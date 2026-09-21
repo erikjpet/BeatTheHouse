@@ -4,7 +4,7 @@
   audit. The claim was not pushed until the pre-publish audit passed, honoring
   the prompt's "STOP before pushing anything if any audit step fails" rule.
 - Confirmed `docs/todone/v04_repackage_after_playtest_fixes_prompt.md` was
-  archived and `docs/plans/0.4_release_checklist.md` contained the fresh
+  archived and `docs/archive/0.4/plans/0.4_release_checklist.md` contained the fresh
   package hashes from the repackage task.
 - Pre-publish audit:
   - `git status --porcelain`: clean.
@@ -37,7 +37,7 @@
   - `git push origin v0.4.0`: PASS.
   - Tag target commit: `ece6bc7c453bbb178d49c2b8f670b29f9ccfaddf`.
   - Tag object: `11eae2964d8efe372ebc4d2704ef54d314f1f1e6`.
-- `docs/plans/0.4_release_checklist.md` was updated with a Published section,
+- `docs/archive/0.4/plans/0.4_release_checklist.md` was updated with a Published section,
   including the pushed commit/tag and the owner-only itch upload instructions.
 - `docs/todo/QUEUE.md` was updated to remove this prompt and unblock
   `v04_post_release_verification_prompt.md` as owner-launch only.
@@ -63,8 +63,8 @@ report; do not publish a broken cut.
 
 ## Read first
 
-- `docs/plans/0.4_release_checklist.md` (must exist with fresh evidence)
-- `docs/plans/0.4_publish_copy.md`
+- `docs/archive/0.4/plans/0.4_release_checklist.md` (must exist with fresh evidence)
+- `docs/archive/0.4/plans/0.4_publish_copy.md`
 - `docs/todo/QUEUE.md` and `docs/todone/` (chain completeness)
 - `tools/export_itch.ps1` (butler invocation path)
 
@@ -76,7 +76,7 @@ report; do not publish a broken cut.
    guide, meta home + its CRITICAL rework, profile, act seam, review pass,
    performance pass, final gate, packaging) is archived in docs/todone/
    with an execution record.
-3. `docs/plans/0.4_release_checklist.md` lists every gate with fresh PASS
+3. `docs/archive/0.4/plans/0.4_release_checklist.md` lists every gate with fresh PASS
    evidence and records both package SHA256 hashes; recompute the hashes of
    `builds/itch/BeatTheHouse-web.zip` and `BeatTheHouse-windows.zip` and
    confirm they match the checklist exactly. If the packages are stale
@@ -115,7 +115,7 @@ web page. Instead, prepare the manual step precisely:
 
 ## 4. Record
 
-Append a "Published" section to `docs/plans/0.4_release_checklist.md`: push
+Append a "Published" section to `docs/archive/0.4/plans/0.4_release_checklist.md`: push
 commit hash, tag, publish timestamp, and the Itch Upload — Owner Action
 block. Commit it and push (part of this authorized publish).
 

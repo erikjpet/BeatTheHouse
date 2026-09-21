@@ -10,7 +10,7 @@ The owner declared the accumulated 0.5 source and playtest-fix work complete,
 accepted the remaining documented limitations, and authorized `main`, fresh
 Web/Windows packages, annotated `v0.5.0`, and the official GitHub Release as
 the playtest-event baseline. Current status is recorded in
-`docs/plans/0.5_source_completion_record.md`.
+`docs/archive/0.5/plans/0.5_source_completion_record.md`.
 
 ## 2026-08-05 technical baseline handoff
 
@@ -109,8 +109,8 @@ Automation cannot check this item on the owner's behalf.
 
 ## Deliverable
 
-Update `docs/plans/0.5_release_checklist.md` and create
-`docs/plans/0.5_final_rc_evidence.md` with exact identity, complete fresh gate
+Update `docs/archive/0.5/plans/0.5_release_checklist.md` and create
+`docs/archive/0.5/plans/0.5_final_rc_evidence.md` with exact identity, complete fresh gate
 matrix, visual inventory, owner playtest, collection decision, limitations,
 packaging instructions, and an explicit APPROVED or REJECTED verdict.
 

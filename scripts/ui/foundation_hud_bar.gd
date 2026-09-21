@@ -7,6 +7,7 @@ const SegmentedMeterScript := preload("res://scripts/ui/segmented_meter.gd")
 const UIArtScript := preload("res://scripts/ui/ui_art.gd")
 const HudTimeWatchScript := preload("res://scripts/ui/hud_time_watch.gd")
 const HeatFeedbackVisualsScript := preload("res://scripts/ui/heat_feedback_visuals.gd")
+const PlayerTextScript := preload("res://scripts/ui/player_text.gd")
 
 var wallet_value: Label
 var wallet_delta: Label
@@ -535,9 +536,4 @@ func _clock_parts(model: Dictionary) -> Dictionary:
 
 
 func _exact_time_label(minute_of_day: int) -> String:
-	var normalized := posmod(minute_of_day, 1440)
-	var hour_24 := int(floor(float(normalized) / 60.0))
-	var hour_12 := hour_24 % 12
-	if hour_12 == 0:
-		hour_12 = 12
-	return "%d:%02d %s" % [hour_12, normalized % 60, "AM" if hour_24 < 12 else "PM"]
+	return PlayerTextScript.format_time_of_day(minute_of_day)

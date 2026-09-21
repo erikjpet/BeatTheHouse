@@ -39,7 +39,7 @@ committed Systems/UI regression found by the 2026-08-05 pre-release audit. Fix
 root causes; do not suppress output, exclude valid coverage, relax assertions,
 or change expected copy solely to make a row green.
 
-Read `docs/plans/0.5_pre_release_audit.md` first. Preserve all unrelated
+Read `docs/archive/0.5/plans/0.5_pre_release_audit.md` first. Preserve all unrelated
 owner-owned narration and audio work.
 
 ## RG-01 - GDScript load gate is false-green
@@ -122,7 +122,7 @@ documented; broad stderr filtering is forbidden.
 
 ## Deliverable and completion
 
-Append an execution section to `docs/plans/0.5_pre_release_audit.md` with root
+Append an execution section to `docs/archive/0.5/plans/0.5_pre_release_audit.md` with root
 causes, fixes, before/after reports, stderr classification, and commits. Only
 after all gates are green, prepend an execution record and move this prompt to
 `docs/todone/`. Do not push without explicit user authorization.

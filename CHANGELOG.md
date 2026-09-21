@@ -229,9 +229,9 @@ authoritative boundary for all work completed before 0.5.
   keeping the fixed ante inside the duel stacks instead of charging the
   player's ordinary cash or casino chips again at settlement.
 
-Current evidence is recorded in `docs/plans/0.5_pre_release_audit.md`,
-`docs/plans/tutorial_completion_report.md`, `docs/plans/0.5_performance_audit.md`, and
-`docs/plans/0.5_release_checklist.md`. No final release approval is claimed
+Current evidence is recorded in `docs/archive/0.5/plans/0.5_pre_release_audit.md`,
+`docs/plans/tutorial_completion_report.md`, `docs/archive/0.5/plans/0.5_performance_audit.md`, and
+`docs/archive/0.5/plans/0.5_release_checklist.md`. No final release approval is claimed
 until the human, owner, packaging, and publishing gates close.
 
 ## 0.4.0 - Unpublished Act 1 candidate
@@ -306,7 +306,7 @@ artifacts remain a separate operator action.
 ## 0.3.2 - Internal release closure
 
 0.3.2 closed the low-end and web cleanup line. Its release ledger is
-`docs/plans/0.3.2_release_checklist.md`. The packaged 0.3.2 zips should not be
+`docs/archive/0.3/plans/0.3.2_release_checklist.md`. The packaged 0.3.2 zips should not be
 uploaded because post-close playtest hotfixes are included in the 0.3.3 patch
 cut instead.
 

@@ -19,13 +19,13 @@ rows from a menu.
 
 Read completely before editing:
 
-1. `docs/plans/0.5_inventory_item_interaction_ui_renovation_plan.md` - binding
+1. `docs/archive/0.5/plans/0.5_inventory_item_interaction_ui_renovation_plan.md` - binding
    specification for this task.
-2. `docs/plans/0.5_ui_overhaul_brief.md` - broader UI direction where it does
+2. `docs/archive/0.5/plans/0.5_ui_overhaul_brief.md` - broader UI direction where it does
    not conflict with this prompt.
 3. `docs/plans/item_collection_meta_system_plan.md` - meta instances, bags,
    storage, loadout, and trade-up context.
-4. `docs/plans/0.5_sals_pawn_shop_resale_shelf_plan.md` and
+4. `docs/archive/0.5/plans/0.5_sals_pawn_shop_resale_shelf_plan.md` and
    `docs/todo/sals_pawn_shop_resale_shelf_prompt.md` if present - Sal shelf and
    exact-instance transaction integration. Do not undo work already landed or
    currently in the working tree.

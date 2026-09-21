@@ -1,7 +1,9 @@
 class_name EnvironmentInteractionViewModel
 extends RefCounted
 
-const VisualStyle := preload("res://scripts/ui/visual_style.gd")
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
+const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const AttributeBadgesScript := preload("res://scripts/core/attribute_badges.gd")
 const CharacterRosterScript := preload("res://scripts/core/character_roster.gd")
 
@@ -70,7 +72,7 @@ static func environment_snapshot(run_state: RunState, data: Dictionary) -> Dicti
 	snapshot["reduce_motion"] = bool(data.get("reduce_motion", false))
 	snapshot["high_contrast"] = bool(data.get("high_contrast", false))
 	snapshot["accessibility"] = data.get("accessibility", {})
-	snapshot["scenario_layout_audit"] = _copy_dict(data.get("scenario_layout_audit", {}))
+	snapshot["scenario_layout_audit"] = JsonCoerceScript._copy_dict(data.get("scenario_layout_audit", {}))
 	snapshot["scenario_layout_authority_digest"] = str(data.get("scenario_layout_authority_digest", ""))
 	snapshot["alcoholic_level"] = run_state.alcoholic_level
 	snapshot["baseline_luck"] = run_state.baseline_luck
@@ -107,14 +109,14 @@ static func environment_snapshot(run_state: RunState, data: Dictionary) -> Dicti
 	snapshot["selected_item_offer_id"] = str(data.get("selected_item_offer_id", ""))
 	snapshot["selected_item_offer_label"] = str(data.get("selected_item_offer_label", ""))
 	snapshot["selected_item_offer_price"] = int(data.get("selected_item_offer_price", 0))
-	snapshot["last_item_result"] = _copy_dict(data.get("last_item_result", {}))
+	snapshot["last_item_result"] = JsonCoerceScript._copy_dict(data.get("last_item_result", {}))
 	snapshot["service_options"] = data.get("service_options", [])
 	snapshot["lender_options"] = data.get("lender_options", [])
 	snapshot["selected_service_hook_id"] = str(data.get("selected_service_hook_id", ""))
 	snapshot["selected_service_hook_label"] = str(data.get("selected_service_hook_label", ""))
 	snapshot["selected_lender_hook_id"] = str(data.get("selected_lender_hook_id", ""))
 	snapshot["selected_lender_hook_label"] = str(data.get("selected_lender_hook_label", ""))
-	snapshot["last_hook_result"] = _copy_dict(data.get("last_hook_result", {}))
+	snapshot["last_hook_result"] = JsonCoerceScript._copy_dict(data.get("last_hook_result", {}))
 	snapshot["interactable_objects"] = data.get("interactable_objects", [])
 	snapshot["recent_result"] = recent_result
 	snapshot["outcome_object_id"] = str(data.get("outcome_object_id", ""))
@@ -146,7 +148,7 @@ static func interactable_object_view_list(run_state: RunState, library: ContentL
 	var failed_reason := str(data.get("failed_reason", "Run failed."))
 	var selection: Dictionary = data.get("selection", {})
 	var layout: Dictionary = data.get("layout", {})
-	var game_fixture_counts := _copy_dict(layout.get("game_fixture_counts", {}))
+	var game_fixture_counts := JsonCoerceScript._copy_dict(layout.get("game_fixture_counts", {}))
 	var game_layout_index := 0
 	for source_value in data.get("game_sources", []):
 		if typeof(source_value) != TYPE_DICTIONARY:
@@ -154,18 +156,18 @@ static func interactable_object_view_list(run_state: RunState, library: ContentL
 		var game_source: Dictionary = source_value
 		var game_id := str(game_source.get("id", ""))
 		var definition: Dictionary = game_source.get("definition", {})
-		var runtime_state := _copy_dict(game_source.get("runtime_state", {}))
-		var object_state := _copy_dict(game_source.get("object_state", {}))
-		var fixture_object_states := _copy_dict(game_source.get("fixture_object_states", {}))
-		for runtime_key in _copy_dict(object_state.get("runtime_state", {})).keys():
+		var runtime_state := JsonCoerceScript._copy_dict(game_source.get("runtime_state", {}))
+		var object_state := JsonCoerceScript._copy_dict(game_source.get("object_state", {}))
+		var fixture_object_states := JsonCoerceScript._copy_dict(game_source.get("fixture_object_states", {}))
+		for runtime_key in JsonCoerceScript._copy_dict(object_state.get("runtime_state", {})).keys():
 			runtime_state[runtime_key] = (object_state.get("runtime_state", {}) as Dictionary)[runtime_key]
 		var enabled := not definition.is_empty() and not failed
 		var fixture_count := maxi(1, int(game_fixture_counts.get(game_id, 1)))
 		for fixture_index in range(fixture_count):
 			var object_id := "game:%s" % game_id if fixture_index == 0 else "game:%s:%d" % [game_id, fixture_index + 1]
-			var fixture_object_state := _copy_dict(fixture_object_states.get(object_id, object_state))
+			var fixture_object_state := JsonCoerceScript._copy_dict(fixture_object_states.get(object_id, object_state))
 			var fixture_runtime_state := runtime_state.duplicate(true)
-			for runtime_key in _copy_dict(fixture_object_state.get("runtime_state", {})).keys():
+			for runtime_key in JsonCoerceScript._copy_dict(fixture_object_state.get("runtime_state", {})).keys():
 				fixture_runtime_state[runtime_key] = (fixture_object_state.get("runtime_state", {}) as Dictionary)[runtime_key]
 			var description := str(definition.get("description", ""))
 			if description.is_empty():
@@ -192,7 +194,7 @@ static func interactable_object_view_list(run_state: RunState, library: ContentL
 				"state_badge": str(fixture_object_state.get("state_badge", "")),
 				"risk_summary": game_risk_summary(definition),
 				"runtime_state": fixture_runtime_state,
-				"visual_state": _copy_dict(fixture_object_state.get("visual_state", {})),
+				"visual_state": JsonCoerceScript._copy_dict(fixture_object_state.get("visual_state", {})),
 				"visual_key": str(definition.get("family", definition.get("type", "game"))),
 				"prop": str(definition.get("environment_prop", definition.get("prop", "card_table"))),
 				"icon_key": str(definition.get("icon_key", game_id)),
@@ -277,7 +279,7 @@ static func interactable_object_view_list(run_state: RunState, library: ContentL
 			"cost_summary": cost_summary,
 			"currency": currency,
 			"price": price,
-			"attribute_badges": _copy_array(offer.get("attribute_badges", [])),
+			"attribute_badges": JsonCoerceScript._copy_array(offer.get("attribute_badges", [])),
 			"visual_key": "item",
 			"prop": str(offer.get("environment_prop", "")),
 			"surface": str(offer.get("surface", "counter")),
@@ -352,7 +354,7 @@ static func interactable_object_view_list(run_state: RunState, library: ContentL
 			"risk_summary": str(_call(data.get("travel_risk_summary", Callable()), [first_choice], "")),
 			"impact_summary": str(_call(data.get("travel_preview_summary", Callable()), [first_choice], "")),
 			"cost_summary": "%d route(s)" % travel_choices.size(),
-			"attribute_badges": _copy_array(first_choice.get("attribute_badges", [])),
+			"attribute_badges": JsonCoerceScript._copy_array(first_choice.get("attribute_badges", [])),
 			"preview_lines": travel_leave_preview_lines(travel_choices, direct_room_exit),
 			"unlock_conditions": [],
 			"visual_key": "travel",
@@ -414,7 +416,7 @@ static func merge_unique_object(existing: Dictionary, incoming: Dictionary) -> D
 	var incoming_priority := int(incoming.get("unique_object_priority", 0))
 	var primary := incoming.duplicate(true) if incoming_priority > existing_priority else existing.duplicate(true)
 	var secondary := existing if incoming_priority > existing_priority else incoming
-	primary["available_actions"] = _merged_actions(_copy_array(primary.get("available_actions", [])), _copy_array(secondary.get("available_actions", [])))
+	primary["available_actions"] = _merged_actions(JsonCoerceScript._copy_array(primary.get("available_actions", [])), JsonCoerceScript._copy_array(secondary.get("available_actions", [])))
 	primary["action_summary"] = _joined_summary_lines([existing.get("action_summary", ""), incoming.get("action_summary", "")])
 	primary["effect_summary"] = _joined_summary_lines([existing.get("effect_summary", ""), incoming.get("effect_summary", "")])
 	primary["status_summary"] = _joined_summary_lines([existing.get("status_summary", ""), incoming.get("status_summary", "")])
@@ -513,10 +515,10 @@ static func make_interactable_object(source: Dictionary, selection: Dictionary) 
 		"cost_summary": str(source.get("cost_summary", "")),
 		"currency": str(source.get("currency", "")),
 		"price": maxi(0, int(source.get("price", 0))),
-		"attribute_badges": AttributeBadgesScript.for_object_overlay(_copy_array(source.get("attribute_badges", []))),
-		"runtime_state": _copy_dict(source.get("runtime_state", {})),
-		"visual_state": _copy_dict(source.get("visual_state", {})),
-		"character_actor": _copy_dict(source.get("character_actor", {})),
+		"attribute_badges": AttributeBadgesScript.for_object_overlay(JsonCoerceScript._copy_array(source.get("attribute_badges", []))),
+		"runtime_state": JsonCoerceScript._copy_dict(source.get("runtime_state", {})),
+		"visual_state": JsonCoerceScript._copy_dict(source.get("visual_state", {})),
+		"character_actor": JsonCoerceScript._copy_dict(source.get("character_actor", {})),
 		"state_badge": str(source.get("state_badge", "")),
 		"non_color_state": str(source.get("non_color_state", "")),
 		"safe_exit": bool(source.get("safe_exit", false)),
@@ -529,8 +531,8 @@ static func make_interactable_object(source: Dictionary, selection: Dictionary) 
 		"pose": str(source.get("pose", "")),
 		"behavior": str(source.get("behavior", "")),
 		"route_id": str(source.get("route_id", "")),
-		"route_points": _copy_array(source.get("route_points", [])),
-		"small_screen_rect": _copy_dict(source.get("small_screen_rect", {})),
+		"route_points": JsonCoerceScript._copy_array(source.get("route_points", [])),
+		"small_screen_rect": JsonCoerceScript._copy_dict(source.get("small_screen_rect", {})),
 		"z_order": int(source.get("z_order", 0)),
 		"z_order_explicit": source.has("z_order"),
 		"visible": bool(source.get("visible", true)),
@@ -542,8 +544,8 @@ static func make_interactable_object(source: Dictionary, selection: Dictionary) 
 		"unique_object_class": str(source.get("unique_object_class", "")).strip_edges(),
 		"unique_object_priority": int(source.get("unique_object_priority", 0)),
 		"allow_duplicate_unique_class": bool(source.get("allow_duplicate_unique_class", false)),
-		"available_actions": _copy_array(source.get("available_actions", [])),
-		"inline_actions": _copy_array(source.get("inline_actions", [])),
+		"available_actions": JsonCoerceScript._copy_array(source.get("available_actions", [])),
+		"inline_actions": JsonCoerceScript._copy_array(source.get("inline_actions", [])),
 		"confirm_action_id": str(source.get("confirm_action_id", "")),
 		"hovered": object_id == str(selection.get("hover_target_id", "")),
 		"focused": object_id == str(selection.get("focus_target_id", "")),
@@ -626,7 +628,7 @@ static func authored_interaction_rect(object_type: String, index: int, layout: D
 	if spot.x < 0.0 or spot.y < 0.0:
 		return Rect2()
 	var fallback_rect := normalized_interaction_rect(object_type, index)
-	var board_size := Vector2(VisualStyle.ENVIRONMENT_BOARD_SIZE)
+	var board_size := Vector2(VisualStyleScript.ENVIRONMENT_BOARD_SIZE)
 	var center := Vector2(clampf(spot.x / board_size.x, 0.0, 1.0), clampf(spot.y / board_size.y, 0.0, 1.0))
 	return Rect2(center - fallback_rect.size * 0.5, fallback_rect.size)
 
@@ -668,7 +670,7 @@ static func layout_spot_to_board_position(value: Variant) -> Vector2:
 
 
 static func normalized_interaction_rect(object_type: String, index: int) -> Rect2:
-	var board_size := Vector2(VisualStyle.ENVIRONMENT_BOARD_SIZE)
+	var board_size := Vector2(VisualStyleScript.ENVIRONMENT_BOARD_SIZE)
 	var center := Vector2(0.5, 0.5)
 	var size := Vector2(0.12, 0.18)
 	match object_type:
@@ -748,7 +750,7 @@ static func travel_leave_preview_lines(travel_choices: Array, direct_room_exit: 
 			result.append("%s: %s" % [label, str(choice.get("disabled_reason", "locked"))])
 		else:
 			result.append("%s: %s, cost %d" % [label, str(choice.get("distance", "near")), int(choice.get("cost", 0))])
-	for line_value in _copy_array(direct_room_exit.get("preview_lines", [])):
+	for line_value in JsonCoerceScript._copy_array(direct_room_exit.get("preview_lines", [])):
 		var line := str(line_value).strip_edges()
 		if not line.is_empty() and not result.has(line):
 			result.append(line)
@@ -757,17 +759,17 @@ static func travel_leave_preview_lines(travel_choices: Array, direct_room_exit: 
 
 static func context_border_color(object_type: String, enabled: bool) -> Color:
 	if not enabled:
-		return VisualStyle.ORANGE
+		return VisualStyleScript.ORANGE
 	match object_type:
-		"game": return VisualStyle.CYAN
-		"event": return VisualStyle.AMBER
-		"item": return VisualStyle.TEAL
-		"shopkeeper", "game_hook", "home_tenure", "meta_bag", "meta_upgrade", "meta_trade_up", "meta_pawn_counter", "service", "lender": return VisualStyle.YELLOW
-		"dialogue": return VisualStyle.CYAN_2
-		"home_sleep": return VisualStyle.CYAN
-		"home_storage", "home_container": return VisualStyle.TEAL
-		"travel": return VisualStyle.PURPLE_2
-	return VisualStyle.CYAN_2
+		"game": return VisualStyleScript.CYAN
+		"event": return VisualStyleScript.AMBER
+		"item": return VisualStyleScript.TEAL
+		"shopkeeper", "game_hook", "home_tenure", "meta_bag", "meta_upgrade", "meta_trade_up", "meta_pawn_counter", "service", "lender": return VisualStyleScript.YELLOW
+		"dialogue": return VisualStyleScript.CYAN_2
+		"home_sleep": return VisualStyleScript.CYAN
+		"home_storage", "home_container": return VisualStyleScript.TEAL
+		"travel": return VisualStyleScript.PURPLE_2
+	return VisualStyleScript.CYAN_2
 
 
 static func context_type_label(object_type: String) -> String:
@@ -838,11 +840,3 @@ static func _call(callback_value: Variant, args: Array, fallback: Variant) -> Va
 
 static func _label_from_id(value: String) -> String:
 	return value.replace("_", " ").capitalize()
-
-
-static func _copy_array(value: Variant) -> Array:
-	return (value as Array).duplicate(true) if typeof(value) == TYPE_ARRAY else []
-
-
-static func _copy_dict(value: Variant) -> Dictionary:
-	return (value as Dictionary).duplicate(true) if typeof(value) == TYPE_DICTIONARY else {}

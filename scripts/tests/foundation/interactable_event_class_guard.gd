@@ -1,5 +1,7 @@
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 # Permanent icon-to-action contract. Generated event_ids are placement promises:
 # every interactable event must either work now or be dormant solely because of
 # an authored `conditions` gate. Normalization, scope, speaker synthesis, and
@@ -154,7 +156,7 @@ static func _check_generated_environment_sweep(library: ContentLibrary, failures
 
 
 static func _enter_and_check_remaining_layers(library: ContentLibrary, run_state: RunState, scenario_id: String, seed_index: int, covered_layers: Dictionary, failures: Array) -> void:
-	var remaining := _string_array(run_state.current_environment.get("layer_ids", []))
+	var remaining := JsonCoerceScript._string_array(run_state.current_environment.get("layer_ids", []))
 	remaining.erase(str(run_state.current_environment.get("current_layer_id", "")))
 	var generator := RunGeneratorScript.new(library)
 	while not remaining.is_empty():
@@ -183,7 +185,7 @@ static func _enter_and_check_remaining_layers(library: ContentLibrary, run_state
 
 static func _check_environment(library: ContentLibrary, run_state: RunState, label: String, failures: Array) -> void:
 	var environment := run_state.current_environment
-	for event_id in _string_array(environment.get("event_ids", [])):
+	for event_id in JsonCoerceScript._string_array(environment.get("event_ids", [])):
 		var definition := library.event(event_id)
 		if definition.is_empty():
 			failures.append("Generated environment %s placed unknown event %s." % [label, event_id])
@@ -277,7 +279,7 @@ static func _check_beach_scenario_resolution(library: ContentLibrary, failures: 
 				scenario
 			).to_dict()
 			run_state.set_environment(environment)
-			if not _string_array(run_state.current_environment.get("event_ids", [])).has(event_id):
+			if not JsonCoerceScript._string_array(run_state.current_environment.get("event_ids", [])).has(event_id):
 				failures.append("Beach scenario %s did not place its event %s in the generated environment." % [scenario_id, event_id])
 				continue
 			var module := EventModuleScript.new()
@@ -291,7 +293,7 @@ static func _check_beach_scenario_resolution(library: ContentLibrary, failures: 
 			if not bool(result.get("ok", false)):
 				failures.append("Beach event %s choice %s failed to resolve: %s" % [event_id, choice_id, str(result.get("message", ""))])
 				continue
-			if not _string_array(run_state.current_environment.get("resolved_event_ids", [])).has(event_id):
+			if not JsonCoerceScript._string_array(run_state.current_environment.get("resolved_event_ids", [])).has(event_id):
 				failures.append("Beach event %s choice %s did not set its resolved-event flag." % [event_id, choice_id])
 			var consequences := _dict(choice.get("consequences", {}))
 			if run_state.bankroll != bankroll_before + int(consequences.get("bankroll_delta", 0)):
@@ -315,12 +317,3 @@ static func _dict(value: Variant) -> Dictionary:
 
 static func _array(value: Variant) -> Array:
 	return (value as Array).duplicate(true) if typeof(value) == TYPE_ARRAY else []
-
-
-static func _string_array(value: Variant) -> Array:
-	var result: Array = []
-	for entry_value in _array(value):
-		var entry := str(entry_value).strip_edges()
-		if not entry.is_empty():
-			result.append(entry)
-	return result

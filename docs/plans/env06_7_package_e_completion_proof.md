@@ -53,7 +53,7 @@ The package-local native/Web probe now provides actual platform evidence:
   maximum across 30 CPU4 idle frames;
 - 80 native GL package-local rasters, their hashes, accessibility geometry,
   obstruction states, and the 960-by-2700 contact sheet are recorded under
-  `docs/plans/evidence/env06_7_package_e/`.
+  `docs/archive/0.6/evidence/env06_7_package_e/`.
 
 The authoring verifier additionally binds eight unique calculated signatures,
 28 pairwise normalized comparisons, exact operation receipts, production target

@@ -5,6 +5,7 @@ param(
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
 . (Join-Path $PSScriptRoot "split_test_runner_helpers.ps1")
+. (Join-Path $PSScriptRoot "health06_1_static_source_rules.ps1")
 
 function Get-ProjectRelativePath {
     param([string]$Path)
@@ -150,6 +151,54 @@ $requiredFiles = @(
 )
 
 $failures = New-Object System.Collections.Generic.List[string]
+
+# health06_1 gdlint: keep lint configuration discoverable at repository root and
+# run it when gdtoolkit is available. The project does not acquire a new runtime
+# dependency; the deterministic source checks below remain active everywhere.
+$gdLintConfigPath = Join-Path $root ".gdlintrc"
+if (-not (Test-Path -LiteralPath $gdLintConfigPath)) {
+    $failures.Add("Missing repository gdlint configuration: .gdlintrc")
+} else {
+    $gdLintConfig = Get-Content -LiteralPath $gdLintConfigPath -Raw
+    foreach ($requiredPolicy in @("mixed indentation", "one separating blank line", "top-level functions use two", "(Script|Scene)")) {
+        if (-not $gdLintConfig.Contains($requiredPolicy)) {
+            $failures.Add(".gdlintrc is missing house-style policy: $requiredPolicy")
+        }
+    }
+}
+
+$shippingGdFiles = @(Get-ChildItem (Join-Path $root "scripts/core"),(Join-Path $root "scripts/games"),(Join-Path $root "scripts/ui") -Recurse -Filter "*.gd" -File)
+$healthSourceRuleErrors = @(Invoke-Health06StaticSourceRules -Paths @($shippingGdFiles.FullName))
+foreach ($sourceRuleError in $healthSourceRuleErrors) {
+    $failures.Add($sourceRuleError)
+}
+foreach ($gdFile in $shippingGdFiles) {
+    $lineNumber = 0
+    foreach ($sourceLine in Get-Content -LiteralPath $gdFile.FullName) {
+        $lineNumber++
+        if ($sourceLine -match '^ +\S') {
+            $failures.Add("GDScript indentation must use tabs: $(Get-ProjectRelativePath $gdFile.FullName):$lineNumber")
+        }
+        if ($sourceLine -match '^const\s+(?<name>[A-Za-z0-9_]+)\s*(?::?=)\s*preload\("(?<path>[^"]+)"\)') {
+            $constantName = $Matches.name
+            $resourcePath = $Matches.path
+            $requiredSuffix = if ($resourcePath.EndsWith(".gd")) { "Script" } elseif ($resourcePath.EndsWith(".tscn")) { "Scene" } else { "" }
+            if ($requiredSuffix -and -not $constantName.EndsWith($requiredSuffix)) {
+                $failures.Add("Preload constant must end in ${requiredSuffix}: $(Get-ProjectRelativePath $gdFile.FullName):$lineNumber ($constantName)")
+            }
+        }
+    }
+}
+
+$gdLintCommand = Get-Command gdlint -ErrorAction SilentlyContinue
+if ($null -ne $gdLintCommand) {
+    $gdLintOutput = & $gdLintCommand.Source @($shippingGdFiles.FullName) 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        $failures.Add("gdlint failed:`n$($gdLintOutput -join "`n")")
+    }
+} elseif (-not $Quiet) {
+    Write-Host "gdlint is not installed; repository-native style checks remain active."
+}
 
 $objectRootContractFixtures = @(
     @{ Label = "object"; Value = ('{"fixture":true}' | ConvertFrom-Json); Expected = $true },

@@ -1,8 +1,12 @@
 class_name GameModule
 extends RefCounted
 
+const IoResultScript := preload("res://scripts/core/io_result.gd")
+const KeysScript := preload("res://scripts/core/keys.gd")
+
 # Base contract for foundation gambling modules.
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 const PlayerTextScript := preload("res://scripts/ui/player_text.gd")
 
 const RESULT_CONTINUE := "continue"
@@ -881,18 +885,23 @@ static func finalize_routed_player_message(result: Dictionary, deltas: Dictionar
 
 
 # Applies structured module changes through RunState.
-static func apply_result(run_state: RunState, result: Dictionary, rng: RngStream = null, trusted_result_fingerprint: String = "") -> void:
+static func apply_result(run_state: RunState, result: Dictionary, rng: RngStream = null, trusted_result_fingerprint: String = "") -> Dictionary:
 	if run_state == null:
-		return
-	if not bool(result.get("ok", false)):
+		return IoResultScript.failed(ERR_INVALID_PARAMETER, "missing_run_state", "Run state is required to apply a game result.")
+	if not bool(result.get(KeysScript.OK, false)):
 		run_state.clear_deferred_bankroll_zero_resolution()
-		return
+		return IoResultScript.failed(
+			int(result.get(IoResultScript.KEY_ERROR, FAILED)),
+			str(result.get(IoResultScript.KEY_ERROR_CODE, "result_rejected")),
+			str(result.get(KeysScript.MESSAGE, "Game result was rejected.")),
+			{"result": result.duplicate(true)}
+		)
 	var result_game_id := str(result.get("game_id", result.get("source_id", "")))
 	if (result_game_id == "blackjack" \
 			or bool(result.get("table_game_authoritative", false)) \
 			or bool(result.get("sealed_action_authoritative", false))) \
 			and not run_state.consume_blackjack_authority_result_receipt(result, trusted_result_fingerprint):
-		return
+		return IoResultScript.failed(ERR_INVALID_DATA, "authority_receipt_rejected", "The authoritative game receipt was rejected.")
 	normalize_skill_cheat_contract(result)
 	var deltas := _normalize_result_deltas(result.get("deltas", {}))
 	run_state.record_score_spending_from_result(result, deltas)
@@ -901,7 +910,7 @@ static func apply_result(run_state: RunState, result: Dictionary, rng: RngStream
 	var defer_bankroll_zero := bool(result.get("defer_bankroll_zero_failure", false)) or run_state.defer_next_bankroll_zero_failure
 	if defer_bankroll_zero:
 		result["defer_bankroll_zero_failure"] = true
-	var bankroll_delta := int(deltas.get("bankroll_delta", 0))
+	var bankroll_delta := int(deltas.get(KeysScript.BANKROLL_DELTA, 0))
 	var failed_before_money := run_state.run_status == RunState.RUN_STATUS_FAILED
 	if bankroll_delta != 0:
 		run_state.change_bankroll(bankroll_delta, defer_bankroll_zero)
@@ -910,7 +919,7 @@ static func apply_result(run_state: RunState, result: Dictionary, rng: RngStream
 		run_state.change_grand_casino_chips(chips_delta, defer_bankroll_zero)
 	if not failed_before_money and run_state.run_status == RunState.RUN_STATUS_FAILED and not bool(result.get("terminal_settlement", false)):
 		run_state.clear_deferred_bankroll_zero_resolution()
-		return
+		return IoResultScript.failed(FAILED, "terminal_settlement_rejected", "The game settlement ended the run before it could be published.")
 	var suspicion_delta := int(deltas.get("suspicion_delta", 0))
 	var blackjack_heat_attempt := suspicion_delta > 0 and result_game_id == "blackjack"
 	if blackjack_heat_attempt:
@@ -1057,6 +1066,7 @@ static func apply_result(run_state: RunState, result: Dictionary, rng: RngStream
 	if rng != null:
 		run_state.save_rng(rng)
 	run_state.clear_deferred_bankroll_zero_resolution()
+	return IoResultScript.ok({"result": result})
 
 
 # Resolves one action with data-driven odds and item modifiers.
@@ -1333,16 +1343,24 @@ func _peek_table_state(environment: Dictionary) -> Dictionary:
 
 # Safely duplicates array content.
 static func _copy_array(value: Variant) -> Array:
-	if typeof(value) != TYPE_ARRAY:
-		return []
-	return (value as Array).duplicate(true)
+	return JsonCoerceScript._copy_array(value)
 
 
 # Safely duplicates dictionary content.
 static func _copy_dict(value: Variant) -> Dictionary:
-	if typeof(value) != TYPE_DICTIONARY:
-		return {}
-	return (value as Dictionary).duplicate(true)
+	return JsonCoerceScript._copy_dict(value)
+
+
+static func _dictionary_array(value: Variant) -> Array:
+	return JsonCoerceScript._dictionary_array(value)
+
+
+static func _string_array(value: Variant) -> Array:
+	return JsonCoerceScript._string_array(value)
+
+
+static func _int_array(value: Variant) -> Array:
+	return JsonCoerceScript._int_array(value)
 
 
 static func _owned_array(value: Variant) -> Array:

@@ -19,7 +19,7 @@ casino roguelike (Web/itch.io + Windows, 1280×720). Content authoring
 on the env06_1 engine, sibling of env06_2 (read its landed data as the
 house style for scenario authoring). Binding design contract:
 `docs/plans/0.6_living_world_roadmap.md` — Pillar 1 catalog (★ launch
-cut). Voice: `docs/plans/0.5_voice_bible.md` +
+cut). Voice: `docs/archive/0.5/plans/0.5_voice_bible.md` +
 `docs/plans/0.6_voice_bible_world_register.md`. This prompt is
 self-contained for rules and scope.
 

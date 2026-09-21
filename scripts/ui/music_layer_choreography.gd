@@ -1,6 +1,8 @@
 class_name MusicLayerChoreography
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 const ROLE_ORDER := ["pad", "bass", "bass_dark", "lead", "drums_low", "drums_high", "drums_high_double", "tension", "texture"]
 const ALLOWED_LEAD_IN_BARS := [1, 2, 4]
 
@@ -29,7 +31,7 @@ static func normalize_recipe(value: Variant) -> Dictionary:
 			"roles": roles,
 			"request_fill": bool(stage.get("request_fill", false)),
 			"fill_priority": maxi(0, int(stage.get("fill_priority", 20))),
-			"change_roles": _string_array(stage.get("change_roles", [])),
+			"change_roles": JsonCoerceScript._string_array(stage.get("change_roles", [])),
 		})
 		next_start = start_bar + duration_bars
 	if stages.is_empty():
@@ -170,15 +172,15 @@ static func _fill_is_compatible(metadata: Dictionary, request: Dictionary) -> bo
 	var destination_progression := str(request.get("destination_progression_id", request.get("progression_id", ""))).strip_edges()
 	var source_sections := _upper_string_array(metadata.get("source_sections", []))
 	var destination_sections := _upper_string_array(metadata.get("destination_sections", metadata.get("harmonic_sections", [])))
-	var progressions := _string_array(metadata.get("progression_compatibility", []))
+	var progressions := JsonCoerceScript._string_array(metadata.get("progression_compatibility", []))
 	if not source_sections.is_empty() and not source_sections.has(source_section):
 		return false
 	if not destination_sections.is_empty() and not destination_sections.has(destination_section):
 		return false
 	if not progressions.is_empty() and not destination_progression.is_empty() and not progressions.has(destination_progression):
 		return false
-	var introduced_roles := _string_array(metadata.get("introduces_roles", []))
-	var change_roles := _string_array(request.get("change_roles", []))
+	var introduced_roles := JsonCoerceScript._string_array(metadata.get("introduces_roles", []))
+	var change_roles := JsonCoerceScript._string_array(request.get("change_roles", []))
 	if not introduced_roles.is_empty() and not change_roles.is_empty():
 		var overlaps := false
 		for role in change_roles:
@@ -202,21 +204,10 @@ static func _normalized_lead_in_bars(value: int) -> int:
 	return value if ALLOWED_LEAD_IN_BARS.has(value) else 2
 
 
-static func _string_array(value: Variant) -> Array[String]:
-	var result: Array[String] = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for item in value as Array:
-		var text := str(item).strip_edges()
-		if not text.is_empty() and not result.has(text):
-			result.append(text)
-	return result
-
-
 static func _upper_string_array(value: Variant) -> Array[String]:
 	var result: Array[String] = []
-	for item in _string_array(value):
-		var text := item.to_upper()
+	for item in JsonCoerceScript._string_array(value):
+		var text := str(item).to_upper()
 		if not result.has(text):
 			result.append(text)
 	return result

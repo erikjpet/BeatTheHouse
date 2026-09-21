@@ -1,6 +1,8 @@
 class_name NumbersContract
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 const NumbersModelScript := preload("res://scripts/core/numbers_model.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 const TownStateScript := preload("res://scripts/core/town_state.gd")
@@ -43,12 +45,12 @@ static func _check_data_and_closes(failures: Array) -> void:
 		"corner_store": 4,
 	}
 	var seen := {}
-	for venue_value in _dictionary_array(config.get("venues", [])):
+	for venue_value in JsonCoerceScript._dictionary_array(config.get("venues", [])):
 		seen[str(venue_value.get("id", ""))] = int(venue_value.get("close_offset_from_post_actions", 99))
 	if seen != expected:
 		failures.append("Numbers signed close ordering drifted: %s." % JSON.stringify(seen))
 	var rumors := _load_array_first("res://data/town/rumors.json")
-	if not _string_array(rumors.get("fact_classes", [])).has("numbers_superstition") or str(rumors.get("truth_policy", "")).find("sole non-factual class") < 0:
+	if not JsonCoerceScript._string_array(rumors.get("fact_classes", [])).has("numbers_superstition") or str(rumors.get("truth_policy", "")).find("sole non-factual class") < 0:
 		failures.append("Numbers superstition is not documented as the sole non-factual rumor class.")
 	var archetypes := _load_array("res://data/environments/archetypes.json")
 	var desk_found := false
@@ -60,10 +62,10 @@ static func _check_data_and_closes(failures: Array) -> void:
 		var back_room := _dictionary(_dictionary(archetype.get("layers", {})).get("back_room", {}))
 		var layout := _dictionary(back_room.get("layout", {}))
 		desk_found = _dictionary_array_from_positions(layout.get("event_spots", [])).has({"x": 680, "y": 240}) \
-			and _string_array(back_room.get("required_event_ids", [])).has("numbers_desk")
+			and JsonCoerceScript._string_array(back_room.get("required_event_ids", [])).has("numbers_desk")
 		var game_spots: Array = _dictionary_array_from_positions(layout.get("game_spots", []))
-		var game_ids: Array = _string_array(back_room.get("game_ids", []))
-		for game_id_value in _string_array(back_room.get("game_pool", [])) + _string_array(back_room.get("required_game_ids", [])):
+		var game_ids: Array = JsonCoerceScript._string_array(back_room.get("game_ids", []))
+		for game_id_value in JsonCoerceScript._string_array(back_room.get("game_pool", [])) + JsonCoerceScript._string_array(back_room.get("required_game_ids", [])):
 			if not game_ids.has(game_id_value):
 				game_ids.append(game_id_value)
 		poker_found = game_spots.has({"x": 450, "y": 218}) and game_ids.has("crew_draw_poker")
@@ -104,7 +106,7 @@ static func _check_read_purity_and_boundary_determinism(failures: Array) -> void
 
 
 static func _check_slip_lifecycle_and_confiscation(failures: Array) -> void:
-	for venue_value in _dictionary_array(NumbersModelScript.tuning().get("venues", [])):
+	for venue_value in JsonCoerceScript._dictionary_array(NumbersModelScript.tuning().get("venues", [])):
 		var venue_id := str(venue_value.get("id", ""))
 		var model: NumbersModel = NumbersModelScript.new()
 		model.reset(90210)
@@ -658,7 +660,7 @@ static func _completed_fix(seed_value: int, strong: bool, allocations: Dictionar
 
 
 static func _fix_slips(fix: Dictionary, slips: Array) -> Array:
-	var ids := _string_array(fix.get("slip_ids", []))
+	var ids := JsonCoerceScript._string_array(fix.get("slip_ids", []))
 	var result: Array = []
 	for slip_value in slips:
 		var slip := _dictionary(slip_value)
@@ -765,15 +767,6 @@ static func _load_array_first(path: String) -> Dictionary:
 	return _dictionary(values[0]) if not values.is_empty() else {}
 
 
-static func _dictionary_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) == TYPE_ARRAY:
-		for entry_value in value as Array:
-			if typeof(entry_value) == TYPE_DICTIONARY:
-				result.append((entry_value as Dictionary).duplicate(true))
-	return result
-
-
 static func _dictionary_array_from_positions(value: Variant) -> Array:
 	var result: Array = []
 	if typeof(value) == TYPE_ARRAY:
@@ -785,13 +778,3 @@ static func _dictionary_array_from_positions(value: Variant) -> Array:
 
 static func _dictionary(value: Variant) -> Dictionary:
 	return value as Dictionary if typeof(value) == TYPE_DICTIONARY else {}
-
-
-static func _string_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) == TYPE_ARRAY:
-		for entry_value in value as Array:
-			var text := str(entry_value).strip_edges()
-			if not text.is_empty():
-				result.append(text)
-	return result

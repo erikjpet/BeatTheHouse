@@ -1,6 +1,8 @@
 class_name GrandCasinoShowdownModel
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 # Pure action-boundary calculations for the Grand Casino showdown front half.
 
 const CREW_LENDER_ID := "the_crew"
@@ -79,7 +81,7 @@ static func evidence_text(definition: Dictionary, snapshot: Dictionary) -> Strin
 
 
 static func response_strength(choice_id: String, snapshot: Dictionary) -> Dictionary:
-	var modifiers := _copy_dict(snapshot.get("modifiers", {}))
+	var modifiers := JsonCoerceScript._copy_dict(snapshot.get("modifiers", {}))
 	var social_support := social_support_modifier(snapshot)
 	var pressure_modifier := 0
 	var fact_modifier := 0
@@ -125,7 +127,7 @@ static func build_duel_terms(snapshot: Dictionary, pat_down_data: Dictionary, an
 		if choice_id == "take_the_edge":
 			edge_count += 1
 	var response_modifier := int(round(float(response_total) / float(maxi(1, answer_ids.size()))))
-	var modifiers := _copy_dict(snapshot.get("modifiers", {}))
+	var modifiers := JsonCoerceScript._copy_dict(snapshot.get("modifiers", {}))
 	modifiers["pressure_choice_modifier"] = response_modifier
 	var social_support := social_support_modifier(snapshot)
 	var pat_down_handicap := maxi(0, int(pat_down_data.get("handicap", 0)))
@@ -155,7 +157,7 @@ static func build_duel_terms(snapshot: Dictionary, pat_down_data: Dictionary, an
 		0,
 		3
 	)
-	var margin_thresholds := _copy_dict(config.get("margin_thresholds", {}))
+	var margin_thresholds := JsonCoerceScript._copy_dict(config.get("margin_thresholds", {}))
 	if margin_thresholds.is_empty():
 		margin_thresholds = {"walk_out_clean_min": 12, "shown_the_door_min": -8}
 	return {
@@ -171,9 +173,9 @@ static func build_duel_terms(snapshot: Dictionary, pat_down_data: Dictionary, an
 		"rourke_aggression": aggression,
 		"rourke_cheat_level": cheat_level,
 		"margin_thresholds": margin_thresholds,
-		"rules": _copy_dict(config.get("rules", {})),
-		"edge_catalog": _copy_array(config.get("edge_catalog", [])),
-		"barks": _copy_dict(config.get("barks", {})),
+		"rules": JsonCoerceScript._copy_dict(config.get("rules", {})),
+		"edge_catalog": JsonCoerceScript._copy_array(config.get("edge_catalog", [])),
+		"barks": JsonCoerceScript._copy_dict(config.get("barks", {})),
 		"pat_down": pat_down_data.duplicate(true),
 		"interrogation": {
 			"evidence_ids": evidence_ids.duplicate(true),
@@ -190,11 +192,11 @@ static func item_classification_id(item_id: String, config: Dictionary) -> Strin
 	var clean_id := item_id.strip_edges()
 	if clean_id.is_empty():
 		return ""
-	for classification_value in _copy_array(config.get("classifications", [])):
+	for classification_value in JsonCoerceScript._copy_array(config.get("classifications", [])):
 		if typeof(classification_value) != TYPE_DICTIONARY:
 			continue
 		var classification: Dictionary = classification_value
-		if _copy_array(classification.get("item_ids", [])).has(clean_id):
+		if JsonCoerceScript._copy_array(classification.get("item_ids", [])).has(clean_id):
 			return str(classification.get("id", "")).strip_edges().to_lower()
 	return ""
 
@@ -210,7 +212,7 @@ static func _evidence_matches(condition: String, snapshot: Dictionary) -> bool:
 		"cheat_evidence":
 			return bool(snapshot.get("cheat_evidence", false))
 		"attention":
-			return not _copy_array(snapshot.get("attention_sources", [])).is_empty()
+			return not JsonCoerceScript._copy_array(snapshot.get("attention_sources", [])).is_empty()
 		"open_debt":
 			return int(snapshot.get("open_debt_count", 0)) > 0
 		"drunk":
@@ -227,15 +229,3 @@ static func _evidence_matches(condition: String, snapshot: Dictionary) -> bool:
 			return bool(snapshot.get("crew_ties", false))
 		_:
 			return true
-
-
-static func _copy_array(value: Variant) -> Array:
-	if typeof(value) != TYPE_ARRAY:
-		return []
-	return (value as Array).duplicate(true)
-
-
-static func _copy_dict(value: Variant) -> Dictionary:
-	if typeof(value) != TYPE_DICTIONARY:
-		return {}
-	return (value as Dictionary).duplicate(true)

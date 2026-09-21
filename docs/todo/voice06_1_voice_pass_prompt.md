@@ -16,7 +16,7 @@ Copy everything below this line into the agent.
 
 You are working in `D:\Projects\Beat-The-House`, a Godot 4.6 GDScript
 casino roguelike (Web/itch.io + Windows, 1280×720). Binding contracts:
-`docs/plans/0.5_voice_bible.md` (fully binding) +
+`docs/archive/0.5/plans/0.5_voice_bible.md` (fully binding) +
 `docs/plans/0.6_voice_bible_world_register.md` (the theme: courtesy is
 how power gets expressed, bluntness is how powerlessness gets
 expressed; narration register rules; period methodology; measurable

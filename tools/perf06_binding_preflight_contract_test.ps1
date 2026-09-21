@@ -24,8 +24,8 @@ if (($actualPorts -join ",") -cne ($expectedPorts -join ",")) {
     throw "Binding port inventory drifted. expected=$($expectedPorts -join ',') actual=$($actualPorts -join ',')"
 }
 $runbook = Get-Content -LiteralPath (Join-Path $root "docs/plans/perf06_1_final_runtime_runbook.md") -Raw
-$lowEndLauncher = Get-Content -LiteralPath (Join-Path $root "tools/perf06_low_end_matrix.ps1") -Raw
-$terminalLauncher = Get-Content -LiteralPath (Join-Path $root "tools/integ06_1_terminal_soak.ps1") -Raw
+$lowEndLauncher = Get-Content -LiteralPath (Join-Path $root "tools/archive/perf06/perf06_low_end_matrix.ps1") -Raw
+$terminalLauncher = Get-Content -LiteralPath (Join-Path $root "tools/archive/integ06_1/integ06_1_terminal_soak.ps1") -Raw
 foreach ($port in @(18730, 18731, 18732, 18733, 18734, 18735)) {
     if (-not $runbook.Contains([string]$port)) { throw "Binding inventory includes normal-run port $port but the runbook no longer names it." }
 }

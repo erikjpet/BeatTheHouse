@@ -1,6 +1,8 @@
 class_name WorldMapOverlayController
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 signal refresh_requested()
 signal message_requested(text: String)
 signal travel_requested(target_id: String, label: String, choice: Dictionary)
@@ -10,7 +12,7 @@ signal node_pressed(node_id: String)
 const WORLD_MAP_NODE_BUTTON_POOL_SIZE := 24
 const WORLD_MAP_DETAIL_BADGE_CELL_POOL_SIZE := 6
 const WORLD_MAP_POPUP_ICON_GAP := 12.0
-const VisualStyle := preload("res://scripts/ui/visual_style.gd")
+const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const SmallScreenPolicyScript := preload("res://scripts/ui/small_screen_policy.gd")
 const AttributeBadgesScript := preload("res://scripts/core/attribute_badges.gd")
 const AttributeBadgeRowScript := preload("res://scripts/ui/attribute_badge_row.gd")
@@ -147,7 +149,7 @@ func clear_node_buttons() -> void:
 
 func node_ids(snapshot: Dictionary) -> Array:
 	var ids: Array = []
-	for node_value in _copy_array(snapshot.get("nodes", [])):
+	for node_value in JsonCoerceScript._copy_array(snapshot.get("nodes", [])):
 		if typeof(node_value) != TYPE_DICTIONARY:
 			continue
 		var node: Dictionary = node_value
@@ -215,14 +217,14 @@ func position_detail_popup(snapshot: Dictionary) -> void:
 	var holder_size := holder.size
 	if holder_size.x <= 0.0 or holder_size.y <= 0.0:
 		holder_size = Vector2(800, 430)
-	detail_popup.custom_minimum_size = Vector2(340.0, VisualStyle.FLEXIBLE_SIZE)
+	detail_popup.custom_minimum_size = Vector2(340.0, VisualStyleScript.FLEXIBLE_SIZE)
 	var content_minimum := detail_popup.get_combined_minimum_size()
 	var popup_size := FoundationWidgetsScript.autosize_popup(detail_popup, holder_size, content_minimum)
 	detail_popup.visible = true
 	var center := holder_size * 0.5
 	if nodes_layer != null and nodes_layer.has_method("local_position_for_node") and bool(nodes_layer.call("node_is_in_view", node_id)):
 		center = nodes_layer.call("local_position_for_node", node_id) as Vector2
-	var margin := float(VisualStyle.SPACE_5)
+	var margin := float(VisualStyleScript.SPACE_5)
 	var icon_rect := _node_visual_holder_rect(node_id)
 	if not icon_rect.has_area():
 		icon_rect = Rect2(center - Vector2(22.0, 22.0), Vector2(44.0, 44.0))
@@ -331,7 +333,7 @@ func set_detail_badges(badges_value: Variant) -> void:
 	if badge_slot == null:
 		return
 	_ensure_detail_badge_pool()
-	var badges := _copy_array(badges_value)
+	var badges := JsonCoerceScript._copy_array(badges_value)
 	detail_badges_snapshot = badges.duplicate(true)
 	var should_show := not badges.is_empty()
 	var badges_key := JSON.stringify(badges)
@@ -532,7 +534,7 @@ func _add_node_buttons(snapshot: Dictionary) -> void:
 		return
 	_ensure_node_button_pool()
 	var index := 0
-	for node_value in _copy_array(snapshot.get("nodes", [])):
+	for node_value in JsonCoerceScript._copy_array(snapshot.get("nodes", [])):
 		if typeof(node_value) != TYPE_DICTIONARY:
 			continue
 		var node: Dictionary = node_value
@@ -564,7 +566,7 @@ func _position_node_buttons(snapshot: Dictionary) -> void:
 		return
 	_ensure_node_button_pool()
 	var index := 0
-	for node_value in _copy_array(snapshot.get("nodes", [])):
+	for node_value in JsonCoerceScript._copy_array(snapshot.get("nodes", [])):
 		if typeof(node_value) != TYPE_DICTIONARY:
 			continue
 		var node: Dictionary = node_value
@@ -621,7 +623,7 @@ func _ensure_detail_badge_pool() -> void:
 		cell.mouse_filter = Control.MOUSE_FILTER_STOP
 		cell.mouse_default_cursor_shape = Control.CURSOR_ARROW
 		cell.custom_minimum_size = Vector2(24.0, 22.0)
-		cell.add_theme_stylebox_override("panel", _badge_cell_style(VisualStyle.CYAN_2))
+		cell.add_theme_stylebox_override("panel", _badge_cell_style(VisualStyleScript.CYAN_2))
 		var cell_box := HBoxContainer.new()
 		cell_box.add_theme_constant_override("separation", 3)
 		cell.add_child(cell_box)
@@ -675,7 +677,7 @@ func _update_detail_badge_cells(badges: Array) -> void:
 			label.text = ""
 			label.visible = false
 			continue
-		var accent := VisualStyle.color(AttributeBadgesScript.palette_token_for_badge(badge), VisualStyle.CYAN_2)
+		var accent := VisualStyleScript.color(AttributeBadgesScript.palette_token_for_badge(badge), VisualStyleScript.CYAN_2)
 		var detail_text := _badge_tooltip_text(badge)
 		cell.visible = true
 		cell.tooltip_text = detail_text
@@ -684,13 +686,13 @@ func _update_detail_badge_cells(badges: Array) -> void:
 		icon.texture = AttributeBadgeRowScript.texture_for_badge(badge, 16, false)
 		label.text = detail_text
 		label.visible = false
-		label.add_theme_color_override("font_color", VisualStyle.accessible_color(accent))
+		label.add_theme_color_override("font_color", VisualStyleScript.accessible_color(accent))
 
 
 func _badge_cell_style(accent: Color) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(accent.r, accent.g, accent.b, 0.12)
-	style.border_color = VisualStyle.accessible_color(accent)
+	style.border_color = VisualStyleScript.accessible_color(accent)
 	style.border_width_left = 1
 	style.border_width_top = 1
 	style.border_width_right = 1
@@ -960,7 +962,3 @@ func _confirm_result(action: String, target_id: String, label: String, choice: D
 		"selected_travel_target_id": selected_travel_target_id,
 		"selected_travel_label": selected_travel_label,
 	}
-
-
-func _copy_array(value: Variant) -> Array:
-	return (value as Array).duplicate(true) if typeof(value) == TYPE_ARRAY else []

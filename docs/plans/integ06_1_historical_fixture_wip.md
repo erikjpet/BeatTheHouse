@@ -7,7 +7,7 @@ Historical source: annotated tag `v0.5.1`, commit
 
 ## Capture design
 
-`tools/integ06_1_generate_v051_fixtures.ps1` exports the pinned historical
+`tools/archive/integ06_1/integ06_1_generate_v051_fixtures.ps1` exports the pinned historical
 runtime into a disposable directory. It never runs inside or writes to the
 preserved detached v0.5.1 worktree. The opt-in historical driver instantiates
 the release's genuine `res://scenes/main.tscn` and uses FoundationMain's public
@@ -59,7 +59,7 @@ are normalized out of the sidecar.
 The single-fixture generating command is:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File tools/integ06_1_generate_v051_fixtures.ps1 -OutputDirectory scripts/tests/fixtures/integ06_1/v0_5_1
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/archive/integ06_1/integ06_1_generate_v051_fixtures.ps1 -OutputDirectory scripts/tests/fixtures/integ06_1/v0_5_1
 ```
 
 The smoke fixture covers a genuine active run at the `house` archetype, before
@@ -75,7 +75,7 @@ still starts a fresh run and uses only the public gameplay/save calls recorded
 in its sidecar. The batch command is:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File tools/integ06_1_generate_v051_fixtures.ps1 -PlanPath scripts/tests/fixtures/integ06_1/v0_5_1/capture_plan.json -OutputDirectory scripts/tests/fixtures/integ06_1/v0_5_1
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/archive/integ06_1/integ06_1_generate_v051_fixtures.ps1 -PlanPath scripts/tests/fixtures/integ06_1/v0_5_1/capture_plan.json -OutputDirectory scripts/tests/fixtures/integ06_1/v0_5_1
 ```
 
 The first admitted batch contains six fixtures:

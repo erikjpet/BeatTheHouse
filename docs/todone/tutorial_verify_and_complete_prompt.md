@@ -38,7 +38,7 @@ every checklist item is proven with the stated evidence and all gates pass.
    beat) are REMOVED — no double-teaching during the tutorial. PROOF: data
    check + a run showing no ambient tips fire.
 3. **Pal** (the early-run guide who calls themselves "your pal") is defined in
-   `docs/plans/0.5_voice_bible.md` and voices the first half in-character.
+   `docs/archive/0.5/plans/0.5_voice_bible.md` and voices the first half in-character.
    PROOF: bible entry + capture.
 4. **The Host** (named, distinct from Linda) is defined in the voice bible,
    guides the Grand Casino half, AND greets the player on Grand Casino entry

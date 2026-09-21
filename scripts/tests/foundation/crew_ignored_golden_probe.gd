@@ -71,7 +71,7 @@ static func world_sequence_noop_failures(library: ContentLibrary) -> Array:
 		{"label": "public_instance_owner_lookup", "call": func() -> Variant: return run_state.world_sequence_owner_for_public_instance("delivery_handoff", "ignored_instance")},
 		{"label": "composed_projection", "call": func() -> Variant: return run_state.world_sequence_composed_projection()},
 		{"label": "execute", "call": func() -> Variant: return run_state.world_sequence_execute(token, {})},
-		{"label": "command", "call": func() -> Variant: return run_state.world_sequence_command(token, "ignored_command", "ignored_receipt")},
+		{"label": "command", "call": func() -> Variant: return run_state.world_sequence_command(FunctionOptions.world_sequence_command(token, "ignored_command", "ignored_receipt"))},
 		{"label": "enqueue_fact", "call": func() -> Variant: return run_state.world_sequence_enqueue_fact(token, {})},
 		{"label": "flush_facts", "call": func() -> Variant: return run_state.world_sequence_flush_facts(token, 0)},
 		{"label": "record_visit", "call": func() -> Variant: return run_state.world_sequence_record_visit(token, "ignored_visit")},

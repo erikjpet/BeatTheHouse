@@ -19,7 +19,7 @@ casino roguelike. The Tonight system shipped in `env06_1`; the launch
 cut of 42 scenarios shipped in `env06_2`/`env06_3` (both archived in
 `docs/todone/`). Binding design contract:
 `docs/plans/0.6_living_world_roadmap.md` — Pillar 1's scenario
-catalog. Voice: `docs/plans/0.5_voice_bible.md` +
+catalog. Voice: `docs/archive/0.5/plans/0.5_voice_bible.md` +
 `docs/plans/0.6_voice_bible_world_register.md`.
 
 ## Why this task exists

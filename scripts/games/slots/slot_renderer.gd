@@ -1,6 +1,8 @@
 class_name SlotRenderer
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 const CatalogScript := preload("res://scripts/games/slots/slot_catalog.gd")
 const DESIGN_SIZE := Vector2(960, 540)
 const PINBALL_AIM_MIN_DEGREES := -60
@@ -592,7 +594,12 @@ func _draw_reels(surface, state: Dictionary, definition: Dictionary, skin: Dicti
 		for point_index in range(maxi(0, points.size() - 1)):
 			surface.draw_line(points[point_index], points[point_index + 1], Color(light.r, light.g, light.b, 0.92), 4)
 			surface.draw_line(points[point_index], points[point_index + 1], Color(accent.r, accent.g, accent.b, 0.48), 8)
-	_draw_buffalo_main_board_overlay(surface, state, definition, rect, reel_count, row_count, gap, cell_w, cell_h, time_msec, accent, light, glass, _read_dict(signature.get("buffalo_main_board_payload", {})))
+	_draw_buffalo_main_board_overlay(FunctionOptions.BuffaloBoardOverlayOptions.from({
+		"surface": surface, "state": state, "definition": definition, "reel_rect": rect,
+		"reel_count": reel_count, "row_count": row_count, "gap": gap, "cell_w": cell_w,
+		"cell_h": cell_h, "time_msec": time_msec, "accent": accent, "light": light,
+		"glass": glass, "payload": _read_dict(signature.get("buffalo_main_board_payload", {})),
+	}))
 	if bool(signature.get("tease_overlay_visible", false)):
 		surface.draw_rect(rect.grow(15), Color(accent.r, accent.g, accent.b, 0.44), false, 4)
 
@@ -733,7 +740,21 @@ func _buffalo_main_board_manifest(surface_state: Dictionary, payload: Dictionary
 	}
 
 
-func _draw_buffalo_main_board_overlay(surface, state: Dictionary, definition: Dictionary, reel_rect: Rect2, reel_count: int, row_count: int, gap: float, cell_w: float, cell_h: float, time_msec: int, accent: Color, light: Color, glass: Color, payload: Dictionary = {}) -> void:
+func _draw_buffalo_main_board_overlay(options: FunctionOptions.BuffaloBoardOverlayOptions) -> void:
+	var surface = options.values.get("surface")
+	var state: Dictionary = options.values.get("state", {})
+	var definition: Dictionary = options.values.get("definition", {})
+	var reel_rect: Rect2 = options.values.get("reel_rect", Rect2())
+	var reel_count := int(options.values.get("reel_count", 0))
+	var row_count := int(options.values.get("row_count", 0))
+	var gap := float(options.values.get("gap", 0.0))
+	var cell_w := float(options.values.get("cell_w", 0.0))
+	var cell_h := float(options.values.get("cell_h", 0.0))
+	var time_msec := int(options.values.get("time_msec", 0))
+	var accent: Color = options.values.get("accent", Color.WHITE)
+	var light: Color = options.values.get("light", Color.WHITE)
+	var glass: Color = options.values.get("glass", Color.WHITE)
+	var payload: Dictionary = options.values.get("payload", {})
 	var active: Dictionary = _read_dict(state.get("slot_active_bonus", {}))
 	if str(active.get("family", state.get("slot_type_id", ""))) != "buffalo":
 		return
@@ -1225,7 +1246,7 @@ func _draw_pinball_playfield(surface, rect: Rect2, state: Dictionary, active: Di
 		positions = _pinball_multiball_fallback_positions(feature_msec)
 	var lit_state: Dictionary = _pinball_lit_state(active)
 	if live_feature_active and int(active.get("active_ball_count", 0)) > 0 and positions.is_empty():
-		var physics: Dictionary = _copy_dict(active.get("physics", {}))
+		var physics: Dictionary = JsonCoerceScript._copy_dict(active.get("physics", {}))
 		positions.append({"ball_index": 0, "position": Vector2(clampf(float(physics.get("ball_x", 0.5)), 0.0, 1.0), clampf(float(physics.get("ball_y", 0.5)), 0.0, 1.0))})
 	surface.draw_rect(play_rect, Color("#08101a"))
 	surface.draw_rect(play_rect, Color(light.r, light.g, light.b, 0.18), false, 2)
@@ -2603,7 +2624,7 @@ func _draw_celebration_overlay(surface, state: Dictionary, skin: Dictionary, sig
 	var particle_count := maxi(0, int(signature.get("particle_count", 0)))
 	var rect := _rect_from_dict(skin.get("reel_window", {})).grow(18)
 	var center := rect.position + rect.size * 0.5
-	var plan: Dictionary = _copy_dict(state.get("slot_animation_plan", {}))
+	var plan: Dictionary = JsonCoerceScript._copy_dict(state.get("slot_animation_plan", {}))
 	var visual_time := int(state.get("slot_visual_time_msec", 0))
 	var shake := _shake_offset(tier, visual_time, plan)
 	var tier_color := trim if tier == "jackpot" else light if tier == "mega" else accent
@@ -2791,18 +2812,6 @@ func _rect_intersection(a: Rect2, b: Rect2) -> Rect2:
 	if right <= left or bottom <= top:
 		return Rect2(Vector2(left, top), Vector2.ZERO)
 	return Rect2(Vector2(left, top), Vector2(right - left, bottom - top))
-
-
-func _copy_array(value: Variant) -> Array:
-	if typeof(value) != TYPE_ARRAY:
-		return []
-	return (value as Array).duplicate(true)
-
-
-func _copy_dict(value: Variant) -> Dictionary:
-	if typeof(value) != TYPE_DICTIONARY:
-		return {}
-	return (value as Dictionary).duplicate(true)
 
 
 func _read_array(value: Variant) -> Array:

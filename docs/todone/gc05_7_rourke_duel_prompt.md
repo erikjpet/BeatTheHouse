@@ -17,7 +17,7 @@ roguelike (Web/itch.io + Windows, 1280×720). Per-game modules under
 system); seeded RNG only; boss endgame contract in
 `docs/plans/grand_casino_endgame_design.md` (ids binding). This file is
 self-contained; the design contract is
-`docs/plans/0.5_grand_casino_rework_plan.md` section 7 (phase 4 +
+`docs/archive/0.5/plans/0.5_grand_casino_rework_plan.md` section 7 (phase 4 +
 outcomes) — read both first. Requires slices 1-6 landed; consumes
 slice 6's `grand_casino_duel_terms`. This is the LARGEST slice — a
 first-class gameplay element, owner-designated.

@@ -13,7 +13,7 @@ DONE — completed 2026-09-10 on implementation `3f31bf10`.
   input.
 - Corrected the underlying single-environment-plane, mutable interaction-source,
   delivery/heist composition and persistence seams exposed by the natural path.
-- Verification: `tools/fix06_29_punchline_natural_l3_route.gd` completed
+- Verification: `tools/archive/fix06_29/fix06_29_punchline_natural_l3_route.gd` completed
   warning-free with `FIX06_29_PUNCHLINE_NATURAL_L3 PASS favors=11`.
 - Supporting proofs: the world-sequence delivery proof and manual-count
   Blackjack settlement probe both passed warning-free.

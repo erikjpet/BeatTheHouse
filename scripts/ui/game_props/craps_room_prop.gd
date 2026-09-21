@@ -1,7 +1,7 @@
 class_name CrapsRoomProp
 extends RefCounted
 
-const Kit := preload("res://scripts/ui/game_props/game_prop_kit.gd")
+const KitScript := preload("res://scripts/ui/game_props/game_prop_kit.gd")
 const EMPTY_STATE: Dictionary = {}
 const C_FELT := Color("#147653")
 const C_FELT_DARK := Color("#0b3c2f")
@@ -18,18 +18,18 @@ static func draw(canvas: CanvasItem, rect: Rect2, object_data: Dictionary, accen
 	var visual: Dictionary = object_data.get("visual_state", EMPTY_STATE) if typeof(object_data.get("visual_state", EMPTY_STATE)) == TYPE_DICTIONARY else EMPTY_STATE
 	var variant: String = visual.get("variant", "casino")
 	var street := variant == "street_craps"
-	var phase_value := Kit.phase(object_data)
-	var pulse := Kit.pulse(flicker, phase_value, selected)
-	Kit.draw_base_shadow(canvas, safe, accent)
+	var phase_value := KitScript.phase(object_data)
+	var pulse := KitScript.pulse(flicker, phase_value, selected)
+	KitScript.draw_base_shadow(canvas, safe, accent)
 	if safe.size.x < 64.0 or safe.size.y < 38.0:
 		_draw_small(canvas, safe, street)
-		Kit.draw_state(canvas, safe, selected, disabled)
+		KitScript.draw_state(canvas, safe, selected, disabled)
 		return
 	if street:
 		_draw_street(canvas, safe, visual, pulse)
 	else:
 		_draw_casino(canvas, safe, visual, pulse, bool(object_data.get("hide_prop_text", false)))
-	Kit.draw_state(canvas, safe, selected, disabled)
+	KitScript.draw_state(canvas, safe, selected, disabled)
 
 
 static func draw_low_detail(canvas: CanvasItem, rect: Rect2, object_data: Dictionary, accent: Color, disabled: bool, flicker: float) -> void:
@@ -37,10 +37,10 @@ static func draw_low_detail(canvas: CanvasItem, rect: Rect2, object_data: Dictio
 	var visual: Dictionary = object_data.get("visual_state", EMPTY_STATE) if typeof(object_data.get("visual_state", EMPTY_STATE)) == TYPE_DICTIONARY else EMPTY_STATE
 	var variant: String = visual.get("variant", "casino")
 	var street := variant == "street_craps"
-	Kit.draw_base_shadow(canvas, safe, accent)
+	KitScript.draw_base_shadow(canvas, safe, accent)
 	_draw_small(canvas, safe, street)
 	if disabled:
-		Kit.draw_state(canvas, safe, false, true)
+		KitScript.draw_state(canvas, safe, false, true)
 
 
 static func _draw_casino(canvas: CanvasItem, safe: Rect2, visual: Dictionary, pulse: float, hide_text: bool) -> void:
@@ -67,8 +67,8 @@ static func _draw_casino(canvas: CanvasItem, safe: Rect2, visual: Dictionary, pu
 	var point_x := grid.position.x + grid.size.x * (0.15 + float(int(visual.get("point", 0)) % 6) * 0.14)
 	canvas.draw_circle(Vector2(point_x, grid.position.y + 2.0), 3.2, Color("#f2efe4") if int(visual.get("point", 0)) == 0 else C_RED)
 	var die_size := Vector2(maxf(7.0, felt.size.y * 0.20), maxf(7.0, felt.size.y * 0.20))
-	Kit.draw_die(canvas, Rect2(felt.get_center() + Vector2(-die_size.x * 0.72, -die_size.y * 0.15), die_size), int(visual.get("last_die_a", 3)))
-	Kit.draw_die(canvas, Rect2(felt.get_center() + Vector2(die_size.x * 0.05, die_size.y * 0.10), die_size), int(visual.get("last_die_b", 4)))
+	KitScript.draw_die(canvas, Rect2(felt.get_center() + Vector2(-die_size.x * 0.72, -die_size.y * 0.15), die_size), int(visual.get("last_die_a", 3)))
+	KitScript.draw_die(canvas, Rect2(felt.get_center() + Vector2(die_size.x * 0.05, die_size.y * 0.10), die_size), int(visual.get("last_die_b", 4)))
 	canvas.draw_line(table.position + Vector2(table.size.x * 0.73, -safe.size.y * 0.08), table.position + Vector2(table.size.x * 0.48, table.size.y * 0.54), C_CHALK, 2.0)
 	canvas.draw_circle(table.position + Vector2(table.size.x * 0.73, -safe.size.y * 0.08), 2.0, C_GOLD)
 	if not hide_text:
@@ -91,8 +91,8 @@ static func _draw_street(canvas: CanvasItem, safe: Rect2, visual: Dictionary, pu
 	canvas.draw_line(ring_center + Vector2(-pavement.size.x * 0.18, 0.0), ring_center + Vector2(pavement.size.x * 0.18, 0.0), C_CHALK, 1.0)
 	canvas.draw_line(ring_center + Vector2(0.0, -pavement.size.y * 0.25), ring_center + Vector2(0.0, pavement.size.y * 0.25), C_CHALK, 1.0)
 	var die_size := Vector2(maxf(8.0, pavement.size.y * 0.21), maxf(8.0, pavement.size.y * 0.21))
-	Kit.draw_die(canvas, Rect2(ring_center + Vector2(-die_size.x * 0.90, -die_size.y * 0.38), die_size), int(visual.get("last_die_a", 2)), Color("#3c332a"), Color("#d8c9ab"))
-	Kit.draw_die(canvas, Rect2(ring_center + Vector2(die_size.x * 0.05, die_size.y * 0.12), die_size), int(visual.get("last_die_b", 4)), Color("#3c332a"), Color("#d8c9ab"))
+	KitScript.draw_die(canvas, Rect2(ring_center + Vector2(-die_size.x * 0.90, -die_size.y * 0.38), die_size), int(visual.get("last_die_a", 2)), Color("#3c332a"), Color("#d8c9ab"))
+	KitScript.draw_die(canvas, Rect2(ring_center + Vector2(die_size.x * 0.05, die_size.y * 0.12), die_size), int(visual.get("last_die_b", 4)), Color("#3c332a"), Color("#d8c9ab"))
 	for index in range(3):
 		var cash := Rect2(pavement.position + Vector2(pavement.size.x * (0.10 + float(index) * 0.34), pavement.size.y * (0.73 + float(index % 2) * 0.08)), Vector2(pavement.size.x * 0.17, pavement.size.y * 0.12))
 		canvas.draw_rect(cash, Color("#719269"))
@@ -106,8 +106,8 @@ static func _draw_small(canvas: CanvasItem, safe: Rect2, street: bool) -> void:
 		var pavement := Rect2(safe.position + Vector2(safe.size.x * 0.08, safe.size.y * 0.18), Vector2(safe.size.x * 0.84, safe.size.y * 0.62))
 		canvas.draw_rect(pavement, C_PAVEMENT)
 		canvas.draw_arc(pavement.get_center(), pavement.size.y * 0.34, 0.0, TAU, 24, C_CHALK, 2.0)
-		Kit.draw_die(canvas, Rect2(pavement.get_center() - Vector2(9.0, 5.0), Vector2(8.0, 8.0)), 3, Color("#3c332a"), Color("#d8c9ab"))
-		Kit.draw_die(canvas, Rect2(pavement.get_center() + Vector2(2.0, 1.0), Vector2(8.0, 8.0)), 4, Color("#3c332a"), Color("#d8c9ab"))
+		KitScript.draw_die(canvas, Rect2(pavement.get_center() - Vector2(9.0, 5.0), Vector2(8.0, 8.0)), 3, Color("#3c332a"), Color("#d8c9ab"))
+		KitScript.draw_die(canvas, Rect2(pavement.get_center() + Vector2(2.0, 1.0), Vector2(8.0, 8.0)), 4, Color("#3c332a"), Color("#d8c9ab"))
 		canvas.draw_rect(Rect2(pavement.position + Vector2(4.0, pavement.size.y * 0.72), Vector2(11.0, 5.0)), Color("#719269"))
 	else:
 		var table := Rect2(safe.position + Vector2(safe.size.x * 0.06, safe.size.y * 0.24), Vector2(safe.size.x * 0.88, safe.size.y * 0.52))
@@ -118,5 +118,5 @@ static func _draw_small(canvas: CanvasItem, safe: Rect2, street: bool) -> void:
 		canvas.draw_rect(felt, C_FELT)
 		for index in range(5):
 			canvas.draw_line(felt.position + Vector2(felt.size.x * (0.18 + float(index) * 0.16), 2.0), felt.position + Vector2(felt.size.x * (0.18 + float(index) * 0.16), felt.size.y - 2.0), C_GOLD, 1.0)
-		Kit.draw_die(canvas, Rect2(felt.get_center() - Vector2(8.0, 5.0), Vector2(8.0, 8.0)), 3)
-		Kit.draw_die(canvas, Rect2(felt.get_center() + Vector2(2.0, 1.0), Vector2(8.0, 8.0)), 4)
+		KitScript.draw_die(canvas, Rect2(felt.get_center() - Vector2(8.0, 5.0), Vector2(8.0, 8.0)), 3)
+		KitScript.draw_die(canvas, Rect2(felt.get_center() + Vector2(2.0, 1.0), Vector2(8.0, 8.0)), 4)

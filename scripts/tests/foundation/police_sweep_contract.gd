@@ -1,5 +1,7 @@
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 const PoliceSweepModelScript := preload("res://scripts/core/police_sweep_model.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 const TownStateScript := preload("res://scripts/core/town_state.gd")
@@ -117,8 +119,8 @@ static func _check_pressure_and_wake(failures: Array) -> void:
 		return
 	var hidden_public := town.public_snapshot()
 	var hidden_public_text := JSON.stringify(hidden_public)
-	if _copy_array(hidden_public.get("active_happenings", [])).has("police_sweep") \
-		or _copy_array(hidden_public.get("active_town_flags", [])).has("police_sweep") \
+	if JsonCoerceScript._copy_array(hidden_public.get("active_happenings", [])).has("police_sweep") \
+		or JsonCoerceScript._copy_array(hidden_public.get("active_town_flags", [])).has("police_sweep") \
 		or hidden_public_text.contains(str(status.get("current_node_id", ""))) \
 		or (not str(status.get("heading_node_id", "")).is_empty() and hidden_public_text.contains(str(status.get("heading_node_id", "")))):
 		failures.append("Active Police Sweep leaked its internal ID, flag, current node, or heading through the public town snapshot.")
@@ -419,7 +421,3 @@ static func _fixture_node_tier(node_id: String, map_data: Dictionary) -> int:
 
 static func _dictionary(value: Variant) -> Dictionary:
 	return value as Dictionary if typeof(value) == TYPE_DICTIONARY else {}
-
-
-static func _copy_array(value: Variant) -> Array:
-	return (value as Array).duplicate(true) if typeof(value) == TYPE_ARRAY else []

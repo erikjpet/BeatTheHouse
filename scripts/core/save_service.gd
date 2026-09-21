@@ -8,6 +8,7 @@ const PersistencePathsScript := preload("res://scripts/core/persistence_paths.gd
 const SAVE_SCHEMA := "beat_the_house.foundation_run"
 const SAVE_VERSION := 2
 const RunSaveCodecScript := preload("res://scripts/core/run_save_codec.gd")
+const DurableStoreScript := preload("res://scripts/core/durable_store.gd")
 const LOAD_OUTCOME_PRIMARY := "loaded-primary"
 const LOAD_OUTCOME_BACKUP := "loaded-backup"
 const LOAD_OUTCOME_NONE := "nothing-loadable"
@@ -55,52 +56,15 @@ func save_run(run_state: RunState, slot_id: String = "autosave") -> Error:
 		return int(payload_result.get("error", FAILED))
 	var payload: Dictionary = payload_result.get("payload", {})
 	var path := run_save_path(clean_slot)
-	var absolute_path := ProjectSettings.globalize_path(path)
-	var directory_error := DirAccess.make_dir_recursive_absolute(absolute_path.get_base_dir())
-	if directory_error != OK:
-		return directory_error
-	var temp_path := "%s.tmp" % absolute_path
-	var file := FileAccess.open(temp_path, FileAccess.WRITE)
-	if file == null:
-		return FileAccess.get_open_error()
-	file.store_string(JSON.stringify(payload))
-	var write_error := file.get_error()
-	file.close()
-	if write_error != OK:
-		_remove_absolute_if_exists(temp_path)
-		return write_error
-	if not _worker_payload_loadable(temp_path):
-		_remove_absolute_if_exists(temp_path)
-		last_save_outcome = {"ok": false, "error": ERR_FILE_CORRUPT, "error_code": "temporary_generation_invalid", "slot_id": clean_slot}
-		return ERR_FILE_CORRUPT
-	var primary_loadable := false
-	if FileAccess.file_exists(path):
-		if _primary_fingerprint_is_trusted(clean_slot, path):
-			primary_loadable = true
-		else:
-			var primary_read := _read_run_state_from_path(path)
-			primary_loadable = bool(primary_read.get("loadable", false))
-			if primary_loadable:
-				_remember_primary_fingerprint(clean_slot, path)
-	if primary_loadable:
-		var backup_error := _rotate_primary_to_backup(path, backup_save_path(clean_slot))
-		if backup_error != OK:
-			_remove_absolute_if_exists(temp_path)
-			return backup_error
-	if FileAccess.file_exists(absolute_path):
-		var remove_error := DirAccess.remove_absolute(absolute_path)
-		if remove_error != OK:
-			_remove_absolute_if_exists(temp_path)
-			return remove_error
-	var install_error := DirAccess.rename_absolute(temp_path, absolute_path)
-	if install_error == OK and _worker_payload_loadable(absolute_path):
+	var result := DurableStoreScript.write_json(path, payload, Callable(self, "_payload_dictionary_loadable"))
+	var install_error := int(result.get("error", FAILED))
+	if bool(result.get("ok", false)):
 		_remember_primary_fingerprint(clean_slot, path)
 		last_save_outcome = {"ok": true, "error": OK, "error_code": "", "slot_id": clean_slot}
 	else:
 		trusted_primary_fingerprints.erase(clean_slot)
-		if install_error == OK:
-			install_error = ERR_FILE_CORRUPT
-		last_save_outcome = {"ok": false, "error": install_error, "error_code": "installed_generation_invalid", "slot_id": clean_slot}
+		last_save_outcome = result.duplicate(true)
+		last_save_outcome["slot_id"] = clean_slot
 	return install_error
 
 
@@ -155,6 +119,7 @@ func _finish_async_save_result() -> Dictionary:
 		_remember_primary_fingerprint(async_slot_id, run_save_path(async_slot_id))
 		result["ok"] = true
 	else:
+		trusted_primary_fingerprints.erase(async_slot_id)
 		if int(result.get("error", FAILED)) == OK:
 			result["error"] = ERR_FILE_CORRUPT
 			result["error_code"] = "installed_generation_invalid"
@@ -192,41 +157,9 @@ func _async_save_worker(runtime_snapshot: Dictionary, slot_id: String, path: Str
 	io_mutex.unlock()
 
 
-static func _write_payload_atomic(payload: Dictionary, path: String, backup_path: String, primary_trusted: bool = false) -> Error:
-	var absolute_path := ProjectSettings.globalize_path(path)
-	var backup_absolute := ProjectSettings.globalize_path(backup_path)
-	var directory_error := DirAccess.make_dir_recursive_absolute(absolute_path.get_base_dir())
-	if directory_error != OK:
-		return directory_error
-	var temp_path := "%s.tmp" % absolute_path
-	var file := FileAccess.open(temp_path, FileAccess.WRITE)
-	if file == null:
-		return FileAccess.get_open_error()
-	file.store_string(JSON.stringify(payload))
-	var write_error := file.get_error()
-	file.close()
-	if write_error != OK:
-		_remove_worker_file(temp_path)
-		return write_error
-	if not _worker_payload_loadable(temp_path):
-		_remove_worker_file(temp_path)
-		return ERR_FILE_CORRUPT
-	if FileAccess.file_exists(absolute_path) and (primary_trusted or _worker_payload_loadable(absolute_path)):
-		if FileAccess.file_exists(backup_absolute):
-			var remove_backup_error := DirAccess.remove_absolute(backup_absolute)
-			if remove_backup_error != OK:
-				_remove_worker_file(temp_path)
-				return remove_backup_error
-		var backup_error := DirAccess.rename_absolute(absolute_path, backup_absolute)
-		if backup_error != OK:
-			_remove_worker_file(temp_path)
-			return backup_error
-	elif FileAccess.file_exists(absolute_path):
-		var remove_primary_error := DirAccess.remove_absolute(absolute_path)
-		if remove_primary_error != OK:
-			_remove_worker_file(temp_path)
-			return remove_primary_error
-	return DirAccess.rename_absolute(temp_path, absolute_path)
+func _write_payload_atomic(payload: Dictionary, path: String, _backup_path: String, _primary_trusted: bool = false) -> Error:
+	var result := DurableStoreScript.write_json(path, payload, Callable(self, "_payload_dictionary_loadable"))
+	return int(result.get("error", FAILED))
 
 
 static func _worker_payload_loadable(absolute_path: String) -> bool:
@@ -235,6 +168,10 @@ static func _worker_payload_loadable(absolute_path: String) -> bool:
 	if json.parse(text) != OK or typeof(json.data) != TYPE_DICTIONARY:
 		return false
 	var payload: Dictionary = json.data
+	return _payload_dictionary_loadable(payload)
+
+
+static func _payload_dictionary_loadable(payload: Dictionary) -> bool:
 	if payload.get("schema", "") == SAVE_SCHEMA:
 		var run_data: Variant = payload.get("run_state", {})
 		if typeof(run_data) != TYPE_DICTIONARY or not RunSaveCodecScript.storage_envelope_valid(run_data as Dictionary):
@@ -245,11 +182,6 @@ static func _worker_payload_loadable(absolute_path: String) -> bool:
 		var unpacked := RunSaveCodecScript.unpack_from_storage(run_data as Dictionary)
 		return not unpacked.is_empty() and unpacked.has("seed_text") and unpacked.has("rng_state") and unpacked.has("current_environment")
 	return payload.has("seed_text") and payload.has("rng_state") and payload.has("current_environment")
-
-
-static func _remove_worker_file(absolute_path: String) -> void:
-	if FileAccess.file_exists(absolute_path):
-		DirAccess.remove_absolute(absolute_path)
 
 
 # Loads run state from a save slot.

@@ -10,6 +10,7 @@ const CrewRecruitmentModelScript := preload("res://scripts/core/crew_recruitment
 const TutorialFlowScript := preload("res://scripts/core/tutorial_flow.gd")
 const WebAudioBridgeScript := preload("res://scripts/ui/web_audio_bridge.gd")
 const BuildIdentityScript := preload("res://scripts/core/build_identity.gd")
+const DurableStoreScript := preload("res://scripts/core/durable_store.gd")
 
 const PERF_PLAN_SCRIPT_PATHS := {
 	"SlotStateScript": "res://scripts/games/slots/slot_machine_state.gd",
@@ -330,6 +331,10 @@ func _abort_perf_plan_setup() -> void:
 
 func travel_stage_timing_enabled(target_id: String) -> bool:
 	return target_id == "corner_store" and plan_id in ["l02", "corner_store"]
+
+
+func is_live() -> bool:
+	return true
 
 
 func begin_foundation_frame() -> void:
@@ -3474,12 +3479,9 @@ func _liveness_counter_delta(before: Dictionary, after: Dictionary) -> Dictionar
 
 
 func _write_report_file(report: Dictionary) -> void:
-	var file := FileAccess.open(report_path, FileAccess.WRITE)
-	if file == null:
-		push_warning("Could not write perf telemetry report to %s." % report_path)
-		return
-	file.store_string(JSON.stringify(report, "\t"))
-	file.close()
+	var result := DurableStoreScript.write_json(report_path, report)
+	if not bool(result.get("ok", false)):
+		push_warning("Could not write perf telemetry report to %s (error %d)." % [report_path, int(result.get("error", FAILED))])
 
 
 func _emit_console(prefix: String, payload: Dictionary) -> void:

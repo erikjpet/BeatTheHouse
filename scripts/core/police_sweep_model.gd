@@ -1,6 +1,8 @@
 class_name PoliceSweepModel
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 const SCHEMA_VERSION := 2
 const LEGACY_SCHEMA_VERSION := 1
 const ENCOUNTER_TOMBSTONE_LIMIT := 16
@@ -223,7 +225,7 @@ func is_adjacent(node_id: String) -> bool:
 	var current := status()
 	if not bool(current.get("active", false)):
 		return false
-	return _string_array(_neighbors_by_node.get(str(current.get("current_node_id", "")), [])).has(node_id.strip_edges())
+	return JsonCoerceScript._string_array(_neighbors_by_node.get(str(current.get("current_node_id", "")), [])).has(node_id.strip_edges())
 
 
 func adjacent_sighting_due(player_node_id: String) -> bool:
@@ -234,7 +236,7 @@ func adjacent_sighting_due(player_node_id: String) -> bool:
 	if current_segment < 0 or current_segment == last_adjacent_sighting_segment:
 		return false
 	var chance := clampi(int(config.get("adjacent_sighting_chance_percent", 35)), 0, 100)
-	var roll := (_stable_hash("%d:%s:%d:adjacent" % [seed_value, player_node_id, current_segment]) % 100) + 1
+	var roll := (JsonCoerceScript._stable_hash("%d:%s:%d:adjacent" % [seed_value, player_node_id, current_segment]) % 100) + 1
 	if roll > chance:
 		return false
 	last_adjacent_sighting_segment = current_segment
@@ -256,7 +258,7 @@ func claim_encounter(node_id: String, host_capability: Variant = null) -> Dictio
 		"segment_index": current_segment,
 		"node_id": node_id.strip_edges(),
 		"action_index": action_index,
-		"encounter_seed": _stable_hash("%d:%d:sweep_encounter" % [seed_value, current_segment]),
+		"encounter_seed": JsonCoerceScript._stable_hash("%d:%d:sweep_encounter" % [seed_value, current_segment]),
 		"sweep_departure_action": int(current.get("next_move_action", action_index + 1)),
 	}
 
@@ -279,7 +281,7 @@ func encounter_proposal(claim: Dictionary, cargo_value: Variant, exit_node_ids: 
 	if not _encounter_claim_matches_current(claim):
 		return {}
 	var cargo := _cargo_public_context(cargo_value)
-	var exits := _string_array(exit_node_ids)
+	var exits := JsonCoerceScript._string_array(exit_node_ids)
 	exits.sort()
 	var unique_exits: Array = []
 	for exit_id in exits:
@@ -309,7 +311,7 @@ static func normalize_encounter_proposal(value: Variant) -> Dictionary:
 	if int(proposal.get("schema_version", 0)) != ENCOUNTER_PROPOSAL_SCHEMA_VERSION or bool(proposal.get("authoritative", true)) or bool(proposal.get("can_mutate", true)) or str(proposal.get("authority_gap", "")) != ENCOUNTER_AUTHORITY_GAP: return {}
 	if str(proposal.get("phase", "")) != "arrival_proposal" or str(proposal.get("officer_presence", "")) != "street_control": return {}
 	if not _cargo_context_valid(proposal.get("cargo_context")) or not _intel_projection_valid(proposal.get("intel_projection")) or not _positions_valid(proposal.get("positions")) or not _rungs_valid(proposal.get("costed_rungs")): return {}
-	var exits := _string_array(proposal.get("exit_node_ids", []))
+	var exits := JsonCoerceScript._string_array(proposal.get("exit_node_ids", []))
 	var sorted := exits.duplicate(); sorted.sort()
 	if exits != sorted or exits.size() != _unique_strings(exits).size(): return {}
 	var normalized := {
@@ -343,7 +345,7 @@ static func encounter_action_proposal(state_value: Variant, action: String) -> D
 		"authority_gap": ENCOUNTER_AUTHORITY_GAP,
 	}
 	if clean_action == "use_intel":
-		var exits := _string_array(state.get("exit_node_ids", []))
+		var exits := JsonCoerceScript._string_array(state.get("exit_node_ids", []))
 		var heading := str(intel.get("heading_node_id", ""))
 		for exit_id in exits:
 			if exit_id != heading:
@@ -397,7 +399,7 @@ func record_encounter_resolution(host_capability: Variant, claim: Dictionary, ou
 		for rung_value in rungs:
 			var rung := _dictionary(rung_value)
 			if str(rung.get("outcome", "")) != outcome: continue
-			for option_value in _dictionary_array(rung.get("cost_options", [])):
+			for option_value in JsonCoerceScript._dictionary_array(rung.get("cost_options", [])):
 				var option := _dictionary(option_value)
 				var amount_range: Array = (option.get("amount_range", []) as Array).duplicate() if typeof(option.get("amount_range", [])) == TYPE_ARRAY else []
 				if str(option.get("cost_kind", "")) == "cash" and amount_range.size() == 2 and cost_amount <= int(amount_range[1]): cost_valid = true
@@ -462,7 +464,7 @@ func request_reroute_toward(candidate_ids: Array, request_token: String) -> Dict
 		reroute_history.append(request)
 		return request.duplicate(true)
 	var token := request_token.strip_edges()
-	var target := str(resolved_candidates[_stable_hash("%d:%s:numbers_reroute" % [seed_value, token]) % resolved_candidates.size()])
+	var target := str(resolved_candidates[JsonCoerceScript._stable_hash("%d:%s:numbers_reroute" % [seed_value, token]) % resolved_candidates.size()])
 	var path := _shortest_path(str(current.get("current_node_id", "")), target)
 	request["target_node_id"] = target
 	request["path"] = path.duplicate()
@@ -534,7 +536,7 @@ func restore(source: Dictionary, p_seed_value: int, source_config: Dictionary = 
 	disabled = bool(source.get("disabled", false))
 	start_action = maxi(0, int(source.get("start_action", 0)))
 	end_action = maxi(start_action, int(source.get("end_action", start_action)))
-	segments = _dictionary_array(source.get("segments", []))
+	segments = JsonCoerceScript._dictionary_array(source.get("segments", []))
 	segment_index = int(source.get("segment_index", -1))
 	swept_windows_by_node = _dictionary(source.get("swept_windows_by_node", {})).duplicate(true)
 	personal_marker = _dictionary(source.get("personal_marker", {})).duplicate(true)
@@ -542,9 +544,9 @@ func restore(source: Dictionary, p_seed_value: int, source_config: Dictionary = 
 	last_encounter_node_id = str(source.get("last_encounter_node_id", ""))
 	last_adjacent_sighting_segment = int(source.get("last_adjacent_sighting_segment", -1))
 	config = _dictionary(source.get("config", source_config)).duplicate(true)
-	reroute_history = _dictionary_array(source.get("reroute_history", []))
+	reroute_history = JsonCoerceScript._dictionary_array(source.get("reroute_history", []))
 	encounter_tombstones = []
-	for tombstone_value in _dictionary_array(source.get("encounter_tombstones", [])):
+	for tombstone_value in JsonCoerceScript._dictionary_array(source.get("encounter_tombstones", [])):
 		var tombstone := _normalize_encounter_tombstone(tombstone_value)
 		if tombstone.is_empty() or encounter_tombstones.size() >= ENCOUNTER_TOMBSTONE_LIMIT:
 			disable(p_seed_value, source_config)
@@ -607,7 +609,7 @@ func _generate_segments() -> void:
 
 
 func _next_node(current_node: String, preferred_tier: int, eligible: Array, rng: RngStream) -> String:
-	var neighbors := _string_array(_neighbors_by_node.get(current_node, []))
+	var neighbors := JsonCoerceScript._string_array(_neighbors_by_node.get(current_node, []))
 	var allowed: Array = []
 	var preferred: Array = []
 	for node_id in neighbors:
@@ -641,7 +643,7 @@ func _sync_segment_index() -> void:
 func _index_world(map_data: Dictionary) -> void:
 	_node_metadata = {}
 	_neighbors_by_node = {}
-	for node_value in _dictionary_array(map_data.get("nodes", [])):
+	for node_value in JsonCoerceScript._dictionary_array(map_data.get("nodes", [])):
 		var node_id := str(node_value.get("id", node_value.get("archetype_id", ""))).strip_edges()
 		if node_id.is_empty():
 			continue
@@ -652,13 +654,13 @@ func _index_world(map_data: Dictionary) -> void:
 			"tier": maxi(1, int(node_value.get("tier", 1))),
 		}
 		_neighbors_by_node[node_id] = []
-	for edge_value in _dictionary_array(map_data.get("edges", [])):
+	for edge_value in JsonCoerceScript._dictionary_array(map_data.get("edges", [])):
 		var a := str(edge_value.get("a", "")).strip_edges()
 		var b := str(edge_value.get("b", "")).strip_edges()
 		if not _node_metadata.has(a) or not _node_metadata.has(b) or a == b:
 			continue
-		var a_neighbors := _string_array(_neighbors_by_node.get(a, []))
-		var b_neighbors := _string_array(_neighbors_by_node.get(b, []))
+		var a_neighbors := JsonCoerceScript._string_array(_neighbors_by_node.get(a, []))
+		var b_neighbors := JsonCoerceScript._string_array(_neighbors_by_node.get(b, []))
 		if not a_neighbors.has(b):
 			a_neighbors.append(b)
 		if not b_neighbors.has(a):
@@ -699,7 +701,7 @@ func _shortest_path(start_node: String, target_node: String) -> Array:
 	var previous := {start_node: ""}
 	while not queue.is_empty():
 		var node_id := str(queue.pop_front())
-		var neighbors := _string_array(_neighbors_by_node.get(node_id, []))
+		var neighbors := JsonCoerceScript._string_array(_neighbors_by_node.get(node_id, []))
 		neighbors.sort()
 		for neighbor_value in neighbors:
 			var neighbor := str(neighbor_value)
@@ -725,7 +727,7 @@ func _encounter_claim_matches_current(claim: Dictionary) -> bool:
 	return not current.is_empty() and int(claim.get("segment_index", -1)) == last_encounter_segment \
 		and str(claim.get("node_id", "")) == last_encounter_node_id and int(claim.get("segment_index", -1)) == int(current.get("segment_index", -2)) \
 		and str(claim.get("node_id", "")) == str(current.get("current_node_id", "")) and int(claim.get("action_index", -1)) == action_index \
-		and int(claim.get("encounter_seed", 0)) == _stable_hash("%d:%d:sweep_encounter" % [seed_value, int(claim.get("segment_index", -1))]) \
+		and int(claim.get("encounter_seed", 0)) == JsonCoerceScript._stable_hash("%d:%d:sweep_encounter" % [seed_value, int(claim.get("segment_index", -1))]) \
 		and int(claim.get("sweep_departure_action", -1)) == int(current.get("next_move_action", -2))
 
 
@@ -863,38 +865,9 @@ static func _dictionary(value: Variant) -> Dictionary:
 	return value as Dictionary if typeof(value) == TYPE_DICTIONARY else {}
 
 
-static func _dictionary_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry_value in value as Array:
-		if typeof(entry_value) == TYPE_DICTIONARY:
-			result.append((entry_value as Dictionary).duplicate(true))
-	return result
-
-
-static func _string_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry_value in value as Array:
-		var entry := str(entry_value).strip_edges()
-		if not entry.is_empty():
-			result.append(entry)
-	return result
-
-
 static func _int_range(value: Variant, fallback_min: int, fallback_max: int) -> Array:
 	if typeof(value) == TYPE_ARRAY and (value as Array).size() >= 2:
 		var first := int((value as Array)[0])
 		var second := int((value as Array)[1])
 		return [mini(first, second), maxi(first, second)]
 	return [mini(fallback_min, fallback_max), maxi(fallback_min, fallback_max)]
-
-
-static func _stable_hash(text: String) -> int:
-	var hash_value := 2166136261
-	for index in range(text.length()):
-		hash_value = hash_value ^ text.unicode_at(index)
-		hash_value = (hash_value * 16777619) & 0x7fffffff
-	return maxi(1, hash_value)

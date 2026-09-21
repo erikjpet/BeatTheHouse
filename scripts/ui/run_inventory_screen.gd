@@ -1,6 +1,8 @@
 class_name RunInventoryScreen
 extends Control
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 signal close_requested
 signal item_selected(item_id: String, source: String)
 signal set_active_requested(item_id: String)
@@ -317,7 +319,7 @@ func _render_selected_detail() -> void:
 func _update_inventory_header(items: Array) -> void:
 	if _inventory_header_label == null or _inventory_hint_label == null:
 		return
-	var containers := _copy_array(_model.get("containers", []))
+	var containers := JsonCoerceScript._copy_array(_model.get("containers", []))
 	var occupied := items.size()
 	var capacity := 0
 	for container_value in containers:
@@ -489,7 +491,7 @@ func _render_ticket_pile_summary(item: Dictionary) -> void:
 	FoundationWidgets.add_detail_row(_detail_box, "Held", "%d ticket%s" % [ticket_count, "" if ticket_count == 1 else "s"])
 	FoundationWidgets.add_detail_row(_detail_box, "Unplayed", "%d still waiting at their original machine state" % unplayed_count)
 	FoundationWidgets.add_detail_row(_detail_box, "Revealed winners", "%d worth $%d face value" % [winner_count, maxi(0, int(item.get("ticket_face_value", 0)))])
-	var origins := _copy_array(item.get("ticket_origin_names", []))
+	var origins := JsonCoerceScript._copy_array(item.get("ticket_origin_names", []))
 	var origin_text := "Unknown purchase location"
 	if not origins.is_empty():
 		var labels: Array = []
@@ -763,7 +765,7 @@ func _destination_button_label(prefix: String, destination: Dictionary) -> Strin
 
 
 func _add_storage_destination_buttons(item: Dictionary, from_container_id: String = "") -> void:
-	var destinations := _copy_array(item.get("storage_destinations", []))
+	var destinations := JsonCoerceScript._copy_array(item.get("storage_destinations", []))
 	if destinations.is_empty():
 		if from_container_id.is_empty():
 			var fallback_container_id := str(_model.get("container_id", ""))
@@ -840,12 +842,6 @@ func _item_array(value: Variant) -> Array:
 		if typeof(item_value) == TYPE_DICTIONARY:
 			result.append((item_value as Dictionary).duplicate(true))
 	return result
-
-
-func _copy_array(value: Variant) -> Array:
-	if typeof(value) != TYPE_ARRAY:
-		return []
-	return (value as Array).duplicate(true)
 
 
 func _mode() -> String:

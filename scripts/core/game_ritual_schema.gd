@@ -1,6 +1,8 @@
 class_name GameRitualSchema
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 # Closed, data-only validator for the accepted game_ritual/1 contract. The
 # validator knows vocabulary shapes only; it never selects a game or rules path.
 
@@ -124,7 +126,7 @@ static func _validate_phases(value: Variant, actions: Dictionary, errors: Array[
 				errors.append("%s.id is invalid" % transition_path)
 			_validate_condition(transition.get("condition", {}), actions, "%s.condition" % transition_path, errors)
 		var accepted_transitions := {}
-		for transition in _dictionary_array(phase.get("transitions", [])):
+		for transition in JsonCoerceScript._dictionary_array(phase.get("transitions", [])):
 			var condition: Dictionary = transition.get("condition", {})
 			if str(condition.get("kind", "")) == "accepted_action":
 				var transition_action := str(condition.get("action_id", ""))
@@ -142,7 +144,7 @@ static func _validate_phase_reachability(initial_phase: String, phases: Dictiona
 	while not pending.is_empty():
 		var phase_id := str(pending.pop_front())
 		var phase: Dictionary = phases[phase_id]
-		for transition in _dictionary_array(phase.get("transitions", [])):
+		for transition in JsonCoerceScript._dictionary_array(phase.get("transitions", [])):
 			var next_phase := str(transition.get("next_phase", ""))
 			if not phases.has(next_phase):
 				errors.append("phase %s transitions to unknown phase %s" % [phase_id, next_phase])
@@ -398,14 +400,14 @@ static func _validate_targets(value: Variant, errors: Array[String]) -> Dictiona
 
 static func _validate_operations_in_definition(definition: Dictionary, actors: Dictionary, objects: Dictionary, errors: Array[String]) -> void:
 	var operations: Array = []
-	for phase in _dictionary_array(definition.get("ritual_phases", [])):
-		operations.append_array(_dictionary_array(phase.get("entry_operations", [])))
-		for transition in _dictionary_array(phase.get("transitions", [])):
-			operations.append_array(_dictionary_array(transition.get("operations", [])))
+	for phase in JsonCoerceScript._dictionary_array(definition.get("ritual_phases", [])):
+		operations.append_array(JsonCoerceScript._dictionary_array(phase.get("entry_operations", [])))
+		for transition in JsonCoerceScript._dictionary_array(phase.get("transitions", [])):
+			operations.append_array(JsonCoerceScript._dictionary_array(transition.get("operations", [])))
 	var energy: Dictionary = definition.get("energy", {}) if typeof(definition.get("energy", {})) == TYPE_DICTIONARY else {}
-	for tier in _dictionary_array(energy.get("tiers", [])):
+	for tier in JsonCoerceScript._dictionary_array(energy.get("tiers", [])):
 		for key in ["actor_operations", "object_operations", "interaction_operations"]:
-			operations.append_array(_dictionary_array(tier.get(key, [])))
+			operations.append_array(JsonCoerceScript._dictionary_array(tier.get(key, [])))
 	var ids := {}
 	for index in range(operations.size()):
 		var operation: Dictionary = operations[index]
@@ -538,7 +540,7 @@ static func _records(value: Variant, path: String, errors: Array[String]) -> Arr
 		return []
 	if (value as Array).size() > MAX_RECORDS:
 		errors.append("%s exceeds the bounded record limit" % path)
-	return _dictionary_array(value)
+	return JsonCoerceScript._dictionary_array(value)
 
 
 static func _strings(value: Variant, path: String, errors: Array[String]) -> Array:
@@ -551,15 +553,6 @@ static func _strings(value: Variant, path: String, errors: Array[String]) -> Arr
 			errors.append("%s must contain strings only" % path)
 		else:
 			result.append(str(item))
-	return result
-
-
-static func _dictionary_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) == TYPE_ARRAY:
-		for item in value:
-			if typeof(item) == TYPE_DICTIONARY:
-				result.append(item as Dictionary)
 	return result
 
 

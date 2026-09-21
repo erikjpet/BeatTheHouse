@@ -1,5 +1,7 @@
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 # Permanent crew06_7 contract: explicit activation, physical presence/rank/context,
 # bounded windows/costs, deterministic detection, persistence, and heat pressure.
 
@@ -130,7 +132,7 @@ static func _check_table_flood_and_concurrency(library: ContentLibrary, failures
 	var blackjack := _module(BlackjackScript, library, "blackjack")
 	var result := BlackjackAuthorityTestDriverScript.resolve(blackjack, "crew_play:table_flood", 5, run, run.current_environment, run.create_rng(), {})
 	if not bool(result.get("ok", false)) or run.crew_play_adjust_detection_chance(50) != 30 \
-		or _string_array(result.get("crew_play_member_ids", [])).size() != 2:
+		or JsonCoerceScript._string_array(result.get("crew_play_member_ids", [])).size() != 2:
 		failures.append("Table Flood did not require two present Made members or apply its 60% cheat-detection multiplier.")
 	if _action_ids(blackjack.legal_actions(run, run.current_environment)).has("crew_play:spotter"):
 		failures.append("The one-window concurrency cap allowed Spotter beside Table Flood.")
@@ -296,14 +298,6 @@ static func _action_ids(actions: Array) -> Array:
 	for value in actions:
 		if typeof(value) == TYPE_DICTIONARY:
 			result.append(str((value as Dictionary).get("id", "")))
-	return result
-
-
-static func _string_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) == TYPE_ARRAY:
-		for entry in value:
-			result.append(str(entry))
 	return result
 
 

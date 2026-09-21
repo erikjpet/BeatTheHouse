@@ -129,7 +129,7 @@ this evidence belongs in `world06_7`'s hidden-information audit.
 
 ## Failure 2 — Consequence payload gap (content and handler vocabulary)
 
-The `env06_7` conversion was produced by a generator (`tools/env06_7_package_a_generate.gd`).
+The `env06_7` conversion was produced by a generator (`tools/archive/env06_7/env06_7_package_a_generate.gd`).
 It satisfies the structural contract — unique mechanic signatures, phase graphs,
 branches, aftermath — while producing no tangible player consequence. `depth06_1`
 passed it because that gate measured *structural* uniqueness, not experienced

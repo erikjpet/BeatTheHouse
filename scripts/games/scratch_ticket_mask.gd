@@ -1,6 +1,8 @@
 class_name ScratchTicketMask
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 const RegionModelScript := preload("res://scripts/games/scratch_ticket_region_model.gd")
 const MASK_COLUMNS := 256
 const MASK_ROWS := 192
@@ -70,7 +72,7 @@ static func ensure(ticket: Dictionary) -> void:
 		return
 	var scratch: Dictionary = ticket.get("scratch", {}) if typeof(ticket.get("scratch", {})) == TYPE_DICTIONARY else {}
 	var mask: Array = ticket.get("latex_mask", []) if typeof(ticket.get("latex_mask", [])) == TYPE_ARRAY else []
-	var old_regions := _dictionary_array(ticket.get("scratch_regions", []))
+	var old_regions := JsonCoerceScript._dictionary_array(ticket.get("scratch_regions", []))
 	var current := int(ticket.get("region_layout_version", 0)) == RegionModelScript.LAYOUT_VERSION
 	current = current and int(scratch.get("mask_columns", 0)) == MASK_COLUMNS and int(scratch.get("mask_rows", 0)) == MASK_ROWS
 	current = current and mask.size() == MASK_COLUMNS * MASK_ROWS and not old_regions.is_empty()
@@ -83,7 +85,7 @@ static func ensure(ticket: Dictionary) -> void:
 	var fallback_revealed := bool(ticket.get("result_ready", false))
 	var ticket_type := {"scratch": scratch}
 	initialize(ticket, ticket_type)
-	var regions := _dictionary_array(ticket.get("scratch_regions", []))
+	var regions := JsonCoerceScript._dictionary_array(ticket.get("scratch_regions", []))
 	mask = ticket.get("latex_mask", []) as Array
 	for region_index in range(regions.size()):
 		var region: Dictionary = regions[region_index]
@@ -217,7 +219,7 @@ static func reveal_all(ticket: Dictionary) -> void:
 	ensure(ticket)
 	var mask: Array = ticket.get("latex_mask", []) if typeof(ticket.get("latex_mask", [])) == TYPE_ARRAY else []
 	mask.fill(0)
-	var regions := _dictionary_array(ticket.get("scratch_regions", []))
+	var regions := JsonCoerceScript._dictionary_array(ticket.get("scratch_regions", []))
 	for index in range(regions.size()):
 		var region: Dictionary = regions[index]
 		region["revealed"] = true
@@ -245,7 +247,7 @@ static func compact_settled(ticket: Dictionary) -> Dictionary:
 
 
 static func ticket_complete(ticket: Dictionary) -> bool:
-	var regions := _dictionary_array(ticket.get("scratch_regions", []))
+	var regions := JsonCoerceScript._dictionary_array(ticket.get("scratch_regions", []))
 	if regions.is_empty():
 		return false
 	for region_value in regions:
@@ -360,12 +362,3 @@ static func _region_progress(region: Dictionary) -> float:
 		return 1.0
 	var total := maxi(1, int(region.get("sample_total", 0)) * 255)
 	return clampf(float(region.get("coverage", 1.0 - float(region.get("mask_remaining_units", total)) / float(total))), 0.0, 1.0)
-
-
-static func _dictionary_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) == TYPE_ARRAY:
-		for entry in value as Array:
-			if typeof(entry) == TYPE_DICTIONARY:
-				result.append(entry)
-	return result

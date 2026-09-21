@@ -69,7 +69,7 @@ line during normal play is a defect, even if nothing visibly breaks.
 
 ## Deliverable
 
-Write `docs/plans/0.5_prerelease_playtest_report.md`: every defect found, with
+Write `docs/archive/0.5/plans/0.5_prerelease_playtest_report.md`: every defect found, with
 the seed and route to reproduce it, a capture, and a severity call
 (blocker / should-fix / polish).
 
@@ -132,7 +132,7 @@ archive, and report verbatim.
 - Archive commit: this commit
 - Result: PASS
 - Defects found: 0 blockers, 2 should-fix, 0 polish. Both should-fix items were in release/playtest tooling rather than player-facing gameplay: stale-camera visible-object double-click replay in `tools/foundation_visual_qa.gd`, and plateaued retained-memory warmup misclassified as sustained soak growth in `tools/foundation_soak_probe.gd`.
-- Playtest report: `docs/plans/0.5_prerelease_playtest_report.md`
+- Playtest report: `docs/archive/0.5/plans/0.5_prerelease_playtest_report.md`
 - Deviations: A separate trailer-rendering task repeatedly launched Godot during the FoundationSuite rerun. Contended guard attempts were discarded; counted gate results were rerun isolated after the trailer chain cleared. The first full soak attempt used too small a wrapper timeout and was inconclusive; the default soak was rerun with a larger timeout, fixed, and rerun to PASS.
 - Gates:
   - `tools\validate_project.ps1`: PASS

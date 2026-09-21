@@ -200,7 +200,7 @@ Rules:
 - **Audio.** Use the existing `crew_cards` cues: `card_deal` for deal and board
   groups, `card_fold` on muck, `chips_place` on bets, sweeps, and payout.
   Don't add audio assets. If per-card cues would stack into noise, fire one cue
-  per group. Check `tools/audio06_1_surface_sfx_audit.gd` still passes.
+  per group. Check `tools/archive/audio06_1/audio06_1_surface_sfx_audit.gd` still passes.
 
 ### 4. Code shape
 

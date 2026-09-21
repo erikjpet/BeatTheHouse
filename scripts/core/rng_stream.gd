@@ -53,7 +53,7 @@ func pick(values: Array, fallback: Variant = null) -> Variant:
 
 # Picks unique values from an array.
 func pick_many(values: Array, count: int) -> Array:
-	var pool: Array = values.duplicate(true)
+	var pool: Array = values.duplicate(false)
 	var picks: Array = []
 	var target_count := maxi(0, count)
 	while not pool.is_empty() and picks.size() < target_count:
@@ -61,6 +61,17 @@ func pick_many(values: Array, count: int) -> Array:
 		picks.append(pool[index])
 		pool.remove_at(index)
 	return picks
+
+
+# Returns a deterministic Fisher-Yates shuffle without copying nested values.
+func shuffled(values: Array) -> Array:
+	var result: Array = values.duplicate(false)
+	for index in range(result.size() - 1, 0, -1):
+		var swap_index := self.randi_range(0, index)
+		var previous: Variant = result[index]
+		result[index] = result[swap_index]
+		result[swap_index] = previous
+	return result
 
 
 # Returns the current seed and state.

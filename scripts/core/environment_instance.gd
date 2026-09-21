@@ -1,6 +1,8 @@
 class_name EnvironmentInstance
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 # One generated location, regardless of venue type.
 
 const ArtContractsScript := preload("res://scripts/core/art_contracts.gd")
@@ -124,11 +126,11 @@ static func from_archetype(archetype: Dictionary, p_depth: int, rng: RngStream, 
 	environment.art_key = _art_key(archetype)
 	environment.visual_context = _simulation_visual_context(archetype, environment.art_key)
 	environment.layout = _generated_layout_variant(archetype, rng.fork("layout:%s" % environment.id))
-	environment.security_profile = _copy_dict(archetype.get("security_profile", {}))
+	environment.security_profile = JsonCoerceScript._copy_dict(archetype.get("security_profile", {}))
 	environment.music_profile = _generated_music_profile(archetype, environment, rng)
-	environment.economic_profile = _copy_dict(archetype.get("economic_profile", {}))
+	environment.economic_profile = JsonCoerceScript._copy_dict(archetype.get("economic_profile", {}))
 	environment.objective_hint = str(archetype.get("objective_hint", ""))
-	environment.demo_objective = _copy_dict(archetype.get("demo_objective", {}))
+	environment.demo_objective = JsonCoerceScript._copy_dict(archetype.get("demo_objective", {}))
 	var game_pool := _filtered_game_pool(archetype, library, challenge_config)
 	var required_games := _filtered_required_games(archetype, game_pool)
 	environment.game_ids = _pick_ids_with_required(game_pool, archetype.get("game_count", 1), required_games, rng)
@@ -140,7 +142,7 @@ static func from_archetype(archetype: Dictionary, p_depth: int, rng: RngStream, 
 	if not selected_state.is_empty() and ScenarioEngineScript.SequenceSchemaScript.is_sequence(selected_scenario):
 		environment.scenario_event_choices = EnvironmentSemanticInventoryScript.event_choice_index(environment.event_ids, library)
 	environment.item_offers = _build_offers(archetype, rng, library, challenge_config)
-	for scenario_offer_value in _copy_array(archetype.get("scenario_item_offers", [])):
+	for scenario_offer_value in JsonCoerceScript._copy_array(archetype.get("scenario_item_offers", [])):
 		if typeof(scenario_offer_value) != TYPE_DICTIONARY:
 			continue
 		var scenario_offer := (scenario_offer_value as Dictionary).duplicate(true)
@@ -151,33 +153,33 @@ static func from_archetype(archetype: Dictionary, p_depth: int, rng: RngStream, 
 			if typeof(environment.item_offers[offer_index]) == TYPE_DICTIONARY and str((environment.item_offers[offer_index] as Dictionary).get("id", "")) == scenario_item_id:
 				environment.item_offers.remove_at(offer_index)
 		environment.item_offers.append(scenario_offer)
-	environment.home_profile = _copy_dict(archetype.get("home_profile", {}))
+	environment.home_profile = JsonCoerceScript._copy_dict(archetype.get("home_profile", {}))
 	environment.home_containers = []
 	environment.parent_archetype = str(archetype.get("parent_archetype", ""))
-	environment.service_ids = _copy_array(archetype.get("service_pool", []))
+	environment.service_ids = JsonCoerceScript._copy_array(archetype.get("service_pool", []))
 	environment.lender_hooks = _pick_lenders(archetype, rng.fork("lenders:%s" % environment.id))
-	environment.suspicion_cues = _copy_array(archetype.get("suspicion_cues", environment.security_profile.get("visible_cues", [])))
-	environment.travel_hooks = _copy_array(archetype.get("travel_hooks", []))
-	environment.next_archetypes = _copy_array(archetype.get("next_archetypes", []))
-	environment.object_fixtures = _copy_array(archetype.get("object_fixtures", []))
+	environment.suspicion_cues = JsonCoerceScript._copy_array(archetype.get("suspicion_cues", environment.security_profile.get("visible_cues", [])))
+	environment.travel_hooks = JsonCoerceScript._copy_array(archetype.get("travel_hooks", []))
+	environment.next_archetypes = JsonCoerceScript._copy_array(archetype.get("next_archetypes", []))
+	environment.object_fixtures = JsonCoerceScript._copy_array(archetype.get("object_fixtures", []))
 	# The expanded semantic catalog belongs to an installed dynamic sequence.
 	# Keep legacy no-sequence room snapshots compact and byte-compatible.
 	if not selected_state.is_empty():
-		environment.semantic_anchors = _copy_dict(archetype.get("semantic_anchors", {}))
-		environment.semantic_zones = _copy_dict(archetype.get("semantic_zones", {}))
-		environment.semantic_actors = _copy_array(archetype.get("semantic_actors", []))
+		environment.semantic_anchors = JsonCoerceScript._copy_dict(archetype.get("semantic_anchors", {}))
+		environment.semantic_zones = JsonCoerceScript._copy_dict(archetype.get("semantic_zones", {}))
+		environment.semantic_actors = JsonCoerceScript._copy_array(archetype.get("semantic_actors", []))
 	var rare_route_rng := rng.fork("rare_next:%s" % environment.id)
 	_append_rare_archetypes(environment.next_archetypes, archetype, rare_route_rng)
-	environment.local_narrative_flags = _copy_dict(archetype.get("local_narrative_flags", {}))
+	environment.local_narrative_flags = JsonCoerceScript._copy_dict(archetype.get("local_narrative_flags", {}))
 	environment.mood = rng.pick(archetype.get("moods", ["watchful"]), "watchful")
 	environment.travel_locked_actions = maxi(0, int(archetype.get("travel_locked_actions", 0)))
 	environment.travel_lock_remaining = environment.travel_locked_actions
-	environment.scenario_patron_ids = _copy_array(archetype.get("scenario_patron_ids", []))
-	environment.scenario_staff_ids = _copy_array(archetype.get("scenario_staff_ids", []))
-	environment.scenario_game_modifiers = _copy_dict(archetype.get("scenario_game_modifiers", {}))
-	environment.scenario_presentation = _copy_dict(archetype.get("scenario_presentation", {}))
-	environment.scenario_exclusive_opportunity = _copy_dict(archetype.get("scenario_exclusive_opportunity", {}))
-	environment.scenario_hook_flags = _copy_dict(archetype.get("scenario_hook_flags", {}))
+	environment.scenario_patron_ids = JsonCoerceScript._copy_array(archetype.get("scenario_patron_ids", []))
+	environment.scenario_staff_ids = JsonCoerceScript._copy_array(archetype.get("scenario_staff_ids", []))
+	environment.scenario_game_modifiers = JsonCoerceScript._copy_dict(archetype.get("scenario_game_modifiers", {}))
+	environment.scenario_presentation = JsonCoerceScript._copy_dict(archetype.get("scenario_presentation", {}))
+	environment.scenario_exclusive_opportunity = JsonCoerceScript._copy_dict(archetype.get("scenario_exclusive_opportunity", {}))
+	environment.scenario_hook_flags = JsonCoerceScript._copy_dict(archetype.get("scenario_hook_flags", {}))
 	if not selected_state.is_empty():
 		environment.scenario_state = selected_state
 		var scenario_environment := environment.to_dict()
@@ -197,13 +199,13 @@ static func from_archetype(archetype: Dictionary, p_depth: int, rng: RngStream, 
 # inventories, and machine state are intentionally outside this projection.
 static func travel_preview_from_archetype(archetype: Dictionary, p_depth: int, rng: RngStream, library: ContentLibrary = null, challenge_config: Dictionary = {}, selected_scenario: Dictionary = {}) -> Dictionary:
 	if _is_layered_archetype(archetype):
-		var layers := _copy_dict(archetype.get("layers", {}))
-		var layer_ids := _string_array(layers.keys())
+		var layers := JsonCoerceScript._copy_dict(archetype.get("layers", {}))
+		var layer_ids := JsonCoerceScript._string_array(layers.keys())
 		if layer_ids.is_empty():
 			return {}
 		var configured_default := str(archetype.get("default_layer_id", layer_ids[0])).strip_edges()
-		var modifiers := _copy_dict(challenge_config.get("modifiers", {}))
-		var overrides := _copy_dict(modifiers.get("environment_layer_overrides", {}))
+		var modifiers := JsonCoerceScript._copy_dict(challenge_config.get("modifiers", {}))
+		var overrides := JsonCoerceScript._copy_dict(modifiers.get("environment_layer_overrides", {}))
 		var default_id := str(overrides.get(str(archetype.get("id", "")), configured_default)).strip_edges()
 		if not layer_ids.has(default_id):
 			default_id = configured_default if layer_ids.has(configured_default) else str(layer_ids[0])
@@ -237,12 +239,12 @@ static func travel_preview_from_archetype(archetype: Dictionary, p_depth: int, r
 	# attach_to_environment materializes a scenario's exclusive game after base
 	# selection. Mirror that one player-visible delta without constructing the
 	# complete semantic environment.
-	var exclusive_opportunity := _copy_dict(archetype.get("scenario_exclusive_opportunity", {}))
+	var exclusive_opportunity := JsonCoerceScript._copy_dict(archetype.get("scenario_exclusive_opportunity", {}))
 	var exclusive_game_id := str(exclusive_opportunity.get("game_id", "")).strip_edges()
 	if not exclusive_game_id.is_empty() and not game_ids.has(exclusive_game_id):
 		game_ids.append(exclusive_game_id)
 	var item_offers := _build_offers(archetype, rng, library, challenge_config)
-	for scenario_offer_value in _copy_array(archetype.get("scenario_item_offers", [])):
+	for scenario_offer_value in JsonCoerceScript._copy_array(archetype.get("scenario_item_offers", [])):
 		if typeof(scenario_offer_value) != TYPE_DICTIONARY:
 			continue
 		var scenario_offer := (scenario_offer_value as Dictionary).duplicate(true)
@@ -257,7 +259,7 @@ static func travel_preview_from_archetype(archetype: Dictionary, p_depth: int, r
 		"tier": environment.tier,
 		"kind": environment.kind,
 		"game_ids": game_ids,
-		"service_ids": _copy_array(archetype.get("service_pool", [])),
+		"service_ids": JsonCoerceScript._copy_array(archetype.get("service_pool", [])),
 		"lender_hooks": _pick_lenders(archetype, rng.fork("lenders:%s" % environment.id)),
 		"item_offers": item_offers,
 		"travel_locked_actions": maxi(0, int(archetype.get("travel_locked_actions", 0))),
@@ -278,45 +280,45 @@ static func from_dict(data: Dictionary) -> EnvironmentInstance:
 	environment.display_name = str(data.get("display_name", ""))
 	environment.tier = int(data.get("tier", 1))
 	environment.depth = int(data.get("depth", 0))
-	environment.art_key = str(data.get("art_key", _copy_dict(data.get("visual_context", {})).get("art_key", "")))
-	environment.visual_context = _strip_presentation_paths(_copy_dict(data.get("visual_context", {})), environment.art_key)
+	environment.art_key = str(data.get("art_key", JsonCoerceScript._copy_dict(data.get("visual_context", {})).get("art_key", "")))
+	environment.visual_context = _strip_presentation_paths(JsonCoerceScript._copy_dict(data.get("visual_context", {})), environment.art_key)
 	environment.layout = ensure_generated_layout(data)
-	environment.security_profile = _copy_dict(data.get("security_profile", {}))
-	environment.music_profile = _copy_dict(data.get("music_profile", {}))
-	environment.economic_profile = _copy_dict(data.get("economic_profile", {}))
+	environment.security_profile = JsonCoerceScript._copy_dict(data.get("security_profile", {}))
+	environment.music_profile = JsonCoerceScript._copy_dict(data.get("music_profile", {}))
+	environment.economic_profile = JsonCoerceScript._copy_dict(data.get("economic_profile", {}))
 	environment.objective_hint = str(data.get("objective_hint", ""))
-	environment.demo_objective = _copy_dict(data.get("demo_objective", {}))
-	environment.game_ids = _copy_array(data.get("game_ids", []))
-	environment.game_states = _copy_dict(data.get("game_states", {}))
-	environment.event_ids = _copy_array(data.get("event_ids", []))
-	environment.item_offers = _copy_array(data.get("item_offers", []))
-	environment.home_profile = _copy_dict(data.get("home_profile", {}))
-	environment.home_containers = _copy_array(data.get("home_containers", []))
+	environment.demo_objective = JsonCoerceScript._copy_dict(data.get("demo_objective", {}))
+	environment.game_ids = JsonCoerceScript._copy_array(data.get("game_ids", []))
+	environment.game_states = JsonCoerceScript._copy_dict(data.get("game_states", {}))
+	environment.event_ids = JsonCoerceScript._copy_array(data.get("event_ids", []))
+	environment.item_offers = JsonCoerceScript._copy_array(data.get("item_offers", []))
+	environment.home_profile = JsonCoerceScript._copy_dict(data.get("home_profile", {}))
+	environment.home_containers = JsonCoerceScript._copy_array(data.get("home_containers", []))
 	environment.home_container_index = maxi(0, int(data.get("home_container_index", 0)))
 	environment.home_lost = bool(data.get("home_lost", false))
 	environment.parent_archetype = str(data.get("parent_archetype", ""))
-	environment.service_ids = _copy_array(data.get("service_ids", []))
-	environment.lender_hooks = _copy_array(data.get("lender_hooks", []))
-	environment.suspicion_cues = _copy_array(data.get("suspicion_cues", []))
-	environment.travel_hooks = _copy_array(data.get("travel_hooks", []))
-	environment.next_archetypes = _copy_array(data.get("next_archetypes", []))
-	environment.object_fixtures = _copy_array(data.get("object_fixtures", []))
-	environment.semantic_anchors = _copy_dict(data.get("semantic_anchors", {}))
-	environment.semantic_zones = _copy_dict(data.get("semantic_zones", {}))
-	environment.semantic_actors = _copy_array(data.get("semantic_actors", []))
-	environment.local_narrative_flags = _copy_dict(data.get("local_narrative_flags", {}))
+	environment.service_ids = JsonCoerceScript._copy_array(data.get("service_ids", []))
+	environment.lender_hooks = JsonCoerceScript._copy_array(data.get("lender_hooks", []))
+	environment.suspicion_cues = JsonCoerceScript._copy_array(data.get("suspicion_cues", []))
+	environment.travel_hooks = JsonCoerceScript._copy_array(data.get("travel_hooks", []))
+	environment.next_archetypes = JsonCoerceScript._copy_array(data.get("next_archetypes", []))
+	environment.object_fixtures = JsonCoerceScript._copy_array(data.get("object_fixtures", []))
+	environment.semantic_anchors = JsonCoerceScript._copy_dict(data.get("semantic_anchors", {}))
+	environment.semantic_zones = JsonCoerceScript._copy_dict(data.get("semantic_zones", {}))
+	environment.semantic_actors = JsonCoerceScript._copy_array(data.get("semantic_actors", []))
+	environment.local_narrative_flags = JsonCoerceScript._copy_dict(data.get("local_narrative_flags", {}))
 	environment.mood = str(data.get("mood", ""))
 	environment.turns = int(data.get("turns", 0))
-	environment.resolved_event_ids = _copy_array(data.get("resolved_event_ids", []))
+	environment.resolved_event_ids = JsonCoerceScript._copy_array(data.get("resolved_event_ids", []))
 	environment.travel_locked_actions = maxi(0, int(data.get("travel_locked_actions", 0)))
 	environment.travel_lock_remaining = maxi(0, int(data.get("travel_lock_remaining", environment.travel_locked_actions)))
 	environment.scenario_state = ScenarioEngineScript.normalize_state(data.get("scenario_state", {}))
-	environment.scenario_patron_ids = _copy_array(data.get("scenario_patron_ids", []))
-	environment.scenario_staff_ids = _copy_array(data.get("scenario_staff_ids", []))
-	environment.scenario_game_modifiers = _copy_dict(data.get("scenario_game_modifiers", {}))
-	environment.scenario_presentation = _copy_dict(data.get("scenario_presentation", {}))
-	environment.scenario_exclusive_opportunity = _copy_dict(data.get("scenario_exclusive_opportunity", {}))
-	environment.scenario_hook_flags = _copy_dict(data.get("scenario_hook_flags", {}))
+	environment.scenario_patron_ids = JsonCoerceScript._copy_array(data.get("scenario_patron_ids", []))
+	environment.scenario_staff_ids = JsonCoerceScript._copy_array(data.get("scenario_staff_ids", []))
+	environment.scenario_game_modifiers = JsonCoerceScript._copy_dict(data.get("scenario_game_modifiers", {}))
+	environment.scenario_presentation = JsonCoerceScript._copy_dict(data.get("scenario_presentation", {}))
+	environment.scenario_exclusive_opportunity = JsonCoerceScript._copy_dict(data.get("scenario_exclusive_opportunity", {}))
+	environment.scenario_hook_flags = JsonCoerceScript._copy_dict(data.get("scenario_hook_flags", {}))
 	var semantic_inventory_version := maxi(0, int(data.get("scenario_semantic_inventory_version", 0)))
 	var semantic_digest := str(data.get("scenario_semantic_digest", "")).strip_edges()
 	if semantic_inventory_version > 0 and not semantic_digest.is_empty():
@@ -329,22 +331,22 @@ static func from_dict(data: Dictionary) -> EnvironmentInstance:
 		environment.scenario_sequence_migration_error = "Persisted dynamic room sequence state is malformed, unsupported, or overbound; explicit migration is required."
 	environment.scenario_sequence_projection = {}
 	environment.scenario_render_snapshot = {}
-	environment.scenario_sequence_migration = _copy_dict(data.get("scenario_sequence_migration", {}))
-	environment.scenario_sequence_base_game_ids = _copy_array(data.get("scenario_sequence_base_game_ids", []))
-	environment.scenario_sequence_base_service_ids = _copy_array(data.get("scenario_sequence_base_service_ids", []))
-	environment.scenario_sequence_base_travel_hooks = _copy_array(data.get("scenario_sequence_base_travel_hooks", []))
-	environment.scenario_sequence_base_game_modifiers = _copy_dict(data.get("scenario_sequence_base_game_modifiers", {}))
+	environment.scenario_sequence_migration = JsonCoerceScript._copy_dict(data.get("scenario_sequence_migration", {}))
+	environment.scenario_sequence_base_game_ids = JsonCoerceScript._copy_array(data.get("scenario_sequence_base_game_ids", []))
+	environment.scenario_sequence_base_service_ids = JsonCoerceScript._copy_array(data.get("scenario_sequence_base_service_ids", []))
+	environment.scenario_sequence_base_travel_hooks = JsonCoerceScript._copy_array(data.get("scenario_sequence_base_travel_hooks", []))
+	environment.scenario_sequence_base_game_modifiers = JsonCoerceScript._copy_dict(data.get("scenario_sequence_base_game_modifiers", {}))
 	environment.scenario_event_choices = {}
 	environment.world_sequence_instances = CrewWorldSequenceAdapterScript.durable_container(data.get(CrewWorldSequenceAdapterScript.CONTAINER_KEY, {}))
 	environment.environment_layer_schema_version = maxi(0, int(data.get("environment_layer_schema_version", 0)))
 	environment.current_layer_id = str(data.get("current_layer_id", "")).strip_edges()
 	environment.default_layer_id = str(data.get("default_layer_id", "")).strip_edges()
-	environment.layer_ids = _string_array(data.get("layer_ids", []))
+	environment.layer_ids = JsonCoerceScript._string_array(data.get("layer_ids", []))
 	environment.layer_display_name = str(data.get("layer_display_name", "")).strip_edges()
-	environment.layer_transitions = _copy_array(data.get("layer_transitions", []))
-	environment.layer_discovery = _copy_dict(data.get("layer_discovery", {}))
+	environment.layer_transitions = JsonCoerceScript._copy_array(data.get("layer_transitions", []))
+	environment.layer_discovery = JsonCoerceScript._copy_dict(data.get("layer_discovery", {}))
 	environment.layer_states = _durable_layer_states(data.get("layer_states", {}))
-	environment.layer_ambient_lines = _string_array(data.get("layer_ambient_lines", []))
+	environment.layer_ambient_lines = JsonCoerceScript._string_array(data.get("layer_ambient_lines", []))
 	environment.layer_ambient_label = str(data.get("layer_ambient_label", "")).strip_edges()
 	environment.layer_ambient_prop = str(data.get("layer_ambient_prop", "")).strip_edges()
 	environment.layer_ambient_rotate_actions = maxi(1, int(data.get("layer_ambient_rotate_actions", 1)))
@@ -455,7 +457,7 @@ static func _durable_sequence_state(value: Variant) -> Dictionary:
 	if not ScenarioOperationRegistryScript.validate_bounded_variant("persisted environment scenario sequence state", value).is_empty(): return {}
 	if not ScenarioSequenceRuntimeScript._persisted_collections_within_limits(value as Dictionary): return {}
 	var state := (value as Dictionary).duplicate(true)
-	var semantic := _copy_dict(state.get("semantic_state", {}))
+	var semantic := JsonCoerceScript._copy_dict(state.get("semantic_state", {}))
 	for key in ["target_inventory", "declared_targets", "base_interactions", "event_choices", "scene_objects", "interactions", "actors", "services", "games", "routes", "transition_queue", "tombstones"]: semantic.erase(key)
 	state["semantic_state"] = semantic
 	state.erase("resolved_branches")
@@ -474,8 +476,8 @@ static func _persisted_sequence_state_requires_migration(raw_value: Variant, dur
 
 static func _durable_layer_states(value: Variant) -> Dictionary:
 	var result: Dictionary = {}
-	for layer_id_value in _copy_dict(value).keys():
-		var body := _copy_dict(_copy_dict(value).get(layer_id_value, {})).duplicate(true)
+	for layer_id_value in JsonCoerceScript._copy_dict(value).keys():
+		var body := JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(value).get(layer_id_value, {})).duplicate(true)
 		# Base/live producer context belongs to the ephemeral proof. The separately
 		# named sealed context is durable rebuild authority and remains in layer state.
 		for key in ["scenario_semantic_ready", "scenario_semantic_inventory", "scenario_semantic_action_digest", "scenario_base_interactions", "scenario_base_actors", "scenario_base_producer_context", "scenario_event_choices", "scenario_sequence_projection", "scenario_sequence_lifecycle_errors", "scenario_live_producer_projection"]: body.erase(key)
@@ -498,17 +500,17 @@ static func _durable_layer_states(value: Variant) -> Dictionary:
 # Generates every layer from independent deterministic data while exposing the
 # active layer through the unchanged flat environment contract.
 static func _from_layered_archetype(archetype: Dictionary, p_depth: int, rng: RngStream, library: ContentLibrary, challenge_config: Dictionary, selected_scenario: Dictionary) -> EnvironmentInstance:
-	var layers := _copy_dict(archetype.get("layers", {}))
-	var ids := _string_array(layers.keys())
+	var layers := JsonCoerceScript._copy_dict(archetype.get("layers", {}))
+	var ids := JsonCoerceScript._string_array(layers.keys())
 	if ids.is_empty():
 		return EnvironmentInstance.new()
 	var configured_default := str(archetype.get("default_layer_id", ids[0])).strip_edges()
-	var modifiers := _copy_dict(challenge_config.get("modifiers", {}))
-	var overrides := _copy_dict(modifiers.get("environment_layer_overrides", {}))
+	var modifiers := JsonCoerceScript._copy_dict(challenge_config.get("modifiers", {}))
+	var overrides := JsonCoerceScript._copy_dict(modifiers.get("environment_layer_overrides", {}))
 	var default_id := str(overrides.get(str(archetype.get("id", "")), configured_default)).strip_edges()
 	if not ids.has(default_id):
 		default_id = configured_default if ids.has(configured_default) else str(ids[0])
-	var discovery := _copy_dict(archetype.get("layer_discovery_defaults", {}))
+	var discovery := JsonCoerceScript._copy_dict(archetype.get("layer_discovery_defaults", {}))
 	discovery[default_id] = true
 	var generated_states: Dictionary = {}
 	var primary_layer_id := str(archetype.get("compatibility_primary_layer_id", default_id)).strip_edges()
@@ -531,7 +533,7 @@ static func _from_layered_archetype(archetype: Dictionary, p_depth: int, rng: Rn
 		var layer_data := layer_environment.to_dict()
 		_apply_layer_metadata(layer_data, archetype, layer_id, ids, discovery)
 		generated_states[layer_id] = _layer_state_body(layer_data)
-	var active_data := _copy_dict(generated_states.get(default_id, {}))
+	var active_data := JsonCoerceScript._copy_dict(generated_states.get(default_id, {}))
 	_apply_layer_metadata(active_data, archetype, default_id, ids, discovery)
 	active_data["layer_states"] = generated_states
 	active_data["display_name"] = str(archetype.get("display_name", "The Punchline"))
@@ -542,23 +544,23 @@ static func _from_layered_archetype(archetype: Dictionary, p_depth: int, rng: Rn
 static func from_archetype_layer(archetype: Dictionary, layer_id: String, p_depth: int, rng: RngStream, library: ContentLibrary = null, challenge_config: Dictionary = {}, selected_scenario: Dictionary = {}) -> EnvironmentInstance:
 	if not _is_layered_archetype(archetype):
 		return from_archetype(archetype, p_depth, rng, library, challenge_config, selected_scenario)
-	var layers := _copy_dict(archetype.get("layers", {}))
-	var ids := _string_array(layers.keys())
+	var layers := JsonCoerceScript._copy_dict(archetype.get("layers", {}))
+	var ids := JsonCoerceScript._string_array(layers.keys())
 	var clean_layer_id := layer_id.strip_edges()
 	if not ids.has(clean_layer_id):
 		return EnvironmentInstance.new()
 	var flat := _archetype_for_layer(archetype, clean_layer_id)
 	var environment := from_archetype(flat, p_depth, rng, library, challenge_config, selected_scenario)
 	var data := environment.to_dict()
-	var discovery := _copy_dict(archetype.get("layer_discovery_defaults", {}))
+	var discovery := JsonCoerceScript._copy_dict(archetype.get("layer_discovery_defaults", {}))
 	_apply_layer_metadata(data, archetype, clean_layer_id, ids, discovery)
 	return from_dict(data)
 
 
 static func _archetype_for_layer(archetype: Dictionary, layer_id: String) -> Dictionary:
 	var result := archetype.duplicate(true)
-	var layers := _copy_dict(result.get("layers", {}))
-	var overlay := _copy_dict(layers.get(layer_id, {}))
+	var layers := JsonCoerceScript._copy_dict(result.get("layers", {}))
+	var overlay := JsonCoerceScript._copy_dict(layers.get(layer_id, {}))
 	for key_value in ["layers", "default_layer_id", "layer_discovery_defaults", "compatibility_primary_layer_id", "environment_layer_schema_version"]:
 		result.erase(key_value)
 	result = _deep_merge(result, overlay)
@@ -567,22 +569,22 @@ static func _archetype_for_layer(archetype: Dictionary, layer_id: String) -> Dic
 
 
 static func _apply_layer_metadata(target: Dictionary, archetype: Dictionary, layer_id: String, ids: Array, discovery: Dictionary) -> void:
-	var layers := _copy_dict(archetype.get("layers", {}))
-	var layer := _copy_dict(layers.get(layer_id, {}))
+	var layers := JsonCoerceScript._copy_dict(archetype.get("layers", {}))
+	var layer := JsonCoerceScript._copy_dict(layers.get(layer_id, {}))
 	target["display_name"] = str(archetype.get("display_name", target.get("display_name", "")))
 	target["environment_layer_schema_version"] = ENVIRONMENT_LAYER_SCHEMA_VERSION
 	target["current_layer_id"] = layer_id
 	target["default_layer_id"] = str(archetype.get("default_layer_id", ids[0] if not ids.is_empty() else layer_id))
 	target["layer_ids"] = ids.duplicate(true)
 	target["layer_display_name"] = str(layer.get("layer_display_name", layer_id.replace("_", " ").capitalize()))
-	target["layer_transitions"] = _copy_array(layer.get("layer_transitions", []))
+	target["layer_transitions"] = JsonCoerceScript._copy_array(layer.get("layer_transitions", []))
 	target["layer_discovery"] = discovery.duplicate(true)
-	target["layer_ambient_lines"] = _string_array(layer.get("ambient_lines", []))
+	target["layer_ambient_lines"] = JsonCoerceScript._string_array(layer.get("ambient_lines", []))
 	target["layer_ambient_label"] = str(layer.get("ambient_label", "")).strip_edges()
 	target["layer_ambient_prop"] = str(layer.get("ambient_prop", "")).strip_edges()
 	target["layer_ambient_rotate_actions"] = maxi(1, int(layer.get("ambient_rotate_actions", 1)))
 	target["layer_ambient_index"] = 0
-	var ambient_lines := _string_array(target.get("layer_ambient_lines", []))
+	var ambient_lines := JsonCoerceScript._string_array(target.get("layer_ambient_lines", []))
 	target["layer_ambient_line"] = str(ambient_lines[0]) if not ambient_lines.is_empty() else ""
 
 
@@ -593,17 +595,17 @@ static func _layer_state_body(environment: Dictionary) -> Dictionary:
 
 
 static func _is_layered_archetype(archetype: Dictionary) -> bool:
-	return not _copy_dict(archetype.get("layers", {})).is_empty()
+	return not JsonCoerceScript._copy_dict(archetype.get("layers", {})).is_empty()
 
 
 # Ensures a generated environment owns stable object placement keyed by object id.
 static func ensure_generated_layout(environment_data: Dictionary, library: ContentLibrary = null) -> Dictionary:
-	var layout := _copy_dict(environment_data.get("layout", {}))
+	var layout := JsonCoerceScript._copy_dict(environment_data.get("layout", {}))
 	if library != null:
-		var refreshed_hints := _event_placement_hints(_copy_array(environment_data.get("event_ids", [])), library, environment_data)
+		var refreshed_hints := _event_placement_hints(JsonCoerceScript._copy_array(environment_data.get("event_ids", [])), library, environment_data)
 		if not refreshed_hints.is_empty():
 			layout["object_placement_hints"] = refreshed_hints
-	var object_rects := _copy_dict(layout.get("object_rects", {}))
+	var object_rects := JsonCoerceScript._copy_dict(layout.get("object_rects", {}))
 	if int(layout.get("generated_object_rect_version", 0)) != GENERATED_LAYOUT_VERSION:
 		object_rects = {}
 	# Town/scenario modifiers can add events after the EnvironmentInstance was
@@ -616,23 +618,23 @@ static func ensure_generated_layout(environment_data: Dictionary, library: Conte
 	var grounding_signature := _grounding_signature(environment_data, layout, active_entries)
 	if int(layout.get("generated_object_rect_version", 0)) == GENERATED_LAYOUT_VERSION \
 			and str(layout.get("grounding_signature", "")) == grounding_signature \
-			and _copy_array(layout.get("placement_errors", [])).is_empty() \
-			and _copy_array(layout.get("placement_fallback_ids", [])).is_empty():
+			and JsonCoerceScript._copy_array(layout.get("placement_errors", [])).is_empty() \
+			and JsonCoerceScript._copy_array(layout.get("placement_fallback_ids", [])).is_empty():
 		return layout
 	var prioritize_services := bool(layout.get("prioritize_service_spots", false))
 	_prune_inactive_object_rects(object_rects, active_object_ids)
 	_assign_object_layout_entries(object_rects, layout, _game_layout_entries(environment_data), active_object_ids)
-	_assign_string_object_rects(object_rects, layout, "event", _copy_array(environment_data.get("event_ids", [])), "event_spots", active_object_ids)
+	_assign_string_object_rects(object_rects, layout, "event", JsonCoerceScript._copy_array(environment_data.get("event_ids", [])), "event_spots", active_object_ids)
 	_assign_object_layout_entries(object_rects, layout, _environment_layer_layout_entries(environment_data), active_object_ids)
 	if not prioritize_services:
-		_assign_item_offer_rects(object_rects, layout, _copy_array(environment_data.get("item_offers", [])), active_object_ids)
+		_assign_item_offer_rects(object_rects, layout, JsonCoerceScript._copy_array(environment_data.get("item_offers", [])), active_object_ids)
 	_assign_object_layout_entries(object_rects, layout, _cage_gift_layout_entries(environment_data), active_object_ids)
 	_assign_single_object_rect(object_rects, layout, "shopkeeper:merchant", "shopkeeper", 0, "shopkeeper_spots", _shopkeeper_should_exist(environment_data), active_object_ids)
 	_assign_single_object_rect(object_rects, layout, "travel:leave", "travel", 0, "travel_spots", not _travel_target_ids(environment_data).is_empty(), active_object_ids)
 	_assign_string_object_rects(object_rects, layout, "travel", _grand_casino_local_target_ids(environment_data), "casino_door_spots", active_object_ids)
 	_assign_string_object_rects(object_rects, layout, "casino_fixture", _casino_fixture_ids(environment_data), "casino_fixture_spots", active_object_ids)
-	_assign_string_object_rects(object_rects, layout, "service", _copy_array(environment_data.get("service_ids", [])), "service_spots", active_object_ids)
-	_assign_string_object_rects(object_rects, layout, "lender", _copy_array(environment_data.get("lender_hooks", [])), "lender_spots", active_object_ids)
+	_assign_string_object_rects(object_rects, layout, "service", JsonCoerceScript._copy_array(environment_data.get("service_ids", [])), "service_spots", active_object_ids)
+	_assign_string_object_rects(object_rects, layout, "lender", JsonCoerceScript._copy_array(environment_data.get("lender_hooks", [])), "lender_spots", active_object_ids)
 	_assign_object_layout_entries(object_rects, layout, _filter_unique_object_layout_entries(_game_hook_layout_entries(environment_data)), active_object_ids)
 	_assign_object_layout_entries(object_rects, layout, _numbers_layout_entries(environment_data), active_object_ids)
 	_assign_single_object_rect(object_rects, layout, "home_tenure:status", "home_tenure", 0, "home_tenure_spots", _home_tenure_should_exist(environment_data), active_object_ids)
@@ -640,7 +642,7 @@ static func ensure_generated_layout(environment_data: Dictionary, library: Conte
 	_assign_single_object_rect(object_rects, layout, "home_storage:place", "home_storage", 0, "home_storage_spots", _home_storage_should_exist(environment_data), active_object_ids)
 	_assign_string_object_rects(object_rects, layout, "home_container", _home_container_ids(environment_data), "home_container_spots", active_object_ids)
 	if prioritize_services:
-		_assign_item_offer_rects(object_rects, layout, _copy_array(environment_data.get("item_offers", [])), active_object_ids)
+		_assign_item_offer_rects(object_rects, layout, JsonCoerceScript._copy_array(environment_data.get("item_offers", [])), active_object_ids)
 	_ground_authored_object_rects(object_rects, layout, environment_data, active_entries)
 	layout["object_rects"] = object_rects
 	layout["generated_object_rect_version"] = GENERATED_LAYOUT_VERSION
@@ -672,15 +674,15 @@ static func _ground_authored_object_rects(object_rects: Dictionary, layout: Dict
 	var placement_classes: Dictionary = {}
 	var placement_surfaces: Dictionary = {}
 	var placement_map := EnvironmentPlacementScript.surface_map(environment_data)
-	var preferred_slots := _copy_dict(placement_map.get("object_slot_positions", {}))
-	var developer_object_slots := _copy_dict(placement_map.get("developer_object_slot_positions", {}))
-	var developer_category_slots := _copy_dict(placement_map.get("developer_category_slot_positions", {}))
+	var preferred_slots := JsonCoerceScript._copy_dict(placement_map.get("object_slot_positions", {}))
+	var developer_object_slots := JsonCoerceScript._copy_dict(placement_map.get("developer_object_slot_positions", {}))
+	var developer_category_slots := JsonCoerceScript._copy_dict(placement_map.get("developer_category_slot_positions", {}))
 	var placement_errors: Array = []
 	var placement_fallback_ids: Array = []
 	var ordered_entries := active_entries.duplicate(true)
 	ordered_entries.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
-		var left := _copy_dict(left_value)
-		var right := _copy_dict(right_value)
+		var left := JsonCoerceScript._copy_dict(left_value)
+		var right := JsonCoerceScript._copy_dict(right_value)
 		var left_id := str(left.get("object_id", ""))
 		var right_id := str(right.get("object_id", ""))
 		var left_class := EnvironmentPlacementScript.classify(left, str(left.get("object_type", "")), left_id)
@@ -694,7 +696,7 @@ static func _ground_authored_object_rects(object_rects: Dictionary, layout: Dict
 		return left_has_slot if left_has_slot != right_has_slot else left_id < right_id
 	)
 	for entry_value in ordered_entries:
-		var entry := _copy_dict(entry_value)
+		var entry := JsonCoerceScript._copy_dict(entry_value)
 		var object_id := str(entry.get("object_id", ""))
 		if object_id.is_empty() or placed.has(object_id):
 			continue
@@ -703,12 +705,12 @@ static func _ground_authored_object_rects(object_rects: Dictionary, layout: Dict
 		placement_classes[object_id] = placement_class
 		var authored_normalized := _rect_from_dict(object_rects.get(object_id, {}))
 		var authored := Rect2(authored_normalized.position * ENVIRONMENT_BOARD_SIZE, authored_normalized.size * ENVIRONMENT_BOARD_SIZE)
-		var slot_values := _copy_array(preferred_slots.get(object_id, []))
+		var slot_values := JsonCoerceScript._copy_array(preferred_slots.get(object_id, []))
 		if slot_values.size() >= 2:
 			authored.position = Vector2(float(slot_values[0]), float(slot_values[1]))
 		var category_key := "%s:%d" % [str(entry.get("spot_field", "")), int(entry.get("index", 0))]
-		var category_slot_values := _copy_array(developer_category_slots.get(category_key, []))
-		var developer_slot_values := _copy_array(developer_object_slots.get(object_id, []))
+		var category_slot_values := JsonCoerceScript._copy_array(developer_category_slots.get(category_key, []))
+		var developer_slot_values := JsonCoerceScript._copy_array(developer_object_slots.get(object_id, []))
 		# An exact object decision is more specific than a category/index default.
 		# The old reverse precedence silently moved doors and other reserved objects
 		# back onto crowded generic slots.
@@ -813,7 +815,7 @@ static func _build_name(archetype: Dictionary, rng: RngStream) -> String:
 
 # Adds rare route hooks with deterministic per-instance odds.
 static func _append_rare_archetypes(target: Array, archetype: Dictionary, rng: RngStream) -> void:
-	var rare_ids := _string_array(archetype.get("rare_next_archetypes", []))
+	var rare_ids := JsonCoerceScript._string_array(archetype.get("rare_next_archetypes", []))
 	if rare_ids.is_empty():
 		return
 	var chance := clampi(int(archetype.get("rare_next_chance_percent", 8)), 0, 100)
@@ -826,7 +828,7 @@ static func _append_rare_archetypes(target: Array, archetype: Dictionary, rng: R
 
 # Generates one saved composition profile for venues that request unique music.
 static func _generated_music_profile(archetype: Dictionary, environment: EnvironmentInstance, rng: RngStream) -> Dictionary:
-	var profile := _copy_dict(archetype.get("music_profile", {}))
+	var profile := JsonCoerceScript._copy_dict(archetype.get("music_profile", {}))
 	if str(profile.get("procedural_variant", "")) != "jazz_club":
 		return profile
 	var progression_options := [
@@ -879,7 +881,7 @@ static func _generated_jazz_motif(rng: RngStream) -> Array:
 
 # Returns the presentation manifest key for this environment.
 static func _art_key(archetype: Dictionary) -> String:
-	var visual := _copy_dict(archetype.get("visual_context", {}))
+	var visual := JsonCoerceScript._copy_dict(archetype.get("visual_context", {}))
 	var key := str(archetype.get("art_key", visual.get("art_key", "")))
 	if not key.is_empty():
 		return key
@@ -888,19 +890,19 @@ static func _art_key(archetype: Dictionary) -> String:
 
 # Keeps first-person visual identity in simulation without concrete asset paths.
 static func _simulation_visual_context(archetype: Dictionary, p_art_key: String) -> Dictionary:
-	return _strip_presentation_paths(_copy_dict(archetype.get("visual_context", {})), p_art_key)
+	return _strip_presentation_paths(JsonCoerceScript._copy_dict(archetype.get("visual_context", {})), p_art_key)
 
 
 # Builds the per-instance room layout variant. Authored object families stay in their
 # authored zones, while encounters can trade spots between runs.
 static func _generated_layout_variant(archetype: Dictionary, rng: RngStream) -> Dictionary:
-	var layout := _copy_dict(archetype.get("layout", {}))
-	var randomized_fields := _string_array(archetype.get("randomized_spot_fields", ["event_spots", "lender_spots"]))
+	var layout := JsonCoerceScript._copy_dict(archetype.get("layout", {}))
+	var randomized_fields := JsonCoerceScript._string_array(archetype.get("randomized_spot_fields", ["event_spots", "lender_spots"]))
 	for field_name_value in randomized_fields:
 		var field_name := str(field_name_value)
-		var spots := _copy_array(layout.get(field_name, []))
+		var spots := JsonCoerceScript._copy_array(layout.get(field_name, []))
 		if spots.size() > 1:
-			layout[field_name] = rng.pick_many(spots, spots.size())
+			layout[field_name] = rng.shuffled(spots)
 	return layout
 
 
@@ -917,7 +919,7 @@ static func _build_offers(archetype: Dictionary, rng: RngStream, library: Conten
 	if library == null:
 		return []
 	var offers: Array = []
-	var economic_profile := _copy_dict(archetype.get("economic_profile", {}))
+	var economic_profile := JsonCoerceScript._copy_dict(archetype.get("economic_profile", {}))
 	var price_multiplier := 1.0
 	if economic_profile.has("shop_price_multiplier"):
 		price_multiplier = clampf(float(economic_profile.get("shop_price_multiplier", 1.0)), 0.5, 1.5)
@@ -955,15 +957,15 @@ static func _item_sale_price(item: Dictionary) -> int:
 
 
 static func _filtered_game_pool(archetype: Dictionary, library: ContentLibrary, challenge_config: Dictionary = {}) -> Array:
-	var pool := _copy_array(archetype.get("game_pool", []))
+	var pool := JsonCoerceScript._copy_array(archetype.get("game_pool", []))
 	if library == null:
-		return _string_array(pool)
+		return JsonCoerceScript._string_array(pool)
 	return library.filter_game_ids_for_challenge(pool, challenge_config)
 
 
 static func _filtered_required_games(archetype: Dictionary, filtered_pool: Array) -> Array:
 	var required: Array = []
-	for required_id in _string_array(archetype.get("required_game_ids", [])):
+	for required_id in JsonCoerceScript._string_array(archetype.get("required_game_ids", [])):
 		if filtered_pool.has(required_id):
 			required.append(required_id)
 	return required
@@ -971,19 +973,19 @@ static func _filtered_required_games(archetype: Dictionary, filtered_pool: Array
 
 # Picks a per-instance subset of lender hooks when the archetype declares a count.
 static func _pick_lenders(archetype: Dictionary, rng: RngStream) -> Array:
-	var pool := _string_array(archetype.get("lender_hooks", []))
+	var pool := JsonCoerceScript._string_array(archetype.get("lender_hooks", []))
 	var archetype_id := str(archetype.get("id", "")).strip_edges()
 	if archetype_id != PAWN_SHOP_ARCHETYPE_ID:
 		pool.erase(SALS_PAWN_COUNTER_ID)
 	if pool.is_empty():
 		return []
 	if not archetype.has("lender_count"):
-		return rng.pick_many(pool, pool.size())
-	var required_lenders := _string_array(archetype.get("required_lender_hooks", []))
+		return rng.shuffled(pool)
+	var required_lenders := JsonCoerceScript._string_array(archetype.get("required_lender_hooks", []))
 	if archetype_id != PAWN_SHOP_ARCHETYPE_ID:
 		required_lenders.erase(SALS_PAWN_COUNTER_ID)
 	var selected := _pick_ids_with_required(pool, archetype.get("lender_count", pool.size()), required_lenders, rng)
-	return rng.pick_many(selected, selected.size())
+	return rng.shuffled(selected)
 
 
 # Picks event ids that match the environment scopes.
@@ -997,13 +999,13 @@ static func _event_placement_hints(event_ids: Array, library: ContentLibrary, en
 	if library == null:
 		return result
 	var surfaces := EnvironmentPlacementScript.surface_map(environment_data)
-	var has_counters := not _copy_array(surfaces.get("counters", [])).is_empty()
-	var has_seats := not _copy_array(surfaces.get("seats", [])).is_empty()
-	for event_id in _string_array(event_ids):
+	var has_counters := not JsonCoerceScript._copy_array(surfaces.get("counters", [])).is_empty()
+	var has_seats := not JsonCoerceScript._copy_array(surfaces.get("seats", [])).is_empty()
+	for event_id in JsonCoerceScript._string_array(event_ids):
 		var definition := library.event(event_id)
 		if definition.is_empty():
 			continue
-		var speaker := _copy_dict(definition.get("speaker", {}))
+		var speaker := JsonCoerceScript._copy_dict(definition.get("speaker", {}))
 		var visual_prop := str(definition.get("environment_prop", ""))
 		var speaker_role := str(speaker.get("role", ""))
 		var hint := {
@@ -1032,9 +1034,9 @@ static func _pick_ids(pool: Array, requested_count: Variant, rng: RngStream) -> 
 
 # Picks unique ids while preserving explicit must-spawn ids.
 static func _pick_ids_with_required(pool: Array, requested_count: Variant, required_ids: Variant, rng: RngStream) -> Array:
-	var normalized_pool := _string_array(pool)
+	var normalized_pool := JsonCoerceScript._string_array(pool)
 	var required: Array = []
-	for required_id in _string_array(required_ids):
+	for required_id in JsonCoerceScript._string_array(required_ids):
 		if normalized_pool.has(required_id) and not required.has(required_id):
 			required.append(required_id)
 	var count := maxi(_count(requested_count, rng), required.size())
@@ -1068,7 +1070,7 @@ static func _count(requested_count: Variant, rng: RngStream) -> int:
 
 # Assigns stable rects to simple string-id object families.
 static func _assign_string_object_rects(object_rects: Dictionary, layout: Dictionary, object_type: String, ids: Array, spot_field: String, active_object_ids: Dictionary) -> void:
-	var stable_ids := _string_array(ids)
+	var stable_ids := JsonCoerceScript._string_array(ids)
 	for index in range(stable_ids.size()):
 		_assign_single_object_rect(object_rects, layout, "%s:%s" % [object_type, stable_ids[index]], object_type, index, spot_field, true, active_object_ids)
 
@@ -1077,10 +1079,10 @@ static func _assign_string_object_rects(object_rects: Dictionary, layout: Dictio
 # Extra fixtures route to the same game id while receiving stable object ids and spots.
 static func _game_layout_entries(environment_data: Dictionary) -> Array:
 	var entries: Array = []
-	var layout := _copy_dict(environment_data.get("layout", {}))
-	var fixture_counts := _copy_dict(layout.get("game_fixture_counts", {}))
+	var layout := JsonCoerceScript._copy_dict(environment_data.get("layout", {}))
+	var fixture_counts := JsonCoerceScript._copy_dict(layout.get("game_fixture_counts", {}))
 	var layout_index := 0
-	for game_id in _string_array(environment_data.get("game_ids", [])):
+	for game_id in JsonCoerceScript._string_array(environment_data.get("game_ids", [])):
 		var fixture_count := maxi(1, int(fixture_counts.get(game_id, 1)))
 		for fixture_index in range(fixture_count):
 			entries.append({
@@ -1449,12 +1451,12 @@ static func _sort_layout_rect_candidate(a: Variant, b: Variant) -> bool:
 static func _active_object_layout_entries(environment_data: Dictionary) -> Array:
 	var entries: Array = []
 	entries.append_array(_game_layout_entries(environment_data))
-	_append_string_layout_entries(entries, "event", _copy_array(environment_data.get("event_ids", [])), "event_spots")
+	_append_string_layout_entries(entries, "event", JsonCoerceScript._copy_array(environment_data.get("event_ids", [])), "event_spots")
 	entries.append_array(_environment_layer_layout_entries(environment_data))
-	var layout := _copy_dict(environment_data.get("layout", {}))
+	var layout := JsonCoerceScript._copy_dict(environment_data.get("layout", {}))
 	var prioritize_services := bool(layout.get("prioritize_service_spots", false))
 	if not prioritize_services:
-		_append_item_offer_layout_entries(entries, _copy_array(environment_data.get("item_offers", [])))
+		_append_item_offer_layout_entries(entries, JsonCoerceScript._copy_array(environment_data.get("item_offers", [])))
 	entries.append_array(_cage_gift_layout_entries(environment_data))
 	if _shopkeeper_should_exist(environment_data):
 		entries.append({"object_id": "shopkeeper:merchant", "object_type": "shopkeeper", "index": 0, "spot_field": "shopkeeper_spots"})
@@ -1462,8 +1464,8 @@ static func _active_object_layout_entries(environment_data: Dictionary) -> Array
 		entries.append({"object_id": "travel:leave", "object_type": "travel", "index": 0, "spot_field": "travel_spots"})
 	_append_string_layout_entries(entries, "travel", _grand_casino_local_target_ids(environment_data), "casino_door_spots")
 	_append_string_layout_entries(entries, "casino_fixture", _casino_fixture_ids(environment_data), "casino_fixture_spots")
-	_append_string_layout_entries(entries, "service", _copy_array(environment_data.get("service_ids", [])), "service_spots")
-	_append_string_layout_entries(entries, "lender", _copy_array(environment_data.get("lender_hooks", [])), "lender_spots")
+	_append_string_layout_entries(entries, "service", JsonCoerceScript._copy_array(environment_data.get("service_ids", [])), "service_spots")
+	_append_string_layout_entries(entries, "lender", JsonCoerceScript._copy_array(environment_data.get("lender_hooks", [])), "lender_spots")
 	entries.append_array(_game_hook_layout_entries(environment_data))
 	entries.append_array(_numbers_layout_entries(environment_data))
 	if _home_tenure_should_exist(environment_data):
@@ -1474,15 +1476,15 @@ static func _active_object_layout_entries(environment_data: Dictionary) -> Array
 		entries.append({"object_id": "home_storage:place", "object_type": "home_storage", "index": 0, "spot_field": "home_storage_spots"})
 	_append_string_layout_entries(entries, "home_container", _home_container_ids(environment_data), "home_container_spots")
 	if prioritize_services:
-		_append_item_offer_layout_entries(entries, _copy_array(environment_data.get("item_offers", [])))
+		_append_item_offer_layout_entries(entries, JsonCoerceScript._copy_array(environment_data.get("item_offers", [])))
 	var filtered := _filter_unique_object_layout_entries(entries)
-	var placement_hints := _copy_dict(_copy_dict(environment_data.get("layout", {})).get("object_placement_hints", {}))
-	var class_overrides := _copy_dict(EnvironmentPlacementScript.surface_map(environment_data).get("class_overrides", {}))
+	var placement_hints := JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(environment_data.get("layout", {})).get("object_placement_hints", {}))
+	var class_overrides := JsonCoerceScript._copy_dict(EnvironmentPlacementScript.surface_map(environment_data).get("class_overrides", {}))
 	for entry_value in filtered:
 		if typeof(entry_value) != TYPE_DICTIONARY:
 			continue
 		var entry: Dictionary = entry_value
-		var hint := _copy_dict(placement_hints.get(str(entry.get("object_id", "")), {}))
+		var hint := JsonCoerceScript._copy_dict(placement_hints.get(str(entry.get("object_id", "")), {}))
 		for key in hint.keys():
 			entry[key] = hint[key]
 		var object_id := str(entry.get("object_id", ""))
@@ -1498,7 +1500,7 @@ static func _environment_layer_layout_entries(environment_data: Dictionary) -> A
 	if not str(environment_data.get("layer_ambient_line", "")).strip_edges().is_empty():
 		entries.append({"object_id": "environment_layer:ambient", "object_type": "environment_layer", "index": index, "spot_field": "layer_spots"})
 		index += 1
-	for transition_value in _copy_array(environment_data.get("layer_transitions", [])):
+	for transition_value in JsonCoerceScript._copy_array(environment_data.get("layer_transitions", [])):
 		if typeof(transition_value) != TYPE_DICTIONARY:
 			continue
 		var target_id := str((transition_value as Dictionary).get("target_layer_id", "")).strip_edges()
@@ -1513,7 +1515,7 @@ static func _environment_layer_layout_entries(environment_data: Dictionary) -> A
 # Reserve their stable authored positions in the same generated layout as games,
 # events, services, and doors so the UI never composes a second placement layer.
 static func _numbers_layout_entries(environment_data: Dictionary) -> Array:
-	var layout := _copy_dict(environment_data.get("layout", {}))
+	var layout := JsonCoerceScript._copy_dict(environment_data.get("layout", {}))
 	var numbers_count := _layout_spot_count(layout, "numbers_spots")
 	var silas_count := _layout_spot_count(layout, "numbers_silas_spots")
 	if numbers_count <= 0 and silas_count <= 0:
@@ -1545,7 +1547,7 @@ static func _numbers_layout_entries(environment_data: Dictionary) -> Array:
 
 
 static func _append_string_layout_entries(entries: Array, object_type: String, ids: Array, spot_field: String) -> void:
-	var stable_ids := _string_array(ids)
+	var stable_ids := JsonCoerceScript._string_array(ids)
 	for index in range(stable_ids.size()):
 		entries.append({
 			"object_id": "%s:%s" % [object_type, stable_ids[index]],
@@ -1574,8 +1576,8 @@ static func _append_item_offer_layout_entries(entries: Array, offers: Array) -> 
 
 static func _cage_gift_layout_entries(environment_data: Dictionary) -> Array:
 	var result: Array = []
-	var shop_state := _copy_dict(environment_data.get("cage_gift_shop_state", {}))
-	var stock := _copy_array(shop_state.get("stock", []))
+	var shop_state := JsonCoerceScript._copy_dict(environment_data.get("cage_gift_shop_state", {}))
+	var stock := JsonCoerceScript._copy_array(shop_state.get("stock", []))
 	for stock_index in range(stock.size()):
 		if typeof(stock[stock_index]) != TYPE_DICTIONARY or bool((stock[stock_index] as Dictionary).get("sold", false)):
 			continue
@@ -1607,9 +1609,9 @@ static func _active_object_ids(environment_data: Dictionary) -> Dictionary:
 		var object_id := str((entry_value as Dictionary).get("object_id", ""))
 		if not object_id.is_empty():
 			result[object_id] = true
-	for event_id in _string_array(environment_data.get("event_ids", [])):
+	for event_id in JsonCoerceScript._string_array(environment_data.get("event_ids", [])):
 		result["event:%s" % event_id] = true
-	for offer in _copy_array(environment_data.get("item_offers", [])):
+	for offer in JsonCoerceScript._copy_array(environment_data.get("item_offers", [])):
 		if typeof(offer) != TYPE_DICTIONARY:
 			continue
 		var item_id := str((offer as Dictionary).get("id", ""))
@@ -1623,9 +1625,9 @@ static func _active_object_ids(environment_data: Dictionary) -> Dictionary:
 		result["casino_fixture:%s" % fixture_id] = true
 	for target_id in _grand_casino_local_target_ids(environment_data):
 		result["travel:%s" % target_id] = true
-	for service_id in _string_array(environment_data.get("service_ids", [])):
+	for service_id in JsonCoerceScript._string_array(environment_data.get("service_ids", [])):
 		result["service:%s" % service_id] = true
-	for lender_id in _string_array(environment_data.get("lender_hooks", [])):
+	for lender_id in JsonCoerceScript._string_array(environment_data.get("lender_hooks", [])):
 		result["lender:%s" % lender_id] = true
 	for entry_value in _environment_layer_layout_entries(environment_data):
 		if typeof(entry_value) == TYPE_DICTIONARY:
@@ -1668,7 +1670,7 @@ static func _travel_target_ids(environment_data: Dictionary) -> Array:
 		environment_data.get("next_archetypes", []),
 		environment_data.get("travel_hooks", []),
 	]:
-		for target_id in _string_array(source):
+		for target_id in JsonCoerceScript._string_array(source):
 			if not result.has(target_id):
 				result.append(target_id)
 	return result
@@ -1692,7 +1694,7 @@ static func _grand_casino_local_target_ids(environment_data: Dictionary) -> Arra
 	if not _is_grand_casino_archetype(environment_data):
 		return []
 	var flags: Dictionary = environment_data.get("local_narrative_flags", {}) if typeof(environment_data.get("local_narrative_flags", {})) == TYPE_DICTIONARY else {}
-	return _string_array(flags.get("casino_room_targets", []))
+	return JsonCoerceScript._string_array(flags.get("casino_room_targets", []))
 
 
 static func _is_grand_casino_archetype(environment_data: Dictionary) -> bool:
@@ -1702,12 +1704,12 @@ static func _is_grand_casino_archetype(environment_data: Dictionary) -> bool:
 
 static func _game_hook_layout_entries(environment_data: Dictionary) -> Array:
 	var result: Array = []
-	var game_states := _copy_dict(environment_data.get("game_states", {}))
-	for game_id in _string_array(environment_data.get("game_ids", [])):
+	var game_states := JsonCoerceScript._copy_dict(environment_data.get("game_states", {}))
+	for game_id in JsonCoerceScript._string_array(environment_data.get("game_ids", [])):
 		var machine: Variant = game_states.get(game_id, {})
 		if typeof(machine) != TYPE_DICTIONARY:
 			continue
-		for hook in _copy_array((machine as Dictionary).get("environment_hooks", [])):
+		for hook in JsonCoerceScript._copy_array((machine as Dictionary).get("environment_hooks", [])):
 			if typeof(hook) != TYPE_DICTIONARY:
 				continue
 			var hook_data: Dictionary = hook
@@ -1754,7 +1756,7 @@ static func _filter_unique_object_layout_entries(entries: Array) -> Array:
 
 static func _home_container_ids(environment_data: Dictionary) -> Array:
 	var result: Array = []
-	for container_value in _copy_array(environment_data.get("home_containers", [])):
+	for container_value in JsonCoerceScript._copy_array(environment_data.get("home_containers", [])):
 		if typeof(container_value) != TYPE_DICTIONARY:
 			continue
 		var container: Dictionary = container_value
@@ -1780,7 +1782,7 @@ static func _home_storage_should_exist(environment_data: Dictionary) -> bool:
 static func _shopkeeper_should_exist(environment_data: Dictionary) -> bool:
 	if _object_fixture_declared(environment_data, "shopkeeper:merchant"):
 		return true
-	if not _copy_array(environment_data.get("item_offers", [])).is_empty():
+	if not JsonCoerceScript._copy_array(environment_data.get("item_offers", [])).is_empty():
 		return true
 	return str(environment_data.get("kind", "")) == "shop"
 
@@ -1788,7 +1790,7 @@ static func _shopkeeper_should_exist(environment_data: Dictionary) -> bool:
 static func _object_fixture_declared(environment_data: Dictionary, object_id: String) -> bool:
 	if object_id.is_empty():
 		return false
-	for fixture_id in _string_array(environment_data.get("object_fixtures", [])):
+	for fixture_id in JsonCoerceScript._string_array(environment_data.get("object_fixtures", [])):
 		if fixture_id == object_id:
 			return true
 	return false
@@ -1810,26 +1812,5 @@ static func _deep_merge(base: Dictionary, overlay: Dictionary) -> Dictionary:
 
 
 # Safely duplicates array content.
-static func _copy_array(value: Variant) -> Array:
-	if typeof(value) != TYPE_ARRAY:
-		return []
-	return value.duplicate(true)
-
-
 # Safely converts an array-like value to non-empty strings.
-static func _string_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry in value:
-		var id := str(entry)
-		if not id.is_empty():
-			result.append(id)
-	return result
-
-
 # Safely duplicates dictionary content.
-static func _copy_dict(value: Variant) -> Dictionary:
-	if typeof(value) != TYPE_DICTIONARY:
-		return {}
-	return value.duplicate(true)

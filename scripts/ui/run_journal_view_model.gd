@@ -1,7 +1,9 @@
 class_name RunJournalViewModel
 extends RefCounted
 
-const VisualStyle := preload("res://scripts/ui/visual_style.gd")
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
+const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 
 
 static func entry_view_list(run_state: RunState, callbacks: Dictionary) -> Array:
@@ -34,21 +36,21 @@ static func summary_text(entries: Array) -> String:
 static func category_color(category: String) -> Color:
 	match category:
 		"travel":
-			return VisualStyle.TEAL
+			return VisualStyleScript.TEAL
 		"item":
-			return VisualStyle.AMBER
+			return VisualStyleScript.AMBER
 		"debt", "heat":
-			return VisualStyle.PINK_2
+			return VisualStyleScript.PINK_2
 		"boss", "showdown", "terminal":
-			return VisualStyle.YELLOW
+			return VisualStyleScript.YELLOW
 		"objective":
-			return VisualStyle.CYAN
+			return VisualStyleScript.CYAN
 		"event":
-			return VisualStyle.ORANGE
+			return VisualStyleScript.ORANGE
 		"game":
-			return VisualStyle.CYAN_2
+			return VisualStyleScript.CYAN_2
 		_:
-			return VisualStyle.SOFT
+			return VisualStyleScript.SOFT
 
 
 static func _entry_view(entry: Dictionary, entry_index: int, callbacks: Dictionary) -> Dictionary:
@@ -84,9 +86,9 @@ static func _category_for_entry(entry: Dictionary) -> String:
 		return "heat"
 	if entry_type == "travel":
 		return "travel"
-	if entry_type.begins_with("item_") or not _copy_array(entry.get("inventory_add", [])).is_empty() or not _copy_array(entry.get("inventory_remove", [])).is_empty():
+	if entry_type.begins_with("item_") or not JsonCoerceScript._copy_array(entry.get("inventory_add", [])).is_empty() or not JsonCoerceScript._copy_array(entry.get("inventory_remove", [])).is_empty():
 		return "item"
-	if entry_type.find("debt") != -1 or entry_type.find("lender") != -1 or not _copy_array(entry.get("debt_changes", [])).is_empty():
+	if entry_type.find("debt") != -1 or entry_type.find("lender") != -1 or not JsonCoerceScript._copy_array(entry.get("debt_changes", [])).is_empty():
 		return "debt"
 	if entry_type == "event" or not str(entry.get("event_id", "")).is_empty():
 		return "event"
@@ -164,16 +166,16 @@ static func _detail_lines(entry: Dictionary, callbacks: Dictionary) -> Array:
 	var game_id := str(entry.get("game_id", "")).strip_edges()
 	if not game_id.is_empty():
 		lines.append("Game: %s" % _call_string(callbacks, "game_display_name", [game_id]))
-	var attention_sources := _copy_array(entry.get("attention_sources", []))
+	var attention_sources := JsonCoerceScript._copy_array(entry.get("attention_sources", []))
 	if not attention_sources.is_empty():
 		lines.append("Attention: %s" % _label_list(attention_sources, callbacks))
-	var debt_changes := _copy_array(entry.get("debt_changes", []))
+	var debt_changes := JsonCoerceScript._copy_array(entry.get("debt_changes", []))
 	if not debt_changes.is_empty():
 		lines.append("Debt changed")
-	var inventory_add := _copy_array(entry.get("inventory_add", []))
+	var inventory_add := JsonCoerceScript._copy_array(entry.get("inventory_add", []))
 	if not inventory_add.is_empty():
 		lines.append("Gained: %s" % _label_list(inventory_add, callbacks))
-	var inventory_remove := _copy_array(entry.get("inventory_remove", []))
+	var inventory_remove := JsonCoerceScript._copy_array(entry.get("inventory_remove", []))
 	if not inventory_remove.is_empty():
 		lines.append("Used: %s" % _label_list(inventory_remove, callbacks))
 	return lines
@@ -250,7 +252,3 @@ static func _call_dict(callbacks: Dictionary, key: String, args: Array) -> Dicti
 		return {}
 	var value: Variant = callback.callv(args)
 	return (value as Dictionary).duplicate(true) if typeof(value) == TYPE_DICTIONARY else {}
-
-
-static func _copy_array(value: Variant) -> Array:
-	return (value as Array).duplicate(true) if typeof(value) == TYPE_ARRAY else []

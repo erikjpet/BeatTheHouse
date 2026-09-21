@@ -14,7 +14,7 @@ funny, comedic, sometimes rude — with distinct character voices — never a
 manual reciting what things do.
 
 **PHASE 1 IS ALREADY DONE AND OWNER-APPROVED.** The voice bible exists at
-`docs/plans/0.5_voice_bible.md` and the owner has signed off on it. Do NOT
+`docs/archive/0.5/plans/0.5_voice_bible.md` and the owner has signed off on it. Do NOT
 re-draft it or re-open the checkpoint — read it, treat it as binding, update
 `content_style_guide.md` to reference it if needed, and go straight to
 Phase 2 (the rewrite). If you find a character in the data that the bible
@@ -56,7 +56,7 @@ Code (hardcoded player-facing strings — a LARGE body, do not skip):
   coach bubbles, and any other on-screen string.
 
 Reference:
-- `docs/plans/0.5_voice_bible.md` — the approved voice (binding).
+- `docs/archive/0.5/plans/0.5_voice_bible.md` — the approved voice (binding).
 - `docs/plans/content_style_guide.md` — update it to reference the bible.
 
 Do NOT touch: internal ids, keys, enum values, debug/dev-only strings, log
@@ -65,7 +65,7 @@ a string is player-facing, check where it renders before rewriting it.
 
 ## PHASE 1 — DONE (voice bible approved)
 
-`docs/plans/0.5_voice_bible.md` is the approved, binding reference: the
+`docs/archive/0.5/plans/0.5_voice_bible.md` is the approved, binding reference: the
 world's neo-noir narrative voice, an identity + tics + sample lines for
 every recurring character (Rourke, Linda, Sal, the Crew, the brother-in-law,
 the street/motel lenders, June the bartender, dealers, hosts, Dave, and the
@@ -165,7 +165,7 @@ through in-voice:
 4. Report: the character roster and voices, the multiple-line pools added,
    the tooltip approach, and gate results.
 
-The voice bible is already approved (`docs/plans/0.5_voice_bible.md`) — there
+The voice bible is already approved (`docs/archive/0.5/plans/0.5_voice_bible.md`) — there
 is NO approval checkpoint; go straight to the rewrite. On an unfixable gate,
 stop at the last green commit, do NOT push, report verbatim.
 
@@ -173,7 +173,7 @@ stop at the last green commit, do NOT push, report verbatim.
 
 ## Execution record — 2026-07-29
 
-- Voice bible: `docs/plans/0.5_voice_bible.md` was treated as owner-approved and binding; `docs/plans/content_style_guide.md` now references it directly.
+- Voice bible: `docs/archive/0.5/plans/0.5_voice_bible.md` was treated as owner-approved and binding; `docs/plans/content_style_guide.md` now references it directly.
 - Commits:
   - `a4c7407a` — docs: bind 0.5 voice bible
   - `1c813562` — content: rewrite player-facing copy for 0.5 voice

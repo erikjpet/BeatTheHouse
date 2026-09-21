@@ -63,7 +63,7 @@ unexecuted success-only proof.
 ## Exact commands
 
 ```powershell
-& $godot --headless --path . --script res://tools/env06_7_package_d_author.gd
+& $godot --headless --path . --script res://tools/archive/env06_7/env06_7_package_d_author.gd
 & $godot --headless --path . --script res://scripts/tests/foundation/env06_7_package_d_contract.gd
 ```
 

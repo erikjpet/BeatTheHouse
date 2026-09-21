@@ -1,24 +1,26 @@
 class_name MetaCollectionViewModel
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 const CollectionItemResolverScript := preload("res://scripts/core/collection_item_resolver.gd")
 
 
 static func build(meta_service: Variant) -> Dictionary:
 	var resolver: Variant = CollectionItemResolverScript.new()
 	var snapshot := _service_snapshot(meta_service)
-	var owned_instances := _copy_array(snapshot.get("owned_instances", []))
-	var unopened_bags := _bag_rows(resolver, _copy_array(snapshot.get("unopened_bags", [])))
+	var owned_instances := JsonCoerceScript._copy_array(snapshot.get("owned_instances", []))
+	var unopened_bags := _bag_rows(resolver, JsonCoerceScript._copy_array(snapshot.get("unopened_bags", [])))
 	var owned_by_itemdef := _owned_by_itemdef(owned_instances)
 	var home := _home_view(meta_service, snapshot)
 	var collections: Array = []
 	for collection_value in resolver.collections():
-		var collection := _copy_dict(collection_value)
+		var collection := JsonCoerceScript._copy_dict(collection_value)
 		var item_rows: Array = []
-		for item_value in _copy_array(collection.get("items", [])):
-			var definition := _copy_dict(item_value)
+		for item_value in JsonCoerceScript._copy_array(collection.get("items", [])):
+			var definition := JsonCoerceScript._copy_dict(item_value)
 			var itemdef_id := int(definition.get("itemdef_id", -1))
-			item_rows.append(_item_row(resolver, definition, _copy_array(owned_by_itemdef.get(itemdef_id, []))))
+			item_rows.append(_item_row(resolver, definition, JsonCoerceScript._copy_array(owned_by_itemdef.get(itemdef_id, []))))
 		collections.append({
 			"id": str(collection.get("id", "")),
 			"display_name": str(collection.get("display_name", "Collection")),
@@ -101,7 +103,7 @@ static func _home_view(meta_service: Variant, snapshot: Dictionary) -> Dictionar
 static func _item_row(resolver: Variant, definition: Dictionary, instances: Array) -> Dictionary:
 	var owned_rows: Array = []
 	for instance_value in instances:
-		var instance := _copy_dict(instance_value)
+		var instance := JsonCoerceScript._copy_dict(instance_value)
 		var band: Dictionary = resolver.condition_band(definition, instance)
 		owned_rows.append({
 			"instance_id": int(instance.get("instance_id", 0)),
@@ -132,7 +134,7 @@ static func _item_row(resolver: Variant, definition: Dictionary, instances: Arra
 static func _bag_rows(resolver: Variant, bags: Array) -> Array:
 	var rows: Array = []
 	for bag_value in bags:
-		var bag := _copy_dict(bag_value)
+		var bag := JsonCoerceScript._copy_dict(bag_value)
 		var definition: Dictionary = resolver.bag_definition(int(bag.get("bagdef_id", -1)))
 		var collection: Dictionary = resolver.collection_definition(str(definition.get("collection_id", bag.get("collection_id", ""))))
 		var tier := str(definition.get("tier", bag.get("tier", "")))
@@ -155,7 +157,7 @@ static func _bag_rows(resolver: Variant, bags: Array) -> Array:
 static func _owned_by_itemdef(instances: Array) -> Dictionary:
 	var grouped: Dictionary = {}
 	for instance_value in instances:
-		var instance := _copy_dict(instance_value)
+		var instance := JsonCoerceScript._copy_dict(instance_value)
 		var itemdef_id := int(instance.get("itemdef_id", -1))
 		if itemdef_id < 0:
 			continue
@@ -167,9 +169,9 @@ static func _owned_by_itemdef(instances: Array) -> Dictionary:
 
 static func _owned_count_for_collection(collection: Dictionary, owned_by_itemdef: Dictionary) -> int:
 	var count := 0
-	for item_value in _copy_array(collection.get("items", [])):
-		var item := _copy_dict(item_value)
-		count += _copy_array(owned_by_itemdef.get(int(item.get("itemdef_id", -1)), [])).size()
+	for item_value in JsonCoerceScript._copy_array(collection.get("items", [])):
+		var item := JsonCoerceScript._copy_dict(item_value)
+		count += JsonCoerceScript._copy_array(owned_by_itemdef.get(int(item.get("itemdef_id", -1)), [])).size()
 	return count
 
 
@@ -200,18 +202,3 @@ static func _tier_badge(tier: String) -> Dictionary:
 		"polarity": "positive",
 		"tooltip": "%s collection tier" % clean_tier.capitalize(),
 	}
-
-
-static func _copy_dict(value: Variant) -> Dictionary:
-	# Projection helpers never mutate their inputs. The service/resolver boundary
-	# already supplies owned values, so borrow nested dictionaries read-only while
-	# constructing fresh output rows.
-	if typeof(value) != TYPE_DICTIONARY:
-		return {}
-	return value as Dictionary
-
-
-static func _copy_array(value: Variant) -> Array:
-	if typeof(value) != TYPE_ARRAY:
-		return []
-	return value as Array

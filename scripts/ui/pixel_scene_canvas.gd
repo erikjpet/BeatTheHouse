@@ -1,6 +1,8 @@
 class_name PixelSceneCanvas
 extends Control
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 # Draws first-person venue scenes as hard-edged pixel art directly on Godot's canvas.
 
 signal object_hovered(object_id: String)
@@ -750,7 +752,7 @@ func current_view_snapshot() -> Dictionary:
 		"minimum_environment_hit_size": SmallScreenPolicyScript.environment_hit_size(small_screen_mode),
 		"reserved_overlay_global_rect": reserved_overlay_global_rect,
 		"overlay_repositioned_object_ids": overlay_repositioned_object_ids.duplicate(),
-		"objects": _copy_array(_active_scene_objects()),
+		"objects": JsonCoerceScript._copy_array(_active_scene_objects()),
 		"object_layout": _scene_object_layout_snapshot(_active_scene_objects()),
 		"scenario_layout_audit": _copy_dictionary(foundation_snapshot.get("scenario_layout_audit", {})) if uses_foundation_snapshot else {},
 		"scenario_layout_authority_digest": str(foundation_snapshot.get("scenario_layout_authority_digest", "")) if uses_foundation_snapshot else "",
@@ -2634,7 +2636,7 @@ func _draw_scenario_actor(rect: Rect2, object_data: Dictionary, active: bool) ->
 	var pose := str(object_data.get("pose", "idle"))
 	var accent := C_ORANGE if behavior in ["guard", "fight", "flee"] else C_TEAL
 	var center := rect.get_center()
-	var route_points := _copy_array(object_data.get("route_points", []))
+	var route_points := JsonCoerceScript._copy_array(object_data.get("route_points", []))
 	if route_points.size() >= 2:
 		var start := _vector2_from_dict(route_points[0], Vector2.ZERO) * Vector2(BOARD_SIZE)
 		var finish := _vector2_from_dict(route_points[1], Vector2.ZERO) * Vector2(BOARD_SIZE)
@@ -2913,7 +2915,7 @@ func _rebuild_scene_object_cache() -> void:
 		var object_id := str(object_data.get("id", ""))
 		if not object_id.is_empty():
 			scene_objects_by_id_cache[object_id] = object_data
-		AttributeBadgeRowScript.warm_cache(_copy_array(object_data.get("attribute_badges", [])), 14)
+		AttributeBadgeRowScript.warm_cache(JsonCoerceScript._copy_array(object_data.get("attribute_badges", [])), 14)
 		_warm_object_info_layout_cache(object_data)
 
 
@@ -2928,7 +2930,7 @@ func _objects_from_foundation_snapshot(snapshot: Dictionary) -> Array:
 		objects.sort_custom(Callable(PixelSceneCanvas, "_sort_composed_scene_objects"))
 		return objects
 	else:
-		var games := _string_array(snapshot.get("game_ids", []))
+		var games := JsonCoerceScript._raw_string_array(snapshot.get("game_ids", []))
 		for index in range(games.size()):
 			objects.append({
 			"id": "game:%s" % games[index],
@@ -2936,7 +2938,7 @@ func _objects_from_foundation_snapshot(snapshot: Dictionary) -> Array:
 			"position": Vector2(0.28 + float(index % 3) * 0.18, 0.56 + float(index / 3) * 0.13),
 			"size": Vector2(118, 72),
 			})
-		var events := _string_array(snapshot.get("event_ids", []))
+		var events := JsonCoerceScript._raw_string_array(snapshot.get("event_ids", []))
 		for index in range(events.size()):
 			objects.append({
 			"id": "event:%s" % events[index],
@@ -2960,9 +2962,9 @@ func _objects_from_foundation_snapshot(snapshot: Dictionary) -> Array:
 			"position": Vector2(0.30 + float(index % 4) * 0.12, 0.76),
 			"size": Vector2(90, 54),
 			})
-		var travel_targets := _string_array(snapshot.get("next_archetypes", []))
+		var travel_targets := JsonCoerceScript._raw_string_array(snapshot.get("next_archetypes", []))
 		if travel_targets.is_empty():
-			travel_targets = _string_array(snapshot.get("travel_hooks", []))
+			travel_targets = JsonCoerceScript._raw_string_array(snapshot.get("travel_hooks", []))
 		if not travel_targets.is_empty():
 			objects.append({
 			"id": "travel:leave",
@@ -2979,8 +2981,8 @@ func _objects_from_foundation_snapshot(snapshot: Dictionary) -> Array:
 	if not bool(render_snapshot.get("ok", false)):
 		objects.sort_custom(Callable(PixelSceneCanvas, "_sort_composed_scene_objects"))
 		return objects
-	for stage_index in range(_copy_array(render_snapshot.get("active_stages", [])).size()):
-		var stage := _copy_dictionary(_copy_array(render_snapshot.get("active_stages", []))[stage_index])
+	for stage_index in range(JsonCoerceScript._copy_array(render_snapshot.get("active_stages", [])).size()):
+		var stage := _copy_dictionary(JsonCoerceScript._copy_array(render_snapshot.get("active_stages", []))[stage_index])
 		var stage_id := str(stage.get("stage_id", "stage_%d" % stage_index))
 		var stage_object_id := "scenario:stage:%s" % stage_id
 		if ids.has(stage_object_id): continue
@@ -2993,7 +2995,7 @@ func _objects_from_foundation_snapshot(snapshot: Dictionary) -> Array:
 			"non_color_state": "stage", "z_order": 10000 + stage_index,
 		}]))
 		ids[stage_object_id] = true
-	for visual_value in _copy_array(render_snapshot.get("visual_objects", [])):
+	for visual_value in JsonCoerceScript._copy_array(render_snapshot.get("visual_objects", [])):
 		var visual := _copy_dictionary(visual_value)
 		var object_id := str(visual.get("object_id", ""))
 		if object_id.is_empty() or ids.has(object_id) or not bool(visual.get("visible", true)):
@@ -3046,7 +3048,7 @@ func _objects_from_interactable_records(records: Array) -> Array:
 			"classification_summary": str(record.get("classification_summary", "")),
 			"addition_count": maxi(0, int(record.get("addition_count", 0))),
 			"cost_summary": str(record.get("cost_summary", "")),
-			"attribute_badges": _copy_array(record.get("attribute_badges", [])),
+			"attribute_badges": JsonCoerceScript._copy_array(record.get("attribute_badges", [])),
 			"runtime_state": (record.get("runtime_state", {}) as Dictionary).duplicate(true) if typeof(record.get("runtime_state", {})) == TYPE_DICTIONARY else {},
 			"visual_state": (record.get("visual_state", {}) as Dictionary).duplicate(true) if typeof(record.get("visual_state", {})) == TYPE_DICTIONARY else {},
 			"character_actor": (record.get("character_actor", {}) as Dictionary).duplicate(true) if typeof(record.get("character_actor", {})) == TYPE_DICTIONARY else {},
@@ -3061,7 +3063,7 @@ func _objects_from_interactable_records(records: Array) -> Array:
 			"actor_pose": str(record.get("actor_pose", "")),
 			"actor_behavior": str(record.get("actor_behavior", "")),
 			"actor_route_id": str(record.get("actor_route_id", "")),
-			"actor_route_points": _copy_array(record.get("actor_route_points", [])),
+			"actor_route_points": JsonCoerceScript._copy_array(record.get("actor_route_points", [])),
 			"actor_route_stage": _copy_dictionary(record.get("actor_route_stage", {})),
 			"small_screen_rect": _copy_dictionary(record.get("small_screen_rect", {})),
 			"scenario_z_order": int(record.get("scenario_z_order", index)),
@@ -3075,8 +3077,8 @@ func _objects_from_interactable_records(records: Array) -> Array:
 			"surface": str(record.get("surface", "")),
 			"icon_key": str(record.get("icon_key", "")),
 			"asset_path": str(record.get("asset_path", "")),
-			"available_actions": _copy_array(record.get("available_actions", [])),
-			"inline_actions": _copy_array(record.get("inline_actions", [])),
+			"available_actions": JsonCoerceScript._copy_array(record.get("available_actions", [])),
+			"inline_actions": JsonCoerceScript._copy_array(record.get("inline_actions", [])),
 			"confirm_action_id": str(record.get("confirm_action_id", "")),
 			"scenario_owner_namespace": str(record.get("scenario_owner_namespace", "")),
 			"scenario_stable_object_id": str(record.get("scenario_stable_object_id", "")),
@@ -3087,7 +3089,7 @@ func _objects_from_interactable_records(records: Array) -> Array:
 			"pose": str(record.get("pose", "")),
 			"behavior": str(record.get("behavior", "")),
 			"route_id": str(record.get("route_id", "")),
-			"route_points": _copy_array(record.get("route_points", [])),
+			"route_points": JsonCoerceScript._copy_array(record.get("route_points", [])),
 			"non_color_state": str(record.get("non_color_state", "")),
 			"z_order": int(record.get("z_order", 0)),
 			"z_order_explicit": bool(record.get("z_order_explicit", record.has("z_order"))),
@@ -3291,7 +3293,7 @@ func _apply_person_transit_fields(object_data: Dictionary, transit: Dictionary) 
 	object_data["person_transit_settled_position"] = object_data.get("position", Vector2(0.5, 0.5))
 	object_data["interactive"] = false
 	object_data["disabled"] = false
-	object_data["actor_route_points"] = _copy_array(transit.get("route_points", []))
+	object_data["actor_route_points"] = JsonCoerceScript._copy_array(transit.get("route_points", []))
 	object_data["actor_route_stage"] = _copy_dictionary(transit.get("route_stage", {}))
 
 
@@ -3601,23 +3603,6 @@ func _minimum_object_visual_size(object_type: String) -> Vector2:
 	return DEFAULT_OBJECT_VISUAL_MIN_SIZE
 
 
-func _string_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry in value:
-		var id := str(entry)
-		if not id.is_empty():
-			result.append(id)
-	return result
-
-
-func _copy_array(value: Variant) -> Array:
-	if typeof(value) != TYPE_ARRAY:
-		return []
-	return (value as Array).duplicate(true)
-
-
 func _array_view(value: Variant) -> Array:
 	if typeof(value) != TYPE_ARRAY:
 		return []
@@ -3695,7 +3680,7 @@ func _selected_object_info_snapshot() -> Dictionary:
 		"visible": true,
 		"object_id": str(info.get("object_id", "")),
 		"title": str(info.get("title", "")),
-		"lines": _copy_array(info.get("lines", [])),
+		"lines": JsonCoerceScript._copy_array(info.get("lines", [])),
 		"expanded": expanded,
 		"interaction_available": _object_info_is_actionable(object_data),
 		"interaction_status": _object_info_interaction_status(object_data),
@@ -3710,7 +3695,7 @@ func _selected_object_info_snapshot() -> Dictionary:
 		"action_label": _selected_info_action_label(object_data),
 		"action_button_rect": _rect_to_snapshot(action_button_rect),
 		"actions": _selected_info_action_snapshot_list(action_entries),
-		"attribute_badges": _copy_array(object_data.get("attribute_badges", [])) if expanded else [],
+		"attribute_badges": JsonCoerceScript._copy_array(object_data.get("attribute_badges", [])) if expanded else [],
 		"badge_hit_entries": _selected_info_badge_snapshot_list(_selected_info_badge_entries_for_rect(object_data, visual_rect, visual_rect.position.y + OBJECT_INFO_BODY_Y)) if expanded else [],
 		"body_text_start_y": _selected_info_body_text_start_y(object_data, visual_rect, expanded),
 	}
@@ -6992,7 +6977,7 @@ func _slot_prop_preview_symbol(preview: Dictionary, reel_index: int, row_index: 
 
 
 func _slot_prop_preview_cell_highlight(preview: Dictionary, reel_index: int, row_index: int) -> bool:
-	for cell_value in _copy_array(preview.get("win_cells", [])):
+	for cell_value in JsonCoerceScript._copy_array(preview.get("win_cells", [])):
 		if typeof(cell_value) != TYPE_DICTIONARY:
 			continue
 		var cell: Dictionary = cell_value
@@ -7068,7 +7053,7 @@ func _draw_slot_prop_nudge_chain_overlay(screen: Rect2, preview: Dictionary, pro
 	var chain: Dictionary = _copy_dictionary(preview.get("nudge_chain", {}))
 	if not bool(chain.get("active", false)):
 		return
-	var coins: Array = _copy_array(chain.get("coins", []))
+	var coins: Array = JsonCoerceScript._copy_array(chain.get("coins", []))
 	var row_count := maxi(1, int(preview.get("row_count", 1)))
 	var active_index := clampi(int(chain.get("active_index", 0)), 0, maxi(0, coins.size() - 1))
 	var active_coin: Dictionary = _copy_dictionary(coins[active_index]) if active_index < coins.size() else {}

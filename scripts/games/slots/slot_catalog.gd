@@ -1,6 +1,8 @@
 class_name SlotCatalog
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 const StateScript := preload("res://scripts/games/slots/slot_machine_state.gd")
 
 
@@ -12,8 +14,8 @@ func skin_for_machine(machine: Dictionary, definition: Dictionary) -> Dictionary
 	var identity: Dictionary = _identity_for(family_id, format_id)
 	var reel_count := int(geometry.get("reel_count", 3))
 	var row_count := int(geometry.get("row_count", 1))
-	var window: Dictionary = _copy_dict(identity.get("reel_window", _window_rect(reel_count, row_count)))
-	var base_palette: Dictionary = _copy_dict(identity.get("palette", {}))
+	var window: Dictionary = JsonCoerceScript._copy_dict(identity.get("reel_window", _window_rect(reel_count, row_count)))
+	var base_palette: Dictionary = JsonCoerceScript._copy_dict(identity.get("palette", {}))
 	return {
 		"id": "%s:%s" % [family_id, format_id],
 		"family": family_id,
@@ -29,16 +31,16 @@ func skin_for_machine(machine: Dictionary, definition: Dictionary) -> Dictionary
 		"reel_count": reel_count,
 		"row_count": row_count,
 		"pay_model": str(geometry.get("pay_model", "")),
-		"silhouette": _copy_dict(identity.get("silhouette", {})),
-		"topper_rect": _copy_dict(identity.get("topper_rect", {"x": 36, "y": 18, "w": 888, "h": 54})),
+		"silhouette": JsonCoerceScript._copy_dict(identity.get("silhouette", {})),
+		"topper_rect": JsonCoerceScript._copy_dict(identity.get("topper_rect", {"x": 36, "y": 18, "w": 888, "h": 54})),
 		"reel_window": window,
-		"feature_panel": _copy_dict(identity.get("feature_panel", {"x": 650, "y": 92, "w": 270, "h": 260})),
-		"tease_panel": _copy_dict(identity.get("tease_panel", {"x": 40, "y": 92, "w": 190, "h": 260})),
-		"playfield_rect": _copy_dict(identity.get("playfield_rect", {"x": 652, "y": 112, "w": 250, "h": 220})),
-		"belly_rect": _copy_dict(identity.get("belly_rect", {"x": 42, "y": 356, "w": 876, "h": 68})),
-		"result_strip": _copy_dict(identity.get("result_strip", {"x": 52, "y": 378, "w": 856, "h": 42})),
-		"controls": _copy_dict(identity.get("controls", {"x": 42, "y": 432, "w": 876, "h": 84})),
-		"side_rails": _copy_array(identity.get("side_rails", [])),
+		"feature_panel": JsonCoerceScript._copy_dict(identity.get("feature_panel", {"x": 650, "y": 92, "w": 270, "h": 260})),
+		"tease_panel": JsonCoerceScript._copy_dict(identity.get("tease_panel", {"x": 40, "y": 92, "w": 190, "h": 260})),
+		"playfield_rect": JsonCoerceScript._copy_dict(identity.get("playfield_rect", {"x": 652, "y": 112, "w": 250, "h": 220})),
+		"belly_rect": JsonCoerceScript._copy_dict(identity.get("belly_rect", {"x": 42, "y": 356, "w": 876, "h": 68})),
+		"result_strip": JsonCoerceScript._copy_dict(identity.get("result_strip", {"x": 52, "y": 378, "w": 856, "h": 42})),
+		"controls": JsonCoerceScript._copy_dict(identity.get("controls", {"x": 42, "y": 432, "w": 876, "h": 84})),
+		"side_rails": JsonCoerceScript._copy_array(identity.get("side_rails", [])),
 		"palette": {
 			"primary": str(cabinet.get("primary", base_palette.get("primary", "#24112f"))),
 			"secondary": str(cabinet.get("secondary", base_palette.get("secondary", "#090b13"))),
@@ -53,9 +55,9 @@ func skin_for_machine(machine: Dictionary, definition: Dictionary) -> Dictionary
 
 func all_skins(definition: Dictionary) -> Array:
 	var result: Array = []
-	for family_value in _dictionary_array(definition.get("slot_types", [])):
+	for family_value in JsonCoerceScript._dictionary_array(definition.get("slot_types", [])):
 		var family: Dictionary = family_value
-		for format_value in _dictionary_array(definition.get("slot_formats", [])):
+		for format_value in JsonCoerceScript._dictionary_array(definition.get("slot_formats", [])):
 			var format: Dictionary = format_value
 			var ids := {
 				"type_id": str(family.get("id", "pinball")),
@@ -68,8 +70,8 @@ func all_skins(definition: Dictionary) -> Array:
 
 func symbol_metadata(definition: Dictionary, family_id: String, symbol_id: String) -> Dictionary:
 	var config_key := "slot_%s_config" % family_id
-	var config: Dictionary = _copy_dict(definition.get(config_key, {}))
-	for entry_value in _dictionary_array(config.get("symbols", [])):
+	var config: Dictionary = JsonCoerceScript._copy_dict(definition.get(config_key, {}))
+	for entry_value in JsonCoerceScript._dictionary_array(config.get("symbols", [])):
 		var entry: Dictionary = entry_value
 		if str(entry.get("id", "")) == symbol_id:
 			return entry.duplicate(true)
@@ -77,7 +79,7 @@ func symbol_metadata(definition: Dictionary, family_id: String, symbol_id: Strin
 
 
 func variant_by_id(entries_value: Variant, variant_id: String) -> Dictionary:
-	for entry_value in _dictionary_array(entries_value):
+	for entry_value in JsonCoerceScript._dictionary_array(entries_value):
 		var entry: Dictionary = entry_value
 		if str(entry.get("id", "")) == variant_id:
 			return entry.duplicate(true)
@@ -219,26 +221,3 @@ func _window_rect(reel_count: int, row_count: int) -> Dictionary:
 	var width := clampf(float(reel_count) * 86.0 + 28.0, 300.0, 590.0)
 	var height := clampf(float(row_count) * 58.0 + 26.0, 96.0, 270.0)
 	return {"x": 480.0 - width * 0.5, "y": 92.0, "w": width, "h": height}
-
-
-func _dictionary_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	var source: Array = value as Array
-	for entry in source:
-		if typeof(entry) == TYPE_DICTIONARY:
-			result.append((entry as Dictionary).duplicate(true))
-	return result
-
-
-func _copy_array(value: Variant) -> Array:
-	if typeof(value) != TYPE_ARRAY:
-		return []
-	return (value as Array).duplicate(true)
-
-
-func _copy_dict(value: Variant) -> Dictionary:
-	if typeof(value) != TYPE_DICTIONARY:
-		return {}
-	return (value as Dictionary).duplicate(true)

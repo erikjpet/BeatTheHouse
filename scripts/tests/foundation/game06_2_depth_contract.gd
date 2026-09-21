@@ -469,7 +469,7 @@ func _check_read_only_compatibility_equivalence(game: GameModule, run: RunState,
 	var table_source := source.substr(table_start, table_end - table_start) if table_start >= 0 and table_end > table_start else ""
 	_check(
 		core_source.contains("read_only_run_state and (not _blackjack_compatibility_read_only_core_allowed")
-			and core_source.contains("_table_state(run_state, environment, read_only_run_state)")
+			and core_source.contains("_table_state(run_state, environment, read_only_run_state, owns_table_state)")
 			and table_source.contains("_apply_grand_casino_dealer_assignment(table, run_state, environment, observational)"),
 		"Read-only compatibility core no longer proves its closed classifier and observational table projection."
 	)

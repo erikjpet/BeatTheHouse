@@ -2962,37 +2962,9 @@ func _seeded_rng(stream_key: String) -> RngStream:
 	return rng
 
 
-func _dictionary_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry in value as Array:
-		if typeof(entry) == TYPE_DICTIONARY:
-			result.append(entry)
-	return result
-
-
 func _dict_ref(value: Variant) -> Dictionary:
 	return value as Dictionary if typeof(value) == TYPE_DICTIONARY else {}
 
 
 func _array_ref(value: Variant) -> Array:
 	return value as Array if typeof(value) == TYPE_ARRAY else []
-
-
-func _string_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry in value as Array:
-		result.append(str(entry))
-	return result
-
-
-func _int_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry in value as Array:
-		result.append(int(entry))
-	return result

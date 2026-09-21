@@ -6,7 +6,7 @@ This guide defines the release voice and copy guardrails for player-facing text
 in `data/` and obvious release-path script constants. It complements the
 existing compact-copy validators under `scripts/tests/foundation/`.
 
-The binding creative references are `docs/plans/0.5_voice_bible.md` for the
+The binding creative references are `docs/archive/0.5/plans/0.5_voice_bible.md` for the
 base cast/world voice and `docs/plans/0.6_voice_bible_world_register.md` for
 period methodology, narration registers, and the measurable brevity rule. This
 guide carries the compact UI limits and safety guardrails.

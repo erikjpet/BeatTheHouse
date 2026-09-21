@@ -33,7 +33,7 @@ The classes resolve to 80 unique delivery event IDs. Manifest SHA-256:
 
 | Check | Result |
 | --- | --- |
-| `Godot --headless --audio-driver Dummy --path . --script res://tools/audio06_1_surface_sfx_audit.gd` | PASS: 13 profiles, 80 complete signal-bearing streams, 10 deterministic seed traces |
+| `Godot --headless --audio-driver Dummy --path . --script res://tools/archive/audio06_1/audio06_1_surface_sfx_audit.gd` | PASS: 13 profiles, 80 complete signal-bearing streams, 10 deterministic seed traces |
 | Combined Foundation runner with `--check-ids=music_fx_foundation,music_stem_director_foundation` | PASS: 2/2 |
 | `Godot --headless --audio-driver Dummy --path . --script res://tools/roulette_audio_audit.gd` | PASS: 14 events, 254,016 PCM bytes |
 | `tools/validate_project.ps1 -Quiet` through supported harness | PASS (two runs) |

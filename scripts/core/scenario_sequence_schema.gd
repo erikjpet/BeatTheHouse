@@ -1,6 +1,8 @@
 class_name ScenarioSequenceSchema
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 # Data-only contract for authored room sequences. Runtime state is normalized by
 # ScenarioSequenceRuntime; this class validates immutable definitions.
 
@@ -181,10 +183,10 @@ static func _validation_authority_memo_projection(definition: Dictionary, target
 	var result := {"inventory_provided": true}
 	for collection_key in ["scene_objects", "interactions", "actors", "services", "games", "routes", "anchors", "zones"]:
 		var available: Dictionary = {}
-		for identity_value in _string_array(target_inventory.get(collection_key, [])):
+		for identity_value in JsonCoerceScript._unique_string_array(target_inventory.get(collection_key, [])):
 			available[str(identity_value)] = true
 		var presence: Dictionary = {}
-		for identity_value in _string_array(declared.get(collection_key, [])):
+		for identity_value in JsonCoerceScript._unique_string_array(declared.get(collection_key, [])):
 			var identity := str(identity_value)
 			presence[identity] = available.has(identity)
 		result[collection_key] = presence
@@ -363,7 +365,7 @@ static func normalized_signature(definition: Dictionary) -> Dictionary:
 		phase_features.append({
 			"ops": operation_features,
 			"branches": branches,
-			"objective_count": _string_array(phase_data.get("objective_ids", [])).size(),
+			"objective_count": JsonCoerceScript._unique_string_array(phase_data.get("objective_ids", [])).size(),
 			"terminal": bool(phase_data.get("terminal", false)),
 			"advance_after_actions": maxi(0, int(phase_data.get("advance_after_actions", 0))),
 		})
@@ -376,7 +378,7 @@ static func normalized_signature(definition: Dictionary) -> Dictionary:
 			var step := _dict(step_value)
 			steps.append({"kind": str(step.get("kind", "")), "source": str(step.get("fact_type", "world" if str(step.get("kind", "")) == "world_boundary" else "command"))})
 		steps.sort_custom(func(a: Variant, b: Variant) -> bool: return JSON.stringify(a) < JSON.stringify(b))
-		objective_features.append({"steps": steps, "outcome_count": _string_array(objective.get("outcomes", [])).size()})
+		objective_features.append({"steps": steps, "outcome_count": JsonCoerceScript._unique_string_array(objective.get("outcomes", [])).size()})
 	objective_features.sort_custom(func(a: Variant, b: Variant) -> bool: return JSON.stringify(a) < JSON.stringify(b))
 	var aftermath_features: Array = []
 	for aftermath_value in _dict(authored.get("aftermath", {})).values():
@@ -407,7 +409,7 @@ static func _declared_target_counts(value: Variant) -> Dictionary:
 	var result: Dictionary = {}
 	var declared := _dict(value)
 	for collection_key in ["scene_objects", "interactions", "actors", "services", "games", "routes", "anchors", "zones"]:
-		result[collection_key] = _string_array(declared.get(collection_key, [])).size()
+		result[collection_key] = JsonCoerceScript._unique_string_array(declared.get(collection_key, [])).size()
 	return result
 
 
@@ -488,9 +490,9 @@ static func _catalog_uniqueness_report(definitions: Array, expected_count: int, 
 			"phase_count": phases.size(),
 			"branch_count": branch_count,
 			"objective_count": _array(authored.get("objectives", [])).size(),
-			"mechanic_tags": _string_array(authored.get("mechanic_tags", [])),
+			"mechanic_tags": JsonCoerceScript._unique_string_array(authored.get("mechanic_tags", [])),
 			"calculated_completion": calculated_completion_contract(definition),
-			"capture_ids": _string_array(_dict(definition.get("sequence_authoring", {})).get("capture_ids", [])),
+			"capture_ids": JsonCoerceScript._unique_string_array(_dict(definition.get("sequence_authoring", {})).get("capture_ids", [])),
 			"seed_evidence": _dict(_dict(definition.get("sequence_authoring", {})).get("seed_evidence", {})),
 		})
 	var comparison_count := 0
@@ -518,7 +520,7 @@ static func _catalog_uniqueness_report(definitions: Array, expected_count: int, 
 			var diagnostic := "scenario %s vs %s: %.3f (%s)." % [str(left_row.get("id", "")), str(right_row.get("id", "")), similarity, str(band.get("status", ""))]
 			var evidence := _dict(masked_visual_explanations.get(pair_key, {}))
 			var explanation := str(evidence.get("explanation", "")).strip_edges()
-			var evidence_valid := not explanation.is_empty() and _valid_sha256(str(evidence.get("capture_receipt_sha256", ""))) and _valid_sha256(str(evidence.get("reviewer_receipt_sha256", "")))
+			var evidence_valid := not explanation.is_empty() and JsonCoerceScript._valid_sha256(str(evidence.get("capture_receipt_sha256", ""))) and JsonCoerceScript._valid_sha256(str(evidence.get("reviewer_receipt_sha256", "")))
 			pairs.append({"left_id": str(left_row.get("id", "")), "right_id": str(right_row.get("id", "")), "similarity": similarity, "equal_normalized_hash": equal_hash, "status": str(band.get("status", "")), "blocking": bool(band.get("blocking", false)), "masked_visual_evidence": evidence.duplicate(true), "masked_visual_evidence_valid": evidence_valid})
 			if bool(band.get("blocking", false)):
 				failures.append(diagnostic)
@@ -806,7 +808,7 @@ static func _validate_objectives(label: String, objectives: Array, errors: Array
 				errors.append("%s objective %s step %s requires registered fact_type." % [label, objective_id, step_id])
 			elif kind == "fact":
 				_validate_fact_payload_predicate("%s objective %s step %s" % [label, objective_id, step_id], str(step.get("fact_type", "")), step.get("payload_equals", {}), errors)
-		var objective_outcomes := _string_array(objective.get("outcomes", []))
+		var objective_outcomes := JsonCoerceScript._unique_string_array(objective.get("outcomes", []))
 		var sorted_outcomes := objective_outcomes.duplicate()
 		sorted_outcomes.sort()
 		var expected_outcomes := OBJECTIVE_OUTCOMES.duplicate()
@@ -861,7 +863,7 @@ static func _validate_declared_targets(label: String, value: Variant, target_inv
 		if typeof(declared.get(collection_key, [])) != TYPE_ARRAY:
 			errors.append("%s declared_targets.%s must be an array." % [label, collection_key])
 			continue
-		var identities := _string_array(declared.get(collection_key, []))
+		var identities := JsonCoerceScript._unique_string_array(declared.get(collection_key, []))
 		if identities.size() != _array(declared.get(collection_key, [])).size():
 			errors.append("%s declared_targets.%s contains invalid or duplicate identities." % [label, collection_key])
 		for identity_value in identities:
@@ -869,7 +871,7 @@ static func _validate_declared_targets(label: String, value: Variant, target_inv
 				errors.append("%s declared_targets.%s contains invalid identity %s." % [label, collection_key, str(identity_value)])
 			elif target_inventory.is_empty():
 				errors.append("%s declared_targets.%s identity %s has no independent target catalog proof." % [label, collection_key, str(identity_value)])
-			elif not _string_array(target_inventory.get(collection_key, [])).has(str(identity_value)):
+			elif not JsonCoerceScript._unique_string_array(target_inventory.get(collection_key, [])).has(str(identity_value)):
 				errors.append("%s declared_targets.%s identity %s is not present in the validated archetype/base inventory." % [label, collection_key, str(identity_value)])
 
 
@@ -877,9 +879,9 @@ static func verified_declared_targets(definition: Dictionary, target_inventory: 
 	var result: Dictionary = {}
 	var declared := _dict(sequence(definition).get("declared_targets", {}))
 	for collection_key in ["scene_objects", "interactions", "actors", "services", "games", "routes", "anchors", "zones"]:
-		var available := _string_array(target_inventory.get(collection_key, []))
+		var available := JsonCoerceScript._unique_string_array(target_inventory.get(collection_key, []))
 		var verified: Array = []
-		for identity_value in _string_array(declared.get(collection_key, [])):
+		for identity_value in JsonCoerceScript._unique_string_array(declared.get(collection_key, [])):
 			if available.has(str(identity_value)): verified.append(str(identity_value))
 		result[collection_key] = verified
 	return result
@@ -906,7 +908,7 @@ static func _validate_phase_safe_exit(label: String, authored: Dictionary, phase
 	var alternate_proof := false
 	for objective_value in _array(authored.get("objectives", [])):
 		var objective := _dict(objective_value)
-		if not _string_array(phase_data.get("objective_ids", [])).has(str(objective.get("id", ""))): continue
+		if not JsonCoerceScript._unique_string_array(phase_data.get("objective_ids", [])).has(str(objective.get("id", ""))): continue
 		for step_value in _array(objective.get("steps", [])):
 			var step := _dict(step_value)
 			if str(step.get("kind", "")) != "command" or not alternate_commands.has(str(step.get("command_id", ""))): continue
@@ -918,7 +920,7 @@ static func _validate_phase_safe_exit(label: String, authored: Dictionary, phase
 	var declared := _dict(authored.get("declared_targets", {}))
 	if blocked_targets.is_empty(): alternate_proof = false
 	for blocked_target_value in blocked_targets.keys():
-		if not _string_array(declared.get("interactions", [])).has(str(blocked_target_value)) and not _string_array(declared.get("routes", [])).has(str(blocked_target_value)):
+		if not JsonCoerceScript._unique_string_array(declared.get("interactions", [])).has(str(blocked_target_value)) and not JsonCoerceScript._unique_string_array(declared.get("routes", [])).has(str(blocked_target_value)):
 			alternate_proof = false
 	if not alternate_proof:
 		errors.append("%s phase %s must prove an enabled safe-exit action or bind each readable blocked route/exit to a reachable alternate objective action and branch." % [label, str(phase_data.get("id", ""))])
@@ -1008,8 +1010,8 @@ static func _material_target_seed(authored: Dictionary, target_inventory: Dictio
 	var declared := _dict(authored.get("declared_targets", {}))
 	for collection_key in ["scene_objects", "interactions", "actors", "services", "games", "routes", "anchors", "zones"]:
 		var keys: Dictionary = {}
-		for identity_value in _string_array(declared.get(collection_key, [])):
-			if not target_inventory.is_empty() and _string_array(target_inventory.get(collection_key, [])).has(str(identity_value)):
+		for identity_value in JsonCoerceScript._unique_string_array(declared.get(collection_key, [])):
+			if not target_inventory.is_empty() and JsonCoerceScript._unique_string_array(target_inventory.get(collection_key, [])).has(str(identity_value)):
 				keys[str(identity_value)] = {"present": true, "source": "base", "target_identity": str(identity_value), "material_origin": "base", "material_dirty": false}
 		result[collection_key] = keys
 	return result
@@ -1031,7 +1033,7 @@ static func _material_target_paths_by_outcome(authored: Dictionary, target_inven
 		var phase_id := str(item.get("phase_id", ""))
 		var phase_data := _dict(phase_index.get(phase_id, {}))
 		if phase_data.is_empty(): continue
-		var visited := _string_array(item.get("visited", []))
+		var visited := JsonCoerceScript._unique_string_array(item.get("visited", []))
 		if visited.has(phase_id):
 			if not _contains_error(errors, "material path repeats phase %s" % phase_id): errors.append("sequence material path repeats phase %s; phase cycles are not permitted." % phase_id)
 			continue
@@ -1352,7 +1354,7 @@ static func _validate_cross_references(label: String, authored: Dictionary, reac
 	for phase_value in _array(graph.get("phases", [])):
 		var phase_data := _dict(phase_value)
 		var phase_id := str(phase_data.get("id", ""))
-		for objective_id_value in _string_array(phase_data.get("objective_ids", [])):
+		for objective_id_value in JsonCoerceScript._unique_string_array(phase_data.get("objective_ids", [])):
 			if not objective_steps.has(str(objective_id_value)):
 				errors.append("%s phase %s references unknown objective %s." % [label, phase_id, str(objective_id_value)])
 		for condition_value in _array(phase_data.get("entry_conditions", [])):
@@ -1368,7 +1370,7 @@ static func _validate_cross_references(label: String, authored: Dictionary, reac
 		for operation_value in _array(phase_data.get("interaction_ops", [])):
 			var interaction := _dict(_dict(operation_value).get("interaction", {}))
 			for action_value in _array(interaction.get("available_actions", _dict(operation_value).get("available_actions", []))):
-				_validate_action_refs("%s phase %s action" % [label, phase_id], _dict(action_value), local_ids, objective_steps, reachable_outcomes, operation_registry, _string_array(phase_data.get("objective_ids", [])), _dict(target_inventory.get("event_choices", {})), errors)
+				_validate_action_refs("%s phase %s action" % [label, phase_id], _dict(action_value), local_ids, objective_steps, reachable_outcomes, operation_registry, JsonCoerceScript._unique_string_array(phase_data.get("objective_ids", [])), _dict(target_inventory.get("event_choices", {})), errors)
 	for subscription_value in _array(authored.get("fact_subscriptions", [])):
 		var subscription := _dict(subscription_value)
 		if not subscription.is_empty():
@@ -1668,14 +1670,6 @@ static func _contains_error(errors: Array, needle: String) -> bool:
 	return false
 
 
-static func _valid_sha256(value: String) -> bool:
-	if value.length() != 64 or value != value.to_lower(): return false
-	for index in range(value.length()):
-		var code := value.unicode_at(index)
-		if not (code >= 48 and code <= 57) and not (code >= 97 and code <= 102): return false
-	return true
-
-
 static func _valid_semantic_object_id(value: String) -> bool:
 	var parts := value.split(":", false)
 	if parts.is_empty() or parts.size() > 2: return false
@@ -1685,7 +1679,7 @@ static func _valid_semantic_object_id(value: String) -> bool:
 
 
 static func _validate_tags_and_exceptions(label: String, authored: Dictionary, errors: Array) -> void:
-	if _string_array(authored.get("mechanic_tags", [])).is_empty() or str(authored.get("sequence_signature", "")).strip_edges().is_empty():
+	if JsonCoerceScript._unique_string_array(authored.get("mechanic_tags", [])).is_empty() or str(authored.get("sequence_signature", "")).strip_edges().is_empty():
 		errors.append("%s requires mechanic_tags and an authored sequence_signature." % label)
 	for exception_value in _array(authored.get("owner_exceptions", [])):
 		var exception := _dict(exception_value)
@@ -1917,7 +1911,7 @@ static func _validate_fact_payload_predicate(label: String, fact_type: String, v
 		var expected_type := int(field_types.get(key, -1))
 		if expected_type >= 0 and typeof(predicate.get(key_value)) != expected_type:
 			errors.append("%s payload_equals.%s has the wrong type for %s." % [label, key, fact_type])
-		elif fact_type == "town_transition" and key == "happening_ids" and _string_array(predicate.get(key_value, [])).size() != _array(predicate.get(key_value, [])).size():
+		elif fact_type == "town_transition" and key == "happening_ids" and JsonCoerceScript._unique_string_array(predicate.get(key_value, [])).size() != _array(predicate.get(key_value, [])).size():
 			errors.append("%s payload_equals.happening_ids must contain unique stable strings." % label)
 		elif not _bounded_predicate_value(predicate.get(key_value)):
 			errors.append("%s payload_equals.%s is not a bounded scalar or scalar array." % [label, key])
@@ -1975,7 +1969,7 @@ static func _local_value_matches(type_id: String, value: Variant, field: Diction
 		"string":
 			return typeof(value) == TYPE_STRING
 		"enum":
-			return typeof(value) == TYPE_STRING and _string_array(field.get("values", [])).has(str(value))
+			return typeof(value) == TYPE_STRING and JsonCoerceScript._unique_string_array(field.get("values", [])).has(str(value))
 		"string_array":
 			if typeof(value) != TYPE_ARRAY or not _all_type(value as Array, TYPE_STRING): return false
 			var seen: Dictionary = {}
@@ -1998,8 +1992,8 @@ static func _normalized_local_value(type_id: String, value: Variant, field: Dict
 			var float_value := float(value) if [TYPE_FLOAT, TYPE_INT].has(typeof(value)) else float(field.get("default", 0.0))
 			return clampf(float_value, float(field.get("min", float_value)), float(field.get("max", float_value)))
 		"string": return str(value) if typeof(value) == TYPE_STRING else str(field.get("default", ""))
-		"enum": return str(value) if typeof(value) == TYPE_STRING and _string_array(field.get("values", [])).has(str(value)) else str(field.get("default", ""))
-		"string_array": return _string_array(value) if typeof(value) == TYPE_ARRAY else _string_array(field.get("default", []))
+		"enum": return str(value) if typeof(value) == TYPE_STRING and JsonCoerceScript._unique_string_array(field.get("values", [])).has(str(value)) else str(field.get("default", ""))
+		"string_array": return JsonCoerceScript._unique_string_array(value) if typeof(value) == TYPE_ARRAY else JsonCoerceScript._unique_string_array(field.get("default", []))
 		"int_array":
 			var result: Array = []
 			var source := _array(value) if typeof(value) == TYPE_ARRAY and _all_type(value as Array, TYPE_INT) else _array(field.get("default", []))
@@ -2139,19 +2133,8 @@ static func _sorted_keys(value: Dictionary) -> Array:
 
 
 static func _sorted_strings(value: Variant) -> Array:
-	var result := _string_array(value)
+	var result := JsonCoerceScript._unique_string_array(value)
 	result.sort()
-	return result
-
-
-static func _string_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for item_value in value as Array:
-		var item := str(item_value).strip_edges()
-		if not item.is_empty() and not result.has(item):
-			result.append(item)
 	return result
 
 

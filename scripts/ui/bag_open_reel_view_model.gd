@@ -1,6 +1,8 @@
 class_name BagOpenReelViewModel
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 const CollectionItemResolverScript := preload("res://scripts/core/collection_item_resolver.gd")
 const RngStreamScript := preload("res://scripts/core/rng_stream.gd")
 
@@ -14,10 +16,10 @@ const RESULT_BAG_KEY := "ba" + "g"
 
 
 static func build(open_result: Dictionary, possible_definitions: Array, reduce_motion: bool = false, seed_key: String = "") -> Dictionary:
-	var item := _copy_dict(open_result.get("item", {}))
-	var definition := _copy_dict(open_result.get("definition", {}))
-	var run_item := _copy_dict(open_result.get("run_item", {}))
-	var bag := _copy_dict(open_result.get(RESULT_BAG_KEY, {}))
+	var item := JsonCoerceScript._copy_dict(open_result.get("item", {}))
+	var definition := JsonCoerceScript._copy_dict(open_result.get("definition", {}))
+	var run_item := JsonCoerceScript._copy_dict(open_result.get("run_item", {}))
+	var bag := JsonCoerceScript._copy_dict(open_result.get(RESULT_BAG_KEY, {}))
 	if definition.is_empty() and int(item.get("itemdef_id", -1)) >= 0:
 		var resolver: Variant = CollectionItemResolverScript.new()
 		definition = resolver.item_definition(int(item.get("itemdef_id", -1)))
@@ -34,7 +36,7 @@ static func build(open_result: Dictionary, possible_definitions: Array, reduce_m
 		"committed_item": winning_card,
 		"won_display_name": str(definition.get("display_name", run_item.get("display_name", "Collection Item"))),
 		"won_rarity": str(definition.get("tier", "")),
-		"won_condition": str(open_result.get("condition_band", _copy_dict(run_item.get("meta_collection", {})).get("condition_band", ""))),
+		"won_condition": str(open_result.get("condition_band", JsonCoerceScript._copy_dict(run_item.get("meta_collection", {})).get("condition_band", ""))),
 		"message": "Won %s. It is already in your collection." % str(definition.get("display_name", "Collection Item")),
 		"sequence": sequence,
 		"landing_index": LANDING_INDEX,
@@ -55,22 +57,22 @@ static func snap_to_complete(model: Dictionary) -> Dictionary:
 
 
 static func landing_card(model: Dictionary) -> Dictionary:
-	var sequence := _dictionary_array(model.get("sequence", []))
+	var sequence := JsonCoerceScript._dictionary_array(model.get("sequence", []))
 	var index := int(model.get("landing_index", LANDING_INDEX))
 	if index >= 0 and index < sequence.size():
-		return _copy_dict(sequence[index])
+		return JsonCoerceScript._copy_dict(sequence[index])
 	return {}
 
 
 static func showcase_itemdef_ids(model: Dictionary) -> Array:
 	var result: Array = []
-	for card_value in _dictionary_array(model.get("contents", [])):
+	for card_value in JsonCoerceScript._dictionary_array(model.get("contents", [])):
 		result.append(int((card_value as Dictionary).get("itemdef_id", -1)))
 	return result
 
 
 static func _reel_sequence(possible_definitions: Array, winning_card: Dictionary, item: Dictionary, bag: Dictionary, seed_key: String) -> Array:
-	var options := _dictionary_array(possible_definitions)
+	var options := JsonCoerceScript._dictionary_array(possible_definitions)
 	if options.is_empty():
 		options = [winning_card]
 	var sequence: Array = []
@@ -102,7 +104,7 @@ static func _weighted_pick(options: Array, rng: RngStream) -> Dictionary:
 	var total := 0
 	var weights: Array = []
 	for value in options:
-		var definition := _copy_dict(value)
+		var definition := JsonCoerceScript._copy_dict(value)
 		var weight := _tier_visual_weight(str(definition.get("tier", "")))
 		weights.append(weight)
 		total += weight
@@ -111,14 +113,14 @@ static func _weighted_pick(options: Array, rng: RngStream) -> Dictionary:
 	for index in range(options.size()):
 		cursor += int(weights[index])
 		if roll <= cursor:
-			return _copy_dict(options[index])
-	return _copy_dict(options[options.size() - 1])
+			return JsonCoerceScript._copy_dict(options[index])
+	return JsonCoerceScript._copy_dict(options[options.size() - 1])
 
 
 static func _showcase_cards(possible_definitions: Array) -> Array:
 	var cards: Array = []
-	for value in _dictionary_array(possible_definitions):
-		cards.append(_item_card(_copy_dict(value), {}))
+	for value in JsonCoerceScript._dictionary_array(possible_definitions):
+		cards.append(_item_card(JsonCoerceScript._copy_dict(value), {}))
 	cards.sort_custom(func(left: Dictionary, right: Dictionary) -> bool:
 		var left_tier := TIERS.find(str(left.get("tier", "")))
 		var right_tier := TIERS.find(str(right.get("tier", "")))
@@ -177,17 +179,3 @@ static func _text_seed(text: String) -> int:
 	for index in range(text.length()):
 		hash = int((hash ^ text.unicode_at(index)) * 16777619) & 0x7fffffff
 	return maxi(1, hash)
-
-
-static func _dictionary_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry in value:
-		if typeof(entry) == TYPE_DICTIONARY:
-			result.append((entry as Dictionary).duplicate(true))
-	return result
-
-
-static func _copy_dict(value: Variant) -> Dictionary:
-	return (value as Dictionary).duplicate(true) if typeof(value) == TYPE_DICTIONARY else {}

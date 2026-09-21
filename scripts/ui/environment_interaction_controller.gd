@@ -1,5 +1,7 @@
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 const EnvironmentBaseSemanticRecordsScript := preload("res://scripts/core/environment_base_semantic_records.gd")
 const ScenarioSequenceSchemaScript := preload("res://scripts/core/scenario_sequence_schema.gd")
 const ScenarioSemanticViewModelScript := preload("res://scripts/ui/scenario_semantic_view_model.gd")
@@ -20,7 +22,7 @@ static func interactable_object_view_list(host: Variant) -> Array:
 	if failed_reason.strip_edges().is_empty():
 		failed_reason = "Run failed."
 	var game_sources: Array = []
-	var game_ids = host._string_array(host.run_state.current_environment.get("game_ids", []))
+	var game_ids = JsonCoerceScript._raw_string_array(host.run_state.current_environment.get("game_ids", []))
 	for index in range(game_ids.size()):
 		var game_id := str(game_ids[index])
 		game_sources.append({
@@ -47,7 +49,7 @@ static func interactable_object_view_list(host: Variant) -> Array:
 	after_travel_objects.append_array(host._hook_interactable_objects(host.CONTEXT_MODE_LENDER, host._lender_hook_view_list()))
 	var event_options: Array = []
 	var contact_event_ids: Array = []
-	for presence_value in host._copy_array(host.run_state.current_environment.get("crew_presence", [])):
+	for presence_value in JsonCoerceScript._copy_array(host.run_state.current_environment.get("crew_presence", [])):
 		if typeof(presence_value) == TYPE_DICTIONARY:
 			var contact_event_id := str((presence_value as Dictionary).get("contact_event_id", "")).strip_edges()
 			if not contact_event_id.is_empty():
@@ -156,7 +158,7 @@ static func interactable_object_view_list(host: Variant) -> Array:
 			var finalization_failure := projection_failure_result(result, _array(finalized.get("errors", [])), _dict(finalized.get("layout_audit", {})))
 			var committed_finalization_failure := committed_projection_status_result(host.run_state, finalization_failure, trusted_base_result)
 			return _array(committed_finalization_failure.get("records", trusted_base_result))
-		var sealed_base_records: Array = host._copy_array(finalized.get("records", []))
+		var sealed_base_records: Array = JsonCoerceScript._copy_array(finalized.get("records", []))
 		result = sealed_base_records.duplicate(true)
 		var projection_result := project_finalized_sequence_interaction_result(result, finalized)
 		var committed_result := committed_projection_status_result(host.run_state, projection_result, trusted_base_result)
@@ -165,7 +167,7 @@ static func interactable_object_view_list(host: Variant) -> Array:
 			result = restore_live_presentation_fields(
 				result,
 				trusted_base_result,
-				host._copy_array(host.run_state.current_environment.get("resolved_event_ids", []))
+				JsonCoerceScript._copy_array(host.run_state.current_environment.get("resolved_event_ids", []))
 			)
 			result = append_unsealed_live_records(result, trusted_base_result, sealed_base_records)
 	elif bool(world_preparation.get("active", false)):
@@ -174,7 +176,7 @@ static func interactable_object_view_list(host: Variant) -> Array:
 			var world_finalization_failure := projection_failure_result(result, _array(world_finalized.get("errors", [])), _dict(world_finalized.get("layout_audit", {})))
 			var committed_world_finalization_failure := committed_projection_status_result(host.run_state, world_finalization_failure, trusted_base_result)
 			return _array(committed_world_finalization_failure.get("records", trusted_base_result))
-		result = host._copy_array(world_finalized.get("records", []))
+		result = JsonCoerceScript._copy_array(world_finalized.get("records", []))
 		var world_projection_result := project_finalized_sequence_interaction_result(result, world_finalized)
 		var committed_world_result := committed_projection_status_result(host.run_state, world_projection_result, trusted_base_result)
 		result = _array(committed_world_result.get("records", trusted_base_result))
@@ -182,7 +184,7 @@ static func interactable_object_view_list(host: Variant) -> Array:
 			result = restore_live_presentation_fields(
 				result,
 				trusted_base_result,
-				host._copy_array(host.run_state.current_environment.get("resolved_event_ids", []))
+				JsonCoerceScript._copy_array(host.run_state.current_environment.get("resolved_event_ids", []))
 			)
 	else:
 		host.run_state.current_environment.erase("scenario_sequence_lifecycle_errors")
@@ -977,7 +979,7 @@ static func crew_presence_interactable_objects(host: Variant, event_options: Arr
 	if host.run_state == null:
 		return result
 	var index := 0
-	for value in host._copy_array(host.run_state.current_environment.get("crew_presence", [])):
+	for value in JsonCoerceScript._copy_array(host.run_state.current_environment.get("crew_presence", [])):
 		if typeof(value) != TYPE_DICTIONARY:
 			continue
 		var presence: Dictionary = value
@@ -1285,7 +1287,7 @@ static func numbers_interactable_objects(host: Variant) -> Array:
 		return objects
 	var venue_id := str(host.run_state.current_environment.get("archetype_id", host.run_state.current_world_node_id())).strip_edges()
 	var venue_row: Dictionary = {}
-	for venue_value in host._copy_array(host.run_state.numbers_status().get("venue_status", [])):
+	for venue_value in JsonCoerceScript._copy_array(host.run_state.numbers_status().get("venue_status", [])):
 		if typeof(venue_value) == TYPE_DICTIONARY and str((venue_value as Dictionary).get("id", "")) == venue_id:
 			venue_row = (venue_value as Dictionary).duplicate(true)
 			break
@@ -1384,7 +1386,7 @@ static func game_hook_interactable_objects(host: Variant, apply_failure_lock: bo
 		if failed_reason.strip_edges().is_empty():
 			failed_reason = "Run failed."
 	var hook_index := 0
-	for game_id in host._string_array(host.run_state.current_environment.get("game_ids", [])):
+	for game_id in JsonCoerceScript._raw_string_array(host.run_state.current_environment.get("game_ids", [])):
 		var game = host._game_module_for_id(game_id)
 		if game == null:
 			continue
@@ -1417,7 +1419,7 @@ static func game_hook_interactable_objects(host: Variant, apply_failure_lock: bo
 			var disabled_reason := str(hook.get("disabled_reason", ""))
 			if run_failed_without_recovery:
 				disabled_reason = failed_reason
-			var hook_actions: Array = [{"id": "start_dialogue", "label": "Talk"}] if enabled and not dialogue_id.is_empty() else host._copy_array(hook.get("available_actions", [])) if enabled else []
+			var hook_actions: Array = [{"id": "start_dialogue", "label": "Talk"}] if enabled and not dialogue_id.is_empty() else JsonCoerceScript._copy_array(hook.get("available_actions", [])) if enabled else []
 			var confirm_action: String = "start_dialogue" if enabled and not dialogue_id.is_empty() else str(hook.get("confirm_action_id", "")) if enabled else ""
 			var enriched_actions: Array = []
 			for action_value in hook_actions:
@@ -1445,7 +1447,7 @@ static func game_hook_interactable_objects(host: Variant, apply_failure_lock: bo
 				"risk_summary": str(hook.get("risk_summary", "")),
 				"cost_summary": str(hook.get("cost_summary", "")),
 				"dialogue_summary": str(hook.get("dialogue_summary", "")),
-				"attribute_badges": host._copy_array(hook.get("attribute_badges", [])),
+				"attribute_badges": JsonCoerceScript._copy_array(hook.get("attribute_badges", [])),
 				"visual_key": str(hook.get("visual_key", "")),
 				"icon_key": str(hook.get("icon_key", "service")),
 				"character_actor": character_actor,
@@ -1540,7 +1542,7 @@ static func home_interactable_objects(host: Variant) -> Array:
 			continue
 		var container: Dictionary = containers[index]
 		var container_id := str(container.get("id", ""))
-		var stored_items = host._string_array(container.get("items", []))
+		var stored_items = JsonCoerceScript._raw_string_array(container.get("items", []))
 		var capacity := maxi(0, int(container.get("capacity", 0)))
 		var object_id := "home_container:%s" % container_id
 		objects.append(host._make_interactable_object({
@@ -1622,7 +1624,7 @@ static func hook_interactable_objects(host: Variant, object_type: String, option
 			"risk_summary": "",
 			"cost_summary": "Cost: %d" % int(option.get("cost", 0)) if option.has("cost") else "",
 			"effect_summary": str(option.get("delta_summary", "")),
-			"attribute_badges": host._copy_array(option.get("attribute_badges", [])),
+			"attribute_badges": JsonCoerceScript._copy_array(option.get("attribute_badges", [])),
 			"visual_key": visual_type,
 			"prop": str(option.get("environment_prop", "")),
 			"surface": str(option.get("surface", "")),
@@ -1664,8 +1666,8 @@ static func parent_home_return_interactable_object(host: Variant) -> Dictionary:
 		"risk_summary": "",
 		"impact_summary": "No fare. No street exposure.",
 		"cost_summary": "Cost: 0",
-		"attribute_badges": host._copy_array(choice.get("attribute_badges", [])),
-		"preview_lines": host._copy_array(choice.get("preview_lines", [])),
+		"attribute_badges": JsonCoerceScript._copy_array(choice.get("attribute_badges", [])),
+		"preview_lines": JsonCoerceScript._copy_array(choice.get("preview_lines", [])),
 		"unlock_conditions": [],
 		"visual_key": "travel",
 		"prop": "door",
@@ -1682,7 +1684,7 @@ static func casino_spatial_interactable_objects(host: Variant) -> Array:
 		return objects
 	var flags: Dictionary = host.run_state.current_environment.get("local_narrative_flags", {}) if typeof(host.run_state.current_environment.get("local_narrative_flags", {})) == TYPE_DICTIONARY else {}
 	var fixture_index := 0
-	for fixture_value in host._copy_array(flags.get("casino_fixtures", [])):
+	for fixture_value in JsonCoerceScript._copy_array(flags.get("casino_fixtures", [])):
 		if typeof(fixture_value) != TYPE_DICTIONARY:
 			continue
 		var fixture: Dictionary = fixture_value
@@ -1719,7 +1721,7 @@ static func casino_spatial_interactable_objects(host: Variant) -> Array:
 		objects.append(host._make_interactable_object(object_data))
 		fixture_index += 1
 	var door_index := 0
-	for target_id_value in host._copy_array(flags.get("casino_room_targets", [])):
+	for target_id_value in JsonCoerceScript._copy_array(flags.get("casino_room_targets", [])):
 		var target_id := str(target_id_value).strip_edges()
 		var choice := casino_room_door_travel_choice(host, target_id)
 		if choice.is_empty():
@@ -1738,9 +1740,9 @@ static func casino_spatial_interactable_objects(host: Variant) -> Array:
 			"disabled_reason": str(choice.get("disabled_reason", "")),
 			"action_summary": "Enter room." if enabled else str(choice.get("disabled_reason", "Locked.")),
 			"cost_summary": "Cost: %d" % int(choice.get("cost", 0)),
-			"attribute_badges": host._copy_array(choice.get("attribute_badges", [])),
-			"preview_lines": host._copy_array(choice.get("preview_lines", [])),
-			"unlock_conditions": host._copy_array(choice.get("unlock_conditions", [])),
+			"attribute_badges": JsonCoerceScript._copy_array(choice.get("attribute_badges", [])),
+			"preview_lines": JsonCoerceScript._copy_array(choice.get("preview_lines", [])),
+			"unlock_conditions": JsonCoerceScript._copy_array(choice.get("unlock_conditions", [])),
 			"visual_key": "travel",
 			"prop": "door",
 			"icon_key": "travel",
@@ -1778,7 +1780,7 @@ static func environment_layer_interactable_objects(host: Variant) -> Array:
 			"focus_rect": host._interaction_rect_for_object("environment_layer:ambient", host.CONTEXT_MODE_ENVIRONMENT_LAYER, 0),
 		}))
 	var transition_index := 1
-	for transition_value in host._copy_array(host.run_state.current_environment.get("layer_transitions", [])):
+	for transition_value in JsonCoerceScript._copy_array(host.run_state.current_environment.get("layer_transitions", [])):
 		if typeof(transition_value) != TYPE_DICTIONARY:
 			continue
 		var transition: Dictionary = transition_value
@@ -1848,7 +1850,7 @@ static func travel_leave_interactable_object(host: Variant) -> Dictionary:
 		"risk_summary": host._travel_risk_summary(first_choice),
 		"impact_summary": host._travel_preview_summary(first_choice),
 		"cost_summary": "%d route(s)" % travel_choices.size(),
-		"attribute_badges": host._copy_array(first_choice.get("attribute_badges", [])),
+		"attribute_badges": JsonCoerceScript._copy_array(first_choice.get("attribute_badges", [])),
 		"preview_lines": preview_lines,
 		"unlock_conditions": [],
 		"visual_key": "travel",
@@ -1908,7 +1910,7 @@ static func local_parent_home_door_travel_choice(host: Variant, target_id: Strin
 		"risk_text": "",
 		"risk_event": {},
 		"attribute_badges": host.AttributeBadgesScript.for_route(route, {}),
-		"unlock_conditions": host._copy_array(status.get("unlock_conditions", [])),
+		"unlock_conditions": JsonCoerceScript._copy_array(status.get("unlock_conditions", [])),
 		"unlock_summary": str(status.get("unlock_summary", "")),
 		"preview": {"level": "full", "lines": [preview_line]},
 		"preview_level": "full",
@@ -1925,7 +1927,7 @@ static func casino_room_door_travel_choice(host: Variant, target_id: String) -> 
 		return {}
 	var clean_target_id := target_id.strip_edges()
 	var flags: Dictionary = host.run_state.current_environment.get("local_narrative_flags", {}) if typeof(host.run_state.current_environment.get("local_narrative_flags", {})) == TYPE_DICTIONARY else {}
-	if not host._string_array(flags.get("casino_room_targets", [])).has(clean_target_id):
+	if not JsonCoerceScript._raw_string_array(flags.get("casino_room_targets", [])).has(clean_target_id):
 		return {}
 	var archetype = host._environment_archetype(clean_target_id)
 	if archetype.is_empty():

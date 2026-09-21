@@ -1,6 +1,8 @@
 class_name ScenarioLayoutResolver
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 const ArtContractsScript := preload("res://scripts/core/art_contracts.gd")
 const OperationRegistryScript := preload("res://scripts/core/scenario_operation_registry.gd")
 const EnvironmentSemanticInventoryScript := preload("res://scripts/core/environment_semantic_inventory.gd")
@@ -214,7 +216,7 @@ static func sealed_renderer_snapshot(layout_result: Dictionary) -> Dictionary:
 	var authority_digest := str(layout_result.get("layout_authority_digest", ""))
 	var layout_audit := _dict(layout_result.get("layout_audit", {}))
 	var sealed_passive := not bool(layout_audit.get("active", true))
-	if not _valid_sha256(authority_digest) or _authority_digest(authority) != authority_digest:
+	if not JsonCoerceScript._valid_sha256(authority_digest) or _authority_digest(authority) != authority_digest:
 		return {"ok": false, "errors": ["Scenario renderer authority digest is missing or stale."]}
 	if sealed_passive and (not authority.is_empty() or _has_active_presentation(semantic_state)):
 		return {"ok": false, "errors": ["Scenario passive renderer snapshot contains active presentation authority."]}
@@ -440,15 +442,15 @@ static func failure_authority(base_records: Array = []) -> Dictionary:
 	var authored := Rect2(300.0, 24.0, 300.0, 76.0)
 	var placement := _collision_safe_rect("system::scenario_presentation_failure", authored, _base_occupied_records(base_records))
 	var rect: Rect2 = placement.get("rect", authored)
-	return _authority_record(
-		"system::scenario_presentation_failure",
-		"scenario::presentation_failure",
-		_normalized_rect(rect),
-		_normalized_rect(_expanded_rect(rect, SMALL_SCREEN_TARGET)),
-		MAX_VISUALS + 1,
-		"system_failure",
-		"trusted_runtime_fallback"
-	)
+	return _authority_record(FunctionOptions.ScenarioAuthorityRecordOptions.from({
+		"identity": "system::scenario_presentation_failure",
+		"presentation_object_id": "scenario::presentation_failure",
+		"normal": _normalized_rect(rect),
+		"small": _normalized_rect(_expanded_rect(rect, SMALL_SCREEN_TARGET)),
+		"z_order": MAX_VISUALS + 1,
+		"visual_kind": "system_failure",
+		"source": "trusted_runtime_fallback",
+	}))
 
 
 static func _resolve_visual(
@@ -935,20 +937,20 @@ static func _add_visual_authority(authority: Dictionary, collection: Dictionary,
 			z_order = int(existing.get("z_order", 0))
 			authority_kind = str(existing.get("visual_kind", "base_record"))
 			authority_source = "sealed_base_record"
-		var sealed_record := _authority_record(
-			identity,
-			presentation_object_id,
-			normal,
-			small,
-			z_order,
-			authority_kind,
-			authority_source,
-			_array(semantic.get("route_points", [])) if visual_kind == "actor" else [],
-			_dict(semantic.get("route_stage", {})) if visual_kind == "actor" else {},
-			true,
-			presentation_visible,
-			presentation_interactive
-		)
+		var sealed_record := _authority_record(FunctionOptions.ScenarioAuthorityRecordOptions.from({
+			"identity": identity,
+			"presentation_object_id": presentation_object_id,
+			"normal": normal,
+			"small": small,
+			"z_order": z_order,
+			"visual_kind": authority_kind,
+			"source": authority_source,
+			"actor_route_points": _array(semantic.get("route_points", [])) if visual_kind == "actor" else [],
+			"actor_route_stage": _dict(semantic.get("route_stage", {})) if visual_kind == "actor" else {},
+			"presentation_required": true,
+			"presentation_visible": presentation_visible,
+			"presentation_interactive": presentation_interactive,
+		}))
 		var placement_class := str(semantic.get("placement_class", existing.get("placement_class", "")))
 		sealed_record["placement_class"] = placement_class
 		sealed_record["contact"] = str(semantic.get("contact", existing.get("contact", _placement_contact(placement_class))))
@@ -973,20 +975,18 @@ static func _base_layout_authority(base_records: Array, errors: Array = [], envi
 		if class_override in EnvironmentPlacementScript.CLASSES:
 			classified_record["placement_class"] = class_override
 		var placement_class := EnvironmentPlacementScript.classify(classified_record, str(record.get("object_type", "")), object_id, str(record.get("prop", record.get("icon_key", ""))))
-		var sealed_record := _authority_record(
-			identity,
-			object_id.strip_edges(),
-			_normalized_rect(rect),
-			_normalized_rect(_expanded_rect(rect, SMALL_SCREEN_TARGET)),
-			int(record.get("scenario_z_order", record.get("z_order", 0))),
-			"base_record",
-			"sealed_base_record",
-			[],
-			{},
-			true,
-			bool(record.get("visible", true)),
-			bool(record.get("interactive", true))
-		)
+		var sealed_record := _authority_record(FunctionOptions.ScenarioAuthorityRecordOptions.from({
+			"identity": identity,
+			"presentation_object_id": object_id.strip_edges(),
+			"normal": _normalized_rect(rect),
+			"small": _normalized_rect(_expanded_rect(rect, SMALL_SCREEN_TARGET)),
+			"z_order": int(record.get("scenario_z_order", record.get("z_order", 0))),
+			"visual_kind": "base_record",
+			"source": "sealed_base_record",
+			"presentation_required": true,
+			"presentation_visible": bool(record.get("visible", true)),
+			"presentation_interactive": bool(record.get("interactive", true)),
+		}))
 		sealed_record["placement_class"] = placement_class
 		sealed_record["contact"] = _placement_contact(placement_class)
 		result[identity] = sealed_record
@@ -1053,7 +1053,18 @@ static func _seal_projection_coverage(authority: Dictionary, semantic_state: Dic
 				errors.append("Required semantic presentation %s has no layout authority to seal." % identity)
 				continue
 			var tombstone_kind := "actor" if actor_member else "scene_object" if scene_member else "interaction_tombstone"
-			record = _authority_record(identity, identity, {}, {}, 0, tombstone_kind, "semantic_tombstone", [], {}, false, false, false)
+			record = _authority_record(FunctionOptions.ScenarioAuthorityRecordOptions.from({
+				"identity": identity,
+				"presentation_object_id": identity,
+				"normal": {},
+				"small": {},
+				"z_order": 0,
+				"visual_kind": tombstone_kind,
+				"source": "semantic_tombstone",
+				"presentation_required": false,
+				"presentation_visible": false,
+				"presentation_interactive": false,
+			}))
 		var visible := bool(record.get("presentation_visible", true))
 		var interactive := bool(record.get("presentation_interactive", true))
 		if not visual.is_empty() and required:
@@ -1160,7 +1171,22 @@ static func _validate_actor_route_authority(identity: String, authority_record: 
 		errors.append("Actor layout authority %s route geometry or timing diverges from its sealed normal/small rectangles." % identity)
 
 
-static func _authority_record(identity: String, presentation_object_id: String, normal: Dictionary, small: Dictionary, z_order: int, visual_kind: String, source: String, actor_route_points: Array = [], actor_route_stage: Dictionary = {}, presentation_required: bool = true, presentation_visible: bool = true, presentation_interactive: bool = true, semantic_scene_object_member: bool = false, semantic_actor_member: bool = false, semantic_interaction_member: bool = false) -> Dictionary:
+static func _authority_record(options: FunctionOptions.ScenarioAuthorityRecordOptions) -> Dictionary:
+	var identity := str(options.values.get("identity", ""))
+	var presentation_object_id := str(options.values.get("presentation_object_id", ""))
+	var normal: Dictionary = options.values.get("normal", {})
+	var small: Dictionary = options.values.get("small", {})
+	var z_order := int(options.values.get("z_order", 0))
+	var visual_kind := str(options.values.get("visual_kind", ""))
+	var source := str(options.values.get("source", ""))
+	var actor_route_points: Array = options.values.get("actor_route_points", [])
+	var actor_route_stage: Dictionary = options.values.get("actor_route_stage", {})
+	var presentation_required := bool(options.values.get("presentation_required", true))
+	var presentation_visible := bool(options.values.get("presentation_visible", true))
+	var presentation_interactive := bool(options.values.get("presentation_interactive", true))
+	var semantic_scene_object_member := bool(options.values.get("semantic_scene_object_member", false))
+	var semantic_actor_member := bool(options.values.get("semantic_actor_member", false))
+	var semantic_interaction_member := bool(options.values.get("semantic_interaction_member", false))
 	return {
 		"actor_route_points": actor_route_points.duplicate(true),
 		"actor_route_stage": actor_route_stage.duplicate(true),
@@ -1943,16 +1969,6 @@ static func _finite_point(point: Vector2) -> bool:
 
 static func _finite_number(value: Variant) -> bool:
 	return typeof(value) in [TYPE_INT, TYPE_FLOAT] and is_finite(float(value))
-
-
-static func _valid_sha256(value: String) -> bool:
-	if value.length() != 64 or value != value.to_lower():
-		return false
-	for index in range(value.length()):
-		var code := value.unicode_at(index)
-		if not (code >= 48 and code <= 57) and not (code >= 97 and code <= 102):
-			return false
-	return true
 
 
 static func _point(value: Variant) -> Vector2:

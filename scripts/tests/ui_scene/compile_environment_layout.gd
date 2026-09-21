@@ -25,7 +25,7 @@ func _check_meta_home_launcher_opens_room(app: Control) -> bool:
 	if not _control_fits_viewport(canvas, viewport_rect, "meta home environment canvas"):
 		return false
 	var spatial: Dictionary = app.call("current_spatial_interaction_snapshot")
-	var objects := _copy_array(spatial.get("objects", []))
+	var objects := JsonCoerceScript._copy_array(spatial.get("objects", []))
 	var container_id := ""
 	var has_map_door := false
 	var bag_prop_count := 0
@@ -53,8 +53,8 @@ func _check_meta_home_launcher_opens_room(app: Control) -> bool:
 	if str(meta_hud.get("mode", "")) != "meta":
 		push_error("Meta home did not switch the top bar to meta mode.")
 		return false
-	var hud_fields := _copy_array(meta_hud.get("fields", []))
-	if hud_fields.size() != 3 or str(_copy_dict(hud_fields[0]).get("id", "")) != "location" or str(_copy_dict(hud_fields[1]).get("id", "")) != "gold" or str(_copy_dict(hud_fields[2]).get("id", "")) != "next_tier":
+	var hud_fields := JsonCoerceScript._copy_array(meta_hud.get("fields", []))
+	if hud_fields.size() != 3 or str(JsonCoerceScript._copy_dict(hud_fields[0]).get("id", "")) != "location" or str(JsonCoerceScript._copy_dict(hud_fields[1]).get("id", "")) != "gold" or str(JsonCoerceScript._copy_dict(hud_fields[2]).get("id", "")) != "next_tier":
 		push_error("Meta top bar should expose only location, gold, and next-tier goal, got %s." % str(hud_fields))
 		return false
 	if int(meta_hud.get("gold", -1)) != 0 or str(meta_hud.get("location_text", "")) != "Home · Back Alley" or str(meta_hud.get("next_home_label", "")) != "Motel Room" or int(meta_hud.get("next_home_price", 0)) != 60 or int(meta_hud.get("next_home_remaining_gold", -1)) != 60:
@@ -87,7 +87,7 @@ func _check_meta_home_launcher_opens_room(app: Control) -> bool:
 		return false
 	var meta_map_view: Dictionary = meta_map_canvas.call("current_view_snapshot")
 	var meta_map_bounds: Dictionary = meta_map_view.get("map_bounds", {}) if typeof(meta_map_view.get("map_bounds", {})) == TYPE_DICTIONARY else {}
-	var meta_map_markers: Array = _copy_array(meta_map_view.get("icon_markers", []))
+	var meta_map_markers: Array = JsonCoerceScript._copy_array(meta_map_view.get("icon_markers", []))
 	var meta_map_holder_rect := _snapshot_rect(meta_map_screen.get("world_map_holder_rect", {}))
 	var meta_home_marker := _map_icon_marker(meta_map_markers, "home")
 	if meta_home_marker.is_empty():
@@ -107,7 +107,7 @@ func _check_meta_home_launcher_opens_room(app: Control) -> bool:
 		return false
 	if not _map_markers_fit(meta_map_markers, meta_map_holder_rect, "initial meta world map"):
 		return false
-	var meta_target_ids: Array = _copy_array(_copy_dict(meta_map_screen.get("world_map", {})).get("travel_target_ids", []))
+	var meta_target_ids: Array = JsonCoerceScript._copy_array(JsonCoerceScript._copy_dict(meta_map_screen.get("world_map", {})).get("travel_target_ids", []))
 	if meta_target_ids.is_empty():
 		push_error("Meta world map did not expose a travel target.")
 		return false
@@ -130,7 +130,7 @@ func _check_meta_home_launcher_opens_room(app: Control) -> bool:
 	if not _map_canvas_size_equal(meta_map_view, selected_meta_map_view):
 		push_error("Selecting a meta world-map node changed the canvas size: before %s after %s." % [JSON.stringify(meta_map_view.get("canvas_size", {})), JSON.stringify(selected_meta_map_view.get("canvas_size", {}))])
 		return false
-	if not _map_markers_fit(_copy_array(selected_meta_map_view.get("icon_markers", [])), meta_map_holder_rect, "selected meta world map"):
+	if not _map_markers_fit(JsonCoerceScript._copy_array(selected_meta_map_view.get("icon_markers", [])), meta_map_holder_rect, "selected meta world map"):
 		return false
 	var selected_meta_screen: Dictionary = app.call("current_screen_snapshot")
 	var selected_meta_detail := str(selected_meta_screen.get("world_map_detail_text", ""))
@@ -138,7 +138,7 @@ func _check_meta_home_launcher_opens_room(app: Control) -> bool:
 	if selected_meta_lines.size() != 4 or not str(selected_meta_lines[1]).begins_with("Hours:") or str(selected_meta_lines[3]) != "0 min * 0$ * Walk":
 		push_error("Meta world-map detail did not use the compact four-field format: %s" % selected_meta_detail)
 		return false
-	var selected_meta_badges: Array = _copy_array(selected_meta_screen.get("world_map_detail_badges", []))
+	var selected_meta_badges: Array = JsonCoerceScript._copy_array(selected_meta_screen.get("world_map_detail_badges", []))
 	if not selected_meta_badges.is_empty():
 		push_error("Meta world-map detail retained badges outside the requested four fields: %s" % str(selected_meta_badges))
 		return false
@@ -178,13 +178,13 @@ func _check_meta_home_launcher_opens_room(app: Control) -> bool:
 		push_error("Meta pawn travel did not open the custom pawn-shop room: %s." % str(pawn_environment))
 		return false
 	var pawn_spatial: Dictionary = app.call("current_spatial_interaction_snapshot")
-	var pawn_objects := _copy_array(pawn_spatial.get("objects", []))
+	var pawn_objects := JsonCoerceScript._copy_array(pawn_spatial.get("objects", []))
 	if _object_by_id(pawn_objects, "meta_pawn_counter:sell").is_empty() or _object_by_id(pawn_objects, "meta_sal:talk").is_empty() or _object_by_id(pawn_objects, "travel:leave").is_empty():
 		push_error("Custom pawn-shop room did not expose separate Sal, sell-counter, and map-door interactions.")
 		return false
 	var shelf_offer_ids: Array = []
-	for offer_value in _copy_array(pawn_environment.get("item_offers", [])):
-		shelf_offer_ids.append(str(_copy_dict(offer_value).get("id", "")))
+	for offer_value in JsonCoerceScript._copy_array(pawn_environment.get("item_offers", [])):
+		shelf_offer_ids.append(str(JsonCoerceScript._copy_dict(offer_value).get("id", "")))
 	for slot_index in range(6):
 		if _object_by_id(pawn_objects, "meta_sal_shelf:%d" % slot_index).is_empty() or not shelf_offer_ids.has("sal_shelf_%d" % slot_index):
 			push_error("Custom pawn-shop room did not preserve stable shelf slot %d." % slot_index)
@@ -199,23 +199,23 @@ func _check_meta_home_launcher_opens_room(app: Control) -> bool:
 	]
 	for slot_index in range(authored_shelf_points.size()):
 		var shelf_object := _object_by_id(pawn_objects, "meta_sal_shelf:%d" % slot_index)
-		var focus_point := _copy_dict(shelf_object.get("focus_point", {}))
+		var focus_point := JsonCoerceScript._copy_dict(shelf_object.get("focus_point", {}))
 		var actual_point := Vector2(float(focus_point.get("x", -1.0)), float(focus_point.get("y", -1.0)))
 		if actual_point.distance_to(authored_shelf_points[slot_index]) > 0.0001:
 			push_error("Sal shelf slot %d moved off its authored item spot: expected %s got %s." % [slot_index, str(authored_shelf_points[slot_index]), str(actual_point)])
 			return false
 	var pawn_canvas := app.get("environment_canvas") as Control
 	var pawn_canvas_view: Dictionary = pawn_canvas.call("current_view_snapshot")
-	var pawn_layout := _copy_dict(pawn_canvas_view.get("object_layout", {}))
+	var pawn_layout := JsonCoerceScript._copy_dict(pawn_canvas_view.get("object_layout", {}))
 	if int(pawn_layout.get("overlap_count", -1)) != 0:
 		push_error("Sal shelf fixtures overlap in the authored pawn-shop layout: %s." % JSON.stringify(pawn_layout.get("overlaps", [])))
 		return false
-	if _copy_array(pawn_environment.get("item_offers", [])).size() != 6:
+	if JsonCoerceScript._copy_array(pawn_environment.get("item_offers", [])).size() != 6:
 		push_error("Custom pawn-shop room did not author exactly six physical shelf spots.")
 		return false
 	var meta_service: Variant = app.get("meta_collection_service")
-	var starter := _copy_dict(meta_service.sal_shelf_row(0))
-	var starter_item := _copy_dict(starter.get("item", {}))
+	var starter := JsonCoerceScript._copy_dict(meta_service.sal_shelf_row(0))
+	var starter_item := JsonCoerceScript._copy_dict(starter.get("item", {}))
 	var starter_price := int(starter.get("asking_price", 0))
 	meta_service.add_gold(starter_price)
 	var starter_arm: Dictionary = meta_service.arm_sal_shelf_purchase(0)
@@ -223,8 +223,8 @@ func _check_meta_home_launcher_opens_room(app: Control) -> bool:
 	await process_frame
 	run_state = app.get("run_state")
 	var starter_entry: Dictionary = run_state.pending_talk_event("dialogue:sal_starter_offer")
-	var starter_option := _copy_dict(app.call("_dialogue_option_for_entry", starter_entry))
-	var pending_offer := _copy_dict(meta_service.pending_starter_buyback())
+	var starter_option := JsonCoerceScript._copy_dict(app.call("_dialogue_option_for_entry", starter_entry))
+	var pending_offer := JsonCoerceScript._copy_dict(meta_service.pending_starter_buyback())
 	var expected_float_text := str(pending_offer.get("rare_channel", "")).replace("_", " ").capitalize()
 	if starter_entry.is_empty() or str(starter_option.get("summary", "")).find(expected_float_text) < 0 or str(starter_option.get("summary", "")).find(str(int(pending_offer.get("offer_price", 0)))) < 0:
 		push_error("Starter purchase did not open persisted Sal dialogue naming the exact rare float and offer: %s" % str(starter_option))
@@ -240,7 +240,7 @@ func _check_meta_home_launcher_opens_room(app: Control) -> bool:
 	app.call("_apply_meta_environment", app.get("meta_session_location_id"))
 	var normal := {}
 	for row_value in meta_service.sal_shelf_rows():
-		var candidate := _copy_dict(row_value)
+		var candidate := JsonCoerceScript._copy_dict(row_value)
 		if bool(candidate.get("occupied", false)) and str(candidate.get("listing_mode", "")) == "normal":
 			normal = candidate
 			break
@@ -256,7 +256,7 @@ func _check_meta_home_launcher_opens_room(app: Control) -> bool:
 	var purchase_dialogue_id := "sal_purchase_1" if not run_state.pending_talk_event("dialogue:sal_purchase_1").is_empty() else "sal_purchase_2"
 	app.call("resolve_event_choice", "dialogue:%s" % purchase_dialogue_id, "move_on")
 	await process_frame
-	var normal_instance_id := int(_copy_dict(normal.get("item", {})).get("instance_id", 0))
+	var normal_instance_id := int(JsonCoerceScript._copy_dict(normal.get("item", {})).get("instance_id", 0))
 	var shelf_before_sale := JSON.stringify(meta_service.sal_shelf_rows())
 	var sale_arm: Dictionary = meta_service.arm_sale("item", normal_instance_id)
 	app.call("_confirm_meta_sale", str(sale_arm.get("token", "")))
@@ -689,5 +689,4 @@ func _qa_action_label(action: Dictionary) -> String:
 	if action_id.is_empty():
 		return "Action"
 	return action_id.replace("_", " ").capitalize()
-
 

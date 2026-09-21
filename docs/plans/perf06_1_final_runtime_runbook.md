@@ -21,7 +21,7 @@ $godot = "D:\Projects\Beat-The-House\.tools\godot-4.6-stable\Godot_v4.6-stable_w
 $candidate = (& git rev-parse HEAD).Trim()
 $originMain = (& git rev-parse origin/main).Trim()
 if ($candidate -cne $originMain) { throw "HEAD is not the pushed origin/main candidate." }
-& tools/perf06_binding_preflight.ps1 -CandidateCommit $candidate
+& tools/archive/perf06/perf06_binding_preflight.ps1 -CandidateCommit $candidate
 if ($LASTEXITCODE -ne 0) { throw "Exact-source and reserved-port binding preflight failed." }
 if (-not (Test-Path -LiteralPath $godot -PathType Leaf)) { throw "Godot 4.6 stable is missing." }
 $busy = @(Get-Process -ErrorAction SilentlyContinue | Where-Object { $_.ProcessName -in @("Godot_v4.6-stable_win64", "Godot_v4.6-stable_win64_console", "BeatTheHouse", "chrome") })
@@ -42,11 +42,11 @@ if ([string]::IsNullOrWhiteSpace($workerWitness) -or [string]::IsNullOrWhiteSpac
 if ($workerWitness -ceq $directorWitness) { throw "Worker and director quiescence witnesses must be distinct." }
 New-Item -ItemType Directory -Path $normalRoot | Out-Null
 
-& tools/perf06_capture_quiescence.ps1 -Stage before -WorkerWitness $workerWitness -DirectorWitness $directorWitness -CandidateCommit $candidate -Out $beforeQuiescence -SampleCount 3 -RequireNoQualificationProcesses
+& tools/archive/perf06/perf06_capture_quiescence.ps1 -Stage before -WorkerWitness $workerWitness -DirectorWitness $directorWitness -CandidateCommit $candidate -Out $beforeQuiescence -SampleCount 3 -RequireNoQualificationProcesses
 if ($LASTEXITCODE -ne 0) { throw "Before-run quiescence custody failed." }
-& tools/perf06_capture_host_profile.ps1 -ProfileId "perf06-final-$tag-host" -Out $normalProfile -Method physical -WebCpuThrottleRate 4
+& tools/archive/perf06/perf06_capture_host_profile.ps1 -ProfileId "perf06-final-$tag-host" -Out $normalProfile -Method physical -WebCpuThrottleRate 4
 if ($LASTEXITCODE -ne 0) { throw "Normal host-profile capture failed." }
-& tools/perf06_capture_host_profile.ps1 -ProfileId "perf06-final-$tag-low-end" -Out $lowProfile -Method reproducible_whole_matrix_throttle -NativeProcessorAffinityHex 0x1 -NativePriorityClass BelowNormal -WebCpuThrottleRate 4
+& tools/archive/perf06/perf06_capture_host_profile.ps1 -ProfileId "perf06-final-$tag-low-end" -Out $lowProfile -Method reproducible_whole_matrix_throttle -NativeProcessorAffinityHex 0x1 -NativePriorityClass BelowNormal -WebCpuThrottleRate 4
 if ($LASTEXITCODE -ne 0) { throw "Low-end host-profile capture failed." }
 $normalProfileHash = (Get-FileHash -LiteralPath $normalProfile -Algorithm SHA256).Hash.ToLowerInvariant()
 ```
@@ -85,11 +85,11 @@ if ($LASTEXITCODE -ne 0) { throw "Complementary-startup contract failed." }
 if ($LASTEXITCODE -ne 0) { throw "Run-UI deferral contract failed." }
 & tools/coin_pusher_backglass_readability_contract.ps1
 if ($LASTEXITCODE -ne 0) { throw "Backglass readability contract failed." }
-& tools/perf06_deferred_validation_contract.ps1 -GodotPath $godot
+& tools/archive/perf06/perf06_deferred_validation_contract.ps1 -GodotPath $godot
 if ($LASTEXITCODE -ne 0) { throw "Deferred-validation runtime contract failed." }
-& $godot --headless --path . --script res://tools/perf06_web_ready_snapshot_contract.gd
+& $godot --headless --path . --script res://tools/archive/perf06/perf06_web_ready_snapshot_contract.gd
 if ($LASTEXITCODE -ne 0) { throw "Web READY snapshot runtime contract failed." }
-& $godot --headless --path . --script res://tools/perf06_idle_liveness_runtime_contract.gd
+& $godot --headless --path . --script res://tools/archive/perf06/perf06_idle_liveness_runtime_contract.gd
 if ($LASTEXITCODE -ne 0) { throw "Idle-liveness runtime contract failed." }
 $candidateTree = (& git rev-parse "HEAD^{tree}").Trim()
 & tools/coin_pusher_static_cache_contract.ps1 -GodotPath $godot -OutDir (Join-Path $normalRoot "coin_pusher_static_cache") -SourceHead $candidate -SourceTree $candidateTree
@@ -100,7 +100,7 @@ if ($LASTEXITCODE -ne 0) { throw "Coin Pusher production static-cache contract f
 
 ```powershell
 $normalAudit = Join-Path $normalRoot "allocation_call_root_audit.json"
-& tools/perf06_allocation_call_root_audit.ps1 -CandidateCommit $candidate -Out $normalAudit
+& tools/archive/perf06/perf06_allocation_call_root_audit.ps1 -CandidateCommit $candidate -Out $normalAudit
 if ($LASTEXITCODE -ne 0) { throw "Allocation call-root audit failed." }
 & tools/foundation_performance_probe.ps1 -RunCount 8 -FramesPerSurface 120 -ResolveSampleCount 48 -SeedPrefix $seedPrefix -Out (Join-Path $normalRoot "foundation_probe.json") -CandidateCommit $candidate -ProfileManifestSha256 $normalProfileHash -EvidenceProfile native -RequireGodot
 if ($LASTEXITCODE -ne 0) { throw "Foundation native probe failed." }
@@ -115,7 +115,7 @@ foreach ($plan in @("l02", "grand_casino", "coin_pusher")) {
     & tools/perf06_native_runtime_matrix.ps1 -ProfilePath $normalProfile -GodotPath $godot -OutDir $run -Plan $plan -EvidenceProfile native -Frames 120 -ActiveFrames 240 -MemorySeconds 600 -TimeoutMs 900000
     if ($LASTEXITCODE -ne 0) { throw "Native $plan runtime failed." }
     $surface = Join-Path $run "surface_report.json"
-    & tools/perf06_build_surface_report.ps1 -CandidateCommit $candidate -Platform native -Profile native -ProfilePath $normalProfile -LaunchSummary (Join-Path $run "summary.json") -StaticAudit $normalAudit -Out $surface
+    & tools/archive/perf06/perf06_build_surface_report.ps1 -CandidateCommit $candidate -Platform native -Profile native -ProfilePath $normalProfile -LaunchSummary (Join-Path $run "summary.json") -StaticAudit $normalAudit -Out $surface
     if ($LASTEXITCODE -ne 0) { throw "Native $plan surface report failed." }
     $surfaceReports.Add($surface)
 }
@@ -142,7 +142,7 @@ foreach ($spec in $webRuns) {
     if (-not $spec.surface) { continue }
     $summary = [IO.Path]::ChangeExtension($webOut, ".summary.json")
     $surface = [IO.Path]::ChangeExtension($webOut, ".surface.json")
-    & tools/perf06_build_surface_report.ps1 -CandidateCommit $candidate -Platform web -Profile web -ProfilePath $normalProfile -LaunchSummary $summary -StaticAudit $normalAudit -Out $surface
+    & tools/archive/perf06/perf06_build_surface_report.ps1 -CandidateCommit $candidate -Platform web -Profile web -ProfilePath $normalProfile -LaunchSummary $summary -StaticAudit $normalAudit -Out $surface
     if ($LASTEXITCODE -ne 0) { throw "Web $($spec.plan)/$($spec.cache) surface report failed." }
     $surfaceReports.Add($surface)
 }
@@ -153,14 +153,14 @@ foreach ($spec in $webRuns) {
 ```powershell
 $compositionOut = Join-Path $normalRoot "integ06_1_composition_matrix"
 $terminalOut = Join-Path $normalRoot "integ06_1_terminal_soak"
-& tools/integ06_1_composition_matrix.ps1 -CandidateCommit $candidate -ProfilePath $normalProfile -EvidenceProfile final -OutDir $compositionOut -GodotPath $godot -SeedCount 512 -ShardCount 8 -CaseTimeoutSeconds 120 -RequireGodot
+& tools/archive/integ06_1/integ06_1_composition_matrix.ps1 -CandidateCommit $candidate -ProfilePath $normalProfile -EvidenceProfile final -OutDir $compositionOut -GodotPath $godot -SeedCount 512 -ShardCount 8 -CaseTimeoutSeconds 120 -RequireGodot
 if ($LASTEXITCODE -ne 0) { throw "Composition matrix failed." }
-& tools/integ06_1_terminal_soak.ps1 -CandidateCommit $candidate -ProfilePath $normalProfile -EvidenceProfile final -OutDir $terminalOut -GodotPath $godot -ShardCount 3 -Cpu 4 -TimeoutMs 900000 -WebPort 18735 -RequireGodot
+& tools/archive/integ06_1/integ06_1_terminal_soak.ps1 -CandidateCommit $candidate -ProfilePath $normalProfile -EvidenceProfile final -OutDir $terminalOut -GodotPath $godot -ShardCount 3 -Cpu 4 -TimeoutMs 900000 -WebPort 18735 -RequireGodot
 if ($LASTEXITCODE -ne 0) { throw "Terminal soak failed." }
 $compositionManifest = Join-Path $compositionOut "manifest.json"
 $terminalManifest = Join-Path $terminalOut "manifest.json"
 
-& tools/perf06_matrix_contract.ps1 -CandidateCommit $candidate -CompositionManifest $compositionManifest -TerminalManifest $terminalManifest -SurfaceReports $surfaceReports.ToArray() -RequiredProfiles @("native", "web") -Out (Join-Path $normalRoot "matrix_contract_native_web.json")
+& tools/archive/perf06/perf06_matrix_contract.ps1 -CandidateCommit $candidate -CompositionManifest $compositionManifest -TerminalManifest $terminalManifest -SurfaceReports $surfaceReports.ToArray() -RequiredProfiles @("native", "web") -Out (Join-Path $normalRoot "matrix_contract_native_web.json")
 if ($LASTEXITCODE -ne 0) { throw "Native/Web matrix contract failed." }
 ```
 
@@ -171,9 +171,9 @@ under the declared one-logical-CPU/BelowNormal whole-process constraint and
 Web CPU throttle 4. Its own preflight and matrix consumer are mandatory.
 
 ```powershell
-& tools/perf06_low_end_matrix.ps1 -ProfilePath $lowProfile -GodotPath $godot -OutDir "$lowRoot-preflight" -PreflightOnly -RequireGodot
+& tools/archive/perf06/perf06_low_end_matrix.ps1 -ProfilePath $lowProfile -GodotPath $godot -OutDir "$lowRoot-preflight" -PreflightOnly -RequireGodot
 if ($LASTEXITCODE -ne 0) { throw "Low-end preflight failed." }
-& tools/perf06_low_end_matrix.ps1 -ProfilePath $lowProfile -GodotPath $godot -OutDir $lowRoot -SeedPrefix $seedPrefix -RequireGodot
+& tools/archive/perf06/perf06_low_end_matrix.ps1 -ProfilePath $lowProfile -GodotPath $godot -OutDir $lowRoot -SeedPrefix $seedPrefix -RequireGodot
 if ($LASTEXITCODE -ne 0) { throw "Low-end matrix failed." }
 ```
 
@@ -183,7 +183,7 @@ if ($LASTEXITCODE -ne 0) { throw "Low-end matrix failed." }
 $lowSurfaceReports = @(Get-ChildItem -LiteralPath $lowRoot -Recurse -File | Where-Object { $_.Name -eq "surface_report.json" -or $_.Name -like "*.surface.json" } | ForEach-Object FullName)
 $allSurfaceReports = @($surfaceReports.ToArray()) + $lowSurfaceReports
 $finalMatrix = Join-Path $normalRoot "matrix_contract_all_profiles.json"
-& tools/perf06_matrix_contract.ps1 -CandidateCommit $candidate -CompositionManifest $compositionManifest -TerminalManifest $terminalManifest -SurfaceReports $allSurfaceReports -RequiredProfiles @("native", "web", "low_end") -Out $finalMatrix
+& tools/archive/perf06/perf06_matrix_contract.ps1 -CandidateCommit $candidate -CompositionManifest $compositionManifest -TerminalManifest $terminalManifest -SurfaceReports $allSurfaceReports -RequiredProfiles @("native", "web", "low_end") -Out $finalMatrix
 if ($LASTEXITCODE -ne 0) { throw "Combined three-profile matrix contract failed." }
 if (& git status --porcelain=v1 --untracked-files=all) { throw "Tracked, index or nonignored untracked source changed during qualification." }
 
@@ -191,7 +191,7 @@ $matrix = Get-Content -LiteralPath $finalMatrix -Raw | ConvertFrom-Json
 if (-not $matrix.passed) { throw "Final matrix did not pass." }
 if (@($matrix.coverage | Where-Object { -not $_.present }).Count -ne 0) { throw "Final matrix has missing cells." }
 if (@($matrix.coverage | Where-Object { $_.samples -le 0 }).Count -ne 0) { throw "Final matrix contains an empty coverage row." }
-& tools/perf06_capture_quiescence.ps1 -Stage after -WorkerWitness $workerWitness -DirectorWitness $directorWitness -CandidateCommit $candidate -Out $afterQuiescence -SampleCount 3 -RequireNoQualificationProcesses
+& tools/archive/perf06/perf06_capture_quiescence.ps1 -Stage after -WorkerWitness $workerWitness -DirectorWitness $directorWitness -CandidateCommit $candidate -Out $afterQuiescence -SampleCount 3 -RequireNoQualificationProcesses
 if ($LASTEXITCODE -ne 0) { throw "After-run quiescence custody failed." }
 Get-ChildItem -LiteralPath $normalRoot, $lowRoot -Recurse -File |
     Get-FileHash -Algorithm SHA256 |

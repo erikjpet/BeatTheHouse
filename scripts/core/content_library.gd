@@ -1,6 +1,9 @@
 class_name ContentLibrary
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+const ItemEffectScript := preload("res://scripts/core/item_effect.gd")
+
 # Loads and validates README-defined foundation content packs.
 
 const MusicDeliveryIndexScript := preload("res://scripts/core/music_delivery_index.gd")
@@ -73,6 +76,7 @@ var validation_errors: Array = []
 var validation_warnings: Array = []
 var validation_complete := false
 var _load_errors: Array = []
+var archetype_by_id: Dictionary = {}
 var _indexes: Dictionary = {}
 var _action_trigger_event_candidates: Array = []
 var _action_trigger_event_candidate_buckets: Dictionary = {}
@@ -519,7 +523,7 @@ func _validate_character_chain_definitions() -> void:
 				validation_errors.append("character_chains %s beat %s references unknown event: %s" % [chain_id, beat_id, event_id])
 			if _as_dict(beat.get("placement", {})).is_empty():
 				validation_errors.append("character_chains %s beat %s needs placement." % [chain_id, beat_id])
-		for ending_flag in _string_array(chain.get("ending_flags", [])):
+		for ending_flag in JsonCoerceScript._unique_string_array(chain.get("ending_flags", [])):
 			if not ending_flag.begins_with(prefix):
 				validation_errors.append("character_chains %s ending flag escapes prefix: %s" % [chain_id, ending_flag])
 
@@ -747,7 +751,10 @@ func archetypes_for(tier: int) -> Array:
 
 # Finds an environment archetype definition by id.
 func environment_archetype(archetype_id: String) -> Dictionary:
-	return _lookup("environment_archetypes", environment_archetypes, archetype_id)
+	if archetype_by_id.size() != environment_archetypes.size() or not archetype_by_id.has(archetype_id):
+		archetype_by_id = _index_by_id(environment_archetypes)
+		_indexes["environment_archetypes"] = archetype_by_id
+	return archetype_by_id.get(archetype_id, {})
 
 
 # Returns scenario definitions for an archetype in authored order.
@@ -968,8 +975,8 @@ func content_group_options(selected_group_ids: Array = []) -> Array:
 			"description": str(group.get("description", "")),
 			"default_enabled": bool(group.get("default_enabled", true)),
 			"selected": bool(selected.get(group_id, false)),
-			"game_ids": _string_array(group.get("game_ids", [])),
-			"item_ids": _string_array(group.get("item_ids", [])),
+			"game_ids": JsonCoerceScript._unique_string_array(group.get("game_ids", [])),
+			"item_ids": JsonCoerceScript._unique_string_array(group.get("item_ids", [])),
 		})
 	return result
 
@@ -988,7 +995,7 @@ func item_enabled_for_challenge(item_id: String, challenge_config: Dictionary = 
 func filter_game_ids_for_challenge(ids: Variant, challenge_config: Dictionary = {}) -> Array:
 	var enabled := enabled_content_group_ids(challenge_config)
 	var result: Array = []
-	for game_id in _string_array(ids):
+	for game_id in JsonCoerceScript._unique_string_array(ids):
 		if _definition_enabled_for_groups(game(game_id), enabled):
 			result.append(game_id)
 	return result
@@ -998,7 +1005,7 @@ func filter_game_ids_for_challenge(ids: Variant, challenge_config: Dictionary = 
 func filter_item_ids_for_challenge(ids: Variant, challenge_config: Dictionary = {}) -> Array:
 	var enabled := enabled_content_group_ids(challenge_config)
 	var result: Array = []
-	for item_id in _string_array(ids):
+	for item_id in JsonCoerceScript._unique_string_array(ids):
 		if _definition_enabled_for_groups(item(item_id), enabled):
 			result.append(item_id)
 	return result
@@ -1186,7 +1193,7 @@ func scenario_target_catalog(definition: Dictionary) -> Dictionary:
 	var effective := EnvironmentSemanticInventoryScript.effective_archetype(archetype, requested_layer)
 	if effective.is_empty():
 		var invalid_inventory := EnvironmentSemanticInventoryScript.for_archetype(archetype, self, requested_layer)
-		return {"schema_version": 1, "kind": "scenario_target_catalog", "inventory": invalid_inventory, "guaranteed": EnvironmentSemanticInventoryScript.guaranteed_collections(invalid_inventory), "possible": EnvironmentSemanticInventoryScript.possible_collections(invalid_inventory), "records": _copy_array(invalid_inventory.get("records", [])), "provenance": _as_dict(invalid_inventory.get("provenance", {})), "event_choices": {}, "diagnostics": [], "errors": EnvironmentSemanticInventoryScript.validate(invalid_inventory)}
+		return {"schema_version": 1, "kind": "scenario_target_catalog", "inventory": invalid_inventory, "guaranteed": EnvironmentSemanticInventoryScript.guaranteed_collections(invalid_inventory), "possible": EnvironmentSemanticInventoryScript.possible_collections(invalid_inventory), "records": JsonCoerceScript._copy_array(invalid_inventory.get("records", [])), "provenance": _as_dict(invalid_inventory.get("provenance", {})), "event_choices": {}, "diagnostics": [], "errors": EnvironmentSemanticInventoryScript.validate(invalid_inventory)}
 	var scenario_state := ScenarioEngineScript.initial_state(definition)
 	effective = ScenarioEngineScript.apply_to_archetype(effective, scenario_state)
 	var inventory := EnvironmentSemanticInventoryScript.for_archetype(effective, self)
@@ -1212,7 +1219,7 @@ func scenario_target_catalog(definition: Dictionary) -> Dictionary:
 		"inventory": inventory,
 		"guaranteed": EnvironmentSemanticInventoryScript.guaranteed_collections(inventory),
 		"possible": EnvironmentSemanticInventoryScript.possible_collections(inventory),
-		"records": _copy_array(inventory.get("records", [])),
+		"records": JsonCoerceScript._copy_array(inventory.get("records", [])),
 		"provenance": _as_dict(inventory.get("provenance", {})),
 		"event_choices": event_choice_index,
 		"diagnostics": structured_diagnostics,
@@ -1222,13 +1229,13 @@ func scenario_target_catalog(definition: Dictionary) -> Dictionary:
 
 func scenario_target_catalog_messages(scenario_id: String, target_catalog: Dictionary) -> Array:
 	var result: Array = []
-	var structured := _copy_array(target_catalog.get("diagnostics", []))
+	var structured := JsonCoerceScript._copy_array(target_catalog.get("diagnostics", []))
 	for diagnostic_value in structured:
 		var diagnostic := _as_dict(diagnostic_value)
 		result.append("environment_scenarios %s target_catalog[%s]: %s" % [scenario_id, str(diagnostic.get("code", "unknown_target")), str(diagnostic.get("message", ""))])
 	var structured_messages: Array = []
 	for diagnostic_value in structured: structured_messages.append(str(_as_dict(diagnostic_value).get("message", "")))
-	for catalog_error_value in _copy_array(target_catalog.get("errors", [])):
+	for catalog_error_value in JsonCoerceScript._copy_array(target_catalog.get("errors", [])):
 		var catalog_error := str(catalog_error_value)
 		if not structured_messages.has(catalog_error): result.append("environment_scenarios %s target_catalog[source_invalid]: %s" % [scenario_id, catalog_error])
 	if target_catalog.is_empty(): result.append("environment_scenarios %s target_catalog[source_invalid]: catalog is empty" % scenario_id)
@@ -1383,7 +1390,7 @@ static func _normalize_event_definition(event_def: Dictionary) -> Dictionary:
 		"heat_threshold":
 			trigger["level"] = clampi(int(trigger.get("level", 65)), 0, 100)
 		"table_approach":
-			trigger["games"] = _string_array(trigger.get("games", []))
+			trigger["games"] = JsonCoerceScript._unique_string_array(trigger.get("games", []))
 			trigger["min_hands"] = maxi(0, int(trigger.get("min_hands", trigger.get("min_rounds", 1))))
 			trigger["chance"] = clampf(float(trigger.get("chance", 1.0)), 0.0, 1.0)
 	normalized["trigger"] = trigger
@@ -1480,8 +1487,9 @@ func trigger_event_index_full_pack_scan_count() -> int:
 # arrays directly; _lookup and the trigger-index identity guard refresh replacements
 # on demand. In-place fixture edits use rebuild_content_indexes() above.
 func _rebuild_indexes() -> void:
+	archetype_by_id = _index_by_id(environment_archetypes)
 	_indexes = {
-		"environment_archetypes": _index_by_id(environment_archetypes),
+		"environment_archetypes": archetype_by_id,
 		"games": _index_by_id(games),
 		"items": _index_by_id(items),
 		"content_groups": _index_by_id(content_groups),
@@ -1534,7 +1542,7 @@ func _rebuild_trigger_event_indexes() -> void:
 		if trigger_type != "table_approach":
 			continue
 		_table_approach_talk_event_candidates.append(event_definition)
-		var game_ids := _string_array(trigger.get("games", []))
+		var game_ids := JsonCoerceScript._unique_string_array(trigger.get("games", []))
 		if game_ids.is_empty():
 			_table_approach_has_wildcard = true
 			continue
@@ -1859,6 +1867,8 @@ func _validate_item_definitions() -> void:
 			validation_errors.append("items %s has price_min greater than price_max." % item_id)
 		if typeof(item_def.get("effect", {})) != TYPE_DICTIONARY:
 			validation_errors.append("items %s effect must be a dictionary." % item_id)
+		else:
+			_validate_item_modifier_type_conflicts(item_id, item_def.get("effect", {}))
 		var rarity := str(item_def.get("rarity", "")).strip_edges().to_lower()
 		if not rarity.is_empty() and not bool(allowed_rarity.get(rarity, false)):
 			validation_errors.append("items %s has unsupported rarity: %s." % [item_id, rarity])
@@ -1869,6 +1879,13 @@ func _validate_item_definitions() -> void:
 			validation_errors.append("items %s is missing environment_prop." % item_id)
 		if str(item_def.get("surface", "")).strip_edges().is_empty():
 			validation_errors.append("items %s is missing surface." % item_id)
+
+
+func _validate_item_modifier_type_conflicts(item_id: String, effect_value: Variant) -> void:
+	if typeof(effect_value) != TYPE_DICTIONARY:
+		return
+	for conflict_value in ItemEffectScript.modifier_type_conflicts(effect_value as Dictionary):
+		validation_errors.append("items %s modifier type conflict: %s." % [item_id, str(conflict_value)])
 
 
 # Validates content-group definitions and their game/item references.
@@ -1885,9 +1902,9 @@ func _validate_content_group_definitions() -> void:
 			validation_errors.append("content_groups %s default_enabled must be a boolean." % group_id)
 		_validate_id_references("content_groups %s game_ids" % group_id, group_def.get("game_ids", []), game_ids)
 		_validate_id_references("content_groups %s item_ids" % group_id, group_def.get("item_ids", []), item_ids)
-		for game_id in _string_array(group_def.get("game_ids", [])):
+		for game_id in JsonCoerceScript._unique_string_array(group_def.get("game_ids", [])):
 			grouped_games[game_id] = true
-		for item_id in _string_array(group_def.get("item_ids", [])):
+		for item_id in JsonCoerceScript._unique_string_array(group_def.get("item_ids", [])):
 			grouped_items[item_id] = true
 	for game_def in games:
 		if typeof(game_def) != TYPE_DICTIONARY:
@@ -1907,7 +1924,7 @@ func _validate_content_group_tags(label: String, ids: Variant, valid_ids: Dictio
 	if typeof(ids) != TYPE_ARRAY:
 		validation_errors.append("%s must be an array." % label)
 		return
-	var group_ids := _string_array(ids)
+	var group_ids := JsonCoerceScript._unique_string_array(ids)
 	if group_ids.is_empty():
 		validation_errors.append("%s must include at least one group id." % label)
 		return
@@ -2269,7 +2286,7 @@ func _validate_event_definitions() -> void:
 
 
 func _validate_event_layer_references(event_id: String, choice_id: String, conditions: Dictionary, consequences: Dictionary) -> void:
-	var scoped_archetypes := _string_array(conditions.get("archetype_ids", []))
+	var scoped_archetypes := JsonCoerceScript._unique_string_array(conditions.get("archetype_ids", []))
 	var declared_layers: Dictionary = {}
 	var candidate_archetypes := environment_archetypes
 	if not scoped_archetypes.is_empty():
@@ -2284,7 +2301,7 @@ func _validate_event_layer_references(event_id: String, choice_id: String, condi
 		for layer_id_value in _as_dict((archetype_value as Dictionary).get("layers", {})).keys():
 			declared_layers[str(layer_id_value)] = true
 	for field_name in ["layer_ids", "blocked_layer_ids"]:
-		for layer_id in _string_array(conditions.get(field_name, [])):
+		for layer_id in JsonCoerceScript._unique_string_array(conditions.get(field_name, [])):
 			if not declared_layers.has(layer_id):
 				validation_errors.append("events %s choice %s %s references unknown layer: %s" % [event_id, choice_id, field_name, layer_id])
 	var discovery := _as_dict(consequences.get("environment_layer_discovery", {}))
@@ -2389,7 +2406,7 @@ static func _dialogue_nodes_map(value: Variant) -> Dictionary:
 
 static func _single_or_array_strings(value: Variant) -> Array:
 	if typeof(value) == TYPE_ARRAY:
-		return _string_array(value)
+		return JsonCoerceScript._unique_string_array(value)
 	var text := str(value).strip_edges()
 	return [] if text.is_empty() else [text]
 
@@ -2522,7 +2539,7 @@ func _validate_character_pool_definitions() -> void:
 			continue
 		var pool: Dictionary = pool_value
 		var pool_id := str(pool.get("id", "")).strip_edges()
-		var member_ids := _string_array(pool.get("member_ids", []))
+		var member_ids := JsonCoerceScript._unique_string_array(pool.get("member_ids", []))
 		if member_ids.is_empty():
 			validation_errors.append("character_pools %s member_ids must not be empty." % pool_id)
 			continue
@@ -2571,7 +2588,7 @@ func _validate_character_speaker_reference(label: String, speaker: Dictionary, c
 		_validate_character_voice_key(label, character_id, line_key)
 	if not line_key.is_empty() and not pool_id.is_empty() and bool(pool_ids.get(pool_id, false)):
 		var pool := character_pool(pool_id)
-		for member_id_value in _string_array(pool.get("member_ids", [])):
+		for member_id_value in JsonCoerceScript._unique_string_array(pool.get("member_ids", [])):
 			_validate_character_voice_key(label, str(member_id_value), line_key)
 
 
@@ -2594,7 +2611,7 @@ func _validate_lender_character_ownership(lender: Dictionary) -> void:
 		owner_ids.append(direct_id)
 	var pool_id := str(speaker.get("character_pool_id", "")).strip_edges()
 	if not pool_id.is_empty():
-		owner_ids.append_array(_string_array(character_pool(pool_id).get("member_ids", [])))
+		owner_ids.append_array(JsonCoerceScript._unique_string_array(character_pool(pool_id).get("member_ids", [])))
 	for character_id_value in owner_ids:
 		var character_id := str(character_id_value)
 		if str(character(character_id).get("lender_id", "")).strip_edges() != lender_id:
@@ -2897,7 +2914,7 @@ func _validate_music_compatibility_sets(track: Dictionary, track_id: String, har
 	var sets: Array = sets_value
 	if sets.is_empty():
 		return
-	var required_roles := _string_array(track.get("compatibility_required_roles", []))
+	var required_roles := JsonCoerceScript._unique_string_array(track.get("compatibility_required_roles", []))
 	var set_ids := {}
 	var set_records := {}
 	for set_value in sets:
@@ -2917,7 +2934,7 @@ func _validate_music_compatibility_sets(track: Dictionary, track_id: String, har
 		var set_key := str(set_data.get("key", "")).strip_edges()
 		if set_key.is_empty():
 			validation_errors.append("music_tracks %s compatibility set %s must declare key." % [track_id, set_id])
-		var sections := _string_array(set_data.get("harmonic_sections", set_data.get("sections", [])))
+		var sections := JsonCoerceScript._unique_string_array(set_data.get("harmonic_sections", set_data.get("sections", [])))
 		if sections.is_empty():
 			validation_errors.append("music_tracks %s compatibility set %s must declare harmonic_sections." % [track_id, set_id])
 		for section_id in sections:
@@ -2933,21 +2950,21 @@ func _validate_music_compatibility_sets(track: Dictionary, track_id: String, har
 			continue
 		var roles: Dictionary = roles_value
 		var chord_voicings_value: Variant = set_data.get("chord_voicings", [])
-		var bass_roots := _string_array(set_data.get("bass_roots", []))
+		var bass_roots := JsonCoerceScript._unique_string_array(set_data.get("bass_roots", []))
 		if typeof(chord_voicings_value) != TYPE_ARRAY or (chord_voicings_value as Array).is_empty() or bass_roots.size() != (chord_voicings_value as Array).size():
 			validation_errors.append("music_tracks %s compatibility set %s must pair ordered chord_voicings with bass_roots." % [track_id, set_id])
 		else:
 			for voicing_value in chord_voicings_value as Array:
 				if typeof(voicing_value) != TYPE_ARRAY or (voicing_value as Array).size() < 3 or (voicing_value as Array).size() > 4:
 					validation_errors.append("music_tracks %s compatibility set %s chord voicings must contain 3 or 4 notes." % [track_id, set_id])
-		if bool(set_data.get("instrument_choice_required", false)) and _string_array(roles.get("pad", [])).size() < 2:
+		if bool(set_data.get("instrument_choice_required", false)) and JsonCoerceScript._unique_string_array(roles.get("pad", [])).size() < 2:
 			validation_errors.append("music_tracks %s compatibility set %s requires at least two chord-instrument choices." % [track_id, set_id])
 		for role_value in roles.keys():
 			var role := str(role_value)
 			if not bool(allowed_roles.get(role, false)):
 				validation_errors.append("music_tracks %s compatibility set %s has unknown role %s." % [track_id, set_id, role])
 				continue
-			var references := _string_array(roles.get(role_value, []))
+			var references := JsonCoerceScript._unique_string_array(roles.get(role_value, []))
 			for variant_id in references:
 				if not variant_records.has(variant_id):
 					validation_errors.append("music_tracks %s compatibility set %s role %s references unknown variant %s." % [track_id, set_id, role, variant_id])
@@ -2956,20 +2973,20 @@ func _validate_music_compatibility_sets(track: Dictionary, track_id: String, har
 				var variant: Dictionary = record.get("data", {}) as Dictionary
 				if str(record.get("role", "")) != role:
 					validation_errors.append("music_tracks %s compatibility set %s role %s references %s from role %s." % [track_id, set_id, role, variant_id, str(record.get("role", ""))])
-				var variant_sections := _string_array(variant.get("harmonic_sections", variant.get("sections", [])))
+				var variant_sections := JsonCoerceScript._unique_string_array(variant.get("harmonic_sections", variant.get("sections", [])))
 				for section_id in sections:
 					if not variant_sections.has(section_id):
 						validation_errors.append("music_tracks %s compatibility set %s variant %s crosses section %s." % [track_id, set_id, variant_id, section_id])
 				if not set_key.is_empty() and str(variant.get("key", "")) != set_key:
 					validation_errors.append("music_tracks %s compatibility set %s variant %s key %s crosses set key %s." % [track_id, set_id, variant_id, str(variant.get("key", "")), set_key])
-				if not _string_array(variant.get("progression_compatibility", [])).has(progression_id):
+				if not JsonCoerceScript._unique_string_array(variant.get("progression_compatibility", [])).has(progression_id):
 					validation_errors.append("music_tracks %s compatibility set %s variant %s does not declare that progression compatibility." % [track_id, set_id, variant_id])
 		for required_role in required_roles:
 			var positive_candidates := 0
-			for variant_id in _string_array(roles.get(required_role, [])):
+			for variant_id in JsonCoerceScript._unique_string_array(roles.get(required_role, [])):
 				var record: Dictionary = variant_records.get(variant_id, {}) as Dictionary
 				var variant: Dictionary = record.get("data", {}) as Dictionary
-				if str(record.get("role", "")) == required_role and bool(variant.get("enabled", true)) and float(variant.get("weight", 1.0)) > 0.0 and _string_array(variant.get("progression_compatibility", [])).has(progression_id):
+				if str(record.get("role", "")) == required_role and bool(variant.get("enabled", true)) and float(variant.get("weight", 1.0)) > 0.0 and JsonCoerceScript._unique_string_array(variant.get("progression_compatibility", [])).has(progression_id):
 					positive_candidates += 1
 			if positive_candidates <= 0:
 				validation_errors.append("music_tracks %s compatibility set %s required role %s has no positive compatible candidates." % [track_id, set_id, required_role])
@@ -2987,7 +3004,7 @@ func _validate_music_compatibility_sets(track: Dictionary, track_id: String, har
 				validation_errors.append("music_tracks %s compatibility set %s contrast must keep progression %s." % [track_id, set_id, str(contrast_set.get("progression_id", contrast_set_id))])
 		if set_data.has("force_change_roles") and typeof(set_data.get("force_change_roles")) != TYPE_ARRAY:
 			validation_errors.append("music_tracks %s compatibility set %s force_change_roles must be an array." % [track_id, set_id])
-		for role in _string_array(set_data.get("force_change_roles", [])):
+		for role in JsonCoerceScript._unique_string_array(set_data.get("force_change_roles", [])):
 			if not bool(allowed_roles.get(role, false)):
 				validation_errors.append("music_tracks %s compatibility set %s force_change_roles contains unknown role %s." % [track_id, set_id, role])
 	var recipes_value: Variant = track.get("arrangement_recipes", [])
@@ -3005,7 +3022,7 @@ func _validate_music_compatibility_sets(track: Dictionary, track_id: String, har
 			validation_errors.append("music_tracks %s arrangement recipe ids must be present and unique: %s." % [track_id, recipe_id])
 		else:
 			recipe_ids[recipe_id] = true
-		var recipe_sections := _string_array(recipe.get("sections", []))
+		var recipe_sections := JsonCoerceScript._unique_string_array(recipe.get("sections", []))
 		if recipe_sections.is_empty():
 			validation_errors.append("music_tracks %s arrangement recipe %s must contain sections." % [track_id, recipe_id])
 		for section_id in recipe_sections:
@@ -3016,17 +3033,17 @@ func _validate_music_compatibility_sets(track: Dictionary, track_id: String, har
 				if typeof(set_value) != TYPE_DICTIONARY:
 					continue
 				var set_data: Dictionary = set_value
-				if not bool(set_data.get("enabled", true)) or float(set_data.get("weight", 1.0)) <= 0.0 or not _string_array(set_data.get("harmonic_sections", set_data.get("sections", []))).has(section_id):
+				if not bool(set_data.get("enabled", true)) or float(set_data.get("weight", 1.0)) <= 0.0 or not JsonCoerceScript._unique_string_array(set_data.get("harmonic_sections", set_data.get("sections", []))).has(section_id):
 					continue
 				var roles: Dictionary = _as_dict(set_data.get("roles", {}))
 				var complete := true
 				var progression_id := str(set_data.get("progression_id", set_data.get("id", "")))
 				for required_role in required_roles:
 					var found := false
-					for variant_id in _string_array(roles.get(required_role, [])):
+					for variant_id in JsonCoerceScript._unique_string_array(roles.get(required_role, [])):
 						var record: Dictionary = _as_dict(variant_records.get(variant_id, {}))
 						var variant: Dictionary = _as_dict(record.get("data", {}))
-						if str(record.get("role", "")) == required_role and bool(variant.get("enabled", true)) and float(variant.get("weight", 1.0)) > 0.0 and _string_array(variant.get("progression_compatibility", [])).has(progression_id):
+						if str(record.get("role", "")) == required_role and bool(variant.get("enabled", true)) and float(variant.get("weight", 1.0)) > 0.0 and JsonCoerceScript._unique_string_array(variant.get("progression_compatibility", [])).has(progression_id):
 							found = true
 							break
 					if not found:
@@ -3491,7 +3508,7 @@ func _validate_environment_references() -> void:
 		_validate_id_references("environment %s service_pool" % archetype_id, archetype.get("service_pool", []), service_ids)
 		_validate_id_references("environment %s lender_hooks" % archetype_id, archetype.get("lender_hooks", []), lender_ids)
 		_validate_id_references("environment %s required_lender_hooks" % archetype_id, archetype.get("required_lender_hooks", []), lender_ids)
-		_validate_count_range("environment %s lender_count" % archetype_id, archetype.get("lender_count", null), _string_array(archetype.get("lender_hooks", [])).size())
+		_validate_count_range("environment %s lender_count" % archetype_id, archetype.get("lender_count", null), JsonCoerceScript._unique_string_array(archetype.get("lender_hooks", [])).size())
 		_validate_id_references("environment %s travel_hooks" % archetype_id, archetype.get("travel_hooks", []), archetype_ids)
 		if not route_ids.is_empty():
 			_validate_id_references("environment %s travel_hooks route metadata" % archetype_id, archetype.get("travel_hooks", []), route_ids)
@@ -3561,12 +3578,12 @@ func _validate_environment_layers(archetype: Dictionary, archetype_ids: Dictiona
 		_validate_id_references("environment %s layer %s travel_hooks" % [archetype_id, layer_id], layer.get("travel_hooks", []), archetype_ids)
 		if not route_ids.is_empty():
 			_validate_id_references("environment %s layer %s travel_hooks route metadata" % [archetype_id, layer_id], layer.get("travel_hooks", []), route_ids)
-		_validate_count_range("environment %s layer %s game_count" % [archetype_id, layer_id], layer.get("game_count", null), _string_array(layer.get("game_pool", [])).size())
-		_validate_count_range("environment %s layer %s item_count" % [archetype_id, layer_id], layer.get("item_count", null), _string_array(layer.get("item_pool", [])).size())
-		_validate_count_range("environment %s layer %s event_count" % [archetype_id, layer_id], layer.get("event_count", null), _string_array(layer.get("event_pool", [])).size())
-		_validate_count_range("environment %s layer %s lender_count" % [archetype_id, layer_id], layer.get("lender_count", null), _string_array(layer.get("lender_hooks", [])).size())
-		for required_event_id in _string_array(layer.get("required_event_ids", [])):
-			if not _string_array(layer.get("event_pool", [])).has(required_event_id):
+		_validate_count_range("environment %s layer %s game_count" % [archetype_id, layer_id], layer.get("game_count", null), JsonCoerceScript._unique_string_array(layer.get("game_pool", [])).size())
+		_validate_count_range("environment %s layer %s item_count" % [archetype_id, layer_id], layer.get("item_count", null), JsonCoerceScript._unique_string_array(layer.get("item_pool", [])).size())
+		_validate_count_range("environment %s layer %s event_count" % [archetype_id, layer_id], layer.get("event_count", null), JsonCoerceScript._unique_string_array(layer.get("event_pool", [])).size())
+		_validate_count_range("environment %s layer %s lender_count" % [archetype_id, layer_id], layer.get("lender_count", null), JsonCoerceScript._unique_string_array(layer.get("lender_hooks", [])).size())
+		for required_event_id in JsonCoerceScript._unique_string_array(layer.get("required_event_ids", [])):
+			if not JsonCoerceScript._unique_string_array(layer.get("event_pool", [])).has(required_event_id):
 				validation_errors.append("environment %s layer %s required_event_ids includes %s but event_pool does not." % [archetype_id, layer_id, required_event_id])
 		var transitions: Array = layer.get("layer_transitions", []) if typeof(layer.get("layer_transitions", [])) == TYPE_ARRAY else []
 		for transition_value in transitions:
@@ -3659,7 +3676,7 @@ func _validate_scenario_definitions() -> void:
 					"archetype": environment_archetype(archetype_key),
 					"scenario_semantic_inventory": _as_dict(sequence_target_catalog.get("inventory", {})),
 				})
-				if sequence_target_catalog.is_empty() or not _copy_array(sequence_target_catalog.get("errors", [])).is_empty():
+				if sequence_target_catalog.is_empty() or not JsonCoerceScript._copy_array(sequence_target_catalog.get("errors", [])).is_empty():
 					validation_errors.append_array(scenario_target_catalog_messages(scenario_id, sequence_target_catalog))
 				else:
 					var sequence_target_inventory := _as_dict(sequence_target_catalog.get("guaranteed", {})).duplicate(true)
@@ -3681,32 +3698,32 @@ func _validate_scenario_definitions() -> void:
 		var scenario_id := str(definition.get("id", ""))
 		if target_inventories.has(scenario_id): continue
 		var target_catalog := scenario_target_catalog(definition)
-		if target_catalog.is_empty() or not _copy_array(target_catalog.get("errors", [])).is_empty():
+		if target_catalog.is_empty() or not JsonCoerceScript._copy_array(target_catalog.get("errors", [])).is_empty():
 			validation_errors.append_array(scenario_target_catalog_messages(scenario_id, target_catalog))
 			continue
 		var target_inventory := _as_dict(target_catalog.get("guaranteed", {})).duplicate(true)
 		target_inventory["event_choices"] = _as_dict(target_catalog.get("event_choices", {}))
 		target_inventories[scenario_id] = target_inventory
 	var sequence_validation_batch := ScenarioEngineScript.validate_sequence_catalog_and_audit(sequence_definitions, sequence_validation_references, sequence_definitions.size(), masked_visual_explanations, target_inventories)
-	validation_errors.append_array(_copy_array(sequence_validation_batch.get("validation_errors", [])))
+	validation_errors.append_array(JsonCoerceScript._copy_array(sequence_validation_batch.get("validation_errors", [])))
 	var rollout_ids := ScenarioSequenceRolloutManifestScript.expected_ids()
 	var required_sequence_ids := ScenarioSequenceRolloutManifestScript.required_sequence_ids()
 	if ScenarioSequenceRolloutManifestScript.EXPECTED_COUNT != 55 or rollout_ids.size() != ScenarioSequenceRolloutManifestScript.EXPECTED_COUNT:
 		validation_errors.append("scenario sequence rollout manifest must contain exactly 55 catalog ids.")
 	var uniqueness_audit := _as_dict(sequence_validation_batch.get("audit", {}))
 	var rollout_report: Dictionary = {}
-	var reuse_rollout_audit := not _copy_array(scenario_sequence_catalog.get("files", [])).is_empty() and _scenario_catalogs_match_for_internal_reuse(sequence_definitions, rollout_definitions, rollout_ids, required_sequence_ids)
+	var reuse_rollout_audit := not JsonCoerceScript._copy_array(scenario_sequence_catalog.get("files", [])).is_empty() and _scenario_catalogs_match_for_internal_reuse(sequence_definitions, rollout_definitions, rollout_ids, required_sequence_ids)
 	if reuse_rollout_audit:
 		rollout_report = _scenario_rollout_report_from_uniqueness_audit(uniqueness_audit, rollout_definitions, rollout_ids, required_sequence_ids)
 	else:
 		rollout_report = ScenarioSequenceSchemaScript.catalog_rollout_report(rollout_definitions, rollout_ids, ScenarioOperationRegistryScript, masked_visual_explanations, required_sequence_ids, target_inventories)
-	if not _copy_array(scenario_sequence_catalog.get("files", [])).is_empty() and not uniqueness_audit.is_empty():
+	if not JsonCoerceScript._copy_array(scenario_sequence_catalog.get("files", [])).is_empty() and not uniqueness_audit.is_empty():
 		scenario_sequence_catalog["uniqueness_audit"] = uniqueness_audit
 		var authority_channels := scenario_uniqueness_validation_channels(uniqueness_audit)
-		validation_errors.append_array(_copy_array(authority_channels.get("errors", [])))
-		validation_warnings.append_array(_copy_array(authority_channels.get("warnings", [])))
+		validation_errors.append_array(JsonCoerceScript._copy_array(authority_channels.get("errors", [])))
+		validation_warnings.append_array(JsonCoerceScript._copy_array(authority_channels.get("warnings", [])))
 	var validation_channels := scenario_uniqueness_validation_channels(rollout_report)
-	for rollout_error_value in _copy_array(validation_channels.get("errors", [])):
+	for rollout_error_value in JsonCoerceScript._copy_array(validation_channels.get("errors", [])):
 		if not validation_errors.has(rollout_error_value):
 			validation_errors.append(rollout_error_value)
 static func scenario_uniqueness_validation_channels(report: Dictionary) -> Dictionary:
@@ -3889,7 +3906,7 @@ func _validate_tutorial_lesson_definitions() -> void:
 			validation_errors.append("tutorial_lessons %s trigger must be a non-empty dictionary." % lesson_id)
 		_validate_tutorial_trigger_reference(lesson_id, "environment_archetype", trigger.get("environment_archetype", ""), archetype_ids)
 		_validate_tutorial_trigger_reference(lesson_id, "game_id", trigger.get("game_id", ""), game_ids)
-		var dependencies := _string_array(trigger.get("depends_on", []))
+		var dependencies := JsonCoerceScript._unique_string_array(trigger.get("depends_on", []))
 		dependency_graph[lesson_id] = dependencies
 		for dependency_id in dependencies:
 			if not lesson_ids.has(dependency_id):
@@ -3991,7 +4008,7 @@ func _validate_tutorial_completion(lesson_id: String, value: Variant, anchor_val
 			validation_errors.append("tutorial_lessons %s anchored_action completion requires an anchor." % lesson_id)
 	elif completion_type == "one_of_actions":
 		var action_ids: Variant = completion.get("action_ids", [])
-		if typeof(action_ids) != TYPE_ARRAY or _string_array(action_ids).is_empty():
+		if typeof(action_ids) != TYPE_ARRAY or JsonCoerceScript._unique_string_array(action_ids).is_empty():
 			validation_errors.append("tutorial_lessons %s one_of_actions completion requires action_ids." % lesson_id)
 	elif completion_type == "state_predicate":
 		_validate_tutorial_state_predicates(lesson_id, completion.get("state_predicates", []))
@@ -4005,7 +4022,7 @@ func _validate_tutorial_gating(lesson_id: String, value: Variant) -> void:
 		return
 	var gating: Dictionary = value
 	var allowed: Variant = gating.get("allowed_action_ids", [])
-	if typeof(allowed) != TYPE_ARRAY or _string_array(allowed).is_empty():
+	if typeof(allowed) != TYPE_ARRAY or JsonCoerceScript._unique_string_array(allowed).is_empty():
 		validation_errors.append("tutorial_lessons %s gating requires allowed_action_ids." % lesson_id)
 
 
@@ -4025,7 +4042,7 @@ func _tutorial_dependency_cycle_from(lesson_id: String, graph: Dictionary, visit
 	if bool(visited.get(lesson_id, false)):
 		return false
 	visiting[lesson_id] = true
-	for dependency_id in _string_array(graph.get(lesson_id, [])):
+	for dependency_id in JsonCoerceScript._unique_string_array(graph.get(lesson_id, [])):
 		if graph.has(dependency_id) and _tutorial_dependency_cycle_from(dependency_id, graph, visiting, visited):
 			return true
 	visiting.erase(lesson_id)
@@ -4054,8 +4071,8 @@ func _validate_environment_open_hours(archetype_id: String, value: Variant) -> v
 
 
 func _validate_required_game_pool(archetype_id: String, archetype: Dictionary) -> void:
-	var game_pool := _string_array(archetype.get("game_pool", []))
-	for required_id in _string_array(archetype.get("required_game_ids", [])):
+	var game_pool := JsonCoerceScript._unique_string_array(archetype.get("game_pool", []))
+	for required_id in JsonCoerceScript._unique_string_array(archetype.get("required_game_ids", [])):
 		if not game_pool.has(required_id):
 			validation_errors.append("environment %s required_game_ids includes %s but game_pool does not." % [archetype_id, required_id])
 
@@ -4111,20 +4128,9 @@ static func _ids_for(values: Array) -> Dictionary:
 	return ids
 
 
-static func _string_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry in value:
-		var id := str(entry).strip_edges()
-		if not id.is_empty() and not result.has(id):
-			result.append(id)
-	return result
-
-
 static func _string_set(value: Variant) -> Dictionary:
 	var result: Dictionary = {}
-	for id in _string_array(value):
+	for id in JsonCoerceScript._unique_string_array(value):
 		result[id] = true
 	return result
 
@@ -4132,7 +4138,7 @@ static func _string_set(value: Variant) -> Dictionary:
 static func _definition_enabled_for_groups(definition: Dictionary, enabled_group_ids: Array) -> bool:
 	if definition.is_empty():
 		return false
-	var groups := _string_array(definition.get("content_groups", []))
+	var groups := JsonCoerceScript._unique_string_array(definition.get("content_groups", []))
 	if groups.is_empty():
 		return true
 	var enabled := _string_set(enabled_group_ids)
@@ -4151,10 +4157,6 @@ static func _as_dict(value: Variant) -> Dictionary:
 	if typeof(value) != TYPE_DICTIONARY:
 		return {}
 	return (value as Dictionary).duplicate(true)
-
-
-static func _copy_array(value: Variant) -> Array:
-	return (value as Array).duplicate(true) if typeof(value) == TYPE_ARRAY else []
 
 
 # Recursively combines dictionaries without mutating either authored source.

@@ -8,4 +8,4 @@ This folder contains 36 screenshots captured from the real Beat the House Godot 
 - `noon_in_game_contact_sheet.png` and `midnight_in_game_contact_sheet.png` — time-specific overviews.
 - `capture_report.json` — environment names, time values, source background paths, viewport size and resolved interactable-object layouts.
 
-The screenshots include the actual game HUD, environment header, interactable objects, gameplay overlays and travel controls. They were produced with `tools/test11_environment_time_screenshots.gd` and did not replace production environment assets.
+The screenshots include the actual game HUD, environment header, interactable objects, gameplay overlays and travel controls. They were produced with `tools/archive/test11/test11_environment_time_screenshots.gd` and did not replace production environment assets.

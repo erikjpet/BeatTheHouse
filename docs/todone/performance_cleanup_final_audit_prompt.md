@@ -17,7 +17,7 @@ Status: **COMPLETE ON THE 0.5 TECHNICAL BASELINE**
   budget or liveness floor.
 - Commits: `3c4f7e57`, `e4ec5549`, `37eba0bb`, `84ae3fc6` (plus the earlier
   integrated scratch-history/storage compaction and Web-audio work recorded in
-  `docs/plans/0.5_performance_audit.md`).
+  `docs/archive/0.5/plans/0.5_performance_audit.md`).
 - Native: the exact-source 8-run/120-frame/48-resolve probe passed 63
   observations with zero failures at
   `.tmp/v05_release_performance_full.json`; the full table is in the audit.
@@ -42,7 +42,7 @@ soak passes with a negative retained-memory trend and zero retained orphans.
 Native performance/liveness, Grand Casino Web runtime, determinism, strict
 mouse play, visual QA, and all seven Scratch Ticket RTP bands are green. The
 evidence and final superseding verdict are in
-`docs/plans/0.5_performance_audit.md`.
+`docs/archive/0.5/plans/0.5_performance_audit.md`.
 
 Web audio parity is also implemented: 80 Web SFX cues and deterministic
 prebuilt procedural music beds use the shared 22.05 kHz delivery contract,
@@ -172,7 +172,7 @@ growth trend.
 
 ## Deliverable
 
-`docs/plans/0.5_performance_audit.md`: the defect list (surface, repro,
+`docs/archive/0.5/plans/0.5_performance_audit.md`: the defect list (surface, repro,
 before/after frame time), the hot-path allocation findings + fixes, the full
 per-surface budget table, the web + soak results, the cleanup summary, and a
 plain verdict on whether typical play is smooth everywhere.

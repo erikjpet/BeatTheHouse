@@ -1726,10 +1726,10 @@ func _start_controlled_roll(ui_state: Dictionary, run_state: RunState, state: Di
 		JSON.stringify(dice),
 		int(ui_state.get("shake_number", 1)),
 	]
-	var started := now_msec - int(_stable_hash(seed) % period)
+	var started := now_msec - int(JsonCoerceScript._stable_hash(seed) % period)
 	var watch_info := _patron_watch_info(state)
 	return {
-		"challenge_id": "bar_control_%d" % _stable_hash(seed),
+		"challenge_id": "bar_control_%d" % JsonCoerceScript._stable_hash(seed),
 		"desired_face": desired_face,
 		"desired_die_index": desired_index,
 		"dice_before": dice.duplicate(),
@@ -1870,12 +1870,12 @@ func _start_palmed_swap_challenge(ui_state: Dictionary, run_state: RunState, sta
 		JSON.stringify(dice),
 		int(ui_state.get("shake_number", 1)),
 	]
-	var started := now_msec - int(_stable_hash(seed) % period)
+	var started := now_msec - int(JsonCoerceScript._stable_hash(seed) % period)
 	var target_index := clampi(int(target.get("index", 0)), 0, DICE_COUNT - 1)
 	var target_phase := int(round((float(target_index) + 0.5) * float(period) / float(DICE_COUNT)))
 	var watch_info := _patron_watch_info(state)
 	return {
-		"challenge_id": "bar_palm_%d" % _stable_hash(seed),
+		"challenge_id": "bar_palm_%d" % JsonCoerceScript._stable_hash(seed),
 		"dice_before": dice.duplicate(),
 		"target_die_index": target_index,
 		"target_face": clampi(int(target.get("face", dice[target_index])), 1, DIE_FACES),
@@ -2092,7 +2092,7 @@ func _normalize_dealer_profile(value: Variant, state: Dictionary) -> Dictionary:
 	var dealer := _copy_dict(value)
 	if dealer.is_empty():
 		var rng := RngStream.new()
-		rng.configure(_stable_hash("%s:dealer" % str(state.get("table_key", "bar"))))
+		rng.configure(JsonCoerceScript._stable_hash("%s:dealer" % str(state.get("table_key", "bar"))))
 		dealer = _generate_dealer_profile(rng, str(state.get("dealer_name", "Bartender")), str(state.get("edge_tier", "standard")))
 	dealer["name"] = str(dealer.get("name", state.get("dealer_name", "Bartender")))
 	dealer["role"] = str(dealer.get("role", "bar_dice_caller"))
@@ -2159,7 +2159,7 @@ func _normalize_patrons(value: Variant) -> Array:
 	var patrons := _dictionary_array(value)
 	if patrons.is_empty():
 		var rng := RngStream.new()
-		rng.configure(_stable_hash("bar_dice:patrons:fallback"))
+		rng.configure(JsonCoerceScript._stable_hash("bar_dice:patrons:fallback"))
 		return _generate_patrons(rng, 2)
 	for i in range(patrons.size()):
 		var patron: Dictionary = patrons[i]
@@ -2396,7 +2396,7 @@ func _deterministic_die(run_state: RunState, state: Dictionary, shake_number: in
 	var rng_state := int(run_state.rng_state) if run_state != null else 0
 	var table_key := str(state.get("table_key", "table"))
 	var rounds := int(state.get("rounds_played", 0))
-	var hashed := _stable_hash("%s:%s:%s:%d:%d:%d:%d" % [get_id(), table_key, seed_text, rng_state, rounds, shake_number, index])
+	var hashed := JsonCoerceScript._stable_hash("%s:%s:%s:%d:%d:%d:%d" % [get_id(), table_key, seed_text, rng_state, rounds, shake_number, index])
 	return 1 + int(hashed % DIE_FACES)
 
 
@@ -2470,7 +2470,7 @@ func _apply_controlled_roll(dice_value: Variant, controlled_roll: Dictionary) ->
 		return dice
 	if grade == "partial":
 		var hash_text := "%s:%s:%s" % [str(controlled_roll.get("challenge_id", "")), JSON.stringify(dice), str(desired_face)]
-		if int(_stable_hash(hash_text) % 100) >= 70:
+		if int(JsonCoerceScript._stable_hash(hash_text) % 100) >= 70:
 			return dice
 	dice[desired_index] = desired_face
 	return dice
@@ -2931,7 +2931,7 @@ func _opponent_preview_dice(state: Dictionary, patron_index: int) -> Array:
 	var table_key := str(state.get("table_key", "bar"))
 	var rounds := int(state.get("rounds_played", 0))
 	for die_index in range(DICE_COUNT):
-		var hashed := _stable_hash("%s:preview:%d:%d:%d" % [table_key, rounds, patron_index, die_index])
+		var hashed := JsonCoerceScript._stable_hash("%s:preview:%d:%d:%d" % [table_key, rounds, patron_index, die_index])
 		dice.append(1 + int(hashed % DIE_FACES))
 	return dice
 
@@ -3136,7 +3136,12 @@ func _draw_dice_rows(surface, state: Dictionary) -> void:
 	surface.surface_label("YOUR CUP", Vector2(262, 204), 12, C_TEAL)
 	if phase == "select":
 		surface.surface_label(str(guide.get("selection", "Pink rerolls; plain dice stay.")).left(64), Vector2(262, 194), 8, C_SOFT)
-	_draw_dice_row(surface, player, PLAYER_DICE_ORIGIN, reroll, suggested, scoring, false, DIE_SIZE, DIE_SPACING, animated, phase == "select", false)
+	_draw_dice_row(FunctionOptions.DiceRowOptions.from({
+		"surface": surface, "values": player, "start": PLAYER_DICE_ORIGIN, "reroll": reroll,
+		"suggested": suggested, "scoring": scoring, "hidden": false, "die_size": DIE_SIZE,
+		"die_spacing": DIE_SPACING, "rolling_indices": animated,
+		"show_keep_labels": phase == "select", "compact": false,
+	}))
 	if phase == "select":
 		_add_dice_row_hits(surface, player, PLAYER_DICE_ORIGIN, "bar_dice_select", DIE_SIZE, DIE_SPACING)
 		_draw_dice_goal_strip(surface, state, Vector2(262, 266))
@@ -3211,10 +3216,27 @@ func _draw_opponent_dice_rows(surface, state: Dictionary) -> void:
 		if detail.is_empty():
 			detail = str(row.get("blurb", "Cup ready"))
 		surface.surface_label(detail.left(15), origin + Vector2(78, -5), 6, C_AMBER)
-		_draw_dice_row(surface, _draw_array_view(row.get("dice", [])), origin + Vector2(0, 7), [], [], _draw_array_view(row.get("scoring_indices", [])), false, OPPONENT_DIE_SIZE, OPPONENT_DIE_SPACING, [], false, true)
+		_draw_dice_row(FunctionOptions.DiceRowOptions.from({
+			"surface": surface, "values": _draw_array_view(row.get("dice", [])), "start": origin + Vector2(0, 7),
+			"reroll": [], "suggested": [], "scoring": _draw_array_view(row.get("scoring_indices", [])),
+			"hidden": false, "die_size": OPPONENT_DIE_SIZE, "die_spacing": OPPONENT_DIE_SPACING,
+			"rolling_indices": [], "show_keep_labels": false, "compact": true,
+		}))
 
 
-func _draw_dice_row(surface, values: Array, start: Vector2, reroll: Array, suggested: Array, scoring: Array, hidden: bool, die_size: Vector2, die_spacing: float, rolling_indices: Array, show_keep_labels: bool, compact: bool) -> void:
+func _draw_dice_row(options: FunctionOptions.DiceRowOptions) -> void:
+	var surface = options.values.get("surface")
+	var values: Array = options.values.get("values", [])
+	var start: Vector2 = options.values.get("start", Vector2.ZERO)
+	var reroll: Array = options.values.get("reroll", [])
+	var suggested: Array = options.values.get("suggested", [])
+	var scoring: Array = options.values.get("scoring", [])
+	var hidden := bool(options.values.get("hidden", false))
+	var die_size: Vector2 = options.values.get("die_size", Vector2.ZERO)
+	var die_spacing := float(options.values.get("die_spacing", 0.0))
+	var rolling_indices: Array = options.values.get("rolling_indices", [])
+	var show_keep_labels := bool(options.values.get("show_keep_labels", false))
+	var compact := bool(options.values.get("compact", false))
 	var tumble_active := bool(surface.surface_animation_active(TUMBLE_CHANNEL))
 	var tumble_progress := float(surface.surface_animation_progress(TUMBLE_CHANNEL))
 	var flicker := float(surface.surface_flicker())
@@ -3633,15 +3655,6 @@ func _int_dice(value: Variant) -> Array:
 	return result
 
 
-func _int_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry in value:
-		result.append(int(entry))
-	return result
-
-
 func _index_array(value: Variant) -> Array:
 	var result: Array = []
 	if typeof(value) != TYPE_ARRAY:
@@ -3670,27 +3683,6 @@ func _index_array_raw(value: Variant) -> Array:
 	return result
 
 
-func _string_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry in value:
-		var text := str(entry).strip_edges()
-		if not text.is_empty():
-			result.append(text)
-	return result
-
-
-func _dictionary_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry in value:
-		if typeof(entry) == TYPE_DICTIONARY:
-			result.append((entry as Dictionary).duplicate(true))
-	return result
-
-
 # Surface-state collections are immutable for a draw. Renderer-only views avoid
 # rebuilding normalized dice and control data on every animation frame.
 static func _draw_dict_view(value: Variant) -> Dictionary:
@@ -3703,11 +3695,3 @@ static func _draw_array_view(value: Variant) -> Array:
 
 func _color_name(name: String) -> Dictionary:
 	return {"name": name}
-
-
-func _stable_hash(text: String) -> int:
-	var hash_value := 2166136261
-	for i in range(text.length()):
-		hash_value = int(hash_value ^ text.unicode_at(i))
-		hash_value = int((hash_value * 16777619) & 0x7fffffff)
-	return maxi(hash_value, 1)

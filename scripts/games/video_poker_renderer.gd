@@ -289,7 +289,11 @@ func _draw_hands(surface, state: Dictionary, palette: Dictionary) -> void:
 		var panel: Rect2 = layouts[hand_index]
 		var cards: Array = display_hands[hand_index] if hand_index < display_hands.size() and typeof(display_hands[hand_index]) == TYPE_ARRAY else []
 		var result: Dictionary = hand_results[hand_index] if hand_index < hand_results.size() and typeof(hand_results[hand_index]) == TYPE_DICTIONARY else {}
-		_draw_hand_panel(surface, state, palette, panel, cards, result, holds, drawn_indices, hand_index, hand_count, phase, flip_active, flip_progress)
+		_draw_hand_panel(FunctionOptions.VideoPokerHandPanelOptions.from({
+			"surface": surface, "state": state, "palette": palette, "panel": panel, "cards": cards,
+			"result": result, "holds": holds, "drawn_indices": drawn_indices, "hand_index": hand_index,
+			"hand_count": hand_count, "phase": phase, "flip_active": flip_active, "flip_progress": flip_progress,
+		}))
 
 
 func _draw_guidance(surface, state: Dictionary, palette: Dictionary) -> void:
@@ -329,7 +333,20 @@ func _hand_layouts(hand_count: int) -> Array:
 	return TRIPLE_HAND_LAYOUT
 
 
-func _draw_hand_panel(surface, state: Dictionary, palette: Dictionary, panel: Rect2, cards: Array, result: Dictionary, holds: Array, drawn_indices: Array, hand_index: int, hand_count: int, phase: String, flip_active: bool, flip_progress: float) -> void:
+func _draw_hand_panel(options: FunctionOptions.VideoPokerHandPanelOptions) -> void:
+	var surface = options.values.get("surface")
+	var state: Dictionary = options.values.get("state", {})
+	var palette: Dictionary = options.values.get("palette", {})
+	var panel: Rect2 = options.values.get("panel", Rect2())
+	var cards: Array = options.values.get("cards", [])
+	var result: Dictionary = options.values.get("result", {})
+	var holds: Array = options.values.get("holds", [])
+	var drawn_indices: Array = options.values.get("drawn_indices", [])
+	var hand_index := int(options.values.get("hand_index", 0))
+	var hand_count := int(options.values.get("hand_count", 1))
+	var phase := str(options.values.get("phase", "idle"))
+	var flip_active := bool(options.values.get("flip_active", false))
+	var flip_progress := float(options.values.get("flip_progress", 0.0))
 	var primary: Color = palette["primary"]
 	var secondary: Color = palette["secondary"]
 	var recommended_holds: Array = state.get("recommended_holds", [])

@@ -15,10 +15,26 @@ static func distribution_build() -> bool:
 
 
 static func distribution_root() -> String:
-	var override := OS.get_environment(DISTRIBUTION_ROOT_ENV).strip_edges().trim_suffix("/")
-	if not override.is_empty():
+	var override := _normalized_distribution_root(OS.get_environment(DISTRIBUTION_ROOT_ENV))
+	if _distribution_root_valid(override):
 		return override
 	return DISTRIBUTION_ROOT if distribution_build() else ""
+
+
+static func _normalized_distribution_root(value: String) -> String:
+	var normalized := value.strip_edges().replace("\\", "/")
+	while normalized.ends_with("/") and not normalized.ends_with("://"):
+		normalized = normalized.trim_suffix("/")
+	return normalized
+
+
+static func _distribution_root_valid(path: String) -> bool:
+	if path.is_empty():
+		return false
+	for segment in path.split("/", false):
+		if segment == "..":
+			return false
+	return path.begins_with("user://") or path.is_absolute_path()
 
 
 static func file_path(development_path: String, file_name: String) -> String:

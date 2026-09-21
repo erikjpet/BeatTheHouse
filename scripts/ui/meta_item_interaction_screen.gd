@@ -1,6 +1,8 @@
 class_name MetaItemInteractionScreen
 extends Control
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 signal close_requested
 signal selection_changed(selection_key: String)
 signal action_requested(action_id: String, payload: Dictionary)
@@ -110,7 +112,7 @@ func layout_snapshot() -> Dictionary:
 		"detail_rect": _detail_panel.get_global_rect() if _detail_panel != null else Rect2(),
 		"surface": _surface.layout_snapshot() if _surface != null else {},
 		"selected_key": selected_key(),
-		"item_count": _dictionary_array(_model.get("items", [])).size(),
+		"item_count": JsonCoerceScript._dictionary_array(_model.get("items", [])).size(),
 		"small_screen_mode": _small_screen_mode,
 		"reduced_motion": _reduced_motion,
 	}
@@ -224,7 +226,7 @@ func _render_detail() -> void:
 		FoundationWidgets.add_detail_row(_detail_box, "Unavailable", disabled_reason, true)
 	if str(_model.get("mode", "")) == "meta_sale" and bool(item.get("sale_eligible", false)):
 		_render_sale_breakdown(item)
-	for action_value in _dictionary_array(item.get("actions", [])):
+	for action_value in JsonCoerceScript._dictionary_array(item.get("actions", [])):
 		_add_action(action_value)
 	_add_global_actions()
 
@@ -246,14 +248,14 @@ func _render_sale_breakdown(item: Dictionary) -> void:
 
 
 func _add_global_actions() -> void:
-	var trade_summary := _dictionary_array(_model.get("trade_summary", []))
+	var trade_summary := JsonCoerceScript._dictionary_array(_model.get("trade_summary", []))
 	if not trade_summary.is_empty():
 		var heading := FoundationWidgets.label("Trade Inputs", 13)
 		FoundationWidgets.set_control_font_color(heading, VisualStyle.CYAN)
 		_detail_box.add_child(heading)
 		for row in trade_summary:
 			FoundationWidgets.add_detail_row(_detail_box, "#%d" % int(row.get("position", 0)), "%s · %s" % [str(row.get("display_name", "Item")), str(row.get("tier", "")).capitalize()])
-	for action_value in _dictionary_array(_model.get("global_actions", [])):
+	for action_value in JsonCoerceScript._dictionary_array(_model.get("global_actions", [])):
 		_add_action(action_value)
 
 
@@ -261,7 +263,7 @@ func _add_action(action: Dictionary) -> void:
 	var enabled := bool(action.get("enabled", true))
 	var label := str(action.get("label", action.get("id", "Action")))
 	if enabled:
-		FoundationWidgets.add_card_button(_detail_box, label, Callable(self, "_emit_action").bind(str(action.get("id", "")), _copy_dict(action.get("payload", {}))), false, true)
+		FoundationWidgets.add_card_button(_detail_box, label, Callable(self, "_emit_action").bind(str(action.get("id", "")), JsonCoerceScript._copy_dict(action.get("payload", {}))), false, true)
 	else:
 		FoundationWidgets.add_detail_row(_detail_box, label, str(action.get("disabled_reason", "Unavailable")), true)
 
@@ -316,17 +318,3 @@ func _texture(path: String) -> Texture2D:
 			return provided as Texture2D
 	var loaded: Variant = load(path)
 	return loaded as Texture2D if loaded is Texture2D else null
-
-
-func _dictionary_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry in value as Array:
-		if typeof(entry) == TYPE_DICTIONARY:
-			result.append((entry as Dictionary).duplicate(true))
-	return result
-
-
-func _copy_dict(value: Variant) -> Dictionary:
-	return (value as Dictionary).duplicate(true) if typeof(value) == TYPE_DICTIONARY else {}

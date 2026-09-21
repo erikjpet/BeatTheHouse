@@ -1,6 +1,8 @@
 class_name WorldMapCanvas
 extends Control
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 signal layout_changed
 
 # Lightweight persistent travel-map renderer.
@@ -22,6 +24,7 @@ const CURRENT_MARKER_LABEL_BG := Color("#05060a", 0.90)
 const CURRENT_MARKER_LABEL_TEXT := Color("#ffffff")
 const CURRENT_MARKER_LABEL_FONT_SIZE := 11
 const DESTINATION_LABEL_SIZE := Vector2(96.0, 18.0)
+const TEXTURE_CACHE_MAX_ENTRIES := 128
 
 var snapshot: Dictionary = {}
 var icon_texture_cache: Dictionary = {}
@@ -161,18 +164,18 @@ func current_view_snapshot() -> Dictionary:
 		var node_id := str(node.get("id", ""))
 		if not node_is_in_view(node_id):
 			continue
-		var center := _normalized_position(_copy_dict(node.get("position", {})))
+		var center := _normalized_position(JsonCoerceScript._copy_dict(node.get("position", {})))
 		var marker_rect := Rect2(center - ICON_SIZE * 0.5, ICON_SIZE)
 		markers.append({
 			"id": node_id,
 			"label": str(node.get("label", node.get("display_name", node_id.replace("_", " ").capitalize()))),
-			"position": _copy_dict(node.get("position", {})),
+			"position": JsonCoerceScript._copy_dict(node.get("position", {})),
 			"screen_center": {"x": center.x, "y": center.y},
 			"screen_rect": {"x": marker_rect.position.x, "y": marker_rect.position.y, "w": marker_rect.size.x, "h": marker_rect.size.y},
 			"icon_path": str(node.get("icon_path", "")),
 			"travel_target": bool(node.get("travel_target", false)),
 			"travel_enabled": bool(node.get("travel_enabled", false)),
-			"attribute_badges": _copy_array(node.get("attribute_badges", [])),
+			"attribute_badges": JsonCoerceScript._copy_array(node.get("attribute_badges", [])),
 		})
 		if node_id == current_id:
 			current_marker = {
@@ -184,7 +187,7 @@ func current_view_snapshot() -> Dictionary:
 			}
 	view["icon_markers"] = markers
 	view["current_marker"] = current_marker
-	var sweep_marker := _copy_dict(snapshot.get("sweep_marker", {}))
+	var sweep_marker := JsonCoerceScript._copy_dict(snapshot.get("sweep_marker", {}))
 	var sweep_node_id := str(sweep_marker.get("node_id", ""))
 	if not sweep_marker.is_empty() and node_screen_position_cache.has(sweep_node_id):
 		var sweep_center := node_screen_position_cache.get(sweep_node_id, Vector2.ZERO) as Vector2
@@ -393,7 +396,7 @@ func _draw_route_path_geometry() -> void:
 
 func _draw_path() -> void:
 	var nodes := nodes_by_id_cache
-	var path := _string_array(snapshot.get("visited_path", []))
+	var path := JsonCoerceScript._string_array(snapshot.get("visited_path", []))
 	for index in range(path.size() - 1):
 		var a := _node_position(nodes, str(path[index]))
 		var b := _node_position(nodes, str(path[index + 1]))
@@ -420,7 +423,7 @@ func _draw_path() -> void:
 
 
 func _draw_sweep_marker() -> void:
-	var marker := _copy_dict(snapshot.get("sweep_marker", {}))
+	var marker := JsonCoerceScript._copy_dict(snapshot.get("sweep_marker", {}))
 	var node_id := str(marker.get("node_id", "")).strip_edges()
 	if marker.is_empty() or node_id.is_empty() or not node_screen_position_cache.has(node_id):
 		return
@@ -488,7 +491,7 @@ func _draw_replay_marker_at(marker: Vector2, label: String) -> void:
 func _replay_marker_state() -> Dictionary:
 	if replay_segments.is_empty():
 		return {"progress": replay_progress, "segment_count": 0}
-	var selected := _copy_dict(replay_segments[-1])
+	var selected := JsonCoerceScript._copy_dict(replay_segments[-1])
 	for segment_value in replay_segments:
 		if typeof(segment_value) != TYPE_DICTIONARY:
 			continue
@@ -652,11 +655,11 @@ func _current_marker_pulse_active() -> bool:
 func _rebuild_snapshot_cache() -> void:
 	nodes_by_id_cache = {}
 	courier_edge_reads_by_id = {}
-	var courier_layer := _copy_dict(snapshot.get("courier_layer", {}))
+	var courier_layer := JsonCoerceScript._copy_dict(snapshot.get("courier_layer", {}))
 	courier_active = bool(courier_layer.get("active", false))
 	courier_header_text = ""
 	if courier_active:
-		var cargo := _copy_dict(courier_layer.get("cargo", {}))
+		var cargo := JsonCoerceScript._copy_dict(courier_layer.get("cargo", {}))
 		courier_header_text = "%s · CONTRABAND · %d ACTIONS" % [
 			str(cargo.get("label", "Cargo")).to_upper(),
 			int(courier_layer.get("deadline_remaining", 0)),
@@ -697,7 +700,7 @@ func _ensure_layout_cache() -> void:
 func _rebuild_layout_cache() -> void:
 	var next_basis_signature := _map_view_basis_signature()
 	var next_selected_node_id := str(snapshot.get("selected_node_id", "")).strip_edges()
-	var next_focus_node_ids := _string_array(snapshot.get("map_focus_node_ids", []))
+	var next_focus_node_ids := JsonCoerceScript._string_array(snapshot.get("map_focus_node_ids", []))
 	var next_layout_size := _current_or_default_layout_size()
 	var layout_size_changed := stable_layout_size.x <= 0.0 or stable_layout_size.y <= 0.0 or absf(stable_layout_size.x - next_layout_size.x) > 2.0 or absf(stable_layout_size.y - next_layout_size.y) > 2.0
 	if next_basis_signature != map_view_basis_signature or map_view_selected_node_id_cache != next_selected_node_id or map_view_focus_node_ids_cache != next_focus_node_ids or layout_size_changed:
@@ -941,7 +944,7 @@ func _navigation_content_signature(map_snapshot: Dictionary) -> String:
 		])
 	parts.sort()
 	parts.append("current:%s" % str(map_snapshot.get("current_node_id", "")))
-	var enabled_ids := _string_array(map_snapshot.get("travel_enabled_node_ids", []))
+	var enabled_ids := JsonCoerceScript._string_array(map_snapshot.get("travel_enabled_node_ids", []))
 	enabled_ids.sort()
 	parts.append("enabled:%s" % ",".join(enabled_ids))
 	parts.append("fit_all:%s" % str(bool(map_snapshot.get("fit_all_nodes", false))))
@@ -1162,7 +1165,7 @@ func _travel_edge_ids(enabled_only: bool) -> Array:
 		var path_data: Dictionary = path_value
 		if enabled_only and not bool(path_data.get("enabled", false)):
 			continue
-		var path := _string_array(path_data.get("path", []))
+		var path := JsonCoerceScript._string_array(path_data.get("path", []))
 		for index in range(path.size() - 1):
 			var edge_id := _edge_id(str(path[index]), str(path[index + 1]))
 			if not edge_id.is_empty() and not result.has(edge_id):
@@ -1187,6 +1190,8 @@ func _background_texture() -> Texture2D:
 	if background_texture_cache.has(path):
 		return background_texture_cache[path] as Texture2D
 	var texture := _texture_for_path(path)
+	if background_texture_cache.size() >= TEXTURE_CACHE_MAX_ENTRIES:
+		background_texture_cache.clear()
 	background_texture_cache[path] = texture
 	return texture
 
@@ -1200,6 +1205,8 @@ func _texture_for_node(node: Dictionary) -> Texture2D:
 	if icon_texture_cache.has(path):
 		return icon_texture_cache[path] as Texture2D
 	var texture := _texture_for_path(path)
+	if icon_texture_cache.size() >= TEXTURE_CACHE_MAX_ENTRIES:
+		icon_texture_cache.clear()
 	icon_texture_cache[path] = texture
 	return texture
 
@@ -1214,6 +1221,8 @@ func _prewarm_map_icon_directory() -> void:
 		if not directory.current_is_dir() and file_name.ends_with(".png"):
 			var path := "%s/%s" % [MAP_ICON_DIR, file_name]
 			if not icon_texture_cache.has(path):
+				if icon_texture_cache.size() >= TEXTURE_CACHE_MAX_ENTRIES:
+					icon_texture_cache.clear()
 				icon_texture_cache[path] = _texture_for_path(path)
 		file_name = directory.get_next()
 	directory.list_dir_end()
@@ -1232,26 +1241,3 @@ static func _array_view(value: Variant) -> Array:
 	if typeof(value) != TYPE_ARRAY:
 		return []
 	return value as Array
-
-
-static func _copy_array(value: Variant) -> Array:
-	if typeof(value) != TYPE_ARRAY:
-		return []
-	return (value as Array).duplicate(true)
-
-
-static func _copy_dict(value: Variant) -> Dictionary:
-	if typeof(value) != TYPE_DICTIONARY:
-		return {}
-	return (value as Dictionary).duplicate(true)
-
-
-static func _string_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry in value:
-		var text := str(entry).strip_edges()
-		if not text.is_empty():
-			result.append(text)
-	return result

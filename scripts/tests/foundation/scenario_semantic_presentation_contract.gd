@@ -1,6 +1,8 @@
 class_name ScenarioSemanticPresentationContract
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 const EnvironmentInteractionControllerScript := preload("res://scripts/ui/environment_interaction_controller.gd")
 const ArtContractsScript := preload("res://scripts/core/art_contracts.gd")
 const OperationRegistryScript := preload("res://scripts/core/scenario_operation_registry.gd")
@@ -318,7 +320,7 @@ static func _check_passive_atomic_commits(library: Variant, failures: Array) -> 
 		or not _presentation_collections_empty(expiry_semantic) or not _dict(expiry_environment.get("scenario_layout_authority", {})).is_empty() \
 		or bool(expiry_audit.get("active", true)) or not bool(expiry_audit.get("valid", false)) or not bool(expiry_audit.get("sealed_passive", false)) \
 		or not bool(expiry_snapshot.get("ok", false)) or not bool(expiry_snapshot.get("sealed_passive", false)) or str(expiry_snapshot.get("presentation_mode", "")) != "passive" \
-		or not ScenarioSequenceRuntimeScript._valid_sha256(expiry_digest) \
+		or not JsonCoerceScript._valid_sha256(expiry_digest) \
 		or str(expiry_audit.get("authority_digest", "")) != expiry_digest or str(expiry_snapshot.get("layout_authority_digest", "")) != expiry_digest \
 		or str(expiry_semantic.get("layout_authority_digest", "")) != expiry_digest or expiry_run.scenario_sequence_projection().is_empty() \
 		or not bool(expiry_public.get("ok", false)) or not bool(expiry_committed.get("ok", false)) or _array(expiry_committed.get("records", [])).size() != 1 \

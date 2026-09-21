@@ -1,5 +1,7 @@
 extends SceneTree
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 
 func _without_coin_pusher_game_states(value: Variant, parent_key: String = "") -> Variant:
 	if typeof(value) == TYPE_DICTIONARY:
@@ -67,18 +69,6 @@ const EXPECTED_GAME_LIBRARY_LAUNCHERS := [
 	{"id": "video_poker", "label": "Video Poker"},
 	{"id": "coin_pusher", "label": "Quarter Falls"},
 ]
-
-
-func _copy_array(value: Variant) -> Array:
-	if typeof(value) != TYPE_ARRAY:
-		return []
-	return (value as Array).duplicate(true)
-
-
-func _copy_dict(value: Variant) -> Dictionary:
-	if typeof(value) != TYPE_DICTIONARY:
-		return {}
-	return (value as Dictionary).duplicate(true)
 
 
 # This file owns the executable UI gate entrypoint, while the environment and
@@ -721,9 +711,9 @@ func _check_run_report_screen_component() -> bool:
 	for report_node_value in report_map.get("nodes", []):
 		if typeof(report_node_value) == TYPE_DICTIONARY:
 			var report_node: Dictionary = report_node_value
-			report_positions[str(report_node.get("id", ""))] = _copy_dict(report_node.get("position", {}))
-	if _copy_dict(report_positions.get("bar", {})) != {"x": 0.2, "y": 0.4} \
-		or _copy_dict(report_positions.get("casino", {})) != {"x": 0.8, "y": 0.5} \
+			report_positions[str(report_node.get("id", ""))] = JsonCoerceScript._copy_dict(report_node.get("position", {}))
+	if JsonCoerceScript._copy_dict(report_positions.get("bar", {})) != {"x": 0.2, "y": 0.4} \
+		or JsonCoerceScript._copy_dict(report_positions.get("casino", {})) != {"x": 0.8, "y": 0.5} \
 		or str(report_map.get("background_path", "")) != "res://assets/art/map_backgrounds/cyberpunk_city_overhead.png":
 		push_error("Run report map changed live-map coordinates or used a different geographic background: %s." % JSON.stringify(report_map))
 		return false
@@ -2644,24 +2634,25 @@ func _check_delivery_ordinary_travel_baseline(app: Control, phase: String) -> bo
 	# A detached bf398237 replay and two exact-candidate replays confirmed that
 	# only the layout-derived environment/world-map records changed. The 0.6
 	# Collision recovery searches every valid physical surface candidate and the
-	# harness isolates user placement state. These two layout-bearing hashes move
-	# with the collision-free project placement; route, RNG, story, and economy
-	# invariants below remain byte-identical.
+	# harness isolates user placement state. health06_1 CH-14 replaces full-size
+	# pick_many removal loops with deterministic Fisher-Yates shuffles. That
+	# deliberately refreshes the three order/layout-bearing hashes below while
+	# route identity, RNG end state, story, and economy remain byte-identical.
 	const EXPECTED := {
 		"bankroll_delta": -4,
 		"clock_delta": 42,
-		"current_environment_sha256": "ad3e26a7f20868c46b51d62d534ffb42896ba66138668d7102e66d60055b369a",
+		"current_environment_sha256": "a3c72dca6bd1f5a379816b791c551624c3d94685a27900b5f5bc88de22b8599a",
 		"current_world_node_id": "bar",
 		"heat_delta": 0,
 		"provenance_commit": "7ddb7685efb21e45979ea10ab89e660d99c6e891",
 		"rng_state": 953559834,
-		"route_choice_sha256": "3fd96381385eb4ba8868bddac39f233b6c62d586e0cd4b249f45e050cb10657b",
+		"route_choice_sha256": "7bf98146beb16adb121391dafba6a2b316996596359dbc669f68b9af4e497559",
 		"seed": "DELIVERY-ORDINARY-BASELINE",
 		"target_id": "bar",
 		"town_action_index": 0,
 		"travel_count_delta": 1,
 		"travel_story_sha256": "0257877551b37226fd62316ee2af5e047a27387fbb87d5acfa0273d1366a0e81",
-		"world_map_sha256": "e3a90f64c59754ffe43b5eb13fc8797be6d20a823cfbd761a208eabfd90bdd41",
+		"world_map_sha256": "bdd23471756818d2e71456bb1afb5dd47f51db81cc061bfd378532670323d04b",
 	}
 	app.call("start_foundation_run", "DELIVERY-ORDINARY-BASELINE", {}, false)
 	for _start_frame in range(3):
@@ -2856,7 +2847,7 @@ func _check_dialogue_dock_main_flow(app: Control) -> bool:
 	if not bool(dialogue_environment_install.get("ok", false)):
 		push_error("Dialogue dock fixture could not install through the scenario host: %s." % JSON.stringify(dialogue_environment_install))
 		return false
-	var layout_before_dialogue := JSON.stringify(_copy_dict(_copy_dict(run_state.current_environment.get("layout", {})).get("object_rects", {})))
+	var layout_before_dialogue := JSON.stringify(JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(run_state.current_environment.get("layout", {})).get("object_rects", {})))
 	app.call("_refresh")
 	await process_frame
 	var rendered_positions_before_dialogue: Dictionary = {}
@@ -2905,7 +2896,7 @@ func _check_dialogue_dock_main_flow(app: Control) -> bool:
 		if stable_position.x < 0.0 or not rendered_position.is_equal_approx(stable_position):
 			push_error("Live dialogue relocated environment object %s instead of preserving its generated position: rendered=%s stable=%s reserve=%s." % [dialogue_object_id, str(rendered_position), str(stable_position), str(environment_reserved_rect)])
 			return false
-	if JSON.stringify(_copy_dict(_copy_dict(run_state.current_environment.get("layout", {})).get("object_rects", {}))) != layout_before_dialogue:
+	if JSON.stringify(JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(run_state.current_environment.get("layout", {})).get("object_rects", {}))) != layout_before_dialogue:
 		push_error("Opening live dialogue changed generated environment object placement.")
 		return false
 	var response_icon_kinds: Array = snapshot.get("response_icon_kinds", [])
@@ -3727,48 +3718,54 @@ func _init() -> void:
 
 
 func _run() -> void:
+	if not await _check_component_preflight():
+		quit(1)
+		return
+	var app := await _check_foundation_app_boot()
+	if app == null:
+		quit(1)
+		return
+	await _run_main_flow(app)
+
+
+func _check_component_preflight() -> bool:
 	_use_isolated_user_settings(TEST_SETTINGS_PATH)
 	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, TEST_META_COLLECTION_PATH)
 	OS.set_environment(ProfileInventoryScript.INVENTORY_PATH_ENV, TEST_PROFILE_INVENTORY_PATH)
-	if FileAccess.file_exists(TEST_META_COLLECTION_PATH):
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(TEST_META_COLLECTION_PATH))
-	if FileAccess.file_exists(TEST_PROFILE_INVENTORY_PATH):
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(TEST_PROFILE_INVENTORY_PATH))
+	# Durable stores recover from their sibling backup when the primary is absent.
+	# Clear both files so a prior gate stage cannot turn this fresh-profile fixture
+	# into a completed-profile run.
+	for isolated_store_path in [TEST_META_COLLECTION_PATH, TEST_PROFILE_INVENTORY_PATH]:
+		for candidate_path in [isolated_store_path, "%s.bak" % isolated_store_path]:
+			if FileAccess.file_exists(candidate_path):
+				DirAccess.remove_absolute(ProjectSettings.globalize_path(candidate_path))
 	if VisualStyleScript.HOT != VisualStyleScript.PINK:
 		push_error("VisualStyle.HOT should alias the production hot/pink token.")
-		quit(1)
-		return
+		return false
 	if not await _check_career_stats_screen_component():
-		quit(1)
-		return
+		return false
 	if not await _check_run_report_screen_component():
-		quit(1)
-		return
+		return false
 	if not await _check_run_inventory_screen_component():
-		quit(1)
-		return
+		return false
 	if not await _check_bag_open_reel_component():
-		quit(1)
-		return
+		return false
 	if not await _check_talk_dock_component():
-		quit(1)
-		return
+		return false
 	if not await _check_coach_overlay_component():
-		quit(1)
-		return
+		return false
 	if not await _check_item_found_popup_component():
-		quit(1)
-		return
+		return false
 	if not await _check_world_map_selection_stable_component():
-		quit(1)
-		return
+		return false
 	if not await _check_performance_liveness_guard_component():
-		quit(1)
-		return
+		return false
 	if not await _check_cold_game_library_launchers():
-		quit(1)
-		return
+		return false
+	return true
 
+
+func _check_foundation_app_boot() -> Control:
 	var app: Control = MainScene.instantiate()
 	# UI interaction fixtures advance their simulation state explicitly. The
 	# continuous production clock has dedicated systems coverage.
@@ -3778,30 +3775,34 @@ func _run() -> void:
 	await process_frame
 	if app.get_script().resource_path != "res://scripts/ui/foundation_main.gd":
 		push_error("Main scene is not wired to the foundation UI shell.")
-		quit(1)
-		return
+		app.queue_free()
+		return null
 	if not app.has_method("uses_foundation_runtime") or not bool(app.call("uses_foundation_runtime")):
 		push_error("Foundation UI shell did not initialize the README runtime contracts.")
-		quit(1)
-		return
+		app.queue_free()
+		return null
 	if not await _check_embedded_refresh_deferred_coach(app):
-		quit(1)
-		return
+		app.queue_free()
+		return null
 	if not await _check_coin_pusher_owned_canvas_render_frame(app):
-		quit(1)
-		return
+		app.queue_free()
+		return null
 	if app.get("start_screen") == null:
 		push_error("Main UI did not build the start screen.")
-		quit(1)
-		return
+		app.queue_free()
+		return null
 	if app.get("run_screen") == null:
 		push_error("Main UI did not build the run screen.")
-		quit(1)
-		return
+		app.queue_free()
+		return null
 	if app.get("run_state") != null:
 		push_error("Foundation UI shell should wait for player start before creating RunState.")
-		quit(1)
-		return
+		app.queue_free()
+		return null
+	return app
+
+
+func _run_main_flow(app: Control) -> void:
 	var first_menu_snapshot: Dictionary = app.call("current_start_menu_snapshot")
 	var first_panel_size: Vector2 = first_menu_snapshot.get("menu_panel_size", Vector2.ZERO)
 	var first_menu_rect := _snapshot_rect(first_menu_snapshot.get("menu_panel_rect", {}))
@@ -4057,6 +4058,13 @@ func _run() -> void:
 		quit(1)
 		return
 	if not await _check_run_pawn_credit_is_immediate(app):
+		quit(1)
+		return
+	# The pawn regression deliberately returns through a rebuilt main-menu tree.
+	# Refresh the cached control reference before asserting the normalized state.
+	exit_game_button = app.get("exit_game_button") as Button
+	if exit_game_button == null:
+		push_error("Rebuilt main menu did not expose its Exit Game button.")
 		quit(1)
 		return
 	if not exit_game_button.visible or exit_game_button.disabled:
@@ -7904,7 +7912,7 @@ func _run() -> void:
 		push_error("World map detail popup covered the selected location icon instead of sitting beside it: popup=%s icon=%s" % [str(map_selected_popup_rect), str(selected_icon_rect)])
 		quit(1)
 		return
-	var detail_badges: Array = _copy_array(selected_map_screen.get("world_map_detail_badges", []))
+	var detail_badges: Array = JsonCoerceScript._copy_array(selected_map_screen.get("world_map_detail_badges", []))
 	if not detail_badges.is_empty():
 		push_error("World map selection popup retained information badges outside the requested four fields: %s" % str(detail_badges))
 		quit(1)
@@ -8364,5 +8372,3 @@ func _run() -> void:
 	await process_frame
 	print("UI scene compile check passed.")
 	quit(0)
-
-

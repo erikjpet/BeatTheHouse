@@ -1,6 +1,9 @@
 class_name RunTerminalEvaluator
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+const GameModuleRegistryScript := preload("res://scripts/core/game_module_registry.gd")
+
 # Evaluates terminal run states that need both RunState and ContentLibrary context.
 
 
@@ -118,11 +121,11 @@ static func _base_result() -> Dictionary:
 
 
 static func _has_valid_wager(run_state: RunState, library: ContentLibrary) -> bool:
-	for game_id in _string_array(run_state.current_environment.get("game_ids", [])):
+	for game_id in JsonCoerceScript._string_array(run_state.current_environment.get("game_ids", [])):
 		var definition := library.game(game_id)
 		if definition.is_empty():
 			continue
-		if _copy_array(definition.get("legal_actions", [])).is_empty() and _copy_array(definition.get("cheat_actions", [])).is_empty():
+		if JsonCoerceScript._copy_array(definition.get("legal_actions", [])).is_empty() and JsonCoerceScript._copy_array(definition.get("cheat_actions", [])).is_empty():
 			continue
 		var economic_profile: Dictionary = run_state.current_environment.get("economic_profile", {})
 		var floor := maxi(1, int(economic_profile.get("stake_floor", 1)))
@@ -135,8 +138,11 @@ static func _has_valid_wager(run_state: RunState, library: ContentLibrary) -> bo
 static func _has_deferred_bankroll_zero_failure(run_state: RunState, library: ContentLibrary) -> bool:
 	if run_state == null or library == null or run_state.current_environment.is_empty():
 		return false
-	for game_id in _string_array(run_state.current_environment.get("game_ids", [])):
-		var game := _create_game_module(library.game(game_id), library)
+	for game_id in JsonCoerceScript._string_array(run_state.current_environment.get("game_ids", [])):
+		var definition := library.game(game_id)
+		if not GameModuleRegistryScript.definition_defers_bankroll_zero(definition):
+			continue
+		var game := GameModuleRegistryScript.create_module(definition, library)
 		if game == null:
 			continue
 		var runtime_state := game.environment_runtime_state(run_state, run_state.current_environment)
@@ -150,7 +156,7 @@ static func _has_available_travel(run_state: RunState, library: ContentLibrary) 
 		var route := library.route(target_id)
 		var status := run_state.travel_route_status(route)
 		var cost := int(status.get("cost", route.get("cost", 0)))
-		if bool(status.get("available", false)) and run_state.bankroll - cost > 0:
+		if bool(status.get("available", false)) and _route_is_affordable(run_state.bankroll, cost):
 			return true
 	return false
 
@@ -159,19 +165,23 @@ static func _has_available_local_room_travel(run_state: RunState) -> bool:
 	if run_state == null or not run_state.is_grand_casino_environment():
 		return false
 	var flags: Dictionary = run_state.current_environment.get("local_narrative_flags", {}) if typeof(run_state.current_environment.get("local_narrative_flags", {})) == TYPE_DICTIONARY else {}
-	for target_value in _copy_array(flags.get("casino_room_targets", [])):
+	for target_value in JsonCoerceScript._copy_array(flags.get("casino_room_targets", [])):
 		var target_id := str(target_value).strip_edges()
 		if target_id.is_empty() or target_id == str(run_state.current_environment.get("archetype_id", "")):
 			continue
 		var access := run_state.grand_casino_room_access_status(target_id)
 		var cost := maxi(0, int(access.get("cost", 0)))
-		if bool(access.get("available", false)) and (cost == 0 or run_state.bankroll - cost > 0):
+		if bool(access.get("available", false)) and _route_is_affordable(run_state.bankroll, cost):
 			return true
 	return false
 
 
+static func _route_is_affordable(bankroll: int, cost: int) -> bool:
+	return bankroll - maxi(0, cost) > 0
+
+
 static func _has_event_recovery(run_state: RunState, library: ContentLibrary) -> bool:
-	for event_id in _string_array(run_state.current_environment.get("event_ids", [])):
+	for event_id in JsonCoerceScript._string_array(run_state.current_environment.get("event_ids", [])):
 		var definition := library.event(event_id)
 		if definition.is_empty():
 			continue
@@ -186,17 +196,17 @@ static func _has_event_recovery(run_state: RunState, library: ContentLibrary) ->
 
 
 static func _has_lender_recovery(run_state: RunState, library: ContentLibrary) -> bool:
-	for lender_id in _string_array(run_state.current_environment.get("lender_hooks", [])):
+	for lender_id in JsonCoerceScript._string_array(run_state.current_environment.get("lender_hooks", [])):
 		var definition := library.lender(lender_id)
 		if definition.is_empty():
 			continue
 		var status := run_state.lender_hook_status(definition)
 		if not bool(status.get("available", false)):
 			continue
-		var effect := _copy_dict(definition.get("effect", {}))
+		var effect := JsonCoerceScript._copy_dict(definition.get("effect", {}))
 		if int(effect.get("bankroll_delta", 0)) > 0:
 			return true
-		var debt_profile := _copy_dict(definition.get("debt_profile", {}))
+		var debt_profile := JsonCoerceScript._copy_dict(definition.get("debt_profile", {}))
 		if int(debt_profile.get("loan_amount", 0)) > 0 or int(debt_profile.get("principal_max", 0)) > 0:
 			return true
 	return false
@@ -215,8 +225,11 @@ static func _has_merchant_sale_recovery(run_state: RunState, library: ContentLib
 
 
 static func _has_game_hook_recovery(run_state: RunState, library: ContentLibrary) -> bool:
-	for game_id in _string_array(run_state.current_environment.get("game_ids", [])):
-		var game := _create_game_module(library.game(game_id), library)
+	for game_id in JsonCoerceScript._string_array(run_state.current_environment.get("game_ids", [])):
+		var definition := library.game(game_id)
+		if not GameModuleRegistryScript.definition_declares_recovery_hook(definition):
+			continue
+		var game := GameModuleRegistryScript.create_module(definition, library)
 		if game == null:
 			continue
 		for hook_value in game.environment_interactable_objects(run_state, run_state.current_environment):
@@ -224,27 +237,11 @@ static func _has_game_hook_recovery(run_state: RunState, library: ContentLibrary
 				return true
 	return false
 
-
-static func _create_game_module(definition: Dictionary, library: ContentLibrary) -> GameModule:
-	var module_path := str(definition.get("module_path", ""))
-	if module_path.is_empty() or module_path.ends_with("_ui.gd") or module_path.begins_with("res://data/runtime/"):
-		return null
-	var module_script: Script = load(module_path)
-	if module_script == null:
-		return null
-	var module_instance = module_script.new()
-	if not module_instance is GameModule:
-		return null
-	var game: GameModule = module_instance
-	game.setup(definition, library)
-	return game
-
-
 static func _choice_can_recover(choice: Dictionary) -> bool:
-	var consequences := _copy_dict(choice.get("consequences", {}))
+	var consequences := JsonCoerceScript._copy_dict(choice.get("consequences", {}))
 	if int(consequences.get("bankroll_delta", 0)) > 0:
 		return true
-	if consequences.has("debt") or not _copy_array(consequences.get("debt_changes", [])).is_empty():
+	if consequences.has("debt") or not JsonCoerceScript._copy_array(consequences.get("debt_changes", [])).is_empty():
 		return true
 	if _travel_consequence_has_targets(consequences):
 		return true
@@ -252,16 +249,16 @@ static func _choice_can_recover(choice: Dictionary) -> bool:
 
 
 static func _travel_consequence_has_targets(consequences: Dictionary) -> bool:
-	if not _copy_array(consequences.get("travel_hooks_add", [])).is_empty():
+	if not JsonCoerceScript._copy_array(consequences.get("travel_hooks_add", [])).is_empty():
 		return true
-	if not _copy_array(consequences.get("set_next_archetypes", [])).is_empty():
+	if not JsonCoerceScript._copy_array(consequences.get("set_next_archetypes", [])).is_empty():
 		return true
-	if not _copy_array(consequences.get("add_next_archetypes", [])).is_empty():
+	if not JsonCoerceScript._copy_array(consequences.get("add_next_archetypes", [])).is_empty():
 		return true
-	var travel_changes := _copy_dict(consequences.get("travel_changes", {}))
-	if not _copy_array(travel_changes.get("set_next_archetypes", [])).is_empty():
+	var travel_changes := JsonCoerceScript._copy_dict(consequences.get("travel_changes", {}))
+	if not JsonCoerceScript._copy_array(travel_changes.get("set_next_archetypes", [])).is_empty():
 		return true
-	if not _copy_array(travel_changes.get("add_next_archetypes", [])).is_empty():
+	if not JsonCoerceScript._copy_array(travel_changes.get("add_next_archetypes", [])).is_empty():
 		return true
 	return false
 
@@ -273,28 +270,19 @@ static func _travel_target_ids(run_state: RunState) -> Array:
 		run_state.current_environment.get("travel_hooks", []),
 		run_state.unlocked_travel,
 	]:
-		for target_id in _string_array(source):
+		for target_id in JsonCoerceScript._string_array(source):
 			if not result.has(target_id):
 				result.append(target_id)
 	return result
 
 
 static func _environment_has_shopkeeper(environment: Dictionary, library: ContentLibrary) -> bool:
-	if not _copy_array(environment.get("item_offers", [])).is_empty():
+	if not JsonCoerceScript._copy_array(environment.get("item_offers", [])).is_empty():
 		return true
 	if str(environment.get("kind", "")) != "shop":
 		return false
-	var archetype := _environment_archetype(library, str(environment.get("archetype_id", "")))
-	return not _string_array(archetype.get("item_pool", [])).is_empty()
-
-
-static func _environment_archetype(library: ContentLibrary, archetype_id: String) -> Dictionary:
-	if library == null or archetype_id.is_empty():
-		return {}
-	for archetype in library.environment_archetypes:
-		if typeof(archetype) == TYPE_DICTIONARY and str((archetype as Dictionary).get("id", "")) == archetype_id:
-			return (archetype as Dictionary).duplicate(true)
-	return {}
+	var archetype := library.environment_archetype(str(environment.get("archetype_id", "")))
+	return not JsonCoerceScript._string_array(archetype.get("item_pool", [])).is_empty()
 
 
 static func _item_sale_price(item_definition: Dictionary) -> int:
@@ -303,26 +291,3 @@ static func _item_sale_price(item_definition: Dictionary) -> int:
 	var price_min := int(item_definition.get("price_min", 0))
 	var price_max := int(item_definition.get("price_max", price_min))
 	return maxi(0, int(round(float(price_min + price_max) * 0.25)))
-
-
-static func _copy_array(value: Variant) -> Array:
-	if typeof(value) != TYPE_ARRAY:
-		return []
-	return (value as Array).duplicate(true)
-
-
-static func _copy_dict(value: Variant) -> Dictionary:
-	if typeof(value) != TYPE_DICTIONARY:
-		return {}
-	return (value as Dictionary).duplicate(true)
-
-
-static func _string_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry in value as Array:
-		var id := str(entry)
-		if not id.is_empty():
-			result.append(id)
-	return result

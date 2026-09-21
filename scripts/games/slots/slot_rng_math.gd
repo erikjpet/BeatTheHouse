@@ -1,6 +1,8 @@
 class_name SlotRngMath
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 # Stateless deterministic helpers for slot generation and spin projection.
 
 
@@ -32,7 +34,7 @@ static func weighted_pick(entries: Array, rng: RngStream) -> Dictionary:
 static func pick_reel_stops(reel_strips: Array, rng: RngStream) -> Array:
 	var stops: Array = []
 	for strip_value in reel_strips:
-		var strip: Array = _string_array(strip_value)
+		var strip: Array = JsonCoerceScript._string_array(strip_value)
 		if strip.is_empty():
 			stops.append(0)
 		else:
@@ -45,7 +47,7 @@ static func project_grid(reel_strips: Array, stops: Array, reel_count: int, row_
 	for reel_index in range(maxi(1, reel_count)):
 		var strip: Array = []
 		if reel_index < reel_strips.size():
-			strip = _string_array(reel_strips[reel_index])
+			strip = JsonCoerceScript._string_array(reel_strips[reel_index])
 		if strip.is_empty():
 			strip = ["BLANK"]
 		var stop := int(stops[reel_index]) if reel_index < stops.size() else 0
@@ -188,7 +190,7 @@ static func random_payline_cells(reel_count: int, row_count: int, count: int, rn
 static func grid_to_string(grid: Array) -> String:
 	var columns: Array = []
 	for column_value in grid:
-		columns.append(",".join(_string_array(column_value)))
+		columns.append(",".join(JsonCoerceScript._string_array(column_value)))
 	return "|".join(columns)
 
 
@@ -247,15 +249,6 @@ static func all_cells_protected(cells: Array, protected_cells: Dictionary) -> bo
 		if not bool(protected_cells.get("%d:%d" % [int(cell.get("reel", -1)), int(cell.get("row", -1))], false)):
 			return false
 	return true
-
-
-static func _string_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry in value:
-		result.append(str(entry))
-	return result
 
 
 static func _payline_rows(reel_count: int, row_count: int, line_index: int) -> Array:

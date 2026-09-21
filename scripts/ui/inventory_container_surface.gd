@@ -1,6 +1,8 @@
 class_name InventoryContainerSurface
 extends Control
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 signal slot_hovered(selection_key: String)
 signal slot_selected(selection_key: String)
 signal slot_confirmed(selection_key: String)
@@ -68,7 +70,7 @@ func update_model(model: Dictionary) -> void:
 	var previous_hint := _selection_reconciliation_hint()
 	var previous_key := _selected_key
 	_model = model.duplicate(true)
-	_containers = _dictionary_array(_model.get("containers", []))
+	_containers = JsonCoerceScript._dictionary_array(_model.get("containers", []))
 	if _containers.is_empty():
 		_containers = [_legacy_loose_container(_model)]
 	_selected_key = str(_model.get("selected_key", _selection_key_from_legacy(_model.get("selected", {})))).strip_edges()
@@ -171,9 +173,9 @@ func layout_snapshot() -> Dictionary:
 			"group_rect": (_slot_group_labels[visible_index] as Label).get_global_rect() if visible_index < _slot_group_labels.size() else Rect2(),
 			"description_rect": (_slot_description_labels[visible_index] as Label).get_global_rect() if visible_index < _slot_description_labels.size() else Rect2(),
 			"badge_rect": (_slot_badge_hosts[visible_index] as HBoxContainer).get_global_rect() if visible_index < _slot_badge_hosts.size() else Rect2(),
-			"stack_text": str(ItemCardViewModelScript.build(_copy_dict(slot.get("item", {}))).get("stack_text", "+1")),
-			"contains_risk_badge": _card_contains_risk_badge(_copy_dict(slot.get("item", {}))),
-			"rarity": str(_copy_dict(slot.get("item", {})).get("tier", "")),
+			"stack_text": str(ItemCardViewModelScript.build(JsonCoerceScript._copy_dict(slot.get("item", {}))).get("stack_text", "+1")),
+			"contains_risk_badge": _card_contains_risk_badge(JsonCoerceScript._copy_dict(slot.get("item", {}))),
+			"rarity": str(JsonCoerceScript._copy_dict(slot.get("item", {})).get("tier", "")),
 		})
 	return {
 		"active_container_key": active_container_key(),
@@ -191,7 +193,7 @@ func layout_snapshot() -> Dictionary:
 		"selected_key": _selected_key,
 		"hovered_key": _hovered_key,
 		"focused_key": _focused_key,
-		"multi_selected_keys": _string_array(_model.get("multi_selected_keys", [])),
+		"multi_selected_keys": JsonCoerceScript._literal_string_array(_model.get("multi_selected_keys", [])),
 		"slots": slots,
 		"pool_count": _slot_buttons.size(),
 		"rendered_slot_count": _slot_models.size(),
@@ -480,7 +482,7 @@ func _visible_container_indices() -> Array:
 
 
 func _normalized_slots(container: Dictionary) -> Array:
-	var slots := _dictionary_array(container.get("slots", []))
+	var slots := JsonCoerceScript._dictionary_array(container.get("slots", []))
 	var capacity := maxi(0, int(container.get("capacity", 0)))
 	var target_count := capacity if capacity > 0 else slots.size()
 	while slots.size() < target_count:
@@ -1055,7 +1057,7 @@ func _selection_reconciliation_hint() -> Dictionary:
 	if location.is_empty():
 		return {}
 	var container: Dictionary = location.get("container", {})
-	var slots := _dictionary_array(container.get("slots", []))
+	var slots := JsonCoerceScript._dictionary_array(container.get("slots", []))
 	var slot: Dictionary = location.get("slot", {})
 	var slot_index := int(slot.get("slot_index", slots.find(slot)))
 	var rects := CatalogScript.slot_rects(str(container.get("container_type", "loose_carry")), maxi(slots.size(), int(container.get("capacity", 0))), _catalog)
@@ -1070,7 +1072,7 @@ func _nearest_occupied_key(container_index: int, hint: Dictionary) -> String:
 	if container_index < 0 or container_index >= _containers.size():
 		return ""
 	var container: Dictionary = _containers[container_index]
-	var slots := _dictionary_array(container.get("slots", []))
+	var slots := JsonCoerceScript._dictionary_array(container.get("slots", []))
 	var rects := CatalogScript.slot_rects(str(container.get("container_type", "loose_carry")), maxi(slots.size(), int(container.get("capacity", 0))), _catalog)
 	var wanted_center: Vector2 = hint.get("center", Vector2.ZERO) if typeof(hint.get("center", Vector2.ZERO)) == TYPE_VECTOR2 else Vector2.ZERO
 	var best_key := ""
@@ -1101,7 +1103,7 @@ func _first_preferred_key(container_index: int) -> String:
 	if container_index < 0 or container_index >= _containers.size():
 		return ""
 	var first_inspectable := ""
-	for slot_value in _dictionary_array((_containers[container_index] as Dictionary).get("slots", [])):
+	for slot_value in JsonCoerceScript._dictionary_array((_containers[container_index] as Dictionary).get("slots", [])):
 		if not bool(slot_value.get("occupied", false)):
 			continue
 		var key := str(slot_value.get("selection_key", ""))
@@ -1117,7 +1119,7 @@ func _first_preferred_key(container_index: int) -> String:
 func _first_preferred_key_on_page(container_index: int, page_index: int) -> String:
 	if container_index < 0 or container_index >= _containers.size():
 		return ""
-	var slots := _dictionary_array((_containers[container_index] as Dictionary).get("slots", []))
+	var slots := JsonCoerceScript._dictionary_array((_containers[container_index] as Dictionary).get("slots", []))
 	var page_size := _page_size(maxi(slots.size(), int((_containers[container_index] as Dictionary).get("capacity", 0))))
 	var start := maxi(0, page_index) * page_size
 	var first_inspectable := ""
@@ -1140,7 +1142,7 @@ func _page_size(slot_count: int) -> int:
 
 
 func _page_count(container: Dictionary) -> int:
-	var slot_count := maxi(_dictionary_array(container.get("slots", [])).size(), int(container.get("capacity", 0)))
+	var slot_count := maxi(JsonCoerceScript._dictionary_array(container.get("slots", [])).size(), int(container.get("capacity", 0)))
 	return maxi(1, int(ceil(float(slot_count) / float(_page_size(slot_count)))))
 
 
@@ -1184,7 +1186,7 @@ func _grouped_card_stage_size_estimate() -> Vector2:
 func _selection_location(selection_key: String) -> Dictionary:
 	for container_index in range(_containers.size()):
 		var container: Dictionary = _containers[container_index]
-		for slot_value in _dictionary_array(container.get("slots", [])):
+		for slot_value in JsonCoerceScript._dictionary_array(container.get("slots", [])):
 			if str(slot_value.get("selection_key", "")) == selection_key:
 				return {"container_index": container_index, "container": container, "slot": slot_value}
 	return {}
@@ -1216,7 +1218,7 @@ func _container_index(container_key: String) -> int:
 
 func _legacy_loose_container(model: Dictionary) -> Dictionary:
 	var slots: Array = []
-	for item_value in _dictionary_array(model.get("items", [])):
+	for item_value in JsonCoerceScript._dictionary_array(model.get("items", [])):
 		var source := str(item_value.get("storage_source", "carried"))
 		var item_id := str(item_value.get("id", ""))
 		slots.append({
@@ -1259,26 +1261,3 @@ func _texture(path: String) -> Texture2D:
 			return provided as Texture2D
 	var loaded: Variant = load(clean_path)
 	return loaded as Texture2D if loaded is Texture2D else null
-
-
-func _dictionary_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry in value as Array:
-		if typeof(entry) == TYPE_DICTIONARY:
-			result.append((entry as Dictionary).duplicate(true))
-	return result
-
-
-func _copy_dict(value: Variant) -> Dictionary:
-	return (value as Dictionary).duplicate(true) if typeof(value) == TYPE_DICTIONARY else {}
-
-
-func _string_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry in value as Array:
-		result.append(str(entry))
-	return result

@@ -11,6 +11,7 @@ const USER_PATH := "user://developer_environment_placements.json"
 const USER_PATH_ENV := "BTH_DEVELOPER_PLACEMENT_PATH"
 const PROJECT_PATH_ENV := "BTH_PROJECT_PLACEMENT_PATH"
 const PersistencePathsScript := preload("res://scripts/core/persistence_paths.gd")
+const DurableStoreScript := preload("res://scripts/core/durable_store.gd")
 const POSITION_FIELDS := [
 	"object_slot_positions",
 	"scenario_object_slot_positions",
@@ -20,6 +21,8 @@ const POSITION_FIELDS := [
 static var _loaded := false
 static var _project_rooms: Dictionary = {}
 static var _user_rooms: Dictionary = {}
+static var last_project_load_outcome: Dictionary = {}
+static var last_user_load_outcome: Dictionary = {}
 
 
 static func room_key(environment: Dictionary) -> String:
@@ -127,35 +130,32 @@ static func _ensure_loaded() -> void:
 	if _loaded:
 		return
 	_loaded = true
-	_project_rooms = _read_rooms(project_path())
-	_user_rooms = _read_rooms(user_path())
+	var project_result := _read_rooms(project_path())
+	last_project_load_outcome = project_result.get("outcome", {}).duplicate(true)
+	_project_rooms = project_result.get("rooms", {}).duplicate(true)
+	var user_result := _read_rooms(user_path())
+	last_user_load_outcome = user_result.get("outcome", {}).duplicate(true)
+	_user_rooms = user_result.get("rooms", {}).duplicate(true)
 
 
 static func _read_rooms(path: String) -> Dictionary:
-	if not FileAccess.file_exists(path):
-		return {}
-	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
-	if typeof(parsed) != TYPE_DICTIONARY:
-		return {}
-	var payload := parsed as Dictionary
-	if int(payload.get("schema_version", 0)) != SCHEMA_VERSION:
-		return {}
-	return _dict(payload.get("rooms", {})).duplicate(true)
+	var result := DurableStoreScript.read_json(path, func(payload: Dictionary) -> bool: return _placement_payload_valid(payload))
+	if not bool(result.get("ok", false)):
+		return {"rooms": {}, "outcome": result}
+	return {"rooms": _dict((result.get("data", {}) as Dictionary).get("rooms", {})).duplicate(true), "outcome": result}
 
 
 static func _write_payload(path: String, rooms: Dictionary) -> Error:
-	var global_path := ProjectSettings.globalize_path(path)
-	var directory := global_path.get_base_dir()
-	if not directory.is_empty():
-		var directory_error := DirAccess.make_dir_recursive_absolute(directory)
-		if directory_error != OK and directory_error != ERR_ALREADY_EXISTS:
-			return directory_error
-	var file := FileAccess.open(path, FileAccess.WRITE)
-	if file == null:
-		return FileAccess.get_open_error()
-	file.store_string(JSON.stringify({"schema_version": SCHEMA_VERSION, "rooms": rooms}, "  ", true) + "\n")
-	file.close()
-	return OK
+	var result := DurableStoreScript.write_json(
+		path,
+		{"schema_version": SCHEMA_VERSION, "rooms": rooms},
+		func(payload: Dictionary) -> bool: return _placement_payload_valid(payload)
+	)
+	return int(result.get("error", FAILED))
+
+
+static func _placement_payload_valid(payload: Dictionary) -> bool:
+	return int(payload.get("schema_version", 0)) == SCHEMA_VERSION and typeof(payload.get("rooms", {})) == TYPE_DICTIONARY
 
 
 static func _dict(value: Variant) -> Dictionary:

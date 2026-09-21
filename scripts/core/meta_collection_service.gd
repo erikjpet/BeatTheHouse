@@ -1,8 +1,11 @@
 class_name MetaCollectionService
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 const CollectionItemResolverScript := preload("res://scripts/core/collection_item_resolver.gd")
 const RngStreamScript := preload("res://scripts/core/rng_stream.gd")
+const DurableStoreScript := preload("res://scripts/core/durable_store.gd")
 
 const STORE_PATH := "user://meta_collection.json"
 const STORE_PATH_ENV := "BTH_META_COLLECTION_PATH"
@@ -37,6 +40,13 @@ const GRAND_CASINO_CHIPS_ITEMDEF_ID := 9501
 const PRESTIGE_RECOGNITION_HEAT_DELTA := -10
 const PRESTIGE_CLEAN_HEAT_CEILING_DELTA := -5
 const PRESTIGE_DROP_TIER_BONUS_STEPS := 1
+const STORE_STORAGE_KEYS := [
+	"schema_version", "owned_instances", "unopened_bags", "gold_balance",
+	"housing_tier", "owned_containers", "loadout",
+	"starter_card_home_grant_applied", "meta_home", "trade_up_history",
+	"sale_history", "pending_sale", "pending_trade_up", "meta_rng",
+	"next_instance_id", "sal_resale",
+]
 
 const FIXTURE_PROVENANCE_TOKENS := [
 	"ui-",
@@ -60,6 +70,7 @@ var _owned_instance_index_source_count := -1
 var _unopened_bag_index: Dictionary = {}
 var _unopened_bag_index_source_count := -1
 var _state_revision := 0
+var last_load_outcome: Dictionary = {"ok": false, "outcome": DurableStoreScript.OUTCOME_NONE}
 
 
 func _init() -> void:
@@ -70,28 +81,15 @@ func _init() -> void:
 
 func load() -> Dictionary:
 	var path := store_path()
-	if not FileAccess.file_exists(path):
+	last_load_outcome = DurableStoreScript.read_json(path, Callable(self, "_meta_payload_valid"))
+	if not bool(last_load_outcome.get("ok", false)):
 		_store = _default_store()
 		_rebuild_owned_instance_index()
 		_state_revision += 1
 		return snapshot()
-	var text := FileAccess.get_file_as_string(path)
-	var parser := JSON.new()
-	var parse_error := parser.parse(text)
-	if parse_error != OK:
-		_store = _default_store()
-		_rebuild_owned_instance_index()
-		_state_revision += 1
-		return snapshot()
-	var parsed: Variant = parser.data
-	if typeof(parsed) != TYPE_DICTIONARY:
-		_store = _default_store()
-		_rebuild_owned_instance_index()
-		_state_revision += 1
-		return snapshot()
-	var data: Dictionary = parsed
+	var data: Dictionary = last_load_outcome.get("data", {})
 	var migration := _migrate_fixture_pollution(_normalize_store(data))
-	_store = _copy_dict(migration.get("store", {}))
+	_store = JsonCoerceScript._copy_dict(migration.get("store", {}))
 	_rebuild_owned_instance_index()
 	_state_revision += 1
 	if bool(migration.get("migrated", false)):
@@ -103,23 +101,16 @@ func save() -> Error:
 	_store = _normalize_store(_store)
 	_rebuild_owned_instance_index()
 	_state_revision += 1
-	var path := store_path()
-	var absolute_path := ProjectSettings.globalize_path(path)
-	var directory := absolute_path.get_base_dir()
-	var directory_error := DirAccess.make_dir_recursive_absolute(directory)
-	if directory_error != OK:
-		return directory_error
-	var temp_path := "%s.tmp" % absolute_path
-	var file := FileAccess.open(temp_path, FileAccess.WRITE)
-	if file == null:
-		return FileAccess.get_open_error()
-	file.store_string(JSON.stringify(_store, "\t"))
-	file.close()
-	if FileAccess.file_exists(absolute_path):
-		var remove_error := DirAccess.remove_absolute(absolute_path)
-		if remove_error != OK:
-			return remove_error
-	return DirAccess.rename_absolute(temp_path, absolute_path)
+	var result := DurableStoreScript.write_json(store_path(), _store, Callable(self, "_meta_payload_valid"))
+	return int(result.get("error", FAILED))
+
+
+func last_load_result() -> Dictionary:
+	return last_load_outcome.duplicate(true)
+
+
+func _meta_payload_valid(data: Dictionary) -> bool:
+	return not data.is_empty() and int(data.get("schema_version", 0)) >= 0
 
 
 func grant_instance(instance: Dictionary) -> Dictionary:
@@ -129,7 +120,7 @@ func grant_instance(instance: Dictionary) -> Dictionary:
 	var instance_id := _take_next_instance_id()
 	normalized["schema_version"] = SCHEMA_VERSION
 	normalized["instance_id"] = instance_id
-	var instances := _copy_array(_store.get("owned_instances", []))
+	var instances := JsonCoerceScript._copy_array(_store.get("owned_instances", []))
 	instances.append(normalized)
 	_store["owned_instances"] = instances
 	_owned_instance_index[instance_id] = normalized
@@ -141,8 +132,8 @@ func mint_players_card(instance_data: Dictionary) -> Dictionary:
 	var starter_card := bool(instance_data.get("starter_card", false))
 	if starter_card:
 		for instance_value in owned_instances():
-			var existing := _copy_dict(instance_value)
-			var existing_stamp := _copy_dict(existing.get("instance_data", {}))
+			var existing := JsonCoerceScript._copy_dict(instance_value)
+			var existing_stamp := JsonCoerceScript._copy_dict(existing.get("instance_data", {}))
 			if _collection_resolver().is_players_card_instance(existing) and bool(existing_stamp.get("starter_card", false)):
 				ensure_players_card_carried(int(existing.get("instance_id", 0)))
 				_store["starter_card_home_grant_applied"] = true
@@ -179,7 +170,7 @@ func ensure_players_card_carried(instance_id: int) -> Dictionary:
 	var capacity := carry_capacity()
 	if capacity <= 0:
 		return {"ok": false, "carried": false, "message": "The home has no carry container."}
-	var loadout := _filtered_packed_ids(_copy_array(_store.get("loadout", [])))
+	var loadout := _filtered_packed_ids(JsonCoerceScript._copy_array(_store.get("loadout", [])))
 	if loadout.has(instance_id):
 		return {"ok": true, "carried": true, "packed_instance_ids": loadout}
 	# Starter-card priority never deletes another possession. If the carry bag is
@@ -230,7 +221,7 @@ func grant_bag(bagdef_id: int, rng_seed: String = "", metadata: Dictionary = {})
 		bag["source"] = "grant"
 	if not bag.has("source_id"):
 		bag["source_id"] = ""
-	var bags := _copy_array(_store.get("unopened_bags", []))
+	var bags := JsonCoerceScript._copy_array(_store.get("unopened_bags", []))
 	bags.append(bag)
 	_store["unopened_bags"] = bags
 	_unopened_bag_index[int(bag.get("instance_id", 0))] = bag
@@ -242,11 +233,11 @@ func open_bag(instance_id: int) -> Dictionary:
 	_ensure_store_ready()
 	if not can_accept_owned_instance():
 		return {"ok": false, "message": "No room for another collection item."}
-	var bags := _copy_array(_store.get("unopened_bags", []))
+	var bags := JsonCoerceScript._copy_array(_store.get("unopened_bags", []))
 	var bag_index := -1
 	var bag: Dictionary = {}
 	for index in range(bags.size()):
-		var candidate := _copy_dict(bags[index])
+		var candidate := JsonCoerceScript._copy_dict(bags[index])
 		if int(candidate.get("instance_id", -1)) == instance_id:
 			bag_index = index
 			bag = candidate
@@ -259,7 +250,7 @@ func open_bag(instance_id: int) -> Dictionary:
 		return {"ok": false, "message": "That bag definition has no item options."}
 	var rng := _meta_rng()
 	var option_index := rng.randi_range(0, options.size() - 1)
-	var definition := _copy_dict(options[option_index])
+	var definition := JsonCoerceScript._copy_dict(options[option_index])
 	var reveal_seed := "%s|bag:%d|itemdef:%d|state:%d" % [
 		str(bag.get("rng_seed", "meta")),
 		instance_id,
@@ -281,7 +272,7 @@ func open_bag(instance_id: int) -> Dictionary:
 		"item": granted.duplicate(true),
 		"definition": definition,
 		"run_item": run_item,
-		"condition_band": _copy_dict(run_item.get("meta_collection", {})).get("condition_band", ""),
+		"condition_band": JsonCoerceScript._copy_dict(run_item.get("meta_collection", {})).get("condition_band", ""),
 	}
 	return {
 		"ok": true,
@@ -300,11 +291,11 @@ func housing_tier() -> String:
 
 func housing_definition(tier: String = "") -> Dictionary:
 	var config := _meta_home_config()
-	var housing := _copy_dict(config.get("housing", {}))
+	var housing := JsonCoerceScript._copy_dict(config.get("housing", {}))
 	var clean_tier := tier.strip_edges()
 	if clean_tier.is_empty():
 		clean_tier = housing_tier()
-	return _copy_dict(housing.get(clean_tier, {}))
+	return JsonCoerceScript._copy_dict(housing.get(clean_tier, {}))
 
 
 func next_housing_upgrade() -> Dictionary:
@@ -334,11 +325,11 @@ func purchase_housing_upgrade() -> Dictionary:
 	var tier := str(upgrade.get("tier", ""))
 	_store["gold_balance"] = gold - price
 	_store["housing_tier"] = tier
-	var home := _copy_dict(_store.get("meta_home", {}))
+	var home := JsonCoerceScript._copy_dict(_store.get("meta_home", {}))
 	home["current_location"] = "home"
 	home["housing_tier"] = tier
 	_store["meta_home"] = home
-	_store["loadout"] = _filtered_packed_ids(_copy_array(_store.get("loadout", [])))
+	_store["loadout"] = _filtered_packed_ids(JsonCoerceScript._copy_array(_store.get("loadout", [])))
 	return {
 		"ok": true,
 		"message": "Home upgraded to %s." % str(upgrade.get("display_name", tier.capitalize())),
@@ -355,8 +346,8 @@ func storage_slots() -> int:
 func carry_capacity() -> int:
 	_ensure_store_ready()
 	var total := 0
-	for container_value in _copy_array(_store.get("owned_containers", [])):
-		var container := _copy_dict(container_value)
+	for container_value in JsonCoerceScript._copy_array(_store.get("owned_containers", [])):
+		var container := JsonCoerceScript._copy_dict(container_value)
 		total += _container_capacity(str(container.get("item_id", "")))
 	return maxi(0, total)
 
@@ -386,7 +377,7 @@ func grant_container(item_id: String) -> Dictionary:
 		"instance_id": _take_next_instance_id(),
 		"capacity": _container_capacity(clean_id),
 	}
-	var containers := _copy_array(_store.get("owned_containers", []))
+	var containers := JsonCoerceScript._copy_array(_store.get("owned_containers", []))
 	containers.append(container)
 	_store["owned_containers"] = containers
 	return container.duplicate(true)
@@ -401,7 +392,7 @@ func pack_instance(instance_id: int) -> Dictionary:
 	var resolver: Variant = _collection_resolver()
 	if not resolver.is_loadout_eligible(_owned_instance(instance_id)):
 		return {"ok": false, "message": "Grand Casino Chips stay in meta storage until Sal fences them."}
-	var loadout := _filtered_packed_ids(_copy_array(_store.get("loadout", [])))
+	var loadout := _filtered_packed_ids(JsonCoerceScript._copy_array(_store.get("loadout", [])))
 	if loadout.has(instance_id):
 		return {"ok": true, "message": "Item is already packed.", "packed_instance_ids": loadout}
 	if loadout.size() >= carry_capacity():
@@ -415,7 +406,7 @@ func unpack_instance(instance_id: int) -> Dictionary:
 	_ensure_store_ready()
 	if housing_tier() == HOUSING_BACK_ALLEY:
 		return {"ok": false, "message": "Back alley starts carry every owned item."}
-	var loadout := _filtered_packed_ids(_copy_array(_store.get("loadout", [])))
+	var loadout := _filtered_packed_ids(JsonCoerceScript._copy_array(_store.get("loadout", [])))
 	loadout.erase(instance_id)
 	_store["loadout"] = loadout
 	return {"ok": true, "message": "Item unpacked.", "packed_instance_ids": loadout}
@@ -425,7 +416,7 @@ func carried_instance_ids() -> Array:
 	_ensure_store_ready()
 	if housing_tier() == HOUSING_BACK_ALLEY:
 		return _loadout_eligible_owned_instance_ids()
-	return _filtered_packed_ids(_copy_array(_store.get("loadout", [])))
+	return _filtered_packed_ids(JsonCoerceScript._copy_array(_store.get("loadout", [])))
 
 
 func normal_run_start_modifiers() -> Dictionary:
@@ -437,7 +428,7 @@ func normal_run_start_modifiers() -> Dictionary:
 	var run_items: Array = []
 	var prestige_card_ids: Array = []
 	for instance_value in owned_instances():
-		var instance := _copy_dict(instance_value)
+		var instance := JsonCoerceScript._copy_dict(instance_value)
 		if not carried_lookup.has(int(instance.get("instance_id", 0))):
 			continue
 		if resolver.is_players_card_instance(instance):
@@ -473,7 +464,7 @@ func carried_container_rows() -> Array:
 	var resolver: Variant = _collection_resolver()
 	var packed_items: Array = []
 	for instance_value in owned_instances():
-		var instance := _copy_dict(instance_value)
+		var instance := JsonCoerceScript._copy_dict(instance_value)
 		if not carried_lookup.has(int(instance.get("instance_id", 0))):
 			continue
 		var run_item: Dictionary = resolver.resolve_run_item(instance)
@@ -482,8 +473,8 @@ func carried_container_rows() -> Array:
 	var rows: Array = []
 	var packed_index := 0
 	var container_index := 0
-	for container_value in _copy_array(_store.get("owned_containers", [])):
-		var container := _copy_dict(container_value)
+	for container_value in JsonCoerceScript._copy_array(_store.get("owned_containers", [])):
+		var container := JsonCoerceScript._copy_dict(container_value)
 		var item_id := str(container.get("item_id", "bag")).strip_edges()
 		var capacity := maxi(0, int(container.get("capacity", _container_capacity(item_id))))
 		if item_id.is_empty() or capacity <= 0:
@@ -492,7 +483,7 @@ func carried_container_rows() -> Array:
 		var item_ids: Array = []
 		var item_definitions := {}
 		while packed_index < packed_items.size() and item_ids.size() < capacity:
-			var packed_item: Dictionary = _copy_dict(packed_items[packed_index])
+			var packed_item: Dictionary = JsonCoerceScript._copy_dict(packed_items[packed_index])
 			packed_index += 1
 			var packed_item_id := str(packed_item.get("id", "")).strip_edges()
 			if packed_item_id.is_empty():
@@ -524,8 +515,8 @@ func apply_failure_decay(carried_ids: Array, rng_seed: String) -> Array:
 	var decayed: Array = []
 	var deleted_ids: Array = []
 	var resolver: Variant = _collection_resolver()
-	for instance_value in _copy_array(_store.get("owned_instances", [])):
-		var instance := _copy_dict(instance_value)
+	for instance_value in JsonCoerceScript._copy_array(_store.get("owned_instances", [])):
+		var instance := JsonCoerceScript._copy_dict(instance_value)
 		var instance_id := int(instance.get("instance_id", 0))
 		if wanted_ids.has(instance_id):
 			var after: Dictionary = resolver.normalize_instance_for_definition(instance)
@@ -551,7 +542,7 @@ func apply_failure_decay(carried_ids: Array, rng_seed: String) -> Array:
 	_store["owned_instances"] = next_instances
 	_rebuild_owned_instance_index()
 	if not deleted_ids.is_empty():
-		var loadout := _filtered_packed_ids(_copy_array(_store.get("loadout", [])))
+		var loadout := _filtered_packed_ids(JsonCoerceScript._copy_array(_store.get("loadout", [])))
 		for deleted_id in deleted_ids:
 			loadout.erase(int(deleted_id))
 		_store["loadout"] = loadout
@@ -604,7 +595,7 @@ func ordinary_collection_price_breakdown(instance: Dictionary, listing_mode: Str
 		3.0
 	), 0.000000000001)
 	var tier := str(definition.get("tier", "blue"))
-	var prices := _copy_dict(_copy_dict(_meta_home_config().get("sale_prices", {})).get("items", {}))
+	var prices := JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(_meta_home_config().get("sale_prices", {})).get("items", {}))
 	var tier_base := maxi(1, int(prices.get(tier, 1)))
 	var pawn_quote := maxi(1, int(round(float(tier_base) * rarity_multiplier)))
 	var mode := listing_mode.strip_edges().to_lower()
@@ -646,13 +637,13 @@ func ordinary_collection_price_breakdown(instance: Dictionary, listing_mode: Str
 
 
 func sal_shelf_rows() -> Array:
-	var resale := _copy_dict(_store.get("sal_resale", {}))
+	var resale := JsonCoerceScript._copy_dict(_store.get("sal_resale", {}))
 	var result: Array = []
-	for slot_value in _copy_array(resale.get("slots", [])):
-		var slot := _copy_dict(slot_value)
+	for slot_value in JsonCoerceScript._copy_array(resale.get("slots", [])):
+		var slot := JsonCoerceScript._copy_dict(slot_value)
 		if bool(slot.get("occupied", false)):
 			var mode := str(slot.get("listing_mode", LISTING_MODE_NORMAL))
-			var breakdown := ordinary_collection_price_breakdown(_copy_dict(slot.get("item", {})), mode)
+			var breakdown := ordinary_collection_price_breakdown(JsonCoerceScript._copy_dict(slot.get("item", {})), mode)
 			slot["quote_basis"] = breakdown
 			slot["asking_price"] = int(breakdown.get("final_price", slot.get("asking_price", 0)))
 		result.append(slot)
@@ -665,16 +656,16 @@ func sal_shelf_row(slot_index: int) -> Dictionary:
 	var rows := sal_shelf_rows()
 	if slot_index >= rows.size():
 		return {}
-	return _copy_dict(rows[slot_index])
+	return JsonCoerceScript._copy_dict(rows[slot_index])
 
 
 func sal_resale_rng_snapshot() -> Dictionary:
-	return _copy_dict(_copy_dict(_store.get("sal_resale", {})).get("rng_streams", {}))
+	return JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(_store.get("sal_resale", {})).get("rng_streams", {}))
 
 
 func allocate_sal_run_receipt(seed_text: String) -> String:
 	_ensure_store_ready()
-	var resale := _copy_dict(_store.get("sal_resale", {}))
+	var resale := JsonCoerceScript._copy_dict(_store.get("sal_resale", {}))
 	var next_id := maxi(1, int(resale.get("next_run_receipt_id", 1)))
 	resale["next_run_receipt_id"] = next_id + 1
 	_store["sal_resale"] = resale
@@ -683,7 +674,7 @@ func allocate_sal_run_receipt(seed_text: String) -> String:
 
 func sal_run_receipt_processed(receipt: String) -> bool:
 	var clean := receipt.strip_edges()
-	return not clean.is_empty() and _copy_array(_copy_dict(_store.get("sal_resale", {})).get("processed_run_receipts", [])).has(clean)
+	return not clean.is_empty() and JsonCoerceScript._copy_array(JsonCoerceScript._copy_dict(_store.get("sal_resale", {})).get("processed_run_receipts", [])).has(clean)
 
 
 func generate_and_insert_sal_stock(run_receipt: String) -> Dictionary:
@@ -693,15 +684,15 @@ func generate_and_insert_sal_stock(run_receipt: String) -> Dictionary:
 		return {"ok": false, "stocked": false, "message": "Sal stock needs a run receipt."}
 	if sal_run_receipt_processed(receipt):
 		return {"ok": true, "stocked": false, "receipt": receipt, "message": "Sal already stocked this run."}
-	var resale := _copy_dict(_store.get("sal_resale", {}))
-	var streams := _copy_dict(resale.get("rng_streams", {}))
-	var stock_rng := _rng_from_snapshot(_copy_dict(streams.get("sal_resale_stock", {})))
+	var resale := JsonCoerceScript._copy_dict(_store.get("sal_resale", {}))
+	var streams := JsonCoerceScript._copy_dict(resale.get("rng_streams", {}))
+	var stock_rng := _rng_from_snapshot(JsonCoerceScript._copy_dict(streams.get("sal_resale_stock", {})))
 	var resolver: Variant = _collection_resolver()
 	var rolled: Dictionary = resolver.roll_virtual_bag_item(stock_rng, "sal_resale_stock|%s" % receipt)
 	if rolled.is_empty():
 		return {"ok": false, "stocked": false, "receipt": receipt, "message": "Sal could not generate stock."}
 	streams["sal_resale_stock"] = stock_rng.snapshot()
-	var item: Dictionary = resolver.normalize_instance_for_definition(_copy_dict(rolled.get("item", {})))
+	var item: Dictionary = resolver.normalize_instance_for_definition(JsonCoerceScript._copy_dict(rolled.get("item", {})))
 	item["schema_version"] = SCHEMA_VERSION
 	item["instance_id"] = _take_next_instance_id()
 	item["source"] = "sal_run_stock"
@@ -709,33 +700,33 @@ func generate_and_insert_sal_stock(run_receipt: String) -> Dictionary:
 	item["generation_seed"] = str(rolled.get("generation_seed", ""))
 	var provenance := _sal_roll_provenance(rolled, "sal_run_stock", receipt)
 	var listing := _sal_listing_from_item(item, LISTING_MODE_NORMAL, provenance)
-	var slots := _copy_array(resale.get("slots", []))
+	var slots := JsonCoerceScript._copy_array(resale.get("slots", []))
 	var slot_index := -1
 	for index in range(slots.size()):
-		if not bool(_copy_dict(slots[index]).get("occupied", false)):
+		if not bool(JsonCoerceScript._copy_dict(slots[index]).get("occupied", false)):
 			slot_index = index
 			break
 	var replaced: Dictionary = {}
 	if slot_index < 0:
 		var eligible: Array = []
 		for index in range(slots.size()):
-			var candidate := _copy_dict(slots[index])
+			var candidate := JsonCoerceScript._copy_dict(slots[index])
 			if bool(candidate.get("occupied", false)) and not bool(candidate.get("protected", false)):
 				eligible.append(index)
 		if eligible.is_empty():
 			return {"ok": false, "stocked": false, "receipt": receipt, "message": "No eligible Sal shelf slot can be replaced."}
-		var replacement_rng := _rng_from_snapshot(_copy_dict(streams.get("sal_resale_replacement", {})))
+		var replacement_rng := _rng_from_snapshot(JsonCoerceScript._copy_dict(streams.get("sal_resale_replacement", {})))
 		slot_index = int(eligible[replacement_rng.randi_range(0, eligible.size() - 1)])
 		streams["sal_resale_replacement"] = replacement_rng.snapshot()
-		replaced = _copy_dict(slots[slot_index])
+		replaced = JsonCoerceScript._copy_dict(slots[slot_index])
 	listing["slot_index"] = slot_index
 	slots[slot_index] = listing
 	resale["slots"] = slots
 	resale["rng_streams"] = streams
-	var receipts := _copy_array(resale.get("processed_run_receipts", []))
+	var receipts := JsonCoerceScript._copy_array(resale.get("processed_run_receipts", []))
 	receipts.append(receipt)
 	resale["processed_run_receipts"] = _bounded_array(receipts, SAL_RECEIPT_LIMIT)
-	var history := _copy_array(resale.get("stock_history", []))
+	var history := JsonCoerceScript._copy_array(resale.get("stock_history", []))
 	history.append({
 		"receipt": receipt,
 		"slot_index": slot_index,
@@ -745,7 +736,7 @@ func generate_and_insert_sal_stock(run_receipt: String) -> Dictionary:
 		"collection_id": str(provenance.get("collection_id", "")),
 		"tier": str(provenance.get("tier", "")),
 		"generation_seed": str(provenance.get("generation_seed", "")),
-		"replaced_instance_id": int(_copy_dict(replaced.get("item", {})).get("instance_id", 0)),
+		"replaced_instance_id": int(JsonCoerceScript._copy_dict(replaced.get("item", {})).get("instance_id", 0)),
 	})
 	resale["stock_history"] = _bounded_array(history, SAL_HISTORY_LIMIT)
 	resale["revision"] = maxi(0, int(resale.get("revision", 0))) + 1
@@ -771,7 +762,7 @@ func arm_sal_shelf_purchase(slot_index: int) -> Dictionary:
 	var price := int(quote.get("asking_price", 0))
 	if int(_store.get("gold_balance", 0)) < price:
 		return {"ok": false, "message": "Not enough gold for that shelf item.", "asking_price": price}
-	var resale := _copy_dict(_store.get("sal_resale", {}))
+	var resale := JsonCoerceScript._copy_dict(_store.get("sal_resale", {}))
 	var token := "sal-buy:%d:%d:%s:%d:%d" % [
 		slot_index,
 		int(quote.get("instance_id", 0)),
@@ -788,8 +779,8 @@ func arm_sal_shelf_purchase(slot_index: int) -> Dictionary:
 
 func confirm_sal_shelf_purchase(token: String) -> Dictionary:
 	_ensure_store_ready()
-	var resale := _copy_dict(_store.get("sal_resale", {}))
-	var pending := _copy_dict(resale.get("pending_purchase", {}))
+	var resale := JsonCoerceScript._copy_dict(_store.get("sal_resale", {}))
+	var pending := JsonCoerceScript._copy_dict(resale.get("pending_purchase", {}))
 	if token.strip_edges().is_empty() or str(pending.get("token", "")) != token:
 		return {"ok": false, "message": "Shelf purchase confirmation expired."}
 	var slot_index := int(pending.get("slot_index", -1))
@@ -807,16 +798,16 @@ func confirm_sal_shelf_purchase(token: String) -> Dictionary:
 	var gold := int(_store.get("gold_balance", 0))
 	if gold < price:
 		return {"ok": false, "message": "Not enough gold for that shelf item."}
-	var slots := _copy_array(resale.get("slots", []))
-	var listing := _copy_dict(slots[slot_index])
-	var item := _copy_dict(listing.get("item", {}))
+	var slots := JsonCoerceScript._copy_array(resale.get("slots", []))
+	var listing := JsonCoerceScript._copy_dict(slots[slot_index])
+	var item := JsonCoerceScript._copy_dict(listing.get("item", {}))
 	_store["gold_balance"] = gold - price
-	var owned := _copy_array(_store.get("owned_instances", []))
+	var owned := JsonCoerceScript._copy_array(_store.get("owned_instances", []))
 	owned.append(item.duplicate(true))
 	_store["owned_instances"] = owned
 	slots[slot_index] = _empty_sal_slot(slot_index)
 	resale["slots"] = slots
-	var history := _copy_array(resale.get("purchase_history", []))
+	var history := JsonCoerceScript._copy_array(resale.get("purchase_history", []))
 	var purchase_record := {
 		"slot_index": slot_index,
 		"instance_id": int(item.get("instance_id", 0)),
@@ -838,7 +829,7 @@ func confirm_sal_shelf_purchase(token: String) -> Dictionary:
 			"instance_id": int(item.get("instance_id", 0)),
 			"itemdef_id": int(item.get("itemdef_id", -1)),
 			"item": item.duplicate(true),
-			"provenance": _copy_dict(listing.get("provenance", {})),
+			"provenance": JsonCoerceScript._copy_dict(listing.get("provenance", {})),
 			"original_slot_index": slot_index,
 			"rare_channel": str(listing.get("starter_rare_channel", "")),
 			"rare_value": float(listing.get("starter_rare_value", 0.0)),
@@ -865,13 +856,13 @@ func confirm_sal_shelf_purchase(token: String) -> Dictionary:
 
 
 func pending_starter_buyback() -> Dictionary:
-	return _copy_dict(_copy_dict(_store.get("sal_resale", {})).get("pending_starter_buyback", {}))
+	return JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(_store.get("sal_resale", {})).get("pending_starter_buyback", {}))
 
 
 func resolve_starter_buyback(choice: String) -> Dictionary:
 	_ensure_store_ready()
-	var resale := _copy_dict(_store.get("sal_resale", {}))
-	var pending := _copy_dict(resale.get("pending_starter_buyback", {}))
+	var resale := JsonCoerceScript._copy_dict(_store.get("sal_resale", {}))
+	var pending := JsonCoerceScript._copy_dict(resale.get("pending_starter_buyback", {}))
 	if pending.is_empty() or bool(pending.get("resolved", false)) or bool(resale.get("starter_tutorial_resolved", false)):
 		return {"ok": false, "message": "Sal's special offer is already resolved."}
 	var clean_choice := choice.strip_edges().to_lower()
@@ -885,11 +876,11 @@ func resolve_starter_buyback(choice: String) -> Dictionary:
 		return {"ok": false, "message": "Choose whether to keep it or sell it back."}
 	var instance_id := int(pending.get("instance_id", 0))
 	var owned_item := _owned_instance(instance_id)
-	if owned_item.is_empty() or not _same_sal_instance_identity(owned_item, _copy_dict(pending.get("item", {}))):
+	if owned_item.is_empty() or not _same_sal_instance_identity(owned_item, JsonCoerceScript._copy_dict(pending.get("item", {}))):
 		return {"ok": false, "message": "The exact starter item is no longer available for Sal's offer."}
 	var slot_index := int(pending.get("original_slot_index", -1))
-	var slots := _copy_array(resale.get("slots", []))
-	if slot_index < 0 or slot_index >= slots.size() or bool(_copy_dict(slots[slot_index]).get("occupied", false)):
+	var slots := JsonCoerceScript._copy_array(resale.get("slots", []))
+	if slot_index < 0 or slot_index >= slots.size() or bool(JsonCoerceScript._copy_dict(slots[slot_index]).get("occupied", false)):
 		return {"ok": false, "message": "The original shelf slot is no longer empty."}
 	var offer_breakdown := ordinary_collection_price_breakdown(owned_item, LISTING_MODE_STARTER_BUYBACK)
 	var pawn_quote := int(offer_breakdown.get("pawn_quote", 0))
@@ -898,11 +889,11 @@ func resolve_starter_buyback(choice: String) -> Dictionary:
 		return {"ok": false, "message": "Sal's saved offer no longer matches the item."}
 	if not remove_instance(instance_id):
 		return {"ok": false, "message": "The starter item could not be transferred."}
-	var loadout := _filtered_packed_ids(_copy_array(_store.get("loadout", [])))
+	var loadout := _filtered_packed_ids(JsonCoerceScript._copy_array(_store.get("loadout", [])))
 	loadout.erase(instance_id)
 	_store["loadout"] = loadout
 	_store["gold_balance"] = maxi(0, int(_store.get("gold_balance", 0)) + offer_price)
-	var provenance := _copy_dict(pending.get("provenance", {}))
+	var provenance := JsonCoerceScript._copy_dict(pending.get("provenance", {}))
 	if provenance.is_empty():
 		provenance = {"source": "sal_starter_buyback", "source_id": "starter"}
 	var relisted := _sal_listing_from_item(owned_item, LISTING_MODE_MOCKING_RELIST, provenance)
@@ -913,7 +904,7 @@ func resolve_starter_buyback(choice: String) -> Dictionary:
 	resale["slots"] = slots
 	resale["pending_starter_buyback"] = {}
 	resale["starter_tutorial_resolved"] = true
-	var history := _copy_array(resale.get("purchase_history", []))
+	var history := JsonCoerceScript._copy_array(resale.get("purchase_history", []))
 	history.append({
 		"kind": "starter_buyback",
 		"instance_id": instance_id,
@@ -941,14 +932,14 @@ func resolve_starter_buyback(choice: String) -> Dictionary:
 func _authoritative_sal_slot_quote(slot_index: int) -> Dictionary:
 	if slot_index < 0 or slot_index >= SAL_SHELF_SLOT_COUNT:
 		return {"ok": false, "message": "That shelf slot does not exist."}
-	var resale := _copy_dict(_store.get("sal_resale", {}))
-	var slots := _copy_array(resale.get("slots", []))
+	var resale := JsonCoerceScript._copy_dict(_store.get("sal_resale", {}))
+	var slots := JsonCoerceScript._copy_array(resale.get("slots", []))
 	if slot_index >= slots.size():
 		return {"ok": false, "message": "That shelf slot does not exist."}
-	var listing := _copy_dict(slots[slot_index])
+	var listing := JsonCoerceScript._copy_dict(slots[slot_index])
 	if not bool(listing.get("occupied", false)):
 		return {"ok": false, "message": "That shelf slot is empty."}
-	var item := _copy_dict(listing.get("item", {}))
+	var item := JsonCoerceScript._copy_dict(listing.get("item", {}))
 	var mode := str(listing.get("listing_mode", LISTING_MODE_NORMAL))
 	var breakdown := ordinary_collection_price_breakdown(item, mode)
 	if not bool(breakdown.get("ok", false)):
@@ -978,7 +969,7 @@ func arm_sale(kind: String, instance_id: int) -> Dictionary:
 
 func confirm_sale(token: String) -> Dictionary:
 	_ensure_store_ready()
-	var pending := _copy_dict(_store.get("pending_sale", {}))
+	var pending := JsonCoerceScript._copy_dict(_store.get("pending_sale", {}))
 	if token.strip_edges().is_empty() or str(pending.get("token", "")) != token:
 		return {"ok": false, "message": "Sale confirmation expired."}
 	var kind := str(pending.get("kind", ""))
@@ -995,7 +986,7 @@ func confirm_sale(token: String) -> Dictionary:
 		removed = _remove_bag(instance_id)
 	else:
 		removed = remove_instance(instance_id)
-		var loadout := _filtered_packed_ids(_copy_array(_store.get("loadout", [])))
+		var loadout := _filtered_packed_ids(JsonCoerceScript._copy_array(_store.get("loadout", [])))
 		loadout.erase(instance_id)
 		_store["loadout"] = loadout
 	if not removed:
@@ -1003,7 +994,7 @@ func confirm_sale(token: String) -> Dictionary:
 		return {"ok": false, "message": "That item is no longer available to sell."}
 	var price := maxi(0, int(authoritative.get("price", 0)))
 	_store["gold_balance"] = maxi(0, int(_store.get("gold_balance", 0)) + price)
-	var history := _copy_array(_store.get("sale_history", []))
+	var history := JsonCoerceScript._copy_array(_store.get("sale_history", []))
 	var record := pending.duplicate(true)
 	record["gold_balance"] = int(_store.get("gold_balance", 0))
 	history.append(record)
@@ -1067,13 +1058,13 @@ func arm_trade_up(instance_ids: Array) -> Dictionary:
 
 func confirm_trade_up(token: String) -> Dictionary:
 	_ensure_store_ready()
-	var pending := _copy_dict(_store.get("pending_trade_up", {}))
+	var pending := JsonCoerceScript._copy_dict(_store.get("pending_trade_up", {}))
 	if token.strip_edges().is_empty() or str(pending.get("token", "")) != token:
 		return {"ok": false, "message": "Trade-up confirmation expired."}
 	if not trade_up_unlocked():
 		_store["pending_trade_up"] = {}
 		return {"ok": false, "message": "Trade-ups unlock with an apartment or house."}
-	var ids := _copy_array(pending.get("instance_ids", []))
+	var ids := JsonCoerceScript._copy_array(pending.get("instance_ids", []))
 	var resolver: Variant = _collection_resolver()
 	var inputs: Array = []
 	for id_value in ids:
@@ -1087,13 +1078,13 @@ func confirm_trade_up(token: String) -> Dictionary:
 		_store["pending_trade_up"] = {}
 		return {"ok": false, "message": "No trade-up output exists."}
 	var rng := _meta_rng()
-	var output_def := _copy_dict(options[rng.randi_range(0, options.size() - 1)])
+	var output_def := JsonCoerceScript._copy_dict(options[rng.randi_range(0, options.size() - 1)])
 	var output := _mean_trade_up_instance(int(output_def.get("itemdef_id", -1)), inputs)
 	for id_value in ids:
 		remove_instance(int(id_value))
 	var granted := grant_instance(output)
 	_store["meta_rng"] = rng.snapshot()
-	var history := _copy_array(_store.get("trade_up_history", []))
+	var history := JsonCoerceScript._copy_array(_store.get("trade_up_history", []))
 	var record := pending.duplicate(true)
 	record["output_instance_id"] = int(granted.get("instance_id", 0))
 	record["output_itemdef_id"] = int(granted.get("itemdef_id", -1))
@@ -1122,21 +1113,21 @@ func unopened_bag_count() -> int:
 
 func meta_rng_snapshot() -> Dictionary:
 	_ensure_store_ready()
-	return _copy_dict(_store.get("meta_rng", {}))
+	return JsonCoerceScript._copy_dict(_store.get("meta_rng", {}))
 
 
 func owned_instances() -> Array:
 	_ensure_store_ready()
-	return _copy_array(_store.get("owned_instances", []))
+	return JsonCoerceScript._copy_array(_store.get("owned_instances", []))
 
 
 func remove_instance(instance_id: int) -> bool:
 	_ensure_store_ready()
-	var instances := _copy_array(_store.get("owned_instances", []))
+	var instances := JsonCoerceScript._copy_array(_store.get("owned_instances", []))
 	var next_instances: Array = []
 	var removed := false
 	for instance_value in instances:
-		var instance := _copy_dict(instance_value)
+		var instance := JsonCoerceScript._copy_dict(instance_value)
 		if int(instance.get("instance_id", -1)) == instance_id:
 			removed = true
 			continue
@@ -1155,6 +1146,12 @@ func add_gold(amount: int) -> int:
 func snapshot() -> Dictionary:
 	_ensure_store_ready()
 	return _store.duplicate(true)
+
+
+static func store_storage_keys() -> Array:
+	var result: Array = STORE_STORAGE_KEYS.duplicate()
+	result.sort()
+	return result
 
 
 # Internal presentation boundary for read-only view-model projection. The
@@ -1230,29 +1227,29 @@ func _normalize_store(data: Dictionary) -> Dictionary:
 	normalized["owned_instances"] = _normalized_instances(normalized.get("owned_instances", []))
 	normalized["unopened_bags"] = _normalized_bags(normalized.get("unopened_bags", []))
 	normalized["gold_balance"] = maxi(0, int(normalized.get("gold_balance", 0)))
-	normalized["housing_tier"] = _normalize_housing_tier(str(normalized.get("housing_tier", _copy_dict(normalized.get("meta_home", {})).get("housing_tier", HOUSING_BACK_ALLEY))))
+	normalized["housing_tier"] = _normalize_housing_tier(str(normalized.get("housing_tier", JsonCoerceScript._copy_dict(normalized.get("meta_home", {})).get("housing_tier", HOUSING_BACK_ALLEY))))
 	normalized["owned_containers"] = _normalized_containers(normalized.get("owned_containers", []))
 	normalized["loadout"] = _filtered_packed_ids_for(
-		_copy_array(normalized.get("loadout", [])),
-		_copy_array(normalized.get("owned_instances", [])),
+		JsonCoerceScript._copy_array(normalized.get("loadout", [])),
+		JsonCoerceScript._copy_array(normalized.get("owned_instances", [])),
 		str(normalized.get("housing_tier", HOUSING_BACK_ALLEY)),
-		_copy_array(normalized.get("owned_containers", []))
+		JsonCoerceScript._copy_array(normalized.get("owned_containers", []))
 	)
 	var starter_card_home_grant_applied := bool(normalized.get("starter_card_home_grant_applied", false))
-	if not starter_card_home_grant_applied and _starter_card_instance_id(_copy_array(normalized.get("owned_instances", []))) > 0:
+	if not starter_card_home_grant_applied and _starter_card_instance_id(JsonCoerceScript._copy_array(normalized.get("owned_instances", []))) > 0:
 		normalized["loadout"] = _starter_card_prioritized_loadout(
-			_copy_array(normalized.get("loadout", [])),
-			_copy_array(normalized.get("owned_instances", [])),
+			JsonCoerceScript._copy_array(normalized.get("loadout", [])),
+			JsonCoerceScript._copy_array(normalized.get("owned_instances", [])),
 			str(normalized.get("housing_tier", HOUSING_BACK_ALLEY)),
-			_copy_array(normalized.get("owned_containers", []))
+			JsonCoerceScript._copy_array(normalized.get("owned_containers", []))
 		)
 		starter_card_home_grant_applied = true
 	normalized["starter_card_home_grant_applied"] = starter_card_home_grant_applied
 	normalized["meta_home"] = _normalize_meta_home(normalized.get("meta_home", {}), str(normalized.get("housing_tier", HOUSING_BACK_ALLEY)))
-	normalized["trade_up_history"] = _bounded_array(_copy_array(normalized.get("trade_up_history", [])), META_TRANSACTION_HISTORY_LIMIT)
-	normalized["sale_history"] = _bounded_array(_copy_array(normalized.get("sale_history", [])), META_TRANSACTION_HISTORY_LIMIT)
-	normalized["pending_sale"] = _copy_dict(normalized.get("pending_sale", {}))
-	normalized["pending_trade_up"] = _copy_dict(normalized.get("pending_trade_up", {}))
+	normalized["trade_up_history"] = _bounded_array(JsonCoerceScript._copy_array(normalized.get("trade_up_history", [])), META_TRANSACTION_HISTORY_LIMIT)
+	normalized["sale_history"] = _bounded_array(JsonCoerceScript._copy_array(normalized.get("sale_history", [])), META_TRANSACTION_HISTORY_LIMIT)
+	normalized["pending_sale"] = JsonCoerceScript._copy_dict(normalized.get("pending_sale", {}))
+	normalized["pending_trade_up"] = JsonCoerceScript._copy_dict(normalized.get("pending_trade_up", {}))
 	normalized["meta_rng"] = _normalize_meta_rng(normalized.get("meta_rng", {}))
 	normalized["next_instance_id"] = maxi(
 		maxi(FIRST_INSTANCE_ID, int(normalized.get("next_instance_id", FIRST_INSTANCE_ID))),
@@ -1267,17 +1264,17 @@ func _normalize_store(data: Dictionary) -> Dictionary:
 
 
 func _normalize_sal_resale(value: Variant, root: Dictionary) -> Dictionary:
-	var resale := _copy_dict(value)
+	var resale := JsonCoerceScript._copy_dict(value)
 	var initialized := bool(resale.get("initialized", false))
 	resale["schema_version"] = SAL_RESALE_SCHEMA_VERSION
 	resale["initialized"] = true
 	resale["rng_streams"] = _normalized_sal_rng_streams(resale.get("rng_streams", {}))
-	var source_slots := _copy_array(resale.get("slots", []))
+	var source_slots := JsonCoerceScript._copy_array(resale.get("slots", []))
 	var slots: Array = []
 	for index in range(SAL_SHELF_SLOT_COUNT):
 		slots.append(_empty_sal_slot(index))
 	for slot_value in source_slots:
-		var source := _copy_dict(slot_value)
+		var source := JsonCoerceScript._copy_dict(slot_value)
 		var index := int(source.get("slot_index", -1))
 		if index < 0 or index >= SAL_SHELF_SLOT_COUNT:
 			continue
@@ -1288,11 +1285,11 @@ func _normalize_sal_resale(value: Variant, root: Dictionary) -> Dictionary:
 	resale["starter_tutorial_resolved"] = bool(resale.get("starter_tutorial_resolved", false))
 	resale["pending_starter_buyback"] = _normalize_pending_starter_buyback(resale.get("pending_starter_buyback", {}))
 	resale["pending_purchase"] = _normalize_pending_sal_purchase(resale.get("pending_purchase", {}))
-	resale["stock_history"] = _bounded_array(_copy_array(resale.get("stock_history", [])), SAL_HISTORY_LIMIT)
-	resale["purchase_history"] = _bounded_array(_copy_array(resale.get("purchase_history", [])), SAL_HISTORY_LIMIT)
-	resale["processed_run_receipts"] = _bounded_unique_strings(_copy_array(resale.get("processed_run_receipts", [])), SAL_RECEIPT_LIMIT)
+	resale["stock_history"] = _bounded_array(JsonCoerceScript._copy_array(resale.get("stock_history", [])), SAL_HISTORY_LIMIT)
+	resale["purchase_history"] = _bounded_array(JsonCoerceScript._copy_array(resale.get("purchase_history", [])), SAL_HISTORY_LIMIT)
+	resale["processed_run_receipts"] = _bounded_unique_strings(JsonCoerceScript._copy_array(resale.get("processed_run_receipts", [])), SAL_RECEIPT_LIMIT)
 	resale["next_run_receipt_id"] = maxi(1, int(resale.get("next_run_receipt_id", 1)))
-	resale["dialogue_counts"] = _copy_dict(resale.get("dialogue_counts", {}))
+	resale["dialogue_counts"] = JsonCoerceScript._copy_dict(resale.get("dialogue_counts", {}))
 	resale["revision"] = maxi(0, int(resale.get("revision", 0)))
 	if not initialized:
 		var starter := _seed_sal_starter_listing(resale, root)
@@ -1306,13 +1303,13 @@ func _normalize_sal_resale(value: Variant, root: Dictionary) -> Dictionary:
 
 
 func _normalize_pending_starter_buyback(value: Variant) -> Dictionary:
-	var pending := _copy_dict(value)
+	var pending := JsonCoerceScript._copy_dict(value)
 	if pending.is_empty():
 		return {}
 	var resolver: Variant = _collection_resolver()
 	pending["instance_id"] = int(pending.get("instance_id", 0))
 	pending["itemdef_id"] = int(pending.get("itemdef_id", -1))
-	var item: Dictionary = resolver.normalize_instance_for_definition(_copy_dict(pending.get("item", {})))
+	var item: Dictionary = resolver.normalize_instance_for_definition(JsonCoerceScript._copy_dict(pending.get("item", {})))
 	item["provenance"] = _normalize_sal_provenance(item.get("provenance", pending.get("provenance", {})))
 	pending["item"] = item
 	pending["original_slot_index"] = int(pending.get("original_slot_index", -1))
@@ -1326,7 +1323,7 @@ func _normalize_pending_starter_buyback(value: Variant) -> Dictionary:
 
 
 func _normalize_pending_sal_purchase(value: Variant) -> Dictionary:
-	var pending := _copy_dict(value)
+	var pending := JsonCoerceScript._copy_dict(value)
 	if pending.is_empty():
 		return {}
 	for key in ["slot_index", "instance_id", "itemdef_id", "tier_base", "pawn_quote", "final_price", "price", "asking_price"]:
@@ -1338,7 +1335,7 @@ func _normalize_pending_sal_purchase(value: Variant) -> Dictionary:
 
 
 func _normalize_sal_provenance(value: Variant) -> Dictionary:
-	var provenance := _copy_dict(value)
+	var provenance := JsonCoerceScript._copy_dict(value)
 	provenance["virtual_bagdef_id"] = int(provenance.get("virtual_bagdef_id", -1))
 	return provenance
 
@@ -1346,7 +1343,7 @@ func _normalize_sal_provenance(value: Variant) -> Dictionary:
 func _normalize_sal_slot(value: Dictionary, slot_index: int) -> Dictionary:
 	var slot := value.duplicate(true)
 	slot["slot_index"] = slot_index
-	var item := _copy_dict(slot.get("item", {}))
+	var item := JsonCoerceScript._copy_dict(slot.get("item", {}))
 	var resolver: Variant = _collection_resolver()
 	item = resolver.normalize_instance_for_definition(item)
 	var definition: Dictionary = resolver.item_definition(int(item.get("itemdef_id", -1)))
@@ -1365,7 +1362,7 @@ func _normalize_sal_slot(value: Dictionary, slot_index: int) -> Dictionary:
 	slot["starter_tutorial_eligible"] = bool(slot.get("starter_tutorial_eligible", mode == LISTING_MODE_STARTER_DISCOUNT))
 	slot["starter_rare_channel"] = str(slot.get("starter_rare_channel", ""))
 	slot["starter_rare_value"] = clampf(float(slot.get("starter_rare_value", item.get(str(slot.get("starter_rare_channel", "")), 0.0))), 0.0, 1.0)
-	var provenance := _copy_dict(slot.get("provenance", {}))
+	var provenance := JsonCoerceScript._copy_dict(slot.get("provenance", {}))
 	slot["virtual_bagdef_id"] = int(slot.get("virtual_bagdef_id", provenance.get("virtual_bagdef_id", -1)))
 	var breakdown := ordinary_collection_price_breakdown(item, mode)
 	slot["quote_basis"] = breakdown
@@ -1374,8 +1371,8 @@ func _normalize_sal_slot(value: Dictionary, slot_index: int) -> Dictionary:
 
 
 func _seed_sal_starter_listing(resale: Dictionary, root: Dictionary) -> Dictionary:
-	var streams := _copy_dict(resale.get("rng_streams", {}))
-	var rng := _rng_from_snapshot(_copy_dict(streams.get("sal_starter_item", {})))
+	var streams := JsonCoerceScript._copy_dict(resale.get("rng_streams", {}))
+	var rng := _rng_from_snapshot(JsonCoerceScript._copy_dict(streams.get("sal_starter_item", {})))
 	var resolver: Variant = _collection_resolver()
 	var rolled: Dictionary = resolver.roll_virtual_bag_item(rng, "sal_starter_item")
 	if rolled.is_empty():
@@ -1384,7 +1381,7 @@ func _seed_sal_starter_listing(resale: Dictionary, root: Dictionary) -> Dictiona
 	var rare_channel := str(rare_channels[rng.randi_range(0, rare_channels.size() - 1)])
 	streams["sal_starter_item"] = rng.snapshot()
 	resale["rng_streams"] = streams
-	var item: Dictionary = resolver.normalize_instance_for_definition(_copy_dict(rolled.get("item", {})))
+	var item: Dictionary = resolver.normalize_instance_for_definition(JsonCoerceScript._copy_dict(rolled.get("item", {})))
 	var instance_id := maxi(FIRST_INSTANCE_ID, int(root.get("next_instance_id", FIRST_INSTANCE_ID)))
 	root["next_instance_id"] = instance_id + 1
 	item["schema_version"] = SCHEMA_VERSION
@@ -1424,8 +1421,8 @@ func _sal_listing_from_item(item: Dictionary, listing_mode: String, provenance: 
 
 
 func _sal_roll_provenance(rolled: Dictionary, source: String, source_id: String) -> Dictionary:
-	var collection := _copy_dict(rolled.get("collection", {}))
-	var bag := _copy_dict(rolled.get("virtual_bag", {}))
+	var collection := JsonCoerceScript._copy_dict(rolled.get("collection", {}))
+	var bag := JsonCoerceScript._copy_dict(rolled.get("virtual_bag", {}))
 	return {
 		"source": source,
 		"source_id": source_id,
@@ -1456,10 +1453,10 @@ func _empty_sal_slot(slot_index: int) -> Dictionary:
 
 
 func _normalized_sal_rng_streams(value: Variant) -> Dictionary:
-	var streams := _copy_dict(value)
+	var streams := JsonCoerceScript._copy_dict(value)
 	for key in ["sal_resale_stock", "sal_resale_replacement", "sal_starter_item"]:
 		var fallback_seed := RngStreamScript.derive_seed(904613, 904613, key)
-		var source := _copy_dict(streams.get(key, {}))
+		var source := JsonCoerceScript._copy_dict(streams.get(key, {}))
 		var rng := RngStreamScript.new()
 		rng.configure(int(source.get("seed", fallback_seed)), int(source.get("state", source.get("seed", fallback_seed))))
 		streams[key] = rng.snapshot()
@@ -1492,8 +1489,8 @@ func _migrate_fixture_pollution(data: Dictionary) -> Dictionary:
 	var next := data.duplicate(true)
 	var quarantined_bags: Array = []
 	var kept_bags: Array = []
-	for bag_value in _copy_array(next.get("unopened_bags", [])):
-		var bag := _copy_dict(bag_value)
+	for bag_value in JsonCoerceScript._copy_array(next.get("unopened_bags", [])):
+		var bag := JsonCoerceScript._copy_dict(bag_value)
 		if _record_has_fixture_provenance(bag):
 			quarantined_bags.append(bag)
 		else:
@@ -1501,8 +1498,8 @@ func _migrate_fixture_pollution(data: Dictionary) -> Dictionary:
 	var fixture_pollution_found := not quarantined_bags.is_empty()
 	var quarantined_instances: Array = []
 	var kept_instances: Array = []
-	for instance_value in _copy_array(next.get("owned_instances", [])):
-		var instance := _copy_dict(instance_value)
+	for instance_value in JsonCoerceScript._copy_array(next.get("owned_instances", [])):
+		var instance := JsonCoerceScript._copy_dict(instance_value)
 		if _record_has_fixture_provenance(instance):
 			quarantined_instances.append(instance)
 		elif fixture_pollution_found and not _record_has_earned_provenance(instance):
@@ -1513,9 +1510,9 @@ func _migrate_fixture_pollution(data: Dictionary) -> Dictionary:
 		return {"store": next, "migrated": false}
 	next["unopened_bags"] = kept_bags
 	next["owned_instances"] = kept_instances
-	var quarantine := _copy_dict(next.get("quarantined_records", {}))
-	quarantine["fixture_bags"] = _copy_array(quarantine.get("fixture_bags", [])) + quarantined_bags
-	quarantine["fixture_instances"] = _copy_array(quarantine.get("fixture_instances", [])) + quarantined_instances
+	var quarantine := JsonCoerceScript._copy_dict(next.get("quarantined_records", {}))
+	quarantine["fixture_bags"] = JsonCoerceScript._copy_array(quarantine.get("fixture_bags", [])) + quarantined_bags
+	quarantine["fixture_instances"] = JsonCoerceScript._copy_array(quarantine.get("fixture_instances", [])) + quarantined_instances
 	quarantine["migration"] = FIXTURE_POLLUTION_MIGRATION_FLAG
 	next["quarantined_records"] = quarantine
 	if kept_bags.is_empty() and kept_instances.is_empty():
@@ -1556,7 +1553,7 @@ func _normalize_housing_tier(value: String) -> String:
 
 
 func _normalize_meta_home(value: Variant, tier: String) -> Dictionary:
-	var home := _copy_dict(value)
+	var home := JsonCoerceScript._copy_dict(value)
 	home["housing_tier"] = _normalize_housing_tier(tier)
 	home["current_location"] = str(home.get("current_location", "home")).strip_edges()
 	if str(home.get("current_location", "")).is_empty():
@@ -1566,8 +1563,8 @@ func _normalize_meta_home(value: Variant, tier: String) -> Dictionary:
 
 func _normalized_containers(value: Variant) -> Array:
 	var containers: Array = []
-	for container_value in _copy_array(value):
-		var container := _copy_dict(container_value)
+	for container_value in JsonCoerceScript._copy_array(value):
+		var container := JsonCoerceScript._copy_dict(container_value)
 		var item_id := str(container.get("item_id", "")).strip_edges()
 		var capacity := _container_capacity(item_id)
 		if item_id.is_empty() or capacity <= 0:
@@ -1585,8 +1582,8 @@ func _normalized_containers(value: Variant) -> Array:
 func _normalized_instances(value: Variant) -> Array:
 	var normalized: Array = []
 	var resolver: Variant = _collection_resolver()
-	for instance_value in _copy_array(value):
-		var instance: Dictionary = resolver.normalize_instance_for_definition(_copy_dict(instance_value))
+	for instance_value in JsonCoerceScript._copy_array(value):
+		var instance: Dictionary = resolver.normalize_instance_for_definition(JsonCoerceScript._copy_dict(instance_value))
 		if int(instance.get("itemdef_id", -1)) < 0:
 			continue
 		normalized.append(instance)
@@ -1595,8 +1592,8 @@ func _normalized_instances(value: Variant) -> Array:
 
 func _normalized_bags(value: Variant) -> Array:
 	var normalized: Array = []
-	for bag_value in _copy_array(value):
-		var bag := _copy_dict(bag_value)
+	for bag_value in JsonCoerceScript._copy_array(value):
+		var bag := JsonCoerceScript._copy_dict(bag_value)
 		var bagdef_id := int(bag.get("bagdef_id", -1))
 		if bagdef_id < 0:
 			continue
@@ -1613,7 +1610,7 @@ func _normalized_bags(value: Variant) -> Array:
 
 
 func _normalize_meta_rng(value: Variant) -> Dictionary:
-	var source := _copy_dict(value)
+	var source := JsonCoerceScript._copy_dict(value)
 	var seed := int(source.get("seed", 904613))
 	var state := int(source.get("state", seed))
 	var rng := RngStreamScript.new()
@@ -1623,7 +1620,7 @@ func _normalize_meta_rng(value: Variant) -> Dictionary:
 
 func _meta_rng() -> RngStream:
 	var rng: RngStream = RngStreamScript.new()
-	rng.restore(_copy_dict(_store.get("meta_rng", {})))
+	rng.restore(JsonCoerceScript._copy_dict(_store.get("meta_rng", {})))
 	return rng
 
 
@@ -1649,7 +1646,7 @@ func _meta_home_config() -> Dictionary:
 
 
 func _housing_order() -> Array:
-	var order := _copy_array(_meta_home_config().get("housing_order", []))
+	var order := JsonCoerceScript._copy_array(_meta_home_config().get("housing_order", []))
 	if order.is_empty():
 		return [HOUSING_BACK_ALLEY, HOUSING_MOTEL_ROOM, HOUSING_APARTMENT, HOUSING_HOUSE]
 	return order
@@ -1658,9 +1655,9 @@ func _housing_order() -> Array:
 func _filtered_packed_ids(values: Array) -> Array:
 	return _filtered_packed_ids_for(
 		values,
-		_copy_array(_store.get("owned_instances", [])),
+		JsonCoerceScript._copy_array(_store.get("owned_instances", [])),
 		str(_store.get("housing_tier", HOUSING_BACK_ALLEY)),
-		_copy_array(_store.get("owned_containers", []))
+		JsonCoerceScript._copy_array(_store.get("owned_containers", []))
 	)
 
 
@@ -1670,7 +1667,7 @@ func _filtered_packed_ids_for(values: Array, owned_instances: Array, tier: Strin
 	var owned_lookup := {}
 	var resolver: Variant = _collection_resolver()
 	for instance_value in owned_instances:
-		var instance := _copy_dict(instance_value)
+		var instance := JsonCoerceScript._copy_dict(instance_value)
 		var instance_id := int(instance.get("instance_id", 0))
 		if instance_id > 0 and resolver.is_loadout_eligible(instance):
 			owned_lookup[instance_id] = true
@@ -1683,7 +1680,7 @@ func _filtered_packed_ids_for(values: Array, owned_instances: Array, tier: Strin
 			result_lookup[id] = true
 	var capacity := 0
 	for container_value in containers:
-		var container := _copy_dict(container_value)
+		var container := JsonCoerceScript._copy_dict(container_value)
 		capacity += maxi(0, int(container.get("capacity", _container_capacity(str(container.get("item_id", ""))))))
 	if tier != HOUSING_BACK_ALLEY and result.size() > capacity:
 		result.resize(capacity)
@@ -1698,7 +1695,7 @@ func _starter_card_prioritized_loadout(values: Array, owned_instances: Array, ti
 		return values
 	var capacity := 0
 	for container_value in containers:
-		var container := _copy_dict(container_value)
+		var container := JsonCoerceScript._copy_dict(container_value)
 		capacity += maxi(0, int(container.get("capacity", _container_capacity(str(container.get("item_id", ""))))))
 	if capacity <= 0:
 		return values
@@ -1712,10 +1709,10 @@ func _starter_card_prioritized_loadout(values: Array, owned_instances: Array, ti
 
 func _starter_card_instance_id(owned_instances: Array) -> int:
 	for instance_value in owned_instances:
-		var instance := _copy_dict(instance_value)
+		var instance := JsonCoerceScript._copy_dict(instance_value)
 		if int(instance.get("itemdef_id", -1)) != PLAYERS_CARD_ITEMDEF_ID:
 			continue
-		if bool(_copy_dict(instance.get("instance_data", {})).get("starter_card", false)):
+		if bool(JsonCoerceScript._copy_dict(instance.get("instance_data", {})).get("starter_card", false)):
 			return int(instance.get("instance_id", 0))
 	return 0
 
@@ -1723,8 +1720,8 @@ func _starter_card_instance_id(owned_instances: Array) -> int:
 func _owned_instance_ids() -> Array:
 	var ids: Array = []
 	var seen := {}
-	for instance_value in _copy_array(_store.get("owned_instances", [])):
-		var instance := _copy_dict(instance_value)
+	for instance_value in JsonCoerceScript._copy_array(_store.get("owned_instances", [])):
+		var instance := JsonCoerceScript._copy_dict(instance_value)
 		var id := int(instance.get("instance_id", 0))
 		if id > 0 and not seen.has(id):
 			ids.append(id)
@@ -1736,8 +1733,8 @@ func _loadout_eligible_owned_instance_ids() -> Array:
 	var resolver: Variant = _collection_resolver()
 	var ids: Array = []
 	var seen := {}
-	for instance_value in _copy_array(_store.get("owned_instances", [])):
-		var instance := _copy_dict(instance_value)
+	for instance_value in JsonCoerceScript._copy_array(_store.get("owned_instances", [])):
+		var instance := JsonCoerceScript._copy_dict(instance_value)
 		var id := int(instance.get("instance_id", 0))
 		if id > 0 and resolver.is_loadout_eligible(instance) and not seen.has(id):
 			ids.append(id)
@@ -1752,11 +1749,11 @@ func _owned_instance(instance_id: int) -> Dictionary:
 
 
 func _remove_bag(instance_id: int) -> bool:
-	var bags := _copy_array(_store.get("unopened_bags", []))
+	var bags := JsonCoerceScript._copy_array(_store.get("unopened_bags", []))
 	var next_bags: Array = []
 	var removed := false
 	for bag_value in bags:
-		var bag := _copy_dict(bag_value)
+		var bag := JsonCoerceScript._copy_dict(bag_value)
 		if int(bag.get("instance_id", 0)) == instance_id:
 			removed = true
 			continue
@@ -1777,7 +1774,7 @@ func _item_sale_quote(instance_id: int) -> Dictionary:
 		return {"ok": false, "message": "That item cannot be sold."}
 	if resolver.is_chip_stack_instance(instance):
 		var face_value := maxi(0, int(instance.get("face_value", instance.get("stack_amount", 0))))
-		var policy := _copy_dict(definition.get("sale_policy", {}))
+		var policy := JsonCoerceScript._copy_dict(definition.get("sale_policy", {}))
 		var gold_rate := clampf(float(policy.get("gold_rate", 0.6)), 0.0, 1.0)
 		var fenced_price := maxi(1, int(round(float(face_value) * gold_rate))) if face_value > 0 else 0
 		return {
@@ -1799,13 +1796,13 @@ func _item_sale_quote(instance_id: int) -> Dictionary:
 
 func _bag_sale_quote(instance_id: int) -> Dictionary:
 	_ensure_store_ready()
-	var bag := _copy_dict(_unopened_bag_index.get(instance_id, {}))
+	var bag := JsonCoerceScript._copy_dict(_unopened_bag_index.get(instance_id, {}))
 	if bag.is_empty():
 		return {"ok": false, "message": "That bag is not unopened."}
 	var resolver: Variant = _collection_resolver()
 	var definition: Dictionary = resolver.bag_definition(int(bag.get("bagdef_id", -1)))
 	var tier := str(definition.get("tier", bag.get("tier", "blue")))
-	var prices := _copy_dict(_copy_dict(_meta_home_config().get("sale_prices", {})).get("bags", {}))
+	var prices := JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(_meta_home_config().get("sale_prices", {})).get("bags", {}))
 	return {
 		"ok": true,
 		"kind": SALE_KIND_BAG,
@@ -1836,7 +1833,7 @@ func _mean_trade_up_instance(itemdef_id: int, instances: Array) -> Dictionary:
 	for float_key in CollectionItemResolverScript.FLOAT_KEYS:
 		var total := 0.0
 		for instance_value in instances:
-			var instance := _copy_dict(instance_value)
+			var instance := JsonCoerceScript._copy_dict(instance_value)
 			total += clampf(float(instance.get(float_key, 0.0)), 0.0, 1.0)
 		result[float_key] = clampf(total / float(instances.size()), 0.0, 1.0)
 	return result
@@ -1844,7 +1841,7 @@ func _mean_trade_up_instance(itemdef_id: int, instances: Array) -> Dictionary:
 
 func _container_capacity(item_id: String) -> int:
 	_ensure_items_loaded()
-	var item := _copy_dict(_item_definitions_by_id.get(item_id.strip_edges(), {}))
+	var item := JsonCoerceScript._copy_dict(_item_definitions_by_id.get(item_id.strip_edges(), {}))
 	return maxi(0, int(item.get("container_capacity", 0)))
 
 
@@ -1870,17 +1867,17 @@ func _ensure_items_loaded() -> void:
 
 func _max_recorded_instance_id(data: Dictionary) -> int:
 	var max_id := 0
-	for instance_value in _copy_array(data.get("owned_instances", [])):
-		var instance := _copy_dict(instance_value)
+	for instance_value in JsonCoerceScript._copy_array(data.get("owned_instances", [])):
+		var instance := JsonCoerceScript._copy_dict(instance_value)
 		max_id = maxi(max_id, int(instance.get("instance_id", 0)))
-	for bag_value in _copy_array(data.get("unopened_bags", [])):
-		var bag := _copy_dict(bag_value)
+	for bag_value in JsonCoerceScript._copy_array(data.get("unopened_bags", [])):
+		var bag := JsonCoerceScript._copy_dict(bag_value)
 		max_id = maxi(max_id, int(bag.get("instance_id", 0)))
-	var resale := _copy_dict(data.get("sal_resale", {}))
-	for slot_value in _copy_array(resale.get("slots", [])):
-		var slot := _copy_dict(slot_value)
-		max_id = maxi(max_id, int(_copy_dict(slot.get("item", {})).get("instance_id", 0)))
-	max_id = maxi(max_id, int(_copy_dict(_copy_dict(resale.get("pending_starter_buyback", {})).get("item", {})).get("instance_id", 0)))
+	var resale := JsonCoerceScript._copy_dict(data.get("sal_resale", {}))
+	for slot_value in JsonCoerceScript._copy_array(resale.get("slots", [])):
+		var slot := JsonCoerceScript._copy_dict(slot_value)
+		max_id = maxi(max_id, int(JsonCoerceScript._copy_dict(slot.get("item", {})).get("instance_id", 0)))
+	max_id = maxi(max_id, int(JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(resale.get("pending_starter_buyback", {})).get("item", {})).get("instance_id", 0)))
 	return max_id
 
 
@@ -1907,21 +1904,7 @@ func _default_store() -> Dictionary:
 	})
 
 
-static func _copy_dict(value: Variant) -> Dictionary:
-	if typeof(value) != TYPE_DICTIONARY:
-		return {}
-	var dictionary: Dictionary = value
-	return dictionary.duplicate(true)
-
-
 func _collection_resolver() -> CollectionItemResolver:
 	if _shared_collection_resolver == null:
 		_shared_collection_resolver = CollectionItemResolverScript.new()
 	return _shared_collection_resolver
-
-
-static func _copy_array(value: Variant) -> Array:
-	if typeof(value) != TYPE_ARRAY:
-		return []
-	var array: Array = value
-	return array.duplicate(true)

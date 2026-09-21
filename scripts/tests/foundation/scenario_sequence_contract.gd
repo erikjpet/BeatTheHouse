@@ -1,5 +1,7 @@
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 const OperationRegistryScript := preload("res://scripts/core/scenario_operation_registry.gd")
 const SequenceCatalogScript := preload("res://scripts/core/scenario_sequence_catalog.gd")
 const SequenceSchemaScript := preload("res://scripts/core/scenario_sequence_schema.gd")
@@ -1193,7 +1195,7 @@ static func _check_lifecycle_finalization(library: ContentLibrary, failures: Arr
 		forged_environment["scenario_base_interactions"] = forged_records
 		forged_environment["scenario_semantic_action_digest"] = SequenceRuntimeScript.base_interaction_action_authority_digest(forged_records)
 		var forged_state := _dict(forged_environment.get("scenario_sequence_state", {}))
-		var forged_command := SequenceRuntimeScript.command("prepare", str(forged_state.get("node_id", "")), str(forged_state.get("phase_id", "")), "forged:base:handler", {}, "game", "game:slot")
+		var forged_command := SequenceRuntimeScript.command(FunctionOptions.scenario_sequence_command("prepare", str(forged_state.get("node_id", "")), str(forged_state.get("phase_id", "")), "forged:base:handler", {"payload": {}, "owner_namespace": "game", "stable_object_id": "game:slot"}))
 		var forged_result := ScenarioEngineScript.sequence_command(forged_environment, definition, forged_command, {"available_funds": 10})
 		if bool(forged_result.get("ok", true)) or _array(_dict(forged_environment.get("scenario_sequence_state", {})).get("command_receipts", [])).has("forged:base:handler"):
 			failures.append("A base-only action invoked a sequence handler without an authenticated authored overlay receipt.")
@@ -2430,15 +2432,15 @@ static func _check_lifecycle_commands(failures: Array) -> void:
 		failures.append("Sequence command accepted one idempotency key for a different command.")
 
 	var hostile_commands := [
-		["wrong node", SequenceRuntimeScript.command("prepare", "other_node", "arrival", "bad:node", {}, "scenario", "command_console")],
-		["stale", SequenceRuntimeScript.command("prepare", "bar_node", "later", "bad:phase", {}, "scenario", "command_console")],
-		["identity", SequenceRuntimeScript.command("prepare", "bar_node", "arrival", "bad:owner", {}, "intruder", "command_console")],
-		["missing interaction", SequenceRuntimeScript.command("prepare", "bar_node", "arrival", "bad:absent", {}, "scenario", "absent_console")],
-		["unavailable", SequenceRuntimeScript.command("invented", "bar_node", "arrival", "bad:action", {}, "scenario", "command_console")],
+		["wrong node", SequenceRuntimeScript.command(FunctionOptions.scenario_sequence_command("prepare", "other_node", "arrival", "bad:node", {"payload": {}, "owner_namespace": "scenario", "stable_object_id": "command_console"}))],
+		["stale", SequenceRuntimeScript.command(FunctionOptions.scenario_sequence_command("prepare", "bar_node", "later", "bad:phase", {"payload": {}, "owner_namespace": "scenario", "stable_object_id": "command_console"}))],
+		["identity", SequenceRuntimeScript.command(FunctionOptions.scenario_sequence_command("prepare", "bar_node", "arrival", "bad:owner", {"payload": {}, "owner_namespace": "intruder", "stable_object_id": "command_console"}))],
+		["missing interaction", SequenceRuntimeScript.command(FunctionOptions.scenario_sequence_command("prepare", "bar_node", "arrival", "bad:absent", {"payload": {}, "owner_namespace": "scenario", "stable_object_id": "absent_console"}))],
+		["unavailable", SequenceRuntimeScript.command(FunctionOptions.scenario_sequence_command("invented", "bar_node", "arrival", "bad:action", {"payload": {}, "owner_namespace": "scenario", "stable_object_id": "command_console"}))],
 	]
-	var missing_key := SequenceRuntimeScript.command("prepare", "bar_node", "arrival", "", {}, "scenario", "command_console")
+	var missing_key := SequenceRuntimeScript.command(FunctionOptions.scenario_sequence_command("prepare", "bar_node", "arrival", "", {"payload": {}, "owner_namespace": "scenario", "stable_object_id": "command_console"}))
 	hostile_commands.append(["idempotency_key", missing_key])
-	var padded_command := SequenceRuntimeScript.command("prepare", "bar_node", "arrival", "bad:padded", {}, "scenario", "command_console")
+	var padded_command := SequenceRuntimeScript.command(FunctionOptions.scenario_sequence_command("prepare", "bar_node", "arrival", "bad:padded", {"payload": {}, "owner_namespace": "scenario", "stable_object_id": "command_console"}))
 	padded_command["command_id"] = " prepare "
 	hostile_commands.append(["exact string", padded_command])
 	for fixture_value in hostile_commands:
@@ -2645,7 +2647,7 @@ static func _check_created_owner_command_authority(failures: Array) -> void:
 
 	var untrusted_host := _fixture_host_semantics(definition)
 	var untrusted_state := SequenceRuntimeScript.initial_state(definition, "bar_node", "caller_minted_owner_seed", untrusted_host)
-	var forged_command := SequenceRuntimeScript.command("prepare", "bar_node", "arrival", "created_owner:forged:1", {}, "crew", "package_handoff")
+	var forged_command := SequenceRuntimeScript.command(FunctionOptions.scenario_sequence_command("prepare", "bar_node", "arrival", "created_owner:forged:1", {"payload": {}, "owner_namespace": "crew", "stable_object_id": "package_handoff"}))
 	var forged := SequenceRuntimeScript.apply_command(untrusted_state, definition, forged_command, {"available_funds": 2, "creation_owner_namespaces": ["crew"]})
 	if bool(forged.get("ok", true)):
 		failures.append("Caller-minted creation_owner_namespaces granted created-interaction command authority without trusted host registration.")
@@ -3096,7 +3098,7 @@ static func _check_receipt_reconstruction(failures: Array) -> void:
 	if bool(ScenarioEngineScript._rebuild_receipted_semantic_mutations(forged_expiry, expiry_definition, expiry_host).get("ok", true)):
 		failures.append("Expiry cleanup reconstruction succeeded without its exact boundary journal.")
 	var long_envelope := _runtime_command(state, definition, "prepare", "bar_node", "arrival", "causal:long", {"a": "x".repeat(400), "b": "y".repeat(400)}, "scenario", "command_console")
-	if not SequenceRuntimeScript._valid_sha256(SequenceRuntimeScript.content_fingerprint(long_envelope)) or not SequenceRuntimeScript._valid_sha256(OperationRegistryScript.operation_fingerprint(_operation_fixture("interaction_ops", "add", 998))):
+	if not JsonCoerceScript._valid_sha256(SequenceRuntimeScript.content_fingerprint(long_envelope)) or not JsonCoerceScript._valid_sha256(OperationRegistryScript.operation_fingerprint(_operation_fixture("interaction_ops", "add", 998))):
 		failures.append("Persisted causal/operation fingerprints are not fixed 64-character lowercase SHA-256 values.")
 
 
@@ -3173,7 +3175,7 @@ static func _check_depth_remediation_contracts(failures: Array) -> void:
 	var replace_result := OperationRegistryScript.apply_operations(_dict(initial.get("semantic_state", {})), "interaction_ops", [replace_operation], "sequence_fixture:bar_node:phase:replacement")
 	var replacement := _dict(_dict(OperationRegistryScript.resolved_semantic_state(_dict(replace_result.get("state", {}))).get("interactions", {})).get("scenario::replacement_console", {}))
 	var replacement_action := _dict(_array(replacement.get("available_actions", []))[0] if not _array(replacement.get("available_actions", [])).is_empty() else {})
-	if not bool(replace_result.get("ok", false)) or str(replacement_action.get("action_origin_receipt_key", "")).is_empty() or str(replacement_action.get("action_origin_boundary_id", "")) != "sequence_fixture:bar_node:phase:replacement" or not SequenceRuntimeScript._valid_sha256(str(replacement_action.get("action_origin_fingerprint", ""))):
+	if not bool(replace_result.get("ok", false)) or str(replacement_action.get("action_origin_receipt_key", "")).is_empty() or str(replacement_action.get("action_origin_boundary_id", "")) != "sequence_fixture:bar_node:phase:replacement" or not JsonCoerceScript._valid_sha256(str(replacement_action.get("action_origin_fingerprint", ""))):
 		failures.append("Interaction replace actions did not inherit exact operation provenance.")
 
 	var boundary_state := {"declared_targets": {"scene_objects": ["scenario::fixture_101"]}, "target_inventory": {"scene_objects": ["scenario::fixture_101"]}}
@@ -3852,7 +3854,7 @@ static func _check_completion_evidence(failures: Array) -> void:
 
 
 static func _check_extension_dispatch(failures: Array) -> void:
-	var command := SequenceRuntimeScript.command("use", "bar_node", "arrival", "extension:1", {}, "scenario", "fixture")
+	var command := SequenceRuntimeScript.command(FunctionOptions.scenario_sequence_command("use", "bar_node", "arrival", "extension:1", {"payload": {}, "owner_namespace": "scenario", "stable_object_id": "fixture"}))
 	var handled := ScenarioExtensionDispatchScript.prepare_command({}, command, {"available_funds": 10})
 	if not bool(handled.get("ok", false)) or JSON.stringify(handled.get("command", {})) != JSON.stringify(command):
 		failures.append("Base scenario handler extension changed the authoritative command envelope.")
@@ -3970,7 +3972,7 @@ static func _check_suppressed_sequence_compatibility(library: ContentLibrary, fa
 			failures.append("Suppressed scenario retained sequence runtime artifact %s." % forbidden_key)
 	if _array(suppressed_environment.get("game_ids", [])) != ["slots"] or _array(suppressed_environment.get("service_ids", [])) != ["fixture_service"] or _array(suppressed_environment.get("travel_hooks", [])) != ["old_exit"] or not _dict(suppressed_environment.get("scenario_game_modifiers", {})).is_empty():
 		failures.append("Suppressed scenario did not restore its pre-sequence material baseline.")
-	var inactive_command := ScenarioEngineScript.sequence_command(suppressed_environment, definition, SequenceRuntimeScript.command("prepare", "bar_node", "arrival", "suppressed:command", {}, "scenario", "command_console"), {"available_funds": 10})
+	var inactive_command := ScenarioEngineScript.sequence_command(suppressed_environment, definition, SequenceRuntimeScript.command(FunctionOptions.scenario_sequence_command("prepare", "bar_node", "arrival", "suppressed:command", {"payload": {}, "owner_namespace": "scenario", "stable_object_id": "command_console"})), {"available_funds": 10})
 	var inactive_requests := ScenarioEngineScript.drain_sequence_event_requests(suppressed_environment, definition)
 	if bool(inactive_command.get("ok", true)) or not bool(inactive_requests.get("inactive", false)) or not _array(inactive_requests.get("requests", [])).is_empty():
 		failures.append("Suppressed scenario exposed command authority or an event-bridge request drain.")
@@ -4329,11 +4331,11 @@ static func _check_delivery_day_production_package(library: ContentLibrary, fail
 		return
 	var hostile_sorting := SequenceRuntimeScript._enter_phase(arrival, definition, "sorting", "hostile_precondition", {})
 	var hostile_commands := [
-		{"label": "wrong owner", "result": SequenceRuntimeScript.apply_command(arrival, definition, SequenceRuntimeScript.command("inspect_manifest", DELIVERY_NODE_ID, "arrival", "delivery:hostile:owner", {}, "event", "delivery_event_gate"), {})},
-		{"label": "wrong object", "result": SequenceRuntimeScript.apply_command(arrival, definition, SequenceRuntimeScript.command("inspect_manifest", DELIVERY_NODE_ID, "arrival", "delivery:hostile:object", {}, "scenario", "wrong_manifest"), {})},
-		{"label": "wrong phase", "result": SequenceRuntimeScript.apply_command(arrival, definition, SequenceRuntimeScript.command("inspect_manifest", DELIVERY_NODE_ID, "sorting", "delivery:hostile:phase", {}, "scenario", "delivery_event_gate"), {})},
-		{"label": "unknown command", "result": SequenceRuntimeScript.apply_command(arrival, definition, SequenceRuntimeScript.command("invent_delivery", DELIVERY_NODE_ID, "arrival", "delivery:hostile:unknown", {}, "scenario", "delivery_event_gate"), {})},
-		{"label": "missing objective precondition", "result": SequenceRuntimeScript.apply_command(hostile_sorting, definition, SequenceRuntimeScript.command("shift_cartons", DELIVERY_NODE_ID, "sorting", "delivery:hostile:precondition", {}, "scenario", "delivery_cartons"), {})},
+		{"label": "wrong owner", "result": SequenceRuntimeScript.apply_command(arrival, definition, SequenceRuntimeScript.command(FunctionOptions.scenario_sequence_command("inspect_manifest", DELIVERY_NODE_ID, "arrival", "delivery:hostile:owner", {"payload": {}, "owner_namespace": "event", "stable_object_id": "delivery_event_gate"})), {})},
+		{"label": "wrong object", "result": SequenceRuntimeScript.apply_command(arrival, definition, SequenceRuntimeScript.command(FunctionOptions.scenario_sequence_command("inspect_manifest", DELIVERY_NODE_ID, "arrival", "delivery:hostile:object", {"payload": {}, "owner_namespace": "scenario", "stable_object_id": "wrong_manifest"})), {})},
+		{"label": "wrong phase", "result": SequenceRuntimeScript.apply_command(arrival, definition, SequenceRuntimeScript.command(FunctionOptions.scenario_sequence_command("inspect_manifest", DELIVERY_NODE_ID, "sorting", "delivery:hostile:phase", {"payload": {}, "owner_namespace": "scenario", "stable_object_id": "delivery_event_gate"})), {})},
+		{"label": "unknown command", "result": SequenceRuntimeScript.apply_command(arrival, definition, SequenceRuntimeScript.command(FunctionOptions.scenario_sequence_command("invent_delivery", DELIVERY_NODE_ID, "arrival", "delivery:hostile:unknown", {"payload": {}, "owner_namespace": "scenario", "stable_object_id": "delivery_event_gate"})), {})},
+		{"label": "missing objective precondition", "result": SequenceRuntimeScript.apply_command(hostile_sorting, definition, SequenceRuntimeScript.command(FunctionOptions.scenario_sequence_command("shift_cartons", DELIVERY_NODE_ID, "sorting", "delivery:hostile:precondition", {"payload": {}, "owner_namespace": "scenario", "stable_object_id": "delivery_cartons"})), {})},
 	]
 	for hostile_command_value in hostile_commands:
 		var hostile_command := _dict(hostile_command_value)
@@ -4341,7 +4343,7 @@ static func _check_delivery_day_production_package(library: ContentLibrary, fail
 		if bool(hostile_result.get("ok", true)) or _array(hostile_result.get("errors", [])).is_empty():
 			failures.append("Committed delivery-day package accepted hostile command class: %s." % str(hostile_command.get("label", "")))
 	var inspect_replay := SequenceRuntimeScript.apply_command(sorting, definition, inspect_command, {})
-	var inspect_conflict := SequenceRuntimeScript.apply_command(sorting, definition, SequenceRuntimeScript.command("ignore_delivery", DELIVERY_NODE_ID, "sorting", "delivery:inspect", {}, "scenario", "delivery_exit"), {})
+	var inspect_conflict := SequenceRuntimeScript.apply_command(sorting, definition, SequenceRuntimeScript.command(FunctionOptions.scenario_sequence_command("ignore_delivery", DELIVERY_NODE_ID, "sorting", "delivery:inspect", {"payload": {}, "owner_namespace": "scenario", "stable_object_id": "delivery_exit"})), {})
 	if not bool(inspect_replay.get("ok", false)) or not bool(inspect_replay.get("replayed", false)) or JSON.stringify(inspect_replay.get("state", {})) != JSON.stringify(sorting) or bool(inspect_conflict.get("ok", true)) or not _contains_text(_array(inspect_conflict.get("errors", [])), "reused"):
 		failures.append("Committed delivery-day command idempotency/reuse contract changed.")
 	for phase_state_value in [arrival, sorting, verification]:
@@ -5746,20 +5748,14 @@ static func _fixture_host_semantics(definition: Dictionary) -> Dictionary:
 
 static func _runtime_command(state: Dictionary, definition: Dictionary, command_id: String, node_id: String, phase_id: String, receipt_id: String, payload: Dictionary = {}, owner_namespace: String = "scenario", stable_object_id: String = "sequence") -> Dictionary:
 	var descriptor := SequenceRuntimeScript._command_descriptor(state, definition, owner_namespace, stable_object_id, command_id)
-	return SequenceRuntimeScript.command(
-		command_id,
-		node_id,
-		phase_id,
-		receipt_id,
-		payload,
-		owner_namespace,
-		stable_object_id,
-		str(descriptor.get("action_origin_owner_namespace", owner_namespace)),
-		str(descriptor.get("action_origin_stable_object_id", stable_object_id)),
-		str(descriptor.get("action_origin_receipt_key", "")),
-		str(descriptor.get("action_origin_boundary_id", "")),
-		str(descriptor.get("action_origin_fingerprint", "")),
-	)
+	return SequenceRuntimeScript.command(FunctionOptions.scenario_sequence_command(command_id, node_id, phase_id, receipt_id, {
+		"payload": payload, "owner_namespace": owner_namespace, "stable_object_id": stable_object_id,
+		"action_origin_owner_namespace": str(descriptor.get("action_origin_owner_namespace", owner_namespace)),
+		"action_origin_stable_object_id": str(descriptor.get("action_origin_stable_object_id", stable_object_id)),
+		"action_origin_receipt_key": str(descriptor.get("action_origin_receipt_key", "")),
+		"action_origin_boundary_id": str(descriptor.get("action_origin_boundary_id", "")),
+		"action_origin_fingerprint": str(descriptor.get("action_origin_fingerprint", "")),
+	}))
 
 
 static func _operation_fixture(family: String, op_id: String, index: int) -> Dictionary:

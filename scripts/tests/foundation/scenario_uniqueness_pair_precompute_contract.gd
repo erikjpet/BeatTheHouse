@@ -8,8 +8,8 @@ const Schema := preload("res://scripts/core/scenario_sequence_schema.gd")
 
 # Refreshed after the accepted integrated environment/scenario passes expanded
 # the exact signatures and removed all previously recorded similarity warnings.
-const PRODUCTION_AUTHORITY_SHA256 := "72da67b4adb39cc4f19f09f891e306bc90c5c15e8c94b87037197805dcbe4698"
-const PRODUCTION_AUTHORITY_BYTES := 1765130
+const PRODUCTION_AUTHORITY_SHA256 := "a198edc5e6b287e3b25095f0b8a12bb6c6e34d54070b7a7c2be972d26cd3076b"
+const PRODUCTION_AUTHORITY_BYTES := 1765196
 
 
 func _init() -> void:

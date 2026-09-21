@@ -35,7 +35,7 @@ if ($trackedStatus.Count -gt 0) {
 }
 $node = Get-Command node -ErrorAction SilentlyContinue
 if (-not $node) {
-    throw "Node.js was not found on PATH. The web perf smoke uses tools/l02_web_perf_probe.mjs."
+    throw "Node.js was not found on PATH. The web perf smoke uses tools/archive/l02/l02_web_perf_probe.mjs."
 }
 $outPath = Resolve-WebPerfEvidencePath -Root $root -Out $Out
 $outDir = Split-Path -Parent $outPath

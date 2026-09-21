@@ -1,6 +1,8 @@
 class_name FoundationHudViewModel
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 const CLOCK_DISPLAY_STEP_MINUTES := 15
 const EXACT_CLOCK_ITEM_EFFECT := "exact_clock_minutes"
 const PlayerTextScript := preload("res://scripts/ui/player_text.gd")
@@ -154,7 +156,7 @@ static func run_status_model(run_state: RunState, data: Dictionary) -> Dictionar
 
 static func meta_status_model(home: Dictionary) -> Dictionary:
 	var gold := int(home.get("gold_balance", 0))
-	var upgrade := _copy_dict(home.get("upgrade", {}))
+	var upgrade := JsonCoerceScript._copy_dict(home.get("upgrade", {}))
 	var next_price := maxi(0, int(upgrade.get("price", 0))) if not upgrade.is_empty() else 0
 	var next_label := str(upgrade.get("display_name", "Next home")) if not upgrade.is_empty() else ""
 	var location_label := str(home.get("location_display_name", "Home")).strip_edges()
@@ -416,7 +418,3 @@ static func _pressure_status_text(pressure: Dictionary) -> String:
 
 static func _call_string(callback: Callable, value: String) -> String:
 	return str(callback.call(value)) if not callback.is_null() else value
-
-
-static func _copy_dict(value: Variant) -> Dictionary:
-	return (value as Dictionary).duplicate(true) if typeof(value) == TYPE_DICTIONARY else {}

@@ -1,5 +1,7 @@
 extends SceneTree
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 const CollectionItemResolverScript := preload("res://scripts/core/collection_item_resolver.gd")
 const MetaCollectionServiceScript := preload("res://scripts/core/meta_collection_service.gd")
 const CollectionDropServiceScript := preload("res://scripts/core/collection_drop_service.gd")
@@ -65,14 +67,14 @@ func _test_collection_schema(resolver: Variant) -> void:
 	var used_itemdef_ids := {}
 	var total_items := 0
 	for collection_value in collections:
-		var collection := _copy_dict(collection_value)
+		var collection := JsonCoerceScript._copy_dict(collection_value)
 		var collection_id := str(collection.get("id", ""))
 		var tier_counts := {}
 		for tier in TIERS:
 			tier_counts[tier] = 0
 		var bag_tiers := {}
-		for bag_value in _copy_array(collection.get("bag_defs", [])):
-			var bag := _copy_dict(bag_value)
+		for bag_value in JsonCoerceScript._copy_array(collection.get("bag_defs", [])):
+			var bag := JsonCoerceScript._copy_dict(bag_value)
 			var bag_tier := str(bag.get("tier", ""))
 			var bag_itemdef_id := int(bag.get("itemdef_id", -1))
 			bag_tiers[bag_tier] = true
@@ -81,8 +83,8 @@ func _test_collection_schema(resolver: Variant) -> void:
 			used_itemdef_ids[bag_itemdef_id] = true
 		for tier in TIERS:
 			_check(bag_tiers.has(tier), "Collection %s missing %s bag definition." % [collection_id, tier])
-		for item_value in _copy_array(collection.get("items", [])):
-			var item := _copy_dict(item_value)
+		for item_value in JsonCoerceScript._copy_array(collection.get("items", [])):
+			var item := JsonCoerceScript._copy_dict(item_value)
 			var itemdef_id := int(item.get("itemdef_id", -1))
 			var tier := str(item.get("tier", ""))
 			_check(not used_itemdef_ids.has(itemdef_id), "Duplicate itemdef_id %d." % itemdef_id)
@@ -114,16 +116,16 @@ func _test_players_card_schema_and_fragility(resolver: Variant) -> void:
 	var rolled: Dictionary = resolver.roll_instance(MetaCollectionServiceScript.PLAYERS_CARD_ITEMDEF_ID, "players-card-roll")
 	_check(is_equal_approx(float(rolled.get("condition", 1.0)), float(normalized.get("condition", 0.0))), "Players Card roll boundary did not keep durability pinned.")
 	var run_item: Dictionary = resolver.resolve_run_item(normalized)
-	_check(str(_copy_dict(run_item.get("meta_collection", {})).get("condition_band", "")) == "critical", "Players Card did not resolve in the critical durability band.")
+	_check(str(JsonCoerceScript._copy_dict(run_item.get("meta_collection", {})).get("condition_band", "")) == "critical", "Players Card did not resolve in the critical durability band.")
 	var bronze_item: Dictionary = resolver.resolve_run_item(resolver.normalize_instance_for_definition({
 		"itemdef_id": MetaCollectionServiceScript.PLAYERS_CARD_ITEMDEF_ID,
 		"instance_data": {"tier_reached": "bronze"},
 	}))
-	var bronze_meta := _copy_dict(bronze_item.get("meta_collection", {}))
+	var bronze_meta := JsonCoerceScript._copy_dict(bronze_item.get("meta_collection", {}))
 	_check(str(bronze_meta.get("tier", "")) == "bronze" and str(bronze_item.get("description", "")).contains("Bronze card"), "A minted Bronze Players Card presented itself as the Gold template rarity.")
 	var chip_definition: Dictionary = resolver.item_definition(MetaCollectionServiceScript.GRAND_CASINO_CHIPS_ITEMDEF_ID)
 	_check(str(chip_definition.get("item_class", "")) == CollectionItemResolverScript.ITEM_CLASS_CHIP_STACK and not bool(chip_definition.get("loadout_eligible", true)), "Grand Casino Chips are not a first-class meta-only chip stack.")
-	var chip_policy := _copy_dict(chip_definition.get("sale_policy", {}))
+	var chip_policy := JsonCoerceScript._copy_dict(chip_definition.get("sale_policy", {}))
 	_check(str(chip_policy.get("kind", "")) == "face_value_rate" and is_equal_approx(float(chip_policy.get("gold_rate", 0.0)), 0.6), "Grand Casino Chips do not carry Sal's tuned 60% fenced rate.")
 
 
@@ -153,8 +155,8 @@ func _test_usage_decay(resolver: Variant) -> void:
 	spent["usage"] = 0.0
 	var fresh_item: Dictionary = resolver.resolve_run_item(fresh)
 	var spent_item: Dictionary = resolver.resolve_run_item(spent)
-	var fresh_effect := _copy_dict(fresh_item.get("effect", {}))
-	var spent_effect := _copy_dict(spent_item.get("effect", {}))
+	var fresh_effect := JsonCoerceScript._copy_dict(fresh_item.get("effect", {}))
+	var spent_effect := JsonCoerceScript._copy_dict(spent_item.get("effect", {}))
 	_check(int(spent_effect.get("win_chance", 999)) < int(fresh_effect.get("win_chance", 0)), "Spent item potency was not dampened.")
 	_check(float(spent_item.get("meta_value_multiplier", 1.0)) < float(fresh_item.get("meta_value_multiplier", 0.0)), "Spent item value multiplier did not bottom out.")
 
@@ -167,7 +169,7 @@ func _test_resolve_run_item(resolver: Variant) -> void:
 	for key in ["id", "display_name", "class", "domain", "content_groups", "sellable", "price_min", "price_max", "icon_key", "description", "effect"]:
 		_check(run_item.has(key), "Resolved run item missing key %s." % str(key))
 	_check(typeof(run_item.get("effect", {})) == TYPE_DICTIONARY, "Resolved run item effect must be a Dictionary.")
-	var meta := _copy_dict(run_item.get("meta_collection", {}))
+	var meta := JsonCoerceScript._copy_dict(run_item.get("meta_collection", {}))
 	_check(int(meta.get("itemdef_id", -1)) == 1013, "Resolved run item missing meta itemdef_id.")
 
 
@@ -199,7 +201,7 @@ func _test_store_round_trip(resolver: Variant) -> void:
 	var corrupt_service: Variant = MetaCollectionServiceScript.new()
 	var corrupt_loaded: Dictionary = corrupt_service.load()
 	_check(int(corrupt_loaded.get("schema_version", 0)) == MetaCollectionServiceScript.SCHEMA_VERSION, "Corrupt store did not normalize schema_version.")
-	_check(_copy_array(corrupt_loaded.get("owned_instances", [])).is_empty(), "Corrupt store did not reset owned instances.")
+	_check(JsonCoerceScript._copy_array(corrupt_loaded.get("owned_instances", [])).is_empty(), "Corrupt store did not reset owned instances.")
 	_check(int(corrupt_loaded.get("gold_balance", -1)) == 0, "Corrupt store did not reset gold balance.")
 	_remove_user_file(TEST_STORE_PATH)
 	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, "")
@@ -228,8 +230,8 @@ func _test_meta_home_rules(resolver: Variant) -> void:
 	var owned_ids: Array = _instance_ids(service.owned_instances())
 	var packed: Dictionary = service.pack_instance(int(owned_ids[0]))
 	var duplicate_pack: Dictionary = service.pack_instance(int(owned_ids[0]))
-	_check(bool(packed.get("ok", false)) and _copy_array(packed.get("packed_instance_ids", [])).size() == 1, "Housed packing did not select one item.")
-	_check(_copy_array(duplicate_pack.get("packed_instance_ids", [])).size() == 1, "Packing the same item twice duplicated it.")
+	_check(bool(packed.get("ok", false)) and JsonCoerceScript._copy_array(packed.get("packed_instance_ids", [])).size() == 1, "Housed packing did not select one item.")
+	_check(JsonCoerceScript._copy_array(duplicate_pack.get("packed_instance_ids", [])).size() == 1, "Packing the same item twice duplicated it.")
 	service.add_gold(250)
 	var apartment: Dictionary = service.purchase_housing_upgrade()
 	_check(bool(apartment.get("ok", false)) and service.housing_tier() == MetaCollectionServiceScript.HOUSING_APARTMENT, "Gold purchase did not upgrade to apartment.")
@@ -255,7 +257,7 @@ func _test_pawn_sale_and_trade_up(resolver: Variant) -> void:
 	var trade_result: Dictionary = service.confirm_trade_up(str(trade.get("token", "")))
 	_check(bool(trade_result.get("ok", false)), "Apartment trade-up did not confirm.")
 	_check(service.owned_instances().size() == 1, "Trade-up did not consume five items and grant one output.")
-	var output := _copy_dict(service.owned_instances()[0])
+	var output := JsonCoerceScript._copy_dict(service.owned_instances()[0])
 	var output_def: Dictionary = resolver.item_definition(int(output.get("itemdef_id", -1)))
 	_check(str(output_def.get("tier", "")) == "purple", "Trade-up output did not move to the next tier.")
 	var sale: Dictionary = service.arm_sale(MetaCollectionServiceScript.SALE_KIND_ITEM, int(output.get("instance_id", 0)))
@@ -275,11 +277,11 @@ func _test_failure_decay_and_run_modifiers(resolver: Variant) -> void:
 	var granted: Dictionary = service.grant_instance(resolver.roll_instance(1000, "failure-decay"))
 	var modifiers: Dictionary = service.normal_run_start_modifiers()
 	_check(str(modifiers.get("home_archetype_id", "")) == MetaCollectionServiceScript.HOUSING_BACK_ALLEY, "Homeless normal run must start at the back alley archetype.")
-	_check(_copy_array(modifiers.get("meta_collection_carried_instance_ids", [])).has(int(granted.get("instance_id", 0))), "Homeless normal run must carry every owned item.")
-	_check(_copy_array(modifiers.get("meta_collection_loadout", [])).size() == 1, "Normal run modifiers did not inject resolved run items.")
+	_check(JsonCoerceScript._copy_array(modifiers.get("meta_collection_carried_instance_ids", [])).has(int(granted.get("instance_id", 0))), "Homeless normal run must carry every owned item.")
+	_check(JsonCoerceScript._copy_array(modifiers.get("meta_collection_loadout", [])).size() == 1, "Normal run modifiers did not inject resolved run items.")
 	var before_condition := float(granted.get("condition", 0.0))
 	var decayed: Array = service.apply_failure_decay([int(granted.get("instance_id", 0))], "failure-decay-seed")
-	var after := _copy_dict(decayed[0]) if not decayed.is_empty() else {}
+	var after := JsonCoerceScript._copy_dict(decayed[0]) if not decayed.is_empty() else {}
 	_check(is_equal_approx(float(after.get("condition", 1.0)), maxf(0.0, before_condition - MetaCollectionServiceScript.FAILURE_DURABILITY_LOSS)), "Failure decay did not reduce carried item condition by 10%.")
 	var fragile := after.duplicate(true)
 	fragile["condition"] = 0.05
@@ -311,14 +313,14 @@ func _test_players_card_mint_and_profile_lifecycle() -> void:
 	_check(bool(mint_result.get("mutated", false)) and not bool(mint_repeat.get("mutated", true)), "Clean win did not mint exactly one Players Card.")
 	var owned: Array = service.owned_instances()
 	_check(owned.size() == 1, "Clean win did not add one Players Card instance to the profile.")
-	var card := _copy_dict(owned[0]) if not owned.is_empty() else {}
-	var stamp := _copy_dict(card.get("instance_data", {}))
+	var card := JsonCoerceScript._copy_dict(owned[0]) if not owned.is_empty() else {}
+	var stamp := JsonCoerceScript._copy_dict(card.get("instance_data", {}))
 	_check(
 		str(stamp.get("seed", "")) == "players-card-clean" and int(stamp.get("final_score", 0)) == int(clean_run.terminal_score_summary().get("score", 0)) and int(stamp.get("days_survived", 0)) == 2,
 		"Players Card stamp did not preserve seed, score, and days: %s" % JSON.stringify(stamp)
 	)
-	_check(_copy_array(stamp.get("tier_timeline", [])).size() == 3 and str(stamp.get("route", "")) == RunStateScript.GRAND_CASINO_HIGH_ROLLER_EVENT_ID, "Players Card stamp did not preserve tier timeline and route.")
-	var report_reward := _copy_dict(RunReportViewModelScript.build(clean_run.to_dict()).get("meta_reward", {}))
+	_check(JsonCoerceScript._copy_array(stamp.get("tier_timeline", [])).size() == 3 and str(stamp.get("route", "")) == RunStateScript.GRAND_CASINO_HIGH_ROLLER_EVENT_ID, "Players Card stamp did not preserve tier timeline and route.")
+	var report_reward := JsonCoerceScript._copy_dict(RunReportViewModelScript.build(clean_run.to_dict()).get("meta_reward", {}))
 	_check(bool(report_reward.get("visible", false)) and str(report_reward.get("kind", "")) == "players_card_minted", "Run report did not surface the minted Players Card in RESULT.")
 	var showdown_run: Variant = _terminal_run("players-card-showdown")
 	drop_service.apply_terminal_special_outcome(showdown_run, service)
@@ -334,10 +336,10 @@ func _test_players_card_mint_and_profile_lifecycle() -> void:
 	var prestige_modifiers: Dictionary = restored_service.normal_run_start_modifiers()
 	var prestige_win: Variant = _terminal_run_with_modifiers("players-card-survival", prestige_modifiers, RunStateScript.RUN_STATUS_ENDED, RunStateScript.GRAND_CASINO_SHOWDOWN_ROUTE)
 	drop_service.apply_terminal_special_outcome(prestige_win, restored_service)
-	_check(restored_service.owned_instances().size() == 1 and str(_copy_dict(prestige_win.narrative_flags.get(CollectionDropServiceScript.PRESTIGE_RESULT_FLAG, {})).get("status", "")) == "retained", "Carried Players Card was not retained after a successful prestige run.")
+	_check(restored_service.owned_instances().size() == 1 and str(JsonCoerceScript._copy_dict(prestige_win.narrative_flags.get(CollectionDropServiceScript.PRESTIGE_RESULT_FLAG, {})).get("status", "")) == "retained", "Carried Players Card was not retained after a successful prestige run.")
 	var prestige_run: Variant = _terminal_run_with_modifiers("players-card-loss", prestige_modifiers, RunStateScript.RUN_STATUS_FAILED, "")
 	var loss_result: Dictionary = drop_service.apply_terminal_special_outcome(prestige_run, restored_service)
-	_check(_copy_array(loss_result.get("destroyed_cards", [])).size() == 1 and restored_service.owned_instances().is_empty(), "Carried Players Card was not destroyed forever on run loss.")
+	_check(JsonCoerceScript._copy_array(loss_result.get("destroyed_cards", [])).size() == 1 and restored_service.owned_instances().is_empty(), "Carried Players Card was not destroyed forever on run loss.")
 	_check(restored_service.save() == OK, "Destroyed Players Card profile save failed.")
 	var post_loss_service: Variant = MetaCollectionServiceScript.new()
 	post_loss_service.load()
@@ -349,8 +351,8 @@ func _test_players_card_mint_and_profile_lifecycle() -> void:
 	hidden_run.challenge_config["hidden_seed"] = true
 	hidden_run.narrative_flags["demo_victory_route"] = RunStateScript.GRAND_CASINO_HIGH_ROLLER_EVENT_ID
 	drop_service.apply_terminal_special_outcome(hidden_run, hidden_service)
-	var hidden_card := _copy_dict(hidden_service.owned_instances()[0]) if not hidden_service.owned_instances().is_empty() else {}
-	var hidden_stamp := _copy_dict(hidden_card.get("instance_data", {}))
+	var hidden_card := JsonCoerceScript._copy_dict(hidden_service.owned_instances()[0]) if not hidden_service.owned_instances().is_empty() else {}
+	var hidden_stamp := JsonCoerceScript._copy_dict(hidden_card.get("instance_data", {}))
 	_check(bool(hidden_stamp.get("seed_hidden", false)) and str(hidden_stamp.get("seed", "")).find("owner-secret-seed") < 0, "Hidden challenge seed leaked into the Players Card stamp.")
 	_remove_user_file(TEST_STORE_PATH)
 	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, "")
@@ -370,8 +372,8 @@ func _test_sal_shelf_defaults_and_migration(resolver: Variant) -> void:
 	_check(rows.size() == 6, "Fresh Sal shelf did not normalize to exactly six slots.")
 	var occupied: Array = rows.filter(func(row: Dictionary) -> bool: return bool(row.get("occupied", false)))
 	_check(occupied.size() == 1, "Fresh Sal shelf did not contain exactly one starter listing.")
-	var starter := _copy_dict(occupied[0]) if not occupied.is_empty() else {}
-	var item := _copy_dict(starter.get("item", {}))
+	var starter := JsonCoerceScript._copy_dict(occupied[0]) if not occupied.is_empty() else {}
+	var item := JsonCoerceScript._copy_dict(starter.get("item", {}))
 	var rare_channel := str(starter.get("starter_rare_channel", ""))
 	_check(str(starter.get("listing_mode", "")) == "starter_discount", "Starter listing did not use starter_discount mode.")
 	_check(float(item.get("condition", 0.0)) > 0.0 and float(item.get("condition", 1.0)) < 0.30, "Starter condition was not inside (0, .30).")
@@ -400,7 +402,7 @@ func _test_sal_shelf_defaults_and_migration(resolver: Variant) -> void:
 	var migrated: Variant = MetaCollectionServiceScript.new()
 	var migrated_snapshot: Dictionary = migrated.load()
 	_check(migrated.sal_shelf_rows().size() == 6 and migrated.sal_shelf_rows().filter(func(row: Dictionary) -> bool: return bool(row.get("occupied", false))).size() == 1, "Legacy store did not receive one starter and six Sal slots.")
-	_check(int(migrated_snapshot.get("gold_balance", 0)) == 41 and bool(_copy_dict(migrated_snapshot.get("unknown_owner_key", {})).get("keep", false)), "Sal migration changed legacy gold or dropped an unknown key.")
+	_check(int(migrated_snapshot.get("gold_balance", 0)) == 41 and bool(JsonCoerceScript._copy_dict(migrated_snapshot.get("unknown_owner_key", {})).get("keep", false)), "Sal migration changed legacy gold or dropped an unknown key.")
 	_remove_user_file(TEST_STORE_PATH)
 	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, "")
 
@@ -411,13 +413,13 @@ func _test_sal_float_rarity_curve(resolver: Variant) -> void:
 		_check(false, "Meta collection service is missing the pure Sal rarity evaluator.")
 		return
 	var definition: Dictionary = resolver.item_definition(1000)
-	var base_prices := _copy_dict(_copy_dict(resolver.meta_home_config().get("sale_prices", {})).get("items", {}))
+	var base_prices := JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(resolver.meta_home_config().get("sale_prices", {})).get("items", {}))
 	var base := int(base_prices.get(str(definition.get("tier", "blue")), 0))
 	for value in [0.0, 0.01, 0.5, 0.99, 1.0]:
 		var edge_instance := {"itemdef_id": 1000, "potency": value, "condition": 0.0, "resonance": 0.5, "usage": 0.5}
 		var edge: Dictionary = service.ordinary_collection_price_breakdown(edge_instance)
 		var expected_edge := pow(absf(2.0 * value - 1.0), 4.0)
-		_check(is_equal_approx(float(_copy_dict(edge.get("rarity_scores", {})).get("potency", -1.0)), expected_edge), "Potency edge fixture %.2f used the wrong fourth-power score." % value)
+		_check(is_equal_approx(float(JsonCoerceScript._copy_dict(edge.get("rarity_scores", {})).get("potency", -1.0)), expected_edge), "Potency edge fixture %.2f used the wrong fourth-power score." % value)
 		_check(int(edge.get("tier_base", -1)) == base, "Rarity evaluator did not use the tier base sale value.")
 	var low: Dictionary = service.ordinary_collection_price_breakdown({"itemdef_id": 1000, "potency": 0.01, "condition": 0.0, "resonance": 0.5, "usage": 0.5})
 	var high: Dictionary = service.ordinary_collection_price_breakdown({"itemdef_id": 1000, "potency": 0.99, "condition": 0.0, "resonance": 0.5, "usage": 0.5})
@@ -427,7 +429,7 @@ func _test_sal_float_rarity_curve(resolver: Variant) -> void:
 	var condition_values: Array = []
 	for value in [0.0, 0.01, 0.5, 0.99, 1.0]:
 		var condition: Dictionary = service.ordinary_collection_price_breakdown({"itemdef_id": 1000, "potency": 0.5, "condition": value, "resonance": 0.5, "usage": 0.5})
-		condition_values.append(float(_copy_dict(condition.get("rarity_scores", {})).get("condition", -1.0)))
+		condition_values.append(float(JsonCoerceScript._copy_dict(condition.get("rarity_scores", {})).get("condition", -1.0)))
 		_check(float(condition.get("rarity_multiplier", 0.0)) >= 1.0 and float(condition.get("rarity_multiplier", 4.0)) <= 3.0, "Rarity multiplier left [1,3].")
 	_check(condition_values == [0.0, pow(0.01, 4.0), pow(0.5, 4.0), pow(0.99, 4.0), 1.0], "Condition fixtures were not monotonic fourth-power durability.")
 	var all_edges := {"itemdef_id": 1000, "potency": 0.0, "condition": 1.0, "resonance": 1.0, "usage": 0.0}
@@ -441,7 +443,7 @@ func _test_sal_float_rarity_curve(resolver: Variant) -> void:
 			fixture[channel] = value
 			var breakdown: Dictionary = service.ordinary_collection_price_breakdown(fixture)
 			var expected_contribution := 0.5 * pow(absf(2.0 * value - 1.0), 4.0)
-			_check(is_equal_approx(float(_copy_dict(breakdown.get("rarity_contributions", {})).get(channel, -1.0)), expected_contribution), "%s %.2f used the wrong edge contribution." % [channel.capitalize(), value])
+			_check(is_equal_approx(float(JsonCoerceScript._copy_dict(breakdown.get("rarity_contributions", {})).get(channel, -1.0)), expected_contribution), "%s %.2f used the wrong edge contribution." % [channel.capitalize(), value])
 	var middle_instance := {"itemdef_id": 1000, "potency": 0.5, "condition": 0.0, "resonance": 0.5, "usage": 0.5}
 	var normal: Dictionary = service.ordinary_collection_price_breakdown(middle_instance, "normal")
 	var starter: Dictionary = service.ordinary_collection_price_breakdown(middle_instance, "starter_discount")
@@ -489,15 +491,15 @@ func _test_sal_stocking_and_idempotency() -> void:
 		var fill_index: int = service.sal_shelf_rows().filter(func(row: Dictionary) -> bool: return bool(row.get("occupied", false))).size()
 		service.generate_and_insert_sal_stock("fill:%d" % fill_index)
 	var full_before: Array = service.sal_shelf_rows()
-	var protected_id := int(_copy_dict(_copy_dict(full_before[0]).get("item", {})).get("instance_id", 0))
+	var protected_id := int(JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(full_before[0]).get("item", {})).get("instance_id", 0))
 	var replacement: Dictionary = service.generate_and_insert_sal_stock("full:replacement")
 	var full_after: Array = service.sal_shelf_rows()
 	var changed_slots := 0
 	for index in range(6):
-		if int(_copy_dict(_copy_dict(full_before[index]).get("item", {})).get("instance_id", 0)) != int(_copy_dict(_copy_dict(full_after[index]).get("item", {})).get("instance_id", 0)):
+		if int(JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(full_before[index]).get("item", {})).get("instance_id", 0)) != int(JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(full_after[index]).get("item", {})).get("instance_id", 0)):
 			changed_slots += 1
 	_check(bool(replacement.get("stocked", false)) and changed_slots == 1, "Full Sal shelf did not replace exactly one eligible slot.")
-	_check(int(_copy_dict(_copy_dict(full_after[0]).get("item", {})).get("instance_id", 0)) == protected_id, "Full-shelf replacement removed the protected starter.")
+	_check(int(JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(full_after[0]).get("item", {})).get("instance_id", 0)) == protected_id, "Full-shelf replacement removed the protected starter.")
 	_remove_user_file(TEST_STORE_PATH)
 	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, "")
 
@@ -514,16 +516,16 @@ func _test_sal_purchase_and_starter_buyback() -> void:
 		OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, "")
 		return
 	var starter_rows: Array = service.sal_shelf_rows().filter(func(row: Dictionary) -> bool: return bool(row.get("occupied", false)))
-	var starter := _copy_dict(starter_rows[0]) if not starter_rows.is_empty() else {}
+	var starter := JsonCoerceScript._copy_dict(starter_rows[0]) if not starter_rows.is_empty() else {}
 	var slot_index := int(starter.get("slot_index", -1))
-	var starter_item := _copy_dict(starter.get("item", {}))
+	var starter_item := JsonCoerceScript._copy_dict(starter.get("item", {}))
 	var price := int(starter.get("asking_price", 0))
 	service.add_gold(price)
 	var armed: Dictionary = service.arm_sal_shelf_purchase(slot_index)
 	var bought: Dictionary = service.confirm_sal_shelf_purchase(str(armed.get("token", "")))
 	_check(bool(bought.get("ok", false)) and int(service.snapshot().get("gold_balance", -1)) == 0, "Starter purchase did not debit the exact asking price once.")
 	var owned: Array = service.owned_instances()
-	var purchased := _copy_dict(owned[0]) if not owned.is_empty() else {}
+	var purchased := JsonCoerceScript._copy_dict(owned[0]) if not owned.is_empty() else {}
 	_check(owned.size() == 1 and int(purchased.get("instance_id", 0)) == int(starter_item.get("instance_id", -1)) and JSON.stringify(purchased) == JSON.stringify(starter_item), "Starter purchase did not transfer the exact persistent instance and floats.")
 	var pending: Dictionary = service.pending_starter_buyback()
 	_check(not pending.is_empty() and int(pending.get("offer_price", 0)) == int(ceil(float(pending.get("pawn_quote", 0)) * 1.25)), "Starter purchase did not persist the exact 1.25x pending offer.")
@@ -536,7 +538,7 @@ func _test_sal_purchase_and_starter_buyback() -> void:
 	var repeated: Dictionary = service.resolve_starter_buyback("sell_back")
 	var relisted: Dictionary = service.sal_shelf_row(slot_index)
 	_check(bool(sold_back.get("ok", false)) and not bool(repeated.get("ok", true)), "Starter buyback did not resolve exactly once.")
-	_check(service.owned_instances().is_empty() and int(_copy_dict(relisted.get("item", {})).get("instance_id", 0)) == int(starter_item.get("instance_id", -1)), "Buyback did not return the exact starter instance to its original slot.")
+	_check(service.owned_instances().is_empty() and int(JsonCoerceScript._copy_dict(relisted.get("item", {})).get("instance_id", 0)) == int(starter_item.get("instance_id", -1)), "Buyback did not return the exact starter instance to its original slot.")
 	_check(str(relisted.get("listing_mode", "")) == "mocking_relist" and int(relisted.get("asking_price", 0)) == int(ceil(float(sold_back.get("pawn_quote", 0)) * 10.0)), "Accepted starter buyback did not create the exact 10x mocking relist.")
 	_check(int(service.snapshot().get("gold_balance", -1)) == int(sold_back.get("offer_price", -2)), "Starter buyback did not pay the exact one-time offer.")
 	var relist_price := int(relisted.get("asking_price", 0))
@@ -552,7 +554,7 @@ func _test_sal_purchase_and_starter_buyback() -> void:
 	_remove_user_file(TEST_STORE_PATH)
 	var keep_service: Variant = MetaCollectionServiceScript.new()
 	keep_service.load()
-	var keep_starter := _copy_dict(keep_service.sal_shelf_rows()[0])
+	var keep_starter := JsonCoerceScript._copy_dict(keep_service.sal_shelf_rows()[0])
 	var keep_price := int(keep_starter.get("asking_price", 0))
 	keep_service.add_gold(keep_price + 7)
 	var keep_arm: Dictionary = keep_service.arm_sal_shelf_purchase(0)
@@ -566,7 +568,7 @@ func _test_sal_purchase_and_starter_buyback() -> void:
 	_remove_user_file(TEST_STORE_PATH)
 	var failure_service: Variant = MetaCollectionServiceScript.new()
 	failure_service.load()
-	var failure_starter := _copy_dict(failure_service.sal_shelf_rows()[0])
+	var failure_starter := JsonCoerceScript._copy_dict(failure_service.sal_shelf_rows()[0])
 	var failure_price := int(failure_starter.get("asking_price", 0))
 	var insufficient_before := JSON.stringify(failure_service.snapshot())
 	_check(not bool(failure_service.arm_sal_shelf_purchase(0).get("ok", true)) and JSON.stringify(failure_service.snapshot()) == insufficient_before, "Insufficient-gold purchase mutated profile state.")
@@ -581,7 +583,7 @@ func _test_sal_purchase_and_starter_buyback() -> void:
 	full_service.grant_container("bag")
 	for seed_index in range(full_service.total_owned_capacity()):
 		full_service.grant_instance(resolver.roll_instance(1000, "sal-capacity-%d" % seed_index))
-	var full_starter := _copy_dict(full_service.sal_shelf_rows()[0])
+	var full_starter := JsonCoerceScript._copy_dict(full_service.sal_shelf_rows()[0])
 	full_service.add_gold(int(full_starter.get("asking_price", 0)))
 	var capacity_before := JSON.stringify(full_service.sal_shelf_rows())
 	_check(not bool(full_service.arm_sal_shelf_purchase(0).get("ok", true)) and JSON.stringify(full_service.sal_shelf_rows()) == capacity_before, "Full owned-item capacity allowed or mutated a shelf purchase.")
@@ -613,8 +615,8 @@ func _test_tutorial_starter_card_fragility() -> void:
 	tutorial_run.narrative_flags["grand_casino_players_card_tier"] = RunStateScript.GRAND_CASINO_PLAYERS_CARD_TIER_GOLD
 	var reward: Dictionary = drop_service.apply_terminal_special_outcome(tutorial_run, service)
 	var owned: Array = service.owned_instances()
-	var card := _copy_dict(owned[0]) if not owned.is_empty() else {}
-	var stamp := _copy_dict(card.get("instance_data", {}))
+	var card := JsonCoerceScript._copy_dict(owned[0]) if not owned.is_empty() else {}
+	var stamp := JsonCoerceScript._copy_dict(card.get("instance_data", {}))
 	_check(bool(reward.get("mutated", false)) and owned.size() == 1 and bool(stamp.get("starter_card", false)) and bool(stamp.get("tutorial", false)), "Tutorial clean victory did not mint one starter-stamped Players Card.")
 	var card_id := int(card.get("instance_id", 0))
 	_check(service.carried_instance_ids().has(card_id), "Tutorial Players Card was stored at home instead of entering the held loadout.")
@@ -632,8 +634,8 @@ func _test_tutorial_starter_card_fragility() -> void:
 	restored.load()
 	_check(restored.owned_instances().size() == 1 and restored.carried_instance_ids().has(card_id), "Tutorial Players Card disappeared from the held home inventory after restart.")
 	var home_inventory: Dictionary = MetaItemInteractionViewModelScript.build(restored, MetaItemInteractionViewModelScript.MODE_CONTAINER)
-	var home_items := _copy_array(home_inventory.get("items", []))
-	var home_card := _copy_dict(home_items[0]) if not home_items.is_empty() else {}
+	var home_items := JsonCoerceScript._copy_array(home_inventory.get("items", []))
+	var home_card := JsonCoerceScript._copy_dict(home_items[0]) if not home_items.is_empty() else {}
 	_check(home_items.size() == 1 and int(home_card.get("instance_id", 0)) == card_id and str(home_card.get("item_class", "")) == CollectionItemResolverScript.ITEM_CLASS_PLAYERS_CARD and bool(home_card.get("packed", false)), "Home inventory did not render the exact tutorial Players Card as held.")
 	_check(bool(restored.unpack_instance(card_id).get("ok", false)) and restored.save() == OK, "Tutorial Players Card could not be deliberately unpacked after its initial home grant.")
 	var unpacked_restore: Variant = MetaCollectionServiceScript.new()
@@ -642,12 +644,12 @@ func _test_tutorial_starter_card_fragility() -> void:
 	unpacked_restore.ensure_players_card_carried(card_id)
 	restored = unpacked_restore
 	var normal_modifiers: Dictionary = restored.normal_run_start_modifiers()
-	var normal_loadout := _copy_array(normal_modifiers.get("meta_collection_loadout", []))
-	var carried_card := _copy_dict(normal_loadout[0]) if not normal_loadout.is_empty() else {}
-	_check(normal_loadout.size() == 1 and str(_copy_dict(carried_card.get("meta_collection", {})).get("item_class", "")) == CollectionItemResolverScript.ITEM_CLASS_PLAYERS_CARD, "First normal run did not receive the held tutorial Players Card as an inventory item.")
+	var normal_loadout := JsonCoerceScript._copy_array(normal_modifiers.get("meta_collection_loadout", []))
+	var carried_card := JsonCoerceScript._copy_dict(normal_loadout[0]) if not normal_loadout.is_empty() else {}
+	_check(normal_loadout.size() == 1 and str(JsonCoerceScript._copy_dict(carried_card.get("meta_collection", {})).get("item_class", "")) == CollectionItemResolverScript.ITEM_CLASS_PLAYERS_CARD, "First normal run did not receive the held tutorial Players Card as an inventory item.")
 	var normal_loss: Variant = _terminal_run_with_modifiers("starter-card-loss", normal_modifiers, RunStateScript.RUN_STATUS_FAILED, "")
 	var loss_result: Dictionary = drop_service.apply_terminal_special_outcome(normal_loss, restored)
-	_check(_copy_array(loss_result.get("destroyed_cards", [])).size() == 1 and restored.owned_instances().is_empty(), "Starter Players Card did not use normal carried-card fragility on a later loss.")
+	_check(JsonCoerceScript._copy_array(loss_result.get("destroyed_cards", [])).size() == 1 and restored.owned_instances().is_empty(), "Starter Players Card did not use normal carried-card fragility on a later loss.")
 	_remove_user_file(TEST_STORE_PATH)
 	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, "")
 
@@ -669,20 +671,20 @@ func _test_uncashed_grand_casino_chips_pawn_flow() -> void:
 	_check(bool(grant_result.get("mutated", false)) and not bool(repeated_result.get("mutated", true)), "Shown-door ending did not grant exactly one chip stack.")
 	var owned: Array = service.owned_instances()
 	_check(owned.size() == 1, "Shown-door ending did not add one Grand Casino Chips stack to meta storage.")
-	var chip_stack := _copy_dict(owned[0]) if not owned.is_empty() else {}
+	var chip_stack := JsonCoerceScript._copy_dict(owned[0]) if not owned.is_empty() else {}
 	_check(str(chip_stack.get("item_class", "")) == CollectionItemResolverScript.ITEM_CLASS_CHIP_STACK and int(chip_stack.get("stack_amount", 0)) == 37 and int(chip_stack.get("face_value", 0)) == 37, "Grand Casino Chips stack did not preserve the exact uncashed amount as face value.")
 	var run_modifiers: Dictionary = service.normal_run_start_modifiers()
-	_check(not _copy_array(run_modifiers.get("meta_collection_carried_instance_ids", [])).has(int(chip_stack.get("instance_id", 0))) and _copy_array(run_modifiers.get("meta_collection_loadout", [])).is_empty(), "Grand Casino Chips leaked from meta storage into a run loadout.")
+	_check(not JsonCoerceScript._copy_array(run_modifiers.get("meta_collection_carried_instance_ids", [])).has(int(chip_stack.get("instance_id", 0))) and JsonCoerceScript._copy_array(run_modifiers.get("meta_collection_loadout", [])).is_empty(), "Grand Casino Chips leaked from meta storage into a run loadout.")
 	var markers: Array = drop_service.ensure_run_end_pending_bags(shown_run, null)
 	_check(not markers.is_empty(), "Shown-door chip stack was not granted alongside the existing run-end drop flow.")
-	var report_reward := _copy_dict(RunReportViewModelScript.build(shown_run.to_dict()).get("meta_reward", {}))
+	var report_reward := JsonCoerceScript._copy_dict(RunReportViewModelScript.build(shown_run.to_dict()).get("meta_reward", {}))
 	_check(str(report_reward.get("kind", "")) == "grand_casino_chips" and str(report_reward.get("title", "")).contains("×37"), "Run report did not surface the uncashed Grand Casino Chips stack.")
 	_check(service.save() == OK, "Grand Casino Chips profile save failed.")
 	var restored: Variant = MetaCollectionServiceScript.new()
 	restored.load()
 	var restored_owned: Array = restored.owned_instances()
-	_check(restored_owned.size() == 1 and int(_copy_dict(restored_owned[0]).get("face_value", 0)) == 37, "Grand Casino Chips did not survive profile restart with exact face value.")
-	var instance_id := int(_copy_dict(restored_owned[0]).get("instance_id", 0)) if not restored_owned.is_empty() else 0
+	_check(restored_owned.size() == 1 and int(JsonCoerceScript._copy_dict(restored_owned[0]).get("face_value", 0)) == 37, "Grand Casino Chips did not survive profile restart with exact face value.")
+	var instance_id := int(JsonCoerceScript._copy_dict(restored_owned[0]).get("instance_id", 0)) if not restored_owned.is_empty() else 0
 	var quote: Dictionary = restored.sale_quote(MetaCollectionServiceScript.SALE_KIND_ITEM, instance_id)
 	_check(bool(quote.get("ok", false)) and int(quote.get("price", 0)) == 22 and is_equal_approx(float(quote.get("gold_rate", 0.0)), 0.6), "Sal did not price the 37-chip stack at the tuned 60% fenced rate.")
 	var run_cash_before: int = shown_run.bankroll
@@ -735,11 +737,11 @@ func _test_prestige_run_modifiers_and_drop_depth() -> void:
 	var prestige_markers: Array = drop_service.ensure_run_end_pending_bags(prestige_drop_run, null)
 	_check(regular_markers.size() == prestige_markers.size() and not regular_markers.is_empty(), "Prestige drop comparison did not produce matching deterministic marker counts.")
 	for index in range(mini(regular_markers.size(), prestige_markers.size())):
-		var regular_marker := _copy_dict(regular_markers[index])
+		var regular_marker := JsonCoerceScript._copy_dict(regular_markers[index])
 		var regular_rolled_tier := str(regular_marker.get("rolled_tier", ""))
 		var regular_tier := str(regular_marker.get("tier", ""))
 		_check(regular_tier == regular_rolled_tier and int(regular_marker.get("tier_bonus_steps", -1)) == 0, "Non-prestige drop changed its existing deterministic tier roll.")
-		var prestige_marker := _copy_dict(prestige_markers[index])
+		var prestige_marker := JsonCoerceScript._copy_dict(prestige_markers[index])
 		var prestige_rolled_tier := str(prestige_marker.get("rolled_tier", ""))
 		var prestige_tier := str(prestige_marker.get("tier", ""))
 		var bonus_steps := int(prestige_modifiers.get("meta_collection_drop_tier_bonus_steps", 0))
@@ -771,16 +773,16 @@ func _test_victory_selection_grants_one_bag() -> void:
 	var run_state: Variant = _terminal_run("p1-grant-seed")
 	var markers: Array = drop_service.ensure_run_end_pending_bags(run_state, null)
 	_check(markers.size() >= 2, "Standard meta victory plus showdown should create at least two pending bags.")
-	var selected := _copy_dict(markers[0])
+	var selected := JsonCoerceScript._copy_dict(markers[0])
 	var flush_result: Dictionary = drop_service.flush_selected_pending_bag(run_state, service, str(selected.get("marker_id", "")))
-	_check(_copy_array(flush_result.get("granted", [])).size() == 1, "Victory extraction did not grant exactly one selected bag.")
+	_check(JsonCoerceScript._copy_array(flush_result.get("granted", [])).size() == 1, "Victory extraction did not grant exactly one selected bag.")
 	_check(run_state.pending_bag_markers().is_empty(), "Run-end flush did not clear pending bag markers.")
 	_check(bool(run_state.narrative_flags.get(CollectionDropServiceScript.FLUSHED_FLAG, false)), "Run-end flush flag was not recorded.")
 	var save_error: Error = service.save()
 	_check(save_error == OK, "Meta collection store save after run-end grant failed.")
 	var loaded_service: Variant = MetaCollectionServiceScript.new()
 	var loaded: Dictionary = loaded_service.load()
-	_check(_copy_array(loaded.get("unopened_bags", [])).size() == 1, "Selected bag did not survive meta store reload as the only grant.")
+	_check(JsonCoerceScript._copy_array(loaded.get("unopened_bags", [])).size() == 1, "Selected bag did not survive meta store reload as the only grant.")
 	_remove_user_file(TEST_STORE_PATH)
 	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, "")
 
@@ -795,7 +797,7 @@ func _test_failed_run_discards_pending_bags() -> void:
 	run_state.run_status = RunStateScript.RUN_STATUS_FAILED
 	run_state.add_pending_bag_marker(drop_service.marker_from_static_bag(9000, "legacy_event", "removed_bag_marker", "failure-bag"))
 	var flush_result: Dictionary = drop_service.flush_pending_bags(run_state, service)
-	_check(_copy_array(flush_result.get("granted", [])).is_empty(), "Failed run must not grant pending bag rewards.")
+	_check(JsonCoerceScript._copy_array(flush_result.get("granted", [])).is_empty(), "Failed run must not grant pending bag rewards.")
 	_check(run_state.pending_bag_markers().is_empty(), "Failed run did not discard pending bag markers.")
 	_check(service.unopened_bags().is_empty(), "Failed run leaked an unopened bag into meta storage.")
 	_remove_user_file(TEST_STORE_PATH)
@@ -848,12 +850,12 @@ func _test_bag_open_reel_view_model_pins_committed_item(resolver: Variant) -> vo
 		_remove_user_file(tier_store_path)
 		var service: Variant = MetaCollectionServiceScript.new()
 		service.load()
-		var bag_defs := _copy_array(resolver.bag_item_definitions("", tier))
+		var bag_defs := JsonCoerceScript._copy_array(resolver.bag_item_definitions("", tier))
 		if bag_defs.is_empty():
 			failures.append("No bag definition available for reel tier %s." % tier)
 			_remove_user_file(tier_store_path)
 			continue
-		var bag_def := _copy_dict(bag_defs[0])
+		var bag_def := JsonCoerceScript._copy_dict(bag_defs[0])
 		var granted_bag: Dictionary = service.grant_bag(int(bag_def.get("itemdef_id", -1)), "reel-earned:%s" % tier, {"display_name": "%s Reel Bag" % tier.capitalize()})
 		var before_owned_count: int = service.owned_instances().size()
 		var result: Dictionary = service.open_bag(int(granted_bag.get("instance_id", 0)))
@@ -861,27 +863,27 @@ func _test_bag_open_reel_view_model_pins_committed_item(resolver: Variant) -> vo
 		if not bool(result.get("ok", false)):
 			_remove_user_file(tier_store_path)
 			continue
-		var possible := _copy_array(resolver.bag_item_options_for_bag(int(bag_def.get("itemdef_id", -1))))
+		var possible := JsonCoerceScript._copy_array(resolver.bag_item_options_for_bag(int(bag_def.get("itemdef_id", -1))))
 		var model: Dictionary = BagOpenReelViewModelScript.build(result, possible, false, "unit:%s" % tier)
-		var landing := _copy_dict(BagOpenReelViewModelScript.landing_card(model))
-		var item := _copy_dict(result.get("item", {}))
+		var landing := JsonCoerceScript._copy_dict(BagOpenReelViewModelScript.landing_card(model))
+		var item := JsonCoerceScript._copy_dict(result.get("item", {}))
 		_check(int(landing.get("itemdef_id", -1)) == int(item.get("itemdef_id", -2)), "Bag reel landing itemdef was not the committed open_bag item for %s." % tier)
 		_check(int(landing.get("instance_id", 0)) == int(item.get("instance_id", -1)), "Bag reel landing instance was not the granted item for %s." % tier)
 		_check(int(model.get("committed_instance_id", 0)) == int(item.get("instance_id", -1)), "Bag reel model lost committed instance id for %s." % tier)
 		_check(int(model.get("landing_index", -1)) == BagOpenReelViewModelScript.LANDING_INDEX, "Bag reel model landing index drifted for %s." % tier)
-		_check(_copy_array(model.get("sequence", [])).size() == BagOpenReelViewModelScript.CARD_COUNT, "Bag reel did not precompute its full card sequence for %s." % tier)
+		_check(JsonCoerceScript._copy_array(model.get("sequence", [])).size() == BagOpenReelViewModelScript.CARD_COUNT, "Bag reel did not precompute its full card sequence for %s." % tier)
 		_check(JSON.stringify(BagOpenReelViewModelScript.showcase_itemdef_ids(model)) == JSON.stringify(_itemdef_ids(possible)), "Bag reel showcase did not exactly match possible contents for %s." % tier)
 		var reduced: Dictionary = BagOpenReelViewModelScript.build(result, possible, true, "unit:%s" % tier)
 		_check(bool(reduced.get("reduce_motion", false)) and float(reduced.get("spin_duration_sec", 1.0)) == 0.0, "Bag reel reduce-motion model still animates for %s." % tier)
-		_check(int(_copy_dict(BagOpenReelViewModelScript.landing_card(reduced)).get("instance_id", 0)) == int(item.get("instance_id", -1)), "Bag reel reduce-motion path changed the committed item for %s." % tier)
+		_check(int(JsonCoerceScript._copy_dict(BagOpenReelViewModelScript.landing_card(reduced)).get("instance_id", 0)) == int(item.get("instance_id", -1)), "Bag reel reduce-motion path changed the committed item for %s." % tier)
 		_check(service.owned_instances().size() == before_owned_count + 1, "Bag reel model construction double-granted an item for %s." % tier)
 		var save_error: Error = service.save()
 		_check(save_error == OK, "Bag reel mid-spin save simulation could not save for %s." % tier)
 		var reloaded: Variant = MetaCollectionServiceScript.new()
 		reloaded.load()
 		var matching := 0
-		for instance_value in _copy_array(reloaded.owned_instances()):
-			if int(_copy_dict(instance_value).get("instance_id", 0)) == int(item.get("instance_id", -1)):
+		for instance_value in JsonCoerceScript._copy_array(reloaded.owned_instances()):
+			if int(JsonCoerceScript._copy_dict(instance_value).get("instance_id", 0)) == int(item.get("instance_id", -1)):
 				matching += 1
 		_check(matching == 1, "Bag reel mid-spin reload did not preserve exactly one granted item for %s." % tier)
 		_remove_user_file(tier_store_path)
@@ -899,12 +901,12 @@ func _test_collection_browser_view_model_read_only(resolver: Variant) -> void:
 	var view: Dictionary = MetaCollectionViewModelScript.build(service)
 	var after_json := JSON.stringify(service.snapshot())
 	_check(before_json == after_json, "Collection browser view-model mutated the meta store.")
-	_check(_copy_array(view.get("collections", [])).size() == 2, "Collection browser did not list both launch collections.")
-	_check(_copy_array(view.get("unopened_bags", [])).size() == 1, "Collection browser did not list unopened bags.")
+	_check(JsonCoerceScript._copy_array(view.get("collections", [])).size() == 2, "Collection browser did not list both launch collections.")
+	_check(JsonCoerceScript._copy_array(view.get("unopened_bags", [])).size() == 1, "Collection browser did not list unopened bags.")
 	_check(int(view.get("owned_count", 0)) == 1, "Collection browser owned count mismatch.")
-	var home := _copy_dict(view.get("home", {}))
+	var home := JsonCoerceScript._copy_dict(view.get("home", {}))
 	_check(str(home.get("housing_tier", "")) == MetaCollectionServiceScript.HOUSING_BACK_ALLEY, "Collection browser did not expose meta home state.")
-	_check(str(_copy_dict(home.get("pawn_shop", {})).get("interaction", "")) == "buy_and_sell" and int(_copy_dict(home.get("pawn_shop", {})).get("shelf_slots", 0)) == 6, "Collection browser did not expose Sal's six-slot buy-and-sell shop.")
+	_check(str(JsonCoerceScript._copy_dict(home.get("pawn_shop", {})).get("interaction", "")) == "buy_and_sell" and int(JsonCoerceScript._copy_dict(home.get("pawn_shop", {})).get("shelf_slots", 0)) == 6, "Collection browser did not expose Sal's six-slot buy-and-sell shop.")
 	_remove_user_file(TEST_STORE_PATH)
 	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, "")
 
@@ -980,7 +982,7 @@ func _grand_casino_environment_fixture() -> Dictionary:
 func _instance_ids(instances: Array) -> Array:
 	var ids: Array = []
 	for instance_value in instances:
-		var instance := _copy_dict(instance_value)
+		var instance := JsonCoerceScript._copy_dict(instance_value)
 		ids.append(int(instance.get("instance_id", 0)))
 	return ids
 
@@ -988,16 +990,16 @@ func _instance_ids(instances: Array) -> Array:
 func _itemdef_ids(definitions: Array) -> Array:
 	var ids: Array = []
 	for definition_value in definitions:
-		var definition := _copy_dict(definition_value)
+		var definition := JsonCoerceScript._copy_dict(definition_value)
 		ids.append(int(definition.get("itemdef_id", -1)))
 	ids.sort()
 	return ids
 
 
 func _item_float_bindings_are_known(item: Dictionary) -> bool:
-	var bindings := _copy_dict(item.get("float_bindings", {}))
+	var bindings := JsonCoerceScript._copy_dict(item.get("float_bindings", {}))
 	for binding_key in ["potency", "resonance"]:
-		var binding := _copy_dict(bindings.get(binding_key, {}))
+		var binding := JsonCoerceScript._copy_dict(bindings.get(binding_key, {}))
 		var effect_key := str(binding.get("effect_key", ""))
 		if not CollectionItemResolverScript.KNOWN_EFFECT_KEYS.has(effect_key):
 			return false
@@ -1023,17 +1025,3 @@ func _finish() -> void:
 func _remove_user_file(path: String) -> void:
 	if FileAccess.file_exists(path):
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
-
-
-static func _copy_dict(value: Variant) -> Dictionary:
-	if typeof(value) != TYPE_DICTIONARY:
-		return {}
-	var dictionary: Dictionary = value
-	return dictionary.duplicate(true)
-
-
-static func _copy_array(value: Variant) -> Array:
-	if typeof(value) != TYPE_ARRAY:
-		return []
-	var array: Array = value
-	return array.duplicate(true)

@@ -116,7 +116,7 @@ casino** vs **straight underground**.
   Determinism preserved (seeded; branch at action boundaries, never
   wall-clock). Zero-copy per-frame; idle liveness untouched. Tabs, typed
   GDScript, sparse comments. Player-facing copy follows
-  `docs/plans/0.5_voice_bible.md`. Captures under `.tmp/`. Never revert or stage
+  `docs/archive/0.5/plans/0.5_voice_bible.md`. Captures under `.tmp/`. Never revert or stage
   unrelated user-owned work.
 - Commit in logical units (decision framing/system; tutorial branch; content).
 

@@ -1,6 +1,8 @@
 class_name AttributeBadges
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 # Read-only translator from content dictionaries to shared attribute badge rows.
 
 const GLYPH_REGISTRY_PATH := "res://data/art/attribute_glyphs.json"
@@ -27,7 +29,7 @@ static func validation_errors() -> Array:
 
 
 static func glyph_ids() -> Array:
-	var ids := _string_array(_glyphs().keys())
+	var ids := JsonCoerceScript._string_array(_glyphs().keys())
 	ids.sort()
 	return ids
 
@@ -96,7 +98,7 @@ static func for_route(route: Dictionary, route_risk: Dictionary = {}) -> Array:
 	var source := route.duplicate(true)
 	var risk_event := route_risk.duplicate(true)
 	if risk_event.is_empty():
-		risk_event = _copy_dict(source.get("risk_event", {}))
+		risk_event = JsonCoerceScript._copy_dict(source.get("risk_event", {}))
 	var badges: Array = []
 	var risk := str(source.get("risk", "")).strip_edges().to_lower()
 	badges.append(class_badge("route", risk))
@@ -141,7 +143,7 @@ static func for_world_map_detail(environment_kind: String, route: Dictionary = {
 		return _filtered_badges(badges)
 	var cooling_percent := clampi(int(route.get("risk_decay", 0)), 0, 100)
 	var route_heat := int(route.get("suspicion_delta", 0))
-	var risk_event := _copy_dict(route.get("risk_event", {}))
+	var risk_event := JsonCoerceScript._copy_dict(route.get("risk_event", {}))
 	var event_heat := int(risk_event.get("suspicion_delta", 0))
 	var event_chance := clampi(int(risk_event.get("chance_percent", 0)), 0, 100)
 	var value_parts: Array[String] = []
@@ -230,14 +232,14 @@ static func for_event_choice(choice: Dictionary) -> Array:
 	var event_type := str(source.get("event_type", source.get("type", ""))).strip_edges().to_lower()
 	if not event_type.is_empty():
 		badges.append(class_badge("event", event_type))
-	var consequences := _copy_dict(source.get("consequences", source.get("effects", source.get("deltas", {}))))
+	var consequences := JsonCoerceScript._copy_dict(source.get("consequences", source.get("effects", source.get("deltas", {}))))
 	_append_delta_badges(badges, consequences)
-	var check := _copy_dict(source.get("check", consequences.get("check", {})))
+	var check := JsonCoerceScript._copy_dict(source.get("check", consequences.get("check", {})))
 	if not check.is_empty():
 		var chance := int(check.get("chance_percent", check.get("base_chance", check.get("chance", 0))))
 		if chance > 0:
 			_add_badge(badges, _badge("win_chance", "%d%%" % chance, _badge_polarity("win_chance", chance), "Check chance"))
-		var success := _copy_dict(check.get("success_consequences", {}))
+		var success := JsonCoerceScript._copy_dict(check.get("success_consequences", {}))
 		if not success.is_empty():
 			_append_delta_badges(badges, success)
 	return _filtered_badges(badges)
@@ -259,7 +261,7 @@ static func for_lender(lender: Dictionary) -> Array:
 	var badges: Array = []
 	var lender_type := str(source.get("lender_type", source.get("category", ""))).strip_edges().to_lower()
 	badges.append(class_badge("lender", lender_type))
-	var debt_profile := _copy_dict(source.get("debt_profile", source.get("debt", {})))
+	var debt_profile := JsonCoerceScript._copy_dict(source.get("debt_profile", source.get("debt", {})))
 	if not debt_profile.is_empty():
 		var amount := int(debt_profile.get("principal", debt_profile.get("amount", debt_profile.get("bankroll_delta", 0))))
 		if amount != 0:
@@ -308,24 +310,24 @@ static func _append_delta_badges(badges: Array, deltas: Dictionary) -> void:
 	if heat_cooldown_actions > 0 and heat_cooldown_per_action > 0:
 		_add_badge(badges, _badge("time_actions", "%da" % heat_cooldown_actions, "good", "Heat cooldown duration"))
 		_add_badge(badges, _badge("suspicion", "-%d/a" % heat_cooldown_per_action, "good", "Heat cooldown per action"))
-	var debt_changes := _copy_array(deltas.get("debt_changes", []))
+	var debt_changes := JsonCoerceScript._copy_array(deltas.get("debt_changes", []))
 	if deltas.has("debt"):
-		debt_changes.append(_copy_dict(deltas.get("debt", {})))
+		debt_changes.append(JsonCoerceScript._copy_dict(deltas.get("debt", {})))
 	if not debt_changes.is_empty():
 		_add_badge(badges, _badge("debt", "+%d" % debt_changes.size(), "bad", "Debt change"))
-	var inventory_add := _copy_array(deltas.get("inventory_add", []))
+	var inventory_add := JsonCoerceScript._copy_array(deltas.get("inventory_add", []))
 	if not inventory_add.is_empty():
 		_add_badge(badges, _badge("inventory", "+%d" % inventory_add.size(), "good", "Item gained"))
-	var inventory_remove := _copy_array(deltas.get("inventory_remove", []))
+	var inventory_remove := JsonCoerceScript._copy_array(deltas.get("inventory_remove", []))
 	if not inventory_remove.is_empty():
 		_add_badge(badges, _badge("inventory", "-%d" % inventory_remove.size(), "bad", "Item removed"))
-	var travel_hooks := _copy_array(deltas.get("travel_hooks_add", []))
+	var travel_hooks := JsonCoerceScript._copy_array(deltas.get("travel_hooks_add", []))
 	for route_id in _single_or_array_strings(deltas.get("unlock_travel_route", deltas.get("unlock_travel_routes", []))):
 		if not travel_hooks.has(route_id):
 			travel_hooks.append(route_id)
 	if not travel_hooks.is_empty():
 		_add_badge(badges, _badge("class_route", "+%d" % travel_hooks.size(), "good", "Route unlocked"))
-	var story_flags := _copy_dict(deltas.get("story_flags_set", {}))
+	var story_flags := JsonCoerceScript._copy_dict(deltas.get("story_flags_set", {}))
 	var single_story_flag := str(deltas.get("set_story_flag", "")).strip_edges()
 	if not single_story_flag.is_empty():
 		story_flags[single_story_flag] = true
@@ -346,7 +348,7 @@ static func _append_effect_badges(badges: Array, effect: Dictionary) -> void:
 		_add_badge(badges, _badge("class_route", "+%d" % int(effect.get("travel_option_bonus", 0)), "good", "Travel options"))
 	if int(effect.get("travel_scouting_level", 0)) > 0:
 		_add_badge(badges, _badge("distance", "scout", "good", "Travel scouting"))
-	var families := _copy_dict(effect.get("families", {}))
+	var families := JsonCoerceScript._copy_dict(effect.get("families", {}))
 	for family_value in families.values():
 		if typeof(family_value) == TYPE_DICTIONARY:
 			_append_family_effect_badges(badges, family_value as Dictionary)
@@ -631,31 +633,8 @@ static func _class_badges() -> Dictionary:
 	return value as Dictionary
 
 
-static func _copy_dict(value: Variant) -> Dictionary:
-	if typeof(value) != TYPE_DICTIONARY:
-		return {}
-	return (value as Dictionary).duplicate(true)
-
-
-static func _copy_array(value: Variant) -> Array:
-	if typeof(value) != TYPE_ARRAY:
-		return []
-	return (value as Array).duplicate(true)
-
-
-static func _string_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry in value:
-		var text := str(entry).strip_edges()
-		if not text.is_empty():
-			result.append(text)
-	return result
-
-
 static func _single_or_array_strings(value: Variant) -> Array:
 	if typeof(value) == TYPE_ARRAY:
-		return _string_array(value)
+		return JsonCoerceScript._string_array(value)
 	var text := str(value).strip_edges()
 	return [] if text.is_empty() else [text]

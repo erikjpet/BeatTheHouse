@@ -1,6 +1,8 @@
 class_name SlotResolver
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 const MathScript := preload("res://scripts/games/slots/slot_rng_math.gd")
 const StateScript := preload("res://scripts/games/slots/slot_machine_state.gd")
 const PinballScript := preload("res://scripts/games/slots/slot_family_pinball.gd")
@@ -36,7 +38,19 @@ func machine_has_feature_entry(machine: Dictionary, definition: Dictionary) -> b
 	return not _feature_entry_for_family(machine, family, definition, false).is_empty()
 
 
-func resolve_spin(machine: Dictionary, action_id: String, selected_bet: Dictionary, rng: RngStream, definition: Dictionary, environment: Dictionary = {}, normalize_machine: bool = true, audit_metrics_mode: bool = false, run_state: RunState = null, item_effects: Dictionary = {}, ui_state: Dictionary = {}, include_presentation_payload: bool = true) -> Dictionary:
+func resolve_spin(options: FunctionOptions.SlotResolveOptions) -> Dictionary:
+	var machine: Dictionary = options.values.get("machine", {})
+	var action_id := str(options.values.get("action_id", ""))
+	var selected_bet: Dictionary = options.values.get("selected_bet", {})
+	var rng: RngStream = options.values.get("rng") as RngStream
+	var definition: Dictionary = options.values.get("definition", {})
+	var environment: Dictionary = options.values.get("environment", {})
+	var normalize_machine := bool(options.values.get("normalize_machine", true))
+	var audit_metrics_mode := bool(options.values.get("audit_metrics_mode", false))
+	var run_state: RunState = options.values.get("run_state") as RunState
+	var item_effects: Dictionary = options.values.get("item_effects", {})
+	var ui_state: Dictionary = options.values.get("ui_state", {})
+	var include_presentation_payload := bool(options.values.get("include_presentation_payload", true))
 	if normalize_machine:
 		machine = StateScript.normalize(machine)
 	var normalized_action := _normalize_action(action_id)
@@ -46,7 +60,7 @@ func resolve_spin(machine: Dictionary, action_id: String, selected_bet: Dictiona
 	var stake := maxi(1, int(selected_bet.get("total_credits", 2)))
 	var bet_id := str(selected_bet.get("id", "bet_2"))
 	var is_cheat := normalized_action == NUDGE_ACTION
-	var had_offer := is_cheat and not _copy_dict(machine.get("last_nudge_offer", {})).is_empty()
+	var had_offer := is_cheat and not JsonCoerceScript._copy_dict(machine.get("last_nudge_offer", {})).is_empty()
 	if StateScript.active_bonus_incomplete(machine) and not had_offer:
 		return _blocked_result(machine, normalized_action, stake, environment, "Finish the active bonus first.")
 	var free_spin := int(machine.get("free_spins", 0)) > 0 and normalized_action == SPIN_ACTION
@@ -57,16 +71,16 @@ func resolve_spin(machine: Dictionary, action_id: String, selected_bet: Dictiona
 	var entry: Dictionary = {}
 	var grid: Array = []
 	var stops: Array = []
-	var previous_grid: Array = [] if audit_metrics_mode or not include_presentation_payload else _copy_array(machine.get("last_grid", []))
+	var previous_grid: Array = [] if audit_metrics_mode or not include_presentation_payload else JsonCoerceScript._copy_array(machine.get("last_grid", []))
 	var nudge_applied := false
 	var nudge_event: Dictionary = {}
 	if had_offer:
-		var offer: Dictionary = _copy_dict(machine.get("last_nudge_offer", {}))
+		var offer: Dictionary = JsonCoerceScript._copy_dict(machine.get("last_nudge_offer", {}))
 		var resolved_nudge: Dictionary = _resolve_reel_shift_nudge_offer(machine, family, offer, selected_bet, definition, ui_state)
-		entry = _copy_dict(resolved_nudge.get("entry", {}))
-		grid = _copy_array(resolved_nudge.get("grid", []))
-		stops = _copy_array(resolved_nudge.get("stops", []))
-		nudge_event = _copy_dict(resolved_nudge.get("tease_event", {}))
+		entry = JsonCoerceScript._copy_dict(resolved_nudge.get("entry", {}))
+		grid = JsonCoerceScript._copy_array(resolved_nudge.get("grid", []))
+		stops = JsonCoerceScript._copy_array(resolved_nudge.get("stops", []))
+		nudge_event = JsonCoerceScript._copy_dict(resolved_nudge.get("tease_event", {}))
 		nudge_applied = true
 	else:
 		entry = _select_entry(machine, family, definition, rng, free_spin, resolved_item_effects)
@@ -87,19 +101,19 @@ func resolve_spin(machine: Dictionary, action_id: String, selected_bet: Dictiona
 		grid = family.force_outcome_symbols(machine, grid, entry, rng, definition)
 		if str(entry.get("classification", "")) == "near_miss":
 			var prepared_nudge: Dictionary = _prepare_near_miss_nudge_target(machine, family, entry, grid, stops, selected_bet, definition)
-			entry = _copy_dict(prepared_nudge.get("entry", entry))
-			grid = _copy_array(prepared_nudge.get("grid", grid))
-			stops = _copy_array(prepared_nudge.get("stops", stops))
+			entry = JsonCoerceScript._copy_dict(prepared_nudge.get("entry", entry))
+			grid = JsonCoerceScript._copy_array(prepared_nudge.get("grid", grid))
+			stops = JsonCoerceScript._copy_array(prepared_nudge.get("stops", stops))
 		if is_cheat and str(entry.get("classification", "")) == "near_miss":
 			var shifted_live: Dictionary = family.apply_nudge_to_grid(machine, grid)
-			grid = _copy_array(shifted_live.get("grid", grid))
-			nudge_event = _copy_dict(shifted_live.get("tease_event", {}))
+			grid = JsonCoerceScript._copy_array(shifted_live.get("grid", grid))
+			nudge_event = JsonCoerceScript._copy_dict(shifted_live.get("tease_event", {}))
 			entry = family.nudge_entry(machine, definition)
 			nudge_applied = true
 	var classification := str(entry.get("classification", "zero_loss"))
 	var side_effects: Dictionary = _derive_grid_side_effects(machine, grid, family_id, stake, entry, definition)
 	var side_grid: Variant = side_effects.get("grid", grid)
-	grid = side_grid as Array if audit_metrics_mode and typeof(side_grid) == TYPE_ARRAY else _copy_array(side_grid)
+	grid = side_grid as Array if audit_metrics_mode and typeof(side_grid) == TYPE_ARRAY else JsonCoerceScript._copy_array(side_grid)
 	var feature_triggered: bool = family.opens_feature(classification)
 	var active_bonus: Dictionary = {}
 	var headline_payout: int = 0 if feature_triggered else _grid_payout_for_family(family, grid, stake, stake_cost, machine, definition, entry)
@@ -108,7 +122,7 @@ func resolve_spin(machine: Dictionary, action_id: String, selected_bet: Dictiona
 	if family_id == "buffalo" and normalized_action == SPIN_ACTION and stake_cost > 0:
 		buffalo.advance_grand_prize(machine, stake_cost, stake, bet_id)
 	if feature_triggered:
-		var preserved_bonus: Dictionary = _copy_dict(entry.get("preserve_active_bonus", {}))
+		var preserved_bonus: Dictionary = JsonCoerceScript._copy_dict(entry.get("preserve_active_bonus", {}))
 		if not preserved_bonus.is_empty():
 			active_bonus = preserved_bonus
 		elif family_id == "pinball":
@@ -214,8 +228,8 @@ func resolve_spin(machine: Dictionary, action_id: String, selected_bet: Dictiona
 		machine["slot_animation_duration_msec"] = int(animation_plan.get("duration_msec", 0))
 		machine["slot_animation_started_msec"] = 0
 		machine["slot_animation_plan"] = animation_plan.duplicate(true)
-		machine["slot_reel_stop_times"] = _copy_array(animation_plan.get("reel_stop_times", []))
-		machine["slot_reel_timeline"] = _copy_array(animation_plan.get("reel_timeline", []))
+		machine["slot_reel_stop_times"] = JsonCoerceScript._copy_array(animation_plan.get("reel_stop_times", []))
+		machine["slot_reel_timeline"] = JsonCoerceScript._copy_array(animation_plan.get("reel_timeline", []))
 		machine["slot_bonus_start_time"] = float(animation_plan.get("bonus_start_time", 0.0))
 	else:
 		# Offscreen autoplay has no surface to animate. Persisting or even building
@@ -228,7 +242,25 @@ func resolve_spin(machine: Dictionary, action_id: String, selected_bet: Dictiona
 		machine["slot_animation_duration_msec"] = 0
 		machine["slot_animation_started_msec"] = 0
 		machine["slot_bonus_start_time"] = 0.0
-	var result: Dictionary = _spin_result(machine, entry, normalized_action, stake, stake_cost, immediate_payout, bankroll_delta, suspicion_delta, environment, animation_plan, feature_triggered, active_bonus, side_effects, free_spin, nudge_applied, cross_effects, include_presentation_payload)
+	var result: Dictionary = _spin_result(FunctionOptions.SlotSpinResultOptions.from({
+		"machine": machine,
+		"entry": entry,
+		"action_id": normalized_action,
+		"stake": stake,
+		"stake_cost": stake_cost,
+		"payout": immediate_payout,
+		"bankroll_delta": bankroll_delta,
+		"suspicion_delta": suspicion_delta,
+		"environment": environment,
+		"animation_plan": animation_plan,
+		"feature_triggered": feature_triggered,
+		"active_bonus": active_bonus,
+		"side_effects": side_effects,
+		"free_spin": free_spin,
+		"nudge_applied": nudge_applied,
+		"cross_effects": cross_effects,
+		"include_presentation_payload": include_presentation_payload,
+	}))
 	return {"machine": StateScript.normalize(machine) if normalize_machine else machine, "result": result}
 
 
@@ -296,7 +328,7 @@ func resolve_bonus_action_owned(machine: Dictionary, action_id: String, rng: Rng
 func _resolve_bonus_action(machine: Dictionary, action_id: String, rng: RngStream, definition: Dictionary, environment: Dictionary, run_state: RunState, item_effects: Dictionary, ui_state: Dictionary, machine_is_owned: bool) -> Dictionary:
 	machine = StateScript.normalize_owned(machine) if machine_is_owned else StateScript.normalize(machine)
 	var normalized_action := _normalize_bonus_action(action_id)
-	var active_before: Dictionary = _copy_dict(machine.get("active_bonus", {}))
+	var active_before: Dictionary = JsonCoerceScript._copy_dict(machine.get("active_bonus", {}))
 	if active_before.is_empty() or not bool(active_before.get("active", false)):
 		return {
 			"machine": machine,
@@ -366,14 +398,14 @@ func _resolve_bonus_action(machine: Dictionary, action_id: String, rng: RngStrea
 		machine["slot_animation_duration_msec"] = int(bonus_plan.get("duration_msec", 0))
 		machine["slot_animation_started_msec"] = 0
 		machine["slot_animation_plan"] = bonus_plan.duplicate(true)
-		machine["slot_reel_stop_times"] = _copy_array(bonus_plan.get("reel_stop_times", []))
-		machine["slot_reel_timeline"] = _copy_array(bonus_plan.get("reel_timeline", []))
+		machine["slot_reel_stop_times"] = JsonCoerceScript._copy_array(bonus_plan.get("reel_stop_times", []))
+		machine["slot_reel_timeline"] = JsonCoerceScript._copy_array(bonus_plan.get("reel_timeline", []))
 		machine["slot_bonus_start_time"] = float(bonus_plan.get("bonus_start_time", 0.0))
-		var bonus_state: Dictionary = _copy_dict(machine.get("bonus_state", {}))
+		var bonus_state: Dictionary = JsonCoerceScript._copy_dict(machine.get("bonus_state", {}))
 		bonus_state["feature_completions"] = maxi(0, int(bonus_state.get("feature_completions", 0))) + 1
 		var bet_id := str(active_before.get("bet_id", "bet_2"))
-		var buckets: Dictionary = _copy_dict(bonus_state.get("per_bet", {}))
-		var bucket: Dictionary = _copy_dict(buckets.get(bet_id, {}))
+		var buckets: Dictionary = JsonCoerceScript._copy_dict(bonus_state.get("per_bet", {}))
+		var bucket: Dictionary = JsonCoerceScript._copy_dict(buckets.get(bet_id, {}))
 		bucket["feature_completion_count"] = maxi(0, int(bucket.get("feature_completion_count", 0))) + 1
 		buckets[bet_id] = bucket
 		bonus_state["per_bet"] = buckets
@@ -443,8 +475,8 @@ func _resolve_bonus_action(machine: Dictionary, action_id: String, rng: RngStrea
 		}
 	result["slot_animation_id"] = str(machine.get("slot_animation_id", ""))
 	result["slot_animation_duration_msec"] = int(machine.get("slot_animation_duration_msec", 0))
-	result["slot_reel_timeline"] = _copy_array(machine.get("slot_reel_timeline", []))
-	result["slot_reel_stop_times"] = _copy_array(machine.get("slot_reel_stop_times", []))
+	result["slot_reel_timeline"] = JsonCoerceScript._copy_array(machine.get("slot_reel_timeline", []))
+	result["slot_reel_stop_times"] = JsonCoerceScript._copy_array(machine.get("slot_reel_stop_times", []))
 	result["slot_luck_payout_bonus"] = luck_payout_bonus
 	result["slot_item_payout_bonus"] = item_payout_bonus
 	result["slot_first_bonus_item_award"] = first_bonus_item_award
@@ -456,12 +488,12 @@ func _resolve_bonus_action(machine: Dictionary, action_id: String, rng: RngStrea
 
 
 func _bonus_completion_award_from_step(step: Dictionary) -> int:
-	var active: Dictionary = _copy_dict(step.get("active_bonus", {}))
+	var active: Dictionary = JsonCoerceScript._copy_dict(step.get("active_bonus", {}))
 	return maxi(maxi(maxi(0, int(active.get("awarded", 0))), int(active.get("feature_total", 0))), int(active.get("pending_award", 0)))
 
 
 func _finalize_bonus_completion_state(machine: Dictionary, active_before: Dictionary, step: Dictionary, award: int) -> Dictionary:
-	var completed_active: Dictionary = _copy_dict(step.get("active_bonus", {}))
+	var completed_active: Dictionary = JsonCoerceScript._copy_dict(step.get("active_bonus", {}))
 	if completed_active.is_empty():
 		completed_active = active_before.duplicate(true)
 	var visual_total := maxi(maxi(maxi(0, award), int(completed_active.get("awarded", 0))), maxi(int(completed_active.get("feature_total", 0)), int(completed_active.get("pending_award", 0))))
@@ -491,7 +523,7 @@ func _finalize_bonus_completion_state(machine: Dictionary, active_before: Dictio
 func complete_active_bonus_for_metrics(machine: Dictionary, rng: RngStream, definition: Dictionary) -> int:
 	var total := 0
 	var guard := 0
-	var metric_active_source: Dictionary = _copy_dict(machine.get("active_bonus", {}))
+	var metric_active_source: Dictionary = JsonCoerceScript._copy_dict(machine.get("active_bonus", {}))
 	var family_id := str(metric_active_source.get("family", machine.get("type_id", "pinball")))
 	var family = _family_hook(family_id)
 	if family_id == "pinball":
@@ -502,16 +534,16 @@ func complete_active_bonus_for_metrics(machine: Dictionary, rng: RngStream, defi
 		machine["active_bonus"] = metric_active
 	while StateScript.active_bonus_incomplete(machine) and guard < 80:
 		var action_id := "slot_bonus_launch"
-		var active: Dictionary = _copy_dict(machine.get("active_bonus", {}))
+		var active: Dictionary = JsonCoerceScript._copy_dict(machine.get("active_bonus", {}))
 		if str(active.get("mode", "")) == "wheel":
 			action_id = "slot_bonus_right"
 		var step: Dictionary = family.step_bonus(machine, action_id, rng, definition)
 		if bool(step.get("complete", false)):
 			total += int(step.get("award", 0))
 			if family_id == "buffalo":
-				var completed_active: Dictionary = _copy_dict(step.get("active_bonus", {}))
+				var completed_active: Dictionary = JsonCoerceScript._copy_dict(step.get("active_bonus", {}))
 				if int(completed_active.get("grand_prize_awarded", step.get("grand_prize_awarded", 0))) > 0:
-					var bet_id := str(completed_active.get("bet_id", _copy_dict(metric_active_source.get("bet_ladder", {})).get("selected_id", "bet_2")))
+					var bet_id := str(completed_active.get("bet_id", JsonCoerceScript._copy_dict(metric_active_source.get("bet_ladder", {})).get("selected_id", "bet_2")))
 					buffalo.reset_grand_prize(machine, maxi(1, int(completed_active.get("stake", 1))), bet_id)
 		guard += 1
 	if StateScript.active_bonus_incomplete(machine):
@@ -541,7 +573,16 @@ func monte_carlo_metrics(source_machine: Dictionary, definition: Dictionary, spi
 	for _spin_index in range(maxi(0, spins)):
 		if StateScript.active_bonus_incomplete(machine):
 			machine["active_bonus"] = {"active": false, "complete": true}
-		var resolved: Dictionary = resolve_spin(machine, SPIN_ACTION, bet, rng, definition, {}, false, true)
+		var resolved: Dictionary = resolve_spin(FunctionOptions.SlotResolveOptions.from({
+			"machine": machine,
+			"action_id": SPIN_ACTION,
+			"selected_bet": bet,
+			"rng": rng,
+			"definition": definition,
+			"environment": {},
+			"normalize_machine": false,
+			"audit_metrics_mode": true,
+		}))
 		var resolved_machine: Variant = resolved.get("machine", {})
 		machine = resolved_machine as Dictionary if typeof(resolved_machine) == TYPE_DICTIONARY else {}
 		var resolved_result: Variant = resolved.get("result", {})
@@ -562,7 +603,7 @@ func monte_carlo_metrics(source_machine: Dictionary, definition: Dictionary, spi
 			near_miss_count += 1
 		if bool(result.get("slot_feature_triggered", false)):
 			feature_count += 1
-			var active_bonus: Dictionary = _copy_dict(machine.get("active_bonus", {}))
+			var active_bonus: Dictionary = JsonCoerceScript._copy_dict(machine.get("active_bonus", {}))
 			var feature_key := "%s:%s:%s:%d" % [str(machine.get("type_id", "")), str(machine.get("format_id", "")), str(active_bonus.get("mode", "")), stake]
 			var feature_award := int(complete_active_bonus_for_metrics(machine, rng, definition))
 			feature_award_totals[feature_key] = int(feature_award_totals.get(feature_key, 0)) + feature_award
@@ -609,10 +650,10 @@ func _grid_payout_for_family(family, grid: Array, stake: int, stake_cost: int, m
 
 func _select_entry(machine: Dictionary, family, definition: Dictionary, rng: RngStream, free_spin: bool, item_effects: Dictionary = {}) -> Dictionary:
 	if str(machine.get("type_id", "")) == "buffalo":
-		var bet_id := str(_copy_dict(machine.get("bet_ladder", {})).get("selected_id", "bet_2"))
-		var bonus_state: Dictionary = _copy_dict(machine.get("bonus_state", {}))
-		var buckets: Dictionary = _copy_dict(bonus_state.get("per_bet", {}))
-		var bucket: Dictionary = _copy_dict(buckets.get(bet_id, {}))
+		var bet_id := str(JsonCoerceScript._copy_dict(machine.get("bet_ladder", {})).get("selected_id", "bet_2"))
+		var bonus_state: Dictionary = JsonCoerceScript._copy_dict(machine.get("bonus_state", {}))
+		var buckets: Dictionary = JsonCoerceScript._copy_dict(bonus_state.get("per_bet", {}))
+		var bucket: Dictionary = JsonCoerceScript._copy_dict(buckets.get(bet_id, {}))
 		if bool(bucket.get("must_hit_ready", false)):
 			bucket["must_hit_ready"] = false
 			bucket["must_hit_meter"] = 100
@@ -639,7 +680,7 @@ func _slot_item_adjusted_outcome_table(machine: Dictionary, family, definition: 
 		return table
 	var result: Array = []
 	for entry_value in table:
-		var entry: Dictionary = _copy_dict(entry_value)
+		var entry: Dictionary = JsonCoerceScript._copy_dict(entry_value)
 		var base_weight := maxi(0, int(entry.get("weight", 0)))
 		var classification := str(entry.get("classification", ""))
 		if base_weight <= 0:
@@ -658,7 +699,7 @@ func _slot_item_adjusted_outcome_table(machine: Dictionary, family, definition: 
 func _apply_cumquat_sandwich_entry(machine: Dictionary, family, definition: Dictionary, entry: Dictionary, action_id: String, stake_cost: int, free_spin: bool) -> Dictionary:
 	if action_id != SPIN_ACTION or stake_cost <= 0 or free_spin:
 		return entry
-	var item_state: Dictionary = _copy_dict(machine.get("slot_item_state", {}))
+	var item_state: Dictionary = JsonCoerceScript._copy_dict(machine.get("slot_item_state", {}))
 	if not bool(item_state.get("cumquat_force_bonus_pending", false)):
 		return entry
 	var forced_entry: Dictionary = _feature_entry_for_family(machine, family, definition, free_spin)
@@ -693,7 +734,7 @@ func _feature_entry_for_family(machine: Dictionary, family, definition: Dictiona
 func _apply_lucky_reel_grease_entry(machine: Dictionary, family, definition: Dictionary, rng: RngStream, entry: Dictionary, action_id: String, stake_cost: int) -> Dictionary:
 	if action_id != SPIN_ACTION or stake_cost <= 0:
 		return entry
-	var item_state: Dictionary = _copy_dict(machine.get("slot_item_state", {}))
+	var item_state: Dictionary = JsonCoerceScript._copy_dict(machine.get("slot_item_state", {}))
 	var remaining := maxi(0, int(item_state.get("lucky_reel_grease_spins", 0)))
 	if remaining <= 0:
 		item_state["lucky_reel_grease_last_tease"] = false
@@ -729,7 +770,7 @@ func _apply_lucky_reel_grease_entry(machine: Dictionary, family, definition: Dic
 
 
 func _apply_slot_nudge_item_heat_state(machine: Dictionary, item_effects: Dictionary, nudge_event: Dictionary) -> void:
-	var item_state: Dictionary = _copy_dict(machine.get("slot_item_state", {}))
+	var item_state: Dictionary = JsonCoerceScript._copy_dict(machine.get("slot_item_state", {}))
 	var cold_charges := maxi(0, int(item_state.get("cold_quarters_charges", 0)))
 	if cold_charges > 0:
 		var reduction := maxi(0, int(item_effects.get("slot_cold_quarter_heat_reduction", 0)))
@@ -801,7 +842,7 @@ func _coin_chain_offer(machine: Dictionary, family, entry: Dictionary, grid: Arr
 	var first_ready := int(round(last_stop * 1000.0)) + NUDGE_CHAIN_FIRST_READY_PADDING_MSEC
 	var perfect_bonus := maxi(0, int(item_effects.get("slot_nudge_perfect_msec_bonus", 0)))
 	var good_bonus := maxi(0, int(item_effects.get("slot_nudge_close_msec_bonus", 0)))
-	var item_state: Dictionary = _copy_dict(machine.get("slot_item_state", {}))
+	var item_state: Dictionary = JsonCoerceScript._copy_dict(machine.get("slot_item_state", {}))
 	var split_note_armed := bool(item_state.get("split_reel_note_armed", false))
 	if split_note_armed:
 		perfect_bonus += maxi(0, int(item_effects.get("slot_split_reel_note_perfect_msec_bonus", 55)))
@@ -871,9 +912,9 @@ func _prepare_near_miss_nudge_target(machine: Dictionary, family, entry: Diction
 	var context: Dictionary = _nudge_context_from_entry(machine, prepared_entry)
 	if context.is_empty():
 		return {"entry": prepared_entry, "grid": prepared_grid, "stops": prepared_stops}
-	var missing_cells: Array = _copy_array(context.get("missing_cells", []))
+	var missing_cells: Array = JsonCoerceScript._copy_array(context.get("missing_cells", []))
 	if missing_cells.is_empty():
-		missing_cells = _copy_array(context.get("skill_line_cells", []))
+		missing_cells = JsonCoerceScript._copy_array(context.get("skill_line_cells", []))
 	var symbol := str(context.get("symbol", ""))
 	if symbol.is_empty():
 		return {"entry": prepared_entry, "grid": prepared_grid, "stops": prepared_stops}
@@ -882,7 +923,7 @@ func _prepare_near_miss_nudge_target(machine: Dictionary, family, entry: Diction
 	var strips_value: Variant = machine.get("reel_strips", [])
 	var strips: Array = strips_value as Array if typeof(strips_value) == TYPE_ARRAY else []
 	for cell_value in missing_cells:
-		var cell: Dictionary = _copy_dict(cell_value)
+		var cell: Dictionary = JsonCoerceScript._copy_dict(cell_value)
 		var reel_index := clampi(int(cell.get("reel", 0)), 0, reel_count - 1)
 		var row_index := clampi(int(cell.get("row", 0)), 0, row_count - 1)
 		var strip: Array = _reel_strip(strips, reel_index)
@@ -920,12 +961,12 @@ func _prepare_near_miss_nudge_target(machine: Dictionary, family, entry: Diction
 
 
 func _nudge_context_from_entry(machine: Dictionary, entry: Dictionary) -> Dictionary:
-	var placement: Dictionary = _copy_dict(entry.get("forced_placement", {}))
+	var placement: Dictionary = JsonCoerceScript._copy_dict(entry.get("forced_placement", {}))
 	var symbol := str(placement.get("symbol", ""))
 	if symbol.is_empty():
 		symbol = "GOLD_TOKEN" if str(machine.get("type_id", "")) == "buffalo" else "PINBALL"
-	var present_cells: Array = _copy_array(placement.get("cells", []))
-	var skill_line_cells: Array = _copy_array(placement.get("skill_line_cells", []))
+	var present_cells: Array = JsonCoerceScript._copy_array(placement.get("cells", []))
+	var skill_line_cells: Array = JsonCoerceScript._copy_array(placement.get("skill_line_cells", []))
 	if skill_line_cells.is_empty() and not present_cells.is_empty():
 		skill_line_cells = _infer_nudge_skill_line(machine, placement, present_cells)
 	if skill_line_cells.is_empty():
@@ -933,7 +974,7 @@ func _nudge_context_from_entry(machine: Dictionary, entry: Dictionary) -> Dictio
 	var present_lookup: Dictionary = _cell_lookup_for_nudge(present_cells)
 	var missing_cells: Array = []
 	for cell_value in skill_line_cells:
-		var cell: Dictionary = _copy_dict(cell_value)
+		var cell: Dictionary = JsonCoerceScript._copy_dict(cell_value)
 		if not bool(present_lookup.get(_nudge_cell_key(int(cell.get("reel", -1)), int(cell.get("row", -1))), false)):
 			missing_cells.append(cell)
 	return {
@@ -948,7 +989,7 @@ func _infer_nudge_skill_line(machine: Dictionary, placement: Dictionary, present
 	var reel_count := maxi(1, int(machine.get("reel_count", 3)))
 	var row_count := maxi(1, int(machine.get("row_count", 1)))
 	var sorted_cells: Array = _cells_sorted_by_reel(present_cells)
-	var first_cell: Dictionary = _copy_dict(sorted_cells[0]) if not sorted_cells.is_empty() else {}
+	var first_cell: Dictionary = JsonCoerceScript._copy_dict(sorted_cells[0]) if not sorted_cells.is_empty() else {}
 	var start_reel := clampi(int(first_cell.get("reel", 0)), 0, reel_count - 1)
 	var line_index := int(placement.get("line_index", int(first_cell.get("row", row_count / 2))))
 	var target_count := mini(3, reel_count - start_reel)
@@ -961,8 +1002,8 @@ func _infer_nudge_skill_line(machine: Dictionary, placement: Dictionary, present
 func _preserve_nudge_context_cells(target_grid: Array, source_grid: Array, context: Dictionary, target_reel: int, target_row: int) -> void:
 	var symbol := str(context.get("symbol", ""))
 	var present_lookup: Dictionary = {}
-	for cell_value in _copy_array(context.get("present_cells", [])):
-		var cell: Dictionary = _copy_dict(cell_value)
+	for cell_value in JsonCoerceScript._copy_array(context.get("present_cells", [])):
+		var cell: Dictionary = JsonCoerceScript._copy_dict(cell_value)
 		var reel_index := int(cell.get("reel", -1))
 		var row_index := int(cell.get("row", -1))
 		if reel_index == target_reel and row_index == target_row:
@@ -971,8 +1012,8 @@ func _preserve_nudge_context_cells(target_grid: Array, source_grid: Array, conte
 		MathScript.set_cell(target_grid, reel_index, row_index, _cell_symbol(source_grid, reel_index, row_index))
 	if symbol.is_empty():
 		return
-	for cell_value in _copy_array(context.get("skill_line_cells", [])):
-		var cell: Dictionary = _copy_dict(cell_value)
+	for cell_value in JsonCoerceScript._copy_array(context.get("skill_line_cells", [])):
+		var cell: Dictionary = JsonCoerceScript._copy_dict(cell_value)
 		var reel_index := int(cell.get("reel", -1))
 		var row_index := int(cell.get("row", -1))
 		if reel_index == target_reel and row_index == target_row:
@@ -987,15 +1028,15 @@ func _scrub_unprotected_nudge_symbols(grid: Array, machine: Dictionary, context:
 	if symbol.is_empty():
 		return
 	var protected: Dictionary = {}
-	for cell_value in _copy_array(context.get("skill_line_cells", [])):
-		var cell: Dictionary = _copy_dict(cell_value)
+	for cell_value in JsonCoerceScript._copy_array(context.get("skill_line_cells", [])):
+		var cell: Dictionary = JsonCoerceScript._copy_dict(cell_value)
 		var reel_index := int(cell.get("reel", -1))
 		var row_index := int(cell.get("row", -1))
 		if reel_index == target_reel and row_index == target_row:
 			continue
 		protected[_nudge_cell_key(reel_index, row_index)] = true
-	for cell_value in _copy_array(context.get("present_cells", [])):
-		var cell: Dictionary = _copy_dict(cell_value)
+	for cell_value in JsonCoerceScript._copy_array(context.get("present_cells", [])):
+		var cell: Dictionary = JsonCoerceScript._copy_dict(cell_value)
 		protected[_nudge_cell_key(int(cell.get("reel", -1)), int(cell.get("row", -1)))] = true
 	for reel_index in range(grid.size()):
 		if typeof(grid[reel_index]) != TYPE_ARRAY:
@@ -1020,7 +1061,7 @@ func _fallback_nudge_symbol(machine: Dictionary, reel_index: int, row_index: int
 
 
 func _nudge_target_payload(machine: Dictionary, family, entry: Dictionary, grid: Array, stops: Array, selected_bet: Dictionary, definition: Dictionary) -> Dictionary:
-	var target: Dictionary = _copy_dict(entry.get("nudge_target", {}))
+	var target: Dictionary = JsonCoerceScript._copy_dict(entry.get("nudge_target", {}))
 	if target.is_empty():
 		return {}
 	var reel_count := maxi(1, int(machine.get("reel_count", 3)))
@@ -1062,7 +1103,7 @@ func _nudge_target_payload(machine: Dictionary, family, entry: Dictionary, grid:
 
 func _nudge_candidate_payload(evaluation: Dictionary, grid: Array, stops: Array, reel_index: int, old_stop: int, new_stop: int, strip_size: int) -> Dictionary:
 	return {
-		"entry": _copy_dict(evaluation.get("entry", {})),
+		"entry": JsonCoerceScript._copy_dict(evaluation.get("entry", {})),
 		"grid": MathScript.clone_grid(grid),
 		"stops": stops.duplicate(true),
 		"classification": str(evaluation.get("classification", "zero_loss")),
@@ -1076,19 +1117,19 @@ func _nudge_candidate_payload(evaluation: Dictionary, grid: Array, stops: Array,
 
 
 func _resolve_reel_shift_nudge_offer(machine: Dictionary, family, offer: Dictionary, selected_bet: Dictionary, definition: Dictionary, ui_state: Dictionary) -> Dictionary:
-	var coins: Array = _copy_array(offer.get("coins", []))
+	var coins: Array = JsonCoerceScript._copy_array(offer.get("coins", []))
 	var active_index := clampi(int(offer.get("active_index", 0)), 0, maxi(0, coins.size() - 1))
-	var active_coin: Dictionary = _copy_dict(coins[active_index]) if active_index < coins.size() else {}
+	var active_coin: Dictionary = JsonCoerceScript._copy_dict(coins[active_index]) if active_index < coins.size() else {}
 	var skill: Dictionary = _nudge_chain_skill_result(offer, active_coin, ui_state)
 	var grade := str(skill.get("grade", "blown"))
-	var original_grid: Array = MathScript.clone_grid(_copy_array(offer.get("grid", machine.get("last_grid", []))))
-	var original_stops: Array = _normalized_stops(_copy_array(offer.get("stops", machine.get("reel_stops", []))), maxi(1, int(machine.get("reel_count", 3))))
-	var target: Dictionary = _copy_dict(offer.get("nudge_target", {}))
+	var original_grid: Array = MathScript.clone_grid(JsonCoerceScript._copy_array(offer.get("grid", machine.get("last_grid", []))))
+	var original_stops: Array = _normalized_stops(JsonCoerceScript._copy_array(offer.get("stops", machine.get("reel_stops", []))), maxi(1, int(machine.get("reel_count", 3))))
+	var target: Dictionary = JsonCoerceScript._copy_dict(offer.get("nudge_target", {}))
 	var candidate: Dictionary = {}
 	if grade == "perfect":
-		candidate = _copy_dict(target.get("perfect", {}))
+		candidate = JsonCoerceScript._copy_dict(target.get("perfect", {}))
 	elif grade == "good":
-		candidate = _copy_dict(target.get("good", {}))
+		candidate = JsonCoerceScript._copy_dict(target.get("good", {}))
 	if candidate.is_empty():
 		candidate = _nudge_candidate_payload(
 			_evaluate_nudge_grid(machine, family, original_grid, selected_bet, definition),
@@ -1099,7 +1140,7 @@ func _resolve_reel_shift_nudge_offer(machine: Dictionary, family, offer: Diction
 			int(target.get("current_stop", 0)),
 			maxi(1, int(target.get("strip_size", 1)))
 		)
-	var entry: Dictionary = _copy_dict(candidate.get("entry", {}))
+	var entry: Dictionary = JsonCoerceScript._copy_dict(candidate.get("entry", {}))
 	if entry.is_empty():
 		entry = _entry_for_classification(machine, family, definition, str(candidate.get("classification", offer.get("classification", "near_miss"))))
 	var event: Dictionary = {
@@ -1124,8 +1165,8 @@ func _resolve_reel_shift_nudge_offer(machine: Dictionary, family, offer: Diction
 	}
 	return {
 		"entry": entry,
-		"grid": _copy_array(candidate.get("grid", original_grid)),
-		"stops": _copy_array(candidate.get("stops", original_stops)),
+		"grid": JsonCoerceScript._copy_array(candidate.get("grid", original_grid)),
+		"stops": JsonCoerceScript._copy_array(candidate.get("stops", original_stops)),
 		"tease_event": event,
 	}
 
@@ -1167,8 +1208,8 @@ func _feature_classification_for_grid(machine: Dictionary, family_id: String, gr
 	var gold_count := MathScript.count_symbol(grid, "GOLD_TOKEN")
 	if gold_count <= 0:
 		return ""
-	var config: Dictionary = _copy_dict(definition.get("slot_buffalo_config", {}))
-	var hold_config: Dictionary = _copy_dict(config.get("hold_and_spin", {}))
+	var config: Dictionary = JsonCoerceScript._copy_dict(definition.get("slot_buffalo_config", {}))
+	var hold_config: Dictionary = JsonCoerceScript._copy_dict(config.get("hold_and_spin", {}))
 	var hold_trigger := clampi(int(hold_config.get("lock_trigger_count", 8)), 3, maxi(3, int(machine.get("reel_count", 3)) * int(machine.get("row_count", 1))))
 	if str(machine.get("format_id", "")) != "classic_3_reel" and gold_count >= hold_trigger:
 		return "hold_and_spin"
@@ -1231,7 +1272,7 @@ func _reel_strip(strips: Array, reel_index: int) -> Array:
 func _cell_lookup_for_nudge(cells: Array) -> Dictionary:
 	var result: Dictionary = {}
 	for cell_value in cells:
-		var cell: Dictionary = _copy_dict(cell_value)
+		var cell: Dictionary = JsonCoerceScript._copy_dict(cell_value)
 		result[_nudge_cell_key(int(cell.get("reel", -1)), int(cell.get("row", -1)))] = true
 	return result
 
@@ -1255,7 +1296,7 @@ func _nudge_chain_skill_result(offer: Dictionary, coin: Dictionary, ui_state: Di
 	var good_width := maxi(perfect_width, int(offer.get("skill_good_msec", offer.get("skill_close_msec", NUDGE_CHAIN_GOOD_MSEC))))
 	if input_msec < 0:
 		input_msec = ready_msec + cycle + good_width + 999
-	var published_window: Dictionary = _copy_dict(offer.get("skill_window_msec", {}))
+	var published_window: Dictionary = JsonCoerceScript._copy_dict(offer.get("skill_window_msec", {}))
 	if not published_window.is_empty():
 		var window_start := int(published_window.get("start", ready_msec))
 		var window_end := int(published_window.get("end", ready_msec + cycle))
@@ -1294,9 +1335,9 @@ func _nudge_chain_input_msec(ui_state: Dictionary) -> int:
 		return int(ui_state.get("slot_nudge_chain_input_msec", -1))
 	if int(ui_state.get("slot_tease_input_msec", -1)) >= 0:
 		return int(ui_state.get("slot_tease_input_msec", -1))
-	var runtime: Dictionary = _copy_dict(ui_state.get("surface_runtime_status", {}))
-	var animations: Dictionary = _copy_dict(runtime.get("surface_animations", {}))
-	var chain: Dictionary = _copy_dict(animations.get("slot_nudge_chain", {}))
+	var runtime: Dictionary = JsonCoerceScript._copy_dict(ui_state.get("surface_runtime_status", {}))
+	var animations: Dictionary = JsonCoerceScript._copy_dict(runtime.get("surface_animations", {}))
+	var chain: Dictionary = JsonCoerceScript._copy_dict(animations.get("slot_nudge_chain", {}))
 	if not chain.is_empty():
 		return maxi(0, int(round(float(chain.get("elapsed", 0.0)) * 1000.0)))
 	return -1
@@ -1316,16 +1357,16 @@ func _gold_tease_profile(machine: Dictionary, classification: String, win_attrib
 		return {}
 	if str(win_attribution.get("symbol", "")) != "GOLD_TOKEN":
 		return {}
-	var cells: Array = _cells_sorted_by_reel(_copy_array(win_attribution.get("cells", [])))
+	var cells: Array = _cells_sorted_by_reel(JsonCoerceScript._copy_array(win_attribution.get("cells", [])))
 	if cells.is_empty():
 		return {}
 	var reel_count := maxi(1, int(machine.get("reel_count", 3)))
 	var coin_count := mini(3, cells.size())
-	var first_cell: Dictionary = _copy_dict(cells[0])
+	var first_cell: Dictionary = JsonCoerceScript._copy_dict(cells[0])
 	var first_reel := clampi(int(first_cell.get("reel", 0)), 0, reel_count - 1)
 	var second_reel := mini(reel_count - 1, first_reel + 1)
 	if cells.size() > 1:
-		var second_cell: Dictionary = _copy_dict(cells[1])
+		var second_cell: Dictionary = JsonCoerceScript._copy_dict(cells[1])
 		second_reel = clampi(int(second_cell.get("reel", second_reel)), 0, reel_count - 1)
 	var start_tease := clampi(first_reel + 1, 0, reel_count - 1)
 	if coin_count >= 2:
@@ -1380,10 +1421,10 @@ func _rough_stop_times_for_machine(machine: Dictionary) -> Array:
 
 
 func _cells_sorted_by_reel(cells: Array) -> Array:
-	var result: Array = _copy_array(cells)
+	var result: Array = JsonCoerceScript._copy_array(cells)
 	result.sort_custom(func(a: Variant, b: Variant) -> bool:
-		var cell_a: Dictionary = _copy_dict(a)
-		var cell_b: Dictionary = _copy_dict(b)
+		var cell_a: Dictionary = JsonCoerceScript._copy_dict(a)
+		var cell_b: Dictionary = JsonCoerceScript._copy_dict(b)
 		var reel_a := int(cell_a.get("reel", 0))
 		var reel_b := int(cell_b.get("reel", 0))
 		if reel_a == reel_b:
@@ -1411,7 +1452,7 @@ func _animation_plan(machine: Dictionary, classification: String, active_bonus: 
 	var timeline: Array = []
 	var tease_reel := reel_count - 1
 	var gold_tease: Dictionary = _gold_tease_profile(machine, classification, win_attribution, base, step)
-	var gold_tease_reels: Array = _copy_array(gold_tease.get("tease_reels", []))
+	var gold_tease_reels: Array = JsonCoerceScript._copy_array(gold_tease.get("tease_reels", []))
 	var gold_tease_lookup: Dictionary = {}
 	for reel_value in gold_tease_reels:
 		gold_tease_lookup[int(reel_value)] = true
@@ -1435,7 +1476,7 @@ func _animation_plan(machine: Dictionary, classification: String, active_bonus: 
 			"tease": tease,
 			"tease_symbol": str(gold_tease.get("symbol", "")),
 			"tease_level": int(gold_tease.get("coin_count", 0)),
-			"tease_window": _copy_dict(gold_tease.get("skill_window_msec", {})),
+			"tease_window": JsonCoerceScript._copy_dict(gold_tease.get("skill_window_msec", {})),
 			"phase_order": ["spin_up", "spin", "tease_slow_roll" if tease else "decel", "settle"],
 		})
 	var last_stop := float(stop_times[stop_times.size() - 1]) if not stop_times.is_empty() else base
@@ -1464,7 +1505,7 @@ func _animation_plan(machine: Dictionary, classification: String, active_bonus: 
 		"tease_coin_count": int(gold_tease.get("coin_count", 0)),
 		"tease_first_coin_reel": int(gold_tease.get("first_coin_reel", -1)),
 		"tease_second_coin_reel": int(gold_tease.get("second_coin_reel", -1)),
-		"tease_skill_window_msec": _copy_dict(gold_tease.get("skill_window_msec", {})),
+		"tease_skill_window_msec": JsonCoerceScript._copy_dict(gold_tease.get("skill_window_msec", {})),
 		"tease_text": str(win_attribution.get("reason", "")),
 		"celebration_tier": tier,
 		"celebration_start_msec": int(round(celebration_start * 1000.0)),
@@ -1499,7 +1540,7 @@ func _bonus_completion_animation_plan(machine: Dictionary, win_attribution: Dict
 
 
 func _bonus_step_uses_reel_animation(family_id: String, active_before: Dictionary, step: Dictionary) -> bool:
-	if family_id != "buffalo" or _copy_array(step.get("grid", [])).is_empty():
+	if family_id != "buffalo" or JsonCoerceScript._copy_array(step.get("grid", [])).is_empty():
 		return false
 	var mode := str(active_before.get("mode", ""))
 	return mode == "free_games" or mode == "hold_and_spin"
@@ -1508,14 +1549,14 @@ func _bonus_step_uses_reel_animation(family_id: String, active_before: Dictionar
 func _bonus_step_animation_plan(machine: Dictionary, active_before: Dictionary, step: Dictionary, win_attribution: Dictionary, completing: bool) -> Dictionary:
 	var classification := str(step.get("classification", "bonus_step"))
 	var plan: Dictionary = _animation_plan(machine, classification, {}, win_attribution)
-	var step_active: Dictionary = _copy_dict(step.get("active_bonus", {}))
+	var step_active: Dictionary = JsonCoerceScript._copy_dict(step.get("active_bonus", {}))
 	var step_index := maxi(1, int(step_active.get("step_index", int(active_before.get("step_index", 0)) + 1)))
 	var id_prefix := "bonus" if completing else "bonus-step"
 	plan["id"] = "%s:%s:%d:%d:%s" % [id_prefix, str(machine.get("machine_key", "")), int(machine.get("spin_count", 0)), step_index, classification]
 	plan["feature_duration_msec"] = 0
 	if completing:
 		var spin_duration := maxi(900, int(plan.get("duration_msec", 0)))
-		var reveal_count := _copy_array(step_active.get("coin_reveals", [])).size()
+		var reveal_count := JsonCoerceScript._copy_array(step_active.get("coin_reveals", [])).size()
 		var collect_duration := 900 if int(step.get("coin_collect_total", step_active.get("coin_collect_total", 0))) > 0 else 450
 		if reveal_count > 0:
 			collect_duration = maxi(collect_duration, 520 + reveal_count * 170)
@@ -1560,19 +1601,19 @@ func _apply_animation_plan_to_machine(machine: Dictionary, plan: Dictionary) -> 
 	machine["slot_animation_duration_msec"] = int(plan.get("duration_msec", 0))
 	machine["slot_animation_started_msec"] = 0
 	machine["slot_animation_plan"] = plan.duplicate(true)
-	machine["slot_reel_stop_times"] = _copy_array(plan.get("reel_stop_times", []))
-	machine["slot_reel_timeline"] = _copy_array(plan.get("reel_timeline", []))
+	machine["slot_reel_stop_times"] = JsonCoerceScript._copy_array(plan.get("reel_stop_times", []))
+	machine["slot_reel_timeline"] = JsonCoerceScript._copy_array(plan.get("reel_timeline", []))
 	machine["slot_bonus_start_time"] = float(plan.get("bonus_start_time", 0.0))
 
 
 func _apply_bonus_step_display(machine: Dictionary, family_id: String, active_before: Dictionary, step: Dictionary) -> void:
-	var grid: Array = _copy_array(step.get("grid", []))
+	var grid: Array = JsonCoerceScript._copy_array(step.get("grid", []))
 	if grid.is_empty():
 		return
-	var previous_grid: Array = _copy_array(machine.get("last_grid", []))
+	var previous_grid: Array = JsonCoerceScript._copy_array(machine.get("last_grid", []))
 	machine["last_previous_grid"] = previous_grid
 	machine["last_grid"] = grid
-	var stops: Array = _copy_array(step.get("reel_stops", []))
+	var stops: Array = JsonCoerceScript._copy_array(step.get("reel_stops", []))
 	if not stops.is_empty():
 		machine["reel_stops"] = stops.duplicate(true)
 		machine["last_reels"] = stops.duplicate(true)
@@ -1583,7 +1624,7 @@ func _apply_bonus_step_display(machine: Dictionary, family_id: String, active_be
 	var entry: Dictionary = {
 		"id": str(step.get("id", classification)),
 		"classification": classification,
-		"forced_placement": _copy_dict(step.get("forced_placement", {})),
+		"forced_placement": JsonCoerceScript._copy_dict(step.get("forced_placement", {})),
 	}
 	var attribution: Dictionary = _win_attribution(machine, grid, family_id, classification, int(step.get("spin_award", 0)), maxi(1, int(active_before.get("stake", 1))), 0, false, active_before, {}, entry)
 	_apply_win_attribution(machine, attribution)
@@ -1595,7 +1636,7 @@ func _slot_first_bonus_item_award(machine: Dictionary, award: int, item_effects:
 	var percent := maxi(0, int(item_effects.get("slot_first_bonus_bonus_percent", 0)))
 	if percent <= 0 or award <= 0:
 		return 0
-	var bonus_state: Dictionary = _copy_dict(machine.get("bonus_state", {}))
+	var bonus_state: Dictionary = JsonCoerceScript._copy_dict(machine.get("bonus_state", {}))
 	if bool(bonus_state.get("neon_players_charm_used", false)):
 		return 0
 	var cap := maxi(1, int(item_effects.get("slot_first_bonus_bonus_cap", 40)))
@@ -1686,7 +1727,24 @@ func _cheat_action_def(definition: Dictionary, action_id: String) -> Dictionary:
 	return {}
 
 
-func _spin_result(machine: Dictionary, entry: Dictionary, action_id: String, stake: int, stake_cost: int, payout: int, bankroll_delta: int, suspicion_delta: int, environment: Dictionary, animation_plan: Dictionary, feature_triggered: bool, active_bonus: Dictionary, side_effects: Dictionary, free_spin: bool, nudge_applied: bool, cross_effects: Dictionary = {}, include_presentation_payload: bool = true) -> Dictionary:
+func _spin_result(options: FunctionOptions.SlotSpinResultOptions) -> Dictionary:
+	var machine: Dictionary = options.values.get("machine", {})
+	var entry: Dictionary = options.values.get("entry", {})
+	var action_id := str(options.values.get("action_id", ""))
+	var stake := int(options.values.get("stake", 0))
+	var stake_cost := int(options.values.get("stake_cost", 0))
+	var payout := int(options.values.get("payout", 0))
+	var bankroll_delta := int(options.values.get("bankroll_delta", 0))
+	var suspicion_delta := int(options.values.get("suspicion_delta", 0))
+	var environment: Dictionary = options.values.get("environment", {})
+	var animation_plan: Dictionary = options.values.get("animation_plan", {})
+	var feature_triggered := bool(options.values.get("feature_triggered", false))
+	var active_bonus: Dictionary = options.values.get("active_bonus", {})
+	var side_effects: Dictionary = options.values.get("side_effects", {})
+	var free_spin := bool(options.values.get("free_spin", false))
+	var nudge_applied := bool(options.values.get("nudge_applied", false))
+	var cross_effects: Dictionary = options.values.get("cross_effects", {})
+	var include_presentation_payload := bool(options.values.get("include_presentation_payload", true))
 	var classification := str(machine.get("last_classification", "zero_loss"))
 	var nudge_skill_outcome := _last_nudge_skill_outcome(machine) if action_id == NUDGE_ACTION else ""
 	if action_id == NUDGE_ACTION and nudge_skill_outcome.is_empty():
@@ -1776,11 +1834,11 @@ func _spin_result(machine: Dictionary, entry: Dictionary, action_id: String, sta
 	result["slot_bonus_start_time"] = float(animation_plan.get("bonus_start_time", 0.0))
 	if include_presentation_payload:
 		result["slot_active_bonus"] = active_bonus.duplicate(true)
-		result["slot_grid"] = _copy_array(machine.get("last_grid", []))
-		result["slot_reel_stops"] = _copy_array(machine.get("reel_stops", []))
+		result["slot_grid"] = JsonCoerceScript._copy_array(machine.get("last_grid", []))
+		result["slot_reel_stops"] = JsonCoerceScript._copy_array(machine.get("reel_stops", []))
 		result["slot_animation_plan"] = animation_plan.duplicate(true)
-		result["slot_reel_stop_times"] = _copy_array(animation_plan.get("reel_stop_times", []))
-		result["slot_reel_timeline"] = _copy_array(animation_plan.get("reel_timeline", []))
+		result["slot_reel_stop_times"] = JsonCoerceScript._copy_array(animation_plan.get("reel_stop_times", []))
+		result["slot_reel_timeline"] = JsonCoerceScript._copy_array(animation_plan.get("reel_timeline", []))
 	result["slot_gold_conversion"] = bool(side_effects.get("conversion", false))
 	result["slot_conversion_award"] = int(side_effects.get("conversion_award", 0))
 	result["slot_scatter_count"] = int(side_effects.get("gold_token_count", side_effects.get("pinball_count", 0)))
@@ -1820,8 +1878,8 @@ func _message_for_spin(classification: String, payout: int, stake_cost: int, fea
 
 
 func _last_nudge_skill_outcome(machine: Dictionary) -> String:
-	for event_value in _copy_array(machine.get("last_tease_events", [])):
-		var event: Dictionary = _copy_dict(event_value)
+	for event_value in JsonCoerceScript._copy_array(machine.get("last_tease_events", [])):
+		var event: Dictionary = JsonCoerceScript._copy_dict(event_value)
 		if str(event.get("type", "")) == "nudge_shift" or str(event.get("type", "")) == "nudge_coin_chain":
 			return str(event.get("skill_outcome", "legacy"))
 	return ""
@@ -1845,7 +1903,7 @@ func _win_attribution(machine: Dictionary, grid: Array, family_id: String, class
 	var row_count := maxi(1, int(machine.get("row_count", 1)))
 	var center_row := clampi(row_count / 2, 0, row_count - 1)
 	var trigger_symbol := "GOLD_TOKEN" if family_id == "buffalo" else "PINBALL"
-	var forced_placement: Dictionary = _copy_dict(entry.get("forced_placement", {}))
+	var forced_placement: Dictionary = JsonCoerceScript._copy_dict(entry.get("forced_placement", {}))
 	var result: Dictionary = {
 		"cells": [],
 		"symbol": "",
@@ -1881,7 +1939,7 @@ func _win_attribution(machine: Dictionary, grid: Array, family_id: String, class
 		return result
 	if classification == "true_win" or classification == "ldw":
 		var line: Dictionary = _line_attribution(grid, family_id, reel_count, center_row, forced_placement)
-		result["cells"] = _copy_array(line.get("cells", []))
+		result["cells"] = JsonCoerceScript._copy_array(line.get("cells", []))
 		result["symbol"] = str(line.get("symbol", ""))
 		result["count"] = int(line.get("count", 0))
 		result["kind"] = str(line.get("kind", "ways" if family_id == "buffalo" and reel_count > 3 else "line"))
@@ -1889,7 +1947,7 @@ func _win_attribution(machine: Dictionary, grid: Array, family_id: String, class
 		result["multiplier"] = maxi(1, int(line.get("multiplier", 1)))
 		var count_label := "%dx %s" % [int(result.get("count", 0)), str(result.get("symbol", ""))]
 		if result["kind"] == "ways":
-			count_label = "%d %s, %d ways" % [int(result.get("count", 0)), str(result.get("symbol", "")), _ways_hint_for_cells(grid, str(result.get("symbol", "")), _copy_array(result.get("cells", [])))]
+			count_label = "%d %s, %d ways" % [int(result.get("count", 0)), str(result.get("symbol", "")), _ways_hint_for_cells(grid, str(result.get("symbol", "")), JsonCoerceScript._copy_array(result.get("cells", [])))]
 		result["reason"] = "%s on line %d" % [count_label, int(result.get("line_index", -1)) + 1] if result["kind"] == "line" else count_label
 		if classification == "ldw":
 			result["reason"] = "%s (small return)" % str(result.get("reason", ""))
@@ -1925,12 +1983,12 @@ func _bonus_win_attribution(active_bonus: Dictionary, step: Dictionary, award: i
 
 
 func _line_attribution(grid: Array, family_id: String, reel_count: int, center_row: int, forced_placement: Dictionary = {}) -> Dictionary:
-	var forced_cells: Array = _copy_array(forced_placement.get("cells", []))
+	var forced_cells: Array = JsonCoerceScript._copy_array(forced_placement.get("cells", []))
 	if not forced_cells.is_empty():
 		var forced_symbol := str(forced_placement.get("symbol", ""))
 		var multiplier_forced := 1
 		for cell_value in forced_cells:
-			var cell: Dictionary = _copy_dict(cell_value)
+			var cell: Dictionary = JsonCoerceScript._copy_dict(cell_value)
 			multiplier_forced *= _symbol_multiplier(_cell_symbol(grid, int(cell.get("reel", 0)), int(cell.get("row", 0))))
 		return {
 			"cells": forced_cells,
@@ -1981,7 +2039,7 @@ func _buffalo_full_line_attribution(grid: Array, reel_count: int) -> Dictionary:
 		var multiplier := 1
 		var compatible := true
 		for cell_value in cells:
-			var cell: Dictionary = _copy_dict(cell_value)
+			var cell: Dictionary = JsonCoerceScript._copy_dict(cell_value)
 			var current_symbol := _cell_symbol(grid, int(cell.get("reel", -1)), int(cell.get("row", -1)))
 			if current_symbol == "BLANK":
 				compatible = false
@@ -2015,7 +2073,7 @@ func _placement_cells(placement: Dictionary, expected_symbol: String) -> Array:
 	var symbol := str(placement.get("symbol", ""))
 	if not symbol.is_empty() and symbol != expected_symbol:
 		return []
-	return _copy_array(placement.get("cells", []))
+	return JsonCoerceScript._copy_array(placement.get("cells", []))
 
 
 func _symbol_cells(grid: Array, symbol_id: String) -> Array:
@@ -2077,7 +2135,7 @@ func _ways_hint_for_cells(grid: Array, symbol_id: String, cells: Array) -> int:
 		return _ways_hint(grid, symbol_id)
 	var reel_lookup := {}
 	for cell_value in cells:
-		var cell: Dictionary = _copy_dict(cell_value)
+		var cell: Dictionary = JsonCoerceScript._copy_dict(cell_value)
 		var reel_index := int(cell.get("reel", -1))
 		if reel_index >= 0 and reel_index < grid.size():
 			reel_lookup[reel_index] = true
@@ -2132,7 +2190,7 @@ func _celebration_duration_msec(tier: String) -> int:
 
 
 func _apply_win_attribution(machine: Dictionary, win_attribution: Dictionary) -> void:
-	machine["slot_win_cells"] = _copy_array(win_attribution.get("cells", []))
+	machine["slot_win_cells"] = JsonCoerceScript._copy_array(win_attribution.get("cells", []))
 	machine["slot_win_symbol"] = str(win_attribution.get("symbol", ""))
 	machine["slot_win_count"] = maxi(0, int(win_attribution.get("count", 0)))
 	machine["slot_win_kind"] = str(win_attribution.get("kind", "none"))
@@ -2152,7 +2210,7 @@ func _capture_previous_result(machine: Dictionary) -> void:
 
 func _result_win_fields(machine: Dictionary) -> Dictionary:
 	return {
-		"slot_win_cells": _copy_array(machine.get("slot_win_cells", [])),
+		"slot_win_cells": JsonCoerceScript._copy_array(machine.get("slot_win_cells", [])),
 		"slot_win_symbol": str(machine.get("slot_win_symbol", "")),
 		"slot_win_count": maxi(0, int(machine.get("slot_win_count", 0))),
 		"slot_win_kind": str(machine.get("slot_win_kind", "none")),
@@ -2248,12 +2306,6 @@ func _blank_grid(reel_count: int, row_count: int) -> Array:
 	return grid
 
 
-func _copy_array(value: Variant) -> Array:
-	if typeof(value) != TYPE_ARRAY:
-		return []
-	return (value as Array).duplicate(true)
-
-
 func _compact_story_receipt(entry: Dictionary) -> Dictionary:
 	# Routine slot results carry many optional zero/default facts. Keep every
 	# non-default gameplay fact while avoiding hundreds of redundant bytes per
@@ -2282,9 +2334,3 @@ func _compact_story_receipt(entry: Dictionary) -> Dictionary:
 		elif typeof(value) == TYPE_DICTIONARY and (value as Dictionary).is_empty():
 			entry.erase(key_value)
 	return entry
-
-
-func _copy_dict(value: Variant) -> Dictionary:
-	if typeof(value) != TYPE_DICTIONARY:
-		return {}
-	return (value as Dictionary).duplicate(true)

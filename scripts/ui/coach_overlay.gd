@@ -1,6 +1,8 @@
 class_name CoachOverlay
 extends Control
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 signal lesson_seen(lesson_id: String)
 signal lesson_completed(lesson_id: String)
 signal dialogue_requested(lesson_id: String, dialogue_id: String, dialogue_node: String)
@@ -860,7 +862,7 @@ func _tutorial_frontier_ready(lesson: Dictionary, context: Dictionary) -> bool:
 	if str(lesson.get("scope", "")).strip_edges() != "tutorial_run" or _path_value(context, "run.tutorial") != true:
 		return false
 	var trigger := _dict(lesson.get("trigger", {}))
-	for dependency_id in _string_array(trigger.get("depends_on", [])):
+	for dependency_id in JsonCoerceScript._unique_string_array(trigger.get("depends_on", [])):
 		if not bool(seen.get(dependency_id, false)):
 			return false
 	# Challenge and meta-session predicates select separate tutorial graphs. They
@@ -948,17 +950,6 @@ func _path_value(source: Dictionary, path: String) -> Variant:
 			return null
 		current = (current as Dictionary).get(segment)
 	return current
-
-
-func _string_array(value: Variant) -> Array[String]:
-	var result: Array[String] = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry_value in value:
-		var entry := str(entry_value).strip_edges()
-		if not entry.is_empty() and not result.has(entry):
-			result.append(entry)
-	return result
 
 
 func _on_ok_pressed() -> void:

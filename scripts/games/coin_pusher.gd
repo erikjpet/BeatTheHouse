@@ -984,9 +984,9 @@ func _generate_machine_state(run_state: RunState, environment: Dictionary, rng: 
 	var local_rng := rng
 	if local_rng == null:
 		local_rng = RngStream.new()
-		local_rng.configure(_stable_hash("%s:%s:%s" % [get_id(), str(run_state.seed_text if run_state != null else "fallback"), str(environment.get("id", "node"))]))
+		local_rng.configure(JsonCoerceScript._overflow_stable_hash("%s:%s:%s" % [get_id(), str(run_state.seed_text if run_state != null else "fallback"), str(environment.get("id", "node"))]))
 	var variation_rng := RngStream.new()
-	variation_rng.configure(_stable_hash("coin_pusher_variation:%s:%s" % [str(run_state.seed_text if run_state != null else "fallback"), _environment_node_id(run_state, environment)]))
+	variation_rng.configure(JsonCoerceScript._overflow_stable_hash("coin_pusher_variation:%s:%s" % [str(run_state.seed_text if run_state != null else "fallback"), _environment_node_id(run_state, environment)]))
 	var variation_id := _seeded_variation_id(environment, variation_rng)
 	var variation_config := _variation_config(variation_id)
 	if _generation_timing_enabled:
@@ -1224,7 +1224,7 @@ func _normalize_machine_state(source: Dictionary, run_state: RunState = null, en
 	var migrated_v2 := not has_live and not has_settled
 	var legacy_tray_value := maxi(0, int(machine.get("tray_value", 0)))
 	var migration_rng := RngStream.new()
-	migration_rng.configure(_stable_hash("coin_pusher_physical_migration:%s:%s" % [_environment_node_id(run_state, environment), str(run_state.seed_text if run_state != null else "fallback")]))
+	migration_rng.configure(JsonCoerceScript._overflow_stable_hash("coin_pusher_physical_migration:%s:%s" % [_environment_node_id(run_state, environment), str(run_state.seed_text if run_state != null else "fallback")]))
 	if migrated_v2:
 		var migrated_variation_id := str(machine.get("variation_id", _variation_id()))
 		machine["simulation"] = CoinPusherSolverScript.create_machine(migration_rng, _machine_definition(migrated_variation_id), mini(_opening_coin_count(migrated_variation_id), 250))
@@ -1245,7 +1245,7 @@ func _normalize_machine_state(source: Dictionary, run_state: RunState = null, en
 		machine["variation_state"] = {}
 	if (machine.get("variation_state", {}) as Dictionary).is_empty() and variation_id != "quarter_falls":
 		var rng := RngStream.new()
-		rng.configure(_stable_hash("migrate:%s:%s" % [variation_id, _environment_node_id(run_state, environment)]))
+		rng.configure(JsonCoerceScript._overflow_stable_hash("migrate:%s:%s" % [variation_id, _environment_node_id(run_state, environment)]))
 		machine["variation_state"] = JackpotRidgeScript.initial_state(_variation_config(variation_id), rng, _lane_count(), _cell_count()) if variation_id == "jackpot_ridge" else VaultDropScript.initial_state(_variation_config(variation_id), rng, _lane_count(), _cell_count(), _environment_node_id(run_state, environment))
 	for key in ["tray_value", "total_cost", "total_payout", "action_count", "tell_rung", "suspicion_floor"]:
 		machine[key] = maxi(0, int(machine.get(key, 0)))
@@ -1757,7 +1757,7 @@ func _ensure_live_machine(run_state: RunState, environment: Dictionary) -> Dicti
 	var settled: Dictionary = machine.get("settled_state", {}) if typeof(machine.get("settled_state", {})) == TYPE_DICTIONARY else {}
 	if _has_v3_simulation(machine) and str(settled.get("schema", "")) != CoinPusherLiveSessionScript.SNAPSHOT_SCHEMA:
 		machine["settled_state"] = CoinPusherLiveSessionScript.make_snapshot(_simulation(machine), machine)
-	var seed := _stable_hash("pusher_live:%s:%s" % [str(run_state.seed_text if run_state != null else "fallback"), _environment_node_id(run_state, environment)])
+	var seed := JsonCoerceScript._overflow_stable_hash("pusher_live:%s:%s" % [str(run_state.seed_text if run_state != null else "fallback"), _environment_node_id(run_state, environment)])
 	CoinPusherLiveSessionScript.begin(machine, _machine_definition(str(machine.get("variation_id", _variation_id()))), seed, true)
 	_assign_feature_items(machine, run_state, environment)
 	_sync_physical_features(machine)
@@ -2327,7 +2327,7 @@ func _safe_pusher_item_pool(run_state: RunState) -> Array:
 func _assign_feature_items(machine: Dictionary, run_state: RunState, environment: Dictionary) -> void:
 	var seed := int(machine.get("feature_item_seed", 0))
 	if seed == 0:
-		seed = _stable_hash("pusher_items:%s:%s:%s" % [
+		seed = JsonCoerceScript._overflow_stable_hash("pusher_items:%s:%s:%s" % [
 			str(run_state.seed_text if run_state != null else "fallback"),
 			_environment_node_id(run_state, environment),
 			str(machine.get("variation_id", "quarter_falls")),
@@ -2349,7 +2349,7 @@ func _assign_feature_items_from_pool(machine: Dictionary, item_pool: Array, seed
 		var item_id := str(feature.get("item_id", ""))
 		if not bool(feature.get("pusher_item_assigned", false)) or not bool(allowed.get(item_id, false)):
 			var feature_id := str(feature.get("id", "feature"))
-			item_id = str(item_pool[posmod(_stable_hash("%d:%s" % [seed, feature_id]), item_pool.size())])
+			item_id = str(item_pool[posmod(JsonCoerceScript._overflow_stable_hash("%d:%s" % [seed, feature_id]), item_pool.size())])
 		var item_definition := library.item(item_id)
 		feature["item_id"] = item_id
 		feature["item_label"] = str(item_definition.get("display_name", item_id.capitalize()))
@@ -3076,10 +3076,3 @@ func _prize_count_min() -> int:
 
 func _prize_count_max() -> int:
 	return maxi(_prize_count_min(), _int_tuning("prize_count_max", 3))
-
-
-func _stable_hash(text: String) -> int:
-	var value := 2166136261
-	for index in range(text.length()):
-		value = int((value ^ text.unicode_at(index)) * 16777619)
-	return abs(value) if value != 0 else 1

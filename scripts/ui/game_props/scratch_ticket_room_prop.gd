@@ -1,7 +1,7 @@
 class_name ScratchTicketRoomProp
 extends RefCounted
 
-const Kit := preload("res://scripts/ui/game_props/game_prop_kit.gd")
+const KitScript := preload("res://scripts/ui/game_props/game_prop_kit.gd")
 const EMPTY_STATE: Dictionary = {}
 const EMPTY_ROWS: Array = []
 const C_RED := Color("#d62e48")
@@ -16,12 +16,12 @@ static func draw(canvas: CanvasItem, rect: Rect2, object_data: Dictionary, accen
 	var safe := Rect2(rect.position + Vector2(rect.size.x * 0.05, rect.size.y * 0.02), Vector2(rect.size.x * 0.90, rect.size.y * 0.94))
 	var visual: Dictionary = object_data.get("visual_state", EMPTY_STATE) if typeof(object_data.get("visual_state", EMPTY_STATE)) == TYPE_DICTIONARY else EMPTY_STATE
 	var rows: Array = visual.get("stock_rows", EMPTY_ROWS) if typeof(visual.get("stock_rows", EMPTY_ROWS)) == TYPE_ARRAY else EMPTY_ROWS
-	var phase_value := Kit.phase(object_data)
-	var pulse := Kit.pulse(flicker, phase_value, selected)
-	Kit.draw_base_shadow(canvas, safe, accent)
+	var phase_value := KitScript.phase(object_data)
+	var pulse := KitScript.pulse(flicker, phase_value, selected)
+	KitScript.draw_base_shadow(canvas, safe, accent)
 	if safe.size.x < 58.0 or safe.size.y < 42.0:
 		_draw_small(canvas, safe, rows)
-		Kit.draw_state(canvas, safe, selected, disabled)
+		KitScript.draw_state(canvas, safe, selected, disabled)
 		return
 	var cabinet := Rect2(safe.position + Vector2(safe.size.x * 0.11, safe.size.y * 0.09), Vector2(safe.size.x * 0.69, safe.size.y * 0.80))
 	var basket := Rect2(safe.position + Vector2(safe.size.x * 0.78, safe.size.y * 0.58), Vector2(safe.size.x * 0.16, safe.size.y * 0.28))
@@ -75,17 +75,17 @@ static func draw(canvas: CanvasItem, rect: Rect2, object_data: Dictionary, accen
 	var coin := safe.position + Vector2(safe.size.x * 0.87, safe.size.y * 0.46)
 	canvas.draw_circle(coin, maxf(2.2, safe.size.x * 0.025), C_GOLD)
 	canvas.draw_line(coin - Vector2(1.5, 0.0), coin + Vector2(1.5, 0.0), Color("#7e5420"), 1.0)
-	Kit.draw_state(canvas, safe, selected, disabled)
+	KitScript.draw_state(canvas, safe, selected, disabled)
 
 
 static func draw_low_detail(canvas: CanvasItem, rect: Rect2, object_data: Dictionary, accent: Color, disabled: bool, flicker: float) -> void:
 	var safe := rect.grow(-3.0)
 	var visual: Dictionary = object_data.get("visual_state", EMPTY_STATE) if typeof(object_data.get("visual_state", EMPTY_STATE)) == TYPE_DICTIONARY else EMPTY_STATE
 	var rows: Array = visual.get("stock_rows", EMPTY_ROWS) if typeof(visual.get("stock_rows", EMPTY_ROWS)) == TYPE_ARRAY else EMPTY_ROWS
-	Kit.draw_base_shadow(canvas, safe, accent)
+	KitScript.draw_base_shadow(canvas, safe, accent)
 	_draw_small(canvas, safe, rows)
 	if disabled:
-		Kit.draw_state(canvas, safe, false, true)
+		KitScript.draw_state(canvas, safe, false, true)
 
 
 static func _draw_basket(canvas: CanvasItem, rect: Rect2) -> void:

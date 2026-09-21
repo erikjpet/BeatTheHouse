@@ -1,6 +1,8 @@
 class_name MetaSessionController
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 signal travel_requested(location_id: String)
 signal popup_action_requested(action_id: String, payload: Dictionary)
 
@@ -64,10 +66,10 @@ func home_summary_view() -> Dictionary:
 	var snapshot: Dictionary = meta_collection_service.snapshot()
 	var housing_tier := str(snapshot.get("housing_tier", MetaCollectionServiceScript.HOUSING_BACK_ALLEY))
 	var definition: Dictionary = meta_collection_service.housing_definition(housing_tier)
-	var owned_instances := _copy_array(snapshot.get("owned_instances", []))
-	var loadout := _copy_array(snapshot.get("loadout", []))
+	var owned_instances := JsonCoerceScript._copy_array(snapshot.get("owned_instances", []))
+	var loadout := JsonCoerceScript._copy_array(snapshot.get("loadout", []))
 	var carried_ids: Array = _snapshot_carried_instance_ids(owned_instances, loadout, housing_tier)
-	var carry_capacity := _snapshot_container_capacity(_copy_array(snapshot.get("owned_containers", [])))
+	var carry_capacity := _snapshot_container_capacity(JsonCoerceScript._copy_array(snapshot.get("owned_containers", [])))
 	var storage_slots := maxi(0, int(definition.get("storage_slots", 0)))
 	return {
 		"housing_tier": housing_tier,
@@ -85,10 +87,10 @@ func home_summary_view() -> Dictionary:
 func interactable_object_view_list(location_id: String, run_state: RunState, hover_target_id: String, focus_target_id: String, selected_object_id: String) -> Array:
 	var cache_key := _interactable_object_view_cache_key(location_id)
 	if cache_key == interactable_object_view_cache_key and not interactable_object_view_cache.is_empty():
-		return _copy_array(interactable_object_view_cache)
+		return JsonCoerceScript._copy_array(interactable_object_view_cache)
 	var objects := _pawn_interactable_objects(run_state, hover_target_id, focus_target_id, selected_object_id) if location_id == pawn_location_id() else _home_interactable_objects(run_state, hover_target_id, focus_target_id, selected_object_id)
 	interactable_object_view_cache_key = cache_key
-	interactable_object_view_cache = _copy_array(objects)
+	interactable_object_view_cache = JsonCoerceScript._copy_array(objects)
 	return objects
 
 
@@ -139,12 +141,12 @@ func owned_item_rows() -> Array:
 		var definition: Dictionary = resolver.item_definition(itemdef_id)
 		var collection: Dictionary = resolver.collection_definition(str(definition.get("collection_id", "")))
 		var run_item: Dictionary = resolver.resolve_run_item(instance)
-		var meta: Dictionary = _copy_dict(run_item.get("meta_collection", {}))
+		var meta: Dictionary = JsonCoerceScript._copy_dict(run_item.get("meta_collection", {}))
 		var item_class := str(definition.get("item_class", CollectionItemResolverScript.ITEM_CLASS_COLLECTION))
 		var collection_name := str(collection.get("display_name", "Collection"))
 		var float_summary := MetaCollectionViewModelScript._float_summary(instance)
 		if item_class == CollectionItemResolverScript.ITEM_CLASS_PLAYERS_CARD:
-			var stamp := _copy_dict(instance.get("instance_data", {}))
+			var stamp := JsonCoerceScript._copy_dict(instance.get("instance_data", {}))
 			collection_name = "Grand Casino Rewards"
 			float_summary = "Critical · Score %d · Day %d · %s" % [int(stamp.get("final_score", 0)), int(stamp.get("days_survived", 1)), str(stamp.get("seed", ""))]
 		elif item_class == CollectionItemResolverScript.ITEM_CLASS_CHIP_STACK:
@@ -170,7 +172,7 @@ func sale_rows() -> Array:
 	if meta_collection_service == null:
 		return rows
 	for item_row_value in owned_item_rows():
-		var item_row := _copy_dict(item_row_value)
+		var item_row := JsonCoerceScript._copy_dict(item_row_value)
 		var instance_id := int(item_row.get("instance_id", 0))
 		var quote: Dictionary = meta_collection_service.sale_quote(MetaCollectionServiceScript.SALE_KIND_ITEM, instance_id)
 		if not bool(quote.get("ok", false)):
@@ -212,11 +214,11 @@ func sal_shelf_rows() -> Array:
 	var store_snapshot: Dictionary = meta_collection_service.snapshot()
 	var gold_balance := int(store_snapshot.get("gold_balance", 0))
 	for slot_value in meta_collection_service.sal_shelf_rows():
-		var slot := _copy_dict(slot_value)
-		var item := _copy_dict(slot.get("item", {}))
+		var slot := JsonCoerceScript._copy_dict(slot_value)
+		var item := JsonCoerceScript._copy_dict(slot.get("item", {}))
 		var definition: Dictionary = resolver.item_definition(int(item.get("itemdef_id", -1)))
 		var collection: Dictionary = resolver.collection_definition(str(definition.get("collection_id", "")))
-		var quote := _copy_dict(slot.get("quote_basis", {}))
+		var quote := JsonCoerceScript._copy_dict(slot.get("quote_basis", {}))
 		slot["display_name"] = str(definition.get("display_name", "Empty Shelf")) if bool(slot.get("occupied", false)) else "Empty Shelf"
 		slot["collection_display_name"] = str(collection.get("display_name", "Collection"))
 		slot["tier"] = str(definition.get("tier", ""))
@@ -238,10 +240,10 @@ func next_tier(tier: String) -> String:
 func collection_reveal_text(result: Dictionary) -> String:
 	if not bool(result.get("ok", false)):
 		return str(result.get("message", "Bag could not be opened."))
-	var reveal := _copy_dict(result.get("reveal", {}))
-	var definition := _copy_dict(reveal.get("definition", {}))
-	var item := _copy_dict(reveal.get("item", {}))
-	var bag := _copy_dict(reveal.get(MetaCollectionServiceScript.REVEAL_BAG_KEY, {}))
+	var reveal := JsonCoerceScript._copy_dict(result.get("reveal", {}))
+	var definition := JsonCoerceScript._copy_dict(reveal.get("definition", {}))
+	var item := JsonCoerceScript._copy_dict(reveal.get("item", {}))
+	var bag := JsonCoerceScript._copy_dict(reveal.get(MetaCollectionServiceScript.REVEAL_BAG_KEY, {}))
 	var tier := str(definition.get("tier", "")).capitalize()
 	var condition := str(reveal.get("condition_band", "unknown")).capitalize()
 	var floats := "P %d%% / C %d%% / R %d%% / U %d%%" % [
@@ -413,9 +415,9 @@ func _build_home_environment(run_state: RunState) -> Dictionary:
 	data["object_fixtures"] = []
 	data["travel_hooks"] = [META_LOCATION_START_RUN, pawn_location_id()]
 	data["next_archetypes"] = [META_LOCATION_START_RUN, pawn_location_id()]
-	data["home_profile"] = _copy_dict(archetype.get("home_profile", {}))
+	data["home_profile"] = JsonCoerceScript._copy_dict(archetype.get("home_profile", {}))
 	data["home_containers"] = _container_rows()
-	data["home_container_index"] = _copy_array(data.get("home_containers", [])).size()
+	data["home_container_index"] = JsonCoerceScript._copy_array(data.get("home_containers", [])).size()
 	data["home_lost"] = false
 	data["meta_session"] = true
 	data["meta_location"] = META_LOCATION_HOME
@@ -475,7 +477,7 @@ func _container_rows() -> Array:
 	for container_value in meta_collection_service.carried_container_rows():
 		if typeof(container_value) != TYPE_DICTIONARY:
 			continue
-		var container: Dictionary = _copy_dict(container_value)
+		var container: Dictionary = JsonCoerceScript._copy_dict(container_value)
 		var item_id := str(container.get("item_id", "bag")).strip_edges()
 		if item_id.is_empty():
 			continue
@@ -536,7 +538,7 @@ func _home_interactable_objects(run_state: RunState, hover_target_id: String, fo
 	var direct_bag_limit := MAX_VISIBLE_HOME_BAG_OBJECTS if bag_count <= MAX_VISIBLE_HOME_BAG_OBJECTS else MAX_VISIBLE_HOME_BAG_OBJECTS - 1
 	var bags := unopened_bag_rows(direct_bag_limit)
 	for index in range(bags.size()):
-		var bag := _copy_dict(bags[index])
+		var bag := JsonCoerceScript._copy_dict(bags[index])
 		var bag_id := int(bag.get("instance_id", 0))
 		objects.append(_make_interactable_object({
 			"object_id": "meta_bag:%d" % bag_id,
@@ -550,7 +552,7 @@ func _home_interactable_objects(run_state: RunState, hover_target_id: String, fo
 			"enabled": true,
 			"action_summary": "Open this bag.",
 			"status_summary": str(bag.get("tier_label", "")),
-			"attribute_badges": _copy_array(bag.get("tier_badges", [])),
+			"attribute_badges": JsonCoerceScript._copy_array(bag.get("tier_badges", [])),
 			"visual_key": "meta_bag",
 			"prop": "paper_bag",
 			"icon_key": str(bag.get("icon_key", "cashout" + "_envelope")),
@@ -579,7 +581,7 @@ func _home_interactable_objects(run_state: RunState, hover_target_id: String, fo
 			"confirm_action_id": "open_meta_bag",
 			"focus_rect": _interaction_rect_for_object(run_state, "meta_bags:all", CONTEXT_MODE_META_BAG, bags.size()),
 		}, hover_target_id, focus_target_id, selected_object_id))
-	var upgrade := _copy_dict(home.get("upgrade", {}))
+	var upgrade := JsonCoerceScript._copy_dict(home.get("upgrade", {}))
 	var upgrade_enabled := not upgrade.is_empty() and bool(upgrade.get("affordable", false))
 	objects.append(_make_interactable_object({
 		"object_id": "meta_upgrade:home",
@@ -644,11 +646,11 @@ func _home_interactable_objects(run_state: RunState, hover_target_id: String, fo
 func _pawn_interactable_objects(run_state: RunState, hover_target_id: String, focus_target_id: String, selected_object_id: String) -> Array:
 	var objects: Array = []
 	for slot_value in sal_shelf_rows():
-		var slot := _copy_dict(slot_value)
+		var slot := JsonCoerceScript._copy_dict(slot_value)
 		var index := int(slot.get("slot_index", objects.size()))
 		var occupied := bool(slot.get("occupied", false))
-		var item := _copy_dict(slot.get("item", {}))
-		var quote := _copy_dict(slot.get("quote_basis", {}))
+		var item := JsonCoerceScript._copy_dict(slot.get("item", {}))
+		var quote := JsonCoerceScript._copy_dict(slot.get("quote_basis", {}))
 		var mode := str(slot.get("listing_mode", ""))
 		objects.append(_make_interactable_object({
 			"object_id": "meta_sal_shelf:%d" % index,
@@ -737,7 +739,7 @@ func _pawn_interactable_objects(run_state: RunState, hover_target_id: String, fo
 func _sal_layout_item_offers() -> Array:
 	var offers: Array = []
 	for slot_value in sal_shelf_rows():
-		var slot := _copy_dict(slot_value)
+		var slot := JsonCoerceScript._copy_dict(slot_value)
 		var index := int(slot.get("slot_index", offers.size()))
 		offers.append({
 			"id": "sal_shelf_%d" % index,
@@ -799,7 +801,7 @@ func _snapshot_carried_instance_ids(owned_instances: Array, loadout: Array, hous
 	var owned_ids: Array = []
 	var owned_lookup := {}
 	for instance_value in owned_instances:
-		var instance := _copy_dict(instance_value)
+		var instance := JsonCoerceScript._copy_dict(instance_value)
 		var instance_id := int(instance.get("instance_id", 0))
 		if instance_id > 0 and not owned_lookup.has(instance_id):
 			owned_ids.append(instance_id)
@@ -819,7 +821,7 @@ func _snapshot_carried_instance_ids(owned_instances: Array, loadout: Array, hous
 func _snapshot_container_capacity(containers: Array) -> int:
 	var total := 0
 	for container_value in containers:
-		var container := _copy_dict(container_value)
+		var container := JsonCoerceScript._copy_dict(container_value)
 		total += maxi(0, int(container.get("capacity", 0)))
 	return total
 
@@ -863,7 +865,7 @@ func _make_interactable_object(source: Dictionary, hover_target_id: String, focu
 		"choice_summary": str(source.get("choice_summary", "")),
 		"risk_summary": str(source.get("risk_summary", "")),
 		"cost_summary": str(source.get("cost_summary", "")),
-		"attribute_badges": _copy_array(source.get("attribute_badges", [])),
+		"attribute_badges": JsonCoerceScript._copy_array(source.get("attribute_badges", [])),
 		"runtime_state": (source.get("runtime_state", {}) as Dictionary).duplicate(true) if typeof(source.get("runtime_state", {})) == TYPE_DICTIONARY else {},
 		"visual_state": (source.get("visual_state", {}) as Dictionary).duplicate(true) if typeof(source.get("visual_state", {})) == TYPE_DICTIONARY else {},
 		"state_badge": str(source.get("state_badge", "")),
@@ -875,8 +877,8 @@ func _make_interactable_object(source: Dictionary, hover_target_id: String, focu
 		"unique_object_class": str(source.get("unique_object_class", "")).strip_edges(),
 		"unique_object_priority": int(source.get("unique_object_priority", 0)),
 		"allow_duplicate_unique_class": bool(source.get("allow_duplicate_unique_class", false)),
-		"available_actions": _copy_array(source.get("available_actions", [])),
-		"inline_actions": _copy_array(source.get("inline_actions", [])),
+		"available_actions": JsonCoerceScript._copy_array(source.get("available_actions", [])),
+		"inline_actions": JsonCoerceScript._copy_array(source.get("inline_actions", [])),
 		"confirm_action_id": str(source.get("confirm_action_id", "")),
 		"hovered": object_id == hover_target_id,
 		"focused": object_id == focus_target_id,
@@ -973,19 +975,7 @@ func _vector2_to_dict(value: Vector2) -> Dictionary:
 	}
 
 
-func _copy_array(value: Variant) -> Array:
-	if typeof(value) != TYPE_ARRAY:
-		return []
-	return (value as Array).duplicate(true)
-
-
 func _collection_resolver() -> CollectionItemResolver:
 	if _shared_collection_resolver == null:
 		_shared_collection_resolver = CollectionItemResolverScript.new()
 	return _shared_collection_resolver
-
-
-func _copy_dict(value: Variant) -> Dictionary:
-	if typeof(value) != TYPE_DICTIONARY:
-		return {}
-	return (value as Dictionary).duplicate(true)

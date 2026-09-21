@@ -1,6 +1,10 @@
 class_name CollectionItemResolver
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
+const StaticDataCacheScript := preload("res://scripts/core/static_data_cache.gd")
+
 const COLLECTIONS_PATH := "res://data/collections/collections.json"
 const SCHEMA_VERSION := 1
 const HASH_MODULUS := 4294967296
@@ -40,8 +44,11 @@ const KNOWN_EFFECT_KEYS := [
 	"roulette_past_post_base_heat",
 	"blackjack_failed_peek_heat_absorb",
 ]
+const DEFINITION_CACHE_MAX_ENTRIES := 2
 
-var _loaded := false
+static var _definition_parse_count := 0
+
+var _definitions_ready := false
 var _root: Dictionary = {}
 var _collections: Array = []
 var _special_items: Array = []
@@ -51,7 +58,17 @@ var _validation_errors: Array[String] = []
 
 
 func load_definitions() -> void:
-	_loaded = true
+	var cached_value: Variant = StaticDataCacheScript.get_or_load(
+		COLLECTIONS_PATH,
+		Callable(self, "_load_definition_bundle"),
+		DEFINITION_CACHE_MAX_ENTRIES
+	)
+	_apply_definition_bundle(cached_value)
+
+
+func _load_definition_bundle(_path: String) -> Dictionary:
+	_definition_parse_count += 1
+	_definitions_ready = true
 	_root = {}
 	_collections = []
 	_special_items = []
@@ -60,21 +77,55 @@ func load_definitions() -> void:
 	_validation_errors = []
 	if not FileAccess.file_exists(COLLECTIONS_PATH):
 		_validation_errors.append("Missing collection schema: %s" % COLLECTIONS_PATH)
-		return
+		return _definition_bundle()
 	var text := FileAccess.get_file_as_string(COLLECTIONS_PATH)
 	var parsed: Variant = JSON.parse_string(text)
 	if typeof(parsed) == TYPE_ARRAY:
 		var entries: Array = parsed
 		if entries.is_empty():
 			_validation_errors.append("Collection schema bundle is empty.")
-			return
-		_root = _copy_dict(entries[0])
+			return _definition_bundle()
+		_root = JsonCoerceScript._copy_dict(entries[0])
 	elif typeof(parsed) == TYPE_DICTIONARY:
-		_root = _copy_dict(parsed)
+		_root = JsonCoerceScript._copy_dict(parsed)
 	else:
 		_validation_errors.append("Collection schema root must be an object or single-object array.")
-		return
+		return _definition_bundle()
 	_index_definitions()
+	return _definition_bundle()
+
+
+func _definition_bundle() -> Dictionary:
+	return {
+		"root": _root.duplicate(true),
+		"collections": _collections.duplicate(true),
+		"special_items": _special_items.duplicate(true),
+		"items_by_itemdef_id": _items_by_itemdef_id.duplicate(true),
+		"bags_by_itemdef_id": _bags_by_itemdef_id.duplicate(true),
+		"validation_errors": _validation_errors.duplicate(),
+	}
+
+
+func _apply_definition_bundle(value: Variant) -> void:
+	var bundle: Dictionary = value if typeof(value) == TYPE_DICTIONARY else {}
+	_definitions_ready = true
+	_root = (bundle.get("root", {}) as Dictionary).duplicate(true)
+	_collections = (bundle.get("collections", []) as Array).duplicate(true)
+	_special_items = (bundle.get("special_items", []) as Array).duplicate(true)
+	_items_by_itemdef_id = (bundle.get("items_by_itemdef_id", {}) as Dictionary).duplicate(true)
+	_bags_by_itemdef_id = (bundle.get("bags_by_itemdef_id", {}) as Dictionary).duplicate(true)
+	_validation_errors.clear()
+	for error_value in bundle.get("validation_errors", []):
+		_validation_errors.append(str(error_value))
+
+
+static func debug_clear_definition_cache() -> void:
+	StaticDataCacheScript.erase(COLLECTIONS_PATH)
+	_definition_parse_count = 0
+
+
+static func debug_definition_parse_count() -> int:
+	return _definition_parse_count
 
 
 func validate_definitions() -> Array[String]:
@@ -94,7 +145,7 @@ func item_definitions() -> Array:
 	_ensure_loaded()
 	var items: Array = []
 	for itemdef_id in _items_by_itemdef_id.keys():
-		items.append(_copy_dict(_items_by_itemdef_id[itemdef_id]))
+		items.append(JsonCoerceScript._copy_dict(_items_by_itemdef_id[itemdef_id]))
 	return items
 
 
@@ -105,12 +156,12 @@ func special_item_definitions() -> Array:
 
 func item_definition(itemdef_id: int) -> Dictionary:
 	_ensure_loaded()
-	return _copy_dict(_items_by_itemdef_id.get(itemdef_id, {}))
+	return JsonCoerceScript._copy_dict(_items_by_itemdef_id.get(itemdef_id, {}))
 
 
 func bag_definition(itemdef_id: int) -> Dictionary:
 	_ensure_loaded()
-	return _copy_dict(_bags_by_itemdef_id.get(itemdef_id, {}))
+	return JsonCoerceScript._copy_dict(_bags_by_itemdef_id.get(itemdef_id, {}))
 
 
 func item_definitions_for_collection_tier(collection_id: String, tier: String) -> Array:
@@ -119,7 +170,7 @@ func item_definitions_for_collection_tier(collection_id: String, tier: String) -
 	var clean_tier := tier.strip_edges()
 	var items: Array = []
 	for item_value in _items_by_itemdef_id.values():
-		var item := _copy_dict(item_value)
+		var item := JsonCoerceScript._copy_dict(item_value)
 		if str(item.get("collection_id", "")) == clean_collection_id and str(item.get("tier", "")) == clean_tier:
 			items.append(item)
 	items.sort_custom(func(left: Dictionary, right: Dictionary) -> bool:
@@ -134,7 +185,7 @@ func bag_item_definitions(collection_id: String = "", tier: String = "") -> Arra
 	var clean_tier := tier.strip_edges()
 	var bags: Array = []
 	for bag_value in _bags_by_itemdef_id.values():
-		var bag := _copy_dict(bag_value)
+		var bag := JsonCoerceScript._copy_dict(bag_value)
 		if not clean_collection_id.is_empty() and str(bag.get("collection_id", "")) != clean_collection_id:
 			continue
 		if not clean_tier.is_empty() and str(bag.get("tier", "")) != clean_tier:
@@ -150,7 +201,7 @@ func collection_definition(collection_id: String) -> Dictionary:
 	_ensure_loaded()
 	var clean_id := collection_id.strip_edges()
 	for collection_value in _collections:
-		var collection := _copy_dict(collection_value)
+		var collection := JsonCoerceScript._copy_dict(collection_value)
 		if str(collection.get("id", "")) == clean_id:
 			return collection
 	return {}
@@ -158,11 +209,11 @@ func collection_definition(collection_id: String) -> Dictionary:
 
 func meta_home_config() -> Dictionary:
 	_ensure_loaded()
-	return _copy_dict(_root.get("meta_home", {}))
+	return JsonCoerceScript._copy_dict(_root.get("meta_home", {}))
 
 
 func prestige_config() -> Dictionary:
-	return _copy_dict(meta_home_config().get("prestige", {}))
+	return JsonCoerceScript._copy_dict(meta_home_config().get("prestige", {}))
 
 
 func bag_item_options_for_bag(bagdef_id: int) -> Array:
@@ -176,16 +227,16 @@ func roll_virtual_bag_item(rng: RngStream, generation_seed: String) -> Dictionar
 	_ensure_loaded()
 	if rng == null or _collections.is_empty():
 		return {}
-	var collection := _copy_dict(_collections[rng.randi_range(0, _collections.size() - 1)])
+	var collection := JsonCoerceScript._copy_dict(_collections[rng.randi_range(0, _collections.size() - 1)])
 	var tier := _roll_weighted_collection_tier(collection, rng)
 	var bag_options := bag_item_definitions(str(collection.get("id", "")), tier)
 	if bag_options.is_empty():
 		return {}
-	var virtual_bag := _copy_dict(bag_options[rng.randi_range(0, bag_options.size() - 1)])
+	var virtual_bag := JsonCoerceScript._copy_dict(bag_options[rng.randi_range(0, bag_options.size() - 1)])
 	var item_options := bag_item_options_for_bag(int(virtual_bag.get("itemdef_id", -1)))
 	if item_options.is_empty():
 		return {}
-	var definition := _copy_dict(item_options[rng.randi_range(0, item_options.size() - 1)])
+	var definition := JsonCoerceScript._copy_dict(item_options[rng.randi_range(0, item_options.size() - 1)])
 	var roll_seed := "%s|collection:%s|tier:%s|bag:%d|item:%d|state:%d" % [
 		generation_seed,
 		str(collection.get("id", "")),
@@ -233,7 +284,7 @@ func apply_usage_decay(instance: Dictionary, rng_seed: String) -> Dictionary:
 		return next
 	if str(definition.get("item_class", ITEM_CLASS_COLLECTION)) != ITEM_CLASS_COLLECTION:
 		return next
-	var usage_binding := _copy_dict(_copy_dict(definition.get("float_bindings", {})).get("usage", {}))
+	var usage_binding := JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(definition.get("float_bindings", {})).get("usage", {}))
 	var decay_min := maxf(0.0, float(usage_binding.get("decay_min", 0.02)))
 	var decay_max := maxf(decay_min, float(usage_binding.get("decay_max", decay_min)))
 	var decay := lerpf(decay_min, decay_max, _unit_float("%s|%d" % [rng_seed, itemdef_id], "usage_decay"))
@@ -254,7 +305,7 @@ func resolve_run_item(instance: Dictionary) -> Dictionary:
 	var instance_id := int(normalized.get("instance_id", 0))
 	var item_id := str(definition.get("id", "collection_item"))
 	var item_class := str(definition.get("item_class", ITEM_CLASS_COLLECTION))
-	var instance_data := _copy_dict(normalized.get("instance_data", {}))
+	var instance_data := JsonCoerceScript._copy_dict(normalized.get("instance_data", {}))
 	var presentation_tier := str(definition.get("tier", ""))
 	var description := str(definition.get("flavor", ""))
 	var display_name := "%s (%s)" % [str(definition.get("display_name", "Collection Item")), str(band.get("display_name", "Unknown"))]
@@ -316,11 +367,11 @@ func condition_band(definition: Dictionary, instance: Dictionary) -> Dictionary:
 			"value_multiplier": 1.0,
 		}
 	var condition := clampf(float(instance.get("condition", 0.0)), 0.0, 1.0)
-	var condition_binding := _copy_dict(_copy_dict(definition.get("float_bindings", {})).get("condition", {}))
-	var bands := _copy_array(condition_binding.get("bands", []))
+	var condition_binding := JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(definition.get("float_bindings", {})).get("condition", {}))
+	var bands := JsonCoerceScript._copy_array(condition_binding.get("bands", []))
 	var fallback: Dictionary = {"id": "unknown", "display_name": "Unknown", "value_multiplier": 1.0}
 	for band_value in bands:
-		var band := _copy_dict(band_value)
+		var band := JsonCoerceScript._copy_dict(band_value)
 		if band.is_empty():
 			continue
 		fallback = band
@@ -333,7 +384,7 @@ func condition_band(definition: Dictionary, instance: Dictionary) -> Dictionary:
 func value_multiplier(definition: Dictionary, instance: Dictionary) -> float:
 	if str(definition.get("item_class", ITEM_CLASS_COLLECTION)) != ITEM_CLASS_COLLECTION:
 		return 1.0
-	var condition_binding := _copy_dict(_copy_dict(definition.get("float_bindings", {})).get("condition", {}))
+	var condition_binding := JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(definition.get("float_bindings", {})).get("condition", {}))
 	var spent_value_multiplier := maxf(0.0, float(condition_binding.get("spent_value_multiplier", 0.08)))
 	var usage := clampf(float(instance.get("usage", 0.0)), 0.0, 1.0)
 	if usage <= 0.0:
@@ -364,14 +415,14 @@ func normalize_instance_for_definition(instance: Dictionary) -> Dictionary:
 		normalized["condition"] = _players_card_condition(definition)
 		normalized["usage"] = 1.0
 		normalized["durability_pinned"] = true
-		normalized["instance_data"] = _copy_dict(normalized.get("instance_data", {}))
+		normalized["instance_data"] = JsonCoerceScript._copy_dict(normalized.get("instance_data", {}))
 	elif item_class == ITEM_CLASS_CHIP_STACK:
 		var stack_amount := maxi(0, int(normalized.get("stack_amount", normalized.get("face_value", 0))))
 		normalized["stack_amount"] = stack_amount
 		normalized["face_value"] = maxi(0, int(normalized.get("face_value", stack_amount)))
 		normalized["condition"] = 1.0
 		normalized["usage"] = 1.0
-		normalized["instance_data"] = _copy_dict(normalized.get("instance_data", {}))
+		normalized["instance_data"] = JsonCoerceScript._copy_dict(normalized.get("instance_data", {}))
 	return normalized
 
 
@@ -391,7 +442,7 @@ func is_loadout_eligible(instance: Dictionary) -> bool:
 
 
 func _ensure_loaded() -> void:
-	if not _loaded:
+	if not _definitions_ready:
 		load_definitions()
 
 
@@ -400,23 +451,23 @@ func _index_definitions() -> void:
 		_validation_errors.append("Collection schema_version must be %d." % SCHEMA_VERSION)
 	if not bool(_root.get("draft", false)):
 		_validation_errors.append("Collection schema must carry draft=true for P0 owner review.")
-	var bundle_collections := _copy_array(_root.get("collections", []))
+	var bundle_collections := JsonCoerceScript._copy_array(_root.get("collections", []))
 	if bundle_collections.size() != 2:
 		_validation_errors.append("Collection schema must define exactly 2 launch collections.")
 	var used_itemdef_ids := {}
 	for collection_value in bundle_collections:
-		var collection := _copy_dict(collection_value)
+		var collection := JsonCoerceScript._copy_dict(collection_value)
 		var collection_id := str(collection.get("id", "")).strip_edges()
 		if collection_id.is_empty():
 			_validation_errors.append("Collection is missing id.")
 			continue
 		_index_collection(collection, collection_id, used_itemdef_ids)
-	_index_special_items(_copy_array(_root.get("special_items", [])), used_itemdef_ids)
+	_index_special_items(JsonCoerceScript._copy_array(_root.get("special_items", [])), used_itemdef_ids)
 
 
 func _index_special_items(items: Array, used_itemdef_ids: Dictionary) -> void:
 	for item_value in items:
-		var item := _copy_dict(item_value)
+		var item := JsonCoerceScript._copy_dict(item_value)
 		var item_id := str(item.get("id", "")).strip_edges()
 		var itemdef_id := int(item.get("itemdef_id", -1))
 		var item_class := str(item.get("item_class", "")).strip_edges().to_lower()
@@ -433,7 +484,7 @@ func _index_special_items(items: Array, used_itemdef_ids: Dictionary) -> void:
 			_validation_errors.append("Special item %s has unknown item_class '%s'." % [item_id, item_class])
 			continue
 		if item_class == ITEM_CLASS_PLAYERS_CARD:
-			var durability := _copy_dict(item.get("durability_policy", {}))
+			var durability := JsonCoerceScript._copy_dict(item.get("durability_policy", {}))
 			var condition := float(durability.get("condition", -1.0))
 			if condition <= 0.0 or condition > 0.10:
 				_validation_errors.append("Players Card %s must pin condition inside the critical band (0, 0.10]." % item_id)
@@ -442,7 +493,7 @@ func _index_special_items(items: Array, used_itemdef_ids: Dictionary) -> void:
 		elif bool(item.get("loadout_eligible", true)):
 			_validation_errors.append("Chip stack %s must remain meta-only." % item_id)
 		else:
-			var sale_policy := _copy_dict(item.get("sale_policy", {}))
+			var sale_policy := JsonCoerceScript._copy_dict(item.get("sale_policy", {}))
 			var gold_rate := float(sale_policy.get("gold_rate", -1.0))
 			if str(sale_policy.get("kind", "")) != "face_value_rate" or gold_rate <= 0.0 or gold_rate > 1.0:
 				_validation_errors.append("Chip stack %s has an invalid fenced sale policy." % item_id)
@@ -453,14 +504,14 @@ func _index_special_items(items: Array, used_itemdef_ids: Dictionary) -> void:
 
 
 func _index_collection(collection: Dictionary, collection_id: String, used_itemdef_ids: Dictionary) -> void:
-	var items := _copy_array(collection.get("items", []))
-	var bag_defs := _copy_array(collection.get("bag_defs", []))
+	var items := JsonCoerceScript._copy_array(collection.get("items", []))
+	var bag_defs := JsonCoerceScript._copy_array(collection.get("bag_defs", []))
 	var tier_counts := {}
 	var bag_tiers := {}
 	for tier in TIERS:
 		tier_counts[tier] = 0
 	for bag_value in bag_defs:
-		var bag := _copy_dict(bag_value)
+		var bag := JsonCoerceScript._copy_dict(bag_value)
 		var bag_tier := str(bag.get("tier", "")).strip_edges()
 		var bag_itemdef_id := int(bag.get("itemdef_id", -1))
 		if not TIERS.has(bag_tier):
@@ -478,7 +529,7 @@ func _index_collection(collection: Dictionary, collection_id: String, used_itemd
 		if not bag_tiers.has(tier):
 			_validation_errors.append("Collection %s is missing a %s bag definition." % [collection_id, tier])
 	for item_value in items:
-		var item := _copy_dict(item_value)
+		var item := JsonCoerceScript._copy_dict(item_value)
 		var item_tier := str(item.get("tier", "")).strip_edges()
 		var itemdef_id := int(item.get("itemdef_id", -1))
 		if not TIERS.has(item_tier):
@@ -504,23 +555,23 @@ func _index_collection(collection: Dictionary, collection_id: String, used_itemd
 
 func _validate_item_bindings(collection_id: String, item: Dictionary) -> void:
 	var item_id := str(item.get("id", ""))
-	var effect := _copy_dict(item.get("base_effect", {}))
+	var effect := JsonCoerceScript._copy_dict(item.get("base_effect", {}))
 	for effect_key in effect.keys():
 		if not KNOWN_EFFECT_KEYS.has(str(effect_key)):
 			_validation_errors.append("Collection %s item %s has unknown base effect key %s." % [collection_id, item_id, str(effect_key)])
-	var bindings := _copy_dict(item.get("float_bindings", {}))
+	var bindings := JsonCoerceScript._copy_dict(item.get("float_bindings", {}))
 	for float_key in FLOAT_KEYS:
 		if not bindings.has(float_key):
 			_validation_errors.append("Collection %s item %s is missing %s binding." % [collection_id, item_id, str(float_key)])
-	var potency := _copy_dict(bindings.get("potency", {}))
+	var potency := JsonCoerceScript._copy_dict(bindings.get("potency", {}))
 	var potency_key := str(potency.get("effect_key", ""))
 	if potency_key.is_empty() or not KNOWN_EFFECT_KEYS.has(potency_key):
 		_validation_errors.append("Collection %s item %s has unknown potency effect key %s." % [collection_id, item_id, potency_key])
-	var resonance := _copy_dict(bindings.get("resonance", {}))
+	var resonance := JsonCoerceScript._copy_dict(bindings.get("resonance", {}))
 	var resonance_key := str(resonance.get("effect_key", ""))
 	if resonance_key.is_empty() or not KNOWN_EFFECT_KEYS.has(resonance_key):
 		_validation_errors.append("Collection %s item %s has unknown resonance effect key %s." % [collection_id, item_id, resonance_key])
-	var usage := _copy_dict(bindings.get("usage", {}))
+	var usage := JsonCoerceScript._copy_dict(bindings.get("usage", {}))
 	var decay_min := float(usage.get("decay_min", -1.0))
 	var decay_max := float(usage.get("decay_max", -1.0))
 	if decay_min < 0.0 or decay_max < decay_min:
@@ -528,17 +579,17 @@ func _validate_item_bindings(collection_id: String, item: Dictionary) -> void:
 
 
 func _scaled_effect(definition: Dictionary, instance: Dictionary) -> Dictionary:
-	var effect := _copy_dict(definition.get("base_effect", {}))
-	var bindings := _copy_dict(definition.get("float_bindings", {}))
-	var potency := _copy_dict(bindings.get("potency", {}))
+	var effect := JsonCoerceScript._copy_dict(definition.get("base_effect", {}))
+	var bindings := JsonCoerceScript._copy_dict(definition.get("float_bindings", {}))
+	var potency := JsonCoerceScript._copy_dict(bindings.get("potency", {}))
 	var effect_key := str(potency.get("effect_key", ""))
 	if not effect_key.is_empty():
 		var raw_value := lerpf(float(potency.get("min", 0)), float(potency.get("max", 0)), clampf(float(instance.get("potency", 0.0)), 0.0, 1.0))
 		if float(instance.get("usage", 0.0)) <= 0.0:
-			var condition_binding := _copy_dict(bindings.get("condition", {}))
+			var condition_binding := JsonCoerceScript._copy_dict(bindings.get("condition", {}))
 			raw_value *= clampf(float(condition_binding.get("spent_potency_factor", 0.35)), 0.0, 1.0)
 		effect[effect_key] = int(round(raw_value))
-	var resonance := _copy_dict(bindings.get("resonance", {}))
+	var resonance := JsonCoerceScript._copy_dict(bindings.get("resonance", {}))
 	var resonance_key := str(resonance.get("effect_key", ""))
 	if not resonance_key.is_empty() and clampf(float(instance.get("resonance", 0.0)), 0.0, 1.0) >= clampf(float(resonance.get("threshold", 1.0)), 0.0, 1.0):
 		effect[resonance_key] = int(effect.get(resonance_key, 0)) + int(resonance.get("value", 0))
@@ -546,7 +597,7 @@ func _scaled_effect(definition: Dictionary, instance: Dictionary) -> Dictionary:
 
 
 func _roll_weighted_collection_tier(collection: Dictionary, rng: RngStream) -> String:
-	var drop_table := _copy_dict(collection.get("drop_table", {}))
+	var drop_table := JsonCoerceScript._copy_dict(collection.get("drop_table", {}))
 	var weighted: Array = []
 	var total := 0
 	for tier_value in TIERS:
@@ -561,7 +612,7 @@ func _roll_weighted_collection_tier(collection: Dictionary, rng: RngStream) -> S
 	var roll := rng.randi_range(1, total)
 	var running := 0
 	for entry_value in weighted:
-		var entry := _copy_dict(entry_value)
+		var entry := JsonCoerceScript._copy_dict(entry_value)
 		running += int(entry.get("weight", 0))
 		if roll <= running:
 			return str(entry.get("tier", "blue"))
@@ -569,7 +620,7 @@ func _roll_weighted_collection_tier(collection: Dictionary, rng: RngStream) -> S
 
 
 func _players_card_condition(definition: Dictionary) -> float:
-	var policy := _copy_dict(definition.get("durability_policy", {}))
+	var policy := JsonCoerceScript._copy_dict(definition.get("durability_policy", {}))
 	return clampf(float(policy.get("condition", 0.08)), 0.001, 0.10)
 
 
@@ -585,17 +636,3 @@ static func _hash_u32(text: String) -> int:
 		if hash < 0:
 			hash += HASH_MODULUS
 	return hash
-
-
-static func _copy_dict(value: Variant) -> Dictionary:
-	if typeof(value) != TYPE_DICTIONARY:
-		return {}
-	var dictionary: Dictionary = value
-	return dictionary.duplicate(true)
-
-
-static func _copy_array(value: Variant) -> Array:
-	if typeof(value) != TYPE_ARRAY:
-		return []
-	var array: Array = value
-	return array.duplicate(true)

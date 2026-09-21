@@ -1,4 +1,4 @@
-﻿{
+{
     "schema":  "beat_the_house.playtest06_owner_build/v1",
     "candidate_commit":  "4aba1829521c32951d14b264b074baa95956a358",
     "candidate_tree":  "eefc98702f36f9634e24b3a2160a1eb8b29534aa",
@@ -14,7 +14,7 @@
     "export_presets_sha256":  "958714e81d82a48a541351fdf1c46ec75848fb2f9cb759ce9b1d829305e44272",
     "tool_hashes":  [
                         {
-                            "path":  "tools/playtest06_owner_build.ps1",
+                            "path":  "tools/archive/playtest06/playtest06_owner_build.ps1",
                             "sha256":  "287595c2f3a6975fa77857ffeb8377ef02ef524ada49e18490dd31adabae54f1"
                         },
                         {
@@ -42,7 +42,7 @@
                             "sha256":  "9ab4df4dfc0d4fb96649e90fd6816058ce582b7ecee82e0e294b8553a5cdc6de"
                         },
                         {
-                            "path":  "tools/l02_web_perf_probe.mjs",
+                            "path":  "tools/archive/l02/l02_web_perf_probe.mjs",
                             "sha256":  "381de1198161480c6fff6db252486606b187801d2d5600f023cb0254c6b80e4c"
                         },
                         {

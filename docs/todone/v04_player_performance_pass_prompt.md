@@ -31,13 +31,13 @@ code. Slowdown introduced this week must be found here, not by players.
 
 ## Reference baselines (the numbers to beat, from committed ledgers)
 
-- `docs/plans/0.3.2_release_checklist.md`: per-surface idle draw p95 (all
+- `docs/archive/0.3/plans/0.3.2_release_checklist.md`: per-surface idle draw p95 (all
   0.000 except blackjack ≤1.721/2.026 waiver), per-game resolve budgets
   (e.g. roulette 2/3/4ms, blackjack 4.5/5.5/7ms), slot autoplay active
   3.254/3.410, web-smoke frame/draw-call/memory tables, boot timeline.
 - The baseline-recovery execution record and commit `066e479` ("Recover
   table surface idle performance") — the most recent accepted idle numbers.
-- `docs/plans/0.3.1_release_checklist.md` soak slopes (memory/node/object
+- `docs/archive/0.3/plans/0.3.1_release_checklist.md` soak slopes (memory/node/object
   growth caps).
 
 ## Part 1 — Instrumented player-style playthrough

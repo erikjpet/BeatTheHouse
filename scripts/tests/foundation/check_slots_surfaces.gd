@@ -1,5 +1,7 @@
 extends "res://scripts/tests/foundation/check_core_content.gd"
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 const SlotsBlackjackAuthorityDriver := preload("res://scripts/tests/foundation/blackjack_authority_test_driver.gd")
 const BarDiceFoundationMainScript := preload("res://scripts/ui/foundation_main.gd")
 
@@ -1861,9 +1863,9 @@ func _check_skill_cheat_item_content_reachability(library: ContentLibrary, failu
 		if group_def.is_empty():
 			failures.append("Skill-cheat item support group is missing: %s." % group_id)
 			continue
-		var group_items := _string_array(group_def.get("item_ids", []))
+		var group_items := JsonCoerceScript._string_array(group_def.get("item_ids", []))
 		var shop_pool := library.shop_item_pool_for_challenge([], {"modifiers": {"content_groups": [group_id]}})
-		for item_id_value in _string_array(expectation.get("items", [])):
+		for item_id_value in JsonCoerceScript._string_array(expectation.get("items", [])):
 			var item_id := str(item_id_value)
 			var item_def := library.item(item_id)
 			if item_def.is_empty():
@@ -1871,7 +1873,7 @@ func _check_skill_cheat_item_content_reachability(library: ContentLibrary, failu
 				continue
 			if not group_items.has(item_id):
 				failures.append("Skill-cheat support item %s is not listed in content group %s." % [item_id, group_id])
-			if not _string_array(item_def.get("content_groups", [])).has(group_id):
+			if not JsonCoerceScript._string_array(item_def.get("content_groups", [])).has(group_id):
 				failures.append("Skill-cheat support item %s does not declare content group %s." % [item_id, group_id])
 			if not shop_pool.has(item_id):
 				failures.append("Skill-cheat support item %s is not reachable from shop pools for %s." % [item_id, group_id])
@@ -2026,7 +2028,7 @@ func _check_roulette_spin_lands_on_result(game: GameModule, result_surface: Dict
 	if last_result.is_empty() or trajectory.is_empty():
 		failures.append("Roulette landing fixture missing result or trajectory.")
 		return
-	var sequence := _string_array(result_surface.get("wheel_sequence", []))
+	var sequence := JsonCoerceScript._string_array(result_surface.get("wheel_sequence", []))
 	var count := maxi(1, sequence.size())
 	var winning_index := int(last_result.get("winning_index", -1))
 	if winning_index < 0 or winning_index >= count:
@@ -2507,7 +2509,7 @@ func _check_premium_grand_casino_table_contract(library: ContentLibrary, game_id
 	if boss_archetype.is_empty():
 		failures.append("Grand Casino premium %s audit requires the grand_casino_high_limit archetype." % game_id)
 		return
-	if not _string_array(boss_archetype.get("game_pool", [])).has(game_id):
+	if not JsonCoerceScript._string_array(boss_archetype.get("game_pool", [])).has(game_id):
 		failures.append("Grand Casino premium audit expected %s in the High Limit game pool." % game_id)
 		return
 
@@ -3651,7 +3653,7 @@ func _mutation_firewall_game_run_state(library: ContentLibrary, game: GameModule
 		"stake_floor": 1,
 		"stake_ceiling": 200,
 	}
-	var game_states := _copy_dict(environment.get("game_states", {}))
+	var game_states := JsonCoerceScript._copy_dict(environment.get("game_states", {}))
 	var generated_state := game.generate_environment_state(run_state, environment, run_state.create_rng("mutation_firewall_state_%s" % game_id))
 	if not generated_state.is_empty():
 		game_states[game_id] = generated_state.duplicate(true)
@@ -3942,7 +3944,7 @@ func _check_one_machine_challenge(library: ContentLibrary, failures: Array) -> v
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("ONE-MACHINE-GEN", config)
 	var environment := EnvironmentInstance.from_archetype(slot_archetype, 1, run_state.create_rng("one_machine"), library, run_state.challenge_config)
-	for game_id in _string_array(environment.game_ids):
+	for game_id in JsonCoerceScript._string_array(environment.game_ids):
 		if game_id != "slot":
 			failures.append("One Machine generated non-slot game %s." % game_id)
 
@@ -3977,7 +3979,7 @@ func _first_definition(values: Array) -> Dictionary:
 
 func _count_string_occurrences(values: Variant, target: String) -> int:
 	var count := 0
-	for id in _string_array(values):
+	for id in JsonCoerceScript._string_array(values):
 		if str(id) == target:
 			count += 1
 	return count

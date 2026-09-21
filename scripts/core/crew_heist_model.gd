@@ -1,6 +1,8 @@
 class_name CrewHeistModel
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 # Deterministic, boundary-driven state model for the two launch heists.
 
 const CONFIG_PATH := "res://data/crew/heist.json"
@@ -81,19 +83,19 @@ static func normalize_state(value: Variant) -> Dictionary:
 		"plan_id": plan_id,
 		"status": status,
 		"locked_action": maxi(0, int(source.get("locked_action", 0))),
-		"setup": _copy_dict(source.get("setup", {})),
-		"play": _copy_dict(source.get("play", {})),
-		"getaway": _copy_dict(source.get("getaway", {})),
+		"setup": JsonCoerceScript._copy_dict(source.get("setup", {})),
+		"play": JsonCoerceScript._copy_dict(source.get("play", {})),
+		"getaway": JsonCoerceScript._copy_dict(source.get("getaway", {})),
 		"outcome": str(source.get("outcome", "")),
 		"payout": maxi(0, int(source.get("payout", 0))),
-		"r": _copy_dict(source.get("r", {"v": 1, "s": "0"})),
+		"r": JsonCoerceScript._copy_dict(source.get("r", {"v": 1, "s": "0"})),
 		"x": CrewTurnModelScript.normalize_state(source.get("x", {}), ["crew_rook", "crew_velvet", "crew_knuckles", "crew_switch", "crew_mags", "crew_bishop", "crew_lucky"]),
 		"q": _tombstones(source.get("q", [])),
 	}
 	if source.has("abort"):
-		result["abort"] = _copy_dict(source.get("abort", {}))
+		result["abort"] = JsonCoerceScript._copy_dict(source.get("abort", {}))
 	if source.has("interview"):
-		result["interview"] = _copy_dict(source.get("interview", {}))
+		result["interview"] = JsonCoerceScript._copy_dict(source.get("interview", {}))
 	return result
 
 
@@ -135,7 +137,7 @@ static func setup_complete(state_value: Variant) -> bool:
 	var state := normalize_state(state_value)
 	if state.is_empty():
 		return false
-	var setup := _copy_dict(state.get("setup", {}))
+	var setup := JsonCoerceScript._copy_dict(state.get("setup", {}))
 	if str(state.get("plan_id", "")) == PLAN_COUNT:
 		return bool(setup.get("identity", false)) and bool(setup.get("schedule", false)) and bool(setup.get("swap_cart", false))
 	return bool(setup.get("vouch", false)) and bool(setup.get("rig", false)) and bool(setup.get("name", false)) and bool(setup.get("drunk", false))
@@ -159,7 +161,7 @@ static func ladder(score: int, getaway_success: bool, made: bool = false, bust: 
 static func payout_for(state_value: Variant, outcome: String) -> int:
 	var state := normalize_state(state_value)
 	var definition := plan(str(state.get("plan_id", "")))
-	var tuning := _copy_dict(definition.get("payout", {}))
+	var tuning := JsonCoerceScript._copy_dict(definition.get("payout", {}))
 	if str(state.get("plan_id", "")) == PLAN_COUNT:
 		var value := int(tuning.get("base", 0))
 		if outcome == "clean_sweep":
@@ -167,18 +169,18 @@ static func payout_for(state_value: Variant, outcome: String) -> int:
 		elif outcome == "somebody_got_pinched":
 			value -= int(tuning.get("hot_penalty", 0))
 		return maxi(0, value)
-	var play := _copy_dict(state.get("play", {}))
+	var play := JsonCoerceScript._copy_dict(state.get("play", {}))
 	return clampi(int(play.get("pot", tuning.get("minimum", 0))), int(tuning.get("minimum", 0)), int(tuning.get("maximum", 0)))
 
 
 static func ending_line(plan_id: String, outcome: String) -> String:
-	return str(_copy_dict(_copy_dict(config().get("ending_copy", {})).get(plan_id, {})).get(outcome, "The crew leaves before the room can name what happened."))
+	return str(JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(config().get("ending_copy", {})).get(plan_id, {})).get(outcome, "The crew leaves before the room can name what happened."))
 
 
 static func plan_surface(plan_id: String) -> Dictionary:
 	if not PLAN_IDS.has(plan_id) or plan(plan_id).is_empty(): return {}
 	if plan_id == PLAN_COUNT:
-		var decision_rounds := _copy_dict(_copy_dict(plan(PLAN_COUNT).get("play", {})).get("decision_rounds", {}))
+		var decision_rounds := JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(plan(PLAN_COUNT).get("play", {})).get("decision_rounds", {}))
 		return {
 			"plan_id": PLAN_COUNT, "label": "The Count", "phases": [
 				_phase("plan", "planning_table", ["review_plan"]),
@@ -224,7 +226,7 @@ static func dependency_proposal(plan_id: String, dependency_id: String) -> Dicti
 		"the_whale_game:clean_walk": {"id": "clean_walk", "place": "front_door", "requires": ["host_cage_receipt", "host_clean_score", "host_zero_pursuit"], "public_verbs": ["arrive", "present_receipt", "walk", "leave"]},
 		"the_whale_game:hot_chase": {"id": "hot_chase", "place": "street_exit", "requires": ["host_interview_result", "host_shared_chase"], "public_verbs": ["arrive", "run", "board", "escape"]},
 	}
-	var proposal := _copy_dict(proposals.get("%s:%s" % [plan_id, dependency_id], {}))
+	var proposal := JsonCoerceScript._copy_dict(proposals.get("%s:%s" % [plan_id, dependency_id], {}))
 	if proposal.is_empty(): return {}
 	proposal.merge({"authoritative": false, "can_mutate": false, "authority_gap": SURFACE_AUTHORITY_GAP})
 	return proposal
@@ -242,7 +244,7 @@ static func objective_evidence_requirements(plan_id: String, objective_id: Strin
 		"the_whale_game:drunk": {"source_kind": "automatic_plan_beat"},
 		"the_whale_game:invitational": {"source_kind": "settled_game_sequence", "game_sequence": ["craps", "blackjack", "craps", "baccarat", "blackjack"], "requires_game_specific_settlement": true, "lifelines_source": "finite_coordinated_play_state"},
 	}
-	var proposal := _copy_dict(requirements.get("%s:%s" % [plan_id, objective_id], {}))
+	var proposal := JsonCoerceScript._copy_dict(requirements.get("%s:%s" % [plan_id, objective_id], {}))
 	if proposal.is_empty(): return {}
 	proposal.merge({"authoritative": false, "can_mutate": false, "authority_gap": SURFACE_AUTHORITY_GAP})
 	return proposal
@@ -288,7 +290,7 @@ static func sequence_mount_marker(state_value: Variant) -> Dictionary:
 static func outcome_ladder_public() -> Array:
 	var result: Array = []
 	for outcome_value in config().get("outcomes", []):
-		var outcome := _copy_dict(outcome_value)
+		var outcome := JsonCoerceScript._copy_dict(outcome_value)
 		result.append({"id": str(outcome.get("id", "")), "label": str(outcome.get("label", "")), "score_min": int(outcome.get("score_min", 0))})
 	return result
 
@@ -296,8 +298,8 @@ static func outcome_ladder_public() -> Array:
 static func aftermath_public(plan_id: String, outcome: String, cause: String) -> Dictionary:
 	if not PLAN_IDS.has(plan_id) or outcome not in ["somebody_got_pinched", "closed"] or cause not in ["mechanical", "confrontation"]: return {}
 	var beat := "identity_shortfall" if plan_id == PLAN_COUNT and cause == "mechanical" else "corridor_closes" if plan_id == PLAN_COUNT else "table_breaks" if cause == "mechanical" else "rig_is_read"
-	var semantics := _copy_dict(plan(plan_id).get("semantics", {}))
-	var descriptor := _copy_dict(_copy_dict(semantics.get("failure_beats", {})).get(beat, {}))
+	var semantics := JsonCoerceScript._copy_dict(plan(plan_id).get("semantics", {}))
+	var descriptor := JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(semantics.get("failure_beats", {})).get(beat, {}))
 	if descriptor.is_empty(): return {}
 	return {
 		"plan_id": plan_id, "outcome": outcome, "cause_public": cause, "aftermath_beat": beat, "descriptor": descriptor,
@@ -314,8 +316,8 @@ static func _decision(id: String, phase: String, round: int, place: String, choi
 
 
 static func _phase_by_id(phases_value: Variant, phase_id: String) -> Dictionary:
-	for phase_value in _copy_array(phases_value):
-		var phase := _copy_dict(phase_value)
+	for phase_value in JsonCoerceScript._copy_array(phases_value):
+		var phase := JsonCoerceScript._copy_dict(phase_value)
 		if str(phase.get("id", "")) == phase_id: return phase
 	return {}
 
@@ -323,10 +325,10 @@ static func _phase_by_id(phases_value: Variant, phase_id: String) -> Dictionary:
 static func _available_decisions(state: Dictionary, surface: Dictionary) -> Array:
 	var result: Array = []
 	var status := str(state.get("status", ""))
-	var play := _copy_dict(state.get("play", {}))
-	var made: Dictionary = _copy_dict(play.get("decisions", {}))
-	for decision_value in _copy_array(surface.get("decisions", [])):
-		var decision := _copy_dict(decision_value)
+	var play := JsonCoerceScript._copy_dict(state.get("play", {}))
+	var made: Dictionary = JsonCoerceScript._copy_dict(play.get("decisions", {}))
+	for decision_value in JsonCoerceScript._copy_array(surface.get("decisions", [])):
+		var decision := JsonCoerceScript._copy_dict(decision_value)
 		var decision_id := str(decision.get("id", ""))
 		if str(decision.get("phase", "")) != status or made.has(decision_id): continue
 		var boundary := int(decision.get("round", -1))
@@ -342,7 +344,7 @@ static func _production_decision_evidence_valid(state: Dictionary, decision_id: 
 		return str(evidence.get("source_kind", "")) == "settled_game_session" and bool(evidence.get("settled", false)) \
 			and str(evidence.get("session_id", "")).strip_edges().length() > 0 and str(evidence.get("game_id", "")) == "blackjack" \
 			and str(evidence.get("environment_archetype_id", "")) in ["grand_casino", "grand_casino_high_limit"] \
-			and int(evidence.get("round", -1)) == int(_copy_dict(state.get("play", {})).get("round", -2))
+			and int(evidence.get("round", -1)) == int(JsonCoerceScript._copy_dict(state.get("play", {})).get("round", -2))
 	if not _exact_keys(evidence, ["place_role", "receipt_verified", "source_kind"]): return false
 	if str(evidence.get("source_kind", "")) != "cage_interview" or str(evidence.get("place_role", "")) != "grand_casino_cage": return false
 	return decision_id == "cut_short" or bool(evidence.get("receipt_verified", false))
@@ -365,33 +367,33 @@ static func validate_content() -> Array:
 			continue
 		var row: Dictionary = value
 		ids.append(str(row.get("id", "")))
-		if _copy_array(row.get("world_criteria", [])).is_empty() or _copy_array(row.get("crew_criteria", [])).is_empty() or _copy_dict(row.get("setup", {})).is_empty() or _copy_dict(row.get("play", {})).is_empty() or _copy_dict(row.get("getaway", {})).is_empty():
+		if JsonCoerceScript._copy_array(row.get("world_criteria", [])).is_empty() or JsonCoerceScript._copy_array(row.get("crew_criteria", [])).is_empty() or JsonCoerceScript._copy_dict(row.get("setup", {})).is_empty() or JsonCoerceScript._copy_dict(row.get("play", {})).is_empty() or JsonCoerceScript._copy_dict(row.get("getaway", {})).is_empty():
 			failures.append("Heist plan %s is missing criteria or phase tuning." % str(row.get("id", "")))
 		var expected_architects := ["crew_bishop"] if str(row.get("id", "")) == PLAN_COUNT else ["crew_velvet", "crew_mags"]
-		if _copy_array(row.get("architects", [])) != expected_architects:
+		if JsonCoerceScript._copy_array(row.get("architects", [])) != expected_architects:
 			failures.append("Heist plan %s must expose its exact crew06_9 loyal-architect set." % str(row.get("id", "")))
-		var setup := _copy_dict(row.get("setup", {}))
-		var play := _copy_dict(row.get("play", {}))
+		var setup := JsonCoerceScript._copy_dict(row.get("setup", {}))
+		var play := JsonCoerceScript._copy_dict(row.get("play", {}))
 		if str(row.get("id", "")) == PLAN_COUNT:
-			var decision_rounds := _copy_dict(play.get("decision_rounds", {}))
+			var decision_rounds := JsonCoerceScript._copy_dict(play.get("decision_rounds", {}))
 			if int(play.get("window_actions", 0)) <= 0 or int(decision_rounds.get("go", -1)) != 0 or int(decision_rounds.get("distraction", -1)) != 1 or int(decision_rounds.get("exit", -1)) != 2:
 				failures.append("The Count must author its action window and three interleaved decision rounds.")
-			var routes := _copy_dict(_copy_dict(row.get("getaway", {})).get("routes", {}))
+			var routes := JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(row.get("getaway", {})).get("routes", {}))
 			if not routes.has("dock") or not routes.has("corridor"):
 				failures.append("The Count must author distinct dock and corridor getaway routes.")
 		else:
-			if _copy_array(play.get("game_sequence", [])) != ["craps", "blackjack", "craps", "baccarat", "blackjack"]:
+			if JsonCoerceScript._copy_array(play.get("game_sequence", [])) != ["craps", "blackjack", "craps", "baccarat", "blackjack"]:
 				failures.append("The Whale Game must author its mixed craps/card invitational sequence.")
-			var rig := _copy_dict(setup.get("rig", {}))
+			var rig := JsonCoerceScript._copy_dict(setup.get("rig", {}))
 			if str(rig.get("component_item", "")) != "false_bottom_cup" or str(rig.get("training_flag", "")) != "craps_setting_trained":
 				failures.append("The Whale Game rig schema must match its reachable item and training producers.")
-			if _copy_dict(row.get("interview", {})).is_empty():
+			if JsonCoerceScript._copy_dict(row.get("interview", {})).is_empty():
 				failures.append("The Whale Game must author its cage interview beat.")
 	if ids != PLAN_IDS:
 		failures.append("heist.json must ship Plans A and B only, in contract order.")
-	failures.append_array(CrewTurnModelScript.validate_tuning(_copy_dict(source.get("hidden_resolution", {}))))
-	var outcomes := _copy_array(source.get("outcomes", []))
-	if outcomes.size() != 4 or str(_copy_dict(outcomes[3]).get("id", "")) != "closed":
+	failures.append_array(CrewTurnModelScript.validate_tuning(JsonCoerceScript._copy_dict(source.get("hidden_resolution", {}))))
+	var outcomes := JsonCoerceScript._copy_array(source.get("outcomes", []))
+	if outcomes.size() != 4 or str(JsonCoerceScript._copy_dict(outcomes[3]).get("id", "")) != "closed":
 		failures.append("heist.json must fill the outcome ladder's fourth slot with the hidden failure beat.")
 	for forbidden in ["the_jackpot_job", "lights_out"]:
 		if JSON.stringify(source).to_lower().find(forbidden) != -1:
@@ -399,18 +401,10 @@ static func validate_content() -> Array:
 	return failures
 
 
-static func _copy_dict(value: Variant) -> Dictionary:
-	return (value as Dictionary).duplicate(true) if typeof(value) == TYPE_DICTIONARY else {}
-
-
-static func _copy_array(value: Variant) -> Array:
-	return (value as Array).duplicate(true) if typeof(value) == TYPE_ARRAY else []
-
-
 static func _tombstones(value: Variant) -> Array:
 	var result: Array = []
-	for row_value in _copy_array(value):
-		var row := _copy_dict(row_value)
+	for row_value in JsonCoerceScript._copy_array(value):
+		var row := JsonCoerceScript._copy_dict(row_value)
 		if not _exact_keys(row, ["a", "c", "p"]) or int(row.get("a", -1)) < 0 or int(row.get("c", 0)) < 1 or int(row.get("c", 0)) > 99 or int(row.get("p", 0)) < 1 or int(row.get("p", 0)) > 9: continue
 		result.append({"a": int(row.get("a", 0)), "c": int(row.get("c", 0)), "p": int(row.get("p", 0))})
 	while result.size() > TOMBSTONE_LIMIT: result.pop_front()

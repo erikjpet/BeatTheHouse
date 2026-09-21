@@ -1,6 +1,8 @@
 class_name ScratchTicketRegionModel
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 const LAYOUT_VERSION := 11
 const REGION_DATA_PATH := "res://data/games/scratch_ticket_regions.json"
 const ART_ROOT := "res://assets/art/scratch_tickets/layers/"
@@ -12,7 +14,7 @@ static var _data_cache: Dictionary = {}
 
 
 static func build(ticket: Dictionary) -> Array:
-	var spots := _dictionary_array(ticket.get("spots", []))
+	var spots := JsonCoerceScript._dictionary_array(ticket.get("spots", []))
 	var definitions := _definitions(str(ticket.get("type_id", "")))
 	return _build_from_spots(spots, definitions)
 
@@ -56,7 +58,7 @@ static func _build_from_spots(spots: Array, definitions: Array) -> Array:
 
 
 static func _definitions(type_id: String) -> Array:
-	return _dictionary_array(_data().get("regions", {}).get(type_id, []))
+	return JsonCoerceScript._dictionary_array(_data().get("regions", {}).get(type_id, []))
 
 
 static func rect_for(region: Dictionary, art_frame: Rect2, field: String = "art_rect") -> Rect2:
@@ -117,12 +119,3 @@ static func _data() -> Dictionary:
 	if int(_data_cache.get("layout_version", 0)) != LAYOUT_VERSION:
 		push_error("Scratch ticket region data layout version does not match runtime layout version.")
 	return _data_cache
-
-
-static func _dictionary_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) == TYPE_ARRAY:
-		for entry in value as Array:
-			if typeof(entry) == TYPE_DICTIONARY:
-				result.append(entry)
-	return result

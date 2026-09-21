@@ -27,7 +27,7 @@ Evidence:
 - `.tmp/performance_playtest_audit/multi_slot_scaling_report.json`
 - `.tmp/performance_playtest_audit/save_storage_profile_report.json`
 - `user://foundation_soak_probe_report.json` from the current 30-minute soak
-- `docs/plans/0.5_performance_audit.md` for the existing native, Web, resolve,
+- `docs/archive/0.5/plans/0.5_performance_audit.md` for the existing native, Web, resolve,
   liveness, and visual-performance contracts
 
 ## Non-negotiable player-equivalence contract

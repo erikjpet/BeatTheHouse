@@ -497,11 +497,18 @@ static func _check_read_only_visual_composition(failures: Array) -> void:
 		"present": true, "visible": true, "enabled": true, "label": "Readable fixture", "role": "evidence",
 		"state": "present", "description": "Scuffs on the fixture show where the room changed.", "description_variants": {},
 	}
-	var authority_record := ScenarioLayoutResolverScript._authority_record(
-		"scenario::readable_fixture", "scenario::readable_fixture",
-		{"x": 0.2, "y": 0.2, "w": 0.1, "h": 0.1}, {"x": 0.2, "y": 0.2, "w": 0.1, "h": 0.1},
-		1, "scene_object", "semantic_visual", [], {}, true, true, false
-	)
+	var authority_record := ScenarioLayoutResolverScript._authority_record(FunctionOptions.ScenarioAuthorityRecordOptions.from({
+		"identity": "scenario::readable_fixture",
+		"presentation_object_id": "scenario::readable_fixture",
+		"normal": {"x": 0.2, "y": 0.2, "w": 0.1, "h": 0.1},
+		"small": {"x": 0.2, "y": 0.2, "w": 0.1, "h": 0.1},
+		"z_order": 1,
+		"visual_kind": "scene_object",
+		"source": "semantic_visual",
+		"presentation_required": true,
+		"presentation_visible": true,
+		"presentation_interactive": false,
+	}))
 	var authority := {"scenario::readable_fixture": authority_record}
 	var seal_errors: Array = []
 	ScenarioLayoutResolverScript._seal_projection_coverage(authority, {"scene_objects": {"scenario::readable_fixture": semantic}, "actors": {}, "interactions": {}}, seal_errors)
@@ -825,12 +832,14 @@ static func _runtime_description_trace(definition: Dictionary, initial_state: Di
 				var command_id := str(condition.get("command_id", ""))
 				var origin := _find_action_origin(state, command_id)
 				var descriptor := ScenarioSequenceRuntimeScript._command_descriptor(state, definition, str(origin.get("owner_namespace", "")), str(origin.get("stable_object_id", "")), command_id, {})
-				var command := ScenarioSequenceRuntimeScript.command(
-					command_id, str(state.get("node_id", "")), str(state.get("phase_id", "")), "env06_8:%s:%d:%d" % [scenario_id, serial, branch_index], {},
-					str(origin.get("owner_namespace", "")), str(origin.get("stable_object_id", "")),
-					str(descriptor.get("action_origin_owner_namespace", "")), str(descriptor.get("action_origin_stable_object_id", "")),
-					str(descriptor.get("action_origin_receipt_key", "")), str(descriptor.get("action_origin_boundary_id", "")), str(descriptor.get("action_origin_fingerprint", ""))
-				)
+				var command := ScenarioSequenceRuntimeScript.command(FunctionOptions.scenario_sequence_command(command_id, str(state.get("node_id", "")), str(state.get("phase_id", "")), "env06_8:%s:%d:%d" % [scenario_id, serial, branch_index], {
+					"payload": {}, "owner_namespace": str(origin.get("owner_namespace", "")), "stable_object_id": str(origin.get("stable_object_id", "")),
+					"action_origin_owner_namespace": str(descriptor.get("action_origin_owner_namespace", "")),
+					"action_origin_stable_object_id": str(descriptor.get("action_origin_stable_object_id", "")),
+					"action_origin_receipt_key": str(descriptor.get("action_origin_receipt_key", "")),
+					"action_origin_boundary_id": str(descriptor.get("action_origin_boundary_id", "")),
+					"action_origin_fingerprint": str(descriptor.get("action_origin_fingerprint", "")),
+				}))
 				applied = ScenarioSequenceRuntimeScript.apply_command(state, definition, command, {"available_funds": 100000})
 			else:
 				applied = _apply_trace_fact(state, definition, condition, scenario_id, serial, branch_index)
@@ -891,12 +900,14 @@ static func reachable_public_states(definition: Dictionary, initial_state: Dicti
 				var command_id := str(condition.get("command_id", ""))
 				var origin := _find_action_origin(state, command_id)
 				var descriptor := ScenarioSequenceRuntimeScript._command_descriptor(state, definition, str(origin.get("owner_namespace", "")), str(origin.get("stable_object_id", "")), command_id, {})
-				var command := ScenarioSequenceRuntimeScript.command(
-					command_id, str(state.get("node_id", "")), str(state.get("phase_id", "")), "grounding:%s:%d:%d" % [scenario_id, serial, branch_index], {},
-					str(origin.get("owner_namespace", "")), str(origin.get("stable_object_id", "")),
-					str(descriptor.get("action_origin_owner_namespace", "")), str(descriptor.get("action_origin_stable_object_id", "")),
-					str(descriptor.get("action_origin_receipt_key", "")), str(descriptor.get("action_origin_boundary_id", "")), str(descriptor.get("action_origin_fingerprint", ""))
-				)
+				var command := ScenarioSequenceRuntimeScript.command(FunctionOptions.scenario_sequence_command(command_id, str(state.get("node_id", "")), str(state.get("phase_id", "")), "grounding:%s:%d:%d" % [scenario_id, serial, branch_index], {
+					"payload": {}, "owner_namespace": str(origin.get("owner_namespace", "")), "stable_object_id": str(origin.get("stable_object_id", "")),
+					"action_origin_owner_namespace": str(descriptor.get("action_origin_owner_namespace", "")),
+					"action_origin_stable_object_id": str(descriptor.get("action_origin_stable_object_id", "")),
+					"action_origin_receipt_key": str(descriptor.get("action_origin_receipt_key", "")),
+					"action_origin_boundary_id": str(descriptor.get("action_origin_boundary_id", "")),
+					"action_origin_fingerprint": str(descriptor.get("action_origin_fingerprint", "")),
+				}))
 				applied = ScenarioSequenceRuntimeScript.apply_command(state, definition, command, {"available_funds": 100000})
 			else:
 				applied = _apply_trace_fact(state, definition, condition, scenario_id, serial, branch_index)

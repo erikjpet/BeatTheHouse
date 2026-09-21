@@ -1,5 +1,7 @@
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 
 static func game_view_snapshot(host: Variant, read_only_render_result: bool = false) -> Dictionary:
 	var display_name = "Choose a game"
@@ -98,7 +100,7 @@ static func game_view_snapshot(host: Variant, read_only_render_result: bool = fa
 		"bankroll_delta": result_bankroll_delta,
 		"suspicion_delta": int(result.get("suspicion_delta", deltas.get("suspicion_delta", 0))),
 		"result_stake": int(result.get("stake", 0)),
-		"ticket_symbols": host._copy_array(result.get("ticket_symbols", [])),
+		"ticket_symbols": JsonCoerceScript._copy_array(result.get("ticket_symbols", [])),
 		"won": bool(result.get("won", false)),
 		"state": str(result.get("state", GameModule.RESULT_CONTINUE)),
 		"summary_source": str(result.get("summary_source", "active_game" if host.current_game != null else "")),
@@ -256,7 +258,7 @@ static func embedded_action_view_patch(host: Variant, current_state: Dictionary)
 		"bankroll_delta": result_bankroll_delta,
 		"suspicion_delta": int(result.get("suspicion_delta", deltas.get("suspicion_delta", 0))),
 		"result_stake": int(result.get("stake", 0)),
-		"ticket_symbols": host._copy_array(result.get("ticket_symbols", [])),
+		"ticket_symbols": JsonCoerceScript._copy_array(result.get("ticket_symbols", [])),
 		"won": bool(result.get("won", false)),
 		"state": str(result.get("state", GameModule.RESULT_CONTINUE)),
 		"summary_source": str(result.get("summary_source", "active_game")),
@@ -449,13 +451,13 @@ static func surface_cast_for_renderer(host: Variant, renderer: String) -> String
 static func game_test_environment(host: Variant, game_id: String, game: GameModule) -> Dictionary:
 	var definition = host.library.game(game_id)
 	var archetype = host._game_test_archetype()
-	var visual_context = host._copy_dict(archetype.get("visual_context", {}))
+	var visual_context = JsonCoerceScript._copy_dict(archetype.get("visual_context", {}))
 	if visual_context.is_empty():
 		visual_context = {"art_key": str(archetype.get("id", "test_lab"))}
 	var archetype_id = str(archetype.get("id", "test_lab"))
-	var security_profile = host._copy_dict(archetype.get("security_profile", {}))
+	var security_profile = JsonCoerceScript._copy_dict(archetype.get("security_profile", {}))
 	security_profile["strictness"] = host._game_test_security_strictness()
-	var economic_profile = host._copy_dict(archetype.get("economic_profile", {}))
+	var economic_profile = JsonCoerceScript._copy_dict(archetype.get("economic_profile", {}))
 	economic_profile["stake_floor"] = host._game_test_stake_floor()
 	economic_profile["stake_ceiling"] = host._game_test_stake_ceiling()
 	var environment = {
@@ -467,9 +469,9 @@ static func game_test_environment(host: Variant, game_id: String, game: GameModu
 		"depth": 4,
 		"art_key": str(visual_context.get("art_key", archetype_id)),
 		"visual_context": visual_context,
-		"layout": host._copy_dict(archetype.get("layout", {})),
+		"layout": JsonCoerceScript._copy_dict(archetype.get("layout", {})),
 		"security_profile": security_profile,
-		"music_profile": host._copy_dict(archetype.get("music_profile", {})),
+		"music_profile": JsonCoerceScript._copy_dict(archetype.get("music_profile", {})),
 		"economic_profile": economic_profile,
 		"objective_hint": "Practice the table.",
 		"demo_objective": {},
@@ -479,25 +481,25 @@ static func game_test_environment(host: Variant, game_id: String, game: GameModu
 		"item_offers": [],
 		"service_ids": [],
 		"lender_hooks": [],
-		"suspicion_cues": host._copy_array(archetype.get("suspicion_cues", [])),
+		"suspicion_cues": JsonCoerceScript._copy_array(archetype.get("suspicion_cues", [])),
 		"travel_hooks": [],
 		"next_archetypes": [],
 		"local_narrative_flags": {"practice_session": true},
-		"moods": host._copy_array(archetype.get("moods", ["boss"])),
+		"moods": JsonCoerceScript._copy_array(archetype.get("moods", ["boss"])),
 		"mood": "boss",
 		"turns": 0,
 		"resolved_event_ids": [],
 	}
 	var overrides = host._game_test_generation_overrides()
-	var environment_overrides = host._copy_dict(overrides.get("environment", {}))
+	var environment_overrides = JsonCoerceScript._copy_dict(overrides.get("environment", {}))
 	if not environment_overrides.is_empty():
 		host._deep_merge_dict(environment, environment_overrides)
 	if game_id == "slot":
 		# The Slot practice room doubles as the production stress room: expose one
 		# fixture for every family/format identity so six cabinets can autoplay while
 		# the player watches any one of them.
-		var slot_layout: Dictionary = host._copy_dict(environment.get("layout", {}))
-		var fixture_counts: Dictionary = host._copy_dict(slot_layout.get("game_fixture_counts", {}))
+		var slot_layout: Dictionary = JsonCoerceScript._copy_dict(environment.get("layout", {}))
+		var fixture_counts: Dictionary = JsonCoerceScript._copy_dict(slot_layout.get("game_fixture_counts", {}))
 		fixture_counts[game_id] = 6
 		slot_layout["game_fixture_counts"] = fixture_counts
 		slot_layout["game_spots"] = [
@@ -510,7 +512,7 @@ static func game_test_environment(host: Variant, game_id: String, game: GameModu
 		rng.configure(1)
 	var generated = game.generate_environment_state(host.run_state, environment, rng.fork("game_state:%s" % game_id))
 	if not generated.is_empty():
-		var state_overrides = host._copy_dict(overrides.get("game_state", {}))
+		var state_overrides = JsonCoerceScript._copy_dict(overrides.get("game_state", {}))
 		if state_overrides.is_empty() and not overrides.has("environment"):
 			state_overrides = overrides
 		if not state_overrides.is_empty():
@@ -518,7 +520,7 @@ static func game_test_environment(host: Variant, game_id: String, game: GameModu
 		if game_id == "scratch_tickets":
 			_set_scratch_ticket_practice_stock(generated)
 		var states: Dictionary = environment.get("game_states", {})
-		var fixture_counts: Dictionary = host._copy_dict(host._copy_dict(environment.get("layout", {})).get("game_fixture_counts", {}))
+		var fixture_counts: Dictionary = JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(environment.get("layout", {})).get("game_fixture_counts", {}))
 		var fixture_count := maxi(1, int(fixture_counts.get(game_id, 1)))
 		var fixture_states: Dictionary = {}
 		if fixture_count > 1 and game.has_method("generate_environment_fixture_states"):
@@ -765,7 +767,7 @@ static func eligible_event_option_view_list(host: Variant) -> Array:
 	if host.run_state == null or host.library == null:
 		return []
 	var options: Array = []
-	for event_id in host._string_array(host.run_state.current_environment.get("event_ids", [])):
+	for event_id in JsonCoerceScript._raw_string_array(host.run_state.current_environment.get("event_ids", [])):
 		if event_id == RunState.GRAND_CASINO_HIGH_ROLLER_EVENT_ID and host.run_state.is_grand_casino_environment():
 			continue
 		var option = host._eligible_event_option(event_id)
@@ -819,9 +821,9 @@ static func eligible_event_option_with_context(host: Variant, event_id: String, 
 			"label": str(choice_data.get("label", choice_id)),
 			"text": str(choice_data.get("text", "")),
 			"event_type": event_module.get_event_type(),
-			"consequences": host._copy_dict(choice_data.get("consequences", {})),
-			"loan_terms": host._copy_dict(choice_data.get("loan_terms", {})),
-			"check": host._copy_dict(choice_data.get("check", {})),
+			"consequences": JsonCoerceScript._copy_dict(choice_data.get("consequences", {})),
+			"loan_terms": JsonCoerceScript._copy_dict(choice_data.get("loan_terms", {})),
+			"check": JsonCoerceScript._copy_dict(choice_data.get("check", {})),
 			"consequence_summary": consequence_summary,
 			"requires_confirm": host._event_choice_requires_confirmation(choice_data),
 			"identity_summary": "Choice ID: %s" % choice_id,
@@ -893,21 +895,21 @@ static func event_choice_consequence_summary(host: Variant, choice_data: Diction
 	var suspicion_delta = int(consequences.get("suspicion_delta", 0))
 	if suspicion_delta != 0:
 		parts.append("Heat %s" % host._signed_int_text(suspicion_delta))
-	if consequences.has("debt") or not host._copy_array(consequences.get("debt_changes", [])).is_empty():
+	if consequences.has("debt") or not JsonCoerceScript._copy_array(consequences.get("debt_changes", [])).is_empty():
 		parts.append("Debt changes")
 	var flags_value: Variant = consequences.get("flags", consequences.get("flags_set", {}))
 	if typeof(flags_value) == TYPE_DICTIONARY and not (flags_value as Dictionary).is_empty():
 		parts.append("Story flag")
-	if not str(consequences.get("set_story_flag", "")).strip_edges().is_empty() or not host._string_array(consequences.get("set_story_flags", [])).is_empty():
+	if not str(consequences.get("set_story_flag", "")).strip_edges().is_empty() or not JsonCoerceScript._raw_string_array(consequences.get("set_story_flags", [])).is_empty():
 		parts.append("Story flag")
-	if not host._string_array(consequences.get("set_next_archetypes", [])).is_empty() or not host._string_array(consequences.get("add_next_archetypes", [])).is_empty() or not host._copy_array(consequences.get("travel_hooks_add", [])).is_empty():
+	if not JsonCoerceScript._raw_string_array(consequences.get("set_next_archetypes", [])).is_empty() or not JsonCoerceScript._raw_string_array(consequences.get("add_next_archetypes", [])).is_empty() or not JsonCoerceScript._copy_array(consequences.get("travel_hooks_add", [])).is_empty():
 		parts.append("Routes change")
-	if not str(consequences.get("unlock_travel_route", "")).strip_edges().is_empty() or not host._string_array(consequences.get("unlock_travel_routes", [])).is_empty():
+	if not str(consequences.get("unlock_travel_route", "")).strip_edges().is_empty() or not JsonCoerceScript._raw_string_array(consequences.get("unlock_travel_routes", [])).is_empty():
 		parts.append("Routes change")
 	var travel_changes: Variant = consequences.get("travel_changes", {})
 	if typeof(travel_changes) == TYPE_DICTIONARY and not (travel_changes as Dictionary).is_empty():
 		parts.append("Routes change")
-	if not host._copy_array(consequences.get("inventory_add", [])).is_empty() or not host._copy_array(consequences.get("inventory_remove", [])).is_empty():
+	if not JsonCoerceScript._copy_array(consequences.get("inventory_add", [])).is_empty() or not JsonCoerceScript._copy_array(consequences.get("inventory_remove", [])).is_empty():
 		parts.append("Inventory changes")
 	if parts.is_empty():
 		parts.append("Event closes" if bool(consequences.get("resolve_event", false)) else "No immediate cost")
@@ -920,7 +922,7 @@ static func event_choice_requires_confirmation(host: Variant, choice_data: Dicti
 	var consequences: Dictionary = choice_data.get("consequences", {}) if typeof(choice_data.get("consequences", {})) == TYPE_DICTIONARY else {}
 	if int(consequences.get("bankroll_delta", 0)) < 0 or int(consequences.get("suspicion_delta", 0)) > 0:
 		return true
-	if consequences.has("debt") or not host._copy_array(consequences.get("debt_changes", [])).is_empty():
+	if consequences.has("debt") or not JsonCoerceScript._copy_array(consequences.get("debt_changes", [])).is_empty():
 		return true
 	if bool(consequences.get("ended", false)):
 		return true

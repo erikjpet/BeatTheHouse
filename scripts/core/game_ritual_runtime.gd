@@ -1,6 +1,8 @@
 class_name GameRitualRuntime
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 # Neutral action-boundary executor for validated game_ritual/1 definitions.
 # Rules/outcomes remain in allowlisted host handlers; this class owns phase,
 # request identity, receipts, staged edits, projection, and replay safety.
@@ -169,12 +171,12 @@ func _reduce_action(action_id: String, parameters: Dictionary, request_key: Stri
 	if transition.size() == 1:
 		var transition_record: Dictionary = transition[0]
 		var next_phase := str(transition_record.get("next_phase", ""))
-		operations.append_array(_dictionary_array(transition_record.get("operations", [])))
+		operations.append_array(JsonCoerceScript._dictionary_array(transition_record.get("operations", [])))
 		candidate["phase_id"] = next_phase
 		candidate["transition_sequence"] = int(candidate.get("transition_sequence", 0)) + 1
 		candidate["last_transition_id"] = str(transition_record.get("id", ""))
-		operations.append_array(_dictionary_array((_phases.get(next_phase, {}) as Dictionary).get("entry_operations", [])))
-	operations.append_array(_dictionary_array(handler_result.get("operations", [])))
+		operations.append_array(JsonCoerceScript._dictionary_array((_phases.get(next_phase, {}) as Dictionary).get("entry_operations", [])))
+	operations.append_array(JsonCoerceScript._dictionary_array(handler_result.get("operations", [])))
 	var operation_ids := {}
 	for operation in operations:
 		var operation_id := str((operation as Dictionary).get("operation_id", ""))
@@ -271,7 +273,7 @@ func _prepared_projection(source_state: Dictionary) -> Dictionary:
 		"phase_id": str(source_state.get("phase_id", "")),
 		"pending_items": (source_state.get("pending_items", {}) as Dictionary).duplicate(true),
 		"working_items": (source_state.get("working_items", {}) as Dictionary).duplicate(true),
-		"item_resolutions": _dictionary_array(source_state.get("item_resolutions", [])),
+		"item_resolutions": JsonCoerceScript._dictionary_array(source_state.get("item_resolutions", [])),
 		"readable_totals": (source_state.get("readable_totals", {}) as Dictionary).duplicate(true),
 		"actors": _actor_projection(source_state),
 		"scene_objects": _object_projection(source_state),
@@ -313,10 +315,10 @@ static func canonical_fingerprint(value: Variant) -> String:
 
 func _fresh_state() -> Dictionary:
 	var actor_states := {}
-	for actor in _dictionary_array(definition.get("actors", [])):
+	for actor in JsonCoerceScript._dictionary_array(definition.get("actors", [])):
 		actor_states[str(actor.get("id", ""))] = {"pose": str(actor.get("initial_pose", "")), "behavior": str(actor.get("initial_behavior", "")), "anchor": str(actor.get("anchor", "")), "attention": "neutral", "visible": true}
 	var object_states := {}
-	for object in _dictionary_array(definition.get("scene_objects", [])):
+	for object in JsonCoerceScript._dictionary_array(definition.get("scene_objects", [])):
 		object_states[str(object.get("id", ""))] = {"visual": str(object.get("initial_visual_state", "")), "functional": str(object.get("initial_functional_state", "")), "anchor": str(object.get("anchor", "")), "visible": true, "enabled": true}
 	return {"state_version": 1, "contract": SchemaScript.CONTRACT, "ritual_id": str(definition.get("ritual_id", "")), "session_id": _session_id, "phase_id": str(definition.get("initial_phase", "")), "action_sequence": 0, "transition_sequence": 0, "boundary_ordinal": 0, "last_transition_id": "", "pending_items": {}, "pending_history": [], "working_items": {}, "last_commitment": {}, "eligible_resolutions": {}, "item_resolutions": [], "authoritative_result_refs": [], "actor_states": actor_states, "object_states": object_states, "energy_tier": str((definition.get("energy", {}) as Dictionary).get("initial_tier", "")), "handler_state": {}, "readable_totals": {"available_funds": 0, "pending_total": 0, "at_risk_total": 0, "returned_stake": 0, "payout": 0, "net_change": 0}, "receipts": [], "envelope_receipts": [], "fact_envelopes": [], "operation_envelopes": [], "one_shot_cues": [], "request_cache": {}, "envelope_request_cache": {}}
 
@@ -326,20 +328,20 @@ func _index_definition() -> void:
 	_phases.clear()
 	_handlers.clear()
 	_operations.clear()
-	for action in _dictionary_array(definition.get("action_declarations", [])):
+	for action in JsonCoerceScript._dictionary_array(definition.get("action_declarations", [])):
 		_actions[str(action.get("action_id", ""))] = action
-	for phase in _dictionary_array(definition.get("ritual_phases", [])):
+	for phase in JsonCoerceScript._dictionary_array(definition.get("ritual_phases", [])):
 		_phases[str(phase.get("id", ""))] = phase
-		for operation in _dictionary_array(phase.get("entry_operations", [])):
+		for operation in JsonCoerceScript._dictionary_array(phase.get("entry_operations", [])):
 			_operations[str(operation.get("operation_id", ""))] = operation
-		for transition in _dictionary_array(phase.get("transitions", [])):
-			for operation in _dictionary_array(transition.get("operations", [])):
+		for transition in JsonCoerceScript._dictionary_array(phase.get("transitions", [])):
+			for operation in JsonCoerceScript._dictionary_array(transition.get("operations", [])):
 				_operations[str(operation.get("operation_id", ""))] = operation
-	for handler in _dictionary_array(definition.get("handler_registry", [])):
+	for handler in JsonCoerceScript._dictionary_array(definition.get("handler_registry", [])):
 		_handlers[str(handler.get("handler_id", ""))] = handler
-	for tier in _dictionary_array((definition.get("energy", {}) as Dictionary).get("tiers", [])):
+	for tier in JsonCoerceScript._dictionary_array((definition.get("energy", {}) as Dictionary).get("tiers", [])):
 		for key in ["actor_operations", "object_operations", "interaction_operations"]:
-			for operation in _dictionary_array(tier.get(key, [])):
+			for operation in JsonCoerceScript._dictionary_array(tier.get(key, [])):
 				_operations[str(operation.get("operation_id", ""))] = operation
 
 
@@ -355,11 +357,11 @@ func _invoke_handler(handler_id: String, action_id: String, parameters: Dictiona
 func _validate_handler_emissions(handler_id: String, handler_result: Dictionary) -> String:
 	var declaration: Dictionary = _handlers.get(handler_id, {})
 	var accepted_operations: Array = declaration.get("accepted_operations", [])
-	for operation in _dictionary_array(handler_result.get("operations", [])):
+	for operation in JsonCoerceScript._dictionary_array(handler_result.get("operations", [])):
 		if not accepted_operations.has(str(operation.get("operation_id", ""))):
 			return "Handler %s emitted operation outside its allowlist." % handler_id
 	var emitted_facts: Array = declaration.get("emitted_facts", [])
-	for fact in _dictionary_array(handler_result.get("facts", [])):
+	for fact in JsonCoerceScript._dictionary_array(handler_result.get("facts", [])):
 		if not emitted_facts.has(str(fact.get("fact_type", ""))):
 			return "Handler %s emitted fact outside its allowlist." % handler_id
 	return ""
@@ -473,12 +475,12 @@ func _apply_operations(candidate: Dictionary, operations: Array) -> String:
 
 func _apply_phase_entry(phase_id: String) -> void:
 	if not _phases.has(phase_id): return
-	_apply_operations(state, _dictionary_array((_phases[phase_id] as Dictionary).get("entry_operations", [])))
+	_apply_operations(state, JsonCoerceScript._dictionary_array((_phases[phase_id] as Dictionary).get("entry_operations", [])))
 
 
 func _transition_for_action(phase: Dictionary, action_id: String) -> Array:
 	var result: Array = []
-	for transition in _dictionary_array(phase.get("transitions", [])):
+	for transition in JsonCoerceScript._dictionary_array(phase.get("transitions", [])):
 		var condition: Dictionary = transition.get("condition", {})
 		if str(condition.get("kind", "")) == "accepted_action" and str(condition.get("action_id", "")) == action_id: result.append(transition)
 	return result
@@ -487,7 +489,7 @@ func _transition_for_action(phase: Dictionary, action_id: String) -> Array:
 func _seal_facts(value: Variant, sequence: int, action_id: String, context: Dictionary = {}) -> Variant:
 	if typeof(value) != TYPE_ARRAY: return null
 	var declared := {}
-	for fact in _dictionary_array(definition.get("game_facts", [])): declared[str(fact.get("fact_type", ""))] = fact
+	for fact in JsonCoerceScript._dictionary_array(definition.get("game_facts", [])): declared[str(fact.get("fact_type", ""))] = fact
 	var result: Array = []
 	var seen := {}
 	for raw in value:
@@ -558,7 +560,7 @@ func _value_matches(value: Variant, descriptor_value: Variant) -> bool:
 
 func _actor_projection(source_state: Dictionary) -> Array:
 	var result: Array = []
-	for actor in _dictionary_array(definition.get("actors", [])):
+	for actor in JsonCoerceScript._dictionary_array(definition.get("actors", [])):
 		var record: Dictionary = actor.duplicate(true)
 		var actor_state: Dictionary = (source_state.get("actor_states", {}) as Dictionary).get(str(actor.get("id", "")), {})
 		record["state"] = actor_state.duplicate(true)
@@ -568,7 +570,7 @@ func _actor_projection(source_state: Dictionary) -> Array:
 
 func _object_projection(source_state: Dictionary) -> Array:
 	var result: Array = []
-	for object in _dictionary_array(definition.get("scene_objects", [])):
+	for object in JsonCoerceScript._dictionary_array(definition.get("scene_objects", [])):
 		var record: Dictionary = object.duplicate(true)
 		var object_state: Dictionary = (source_state.get("object_states", {}) as Dictionary).get(str(object.get("id", "")), {})
 		record["state"] = object_state.duplicate(true)
@@ -578,7 +580,7 @@ func _object_projection(source_state: Dictionary) -> Array:
 
 func _pointer_projection(source_state: Dictionary) -> Array:
 	var phase := str(source_state.get("phase_id", "")); var result: Array = []
-	for pointer in _dictionary_array(definition.get("pointer_verbs", [])):
+	for pointer in JsonCoerceScript._dictionary_array(definition.get("pointer_verbs", [])):
 		if (pointer.get("phases", []) as Array).has(phase): result.append(pointer.duplicate(true))
 	return result
 
@@ -842,7 +844,7 @@ func _valid_fact_envelope(fact: Dictionary) -> bool:
 	var keys := ["envelope_version", "fact_id", "fact_type", "fact_version", "payload", "visibility", "boundary", "receipt_key", "content_fingerprint"]
 	if not _closed_shape(fact, keys) or int(fact.get("envelope_version", 0)) != 1 or not _qualified_id(str(fact.get("fact_id", ""))) or not _request_key(str(fact.get("receipt_key", ""))) or not _fingerprint(str(fact.get("content_fingerprint", ""))) or canonical_fingerprint(_without_fingerprint(fact)) != str(fact.get("content_fingerprint", "")) or typeof(fact.get("payload")) != TYPE_DICTIONARY or typeof(fact.get("boundary")) != TYPE_DICTIONARY:
 		return false
-	for declaration in _dictionary_array(definition.get("game_facts", [])):
+	for declaration in JsonCoerceScript._dictionary_array(definition.get("game_facts", [])):
 		if str(declaration.get("fact_type", "")) == str(fact.get("fact_type", "")):
 			return int(fact.get("fact_version", 0)) == int(declaration.get("fact_version", 0)) and str(fact.get("visibility", "")) == str(declaration.get("visibility", "")) and _validate_parameters(fact.get("payload", {}) as Dictionary, declaration.get("payload", {})).is_empty() and _valid_boundary_record(fact.get("boundary", {}) as Dictionary)
 	return false
@@ -894,15 +896,15 @@ func _valid_readable_totals(totals: Dictionary, source_state: Dictionary) -> boo
 
 
 func _valid_energy_tier(tier_id: String) -> bool:
-	for tier in _dictionary_array((definition.get("energy", {}) as Dictionary).get("tiers", [])):
+	for tier in JsonCoerceScript._dictionary_array((definition.get("energy", {}) as Dictionary).get("tiers", [])):
 		if str(tier.get("id", "")) == tier_id: return true
 	return false
 
 
 func _valid_transition_identity(transition_id: String, sequence: int) -> bool:
 	if sequence == 0: return transition_id.is_empty()
-	for phase in _dictionary_array(definition.get("ritual_phases", [])):
-		for transition in _dictionary_array(phase.get("transitions", [])):
+	for phase in JsonCoerceScript._dictionary_array(definition.get("ritual_phases", [])):
+		for transition in JsonCoerceScript._dictionary_array(phase.get("transitions", [])):
 			if str(transition.get("id", "")) == transition_id: return true
 	return false
 
@@ -915,7 +917,7 @@ func _valid_one_shot_cue(cue: Dictionary, action_sequence: int) -> bool:
 
 func _validate_actor_states(actor_states: Dictionary, errors: Array[String]) -> void:
 	var declarations := {}
-	for actor in _dictionary_array(definition.get("actors", [])): declarations[str(actor.get("id", ""))] = actor
+	for actor in JsonCoerceScript._dictionary_array(definition.get("actors", [])): declarations[str(actor.get("id", ""))] = actor
 	if actor_states.size() != declarations.size(): errors.append("restore actor state set is incomplete")
 	for actor_id in actor_states.keys():
 		var state_value: Variant = actor_states[actor_id]
@@ -927,7 +929,7 @@ func _validate_actor_states(actor_states: Dictionary, errors: Array[String]) -> 
 
 func _validate_object_states(object_states: Dictionary, errors: Array[String]) -> void:
 	var declarations := {}
-	for object in _dictionary_array(definition.get("scene_objects", [])): declarations[str(object.get("id", ""))] = object
+	for object in JsonCoerceScript._dictionary_array(definition.get("scene_objects", [])): declarations[str(object.get("id", ""))] = object
 	if object_states.size() != declarations.size(): errors.append("restore object state set is incomplete")
 	for object_id in object_states.keys():
 		var state_value: Variant = object_states[object_id]
@@ -974,20 +976,12 @@ func _valid_response_envelope(response: Dictionary) -> bool:
 
 
 func _actors_contains(actor_id: String) -> bool:
-	for actor in _dictionary_array(definition.get("actors", [])):
+	for actor in JsonCoerceScript._dictionary_array(definition.get("actors", [])):
 		if str(actor.get("id", "")) == actor_id: return true
 	return false
 
 
 func _objects_contains(object_id: String) -> bool:
-	for object in _dictionary_array(definition.get("scene_objects", [])):
+	for object in JsonCoerceScript._dictionary_array(definition.get("scene_objects", [])):
 		if str(object.get("id", "")) == object_id: return true
 	return false
-
-
-func _dictionary_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) == TYPE_ARRAY:
-		for item in value:
-			if typeof(item) == TYPE_DICTIONARY: result.append((item as Dictionary).duplicate(true))
-	return result

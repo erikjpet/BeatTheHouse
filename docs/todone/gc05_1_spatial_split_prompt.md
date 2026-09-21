@@ -18,7 +18,7 @@ rendering; per-game modules under `scripts/games/` talk to the host
 data-driven from `data/*.json`; UI logic lives in extracted controllers and
 pure view models (decomposition pattern — do not grow foundation_main
 beyond thin wiring). This file is self-contained; the binding design
-contract is `docs/plans/0.5_grand_casino_rework_plan.md` (owner-locked) —
+contract is `docs/archive/0.5/plans/0.5_grand_casino_rework_plan.md` (owner-locked) —
 read it first; this slice implements its section 1.
 
 ## Task

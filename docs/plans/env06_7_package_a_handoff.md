@@ -31,7 +31,7 @@ mechanic signature. Delivery Day is the frozen env06_6 reference implementation.
 
 Cheap exact check:
 
-`Godot --headless --path <worktree> --script res://tools/env06_7_package_a_check.gd`
+`Godot --headless --path <worktree> --script res://tools/archive/env06_7/env06_7_package_a_check.gd`
 
 The check loads the production overlay catalog, requires the exact 12-id
 inventory, validates all eleven newly authored schema-v2 definitions, verifies

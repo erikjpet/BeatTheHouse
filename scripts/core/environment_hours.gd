@@ -1,6 +1,8 @@
 class_name EnvironmentHours
 extends RefCounted
 
+const PlayerTextScript := preload("res://scripts/ui/player_text.gd")
+
 # Pure venue-hours helpers. All callers pass deterministic clock minutes.
 
 const MINUTES_PER_DAY := 1440
@@ -50,13 +52,13 @@ static func status_at(archetype: Dictionary, minute_of_day: int) -> Dictionary:
 			"closing_soon": soon,
 			"label": "Closing soon" if soon else "Open",
 			"disabled_reason": "",
-			"opens_at": _clock_label(open_minute),
-			"closes_at": _clock_label(close_minute),
+			"opens_at": PlayerTextScript.format_time_of_day(open_minute),
+			"closes_at": PlayerTextScript.format_time_of_day(close_minute),
 			"minutes_until_open": 0,
 			"minutes_until_close": until_close,
 		}
 	var until_open := _minutes_forward(minute, open_minute)
-	var opens_at := _clock_label(open_minute)
+	var opens_at := PlayerTextScript.format_time_of_day(open_minute)
 	return {
 		"open": false,
 		"always_open": false,
@@ -64,7 +66,7 @@ static func status_at(archetype: Dictionary, minute_of_day: int) -> Dictionary:
 		"label": "Closed",
 		"disabled_reason": "Closed. Opens at %s." % opens_at,
 		"opens_at": opens_at,
-		"closes_at": _clock_label(close_minute),
+		"closes_at": PlayerTextScript.format_time_of_day(close_minute),
 		"minutes_until_open": until_open,
 		"minutes_until_close": 0,
 	}
@@ -123,13 +125,3 @@ static func _minutes_forward(from_minute: int, to_minute: int) -> int:
 	if to_value >= from_value:
 		return to_value - from_value
 	return MINUTES_PER_DAY - from_value + to_value
-
-
-static func _clock_label(minute_of_day: int) -> String:
-	var minute := _normalize_minute(minute_of_day)
-	var hour_24 := int(floor(float(minute) / 60.0)) % 24
-	var hour_12 := hour_24 % 12
-	if hour_12 == 0:
-		hour_12 = 12
-	var suffix := "AM" if hour_24 < 12 else "PM"
-	return "%d %s" % [hour_12, suffix]

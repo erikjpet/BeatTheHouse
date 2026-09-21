@@ -1,7 +1,7 @@
 # Beat the House 0.5 Pre-Release Completion Queue
 
 Last reconciled: 2026-08-12
-Authoritative audit: `docs/plans/0.5_pre_release_audit.md`
+Authoritative audit: `docs/archive/0.5/plans/0.5_pre_release_audit.md`
 
 ## Current verdict
 

@@ -13,7 +13,7 @@ The retained rehearsal began from pushed `origin/main` commit `c570f2ce6fafa4212
 
 ## Harness recovery and review
 
-The six named harness artifacts on `origin/main` were byte-identical to the historical `codex/perf06-final-run` tree: `docs/plans/perf06_1_final_runtime_runbook.md`, `docs/plans/perf06_1_static_harness_review.md`, `tools/perf06_binding_preflight.ps1`, `tools/perf06_phase_qualification_contract.ps1`, `tools/perf06_capture_quiescence.ps1`, and `tools/perf06_matrix_contract.ps1`. That retired task branch was later deleted during the two-branch custody cleanup.
+The six named harness artifacts on `origin/main` were byte-identical to the historical `codex/perf06-final-run` tree: `docs/plans/perf06_1_final_runtime_runbook.md`, `docs/plans/perf06_1_static_harness_review.md`, `tools/archive/perf06/perf06_binding_preflight.ps1`, `tools/archive/perf06/perf06_phase_qualification_contract.ps1`, `tools/archive/perf06/perf06_capture_quiescence.ps1`, and `tools/archive/perf06/perf06_matrix_contract.ps1`. That retired task branch was later deleted during the two-branch custody cleanup.
 
 The historical `[UNREVIEWED]` changes `92bb16f5` and `618d0033` were read and verified on 2026-09-11. Their hostile-fixture suites pass and demonstrate rejection of nonignored untracked files, staged and unstaged changes, occupied ports, below-floor idle liveness, forged static-zero authority, missing active progress, published timing overruns, missing witness custody, wrong sequencing, and mutable evidence destinations:
 

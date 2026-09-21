@@ -214,7 +214,7 @@ low-end run.
 ## Available 0.5 comparators
 
 The authoritative 0.5 exact-source section in
-`docs/plans/0.5_performance_audit.md` records source through `84ae3fc6` and the
+`docs/archive/0.5/plans/0.5_performance_audit.md` records source through `84ae3fc6` and the
 following usable comparator classes:
 
 - native idle draw mean/p95/max and liveness for Pull Tabs, Scratch Tickets,

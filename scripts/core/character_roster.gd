@@ -1,6 +1,8 @@
 class_name CharacterRoster
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 # Resolves authored character pools into compact, save-safe speaker snapshots.
 # Selection uses the run seed plus a stable crew/encounter identity, so UI
 # refreshes and unrelated RNG consumption cannot reshuffle a known group.
@@ -24,7 +26,7 @@ static func resolve_speaker(
 		var pool := library.character_pool(pool_id)
 		if pool.is_empty():
 			return speaker
-		member_ids = _string_array(pool.get("member_ids", []))
+		member_ids = JsonCoerceScript._string_array(pool.get("member_ids", []))
 		lineup_size = clampi(int(pool.get("lineup_size", 1)), 1, member_ids.size())
 	elif not direct_character_id.is_empty():
 		if library.character(direct_character_id).is_empty():
@@ -122,7 +124,7 @@ static func _voice_line(character: Dictionary, line_key: String, rng: RngStream)
 		return ""
 	var voice: Dictionary = character.get("voice", {}) if typeof(character.get("voice", {})) == TYPE_DICTIONARY else {}
 	var lines: Dictionary = voice.get("lines", {}) if typeof(voice.get("lines", {})) == TYPE_DICTIONARY else {}
-	var candidates := _string_array(lines.get(line_key, []))
+	var candidates := JsonCoerceScript._string_array(lines.get(line_key, []))
 	return str(rng.pick(candidates, "")) if not candidates.is_empty() else ""
 
 
@@ -144,14 +146,3 @@ static func _stable_run_rng(run_state: RunState, stream_key: String) -> RngStrea
 	var stable_seed := run_state.rng_seed if run_state != null else 1
 	root.configure(stable_seed, stable_seed)
 	return root.fork(stream_key)
-
-
-static func _string_array(value: Variant) -> Array:
-	if typeof(value) != TYPE_ARRAY:
-		return []
-	var result: Array = []
-	for entry_value in value as Array:
-		var text := str(entry_value).strip_edges()
-		if not text.is_empty():
-			result.append(text)
-	return result

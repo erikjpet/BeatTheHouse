@@ -16,7 +16,7 @@ roguelike (Web/itch.io + Windows, 1280×720). Data-driven content; dialogue
 via the talk-dock/dialogue pipeline (`scripts/ui/talk_dock.gd`,
 `data/dialogue/dialogues.json`, `data/events/events.json`); UI via
 extracted components. This file is self-contained; the binding design
-contract is `docs/plans/0.5_grand_casino_rework_plan.md` sections 5-6 —
+contract is `docs/archive/0.5/plans/0.5_grand_casino_rework_plan.md` sections 5-6 —
 read it first. Requires slices 1-2 landed (rooms + Cage window); slice 3
 recommended first. Re-verify actual code; code reality wins.
 

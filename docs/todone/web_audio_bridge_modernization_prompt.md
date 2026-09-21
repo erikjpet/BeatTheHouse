@@ -66,7 +66,7 @@ which installs a hand-built Web Audio API graph into the page and plays all
 PCM through it. This was introduced in commit `6ae682b` ("Fix web audio
 playback in exports") because native Godot web audio playback was broken for
 this project's runtime-generated streams, and was later hardened by the LA.6
-audio audit (see `docs/plans/0.3.2_low_end_web_cleanup_board.md`), which cut
+audio audit (see `docs/archive/0.3/plans/0.3.2_low_end_web_cleanup_board.md`), which cut
 music `_process` cost from ~1373µs to ~63µs.
 
 The JS graph applies mastering desktop never gets: master 0.72 × output 0.92

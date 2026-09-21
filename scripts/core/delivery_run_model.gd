@@ -1,6 +1,8 @@
 class_name DeliveryRunModel
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 const SCHEMA_VERSION := 3
 const LEGACY_SCHEMA_VERSION := 2
 const EARLIEST_LEGACY_SCHEMA_VERSION := 1
@@ -54,7 +56,7 @@ static func begin(spec: Dictionary, started_action: int) -> Dictionary:
 	var deadline := maxi(1, int(spec.get("deadline_minutes", 1))) if deadline_kind == DEADLINE_CLOCK else maxi(1, int(spec.get("deadline_actions", 1)))
 	var started_clock := maxi(0, int(spec.get("started_game_clock_minutes", 0)))
 	var deadline_clock := maxi(started_clock + 1, int(spec.get("deadline_game_clock_minutes", started_clock + deadline))) if deadline_kind == DEADLINE_CLOCK else 0
-	var assists := _string_array(spec.get("assists", []))
+	var assists := JsonCoerceScript._string_array(spec.get("assists", []))
 	return normalize_state({
 		"schema_version": SCHEMA_VERSION,
 		"status": "active",
@@ -74,7 +76,7 @@ static func begin(spec: Dictionary, started_action: int) -> Dictionary:
 		"cargo_label": str(spec.get("cargo_label", "Crew package")).strip_edges(),
 		"cargo_heat_per_travel": maxi(0, int(spec.get("cargo_heat_per_travel", 2))),
 		"depth_state": _initial_depth_state(mode, spec),
-		"consumer_payload": _copy_dict(spec.get("consumer_payload", {})),
+		"consumer_payload": JsonCoerceScript._copy_dict(spec.get("consumer_payload", {})),
 		"fast_threshold_actions": maxi(0, int(spec.get("fast_threshold_actions", deadline - 2))),
 		"boundaries_elapsed": 0,
 		"arrival_count": 0,
@@ -119,7 +121,7 @@ static func normalize_state(value: Variant) -> Dictionary:
 	var status := str(source.get("status", "active")).strip_edges().to_lower()
 	if not ["active", "resolved"].has(status):
 		status = "resolved"
-	var resolution := _copy_dict(source.get("resolution", {}))
+	var resolution := JsonCoerceScript._copy_dict(source.get("resolution", {}))
 	if status == "resolved" and resolution.is_empty():
 		resolution = _resolution("failed", "invalid_state", source, false)
 	var depth_state := _normalize_depth_state(source.get("depth_state", {})) if source_schema == SCHEMA_VERSION else _legacy_depth_state(source, mode, source_schema)
@@ -144,7 +146,7 @@ static func normalize_state(value: Variant) -> Dictionary:
 		"cargo_label": str(source.get("cargo_label", "Crew package")).strip_edges(),
 		"cargo_heat_per_travel": maxi(0, int(source.get("cargo_heat_per_travel", 2))),
 		"depth_state": depth_state,
-		"consumer_payload": _copy_dict(source.get("consumer_payload", {})),
+		"consumer_payload": JsonCoerceScript._copy_dict(source.get("consumer_payload", {})),
 		"fast_threshold_actions": maxi(0, int(source.get("fast_threshold_actions", deadline_total - 2))),
 		"boundaries_elapsed": maxi(0, int(source.get("boundaries_elapsed", 0))),
 		"arrival_count": maxi(0, int(source.get("arrival_count", 0))),
@@ -155,26 +157,26 @@ static func normalize_state(value: Variant) -> Dictionary:
 		"pursuit_pressure": maxi(0, int(source.get("pursuit_pressure", 0))),
 		"pursuit_per_boundary": maxi(0, int(source.get("pursuit_per_boundary", 2))),
 		"pursuit_limit": maxi(1, int(source.get("pursuit_limit", 12))),
-		"assists_available": _string_array(source.get("assists_available", source.get("assists", []))),
-		"assists_used": _string_array(source.get("assists_used", [])),
+		"assists_available": JsonCoerceScript._string_array(source.get("assists_available", source.get("assists", []))),
+		"assists_used": JsonCoerceScript._string_array(source.get("assists_used", [])),
 		"assists_effect": maxi(1, int(source.get("assists_effect", source.get("assist_relief", 4)))),
 		"heat_earned": maxi(0, int(source.get("heat_earned", 0))),
 		"confiscated": bool(source.get("confiscated", false)),
 		"resolution": resolution,
-		"receipt": _copy_dict(source.get("receipt", {})),
+		"receipt": JsonCoerceScript._copy_dict(source.get("receipt", {})),
 		"world_applied": bool(source.get("world_applied", false)),
 	}
 	# Preserve an untrusted persisted checkpoint byte-for-byte. Validation belongs
 	# at the consume boundary; silently normalizing hostile data would turn a
 	# detectable corrupt authority record into an ambiguous legacy snapshot.
 	if source.has("closed_checkpoint"):
-		result["closed_checkpoint"] = _copy_dict(source.get("closed_checkpoint", {}))
+		result["closed_checkpoint"] = JsonCoerceScript._copy_dict(source.get("closed_checkpoint", {}))
 	return result
 
 
 static func closed_checkpoint(state_value: Variant) -> Dictionary:
 	var state := normalize_state(state_value)
-	return _copy_dict(state.get("closed_checkpoint", {}))
+	return JsonCoerceScript._copy_dict(state.get("closed_checkpoint", {}))
 
 
 # DeliveryRunModel is the only issuer of the persisted closed checkpoint. The
@@ -205,8 +207,8 @@ static func commit_closed_checkpoint(state_value: Variant, binding_value: Dictio
 		"outcome_receipt_id": str(binding.get("outcome_receipt_id", "")),
 		"outcome_receipt_fingerprint": str(binding.get("outcome_receipt_fingerprint", "")),
 		"outcome_cause_fingerprint": str(binding.get("outcome_cause_fingerprint", "")),
-		"resolution_fingerprint": _fingerprint(_copy_dict(state.get("resolution", {}))),
-		"delivery_receipt_fingerprint": _fingerprint(_copy_dict(state.get("receipt", {}))),
+		"resolution_fingerprint": _fingerprint(JsonCoerceScript._copy_dict(state.get("resolution", {}))),
+		"delivery_receipt_fingerprint": _fingerprint(JsonCoerceScript._copy_dict(state.get("receipt", {}))),
 		"public_result": public_result,
 		"public_result_fingerprint": _fingerprint(public_result),
 	}
@@ -217,7 +219,7 @@ static func commit_closed_checkpoint(state_value: Variant, binding_value: Dictio
 
 static func closed_checkpoint_errors(state_value: Variant, binding_value: Dictionary = {}) -> Array:
 	var state := normalize_state(state_value)
-	var checkpoint := _copy_dict(state.get("closed_checkpoint", {}))
+	var checkpoint := JsonCoerceScript._copy_dict(state.get("closed_checkpoint", {}))
 	var errors: Array = []
 	if checkpoint.is_empty(): return ["delivery closed checkpoint is missing"]
 	var keys := checkpoint.keys()
@@ -240,11 +242,11 @@ static func closed_checkpoint_errors(state_value: Variant, binding_value: Dictio
 	for key in ["delivery_instance_id", "owner_token", "public_instance_token", "outcome_receipt_id", "outcome_receipt_fingerprint", "outcome_cause_fingerprint", "resolution_fingerprint", "delivery_receipt_fingerprint", "public_result_fingerprint"]:
 		var text := str(checkpoint.get(key, ""))
 		if text.is_empty() or text != text.strip_edges(): errors.append("delivery closed checkpoint field %s is noncanonical" % key)
-	if str(checkpoint.get("resolution_fingerprint", "")) != _fingerprint(_copy_dict(state.get("resolution", {}))):
+	if str(checkpoint.get("resolution_fingerprint", "")) != _fingerprint(JsonCoerceScript._copy_dict(state.get("resolution", {}))):
 		errors.append("delivery closed checkpoint resolution fingerprint does not match")
-	if str(checkpoint.get("delivery_receipt_fingerprint", "")) != _fingerprint(_copy_dict(state.get("receipt", {}))):
+	if str(checkpoint.get("delivery_receipt_fingerprint", "")) != _fingerprint(JsonCoerceScript._copy_dict(state.get("receipt", {}))):
 		errors.append("delivery closed checkpoint receipt fingerprint does not match")
-	var public_result := _copy_dict(checkpoint.get("public_result", {}))
+	var public_result := JsonCoerceScript._copy_dict(checkpoint.get("public_result", {}))
 	var canonical_public_result := _canonical_public_result(public_result)
 	if canonical_public_result.is_empty() or JSON.stringify(public_result) != JSON.stringify(canonical_public_result):
 		errors.append("delivery closed checkpoint public result is not canonical")
@@ -277,22 +279,22 @@ static func snapshot(state_value: Variant) -> Dictionary:
 		"deadline_kind": str(state.get("deadline_kind", DEADLINE_ACTIONS)),
 		"started_game_clock_minutes": int(state.get("started_game_clock_minutes", 0)),
 		"deadline_game_clock_minutes": int(state.get("deadline_game_clock_minutes", 0)),
-		"targets": _copy_array(state.get("targets", [])),
+		"targets": JsonCoerceScript._copy_array(state.get("targets", [])),
 		"target_count": (state.get("targets", []) as Array).size(),
 		"delivered_count": delivered,
 		"cargo_id": str(state.get("cargo_id", "")),
 		"cargo_label": str(state.get("cargo_label", "Crew package")),
 		"physical": physical_projection(state),
-		"carrying_contraband": str(_copy_dict(_copy_dict(state.get("depth_state", {})).get("cargo", {})).get("status", "")) == CARGO_CARRIED,
+		"carrying_contraband": str(JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(state.get("depth_state", {})).get("cargo", {})).get("status", "")) == CARGO_CARRIED,
 		"handoff_pending_node_id": str(state.get("handoff_pending_node_id", "")),
 		"hold_required_actions": int(state.get("hold_required_actions", 0)),
 		"hold_progress": int(state.get("hold_progress", 0)),
 		"pursuit_pressure": int(state.get("pursuit_pressure", 0)),
 		"pursuit_limit": int(state.get("pursuit_limit", 0)),
-		"assists_available": _copy_array(state.get("assists_available", [])),
-		"assists_used": _copy_array(state.get("assists_used", [])),
-		"resolution": _copy_dict(state.get("resolution", {})),
-		"receipt": _copy_dict(state.get("receipt", {})),
+		"assists_available": JsonCoerceScript._copy_array(state.get("assists_available", [])),
+		"assists_used": JsonCoerceScript._copy_array(state.get("assists_used", [])),
+		"resolution": JsonCoerceScript._copy_dict(state.get("resolution", {})),
+		"receipt": JsonCoerceScript._copy_dict(state.get("receipt", {})),
 	}
 
 
@@ -300,9 +302,9 @@ static func physical_projection(state_value: Variant) -> Dictionary:
 	var state := normalize_state(state_value)
 	if state.is_empty():
 		return {}
-	var depth := _copy_dict(state.get("depth_state", {}))
-	var cargo := _copy_dict(depth.get("cargo", {}))
-	var position := _copy_dict(depth.get("position", {}))
+	var depth := JsonCoerceScript._copy_dict(state.get("depth_state", {}))
+	var cargo := JsonCoerceScript._copy_dict(depth.get("cargo", {}))
+	var position := JsonCoerceScript._copy_dict(depth.get("position", {}))
 	return {
 		"schema_version": DEPTH_STATE_SCHEMA_VERSION,
 		"instance_id": str(state.get("job_id", "")) if not str(state.get("job_id", "")).is_empty() else str(state.get("run_id", "")),
@@ -318,9 +320,9 @@ static func physical_projection(state_value: Variant) -> Dictionary:
 		"last_verb": str(position.get("last_verb", "")),
 		"command_sequence": int(depth.get("command_sequence", 0)),
 		"available_verbs": _available_physical_verbs(state),
-		"hold_signals": _copy_array(depth.get("hold_signals", [])),
-		"hold_aftermath": _copy_dict(depth.get("hold_aftermath", {})),
-		"pursuit_aftermath": _copy_dict(depth.get("pursuit_aftermath", {})),
+		"hold_signals": JsonCoerceScript._copy_array(depth.get("hold_signals", [])),
+		"hold_aftermath": JsonCoerceScript._copy_dict(depth.get("hold_aftermath", {})),
+		"pursuit_aftermath": JsonCoerceScript._copy_dict(depth.get("pursuit_aftermath", {})),
 	}
 
 
@@ -347,12 +349,12 @@ static func bind_legacy_position(state_value: Variant, host_node_id: String) -> 
 	var clean_node := host_node_id.strip_edges()
 	if state.is_empty() or clean_node.is_empty():
 		return state
-	var depth := _copy_dict(state.get("depth_state", {}))
-	var position := _copy_dict(depth.get("position", {}))
+	var depth := JsonCoerceScript._copy_dict(state.get("depth_state", {}))
+	var position := JsonCoerceScript._copy_dict(depth.get("position", {}))
 	if not str(depth.get("origin", "")).begins_with("legacy_v") or not str(position.get("node_id", "")).is_empty():
 		return state
 	depth["position"] = _physical_position(clean_node, "", "legacy_restore")
-	var cargo := _copy_dict(depth.get("cargo", {}))
+	var cargo := JsonCoerceScript._copy_dict(depth.get("cargo", {}))
 	if str(cargo.get("status", "")) == CARGO_CARRIED and str(cargo.get("node_id", "")).is_empty():
 		cargo["node_id"] = clean_node
 		depth["cargo"] = cargo
@@ -382,7 +384,7 @@ static func advance_boundaries(state_value: Variant, amount: int, current_node_i
 					state = _resolve(state, "success", "held_window", true)
 					continue
 		elif str(state.get("mode", "")) == MODE_GETAWAY:
-			var consumer_payload := _copy_dict(state.get("consumer_payload", {}))
+			var consumer_payload := JsonCoerceScript._copy_dict(state.get("consumer_payload", {}))
 			var start_grace := maxi(0, int(consumer_payload.get("start_boundary_grace", 0)))
 			if start_grace > 0:
 				consumer_payload["start_boundary_grace"] = start_grace - 1
@@ -395,11 +397,11 @@ static func advance_boundaries(state_value: Variant, amount: int, current_node_i
 		if str(state.get("deadline_kind", DEADLINE_ACTIONS)) == DEADLINE_ACTIONS and int(state.get("deadline_remaining", 0)) <= 0:
 			state = _resolve(state, "failed", "deadline", false)
 	if str(state.get("status", "")) == "resolved" and str(state.get("mode", "")) in [MODE_HOLD, MODE_GETAWAY]:
-		var depth := _copy_dict(state.get("depth_state", {}))
+		var depth := JsonCoerceScript._copy_dict(state.get("depth_state", {}))
 		var aftermath_key := "hold_aftermath" if str(state.get("mode", "")) == MODE_HOLD else "pursuit_aftermath"
-		if _copy_dict(depth.get(aftermath_key, {})).is_empty():
+		if JsonCoerceScript._copy_dict(depth.get(aftermath_key, {})).is_empty():
 			depth[aftermath_key] = {
-				"outcome": str(_copy_dict(state.get("resolution", {})).get("reason", "failed")),
+				"outcome": str(JsonCoerceScript._copy_dict(state.get("resolution", {})).get("reason", "failed")),
 				"node_id": current_node_id.strip_edges(),
 				"action_index": maxi(0, action_index),
 			}
@@ -424,7 +426,7 @@ static func note_arrival(state_value: Variant, node_id: String) -> Dictionary:
 	var state := normalize_state(state_value)
 	if state.is_empty() or str(state.get("status", "")) != "active":
 		return state
-	var depth := _copy_dict(state.get("depth_state", {}))
+	var depth := JsonCoerceScript._copy_dict(state.get("depth_state", {}))
 	if str(depth.get("origin", "")) == "current":
 		return state
 	return _note_arrival_state(state, node_id)
@@ -455,9 +457,9 @@ static func complete_handoff(state_value: Variant, node_id: String) -> Dictionar
 	var clean_node_id := node_id.strip_edges()
 	if clean_node_id.is_empty() or clean_node_id != str(state.get("handoff_pending_node_id", "")):
 		return state
-	var depth := _copy_dict(state.get("depth_state", {}))
-	var cargo := _copy_dict(depth.get("cargo", {}))
-	var position := _copy_dict(depth.get("position", {}))
+	var depth := JsonCoerceScript._copy_dict(state.get("depth_state", {}))
+	var cargo := JsonCoerceScript._copy_dict(depth.get("cargo", {}))
+	var position := JsonCoerceScript._copy_dict(depth.get("position", {}))
 	if str(cargo.get("status", "")) != CARGO_CARRIED or str(cargo.get("node_id", "")) != clean_node_id \
 			or str(position.get("node_id", "")) != clean_node_id:
 		return state
@@ -499,7 +501,7 @@ static func apply_host_action(state_value: Variant, verb: String, receipt_key: S
 		return state
 	if replay == -2 or str(state.get("status", "")) != "active":
 		return state
-	if _copy_array(_copy_dict(state.get("depth_state", {})).get("command_receipts", [])).size() >= MAX_DEPTH_COMMAND_RECEIPTS:
+	if JsonCoerceScript._copy_array(JsonCoerceScript._copy_dict(state.get("depth_state", {})).get("command_receipts", [])).size() >= MAX_DEPTH_COMMAND_RECEIPTS:
 		return state
 	var node_id := str(host_context.get("node_id", ""))
 	var destination_node_id := str(host_context.get("destination_node_id", ""))
@@ -509,9 +511,9 @@ static func apply_host_action(state_value: Variant, verb: String, receipt_key: S
 	var signal_id := str(host_context.get("signal_id", ""))
 	var action_index := int(host_context.get("action_index", 0))
 	var attention := int(host_context.get("attention", 0))
-	var depth := _copy_dict(state.get("depth_state", {}))
-	var cargo := _copy_dict(depth.get("cargo", {}))
-	var position := _copy_dict(depth.get("position", {}))
+	var depth := JsonCoerceScript._copy_dict(state.get("depth_state", {}))
+	var cargo := JsonCoerceScript._copy_dict(depth.get("cargo", {}))
+	var position := JsonCoerceScript._copy_dict(depth.get("position", {}))
 	match action:
 		"pickup":
 			if str(cargo.get("status", "")) != CARGO_PICKUP_PENDING or node_id.is_empty() \
@@ -543,8 +545,8 @@ static func apply_host_action(state_value: Variant, verb: String, receipt_key: S
 				state["pursuit_pressure"] = maxi(0, int(state.get("pursuit_pressure", 0)) - int(state.get("pursuit_per_boundary", 0)))
 			state = advance_boundaries(state, 1, node_id, attention, action_index)
 			if str(state.get("status", "")) == "resolved" and str(state.get("mode", "")) == MODE_GETAWAY:
-				depth = _copy_dict(state.get("depth_state", {}))
-				depth["pursuit_aftermath"] = {"outcome": str(_copy_dict(state.get("resolution", {})).get("reason", "failed")), "node_id": node_id, "action_index": action_index}
+				depth = JsonCoerceScript._copy_dict(state.get("depth_state", {}))
+				depth["pursuit_aftermath"] = {"outcome": str(JsonCoerceScript._copy_dict(state.get("resolution", {})).get("reason", "failed")), "node_id": node_id, "action_index": action_index}
 				state["depth_state"] = depth
 		"stash":
 			if str(cargo.get("status", "")) != CARGO_CARRIED or node_id.is_empty() or place_id.is_empty() \
@@ -588,7 +590,7 @@ static func apply_host_action(state_value: Variant, verb: String, receipt_key: S
 			if str(state.get("mode", "")) != MODE_HOLD or node_id != str(position.get("node_id", "")):
 				return state
 			state = _record_physical_position(state, node_id, action)
-			depth = _copy_dict(state.get("depth_state", {}))
+			depth = JsonCoerceScript._copy_dict(state.get("depth_state", {}))
 			depth["hold_aftermath"] = {"outcome": "broken_early", "node_id": node_id, "action_index": action_index}
 			state["depth_state"] = depth
 			state = _resolve(state, "failed", "hold_broken", false)
@@ -609,7 +611,7 @@ static func apply_host_action(state_value: Variant, verb: String, receipt_key: S
 			var handoff_target_index := _pending_target_index(state, node_id)
 			if handoff_target_index < 0:
 				return state
-			var handoff_target := _copy_dict(_copy_array(state.get("targets", []))[handoff_target_index])
+			var handoff_target := JsonCoerceScript._copy_dict(JsonCoerceScript._copy_array(state.get("targets", []))[handoff_target_index])
 			if target_id.is_empty() or target_id != str(handoff_target.get("id", "")):
 				return state
 			var handed := complete_handoff(state, node_id)
@@ -625,8 +627,8 @@ static func use_assist(state_value: Variant, assist_id: String) -> Dictionary:
 	var clean_id := assist_id.strip_edges()
 	if state.is_empty() or str(state.get("status", "")) != "active" or str(state.get("mode", "")) != MODE_GETAWAY:
 		return state
-	var available := _string_array(state.get("assists_available", []))
-	var used := _string_array(state.get("assists_used", []))
+	var available := JsonCoerceScript._string_array(state.get("assists_available", []))
+	var used := JsonCoerceScript._string_array(state.get("assists_used", []))
 	if clean_id.is_empty() or not available.has(clean_id) or used.has(clean_id):
 		return state
 	used.append(clean_id)
@@ -648,8 +650,8 @@ static func confiscate(state_value: Variant, reason: String = "swept") -> Dictio
 	if state.is_empty() or str(state.get("status", "")) != "active":
 		return state
 	state["confiscated"] = true
-	var depth := _copy_dict(state.get("depth_state", {}))
-	var position := _copy_dict(depth.get("position", {}))
+	var depth := JsonCoerceScript._copy_dict(state.get("depth_state", {}))
+	var position := JsonCoerceScript._copy_dict(depth.get("position", {}))
 	depth["cargo"] = _physical_cargo(CARGO_CONFISCATED, str(position.get("node_id", "")), "police", "")
 	state["depth_state"] = depth
 	return _resolve(state, "failed", reason.strip_edges() if not reason.strip_edges().is_empty() else "swept", false)
@@ -702,17 +704,17 @@ static func _all_targets_delivered(state: Dictionary) -> bool:
 
 
 static func _next_pending_target_index(state: Dictionary) -> int:
-	var targets := _copy_array(state.get("targets", []))
+	var targets := JsonCoerceScript._copy_array(state.get("targets", []))
 	for index in range(targets.size()):
-		if str(_copy_dict(targets[index]).get("status", "pending")) == "pending":
+		if str(JsonCoerceScript._copy_dict(targets[index]).get("status", "pending")) == "pending":
 			return index
 	return -1
 
 
 static func _record_physical_position(state_value: Dictionary, node_id: String, verb: String) -> Dictionary:
 	var state := state_value.duplicate(true)
-	var depth := _copy_dict(state.get("depth_state", {}))
-	var position := _copy_dict(depth.get("position", {}))
+	var depth := JsonCoerceScript._copy_dict(state.get("depth_state", {}))
+	var position := JsonCoerceScript._copy_dict(depth.get("position", {}))
 	var clean_node := node_id.strip_edges()
 	if clean_node.is_empty():
 		return state
@@ -721,7 +723,7 @@ static func _record_physical_position(state_value: Dictionary, node_id: String, 
 		position["node_id"] = clean_node
 	position["last_verb"] = verb.strip_edges()
 	depth["position"] = position
-	var cargo := _copy_dict(depth.get("cargo", {}))
+	var cargo := JsonCoerceScript._copy_dict(depth.get("cargo", {}))
 	if str(cargo.get("status", "")) == CARGO_CARRIED:
 		cargo["node_id"] = clean_node
 		depth["cargo"] = cargo
@@ -731,12 +733,12 @@ static func _record_physical_position(state_value: Dictionary, node_id: String, 
 
 static func _advance_hold_choice(state_value: Dictionary, node_id: String, attention: int, action_index: int, signal_id: String) -> Dictionary:
 	var state := state_value.duplicate(true)
-	var targets := _copy_array(state.get("targets", []))
-	if targets.is_empty() or node_id != str(_copy_dict(targets[0]).get("node_id", "")):
+	var targets := JsonCoerceScript._copy_array(state.get("targets", []))
+	if targets.is_empty() or node_id != str(JsonCoerceScript._copy_dict(targets[0]).get("node_id", "")):
 		return state_value
-	var depth := _copy_dict(state.get("depth_state", {}))
+	var depth := JsonCoerceScript._copy_dict(state.get("depth_state", {}))
 	if not signal_id.is_empty():
-		var signals := _copy_array(depth.get("hold_signals", []))
+		var signals := JsonCoerceScript._copy_array(depth.get("hold_signals", []))
 		if signals.size() >= MAX_DEPTH_COMMAND_RECEIPTS:
 			return state_value
 		signals.append({"signal_id": signal_id, "node_id": node_id, "action_index": action_index})
@@ -744,8 +746,8 @@ static func _advance_hold_choice(state_value: Dictionary, node_id: String, atten
 		state["depth_state"] = depth
 	state = advance_boundaries(state, 1, node_id, clampi(attention, 0, 100), action_index)
 	if str(state.get("status", "")) == "resolved":
-		depth = _copy_dict(state.get("depth_state", {}))
-		depth["hold_aftermath"] = {"outcome": str(_copy_dict(state.get("resolution", {})).get("reason", "failed")), "node_id": node_id, "action_index": action_index}
+		depth = JsonCoerceScript._copy_dict(state.get("depth_state", {}))
+		depth["hold_aftermath"] = {"outcome": str(JsonCoerceScript._copy_dict(state.get("resolution", {})).get("reason", "failed")), "node_id": node_id, "action_index": action_index}
 		state["depth_state"] = depth
 	return state
 
@@ -771,8 +773,8 @@ static func _normalize_host_context(value: Variant) -> Dictionary:
 
 static func _depth_receipt_replay(state: Dictionary, receipt_key: String, envelope: Dictionary) -> int:
 	var expected_fingerprint := _fingerprint(envelope)
-	for receipt_value in _copy_array(_copy_dict(state.get("depth_state", {})).get("command_receipts", [])):
-		var receipt := _copy_dict(receipt_value)
+	for receipt_value in JsonCoerceScript._copy_array(JsonCoerceScript._copy_dict(state.get("depth_state", {})).get("command_receipts", [])):
+		var receipt := JsonCoerceScript._copy_dict(receipt_value)
 		if str(receipt.get("receipt_key", "")) != receipt_key:
 			continue
 		return int(receipt.get("sequence", 0)) if str(receipt.get("command_record_fingerprint", "")) == expected_fingerprint else -2
@@ -780,19 +782,19 @@ static func _depth_receipt_replay(state: Dictionary, receipt_key: String, envelo
 
 
 static func _depth_has_command(depth: Dictionary, command_id: String) -> bool:
-	for receipt_value in _copy_array(depth.get("command_receipts", [])):
-		if str(_copy_dict(receipt_value).get("command_id", "")) == command_id:
+	for receipt_value in JsonCoerceScript._copy_array(depth.get("command_receipts", [])):
+		if str(JsonCoerceScript._copy_dict(receipt_value).get("command_id", "")) == command_id:
 			return true
 	return false
 
 
 static func _append_depth_receipt(state_value: Dictionary, receipt_key: String, command_id: String, envelope: Dictionary) -> Dictionary:
 	var state := state_value.duplicate(true)
-	var depth := _copy_dict(state.get("depth_state", {}))
-	var receipts := _copy_array(depth.get("command_receipts", []))
+	var depth := JsonCoerceScript._copy_dict(state.get("depth_state", {}))
+	var receipts := JsonCoerceScript._copy_array(depth.get("command_receipts", []))
 	if receipts.size() >= MAX_DEPTH_COMMAND_RECEIPTS:
 		return state_value
-	var previous_fingerprint := "0".repeat(64) if receipts.is_empty() else str(_copy_dict(receipts[receipts.size() - 1]).get("receipt_fingerprint", ""))
+	var previous_fingerprint := "0".repeat(64) if receipts.is_empty() else str(JsonCoerceScript._copy_dict(receipts[receipts.size() - 1]).get("receipt_fingerprint", ""))
 	var receipt := {
 		"receipt_key": receipt_key,
 		"command_id": command_id,
@@ -832,7 +834,7 @@ static func _legacy_depth_state(source: Dictionary, mode: String, source_schema:
 	if bool(source.get("confiscated", false)):
 		cargo_status = CARGO_CONFISCATED
 	elif str(source.get("status", "active")) == "resolved":
-		var resolution := _copy_dict(source.get("resolution", {}))
+		var resolution := JsonCoerceScript._copy_dict(source.get("resolution", {}))
 		if str(resolution.get("outcome", "")) == "success":
 			cargo_status = CARGO_DELIVERED
 		elif str(resolution.get("reason", "")) == "swept":
@@ -868,7 +870,7 @@ static func _normalize_depth_state(value: Variant) -> Dictionary:
 	var cargo := _normalize_physical_cargo(source.get("cargo", {}))
 	var position := _normalize_physical_position(source.get("position", {}))
 	var receipts := _normalize_depth_receipts(source.get("command_receipts", []))
-	if cargo.is_empty() or position.is_empty() or receipts.size() != _copy_array(source.get("command_receipts", [])).size() \
+	if cargo.is_empty() or position.is_empty() or receipts.size() != JsonCoerceScript._copy_array(source.get("command_receipts", [])).size() \
 			or receipts.size() > MAX_DEPTH_COMMAND_RECEIPTS or int(source.get("command_sequence", -1)) != receipts.size():
 		return {}
 	if typeof(source.get("hold_signals")) != TYPE_ARRAY or (source.get("hold_signals", []) as Array).size() > MAX_DEPTH_COMMAND_RECEIPTS \
@@ -881,9 +883,9 @@ static func _normalize_depth_state(value: Variant) -> Dictionary:
 		"position": position,
 		"command_receipts": receipts,
 		"command_sequence": receipts.size(),
-		"hold_signals": _copy_array(source.get("hold_signals", [])),
-		"hold_aftermath": _copy_dict(source.get("hold_aftermath", {})),
-		"pursuit_aftermath": _copy_dict(source.get("pursuit_aftermath", {})),
+		"hold_signals": JsonCoerceScript._copy_array(source.get("hold_signals", [])),
+		"hold_aftermath": JsonCoerceScript._copy_dict(source.get("hold_aftermath", {})),
+		"pursuit_aftermath": JsonCoerceScript._copy_dict(source.get("pursuit_aftermath", {})),
 	}
 
 
@@ -962,8 +964,8 @@ static func _normalize_depth_receipts(value: Variant) -> Array:
 		for key in ["command_id", "receipt_key"]:
 			if typeof(receipt.get(key)) != TYPE_STRING or str(receipt.get(key, "")).is_empty() or str(receipt.get(key, "")).length() > MAX_DEPTH_TEXT or str(receipt.get(key, "")) != str(receipt.get(key, "")).strip_edges():
 				return []
-		if seen.has(str(receipt.get("receipt_key", ""))) or not _valid_sha256(str(receipt.get("command_record_fingerprint", ""))) \
-				or str(receipt.get("previous_receipt_fingerprint", "")) != previous_fingerprint or not _valid_sha256(str(receipt.get("receipt_fingerprint", ""))):
+		if seen.has(str(receipt.get("receipt_key", ""))) or not JsonCoerceScript._valid_sha256(str(receipt.get("command_record_fingerprint", ""))) \
+				or str(receipt.get("previous_receipt_fingerprint", "")) != previous_fingerprint or not JsonCoerceScript._valid_sha256(str(receipt.get("receipt_fingerprint", ""))):
 			return []
 		var body := receipt.duplicate(true)
 		body.erase("receipt_fingerprint")
@@ -975,17 +977,13 @@ static func _normalize_depth_receipts(value: Variant) -> Array:
 	return result
 
 
-static func _valid_sha256(value: String) -> bool:
-	return value.length() == 64 and value == value.to_lower() and value.is_valid_hex_number()
-
-
 static func _available_physical_verbs(state: Dictionary) -> Array:
 	if str(state.get("status", "")) != "active":
 		return []
 	var mode := str(state.get("mode", ""))
-	var depth := _copy_dict(state.get("depth_state", {}))
-	var cargo := _copy_dict(depth.get("cargo", {}))
-	var position := _copy_dict(depth.get("position", {}))
+	var depth := JsonCoerceScript._copy_dict(state.get("depth_state", {}))
+	var cargo := JsonCoerceScript._copy_dict(depth.get("cargo", {}))
+	var position := JsonCoerceScript._copy_dict(depth.get("position", {}))
 	var cargo_status := str(cargo.get("status", CARGO_NONE))
 	if cargo_status == CARGO_PICKUP_PENDING:
 		return ["pickup"] if str(cargo.get("node_id", "")) == str(position.get("node_id", "")) else ["move"]
@@ -1030,25 +1028,6 @@ static func _normalize_targets(value: Variant) -> Array:
 			"revealed_by_job": bool(source.get("revealed_by_job", false)),
 			"delivered_boundary": maxi(0, int(source.get("delivered_boundary", 0))),
 		})
-	return result
-
-
-static func _copy_array(value: Variant) -> Array:
-	return (value as Array).duplicate(true) if typeof(value) == TYPE_ARRAY else []
-
-
-static func _copy_dict(value: Variant) -> Dictionary:
-	return (value as Dictionary).duplicate(true) if typeof(value) == TYPE_DICTIONARY else {}
-
-
-static func _string_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry_value in value as Array:
-		var entry := str(entry_value).strip_edges()
-		if not entry.is_empty() and not result.has(entry):
-			result.append(entry)
 	return result
 
 

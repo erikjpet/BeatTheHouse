@@ -1,5 +1,7 @@
 extends SceneTree
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 # Opt-in historical fixture capture. The integration generators copy this
 # driver into an archived historical tree. Every state mutation below goes
 # through FoundationMain's player-facing runtime.
@@ -175,7 +177,7 @@ func _capture_case(app: Control, capture_case: Dictionary, version: String) -> D
 		return {}
 	var steps: Array = capture_case.get("steps", []) if typeof(capture_case.get("steps", [])) == TYPE_ARRAY else []
 	if steps.is_empty():
-		for target_id in _string_array(capture_case.get("travel_path", [])):
+		for target_id in JsonCoerceScript._string_array(capture_case.get("travel_path", [])):
 			steps.append({"type": "travel", "target": target_id})
 	var game_id := ""
 	for step_value in steps:
@@ -238,10 +240,10 @@ func _capture_case(app: Control, capture_case: Dictionary, version: String) -> D
 			var talk_snapshot: Dictionary = {}
 			for _frame in range(30):
 				talk_snapshot = app.call("current_talk_dock_snapshot")
-				if bool(talk_snapshot.get("visible", false)) and str(talk_snapshot.get("event_id", "")) == talk_event_id and _string_array(talk_snapshot.get("choice_ids", [])).has(talk_choice_id):
+				if bool(talk_snapshot.get("visible", false)) and str(talk_snapshot.get("event_id", "")) == talk_event_id and JsonCoerceScript._string_array(talk_snapshot.get("choice_ids", [])).has(talk_choice_id):
 					break
 				await process_frame
-			if not bool(talk_snapshot.get("visible", false)) or str(talk_snapshot.get("event_id", "")) != talk_event_id or not _string_array(talk_snapshot.get("choice_ids", [])).has(talk_choice_id):
+			if not bool(talk_snapshot.get("visible", false)) or str(talk_snapshot.get("event_id", "")) != talk_event_id or not JsonCoerceScript._string_array(talk_snapshot.get("choice_ids", [])).has(talk_choice_id):
 				_fail("%s could not resolve public TalkDock choice %s:%s from %s" % [fixture_id, talk_event_id, talk_choice_id, str(talk_snapshot)])
 				return {}
 			if bool(step.get("require_enabled", false)) and talk_choice_id.begins_with("cage_"):
@@ -258,7 +260,7 @@ func _capture_case(app: Control, capture_case: Dictionary, version: String) -> D
 		if step_type == "enter_game":
 			var step_game_id := str(step.get("game_id", "")).strip_edges()
 			var step_environment: Dictionary = run_state.get("current_environment")
-			if not _string_array(step_environment.get("game_ids", [])).has(step_game_id) or not bool(app.call("enter_game", step_game_id)):
+			if not JsonCoerceScript._string_array(step_environment.get("game_ids", [])).has(step_game_id) or not bool(app.call("enter_game", step_game_id)):
 				_fail("%s could not enter generated game %s" % [fixture_id, step_game_id])
 				return {}
 			game_id = step_game_id
@@ -329,7 +331,7 @@ func _capture_case(app: Control, capture_case: Dictionary, version: String) -> D
 			var choice_id := str(step.get("choice_id", "")).strip_edges()
 			var popup_snapshot: Dictionary = app.call("current_event_choice_popup_snapshot")
 			if bool(step.get("popup", false)):
-				if not bool(popup_snapshot.get("visible", false)) or str(popup_snapshot.get("event_id", "")) != event_id or not _string_array(popup_snapshot.get("choice_ids", [])).has(choice_id):
+				if not bool(popup_snapshot.get("visible", false)) or str(popup_snapshot.get("event_id", "")) != event_id or not JsonCoerceScript._string_array(popup_snapshot.get("choice_ids", [])).has(choice_id):
 					_fail("%s could not resolve public popup event choice %s:%s from %s" % [fixture_id, event_id, choice_id, str(popup_snapshot)])
 					return {}
 				app.call("resolve_event_choice", event_id, choice_id)
@@ -379,7 +381,7 @@ func _capture_case(app: Control, capture_case: Dictionary, version: String) -> D
 		return {}
 	var requested_game := str(capture_case.get("enter_game", "")).strip_edges()
 	if not requested_game.is_empty():
-		var game_ids := _string_array(environment.get("game_ids", []))
+		var game_ids := JsonCoerceScript._string_array(environment.get("game_ids", []))
 		if requested_game == "first":
 			if game_ids.is_empty():
 				_fail("%s reached an environment with no playable game" % fixture_id)
@@ -661,17 +663,6 @@ func _options(arguments: PackedStringArray) -> Dictionary:
 			index += 2
 		else:
 			index += 1
-	return result
-
-
-func _string_array(value: Variant) -> Array[String]:
-	var result: Array[String] = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry in value as Array:
-		var text := str(entry).strip_edges()
-		if not text.is_empty():
-			result.append(text)
 	return result
 
 

@@ -12,9 +12,9 @@ You are working in `D:\Projects\Beat-The-House`, which ships to Web (itch.io) an
 Windows at 1280×720 and has a documented history of performance regressions.
 Read `scripts/ui/performance_liveness_guard.gd`,
 `scripts/ui/perf_telemetry_overlay.gd`, `scripts/ui/game_surface_canvas.gd`'s
-performance counters, `docs/plans/0.5_performance_audit.md`,
+performance counters, `docs/archive/0.5/plans/0.5_performance_audit.md`,
 `docs/plans/v04_performance_pass_2026_07.md`,
-`docs/plans/0.3.2_low_end_web_cleanup_board.md`, and
+`docs/archive/0.3/plans/0.3.2_low_end_web_cleanup_board.md`, and
 `scripts/tests/export_distribution_fresh_start_check.gd`.
 
 ## Why this row exists

@@ -55,8 +55,6 @@ func submit_daily_score(daily_id: String, score: int, challenge_config: Dictiona
 	})
 
 
-# Pretends to save cloud run data for future adapter parity.
-# Reports that no local cloud save exists.
 # Accepts an achievement unlock without sending it anywhere.
 func unlock_achievement(achievement_id: String) -> Dictionary:
 	return _local_payload({

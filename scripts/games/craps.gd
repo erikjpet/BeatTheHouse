@@ -2376,28 +2376,3 @@ func _dict(value: Variant) -> Dictionary:
 
 func _array(value: Variant) -> Array:
 	return value if typeof(value) == TYPE_ARRAY else []
-
-
-func _int_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) == TYPE_ARRAY:
-		for entry in value:
-			result.append(int(entry))
-	return result
-
-
-func _string_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) == TYPE_ARRAY:
-		for entry in value:
-			result.append(str(entry))
-	return result
-
-
-func _dictionary_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) == TYPE_ARRAY:
-		for entry in value:
-			if typeof(entry) == TYPE_DICTIONARY:
-				result.append((entry as Dictionary).duplicate(true))
-	return result

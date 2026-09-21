@@ -1,6 +1,8 @@
 class_name RunReportViewModel
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 const OUTCOME_REGISTRY_PATH := "res://data/art/run_outcome_icons.json"
 const BAG_GRANTS_FLAG := "_meta_bag_grants"
 const BAG_SELECTED_FLAG := "_meta_bag_selected"
@@ -39,26 +41,26 @@ const GAME_LABELS := {
 
 static func build(run_data: Dictionary, catalogs: Dictionary = {}) -> Dictionary:
 	var story_log := _dict_array(run_data.get("story_log", []))
-	var outcome := build_outcome(run_data, _copy_dict(catalogs.get("outcomes", {})))
-	var score := _copy_dict(run_data.get("terminal_score", {}))
+	var outcome := build_outcome(run_data, JsonCoerceScript._copy_dict(catalogs.get("outcomes", {})))
+	var score := JsonCoerceScript._copy_dict(run_data.get("terminal_score", {}))
 	if score.is_empty():
 		var base := maxi(0, int(run_data.get("run_spending_score", 0)))
-		var won := str(run_data.get("run_status", "")) == "ended" and bool(_copy_dict(run_data.get("narrative_flags", {})).get("demo_victory", false))
+		var won := str(run_data.get("run_status", "")) == "ended" and bool(JsonCoerceScript._copy_dict(run_data.get("narrative_flags", {})).get("demo_victory", false))
 		var multiplier := RunState.TERMINAL_SCORE_VICTORY_MULTIPLIER if won else 1
 		score = {"base_spending": base, "multiplier": multiplier, "score": base * multiplier}
 	var end_game_clock_minutes := maxi(RunState.GAME_CLOCK_START_MINUTE, int(run_data.get("game_clock_minutes", RunState.GAME_CLOCK_START_MINUTE)))
 	var timeline_heat_entries := _heat_entries_with_final_snapshot(run_data, end_game_clock_minutes)
 	var timeline := build_timeline(
 		timeline_heat_entries,
-		_copy_dict(run_data.get("world_map", {})),
-		maxi(0, int(_copy_dict(run_data.get("event_cadence", {})).get("action_index", 0))),
+		JsonCoerceScript._copy_dict(run_data.get("world_map", {})),
+		maxi(0, int(JsonCoerceScript._copy_dict(run_data.get("event_cadence", {})).get("action_index", 0))),
 		story_log,
 		RunState.GAME_CLOCK_START_MINUTE,
 		end_game_clock_minutes,
 		_dict_array(run_data.get("environment_history", [])),
-		_copy_dict(run_data.get("current_environment", {}))
+		JsonCoerceScript._copy_dict(run_data.get("current_environment", {}))
 	)
-	var report_map := build_report_map_snapshot(_copy_dict(run_data.get("world_map", {})), timeline)
+	var report_map := build_report_map_snapshot(JsonCoerceScript._copy_dict(run_data.get("world_map", {})), timeline)
 	return {
 		"outcome": outcome,
 		"score": {
@@ -67,8 +69,8 @@ static func build(run_data: Dictionary, catalogs: Dictionary = {}) -> Dictionary
 			"show_winner_bonus": bool(outcome.get("won", false)),
 			"final_score": int(score.get("score", 0)),
 		},
-		"items": build_item_fates(_inventory_item_ids(run_data.get("inventory", [])), _dict_array(run_data.get("debt", [])), story_log, _copy_dict(catalogs.get("items", {}))),
-		"take_home_item_reward": build_take_home_item_reward(run_data, _copy_dict(catalogs.get("items", {}))),
+		"items": build_item_fates(_inventory_item_ids(run_data.get("inventory", [])), _dict_array(run_data.get("debt", [])), story_log, JsonCoerceScript._copy_dict(catalogs.get("items", {}))),
+		"take_home_item_reward": build_take_home_item_reward(run_data, JsonCoerceScript._copy_dict(catalogs.get("items", {}))),
 		"bag_reward": build_bag_reward(run_data),
 		"meta_reward": build_meta_reward(run_data),
 		"debts": build_debt_ledger(_dict_array(run_data.get("debt", [])), story_log),
@@ -110,16 +112,16 @@ static func build_release_ledger(run_data: Dictionary) -> Dictionary:
 static func release_profile_snapshot(run_data: Dictionary) -> Dictionary:
 	var ledger := build_release_ledger(run_data)
 	return {
-		"crew": _copy_dict(ledger.get("crew", {})),
-		"world": _copy_dict(ledger.get("world", {})),
-		"numbers": _copy_dict(ledger.get("numbers", {})),
-		"deliveries": _copy_dict(ledger.get("deliveries", {})),
+		"crew": JsonCoerceScript._copy_dict(ledger.get("crew", {})),
+		"world": JsonCoerceScript._copy_dict(ledger.get("world", {})),
+		"numbers": JsonCoerceScript._copy_dict(ledger.get("numbers", {})),
+		"deliveries": JsonCoerceScript._copy_dict(ledger.get("deliveries", {})),
 	}
 
 
 static func _crew_ledger(run_data: Dictionary) -> Dictionary:
-	var crew_state := _copy_dict(run_data.get("crew_state", {}))
-	var trust := _copy_dict(crew_state.get("trust", {}))
+	var crew_state := JsonCoerceScript._copy_dict(run_data.get("crew_state", {}))
+	var trust := JsonCoerceScript._copy_dict(crew_state.get("trust", {}))
 	var member_rows: Array = []
 	var standing_index := 0
 	for member_id_value in CrewStateModelScript.MEMBER_IDS:
@@ -133,7 +135,7 @@ static func _crew_ledger(run_data: Dictionary) -> Dictionary:
 			member_rows.append({"id": member_id, "label": str(CREW_MEMBER_LABELS.get(member_id, member_id.replace("crew_", "").capitalize())), "standing": rank})
 	var completed := 0
 	var abandoned := 0
-	for job_value in _copy_dict(crew_state.get("jobs", {})).values():
+	for job_value in JsonCoerceScript._copy_dict(crew_state.get("jobs", {})).values():
 		if typeof(job_value) != TYPE_DICTIONARY or str((job_value as Dictionary).get("status", "")) != "resolved":
 			continue
 		var job_outcome := str((job_value as Dictionary).get("outcome", ""))
@@ -141,9 +143,9 @@ static func _crew_ledger(run_data: Dictionary) -> Dictionary:
 			completed += 1
 		elif job_outcome == "abandoned":
 			abandoned += 1
-	var heist := _copy_dict(crew_state.get("crew_heist", {}))
+	var heist := JsonCoerceScript._copy_dict(crew_state.get("crew_heist", {}))
 	var result := {
-		"path_walked": not trust.is_empty() and _positive_value_count(trust) > 0 or not _copy_dict(crew_state.get("jobs", {})).is_empty() or not heist.is_empty(),
+		"path_walked": not trust.is_empty() and _positive_value_count(trust) > 0 or not JsonCoerceScript._copy_dict(crew_state.get("jobs", {})).is_empty() or not heist.is_empty(),
 		"standing": str(CrewStateModelScript.RANK_IDS[standing_index]),
 		"members_met": member_rows,
 		"jobs_completed": completed,
@@ -151,7 +153,7 @@ static func _crew_ledger(run_data: Dictionary) -> Dictionary:
 	}
 	# The ending copy is the contract-approved public source. Never inspect the
 	# hidden Turn payload, and never name it before a completed terminal heist.
-	var flags := _copy_dict(run_data.get("narrative_flags", {}))
+	var flags := JsonCoerceScript._copy_dict(run_data.get("narrative_flags", {}))
 	var terminal_heist := str(run_data.get("run_status", "")) == RunState.RUN_STATUS_ENDED \
 		and str(flags.get("demo_victory_route", "")) == RunState.CREW_HEIST_ROUTE \
 		and str(heist.get("status", "")) == "completed"
@@ -164,14 +166,14 @@ static func _crew_ledger(run_data: Dictionary) -> Dictionary:
 static func _world_ledger(run_data: Dictionary) -> Dictionary:
 	var visited := _visited_node_ids(run_data)
 	var scenario_by_id := {}
-	var current_environment := _copy_dict(run_data.get("current_environment", {}))
+	var current_environment := JsonCoerceScript._copy_dict(run_data.get("current_environment", {}))
 	_record_scenario(scenario_by_id, current_environment)
-	var world_map := _copy_dict(run_data.get("world_map", {}))
+	var world_map := JsonCoerceScript._copy_dict(run_data.get("world_map", {}))
 	for node_value in _dict_array(world_map.get("nodes", [])):
 		var node_id := str(node_value.get("id", "")).strip_edges()
 		if not visited.has(node_id):
 			continue
-		_record_scenario(scenario_by_id, _copy_dict(node_value.get("environment", node_value)))
+		_record_scenario(scenario_by_id, JsonCoerceScript._copy_dict(node_value.get("environment", node_value)))
 	var scenarios: Array = scenario_by_id.values()
 	scenarios.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return str(a.get("label", "")) < str(b.get("label", "")))
 	var notable_lookup := {}
@@ -190,9 +192,9 @@ static func _world_ledger(run_data: Dictionary) -> Dictionary:
 		}
 	var notable: Array = notable_lookup.values()
 	notable.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return str(a.get("label", "")) < str(b.get("label", "")))
-	var living_world := _copy_dict(_copy_dict(run_data.get("town_state", {})).get("living_world", {}))
+	var living_world := JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(run_data.get("town_state", {})).get("living_world", {}))
 	var rumors_proved_true := 0
-	for target_value in _copy_dict(living_world.get("heard_by_node", {})).keys():
+	for target_value in JsonCoerceScript._copy_dict(living_world.get("heard_by_node", {})).keys():
 		if visited.has(str(target_value)):
 			rumors_proved_true += 1
 	var end_minutes := maxi(RunState.GAME_CLOCK_START_MINUTE, int(run_data.get("game_clock_minutes", RunState.GAME_CLOCK_START_MINUTE)))
@@ -206,7 +208,7 @@ static func _world_ledger(run_data: Dictionary) -> Dictionary:
 
 
 static func _numbers_ledger(run_data: Dictionary) -> Dictionary:
-	var state := _copy_dict(run_data.get("numbers_state", {}))
+	var state := JsonCoerceScript._copy_dict(run_data.get("numbers_state", {}))
 	var slips := _dict_array(state.get("slips", []))
 	var hits := 0
 	for slip in slips:
@@ -215,13 +217,13 @@ static func _numbers_ledger(run_data: Dictionary) -> Dictionary:
 	return {
 		"slips_placed": slips.size(),
 		"hits": hits,
-		"rig_route_used": str(_copy_dict(state.get("fix_state", {})).get("status", "")) == "completed",
+		"rig_route_used": str(JsonCoerceScript._copy_dict(state.get("fix_state", {})).get("status", "")) == "completed",
 	}
 
 
 static func _games_ledger(run_data: Dictionary) -> Array:
-	var flags := _copy_dict(run_data.get("narrative_flags", {}))
-	var tallies := _copy_dict(flags.get("profile_games_played", run_data.get("games_played", {})))
+	var flags := JsonCoerceScript._copy_dict(run_data.get("narrative_flags", {}))
+	var tallies := JsonCoerceScript._copy_dict(flags.get("profile_games_played", run_data.get("games_played", {})))
 	var rows: Array = []
 	for game_id_value in tallies.keys():
 		var game_id := str(game_id_value).strip_edges()
@@ -234,7 +236,7 @@ static func _games_ledger(run_data: Dictionary) -> Array:
 
 
 static func _deliveries_ledger(run_data: Dictionary) -> Dictionary:
-	var flags := _copy_dict(run_data.get("narrative_flags", {}))
+	var flags := JsonCoerceScript._copy_dict(run_data.get("narrative_flags", {}))
 	return {
 		"runs_completed": maxi(0, int(flags.get("profile_delivery_runs_completed", 0))),
 		"packages_lost": maxi(0, int(flags.get("profile_delivery_packages_lost", 0))),
@@ -259,8 +261,8 @@ static func _crew_rows(crew: Dictionary) -> Array:
 static func _world_rows(world: Dictionary) -> Array:
 	return [
 		{"label": "Nights", "value": str(int(world.get("nights_survived", 0)))},
-		{"label": "Scenarios", "value": str(_copy_array(world.get("scenarios", [])).size())},
-		{"label": "Aftermath", "value": str(_copy_array(world.get("notable_outcomes", [])).size())},
+		{"label": "Scenarios", "value": str(JsonCoerceScript._copy_array(world.get("scenarios", [])).size())},
+		{"label": "Aftermath", "value": str(JsonCoerceScript._copy_array(world.get("notable_outcomes", [])).size())},
 		{"label": "Sweeps", "value": str(int(world.get("sweeps_encountered", 0)))},
 		{"label": "True rumors", "value": str(int(world.get("rumors_proved_true", 0)))},
 	]
@@ -283,8 +285,8 @@ static func _delivery_rows(deliveries: Dictionary) -> Array:
 
 static func _ledger_summary_lines(crew: Dictionary, world: Dictionary, numbers: Dictionary, games: Array, deliveries: Dictionary) -> Array:
 	var lines: Array = [
-		"Crew | path %s | %s | %d met | jobs %d complete/%d abandoned" % ["walked" if bool(crew.get("path_walked", false)) else "untouched", str(crew.get("standing", "stranger")).replace("_", " ").capitalize(), _copy_array(crew.get("members_met", [])).size(), int(crew.get("jobs_completed", 0)), int(crew.get("jobs_abandoned", 0))],
-		"World | %d nights | %d scenarios | %d aftermath | %d sweeps | %d true rumors" % [int(world.get("nights_survived", 0)), _copy_array(world.get("scenarios", [])).size(), _copy_array(world.get("notable_outcomes", [])).size(), int(world.get("sweeps_encountered", 0)), int(world.get("rumors_proved_true", 0))],
+		"Crew | path %s | %s | %d met | jobs %d complete/%d abandoned" % ["walked" if bool(crew.get("path_walked", false)) else "untouched", str(crew.get("standing", "stranger")).replace("_", " ").capitalize(), JsonCoerceScript._copy_array(crew.get("members_met", [])).size(), int(crew.get("jobs_completed", 0)), int(crew.get("jobs_abandoned", 0))],
+		"World | %d nights | %d scenarios | %d aftermath | %d sweeps | %d true rumors" % [int(world.get("nights_survived", 0)), JsonCoerceScript._copy_array(world.get("scenarios", [])).size(), JsonCoerceScript._copy_array(world.get("notable_outcomes", [])).size(), int(world.get("sweeps_encountered", 0)), int(world.get("rumors_proved_true", 0))],
 		"Numbers | %d slips | %d hits | rig %s" % [int(numbers.get("slips_placed", 0)), int(numbers.get("hits", 0)), "used" if bool(numbers.get("rig_route_used", false)) else "unused"],
 		"Deliveries | %d complete | %d lost" % [int(deliveries.get("runs_completed", 0)), int(deliveries.get("packages_lost", 0))],
 	]
@@ -299,17 +301,17 @@ static func _ledger_summary_lines(crew: Dictionary, world: Dictionary, numbers: 
 
 static func _visited_node_ids(run_data: Dictionary) -> Array:
 	var result: Array = []
-	for value in _copy_array(_copy_dict(run_data.get("world_map", {})).get("visited_path", [])):
+	for value in JsonCoerceScript._copy_array(JsonCoerceScript._copy_dict(run_data.get("world_map", {})).get("visited_path", [])):
 		_append_unique_string(result, str(value))
 	for entry in _dict_array(run_data.get("environment_history", [])):
 		_append_unique_string(result, str(entry.get("world_node_id", entry.get("archetype_id", entry.get("id", "")))))
-	var current := _copy_dict(run_data.get("current_environment", {}))
+	var current := JsonCoerceScript._copy_dict(run_data.get("current_environment", {}))
 	_append_unique_string(result, str(current.get("world_node_id", current.get("archetype_id", current.get("id", "")))))
 	return result
 
 
 static func _record_scenario(target: Dictionary, environment: Dictionary) -> void:
-	var state := _copy_dict(environment.get("scenario_state", {}))
+	var state := JsonCoerceScript._copy_dict(environment.get("scenario_state", {}))
 	var scenario_id := str(state.get("id", environment.get("scenario_id", ""))).strip_edges()
 	if scenario_id.is_empty():
 		return
@@ -332,14 +334,14 @@ static func _positive_value_count(values: Dictionary) -> int:
 
 
 static func build_meta_reward(run_data: Dictionary) -> Dictionary:
-	var flags := _copy_dict(run_data.get("narrative_flags", {}))
-	var card := _copy_dict(flags.get(PLAYERS_CARD_REWARD_FLAG, {}))
-	var chips := _copy_dict(flags.get(GRAND_CASINO_CHIPS_REWARD_FLAG, {}))
+	var flags := JsonCoerceScript._copy_dict(run_data.get("narrative_flags", {}))
+	var card := JsonCoerceScript._copy_dict(flags.get(PLAYERS_CARD_REWARD_FLAG, {}))
+	var chips := JsonCoerceScript._copy_dict(flags.get(GRAND_CASINO_CHIPS_REWARD_FLAG, {}))
 	var destroyed := _dict_array(flags.get(PLAYERS_CARD_DESTROYED_FLAG, []))
-	var prestige := _copy_dict(flags.get(PRESTIGE_RESULT_FLAG, {}))
+	var prestige := JsonCoerceScript._copy_dict(flags.get(PRESTIGE_RESULT_FLAG, {}))
 	var prestige_suffix := " · Prestige card retained" if bool(prestige.get("active", false)) else ""
 	if not card.is_empty():
-		var stamp := _copy_dict(card.get("instance_data", {}))
+		var stamp := JsonCoerceScript._copy_dict(card.get("instance_data", {}))
 		return {
 			"visible": true,
 			"kind": "players_card_minted",
@@ -361,7 +363,7 @@ static func build_meta_reward(run_data: Dictionary) -> Dictionary:
 			"kind": "players_card_destroyed",
 			"title": "CARD LOST FOREVER · Grand Casino Players Card",
 			"detail": "The prestige card carried into this failed run was destroyed.",
-			"instance_id": int(_copy_dict(destroyed[0]).get("instance_id", 0)),
+			"instance_id": int(JsonCoerceScript._copy_dict(destroyed[0]).get("instance_id", 0)),
 		}
 	if bool(prestige.get("active", false)):
 		return {
@@ -374,11 +376,11 @@ static func build_meta_reward(run_data: Dictionary) -> Dictionary:
 
 
 static func build_bag_reward(run_data: Dictionary) -> Dictionary:
-	var flags := _copy_dict(run_data.get("narrative_flags", {}))
+	var flags := JsonCoerceScript._copy_dict(run_data.get("narrative_flags", {}))
 	var won := str(run_data.get("run_status", "")) == RunState.RUN_STATUS_ENDED and bool(flags.get("demo_victory", false))
 	var choices: Array = []
 	for marker_value in _dict_array(run_data.get("pending_bags", [])):
-		var marker := _copy_dict(marker_value)
+		var marker := JsonCoerceScript._copy_dict(marker_value)
 		var marker_id := str(marker.get("marker_id", "")).strip_edges()
 		if marker_id.is_empty():
 			continue
@@ -393,7 +395,7 @@ static func build_bag_reward(run_data: Dictionary) -> Dictionary:
 			"collection_name": collection_name,
 			"tier_label": tier_label,
 		})
-	var summary_lines := _string_array(flags.get(BAG_GRANTS_FLAG, []))
+	var summary_lines := JsonCoerceScript._string_array(flags.get(BAG_GRANTS_FLAG, []))
 	var sal_line := str(flags.get(SAL_STOCK_SUMMARY_FLAG, "")).strip_edges()
 	if not sal_line.is_empty() and not summary_lines.has(sal_line):
 		summary_lines.append(sal_line)
@@ -408,10 +410,10 @@ static func build_bag_reward(run_data: Dictionary) -> Dictionary:
 
 
 static func build_take_home_item_reward(run_data: Dictionary, item_catalog: Dictionary = {}) -> Dictionary:
-	var flags := _copy_dict(run_data.get("narrative_flags", {}))
+	var flags := JsonCoerceScript._copy_dict(run_data.get("narrative_flags", {}))
 	var won := str(run_data.get("run_status", "")) == RunState.RUN_STATUS_ENDED and bool(flags.get("demo_victory", false))
-	var challenge := _copy_dict(run_data.get("challenge_config", {}))
-	var modifiers := _copy_dict(challenge.get("modifiers", {}))
+	var challenge := JsonCoerceScript._copy_dict(run_data.get("challenge_config", {}))
+	var modifiers := JsonCoerceScript._copy_dict(challenge.get("modifiers", {}))
 	var meta_enabled := str(challenge.get("mode", "standard")).strip_edges().to_lower() == "standard" \
 		and str(challenge.get("completion_flag", "")).strip_edges().is_empty() \
 		and bool(modifiers.get("meta_collection_enabled", false))
@@ -422,10 +424,10 @@ static func build_take_home_item_reward(run_data: Dictionary, item_catalog: Dict
 		if item_id.is_empty() or seen.has(item_id):
 			continue
 		seen[item_id] = true
-		var definition := _copy_dict(item_catalog.get(item_id, {}))
+		var definition := JsonCoerceScript._copy_dict(item_catalog.get(item_id, {}))
 		if definition.is_empty():
 			continue
-		var effect := _copy_dict(definition.get("effect", {}))
+		var effect := JsonCoerceScript._copy_dict(definition.get("effect", {}))
 		var capacity := maxi(0, int(definition.get("container_capacity", effect.get("container_capacity", 0))))
 		if str(definition.get("class", "")).strip_edges().to_lower() != "container" and capacity <= 0:
 			continue
@@ -455,15 +457,15 @@ static func build_take_home_item_reward(run_data: Dictionary, item_catalog: Dict
 static func _is_tutorial_failure(run_data: Dictionary) -> bool:
 	if str(run_data.get("run_status", "")) != RunState.RUN_STATUS_FAILED:
 		return false
-	var config := _copy_dict(run_data.get("challenge_config", {}))
+	var config := JsonCoerceScript._copy_dict(run_data.get("challenge_config", {}))
 	if TutorialFlowScript.is_tutorial_challenge(config):
 		return true
-	var modifiers := _copy_dict(config.get("modifiers", {}))
+	var modifiers := JsonCoerceScript._copy_dict(config.get("modifiers", {}))
 	return bool(modifiers.get("tutorial_run", false))
 
 
 static func build_outcome(run_data: Dictionary, registry: Dictionary) -> Dictionary:
-	var flags := _copy_dict(run_data.get("narrative_flags", {}))
+	var flags := JsonCoerceScript._copy_dict(run_data.get("narrative_flags", {}))
 	var won := str(run_data.get("run_status", "")) == "ended" and bool(flags.get("demo_victory", false))
 	var tutorial_failure := _is_tutorial_failure(run_data)
 	var outcome_key := str(run_data.get("run_failure_reason", RunState.FAILURE_BANKROLL_ZERO))
@@ -472,10 +474,10 @@ static func build_outcome(run_data: Dictionary, registry: Dictionary) -> Diction
 		outcome_key = RunState.report_outcome_key_for_runtime(victory_route, str(flags.get("crew_heist_outcome", "")))
 		if outcome_key.is_empty():
 			outcome_key = "showdown_survived"
-	var entries := _copy_dict(registry.get("outcomes", registry))
-	var definition := _copy_dict(entries.get(outcome_key, {}))
+	var entries := JsonCoerceScript._copy_dict(registry.get("outcomes", registry))
+	var definition := JsonCoerceScript._copy_dict(entries.get(outcome_key, {}))
 	if definition.is_empty() and outcome_key == "heist_closed":
-		definition = _copy_dict(entries.get("showdown_survived", {}))
+		definition = JsonCoerceScript._copy_dict(entries.get("showdown_survived", {}))
 		definition["title"] = "The Score Broke"
 		definition["how"] = "The crew left with the ending the room allowed."
 	var title := str(definition.get("title", outcome_key.replace("_", " ").capitalize()))
@@ -492,7 +494,7 @@ static func build_outcome(run_data: Dictionary, registry: Dictionary) -> Diction
 		seam_line = RunState.GRAND_CASINO_ACT_TWO_SEAM_MESSAGE
 		if how.find(seam_line) == -1:
 			how = "%s %s" % [how.strip_edges(), seam_line]
-	var environment := _copy_dict(run_data.get("current_environment", {}))
+	var environment := JsonCoerceScript._copy_dict(run_data.get("current_environment", {}))
 	var environment_name := str(environment.get("display_name", environment.get("id", "Unknown room")))
 	var total_minutes := maxi(0, int(run_data.get("game_clock_minutes", RunState.GAME_CLOCK_START_MINUTE)))
 	return {
@@ -600,7 +602,7 @@ static func build_debt_ledger(live_debt: Array, story_log: Array) -> Array:
 			var debt_id := str(entry.get("debt_id", ""))
 			if debt_id.is_empty():
 				continue
-			var loan: Dictionary = _copy_dict(loans.get(debt_id, {"id": debt_id, "lender": str(entry.get("lender_id", "Lender")).replace("_", " ").capitalize(), "amount": 0, "kind": "cash", "outcome": "outstanding", "tone": "outstanding"}))
+			var loan: Dictionary = JsonCoerceScript._copy_dict(loans.get(debt_id, {"id": debt_id, "lender": str(entry.get("lender_id", "Lender")).replace("_", " ").capitalize(), "amount": 0, "kind": "cash", "outcome": "outstanding", "tone": "outstanding"}))
 			match entry_type:
 				"debt_paid", "debt_favor_completed":
 					loan["outcome"] = "redeemed" if not str(entry.get("collateral_item_id", "")).is_empty() else "settled"
@@ -617,7 +619,7 @@ static func build_debt_ledger(live_debt: Array, story_log: Array) -> Array:
 			continue
 		var debt_entry: Dictionary = value
 		var debt_id := str(debt_entry.get("id", ""))
-		var existing := _copy_dict(loans.get(debt_id, _loan_row(debt_entry, str(debt_entry.get("lender_id", "Lender")))))
+		var existing := JsonCoerceScript._copy_dict(loans.get(debt_id, _loan_row(debt_entry, str(debt_entry.get("lender_id", "Lender")))))
 		if str(debt_entry.get("debt_kind", "")) == "casino_marker":
 			existing["amount"] = maxi(0, int(debt_entry.get("balance", 0)))
 		existing["outcome"] = "still held" if str(debt_entry.get("debt_kind", "")) == "pawn" else "outstanding"
@@ -630,12 +632,12 @@ static func build_debt_ledger(live_debt: Array, story_log: Array) -> Array:
 
 static func _heat_entries_with_final_snapshot(run_data: Dictionary, end_game_clock_minutes: int) -> Array:
 	var entries := _dict_array(run_data.get("heat_history", []))
-	var current_environment := _copy_dict(run_data.get("current_environment", {}))
+	var current_environment := JsonCoerceScript._copy_dict(run_data.get("current_environment", {}))
 	var current_environment_id := str(current_environment.get("id", current_environment.get("world_node_id", current_environment.get("archetype_id", "")))).strip_edges()
 	var current_world_node_id := _report_node_id_from_environment(current_environment)
 	var current_environment_name := str(current_environment.get("display_name", current_environment_id.replace("_", " ").capitalize())).strip_edges()
-	var cadence := _copy_dict(run_data.get("event_cadence", {}))
-	var suspicion := _copy_dict(run_data.get("suspicion", {}))
+	var cadence := JsonCoerceScript._copy_dict(run_data.get("event_cadence", {}))
+	var suspicion := JsonCoerceScript._copy_dict(run_data.get("suspicion", {}))
 	var final_sample := {
 		"action_index": maxi(0, int(cadence.get("action_index", 0))),
 		"game_clock_minutes": maxi(0, end_game_clock_minutes),
@@ -698,9 +700,9 @@ static func build_timeline(heat_entries: Array, world_map: Dictionary, final_act
 	var arrival_clock := start_clock
 	for index in range(path.size()):
 		var node_id := str(path[index])
-		var node := _copy_dict(nodes_by_id.get(node_id, {}))
+		var node := JsonCoerceScript._copy_dict(nodes_by_id.get(node_id, {}))
 		var label := str(node.get("display_name", node.get("label", node_id.replace("_", " ").capitalize())))
-		var position := _copy_dict(node.get("position", {}))
+		var position := JsonCoerceScript._copy_dict(node.get("position", {}))
 		keyframes.append({
 			"node_id": node_id,
 			"label": label,
@@ -713,7 +715,7 @@ static func build_timeline(heat_entries: Array, world_map: Dictionary, final_act
 			_append_replay_segment(segments, "dwell", node_id, node_id, label, label, arrival_clock, end_clock, start_clock, duration_minutes, index)
 			continue
 		var next_node_id := str(path[index + 1])
-		var next_node := _copy_dict(nodes_by_id.get(next_node_id, {}))
+		var next_node := JsonCoerceScript._copy_dict(nodes_by_id.get(next_node_id, {}))
 		var next_label := str(next_node.get("display_name", next_node.get("label", next_node_id.replace("_", " ").capitalize())))
 		var travel_entry := _travel_entry_for_report_leg(travel_entries, node_id, next_node_id, index)
 		var travel_minutes := maxi(1, int(travel_entry.get("travel_minutes", 1)))
@@ -733,7 +735,7 @@ static func build_timeline(heat_entries: Array, world_map: Dictionary, final_act
 		arrival_clock = next_arrival_clock
 	if segments.is_empty() and not path.is_empty():
 		var only_node_id := str(path[0])
-		var only_node := _copy_dict(nodes_by_id.get(only_node_id, {}))
+		var only_node := JsonCoerceScript._copy_dict(nodes_by_id.get(only_node_id, {}))
 		var only_label := str(only_node.get("display_name", only_node_id.replace("_", " ").capitalize()))
 		segments.append({"kind": "dwell", "node_id": only_node_id, "from_node_id": only_node_id, "to_node_id": only_node_id, "from_label": only_label, "to_label": only_label, "start_game_clock_minutes": start_clock, "end_game_clock_minutes": end_clock, "start_progress": 0.0, "end_progress": 1.0, "leg_index": 0})
 	# Exact compact visit clocks are the source of truth. The reconstruction
@@ -750,7 +752,7 @@ static func build_timeline(heat_entries: Array, world_map: Dictionary, final_act
 		max_action
 	)
 	if not recorded_visit_timeline.is_empty():
-		path = _string_array(recorded_visit_timeline.get("path", []))
+		path = JsonCoerceScript._string_array(recorded_visit_timeline.get("path", []))
 		keyframes = _dict_array(recorded_visit_timeline.get("keyframes", []))
 		segments = _dict_array(recorded_visit_timeline.get("segments", []))
 	var bands: Array = []
@@ -769,7 +771,7 @@ static func build_timeline(heat_entries: Array, world_map: Dictionary, final_act
 
 
 static func _resolved_report_path(world_map: Dictionary, transitions: Array, travel_entries: Array, environment_history: Array = [], current_environment: Dictionary = {}) -> Array:
-	var map_path := _string_array(world_map.get("visited_path", []))
+	var map_path := JsonCoerceScript._string_array(world_map.get("visited_path", []))
 	var recorded_path: Array = []
 	for transition_value in transitions:
 		if typeof(transition_value) != TYPE_DICTIONARY:
@@ -910,9 +912,9 @@ static func _recorded_visit_timeline(environment_history: Array, current_environ
 			var next_entered := int(next_source.get("entered_game_clock_minutes", -1))
 			if next_entered < entered or departed > next_entered:
 				return {}
-		var node := _copy_dict(nodes_by_id.get(node_id, {}))
+		var node := JsonCoerceScript._copy_dict(nodes_by_id.get(node_id, {}))
 		var label := str(node.get("display_name", node.get("label", source.get("display_name", node_id.replace("_", " ").capitalize()))))
-		var position := _copy_dict(node.get("position", {}))
+		var position := JsonCoerceScript._copy_dict(node.get("position", {}))
 		var visit := {
 			"node_id": node_id,
 			"label": label,
@@ -965,7 +967,7 @@ static func _recorded_visit_timeline(environment_history: Array, current_environ
 			"action_index": int(round(_clock_progress(arrival_clock, start_clock, duration_minutes) * float(max_action))),
 			"game_clock_minutes": arrival_clock,
 			"progress": _clock_progress(arrival_clock, start_clock, duration_minutes),
-			"position": _copy_dict(visit.get("position", {})),
+			"position": JsonCoerceScript._copy_dict(visit.get("position", {})),
 		})
 		_append_replay_segment(segments, "dwell", node_id, node_id, label, label, arrival_clock, departure_clock, start_clock, duration_minutes, index)
 		if index + 1 >= visits.size():
@@ -983,7 +985,7 @@ static func build_report_map_snapshot(world_map: Dictionary, timeline: Dictionar
 	# independently from the streets and landmarks underneath them.
 	report_map["background_path"] = str(world_map.get("background_path", RUN_MAP_BACKGROUND_PATH))
 	report_map["background_fill_canvas"] = true
-	var path := _string_array(timeline.get("visited_node_ids", world_map.get("visited_path", [])))
+	var path := JsonCoerceScript._string_array(timeline.get("visited_node_ids", world_map.get("visited_path", [])))
 	var visited_lookup := {}
 	var visited_focus_ids: Array = []
 	for node_id in path:
@@ -1003,9 +1005,9 @@ static func build_report_map_snapshot(world_map: Dictionary, timeline: Dictionar
 		var node_id := str(node_id_value).strip_edges()
 		if node_id.is_empty() or not visited_lookup.has(node_id) or added_node_ids.has(node_id):
 			continue
-		var node: Dictionary = _copy_dict(source_nodes_by_id.get(node_id, {}))
+		var node: Dictionary = JsonCoerceScript._copy_dict(source_nodes_by_id.get(node_id, {}))
 		if node.is_empty():
-			node = _synthetic_report_node(node_id, path.find(node_id), path.size(), _copy_dict(timeline_positions_by_id.get(node_id, {})))
+			node = _synthetic_report_node(node_id, path.find(node_id), path.size(), JsonCoerceScript._copy_dict(timeline_positions_by_id.get(node_id, {})))
 		node["state"] = "visited"
 		node["travel_target"] = false
 		node["travel_enabled"] = false
@@ -1196,7 +1198,7 @@ static func _source_label(entry: Dictionary, source: Dictionary, catalogs: Dicti
 	var kind := str(source.get("kind", ""))
 	var source_id := str(source.get("id", ""))
 	if kind == "game":
-		var game := _copy_dict(_copy_dict(catalogs.get("games", {})).get(source_id, {}))
+		var game := JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(catalogs.get("games", {})).get(source_id, {}))
 		return str(game.get("display_name", source_id.replace("_", " ").capitalize()))
 	if kind == "travel": return "Travel"
 	if str(source.get("key", "")) == "items_bought": return "Items bought"
@@ -1207,7 +1209,7 @@ static func _source_label(entry: Dictionary, source: Dictionary, catalogs: Dicti
 
 
 static func _item_row(item_id: String, count: int, fate: String, price: int, item_catalog: Dictionary) -> Dictionary:
-	var definition := _copy_dict(item_catalog.get(item_id, {}))
+	var definition := JsonCoerceScript._copy_dict(item_catalog.get(item_id, {}))
 	return {"item_id": item_id, "label": str(definition.get("display_name", item_id.replace("_", " ").capitalize())), "count": maxi(1, count), "fate": fate, "price": price, "icon_path": str(definition.get("asset_path", "res://assets/art/items/%s.png" % str(definition.get("icon_key", item_id))))}
 
 
@@ -1226,7 +1228,7 @@ static func _loan_row(debt_entry: Dictionary, lender_label: String) -> Dictionar
 
 
 static func _player_facing_seed(run_data: Dictionary) -> String:
-	var challenge := _copy_dict(run_data.get("challenge_config", {}))
+	var challenge := JsonCoerceScript._copy_dict(run_data.get("challenge_config", {}))
 	return "Hidden daily challenge" if bool(challenge.get("hidden_seed", false)) else str(run_data.get("seed_text", ""))
 
 
@@ -1240,14 +1242,6 @@ static func _dict_array(value: Variant) -> Array:
 	return result
 
 
-static func _string_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) == TYPE_ARRAY:
-		for entry in value as Array:
-			result.append(str(entry))
-	return result
-
-
 static func _inventory_item_ids(value: Variant) -> Array:
 	var result: Array = []
 	if typeof(value) != TYPE_ARRAY:
@@ -1257,11 +1251,3 @@ static func _inventory_item_ids(value: Variant) -> Array:
 		if not item_id.is_empty():
 			result.append(item_id)
 	return result
-
-
-static func _copy_dict(value: Variant) -> Dictionary:
-	return (value as Dictionary).duplicate(true) if typeof(value) == TYPE_DICTIONARY else {}
-
-
-static func _copy_array(value: Variant) -> Array:
-	return (value as Array).duplicate(true) if typeof(value) == TYPE_ARRAY else []

@@ -135,7 +135,7 @@ layout resolver/controller, icon fallback, package generators, or
 deferred until that environment work lands.
 
 The aggregate composition and terminal manifests are now directly consumable
-by `tools/perf06_matrix_contract.ps1`: shard references are relative path
+by `tools/archive/perf06/perf06_matrix_contract.ps1`: shard references are relative path
 strings, every aggregate artifact has a SHA-256 and byte count, composition
 coverage fields are numeric, and terminal evidence includes the required
 Crew-ignoring control, victory/failure routes, and per-seed native/repeat/Web
@@ -150,7 +150,7 @@ and the live Blackjack module, but leaves
 only `play_basic`, and `RunState.crew_play_activate("spotter", "blackjack", ... )`
 rejects the call as not bound to the live table. Setting only that missing field
 in a control copy exposes both `play_basic` and `crew_play:spotter`. The opt-in
-`tools/integ06_1_crew_play_entry_repro.gd` records those values and intentionally
+`tools/archive/integ06_1/integ06_1_crew_play_entry_repro.gd` records those values and intentionally
 exits 1 while the regression is present. The smallest post-env shared-host fix
 is to bind `active_game_id` before `GameModule.enter`/legal-action presentation
 and clear it on every game-exit path; this integration branch does not modify
@@ -294,7 +294,7 @@ Verdict: PASS; `save_load_exact=true`, `replay_idempotent=true`,
 `abandonment_clean=true`, final registration lifecycle `cleaned`.
 
 This proves a maximal real Bar composition and all three Punchline layers. The
-checked-in `tools/integ06_1_composition_matrix.ps1` now derives every eligible
+checked-in `tools/archive/integ06_1/integ06_1_composition_matrix.ps1` now derives every eligible
 archetype from production catalogs and schedules five lifecycle orderings plus
 all three Punchline layers. It refuses a dirty or mismatched candidate and
 writes immutable provenance-bound shard reports. That larger matrix is a

@@ -525,7 +525,7 @@ bar, gas station, motel, Delta Queen and beach near the top. For each room:
    unexplained `SEMANTIC_MISMATCH`, zero `DISPLACED` from a correct place.
 
 **Changing data inside a signed package** (`scene_ops` / `actor_ops` /
-`declared_targets`) requires re-signing it. Use `tools/env06_8_resign_package.gd`
+`declared_targets`) requires re-signing it. Use `tools/archive/env06_8/env06_8_resign_package.gd`
 (`-- res://data/environments/scenario_sequences/<package>.json`), then run schema
 validation. Adding or renaming anchors also changes each scenario's
 `declared_targets.anchors` and the sealed semantic inventory. Run

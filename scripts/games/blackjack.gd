@@ -2518,7 +2518,13 @@ func _resolve_blackjack_proposal_core(action_id: String, stake: int, run_state: 
 	_update_table_after_hand(table, session, dealer_cards, actual_count_delta, count_record_delta, rng, presentation_msec, cheat)
 	if not sit_out:
 		_apply_patron_rapport_after_blackjack(table, session, table_stake, round_net_delta)
-	table["last_result"] = _blackjack_last_result_payload(message, hand_results, side_results, main_delta, side_delta, bankroll_delta, suspicion_delta, dealer_cards, hands, patron_hands, patron_action_events, cheat, presentation_msec, round_net_delta)
+	table["last_result"] = _blackjack_last_result_payload(FunctionOptions.BlackjackResultOptions.from({
+		"message": message, "hand_results": hand_results, "side_results": side_results,
+		"main_delta": main_delta, "side_delta": side_delta, "bankroll_delta": bankroll_delta,
+		"suspicion_delta": suspicion_delta, "dealer_cards": dealer_cards, "player_hands": hands,
+		"patron_hands": patron_hands, "patron_action_events": patron_action_events, "cheat": cheat,
+		"result_msec": presentation_msec, "round_net_delta_value": round_net_delta,
+	}))
 	(table["last_result"] as Dictionary)["main_stake"] = table_stake
 	(table["last_result"] as Dictionary)["side_bet_ids"] = _string_array(session.get("blackjack_side_bets", []))
 	(table["last_result"] as Dictionary)["total_wager"] = total_wager
@@ -2666,7 +2672,13 @@ func _resolve_rourke_duel_hand(action_id: String, run_state: RunState, environme
 	var used_cards := _cards_used_for_counting(hands, dealer_cards, [])
 	var actual_count_delta := _count_cards_delta(used_cards)
 	_update_table_after_hand(table, session, dealer_cards, actual_count_delta, actual_count_delta if bool(session.get("count_answered", false)) else 0, settlement_rng, presentation_msec)
-	table["last_result"] = _blackjack_last_result_payload(message, hand_results, [], transfer, 0, transfer - caught_penalty, 0, dealer_cards, hands, [], [], {"caught": caught}, presentation_msec, transfer - caught_penalty)
+	table["last_result"] = _blackjack_last_result_payload(FunctionOptions.BlackjackResultOptions.from({
+		"message": message, "hand_results": hand_results, "side_results": [], "main_delta": transfer,
+		"side_delta": 0, "bankroll_delta": transfer - caught_penalty, "suspicion_delta": 0,
+		"dealer_cards": dealer_cards, "player_hands": hands, "patron_hands": [],
+		"patron_action_events": [], "cheat": {"caught": caught}, "result_msec": presentation_msec,
+		"round_net_delta_value": transfer - caught_penalty,
+	}))
 	_update_environment_table(environment, table)
 	var applied := run_state.apply_grand_casino_duel_hand({
 		"transfer": transfer,
@@ -3937,7 +3949,7 @@ func _ambient_table_event_for_surface(surface, surface_state: Dictionary) -> Dic
 		{"label": "felt chatter", "detail": "table noise rises", "accent": "cyan"},
 	]
 	var table_key: String = "%s:%d:%d" % [str(surface_state.get("table_name", "blackjack")), int(surface_state.get("hands_played", 0)), int(now_msec / cycle_msec)]
-	var event_seed: int = abs(_stable_hash(table_key))
+	var event_seed: int = abs(JsonCoerceScript._stable_hash(table_key))
 	var index: int = event_seed % catalog.size()
 	var event: Dictionary = (catalog[index] as Dictionary).duplicate(true)
 	event["phase"] = phase
@@ -4393,7 +4405,7 @@ func _ensure_tutorial_peek_distractions(table: Dictionary, run_state: RunState, 
 
 func _default_table_rng(table: Dictionary, suffix: String) -> RngStream:
 	var rng := RngStream.new()
-	rng.configure(_stable_hash("%s:%s:%s" % [get_id(), str(table.get("table_name", "blackjack")), suffix]))
+	rng.configure(JsonCoerceScript._stable_hash("%s:%s:%s" % [get_id(), str(table.get("table_name", "blackjack")), suffix]))
 	return rng
 
 
@@ -4495,7 +4507,7 @@ func _normalize_table_state(table: Dictionary, owns_table_state: bool = false) -
 		shoe = shoe_value as Array
 	if shoe.is_empty():
 		var rng := RngStream.new()
-		rng.configure(_stable_hash(str(normalized.get("table_name", "blackjack"))))
+		rng.configure(JsonCoerceScript._stable_hash(str(normalized.get("table_name", "blackjack"))))
 		shoe = _build_shoe(deck_count, rng)
 	normalized["shoe"] = shoe
 	normalized["shoe_cursor"] = 0
@@ -4815,7 +4827,7 @@ func _draw_cards_from_table_cursor(session: Dictionary, table: Dictionary, targe
 func _refill_session_shoe(session: Dictionary, table: Dictionary) -> void:
 	var refill_index := int(session.get("shoe_emergency_shuffle_count", 0)) + 1
 	var rng := RngStream.new()
-	rng.configure(_stable_hash("%s:%s:%d:%d" % [
+	rng.configure(JsonCoerceScript._stable_hash("%s:%s:%d:%d" % [
 		str(table.get("table_name", "blackjack")),
 		str(session.get("session_id", "")),
 		int(table.get("hands_played", 0)),
@@ -7105,7 +7117,7 @@ func _start_count_challenge(ui_state: Dictionary, table: Dictionary, run_state: 
 		var count_value := _count_value_for_card(card)
 		if count_value == 0:
 			continue
-		var seed: int = abs(_stable_hash("%s:%s:%d" % [challenge_id, _count_icon_card_key(card), i]))
+		var seed: int = abs(JsonCoerceScript._stable_hash("%s:%s:%d" % [challenge_id, _count_icon_card_key(card), i]))
 		var icon_pos := _count_icon_position_for_card(card, seed)
 		icons.append({
 			"id": "%s:%d" % [challenge_id, icon_serial],
@@ -7378,7 +7390,7 @@ func _sync_count_challenge_icons(ui_state: Dictionary, run_state: RunState, now_
 			continue
 		while _count_icon_id_is_used(icons, "%s:%d" % [challenge_id, serial]):
 			serial += 1
-		var seed: int = abs(_stable_hash("%s:%s:%d" % [challenge_id, key, serial]))
+		var seed: int = abs(JsonCoerceScript._stable_hash("%s:%s:%d" % [challenge_id, key, serial]))
 		var icon_pos := _count_icon_position_for_card(card, seed)
 		icons.append({
 			"id": "%s:%d" % [challenge_id, serial],
@@ -8072,7 +8084,7 @@ func _ambient_table_event(table: Dictionary, session: Dictionary) -> Dictionary:
 		{"label": "felt chatter", "detail": "table noise rises", "accent": "cyan"},
 	]
 	var table_key: String = "%s:%d:%d" % [str(table.get("table_name", "blackjack")), int(table.get("hands_played", 0)), int(now / cycle_msec)]
-	var event_seed: int = abs(_stable_hash(table_key))
+	var event_seed: int = abs(JsonCoerceScript._stable_hash(table_key))
 	var index: int = event_seed % catalog.size()
 	var event: Dictionary = (catalog[index] as Dictionary).duplicate(true)
 	event["phase"] = phase
@@ -8305,7 +8317,21 @@ func _blackjack_side_result_detail(side: Dictionary) -> String:
 	return "%s %s %+d" % [label, detail, delta]
 
 
-func _blackjack_last_result_payload(message: String, hand_results: Array, side_results: Array, main_delta: int, side_delta: int, bankroll_delta: int, suspicion_delta: int, dealer_cards: Array, player_hands: Array, patron_hands: Array, patron_action_events: Array, cheat: Dictionary, result_msec: int = 0, round_net_delta_value: Variant = null) -> Dictionary:
+func _blackjack_last_result_payload(options: FunctionOptions.BlackjackResultOptions) -> Dictionary:
+	var message := str(options.values.get("message", ""))
+	var hand_results: Array = options.values.get("hand_results", [])
+	var side_results: Array = options.values.get("side_results", [])
+	var main_delta := int(options.values.get("main_delta", 0))
+	var side_delta := int(options.values.get("side_delta", 0))
+	var bankroll_delta := int(options.values.get("bankroll_delta", 0))
+	var suspicion_delta := int(options.values.get("suspicion_delta", 0))
+	var dealer_cards: Array = options.values.get("dealer_cards", [])
+	var player_hands: Array = options.values.get("player_hands", [])
+	var patron_hands: Array = options.values.get("patron_hands", [])
+	var patron_action_events: Array = options.values.get("patron_action_events", [])
+	var cheat: Dictionary = options.values.get("cheat", {})
+	var result_msec := int(options.values.get("result_msec", 0))
+	var round_net_delta_value: Variant = options.values.get("round_net_delta_value", null)
 	var resolved_at := maxi(0, result_msec)
 	var round_net_delta := main_delta + side_delta if round_net_delta_value == null else int(round_net_delta_value)
 	var headline := "PUSH"
@@ -8590,27 +8616,6 @@ func _card_array(value: Variant) -> Array:
 	return result
 
 
-func _dictionary_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry in value:
-		if typeof(entry) == TYPE_DICTIONARY:
-			result.append((entry as Dictionary).duplicate(true))
-	return result
-
-
-func _string_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry in value:
-		var text := str(entry)
-		if not text.is_empty():
-			result.append(text)
-	return result
-
-
 func _local_copy_dict(value: Variant) -> Dictionary:
 	if typeof(value) != TYPE_DICTIONARY:
 		return {}
@@ -8626,11 +8631,3 @@ static func _draw_dict_view(value: Variant) -> Dictionary:
 
 static func _draw_array_view(value: Variant) -> Array:
 	return value as Array if typeof(value) == TYPE_ARRAY else []
-
-
-func _stable_hash(text: String) -> int:
-	var hash_value := 2166136261
-	for i in range(text.length()):
-		hash_value = int(hash_value ^ text.unicode_at(i))
-		hash_value = int((hash_value * 16777619) & 0x7fffffff)
-	return maxi(hash_value, 1)

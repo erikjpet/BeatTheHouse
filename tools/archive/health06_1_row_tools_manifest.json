@@ -1,0 +1,510 @@
+{
+    "schema_version":  1,
+    "audit_baseline":  "4384378a",
+    "generated_utc":  "2026-09-21T14:23:29.8580359Z",
+    "policy":  "Move completed-row one-shot artifacts; retain 14 permanent-gate inputs and shared dependencies at tools root.",
+    "retained":  [
+                     "tools/fix06_31_contact_sheets.ps1",
+                     "tools/integ06_1_terminal_soak_launcher_contract_test.ps1",
+                     "tools/perf06_allocation_contract_test.ps1",
+                     "tools/perf06_binding_preflight_contract_test.ps1",
+                     "tools/perf06_budget_contract_test.ps1",
+                     "tools/perf06_budget_table.json",
+                     "tools/perf06_coin_pusher_action_diagnostic_contract.ps1",
+                     "tools/perf06_native_runtime_matrix.ps1",
+                     "tools/perf06_phase_qualification_contract_test.ps1",
+                     "tools/perf06_quiescence_contract_test.ps1",
+                     "tools/perf06_required_matrix.json",
+                     "tools/perf06_required_matrix_contract_test.ps1",
+                     "tools/perf06_web_complementary_startup_contract.ps1",
+                     "tools/perf06_web_run_ui_deferral_contract.ps1"
+                 ],
+    "moves":  [
+                  {
+                      "row_id":  "audio06_1",
+                      "source":  "tools/audio06_1_surface_sfx_audit.gd",
+                      "destination":  "tools/archive/audio06_1/audio06_1_surface_sfx_audit.gd",
+                      "sha256":  "41fb6d20b87d99ef6f8d01a034a4e490b8355ca9b931ab6b734f5f2108ef84f4"
+                  },
+                  {
+                      "row_id":  "content06",
+                      "source":  "tools/content06_manual_smoke.gd",
+                      "destination":  "tools/archive/content06/content06_manual_smoke.gd",
+                      "sha256":  "e29aece7d0b132fa299cc8135605b67b9baf23c00765e0374dec4485173381f3"
+                  },
+                  {
+                      "row_id":  "env06_7",
+                      "source":  "tools/env06_7_package_a_check.gd",
+                      "destination":  "tools/archive/env06_7/env06_7_package_a_check.gd",
+                      "sha256":  "890fd8f89ed96d935ad411a6b1d04ea8f9c35de3f96893dda95765aae4c0a276"
+                  },
+                  {
+                      "row_id":  "env06_7",
+                      "source":  "tools/env06_7_package_a_generate.gd",
+                      "destination":  "tools/archive/env06_7/env06_7_package_a_generate.gd",
+                      "sha256":  "836465129bd1a35a7712349b432e51ca7d1b980661067081d1f6b2960a0ddb79"
+                  },
+                  {
+                      "row_id":  "env06_7",
+                      "source":  "tools/env06_7_package_a_platform_probe.gd",
+                      "destination":  "tools/archive/env06_7/env06_7_package_a_platform_probe.gd",
+                      "sha256":  "12ef78bf1a883b3e1899c6f887f7c8341203efdaed03a2d5dec1c744bdb79adb"
+                  },
+                  {
+                      "row_id":  "env06_7",
+                      "source":  "tools/env06_7_package_a_platform_probe.tscn",
+                      "destination":  "tools/archive/env06_7/env06_7_package_a_platform_probe.tscn",
+                      "sha256":  "78ed8ff9f4baadab887be0e9517213f67f5e53e95dea0b9e45132254ce7aeeb0"
+                  },
+                  {
+                      "row_id":  "env06_7",
+                      "source":  "tools/env06_7_package_b_generate.mjs",
+                      "destination":  "tools/archive/env06_7/env06_7_package_b_generate.mjs",
+                      "sha256":  "367071bcee75a9b6e281a085e9805bc9d50f9e6b8259e4712e16e151e8093340"
+                  },
+                  {
+                      "row_id":  "env06_7",
+                      "source":  "tools/env06_7_package_b_platform_probe.gd",
+                      "destination":  "tools/archive/env06_7/env06_7_package_b_platform_probe.gd",
+                      "sha256":  "cd4f4e2239766122b6a7a13fd57bc203895f71edca0689750e02b85845a72469"
+                  },
+                  {
+                      "row_id":  "env06_7",
+                      "source":  "tools/env06_7_package_b_platform_probe.tscn",
+                      "destination":  "tools/archive/env06_7/env06_7_package_b_platform_probe.tscn",
+                      "sha256":  "bea32e8d90f86e5a9b07c0c5e8f5f1a218cb3f822050aedc9f2a95a882958cef"
+                  },
+                  {
+                      "row_id":  "env06_7",
+                      "source":  "tools/env06_7_package_b_sign.gd",
+                      "destination":  "tools/archive/env06_7/env06_7_package_b_sign.gd",
+                      "sha256":  "8cc6be9f19ca3a2581a640e6a3fc2e01dcb273422d7b9c21db8b407faecc127d"
+                  },
+                  {
+                      "row_id":  "env06_7",
+                      "source":  "tools/env06_7_package_b_web_capture.mjs",
+                      "destination":  "tools/archive/env06_7/env06_7_package_b_web_capture.mjs",
+                      "sha256":  "ab022aea8faf4cbf5b1c12bc0ba1470b0dc820f21a134b6e81a88d110079ad7a"
+                  },
+                  {
+                      "row_id":  "env06_7",
+                      "source":  "tools/env06_7_package_c_author.gd",
+                      "destination":  "tools/archive/env06_7/env06_7_package_c_author.gd",
+                      "sha256":  "566d5488b7fa26c723ed9820a41381643606e7a2c8dbb6054c21f443283553a0"
+                  },
+                  {
+                      "row_id":  "env06_7",
+                      "source":  "tools/env06_7_package_d_author.gd",
+                      "destination":  "tools/archive/env06_7/env06_7_package_d_author.gd",
+                      "sha256":  "91d037bc9ff25e0a3a5101d13745138ac0078204009a20546527fe73e7f9366c"
+                  },
+                  {
+                      "row_id":  "env06_7",
+                      "source":  "tools/env06_7_package_e_author.gd",
+                      "destination":  "tools/archive/env06_7/env06_7_package_e_author.gd",
+                      "sha256":  "9f3d4d28974c1ecef939453444424dccc27571651e5764555125c6f75ba87cb6"
+                  },
+                  {
+                      "row_id":  "env06_7",
+                      "source":  "tools/env06_7_package_e_author.ps1",
+                      "destination":  "tools/archive/env06_7/env06_7_package_e_author.ps1",
+                      "sha256":  "489882369000da012240a1c24c22a310dfe2a543d1d62aa29ed924b04e5769c7"
+                  },
+                  {
+                      "row_id":  "env06_7",
+                      "source":  "tools/env06_7_package_e_platform_probe.gd",
+                      "destination":  "tools/archive/env06_7/env06_7_package_e_platform_probe.gd",
+                      "sha256":  "9e3129098e4c38be6cde298b27325b05c3a4d8ec1773a12cfed84bb0dfa6a674"
+                  },
+                  {
+                      "row_id":  "env06_7",
+                      "source":  "tools/env06_7_package_e_platform_probe.tscn",
+                      "destination":  "tools/archive/env06_7/env06_7_package_e_platform_probe.tscn",
+                      "sha256":  "eb384339ba07bdf67f2396d6709f0eaa49f4638c2d7866992322e5cb539fe295"
+                  },
+                  {
+                      "row_id":  "env06_7",
+                      "source":  "tools/env06_7_package_e_web_capture.mjs",
+                      "destination":  "tools/archive/env06_7/env06_7_package_e_web_capture.mjs",
+                      "sha256":  "e8075f822fe899679ebcd7d1072e950992fa3ecc9f865075a7131085862322c0"
+                  },
+                  {
+                      "row_id":  "env06_8",
+                      "source":  "tools/env06_8_author_package_a.py",
+                      "destination":  "tools/archive/env06_8/env06_8_author_package_a.py",
+                      "sha256":  "b2ad76bdd1ac5fc5a770c31e7ea31344035f28653de5d5bde7f085b13567d27c"
+                  },
+                  {
+                      "row_id":  "env06_8",
+                      "source":  "tools/env06_8_resign_package.gd",
+                      "destination":  "tools/archive/env06_8/env06_8_resign_package.gd",
+                      "sha256":  "35eb3513e09fa83778eabdd5dfd716673a8444d0fa73f49bc79cbfdcd27c9f21"
+                  },
+                  {
+                      "row_id":  "env06_8",
+                      "source":  "tools/env06_8_unlabeled_contact_sheet_probe.gd",
+                      "destination":  "tools/archive/env06_8/env06_8_unlabeled_contact_sheet_probe.gd",
+                      "sha256":  "dbbbd4e900938a0af883b167af5bdbbd3850dfe08170868c576edc7298c6a0da"
+                  },
+                  {
+                      "row_id":  "fix06_28",
+                      "source":  "tools/fix06_28_acceptance_authority_contract.ps1",
+                      "destination":  "tools/archive/fix06_28/fix06_28_acceptance_authority_contract.ps1",
+                      "sha256":  "b474da0e7462f606bf0e6e2c6b67199aca1719e75db7c46a7ae9acbc9b068b9a"
+                  },
+                  {
+                      "row_id":  "fix06_28",
+                      "source":  "tools/fix06_28_punchline_player_route.gd",
+                      "destination":  "tools/archive/fix06_28/fix06_28_punchline_player_route.gd",
+                      "sha256":  "48e5d1570b13fb0956465d0de6955d0a7af0178642feab9a9ae63ac3da2b4707"
+                  },
+                  {
+                      "row_id":  "fix06_28",
+                      "source":  "tools/fix06_28_working_order_driver.gd",
+                      "destination":  "tools/archive/fix06_28/fix06_28_working_order_driver.gd",
+                      "sha256":  "1b87aa1026dbe323d672b45dcd9e1dca79d3b60d17e63aeea055f18ef46807ed"
+                  },
+                  {
+                      "row_id":  "fix06_29",
+                      "source":  "tools/fix06_29_punchline_natural_l3_route.gd",
+                      "destination":  "tools/archive/fix06_29/fix06_29_punchline_natural_l3_route.gd",
+                      "sha256":  "6414edd448caedf96da4335330d280bc62a8ac6b965b11c12ede16ab5c589f70"
+                  },
+                  {
+                      "row_id":  "game06_3",
+                      "source":  "tools/game06_3_platform_parity_main.gd",
+                      "destination":  "tools/archive/game06_3/game06_3_platform_parity_main.gd",
+                      "sha256":  "04722f27534efea0510e8f50e9adbba7425177f88afd0da22a0dc5bb8c6dd9b3"
+                  },
+                  {
+                      "row_id":  "game06_3",
+                      "source":  "tools/game06_3_platform_parity_main.tscn",
+                      "destination":  "tools/archive/game06_3/game06_3_platform_parity_main.tscn",
+                      "sha256":  "9590e7fa2dc5a1019abb099417d381f569b203e7d20aeab8724e62c703a0f896"
+                  },
+                  {
+                      "row_id":  "game06_3",
+                      "source":  "tools/game06_3_platform_parity_web_capture.mjs",
+                      "destination":  "tools/archive/game06_3/game06_3_platform_parity_web_capture.mjs",
+                      "sha256":  "d0173e6679b7070ef02bfc1df36ab50570deff70ca9b21304542fc476c030189"
+                  },
+                  {
+                      "row_id":  "game06_4",
+                      "source":  "tools/game06_4_machine_games_platform_probe.gd",
+                      "destination":  "tools/archive/game06_4/game06_4_machine_games_platform_probe.gd",
+                      "sha256":  "d93777157f72ad616db9269005eb109952267756390cf28ccd9cc5358ba049dc"
+                  },
+                  {
+                      "row_id":  "game06_4",
+                      "source":  "tools/game06_4_machine_games_platform_probe.tscn",
+                      "destination":  "tools/archive/game06_4/game06_4_machine_games_platform_probe.tscn",
+                      "sha256":  "f37656952e7e82c8ec722fb92b940b86f45a7baaf1c0e9c9cead036ea9134e0a"
+                  },
+                  {
+                      "row_id":  "game06_4",
+                      "source":  "tools/game06_4_machine_games_web_capture.mjs",
+                      "destination":  "tools/archive/game06_4/game06_4_machine_games_web_capture.mjs",
+                      "sha256":  "7c2e98361e618f1e30536124b38105c4b492d865657cf60b40d0a701225fd851"
+                  },
+                  {
+                      "row_id":  "game06_6",
+                      "source":  "tools/game06_6_bar_dice_platform_probe.gd",
+                      "destination":  "tools/archive/game06_6/game06_6_bar_dice_platform_probe.gd",
+                      "sha256":  "cc8c9389ad575f5f66f8cdd2a7cf6fb8a4b4816b4ac802af652e87272b6d5224"
+                  },
+                  {
+                      "row_id":  "game06_6",
+                      "source":  "tools/game06_6_bar_dice_platform_probe.tscn",
+                      "destination":  "tools/archive/game06_6/game06_6_bar_dice_platform_probe.tscn",
+                      "sha256":  "1de96e624adff36b68e158d9aff2872d4137f081a09a72dd43b973f2ec3d587e"
+                  },
+                  {
+                      "row_id":  "game06_6",
+                      "source":  "tools/game06_6_bar_dice_web_capture.mjs",
+                      "destination":  "tools/archive/game06_6/game06_6_bar_dice_web_capture.mjs",
+                      "sha256":  "0bf26b5b68dcacc3819ae135260fa17278e0222d0db77e987716dea34e7f2cc3"
+                  },
+                  {
+                      "row_id":  "game06_7",
+                      "source":  "tools/game06_7_showdown_duel_platform_probe.gd",
+                      "destination":  "tools/archive/game06_7/game06_7_showdown_duel_platform_probe.gd",
+                      "sha256":  "ee8ce6121ae2969af0d5ab17d34a27100349bbf19e90aeb002879f8fcd80e70b"
+                  },
+                  {
+                      "row_id":  "game06_7",
+                      "source":  "tools/game06_7_showdown_duel_platform_probe.tscn",
+                      "destination":  "tools/archive/game06_7/game06_7_showdown_duel_platform_probe.tscn",
+                      "sha256":  "e534bb3408feaee8b9f1ca318e8ebcaf425a8c8567345a10fcd1a9e5807f3395"
+                  },
+                  {
+                      "row_id":  "game06_7",
+                      "source":  "tools/game06_7_showdown_duel_web_capture.mjs",
+                      "destination":  "tools/archive/game06_7/game06_7_showdown_duel_web_capture.mjs",
+                      "sha256":  "cf0c39f4ed6f612c535e9d8f61cbc0044a47c0b0f70f0163afc5f01a9006cf04"
+                  },
+                  {
+                      "row_id":  "integ06_1",
+                      "source":  "tools/integ06_1_composition_matrix.ps1",
+                      "destination":  "tools/archive/integ06_1/integ06_1_composition_matrix.ps1",
+                      "sha256":  "addb6483f291a648d4d935a55eeaece952909ac39ff2d09f620b2dd3d4b51e8c"
+                  },
+                  {
+                      "row_id":  "integ06_1",
+                      "source":  "tools/integ06_1_crew_play_entry_repro.gd",
+                      "destination":  "tools/archive/integ06_1/integ06_1_crew_play_entry_repro.gd",
+                      "sha256":  "35625170f8fbb88229e7ae88580b5b677dbfb36d71922c7e6a73fecd9e296b29"
+                  },
+                  {
+                      "row_id":  "integ06_1",
+                      "source":  "tools/integ06_1_generate_mid06_fixtures.ps1",
+                      "destination":  "tools/archive/integ06_1/integ06_1_generate_mid06_fixtures.ps1",
+                      "sha256":  "2f87be96b567c0b2d50143ed9f7ad358624a7ea9764b2999caee09b13a906b58"
+                  },
+                  {
+                      "row_id":  "integ06_1",
+                      "source":  "tools/integ06_1_generate_v051_fixtures.ps1",
+                      "destination":  "tools/archive/integ06_1/integ06_1_generate_v051_fixtures.ps1",
+                      "sha256":  "1726f94cc6db1aee183ff906d8ad62b22ecf30f819755fd8f0193be9850e1034"
+                  },
+                  {
+                      "row_id":  "integ06_1",
+                      "source":  "tools/integ06_1_terminal_soak.ps1",
+                      "destination":  "tools/archive/integ06_1/integ06_1_terminal_soak.ps1",
+                      "sha256":  "aa2f0fd01a4836afd25e8c466702a9768b9d6ca22abc6099c163c3dd9952c4da"
+                  },
+                  {
+                      "row_id":  "integ06_1",
+                      "source":  "tools/integ06_1_terminal_soak_contract.ps1",
+                      "destination":  "tools/archive/integ06_1/integ06_1_terminal_soak_contract.ps1",
+                      "sha256":  "ad4c21ba5f0c28f832a0081b5393060225159242d93eeda3931528c2c8dca99a"
+                  },
+                  {
+                      "row_id":  "integ06_1",
+                      "source":  "tools/integ06_1_terminal_soak_contract_test.ps1",
+                      "destination":  "tools/archive/integ06_1/integ06_1_terminal_soak_contract_test.ps1",
+                      "sha256":  "b26362fcc986fff8eb51f9029d154072d88e95d07d0147719eb5ce03a3ea42d8"
+                  },
+                  {
+                      "row_id":  "integ06_1",
+                      "source":  "tools/integ06_1_terminal_soak_main.gd",
+                      "destination":  "tools/archive/integ06_1/integ06_1_terminal_soak_main.gd",
+                      "sha256":  "5c645c94d8fa8556de8c0b13a9b847396e2a2ca0ffc89d7bf1f6120015b94cbc"
+                  },
+                  {
+                      "row_id":  "integ06_1",
+                      "source":  "tools/integ06_1_terminal_soak_main.tscn",
+                      "destination":  "tools/archive/integ06_1/integ06_1_terminal_soak_main.tscn",
+                      "sha256":  "cd2a1c333f4c95f82aff6caace1b82d19611158809c1d80dfc9db836d297f6b9"
+                  },
+                  {
+                      "row_id":  "integ06_1",
+                      "source":  "tools/integ06_1_terminal_soak_web_capture.mjs",
+                      "destination":  "tools/archive/integ06_1/integ06_1_terminal_soak_web_capture.mjs",
+                      "sha256":  "64ed0d96660649970d4a250776ef0e52fdcb5e583ccb53748b982dee21408517"
+                  },
+                  {
+                      "row_id":  "l02",
+                      "source":  "tools/l02_desktop_perf_probe.ps1",
+                      "destination":  "tools/archive/l02/l02_desktop_perf_probe.ps1",
+                      "sha256":  "a8a9dc3209d3fca927f65310f3dcd376a0db285d43f80d226fff6ccf660c63f7"
+                  },
+                  {
+                      "row_id":  "l02",
+                      "source":  "tools/l02_web_perf_probe.mjs",
+                      "destination":  "tools/archive/l02/l02_web_perf_probe.mjs",
+                      "sha256":  "381de1198161480c6fff6db252486606b187801d2d5600f023cb0254c6b80e4c"
+                  },
+                  {
+                      "row_id":  "meta06_1",
+                      "source":  "tools/meta06_1_career_capture.gd",
+                      "destination":  "tools/archive/meta06_1/meta06_1_career_capture.gd",
+                      "sha256":  "86ce3e25f44aeaccea23e328dd1b4b26e77806ab76933d3d01b45534742dcf01"
+                  },
+                  {
+                      "row_id":  "perf06",
+                      "source":  "tools/perf06_allocation_call_root_audit.ps1",
+                      "destination":  "tools/archive/perf06/perf06_allocation_call_root_audit.ps1",
+                      "sha256":  "5d5781ed3a0c2b0e0456c5d6b942b1dd7fbdfed6d5a9dd3243072f9a871d1548"
+                  },
+                  {
+                      "row_id":  "perf06",
+                      "source":  "tools/perf06_binding_preflight.ps1",
+                      "destination":  "tools/archive/perf06/perf06_binding_preflight.ps1",
+                      "sha256":  "decc4084d6f17942355ca7f63c729ab2e6e0e9c7e48308308e66d8d15e08e378"
+                  },
+                  {
+                      "row_id":  "perf06",
+                      "source":  "tools/perf06_binding_preflight_contract.ps1",
+                      "destination":  "tools/archive/perf06/perf06_binding_preflight_contract.ps1",
+                      "sha256":  "910c386f64b3022e2e89bd34909f19be4908d354be93e482fb30b5a5e89575da"
+                  },
+                  {
+                      "row_id":  "perf06",
+                      "source":  "tools/perf06_build_surface_report.ps1",
+                      "destination":  "tools/archive/perf06/perf06_build_surface_report.ps1",
+                      "sha256":  "44b47b47b94b3611c8c99c9152fa7b2c7692eee484fb110b89ea9ca8b10a68d3"
+                  },
+                  {
+                      "row_id":  "perf06",
+                      "source":  "tools/perf06_capture_host_profile.ps1",
+                      "destination":  "tools/archive/perf06/perf06_capture_host_profile.ps1",
+                      "sha256":  "de7c882c08c86063472efcb403d493731de25127591d0673fa677617f6da45f8"
+                  },
+                  {
+                      "row_id":  "perf06",
+                      "source":  "tools/perf06_capture_quiescence.ps1",
+                      "destination":  "tools/archive/perf06/perf06_capture_quiescence.ps1",
+                      "sha256":  "7f6a23978685b899dc1c5e758fdb43f0a9c3b07a94f2c84b5e59934d61533853"
+                  },
+                  {
+                      "row_id":  "perf06",
+                      "source":  "tools/perf06_deferred_validation_contract.gd",
+                      "destination":  "tools/archive/perf06/perf06_deferred_validation_contract.gd",
+                      "sha256":  "5c1f1b53c7a13d6fd2d62fd1cadafef4be5e968cda946ec0b62fbd1c95414f79"
+                  },
+                  {
+                      "row_id":  "perf06",
+                      "source":  "tools/perf06_deferred_validation_contract.ps1",
+                      "destination":  "tools/archive/perf06/perf06_deferred_validation_contract.ps1",
+                      "sha256":  "9e6b7af504fef736a646bd804a17a03a8294cefe270ba319bb7a88e7920a2064"
+                  },
+                  {
+                      "row_id":  "perf06",
+                      "source":  "tools/perf06_idle_liveness_runtime_contract.gd",
+                      "destination":  "tools/archive/perf06/perf06_idle_liveness_runtime_contract.gd",
+                      "sha256":  "698cce312046d829a82954b76ea29d459a8135c9bea41089a84f5dbeadfa5701"
+                  },
+                  {
+                      "row_id":  "perf06",
+                      "source":  "tools/perf06_low_end_matrix.ps1",
+                      "destination":  "tools/archive/perf06/perf06_low_end_matrix.ps1",
+                      "sha256":  "3930988a7a56c94c9306a143ae7dde8acd5546b1f0e1aa42db33398db91c65fa"
+                  },
+                  {
+                      "row_id":  "perf06",
+                      "source":  "tools/perf06_low_end_profile.example.json",
+                      "destination":  "tools/archive/perf06/perf06_low_end_profile.example.json",
+                      "sha256":  "6c104501bb99470f0b5a39501a01108f182ac09ee5d029d2f8c96161b7238284"
+                  },
+                  {
+                      "row_id":  "perf06",
+                      "source":  "tools/perf06_matrix_contract.ps1",
+                      "destination":  "tools/archive/perf06/perf06_matrix_contract.ps1",
+                      "sha256":  "167cb77f39800d4fbf70d8c0095610685be7c4218c27146bfe4d171727f4a92a"
+                  },
+                  {
+                      "row_id":  "perf06",
+                      "source":  "tools/perf06_phase_qualification_contract.ps1",
+                      "destination":  "tools/archive/perf06/perf06_phase_qualification_contract.ps1",
+                      "sha256":  "ffc4f06fe29ad5ef96a4a6711390004dcc1b8e9b08364a8dbe3db91920f7efd1"
+                  },
+                  {
+                      "row_id":  "perf06",
+                      "source":  "tools/perf06_web_ready_snapshot_contract.gd",
+                      "destination":  "tools/archive/perf06/perf06_web_ready_snapshot_contract.gd",
+                      "sha256":  "a1b3870af9c28fc38f36bef5796c341aaaf3e758663d7fae57c81e04ad25ba0a"
+                  },
+                  {
+                      "row_id":  "playtest06_2",
+                      "source":  "tools/playtest06_2_candidate_seeds.json",
+                      "destination":  "tools/archive/playtest06_2/playtest06_2_candidate_seeds.json",
+                      "sha256":  "f915741b27e49a41cfc6989139f2325c69bbaab908249408639a2f74cb112ce3"
+                  },
+                  {
+                      "row_id":  "playtest06_2",
+                      "source":  "tools/playtest06_2_seed_catalog_probe.gd",
+                      "destination":  "tools/archive/playtest06_2/playtest06_2_seed_catalog_probe.gd",
+                      "sha256":  "13569e408042ce019e03776071c9a3be105e7e70d67ddc358e603bb23e65a2c5"
+                  },
+                  {
+                      "row_id":  "playtest06_2",
+                      "source":  "tools/playtest06_2_seed_manifest_contract.ps1",
+                      "destination":  "tools/archive/playtest06_2/playtest06_2_seed_manifest_contract.ps1",
+                      "sha256":  "b2c6032e37bc445ab629bc1c0ee114915c4d4c716f73686878315091904d7443"
+                  },
+                  {
+                      "row_id":  "playtest06_2",
+                      "source":  "tools/playtest06_2_seed_manifest_contract_test.ps1",
+                      "destination":  "tools/archive/playtest06_2/playtest06_2_seed_manifest_contract_test.ps1",
+                      "sha256":  "935a850d130c8c17d561ee8dafc0db3a7e37afb9d01da1c2cf07d94dd3b140f1"
+                  },
+                  {
+                      "row_id":  "playtest06",
+                      "source":  "tools/playtest06_owner_build.ps1",
+                      "destination":  "tools/archive/playtest06/playtest06_owner_build.ps1",
+                      "sha256":  "287595c2f3a6975fa77857ffeb8377ef02ef524ada49e18490dd31adabae54f1"
+                  },
+                  {
+                      "row_id":  "playtest06",
+                      "source":  "tools/playtest06_owner_build_contract_test.ps1",
+                      "destination":  "tools/archive/playtest06/playtest06_owner_build_contract_test.ps1",
+                      "sha256":  "18f10ab224192fa0d8deb6ab885b69a1ef51da4cc733e531e2a299465db17469"
+                  },
+                  {
+                      "row_id":  "playtest06",
+                      "source":  "tools/playtest06_owner_evidence_transaction.ps1",
+                      "destination":  "tools/archive/playtest06/playtest06_owner_evidence_transaction.ps1",
+                      "sha256":  "c436d0ad8b8c4d2fa149408e3a932962c7d05ca3e8acc24c8442d5ca6d0d84a3"
+                  },
+                  {
+                      "row_id":  "playtest06",
+                      "source":  "tools/playtest06_owner_evidence_transaction_contract_test.ps1",
+                      "destination":  "tools/archive/playtest06/playtest06_owner_evidence_transaction_contract_test.ps1",
+                      "sha256":  "a62dbdbf263373b3c2c1eaf2a75668be33f0fbbc60b60231140c0ecc884822a8"
+                  },
+                  {
+                      "row_id":  "playtest06",
+                      "source":  "tools/playtest06_surface_family_playability_contract.gd",
+                      "destination":  "tools/archive/playtest06/playtest06_surface_family_playability_contract.gd",
+                      "sha256":  "ab8ccebce97bf52e81ec39a0945189531883b200276e48bb4e12c6336e81035d"
+                  },
+                  {
+                      "row_id":  "test11",
+                      "source":  "tools/test11_environment_time_screenshots.gd",
+                      "destination":  "tools/archive/test11/test11_environment_time_screenshots.gd",
+                      "sha256":  "204fbb5a2c9c309fb26ab61c95fa48262cf6fb687feb2607eae5af5b71db3209"
+                  },
+                  {
+                      "row_id":  "tier1",
+                      "source":  "tools/tier1_scenario_audit.gd",
+                      "destination":  "tools/archive/tier1/tier1_scenario_audit.gd",
+                      "sha256":  "66d7e7461e33ab1612e0246aa2a4fb388ad9291a2135c823e31dab343c702d4d"
+                  },
+                  {
+                      "row_id":  "tier1",
+                      "source":  "tools/tier1_scenario_screenshots.gd",
+                      "destination":  "tools/archive/tier1/tier1_scenario_screenshots.gd",
+                      "sha256":  "52e91ebdf7b190e428b31b2c6afb52f657801761ddfba37de5a33ac2458f6874"
+                  },
+                  {
+                      "row_id":  "ui05",
+                      "source":  "tools/ui05_asset_pipeline_check.ps1",
+                      "destination":  "tools/archive/ui05/ui05_asset_pipeline_check.ps1",
+                      "sha256":  "4a0c6592d8c78d7dd4a79fbdcd339775d11b7724f1fe403adb32b1febaa9dd39"
+                  },
+                  {
+                      "row_id":  "ui05",
+                      "source":  "tools/ui05_popup_fit_check.ps1",
+                      "destination":  "tools/archive/ui05/ui05_popup_fit_check.ps1",
+                      "sha256":  "f1d385abd9a091798040c12378f6b7cc5523de6914c9e9b7d90e94c24a4db188"
+                  },
+                  {
+                      "row_id":  "ui05",
+                      "source":  "tools/ui05_surface_coverage_check.ps1",
+                      "destination":  "tools/archive/ui05/ui05_surface_coverage_check.ps1",
+                      "sha256":  "80f54325f6bc225f580ef166daa29a8ff303a79c25ef2dbe506b1e73066b0ced"
+                  },
+                  {
+                      "row_id":  "ui05",
+                      "source":  "tools/ui05_token_adoption_check.ps1",
+                      "destination":  "tools/archive/ui05/ui05_token_adoption_check.ps1",
+                      "sha256":  "e7d318b921c331a8865f6384da1fbc3f6677bd86ca47ef190313df6a5a3e53aa"
+                  },
+                  {
+                      "row_id":  "world06_6",
+                      "source":  "tools/world06_6_sign_packages.gd",
+                      "destination":  "tools/archive/world06_6/world06_6_sign_packages.gd",
+                      "sha256":  "3e63b83795ffb48825e13c3a2992591410b428211b04e4d514bd3b73c53d6f91"
+                  }
+              ]
+}

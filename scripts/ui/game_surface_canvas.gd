@@ -1,6 +1,8 @@
 class_name GameSurfaceCanvas
 extends Control
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 # Hosts the active gambling surface. Game-specific drawing lives in the active
 # GameModule; this canvas only owns scaling, hit regions, overlays, and input.
 
@@ -786,7 +788,7 @@ func surface_animation_active_id(channel_id: String) -> String:
 
 
 func surface_animation_metadata(channel_id: String) -> Dictionary:
-	return _copy_dict(_surface_animation_channel(channel_id).get("metadata", {}))
+	return JsonCoerceScript._copy_dict(_surface_animation_channel(channel_id).get("metadata", {}))
 
 
 func surface_play_audio_cue(cue_id: String, context: Dictionary = {}, authority: Variant = null) -> void:
@@ -1485,7 +1487,7 @@ func _normalized_drunk_effect_mode(value: String) -> String:
 func _update_surface_animation_channels() -> void:
 	var next_ids := {}
 	var now_msec := Time.get_ticks_msec()
-	for channel_value in _dictionary_array(state.get("surface_animation_channels", [])):
+	for channel_value in JsonCoerceScript._dictionary_array(state.get("surface_animation_channels", [])):
 		var channel: Dictionary = channel_value
 		var channel_id := str(channel.get("id", ""))
 		if channel_id.is_empty():
@@ -1495,7 +1497,7 @@ func _update_surface_animation_channels() -> void:
 		var incoming_active := bool(channel.get("active", not incoming_active_id.is_empty()))
 		var incoming_started := int(channel.get("started_msec", 0))
 		var restart_on_id_change := bool(channel.get("restart_on_active_id_change", true))
-		var current := _copy_dict(surface_animation_channels.get(channel_id, {}))
+		var current := JsonCoerceScript._copy_dict(surface_animation_channels.get(channel_id, {}))
 		var was_active := _surface_channel_record_active(current)
 		var current_active_id := str(current.get("active_id", ""))
 		if current.is_empty() or (restart_on_id_change and current_active_id != incoming_active_id):
@@ -1510,7 +1512,7 @@ func _update_surface_animation_channels() -> void:
 			var current_offset := maxi(0, int(current.get("elapsed_offset_msec", 0)))
 			var incoming_offset := maxi(0, int(channel.get("elapsed_offset_msec", 0)))
 			current["elapsed_offset_msec"] = incoming_offset
-			current["metadata"] = _copy_dict(channel.get("metadata", current.get("metadata", {})))
+			current["metadata"] = JsonCoerceScript._copy_dict(channel.get("metadata", current.get("metadata", {})))
 			current["clock_source"] = str(channel.get("clock_source", current.get("clock_source", "realtime")))
 			if incoming_started > 0:
 				current["started_msec"] = incoming_started
@@ -1527,7 +1529,7 @@ func _update_surface_animation_channels() -> void:
 			_mark_surface_animation_handoff(now_msec)
 	for existing_id in surface_animation_channels.keys():
 		if not next_ids.has(str(existing_id)):
-			if _surface_channel_record_active(_copy_dict(surface_animation_channels.get(existing_id, {}))):
+			if _surface_channel_record_active(JsonCoerceScript._copy_dict(surface_animation_channels.get(existing_id, {}))):
 				_mark_surface_animation_handoff(now_msec)
 			surface_animation_channels.erase(existing_id)
 
@@ -1770,7 +1772,7 @@ func _surface_ui_protected_board_rects() -> Array:
 
 func _surface_state_rects(key: String, hover_filtered: bool = false) -> Array:
 	var rects: Array = []
-	for region in _dictionary_array(state.get(key, [])):
+	for region in JsonCoerceScript._dictionary_array(state.get(key, [])):
 		if hover_filtered and not _surface_hover_region_matches(region):
 			continue
 		var rect := _surface_state_rect(region)
@@ -1874,9 +1876,9 @@ func _ensure_snapshot_proxy_hit_regions() -> void:
 		_add_proxy_hit_region(Rect2(98, 258, 26, 42), "surface_stake_down", -1)
 		_add_proxy_hit_region(Rect2(128, 258, 26, 42), "surface_stake_up", -1)
 		_add_proxy_hit_region(Rect2(158, 258, 44, 42), "surface_stake_max", -1)
-	if not _dictionary_array(state.get("legal_actions", [])).is_empty():
+	if not JsonCoerceScript._dictionary_array(state.get("legal_actions", [])).is_empty():
 		_add_proxy_hit_region(Rect2(212, 258, 150, 42), "surface_legal", 0)
-	if not _dictionary_array(state.get("cheat_actions", [])).is_empty():
+	if not JsonCoerceScript._dictionary_array(state.get("cheat_actions", [])).is_empty():
 		_add_proxy_hit_region(Rect2(372, 258, 174, 42), "surface_cheat", 0)
 
 
@@ -1951,7 +1953,7 @@ func _surface_animation_status_snapshot() -> Dictionary:
 			"duration_msec": int(channel.get("duration_msec", 0)),
 			"started_msec": int(channel.get("started_msec", 0)),
 			"elapsed_offset_msec": int(channel.get("elapsed_offset_msec", 0)),
-			"metadata": _copy_dict(channel.get("metadata", {})),
+			"metadata": JsonCoerceScript._copy_dict(channel.get("metadata", {})),
 		}
 	return snapshot
 
@@ -1961,11 +1963,11 @@ func _surface_action_blocked(action: String) -> bool:
 
 
 func _surface_action_block_reason(action: String) -> String:
-	for block_value in _dictionary_array(state.get("surface_action_blocks", [])):
+	for block_value in JsonCoerceScript._dictionary_array(state.get("surface_action_blocks", [])):
 		var block: Dictionary = block_value
 		var blocked_action := str(block.get("action", ""))
 		if blocked_action != action:
-			var blocked_actions := _string_array(block.get("actions", []))
+			var blocked_actions := JsonCoerceScript._raw_string_array(block.get("actions", []))
 			if not blocked_actions.has(action):
 				continue
 		var channel_id := str(block.get("while_animation", ""))
@@ -2067,8 +2069,8 @@ func _draw_foundation_control_strip(panel: Rect2, include_back: bool) -> void:
 	surface_draw_stake_control(Rect2(98, 258, 26, 42), "-", bool(state.get("has_valid_stake", false)), "surface_stake_down")
 	surface_draw_stake_control(Rect2(128, 258, 26, 42), "+", bool(state.get("has_valid_stake", false)), "surface_stake_up")
 	surface_draw_stake_control(Rect2(158, 258, 44, 42), "MAX", bool(state.get("has_valid_stake", false)), "surface_stake_max")
-	var legal_actions := _dictionary_array(state.get("legal_actions", []))
-	var cheat_actions := _dictionary_array(state.get("cheat_actions", []))
+	var legal_actions := JsonCoerceScript._dictionary_array(state.get("legal_actions", []))
+	var cheat_actions := JsonCoerceScript._dictionary_array(state.get("cheat_actions", []))
 	var legal_action := _first_dictionary(legal_actions)
 	var cheat_action := _first_dictionary(cheat_actions)
 	_draw_surface_action_tile(Rect2(212, 258, 150, 42), "Safe: %s" % _surface_action_label(legal_action, "Safe action"), _surface_action_summary(legal_action, "legal"), "legal", not legal_action.is_empty(), _surface_action_selected("legal", legal_action), "surface_legal", 0)
@@ -2225,38 +2227,11 @@ func _surface_action_summary(action: Dictionary, kind: String) -> String:
 	return " / ".join(parts)
 
 
-func _dictionary_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry in value:
-		if typeof(entry) == TYPE_DICTIONARY:
-			result.append(entry)
-	return result
-
-
-func _string_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry in value:
-		var text := str(entry)
-		if not text.is_empty():
-			result.append(text)
-	return result
-
-
 func _vector_from_dict(value: Variant, fallback: Vector2 = Vector2.ZERO) -> Vector2:
 	if typeof(value) != TYPE_DICTIONARY:
 		return fallback
 	var data: Dictionary = value as Dictionary
 	return Vector2(float(data.get("x", fallback.x)), float(data.get("y", fallback.y)))
-
-
-func _copy_dict(value: Variant) -> Dictionary:
-	if typeof(value) != TYPE_DICTIONARY:
-		return {}
-	return (value as Dictionary).duplicate(true)
 
 
 func _first_dictionary(value: Array) -> Dictionary:

@@ -1,10 +1,13 @@
 class_name MetaItemInteractionViewModel
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 const CollectionItemResolverScript := preload("res://scripts/core/collection_item_resolver.gd")
 const MetaCollectionServiceScript := preload("res://scripts/core/meta_collection_service.gd")
 const AttributeBadgesScript := preload("res://scripts/core/attribute_badges.gd")
 const BADGE_CACHE_LIMIT := 256
+const ASSET_PATH_CACHE_LIMIT := 256
 
 const MODE_CONTAINER := "meta_container"
 const MODE_BAGS := "meta_bags"
@@ -23,11 +26,11 @@ static func build(meta_service: Variant, mode: String, selected_key: String = ""
 			snapshot = meta_service.presentation_snapshot()
 		elif meta_service.has_method("snapshot"):
 			snapshot = meta_service.snapshot()
-	var owned := _dictionary_array(snapshot.get("owned_instances", []))
+	var owned := JsonCoerceScript._dictionary_array(snapshot.get("owned_instances", []))
 	var valid_trade_selected_ids := _valid_trade_selection(resolver, owned, trade_selected_ids)
 	var carried_ids: Array = meta_service.carried_instance_ids() if meta_service != null and meta_service.has_method("carried_instance_ids") else []
 	var item_models := _owned_item_models(meta_service, resolver, owned, carried_ids, mode, valid_trade_selected_ids)
-	var bag_models := _bag_models(meta_service, resolver, _dictionary_array(snapshot.get("unopened_bags", [])), mode)
+	var bag_models := _bag_models(meta_service, resolver, JsonCoerceScript._dictionary_array(snapshot.get("unopened_bags", [])), mode)
 	var container_key := "meta_collection_storage"
 	var container_label := "Home Storage"
 	var visible_items: Array = []
@@ -70,7 +73,7 @@ static func build(meta_service: Variant, mode: String, selected_key: String = ""
 		global_actions.append({
 			"id": "arm_trade",
 			"label": "Arm Trade-Up",
-			"payload": {"instance_ids": _int_array(valid_trade_selected_ids)},
+			"payload": {"instance_ids": JsonCoerceScript._int_array(valid_trade_selected_ids)},
 			"permanent": true,
 		})
 	return {
@@ -83,7 +86,7 @@ static func build(meta_service: Variant, mode: String, selected_key: String = ""
 		"active_container_key": container_key,
 		"multi_selected_keys": _trade_selection_keys(valid_trade_selected_ids),
 		"global_actions": global_actions,
-		"trade_selected_ids": _int_array(valid_trade_selected_ids),
+		"trade_selected_ids": JsonCoerceScript._int_array(valid_trade_selected_ids),
 		"trade_summary": _trade_summary(visible_items, valid_trade_selected_ids),
 		"gold_balance": int(snapshot.get("gold_balance", 0)),
 		"empty_text": _empty_text(mode),
@@ -99,7 +102,7 @@ static func _valid_trade_selection(resolver: Variant, owned: Array, requested_id
 	var result: Array = []
 	var collection_id := ""
 	var tier := ""
-	for id_value in _int_array(requested_ids):
+	for id_value in JsonCoerceScript._int_array(requested_ids):
 		var instance_id := int(id_value)
 		if result.has(instance_id) or not instances_by_id.has(instance_id):
 			continue
@@ -176,7 +179,7 @@ static func _owned_item_models(meta_service: Variant, resolver: Variant, owned: 
 		elif mode == MODE_SALE and bool(quote.get("ok", false)):
 			actions.append({"id": "arm_sale", "label": "Sell for %d gold" % int(quote.get("price", 0)), "payload": {"kind": MetaCollectionServiceScript.SALE_KIND_ITEM, "instance_id": instance_id}, "permanent": true})
 		elif mode == MODE_TRADE and trade_visible:
-			var selected_index := _int_array(trade_selected_ids).find(instance_id)
+			var selected_index := JsonCoerceScript._int_array(trade_selected_ids).find(instance_id)
 			actions.append({
 				"id": "toggle_trade",
 				"label": "Remove from Trade" if selected_index >= 0 else "Select for Trade",
@@ -287,7 +290,7 @@ static func _slots(items: Array) -> Array:
 			"occupied": true,
 			"selection_key": str(item.get("selection_key", "")),
 			"item": item,
-			"actionable": not _dictionary_array(item.get("actions", [])).is_empty(),
+			"actionable": not JsonCoerceScript._dictionary_array(item.get("actions", [])).is_empty(),
 			"disabled_reason": str(item.get("disabled_reason", "")),
 			"state_marker": str(item.get("state_marker", "")),
 		})
@@ -371,6 +374,8 @@ static func _asset_path_for_icon(icon_key: String) -> String:
 		return str(_asset_path_cache.get(clean_key, ""))
 	var path := "res://assets/art/items/%s.png" % clean_key
 	var resolved := path if ResourceLoader.exists(path) else ""
+	if _asset_path_cache.size() >= ASSET_PATH_CACHE_LIMIT:
+		_asset_path_cache.clear()
 	_asset_path_cache[clean_key] = resolved
 	return resolved
 
@@ -404,7 +409,7 @@ static func _trade_selection_keys(ids: Array) -> Array:
 
 static func _trade_summary(items: Array, ids: Array) -> Array:
 	var result: Array = []
-	var wanted := _int_array(ids)
+	var wanted := JsonCoerceScript._int_array(ids)
 	for index in range(wanted.size()):
 		var instance_id := int(wanted[index])
 		for item_value in items:
@@ -421,19 +426,6 @@ static func _trade_summary(items: Array, ids: Array) -> Array:
 	return result
 
 
-static func _dictionary_array(value: Variant) -> Array:
-	# Callers only inspect these dictionaries while constructing an owned model.
-	# Preserve the filtered array boundary without recursively cloning every item
-	# and nested payload each time the same slots are scanned.
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry in value as Array:
-		if typeof(entry) == TYPE_DICTIONARY:
-			result.append(entry)
-	return result
-
-
 static func _cached_item_definition(resolver: Variant, cache: Dictionary, itemdef_id: int) -> Dictionary:
 	if not cache.has(itemdef_id):
 		cache[itemdef_id] = resolver.item_definition(itemdef_id)
@@ -444,12 +436,3 @@ static func _cached_collection_definition(resolver: Variant, cache: Dictionary, 
 	if not cache.has(collection_id):
 		cache[collection_id] = resolver.collection_definition(collection_id)
 	return cache.get(collection_id, {}) as Dictionary
-
-
-static func _int_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry in value as Array:
-		result.append(int(entry))
-	return result

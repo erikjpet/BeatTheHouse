@@ -49,9 +49,9 @@ Current reality:
   (`618d0033`, `92bb16f5`, `6a3485c7`, `33128713`). Verified byte-identical on
   both sides: `docs/plans/perf06_1_final_runtime_runbook.md`,
   `docs/plans/perf06_1_static_harness_review.md`,
-  `tools/perf06_binding_preflight.ps1`,
-  `tools/perf06_phase_qualification_contract.ps1`,
-  `tools/perf06_capture_quiescence.ps1` and `tools/perf06_matrix_contract.ps1`.
+  `tools/archive/perf06/perf06_binding_preflight.ps1`,
+  `tools/archive/perf06/perf06_phase_qualification_contract.ps1`,
+  `tools/archive/perf06/perf06_capture_quiescence.ps1` and `tools/archive/perf06/perf06_matrix_contract.ps1`.
   **Do not recreate, cherry-pick, or merge a retired task branch.** Work from
   current `main`; use only the consolidated WIP branch for unfinished changes.
 - **Two of the landed commits are still labeled `[UNREVIEWED]`** in their
@@ -99,7 +99,7 @@ severity and destination.
 
 ## 2. Scheduling constraint — read before you run anything heavy
 
-The qualification requires a **quiescent host**. `tools/perf06_capture_quiescence.ps1`
+The qualification requires a **quiescent host**. `tools/archive/perf06/perf06_capture_quiescence.ps1`
 throws if any `Godot_v4.6-stable_win64`, `Godot_v4.6-stable_win64_console`,
 `BeatTheHouse` or `chrome` process is alive, and the runbook repeats that check
 itself. It also requires `HEAD` to equal the pushed `origin/main` exactly.

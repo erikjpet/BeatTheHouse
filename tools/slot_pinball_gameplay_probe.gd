@@ -55,20 +55,11 @@ func _run() -> void:
 	var resolver = SlotResolver.new()
 	var trigger_rng := run_state.create_rng("gameplay_probe_real_jackpot")
 	for attempt in range(1, 2001):
-		var resolved: Dictionary = resolver.resolve_spin(
-			machine,
-			"spin",
-			SlotState.selected_bet(machine),
-			trigger_rng,
-			definition,
-			environment,
-			true,
-			false,
-			run_state,
-			{},
-			{},
-			true
-		)
+		var resolved: Dictionary = resolver.resolve_spin(FunctionOptions.slot_resolve(machine, "spin", SlotState.selected_bet(machine), {
+			"rng": trigger_rng, "definition": definition, "environment": environment,
+			"normalize_machine": true, "audit_metrics_mode": false, "run_state": run_state,
+			"item_effects": {}, "ui_state": {}, "include_presentation_payload": true,
+		}))
 		machine = resolved.get("machine", machine) as Dictionary
 		var active: Dictionary = machine.get("active_bonus", {}) if typeof(machine.get("active_bonus", {})) == TYPE_DICTIONARY else {}
 		if str(active.get("family", "")) == "pinball" and bool(active.get("active", false)) and not bool(active.get("complete", false)):

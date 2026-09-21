@@ -74,7 +74,7 @@ surrounding code, never by trusting the number.
    `scripts/tests/foundation/scenario_backlog_contract.gd`,
    `scripts/ui/foundation_main.gd`,
    `tools/scenario_room_multiseed_finalization.gd`,
-   `tools/world06_6_sign_packages.gd`, plus untracked
+   `tools/archive/world06_6/world06_6_sign_packages.gd`, plus untracked
    `scripts/tests/foundation/table_game_authority_test_driver.gd` and
    `reports/playtest_2026-09-20/`.
    Do not revert, stash, checkout-over or "clean up" any of them. Build on top.
@@ -1287,8 +1287,8 @@ health documents appeared outside this sweep after baseline and were not edited.
  M tools/foundation_soak_probe.gd
  M tools/foundation_systems_shards.ps1
  M tools/scenario_room_multiseed_finalization.gd
- M tools/ui05_surface_coverage_check.ps1
- M tools/world06_6_sign_packages.gd
+ M tools/archive/ui05/ui05_surface_coverage_check.ps1
+ M tools/archive/world06_6/world06_6_sign_packages.gd
 ?? docs/plans/0.5_ui_surface_coverage_supplement.json
 ?? docs/plans/code_health_audit_2026-09-20.md
 ?? docs/todo/fixsweep06_1_extended_playtest_bug_sweep_prompt.md

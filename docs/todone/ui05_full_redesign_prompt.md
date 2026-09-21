@@ -13,8 +13,8 @@
   deterministic replay (326 checkpoints, baseline-identical hash
   `2304215261`); token-adoption, popup-fit, asset manifest/fallback,
   surface-coverage, legacy-tag checks; and Web release export.
-- **Deliverables:** `docs/plans/0.5_ui_redesign_report.md` and
-  `docs/plans/0.5_ui_art_manifest.md`.
+- **Deliverables:** `docs/archive/0.5/plans/0.5_ui_redesign_report.md` and
+  `docs/archive/0.5/plans/0.5_ui_art_manifest.md`.
 - **Deviations:** The prompt originally required deletion on completion and
   was deleted in `c01820f8`. A later owner instruction explicitly required
   the completed prompt to be retained in `docs/todone`; this archived copy
@@ -37,7 +37,7 @@ game scenes, items, inventory containers) — extend that pipeline for UI
 art in this task.
 
 This file is SELF-CONTAINED: every rule you need is in here. The design
-philosophy in `docs/plans/0.5_ui_overhaul_brief.md` is binding
+philosophy in `docs/archive/0.5/plans/0.5_ui_overhaul_brief.md` is binding
 background reading (identity preserved, hierarchy over chrome, readable
 at both sizes, zero performance tax) — read it first. This prompt
 SUPERSEDES `docs/todo/ui05_0_audit_design_system_prompt.md`; delete that
@@ -90,7 +90,7 @@ Everything later consumes this; build it first.
    an artist can open and repaint WITHOUT touching code. You will
    author the initial pixel art yourself (see art quality bar below);
    the deliverable is that every one of these files is swappable.
-   - Write an asset manifest `docs/plans/0.5_ui_art_manifest.md`
+   - Write an asset manifest `docs/archive/0.5/plans/0.5_ui_art_manifest.md`
      listing every UI art file, its exact pixel dimensions, palette
      notes, and what it represents — this is the artist's handoff doc.
    - Loading must go through a single helper with a code-drawn fallback
@@ -340,9 +340,9 @@ streamlined to its purpose, self-explanatory to a first-time player:
 ## Deliverables
 
 - All code/asset changes, committed in logical units per phase.
-- `docs/plans/0.5_ui_art_manifest.md` — artist handoff for every UI
+- `docs/archive/0.5/plans/0.5_ui_art_manifest.md` — artist handoff for every UI
   art asset (path, dimensions, palette, meaning, swap instructions).
-- `docs/plans/0.5_ui_redesign_report.md` — surface-by-surface
+- `docs/archive/0.5/plans/0.5_ui_redesign_report.md` — surface-by-surface
   checklist (every surface in `scripts/ui/` accounted for), the
   cold-look notes, capture index, gate results per phase, and any
   intentionally-deferred items with reasons.

@@ -1,6 +1,8 @@
 class_name SfxPlayer
 extends Node
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 const WebAudioBridgeScript := preload("res://scripts/ui/web_audio_bridge.gd")
 const SurfaceSfxManifestScript := preload("res://scripts/core/surface_sfx_manifest.gd")
 
@@ -540,7 +542,7 @@ func sync_coin_pusher_state(surface_state: Dictionary, elapsed: float, animation
 	# Incremental Coin Pusher action views retain the canvas-owned dense body
 	# arrays while publishing the authoritative post-action count separately.
 	# Full/legacy snapshots continue to derive the same value from `bodies`.
-	var body_count := int(snapshot.get("body_count", _dictionary_array(snapshot.get("bodies", [])).size()))
+	var body_count := int(snapshot.get("body_count", JsonCoerceScript._dictionary_array(snapshot.get("bodies", [])).size()))
 	var loaded := body_count >= 80
 	var phase_milli := int(snapshot.get("lower_phase_milli", 0))
 	var phase_domain_milli := maxi(1, int(snapshot.get("phase_domain_milli", 8000)))
@@ -582,7 +584,7 @@ func sync_coin_pusher_state(surface_state: Dictionary, elapsed: float, animation
 	if not animation_active and not _coin_pusher_action_observed_active:
 		return
 	var event_classes: Dictionary = _dict(profile.get("event_classes", {}))
-	var events := _dictionary_array(snapshot.get("events", []))
+	var events := JsonCoerceScript._dictionary_array(snapshot.get("events", []))
 	for index in range(events.size()):
 		var event: Dictionary = events[index]
 		if not _coin_pusher_event_is_audio_primary(event):
@@ -635,7 +637,7 @@ func _sync_live_coin_pusher_state(surface_state: Dictionary, profile: Dictionary
 		return
 	_coin_pusher_live_event_serial = serial
 	var event_classes: Dictionary = _dict(profile.get("event_classes", {}))
-	var events := _dictionary_array(surface_state.get("coin_pusher_audio_events", []))
+	var events := JsonCoerceScript._dictionary_array(surface_state.get("coin_pusher_audio_events", []))
 	for index in range(events.size()):
 		var event: Dictionary = events[index]
 		if not _coin_pusher_event_is_audio_primary(event):
@@ -824,7 +826,7 @@ func sync_slot_state(slot_state: Dictionary, elapsed: float, animation_active: b
 	if not _feature_music_id.is_empty():
 		_feature_music_id = ""
 
-	var bonus_steps := _dictionary_array(slot_state.get("slot_bonus_steps", []))
+	var bonus_steps := JsonCoerceScript._dictionary_array(slot_state.get("slot_bonus_steps", []))
 	if cue_stream.is_empty() and not bonus_steps.is_empty():
 		_trigger("bonus_start", elapsed >= bonus_start_time, str(profile.get("bonus_start_event", "bonus_start")), -1.0, float(profile.get("bonus_pitch", 1.0)))
 		for i in range(bonus_steps.size()):
@@ -996,7 +998,7 @@ func sync_pull_tab_dispense(surface_state: Dictionary, elapsed: float, animation
 		_played_markers.clear()
 	if not animation_active:
 		return
-	var events := _dictionary_array(surface_state.get("pull_tab_dispense_events", []))
+	var events := JsonCoerceScript._dictionary_array(surface_state.get("pull_tab_dispense_events", []))
 	for event_value in events:
 		var event: Dictionary = event_value
 		var marker := "pull_tab_thud_%s" % str(event.get("ticket_id", event.get("sequence_index", events.find(event_value))))
@@ -1014,7 +1016,7 @@ func sync_blackjack_state(surface_state: Dictionary, deal_elapsed: float, deal_a
 		if deal_active_id != _blackjack_deal_id:
 			_blackjack_deal_id = deal_active_id
 			_clear_markers_with_prefix("blackjack_deal_")
-		var events := _dictionary_array(surface_state.get("deal_animation_events", []))
+		var events := JsonCoerceScript._dictionary_array(surface_state.get("deal_animation_events", []))
 		for i in range(events.size()):
 			var event: Dictionary = events[i]
 			var delay := float(maxi(0, int(event.get("delay_msec", 0)))) / 1000.0
@@ -1104,7 +1106,7 @@ func sync_baccarat_state(surface_state: Dictionary, deal_elapsed: float, deal_an
 		if deal_active_id != _baccarat_deal_id:
 			_baccarat_deal_id = deal_active_id
 			_clear_markers_with_prefix("baccarat_deal_")
-		var events := _dictionary_array(surface_state.get("deal_animation_events", []))
+		var events := JsonCoerceScript._dictionary_array(surface_state.get("deal_animation_events", []))
 		for i in range(events.size()):
 			var event: Dictionary = events[i]
 			if str(event.get("type", "card")) != "card":
@@ -1191,9 +1193,9 @@ func debug_coin_pusher_event_schedule(surface_state: Dictionary) -> Array:
 	var event_classes: Dictionary = _dict(profile.get("event_classes", {}))
 	var result: Array = []
 	var snapshot := _dict(surface_state.get("coin_pusher_snapshot", {}))
-	var events := _dictionary_array(surface_state.get("coin_pusher_audio_events", []))
+	var events := JsonCoerceScript._dictionary_array(surface_state.get("coin_pusher_audio_events", []))
 	if events.is_empty():
-		events = _dictionary_array(snapshot.get("events", []))
+		events = JsonCoerceScript._dictionary_array(snapshot.get("events", []))
 	for event_value in events:
 		var event: Dictionary = event_value
 		if not _coin_pusher_event_is_audio_primary(event):
@@ -1231,7 +1233,7 @@ func debug_slot_final_cue_armed(slot_state: Dictionary, elapsed: float, animatio
 	var reel_stop_times := _slot_reel_stop_times(slot_state)
 	var last_stop_time := float(reel_stop_times[reel_stop_times.size() - 1]) if not reel_stop_times.is_empty() else 0.0
 	var final_time := last_stop_time + 0.35
-	var bonus_steps := _dictionary_array(slot_state.get("slot_bonus_steps", []))
+	var bonus_steps := JsonCoerceScript._dictionary_array(slot_state.get("slot_bonus_steps", []))
 	if not bonus_steps.is_empty():
 		var bonus_start_time := float(slot_state.get("slot_bonus_start_time", last_stop_time + SLOT_POST_REEL_BONUS_DELAY))
 		final_time = bonus_start_time + float(bonus_steps.size()) * SLOT_BONUS_STEP_TIME + 0.22
@@ -1586,7 +1588,7 @@ func _sync_feature_scene_cues(slot_state: Dictionary, profile: Dictionary, fallb
 		start_times.append(cursor)
 		if typeof(stage_value) == TYPE_DICTIONARY:
 			cursor += float(maxi(1, int((stage_value as Dictionary).get("duration_msec", 1)))) / 1000.0
-	var cues := _dictionary_array(scene.get("audio_cues", []))
+	var cues := JsonCoerceScript._dictionary_array(scene.get("audio_cues", []))
 	for cue in cues:
 		var stage_index := int(cue.get("stage_index", 0))
 		var cue_time := 0.0
@@ -3338,16 +3340,6 @@ func _soft_limit(value: float) -> float:
 	if amount <= 0.72:
 		return value
 	return value / (1.0 + (amount - 0.72) * 0.80)
-
-
-func _dictionary_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry in value:
-		if typeof(entry) == TYPE_DICTIONARY:
-			result.append(entry)
-	return result
 
 
 func _dict(value: Variant) -> Dictionary:

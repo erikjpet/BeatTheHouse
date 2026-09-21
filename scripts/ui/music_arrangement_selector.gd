@@ -1,6 +1,8 @@
 class_name MusicArrangementSelector
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 # Deterministic authored-stem bank selection. The selector works on manifest
 # data only so the same decisions are available in headless tests and builds.
 
@@ -12,14 +14,14 @@ static func select(entry: Dictionary, profile: Dictionary, music_state: Dictiona
 		return _select_compatibility_arrangement(entry, profile, music_state)
 	var track_id := str(entry.get("id", "")).strip_edges()
 	var context := selection_context(profile, music_state, entry)
-	var selected_stems := _copy_dict(entry.get("stems", {}))
+	var selected_stems := JsonCoerceScript._copy_dict(entry.get("stems", {}))
 	var selected_variants := {}
 	var selected_ids := {}
 	var selected_tags := {}
 	var selected_groups := {}
 	for tag_value in context.get("tags", []):
 		selected_tags[str(tag_value)] = true
-	var banks := _copy_dict(entry.get("stem_banks", {}))
+	var banks := JsonCoerceScript._copy_dict(entry.get("stem_banks", {}))
 	var roles := banks.keys()
 	roles.sort_custom(func(a: Variant, b: Variant) -> bool: return str(a) < str(b))
 	for role_value in roles:
@@ -42,7 +44,7 @@ static func select(entry: Dictionary, profile: Dictionary, music_state: Dictiona
 			str(bank.get("seed_salt", "")),
 			int(context.get("intensity_bucket", 0)),
 		]
-		var selected := _weighted_pick(candidates, _stable_hash(seed_text))
+		var selected := _weighted_pick(candidates, JsonCoerceScript._stable_hash_allow_zero(seed_text))
 		if selected.is_empty():
 			continue
 		selected_stems[role] = selected.duplicate(true)
@@ -50,12 +52,12 @@ static func select(entry: Dictionary, profile: Dictionary, music_state: Dictiona
 		selected_variants[role] = {
 			"id": variant_id,
 			"weight": maxf(0.0, float(selected.get("weight", 1.0))),
-			"tags": _string_array(selected.get("tags", [])),
+			"tags": JsonCoerceScript._string_array(selected.get("tags", [])),
 			"harmonic_section": str(context.get("harmonic_section", "A")),
 			"intensity": float(context.get("intensity", 0.0)),
 		}
 		selected_ids[variant_id] = true
-		for tag_value in _string_array(selected.get("tags", [])):
+		for tag_value in JsonCoerceScript._string_array(selected.get("tags", [])):
 			selected_tags[str(tag_value)] = true
 		var group := str(selected.get("mutual_exclusion_group", selected.get("exclusive_group", ""))).strip_edges()
 		if not group.is_empty():
@@ -131,7 +133,7 @@ static func advance_recipe_state(entry: Dictionary, state: Dictionary, phrase_ev
 		return result
 	var cursor := int(result.get("cursor", -1)) + 1
 	var section := str(sections[posmod(cursor, sections.size())]).to_upper()
-	var history := _string_array(result.get("section_history", []))
+	var history := JsonCoerceScript._string_array(result.get("section_history", []))
 	history.append(section)
 	while history.size() > 8:
 		history.pop_front()
@@ -147,7 +149,7 @@ static func advance_recipe_state(entry: Dictionary, state: Dictionary, phrase_ev
 static func _select_compatibility_arrangement(entry: Dictionary, profile: Dictionary, music_state: Dictionary) -> Dictionary:
 	var track_id := str(entry.get("id", "")).strip_edges()
 	var context := selection_context(profile, music_state, entry)
-	var arrangement_state := _copy_dict(music_state.get("music_arrangement_state", music_state.get("arrangement_state", {})))
+	var arrangement_state := JsonCoerceScript._copy_dict(music_state.get("music_arrangement_state", music_state.get("arrangement_state", {})))
 	if arrangement_state.is_empty():
 		arrangement_state = initial_recipe_state(entry, music_state.get("run_seed", ""), str(music_state.get("music_visit_id", "")))
 	var active_section := str(arrangement_state.get("harmonic_section", context.get("harmonic_section", "A"))).to_upper()
@@ -165,7 +167,7 @@ static func _select_compatibility_arrangement(entry: Dictionary, profile: Dictio
 		var reasons: Array[String] = []
 		if not bool(set_data.get("enabled", true)) or float(set_data.get("weight", 1.0)) <= 0.0:
 			reasons.append("disabled_or_zero_weight")
-		var sections := _string_array(set_data.get("harmonic_sections", set_data.get("sections", [])))
+		var sections := JsonCoerceScript._string_array(set_data.get("harmonic_sections", set_data.get("sections", [])))
 		if not sections.is_empty() and not sections.has(active_section):
 			reasons.append("harmonic_section")
 		if reasons.is_empty():
@@ -174,13 +176,13 @@ static func _select_compatibility_arrangement(entry: Dictionary, profile: Dictio
 			excluded.append({"kind": "compatibility_set", "id": str(set_data.get("id", "")), "reasons": reasons})
 	if set_candidates.is_empty():
 		return _compatibility_failure(context, excluded, "no_compatible_set")
-	var history_text := ">".join(_string_array(arrangement_state.get("section_history", [])))
+	var history_text := ">".join(JsonCoerceScript._string_array(arrangement_state.get("section_history", [])))
 	var set_seed := "%s|%s|%s|%s|%s|%s|cursor=%d|event=%d" % [track_id, str(music_state.get("run_seed", arrangement_state.get("run_seed", ""))), str(context.get("visit_id", "")), active_section, str(context.get("recipe_id", "")), history_text, int(arrangement_state.get("cursor", 0)), int(arrangement_state.get("last_phrase_event_index", -1))]
-	var selected_set := _weighted_pick(set_candidates, _stable_hash(set_seed))
+	var selected_set := _weighted_pick(set_candidates, JsonCoerceScript._stable_hash_allow_zero(set_seed))
 	var selected_set_id := str(selected_set.get("id", ""))
 	var selected_progression_id := str(selected_set.get("progression_id", selected_set_id))
-	var allowed_roles := _copy_dict(selected_set.get("roles", {}))
-	var banks := _copy_dict(entry.get("stem_banks", {}))
+	var allowed_roles := JsonCoerceScript._copy_dict(selected_set.get("roles", {}))
+	var banks := JsonCoerceScript._copy_dict(entry.get("stem_banks", {}))
 	var selected_stems := {}
 	var selected_variants := {}
 	var selected_ids := {}
@@ -188,19 +190,19 @@ static func _select_compatibility_arrangement(entry: Dictionary, profile: Dictio
 	var selected_groups := {}
 	var selected_role_epochs := {}
 	var recipe := recipe_definition(entry, str(arrangement_state.get("recipe_id", "")))
-	var role_policies := _copy_dict(recipe.get("role_policies", {}))
-	var prior_variant_ids := _copy_dict(arrangement_state.get("selected_variant_ids", {}))
-	var prior_role_epochs := _copy_dict(arrangement_state.get("selected_role_epochs", {}))
+	var role_policies := JsonCoerceScript._copy_dict(recipe.get("role_policies", {}))
+	var prior_variant_ids := JsonCoerceScript._copy_dict(arrangement_state.get("selected_variant_ids", {}))
+	var prior_role_epochs := JsonCoerceScript._copy_dict(arrangement_state.get("selected_role_epochs", {}))
 	var selection_memory_ids := prior_variant_ids.duplicate(true)
 	var selection_memory_epochs := prior_role_epochs.duplicate(true)
-	var target_role_epochs := _copy_dict(arrangement_state.get("role_epochs", {}))
+	var target_role_epochs := JsonCoerceScript._copy_dict(arrangement_state.get("role_epochs", {}))
 	for tag_value in context.get("tags", []):
 		selected_tags[str(tag_value)] = true
 	var roles := allowed_roles.keys()
 	roles.sort_custom(func(a: Variant, b: Variant) -> bool: return str(a) < str(b))
 	for role_value in roles:
 		var role := str(role_value)
-		var allowed_ids := _string_array(allowed_roles.get(role_value))
+		var allowed_ids := JsonCoerceScript._string_array(allowed_roles.get(role_value))
 		var bank := _bank_data(banks.get(role))
 		var candidates: Array = []
 		for variant_value in bank.get("variants", []):
@@ -211,7 +213,7 @@ static func _select_compatibility_arrangement(entry: Dictionary, profile: Dictio
 			var reasons := _variant_exclusion_reasons(variant, context, selected_ids, selected_tags, selected_groups)
 			if not allowed_ids.has(variant_id):
 				reasons.append("not_in_compatibility_set")
-			if not _string_array(variant.get("progression_compatibility", [])).has(selected_progression_id):
+			if not JsonCoerceScript._string_array(variant.get("progression_compatibility", [])).has(selected_progression_id):
 				reasons.append("progression_incompatible")
 			if reasons.is_empty():
 				candidates.append(variant)
@@ -219,14 +221,14 @@ static func _select_compatibility_arrangement(entry: Dictionary, profile: Dictio
 				excluded.append({"kind": "variant", "role": role, "id": variant_id, "reasons": reasons})
 		if candidates.is_empty():
 			continue
-		var policy := _copy_dict(role_policies.get(role, {}))
+		var policy := JsonCoerceScript._copy_dict(role_policies.get(role, {}))
 		var change_every := maxi(1, int(policy.get("change_every", 1)))
 		var target_epoch := int(target_role_epochs.get(role, maxi(0, int(arrangement_state.get("cursor", -1))) / change_every))
 		var memory_key := "%s:%s" % [selected_set_id, role]
 		var prior_id := str(prior_variant_ids.get(memory_key, prior_variant_ids.get(role, "")))
 		var prior_epoch := int(prior_role_epochs.get(memory_key, prior_role_epochs.get(role, -1)))
 		var contrast_set_id := str(selected_set.get("contrast_with_set_id", "")).strip_edges()
-		var force_contrast := not contrast_set_id.is_empty() and _string_array(selected_set.get("force_change_roles", [])).has(role)
+		var force_contrast := not contrast_set_id.is_empty() and JsonCoerceScript._string_array(selected_set.get("force_change_roles", [])).has(role)
 		if force_contrast:
 			prior_id = str(prior_variant_ids.get("%s:%s" % [contrast_set_id, role], ""))
 		var role_seed := "%s|%s|%s|%s|%s|%s" % [set_seed, selected_set_id, role, str(bank.get("seed_salt", "")), int(context.get("intensity_bucket", 0)), history_text]
@@ -244,20 +246,20 @@ static func _select_compatibility_arrangement(entry: Dictionary, profile: Dictio
 			if not changed_candidates.is_empty():
 				candidates = changed_candidates
 		if selected.is_empty():
-			selected = _weighted_pick(candidates, _stable_hash("%s|epoch=%d" % [role_seed, target_epoch]))
+			selected = _weighted_pick(candidates, JsonCoerceScript._stable_hash_allow_zero("%s|epoch=%d" % [role_seed, target_epoch]))
 		var selected_id := str(selected.get("id", ""))
 		selected_stems[role] = selected.duplicate(true)
-		selected_variants[role] = {"id": selected_id, "weight": float(selected.get("weight", 1.0)), "tags": _string_array(selected.get("tags", [])), "harmonic_section": active_section, "intensity": float(context.get("intensity", 0.0)), "compatibility_set_id": selected_set_id}
+		selected_variants[role] = {"id": selected_id, "weight": float(selected.get("weight", 1.0)), "tags": JsonCoerceScript._string_array(selected.get("tags", [])), "harmonic_section": active_section, "intensity": float(context.get("intensity", 0.0)), "compatibility_set_id": selected_set_id}
 		selected_ids[selected_id] = true
 		selected_role_epochs[role] = target_epoch
 		selection_memory_ids[memory_key] = selected_id
 		selection_memory_epochs[memory_key] = target_epoch
-		for tag_value in _string_array(selected.get("tags", [])):
+		for tag_value in JsonCoerceScript._string_array(selected.get("tags", [])):
 			selected_tags[tag_value] = true
 		var group := str(selected.get("mutual_exclusion_group", selected.get("exclusive_group", ""))).strip_edges()
 		if not group.is_empty():
 			selected_groups[group] = selected_id
-	var required_roles := _string_array(entry.get("compatibility_required_roles", selected_set.get("required_roles", [])))
+	var required_roles := JsonCoerceScript._string_array(entry.get("compatibility_required_roles", selected_set.get("required_roles", [])))
 	var missing_roles: Array[String] = []
 	for role in required_roles:
 		if not selected_stems.has(role):
@@ -282,13 +284,13 @@ static func selection_context(profile: Dictionary, music_state: Dictionary = {},
 	var heat := clampf(float(music_state.get("heat", music_state.get("heat_level", 0.0))), 0.0, 100.0)
 	var intensity := clampf(float(music_state.get("music_intensity", heat / 100.0)), 0.0, 1.0)
 	var bucket_count := maxi(1, int(music_state.get("intensity_bucket_count", DEFAULT_INTENSITY_BUCKETS)))
-	var tags := _string_array(music_state.get("music_tags", []))
+	var tags := JsonCoerceScript._string_array(music_state.get("music_tags", []))
 	for automatic_tag in _automatic_tags(music_state, intensity):
 		if not tags.has(automatic_tag):
 			tags.append(automatic_tag)
 	var harmonic_section := str(music_state.get("harmonic_section", profile.get("harmonic_section", ""))).strip_edges().to_upper()
 	if harmonic_section.is_empty():
-		var arrangement := _string_array(entry.get("arrangement", []))
+		var arrangement := JsonCoerceScript._string_array(entry.get("arrangement", []))
 		if not arrangement.is_empty():
 			harmonic_section = str(arrangement[posmod(int(music_state.get("musical_bar", 0)), arrangement.size())]).to_upper()
 	if harmonic_section.is_empty():
@@ -337,16 +339,16 @@ static func _variant_exclusion_reasons(variant: Dictionary, context: Dictionary,
 	var intensity := float(context.get("intensity", 0.0))
 	if intensity + 0.0001 < float(variant.get("intensity_min", 0.0)) or intensity - 0.0001 > float(variant.get("intensity_max", 1.0)):
 		reasons.append("intensity")
-	var sections := _string_array(variant.get("harmonic_sections", variant.get("sections", [])))
+	var sections := JsonCoerceScript._string_array(variant.get("harmonic_sections", variant.get("sections", [])))
 	if not sections.is_empty() and not sections.has(str(context.get("harmonic_section", "A"))):
 		reasons.append("harmonic_section")
-	for required_tag in _string_array(variant.get("requires_tags", [])):
+	for required_tag in JsonCoerceScript._string_array(variant.get("requires_tags", [])):
 		if not bool(selected_tags.get(required_tag, false)):
 			reasons.append("missing_tag:%s" % required_tag)
-	for excluded_id in _string_array(variant.get("excludes", variant.get("exclude_ids", []))):
+	for excluded_id in JsonCoerceScript._string_array(variant.get("excludes", variant.get("exclude_ids", []))):
 		if bool(selected_ids.get(excluded_id, false)):
 			reasons.append("excluded_id:%s" % excluded_id)
-	for excluded_tag in _string_array(variant.get("exclude_tags", [])):
+	for excluded_tag in JsonCoerceScript._string_array(variant.get("exclude_tags", [])):
 		if bool(selected_tags.get(excluded_tag, false)):
 			reasons.append("excluded_tag:%s" % excluded_tag)
 	var group := str(variant.get("mutual_exclusion_group", variant.get("exclusive_group", ""))).strip_edges()
@@ -374,20 +376,6 @@ static func _weighted_pick(candidates: Array, seed: int) -> Dictionary:
 	return (candidates.back() as Dictionary).duplicate(true)
 
 
-static func _string_array(value: Variant) -> Array[String]:
-	var result: Array[String] = []
-	if typeof(value) == TYPE_STRING:
-		var text := str(value).strip_edges()
-		if not text.is_empty():
-			result.append(text)
-	elif typeof(value) == TYPE_ARRAY:
-		for item in value as Array:
-			var text := str(item).strip_edges()
-			if not text.is_empty() and not result.has(text):
-				result.append(text)
-	return result
-
-
 static func _ordered_string_array(value: Variant) -> Array[String]:
 	var result: Array[String] = []
 	if typeof(value) == TYPE_STRING:
@@ -400,14 +388,3 @@ static func _ordered_string_array(value: Variant) -> Array[String]:
 			if not text.is_empty():
 				result.append(text)
 	return result
-
-
-static func _copy_dict(value: Variant) -> Dictionary:
-	return (value as Dictionary).duplicate(true) if typeof(value) == TYPE_DICTIONARY else {}
-
-
-static func _stable_hash(text: String) -> int:
-	var value := 2166136261
-	for index in range(text.length()):
-		value = int((value ^ text.unicode_at(index)) * 16777619) & 0x7fffffff
-	return value

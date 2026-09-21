@@ -1,6 +1,8 @@
 class_name SlotMachineGenerator
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 const MathScript := preload("res://scripts/games/slots/slot_rng_math.gd")
 const StateScript := preload("res://scripts/games/slots/slot_machine_state.gd")
 
@@ -10,11 +12,11 @@ func generate_machine(run_state: RunState, environment: Dictionary, rng: RngStre
 	var archetype_id := str(environment.get("archetype_id", environment.get("kind", "archetype")))
 	var stream_key := "slot_machine:%s:%s:%s" % [game_id, environment_id, archetype_id]
 	var generation_rng: RngStream = run_state.create_rng(stream_key) if run_state != null else rng.fork(stream_key)
-	var format: Dictionary = MathScript.weighted_pick(_dictionary_array(definition.get("slot_formats", [])), generation_rng)
-	var family: Dictionary = MathScript.weighted_pick(_dictionary_array(definition.get("slot_types", [])), generation_rng)
-	var math_variant: Dictionary = MathScript.weighted_pick(_dictionary_array(definition.get("slot_math_variants", [])), generation_rng)
-	var cabinet: Dictionary = MathScript.weighted_pick(_dictionary_array(definition.get("slot_cabinet_variants", [])), generation_rng)
-	var bonus: Dictionary = MathScript.weighted_pick(_dictionary_array(definition.get("slot_bonus_variants", [])), generation_rng)
+	var format: Dictionary = MathScript.weighted_pick(JsonCoerceScript._dictionary_array(definition.get("slot_formats", [])), generation_rng)
+	var family: Dictionary = MathScript.weighted_pick(JsonCoerceScript._dictionary_array(definition.get("slot_types", [])), generation_rng)
+	var math_variant: Dictionary = MathScript.weighted_pick(JsonCoerceScript._dictionary_array(definition.get("slot_math_variants", [])), generation_rng)
+	var cabinet: Dictionary = MathScript.weighted_pick(JsonCoerceScript._dictionary_array(definition.get("slot_cabinet_variants", [])), generation_rng)
+	var bonus: Dictionary = MathScript.weighted_pick(JsonCoerceScript._dictionary_array(definition.get("slot_bonus_variants", [])), generation_rng)
 	return build_machine_from_ids(definition, {
 		"format_id": str(format.get("id", "classic_3_reel")),
 		"type_id": str(family.get("id", "pinball")),
@@ -87,8 +89,8 @@ func build_machine_from_ids(definition: Dictionary, ids: Dictionary, rng: RngStr
 
 func _configured_strips(definition: Dictionary, family_id: String, format_id: String, reel_count: int) -> Array:
 	var config_key := "slot_%s_config" % family_id
-	var family_config: Dictionary = _copy_dict(definition.get(config_key, {}))
-	var by_format: Dictionary = _copy_dict(family_config.get("reel_strips", {}))
+	var family_config: Dictionary = JsonCoerceScript._copy_dict(definition.get(config_key, {}))
+	var by_format: Dictionary = JsonCoerceScript._copy_dict(family_config.get("reel_strips", {}))
 	var source: Variant = by_format.get(format_id, [])
 	var strips: Array = []
 	if typeof(source) == TYPE_ARRAY:
@@ -124,20 +126,3 @@ func _array_size(value: Variant) -> int:
 	if typeof(value) != TYPE_ARRAY:
 		return 0
 	return (value as Array).size()
-
-
-func _dictionary_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	var source: Array = value as Array
-	for entry in source:
-		if typeof(entry) == TYPE_DICTIONARY:
-			result.append((entry as Dictionary).duplicate(true))
-	return result
-
-
-func _copy_dict(value: Variant) -> Dictionary:
-	if typeof(value) != TYPE_DICTIONARY:
-		return {}
-	return (value as Dictionary).duplicate(true)

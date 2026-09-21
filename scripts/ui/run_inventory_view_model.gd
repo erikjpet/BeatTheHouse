@@ -1,6 +1,8 @@
 class_name RunInventoryViewModel
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 
 static func build(run_state: RunState, run_action_service: RunActionService, mode: String, container_id: String, selected: Dictionary) -> Dictionary:
 	var items := _stack_item_models(_inventory_popup_item_view_list(run_state, run_action_service, mode, container_id))
@@ -51,7 +53,7 @@ static func _flatten_container_items(containers: Array) -> Array:
 	for container_value in containers:
 		if typeof(container_value) != TYPE_DICTIONARY:
 			continue
-		for slot_value in _dictionary_array((container_value as Dictionary).get("slots", [])):
+		for slot_value in JsonCoerceScript._dictionary_array((container_value as Dictionary).get("slots", [])):
 			var item: Dictionary = slot_value.get("item", {}) if typeof(slot_value.get("item", {})) == TYPE_DICTIONARY else {}
 			if not item.is_empty():
 				result.append(item.duplicate(true))
@@ -76,7 +78,7 @@ static func _spatial_container_models(run_state: RunState, mode: String, contain
 	var result: Array = []
 	if mode == "home_container":
 		result.append(_container_model("run_carried", "loose_carry", "Carried Items", 0, carried, false))
-		for home_container_value in _dictionary_array(run_state.current_home_containers() if run_state != null else []):
+		for home_container_value in JsonCoerceScript._dictionary_array(run_state.current_home_containers() if run_state != null else []):
 			var home_container: Dictionary = home_container_value
 			var home_container_id := str(home_container.get("id", ""))
 			var container_type := str(home_container.get("item_id", "home_storage")).strip_edges().to_lower()
@@ -139,7 +141,7 @@ static func _meta_loadout_container_models(run_state: RunState, items: Array) ->
 	if run_state == null:
 		return []
 	var modifiers := run_state.challenge_modifiers()
-	var rows := _dictionary_array(modifiers.get("meta_collection_containers", []))
+	var rows := JsonCoerceScript._dictionary_array(modifiers.get("meta_collection_containers", []))
 	if rows.is_empty():
 		return []
 	var remaining := items.duplicate(true)
@@ -147,7 +149,7 @@ static func _meta_loadout_container_models(run_state: RunState, items: Array) ->
 	for row_value in rows:
 		var row: Dictionary = row_value
 		var assigned: Array = []
-		for item_id_value in _string_array(row.get("items", [])):
+		for item_id_value in JsonCoerceScript._string_array(row.get("items", [])):
 			var item_id := str(item_id_value)
 			for index in range(remaining.size()):
 				if typeof(remaining[index]) != TYPE_DICTIONARY or str((remaining[index] as Dictionary).get("id", "")) != item_id:
@@ -292,7 +294,7 @@ static func _held_container_inventory_details(run_state: RunState, run_action_se
 	var result: Array = []
 	if run_state == null or run_action_service == null:
 		return result
-	for item_id in _string_array(run_state.inventory):
+	for item_id in JsonCoerceScript._string_array(run_state.inventory):
 		var option := _container_item_option(run_action_service, item_id)
 		if option.is_empty():
 			continue
@@ -309,7 +311,7 @@ static func _home_container_inventory_details(run_state: RunState, run_action_se
 	var result: Array = []
 	if run_state == null or run_action_service == null:
 		return result
-	var containers := _dictionary_array(run_state.current_home_containers())
+	var containers := JsonCoerceScript._dictionary_array(run_state.current_home_containers())
 	var destinations := _storage_destinations(containers)
 	var stored_item_counts := _stored_item_counts(containers)
 	for item_id in _storable_inventory_item_ids(run_state, run_action_service):
@@ -328,7 +330,7 @@ static func _home_container_inventory_details(run_state: RunState, run_action_se
 	for container_value in containers:
 		var container: Dictionary = container_value
 		var home_container_id := str(container.get("id", ""))
-		var stored_items := _string_array(container.get("items", []))
+		var stored_items := JsonCoerceScript._string_array(container.get("items", []))
 		var meta_loadout := bool(container.get("meta_loadout", false))
 		var other_destinations := _storage_destinations(containers, home_container_id)
 		for item_index in range(stored_items.size()):
@@ -358,7 +360,7 @@ static func _storage_destinations(containers: Array, excluded_container_id: Stri
 		var home_container_id := str(container.get("id", ""))
 		if home_container_id.is_empty() or home_container_id == excluded_container_id:
 			continue
-		var items := _string_array(container.get("items", []))
+		var items := JsonCoerceScript._string_array(container.get("items", []))
 		var capacity := maxi(0, int(container.get("capacity", 0)))
 		var meta_loadout := bool(container.get("meta_loadout", false))
 		result.append({
@@ -394,16 +396,16 @@ static func _summary_text(run_state: RunState, run_action_service: RunActionServ
 	if mode == "home_container":
 		var selected_container := _home_container_by_id(run_state, container_id)
 		if not selected_container.is_empty():
-			var used := _string_array(selected_container.get("items", [])).size()
+			var used := JsonCoerceScript._string_array(selected_container.get("items", [])).size()
 			var capacity := maxi(0, int(selected_container.get("capacity", 0)))
 			if bool(selected_container.get("meta_loadout", false)):
 				return "%d/%d packed from the meta-home. Packed item effects apply during this run; items are read-only here." % [used, capacity]
 			return "%d/%d stored in %s. Stored item effects do not apply until moved back to inventory." % [used, capacity, str(selected_container.get("display_name", "this container"))]
 		var total_stored := 0
 		var total_capacity := 0
-		for container_value in _dictionary_array(run_state.current_home_containers() if run_state != null else []):
+		for container_value in JsonCoerceScript._dictionary_array(run_state.current_home_containers() if run_state != null else []):
 			var home_container: Dictionary = container_value
-			total_stored += _string_array(home_container.get("items", [])).size()
+			total_stored += JsonCoerceScript._string_array(home_container.get("items", [])).size()
 			total_capacity += maxi(0, int(home_container.get("capacity", 0)))
 		return "%d/%d stored across home containers. Stored item effects do not apply until moved back to inventory." % [total_stored, total_capacity]
 	var count := 0
@@ -444,7 +446,7 @@ static func _storable_inventory_item_ids(run_state: RunState, run_action_service
 	var result: Array = []
 	if run_state == null:
 		return result
-	for item_id in _string_array(run_state.inventory):
+	for item_id in JsonCoerceScript._string_array(run_state.inventory):
 		if RunState.is_portable_ticket_pile_item(item_id):
 			continue
 		if _container_item_option(run_action_service, item_id).is_empty():
@@ -490,27 +492,6 @@ static func _stored_item_counts(containers: Array) -> Dictionary:
 	for container_value in containers:
 		if typeof(container_value) != TYPE_DICTIONARY:
 			continue
-		for item_id in _string_array((container_value as Dictionary).get("items", [])):
+		for item_id in JsonCoerceScript._string_array((container_value as Dictionary).get("items", [])):
 			result[item_id] = int(result.get(item_id, 0)) + 1
-	return result
-
-
-static func _string_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry in value:
-		var id := str((entry as Dictionary).get("id", "")) if typeof(entry) == TYPE_DICTIONARY else str(entry)
-		if not id.is_empty():
-			result.append(id)
-	return result
-
-
-static func _dictionary_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry in value as Array:
-		if typeof(entry) == TYPE_DICTIONARY:
-			result.append((entry as Dictionary).duplicate(true))
 	return result

@@ -216,7 +216,7 @@ enough scheduler time, the due scheduled redraws, and a real canvas draw. This
 does not raise a budget, reduce the 1 Hz production cadence, or let zero-draw
 idle appear cheap. Focused fail-closed coverage lives in
 `tools/web_perf_idle_liveness_contract_test.ps1`; the paired runtime contract in
-`tools/perf06_idle_liveness_runtime_contract.gd` also proves scheduler/reset
+`tools/archive/perf06/perf06_idle_liveness_runtime_contract.gd` also proves scheduler/reset
 semantics and keeps a monotonic draw total separate from the bounded 512-sample
 timing buffer, so a long L0.2 run cannot conceal drawing through saturation.
 
@@ -230,7 +230,7 @@ exact integrated, quiesced-host pass to reproduce and attribute.
 The opt-in closeout harness now freezes every required shipped game and system
 phase in `tools/perf06_required_matrix.json`. The catalog is checked against
 `data/games/games.json`, so a newly shipped game cannot silently escape the
-native, Web, and low-end matrix. `tools/perf06_matrix_contract.ps1` consumes,
+native, Web, and low-end matrix. `tools/archive/perf06/perf06_matrix_contract.ps1` consumes,
 rather than recreates, the integration lane's all-archetype composition and
 terminal-soak manifests and shards. It requires exact candidate identity,
 artifact hashes, zero uncovered composition rows, every ordering, Crew-ignore,
@@ -248,7 +248,7 @@ functions and rejects direct deep copies, JSON codecs, delays, and callable
 creation. Its `direct_root_source` scope is deliberately narrower than a
 transitive call graph and cannot be presented as one.
 
-`tools/perf06_low_end_matrix.ps1` runs the same native/Web/integration producers
+`tools/archive/perf06/perf06_low_end_matrix.ps1` runs the same native/Web/integration producers
 on a declared physical low-end host. It rejects a dirty or wrong candidate,
 pre-existing evidence directories, a caller-selected label without a matching
 profile hash, hardware fingerprint, actual Windows power plan, Chrome identity,

@@ -104,7 +104,7 @@ func _verify_authored_contract() -> Dictionary:
 
 	var pal: Dictionary = library.character("pal_tutorial_guide")
 	var host: Dictionary = library.character("vivienne_grand_host")
-	var bible_text := FileAccess.get_file_as_string("res://docs/plans/0.5_voice_bible.md")
+	var bible_text := FileAccess.get_file_as_string("res://docs/archive/0.5/plans/0.5_voice_bible.md")
 	_check(str(pal.get("display_name", "")) == "Pal" and str(pal.get("voice", {})).contains("your pal"), "Pal is missing or does not call themselves your pal.", failures)
 	_check(str(host.get("display_name", "")) == "Vivienne Vale" and str(host.get("id", "")) != "linda_cage_host", "Vivienne Vale is missing or not distinct from Linda.", failures)
 	_check(bible_text.contains("Pal") and bible_text.contains("your pal") and bible_text.contains("Vivienne Vale") and bible_text.contains("Grand Casino Host"), "Voice bible is missing Pal or Vivienne Vale.", failures)

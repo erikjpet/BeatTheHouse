@@ -1556,9 +1556,9 @@ func _check_onboarding_tutorial_ui_flow(app: Control) -> bool:
 	coach_snapshot = app.get("coach_overlay").call("current_snapshot")
 	var starter_card_in_run_inventory := false
 	if run_state != null:
-		for item_value in _copy_array(run_state.inventory):
-			var item := _copy_dict(item_value)
-			var meta := _copy_dict(item.get("meta_collection", {}))
+		for item_value in JsonCoerceScript._copy_array(run_state.inventory):
+			var item := JsonCoerceScript._copy_dict(item_value)
+			var meta := JsonCoerceScript._copy_dict(item.get("meta_collection", {}))
 			if int(meta.get("instance_id", 0)) == starter_id and str(meta.get("item_class", "")) == "players_card":
 				starter_card_in_run_inventory = true
 				break
@@ -1806,7 +1806,7 @@ func _check_showdown_phase_ui(app: Control) -> bool:
 	environment["event_ids"] = [RunState.GRAND_CASINO_SHOWDOWN_EVENT_ID]
 	var run_state := _grand_casino_fixture_run("UI-HOUSE-CALLS-PHASES", environment)
 	run_state.current_environment["turns"] = 0
-	var objective := _copy_dict(run_state.current_environment.get("demo_objective", {}))
+	var objective := JsonCoerceScript._copy_dict(run_state.current_environment.get("demo_objective", {}))
 	run_state.add_suspicion("ui_showdown_phase", int(objective.get("showdown_heat_threshold", 70)), "behavior")
 	run_state.evaluate_environment_objective_state()
 	_set_ui_fixture_run(app, run_state)
@@ -1869,7 +1869,7 @@ func _check_showdown_phase_ui(app: Control) -> bool:
 
 
 func _popup_has_choice(snapshot: Dictionary, choice_id: String) -> bool:
-	for choice_value in _copy_array(snapshot.get("choices", [])):
+	for choice_value in JsonCoerceScript._copy_array(snapshot.get("choices", [])):
 		if typeof(choice_value) == TYPE_DICTIONARY and str((choice_value as Dictionary).get("id", "")) == choice_id:
 			return true
 	return false
@@ -4407,7 +4407,7 @@ func _canvas_object_id_with_prefix(objects: Array, prefix: String) -> bool:
 
 func _hidden_world_map_ids(map_data: Dictionary) -> Array:
 	var hidden_ids: Array = []
-	for node_value in _copy_array(map_data.get("nodes", [])):
+	for node_value in JsonCoerceScript._copy_array(map_data.get("nodes", [])):
 		if typeof(node_value) != TYPE_DICTIONARY:
 			continue
 		var node: Dictionary = node_value
@@ -4421,7 +4421,7 @@ func _hidden_world_map_ids(map_data: Dictionary) -> Array:
 
 
 func _world_map_node_by_id(map_data: Dictionary, node_id: String) -> Dictionary:
-	for node_value in _copy_array(map_data.get("nodes", [])):
+	for node_value in JsonCoerceScript._copy_array(map_data.get("nodes", [])):
 		if typeof(node_value) == TYPE_DICTIONARY and str((node_value as Dictionary).get("id", "")) == node_id:
 			return (node_value as Dictionary).duplicate(true)
 	return {}

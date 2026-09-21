@@ -1,6 +1,10 @@
 class_name RunActionService
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+const IoResultScript := preload("res://scripts/core/io_result.gd")
+const KeysScript := preload("res://scripts/core/keys.gd")
+
 # Resolves non-game run actions from data definitions.
 #
 # FoundationMain should call this service for content/system behavior and keep
@@ -63,7 +67,7 @@ func item_offer_view_list(selected_item_id: String = "") -> Array:
 	if not is_ready():
 		return []
 	var offers: Array = []
-	for offer in _copy_array(run_state.current_environment.get("item_offers", [])):
+	for offer in JsonCoerceScript._copy_array(run_state.current_environment.get("item_offers", [])):
 		if typeof(offer) != TYPE_DICTIONARY:
 			continue
 		var offer_data := offer as Dictionary
@@ -149,7 +153,7 @@ func item_offer(item_id: String, selected_item_id: String = "") -> Dictionary:
 
 
 func _item_purpose_summary(item_definition: Dictionary) -> String:
-	var effect := _copy_dict(item_definition.get("effect", {}))
+	var effect := JsonCoerceScript._copy_dict(item_definition.get("effect", {}))
 	var item_class := str(item_definition.get("class", item_definition.get("item_class", ""))).strip_edges().to_lower()
 	var domain := str(item_definition.get("domain", "")).strip_edges().to_lower()
 	if int(effect.get("container_capacity", item_definition.get("container_capacity", 0))) > 0 or item_class == "container":
@@ -157,7 +161,7 @@ func _item_purpose_summary(item_definition: Dictionary) -> String:
 	if bool(effect.get("active_item", false)) or not str(effect.get("active_mode", "")).strip_edges().is_empty():
 		var target := str(effect.get("active_target", domain)).strip_edges()
 		return "Active item for %s." % _purpose_domain_label(target)
-	var families := _copy_dict(effect.get("families", {}))
+	var families := JsonCoerceScript._copy_dict(effect.get("families", {}))
 	if not families.is_empty():
 		return "Helps %s." % _purpose_family_list(families.keys())
 	if int(effect.get("travel_option_bonus", 0)) > 0:
@@ -260,7 +264,7 @@ func cage_gift_shop_offer_view_list() -> Array:
 		return []
 	var shop_state: Dictionary = run_state.current_environment.get("cage_gift_shop_state", {}) if typeof(run_state.current_environment.get("cage_gift_shop_state", {})) == TYPE_DICTIONARY else {}
 	var result: Array = []
-	var stock_entries := _copy_array(shop_state.get("stock", []))
+	var stock_entries := JsonCoerceScript._copy_array(shop_state.get("stock", []))
 	for stock_index in range(stock_entries.size()):
 		var stock_value: Variant = stock_entries[stock_index]
 		if typeof(stock_value) != TYPE_DICTIONARY:
@@ -335,7 +339,7 @@ func buy_cage_gift_shop_offer(item_id: String) -> Dictionary:
 	var display_name := str(offer.get("display_name", item_id))
 	var message := "Bought %s for %d Grand Casino chips." % [display_name, price]
 	var story: Array = []
-	for story_value in _copy_array(deltas.get("story_log", [])):
+	for story_value in JsonCoerceScript._copy_array(deltas.get("story_log", [])):
 		if typeof(story_value) != TYPE_DICTIONARY or str((story_value as Dictionary).get("type", "")) != "item_purchase":
 			story.append(story_value)
 	story.append({
@@ -373,7 +377,7 @@ func buy_cage_gift_shop_offer(item_id: String) -> Dictionary:
 
 func _mark_cage_gift_shop_offer_sold(item_id: String) -> void:
 	var shop_state: Dictionary = run_state.current_environment.get("cage_gift_shop_state", {}) if typeof(run_state.current_environment.get("cage_gift_shop_state", {})) == TYPE_DICTIONARY else {}
-	var stock: Array = _copy_array(shop_state.get("stock", []))
+	var stock: Array = JsonCoerceScript._copy_array(shop_state.get("stock", []))
 	for index in range(stock.size()):
 		if typeof(stock[index]) != TYPE_DICTIONARY:
 			continue
@@ -591,7 +595,7 @@ func pawn_quote_options(lender_id: String = SALS_PAWN_COUNTER_ID) -> Array:
 	var definition := hook_definition("lender", lender_id)
 	if definition.is_empty() or str(definition.get("lender_type", "")) != "pawn":
 		return []
-	return _pawn_quote_options_for_profile(_copy_dict(definition.get("debt_profile", {})))
+	return _pawn_quote_options_for_profile(JsonCoerceScript._copy_dict(definition.get("debt_profile", {})))
 
 
 func pawn_inventory_item(item_id: String, lender_id: String = SALS_PAWN_COUNTER_ID) -> Dictionary:
@@ -647,7 +651,7 @@ func pawn_inventory_item(item_id: String, lender_id: String = SALS_PAWN_COUNTER_
 			return _boundary_service_error(cashout_turn_result, "The ticket cash-out boundary could not advance safely.")
 		GameModule.apply_result(run_state, cashout_result)
 		return _service_success(cashout_result)
-	var quote := _pawn_quote_for_item(item_id, _copy_dict(definition.get("debt_profile", {})))
+	var quote := _pawn_quote_for_item(item_id, JsonCoerceScript._copy_dict(definition.get("debt_profile", {})))
 	if quote.is_empty():
 		return _service_error("Sal needs a sellable item as collateral.")
 	var result := _dynamic_lender_result(lender_id, definition, status, quote)
@@ -741,7 +745,7 @@ func _held_active_item_ids() -> Array:
 	var result: Array = []
 	if run_state == null or library == null:
 		return result
-	for item_id_value in _copy_array(run_state.inventory):
+	for item_id_value in JsonCoerceScript._copy_array(run_state.inventory):
 		var item_id := str(item_id_value)
 		var definition := library.item(item_id)
 		if not definition.is_empty() and _definition_is_active_item(definition):
@@ -790,12 +794,12 @@ func item_sale_price_breakdown(item_definition: Dictionary) -> Dictionary:
 func shopkeeper_available() -> bool:
 	if run_state == null:
 		return false
-	for offer_value in _copy_array(run_state.current_environment.get("item_offers", [])):
+	for offer_value in JsonCoerceScript._copy_array(run_state.current_environment.get("item_offers", [])):
 		if typeof(offer_value) == TYPE_DICTIONARY and not bool((offer_value as Dictionary).get("pickup", false)):
 			return true
 	if str(run_state.current_environment.get("kind", "")) == "shop":
 		var archetype := _environment_archetype(str(run_state.current_environment.get("archetype_id", "")))
-		return not _string_array(archetype.get("item_pool", [])).is_empty()
+		return not JsonCoerceScript._string_array(archetype.get("item_pool", [])).is_empty()
 	return false
 
 
@@ -865,7 +869,7 @@ func service_hook_view_list(selected_service_id: String = "") -> Array:
 	if run_state == null:
 		return []
 	var options: Array = []
-	var service_ids := _string_array(run_state.current_environment.get("service_ids", []))
+	var service_ids := JsonCoerceScript._string_array(run_state.current_environment.get("service_ids", []))
 	if _jazz_glasses_service_visible() and not service_ids.has(JAZZ_SHOW_GLASSES_SERVICE_ID):
 		service_ids.append(JAZZ_SHOW_GLASSES_SERVICE_ID)
 	for service_id in service_ids:
@@ -883,7 +887,7 @@ func lender_hook_view_list(selected_lender_id: String = "") -> Array:
 	if run_state == null:
 		return []
 	var options: Array = []
-	for lender_id in _string_array(run_state.current_environment.get("lender_hooks", [])):
+	for lender_id in JsonCoerceScript._string_array(run_state.current_environment.get("lender_hooks", [])):
 		var option := hook_option("lender", lender_id, selected_lender_id)
 		if not bool(option.get("hidden", false)):
 			options.append(option)
@@ -1120,14 +1124,14 @@ func purchase_item_result(effect_result: Dictionary, item_definition: Dictionary
 	result["action_id"] = "buy_item"
 	result["item_game_affinity"] = game_affinity
 	result["item_affinity_nudge"] = affinity_nudge
-	if _string_array(run_state.current_environment.get("game_ids", [])).has(game_affinity):
+	if JsonCoerceScript._string_array(run_state.current_environment.get("game_ids", [])).has(game_affinity):
 		result["highlight_game_id"] = game_affinity
 	result["price"] = price
 	result["bankroll_delta"] = int(deltas.get("bankroll_delta", 0))
 	result["suspicion_delta"] = int(deltas.get("suspicion_delta", 0))
 	result["deltas"] = deltas
 	result["message"] = message
-	result["messages"] = _copy_array(deltas.get("messages", []))
+	result["messages"] = JsonCoerceScript._copy_array(deltas.get("messages", []))
 	result["ended"] = bool(deltas.get("ended", false))
 	result["state"] = GameModule.RESULT_ENDED if bool(result.get("ended", false)) else GameModule.RESULT_CONTINUE
 	return result
@@ -1253,7 +1257,7 @@ func result_deltas_have_mutation(deltas: Dictionary) -> bool:
 	if bool(deltas.get("ended", false)):
 		return true
 	for key in ["debt_changes", "inventory_add", "inventory_remove", "travel_hooks_add", "story_log", "pending_bags"]:
-		if not _copy_array(deltas.get(key, [])).is_empty():
+		if not JsonCoerceScript._copy_array(deltas.get(key, [])).is_empty():
 			return true
 	for key in ["flags_set", "travel_changes"]:
 		var value: Variant = deltas.get(key, {})
@@ -1293,22 +1297,22 @@ func delta_summary(deltas: Dictionary) -> String:
 	var baseline_luck_delta := int(deltas.get("baseline_luck_delta", 0))
 	if baseline_luck_delta != 0:
 		parts.append("luck %+d" % baseline_luck_delta)
-	var debt_changes := _copy_array(deltas.get("debt_changes", []))
+	var debt_changes := JsonCoerceScript._copy_array(deltas.get("debt_changes", []))
 	if not debt_changes.is_empty():
 		parts.append("debt added" if debt_changes.size() == 1 else "%d debt changes" % debt_changes.size())
 	var flags: Dictionary = deltas.get("flags_set", {})
 	if not flags.is_empty():
 		parts.append("story changes" if flags.size() == 1 else "%d story changes" % flags.size())
-	var travel_hooks := _copy_array(deltas.get("travel_hooks_add", []))
+	var travel_hooks := JsonCoerceScript._copy_array(deltas.get("travel_hooks_add", []))
 	if not travel_hooks.is_empty():
 		parts.append("routes +%d" % travel_hooks.size())
-	var inventory_add := _copy_array(deltas.get("inventory_add", []))
+	var inventory_add := JsonCoerceScript._copy_array(deltas.get("inventory_add", []))
 	if not inventory_add.is_empty():
 		parts.append("items +%d" % inventory_add.size())
-	var inventory_remove := _copy_array(deltas.get("inventory_remove", []))
+	var inventory_remove := JsonCoerceScript._copy_array(deltas.get("inventory_remove", []))
 	if not inventory_remove.is_empty():
 		parts.append("items -%d" % inventory_remove.size())
-	var pending_bags := _copy_array(deltas.get("pending_bags", []))
+	var pending_bags := JsonCoerceScript._copy_array(deltas.get("pending_bags", []))
 	if not pending_bags.is_empty():
 		parts.append("bags +%d" % pending_bags.size())
 	return "; ".join(parts) if not parts.is_empty() else "story changes"
@@ -1450,8 +1454,8 @@ func _runtime_item_definition(item_id: String) -> Dictionary:
 		if str(item.get("id", "")).strip_edges() == item_id:
 			return item.duplicate(true)
 	for container_value in run_state.current_home_containers():
-		var container := _copy_dict(container_value)
-		var definition := _copy_dict(_copy_dict(container.get("item_definitions", {})).get(item_id, {}))
+		var container := JsonCoerceScript._copy_dict(container_value)
+		var definition := JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(container.get("item_definitions", {})).get(item_id, {}))
 		if not definition.is_empty():
 			return definition
 	return {}
@@ -1491,11 +1495,11 @@ func _dynamic_lender_result(lender_id: String, definition: Dictionary, status: D
 	var loan_terms := lender_loan_terms(definition, deltas)
 	var terms_summary := str(loan_terms.get("summary", "")).strip_edges()
 	var message := "%s %s" % [authored_message, terms_summary] if not terms_summary.is_empty() else authored_message
-	var messages := _copy_array(deltas.get("messages", []))
+	var messages := JsonCoerceScript._copy_array(deltas.get("messages", []))
 	if messages.is_empty() or not terms_summary.is_empty():
 		messages.append(message)
 	deltas["messages"] = messages
-	var story_log := _copy_array(deltas.get("story_log", []))
+	var story_log := JsonCoerceScript._copy_array(deltas.get("story_log", []))
 	if story_log.is_empty():
 		story_log.append({
 			"type": "lender_hook",
@@ -1505,7 +1509,7 @@ func _dynamic_lender_result(lender_id: String, definition: Dictionary, status: D
 			"environment_archetype_id": str(run_state.current_environment.get("archetype_id", "")),
 			"bankroll_delta": int(deltas.get("bankroll_delta", 0)),
 			"suspicion_delta": int(deltas.get("suspicion_delta", 0)),
-			"debt_changes": _copy_array(deltas.get("debt_changes", [])),
+			"debt_changes": JsonCoerceScript._copy_array(deltas.get("debt_changes", [])),
 			"message": message,
 		})
 	deltas["story_log"] = story_log
@@ -1531,7 +1535,7 @@ func _dynamic_lender_result(lender_id: String, definition: Dictionary, status: D
 # will apply. This keeps repeat-loan scaling, ceil rounding, favors, and pawn
 # fees synchronized with the owning debt model.
 func lender_loan_terms(definition: Dictionary, deltas: Dictionary) -> Dictionary:
-	var debt_changes := _copy_array(deltas.get("debt_changes", []))
+	var debt_changes := JsonCoerceScript._copy_array(deltas.get("debt_changes", []))
 	if debt_changes.is_empty() or typeof(debt_changes[0]) != TYPE_DICTIONARY:
 		return {}
 	var debt: Dictionary = debt_changes[0]
@@ -1566,7 +1570,7 @@ func _dynamic_lender_status(definition: Dictionary, base_status: Dictionary) -> 
 	if not bool(status.get("available", true)):
 		return status
 	var lender_type := str(definition.get("lender_type", ""))
-	var profile := _copy_dict(definition.get("debt_profile", {}))
+	var profile := JsonCoerceScript._copy_dict(definition.get("debt_profile", {}))
 	if lender_type == "pawn":
 		var collateral := _pawn_collateral_option(profile)
 		if collateral.is_empty() and not _portable_ticket_cashout_available():
@@ -1588,7 +1592,7 @@ func _dynamic_lender_deltas(definition: Dictionary, status: Dictionary, pawn_quo
 		return deltas
 	var lender_id := str(definition.get("id", ""))
 	var lender_type := str(definition.get("lender_type", ""))
-	var profile := _copy_dict(definition.get("debt_profile", {}))
+	var profile := JsonCoerceScript._copy_dict(definition.get("debt_profile", {}))
 	match lender_type:
 		"favor_crew":
 			return _crew_lender_deltas(definition, profile)
@@ -1668,7 +1672,7 @@ func _family_lender_deltas(definition: Dictionary, profile: Dictionary) -> Dicti
 		"late_scar_flag": str(profile.get("late_scar_flag", "brother_in_law_story_scar")),
 		"nag_interval_turns": maxi(1, int(profile.get("nag_interval_turns", 3))),
 	}
-	var availability := _copy_dict(definition.get("availability", {}))
+	var availability := JsonCoerceScript._copy_dict(definition.get("availability", {}))
 	var single_use_flag := str(availability.get("single_use_flag", "brother_in_law_loan_used"))
 	var flags := {}
 	if not single_use_flag.is_empty():
@@ -1806,7 +1810,7 @@ func _pawn_quote_options_for_profile(profile: Dictionary) -> Array:
 	var maximum := maxi(minimum, int(profile.get("principal_max", minimum)))
 	var multiplier := maxi(1, int(profile.get("loan_to_sale_price_multiplier", 2)))
 	var seen := {}
-	for item_value in _copy_array(run_state.inventory):
+	for item_value in JsonCoerceScript._copy_array(run_state.inventory):
 		var item_id := str(item_value)
 		if item_id.is_empty() or seen.has(item_id):
 			continue
@@ -1847,7 +1851,7 @@ func _pawn_quote_for_item(item_id: String, profile: Dictionary) -> Dictionary:
 func _lender_has_dynamic_contract(definition: Dictionary) -> bool:
 	if ["favor_crew", "family_phone", "pawn"].has(str(definition.get("lender_type", ""))):
 		return true
-	var profile := _copy_dict(definition.get("debt_profile", {}))
+	var profile := JsonCoerceScript._copy_dict(definition.get("debt_profile", {}))
 	return not profile.is_empty()
 
 
@@ -2294,45 +2298,19 @@ func _find_option(options: Array, option_id: String) -> Dictionary:
 
 
 func _service_success(result: Dictionary) -> Dictionary:
-	return {
-		"ok": true,
+	return IoResultScript.ok({
 		"result": result.duplicate(true),
-		"message": str(result.get("message", "")),
-	}
+		KeysScript.MESSAGE: str(result.get(KeysScript.MESSAGE, "")),
+	})
 
 
 func _boundary_service_error(boundary_result: Dictionary, fallback: String) -> Dictionary:
-	var errors := _copy_array(boundary_result.get("errors", []))
+	var errors := JsonCoerceScript._copy_array(boundary_result.get("errors", []))
 	return _service_error(str(errors[0]) if not errors.is_empty() else fallback)
 
 
 func _service_error(message: String) -> Dictionary:
-	return {
-		"ok": false,
-		"result": {},
-		"message": message,
-	}
-
-
-static func _copy_array(value: Variant) -> Array:
-	if typeof(value) != TYPE_ARRAY:
-		return []
-	return (value as Array).duplicate(true)
-
-
-static func _copy_dict(value: Variant) -> Dictionary:
-	if typeof(value) != TYPE_DICTIONARY:
-		return {}
-	return (value as Dictionary).duplicate(true)
-
-
-static func _string_array(value: Variant) -> Array:
-	var result: Array = []
-	for entry in _copy_array(value):
-		var id := _inventory_value_id(entry)
-		if not id.is_empty():
-			result.append(id)
-	return result
+	return IoResultScript.failed(FAILED, "service_rejected", message, {"result": {}})
 
 
 static func _inventory_value_id(value: Variant) -> String:

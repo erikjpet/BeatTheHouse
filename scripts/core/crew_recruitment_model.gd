@@ -1,6 +1,8 @@
 class_name CrewRecruitmentModel
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 # Deterministic, data-backed placement and presence rules for the seven Crew
 # members. The model never advances run RNG and only mutates rooms at generation
 # or revisit boundaries through apply_to_environment().
@@ -94,9 +96,9 @@ static func meeting_path_public(member_id: String, path_kind: String) -> Diction
 		"contact_event_id": str(definition.get("contact_event_id", "")),
 		"path_kind": clean_path,
 		"placement_kind": str(placement.get("kind", "environment")),
-		"archetype_ids": _string_array(placement.get("archetype_ids", [])),
-		"scenario_ids": _string_array(placement.get("scenario_ids", [])),
-		"layer_ids": _string_array(placement.get("layer_ids", [])),
+		"archetype_ids": JsonCoerceScript._string_array(placement.get("archetype_ids", [])),
+		"scenario_ids": JsonCoerceScript._string_array(placement.get("scenario_ids", [])),
+		"layer_ids": JsonCoerceScript._string_array(placement.get("layer_ids", [])),
 		"requires_system": str(placement.get("requires_system", "")),
 	}
 
@@ -183,7 +185,7 @@ static func encounter_public_state(state_value: Variant, member_id: String) -> D
 static func apply_to_environment(run_state: RunState, environment: Dictionary) -> void:
 	if run_state == null or environment.is_empty() or not crew_path_started(run_state):
 		return
-	var event_ids := _string_array(environment.get("event_ids", []))
+	var event_ids := JsonCoerceScript._string_array(environment.get("event_ids", []))
 	# Rook's contextual leads follow his seeded presence. Remove the derived
 	# event before recomputing so a revisit never leaves his voice in an empty
 	# room after his itinerary rotates.
@@ -200,7 +202,7 @@ static func apply_to_environment(run_state: RunState, environment: Dictionary) -
 		if not event_id.is_empty() and not event_ids.has(event_id):
 			event_ids.append(event_id)
 	environment["event_ids"] = event_ids
-	var patrons := _string_array(environment.get("scenario_patron_ids", []))
+	var patrons := JsonCoerceScript._string_array(environment.get("scenario_patron_ids", []))
 	for member_id in MEMBER_IDS:
 		patrons.erase(member_id)
 	var presence := presence_for_environment(run_state, environment)
@@ -257,7 +259,7 @@ static func placement_kind(run_state: RunState, environment: Dictionary, definit
 
 static func primary_available(run_state: RunState, definition: Dictionary) -> bool:
 	var primary := _dict(definition.get("primary", {}))
-	var scenario_ids := _string_array(primary.get("scenario_ids", []))
+	var scenario_ids := JsonCoerceScript._string_array(primary.get("scenario_ids", []))
 	if not scenario_ids.is_empty():
 		for node_id in _world_node_ids(run_state):
 			# Town scenario definitions are immutable generation authority. Placement
@@ -266,7 +268,7 @@ static func primary_available(run_state: RunState, definition: Dictionary) -> bo
 			if scenario_ids.has(str(run_state._seeded_scenario_definition_for_node_readonly(node_id).get("id", ""))):
 				return true
 		return false
-	var archetype_ids := _string_array(primary.get("archetype_ids", []))
+	var archetype_ids := JsonCoerceScript._string_array(primary.get("archetype_ids", []))
 	for node_id in _world_node_ids(run_state):
 		if archetype_ids.has(node_id):
 			return true
@@ -275,7 +277,7 @@ static func primary_available(run_state: RunState, definition: Dictionary) -> bo
 
 static func fallback_node_id(run_state: RunState, definition: Dictionary) -> String:
 	var fallback := _dict(definition.get("fallback", {}))
-	var allowed := _string_array(fallback.get("archetype_ids", []))
+	var allowed := JsonCoerceScript._string_array(fallback.get("archetype_ids", []))
 	var candidates: Array = []
 	for node_id in _world_node_ids(run_state):
 		if allowed.has(node_id):
@@ -438,7 +440,7 @@ static func presence_for_environment(run_state: RunState, environment: Dictionar
 		if not _rank_at_least(rank, "marker"):
 			continue
 		var definition := member_definition(member_id)
-		var locations := _string_array(definition.get("presence", []))
+		var locations := JsonCoerceScript._string_array(definition.get("presence", []))
 		var available: Array = []
 		var nodes := _world_node_ids(run_state)
 		for location in locations:
@@ -527,7 +529,7 @@ static func validate_content() -> Array:
 			failures.append("Crew recruitment %s needs primary and fallback placement data." % member_id)
 		if str(definition.get("contact_event_id", "")).strip_edges().is_empty():
 			failures.append("Crew recruitment %s needs a contact event id." % member_id)
-		if _string_array(definition.get("presence", [])).is_empty():
+		if JsonCoerceScript._string_array(definition.get("presence", [])).is_empty():
 			failures.append("Crew recruitment %s needs a seeded presence itinerary." % member_id)
 		var lines := _dict(definition.get("presence_lines", {}))
 		for rank in ["marker", "associate", "made", "inner_circle"]:
@@ -548,14 +550,14 @@ static func _fallback_system_live(run_state: RunState, fallback: Dictionary) -> 
 
 
 static func _location_matches(location: Dictionary, environment: Dictionary) -> bool:
-	var archetype_ids := _string_array(location.get("archetype_ids", []))
+	var archetype_ids := JsonCoerceScript._string_array(location.get("archetype_ids", []))
 	var archetype_id := str(environment.get("archetype_id", "")).strip_edges()
 	if not archetype_ids.is_empty() and not archetype_ids.has(archetype_id):
 		return false
-	var scenario_ids := _string_array(location.get("scenario_ids", []))
+	var scenario_ids := JsonCoerceScript._string_array(location.get("scenario_ids", []))
 	if not scenario_ids.is_empty() and not scenario_ids.has(str(environment.get("scenario_id", ""))):
 		return false
-	var layer_ids := _string_array(location.get("layer_ids", []))
+	var layer_ids := JsonCoerceScript._string_array(location.get("layer_ids", []))
 	if not layer_ids.is_empty() and not layer_ids.has(str(environment.get("current_layer_id", ""))):
 		return false
 	return not archetype_ids.is_empty() or not scenario_ids.is_empty()
@@ -573,7 +575,7 @@ static func _meeting_environment_eligible(run_state: Variant, environment: Dicti
 	var location := _dict(definition.get(path_kind, {}))
 	if location.is_empty() or placement_kind(run_state, environment, definition) != path_kind:
 		return false
-	var scenario_ids := _string_array(location.get("scenario_ids", []))
+	var scenario_ids := JsonCoerceScript._string_array(location.get("scenario_ids", []))
 	if not scenario_ids.is_empty():
 		var node_id := str(environment.get("world_node_id", environment.get("archetype_id", "")))
 		var seeded_id := str(run_state._seeded_scenario_definition_for_node_readonly(node_id).get("id", ""))
@@ -663,15 +665,6 @@ static func _dict(value: Variant) -> Dictionary:
 
 static func _array(value: Variant) -> Array:
 	return (value as Array).duplicate(true) if typeof(value) == TYPE_ARRAY else []
-
-
-static func _string_array(value: Variant) -> Array:
-	var result: Array = []
-	for entry_value in _array(value):
-		var entry := str(entry_value).strip_edges()
-		if not entry.is_empty():
-			result.append(entry)
-	return result
 
 
 static func _item_display_name(library: ContentLibrary, item_id: String) -> String:

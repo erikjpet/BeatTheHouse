@@ -1,5 +1,7 @@
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 
 static func world_map_snapshot(host: Variant) -> Dictionary:
 	if host.run_state == null:
@@ -44,7 +46,7 @@ static func enriched_world_map_snapshot(host: Variant, snapshot: Dictionary) -> 
 	var visible_node_ids: Array = []
 	var courier_layer: Dictionary = host.run_state.delivery_map_layer() if host.run_state.has_method("delivery_map_layer") else {}
 	var courier_targets_by_id: Dictionary = {}
-	for courier_target_value in host._copy_array(courier_layer.get("targets", [])):
+	for courier_target_value in JsonCoerceScript._copy_array(courier_layer.get("targets", [])):
 		if typeof(courier_target_value) != TYPE_DICTIONARY:
 			continue
 		var courier_target: Dictionary = courier_target_value
@@ -55,14 +57,14 @@ static func enriched_world_map_snapshot(host: Variant, snapshot: Dictionary) -> 
 	var sweep_marker_node_id := str(sweep_marker.get("node_id", "")).strip_edges()
 	var nodes: Array = []
 	var source_nodes_by_id: Dictionary = {}
-	for source_node_value in host._copy_array(enriched.get("nodes", [])):
+	for source_node_value in JsonCoerceScript._copy_array(enriched.get("nodes", [])):
 		if typeof(source_node_value) != TYPE_DICTIONARY:
 			continue
 		var source_node: Dictionary = source_node_value
 		var source_node_id := str(source_node.get("id", "")).strip_edges()
 		if not source_node_id.is_empty():
 			source_nodes_by_id[source_node_id] = source_node.duplicate(true)
-	for node_value in host._copy_array(enriched.get("nodes", [])):
+	for node_value in JsonCoerceScript._copy_array(enriched.get("nodes", [])):
 		if typeof(node_value) != TYPE_DICTIONARY:
 			continue
 		var node: Dictionary = (node_value as Dictionary).duplicate(true)
@@ -105,7 +107,7 @@ static func enriched_world_map_snapshot(host: Variant, snapshot: Dictionary) -> 
 				node["travel_disabled_reason"] = str(status.get("disabled_reason", "Route locked. Check the lead, the clock, or another stop."))
 				node["attribute_badges"] = []
 				travel_disabled_ids.append(node_id)
-				var locked_route_path = host._string_array(route.get("world_path", []))
+				var locked_route_path = JsonCoerceScript._raw_string_array(route.get("world_path", []))
 				if locked_route_path.size() >= 2:
 					travel_paths.append({
 						"target_id": node_id,
@@ -123,7 +125,7 @@ static func enriched_world_map_snapshot(host: Variant, snapshot: Dictionary) -> 
 			node["cost"] = int(status.get("cost", route.get("cost", 0)))
 			node["risk"] = str(status.get("risk", route.get("risk", "")))
 			node["risk_decay"] = int(status.get("risk_decay", route.get("risk_decay", 0)))
-			node["risk_event"] = host._copy_dict(status.get("risk_event", {}))
+			node["risk_event"] = JsonCoerceScript._copy_dict(status.get("risk_event", {}))
 			node["open_status_text"] = open_status_text
 			node["open_now"] = open_now
 			node["closing_soon"] = closing_soon
@@ -132,8 +134,8 @@ static func enriched_world_map_snapshot(host: Variant, snapshot: Dictionary) -> 
 				"risk": str(node.get("risk", "")),
 				"distance": str(node.get("distance", "")),
 				"risk_decay": int(node.get("risk_decay", 0)),
-				"risk_event": host._copy_dict(node.get("risk_event", {})),
-			}, host._copy_dict(node.get("risk_event", {})))
+				"risk_event": JsonCoerceScript._copy_dict(node.get("risk_event", {})),
+			}, JsonCoerceScript._copy_dict(node.get("risk_event", {})))
 			if enabled:
 				travel_enabled_ids.append(node_id)
 			else:
@@ -142,7 +144,7 @@ static func enriched_world_map_snapshot(host: Variant, snapshot: Dictionary) -> 
 					disabled_reason = open_status_text
 				node["travel_disabled_reason"] = disabled_reason
 				travel_disabled_ids.append(node_id)
-			var route_path = host._string_array(route.get("world_path", []))
+			var route_path = JsonCoerceScript._raw_string_array(route.get("world_path", []))
 			if route_path.size() >= 2:
 				travel_paths.append({
 					"target_id": node_id,
@@ -156,14 +158,14 @@ static func enriched_world_map_snapshot(host: Variant, snapshot: Dictionary) -> 
 		displayed_lookup[node_id] = true
 		visible_node_ids.append(node_id)
 	var visible_edges: Array = []
-	for edge_value in host._copy_array(enriched.get("edges", [])):
+	for edge_value in JsonCoerceScript._copy_array(enriched.get("edges", [])):
 		if typeof(edge_value) != TYPE_DICTIONARY:
 			continue
 		var edge: Dictionary = edge_value
 		if displayed_lookup.has(str(edge.get("a", ""))) and displayed_lookup.has(str(edge.get("b", ""))):
 			visible_edges.append(edge.duplicate(true))
 	var visible_path: Array = []
-	for path_node_id_value in host._string_array(enriched.get("visited_path", [])):
+	for path_node_id_value in JsonCoerceScript._raw_string_array(enriched.get("visited_path", [])):
 		var path_node_id = str(path_node_id_value)
 		if displayed_lookup.has(path_node_id):
 			visible_path.append(path_node_id)
@@ -298,7 +300,7 @@ static func travel_choice(host: Variant, target_id: String, known_target_ids: Ar
 		"tier": int(archetype.get("tier", 1)),
 		"description": str(route.get("description", "")),
 		"route": route.duplicate(true),
-		"decision": host._copy_dict(route.get("decision", {})),
+		"decision": JsonCoerceScript._copy_dict(route.get("decision", {})),
 	}
 	if route.has("cost"):
 		choice["cost"] = int(route.get("cost", 0))
@@ -336,7 +338,7 @@ static func travel_choice(host: Variant, target_id: String, known_target_ids: Ar
 		choice["distance_blocks"] = int(route.get("distance_blocks", choice.get("distance_blocks", 0)))
 		choice["cost"] = int(status.get("cost", choice.get("cost", route.get("cost", 0))))
 		choice["risk_decay"] = int(status.get("risk_decay", route.get("risk_decay", 0)))
-		choice["risk_event"] = host._copy_dict(status.get("risk_event", {}))
+		choice["risk_event"] = JsonCoerceScript._copy_dict(status.get("risk_event", {}))
 		choice["condition_text"] = locked_reason
 		choice["unlock_summary"] = str(status.get("unlock_summary", locked_reason))
 		choice["enabled"] = false
@@ -351,8 +353,8 @@ static func travel_choice(host: Variant, target_id: String, known_target_ids: Ar
 	choice["cost"] = int(status.get("cost", choice.get("cost", route.get("cost", 0))))
 	choice["risk_decay"] = int(status.get("risk_decay", choice.get("risk_decay", 0)))
 	choice["risk_text"] = str(status.get("risk_text", ""))
-	choice["risk_event"] = host._copy_dict(status.get("risk_event", {}))
-	choice["unlock_conditions"] = host._copy_array(status.get("unlock_conditions", []))
+	choice["risk_event"] = JsonCoerceScript._copy_dict(status.get("risk_event", {}))
+	choice["unlock_conditions"] = JsonCoerceScript._copy_array(status.get("unlock_conditions", []))
 	choice["unlock_summary"] = str(status.get("unlock_summary", ""))
 	if status.has("availability_turn"):
 		choice["availability_turn"] = int(status.get("availability_turn", 0))
@@ -366,7 +368,7 @@ static func travel_choice(host: Variant, target_id: String, known_target_ids: Ar
 	var preview = host.run_state.travel_route_preview(route, archetype, preview_environment, full_preview)
 	choice["preview"] = preview
 	choice["preview_level"] = str(preview.get("level", "partial"))
-	choice["preview_lines"] = host._copy_array(preview.get("lines", []))
+	choice["preview_lines"] = JsonCoerceScript._copy_array(preview.get("lines", []))
 	var enabled = bool(status.get("available", true))
 	var disabled_reason = str(status.get("disabled_reason", ""))
 	if not bool(open_status.get("open", true)):
@@ -383,7 +385,7 @@ static func travel_choice(host: Variant, target_id: String, known_target_ids: Ar
 		disabled_reason = "This route is locked for now."
 	choice["enabled"] = enabled
 	choice["disabled_reason"] = disabled_reason
-	choice["attribute_badges"] = host.AttributeBadgesScript.for_route(choice, host._copy_dict(choice.get("risk_event", {})))
+	choice["attribute_badges"] = host.AttributeBadgesScript.for_route(choice, JsonCoerceScript._copy_dict(choice.get("risk_event", {})))
 	return choice
 
 
@@ -456,11 +458,11 @@ static func travel_target_ids(host: Variant) -> Array:
 			host.run_state.current_environment.get("next_archetypes", []),
 			host.run_state.current_environment.get("travel_hooks", []),
 		]:
-			for target_id in host._string_array(source):
+			for target_id in JsonCoerceScript._raw_string_array(source):
 				if not result.has(target_id):
 					result.append(target_id)
 	var flags: Dictionary = host.run_state.current_environment.get("local_narrative_flags", {}) if typeof(host.run_state.current_environment.get("local_narrative_flags", {})) == TYPE_DICTIONARY else {}
-	for local_target_id in host._string_array(flags.get("casino_room_targets", [])):
+	for local_target_id in JsonCoerceScript._raw_string_array(flags.get("casino_room_targets", [])):
 		if not result.has(local_target_id):
 			result.append(local_target_id)
 	result = host.TutorialFlowScript.travel_target_ids(host.run_state, result)
@@ -681,7 +683,7 @@ static func travel_full_preview_enabled_for(host: Variant, target_id: String) ->
 
 
 static func travel_preview_summary(host: Variant, choice: Dictionary) -> String:
-	var preview_lines = host._copy_array(choice.get("preview_lines", []))
+	var preview_lines = JsonCoerceScript._copy_array(choice.get("preview_lines", []))
 	if preview_lines.is_empty():
 		return ""
 	var level = str(choice.get("preview_level", "partial"))
@@ -711,7 +713,7 @@ static func travel_risk_summary(host: Variant, choice: Dictionary) -> String:
 	var risk_text = str(choice.get("risk_text", "")).strip_edges()
 	if not risk_text.is_empty():
 		parts.append(risk_text)
-	var risk_event = host._copy_dict(choice.get("risk_event", {}))
+	var risk_event = JsonCoerceScript._copy_dict(choice.get("risk_event", {}))
 	if not risk_event.is_empty():
 		var chance = int(risk_event.get("chance_percent", 0))
 		var event_bits: Array = []

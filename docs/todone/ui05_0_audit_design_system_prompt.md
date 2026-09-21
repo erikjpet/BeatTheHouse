@@ -16,7 +16,7 @@ roguelike (Web/itch.io + Windows, 1280×720; small-screen play mode
 exists). UI is code-built (no scenes beyond main): `VisualStyle` palette,
 `FoundationWidgets` helpers, extracted screen components under
 `scripts/ui/`. This file is self-contained; the binding design brief is
-`docs/plans/0.5_ui_overhaul_brief.md` — read it first, including the
+`docs/archive/0.5/plans/0.5_ui_overhaul_brief.md` — read it first, including the
 design philosophy you are implementing the foundation for. THIS PHASE
 RUNS LAST IN 0.5 — refuse to start if any gc05_*, audio_jazz_*, ob05_*,
 or other feature prompt remains in docs/todo (report and stop; the

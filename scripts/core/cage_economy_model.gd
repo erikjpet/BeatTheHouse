@@ -7,7 +7,6 @@ const ATM_DEBT_ID := "grand_casino_atm_marker"
 
 const LOAN_INCREMENT := 50
 const LOAN_CAP := 500
-const ORIGINATION_FEE := 0
 const DAILY_INTEREST_RATE := 0.05
 const INTEREST_MINUTE_OF_DAY := 180
 const MINUTES_PER_DAY := 1440

@@ -1,6 +1,8 @@
 class_name TerminalConsequenceViewModel
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 
 static func consequence_snapshot(run_state: RunState, data: Dictionary) -> Dictionary:
 	if run_state == null:
@@ -93,16 +95,16 @@ static func consequence_cards(run_state: RunState, context: Dictionary) -> Array
 	var luck_delta := int(deltas.get("baseline_luck_delta", 0))
 	if alcohol_intake != 0 or drunk_delta != 0 or alcoholic_delta != 0 or luck_delta != 0 or run_state.drunk_level > 0 or run_state.alcoholic_level > 0 or run_state.baseline_luck != 0:
 		cards.append({"title": "Alcohol", "tone": "risk" if run_state.alcoholic_level > run_state.drunk_level else "positive", "lines": alcohol_card_lines(run_state, alcohol_intake, drunk_delta, alcoholic_delta, luck_delta)})
-	var debt_changes := _copy_array(deltas.get("debt_changes", []))
+	var debt_changes := JsonCoerceScript._copy_array(deltas.get("debt_changes", []))
 	var debt_items: Array = context.get("debt_items", [])
 	if not debt_changes.is_empty() or not debt_items.is_empty():
 		cards.append({"title": "Debt", "tone": "cost", "lines": debt_card_lines(debt_changes, debt_items)})
-	var inventory_add := _copy_array(deltas.get("inventory_add", []))
-	var inventory_remove := _copy_array(deltas.get("inventory_remove", []))
+	var inventory_add := JsonCoerceScript._copy_array(deltas.get("inventory_add", []))
+	var inventory_remove := JsonCoerceScript._copy_array(deltas.get("inventory_remove", []))
 	var inventory_items: Array = context.get("inventory_items", [])
 	if not inventory_add.is_empty() or not inventory_remove.is_empty() or not inventory_items.is_empty():
 		cards.append({"title": "Items", "tone": "positive", "lines": inventory_card_lines(inventory_add, inventory_remove, inventory_items, context.get("item_labeler", Callable()))})
-	var travel_hooks := _copy_array(deltas.get("travel_hooks_add", []))
+	var travel_hooks := JsonCoerceScript._copy_array(deltas.get("travel_hooks_add", []))
 	var travel_changes: Dictionary = deltas.get("travel_changes", {})
 	var travel_choices: Array = context.get("travel_choices", [])
 	if not travel_hooks.is_empty() or not travel_changes.is_empty() or not travel_choices.is_empty():
@@ -167,7 +169,7 @@ static func result_is_visible_consequence(result: Dictionary, recent_message: St
 	if bool(result.get("ended", deltas.get("ended", false))):
 		return true
 	for key in ["debt_changes", "inventory_add", "inventory_remove", "travel_hooks_add", "story_log", "messages", "item_hooks", "event_hooks"]:
-		if not _copy_array(deltas.get(key, [])).is_empty():
+		if not JsonCoerceScript._copy_array(deltas.get(key, [])).is_empty():
 			return true
 	for key in ["flags_set", "travel_changes"]:
 		var value: Variant = deltas.get(key, {})
@@ -304,14 +306,14 @@ static func suspicion_cue_view_list(run_state: RunState, label_from_id: Callable
 
 static func security_cue_view_list(run_state: RunState) -> Array:
 	var result: Array = []
-	for cue in _copy_array(run_state.current_environment.get("suspicion_cues", [])):
+	for cue in JsonCoerceScript._copy_array(run_state.current_environment.get("suspicion_cues", [])):
 		if not str(cue).is_empty(): result.append(str(cue))
 	return result
 
 
 static func inventory_view_list(run_state: RunState, library: ContentLibrary, label_from_id: Callable) -> Array:
 	var result: Array = []
-	for item_id in _string_array(run_state.inventory):
+	for item_id in JsonCoerceScript._string_array(run_state.inventory):
 		var definition := library.item(item_id) if library != null else {}
 		result.append(str(definition.get("display_name", _call_label(label_from_id, item_id))) if not definition.is_empty() else _call_label(label_from_id, item_id))
 	return result
@@ -319,7 +321,7 @@ static func inventory_view_list(run_state: RunState, library: ContentLibrary, la
 
 static func debt_view_list(run_state: RunState, label_from_id: Callable) -> Array:
 	var result: Array = []
-	for value in _copy_array(run_state.debt):
+	for value in JsonCoerceScript._copy_array(run_state.debt):
 		if typeof(value) == TYPE_DICTIONARY: result.append(debt_entry_view_line(value as Dictionary, label_from_id))
 	return result
 
@@ -423,7 +425,7 @@ static func outcome_object_id(result: Dictionary) -> String:
 static func outcome_message(result: Dictionary, player_facing_text: Callable) -> String:
 	var message := str(player_facing_text.call(str(result.get("message", ""))) if not player_facing_text.is_null() else result.get("message", ""))
 	if not message.is_empty(): return message
-	var messages := _copy_array(result.get("messages", []))
+	var messages := JsonCoerceScript._copy_array(result.get("messages", []))
 	return str(player_facing_text.call(str(messages[0])) if not player_facing_text.is_null() else messages[0]) if not messages.is_empty() else ""
 
 
@@ -445,7 +447,7 @@ static func run_travel_target_count(state: RunState) -> int:
 	var result: Array = []
 	if state == null: return 0
 	for source in [state.current_environment.get("next_archetypes", []), state.current_environment.get("travel_hooks", [])]:
-		for target_id in _string_array(source):
+		for target_id in JsonCoerceScript._string_array(source):
 			if not result.has(target_id): result.append(target_id)
 	return result.size()
 
@@ -498,15 +500,3 @@ static func _call_label(callback: Callable, value: String) -> String:
 
 static func _call_list_label(callback: Callable, values: Array) -> String:
 	return str(callback.call(values)) if not callback.is_null() else ", ".join(values)
-
-
-static func _copy_array(value: Variant) -> Array:
-	return (value as Array).duplicate(true) if typeof(value) == TYPE_ARRAY else []
-
-
-static func _string_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY: return result
-	for entry in value:
-		if not str(entry).is_empty(): result.append(str(entry))
-	return result

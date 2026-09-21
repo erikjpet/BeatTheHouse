@@ -24,7 +24,7 @@ roguelike. This is a **writing task with a data edit**, not a code task. You
 are rewording existing narration strings in JSON. Everything you need is
 inlined below. You do not need to read any other document to do the work.
 
-Background if you want it: `docs/plans/0.5_voice_bible.md` (the cast, still
+Background if you want it: `docs/archive/0.5/plans/0.5_voice_bible.md` (the cast, still
 binding in full) and `docs/plans/0.6_voice_bible_world_register.md` (this
 spec, in full). Neither is required reading.
 

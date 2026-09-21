@@ -1,6 +1,8 @@
 class_name MusicOutcomeDirectorModel
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 const OUTCOME_CLASSES := ["small_win", "loss", "big_win", "feature_start", "feature_end", "neutral", "push"]
 const QUANTIZATIONS := ["beat", "half_bar", "bar", "phrase"]
 const DEFAULT_CUES := {
@@ -44,7 +46,7 @@ static func select_cue(stinger_metadata_value: Variant, event: Dictionary) -> Di
 		if typeof(cue_value_data) != TYPE_DICTIONARY:
 			continue
 		var cue: Dictionary = cue_value_data
-		var outcome_classes := _string_array(cue.get("outcome_classes", []))
+		var outcome_classes := JsonCoerceScript._string_array(cue.get("outcome_classes", []))
 		if not requested_cue.is_empty() and cue_id != requested_cue:
 			continue
 		if requested_cue.is_empty() and not outcome_classes.has(outcome_class):
@@ -63,7 +65,7 @@ static func normalize_cue(cue_id: String, value: Variant, outcome_class: String)
 	var quantize := str(source.get("quantize", "beat")).strip_edges().to_lower()
 	if not QUANTIZATIONS.has(quantize):
 		quantize = "beat"
-	var outcome_classes := _string_array(source.get("outcome_classes", [outcome_class]))
+	var outcome_classes := JsonCoerceScript._string_array(source.get("outcome_classes", [outcome_class]))
 	var pulse_value: Variant = source.get("reverb_pulse", {})
 	var pulse_source: Dictionary = pulse_value as Dictionary if typeof(pulse_value) == TYPE_DICTIONARY else {}
 	var pulse := {}
@@ -73,8 +75,8 @@ static func normalize_cue(cue_id: String, value: Variant, outcome_class: String)
 			"hold_beats": maxf(0.0, float(pulse_source.get("hold_beats", 0.0))),
 			"release_beats": maxf(0.0, float(pulse_source.get("release_beats", 0.0))),
 			"peak_send": clampf(float(pulse_source.get("peak_send", 0.0)), 0.0, 0.45),
-			"eligible_roles": _string_array(pulse_source.get("eligible_roles", [])),
-			"outcome_classes": _string_array(pulse_source.get("outcome_classes", outcome_classes)),
+			"eligible_roles": JsonCoerceScript._string_array(pulse_source.get("eligible_roles", [])),
+			"outcome_classes": JsonCoerceScript._string_array(pulse_source.get("outcome_classes", outcome_classes)),
 			"cooldown_beats": maxf(0.0, float(pulse_source.get("cooldown_beats", source.get("cooldown_beats", 0.0)))),
 		}
 	return {
@@ -145,14 +147,3 @@ static func reverb_level(envelope: Dictionary, transport_beat: float) -> float:
 	if release <= 0.0 or beat >= release_start + release:
 		return 0.0
 	return lerpf(peak, 0.0, clampf((beat - release_start) / release, 0.0, 1.0))
-
-
-static func _string_array(value: Variant) -> Array[String]:
-	var result: Array[String] = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for item in value as Array:
-		var text := str(item).strip_edges().to_lower()
-		if not text.is_empty() and not result.has(text):
-			result.append(text)
-	return result

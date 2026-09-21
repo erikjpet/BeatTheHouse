@@ -1,6 +1,8 @@
 class_name ItemEffect
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 # Base contract for data-backed item effects.
 
 const DIRECT_DELTA_KEYS := [
@@ -55,7 +57,7 @@ func get_domain() -> String:
 
 # Returns a copy of the effect payload.
 func effect_data() -> Dictionary:
-	return _copy_dict(definition.get("effect", {}))
+	return JsonCoerceScript._copy_dict(definition.get("effect", {}))
 
 
 # Checks whether the effect applies to the supplied context.
@@ -66,7 +68,7 @@ func applies(context: Dictionary) -> bool:
 	var context_domain := str(context.get("domain", ""))
 	if context_domain == domain:
 		return true
-	var domains := _string_array(context.get("domains", []))
+	var domains := JsonCoerceScript._raw_string_array(context.get("domains", []))
 	if domains.has(domain):
 		return true
 	if domain == "games" and (context_domain == "game" or domains.has("game")):
@@ -84,9 +86,9 @@ func modifiers_for(context: Dictionary) -> Dictionary:
 	var modifiers: Dictionary = {}
 	_merge_modifier_source(modifiers, effect)
 	var family := str(context.get("game_family", context.get("family", "")))
-	var families := _copy_dict(effect.get("families", {}))
+	var families := JsonCoerceScript._copy_dict(effect.get("families", {}))
 	if not family.is_empty() and families.has(family):
-		_merge_modifier_source(modifiers, _copy_dict(families.get(family, {})))
+		_merge_modifier_source(modifiers, JsonCoerceScript._copy_dict(families.get(family, {})))
 	var action_kind := str(context.get("action_kind", ""))
 	if action_kind == "legal":
 		_merge_prefixed_modifiers(modifiers, effect, "legal_")
@@ -116,7 +118,7 @@ func apply(context: Dictionary, run_state: RunState = null) -> Dictionary:
 	result["modifiers"] = modifiers
 	result["deltas"] = deltas
 	result["message"] = ""
-	result["messages"] = _copy_array(deltas.get("messages", []))
+	result["messages"] = JsonCoerceScript._copy_array(deltas.get("messages", []))
 	result["ended"] = bool(deltas.get("ended", false))
 	result["state"] = GameModule.RESULT_ENDED if bool(result["ended"]) else GameModule.RESULT_CONTINUE
 	if run_state != null:
@@ -138,16 +140,16 @@ func _result_deltas(context: Dictionary, modifiers: Dictionary, applied: bool) -
 	deltas["drunk_distortion_suppression_turns"] = int(effect.get("drunk_distortion_suppression_turns", 0))
 	deltas["alcoholic_delta"] = int(effect.get("alcoholic_delta", 0))
 	deltas["baseline_luck_delta"] = int(effect.get("baseline_luck_delta", 0))
-	deltas["debt_changes"] = _copy_array(effect.get("debt_changes", []))
-	deltas["inventory_add"] = _copy_array(effect.get("inventory_add", []))
-	deltas["inventory_remove"] = _copy_array(effect.get("inventory_remove", []))
-	deltas["flags_set"] = _copy_dict(effect.get("flags_set", {}))
-	deltas["travel_hooks_add"] = _copy_array(effect.get("travel_hooks_add", []))
-	deltas["travel_changes"] = _copy_dict(effect.get("travel_changes", {}))
-	deltas["story_log"] = _copy_array(effect.get("story_log", []))
-	deltas["messages"] = _copy_array(effect.get("messages", []))
+	deltas["debt_changes"] = JsonCoerceScript._copy_array(effect.get("debt_changes", []))
+	deltas["inventory_add"] = JsonCoerceScript._copy_array(effect.get("inventory_add", []))
+	deltas["inventory_remove"] = JsonCoerceScript._copy_array(effect.get("inventory_remove", []))
+	deltas["flags_set"] = JsonCoerceScript._copy_dict(effect.get("flags_set", {}))
+	deltas["travel_hooks_add"] = JsonCoerceScript._copy_array(effect.get("travel_hooks_add", []))
+	deltas["travel_changes"] = JsonCoerceScript._copy_dict(effect.get("travel_changes", {}))
+	deltas["story_log"] = JsonCoerceScript._copy_array(effect.get("story_log", []))
+	deltas["messages"] = JsonCoerceScript._copy_array(effect.get("messages", []))
 	deltas["ended"] = bool(effect.get("ended", false))
-	deltas["event_hooks"] = _copy_array(effect.get("event_hooks", []))
+	deltas["event_hooks"] = JsonCoerceScript._copy_array(effect.get("event_hooks", []))
 	if not modifiers.is_empty():
 		deltas["item_hooks"] = [{
 			"item_id": get_id(),
@@ -159,7 +161,7 @@ func _result_deltas(context: Dictionary, modifiers: Dictionary, applied: bool) -
 			"modifiers": modifiers.duplicate(true),
 		}]
 	else:
-		deltas["item_hooks"] = _copy_array(effect.get("item_hooks", []))
+		deltas["item_hooks"] = JsonCoerceScript._copy_array(effect.get("item_hooks", []))
 	return deltas
 
 
@@ -193,34 +195,60 @@ func _is_action_prefixed_key(key: String) -> bool:
 func _merge_modifier_value(target: Dictionary, key: String, value: Variant) -> void:
 	var value_type := typeof(value)
 	if value_type == TYPE_INT or value_type == TYPE_FLOAT:
-		target[key] = target.get(key, 0) + value
+		var existing: Variant = target.get(key, 0)
+		target[key] = existing + value if _modifier_type_family(existing) == "number" else value
 	elif value_type == TYPE_DICTIONARY:
-		target[key] = _copy_dict(value)
+		target[key] = JsonCoerceScript._copy_dict(value)
 	elif value_type == TYPE_ARRAY:
-		target[key] = _copy_array(value)
+		target[key] = JsonCoerceScript._copy_array(value)
 	else:
 		target[key] = value
 
 
+static func modifier_type_conflicts(effect: Dictionary) -> Array:
+	var conflicts: Array = []
+	var seen: Dictionary = {}
+	var families := JsonCoerceScript._copy_dict(effect.get("families", {}))
+	var family_ids: Array = [""] + families.keys()
+	for family_id_value in family_ids:
+		var family_id := str(family_id_value)
+		for action_kind in ["", "legal", "cheat"]:
+			var types: Dictionary = {}
+			_collect_modifier_types(effect, "", types, conflicts, seen, family_id, action_kind)
+			if not family_id.is_empty():
+				_collect_modifier_types(JsonCoerceScript._copy_dict(families.get(family_id, {})), "", types, conflicts, seen, family_id, action_kind)
+			if not action_kind.is_empty():
+				_collect_modifier_types(effect, "%s_" % action_kind, types, conflicts, seen, family_id, action_kind)
+	return conflicts
+
+
+static func _collect_modifier_types(source: Dictionary, prefix: String, types: Dictionary, conflicts: Array, seen: Dictionary, family_id: String, action_kind: String) -> void:
+	for key_value in source.keys():
+		var source_key := str(key_value)
+		if prefix.is_empty():
+			if DIRECT_DELTA_KEYS.has(source_key) or EFFECT_METADATA_KEYS.has(source_key) or source_key.begins_with("legal_") or source_key.begins_with("cheat_"):
+				continue
+		else:
+			if not source_key.begins_with(prefix):
+				continue
+		var modifier_key := source_key if prefix.is_empty() else source_key.trim_prefix(prefix)
+		if modifier_key.is_empty():
+			continue
+		var type_family := _modifier_type_family(source.get(key_value))
+		if types.has(modifier_key) and str(types.get(modifier_key)) != type_family:
+			var context := "%s/%s" % [family_id if not family_id.is_empty() else "all", action_kind if not action_kind.is_empty() else "all"]
+			var signature := "%s:%s" % [context, modifier_key]
+			if not seen.has(signature):
+				seen[signature] = true
+				conflicts.append("%s modifier %s mixes %s and %s" % [context, modifier_key, str(types.get(modifier_key)), type_family])
+		else:
+			types[modifier_key] = type_family
+
+
+static func _modifier_type_family(value: Variant) -> String:
+	return "number" if typeof(value) in [TYPE_INT, TYPE_FLOAT] else type_string(typeof(value))
+
+
 # Safely duplicates array content.
-static func _copy_array(value: Variant) -> Array:
-	if typeof(value) != TYPE_ARRAY:
-		return []
-	return (value as Array).duplicate(true)
-
-
 # Normalizes a variant array into string ids.
-static func _string_array(value: Variant) -> Array:
-	var result: Array = []
-	for entry in _copy_array(value):
-		var id := str(entry)
-		if not id.is_empty():
-			result.append(id)
-	return result
-
-
 # Safely duplicates dictionary content.
-static func _copy_dict(value: Variant) -> Dictionary:
-	if typeof(value) != TYPE_DICTIONARY:
-		return {}
-	return (value as Dictionary).duplicate(true)

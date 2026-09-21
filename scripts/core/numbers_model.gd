@@ -1,6 +1,8 @@
 class_name NumbersModel
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 const CONFIG_PATH := "res://data/crew/numbers.json"
 const RngStreamScript := preload("res://scripts/core/rng_stream.gd")
 const SCHEMA_VERSION := 1
@@ -126,7 +128,7 @@ func restore(source: Dictionary, p_seed_value: int, source_config: Dictionary = 
 			return false
 		_migrate_legacy_depth()
 		return true
-	depth_causes = _dictionary_array(source.get("depth_causes", []))
+	depth_causes = JsonCoerceScript._dictionary_array(source.get("depth_causes", []))
 	draw_occasions = _dictionary(source.get("draw_occasions", {})).duplicate(true)
 	bookmaker_aftermath = _dictionary(source.get("bookmaker_aftermath", {})).duplicate(true)
 	if not _depth_state_is_valid():
@@ -224,7 +226,7 @@ func bookmaker_state(venue_id: String, day: int = -1, at_action: int = -1) -> Di
 
 func bookmaker_states_public(day: int = -1, at_action: int = -1) -> Array:
 	var result: Array = []
-	for venue in _dictionary_array(config.get("venues", [])):
+	for venue in JsonCoerceScript._dictionary_array(config.get("venues", [])):
 		result.append(bookmaker_state(str(venue.get("id", "")), day, at_action))
 	return result
 
@@ -372,7 +374,7 @@ func buy_slip(venue_id: String, digits_value: Variant, stake: int, play_type: St
 	if is_past_post:
 		past_post_attempts += 1
 		detection_percent = detection_chance(stake, past_post_attempts)
-		var detection_roll := (_stable_hash("%d:%d:%s:past_post_detection" % [seed_value, day, slip_id]) % 100) + 1
+		var detection_roll := (JsonCoerceScript._stable_hash("%d:%d:%s:past_post_detection" % [seed_value, day, slip_id]) % 100) + 1
 		detected = detection_roll <= detection_percent
 	var issue_context := {
 		"status": "open", "holder_id": "player", "physical_state": "carried",
@@ -427,7 +429,7 @@ func hear_staggered_close_rumor(rumor_id: String) -> Dictionary:
 	var clean_id := rumor_id.strip_edges()
 	if clean_id.is_empty():
 		return knowledge.duplicate(true)
-	var heard := _string_array(knowledge.get("staggered_close_rumor_ids", []))
+	var heard := JsonCoerceScript._string_array(knowledge.get("staggered_close_rumor_ids", []))
 	if not heard.has(clean_id):
 		heard.append(clean_id)
 		heard.sort()
@@ -574,7 +576,7 @@ func fix_allocate(allocations_value: Variant) -> Dictionary:
 	var scheduled_day := int(fix_state.get("target_day", day_at(action_index) + 1))
 	var allocations := _dictionary(quote.get("allocations", {})).duplicate(true)
 	var target_day := scheduled_day
-	var fixed_number := _three_digits(_stable_hash("%d:%d:crew_fix_number" % [seed_value, target_day]) % 1000)
+	var fixed_number := _three_digits(JsonCoerceScript._stable_hash("%d:%d:crew_fix_number" % [seed_value, target_day]) % 1000)
 	var draw := _handle_record_at_boundary(target_day)
 	draw["number"] = fixed_number
 	draw["fixed_by_crew"] = true
@@ -666,7 +668,7 @@ func _resolve_draw_occasion(day: int, boundary: int) -> void:
 
 
 func venue_definition(venue_id: String) -> Dictionary:
-	for venue in _dictionary_array(config.get("venues", [])):
+	for venue in JsonCoerceScript._dictionary_array(config.get("venues", [])):
 		if str(venue.get("id", "")) == venue_id.strip_edges():
 			return venue
 	return {}
@@ -674,7 +676,7 @@ func venue_definition(venue_id: String) -> Dictionary:
 
 func venue_statuses(day: int, at_action: int) -> Array:
 	var result: Array = []
-	for venue in _dictionary_array(config.get("venues", [])):
+	for venue in JsonCoerceScript._dictionary_array(config.get("venues", [])):
 		var venue_id := str(venue.get("id", ""))
 		var close := close_action(venue_id, day)
 		var row: Dictionary = venue.duplicate(true)
@@ -812,7 +814,7 @@ func _queue_leak(active_day: int, number: String, source: String) -> void:
 	leak_successes += 1
 	var row := _leak_row(leak_successes)
 	var chance := clampi(int(row.get("sweep_reroute_chance_percent", 0)), 0, 100)
-	var roll := (_stable_hash("%d:%d:%d:numbers_leak_sweep" % [seed_value, active_day, leak_successes]) % 100) + 1
+	var roll := (JsonCoerceScript._stable_hash("%d:%d:%d:numbers_leak_sweep" % [seed_value, active_day, leak_successes]) % 100) + 1
 	pending_leaks.append({
 		"active_day": active_day,
 		"number": number,
@@ -842,13 +844,13 @@ func _activate_leaks(day: int) -> Array:
 
 func _day_rumor_event(day: int) -> Dictionary:
 	var yesterday := yesterday_number(day)
-	var hot_number := _three_digits(_stable_hash("%d:%d:numbers_hot_talk" % [seed_value, day]) % 1000)
+	var hot_number := _three_digits(JsonCoerceScript._stable_hash("%d:%d:numbers_hot_talk" % [seed_value, day]) % 1000)
 	return {"type": "numbers_day_rumors", "day": day, "yesterday_number": yesterday, "hot_number": hot_number}
 
 
 func _leak_row(success_count: int) -> Dictionary:
 	var selected: Dictionary = {}
-	for row in _dictionary_array(_dictionary(config.get("leak", {})).get("escalation", [])):
+	for row in JsonCoerceScript._dictionary_array(_dictionary(config.get("leak", {})).get("escalation", [])):
 		if success_count >= int(row.get("successes", 1)):
 			selected = row
 	return selected
@@ -869,7 +871,7 @@ func _slip_payout(slip: Dictionary) -> int:
 
 func _refresh_knowledge() -> void:
 	var required := maxi(1, int(_dictionary(config.get("past_posting", {})).get("required_distinct_staggered_close_rumors", 2)))
-	knowledge["assembled"] = bool(knowledge.get("silas_tip", false)) and _string_array(knowledge.get("staggered_close_rumor_ids", [])).size() >= required
+	knowledge["assembled"] = bool(knowledge.get("silas_tip", false)) and JsonCoerceScript._string_array(knowledge.get("staggered_close_rumor_ids", [])).size() >= required
 
 
 func _slip_index(slip_id: String) -> int:
@@ -919,7 +921,7 @@ func _record_settlement_aftermath(slip: Dictionary, cause_sequence: int) -> void
 		memory["friendly"] = true
 		memory["last_public_event"] = "winner"
 	memory["last_day"] = int(slip.get("day", 0))
-	var causes := _int_array(memory.get("_cause_sequences", []))
+	var causes := JsonCoerceScript._int_array(memory.get("_cause_sequences", []))
 	causes.append(cause_sequence)
 	memory["_cause_sequences"] = causes
 	bookmaker_aftermath[venue_id] = memory
@@ -970,27 +972,27 @@ func _load_core_unchecked(source: Dictionary, p_seed_value: int, source_config: 
 	action_index = maxi(0, int(source.get("action_index", 0)))
 	slip_sequence = maxi(0, int(source.get("slip_sequence", 0)))
 	draws_by_day = _dictionary(source.get("draws_by_day", {})).duplicate(true)
-	slips = _dictionary_array(source.get("slips", []))
+	slips = JsonCoerceScript._dictionary_array(source.get("slips", []))
 	knowledge = _normalize_knowledge(source.get("knowledge", {}))
 	past_post_attempts = maxi(0, int(source.get("past_post_attempts", 0)))
 	fix_state = _dictionary(source.get("fix_state", {})).duplicate(true)
 	if not FIX_STATES.has(str(fix_state.get("status", "locked"))):
 		fix_state = {"status": "locked", "retry_day": 0}
 	leak_successes = maxi(0, int(source.get("leak_successes", 0)))
-	pending_leaks = _dictionary_array(source.get("pending_leaks", []))
+	pending_leaks = JsonCoerceScript._dictionary_array(source.get("pending_leaks", []))
 	active_leak = _dictionary(source.get("active_leak", {})).duplicate(true)
 	collection_state = _dictionary(source.get("collection_state", {})).duplicate(true)
 
 
 func _load_snapshot_unchecked(source: Dictionary, source_config: Dictionary) -> void:
 	_load_core_unchecked(source, int(source.get("seed_value", 1)), source_config)
-	depth_causes = _dictionary_array(source.get("depth_causes", []))
+	depth_causes = JsonCoerceScript._dictionary_array(source.get("depth_causes", []))
 	draw_occasions = _dictionary(source.get("draw_occasions", {})).duplicate(true)
 	bookmaker_aftermath = _dictionary(source.get("bookmaker_aftermath", {})).duplicate(true)
 
 
 static func _legacy_depth_is_empty(source: Dictionary) -> bool:
-	for slip_value in _dictionary_array(source.get("slips", [])):
+	for slip_value in JsonCoerceScript._dictionary_array(source.get("slips", [])):
 		if slip_value.has("physical_state"):
 			return false
 	return true
@@ -1091,7 +1093,7 @@ func _depth_causes_are_closed() -> bool:
 			var draw := _dictionary(draws_by_day.get(str(day), {}))
 			if subject_id != "draw:%d" % day or int(cause.get("action_index", -1)) != post_action(day) or not bool(draw.get("posted", false)) or int(draw.get("posted_action", -1)) != post_action(day):
 				return false
-			var expected_number := _three_digits(_stable_hash("%d:%d:crew_fix_number" % [seed_value, day]) % 1000) if bool(draw.get("fixed_by_crew", false)) else _derived_handle(day)
+			var expected_number := _three_digits(JsonCoerceScript._stable_hash("%d:%d:crew_fix_number" % [seed_value, day]) % 1000) if bool(draw.get("fixed_by_crew", false)) else _derived_handle(day)
 			if str(draw.get("number", "")) != expected_number:
 				return false
 			if not _dictionary_has_exact_keys(context, ["presence", "presence_cause_sequence"]) or str(context.get("presence", "")) not in ["present", "absent"]:
@@ -1181,7 +1183,7 @@ func _expected_bookmaker_aftermath() -> Dictionary:
 			memory["friendly"] = true
 			memory["last_public_event"] = "winner"
 		memory["last_day"] = int(slip.get("day", 0))
-		var sequences := _int_array(memory.get("_cause_sequences", []))
+		var sequences := JsonCoerceScript._int_array(memory.get("_cause_sequences", []))
 		sequences.append(int(cause.get("sequence", 0)))
 		memory["_cause_sequences"] = sequences
 		result[venue_id] = memory
@@ -1194,7 +1196,7 @@ func _all_slip_causes_are_referenced() -> bool:
 		var physical := _dictionary(_dictionary(slip_value).get("physical_state", {}))
 		referenced[int(physical.get("cause_sequence", 0))] = true
 	for memory_value in bookmaker_aftermath.values():
-		for sequence in _int_array(_dictionary(memory_value).get("_cause_sequences", [])):
+		for sequence in JsonCoerceScript._int_array(_dictionary(memory_value).get("_cause_sequences", [])):
 			referenced[int(sequence)] = true
 	var changed := true
 	while changed:
@@ -1217,7 +1219,7 @@ func _all_slip_causes_are_referenced() -> bool:
 func _normalize_knowledge(value: Variant) -> Dictionary:
 	var source := _dictionary(value)
 	var result := {
-		"staggered_close_rumor_ids": _string_array(source.get("staggered_close_rumor_ids", [])),
+		"staggered_close_rumor_ids": JsonCoerceScript._string_array(source.get("staggered_close_rumor_ids", [])),
 		"silas_tip": bool(source.get("silas_tip", false)),
 		"assembled": false,
 		"known_numbers_by_day": _dictionary(source.get("known_numbers_by_day", {})).duplicate(true),
@@ -1271,43 +1273,3 @@ func _derived_handle(day: int) -> String:
 
 static func _dictionary(value: Variant) -> Dictionary:
 	return value as Dictionary if typeof(value) == TYPE_DICTIONARY else {}
-
-
-static func _dictionary_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry_value in value as Array:
-		if typeof(entry_value) == TYPE_DICTIONARY:
-			result.append((entry_value as Dictionary).duplicate(true))
-	return result
-
-
-static func _string_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry_value in value as Array:
-		var text := str(entry_value).strip_edges()
-		if not text.is_empty() and not result.has(text):
-			result.append(text)
-	return result
-
-
-static func _int_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry_value in value as Array:
-		if typeof(entry_value) != TYPE_INT or int(entry_value) <= 0:
-			return []
-		result.append(int(entry_value))
-	return result
-
-
-static func _stable_hash(text: String) -> int:
-	var hash_value := 2166136261
-	for index in range(text.length()):
-		hash_value = hash_value ^ text.unicode_at(index)
-		hash_value = (hash_value * 16777619) & 0x7fffffff
-	return maxi(1, hash_value)

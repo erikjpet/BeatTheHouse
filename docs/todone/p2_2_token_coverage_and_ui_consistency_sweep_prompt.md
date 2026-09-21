@@ -141,8 +141,8 @@ Summary:
 
 - Migrated visible start/run chrome in `scripts/ui/foundation_screen_builder.gd` to `VisualStyle` spacing, type, color, border, and touch-target tokens without changing behavior or visual identity.
 - Migrated `scripts/ui/coach_overlay.gd` off raw color, spacing, and font literals.
-- Rewrote `tools/ui05_token_adoption_check.ps1` to auto-discover `scripts/ui/*.gd`, check raw hex colors/theme spacing/font sizes/control `Vector2` sizes, and require explicit one-line exemptions.
-- Updated `docs/plans/0.5_ui_redesign_report.md` with the widened token gate result and current UI surface accounting.
+- Rewrote `tools/archive/ui05/ui05_token_adoption_check.ps1` to auto-discover `scripts/ui/*.gd`, check raw hex colors/theme spacing/font sizes/control `Vector2` sizes, and require explicit one-line exemptions.
+- Updated `docs/archive/0.5/plans/0.5_ui_redesign_report.md` with the widened token gate result and current UI surface accounting.
 - Before/after capture: `.tmp/ui05_captures/p2_2/token_sweep_before_after.json`.
 
 Gate results:

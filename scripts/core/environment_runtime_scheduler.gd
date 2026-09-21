@@ -8,14 +8,12 @@ extends RefCounted
 const RECONCILE_INTERVAL_MSEC := 1000
 
 var _queues: Dictionary = {}
-var stale_pop_count := 0
 var _last_inspection_usec := 0
 var _last_due_lateness_msec := 0
 
 
 func clear() -> void:
 	_queues.clear()
-	stale_pop_count = 0
 	_last_inspection_usec = 0
 	_last_due_lateness_msec = 0
 
@@ -113,7 +111,6 @@ func debug_snapshot(environment_id: String) -> Dictionary:
 		"queue_depth": queue_depth(environment_id),
 		"last_inspection_usec": _last_inspection_usec,
 		"last_due_lateness_msec": _last_due_lateness_msec,
-		"stale_pop_count": stale_pop_count,
 	}
 
 

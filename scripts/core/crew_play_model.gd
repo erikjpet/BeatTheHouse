@@ -1,6 +1,8 @@
 class_name CrewPlayModel
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 const PlayerTextScript := preload("res://scripts/ui/player_text.gd")
 
 # Data and deterministic state rules for explicit, limited-use coordinated plays.
@@ -135,7 +137,7 @@ static func available_actions(run_state: RunState, environment: Dictionary, game
 			"crew_play_id": play_id,
 			"summary": str(availability.get("cost_summary", "")),
 			"cost_summary": str(availability.get("cost_summary", "")),
-			"member_ids": _string_array(availability.get("member_ids", [])),
+			"member_ids": JsonCoerceScript._string_array(availability.get("member_ids", [])),
 			"uses_remaining": int(availability.get("uses_remaining", 0)),
 		})
 	return result
@@ -143,7 +145,7 @@ static func available_actions(run_state: RunState, environment: Dictionary, game
 
 static func availability(run_state: RunState, environment: Dictionary, game_id: String, play_id: String) -> Dictionary:
 	var play := _definition_ref(play_id)
-	if run_state == null or play.is_empty() or not _string_array(play.get("game_ids", [])).has(game_id):
+	if run_state == null or play.is_empty() or not JsonCoerceScript._string_array(play.get("game_ids", [])).has(game_id):
 		return {"available": false, "reason": "wrong_context"}
 	var state := normalize_state(run_state.crew_play_state)
 	var current_action := run_state.crew_action_index()
@@ -210,7 +212,7 @@ static func table_presence_proposal(run_state: RunState, environment: Dictionary
 	if not bool(status.get("available", false)):
 		return base.merged({"eligible": false, "reason": str(status.get("reason", "unavailable"))}, true)
 	var play := _definition_ref(play_id)
-	var members := _string_array(status.get("member_ids", []))
+	var members := JsonCoerceScript._string_array(status.get("member_ids", []))
 	var action_index := run_state.crew_action_index()
 	var state := normalize_state(run_state.crew_play_state)
 	var used := maxi(0, int((state.get("uses", {}) as Dictionary).get(play_id, 0)))
@@ -274,7 +276,7 @@ static func activate(run_state: RunState, environment: Dictionary, game_id: Stri
 		return _result(false, play_id, environment, "That crew play is not available now.")
 	var play := _definition_ref(play_id)
 	var state := normalize_state(run_state.crew_play_state)
-	var members := _string_array(status.get("member_ids", []))
+	var members := JsonCoerceScript._string_array(status.get("member_ids", []))
 	var current_action := run_state.crew_action_index()
 	var uses: Dictionary = state.get("uses", {})
 	var free_heist_use := bool(status.get("free_heist_use", false)) and run_state.crew_heist_consume_free_play()
@@ -417,7 +419,7 @@ static func active_status(state_value: Variant, action_index: int, environment: 
 		result.append({
 			"play_id": play_id,
 			"display_name": str(_definition_ref(play_id).get("display_name", play_id.capitalize())),
-			"member_ids": _string_array(active.get("member_ids", [])),
+			"member_ids": JsonCoerceScript._string_array(active.get("member_ids", [])),
 			"remaining_boundaries": maxi(0, int(active.get("expires_at_action", 0)) - action_index),
 			"effect": (active.get("effect", {}) as Dictionary).duplicate(true) if typeof(active.get("effect", {})) == TYPE_DICTIONARY else {},
 		})
@@ -471,9 +473,9 @@ static func validate_content(member_ids: Array) -> Array:
 		if not PLAY_IDS.has(play_id) or seen.has(play_id):
 			failures.append("plays.json contains unknown or duplicate play %s." % play_id)
 		seen.append(play_id)
-		if not RANK_IDS.has(str(play.get("minimum_rank", ""))) or _string_array(play.get("game_ids", [])).is_empty():
+		if not RANK_IDS.has(str(play.get("minimum_rank", ""))) or JsonCoerceScript._string_array(play.get("game_ids", [])).is_empty():
 			failures.append("Play %s has an invalid rank/context." % play_id)
-		for member_id in _string_array(play.get("member_ids", [])):
+		for member_id in JsonCoerceScript._string_array(play.get("member_ids", [])):
 			if member_id != "*" and not member_ids.has(member_id):
 				failures.append("Play %s references unknown member %s." % [play_id, member_id])
 		if int(play.get("uses_per_run", 0)) <= 0 or int(play.get("cooldown_boundaries", 0)) <= 0:
@@ -489,12 +491,12 @@ static func environment_key(environment: Dictionary) -> String:
 
 static func _eligible_members(run_state: RunState, environment: Dictionary, play: Dictionary, state: Dictionary, action_index: int) -> Array:
 	var result: Array = []
-	var allowed := _string_array(play.get("member_ids", []))
+	var allowed := JsonCoerceScript._string_array(play.get("member_ids", []))
 	var excluded: Array = []
 	if bool(play.get("exclude_active_members", false)):
 		for active_value in _array(state.get("active", [])):
 			if typeof(active_value) == TYPE_DICTIONARY:
-				excluded.append_array(_string_array((active_value as Dictionary).get("member_ids", [])))
+				excluded.append_array(JsonCoerceScript._string_array((active_value as Dictionary).get("member_ids", [])))
 	var cooldowns: Dictionary = state.get("member_cooldowns", {})
 	var minimum_rank := str(play.get("minimum_rank", "made"))
 	for member_value in run_state.crew_present_member_ids(environment):
@@ -518,7 +520,7 @@ static func _concurrency_allows(state: Dictionary, play_id: String, action_index
 		return true
 	for active_value in active:
 		var pair := "%s:%s" % [str((active_value as Dictionary).get("play_id", "")), play_id]
-		if _string_array(_config_ref().get("pairing_exceptions", [])).has(pair):
+		if JsonCoerceScript._string_array(_config_ref().get("pairing_exceptions", [])).has(pair):
 			return true
 	return false
 
@@ -597,7 +599,7 @@ static func _normalize_active(value: Dictionary) -> Dictionary:
 	var expires := maxi(activated + 1, int(value.get("expires_at_action", activated + 1)))
 	return {
 		"play_id": play_id,
-		"member_ids": _string_array(value.get("member_ids", [])),
+		"member_ids": JsonCoerceScript._string_array(value.get("member_ids", [])),
 		"environment_key": str(value.get("environment_key", "")),
 		"game_id": str(value.get("game_id", "")),
 		"activated_action": activated,
@@ -611,7 +613,7 @@ static func _append_tombstone(state: Dictionary, active: Dictionary, ended_actio
 	var tombstones := _array(state.get("tombstones", []))
 	tombstones.append({
 		"play_id": str(active.get("play_id", "")),
-		"member_ids": _string_array(active.get("member_ids", [])),
+		"member_ids": JsonCoerceScript._string_array(active.get("member_ids", [])),
 		"environment_key": str(active.get("environment_key", "")),
 		"game_id": str(active.get("game_id", "")),
 		"sequence": maxi(0, int(active.get("sequence", 0))),
@@ -627,26 +629,17 @@ static func _normalize_tombstone(value: Dictionary) -> Dictionary:
 	var play_id := str(value.get("play_id", ""))
 	var reason := str(value.get("reason", ""))
 	if not PLAY_IDS.has(play_id) or reason not in ["window_ended", "detected"] or str(value.get("environment_key", "")).is_empty() \
-			or not _string_array(_definition_ref(play_id).get("game_ids", [])).has(str(value.get("game_id", ""))):
+			or not JsonCoerceScript._string_array(_definition_ref(play_id).get("game_ids", [])).has(str(value.get("game_id", ""))):
 		return {}
 	return {
 		"play_id": play_id,
-		"member_ids": _string_array(value.get("member_ids", [])),
+		"member_ids": JsonCoerceScript._string_array(value.get("member_ids", [])),
 		"environment_key": str(value.get("environment_key", "")),
 		"game_id": str(value.get("game_id", "")),
 		"sequence": maxi(0, int(value.get("sequence", 0))),
 		"ended_action": maxi(0, int(value.get("ended_action", 0))),
 		"reason": reason,
 	}
-
-
-static func _string_array(value: Variant) -> Array:
-	var result: Array = []
-	for entry in _array(value):
-		var text := str(entry).strip_edges()
-		if not text.is_empty():
-			result.append(text)
-	return result
 
 
 static func _dict(value: Variant) -> Dictionary:

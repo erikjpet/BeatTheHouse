@@ -442,11 +442,11 @@ early can leave Godot children writing `user://` logs, which has reproduced
 Windows native access-violation dialogs on later runs.
 
 For shipped 0.2.0 release evidence, use the tracked checklist at
-`docs/plans/0.2_release_checklist.md`. For shipped 0.3.0 evidence, use
-`docs/plans/0.3_release_checklist.md`. For shipped 0.3.1 evidence, use
-`docs/plans/0.3.1_release_checklist.md`. For the completed 0.3.2 internal
-readiness ledger, use `docs/plans/0.3.2_release_checklist.md`. For the
-unpublished 0.4 candidate, use `docs/plans/0.4_release_checklist.md` as
+`docs/archive/0.2/plans/0.2_release_checklist.md`. For shipped 0.3.0 evidence, use
+`docs/archive/0.3/plans/0.3_release_checklist.md`. For shipped 0.3.1 evidence, use
+`docs/archive/0.3/plans/0.3.1_release_checklist.md`. For the completed 0.3.2 internal
+readiness ledger, use `docs/archive/0.3/plans/0.3.2_release_checklist.md`. For the
+unpublished 0.4 candidate, use `docs/archive/0.4/plans/0.4_release_checklist.md` as
 historical context only. For Act 1 historical work, use
 `docs/plans/act_one_feature_complete_task_board.md`.
 
@@ -459,19 +459,19 @@ dated evidence, shipped-release ledgers, and historical context:
 
 - `CHANGELOG.md` - public release changelog for shipped releases and candidate
   notes.
-- `docs/plans/0.5_release_checklist.md` - historical 0.5 source-prep and release
+- `docs/archive/0.5/plans/0.5_release_checklist.md` - historical 0.5 source-prep and release
   readiness ledger.
-- `docs/plans/0.5_source_completion_record.md` - historical owner
+- `docs/archive/0.5/plans/0.5_source_completion_record.md` - historical owner
   source-completion decision, final playtest scope, validation, and publication
   boundary for 0.5.
-- `docs/plans/0.5_publish_copy.md` - paste-ready itch.io and GitHub release
+- `docs/archive/0.5/plans/0.5_publish_copy.md` - paste-ready itch.io and GitHub release
   copy for 0.5.0 after owner approval.
-- `docs/plans/0.5.0_devlog_post.md` - ready-to-post 0.5.0 devlog and social carousel plan.
-- `docs/plans/0.5_prerelease_playtest_report.md` - 0.5 prerelease playtest
+- `docs/archive/0.5/plans/0.5.0_devlog_post.md` - ready-to-post 0.5.0 devlog and social carousel plan.
+- `docs/archive/0.5/plans/0.5_prerelease_playtest_report.md` - 0.5 prerelease playtest
   findings and closure evidence.
 - `docs/plans/tutorial_completion_report.md` - tutorial requirement table,
   real-interface route matrix, 0.6 addenda, and explicit TUT-N17 handoff.
-- `docs/plans/0.5_performance_audit.md` - historical 0.5 native/Web performance,
+- `docs/archive/0.5/plans/0.5_performance_audit.md` - historical 0.5 native/Web performance,
   liveness, memory-soak, Scratch Ticket compaction, and Web audio evidence.
 - `docs/plans/act_one_feature_complete_task_board.md` - the historical Act 1
   implementation board, retained for decisions and landing evidence.
@@ -494,20 +494,20 @@ dated evidence, shipped-release ledgers, and historical context:
 - `docs/plans/music_system_rework_plan.md` and
   `docs/plans/music_listening_pass.md` - parked post-0.3 music planning and
   listening-check context.
-- `docs/plans/0.2_release_checklist.md` - the shipped 0.2.0 release readiness
+- `docs/archive/0.2/plans/0.2_release_checklist.md` - the shipped 0.2.0 release readiness
   checklist, including validation evidence and known blockers.
-- `docs/plans/0.3_release_checklist.md` - the shipped 0.3.0 readiness ledger.
-- `docs/plans/0.3.1_release_checklist.md` - the shipped 0.3.1 hardening
+- `docs/archive/0.3/plans/0.3_release_checklist.md` - the shipped 0.3.0 readiness ledger.
+- `docs/archive/0.3/plans/0.3.1_release_checklist.md` - the shipped 0.3.1 hardening
   release ledger, including performance/stability evidence and package hashes.
-- `docs/plans/0.3.2_release_checklist.md` - the completed 0.3.2 low-end/web
+- `docs/archive/0.3/plans/0.3.2_release_checklist.md` - the completed 0.3.2 low-end/web
   cleanup release ledger, including gate evidence and package hashes.
-- `docs/plans/0.3.3_publish_copy.md` - paste-ready itch.io, GitHub release,
+- `docs/archive/0.3/plans/0.3.3_publish_copy.md` - paste-ready itch.io, GitHub release,
   and devlog copy for the 0.3.3 public patch.
-- `docs/plans/0.4_act1_completion_plan.md` - the implemented 0.4 scope and
+- `docs/archive/0.4/plans/0.4_act1_completion_plan.md` - the implemented 0.4 scope and
   historical candidate evidence.
-- `docs/plans/0.4_release_checklist.md` - the 0.4 package/readiness ledger,
+- `docs/archive/0.4/plans/0.4_release_checklist.md` - the 0.4 package/readiness ledger,
   retained as historical context.
-- `docs/plans/0.4_publish_copy.md` - historical paste-ready itch.io, GitHub,
+- `docs/archive/0.4/plans/0.4_publish_copy.md` - historical paste-ready itch.io, GitHub,
   and devlog copy prepared for the unpublished 0.4.0 candidate.
 
 For current slot implementation work, use the slot stack listed in this README

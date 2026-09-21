@@ -44,20 +44,10 @@ static func environment_status_text(run_state: RunState, archetype: Dictionary, 
 	return EnvironmentHours.travel_status_text(archetype, minute_of_day)
 
 
-static func apply_caught_transition(run_state: RunState, result: Dictionary) -> Dictionary:
-	if run_state == null or not run_state.is_tutorial_run():
-		return {}
-	# Being caught is a gameplay result, never permission to administratively
-	# complete an unplayed lesson. Blackjack owns the protected practice-hand
-	# behavior; the tutorial dependency chain must always reach a real count.
-	return {}
-
-
-static func repair_legacy_frontier(run_state: RunState) -> bool:
-	return repair_legacy_blackjack_count_skip(run_state)
-
-
-static func repair_legacy_blackjack_count_skip(run_state: RunState) -> bool:
+# The published 0.5.1 build can persist tutorial_caught_continue without a
+# release/version discriminator in the run payload. Retain this direct migration
+# until that public save line is explicitly retired; the alias was removed.
+static func repair_legacy_tutorial_save(run_state: RunState) -> bool:
 	if run_state == null or not run_state.is_tutorial_run():
 		return false
 	if not bool(run_state.narrative_flags.get("tutorial_caught_continue", false)):

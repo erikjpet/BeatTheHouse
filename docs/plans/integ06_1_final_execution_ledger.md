@@ -75,15 +75,15 @@ sources.
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File tools\validate_project.ps1
 
-& $godot --headless --path . --script res://tools/env06_7_package_a_generate.gd
-& $godot --headless --path . --script res://tools/env06_7_package_a_check.gd
-& $godot --headless --path . --script res://tools/env06_7_package_b_sign.gd
+& $godot --headless --path . --script res://tools/archive/env06_7/env06_7_package_a_generate.gd
+& $godot --headless --path . --script res://tools/archive/env06_7/env06_7_package_a_check.gd
+& $godot --headless --path . --script res://tools/archive/env06_7/env06_7_package_b_sign.gd
 & $godot --headless --path . --script res://scripts/tests/foundation/env06_7_package_b_contract.gd
-& $godot --headless --path . --script res://tools/env06_7_package_c_author.gd
+& $godot --headless --path . --script res://tools/archive/env06_7/env06_7_package_c_author.gd
 & $godot --headless --path . --script res://scripts/tests/foundation/env06_7_package_c_contract.gd
-& $godot --headless --path . --script res://tools/env06_7_package_d_author.gd
+& $godot --headless --path . --script res://tools/archive/env06_7/env06_7_package_d_author.gd
 & $godot --headless --path . --script res://scripts/tests/foundation/env06_7_package_d_contract.gd
-& $godot --headless --path . --script res://tools/env06_7_package_e_author.gd
+& $godot --headless --path . --script res://tools/archive/env06_7/env06_7_package_e_author.gd
 & $godot --headless --path . --script res://scripts/tests/foundation/env06_7_package_e_contract.gd
 
 git diff --exit-code -- data/environments/scenario_sequences docs/plans/env06_7_package_*_sequence_dossiers.json
@@ -132,7 +132,7 @@ binding evidence.
 
 ```powershell
 & $godot --headless --path . --script `
-  res://tools/integ06_1_crew_play_entry_repro.gd
+  res://tools/archive/integ06_1/integ06_1_crew_play_entry_repro.gd
 ```
 
 ## 3. Save migration matrices

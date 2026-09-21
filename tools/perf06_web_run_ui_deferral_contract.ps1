@@ -3,7 +3,7 @@ $ErrorActionPreference = "Stop"
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $hostPath = Join-Path $repoRoot "scripts/ui/foundation_main.gd"
 $source = [System.IO.File]::ReadAllText($hostPath)
-$readySnapshotTestPath = Join-Path $repoRoot "tools/perf06_web_ready_snapshot_contract.gd"
+$readySnapshotTestPath = Join-Path $repoRoot "tools/archive/perf06/perf06_web_ready_snapshot_contract.gd"
 if (-not (Test-Path -LiteralPath $readySnapshotTestPath -PathType Leaf)) {
     throw "Missing immediate-after-READY public snapshot runtime contract."
 }

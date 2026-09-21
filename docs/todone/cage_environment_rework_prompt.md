@@ -50,9 +50,9 @@ rework of landed Grand Casino systems, not a greenfield feature.
 
 Read these files completely before editing:
 
-1. `docs/plans/0.5_cage_environment_rework_plan.md` — the binding specification
+1. `docs/archive/0.5/plans/0.5_cage_environment_rework_plan.md` — the binding specification
    for this task.
-2. `docs/plans/0.5_grand_casino_rework_plan.md` — binding except where the Cage
+2. `docs/archive/0.5/plans/0.5_grand_casino_rework_plan.md` — binding except where the Cage
    rework plan explicitly supersedes its old "Cage is not a room/modal window"
    decision.
 3. `docs/plans/grand_casino_endgame_design.md` — canonical endgame IDs, flags,

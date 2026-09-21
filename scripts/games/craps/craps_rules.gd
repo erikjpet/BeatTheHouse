@@ -1,6 +1,8 @@
 class_name CrapsRules
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 
 static func roll_dice(rng: RngStream, rules: Dictionary, setting_bias_permille: int = 0) -> Dictionary:
 	var die_sides := maxi(2, int(rules.get("die_sides", 6)))
@@ -85,7 +87,7 @@ static func can_place_bet(bet_id: String, amount: int, table: Dictionary, pendin
 					return {"ok": false, "message": "The table has reached its posted lay-odds limit."}
 			elif bet_id.begins_with("place_") or bet_id.begins_with("buy_") or bet_id.begins_with("lay_"):
 				var number := int(bet_id.get_slice("_", 1))
-				if not _int_array(rules.get("point_numbers", [])).has(number):
+				if not JsonCoerceScript._int_array(rules.get("point_numbers", [])).has(number):
 					return {"ok": false, "message": "That box number is not offered."}
 			elif bet_id.begins_with("hard_"):
 				var number := int(bet_id.trim_prefix("hard_"))
@@ -219,16 +221,16 @@ static func _settle_line_bets(working: Dictionary, total: int, point: int, rules
 	var point_made := false
 	var seven_out := false
 	if point == 0:
-		if _int_array(rules.get("come_out_naturals", [])).has(total):
+		if JsonCoerceScript._int_array(rules.get("come_out_naturals", [])).has(total):
 			credit += _win_and_clear(working, "pass_line", pass_stake, rules, results, "Pass Line")
 			_clear_loss(working, "dont_pass", dont_stake, results, "Don't Pass")
-		elif _int_array(rules.get("come_out_craps", [])).has(total):
+		elif JsonCoerceScript._int_array(rules.get("come_out_craps", [])).has(total):
 			_clear_loss(working, "pass_line", pass_stake, results, "Pass Line")
 			if total == int(rules.get("dont_pass_bar", 0)):
 				credit += _push_and_clear(working, "dont_pass", dont_stake, results, "Don't Pass")
 			else:
 				credit += _win_and_clear(working, "dont_pass", dont_stake, rules, results, "Don't Pass")
-		elif _int_array(rules.get("point_numbers", [])).has(total):
+		elif JsonCoerceScript._int_array(rules.get("point_numbers", [])).has(total):
 			point_after = total
 	else:
 		if total == point:
@@ -333,19 +335,19 @@ static func _settle_new_come_bets(working: Dictionary, pending: Dictionary, tota
 	var come := _dict(working.get("come", {}))
 	var dont_come := _dict(working.get("dont_come", {}))
 	if come_stake > 0:
-		if _int_array(rules.get("come_out_naturals", [])).has(total):
+		if JsonCoerceScript._int_array(rules.get("come_out_naturals", [])).has(total):
 			var profit := _even_money_profit(come_stake, rules)
 			credit += come_stake + profit
 			results.append(_bet_result("Come", come_stake, profit, "win"))
-		elif _int_array(rules.get("come_out_craps", [])).has(total):
+		elif JsonCoerceScript._int_array(rules.get("come_out_craps", [])).has(total):
 			results.append(_bet_result("Come", come_stake, -come_stake, "loss"))
 		else:
 			come[str(total)] = int(come.get(str(total), 0)) + come_stake
 			results.append(_bet_result("Come", come_stake, 0, "moved_%d" % total))
 	if dont_stake > 0:
-		if _int_array(rules.get("come_out_naturals", [])).has(total):
+		if JsonCoerceScript._int_array(rules.get("come_out_naturals", [])).has(total):
 			results.append(_bet_result("Don't Come", dont_stake, -dont_stake, "loss"))
-		elif _int_array(rules.get("come_out_craps", [])).has(total):
+		elif JsonCoerceScript._int_array(rules.get("come_out_craps", [])).has(total):
 			if total == int(rules.get("dont_pass_bar", 0)):
 				credit += dont_stake
 				results.append(_bet_result("Don't Come", dont_stake, 0, "push"))
@@ -399,7 +401,7 @@ static func _settle_hardways(working: Dictionary, roll: Dictionary, point_before
 	var active := point_before != 0 or bool(working.get("working_on_come_out", false)) or bool(rules.get("hardways_work_on_come_out", false))
 	if not active:
 		return 0
-	var dice := _int_array(roll.get("dice", []))
+	var dice := JsonCoerceScript._int_array(roll.get("dice", []))
 	var total := int(roll.get("total", 0))
 	var hard := dice.size() == 2 and int(dice[0]) == int(dice[1])
 	var credit := 0
@@ -673,11 +675,3 @@ static func _bet_result(label: String, stake: int, profit: int, outcome: String)
 
 static func _dict(value: Variant) -> Dictionary:
 	return value if typeof(value) == TYPE_DICTIONARY else {}
-
-
-static func _int_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) == TYPE_ARRAY:
-		for entry in value:
-			result.append(int(entry))
-	return result

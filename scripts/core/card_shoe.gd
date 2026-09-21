@@ -50,7 +50,7 @@ static func draw_cards(shoe_value: Variant, count: int) -> Dictionary:
 			if drawn.size() < draw_count:
 				drawn.append(card.duplicate(true))
 			else:
-				shoe.append(card.duplicate(true))
+				shoe.append(card)
 	return {
 		"cards": drawn,
 		"shoe": shoe,
@@ -64,7 +64,7 @@ static func card_array(value: Variant) -> Array:
 		return result
 	for card_value in value:
 		if typeof(card_value) == TYPE_DICTIONARY:
-			result.append((card_value as Dictionary).duplicate(true))
+			result.append(card_value)
 	return result
 
 

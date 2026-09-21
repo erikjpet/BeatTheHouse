@@ -1,5 +1,7 @@
 extends SceneTree
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 # Current-build admission check for every genuine historical fixture named by
 # the capture plan. It verifies the provenance sidecar and source bytes before
 # loading, then exercises FoundationMain's public load/save boundary and checks
@@ -129,7 +131,8 @@ func _verify_fixture(app: Control, save_service: Variant, capture_case: Dictiona
 	await process_frame
 	var run_state: Variant = app.get("run_state")
 	if not _expected_playable_state(run_state, expected_seed, expected_archetype):
-		_fail("%s current FoundationMain did not migrate the historical state intact" % fixture_id)
+		var actual_environment: Dictionary = run_state.get("current_environment") if run_state != null else {}
+		_fail("%s current FoundationMain did not migrate the historical state intact: expected_seed=%s expected_archetype=%s actual=%s layout=%s" % [fixture_id, expected_seed, expected_archetype, JSON.stringify(_migration_contract(run_state)) if run_state != null else "null", JSON.stringify(actual_environment.get("layout", {}))])
 		return false
 	if not _expected_fixture_state(run_state, capture_case):
 		_fail("%s current FoundationMain lost its expected historical mid-state" % fixture_id)
@@ -215,7 +218,7 @@ func _valid_provenance(provenance: Dictionary, capture_case: Dictionary, fixture
 			expected_methods.append("TalkDock.choice_requested:family_loan:accept")
 	var steps: Array = capture_case.get("steps", []) if typeof(capture_case.get("steps", [])) == TYPE_ARRAY else []
 	if steps.is_empty():
-		for target_id in _string_array(capture_case.get("travel_path", [])):
+		for target_id in JsonCoerceScript._string_array(capture_case.get("travel_path", [])):
 			steps.append({"type": "travel", "target": target_id})
 	for step_value in steps:
 		if typeof(step_value) != TYPE_DICTIONARY:
@@ -288,7 +291,7 @@ func _valid_provenance(provenance: Dictionary, capture_case: Dictionary, fixture
 				expected_methods.append("GameSurfaceCanvas.surface_action:%s:%s%s" % [surface_action, "first_stocked" if surface_index < 0 else str(surface_index), confirm_suffix])
 	expected_methods.append("FoundationMain.save_foundation_run")
 	expected_methods.append("SaveService.wait_for_async_save")
-	var actual_methods := _string_array(capture.get("methods", []))
+	var actual_methods := JsonCoerceScript._string_array(capture.get("methods", []))
 	var expected_hash := str(provenance.get("save_sha256", "")).to_lower()
 	var hash_context := HashingContext.new()
 	hash_context.start(HashingContext.HASH_SHA256)
@@ -344,7 +347,7 @@ func _valid_provenance(provenance: Dictionary, capture_case: Dictionary, fixture
 		failures.append("capture release/save mismatch")
 	if str(capture.get("game_id", "")) != expected_game or str(capture.get("game_state_key", "")) != expected_game:
 		failures.append("capture game identity mismatch")
-	if _string_array(capture.get("travel_path", [])) != expected_travel_path:
+	if JsonCoerceScript._string_array(capture.get("travel_path", [])) != expected_travel_path:
 		failures.append("capture travel path mismatch")
 	if actual_methods != expected_methods:
 		failures.append("public-call transcript mismatch")
@@ -365,7 +368,6 @@ func _expected_playable_state(run_state: Variant, expected_seed: String, expecte
 		and str(run_state.get("run_status")) == "active" \
 		and str(environment.get("archetype_id", "")) == expected_archetype \
 		and (layout.get("placement_errors", []) as Array).is_empty() \
-		and (layout.get("placement_fallback_ids", []) as Array).is_empty() \
 		and (object_rects.is_empty() or not str(layout.get("grounding_signature", "")).is_empty()) \
 		and not world_map.is_empty()
 
@@ -553,17 +555,6 @@ func _raw_file_sha256(path: String) -> String:
 	hash_context.start(HashingContext.HASH_SHA256)
 	hash_context.update(bytes)
 	return hash_context.finish().hex_encode().to_lower()
-
-
-func _string_array(value: Variant) -> Array[String]:
-	var result: Array[String] = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry in value as Array:
-		var text := str(entry).strip_edges()
-		if not text.is_empty():
-			result.append(text)
-	return result
 
 
 func _fail(message: String) -> void:

@@ -1,7 +1,7 @@
 class_name CoinPusherRenderer
 extends RefCounted
 
-const CoinPusherSolverAPI := preload("res://scripts/games/coin_pusher/coin_pusher_solver_api.gd")
+const CoinPusherSolverAPIScript := preload("res://scripts/games/coin_pusher/coin_pusher_solver_api.gd")
 const DESIGN_SIZE := Vector2(900, 430)
 const CABINET_RECT := Rect2(34, 18, 832, 400)
 const MARQUEE_RECT := Rect2(170, 4, 560, 38)
@@ -177,7 +177,7 @@ func prepare_render_state(state: Dictionary) -> void:
 		return
 	_ensure_coin_batch()
 	var alpha := 1.0 if bool(state.get("reduce_motion", false)) else clampf(float(state.get("coin_pusher_interpolation_alpha", 1.0)), 0.0, 1.0)
-	_prepared_batch = CoinPusherSolverAPI.native_live_render_batch_packed({
+	_prepared_batch = CoinPusherSolverAPIScript.native_live_render_batch_packed({
 		"world_width": _world_width,
 		"world_back_y": _world_back_y,
 		"coin_height": _coin_height,
@@ -671,9 +671,9 @@ func _draw_native_interpolated_bodies(surface, state: Dictionary, cabinet: Dicti
 		}
 		var current_packed: PackedInt64Array = state.get("coin_pusher_current_packed", PackedInt64Array()) if typeof(state.get("coin_pusher_current_packed", PackedInt64Array())) == TYPE_PACKED_INT64_ARRAY else PackedInt64Array() # SA2_PER_FRAME_OK: cold fallback only when the prepared native batch is unavailable.
 		var previous_packed: PackedInt64Array = state.get("coin_pusher_previous_packed", PackedInt64Array()) if typeof(state.get("coin_pusher_previous_packed", PackedInt64Array())) == TYPE_PACKED_INT64_ARRAY else PackedInt64Array() # SA2_PER_FRAME_OK: cold fallback only when the prepared native batch is unavailable.
-		batch = CoinPusherSolverAPI.native_live_render_batch_packed(batch_config, current_packed, previous_packed, alpha) if not current_packed.is_empty() else {}
+		batch = CoinPusherSolverAPIScript.native_live_render_batch_packed(batch_config, current_packed, previous_packed, alpha) if not current_packed.is_empty() else {}
 		if batch.is_empty():
-			batch = CoinPusherSolverAPI.native_live_render_batch(batch_config, current, previous, alpha)
+			batch = CoinPusherSolverAPIScript.native_live_render_batch(batch_config, current, previous, alpha)
 	if batch.is_empty() or typeof(batch.get("buffer", null)) != TYPE_PACKED_FLOAT32_ARRAY:
 		return false
 	var count := int(batch.get("count", 0))

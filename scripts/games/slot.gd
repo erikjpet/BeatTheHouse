@@ -832,7 +832,19 @@ func resolve_with_context(action_id: String, _stake: int, run_state: RunState, e
 	# _ensure_machine_state returns an owned, current-schema machine and the
 	# final write normalizes once. Normalizing at both resolver entry and exit
 	# duplicated the entire reel/bonus state twice per spin.
-	var resolved: Dictionary = resolver.resolve_spin(machine, normalized_action, selected_bet, rng, definition, environment, false, false, run_state, _slot_cross_game_item_effects(run_state, machine, normalized_action == "nudge"), _ui_state)
+	var resolved: Dictionary = resolver.resolve_spin(FunctionOptions.SlotResolveOptions.from({
+		"machine": machine,
+		"action_id": normalized_action,
+		"selected_bet": selected_bet,
+		"rng": rng,
+		"definition": definition,
+		"environment": environment,
+		"normalize_machine": false,
+		"audit_metrics_mode": false,
+		"run_state": run_state,
+		"item_effects": _slot_cross_game_item_effects(run_state, machine, normalized_action == "nudge"),
+		"ui_state": _ui_state,
+	}))
 	var resolved_machine_value: Variant = resolved.get("machine", machine)
 	var resolved_machine: Dictionary = resolved_machine_value as Dictionary if typeof(resolved_machine_value) == TYPE_DICTIONARY else machine
 	resolved = _apply_tutorial_first_night_match(resolved, resolved_machine, normalized_action, run_state)
@@ -1237,7 +1249,20 @@ func environment_runtime_tick(run_state: RunState, environment: Dictionary, rng:
 	machine["slot_autoplay_next_msec"] = now_msec + _slot_autoplay_delay_msec(machine)
 	_write_machine(environment, machine)
 	var selected_bet: Dictionary = StateScript.selected_bet(machine)
-	var resolved: Dictionary = resolver.resolve_spin(machine, "spin", selected_bet, rng, definition, environment, false, false, run_state, _slot_cross_game_item_effects(run_state, machine, false), {}, false)
+	var resolved: Dictionary = resolver.resolve_spin(FunctionOptions.SlotResolveOptions.from({
+		"machine": machine,
+		"action_id": "spin",
+		"selected_bet": selected_bet,
+		"rng": rng,
+		"definition": definition,
+		"environment": environment,
+		"normalize_machine": false,
+		"audit_metrics_mode": false,
+		"run_state": run_state,
+		"item_effects": _slot_cross_game_item_effects(run_state, machine, false),
+		"ui_state": {},
+		"include_presentation_payload": false,
+	}))
 	var resolved_machine_value: Variant = resolved.get("machine", machine)
 	var resolved_machine: Dictionary = resolved_machine_value as Dictionary if typeof(resolved_machine_value) == TYPE_DICTIONARY else machine
 	var feature_pending := _slot_feature_pending(resolved_machine)

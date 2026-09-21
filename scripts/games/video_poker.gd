@@ -1255,7 +1255,13 @@ func _resolve_draw(action_id: String, run_state: RunState, environment: Dictiona
 	var blurb := _hand_blurb(primary_descriptor, pay_row, variant)
 	if hand_count > 1:
 		blurb = "%s x%d hands" % [blurb, hand_count]
-	var message := _outcome_message(blurb, pay_row, gross_payout, bankroll_delta, suspicion_delta, is_cheat, pit_boss_summary, security_message, holdout_grade, holdout_applied, holdout_challenge, state)
+	var message := _outcome_message(FunctionOptions.VideoPokerOutcomeOptions.from({
+		"blurb": blurb, "pay_row": pay_row, "coin_pay": gross_payout,
+		"bankroll_delta": bankroll_delta, "suspicion_delta": suspicion_delta, "is_cheat": is_cheat,
+		"pit_boss_summary": pit_boss_summary, "security_message": security_message,
+		"holdout_grade": holdout_grade, "holdout_applied": holdout_applied,
+		"holdout_challenge": holdout_challenge, "state": state,
+	}))
 	# A real machine's WIN meter and gamble stake show the gross paid credits,
 	# even when one winning multi-hand row returns less than the total wager.
 	var win_credits := maxi(0, gross_payout)
@@ -1773,11 +1779,11 @@ func _start_holdout_challenge(ui_state: Dictionary, run_state: RunState, state: 
 		JSON.stringify(holds),
 		int(ui_state.get("bet_level", MAX_BET_LEVEL)),
 	]
-	var prompt_offset := HOLDOUT_PROMPT_BASE_MSEC + (_stable_hash(seed) % 141) - 70
+	var prompt_offset := HOLDOUT_PROMPT_BASE_MSEC + (JsonCoerceScript._stable_hash(seed) % 141) - 70
 	var windows: Dictionary = _holdout_windows(run_state)
 	var pit_boss: Dictionary = run_state.pit_boss_watch_status(environment) if run_state != null else {}
 	return {
-		"challenge_id": "vp_holdout_%d" % _stable_hash(seed),
+		"challenge_id": "vp_holdout_%d" % JsonCoerceScript._stable_hash(seed),
 		"opening_hand": opening.duplicate(true),
 		"holds": holds,
 		"target_card": _copy_dict(target.get("card", {})),
@@ -2272,7 +2278,7 @@ func _deal_deck(run_state: RunState, state: Dictionary) -> Array:
 	var rng_state := int(run_state.rng_state) if run_state != null else 0
 	var seed_text := str(run_state.seed_text) if run_state != null else "video_poker"
 	var local_rng := RngStream.new()
-	local_rng.configure(_stable_hash("%s:%s:%s:%d:%d:deal" % [get_id(), str(state.get("cabinet_key", "")), seed_text, rng_state, hands]))
+	local_rng.configure(JsonCoerceScript._stable_hash("%s:%s:%s:%d:%d:deal" % [get_id(), str(state.get("cabinet_key", "")), seed_text, rng_state, hands]))
 	return CardShoeScript.shuffle_cards(_base_deck(_variant(state)), local_rng)
 
 
@@ -2771,7 +2777,7 @@ func _best_odds_holds(hand: Array, variant: Dictionary, state: Dictionary, coin_
 		coin_count,
 		coin_value,
 		int(state.get("progressive_meter", PROGRESSIVE_BASE)),
-		_stable_hash(_hand_signature(hand)),
+		JsonCoerceScript._stable_hash(_hand_signature(hand)),
 	]
 	if _strategy_hold_cache.has(cache_key):
 		return _index_array(_strategy_hold_cache.get(cache_key, []))
@@ -2815,7 +2821,7 @@ func _hold_expected_pay(hand: Array, deck: Array, holds: Array, variant: Diction
 				samples += 1
 	else:
 		var sample_rng := RngStream.new()
-		sample_rng.configure(_stable_hash("%s|%s" % [seed_key, JSON.stringify(holds)]))
+		sample_rng.configure(JsonCoerceScript._stable_hash("%s|%s" % [seed_key, JSON.stringify(holds)]))
 		for _sample in range(STRATEGY_SAMPLE_CAP):
 			var pool := deck.duplicate(false)
 			var cards: Array = []
@@ -3017,7 +3023,7 @@ func _double_up_view(run_state: RunState, state: Dictionary, ui: Dictionary, las
 	var rng_state := int(run_state.rng_state) if run_state != null else 0
 	var seed_text := str(run_state.seed_text) if run_state != null else "video_poker"
 	var local_rng := RngStream.new()
-	local_rng.configure(_stable_hash("%s:%s:%d:%d:double" % [get_id(), seed_text, rng_state, hands + chain]))
+	local_rng.configure(JsonCoerceScript._stable_hash("%s:%s:%d:%d:double" % [get_id(), seed_text, rng_state, hands + chain]))
 	var deck: Array = CardShoeScript.shuffle_cards(CardShoeScript.build_deck(), local_rng)
 	var dealer: Dictionary = deck[0]
 	var picks: Array = []
@@ -3124,7 +3130,19 @@ func _high_two_pair(rank_counts: Dictionary, high: bool) -> int:
 	return int(pairs[pairs.size() - 1]) if high else int(pairs[0])
 
 
-func _outcome_message(blurb: String, pay_row: Dictionary, coin_pay: int, bankroll_delta: int, suspicion_delta: int, is_cheat: bool, pit_boss_summary: String, security_message: String, holdout_grade: String = "", holdout_applied: bool = false, holdout_challenge: Dictionary = {}, state: Dictionary = {}) -> String:
+func _outcome_message(options: FunctionOptions.VideoPokerOutcomeOptions) -> String:
+	var blurb := str(options.values.get("blurb", ""))
+	var pay_row: Dictionary = options.values.get("pay_row", {})
+	var coin_pay := int(options.values.get("coin_pay", 0))
+	var bankroll_delta := int(options.values.get("bankroll_delta", 0))
+	var suspicion_delta := int(options.values.get("suspicion_delta", 0))
+	var is_cheat := bool(options.values.get("is_cheat", false))
+	var pit_boss_summary := str(options.values.get("pit_boss_summary", ""))
+	var security_message := str(options.values.get("security_message", ""))
+	var holdout_grade := str(options.values.get("holdout_grade", ""))
+	var holdout_applied := bool(options.values.get("holdout_applied", false))
+	var holdout_challenge: Dictionary = options.values.get("holdout_challenge", {})
+	var state: Dictionary = options.values.get("state", {})
 	var lead := "You draw %s." % blurb
 	if is_cheat:
 		var grade_text := holdout_grade.replace("_", " ").capitalize()
@@ -3406,11 +3424,3 @@ func _presentation_cards(count: int) -> Array:
 	for i in range(count):
 		cards.append({"hidden": true})
 	return cards
-
-
-func _stable_hash(text: String) -> int:
-	var hash_value := 2166136261
-	for i in range(text.length()):
-		hash_value = int(hash_value ^ text.unicode_at(i))
-		hash_value = int((hash_value * 16777619) & 0x7fffffff)
-	return maxi(hash_value, 1)

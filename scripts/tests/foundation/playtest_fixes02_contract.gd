@@ -116,12 +116,22 @@ static func _check_bug27_blackjack_semantic_round_result(failures: Array) -> voi
 	]
 	for case_value in cases:
 		var case_data: Dictionary = case_value
-		var result: Dictionary = game.call("_blackjack_last_result_payload", case_data.name, [], [], case_data.main, case_data.side, case_data.transfer, 0, [], [], [], [], {}, 10)
+		var result: Dictionary = game.call("_blackjack_last_result_payload", FunctionOptions.BlackjackResultOptions.from({
+			"message": case_data.name, "hand_results": [], "side_results": [], "main_delta": case_data.main,
+			"side_delta": case_data.side, "bankroll_delta": case_data.transfer, "suspicion_delta": 0,
+			"dealer_cards": [], "player_hands": [], "patron_hands": [], "patron_action_events": [],
+			"cheat": {}, "result_msec": 10,
+		}))
 		if int(result.get("round_net_delta", 999999)) != int(case_data.round) or str(result.get("headline", "")) != str(case_data.headline):
 			failures.append("BUG-27 regression: %s uses settlement transfer instead of semantic round net (%s)." % [case_data.name, result])
 		if int(result.get("outcome_bankroll_delta", result.get("round_net_delta", 999999))) != int(case_data.round):
 			failures.append("BUG-27 regression: %s does not publish its semantic delta to shared result presentation." % case_data.name)
-	var caught: Dictionary = game.call("_blackjack_last_result_payload", "caught", [], [], 11, 0, -14, 8, [], [], [], [], {"caught": true}, 11, -25)
+	var caught: Dictionary = game.call("_blackjack_last_result_payload", FunctionOptions.BlackjackResultOptions.from({
+		"message": "caught", "hand_results": [], "side_results": [], "main_delta": 11, "side_delta": 0,
+		"bankroll_delta": -14, "suspicion_delta": 8, "dealer_cards": [], "player_hands": [],
+		"patron_hands": [], "patron_action_events": [], "cheat": {"caught": true},
+		"result_msec": 11, "round_net_delta_value": -25,
+	}))
 	if int(caught.get("round_net_delta", 0)) != -25 or str(caught.get("headline", "")) != "HEAT SPIKE":
 		failures.append("BUG-27 regression: caught-cheat penalty is absent from the semantic round result.")
 	var save_run = RunStateScript.new()

@@ -1,6 +1,8 @@
 class_name WorldMap
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 # Persistent deterministic travel graph for Act 1 runs.
 
 const VERSION := 3
@@ -241,9 +243,9 @@ static func normalize(map_data: Dictionary) -> Dictionary:
 	normalized["start_node_id"] = str(normalized.get("start_node_id", ""))
 	normalized["current_node_id"] = str(normalized.get("current_node_id", normalized.get("start_node_id", "")))
 	normalized["revision"] = maxi(0, int(normalized.get("revision", 0)))
-	normalized["nodes"] = _normalize_nodes(_copy_array(normalized.get("nodes", [])))
-	normalized["edges"] = _normalize_edges(_copy_array(normalized.get("edges", [])))
-	normalized["visited_path"] = _string_array(normalized.get("visited_path", []))
+	normalized["nodes"] = _normalize_nodes(JsonCoerceScript._copy_array(normalized.get("nodes", [])))
+	normalized["edges"] = _normalize_edges(JsonCoerceScript._copy_array(normalized.get("edges", [])))
+	normalized["visited_path"] = JsonCoerceScript._string_array(normalized.get("visited_path", []))
 	return normalized
 
 
@@ -267,7 +269,7 @@ static func normalize_topology(map_data: Dictionary) -> Dictionary:
 		# the topology-only projection has a chance to omit it.
 		"nodes": _normalize_nodes(nodes, false),
 		"edges": _normalize_edges(edges),
-		"visited_path": _string_array(map_data.get("visited_path", [])),
+		"visited_path": JsonCoerceScript._string_array(map_data.get("visited_path", [])),
 	}
 
 
@@ -616,7 +618,7 @@ static func travel_target_ids(map_data: Dictionary, node_id: String = "", max_ne
 	var enabled_lookup := _enabled_target_lookup(enabled_target_ids)
 	var node_lookup := _node_lookup(normalized)
 	var edge_lookup := _edge_lookup(normalized)
-	var visited_path := _string_array(normalized.get("visited_path", []))
+	var visited_path := JsonCoerceScript._string_array(normalized.get("visited_path", []))
 	var new_candidates := _travel_candidate_entries_prepared(normalized, source_id, false, enabled_lookup, visible_ids, visible_lookup, node_lookup, edge_lookup, visited_path)
 	var old_candidates := _travel_candidate_entries_prepared(normalized, source_id, true, enabled_lookup, visible_ids, visible_lookup, node_lookup, edge_lookup, visited_path)
 	var enabled_new_candidates := _filter_candidates_by_enabled(new_candidates, true)
@@ -728,7 +730,7 @@ static func enter_node(map_data: Dictionary, node_id: String, environment_data: 
 		node["discovered_by_travel"] = true
 		nodes[index] = node
 	normalized["nodes"] = nodes
-	var path: Array = _string_array(normalized.get("visited_path", []))
+	var path: Array = JsonCoerceScript._string_array(normalized.get("visited_path", []))
 	if path.is_empty() or str(path[path.size() - 1]) != target_id:
 		path.append(target_id)
 	normalized["visited_path"] = path
@@ -781,7 +783,7 @@ static func unlock_nodes(map_data: Dictionary, node_ids: Array, source: String =
 	if node_ids.is_empty():
 		return normalize(map_data)
 	var normalized := normalize(map_data)
-	var unlock_ids := _string_array(node_ids)
+	var unlock_ids := JsonCoerceScript._string_array(node_ids)
 	var clean_source := source.strip_edges().to_lower()
 	if clean_source.is_empty():
 		clean_source = DISCOVERY_SOURCE_EVENT
@@ -813,7 +815,7 @@ static func enable_node_spawns(map_data: Dictionary, node_ids: Array) -> Diction
 	if node_ids.is_empty():
 		return normalize(map_data)
 	var normalized := normalize(map_data)
-	var spawn_ids := _string_array(node_ids)
+	var spawn_ids := JsonCoerceScript._string_array(node_ids)
 	var nodes: Array = normalized.get("nodes", [])
 	var changed := false
 	for index in range(nodes.size()):
@@ -836,8 +838,8 @@ static func enable_node_spawns(map_data: Dictionary, node_ids: Array) -> Diction
 # gates without changing the current node, visit path, or stored environments.
 static func discover_spawn_open_neighbors(map_data: Dictionary, source_node_ids: Array, target_node_ids: Array) -> Dictionary:
 	var normalized := normalize(map_data)
-	var source_ids := _string_array(source_node_ids)
-	var target_ids := _string_array(target_node_ids)
+	var source_ids := JsonCoerceScript._string_array(source_node_ids)
+	var target_ids := JsonCoerceScript._string_array(target_node_ids)
 	if source_ids.is_empty() or target_ids.is_empty():
 		return normalized
 	var nodes: Array = normalized.get("nodes", [])
@@ -875,7 +877,7 @@ static func refresh_shop_node_environments(map_data: Dictionary, node_ids: Array
 	if node_ids.is_empty():
 		return normalize(map_data)
 	var normalized := normalize(map_data)
-	var refresh_ids := _string_array(node_ids)
+	var refresh_ids := JsonCoerceScript._string_array(node_ids)
 	var nodes: Array = normalized.get("nodes", [])
 	for index in range(nodes.size()):
 		if typeof(nodes[index]) != TYPE_DICTIONARY:
@@ -952,7 +954,7 @@ static func snapshot(map_data: Dictionary, selected_id: String = "") -> Dictiona
 		"visible_node_ids": visible_ids,
 		"nodes": visible_nodes,
 		"edges": visible_edges,
-		"visited_path": _string_array(normalized.get("visited_path", [])),
+		"visited_path": JsonCoerceScript._string_array(normalized.get("visited_path", [])),
 		"background_path": MAP_BACKGROUND_PATH,
 	}
 
@@ -1105,7 +1107,7 @@ func _build_edges(ids: Array, archetypes_by_id: Dictionary, positions: Dictionar
 	for source_id_value in ids:
 		var source_id := str(source_id_value)
 		var source: Dictionary = archetypes_by_id.get(source_id, {})
-		var authored_targets := _ranked_target_ids(source_id, _unique_strings(_copy_array(source.get("next_archetypes", [])), _copy_array(source.get("travel_hooks", []))), archetypes_by_id, positions)
+		var authored_targets := _ranked_target_ids(source_id, _unique_strings(JsonCoerceScript._copy_array(source.get("next_archetypes", [])), JsonCoerceScript._copy_array(source.get("travel_hooks", []))), archetypes_by_id, positions)
 		for target_id_value in authored_targets:
 			var target_id := str(target_id_value)
 			if not archetypes_by_id.has(target_id):
@@ -1382,7 +1384,7 @@ func _node_label(archetype: Dictionary) -> String:
 	var display_name := str(archetype.get("display_name", "")).strip_edges()
 	if not display_name.is_empty():
 		return display_name
-	var nouns := _string_array(archetype.get("name_nouns", []))
+	var nouns := JsonCoerceScript._string_array(archetype.get("name_nouns", []))
 	if not nouns.is_empty():
 		return str(nouns[0])
 	return str(archetype.get("id", "Unknown")).replace("_", " ").capitalize()
@@ -1476,8 +1478,8 @@ func _archetype_has_games_for_discovery(archetype: Dictionary) -> bool:
 
 
 func _archetype_game_capacity(archetype: Dictionary) -> int:
-	var game_ids := _string_array(archetype.get("game_pool", []))
-	var required_ids := _string_array(archetype.get("required_game_ids", []))
+	var game_ids := JsonCoerceScript._string_array(archetype.get("game_pool", []))
+	var required_ids := JsonCoerceScript._string_array(archetype.get("required_game_ids", []))
 	for required_id in required_ids:
 		if not game_ids.has(str(required_id)):
 			game_ids.append(str(required_id))
@@ -1518,7 +1520,7 @@ func _route_is_spawn_open(archetype_id: String) -> bool:
 	var route := library.route(archetype_id)
 	if route.is_empty():
 		return true
-	return _copy_dict(route.get("requires_flags", {})).is_empty() and maxi(0, int(route.get("requires_travel_count_min", 0))) == 0 and not bool(route.get("hide_until_travel_count_met", false)) and _copy_dict(route.get("availability_window", {})).is_empty()
+	return JsonCoerceScript._copy_dict(route.get("requires_flags", {})).is_empty() and maxi(0, int(route.get("requires_travel_count_min", 0))) == 0 and not bool(route.get("hide_until_travel_count_met", false)) and JsonCoerceScript._copy_dict(route.get("availability_window", {})).is_empty()
 
 
 func _edge_neighbor_ids(edges: Array, source_id: String) -> Array:
@@ -1556,7 +1558,7 @@ static func _normalize_nodes(nodes: Array, include_environment: bool = true) -> 
 		var id := str(source.get("id", source.get("archetype_id", ""))).strip_edges()
 		if id.is_empty():
 			continue
-		var position := _copy_dict(source.get("position", {}))
+		var position := JsonCoerceScript._copy_dict(source.get("position", {}))
 		var discovery_source := str(source.get("discovery_source", source.get("unlock_source", ""))).strip_edges().to_lower()
 		var discovered_at_spawn := bool(source.get("discovered_at_spawn", false))
 		var unlocked := bool(source.get("unlocked", false))
@@ -1586,11 +1588,11 @@ static func _normalize_nodes(nodes: Array, include_environment: bool = true) -> 
 			"icon_path": str(source.get("icon_path", _map_icon_path(id))),
 			"flavor": str(source.get("flavor", "")),
 			"scouted": bool(source.get("scouted", false)),
-			"heard": _copy_dict(source.get("heard", {})),
+			"heard": JsonCoerceScript._copy_dict(source.get("heard", {})),
 			"home_lost": bool(source.get("home_lost", false)),
 		}
 		if include_environment:
-			normalized_node["environment"] = _copy_dict(source.get("environment", {}))
+			normalized_node["environment"] = JsonCoerceScript._copy_dict(source.get("environment", {}))
 		result.append(normalized_node)
 	return result
 
@@ -1656,7 +1658,7 @@ static func _snapshot_node(node: Dictionary) -> Dictionary:
 		"kind": str(node.get("kind", "")),
 		"tier": int(node.get("tier", 1)),
 		"game_capacity": int(node.get("game_capacity", 0)),
-		"position": _copy_dict(node.get("position", {})),
+		"position": JsonCoerceScript._copy_dict(node.get("position", {})),
 		"state": str(node.get("state", STATE_HIDDEN)),
 		"seen": bool(node.get("seen", false)),
 		"discovered_at_spawn": bool(node.get("discovered_at_spawn", false)),
@@ -1664,7 +1666,7 @@ static func _snapshot_node(node: Dictionary) -> Dictionary:
 		"discovery_source": str(node.get("discovery_source", "")),
 		"route_spawn_open": bool(node.get("route_spawn_open", true)),
 		"scouted": bool(node.get("scouted", false)),
-		"heard": _copy_dict(node.get("heard", {})),
+		"heard": JsonCoerceScript._copy_dict(node.get("heard", {})),
 		"icon_path": str(node.get("icon_path", _map_icon_path(str(node.get("archetype_id", node.get("id", "")))))),
 		"flavor": str(node.get("flavor", "")),
 		"home_lost": bool(node.get("home_lost", false)),
@@ -1673,7 +1675,7 @@ static func _snapshot_node(node: Dictionary) -> Dictionary:
 
 static func _enabled_target_lookup(enabled_target_ids: Array) -> Dictionary:
 	var result: Dictionary = {}
-	for id_value in _string_array(enabled_target_ids):
+	for id_value in JsonCoerceScript._string_array(enabled_target_ids):
 		result[str(id_value)] = true
 	return result
 
@@ -1781,7 +1783,7 @@ static func _travel_candidate_entries(map_data: Dictionary, source_id: String, v
 	var visible_lookup: Dictionary = visible_data.get("lookup", {})
 	var node_lookup := _node_lookup(map_data)
 	var edge_lookup := _edge_lookup(map_data)
-	var visited_path := _string_array(map_data.get("visited_path", []))
+	var visited_path := JsonCoerceScript._string_array(map_data.get("visited_path", []))
 	return _travel_candidate_entries_prepared(map_data, source_id, visited_only, enabled_lookup, visible_ids, visible_lookup, node_lookup, edge_lookup, visited_path)
 
 
@@ -2192,26 +2194,3 @@ static func _unique_strings(a: Array, b: Array = []) -> Array:
 			if not text.is_empty() and not result.has(text):
 				result.append(text)
 	return result
-
-
-static func _string_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry in value:
-		var text := str(entry).strip_edges()
-		if not text.is_empty():
-			result.append(text)
-	return result
-
-
-static func _copy_array(value: Variant) -> Array:
-	if typeof(value) != TYPE_ARRAY:
-		return []
-	return (value as Array).duplicate(true)
-
-
-static func _copy_dict(value: Variant) -> Dictionary:
-	if typeof(value) != TYPE_DICTIONARY:
-		return {}
-	return (value as Dictionary).duplicate(true)

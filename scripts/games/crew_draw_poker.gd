@@ -3147,16 +3147,6 @@ func _card_array(value: Variant) -> Array:
 	return result
 
 
-func _string_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) == TYPE_ARRAY:
-		for entry in value:
-			var text := str(entry).strip_edges()
-			if not text.is_empty():
-				result.append(text)
-	return result
-
-
 func _index_array(value: Variant) -> Array:
 	var result: Array = []
 	if typeof(value) == TYPE_ARRAY:

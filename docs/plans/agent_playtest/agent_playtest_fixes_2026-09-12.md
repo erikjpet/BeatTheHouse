@@ -249,7 +249,7 @@ All ten original command streams were replayed on the fixed build, totaling 916 
 - BUG-10: no files.
 - BUG-11: `scripts/games/video_poker.gd`; combined/table-game tests.
 - BUG-14: `scripts/core/event_module.gd`; combined production-seam regression.
-- BUG-15: `data/audio/surface_sfx_manifest.json`; `tools/audio06_1_surface_sfx_audit.gd`.
+- BUG-15: `data/audio/surface_sfx_manifest.json`; `tools/archive/audio06_1/audio06_1_surface_sfx_audit.gd`.
 - BUG-17: `scripts/ui/environment_interaction_controller.gd`; `scripts/ui/environment_interaction_view_model.gd`.
 - BUG-20: `scripts/games/roulette.gd`; `scripts/tests/foundation/check_table_games.gd`.
 - BUG-21: `scripts/games/crew_draw_poker.gd`; combined/Crew Poker tests.

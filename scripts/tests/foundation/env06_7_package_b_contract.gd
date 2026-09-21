@@ -299,15 +299,14 @@ func _report_first_drift(before: Variant, after: Variant, path: String) -> bool:
 func _runtime_command(state: Dictionary, definition: Dictionary, command_id: String, receipt_id: String) -> Dictionary:
 	var origin := _find_action_origin(state, command_id)
 	var descriptor := Runtime._command_descriptor(state, definition, str(origin.get("owner_namespace", "")), str(origin.get("stable_object_id", "")), command_id, {})
-	return Runtime.command(
-		command_id, str(state.get("node_id", "")), str(state.get("phase_id", "")), receipt_id, {},
-		str(origin.get("owner_namespace", "")), str(origin.get("stable_object_id", "")),
-		str(descriptor.get("action_origin_owner_namespace", "")),
-		str(descriptor.get("action_origin_stable_object_id", "")),
-		str(descriptor.get("action_origin_receipt_key", "")),
-		str(descriptor.get("action_origin_boundary_id", "")),
-		str(descriptor.get("action_origin_fingerprint", "")),
-	)
+	return Runtime.command(FunctionOptions.scenario_sequence_command(command_id, str(state.get("node_id", "")), str(state.get("phase_id", "")), receipt_id, {
+		"payload": {}, "owner_namespace": str(origin.get("owner_namespace", "")), "stable_object_id": str(origin.get("stable_object_id", "")),
+		"action_origin_owner_namespace": str(descriptor.get("action_origin_owner_namespace", "")),
+		"action_origin_stable_object_id": str(descriptor.get("action_origin_stable_object_id", "")),
+		"action_origin_receipt_key": str(descriptor.get("action_origin_receipt_key", "")),
+		"action_origin_boundary_id": str(descriptor.get("action_origin_boundary_id", "")),
+		"action_origin_fingerprint": str(descriptor.get("action_origin_fingerprint", "")),
+	}))
 
 
 func _find_action_origin(state: Dictionary, command_id: String) -> Dictionary:

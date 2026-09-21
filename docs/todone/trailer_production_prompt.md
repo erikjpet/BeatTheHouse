@@ -28,7 +28,7 @@ genuinely good.
   cut (~30–60s) derived from the same footage.
 - `branding/trailer/beat_the_house_trailer_loop.webm` (or gif) — a short
   silent looping header clip for the itch page (~6–10s).
-- `docs/plans/0.5_trailer_production.md` — the research-backed design
+- `docs/archive/0.5/plans/0.5_trailer_production.md` — the research-backed design
   philosophy, the final shot list, the exact regeneration steps, and the
   tooling used, so the trailer can be re-rendered after future changes.
 
@@ -57,7 +57,7 @@ music beats/hits; the role and brevity of title cards (name the pillars,
 don't explain them); readability at small sizes; the ~60s structure
 (hook → what it is → range → tension → climax → CTA); ending on where to
 play. Write the philosophy and the resulting edit rules into
-`docs/plans/0.5_trailer_production.md`. This research drives every later
+`docs/archive/0.5/plans/0.5_trailer_production.md`. This research drives every later
 choice; cite the principles you apply.
 
 ## Phase 1 — Deterministic gameplay footage (Godot Movie Maker)
@@ -144,7 +144,7 @@ Cut the finished trailer with ffmpeg from the footage + cards + audio.
   frames, audio in sync, pixel art crisp, file sizes sane.
 - Write the final shot list, the exact commands to regenerate every
   artifact, and the tooling versions into
-  `docs/plans/0.5_trailer_production.md`.
+  `docs/archive/0.5/plans/0.5_trailer_production.md`.
 
 ## Hard rules
 
@@ -209,7 +209,7 @@ Deliverables:
 - `branding/trailer/beat_the_house_trailer_loop.webm` — 3,166,529 bytes,
   VP9 1920×1080 30 FPS, silent, 8.0 seconds.
 - Title-card sources: `branding/trailer/cards/`.
-- Full production/QA record: `docs/plans/0.5_trailer_production.md`.
+- Full production/QA record: `docs/archive/0.5/plans/0.5_trailer_production.md`.
 
 Regeneration:
 

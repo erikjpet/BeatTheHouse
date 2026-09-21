@@ -1,5 +1,7 @@
 extends "res://scripts/tests/foundation/check_slots_surfaces.gd"
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 const CrapsRulesScript := preload("res://scripts/games/craps/craps_rules.gd")
 const GameRitualRuntimeContractScript := preload("res://scripts/tests/foundation/game_ritual_runtime_contract.gd")
 const BlackjackActionAuthorityScript := preload("res://scripts/core/blackjack_action_authority.gd")
@@ -998,13 +1000,13 @@ func _check_crew_poker_contract(library: ContentLibrary, failures: Array) -> voi
 		stable_position = position.size() == 2 and int(position[0]) == 450 and int(position[1]) == 218
 	var game_count: Array = back_room.get("game_count", []) if typeof(back_room.get("game_count", [])) == TYPE_ARRAY else []
 	var exact_count := game_count.size() == 2 and int(game_count[0]) == 1 and int(game_count[1]) == 1
-	var back_pool := _string_array(back_room.get("game_pool", []))
-	var back_required := _string_array(back_room.get("required_game_ids", []))
+	var back_pool := JsonCoerceScript._string_array(back_room.get("game_pool", []))
+	var back_required := JsonCoerceScript._string_array(back_room.get("required_game_ids", []))
 	var exact_pool := back_pool.size() == 1 and str(back_pool[0]) == "crew_draw_poker"
 	var exact_required := back_required.size() == 1 and str(back_required[0]) == "crew_draw_poker"
 	if not stable_position or not exact_pool or not exact_required or not exact_count:
 		failures.append("Crew poker must furnish exactly one stable table in the L3 back room.")
-	if _string_array(poker_archetype.get("game_pool", [])).has("crew_draw_poker") or _string_array(club.get("game_pool", [])).has("crew_draw_poker"):
+	if JsonCoerceScript._string_array(poker_archetype.get("game_pool", [])).has("crew_draw_poker") or JsonCoerceScript._string_array(club.get("game_pool", [])).has("crew_draw_poker"):
 		failures.append("Crew poker leaked out of the nested L3 game pool into the public Punchline layer.")
 	var game: GameModule = CrewDrawPokerGameScript.new()
 	game.setup(definition, library)
@@ -1577,7 +1579,7 @@ func _check_crew_poker_dealer_and_animation_contract(game: GameModule, failures:
 	var environment := {"id": "crew_poker_dealer_animation", "archetype_id": "small_underground_casino", "kind": "crew", "layer_id": "back_room", "resident_member_ids": ["crew_mags", "crew_rook"], "game_ids": ["crew_draw_poker"], "game_states": {}}
 	var first := game.generate_environment_state(run_state, environment, seed_a)
 	var second := game.generate_environment_state(run_state, environment, seed_b)
-	var members := _string_array(first.get("members", []))
+	var members := JsonCoerceScript._string_array(first.get("members", []))
 	var dealer_id := str(first.get("dealer_member_id", ""))
 	if dealer_id.is_empty() or members.has(dealer_id) or dealer_id != str(second.get("dealer_member_id", "")) or JSON.stringify(members) != JSON.stringify(second.get("members", [])):
 		failures.append("Crew poker house-dealer selection was not deterministic and disjoint from the five playing seats.")
@@ -2130,7 +2132,7 @@ func _check_roulette_surface_contract(game: GameModule, failures: Array, library
 		return
 	if str(table.get("schema", "")) != "roulette_table_state":
 		failures.append("Roulette generated table state did not expose the roulette schema.")
-	var wheel_sequence := _string_array(table.get("wheel_sequence", []))
+	var wheel_sequence := JsonCoerceScript._string_array(table.get("wheel_sequence", []))
 	if wheel_sequence.size() != 38 or not wheel_sequence.has("0") or not wheel_sequence.has("00"):
 		failures.append("Roulette generated American table did not expose a 38-pocket wheel sequence.")
 	var rules: Dictionary = table.get("rules", {}) if typeof(table.get("rules", {})) == TYPE_DICTIONARY else {}
@@ -2350,7 +2352,7 @@ func _check_roulette_surface_contract(game: GameModule, failures: Array, library
 	armed_spin_ui["selected_action_id"] = "spin_roulette"
 	armed_spin_ui["selected_action_kind"] = "legal"
 	var armed_surface := game.surface_state(run_state, environment, armed_spin_ui)
-	if not _string_array(armed_surface.get("native_selected_surface_actions", [])).has("roulette_spin"):
+	if not JsonCoerceScript._string_array(armed_surface.get("native_selected_surface_actions", [])).has("roulette_spin"):
 		failures.append("Roulette armed spin was not reflected in native selected surface actions.")
 	var confirm_spin := _check_surface_command_non_mutating(game, "roulette_spin", 0, false, armed_spin_ui, run_state, environment, "roulette confirm spin command", failures)
 	if str(confirm_spin.get("action_id", "")) != "spin_roulette" or not bool(confirm_spin.get("resolve", false)):
@@ -2876,7 +2878,7 @@ func _roulette_target_index(targets: Array, target_type: String, number: String)
 		var target: Dictionary = targets[i]
 		if str(target.get("type", "")) != target_type:
 			continue
-		if _string_array(target.get("numbers", [])).has(number):
+		if JsonCoerceScript._string_array(target.get("numbers", [])).has(number):
 			return i
 	return -1
 
@@ -4316,7 +4318,7 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 		var miss_tick := _blackjack_authority_auto_command(game, 1, run_state, environment, miss_state, test_now)
 		var tick_state: Dictionary = miss_tick.get("ui_state", {})
 		var tick_challenge: Dictionary = tick_state.get("count_challenge", {})
-		if (_string_array(tick_challenge.get("missed_icons", []))).is_empty():
+		if (JsonCoerceScript._string_array(tick_challenge.get("missed_icons", []))).is_empty():
 			failures.append("Blackjack live count auto tick did not persist missed count symbols.")
 	var watched_peek_run_state: RunState = RunStateScript.new()
 	watched_peek_run_state.start_new("BLACKJACK-WATCHED-PEEK-CONTRACT")
@@ -5698,7 +5700,7 @@ func _check_video_poker_freds_hat(game: GameModule, library: ContentLibrary, fai
 	if int(effect.get("video_poker_strategy_hint", 0)) != 1 or int(effect.get("video_poker_win_heat", 0)) != 1:
 		failures.append("Fred's Poker Hat does not expose its strategy hint and +1 win Heat effects.")
 	var group := library.content_group("video_poker_pack")
-	if not _string_array(group.get("item_ids", [])).has("freds_poker_hat"):
+	if not JsonCoerceScript._string_array(group.get("item_ids", [])).has("freds_poker_hat"):
 		failures.append("Fred's Poker Hat is not reachable through the video-poker content pack.")
 
 	var run_state: RunState = _vp_fresh(game, "jacks_or_better", "FREDS-HAT-SURFACE", 100000, "full_pay", 1, 1)

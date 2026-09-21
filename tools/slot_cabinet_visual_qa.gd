@@ -41,7 +41,7 @@ func _init() -> void:
 			var sig_idle_b: String = JSON.stringify(renderer.render_signature(idle_b, definition, 1260, "attract"))
 			if sig_idle_a == sig_idle_b:
 				failures.append("%s attract signature did not change." % key)
-			var resolved: Dictionary = resolver.resolve_spin(machine, "spin", SlotMachineStateScript.selected_bet(machine), run_state.create_rng("spin"), definition, {})
+			var resolved: Dictionary = resolver.resolve_spin(FunctionOptions.slot_resolve(machine, "spin", SlotMachineStateScript.selected_bet(machine), {"rng": run_state.create_rng("spin"), "definition": definition, "environment": {}}))
 			machine = resolved.get("machine", machine)
 			var duration := int(_dict(resolved.get("result", {})).get("slot_animation_duration_msec", 2200))
 			var spin_a: Dictionary = presentation.surface_state(machine, run_state, definition, {"surface_time_msec": 120})
@@ -589,7 +589,7 @@ func _spin_until_classification(definition: Dictionary, generator, resolver, fam
 	machine = SlotMachineStateScript.set_selected_bet(machine, "bet_10")
 	var rng: RngStream = run_state.create_rng("spin_seek_%s" % classification)
 	for _index in range(1600):
-		var resolved: Dictionary = resolver.resolve_spin(machine, "spin", SlotMachineStateScript.selected_bet(machine), rng, definition, {})
+		var resolved: Dictionary = resolver.resolve_spin(FunctionOptions.slot_resolve(machine, "spin", SlotMachineStateScript.selected_bet(machine), {"rng": rng, "definition": definition, "environment": {}}))
 		machine = _dict(resolved.get("machine", machine))
 		var result: Dictionary = _dict(resolved.get("result", {}))
 		if str(result.get("slot_classification", "")) == classification:

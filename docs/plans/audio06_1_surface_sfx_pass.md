@@ -54,7 +54,7 @@ prewarm queue, so no manifest parsing or bulk sound generation occurs per frame.
 
 ## Independent verification
 
-- `tools/audio06_1_surface_sfx_audit.gd`: PASS on the exact integrated candidate — 13
+- `tools/archive/audio06_1/audio06_1_surface_sfx_audit.gd`: PASS on the exact integrated candidate — 13
   profiles, 80 complete generated/delivered waveforms with signal, ten seed
   traces, native/Web selection parity, paired hidden-state observers, strict
   negative manifest cases, hostile capability/rebind cases, deterministic

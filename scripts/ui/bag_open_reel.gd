@@ -1,6 +1,8 @@
 class_name BagOpenReel
 extends Control
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 signal close_requested
 
 const PANEL_SIZE := Vector2(1040, 620)
@@ -34,8 +36,8 @@ func configure(texture_provider: Callable) -> void:
 
 func open(model: Dictionary) -> void:
 	_model = model.duplicate(true)
-	_sequence = _dictionary_array(_model.get("sequence", []))
-	_contents = _dictionary_array(_model.get("contents", []))
+	_sequence = JsonCoerceScript._dictionary_array(_model.get("sequence", []))
+	_contents = JsonCoerceScript._dictionary_array(_model.get("contents", []))
 	_reduced_motion = bool(_model.get("reduce_motion", false))
 	_elapsed_sec = float(_model.get("spin_duration_sec", 0.0)) if _reduced_motion else 0.0
 	_spin_complete = _reduced_motion or float(_model.get("spin_duration_sec", 0.0)) <= 0.0
@@ -89,7 +91,7 @@ func layout_snapshot() -> Dictionary:
 		"component": str(_model.get("component", "")),
 		"committed_instance_id": int(_model.get("committed_instance_id", 0)),
 		"committed_itemdef_id": int(_model.get("committed_itemdef_id", -1)),
-		"landing_itemdef_id": int(_copy_dict(_model.get("committed_item", {})).get("itemdef_id", -1)),
+		"landing_itemdef_id": int(JsonCoerceScript._copy_dict(_model.get("committed_item", {})).get("itemdef_id", -1)),
 		"landing_index": int(_model.get("landing_index", 0)),
 		"sequence_count": _sequence.size(),
 		"contents_count": _contents.size(),
@@ -302,17 +304,3 @@ func _draw_label(text: String, pos: Vector2, font_size: int, color: Color) -> vo
 func _draw_centered(text: String, rect: Rect2, font_size: int, color: Color) -> void:
 	draw_string(get_theme_default_font(), rect.position + Vector2(1, rect.size.y), text, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, font_size, Color(0, 0, 0, 0.70))
 	draw_string(get_theme_default_font(), rect.position + Vector2(0, rect.size.y - 1), text, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, font_size, color)
-
-
-func _dictionary_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry in value:
-		if typeof(entry) == TYPE_DICTIONARY:
-			result.append((entry as Dictionary).duplicate(true))
-	return result
-
-
-func _copy_dict(value: Variant) -> Dictionary:
-	return (value as Dictionary).duplicate(true) if typeof(value) == TYPE_DICTIONARY else {}

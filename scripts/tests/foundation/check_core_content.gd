@@ -1,5 +1,8 @@
 extends SceneTree
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+const FoundationTestHarnessScript := preload("res://scripts/tests/foundation/foundation_test_harness.gd")
+
 # Smoke test for production content and foundation contracts.
 
 const ContentLibraryScript := preload("res://scripts/core/content_library.gd")
@@ -426,17 +429,16 @@ func _foundation_init_after_tree_ready() -> void:
 		return
 	_foundation_active_suite = str(options.get("suite", "contracts"))
 	var failures: Array = []
+	var harness = FoundationTestHarnessScript.new(failures)
 	var ready_sentinel := FoundationRunnerReadySentinel.new()
 	root.add_child(ready_sentinel)
-	if not ready_sentinel.ready_seen:
-		failures.append("Foundation runner deferred start did not attach nodes through _ready.")
+	harness._expect(ready_sentinel.ready_seen, "Foundation runner deferred start did not attach nodes through _ready.", {"suite": _foundation_active_suite})
 	ready_sentinel.free()
 	var report := _foundation_report(_foundation_active_suite)
 	var requested_check_ids: Array = options.get("check_ids", [])
 	for check_id_value in requested_check_ids:
 		var check_id := str(check_id_value)
-		if _foundation_requested_check_ids.has(check_id):
-			failures.append("Foundation check filter contains duplicate id: %s." % check_id)
+		harness._expect(not _foundation_requested_check_ids.has(check_id), "Foundation check filter contains duplicate id.", {"check_id": check_id})
 		_foundation_requested_check_ids[check_id] = true
 	report["requested_check_ids"] = requested_check_ids.duplicate()
 	var content_library: ContentLibrary = ContentLibraryScript.new()
@@ -447,14 +449,11 @@ func _foundation_init_after_tree_ready() -> void:
 	_foundation_content_library_fingerprint = _foundation_library_fingerprint(content_library)
 	_foundation_fixture_library_fingerprint = _foundation_library_fingerprint(fixture_library)
 	var supported_suites := _foundation_runner_supported_suites()
-	if not supported_suites.has(_foundation_active_suite):
-		failures.append("Foundation runner %s does not support suite '%s'; supported suites: %s." % [get_script().resource_path, _foundation_active_suite, ", ".join(supported_suites)])
-	else:
+	if harness._expect(supported_suites.has(_foundation_active_suite), "Foundation runner does not support the requested suite.", {"runner": get_script().resource_path, "suite": _foundation_active_suite, "supported_suites": supported_suites}):
 		_foundation_run_suite(_foundation_active_suite, content_library, fixture_library, failures, report)
 	var registered_check_ids: Array = report.get("registered_check_ids", [])
 	for check_id_value in requested_check_ids:
-		if not registered_check_ids.has(str(check_id_value)):
-			failures.append("Foundation check filter requested unregistered id: %s." % str(check_id_value))
+		harness._expect(registered_check_ids.has(str(check_id_value)), "Foundation check filter requested an unregistered id.", {"check_id": str(check_id_value)})
 	report["duration_msec"] = Time.get_ticks_msec() - int(report.get("started_msec", 0))
 	report["failure_count"] = failures.size()
 	report["failures"] = failures.duplicate()
@@ -1317,17 +1316,17 @@ func _check_scenario_engine_foundation(library: ContentLibrary, failures: Array)
 	phase_run.start_new("SCENARIO-PHASE")
 	var phased := EnvironmentInstance.from_archetype(library.environment_archetype("bar"), 1, phase_run.create_rng("bar"), library, {}, bar_definition).to_dict()
 	phase_run.set_environment(phased)
-	if str(phase_run.current_environment.get("scenario_id", "")) != "bar_fight_night" or str(_copy_dict(phase_run.current_environment.get("scenario_presentation", {})).get("signage_line", "")) != "UNDERCARD STARTS SOON.":
+	if str(phase_run.current_environment.get("scenario_id", "")) != "bar_fight_night" or str(JsonCoerceScript._copy_dict(phase_run.current_environment.get("scenario_presentation", {})).get("signage_line", "")) != "UNDERCARD STARTS SOON.":
 		failures.append("Selected scenario was not applied at environment generation time.")
 	var legacy_before_dynamic_probe := JSON.stringify(phase_run.current_environment)
 	var legacy_dynamic_probe := phase_run.scenario_enqueue_fact("world_boundary", "scenario", {"amount": 1, "action_index": 1}, "legacy:inactive")
-	if not bool(legacy_dynamic_probe.get("inactive", false)) or bool(legacy_dynamic_probe.get("ok", true)) or not _copy_array(legacy_dynamic_probe.get("errors", [])).is_empty() or JSON.stringify(phase_run.current_environment) != legacy_before_dynamic_probe:
+	if not bool(legacy_dynamic_probe.get("inactive", false)) or bool(legacy_dynamic_probe.get("ok", true)) or not JsonCoerceScript._copy_array(legacy_dynamic_probe.get("errors", [])).is_empty() or JSON.stringify(phase_run.current_environment) != legacy_before_dynamic_probe:
 		failures.append("A nonempty legacy scenario definition did not bypass dynamic fact ingress byte-identically.")
 	phase_run.advance_environment_turns(1)
 	if int(phase_run.current_environment.get("scenario_phase_index", -1)) != 0 or int(phase_run.current_environment.get("scenario_phase_action_counter", -1)) != 1:
 		failures.append("Scenario phase advanced before its authored action boundary.")
 	phase_run.advance_environment_turns(2)
-	if int(phase_run.current_environment.get("scenario_phase_index", -1)) != 1 or str(_copy_dict(phase_run.current_environment.get("scenario_presentation", {})).get("signage_line", "")) != "THE BOUT IS LIVE.":
+	if int(phase_run.current_environment.get("scenario_phase_index", -1)) != 1 or str(JsonCoerceScript._copy_dict(phase_run.current_environment.get("scenario_presentation", {})).get("signage_line", "")) != "THE BOUT IS LIVE.":
 		failures.append("Fight Night did not advance from prefight to bout on its third action boundary.")
 	phase_run.advance_environment_turns(1)
 	var mid_phase := RunStateScript.new()
@@ -1337,7 +1336,7 @@ func _check_scenario_engine_foundation(library: ContentLibrary, failures: Array)
 	if int(mid_phase.current_environment.get("scenario_phase_index", -1)) != 1 or int(mid_phase.current_environment.get("scenario_phase_action_counter", -1)) != 1:
 		failures.append("Fight Night save/load did not preserve the mid-bout action counter.")
 	mid_phase.advance_environment_turns(3)
-	if int(mid_phase.current_environment.get("scenario_phase_index", -1)) != 2 or int(mid_phase.current_environment.get("scenario_phase_action_counter", -1)) != 0 or str(_copy_dict(mid_phase.current_environment.get("scenario_presentation", {})).get("signage_line", "")) != "THE TAPE GETS SWEPT UP.":
+	if int(mid_phase.current_environment.get("scenario_phase_index", -1)) != 2 or int(mid_phase.current_environment.get("scenario_phase_action_counter", -1)) != 0 or str(JsonCoerceScript._copy_dict(mid_phase.current_environment.get("scenario_presentation", {})).get("signage_line", "")) != "THE TAPE GETS SWEPT UP.":
 		failures.append("Fight Night did not advance from bout to aftermath on its fourth bout action boundary.")
 
 	var deterministic_a := _scenario_full_generation("SCENARIO-DETERMINISM", library, failures)
@@ -1412,7 +1411,7 @@ func _check_scenario_engine_foundation(library: ContentLibrary, failures: Array)
 	var pinned_run := RunStateScript.new()
 	pinned_run.start_new("SCENARIO-PIN", RunStateScript.custom_challenge("scenario_pin", "SCENARIO-PIN", {"scenario_pins": {"bar": "bar_lock_in"}}))
 	var pinned: Dictionary = repeat_generator.call("_select_scenario", pinned_run, "bar", pinned_run.create_rng("pin"))
-	if str(pinned.get("id", "")) != "bar_lock_in" or _copy_dict(pinned.get("mutations", {})).is_empty():
+	if str(pinned.get("id", "")) != "bar_lock_in" or JsonCoerceScript._copy_dict(pinned.get("mutations", {})).is_empty():
 		failures.append("Challenge scenario pin did not select the configured scenario.")
 	var excluded_ids: Array = []
 	for excluded_definition_value in library.scenarios_for_archetype("bar"):
@@ -1446,21 +1445,21 @@ func _check_scenario_engine_foundation(library: ContentLibrary, failures: Array)
 	var axes_run := RunStateScript.new()
 	axes_run.start_new("SCENARIO-AXES")
 	var axes_environment := EnvironmentInstance.from_archetype(library.environment_archetype("bar"), 1, axes_run.create_rng("axes"), library, {}, all_axes).to_dict()
-	if not _string_array(axes_environment.get("scenario_patron_ids", [])).has("fixture_patron") \
-		or not _string_array(axes_environment.get("scenario_staff_ids", [])).has("fixture_staff") \
-		or not _string_array(axes_environment.get("event_ids", [])).has("rowdy_regular") \
-		or not _string_array(axes_environment.get("service_ids", [])).has("house_drink") \
-		or not bool(_copy_dict(axes_environment.get("scenario_game_modifiers", {})).get("fixture", false)) \
-		or str(_copy_dict(axes_environment.get("scenario_presentation", {})).get("signage_line", "")) != "FIXTURE" \
-		or str(_copy_dict(axes_environment.get("security_profile", {})).get("strictness_band", "")) != "fixture" \
-		or not bool(_copy_dict(axes_environment.get("scenario_hook_flags", {})).get("rumor_anchor", false)):
+	if not JsonCoerceScript._raw_string_array(axes_environment.get("scenario_patron_ids", [])).has("fixture_patron") \
+		or not JsonCoerceScript._raw_string_array(axes_environment.get("scenario_staff_ids", [])).has("fixture_staff") \
+		or not JsonCoerceScript._raw_string_array(axes_environment.get("event_ids", [])).has("rowdy_regular") \
+		or not JsonCoerceScript._raw_string_array(axes_environment.get("service_ids", [])).has("house_drink") \
+		or not bool(JsonCoerceScript._copy_dict(axes_environment.get("scenario_game_modifiers", {})).get("fixture", false)) \
+		or str(JsonCoerceScript._copy_dict(axes_environment.get("scenario_presentation", {})).get("signage_line", "")) != "FIXTURE" \
+		or str(JsonCoerceScript._copy_dict(axes_environment.get("security_profile", {})).get("strictness_band", "")) != "fixture" \
+		or not bool(JsonCoerceScript._copy_dict(axes_environment.get("scenario_hook_flags", {})).get("rumor_anchor", false)):
 		failures.append("Scenario mutation application did not cover every allowed Tonight System axis.")
 	var probe_environment := axes_environment.duplicate(true)
 	probe_environment["game_ids"] = ["blackjack"]
 	var probe_generator := ScenarioModifierProbeGenerator.new(library)
 	var probe_states: Dictionary = probe_generator.call("_generated_game_states", axes_run, probe_environment, axes_run.create_rng("scenario_game_modifier_probe"))
-	var probe_state := _copy_dict(probe_states.get("blackjack", {}))
-	var received_modifiers := _copy_dict(probe_state.get("received_scenario_game_modifiers", {}))
+	var probe_state := JsonCoerceScript._copy_dict(probe_states.get("blackjack", {}))
+	var received_modifiers := JsonCoerceScript._copy_dict(probe_state.get("received_scenario_game_modifiers", {}))
 	if not bool(received_modifiers.get("fixture", false)):
 		failures.append("Scenario game modifier hooks did not reach GameModule.generate_environment_state.")
 
@@ -1492,7 +1491,7 @@ func _check_tier1_scenario_content(library: ContentLibrary, failures: Array) -> 
 	for archetype_value in library.environment_archetypes:
 		if typeof(archetype_value) != TYPE_DICTIONARY:
 			continue
-		for event_id_value in _string_array((archetype_value as Dictionary).get("event_pool", [])):
+		for event_id_value in JsonCoerceScript._raw_string_array((archetype_value as Dictionary).get("event_pool", [])):
 			base_event_ids[str(event_id_value)] = true
 	var found_ids: Array = []
 	var exclusive_ids: Array = []
@@ -1514,7 +1513,7 @@ func _check_tier1_scenario_content(library: ContentLibrary, failures: Array) -> 
 				failures.append("Tier-1 scenario %s is still marked as placeholder content." % scenario_id)
 			if scenario.has("layer_id"):
 				failures.append("Ordinary tier-1 scenario %s must omit the Punchline-only layer_id field." % scenario_id)
-			var mutations := _copy_dict(scenario.get("mutations", {}))
+			var mutations := JsonCoerceScript._copy_dict(scenario.get("mutations", {}))
 			var axis_count := 0
 			if mutations.has("patron_set") or mutations.has("staff_set"):
 				axis_count += 1
@@ -1525,16 +1524,16 @@ func _check_tier1_scenario_content(library: ContentLibrary, failures: Array) -> 
 					axis_count += 1
 			if axis_count < 3:
 				failures.append("Tier-1 scenario %s mutates only %d Tonight axes." % [scenario_id, axis_count])
-			var presentation := _copy_dict(mutations.get("presentation", {}))
+			var presentation := JsonCoerceScript._copy_dict(mutations.get("presentation", {}))
 			for presentation_key in ["palette_tint", "crowd_density", "signage_line"]:
 				if str(presentation.get(presentation_key, "")).strip_edges().is_empty():
 					failures.append("Tier-1 scenario %s is missing presentation.%s." % [scenario_id, presentation_key])
-			if _copy_dict(mutations.get("music_profile_override", {})).is_empty():
+			if JsonCoerceScript._copy_dict(mutations.get("music_profile_override", {})).is_empty():
 				failures.append("Tier-1 scenario %s has no music-profile distinction." % scenario_id)
-			var scenario_events := _string_array(mutations.get("event_pool_add", []))
+			var scenario_events := JsonCoerceScript._raw_string_array(mutations.get("event_pool_add", []))
 			if scenario_events.size() < 1 or scenario_events.size() > 3:
 				failures.append("Tier-1 scenario %s must author one to three exclusive events." % scenario_id)
-			var opportunity_id := str(_copy_dict(mutations.get("exclusive_opportunity", {})).get("event_id", ""))
+			var opportunity_id := str(JsonCoerceScript._copy_dict(mutations.get("exclusive_opportunity", {})).get("event_id", ""))
 			if opportunity_id.is_empty() or not scenario_events.has(opportunity_id):
 				failures.append("Tier-1 scenario %s does not guarantee one of its exclusive events." % scenario_id)
 			for event_id_value in scenario_events:
@@ -1543,7 +1542,7 @@ func _check_tier1_scenario_content(library: ContentLibrary, failures: Array) -> 
 				if bool(base_event_ids.get(event_id, false)):
 					failures.append("Scenario-exclusive event %s leaked into an archetype base pool." % event_id)
 				var event_definition := library.event(event_id)
-				var choices := _copy_array(_copy_dict(event_definition.get("payload", {})).get("choices", []))
+				var choices := JsonCoerceScript._copy_array(JsonCoerceScript._copy_dict(event_definition.get("payload", {})).get("choices", []))
 				if event_definition.is_empty() or choices.is_empty():
 					failures.append("Scenario-exclusive event %s has no usable current-engine choice." % event_id)
 					continue
@@ -1563,7 +1562,7 @@ func _check_tier1_scenario_content(library: ContentLibrary, failures: Array) -> 
 	for expected_id_value in expected_ids:
 		if not found_ids.has(str(expected_id_value)):
 			failures.append("Tier-1 launch scenario is missing: %s." % str(expected_id_value))
-	if str(_copy_dict(library.scenario("back_alley_street_craps").get("mutations", {})).get("game_modifier_hooks", {}).get("game_hook", "")) != "street_craps":
+	if str(JsonCoerceScript._copy_dict(library.scenario("back_alley_street_craps").get("mutations", {})).get("game_modifier_hooks", {}).get("game_hook", "")) != "street_craps":
 		failures.append("Street Craps scenario shell lost its inert game_hook seam.")
 	var required_anchors := {
 		"bar_fight_night": ["recruitment_anchor", "knuckles"],
@@ -1572,12 +1571,12 @@ func _check_tier1_scenario_content(library: ContentLibrary, failures: Array) -> 
 	}
 	for scenario_id_value in required_anchors.keys():
 		var anchor: Array = required_anchors.get(scenario_id_value, [])
-		var hooks := _copy_dict(_copy_dict(library.scenario(str(scenario_id_value)).get("mutations", {})).get("hook_flags", {}))
+		var hooks := JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(library.scenario(str(scenario_id_value)).get("mutations", {})).get("hook_flags", {}))
 		if str(hooks.get(str(anchor[0]), "")) != str(anchor[1]):
 			failures.append("Tier-1 scenario %s lost its %s anchor." % [str(scenario_id_value), str(anchor[1])])
-	var graveyard := _copy_dict(library.scenario("gas_station_graveyard_shift").get("mutations", {}))
-	var graveyard_security := _copy_dict(graveyard.get("security_overrides", {}))
-	var graveyard_hooks := _copy_dict(graveyard.get("hook_flags", {}))
+	var graveyard := JsonCoerceScript._copy_dict(library.scenario("gas_station_graveyard_shift").get("mutations", {}))
+	var graveyard_security := JsonCoerceScript._copy_dict(graveyard.get("security_overrides", {}))
+	var graveyard_hooks := JsonCoerceScript._copy_dict(graveyard.get("hook_flags", {}))
 	if str(graveyard_security.get("machine_alarm_tolerance_band", "")) != "lax" or not bool(graveyard_hooks.get("maintenance_cheat_window", false)):
 		failures.append("Graveyard Shift lost its lax alarm band or maintenance cheat-window seam.")
 	var expected_phases := {
@@ -1587,7 +1586,7 @@ func _check_tier1_scenario_content(library: ContentLibrary, failures: Array) -> 
 	}
 	for scenario_id_value in expected_phases.keys():
 		var phase_ids: Array = []
-		for phase_value in _copy_array(library.scenario(str(scenario_id_value)).get("phases", [])):
+		for phase_value in JsonCoerceScript._copy_array(library.scenario(str(scenario_id_value)).get("phases", [])):
 			phase_ids.append(str((phase_value as Dictionary).get("id", "")))
 		if phase_ids != expected_phases.get(scenario_id_value, []):
 			failures.append("Scenario %s lost its authored phase arc." % str(scenario_id_value))
@@ -1606,21 +1605,21 @@ func _check_tier1_scenario_content(library: ContentLibrary, failures: Array) -> 
 		if not bool(reached.get(str(expected_id_value), false)):
 			failures.append("Tier-1 scenario was starved across the real 20-seed selector sweep: %s." % str(expected_id_value))
 	var tutorial_config := library.challenge_config_for("tutorial_first_card", "TIER1-TUTORIAL-PIN")
-	var tutorial_modifiers := _copy_dict(tutorial_config.get("modifiers", {}))
-	if bool(tutorial_modifiers.get("scenario_pins_apply_mutations", true)) or str(_copy_dict(tutorial_modifiers.get("scenario_pins", {})).get("corner_store", "")) != "corner_store_delivery_day":
+	var tutorial_modifiers := JsonCoerceScript._copy_dict(tutorial_config.get("modifiers", {}))
+	if bool(tutorial_modifiers.get("scenario_pins_apply_mutations", true)) or str(JsonCoerceScript._copy_dict(tutorial_modifiers.get("scenario_pins", {})).get("corner_store", "")) != "corner_store_delivery_day":
 		failures.append("Tutorial challenge does not pin the neutral Delivery Day identity overlay.")
 	var tutorial_run := RunStateScript.new()
 	tutorial_run.start_new("TIER1-TUTORIAL-PIN", tutorial_config)
 	var tutorial_generator := RunGeneratorScript.new(library)
 	var tutorial_pin: Dictionary = tutorial_generator.call("_select_scenario", tutorial_run, "corner_store", tutorial_run.create_rng("tutorial_pin"))
-	if str(tutorial_pin.get("id", "")) != "corner_store_delivery_day" or not _copy_dict(tutorial_pin.get("mutations", {})).is_empty() or not _copy_array(tutorial_pin.get("phases", [])).is_empty() or not bool(tutorial_pin.get(ScenarioEngineScript.SEQUENCE_SUPPRESSION_KEY, false)) or tutorial_pin.has("sequence"):
+	if str(tutorial_pin.get("id", "")) != "corner_store_delivery_day" or not JsonCoerceScript._copy_dict(tutorial_pin.get("mutations", {})).is_empty() or not JsonCoerceScript._copy_array(tutorial_pin.get("phases", [])).is_empty() or not bool(tutorial_pin.get(ScenarioEngineScript.SEQUENCE_SUPPRESSION_KEY, false)) or tutorial_pin.has("sequence"):
 		failures.append("Tutorial neutral pin did not preserve identity while suppressing every scenario mutation and phase.")
 	for controlled_archetype_id in ["gas_station_casino", "small_underground_casino", "grand_casino"]:
 		var controlled_scenario: Dictionary = tutorial_generator.call("_select_scenario", tutorial_run, controlled_archetype_id, tutorial_run.create_rng("tutorial_controlled:%s" % controlled_archetype_id))
 		if not controlled_scenario.is_empty():
 			failures.append("Tutorial controlled environment %s unexpectedly selected scenario %s." % [controlled_archetype_id, str(controlled_scenario.get("id", ""))])
 	var ordinary_selector_config := RunStateScript.standard_challenge("TIER1-ORDINARY-SELECTOR")
-	var ordinary_selector_modifiers := _copy_dict(ordinary_selector_config.get("modifiers", {}))
+	var ordinary_selector_modifiers := JsonCoerceScript._copy_dict(ordinary_selector_config.get("modifiers", {}))
 	ordinary_selector_modifiers["scenario_pins"] = {"corner_store": "corner_store_delivery_day"}
 	ordinary_selector_modifiers["scenario_pins_apply_mutations"] = true
 	ordinary_selector_config["modifiers"] = ordinary_selector_modifiers
@@ -1652,7 +1651,7 @@ func _check_tier1_scenario_content(library: ContentLibrary, failures: Array) -> 
 	var legacy_seeded := legacy_neutral_run.seed_scenario_for_node("corner_store", legacy_neutral_definition)
 	var legacy_neutral_generator := RunGeneratorScript.new(library)
 	var upgraded_neutral: Dictionary = legacy_neutral_generator.call("_select_scenario", legacy_neutral_run, "corner_store", legacy_neutral_run.create_rng("legacy_neutral"))
-	if not legacy_seeded or not bool(upgraded_neutral.get(ScenarioEngineScript.SEQUENCE_SUPPRESSION_KEY, false)) or upgraded_neutral.has("sequence") or not _copy_dict(upgraded_neutral.get("mutations", {})).is_empty() or not _copy_array(upgraded_neutral.get("phases", [])).is_empty():
+	if not legacy_seeded or not bool(upgraded_neutral.get(ScenarioEngineScript.SEQUENCE_SUPPRESSION_KEY, false)) or upgraded_neutral.has("sequence") or not JsonCoerceScript._copy_dict(upgraded_neutral.get("mutations", {})).is_empty() or not JsonCoerceScript._copy_array(upgraded_neutral.get("phases", [])).is_empty():
 		failures.append("A legacy mutation-suppressed tutorial seed was not upgraded before sequence resolution.")
 	var controlled_run := RunStateScript.new()
 	controlled_run.start_new("TIER1-TUTORIAL-CONTROLLED", tutorial_config)
@@ -1663,7 +1662,7 @@ func _check_tier1_scenario_content(library: ContentLibrary, failures: Array) -> 
 	for sensitive_key in ["game_ids", "event_ids", "item_offers", "service_ids", "economic_profile", "security_profile", "visual_context", "next_archetypes", "travel_hooks", "object_fixtures", "local_narrative_flags"]:
 		if JSON.stringify(pinned_environment.get(sensitive_key)) != JSON.stringify(neutral_environment.get(sensitive_key)):
 			failures.append("Tutorial neutral scenario pin changed controlled environment field %s." % sensitive_key)
-	if not _copy_dict(pinned_environment.get("scenario_presentation", {})).is_empty() or not _copy_dict(neutral_environment.get("scenario_presentation", {})).is_empty():
+	if not JsonCoerceScript._copy_dict(pinned_environment.get("scenario_presentation", {})).is_empty() or not JsonCoerceScript._copy_dict(neutral_environment.get("scenario_presentation", {})).is_empty():
 		failures.append("Tutorial neutral scenario pin leaked presentation values into the controlled room.")
 	for forbidden_sequence_key in ["scenario_sequence_state", "scenario_sequence_projection", "scenario_render_snapshot", "scenario_sequence_migration", "scenario_sequence_definition"]:
 		if pinned_environment.has(forbidden_sequence_key):
@@ -1722,14 +1721,14 @@ func _check_tier1_scenario_content(library: ContentLibrary, failures: Array) -> 
 		or rollback_probe.town_state.living_world.seeded_scenario_definitions_by_node.has("rollback_outer_map_probe"):
 		failures.append("Travel rollback did not restore its worker-safe snapshot byte-identically.")
 	_harness_arrive(stored_generator, stored_run, failures, "tutorial stored Corner Store arrival", "corner_store", true)
-	if str(stored_run.scenario_for_node("corner_store").get("id", "")) != "corner_store_delivery_day" or not _copy_dict(stored_run.current_environment.get("scenario_exclusive_opportunity", {})).is_empty() or not _copy_dict(stored_run.current_environment.get("scenario_hook_flags", {})).is_empty():
+	if str(stored_run.scenario_for_node("corner_store").get("id", "")) != "corner_store_delivery_day" or not JsonCoerceScript._copy_dict(stored_run.current_environment.get("scenario_exclusive_opportunity", {})).is_empty() or not JsonCoerceScript._copy_dict(stored_run.current_environment.get("scenario_hook_flags", {})).is_empty():
 		failures.append("Tutorial neutral pin did not store scenario identity without opportunity or hook leakage.")
 	if JSON.stringify(stored_run.seeded_scenario_definition_for_node("corner_store")) != tutorial_seeded_bytes \
-		or not _copy_dict(tutorial_seeded_before_entry.get("mutations", {})).is_empty() \
-		or not _copy_array(tutorial_seeded_before_entry.get("phases", [])).is_empty():
+		or not JsonCoerceScript._copy_dict(tutorial_seeded_before_entry.get("mutations", {})).is_empty() \
+		or not JsonCoerceScript._copy_array(tutorial_seeded_before_entry.get("phases", [])).is_empty():
 		failures.append("Tutorial pre-seed-to-entry did not preserve the canonical suppressed selection byte-identically.")
 	var ordinary_config := RunStateScript.standard_challenge("TIER1-ORDINARY-STORED")
-	var ordinary_modifiers := _copy_dict(ordinary_config.get("modifiers", {}))
+	var ordinary_modifiers := JsonCoerceScript._copy_dict(ordinary_config.get("modifiers", {}))
 	ordinary_modifiers["scenario_pins"] = {"corner_store": "corner_store_delivery_day"}
 	ordinary_modifiers["scenario_pins_apply_mutations"] = true
 	ordinary_config["modifiers"] = ordinary_modifiers
@@ -1740,12 +1739,12 @@ func _check_tier1_scenario_content(library: ContentLibrary, failures: Array) -> 
 	var ordinary_seeded := ordinary_run.seeded_scenario_definition_for_node("corner_store")
 	var ordinary_seeded_bytes := JSON.stringify(ordinary_seeded)
 	_harness_arrive(ordinary_generator, ordinary_run, failures, "ordinary stored Corner Store arrival", "corner_store", true)
-	if _copy_dict(ordinary_seeded.get("mutations", {})).is_empty() \
+	if JsonCoerceScript._copy_dict(ordinary_seeded.get("mutations", {})).is_empty() \
 		or bool(ordinary_seeded.get(ScenarioEngineScript.SEQUENCE_SUPPRESSION_KEY, false)) \
 		or ordinary_seeded.has("sequence") != authored_delivery.has("sequence") \
 		or JSON.stringify(ordinary_run.seeded_scenario_definition_for_node("corner_store")) != ordinary_seeded_bytes \
-		or str(_copy_dict(ordinary_run.current_environment.get("scenario_exclusive_opportunity", {})).get("event_id", "")) != "scenario_delivery_day_stock" \
-		or not bool(_copy_dict(ordinary_run.current_environment.get("scenario_hook_flags", {})).get("delivery_day", false)):
+		or str(JsonCoerceScript._copy_dict(ordinary_run.current_environment.get("scenario_exclusive_opportunity", {})).get("event_id", "")) != "scenario_delivery_day_stock" \
+		or not bool(JsonCoerceScript._copy_dict(ordinary_run.current_environment.get("scenario_hook_flags", {})).get("delivery_day", false)):
 		failures.append("Ordinary pre-seeded Delivery Day did not preserve and apply its full authored mutations on entry.")
 
 
@@ -2017,10 +2016,10 @@ func _check_connected_town_foundation(library: ContentLibrary, failures: Array) 
 	if not bool(rumor_result.get("ok", false)):
 		failures.append("Staff rumor event could not resolve through the existing event surface.")
 	var heard_node := WorldMapScript.node_metadata_by_id(run_state.world_map, "bar")
-	if heard.is_empty() or _copy_dict(heard_node.get("heard", {})).is_empty() or bool(heard_node.get("scouted", false)):
+	if heard.is_empty() or JsonCoerceScript._copy_dict(heard_node.get("heard", {})).is_empty() or bool(heard_node.get("scouted", false)):
 		failures.append("Hearing a rumor did not write the distinct heard-tier map payload without granting full scouting.")
 	var heard_preview := run_state.travel_route_preview({"destination_archetype": "bar"}, library.environment_archetype("bar"), {}, false)
-	if str(heard_preview.get("level", "")) != "heard" or heard_preview.has("game_ids") or heard_preview.has("service_ids") or not str(_copy_array(heard_preview.get("lines", []))[1]).contains(str(seeded_bar.get("display_name", ""))):
+	if str(heard_preview.get("level", "")) != "heard" or heard_preview.has("game_ids") or heard_preview.has("service_ids") or not str(JsonCoerceScript._copy_array(heard_preview.get("lines", []))[1]).contains(str(seeded_bar.get("display_name", ""))):
 		failures.append("Heard-tier preview leaked full scouting fields or omitted the traced scenario name.")
 	var before_entry_seed := str(seeded_bar.get("id", ""))
 	var saved_before_entry := run_state.to_dict()
@@ -2095,15 +2094,15 @@ func _check_connected_town_foundation(library: ContentLibrary, failures: Array) 
 			var cass_environment := library.environment_archetype(cass_node).duplicate(true)
 			cass_environment["world_node_id"] = cass_node
 			cass_run.apply_town_living_world_context(cass_environment)
-			if not bool(_copy_dict(cass_environment.get("local_narrative_flags", {})).get("rival_worked_here", false)) \
-				or int(_copy_dict(cass_environment.get("security_profile", {})).get("rival_table_attention_delta", 0)) <= 0:
+			if not bool(JsonCoerceScript._copy_dict(cass_environment.get("local_narrative_flags", {})).get("rival_worked_here", false)) \
+				or int(JsonCoerceScript._copy_dict(cass_environment.get("security_profile", {})).get("rival_table_attention_delta", 0)) <= 0:
 				failures.append("Cass's departed-node modifier did not reach generated venue attention context.")
 			cass_run.advance_environment_turns(int(cass_modifier.get("remaining_actions", 0)))
 			if not cass_run.town_state.departed_traveler_modifier(cass_node, "cass_rival_counter").is_empty():
 				failures.append("Cass's rival_worked_here modifier did not decay at its data-authored boundary.")
 			cass_run.apply_town_living_world_context(cass_environment)
-			if bool(_copy_dict(cass_environment.get("local_narrative_flags", {})).get("rival_worked_here", false)) \
-				or _copy_dict(cass_environment.get("security_profile", {})).has("rival_table_attention_delta"):
+			if bool(JsonCoerceScript._copy_dict(cass_environment.get("local_narrative_flags", {})).get("rival_worked_here", false)) \
+				or JsonCoerceScript._copy_dict(cass_environment.get("security_profile", {})).has("rival_table_attention_delta"):
 				failures.append("Cass's generated venue context retained the modifier after its decay boundary.")
 
 	var silas_event := EventModuleScript.new()
@@ -2130,12 +2129,12 @@ func _check_connected_town_foundation(library: ContentLibrary, failures: Array) 
 		var adjacent_environment := library.environment_archetype(adjacent_node).duplicate(true)
 		adjacent_environment["world_node_id"] = adjacent_node
 		run_state.apply_town_generation_modifiers(adjacent_environment)
-		if int(_copy_dict(adjacent_environment.get("security_profile", {})).get("town_door_strictness_delta", 0)) <= 0:
+		if int(JsonCoerceScript._copy_dict(adjacent_environment.get("security_profile", {})).get("town_door_strictness_delta", 0)) <= 0:
 			failures.append("Environment generation did not consume the adjacent reputation door-strictness band.")
 		var reputation_event := EventModuleScript.new()
 		reputation_event.setup(library.event("town_reputation_reaction"), library)
 		var reputation_choices := reputation_event.choices(run_state, adjacent_environment)
-		var expected_staff_line := str(_copy_dict(adjacent_environment.get("town_reputation", {})).get("staff_line", ""))
+		var expected_staff_line := str(JsonCoerceScript._copy_dict(adjacent_environment.get("town_reputation", {})).get("staff_line", ""))
 		if reputation_choices.is_empty() or expected_staff_line.is_empty() \
 			or str((reputation_choices[0] as Dictionary).get("text", "")) != expected_staff_line:
 			failures.append("Traveling reputation did not feed its selected staff line into the existing event surface.")
@@ -2190,7 +2189,7 @@ func _check_connected_town_foundation(library: ContentLibrary, failures: Array) 
 	if JSON.stringify(round_trip.town_snapshot()) != JSON.stringify(run_state.town_snapshot()):
 		failures.append("Rumor, itinerary, and reputation state did not round-trip together.")
 	var legacy := run_state.to_dict()
-	var legacy_town := _copy_dict(legacy.get("town_state", {}))
+	var legacy_town := JsonCoerceScript._copy_dict(legacy.get("town_state", {}))
 	legacy_town.erase("living_world")
 	legacy["town_state"] = legacy_town
 	var migrated := RunStateScript.new()
@@ -2309,7 +2308,7 @@ func _first_event_choice_fixture(library: ContentLibrary) -> Dictionary:
 			continue
 		var event: Dictionary = event_value
 		var payload: Dictionary = event.get("payload", {}) if typeof(event.get("payload", {})) == TYPE_DICTIONARY else {}
-		for choice_value in _copy_array(payload.get("choices", [])):
+		for choice_value in JsonCoerceScript._copy_array(payload.get("choices", [])):
 			if typeof(choice_value) != TYPE_DICTIONARY:
 				continue
 			var choice: Dictionary = (choice_value as Dictionary).duplicate(true)
@@ -2411,9 +2410,9 @@ func _check_destination_decision_contract(library: ContentLibrary, failures: Arr
 	var underground_gameplay: Dictionary = underground_layers.get("casino", underground) if typeof(underground_layers.get("casino", underground)) == TYPE_DICTIONARY else underground
 	var gas_route := library.route("gas_station_casino")
 	var underground_route := library.route("small_underground_casino")
-	if _string_array(gas.get("game_pool", [])) == _string_array(underground_gameplay.get("game_pool", [])):
+	if JsonCoerceScript._raw_string_array(gas.get("game_pool", [])) == JsonCoerceScript._raw_string_array(underground_gameplay.get("game_pool", [])):
 		failures.append("Tutorial route branches share the same game pool.")
-	if _string_array(gas.get("event_pool", [])) == _string_array(underground_gameplay.get("event_pool", [])):
+	if JsonCoerceScript._raw_string_array(gas.get("event_pool", [])) == JsonCoerceScript._raw_string_array(underground_gameplay.get("event_pool", [])):
 		failures.append("Tutorial route branches share the same event pool.")
 	if str((gas.get("security_profile", {}) as Dictionary).get("strictness", "")) == str((underground_gameplay.get("security_profile", {}) as Dictionary).get("strictness", "")):
 		failures.append("Tutorial route branches share the same security consequence.")
@@ -2874,7 +2873,7 @@ func _check_environment_encounter_freshness(library: ContentLibrary, failures: A
 	if back_alley.is_empty():
 		failures.append("Encounter freshness fixture is missing the back_alley archetype.")
 		return
-	var lender_pool := _string_array(back_alley.get("lender_hooks", []))
+	var lender_pool := JsonCoerceScript._raw_string_array(back_alley.get("lender_hooks", []))
 	if lender_pool.size() < 2:
 		failures.append("Encounter freshness fixture expects Back Alley to expose at least two non-pawn-shop lender hooks.")
 		return
@@ -2947,8 +2946,8 @@ func _check_environment_game_pool_distribution(library: ContentLibrary, failures
 			var source_label := str(source.get("label", archetype_id))
 			var layer_id := str(source.get("layer_id", ""))
 			var definition: Dictionary = source.get("definition", {})
-			var game_pool := _string_array(definition.get("game_pool", []))
-			var required_games := _string_array(definition.get("required_game_ids", []))
+			var game_pool := JsonCoerceScript._raw_string_array(definition.get("game_pool", []))
+			var required_games := JsonCoerceScript._raw_string_array(definition.get("required_game_ids", []))
 			var game_count_ceiling := _item_count_ceiling(definition.get("game_count", 0))
 			if game_pool.is_empty():
 				if game_count_ceiling > 0:
@@ -2971,7 +2970,7 @@ func _check_environment_game_pool_distribution(library: ContentLibrary, failures
 				sample_run.start_new("POOL-%s-%s-%02d" % [archetype_id.to_upper(), layer_id.to_upper(), sample_index])
 				var sample_rng := sample_run.create_rng("game_pool_distribution")
 				var sample_environment := EnvironmentInstance.from_archetype(archetype, sample_index, sample_rng, library) if layer_id.is_empty() else EnvironmentInstance.from_archetype_layer(archetype, layer_id, sample_index, sample_rng, library)
-				var generated_games := _string_array(sample_environment.game_ids)
+				var generated_games := JsonCoerceScript._raw_string_array(sample_environment.game_ids)
 				for required_id in required_games:
 					if not generated_games.has(required_id):
 						failures.append("Environment %s failed to generate required game %s." % [source_label, required_id])
@@ -3011,14 +3010,14 @@ func _check_grand_casino_game_fixture_capacity(library: ContentLibrary, failures
 		var run_state: RunState = RunStateScript.new()
 		run_state.start_new("GRAND-CASINO-CAPACITY-%s" % room_id.to_upper())
 		var environment := EnvironmentInstance.from_archetype(archetype, 5, run_state.create_rng("grand_casino_capacity"), library).to_dict()
-		var layout := _copy_dict(environment.get("layout", {}))
-		var fixture_counts := _copy_dict(layout.get("game_fixture_counts", {}))
-		var logical_count := _string_array(environment.get("game_ids", [])).size()
+		var layout := JsonCoerceScript._copy_dict(environment.get("layout", {}))
+		var fixture_counts := JsonCoerceScript._copy_dict(layout.get("game_fixture_counts", {}))
+		var logical_count := JsonCoerceScript._raw_string_array(environment.get("game_ids", [])).size()
 		var rendered_count := 0
-		for game_id in _string_array(environment.get("game_ids", [])):
+		for game_id in JsonCoerceScript._raw_string_array(environment.get("game_ids", [])):
 			rendered_count += maxi(1, int(fixture_counts.get(game_id, 1)))
-		var authored_capacity := _copy_array(layout.get("game_spots", [])).size()
-		var expected := _copy_dict(expected_counts.get(room_id, {}))
+		var authored_capacity := JsonCoerceScript._copy_array(layout.get("game_spots", [])).size()
+		var expected := JsonCoerceScript._copy_dict(expected_counts.get(room_id, {}))
 		if logical_count != int(expected.get("logical", -1)) or rendered_count != int(expected.get("rendered", -1)):
 			failures.append("Grand Casino %s game fixture counts changed: logical=%d rendered=%d expected=%s." % [room_id, logical_count, rendered_count, JSON.stringify(expected)])
 		if rendered_count != authored_capacity:
@@ -3034,7 +3033,7 @@ func _check_grand_casino_game_fixture_capacity(library: ContentLibrary, failures
 	main_environment["lender_hooks"] = []
 	main_environment["travel_hooks"] = []
 	var game_states: Dictionary = {}
-	for game_id in _string_array(main_environment.get("game_ids", [])):
+	for game_id in JsonCoerceScript._raw_string_array(main_environment.get("game_ids", [])):
 		var game: GameModule = _load_surface_contract_game(library, game_id, failures)
 		if game == null:
 			continue
@@ -3045,7 +3044,7 @@ func _check_grand_casino_game_fixture_capacity(library: ContentLibrary, failures
 	main_environment["game_states"] = game_states
 	main_environment["world_map_travel"] = true
 	main_environment["layout"] = EnvironmentInstance.ensure_generated_layout(main_environment)
-	var object_rects := _copy_dict(_copy_dict(main_environment.get("layout", {})).get("object_rects", {}))
+	var object_rects := JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(main_environment.get("layout", {})).get("object_rects", {}))
 	for required_id in ["game:craps", "game_hook:pull_tabs:ticket_redeemer", "casino_fixture:host_desk"]:
 		if not object_rects.has(required_id):
 			failures.append("Grand Casino production-order layout regression is missing %s." % required_id)
@@ -3121,7 +3120,7 @@ func _check_high_risk_table_limit_overrides(library: ContentLibrary, failures: A
 			var rules: Dictionary = roulette_table.get("rules", {}) if typeof(roulette_table.get("rules", {})) == TYPE_DICTIONARY else {}
 			if int(rules.get("table_max", 0)) != int(venue_expected.get("roulette", 0)):
 				failures.append("%s roulette table did not generate the raised table max." % str(venue_id))
-			var chips := _copy_array(roulette_table.get("chip_denominations", []))
+			var chips := JsonCoerceScript._copy_array(roulette_table.get("chip_denominations", []))
 			if int(venue_expected.get("roulette", 0)) >= 100 and not chips.has(50):
 				failures.append("%s roulette high-limit table should expose a $50 chip." % str(venue_id))
 			if int(venue_expected.get("roulette", 0)) >= 150 and not chips.has(100):
@@ -3284,7 +3283,7 @@ func _check_talk_content_pass_content(library: ContentLibrary, failures: Array) 
 			continue
 		_check_talk_content_event_shape(event, event_id, "table_approach", failures)
 		var trigger: Dictionary = event.get("trigger", {}) if typeof(event.get("trigger", {})) == TYPE_DICTIONARY else {}
-		var games := _string_array(trigger.get("games", []))
+		var games := JsonCoerceScript._raw_string_array(trigger.get("games", []))
 		if games != [game_id]:
 			failures.append("Talk content table approach %s must target only %s." % [event_id, game_id])
 		var run_state: RunState = RunStateScript.new()
@@ -3644,7 +3643,7 @@ func _check_t4_3_event_pool_reachability(library: ContentLibrary, required_event
 		if typeof(archetype_value) != TYPE_DICTIONARY:
 			continue
 		var archetype: Dictionary = archetype_value
-		for event_id in _string_array(archetype.get("event_pool", [])):
+		for event_id in JsonCoerceScript._raw_string_array(archetype.get("event_pool", [])):
 			if required_event_ids.has(event_id):
 				placed_events[event_id] = true
 	for event_id in required_event_ids:
@@ -3667,7 +3666,7 @@ func _check_t4_3_event_pool_reachability(library: ContentLibrary, required_event
 			var sample_run: RunState = RunStateScript.new()
 			sample_run.start_new("T43-EVENT-SPREAD-%s-%02d" % [archetype_id.to_upper(), sample_index])
 			var sample_environment := EnvironmentInstance.from_archetype(archetype, sample_index, sample_run.create_rng("t43_event_spread"), library)
-			for event_id in _string_array(sample_environment.event_ids):
+			for event_id in JsonCoerceScript._raw_string_array(sample_environment.event_ids):
 				if required_interactable_ids.has(event_id):
 					generated_hits[event_id] = true
 					generated_counts[event_id] = int(generated_counts.get(event_id, 0)) + 1
@@ -3732,10 +3731,10 @@ func _check_t4_4_item_pack(library: ContentLibrary, failures: Array) -> void:
 			if item.is_empty():
 				failures.append("T4.4 build item is missing: %s." % item_id)
 				continue
-			if not _string_array(item.get("build_tags", [])).has(str(build_id)):
+			if not JsonCoerceScript._raw_string_array(item.get("build_tags", [])).has(str(build_id)):
 				failures.append("T4.4 item %s does not declare build tag %s." % [item_id, str(build_id)])
 			var effect: Dictionary = item.get("effect", {}) if typeof(item.get("effect", {})) == TYPE_DICTIONARY else {}
-			if _copy_array(effect.get("synergies", [])).is_empty():
+			if JsonCoerceScript._copy_array(effect.get("synergies", [])).is_empty():
 				failures.append("T4.4 item %s should declare a data-driven synergy." % item_id)
 	_check_t4_4_item_effect_key_consumption(library, failures)
 	_check_t4_4_item_shop_distribution(library, failures)
@@ -3800,7 +3799,7 @@ func _check_t4_4_item_synergy_schema(label: String, value: Variant, consumed_key
 			if not allowed_schema_keys.has(schema_key):
 				failures.append("%s synergies[%d] uses unknown schema key: %s." % [label, index, schema_key])
 		for requirement_key in ["requires_all", "requires_any"]:
-			for required_item_value in _string_array(synergy.get(requirement_key, [])):
+			for required_item_value in JsonCoerceScript._raw_string_array(synergy.get(requirement_key, [])):
 				var required_item := str(required_item_value)
 				if not item_ids.has(required_item):
 					failures.append("%s synergies[%d] references missing item: %s." % [label, index, required_item])
@@ -3831,9 +3830,9 @@ func _check_t4_4_item_shop_distribution(library: ContentLibrary, failures: Array
 	for expectation_value in expectations:
 		var expectation: Dictionary = expectation_value
 		var group_id := str(expectation.get("group", ""))
-		var group_items := _string_array(library.content_group(group_id).get("item_ids", []))
+		var group_items := JsonCoerceScript._raw_string_array(library.content_group(group_id).get("item_ids", []))
 		var shop_pool := library.shop_item_pool_for_challenge([], {"modifiers": {"content_groups": [group_id]}})
-		for item_id_value in _string_array(expectation.get("items", [])):
+		for item_id_value in JsonCoerceScript._raw_string_array(expectation.get("items", [])):
 			var item_id := str(item_id_value)
 			if not group_items.has(item_id):
 				failures.append("T4.4 item %s is not listed in %s." % [item_id, group_id])
@@ -4128,7 +4127,7 @@ func _check_content_group_modularity(library: ContentLibrary, failures: Array) -
 		var run_state := RunStateScript.new()
 		run_state.start_new("NO-PULL-TABS", no_pull_tabs_challenge)
 		var environment := EnvironmentInstance.from_archetype(pull_tab_archetype, 1, run_state.create_rng("no_pull_tabs"), library, run_state.challenge_config)
-		if _string_array(environment.game_ids).has("pull_tabs"):
+		if JsonCoerceScript._raw_string_array(environment.game_ids).has("pull_tabs"):
 			failures.append("Generated environment still spawned pull tabs after its content group was disabled.")
 	var shop_archetype := _first_archetype_with_item(library, "tab_detector")
 	if shop_archetype.is_empty():
@@ -4191,7 +4190,7 @@ func _first_archetype_with_game(library: ContentLibrary, game_id: String) -> Dic
 		if typeof(archetype_value) != TYPE_DICTIONARY:
 			continue
 		var archetype: Dictionary = archetype_value
-		if _string_array(archetype.get("game_pool", [])).has(game_id):
+		if JsonCoerceScript._raw_string_array(archetype.get("game_pool", [])).has(game_id):
 			return archetype
 	return {}
 
@@ -4611,10 +4610,6 @@ func _check_onboarding_tutorial_arc(library: ContentLibrary, failures: Array) ->
 		failures.append("Tutorial venue-hours override did not keep a normally closed location open.")
 	var caught_run := RunStateScript.new()
 	caught_run.start_new("TUTORIAL-CAUGHT", config_a)
-	var caught_transition := TutorialFlowScript.apply_caught_transition(caught_run, {"dealer_caught_cheat": true})
-	var caught_flags: Dictionary = caught_run.narrative_flags.get("tutorial_lessons_completed", {}) if typeof(caught_run.narrative_flags.get("tutorial_lessons_completed", {})) == TYPE_DICTIONARY else {}
-	if not caught_transition.is_empty() or bool(caught_flags.get("tutorial_blackjack_count_all", false)):
-		failures.append("A caught tutorial Peek still administratively skipped the required counting lesson.")
 	caught_run.current_environment = {
 		"id": "legacy_tutorial_underground",
 		"archetype_id": "small_underground_casino",
@@ -4622,7 +4617,7 @@ func _check_onboarding_tutorial_arc(library: ContentLibrary, failures: Array) ->
 	}
 	caught_run.narrative_flags["tutorial_caught_continue"] = true
 	caught_run.narrative_flags["tutorial_lessons_completed"] = {"tutorial_blackjack_peek": true, "tutorial_blackjack_count_start": true, "tutorial_blackjack_count_all": true}
-	if not TutorialFlowScript.repair_legacy_blackjack_count_skip(caught_run):
+	if not TutorialFlowScript.repair_legacy_tutorial_save(caught_run):
 		failures.append("A legacy tutorial save that skipped Count was not repaired.")
 	else:
 		var repaired_table: Dictionary = caught_run.current_environment.get("game_states", {}).get("blackjack", {})
@@ -5143,15 +5138,15 @@ func _check_profile_inventory_boundary(failures: Array) -> void:
 		failures.append("ProfileInventory retained reporting-only Crew/world detail after aggregating the terminal run.")
 	if int(restored.lifetime_stats.get("total_runs", 0)) != 6:
 		failures.append("ProfileInventory lifetime total_runs did not match terminal fixtures.")
-	var victories := _copy_dict(restored.lifetime_stats.get("victories_per_route", {}))
+	var victories := JsonCoerceScript._copy_dict(restored.lifetime_stats.get("victories_per_route", {}))
 	if int(victories.get("players_card_cashout", 0)) != 1 or int(victories.get("crew_heist", 0)) != 1:
 		failures.append("ProfileInventory did not count players-card and crew-heist victories by route.")
-	var games_played := _copy_dict(restored.lifetime_stats.get("games_played", {}))
+	var games_played := JsonCoerceScript._copy_dict(restored.lifetime_stats.get("games_played", {}))
 	if int(games_played.get("bar_dice", 0)) != 2 or int(games_played.get("blackjack", 0)) != 1 or int(games_played.get("craps", 0)) != 3 or int(games_played.get("coin_pusher", 0)) != 2 or int(games_played.get("crew_draw_poker", 0)) != 4:
 		failures.append("ProfileInventory did not merge lifetime game tallies.")
-	var release_stats := _copy_dict(restored.lifetime_stats.get(ProfileInventoryScript.RELEASE_REPORTING_KEY, {}))
+	var release_stats := JsonCoerceScript._copy_dict(restored.lifetime_stats.get(ProfileInventoryScript.RELEASE_REPORTING_KEY, {}))
 	if int(release_stats.get("crew_path_runs", 0)) != 1 or str(release_stats.get("highest_crew_standing", "")) != "made" or int(release_stats.get("crew_members_met", 0)) != 2 \
-		or int(release_stats.get("crew_members_met_unique", 0)) != 2 or _copy_array(release_stats.get("crew_member_ids_met", [])) != ["crew_rook", "crew_lucky"] \
+		or int(release_stats.get("crew_members_met_unique", 0)) != 2 or JsonCoerceScript._copy_array(release_stats.get("crew_member_ids_met", [])) != ["crew_rook", "crew_lucky"] \
 		or int(release_stats.get("crew_jobs_completed", 0)) != 3 or int(release_stats.get("crew_jobs_abandoned", 0)) != 1 or int(release_stats.get("crew_turn_resolutions", 0)) != 1 \
 		or int(release_stats.get("nights_survived", 0)) != 2 or int(release_stats.get("scenarios_experienced", 0)) != 2 or int(release_stats.get("notable_aftermath_outcomes", 0)) != 1 \
 		or int(release_stats.get("sweeps_encountered", 0)) != 2 or int(release_stats.get("rumors_proved_true", 0)) != 1 or int(release_stats.get("numbers_slips_placed", 0)) != 4 \
@@ -5166,7 +5161,7 @@ func _check_profile_inventory_boundary(failures: Array) -> void:
 	var historical_profile := ProfileInventoryScript.new()
 	historical_profile.from_dict({"schema_version": 5, "lifetime_stats": {"total_runs": 4, "victories_per_route": {"crew_heist": 4}, "future_counter": 33}})
 	var historical_career := CareerStatsViewModelScript.build(historical_profile)
-	if JSON.stringify(historical_career.get("routes", [])).find("Crew Heist") == -1 or str(_copy_dict((historical_career.get("headline", []) as Array)[1]).get("value", "")) != "4" or int(historical_profile.lifetime_stats.get("future_counter", 0)) != 33:
+	if JSON.stringify(historical_career.get("routes", [])).find("Crew Heist") == -1 or str(JsonCoerceScript._copy_dict((historical_career.get("headline", []) as Array)[1]).get("value", "")) != "4" or int(historical_profile.lifetime_stats.get("future_counter", 0)) != 33:
 		failures.append("An existing counted-but-undisplayed heist route did not surface without migration loss.")
 	var unique_member_profile := ProfileInventoryScript.new()
 	var first_member_run := _profile_result_fixture("failure", RunStateScript.FAILURE_ABANDONED, "2026-07-07", 90, {})
@@ -5180,17 +5175,17 @@ func _check_profile_inventory_boundary(failures: Array) -> void:
 	second_release["crew"]["members_met"] = [{"id": "crew_rook", "label": "Rook"}, {"id": "crew_bishop", "label": "Bishop"}]
 	second_member_run[ProfileInventoryScript.RELEASE_REPORTING_KEY] = second_release
 	unique_member_profile.record_run_result(second_member_run)
-	var unique_member_stats := _copy_dict(unique_member_profile.lifetime_stats.get(ProfileInventoryScript.RELEASE_REPORTING_KEY, {}))
-	if _copy_array(unique_member_stats.get("crew_member_ids_met", [])) != ["crew_rook", "crew_bishop", "crew_lucky"] or int(unique_member_stats.get("crew_members_met_unique", 0)) != 3 or int(unique_member_stats.get("crew_members_met", 0)) != 4 or int(unique_member_stats.get("crew_turn_resolutions", -1)) != 0:
+	var unique_member_stats := JsonCoerceScript._copy_dict(unique_member_profile.lifetime_stats.get(ProfileInventoryScript.RELEASE_REPORTING_KEY, {}))
+	if JsonCoerceScript._copy_array(unique_member_stats.get("crew_member_ids_met", [])) != ["crew_rook", "crew_bishop", "crew_lucky"] or int(unique_member_stats.get("crew_members_met_unique", 0)) != 3 or int(unique_member_stats.get("crew_members_met", 0)) != 4 or int(unique_member_stats.get("crew_turn_resolutions", -1)) != 0:
 		failures.append("Career ledger did not deduplicate the lifetime Crew roster while preserving the cumulative contact counter: %s." % JSON.stringify(unique_member_stats))
 	var unique_member_career := CareerStatsViewModelScript.build(unique_member_profile)
 	var displayed_unique_members := false
-	for section_value in _copy_array(unique_member_career.get("release_0_6", [])):
-		var section := _copy_dict(section_value)
+	for section_value in JsonCoerceScript._copy_array(unique_member_career.get("release_0_6", [])):
+		var section := JsonCoerceScript._copy_dict(section_value)
 		if str(section.get("id", "")) != "crew":
 			continue
-		for row_value in _copy_array(section.get("rows", [])):
-			var row := _copy_dict(row_value)
+		for row_value in JsonCoerceScript._copy_array(section.get("rows", [])):
+			var row := JsonCoerceScript._copy_dict(row_value)
 			if str(row.get("label", "")) == "Members met" and str(row.get("value", "")) == "3":
 				displayed_unique_members = true
 	if not displayed_unique_members:
@@ -5201,7 +5196,7 @@ func _check_profile_inventory_boundary(failures: Array) -> void:
 		failures.append("ProfileInventory did not preserve unknown profile keys.")
 	if int(restored.to_dict().get("act", 0)) != 1:
 		failures.append("ProfileInventory did not write the Act 1 profile marker.")
-	if not _copy_dict(restored.to_dict().get("act_seam", {})).is_empty():
+	if not JsonCoerceScript._copy_dict(restored.to_dict().get("act_seam", {})).is_empty():
 		failures.append("ProfileInventory old profile normalization should leave act_seam empty.")
 	var seam_result: Dictionary = restored.record_act_seam({
 		"source_act": 1,
@@ -5246,11 +5241,11 @@ func _check_profile_inventory_boundary(failures: Array) -> void:
 		failures.append("Profile inventory leaked into RunState serialization.")
 	var old_profile: ProfileInventory = ProfileInventoryScript.new()
 	old_profile.from_dict({"schema_version": 2, "items": []})
-	if int(old_profile.to_dict().get("act", 0)) != 1 or not _copy_dict(old_profile.to_dict().get("act_seam", {})).is_empty():
+	if int(old_profile.to_dict().get("act", 0)) != 1 or not JsonCoerceScript._copy_dict(old_profile.to_dict().get("act_seam", {})).is_empty():
 		failures.append("ProfileInventory markerless profile did not normalize Act 1 with empty act_seam.")
 	if not old_profile.tips_seen.is_empty() or old_profile.tutorial_completed:
 		failures.append("ProfileInventory legacy profile did not default coach fields compatibly.")
-	var old_release := _copy_dict(old_profile.lifetime_stats.get(ProfileInventoryScript.RELEASE_REPORTING_KEY, {}))
+	var old_release := JsonCoerceScript._copy_dict(old_profile.lifetime_stats.get(ProfileInventoryScript.RELEASE_REPORTING_KEY, {}))
 	if old_release.size() != 18 or not _release_reporting_defaults_are_zero(old_release):
 		failures.append("ProfileInventory absent 0.6 reporting fields did not default compatibly.")
 	var old_snapshot := old_profile.to_dict()
@@ -5260,7 +5255,7 @@ func _check_profile_inventory_boundary(failures: Array) -> void:
 		failures.append("ProfileInventory absent 0.6 reporting defaults were not round-trip idempotent.")
 	var malformed_release_profile: ProfileInventory = ProfileInventoryScript.new()
 	malformed_release_profile.from_dict({"schema_version": 5, "lifetime_stats": {ProfileInventoryScript.RELEASE_REPORTING_KEY: ["not", "a", "dictionary"]}})
-	var malformed_release := _copy_dict(malformed_release_profile.lifetime_stats.get(ProfileInventoryScript.RELEASE_REPORTING_KEY, {}))
+	var malformed_release := JsonCoerceScript._copy_dict(malformed_release_profile.lifetime_stats.get(ProfileInventoryScript.RELEASE_REPORTING_KEY, {}))
 	if malformed_release.size() != 18 or not _release_reporting_defaults_are_zero(malformed_release):
 		failures.append("ProfileInventory malformed 0.6 reporting container did not normalize to canonical zero defaults.")
 	var hostile_release_profile: ProfileInventory = ProfileInventoryScript.new()
@@ -5279,8 +5274,8 @@ func _check_profile_inventory_boundary(failures: Array) -> void:
 			},
 		},
 	})
-	var hostile_release := _copy_dict(hostile_release_profile.lifetime_stats.get(ProfileInventoryScript.RELEASE_REPORTING_KEY, {}))
-	var hostile_nested := _copy_dict(hostile_release.get("future_nested_counters", {}))
+	var hostile_release := JsonCoerceScript._copy_dict(hostile_release_profile.lifetime_stats.get(ProfileInventoryScript.RELEASE_REPORTING_KEY, {}))
+	var hostile_nested := JsonCoerceScript._copy_dict(hostile_release.get("future_nested_counters", {}))
 	if not _release_reporting_defaults_are_zero(hostile_release):
 		failures.append("ProfileInventory malformed 0.6 reporting fields produced false-positive lifetime counts.")
 	if int(hostile_release.get("future_release_counter", 0)) != 33 or int(hostile_nested.get("kept", 0)) != 41:
@@ -5324,7 +5319,7 @@ func _check_profile_inventory_boundary(failures: Array) -> void:
 		var unknown_snapshot := unknown_reporting_profile.to_dict()
 		var unknown_round_trip := ProfileInventoryScript.new()
 		unknown_round_trip.from_dict(JSON.parse_string(JSON.stringify(unknown_snapshot)) as Dictionary)
-		var unknown_release := _copy_dict(unknown_round_trip.lifetime_stats.get(ProfileInventoryScript.RELEASE_REPORTING_KEY, {}))
+		var unknown_release := JsonCoerceScript._copy_dict(unknown_round_trip.lifetime_stats.get(ProfileInventoryScript.RELEASE_REPORTING_KEY, {}))
 		if not unknown_release.has("future_reporting_field"):
 			failures.append("ProfileInventory normalization/roundtrip lost unknown neutral-looking 0.6 reporting field of type %d." % typeof(unknown_default_value))
 		elif TutorialFlowScript.should_auto_start(unknown_round_trip, tutorial_meta_default):
@@ -5343,7 +5338,7 @@ func _check_profile_inventory_boundary(failures: Array) -> void:
 
 func _release_reporting_defaults_are_zero(release: Dictionary) -> bool:
 	if str(release.get("highest_crew_standing", "")) != "stranger" \
-			or not _copy_array(release.get("crew_member_ids_met", [])).is_empty() \
+			or not JsonCoerceScript._copy_array(release.get("crew_member_ids_met", [])).is_empty() \
 			or int(release.get("crew_members_met_unique", -1)) != 0:
 		return false
 	for key in [
@@ -5368,7 +5363,7 @@ func _check_act_two_seam_payloads(failures: Array) -> void:
 	var clean_payload := clean_run.act_two_seam_payload()
 	if str(clean_payload.get("victory_route", "")) != "players_card_cashout" or str(clean_payload.get("final_bankroll_band", "")) != "heavy_envelope":
 		failures.append("Act 2 seam clean victory payload did not record route and bankroll band.")
-	if not bool(_copy_dict(clean_payload.get("story_flags", {})).get("host_saw_clean_play", false)):
+	if not bool(JsonCoerceScript._copy_dict(clean_payload.get("story_flags", {})).get("host_saw_clean_play", false)):
 		failures.append("Act 2 seam clean victory payload did not carry story flags.")
 	var showdown_run: RunState = RunStateScript.new()
 	showdown_run.start_new("ACT-TWO-SEAM-SHOWDOWN")
@@ -5380,7 +5375,7 @@ func _check_act_two_seam_payloads(failures: Array) -> void:
 	var showdown_payload := showdown_run.act_two_seam_payload()
 	if str(showdown_payload.get("victory_route", "")) != "showdown" or str(showdown_payload.get("final_bankroll_band", "")) != "empty_pockets":
 		failures.append("Act 2 seam showdown victory payload did not record route and bankroll band.")
-	if JSON.stringify(_copy_dict(clean_payload.get("route_payload", {}))) == JSON.stringify(_copy_dict(showdown_payload.get("route_payload", {}))):
+	if JSON.stringify(JsonCoerceScript._copy_dict(clean_payload.get("route_payload", {}))) == JSON.stringify(JsonCoerceScript._copy_dict(showdown_payload.get("route_payload", {}))):
 		failures.append("Act 2 seam route payloads were not distinct.")
 	var failure_run: RunState = RunStateScript.new()
 	failure_run.start_new("ACT-TWO-SEAM-FAILURE")
@@ -6395,7 +6390,7 @@ func _check_slot_buffalo_symbol_variety(definition: Dictionary, failures: Array)
 		for _index in range(420):
 			if SlotMachineStateScript.active_bonus_incomplete(machine):
 				machine["active_bonus"] = {"active": false, "complete": true}
-			var resolved: Dictionary = resolver.resolve_spin(machine, "spin", SlotMachineStateScript.selected_bet(machine), rng, definition, {})
+			var resolved: Dictionary = resolver.resolve_spin(FunctionOptions.slot_resolve(machine, "spin", SlotMachineStateScript.selected_bet(machine), {"rng": rng, "definition": definition, "environment": {}}))
 			machine = _slot_dict(resolved.get("machine", machine))
 			var result: Dictionary = _slot_dict(resolved.get("result", {}))
 			var grid: Array = _slot_array(result.get("slot_grid", []))
@@ -6498,7 +6493,7 @@ func _check_slot_reel_display_consistency(definition: Dictionary, failures: Arra
 			if SlotMachineStateScript.active_bonus_incomplete(machine):
 				machine["active_bonus"] = {"active": false, "complete": true}
 			var selected_bet: Dictionary = SlotMachineStateScript.selected_bet(machine)
-			var resolved: Dictionary = resolver.resolve_spin(machine, "spin", selected_bet, rng, definition, {})
+			var resolved: Dictionary = resolver.resolve_spin(FunctionOptions.slot_resolve(machine, "spin", selected_bet, {"rng": rng, "definition": definition, "environment": {}}))
 			machine = _slot_dict(resolved.get("machine", machine))
 			var result: Dictionary = _slot_dict(resolved.get("result", {}))
 			var grid: Array = _slot_array(result.get("slot_grid", []))
@@ -6668,7 +6663,7 @@ func _check_slot_buffalo_timed_nudge(definition: Dictionary, failures: Array) ->
 		cue_ids.append(str(cue.get("cue_id", "")))
 	if not cue_ids.has("gold_coin_tease"):
 		failures.append("Buffalo coin-chain tease did not schedule the gold coin stinger.")
-	var perfect_resolved: Dictionary = resolver.resolve_spin(near_machine.duplicate(true), "nudge", SlotMachineStateScript.selected_bet(near_machine), run_state.create_rng("buffalo_nudge_perfect"), definition, {}, true, false, run_state, {}, {"slot_nudge_chain_input_msec": perfect_msec})
+	var perfect_resolved: Dictionary = resolver.resolve_spin(FunctionOptions.slot_resolve(near_machine.duplicate(true), "nudge", SlotMachineStateScript.selected_bet(near_machine), {"rng": run_state.create_rng("buffalo_nudge_perfect"), "definition": definition, "environment": {}, "normalize_machine": true, "audit_metrics_mode": false, "run_state": run_state, "item_effects": {}, "ui_state": {"slot_nudge_chain_input_msec": perfect_msec}}))
 	var perfect_action: Dictionary = _slot_dict(perfect_resolved.get("result", {}))
 	var perfect_machine: Dictionary = _slot_dict(perfect_resolved.get("machine", {}))
 	if not bool(perfect_action.get("slot_nudge_applied", false)) or str(perfect_action.get("slot_nudge_skill_outcome", "")) != "perfect":
@@ -6690,7 +6685,7 @@ func _check_slot_buffalo_timed_nudge(definition: Dictionary, failures: Array) ->
 	var miss_offer: Dictionary = _slot_dict(miss_machine_seed.get("last_nudge_offer", {}))
 	var miss_window: Dictionary = _slot_dict(miss_offer.get("skill_window_msec", {}))
 	var soft_miss_msec := int(miss_window.get("end", 0)) + 1
-	var soft_miss_resolved: Dictionary = resolver.resolve_spin(miss_machine_seed.duplicate(true), "nudge", SlotMachineStateScript.selected_bet(miss_machine_seed), run_state.create_rng("buffalo_nudge_soft_miss"), definition, {}, true, false, run_state, {}, {"slot_nudge_chain_input_msec": soft_miss_msec})
+	var soft_miss_resolved: Dictionary = resolver.resolve_spin(FunctionOptions.slot_resolve(miss_machine_seed.duplicate(true), "nudge", SlotMachineStateScript.selected_bet(miss_machine_seed), {"rng": run_state.create_rng("buffalo_nudge_soft_miss"), "definition": definition, "environment": {}, "normalize_machine": true, "audit_metrics_mode": false, "run_state": run_state, "item_effects": {}, "ui_state": {"slot_nudge_chain_input_msec": soft_miss_msec}}))
 	var soft_miss_action: Dictionary = _slot_dict(soft_miss_resolved.get("result", {}))
 	var soft_miss_machine: Dictionary = _slot_dict(soft_miss_resolved.get("machine", {}))
 	if str(soft_miss_action.get("slot_nudge_skill_outcome", "")) != "miss":
@@ -6700,7 +6695,7 @@ func _check_slot_buffalo_timed_nudge(definition: Dictionary, failures: Array) ->
 	if int(soft_miss_action.get("slot_payout", 0)) != 0 or bool(soft_miss_action.get("slot_feature_triggered", false)) or not _slot_dict(soft_miss_machine.get("last_nudge_offer", {})).is_empty():
 		failures.append("Slightly mistimed Buffalo coin-chain nudge did not end without payout, feature, or a lingering offer.")
 	var miss_msec := int(miss_window.get("end", 0)) + 300
-	var miss_resolved: Dictionary = resolver.resolve_spin(miss_machine_seed.duplicate(true), "nudge", SlotMachineStateScript.selected_bet(miss_machine_seed), run_state.create_rng("buffalo_nudge_miss"), definition, {}, true, false, run_state, {}, {"slot_nudge_chain_input_msec": miss_msec})
+	var miss_resolved: Dictionary = resolver.resolve_spin(FunctionOptions.slot_resolve(miss_machine_seed.duplicate(true), "nudge", SlotMachineStateScript.selected_bet(miss_machine_seed), {"rng": run_state.create_rng("buffalo_nudge_miss"), "definition": definition, "environment": {}, "normalize_machine": true, "audit_metrics_mode": false, "run_state": run_state, "item_effects": {}, "ui_state": {"slot_nudge_chain_input_msec": miss_msec}}))
 	var miss_action: Dictionary = _slot_dict(miss_resolved.get("result", {}))
 	var miss_machine: Dictionary = _slot_dict(miss_resolved.get("machine", {}))
 	if str(miss_action.get("slot_nudge_skill_outcome", "")) != "blown":
@@ -6753,7 +6748,7 @@ func _check_slot_nudge_chain_determinism(definition: Dictionary, failures: Array
 			if target.is_empty() or _slot_dict(target.get("perfect", {})).is_empty():
 				failures.append("Slot coin chain for %s did not publish a perfect reel-stop target." % variant_key)
 			else:
-				var perfect_resolved: Dictionary = resolver.resolve_spin(machine.duplicate(true), "nudge", SlotMachineStateScript.selected_bet(machine), sample_run_state.create_rng("slot_nudge_chain_perfect_%s_%s" % [family_id, format_id]), definition, {}, true, false, sample_run_state, {}, {"slot_nudge_chain_input_msec": perfect_msec})
+				var perfect_resolved: Dictionary = resolver.resolve_spin(FunctionOptions.slot_resolve(machine.duplicate(true), "nudge", SlotMachineStateScript.selected_bet(machine), {"rng": sample_run_state.create_rng("slot_nudge_chain_perfect_%s_%s" % [family_id, format_id]), "definition": definition, "environment": {}, "normalize_machine": true, "audit_metrics_mode": false, "run_state": sample_run_state, "item_effects": {}, "ui_state": {"slot_nudge_chain_input_msec": perfect_msec}}))
 				var perfect_result: Dictionary = _slot_dict(perfect_resolved.get("result", {}))
 				var perfect_machine: Dictionary = _slot_dict(perfect_resolved.get("machine", {}))
 				if str(perfect_result.get("slot_nudge_skill_outcome", "")) != "perfect":
@@ -6812,7 +6807,7 @@ func _slot_nudge_chain_script(definition: Dictionary, base_machine: Dictionary, 
 		var input_msec := int(window.get("perfect", -1))
 		if input_msec < 0:
 			break
-		var resolved: Dictionary = resolver.resolve_spin(machine.duplicate(true), "nudge", SlotMachineStateScript.selected_bet(machine), rng, definition, {}, true, false, run_state, {}, {"slot_nudge_chain_input_msec": input_msec})
+		var resolved: Dictionary = resolver.resolve_spin(FunctionOptions.slot_resolve(machine.duplicate(true), "nudge", SlotMachineStateScript.selected_bet(machine), {"rng": rng, "definition": definition, "environment": {}, "normalize_machine": true, "audit_metrics_mode": false, "run_state": run_state, "item_effects": {}, "ui_state": {"slot_nudge_chain_input_msec": input_msec}}))
 		machine = _slot_dict(resolved.get("machine", machine))
 		var result: Dictionary = _slot_dict(resolved.get("result", {}))
 		var next_offer: Dictionary = _slot_dict(machine.get("last_nudge_offer", {}))
@@ -6831,7 +6826,7 @@ func _slot_nudge_chain_script(definition: Dictionary, base_machine: Dictionary, 
 	if not terminal_offer.is_empty():
 		var terminal_window: Dictionary = _slot_dict(terminal_offer.get("skill_window_msec", {}))
 		var miss_msec := int(terminal_window.get("end", 0)) + 300
-		var miss_resolved: Dictionary = resolver.resolve_spin(machine.duplicate(true), "nudge", SlotMachineStateScript.selected_bet(machine), rng, definition, {}, true, false, run_state, {}, {"slot_nudge_chain_input_msec": miss_msec})
+		var miss_resolved: Dictionary = resolver.resolve_spin(FunctionOptions.slot_resolve(machine.duplicate(true), "nudge", SlotMachineStateScript.selected_bet(machine), {"rng": rng, "definition": definition, "environment": {}, "normalize_machine": true, "audit_metrics_mode": false, "run_state": run_state, "item_effects": {}, "ui_state": {"slot_nudge_chain_input_msec": miss_msec}}))
 		machine = _slot_dict(miss_resolved.get("machine", machine))
 		var miss_result: Dictionary = _slot_dict(miss_resolved.get("result", {}))
 		transcript.append({
@@ -6917,7 +6912,7 @@ func _slot_nudge_line_pay_fixture(definition: Dictionary, failures: Array) -> bo
 		},
 		"post_spin_available": true,
 	}
-	var resolved: Dictionary = resolver.resolve_spin(machine.duplicate(true), "nudge", SlotMachineStateScript.selected_bet(machine), run_state.create_rng("slot_nudge_line_pay"), definition, {}, true, false, run_state, {}, {"slot_nudge_chain_input_msec": perfect_msec})
+	var resolved: Dictionary = resolver.resolve_spin(FunctionOptions.slot_resolve(machine.duplicate(true), "nudge", SlotMachineStateScript.selected_bet(machine), {"rng": run_state.create_rng("slot_nudge_line_pay"), "definition": definition, "environment": {}, "normalize_machine": true, "audit_metrics_mode": false, "run_state": run_state, "item_effects": {}, "ui_state": {"slot_nudge_chain_input_msec": perfect_msec}}))
 	var result: Dictionary = _slot_dict(resolved.get("result", {}))
 	var resolved_machine: Dictionary = _slot_dict(resolved.get("machine", {}))
 	if str(result.get("slot_nudge_skill_outcome", "")) != "perfect":
@@ -8165,7 +8160,7 @@ func _assert_json_equal(actual: Variant, expected: Variant, message: String, fai
 # byte comparisons for save/restore and same-run transaction tests.
 func _deterministic_run_projection(run_state: RunState) -> Dictionary:
 	var result := run_state.to_dict()
-	var crew := _copy_dict(result.get("crew_state", {}))
+	var crew := JsonCoerceScript._copy_dict(result.get("crew_state", {}))
 	crew.erase("a")
 	crew.erase("z")
 	result["crew_state"] = crew
@@ -8173,16 +8168,6 @@ func _deterministic_run_projection(run_state: RunState) -> Dictionary:
 
 
 # Checks core contracts with fixture content.
-
-func _copy_array(value: Variant) -> Array:
-	if typeof(value) != TYPE_ARRAY:
-		return []
-	return (value as Array).duplicate(true)
-
-func _copy_dict(value: Variant) -> Dictionary:
-	if typeof(value) != TYPE_DICTIONARY:
-		return {}
-	return (value as Dictionary).duplicate(true)
 
 func _fixture_library(failures: Array) -> ContentLibrary:
 	var library := ContentLibraryScript.new()
@@ -8613,7 +8598,7 @@ func _slot_spin_until_classification(definition: Dictionary, family_id: String, 
 	var machine: Dictionary = _slot_machine(definition, run_state, family_id, format_id, "standard", "plain")
 	var rng: RngStream = run_state.create_rng("slot_seek_%s" % classification)
 	for _index in range(1600):
-		var resolved: Dictionary = resolver.resolve_spin(machine, "spin", SlotMachineStateScript.selected_bet(machine), rng, definition, {})
+		var resolved: Dictionary = resolver.resolve_spin(FunctionOptions.slot_resolve(machine, "spin", SlotMachineStateScript.selected_bet(machine), {"rng": rng, "definition": definition, "environment": {}}))
 		machine = _slot_dict(resolved.get("machine", machine))
 		var result: Dictionary = _slot_dict(resolved.get("result", {}))
 		if str(result.get("slot_classification", "")) == classification:
@@ -8749,17 +8734,6 @@ func _slot_with_test_celebration(machine: Dictionary, tier: String, payout: int,
 		"count_up_end_msec": start_msec + duration,
 	}
 	return next
-
-func _string_array(values: Variant) -> Array:
-	var result: Array = []
-	if typeof(values) != TYPE_ARRAY:
-		return result
-	for value in values:
-		var id := str(value)
-		if not id.is_empty():
-			result.append(id)
-	return result
-
 
 func _slot_bonus_action_for(active: Dictionary, desired_choice_id: String = "") -> String:
 	if str(active.get("mode", "")) == "wheel":

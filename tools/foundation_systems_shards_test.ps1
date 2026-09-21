@@ -156,7 +156,8 @@ foreach ($slotId in @("foundation_save_round_trip", "foundation_save_atomic_reco
     Assert-True $foundationSourceText.Contains(('var slot_id := "' + $slotId + '"')) "Systems source no longer exposes save slot '$slotId' for ownership validation."
     Assert-True $pathOwners.Contains("user://saves/$slotId.json") "Derived SaveService user path for '$slotId' has no shard owner."
 }
-Assert-True ($saveServiceSource.Contains('const SAVE_DIR := "user://saves"') -and $saveServiceSource.Contains('"%s.tmp"') -and $saveServiceSource.Contains('"%s.bak"')) "SaveService derived .tmp/.bak persistence targets are no longer covered by the owned save slots."
+$durableStoreSource = Get-Content -Raw -LiteralPath (Join-Path $projectRoot "scripts/core/durable_store.gd")
+Assert-True ($saveServiceSource.Contains('const SAVE_DIR := "user://saves"') -and $saveServiceSource.Contains('DurableStoreScript.write_json') -and $durableStoreSource.Contains('"%s.tmp"') -and $durableStoreSource.Contains('"%s.bak"')) "SaveService derived .tmp/.bak persistence targets are no longer covered by the owned save slots through DurableStore."
 
 $tempCache = Join-Path ([System.IO.Path]::GetTempPath()) ("bth_shard_cache_" + [Guid]::NewGuid().ToString("N"))
 try {

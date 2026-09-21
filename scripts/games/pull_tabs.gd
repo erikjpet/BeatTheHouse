@@ -3333,15 +3333,6 @@ func _default_environment_hooks() -> Array:
 	}]
 
 
-func _int_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry in value:
-		result.append(int(entry))
-	return result
-
-
 func _draw_pull_tab_cabinet(surface, cabinet: Rect2, deals: Array, tray_stack: Array, surface_state: Dictionary) -> void:
 	var clock := float(surface.surface_flicker())
 	var side := [
@@ -4279,16 +4270,6 @@ func _pt_copy_dict(value: Variant) -> Dictionary:
 	return (value as Dictionary).duplicate(true)
 
 
-func _dictionary_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry in value:
-		if typeof(entry) == TYPE_DICTIONARY:
-			result.append((entry as Dictionary).duplicate(true))
-	return result
-
-
 func _dictionary_view_array(value: Variant) -> Array:
 	var result: Array = []
 	if typeof(value) != TYPE_ARRAY:
@@ -4309,14 +4290,3 @@ func _array_size(value: Variant) -> int:
 	if typeof(value) != TYPE_ARRAY:
 		return 0
 	return (value as Array).size()
-
-
-func _string_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry in value:
-		var id := str(entry)
-		if not id.is_empty():
-			result.append(id)
-	return result

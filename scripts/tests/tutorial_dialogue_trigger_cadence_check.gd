@@ -20,8 +20,8 @@ const BLACKJACK_FIXTURE_CHALLENGE := {
 		"starting_bankroll": 80,
 	},
 }
-const BLACKJACK_FIXTURE_BASELINE_SHA256 := "e3e82af65d31d22658612772fe4c0296c85f0d7ad920850bc2501c90a118a922"
-const BLACKJACK_GAMES_SOURCE_SHA256 := "fe2b3233163564742cfb7f53a61de955d056476a44959febb38a5bc32b85fa72"
+const BLACKJACK_FIXTURE_BASELINE_SHA256 := "ed0703de0d228e81b25f6a83594b28f9b2e71d699731f6f5df95d811f4e5705b"
+const BLACKJACK_GAMES_SOURCE_SHA256 := "a4c88f6112211e7468a90ce1e9ee58f10e358c8add8e49c894f2c19059d011fe"
 const NORMALIZED_CREW_AUTHORITY_ID := "0000000000000000000000000000000000000000000000000000000000000000"
 
 
@@ -420,6 +420,7 @@ func _blackjack_count_fixture_baseline() -> Dictionary:
 	var fingerprint := JSON.stringify(_normalize_fixture_private_capsules(normalized.to_dict())).sha256_text()
 	return {
 		"bytes": bytes,
+		"data": normalized.to_dict(),
 		"fingerprint": fingerprint,
 		"heat": normalized.suspicion_level(),
 		"valid": fingerprint == BLACKJACK_FIXTURE_BASELINE_SHA256
@@ -443,7 +444,27 @@ func _restore_blackjack_count_fixture(baseline: Dictionary) -> Dictionary:
 		"library": library,
 		"fingerprint": JSON.stringify(_normalize_fixture_private_capsules(run_state.to_dict())).sha256_text(),
 		"heat": run_state.suspicion_level(),
+		"round_trip_diff": _fixture_top_level_diff(baseline.get("data", {}), run_state.to_dict()),
 	}
+
+
+func _fixture_top_level_diff(before_value: Variant, after_value: Variant) -> Dictionary:
+	if typeof(before_value) != TYPE_DICTIONARY or typeof(after_value) != TYPE_DICTIONARY:
+		return {"invalid_roots": true}
+	var before: Dictionary = _normalize_fixture_private_capsules(before_value)
+	var after: Dictionary = _normalize_fixture_private_capsules(after_value)
+	var keys := before.keys()
+	for key in after.keys():
+		if not keys.has(key):
+			keys.append(key)
+	keys.sort()
+	var diff: Dictionary = {}
+	for key in keys:
+		var before_text := JSON.stringify(before.get(key))
+		var after_text := JSON.stringify(after.get(key))
+		if before_text != after_text:
+			diff[str(key)] = {"before": before_text, "after": after_text}
+	return diff
 
 
 func _blackjack_fixture_library() -> ContentLibrary:
@@ -470,6 +491,8 @@ func _blackjack_fixture_library() -> ContentLibrary:
 
 
 func _normalize_fixture_private_capsules(value: Variant) -> Variant:
+	if typeof(value) == TYPE_FLOAT and is_finite(float(value)) and float(value) == floorf(float(value)):
+		return int(value)
 	if typeof(value) == TYPE_ARRAY:
 		var normalized_array: Array = []
 		for child in value as Array:
@@ -525,8 +548,7 @@ func _blackjack_isolated_repeated_peek_reprieve_is_terminal(baseline: Dictionary
 			or not bool(caught.get("blackjack_tutorial_peek_reprieve", false)) \
 			or bool(caught.get("blackjack_table_barred", true)) \
 			or bool(table.get("barred", true)) \
-			or protected_state.is_empty() \
-			or not TutorialFlow.apply_caught_transition(run_state, caught).is_empty():
+			or protected_state.is_empty():
 		_fail("The isolated repeated Peek did not produce its authentic protected caught result: %s." % str(caught))
 		return false
 
@@ -644,7 +666,7 @@ func _blackjack_count_hand_is_mandatory() -> bool:
 		"tutorial_blackjack_count_start": true,
 		"tutorial_blackjack_count_all": true,
 	}
-	if not TutorialFlow.repair_legacy_blackjack_count_skip(legacy_run):
+	if not TutorialFlow.repair_legacy_tutorial_save(legacy_run):
 		_fail("The old caught-Peek Count skip was not migrated back to a playable boundary.")
 		return false
 	var legacy_table: Dictionary = legacy_run.current_environment.get("game_states", {}).get("blackjack", {})

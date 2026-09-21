@@ -1,6 +1,8 @@
 class_name TownState
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 const CONDITIONS_PATH := "res://data/town/conditions.json"
 const TownNetworkScript := preload("res://scripts/core/town_network.gd")
 const PoliceSweepModelScript := preload("res://scripts/core/police_sweep_model.gd")
@@ -88,10 +90,10 @@ func restore(source: Dictionary, p_seed_value: int, source_conditions: Dictionar
 	action_index = maxi(0, int(source.get("action_index", 0)))
 	turn_horizon = maxi(1, int(source.get("turn_horizon", DEFAULT_TURN_HORIZON)))
 	_conditions = source_conditions if not source_conditions.is_empty() else conditions()
-	weather_schedule = _dictionary_array(source.get("weather_schedule", []))
-	calendar_cycle = _dictionary_array(source.get("calendar_cycle", []))
+	weather_schedule = JsonCoerceScript._dictionary_array(source.get("weather_schedule", []))
+	calendar_cycle = JsonCoerceScript._dictionary_array(source.get("calendar_cycle", []))
 	calendar_offset_actions = maxi(0, int(source.get("calendar_offset_actions", 0)))
-	happenings = _dictionary_array(source.get("happenings", []))
+	happenings = JsonCoerceScript._dictionary_array(source.get("happenings", []))
 	progressive_meters = _dictionary(source.get("progressive_meters", {})).duplicate(true) if source_schema >= 3 else {}
 	_condition_rumor_signature = []
 	living_world = TownNetworkScript.new()
@@ -470,17 +472,17 @@ func public_snapshot() -> Dictionary:
 
 func _index_definitions() -> void:
 	_weather_definition_by_id = {}
-	for definition in _dictionary_array(_conditions.get("weather_states", [])):
+	for definition in JsonCoerceScript._dictionary_array(_conditions.get("weather_states", [])):
 		_weather_definition_by_id[str(definition.get("id", ""))] = definition
 	_happening_definition_by_id = {}
 	var happening_config := _dictionary(_conditions.get("happenings", {}))
-	for definition in _dictionary_array(happening_config.get("definitions", [])):
+	for definition in JsonCoerceScript._dictionary_array(happening_config.get("definitions", [])):
 		_happening_definition_by_id[str(definition.get("id", ""))] = definition
 
 
 func _generate_weather_schedule(rng: RngStream) -> void:
 	weather_schedule = []
-	var definitions := _dictionary_array(_conditions.get("weather_states", []))
+	var definitions := JsonCoerceScript._dictionary_array(_conditions.get("weather_states", []))
 	if definitions.is_empty():
 		definitions = [{"id": "clear", "dwell_actions": [turn_horizon, turn_horizon], "modifiers": {}}]
 	var definition_index := rng.randi_range(0, definitions.size() - 1)
@@ -520,7 +522,7 @@ func _rebuild_weather_index() -> void:
 
 func _generate_calendar(rng: RngStream) -> void:
 	var calendar := _dictionary(_conditions.get("calendar", {}))
-	calendar_cycle = _dictionary_array(calendar.get("cycle", []))
+	calendar_cycle = JsonCoerceScript._dictionary_array(calendar.get("cycle", []))
 	if calendar_cycle.is_empty():
 		calendar_cycle = [{"id": "midweek", "duration_actions": turn_horizon, "modifiers": {}}]
 	var period := _calendar_period()
@@ -531,7 +533,7 @@ func _generate_happenings(rng: RngStream) -> void:
 	happenings = []
 	var happening_config := _dictionary(_conditions.get("happenings", {}))
 	var definitions: Array = []
-	for definition in _dictionary_array(happening_config.get("definitions", [])):
+	for definition in JsonCoerceScript._dictionary_array(happening_config.get("definitions", [])):
 		var spawn_chance := clampi(int(definition.get("spawn_chance_percent", 100)), 0, 100)
 		if spawn_chance <= 0 or (spawn_chance < 100 and rng.randi_range(1, 100) > spawn_chance):
 			continue
@@ -851,16 +853,6 @@ func _display_name(id: String) -> String:
 
 static func _dictionary(value: Variant) -> Dictionary:
 	return value as Dictionary if typeof(value) == TYPE_DICTIONARY else {}
-
-
-static func _dictionary_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry_value in value as Array:
-		if typeof(entry_value) == TYPE_DICTIONARY:
-			result.append((entry_value as Dictionary).duplicate(true))
-	return result
 
 
 static func _int_range(value: Variant, fallback_min: int, fallback_max: int) -> Array:

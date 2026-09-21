@@ -1,6 +1,9 @@
 class_name RunGenerator
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+const GameModuleRegistryScript := preload("res://scripts/core/game_module_registry.gd")
+
 # Builds deterministic environments from library data.
 
 const GrandCasinoShowdownModelScript := preload("res://scripts/core/grand_casino_showdown_model.gd")
@@ -21,7 +24,6 @@ var _world_environment_build_stages_usec: Dictionary = {}
 var _world_environment_install_stages_usec: Dictionary = {}
 var _world_scenario_prime_stages_usec: Dictionary = {}
 var _world_scenario_select_stages_usec: Dictionary = {}
-var _game_module_script_cache: Dictionary = {}
 var _caller_owns_result_rollback := false
 
 
@@ -47,8 +49,7 @@ func environment_install_failure_snapshot() -> Dictionary:
 
 
 func cache_game_module_script(module_path: String, module_script: Script) -> void:
-	if not module_path.is_empty() and module_script != null:
-		_game_module_script_cache[module_path] = module_script
+	GameModuleRegistryScript.cache_script(module_path, module_script)
 
 
 # Stores the content library used for generation.
@@ -72,13 +73,13 @@ func _install_environment_with_rollback(run_state: RunState, environment_data: D
 	if not bool(trusted.get("ok", false)):
 		if restore_on_failure:
 			_restore_travel_snapshot(run_state, rollback)
-		return {"ok": false, "applied": false, "errors": _copy_array(trusted.get("errors", []))}
+		return {"ok": false, "applied": false, "errors": JsonCoerceScript._copy_array(trusted.get("errors", []))}
 	var trusted_definition_value: Variant = trusted.get("scenario_definition", {})
 	if typeof(trusted_definition_value) == TYPE_DICTIONARY:
 		# Keep validation/catalog receipts in RunState's process-local cache. The
 		# living-world seed intentionally remains persistent authored data only.
 		run_state.cache_runtime_scenario_definition(trusted_definition_value as Dictionary)
-	var install_data: Dictionary = _copy_dict(trusted.get("environment", {}))
+	var install_data: Dictionary = JsonCoerceScript._copy_dict(trusted.get("environment", {}))
 	if _world_environment_timing_enabled:
 		_world_environment_install_stages_usec["trusted_copy"] = Time.get_ticks_usec() - perf_stage_started_usec
 		perf_stage_started_usec = Time.get_ticks_usec()
@@ -96,7 +97,7 @@ func _install_environment_with_rollback(run_state: RunState, environment_data: D
 	if not bool(finalized.get("ok", false)):
 		if restore_on_failure:
 			_restore_travel_snapshot(run_state, rollback)
-		return {"ok": false, "applied": true, "errors": _copy_array(finalized.get("errors", []))}
+		return {"ok": false, "applied": true, "errors": JsonCoerceScript._copy_array(finalized.get("errors", []))}
 	return {"ok": true, "applied": true, "inactive": bool(finalized.get("inactive", false)), "errors": []}
 
 
@@ -159,7 +160,7 @@ func travel_environment_result(run_state: RunState, target_archetype_id: String,
 	var target_id := target_archetype_id.strip_edges()
 	var preflight := run_state.scenario_preflight_environment_change(source_id, target_id, "world")
 	if not bool(preflight.get("ok", false)):
-		return {"ok": false, "errors": _copy_array(preflight.get("errors", [])), "environment": run_state.current_environment.duplicate(true)}
+		return {"ok": false, "errors": JsonCoerceScript._copy_array(preflight.get("errors", [])), "environment": run_state.current_environment.duplicate(true)}
 	var rollback := {} if caller_owns_rollback else _travel_rollback_snapshot(run_state)
 	_last_environment_install_errors = []
 	# The facade already owns the exact rollback snapshot and has accepted this
@@ -177,7 +178,7 @@ func travel_environment_result(run_state: RunState, target_archetype_id: String,
 		var errors := _last_environment_install_errors.duplicate(true)
 		if errors.is_empty():
 			errors = ["Travel destination was not installed."]
-		return {"ok": false, "errors": errors, "environment": _copy_dict(rollback.get("environment", run_state.current_environment))}
+		return {"ok": false, "errors": errors, "environment": JsonCoerceScript._copy_dict(rollback.get("environment", run_state.current_environment))}
 	return {
 		"ok": true,
 		"errors": [],
@@ -207,7 +208,7 @@ func enter_grand_casino_room_result(run_state: RunState, target_archetype_id: St
 	var target_id := target_archetype_id.strip_edges()
 	var preflight := run_state.scenario_preflight_environment_change(source_id, target_id, "grand_room") if source_id != target_id else {"ok": true, "inactive": true, "errors": []}
 	if not bool(preflight.get("ok", false)):
-		return {"ok": false, "errors": _copy_array(preflight.get("errors", []))}
+		return {"ok": false, "errors": JsonCoerceScript._copy_array(preflight.get("errors", []))}
 	var rollback := {} if caller_owns_rollback else _travel_rollback_snapshot(run_state)
 	if not _enter_grand_casino_room(run_state, target_id, rollback, true, false):
 		if not caller_owns_rollback:
@@ -236,11 +237,11 @@ func _travel_rollback_snapshot(run_state: RunState) -> Dictionary:
 
 
 func _restore_travel_snapshot(run_state: RunState, rollback: Dictionary) -> void:
-	run_state.from_dict(_copy_dict(rollback.get("run", {})))
-	run_state.current_environment = _copy_dict(rollback.get("environment", {}))
-	run_state.world_map = _copy_dict(rollback.get("world_map", {}))
-	run_state.grand_casino_room_states = _copy_dict(rollback.get("room_states", {}))
-	run_state.restore_scenario_definition_cache(_copy_dict(rollback.get("scenario_definition_cache", {})))
+	run_state.from_dict(JsonCoerceScript._copy_dict(rollback.get("run", {})))
+	run_state.current_environment = JsonCoerceScript._copy_dict(rollback.get("environment", {}))
+	run_state.world_map = JsonCoerceScript._copy_dict(rollback.get("world_map", {}))
+	run_state.grand_casino_room_states = JsonCoerceScript._copy_dict(rollback.get("room_states", {}))
+	run_state.restore_scenario_definition_cache(JsonCoerceScript._copy_dict(rollback.get("scenario_definition_cache", {})))
 
 
 # Builds and assigns the next environment for a run. A prevalidated target is
@@ -475,7 +476,7 @@ func enter_environment_layer(run_state: RunState, target_layer_id: String, advan
 	var source_layer_id := str(run_state.current_environment.get("current_layer_id", "")).strip_edges()
 	var preflight := run_state.scenario_preflight_environment_change(source_layer_id, target_id, "layer") if source_layer_id != target_id else {"ok": true, "inactive": true, "errors": []}
 	if not bool(preflight.get("ok", false)):
-		var preflight_errors := _copy_array(preflight.get("errors", []))
+		var preflight_errors := JsonCoerceScript._copy_array(preflight.get("errors", []))
 		return {"ok": false, "message": str(preflight_errors[0]) if not preflight_errors.is_empty() else "The room boundary could not begin safely."}
 	var rollback := _travel_rollback_snapshot(run_state)
 	if bool(access.get("discover_on_enter", false)):
@@ -484,7 +485,7 @@ func enter_environment_layer(run_state: RunState, target_layer_id: String, advan
 		var advance_result := run_state.advance_environment_turns(1)
 		if not bool(advance_result.get("ok", false)):
 			_restore_travel_snapshot(run_state, rollback)
-			return {"ok": false, "message": str(_copy_array(advance_result.get("errors", []))[0]) if not _copy_array(advance_result.get("errors", [])).is_empty() else "The room boundary could not advance safely."}
+			return {"ok": false, "message": str(JsonCoerceScript._copy_array(advance_result.get("errors", []))[0]) if not JsonCoerceScript._copy_array(advance_result.get("errors", [])).is_empty() else "The room boundary could not advance safely."}
 	var layer_state := run_state.environment_layer_state(target_id)
 	if layer_state.is_empty():
 		var archetype_id := str(run_state.current_environment.get("archetype_id", "")).strip_edges()
@@ -510,7 +511,7 @@ func enter_environment_layer(run_state: RunState, target_layer_id: String, advan
 	if not layer_state.has("town_conditions"):
 		run_state.apply_town_generation_modifiers(layer_state)
 	var stored_game_states: Variant = layer_state.get("game_states", null)
-	if typeof(stored_game_states) != TYPE_DICTIONARY or (stored_game_states as Dictionary).is_empty() and not _copy_array(layer_state.get("game_ids", [])).is_empty():
+	if typeof(stored_game_states) != TYPE_DICTIONARY or (stored_game_states as Dictionary).is_empty() and not JsonCoerceScript._copy_array(layer_state.get("game_ids", [])).is_empty():
 		var game_rng := run_state.create_rng("environment_layer_games:%s:%s" % [str(run_state.current_environment.get("world_node_id", run_state.current_environment.get("archetype_id", ""))), target_id])
 		layer_state["game_states"] = _generated_game_states(run_state, layer_state, game_rng)
 	if run_state.has_world_map():
@@ -520,7 +521,7 @@ func enter_environment_layer(run_state: RunState, target_layer_id: String, advan
 		var departed := _commit_travel_departure(run_state, source_layer_id, target_id, "layer")
 		if not bool(departed.get("ok", false)):
 			_restore_travel_snapshot(run_state, rollback)
-			return {"ok": false, "message": str(_copy_array(departed.get("errors", []))[0]) if not _copy_array(departed.get("errors", [])).is_empty() else "The room departure could not be recorded."}
+			return {"ok": false, "message": str(JsonCoerceScript._copy_array(departed.get("errors", []))[0]) if not JsonCoerceScript._copy_array(departed.get("errors", [])).is_empty() else "The room departure could not be recorded."}
 	if not run_state.install_environment_layer_state(target_id, layer_state):
 		_restore_travel_snapshot(run_state, rollback)
 		return {"ok": false, "message": "The room could not be entered."}
@@ -533,7 +534,7 @@ func enter_environment_layer(run_state: RunState, target_layer_id: String, advan
 	var layer_finalized := run_state.scenario_finalize_installed_environment(library)
 	if not bool(layer_finalized.get("ok", false)):
 		_restore_travel_snapshot(run_state, rollback)
-		var layer_errors := _copy_array(layer_finalized.get("errors", []))
+		var layer_errors := JsonCoerceScript._copy_array(layer_finalized.get("errors", []))
 		return {"ok": false, "message": str(layer_errors[0]) if not layer_errors.is_empty() else "The room semantic contract could not be finalized."}
 	if source_layer_id != target_id:
 		run_state.scenario_publish_travel("travel_arrived", source_layer_id, target_id, "layer")
@@ -563,7 +564,7 @@ func _apply_cage_gift_shop_stock(run_state: RunState, environment_data: Dictiona
 	var pat_down_config: Dictionary = showdown_payload.get("pat_down", {}) if typeof(showdown_payload.get("pat_down", {})) == TYPE_DICTIONARY else {}
 	var allowed: Array = []
 	var seen := {}
-	for candidate_value in _copy_array(shop_config.get("candidate_offers", [])):
+	for candidate_value in JsonCoerceScript._copy_array(shop_config.get("candidate_offers", [])):
 		if typeof(candidate_value) != TYPE_DICTIONARY:
 			continue
 		var candidate := (candidate_value as Dictionary).duplicate(true)
@@ -659,7 +660,7 @@ func _next_world_environment(run_state: RunState, target_archetype_id: String, r
 	if not run_state.current_environment.is_empty() and not source_preflight_complete:
 		var arrival_preflight := run_state.scenario_preflight_environment_change(current_node_id, target_id, "world")
 		if not bool(arrival_preflight.get("ok", false)):
-			_last_environment_install_errors = _copy_array(arrival_preflight.get("errors", []))
+			_last_environment_install_errors = JsonCoerceScript._copy_array(arrival_preflight.get("errors", []))
 			if restore_on_failure:
 				_restore_travel_snapshot(run_state, rollback)
 			return EnvironmentInstance.from_dict(run_state.current_environment)
@@ -667,7 +668,7 @@ func _next_world_environment(run_state: RunState, target_archetype_id: String, r
 		if current_node_id != target_id:
 			var departure := _commit_travel_departure(run_state, current_node_id, target_id, "world")
 			if not bool(departure.get("ok", false)):
-				_last_environment_install_errors = _copy_array(departure.get("errors", []))
+				_last_environment_install_errors = JsonCoerceScript._copy_array(departure.get("errors", []))
 				if restore_on_failure:
 					_restore_travel_snapshot(run_state, rollback)
 				return EnvironmentInstance.from_dict(run_state.current_environment)
@@ -680,7 +681,7 @@ func _next_world_environment(run_state: RunState, target_archetype_id: String, r
 		perf_stage_started_usec = Time.get_ticks_usec()
 	var installed := _install_environment_with_rollback(run_state, environment_data, rollback, false)
 	if not bool(installed.get("ok", false)):
-		_last_environment_install_errors = _copy_array(installed.get("errors", []))
+		_last_environment_install_errors = JsonCoerceScript._copy_array(installed.get("errors", []))
 		_last_environment_install_failure = {
 			"target_id": target_id,
 			"scenario_id": str(environment_data.get("scenario_id", "")).strip_edges(),
@@ -735,7 +736,7 @@ func _apply_tutorial_authored_travel_targets(run_state: RunState, environment_id
 	if not override.has("next_archetypes") and not override.has("travel_hooks"):
 		return
 	var targets: Array = []
-	for source in [_string_array(override.get("next_archetypes", [])), _string_array(override.get("travel_hooks", []))]:
+	for source in [JsonCoerceScript._raw_string_array(override.get("next_archetypes", [])), JsonCoerceScript._raw_string_array(override.get("travel_hooks", []))]:
 		for target_id_value in source:
 			var target_id := str(target_id_value)
 			if not target_id.is_empty() and not targets.has(target_id):
@@ -805,7 +806,7 @@ func _legacy_next_environment(run_state: RunState, target_archetype_id: String, 
 		# known, but before any generated-room mutation is committed to the run.
 		var preflight := run_state.scenario_preflight_environment_change(source_id, destination_id, "legacy")
 		if destination_id.is_empty() or not bool(preflight.get("ok", false)):
-			_last_environment_install_errors = ["Generated travel destination identity is empty."] if destination_id.is_empty() else _copy_array(preflight.get("errors", []))
+			_last_environment_install_errors = ["Generated travel destination identity is empty."] if destination_id.is_empty() else JsonCoerceScript._copy_array(preflight.get("errors", []))
 			_restore_travel_snapshot(run_state, rollback)
 			return EnvironmentInstance.from_dict(run_state.current_environment)
 	run_state.apply_town_generation_modifiers(environment_data, rng)
@@ -815,13 +816,13 @@ func _legacy_next_environment(run_state: RunState, target_archetype_id: String, 
 	if had_source:
 		var departure := _commit_travel_departure(run_state, source_id, destination_id, "legacy")
 		if not bool(departure.get("ok", false)):
-			_last_environment_install_errors = _copy_array(departure.get("errors", []))
+			_last_environment_install_errors = JsonCoerceScript._copy_array(departure.get("errors", []))
 			_restore_travel_snapshot(run_state, rollback)
 			return EnvironmentInstance.from_dict(run_state.current_environment)
 	run_state.save_rng(rng)
 	var installed := _install_environment_with_rollback(run_state, environment_data, rollback, false)
 	if not bool(installed.get("ok", false)):
-		_last_environment_install_errors = _copy_array(installed.get("errors", []))
+		_last_environment_install_errors = JsonCoerceScript._copy_array(installed.get("errors", []))
 		_restore_travel_snapshot(run_state, rollback)
 		return EnvironmentInstance.from_dict(run_state.current_environment)
 	if had_source:
@@ -887,7 +888,7 @@ func _world_environment_data_for_node(run_state: RunState, map_data: Dictionary,
 		var persistent_games: Dictionary = stored_environment.get("game_states", {})
 		for game_id_value in persistent_games.keys():
 			if environment_data["game_states"].has(game_id_value):
-				environment_data["game_states"][game_id_value] = _copy_dict(persistent_games.get(game_id_value, {}))
+				environment_data["game_states"][game_id_value] = JsonCoerceScript._copy_dict(persistent_games.get(game_id_value, {}))
 	if _world_environment_timing_enabled:
 		_world_environment_build_stages_usec["games"] = Time.get_ticks_usec() - perf_stage_started_usec
 		perf_stage_started_usec = Time.get_ticks_usec()
@@ -937,9 +938,9 @@ func _apply_scenario_sequence_travel_targets(environment_data: Dictionary, defin
 	if not ScenarioSequenceSchemaScript.is_sequence(definition):
 		return
 	var sequence := ScenarioSequenceSchemaScript.sequence(definition)
-	var declared := _copy_dict(sequence.get("declared_targets", {}))
-	var targets := _string_array(environment_data.get("next_archetypes", []))
-	for identity_value in _copy_array(declared.get("routes", [])):
+	var declared := JsonCoerceScript._copy_dict(sequence.get("declared_targets", {}))
+	var targets := JsonCoerceScript._raw_string_array(environment_data.get("next_archetypes", []))
+	for identity_value in JsonCoerceScript._copy_array(declared.get("routes", [])):
 		var identity := str(identity_value).strip_edges()
 		if not identity.begins_with("base::world:"):
 			continue
@@ -969,8 +970,8 @@ func _grand_casino_local_target_ids(environment_data: Dictionary) -> Array:
 func _align_world_map_scenario_layout_baseline(environment_data: Dictionary) -> void:
 	if not bool(environment_data.get("world_map_travel", false)) or not environment_data.has("scenario_sequence_base_layout_object_rects"):
 		return
-	var baseline_rects := _copy_dict(environment_data.get("scenario_sequence_base_layout_object_rects", {}))
-	var final_rects := _copy_dict(_copy_dict(environment_data.get("layout", {})).get("object_rects", {}))
+	var baseline_rects := JsonCoerceScript._copy_dict(environment_data.get("scenario_sequence_base_layout_object_rects", {}))
+	var final_rects := JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(environment_data.get("layout", {})).get("object_rects", {}))
 	var allowed_travel_ids := {"travel:leave": true}
 	for target_id_value in _grand_casino_local_target_ids(environment_data):
 		allowed_travel_ids["travel:%s" % str(target_id_value)] = true
@@ -981,7 +982,7 @@ func _align_world_map_scenario_layout_baseline(environment_data: Dictionary) -> 
 	for object_id_value in allowed_travel_ids.keys():
 		var object_id := str(object_id_value)
 		if final_rects.has(object_id):
-			baseline_rects[object_id] = _copy_dict(final_rects.get(object_id, {}))
+			baseline_rects[object_id] = JsonCoerceScript._copy_dict(final_rects.get(object_id, {}))
 		else:
 			baseline_rects.erase(object_id)
 	environment_data["scenario_sequence_base_layout_object_rects"] = baseline_rects
@@ -1074,7 +1075,7 @@ func _pick_archetype(run_state: RunState, depth: int, rng: RngStream, target_arc
 			return rng.pick(starts, {})
 
 	var next_ids: Array = []
-	for routed_id in _copy_array(run_state.current_environment.get("next_archetypes", [])) + _copy_array(run_state.current_environment.get("travel_hooks", [])):
+	for routed_id in JsonCoerceScript._copy_array(run_state.current_environment.get("next_archetypes", [])) + JsonCoerceScript._copy_array(run_state.current_environment.get("travel_hooks", [])):
 		var clean_routed_id := str(routed_id).strip_edges()
 		if not clean_routed_id.is_empty() and not next_ids.has(clean_routed_id):
 			next_ids.append(clean_routed_id)
@@ -1109,7 +1110,7 @@ func _archetypes_with_shop_items(archetypes: Array, include_rare: bool = true, c
 		var data: Dictionary = archetype
 		if str(data.get("kind", "")) != "shop":
 			continue
-		var filtered_item_pool := library.shop_item_pool_for_challenge(data.get("item_pool", []), challenge_config) if library != null else _string_array(data.get("item_pool", []))
+		var filtered_item_pool := library.shop_item_pool_for_challenge(data.get("item_pool", []), challenge_config) if library != null else JsonCoerceScript._raw_string_array(data.get("item_pool", []))
 		if filtered_item_pool.is_empty():
 			continue
 		if _count_ceiling(data.get("item_count", 0)) <= 0:
@@ -1127,7 +1128,7 @@ func _archetypes_with_games(archetypes: Array, include_rare: bool = true, challe
 		if typeof(archetype) != TYPE_DICTIONARY:
 			continue
 		var data: Dictionary = archetype
-		var filtered_game_pool := library.filter_game_ids_for_challenge(data.get("game_pool", []), challenge_config) if library != null else _string_array(data.get("game_pool", []))
+		var filtered_game_pool := library.filter_game_ids_for_challenge(data.get("game_pool", []), challenge_config) if library != null else JsonCoerceScript._raw_string_array(data.get("game_pool", []))
 		if filtered_game_pool.is_empty():
 			continue
 		if not include_rare and str(data.get("rarity", "")).to_lower() == "rare":
@@ -1193,10 +1194,10 @@ func _select_scenario(run_state: RunState, archetype_id: String, rng: RngStream,
 	var perf_stages: Dictionary = {}
 	if run_state == null or library == null or rng == null:
 		return {}
-	var modifiers := _copy_dict(run_state.challenge_config.get("modifiers", {}))
-	var pins := _copy_dict(modifiers.get("scenario_pins", {}))
+	var modifiers := JsonCoerceScript._copy_dict(run_state.challenge_config.get("modifiers", {}))
+	var pins := JsonCoerceScript._copy_dict(modifiers.get("scenario_pins", {}))
 	var pinned_id := str(pins.get(archetype_id, "")).strip_edges()
-	var tutorial_overrides := _copy_dict(modifiers.get("tutorial_environment_overrides", {}))
+	var tutorial_overrides := JsonCoerceScript._copy_dict(modifiers.get("tutorial_environment_overrides", {}))
 	if _world_environment_timing_enabled:
 		perf_stages["modifiers"] = Time.get_ticks_usec() - perf_stage_usec
 		perf_stage_usec = Time.get_ticks_usec()
@@ -1240,8 +1241,8 @@ func _select_scenario(run_state: RunState, archetype_id: String, rng: RngStream,
 				return _apply_scenario_pin_suppression(run_state, archetype_id, resolved_pinned)
 		run_state.remember_environment_situation_cycle(archetype_id, cycle_id, "")
 		return {}
-	var excludes := _copy_dict(modifiers.get("scenario_excludes", {}))
-	var excluded_ids := _string_array(excludes.get(archetype_id, []))
+	var excludes := JsonCoerceScript._copy_dict(modifiers.get("scenario_excludes", {}))
+	var excluded_ids := JsonCoerceScript._raw_string_array(excludes.get(archetype_id, []))
 	var candidates: Array = []
 	for definition_value in pool:
 		if typeof(definition_value) != TYPE_DICTIONARY:
@@ -1281,7 +1282,7 @@ func _select_scenario(run_state: RunState, archetype_id: String, rng: RngStream,
 			repeat_multiplier = 0.60
 		var town_multiplier := 1.0
 		if run_state.has_method("scenario_weight_multiplier"):
-			town_multiplier = maxf(0.0, float(run_state.call("scenario_weight_multiplier", archetype_id, scenario_id, _string_array(definition.get("town_weight_tags", [])))))
+			town_multiplier = maxf(0.0, float(run_state.call("scenario_weight_multiplier", archetype_id, scenario_id, JsonCoerceScript._raw_string_array(definition.get("town_weight_tags", [])))))
 		var scaled_weight := maxi(0, int(round(float(definition.get("weight", 1.0)) * repeat_multiplier * town_multiplier * 1000.0)))
 		if scaled_weight <= 0:
 			continue
@@ -1335,7 +1336,7 @@ func _apply_scenario_pin_suppression(run_state: RunState, archetype_id: String, 
 		return result
 	var scenario_id := str(result.get("id", "")).strip_edges()
 	if scenario_id.is_empty():
-		scenario_id = str(_copy_dict(_copy_dict(run_state.challenge_config.get("modifiers", {})).get("scenario_pins", {})).get(archetype_id, "")).strip_edges()
+		scenario_id = str(JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(run_state.challenge_config.get("modifiers", {})).get("scenario_pins", {})).get(archetype_id, "")).strip_edges()
 	if not run_state.scenario_sequence_is_suppressed(scenario_id, archetype_id):
 		return result
 	if result.is_empty():
@@ -1366,7 +1367,7 @@ func _weighted_pick_archetype(archetypes: Array, rng: RngStream) -> Dictionary:
 
 func _apply_home_profile(run_state: RunState, environment_data: Dictionary, archetype: Dictionary, node_id: String, rng: RngStream) -> void:
 	var effective_archetype := library.environment_archetype_for_challenge(archetype, run_state.challenge_config) if library != null else archetype
-	var profile := _copy_dict(environment_data.get("home_profile", effective_archetype.get("home_profile", {})))
+	var profile := JsonCoerceScript._copy_dict(environment_data.get("home_profile", effective_archetype.get("home_profile", {})))
 	if profile.is_empty():
 		return
 	run_state.initialize_home_from_profile(effective_archetype, node_id, profile)
@@ -1404,7 +1405,7 @@ func _home_starting_item_offers(profile: Dictionary, starting_pool: Array, rng: 
 
 
 func _home_starting_item_pool(profile: Dictionary, challenge_config: Dictionary) -> Array:
-	var pool := _string_array(profile.get("starting_item_pool", []))
+	var pool := JsonCoerceScript._raw_string_array(profile.get("starting_item_pool", []))
 	if pool.is_empty():
 		if library == null:
 			return pool
@@ -1427,7 +1428,7 @@ func _home_starting_item_pool(profile: Dictionary, challenge_config: Dictionary)
 func _home_starting_containers(profile: Dictionary, starting_pool: Array, rng: RngStream) -> Array:
 	var containers: Array = []
 	var index := 0
-	for container_value in _copy_array(profile.get("starting_containers", [])):
+	for container_value in JsonCoerceScript._copy_array(profile.get("starting_containers", [])):
 		if typeof(container_value) != TYPE_DICTIONARY:
 			continue
 		var entry: Dictionary = container_value
@@ -1456,14 +1457,14 @@ func _home_starting_containers(profile: Dictionary, starting_pool: Array, rng: R
 
 
 func _meta_collection_starting_containers(challenge_config: Dictionary) -> Array:
-	var modifiers := _copy_dict(challenge_config.get("modifiers", {}))
+	var modifiers := JsonCoerceScript._copy_dict(challenge_config.get("modifiers", {}))
 	if not bool(modifiers.get("meta_collection_enabled", false)):
 		return []
 	var containers: Array = []
-	for container_value in _copy_array(modifiers.get("meta_collection_containers", [])):
+	for container_value in JsonCoerceScript._copy_array(modifiers.get("meta_collection_containers", [])):
 		if typeof(container_value) != TYPE_DICTIONARY:
 			continue
-		var container: Dictionary = _copy_dict(container_value)
+		var container: Dictionary = JsonCoerceScript._copy_dict(container_value)
 		var item_id := str(container.get("item_id", "")).strip_edges()
 		var capacity := _container_capacity(item_id, int(container.get("capacity", 0)))
 		if item_id.is_empty() or capacity <= 0:
@@ -1482,7 +1483,7 @@ func _container_capacity(item_id: String, fallback: int) -> int:
 	if definition.is_empty():
 		return capacity
 	capacity = maxi(capacity, int(definition.get("container_capacity", 0)))
-	var effect := _copy_dict(definition.get("effect", {}))
+	var effect := JsonCoerceScript._copy_dict(definition.get("effect", {}))
 	return maxi(capacity, int(effect.get("container_capacity", 0)))
 
 
@@ -1498,9 +1499,9 @@ func _int_range(value: Variant, fallback_min: int, fallback_max: int) -> Array:
 
 # Lets GameModule instances attach generated per-environment state before entry.
 func _generated_game_states(run_state: RunState, environment_data: Dictionary, rng: RngStream) -> Dictionary:
-	var states := _copy_dict(environment_data.get("game_states", {}))
+	var states := JsonCoerceScript._copy_dict(environment_data.get("game_states", {}))
 	var perf_games_detail: Dictionary = {}
-	for game_id in _string_array(environment_data.get("game_ids", [])):
+	for game_id in JsonCoerceScript._raw_string_array(environment_data.get("game_ids", [])):
 		var perf_game_started_usec := Time.get_ticks_usec() if _world_environment_timing_enabled else 0
 		var definition := library.game(game_id)
 		var game: GameModule = _create_game_module(definition)
@@ -1527,7 +1528,7 @@ func _generated_game_states(run_state: RunState, environment_data: Dictionary, r
 				}
 				if game.has_method("generation_timing_snapshot"):
 					perf_games_detail[game_id]["generation_detail"] = game.call("generation_timing_snapshot")
-		var fixture_count := maxi(1, int(_copy_dict(_copy_dict(environment_data.get("layout", {})).get("game_fixture_counts", {})).get(game_id, 1)))
+		var fixture_count := maxi(1, int(JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(environment_data.get("layout", {})).get("game_fixture_counts", {})).get(game_id, 1)))
 		if fixture_count <= 1 or not game.has_method("generate_environment_fixture_states"):
 			continue
 		var fixture_states_value: Variant = game.call("generate_environment_fixture_states", run_state, environment_data, state_rng.fork("fixtures"), fixture_count)
@@ -1552,39 +1553,7 @@ func _generated_game_states(run_state: RunState, environment_data: Dictionary, r
 
 
 func _create_game_module(definition: Dictionary) -> GameModule:
-	var module_path := str(definition.get("module_path", ""))
-	if module_path.is_empty() or module_path.ends_with("_ui.gd") or module_path.begins_with("res://data/runtime/"):
-		return null
-	var module_script: Script = _game_module_script_cache.get(module_path) as Script
-	if module_script == null:
-		module_script = load(module_path)
-		if module_script != null:
-			_game_module_script_cache[module_path] = module_script
-	if module_script == null:
-		return null
-	var module_instance = module_script.new()
-	if not module_instance is GameModule:
-		return null
-	var game: GameModule = module_instance
-	game.setup(definition, library)
-	return game
-
-
-func _string_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry in value:
-		var id := str(entry)
-		if not id.is_empty():
-			result.append(id)
-	return result
-
-
-func _copy_array(value: Variant) -> Array:
-	if typeof(value) != TYPE_ARRAY:
-		return []
-	return (value as Array).duplicate(true)
+	return GameModuleRegistryScript.create_module(definition, library)
 
 
 func _count_ceiling(value: Variant) -> int:
@@ -1595,9 +1564,3 @@ func _count_ceiling(value: Variant) -> int:
 			max_count = maxi(max_count, int(entry))
 		return max_count
 	return int(value)
-
-
-func _copy_dict(value: Variant) -> Dictionary:
-	if typeof(value) != TYPE_DICTIONARY:
-		return {}
-	return (value as Dictionary).duplicate(true)

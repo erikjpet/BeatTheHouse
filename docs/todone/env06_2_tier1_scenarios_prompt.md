@@ -20,7 +20,7 @@ authoring** slice on top of the env06_1 scenario engine. Binding design
 contract: `docs/plans/0.6_living_world_roadmap.md` — Pillar 1's
 scenario catalog (★ = launch cut) is your authored spec; Pillar 1's
 mutation-axis table is your toolbox. Voice: all player-facing text obeys
-`docs/plans/0.5_voice_bible.md` + `docs/plans/0.6_voice_bible_world_register.md`
+`docs/archive/0.5/plans/0.5_voice_bible.md` + `docs/plans/0.6_voice_bible_world_register.md`
 (house = courtesy, street = blunt; brevity rule). This prompt is
 self-contained for rules and scope.
 

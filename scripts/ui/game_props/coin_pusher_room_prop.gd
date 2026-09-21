@@ -1,7 +1,7 @@
 class_name CoinPusherRoomProp
 extends RefCounted
 
-const Kit := preload("res://scripts/ui/game_props/game_prop_kit.gd")
+const KitScript := preload("res://scripts/ui/game_props/game_prop_kit.gd")
 const EMPTY_STATE: Dictionary = {}
 const C_CYAN := Color("#58ead9")
 const C_PINK := Color("#ff6588")
@@ -23,12 +23,12 @@ static func draw(canvas: CanvasItem, rect: Rect2, object_data: Dictionary, accen
 	var backglass_color: Color = visual.get("backglass_color", Color("#46131c"))
 	var topper_style: String = visual.get("topper_style", "crown_lights")
 	var backglass_style: String = visual.get("backglass_style", "prize_showcase")
-	var phase_value := Kit.phase(object_data)
-	var pulse := Kit.pulse(flicker, phase_value, selected)
-	Kit.draw_base_shadow(canvas, safe, accent)
+	var phase_value := KitScript.phase(object_data)
+	var pulse := KitScript.pulse(flicker, phase_value, selected)
+	KitScript.draw_base_shadow(canvas, safe, accent)
 	if safe.size.x < 58.0 or safe.size.y < 42.0:
 		_draw_small(canvas, safe, identity, body_color, trim_color, glass_color)
-		Kit.draw_state(canvas, safe, selected, disabled)
+		KitScript.draw_state(canvas, safe, selected, disabled)
 		return
 	var body := Rect2(safe.position + Vector2(safe.size.x * 0.12, safe.size.y * 0.20), Vector2(safe.size.x * 0.76, safe.size.y * 0.69))
 	if identity == "jackpot_ridge":
@@ -62,7 +62,7 @@ static func draw(canvas: CanvasItem, rect: Rect2, object_data: Dictionary, accen
 		var font: Font = canvas.get_theme_default_font()
 		var marquee: String = visual.get("marquee", "QUARTER FALLS")
 		canvas.draw_string(font, safe.position + Vector2(2.0, safe.size.y * 0.16), marquee, HORIZONTAL_ALIGNMENT_CENTER, safe.size.x - 4.0, 7, light_color)
-	Kit.draw_state(canvas, safe, selected, disabled)
+	KitScript.draw_state(canvas, safe, selected, disabled)
 
 
 static func draw_low_detail(canvas: CanvasItem, rect: Rect2, object_data: Dictionary, accent: Color, disabled: bool, flicker: float) -> void:
@@ -72,10 +72,10 @@ static func draw_low_detail(canvas: CanvasItem, rect: Rect2, object_data: Dictio
 	var body_color: Color = visual.get("body_color", Color("#6f2028"))
 	var trim_color: Color = visual.get("trim_color", C_YELLOW)
 	var glass_color: Color = visual.get("glass_color", C_CYAN)
-	Kit.draw_base_shadow(canvas, safe, accent)
+	KitScript.draw_base_shadow(canvas, safe, accent)
 	_draw_small(canvas, safe, identity, body_color, trim_color, glass_color)
 	if disabled:
-		Kit.draw_state(canvas, safe, false, true)
+		KitScript.draw_state(canvas, safe, false, true)
 
 
 static func _draw_topper(canvas: CanvasItem, safe: Rect2, identity: String, style: String, trim: Color, light: Color, pulse: float) -> void:

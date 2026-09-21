@@ -53,7 +53,7 @@ correctly on its first layout pass (assert it, don't eyeball it).
 UI redesign report omits scripts/ui files: scripts/ui/hud_time_watch.gd
 ```
 
-`docs/plans/0.5_ui_redesign_report.md` claims "all 54 current
+`docs/archive/0.5/plans/0.5_ui_redesign_report.md` claims "all 54 current
 `scripts/ui/*.gd` files accounted" - but there are now 55. Twelve commits
 landed after the overhaul was declared complete (`12a437b6` onward: HUD
 compaction, the exact visual run clock, cheat-dock integration into game
@@ -68,7 +68,7 @@ Do this:
 
 1. Fix the coverage gate for real: account for `hud_time_watch.gd` and every
    other file added or materially changed since `12a437b6` in
-   `docs/plans/0.5_ui_redesign_report.md`, including its cold-look note and a
+   `docs/archive/0.5/plans/0.5_ui_redesign_report.md`, including its cold-look note and a
    capture, to the same standard as the existing entries.
 2. Re-run the full evidence battery on the CURRENT tree and replace the stale
    numbers in the report's "Final gates" table - do not leave the old
@@ -109,7 +109,7 @@ otherwise.
 - Working tree may contain other people's uncommitted work
   (`data/games/scratch_tickets.json`, `scripts/games/scratch_tickets.gd`,
   `scripts/tests/foundation/check_scratch_tickets.gd`, both probe tools,
-  `docs/plans/0.5_ui_overhaul_brief.md`). Treat it as user-owned: never
+  `docs/archive/0.5/plans/0.5_ui_overhaul_brief.md`). Treat it as user-owned: never
   revert, reformat, or stage it. Stage explicitly, file by file.
 - Style: tabs, typed GDScript, sparse comments. Captures under `.tmp/`.
 
@@ -137,7 +137,7 @@ archive, and report verbatim.
 - Archive commit: this commit
 - Result: PASS
 - Viewport fix / outcome: `_apply_main_menu_panel_size()` was already made tree-safe by the preceding p0_0 commit; p0_2 added an explicit first-pass assertion in `scripts/tests/ui_scene/compile_components_and_main_flow.gd` so a 1x1/zero-viewport main-menu panel cannot regress silently. A full boot and the `ui` suite both produced zero `is_inside_tree` / `get_viewport_rect` stderr matches.
-- Gate honesty outcome: `docs/plans/0.5_ui_redesign_report.md` now accounts for all 55 current `scripts/ui/*.gd` files, including `scripts/ui/hud_time_watch.gd`, and its final gate table now records p0_2-observed current-tree numbers. `tools/check_godot.ps1` suite-time baselines were refreshed from those current p0_2 runs; `foundation_bar_dice` was the only logic-green/timing-red suite before the refresh.
+- Gate honesty outcome: `docs/archive/0.5/plans/0.5_ui_redesign_report.md` now accounts for all 55 current `scripts/ui/*.gd` files, including `scripts/ui/hud_time_watch.gd`, and its final gate table now records p0_2-observed current-tree numbers. `tools/check_godot.ps1` suite-time baselines were refreshed from those current p0_2 runs; `foundation_bar_dice` was the only logic-green/timing-red suite before the refresh.
 - Deviations: Several guard failures were caused by stale/orphan Godot processes from prior validation/trailer jobs. They were not counted as gate failures; each affected suite was rerun isolated after the process cleared or was stopped. Web export was not rerun for this prompt because p0_2 did not list it in its evidence battery and release-owner rules prohibit publish/upload work.
 - Gates:
   - `tools\validate_project.ps1`: PASS

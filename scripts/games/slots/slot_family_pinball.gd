@@ -1,6 +1,8 @@
 class_name SlotFamilyPinball
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 const MathScript := preload("res://scripts/games/slots/slot_rng_math.gd")
 const FeatureScript := preload("res://scripts/games/slots/pinball/pinball_feature.gd")
 
@@ -18,7 +20,7 @@ const FILL_REEL_SYMBOLS := [
 
 func outcome_table(machine: Dictionary, definition: Dictionary, _free_spin: bool) -> Array:
 	var config: Dictionary = _pinball_config(definition)
-	var table: Array = _dictionary_array(config.get("outcome_table", []))
+	var table: Array = JsonCoerceScript._dictionary_array(config.get("outcome_table", []))
 	return _adjusted_table(table, str(machine.get("math_variant_id", "standard")))
 
 
@@ -33,14 +35,14 @@ func force_outcome_symbols(machine: Dictionary, grid: Array, entry: Dictionary, 
 	match classification:
 		"near_miss":
 			var line_info := _random_payline(reel_count, row_count, mini(3, reel_count), rng)
-			var cells: Array = _copy_array(line_info.get("cells", []))
+			var cells: Array = JsonCoerceScript._copy_array(line_info.get("cells", []))
 			for index in range(cells.size()):
 				var cell: Dictionary = cells[index]
 				MathScript.set_cell(result, int(cell.get("reel", 0)), int(cell.get("row", 0)), "PINBALL" if index < 2 else _safe_pinball_fill_symbol(int(cell.get("reel", 0)), int(cell.get("row", 0)), "PINBALL"))
 			placement = {"kind": "tease", "symbol": "PINBALL", "cells": cells.slice(0, mini(2, cells.size())), "line_index": int(line_info.get("line_index", center_row))}
 		"ldw":
 			var line_info := _random_payline(reel_count, row_count, mini(3, reel_count), rng)
-			var cells: Array = _copy_array(line_info.get("cells", []))
+			var cells: Array = JsonCoerceScript._copy_array(line_info.get("cells", []))
 			for cell in cells:
 				MathScript.set_cell(result, int(cell.get("reel", 0)), int(cell.get("row", 0)), "CHERRY")
 			_stop_pinball_extension(result, int(line_info.get("line_index", center_row)), cells, "CHERRY")
@@ -53,7 +55,7 @@ func force_outcome_symbols(machine: Dictionary, grid: Array, entry: Dictionary, 
 			var wild_cell_index := int(win_plan.get("wild_cell_index", -1))
 			var wild_symbol := str(win_plan.get("wild_symbol", "DOUBLE"))
 			var line_info := _random_payline(reel_count, row_count, win_count, rng)
-			var cells: Array = _copy_array(line_info.get("cells", []))
+			var cells: Array = JsonCoerceScript._copy_array(line_info.get("cells", []))
 			for index in range(cells.size()):
 				var cell: Dictionary = cells[index]
 				var placed_symbol := wild_symbol if index == wild_cell_index else symbol
@@ -68,7 +70,7 @@ func force_outcome_symbols(machine: Dictionary, grid: Array, entry: Dictionary, 
 	if not placement.is_empty():
 		entry["forced_placement"] = placement
 	if classification != "bonus":
-		_sanitize_pinball_grid(result, definition, MathScript.protected_cell_lookup(_copy_array(placement.get("cells", []))))
+		_sanitize_pinball_grid(result, definition, MathScript.protected_cell_lookup(JsonCoerceScript._copy_array(placement.get("cells", []))))
 	return result
 
 
@@ -92,16 +94,16 @@ func payout_for(entry: Dictionary, stake: int, stake_cost: int, machine: Diction
 
 func grid_payout_for_entry(grid: Array, stake: int, stake_cost: int = -1, machine: Dictionary = {}, definition: Dictionary = {}, entry: Dictionary = {}) -> int:
 	var classification := str(entry.get("classification", ""))
-	var forced_placement: Dictionary = _copy_dict(entry.get("forced_placement", {}))
+	var forced_placement: Dictionary = JsonCoerceScript._copy_dict(entry.get("forced_placement", {}))
 	if (classification == "true_win" or classification == "ldw") and str(forced_placement.get("kind", "")) == "line":
-		var cells: Array = _copy_array(forced_placement.get("cells", []))
+		var cells: Array = JsonCoerceScript._copy_array(forced_placement.get("cells", []))
 		if cells.size() >= mini(3, maxi(1, grid.size())):
 			var safe_stake := maxi(1, stake)
 			var safe_stake_cost := safe_stake if stake_cost < 0 else maxi(0, stake_cost)
 			var symbols: Dictionary = _symbol_lookup(_pinball_config(definition))
 			var line_symbols: Array = []
 			for cell_value in cells:
-				var cell: Dictionary = _copy_dict(cell_value)
+				var cell: Dictionary = JsonCoerceScript._copy_dict(cell_value)
 				line_symbols.append(_cell_symbol(grid, int(cell.get("reel", 0)), int(cell.get("row", 0))))
 			return _line_payout(line_symbols, safe_stake, safe_stake_cost, symbols)
 	return grid_payout(grid, stake, stake_cost, machine, definition)
@@ -118,7 +120,7 @@ func grid_payout(grid: Array, stake: int, stake_cost: int = -1, _machine: Dictio
 		var cells: Array = MathScript.payline_cells(reel_count, row_count, line_index)
 		var line_symbols: Array = []
 		for cell_value in cells:
-			var cell: Dictionary = _copy_dict(cell_value)
+			var cell: Dictionary = JsonCoerceScript._copy_dict(cell_value)
 			line_symbols.append(_cell_symbol(grid, int(cell.get("reel", 0)), int(cell.get("row", 0))))
 		for start_index in range(line_symbols.size()):
 			var segment: Array = line_symbols.slice(start_index, line_symbols.size())
@@ -142,12 +144,12 @@ func open_feature(machine: Dictionary, stake: int, rng: RngStream, definition: D
 		"cap": _session_cap(stake, mode, feature_scale),
 		"feature_scale": feature_scale,
 		"item_effects": _pinball_item_effects(item_effects),
-		"bet_id": str(_copy_dict(machine.get("bet_ladder", {})).get("selected_id", "bet_2")),
+		"bet_id": str(JsonCoerceScript._copy_dict(machine.get("bet_ladder", {})).get("selected_id", "bet_2")),
 	})
 
 
 func nudge_entry(_machine: Dictionary, definition: Dictionary) -> Dictionary:
-	for entry_value in _dictionary_array(_pinball_config(definition).get("outcome_table", [])):
+	for entry_value in JsonCoerceScript._dictionary_array(_pinball_config(definition).get("outcome_table", [])):
 		var entry: Dictionary = entry_value
 		if str(entry.get("id", "")) == "bonus":
 			return entry.duplicate(true)
@@ -178,7 +180,7 @@ func step_bonus(machine: Dictionary, action_id: String, rng: RngStream, definiti
 
 
 func shot_table(definition: Dictionary) -> Array:
-	return _dictionary_array(_pinball_config(definition).get("shot_table", []))
+	return JsonCoerceScript._dictionary_array(_pinball_config(definition).get("shot_table", []))
 
 
 func feature_mode_for_machine(machine: Dictionary) -> String:
@@ -318,10 +320,10 @@ func _pinball_true_win_plan(reel_count: int, format_id: String, rng: RngStream, 
 	var safe_reels := maxi(1, reel_count)
 	var config: Dictionary = _pinball_config(definition)
 	var symbols: Dictionary = _symbol_lookup(config)
-	var profiles_by_format: Dictionary = _copy_dict(config.get("true_win_profiles", {}))
-	var raw_profiles: Array = _dictionary_array(profiles_by_format.get(format_id, []))
+	var profiles_by_format: Dictionary = JsonCoerceScript._copy_dict(config.get("true_win_profiles", {}))
+	var raw_profiles: Array = JsonCoerceScript._dictionary_array(profiles_by_format.get(format_id, []))
 	if raw_profiles.is_empty() and format_id != "classic_3_reel":
-		raw_profiles = _dictionary_array(profiles_by_format.get("line_5x3", []))
+		raw_profiles = JsonCoerceScript._dictionary_array(profiles_by_format.get("line_5x3", []))
 	var candidates: Array = []
 	var minimum_count := mini(3, safe_reels)
 	for profile_value in raw_profiles:
@@ -332,7 +334,7 @@ func _pinball_true_win_plan(reel_count: int, format_id: String, rng: RngStream, 
 			continue
 		if symbol.is_empty() or not symbols.has(symbol) or _pinball_wild(symbol):
 			continue
-		var symbol_def: Dictionary = _copy_dict(symbols.get(symbol, {}))
+		var symbol_def: Dictionary = JsonCoerceScript._copy_dict(symbols.get(symbol, {}))
 		if str(symbol_def.get("role", "")) == "bonus_scatter":
 			continue
 		candidates.append(profile.duplicate(true))
@@ -389,7 +391,7 @@ func _sanitize_pinball_grid(grid: Array, definition: Dictionary, protected_cells
 		var violation: Dictionary = _first_pinball_win_violation(grid, definition, protected_cells)
 		if violation.is_empty():
 			return
-		var break_cell: Dictionary = MathScript.first_unprotected_cell(_copy_array(violation.get("cells", [])), protected_cells)
+		var break_cell: Dictionary = MathScript.first_unprotected_cell(JsonCoerceScript._copy_array(violation.get("cells", [])), protected_cells)
 		if break_cell.is_empty():
 			return
 		MathScript.set_cell(grid, int(break_cell.get("reel", 0)), int(break_cell.get("row", 0)), "BLANK")
@@ -455,7 +457,7 @@ func _stop_pinball_extension(grid: Array, line_index: int, cells: Array, symbol:
 	var min_reel := grid.size()
 	var max_reel := -1
 	for cell_value in cells:
-		var cell: Dictionary = _copy_dict(cell_value)
+		var cell: Dictionary = JsonCoerceScript._copy_dict(cell_value)
 		var reel_index := int(cell.get("reel", -1))
 		min_reel = mini(min_reel, reel_index)
 		max_reel = maxi(max_reel, reel_index)
@@ -465,7 +467,7 @@ func _stop_pinball_extension(grid: Array, line_index: int, cells: Array, symbol:
 		var stop_cells: Array = MathScript.payline_cells_from(grid.size(), row_count, line_index, stop_reel, 1)
 		if stop_cells.is_empty():
 			continue
-		var stop_cell: Dictionary = _copy_dict(stop_cells[0])
+		var stop_cell: Dictionary = JsonCoerceScript._copy_dict(stop_cells[0])
 		var stop_row := int(stop_cell.get("row", 0))
 		var column: Array = grid[stop_reel] if typeof(grid[stop_reel]) == TYPE_ARRAY else []
 		if stop_row >= 0 and stop_row < column.size():
@@ -591,31 +593,8 @@ func _pinball_config(definition: Dictionary) -> Dictionary:
 
 
 func _variant_by_id(entries_value: Variant, variant_id: String) -> Dictionary:
-	for entry_value in _dictionary_array(entries_value):
+	for entry_value in JsonCoerceScript._dictionary_array(entries_value):
 		var entry: Dictionary = entry_value
 		if str(entry.get("id", "")) == variant_id:
 			return entry.duplicate(true)
 	return {}
-
-
-func _dictionary_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	var source: Array = value as Array
-	for entry in source:
-		if typeof(entry) == TYPE_DICTIONARY:
-			result.append((entry as Dictionary).duplicate(true))
-	return result
-
-
-func _copy_array(value: Variant) -> Array:
-	if typeof(value) != TYPE_ARRAY:
-		return []
-	return (value as Array).duplicate(true)
-
-
-func _copy_dict(value: Variant) -> Dictionary:
-	if typeof(value) != TYPE_DICTIONARY:
-		return {}
-	return (value as Dictionary).duplicate(true)
