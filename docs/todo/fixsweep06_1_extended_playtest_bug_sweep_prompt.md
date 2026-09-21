@@ -1020,6 +1020,7 @@ had to make under rule 6.
 | W8 Tutorial | BTH-027 | DONE | `.tmp/fixsweep06_1/wave8/tutorial_before.log` reproduces the zero-area Coffee action; `tutorial_after.log` passes with visible selected info and a non-empty aligned Buy rect; `guardrail_recovery.log` passes 1,622 irregular boundaries; `ui_scene_gate.log` passes the full UI flow gate. | Tutorial completion now evaluates the settled final active lesson before reconciling focus, so already-satisfied dependents are skipped by the authoritative lesson evaluator. Selection is cleared only when that resolved anchor truly differs, and an allowed action on the same prior object defensively restores its card before coach geometry sync. `dialogue_cadence.log` and `talk_target_nonoverlap.log` record unrelated legacy-probe failures before focus assertions (invalid Blackjack fixture JSON; expected Heat 75 versus runtime 8); neither appears in the focused, stress, or full UI gate. Touched: `foundation_main.gd`, `tutorial_corner_shop_order_check.gd`. |
 | W9 Packaging custody | BTH-033, 034, 040, 041 | DONE | `.tmp/fixsweep06_1/wave9/packaging_before.log` records all four missing boundaries; `packaging_after.log` and `packaging_runtime.log` pass; `current_web_pck_audit.json` independently enumerates the six reported leaks plus the newly excluded `.gitkeep`; `validate_project.log` and `ui_scene_gate.log` pass. Quarantine evidence: `builds/quarantine/20260921T015912Z/quarantine_manifest.json` plus the adjacent later manifest for two additional stale export roots. | D3 retained `project.godot` 0.5.1 while manifest-backed non-release identity is `0.6.0-dev+<short-commit>` and telemetry trusts embedded identity for distributions. Export tooling now defaults to one Windows/Web candidate in immutable commit/tree/dirty-digest staging, embeds per-platform manifests, audits PCK contents, verifies native side libraries and ZIP bytes, and refuses overwrite/unowned executable artifacts. Export filters remove reports, native toolchain sources, logs, test residue and secret file types while preserving addon binaries/descriptors. D4 moved 17 opaque roots/files into reversible timestamped quarantine; nothing was deleted. Distribution Coin Pusher fails closed when native authority is absent. No export, package, push or publish was performed. |
 | Final verification | section 6 ladder | DONE | `.tmp/fixsweep06_1/final/01_validate_project_frozen.log` through `08_soak_frozen.log`; Smoke report `.tmp/test_reports/20260921_013324_smoke/summary.json`; Contract report `.tmp/test_reports/20260921_014040_contract/summary.json`; copied soak JSON `.tmp/fixsweep06_1/final/foundation_soak_probe_report_frozen.json`. | Frozen-tree ladder passed in the required order. Soak: 19 samples, 504 measured actions, 0 max orphans, 0 node/resource retained slopes, 10,512 B/sample robust memory slope, 1,205,388 B retained growth, 912,599 B max serialized state, and zero occurrences of both prohibited Wave-1 error phrases. No commit, push, export, package, upload, tag, or publish was performed. |
+| 2026-09-21 reconfirmation | BTH-001 through BTH-058 | DONE | Fresh evidence under `.tmp/fixsweep06_1/reconfirm_20260921/`; final Smoke report `.tmp/test_reports/20260921_024306_smoke/summary.json`; final Contract report `.tmp/test_reports/20260921_025022_contract/summary.json`; copied performance and soak JSON in the reconfirmation directory. | All 58 original findings are not reproducible under their focused wave regressions and the complete section 6 ladder. The first fresh Smoke run exposed a separate intermittent main-menu Exit control restoration failure. A deterministic regression was captured red, the standard/meta return boundary was fixed, the full UI gate passed twice, affected W4/W5/W8 regressions passed, and the entire ladder was restarted from validation and passed. No export, package, upload, tag, publish, commit, or push was performed during this reconfirmation. |
 
 ---
 
@@ -1347,3 +1348,137 @@ Ignored but review-relevant reversible/evidence outputs are
   valid measured travels, has no failure, and contains zero semantic-digest or
   compact-rollback error signatures. This is diagnostic harness noise, not a
   player-facing defect, so no production behavior was changed for it.
+
+---
+
+## 9. Fresh reconfirmation - 2026-09-21
+
+This second pass started from clean `main` at
+`93e7550b9d0116d59cb61198b4ccfdafbc810cc1`, equal to `origin/main`. The source
+report and all fifteen specialist reports remained read-only. Every focused
+Godot invocation used an evidence-local developer-placement path, and no two
+Godot jobs overlapped.
+
+### Fresh evidence keys
+
+- `RC-W1-W3`: `wave1_to_wave3_contract.log`, followed by the restarted final
+  Contract report `.tmp/test_reports/20260921_025022_contract/summary.json`.
+- `RC-W2-LAYOUT`: `wave2_layout.log` and `wave2_layout/layout_report.json`;
+  `LAYOUT_SURVEY_DONE 18 environments`.
+- `RC-W4`: `wave4_accessibility.log` and
+  `wave4_accessibility_after_menu_fix.log`.
+- `RC-W5`: `wave5_lifecycle.log` and
+  `wave5_lifecycle_after_menu_fix.log`.
+- `RC-W6`: `wave6_audio.log` and `wave6_audio_final_tree.log`.
+- `RC-W7`: `wave7_player_text.log` and `wave7_player_text_final_tree.log`.
+- `RC-W8`: `wave8_tutorial.log` and `wave8_tutorial_after_menu_fix.log`.
+- `RC-W9`: the initial and final-tree `wave9_packaging_static*.log` and
+  `wave9_packaging_runtime*.log` pairs.
+- `RC-FINAL`: `final_restart_01_validate_project.log` through
+  `final_restart_08_soak.log`, plus the copied performance/soak JSON reports,
+  all under `.tmp/fixsweep06_1/reconfirm_20260921/`.
+
+### Per-defect reconfirmation
+
+`NOT REPRODUCIBLE` means the detailed report reproduction is now contradicted
+by its focused fresh regression and by the owning full-suite gate. No original
+BTH finding remains partial, blocked, or accepted as a waiver.
+
+| BTH id | Fresh status | Fresh proof |
+| --- | --- | --- |
+| BTH-001 | NOT REPRODUCIBLE - DONE | `RC-W2-LAYOUT`, `RC-W1-W3`, `RC-FINAL` |
+| BTH-002 | NOT REPRODUCIBLE - DONE | `RC-W2-LAYOUT`, `RC-W1-W3`, `RC-FINAL` |
+| BTH-003 | NOT REPRODUCIBLE - DONE | `RC-W2-LAYOUT`, `RC-W1-W3`, `RC-FINAL` |
+| BTH-004 | NOT REPRODUCIBLE - DONE | `RC-W2-LAYOUT`, `RC-W1-W3`, `RC-FINAL` |
+| BTH-005 | NOT REPRODUCIBLE - DONE | `RC-W2-LAYOUT`, `RC-W1-W3`, `RC-FINAL` |
+| BTH-006 | NOT REPRODUCIBLE - DONE | `RC-W2-LAYOUT`, `RC-W1-W3`, `RC-FINAL` |
+| BTH-007 | NOT REPRODUCIBLE - DONE | `RC-W2-LAYOUT`, `RC-W1-W3`, `RC-FINAL` |
+| BTH-008 | NOT REPRODUCIBLE - DONE | `RC-W2-LAYOUT`, `RC-W1-W3`, `RC-FINAL` |
+| BTH-009 | NOT REPRODUCIBLE - DONE | `RC-W2-LAYOUT`, `RC-W1-W3`, `RC-FINAL` |
+| BTH-010 | NOT REPRODUCIBLE - DONE | `RC-W2-LAYOUT`, `RC-W1-W3`, `RC-FINAL` |
+| BTH-011 | NOT REPRODUCIBLE - DONE | `RC-W2-LAYOUT`, `RC-W1-W3`, `RC-FINAL` |
+| BTH-012 | NOT REPRODUCIBLE - DONE | `RC-W2-LAYOUT`, `RC-W1-W3`, `RC-FINAL` |
+| BTH-013 | NOT REPRODUCIBLE - DONE | `RC-W2-LAYOUT`, `RC-W1-W3`, `RC-FINAL` |
+| BTH-014 | NOT REPRODUCIBLE - DONE | `RC-W2-LAYOUT`, `RC-W1-W3`, `RC-FINAL` |
+| BTH-015 | NOT REPRODUCIBLE - DONE | `RC-W2-LAYOUT`, `RC-W1-W3`, `RC-FINAL` |
+| BTH-016 | NOT REPRODUCIBLE - DONE | `RC-W2-LAYOUT`, `RC-W1-W3`, `RC-FINAL` |
+| BTH-017 | NOT REPRODUCIBLE - DONE | `RC-W2-LAYOUT`, `RC-W1-W3`, `RC-FINAL` |
+| BTH-018 | NOT REPRODUCIBLE - DONE | `RC-W2-LAYOUT`, `RC-W1-W3`, `RC-FINAL` |
+| BTH-019 | NOT REPRODUCIBLE - DONE | `RC-W2-LAYOUT`, `RC-W1-W3`, `RC-FINAL` |
+| BTH-020 | NOT REPRODUCIBLE - DONE | `RC-W2-LAYOUT`, `RC-W1-W3`, `RC-FINAL` |
+| BTH-021 | NOT REPRODUCIBLE - DONE | `RC-W2-LAYOUT`, `RC-W1-W3`, `RC-FINAL` |
+| BTH-022 | NOT REPRODUCIBLE - DONE | `RC-W1-W3`, `RC-FINAL` |
+| BTH-023 | NOT REPRODUCIBLE - DONE | `RC-W1-W3`, `RC-FINAL` |
+| BTH-024 | NOT REPRODUCIBLE - DONE | `RC-W7`, `RC-FINAL` |
+| BTH-025 | NOT REPRODUCIBLE - DONE | `RC-W7`, `RC-FINAL` |
+| BTH-026 | NOT REPRODUCIBLE - DONE | `RC-W2-LAYOUT`, `RC-W1-W3`, `RC-FINAL` |
+| BTH-027 | NOT REPRODUCIBLE - DONE | `RC-W8`, `RC-FINAL` |
+| BTH-028 | NOT REPRODUCIBLE - DONE | `RC-W4`, `RC-FINAL` |
+| BTH-029 | NOT REPRODUCIBLE - DONE | `RC-W4`, `RC-FINAL` |
+| BTH-030 | NOT REPRODUCIBLE - DONE | `RC-W4`, `RC-FINAL` |
+| BTH-031 | NOT REPRODUCIBLE - DONE | `RC-W4`, `RC-FINAL` |
+| BTH-032 | NOT REPRODUCIBLE - DONE | `RC-W4`, `RC-FINAL` |
+| BTH-033 | NOT REPRODUCIBLE - DONE | `RC-W9`, `RC-FINAL` |
+| BTH-034 | NOT REPRODUCIBLE - DONE | `RC-W9`, `RC-FINAL` |
+| BTH-035 | NOT REPRODUCIBLE - DONE | `RC-W4`, `RC-FINAL` |
+| BTH-036 | NOT REPRODUCIBLE - DONE | `RC-W4`, `RC-FINAL` |
+| BTH-037 | NOT REPRODUCIBLE - DONE | `RC-W4`, `RC-FINAL` |
+| BTH-038 | NOT REPRODUCIBLE - DONE | `RC-W4`, `RC-FINAL` |
+| BTH-039 | NOT REPRODUCIBLE - DONE | `RC-W1-W3`, `RC-FINAL` |
+| BTH-040 | NOT REPRODUCIBLE - DONE | `RC-W9`, `RC-FINAL` |
+| BTH-041 | NOT REPRODUCIBLE - DONE | `RC-W9`, `RC-FINAL` |
+| BTH-042 | NOT REPRODUCIBLE - DONE | `RC-W1-W3`, `RC-FINAL` |
+| BTH-043 | NOT REPRODUCIBLE - DONE | `RC-W1-W3`, `RC-FINAL` |
+| BTH-044 | NOT REPRODUCIBLE - DONE | `RC-W1-W3`, `RC-FINAL` |
+| BTH-045 | NOT REPRODUCIBLE - DONE | `RC-W1-W3`, `RC-FINAL` |
+| BTH-046 | NOT REPRODUCIBLE - DONE | `RC-W6`, `RC-FINAL` |
+| BTH-047 | NOT REPRODUCIBLE - DONE | `RC-W5`, `RC-FINAL` |
+| BTH-048 | NOT REPRODUCIBLE - DONE | `RC-W6`, `RC-FINAL` |
+| BTH-049 | NOT REPRODUCIBLE - DONE | `RC-W6`, `RC-FINAL` |
+| BTH-050 | NOT REPRODUCIBLE - DONE | `RC-W6`, `RC-FINAL` |
+| BTH-051 | NOT REPRODUCIBLE - DONE | `RC-W6`, `RC-FINAL` |
+| BTH-052 | NOT REPRODUCIBLE - DONE | `RC-W5`, `RC-FINAL` |
+| BTH-053 | NOT REPRODUCIBLE - DONE | `RC-W5`, `RC-FINAL` |
+| BTH-054 | NOT REPRODUCIBLE - DONE | `RC-W5`, `RC-FINAL` |
+| BTH-055 | NOT REPRODUCIBLE - DONE | `RC-W7`, `RC-FINAL` |
+| BTH-056 | NOT REPRODUCIBLE - DONE | `RC-W7`, `RC-FINAL` |
+| BTH-057 | NOT REPRODUCIBLE - DONE | `RC-W7`, `RC-FINAL` |
+| BTH-058 | NOT REPRODUCIBLE - DONE | `RC-W7`, `RC-FINAL` |
+
+### Additional defect found and closed during reconfirmation
+
+The first fresh Smoke run passed five stages, then failed
+`ui_scene_compile`: after the pawn immediate-credit flow returned to the main
+menu, the live Exit Game button could remain locally hidden/disabled. An
+isolated rerun passed, but a stress repetition reproduced the same failure, so
+it was not waived as timing noise.
+
+- Pre-fix evidence: `final_02_smoke.log`, `ui_scene_compile_repro_02.log`, and
+  deterministic `menu_restore_regression_before.log` (`visible=false`,
+  `visible_in_tree=false`, `disabled=true`, visible parent, live field identity).
+- Fix: `foundation_main.gd` now makes the main-menu return path the explicit
+  normalization boundary for persistent utility controls, and the meta-session
+  return also closes run configuration and uses that boundary.
+- Regression: `compile_environment_layout.gd` deliberately seeds the exact
+  stale control state before returning; `compile_components_and_main_flow.gd`
+  reports the full control identity/state if restoration fails.
+- Post-fix evidence: `menu_restore_regression_after_01.log` and `_after_02.log`
+  both pass the complete UI scene gate; fresh W4, W5 and W8 focused reruns pass;
+  restarted Smoke passes all 10 stages.
+
+### Restarted final ladder result
+
+| Rung | Result |
+| --- | --- |
+| Project validation | PASS |
+| Smoke | PASS, 10/10 stages, 430.2 s |
+| Contract / contracts | PASS, 4/4 stages, 377.5 s |
+| Performance | PASS, 75 observations, 8 seeds, 16/16 liveness observations nonzero/passing, 0 failures |
+| Stuck-state sweep | PASS, 200 seeds, 48 slot scenarios, 9 wait scenarios, 0 stuck |
+| Popup fit | PASS, 3 representative viewport/content pairs |
+| UI surface coverage | PASS, 63 scripts plus 6 supplement entries |
+| Soak | PASS, 19 samples, 504 measured actions, 0 max orphans, 0 retained node/resource slope, 1,300 B/sample robust retained-memory slope, 1,239,360 B retained-memory growth, 912,599 B max serialized state |
+
+The final soak contains zero occurrences of both required prohibited phrases:
+`scenario semantic inventory version or digest changed` and
+`failed to restore its declared compact host-action rollback token`.

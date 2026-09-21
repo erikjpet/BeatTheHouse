@@ -335,6 +335,16 @@ func _check_run_pawn_credit_is_immediate(app: Control) -> bool:
 	if str(pawn_model.get("summary", "")).find("Cash $%d" % expected_bankroll) == -1:
 		push_error("Pawn popup did not show the immediately credited cash balance: %s." % str(pawn_model.get("summary", "")))
 		return false
+	# Returning to the main menu is an authority boundary: it must normalize the
+	# persistent top-bar controls even if a prior asynchronous surface left one
+	# hidden or disabled. The full Smoke sequence reproduced that stale state
+	# intermittently, so force it here to make the regression deterministic.
+	var exit_button := app.get("exit_game_button") as Button
+	if exit_button == null:
+		push_error("Pawn immediate-credit check could not find the main-menu Exit Game button.")
+		return false
+	exit_button.visible = false
+	exit_button.disabled = true
 	app.call("return_to_main_menu")
 	await process_frame
 	return true

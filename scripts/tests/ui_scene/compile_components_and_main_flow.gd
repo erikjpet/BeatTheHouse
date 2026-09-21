@@ -4060,7 +4060,17 @@ func _run() -> void:
 		quit(1)
 		return
 	if not exit_game_button.visible or exit_game_button.disabled:
-		push_error("Main menu Exit Game button should be visible and enabled.")
+		push_error(
+			"Main menu Exit Game button should be visible and enabled: visible=%s visible_in_tree=%s disabled=%s parent=%s parent_visible=%s current=%s."
+			% [
+				str(exit_game_button.visible),
+				str(exit_game_button.is_visible_in_tree()),
+				str(exit_game_button.disabled),
+				str(exit_game_button.get_parent()),
+				str((exit_game_button.get_parent() as CanvasItem).visible if exit_game_button.get_parent() is CanvasItem else true),
+				str(app.get("exit_game_button")),
+			]
+		)
 		quit(1)
 		return
 	game_library_button.emit_signal("pressed")

@@ -16485,6 +16485,15 @@ func _restore_main_menu_surface_visibility() -> void:
 	if start_menu_controls != null:
 		start_menu_controls.visible = true
 	_set_start_menu_action_controls_visible(true)
+	# The redesigned menu keeps its persistent utility actions in the top bar,
+	# outside start_menu_action_controls. Treat the return-to-menu transition as
+	# the normalization boundary for those controls too; otherwise an interrupted
+	# or deferred surface transition can strand an individually hidden/disabled
+	# button even though the containing main-menu tree has been restored.
+	for utility_button in [game_library_button, inventory_button, career_button, settings_button, exit_game_button]:
+		if utility_button is Button and is_instance_valid(utility_button):
+			utility_button.visible = true
+			utility_button.disabled = false
 
 
 func exit_game() -> void:
@@ -16908,6 +16917,7 @@ func _enter_meta_location(location_id: String, tutorial_handoff: bool = false) -
 func _exit_meta_session() -> void:
 	_hide_run_menu()
 	_hide_event_choice_popup()
+	close_run_configuration()
 	close_meta_item_interaction()
 	_hide_run_inventory_popup()
 	_hide_run_journal_popup()
@@ -16935,6 +16945,7 @@ func _exit_meta_session() -> void:
 		inventory_page.visible = false
 	if game_test_menu != null:
 		game_test_menu.visible = false
+	_restore_main_menu_surface_visibility()
 	_stop_procedural_music()
 	_refresh_start_screen()
 
