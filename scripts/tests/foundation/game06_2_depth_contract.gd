@@ -760,6 +760,7 @@ func _check_failed_turn_retry(game: GameModule) -> void:
 	var before_rng := retry_run.rng_state
 	var before_town_action := int(retry_run.town_state.action_index)
 	var before_environment_turns := int(retry_run.current_environment.get("turns", 0))
+	var before_story := RitualRuntimeScript.canonical_json(retry_run.story_log)
 	var before_table: Dictionary = game.call("_table_state_preview", retry_run, retry_run.current_environment)
 	before_table.erase("_blackjack_action_authority")
 	var retry_host := _failing_authority_host(game, retry_run, 5)
@@ -773,6 +774,7 @@ func _check_failed_turn_retry(game: GameModule) -> void:
 	_check(not pending.is_empty() and str(pending.get("request_key", "")) == str(rejected.get("blackjack_host_request_key", "")), "Failed environment turn did not retain the exact retryable pending delivery key.")
 	_check(retry_run.bankroll == before_bankroll and retry_run.grand_casino_chips == before_chips and retry_run.rng_state == before_rng, "Failed environment turn funded, applied, or advanced RNG on the live run.")
 	_check(int(retry_run.town_state.action_index) == before_town_action and int(retry_run.current_environment.get("turns", 0)) == before_environment_turns, "Failed environment turn advanced a live action boundary.")
+	_check(RitualRuntimeScript.canonical_json(retry_run.story_log) == before_story, "Rejected Blackjack delivery leaked completed history before publication.")
 	_check(RitualRuntimeScript.canonical_json(rejected_table_without_authority) == RitualRuntimeScript.canonical_json(before_table), "Failed environment turn published detached Blackjack table/result mutations.")
 	var pending_surface: Dictionary = game.surface_state(retry_run, retry_run.current_environment, {})
 	var pending_bindings: Dictionary = pending_surface.get("surface_action_bindings", {})
@@ -787,6 +789,7 @@ func _check_failed_turn_retry(game: GameModule) -> void:
 	_check(str(retried.get("blackjack_host_request_key", "")) == str(pending.get("request_key", "")), "Environment-turn retry replaced its durable delivery key.")
 	_check(RitualRuntimeScript.canonical_json(retried) == RitualRuntimeScript.canonical_json(control), "Environment-turn retry response diverged from a clean single delivery.")
 	_check(RitualRuntimeScript.canonical_json(retry_run.to_save_snapshot()) == RitualRuntimeScript.canonical_json(control_run.to_save_snapshot()), "Environment-turn retry double-funded, double-applied, burned RNG, or crossed two boundaries.")
+	_check(retry_run.story_log.size() == control_run.story_log.size() and retry_run.story_log.size() == 1, "Environment-turn retry did not publish exactly one completed story record.")
 
 	var cancel_fixture := _prepared_authority_fixture(game, "GAME06-2-CANCEL-ROLLBACK", 37, 5)
 	var cancel_run: RunState = cancel_fixture.run

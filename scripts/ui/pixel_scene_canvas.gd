@@ -91,6 +91,7 @@ const OBJECT_INFO_ANIMATION_SPEED := 14.0
 const OBJECT_INFO_RECT_SNAP_EPSILON := 0.25
 const OBJECT_LABEL_MAX_WIDTH := 126.0
 const OBJECT_LABEL_HEIGHT := 15.0
+const OBJECT_LABEL_TWO_LINE_HEIGHT := 26.0
 const OBJECT_LABEL_GAP := 4.0
 # Godot can deliver touch plus emulated mouse after a stalled frame.
 const EMULATED_TOUCH_SUPPRESS_MS := 750
@@ -598,6 +599,7 @@ func set_selected_object(object_id: String, snap_to_target: bool = true) -> void
 		selected_object_id = object_id
 		selected_info_action_index = 0
 		_invalidate_camera_target()
+	_update_object_label_accessibility()
 	_update_camera_target_if_needed()
 	# Reduced-motion and explicit room resets snap. A tutorial conversation only
 	# freezes autonomous room activity; player-driven focus presentation remains
@@ -3438,6 +3440,37 @@ func _scene_object_layout_snapshot(objects: Array) -> Dictionary:
 	}
 
 
+func accessibility_clickable_rect_audit() -> Dictionary:
+	var entries: Array = []
+	var violations: Array = []
+	for object_data in _active_scene_objects():
+		if typeof(object_data) != TYPE_DICTIONARY or not bool((object_data as Dictionary).get("interactive", true)):
+			continue
+		var object_rect := _interaction_rect_for_object(object_data as Dictionary)
+		entries.append({"id": str((object_data as Dictionary).get("id", "")), "kind": "object", "rect": _rect_to_snapshot(object_rect)})
+		if small_screen_mode and (object_rect.size.x < SmallScreenPolicyScript.ENVIRONMENT_OBJECT_HIT_SIZE.x or object_rect.size.y < SmallScreenPolicyScript.ENVIRONMENT_OBJECT_HIT_SIZE.y):
+			violations.append("object:%s" % str((object_data as Dictionary).get("id", "")))
+	var info := _selected_object_info()
+	if not info.is_empty():
+		for entry_value in _selected_info_action_entries_from_info(info):
+			if typeof(entry_value) != TYPE_DICTIONARY:
+				continue
+			var entry := entry_value as Dictionary
+			if not bool(entry.get("enabled", true)):
+				continue
+			var action_rect: Rect2 = entry.get("button_rect", Rect2())
+			entries.append({"id": str(entry.get("emit_object_id", entry.get("label", ""))), "kind": "action", "rect": _rect_to_snapshot(action_rect)})
+			if small_screen_mode and action_rect.size.y < SmallScreenPolicyScript.CONTROL_TOUCH_TARGET_HEIGHT:
+				violations.append("action:%s" % str(entry.get("emit_object_id", entry.get("label", ""))))
+	return {
+		"small_screen_mode": small_screen_mode,
+		"minimum_action_height": SmallScreenPolicyScript.CONTROL_TOUCH_TARGET_HEIGHT if small_screen_mode else 0.0,
+		"entries": entries,
+		"violations": violations,
+		"valid": violations.is_empty(),
+	}
+
+
 func _apply_draw_hints(object_data: Dictionary, object_type: String, index: int) -> Dictionary:
 	match object_type:
 		"game":
@@ -3885,13 +3918,17 @@ func _fit_draw_text(text: String, font: Font, font_size: int, max_width: float) 
 	var fitted := compact
 	if font != null and not compact.is_empty() and _draw_text_width(compact, font, font_size) > max_width:
 		fitted = ""
+		var ellipsis := "…"
+		var ellipsis_width := _draw_text_width(ellipsis, font, font_size)
 		var available := compact.length()
 		while available > 0:
-			var candidate := compact.left(available).strip_edges()
-			if _draw_text_width(candidate, font, font_size) <= max_width:
-				fitted = candidate
+			var candidate := compact.left(available).strip_edges().trim_suffix(".")
+			if _draw_text_width(candidate, font, font_size) + ellipsis_width <= max_width:
+				fitted = candidate + ellipsis
 				break
 			available -= 1
+		if fitted.is_empty() and ellipsis_width <= max_width:
+			fitted = ellipsis
 	_store_fit_draw_text(cache_key, fitted)
 	return fitted
 
@@ -4757,6 +4794,7 @@ func _set_hovered_object(object_id: String) -> void:
 	var hovered_object := _scene_object(object_id)
 	var enabled_hover := _object_info_is_actionable(hovered_object)
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND if enabled_hover else Control.CURSOR_ARROW
+	_update_object_label_accessibility()
 	object_hovered.emit(object_id)
 	queue_redraw()
 
@@ -5061,11 +5099,57 @@ func _label_rect_for_object(rect: Rect2, label: String) -> Rect2:
 	if text.is_empty():
 		return Rect2()
 	var width := minf(maxf(48.0, float(text.length()) * 5.8 + 12.0), OBJECT_LABEL_MAX_WIDTH)
+	var height := OBJECT_LABEL_TWO_LINE_HEIGHT if float(text.length()) * 5.8 + 12.0 > OBJECT_LABEL_MAX_WIDTH else OBJECT_LABEL_HEIGHT
 	var x := rect.position.x + rect.size.x * 0.5 - width * 0.5
-	var y := rect.position.y - OBJECT_LABEL_HEIGHT - OBJECT_LABEL_GAP
+	var y := rect.position.y - height - OBJECT_LABEL_GAP
 	if y < OBJECT_LAYOUT_MARGIN:
 		y = rect.end.y + OBJECT_LABEL_GAP
-	return _clamp_board_rect(Rect2(Vector2(x, y), Vector2(width, OBJECT_LABEL_HEIGHT)))
+	return _clamp_board_rect(Rect2(Vector2(x, y), Vector2(width, height)))
+
+
+func _object_label_lines(text: String, font: Font, font_size: int, max_width: float) -> Array[String]:
+	var compact := text.replace("\n", " ").replace("\t", " ").strip_edges()
+	while compact.find("  ") != -1:
+		compact = compact.replace("  ", " ")
+	if compact.is_empty():
+		return []
+	if font == null or _draw_text_width(compact, font, font_size) <= max_width:
+		return [compact]
+	var words := compact.split(" ", false)
+	var first := ""
+	var split_index := 0
+	for index in range(words.size()):
+		var candidate := str(words[index]) if first.is_empty() else "%s %s" % [first, str(words[index])]
+		if not first.is_empty() and _draw_text_width(candidate, font, font_size) > max_width:
+			split_index = index
+			break
+		first = candidate
+		split_index = index + 1
+	if first.is_empty():
+		return [_fit_draw_text(compact, font, font_size, max_width)]
+	var remainder := " ".join(words.slice(split_index))
+	if remainder.is_empty():
+		return [_fit_draw_text(first, font, font_size, max_width)]
+	return [_fit_draw_text(first, font, font_size, max_width), _fit_draw_text(remainder, font, font_size, max_width)]
+
+
+func object_label_accessibility_snapshot(full_label: String) -> Dictionary:
+	var full := full_label.strip_edges()
+	var lines := _object_label_lines(full, ThemeDB.fallback_font, 8, OBJECT_LABEL_MAX_WIDTH - 6.0)
+	return {
+		"tooltip": full,
+		"accessibility_name": full,
+		"line_count": lines.size(),
+		"rendered_lines": lines,
+	}
+
+
+func _update_object_label_accessibility() -> void:
+	var focus_id := hovered_object_id if not hovered_object_id.is_empty() else selected_object_id
+	var object_data := _scene_object(focus_id)
+	var full_label := str(object_data.get("label", "")).strip_edges()
+	tooltip_text = full_label
+	accessibility_name = full_label if not full_label.is_empty() else "Environment scene"
 
 
 func _resolved_label_rect_for_object(object_data: Dictionary, object_rect: Rect2) -> Rect2:
@@ -5346,10 +5430,11 @@ func _draw_object_label(rect: Rect2, label: String, object_type: String, disable
 		color = C_SOFT
 		alpha = 0.68
 	var font := get_theme_default_font()
-	var fitted := _fit_draw_text(text, font, 8, label_rect.size.x - 6.0)
-	var text_pos := label_rect.position + Vector2(3.0, 10.0)
-	draw_string(font, text_pos + Vector2(1.0, 1.0), fitted, HORIZONTAL_ALIGNMENT_CENTER, label_rect.size.x - 6.0, 8, Color(0.0, 0.0, 0.0, 0.78))
-	draw_string(font, text_pos, fitted, HORIZONTAL_ALIGNMENT_CENTER, label_rect.size.x - 6.0, 8, Color(color.r, color.g, color.b, alpha))
+	var lines := _object_label_lines(text, font, 8, label_rect.size.x - 6.0)
+	for index in range(mini(2, lines.size())):
+		var text_pos := label_rect.position + Vector2(3.0, 10.0 + float(index) * 11.0)
+		draw_string(font, text_pos + Vector2(1.0, 1.0), lines[index], HORIZONTAL_ALIGNMENT_CENTER, label_rect.size.x - 6.0, 8, Color(0.0, 0.0, 0.0, 0.78))
+		draw_string(font, text_pos, lines[index], HORIZONTAL_ALIGNMENT_CENTER, label_rect.size.x - 6.0, 8, Color(color.r, color.g, color.b, alpha))
 	draw_line(
 		Vector2(label_rect.position.x + 8.0, label_rect.end.y - 1.0),
 		Vector2(label_rect.end.x - 8.0, label_rect.end.y - 1.0),

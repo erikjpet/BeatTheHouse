@@ -61,6 +61,7 @@ const OPENING_TEMPLATE_CACHE_CAPACITY := 16
 static var _native_backend: Object = null
 static var _native_backend_checked := false
 static var _last_step_backend := "gdscript_v3"
+static var _native_required_error_reported := false
 static var _opening_template_cache: Dictionary = {}
 static var _opening_template_cache_order: Array = []
 
@@ -466,8 +467,27 @@ static func step_ticks(state: Dictionary, config: Dictionary, tick_count: int) -
 			var native_result := result_value as Dictionary
 			_debug_assert_invariants(native_result)
 			return native_result
+	if native == null and _native_extension_required():
+		_last_step_backend = "native_extension_required"
+		var message := "Distribution build is missing the required Coin Pusher native extension; simulation was stopped instead of using the development fallback."
+		if not _native_required_error_reported:
+			_native_required_error_reported = true
+			push_error(message)
+		return {
+			"ok": false,
+			"error_code": "native_extension_required",
+			"message": message,
+			"events": [],
+			"metrics": {"fixed_ticks": 0, "body_count": (state.get("bodies", []) as Array).size()},
+			"invariants": {"ok": false, "native_extension_required": true},
+		}
 	_last_step_backend = "gdscript_v3"
 	return _step_ticks_gdscript(state, config, tick_count)
+
+
+static func _native_extension_required() -> bool:
+	var override := OS.get_environment("BTH_FORCE_DISTRIBUTION_NATIVE_REQUIRED").strip_edges().to_lower()
+	return OS.has_feature("distribution_build") or ["1", "true", "yes", "on"].has(override)
 
 
 static func step_ticks_reference_for_test(state: Dictionary, config: Dictionary, tick_count: int) -> Dictionary:
@@ -553,6 +573,15 @@ static func last_step_backend_for_test() -> String:
 static func reset_native_backend_for_test() -> void:
 	_native_backend = null
 	_native_backend_checked = false
+	_native_required_error_reported = false
+
+
+static func force_native_backend_missing_for_test() -> void:
+	_native_backend = null
+	_native_backend_checked = true
+	# The returned fail-closed payload remains testable without deliberately
+	# polluting a passing regression's stderr with the production one-shot error.
+	_native_required_error_reported = true
 
 
 static func _native_solver_backend() -> Object:

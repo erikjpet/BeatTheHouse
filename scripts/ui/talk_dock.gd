@@ -536,6 +536,7 @@ func set_reduce_motion(enabled: bool) -> void:
 	reduce_motion = enabled
 	if reduce_motion:
 		_complete_body_reveal()
+		_settle_attention_animation()
 	if portrait_model != null:
 		portrait_model.set_reduce_motion(enabled)
 		portrait_model.set_animation_active(visible and expanded)
@@ -1307,6 +1308,9 @@ func _notify_occupied_rect_changed() -> void:
 func _play_attention_animation() -> void:
 	if panel == null:
 		return
+	if reduce_motion:
+		_settle_attention_animation()
+		return
 	panel.modulate = Color(1.0, 1.0, 1.0, 0.88)
 	var tween := create_tween()
 	attention_tweens.append(tween)
@@ -1317,3 +1321,15 @@ func _play_attention_animation() -> void:
 		portrait_model.pivot_offset = portrait_model.size * 0.5
 		portrait_model.scale = Vector2(1.04, 1.04)
 		tween.parallel().tween_property(portrait_model, "scale", Vector2.ONE, 0.18)
+
+
+func _settle_attention_animation() -> void:
+	_prune_attention_tweens()
+	for tween in attention_tweens:
+		if tween != null and tween.is_valid():
+			tween.kill()
+	attention_tweens.clear()
+	if panel != null:
+		panel.modulate = Color.WHITE
+	if portrait_model != null:
+		portrait_model.scale = Vector2.ONE

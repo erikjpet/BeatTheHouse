@@ -476,7 +476,9 @@ static func _durable_layer_states(value: Variant) -> Dictionary:
 	var result: Dictionary = {}
 	for layer_id_value in _copy_dict(value).keys():
 		var body := _copy_dict(_copy_dict(value).get(layer_id_value, {})).duplicate(true)
-		for key in ["scenario_semantic_ready", "scenario_semantic_inventory", "scenario_semantic_action_digest", "scenario_base_interactions", "scenario_base_actors", "scenario_base_producer_context", "scenario_event_choices", "scenario_sequence_projection", "scenario_sequence_lifecycle_errors"]: body.erase(key)
+		# Base/live producer context belongs to the ephemeral proof. The separately
+		# named sealed context is durable rebuild authority and remains in layer state.
+		for key in ["scenario_semantic_ready", "scenario_semantic_inventory", "scenario_semantic_action_digest", "scenario_base_interactions", "scenario_base_actors", "scenario_base_producer_context", "scenario_event_choices", "scenario_sequence_projection", "scenario_sequence_lifecycle_errors", "scenario_live_producer_projection"]: body.erase(key)
 		if body.has(CrewWorldSequenceAdapterScript.CONTAINER_KEY):
 			var world_instances := CrewWorldSequenceAdapterScript.durable_container(body.get(CrewWorldSequenceAdapterScript.CONTAINER_KEY, {}))
 			if world_instances.is_empty(): body.erase(CrewWorldSequenceAdapterScript.CONTAINER_KEY)
@@ -673,12 +675,20 @@ static func _ground_authored_object_rects(object_rects: Dictionary, layout: Dict
 	var preferred_slots := _copy_dict(placement_map.get("object_slot_positions", {}))
 	var developer_object_slots := _copy_dict(placement_map.get("developer_object_slot_positions", {}))
 	var developer_category_slots := _copy_dict(placement_map.get("developer_category_slot_positions", {}))
+	var placement_errors: Array = []
+	var placement_fallback_ids: Array = []
 	var ordered_entries := active_entries.duplicate(true)
 	ordered_entries.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
 		var left := _copy_dict(left_value)
 		var right := _copy_dict(right_value)
 		var left_id := str(left.get("object_id", ""))
 		var right_id := str(right.get("object_id", ""))
+		var left_class := EnvironmentPlacementScript.classify(left, str(left.get("object_type", "")), left_id)
+		var right_class := EnvironmentPlacementScript.classify(right, str(right.get("object_type", "")), right_id)
+		var left_route := left_class == "doorway" or str(left.get("object_type", "")) in ["travel", "casino_door"]
+		var right_route := right_class == "doorway" or str(right.get("object_type", "")) in ["travel", "casino_door"]
+		if left_route != right_route:
+			return left_route
 		var left_has_slot := preferred_slots.has(left_id)
 		var right_has_slot := preferred_slots.has(right_id)
 		return left_has_slot if left_has_slot != right_has_slot else left_id < right_id
@@ -699,7 +709,10 @@ static func _ground_authored_object_rects(object_rects: Dictionary, layout: Dict
 		var category_key := "%s:%d" % [str(entry.get("spot_field", "")), int(entry.get("index", 0))]
 		var category_slot_values := _copy_array(developer_category_slots.get(category_key, []))
 		var developer_slot_values := _copy_array(developer_object_slots.get(object_id, []))
-		var manual_values := category_slot_values if category_slot_values.size() >= 2 else developer_slot_values
+		# An exact object decision is more specific than a category/index default.
+		# The old reverse precedence silently moved doors and other reserved objects
+		# back onto crowded generic slots.
+		var manual_values := developer_slot_values if developer_slot_values.size() >= 2 else category_slot_values
 		var manually_placed := manual_values.size() >= 2
 		if manually_placed:
 			authored.position = Vector2(float(manual_values[0]), float(manual_values[1]))
@@ -708,11 +721,13 @@ static func _ground_authored_object_rects(object_rects: Dictionary, layout: Dict
 		var resolved := {"rect": authored, "surface_id": "developer_free", "adjusted": false} if manually_placed else EnvironmentPlacementScript.authored_or_local_rect(environment_data, placement_class, authored)
 		var selected: Rect2 = resolved.get("rect", authored)
 		var selected_surface := str(resolved.get("surface_id", ""))
-		# Every legacy/authored slot still participates in collision recovery. The
-		# previous guard only searched alternatives after a support correction, so
-		# already-grounded slots could be moved directly on top of earlier objects.
-		# Explicit developer-free placements remain exact by design.
-		if not manually_placed and _object_rect_collides_with_any(placed, Rect2(selected.position / ENVIRONMENT_BOARD_SIZE, selected.size / ENVIRONMENT_BOARD_SIZE)):
+		# Project-authored overrides are shipping content, not an exemption from hit
+		# authority. Every origin participates in the same deterministic recovery.
+		var selected_normalized := Rect2(selected.position / ENVIRONMENT_BOARD_SIZE, selected.size / ENVIRONMENT_BOARD_SIZE)
+		var initial_direct_collision := _object_rect_direct_collides_with_any(placed, selected_normalized)
+		if _object_rect_collides_with_any(placed, selected_normalized):
+			var recovered := false
+			var recovered_via_grid := false
 			for candidate_value in EnvironmentPlacementScript.supported_rect_candidates(environment_data, placement_class, selected):
 				var candidate: Dictionary = candidate_value
 				var candidate_rect: Rect2 = candidate.get("rect", Rect2())
@@ -720,7 +735,47 @@ static func _ground_authored_object_rects(object_rects: Dictionary, layout: Dict
 				if candidate_rect.has_area() and not _object_rect_collides_with_any(placed, normalized_candidate):
 					selected = candidate_rect
 					selected_surface = str(candidate.get("surface_id", selected_surface))
+					recovered = true
 					break
+			# Spacing is advisory (D2), while direct interaction authority is not.
+			# Dense rooms may lack a margin-perfect support even though a support is
+			# directly disjoint. Prefer that truthful placement over retaining the
+			# original direct collision or incorrectly reporting exhaustion.
+			if not recovered and initial_direct_collision:
+				for candidate_value in EnvironmentPlacementScript.supported_rect_candidates(environment_data, placement_class, selected):
+					var candidate: Dictionary = candidate_value
+					var candidate_rect: Rect2 = candidate.get("rect", Rect2())
+					var normalized_candidate := Rect2(candidate_rect.position / ENVIRONMENT_BOARD_SIZE, candidate_rect.size / ENVIRONMENT_BOARD_SIZE)
+					if candidate_rect.has_area() and not _object_rect_direct_collides_with_any(placed, normalized_candidate):
+						selected = candidate_rect
+						selected_surface = str(candidate.get("surface_id", selected_surface))
+						recovered = true
+						break
+			if not recovered:
+				for fallback_value in _fallback_grid_object_rects(object_type, int(entry.get("index", 0)), selected_normalized):
+					var fallback_normalized: Rect2 = fallback_value
+					if not _object_rect_collides_with_any(placed, fallback_normalized):
+						selected = Rect2(fallback_normalized.position * ENVIRONMENT_BOARD_SIZE, fallback_normalized.size * ENVIRONMENT_BOARD_SIZE)
+						selected_surface = "fallback_grid"
+						recovered = true
+						recovered_via_grid = true
+						break
+			if not recovered and initial_direct_collision:
+				for fallback_value in _fallback_grid_object_rects(object_type, int(entry.get("index", 0)), selected_normalized):
+					var fallback_normalized: Rect2 = fallback_value
+					if not _object_rect_direct_collides_with_any(placed, fallback_normalized):
+						selected = Rect2(fallback_normalized.position * ENVIRONMENT_BOARD_SIZE, fallback_normalized.size * ENVIRONMENT_BOARD_SIZE)
+						selected_surface = "fallback_grid"
+						recovered = true
+						recovered_via_grid = true
+						break
+			# Moving to another valid authored support is ordinary packing. Reserve
+			# fallback diagnostics for the generic grid, whose use means content has
+			# no semantically appropriate slot and therefore needs author attention.
+			if recovered_via_grid:
+				placement_fallback_ids.append(object_id)
+			elif not recovered and initial_direct_collision:
+				placement_errors.append("No collision-free placement exists for %s (%s)." % [object_id, placement_class])
 		# Surface grounding may shift an authored hotspot near the right or bottom
 		# edge. Preserve its size while keeping the complete interactive rectangle
 		# on the environment board; semantic validation rejects clipped controls.
@@ -730,10 +785,23 @@ static func _ground_authored_object_rects(object_rects: Dictionary, layout: Dict
 		object_rects[object_id] = _rect_to_dict(normalized_selected)
 		placed[object_id] = _rect_to_dict(normalized_selected)
 		placement_surfaces[object_id] = selected_surface
+	# Re-audit the complete assembled set. Generated entries that appear after a
+	# manual override may never turn an earlier exact placement into a silent
+	# success.
+	var placed_ids := placed.keys()
+	placed_ids.sort()
+	for left_index in range(placed_ids.size()):
+		var left_id := str(placed_ids[left_index])
+		var left_rect := _rect_from_dict(placed.get(left_id, {}))
+		for right_index in range(left_index + 1, placed_ids.size()):
+			var right_id := str(placed_ids[right_index])
+			var right_rect := _rect_from_dict(placed.get(right_id, {}))
+			if left_rect.intersects(right_rect) and left_rect.intersection(right_rect).get_area() > 0.000001:
+				placement_errors.append("Interactive placements %s and %s overlap after final packing." % [left_id, right_id])
 	layout["placement_classes"] = placement_classes
 	layout["placement_surfaces"] = placement_surfaces
-	layout["placement_errors"] = []
-	layout["placement_fallback_ids"] = []
+	layout["placement_errors"] = placement_errors
+	layout["placement_fallback_ids"] = placement_fallback_ids
 
 
 # Creates a generated display name from archetype name parts.
@@ -1291,6 +1359,15 @@ static func _object_rect_collides_with_any(placed_rects: Dictionary, rect: Rect2
 		if existing_rect.size.x <= 0.0 or existing_rect.size.y <= 0.0:
 			continue
 		if _rects_overlap_with_layout_gap(existing_rect, rect):
+			return true
+	return false
+
+
+static func _object_rect_direct_collides_with_any(placed_rects: Dictionary, rect: Rect2) -> bool:
+	for key in placed_rects.keys():
+		var existing_rect := _rect_from_dict(placed_rects.get(key, {}))
+		if existing_rect.has_area() and rect.has_area() and existing_rect.intersects(rect) \
+				and existing_rect.intersection(rect).get_area() > 0.000001:
 			return true
 	return false
 

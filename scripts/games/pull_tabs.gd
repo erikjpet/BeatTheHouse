@@ -365,12 +365,14 @@ func environment_object_state(run_state: RunState, environment: Dictionary) -> D
 	elif tray_count > 0:
 		badge = "%d IN TRAY" % tray_count
 	elif stack_count > 0:
-		badge = "%d TAB%s" % [stack_count, "" if stack_count == 1 else "S"]
+		badge = PlayerTextScript.count_text("ticket", stack_count).to_upper()
 	runtime_state["status_label"] = badge
 	runtime_state["tickets_remaining"] = remaining
 	return {
-		"status_summary": "%d tickets remain across four deal rows." % remaining,
-		"effect_summary": "Pending payout $%d; %d tray ticket%s; %d in play." % [pending_payout, tray_count, "" if tray_count == 1 else "s", stack_count],
+		"status_summary": "%s remain across %s." % [PlayerTextScript.count_text("ticket", remaining), PlayerTextScript.count_text("deal_row", 4)],
+		"effect_summary": "Pending payout $%d; %s; %d in play." % [pending_payout, PlayerTextScript.count_text("tray_ticket", tray_count), stack_count],
+		"status_message_key": "pull_tabs.stock_summary",
+		"status_message_params": {"ticket_count": remaining, "deal_row_count": 4, "tray_ticket_count": tray_count, "in_play_count": stack_count},
 		"state_badge": badge,
 		"runtime_state": runtime_state,
 		"visual_state": {

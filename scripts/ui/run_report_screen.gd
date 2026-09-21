@@ -115,6 +115,37 @@ func set_report(model: Dictionary) -> void:
 	queue_redraw()
 
 
+func clear_report() -> void:
+	_ensure_built()
+	report_model = {}
+	replay_progress = 0.0
+	replay_playing = false
+	set_process(false)
+	# Both canvases own deep copies of the report timeline/map. Clearing only the
+	# top-level model leaves those completed-run graphs alive throughout the next
+	# run, which becomes material after several terminal runs in one session.
+	timeline_canvas.set_timeline({})
+	map_canvas.set_map_snapshot({})
+	map_canvas.set_run_report_replay([], reduce_motion, [])
+	# Report rows are runtime Controls. Hiding the report alone retains the last
+	# run's money-flow bars and item icons across a new run, so release them at
+	# the same ownership boundary that clears the report model.
+	_clear(story_rows, 1)
+	_clear(release_ledger_rows)
+	_clear(item_rows)
+	_clear(debt_rows, 1)
+	take_home_item_reward_selector.clear()
+	bag_reward_selector.clear()
+	take_home_item_reward_row.visible = false
+	bag_reward_row.visible = false
+	take_home_item_claim_button.visible = false
+	bag_claim_button.visible = false
+	_update_reward_navigation_lock()
+	outcome_icon.texture = null
+	outcome_meta_reward.visible = false
+	queue_redraw()
+
+
 func set_reduce_motion(enabled: bool) -> void:
 	reduce_motion = enabled
 	if play_button == null or map_canvas == null or timeline_canvas == null:
@@ -606,7 +637,7 @@ func debug_layout_snapshot() -> Dictionary:
 	var rects := {}
 	for key in section_panels.keys():
 		rects[str(key)] = (section_panels[key] as Control).get_rect()
-	return {"size": size, "section_rects": rects, "button_rect": button_row.get_rect(), "small_screen_mode": small_screen_mode, "reduce_motion": reduce_motion, "replay_progress": replay_progress, "replay_clock_text": replay_clock_label.text, "timeline_install_count": timeline_install_count, "has_scroll_container": _has_scroll_container(self), "release_ledger_text": _release_ledger_text(), "release_ledger_line_count": maxi(0, release_ledger_rows.get_child_count() - 1), "release_ledger_rect": release_ledger_rows.get_global_rect(), "result_panel_rect": (section_panels.get("result") as Control).get_global_rect(), "bag_reward_visible": bag_reward_row.visible, "bag_reward_pending": bag_claim_button.visible, "bag_reward_choice_count": bag_reward_selector.item_count, "take_home_item_reward_visible": take_home_item_reward_row.visible, "take_home_item_reward_pending": take_home_item_claim_button.visible, "take_home_item_reward_choice_count": take_home_item_reward_selector.item_count, "take_home_item_reward_label": take_home_item_reward_label.text, "meta_reward_visible": outcome_meta_reward.visible, "meta_reward_text": outcome_meta_reward.text, "new_run_disabled": new_run_button.disabled, "home_disabled": home_button.disabled}
+	return {"size": size, "section_rects": rects, "button_rect": button_row.get_rect(), "small_screen_mode": small_screen_mode, "reduce_motion": reduce_motion, "replay_progress": replay_progress, "replay_clock_text": replay_clock_label.text, "timeline_install_count": timeline_install_count, "timeline_heat_sample_count": timeline_canvas.heat_samples.size(), "timeline_environment_band_count": timeline_canvas.environment_bands.size(), "map_snapshot_node_count": (map_canvas.snapshot.get("nodes", []) as Array).size(), "map_replay_keyframe_count": map_canvas.replay_keyframes.size(), "map_replay_segment_count": map_canvas.replay_segments.size(), "has_scroll_container": _has_scroll_container(self), "release_ledger_text": _release_ledger_text(), "release_ledger_line_count": maxi(0, release_ledger_rows.get_child_count() - 1), "release_ledger_rect": release_ledger_rows.get_global_rect(), "result_panel_rect": (section_panels.get("result") as Control).get_global_rect(), "bag_reward_visible": bag_reward_row.visible, "bag_reward_pending": bag_claim_button.visible, "bag_reward_choice_count": bag_reward_selector.item_count, "take_home_item_reward_visible": take_home_item_reward_row.visible, "take_home_item_reward_pending": take_home_item_claim_button.visible, "take_home_item_reward_choice_count": take_home_item_reward_selector.item_count, "take_home_item_reward_label": take_home_item_reward_label.text, "meta_reward_visible": outcome_meta_reward.visible, "meta_reward_text": outcome_meta_reward.text, "new_run_disabled": new_run_button.disabled, "home_disabled": home_button.disabled}
 
 
 func _release_ledger_text() -> String:

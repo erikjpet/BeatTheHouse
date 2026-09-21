@@ -12,6 +12,7 @@ const SurfaceSfxManifestScript := preload("res://scripts/core/surface_sfx_manife
 # procedural samples in one place.
 
 signal music_cue_requested(cue_id: String, context: Dictionary)
+signal audio_status_changed(message: String)
 
 const SFX_BUS := "SFX"
 const SURFACE_SFX_MANIFEST_PATH := "res://data/audio/surface_sfx_manifest.json"
@@ -25,6 +26,8 @@ const SLOT_POST_REEL_BONUS_DELAY := 0.40
 const SLOT_BONUS_STEP_TIME := 0.72
 const ONE_SHOT_PLAYER_COUNT := 10
 const WEB_SURFACE_LOOP_ID := "sfx:surface_loop"
+const WEB_LOOP_RETRY_LIMIT := 2
+const WEB_FAILURE_WARNING_THRESHOLD := 3
 const BLACKJACK_PREWARM_EVENTS := [
 	"blackjack_card",
 	"blackjack_chip",
@@ -206,8 +209,19 @@ var _debug_coin_pusher_motor_pitch := 0.0
 var _debug_coin_pusher_motor_volume_db := 0.0
 var _debug_coin_pusher_motor_running := false
 var _web_surface_loop_active := false
+var _pending_web_loop_retry: Dictionary = {}
+var _web_loop_retry_count := 0
+var _web_delivery_attempts := 0
+var _web_delivery_failure_count := 0
+var _web_fallback_count := 0
+var _web_dropped_cue_count := 0
+var _audio_status_message := ""
+var _debug_web_delivery_results: Array = []
+var _debug_web_delivery_active := false
 var _surface_loop_event_id := ""
 var _surface_loop_fade_tween: Tween
+var _surface_activity_paused := false
+var _surface_pause_transition_serial := 0
 var _played_markers: Dictionary = {}
 var _normalized_event_cache: Dictionary = {}
 var _prewarm_queue: Array[String] = []
@@ -275,6 +289,8 @@ func _process(_delta: float) -> void:
 
 func play_surface_cue(cue_id: String, context: Dictionary = {}, surface_state: Dictionary = {}, authority: Variant = null) -> void:
 	if not _has_surface_audio_authority(authority):
+		return
+	if _surface_activity_paused:
 		return
 	if not audio_enabled or _running_headless():
 		return
@@ -346,6 +362,8 @@ func prewarm_surface_profile(profile_id: String, authority: Variant = null) -> v
 func start_surface_loop(cue_id: String, volume_db: float = -10.0, pitch: float = 1.0, authority: Variant = null) -> void:
 	if not _has_surface_audio_authority(authority):
 		return
+	if _surface_activity_paused:
+		return
 	if not audio_enabled or _running_headless():
 		return
 	var clean_cue := cue_id.strip_edges()
@@ -382,6 +400,8 @@ func stop_surface_loop(cue_id: String = "", authority: Variant = null) -> void:
 
 func sync_surface_state(surface_state: Dictionary, sync_spec: Dictionary, timing: Dictionary, authority: Variant = null) -> void:
 	if not _has_surface_audio_authority(authority):
+		return
+	if _surface_activity_paused:
 		return
 	if not audio_enabled or _running_headless():
 		return
@@ -1232,8 +1252,31 @@ func debug_soak_snapshot() -> Dictionary:
 		"surface_selection_trace_size": _surface_selection_trace.size(),
 		"surface_profile_count": _surface_sfx_manifest.size(),
 		"surface_loop_event_id": _surface_loop_event_id,
+		"surface_activity_paused": _surface_activity_paused,
+		"surface_pause_transition_serial": _surface_pause_transition_serial,
+		"surface_loop_phase": _loop_player.get_playback_position() if _loop_player != null and _loop_player.playing else 0.0,
 		"rejected_surface_authority_calls": _rejected_surface_authority_calls,
+		"web_delivery_attempts": _web_delivery_attempts,
+		"web_delivery_failure_count": _web_delivery_failure_count,
+		"web_loop_retry_count": _web_loop_retry_count,
+		"web_fallback_count": _web_fallback_count,
+		"web_dropped_cue_count": _web_dropped_cue_count,
+		"audio_status": _audio_status_message,
 	}
+
+
+func set_surface_activity_paused(paused: bool, authority: Variant = null) -> void:
+	if not _has_surface_audio_authority(authority) or _surface_activity_paused == paused:
+		return
+	_surface_activity_paused = paused
+	_surface_pause_transition_serial += 1
+	if _surface_loop_fade_tween != null and _surface_loop_fade_tween.is_valid():
+		_surface_loop_fade_tween.kill()
+		_surface_loop_fade_tween = null
+	if WebAudioBridgeScript.available() and _web_surface_loop_active:
+		WebAudioBridgeScript.set_loop_paused(WEB_SURFACE_LOOP_ID, paused)
+	if _loop_player != null and _loop_player.playing:
+		_loop_player.stream_paused = paused
 
 
 func audio_fidelity_contract_snapshot() -> Dictionary:
@@ -1563,16 +1606,29 @@ func _start_reel_loop(event_id: String = "reel_loop", volume_db: float = -13.0, 
 	if suppress_physical_playback:
 		return
 	var stream := _event_stream(event_id)
-	if WebAudioBridgeScript.available():
-		WebAudioBridgeScript.play_stream(stream, "sfx:%s" % _normalized_event_id(event_id), volume_db, pitch, WEB_SURFACE_LOOP_ID, true)
-		_web_surface_loop_active = true
-		return
+	if _web_audio_delivery_available():
+		_web_delivery_attempts += 1
+		if _deliver_web_stream(stream, "sfx:%s" % _normalized_event_id(event_id), volume_db, pitch, WEB_SURFACE_LOOP_ID, true):
+			_web_surface_loop_active = true
+			_pending_web_loop_retry = {}
+			_web_loop_retry_count = 0
+			return
+		_record_web_delivery_failure()
+		_pending_web_loop_retry = {"stream": stream, "stream_id": "sfx:%s" % _normalized_event_id(event_id), "volume_db": volume_db, "pitch": pitch}
+		_web_loop_retry_count = 0
+		if is_inside_tree() and not _debug_web_delivery_active:
+			call_deferred("_retry_pending_web_surface_loop")
 	if _loop_player == null:
+		if not _pending_web_loop_retry.is_empty():
+			_web_dropped_cue_count += 1
 		return
+	if not _pending_web_loop_retry.is_empty():
+		_web_fallback_count += 1
 	_loop_player.stream = stream
 	_loop_player.volume_db = volume_db
 	_loop_player.pitch_scale = pitch
-	_loop_player.play()
+	if _loop_player.is_inside_tree():
+		_loop_player.play()
 
 
 func _stop_reel_loop() -> void:
@@ -1581,10 +1637,12 @@ func _stop_reel_loop() -> void:
 	_surface_loop_fade_tween = null
 	if WebAudioBridgeScript.available() and _web_surface_loop_active:
 		WebAudioBridgeScript.stop_loop(WEB_SURFACE_LOOP_ID)
-		_web_surface_loop_active = false
+	_web_surface_loop_active = false
 	if _loop_player != null and _loop_player.playing:
 		_loop_player.stop()
 	_surface_loop_event_id = ""
+	_pending_web_loop_retry = {}
+	_web_loop_retry_count = 0
 
 
 func _stop_one_shot_loops() -> void:
@@ -1602,12 +1660,17 @@ func _stop_one_shot_loops() -> void:
 func _play(event_id: String, volume_db: float = 0.0, pitch: float = 1.0, profile_id: String = "", max_voices: int = ONE_SHOT_PLAYER_COUNT) -> void:
 	_remove_from_prewarm_queue(_normalized_event_id(event_id))
 	var stream := _event_stream(event_id)
-	if WebAudioBridgeScript.available():
-		WebAudioBridgeScript.play_stream(stream, "sfx:%s" % _normalized_event_id(event_id), volume_db, pitch, "", false, profile_id, max_voices)
-		return
+	if _web_audio_delivery_available():
+		_web_delivery_attempts += 1
+		if _deliver_web_stream(stream, "sfx:%s" % _normalized_event_id(event_id), volume_db, pitch, "", false, profile_id, max_voices):
+			return
+		_record_web_delivery_failure()
 	var player := _next_player(profile_id, max_voices)
 	if player == null:
+		_web_dropped_cue_count += 1
 		return
+	if _web_audio_delivery_available():
+		_web_fallback_count += 1
 	player.stop()
 	player.stream = stream
 	player.volume_db = volume_db
@@ -1616,6 +1679,79 @@ func _play(event_id: String, volume_db: float = 0.0, pitch: float = 1.0, profile
 	player.set_meta("surface_profile_id", profile_id)
 	player.set_meta("surface_voice_serial", _surface_voice_serial)
 	player.play()
+
+
+func _web_audio_delivery_available() -> bool:
+	return _debug_web_delivery_active or WebAudioBridgeScript.available()
+
+
+func _deliver_web_stream(stream: AudioStream, stream_id: String, volume_db: float, pitch: float, loop_id: String, force_loop: bool, profile_id: String = "", max_voices: int = ONE_SHOT_PLAYER_COUNT) -> bool:
+	if _debug_web_delivery_active:
+		if _debug_web_delivery_results.is_empty():
+			return false
+		return bool(_debug_web_delivery_results.pop_front())
+	return WebAudioBridgeScript.play_stream(stream, stream_id, volume_db, pitch, loop_id, force_loop, profile_id, max_voices)
+
+
+func _retry_pending_web_surface_loop() -> void:
+	if _pending_web_loop_retry.is_empty() or _web_surface_loop_active:
+		return
+	_web_loop_retry_count += 1
+	_web_delivery_attempts += 1
+	var request := _pending_web_loop_retry
+	if _deliver_web_stream(request.get("stream") as AudioStream, str(request.get("stream_id", "")), float(request.get("volume_db", -13.0)), float(request.get("pitch", 1.0)), WEB_SURFACE_LOOP_ID, true):
+		_web_surface_loop_active = true
+		_pending_web_loop_retry = {}
+		if _loop_player != null and _loop_player.playing:
+			_loop_player.stop()
+		return
+	_record_web_delivery_failure()
+	if _web_loop_retry_count < WEB_LOOP_RETRY_LIMIT:
+		if is_inside_tree() and not _debug_web_delivery_active:
+			call_deferred("_retry_pending_web_surface_loop")
+		return
+	_pending_web_loop_retry = {}
+	_web_dropped_cue_count += 1
+	_publish_audio_unavailable_status()
+
+
+func _record_web_delivery_failure() -> void:
+	_web_delivery_failure_count += 1
+	if _web_delivery_failure_count >= WEB_FAILURE_WARNING_THRESHOLD:
+		_publish_audio_unavailable_status()
+
+
+func _publish_audio_unavailable_status() -> void:
+	var message := "Audio unavailable. Gameplay will continue; check browser audio permissions or reload."
+	if _audio_status_message == message:
+		return
+	_audio_status_message = message
+	audio_status_changed.emit(message)
+
+
+func debug_web_delivery_contract(results: Array) -> Dictionary:
+	_stop_reel_loop()
+	_web_delivery_attempts = 0
+	_web_delivery_failure_count = 0
+	_web_fallback_count = 0
+	_web_dropped_cue_count = 0
+	_audio_status_message = ""
+	_debug_web_delivery_results = results.duplicate()
+	_debug_web_delivery_active = true
+	_ensure_players()
+	_start_reel_loop("reel_loop", -13.0, 1.0)
+	while not _pending_web_loop_retry.is_empty() and _web_loop_retry_count < WEB_LOOP_RETRY_LIMIT:
+		_retry_pending_web_surface_loop()
+	_debug_web_delivery_active = false
+	return {
+		"loop_active": _web_surface_loop_active,
+		"attempts": _web_delivery_attempts,
+		"retry_count": _web_loop_retry_count,
+		"failure_count": _web_delivery_failure_count,
+		"fallback_count": _web_fallback_count,
+		"dropped_cue_count": _web_dropped_cue_count,
+		"status": _audio_status_message,
+	}
 
 
 func _next_player(profile_id: String = "", max_voices: int = ONE_SHOT_PLAYER_COUNT) -> AudioStreamPlayer:

@@ -1,6 +1,8 @@
 class_name CareerStatsViewModel
 extends RefCounted
 
+const PlayerTextScript := preload("res://scripts/ui/player_text.gd")
+
 const REQUIRED_GAME_DEFINITIONS := [
 	{"id": "craps", "label": "Craps"},
 	{"id": "coin_pusher", "label": "Quarter Falls"},
@@ -167,7 +169,8 @@ static func _history_rows(history: Array, limit: int = 8) -> Array:
 			"outcome": _outcome_text(entry),
 			"bankroll": "$%d" % int(entry.get("final_bankroll", 0)),
 			"day": "Day %d" % int(entry.get("day_count", 1)),
-			"actions": "%d actions" % int(entry.get("duration_actions", 0)),
+			"actions": PlayerTextScript.count_text("action", int(entry.get("duration_actions", 0))),
+			"duration_actions": int(entry.get("duration_actions", 0)),
 			"score": int(entry.get("score", 0)),
 			"won": str(entry.get("outcome", "")) == "victory",
 		})

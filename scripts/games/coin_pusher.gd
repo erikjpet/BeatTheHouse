@@ -36,6 +36,9 @@ const CoinPusherLiveSessionScript := preload("res://scripts/games/coin_pusher/co
 const V3_HEADLESS_MESSAGE := "Aim for bonus-token cups, use the stop to build pressure, and push the machine's heavy feature pieces into the win tray."
 
 var _live_machines: Dictionary = {}
+var _live_machine_generations: Dictionary = {}
+var _next_live_machine_generation := 1
+var _last_host_rollback_failure: Dictionary = {}
 var _exit_settle_active := false
 var _renderer = null
 var _machine_definition_cache: Dictionary = {}
@@ -61,6 +64,7 @@ func host_action_rollback_snapshot(action_id: String, run_state: RunState, envir
 	if action_id != DROP_ACTION or run_state == null or run_state.grand_casino_game_uses_chips(get_id(), environment):
 		return {}
 	var machine := _ensure_live_machine(run_state, environment)
+	var cache_key := _live_key(run_state, environment)
 	if str(machine.get("variation_id", "quarter_falls")) != "quarter_falls":
 		return {}
 	var shell: Dictionary = {}
@@ -74,7 +78,10 @@ func host_action_rollback_snapshot(action_id: String, run_state: RunState, envir
 	var durable_value: Variant = durable_states.get(get_id(), null)
 	return {
 		"supported": true,
-		"machine": machine,
+		"game_id": get_id(),
+		"action_id": action_id,
+		"cache_key": cache_key,
+		"identity_generation": int(_live_machine_generations.get(cache_key, 0)),
 		"shell": shell,
 		"motor_target_rate_present": simulation.has("motor_target_rate_fp"),
 		"motor_target_rate_fp": int(simulation.get("motor_target_rate_fp", 0)),
@@ -94,14 +101,19 @@ func host_action_rollback_snapshot(action_id: String, run_state: RunState, envir
 
 
 func restore_host_action_rollback(snapshot: Dictionary, run_state: RunState, environment: Dictionary) -> bool:
-	var machine_value: Variant = snapshot.get("machine", null)
 	var shell_value: Variant = snapshot.get("shell", null)
-	if typeof(machine_value) != TYPE_DICTIONARY or typeof(shell_value) != TYPE_DICTIONARY:
+	var cache_key := str(snapshot.get("cache_key", ""))
+	var expected_key := _live_key(run_state, environment)
+	var expected_generation := int(snapshot.get("identity_generation", 0))
+	if cache_key.is_empty() or cache_key != expected_key or expected_generation <= 0 or typeof(shell_value) != TYPE_DICTIONARY:
+		_record_host_rollback_failure(snapshot, expected_key, "invalid compact rollback identity")
 		return false
-	var machine := machine_value as Dictionary
+	var machine := _ensure_live_machine(run_state, environment)
+	var current_generation := int(_live_machine_generations.get(cache_key, 0))
+	if current_generation != expected_generation:
+		_record_host_rollback_failure(snapshot, expected_key, "live machine generation changed")
+		return false
 	var shell := shell_value as Dictionary
-	if not is_same(machine, _ensure_live_machine(run_state, environment)):
-		return false
 	for key in machine.keys():
 		if str(key) not in ["simulation", "live_session", "settled_state"] and not shell.has(key):
 			machine.erase(key)
@@ -127,7 +139,24 @@ func restore_host_action_rollback(snapshot: Dictionary, run_state: RunState, env
 		durable_states[get_id()] = durable_machine_value
 	else:
 		durable_states.erase(get_id())
+	_last_host_rollback_failure = {}
 	return true
+
+
+func host_action_rollback_failure_payload() -> Dictionary:
+	return _last_host_rollback_failure.duplicate(true)
+
+
+func _record_host_rollback_failure(snapshot: Dictionary, current_key: String, reason: String) -> void:
+	_last_host_rollback_failure = {
+		"game_id": get_id(),
+		"action_id": str(snapshot.get("action_id", "")),
+		"cache_key": str(snapshot.get("cache_key", "")),
+		"current_cache_key": current_key,
+		"identity_generation": int(snapshot.get("identity_generation", 0)),
+		"current_identity_generation": int(_live_machine_generations.get(current_key, 0)),
+		"reason": reason,
+	}
 
 
 func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
@@ -937,11 +966,14 @@ func advance_chunked_exit_settle(run_state: RunState, environment: Dictionary, t
 	if bool(result.get("done", false)):
 		_write_live_durable(run_state, environment, machine, false)
 		_live_machines.erase(key)
+		_live_machine_generations.erase(key)
 	return result
 
 
 func finalize_chunked_exit_settle(run_state: RunState, environment: Dictionary) -> void:
-	_live_machines.erase(_live_key(run_state, environment))
+	var key := _live_key(run_state, environment)
+	_live_machines.erase(key)
+	_live_machine_generations.erase(key)
 	_exit_settle_active = false
 
 
@@ -1731,6 +1763,8 @@ func _ensure_live_machine(run_state: RunState, environment: Dictionary) -> Dicti
 	_sync_physical_features(machine)
 	_sync_variation_motor(machine)
 	_live_machines[key] = machine
+	_live_machine_generations[key] = _next_live_machine_generation
+	_next_live_machine_generation += 1
 	return machine
 
 

@@ -179,6 +179,8 @@ $script:FoundationContractsCheckIds = @(
     "playtest_fixes01_regressions",
     "playtest_fixes02_regressions",
     "playtest_fixes03_regressions",
+    "fixsweep06_1_wave1",
+    "fixsweep06_1_wave2",
     "coach_engine_foundation",
     "foundation_contracts",
     "bar_dice_contract",
@@ -262,7 +264,9 @@ $script:FoundationContractsShardPlan = [ordered]@{
         "content_depth_contract",
         "playtest_fixes01_regressions",
         "playtest_fixes02_regressions",
-        "playtest_fixes03_regressions"
+        "playtest_fixes03_regressions",
+        "fixsweep06_1_wave1",
+        "fixsweep06_1_wave2"
     )
     "contracts_games" = @(
         "bar_dice_contract",

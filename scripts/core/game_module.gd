@@ -3,6 +3,8 @@ extends RefCounted
 
 # Base contract for foundation gambling modules.
 
+const PlayerTextScript := preload("res://scripts/ui/player_text.gd")
+
 const RESULT_CONTINUE := "continue"
 const RESULT_ENDED := "ended"
 const GAMEPLAY_MODEL_GENERIC_ODDS := "generic_odds"
@@ -848,6 +850,36 @@ static func patrons_with_talk_focus(patrons: Array, focused_speaker_value: Varia
 	return result
 
 
+# Rewrites authored money copy only after the environment has routed the
+# balance. The original message remains available to diagnostics and replays.
+static func finalize_routed_player_message(result: Dictionary, deltas: Dictionary) -> void:
+	var cash_delta := int(deltas.get("bankroll_delta", 0))
+	var chips_delta := int(deltas.get("chips_delta", 0))
+	if cash_delta == 0 and chips_delta == 0:
+		return
+	var message_key := "game.result.currency_settlement"
+	var message_params := {"cash_delta": cash_delta, "chips_delta": chips_delta}
+	var authored_message := str(result.get("message", ""))
+	var settlement_message := PlayerTextScript.resolve(message_key, message_params)
+	var routed_authored_message := authored_message
+	if chips_delta != 0 and cash_delta == 0:
+		var cash_amount := RegEx.new()
+		cash_amount.compile("\\$([0-9]+)")
+		routed_authored_message = cash_amount.sub(routed_authored_message, "$1 chips", true)
+		routed_authored_message = routed_authored_message.replace("Bankroll", "Chips").replace("bankroll", "chips")
+		routed_authored_message = routed_authored_message.replace("Cash", "Chips").replace("cash", "chips")
+	var player_message := PlayerTextScript.join_sentences([routed_authored_message, settlement_message]) if not routed_authored_message.is_empty() else settlement_message
+	if not authored_message.is_empty():
+		result["diagnostic_message"] = authored_message
+	result["message_key"] = message_key
+	result["message_params"] = message_params
+	result["message"] = player_message
+	deltas["message_key"] = message_key
+	deltas["message_params"] = message_params
+	deltas["message"] = player_message
+	result["deltas"] = deltas
+
+
 # Applies structured module changes through RunState.
 static func apply_result(run_state: RunState, result: Dictionary, rng: RngStream = null, trusted_result_fingerprint: String = "") -> void:
 	if run_state == null:
@@ -865,15 +897,20 @@ static func apply_result(run_state: RunState, result: Dictionary, rng: RngStream
 	var deltas := _normalize_result_deltas(result.get("deltas", {}))
 	run_state.record_score_spending_from_result(result, deltas)
 	deltas = run_state.route_grand_casino_game_currency(result, deltas)
+	finalize_routed_player_message(result, deltas)
 	var defer_bankroll_zero := bool(result.get("defer_bankroll_zero_failure", false)) or run_state.defer_next_bankroll_zero_failure
 	if defer_bankroll_zero:
 		result["defer_bankroll_zero_failure"] = true
 	var bankroll_delta := int(deltas.get("bankroll_delta", 0))
+	var failed_before_money := run_state.run_status == RunState.RUN_STATUS_FAILED
 	if bankroll_delta != 0:
 		run_state.change_bankroll(bankroll_delta, defer_bankroll_zero)
 	var chips_delta := int(deltas.get("chips_delta", 0))
 	if chips_delta != 0:
 		run_state.change_grand_casino_chips(chips_delta, defer_bankroll_zero)
+	if not failed_before_money and run_state.run_status == RunState.RUN_STATUS_FAILED and not bool(result.get("terminal_settlement", false)):
+		run_state.clear_deferred_bankroll_zero_resolution()
+		return
 	var suspicion_delta := int(deltas.get("suspicion_delta", 0))
 	var blackjack_heat_attempt := suspicion_delta > 0 and result_game_id == "blackjack"
 	if blackjack_heat_attempt:

@@ -117,7 +117,12 @@ func _run() -> void:
 			library.environment_scenarios[archetype_id] = [definition.duplicate(true)]
 			var case_failures: Array = []
 			var run_state := RunStateScript.new()
-			run_state.start_new("%s-%s" % [seed_family, scenario_id])
+			var case_seed := "%s-%s" % [seed_family, scenario_id]
+			var case_config := RunStateScript.custom_challenge("scenario_room_finalization", case_seed, {
+				"scenario_pins": {archetype_id: scenario_id},
+				"scenario_pins_apply_mutations": true,
+			})
+			run_state.start_new(case_seed, case_config)
 			var generator := RunGeneratorScript.new(library)
 			var initial := HarnessProductionFidelityScript.generate_and_finalize(generator, run_state, case_failures, "%s/%s initial room" % [seed_family, scenario_id], "", false, LAYOUT_CONTEXT)
 			var target_node := _node_for_archetype(run_state, archetype_id)

@@ -68,9 +68,9 @@ const OPPONENT_DIE_SIZE := Vector2(22, 22)
 const OPPONENT_DIE_SPACING := 29.0
 const MAX_VISIBLE_OPPONENT_ROWS := 3
 const OPPONENT_DICE_ORIGINS := [
-	Vector2(76, 150),
-	Vector2(76, 202),
+	Vector2(76, 204),
 	Vector2(76, 254),
+	Vector2(76, 304),
 ]
 const BAR_PATRON_POSITIONS := [
 	Vector2(94, 84),
@@ -78,6 +78,12 @@ const BAR_PATRON_POSITIONS := [
 	Vector2(660, 70),
 	Vector2(808, 84),
 ]
+const BAR_DICE_DEALER_STATUS_LAYOUT := {
+	"station": Rect2(352, 54, 196, 154),
+	"attention_meter": Rect2(360, 164, 180, 9),
+	"danger_meter": Rect2(360, 178, 180, 6),
+	"status_panel": Rect2(360, 188, 180, 16),
+}
 const DICE_GOAL_LABELS := ["SHIP 6", "CAPTAIN 5", "CREW 4", "CARGO"]
 
 const RULESET_LABEL := {
@@ -556,7 +562,7 @@ func draw_surface(surface, surface_state: Dictionary, _render_context: Dictionar
 	_draw_bar_room(surface, surface_state)
 	_draw_bar_top(surface, surface_state)
 	TableVisualsScript.draw_table_patrons(surface, surface_state, BAR_PATRON_POSITIONS)
-	TableVisualsScript.draw_dealer_station(surface, surface_state, "calls cargo")
+	TableVisualsScript.draw_dealer_station(surface, surface_state, "calls cargo", BAR_DICE_DEALER_STATUS_LAYOUT)
 	_draw_dice_rows(surface, surface_state)
 	_draw_explainer(surface, surface_state)
 	_draw_paytable(surface, surface_state)
@@ -3473,12 +3479,18 @@ func _draw_neon_panel(surface, rect: Rect2, accent: Color, alpha: float = 0.16) 
 
 
 func _bar_dice_layout_snapshot() -> Dictionary:
+	var text_panel_rects := _bar_dice_text_panel_regions()
+	var opponent_panel_rects := _bar_dice_opponent_panel_rects()
+	var dealer_station_rects := _bar_dice_dealer_station_rects()
 	return {
 		"rules_panel": _rect_payload(RULES_PANEL_RECT),
 		"paytable_panel": _rect_payload(PAYTABLE_PANEL_RECT),
 		"round_timer": _rect_payload(ROUND_TIMER_RECT),
 		"guidance_rect": BAR_DICE_GUIDANCE_RECT,
-		"text_panel_rects": _bar_dice_text_panel_regions(),
+		"text_panel_rects": text_panel_rects,
+		"opponent_panel_rects": opponent_panel_rects,
+		"dealer_station_rects": dealer_station_rects,
+		"patron_exclusion_rects": text_panel_rects + opponent_panel_rects + dealer_station_rects,
 		"patron_safe_rects": _bar_dice_patron_safe_rects(),
 	}
 
@@ -3490,6 +3502,22 @@ func _bar_dice_text_panel_regions() -> Array:
 		_rect_payload(ROUND_TIMER_RECT, "round_timer"),
 		_rect_payload(BAR_DICE_GUIDANCE_RECT, "console_guidance"),
 	]
+
+
+func _bar_dice_opponent_panel_rects() -> Array:
+	var rects: Array = []
+	for i in range(MAX_VISIBLE_OPPONENT_ROWS):
+		rects.append(_rect_payload(Rect2(OPPONENT_DICE_ORIGINS[i] + Vector2(-8, -14), Vector2(164, 48)), "rail_cup_%d" % i))
+	return rects
+
+
+func _bar_dice_dealer_station_rects() -> Array:
+	var ids := ["dealer_station", "dealer_attention", "dealer_danger", "dealer_status"]
+	var rects: Array = []
+	var occupied_rects: Array = TableVisualsScript.dealer_station_occupied_rects(BAR_DICE_DEALER_STATUS_LAYOUT)
+	for i in range(occupied_rects.size()):
+		rects.append(_rect_payload(occupied_rects[i], ids[i] if i < ids.size() else "dealer_%d" % i))
+	return rects
 
 
 func _bar_dice_patron_safe_rects() -> Array:

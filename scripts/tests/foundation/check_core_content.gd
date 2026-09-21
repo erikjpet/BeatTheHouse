@@ -34,6 +34,7 @@ const Tier2ScenarioContractScript := preload("res://scripts/tests/foundation/tie
 const ScenarioBacklogContractScript := preload("res://scripts/tests/foundation/scenario_backlog_contract.gd")
 const ScenarioSequenceContractScript := preload("res://scripts/tests/foundation/scenario_sequence_contract.gd")
 const ScenarioSemanticPresentationContractScript := preload("res://scripts/tests/foundation/scenario_semantic_presentation_contract.gd")
+const Fixsweep061RegressionsScript := preload("res://scripts/tests/foundation/fixsweep06_1_regressions.gd")
 const EnvironmentSemanticInventoryContractScript := preload("res://scripts/tests/foundation/environment_semantic_inventory_contract.gd")
 const InteractableEventClassGuardScript := preload("res://scripts/tests/foundation/interactable_event_class_guard.gd")
 const GameActivationClassGuardScript := preload("res://scripts/tests/foundation/game_activation_class_guard.gd")
@@ -626,6 +627,8 @@ func _foundation_run_contract_suite(content_library: ContentLibrary, fixture_lib
 	_foundation_run_check(report, failures, "playtest_fixes01_regressions", Callable(self, "_check_playtest_fixes01_regressions"), [content_library])
 	_foundation_run_check(report, failures, "playtest_fixes02_regressions", Callable(PlaytestFixes02ContractScript, "check"), [content_library])
 	_foundation_run_check(report, failures, "playtest_fixes03_regressions", Callable(PlaytestFixes03ContractScript, "check"), [content_library])
+	_foundation_run_check(report, failures, "fixsweep06_1_wave1", Callable(Fixsweep061RegressionsScript, "check_wave1"), [content_library])
+	_foundation_run_check(report, failures, "fixsweep06_1_wave2", Callable(Fixsweep061RegressionsScript, "check_wave2"), [content_library])
 	_foundation_run_check(report, failures, "coach_engine_foundation", Callable(self, "_check_coach_engine_foundation"), [content_library])
 	# Keep the established parent id for the core assertions. Independent game and
 	# system contracts are registered separately so every failure remains visible
@@ -2839,8 +2842,8 @@ func _check_start_home_environment(run_state: RunState, environment: Environment
 		failures.append("The first generated home should offer a route onward into the world.")
 	if not run_state.home_is_active():
 		failures.append("The first generated home should initialize RunState home_state.")
-	if run_state.clock_display_text(true) != "Day 1 12 PM":
-		failures.append("The first generated home should start at the fixed day 1, 12 PM clock.")
+	if run_state.clock_display_text(true) != "Day 1 12:00 PM":
+		failures.append("The first generated home should start at the fixed day 1, 12:00 PM clock.")
 	var sleep_run: RunState = RunStateScript.new()
 	sleep_run.from_dict(run_state.to_dict())
 	sleep_run.add_suspicion("home_sleep_fixture", 30)

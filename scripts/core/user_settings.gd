@@ -57,16 +57,52 @@ func reset() -> void:
 	developer_placement_mode = false
 
 
-# Loads preferences from disk or defaults.
-func load() -> void:
+# Loads preferences from disk or defaults and reports recoverable failures.
+func load() -> Dictionary:
 	reset()
 	var path := settings_path()
 	if not FileAccess.file_exists(path):
-		return
-	var text := FileAccess.get_file_as_string(path)
-	var parsed: Variant = JSON.parse_string(text)
-	if typeof(parsed) == TYPE_DICTIONARY:
-		from_dict(parsed)
+		return {"code": "missing", "path": path}
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		return {
+			"code": "io_error",
+			"detail": "read_failed",
+			"path": path,
+			"error": int(FileAccess.get_open_error()),
+		}
+	var text := file.get_as_text()
+	file.close()
+	var parser := JSON.new()
+	var parse_error := parser.parse(text)
+	if parse_error != OK:
+		return _recover_invalid_settings_file(path, "malformed_json", parser.get_error_message())
+	var parsed: Variant = parser.data
+	if typeof(parsed) != TYPE_DICTIONARY:
+		return _recover_invalid_settings_file(path, "invalid_schema", "Settings root must be an object.")
+	from_dict(parsed as Dictionary)
+	return {"code": "loaded", "path": path}
+
+
+func _recover_invalid_settings_file(path: String, detail: String, message: String) -> Dictionary:
+	var preserved_path := "%s.invalid.%d.%d" % [path, int(Time.get_unix_time_from_system()), Time.get_ticks_usec()]
+	var rename_error := DirAccess.rename_absolute(ProjectSettings.globalize_path(path), ProjectSettings.globalize_path(preserved_path))
+	if rename_error != OK:
+		return {
+			"code": "io_error",
+			"detail": "preserve_failed",
+			"source_detail": detail,
+			"path": path,
+			"error": int(rename_error),
+			"message": message,
+		}
+	return {
+		"code": "recovered_defaults",
+		"detail": detail,
+		"path": path,
+		"preserved_path": preserved_path,
+		"message": message,
+	}
 
 
 # Saves preferences to disk.
@@ -301,8 +337,12 @@ func _set_volume(bus_name: String, value: float) -> void:
 	if bus_index < 0:
 		return
 	var clamped := _volume(value)
-	var volume_db := -80.0 if clamped <= 0.0 else linear_to_db(clamped)
-	AudioServer.set_bus_volume_db(bus_index, volume_db)
+	if clamped <= 0.0:
+		# Preserve the last non-zero dB value while guaranteeing digital silence.
+		AudioServer.set_bus_mute(bus_index, true)
+		return
+	AudioServer.set_bus_volume_db(bus_index, linear_to_db(clamped))
+	AudioServer.set_bus_mute(bus_index, false)
 
 
 # Clamps a value to the allowed volume range.

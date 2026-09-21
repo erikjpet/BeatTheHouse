@@ -2582,16 +2582,24 @@ func _check_pusher_v3_production_integration_boundaries(library: ContentLibrary,
 	var rollback_token := rollback_game.host_action_rollback_snapshot("drop_quarter", run_state, rollback_environment)
 	var rollback_result := rollback_game.resolve_with_context("drop_quarter", 1, run_state, rollback_environment, _pusher_v3_rng("PUSHER-V3-ROLLBACK-DROP"), {})
 	var rollback_applied := bool(rollback_result.get("ok", false)) and (rollback_live.get("drop_queue", []) as Array).size() == 1
+	# Replacement-on-write is legal for the live cache and is exactly the shape
+	# seen when a rejected host boundary rebinds the cabinet. A compact token is
+	# keyed by semantic cabinet identity, never Dictionary object identity.
+	var rollback_key := str(rollback_token.get("cache_key", rollback_game.call("_live_key", run_state, rollback_environment)))
+	var rebound_live := rollback_live.duplicate(true)
+	(rollback_game.get("_live_machines") as Dictionary)[rollback_key] = rebound_live
 	var rollback_restored := rollback_game.restore_host_action_rollback(rollback_token, run_state, rollback_environment)
+	var rebound_simulation: Dictionary = rebound_live.get("simulation", {})
+	var rebound_session: Dictionary = rebound_live.get("live_session", {})
 	var live_rollback_after := {
-		"action_count": int(rollback_live.get("action_count", 0)),
-		"drop_queue": (rollback_live.get("drop_queue", []) as Array).duplicate(true),
-		"motor_started": bool(rollback_live.get("motor_started", false)),
-		"motor_target_rate_fp": int(rollback_simulation.get("motor_target_rate_fp", 0)),
-		"durable_ready": bool(rollback_session.get("durable_ready", false)),
-		"durable_dirty": bool(rollback_session.get("durable_dirty", false)),
+		"action_count": int(rebound_live.get("action_count", 0)),
+		"drop_queue": (rebound_live.get("drop_queue", []) as Array).duplicate(true),
+		"motor_started": bool(rebound_live.get("motor_started", false)),
+		"motor_target_rate_fp": int(rebound_simulation.get("motor_target_rate_fp", 0)),
+		"durable_ready": bool(rebound_session.get("durable_ready", false)),
+		"durable_dirty": bool(rebound_session.get("durable_dirty", false)),
 	}
-	if not bool(rollback_token.get("supported", false)) or not rollback_applied or not rollback_restored \
+	if not bool(rollback_token.get("supported", false)) or rollback_key.is_empty() or not rollback_token.has("identity_generation") or not rollback_applied or not rollback_restored \
 			or var_to_bytes(rollback_environment.get("game_states", {})) != durable_rollback_before \
 			or live_rollback_after != live_rollback_before:
 		failures.append("Coin Pusher compact host rollback did not restore the exact durable/live DROP boundary: supported=%s applied=%s restored=%s durable=%s live=%s." % [bool(rollback_token.get("supported", false)), rollback_applied, rollback_restored, var_to_bytes(rollback_environment.get("game_states", {})) == durable_rollback_before, JSON.stringify(live_rollback_after)])

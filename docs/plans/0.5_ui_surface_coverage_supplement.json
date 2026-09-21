@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "purpose": "Accounts for UI production files added after the immutable 0.5 redesign report was written.",
+  "coverage": [
+    {
+      "path": "scripts/ui/heat_feedback_visuals.gd",
+      "owner": "shared heat feedback renderer",
+      "verification": "scripts/ui/game_surface_canvas.gd"
+    },
+    {
+      "path": "scripts/ui/heat_gain_feedback_overlay.gd",
+      "owner": "deferred heat-gain overlay",
+      "verification": "tools/perf06_web_run_ui_deferral_contract.ps1"
+    },
+    {
+      "path": "scripts/ui/item_card_view_model.gd",
+      "owner": "shared item-card presentation model",
+      "verification": "scripts/tests/inventory_spatial_ui_check.gd"
+    },
+    {
+      "path": "scripts/ui/performance_fixture_setup.gd",
+      "owner": "performance fixture boundary",
+      "verification": "tools/perf06_web_complementary_startup_contract.ps1"
+    },
+    {
+      "path": "scripts/ui/player_text.gd",
+      "owner": "canonical player-text boundary",
+      "verification": "scripts/tests/fixsweep06_1_player_text_contract.gd"
+    },
+    {
+      "path": "scripts/ui/scenario_semantic_view_model.gd",
+      "owner": "scenario semantic presentation model",
+      "verification": "scripts/tests/foundation/scenario_semantic_presentation_contract.gd"
+    }
+  ]
+}

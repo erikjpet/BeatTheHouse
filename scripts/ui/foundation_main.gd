@@ -2,6 +2,8 @@ class_name FoundationMain
 extends Control
 
 const ScenarioSemanticViewModelScript := preload("res://scripts/ui/scenario_semantic_view_model.gd")
+const PlayerTextScript := preload("res://scripts/ui/player_text.gd")
+const BuildIdentityScript := preload("res://scripts/core/build_identity.gd")
 
 # Thin UI shell for the README foundation runtime.
 
@@ -244,6 +246,7 @@ var action_authority_contract: Dictionary:
 		return current_game.sealed_action_authority_contract()
 
 var user_settings: UserSettings
+var user_settings_load_outcome: Dictionary = {}
 var profile_inventory: ProfileInventory
 var meta_collection_service: MetaCollectionService
 var meta_session_controller: MetaSessionController
@@ -382,6 +385,7 @@ var drunk_time_last_scale := 1.0
 var continuous_environment_clock_enabled := true
 var environment_pause_started_msec := 0
 var environment_paused_total_msec := 0
+var application_pause_owners: Dictionary = {}
 var environment_clock_fractional_minutes := 0.0
 var stored_grand_casino_runtime_last_msec := -100000
 var dev_game_test_mode := false
@@ -494,6 +498,7 @@ var run_menu_skip_tutorial_button: Button
 var tutorial_skip_dialog: ConfirmationDialog
 var settings_overlay: Control
 var settings_margin: MarginContainer
+var settings_panel: PanelContainer
 var settings_menu: SettingsMenu
 var procedural_music_player: ProceduralMusicPlayer
 var environment_sfx_player: Node
@@ -515,6 +520,7 @@ var event_choice_popup_pressed_callback := Callable()
 var event_choice_popup_press_position := Vector2.ZERO
 var event_choice_popup_press_activation_serial := 0
 var event_choice_popup_activation_serial := 0
+var event_choice_popup_previous_focus_owner: Control
 var numbers_surface_source_id: String = ""
 var numbers_digit_options: Array = []
 var numbers_stake_input: SpinBox
@@ -565,7 +571,9 @@ var world_map_badge_slot: VBoxContainer
 var world_map_badge_row: HFlowContainer
 var world_map_badge_cells: Array = []
 var world_map_confirm_button: Button
+var world_map_close_button: Button
 var world_map_overlay_controller
+var world_map_previous_focus_owner: Control
 var wager_confirmation_controller
 var selected_world_map_node_id: String = ""
 var world_map_button_ids: Array = []
@@ -677,6 +685,7 @@ func _ready() -> void:
 	_mark_boot_event("foundation_ready")
 	_build_ui()
 	_mark_boot_event("ui_built")
+	_surface_user_settings_load_outcome()
 	_refresh()
 	_mark_boot_event("main_menu_interactive", {
 		"screen": current_screen,
@@ -689,6 +698,7 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	_poll_game_module_script_prewarm()
 	_advance_game_coach_refresh_after_draw()
+	_sync_simulation_pause_owners()
 	if perf_telemetry_overlay == null:
 		if run_layout_dirty:
 			_apply_run_screen_layout()
@@ -780,14 +790,32 @@ func _input(event: InputEvent) -> void:
 		if procedural_music_player != null and procedural_music_player.has_method("web_audio_user_gesture"):
 			procedural_music_player.web_audio_user_gesture()
 		_schedule_web_audio_unlock_refresh()
+	if event.is_action_pressed("ui_cancel") and _route_topmost_modal_cancel():
+		get_viewport().set_input_as_handled()
+		return
+	if _event_choice_popup_is_visible() and _trap_event_choice_popup_focus(event):
+		get_viewport().set_input_as_handled()
+		return
 	if talk_dock != null and not _talk_dock_input_is_blocked() and talk_dock.handle_hotkey(event):
 		get_viewport().set_input_as_handled()
 
 
 func _notification(what: int) -> void:
-	if what == NOTIFICATION_RESIZED:
+	if what == NOTIFICATION_APPLICATION_FOCUS_OUT or what == NOTIFICATION_WM_WINDOW_FOCUS_OUT:
+		set_application_pause_owner("focus_out", true)
+	elif what == NOTIFICATION_APPLICATION_FOCUS_IN or what == NOTIFICATION_WM_WINDOW_FOCUS_IN:
+		set_application_pause_owner("focus_out", false)
+	elif what == NOTIFICATION_APPLICATION_PAUSED:
+		set_application_pause_owner("application_paused", true)
+	elif what == NOTIFICATION_APPLICATION_RESUMED:
+		set_application_pause_owner("application_paused", false)
+	elif what == NOTIFICATION_RESIZED:
+		if DisplayServer.get_name() != "headless":
+			set_application_pause_owner("window_minimized", DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_MINIMIZED)
 		_invalidate_run_screen_layout()
 		_apply_run_screen_layout()
+		_layout_world_map_panel()
+		_layout_settings_overlay()
 		if _event_choice_popup_is_visible():
 			call_deferred("_position_event_choice_popup")
 	elif what == NOTIFICATION_WM_CLOSE_REQUEST and run_state != null and not _is_meta_session():
@@ -837,6 +865,7 @@ func uses_foundation_runtime() -> bool:
 func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Dictionary = {}, include_meta_home_modifiers: bool = true) -> bool:
 	if not _ensure_run_ui_built():
 		return false
+	_clear_run_audio_caches()
 	if library == null:
 		_initialize_foundation()
 	_ensure_full_content_library_loaded()
@@ -861,6 +890,8 @@ func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Di
 	last_environment_runtime_result = {}
 	run_report_model = {}
 	run_report_model_key = ""
+	if run_report_screen != null:
+		run_report_screen.clear_report()
 	run_item_icon_texture_cache.clear()
 	close_content_group_config()
 	close_challenge_selection()
@@ -1711,10 +1742,14 @@ func _sealed_action_host_publish(candidate: RunState) -> bool:
 
 
 func _sealed_action_host_rejection(error_code: String, message: String, request_key: String = "") -> Dictionary:
+	var message_key := PlayerTextScript.sealed_action_message_key(error_code)
 	var rejection := {
 		"ok": false,
 		"error_code": error_code,
-		"message": message,
+		"message": PlayerTextScript.resolve(message_key),
+		"message_key": message_key,
+		"message_params": {},
+		"diagnostic_detail": message,
 		"request_key": request_key,
 	}
 	rejection[ActionAuthorityScript.HOST_REQUEST_KEY] = request_key
@@ -1990,9 +2025,17 @@ func _sealed_action_host_prepare_delivery(action_id: String, stake: int, deliver
 	# Delivery identity is durable before any RNG, funding, or game proposal work.
 	if not _sealed_action_host_publish(candidate):
 		return _sealed_action_host_rejection("internal_fail_closed", "Blackjack delivery could not be persisted.")
-	# The detached candidate and validated ledger are still the exact state that
-	# successfully crossed the publish boundary. Hand them only to the synchronous
-	# resolver so it need not serialize and restore the just-published run again.
+	# Publishing the durable pending delivery transfers candidate collection roots
+	# into the live RunState. Reusing that candidate would let apply_result append
+	# story/profile/crew histories through those aliases before the still-fallible
+	# environment-turn boundary. Fork once more so every apply-time collection is
+	# transaction-owned until the final publish succeeds.
+	candidate = _sealed_action_host_detached()
+	if candidate == null:
+		return _sealed_action_host_rejection("internal_fail_closed", "Blackjack delivery could not isolate its transaction histories.")
+	ledger = _sealed_action_host_ledger(candidate, false)
+	if ledger.is_empty() or GameRitualRuntimeScript.canonical_json(ledger.get("pending_delivery", {})) != GameRitualRuntimeScript.canonical_json(issued.get("delivery", {})):
+		return _sealed_action_host_rejection("internal_fail_closed", "Blackjack delivery isolation lost its pending authority.")
 	return {
 		"ok": true,
 		"delivery": (issued.get("delivery", {}) as Dictionary).duplicate(true),
@@ -3787,6 +3830,7 @@ func open_world_map(force_closing_allowed: bool = false) -> bool:
 		return false
 	if _guard_player_input_route(force_closing_allowed, "map"):
 		return false
+	world_map_previous_focus_owner = get_viewport().gui_get_focus_owner()
 	# The map becomes the sole interaction surface. Leaving the room selection
 	# alive kept its info/action card visible beneath the modal map and made the
 	# travel screen look like two competing layers.
@@ -3799,9 +3843,11 @@ func open_world_map(force_closing_allowed: bool = false) -> bool:
 	if world_map_overlay != null:
 		world_map_overlay.visible = true
 		world_map_overlay.move_to_front()
+	_layout_world_map_panel()
 	_sync_coach_focus_visibility()
 	_request_world_map_button_relayout()
 	_refresh()
+	call_deferred("_focus_world_map_entry")
 	return true
 
 
@@ -3827,6 +3873,20 @@ func close_world_map() -> void:
 	if current_screen == SCREEN_TRAVEL:
 		_set_current_screen(SCREEN_ENVIRONMENT)
 		_refresh()
+	call_deferred("_restore_world_map_focus")
+
+
+func _focus_world_map_entry() -> void:
+	if not _world_map_overlay_is_visible():
+		return
+	_ensure_world_map_overlay_controller()
+	world_map_overlay_controller.focus_first_available(world_map_close_button)
+
+
+func _restore_world_map_focus() -> void:
+	if is_instance_valid(world_map_previous_focus_owner) and world_map_previous_focus_owner.is_visible_in_tree():
+		world_map_previous_focus_owner.grab_focus()
+	world_map_previous_focus_owner = null
 
 
 func _hide_world_map_overlay() -> void:
@@ -4897,11 +4957,7 @@ func _show_triggered_event_popup(entry: Dictionary) -> bool:
 			false,
 			choice.get("attribute_badges", [])
 		)
-	event_choice_popup_overlay.visible = true
-	event_choice_popup_overlay.move_to_front()
-	_sync_coach_focus_visibility()
-	_position_event_choice_popup()
-	call_deferred("_position_event_choice_popup")
+	_present_event_choice_popup()
 	return true
 
 
@@ -6294,11 +6350,7 @@ func _show_active_item_confirmation_popup(item: Dictionary) -> void:
 	var impact := "Toggles this item." if mode == "toggle" else "Consumes this item." if mode == "consumable" else "Uses this item."
 	_add_wager_confirmation_card("Use Item", "Activate %s now." % display_name, impact, Callable(self, "confirm_pending_active_item_use"), true)
 	_add_wager_confirmation_card("Cancel", "Keep the item ready.", "No change.", Callable(self, "cancel_pending_active_item_use"), false)
-	event_choice_popup_overlay.visible = true
-	event_choice_popup_overlay.move_to_front()
-	_sync_coach_focus_visibility()
-	_position_event_choice_popup()
-	call_deferred("_position_event_choice_popup")
+	_present_event_choice_popup()
 
 
 func talk_to_shopkeeper() -> bool:
@@ -8639,10 +8691,20 @@ func _fit_main_menu_background_to_viewport() -> void:
 
 func _initialize_user_settings() -> void:
 	user_settings = UserSettingsScript.new()
-	user_settings.load()
+	user_settings_load_outcome = user_settings.load()
 	selected_home_type_id = user_settings.selected_home_type_id
 	VisualStyle.set_high_contrast_enabled(user_settings.high_contrast)
 	user_settings.apply()
+
+
+func _surface_user_settings_load_outcome() -> void:
+	if settings_menu != null and settings_menu.has_method("set_recovery_banner"):
+		settings_menu.call("set_recovery_banner", user_settings_load_outcome)
+	var code := str(user_settings_load_outcome.get("code", ""))
+	if code == "recovered_defaults":
+		_show_message("Settings could not be read. Safe defaults were restored and the original file was preserved.")
+	elif code == "io_error":
+		_show_message("Settings could not be read. Safe defaults are active; check file access before saving.")
 
 
 func _initialize_profile_inventory() -> void:
@@ -9631,21 +9693,22 @@ func _build_settings_overlay() -> void:
 	settings_margin.add_theme_constant_override("margin_bottom", 48)
 	settings_overlay.add_child(settings_margin)
 
-	var panel := _panel_container(Color("#080817", 0.98), VisualStyle.PINK)
-	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	settings_margin.add_child(panel)
+	settings_panel = _panel_container(Color("#080817", 0.98), VisualStyle.PINK)
+	settings_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	settings_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	settings_margin.add_child(settings_panel)
 
 	settings_menu = SettingsMenuScript.new()
 	settings_menu.visible = false
 	settings_menu.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	settings_menu.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	settings_menu.setup(user_settings)
-	settings_menu.back_requested.connect(close_settings_menu)
+	settings_menu.cancel_requested.connect(close_settings_menu)
 	settings_menu.settings_applied.connect(_on_settings_applied)
 	settings_menu.reset_tips_requested.connect(_on_reset_coach_tips_requested)
 	settings_menu.game_library_requested.connect(_on_settings_game_library_requested)
-	panel.add_child(settings_menu)
+	settings_panel.add_child(settings_menu)
+	_layout_settings_overlay()
 
 
 func _build_event_choice_popup_overlay() -> void:
@@ -9721,21 +9784,7 @@ func _build_talk_dock() -> void:
 
 
 func _on_talk_dock_conversation_active_changed(active: bool) -> void:
-	var now_msec := Time.get_ticks_msec()
-	var should_pause := active \
-		and run_state != null \
-		and run_state.is_tutorial_run() \
-		and talk_dock != null \
-		and _talk_entry_is_pal_tutorial_dialogue(talk_dock.entry)
-	if should_pause and environment_pause_started_msec <= 0:
-		environment_pause_started_msec = now_msec
-	elif not should_pause and environment_pause_started_msec > 0:
-		environment_paused_total_msec += maxi(0, now_msec - environment_pause_started_msec)
-		environment_pause_started_msec = 0
-	if environment_canvas != null:
-		environment_canvas.set_environment_activity_paused(should_pause)
-	if game_surface_canvas != null:
-		game_surface_canvas.set_environment_activity_paused(should_pause)
+	_sync_simulation_pause_owners()
 	_sync_coach_panel_for_talk_dock()
 
 
@@ -9975,7 +10024,7 @@ func _build_world_map_overlay() -> void:
 	world_map_overlay.add_child(dim)
 
 	world_map_panel = _panel_container(Color("#050611", 0.98), VisualStyle.PURPLE_2)
-	world_map_panel.custom_minimum_size = Vector2(860, 540)
+	world_map_panel.custom_minimum_size = Vector2.ZERO
 	world_map_panel.anchor_left = 0.5
 	world_map_panel.anchor_top = 0.5
 	world_map_panel.anchor_right = 0.5
@@ -10004,9 +10053,9 @@ func _build_world_map_overlay() -> void:
 	_set_control_font_color(world_map_title_label, VisualStyle.YELLOW)
 	header.add_child(world_map_title_label)
 
-	var close_button := _button("Close", Callable(self, "close_world_map"))
-	close_button.custom_minimum_size = Vector2(96, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
-	header.add_child(close_button)
+	world_map_close_button = _button("Close", Callable(self, "close_world_map"))
+	world_map_close_button.custom_minimum_size = Vector2(96, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
+	header.add_child(world_map_close_button)
 
 	var body := VBoxContainer.new()
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -10015,7 +10064,7 @@ func _build_world_map_overlay() -> void:
 
 	world_map_holder = Control.new()
 	world_map_holder.name = "WorldMapHolder"
-	world_map_holder.custom_minimum_size = Vector2(800, 430)
+	world_map_holder.custom_minimum_size = Vector2.ZERO
 	world_map_holder.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	world_map_holder.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	world_map_holder.clip_contents = true
@@ -10024,7 +10073,7 @@ func _build_world_map_overlay() -> void:
 	body.add_child(world_map_holder)
 
 	world_map_nodes_layer = WorldMapCanvasScript.new()
-	world_map_nodes_layer.custom_minimum_size = Vector2(800, 430)
+	world_map_nodes_layer.custom_minimum_size = Vector2.ZERO
 	world_map_nodes_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
 	world_map_nodes_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	if world_map_nodes_layer.has_signal("layout_changed"):
@@ -10061,6 +10110,7 @@ func _build_world_map_overlay() -> void:
 	world_map_confirm_button.custom_minimum_size = Vector2(132, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
 	popup_stack.add_child(world_map_confirm_button)
 	world_map_overlay_controller.configure_nodes(world_map_overlay, world_map_holder, world_map_nodes_layer, world_map_title_label, world_map_detail_popup, world_map_detail_label, world_map_badge_slot, world_map_confirm_button)
+	_layout_world_map_panel()
 
 
 func _ensure_world_map_overlay_controller() -> void:
@@ -10068,6 +10118,86 @@ func _ensure_world_map_overlay_controller() -> void:
 		world_map_overlay_controller = WorldMapOverlayControllerScript.new()
 		world_map_overlay_controller.node_pressed.connect(Callable(self, "select_world_map_node"))
 	world_map_overlay_controller.set_small_screen_mode(_small_screen_enabled())
+
+
+func _modal_viewport_size(override_size: Vector2 = Vector2.ZERO) -> Vector2:
+	if override_size.x > 0.0 and override_size.y > 0.0:
+		return override_size
+	if world_map_overlay != null and world_map_overlay.size.x > 0.0 and world_map_overlay.size.y > 0.0:
+		return world_map_overlay.size
+	return get_viewport_rect().size
+
+
+func _bounded_centered_modal_rect(viewport_size: Vector2, maximum_size: Vector2, margin: Vector2) -> Rect2:
+	var available := Vector2(maxf(1.0, viewport_size.x - margin.x * 2.0), maxf(1.0, viewport_size.y - margin.y * 2.0))
+	var modal_size := Vector2(minf(maximum_size.x, available.x), minf(maximum_size.y, available.y))
+	return Rect2((viewport_size - modal_size) * 0.5, modal_size)
+
+
+func _world_map_panel_rect_for_viewport(viewport_size: Vector2) -> Rect2:
+	var compact := _small_screen_enabled() or viewport_size.x < 960.0 or viewport_size.y < 540.0
+	var margin := Vector2(12.0, 12.0) if compact else Vector2(24.0, 24.0)
+	return _bounded_centered_modal_rect(viewport_size, Vector2(860.0, 540.0), margin)
+
+
+func _settings_panel_rect_for_viewport(viewport_size: Vector2) -> Rect2:
+	var compact := _small_screen_enabled() or viewport_size.x < 960.0 or viewport_size.y < 540.0
+	var horizontal_margin := 72.0 if compact else minf(220.0, maxf(24.0, (viewport_size.x - 480.0) * 0.5))
+	var vertical_margin := 12.0 if compact else 48.0
+	return Rect2(Vector2(horizontal_margin, vertical_margin), Vector2(maxf(1.0, viewport_size.x - horizontal_margin * 2.0), maxf(1.0, viewport_size.y - vertical_margin * 2.0)))
+
+
+func _layout_world_map_panel() -> void:
+	if world_map_panel == null:
+		return
+	var viewport_size := _modal_viewport_size()
+	var rect := _world_map_panel_rect_for_viewport(viewport_size)
+	world_map_panel.custom_minimum_size = Vector2.ZERO
+	world_map_panel.anchor_left = 0.5
+	world_map_panel.anchor_top = 0.5
+	world_map_panel.anchor_right = 0.5
+	world_map_panel.anchor_bottom = 0.5
+	world_map_panel.offset_left = -rect.size.x * 0.5
+	world_map_panel.offset_top = -rect.size.y * 0.5
+	world_map_panel.offset_right = rect.size.x * 0.5
+	world_map_panel.offset_bottom = rect.size.y * 0.5
+	if world_map_holder != null:
+		world_map_holder.custom_minimum_size = Vector2.ZERO
+	if world_map_nodes_layer != null:
+		world_map_nodes_layer.custom_minimum_size = Vector2.ZERO
+	if world_map_overlay_controller != null:
+		world_map_overlay_controller.reset_button_layout()
+
+
+func _layout_settings_overlay() -> void:
+	if settings_margin == null:
+		return
+	var viewport_size := _modal_viewport_size()
+	var rect := _settings_panel_rect_for_viewport(viewport_size)
+	settings_margin.add_theme_constant_override("margin_left", int(round(rect.position.x)))
+	settings_margin.add_theme_constant_override("margin_right", int(round(viewport_size.x - rect.end.x)))
+	settings_margin.add_theme_constant_override("margin_top", int(round(rect.position.y)))
+	settings_margin.add_theme_constant_override("margin_bottom", int(round(viewport_size.y - rect.end.y)))
+
+
+func debug_apply_accessibility_viewport(viewport_size: Vector2) -> Dictionary:
+	var map_rect := _world_map_panel_rect_for_viewport(viewport_size)
+	var settings_rect := _settings_panel_rect_for_viewport(viewport_size)
+	var actions: Array[Rect2] = []
+	var action_height := SmallScreenPolicyScript.control_height(MIN_NATIVE_TOUCH_TARGET_HEIGHT, _small_screen_enabled())
+	var gap := 10.0
+	var action_width := maxf(1.0, (settings_rect.size.x - gap * 2.0) / 3.0)
+	for index in range(3):
+		actions.append(Rect2(
+			Vector2(settings_rect.position.x + float(index) * (action_width + gap), settings_rect.end.y - action_height),
+			Vector2(action_width, action_height)
+		))
+	return {
+		"viewport_rect": Rect2(Vector2.ZERO, viewport_size),
+		"world_map_panel_rect": map_rect,
+		"settings_panel_rect": settings_rect,
+		"settings_action_rects": actions,
+	}
 
 
 func _sync_world_map_overlay_controller_from_host() -> void:
@@ -12293,10 +12423,14 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 	# rejection cannot touch live state, so taking a second whole-run rollback here
 	# only blocks the input thread on accumulated saves.
 	var authority_owns_action_rollback := current_action_uses_authority
-	var boundary_rollback_run := {} if uses_compact_action_rollback or authority_owns_action_rollback else run_state.to_dict()
+	# Compact rollback is the fast path, but it must never be the only recovery
+	# path. Keep a complete pre-resolution fallback for the exceptional cache
+	# generation/token failure so an accepted module action cannot leak through a
+	# rejected environment-turn boundary.
+	var boundary_rollback_run := {} if authority_owns_action_rollback else run_state.to_dict()
 	if debug_coin_pusher_host:
 		debug_host_timing["host_rollback_snapshot"] = Time.get_ticks_usec() - debug_rollback_started_usec
-	var boundary_rollback_environment := {} if uses_compact_action_rollback or authority_owns_action_rollback else run_state.current_environment.duplicate(true)
+	var boundary_rollback_environment := {} if authority_owns_action_rollback else run_state.current_environment.duplicate(true)
 	var boundary_rollback_deferred_failure := run_state.defer_next_bankroll_zero_failure
 	var confirmed_all_in_wager := wager_confirmed and _wager_needs_final_bankroll_confirmation(current_game, action_id, stake, wager_cost, action_surface_ui_state)
 	if confirmed_all_in_wager:
@@ -12362,7 +12496,10 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 			if not _advance_environment_turns_checked(1, debug_host_timing if debug_coin_pusher_host else {}):
 				if uses_compact_action_rollback:
 					if not current_game.restore_host_action_rollback(compact_action_rollback, run_state, run_state.current_environment):
-						push_error("Game module failed to restore its declared compact host-action rollback token.")
+						run_state.from_dict(boundary_rollback_run)
+						run_state.current_environment = boundary_rollback_environment
+						var rollback_failure: Dictionary = current_game.call("host_action_rollback_failure_payload") as Dictionary if current_game.has_method("host_action_rollback_failure_payload") else {}
+						push_error("Game module failed to restore its declared compact host-action rollback token; full fallback applied: %s" % JSON.stringify(rollback_failure))
 				elif not authority_owns_action_rollback:
 					run_state.from_dict(boundary_rollback_run)
 					run_state.current_environment = boundary_rollback_environment
@@ -12745,7 +12882,8 @@ func _simulation_progression_paused() -> bool:
 	# Conversations remain modal to player input, but only Pal owns the tutorial
 	# time-freeze contract. Natural dealer, patron, and event conversations keep
 	# normal-run clocks and autonomous systems moving behind the dialogue.
-	return travel_transition_active \
+	return not application_pause_owners.is_empty() \
+		or travel_transition_active \
 		or _pal_tutorial_time_freeze_active() \
 		or _event_choice_popup_is_visible() \
 		or _meta_item_interaction_is_visible() \
@@ -12753,6 +12891,47 @@ func _simulation_progression_paused() -> bool:
 		or _run_journal_popup_is_visible() \
 		or _world_map_overlay_is_visible() \
 		or _run_menu_is_visible()
+
+
+func set_application_pause_owner(owner: String, paused: bool) -> void:
+	var clean_owner := owner.strip_edges()
+	if clean_owner.is_empty():
+		return
+	var was_paused := not application_pause_owners.is_empty()
+	if paused:
+		application_pause_owners[clean_owner] = true
+	else:
+		application_pause_owners.erase(clean_owner)
+	var is_paused := not application_pause_owners.is_empty()
+	if game_surface_canvas != null and game_surface_canvas.has_method("handle_application_lifecycle") and was_paused != is_paused:
+		game_surface_canvas.call("handle_application_lifecycle", not is_paused)
+	_sync_simulation_pause_owners()
+
+
+func _sync_simulation_pause_owners() -> void:
+	var should_pause := _simulation_progression_paused()
+	var pause_timed_feedback := should_pause and not (_pal_tutorial_time_freeze_active() and application_pause_owners.is_empty())
+	var now_msec := Time.get_ticks_msec()
+	if should_pause and environment_pause_started_msec <= 0:
+		environment_pause_started_msec = now_msec
+	elif not should_pause and environment_pause_started_msec > 0:
+		environment_paused_total_msec += maxi(0, now_msec - environment_pause_started_msec)
+		environment_pause_started_msec = 0
+	if environment_canvas != null:
+		environment_canvas.set_environment_activity_paused(should_pause)
+	if game_surface_canvas != null:
+		game_surface_canvas.set_environment_activity_paused(should_pause, pause_timed_feedback)
+
+
+func application_lifecycle_snapshot() -> Dictionary:
+	return {
+		"pause_owners": application_pause_owners.keys(),
+		"application_paused": not application_pause_owners.is_empty(),
+		"simulation_paused": _simulation_progression_paused(),
+		"environment_canvas_paused": bool(environment_canvas.get("environment_activity_paused")) if environment_canvas != null else true,
+		"game_canvas_paused": bool(game_surface_canvas.get("environment_activity_paused")) if game_surface_canvas != null else true,
+		"game_timed_feedback_paused": bool(game_surface_canvas.get("timed_feedback_paused")) if game_surface_canvas != null else true,
+	}
 
 
 func _pal_tutorial_time_freeze_active() -> bool:
@@ -12994,6 +13173,8 @@ func _ensure_environment_sfx_player() -> void:
 		environment_sfx_player.call("bind_surface_audio_authority", _environment_audio_authority)
 	if environment_sfx_player.has_method("set_prewarm_events"):
 		environment_sfx_player.call("set_prewarm_events", ["phone_call", "phone_out_of_service", "heat_gain"])
+	if environment_sfx_player.has_signal("audio_status_changed"):
+		environment_sfx_player.audio_status_changed.connect(_on_surface_audio_status_changed)
 	add_child(environment_sfx_player)
 
 
@@ -13070,11 +13251,7 @@ func _show_wager_confirmation_popup(action_id: String, stake: int, wager_cost: i
 		var card: Dictionary = card_value
 		var callback := Callable(self, "confirm_pending_wager_action") if str(card.get("action", "")) == "confirm" else Callable(self, "cancel_pending_wager_confirmation")
 		_add_wager_confirmation_card(str(card.get("label", "")), str(card.get("text", "")), str(card.get("impact", "")), callback, bool(card.get("primary", false)))
-	event_choice_popup_overlay.visible = true
-	event_choice_popup_overlay.move_to_front()
-	_sync_coach_focus_visibility()
-	_position_event_choice_popup()
-	call_deferred("_position_event_choice_popup")
+	_present_event_choice_popup()
 
 
 func _add_wager_confirmation_card(label: String, text: String, _impact: String, callback: Callable, primary: bool, badges_value: Variant = []) -> void:
@@ -13112,8 +13289,10 @@ func _add_wager_confirmation_card(label: String, text: String, _impact: String, 
 	if primary:
 		_style_selected_button(button)
 	stack.add_child(button)
+	_apply_accessibility_to_node(card, _accessibility_font_scale(), _accessibility_control_scale())
 	if _event_choice_popup_is_visible():
 		call_deferred("_position_event_choice_popup")
+		call_deferred("_focus_first_event_choice")
 
 
 func _activate_event_choice_popup_callback(callback: Callable) -> void:
@@ -13136,6 +13315,92 @@ func _capture_event_choice_popup_button_press(button: Button, callback: Callable
 
 func _defer_event_choice_popup_button_press_recovery() -> void:
 	call_deferred("_finish_event_choice_popup_button_press")
+
+
+func _present_event_choice_popup() -> void:
+	if event_choice_popup_overlay == null:
+		return
+	if not event_choice_popup_overlay.visible:
+		var popup_viewport := get_viewport()
+		event_choice_popup_previous_focus_owner = popup_viewport.gui_get_focus_owner() if popup_viewport != null else null
+	event_choice_popup_overlay.visible = true
+	event_choice_popup_overlay.move_to_front()
+	_sync_coach_focus_visibility()
+	_position_event_choice_popup()
+	call_deferred("_position_event_choice_popup")
+	call_deferred("_focus_first_event_choice")
+
+
+func _event_choice_focus_controls() -> Array[Control]:
+	var controls: Array[Control] = []
+	if event_choice_popup_choices_list == null:
+		return controls
+	for node in event_choice_popup_choices_list.find_children("*", "Control", true, false):
+		var control := node as Control
+		if control == null or not control.is_visible_in_tree() or control.focus_mode == Control.FOCUS_NONE:
+			continue
+		if control is BaseButton and (control as BaseButton).disabled:
+			continue
+		controls.append(control)
+	return controls
+
+
+func _focus_first_event_choice() -> void:
+	if not _event_choice_popup_is_visible():
+		return
+	var controls := _event_choice_focus_controls()
+	if controls.is_empty():
+		return
+	var preferred: Control = null
+	for control in controls:
+		if str(control.get_meta("choice_id", "")) == pending_event_choice_popup_focus_choice_id:
+			preferred = control
+			break
+	(preferred if preferred != null else controls[0]).grab_focus()
+
+
+func _trap_event_choice_popup_focus(event: InputEvent) -> bool:
+	var forward := event.is_action_pressed("ui_focus_next")
+	var backward := event.is_action_pressed("ui_focus_prev")
+	if not forward and not backward:
+		return false
+	var controls := _event_choice_focus_controls()
+	if controls.is_empty():
+		return true
+	var current := get_viewport().gui_get_focus_owner()
+	var index := controls.find(current)
+	var direction := -1 if backward else 1
+	controls[posmod(index + direction, controls.size())].grab_focus()
+	return true
+
+
+func _route_topmost_modal_cancel() -> bool:
+	if _event_choice_popup_is_visible():
+		if bool(pending_event_choice_popup_snapshot.get("dismissible", false)):
+			if str(pending_event_choice_popup_snapshot.get("popup_type", "")) == "interactable_event":
+				_dismiss_interactable_event_popup()
+			else:
+				_hide_event_choice_popup()
+		return true
+	if settings_overlay != null and settings_overlay.visible:
+		close_settings_menu()
+		return true
+	if _meta_item_interaction_is_visible():
+		close_meta_item_interaction()
+		return true
+	if _run_inventory_popup_is_visible():
+		close_run_inventory()
+		return true
+	if _run_journal_popup_is_visible():
+		close_run_journal()
+		return true
+	if _world_map_overlay_is_visible():
+		close_world_map()
+		return true
+	if _run_menu_is_visible():
+		close_run_menu()
+		return true
+	return false
 
 
 func _on_event_choice_popup_overlay_gui_input(event: InputEvent) -> void:
@@ -14785,11 +15050,7 @@ func _show_interactable_event_popup(event_id: String) -> bool:
 			Callable(self, "_dismiss_interactable_event_popup"),
 			false
 		)
-	event_choice_popup_overlay.visible = true
-	event_choice_popup_overlay.move_to_front()
-	_sync_coach_focus_visibility()
-	_position_event_choice_popup()
-	call_deferred("_position_event_choice_popup")
+	_present_event_choice_popup()
 	return true
 
 
@@ -15185,6 +15446,12 @@ func _interactable_object_view_list() -> Array:
 			EnvironmentInteractionControllerScript.interactable_object_view_list(self)
 		)
 		interactable_object_catalog_cache_valid = true
+		# Scenario projection seals its layout authority while building the catalog.
+		# Capture the post-projection token; retaining the pre-projection token made
+		# the immediately following header/canvas request rebuild the same expensive
+		# catalog, and delivery-arrival contacts amplified that into a multi-second
+		# travel hitch.
+		catalog_key = _interactable_object_cache_key()
 		interactable_object_catalog_cache_key = catalog_key
 		interactable_object_view_cache_valid = false
 	var view_key := "%s|%s|%s|%s" % [catalog_key, hover_target_id, focus_target_id, selected_object_id]
@@ -15904,6 +16171,10 @@ func _show_message(text: String) -> void:
 		start_status_label.text = display_text
 
 
+func _on_surface_audio_status_changed(message: String) -> void:
+	_show_message(message)
+
+
 func _show_environment_action_acknowledgement(text: String) -> void:
 	immediate_environment_acknowledgement = _player_facing_text(text.strip_edges())
 	_show_message(text)
@@ -16146,6 +16417,7 @@ func return_to_main_menu() -> void:
 		_evaluate_run_terminal_state(true)
 	if run_state != null and not dev_game_test_mode:
 		_autosave_foundation_run("Autosaved before main menu.", true)
+	_clear_run_audio_caches()
 	pending_all_in_result_terminal_check = false
 	_finish_conclusion_animation()
 	_reset_game_surface_runtime_state()
@@ -16193,6 +16465,11 @@ func return_to_main_menu() -> void:
 	_refresh_start_screen()
 
 
+func _clear_run_audio_caches() -> void:
+	if procedural_music_player != null and procedural_music_player.has_method("clear_run_scoped_caches"):
+		procedural_music_player.call("clear_run_scoped_caches")
+
+
 func _restore_main_menu_surface_visibility() -> void:
 	# Several menu-adjacent panels hide different branches of the start-screen
 	# tree. Restore the complete surface in one place so returning for a second
@@ -16221,6 +16498,8 @@ func exit_game() -> void:
 func open_settings_menu() -> void:
 	if settings_menu == null or settings_overlay == null:
 		return
+	if _event_choice_popup_is_visible():
+		return
 	close_run_configuration()
 	if start_menu_controls != null:
 		start_menu_controls.visible = false
@@ -16234,12 +16513,15 @@ func open_settings_menu() -> void:
 		start_menu_intro.visible = true
 	settings_overlay.visible = true
 	settings_overlay.move_to_front()
+	_layout_settings_overlay()
 	_sync_coach_focus_visibility()
 	settings_menu.open()
 	_refresh_talk_dock()
 
 
 func close_settings_menu() -> void:
+	if settings_menu != null:
+		settings_menu.discard_draft()
 	if settings_menu != null:
 		settings_menu.visible = false
 	if settings_overlay != null:
@@ -16381,8 +16663,8 @@ func _on_coach_lesson_completed(lesson_id: String) -> void:
 func _resume_after_completed_tutorial_action(lesson_id: String, expected_generation: int) -> void:
 	if expected_generation != tutorial_action_resume_active_generation:
 		return
+	var selected_before_boundary := selected_object_id
 	_advance_completed_tutorial_action_dialogue(lesson_id)
-	_clear_stale_focus_before_dependent_tutorial_target(lesson_id)
 	if lesson_id == TUTORIAL_META_HOME_CARD_LESSON_ID and _is_meta_session():
 		run_state.narrative_flags["tutorial_meta_home_handoff_completed"] = true
 		run_state.challenge_config["tutorial"] = false
@@ -16390,25 +16672,38 @@ func _resume_after_completed_tutorial_action(lesson_id: String, expected_generat
 	# unwinding the prior lesson. Evaluate once more at the settled boundary so
 	# consecutive focus/action lessons never leave a blank guidance gap.
 	_refresh_coach_at_boundary()
-
-
-func _clear_stale_focus_before_dependent_tutorial_target(completed_lesson_id: String) -> void:
-	if library == null or selected_object_id.is_empty():
+	if expected_generation != tutorial_action_resume_active_generation:
 		return
-	for lesson_value in library.tutorial_lessons:
-		if typeof(lesson_value) != TYPE_DICTIONARY:
-			continue
-		var lesson: Dictionary = lesson_value
-		var trigger: Dictionary = lesson.get("trigger", {}) if typeof(lesson.get("trigger", {})) == TYPE_DICTIONARY else {}
-		if not _string_array(trigger.get("depends_on", [])).has(completed_lesson_id):
-			continue
-		var anchor: Dictionary = CoachViewModelScript.resolved_anchor(lesson, _coach_context_snapshot())
-		if str(anchor.get("kind", "")) != "interactable_object":
-			continue
-		var next_object_id := str(anchor.get("id", "")).strip_edges()
-		if not next_object_id.is_empty() and next_object_id != selected_object_id:
+	_reconcile_focus_after_dependent_tutorial_target(selected_before_boundary)
+	_sync_coach_environment_anchor_geometry()
+
+
+func _reconcile_focus_after_dependent_tutorial_target(selected_before_boundary: String) -> void:
+	if library == null or coach_overlay == null:
+		return
+	var active_lesson_id: String = coach_overlay.active_lesson_id()
+	if active_lesson_id.is_empty():
+		return
+	var lesson := library.tutorial_lesson(active_lesson_id)
+	var anchor: Dictionary = CoachViewModelScript.resolved_anchor(lesson, _coach_context_snapshot())
+	if str(anchor.get("kind", "")) != "interactable_object":
+		return
+	var target_object_id := str(anchor.get("id", "")).strip_edges()
+	if target_object_id.is_empty():
+		return
+	if target_object_id != selected_before_boundary:
+		if not selected_before_boundary.is_empty() and selected_object_id == selected_before_boundary:
 			clear_interaction_focus(false)
 		return
+	# The dependency walker may complete several lessons that were satisfied out
+	# of order. If the final active lesson still asks for an action on the object
+	# the player selected, keep the action card and coach geometry on that object.
+	var gating: Dictionary = lesson.get("gating", {}) if typeof(lesson.get("gating", {})) == TYPE_DICTIONARY else {}
+	var allowed_actions := _string_array(gating.get("allowed_action_ids", []))
+	if selected_object_id != target_object_id \
+			and allowed_actions.has(target_object_id) \
+			and not _interactable_object(target_object_id).is_empty():
+		focus_interactable_object(target_object_id)
 
 
 func _advance_completed_tutorial_action_dialogue(lesson_id: String) -> void:
@@ -17077,11 +17372,7 @@ func _show_meta_popup(title: String, summary: String, popup_type: String) -> voi
 	if event_choice_popup_summary_label != null:
 		event_choice_popup_summary_label.text = summary
 	_clear_event_choice_popup_choices()
-	event_choice_popup_overlay.visible = true
-	event_choice_popup_overlay.move_to_front()
-	_sync_coach_focus_visibility()
-	_position_event_choice_popup()
-	call_deferred("_position_event_choice_popup")
+	_present_event_choice_popup()
 
 
 func _add_meta_action_card(title: String, text: String, impact: String, callback: Callable, button_text: String, primary: bool) -> void:
@@ -17339,10 +17630,10 @@ func _refresh_start_screen() -> void:
 	var has_save := _has_foundation_save()
 	var save_slot_status := save_service.slot_status(autosave_slot_id) if save_service != null else {}
 	if start_status_label != null:
-		if not run_ui_build_failure_reason.is_empty():
-			start_status_label.text = RUN_UI_UNAVAILABLE_MESSAGE
-		elif not content_validation_status_message.is_empty():
+		if not content_validation_status_message.is_empty():
 			start_status_label.text = content_validation_status_message
+		elif not run_ui_build_failure_reason.is_empty():
+			start_status_label.text = RUN_UI_UNAVAILABLE_MESSAGE
 		elif has_save:
 			if bool(save_slot_status.get("primary_corrupt", false)) and bool(save_slot_status.get("backup_loadable", false)):
 				start_status_label.text = "Backup save available. Continue will recover the last good run."
@@ -17368,7 +17659,8 @@ func _refresh_start_screen() -> void:
 	if seed_status_label != null:
 		seed_status_label.visible = tutorial_seed_locked
 		seed_status_label.text = "First Night uses a fixed lesson seed; later runs use your seed." if tutorial_seed_locked else ""
-	if tutorial_seed_locked and start_status_label != null and not has_save:
+	if tutorial_seed_locked and start_status_label != null and not has_save \
+			and content_validation_status_message.is_empty() and run_ui_build_failure_reason.is_empty():
 		start_status_label.text = "Your first run is the First Night lesson, so its teaching seed is fixed."
 	_refresh_content_group_controls()
 	_refresh_challenge_controls()
@@ -17381,11 +17673,7 @@ func _mandatory_tutorial_seed_locked() -> bool:
 
 
 func _release_version_text() -> String:
-	const FALLBACK_RELEASE_VERSION := "0.5.0"
-	var release_version := str(ProjectSettings.get_setting("application/config/version", FALLBACK_RELEASE_VERSION)).strip_edges()
-	if release_version.is_empty():
-		release_version = FALLBACK_RELEASE_VERSION
-	return "Version %s" % release_version
+	return "Version %s" % BuildIdentityScript.display_version()
 
 
 func _generate_menu_seed_text() -> String:
@@ -18727,6 +19015,7 @@ func _render_numbers_surface(result_message: String = "") -> void:
 		"visible": true,
 		"popup_type": "numbers_surface",
 		"blocking": true,
+		"dismissible": true,
 		"source_id": source_id,
 		"venue_id": venue_id,
 		"book_open": bool(venue.get("open", false)),
@@ -18765,11 +19054,7 @@ func _render_numbers_surface(result_message: String = "") -> void:
 		if source_id == "desk":
 			_build_numbers_desk_controls(desk)
 	_add_card_button(event_choice_popup_choices_list, "Back", Callable(self, "_hide_event_choice_popup"))
-	event_choice_popup_overlay.visible = true
-	event_choice_popup_overlay.move_to_front()
-	_sync_coach_focus_visibility()
-	_position_event_choice_popup()
-	call_deferred("_position_event_choice_popup")
+	_present_event_choice_popup()
 
 
 func _build_numbers_slip_controls(venue: Dictionary) -> void:
@@ -18994,6 +19279,13 @@ func _hide_event_choice_popup(clear_snapshot: bool = true) -> void:
 	if clear_snapshot:
 		pending_event_choice_popup_snapshot = {}
 	_clear_pending_wager_confirmation()
+	call_deferred("_restore_event_choice_popup_focus")
+
+
+func _restore_event_choice_popup_focus() -> void:
+	if is_instance_valid(event_choice_popup_previous_focus_owner) and event_choice_popup_previous_focus_owner.is_visible_in_tree():
+		event_choice_popup_previous_focus_owner.grab_focus()
+	event_choice_popup_previous_focus_owner = null
 
 
 func _clear_event_choice_popup_choices() -> void:
@@ -19933,7 +20225,9 @@ func _add_detail_row(stack: VBoxContainer, label_text: String, value_text: Strin
 
 
 func _add_card_button(stack: VBoxContainer, text: String, callback: Callable, disabled: bool = false, primary: bool = false) -> Button:
-	return FoundationWidgetsScript.add_card_button(stack, text, callback, disabled, primary)
+	var button := FoundationWidgetsScript.add_card_button(stack, text, callback, disabled, primary)
+	_apply_accessibility_to_node(button, _accessibility_font_scale(), _accessibility_control_scale())
+	return button
 
 
 func _accessible_font_size(base_size: int) -> int:
@@ -20644,6 +20938,8 @@ func _apply_accessibility_settings() -> void:
 	if transform_active or accessibility_tree_transform_active:
 		_apply_accessibility_to_node(self, font_scale, control_scale)
 	accessibility_tree_transform_active = transform_active
+	_layout_settings_overlay()
+	_layout_world_map_panel()
 	_invalidate_run_screen_layout()
 
 

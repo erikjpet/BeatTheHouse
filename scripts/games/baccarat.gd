@@ -781,7 +781,7 @@ func _table_game_resolve_proposal(action_id: String, stake: int, run_snapshot: D
 func _table_game_resolve_candidate(action_id: String, stake: int, candidate: RunState, proposal_rng: RngStream, ui_state: Dictionary = {}) -> Dictionary:
 	if candidate == null or proposal_rng == null:
 		return _empty_baccarat_result(action_id, stake, {}, "Baccarat resolution requires an isolated run and RNG candidate.")
-	return _resolve_baccarat_proposal_core(
+	var result := _resolve_baccarat_proposal_core(
 		action_id,
 		stake,
 		candidate,
@@ -789,6 +789,17 @@ func _table_game_resolve_candidate(action_id: String, stake: int, candidate: Run
 		proposal_rng,
 		ui_state.duplicate(true)
 	)
+	# Crew plays commit their account transfer inside the isolated candidate rather
+	# than through a later result delta. Keep the table ledger bound to that new
+	# account checkpoint so the host can validate and publish the proposal.
+	if bool(result.get("ok", false)) and action_id.begins_with("crew_play:"):
+		var table := _table_state_preview(candidate, candidate.current_environment).duplicate(false)
+		var ledger: Dictionary = (table.get(ActionAuthorityScript.LEDGER_KEY, {}) as Dictionary).duplicate(false) if typeof(table.get(ActionAuthorityScript.LEDGER_KEY, {})) == TYPE_DICTIONARY else {}
+		if not ledger.is_empty():
+			ledger["checkpoint_fingerprint"] = candidate.action_authority_checkpoint_fingerprint()
+			table[ActionAuthorityScript.LEDGER_KEY] = ledger
+			_update_environment_table(candidate.current_environment, table)
+	return result
 
 
 func _table_game_wager_cost_proposal(action_id: String, stake: int, run_snapshot: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
@@ -2874,18 +2885,14 @@ func _baccarat_result_message(hand: Dictionary, settlement: Dictionary, bankroll
 			pushes += 1
 		else:
 			losses += 1
-	var natural := " Natural hand." if bool(hand.get("natural", false)) else ""
-	var commission_text := " Commission $%d." % commission if commission > 0 else ""
-	var bet_text := "No player chips settled." if wins + losses + pushes <= 0 else "%d won, %d lost, %d pushed." % [wins, losses, pushes]
-	return "Baccarat: %s Player %d, Banker %d. %s%s Net %+d.%s" % [
-		_winner_sentence(winner),
-		player_total,
-		banker_total,
-		natural,
+	var bet_text := "No player chips settled." if wins + losses + pushes <= 0 else "%s, %s, %s." % [PlayerTextScript.count_text("bet_won", wins), PlayerTextScript.count_text("bet_lost", losses), PlayerTextScript.count_text("bet_pushed", pushes)]
+	return PlayerTextScript.join_sentences([
+		"Baccarat: %s Player %d, Banker %d." % [_winner_sentence(winner), player_total, banker_total],
+		"Natural hand." if bool(hand.get("natural", false)) else "",
 		bet_text,
-		bankroll_delta,
-		commission_text,
-	]
+		"Net %+d." % bankroll_delta,
+		"Commission $%d." % commission if commission > 0 else "",
+	])
 
 
 func _winner_title(winner: String) -> String:

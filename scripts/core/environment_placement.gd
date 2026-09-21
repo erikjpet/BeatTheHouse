@@ -255,10 +255,16 @@ static func supported_rect_candidates(environment: Dictionary, placement_class: 
 
 # Returns the physical support occupied by rect, or an empty dictionary.
 static func support_for_rect(environment: Dictionary, placement_class: String, rect: Rect2) -> Dictionary:
+	return support_for_rect_on_surfaces(surface_map(environment), placement_class, rect)
+
+
+# Candidate searches already hold the immutable effective surface map. Reusing
+# it avoids re-merging developer/project placement layers for every point in a
+# coarse or fine collision grid without changing placement semantics.
+static func support_for_rect_on_surfaces(surfaces: Dictionary, placement_class: String, rect: Rect2) -> Dictionary:
 	var board := Rect2(0.0, 0.0, 900.0, 430.0)
 	if rect.size.x <= 0.0 or rect.size.y <= 0.0 or not board.encloses(rect):
 		return {}
-	var surfaces := surface_map(environment)
 	var contact := _contact_point(rect, placement_class)
 	if placement_class in GROUNDED_CLASSES:
 		var floor_data := _dict(surfaces.get("floor", {}))

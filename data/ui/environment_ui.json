@@ -72,11 +72,13 @@
   },
   {
     "id": "grand_casino_high_limit",
+	"title_mode": "text",
     "blurb": "Bigger stakes. Quieter attention. Perfect memory.",
     "options": ["Play high limit", "Read host", "Return"]
   },
   {
     "id": "grand_casino_back_room",
+	"title_mode": "text",
     "blurb": "Rourke asks once. The room keeps everything.",
     "options": ["Answer", "Show evidence", "Hold nerve"]
   },

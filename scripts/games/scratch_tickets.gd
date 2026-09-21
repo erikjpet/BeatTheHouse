@@ -186,7 +186,9 @@ func environment_object_state(run_state: RunState, environment: Dictionary) -> D
 			"stock_total": stock_total,
 			"sold_out_count": sold_out_count,
 		},
-		"status_summary": "Scratch center sold out." if stock_total <= 0 else "%d tickets across %d active rows." % [stock_total, rows.size() - sold_out_count],
+		"status_summary": "Scratch center sold out." if stock_total <= 0 else "%s across %s." % [PlayerTextScript.count_text("ticket", stock_total), PlayerTextScript.count_text("active_row", rows.size() - sold_out_count)],
+		"status_message_key": "scratch.stock_summary",
+		"status_message_params": {"ticket_count": stock_total, "active_row_count": rows.size() - sold_out_count},
 		"state_badge": "OUT" if stock_total <= 0 else "TIX",
 	}
 
@@ -2473,15 +2475,7 @@ func _scalper_dialogue_summary(machine: Dictionary, knows_schedule: bool) -> Str
 
 
 static func _clock_text_at_absolute_minute(absolute_minute: int) -> String:
-	var safe_minute := maxi(0, absolute_minute)
-	var day := int(floor(float(safe_minute) / 1440.0)) + 1
-	var minute_of_day := safe_minute % 1440
-	var hour_24 := int(floor(float(minute_of_day) / 60.0)) % 24
-	var minute := minute_of_day % 60
-	var hour_12 := hour_24 % 12
-	if hour_12 == 0:
-		hour_12 = 12
-	return "Day %d, %d:%02d %s" % [day, hour_12, minute, "AM" if hour_24 < 12 else "PM"]
+	return PlayerTextScript.format_game_clock(absolute_minute, true, ", ")
 
 
 func _ticket_play_label(type_id: String, _mechanic: Dictionary) -> String:

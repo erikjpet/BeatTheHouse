@@ -389,6 +389,12 @@ elseif (-not [System.IO.Path]::IsPathRooted($ReportDir)) {
 }
 $script:ReportRoot = [System.IO.Path]::GetFullPath($ReportDir)
 New-Item -ItemType Directory -Force -Path $script:ReportRoot | Out-Null
+# Foundation gates must qualify checked-in placement authority, never whatever
+# developer authoring residue happens to live in the operator's global user://
+# profile. Individual placement tests may still point this variable at their
+# own fixture. The wrapper process is short-lived, so the caller environment is
+# not mutated and the user's file is never read, moved, or overwritten.
+$env:BTH_DEVELOPER_PLACEMENT_PATH = Join-Path $script:ReportRoot "isolated_developer_placements.json"
 
 $script:StageResults = New-Object System.Collections.Generic.List[object]
 $script:PostLandIdentity = $null
@@ -947,6 +953,27 @@ function Invoke-FoundationSystemsSharded {
         throw "Invalid foundation systems shard plan: $(@($planCheck.errors) -join ' | ')"
     }
 
+    $shardLaunchOrder = @($plan.Keys)
+    $maxConcurrentShardProcesses = [int]::MaxValue
+    if ($FoundationSuite -eq "contracts") {
+        # Every Godot child creates its own worker pool. Launching all 18 contract
+        # shards together oversubscribes a 16-thread host and makes the longest
+        # scenario checks slower than two ordered waves. Keep canonical merge
+        # order unchanged, but put measured long shards in the first wave.
+        $maxConcurrentShardProcesses = [Math]::Max(1, [Math]::Min(8, [Environment]::ProcessorCount))
+        $preferredOrder = @(
+            "contracts_content_scenarios",
+            "contracts_games",
+            "contracts_coin_pusher",
+            "contracts_crew",
+            "contracts_content_hidden_0",
+            "contracts_content_hidden_1",
+            "contracts_content_hidden_2",
+            "contracts_content_hidden_3"
+        )
+        $shardLaunchOrder = @($preferredOrder) + @($plan.Keys | Where-Object { $_ -notin $preferredOrder })
+    }
+
     # Generate the composite source once, then copy it into each private
     # project. No child traverses the parent report tree through res://.tmp.
     $runnerResourcePath = Get-FoundationSplitRunnerPath
@@ -957,7 +984,7 @@ function Invoke-FoundationSystemsSharded {
     $runnerPath = Join-Path $root ($runnerRelativePath.Replace("/", "\"))
     $parentCacheRoot = Join-Path $root ".godot"
     $cacheBefore = @(Get-FoundationCacheFingerprint -CacheRoot $parentCacheRoot)
-    foreach ($shardIdValue in $plan.Keys) {
+    foreach ($shardIdValue in $shardLaunchOrder) {
         $shardId = [string]$shardIdValue
         $safeShardId = $shardId -replace "[^A-Za-z0-9_.-]", "_"
         $reportFile = "$name.$safeShardId.json"
@@ -1030,6 +1057,18 @@ function Invoke-FoundationSystemsSharded {
         catch {
             Remove-FoundationShardProjectRoot -ProjectRoot $shardProjectRoot -AllowedProjectRoot $shardProjectsRoot
             throw
+        }
+        while (@($records | Where-Object { $_.process_started -and -not $_.process.HasExited }).Count -ge $maxConcurrentShardProcesses) {
+            foreach ($startedRecord in $records) {
+                if ($startedRecord.process_started -and -not $startedRecord.duration_recorded -and $startedRecord.process.HasExited) {
+                    $startedRecord.stopwatch.Stop()
+                    $startedRecord.duration_recorded = $true
+                }
+            }
+            if ($wall.Elapsed.TotalSeconds -ge $timeout) {
+                throw "Foundation $FoundationSuite shard launch exceeded the $timeout second timeout."
+            }
+            Start-Sleep -Milliseconds 25
         }
         [void]$process.Start()
         $record.process_started = $true

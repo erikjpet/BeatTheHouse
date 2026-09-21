@@ -22,7 +22,12 @@ func _init() -> void:
 			push_error("World 6 heist package must contain exactly one definition.")
 			quit(1)
 			return
-		var definition := definitions[0] as Dictionary
+		var entry := definitions[0] as Dictionary
+		var definition: Dictionary = entry.get("definition", {}) if typeof(entry.get("definition", {})) == TYPE_DICTIONARY else {}
+		if definition.is_empty():
+			push_error("World 6 heist package definition payload is missing.")
+			quit(1)
+			return
 		var sequence: Dictionary = definition.get("sequence", {}) if typeof(definition.get("sequence", {})) == TYPE_DICTIONARY else {}
 		sequence["sequence_signature"] = ScenarioSequenceSchemaScript.calculated_signature_hash(definition)
 		definition["sequence"] = sequence
@@ -35,7 +40,8 @@ func _init() -> void:
 			push_error("World 6 heist package %s failed shared sequence validation: %s" % [str(package.get("package_id", "")), JSON.stringify(validation_errors)])
 			quit(1)
 			return
-		definitions[0] = definition
+		entry["definition"] = definition
+		definitions[0] = entry
 		package["definitions"] = definitions
 	var file := FileAccess.open(PATH, FileAccess.WRITE)
 	if file == null:

@@ -1,6 +1,6 @@
 [
   {
-    "schema_version": 1,
+    "schema_version": 1.0,
     "package_id": "world06_6_count_setup",
     "definitions": [
       {
@@ -27,17 +27,31 @@
             "target": "crew::heist_count_setup_closed",
             "property": "scene_ops",
             "mode": "exclusive"
+          },
+          {
+            "target": "crew::heist_count_setup_aborted",
+            "property": "scene_ops",
+            "mode": "exclusive"
+          },
+          {
+            "target": "crew::heist_count_setup_expired",
+            "property": "interaction_ops",
+            "mode": "exclusive"
           }
         ],
         "outcome_channels": {
-          "closed": "heist_scene"
+          "closed": "heist_scene",
+          "aborted": "heist_scene",
+          "expired": "heist_scene"
         },
         "private_capabilities": [],
         "definition": {
           "id": "heist_count_setup",
           "sequence": {
-            "schema_version": 2,
-            "local_state_schema": {},
+            "schema_version": 2.0,
+            "local_state_schema": {
+
+            },
             "phase_graph": {
               "initial_phase": "staged",
               "phases": [
@@ -54,7 +68,7 @@
                   "objective_ids": [
                     "read_scene"
                   ],
-                  "advance_after_actions": 0,
+                  "advance_after_actions": 0.0,
                   "scene_ops": [
                     {
                       "family": "scene_ops",
@@ -67,8 +81,8 @@
                         "role": "heist_evidence",
                         "zone_id": "center",
                         "bounds": {
-                          "w": 88,
-                          "h": 64
+                          "w": 88.0,
+                          "h": 64.0
                         },
                         "visible": true,
                         "enabled": true,
@@ -86,7 +100,7 @@
                       "stable_object_id": "heist_count_setup",
                       "interaction": {
                         "owner_namespace": "crew",
-                      "stable_object_id": "heist_count_setup",
+                        "stable_object_id": "heist_count_setup",
                         "label": "Read the Count setup",
                         "state_label": "Host staged",
                         "prompt": "The cage schedule and swap-cart route sit under separate lamps.",
@@ -95,12 +109,12 @@
                         "available_actions": [],
                         "input_actions": [],
                         "non_color_state": "count_setup",
-                        "focus_order": 20,
+                        "focus_order": 20.0,
                         "hit_bounds": {
-                          "w": 88,
-                          "h": 64
+                          "w": 88.0,
+                          "h": 64.0
                         },
-                        "min_target_size": 44,
+                        "min_target_size": 44.0,
                         "safe_exit": false,
                         "alternate_exit": false
                       }
@@ -117,7 +131,7 @@
                       "channel": "room",
                       "message": "The cage schedule and swap-cart route sit under separate lamps.",
                       "stage_id": "heist_count_setup_arrival",
-                      "duration_boundaries": 1,
+                      "duration_boundaries": 1.0,
                       "reduced_motion_message": "The cage schedule and swap-cart route sit under separate lamps."
                     }
                   ],
@@ -129,6 +143,22 @@
                         "command_id": "owner_phase_closed"
                       },
                       "next_phase": "closed_result"
+                    },
+                    {
+                      "id": "owner_aborted",
+                      "condition": {
+                        "type": "command",
+                        "command_id": "owner_phase_aborted"
+                      },
+                      "next_phase": "aborted_result"
+                    },
+                    {
+                      "id": "owner_expired",
+                      "condition": {
+                        "type": "command",
+                        "command_id": "owner_phase_expired"
+                      },
+                      "next_phase": "expired_result"
                     }
                   ]
                 },
@@ -140,7 +170,7 @@
                   "exit_prompt": "The room's ordinary exit remains open.",
                   "entry_conditions": [],
                   "objective_ids": [],
-                  "advance_after_actions": 0,
+                  "advance_after_actions": 0.0,
                   "scene_ops": [],
                   "interaction_ops": [],
                   "actor_ops": [],
@@ -152,6 +182,52 @@
                         "type": "always"
                       },
                       "outcome": "closed"
+                    }
+                  ]
+                },
+                {
+                  "id": "aborted_result",
+                  "label": "Count setup aborted",
+                  "terminal": true,
+                  "arrival_feedback": "The staged Crew beat closes exactly once.",
+                  "exit_prompt": "The room's ordinary exit remains open.",
+                  "entry_conditions": [],
+                  "objective_ids": [],
+                  "advance_after_actions": 0.0,
+                  "scene_ops": [],
+                  "interaction_ops": [],
+                  "actor_ops": [],
+                  "transition_ops": [],
+                  "branches": [
+                    {
+                      "id": "aborted_outcome",
+                      "condition": {
+                        "type": "always"
+                      },
+                      "outcome": "aborted"
+                    }
+                  ]
+                },
+                {
+                  "id": "expired_result",
+                  "label": "Count setup expired",
+                  "terminal": true,
+                  "arrival_feedback": "The staged Crew beat closes exactly once.",
+                  "exit_prompt": "The room's ordinary exit remains open.",
+                  "entry_conditions": [],
+                  "objective_ids": [],
+                  "advance_after_actions": 0.0,
+                  "scene_ops": [],
+                  "interaction_ops": [],
+                  "actor_ops": [],
+                  "transition_ops": [],
+                  "branches": [
+                    {
+                      "id": "expired_outcome",
+                      "condition": {
+                        "type": "always"
+                      },
+                      "outcome": "expired"
                     }
                   ]
                 }
@@ -168,6 +244,18 @@
                     "label": "Close the staged beat",
                     "kind": "command",
                     "command_id": "owner_phase_closed"
+                  },
+                  {
+                    "id": "owner_phase_aborted",
+                    "label": "Abort the staged beat",
+                    "kind": "command",
+                    "command_id": "owner_phase_aborted"
+                  },
+                  {
+                    "id": "owner_phase_expired",
+                    "label": "Expire the staged beat",
+                    "kind": "command",
+                    "command_id": "owner_phase_expired"
                   }
                 ],
                 "outcomes": [
@@ -185,7 +273,7 @@
             },
             "expiry": {
               "boundary": "none",
-              "after": 0,
+              "after": 0.0,
               "policy": "cancel"
             },
             "cleanup": {
@@ -222,13 +310,72 @@
                       "role": "aftermath",
                       "zone_id": "center",
                       "bounds": {
-                        "w": 44,
-                        "h": 44
+                        "w": 44.0,
+                        "h": 44.0
                       },
                       "visible": true,
                       "enabled": false,
                       "state": "closed",
                       "appearance": "count_setup_closed"
+                    }
+                  }
+                ]
+              },
+              "aborted": {
+                "label": "Count setup aborted",
+                "revisit_feedback": "The staged Crew beat ended aborted.",
+                "scene_ops": [
+                  {
+                    "family": "scene_ops",
+                    "op": "spawn",
+                    "receipt_id": "aftermath_heist_count_setup_aborted",
+                    "owner_namespace": "crew",
+                    "stable_object_id": "heist_count_setup_aborted",
+                    "object": {
+                      "label": "Count setup aborted",
+                      "role": "aftermath",
+                      "zone_id": "center",
+                      "bounds": {
+                        "w": 44.0,
+                        "h": 44.0
+                      },
+                      "visible": true,
+                      "enabled": false,
+                      "state": "aborted",
+                      "appearance": "count_setup_aborted"
+                    }
+                  }
+                ]
+              },
+              "expired": {
+                "label": "Count setup expired",
+                "revisit_feedback": "The staged Crew beat expired before the live window.",
+                "interaction_ops": [
+                  {
+                    "family": "interaction_ops",
+                    "op": "add",
+                    "receipt_id": "aftermath_heist_count_setup_expired",
+                    "owner_namespace": "crew",
+                    "stable_object_id": "heist_count_setup_expired",
+                    "interaction": {
+                      "owner_namespace": "crew",
+                      "stable_object_id": "heist_count_setup_expired",
+                      "label": "Count setup expired",
+                      "state_label": "Expired",
+                      "prompt": "The live window has closed.",
+                      "enabled": false,
+                      "disabled_reason": "This Crew beat has expired.",
+                      "available_actions": [],
+                      "input_actions": [],
+                      "non_color_state": "expired",
+                      "focus_order": 20.0,
+                      "hit_bounds": {
+                        "w": 44.0,
+                        "h": 44.0
+                      },
+                      "min_target_size": 44.0,
+                      "safe_exit": false,
+                      "alternate_exit": false
                     }
                   }
                 ]
@@ -252,7 +399,7 @@
               "environment_composition",
               "privacy_safe"
             ],
-            "sequence_signature": "c3177ac3df451d487839b1622a1c88487222575c684bc1f38836cd5e1bf51928",
+            "sequence_signature": "c4969babe97adac30be0854b635a08088ae711aabfda1be664b4e46d7816c34e",
             "owner_exceptions": [
               {
                 "row": "world_connection",
@@ -321,7 +468,7 @@
     ]
   },
   {
-    "schema_version": 1,
+    "schema_version": 1.0,
     "package_id": "world06_6_count_play",
     "definitions": [
       {
@@ -348,17 +495,31 @@
             "target": "crew::heist_count_play_closed",
             "property": "scene_ops",
             "mode": "exclusive"
+          },
+          {
+            "target": "crew::heist_count_play_aborted",
+            "property": "scene_ops",
+            "mode": "exclusive"
+          },
+          {
+            "target": "crew::heist_count_play_expired",
+            "property": "interaction_ops",
+            "mode": "exclusive"
           }
         ],
         "outcome_channels": {
-          "closed": "heist_scene"
+          "closed": "heist_scene",
+          "aborted": "heist_scene",
+          "expired": "heist_scene"
         },
         "private_capabilities": [],
         "definition": {
           "id": "heist_count_play",
           "sequence": {
-            "schema_version": 2,
-            "local_state_schema": {},
+            "schema_version": 2.0,
+            "local_state_schema": {
+
+            },
             "phase_graph": {
               "initial_phase": "staged",
               "phases": [
@@ -375,7 +536,7 @@
                   "objective_ids": [
                     "read_scene"
                   ],
-                  "advance_after_actions": 0,
+                  "advance_after_actions": 0.0,
                   "scene_ops": [
                     {
                       "family": "scene_ops",
@@ -388,8 +549,8 @@
                         "role": "heist_evidence",
                         "zone_id": "center",
                         "bounds": {
-                          "w": 88,
-                          "h": 64
+                          "w": 88.0,
+                          "h": 64.0
                         },
                         "visible": true,
                         "enabled": true,
@@ -416,12 +577,12 @@
                         "available_actions": [],
                         "input_actions": [],
                         "non_color_state": "count_play",
-                        "focus_order": 20,
+                        "focus_order": 20.0,
                         "hit_bounds": {
-                          "w": 88,
-                          "h": 64
+                          "w": 88.0,
+                          "h": 64.0
                         },
-                        "min_target_size": 44,
+                        "min_target_size": 44.0,
                         "safe_exit": false,
                         "alternate_exit": false
                       }
@@ -438,7 +599,7 @@
                       "channel": "room",
                       "message": "A deliberately ordinary blackjack table holds Bishop's three live decisions.",
                       "stage_id": "heist_count_play_arrival",
-                      "duration_boundaries": 1,
+                      "duration_boundaries": 1.0,
                       "reduced_motion_message": "A deliberately ordinary blackjack table holds Bishop's three live decisions."
                     }
                   ],
@@ -450,6 +611,22 @@
                         "command_id": "owner_phase_closed"
                       },
                       "next_phase": "closed_result"
+                    },
+                    {
+                      "id": "owner_aborted",
+                      "condition": {
+                        "type": "command",
+                        "command_id": "owner_phase_aborted"
+                      },
+                      "next_phase": "aborted_result"
+                    },
+                    {
+                      "id": "owner_expired",
+                      "condition": {
+                        "type": "command",
+                        "command_id": "owner_phase_expired"
+                      },
+                      "next_phase": "expired_result"
                     }
                   ]
                 },
@@ -461,7 +638,7 @@
                   "exit_prompt": "The room's ordinary exit remains open.",
                   "entry_conditions": [],
                   "objective_ids": [],
-                  "advance_after_actions": 0,
+                  "advance_after_actions": 0.0,
                   "scene_ops": [],
                   "interaction_ops": [],
                   "actor_ops": [],
@@ -473,6 +650,52 @@
                         "type": "always"
                       },
                       "outcome": "closed"
+                    }
+                  ]
+                },
+                {
+                  "id": "aborted_result",
+                  "label": "Count live table aborted",
+                  "terminal": true,
+                  "arrival_feedback": "The staged Crew beat closes exactly once.",
+                  "exit_prompt": "The room's ordinary exit remains open.",
+                  "entry_conditions": [],
+                  "objective_ids": [],
+                  "advance_after_actions": 0.0,
+                  "scene_ops": [],
+                  "interaction_ops": [],
+                  "actor_ops": [],
+                  "transition_ops": [],
+                  "branches": [
+                    {
+                      "id": "aborted_outcome",
+                      "condition": {
+                        "type": "always"
+                      },
+                      "outcome": "aborted"
+                    }
+                  ]
+                },
+                {
+                  "id": "expired_result",
+                  "label": "Count live table expired",
+                  "terminal": true,
+                  "arrival_feedback": "The staged Crew beat closes exactly once.",
+                  "exit_prompt": "The room's ordinary exit remains open.",
+                  "entry_conditions": [],
+                  "objective_ids": [],
+                  "advance_after_actions": 0.0,
+                  "scene_ops": [],
+                  "interaction_ops": [],
+                  "actor_ops": [],
+                  "transition_ops": [],
+                  "branches": [
+                    {
+                      "id": "expired_outcome",
+                      "condition": {
+                        "type": "always"
+                      },
+                      "outcome": "expired"
                     }
                   ]
                 }
@@ -489,6 +712,18 @@
                     "label": "Close the staged beat",
                     "kind": "command",
                     "command_id": "owner_phase_closed"
+                  },
+                  {
+                    "id": "owner_phase_aborted",
+                    "label": "Abort the staged beat",
+                    "kind": "command",
+                    "command_id": "owner_phase_aborted"
+                  },
+                  {
+                    "id": "owner_phase_expired",
+                    "label": "Expire the staged beat",
+                    "kind": "command",
+                    "command_id": "owner_phase_expired"
                   }
                 ],
                 "outcomes": [
@@ -506,7 +741,7 @@
             },
             "expiry": {
               "boundary": "none",
-              "after": 0,
+              "after": 0.0,
               "policy": "cancel"
             },
             "cleanup": {
@@ -543,13 +778,72 @@
                       "role": "aftermath",
                       "zone_id": "center",
                       "bounds": {
-                        "w": 44,
-                        "h": 44
+                        "w": 44.0,
+                        "h": 44.0
                       },
                       "visible": true,
                       "enabled": false,
                       "state": "closed",
                       "appearance": "count_play_closed"
+                    }
+                  }
+                ]
+              },
+              "aborted": {
+                "label": "Count live table aborted",
+                "revisit_feedback": "The staged Crew beat ended aborted.",
+                "scene_ops": [
+                  {
+                    "family": "scene_ops",
+                    "op": "spawn",
+                    "receipt_id": "aftermath_heist_count_play_aborted",
+                    "owner_namespace": "crew",
+                    "stable_object_id": "heist_count_play_aborted",
+                    "object": {
+                      "label": "Count live table aborted",
+                      "role": "aftermath",
+                      "zone_id": "center",
+                      "bounds": {
+                        "w": 44.0,
+                        "h": 44.0
+                      },
+                      "visible": true,
+                      "enabled": false,
+                      "state": "aborted",
+                      "appearance": "count_play_aborted"
+                    }
+                  }
+                ]
+              },
+              "expired": {
+                "label": "Count live table expired",
+                "revisit_feedback": "The staged Crew beat expired before the live window.",
+                "interaction_ops": [
+                  {
+                    "family": "interaction_ops",
+                    "op": "add",
+                    "receipt_id": "aftermath_heist_count_play_expired",
+                    "owner_namespace": "crew",
+                    "stable_object_id": "heist_count_play_expired",
+                    "interaction": {
+                      "owner_namespace": "crew",
+                      "stable_object_id": "heist_count_play_expired",
+                      "label": "Count live table expired",
+                      "state_label": "Expired",
+                      "prompt": "The live window has closed.",
+                      "enabled": false,
+                      "disabled_reason": "This Crew beat has expired.",
+                      "available_actions": [],
+                      "input_actions": [],
+                      "non_color_state": "expired",
+                      "focus_order": 20.0,
+                      "hit_bounds": {
+                        "w": 44.0,
+                        "h": 44.0
+                      },
+                      "min_target_size": 44.0,
+                      "safe_exit": false,
+                      "alternate_exit": false
                     }
                   }
                 ]
@@ -573,7 +867,7 @@
               "environment_composition",
               "privacy_safe"
             ],
-            "sequence_signature": "e12b313cda0fa6ae34f9ad67320661f85355d74e2096a86832ad11fa82a59e48",
+            "sequence_signature": "0da85496c294c7b92fa2874ca28452af35f0bbfbad2f9e7d1aa9dbb93efba1a2",
             "owner_exceptions": [
               {
                 "row": "world_connection",
@@ -642,7 +936,7 @@
     ]
   },
   {
-    "schema_version": 1,
+    "schema_version": 1.0,
     "package_id": "world06_6_count_getaway",
     "definitions": [
       {
@@ -669,17 +963,31 @@
             "target": "crew::heist_count_getaway_closed",
             "property": "scene_ops",
             "mode": "exclusive"
+          },
+          {
+            "target": "crew::heist_count_getaway_aborted",
+            "property": "scene_ops",
+            "mode": "exclusive"
+          },
+          {
+            "target": "crew::heist_count_getaway_expired",
+            "property": "interaction_ops",
+            "mode": "exclusive"
           }
         ],
         "outcome_channels": {
-          "closed": "heist_scene"
+          "closed": "heist_scene",
+          "aborted": "heist_scene",
+          "expired": "heist_scene"
         },
         "private_capabilities": [],
         "definition": {
           "id": "heist_count_getaway",
           "sequence": {
-            "schema_version": 2,
-            "local_state_schema": {},
+            "schema_version": 2.0,
+            "local_state_schema": {
+
+            },
             "phase_graph": {
               "initial_phase": "staged",
               "phases": [
@@ -696,7 +1004,7 @@
                   "objective_ids": [
                     "read_scene"
                   ],
-                  "advance_after_actions": 0,
+                  "advance_after_actions": 0.0,
                   "scene_ops": [
                     {
                       "family": "scene_ops",
@@ -709,8 +1017,8 @@
                         "role": "heist_evidence",
                         "zone_id": "center",
                         "bounds": {
-                          "w": 88,
-                          "h": 64
+                          "w": 88.0,
+                          "h": 64.0
                         },
                         "visible": true,
                         "enabled": true,
@@ -737,12 +1045,12 @@
                         "available_actions": [],
                         "input_actions": [],
                         "non_color_state": "count_exits",
-                        "focus_order": 20,
+                        "focus_order": 20.0,
                         "hit_bounds": {
-                          "w": 88,
-                          "h": 64
+                          "w": 88.0,
+                          "h": 64.0
                         },
-                        "min_target_size": 44,
+                        "min_target_size": 44.0,
                         "safe_exit": false,
                         "alternate_exit": false
                       }
@@ -759,7 +1067,7 @@
                       "channel": "room",
                       "message": "Dock paint and the earned service-corridor marker stay physically distinct.",
                       "stage_id": "heist_count_getaway_arrival",
-                      "duration_boundaries": 1,
+                      "duration_boundaries": 1.0,
                       "reduced_motion_message": "Dock paint and the earned service-corridor marker stay physically distinct."
                     }
                   ],
@@ -771,6 +1079,22 @@
                         "command_id": "owner_phase_closed"
                       },
                       "next_phase": "closed_result"
+                    },
+                    {
+                      "id": "owner_aborted",
+                      "condition": {
+                        "type": "command",
+                        "command_id": "owner_phase_aborted"
+                      },
+                      "next_phase": "aborted_result"
+                    },
+                    {
+                      "id": "owner_expired",
+                      "condition": {
+                        "type": "command",
+                        "command_id": "owner_phase_expired"
+                      },
+                      "next_phase": "expired_result"
                     }
                   ]
                 },
@@ -782,7 +1106,7 @@
                   "exit_prompt": "The room's ordinary exit remains open.",
                   "entry_conditions": [],
                   "objective_ids": [],
-                  "advance_after_actions": 0,
+                  "advance_after_actions": 0.0,
                   "scene_ops": [],
                   "interaction_ops": [],
                   "actor_ops": [],
@@ -794,6 +1118,52 @@
                         "type": "always"
                       },
                       "outcome": "closed"
+                    }
+                  ]
+                },
+                {
+                  "id": "aborted_result",
+                  "label": "Count exits aborted",
+                  "terminal": true,
+                  "arrival_feedback": "The staged Crew beat closes exactly once.",
+                  "exit_prompt": "The room's ordinary exit remains open.",
+                  "entry_conditions": [],
+                  "objective_ids": [],
+                  "advance_after_actions": 0.0,
+                  "scene_ops": [],
+                  "interaction_ops": [],
+                  "actor_ops": [],
+                  "transition_ops": [],
+                  "branches": [
+                    {
+                      "id": "aborted_outcome",
+                      "condition": {
+                        "type": "always"
+                      },
+                      "outcome": "aborted"
+                    }
+                  ]
+                },
+                {
+                  "id": "expired_result",
+                  "label": "Count exits expired",
+                  "terminal": true,
+                  "arrival_feedback": "The staged Crew beat closes exactly once.",
+                  "exit_prompt": "The room's ordinary exit remains open.",
+                  "entry_conditions": [],
+                  "objective_ids": [],
+                  "advance_after_actions": 0.0,
+                  "scene_ops": [],
+                  "interaction_ops": [],
+                  "actor_ops": [],
+                  "transition_ops": [],
+                  "branches": [
+                    {
+                      "id": "expired_outcome",
+                      "condition": {
+                        "type": "always"
+                      },
+                      "outcome": "expired"
                     }
                   ]
                 }
@@ -810,6 +1180,18 @@
                     "label": "Close the staged beat",
                     "kind": "command",
                     "command_id": "owner_phase_closed"
+                  },
+                  {
+                    "id": "owner_phase_aborted",
+                    "label": "Abort the staged beat",
+                    "kind": "command",
+                    "command_id": "owner_phase_aborted"
+                  },
+                  {
+                    "id": "owner_phase_expired",
+                    "label": "Expire the staged beat",
+                    "kind": "command",
+                    "command_id": "owner_phase_expired"
                   }
                 ],
                 "outcomes": [
@@ -827,7 +1209,7 @@
             },
             "expiry": {
               "boundary": "none",
-              "after": 0,
+              "after": 0.0,
               "policy": "cancel"
             },
             "cleanup": {
@@ -864,13 +1246,72 @@
                       "role": "aftermath",
                       "zone_id": "center",
                       "bounds": {
-                        "w": 44,
-                        "h": 44
+                        "w": 44.0,
+                        "h": 44.0
                       },
                       "visible": true,
                       "enabled": false,
                       "state": "closed",
                       "appearance": "count_exits_closed"
+                    }
+                  }
+                ]
+              },
+              "aborted": {
+                "label": "Count exits aborted",
+                "revisit_feedback": "The staged Crew beat ended aborted.",
+                "scene_ops": [
+                  {
+                    "family": "scene_ops",
+                    "op": "spawn",
+                    "receipt_id": "aftermath_heist_count_getaway_aborted",
+                    "owner_namespace": "crew",
+                    "stable_object_id": "heist_count_getaway_aborted",
+                    "object": {
+                      "label": "Count exits aborted",
+                      "role": "aftermath",
+                      "zone_id": "center",
+                      "bounds": {
+                        "w": 44.0,
+                        "h": 44.0
+                      },
+                      "visible": true,
+                      "enabled": false,
+                      "state": "aborted",
+                      "appearance": "count_getaway_aborted"
+                    }
+                  }
+                ]
+              },
+              "expired": {
+                "label": "Count exits expired",
+                "revisit_feedback": "The staged Crew beat expired before the live window.",
+                "interaction_ops": [
+                  {
+                    "family": "interaction_ops",
+                    "op": "add",
+                    "receipt_id": "aftermath_heist_count_getaway_expired",
+                    "owner_namespace": "crew",
+                    "stable_object_id": "heist_count_getaway_expired",
+                    "interaction": {
+                      "owner_namespace": "crew",
+                      "stable_object_id": "heist_count_getaway_expired",
+                      "label": "Count exits expired",
+                      "state_label": "Expired",
+                      "prompt": "The live window has closed.",
+                      "enabled": false,
+                      "disabled_reason": "This Crew beat has expired.",
+                      "available_actions": [],
+                      "input_actions": [],
+                      "non_color_state": "expired",
+                      "focus_order": 20.0,
+                      "hit_bounds": {
+                        "w": 44.0,
+                        "h": 44.0
+                      },
+                      "min_target_size": 44.0,
+                      "safe_exit": false,
+                      "alternate_exit": false
                     }
                   }
                 ]
@@ -894,7 +1335,7 @@
               "environment_composition",
               "privacy_safe"
             ],
-            "sequence_signature": "61fdfae6a2d40bf24e8e65fbdf97c99bb6706385376189bdd333f6bc7b43818e",
+            "sequence_signature": "615dfb174d392bb40932e4cac2af7d54bbd37b089a202f7990e6e69bba7a2a60",
             "owner_exceptions": [
               {
                 "row": "world_connection",
@@ -963,7 +1404,7 @@
     ]
   },
   {
-    "schema_version": 1,
+    "schema_version": 1.0,
     "package_id": "world06_6_whale_setup",
     "definitions": [
       {
@@ -990,17 +1431,31 @@
             "target": "crew::heist_whale_setup_closed",
             "property": "scene_ops",
             "mode": "exclusive"
+          },
+          {
+            "target": "crew::heist_whale_setup_aborted",
+            "property": "scene_ops",
+            "mode": "exclusive"
+          },
+          {
+            "target": "crew::heist_whale_setup_expired",
+            "property": "interaction_ops",
+            "mode": "exclusive"
           }
         ],
         "outcome_channels": {
-          "closed": "heist_scene"
+          "closed": "heist_scene",
+          "aborted": "heist_scene",
+          "expired": "heist_scene"
         },
         "private_capabilities": [],
         "definition": {
           "id": "heist_whale_setup",
           "sequence": {
-            "schema_version": 2,
-            "local_state_schema": {},
+            "schema_version": 2.0,
+            "local_state_schema": {
+
+            },
             "phase_graph": {
               "initial_phase": "staged",
               "phases": [
@@ -1017,7 +1472,7 @@
                   "objective_ids": [
                     "read_scene"
                   ],
-                  "advance_after_actions": 0,
+                  "advance_after_actions": 0.0,
                   "scene_ops": [
                     {
                       "family": "scene_ops",
@@ -1030,8 +1485,8 @@
                         "role": "heist_evidence",
                         "zone_id": "center",
                         "bounds": {
-                          "w": 88,
-                          "h": 64
+                          "w": 88.0,
+                          "h": 64.0
                         },
                         "visible": true,
                         "enabled": true,
@@ -1058,12 +1513,12 @@
                         "available_actions": [],
                         "input_actions": [],
                         "non_color_state": "whale_setup",
-                        "focus_order": 20,
+                        "focus_order": 20.0,
                         "hit_bounds": {
-                          "w": 88,
-                          "h": 64
+                          "w": 88.0,
+                          "h": 64.0
                         },
-                        "min_target_size": 44,
+                        "min_target_size": 44.0,
                         "safe_exit": false,
                         "alternate_exit": false
                       }
@@ -1080,7 +1535,7 @@
                       "channel": "room",
                       "message": "The vouch, the setting rig, and the borrowed name occupy three public stations.",
                       "stage_id": "heist_whale_setup_arrival",
-                      "duration_boundaries": 1,
+                      "duration_boundaries": 1.0,
                       "reduced_motion_message": "The vouch, the setting rig, and the borrowed name occupy three public stations."
                     }
                   ],
@@ -1092,6 +1547,22 @@
                         "command_id": "owner_phase_closed"
                       },
                       "next_phase": "closed_result"
+                    },
+                    {
+                      "id": "owner_aborted",
+                      "condition": {
+                        "type": "command",
+                        "command_id": "owner_phase_aborted"
+                      },
+                      "next_phase": "aborted_result"
+                    },
+                    {
+                      "id": "owner_expired",
+                      "condition": {
+                        "type": "command",
+                        "command_id": "owner_phase_expired"
+                      },
+                      "next_phase": "expired_result"
                     }
                   ]
                 },
@@ -1103,7 +1574,7 @@
                   "exit_prompt": "The room's ordinary exit remains open.",
                   "entry_conditions": [],
                   "objective_ids": [],
-                  "advance_after_actions": 0,
+                  "advance_after_actions": 0.0,
                   "scene_ops": [],
                   "interaction_ops": [],
                   "actor_ops": [],
@@ -1115,6 +1586,52 @@
                         "type": "always"
                       },
                       "outcome": "closed"
+                    }
+                  ]
+                },
+                {
+                  "id": "aborted_result",
+                  "label": "Whale setup aborted",
+                  "terminal": true,
+                  "arrival_feedback": "The staged Crew beat closes exactly once.",
+                  "exit_prompt": "The room's ordinary exit remains open.",
+                  "entry_conditions": [],
+                  "objective_ids": [],
+                  "advance_after_actions": 0.0,
+                  "scene_ops": [],
+                  "interaction_ops": [],
+                  "actor_ops": [],
+                  "transition_ops": [],
+                  "branches": [
+                    {
+                      "id": "aborted_outcome",
+                      "condition": {
+                        "type": "always"
+                      },
+                      "outcome": "aborted"
+                    }
+                  ]
+                },
+                {
+                  "id": "expired_result",
+                  "label": "Whale setup expired",
+                  "terminal": true,
+                  "arrival_feedback": "The staged Crew beat closes exactly once.",
+                  "exit_prompt": "The room's ordinary exit remains open.",
+                  "entry_conditions": [],
+                  "objective_ids": [],
+                  "advance_after_actions": 0.0,
+                  "scene_ops": [],
+                  "interaction_ops": [],
+                  "actor_ops": [],
+                  "transition_ops": [],
+                  "branches": [
+                    {
+                      "id": "expired_outcome",
+                      "condition": {
+                        "type": "always"
+                      },
+                      "outcome": "expired"
                     }
                   ]
                 }
@@ -1131,6 +1648,18 @@
                     "label": "Close the staged beat",
                     "kind": "command",
                     "command_id": "owner_phase_closed"
+                  },
+                  {
+                    "id": "owner_phase_aborted",
+                    "label": "Abort the staged beat",
+                    "kind": "command",
+                    "command_id": "owner_phase_aborted"
+                  },
+                  {
+                    "id": "owner_phase_expired",
+                    "label": "Expire the staged beat",
+                    "kind": "command",
+                    "command_id": "owner_phase_expired"
                   }
                 ],
                 "outcomes": [
@@ -1148,7 +1677,7 @@
             },
             "expiry": {
               "boundary": "none",
-              "after": 0,
+              "after": 0.0,
               "policy": "cancel"
             },
             "cleanup": {
@@ -1185,13 +1714,72 @@
                       "role": "aftermath",
                       "zone_id": "center",
                       "bounds": {
-                        "w": 44,
-                        "h": 44
+                        "w": 44.0,
+                        "h": 44.0
                       },
                       "visible": true,
                       "enabled": false,
                       "state": "closed",
                       "appearance": "whale_setup_closed"
+                    }
+                  }
+                ]
+              },
+              "aborted": {
+                "label": "Whale setup aborted",
+                "revisit_feedback": "The staged Crew beat ended aborted.",
+                "scene_ops": [
+                  {
+                    "family": "scene_ops",
+                    "op": "spawn",
+                    "receipt_id": "aftermath_heist_whale_setup_aborted",
+                    "owner_namespace": "crew",
+                    "stable_object_id": "heist_whale_setup_aborted",
+                    "object": {
+                      "label": "Whale setup aborted",
+                      "role": "aftermath",
+                      "zone_id": "center",
+                      "bounds": {
+                        "w": 44.0,
+                        "h": 44.0
+                      },
+                      "visible": true,
+                      "enabled": false,
+                      "state": "aborted",
+                      "appearance": "whale_setup_aborted"
+                    }
+                  }
+                ]
+              },
+              "expired": {
+                "label": "Whale setup expired",
+                "revisit_feedback": "The staged Crew beat expired before the live window.",
+                "interaction_ops": [
+                  {
+                    "family": "interaction_ops",
+                    "op": "add",
+                    "receipt_id": "aftermath_heist_whale_setup_expired",
+                    "owner_namespace": "crew",
+                    "stable_object_id": "heist_whale_setup_expired",
+                    "interaction": {
+                      "owner_namespace": "crew",
+                      "stable_object_id": "heist_whale_setup_expired",
+                      "label": "Whale setup expired",
+                      "state_label": "Expired",
+                      "prompt": "The live window has closed.",
+                      "enabled": false,
+                      "disabled_reason": "This Crew beat has expired.",
+                      "available_actions": [],
+                      "input_actions": [],
+                      "non_color_state": "expired",
+                      "focus_order": 20.0,
+                      "hit_bounds": {
+                        "w": 44.0,
+                        "h": 44.0
+                      },
+                      "min_target_size": 44.0,
+                      "safe_exit": false,
+                      "alternate_exit": false
                     }
                   }
                 ]
@@ -1215,7 +1803,7 @@
               "environment_composition",
               "privacy_safe"
             ],
-            "sequence_signature": "4ea82138b3e284b280f442de90f6c0e2e9ffa270f8f6829282ecf3d72db4ee87",
+            "sequence_signature": "8fc2bbf2708aca6d9931ba2c4ba72dfdad560e3103e79bb5751088afb126abf0",
             "owner_exceptions": [
               {
                 "row": "world_connection",
@@ -1284,7 +1872,7 @@
     ]
   },
   {
-    "schema_version": 1,
+    "schema_version": 1.0,
     "package_id": "world06_6_whale_play",
     "definitions": [
       {
@@ -1311,17 +1899,31 @@
             "target": "crew::heist_whale_play_closed",
             "property": "scene_ops",
             "mode": "exclusive"
+          },
+          {
+            "target": "crew::heist_whale_play_aborted",
+            "property": "scene_ops",
+            "mode": "exclusive"
+          },
+          {
+            "target": "crew::heist_whale_play_expired",
+            "property": "interaction_ops",
+            "mode": "exclusive"
           }
         ],
         "outcome_channels": {
-          "closed": "heist_scene"
+          "closed": "heist_scene",
+          "aborted": "heist_scene",
+          "expired": "heist_scene"
         },
         "private_capabilities": [],
         "definition": {
           "id": "heist_whale_play",
           "sequence": {
-            "schema_version": 2,
-            "local_state_schema": {},
+            "schema_version": 2.0,
+            "local_state_schema": {
+
+            },
             "phase_graph": {
               "initial_phase": "staged",
               "phases": [
@@ -1338,7 +1940,7 @@
                   "objective_ids": [
                     "read_scene"
                   ],
-                  "advance_after_actions": 0,
+                  "advance_after_actions": 0.0,
                   "scene_ops": [
                     {
                       "family": "scene_ops",
@@ -1351,8 +1953,8 @@
                         "role": "heist_evidence",
                         "zone_id": "center",
                         "bounds": {
-                          "w": 88,
-                          "h": 64
+                          "w": 88.0,
+                          "h": 64.0
                         },
                         "visible": true,
                         "enabled": true,
@@ -1379,12 +1981,12 @@
                         "available_actions": [],
                         "input_actions": [],
                         "non_color_state": "whale_play",
-                        "focus_order": 20,
+                        "focus_order": 20.0,
                         "hit_bounds": {
-                          "w": 88,
-                          "h": 64
+                          "w": 88.0,
+                          "h": 64.0
                         },
-                        "min_target_size": 44,
+                        "min_target_size": 44.0,
                         "safe_exit": false,
                         "alternate_exit": false
                       }
@@ -1401,7 +2003,7 @@
                       "channel": "room",
                       "message": "The three-game invitational advances around one visible pot under Rourke's attention.",
                       "stage_id": "heist_whale_play_arrival",
-                      "duration_boundaries": 1,
+                      "duration_boundaries": 1.0,
                       "reduced_motion_message": "The three-game invitational advances around one visible pot under Rourke's attention."
                     }
                   ],
@@ -1413,6 +2015,22 @@
                         "command_id": "owner_phase_closed"
                       },
                       "next_phase": "closed_result"
+                    },
+                    {
+                      "id": "owner_aborted",
+                      "condition": {
+                        "type": "command",
+                        "command_id": "owner_phase_aborted"
+                      },
+                      "next_phase": "aborted_result"
+                    },
+                    {
+                      "id": "owner_expired",
+                      "condition": {
+                        "type": "command",
+                        "command_id": "owner_phase_expired"
+                      },
+                      "next_phase": "expired_result"
                     }
                   ]
                 },
@@ -1424,7 +2042,7 @@
                   "exit_prompt": "The room's ordinary exit remains open.",
                   "entry_conditions": [],
                   "objective_ids": [],
-                  "advance_after_actions": 0,
+                  "advance_after_actions": 0.0,
                   "scene_ops": [],
                   "interaction_ops": [],
                   "actor_ops": [],
@@ -1436,6 +2054,52 @@
                         "type": "always"
                       },
                       "outcome": "closed"
+                    }
+                  ]
+                },
+                {
+                  "id": "aborted_result",
+                  "label": "Whale invitational aborted",
+                  "terminal": true,
+                  "arrival_feedback": "The staged Crew beat closes exactly once.",
+                  "exit_prompt": "The room's ordinary exit remains open.",
+                  "entry_conditions": [],
+                  "objective_ids": [],
+                  "advance_after_actions": 0.0,
+                  "scene_ops": [],
+                  "interaction_ops": [],
+                  "actor_ops": [],
+                  "transition_ops": [],
+                  "branches": [
+                    {
+                      "id": "aborted_outcome",
+                      "condition": {
+                        "type": "always"
+                      },
+                      "outcome": "aborted"
+                    }
+                  ]
+                },
+                {
+                  "id": "expired_result",
+                  "label": "Whale invitational expired",
+                  "terminal": true,
+                  "arrival_feedback": "The staged Crew beat closes exactly once.",
+                  "exit_prompt": "The room's ordinary exit remains open.",
+                  "entry_conditions": [],
+                  "objective_ids": [],
+                  "advance_after_actions": 0.0,
+                  "scene_ops": [],
+                  "interaction_ops": [],
+                  "actor_ops": [],
+                  "transition_ops": [],
+                  "branches": [
+                    {
+                      "id": "expired_outcome",
+                      "condition": {
+                        "type": "always"
+                      },
+                      "outcome": "expired"
                     }
                   ]
                 }
@@ -1452,6 +2116,18 @@
                     "label": "Close the staged beat",
                     "kind": "command",
                     "command_id": "owner_phase_closed"
+                  },
+                  {
+                    "id": "owner_phase_aborted",
+                    "label": "Abort the staged beat",
+                    "kind": "command",
+                    "command_id": "owner_phase_aborted"
+                  },
+                  {
+                    "id": "owner_phase_expired",
+                    "label": "Expire the staged beat",
+                    "kind": "command",
+                    "command_id": "owner_phase_expired"
                   }
                 ],
                 "outcomes": [
@@ -1469,7 +2145,7 @@
             },
             "expiry": {
               "boundary": "none",
-              "after": 0,
+              "after": 0.0,
               "policy": "cancel"
             },
             "cleanup": {
@@ -1506,13 +2182,72 @@
                       "role": "aftermath",
                       "zone_id": "center",
                       "bounds": {
-                        "w": 44,
-                        "h": 44
+                        "w": 44.0,
+                        "h": 44.0
                       },
                       "visible": true,
                       "enabled": false,
                       "state": "closed",
                       "appearance": "whale_play_closed"
+                    }
+                  }
+                ]
+              },
+              "aborted": {
+                "label": "Whale invitational aborted",
+                "revisit_feedback": "The staged Crew beat ended aborted.",
+                "scene_ops": [
+                  {
+                    "family": "scene_ops",
+                    "op": "spawn",
+                    "receipt_id": "aftermath_heist_whale_play_aborted",
+                    "owner_namespace": "crew",
+                    "stable_object_id": "heist_whale_play_aborted",
+                    "object": {
+                      "label": "Whale invitational aborted",
+                      "role": "aftermath",
+                      "zone_id": "center",
+                      "bounds": {
+                        "w": 44.0,
+                        "h": 44.0
+                      },
+                      "visible": true,
+                      "enabled": false,
+                      "state": "aborted",
+                      "appearance": "whale_play_aborted"
+                    }
+                  }
+                ]
+              },
+              "expired": {
+                "label": "Whale invitational expired",
+                "revisit_feedback": "The staged Crew beat expired before the live window.",
+                "interaction_ops": [
+                  {
+                    "family": "interaction_ops",
+                    "op": "add",
+                    "receipt_id": "aftermath_heist_whale_play_expired",
+                    "owner_namespace": "crew",
+                    "stable_object_id": "heist_whale_play_expired",
+                    "interaction": {
+                      "owner_namespace": "crew",
+                      "stable_object_id": "heist_whale_play_expired",
+                      "label": "Whale invitational expired",
+                      "state_label": "Expired",
+                      "prompt": "The live window has closed.",
+                      "enabled": false,
+                      "disabled_reason": "This Crew beat has expired.",
+                      "available_actions": [],
+                      "input_actions": [],
+                      "non_color_state": "expired",
+                      "focus_order": 20.0,
+                      "hit_bounds": {
+                        "w": 44.0,
+                        "h": 44.0
+                      },
+                      "min_target_size": 44.0,
+                      "safe_exit": false,
+                      "alternate_exit": false
                     }
                   }
                 ]
@@ -1536,7 +2271,7 @@
               "environment_composition",
               "privacy_safe"
             ],
-            "sequence_signature": "1cbc31d708a401431cfe72a5f644e7f575d165717a337ccfaf7c1ff48f22571f",
+            "sequence_signature": "5ea3a1a1f934d6190d2ed2ecd355f524e4fa584674ce7e0b0e09e69ca7c11d09",
             "owner_exceptions": [
               {
                 "row": "world_connection",
@@ -1605,7 +2340,7 @@
     ]
   },
   {
-    "schema_version": 1,
+    "schema_version": 1.0,
     "package_id": "world06_6_whale_interview",
     "definitions": [
       {
@@ -1632,17 +2367,31 @@
             "target": "crew::heist_whale_interview_closed",
             "property": "scene_ops",
             "mode": "exclusive"
+          },
+          {
+            "target": "crew::heist_whale_interview_aborted",
+            "property": "scene_ops",
+            "mode": "exclusive"
+          },
+          {
+            "target": "crew::heist_whale_interview_expired",
+            "property": "interaction_ops",
+            "mode": "exclusive"
           }
         ],
         "outcome_channels": {
-          "closed": "heist_scene"
+          "closed": "heist_scene",
+          "aborted": "heist_scene",
+          "expired": "heist_scene"
         },
         "private_capabilities": [],
         "definition": {
           "id": "heist_whale_interview",
           "sequence": {
-            "schema_version": 2,
-            "local_state_schema": {},
+            "schema_version": 2.0,
+            "local_state_schema": {
+
+            },
             "phase_graph": {
               "initial_phase": "staged",
               "phases": [
@@ -1659,7 +2408,7 @@
                   "objective_ids": [
                     "read_scene"
                   ],
-                  "advance_after_actions": 0,
+                  "advance_after_actions": 0.0,
                   "scene_ops": [
                     {
                       "family": "scene_ops",
@@ -1672,8 +2421,8 @@
                         "role": "heist_evidence",
                         "zone_id": "center",
                         "bounds": {
-                          "w": 88,
-                          "h": 64
+                          "w": 88.0,
+                          "h": 64.0
                         },
                         "visible": true,
                         "enabled": true,
@@ -1700,12 +2449,12 @@
                         "available_actions": [],
                         "input_actions": [],
                         "non_color_state": "whale_interview",
-                        "focus_order": 20,
+                        "focus_order": 20.0,
                         "hit_bounds": {
-                          "w": 88,
-                          "h": 64
+                          "w": 88.0,
+                          "h": 64.0
                         },
-                        "min_target_size": 44,
+                        "min_target_size": 44.0,
                         "safe_exit": false,
                         "alternate_exit": false
                       }
@@ -1722,7 +2471,7 @@
                       "channel": "room",
                       "message": "The cage window holds the pot and a checkable receipt while Rourke waits.",
                       "stage_id": "heist_whale_interview_arrival",
-                      "duration_boundaries": 1,
+                      "duration_boundaries": 1.0,
                       "reduced_motion_message": "The cage window holds the pot and a checkable receipt while Rourke waits."
                     }
                   ],
@@ -1734,6 +2483,22 @@
                         "command_id": "owner_phase_closed"
                       },
                       "next_phase": "closed_result"
+                    },
+                    {
+                      "id": "owner_aborted",
+                      "condition": {
+                        "type": "command",
+                        "command_id": "owner_phase_aborted"
+                      },
+                      "next_phase": "aborted_result"
+                    },
+                    {
+                      "id": "owner_expired",
+                      "condition": {
+                        "type": "command",
+                        "command_id": "owner_phase_expired"
+                      },
+                      "next_phase": "expired_result"
                     }
                   ]
                 },
@@ -1745,7 +2510,7 @@
                   "exit_prompt": "The room's ordinary exit remains open.",
                   "entry_conditions": [],
                   "objective_ids": [],
-                  "advance_after_actions": 0,
+                  "advance_after_actions": 0.0,
                   "scene_ops": [],
                   "interaction_ops": [],
                   "actor_ops": [],
@@ -1757,6 +2522,52 @@
                         "type": "always"
                       },
                       "outcome": "closed"
+                    }
+                  ]
+                },
+                {
+                  "id": "aborted_result",
+                  "label": "Cage interview aborted",
+                  "terminal": true,
+                  "arrival_feedback": "The staged Crew beat closes exactly once.",
+                  "exit_prompt": "The room's ordinary exit remains open.",
+                  "entry_conditions": [],
+                  "objective_ids": [],
+                  "advance_after_actions": 0.0,
+                  "scene_ops": [],
+                  "interaction_ops": [],
+                  "actor_ops": [],
+                  "transition_ops": [],
+                  "branches": [
+                    {
+                      "id": "aborted_outcome",
+                      "condition": {
+                        "type": "always"
+                      },
+                      "outcome": "aborted"
+                    }
+                  ]
+                },
+                {
+                  "id": "expired_result",
+                  "label": "Cage interview expired",
+                  "terminal": true,
+                  "arrival_feedback": "The staged Crew beat closes exactly once.",
+                  "exit_prompt": "The room's ordinary exit remains open.",
+                  "entry_conditions": [],
+                  "objective_ids": [],
+                  "advance_after_actions": 0.0,
+                  "scene_ops": [],
+                  "interaction_ops": [],
+                  "actor_ops": [],
+                  "transition_ops": [],
+                  "branches": [
+                    {
+                      "id": "expired_outcome",
+                      "condition": {
+                        "type": "always"
+                      },
+                      "outcome": "expired"
                     }
                   ]
                 }
@@ -1773,6 +2584,18 @@
                     "label": "Close the staged beat",
                     "kind": "command",
                     "command_id": "owner_phase_closed"
+                  },
+                  {
+                    "id": "owner_phase_aborted",
+                    "label": "Abort the staged beat",
+                    "kind": "command",
+                    "command_id": "owner_phase_aborted"
+                  },
+                  {
+                    "id": "owner_phase_expired",
+                    "label": "Expire the staged beat",
+                    "kind": "command",
+                    "command_id": "owner_phase_expired"
                   }
                 ],
                 "outcomes": [
@@ -1790,7 +2613,7 @@
             },
             "expiry": {
               "boundary": "none",
-              "after": 0,
+              "after": 0.0,
               "policy": "cancel"
             },
             "cleanup": {
@@ -1827,13 +2650,72 @@
                       "role": "aftermath",
                       "zone_id": "center",
                       "bounds": {
-                        "w": 44,
-                        "h": 44
+                        "w": 44.0,
+                        "h": 44.0
                       },
                       "visible": true,
                       "enabled": false,
                       "state": "closed",
                       "appearance": "whale_interview_closed"
+                    }
+                  }
+                ]
+              },
+              "aborted": {
+                "label": "Cage interview aborted",
+                "revisit_feedback": "The staged Crew beat ended aborted.",
+                "scene_ops": [
+                  {
+                    "family": "scene_ops",
+                    "op": "spawn",
+                    "receipt_id": "aftermath_heist_whale_interview_aborted",
+                    "owner_namespace": "crew",
+                    "stable_object_id": "heist_whale_interview_aborted",
+                    "object": {
+                      "label": "Cage interview aborted",
+                      "role": "aftermath",
+                      "zone_id": "center",
+                      "bounds": {
+                        "w": 44.0,
+                        "h": 44.0
+                      },
+                      "visible": true,
+                      "enabled": false,
+                      "state": "aborted",
+                      "appearance": "whale_interview_aborted"
+                    }
+                  }
+                ]
+              },
+              "expired": {
+                "label": "Cage interview expired",
+                "revisit_feedback": "The staged Crew beat expired before the live window.",
+                "interaction_ops": [
+                  {
+                    "family": "interaction_ops",
+                    "op": "add",
+                    "receipt_id": "aftermath_heist_whale_interview_expired",
+                    "owner_namespace": "crew",
+                    "stable_object_id": "heist_whale_interview_expired",
+                    "interaction": {
+                      "owner_namespace": "crew",
+                      "stable_object_id": "heist_whale_interview_expired",
+                      "label": "Cage interview expired",
+                      "state_label": "Expired",
+                      "prompt": "The live window has closed.",
+                      "enabled": false,
+                      "disabled_reason": "This Crew beat has expired.",
+                      "available_actions": [],
+                      "input_actions": [],
+                      "non_color_state": "expired",
+                      "focus_order": 20.0,
+                      "hit_bounds": {
+                        "w": 44.0,
+                        "h": 44.0
+                      },
+                      "min_target_size": 44.0,
+                      "safe_exit": false,
+                      "alternate_exit": false
                     }
                   }
                 ]
@@ -1857,7 +2739,7 @@
               "environment_composition",
               "privacy_safe"
             ],
-            "sequence_signature": "11c6cd5a1071c2d865e66432b3c0045c9e2f8baa2ef1b035752cfc9cbb37ff6b",
+            "sequence_signature": "938881a7909f57f2419fc3a6d9b95bc1c1e0abe3046ce42beb4f98ec646ec368",
             "owner_exceptions": [
               {
                 "row": "world_connection",
@@ -1926,7 +2808,7 @@
     ]
   },
   {
-    "schema_version": 1,
+    "schema_version": 1.0,
     "package_id": "world06_6_whale_getaway",
     "definitions": [
       {
@@ -1953,17 +2835,31 @@
             "target": "crew::heist_whale_getaway_closed",
             "property": "scene_ops",
             "mode": "exclusive"
+          },
+          {
+            "target": "crew::heist_whale_getaway_aborted",
+            "property": "scene_ops",
+            "mode": "exclusive"
+          },
+          {
+            "target": "crew::heist_whale_getaway_expired",
+            "property": "interaction_ops",
+            "mode": "exclusive"
           }
         ],
         "outcome_channels": {
-          "closed": "heist_scene"
+          "closed": "heist_scene",
+          "aborted": "heist_scene",
+          "expired": "heist_scene"
         },
         "private_capabilities": [],
         "definition": {
           "id": "heist_whale_getaway",
           "sequence": {
-            "schema_version": 2,
-            "local_state_schema": {},
+            "schema_version": 2.0,
+            "local_state_schema": {
+
+            },
             "phase_graph": {
               "initial_phase": "staged",
               "phases": [
@@ -1980,7 +2876,7 @@
                   "objective_ids": [
                     "read_scene"
                   ],
-                  "advance_after_actions": 0,
+                  "advance_after_actions": 0.0,
                   "scene_ops": [
                     {
                       "family": "scene_ops",
@@ -1993,8 +2889,8 @@
                         "role": "heist_evidence",
                         "zone_id": "center",
                         "bounds": {
-                          "w": 88,
-                          "h": 64
+                          "w": 88.0,
+                          "h": 64.0
                         },
                         "visible": true,
                         "enabled": true,
@@ -2021,12 +2917,12 @@
                         "available_actions": [],
                         "input_actions": [],
                         "non_color_state": "whale_exit",
-                        "focus_order": 20,
+                        "focus_order": 20.0,
                         "hit_bounds": {
-                          "w": 88,
-                          "h": 64
+                          "w": 88.0,
+                          "h": 64.0
                         },
-                        "min_target_size": 44,
+                        "min_target_size": 44.0,
                         "safe_exit": false,
                         "alternate_exit": false
                       }
@@ -2043,7 +2939,7 @@
                       "channel": "room",
                       "message": "The front door remains clean unless the settled table and interview made the exit hot.",
                       "stage_id": "heist_whale_getaway_arrival",
-                      "duration_boundaries": 1,
+                      "duration_boundaries": 1.0,
                       "reduced_motion_message": "The front door remains clean unless the settled table and interview made the exit hot."
                     }
                   ],
@@ -2055,6 +2951,22 @@
                         "command_id": "owner_phase_closed"
                       },
                       "next_phase": "closed_result"
+                    },
+                    {
+                      "id": "owner_aborted",
+                      "condition": {
+                        "type": "command",
+                        "command_id": "owner_phase_aborted"
+                      },
+                      "next_phase": "aborted_result"
+                    },
+                    {
+                      "id": "owner_expired",
+                      "condition": {
+                        "type": "command",
+                        "command_id": "owner_phase_expired"
+                      },
+                      "next_phase": "expired_result"
                     }
                   ]
                 },
@@ -2066,7 +2978,7 @@
                   "exit_prompt": "The room's ordinary exit remains open.",
                   "entry_conditions": [],
                   "objective_ids": [],
-                  "advance_after_actions": 0,
+                  "advance_after_actions": 0.0,
                   "scene_ops": [],
                   "interaction_ops": [],
                   "actor_ops": [],
@@ -2078,6 +2990,52 @@
                         "type": "always"
                       },
                       "outcome": "closed"
+                    }
+                  ]
+                },
+                {
+                  "id": "aborted_result",
+                  "label": "Whale exit aborted",
+                  "terminal": true,
+                  "arrival_feedback": "The staged Crew beat closes exactly once.",
+                  "exit_prompt": "The room's ordinary exit remains open.",
+                  "entry_conditions": [],
+                  "objective_ids": [],
+                  "advance_after_actions": 0.0,
+                  "scene_ops": [],
+                  "interaction_ops": [],
+                  "actor_ops": [],
+                  "transition_ops": [],
+                  "branches": [
+                    {
+                      "id": "aborted_outcome",
+                      "condition": {
+                        "type": "always"
+                      },
+                      "outcome": "aborted"
+                    }
+                  ]
+                },
+                {
+                  "id": "expired_result",
+                  "label": "Whale exit expired",
+                  "terminal": true,
+                  "arrival_feedback": "The staged Crew beat closes exactly once.",
+                  "exit_prompt": "The room's ordinary exit remains open.",
+                  "entry_conditions": [],
+                  "objective_ids": [],
+                  "advance_after_actions": 0.0,
+                  "scene_ops": [],
+                  "interaction_ops": [],
+                  "actor_ops": [],
+                  "transition_ops": [],
+                  "branches": [
+                    {
+                      "id": "expired_outcome",
+                      "condition": {
+                        "type": "always"
+                      },
+                      "outcome": "expired"
                     }
                   ]
                 }
@@ -2094,6 +3052,18 @@
                     "label": "Close the staged beat",
                     "kind": "command",
                     "command_id": "owner_phase_closed"
+                  },
+                  {
+                    "id": "owner_phase_aborted",
+                    "label": "Abort the staged beat",
+                    "kind": "command",
+                    "command_id": "owner_phase_aborted"
+                  },
+                  {
+                    "id": "owner_phase_expired",
+                    "label": "Expire the staged beat",
+                    "kind": "command",
+                    "command_id": "owner_phase_expired"
                   }
                 ],
                 "outcomes": [
@@ -2111,7 +3081,7 @@
             },
             "expiry": {
               "boundary": "none",
-              "after": 0,
+              "after": 0.0,
               "policy": "cancel"
             },
             "cleanup": {
@@ -2148,13 +3118,72 @@
                       "role": "aftermath",
                       "zone_id": "center",
                       "bounds": {
-                        "w": 44,
-                        "h": 44
+                        "w": 44.0,
+                        "h": 44.0
                       },
                       "visible": true,
                       "enabled": false,
                       "state": "closed",
                       "appearance": "whale_exit_closed"
+                    }
+                  }
+                ]
+              },
+              "aborted": {
+                "label": "Whale exit aborted",
+                "revisit_feedback": "The staged Crew beat ended aborted.",
+                "scene_ops": [
+                  {
+                    "family": "scene_ops",
+                    "op": "spawn",
+                    "receipt_id": "aftermath_heist_whale_getaway_aborted",
+                    "owner_namespace": "crew",
+                    "stable_object_id": "heist_whale_getaway_aborted",
+                    "object": {
+                      "label": "Whale exit aborted",
+                      "role": "aftermath",
+                      "zone_id": "center",
+                      "bounds": {
+                        "w": 44.0,
+                        "h": 44.0
+                      },
+                      "visible": true,
+                      "enabled": false,
+                      "state": "aborted",
+                      "appearance": "whale_getaway_aborted"
+                    }
+                  }
+                ]
+              },
+              "expired": {
+                "label": "Whale exit expired",
+                "revisit_feedback": "The staged Crew beat expired before the live window.",
+                "interaction_ops": [
+                  {
+                    "family": "interaction_ops",
+                    "op": "add",
+                    "receipt_id": "aftermath_heist_whale_getaway_expired",
+                    "owner_namespace": "crew",
+                    "stable_object_id": "heist_whale_getaway_expired",
+                    "interaction": {
+                      "owner_namespace": "crew",
+                      "stable_object_id": "heist_whale_getaway_expired",
+                      "label": "Whale exit expired",
+                      "state_label": "Expired",
+                      "prompt": "The live window has closed.",
+                      "enabled": false,
+                      "disabled_reason": "This Crew beat has expired.",
+                      "available_actions": [],
+                      "input_actions": [],
+                      "non_color_state": "expired",
+                      "focus_order": 20.0,
+                      "hit_bounds": {
+                        "w": 44.0,
+                        "h": 44.0
+                      },
+                      "min_target_size": 44.0,
+                      "safe_exit": false,
+                      "alternate_exit": false
                     }
                   }
                 ]
@@ -2178,7 +3207,7 @@
               "environment_composition",
               "privacy_safe"
             ],
-            "sequence_signature": "eb264f33a6d91efdcb3d145abdcb84f7a5ec675ef0d46e7e40935faa197bb97b",
+            "sequence_signature": "296a642481dc714c8023177a564a80d2494e082b13a20c5e405ab2f8bb14bbe2",
             "owner_exceptions": [
               {
                 "row": "world_connection",
@@ -2247,7 +3276,7 @@
     ]
   },
   {
-    "schema_version": 1,
+    "schema_version": 1.0,
     "package_id": "world06_6_quiet_clue",
     "definitions": [
       {
@@ -2274,17 +3303,31 @@
             "target": "crew::heist_quiet_clue_closed",
             "property": "scene_ops",
             "mode": "exclusive"
+          },
+          {
+            "target": "crew::heist_quiet_clue_aborted",
+            "property": "scene_ops",
+            "mode": "exclusive"
+          },
+          {
+            "target": "crew::heist_quiet_clue_expired",
+            "property": "interaction_ops",
+            "mode": "exclusive"
           }
         ],
         "outcome_channels": {
-          "closed": "heist_scene"
+          "closed": "heist_scene",
+          "aborted": "heist_scene",
+          "expired": "heist_scene"
         },
         "private_capabilities": [],
         "definition": {
           "id": "heist_quiet_clue",
           "sequence": {
-            "schema_version": 2,
-            "local_state_schema": {},
+            "schema_version": 2.0,
+            "local_state_schema": {
+
+            },
             "phase_graph": {
               "initial_phase": "staged",
               "phases": [
@@ -2301,7 +3344,7 @@
                   "objective_ids": [
                     "read_scene"
                   ],
-                  "advance_after_actions": 0,
+                  "advance_after_actions": 0.0,
                   "scene_ops": [
                     {
                       "family": "scene_ops",
@@ -2314,8 +3357,8 @@
                         "role": "heist_evidence",
                         "zone_id": "center",
                         "bounds": {
-                          "w": 88,
-                          "h": 64
+                          "w": 88.0,
+                          "h": 64.0
                         },
                         "visible": true,
                         "enabled": true,
@@ -2342,12 +3385,12 @@
                         "available_actions": [],
                         "input_actions": [],
                         "non_color_state": "quiet_clue",
-                        "focus_order": 20,
+                        "focus_order": 20.0,
                         "hit_bounds": {
-                          "w": 88,
-                          "h": 64
+                          "w": 88.0,
+                          "h": 64.0
                         },
-                        "min_target_size": 44,
+                        "min_target_size": 44.0,
                         "safe_exit": false,
                         "alternate_exit": false
                       }
@@ -2364,7 +3407,7 @@
                       "channel": "room",
                       "message": "A neutral Crew voice leaves one public, checkable contradiction without naming its source.",
                       "stage_id": "heist_quiet_clue_arrival",
-                      "duration_boundaries": 1,
+                      "duration_boundaries": 1.0,
                       "reduced_motion_message": "A neutral Crew voice leaves one public, checkable contradiction without naming its source."
                     }
                   ],
@@ -2376,6 +3419,22 @@
                         "command_id": "owner_phase_closed"
                       },
                       "next_phase": "closed_result"
+                    },
+                    {
+                      "id": "owner_aborted",
+                      "condition": {
+                        "type": "command",
+                        "command_id": "owner_phase_aborted"
+                      },
+                      "next_phase": "aborted_result"
+                    },
+                    {
+                      "id": "owner_expired",
+                      "condition": {
+                        "type": "command",
+                        "command_id": "owner_phase_expired"
+                      },
+                      "next_phase": "expired_result"
                     }
                   ]
                 },
@@ -2387,7 +3446,7 @@
                   "exit_prompt": "The room's ordinary exit remains open.",
                   "entry_conditions": [],
                   "objective_ids": [],
-                  "advance_after_actions": 0,
+                  "advance_after_actions": 0.0,
                   "scene_ops": [],
                   "interaction_ops": [],
                   "actor_ops": [],
@@ -2399,6 +3458,52 @@
                         "type": "always"
                       },
                       "outcome": "closed"
+                    }
+                  ]
+                },
+                {
+                  "id": "aborted_result",
+                  "label": "Quiet-table clue aborted",
+                  "terminal": true,
+                  "arrival_feedback": "The staged Crew beat closes exactly once.",
+                  "exit_prompt": "The room's ordinary exit remains open.",
+                  "entry_conditions": [],
+                  "objective_ids": [],
+                  "advance_after_actions": 0.0,
+                  "scene_ops": [],
+                  "interaction_ops": [],
+                  "actor_ops": [],
+                  "transition_ops": [],
+                  "branches": [
+                    {
+                      "id": "aborted_outcome",
+                      "condition": {
+                        "type": "always"
+                      },
+                      "outcome": "aborted"
+                    }
+                  ]
+                },
+                {
+                  "id": "expired_result",
+                  "label": "Quiet-table clue expired",
+                  "terminal": true,
+                  "arrival_feedback": "The staged Crew beat closes exactly once.",
+                  "exit_prompt": "The room's ordinary exit remains open.",
+                  "entry_conditions": [],
+                  "objective_ids": [],
+                  "advance_after_actions": 0.0,
+                  "scene_ops": [],
+                  "interaction_ops": [],
+                  "actor_ops": [],
+                  "transition_ops": [],
+                  "branches": [
+                    {
+                      "id": "expired_outcome",
+                      "condition": {
+                        "type": "always"
+                      },
+                      "outcome": "expired"
                     }
                   ]
                 }
@@ -2415,6 +3520,18 @@
                     "label": "Close the staged beat",
                     "kind": "command",
                     "command_id": "owner_phase_closed"
+                  },
+                  {
+                    "id": "owner_phase_aborted",
+                    "label": "Abort the staged beat",
+                    "kind": "command",
+                    "command_id": "owner_phase_aborted"
+                  },
+                  {
+                    "id": "owner_phase_expired",
+                    "label": "Expire the staged beat",
+                    "kind": "command",
+                    "command_id": "owner_phase_expired"
                   }
                 ],
                 "outcomes": [
@@ -2432,7 +3549,7 @@
             },
             "expiry": {
               "boundary": "none",
-              "after": 0,
+              "after": 0.0,
               "policy": "cancel"
             },
             "cleanup": {
@@ -2469,13 +3586,72 @@
                       "role": "aftermath",
                       "zone_id": "center",
                       "bounds": {
-                        "w": 44,
-                        "h": 44
+                        "w": 44.0,
+                        "h": 44.0
                       },
                       "visible": true,
                       "enabled": false,
                       "state": "closed",
                       "appearance": "quiet_clue_closed"
+                    }
+                  }
+                ]
+              },
+              "aborted": {
+                "label": "Quiet-table clue aborted",
+                "revisit_feedback": "The staged Crew beat ended aborted.",
+                "scene_ops": [
+                  {
+                    "family": "scene_ops",
+                    "op": "spawn",
+                    "receipt_id": "aftermath_heist_quiet_clue_aborted",
+                    "owner_namespace": "crew",
+                    "stable_object_id": "heist_quiet_clue_aborted",
+                    "object": {
+                      "label": "Quiet-table clue aborted",
+                      "role": "aftermath",
+                      "zone_id": "center",
+                      "bounds": {
+                        "w": 44.0,
+                        "h": 44.0
+                      },
+                      "visible": true,
+                      "enabled": false,
+                      "state": "aborted",
+                      "appearance": "quiet_clue_aborted"
+                    }
+                  }
+                ]
+              },
+              "expired": {
+                "label": "Quiet-table clue expired",
+                "revisit_feedback": "The staged Crew beat expired before the live window.",
+                "interaction_ops": [
+                  {
+                    "family": "interaction_ops",
+                    "op": "add",
+                    "receipt_id": "aftermath_heist_quiet_clue_expired",
+                    "owner_namespace": "crew",
+                    "stable_object_id": "heist_quiet_clue_expired",
+                    "interaction": {
+                      "owner_namespace": "crew",
+                      "stable_object_id": "heist_quiet_clue_expired",
+                      "label": "Quiet-table clue expired",
+                      "state_label": "Expired",
+                      "prompt": "The live window has closed.",
+                      "enabled": false,
+                      "disabled_reason": "This Crew beat has expired.",
+                      "available_actions": [],
+                      "input_actions": [],
+                      "non_color_state": "expired",
+                      "focus_order": 20.0,
+                      "hit_bounds": {
+                        "w": 44.0,
+                        "h": 44.0
+                      },
+                      "min_target_size": 44.0,
+                      "safe_exit": false,
+                      "alternate_exit": false
                     }
                   }
                 ]
@@ -2499,7 +3675,7 @@
               "environment_composition",
               "privacy_safe"
             ],
-            "sequence_signature": "2007686079141ca8deaca98de2aa8f42640d93f30bfe2e9210ebfde76fc85f12",
+            "sequence_signature": "b614ed04a21349dd4e4a8844733a5e1e65bac86df2e40dd256ee6ec68ba344a5",
             "owner_exceptions": [
               {
                 "row": "world_connection",
@@ -2568,7 +3744,7 @@
     ]
   },
   {
-    "schema_version": 1,
+    "schema_version": 1.0,
     "package_id": "world06_6_closed_door",
     "definitions": [
       {
@@ -2595,17 +3771,31 @@
             "target": "crew::heist_closed_door_closed",
             "property": "scene_ops",
             "mode": "exclusive"
+          },
+          {
+            "target": "crew::heist_closed_door_aborted",
+            "property": "scene_ops",
+            "mode": "exclusive"
+          },
+          {
+            "target": "crew::heist_closed_door_expired",
+            "property": "interaction_ops",
+            "mode": "exclusive"
           }
         ],
         "outcome_channels": {
-          "closed": "heist_scene"
+          "closed": "heist_scene",
+          "aborted": "heist_scene",
+          "expired": "heist_scene"
         },
         "private_capabilities": [],
         "definition": {
           "id": "heist_closed_door",
           "sequence": {
-            "schema_version": 2,
-            "local_state_schema": {},
+            "schema_version": 2.0,
+            "local_state_schema": {
+
+            },
             "phase_graph": {
               "initial_phase": "staged",
               "phases": [
@@ -2622,7 +3812,7 @@
                   "objective_ids": [
                     "read_scene"
                   ],
-                  "advance_after_actions": 0,
+                  "advance_after_actions": 0.0,
                   "scene_ops": [
                     {
                       "family": "scene_ops",
@@ -2635,8 +3825,8 @@
                         "role": "heist_evidence",
                         "zone_id": "center",
                         "bounds": {
-                          "w": 88,
-                          "h": 64
+                          "w": 88.0,
+                          "h": 64.0
                         },
                         "visible": true,
                         "enabled": true,
@@ -2663,12 +3853,12 @@
                         "available_actions": [],
                         "input_actions": [],
                         "non_color_state": "closed_door",
-                        "focus_order": 20,
+                        "focus_order": 20.0,
                         "hit_bounds": {
-                          "w": 88,
-                          "h": 64
+                          "w": 88.0,
+                          "h": 64.0
                         },
-                        "min_target_size": 44,
+                        "min_target_size": 44.0,
                         "safe_exit": false,
                         "alternate_exit": false
                       }
@@ -2685,7 +3875,7 @@
                       "channel": "room",
                       "message": "One closed chair and a neutral Crew voice stage the confrontation without exposing private terms.",
                       "stage_id": "heist_closed_door_arrival",
-                      "duration_boundaries": 1,
+                      "duration_boundaries": 1.0,
                       "reduced_motion_message": "One closed chair and a neutral Crew voice stage the confrontation without exposing private terms."
                     }
                   ],
@@ -2697,6 +3887,22 @@
                         "command_id": "owner_phase_closed"
                       },
                       "next_phase": "closed_result"
+                    },
+                    {
+                      "id": "owner_aborted",
+                      "condition": {
+                        "type": "command",
+                        "command_id": "owner_phase_aborted"
+                      },
+                      "next_phase": "aborted_result"
+                    },
+                    {
+                      "id": "owner_expired",
+                      "condition": {
+                        "type": "command",
+                        "command_id": "owner_phase_expired"
+                      },
+                      "next_phase": "expired_result"
                     }
                   ]
                 },
@@ -2708,7 +3914,7 @@
                   "exit_prompt": "The room's ordinary exit remains open.",
                   "entry_conditions": [],
                   "objective_ids": [],
-                  "advance_after_actions": 0,
+                  "advance_after_actions": 0.0,
                   "scene_ops": [],
                   "interaction_ops": [],
                   "actor_ops": [],
@@ -2720,6 +3926,52 @@
                         "type": "always"
                       },
                       "outcome": "closed"
+                    }
+                  ]
+                },
+                {
+                  "id": "aborted_result",
+                  "label": "Closed-door confrontation aborted",
+                  "terminal": true,
+                  "arrival_feedback": "The staged Crew beat closes exactly once.",
+                  "exit_prompt": "The room's ordinary exit remains open.",
+                  "entry_conditions": [],
+                  "objective_ids": [],
+                  "advance_after_actions": 0.0,
+                  "scene_ops": [],
+                  "interaction_ops": [],
+                  "actor_ops": [],
+                  "transition_ops": [],
+                  "branches": [
+                    {
+                      "id": "aborted_outcome",
+                      "condition": {
+                        "type": "always"
+                      },
+                      "outcome": "aborted"
+                    }
+                  ]
+                },
+                {
+                  "id": "expired_result",
+                  "label": "Closed-door confrontation expired",
+                  "terminal": true,
+                  "arrival_feedback": "The staged Crew beat closes exactly once.",
+                  "exit_prompt": "The room's ordinary exit remains open.",
+                  "entry_conditions": [],
+                  "objective_ids": [],
+                  "advance_after_actions": 0.0,
+                  "scene_ops": [],
+                  "interaction_ops": [],
+                  "actor_ops": [],
+                  "transition_ops": [],
+                  "branches": [
+                    {
+                      "id": "expired_outcome",
+                      "condition": {
+                        "type": "always"
+                      },
+                      "outcome": "expired"
                     }
                   ]
                 }
@@ -2736,6 +3988,18 @@
                     "label": "Close the staged beat",
                     "kind": "command",
                     "command_id": "owner_phase_closed"
+                  },
+                  {
+                    "id": "owner_phase_aborted",
+                    "label": "Abort the staged beat",
+                    "kind": "command",
+                    "command_id": "owner_phase_aborted"
+                  },
+                  {
+                    "id": "owner_phase_expired",
+                    "label": "Expire the staged beat",
+                    "kind": "command",
+                    "command_id": "owner_phase_expired"
                   }
                 ],
                 "outcomes": [
@@ -2753,7 +4017,7 @@
             },
             "expiry": {
               "boundary": "none",
-              "after": 0,
+              "after": 0.0,
               "policy": "cancel"
             },
             "cleanup": {
@@ -2790,13 +4054,72 @@
                       "role": "aftermath",
                       "zone_id": "center",
                       "bounds": {
-                        "w": 44,
-                        "h": 44
+                        "w": 44.0,
+                        "h": 44.0
                       },
                       "visible": true,
                       "enabled": false,
                       "state": "closed",
                       "appearance": "closed_door_closed"
+                    }
+                  }
+                ]
+              },
+              "aborted": {
+                "label": "Closed-door confrontation aborted",
+                "revisit_feedback": "The staged Crew beat ended aborted.",
+                "scene_ops": [
+                  {
+                    "family": "scene_ops",
+                    "op": "spawn",
+                    "receipt_id": "aftermath_heist_closed_door_aborted",
+                    "owner_namespace": "crew",
+                    "stable_object_id": "heist_closed_door_aborted",
+                    "object": {
+                      "label": "Closed-door confrontation aborted",
+                      "role": "aftermath",
+                      "zone_id": "center",
+                      "bounds": {
+                        "w": 44.0,
+                        "h": 44.0
+                      },
+                      "visible": true,
+                      "enabled": false,
+                      "state": "aborted",
+                      "appearance": "closed_door_aborted"
+                    }
+                  }
+                ]
+              },
+              "expired": {
+                "label": "Closed-door confrontation expired",
+                "revisit_feedback": "The staged Crew beat expired before the live window.",
+                "interaction_ops": [
+                  {
+                    "family": "interaction_ops",
+                    "op": "add",
+                    "receipt_id": "aftermath_heist_closed_door_expired",
+                    "owner_namespace": "crew",
+                    "stable_object_id": "heist_closed_door_expired",
+                    "interaction": {
+                      "owner_namespace": "crew",
+                      "stable_object_id": "heist_closed_door_expired",
+                      "label": "Closed-door confrontation expired",
+                      "state_label": "Expired",
+                      "prompt": "The live window has closed.",
+                      "enabled": false,
+                      "disabled_reason": "This Crew beat has expired.",
+                      "available_actions": [],
+                      "input_actions": [],
+                      "non_color_state": "expired",
+                      "focus_order": 20.0,
+                      "hit_bounds": {
+                        "w": 44.0,
+                        "h": 44.0
+                      },
+                      "min_target_size": 44.0,
+                      "safe_exit": false,
+                      "alternate_exit": false
                     }
                   }
                 ]
@@ -2820,7 +4143,7 @@
               "environment_composition",
               "privacy_safe"
             ],
-            "sequence_signature": "7b69e50fb4c2246d4ab0b5684147420c98f3d632fb8dc6dbcfb2011a242d8ed7",
+            "sequence_signature": "86c2d7a46af9dbf3119599b0e032c2744cfc23e9d290de9de4645549eff4f7fd",
             "owner_exceptions": [
               {
                 "row": "world_connection",

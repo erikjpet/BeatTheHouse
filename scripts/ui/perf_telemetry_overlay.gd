@@ -9,6 +9,7 @@ const CrewTurnModelScript := preload("res://scripts/core/crew_turn_model.gd")
 const CrewRecruitmentModelScript := preload("res://scripts/core/crew_recruitment_model.gd")
 const TutorialFlowScript := preload("res://scripts/core/tutorial_flow.gd")
 const WebAudioBridgeScript := preload("res://scripts/ui/web_audio_bridge.gd")
+const BuildIdentityScript := preload("res://scripts/core/build_identity.gd")
 
 const PERF_PLAN_SCRIPT_PATHS := {
 	"SlotStateScript": "res://scripts/games/slots/slot_machine_state.gd",
@@ -430,10 +431,7 @@ func dump_report() -> Dictionary:
 		"scenarios": scenario_records,
 		"events": telemetry_events,
 		"telemetry_overhead": _overhead_stats(),
-		"build_identity": {
-			"source_commit": str(runtime_options.get("bth_perf_source_commit", "")),
-			"export_sha256": str(runtime_options.get("bth_perf_export_sha256", "")),
-		},
+		"build_identity": BuildIdentityScript.telemetry_identity(runtime_options),
 		"evidence_profile": str(runtime_options.get("bth_perf_evidence_profile", OS.get_environment("BTH_PERF_EVIDENCE_PROFILE"))),
 	}
 	_write_report_file(report)
@@ -1364,8 +1362,8 @@ func _coin_pusher_fixture_identity(run_state: RunState, game: GameModule) -> Dic
 		"solver_fixed_hz": 60,
 		"solver_backend": CoinPusherSolverScript.last_step_backend_for_test(),
 		"platform": _platform_label(),
-		"source_commit": str(runtime_options.get("bth_perf_source_commit", "")),
-		"export_sha256": str(runtime_options.get("bth_perf_export_sha256", "")),
+		"source_commit": str(BuildIdentityScript.telemetry_identity(runtime_options).get("source_commit", "")),
+		"export_sha256": str(BuildIdentityScript.telemetry_identity(runtime_options).get("export_sha256", "")),
 		"environment_id": str(run_state.current_environment.get("id", "")),
 	}
 

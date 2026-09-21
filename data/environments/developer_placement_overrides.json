@@ -42,16 +42,32 @@
           89.0,
           350.0
         ],
+        "game_hook:pull_tabs:ticket_redeemer": [
+          590.0,
+          108.0
+        ],
         "game:bar_dice": [
-          65.0,
-          146.0
+          570.0,
+          116.0
         ],
         "travel:leave": [
-          783.0,
-          354.0
+          4.0,
+          300.0
         ]
       },
       "scenario_object_slot_positions": {
+        "bar_dead_tuesday_patron_zone": [
+          700.0,
+          300.0
+        ],
+        "bar_dead_tuesday_task_0": [
+          766.0,
+          0.0
+        ],
+        "bar_fight_night_task_0": [
+          766.0,
+          0.0
+        ],
         "bar_darts_league_night_darts_scorer": [
           102.0,
           335.0
@@ -106,16 +122,32 @@
           766.0,
           226.0
         ],
+        "item:odds_notebook": [
+          60.0,
+          144.0
+        ],
+        "event:late_shift_discount": [
+          650.0,
+          270.0
+        ],
         "service:house_drink": [
           641.0,
           145.0
         ],
         "shopkeeper:merchant": [
-          413.0,
-          137.0
+          338.0,
+          70.0
+        ],
+        "item:trunk": [
+          300.0,
+          250.0
         ]
       },
       "scenario_object_slot_positions": {
+        "count_cage": [
+          350.0,
+          330.0
+        ],
         "corner_store_dead_shift_exit": [
           690.0,
           330.0
@@ -151,8 +183,8 @@
           228.0
         ],
         "event:side_door": [
-          611.0,
-          346.0
+          790.0,
+          70.0
         ],
         "event:town_rumor_staff": [
           80.0,
@@ -163,8 +195,8 @@
           126.0
         ],
         "game:scratch_tickets": [
-          526.0,
-          127.0
+          560.0,
+          126.0
         ],
         "game_hook:scratch_tickets:scratch_ticket_clerk": [
           691.0,
@@ -175,7 +207,7 @@
           183.0
         ],
         "service:house_drink": [
-          170.0,
+          205.0,
           186.0
         ],
         "travel:leave": [
@@ -184,6 +216,10 @@
         ]
       },
       "scenario_object_slot_positions": {
+        "gas_station_storm_shelter_safe_exit": [
+          4.0,
+          200.0
+        ],
         "gas_station_road_crew_payday_barricade_stack": [
           372.0,
           247.0
@@ -201,8 +237,8 @@
           240.0
         ],
         "gas_station_road_crew_payday_station": [
-          578.0,
-          327.0
+          340.0,
+          330.0
         ],
         "gas_station_road_crew_payday_work_order_board": [
           297.0,
@@ -225,8 +261,16 @@
           210.0
         ],
         "home_storage:place": [
-          320.0,
+          400.0,
           293.0
+        ]
+      }
+    },
+    "jazz_club": {
+      "object_slot_positions": {
+        "game_hook:pull_tabs:ticket_redeemer": [
+          760.0,
+          0.0
         ]
       }
     },
@@ -249,8 +293,8 @@
           281.0
         ],
         "lender:motel_friend": [
-          115.0,
-          357.0
+          200.0,
+          330.0
         ],
         "shopkeeper:merchant": [
           336.0,
@@ -265,6 +309,14 @@
         "motel_weekly_rates_landlord": [
           30.0,
           328.0
+        ]
+      }
+    },
+    "pawn_shop": {
+      "scenario_object_slot_positions": {
+        "serial_station": [
+          500.0,
+          206.0
         ]
       }
     }

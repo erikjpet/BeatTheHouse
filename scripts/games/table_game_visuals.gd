@@ -136,7 +136,16 @@ static func draw_table(surface) -> void:
 		surface.draw_rect(Rect2(140, 308, 620, 2), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.14))
 
 
-static func draw_dealer_station(surface, state: Dictionary, label_override: String = "") -> void:
+static func dealer_station_occupied_rects(status_layout: Dictionary = {}) -> Array:
+	return [
+		_dealer_layout_rect(status_layout, "station", Rect2(352, 54, 196, 104)),
+		_dealer_layout_rect(status_layout, "attention_meter", Rect2(566, 92, 118, 9)),
+		_dealer_layout_rect(status_layout, "danger_meter", Rect2(566, 116, 118, 6)),
+		_dealer_layout_rect(status_layout, "status_panel", Rect2(566, 130, 122, 22)),
+	]
+
+
+static func draw_dealer_station(surface, state: Dictionary, label_override: String = "", status_layout: Dictionary = {}) -> Array:
 	var focus := dealer_focus_for_state(state)
 	var profile := _dict_view(state.get("dealer_profile", {}))
 	var low_detail := _surface_low_detail_idle(surface)
@@ -146,8 +155,13 @@ static func draw_dealer_station(surface, state: Dictionary, label_override: Stri
 	var eye_offset := float(focus.get("eye_offset", 0.0))
 	var idle := _surface_clock(surface) + float(int(profile.get("blink_offset", 0))) / 1000.0
 	var attention_color := C_PINK if int(focus.get("peek_danger", 0)) >= 70 else C_YELLOW if int(focus.get("peek_danger", 0)) >= 42 else C_TEAL
-	surface.draw_rect(Rect2(352, 54, 196, 104), Color("#0b0d16"))
-	surface.draw_rect(Rect2(352, 54, 196, 104), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.18), false, 1)
+	var occupied_rects := dealer_station_occupied_rects(status_layout)
+	var station_rect: Rect2 = occupied_rects[0]
+	var attention_rect: Rect2 = occupied_rects[1]
+	var danger_rect: Rect2 = occupied_rects[2]
+	var panel_rect: Rect2 = occupied_rects[3]
+	surface.draw_rect(station_rect, Color("#0b0d16"))
+	surface.draw_rect(station_rect, Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.18), false, 1)
 	if low_detail:
 		_draw_static_character(surface, Vector2(450, 156), 1.06, attention_color, Color("#1b2230"), str(state.get("dealer_name", profile.get("name", "Dealer"))))
 	else:
@@ -166,16 +180,21 @@ static func draw_dealer_station(surface, state: Dictionary, label_override: Stri
 			"uniform_accent": str(profile.get("uniform_accent", "")),
 		}, Vector2(450, 156), 1.06, idle)
 	var meter := clampi(int(focus.get("attention_meter", 0)), 0, 100)
-	_draw_status_meter(surface, Rect2(566, 92, 118, 9), meter, "dealer %s" % str(focus.get("status", "watching")), C_PINK if meter >= 70 else C_YELLOW if meter >= 42 else C_TEAL)
-	_draw_status_meter(surface, Rect2(566, 116, 118, 6), int(focus.get("peek_danger", 0)), str(focus.get("gaze_phase", "read")).left(20), attention_color)
+	_draw_status_meter(surface, attention_rect, meter, "dealer %s" % str(focus.get("status", "watching")), C_PINK if meter >= 70 else C_YELLOW if meter >= 42 else C_TEAL)
+	_draw_status_meter(surface, danger_rect, int(focus.get("peek_danger", 0)), str(focus.get("gaze_phase", "read")).left(20), attention_color)
 	# A gaze phase may change the panel's presentation, but never its draw-command
 	# membership. That keeps repeated draws of one snapshot structurally stable
 	# when wall-clock time crosses into or out of a read window.
-	var panel_rect := Rect2(566, 130, 122, 22)
 	var panel_accent := C_TEAL if peek_window else C_SOFT
 	_draw_neon_panel(surface, panel_rect, panel_accent, 0.28 if peek_window else 0.05)
 	var focus_label := "PEEK %.1fs" % (float(int(focus.get("lookaway_remaining_msec", 0))) / 1000.0) if looking_away else "READ WINDOW" if peek_window else (label_override if not label_override.is_empty() else str(focus.get("body_language", focus.get("tell", ""))))
-	surface.surface_label_centered(focus_label.left(26), Rect2(570, 134, 114, 14), 11, panel_accent)
+	surface.surface_label_centered(focus_label.left(26), panel_rect.grow(-4.0), 11, panel_accent)
+	return occupied_rects
+
+
+static func _dealer_layout_rect(status_layout: Dictionary, key: String, fallback: Rect2) -> Rect2:
+	var value = status_layout.get(key, fallback)
+	return value if typeof(value) == TYPE_RECT2 and value.size.x > 0.0 and value.size.y > 0.0 else fallback
 
 
 static func draw_table_patrons(surface, state: Dictionary, positions: Array = []) -> void:

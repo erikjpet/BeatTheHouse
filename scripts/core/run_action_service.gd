@@ -13,6 +13,7 @@ const AttributeBadgesScript := preload("res://scripts/core/attribute_badges.gd")
 const ItemEffectScript := preload("res://scripts/core/item_effect.gd")
 const CharacterRosterScript := preload("res://scripts/core/character_roster.gd")
 const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
+const PlayerTextScript := preload("res://scripts/ui/player_text.gd")
 
 const JAZZ_CLUB_ARCHETYPE_ID := "jazz_club"
 const JAZZ_SAX_ROUND_SERVICE_ID := "jazz_sax_round"
@@ -246,14 +247,12 @@ func buy_item_offer(item_id: String) -> Dictionary:
 	}
 	var effect_result: Dictionary = item_effect.apply(context)
 	var result := purchase_item_result(effect_result, item_definition, offer)
-	var turn_result := run_state.advance_environment_turns(1)
-	if not bool(turn_result.get("ok", false)):
-		return _boundary_service_error(turn_result, "The purchase boundary could not advance safely.")
-	GameModule.apply_result(run_state, result)
+	var transaction := _commit_money_transaction(result, price, "item", item_id, item_definition)
+	if not bool(transaction.get("ok", false)):
+		return transaction
 	if _definition_is_active_item(item_definition):
 		_auto_select_active_item_after_gain(item_id)
-	run_state.remove_item_offer(item_id)
-	return _service_success(result)
+	return transaction
 
 
 func cage_gift_shop_offer_view_list() -> Array:
@@ -998,6 +997,9 @@ func use_hook(kind: String, hook_id: String) -> Dictionary:
 			return _service_error(str(jazz_errors[0]) if not jazz_errors.is_empty() else "The service boundary could not advance safely.")
 		run_state.scenario_publish_service_result(kind, hook_id, result)
 		return _service_success(result)
+	var transaction_price := maxi(0, int(option.get("cost", definition.get("cost", 0)))) if kind == "service" else 0
+	if transaction_price > 0:
+		return _commit_money_transaction(result, transaction_price, kind, hook_id, definition)
 	var clock_result := _advance_hook_clock(kind, definition)
 	if not bool(clock_result.get("ok", false)):
 		var clock_errors: Array = clock_result.get("errors", []) if typeof(clock_result.get("errors", [])) == TYPE_ARRAY else []
@@ -1007,6 +1009,65 @@ func use_hook(kind: String, hook_id: String) -> Dictionary:
 		_apply_crew_loan_trust(definition)
 	run_state.scenario_publish_service_result(kind, hook_id, result)
 	return _service_success(result)
+
+
+# Commits a quoted cash price, its fallible time boundary, and all rewards as a
+# single detached RunState publication. The price is reserved before the
+# boundary; the result copy then applies every non-price delta exactly once.
+func _commit_money_transaction(result: Dictionary, price: int, transaction_kind: String, source_id: String, definition: Dictionary) -> Dictionary:
+	var candidate := run_state.detached_host_action_candidate()
+	if candidate == null:
+		return _service_error("The transaction could not create a safe state snapshot.")
+	var quoted_price := maxi(0, price)
+	if candidate.bankroll < quoted_price:
+		return _service_error("The quoted price is no longer affordable.")
+	if quoted_price > 0:
+		candidate.change_bankroll(-quoted_price, true)
+	var boundary_result := candidate.advance_environment_turns(1) if transaction_kind == "item" else _advance_transaction_hook_clock(candidate, transaction_kind, definition)
+	if not bool(boundary_result.get("ok", false)):
+		return _money_transaction_cancelled(boundary_result, "The transaction boundary could not advance safely.")
+	var candidate_service := get_script().new() as RunActionService
+	candidate_service.setup(library, candidate)
+	if candidate.run_status != RunState.RUN_STATUS_ACTIVE:
+		return _service_error("The transaction was cancelled because the action boundary ended the run.")
+	if transaction_kind == "item":
+		var live_offer := candidate_service.item_offer(source_id)
+		if live_offer.is_empty() or int(live_offer.get("price", -1)) != quoted_price:
+			return _service_error("The item offer changed before the purchase could commit.")
+	else:
+		var live_option := candidate_service.hook_option(transaction_kind, source_id)
+		if live_option.is_empty() or not bool(live_option.get("enabled", false)) or int(live_option.get("cost", -1)) != quoted_price:
+			return _service_error("The paid service changed before the transaction could commit.")
+	var applied_result := result.duplicate(true)
+	var applied_deltas := copy_result_deltas(applied_result.get("deltas", {}))
+	applied_deltas["bankroll_delta"] = int(applied_deltas.get("bankroll_delta", 0)) + quoted_price
+	applied_result["deltas"] = applied_deltas
+	applied_result["bankroll_delta"] = int(applied_deltas.get("bankroll_delta", 0))
+	GameModule.apply_result(candidate, applied_result)
+	candidate.evaluate_immediate_terminal_state(false)
+	if candidate.run_status == RunState.RUN_STATUS_FAILED and not bool(result.get("terminal_settlement", false)):
+		return _service_error("The transaction was cancelled because its settlement would end the run.")
+	if transaction_kind == "item":
+		candidate.remove_item_offer(source_id)
+	else:
+		candidate.scenario_publish_service_result(transaction_kind, source_id, applied_result)
+	if not run_state.publish_host_action_candidate(candidate):
+		return _service_error("The transaction could not publish its completed state.")
+	return _service_success(result)
+
+
+func _advance_transaction_hook_clock(candidate: RunState, kind: String, definition: Dictionary) -> Dictionary:
+	var duration_minutes := maxi(0, int(definition.get("duration_minutes", 0))) if kind == "service" else 0
+	if duration_minutes > 0:
+		return candidate.advance_game_clock_minutes(duration_minutes)
+	return candidate.advance_environment_turns(1)
+
+
+func _money_transaction_cancelled(boundary_result: Dictionary, fallback: String) -> Dictionary:
+	var errors: Array = boundary_result.get("errors", []) if typeof(boundary_result.get("errors", [])) == TYPE_ARRAY else []
+	var response := _service_error(str(errors[0]) if not errors.is_empty() else fallback)
+	response["error_code"] = "transaction_boundary_rejected"
+	return response
 
 
 func _advance_hook_clock(kind: String, definition: Dictionary) -> Dictionary:
@@ -1225,7 +1286,7 @@ func delta_summary(deltas: Dictionary) -> String:
 	var heat_cooldown_actions := int(deltas.get("heat_cooldown_actions", 0))
 	var heat_cooldown_per_action := int(deltas.get("heat_cooldown_per_action", 0))
 	if heat_cooldown_actions > 0 and heat_cooldown_per_action > 0:
-		parts.append("heat cools %d actions" % heat_cooldown_actions)
+		parts.append("heat cools %s" % PlayerTextScript.count_text("action", heat_cooldown_actions))
 	var alcoholic_delta := int(deltas.get("alcoholic_delta", 0))
 	if alcoholic_delta != 0:
 		parts.append("need %+d" % alcoholic_delta)

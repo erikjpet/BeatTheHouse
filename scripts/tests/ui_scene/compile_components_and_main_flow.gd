@@ -27,6 +27,7 @@ const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const PixelSceneCanvasScript := preload("res://scripts/ui/pixel_scene_canvas.gd")
 const GameSurfaceCanvasScript := preload("res://scripts/ui/game_surface_canvas.gd")
 const PerformanceLivenessGuardScript := preload("res://scripts/ui/performance_liveness_guard.gd")
+const BuildIdentityScript := preload("res://scripts/core/build_identity.gd")
 const RunInventoryScreenScript := preload("res://scripts/ui/run_inventory_screen.gd")
 const BagOpenReelScript := preload("res://scripts/ui/bag_open_reel.gd")
 const BagOpenReelViewModelScript := preload("res://scripts/ui/bag_open_reel_view_model.gd")
@@ -867,6 +868,13 @@ func _check_run_report_screen_component() -> bool:
 	if float(screen.debug_layout_snapshot().get("replay_progress", -1.0)) != 1.0:
 		push_error("Run report heat scrubber did not seek to the final action boundary.")
 		return false
+	screen.clear_report()
+	await process_frame
+	var cleared_snapshot := screen.debug_layout_snapshot()
+	for retained_count_key in ["timeline_heat_sample_count", "timeline_environment_band_count", "map_snapshot_node_count", "map_replay_keyframe_count", "map_replay_segment_count", "release_ledger_line_count", "bag_reward_choice_count", "take_home_item_reward_choice_count"]:
+		if int(cleared_snapshot.get(retained_count_key, -1)) != 0:
+			push_error("Run report retained completed-run data after clear_report: %s=%s." % [retained_count_key, str(cleared_snapshot.get(retained_count_key))])
+			return false
 	screen.queue_free()
 	await process_frame
 	return true
@@ -2635,13 +2643,14 @@ func _check_delivery_ordinary_travel_baseline(app: Control, phase: String) -> bo
 	# occupied plane and reflows scenario objects around every authored object.
 	# A detached bf398237 replay and two exact-candidate replays confirmed that
 	# only the layout-derived environment/world-map records changed. The 0.6
-	# collision recovery pass now searches every valid physical surface candidate,
-	# so these two layout-derived hashes advance again while route semantics stay
-	# byte-identical.
+	# Collision recovery searches every valid physical surface candidate and the
+	# harness isolates user placement state. These two layout-bearing hashes move
+	# with the collision-free project placement; route, RNG, story, and economy
+	# invariants below remain byte-identical.
 	const EXPECTED := {
 		"bankroll_delta": -4,
 		"clock_delta": 42,
-		"current_environment_sha256": "d562a8192a012c1a7fe8b98a95f0a974d24c84e2760edadd0c2836cb17c101cf",
+		"current_environment_sha256": "ad3e26a7f20868c46b51d62d534ffb42896ba66138668d7102e66d60055b369a",
 		"current_world_node_id": "bar",
 		"heat_delta": 0,
 		"provenance_commit": "7ddb7685efb21e45979ea10ab89e660d99c6e891",
@@ -2652,7 +2661,7 @@ func _check_delivery_ordinary_travel_baseline(app: Control, phase: String) -> bo
 		"town_action_index": 0,
 		"travel_count_delta": 1,
 		"travel_story_sha256": "0257877551b37226fd62316ee2af5e047a27387fbb87d5acfa0273d1366a0e81",
-		"world_map_sha256": "9ffa0dd721762602607d6ee6ce6b713b3b229134628ccd80394067dbdee1a896",
+		"world_map_sha256": "e3a90f64c59754ffe43b5eb13fc8797be6d20a823cfbd761a208eabfd90bdd41",
 	}
 	app.call("start_foundation_run", "DELIVERY-ORDINARY-BASELINE", {}, false)
 	for _start_frame in range(3):
@@ -3807,8 +3816,8 @@ func _run() -> void:
 		return
 	var project_version := str(ProjectSettings.get_setting("application/config/version", "")).strip_edges()
 	var rendered_version := str(first_menu_snapshot.get("release_version_text", "")).strip_edges()
-	if project_version.is_empty() or rendered_version != "Version %s" % project_version:
-		push_error("Rendered release version does not match ProjectSettings: rendered=%s project=%s." % [rendered_version, project_version])
+	if project_version != "0.5.1" or rendered_version != "Version %s" % BuildIdentityScript.display_version():
+		push_error("Development identity boundary diverged: rendered=%s identity=%s retained_project=%s." % [rendered_version, BuildIdentityScript.display_version(), project_version])
 		quit(1)
 		return
 	app.call("open_career_stats_screen")

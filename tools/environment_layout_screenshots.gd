@@ -251,7 +251,13 @@ func _capture_archetype(archetype: Dictionary, archetype_id: String, run_state: 
 		data["home_containers"] = _survey_home_containers(profile)
 		data["home_container_index"] = int((data["home_containers"] as Array).size())
 		data["home_lost"] = false
-	data["layout"] = EnvironmentInstance.ensure_generated_layout(data)
+	# Match production ordering: generated game state supplies room hooks (ticket
+	# redeemers, attendants, and similar objects) before the final packing pass.
+	# A capture that packs the raw archetype first can conceal the exact late-hook
+	# collisions this audit is intended to catch.
+	var generator := RunGeneratorScript.new(library)
+	data["game_states"] = generator.call("_generated_game_states", run_state, data, rng)
+	data["layout"] = EnvironmentInstance.ensure_generated_layout(data, library)
 	run_state.save_rng(rng)
 	run_state.set_environment(data)
 	app.call("_clear_selected_game_action")
@@ -271,7 +277,14 @@ func _capture_archetype(archetype: Dictionary, archetype_id: String, run_state: 
 		"service_ids": data.get("service_ids", []),
 		"lender_hooks": data.get("lender_hooks", []),
 		"authored_layout": archetype.get("layout", {}),
+		"generated_layout": {
+			"object_rects": (data.get("layout", {}) as Dictionary).get("object_rects", {}),
+			"placement_surfaces": (data.get("layout", {}) as Dictionary).get("placement_surfaces", {}),
+			"placement_errors": (data.get("layout", {}) as Dictionary).get("placement_errors", []),
+			"placement_fallback_ids": (data.get("layout", {}) as Dictionary).get("placement_fallback_ids", []),
+		},
 		"canvas_object_layout": _canvas_object_layout(),
+		"direct_interaction_overlaps": _direct_interaction_overlaps(_canvas_object_layout()),
 	}
 	if punchline_layer_review:
 		for layer_id_value in data.get("layer_ids", []):
@@ -286,7 +299,9 @@ func _capture_archetype_layer(archetype: Dictionary, archetype_id: String, layer
 	var data: Dictionary = environment.to_dict()
 	data["world_node_id"] = archetype_id
 	data["layer_discovery"] = {"club": true, "casino": true, "back_room": true}
-	data["layout"] = EnvironmentInstance.ensure_generated_layout(data)
+	var generator := RunGeneratorScript.new(library)
+	data["game_states"] = generator.call("_generated_game_states", run_state, data, rng)
+	data["layout"] = EnvironmentInstance.ensure_generated_layout(data, library)
 	run_state.set_environment(data)
 	app.call("_clear_selected_game_action")
 	app.call("_refresh")
@@ -305,6 +320,7 @@ func _capture_archetype_layer(archetype: Dictionary, archetype_id: String, layer
 		"lender_hooks": data.get("lender_hooks", []),
 		"authored_layout": data.get("layout", {}),
 		"canvas_object_layout": _canvas_object_layout(),
+		"direct_interaction_overlaps": _direct_interaction_overlaps(_canvas_object_layout()),
 	}
 
 
@@ -314,6 +330,29 @@ func _canvas_object_layout() -> Dictionary:
 		return {}
 	var snapshot: Dictionary = canvas.call("current_view_snapshot")
 	return snapshot.get("object_layout", {})
+
+
+func _direct_interaction_overlaps(layout: Dictionary) -> Array:
+	var objects := _array(layout.get("objects", []))
+	var overlaps: Array = []
+	for a in range(objects.size()):
+		var first := _dict(objects[a])
+		var first_rect := _rect(first.get("interaction_rect", {}))
+		if not first_rect.has_area():
+			continue
+		for b in range(a + 1, objects.size()):
+			var second := _dict(objects[b])
+			var second_rect := _rect(second.get("interaction_rect", {}))
+			if not second_rect.has_area() or not first_rect.intersects(second_rect):
+				continue
+			var intersection := first_rect.intersection(second_rect)
+			if intersection.has_area():
+				overlaps.append({
+					"a": str(first.get("id", "")),
+					"b": str(second.get("id", "")),
+					"area": intersection.get_area(),
+				})
+	return overlaps
 
 
 func _run_fix06_31_audit(library: Variant) -> void:

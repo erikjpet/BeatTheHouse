@@ -18,6 +18,7 @@ const RUN_MAP_BACKGROUND_PATH := "res://assets/art/map_backgrounds/cyberpunk_cit
 # at the same geography as the live travel map.
 const RUN_REPORT_MAP_BACKGROUND_PATH := RUN_MAP_BACKGROUND_PATH
 const TutorialFlowScript := preload("res://scripts/core/tutorial_flow.gd")
+const PlayerTextScript := preload("res://scripts/ui/player_text.gd")
 const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
 
 const CREW_MEMBER_LABELS := {
@@ -494,17 +495,13 @@ static func build_outcome(run_data: Dictionary, registry: Dictionary) -> Diction
 	var environment := _copy_dict(run_data.get("current_environment", {}))
 	var environment_name := str(environment.get("display_name", environment.get("id", "Unknown room")))
 	var total_minutes := maxi(0, int(run_data.get("game_clock_minutes", RunState.GAME_CLOCK_START_MINUTE)))
-	var day := int(floor(float(total_minutes) / 1440.0)) + 1
-	var minute_of_day := total_minutes % 1440
-	var hour := int(floor(float(minute_of_day) / 60.0))
-	var minute := minute_of_day % 60
 	return {
 		"key": outcome_key,
 		"won": won,
 		"title": title,
 		"how": how,
 		"seam_line": seam_line,
-		"where": "%s · Day %d, %02d:%02d" % [environment_name, day, hour, minute],
+		"where": "%s · %s" % [environment_name, PlayerTextScript.format_game_clock(total_minutes, true, ", ")],
 		"environment_name": environment_name,
 		"icon_key": str(definition.get("icon_key", outcome_key)),
 		"icon_path": str(definition.get("icon_path", "res://assets/art/run_outcomes/%s.png" % str(definition.get("icon_key", outcome_key)))),
@@ -1149,15 +1146,7 @@ static func cursor_for_progress(timeline: Dictionary, progress: float) -> Dictio
 
 
 static func format_game_clock(game_clock_minutes: int) -> String:
-	var total_minutes := maxi(0, game_clock_minutes)
-	var day := int(floor(float(total_minutes) / 1440.0)) + 1
-	var minute_of_day := total_minutes % 1440
-	var hour_24 := int(floor(float(minute_of_day) / 60.0)) % 24
-	var hour_12 := hour_24 % 12
-	if hour_12 == 0:
-		hour_12 = 12
-	var suffix := "AM" if hour_24 < 12 else "PM"
-	return "Day %d %d:%02d %s" % [day, hour_12, minute_of_day % 60, suffix]
+	return PlayerTextScript.format_game_clock(game_clock_minutes)
 
 
 static func load_outcome_registry() -> Dictionary:

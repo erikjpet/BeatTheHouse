@@ -1,6 +1,8 @@
 class_name CrewPlayModel
 extends RefCounted
 
+const PlayerTextScript := preload("res://scripts/ui/player_text.gd")
+
 # Data and deterministic state rules for explicit, limited-use coordinated plays.
 # Presence and rank remain owned by RunState/CrewRecruitmentModel.
 
@@ -173,7 +175,7 @@ static func availability(run_state: RunState, environment: Dictionary, game_id: 
 		summary += " · $%d cut" % cash_cost
 	var window := maxi(0, int(play.get("window_boundaries", 0)))
 	if window > 0:
-		summary += " · %d actions" % window
+		summary += " · %s" % PlayerTextScript.count_text("action", window)
 	var risk := maxi(0, int(play.get("detection_chance_percent", 0)))
 	if risk > 0:
 		summary += " · %d%% heat risk" % risk
@@ -343,7 +345,7 @@ static func activate(run_state: RunState, environment: Dictionary, game_id: Stri
 	elif play_id == "chip_dump":
 		message += " $%d becomes %d chips; the fee is $%d.%s" % [maxi(0, int(effect.get("transfer_amount", 0))), chips_delta, maxi(0, int(effect.get("transfer_fee", 0))), " The floor marks the pass." if detected else ""]
 	elif window > 0:
-		message += " %s is live for %d actions." % [str(play.get("display_name", play_id.capitalize())), window]
+		message += " %s is live for %s." % [str(play.get("display_name", play_id.capitalize())), PlayerTextScript.count_text("action", window)]
 	run_state.log_story({
 		"type": "crew_play",
 		"play_id": play_id,

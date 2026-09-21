@@ -18,6 +18,7 @@ const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")
 const ScenarioOperationRegistryScript := preload("res://scripts/core/scenario_operation_registry.gd")
 const ScenarioSequenceRuntimeScript := preload("res://scripts/core/scenario_sequence_runtime.gd")
 const ScenarioSequenceSchemaScript := preload("res://scripts/core/scenario_sequence_schema.gd")
+const PlayerTextScript := preload("res://scripts/ui/player_text.gd")
 const CrewWorldSequenceAdapterScript := preload("res://scripts/core/crew_world_sequence_adapter.gd")
 const WorldSequencePackageCatalogScript := preload("res://scripts/core/world_sequence_package_catalog.gd")
 const EnvironmentBaseSemanticRecordsScript := preload("res://scripts/core/environment_base_semantic_records.gd")
@@ -52,6 +53,7 @@ const SCENARIO_DERIVED_NONCAUSAL_ENVIRONMENT_FIELDS := [
 	"scenario_layout_context",
 	"scenario_layout_audit",
 	"scenario_render_snapshot",
+	"scenario_live_producer_projection",
 	"scenario_restore_pending_trusted_rebuild",
 ]
 
@@ -782,16 +784,7 @@ func game_minute_of_day() -> int:
 
 
 func clock_display_text(include_day: bool = true) -> String:
-	var minute_of_day := game_minute_of_day()
-	var hour_24 := int(floor(float(minute_of_day) / 60.0)) % 24
-	var hour_12 := hour_24 % 12
-	if hour_12 == 0:
-		hour_12 = 12
-	var suffix := "AM" if hour_24 < 12 else "PM"
-	var time_text := "%d %s" % [hour_12, suffix]
-	if include_day:
-		return "Day %d %s" % [game_day(), time_text]
-	return time_text
+	return PlayerTextScript.format_game_clock(game_clock_minutes, include_day)
 
 
 func advance_game_clock_minutes(amount: int) -> Dictionary:
@@ -1681,11 +1674,17 @@ func set_environment(environment_data: Dictionary, debug_timing: Dictionary = {}
 		# Persistent storage retains the immutable inventory and its source
 		# provenance. Keep a well-formed, exactly bound copy available to the
 		# mandatory rebuild; newly generated or malformed rooms still start empty.
-		if not _persisted_scenario_inventory_matches_environment(current_environment):
+		var persisted_inventory_matches := _persisted_scenario_inventory_matches_environment(current_environment)
+		if not persisted_inventory_matches:
 			current_environment.erase("scenario_semantic_inventory")
 		current_environment.erase("scenario_base_interactions")
 		current_environment.erase("scenario_base_actors")
-		current_environment.erase("scenario_base_producer_context")
+		# This context is part of the immutable semantic seal. Reentry used to
+		# discard it while retaining the matching inventory, forcing refresh either
+		# to sample mutable live state or to fail a valid revisit. Preserve only the
+		# exact well-formed context that accompanies a matching persisted inventory.
+		if not persisted_inventory_matches or not _scenario_base_producer_context_valid(_copy_dict(current_environment.get("scenario_base_producer_context", {}))):
+			current_environment.erase("scenario_base_producer_context")
 		current_environment.erase("scenario_semantic_action_digest")
 		# Finalization creates the public visit identity and falls back to it when
 		# this optional persisted migration hint is absent.
@@ -2643,7 +2642,16 @@ func _scenario_finalize_trusted_base_semantics(trusted_records: Array, library: 
 			or current_environment.has("scenario_semantic_inventory_version") \
 			or current_environment.has("scenario_semantic_digest")
 	if library == null: return _scenario_semantic_finalization_failure(["Scenario semantic finalization requires ContentLibrary."], refresh_attempt)
-	var producer_context := _scenario_base_producer_context()
+	var live_producer_context := _scenario_base_producer_context()
+	var producer_context := live_producer_context
+	if refresh_attempt:
+		var base_context_present := current_environment.has("scenario_base_producer_context")
+		var sealed_producer_context := _copy_dict(current_environment.get("scenario_base_producer_context", {}))
+		if not base_context_present:
+			sealed_producer_context = _copy_dict(current_environment.get("scenario_sealed_producer_context", {}))
+		if not _scenario_base_producer_context_valid(sealed_producer_context):
+			return _invalidate_scenario_semantic_proof("scenario semantic producer context is missing or malformed; explicit migration is required")
+		producer_context = sealed_producer_context
 	# Trusted records are produced from the immutable pre-sequence baseline. A
 	# resolved ordinary event is intentionally absent from the live room, but it
 	# remains part of that baseline seal. Authenticate the records against the
@@ -2719,6 +2727,8 @@ func _scenario_finalize_trusted_base_semantics(trusted_records: Array, library: 
 		refresh_candidate["scenario_base_interactions"] = interactions
 		refresh_candidate["scenario_base_actors"] = actors
 		refresh_candidate["scenario_base_producer_context"] = producer_context.duplicate(true)
+		refresh_candidate["scenario_sealed_producer_context"] = _copy_dict(current_environment.get("scenario_sealed_producer_context", producer_context)).duplicate(true)
+		refresh_candidate["scenario_live_producer_projection"] = _scenario_live_producer_projection(live_producer_context)
 		refresh_candidate["scenario_semantic_action_digest"] = action_digest
 		refresh_candidate["scenario_semantic_inventory"] = sealed
 		refresh_candidate["scenario_semantic_inventory_version"] = next_version
@@ -2734,7 +2744,7 @@ func _scenario_finalize_trusted_base_semantics(trusted_records: Array, library: 
 		var refresh_layout := _resolve_scenario_layout_candidate(refresh_candidate, stamped_records, definition, layout_context)
 		if not bool(refresh_layout.get("ok", false)):
 			return refresh_layout
-		for key in ["scenario_id", "scenario_base_interactions", "scenario_base_actors", "scenario_base_producer_context", "scenario_semantic_action_digest", "scenario_semantic_inventory", "scenario_semantic_inventory_version", "scenario_semantic_digest", "scenario_semantic_ready", "scenario_restore_contract", "scenario_event_choices", "scenario_sequence_state", ScenarioEngineScript.TRUSTED_STATE_REFERENCE_KEY, ScenarioEngineScript.TRUSTED_LAYOUT_INPUT_DIGEST_KEY, "scenario_sequence_projection", "scenario_layout_base_records", "scenario_layout_context", "scenario_layout_authority", "scenario_layout_audit", "scenario_layout_authority_digest", "scenario_render_snapshot", "game_ids", "service_ids", "travel_hooks", "scenario_game_modifiers", "scenario_sequence_base_game_ids", "scenario_sequence_base_service_ids", "scenario_sequence_base_travel_hooks", "scenario_sequence_base_game_modifiers", "scenario_sequence_base_layout_object_rects"]:
+		for key in ["scenario_id", "scenario_base_interactions", "scenario_base_actors", "scenario_base_producer_context", "scenario_sealed_producer_context", "scenario_live_producer_projection", "scenario_semantic_action_digest", "scenario_semantic_inventory", "scenario_semantic_inventory_version", "scenario_semantic_digest", "scenario_semantic_ready", "scenario_restore_contract", "scenario_event_choices", "scenario_sequence_state", ScenarioEngineScript.TRUSTED_STATE_REFERENCE_KEY, ScenarioEngineScript.TRUSTED_LAYOUT_INPUT_DIGEST_KEY, "scenario_sequence_projection", "scenario_layout_base_records", "scenario_layout_context", "scenario_layout_authority", "scenario_layout_audit", "scenario_layout_authority_digest", "scenario_render_snapshot", "game_ids", "service_ids", "travel_hooks", "scenario_game_modifiers", "scenario_sequence_base_game_ids", "scenario_sequence_base_service_ids", "scenario_sequence_base_travel_hooks", "scenario_sequence_base_game_modifiers", "scenario_sequence_base_layout_object_rects"]:
 			current_environment[key] = refresh_candidate.get(key).duplicate(true) if typeof(refresh_candidate.get(key)) in [TYPE_DICTIONARY, TYPE_ARRAY] else refresh_candidate.get(key)
 		current_environment.erase("scenario_sequence_lifecycle_errors")
 		current_environment.erase("scenario_restore_pending_trusted_rebuild")
@@ -2748,6 +2758,8 @@ func _scenario_finalize_trusted_base_semantics(trusted_records: Array, library: 
 	candidate["scenario_base_interactions"] = interactions
 	candidate["scenario_base_actors"] = actors
 	candidate["scenario_base_producer_context"] = producer_context.duplicate(true)
+	candidate["scenario_sealed_producer_context"] = producer_context.duplicate(true)
+	candidate["scenario_live_producer_projection"] = _scenario_live_producer_projection(live_producer_context)
 	candidate["scenario_semantic_action_digest"] = action_digest
 	candidate["scenario_semantic_inventory"] = sealed
 	candidate["scenario_semantic_inventory_version"] = next_version
@@ -2787,7 +2799,7 @@ func _scenario_finalize_trusted_base_semantics(trusted_records: Array, library: 
 		"warnings": _copy_array(reentry.get("warnings", [])),
 		"errors": [],
 	}
-	for key in ["scenario_id", "scenario_base_interactions", "scenario_base_actors", "scenario_base_producer_context", "scenario_semantic_action_digest", "scenario_semantic_inventory", "scenario_semantic_inventory_version", "scenario_semantic_digest", "scenario_semantic_ready", "scenario_restore_contract", "scenario_event_choices", "scenario_sequence_migration", "scenario_sequence_state", ScenarioEngineScript.TRUSTED_STATE_REFERENCE_KEY, ScenarioEngineScript.TRUSTED_LAYOUT_INPUT_DIGEST_KEY, "scenario_sequence_projection", "scenario_layout_base_records", "scenario_layout_context", "scenario_layout_authority", "scenario_layout_audit", "scenario_layout_authority_digest", "scenario_render_snapshot", "game_ids", "service_ids", "travel_hooks", "scenario_game_modifiers", "scenario_sequence_base_game_ids", "scenario_sequence_base_service_ids", "scenario_sequence_base_travel_hooks", "scenario_sequence_base_game_modifiers", "scenario_sequence_base_layout_object_rects"]:
+	for key in ["scenario_id", "scenario_base_interactions", "scenario_base_actors", "scenario_base_producer_context", "scenario_sealed_producer_context", "scenario_live_producer_projection", "scenario_semantic_action_digest", "scenario_semantic_inventory", "scenario_semantic_inventory_version", "scenario_semantic_digest", "scenario_semantic_ready", "scenario_restore_contract", "scenario_event_choices", "scenario_sequence_migration", "scenario_sequence_state", ScenarioEngineScript.TRUSTED_STATE_REFERENCE_KEY, ScenarioEngineScript.TRUSTED_LAYOUT_INPUT_DIGEST_KEY, "scenario_sequence_projection", "scenario_layout_base_records", "scenario_layout_context", "scenario_layout_authority", "scenario_layout_audit", "scenario_layout_authority_digest", "scenario_render_snapshot", "game_ids", "service_ids", "travel_hooks", "scenario_game_modifiers", "scenario_sequence_base_game_ids", "scenario_sequence_base_service_ids", "scenario_sequence_base_travel_hooks", "scenario_sequence_base_game_modifiers", "scenario_sequence_base_layout_object_rects"]:
 		current_environment[key] = candidate.get(key).duplicate(true) if typeof(candidate.get(key)) in [TYPE_DICTIONARY, TYPE_ARRAY] else candidate.get(key)
 	current_environment.erase("scenario_sequence_pending_visit_id")
 	current_environment.erase("scenario_sequence_lifecycle_errors")
@@ -3184,7 +3196,7 @@ func _scenario_base_producer_context() -> Dictionary:
 
 
 func _invalidate_scenario_semantic_proof(message: String) -> Dictionary:
-	for key in ["scenario_semantic_ready", "scenario_semantic_inventory", "scenario_base_interactions", "scenario_base_actors", "scenario_base_producer_context", "scenario_semantic_action_digest", "scenario_layout_base_records", "scenario_layout_context", "scenario_layout_authority", "scenario_layout_audit", "scenario_layout_authority_digest", "scenario_render_snapshot"]:
+	for key in ["scenario_semantic_ready", "scenario_semantic_inventory", "scenario_base_interactions", "scenario_base_actors", "scenario_base_producer_context", "scenario_sealed_producer_context", "scenario_semantic_action_digest", "scenario_layout_base_records", "scenario_layout_context", "scenario_layout_authority", "scenario_layout_audit", "scenario_layout_authority_digest", "scenario_render_snapshot"]:
 		current_environment.erase(key)
 	# Proof invalidation is not a causal gameplay boundary. Preserve the durable
 	# journal exactly and block live ingress; cleanup may only be written by the
@@ -3963,6 +3975,34 @@ func remember_environment_situation_cycle(node_id: String, cycle_id: String, sce
 	environment_situation_cycles_by_node[clean_node] = {
 		"cycle_id": clean_cycle,
 		"scenario_id": scenario_id.strip_edges(),
+	}
+
+
+func _scenario_base_producer_context_valid(context: Dictionary) -> bool:
+	if context.keys().size() != 3:
+		return false
+	if typeof(context.get("numbers_venue_ids")) != TYPE_ARRAY \
+			or typeof(context.get("numbers_silas_present")) != TYPE_BOOL \
+			or typeof(context.get("delivery_handoff_node_id")) != TYPE_STRING:
+		return false
+	var venue_ids: Array = context.get("numbers_venue_ids", [])
+	var prior_id := ""
+	for venue_value in venue_ids:
+		if typeof(venue_value) != TYPE_STRING:
+			return false
+		var venue_id := str(venue_value)
+		if venue_id.is_empty() or venue_id != venue_id.strip_edges() or not prior_id.is_empty() and venue_id <= prior_id:
+			return false
+		prior_id = venue_id
+	var handoff_id := str(context.get("delivery_handoff_node_id", ""))
+	return handoff_id == handoff_id.strip_edges()
+
+
+func _scenario_live_producer_projection(context: Dictionary) -> Dictionary:
+	return {
+		"schema_version": 1,
+		"context": context.duplicate(true),
+		"digest": ScenarioSequenceRuntimeScript.content_fingerprint(context),
 	}
 
 
@@ -9806,12 +9846,7 @@ func _crew_heist_route_contradiction(member_id: String) -> Dictionary:
 
 
 static func _crew_clock_label(total_minutes: int) -> String:
-	var minute_of_day := maxi(0, total_minutes) % 1440
-	var hour_24 := int(floor(float(minute_of_day) / 60.0)) % 24
-	var hour_12 := hour_24 % 12
-	if hour_12 == 0:
-		hour_12 = 12
-	return "%d:%02d %s" % [hour_12, minute_of_day % 60, "AM" if hour_24 < 12 else "PM"]
+	return PlayerTextScript.format_time_of_day(total_minutes)
 
 
 func crew_heist_abort(reason: String = "retreated", host_capability: Variant = null) -> Dictionary:
@@ -11849,14 +11884,7 @@ func _delivery_contact_label(node: Dictionary) -> String:
 
 
 func _clock_display_for_absolute_minutes(absolute_minutes: int) -> String:
-	var safe_minutes := maxi(0, absolute_minutes)
-	var day := int(floor(float(safe_minutes) / 1440.0)) + 1
-	var minute_of_day := safe_minutes % 1440
-	var hour_24 := int(floor(float(minute_of_day) / 60.0)) % 24
-	var minute := minute_of_day % 60
-	var hour_12 := hour_24 % 12
-	if hour_12 == 0: hour_12 = 12
-	return "Day %d, %d:%02d %s" % [day, hour_12, minute, "AM" if hour_24 < 12 else "PM"]
+	return PlayerTextScript.format_game_clock(absolute_minutes, true, ", ")
 
 
 func _delivery_add_inventory_cargo() -> void:
@@ -16297,7 +16325,7 @@ static func scenario_restore_equivalence_snapshot(environment: Dictionary) -> Di
 		"scenario_sequence_state", "scenario_sequence_pending_visit_id",
 		"scenario_restore_contract", "scenario_semantic_ready", "scenario_semantic_inventory",
 		"scenario_semantic_inventory_version", "scenario_semantic_digest",
-		"scenario_base_interactions", "scenario_base_actors", "scenario_base_producer_context",
+		"scenario_base_interactions", "scenario_base_actors", "scenario_base_producer_context", "scenario_sealed_producer_context",
 		"scenario_semantic_action_digest", "scenario_event_choices",
 		"scenario_layout_base_records", "scenario_layout_authority", "scenario_layout_authority_digest",
 		"scenario_sequence_base_game_ids", "scenario_sequence_base_service_ids",

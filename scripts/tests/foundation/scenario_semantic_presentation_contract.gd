@@ -19,6 +19,19 @@ const BOARD_SIZE := Vector2(ArtContractsScript.ENVIRONMENT_BOARD_SIZE)
 const SMALL_SCREEN_TARGET := Vector2(ArtContractsScript.ENVIRONMENT_OBJECT_HIT_SIZE)
 
 
+class MutableProducerContextRun:
+	extends RunState
+
+	var fixture_producer_context := {
+		"numbers_venue_ids": ["bar"],
+		"numbers_silas_present": false,
+		"delivery_handoff_node_id": "",
+	}
+
+	func _scenario_base_producer_context() -> Dictionary:
+		return fixture_producer_context.duplicate(true)
+
+
 static func check(library: Variant, failures: Array) -> void:
 	# This is the single standard-suite authority for the complete env06_8
 	# through-state icon and paired-hidden observer. ContentDepth keeps the fast
@@ -30,6 +43,7 @@ static func check(library: Variant, failures: Array) -> void:
 	_check_finalized_canvas_authority(library, failures)
 	_check_atomic_finalization_layout(library, failures)
 	_check_mutable_event_and_route_source_authority(library, failures)
+	_check_immutable_producer_context_refresh(library, failures)
 	_check_persisted_inventory_dynamic_refresh_guard(failures)
 	_check_atomic_post_operation_layout(library, failures)
 	_check_passive_atomic_commits(library, failures)
@@ -53,6 +67,7 @@ static func check_static_and_geometry(library: Variant, failures: Array) -> void
 	_check_finalized_canvas_authority(library, failures)
 	_check_atomic_finalization_layout(library, failures)
 	_check_mutable_event_and_route_source_authority(library, failures)
+	_check_immutable_producer_context_refresh(library, failures)
 	_check_persisted_inventory_dynamic_refresh_guard(failures)
 	_check_atomic_post_operation_layout(library, failures)
 	_check_passive_atomic_commits(library, failures)
@@ -206,6 +221,35 @@ static func _check_mutable_event_and_route_source_authority(library: Variant, fa
 		failures.append("Scenario refresh resurrected the resolved base event in the live room.")
 	if choices.has("parking_lot_tip"):
 		failures.append("An injected live catalog event minted scenario choice authority after the base event set was sealed.")
+
+
+static func _check_immutable_producer_context_refresh(library: Variant, failures: Array) -> void:
+	var fields := {
+		"numbers_venue_ids": ["bar", "corner_store"],
+		"numbers_silas_present": true,
+		"delivery_handoff_node_id": "back_alley",
+	}
+	for field_value in fields.keys():
+		var field := str(field_value)
+		var run_state := MutableProducerContextRun.new()
+		run_state.current_environment = _finalization_environment(ScenarioSequenceContractScript.finalization_fixture_definition())
+		run_state.scenario_prepare_semantic_finalization()
+		var presentation := _production_presentation()
+		var first := run_state.scenario_finalize_base_semantics([presentation], library, _production_layout_context())
+		if not bool(first.get("ok", false)):
+			failures.append("Producer-context refresh fixture could not seal its initial room for %s." % field)
+			continue
+		var sealed_context := _dict(run_state.current_environment.get("scenario_base_producer_context", {}))
+		var sealed_inventory := JSON.stringify(run_state.current_environment.get("scenario_semantic_inventory", {}))
+		var sealed_digest := str(run_state.current_environment.get("scenario_semantic_digest", ""))
+		run_state.fixture_producer_context[field] = fields[field]
+		var refreshed := run_state.scenario_finalize_base_semantics([presentation], library, _production_layout_context())
+		if not bool(refreshed.get("ok", false)) \
+				or not bool(run_state.current_environment.get("scenario_semantic_ready", false)) \
+				or JSON.stringify(run_state.current_environment.get("scenario_base_producer_context", {})) != JSON.stringify(sealed_context) \
+				or JSON.stringify(run_state.current_environment.get("scenario_semantic_inventory", {})) != sealed_inventory \
+				or str(run_state.current_environment.get("scenario_semantic_digest", "")) != sealed_digest:
+			failures.append("Mutable live producer field %s changed or destroyed the immutable scenario proof during refresh." % field)
 
 
 static func _check_atomic_post_operation_layout(library: Variant, failures: Array) -> void:

@@ -7443,9 +7443,18 @@ func _check_bar_dice_surface_contract(game: GameModule, failures: Array) -> void
 			break
 	var bar_layout: Dictionary = surface.get("bar_dice_layout", {}) if typeof(surface.get("bar_dice_layout", {})) == TYPE_DICTIONARY else {}
 	var text_panel_rects: Array = bar_layout.get("text_panel_rects", []) if typeof(bar_layout.get("text_panel_rects", [])) == TYPE_ARRAY else []
+	var opponent_panel_rects: Array = bar_layout.get("opponent_panel_rects", []) if typeof(bar_layout.get("opponent_panel_rects", [])) == TYPE_ARRAY else []
+	var dealer_station_rects: Array = bar_layout.get("dealer_station_rects", []) if typeof(bar_layout.get("dealer_station_rects", [])) == TYPE_ARRAY else []
+	var patron_exclusion_rects: Array = bar_layout.get("patron_exclusion_rects", []) if typeof(bar_layout.get("patron_exclusion_rects", [])) == TYPE_ARRAY else []
 	var patron_safe_rects: Array = bar_layout.get("patron_safe_rects", []) if typeof(bar_layout.get("patron_safe_rects", [])) == TYPE_ARRAY else []
 	if text_panel_rects.size() < 2 or patron_safe_rects.size() < 2:
 		failures.append("Bar Dice surface did not expose text-panel and player-safe layout metadata.")
+	if opponent_panel_rects.size() != 3:
+		failures.append("Bar Dice surface did not expose all three Rail Cups panel rectangles.")
+	if dealer_station_rects.size() < 4:
+		failures.append("Bar Dice surface did not expose the dealer station and all status-widget rectangles.")
+	if patron_exclusion_rects.size() != text_panel_rects.size() + opponent_panel_rects.size() + dealer_station_rects.size():
+		failures.append("Bar Dice patron-exclusion metadata did not include every text, Rail Cups, and dealer-station rectangle.")
 	var game_board := Rect2(Vector2.ZERO, Vector2(ArtContractsScript.GAME_BOARD_SIZE))
 	for panel_value in text_panel_rects:
 		var panel_rect := _layout_rect_from_dict(panel_value)
@@ -7454,11 +7463,17 @@ func _check_bar_dice_surface_contract(game: GameModule, failures: Array) -> void
 		var panel_id := str((panel_value as Dictionary).get("id", "")) if typeof(panel_value) == TYPE_DICTIONARY else ""
 		if panel_id == "rules" and panel_rect.size.y >= 64.0:
 			failures.append("Bar Dice rules panel stayed too large after the compact layout pass.")
+	for occupied_value in patron_exclusion_rects:
+		var occupied_rect := _layout_rect_from_dict(occupied_value)
+		if occupied_rect.size.x <= 0.0 or occupied_rect.size.y <= 0.0 or occupied_rect.position.x < 0.0 or occupied_rect.position.y < 0.0 or occupied_rect.end.x > game_board.end.x or occupied_rect.end.y > game_board.end.y:
+			failures.append("Bar Dice patron-exclusion rectangle is outside the game board: %s." % str(occupied_rect))
+			continue
+		var occupied_id := str((occupied_value as Dictionary).get("id", "unnamed")) if typeof(occupied_value) == TYPE_DICTIONARY else "unnamed"
 		for patron_value in patron_safe_rects:
 			var patron_rect := _layout_rect_from_dict(patron_value)
-			if panel_rect.intersects(patron_rect):
-				failures.append("Bar Dice text panel overlaps a table player: %s intersects %s." % [str(panel_rect), str(patron_rect)])
-				break
+			if occupied_rect.intersects(patron_rect):
+				var patron_id := str((patron_value as Dictionary).get("id", "unnamed")) if typeof(patron_value) == TYPE_DICTIONARY else "unnamed"
+				failures.append("Bar Dice occupied region %s overlaps table player %s: %s intersects %s." % [occupied_id, patron_id, str(occupied_rect), str(patron_rect)])
 	for i in range(patron_safe_rects.size()):
 		var patron_a := _layout_rect_from_dict(patron_safe_rects[i])
 		for j in range(i + 1, patron_safe_rects.size()):

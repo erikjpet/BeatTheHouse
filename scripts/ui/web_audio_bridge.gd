@@ -14,7 +14,8 @@ static var _payload_bytes := 0
 static var _preencoded_payload_hits := 0
 static var _synchronous_payload_encodes := 0
 
-const WEB_AUDIO_VERSION := 9
+const WEB_AUDIO_VERSION := 10
+const WEB_PCM_CACHE_BUDGET_BYTES := 64 * 1024 * 1024
 const WEB_AUDIO_MIN_BUFFER_SAMPLE_RATE := 3000
 const PCM_BASE64_META: StringName = &"_bth_web_pcm_base64"
 const WEB_MASTER_GAIN := 0.72
@@ -29,7 +30,8 @@ const WEB_MUSIC_STEM_ROLES := ["pad", "bass", "bass_dark", "lead", "drums_low", 
 
 const WEB_AUDIO_SCRIPT := """
 (function () {
-	var BRIDGE_VERSION = 9;
+	var BRIDGE_VERSION = 10;
+	var PCM_BUDGET_BYTES = 67108864;
 	if (window.BTHWebAudio && window.BTHWebAudio.version === BRIDGE_VERSION) {
 		return true;
 	}
@@ -174,6 +176,9 @@ const WEB_AUDIO_SCRIPT := """
 		sfxBus: null,
 		musicBus: null,
 		pcmBuffers: {},
+		pcmMeta: {},
+		pcmSerial: 0,
+		pcmBudgetBytes: PCM_BUDGET_BYTES,
 		sfxLoops: {},
 		sfxOneShots: [],
 		musicGroups: {},
@@ -223,7 +228,74 @@ const WEB_AUDIO_SCRIPT := """
 			}
 			return true;
 		},
-		registerPcm: function (payload) {
+		activePcmKeys: function () {
+			var active = {};
+			for (var loopId in this.sfxLoops) {
+				if (Object.prototype.hasOwnProperty.call(this.sfxLoops, loopId) && this.sfxLoops[loopId] && !this.sfxLoops[loopId].ended) active[this.sfxLoops[loopId].key] = true;
+			}
+			for (var shotIndex = 0; shotIndex < this.sfxOneShots.length; shotIndex += 1) {
+				var shot = this.sfxOneShots[shotIndex];
+				if (shot && !shot.ended) active[shot.key] = true;
+			}
+			for (var groupId in this.musicGroups) {
+				if (!Object.prototype.hasOwnProperty.call(this.musicGroups, groupId)) continue;
+				var keys = this.musicGroups[groupId].keys || [];
+				for (var keyIndex = 0; keyIndex < keys.length; keyIndex += 1) active[keys[keyIndex]] = true;
+			}
+			return active;
+		},
+		pcmStats: function () {
+			var keys = Object.keys(this.pcmBuffers);
+			var bytes = 0;
+			for (var index = 0; index < keys.length; index += 1) bytes += Number((this.pcmMeta[keys[index]] || {}).bytes || 0);
+			return JSON.stringify({ count: keys.length, bytes: bytes, budget_bytes: this.pcmBudgetBytes, keys: keys });
+		},
+		touchPcm: function (key) {
+			if (!this.pcmMeta[key]) return;
+			this.pcmSerial += 1;
+			this.pcmMeta[key].lastUsed = this.pcmSerial;
+		},
+		disposePcm: function (payload) {
+			payload = parsePayload(payload, {});
+			var requested = Array.isArray(payload) ? payload : (Array.isArray(payload.keys) ? payload.keys : []);
+			var active = this.activePcmKeys();
+			var removed = [];
+			for (var index = 0; index < requested.length; index += 1) {
+				var key = String(requested[index] || "");
+				if (!key || active[key] || !this.pcmBuffers[key]) continue;
+				delete this.pcmBuffers[key];
+				delete this.pcmMeta[key];
+				removed.push(key);
+			}
+			return JSON.stringify({ removed_keys: removed, stats: JSON.parse(this.pcmStats()) });
+		},
+		clearInactivePcm: function () {
+			var active = this.activePcmKeys();
+			var inactive = Object.keys(this.pcmBuffers).filter(function (key) { return !active[key]; });
+			return this.disposePcm({ keys: inactive });
+		},
+		evictPcm: function (protectedKeys) {
+			var protectedSet = this.activePcmKeys();
+			protectedKeys = Array.isArray(protectedKeys) ? protectedKeys : [];
+			for (var protectIndex = 0; protectIndex < protectedKeys.length; protectIndex += 1) protectedSet[String(protectedKeys[protectIndex] || "")] = true;
+			var stats = JSON.parse(this.pcmStats());
+			while (stats.bytes > this.pcmBudgetBytes) {
+				var victim = "";
+				var oldest = Number.MAX_SAFE_INTEGER;
+				var keys = Object.keys(this.pcmBuffers);
+				for (var index = 0; index < keys.length; index += 1) {
+					var key = keys[index];
+					var age = Number((this.pcmMeta[key] || {}).lastUsed || 0);
+					if (!protectedSet[key] && age < oldest) { victim = key; oldest = age; }
+				}
+				if (!victim) break;
+				delete this.pcmBuffers[victim];
+				delete this.pcmMeta[victim];
+				stats = JSON.parse(this.pcmStats());
+			}
+			return this.pcmStats();
+		},
+		registerPcm: function (payload, protectedKeys) {
 			payload = parsePayload(payload, {});
 			if (!this.ensure()) {
 				return false;
@@ -233,6 +305,7 @@ const WEB_AUDIO_SCRIPT := """
 				return false;
 			}
 			if (this.pcmBuffers[key]) {
+				this.touchPcm(key);
 				return true;
 			}
 			if (!payload.data) {
@@ -240,6 +313,12 @@ const WEB_AUDIO_SCRIPT := """
 			}
 			try {
 				this.pcmBuffers[key] = payload.codec === "bth_ima_adpcm4" ? decodeBthImaAdpcm(payload, this.ctx) : decodePcm16(payload, this.ctx);
+				this.pcmSerial += 1;
+				var decoded = this.pcmBuffers[key];
+				this.pcmMeta[key] = { bytes: decoded.length * decoded.numberOfChannels * 4, lastUsed: this.pcmSerial };
+				var pending = Array.isArray(protectedKeys) ? protectedKeys.slice() : [];
+				pending.push(key);
+				this.evictPcm(pending);
 			} catch (error) {
 				console.error("BTH Web Audio PCM decode failed:", error);
 				return false;
@@ -254,7 +333,7 @@ const WEB_AUDIO_SCRIPT := """
 			// suspended: Chromium logs and schedules each rejected attempt on the
 			// main thread. A cabinet loop may be queued silently before unlock so it
 			// begins at the correct phase when the user's first gesture resumes audio.
-			if (!this.ensure() || (!this.unlocked && !payload.loop) || !this.registerPcm(payload)) {
+			if (!this.ensure() || (!this.unlocked && !payload.loop) || !this.registerPcm(payload, [String(payload.key || "")])) {
 				return false;
 			}
 			var ctx = this.ctx;
@@ -311,7 +390,7 @@ const WEB_AUDIO_SCRIPT := """
 			if (loopId) {
 				this.stopLoop(loopId);
 			}
-			var entry = { source: source, gain: gain, key: key, profileId: profileId, ended: false };
+			var entry = { source: source, gain: gain, key: key, profileId: profileId, ended: false, paused: false, pitch: source.playbackRate.value, outputGain: gain.gain.value };
 			source.onended = function () {
 				entry.ended = true;
 				try {
@@ -339,6 +418,24 @@ const WEB_AUDIO_SCRIPT := """
 			delete this.sfxLoops[loopId];
 			return true;
 		},
+		setLoopPaused: function (loopId, paused) {
+			loopId = String(loopId || "");
+			var entry = this.sfxLoops[loopId];
+			if (!entry || !entry.source || !entry.gain || entry.ended) {
+				return false;
+			}
+			paused = !!paused;
+			if (entry.paused === paused) {
+				return true;
+			}
+			entry.paused = paused;
+			var now = this.ctx.currentTime;
+			entry.source.playbackRate.cancelScheduledValues(now);
+			entry.gain.gain.cancelScheduledValues(now);
+			entry.source.playbackRate.setValueAtTime(paused ? 0 : Number(entry.pitch || 1), now);
+			entry.gain.gain.setValueAtTime(paused ? 0 : Number(entry.outputGain || 0), now);
+			return true;
+		},
 		playMusicStems: function (payload) {
 			payload = parsePayload(payload, {});
 			// Music sources are intentionally allowed to queue on a suspended graph;
@@ -358,12 +455,14 @@ const WEB_AUDIO_SCRIPT := """
 				sources: {},
 				gains: {},
 				startedAt: ctx.currentTime,
-				position: Math.max(0, Number(payload.position || 0))
+				position: Math.max(0, Number(payload.position || 0)),
+				keys: []
 			};
+			var pendingKeys = stems.map(function (stem) { return String((stem || {}).key || ""); });
 			for (var index = 0; index < stems.length; index += 1) {
 				var stem = stems[index] || {};
 				var role = String(stem.role || "");
-				if (!role || !this.registerPcm(stem)) {
+				if (!role || !this.registerPcm(stem, pendingKeys)) {
 					continue;
 				}
 				var buffer = this.pcmBuffers[String(stem.key || "")];
@@ -383,6 +482,7 @@ const WEB_AUDIO_SCRIPT := """
 				var offset = buffer.duration > 0 ? group.position % buffer.duration : 0;
 				group.sources[role] = source;
 				group.gains[role] = gain;
+				group.keys.push(String(stem.key || ""));
 				source.start(0, offset);
 			}
 			if (!Object.keys(group.sources).length) {
@@ -557,6 +657,16 @@ static func stop_loop(loop_id: String) -> void:
 	_bridge_interface.stopLoop(safe_loop_id)
 
 
+static func set_loop_paused(loop_id: String, paused: bool) -> bool:
+	if not available() or not _bridge_ready():
+		return false
+	var safe_loop_id := loop_id.strip_edges()
+	if safe_loop_id.is_empty():
+		return false
+	_record_bridge_call("pause_loop" if paused else "resume_loop", safe_loop_id.length())
+	return bool(_bridge_interface.setLoopPaused(safe_loop_id, paused))
+
+
 static func play_music_stems(group_id: String, stem_set_key: String, stem_set: Dictionary, role_volume_db: Dictionary, resume_position: float) -> bool:
 	if not available():
 		return false
@@ -668,17 +778,30 @@ static func stop_music(group_id: String = "") -> void:
 	_bridge_interface.stopMusic(payload_json)
 
 
+static func dispose_pcm(keys: Array) -> Dictionary:
+	if keys.is_empty() or not _bridge_ready():
+		return _tracked_pcm_stats()
+	var payload := JSON.stringify({"keys": keys})
+	_record_bridge_call("dispose_pcm", payload.length())
+	var result := _parse_bridge_pcm_result(_bridge_interface.disposePcm(payload))
+	_sync_registered_pcm_from_result(result)
+	return result
+
+
+static func clear_inactive_pcm() -> Dictionary:
+	if not available() or not _bridge_ready():
+		return _tracked_pcm_stats()
+	_record_bridge_call("clear_inactive_pcm", 0)
+	var result := _parse_bridge_pcm_result(_bridge_interface.clearInactivePcm())
+	_sync_registered_pcm_from_result(result)
+	return result
+
+
 static func reset_debug_stats() -> void:
 	_call_counts = {}
 	_payload_bytes = 0
 	_preencoded_payload_hits = 0
 	_synchronous_payload_encodes = 0
-	_last_music_payload_key = ""
-	_last_music_mix_keys = {}
-	_last_music_mix_msec = {}
-	_registered_pcm_keys = {}
-	_active_music_groups = {}
-	_last_bus_levels_key = ""
 
 
 static func _sync_output_levels() -> void:
@@ -707,6 +830,7 @@ static func _audio_bus_linear(bus_name: String) -> float:
 
 
 static func debug_stats() -> Dictionary:
+	var pcm := _actual_pcm_stats()
 	return {
 		"available": available(),
 		"ensured": _ensured,
@@ -714,7 +838,10 @@ static func debug_stats() -> Dictionary:
 		"payload_bytes": _payload_bytes,
 		"preencoded_payload_hits": _preencoded_payload_hits,
 		"synchronous_payload_encodes": _synchronous_payload_encodes,
-		"registered_pcm_count": _registered_pcm_keys.size(),
+		"registered_pcm_count": int(pcm.get("count", _registered_pcm_keys.size())),
+		"registered_pcm_bytes": int(pcm.get("bytes", 0)),
+		"pcm_budget_bytes": int(pcm.get("budget_bytes", WEB_PCM_CACHE_BUDGET_BYTES)),
+		"pcm_diagnostics_actual": bool(pcm.get("actual", false)),
 		"active_music_group_count": _active_music_groups.size(),
 	}
 
@@ -744,6 +871,11 @@ static func mix_contract_snapshot() -> Dictionary:
 		"script_has_music_stems": WEB_AUDIO_SCRIPT.find("playMusicStems") >= 0 and WEB_AUDIO_SCRIPT.find("setMusicMix") >= 0,
 		"script_syncs_user_bus_levels": WEB_AUDIO_SCRIPT.find("setBusLevels") >= 0 and WEB_AUDIO_SCRIPT.find("this.musicBus.gain.setTargetAtTime") >= 0 and WEB_AUDIO_SCRIPT.find("this.sfxBus.gain.setTargetAtTime") >= 0,
 		"script_has_loop_stop": WEB_AUDIO_SCRIPT.find("stopLoop") >= 0,
+		"script_has_loop_pause_resume": WEB_AUDIO_SCRIPT.find("setLoopPaused") >= 0 and WEB_AUDIO_SCRIPT.find("playbackRate.setValueAtTime(paused ? 0") >= 0,
+		"script_has_pcm_byte_lru": WEB_AUDIO_SCRIPT.find("pcmBudgetBytes") >= 0 and WEB_AUDIO_SCRIPT.find("evictPcm") >= 0 and WEB_AUDIO_SCRIPT.find("lastUsed") >= 0,
+		"script_has_pcm_disposal": WEB_AUDIO_SCRIPT.find("disposePcm") >= 0 and WEB_AUDIO_SCRIPT.find("clearInactivePcm") >= 0,
+		"diagnostics_report_actual_pcm": WEB_AUDIO_SCRIPT.find("pcmStats") >= 0 and WEB_AUDIO_SCRIPT.find("decoded.length * decoded.numberOfChannels * 4") >= 0,
+		"pcm_budget_bytes": WEB_PCM_CACHE_BUDGET_BYTES,
 		"script_has_global_sfx_cap": WEB_AUDIO_SCRIPT.find("var globalMaxVoices = 10") >= 0 \
 			and WEB_AUDIO_SCRIPT.find("this.sfxOneShots.length >= globalMaxVoices") >= 0,
 		"script_requires_explicit_one_shot_unlock": WEB_AUDIO_SCRIPT.find("(!this.unlocked && !payload.loop)") >= 0 \
@@ -824,7 +956,55 @@ static func prepare_pcm_stream_for_bridge(stream: AudioStream) -> bool:
 
 static func _mark_pcm_registered(payload: Dictionary) -> void:
 	if payload.has("data"):
-		_registered_pcm_keys[str(payload.get("key", ""))] = true
+		_registered_pcm_keys[str(payload.get("key", ""))] = maxi(0, int(payload.get("frames", 0))) * maxi(1, int(payload.get("channels", 1))) * 4
+
+
+static func _tracked_pcm_stats() -> Dictionary:
+	var bytes := 0
+	for value in _registered_pcm_keys.values():
+		bytes += int(value)
+	return {
+		"count": _registered_pcm_keys.size(),
+		"bytes": bytes,
+		"budget_bytes": WEB_PCM_CACHE_BUDGET_BYTES,
+		"keys": _registered_pcm_keys.keys(),
+		"actual": false,
+	}
+
+
+static func _actual_pcm_stats() -> Dictionary:
+	if not available() or not _bridge_ready():
+		return _tracked_pcm_stats()
+	var parsed := _parse_bridge_pcm_result(_bridge_interface.pcmStats())
+	var stats: Dictionary = parsed.get("stats", parsed) as Dictionary
+	stats["actual"] = true
+	return stats
+
+
+static func _parse_bridge_pcm_result(value: Variant) -> Dictionary:
+	var parsed: Variant = value
+	if typeof(value) == TYPE_STRING:
+		parsed = JSON.parse_string(str(value))
+	if typeof(parsed) != TYPE_DICTIONARY:
+		return _tracked_pcm_stats()
+	var result := (parsed as Dictionary).duplicate(true)
+	if result.has("stats") and typeof(result.get("stats")) == TYPE_DICTIONARY:
+		(result["stats"] as Dictionary)["actual"] = true
+	else:
+		result["actual"] = true
+	return result
+
+
+static func _sync_registered_pcm_from_result(result: Dictionary) -> void:
+	var stats: Dictionary = result.get("stats", result) as Dictionary
+	var keys_value: Variant = stats.get("keys", [])
+	if typeof(keys_value) != TYPE_ARRAY:
+		return
+	var retained: Dictionary = {}
+	for key_value in (keys_value as Array):
+		var key := str(key_value)
+		retained[key] = int(_registered_pcm_keys.get(key, 0))
+	_registered_pcm_keys = retained
 
 
 static func wav_has_signal(wav: AudioStreamWAV) -> bool:

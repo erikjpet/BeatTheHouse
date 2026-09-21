@@ -124,6 +124,7 @@ func sync_node_buttons(snapshot: Dictionary) -> void:
 		button_layout_size = layer_size
 	else:
 		_position_node_buttons(snapshot)
+	_refresh_spatial_focus_neighbors()
 
 
 func clear_node_buttons() -> void:
@@ -136,6 +137,8 @@ func clear_node_buttons() -> void:
 		button.visible = false
 		button.disabled = true
 		button.tooltip_text = ""
+		button.text = ""
+		button.accessibility_name = ""
 		button.set_meta("node_id", "")
 		button.name = "WorldMapNodePool_%02d" % index
 	button_ids = []
@@ -549,6 +552,8 @@ func _add_node_buttons(snapshot: Dictionary) -> void:
 		button.visible = in_view
 		button.disabled = not in_view
 		button.tooltip_text = str(node.get("label", node_id))
+		button.text = str(node.get("label", node_id))
+		button.accessibility_name = button.text
 		button.set_meta("node_id", node_id)
 		button.name = "WorldMapNode_%s" % node_id
 		index += 1
@@ -576,6 +581,8 @@ func _position_node_buttons(snapshot: Dictionary) -> void:
 		button.visible = in_view
 		button.disabled = not in_view
 		button.tooltip_text = str(node.get("label", node_id))
+		button.text = str(node.get("label", node_id))
+		button.accessibility_name = button.text
 		button.set_meta("node_id", node_id)
 		button.name = "WorldMapNode_%s" % node_id
 		index += 1
@@ -718,7 +725,10 @@ func _hit_button(callback: Callable) -> Button:
 	var button := Button.new()
 	button.text = ""
 	button.flat = true
-	button.focus_mode = Control.FOCUS_NONE
+	button.focus_mode = Control.FOCUS_ALL
+	button.clip_text = true
+	button.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	button.add_theme_font_size_override("font_size", 8)
 	button.mouse_filter = Control.MOUSE_FILTER_PASS
 	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -762,6 +772,67 @@ func _ensure_node_button_pool() -> void:
 		button.button_down.connect(Callable(self, "_on_pool_button_down").bind(index))
 		button.button_up.connect(Callable(self, "_on_pool_button_up").bind(index))
 		nodes_layer.add_child(button)
+
+
+func focus_first_available(fallback: Control = null) -> bool:
+	var preferred: Button = null
+	for index in range(WORLD_MAP_NODE_BUTTON_POOL_SIZE):
+		var button := _pool_button(index)
+		if button == null or not button.is_visible_in_tree() or button.disabled:
+			continue
+		if preferred == null:
+			preferred = button
+		if str(button.get_meta("node_id", "")) == selected_node_id:
+			preferred = button
+			break
+	if preferred != null:
+		preferred.grab_focus()
+		return true
+	if fallback != null and fallback.is_visible_in_tree() and fallback.focus_mode != Control.FOCUS_NONE:
+		fallback.grab_focus()
+		return true
+	return false
+
+
+func _refresh_spatial_focus_neighbors() -> void:
+	var buttons: Array[Button] = []
+	for index in range(WORLD_MAP_NODE_BUTTON_POOL_SIZE):
+		var button := _pool_button(index)
+		if button != null and button.visible and not button.disabled:
+			buttons.append(button)
+	for button in buttons:
+		button.focus_neighbor_left = _focus_neighbor_path(button, buttons, Vector2.LEFT)
+		button.focus_neighbor_right = _focus_neighbor_path(button, buttons, Vector2.RIGHT)
+		button.focus_neighbor_top = _focus_neighbor_path(button, buttons, Vector2.UP)
+		button.focus_neighbor_bottom = _focus_neighbor_path(button, buttons, Vector2.DOWN)
+	for index in range(buttons.size()):
+		var button := buttons[index]
+		var next: Control = buttons[index + 1] if index + 1 < buttons.size() else confirm_button
+		var previous: Control = buttons[index - 1] if index > 0 else confirm_button
+		button.focus_next = button.get_path_to(next) if next != null else NodePath()
+		button.focus_previous = button.get_path_to(previous) if previous != null else NodePath()
+	if confirm_button != null and not buttons.is_empty():
+		confirm_button.focus_previous = confirm_button.get_path_to(buttons[buttons.size() - 1])
+		confirm_button.focus_next = confirm_button.get_path_to(buttons[0])
+
+
+func _focus_neighbor_path(source: Button, candidates: Array[Button], direction: Vector2) -> NodePath:
+	var source_center := source.position + source.size * 0.5
+	var best: Button = null
+	var best_score := INF
+	for candidate in candidates:
+		if candidate == source:
+			continue
+		var delta := candidate.position + candidate.size * 0.5 - source_center
+		var forward := delta.dot(direction)
+		if forward <= 0.5:
+			continue
+		var cross := absf(delta.cross(direction))
+		var score := forward + cross * 2.0
+		if score < best_score:
+			best_score = score
+			best = candidate
+	return source.get_path_to(best) if best != null else NodePath()
 
 
 func _pool_button(index: int) -> Button:

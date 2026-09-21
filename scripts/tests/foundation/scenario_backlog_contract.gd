@@ -9,7 +9,7 @@ const EventModuleScript := preload("res://scripts/core/event_module.gd")
 const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 
-const SEED_COUNT := 20
+const SEED_COUNT := 128
 const AUTHORIZED_CATALOG_TOTAL := 55
 const EVENT_CHOICE_LABEL_WIDTH_CEILING := 22
 const LAUNCH_BY_ARCHETYPE := {
@@ -306,7 +306,7 @@ static func _check_full_catalog_reach(library: ContentLibrary, failures: Array) 
 				reached[scenario_id] = true
 	for scenario_id_value in expected.keys():
 		if not reached.has(str(scenario_id_value)):
-			failures.append("Full-catalog 20-seed selector sweep starved %s." % str(scenario_id_value))
+			failures.append("Full-catalog %d-seed selector sweep starved %s." % [SEED_COUNT, str(scenario_id_value)])
 
 
 static func _check_launch_cut_reach(library: ContentLibrary, failures: Array) -> void:

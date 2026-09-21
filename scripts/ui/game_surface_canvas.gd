@@ -8,6 +8,7 @@ signal surface_action(action: String, index: int, confirm_requested: bool)
 signal surface_action_blocked(action: String, reason: String)
 signal surface_pointer_action(action: String, index: int, phase: String, board_position: Vector2)
 signal surface_music_cue(cue_id: String, context: Dictionary)
+signal audio_status_changed(message: String)
 signal view_geometry_changed
 
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
@@ -102,6 +103,8 @@ var surface_presentation_clock_msec := 0.0
 var transient_surface_loop_deadline_msec := 0
 var transient_surface_loop_id := ""
 var environment_activity_paused := false
+var timed_feedback_paused := false
+var reject_orphan_surface_events := false
 var surface_render_state_dirty := false
 var _surface_audio_authority := RefCounted.new()
 var _surface_audio_authority_bound := false
@@ -124,13 +127,30 @@ func set_game_module(game_module: GameModule) -> void:
 	queue_redraw()
 
 
-func set_environment_activity_paused(paused: bool) -> void:
-	if environment_activity_paused == paused:
-		return
+func set_environment_activity_paused(paused: bool, pause_timed_feedback: bool = false) -> void:
+	var changed := environment_activity_paused != paused or timed_feedback_paused != pause_timed_feedback
 	environment_activity_paused = paused
+	timed_feedback_paused = pause_timed_feedback
 	if paused:
 		_cancel_captured_surface_pointer()
-	queue_redraw()
+	_ensure_surface_sfx_player()
+	if surface_sfx_player.has_method("set_surface_activity_paused"):
+		surface_sfx_player.call("set_surface_activity_paused", timed_feedback_paused, _surface_audio_authority)
+	if changed:
+		queue_redraw()
+
+
+func set_modal_activity_paused(paused: bool) -> void:
+	set_environment_activity_paused(paused, paused)
+
+
+func handle_application_lifecycle(active: bool) -> void:
+	if active:
+		return
+	reject_orphan_surface_events = true
+	captured_pointer_move_pending = false
+	captured_pointer_move_position = Vector2.ZERO
+	_cancel_captured_surface_pointer()
 
 
 func clear_runtime_state() -> void:
@@ -1056,14 +1076,18 @@ func _gui_input(event: InputEvent) -> void:
 	if event is InputEventKey or event is InputEventJoypadButton:
 		if event is InputEventKey and (event as InputEventKey).echo:
 			return
-		var joy_confirm := event is InputEventJoypadButton and (event as InputEventJoypadButton).button_index == JOY_BUTTON_A
-		if event.is_action_pressed("ui_accept") or (joy_confirm and (event as InputEventJoypadButton).pressed):
+		if event.is_action_pressed("ui_accept"):
+			reject_orphan_surface_events = false
 			_activate_keyboard_hold()
-		elif event.is_action_released("ui_accept") or (joy_confirm and not (event as InputEventJoypadButton).pressed):
+		elif event.is_action_released("ui_accept"):
+			if reject_orphan_surface_events:
+				return
 			_release_keyboard_hold()
 		return
 	var motion_event := event as InputEventMouseMotion
 	if motion_event != null:
+		if reject_orphan_surface_events:
+			return
 		_set_hovered_surface_region(motion_event.position)
 		if not captured_surface_action.is_empty() and (motion_event.button_mask & MOUSE_BUTTON_MASK_LEFT) != 0:
 			_queue_or_emit_captured_pointer_move(motion_event.position)
@@ -1071,11 +1095,14 @@ func _gui_input(event: InputEvent) -> void:
 	var mouse_event := event as InputEventMouseButton
 	if mouse_event != null:
 		if mouse_event.pressed and mouse_event.button_index == MOUSE_BUTTON_LEFT:
+			reject_orphan_surface_events = false
 			if _mouse_duplicates_recent_touch_press(mouse_event.position):
 				accept_event()
 				return
 			_remember_mouse_press(mouse_event.position)
 			_activate_surface_at_position(mouse_event.position, mouse_event.double_click)
+		elif reject_orphan_surface_events:
+			return
 		elif not mouse_event.pressed and mouse_event.button_index == MOUSE_BUTTON_LEFT and not captured_surface_action.is_empty():
 			_flush_captured_pointer_move()
 			_emit_captured_surface_pointer("end", mouse_event.position)
@@ -1083,16 +1110,21 @@ func _gui_input(event: InputEvent) -> void:
 	var touch_event := event as InputEventScreenTouch
 	if touch_event != null:
 		if touch_event.pressed:
+			reject_orphan_surface_events = false
 			if _touch_duplicates_recent_mouse_press(touch_event.position):
 				accept_event()
 				return
 			_remember_touch_press(touch_event.position)
 			_activate_surface_at_position(touch_event.position, touch_event.double_tap)
+		elif reject_orphan_surface_events:
+			return
 		elif not touch_event.pressed and not captured_surface_action.is_empty():
 			_flush_captured_pointer_move()
 			_emit_captured_surface_pointer("end", touch_event.position)
 		return
 	var drag_event := event as InputEventScreenDrag
+	if drag_event != null and reject_orphan_surface_events:
+		return
 	if drag_event != null and not captured_surface_action.is_empty():
 		_queue_or_emit_captured_pointer_move(drag_event.position)
 		return
@@ -1229,6 +1261,10 @@ func _clear_captured_surface_pointer_state() -> void:
 	captured_surface_board_position = Vector2.ZERO
 	captured_surface_keyboard = false
 	captured_pointer_move_pending = false
+	captured_pointer_move_position = Vector2.ZERO
+	environment_activity_paused = false
+	timed_feedback_paused = false
+	reject_orphan_surface_events = false
 
 
 func _notification(what: int) -> void:
@@ -1257,6 +1293,8 @@ func _flush_captured_pointer_move() -> void:
 func _process(delta: float) -> void:
 	if not is_visible_in_tree():
 		return
+	if timed_feedback_paused:
+		return
 	_flush_captured_pointer_move()
 	if transient_surface_loop_deadline_msec > 0 and Time.get_ticks_msec() >= transient_surface_loop_deadline_msec:
 		surface_stop_audio_loop(transient_surface_loop_id, _surface_audio_authority)
@@ -1280,6 +1318,19 @@ func _process(delta: float) -> void:
 	if not environment_activity_paused:
 		surface_simulation_clock_msec += clamped_delta * 1000.0
 	_schedule_surface_animation_redraws(clamped_delta)
+
+
+func debug_pause_contract_snapshot() -> Dictionary:
+	return {
+		"environment_activity_paused": environment_activity_paused,
+		"timed_feedback_paused": timed_feedback_paused,
+		"reject_orphan_surface_events": reject_orphan_surface_events,
+		"captured_surface_action": captured_surface_action,
+		"captured_pointer_move_pending": captured_pointer_move_pending,
+		"surface_simulation_time_msec": surface_simulation_time_msec(),
+		"surface_presentation_time_msec": surface_presentation_time_msec(),
+		"surface_sfx": surface_sfx_player.call("debug_soak_snapshot") if surface_sfx_player != null and surface_sfx_player.has_method("debug_soak_snapshot") else {},
+	}
 
 
 func _schedule_surface_animation_redraws(delta: float) -> void:
@@ -1374,6 +1425,8 @@ func _ensure_surface_sfx_player() -> void:
 		surface_sfx_player.call("bind_surface_audio_authority", _surface_audio_authority)
 	if surface_sfx_player.has_signal("music_cue_requested"):
 		surface_sfx_player.music_cue_requested.connect(_on_surface_sfx_music_cue)
+	if surface_sfx_player.has_signal("audio_status_changed"):
+		surface_sfx_player.audio_status_changed.connect(_on_surface_audio_status_changed)
 	add_child(surface_sfx_player)
 
 
@@ -1401,6 +1454,10 @@ func _surface_dynamic_overlay_channel_active() -> bool:
 
 func _on_surface_sfx_music_cue(cue_id: String, context: Dictionary) -> void:
 	surface_music_cue.emit(cue_id, context)
+
+
+func _on_surface_audio_status_changed(message: String) -> void:
+	audio_status_changed.emit(message)
 
 
 func _ensure_drunk_distortion_overlay() -> void:

@@ -3,6 +3,7 @@ extends RefCounted
 
 const CLOCK_DISPLAY_STEP_MINUTES := 15
 const EXACT_CLOCK_ITEM_EFFECT := "exact_clock_minutes"
+const PlayerTextScript := preload("res://scripts/ui/player_text.gd")
 
 
 static func clock_model(run_state: RunState) -> Dictionary:
@@ -11,17 +12,10 @@ static func clock_model(run_state: RunState) -> Dictionary:
 	var minute_of_day := run_state.game_minute_of_day()
 	var exact_minutes := run_state.item_effect_total(EXACT_CLOCK_ITEM_EFFECT) > 0
 	var display_minute_of_day := minute_of_day if exact_minutes else int(floor(float(minute_of_day) / float(CLOCK_DISPLAY_STEP_MINUTES))) * CLOCK_DISPLAY_STEP_MINUTES
-	var hour_24 := int(floor(float(display_minute_of_day) / 60.0)) % 24
-	var hour_12 := hour_24 % 12
-	if hour_12 == 0:
-		hour_12 = 12
-	var exact_display := "%d:%02d %s" % [
-		hour_12,
-		display_minute_of_day % 60,
-		"AM" if hour_24 < 12 else "PM",
-	]
+	var absolute_display_minutes := (run_state.game_day() - 1) * 1440 + display_minute_of_day
+	var exact_display := PlayerTextScript.format_time_of_day(absolute_display_minutes)
 	return {
-		"clock_display": "Day %d %s" % [run_state.game_day(), exact_display],
+		"clock_display": PlayerTextScript.format_game_clock(absolute_display_minutes),
 		"clock_day": run_state.game_day(),
 		# The watch face always receives the authoritative minute. Only the
 		# adjacent digital readout is intentionally less precise without the item.

@@ -140,6 +140,7 @@ const FEATURE_DELIVERY_STINGERS := {
 }
 const AUTHORED_MANIFEST_CACHE_LIMIT := 32
 const MUSIC_MIN_VOLUME_DB := -80.0
+const PCM_CACHE_DEFAULT_BUDGET_BYTES := 64 * 1024 * 1024
 const WEB_AUDIO_MUSIC_STEM_MAX_PCM_BYTES := 8388608
 const WEB_AUDIO_MUSIC_BED_SECONDS := 30.0
 const WEB_AUDIO_MUSIC_BED_SAMPLE_RATE := 22050
@@ -175,11 +176,16 @@ var _ambient_primer_cache: Dictionary = {}
 var _ambient_instant_cache: Dictionary = {}
 var _web_music_bed_cache: Dictionary = {}
 var _ambient_profile_cache: Dictionary = {}
+var _pcm_cache_budget_bytes := PCM_CACHE_DEFAULT_BUDGET_BYTES
+var _pcm_cache_entry_bytes: Dictionary = {}
+var _pcm_cache_lru: Array[String] = []
+var _pcm_cache_eviction_count := 0
 var _current_cache_key: String = ""
 var _current_web_music_bed_cache_key: String = ""
 var _current_web_music_bed_stem_key: String = ""
 var _current_stream_is_primer: bool = false
 var _current_music_context: Dictionary = {}
+var _current_live_mix_profile: Dictionary = {}
 var _pending_cache_key: String = ""
 var _transition_target_cache_key: String = ""
 var _transition_target_profile: Dictionary = {}
@@ -335,6 +341,8 @@ func _exit_tree() -> void:
 	_ambient_instant_cache.clear()
 	_web_music_bed_cache.clear()
 	_ambient_profile_cache.clear()
+	_pcm_cache_entry_bytes.clear()
+	_pcm_cache_lru.clear()
 	_authored_manifest_cache.clear()
 	_authored_manifest_cache_order.clear()
 	_authored_manifest_entries_cache.clear()
@@ -364,7 +372,173 @@ func debug_soak_snapshot() -> Dictionary:
 		"pending_cache_key": _pending_cache_key,
 		"thread_cache_key": _thread_cache_key,
 		"last_authored_boundary_applied_cache_key": _last_authored_boundary_applied_cache_key,
+		"pcm_cache_bytes": _pcm_cache_total_bytes(),
+		"pcm_cache_budget_bytes": _pcm_cache_budget_bytes,
+		"pcm_cache_eviction_count": _pcm_cache_eviction_count,
 	}
+
+
+func pcm_cache_policy_snapshot() -> Dictionary:
+	return {
+		"budget_bytes": _pcm_cache_budget_bytes,
+		"bytes": _pcm_cache_total_bytes(),
+		"keys": _pcm_cache_lru.duplicate(),
+		"entry_bytes": _pcm_cache_entry_bytes.duplicate(true),
+		"protected_keys": _pcm_cache_protected_keys().keys(),
+		"eviction_count": _pcm_cache_eviction_count,
+	}
+
+
+func clear_run_scoped_caches() -> void:
+	# Menu music is the sole shared hot set. Run-owned PCM is released at both
+	# run boundaries so a long page lifetime cannot accumulate every visited room.
+	var keep: Dictionary = {}
+	for key_value in _ambient_profile_cache.keys():
+		var key := str(key_value)
+		var profile: Dictionary = _ambient_profile_cache.get(key, {}) as Dictionary
+		if str(profile.get("environment_id", "")) == "main_menu_tour":
+			keep[key] = true
+	if not _current_cache_key.is_empty() and not keep.has(_current_cache_key):
+		stop()
+	for key_value in _all_pcm_cache_keys():
+		var key := str(key_value)
+		if not keep.has(key):
+			_evict_pcm_cache_key(key)
+	_rebuild_pcm_cache_accounting()
+	WebAudioBridgeScript.clear_inactive_pcm()
+
+
+func debug_configure_pcm_cache_budget(byte_budget: int) -> void:
+	_pcm_cache_budget_bytes = maxi(1, byte_budget)
+	_enforce_pcm_cache_budget()
+
+
+func debug_store_pcm_cache_entry(cache_key: String, byte_count: int, menu_hot: bool = false) -> void:
+	var wav := AudioStreamWAV.new()
+	var bytes := PackedByteArray()
+	bytes.resize(maxi(1, byte_count))
+	wav.data = bytes
+	wav.format = AudioStreamWAV.FORMAT_8_BITS
+	_store_pcm_cache_entry("full", cache_key, {"stems": {"pad": wav}})
+	_remember_profile(cache_key, {"environment_id": "main_menu_tour" if menu_hot else "debug_run"})
+
+
+func _store_pcm_cache_entry(domain: String, cache_key: String, value: Dictionary) -> void:
+	match domain:
+		"primer":
+			_ambient_primer_cache[cache_key] = value
+		"instant":
+			_ambient_instant_cache[cache_key] = value
+		"web":
+			_web_music_bed_cache[cache_key] = value
+		_:
+			_ambient_stream_cache[cache_key] = value
+	_touch_pcm_cache_key(cache_key)
+	_recalculate_pcm_cache_key_bytes(cache_key)
+	_enforce_pcm_cache_budget()
+
+
+func _touch_pcm_cache_key(cache_key: String) -> void:
+	_pcm_cache_lru.erase(cache_key)
+	_pcm_cache_lru.append(cache_key)
+
+
+func _recalculate_pcm_cache_key_bytes(cache_key: String) -> void:
+	var seen: Dictionary = {}
+	var total := 0
+	for cache in [_ambient_stream_cache, _ambient_primer_cache, _ambient_instant_cache, _web_music_bed_cache]:
+		if cache.has(cache_key):
+			total += _pcm_variant_bytes(cache.get(cache_key), seen)
+	if total > 0:
+		_pcm_cache_entry_bytes[cache_key] = total
+	else:
+		_pcm_cache_entry_bytes.erase(cache_key)
+
+
+func _pcm_variant_bytes(value: Variant, seen: Dictionary) -> int:
+	if value is AudioStreamWAV:
+		var wav := value as AudioStreamWAV
+		var instance_id := wav.get_instance_id()
+		if seen.has(instance_id):
+			return 0
+		seen[instance_id] = true
+		return wav.data.size()
+	if value is PackedByteArray:
+		return (value as PackedByteArray).size()
+	if typeof(value) == TYPE_DICTIONARY:
+		var total := 0
+		for nested in (value as Dictionary).values():
+			total += _pcm_variant_bytes(nested, seen)
+		return total
+	if typeof(value) == TYPE_ARRAY:
+		var total := 0
+		for nested in (value as Array):
+			total += _pcm_variant_bytes(nested, seen)
+		return total
+	return 0
+
+
+func _pcm_cache_total_bytes() -> int:
+	var total := 0
+	for value in _pcm_cache_entry_bytes.values():
+		total += int(value)
+	return total
+
+
+func _pcm_cache_protected_keys() -> Dictionary:
+	var protected: Dictionary = {}
+	for key in [_current_cache_key, _current_web_music_bed_cache_key, _pending_cache_key, _transition_target_cache_key, _deferred_transition_cache_key, _thread_cache_key, _queued_generation_cache_key]:
+		if not str(key).is_empty():
+			protected[str(key)] = true
+	return protected
+
+
+func _enforce_pcm_cache_budget() -> void:
+	var protected := _pcm_cache_protected_keys()
+	while _pcm_cache_total_bytes() > _pcm_cache_budget_bytes:
+		var victim := ""
+		for key in _pcm_cache_lru:
+			if not protected.has(key):
+				victim = key
+				break
+		if victim.is_empty():
+			break
+		_evict_pcm_cache_key(victim)
+		_pcm_cache_eviction_count += 1
+	if _pcm_cache_total_bytes() > _pcm_cache_budget_bytes:
+		# A single active composition may exceed the budget; it remains protected
+		# until playback moves, at which point the next insertion/clear evicts it.
+		return
+
+
+func _evict_pcm_cache_key(cache_key: String) -> void:
+	_ambient_stream_cache.erase(cache_key)
+	_ambient_primer_cache.erase(cache_key)
+	_ambient_instant_cache.erase(cache_key)
+	_web_music_bed_cache.erase(cache_key)
+	_ambient_profile_cache.erase(cache_key)
+	_pcm_cache_entry_bytes.erase(cache_key)
+	_pcm_cache_lru.erase(cache_key)
+
+
+func _all_pcm_cache_keys() -> Array[String]:
+	var result: Array[String] = []
+	for cache in [_ambient_stream_cache, _ambient_primer_cache, _ambient_instant_cache, _web_music_bed_cache]:
+		for key_value in cache.keys():
+			var key := str(key_value)
+			if not result.has(key):
+				result.append(key)
+	return result
+
+
+func _rebuild_pcm_cache_accounting() -> void:
+	_pcm_cache_entry_bytes.clear()
+	var keys := _all_pcm_cache_keys()
+	for key in keys:
+		_recalculate_pcm_cache_key_bytes(key)
+	for index in range(_pcm_cache_lru.size() - 1, -1, -1):
+		if not keys.has(_pcm_cache_lru[index]):
+			_pcm_cache_lru.remove_at(index)
 
 
 # Starts or updates the generated theme for the current environment.
@@ -405,6 +579,7 @@ func play_for_environment_state(environment: Dictionary, heat_level: int, music_
 		return
 	_ensure_stem_players()
 	var profile := _music_profile_from_environment(environment, heat_level)
+	_set_live_mix_profile(profile)
 	var cache_key := _ambient_cache_key(profile)
 	if WebAudioBridgeScript.available():
 		# Authored WAV masters use a deterministic desktop decoder. Opening and
@@ -433,7 +608,7 @@ func play_for_environment_state(environment: Dictionary, heat_level: int, music_
 		cache_key = "%s:selection:%s" % [cache_key, str(authored_stem_set.get("selection_key", "base"))]
 	_remember_profile(cache_key, profile)
 	if not authored_stem_set.is_empty():
-		_ambient_stream_cache[cache_key] = authored_stem_set
+		_store_pcm_cache_entry("full", cache_key, authored_stem_set)
 		if _pending_restore_matches_authored_stem_set(authored_stem_set):
 			_apply_pending_authored_arrangement_restore(cache_key, authored_stem_set)
 			return
@@ -545,6 +720,7 @@ func stop() -> void:
 		_ambient_player.stream = null
 		_ambient_player.pitch_scale = 1.0
 	_current_music_context = {}
+	_current_live_mix_profile = {}
 	_current_stem_set = {}
 	_current_stem_stage = ""
 	_current_feature_stem_set = {}
@@ -1079,7 +1255,7 @@ func _advance_authored_arrangement() -> void:
 	if next_cache_key == _current_cache_key or next_cache_key == _deferred_transition_cache_key:
 		return
 	_remember_profile(next_cache_key, profile)
-	_ambient_stream_cache[next_cache_key] = next_stem_set
+	_store_pcm_cache_entry("full", next_cache_key, next_stem_set)
 	_transition_target_cache_key = next_cache_key
 	_transition_target_profile = profile.duplicate(true)
 	_set_deferred_transition_stem_set(next_cache_key, next_stem_set)
@@ -1953,10 +2129,21 @@ func _apply_music_mix_vector(vector: Dictionary, _force: bool) -> void:
 
 func _music_role_volume_db_map(vector: Dictionary) -> Dictionary:
 	var duck := clampf(float(_feature_mix_live.get("venue_duck", 0.0)), 0.0, 0.82)
+	var ambience := clampf(float(_current_live_mix_profile.get("ambience", 0.7)), 0.0, 1.0)
+	var volume_scale := clampf(float(_current_live_mix_profile.get("volume", 0.26)) / 0.26, 0.0, 2.0)
 	var result := {}
 	for role_value in MUSIC_STEM_PLAYBACK_ROLES:
 		var role := str(role_value)
 		var gain := clampf(float(vector.get(role, 0.0)), 0.0, 1.35)
+		gain *= volume_scale
+		if role == "pad":
+			gain *= lerpf(0.34, 0.50, ambience) / lerpf(0.34, 0.50, 0.7)
+		elif role == "lead":
+			gain *= lerpf(1.0, 0.74, ambience) / lerpf(1.0, 0.74, 0.7)
+		elif role.begins_with("drums"):
+			gain *= lerpf(1.0, 0.68, ambience) / lerpf(1.0, 0.68, 0.7)
+		elif role == "texture":
+			gain *= lerpf(0.34, 0.78, ambience) / lerpf(0.34, 0.78, 0.7)
 		gain *= clampf(float(_music_choreography_role_live.get(role, 1.0)), 0.0, 1.0)
 		if role == "pad":
 			gain *= lerpf(1.0, 0.42, duck)
@@ -1966,6 +2153,15 @@ func _music_role_volume_db_map(vector: Dictionary) -> Dictionary:
 			gain *= lerpf(1.0, 0.78, duck)
 		result[role] = _gain_to_db(gain)
 	return result
+
+
+func _set_live_mix_profile(profile: Dictionary) -> void:
+	_current_live_mix_profile = {
+		"ambience": clampf(float(profile.get("ambience", 0.7)), 0.0, 1.0),
+		"volume": maxf(0.0, float(profile.get("volume", 0.26))),
+	}
+	if not _stem_players.is_empty():
+		_apply_music_mix_vector(_music_mix_live if not _music_mix_live.is_empty() else _neutral_music_mix_vector(), true)
 
 
 func _update_music_mix_state(music_state: Dictionary) -> void:
@@ -2915,6 +3111,7 @@ func _music_profile_from_environment(environment: Dictionary, heat_level: int) -
 		"theme": theme,
 		"palette_id": palette_id,
 		"authored_track_id": str(source.get("authored_track_id", "")).strip_edges(),
+		"generated_signature": str(source.get("generated_signature", "")).strip_edges(),
 		"mood": mood,
 		"mode": str(source.get("mode", _theme_mode(theme))).to_lower(),
 		"texture": str(source.get("texture", _theme_texture(theme))),
@@ -2931,6 +3128,7 @@ func _music_profile_from_environment(environment: Dictionary, heat_level: int) -
 		"arrangement_phrases": clampi(int(source.get("arrangement_phrases", DEFAULT_ARRANGEMENT_PHRASES)), MIN_ARRANGEMENT_PHRASES, MAX_ARRANGEMENT_PHRASES),
 		"adaptive_tempo": adaptive_tempo,
 		"layer_choreography": _copy_dict(source.get("layer_choreography", {})),
+		"swing_amount": float(source.get("swing_amount", _theme_swing_amount(theme))),
 	}
 	profile["progression"] = _number_array(source.get("progression", _theme_progression(theme)), _theme_progression(theme))
 	profile["motif"] = _number_array(source.get("motif", _theme_motif(theme)), _theme_motif(theme))
@@ -2939,13 +3137,66 @@ func _music_profile_from_environment(environment: Dictionary, heat_level: int) -
 
 func _ambient_cache_key(profile: Dictionary) -> String:
 	var authored_track_id := str(profile.get("authored_track_id", ""))
-	return "stem:%d:%s:%s:%s:%s" % [
+	return "stem:%d:%s:%s:%s" % [
 		AMBIENT_VERSION,
 		str(profile.get("archetype_id", "")),
-		str(profile.get("theme", "")),
-		str(profile.get("palette_id", "")),
 		authored_track_id if not authored_track_id.is_empty() else "procedural",
+		composition_fingerprint(profile),
 	]
+
+
+func composition_fingerprint(profile: Dictionary) -> String:
+	# Only values that affect decoded PCM belong here. Ambience and volume are
+	# applied as live gains below, so weather can remix a cached composition.
+	var identity := {
+		"archetype_id": str(profile.get("archetype_id", "")),
+		"theme": str(profile.get("theme", "")),
+		"palette_id": str(profile.get("palette_id", "")),
+		"authored_track_id": str(profile.get("authored_track_id", "")),
+		"generated_signature": str(profile.get("generated_signature", "")),
+		"mode": str(profile.get("mode", "")),
+		"texture": str(profile.get("texture", "")),
+		"texture_rate": snappedf(float(profile.get("texture_rate", 0.0)), 0.0001),
+		"texture_seed": int(profile.get("texture_seed", 0)),
+		"bpm": snappedf(float(profile.get("bpm", 0.0)), 0.0001),
+		"root_midi": int(profile.get("root_midi", 0)),
+		"safety": snappedf(float(profile.get("safety", 0.0)), 0.0001),
+		"heat_pressure": snappedf(float(profile.get("heat_pressure", 0.0)), 0.0001),
+		"arrangement_phrases": int(profile.get("arrangement_phrases", 0)),
+		"swing_amount": snappedf(float(profile.get("swing_amount", 0.0)), 0.0001),
+		"progression": profile.get("progression", []),
+		"motif": profile.get("motif", []),
+	}
+	return JSON.stringify(_canonical_cache_value(identity)).sha256_text()
+
+
+func live_mix_fingerprint(profile: Dictionary) -> String:
+	var identity := {
+		"ambience": snappedf(float(profile.get("ambience", 0.7)), 0.0001),
+		"volume": snappedf(float(profile.get("volume", 0.26)), 0.0001),
+	}
+	return JSON.stringify(_canonical_cache_value(identity)).sha256_text()
+
+
+func profile_fingerprint(profile: Dictionary) -> String:
+	return JSON.stringify(_canonical_cache_value(profile)).sha256_text()
+
+
+func _canonical_cache_value(value: Variant) -> Variant:
+	if typeof(value) == TYPE_DICTIONARY:
+		var source := value as Dictionary
+		var keys := source.keys()
+		keys.sort_custom(func(left: Variant, right: Variant) -> bool: return str(left) < str(right))
+		var result := {}
+		for key in keys:
+			result[str(key)] = _canonical_cache_value(source.get(key))
+		return result
+	if typeof(value) == TYPE_ARRAY:
+		var result: Array = []
+		for nested in (value as Array):
+			result.append(_canonical_cache_value(nested))
+		return result
+	return value
 
 
 func _ambient_music_stream(profile: Dictionary) -> AudioStreamWAV:
@@ -3110,12 +3361,12 @@ func _apply_generated_ambient_data(result: Dictionary) -> void:
 		return
 	var stage := str(result.get("stage", AMBIENT_STAGE_FULL))
 	if stage == AMBIENT_STAGE_WEB:
-		_web_music_bed_cache[cache_key] = stem_set
+		_store_pcm_cache_entry("web", cache_key, stem_set)
 		_pending_cache_key = ""
 		_play_web_full_bed(_copy_dict(result.get("profile", {})), cache_key)
 		return
 	if stage == AMBIENT_STAGE_PRIMER:
-		_ambient_primer_cache[cache_key] = stem_set
+		_store_pcm_cache_entry("primer", cache_key, stem_set)
 		_play_primer_stem_set(cache_key, stem_set)
 		var profile: Dictionary = result.get("profile", {})
 		if profile.is_empty():
@@ -3123,7 +3374,7 @@ func _apply_generated_ambient_data(result: Dictionary) -> void:
 			return
 		_start_ambient_generation(profile, cache_key, token, AMBIENT_STAGE_FULL)
 		return
-	_ambient_stream_cache[cache_key] = stem_set
+	_store_pcm_cache_entry("full", cache_key, stem_set)
 	_accept_full_stem_set(cache_key, stem_set)
 
 
@@ -3422,6 +3673,8 @@ func _remember_profile(cache_key: String, profile: Dictionary) -> void:
 	if cache_key.is_empty() or profile.is_empty():
 		return
 	_ambient_profile_cache[cache_key] = profile.duplicate(true)
+	if _pcm_cache_entry_bytes.has(cache_key):
+		_touch_pcm_cache_key(cache_key)
 
 
 func _should_defer_music_change(cache_key: String) -> bool:
@@ -3565,6 +3818,7 @@ func _remember_current_music_context(cache_key: String) -> void:
 		_current_music_context = {}
 		return
 	_current_music_context = _ambient_generation_context(profile)
+	_set_live_mix_profile(profile)
 
 
 func _play_instant_stem_bed(profile: Dictionary, cache_key: String) -> void:
@@ -3574,7 +3828,7 @@ func _play_instant_stem_bed(profile: Dictionary, cache_key: String) -> void:
 		_request_web_music_bed_generation(profile, cache_key)
 		return
 	if not _ambient_instant_cache.has(cache_key):
-		_ambient_instant_cache[cache_key] = _instant_bed_stem_set(profile)
+		_store_pcm_cache_entry("instant", cache_key, _instant_bed_stem_set(profile))
 	_play_primer_stem_set(cache_key, _ambient_instant_cache[cache_key])
 
 
@@ -3981,10 +4235,12 @@ func _ambient_generation_context(profile: Dictionary) -> Dictionary:
 	var frames := int(duration * SAMPLE_RATE)
 	var root_midi := int(profile.get("root_midi", 45))
 	var safety := clampf(float(profile.get("safety", 0.5)), 0.0, 1.0)
-	var ambience := clampf(float(profile.get("ambience", 0.7)), 0.0, 1.0)
+	# Ambience and output volume are live mix axes. Keeping their neutral values
+	# in rendered PCM lets weather/scenario remixes reuse the same decoded stems.
+	var ambience := 0.7
 	var heat_pressure := clampf(float(profile.get("heat_pressure", 0.0)), 0.0, 1.0)
 	var danger := 1.0 - safety
-	var volume := float(profile.get("volume", 0.26)) * lerpf(0.82, 1.0, ambience)
+	var volume := 0.26 * lerpf(0.82, 1.0, ambience)
 	var pad_gain := lerpf(0.34, 0.50, ambience) * lerpf(0.96, 1.08, safety)
 	var bass_gain := lerpf(0.16, 0.29, danger)
 	var lead_gain := lerpf(0.055, 0.12, safety) * lerpf(1.0, 0.74, ambience)

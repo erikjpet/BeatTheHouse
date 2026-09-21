@@ -199,12 +199,18 @@ static func type_size(step: String) -> int:
 
 
 static func accessible_color(value: Color) -> Color:
-	if not high_contrast_enabled:
+	return accessible_color_for_mode(value, high_contrast_enabled)
+
+
+static func accessible_color_for_mode(value: Color, enabled: bool) -> Color:
+	if not enabled:
 		return value
 	var token := _palette_token_for_color(value)
 	if token.is_empty():
 		return value
-	return color(token, value)
+	var palette := HIGH_CONTRAST_PALETTE
+	var mapped: Variant = palette.get(token, value)
+	return mapped if typeof(mapped) == TYPE_COLOR else value
 
 
 static func rarity_outline_color(tier: String) -> Color:

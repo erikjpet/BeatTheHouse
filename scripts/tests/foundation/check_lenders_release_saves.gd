@@ -3380,17 +3380,21 @@ func _check_grand_casino_spatial_split(library: ContentLibrary, main_archetype: 
 	for fixture_id in ["game:slot", "game:slot:2", "game:slot:3"]:
 		if not fixture_rects.has(fixture_id):
 			failures.append("Grand Casino Main Floor generated layout is missing slot fixture %s." % fixture_id)
-	var slot_centers: Array = []
-	for fixture_id in ["game:slot", "game:slot:2", "game:slot:3"]:
+	var slot_centers: Dictionary = {}
+	for fixture_id in ["game:slot", "game:slot:2", "game:slot:3", "game:video_poker"]:
 		var rect := _copy_dict(fixture_rects.get(fixture_id, {}))
 		if rect.is_empty():
 			continue
-		slot_centers.append(Vector2(float(rect.get("x", 0.0)) + float(rect.get("w", 0.0)) * 0.5, float(rect.get("y", 0.0)) + float(rect.get("h", 0.0)) * 0.5))
-	if slot_centers.size() == 3:
-		var first_gap := absf((slot_centers[1] as Vector2).x - (slot_centers[0] as Vector2).x)
-		var second_gap := absf((slot_centers[2] as Vector2).x - (slot_centers[1] as Vector2).x)
-		if absf((slot_centers[0] as Vector2).y - (slot_centers[1] as Vector2).y) > 0.01 or absf((slot_centers[1] as Vector2).y - (slot_centers[2] as Vector2).y) > 0.01 or first_gap > 0.16 or second_gap > 0.16 or absf(first_gap - second_gap) > 0.02:
-			failures.append("Grand Casino Main Floor slot fixtures are not placed as a tight three-across bank.")
+		slot_centers[fixture_id] = Vector2(float(rect.get("x", 0.0)) + float(rect.get("w", 0.0)) * 0.5, float(rect.get("y", 0.0)) + float(rect.get("h", 0.0)) * 0.5)
+	if slot_centers.size() == 4:
+		var left_gap := absf((slot_centers["game:slot:2"] as Vector2).x - (slot_centers["game:slot"] as Vector2).x)
+		var right_gap := absf((slot_centers["game:video_poker"] as Vector2).x - (slot_centers["game:slot:3"] as Vector2).x)
+		var row_y := (slot_centers["game:slot"] as Vector2).y
+		if left_gap > 0.16 or right_gap > 0.16 or absf(left_gap - right_gap) > 0.02 \
+				or absf(row_y - (slot_centers["game:slot:2"] as Vector2).y) > 0.01 \
+				or absf(row_y - (slot_centers["game:slot:3"] as Vector2).y) > 0.01 \
+				or absf(row_y - (slot_centers["game:video_poker"] as Vector2).y) > 0.01:
+			failures.append("Grand Casino Main Floor wall machines are not placed as two balanced banks (centers=%s gaps=%.3f/%.3f)." % [str(slot_centers), left_gap, right_gap])
 	var slot_variant_run := _grand_casino_spatial_fixture_run(library, "GC-MAIN-SLOT-VARIANTS", failures)
 	var slot_game_states := _copy_dict(slot_variant_run.current_environment.get("game_states", {})) if slot_variant_run != null else {}
 	var slot_machine_keys: Dictionary = {}

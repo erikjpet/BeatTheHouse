@@ -9,6 +9,7 @@ const CrewPlayModelScript := preload("res://scripts/core/crew_play_model.gd")
 const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 const BlackjackAuthorityTestDriverScript := preload("res://scripts/tests/foundation/blackjack_authority_test_driver.gd")
+const TableGameAuthorityTestDriverScript := preload("res://scripts/tests/foundation/table_game_authority_test_driver.gd")
 
 
 static func check(library: ContentLibrary, failures: Array) -> void:
@@ -110,14 +111,14 @@ static func _check_chip_dump_conservation(library: ContentLibrary, failures: Arr
 	first.grand_casino_chips = 10
 	var baccarat := _module(BaccaratScript, library, "baccarat")
 	var before_total := first.bankroll + first.grand_casino_chips
-	var result := baccarat.resolve_with_context("crew_play:chip_dump", 20, first, first.current_environment, first.create_rng(), {})
+	var result := TableGameAuthorityTestDriverScript.resolve(baccarat, "crew_play:chip_dump", 20, first, first.current_environment)
 	if not bool(result.get("ok", false)) or first.bankroll != 54 or first.grand_casino_chips != 50 \
 		or first.bankroll + first.grand_casino_chips != before_total - 6:
-		failures.append("Chip Dump did not conserve player/member value minus the authored $6 fee.")
+		failures.append("Chip Dump did not conserve player/member value minus the authored $6 fee (before=%d cash=%d chips=%d result=%s)." % [before_total, first.bankroll, first.grand_casino_chips, JSON.stringify(result)])
 	var second := _run("CREW-PLAYS-CHIP-DUMP", ["crew_bishop"], "baccarat")
 	_make_made(second, ["crew_bishop"])
 	second.grand_casino_chips = 10
-	var replay := baccarat.resolve_with_context("crew_play:chip_dump", 20, second, second.current_environment, second.create_rng(), {})
+	var replay := TableGameAuthorityTestDriverScript.resolve(baccarat, "crew_play:chip_dump", 20, second, second.current_environment)
 	if bool(result.get("crew_play_detected", false)) != bool(replay.get("crew_play_detected", false)) \
 		or first.suspicion_level() != second.suspicion_level():
 		failures.append("Chip Dump detection was not deterministic for the same seed/action sequence.")

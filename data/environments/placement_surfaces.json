@@ -115,7 +115,7 @@
           "scenario_object_slot_positions": {"punchline_greased_week_payoff_ledger":[360,40],"punchline_greased_week_inspection_seals":[450,142],"punchline_greased_week_task_0":[0,50],"punchline_greased_week_task_1":[0,50],"punchline_greased_week_task_2":[0,50],"punchline_greased_week_task_3":[0,50],"punchline_greased_week_task_4":[0,50],"punchline_greased_week_payoff_runner":[160,268],"punchline_greased_week_safe_exit":[800,180],"punchline_greased_week_service_barrier":[320,194],"punchline_greased_week_moving_inspector":[680,172],"punchline_greased_week_aftermath_chain_exposed_actor":[494,172],"punchline_greased_week_aftermath_chain_exposed_prop":[500,0],"punchline_greased_week_aftermath_inspection_interrupted_prop":[700,197],"punchline_greased_week_aftermath_payoff_maintained_prop":[500,0],"punchline_greased_week_aftermath_route_refused_actor":[320,190]}
         },
         "punchline_high_stakes_night": {
-          "class_overrides": {"game:video_poker": "floor_fixture", "punchline_high_stakes_night_observer_rail": "wall_mounted"},
+          "class_overrides": {"game:video_poker": "floor_fixture", "punchline_high_stakes_night_high_stakes_guard": "seated_person", "punchline_high_stakes_night_observer_rail": "wall_mounted"},
           "scenario_object_slot_positions": {"punchline_high_stakes_night_protected_table":[700,40],"punchline_high_stakes_night_task_0":[0,50],"punchline_high_stakes_night_task_1":[0,50],"punchline_high_stakes_night_task_2":[0,50],"punchline_high_stakes_night_task_3":[0,50],"punchline_high_stakes_night_safe_exit":[800,300],"punchline_high_stakes_night_chair_stack":[200,330],"punchline_high_stakes_night_floor_service_runner":[380,200],"punchline_high_stakes_night_observer_rail":[300,100],"punchline_high_stakes_night_high_stakes_guard":[700,278],"punchline_high_stakes_night_aftermath_floor_remains_protected_prop":[700,330],"punchline_high_stakes_night_aftermath_public_lane_restored_actor":[320,190]}
         }
       },
@@ -147,7 +147,7 @@
             "kitty_cat_lounge_amateur_night_dressing_rack": [300, 300],
             "kitty_cat_lounge_amateur_night_amateur_signup": [150, 150],
             "kitty_cat_lounge_amateur_night_task_0": [415, 20],
-            "kitty_cat_lounge_amateur_night_amateur_contestant": [780, 320],
+            "kitty_cat_lounge_amateur_night_amateur_contestant": [130, 320],
             "kitty_cat_lounge_amateur_night_amateur_judge": [812, 226],
             "kitty_cat_lounge_amateur_night_safe_exit": [0, 150],
             "kitty_cat_lounge_amateur_night_aftermath_act_refused_actor": [250, 172],
@@ -168,7 +168,7 @@
             "kitty_cat_lounge_bachelorette_storm_task_0": [450, 20],
             "kitty_cat_lounge_bachelorette_storm_party_leader": [264, 250],
             "kitty_cat_lounge_bachelorette_storm_party_prop_trunk": [808, 232],
-            "kitty_cat_lounge_bachelorette_storm_missing_guest_marker": [774, 306],
+            "kitty_cat_lounge_bachelorette_storm_missing_guest_marker": [650, 306],
             "kitty_cat_lounge_bachelorette_storm_bar_route_rope": [0, 150],
             "kitty_cat_lounge_bachelorette_storm_floor_recovery_host": [700, 116],
             "kitty_cat_lounge_bachelorette_storm_safe_exit": [0, 150],
@@ -306,7 +306,7 @@
           "scenario_object_slot_positions": {
             "delta_queen_captains_invitational_bracket_tables": [800, 350],
             "delta_queen_captains_invitational_captain_scorer": [666, 198],
-            "delta_queen_captains_invitational_eliminated_players": [550, 200],
+            "delta_queen_captains_invitational_eliminated_players": [250, 200],
             "delta_queen_captains_invitational_entry_cards": [100, 100],
             "delta_queen_captains_invitational_safe_exit": [4, 300],
             "delta_queen_captains_invitational_scorer_rail": [64, 278],
@@ -326,7 +326,7 @@
           }
         },
         "delta_queen_whale_aboard": {
-          "class_overrides": {"delta_queen_whale_aboard_aftermath_shadowed_entourage_prop": "wall_mounted", "game:video_poker": "floor_fixture", "lender:the_crew": "standing_person"},
+          "class_overrides": {"delta_queen_whale_aboard_aftermath_shadowed_entourage_prop": "wall_mounted", "delta_queen_whale_aboard_work_2_choice_2": "wall_mounted", "game:video_poker": "floor_fixture", "lender:the_crew": "standing_person"},
           "scenario_object_slot_positions": {
             "delta_queen_whale_aboard_entourage_runner": [500, 166],
             "delta_queen_whale_aboard_premium_table": [650, 350],
@@ -345,7 +345,7 @@
             "delta_queen_whale_aboard_task_3": [684, 0],
             "delta_queen_whale_aboard_work_2_choice_0": [700, 94],
             "delta_queen_whale_aboard_work_2_choice_1": [580, 94],
-            "delta_queen_whale_aboard_work_2_choice_2": [766, 190]
+            "delta_queen_whale_aboard_work_2_choice_2": [100, 278]
           }
         }
       },
@@ -379,11 +379,11 @@
         "grand_casino_convention_crowd_convention_coordinator": "standing_person", "grand_casino_convention_crowd_booking_board": "wall_mounted", "grand_casino_convention_crowd_safe_exit": "ground_marker", "grand_casino_convention_crowd_work_2_choice_0": "wall_mounted", "grand_casino_convention_crowd_work_2_choice_1": "wall_mounted", "grand_casino_convention_crowd_work_2_choice_2": "ground_marker", "grand_casino_convention_crowd_aftermath_camouflage_route_prop": "wall_mounted"
       },
       "object_slot_positions": {
-        "game:slot": [0, 8], "game:slot:2": [126, 8], "game:slot:3": [608, 8], "game:video_poker": [734, 8],
+        "game:slot": [0, 8], "game:slot:2": [140, 8], "game:slot:3": [608, 8], "game:video_poker": [748, 8],
         "event:scenario_audit_roster": [372, 8],
         "event:comped_suite_offer": [0, 96], "event:the_house_calls": [116, 96], "event:chain06_cass_first_contact": [684, 96], "event:town_rumor_staff": [800, 96], "event:scenario_convention_badge": [600, 104], "event:scenario_gala_cover": [700, 350],
-        "game:blackjack": [120, 176], "game:craps": [248, 176], "game:pull_tabs": [544, 176], "event:chain06_rourke_noticed": [672, 184],
-        "casino_fixture:host_desk": [120, 352], "game_hook:pull_tabs:ticket_redeemer": [246, 372], "service:house_drink": [600, 376],
+        "game:blackjack": [160, 176], "game:craps": [300, 176], "game:pull_tabs": [544, 176], "event:chain06_rourke_noticed": [672, 184],
+        "casino_fixture:host_desk": [120, 352], "game_hook:pull_tabs:ticket_redeemer": [400, 372], "service:house_drink": [600, 376],
         "travel:grand_casino_back_room": [0, 176], "travel:grand_casino_cage": [796, 176], "travel:grand_casino_high_limit": [0, 256], "travel:leave": [796, 256],
         "travel:motel": [0, 336], "travel:small_underground_casino": [796, 336]
       },

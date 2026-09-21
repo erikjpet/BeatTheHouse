@@ -680,7 +680,12 @@ static func _check_presentation_records(records: Array, failures: Array) -> void
 
 static func _seeded_description_observer(library: Variant, archetype_id: String, scenario_id: String, hidden_profile: String, failures: Array) -> Dictionary:
 	var run_state := RunStateScript.new()
-	run_state.start_new("ENV06_8-HIDDEN-%s" % scenario_id)
+	var observer_seed := "ENV06_8-HIDDEN-%s" % scenario_id
+	var observer_config := RunStateScript.custom_challenge("env06_8_hidden_observer", observer_seed, {
+		"scenario_pins": {archetype_id: scenario_id},
+		"scenario_pins_apply_mutations": true,
+	})
+	run_state.start_new(observer_seed, observer_config)
 	if hidden_profile == "turn_and_grievance":
 		var turn := CrewTurnModelScript.empty_state()
 		turn["m"] = str(CrewStateModelScript.MEMBER_IDS[1])

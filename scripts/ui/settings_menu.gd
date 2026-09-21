@@ -4,6 +4,7 @@ extends VBoxContainer
 # Settings screen; edits a draft before applying.
 
 signal back_requested
+signal cancel_requested
 signal settings_applied
 signal reset_tips_requested
 signal game_library_requested
@@ -46,8 +47,14 @@ var reset_tips: Button
 var haptics_note: Label
 var game_library: Button
 var developer_placement_mode: CheckBox
+var body_scroll: ScrollContainer
+var back_button: Button
+var defaults_button: Button
+var apply_button: Button
 var focus_controls: Array[Control] = []
 var previous_focus_owner: Control
+var draft_committed := false
+var recovery_banner_message := ""
 
 
 # Stores the settings object and builds the view.
@@ -59,9 +66,11 @@ func setup(p_settings: UserSettings) -> void:
 
 # Opens the menu with a fresh draft.
 func open() -> void:
-	previous_focus_owner = get_viewport().gui_get_focus_owner()
+	var viewport := get_viewport()
+	previous_focus_owner = viewport.gui_get_focus_owner() if viewport != null else null
 	draft.from_dict(settings.to_dict())
-	status.text = ""
+	draft_committed = false
+	status.text = recovery_banner_message
 	_sync()
 	visible = true
 	call_deferred("_focus_first_setting")
@@ -78,18 +87,18 @@ func _build() -> void:
 	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	add_child(heading)
 
-	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(0, 300)
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	scroll.follow_focus = true
-	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	add_child(scroll)
+	body_scroll = ScrollContainer.new()
+	body_scroll.custom_minimum_size = Vector2.ZERO
+	body_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	body_scroll.follow_focus = true
+	body_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	body_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	add_child(body_scroll)
 
 	var box := VBoxContainer.new()
 	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	box.add_theme_constant_override("separation", 14)
-	scroll.add_child(box)
+	body_scroll.add_child(box)
 
 	_section(box, "Video")
 	resolution = _option(box, "Resolution", _res_labels())
@@ -159,24 +168,32 @@ func _build() -> void:
 	actions.add_theme_constant_override("separation", 10)
 	add_child(actions)
 
-	var back := _button("Back")
-	back.pressed.connect(back_requested.emit)
-	actions.add_child(back)
+	back_button = _button("Back")
+	back_button.pressed.connect(_request_cancel)
+	actions.add_child(back_button)
 
-	var defaults := _button("Restore Defaults")
-	defaults.pressed.connect(_on_defaults)
-	actions.add_child(defaults)
+	defaults_button = _button("Restore Defaults")
+	defaults_button.pressed.connect(_on_defaults)
+	actions.add_child(defaults_button)
 
-	var apply := _button("Apply")
-	apply.pressed.connect(_on_apply)
-	actions.add_child(apply)
+	apply_button = _button("Apply")
+	apply_button.pressed.connect(_on_apply)
+	actions.add_child(apply_button)
 	_cache_focus_controls()
+	for control in focus_controls:
+		control.focus_entered.connect(Callable(self, "_ensure_focused_control_visible").bind(control))
 	visibility_changed.connect(_on_visibility_changed)
 	_apply_accessibility_settings()
 
 
 func _input(event: InputEvent) -> void:
-	if visible and _trap_focus_navigation(event):
+	if not visible:
+		return
+	if event.is_action_pressed("ui_cancel"):
+		_request_cancel()
+		get_viewport().set_input_as_handled()
+		return
+	if _trap_focus_navigation(event):
 		get_viewport().set_input_as_handled()
 
 
@@ -208,6 +225,15 @@ func _focus_first_setting() -> void:
 		focus_controls[0].grab_focus()
 
 
+func _ensure_focused_control_visible(control: Control) -> void:
+	if body_scroll != null and is_instance_valid(control) and body_scroll.is_ancestor_of(control):
+		body_scroll.ensure_control_visible(control)
+
+
+func action_buttons() -> Array:
+	return [back_button, defaults_button, apply_button]
+
+
 func _on_visibility_changed() -> void:
 	if not visible:
 		call_deferred("_restore_previous_focus")
@@ -217,6 +243,20 @@ func _restore_previous_focus() -> void:
 	if is_instance_valid(previous_focus_owner) and previous_focus_owner.is_visible_in_tree():
 		previous_focus_owner.grab_focus()
 	previous_focus_owner = null
+
+
+func _request_cancel() -> void:
+	discard_draft()
+	cancel_requested.emit()
+	back_requested.emit()
+
+
+func discard_draft() -> void:
+	if settings == null or draft == null:
+		return
+	draft.from_dict(settings.to_dict())
+	draft_committed = false
+	_apply_accessibility_settings()
 
 
 # Adds a visual section heading.
@@ -339,8 +379,10 @@ func _save(message: String) -> void:
 	settings.from_dict(draft.to_dict())
 	settings.apply()
 	VisualStyleScript.set_high_contrast_enabled(settings.high_contrast)
+	draft_committed = true
 	var error: Error = settings.save()
 	settings_applied.emit()
+	recovery_banner_message = ""
 	status.text = message if error == OK else "Settings applied, but could not be saved."
 	_apply_accessibility_settings()
 
@@ -447,6 +489,7 @@ func current_settings_snapshot() -> Dictionary:
 		return {}
 	return {
 		"visible": visible,
+		"status": status.text if status != null else recovery_banner_message,
 		"ui_scale": float(active_settings.ui_scale),
 		"text_size": str(active_settings.text_size),
 		"text_scale": float(active_settings.text_scale()),
@@ -461,6 +504,18 @@ func current_settings_snapshot() -> Dictionary:
 		"haptics_supported": false,
 		"haptics_cut_reason": UserSettingsScript.HAPTICS_CUT_REASON,
 	}
+
+
+func set_recovery_banner(outcome: Dictionary) -> void:
+	var code := str(outcome.get("code", ""))
+	if code == "recovered_defaults":
+		recovery_banner_message = "Settings could not be read. Safe defaults were restored; the original file was preserved."
+	elif code == "io_error":
+		recovery_banner_message = "Settings could not be read. Safe defaults are active; check file access before saving."
+	else:
+		recovery_banner_message = ""
+	if status != null:
+		status.text = recovery_banner_message
 
 
 # Builds human-readable resolution labels.
@@ -483,18 +538,17 @@ func _apply_accessibility_settings() -> void:
 			font_scale = minf(1.5, font_scale * SmallScreenPolicyScript.FONT_SCALE)
 			control_scale = maxf(control_scale, SmallScreenPolicyScript.CONTROL_SCALE)
 		high_contrast_enabled = bool(active_settings.high_contrast)
-	VisualStyleScript.set_high_contrast_enabled(high_contrast_enabled)
-	_apply_accessibility_to_node(self, font_scale, control_scale)
+	_apply_accessibility_to_node(self, font_scale, control_scale, high_contrast_enabled)
 
 
-func _apply_accessibility_to_node(node: Node, font_scale: float, control_scale: float) -> void:
+func _apply_accessibility_to_node(node: Node, font_scale: float, control_scale: float, high_contrast_enabled: bool) -> void:
 	var control := node as Control
 	if control != null:
 		_apply_accessibility_font(control, font_scale)
 		_apply_accessibility_minimum_size(control, control_scale)
-		_apply_accessibility_colors(control)
+		_apply_accessibility_colors(control, high_contrast_enabled)
 	for child in node.get_children():
-		_apply_accessibility_to_node(child, font_scale, control_scale)
+		_apply_accessibility_to_node(child, font_scale, control_scale, high_contrast_enabled)
 
 
 func _apply_accessibility_font(control: Control, font_scale: float) -> void:
@@ -528,7 +582,7 @@ func _apply_accessibility_minimum_size(control: Control, control_scale: float) -
 	control.custom_minimum_size = next_size
 
 
-func _apply_accessibility_colors(control: Control) -> void:
+func _apply_accessibility_colors(control: Control, high_contrast_enabled: bool) -> void:
 	if not _control_uses_text(control):
 		return
 	if not control.has_meta(ACCESSIBILITY_BASE_COLOR_META):
@@ -542,7 +596,7 @@ func _apply_accessibility_colors(control: Control) -> void:
 	var color := VisualStyleScript.SOFT
 	if typeof(stored) == TYPE_COLOR:
 		color = stored
-	control.add_theme_color_override("font_color", VisualStyleScript.accessible_color(color))
+	control.add_theme_color_override("font_color", VisualStyleScript.accessible_color_for_mode(color, high_contrast_enabled))
 
 
 func _control_uses_text(control: Control) -> bool:
