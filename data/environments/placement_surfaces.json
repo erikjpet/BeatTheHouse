@@ -7751,32 +7751,6 @@
       "slot_schema_version": 1,
       "base_slots": [
         {
-          "id": "base.doorway.01",
-          "kind": "base",
-          "pos": [
-            841.0,
-            266.0
-          ],
-          "footprint_class": "doorway",
-          "hit_rect": [
-            809.0,
-            230.0,
-            64.0,
-            72.0
-          ],
-          "label_anchor": [
-            841.0,
-            224.0
-          ],
-          "facing": "left",
-          "priority": 10,
-          "zone_id": "room",
-          "support_id": "right_exit",
-          "walk_lane_ids": [
-            "lane.public"
-          ]
-        },
-        {
           "id": "base.doorway.02",
           "kind": "base",
           "pos": [
@@ -7803,73 +7777,51 @@
           ]
         },
         {
-          "id": "base.surface_item.01",
+          "id": "base.doorway.01",
           "kind": "base",
           "pos": [
-            802.0,
-            108.0
+            841.0,
+            266.0
           ],
-          "footprint_class": "surface_item",
+          "footprint_class": "doorway",
           "hit_rect": [
-            766.0,
-            60.0,
-            72.0,
-            48.0
+            809.0,
+            230.0,
+            64.0,
+            72.0
           ],
           "label_anchor": [
-            802.0,
-            54.0
+            841.0,
+            224.0
+          ],
+          "facing": "left",
+          "priority": 10,
+          "zone_id": "room",
+          "support_id": "right_exit",
+          "walk_lane_ids": [
+            "lane.public"
+          ]
+        },
+        {
+          "id": "base.floor_fixture.01",
+          "kind": "base",
+          "pos": [
+            694.0,
+            142.0
+          ],
+          "footprint_class": "floor_fixture",
+          "hit_rect": [
+            648.0,
+            78.0,
+            92.0,
+            64.0
+          ],
+          "label_anchor": [
+            694.0,
+            72.0
           ],
           "facing": "none",
           "priority": 10,
-          "zone_id": "background",
-          "support_id": "refreshment_shelf",
-          "walk_lane_ids": []
-        },
-        {
-          "id": "base.surface_item.02",
-          "kind": "base",
-          "pos": [
-            110.0,
-            194.0
-          ],
-          "footprint_class": "surface_item",
-          "hit_rect": [
-            74.0,
-            146.0,
-            72.0,
-            48.0
-          ],
-          "label_anchor": [
-            110.0,
-            140.0
-          ],
-          "facing": "none",
-          "priority": 20,
-          "zone_id": "left",
-          "support_id": "left_table",
-          "walk_lane_ids": []
-        },
-        {
-          "id": "base.surface_item.03",
-          "kind": "base",
-          "pos": [
-            300.0,
-            202.0
-          ],
-          "footprint_class": "surface_item",
-          "hit_rect": [
-            264.0,
-            154.0,
-            72.0,
-            48.0
-          ],
-          "label_anchor": [
-            300.0,
-            148.0
-          ],
-          "facing": "none",
-          "priority": 30,
           "zone_id": "room",
           "support_id": "stage",
           "walk_lane_ids": []
@@ -7901,81 +7853,79 @@
           ]
         },
         {
-          "id": "base.floor_fixture.01",
+          "id": "base.surface_item.03",
           "kind": "base",
           "pos": [
-            446.0,
-            142.0
-          ],
-          "footprint_class": "floor_fixture",
-          "hit_rect": [
-            400.0,
-            78.0,
-            92.0,
-            64.0
-          ],
-          "label_anchor": [
-            446.0,
-            72.0
-          ],
-          "facing": "none",
-          "priority": 10,
-          "zone_id": "room",
-          "support_id": "stage",
-          "walk_lane_ids": []
-        }
-      ],
-      "stage_slots": [
-        {
-          "id": "stage.surface_item.01",
-          "kind": "stage",
-          "pos": [
-            380.0,
+            300.0,
             202.0
           ],
           "footprint_class": "surface_item",
           "hit_rect": [
-            344.0,
+            264.0,
             154.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            380.0,
+            300.0,
             148.0
           ],
           "facing": "none",
-          "priority": 10,
+          "priority": 30,
+          "zone_id": "room",
+          "support_id": "stage",
+          "walk_lane_ids": []
+        },
+        {
+          "id": "base.surface_item.02",
+          "kind": "base",
+          "pos": [
+            412.0,
+            202.0
+          ],
+          "footprint_class": "surface_item",
+          "hit_rect": [
+            376.0,
+            154.0,
+            72.0,
+            48.0
+          ],
+          "label_anchor": [
+            412.0,
+            148.0
+          ],
+          "facing": "none",
+          "priority": 20,
           "zone_id": "service_lane",
           "support_id": "stage",
           "walk_lane_ids": []
         },
         {
-          "id": "stage.standing_person.01",
-          "kind": "stage",
+          "id": "base.surface_item.01",
+          "kind": "base",
           "pos": [
-            152.0,
-            358.0
+            802.0,
+            108.0
           ],
-          "footprint_class": "standing_person",
+          "footprint_class": "surface_item",
           "hit_rect": [
-            116.0,
-            278.0,
+            766.0,
+            60.0,
             72.0,
-            80.0
+            48.0
           ],
           "label_anchor": [
-            152.0,
-            272.0
+            802.0,
+            54.0
           ],
-          "facing": "right",
+          "facing": "none",
           "priority": 10,
-          "zone_id": "left",
-          "support_id": "floor",
-          "walk_lane_ids": [
-            "lane.public"
-          ]
-        },
+          "zone_id": "background",
+          "support_id": "refreshment_shelf",
+          "walk_lane_ids": []
+        }
+      ],
+      "stage_slots": [
         {
           "id": "stage.floor_fixture.01",
           "kind": "stage",
@@ -7998,6 +7948,56 @@
           "priority": 10,
           "zone_id": "center",
           "support_id": "floor",
+          "walk_lane_ids": []
+        },
+        {
+          "id": "stage.standing_person.01",
+          "kind": "stage",
+          "pos": [
+            388.0,
+            358.0
+          ],
+          "footprint_class": "standing_person",
+          "hit_rect": [
+            352.0,
+            278.0,
+            72.0,
+            80.0
+          ],
+          "label_anchor": [
+            388.0,
+            272.0
+          ],
+          "facing": "front",
+          "priority": 10,
+          "zone_id": "center",
+          "support_id": "floor",
+          "walk_lane_ids": [
+            "lane.public"
+          ]
+        },
+        {
+          "id": "stage.surface_item.01",
+          "kind": "stage",
+          "pos": [
+            110.0,
+            194.0
+          ],
+          "footprint_class": "surface_item",
+          "hit_rect": [
+            74.0,
+            146.0,
+            72.0,
+            48.0
+          ],
+          "label_anchor": [
+            110.0,
+            140.0
+          ],
+          "facing": "none",
+          "priority": 10,
+          "zone_id": "left",
+          "support_id": "left_table",
           "walk_lane_ids": []
         }
       ],
@@ -8033,18 +8033,18 @@
           "kind": "exit",
           "pos": [
             36.0,
-            338.0
+            346.0
           ],
           "footprint_class": "doorway",
           "hit_rect": [
             4.0,
-            302.0,
+            310.0,
             64.0,
             72.0
           ],
           "label_anchor": [
             36.0,
-            296.0
+            304.0
           ],
           "facing": "right",
           "priority": 20,
@@ -8080,23 +8080,23 @@
       "actor_routes": [],
       "object_slot_ids": {
         "event:chain06_cass_first_contact": "base.standing_person.01",
-        "event:town_rumor_staff": "base.standing_person.01",
-        "numbers:book": "base.surface_item.03",
-        "service:house_drink": "base.surface_item.02",
-        "service:punchline_cover_charge": "base.surface_item.01",
-        "service:punchline_two_drink_minimum": "base.surface_item.03",
         "event:scenario_headliner_cover": "base.doorway.01",
         "event:side_door": "base.doorway.02",
+        "event:town_rumor_staff": "base.standing_person.01",
+        "numbers:book": "base.surface_item.02",
+        "service:house_drink": "base.surface_item.03",
+        "service:punchline_cover_charge": "base.surface_item.01",
+        "service:punchline_two_drink_minimum": "base.surface_item.02",
         "travel:leave": "base.doorway.02"
       },
       "category_slot_ids": {
         "event_spots:0": "base.floor_fixture.01",
-        "travel_spots:0": "base.doorway.02",
-        "service_spots:0": "base.surface_item.02",
         "layer_spots:0": "base.doorway.01",
         "layer_spots:1": "base.doorway.01",
-        "numbers_spots:0": "base.surface_item.01",
-        "numbers_silas_spots:0": "base.standing_person.01"
+        "numbers_silas_spots:0": "base.standing_person.01",
+        "numbers_spots:0": "base.surface_item.02",
+        "service_spots:0": "base.surface_item.03",
+        "travel_spots:0": "base.doorway.02"
       },
       "scenario_slot_ids": {},
       "scenario_position_route_ids": {}
