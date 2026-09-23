@@ -2,8 +2,8 @@
 
 Status: TODO. Self-contained. Launch with this file only.
 
-You own getting Beat the House 0.6.0 from its current state to published by
-**2026-09-29**. You do this by executing the release-week rows in order. You may
+You own getting Beat the House 0.6.0 from its current state to an upload-ready
+artifact handoff by **2026-09-29**. You do this by executing the release-week rows in order. You may
 run rows yourself or delegate them to sub-agents. Either way, you are accountable
 for verifying every row before it counts as DONE.
 
@@ -41,8 +41,10 @@ for verifying every row before it counts as DONE.
 
 ## Deliverable
 
-The itch.io Web build and the Windows `.exe`, both at 0.6.0, uploaded and ready
-for owner playtesting.
+Two upload-ready zip files: the itch.io Web build and the Windows `.exe`, both
+at 0.6.0, built with `tools/export_itch.ps1` without `-Push`, PCK-audited and
+packaged-smoke verified. The owner uploads them personally. No agent ever runs
+butler or any upload or publish command.
 
 ## Startup: you launch at the same time as the worker handoff
 
@@ -109,9 +111,11 @@ Once the merge lands, rebase your Phase 0 worktrees onto the new `main`.
    Owner blockers become scoped fixes, assigned to rw06_1 for placement or
    rw06_2 for everything else. Non-blockers go to the 0.6.1 backlog.
 4. **rw06_3** (balance) after the owner's notes are handled.
-5. **rw06_4** (gate and ship). It has three hard owner stops: source approval,
-   artifact approval, publish authorization. Each is asked in the questions file.
-   Never publish, upload or post without an ANSWERED "go" there.
+5. **rw06_4** (gate and artifact handoff). It has three hard owner stops: source
+   approval, artifact approval, and artifact handoff/upload confirmation. Each
+   is asked in the questions file. Agents post the two zip paths and SHA-256
+   hashes for the owner, never run `export_itch.ps1 -Push`, butler, or any
+   upload/publish command, and tag only after the owner confirms they uploaded.
 
 ## Your standing duties
 
@@ -169,6 +173,7 @@ Once the merge lands, rebase your Phase 0 worktrees onto the new `main`.
 
 ## Done
 
-0.6.0 is published after owner authorization and tagged `v0.6.0`. The scoreboard
-is all green, and no release-week branch or worktree remains unmerged. Every row prompt is archived to `docs/todone/` with its execution
+0.6.0's two verified zips are handed to the owner, the owner confirms in the
+questions file that they uploaded them, and the exact source is then tagged
+`v0.6.0`. The scoreboard is all green, and no release-week branch or worktree remains unmerged. Every row prompt is archived to `docs/todone/` with its execution
 record filled in. The 0.6.1 backlog contains everything that was deferred.

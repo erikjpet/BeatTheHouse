@@ -1,4 +1,4 @@
-# rw06_4 — 0.6.0 release gate and ship
+# rw06_4 — 0.6.0 release gate and artifact handoff
 
 Status: TODO. Self-contained. Launch with this file only.
 Depends on rw06_1, rw06_2, rw06_3 and rw06_5 being DONE. This replaces
@@ -21,23 +21,26 @@ other way, and never stall waiting.
 
 ## Deliverable
 
-The **itch.io Web build** and the **Windows `.exe`**, both at version 0.6.0,
-uploaded with `tools/export_itch.ps1 -Push -ItchTarget <target from Q-001>` and
-ready for owner playtesting. Before asking for publish authorization, verify both
-from the exact packages:
+Two upload-ready zip files: the **itch.io Web build** and the **Windows `.exe`**,
+both at version 0.6.0, built with `tools/export_itch.ps1` without `-Push` and
+ready for owner playtesting. Before artifact handoff, verify both from the exact
+packages:
 
 - the Web build loads in a browser;
 - the `.exe` launches and shows version 0.6.0;
 - each can reach the first room and play a game;
 - save and Continue work.
 
-Agents never enter credentials. If butler isn't logged in, ask the owner.
+Agents never run `export_itch.ps1 -Push`, butler, or any upload or publish
+command. The owner always uploads both zip files personally.
 
 ## Hard owner gates (ask in the questions file, never assume)
 
 1. **Source approval** before packaging.
-2. **Artifact approval** before publishing.
-3. **Publish authorization** before any upload and before any public post.
+2. **Artifact approval** after both exact zip files pass every packaged gate.
+3. **Artifact handoff/upload confirmation**: post both zip paths and SHA-256
+   hashes in the questions file. The owner uploads them personally and answers
+   when complete. Only then may the exact source be tagged `v0.6.0`.
 
 Each gate is a question in `rw06_owner_questions.md`. While a gate is waiting,
 keep doing work that doesn't depend on it: records, copy drafts, evidence.
@@ -86,8 +89,10 @@ Mobile (Android/iOS) is not in 0.6.0.
   The trailer template is optional and can wait for 0.6.1.
 - Update `docs/current_game_state.md` and the status line of
   `docs/plans/0.6_living_world_roadmap.md` to "shipped as 0.6.0 (<hash>)".
-- After publish authorization, publish with the existing itch/website flow.
-  Then tag `v0.6.0` on the exact published source and push the tag.
+- After artifact approval, post both zip paths and SHA-256 hashes in the owner
+  questions file. Do not run any upload or publish command. After the owner
+  confirms there that they personally uploaded the artifacts, tag `v0.6.0` on
+  the exact handed-off source and push the tag.
 
 ## Rules
 
@@ -101,8 +106,8 @@ Mobile (Android/iOS) is not in 0.6.0.
 
 - Scoreboard: every gate item row set to green or red with an evidence path,
   plus a history line.
-- Report to the owner the candidate hash, artifact hashes, and which owner gate
-  is waiting.
+- Report to the owner the candidate hash, zip paths and SHA-256 hashes, and
+  which owner gate is waiting.
 - Work in a worktree branch, fast-forward `main` and push; never force-push.
   After shipping, `git branch -a` and `git worktree list` must show no leftover
   rw06 branches or worktrees. Delete yours, local and origin.

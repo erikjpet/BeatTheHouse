@@ -1,6 +1,6 @@
 # 0.6 Release Week — plan and scoreboard
 
-Created 2026-09-22 by the owner and PM. Target: 0.6.0 published by **2026-09-29**.
+Created 2026-09-22 by the owner and PM. Target: 0.6.0 upload-ready artifact handoff by **2026-09-29**.
 This page replaces the "Current owner-directed sequence" on
 `README_0_6_board.md`. Anything not on this page ships in 0.6.1 and is listed in
 `../plans/0.6.1_backlog.md`, so no idea is dropped.
@@ -21,8 +21,11 @@ use fixed, modular slots instead of randomly scattered objects.
 
 ## Deliverable
 
-The **itch.io Web build** and the **Windows `.exe` build**, both at version
-0.6.0, uploaded to itch.io and ready for playtesting.
+Two upload-ready zip files: the **itch.io Web build** and the **Windows `.exe`
+build**, both at version 0.6.0, built with `tools/export_itch.ps1` without
+`-Push`. Each zip must pass its PCK audit and packaged smoke checks. The owner
+always uploads the zips personally; agents never run butler or any upload or
+publish command.
 
 ## Owner questions file
 
