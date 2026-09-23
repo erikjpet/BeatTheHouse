@@ -310,8 +310,9 @@ func _click_button(target: String) -> Dictionary:
 		return {"ok": false, "reason": "ambiguous button text; use one of these ids: %s" % ", ".join(ids)}
 	var data := matches[0] as Dictionary
 	var button := data.get("node") as Button
-	if button == null or not button.is_visible_in_tree() or button.disabled:
-		return {"ok": false, "reason": "button became hidden or disabled before click"}
+	if button == null or not button.is_visible_in_tree() or button.disabled \
+			or not bool(data.get("fully_visible", false)):
+		return {"ok": false, "reason": "button became hidden, clipped, or disabled before click"}
 	var clicked_id := str(data.get("id", ""))
 	var clicked_text := button.text
 	var click_position: Vector2 = data.get("click_position", button.get_global_rect().get_center())
@@ -787,6 +788,7 @@ func _collect_buttons(node: Node, result: Array) -> void:
 		return
 	if node is Button:
 		var button := node as Button
+		var full_rect := button.get_global_rect()
 		var visible_rect := _clipped_control_rect(button)
 		if button.is_visible_in_tree() and not button.disabled and visible_rect.has_area():
 			result.append({
@@ -794,6 +796,7 @@ func _collect_buttons(node: Node, result: Array) -> void:
 				"id": str(button.get_path()),
 				"text": button.text.strip_edges(),
 				"rect": visible_rect,
+				"fully_visible": _rect_encloses_with_tolerance(visible_rect, full_rect),
 				"click_position": visible_rect.get_center(),
 			})
 	for child in node.get_children():
@@ -809,6 +812,7 @@ func _public_buttons() -> Array:
 			"text": entry.get("text", ""),
 			"enabled": true,
 			"rect": entry.get("rect", Rect2()),
+			"fully_visible": bool(entry.get("fully_visible", false)),
 		})
 	return result
 
@@ -954,6 +958,14 @@ func _clipped_control_rect(control: Control) -> Rect2:
 			visible_rect = visible_rect.intersection((ancestor as Control).get_global_rect())
 		ancestor = ancestor.get_parent()
 	return visible_rect
+
+
+func _rect_encloses_with_tolerance(outer: Rect2, inner: Rect2, tolerance: float = 0.75) -> bool:
+	return outer.has_area() and inner.has_area() \
+		and outer.position.x <= inner.position.x + tolerance \
+		and outer.position.y <= inner.position.y + tolerance \
+		and outer.end.x >= inner.end.x - tolerance \
+		and outer.end.y >= inner.end.y - tolerance
 
 
 func _canvas_objects(canvas: Control) -> Array:

@@ -21,14 +21,15 @@ files or private run state.
 ## Live measurements still required
 
 The first engine contract and the launcher detach/atomic-command regression
-passed. Two 2026-09-23 current-main exploratory clean probes then accepted PLAY
-and publicly observed the tutorial Apartment at $80 / 0 Heat. The first stopped
-after one counted action on tutorial replay policy; the second proved that fix
-and stopped after four counted actions because the visible run menu needed a
-semantic scroll input to reveal **Skip Lessons**. Both failures happened before
-any route economy decision and are replay-policy/bridge findings, not product
-economy evidence. Therefore there is not yet an honest route money curve or
-tuning recommendation.
+passed. Three 2026-09-23 current-main exploratory clean probes then accepted
+PLAY and publicly observed the tutorial Apartment at $80 / 0 Heat. The first
+stopped after one counted action on tutorial replay policy; the second stopped
+after four because the run menu needed semantic scroll; the third proved that
+wheel input and stopped after six because a partially clipped button was
+mistaken for a fully rendered target. Every failure happened before a route
+economy decision and is a replay-policy/bridge finding, not product economy
+evidence. Therefore there is not yet an honest route money curve or tuning
+recommendation.
 Copy the exact values from the qualifying route summaries into this table:
 
 | Ending | Seed | Start cash | Grand entry cash | Lowest cash | Chips bought | End cash | Peak heat | Counted actions | Friction / rw06_3 recommendation |

@@ -85,6 +85,7 @@ if ($failures.Count -eq 0) {
         'function Invoke-HeistEndingRoute',
         'function Invoke-BridgeTransportRegression',
         'function Invoke-BridgeStatusRegression',
+        'function Select-UniqueFullyVisibleButton',
         'function Select-UniquePublicVerticalScrollSurface',
         'function Reveal-ButtonByVerticalScroll',
         'function Click-RunMenuButton',
@@ -175,10 +176,12 @@ if ($failures.Count -eq 0) {
         '"scroll_surface"',
         '"talk_choices": _public_talk_choices(observable)',
         '"scroll_surfaces": _public_scroll_surfaces()',
+        '"fully_visible": bool(entry.get("fully_visible", false))',
         'func _scroll_surface(argument: String) -> Dictionary:',
         'func _visible_vertical_scroll_surface(surface_id: String) -> Dictionary:',
         'func _public_scroll_surfaces() -> Array:',
         'func _push_mouse_wheel(position: Vector2, button_index: int) -> void:',
+        'func _rect_encloses_with_tolerance(outer: Rect2, inner: Rect2, tolerance: float = 0.75) -> bool:',
         'start_menu["seed_text_committed"] = seed_field_visible',
         'screen["run_report_visible"] = screen_id in ["VICTORY", "FAILURE"]',
         'status_hud["save_text_visible"] = _hud_status_tooltip_is_rendered',
@@ -257,9 +260,12 @@ if ($failures.Count -eq 0) {
     Assert-Match $runner '(?s)function Get-VisibleTutorialGuideAcknowledgment.*?tutorial_guide:.*?choiceIds\.Count\s+-ne\s+1.*?choiceIds\[0\].*?continue.*?Get-PublicTalkChoices.*?enabled' 'Coach recovery must accept only one rendered enabled continue choice from the public tutorial-guide TalkDock.'
     Assert-Match $runner '(?s)function Clear-VisibleCoach.*?Get-VisibleTutorialGuideAcknowledgment.*?Choose-VisibleChoice\s+-ChoiceId\s+''continue''.*?Wait-Frames.*?continue.*?dismissLabel' 'Coach recovery must follow the narrow public tutorial-guide acknowledgement before trying the rendered coach dismiss control.'
     Assert-Match $runner '(?s)function Select-UniquePublicVerticalScrollSurface.*?SurfaceId\s+-cne\s+''run_menu''.*?matches\.Count\s+-ne\s+1.*?axis.*?vertical.*?rendered.*?can_scroll_\$Direction' 'Run-menu scroll selection must reject unsupported, ambiguous, hidden, wrong-axis, and direction-blocked public surfaces.'
-    Assert-Match $runner '(?s)function Reveal-ButtonByVerticalScroll.*?MaximumScrolls\s*=\s*12.*?Get-PublicScrollSurfaces.*?scroll_surface \$surfaceId \$Direction.*?did not become visible within' 'Run-menu reveal must use bounded public semantic scroll inputs and fail closed.'
+    Assert-Match $runner '(?s)function Select-UniqueFullyVisibleButton.*?matches\.Count\s+-gt\s+1.*?Properties\[''fully_visible''\].*?-isnot\s+\[bool\].*?fully_visible signal.*?return \$null' 'Run-menu button selection must fail closed on ambiguous, absent, non-boolean, and false fully-visible signals.'
+    Assert-Match $runner '(?s)function Reveal-ButtonByVerticalScroll.*?MaximumScrolls\s*=\s*12.*?Select-UniqueFullyVisibleButton.*?Get-PublicScrollSurfaces.*?scroll_surface \$surfaceId \$Direction.*?did not become visible within' 'Run-menu reveal must require a fully visible target, use bounded public semantic scroll inputs, and fail closed.'
     Assert-NotMatch $runner '\$null\s+-eq\s+\(Find-Button\s+-Text\s+''Skip Lessons''\)' 'The tutorial route must not demand an already visible Skip Lessons button before semantic scrolling can reveal it.'
     Assert-Match $bridge '(?s)func _scroll_surface\(argument: String\).*?surface_id != "run_menu".*?direction not in \["up", "down"\].*?surface\.get\(capability, false\).*?_push_mouse_wheel.*?after <= before.*?after >= before' 'The bridge semantic scroll command must allow only rendered public run-menu capabilities and verify real wheel movement.'
+    Assert-Match $bridge '(?s)func _click_button\(target: String\).*?fully_visible.*?button became hidden, clipped, or disabled before click' 'The bridge must re-check that a semantic button is fully visible immediately before clicking it.'
+    Assert-Match $bridge '(?s)func _collect_buttons\(node: Node, result: Array\).*?full_rect\s*:=\s*button\.get_global_rect\(\).*?visible_rect\s*:=\s*_clipped_control_rect\(button\).*?"fully_visible":\s*_rect_encloses_with_tolerance\(visible_rect, full_rect\)' 'The bridge must derive fully-visible button state by comparing the full global rect with the clipped visible rect.'
     Assert-NotMatch $bridge '\.scroll_vertical\s*=' 'The replay bridge must not inject scroll-container state directly.'
     Assert-Contains $runner "@('players_card_eligible') `$false" 'Clean-ending eligibility must fail closed when its public field is absent.'
     Assert-Contains $runner 'Stop-Process -Id $script:OwnedSessionPid -Force -ErrorAction Stop' 'Failure cleanup may force-stop only the exact recorded session-owned Godot PID.'
@@ -317,6 +323,9 @@ if ($failures.Count -eq 0) {
         $scrollReport = $scrollOutput | ConvertFrom-Json
         if (-not [bool]$scrollReport.passed -or [int]$scrollReport.hostile_fixtures -ne 7) {
             Add-Failure 'Semantic scroll hostile regression did not pass all seven fail-closed fixtures.'
+        }
+        if ([int]$scrollReport.hostile_button_fixtures -ne 5) {
+            Add-Failure 'Semantic scroll hostile regression did not pass all five fully-visible button fixtures.'
         }
         if (-not (Test-Path -LiteralPath $SemanticScrollReportPath -PathType Leaf)) {
             Add-Failure 'Semantic scroll hostile regression did not publish its deterministic report.'

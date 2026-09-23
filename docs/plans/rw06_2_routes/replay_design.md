@@ -11,9 +11,9 @@ nonzero at the first route deviation. It is a player replay, not a state-builder
 ## Authority rules
 
 - Start and command isolated sessions through `tools/agent_playtest_session.ps1`.
-- Use only rendered `click_button`, semantic `click_object`, `click_action`,
-  `click_map`, `click_choice`, `click_inventory`, public text-field entry,
-  waits, and quit/relaunch.
+- Use only rendered `click_button`, semantic `scroll_surface`, `click_object`,
+  `click_action`, `click_map`, `click_choice`, `click_inventory`, public
+  text-field entry, waits, and quit/relaunch.
 - Do not call product handlers directly, edit saves, inject flags/trust/money,
   teleport, use debug shortcuts, inspect hidden cards, or read the private Crew
   capsule.
@@ -144,8 +144,22 @@ checkpoint, screenshots, and final summary used for acceptance.
   fixtures pass engine-free. Summary evidence is
   `.tmp/rw06_2/exploratory/clean-main-11c584bd-probe2/20260923-094003-789-18960/run-01/summary.json`
   (SHA-256 `D876EF3276898B59AC33B0E9F10C8A7953184E6EA29CA352A3DFFE03E74AF344`).
-  The exact owned process exited with empty stderr and no survivor. The scroll
-  correction still requires a serialized live probe.
+  The exact owned process exited with empty stderr and no survivor.
+- A third serialized, non-qualifying clean probe on product base `006620e5`
+  proved the real wheel input and bounded route scroll, then exposed a narrower
+  rendered-reachability gap. After one wheel step, only 23 of the 52-pixel
+  **Skip Lessons** button intersected the viewport; its label and center were
+  still clipped. The bridge nevertheless published its control text, and its
+  accepted click did not open the confirmation. The run stopped fail-closed
+  after six counted actions. The bridge now publishes a `fully_visible` signal
+  derived from the full global and clipped rectangles, rechecks it at click
+  time, and the route scrolls until the target is fully visible. Missing,
+  false, non-boolean, and ambiguous values fail closed under hostile engine-free
+  fixtures. Summary evidence is
+  `.tmp/rw06_2/exploratory/clean-main-006620e5-probe3/20260923-103641-220-18380/run-01/summary.json`
+  (SHA-256 `AF3293A2F0499FE1FCC9A2599E6C116C6F83B4020DC5387BD1464854B35EB6A1`).
+  The exact owned process exited with empty stderr and no survivor. The
+  full-visibility correction still requires a later serialized live probe.
 - Final qualifying evidence intentionally waits for rw06_1 to land.
 
 ## Open route risks

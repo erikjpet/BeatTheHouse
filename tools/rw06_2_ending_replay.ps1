@@ -662,6 +662,28 @@ function Find-Button {
 }
 
 
+function Select-UniqueFullyVisibleButton {
+    param(
+        [Parameter(Mandatory = $true)][AllowEmptyCollection()][object[]]$Buttons,
+        [Parameter(Mandatory = $true)][string]$Text
+    )
+    $matches = @($Buttons | Where-Object {
+        [string](Get-Value $_ @('text') '') -ceq $Text
+    })
+    if ($matches.Count -gt 1) {
+        throw "Fully visible button lookup is ambiguous for '$Text'."
+    }
+    if ($matches.Count -eq 0) { return $null }
+    $button = $matches[0]
+    $visibilityProperty = $button.PSObject.Properties['fully_visible']
+    if ($null -eq $visibilityProperty -or $visibilityProperty.Value -isnot [bool]) {
+        throw "Public button '$Text' has no unambiguous fully_visible signal."
+    }
+    if (-not [bool]$visibilityProperty.Value) { return $null }
+    return $button
+}
+
+
 function Get-PublicScrollSurfaces {
     return @(Get-Array (Get-Value $script:LastResult @('look', 'clickable', 'scroll_surfaces') @()))
 }
@@ -702,7 +724,7 @@ function Reveal-ButtonByVerticalScroll {
         [ValidateRange(1, 16)][int]$MaximumScrolls = 12
     )
     for ($attempt = 0; $attempt -le $MaximumScrolls; $attempt++) {
-        $button = Find-Button -Text $Text
+        $button = Select-UniqueFullyVisibleButton -Buttons @(Get-Buttons) -Text $Text
         if ($null -ne $button) { return $button }
         if ($attempt -eq $MaximumScrolls) { break }
         $surface = Select-UniquePublicVerticalScrollSurface `
@@ -2767,6 +2789,43 @@ function Invoke-BridgeStatusRegression {
 
 function Invoke-SemanticScrollRegression {
     $failures = [Collections.Generic.List[string]]::new()
+    $validButton = [pscustomobject][ordered]@{
+        id = '/root/RunMenu/SkipLessons'
+        text = 'Skip Lessons'
+        enabled = $true
+        fully_visible = $true
+    }
+    try {
+        $selectedButton = Select-UniqueFullyVisibleButton -Buttons @($validButton) -Text 'Skip Lessons'
+        if ([string](Get-Value $selectedButton @('id') '') -cne '/root/RunMenu/SkipLessons') {
+            $failures.Add('Valid fully visible public button selection returned the wrong button.')
+        }
+    }
+    catch {
+        $failures.Add("Valid fully visible public button selection threw: $($_.Exception.Message)")
+    }
+
+    $buttonHostileFixtures = @(
+        [pscustomobject]@{ label = 'target-missing'; buttons = @(); expect_throw = $false },
+        [pscustomobject]@{ label = 'fully-visible-false'; buttons = @([pscustomobject]@{ id = '/root/partial'; text = 'Skip Lessons'; enabled = $true; fully_visible = $false }); expect_throw = $false },
+        [pscustomobject]@{ label = 'fully-visible-absent'; buttons = @([pscustomobject]@{ id = '/root/absent'; text = 'Skip Lessons'; enabled = $true }); expect_throw = $true },
+        [pscustomobject]@{ label = 'fully-visible-non-boolean'; buttons = @([pscustomobject]@{ id = '/root/nonbool'; text = 'Skip Lessons'; enabled = $true; fully_visible = 'true' }); expect_throw = $true },
+        [pscustomobject]@{ label = 'ambiguous-buttons'; buttons = @($validButton, $validButton); expect_throw = $true }
+    )
+    foreach ($fixture in $buttonHostileFixtures) {
+        $selected = $null
+        $threw = $false
+        try {
+            $selected = Select-UniqueFullyVisibleButton -Buttons @($fixture.buttons) -Text 'Skip Lessons'
+        }
+        catch {
+            $threw = $true
+        }
+        if ([bool]$fixture.expect_throw -ne $threw -or (-not $threw -and $null -ne $selected)) {
+            $failures.Add("Hostile fully-visible fixture '$($fixture.label)' did not fail closed.")
+        }
+    }
+
     $validDown = [pscustomobject][ordered]@{
         id = 'run_menu'
         axis = 'vertical'
@@ -2826,6 +2885,8 @@ function Invoke-SemanticScrollRegression {
         schema_version = 1
         check_id = 'rw06_2_semantic_scroll_contract'
         passed = ($failures.Count -eq 0)
+        valid_button_fixtures = 1
+        hostile_button_fixtures = $buttonHostileFixtures.Count
         valid_fixtures = 2
         hostile_fixtures = $hostileFixtures.Count
         failures = @($failures)

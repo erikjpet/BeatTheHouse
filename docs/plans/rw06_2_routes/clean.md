@@ -78,6 +78,39 @@ Evidence:
 - The exact owned process exited, stderr was empty, and no Godot process
   survived.
 
+## 2026-09-23 third current-main exploratory probe (non-qualifying)
+
+Product base `006620e5`; pushed replay tip `a6c23bee`. Exactly one additional
+`-Ending clean -Repeat 1` run was made under the serialized Godot lease. The
+semantic wheel input succeeded and made part of the bottom button row intersect
+the run-menu viewport. The bridge then published **Skip Lessons** even though
+only 23 of its 52 pixels were inside the clip and its label and center remained
+offscreen. The semantic click reported acceptance but did not open the visible
+confirmation, so the replay stopped fail-closed after six counted actions.
+
+This is a harness rendered-reachability finding, not a product placement,
+ending, goal-clarity, or economy finding. The bridge now derives an unambiguous
+`fully_visible` signal by comparing each button's full global rectangle with
+its clipped visible rectangle, rechecks that signal before clicking, and lets
+the route continue bounded scrolling until the named run-menu target is fully
+visible. Missing, false, non-boolean, and ambiguous signals fail closed in the
+engine-free hostile contract. A later serialized live probe must prove the
+correction; no additional engine run was consumed.
+
+Evidence:
+
+- Run summary:
+  `.tmp/rw06_2/exploratory/clean-main-006620e5-probe3/20260923-103641-220-18380/run-01/summary.json`
+  (SHA-256 `AF3293A2F0499FE1FCC9A2599E6C116C6F83B4020DC5387BD1464854B35EB6A1`).
+- Public trace, six counted actions:
+  `.tmp/rw06_2/exploratory/clean-main-006620e5-probe3/20260923-103641-220-18380/run-01/public_trace.ndjson`
+  (SHA-256 `2483B5C1943CC4F596855198040B24A59ECE2EDDCB8D00ACD1E8D25212CC8F7C`).
+- Post-click screenshot:
+  `.tmp/agent_playtest/2026-09-23/rw062-clean-18380-1-3adb39135e/0011.png`
+  (SHA-256 `D0B1B49E5D95D1DE7056FF95DBFE928DEE0603A30DC57C5E904AD67DDE1C5591`).
+- Exact owned process exited, stderr was empty, and zero Godot processes
+  remained before the lease was released.
+
 ## Player intent
 
 Reach the Grand Casino, earn Bronze, Silver, and Gold Players Card tiers without
