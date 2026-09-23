@@ -392,7 +392,10 @@ func _run_rw06_1_contact_sheet(library: Variant) -> void:
 		archetypes[str(archetype.get("id", ""))] = archetype
 	DirAccess.make_dir_recursive_absolute("%s/normal" % out_dir)
 	DirAccess.make_dir_recursive_absolute("%s/expanded" % out_dir)
+	_rw06_1_remove_stale_contact_artifacts(selections)
 	var capture_rows: Array = []
+	var capture_attempts: Array = []
+	var player_view_failure := false
 	for selection_value in selections:
 		var selection := _dict(selection_value)
 		var archetype_id := str(selection.get("archetype_id", ""))
@@ -406,10 +409,18 @@ func _run_rw06_1_contact_sheet(library: Variant) -> void:
 			failures.append_array(_array(prepared.get("errors", ["%s could not be prepared." % archetype_id])))
 			continue
 		var captured := await _rw06_1_capture_pair(selection)
+		capture_attempts.append(captured.duplicate(true))
+		if not bool(captured.get("player_view_clean", false)):
+			player_view_failure = true
 		if not bool(captured.get("ok", false)):
 			failures.append_array(_array(captured.get("errors", ["%s could not be captured." % archetype_id])))
 			continue
 		capture_rows.append(captured)
+	# One dirty source invalidates the whole player-view set. Do not leave a
+	# partial 1/3 or 2/3 sample that could be mistaken for owner-review evidence.
+	if player_view_failure:
+		_rw06_1_remove_contact_source_images(selections)
+		capture_rows.clear()
 	var day2_rows: Array = []
 	for row_value in capture_rows:
 		var row := _dict(row_value)
@@ -427,6 +438,15 @@ func _run_rw06_1_contact_sheet(library: Variant) -> void:
 		"room_count": capture_rows.size(),
 		"day2_room_count": day2_rows.size(),
 		"captures": capture_rows,
+		"capture_attempts": capture_attempts,
+		"player_view_cleanliness": {
+			"required": true,
+			"passed": not player_view_failure and capture_rows.size() == expected_room_count,
+			"attempted_room_count": capture_attempts.size(),
+			"accepted_room_count": capture_rows.size(),
+			"accepted_source_capture_count": capture_rows.size() * 2,
+			"fail_closed_zero_rows": player_view_failure and capture_rows.is_empty(),
+		},
 		"all_rooms_sheet": full_sheet,
 		"day2_sheet": day2_sheet,
 		"failures": failures,
@@ -695,33 +715,163 @@ func _rw06_1_capture_pair(selection: Dictionary) -> Dictionary:
 	var archetype_id := str(selection.get("archetype_id", ""))
 	var canvas: Variant = app.get("environment_canvas")
 	if canvas == null:
-		return {"ok": false, "errors": ["%s has no production environment canvas." % archetype_id]}
+		return {
+			"ok": false,
+			"player_view_clean": false,
+			"errors": ["%s has no production environment canvas." % archetype_id],
+		}
 	var layouts: Dictionary = {}
 	for mode in ["normal", "expanded"]:
+		_rw06_1_clear_player_view_artifacts(canvas)
 		canvas.call("set_small_screen_mode", mode == "expanded")
 		canvas.call("queue_redraw")
 		await _settle(3)
+		# Layout changes can re-evaluate tutorial focus. Clear once more, then let
+		# the exact production viewport draw the state that will be persisted.
+		_rw06_1_clear_player_view_artifacts(canvas)
+		canvas.call("queue_redraw")
+		await _settle(1)
 		await RenderingServer.frame_post_draw
-		var image := root.get_viewport().get_texture().get_image()
 		var path := "%s/%s/%s.png" % [out_dir, mode, archetype_id]
+		var cleanliness := _rw06_1_player_view_cleanliness(canvas, archetype_id, mode)
+		layouts[mode] = {
+			"path": path,
+			"capture_source": "production_root_viewport_texture",
+			"post_processed": false,
+			"player_view_cleanliness": cleanliness,
+		}
+		if not bool(cleanliness.get("ok", false)):
+			failures.append_array(_array(cleanliness.get("errors", ["%s %s player view is not clean." % [archetype_id, mode]])))
+			continue
+		var image := root.get_viewport().get_texture().get_image()
 		var save_error := image.save_png(path)
 		if save_error != OK:
 			failures.append("%s %s capture could not be written (%s)." % [archetype_id, mode, error_string(save_error)])
 		var object_layout := _canvas_object_layout()
-		layouts[mode] = {
-			"path": path,
-			"sha256": FileAccess.get_sha256(path) if save_error == OK else "",
-			"object_layout": object_layout,
-			"direct_interaction_overlaps": _direct_interaction_overlaps(object_layout),
-		}
+		layouts[mode]["sha256"] = FileAccess.get_sha256(path) if save_error == OK else ""
+		layouts[mode]["object_layout"] = object_layout
+		layouts[mode]["direct_interaction_overlaps"] = _direct_interaction_overlaps(object_layout)
 	canvas.call("set_small_screen_mode", false)
+	var player_view_clean := true
+	for mode in ["normal", "expanded"]:
+		player_view_clean = player_view_clean and bool(_dict(_dict(layouts.get(mode, {})).get("player_view_cleanliness", {})).get("ok", false))
+	if not player_view_clean:
+		for mode in ["normal", "expanded"]:
+			_rw06_1_remove_file("%s/%s/%s.png" % [out_dir, mode, archetype_id])
 	return {
-		"ok": failures.is_empty(),
+		"ok": failures.is_empty() and player_view_clean,
+		"player_view_clean": player_view_clean,
 		"selection": selection.duplicate(true),
 		"normal": _dict(layouts.get("normal", {})),
 		"expanded": _dict(layouts.get("expanded", {})),
 		"errors": failures,
 	}
+
+
+func _rw06_1_clear_player_view_artifacts(canvas: Variant) -> void:
+	canvas.call("set_developer_placement_mode", false)
+	canvas.call("clear_developer_placement_preview")
+	canvas.call("set_selected_object", "")
+	canvas.call("_set_hovered_object", "")
+	canvas.set("selected_info_badge_hit_entries", [])
+	canvas.set("selected_info_badge_hover_text", "")
+	var coach: Variant = app.get("coach_overlay")
+	if coach != null:
+		coach.call("suspend")
+	app.call("_clear_selected_game_action")
+
+
+func _rw06_1_player_view_cleanliness(canvas: Variant, archetype_id: String, mode: String) -> Dictionary:
+	var failures: Array = []
+	var placement := _dict(canvas.call("developer_placement_snapshot"))
+	var view := _dict(canvas.call("current_view_snapshot"))
+	var placement_panel := canvas.get("developer_placement_panel") as Control
+	var badge_hits := _array(canvas.get("selected_info_badge_hit_entries"))
+	var badge_hover_text := str(canvas.get("selected_info_badge_hover_text")).strip_edges()
+	var telemetry: Variant = app.get("perf_telemetry_overlay")
+	var coach: Variant = app.get("coach_overlay")
+	var coach_control := coach as Control
+	var coach_panel: Control = null
+	var coach_focus_layer: Control = null
+	var coach_snapshot: Dictionary = {}
+	if coach != null:
+		coach_panel = coach.get("panel") as Control
+		coach_focus_layer = coach.get("focus_layer") as Control
+		coach_snapshot = _dict(coach.call("current_snapshot"))
+	var selected_info := _dict(view.get("selected_info", {}))
+	var canvas_script: Variant = canvas.get_script()
+	var assertions := {
+		"production_environment_canvas": canvas_script != null and str(canvas_script.resource_path) == "res://scripts/ui/pixel_scene_canvas.gd",
+		"direct_root_viewport": canvas.get_viewport() == root.get_viewport(),
+		"developer_placement_mode_disabled": not bool(placement.get("enabled", true)),
+		"developer_placement_panel_hidden": placement_panel == null or not placement_panel.is_visible_in_tree(),
+		"developer_hit_preview_absent": not bool(placement.get("dragging", true))
+			and not bool(placement.get("pending", true))
+			and _array(placement.get("overlap_ids", [])).is_empty(),
+		"telemetry_absent": telemetry == null,
+		"coach_root_hidden": coach_control == null or not coach_control.is_visible_in_tree(),
+		"coach_panel_hidden": coach_panel == null or not coach_panel.is_visible_in_tree(),
+		"coach_focus_layer_hidden": coach_focus_layer == null or not coach_focus_layer.is_visible_in_tree(),
+		"coach_snapshot_hidden": not bool(coach_snapshot.get("visible", true))
+			and int(coach_snapshot.get("queued_count", 1)) == 0,
+		"selection_absent": str(view.get("selected_object_id", "")).is_empty()
+			and str(placement.get("selected_object_id", "")).is_empty()
+			and not bool(selected_info.get("visible", true))
+			and str(selected_info.get("object_id", "")).is_empty(),
+		"hover_absent": str(view.get("hovered_object_id", "")).is_empty(),
+		"hit_annotations_absent": badge_hits.is_empty() and badge_hover_text.is_empty(),
+		"camera_debug_focus_absent": not bool(view.get("camera_focus_active", true)),
+	}
+	for assertion_value in assertions.keys():
+		var assertion_name := str(assertion_value)
+		if not bool(assertions.get(assertion_name, false)):
+			failures.append("%s %s source capture failed player-view assertion: %s." % [archetype_id, mode, assertion_name])
+	return {
+		"ok": failures.is_empty(),
+		"archetype_id": archetype_id,
+		"mode": mode,
+		"capture_source": "production_root_viewport_texture",
+		"post_processed": false,
+		"assertions": assertions,
+		"developer_placement": placement,
+		"coach": {
+			"snapshot": coach_snapshot,
+			"root_visible_in_tree": coach_control != null and coach_control.is_visible_in_tree(),
+			"panel_visible_in_tree": coach_panel != null and coach_panel.is_visible_in_tree(),
+			"focus_layer_visible_in_tree": coach_focus_layer != null and coach_focus_layer.is_visible_in_tree(),
+		},
+		"view_artifacts": {
+			"selected_object_id": str(view.get("selected_object_id", "")),
+			"hovered_object_id": str(view.get("hovered_object_id", "")),
+			"camera_focus_active": bool(view.get("camera_focus_active", true)),
+			"selected_info": selected_info,
+			"badge_hit_count": badge_hits.size(),
+			"badge_hover_text": badge_hover_text,
+		},
+		"telemetry_present": telemetry != null,
+		"errors": failures,
+	}
+
+
+func _rw06_1_remove_stale_contact_artifacts(selections: Array) -> void:
+	_rw06_1_remove_contact_source_images(selections)
+	_rw06_1_remove_file("%s/all_rooms_contact_sheet.png" % out_dir)
+	_rw06_1_remove_file("%s/day2_contact_sheet.png" % out_dir)
+	_rw06_1_remove_file("%s/contact_sheet_report.json" % out_dir)
+
+
+func _rw06_1_remove_contact_source_images(selections: Array) -> void:
+	for selection_value in selections:
+		var archetype_id := str(_dict(selection_value).get("archetype_id", ""))
+		for mode in ["normal", "expanded"]:
+			_rw06_1_remove_file("%s/%s/%s.png" % [out_dir, mode, archetype_id])
+
+
+func _rw06_1_remove_file(path: String) -> void:
+	if not FileAccess.file_exists(path):
+		return
+	var absolute_path := path if path.is_absolute_path() else ProjectSettings.globalize_path(path)
+	DirAccess.remove_absolute(absolute_path)
 
 
 func _rw06_1_build_sheet(rows: Array, path: String, rooms_per_row: int) -> Dictionary:

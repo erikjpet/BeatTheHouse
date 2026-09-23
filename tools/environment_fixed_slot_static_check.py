@@ -1300,6 +1300,39 @@ def main() -> int:
         and 'reachable.get("explored_state_count"' in capture_prepare_source,
         "contact-sheet capture must retain traversal and layout diagnostics",
     )
+    capture_pair_source = capture_source.split("func _rw06_1_capture_pair", 1)[-1].split("func _rw06_1_clear_player_view_artifacts", 1)[0]
+    cleanliness_source = capture_source.split("func _rw06_1_player_view_cleanliness", 1)[-1].split("func _rw06_1_remove_stale_contact_artifacts", 1)[0]
+    check.require(
+        'root.get_viewport().get_texture().get_image()' in capture_pair_source
+        and '"capture_source": "production_root_viewport_texture"' in capture_pair_source
+        and '"post_processed": false' in capture_pair_source
+        and ".resize(" not in capture_pair_source,
+        "contact-sheet source images must be saved directly from the production viewport without post-processing",
+    )
+    for assertion_name in (
+        "production_environment_canvas",
+        "direct_root_viewport",
+        "developer_placement_mode_disabled",
+        "developer_placement_panel_hidden",
+        "developer_hit_preview_absent",
+        "telemetry_absent",
+        "coach_root_hidden",
+        "coach_panel_hidden",
+        "coach_focus_layer_hidden",
+        "coach_snapshot_hidden",
+        "selection_absent",
+        "hover_absent",
+        "hit_annotations_absent",
+        "camera_debug_focus_absent",
+    ):
+        check.require(f'"{assertion_name}"' in cleanliness_source, f"contact-sheet player-view gate is missing {assertion_name}")
+    check.require(
+        "if player_view_failure:" in capture_source
+        and "capture_rows.clear()" in capture_source
+        and '"fail_closed_zero_rows"' in capture_source
+        and "_rw06_1_remove_contact_source_images(selections)" in capture_source,
+        "a dirty player-view source must invalidate and remove the entire owner-review capture set",
+    )
 
     # Authored JSON is continuing authority. The migration helper remains a
     # reproducibility tool, but acceptance must allow one valid slot to be added
