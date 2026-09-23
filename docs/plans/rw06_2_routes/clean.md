@@ -763,6 +763,53 @@ source contract passes (report SHA-256
 and the full engine-free project validator passes. Focused engine confirmation
 of this public-snapshot correction is pending a new serialized lease.
 
+### Invalid focused launch retained for audit
+
+One attempted focused launch at exact pushed tip
+`c3869acdc757d004fafa35be1e9dfb31db4c3ea5` is retained as **invalid harness
+evidence**, not a product result. The launch executed exactly one generated
+`systems/content` process and did not retry, but its inline wrapper omitted the
+isolated `APPDATA` root used by the earlier canonical focused passes. Godot
+therefore merged the machine-global
+`user://developer_environment_placements.json` into the checked rooms.
+
+Evidence root:
+`.tmp/rw06_2/focused-c3869acd-split-content/20260923-144501-774`.
+The failed report SHA-256 is
+`C900D1FB60D596BA124C894CC8E8A0BA14659A56850C196C7EFB9D73326111AB`,
+stdout is
+`2AAE1E237EB4A7139A24051F78F3CDAA0F0BEA9EEA04F238C14AFBB2D9D96DD7`,
+stderr is empty (empty-file SHA-256
+`E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855`),
+and the Godot log is
+`F70DBCAAE578060C317203F82B80A797A0A1138D73CBE52694C6F27FDEC2ECBA`.
+The generated runner SHA-256 was
+`FE42E058209248BCF58093ECB5268A8C14C84F29516FB361A8E0C78E2A802A28`.
+The process count was zero before and after. The observed command/native result
+was exit 1, the report executed only `content` and recorded 13 failures, and
+there was no ObjectDB warning or leaked instance. The only non-assertion
+warnings were the three standard external `misc2` controller-mapping lines.
+
+All 13 assertions reduce to two machine-local placement collisions plus their
+cascades: the global Bar overrides blocked the access lane to
+`bar_fight_night_safe_exit`, and the global Gas Station override placed
+`gas_station_road_crew_payday_station` at `[578, 327]` against
+`event::event:side_door` at `[611, 346]`, producing overlapping interaction
+rects `[P: (578, 327), S: (64, 56)]` and
+`[P: (611, 346), S: (100, 64)]`. The global override file has SHA-256
+`13AD0615C156DFC993AC00AF0CB02A42E56B62C73C9A1A3F04DF90BBD1DA37A8`
+and predates release week (`2026-09-12 02:24` local). The clean c386 worktree's
+tracked placement files remained unchanged with SHA-256 values
+`E0273B91E663E0DAD02923A046922F40BCF01B3113F2D929D9EFE1E99C08B009`
+and `B0B0FFEB0E983B19AA319276EFAEEA73F79C15CEE70CCB5F6AF58B587337D272`.
+The Grand public-snapshot regression itself did not fail.
+
+The replacement focused request must use the same exact pushed c386 tip and
+runner, create `<evidence>/user_data`, set `APPDATA` to that directory in the
+same process before launch, verify a zero pre-process census, and then execute
+one canonical Godot 4.6 `systems/content` process with no retry. It remains
+pending a fresh serialized lease.
+
 ## Player intent
 
 Reach the Grand Casino, earn Bronze, Silver, and Gold Players Card tiers without
