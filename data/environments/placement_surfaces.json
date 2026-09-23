@@ -2929,7 +2929,7 @@
       "slot_schema_version": 1,
       "base_slots": [
         {
-          "id": "base.behind_counter_person.01",
+          "id": "base.staff_front_desk",
           "kind": "base",
           "pos": [
             824.0,
@@ -2955,7 +2955,7 @@
           ]
         },
         {
-          "id": "base.doorway.02",
+          "id": "base.door_curtain",
           "kind": "base",
           "pos": [
             450.0,
@@ -2981,7 +2981,7 @@
           ]
         },
         {
-          "id": "base.doorway.01",
+          "id": "base.door_left_middle",
           "kind": "base",
           "pos": [
             41.0,
@@ -3007,7 +3007,7 @@
           ]
         },
         {
-          "id": "base.floor_fixture.01",
+          "id": "base.event_hallway_fixture",
           "kind": "base",
           "pos": [
             606.0,
@@ -3031,7 +3031,7 @@
           "walk_lane_ids": []
         },
         {
-          "id": "base.ground_marker.01",
+          "id": "base.event_parking_marker",
           "kind": "base",
           "pos": [
             724.0,
@@ -3055,7 +3055,7 @@
           "walk_lane_ids": []
         },
         {
-          "id": "base.standing_person.01",
+          "id": "base.patron_floor_right",
           "kind": "base",
           "pos": [
             716.0,
@@ -3081,7 +3081,7 @@
           ]
         },
         {
-          "id": "base.surface_item.03",
+          "id": "base.item_front_desk",
           "kind": "base",
           "pos": [
             700.0,
@@ -3105,7 +3105,7 @@
           "walk_lane_ids": []
         },
         {
-          "id": "base.surface_item.02",
+          "id": "base.item_bed_left",
           "kind": "base",
           "pos": [
             180.0,
@@ -3129,7 +3129,7 @@
           "walk_lane_ids": []
         },
         {
-          "id": "base.surface_item.01",
+          "id": "base.item_key_ledge",
           "kind": "base",
           "pos": [
             298.0,
@@ -3153,7 +3153,7 @@
           "walk_lane_ids": []
         },
         {
-          "id": "base.wall_mounted.01",
+          "id": "base.event_wall_calendar",
           "kind": "base",
           "pos": [
             688.0,
@@ -3179,7 +3179,7 @@
       ],
       "stage_slots": [
         {
-          "id": "stage.behind_counter_person.01",
+          "id": "stage.staff_lobby_table",
           "kind": "stage",
           "pos": [
             558.0,
@@ -3205,7 +3205,7 @@
           ]
         },
         {
-          "id": "stage.doorway.01",
+          "id": "stage.event_right_door",
           "kind": "stage",
           "pos": [
             859.0,
@@ -3231,7 +3231,7 @@
           ]
         },
         {
-          "id": "stage.doorway.02",
+          "id": "stage.event_left_door",
           "kind": "stage",
           "pos": [
             41.0,
@@ -3257,7 +3257,7 @@
           ]
         },
         {
-          "id": "stage.floor_fixture.01",
+          "id": "stage.event_floor_left",
           "kind": "stage",
           "pos": [
             174.0,
@@ -3281,7 +3281,7 @@
           "walk_lane_ids": []
         },
         {
-          "id": "stage.floor_fixture.02",
+          "id": "stage.event_floor_right",
           "kind": "stage",
           "pos": [
             830.0,
@@ -3305,7 +3305,7 @@
           "walk_lane_ids": []
         },
         {
-          "id": "stage.floor_fixture.03",
+          "id": "stage.event_floor_center",
           "kind": "stage",
           "pos": [
             494.0,
@@ -3329,7 +3329,7 @@
           "walk_lane_ids": []
         },
         {
-          "id": "stage.hanging.01",
+          "id": "stage.event_ceiling_center",
           "kind": "stage",
           "pos": [
             572.0,
@@ -3353,7 +3353,7 @@
           "walk_lane_ids": []
         },
         {
-          "id": "stage.standing_person.01",
+          "id": "stage.patron_floor_left",
           "kind": "stage",
           "pos": [
             284.0,
@@ -3379,7 +3379,7 @@
           ]
         },
         {
-          "id": "stage.standing_person.02",
+          "id": "stage.patron_floor_right",
           "kind": "stage",
           "pos": [
             612.0,
@@ -3405,7 +3405,7 @@
           ]
         },
         {
-          "id": "stage.standing_person.03",
+          "id": "stage.patron_floor_center",
           "kind": "stage",
           "pos": [
             388.0,
@@ -3431,7 +3431,7 @@
           ]
         },
         {
-          "id": "stage.surface_item.01",
+          "id": "stage.event_bed_rail",
           "kind": "stage",
           "pos": [
             300.0,
@@ -3455,7 +3455,7 @@
           "walk_lane_ids": []
         },
         {
-          "id": "stage.surface_item.02",
+          "id": "stage.event_bedspread",
           "kind": "stage",
           "pos": [
             420.0,
@@ -3479,7 +3479,7 @@
           "walk_lane_ids": []
         },
         {
-          "id": "stage.surface_item.03",
+          "id": "stage.event_key_ledge",
           "kind": "stage",
           "pos": [
             170.0,
@@ -3503,7 +3503,7 @@
           "walk_lane_ids": []
         },
         {
-          "id": "stage.wall_mounted.01",
+          "id": "stage.event_wall_left",
           "kind": "stage",
           "pos": [
             40.0,
@@ -3529,7 +3529,7 @@
       ],
       "exit_slots": [
         {
-          "id": "exit.doorway.01",
+          "id": "exit.left_upper",
           "kind": "exit",
           "pos": [
             41.0,
@@ -3555,7 +3555,7 @@
           ]
         },
         {
-          "id": "exit.doorway.02",
+          "id": "exit.room_door",
           "kind": "exit",
           "pos": [
             303.0,
@@ -3605,87 +3605,87 @@
       ],
       "actor_routes": [],
       "object_slot_ids": {
-        "event:call_brother_in_law": "base.surface_item.01",
-        "event:chain06_dave_last_stop": "base.surface_item.02",
-        "event:chain06_dave_same_bus": "base.surface_item.03",
-        "event:parking_lot_tip": "base.ground_marker.01",
-        "event:scenario_stakeout_watch_or_leave": "base.doorway.01",
-        "event:scenario_wedding_overflow_hallway": "base.floor_fixture.01",
-        "event:town_rumor_staff": "base.behind_counter_person.01",
-        "item:extra_ball_token": "base.surface_item.02",
-        "item:lucky_ladies_compact": "base.surface_item.02",
-        "item:payment_calendar": "base.wall_mounted.01",
-        "item:split_reel_note": "base.surface_item.03",
-        "item:tarot_card": "base.surface_item.01",
-        "lender:brother_in_law": "base.standing_person.01",
-        "numbers:book": "base.surface_item.03",
-        "service:house_drink": "base.surface_item.01",
-        "shopkeeper:merchant": "base.behind_counter_person.01",
-        "travel:leave": "base.doorway.02"
+        "event:call_brother_in_law": "base.item_key_ledge",
+        "event:chain06_dave_last_stop": "base.item_bed_left",
+        "event:chain06_dave_same_bus": "base.item_front_desk",
+        "event:parking_lot_tip": "base.event_parking_marker",
+        "event:scenario_stakeout_watch_or_leave": "base.door_left_middle",
+        "event:scenario_wedding_overflow_hallway": "base.event_hallway_fixture",
+        "event:town_rumor_staff": "base.staff_front_desk",
+        "item:extra_ball_token": "base.item_bed_left",
+        "item:lucky_ladies_compact": "base.item_bed_left",
+        "item:payment_calendar": "base.event_wall_calendar",
+        "item:split_reel_note": "base.item_front_desk",
+        "item:tarot_card": "base.item_key_ledge",
+        "lender:brother_in_law": "base.patron_floor_right",
+        "numbers:book": "base.item_front_desk",
+        "service:house_drink": "base.item_key_ledge",
+        "shopkeeper:merchant": "base.staff_front_desk",
+        "travel:leave": "base.door_curtain"
       },
       "category_slot_ids": {
-        "event_spots:0": "base.floor_fixture.01",
-        "event_spots:1": "base.floor_fixture.01",
-        "event_spots:2": "base.floor_fixture.01",
-        "event_spots:3": "base.floor_fixture.01",
-        "item_spots:0": "base.surface_item.02",
-        "item_spots:1": "base.surface_item.01",
-        "item_spots:2": "base.surface_item.03",
-        "item_spots:3": "base.surface_item.03",
-        "item_spots:4": "base.surface_item.03",
-        "lender_spots:0": "base.standing_person.01",
-        "lender_spots:1": "base.standing_person.01",
-        "lender_spots:2": "base.standing_person.01",
-        "numbers_silas_spots:0": "base.standing_person.01",
-        "numbers_spots:0": "base.surface_item.03",
-        "service_spots:0": "base.surface_item.03",
-        "shopkeeper_spots:0": "base.behind_counter_person.01",
-        "travel_spots:0": "base.doorway.02",
-        "travel_spots:1": "base.doorway.01",
-        "travel_spots:2": "base.doorway.02",
-        "travel_spots:3": "base.doorway.01"
+        "event_spots:0": "base.event_hallway_fixture",
+        "event_spots:1": "base.event_hallway_fixture",
+        "event_spots:2": "base.event_hallway_fixture",
+        "event_spots:3": "base.event_hallway_fixture",
+        "item_spots:0": "base.item_bed_left",
+        "item_spots:1": "base.item_key_ledge",
+        "item_spots:2": "base.item_front_desk",
+        "item_spots:3": "base.item_front_desk",
+        "item_spots:4": "base.item_front_desk",
+        "lender_spots:0": "base.patron_floor_right",
+        "lender_spots:1": "base.patron_floor_right",
+        "lender_spots:2": "base.patron_floor_right",
+        "numbers_silas_spots:0": "base.patron_floor_right",
+        "numbers_spots:0": "base.item_front_desk",
+        "service_spots:0": "base.item_front_desk",
+        "shopkeeper_spots:0": "base.staff_front_desk",
+        "travel_spots:0": "base.door_curtain",
+        "travel_spots:1": "base.door_left_middle",
+        "travel_spots:2": "base.door_curtain",
+        "travel_spots:3": "base.door_left_middle"
       },
       "scenario_slot_ids": {
-        "motel_conventioneers_blue_cases||left|": "stage.floor_fixture.01",
-        "motel_conventioneers_coach_party|package_b_motel_top_right|left|": "stage.standing_person.01",
-        "motel_conventioneers_coach_party|package_b_motel_top_right|left|motel_conventioneers_beat_2_set_position": "stage.standing_person.01",
-        "motel_conventioneers_desk_clerk|env06_8_convention_clerk|background|": "stage.behind_counter_person.01",
-        "motel_conventioneers_luggage_cart|package_b_motel_top_mid|background|": "stage.floor_fixture.03",
-        "motel_conventioneers_luggage_cart||center|": "stage.floor_fixture.03",
-        "motel_conventioneers_red_cases||right|": "stage.floor_fixture.02",
-        "motel_conventioneers_room_board||service_lane|": "stage.wall_mounted.01",
-        "motel_conventioneers_safe_exit||exit_lane|": "exit.doorway.01",
-        "motel_conventioneers_station|env06_8_convention_station|foreground|": "stage.surface_item.01",
-        "motel_stakeout_courtyard_gate||exit_lane|": "stage.doorway.01",
-        "motel_stakeout_laundry_trolley|env06_8_stakeout_trolley|background|": "stage.floor_fixture.01",
-        "motel_stakeout_laundry_trolley|package_b_motel_top_mid|background|": "stage.floor_fixture.01",
-        "motel_stakeout_north_observer||left|": "stage.standing_person.01",
-        "motel_stakeout_north_scope|env06_8_stakeout_scope|background|": "stage.surface_item.01",
-        "motel_stakeout_safe_exit|env06_8_stakeout_exit|exit_lane|": "exit.doorway.01",
-        "motel_stakeout_south_camera||right|": "stage.hanging.01",
-        "motel_stakeout_south_observer|package_b_motel_top_left|right|": "stage.standing_person.02",
-        "motel_stakeout_south_observer|package_b_motel_top_left|right|motel_stakeout_beat_2_set_position": "stage.standing_person.02",
-        "motel_stakeout_station|package_b_motel_station|foreground|": "stage.surface_item.02",
-        "motel_stakeout_watched_door||foreground|": "stage.doorway.02",
-        "motel_wedding_overflow_best_person||right|": "stage.standing_person.01",
-        "motel_wedding_overflow_bouquet_case|package_b_motel_top_left|background|": "stage.surface_item.03",
-        "motel_wedding_overflow_bouquet_case||background|": "stage.surface_item.03",
-        "motel_wedding_overflow_desk_clerk|package_b_motel_service_top_right|background|": "stage.standing_person.02",
-        "motel_wedding_overflow_garment_rack|package_b_motel_top_mid|right|": "stage.floor_fixture.01",
-        "motel_wedding_overflow_reception_cart||foreground|": "stage.floor_fixture.02",
-        "motel_wedding_overflow_ribbon_stair||exit_lane|": "stage.doorway.01",
-        "motel_wedding_overflow_room_key_tray|env06_8_wedding_key_tray|service_lane|": "stage.surface_item.01",
-        "motel_wedding_overflow_safe_exit|env06_8_wedding_exit|exit_lane|": "exit.doorway.01",
-        "motel_wedding_overflow_station|package_b_motel_station|left|": "stage.surface_item.02",
-        "motel_wedding_overflow_wedding_runner|package_b_motel_top_left|left|": "stage.standing_person.03",
-        "motel_wedding_overflow_wedding_runner|package_b_motel_top_left|left|motel_wedding_overflow_beat_1_set_position": "stage.standing_person.03",
-        "motel_weekly_rates_landlord||background|": "stage.standing_person.01",
-        "motel_weekly_rates_lease_clipboard||service_lane|": "stage.floor_fixture.01",
-        "motel_weekly_rates_safe_exit|package_b_motel_safe_exit|exit_lane|": "exit.doorway.01",
-        "motel_weekly_rates_station|env06_8_weekly_station|foreground|": "stage.surface_item.01",
-        "motel_weekly_rates_weekly_bed||background|": "stage.floor_fixture.02",
-        "motel_weekly_rates_weekly_lamp||left|": "stage.surface_item.02",
-        "motel_weekly_rates_weekly_sink||right|": "stage.wall_mounted.01"
+        "motel_conventioneers_blue_cases||left|": "stage.event_floor_left",
+        "motel_conventioneers_coach_party|package_b_motel_top_right|left|": "stage.patron_floor_left",
+        "motel_conventioneers_coach_party|package_b_motel_top_right|left|motel_conventioneers_beat_2_set_position": "stage.patron_floor_left",
+        "motel_conventioneers_desk_clerk|env06_8_convention_clerk|background|": "stage.staff_lobby_table",
+        "motel_conventioneers_luggage_cart|package_b_motel_top_mid|background|": "stage.event_floor_center",
+        "motel_conventioneers_luggage_cart||center|": "stage.event_floor_center",
+        "motel_conventioneers_red_cases||right|": "stage.event_floor_right",
+        "motel_conventioneers_room_board||service_lane|": "stage.event_wall_left",
+        "motel_conventioneers_safe_exit||exit_lane|": "exit.left_upper",
+        "motel_conventioneers_station|env06_8_convention_station|foreground|": "stage.event_bed_rail",
+        "motel_stakeout_courtyard_gate||exit_lane|": "stage.event_right_door",
+        "motel_stakeout_laundry_trolley|env06_8_stakeout_trolley|background|": "stage.event_floor_left",
+        "motel_stakeout_laundry_trolley|package_b_motel_top_mid|background|": "stage.event_floor_left",
+        "motel_stakeout_north_observer||left|": "stage.patron_floor_left",
+        "motel_stakeout_north_scope|env06_8_stakeout_scope|background|": "stage.event_bed_rail",
+        "motel_stakeout_safe_exit|env06_8_stakeout_exit|exit_lane|": "exit.left_upper",
+        "motel_stakeout_south_camera||right|": "stage.event_ceiling_center",
+        "motel_stakeout_south_observer|package_b_motel_top_left|right|": "stage.patron_floor_right",
+        "motel_stakeout_south_observer|package_b_motel_top_left|right|motel_stakeout_beat_2_set_position": "stage.patron_floor_right",
+        "motel_stakeout_station|package_b_motel_station|foreground|": "stage.event_bedspread",
+        "motel_stakeout_watched_door||foreground|": "stage.event_left_door",
+        "motel_wedding_overflow_best_person||right|": "stage.patron_floor_left",
+        "motel_wedding_overflow_bouquet_case|package_b_motel_top_left|background|": "stage.event_key_ledge",
+        "motel_wedding_overflow_bouquet_case||background|": "stage.event_key_ledge",
+        "motel_wedding_overflow_desk_clerk|package_b_motel_service_top_right|background|": "stage.patron_floor_right",
+        "motel_wedding_overflow_garment_rack|package_b_motel_top_mid|right|": "stage.event_floor_left",
+        "motel_wedding_overflow_reception_cart||foreground|": "stage.event_floor_right",
+        "motel_wedding_overflow_ribbon_stair||exit_lane|": "stage.event_right_door",
+        "motel_wedding_overflow_room_key_tray|env06_8_wedding_key_tray|service_lane|": "stage.event_bed_rail",
+        "motel_wedding_overflow_safe_exit|env06_8_wedding_exit|exit_lane|": "exit.left_upper",
+        "motel_wedding_overflow_station|package_b_motel_station|left|": "stage.event_bedspread",
+        "motel_wedding_overflow_wedding_runner|package_b_motel_top_left|left|": "stage.patron_floor_center",
+        "motel_wedding_overflow_wedding_runner|package_b_motel_top_left|left|motel_wedding_overflow_beat_1_set_position": "stage.patron_floor_center",
+        "motel_weekly_rates_landlord||background|": "stage.patron_floor_left",
+        "motel_weekly_rates_lease_clipboard||service_lane|": "stage.event_floor_left",
+        "motel_weekly_rates_safe_exit|package_b_motel_safe_exit|exit_lane|": "exit.left_upper",
+        "motel_weekly_rates_station|env06_8_weekly_station|foreground|": "stage.event_bed_rail",
+        "motel_weekly_rates_weekly_bed||background|": "stage.event_floor_right",
+        "motel_weekly_rates_weekly_lamp||left|": "stage.event_bedspread",
+        "motel_weekly_rates_weekly_sink||right|": "stage.event_wall_left"
       },
       "scenario_position_route_ids": {}
     },
@@ -5948,7 +5948,7 @@
       "slot_schema_version": 1,
       "base_slots": [
         {
-          "id": "base.doorway.02",
+          "id": "base.door_right_middle",
           "kind": "base",
           "pos": [
             859.0,
@@ -5974,7 +5974,7 @@
           ]
         },
         {
-          "id": "base.doorway.01",
+          "id": "base.door_left_middle",
           "kind": "base",
           "pos": [
             41.0,
@@ -6000,7 +6000,7 @@
           ]
         },
         {
-          "id": "base.floor_fixture.02",
+          "id": "base.game_2",
           "kind": "base",
           "pos": [
             374.0,
@@ -6024,7 +6024,7 @@
           "walk_lane_ids": []
         },
         {
-          "id": "base.floor_fixture.01",
+          "id": "base.game_1",
           "kind": "base",
           "pos": [
             494.0,
@@ -6048,7 +6048,7 @@
           "walk_lane_ids": []
         },
         {
-          "id": "base.surface_item.02",
+          "id": "base.service_lottery_desk",
           "kind": "base",
           "pos": [
             490.0,
@@ -6072,7 +6072,7 @@
           "walk_lane_ids": []
         },
         {
-          "id": "base.surface_item.01",
+          "id": "base.service_highway_sill",
           "kind": "base",
           "pos": [
             262.0,
@@ -6096,7 +6096,7 @@
           "walk_lane_ids": []
         },
         {
-          "id": "base.wall_mounted.02",
+          "id": "base.event_wall_route",
           "kind": "base",
           "pos": [
             496.0,
@@ -6120,7 +6120,7 @@
           "walk_lane_ids": []
         },
         {
-          "id": "base.wall_mounted.01",
+          "id": "base.event_control_rail",
           "kind": "base",
           "pos": [
             396.0,
@@ -6146,7 +6146,7 @@
       ],
       "stage_slots": [
         {
-          "id": "stage.behind_counter_person.01",
+          "id": "stage.staff_window",
           "kind": "stage",
           "pos": [
             600.0,
@@ -6172,7 +6172,7 @@
           ]
         },
         {
-          "id": "stage.doorway.01",
+          "id": "stage.event_right_door",
           "kind": "stage",
           "pos": [
             859.0,
@@ -6198,7 +6198,7 @@
           ]
         },
         {
-          "id": "stage.floor_fixture.01",
+          "id": "stage.event_machine_left",
           "kind": "stage",
           "pos": [
             158.0,
@@ -6222,7 +6222,7 @@
           "walk_lane_ids": []
         },
         {
-          "id": "stage.floor_fixture.02",
+          "id": "stage.event_machine_right",
           "kind": "stage",
           "pos": [
             614.0,
@@ -6246,7 +6246,7 @@
           "walk_lane_ids": []
         },
         {
-          "id": "stage.ground_marker.01",
+          "id": "stage.event_foreground_marker",
           "kind": "stage",
           "pos": [
             284.0,
@@ -6270,7 +6270,7 @@
           "walk_lane_ids": []
         },
         {
-          "id": "stage.group.01",
+          "id": "stage.patron_group_right",
           "kind": "stage",
           "pos": [
             732.0,
@@ -6296,7 +6296,7 @@
           ]
         },
         {
-          "id": "stage.group.02",
+          "id": "stage.patron_group_center",
           "kind": "stage",
           "pos": [
             292.0,
@@ -6322,7 +6322,7 @@
           ]
         },
         {
-          "id": "stage.standing_person.01",
+          "id": "stage.patron_floor_left",
           "kind": "stage",
           "pos": [
             52.0,
@@ -6348,7 +6348,7 @@
           ]
         },
         {
-          "id": "stage.standing_person.02",
+          "id": "stage.patron_floor_middle",
           "kind": "stage",
           "pos": [
             156.0,
@@ -6374,7 +6374,7 @@
           ]
         },
         {
-          "id": "stage.standing_person.03",
+          "id": "stage.patron_floor_right",
           "kind": "stage",
           "pos": [
             604.0,
@@ -6400,7 +6400,7 @@
           ]
         },
         {
-          "id": "stage.surface_item.01",
+          "id": "stage.event_refreshment_shelf",
           "kind": "stage",
           "pos": [
             840.0,
@@ -6424,7 +6424,7 @@
           "walk_lane_ids": []
         },
         {
-          "id": "stage.surface_item.02",
+          "id": "stage.event_machine_bank",
           "kind": "stage",
           "pos": [
             382.0,
@@ -6448,7 +6448,7 @@
           "walk_lane_ids": []
         },
         {
-          "id": "stage.wall_mounted.01",
+          "id": "stage.event_wall_left",
           "kind": "stage",
           "pos": [
             256.0,
@@ -6472,7 +6472,7 @@
           "walk_lane_ids": []
         },
         {
-          "id": "stage.wall_mounted.02",
+          "id": "stage.event_wall_right",
           "kind": "stage",
           "pos": [
             720.0,
@@ -6496,7 +6496,7 @@
           "walk_lane_ids": []
         },
         {
-          "id": "stage.wall_mounted.03",
+          "id": "stage.event_wall_far_left",
           "kind": "stage",
           "pos": [
             40.0,
@@ -6520,7 +6520,7 @@
           "walk_lane_ids": []
         },
         {
-          "id": "stage.wall_mounted.04",
+          "id": "stage.event_service_wall",
           "kind": "stage",
           "pos": [
             744.0,
@@ -6544,7 +6544,7 @@
           "walk_lane_ids": []
         },
         {
-          "id": "stage.wall_mounted.05",
+          "id": "stage.event_control_wall",
           "kind": "stage",
           "pos": [
             732.0,
@@ -6570,7 +6570,7 @@
       ],
       "exit_slots": [
         {
-          "id": "exit.doorway.01",
+          "id": "exit.right_lower",
           "kind": "exit",
           "pos": [
             859.0,
@@ -6596,7 +6596,7 @@
           ]
         },
         {
-          "id": "exit.doorway.02",
+          "id": "exit.left_upper",
           "kind": "exit",
           "pos": [
             41.0,
@@ -6646,98 +6646,98 @@
       ],
       "actor_routes": [],
       "object_slot_ids": {
-        "event:chain06_dave_last_stop": "base.surface_item.01",
-        "event:chain06_dave_same_bus": "base.surface_item.02",
-        "event:scenario_graveyard_maintenance": "base.doorway.02",
-        "event:scenario_tour_bus_ticket_rush": "base.wall_mounted.01",
-        "event:scenario_trucker_convoy_route": "base.wall_mounted.02",
-        "event:side_door": "base.doorway.01",
-        "game:coin_pusher": "base.floor_fixture.01",
-        "game:pull_tabs": "base.floor_fixture.02",
-        "game:scratch_tickets": "base.floor_fixture.02",
-        "game_hook:pull_tabs:ticket_redeemer": "base.surface_item.02",
-        "numbers:book": "base.surface_item.02",
-        "service:house_drink": "base.surface_item.02",
-        "travel:back_alley": "base.doorway.02",
-        "travel:corner_store": "base.doorway.01",
-        "travel:delta_queen": "base.doorway.01",
-        "travel:grand_casino": "base.doorway.01",
-        "travel:kitty_cat_lounge": "base.doorway.02",
-        "travel:leave": "base.doorway.02"
+        "event:chain06_dave_last_stop": "base.service_highway_sill",
+        "event:chain06_dave_same_bus": "base.service_lottery_desk",
+        "event:scenario_graveyard_maintenance": "base.door_right_middle",
+        "event:scenario_tour_bus_ticket_rush": "base.event_control_rail",
+        "event:scenario_trucker_convoy_route": "base.event_wall_route",
+        "event:side_door": "base.door_left_middle",
+        "game:coin_pusher": "base.game_1",
+        "game:pull_tabs": "base.game_2",
+        "game:scratch_tickets": "base.game_2",
+        "game_hook:pull_tabs:ticket_redeemer": "base.service_lottery_desk",
+        "numbers:book": "base.service_lottery_desk",
+        "service:house_drink": "base.service_lottery_desk",
+        "travel:back_alley": "base.door_right_middle",
+        "travel:corner_store": "base.door_left_middle",
+        "travel:delta_queen": "base.door_left_middle",
+        "travel:grand_casino": "base.door_left_middle",
+        "travel:kitty_cat_lounge": "base.door_right_middle",
+        "travel:leave": "base.door_right_middle"
       },
       "category_slot_ids": {
-        "event_spots:0": "base.floor_fixture.02",
-        "event_spots:1": "base.floor_fixture.02",
-        "event_spots:2": "base.floor_fixture.01",
-        "event_spots:3": "base.floor_fixture.02",
-        "game_hook_spots:0": "base.surface_item.02",
-        "game_hook_spots:1": "base.surface_item.01",
-        "game_spots:0": "base.floor_fixture.02",
-        "game_spots:1": "base.floor_fixture.01",
-        "game_spots:2": "base.floor_fixture.01",
-        "numbers_spots:0": "base.surface_item.02",
-        "service_spots:0": "base.surface_item.02",
-        "travel_spots:0": "base.doorway.02",
-        "travel_spots:1": "base.doorway.01",
-        "travel_spots:2": "base.doorway.01",
-        "travel_spots:3": "base.doorway.02",
-        "travel_spots:4": "base.doorway.02",
-        "travel_spots:5": "base.doorway.01",
-        "travel_spots:6": "base.doorway.02"
+        "event_spots:0": "base.game_2",
+        "event_spots:1": "base.game_2",
+        "event_spots:2": "base.game_1",
+        "event_spots:3": "base.game_2",
+        "game_hook_spots:0": "base.service_lottery_desk",
+        "game_hook_spots:1": "base.service_highway_sill",
+        "game_spots:0": "base.game_2",
+        "game_spots:1": "base.game_1",
+        "game_spots:2": "base.game_1",
+        "numbers_spots:0": "base.service_lottery_desk",
+        "service_spots:0": "base.service_lottery_desk",
+        "travel_spots:0": "base.door_right_middle",
+        "travel_spots:1": "base.door_left_middle",
+        "travel_spots:2": "base.door_left_middle",
+        "travel_spots:3": "base.door_right_middle",
+        "travel_spots:4": "base.door_right_middle",
+        "travel_spots:5": "base.door_left_middle",
+        "travel_spots:6": "base.door_right_middle"
       },
       "scenario_slot_ids": {
-        "gas_station_graveyard_shift_aftermath_lock_cycle_failed": "stage.floor_fixture.02",
-        "gas_station_graveyard_shift_aftermath_night_check_interrupted": "stage.floor_fixture.02",
-        "gas_station_graveyard_shift_camera_monitor||background|": "stage.wall_mounted.01",
-        "gas_station_graveyard_shift_cooler_gate|env06_8_cooler_gate|right|": "stage.wall_mounted.02",
-        "gas_station_graveyard_shift_flashlight_dock||right|": "stage.floor_fixture.01",
-        "gas_station_graveyard_shift_machine_gate||center|": "stage.wall_mounted.03",
-        "gas_station_graveyard_shift_night_clerk|package_b_gas_top_mid|left|": "stage.behind_counter_person.01",
-        "gas_station_graveyard_shift_night_clerk|package_b_gas_top_mid|left|gas_station_graveyard_shift_beat_2_set_position": "stage.behind_counter_person.01",
-        "gas_station_graveyard_shift_safe_exit|package_b_gas_low_left|exit_lane|": "exit.doorway.01",
-        "gas_station_graveyard_shift_shutter_panel||service_lane|": "stage.wall_mounted.04",
-        "gas_station_graveyard_shift_station|cashier_counter|left|": "stage.wall_mounted.05",
-        "gas_station_road_crew_payday_aftermath_route_repaired": "stage.floor_fixture.02",
-        "gas_station_road_crew_payday_barricade_stack|package_b_gas_top_mid|foreground|": "stage.floor_fixture.01",
-        "gas_station_road_crew_payday_crew_foreman||background|": "stage.standing_person.01",
-        "gas_station_road_crew_payday_machine_player|package_b_gas_top_left|right|": "stage.standing_person.02",
-        "gas_station_road_crew_payday_repair_crate|env06_8_payday_crate|foreground|": "stage.floor_fixture.02",
-        "gas_station_road_crew_payday_safe_exit||exit_lane|": "exit.doorway.01",
-        "gas_station_road_crew_payday_stake_envelope||right|": "stage.surface_item.01",
-        "gas_station_road_crew_payday_stake_keeper|package_b_gas_top_right|left|": "stage.standing_person.03",
-        "gas_station_road_crew_payday_station|package_b_gas_low_left|background|": "stage.wall_mounted.01",
-        "gas_station_road_crew_payday_work_order_board|env06_8_payday_board|service_lane|": "stage.wall_mounted.02",
-        "gas_station_storm_shelter_aftermath_shelter_interrupted": "stage.floor_fixture.02",
-        "gas_station_storm_shelter_aftermath_station_reopened": "stage.floor_fixture.02",
-        "gas_station_storm_shelter_driver_group|env06_8_storm_drivers|background|": "stage.group.01",
-        "gas_station_storm_shelter_family_group|package_b_gas_low_left|left|": "stage.group.02",
-        "gas_station_storm_shelter_generator_cart||left|": "stage.floor_fixture.01",
-        "gas_station_storm_shelter_power_panel||service_lane|": "stage.wall_mounted.01",
-        "gas_station_storm_shelter_rain_shutters||background|": "stage.wall_mounted.02",
-        "gas_station_storm_shelter_safe_exit|env06_8_storm_exit|exit_lane|": "exit.doorway.01",
-        "gas_station_storm_shelter_safe_zone_tape|env06_8_storm_tape|foreground|": "stage.ground_marker.01",
-        "gas_station_storm_shelter_station|package_b_gas_top_right|left|": "stage.wall_mounted.03",
-        "gas_station_storm_shelter_supply_shelves|package_b_gas_top_left|right|": "stage.wall_mounted.04",
-        "gas_station_tour_bus_stop_boarding_counter||service_lane|": "stage.surface_item.01",
-        "gas_station_tour_bus_stop_bus_driver|package_b_gas_top_mid|background|": "stage.standing_person.01",
-        "gas_station_tour_bus_stop_queue_marshal|env06_8_bus_marshal|foreground|": "stage.standing_person.02",
-        "gas_station_tour_bus_stop_restroom_queue||right|": "stage.ground_marker.01",
-        "gas_station_tour_bus_stop_safe_exit||exit_lane|": "exit.doorway.01",
-        "gas_station_tour_bus_stop_station|cashier_counter|background|": "stage.wall_mounted.01",
-        "gas_station_tour_bus_stop_stranded_passenger|package_b_gas_top_right|left|": "stage.standing_person.03",
-        "gas_station_tour_bus_stop_stranded_passenger|package_b_gas_top_right|left|gas_station_tour_bus_stop_beat_2_set_position": "stage.standing_person.03",
-        "gas_station_tour_bus_stop_ticket_basket||left|": "stage.surface_item.02",
-        "gas_station_tour_bus_stop_tour_bus_door|package_b_gas_top_left|background|": "stage.doorway.01",
-        "gas_station_trucker_convoy_departure_board||service_lane|": "stage.wall_mounted.01",
-        "gas_station_trucker_convoy_freight_pallet||foreground|": "stage.floor_fixture.01",
-        "gas_station_trucker_convoy_lead_driver||left|": "stage.standing_person.01",
-        "gas_station_trucker_convoy_lead_rig||background|": "stage.wall_mounted.02",
-        "gas_station_trucker_convoy_machine_driver|package_b_gas_top_mid|background|": "stage.standing_person.02",
-        "gas_station_trucker_convoy_relay_driver|package_b_gas_top_right|right|": "stage.standing_person.03",
-        "gas_station_trucker_convoy_relay_rig||left|": "stage.wall_mounted.03",
-        "gas_station_trucker_convoy_safe_exit||exit_lane|": "exit.doorway.01",
-        "gas_station_trucker_convoy_station|env06_8_convoy_station|left|": "stage.wall_mounted.04",
-        "gas_station_trucker_convoy_tail_rig|package_b_gas_top_left|right|": "stage.ground_marker.01"
+        "gas_station_graveyard_shift_aftermath_lock_cycle_failed": "stage.event_machine_right",
+        "gas_station_graveyard_shift_aftermath_night_check_interrupted": "stage.event_machine_right",
+        "gas_station_graveyard_shift_camera_monitor||background|": "stage.event_wall_left",
+        "gas_station_graveyard_shift_cooler_gate|env06_8_cooler_gate|right|": "stage.event_wall_right",
+        "gas_station_graveyard_shift_flashlight_dock||right|": "stage.event_machine_left",
+        "gas_station_graveyard_shift_machine_gate||center|": "stage.event_wall_far_left",
+        "gas_station_graveyard_shift_night_clerk|package_b_gas_top_mid|left|": "stage.staff_window",
+        "gas_station_graveyard_shift_night_clerk|package_b_gas_top_mid|left|gas_station_graveyard_shift_beat_2_set_position": "stage.staff_window",
+        "gas_station_graveyard_shift_safe_exit|package_b_gas_low_left|exit_lane|": "exit.right_lower",
+        "gas_station_graveyard_shift_shutter_panel||service_lane|": "stage.event_service_wall",
+        "gas_station_graveyard_shift_station|cashier_counter|left|": "stage.event_control_wall",
+        "gas_station_road_crew_payday_aftermath_route_repaired": "stage.event_machine_right",
+        "gas_station_road_crew_payday_barricade_stack|package_b_gas_top_mid|foreground|": "stage.event_machine_left",
+        "gas_station_road_crew_payday_crew_foreman||background|": "stage.patron_floor_left",
+        "gas_station_road_crew_payday_machine_player|package_b_gas_top_left|right|": "stage.patron_floor_middle",
+        "gas_station_road_crew_payday_repair_crate|env06_8_payday_crate|foreground|": "stage.event_machine_right",
+        "gas_station_road_crew_payday_safe_exit||exit_lane|": "exit.right_lower",
+        "gas_station_road_crew_payday_stake_envelope||right|": "stage.event_refreshment_shelf",
+        "gas_station_road_crew_payday_stake_keeper|package_b_gas_top_right|left|": "stage.patron_floor_right",
+        "gas_station_road_crew_payday_station|package_b_gas_low_left|background|": "stage.event_wall_left",
+        "gas_station_road_crew_payday_work_order_board|env06_8_payday_board|service_lane|": "stage.event_wall_right",
+        "gas_station_storm_shelter_aftermath_shelter_interrupted": "stage.event_machine_right",
+        "gas_station_storm_shelter_aftermath_station_reopened": "stage.event_machine_right",
+        "gas_station_storm_shelter_driver_group|env06_8_storm_drivers|background|": "stage.patron_group_right",
+        "gas_station_storm_shelter_family_group|package_b_gas_low_left|left|": "stage.patron_group_center",
+        "gas_station_storm_shelter_generator_cart||left|": "stage.event_machine_left",
+        "gas_station_storm_shelter_power_panel||service_lane|": "stage.event_wall_left",
+        "gas_station_storm_shelter_rain_shutters||background|": "stage.event_wall_right",
+        "gas_station_storm_shelter_safe_exit|env06_8_storm_exit|exit_lane|": "exit.right_lower",
+        "gas_station_storm_shelter_safe_zone_tape|env06_8_storm_tape|foreground|": "stage.event_foreground_marker",
+        "gas_station_storm_shelter_station|package_b_gas_top_right|left|": "stage.event_wall_far_left",
+        "gas_station_storm_shelter_supply_shelves|package_b_gas_top_left|right|": "stage.event_service_wall",
+        "gas_station_tour_bus_stop_boarding_counter||service_lane|": "stage.event_refreshment_shelf",
+        "gas_station_tour_bus_stop_bus_driver|package_b_gas_top_mid|background|": "stage.patron_floor_left",
+        "gas_station_tour_bus_stop_queue_marshal|env06_8_bus_marshal|foreground|": "stage.patron_floor_middle",
+        "gas_station_tour_bus_stop_restroom_queue||right|": "stage.event_foreground_marker",
+        "gas_station_tour_bus_stop_safe_exit||exit_lane|": "exit.right_lower",
+        "gas_station_tour_bus_stop_station|cashier_counter|background|": "stage.event_wall_left",
+        "gas_station_tour_bus_stop_stranded_passenger|package_b_gas_top_right|left|": "stage.patron_floor_right",
+        "gas_station_tour_bus_stop_stranded_passenger|package_b_gas_top_right|left|gas_station_tour_bus_stop_beat_2_set_position": "stage.patron_floor_right",
+        "gas_station_tour_bus_stop_ticket_basket||left|": "stage.event_machine_bank",
+        "gas_station_tour_bus_stop_tour_bus_door|package_b_gas_top_left|background|": "stage.event_right_door",
+        "gas_station_trucker_convoy_departure_board||service_lane|": "stage.event_wall_left",
+        "gas_station_trucker_convoy_freight_pallet||foreground|": "stage.event_machine_left",
+        "gas_station_trucker_convoy_lead_driver||left|": "stage.patron_floor_left",
+        "gas_station_trucker_convoy_lead_rig||background|": "stage.event_wall_right",
+        "gas_station_trucker_convoy_machine_driver|package_b_gas_top_mid|background|": "stage.patron_floor_middle",
+        "gas_station_trucker_convoy_relay_driver|package_b_gas_top_right|right|": "stage.patron_floor_right",
+        "gas_station_trucker_convoy_relay_rig||left|": "stage.event_wall_far_left",
+        "gas_station_trucker_convoy_safe_exit||exit_lane|": "exit.right_lower",
+        "gas_station_trucker_convoy_station|env06_8_convoy_station|left|": "stage.event_service_wall",
+        "gas_station_trucker_convoy_tail_rig|package_b_gas_top_left|right|": "stage.event_foreground_marker"
       },
       "scenario_position_route_ids": {}
     },
