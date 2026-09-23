@@ -655,7 +655,8 @@ static func travel_target_ids(map_data: Dictionary, node_id: String = "", max_ne
 		var target_id := str(candidate.get("id", ""))
 		if not target_id.is_empty() and not result.has(target_id):
 			result.append(target_id)
-	var priority_candidates := enabled_new_candidates + enabled_old_candidates
+	var enabled_priority_candidates := enabled_new_candidates + enabled_old_candidates
+	var all_priority_candidates := enabled_priority_candidates + fallback_new_candidates + fallback_old_candidates
 	if source_id == BEACH_GATEWAY_ID:
 		result = _ensure_visible_neighbor_target(result, source_id, BEACH_ID, total_limit, visible_lookup, edge_lookup, node_lookup)
 	elif source_id == BEACH_ID:
@@ -663,17 +664,20 @@ static func travel_target_ids(map_data: Dictionary, node_id: String = "", max_ne
 	# Once a Tier-2 casino has been revealed and passes its route gates, it must
 	# survive the small travel-card cap. Otherwise cheaper familiar stops can
 	# crowd the newly earned progression route out of the actual player UI.
-	var tier_two_priority_id := _first_priority_node_id(priority_candidates, node_lookup, TIER_TWO_CASINO_IDS)
+	var tier_two_priority_id := _first_priority_node_id(enabled_priority_candidates, node_lookup, TIER_TWO_CASINO_IDS)
 	# An explicit event lead is an equally strong player promise. In particular,
 	# Parking Lot Tip unlocks The Punchline from across town; if ordinary nearby
 	# stops and a newly revealed Tier-2 casino consume all three cards, the player
 	# is forced through hours of incidental travel and can reach the venue only
 	# after it closes. Keep one event-unlocked destination on the visible list.
-	var event_priority_id := _first_event_unlocked_priority_node_id(priority_candidates, node_lookup)
+	# An event promise remains useful when the route is temporarily disabled. In
+	# particular, accepting the Grand invitation below its fare must show the
+	# Grand card and its affordability reason instead of silently evicting it.
+	var event_priority_id := _first_event_unlocked_priority_node_id(all_priority_candidates, node_lookup)
 	# Preserve the invited Grand Casino at the same time when both progression
 	# targets are live; independently replacing the last card makes priority
 	# destinations evict one another under the three-card cap.
-	result = _ensure_priority_targets(result, priority_candidates, [GRAND_CASINO_ID, event_priority_id, tier_two_priority_id], total_limit)
+	result = _ensure_priority_targets(result, all_priority_candidates, [GRAND_CASINO_ID, event_priority_id, tier_two_priority_id], total_limit, [event_priority_id])
 	return result
 
 
@@ -1697,7 +1701,7 @@ static func _filter_candidates_by_enabled(candidates: Array, enabled: bool) -> A
 	return result
 
 
-static func _ensure_priority_targets(result: Array, candidates: Array, target_ids: Array, total_limit: int) -> Array:
+static func _ensure_priority_targets(result: Array, candidates: Array, target_ids: Array, total_limit: int, allowed_disabled_target_ids: Array = []) -> Array:
 	var normalized_result := result.duplicate(true)
 	if total_limit <= 0:
 		return normalized_result
@@ -1710,7 +1714,8 @@ static func _ensure_priority_targets(result: Array, candidates: Array, target_id
 		var candidate_id := str(candidate.get("id", ""))
 		if bool(candidate.get("visited", false)) and not candidate_id.is_empty() and not visited_ids.has(candidate_id):
 			visited_ids.append(candidate_id)
-		if target_ids.has(candidate_id) and not candidate_id.is_empty() and bool(candidate.get("enabled_hint", true)) and not eligible_ids.has(candidate_id):
+		var enabled_or_promised := bool(candidate.get("enabled_hint", true)) or allowed_disabled_target_ids.has(candidate_id)
+		if target_ids.has(candidate_id) and not candidate_id.is_empty() and enabled_or_promised and not eligible_ids.has(candidate_id):
 			eligible_ids.append(candidate_id)
 	for target_id in eligible_ids:
 		if normalized_result.has(target_id):
@@ -1750,8 +1755,6 @@ static func _first_event_unlocked_priority_node_id(candidates: Array, node_looku
 		if typeof(candidate_value) != TYPE_DICTIONARY:
 			continue
 		var candidate: Dictionary = candidate_value
-		if not bool(candidate.get("enabled_hint", true)):
-			continue
 		var candidate_id := str(candidate.get("id", ""))
 		var node: Dictionary = node_lookup.get(candidate_id, {})
 		if bool(node.get("unlocked", false)) and str(node.get("discovery_source", "")) == DISCOVERY_SOURCE_EVENT:

@@ -283,13 +283,29 @@ checkpoint, screenshots, and final summary used for acceptance.
   Cleanup was graceful with empty stderr and zero surviving Godot processes.
   The engine-free replay source and semantic hostile-fixture contracts plus the
   full static project gate pass after the correction.
+- The next non-qualifying launch at pushed tip `c7a6c937` proved exact
+  invitation acceptance and exposed a product arc-clarity breaker. With $63,
+  **The Grand Casino opens** appeared, but the immediate map omitted the Grand
+  because its $70 route was disabled and the three-card selector considered
+  only enabled routes for event priority. The product now preserves an
+  event-unlocked destination inside the existing cap even while disabled, so
+  its affordability reason stays visible; no fare or economy math changed.
+  The replay also stops on that public blocker with cash and route cost instead
+  of wandering to another venue. Summary SHA-256 is
+  `632273E70085DAD0C03D51F5D4C2E0999C5533D951B040CD426B808EC5AF99EF`;
+  the immediate-map observation SHA-256 is
+  `B50D31500D4C48B33579AD8C213722CF2FE4FA1086E9F921579759989829B5DE`.
+  Cleanup was not forced and left zero Godot processes. A generic non-verbose
+  ObjectDB exit warning is retained as a qualification warning, not labeled a
+  product blocker without retained-object evidence.
 - Final qualifying evidence intentionally waits for rw06_1 to land.
 
 ## Open route risks
 
 1. Exact visible labels and semantic targets still require live-route audit.
-2. Exploratory UI runs have not reached the route economy yet, so seeds and
-   wager policies remain provisional.
+2. The clean exploratory route reaches the invitation with $63 against a $70
+   fare. The $7 shortfall is measured, but its normal-play earning policy and
+   all ending wager policies remain provisional.
 3. The clean lane is sequential: 1/+5, then 3/+15, then 5/+30. Its nine games
    and +$50 total may conflict with shorter player-facing summaries.
 4. The Grand Casino route costs $70 before gambling capital.

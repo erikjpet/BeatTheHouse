@@ -1605,12 +1605,23 @@ function Reach-GrandCasino {
         Open-WorldMap
         $nodes = @(Get-MapNodes)
         $grand = @($nodes | Where-Object {
-            [string](Get-Value $_ @('archetype_id') '') -eq 'grand_casino' -and
-            [bool](Get-Value $_ @('travel_enabled') $false)
-        } | Select-Object -First 1)
-        if ($grand.Count -eq 1) {
+            [string](Get-Value $_ @('archetype_id') '') -eq 'grand_casino'
+        })
+        if ($grand.Count -gt 1) {
+            throw "The visible city map exposes more than one Grand Casino route."
+        }
+        if ($grand.Count -eq 1 -and [bool](Get-Value $grand[0] @('travel_enabled') $false)) {
             Travel-ToNode -NodeId ([string](Get-Value $grand[0] @('id') '')) -Intent 'travel to the Grand Casino through the visible city map'
             continue
+        }
+        if ($grand.Count -eq 1) {
+            $reason = [string](Get-Value $grand[0] @('travel_disabled_reason') 'The route is unavailable.')
+            $cost = [int](Get-Value $grand[0] @('cost') 0)
+            $cash = [int](Get-Value $script:LastObservation @('status_hud', 'bankroll') 0)
+            if ($reason -match 'Not enough bankroll') {
+                throw "The invited Grand Casino route is visibly unaffordable: cash=$cash, route_cost=$cost, reason=$reason Earn the shortfall through visible play before retrying."
+            }
+            throw "The invited Grand Casino route is visible but unavailable: $reason"
         }
 
         $candidates = @($nodes | Where-Object {

@@ -62,6 +62,19 @@ wall and not a tuning recommendation. The run stopped on an exact-action replay
 policy defect before accepting the clearly rendered choice. Its money-curve
 SHA-256 is
 `B0BC21CEF1AFCC823237881BAD87C8618EC03E691AE7F66DE2C96C1B12D56867`.
+The next probe accepted that invitation and proved it does not waive the $70
+fare. The fixed route was therefore $7 short at Kitty Cat Lounge. This is not
+yet a hard economy wall: Roulette and Slot were visibly available, so normal
+play could earn the shortfall. A product presentation defect hid the disabled
+Grand route behind the three-card cap; rw06_2 now keeps the event-unlocked card
+visible with its affordability reason without changing any number. The old
+replay then spent another $16 reaching Delta Queen ($47, heat 3) instead of
+surfacing the shortfall; it now fails closed before that waste. Probe money
+curve SHA-256 is
+`7E552A23EE8A2BD5C49E42B832896FEE864C1E8276517E0DE4267B23EA1FFF1D`.
+The smallest data-only lever, if normal-play earning later proves impractical,
+would be a travel-cost or starting-cash adjustment in rw06_3. Do not apply it
+from this single seed before the replay measures the earning path.
 Copy the exact values from the qualifying route summaries into this table:
 
 | Ending | Seed | Start cash | Grand entry cash | Lowest cash | Chips bought | End cash | Peak heat | Counted actions | Friction / rw06_3 recommendation |

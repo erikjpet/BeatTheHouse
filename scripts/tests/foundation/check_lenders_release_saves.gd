@@ -4699,6 +4699,19 @@ func _check_grand_casino_invite_gate(library: ContentLibrary, kitty: Dictionary,
 	var unlocked_status := accept_run.travel_route_status(locked_route)
 	if not bool(unlocked_status.get("available", false)) or bool(unlocked_status.get("hidden", true)) or bool(unlocked_status.get("locked", true)):
 		failures.append("Grand Casino route did not become available after accepting the invite.")
+	accept_run.bankroll = 63
+	accept_run.enter_world_node("delta_queen", accept_run.current_environment)
+	var low_bankroll_map := WorldMapScript.new(library)
+	var low_bankroll_route := low_bankroll_map.route_for_target(accept_run.world_map, "delta_queen", "grand_casino")
+	var low_bankroll_status := accept_run.travel_route_status(low_bankroll_route)
+	if bool(low_bankroll_status.get("available", true)) or str(low_bankroll_status.get("disabled_reason", "")) != "Not enough bankroll for this route.":
+		failures.append("Low-bankroll invited Grand route did not retain its exact affordability blocker.")
+	var low_bankroll_targets := RunGeneratorScript.new(library)._world_travel_target_ids(accept_run, accept_run.world_map, "delta_queen")
+	if not low_bankroll_targets.has("grand_casino"):
+		failures.append("The event-unlocked Grand Casino disappeared from the capped production map while its fare was unaffordable: %s." % JSON.stringify(low_bankroll_targets))
+	if low_bankroll_targets.size() > WorldMapScript.TRAVEL_TOTAL_TARGET_LIMIT + accept_run.travel_option_bonus():
+		failures.append("Preserving the unaffordable event-unlocked Grand Casino exceeded the production travel-card cap.")
+	accept_run.bankroll = 500
 	var suppressed_env := EnvironmentInstance.from_archetype(kitty, 2, accept_run.create_rng("suppressed_kitty"), library).to_dict()
 	if invite_module.can_trigger(accept_run, suppressed_env):
 		failures.append("Grand Casino invite copy at the other tier-2 venue was not suppressed after acceptance.")

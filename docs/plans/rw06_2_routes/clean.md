@@ -460,6 +460,68 @@ its semantic hostile-fixture report passed (SHA-256
 and the full static project gate passed. No second Godot run was used for this
 lease.
 
+## 2026-09-23 invited-route visibility probe (non-qualifying)
+
+Pushed replay tip `c7a6c937`. The exact invitation action worked: selecting
+**Take the invite** produced the visible feedback **The Grand Casino opens.**
+The player had $63 and heat 2 at Kitty Cat Lounge. Opening the map immediately
+afterward showed Alley, Bar, Riverboat Casino, Gas Casino, Lounge, Motel, and
+Sal's Pawn Shop, but no Grand Casino card. The nominal Grand fare is $70.
+
+This is a product arc-clarity breaker, not proof of a hard economy wall. A
+legitimate game could still earn the $7 shortfall, but the explicit event
+promise disappeared from the capped map precisely because its route was
+unaffordable. `WorldMap.travel_target_ids` built event-priority candidates only
+from enabled routes, so cheaper ordinary stops evicted the newly event-unlocked
+Grand. The bounded correction keeps an event-unlocked destination represented
+inside the existing three-card cap even while disabled; the player can now see
+the exact affordability reason. It does not change the $70 fare, any economy
+value, odds, wager math, or RTP.
+
+The replay had a separate policy defect after the missing card: it spent
+another $16 traveling to Delta Queen, leaving $47 and heat 3, then encountered
+the River Queen's two-action travel lock and reported that no unvisited route
+could advance. It now fails closed as soon as the invited Grand is visibly
+unaffordable and reports public cash, route cost, and disabled reason. The next
+route step is to earn that visible shortfall through normal play; no hidden
+state or speculative tuning is encoded.
+
+Evidence:
+
+- Run summary, 36 counted actions:
+  `.tmp/rw06_2/exploratory/clean-tip-c7a6c937-probe13/20260923-124926-770-16872/20260923-124926-832-16872/run-01/summary.json`
+  (SHA-256 `632273E70085DAD0C03D51F5D4C2E0999C5533D951B040CD426B808EC5AF99EF`).
+- Public trace:
+  `.tmp/rw06_2/exploratory/clean-tip-c7a6c937-probe13/20260923-124926-770-16872/20260923-124926-832-16872/run-01/public_trace.ndjson`
+  (SHA-256 `32BDF25C6D958AA3497068E95FE943D86B7A3AC9D67DECDA39114CAC1DBF6C19`).
+- Money curve:
+  `.tmp/rw06_2/exploratory/clean-tip-c7a6c937-probe13/20260923-124926-770-16872/20260923-124926-832-16872/run-01/money_curve.ndjson`
+  (SHA-256 `7E552A23EE8A2BD5C49E42B832896FEE864C1E8276517E0DE4267B23EA1FFF1D`).
+- Accepted invitation response:
+  `.tmp/agent_playtest/2026-09-23/rw062-clean-16872-1-b008be333e/0047.result.json`
+  (SHA-256 `0A3EC0BB4773DEB5EE86BA8AE3BA7345150A21DF1B387C217A4098585BD38F55`).
+- Immediate post-invitation map observation:
+  `.tmp/agent_playtest/2026-09-23/rw062-clean-16872-1-b008be333e/0052.result.json`
+  (SHA-256 `B50D31500D4C48B33579AD8C213722CF2FE4FA1086E9F921579759989829B5DE`).
+- Matching map screenshot:
+  `.tmp/agent_playtest/2026-09-23/rw062-clean-16872-1-b008be333e/0052.png`
+  (SHA-256 `31E827711F274526AD19D86ABE0A7A9D959BBF8D0FD28E3EBE1067D3FD7BB69A`).
+- Final public map observation after the extra Delta Queen trip:
+  `.tmp/agent_playtest/2026-09-23/rw062-clean-16872-1-b008be333e/0058.result.json`
+  (SHA-256 `7AD480943A99AF5F68BF541EB6256D8520E5E9D5FF349D69D8F8419CECEA6621`).
+- Graceful quit result:
+  `.tmp/agent_playtest/2026-09-23/rw062-clean-16872-1-b008be333e/0059.result.json`
+  (SHA-256 `214DAB04C18260B1D5353CACB7E66DED1226A8440EB13B77BEE8A067DD192A97`).
+
+Cleanup did not force the owned process and the global process census returned
+zero. Post-exit stderr contained only Godot's generic `ObjectDB instances
+leaked at exit` warning (SHA-256
+`7E8F5DEB3BF520C8ABB23951DEAFB0669C320CEBB4CEB6668C755C617C5FD7D3`).
+Earlier runs through the same harness exited cleanly, and this non-verbose line
+does not identify a retained object, so it is preserved as a qualification
+warning rather than classified as a new product blocker. No second run used
+the lease.
+
 ## Player intent
 
 Reach the Grand Casino, earn Bronze, Silver, and Gold Players Card tiers without
