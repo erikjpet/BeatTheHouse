@@ -89,9 +89,10 @@ func _poll_once() -> void:
 	if not FileAccess.file_exists(command_path):
 		return
 	var file := FileAccess.open(command_path, FileAccess.READ)
-	var raw := file.get_as_text().strip_edges() if file != null else ""
-	if file != null:
-		file.close()
+	if file == null:
+		return
+	var raw := file.get_as_text().strip_edges()
+	file.close()
 	var result := await _execute_command(raw, next_command)
 	_write_json(_path("%04d.result.json" % next_command), result)
 	next_command += 1

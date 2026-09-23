@@ -21,6 +21,8 @@ $buttonViewportValidFixtures = 0
 $buttonViewportHostileFixtures = 0
 $machineJamValidFixtures = 0
 $machineJamHostileFixtures = 0
+$commandOpenValidFixtures = 0
+$commandOpenHostileFixtures = 0
 
 function Add-Failure {
     param([Parameter(Mandatory = $true)][string]$Message)
@@ -80,6 +82,19 @@ function Test-WheelPressReleaseSequence {
     return [regex]::IsMatch(
         $functionMatch.Value,
         '(?s)var\s+wheel\s*:=\s*InputEventMouseButton\.new\(\).*?wheel\.pressed\s*=\s*true.*?app\.get_viewport\(\)\.push_input\(wheel,\s*true\)\s*await\s+process_frame\s*var\s+release\s*:=\s*wheel\.duplicate\(\)\s+as\s+InputEventMouseButton\s*release\.pressed\s*=\s*false\s*app\.get_viewport\(\)\.push_input\(release,\s*true\)\s*await\s+process_frame'
+    )
+}
+
+function Test-CommandOpenRetrySequence {
+    param([Parameter(Mandatory = $true)][string]$Source)
+    $functionMatch = [regex]::Match(
+        $Source,
+        '(?ms)^func\s+_poll_once\(\)[^\r\n]*\r?\n.*?(?=^func\s|\z)'
+    )
+    if (-not $functionMatch.Success) { return $false }
+    return [regex]::IsMatch(
+        $functionMatch.Value,
+        '(?s)var\s+file\s*:=\s*FileAccess\.open\(command_path,\s*FileAccess\.READ\)\s*if\s+file\s*==\s*null:\s*return\s*var\s+raw\s*:=\s*file\.get_as_text\(\)\.strip_edges\(\)\s*file\.close\(\)\s*var\s+result\s*:=\s*await\s+_execute_command\(raw,\s*next_command\)\s*_write_json\([^\r\n]+result\)\s*next_command\s*\+=\s*1'
     )
 }
 
@@ -258,6 +273,82 @@ if ($failures.Count -eq 0) {
     else {
         Add-Failure 'Replay policy helper did not export Select-GrandFareMachineJamChoice.'
     }
+
+    $validCommandOpenFixture = @'
+func _poll_once() -> void:
+	var command_path := _path("%04d.command.txt" % next_command)
+	if not FileAccess.file_exists(command_path):
+		return
+	var file := FileAccess.open(command_path, FileAccess.READ)
+	if file == null:
+		return
+	var raw := file.get_as_text().strip_edges()
+	file.close()
+	var result := await _execute_command(raw, next_command)
+	_write_json(_path("%04d.result.json" % next_command), result)
+	next_command += 1
+'@
+    $hostileCommandOpenFixtures = @(
+        [pscustomobject]@{ label = 'null-open-becomes-empty-command'; source = @'
+func _poll_once() -> void:
+	var file := FileAccess.open(command_path, FileAccess.READ)
+	var raw := file.get_as_text().strip_edges() if file != null else ""
+	if file != null:
+		file.close()
+	var result := await _execute_command(raw, next_command)
+	_write_json(_path("%04d.result.json" % next_command), result)
+	next_command += 1
+'@ },
+        [pscustomobject]@{ label = 'null-open-advances-ordinal'; source = @'
+func _poll_once() -> void:
+	var file := FileAccess.open(command_path, FileAccess.READ)
+	if file == null:
+		next_command += 1
+		return
+	var raw := file.get_as_text().strip_edges()
+	file.close()
+	var result := await _execute_command(raw, next_command)
+	_write_json(_path("%04d.result.json" % next_command), result)
+	next_command += 1
+'@ },
+        [pscustomobject]@{ label = 'null-open-writes-result'; source = @'
+func _poll_once() -> void:
+	var file := FileAccess.open(command_path, FileAccess.READ)
+	if file == null:
+		_write_json(_path("%04d.result.json" % next_command), {})
+		return
+	var raw := file.get_as_text().strip_edges()
+	file.close()
+	var result := await _execute_command(raw, next_command)
+	_write_json(_path("%04d.result.json" % next_command), result)
+	next_command += 1
+'@ },
+        [pscustomobject]@{ label = 'execute-before-open-check'; source = @'
+func _poll_once() -> void:
+	var file := FileAccess.open(command_path, FileAccess.READ)
+	var raw := file.get_as_text().strip_edges() if file != null else ""
+	var result := await _execute_command(raw, next_command)
+	if file == null:
+		return
+	file.close()
+	_write_json(_path("%04d.result.json" % next_command), result)
+	next_command += 1
+'@ }
+    )
+    $commandOpenValidFixtures = 1
+    $commandOpenHostileFixtures = $hostileCommandOpenFixtures.Count
+    if (-not (Test-CommandOpenRetrySequence -Source $validCommandOpenFixture)) {
+        Add-Failure 'Valid transient command-open retry fixture was rejected.'
+    }
+    foreach ($fixture in $hostileCommandOpenFixtures) {
+        if (Test-CommandOpenRetrySequence -Source ([string]$fixture.source)) {
+            Add-Failure "Hostile command-open fixture '$($fixture.label)' did not fail closed."
+        }
+    }
+    if (-not (Test-CommandOpenRetrySequence -Source $bridge)) {
+        Add-Failure 'Production bridge must leave a transiently unopenable published command pending without executing, writing a result, or advancing its ordinal.'
+    }
+    Assert-Match $bridge '(?s)func _execute_command\(raw: String, command_number: int\).*?elif raw\.is_empty\(\):\s*reason\s*=\s*"empty command"' 'A successfully opened, genuinely empty command must retain its explicit rejection.'
 
     $validWheelFixture = @'
 func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
@@ -682,6 +773,8 @@ $report = [ordered]@{
     button_viewport_hostile_fixtures = $buttonViewportHostileFixtures
     machine_jam_valid_fixtures = $machineJamValidFixtures
     machine_jam_hostile_fixtures = $machineJamHostileFixtures
+    command_open_valid_fixtures = $commandOpenValidFixtures
+    command_open_hostile_fixtures = $commandOpenHostileFixtures
     failures = @($failures)
 }
 $report | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $ReportPath -Encoding utf8

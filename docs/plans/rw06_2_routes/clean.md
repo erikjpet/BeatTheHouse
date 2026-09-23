@@ -877,6 +877,59 @@ fixtures pass; the source-contract report SHA-256 is
 and the full static project validator passes. A later serialized live probe
 must prove the new policy; no additional engine run was used for this change.
 
+## 2026-09-23 probe 18: machine-jam proof and transient command-open boundary
+
+Exactly one non-qualifying clean replay used exact pushed tip
+`b08f788cf93835e2e9cecd8e15e1c11a0910040f`, isolated `APPDATA`, and the
+fixed `RW06-CLEAN-ROUTE-01` seed. The new machine-jam policy worked in live
+play. Action 36 opened the exact public `machine_jam` at Heat 1; action 37
+selected `push`, the event closed, and Heat became 7. Actions 38 through 40
+then completed three more visible slot spins. This proves the allowlist,
+public-heat decision, confirmation-aware input, and return to slot play.
+
+The first later boundary was session command 0068, the attempted fifth spin.
+The public snapshot still exposed an enabled `slot_spin:0`, but the bridge
+returned `accepted = false`, `reason = "empty command"`, an empty result
+command, and `input_emitted = false`. The published `0068.command.txt` is 29
+bytes and byte-identical to the accepted 0058, 0062, 0064, and 0066 commands:
+all contain `click_action slot_spin 0` and have SHA-256
+`1D75C86E6F63E412273E378A60633207529FC82FBF8293C2C072138F9A63F1BC`.
+The bridge had mapped a transient `FileAccess.open()` failure to an empty
+command, wrote a rejection, and advanced the ordinal. This is an input-adapter
+transport bug, not a product, economy, placement, or replay-policy finding.
+
+Evidence root:
+`.tmp/rw06_2/exploratory/clean-tip-b08f788c-probe18`. The run summary SHA-256
+is `396C386FB7F944443C11C9BB71FC3BE5C255CC2B5928E14C1334F5861574C1D5`,
+the public trace is
+`3D8958D8646A1D0718AEE5AD0CA6DB93195DA077E7E0DDC81EECBF4ABE38EEB7`,
+the money curve is
+`A1FB25D4EAA15E74D261B023E217DF277483905F39CFC540F0E5C2B422C66968`,
+and launch metadata is
+`060BD02B6DC208B53157EEE15C3489707EB5CBDF5874225D66679AB08C36D09D`.
+The accepted `push` result and screenshot are
+`.tmp/agent_playtest/2026-09-23/rw062-clean-23032-1-a8cfcf9eb6/0060.result.json`
+(SHA-256 `02EC54A35D94B00D719AD6718911295639126DC4DC92B0C8220E6BED06EAD540`)
+and `0060.png` (SHA-256
+`69105F4214D5A8E6ED0F74187A4A46C049B38174205AE8230B7D0FA549CBBFBF`).
+The rejected adapter result and screenshot are `0068.result.json` (SHA-256
+`352E0AD2DCD010D1D4D2822BBBFD981736E5DEFC2AE7C3E1120FB4AC7980EF7F`)
+and `0068.png` (SHA-256
+`286F2EF6EE1B53317B814B0DE77746CBAFA92B2308D71C1FEB7F1113DE5BDD6F`).
+The exact owned process quit without force, the pre/post Godot counts were
+zero, stderr was empty, and no retry occurred.
+
+The bridge now leaves a published command pending when its file cannot yet be
+opened; it does not execute, write a result, or advance the command ordinal
+until a later poll opens that same file. A successfully opened genuinely empty
+file still reaches the explicit `empty command` rejection. The regression was
+added first and failed only the production bridge check, then passed after the
+narrow correction. One valid and four hostile command-open fixtures pass in
+the engine-free source contract; its report SHA-256 is
+`845610D4F64C7B3C243C36E9CFD647B1899C6F5BF07368C5133FE3C1D8380559`.
+The full static project validator also passes. A later serialized live probe
+must prove this transport correction; Probe18 was not retried.
+
 ## Player intent
 
 Reach the Grand Casino, earn Bronze, Silver, and Gold Players Card tiers without
