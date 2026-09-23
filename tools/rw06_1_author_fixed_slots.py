@@ -13,6 +13,7 @@ import argparse
 import copy
 import hashlib
 import json
+import math
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -72,6 +73,7 @@ STAGE_CAP = {
 LABEL_W = 88.0
 LABEL_H = 15.0
 WALK_LANE_RECT = (16.0, 378.0, 868.0, 36.0)
+EXIT_COLOR_OFFSET = 1000
 
 COUNTER_PERSON_TOKENS = ("bartender", "cashier", "clerk", "dealer", "shopkeeper", "staff", "teller", "vendor")
 PERSON_TOKENS = ("actor", "bouncer", "captain", "crew", "driver", "guard", "host", "landlord", "mate", "observer", "patron", "person", "regular", "runner", "staff")
@@ -141,6 +143,70 @@ def point(value: Any) -> tuple[float, float] | None:
     if isinstance(value, dict) and "x" in value and "y" in value:
         return (float(value["x"]), float(value["y"]))
     return None
+
+
+def _polyline_projection_with_distance(
+    points: list[tuple[float, float]],
+    target: tuple[float, float],
+) -> tuple[tuple[float, float], float] | None:
+    best: tuple[tuple[float, float], float] | None = None
+    best_distance_squared = float("inf")
+    traversed = 0.0
+    for start, end in zip(points, points[1:]):
+        dx, dy = end[0] - start[0], end[1] - start[1]
+        length_squared = dx * dx + dy * dy
+        if length_squared <= 0.000001:
+            continue
+        length = math.sqrt(length_squared)
+        weight = max(
+            0.0,
+            min(1.0, ((target[0] - start[0]) * dx + (target[1] - start[1]) * dy) / length_squared),
+        )
+        projected = (start[0] + dx * weight, start[1] + dy * weight)
+        distance_squared = (
+            (target[0] - projected[0]) ** 2
+            + (target[1] - projected[1]) ** 2
+        )
+        distance_along = traversed + length * weight
+        if (
+            distance_squared < best_distance_squared - 0.000001
+            or abs(distance_squared - best_distance_squared) <= 0.000001
+            and (best is None or distance_along < best[1])
+        ):
+            best_distance_squared = distance_squared
+            best = (projected, distance_along)
+        traversed += length
+    return best
+
+
+def _polyline_slice_points(
+    points: list[tuple[float, float]],
+    start_point: tuple[float, float],
+    start_distance: float,
+    end_point: tuple[float, float],
+    end_distance: float,
+) -> list[tuple[float, float]]:
+    vertex_distances = [0.0]
+    for start, end in zip(points, points[1:]):
+        vertex_distances.append(vertex_distances[-1] + math.dist(start, end))
+    result = [start_point]
+    indexes = (
+        range(1, len(points) - 1)
+        if start_distance <= end_distance
+        else range(len(points) - 2, 0, -1)
+    )
+    for index in indexes:
+        distance = vertex_distances[index]
+        inside = (
+            distance > start_distance + 0.001 and distance < end_distance - 0.001
+            if start_distance <= end_distance
+            else distance < start_distance - 0.001 and distance > end_distance + 0.001
+        )
+        if inside and result[-1] != points[index]:
+            result.append(points[index])
+    if result[-1] != end_point:
+        result.append(end_point)
+    return result
 
 
 def intersects(a: tuple[float, float, float, float], b: tuple[float, float, float, float]) -> bool:
@@ -1179,65 +1245,6 @@ def author_map(
     exit_colors = color_scenario_states(exit_states, exit_conflicts)
     exit_slots: list[dict[str, Any]] = []
     exit_target = max(exit_colors.values(), default=-1) + 1
-    for color in range(exit_target):
-        previous_exit_id = f"exit.doorway.{color + 1:02d}"
-        previous_exit = next(
-            (
-                slot
-                for slot in previous_slots["exit"]
-                if str(slot.get("id", "")) == previous_exit_id
-                and str(slot.get("footprint_class", "")) == "doorway"
-            ),
-            {},
-        )
-        previous_exit_bounds = (
-            rect(previous_exit.get("hit_rect"))
-            if previous_exit
-            else (0.0, 0.0, 0.0, 0.0)
-        )
-        color_wants = [
-            state.get("wanted")
-            for key, state in exit_states.items()
-            if exit_colors.get(key) == color and isinstance(state.get("wanted"), tuple)
-        ]
-        color_labels = [
-            str(state.get("label", ""))
-            for key, state in exit_states.items()
-            if exit_colors.get(key) == color
-        ]
-        color_label = max(color_labels, key=len, default="")
-
-        def exit_rank(candidate: dict[str, Any]) -> tuple[float, float, float, float]:
-            # Keep a still-valid authored exit stable across regeneration.  A
-            # nearest-only pass can move the door into geometry that the rest
-            # of the previously proven-disjoint room inventory needs, turning
-            # an otherwise stable room into an unnecessary CSP search.
-            retained = 0.0 if previous_exit and candidate["rect"] == previous_exit_bounds else 1.0
-            distance = sum(
-                (candidate["contact"][0] - wanted[0]) ** 2
-                + (candidate["contact"][1] - wanted[1]) ** 2
-                for wanted in color_wants
-            )
-            return (retained, distance, candidate["contact"][1], candidate["contact"][0])
-
-        selected = None
-        for candidate in sorted(pools["doorway"], key=exit_rank):
-            reserve = reservation(candidate["rect"])
-            authority = candidate_authority(candidate, color_label)
-            if not authority_intersects(authority, occupied_authority):
-                occupied_authority.extend(authority)
-                occupied_hits.append(reserve)
-                selected = make_slot(
-                    f"exit.doorway.{color + 1:02d}",
-                    "exit",
-                    "doorway",
-                    candidate,
-                    (color + 1) * 10,
-                    zones,
-                )
-                break
-        if selected is not None:
-            exit_slots.append(selected)
 
     base_desires: dict[str, list[tuple[str, tuple[float, float] | None]]] = {key: [] for key in CLASSES}
     object_positions = map_data.get("object_slot_positions", {}) if isinstance(map_data.get("object_slot_positions"), dict) else {}
@@ -1362,17 +1369,6 @@ def author_map(
                 selected = min(choices, key=lambda slot: (slot_distance(slot, wanted), slot["priority"], slot["id"]))
                 object_slot_ids[identity] = selected["id"]
                 used.add(str(selected["id"]))
-    if map_data.get("id") == "pawn_shop":
-        shelf_slots = base_by_class["surface_item"][:6]
-        for index, slot in enumerate(shelf_slots):
-            # The serialized shelf inventory and its late meta interaction use
-            # different canvas ids but are one physical object per shelf slot.
-            object_slot_ids[f"item:sal_shelf_{index}"] = str(slot["id"])
-            object_slot_ids[f"meta_sal_shelf:{index}"] = str(slot["id"])
-        counter_slots = base_by_class["behind_counter_person"]
-        if len(counter_slots) >= 2:
-            object_slot_ids["shopkeeper:merchant"] = str(counter_slots[0]["id"])
-            object_slot_ids["meta_pawn_counter:sell"] = str(counter_slots[1]["id"])
     category_slot_ids: dict[str, str] = {}
     category_used = {placement_class: set() for placement_class in CLASSES}
     for field_name, index, placement_class, wanted in category_desires:
@@ -1425,6 +1421,13 @@ def author_map(
     contacts = values(floor.get("contact_y"))
     lane_y = float(contacts[-1]) if contacts else 358.0
     lane_y = max(44.0, min(BOARD_H - 16.0, lane_y))
+    walk_lanes = [{
+        "id": "lane.public",
+        "points": [[64.0, lane_y], [450.0, lane_y], [836.0, lane_y]],
+        "clearance_px": 8.0,
+        "direction": "both",
+        "entry": True,
+    }]
     permanent_authority = list(occupied_authority)
     permanent_hits = list(occupied_hits)
     synthetic_route_keys = {
@@ -1438,79 +1441,79 @@ def author_map(
         end: dict[str, Any],
         placement_class: str,
     ) -> list[tuple[float, float, float, float]]:
-        width, height = SLOT_SIZE[placement_class]
+        lanes_by_id = {
+            str(lane.get("id", "")): lane
+            for lane in walk_lanes
+            if isinstance(lane, dict)
+        }
         start_contact = start["contact"]
         end_contact = end["contact"]
-        route_contacts = (
-            start_contact,
-            (start_contact[0], lane_y),
-            (end_contact[0], lane_y),
-            end_contact,
+        lane_points: list[tuple[float, float]] = []
+        for lane_id in ("lane.public",):
+            lane = lanes_by_id.get(lane_id, {})
+            points = [point(value) for value in values(lane.get("points"))]
+            points = [value for value in points if value is not None]
+            if len(points) < 2:
+                return []
+            direction = str(lane.get("direction", "both"))
+            if direction == "reverse":
+                points.reverse()
+            elif direction == "both":
+                approach = start_contact if not lane_points else lane_points[-1]
+                if (
+                    (approach[0] - points[-1][0]) ** 2 + (approach[1] - points[-1][1]) ** 2
+                    < (approach[0] - points[0][0]) ** 2 + (approach[1] - points[0][1]) ** 2
+                ):
+                    points.reverse()
+            if lane_points and lane_points[-1] != points[0]:
+                return []
+            for lane_point in points:
+                if not lane_points or lane_points[-1] != lane_point:
+                    lane_points.append(lane_point)
+        start_projection = _polyline_projection_with_distance(lane_points, start_contact)
+        end_projection = _polyline_projection_with_distance(lane_points, end_contact)
+        if start_projection is None or end_projection is None:
+            return []
+        contact_path = _polyline_slice_points(
+            lane_points,
+            start_projection[0],
+            start_projection[1],
+            end_projection[0],
+            end_projection[1],
         )
+        width, height = SLOT_SIZE[placement_class]
+        start_center = (
+            start["rect"][0] + start["rect"][2] / 2.0,
+            start["rect"][1] + start["rect"][3] / 2.0,
+        )
+        end_center = (
+            end["rect"][0] + end["rect"][2] / 2.0,
+            end["rect"][1] + end["rect"][3] / 2.0,
+        )
+        center_offset = (
+            start_center[0] - start_contact[0],
+            start_center[1] - start_contact[1],
+        )
+        route_centers = [start_center]
+        route_centers.extend(
+            (contact[0] + center_offset[0], contact[1] + center_offset[1])
+            for contact in contact_path
+        )
+        route_centers.append(end_center)
+        route_centers = [
+            route_center
+            for index, route_center in enumerate(route_centers)
+            if index == 0 or route_center != route_centers[index - 1]
+        ]
         sweeps: list[tuple[float, float, float, float]] = []
-        for left, right in zip(route_contacts, route_contacts[1:]):
+        for left, right in zip(route_centers, route_centers[1:]):
             sweeps.append((
                 min(left[0], right[0]) - width / 2.0,
-                min(left[1], right[1]) - height,
+                min(left[1], right[1]) - height / 2.0,
                 abs(right[0] - left[0]) + width,
                 abs(right[1] - left[1]) + height,
             ))
         return sweeps
-
-    def route_sweep_clear(
-        start: dict[str, Any],
-        end: dict[str, Any],
-        placement_class: str,
-    ) -> bool:
-        return not any(
-            intersects(sweep, other)
-            for sweep in route_sweep_rects(start, end, placement_class)
-            for other in permanent_hits
-        )
-
-    # Pick semantic-route endpoints as one safe pair before allocating other
-    # stage geometry.  Each pair is body-swept through the authored public lane;
-    # merely having two individually free endpoints is not enough.
-    for _route_id, route_keys in sorted(authored_route_states.items()):
-        placement_class = str(states.get(route_keys[0], {}).get("placement_class", ""))
-        if placement_class not in pools:
-            continue
-        wanted = states.get(route_keys[0], {}).get("wanted")
-        route_label = max(
-            (str(states.get(route_key, {}).get("label", "")) for route_key in route_keys),
-            key=len,
-            default="",
-        )
-        free_candidates = [
-            candidate
-            for candidate in pools[placement_class]
-            if not authority_intersects(candidate_authority(candidate, route_label), permanent_authority)
-        ]
-        pairs: list[tuple[float, dict[str, Any], dict[str, Any]]] = []
-        for left_index, left in enumerate(free_candidates):
-            for right in free_candidates[left_index + 1:]:
-                if authority_intersects(
-                    candidate_authority(left, route_label),
-                    candidate_authority(right, route_label),
-                ):
-                    continue
-                if not route_sweep_clear(left, right, placement_class):
-                    continue
-                wanted_score = 0.0
-                if isinstance(wanted, tuple):
-                    wanted_score = min(
-                        (left["contact"][0] - wanted[0]) ** 2 + (left["contact"][1] - wanted[1]) ** 2,
-                        (right["contact"][0] - wanted[0]) ** 2 + (right["contact"][1] - wanted[1]) ** 2,
-                    )
-                travel = (left["contact"][0] - right["contact"][0]) ** 2 + (left["contact"][1] - right["contact"][1]) ** 2
-                pairs.append((wanted_score + travel, left, right))
-        if pairs:
-            _score, start_candidate, end_candidate = min(
-                pairs,
-                key=lambda item: (item[0], item[1]["key"], item[2]["key"]),
-            )
-            states[route_keys[0]]["wanted"] = start_candidate["contact"]
-            states[route_keys[1]]["wanted"] = end_candidate["contact"]
 
     # Allocate every (footprint class, graph color) as one constraint problem.
     # A class-by-class greedy pass can strand a scarce later class even though a
@@ -1550,6 +1553,24 @@ def author_map(
             "wanted": spec.get("wanted"),
             "label": spec.get("label"),
         }
+    for color in range(exit_target):
+        keys = [key for key in exit_states if exit_colors.get(key) == color]
+        color_wants = [
+            exit_states[key].get("wanted")
+            for key in keys
+            if isinstance(exit_states[key].get("wanted"), tuple)
+        ]
+        wanted = color_wants[0] if color_wants else None
+        labels = [str(exit_states[key].get("label", "")) for key in keys]
+        group_rows[("doorway", EXIT_COLOR_OFFSET + color)] = {
+            "kind": "exit",
+            "placement_class": "doorway",
+            "color": EXIT_COLOR_OFFSET + color,
+            "exit_color": color,
+            "keys": keys,
+            "wanted": wanted,
+            "label": max(labels, key=len, default=""),
+        }
 
     def groups_conflict(left: tuple[str, int], right: tuple[str, int]) -> bool:
         # Every emitted record is part of one immutable slot inventory. States
@@ -1584,14 +1605,19 @@ def author_map(
             ):
                 continue
             candidates.append(candidate)
-        route_endpoint = any(key in synthetic_route_keys for key in group["keys"])
-        if route_endpoint and isinstance(group["wanted"], tuple):
-            pinned = [candidate for candidate in candidates if candidate["contact"] == group["wanted"]]
-            if pinned:
-                candidates = pinned
         if group_kind == "base":
             previous_id = f"base.{placement_class}.{int(group.get('ordinal', 0)):02d}"
             previous = previous_base_by_id.get(previous_id, {})
+        elif group_kind == "exit":
+            previous_id = f"exit.doorway.{int(group.get('exit_color', 0)) + 1:02d}"
+            previous = next(
+                (
+                    slot
+                    for slot in previous_slots["exit"]
+                    if str(slot.get("id", "")) == previous_id
+                ),
+                {},
+            )
         else:
             previous_id = f"stage.{placement_class}.{color + 1:02d}"
             previous = previous_stage_by_id.get(previous_id, {})
@@ -1651,11 +1677,30 @@ def author_map(
                 blockers.update(
                     group_id
                     for group_id, row in group_rows.items()
-                    if str(row.get("kind", "stage")) == "base"
+                    if str(row.get("kind", "stage")) in {"base", "exit"}
                 )
                 blockers.discard(start_group)
                 blockers.discard(end_group)
                 route_blocker_groups.append(blockers)
+    route_families: list[dict[str, Any]] = []
+    route_family_by_key: dict[tuple[Any, ...], int] = {}
+    for relation_index, relation in enumerate(route_relations):
+        start_group, end_group, placement_class = relation[:3]
+        left_group, right_group = sorted((start_group, end_group))
+        family_key = (left_group, right_group, placement_class, ("lane.public",))
+        family_index = route_family_by_key.get(family_key)
+        if family_index is None:
+            family_index = len(route_families)
+            route_family_by_key[family_key] = family_index
+            route_families.append({
+                "left_group": left_group,
+                "right_group": right_group,
+                "placement_class": placement_class,
+                "relation_indexes": [],
+                "blockers": set(),
+            })
+        route_families[family_index]["relation_indexes"].append(relation_index)
+        route_families[family_index]["blockers"].update(route_blocker_groups[relation_index])
 
     def groups_connected(left: tuple[str, int], right: tuple[str, int]) -> bool:
         if groups_conflict(left, right):
@@ -1734,6 +1779,72 @@ def author_map(
         pair = (candidate_index(right_group, right_candidate), candidate_index(left_group, left_candidate))
         return pair in overlap_matrices[(right_group, left_group)]
 
+    route_family_pairs: list[
+        list[tuple[int, int, tuple[tuple[float, float, float, float], ...]]]
+    ] = []
+    for family in route_families:
+        left_group = family["left_group"]
+        right_group = family["right_group"]
+        placement_class = str(family["placement_class"])
+        pairs: list[tuple[int, int, tuple[tuple[float, float, float, float], ...]]] = []
+        for left_index, left_candidate in enumerate(group_domains[left_group]):
+            for right_index, right_candidate in enumerate(group_domains[right_group]):
+                if left_candidate["contact"] == right_candidate["contact"]:
+                    continue
+                if candidates_conflict(left_group, left_candidate, right_group, right_candidate):
+                    continue
+                sweeps = tuple(route_sweep_rects(left_candidate, right_candidate, placement_class))
+                if not sweeps or any(
+                    intersects(sweep, occupied_rect)
+                    for sweep in sweeps
+                    for occupied_rect in permanent_hits
+                ):
+                    continue
+                pairs.append((left_index, right_index, sweeps))
+        route_family_pairs.append(pairs)
+
+    route_pair_blocker_support_masks: dict[
+        tuple[int, int, tuple[str, int]],
+        int,
+    ] = {}
+
+    def route_pair_blocker_support_mask(
+        family_index: int,
+        pair_index: int,
+        blocker_group: tuple[str, int],
+    ) -> int:
+        """Return blocker candidates compatible with this exact route pair.
+
+        A route pair is a compound value: one candidate for each endpoint plus
+        the exact body-width sweep produced by the runtime lane projection.
+        Cache its support against every possible blocker so propagation can use
+        bit operations instead of rediscovering the same intersections at each
+        search node.
+        """
+        cache_key = (family_index, pair_index, blocker_group)
+        cached = route_pair_blocker_support_masks.get(cache_key)
+        if cached is not None:
+            return cached
+        family = route_families[family_index]
+        left_group = family["left_group"]
+        right_group = family["right_group"]
+        left_index, right_index, sweeps = route_family_pairs[family_index][pair_index]
+        support = (1 << len(group_domains[blocker_group])) - 1
+        if blocker_group != left_group:
+            support &= ~directed_conflict_masks[(left_group, blocker_group)][left_index]
+        if blocker_group != right_group:
+            support &= ~directed_conflict_masks[(right_group, blocker_group)][right_index]
+        remaining = support
+        while remaining:
+            bit = remaining & -remaining
+            blocker_index = bit.bit_length() - 1
+            blocker_hit = reservation(group_domains[blocker_group][blocker_index]["rect"])
+            if any(intersects(sweep, blocker_hit) for sweep in sweeps):
+                support &= ~bit
+            remaining &= remaining - 1
+        route_pair_blocker_support_masks[cache_key] = support
+        return support
+
     def candidate_consistent(group_id: tuple[str, int], candidate: dict[str, Any]) -> bool:
         if candidate_index(group_id, candidate) in permanent_blocked[group_id]:
             return False
@@ -1741,18 +1852,18 @@ def author_map(
             if candidates_conflict(group_id, candidate, other_group, other_candidate):
                 return False
         candidate_hit = reservation(candidate["rect"])
-        for relation_index, relation in enumerate(route_relations):
-            start_group, end_group, placement_class = relation[:3]
-            if group_id in {start_group, end_group} \
-                    or group_id not in route_blocker_groups[relation_index] \
-                    or start_group not in assignments \
-                    or end_group not in assignments:
+        for family in route_families:
+            left_group = family["left_group"]
+            right_group = family["right_group"]
+            if group_id in {left_group, right_group} \
+                    or group_id not in family["blockers"] \
+                    or left_group not in assignments \
+                    or right_group not in assignments:
                 continue
-            sweeps = cached_route_sweeps(
-                relation_index,
-                assignments[start_group],
-                assignments[end_group],
-                str(placement_class),
+            sweeps = route_sweep_rects(
+                assignments[left_group],
+                assignments[right_group],
+                str(family["placement_class"]),
             )
             if any(intersects(sweep, candidate_hit) for sweep in sweeps):
                 return False
@@ -1840,7 +1951,7 @@ def author_map(
         if search_nodes > 10000:
             return False
         if all(group_id in assignments for group_id in component):
-            return True
+            return routes_have_support()
         viable_masks: dict[tuple[str, int], int] = {}
         for group_id in component:
             if group_id in assignments:
@@ -1853,37 +1964,118 @@ def author_map(
                 return False
             viable_masks[group_id] = mask
 
-        # Arc consistency across the universal disjoint inventory removes a
-        # candidate as soon as it has no compatible value in a future group.
-        # Cached bitmasks keep this much cheaper than rediscovering thousands
-        # of rectangle intersections at each search node.
-        queue = [
-            (left_group, right_group)
-            for left_group in viable_masks
-            for right_group in viable_masks
-            if left_group != right_group and groups_conflict(left_group, right_group)
-        ]
-        while queue:
-            left_group, right_group = queue.pop()
-            left_mask = viable_masks[left_group]
-            right_mask = viable_masks[right_group]
-            revised_mask = left_mask
-            candidate_mask = left_mask
-            conflict_rows = directed_conflict_masks[(left_group, right_group)]
-            while candidate_mask:
-                bit = candidate_mask & -candidate_mask
-                left_index = bit.bit_length() - 1
-                if right_mask & ~conflict_rows[left_index] == 0:
-                    revised_mask &= ~bit
-                candidate_mask &= candidate_mask - 1
-            if revised_mask == left_mask:
-                continue
-            if revised_mask == 0:
+        def active_mask(group_id: tuple[str, int]) -> int:
+            if group_id in assignments:
+                return 1 << candidate_index(group_id, assignments[group_id])
+            return viable_masks.get(group_id, 0)
+
+        def revise_geometry_arcs() -> tuple[bool, bool]:
+            changed = False
+            queue = [
+                (left_group, right_group)
+                for left_group in viable_masks
+                for right_group in viable_masks
+                if left_group != right_group and groups_conflict(left_group, right_group)
+            ]
+            while queue:
+                left_group, right_group = queue.pop()
+                left_mask = viable_masks[left_group]
+                right_mask = viable_masks[right_group]
+                revised_mask = left_mask
+                candidate_mask = left_mask
+                conflict_rows = directed_conflict_masks[(left_group, right_group)]
+                while candidate_mask:
+                    bit = candidate_mask & -candidate_mask
+                    left_index = bit.bit_length() - 1
+                    if right_mask & ~conflict_rows[left_index] == 0:
+                        revised_mask &= ~bit
+                    candidate_mask &= candidate_mask - 1
+                if revised_mask == left_mask:
+                    continue
+                if revised_mask == 0:
+                    return False, changed
+                viable_masks[left_group] = revised_mask
+                changed = True
+                for neighbor in viable_masks:
+                    if neighbor != left_group and neighbor != right_group and groups_conflict(neighbor, left_group):
+                        queue.append((neighbor, left_group))
+            return True, changed
+
+        # Alternate ordinary rectangle AC-3 with generalized arc consistency
+        # for each compound route family.  A surviving route pair must have one
+        # *same* blocker candidate compatible with both endpoints and the full
+        # runtime-equivalent body sweep; separate endpoint supports are not a
+        # valid proof of a traversable route.
+        active_family_pairs: dict[int, list[int]] = {}
+        while True:
+            geometry_ok, propagation_changed = revise_geometry_arcs()
+            if not geometry_ok:
                 return False
-            viable_masks[left_group] = revised_mask
-            for neighbor in viable_masks:
-                if neighbor != left_group and neighbor != right_group and groups_conflict(neighbor, left_group):
-                    queue.append((neighbor, left_group))
+            for family_index, family in enumerate(route_families):
+                left_group = family["left_group"]
+                right_group = family["right_group"]
+                left_mask = active_mask(left_group)
+                right_mask = active_mask(right_group)
+                if left_mask == 0 or right_mask == 0:
+                    return False
+                supported_pairs: list[int] = []
+                for pair_index, (left_index, right_index, _sweeps) in enumerate(route_family_pairs[family_index]):
+                    if not left_mask & (1 << left_index) or not right_mask & (1 << right_index):
+                        continue
+                    pair_supported = True
+                    for blocker_group in family["blockers"]:
+                        blocker_mask = active_mask(blocker_group)
+                        if blocker_mask == 0 or route_pair_blocker_support_mask(
+                            family_index,
+                            pair_index,
+                            blocker_group,
+                        ) & blocker_mask == 0:
+                            pair_supported = False
+                            break
+                    if pair_supported:
+                        supported_pairs.append(pair_index)
+                if not supported_pairs:
+                    return False
+                active_family_pairs[family_index] = supported_pairs
+
+                if left_group in viable_masks:
+                    supported_left = 0
+                    for pair_index in supported_pairs:
+                        supported_left |= 1 << route_family_pairs[family_index][pair_index][0]
+                    revised = viable_masks[left_group] & supported_left
+                    if revised == 0:
+                        return False
+                    if revised != viable_masks[left_group]:
+                        viable_masks[left_group] = revised
+                        propagation_changed = True
+                if right_group in viable_masks:
+                    supported_right = 0
+                    for pair_index in supported_pairs:
+                        supported_right |= 1 << route_family_pairs[family_index][pair_index][1]
+                    revised = viable_masks[right_group] & supported_right
+                    if revised == 0:
+                        return False
+                    if revised != viable_masks[right_group]:
+                        viable_masks[right_group] = revised
+                        propagation_changed = True
+                for blocker_group in family["blockers"]:
+                    if blocker_group not in viable_masks:
+                        continue
+                    supported_blockers = 0
+                    for pair_index in supported_pairs:
+                        supported_blockers |= route_pair_blocker_support_mask(
+                            family_index,
+                            pair_index,
+                            blocker_group,
+                        )
+                    revised = viable_masks[blocker_group] & supported_blockers
+                    if revised == 0:
+                        return False
+                    if revised != viable_masks[blocker_group]:
+                        viable_masks[blocker_group] = revised
+                        propagation_changed = True
+            if not propagation_changed:
+                break
 
         viable_by_group: dict[tuple[str, int], list[dict[str, Any]]] = {
             group_id: [
@@ -1905,168 +2097,68 @@ def author_map(
             # the only body-width corridor and force deep late backtracking.
             return (0 if routed else 1, len(viable_by_group[group_id]), -degree, group_id[0], group_id[1])
 
-        selected = min(viable_by_group, key=group_rank)
+        unresolved_families = [
+            family_index
+            for family_index, family in enumerate(route_families)
+            if family["left_group"] not in assignments or family["right_group"] not in assignments
+        ]
+        if unresolved_families:
+            family_index = min(
+                unresolved_families,
+                key=lambda index: (len(active_family_pairs[index]), index),
+            )
+            family = route_families[family_index]
+            left_group = family["left_group"]
+            right_group = family["right_group"]
 
-        paired_relation = next(
-            (
-                (relation_index, start_group, end_group, placement_class)
-                for relation_index, (start_group, end_group, placement_class, _start_key, _end_key) in enumerate(route_relations)
-                if selected in {start_group, end_group}
-                and start_group not in assignments
-                and end_group not in assignments
-            ),
-            None,
-        )
-        if paired_relation is not None:
-            relation_index, start_group, end_group, placement_class = paired_relation
-            family_indices = [
-                index
-                for index, relation in enumerate(route_relations)
-                if {relation[0], relation[1]} == {start_group, end_group}
-                and relation[2] == placement_class
-            ]
-            family_blockers: set[tuple[str, int]] = set()
-            for family_index in family_indices:
-                family_blockers.update(route_blocker_groups[family_index])
-            pair_options: list[
-                tuple[
-                    tuple[int, int, int, int, tuple[float, ...], tuple[float, ...]],
-                    dict[str, Any],
-                    dict[str, Any],
-                ]
-            ] = []
-            for start_candidate in viable_by_group[start_group]:
-                for end_candidate in viable_by_group[end_group]:
-                    if start_candidate["contact"] == end_candidate["contact"]:
+            def route_pair_rank(pair_index: int) -> tuple[int, int, int, int, tuple[float, ...], tuple[float, ...]]:
+                left_index, right_index, _sweeps = route_family_pairs[family_index][pair_index]
+                exhausted = 0
+                blocked_total = 0
+                for other_group, other_mask in viable_masks.items():
+                    if other_group in {left_group, right_group}:
                         continue
-                    if candidates_conflict(start_group, start_candidate, end_group, end_candidate):
-                        continue
-                    sweeps = cached_route_sweeps(
-                        relation_index,
-                        start_candidate,
-                        end_candidate,
-                        placement_class,
-                    )
-                    if any(
-                        intersects(sweep, occupied_rect)
-                        for sweep in sweeps
-                        for occupied_rect in permanent_hits
-                    ):
-                        continue
-                    blocked_by_assignment = any(
-                        other_group in family_blockers
-                        and any(
-                            intersects(sweep, reservation(other_candidate["rect"]))
-                            for sweep in sweeps
+                    supported = other_mask
+                    supported &= ~directed_conflict_masks[(left_group, other_group)][left_index]
+                    supported &= ~directed_conflict_masks[(right_group, other_group)][right_index]
+                    if other_group in family["blockers"]:
+                        supported &= route_pair_blocker_support_mask(
+                            family_index,
+                            pair_index,
+                            other_group,
                         )
-                        for other_group, other_candidate in assignments.items()
-                        if other_group not in {start_group, end_group}
-                    )
-                    if blocked_by_assignment:
-                        continue
-                    exhausted = 0
-                    blocked_total = 0
-                    for other_group, other_domain in viable_by_group.items():
-                        if other_group in {start_group, end_group}:
-                            continue
-                        blocked = sum(
-                            candidates_conflict(start_group, start_candidate, other_group, other_candidate)
-                            or candidates_conflict(end_group, end_candidate, other_group, other_candidate)
-                            or other_group in family_blockers
-                            and any(
-                                intersects(sweep, reservation(other_candidate["rect"]))
-                                for sweep in sweeps
-                            )
-                            for other_candidate in other_domain
-                        )
-                        blocked_total += blocked
-                        if blocked == len(other_domain):
-                            exhausted += 1
-                    pair_options.append((
-                        (
-                            exhausted,
-                            blocked_total,
-                            group_domains[start_group].index(start_candidate),
-                            group_domains[end_group].index(end_candidate),
-                            start_candidate["key"],
-                            end_candidate["key"],
-                        ),
-                        start_candidate,
-                        end_candidate,
-                    ))
-            for _rank, start_candidate, end_candidate in sorted(pair_options, key=lambda option: option[0]):
-                assignments[start_group] = start_candidate
-                assignments[end_group] = end_candidate
-                if routes_have_support() and solve_stage_component(component):
+                    blocked = other_mask.bit_count() - supported.bit_count()
+                    blocked_total += blocked
+                    if supported == 0:
+                        exhausted += 1
+                return (
+                    exhausted,
+                    blocked_total,
+                    left_index,
+                    right_index,
+                    group_domains[left_group][left_index]["key"],
+                    group_domains[right_group][right_index]["key"],
+                )
+
+            for pair_index in sorted(active_family_pairs[family_index], key=route_pair_rank):
+                left_index, right_index, _sweeps = route_family_pairs[family_index][pair_index]
+                newly_assigned: list[tuple[str, int]] = []
+                if left_group not in assignments:
+                    assignments[left_group] = group_domains[left_group][left_index]
+                    newly_assigned.append(left_group)
+                if right_group not in assignments:
+                    assignments[right_group] = group_domains[right_group][right_index]
+                    newly_assigned.append(right_group)
+                if solve_stage_component(component):
                     return True
-                del assignments[start_group]
-                del assignments[end_group]
+                for group_id in newly_assigned:
+                    del assignments[group_id]
             return False
 
-        def route_value_score(candidate: dict[str, Any]) -> tuple[int, int]:
-            exhausted_total = 0
-            blocked_total = 0
-            for relation_index, (start_group, end_group, placement_class, _start_key, _end_key) in enumerate(route_relations):
-                if selected not in {start_group, end_group}:
-                    continue
-                other_endpoint = end_group if selected == start_group else start_group
-                other_domain = (
-                    [assignments[other_endpoint]]
-                    if other_endpoint in assignments
-                    else viable_by_group.get(other_endpoint, group_domains[other_endpoint])
-                )
-                best: tuple[int, int] | None = None
-                for other_candidate in other_domain:
-                    start_candidate = candidate if selected == start_group else other_candidate
-                    end_candidate = other_candidate if selected == start_group else candidate
-                    if start_candidate["contact"] == end_candidate["contact"]:
-                        continue
-                    if not candidate_consistent(other_endpoint, other_candidate):
-                        continue
-                    if candidates_conflict(start_group, start_candidate, end_group, end_candidate):
-                        continue
-                    sweeps = cached_route_sweeps(
-                        relation_index,
-                        start_candidate,
-                        end_candidate,
-                        placement_class,
-                    )
-                    if any(
-                        intersects(sweep, occupied_rect)
-                        for sweep in sweeps
-                        for occupied_rect in permanent_hits
-                    ):
-                        continue
-                    route_exhausted = 0
-                    route_blocked = 0
-                    for group_id, domain in viable_by_group.items():
-                        if group_id in {selected, other_endpoint}:
-                            continue
-                        if group_id not in route_blocker_groups[relation_index]:
-                            continue
-                        blocked = sum(
-                            any(
-                                intersects(sweep, reservation(domain_candidate["rect"]))
-                                for sweep in sweeps
-                            )
-                            for domain_candidate in domain
-                        )
-                        route_blocked += blocked
-                        if blocked == len(domain):
-                            route_exhausted += 1
-                    score = (route_exhausted, route_blocked)
-                    if best is None or score < best:
-                        best = score
-                if best is None:
-                    exhausted_total += len(viable_by_group) + 1
-                else:
-                    exhausted_total += best[0]
-                    blocked_total += best[1]
-            return exhausted_total, blocked_total
+        selected = min(viable_by_group, key=group_rank)
 
-        def value_rank(candidate: dict[str, Any]) -> tuple[int, int, int, int, int, tuple[float, ...]]:
+        def value_rank(candidate: dict[str, Any]) -> tuple[int, int, int, tuple[float, ...]]:
             authored_rank = group_domains[selected].index(candidate)
-            route_exhausted, route_blocked = route_value_score(candidate)
             exhausted = 0
             blocked_total = 0
             for other_group, other_domain in viable_by_group.items():
@@ -2080,8 +2172,6 @@ def author_map(
                 if blocked == len(other_domain):
                     exhausted += 1
             return (
-                route_exhausted,
-                route_blocked,
                 exhausted,
                 blocked_total,
                 authored_rank,
@@ -2090,7 +2180,7 @@ def author_map(
 
         for candidate in sorted(viable_by_group[selected], key=value_rank):
             assignments[selected] = candidate
-            if routes_have_support() and solve_stage_component(component):
+            if solve_stage_component(component):
                 return True
             del assignments[selected]
         return False
@@ -2149,6 +2239,20 @@ def author_map(
             ordinal * 10,
             zones,
         ))
+    for (placement_class, color), candidate in sorted(assignments.items()):
+        group = group_rows[(placement_class, color)]
+        if str(group.get("kind", "stage")) != "exit":
+            continue
+        exit_color = int(group.get("exit_color", 0))
+        exit_slots.append(make_slot(
+            f"exit.doorway.{exit_color + 1:02d}",
+            "exit",
+            "doorway",
+            candidate,
+            (exit_color + 1) * 10,
+            zones,
+        ))
+    exit_slots.sort(key=lambda slot: (int(slot.get("priority", 0)), str(slot.get("id", ""))))
     if deferred_base_specs:
         base_by_class = {
             placement_class: sorted(
@@ -2176,6 +2280,17 @@ def author_map(
                 selected = min(choices, key=lambda slot: (slot_distance(slot, wanted), slot["priority"], slot["id"]))
                 category_slot_ids[f"{field_name}:{index}"] = str(selected["id"])
                 category_used.add(str(selected["id"]))
+        if map_data.get("id") == "pawn_shop":
+            shelf_slots = base_by_class["surface_item"][:6]
+            for index, slot in enumerate(shelf_slots):
+                # The serialized shelf inventory and its late meta interaction
+                # are one physical object and intentionally share one slot.
+                object_slot_ids[f"item:sal_shelf_{index}"] = str(slot["id"])
+                object_slot_ids[f"meta_sal_shelf:{index}"] = str(slot["id"])
+            counter_slots = base_by_class["behind_counter_person"]
+            if len(counter_slots) >= 2:
+                object_slot_ids["shopkeeper:merchant"] = str(counter_slots[0]["id"])
+                object_slot_ids["meta_pawn_counter:sell"] = str(counter_slots[1]["id"])
     stage_slots: list[dict[str, Any]] = []
     if solved_stage_groups:
         for (placement_class, color), candidate in sorted(assignments.items()):
@@ -2221,13 +2336,6 @@ def author_map(
             slot_id = str(exit_slots[color]["id"])
             scenario_slot_ids[key] = slot_id
 
-    walk_lanes = [{
-        "id": "lane.public",
-        "points": [[64.0, lane_y], [450.0, lane_y], [836.0, lane_y]],
-        "clearance_px": 8.0,
-        "direction": "both",
-        "entry": True,
-    }]
     actor_routes: list[dict[str, Any]] = []
     for route_id, (start_key, end_key) in sorted(authored_route_states.items()):
         start_state = states.get(start_key, {})
