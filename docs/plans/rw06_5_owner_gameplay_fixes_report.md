@@ -3,9 +3,9 @@
 Date: 2026-09-23
 Branch: `codex/rw06_5-owner-fixes`
 Starting base: `7da3e5dab59b7f41b73520dbba8d86a37ebaa8e9`
-Status: implementation, focused contracts, static validation, and production
-input validation complete. Gameplay behavior is a functional PASS. Integration
-is pending; an intermittent exit-only ObjectDB warning remains recorded for
+Status: DONE. Implementation, focused contracts, static validation,
+production-input validation, merged-main integration, and release-row cleanup
+are complete. The intermittent exit-only ObjectDB warning remains recorded for
 confirmation by the release slim gate.
 
 ## Result
@@ -78,6 +78,42 @@ before the modified test hunk. The blackjack report's broad `content`
 prerequisite contains 13 held rw06_1 placement failures. The release
 orchestrator independently classified both sets as unrelated; the focused
 rw06_5 checks above are green. No gate or assertion was weakened.
+
+## Merged-main integration verification
+
+The release orchestrator independently verified exact merged-main commit
+`1038a31fc1ae938e80c3802e2e6eddb91d435a4d`:
+
+- `tools/validate_project.ps1`: PASS, exit 0, 125.8 seconds.
+- Smoke: the full merged-main run passed 9/10 stages. Its sole miss was the
+  unchanged performance probe's stochastic coin-pusher idle p95 sample
+  (5.55 ms against 5.0 ms). The authored wrapper refresh rerun then exposed a
+  separate marginal scratch-resolve sample (6.09 ms against 6.0 ms); an
+  immediate clean isolated rerun of the exact unchanged profile passed with
+  `native_v3` and scratch resolve max 3.905 ms. This transparently closes the
+  same 10/10 composite used by rw06_0; no threshold, budget, assertion, or
+  liveness floor changed. Full summary:
+  `.tmp/rw06_5/orchestrator_main_smoke/summary.json`, SHA-256
+  `17DD0C0663530D110FEE99FB85593D52CDA1D74D52B6D2A04BBE147FC436276F`.
+  Clean exact-profile retest:
+  `.tmp/rw06_5/orchestrator_main_smoke/foundation_perf_smoke_retest2.json`,
+  SHA-256
+  `65ADC8B0B5505270235D3F3784AAFF18F7BA39BB73AF01C76341C9DA9DC99C8A`.
+- Contract: 69/70 stages passed. All 18/18 serial Foundation shards passed
+  (58 checks, zero failures) in 1,180.023 seconds, below the unchanged
+  1,349.566-second baseline and 2,024.349-second budget. UI scene compile,
+  game-library launchers, both tutorial stages, and roulette audio all passed.
+  The only red stage was the inherited
+  `game06_2_repeated_reprieve_contract` baseline with the unchanged diagnostic
+  `fingerprint= heat=-1`. Summary:
+  `.tmp/rw06_5/orchestrator_main_contract/summary.json`, SHA-256
+  `FDD2D9D421378F6A3F063ADBD378B786F05F08782F72B6AFCD849EFF1F77092B`.
+  Foundation report SHA-256:
+  `73D3403A3BB64FBFE32BC6DA2FD831DED115C7E5F2F8399DDC79AC6E60512B45`.
+- No Godot process survived either completed gate. The known exit warning also
+  appeared in the unchanged v0.5.1 migration smoke while that stage still
+  exited 0; it remains explicitly visible for the release slim gate rather
+  than being waived here.
 
 ## Production-input validation
 

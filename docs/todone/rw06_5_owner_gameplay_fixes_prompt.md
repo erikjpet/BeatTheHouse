@@ -1,7 +1,29 @@
 # rw06_5 — Owner-requested gameplay fixes: talking to people, blackjack count, Cass gate
 
-Status: TODO. Self-contained. Launch with this file only. Timebox: 2 days.
+Status: DONE. Completed 2026-09-23 by the release orchestrator.
 Depends on rw06_0 being DONE. Runs in parallel with rw06_1 and rw06_2.
+
+## Execution record
+
+- The implementation landed on `main` and `origin/main` at
+  `1038a31fc1ae938e80c3802e2e6eddb91d435a4d`.
+- Independent static validation passed on the merged tree. Production-input
+  checks exercised the rumor conversation, counted blackjack hand, and Cass
+  without and with an active count; the public screenshots, allowlisted JSON,
+  and SHA-256 hashes are recorded in
+  `docs/plans/rw06_5_owner_gameplay_fixes_report.md`.
+- Merged-main Smoke closed 10/10 by the same composite rule recorded for
+  rw06_0: 9/10 stages passed in the full run, whose sole miss was a stochastic
+  performance sample; an immediate isolated rerun of the exact unchanged
+  authored profile passed. No threshold, budget, assertion, or liveness floor
+  changed.
+- Merged-main Contract passed all 18/18 Foundation shards and every later
+  UI/tutorial/audio stage. The only red stage was the inherited
+  `game06_2_repeated_reprieve_contract` fingerprint baseline already present at
+  release-week start.
+- The product branch and closeout branch were merged, pushed, and removed
+  locally and from origin, and their worktrees were removed before the row was
+  declared DONE.
 
 ## Owner questions (binding for every agent)
 
