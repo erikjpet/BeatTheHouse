@@ -4992,6 +4992,49 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	var multi_after_first: Dictionary = (multi_count_environment.get("game_states", {}) as Dictionary).get("blackjack", {})
 	if int(multi_after_first.get("recorded_running_count", 999)) != multi_first_expected_count:
 		failures.append("Blackjack recorded count did not persist after the first counted hand.")
+	var multi_between_surface := game.surface_state(multi_count_run_state, multi_count_environment, {})
+	if not bool(multi_between_surface.get("between_hands", false)) \
+			or not bool(multi_between_surface.get("between_hands_count_visible", false)) \
+			or int(multi_between_surface.get("between_hands_recorded_running_count", 999)) != multi_first_expected_count:
+		failures.append("Blackjack did not expose the player's recorded count in the counted between-hands state.")
+	var count_label := str(game.call("_blackjack_shoe_status_text", {
+		"shoe_remaining": 31,
+		"between_hands_count_visible": true,
+		"between_hands_recorded_running_count": -3,
+		"running_count": 11,
+	}))
+	var hidden_count_label := str(game.call("_blackjack_shoe_status_text", {
+		"shoe_remaining": 31,
+		"between_hands_count_visible": false,
+		"counting_enabled": false,
+		"between_hands_recorded_running_count": -3,
+		"recorded_running_count": -3,
+		"running_count": 11,
+	}))
+	var live_count_label := str(game.call("_blackjack_shoe_status_text", {
+		"shoe_remaining": 31,
+		"between_hands_count_visible": false,
+		"counting_enabled": true,
+		"between_hands_recorded_running_count": 99,
+		"recorded_running_count": -4,
+		"running_count": 11,
+	}))
+	if not count_label.contains("YOUR COUNT -3") or count_label.contains("+11") \
+			or hidden_count_label.contains("YOUR COUNT") or hidden_count_label.contains("-3") \
+			or not live_count_label.contains("YOUR COUNT -4") or live_count_label.contains("+11") or live_count_label.contains("+99"):
+		failures.append("Blackjack between-hands count label leaked the true count or ignored the counting visibility flag.")
+	var count_label_protected := false
+	for region_value in multi_between_surface.get("surface_ui_protected_regions", []):
+		if typeof(region_value) != TYPE_DICTIONARY:
+			continue
+		var region: Dictionary = region_value
+		if float(region.get("x", 9999.0)) <= 344.0 and float(region.get("y", 9999.0)) <= 48.0 \
+				and float(region.get("x", 0.0)) + float(region.get("w", 0.0)) >= 568.0 \
+				and float(region.get("y", 0.0)) + float(region.get("h", 0.0)) >= 66.0:
+			count_label_protected = true
+			break
+	if not count_label_protected:
+		failures.append("Blackjack between-hands count label is outside the protected HUD regions.")
 	var multi_second_deal := _blackjack_authority_surface(game, "blackjack_deal", 5, multi_count_run_state, multi_count_environment)
 	var multi_second_surface := game.surface_state(multi_count_run_state, multi_count_environment, multi_second_deal.get("ui_state", {}))
 	if int(multi_second_surface.get("persisted_recorded_running_count", 999)) != multi_first_expected_count or int(multi_second_surface.get("recorded_running_count", 999)) != multi_first_expected_count:
@@ -5096,6 +5139,7 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 		{"rank": 10, "suit": 2}, {"rank": 5, "suit": 1}, {"rank": 4, "suit": 0}, {"rank": 3, "suit": 2}
 	]
 	shuffle_environment["game_states"] = {"blackjack": shuffle_table}
+	var shuffle_generation_before := int(shuffle_table.get("shoe_generation", 1))
 	var shuffle_deal := game.surface_action_command("blackjack_deal", 0, false, {"selected_stake": 5}, shuffle_run_state, shuffle_environment)
 	var shuffle_stand := game.surface_action_command("blackjack_stand", 0, true, shuffle_deal.get("ui_state", {}), shuffle_run_state, shuffle_environment)
 	var _shuffle_result := _blackjack_authority_resolve(game, "play_basic", 5, shuffle_run_state, shuffle_environment, shuffle_run_state.create_rng("blackjack_forced_shuffle_resolve"), shuffle_stand.get("ui_state", {}))
@@ -5106,6 +5150,9 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 		failures.append("Blackjack cut-card shuffle did not rebuild a full shoe from the declared deck count.")
 	if int(shuffle_updated.get("running_count", 99)) != 0 or int(shuffle_updated.get("recorded_running_count", 99)) != 0:
 		failures.append("Blackjack cut-card shuffle did not reset true and recorded counts.")
+	if int(shuffle_updated.get("recorded_count_shoe_generation", -1)) != 0 \
+			or int(shuffle_updated.get("shoe_generation", 1)) <= shuffle_generation_before:
+		failures.append("Blackjack cut-card shuffle did not invalidate the player's recorded-count shoe provenance.")
 	if int(shuffle_updated.get("last_shuffle_hand", 0)) <= 0:
 		failures.append("Blackjack cut-card shuffle did not record the shuffle hand.")
 

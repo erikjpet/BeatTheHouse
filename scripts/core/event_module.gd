@@ -13,6 +13,18 @@ var definition: Dictionary = {}
 var content_library: ContentLibrary = null
 
 
+# One shared classification keeps person events on the TalkDock path. A speaker
+# explicitly marked as a non-room actor is not enough on its own; authored talk
+# presentation still counts (for example a phone contact).
+static func is_person_conversation_definition(event_definition: Dictionary) -> bool:
+	if str(event_definition.get("presentation", "")).strip_edges() == "talk":
+		return true
+	if str(event_definition.get("visual_type", "")).strip_edges() == "character":
+		return true
+	var speaker: Dictionary = event_definition.get("speaker", {}) if typeof(event_definition.get("speaker", {})) == TYPE_DICTIONARY else {}
+	return not speaker.is_empty() and bool(speaker.get("environment_actor", true))
+
+
 # Stores the event definition used by this module.
 func setup(p_definition: Dictionary, p_library: ContentLibrary = null) -> void:
 	definition = p_definition.duplicate(true)
@@ -82,13 +94,119 @@ func choices(run_state: RunState = null, environment: Dictionary = {}) -> Array:
 			continue
 		var choice_data: Dictionary = (choice_value as Dictionary).duplicate(true)
 		if _choice_conditions_allow(choice_data, run_state, environment):
-			choice_data = _rumor_delivery_choice(choice_data, run_state, environment)
-			choice_data = _traveler_context_choice(choice_data, run_state)
-			choice_data = _reputation_context_choice(choice_data, environment)
-			choice_data = CharacterChainModelScript.contextualize_choice(get_id(), choice_data, run_state)
-			choice_data = _lender_terms_choice(choice_data, run_state)
-			result.append(choice_data)
+			result.append(_contextualized_choice(choice_data, run_state, environment))
 	return result
+
+
+# Returns player-facing choices, retaining explicitly displayable unmet
+# conditions as disabled responses. Authority still resolves through choices(),
+# so a stale or forged enabled flag can never bypass the condition check.
+func choice_views(run_state: RunState = null, environment: Dictionary = {}) -> Array:
+	var payload := JsonCoerceScript._copy_dict(definition.get("payload", {}))
+	# Dynamic choice providers already return their complete player-facing view.
+	# None currently author displayable unmet conditions.
+	if get_id() in ["crew_planning_table", "heist_live_table"] \
+			or str(payload.get("kind", "")) in [
+				"crew_rook_signpost", "crew_rook_leads", "crew_contact",
+				"crew_job_board", "crew_practice_rig", "crew_stake_horse_loss",
+				"crew_collection_press", "crew_rook_ride", "crew_mags_bench",
+				"grand_casino_showdown", "grand_casino_high_roller_cashout",
+			]:
+		var dynamic_views: Array = []
+		for choice_value in choices(run_state, environment):
+			if typeof(choice_value) != TYPE_DICTIONARY:
+				continue
+			var choice_data := (choice_value as Dictionary).duplicate(true)
+			choice_data["enabled"] = true
+			choice_data["disabled_reason"] = ""
+			dynamic_views.append(choice_data)
+		return dynamic_views
+	var result: Array = []
+	for choice_value in JsonCoerceScript._copy_array(payload.get("choices", [])):
+		if typeof(choice_value) != TYPE_DICTIONARY:
+			continue
+		var choice_data := (choice_value as Dictionary).duplicate(true)
+		var enabled := _choice_conditions_allow(choice_data, run_state, environment)
+		var choice_conditions := JsonCoerceScript._copy_dict(choice_data.get("conditions", {}))
+		# Ordinary unmet choice conditions remain hidden, preserving existing story
+		# secrecy. Active-count hand-offs are deliberately visible so Cass can tell
+		# the player what is missing without resolving the encounter. Do not expose
+		# the choice when any other authored condition is unmet.
+		if not enabled:
+			if not bool(choice_conditions.get("requires_active_count", false)):
+				continue
+			var other_conditions := choice_conditions.duplicate(true)
+			other_conditions.erase("requires_active_count")
+			if not _conditions_allow(run_state, environment, {"choice_conditions": true, "conditions_override": other_conditions}):
+				continue
+		choice_data = _contextualized_choice(choice_data, run_state, environment)
+		choice_data["enabled"] = enabled
+		choice_data["disabled_reason"] = "" if enabled else _choice_disabled_reason(choice_conditions, run_state)
+		result.append(choice_data)
+	return result
+
+
+func conversation_summary(run_state: RunState = null, environment: Dictionary = {}, projected_choices: Array = []) -> String:
+	var payload := JsonCoerceScript._copy_dict(definition.get("payload", {}))
+	var views := projected_choices if not projected_choices.is_empty() else choice_views(run_state, environment)
+	var summary := str(payload.get("summary", "")).strip_edges()
+	if summary.is_empty():
+		summary = str(definition.get("start_summary", "")).strip_edges()
+	var any_enabled := false
+	var live_scene_summary := ""
+	var consequence_summary := ""
+	for choice_value in views:
+		if typeof(choice_value) != TYPE_DICTIONARY:
+			continue
+		var choice_data := choice_value as Dictionary
+		any_enabled = any_enabled or bool(choice_data.get("enabled", true))
+		var choice_summary := str(choice_data.get("scene_summary", "")).strip_edges()
+		if live_scene_summary.is_empty() and not choice_summary.is_empty():
+			live_scene_summary = choice_summary
+		if consequence_summary.is_empty():
+			consequence_summary = str(choice_data.get("presentation_consequence_summary", choice_data.get("consequence_summary", ""))).strip_edges()
+	if not live_scene_summary.is_empty():
+		summary = live_scene_summary
+	elif summary.is_empty() and not consequence_summary.is_empty():
+		summary = consequence_summary
+	var active_count_missing_line := str(payload.get("active_count_missing_line", "")).strip_edges()
+	if not any_enabled and not active_count_missing_line.is_empty():
+		summary = active_count_missing_line
+	var rumor_importance_line := str(payload.get("rumor_importance_line", "")).strip_edges()
+	var event_conditions := JsonCoerceScript._copy_dict(definition.get("conditions", {}))
+	if bool(event_conditions.get("requires_available_rumor", false)) and not rumor_importance_line.is_empty() and not summary.contains(rumor_importance_line):
+		summary = "%s\n%s" % [summary, rumor_importance_line] if not summary.is_empty() else rumor_importance_line
+	return _short_conversation_summary(summary)
+
+
+func _short_conversation_summary(value: String) -> String:
+	var lines: Array = []
+	for line_value in value.split("\n", false):
+		var line := str(line_value).strip_edges()
+		if line.is_empty():
+			continue
+		lines.append(line)
+		if lines.size() == 3:
+			break
+	return "\n".join(lines)
+
+
+func _contextualized_choice(choice_data: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
+	var resolved := _rumor_delivery_choice(choice_data, run_state, environment)
+	resolved = _traveler_context_choice(resolved, run_state)
+	resolved = _reputation_context_choice(resolved, environment)
+	resolved = CharacterChainModelScript.contextualize_choice(get_id(), resolved, run_state)
+	return _lender_terms_choice(resolved, run_state)
+
+
+func _choice_disabled_reason(conditions: Dictionary, run_state: RunState) -> String:
+	if bool(conditions.get("requires_active_count", false)):
+		if run_state == null:
+			return "Come back when you're actually counting."
+		var count_reason := str(run_state.active_player_count_status().get("reason", "")).strip_edges()
+		if not count_reason.is_empty():
+			return count_reason
+	return "That response is not available right now."
 
 
 func _lender_terms_choice(choice_data: Dictionary, run_state: RunState) -> Dictionary:
@@ -783,6 +901,8 @@ func _conditions_allow(run_state: RunState, environment: Dictionary, context: Di
 	if conditions.has("min_luck") and run_state.effective_luck() < int(conditions.get("min_luck", 0)):
 		return false
 	if conditions.has("max_luck") and run_state.effective_luck() > int(conditions.get("max_luck", 0)):
+		return false
+	if bool(conditions.get("requires_active_count", false)) and not bool(run_state.active_player_count_status().get("active", false)):
 		return false
 	var economy_states := JsonCoerceScript._raw_string_array(conditions.get("economy_states", []))
 	if not economy_states.is_empty() and not economy_states.has(run_state.economy()):

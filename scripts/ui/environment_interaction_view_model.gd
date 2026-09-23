@@ -215,7 +215,8 @@ static func interactable_object_view_list(run_state: RunState, library: ContentL
 		var enabled := not choices.is_empty() and not failed
 		var object_id := "event:%s" % event_id
 		var event_speaker: Dictionary = event_data.get("speaker", {}) if typeof(event_data.get("speaker", {})) == TYPE_DICTIONARY else {}
-		var character_actor := event_speaker if str(event_data.get("presentation", "")) == "talk" and bool(event_speaker.get("environment_actor", true)) and not event_speaker.is_empty() else {}
+		var character_actor := event_speaker if bool(event_speaker.get("environment_actor", true)) and not event_speaker.is_empty() else {}
+		var conversation_first := str(event_data.get("presentation", "")) == "talk" or not character_actor.is_empty()
 		objects.append(_object_with_rect({
 			"object_id": object_id,
 			"object_type": "event",
@@ -236,10 +237,11 @@ static func interactable_object_view_list(run_state: RunState, library: ContentL
 			"icon_key": str(event_data.get("icon_key", event_id)),
 			"asset_path": str(event_data.get("asset_path", "")),
 			"character_actor": character_actor,
+			"presentation": str(event_data.get("presentation", "")),
 			"unique_object_class": str(event_data.get("unique_object_class", "")).strip_edges(),
 			"unique_object_priority": int(event_data.get("unique_object_priority", 0)),
 			"allow_duplicate_unique_class": bool(event_data.get("allow_duplicate_unique_class", false)),
-			"available_actions": [{"id": "inspect_event_choices", "label": "Review responses"}] if enabled else [],
+			"available_actions": [{"id": "inspect_event_choices", "label": "Talk" if conversation_first else "Review responses"}] if enabled else [],
 			"inline_actions": _call(data.get("event_inline_actions", Callable()), [event_id, choices], []) if enabled else [],
 			"confirm_action_id": "inspect_event_choices" if enabled else "",
 		}, selection, layout, event_index))

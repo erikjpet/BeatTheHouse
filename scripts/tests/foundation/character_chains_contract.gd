@@ -8,10 +8,55 @@ const CharacterChainModelScript := preload("res://scripts/core/character_chain_m
 const EventModuleScript := preload("res://scripts/core/event_module.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 
+const PERSON_INTERACTABLE_EVENT_IDS := [
+	"chain06_cass_escalation",
+	"chain06_cass_first_contact",
+	"chain06_cass_proposition",
+	"chain06_dave_last_stop",
+	"chain06_dave_same_bus",
+	"chain06_dave_true_stop",
+	"chain06_nico_favor_call",
+	"chain06_nico_weekly_door",
+	"chain06_nico_what_it_covers",
+	"chain06_rourke_expected",
+	"chain06_sal_estate_item",
+	"chain06_sal_sellback",
+	"chain06_trio_gift_memory",
+	"chain06_trio_rent_payoff",
+	"crew_contact_bishop",
+	"crew_contact_knuckles",
+	"crew_contact_lucky",
+	"crew_contact_mags",
+	"crew_contact_rook",
+	"crew_contact_switch",
+	"crew_contact_velvet",
+	"heist_live_table",
+	"recruitment_bishop",
+	"recruitment_knuckles",
+	"recruitment_lucky",
+	"recruitment_mags",
+	"recruitment_rook_leads",
+	"recruitment_switch",
+	"recruitment_velvet",
+	"town_rumor_staff",
+]
+
+const FORBIDDEN_CONVERSATION_STATE_TOKENS := [
+	"truth_trace",
+	"traitor_grievance",
+	"rigged_draw",
+	"unrevealed_ticket",
+	"turn_index",
+	"local_state",
+]
+
 
 static func check(library: ContentLibrary, failures: Array) -> void:
 	_check_inventory(library, failures)
+	_check_person_conversation_inventory(library, failures)
+	_check_non_resolving_person_choice_persists(library, failures)
 	_check_deterministic_world_anchors(failures)
+	_check_cass_active_count_gate(library, failures)
 	_check_cass_endings_and_bounds(library, failures)
 	_check_scenario_itinerary_and_pressure_conditions(library, failures)
 	_check_sal_and_trio_consumers(library, failures)
@@ -46,6 +91,85 @@ static func _check_inventory(library: ContentLibrary, failures: Array) -> void:
 		failures.append("Cass tuning exceeds the bounded release contract.")
 
 
+static func _check_person_conversation_inventory(library: ContentLibrary, failures: Array) -> void:
+	var actual: Array = []
+	for event_value in library.events:
+		var definition := _dict(event_value)
+		if str(definition.get("interaction_mode", "")) != "interactable" \
+				or not EventModuleScript.is_person_conversation_definition(definition):
+			continue
+		var event_id := str(definition.get("id", ""))
+		actual.append(event_id)
+		var module := EventModuleScript.new()
+		module.setup(definition, library)
+		# Supply a neutral projected choice so dynamic event providers are not
+		# invoked without a live run; this census audits the authored opening line.
+		var summary := str(module.conversation_summary(null, {}, [{"enabled": true}])).strip_edges()
+		var lines := summary.split("\n", false)
+		if summary.is_empty() or lines.size() < 1 or lines.size() > 3:
+			failures.append("Person event %s does not produce one to three conversation lines." % event_id)
+		for line_value in lines:
+			if str(line_value).strip_edges().length() > 120:
+				failures.append("Person event %s has a conversation line longer than 120 characters." % event_id)
+				break
+		var normalized_summary := summary.to_lower()
+		for token_value in FORBIDDEN_CONVERSATION_STATE_TOKENS:
+			if normalized_summary.contains(str(token_value)):
+				failures.append("Person event %s leaks hidden state through its generated conversation summary." % event_id)
+				break
+	actual.sort()
+	var expected := PERSON_INTERACTABLE_EVENT_IDS.duplicate()
+	expected.sort()
+	if actual != expected:
+		failures.append("Person-event conversation audit changed. expected=%s actual=%s" % [JSON.stringify(expected), JSON.stringify(actual)])
+	var non_actor_speaker := {
+		"id": "non_actor_speaker_fixture",
+		"interaction_mode": "interactable",
+		"presentation": "modal",
+		"speaker": {"name": "Voice", "environment_actor": false},
+	}
+	if EventModuleScript.is_person_conversation_definition(non_actor_speaker):
+		failures.append("A non-talk speaker explicitly marked as a non-actor was classified as a person event.")
+
+
+static func _check_non_resolving_person_choice_persists(library: ContentLibrary, failures: Array) -> void:
+	var definition := {
+		"id": "person_conversation_persistence_fixture",
+		"display_name": "Waiting Contact",
+		"interaction_mode": "interactable",
+		"presentation": "talk",
+		"scopes": ["any"],
+		"speaker": {"name": "Waiting Contact", "role": "contact", "environment_actor": true},
+		"payload": {
+			"summary": "The contact waits for a final answer.",
+			"choices": [{"id": "not_yet", "label": "Not yet", "text": "The contact stays put.", "consequences": {}}],
+		},
+	}
+	var run_state := _fresh_run("PERSON-CONVERSATION-PERSISTS")
+	run_state.current_environment = _environment("bar", "bar", "")
+	run_state.current_environment["event_ids"] = [str(definition.get("id", ""))]
+	var module := EventModuleScript.new()
+	module.setup(definition, library)
+	if not run_state.enqueue_triggered_event(str(definition.get("id", "")), "event_object", {}, {
+		"presentation": "talk",
+		"speaker": _dict(definition.get("speaker", {})),
+	}):
+		failures.append("Person persistence fixture could not open its TalkDock conversation.")
+		return
+	if not module.can_trigger(run_state, run_state.current_environment):
+		failures.append("Person actor became unavailable while its conversation was open.")
+	var result := module.resolve(run_state, run_state.current_environment, "not_yet")
+	if not bool(result.get("ok", false)):
+		failures.append("Non-resolving person choice failed to resolve normally.")
+		return
+	run_state.complete_talk_event_resolution(str(definition.get("id", "")))
+	if _strings(run_state.current_environment.get("resolved_event_ids", [])).has(str(definition.get("id", ""))) \
+			or not module.can_trigger(run_state, run_state.current_environment):
+		failures.append("Successful non-resolving person choice removed the actor instead of leaving it available.")
+	if not run_state.pending_talk_event(str(definition.get("id", ""))).is_empty():
+		failures.append("Completed non-resolving person conversation remained queued in TalkDock.")
+
+
 static func _check_deterministic_world_anchors(failures: Array) -> void:
 	var first := _world_run("CHAIN-ANCHORS")
 	var twin := _world_run("CHAIN-ANCHORS")
@@ -73,12 +197,14 @@ static func _check_deterministic_world_anchors(failures: Array) -> void:
 
 static func _check_cass_endings_and_bounds(library: ContentLibrary, failures: Array) -> void:
 	var truce := _fresh_run("CASS-TRUCE")
+	_arm_active_count(truce)
 	_resolve(library, truce, "chain06_cass_first_contact", "share_the_read")
 	_resolve(library, truce, "chain06_cass_escalation", "take_the_mark")
 	_resolve(library, truce, "chain06_cass_proposition", "split_the_town")
 	if not bool(truce.story_flags.get("chain06_cass_ending_truce", false)):
 		failures.append("Cass truce ending did not land.")
 	var tipoff := _fresh_run("CASS-TIPOFF")
+	_arm_active_count(tipoff)
 	_resolve(library, tipoff, "chain06_cass_first_contact", "share_the_read")
 	_resolve(library, tipoff, "chain06_cass_escalation", "take_the_mark")
 	_resolve(library, tipoff, "chain06_cass_proposition", "cross_her")
@@ -87,6 +213,7 @@ static func _check_cass_endings_and_bounds(library: ContentLibrary, failures: Ar
 	if not bool(tipoff.story_flags.get("chain06_cass_ending_tipoff", false)) or tipoff.suspicion_level() - heat_before > int(CharacterChainModelScript.tuning().get("cass_tipoff_heat", 8)):
 		failures.append("Cass tip-off ending or bounded heat spike failed.")
 	var flameout := _fresh_run("CASS-FLAMEOUT")
+	_arm_active_count(flameout)
 	_resolve(library, flameout, "chain06_cass_first_contact", "share_the_read")
 	_resolve(library, flameout, "chain06_cass_escalation", "leave_it_clean")
 	_resolve(library, flameout, "chain06_cass_proposition", "stay_clean")
@@ -100,6 +227,56 @@ static func _check_cass_endings_and_bounds(library: ContentLibrary, failures: Ar
 	CharacterChainModelScript.advance(flameout, int(CharacterChainModelScript.tuning().get("cass_flameout_attention_actions", 6)))
 	if bool(flameout.story_flags.get("chain06_cass_flameout_attention_active", true)) or int(_dict(flameout.current_environment.get("security_profile", {})).get("cass_chain_attention_delta", 0)) != 0:
 		failures.append("Cass flameout floor-attention window did not expire.")
+
+
+static func _check_cass_active_count_gate(library: ContentLibrary, failures: Array) -> void:
+	var run_state := _fresh_run("CASS-ACTIVE-COUNT-GATE")
+	run_state.current_environment = _environment("delta_queen", "delta_queen", "")
+	_set_traveler(run_state, "cass_rival_counter", "delta_queen")
+	var module := EventModuleScript.new()
+	module.setup(library.event("chain06_cass_first_contact"), library)
+	var disabled_views := module.choice_views(run_state, run_state.current_environment)
+	if disabled_views.size() != 2:
+		failures.append("Cass did not keep both count hand-off choices visible without an active count.")
+	for choice_value in disabled_views:
+		var choice := _dict(choice_value)
+		if bool(choice.get("enabled", true)) or not str(choice.get("disabled_reason", "")).contains("actually counting"):
+			failures.append("Cass count hand-off choice was not disabled with her active-count reason.")
+			break
+	if str(module.conversation_summary(run_state, run_state.current_environment, disabled_views)) != "Come back when you're actually counting.":
+		failures.append("Cass did not use her authored no-count conversation line.")
+	var blocked_result := module.resolve(run_state, run_state.current_environment, "share_the_read")
+	if bool(blocked_result.get("ok", false)) or bool(run_state.story_flags.get("chain06_cass_first_contact", false)):
+		failures.append("Cass advanced first contact without an active player count.")
+	_arm_active_count(run_state, "blackjack:2", 0)
+	var active_status := run_state.active_player_count_status()
+	var enabled_views := module.choice_views(run_state, run_state.current_environment)
+	if not bool(active_status.get("active", false)) or str(active_status.get("state_key", "")) != "blackjack:2" or int(active_status.get("recorded_running_count", 99)) != 0:
+		failures.append("A recorded numeric zero at another live blackjack table in the room was not accepted as an active count.")
+	var enabled_summary := module.conversation_summary(run_state, run_state.current_environment, enabled_views)
+	if enabled_summary != "Cass counts from the other end." or enabled_summary.contains("actually counting"):
+		failures.append("Cass kept her missing-count line after a valid active count became available.")
+	for choice_value in enabled_views:
+		if not bool(_dict(choice_value).get("enabled", false)):
+			failures.append("Cass kept a count hand-off choice disabled after a valid same-room count was recorded.")
+			break
+	var allowed_result := module.resolve(run_state, run_state.current_environment, "share_the_read")
+	if not bool(allowed_result.get("ok", false)) or not bool(run_state.story_flags.get("chain06_cass_first_contact", false)):
+		failures.append("Cass first contact did not advance with a valid active count.")
+	var stale := _fresh_run("CASS-STALE-COUNT-GATE")
+	stale.current_environment = _environment("delta_queen", "delta_queen", "")
+	_arm_active_count(stale, "blackjack", 4)
+	var stale_table := _dict(_dict(stale.current_environment.get("game_states", {})).get("blackjack", {}))
+	stale_table["shoe_generation"] = int(stale_table.get("shoe_generation", 1)) + 1
+	if bool(stale.active_player_count_status().get("active", false)):
+		failures.append("Cass accepted a recorded count from a shuffled/stale shoe.")
+	var disarmed := _fresh_run("CASS-DISARMED-COUNT-GATE")
+	disarmed.current_environment = _environment("delta_queen", "delta_queen", "")
+	_arm_active_count(disarmed, "blackjack", -2)
+	var disarmed_table := _dict(_dict(disarmed.current_environment.get("game_states", {})).get("blackjack", {}))
+	disarmed_table["counting_enabled"] = false
+	if bool(disarmed.active_player_count_status().get("active", false)):
+		failures.append("Cass accepted a recorded count while player counting was disabled.")
 
 
 static func _check_scenario_itinerary_and_pressure_conditions(library: ContentLibrary, failures: Array) -> void:
@@ -278,6 +455,24 @@ static func _fresh_run(seed: String) -> RunState:
 	var run_state := RunStateScript.new()
 	run_state.start_new(seed)
 	return run_state
+
+
+static func _arm_active_count(run_state: RunState, state_key: String = "blackjack", recorded_count: int = 2) -> void:
+	var environment := run_state.current_environment.duplicate(true)
+	if environment.is_empty():
+		environment = _environment("delta_queen", "delta_queen", "")
+	var game_states := _dict(environment.get("game_states", {})).duplicate(true)
+	game_states[state_key] = {
+		"schema": "blackjack_table_state",
+		"counting_enabled": true,
+		"recorded_running_count": recorded_count,
+		"shoe_generation": 3,
+		"recorded_count_shoe_generation": 3,
+		"shoe": [{"rank": 10, "suit": 0}],
+		"shoe_remaining": 1,
+	}
+	environment["game_states"] = game_states
+	run_state.current_environment = environment
 
 
 static func _world_run(seed: String) -> RunState:
