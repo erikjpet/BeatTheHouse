@@ -95,6 +95,7 @@ if ($failures.Count -eq 0) {
         'function Enter-GrandRoom',
         'function Resolve-VisibleBlockingPresentation',
         'function Get-PublicTalkChoices',
+        'function Get-VisibleTutorialGuideAcknowledgment',
         'function Write-FinalPublicCheckpoint',
         'function Get-ExactOwnedSessionProcess',
         'function Stop-ExactOwnedSessionProcess',
@@ -137,6 +138,10 @@ if ($failures.Count -eq 0) {
         '$Repeat -eq 2',
         'release_qualifying = $releaseQualifying',
         'PLAY did not visibly enter a live active first-night lesson',
+        "StartsWith('tutorial_guide:', [StringComparison]::Ordinal)",
+        "`$choiceIds.Count -ne 1 -or [string]`$choiceIds[0] -cne 'continue'",
+        "Choose-VisibleChoice -ChoiceId 'continue'",
+        'follow Pal''s visible tutorial guidance: $label',
         'The live first-night lesson did not render an enabled Skip Lessons control.',
         'The semantic seed entry was not preserved as exact visible public evidence',
         'Main Menu did not visibly return The Count checkpoint to START before relaunch.'
@@ -236,6 +241,8 @@ if ($failures.Count -eq 0) {
     Assert-NotMatch $bridge 'set_application_pause_owner[^\r\n]+false' 'The bridge must retain its deterministic replay pause owner for the entire process lifetime.'
     Assert-Contains $bridge 'var choice_list := talk_dock.get("choice_list") as Node if talk_dock != null else null' 'Semantic TalkDock choices must bind to the actual rendered choice list.'
     Assert-Contains $runner "@('look', 'clickable', 'talk_choices')" 'Replay routes must consume the rendered TalkDock enabled-state mapping.'
+    Assert-Match $runner '(?s)function Get-VisibleTutorialGuideAcknowledgment.*?tutorial_guide:.*?choiceIds\.Count\s+-ne\s+1.*?choiceIds\[0\].*?continue.*?Get-PublicTalkChoices.*?enabled' 'Coach recovery must accept only one rendered enabled continue choice from the public tutorial-guide TalkDock.'
+    Assert-Match $runner '(?s)function Clear-VisibleCoach.*?Get-VisibleTutorialGuideAcknowledgment.*?Choose-VisibleChoice\s+-ChoiceId\s+''continue''.*?Wait-Frames.*?continue.*?dismissLabel' 'Coach recovery must follow the narrow public tutorial-guide acknowledgement before trying the rendered coach dismiss control.'
     Assert-Contains $runner "@('players_card_eligible') `$false" 'Clean-ending eligibility must fail closed when its public field is absent.'
     Assert-Contains $runner 'Stop-Process -Id $script:OwnedSessionPid -Force -ErrorAction Stop' 'Failure cleanup may force-stop only the exact recorded session-owned Godot PID.'
     Assert-Contains $runner '$actualStartUtcTicks -ne $script:OwnedSessionStartUtcTicks' 'Failure cleanup must verify process start identity before force-stop.'

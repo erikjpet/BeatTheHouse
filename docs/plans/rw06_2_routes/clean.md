@@ -1,6 +1,6 @@
 # rw06_2 clean ending route — first-pass replay
 
-Status: **IMPLEMENTED; QUALIFYING LIVE RUN PENDING rw06_1/rw06_5**
+Status: **IMPLEMENTED; EXPLORATORY LIVE RUN STARTED; QUALIFYING LIVE RUN PENDING rw06_1**
 Implementation base: `origin/main` at `7da3e5dab59b`
 Canonical terminal route: `high_roller_cashout`
 Fixed replay seed: `RW06-CLEAN-ROUTE-01`
@@ -11,6 +11,39 @@ requires a real Cage/main-room door traversal, performs Save → process exit �
 relaunch → Continue after Silver, and accepts only the public `players_card`
 win. The qualifying twice-identical run and fresh-seed experience pass remain
 open until the shared gameplay work lands.
+
+## 2026-09-23 current-main exploratory probe (non-qualifying)
+
+Product base `6a9201e3`; pushed replay tip `e67a316d`. Exactly one
+`-Ending clean -Repeat 1` run was made under the serialized Godot lease. It
+accepted **PLAY**, entered the real first-night Apartment at $80 / 0 Heat, and
+then stopped fail-closed after one counted action.
+
+The screen clearly showed Pal's TalkDock instruction, the highlighted X-Ray
+Glasses, and the rendered **Pick them up** choice (public id `continue`). The
+replay nevertheless required a separately rendered **Skip tip** button because
+the coach snapshot advertised that dismiss label. This is a replay-policy
+blocker, not a product arc breaker or placement finding: the player's next step
+was visible and actionable. The runner now narrowly acknowledges the single
+enabled `continue` choice only when its public TalkDock event id begins with
+`tutorial_guide:`, then resumes its existing fail-closed coach handling. No
+ending, route economy, or goal-clarity conclusion is claimed from this probe.
+
+Evidence:
+
+- Run summary:
+  `.tmp/rw06_2/exploratory/clean-main-6a9201e3/20260923-092920-880-9772/run-01/summary.json`
+  (SHA-256 `6225DC1798DEE8A4EE5772047E6256D76A2C5B099F886B8F03047E9B6E72CDC9`).
+- Public trace:
+  `.tmp/rw06_2/exploratory/clean-main-6a9201e3/20260923-092920-880-9772/run-01/public_trace.ndjson`
+  (SHA-256 `EA0759C3A5AEBFA40CC9FFC3A16C8ADBEE2743C722162D28A7F95107032A88D1`).
+- Screenshot:
+  `.tmp/agent_playtest/2026-09-23/rw062-clean-9772-1-cc8e9a2679/0003.png`
+  (SHA-256 `71BA5710A6B7ACE5EB999AA88D6DA41C845D571828183510AD8016210C91D833`).
+- Exact owned process exited and no Godot process survived. Its post-exit stderr
+  contained the generic engine warning `ObjectDB instances leaked at exit`;
+  that warning remains preserved with the session evidence rather than being
+  ignored or treated as a passing run.
 
 ## Player intent
 

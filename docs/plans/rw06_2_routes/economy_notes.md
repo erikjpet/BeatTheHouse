@@ -21,8 +21,11 @@ files or private run state.
 ## Live measurements still required
 
 The first engine contract and the launcher detach/atomic-command regression
-passed, but the first route probe stopped before it sent a player command.
-Therefore there is not yet an honest money curve or tuning recommendation.
+passed. The 2026-09-23 current-main exploratory clean probe then accepted PLAY
+and publicly observed the tutorial Apartment at $80 / 0 Heat, but stopped after
+that first counted action on a replay-policy mismatch before any route economy
+decision. Therefore there is not yet an honest route money curve or tuning
+recommendation.
 Copy the exact values from the qualifying route summaries into this table:
 
 | Ending | Seed | Start cash | Grand entry cash | Lowest cash | Chips bought | End cash | Peak heat | Counted actions | Friction / rw06_3 recommendation |

@@ -886,6 +886,29 @@ function Get-PublicTalkChoices {
 }
 
 
+function Get-VisibleTutorialGuideAcknowledgment {
+    if (-not [bool](Get-Value $script:LastObservation @('talk', 'visible') $false)) {
+        return $null
+    }
+    $eventId = [string](Get-Value $script:LastObservation @('talk', 'event_id') '')
+    if (-not $eventId.StartsWith('tutorial_guide:', [StringComparison]::Ordinal)) {
+        return $null
+    }
+    $choiceIds = @(Get-VisibleChoiceIds)
+    if ($choiceIds.Count -ne 1 -or [string]$choiceIds[0] -cne 'continue') {
+        return $null
+    }
+    $rendered = @(Get-PublicTalkChoices | Where-Object {
+        [string](Get-Value $_ @('id') '') -ceq 'continue' -and
+        [bool](Get-Value $_ @('enabled') $false)
+    })
+    if ($rendered.Count -ne 1) {
+        return $null
+    }
+    return $rendered[0]
+}
+
+
 function Choose-VisibleChoice {
     param(
         [Parameter(Mandatory = $true)][string]$ChoiceId,
@@ -981,6 +1004,13 @@ function Clear-VisibleCoach {
     for ($attempt = 0; $attempt -lt 4; $attempt++) {
         $coachVisible = [bool](Get-Value $script:LastResult @('look', 'coach', 'visible') $false)
         if (-not $coachVisible) { return }
+        $tutorialAcknowledgment = Get-VisibleTutorialGuideAcknowledgment
+        if ($null -ne $tutorialAcknowledgment) {
+            $label = [string](Get-Value $tutorialAcknowledgment @('label') 'Continue')
+            $null = Choose-VisibleChoice -ChoiceId 'continue' -Intent "follow Pal's visible tutorial guidance: $label"
+            Wait-Frames -Frames 8
+            continue
+        }
         $dismissLabel = [string](Get-Value $script:LastResult @('look', 'coach', 'dismiss_label') '')
         $button = $null
         if (-not [string]::IsNullOrWhiteSpace($dismissLabel)) {

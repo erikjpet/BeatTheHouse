@@ -1,6 +1,6 @@
 # rw06_2 ending replay design — first-pass implementation
 
-Status: **IMPLEMENTED; LIVE ROUTE ACCEPTANCE PENDING rw06_1/rw06_5**
+Status: **IMPLEMENTED; EXPLORATORY LIVE RUN STARTED; ACCEPTANCE PENDING rw06_1**
 Implementation base: `origin/main` at `7da3e5dab59b`
 
 The release deliverable is `tools/rw06_2_ending_replay.ps1 -Ending
@@ -119,7 +119,20 @@ checkpoint, screenshots, and final summary used for acceptance.
   (SHA-256 `79F6D5CB75857BA83A66A475BA4EB5FC6C18A2D9311C7954B5B56AEA2C862CCF`).
   These focused contracts are not full-route acceptance; all qualifying route
   passes remain pending.
-- Final qualifying evidence intentionally waits for rw06_1 and rw06_5 to land.
+- The first owner-directed current-main exploratory clean run on 2026-09-23 was
+  explicitly non-qualifying. It accepted PLAY and reached the real tutorial
+  Apartment, then the replay stopped after one counted action because Pal's
+  visible TalkDock offered **Pick them up** (`continue`) while the coach
+  snapshot's **Skip tip** label had no separate rendered button. The player
+  path was clear, so this was classified as replay policy rather than a product
+  arc breaker. The runner now consumes only the single rendered enabled
+  `continue` choice from a public `tutorial_guide:*` TalkDock before applying
+  its existing strict coach-dismiss rule. Summary evidence is
+  `.tmp/rw06_2/exploratory/clean-main-6a9201e3/20260923-092920-880-9772/run-01/summary.json`
+  (SHA-256 `6225DC1798DEE8A4EE5772047E6256D76A2C5B099F886B8F03047E9B6E72CDC9`).
+  The exact owned process exited with no survivor; its generic post-exit
+  `ObjectDB instances leaked at exit` warning is retained in the session logs.
+- Final qualifying evidence intentionally waits for rw06_1 to land.
 
 ## Open route risks
 
