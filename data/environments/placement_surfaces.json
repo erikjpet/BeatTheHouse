@@ -1628,7 +1628,7 @@
           ],
           "label_anchor": [
             606.0,
-            288.0
+            390.0
           ],
           "facing": "none",
           "priority": 10,
@@ -1652,7 +1652,7 @@
           ],
           "label_anchor": [
             284.0,
-            274.0
+            390.0
           ],
           "facing": "right",
           "priority": 10,
@@ -3185,7 +3185,7 @@
           ],
           "label_anchor": [
             606.0,
-            344.0
+            430.0
           ],
           "facing": "none",
           "priority": 10,
@@ -3209,7 +3209,7 @@
           ],
           "label_anchor": [
             724.0,
-            360.0
+            392.0
           ],
           "facing": "none",
           "priority": 10,
@@ -3232,8 +3232,8 @@
             80.0
           ],
           "label_anchor": [
-            716.0,
-            240.0
+            646.0,
+            225.0
           ],
           "facing": "left",
           "priority": 10,
@@ -3330,7 +3330,7 @@
             48.0
           ],
           "label_anchor": [
-            688.0,
+            698.0,
             8.0
           ],
           "facing": "none",
@@ -17032,7 +17032,7 @@
           ],
           "label_anchor": [
             36.0,
-            328.0
+            338.0
           ],
           "facing": "right",
           "priority": 20,
@@ -17083,8 +17083,8 @@
             64.0
           ],
           "label_anchor": [
-            502.0,
-            110.0
+            516.0,
+            212.0
           ],
           "facing": "none",
           "priority": 10,
@@ -22792,7 +22792,7 @@
           ],
           "label_anchor": [
             300.0,
-            96.0
+            130.0
           ],
           "facing": "none",
           "priority": 30,
