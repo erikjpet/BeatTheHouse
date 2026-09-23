@@ -68,3 +68,16 @@ Resume: rw06_5 continues with strict option A while OPEN; once answered, apply t
 Answer:
 
 B is fine as llong as you hvae something to pass to them
+
+### Q-003 · rw06_4 · Owner directive: never upload; deliver zips
+Status: RESOLVED by release orchestrator 2026-09-23
+Asked: PM (owner directive, from Q-001), 2026-09-23
+Question: None; this is a standing owner directive. The committed `rw06_4_release_gate_ship_prompt.md` and `README_0_6_release_week.md` still describe `tools/export_itch.ps1 -Push` and an itch upload. That contradicts the Q-001 answer and must be amended so no later sub-agent follows it.
+Options: A) Amend as described in Resume (the owner's decision)
+Resume: Orchestrator: amend `rw06_4_release_gate_ship_prompt.md`, `README_0_6_release_week.md` (Deliverable) and `rw06_execute_release_week_prompt.md` so that:
+1. No agent ever runs `export_itch.ps1 -Push`, butler, or any upload or publish command.
+2. The deliverable is two upload-ready zips, the itch.io Web build and the Windows `.exe` build, both at 0.6.0, built with `tools/export_itch.ps1` (no `-Push`). Each passes the PCK audit and the packaged smoke checks.
+3. The "publish authorization" gate becomes "artifact handoff": post the zip paths and SHA-256 hashes here for the owner, who uploads them personally.
+4. Tagging `v0.6.0` happens after the owner confirms in this file that they uploaded.
+Commit the amendments, then set this entry to RESOLVED.
+Answer: A. The owner always updates the web version personally. Provide the zips only.
