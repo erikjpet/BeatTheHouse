@@ -265,6 +265,26 @@ Evidence:
   engine warning `ObjectDB instances leaked at exit` (SHA-256
   `7E8F5DEB3BF520C8ABB23951DEAFB0669C320CEBB4CEB6668C755C617C5FD7D3`).
 
+## 2026-09-23 embedder correction compile launch (no gameplay probe)
+
+Pushed replay tip `f643859d`; embedder implementation `54080a15`. The one
+authorized launch exited before `ready.json` and before any gameplay action
+because GDScript could not infer the type returned by
+`dialog.get_parent_viewport()`. No route summary, screenshot, public trace, or
+product conclusion was produced. The narrow fix explicitly annotates that
+value as `Viewport`, and the source contract now requires the annotation before
+another engine lease can be requested.
+
+Evidence:
+
+- Session:
+  `.tmp/agent_playtest/2026-09-23/rw062-clean-14848-1-0bb7d82feb/`.
+- Parser stderr:
+  `.tmp/agent_playtest/2026-09-23/rw062-clean-14848-1-0bb7d82feb/godot.stderr.log`
+  (SHA-256 `AF295127E0E014B1D6E36E00FBF2A3B3A50F8278D481AF6D6B0014A1A42B20E0`).
+- The exact owned process exited without force and zero Godot processes
+  remained before the lease was released.
+
 ## Player intent
 
 Reach the Grand Casino, earn Bronze, Silver, and Gold Players Card tiers without

@@ -888,7 +888,7 @@ func _button_input_route(data: Dictionary, button: Button, local_position: Vecto
 	var expected_id := "tutorial_skip_dialog:%s" % role
 	if button != expected_button or str(data.get("id", "")) != expected_id:
 		return {}
-	var embedder_viewport := dialog.get_parent_viewport()
+	var embedder_viewport: Viewport = dialog.get_parent_viewport()
 	if embedder_viewport == null or embedder_viewport != root_viewport:
 		return {}
 	return {

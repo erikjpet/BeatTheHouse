@@ -36,6 +36,8 @@ child-Window injection and established the need for a Window-position offset
 through the root embedder. Every failure happened before a route economy
 decision and is a replay-policy/bridge finding, not product economy evidence.
 Therefore there is not yet an honest route money curve or tuning recommendation.
+The subsequent embedder-correction launch failed GDScript parsing before
+readiness or any player action, so it adds no eighth economy observation.
 Copy the exact values from the qualifying route summaries into this table:
 
 | Ending | Seed | Start cash | Grand entry cash | Lowest cash | Chips bought | End cash | Peak heat | Counted actions | Friction / rw06_3 recommendation |

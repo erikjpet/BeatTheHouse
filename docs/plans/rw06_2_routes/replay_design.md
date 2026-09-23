@@ -218,6 +218,14 @@ checkpoint, screenshots, and final summary used for acceptance.
   The exact owned process exited without force; its generic ObjectDB warning is
   preserved and no Godot process survived. The embedder-coordinate correction
   still requires a later serialized live probe.
+- The next authorized launch at pushed tip `f643859d` exited before readiness
+  or any gameplay action because the new `dialog.get_parent_viewport()` local
+  lacked an explicit GDScript type. The correction now declares it as
+  `Viewport`, and the source contract requires that exact annotation. The
+  compile-only failure produced no route evidence or product conclusion.
+  Preserved stderr is
+  `.tmp/agent_playtest/2026-09-23/rw062-clean-14848-1-0bb7d82feb/godot.stderr.log`
+  (SHA-256 `AF295127E0E014B1D6E36E00FBF2A3B3A50F8278D481AF6D6B0014A1A42B20E0`).
 - Final qualifying evidence intentionally waits for rw06_1 to land.
 
 ## Open route risks
