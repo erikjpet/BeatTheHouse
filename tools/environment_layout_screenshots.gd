@@ -39,6 +39,7 @@ var fix06_31_room_filter := ""
 var fix06_31_skip_base := false
 var fix06_31_surface_maps: Dictionary = {}
 var rw06_1_contact_sheet := false
+var rw06_1_day2_only := false
 var rw06_1_static_report := "res://.tmp/rw06_1/static/slot_report.json"
 
 
@@ -63,6 +64,8 @@ func _init() -> void:
 			fix06_31_skip_base = true
 		elif argument == "--rw06-1-contact-sheet":
 			rw06_1_contact_sheet = true
+		elif argument == "--rw06-1-day2-only":
+			rw06_1_day2_only = true
 		elif argument.begins_with("--rw06-1-static-report="):
 			rw06_1_static_report = argument.trim_prefix("--rw06-1-static-report=")
 	call_deferred("_run")
@@ -372,8 +375,13 @@ func _run_rw06_1_contact_sheet(library: Variant) -> void:
 	var failures: Array = []
 	var static_report := _rw06_1_read_json(rw06_1_static_report)
 	var selections := _array(static_report.get("contact_sheet", []))
-	if selections.size() != 18:
-		failures.append("rw06_1 contact-sheet manifest must contain 18 rooms; found %d." % selections.size())
+	if rw06_1_day2_only:
+		selections = selections.filter(func(selection_value: Variant) -> bool:
+			return bool(_dict(selection_value).get("day2_sample", false))
+		)
+	var expected_room_count := 3 if rw06_1_day2_only else 18
+	if selections.size() != expected_room_count:
+		failures.append("rw06_1 contact-sheet manifest must contain %d rooms; found %d." % [expected_room_count, selections.size()])
 	var definitions: Dictionary = {}
 	for definition_value in _fix06_31_scenario_definitions(library):
 		var definition := _dict(definition_value)
@@ -428,7 +436,7 @@ func _run_rw06_1_contact_sheet(library: Variant) -> void:
 	app.free()
 	app = null
 	await _settle(4)
-	quit(0 if failures.is_empty() and capture_rows.size() == 18 and day2_rows.size() == 3 else 1)
+	quit(0 if failures.is_empty() and capture_rows.size() == expected_room_count and day2_rows.size() == 3 else 1)
 
 
 func _rw06_1_prepare_base_room(archetype: Dictionary, library: Variant) -> Dictionary:
