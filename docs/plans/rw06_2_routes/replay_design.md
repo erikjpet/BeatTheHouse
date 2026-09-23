@@ -226,6 +226,20 @@ checkpoint, screenshots, and final summary used for acceptance.
   Preserved stderr is
   `.tmp/agent_playtest/2026-09-23/rw062-clean-14848-1-0bb7d82feb/godot.stderr.log`
   (SHA-256 `AF295127E0E014B1D6E36E00FBF2A3B3A50F8278D481AF6D6B0014A1A42B20E0`).
+- The following authorized launch at pushed tip `4c3b9555` was interrupted by
+  its caller's five-second shell timeout before the engine's normal
+  nine-second readiness publication. The replay issued no gameplay command,
+  produced no route summary/trace/curve, and was not repeated under the same
+  lease. The exact session later accepted a graceful `quit`; stderr stayed
+  empty and the process census returned zero. This is orchestration-only and
+  provides no product conclusion. The retained `ready.json` SHA-256 is
+  `80A742862239F59C560A6F9F983DCF4ED2C4B00849DFBF526DB8242D3059C078`;
+  the graceful quit result SHA-256 is
+  `4BD08DBB174B78F2184AB0EDD7C7BF149FBF664F2187ED26D0F75785D74EBB1B`.
+  Future invocations keep one long-timeout outer shell call attached and yield
+  while waiting for that same call instead of detaching or reinvoking it. An
+  engine-free check of that exact orchestration stayed attached for 7.016
+  seconds and passed without starting Godot.
 - Final qualifying evidence intentionally waits for rw06_1 to land.
 
 ## Open route risks

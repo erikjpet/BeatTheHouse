@@ -285,6 +285,42 @@ Evidence:
 - The exact owned process exited without force and zero Godot processes
   remained before the lease was released.
 
+## 2026-09-23 outer-launcher timeout (no gameplay probe)
+
+Pushed replay tip `4c3b9555`; embedder annotation implementation `e4059ee6`.
+The authorized launcher was mistakenly given a five-second outer shell timeout.
+That parent was terminated before the engine's normal nine-second readiness
+publication, so the replay driver never issued PLAY and the requested evidence
+root contains no summary, public trace, or money curve. The one leased launch
+was not repeated. After `ready.json` appeared, the exact owned session accepted
+one graceful `quit` command with no log alert; both Godot processes exited and
+the process census returned zero. This is an orchestration-only interruption,
+not placement, ending logic, goal-clarity, or economy evidence.
+
+The next launch must keep the same outer shell call alive with a long host
+timeout and use a yielding wait on that still-running call. The runner's
+`-TimeoutSeconds` value is only its per-bridge-command bound and is not a safe
+outer process timeout. An engine-free invocation check using that exact
+long-timeout/yielding parent pattern stayed attached for 7.016 seconds
+(`2026-09-23T17:02:19.8831044Z` through
+`2026-09-23T17:02:26.8991189Z`) and passed, exceeding the prior five-second
+failure boundary without starting Godot.
+
+Evidence:
+
+- Session:
+  `.tmp/agent_playtest/2026-09-23/rw062-clean-16680-1-99d3462b38/`.
+- Readiness record, published after the outer caller had ended:
+  `.tmp/agent_playtest/2026-09-23/rw062-clean-16680-1-99d3462b38/ready.json`
+  (SHA-256 `80A742862239F59C560A6F9F983DCF4ED2C4B00849DFBF526DB8242D3059C078`).
+- Graceful quit result:
+  `.tmp/agent_playtest/2026-09-23/rw062-clean-16680-1-99d3462b38/0001.result.json`
+  (SHA-256 `4BD08DBB174B78F2184AB0EDD7C7BF149FBF664F2187ED26D0F75785D74EBB1B`).
+- Engine stdout contains only the normal engine/renderer banner (SHA-256
+  `FA2EA26AAADBCE94053905A7C805C47D0DE5FF59CD1009A25DEE2FB8B8762CC4`);
+  stderr is empty (SHA-256
+  `E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855`).
+
 ## Player intent
 
 Reach the Grand Casino, earn Bronze, Silver, and Gold Players Card tiers without

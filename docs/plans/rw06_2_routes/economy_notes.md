@@ -38,6 +38,10 @@ decision and is a replay-policy/bridge finding, not product economy evidence.
 Therefore there is not yet an honest route money curve or tuning recommendation.
 The subsequent embedder-correction launch failed GDScript parsing before
 readiness or any player action, so it adds no eighth economy observation.
+The next authorized launch was then cut off by its caller's five-second outer
+timeout before the engine's normal nine-second readiness publication. It also
+issued no gameplay command and adds no economy observation; the exact session
+was closed gracefully with empty stderr and zero surviving Godot processes.
 Copy the exact values from the qualifying route summaries into this table:
 
 | Ending | Seed | Start cash | Grand entry cash | Lowest cash | Chips bought | End cash | Peak heat | Counted actions | Friction / rw06_3 recommendation |
