@@ -1127,9 +1127,8 @@ function Start-NormalSeededRun {
     Clear-VisibleCoach
 
     $null = Click-Button -Text 'Menu' -Intent 'open the run menu to use the player-facing lesson skip'
-    if (-not [bool](Get-Value $script:LastObservation @('screen', 'run_menu_visible') $false) -or
-        $null -eq (Find-Button -Text 'Skip Lessons')) {
-        throw 'The live first-night lesson did not render an enabled Skip Lessons control.'
+    if (-not [bool](Get-Value $script:LastObservation @('screen', 'run_menu_visible') $false)) {
+        throw 'The live first-night lesson did not render its run menu.'
     }
     $null = Click-RunMenuButton -Text 'Skip Lessons' -RevealDirection down -Intent 'request the player-facing lesson skip'
     if ($null -eq (Find-Button -Text 'OK')) {

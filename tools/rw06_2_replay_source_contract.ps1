@@ -148,7 +148,7 @@ if ($failures.Count -eq 0) {
         "`$choiceIds.Count -ne 1 -or [string]`$choiceIds[0] -cne 'continue'",
         "Choose-VisibleChoice -ChoiceId 'continue'",
         'follow Pal''s visible tutorial guidance: $label',
-        'The live first-night lesson did not render an enabled Skip Lessons control.',
+        'The live first-night lesson did not render its run menu.',
         'The semantic seed entry was not preserved as exact visible public evidence',
         'Main Menu did not visibly return The Count checkpoint to START before relaunch.'
     )) {
@@ -258,6 +258,7 @@ if ($failures.Count -eq 0) {
     Assert-Match $runner '(?s)function Clear-VisibleCoach.*?Get-VisibleTutorialGuideAcknowledgment.*?Choose-VisibleChoice\s+-ChoiceId\s+''continue''.*?Wait-Frames.*?continue.*?dismissLabel' 'Coach recovery must follow the narrow public tutorial-guide acknowledgement before trying the rendered coach dismiss control.'
     Assert-Match $runner '(?s)function Select-UniquePublicVerticalScrollSurface.*?SurfaceId\s+-cne\s+''run_menu''.*?matches\.Count\s+-ne\s+1.*?axis.*?vertical.*?rendered.*?can_scroll_\$Direction' 'Run-menu scroll selection must reject unsupported, ambiguous, hidden, wrong-axis, and direction-blocked public surfaces.'
     Assert-Match $runner '(?s)function Reveal-ButtonByVerticalScroll.*?MaximumScrolls\s*=\s*12.*?Get-PublicScrollSurfaces.*?scroll_surface \$surfaceId \$Direction.*?did not become visible within' 'Run-menu reveal must use bounded public semantic scroll inputs and fail closed.'
+    Assert-NotMatch $runner '\$null\s+-eq\s+\(Find-Button\s+-Text\s+''Skip Lessons''\)' 'The tutorial route must not demand an already visible Skip Lessons button before semantic scrolling can reveal it.'
     Assert-Match $bridge '(?s)func _scroll_surface\(argument: String\).*?surface_id != "run_menu".*?direction not in \["up", "down"\].*?surface\.get\(capability, false\).*?_push_mouse_wheel.*?after <= before.*?after >= before' 'The bridge semantic scroll command must allow only rendered public run-menu capabilities and verify real wheel movement.'
     Assert-NotMatch $bridge '\.scroll_vertical\s*=' 'The replay bridge must not inject scroll-container state directly.'
     Assert-Contains $runner "@('players_card_eligible') `$false" 'Clean-ending eligibility must fail closed when its public field is absent.'
