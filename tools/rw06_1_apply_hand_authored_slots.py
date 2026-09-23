@@ -75,13 +75,14 @@ HAND_SLOTS: dict[str, dict[str, list[tuple[str, str, tuple[float, float], tuple[
             ("base.shop_item_4", "surface_item", (230.0, 192.0), (230.0, 138.0), "shelf_row_4"),
             ("base.shop_item_5", "surface_item", (692.0, 136.0), (692.0, 82.0), "cooler_upper"),
             ("base.staff_shopkeeper", "behind_counter_person", (374.0, 206.0), (374.0, 128.0), "register"),
-            ("base.staff_dialogue", "behind_counter_person", (478.0, 206.0), (478.0, 128.0), "register"),
-            ("base.fixed_phone", "surface_item", (588.0, 206.0), (588.0, 152.0), "register"),
+            ("base.staff_dialogue", "behind_counter_person", (480.0, 206.0), (480.0, 244.0), "register"),
+            ("base.staff_dialogue_2", "behind_counter_person", (586.0, 206.0), (586.0, 128.0), "register"),
+            ("base.fixed_phone", "surface_item", (220.0, 270.0), (220.0, 286.0), "left_checkout_counter"),
             ("base.fixed_drink", "surface_item", (796.0, 136.0), (796.0, 82.0), "cooler_upper"),
             ("base.game_1", "floor_fixture", (270.0, 358.0), (270.0, 398.0), "floor"),
             ("base.event_group_1", "group", (384.0, 358.0), (384.0, 398.0), "floor"),
             ("base.lender_floor_1", "standing_person", (498.0, 358.0), (498.0, 398.0), "floor"),
-            ("base.travel_left", "doorway", (41.0, 370.0), (41.0, 328.0), "left_exit"),
+            ("base.travel_left", "doorway", (41.0, 370.0), (41.0, 430.0), "left_exit"),
             ("base.travel_right", "doorway", (859.0, 370.0), (859.0, 328.0), "right_exit"),
         ],
         "stage": [
@@ -95,6 +96,102 @@ HAND_SLOTS: dict[str, dict[str, list[tuple[str, str, tuple[float, float], tuple[
         "exit": [
             ("exit.safe_left", "doorway", (41.0, 286.0), (41.0, 244.0), "left_exit"),
             ("exit.safe_right", "doorway", (859.0, 286.0), (859.0, 244.0), "right_exit"),
+        ],
+    },
+    "grand_casino": {
+        "base": [
+            ("base.game_machine_1", "wall_mounted", (180.0, 80.0), (180.0, 32.0), "wall"),
+            ("base.game_machine_2", "wall_mounted", (315.0, 80.0), (315.0, 32.0), "wall"),
+            ("base.game_machine_3", "wall_mounted", (450.0, 80.0), (450.0, 32.0), "wall"),
+            ("base.game_machine_4", "wall_mounted", (585.0, 80.0), (585.0, 32.0), "wall"),
+            ("base.game_machine_5", "wall_mounted", (720.0, 80.0), (720.0, 32.0), "wall"),
+            ("base.game_table_left", "surface_item", (210.0, 184.0), (210.0, 130.0), "left_table_felt"),
+            ("base.game_table_right", "surface_item", (690.0, 184.0), (690.0, 130.0), "right_table_felt"),
+            ("base.staff_host", "behind_counter_person", (450.0, 248.0), (450.0, 170.0), "mid_game_rail"),
+            ("base.fixed_drink", "surface_item", (824.0, 100.0), (824.0, 46.0), "base_drink_shelf"),
+            ("base.fixed_ticket_redeemer", "wall_mounted", (60.0, 24.0), (60.0, 72.0), "wall"),
+            ("base.event_wall_1", "wall_mounted", (330.0, 170.0), (330.0, 218.0), "wall"),
+            ("base.fixture_host_desk", "floor_fixture", (384.0, 340.0), (384.0, 270.0), "floor"),
+            ("base.event_floor_1", "floor_fixture", (156.0, 430.0), (156.0, 376.0), "floor"),
+            ("base.travel_left", "doorway", (36.0, 390.0), (36.0, 348.0), "left_exit"),
+            ("base.travel_right", "doorway", (864.0, 390.0), (864.0, 348.0), "right_exit"),
+        ],
+        "stage": [
+            ("stage.event_table_left_1", "surface_item", (160.0, 276.0), (180.0, 326.0), "left_table_rail"),
+            ("stage.event_table_left_2", "surface_item", (280.0, 276.0), (294.0, 244.0), "left_table_rail"),
+            ("stage.event_table_right_1", "surface_item", (620.0, 276.0), (700.0, 326.0), "right_table_rail"),
+            ("stage.event_table_right_2", "surface_item", (740.0, 276.0), (754.0, 244.0), "right_table_rail"),
+            ("stage.event_floor_center", "floor_fixture", (488.0, 340.0), (560.0, 330.0), "floor"),
+            ("stage.event_floor_left", "floor_fixture", (264.0, 430.0), (264.0, 376.0), "floor"),
+            ("stage.group_floor_1", "group", (372.0, 430.0), (372.0, 400.0), "floor"),
+            ("stage.patron_floor_1", "standing_person", (480.0, 430.0), (480.0, 400.0), "floor"),
+            ("stage.patron_floor_2", "standing_person", (588.0, 430.0), (588.0, 400.0), "floor"),
+            ("stage.event_ground_1", "ground_marker", (696.0, 430.0), (696.0, 400.0), "floor"),
+            ("stage.event_wall_left", "wall_mounted", (60.0, 170.0), (60.0, 218.0), "wall"),
+            ("stage.event_wall_center", "wall_mounted", (570.0, 170.0), (570.0, 146.0), "wall"),
+            ("stage.event_wall_right", "wall_mounted", (840.0, 170.0), (840.0, 146.0), "wall"),
+        ],
+        "exit": [
+            ("exit.safe_left", "doorway", (36.0, 278.0), (36.0, 236.0), "left_exit"),
+            ("exit.safe_right", "doorway", (864.0, 278.0), (864.0, 236.0), "right_exit"),
+        ],
+    },
+    "grand_casino_high_limit": {
+        "base": [
+            ("base.game_table_1", "surface_item", (130.0, 184.0), (130.0, 130.0), "left_table"),
+            ("base.game_table_2", "surface_item", (250.0, 184.0), (250.0, 130.0), "left_table"),
+            ("base.game_table_3", "surface_item", (650.0, 184.0), (650.0, 130.0), "right_table"),
+            ("base.game_table_4", "surface_item", (770.0, 184.0), (770.0, 130.0), "right_table"),
+            ("base.event_floor_1", "floor_fixture", (384.0, 358.0), (384.0, 288.0), "floor"),
+            ("base.patron_floor_1", "standing_person", (498.0, 358.0), (498.0, 398.0), "floor"),
+            ("base.travel_left", "doorway", (36.0, 370.0), (36.0, 328.0), "left_exit"),
+            ("base.travel_right", "doorway", (864.0, 370.0), (864.0, 328.0), "right_exit"),
+        ],
+        "stage": [
+            ("stage.event_wall_1", "wall_mounted", (450.0, 80.0), (450.0, 32.0), "wall"),
+            ("stage.event_floor_1", "floor_fixture", (612.0, 358.0), (612.0, 288.0), "floor"),
+            ("stage.patron_floor_1", "standing_person", (726.0, 358.0), (726.0, 398.0), "floor"),
+        ],
+        "exit": [
+            ("exit.safe_left", "doorway", (36.0, 274.0), (36.0, 232.0), "left_exit"),
+            ("exit.safe_right", "doorway", (864.0, 274.0), (864.0, 232.0), "right_exit"),
+        ],
+    },
+    "grand_casino_back_room": {
+        "base": [
+            ("base.game_table_left", "surface_item", (210.0, 184.0), (210.0, 130.0), "left_table"),
+            ("base.game_table_right", "surface_item", (690.0, 184.0), (690.0, 130.0), "right_table"),
+            ("base.patron_floor_1", "standing_person", (450.0, 358.0), (450.0, 398.0), "floor"),
+            ("base.travel_left", "doorway", (36.0, 370.0), (36.0, 328.0), "left_exit"),
+        ],
+        "stage": [
+            ("stage.event_floor_1", "floor_fixture", (330.0, 358.0), (330.0, 288.0), "floor"),
+            ("stage.patron_floor_1", "standing_person", (570.0, 358.0), (570.0, 398.0), "floor"),
+        ],
+        "exit": [
+            ("exit.safe_left", "doorway", (36.0, 274.0), (36.0, 232.0), "left_exit"),
+            ("exit.safe_right", "doorway", (864.0, 274.0), (864.0, 232.0), "right_exit"),
+        ],
+    },
+    "grand_casino_cage": {
+        "base": [
+            ("base.shop_item_1", "surface_item", (96.0, 124.0), (96.0, 70.0), "gift_case"),
+            ("base.shop_item_2", "surface_item", (200.0, 124.0), (200.0, 70.0), "gift_case"),
+            ("base.shop_item_3", "surface_item", (320.0, 260.0), (320.0, 206.0), "teller_counter"),
+            ("base.shop_item_4", "surface_item", (440.0, 260.0), (440.0, 206.0), "teller_counter"),
+            ("base.fixture_cage_1", "floor_fixture", (330.0, 358.0), (330.0, 288.0), "floor"),
+            ("base.fixture_cage_2", "floor_fixture", (450.0, 358.0), (450.0, 288.0), "floor"),
+            ("base.travel_floor_door", "doorway", (847.0, 160.0), (847.0, 118.0), "floor_door"),
+            ("base.casino_floor_door", "doorway", (847.0, 248.0), (847.0, 206.0), "floor_door"),
+        ],
+        "stage": [
+            ("stage.event_atm_1", "surface_item", (720.0, 116.0), (720.0, 62.0), "atm"),
+            ("stage.event_floor_1", "floor_fixture", (570.0, 358.0), (570.0, 288.0), "floor"),
+            ("stage.patron_floor_1", "standing_person", (690.0, 358.0), (690.0, 398.0), "floor"),
+        ],
+        "exit": [
+            ("exit.safe_left", "doorway", (36.0, 278.0), (36.0, 236.0), "left_exit"),
+            ("exit.safe_left_lower", "doorway", (36.0, 370.0), (36.0, 328.0), "left_exit"),
         ],
     },
 }
@@ -129,6 +226,26 @@ SCENARIO_SLOT_RENAMES = {
         "exit.doorway.01": "exit.safe_left",
         "exit.doorway.02": "exit.safe_right",
     },
+    "grand_casino": {
+        "stage.floor_fixture.01": "stage.event_floor_center",
+        "stage.floor_fixture.02": "stage.event_floor_left",
+        "stage.ground_marker.01": "stage.event_ground_1",
+        "stage.group.01": "stage.group_floor_1",
+        "stage.standing_person.01": "stage.patron_floor_1",
+        "stage.standing_person.02": "stage.patron_floor_2",
+        "stage.surface_item.01": "stage.event_table_left_1",
+        "stage.surface_item.02": "stage.event_table_left_2",
+        "stage.surface_item.03": "stage.event_table_right_1",
+        "stage.surface_item.04": "stage.event_table_right_2",
+        "stage.wall_mounted.01": "stage.event_wall_right",
+        "stage.wall_mounted.02": "stage.event_wall_center",
+        "stage.wall_mounted.03": "stage.event_wall_left",
+        "exit.doorway.01": "exit.safe_left",
+        "exit.doorway.02": "exit.safe_right",
+    },
+    "grand_casino_high_limit": {},
+    "grand_casino_back_room": {},
+    "grand_casino_cage": {},
 }
 
 
@@ -149,7 +266,7 @@ OBJECT_SLOT_IDS = {
         "event:call_brother_in_law": "base.fixed_phone",
         "event:chatty_clerk": "base.staff_dialogue",
         "event:late_shift_discount": "base.staff_dialogue",
-        "event:scenario_delivery_day_stock": "base.staff_dialogue",
+        "event:scenario_delivery_day_stock": "base.staff_dialogue_2",
         "event:town_rumor_staff": "base.staff_dialogue",
         "item:bag": "base.shop_item_5",
         "lender:the_crew": "base.event_group_1",
@@ -161,6 +278,28 @@ OBJECT_SLOT_IDS = {
         "travel:leave": "base.travel_left",
         "travel:pawn_shop": "base.travel_left",
     },
+    "grand_casino": {
+        "casino_fixture:host_desk": "base.fixture_host_desk",
+        "event:chain06_cass_first_contact": "base.staff_host",
+        "event:chain06_rourke_noticed": "base.event_wall_1",
+        "event:comped_suite_offer": "base.staff_host",
+        "event:scenario_audit_roster": "base.event_wall_1",
+        "event:scenario_convention_badge": "base.event_wall_1",
+        "event:scenario_gala_cover": "base.event_floor_1",
+        "event:the_house_calls": "base.staff_host",
+        "event:town_rumor_staff": "base.staff_host",
+        "game_hook:pull_tabs:ticket_redeemer": "base.fixed_ticket_redeemer",
+        "service:house_drink": "base.fixed_drink",
+        "travel:grand_casino_back_room": "base.travel_left",
+        "travel:grand_casino_cage": "base.travel_right",
+        "travel:grand_casino_high_limit": "base.travel_left",
+        "travel:leave": "base.travel_right",
+        "travel:motel": "base.travel_left",
+        "travel:small_underground_casino": "base.travel_right",
+    },
+    "grand_casino_high_limit": {},
+    "grand_casino_back_room": {},
+    "grand_casino_cage": {},
 }
 
 
@@ -188,6 +327,43 @@ CATEGORY_SLOT_IDS = {
         "numbers_spots:0": "base.fixed_phone",
         "travel_spots:0": "base.travel_right", "travel_spots:1": "base.travel_left",
     },
+    "grand_casino": {
+        "game_spots:0": "base.game_machine_1", "game_spots:1": "base.game_machine_2",
+        "game_spots:2": "base.game_machine_3", "game_spots:3": "base.game_machine_4",
+        "game_spots:4": "base.game_machine_5", "game_spots:5": "base.game_table_left",
+        "game_spots:6": "base.game_table_right",
+        "event_spots:0": "base.staff_host", "event_spots:1": "base.event_wall_1",
+        "event_spots:2": "base.event_floor_1", "event_spots:3": "base.event_floor_1",
+        "service_spots:0": "base.fixed_drink",
+        "game_hook_spots:0": "base.fixed_ticket_redeemer",
+        "game_hook_spots:1": "base.fixed_ticket_redeemer",
+        "casino_fixture_spots:0": "base.fixture_host_desk",
+        "casino_fixture_spots:1": "base.event_floor_1",
+        "casino_door_spots:0": "base.travel_right",
+        "casino_door_spots:1": "base.travel_left",
+        "casino_door_spots:2": "base.travel_left",
+        "travel_spots:0": "base.travel_left",
+    },
+    "grand_casino_high_limit": {
+        "game_spots:0": "base.game_table_1", "game_spots:1": "base.game_table_2",
+        "game_spots:2": "base.game_table_3", "game_spots:3": "base.game_table_4",
+        "event_spots:0": "base.event_floor_1", "event_spots:1": "base.patron_floor_1",
+        "casino_door_spots:0": "base.travel_left", "casino_door_spots:1": "base.travel_right",
+        "travel_spots:0": "base.travel_right",
+    },
+    "grand_casino_back_room": {
+        "game_spots:0": "base.game_table_left", "game_spots:1": "base.game_table_right",
+        "event_spots:0": "base.patron_floor_1",
+        "travel_spots:0": "base.travel_left",
+    },
+    "grand_casino_cage": {
+        "item_spots:0": "base.shop_item_1", "item_spots:1": "base.shop_item_2",
+        "item_spots:2": "base.shop_item_3", "item_spots:3": "base.shop_item_4",
+        "casino_fixture_spots:0": "base.fixture_cage_1",
+        "casino_fixture_spots:1": "base.fixture_cage_2",
+        "casino_door_spots:0": "base.casino_floor_door",
+        "travel_spots:0": "base.travel_floor_door",
+    },
 }
 
 
@@ -208,11 +384,60 @@ CLASS_OVERRIDES = {
         "inventory_clerk": "standing_person",
         "night_clerk": "standing_person",
     },
+    "grand_casino": {
+        "event:chain06_rourke_noticed": "wall_mounted",
+        "event:scenario_audit_roster": "wall_mounted",
+        "event:scenario_convention_badge": "wall_mounted",
+        "game:blackjack": "surface_item",
+        "game:craps": "surface_item",
+        "game:pull_tabs": "wall_mounted",
+        "game:slot": "wall_mounted",
+        "game:slot:2": "wall_mounted",
+        "game:slot:3": "wall_mounted",
+        "game:video_poker": "wall_mounted",
+        "game_hook:pull_tabs:ticket_redeemer": "wall_mounted",
+        "service:house_drink": "surface_item",
+    },
+    "grand_casino_high_limit": {
+        "game:baccarat": "surface_item",
+        "game:blackjack": "surface_item",
+        "game:craps": "surface_item",
+        "game:roulette": "surface_item",
+    },
+    "grand_casino_back_room": {
+        "game:blackjack": "surface_item",
+        "game:craps": "surface_item",
+    },
+    "grand_casino_cage": {},
 }
 
 
 COUNTER_UPDATES = {
     "corner_store": {"register": {"x1": 624.0}},
+}
+
+
+COUNTER_ADDITIONS = {
+    "corner_store": [
+        {
+            "id": "left_checkout_counter",
+            "x0": 170.0,
+            "x1": 270.0,
+            "top_y": 270.0,
+            "front_y": 286.0,
+            "classes": ["surface_item"],
+        },
+    ],
+}
+
+
+LANE_Y = {
+    "bar": 366.0,
+    "corner_store": 358.0,
+    "grand_casino": 414.0,
+    "grand_casino_high_limit": 358.0,
+    "grand_casino_back_room": 358.0,
+    "grand_casino_cage": 358.0,
 }
 
 
@@ -246,7 +471,7 @@ def apply_layout(map_data: dict[str, Any]) -> None:
     for field, kind in (("base_slots", "base"), ("stage_slots", "stage"), ("exit_slots", "exit")):
         specs = literal[kind]
         map_data[field] = [slot_record(kind, index, spec) for index, spec in enumerate(specs)]
-    lane_y = 366.0 if map_id == "bar" else 358.0
+    lane_y = LANE_Y[map_id]
     map_data["walk_lanes"] = [{
         "id": "lane.public",
         "points": [[64.0, lane_y], [450.0, lane_y], [836.0, lane_y]],
@@ -278,6 +503,10 @@ def apply_layout(map_data: dict[str, Any]) -> None:
     for counter in map_data.get("counters", []):
         if isinstance(counter, dict) and str(counter.get("id", "")) in updates:
             counter.update(updates[str(counter["id"])])
+    counters = [counter for counter in map_data.get("counters", []) if isinstance(counter, dict)]
+    additions = {str(counter["id"]): counter for counter in COUNTER_ADDITIONS.get(map_id, [])}
+    map_data["counters"] = [counter for counter in counters if str(counter.get("id", "")) not in additions]
+    map_data["counters"].extend(additions.values())
 
 
 def main() -> int:

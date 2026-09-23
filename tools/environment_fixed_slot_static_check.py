@@ -844,11 +844,72 @@ def main() -> int:
         store_preferences.get("shopkeeper:merchant") == "base.staff_shopkeeper"
         and store_base_slots.get("base.staff_shopkeeper", {}).get("footprint_class") == "behind_counter_person"
         and store_preferences.get("event:call_brother_in_law") == "base.fixed_phone"
-        and store_base_slots.get("base.fixed_phone", {}).get("support_id") == "register"
+        and store_base_slots.get("base.fixed_phone", {}).get("support_id") == "left_checkout_counter"
         and store_preferences.get("service:house_drink") == "base.fixed_drink"
         and str(store_base_slots.get("base.fixed_drink", {}).get("support_id", "")).startswith("cooler_"),
         "corner_store: shopkeeper, fixed phone, and drink must remain on their named art fixtures",
     )
+    store_staff_bindings = {
+        "shopkeeper:merchant": ("base.staff_shopkeeper", "Shopkeeper"),
+        "event:late_shift_discount": ("base.staff_dialogue", "Late Shift Discount"),
+        "event:scenario_delivery_day_stock": ("base.staff_dialogue_2", "Fresh Off the Truck"),
+    }
+    store_staff_authority: list[tuple[str, tuple[float, float, float, float], tuple[float, float, float, float], tuple[float, float, float, float]]] = []
+    for identity, (expected_slot_id, label) in store_staff_bindings.items():
+        staff_slot = store_base_slots.get(expected_slot_id, {})
+        staff_hit = rect(staff_slot.get("hit_rect"))
+        check.require(
+            store_preferences.get(identity) == expected_slot_id
+            and staff_slot.get("footprint_class") == "behind_counter_person"
+            and staff_slot.get("support_id") == "register"
+            and staff_hit is not None,
+            f"corner_store: {identity} must retain its distinct named behind-register slot",
+        )
+        if staff_hit is not None:
+            store_staff_authority.append((identity, staff_hit, expanded(staff_hit, board), label_rect(staff_slot, label, board)))
+    check.require(
+        len({slot_id for slot_id, _label in store_staff_bindings.values()}) == 3,
+        "corner_store: shopkeeper and both simultaneous dialogue events must use three distinct slots",
+    )
+    for index, (identity, hit, small_hit, label_bounds) in enumerate(store_staff_authority):
+        for other_identity, other_hit, other_small_hit, other_label in store_staff_authority[index + 1:]:
+            check.require(not intersects(hit, other_hit), f"corner_store: {identity}/{other_identity} normal staff targets overlap")
+            check.require(not intersects(small_hit, other_small_hit), f"corner_store: {identity}/{other_identity} 104x76 staff targets overlap")
+            check.require(not intersects(label_bounds, other_label), f"corner_store: {identity}/{other_identity} staff labels overlap")
+            check.require(not intersects(label_bounds, other_hit) and not intersects(label_bounds, other_small_hit), f"corner_store: {identity} label overlaps {other_identity} target")
+            check.require(not intersects(other_label, hit) and not intersects(other_label, small_hit), f"corner_store: {other_identity} label overlaps {identity} target")
+
+    # Every Delivery Day phase uses the same authored safe-exit family. Keep the
+    # persistent left-travel label clear of every mapped delivery exit target,
+    # and keep every delivery-exit label clear of the persistent travel target.
+    store_all_slots = {
+        str(slot.get("id", "")): slot
+        for slot in all_slots(store_map)
+        if isinstance(slot, dict)
+    }
+    store_scenario_preferences = store_map.get("scenario_slot_ids", {}) if isinstance(store_map.get("scenario_slot_ids"), dict) else {}
+    delivery_exit_slot_ids = sorted({
+        str(slot_id)
+        for identity, slot_id in store_scenario_preferences.items()
+        if str(identity).split("|", 1)[0] == "delivery_exit"
+        and store_all_slots.get(str(slot_id), {}).get("footprint_class") == "doorway"
+    })
+    travel_left = store_base_slots.get("base.travel_left", {})
+    travel_hit = rect(travel_left.get("hit_rect"))
+    check.require(bool(delivery_exit_slot_ids), "corner_store: Delivery Day has no fixed doorway state")
+    check.require(travel_hit is not None, "corner_store: persistent left travel target is missing")
+    if travel_hit is not None:
+        travel_small = expanded(travel_hit, board)
+        travel_label = label_rect(travel_left, "Leave", board)
+        for exit_slot_id in delivery_exit_slot_ids:
+            exit_slot = store_all_slots.get(exit_slot_id, {})
+            exit_hit = rect(exit_slot.get("hit_rect"))
+            if exit_hit is None:
+                continue
+            exit_small = expanded(exit_hit, board)
+            exit_label = label_rect(exit_slot, "Delivery Exit", board)
+            check.require(not intersects(travel_label, exit_hit) and not intersects(travel_label, exit_small), f"corner_store: left-travel label overlaps Delivery exit state {exit_slot_id}")
+            check.require(not intersects(exit_label, travel_hit) and not intersects(exit_label, travel_small), f"corner_store: Delivery exit state {exit_slot_id} label overlaps left-travel target")
 
     # Delivery Day's catalog event is presented by a clerk behind the Corner
     # Store counter. Production sees the catalog placement hint, while the
@@ -895,9 +956,94 @@ def main() -> int:
         replayed_delivery_class == hinted_delivery_class,
         "corner_store: compact Delivery Day event replay diverges from its catalog-hinted production class",
     )
+    delivery_preferred_slot = str(delivery_map.get("object_slot_ids", {}).get(delivery_object_id, "")) if isinstance(delivery_map.get("object_slot_ids"), dict) else ""
     check.require(
-        delivery_base_slots.get("base.staff_dialogue", {}).get("footprint_class") == replayed_delivery_class,
-        "corner_store: Delivery Day event replay has no compatible fixed base slot",
+        delivery_preferred_slot == "base.staff_dialogue_2"
+        and delivery_base_slots.get(delivery_preferred_slot, {}).get("footprint_class") == replayed_delivery_class,
+        "corner_store: Delivery Day event replay has no distinct compatible fixed base slot",
+    )
+
+    grand_map = maps_by_id.get("grand_casino", {})
+    grand_base_slots = {
+        str(slot.get("id", "")): slot
+        for slot in values(grand_map.get("base_slots"))
+        if isinstance(slot, dict)
+    }
+    grand_categories = grand_map.get("category_slot_ids", {}) if isinstance(grand_map.get("category_slot_ids"), dict) else {}
+    grand_machine_ids = [str(grand_categories.get(f"game_spots:{index}", "")) for index in range(5)]
+    grand_machine_slots = [grand_base_slots.get(slot_id, {}) for slot_id in grand_machine_ids]
+    grand_machine_positions = [point(slot.get("pos")) for slot in grand_machine_slots]
+    check.require(
+        grand_machine_ids == [f"base.game_machine_{index}" for index in range(1, 6)]
+        and len(set(grand_machine_ids)) == 5
+        and all(slot.get("footprint_class") == "wall_mounted" and slot.get("support_id") == "wall" for slot in grand_machine_slots)
+        and all(position is not None and position[1] == 80.0 for position in grand_machine_positions)
+        and all(
+            grand_machine_positions[index] is not None
+            and grand_machine_positions[index + 1] is not None
+            and grand_machine_positions[index + 1][0] - grand_machine_positions[index][0] >= 104.0
+            for index in range(4)
+        ),
+        "grand_casino: five generated machine positions must remain an aligned, expanded-target-safe named row",
+    )
+    grand_table_ids = [str(grand_categories.get(f"game_spots:{index}", "")) for index in range(5, 7)]
+    check.require(
+        grand_table_ids == ["base.game_table_left", "base.game_table_right"]
+        and grand_base_slots.get(grand_table_ids[0], {}).get("footprint_class") == "surface_item"
+        and grand_base_slots.get(grand_table_ids[0], {}).get("support_id") == "left_table_felt"
+        and grand_base_slots.get(grand_table_ids[1], {}).get("footprint_class") == "surface_item"
+        and grand_base_slots.get(grand_table_ids[1], {}).get("support_id") == "right_table_felt",
+        "grand_casino: both generated card-table positions must remain tied to the visible left/right table art",
+    )
+    grand_preferences = grand_map.get("object_slot_ids", {}) if isinstance(grand_map.get("object_slot_ids"), dict) else {}
+    check.require(
+        not any(str(identity).startswith("game:") for identity in grand_preferences),
+        "grand_casino: concrete game identities must remain seed-random rather than pinned to machine/table slots",
+    )
+    grand_overrides = grand_map.get("class_overrides", {}) if isinstance(grand_map.get("class_overrides"), dict) else {}
+    check.require(
+        all(str(grand_overrides.get(identity, "")) == "wall_mounted" for identity in (
+            "game:slot", "game:slot:2", "game:slot:3", "game:video_poker", "game:pull_tabs"
+        ))
+        and all(str(grand_overrides.get(identity, "")) == "surface_item" for identity in ("game:blackjack", "game:craps")),
+        "grand_casino: random machine/table identities must retain their art-compatible placement classes",
+    )
+
+    for auxiliary_id, expected_game_ids in {
+        "grand_casino_high_limit": [f"base.game_table_{index}" for index in range(1, 5)],
+        "grand_casino_back_room": ["base.game_table_left", "base.game_table_right"],
+    }.items():
+        auxiliary = maps_by_id.get(auxiliary_id, {})
+        auxiliary_slots = {
+            str(slot.get("id", "")): slot
+            for slot in values(auxiliary.get("base_slots"))
+            if isinstance(slot, dict)
+        }
+        auxiliary_categories = auxiliary.get("category_slot_ids", {}) if isinstance(auxiliary.get("category_slot_ids"), dict) else {}
+        actual_game_ids = [str(auxiliary_categories.get(f"game_spots:{index}", "")) for index in range(len(expected_game_ids))]
+        check.require(
+            actual_game_ids == expected_game_ids
+            and len(set(actual_game_ids)) == len(actual_game_ids)
+            and all(
+                auxiliary_slots.get(slot_id, {}).get("footprint_class") == "surface_item"
+                and str(auxiliary_slots.get(slot_id, {}).get("support_id", "")).endswith("table")
+                for slot_id in actual_game_ids
+            ),
+            f"{auxiliary_id}: generated games must retain distinct named art-backed table slots",
+        )
+    cage_map = maps_by_id.get("grand_casino_cage", {})
+    cage_slots = {
+        str(slot.get("id", "")): slot
+        for slot in values(cage_map.get("base_slots"))
+        if isinstance(slot, dict)
+    }
+    cage_categories = cage_map.get("category_slot_ids", {}) if isinstance(cage_map.get("category_slot_ids"), dict) else {}
+    cage_item_ids = [str(cage_categories.get(f"item_spots:{index}", "")) for index in range(4)]
+    check.require(
+        cage_item_ids == [f"base.shop_item_{index}" for index in range(1, 5)]
+        and len(set(cage_item_ids)) == 4
+        and all(cage_slots.get(slot_id, {}).get("footprint_class") == "surface_item" for slot_id in cage_item_ids),
+        "grand_casino_cage: four generated item positions must retain distinct named case/counter slots",
     )
 
     pawn_map = maps_by_id.get("pawn_shop", {})
