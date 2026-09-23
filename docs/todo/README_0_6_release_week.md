@@ -66,8 +66,8 @@ next finds the answer resumes the work. Every row must follow its protocol.
 | --- | --- | --- | --- | --- |
 | 0 | rw06_pre | `../todone/rw06_pre_worker_handoff_message.md`: the running worker finishes on its branch, merges to main and deletes the branch | — | DONE (`54c7d788`) |
 | 1 | rw06_0 | `../todone/rw06_0_custody_commit_prompt.md` | rw06_pre reports MERGED (fixes on main, branch deleted) | DONE (`7da3e5da`) |
-| 1–4 | rw06_1 | `rw06_1_fixed_slot_rooms_prompt.md` | rw06_0 | IN_PROGRESS (core fail-closed checkpoint `f3ab259e`; complete route/CSP proof is under additive repair; isolated overflow UI tip `346c8cec` fixes ordinary dispatch but remains rejected on record-level authority sealing; Godot off pending one clean audited tip) |
-| 1–5 | rw06_2 | `rw06_2_three_endings_prompt.md` | rw06_0 (runs parallel to rw06_1; final pass after rw06_1) | IN_PROGRESS (replay safety harness focused PASS at `172731ee`; qualifying routes wait for rw06_1) |
+| 1–4 | rw06_1 | `rw06_1_fixed_slot_rooms_prompt.md` | rw06_0 | IN_PROGRESS / WAITING Q-004 (combined fixed-slot + overflow UI tip `44758fad`; focused Godot and interim three-room capture are running now; land on `main` by end of 2026-09-24, using stationary actors/overflow rather than delaying on optional route animation) |
+| 1–5 | rw06_2 | `rw06_2_three_endings_prompt.md` | rw06_0 (runs parallel to rw06_1; final pass after rw06_1) | IN_PROGRESS (replay safety harness focused PASS at `172731ee`; exploratory non-placement ending runs on current `main` started while qualifying routes still wait for rw06_1) |
 | 1–3 | rw06_5 | `../todone/rw06_5_owner_gameplay_fixes_prompt.md`: clicking a person starts a conversation, blackjack count shown between hands, Cass needs a real count | rw06_0 (parallel with rw06_1/rw06_2) | DONE (`1038a31f`) |
 | 5 | owner run | Owner plays one ending start to finish; notes go to the scoreboard | rw06_1, rw06_5 | TODO (rw06_5 DONE; waits for rw06_1) |
 | 5 | rw06_3 | `rw06_3_balance_prompt.md` | rw06_2 routes exist | TODO |
@@ -89,7 +89,7 @@ place, and add one dated line to the history below.
 | Open P1 (High) defects | 0 | 7 (UIENV-PF-003…008; RP-006 packaged proof) | release orchestrator |
 | Open P2 (Medium) defects | 0 | 1 placement (UIENV-PF-009); 0 non-placement | release orchestrator |
 | Endings reaching the win state through real UI | 3/3 | unknown | — |
-| Owner day-2 room sample (3 rooms) | approved | not started | — |
+| Owner day-2 room sample (3 rooms) | approved | WAITING Q-004; interim `44758fad` capture in progress at `.tmp/rw06_1/contact_sheet/interim_44758fad/day2_contact_sheet.png` | release orchestrator |
 | Owner start-to-finish run | done, no blockers | not started | — |
 | Owner run notes | (owner writes blockers here; non-blockers go to the 0.6.1 backlog) | — | — |
 | Release gate items green (rw06_4) | all | 0 | — |
@@ -106,6 +106,7 @@ History (newest last):
 - 2026-09-23 release orchestrator: expanded rw06_1's exact-tip checklist to 17 findings before spending more engine time. It now covers production-canvas/base/label authority, reachable multi-action overflow controls, fail-closed safe exits and binder errors, transient TalkDock ownership, reconstructible actor moves, and swept-body route collisions (including the Back Alley lender crossing). Core/data/static work remains on `codex/rw06_1-phase0`; the non-overlapping overflow UI and Foundation integration contract run in `codex/rw06_1-overflow-ui`. No Godot resumes until both land on one clean pushed tip and pass read-only audit.
 - 2026-09-23 release orchestrator: applied the owner's latest checkpoint order: request the start-to-finish owner playthrough as soon as rw06_1 and rw06_5 are on `main`; rw06_2 continues in parallel and no longer delays that request. rw06_3 still waits for both the owner's notes and rw06_2 route evidence.
 - 2026-09-23 release orchestrator: rw06_1 remains fail-closed before engine use. Core checkpoint `f3ab259e` records the incomplete bounded search; follow-up work removes greedy route pinning, matches runtime swept paths, integrates exits, and widens deterministically to complete domains. Independent audit also requires exact reachable composition census, production modular binding, preferred-slot fallback, transient TalkDock assertions and same-room replay reset. Isolated UI tip `346c8cec` fixes ordinary action dispatch, but re-audit found record-level scenario authority was not included in the stale-action seal; its additive correction is in progress. No Godot process has run on these revisions.
+- 2026-09-23 release orchestrator: owner morning steer set an end-of-2026-09-24 rw06_1 landing timebox and requested immediate engine evidence plus the interim day-2 sample. Combined tip `44758fad` includes the corrected overflow authority seal; Q-004 is OPEN while focused Godot contracts and the three-room capture run. Unsafe optional actor walks now simplify to stationary slots and non-fitting objects to overflow, with each simplification logged for 0.6.1; overlap, exit, reachability and hidden-state guarantees remain hard. rw06_2 exploratory non-placement ending runs also started on current `main`; qualifying passes remain post-rw06_1.
 
 ## Rules every row inherits
 
