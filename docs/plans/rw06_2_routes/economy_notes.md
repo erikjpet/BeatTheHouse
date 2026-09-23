@@ -46,6 +46,12 @@ The following attached launch reached the confirmation after seven actions but
 failed on a nonexistent dialog-parent viewport method before OK input. It adds
 no route economy observation; its bounded cleanup exited without force and
 left zero Godot processes while the API correction proceeds engine-free.
+The next probe finally reached normal play: the seeded run began at $100 and
+the first natural Back Alley to Gas Station Casino trip cost $7 and raised heat
+from 0 to 1. A clipped Dealer's Advice CTA stopped the run at action 15 before
+any game or Clean-ladder decision, so this is a preliminary visible checkpoint,
+not yet an affordability or tuning conclusion. Its money-curve SHA-256 is
+`DEE1A481172A67DBC49A4796534265736933D69713A4A6E2EB3AD614E2B3ED43`.
 Copy the exact values from the qualifying route summaries into this table:
 
 | Ending | Seed | Start cash | Grand entry cash | Lowest cash | Chips bought | End cash | Peak heat | Counted actions | Friction / rw06_3 recommendation |

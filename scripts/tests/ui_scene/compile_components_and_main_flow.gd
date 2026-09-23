@@ -1674,6 +1674,46 @@ func _check_coach_overlay_component() -> bool:
 		parent.queue_free()
 		push_error("Coach overlay did not apply reduce-motion instantly and without attention animation.")
 		return false
+	var long_copy_parent := Control.new()
+	long_copy_parent.size = Vector2(1280, 720)
+	root.add_child(long_copy_parent)
+	var long_copy_overlay: CoachOverlay = CoachOverlayScript.new()
+	long_copy_parent.add_child(long_copy_overlay)
+	await process_frame
+	long_copy_overlay.set_lessons([{
+		"id": "coach_long_ambient_copy",
+		"scope": "normal_run",
+		"trigger": {"state_predicates": []},
+		"anchor": {"kind": "hud_element", "id": "objective"},
+		"copy": "Tonight's scenario changes this room. Read the objective: it says what can change and what ends the night.",
+		"completion": {"type": "any_action"},
+	}])
+	long_copy_overlay.evaluate_at_boundary({
+		"viewport_rect": Rect2(Vector2.ZERO, long_copy_parent.size),
+		"screen": "ENVIRONMENT",
+		"run": {"tutorial": false},
+		"anchor_rects": {"hud_elements": {}},
+	})
+	await process_frame
+	var long_copy_panel: Panel = long_copy_overlay.get("panel")
+	var long_copy_button: Button = long_copy_overlay.get("ok_button")
+	var long_copy_snapshot: Dictionary = long_copy_overlay.current_snapshot()
+	var long_copy_minimum_height := float(long_copy_snapshot.get("minimum_control_height", 0.0))
+	if not bool(long_copy_snapshot.get("visible", false)) \
+			or long_copy_panel == null \
+			or long_copy_button == null \
+			or long_copy_button.get_global_rect().size.y < long_copy_minimum_height \
+			or not long_copy_panel.get_global_rect().encloses(long_copy_button.get_global_rect()):
+		long_copy_parent.queue_free()
+		parent.queue_free()
+		push_error("Long normal-run coach copy clipped its minimum-height dismiss control: panel=%s button=%s minimum=%s." % [
+			str(long_copy_panel.get_global_rect() if long_copy_panel != null else Rect2()),
+			str(long_copy_button.get_global_rect() if long_copy_button != null else Rect2()),
+			str(long_copy_minimum_height),
+		])
+		return false
+	long_copy_parent.queue_free()
+	await process_frame
 	overlay.restore_seen({})
 	overlay.set_lessons([
 		{"id": "tips_off_normal", "trigger": {"state_predicates": []}, "anchor": {"kind": "none"}, "copy": "Normal advice.", "completion": {"type": "any_action"}},

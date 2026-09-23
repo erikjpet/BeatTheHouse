@@ -253,6 +253,21 @@ checkpoint, screenshots, and final summary used for acceptance.
   node and derives the embedder from that parent's `get_viewport()`, retaining
   every existing identity, embedded-state, root-viewport, and offset guard.
   Two valid and eight hostile route fixtures pass engine-free.
+- The next non-qualifying launch at pushed tip `9cb85e3b` proved the dialog
+  correction, returned through the start screen, started the fixed normal run,
+  and traveled to Gas Station Casino by action 15 ($100 to $93, heat 0 to 1).
+  It then exposed a real UI arc breaker: a 106-character normal-run Dealer's
+  Advice line overflowed the fixed 144 px ambient bubble, clipping its 40 px
+  **Skip tip** control to 23 px and correctly publishing
+  `fully_visible: false`. Replay policy also incorrectly selected that partial
+  control before the bridge rejected it. The product now uses the existing
+  172 px safe coach height (+14 on small screens), with a rendered 1280x720
+  long-copy containment regression; replay policy requires one boolean-true
+  fully-visible coach dismissal. Summary SHA-256 is
+  `98058AD4D2021A7612D58BF2F5789891BC3C137022544E8AB38ED22DE1949EFA`;
+  public trace SHA-256 is
+  `313C5F9D389E32EBD37887B72312D14EB91D92C2AAD9BDBCE4F2FE65C752E266`.
+  Cleanup was graceful with empty stderr and zero surviving Godot processes.
 - Final qualifying evidence intentionally waits for rw06_1 to land.
 
 ## Open route risks

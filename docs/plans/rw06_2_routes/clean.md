@@ -360,6 +360,55 @@ Evidence:
   `.tmp/agent_playtest/2026-09-23/rw062-clean-9868-1-6e64059196/0015.result.json`
   (SHA-256 `D2DFA9CC4F8D99557AE76AE7002619E4CB2E45DF291675A11974573DBFF97878`).
 
+## 2026-09-23 first post-tutorial exploratory probe (non-qualifying)
+
+Pushed replay tip `9cb85e3b`. The embedded-dialog correction worked: action 8
+clicked exact `tutorial_skip_dialog:ok` through production input and returned
+to the start screen. The fixed-seed setup then started a normal run at $100,
+opened the public map, and traveled naturally from Back Alley to Gas Station
+Casino for $7 and +1 heat. This is the first exploratory probe to pass the
+tutorial and reach the actual Clean route.
+
+At Gas Station Casino, Dealer's Advice displayed the 106-character
+`tip06_tonight_changes_rooms` copy. Its fixed 144 px ambient panel clipped the
+unchanged minimum-height **Skip tip** control to 23 px: the public control was
+enabled but correctly reported `fully_visible: false`. Replay policy exposed a
+second bug by selecting that control without requiring the boolean-true
+visibility signal; production input then correctly rejected the stale route.
+This is both a real non-placement product UI arc breaker and a harness selector
+bug. It is not a tolerance edge and no visibility or target-size check is
+relaxed.
+
+The root correction uses the existing safe 172 px coach height for both ambient
+and explicit advice, retaining the +14 px small-screen allowance and the same
+40 px normal CTA minimum. A rendered 1280x720 long-copy regression requires the
+panel to fully enclose the minimum-height CTA. Replay policy now selects only a
+unique boolean-true fully-visible coach dismissal. The exact owned process
+exited without force, stderr was empty, and the global process census returned
+zero.
+
+Evidence:
+
+- Run summary, 15 counted actions:
+  `.tmp/rw06_2/exploratory/clean-tip-9cb85e3b-probe11/20260923-122239-628-20992/run-01/summary.json`
+  (SHA-256 `98058AD4D2021A7612D58BF2F5789891BC3C137022544E8AB38ED22DE1949EFA`).
+- Public trace:
+  `.tmp/rw06_2/exploratory/clean-tip-9cb85e3b-probe11/20260923-122239-628-20992/run-01/public_trace.ndjson`
+  (SHA-256 `313C5F9D389E32EBD37887B72312D14EB91D92C2AAD9BDBCE4F2FE65C752E266`).
+- Money curve:
+  `.tmp/rw06_2/exploratory/clean-tip-9cb85e3b-probe11/20260923-122239-628-20992/run-01/money_curve.ndjson`
+  (SHA-256 `DEE1A481172A67DBC49A4796534265736933D69713A4A6E2EB3AD614E2B3ED43`).
+- Clipped Dealer's Advice screenshot:
+  `.tmp/agent_playtest/2026-09-23/rw062-clean-20992-1-6c21f053db/0025.png`
+  (SHA-256 `2B7EDC1447AF57316FDA22DED48F2C087030F61756EB329A481A9B396513F52C`).
+- Public observation containing the enabled, 23 px,
+  `fully_visible: false` control:
+  `.tmp/agent_playtest/2026-09-23/rw062-clean-20992-1-6c21f053db/0025.result.json`
+  (SHA-256 `9D06D4CA9FE8241FB618CCE219F5CD9005B5625883033968A608D341752CB2BB`).
+- Graceful quit result:
+  `.tmp/agent_playtest/2026-09-23/rw062-clean-20992-1-6c21f053db/0027.result.json`
+  (SHA-256 `19351D91B90D768B44D500C515B3CD2E32C9F3D297453039DE628BA93051731C`).
+
 ## Player intent
 
 Reach the Grand Casino, earn Bronze, Silver, and Gold Players Card tiers without

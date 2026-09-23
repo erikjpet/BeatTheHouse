@@ -1151,11 +1151,13 @@ function Clear-VisibleCoach {
         $dismissLabel = [string](Get-Value $script:LastResult @('look', 'coach', 'dismiss_label') '')
         $button = $null
         if (-not [string]::IsNullOrWhiteSpace($dismissLabel)) {
-            $button = Find-Button -Text $dismissLabel
+            $button = Select-UniqueFullyVisibleButton -Buttons @(Get-Buttons) -Text $dismissLabel
         }
-        if ($null -eq $button) { $button = Find-Button -Text 'Skip tip' }
         if ($null -eq $button) {
-            throw "A visible coach card blocks the route without a public dismiss control."
+            $button = Select-UniqueFullyVisibleButton -Buttons @(Get-Buttons) -Text 'Skip tip'
+        }
+        if ($null -eq $button) {
+            throw "A visible coach card blocks the route without a fully visible public dismiss control."
         }
         $id = [string](Get-Value $button @('id') '')
         $null = Invoke-BridgeCommand -Command "click_button $id" -Intent 'dismiss the visible guidance card'
