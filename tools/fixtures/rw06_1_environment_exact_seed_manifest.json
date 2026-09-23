@@ -1,6 +1,17 @@
 {
   "schema_version": 1,
   "source": "postfix06_2 exact historical UIENV contract",
+  "legal_room_combinations": [
+    {
+      "seed": "POSTFIX-UIENV-009-4151570434",
+      "destination": "corner_store",
+      "scenario_id": "corner_store_delivery_day",
+      "phase_id": "arrival",
+      "base_event_id": "town_rumor_staff",
+      "base_slot_id": "base.staff_shopkeeper",
+      "scenario_identity": "scenario::delivery_event_gate"
+    }
+  ],
   "expectations": [
     {"seed":"POSTFIX-UIENV-009-4151570434","destination":"bar","scenario_id":"bar_fight_night","required_marker":"scenario_fight_night_swing_bet","required_interaction":"scenario::bar_fight_night_safe_exit"},
     {"seed":"POSTFIX-UIENV-015-1938529946","destination":"bar","scenario_id":"bar_fight_night","required_marker":"scenario_fight_night_swing_bet","required_interaction":"scenario::bar_fight_night_safe_exit"},

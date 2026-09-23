@@ -93,7 +93,7 @@ HAND_SLOTS: dict[str, dict[str, list[SlotSpec]]] = {
             ("stage.patron_floor_1", "standing_person", (726.0, 358.0), (730.0, 370.0), "floor"),
             ("stage.event_cooler_1", "surface_item", (692.0, 220.0), (670.0, 246.0), "cooler_top"),
             ("stage.event_cooler_2", "surface_item", (796.0, 220.0), (730.0, 272.0), "cooler_top"),
-            ("stage.event_wall_1", "wall_mounted", (450.0, 50.0), (450.0, 112.0), "wall"),
+            ("stage.event_wall_1", "wall_mounted", (450.0, 50.0), (450.0, 82.0), "wall"),
         ],
         "exit": [
             ("exit.safe_left", "doorway", (41.0, 286.0), (41.0, 244.0), "left_exit"),

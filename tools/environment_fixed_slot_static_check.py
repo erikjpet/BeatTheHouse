@@ -1158,8 +1158,10 @@ def main() -> int:
     check.require(authored_action_count > 0, "scenario phase simulation enumerated no authored actions")
 
     manifest_rows = values(exact_seed_manifest.get("expectations"))
+    legal_room_combinations = values(exact_seed_manifest.get("legal_room_combinations"))
     check.require(exact_seed_manifest.get("schema_version") == 1, "exact-seed manifest schema_version must be 1")
     check.require(len(manifest_rows) == 22, f"historical UIENV exact-seed manifest must contain 22 rows, found {len(manifest_rows)}")
+    check.require(len(legal_room_combinations) == 1, f"historical UIENV legal-room fixture must contain one row, found {len(legal_room_combinations)}")
     seed_ids = [str(item.get("seed", "")) for item in manifest_rows if isinstance(item, dict)]
     check.require(len(set(seed_ids)) == 22 and all(seed_ids), "historical UIENV exact-seed identities must be unique and non-empty")
     event_ids = {str(item.get("id", "")) for item in values(event_catalog) if isinstance(item, dict)}
@@ -1198,6 +1200,72 @@ def main() -> int:
             if required_interaction in bindings:
                 interaction_bindings.append(str(bindings[required_interaction]["mode"]))
         check.require(bool(interaction_bindings), f"{seed}: required interaction {required_interaction} never receives room/overflow authority")
+
+    # Exact seeds can traverse a legal room before reaching their manifest's
+    # final destination. Preserve the first repaired pre-destination composition
+    # explicitly: the generated town-rumor staff label and Delivery Day's live
+    # manifest gate must be checked together, including both target-size modes.
+    for combination in legal_room_combinations:
+        if not isinstance(combination, dict):
+            check.errors.append("historical UIENV legal-room fixture contains a non-object row")
+            continue
+        seed = str(combination.get("seed", ""))
+        destination = str(combination.get("destination", ""))
+        scenario_id = str(combination.get("scenario_id", ""))
+        phase_id = str(combination.get("phase_id", ""))
+        base_event_id = str(combination.get("base_event_id", ""))
+        base_identity = f"event::event:{base_event_id}"
+        base_slot_id = str(combination.get("base_slot_id", ""))
+        scenario_identity = str(combination.get("scenario_identity", ""))
+        check.require(seed in seed_ids, f"{seed}: legal-room fixture is not attached to a historical exact seed")
+        check.require(destination in maps_by_id, f"{seed}: legal-room destination {destination} has no slot map")
+        check.require(scenario_id in scenario_defs, f"{seed}: legal-room scenario {scenario_id} has no sequence")
+        check.require(base_event_id in events_by_id, f"{seed}: legal-room base event {base_event_id} is missing")
+        map_data = maps_by_id.get(destination, {})
+        slots_by_id = {str(slot.get("id", "")): slot for slot in all_slots(map_data)}
+        base_slot = slots_by_id.get(base_slot_id, {})
+        base_hit = rect(base_slot.get("hit_rect"))
+        base_label = str(events_by_id.get(base_event_id, {}).get("display_name", ""))
+        check.require(bool(base_slot), f"{seed}: legal-room base slot {base_slot_id} is missing")
+        check.require(base_hit is not None, f"{seed}: legal-room base slot {base_slot_id} has no target")
+        check.require(bool(base_label), f"{seed}: legal-room base identity {base_identity} has no label")
+        matching_snapshots = [
+            snapshot
+            for snapshot in complete_snapshots.get(destination, [])
+            if any(
+                str(item.get("_slot_scenario_id", "")) == scenario_id
+                and str(item.get("_slot_phase_id", "")) == phase_id
+                and str(item.get("identity", "")) == scenario_identity
+                for item in snapshot
+            )
+        ]
+        check.require(bool(matching_snapshots), f"{seed}: legal-room fixture found no {scenario_id}/{phase_id} snapshot containing {scenario_identity}")
+        checked_snapshots = 0
+        for snapshot in matching_snapshots:
+            bindings, _room, _overflow, _actions = simulate_scenario_binding(check, map_data, snapshot)
+            scenario_binding = bindings.get(scenario_identity, {})
+            check.require(scenario_binding.get("mode") == "room", f"{seed}: legal-room scenario identity {scenario_identity} did not receive a room slot")
+            scenario_slot_id = str(scenario_binding.get("slot_id", ""))
+            scenario_slot = slots_by_id.get(scenario_slot_id, {})
+            scenario_hit = rect(scenario_slot.get("hit_rect"))
+            semantic = next((item for item in snapshot if str(item.get("identity", "")) == scenario_identity), {})
+            scenario_label = SlotAuthoring.placement_label(semantic)
+            check.require(scenario_hit is not None, f"{seed}: legal-room scenario slot {scenario_slot_id} has no target")
+            check.require(bool(scenario_label), f"{seed}: legal-room scenario identity {scenario_identity} has no label")
+            if base_hit is None or scenario_hit is None or not base_label or not scenario_label:
+                continue
+            checked_snapshots += 1
+            base_label_bounds = label_rect(base_slot, base_label, board)
+            scenario_label_bounds = label_rect(scenario_slot, scenario_label, board)
+            base_small_hit = expanded(base_hit, board)
+            scenario_small_hit = expanded(scenario_hit, board)
+            prefix = f"{seed}: legal {destination}/{scenario_id}/{phase_id} {base_identity}@{base_slot_id} vs {scenario_identity}@{scenario_slot_id}"
+            check.require(not intersects(base_label_bounds, scenario_label_bounds), f"{prefix}: labels overlap")
+            check.require(not intersects(base_label_bounds, scenario_hit), f"{prefix}: base label overlaps scenario normal target")
+            check.require(not intersects(base_label_bounds, scenario_small_hit), f"{prefix}: base label overlaps scenario expanded target")
+            check.require(not intersects(scenario_label_bounds, base_hit), f"{prefix}: scenario label overlaps base normal target")
+            check.require(not intersects(scenario_label_bounds, base_small_hit), f"{prefix}: scenario label overlaps base expanded target")
+        check.require(checked_snapshots > 0, f"{seed}: legal-room fixture did not validate a complete label/target composition")
 
     binder_source = (root / "scripts/core/environment_slot_binder.gd").read_text(encoding="utf-8")
     instance_source = (root / "scripts/core/environment_instance.gd").read_text(encoding="utf-8")
@@ -1372,6 +1440,7 @@ def main() -> int:
             "complete_overflow": complete_overflow_count,
             "authored_actions": authored_action_count,
             "historical_exact_seeds": len(manifest_rows),
+            "historical_legal_room_combinations": len(legal_room_combinations),
         },
         "day2_samples": day2_sample_report(active_summaries),
         "contact_sheet": contact_sheet,
