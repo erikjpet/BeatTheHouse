@@ -184,6 +184,47 @@ Evidence:
   `E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855`),
   and zero Godot processes remained before the lease was released.
 
+## 2026-09-23 sixth current-tip exploratory probe (non-qualifying)
+
+Pushed replay tip `104e4f62`. Exactly one additional `-Ending clean -Repeat 1`
+run was made under the serialized Godot lease. The narrow internal-control
+whitelist worked: the bridge published exactly the rendered, enabled
+`tutorial_skip_dialog:ok|cancel` controls and the route selected the exact OK
+role. The click command was accepted, but the dialog remained visible and the
+public run stayed active in the Apartment after another 30 frames, so the run
+stopped fail-closed after eight counted actions.
+
+The OK button's rendered rectangle is in its embedded `ConfirmationDialog`
+Window/Viewport coordinate space, but the generic mouse helper injected that
+position into the application root Viewport. This is another narrow harness
+input-routing blocker, not product placement, ending logic, goal clarity, or
+economy evidence. The bridge now records the exact Viewport of each visible
+button, verifies that exactly one recorded Viewport still matches the live
+button, clips in that Viewport's coordinate space, and sends the same real
+motion/press/release sequence through it. Ordinary root buttons retain the root
+Viewport. Engine-free fixtures accept root and dialog Viewports and reject
+null, wrong, and ambiguous candidates. A later serialized probe must prove the
+correction.
+
+Evidence:
+
+- Run summary:
+  `.tmp/rw06_2/exploratory/clean-tip-104e4f62-probe6/20260923-112542-759-25648/run-01/summary.json`
+  (SHA-256 `8CD5D6AD84C47E7B1844994222D1722B08F8FA4300FBC99F5283491413E86D4C`).
+- Public trace, eight counted actions:
+  `.tmp/rw06_2/exploratory/clean-tip-104e4f62-probe6/20260923-112542-759-25648/run-01/public_trace.ndjson`
+  (SHA-256 `4FAD80C8F41E23913D31DB9BB53F263B6C4DD09B77893EA8DFBFE8BB72AF1310`).
+- Accepted exact-OK screenshot:
+  `.tmp/agent_playtest/2026-09-23/rw062-clean-25648-1-7c24f98e36/0014.png`
+  (SHA-256 `C0F337CE97E25673335783635EEE02D99E3CBA71AABD1404D8B6EC848FFD9771`).
+- Public result for that screenshot:
+  `.tmp/agent_playtest/2026-09-23/rw062-clean-25648-1-7c24f98e36/0014.result.json`
+  (SHA-256 `A7CD12BDFB0A6E075791427665BC5E574CA9ED2C9546ECE163988ECE08D5B55E`).
+- The exact owned process exited without force and zero Godot processes
+  remained before the lease was released. Its stderr preserves the generic
+  engine warning `ObjectDB instances leaked at exit` (SHA-256
+  `7E8F5DEB3BF520C8ABB23951DEAFB0669C320CEBB4CEB6668C755C617C5FD7D3`).
+
 ## Player intent
 
 Reach the Grand Casino, earn Bronze, Silver, and Gold Players Card tiers without

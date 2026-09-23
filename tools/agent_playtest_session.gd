@@ -313,10 +313,13 @@ func _click_button(target: String) -> Dictionary:
 	if button == null or not button.is_visible_in_tree() or button.disabled \
 			or not bool(data.get("fully_visible", false)):
 		return {"ok": false, "reason": "button became hidden, clipped, or disabled before click"}
+	var input_viewport := _button_input_viewport(data, button)
+	if input_viewport == null:
+		return {"ok": false, "reason": "button input viewport became missing, changed, or ambiguous before click"}
 	var clicked_id := str(data.get("id", ""))
 	var clicked_text := button.text
 	var click_position: Vector2 = data.get("click_position", button.get_global_rect().get_center())
-	await _push_mouse_click(click_position, false)
+	await _push_mouse_click_in_viewport(input_viewport, click_position, false)
 	return {"ok": true, "id": clicked_id, "text": clicked_text}
 
 
@@ -642,10 +645,14 @@ func _type_text(value: String) -> Dictionary:
 
 
 func _push_mouse_click(position: Vector2, double_click: bool) -> void:
+	await _push_mouse_click_in_viewport(app.get_viewport(), position, double_click)
+
+
+func _push_mouse_click_in_viewport(viewport: Viewport, position: Vector2, double_click: bool) -> void:
 	var motion := InputEventMouseMotion.new()
 	motion.position = position
 	motion.global_position = position
-	app.get_viewport().push_input(motion, true)
+	viewport.push_input(motion, true)
 	await process_frame
 	var press := InputEventMouseButton.new()
 	press.button_index = MOUSE_BUTTON_LEFT
@@ -654,12 +661,12 @@ func _push_mouse_click(position: Vector2, double_click: bool) -> void:
 	press.double_click = double_click
 	press.position = position
 	press.global_position = position
-	app.get_viewport().push_input(press, true)
+	viewport.push_input(press, true)
 	await process_frame
 	var release := press.duplicate() as InputEventMouseButton
 	release.pressed = false
 	release.button_mask = 0
-	app.get_viewport().push_input(release, true)
+	viewport.push_input(release, true)
 	await process_frame
 
 
@@ -798,6 +805,7 @@ func _collect_buttons(node: Node, result: Array) -> void:
 		if button.is_visible_in_tree() and not button.disabled and visible_rect.has_area():
 			result.append({
 				"node": button,
+				"input_viewport_candidates": [button.get_viewport()],
 				"id": str(button.get_path()),
 				"text": button.text.strip_edges(),
 				"rect": visible_rect,
@@ -826,6 +834,7 @@ func _append_tutorial_confirmation_buttons(result: Array) -> void:
 			continue
 		result.append({
 			"node": button,
+			"input_viewport_candidates": [button.get_viewport()],
 			"id": str(control_data.get("id", "")),
 			"text": button.text.strip_edges(),
 			"rect": visible_rect,
@@ -853,6 +862,17 @@ func _public_buttons() -> Array:
 				public_entry[key] = entry.get(key)
 		result.append(public_entry)
 	return result
+
+
+func _button_input_viewport(data: Dictionary, button: Button) -> Viewport:
+	var viewport_candidates := _array(data.get("input_viewport_candidates", []))
+	if viewport_candidates.size() != 1:
+		return null
+	var recorded_viewport := viewport_candidates[0] as Viewport
+	var live_viewport := button.get_viewport() if button != null else null
+	if recorded_viewport == null or live_viewport == null or recorded_viewport != live_viewport:
+		return null
+	return recorded_viewport
 
 
 func _visible_vertical_scroll_surface(surface_id: String) -> Dictionary:
@@ -989,7 +1009,10 @@ func _public_coach_snapshot(source: Dictionary) -> Dictionary:
 func _clipped_control_rect(control: Control) -> Rect2:
 	if control == null or not control.is_visible_in_tree():
 		return Rect2()
-	var visible_rect := control.get_global_rect().intersection(Rect2(Vector2.ZERO, Vector2(root.size)))
+	var viewport := control.get_viewport()
+	if viewport == null:
+		return Rect2()
+	var visible_rect := control.get_global_rect().intersection(viewport.get_visible_rect())
 	var ancestor := control.get_parent()
 	while ancestor != null and visible_rect.has_area():
 		if ancestor is Control and (ancestor as Control).clip_contents:

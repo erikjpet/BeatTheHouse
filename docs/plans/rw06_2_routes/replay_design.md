@@ -189,6 +189,21 @@ checkpoint, screenshots, and final summary used for acceptance.
   (SHA-256 `E0FD3B4623BB0DC43CA5D3C7B09C7C7BD6B3EBFC7807E6A741EB0450FCA9038A`).
   The exact owned process exited with empty stderr and no survivor. The narrow
   dialog-control correction still requires a later serialized live probe.
+- A sixth serialized, non-qualifying clean probe at pushed tip `104e4f62`
+  proved the dialog whitelist and exact role/id selector. The bridge accepted
+  `click_button tutorial_skip_dialog:ok`, but the confirmation remained visible
+  and the public run stayed active after 30 more frames. Its button rectangle
+  belongs to the embedded ConfirmationDialog Window/Viewport while the generic
+  helper sent that local point to the application root Viewport. The bridge now
+  binds every button to exactly one live-matching input Viewport, clips in that
+  Viewport, and routes the unchanged physical mouse sequence through it; root
+  buttons still use the root. Two valid and three null/wrong/ambiguous hostile
+  fixtures cover the routing decision engine-free. Summary evidence is
+  `.tmp/rw06_2/exploratory/clean-tip-104e4f62-probe6/20260923-112542-759-25648/run-01/summary.json`
+  (SHA-256 `8CD5D6AD84C47E7B1844994222D1722B08F8FA4300FBC99F5283491413E86D4C`).
+  The exact owned process exited without force; the generic post-exit ObjectDB
+  warning remains preserved, and no Godot process survived. This Viewport
+  correction still requires a later serialized live probe.
 - Final qualifying evidence intentionally waits for rw06_1 to land.
 
 ## Open route risks

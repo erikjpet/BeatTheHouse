@@ -16,6 +16,8 @@ $SemanticScrollReportPath = Join-Path $Worktree '.tmp\rw06_2\semantic_scroll_con
 $failures = [Collections.Generic.List[string]]::new()
 $wheelSequenceValidFixtures = 0
 $wheelSequenceHostileFixtures = 0
+$buttonViewportValidFixtures = 0
+$buttonViewportHostileFixtures = 0
 
 function Add-Failure {
     param([Parameter(Mandatory = $true)][string]$Message)
@@ -76,6 +78,24 @@ function Test-WheelPressReleaseSequence {
         $functionMatch.Value,
         '(?s)var\s+wheel\s*:=\s*InputEventMouseButton\.new\(\).*?wheel\.pressed\s*=\s*true.*?app\.get_viewport\(\)\.push_input\(wheel,\s*true\)\s*await\s+process_frame\s*var\s+release\s*:=\s*wheel\.duplicate\(\)\s+as\s+InputEventMouseButton\s*release\.pressed\s*=\s*false\s*app\.get_viewport\(\)\.push_input\(release,\s*true\)\s*await\s+process_frame'
     )
+}
+
+function Select-ExactButtonViewportFixture {
+    param(
+        [AllowNull()][object[]]$Candidates,
+        [AllowNull()][string]$LiveViewport
+    )
+    $resolvedCandidates = @($Candidates | Where-Object { $null -ne $_ })
+    if ($resolvedCandidates.Count -ne 1) {
+        throw "Expected exactly one recorded button input viewport; found $($resolvedCandidates.Count)."
+    }
+    $recordedViewport = [string]$resolvedCandidates[0]
+    if ([string]::IsNullOrWhiteSpace($recordedViewport) -or
+        [string]::IsNullOrWhiteSpace($LiveViewport) -or
+        $recordedViewport -cne $LiveViewport) {
+        throw 'Recorded and live button input viewports are missing or do not match.'
+    }
+    return $recordedViewport
 }
 
 foreach ($path in @($RunnerPath, $LauncherPath, $BridgePath, $SanitizerPath, $ObservationContractPath)) {
@@ -171,6 +191,41 @@ func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
     }
     if (-not (Test-WheelPressReleaseSequence -Source $bridge)) {
         Add-Failure 'Production bridge wheel input must publish its matching release immediately after every press.'
+    }
+
+    $validButtonViewportFixtures = @(
+        [pscustomobject]@{ label = 'ordinary-root-button'; candidates = @('app-root'); live = 'app-root' },
+        [pscustomobject]@{ label = 'confirmation-dialog-button'; candidates = @('tutorial-dialog'); live = 'tutorial-dialog' }
+    )
+    $buttonViewportValidFixtures = $validButtonViewportFixtures.Count
+    foreach ($fixture in $validButtonViewportFixtures) {
+        try {
+            $selectedViewport = Select-ExactButtonViewportFixture -Candidates @($fixture.candidates) -LiveViewport ([string]$fixture.live)
+            if ($selectedViewport -cne [string]$fixture.live) {
+                Add-Failure "Valid button viewport fixture '$($fixture.label)' selected the wrong viewport."
+            }
+        }
+        catch {
+            Add-Failure "Valid button viewport fixture '$($fixture.label)' threw: $($_.Exception.Message)"
+        }
+    }
+    $hostileButtonViewportFixtures = @(
+        [pscustomobject]@{ label = 'null-recorded-viewport'; candidates = @($null); live = 'app-root' },
+        [pscustomobject]@{ label = 'wrong-recorded-viewport'; candidates = @('app-root'); live = 'tutorial-dialog' },
+        [pscustomobject]@{ label = 'ambiguous-recorded-viewports'; candidates = @('app-root', 'tutorial-dialog'); live = 'tutorial-dialog' }
+    )
+    $buttonViewportHostileFixtures = $hostileButtonViewportFixtures.Count
+    foreach ($fixture in $hostileButtonViewportFixtures) {
+        $threw = $false
+        try {
+            $null = Select-ExactButtonViewportFixture -Candidates @($fixture.candidates) -LiveViewport ([string]$fixture.live)
+        }
+        catch {
+            $threw = $true
+        }
+        if (-not $threw) {
+            Add-Failure "Hostile button viewport fixture '$($fixture.label)' did not fail closed."
+        }
     }
 
     foreach ($required in @(
@@ -278,6 +333,9 @@ func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
         'func _visible_vertical_scroll_surface(surface_id: String) -> Dictionary:',
         'func _public_scroll_surfaces() -> Array:',
         'func _append_tutorial_confirmation_buttons(result: Array) -> void:',
+        'func _button_input_viewport(data: Dictionary, button: Button) -> Viewport:',
+        'func _push_mouse_click_in_viewport(viewport: Viewport, position: Vector2, double_click: bool) -> void:',
+        '"input_viewport_candidates": [button.get_viewport()]',
         'app.get("tutorial_skip_dialog") as ConfirmationDialog',
         'dialog.get_ok_button()',
         'dialog.get_cancel_button()',
@@ -371,9 +429,13 @@ func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
     Assert-NotMatch $runner '(?:Find-Button|Click-Button)\s+-Text\s+''OK''' 'The tutorial confirmation route must not select the generic OK label.'
     Assert-Match $bridge '(?s)func _scroll_surface\(argument: String\).*?surface_id != "run_menu".*?direction not in \["up", "down"\].*?surface\.get\(capability, false\).*?_push_mouse_wheel.*?after <= before.*?after >= before' 'The bridge semantic scroll command must allow only rendered public run-menu capabilities and verify real wheel movement.'
     Assert-Match $bridge '(?s)func _click_button\(target: String\).*?fully_visible.*?button became hidden, clipped, or disabled before click' 'The bridge must re-check that a semantic button is fully visible immediately before clicking it.'
+    Assert-Match $bridge '(?s)func _click_button\(target: String\).*?_button_input_viewport\(data, button\).*?input_viewport\s*==\s*null.*?missing, changed, or ambiguous.*?_push_mouse_click_in_viewport\(input_viewport, click_position, false\)' 'Every semantic button click must fail closed on stale viewport identity and route input through the exact button viewport.'
+    Assert-Match $bridge '(?s)func _button_input_viewport\(data: Dictionary, button: Button\).*?input_viewport_candidates.*?viewport_candidates\.size\(\)\s*!=\s*1.*?viewport_candidates\[0\]\s+as\s+Viewport.*?button\.get_viewport\(\).*?recorded_viewport\s*!=\s*live_viewport.*?return recorded_viewport' 'Button viewport selection must require one non-null recorded viewport that still exactly matches the live button viewport.'
+    Assert-Match $bridge '(?s)func _push_mouse_click\(position: Vector2, double_click: bool\).*?_push_mouse_click_in_viewport\(app\.get_viewport\(\), position, double_click\).*?func _push_mouse_click_in_viewport\(viewport: Viewport.*?viewport\.push_input\(motion, true\).*?viewport\.push_input\(press, true\).*?viewport\.push_input\(release, true\)' 'Ordinary clicks must retain the root viewport while exact button clicks may route the same real input sequence through an embedded dialog viewport.'
     Assert-Match $bridge '(?s)func _collect_buttons\(node: Node, result: Array\).*?full_rect\s*:=\s*button\.get_global_rect\(\).*?visible_rect\s*:=\s*_clipped_control_rect\(button\).*?"fully_visible":\s*_rect_encloses_with_tolerance\(visible_rect, full_rect\)' 'The bridge must derive fully-visible button state by comparing the full global rect with the clipped visible rect.'
     Assert-Match $bridge '(?s)func _append_tutorial_confirmation_buttons\(result: Array\).*?app\.get\("tutorial_skip_dialog"\) as ConfirmationDialog.*?dialog\s*==\s*null.*?not\s+dialog\.visible.*?dialog\.size\.x\s*<=\s*0.*?dialog\.size\.y\s*<=\s*0.*?dialog\.get_ok_button\(\).*?tutorial_skip_dialog:ok.*?dialog\.get_cancel_button\(\).*?tutorial_skip_dialog:cancel.*?button\.disabled.*?button\.is_visible_in_tree\(\).*?_clipped_control_rect\(button\).*?visible_rect\.has_area\(\).*?"fully_visible":\s*_rect_encloses_with_tolerance\(visible_rect, full_rect\).*?"dialog_rendered":\s*true' 'The bridge may expose only the rendered, enabled, fully measured tutorial confirmation OK/Cancel controls under exact stable ids.'
     Assert-NotMatch $bridge '_control_is_rendered\(dialog\)' 'ConfirmationDialog is a Window, so the bridge must not pass it to the Control-only rendered helper.'
+    Assert-Match $bridge '(?s)func _clipped_control_rect\(control: Control\).*?control\.get_viewport\(\).*?viewport\s*==\s*null.*?control\.get_global_rect\(\)\.intersection\(viewport\.get_visible_rect\(\)\)' 'Control visibility and click coordinates must be clipped in the exact control viewport coordinate space.'
     Assert-NotMatch $bridge 'get_children\(true\)' 'The bridge must not broadly enumerate internal controls; only the tutorial confirmation whitelist is admissible.'
     Assert-NotMatch $bridge '\.scroll_vertical\s*=' 'The replay bridge must not inject scroll-container state directly.'
     Assert-Contains $runner "@('players_card_eligible') `$false" 'Clean-ending eligibility must fail closed when its public field is absent.'
@@ -455,6 +517,8 @@ $report = [ordered]@{
     passed = ($failures.Count -eq 0)
     wheel_sequence_valid_fixtures = $wheelSequenceValidFixtures
     wheel_sequence_hostile_fixtures = $wheelSequenceHostileFixtures
+    button_viewport_valid_fixtures = $buttonViewportValidFixtures
+    button_viewport_hostile_fixtures = $buttonViewportHostileFixtures
     failures = @($failures)
 }
 $report | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $ReportPath -Encoding utf8
