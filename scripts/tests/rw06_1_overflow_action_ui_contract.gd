@@ -75,6 +75,7 @@ func _run() -> void:
 		return
 	_check_exact_overflow_semantic_retention(app, production_record)
 	_check_late_binding_persistence(app, production_record)
+	_check_capacity_simplification_action_reachability()
 	_check_canonical_expanded_target()
 	_check_authority_geometry_round_trip()
 	production_record["presentation_mode"] = "overflow"
@@ -976,6 +977,162 @@ func _check_exact_overflow_semantic_retention(app: Control, production_record: D
 		unaliased_record.erase("slot_binding_source_id")
 		if bool(EnvironmentSlotBinderScript.validate_base_layout_authority(alias_environment, [unaliased_record]).get("ok", true)):
 			failures.append("RW06-1 duplicate room slot without an explicit current alias was accepted.")
+
+
+func _check_capacity_simplification_action_reachability() -> void:
+	var gas_ids: Array[String] = [
+		"event:scenario_graveyard_maintenance",
+		"event:side_door",
+		"travel:back_alley",
+		"travel:corner_store",
+		"travel:delta_queen",
+		"travel:grand_casino",
+		"travel:kitty_cat_lounge",
+		"travel:leave",
+	]
+	var gas_records: Array = []
+	for object_id in gas_ids:
+		gas_records.append(_capacity_action_record(
+			object_id,
+			"event" if object_id.begins_with("event:") else "travel",
+			"doorway"
+		))
+	var gas_environment := {"archetype_id": "gas_station_casino"}
+	var gas_first := EnvironmentSlotBinderScript.bind_base_records(gas_environment, gas_records)
+	var gas_second := EnvironmentSlotBinderScript.bind_base_records(gas_environment, gas_records)
+	if not bool(gas_first.get("ok", false)) or not bool(gas_second.get("ok", false)):
+		failures.append("RW06-1 Gas Station capacity regression could not bind its multi-travel composition: %s." % JSON.stringify(gas_first.get("errors", [])))
+	else:
+		var gas_bindings := gas_first.get("slot_bindings", {}) as Dictionary
+		var gas_overflow := gas_first.get("overflow_ids", []) as Array
+		if JSON.stringify(gas_bindings) != JSON.stringify(gas_second.get("slot_bindings", {})) \
+				or JSON.stringify(gas_overflow) != JSON.stringify(gas_second.get("overflow_ids", [])):
+			failures.append("RW06-1 Gas Station multi-travel binding is not deterministic.")
+		var gas_room_ids: Array[String] = []
+		for object_id in gas_ids:
+			var binding := gas_bindings.get(object_id, {}) as Dictionary
+			if str(binding.get("presentation_mode", "")) == "room":
+				gas_room_ids.append(object_id)
+		if gas_room_ids != ["event:scenario_graveyard_maintenance"] \
+				or str((gas_bindings.get("event:scenario_graveyard_maintenance", {}) as Dictionary).get("slot_id", "")) != "base.door_left_middle" \
+				or gas_overflow.size() != gas_ids.size() - 1:
+			failures.append("RW06-1 Gas Station must bind one retained doorway and route every remaining travel record to authenticated overflow: rooms=%s overflow=%s." % [JSON.stringify(gas_room_ids), JSON.stringify(gas_overflow)])
+		_check_capacity_action_records("Gas Station", gas_first.get("records", []) as Array, gas_ids)
+
+	var jazz_records: Array = [_capacity_action_record("travel:leave", "travel", "doorway")]
+	var jazz_ids: Array[String] = ["travel:leave"]
+	for index in range(5):
+		var object_id := "travel:jazz_capacity_%d" % index
+		var record := _capacity_action_record(object_id, "travel", "doorway")
+		record["layout_spot_field"] = "travel_spots"
+		record["layout_index"] = index
+		jazz_records.append(record)
+		jazz_ids.append(object_id)
+	var jazz_environment := {"archetype_id": "jazz_club"}
+	var jazz_first := EnvironmentSlotBinderScript.bind_base_records(jazz_environment, jazz_records)
+	var jazz_second := EnvironmentSlotBinderScript.bind_base_records(jazz_environment, jazz_records)
+	if not bool(jazz_first.get("ok", false)) or not bool(jazz_second.get("ok", false)):
+		failures.append("RW06-1 Jazz Club capacity regression could not bind its multi-travel composition: %s." % JSON.stringify(jazz_first.get("errors", [])))
+	else:
+		var jazz_bindings := jazz_first.get("slot_bindings", {}) as Dictionary
+		var jazz_overflow := jazz_first.get("overflow_ids", []) as Array
+		if JSON.stringify(jazz_bindings) != JSON.stringify(jazz_second.get("slot_bindings", {})) \
+				or JSON.stringify(jazz_overflow) != JSON.stringify(jazz_second.get("overflow_ids", [])):
+			failures.append("RW06-1 Jazz Club multi-travel binding is not deterministic.")
+		var jazz_room_ids: Array[String] = []
+		for object_id in jazz_ids:
+			var binding := jazz_bindings.get(object_id, {}) as Dictionary
+			if str(binding.get("presentation_mode", "")) == "room":
+				jazz_room_ids.append(object_id)
+				if str(binding.get("slot_id", "")) != "base.door_right_upper":
+					failures.append("RW06-1 Jazz Club travel record escaped the retained upper doorway: %s." % JSON.stringify(binding))
+		if jazz_room_ids.size() != 1 or jazz_overflow.size() != jazz_ids.size() - 1:
+			failures.append("RW06-1 Jazz Club must bind one retained doorway and route every remaining travel record to authenticated overflow: rooms=%s overflow=%s." % [JSON.stringify(jazz_room_ids), JSON.stringify(jazz_overflow)])
+		_check_capacity_action_records("Jazz Club", jazz_first.get("records", []) as Array, jazz_ids)
+
+	var delta_records: Array = [
+		_capacity_action_record("event:scenario_captains_invitational_card", "event", "surface_item"),
+		_capacity_action_record("event:grand_casino_invite", "event", "wall_mounted"),
+		_capacity_action_record("event:scenario_engine_trouble_repairs", "event", "wall_mounted"),
+		_capacity_action_record("event:scenario_whale_aboard_vouch", "event", "wall_mounted"),
+		_capacity_action_record("item:payment_calendar", "item", "wall_mounted"),
+	]
+	var delta_ids: Array[String] = []
+	for record_value in delta_records:
+		delta_ids.append(str((record_value as Dictionary).get("object_id", "")))
+	var delta_environment := {"archetype_id": "delta_queen"}
+	var delta_first := EnvironmentSlotBinderScript.bind_base_records(delta_environment, delta_records)
+	var delta_second := EnvironmentSlotBinderScript.bind_base_records(delta_environment, delta_records)
+	if not bool(delta_first.get("ok", false)) or not bool(delta_second.get("ok", false)):
+		failures.append("RW06-1 Delta Queen wall-capacity regression could not bind its co-present fixtures: %s." % JSON.stringify(delta_first.get("errors", [])))
+		return
+	var delta_bindings := delta_first.get("slot_bindings", {}) as Dictionary
+	var delta_overflow := delta_first.get("overflow_ids", []) as Array
+	if JSON.stringify(delta_bindings) != JSON.stringify(delta_second.get("slot_bindings", {})) \
+			or JSON.stringify(delta_overflow) != JSON.stringify(delta_second.get("overflow_ids", [])):
+		failures.append("RW06-1 Delta Queen co-presence binding is not deterministic.")
+	var wall_room_ids: Array[String] = []
+	for object_id in delta_ids:
+		var binding := delta_bindings.get(object_id, {}) as Dictionary
+		if str(binding.get("slot_id", "")) == "base.event_wall_1":
+			wall_room_ids.append(object_id)
+	var table_binding := delta_bindings.get("event:scenario_captains_invitational_card", {}) as Dictionary
+	if wall_room_ids != ["event:grand_casino_invite"] \
+			or str(table_binding.get("presentation_mode", "")) != "room" \
+			or str(table_binding.get("slot_id", "")) != "base.event_table_1" \
+			or delta_overflow.size() != 3:
+		failures.append("RW06-1 Delta Queen must preserve event_table_1 independently while one wall record stays in-room and three retain overflow actions: wall=%s table=%s overflow=%s." % [JSON.stringify(wall_room_ids), JSON.stringify(table_binding), JSON.stringify(delta_overflow)])
+	_check_capacity_action_records("Delta Queen", delta_first.get("records", []) as Array, delta_ids)
+
+
+func _capacity_action_record(object_id: String, object_type: String, placement_class: String) -> Dictionary:
+	var action_suffix := object_id.replace(":", "_")
+	return {
+		"object_id": object_id,
+		"object_type": object_type,
+		"placement_class": placement_class,
+		"label": object_id,
+		"presentation_required": true,
+		"visible": true,
+		"interactive": true,
+		"enabled": true,
+		"available_actions": [
+			{
+				"id": "visible_%s" % action_suffix,
+				"emit_object_id": "capacity_action:visible:%s" % action_suffix,
+				"label": "Use %s" % object_id,
+			},
+			{
+				"id": "hidden_%s" % action_suffix,
+				"emit_object_id": "capacity_action:hidden:%s" % action_suffix,
+				"label": "Hidden %s" % object_id,
+				"hidden_only": true,
+			},
+		],
+	}
+
+
+func _check_capacity_action_records(label: String, records: Array, expected_ids: Array[String]) -> void:
+	var seen: Dictionary = {}
+	for record_value in records:
+		var record := record_value as Dictionary
+		var object_id := str(record.get("object_id", ""))
+		if not expected_ids.has(object_id):
+			continue
+		seen[object_id] = true
+		var action_suffix := object_id.replace(":", "_")
+		var entries := RoomActionListScript.action_entries_for_record(record)
+		if entries.size() != 1 \
+				or str((entries[0] as Dictionary).get("emit_object_id", "")) != "capacity_action:visible:%s" % action_suffix:
+			failures.append("RW06-1 %s record %s lost its independent visible action or exposed hidden-only state: %s." % [label, object_id, JSON.stringify(entries)])
+		if str(record.get("presentation_mode", "")) == "overflow" \
+				and (not (record.get("normalized_rect", {}) as Dictionary).is_empty() \
+				or not (record.get("focus_rect", {}) as Dictionary).is_empty()):
+			failures.append("RW06-1 %s overflow record %s retained forged room geometry." % [label, object_id])
+	if seen.size() != expected_ids.size():
+		failures.append("RW06-1 %s capacity regression omitted records: expected=%s seen=%s." % [label, JSON.stringify(expected_ids), JSON.stringify(seen.keys())])
+
+
 func _check_canonical_expanded_target() -> void:
 	var canonical := Vector2(ArtContractsScript.ENVIRONMENT_OBJECT_HIT_SIZE)
 	var expanded := EnvironmentSlotBinderScript.expanded_rect(Rect2(200.0, 200.0, 44.0, 44.0))

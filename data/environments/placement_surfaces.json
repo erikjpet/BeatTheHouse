@@ -6225,32 +6225,6 @@
       "slot_schema_version": 1,
       "base_slots": [
         {
-          "id": "base.door_right_middle",
-          "kind": "base",
-          "pos": [
-            859.0,
-            266.0
-          ],
-          "footprint_class": "doorway",
-          "hit_rect": [
-            827.0,
-            230.0,
-            64.0,
-            72.0
-          ],
-          "label_anchor": [
-            859.0,
-            224.0
-          ],
-          "facing": "left",
-          "priority": 20,
-          "zone_id": "room",
-          "support_id": "forecourt_right",
-          "walk_lane_ids": [
-            "lane.public"
-          ]
-        },
-        {
           "id": "base.door_left_middle",
           "kind": "base",
           "pos": [
@@ -6266,7 +6240,7 @@
           ],
           "label_anchor": [
             41.0,
-            168.0
+            272.0
           ],
           "facing": "right",
           "priority": 10,
@@ -6291,8 +6265,8 @@
             64.0
           ],
           "label_anchor": [
-            374.0,
-            170.0
+            377.0,
+            196.0
           ],
           "facing": "none",
           "priority": 20,
@@ -6315,8 +6289,8 @@
             64.0
           ],
           "label_anchor": [
-            494.0,
-            170.0
+            511.0,
+            272.0
           ],
           "facing": "none",
           "priority": 10,
@@ -6339,8 +6313,8 @@
             48.0
           ],
           "label_anchor": [
-            490.0,
-            346.0
+            489.0,
+            390.0
           ],
           "facing": "none",
           "priority": 20,
@@ -6387,7 +6361,7 @@
             48.0
           ],
           "label_anchor": [
-            496.0,
+            485.0,
             8.0
           ],
           "facing": "none",
@@ -6411,8 +6385,8 @@
             48.0
           ],
           "label_anchor": [
-            396.0,
-            262.0
+            408.0,
+            300.0
           ],
           "facing": "none",
           "priority": 10,
@@ -6925,7 +6899,7 @@
       "object_slot_ids": {
         "event:chain06_dave_last_stop": "base.service_highway_sill",
         "event:chain06_dave_same_bus": "base.service_lottery_desk",
-        "event:scenario_graveyard_maintenance": "base.door_right_middle",
+        "event:scenario_graveyard_maintenance": "base.door_left_middle",
         "event:scenario_tour_bus_ticket_rush": "base.event_control_rail",
         "event:scenario_trucker_convoy_route": "base.event_wall_route",
         "event:side_door": "base.door_left_middle",
@@ -6935,12 +6909,12 @@
         "game_hook:pull_tabs:ticket_redeemer": "base.service_lottery_desk",
         "numbers:book": "base.service_lottery_desk",
         "service:house_drink": "base.service_lottery_desk",
-        "travel:back_alley": "base.door_right_middle",
+        "travel:back_alley": "base.door_left_middle",
         "travel:corner_store": "base.door_left_middle",
         "travel:delta_queen": "base.door_left_middle",
         "travel:grand_casino": "base.door_left_middle",
-        "travel:kitty_cat_lounge": "base.door_right_middle",
-        "travel:leave": "base.door_right_middle"
+        "travel:kitty_cat_lounge": "base.door_left_middle",
+        "travel:leave": "base.door_left_middle"
       },
       "category_slot_ids": {
         "event_spots:0": "base.game_2",
@@ -6954,13 +6928,13 @@
         "game_spots:2": "base.game_1",
         "numbers_spots:0": "base.service_lottery_desk",
         "service_spots:0": "base.service_lottery_desk",
-        "travel_spots:0": "base.door_right_middle",
+        "travel_spots:0": "base.door_left_middle",
         "travel_spots:1": "base.door_left_middle",
         "travel_spots:2": "base.door_left_middle",
-        "travel_spots:3": "base.door_right_middle",
-        "travel_spots:4": "base.door_right_middle",
+        "travel_spots:3": "base.door_left_middle",
+        "travel_spots:4": "base.door_left_middle",
         "travel_spots:5": "base.door_left_middle",
-        "travel_spots:6": "base.door_right_middle"
+        "travel_spots:6": "base.door_left_middle"
       },
       "scenario_slot_ids": {
         "gas_station_graveyard_shift_aftermath_lock_cycle_failed": "stage.event_machine_right",
@@ -8043,8 +8017,8 @@
             72.0
           ],
           "label_anchor": [
-            841.0,
-            320.0
+            836.0,
+            330.0
           ],
           "facing": "left",
           "priority": 20,
@@ -8069,7 +8043,7 @@
             72.0
           ],
           "label_anchor": [
-            841.0,
+            836.0,
             224.0
           ],
           "facing": "left",
@@ -8095,8 +8069,8 @@
             64.0
           ],
           "label_anchor": [
-            694.0,
-            72.0
+            687.0,
+            80.0
           ],
           "facing": "none",
           "priority": 10,
@@ -8119,7 +8093,7 @@
             80.0
           ],
           "label_anchor": [
-            252.0,
+            251.0,
             272.0
           ],
           "facing": "right",
@@ -8145,7 +8119,7 @@
             48.0
           ],
           "label_anchor": [
-            300.0,
+            297.0,
             148.0
           ],
           "facing": "none",
@@ -8169,7 +8143,7 @@
             48.0
           ],
           "label_anchor": [
-            412.0,
+            423.0,
             148.0
           ],
           "facing": "none",
@@ -8193,7 +8167,7 @@
             48.0
           ],
           "label_anchor": [
-            802.0,
+            801.0,
             54.0
           ],
           "facing": "none",
@@ -9404,8 +9378,8 @@
             72.0
           ],
           "label_anchor": [
-            841.0,
-            320.0
+            836.0,
+            390.0
           ],
           "facing": "left",
           "priority": 20,
@@ -9430,8 +9404,8 @@
             72.0
           ],
           "label_anchor": [
-            846.0,
-            72.0
+            837.0,
+            148.0
           ],
           "facing": "left",
           "priority": 10,
@@ -9456,8 +9430,8 @@
             64.0
           ],
           "label_anchor": [
-            734.0,
-            288.0
+            725.0,
+            278.0
           ],
           "facing": "none",
           "priority": 10,
@@ -9480,8 +9454,8 @@
             80.0
           ],
           "label_anchor": [
-            628.0,
-            272.0
+            627.0,
+            252.0
           ],
           "facing": "left",
           "priority": 10,
@@ -9506,8 +9480,8 @@
             48.0
           ],
           "label_anchor": [
-            332.0,
-            148.0
+            331.0,
+            174.0
           ],
           "facing": "none",
           "priority": 30,
@@ -9530,7 +9504,7 @@
             48.0
           ],
           "label_anchor": [
-            110.0,
+            107.0,
             140.0
           ],
           "facing": "none",
@@ -9554,8 +9528,8 @@
             48.0
           ],
           "label_anchor": [
-            706.0,
-            140.0
+            705.0,
+            148.0
           ],
           "facing": "none",
           "priority": 10,
@@ -10438,7 +10412,7 @@
             72.0
           ],
           "label_anchor": [
-            634.0,
+            633.0,
             64.0
           ],
           "facing": "left",
@@ -10464,7 +10438,7 @@
             72.0
           ],
           "label_anchor": [
-            798.0,
+            811.0,
             178.0
           ],
           "facing": "left",
@@ -10490,8 +10464,8 @@
             72.0
           ],
           "label_anchor": [
-            36.0,
-            334.0
+            63.0,
+            342.0
           ],
           "facing": "right",
           "priority": 10,
@@ -10516,8 +10490,8 @@
             64.0
           ],
           "label_anchor": [
-            734.0,
-            288.0
+            733.0,
+            390.0
           ],
           "facing": "none",
           "priority": 10,
@@ -10540,8 +10514,8 @@
             80.0
           ],
           "label_anchor": [
-            284.0,
-            272.0
+            299.0,
+            256.0
           ],
           "facing": "right",
           "priority": 10,
@@ -10566,8 +10540,8 @@
             48.0
           ],
           "label_anchor": [
-            136.0,
-            100.0
+            129.0,
+            102.0
           ],
           "facing": "none",
           "priority": 20,
@@ -10590,8 +10564,8 @@
             48.0
           ],
           "label_anchor": [
-            256.0,
-            100.0
+            255.0,
+            102.0
           ],
           "facing": "none",
           "priority": 10,
@@ -10614,8 +10588,8 @@
             48.0
           ],
           "label_anchor": [
-            672.0,
-            186.0
+            685.0,
+            182.0
           ],
           "facing": "none",
           "priority": 20,
@@ -10638,8 +10612,8 @@
             48.0
           ],
           "label_anchor": [
-            752.0,
-            8.0
+            751.0,
+            26.0
           ],
           "facing": "none",
           "priority": 10,
@@ -11342,7 +11316,7 @@
             72.0
           ],
           "label_anchor": [
-            830.0,
+            831.0,
             64.0
           ],
           "facing": "left",
@@ -11368,8 +11342,8 @@
             72.0
           ],
           "label_anchor": [
-            830.0,
-            160.0
+            829.0,
+            170.0
           ],
           "facing": "left",
           "priority": 90,
@@ -12096,39 +12070,13 @@
             72.0
           ],
           "label_anchor": [
-            742.0,
+            733.0,
             110.0
           ],
           "facing": "right",
           "priority": 10,
           "zone_id": "room",
           "support_id": "bar",
-          "walk_lane_ids": [
-            "lane.public"
-          ]
-        },
-        {
-          "id": "base.door_right_middle",
-          "kind": "base",
-          "pos": [
-            864.0,
-            212.0
-          ],
-          "footprint_class": "doorway",
-          "hit_rect": [
-            832.0,
-            176.0,
-            64.0,
-            72.0
-          ],
-          "label_anchor": [
-            864.0,
-            170.0
-          ],
-          "facing": "left",
-          "priority": 20,
-          "zone_id": "room",
-          "support_id": "right_exit",
           "walk_lane_ids": [
             "lane.public"
           ]
@@ -12148,7 +12096,7 @@
             72.0
           ],
           "label_anchor": [
-            864.0,
+            837.0,
             74.0
           ],
           "facing": "left",
@@ -12175,7 +12123,7 @@
           ],
           "label_anchor": [
             174.0,
-            344.0
+            354.0
           ],
           "facing": "none",
           "priority": 10,
@@ -12199,7 +12147,7 @@
           ],
           "label_anchor": [
             724.0,
-            360.0
+            374.0
           ],
           "facing": "none",
           "priority": 10,
@@ -12222,7 +12170,7 @@
             80.0
           ],
           "label_anchor": [
-            52.0,
+            63.0,
             328.0
           ],
           "facing": "right",
@@ -12296,8 +12244,8 @@
             48.0
           ],
           "label_anchor": [
-            630.0,
-            134.0
+            627.0,
+            136.0
           ],
           "facing": "none",
           "priority": 10,
@@ -12321,7 +12269,7 @@
           ],
           "label_anchor": [
             688.0,
-            8.0
+            26.0
           ],
           "facing": "none",
           "priority": 10,
@@ -12670,7 +12618,7 @@
         "service:jazz_sax_round": "base.service_band_rail",
         "service:listen_to_jazz": "base.event_listen_marker",
         "shopkeeper:merchant": "base.staff_bar",
-        "travel:leave": "base.door_right_middle"
+        "travel:leave": "base.door_right_upper"
       },
       "category_slot_ids": {
         "event_spots:0": "base.game_1",
@@ -12689,11 +12637,11 @@
         "service_spots:4": "base.service_band_rail",
         "service_spots:5": "base.service_stage",
         "shopkeeper_spots:0": "base.staff_bar",
-        "travel_spots:0": "base.door_right_middle",
+        "travel_spots:0": "base.door_right_upper",
         "travel_spots:1": "base.door_right_upper",
         "travel_spots:2": "base.door_right_upper",
-        "travel_spots:3": "base.door_right_middle",
-        "travel_spots:4": "base.door_right_middle"
+        "travel_spots:3": "base.door_right_upper",
+        "travel_spots:4": "base.door_right_upper"
       },
       "scenario_slot_ids": {
         "jazz_club_guest_legend_aftermath_arrival_interrupted_prop||background|": "stage.event_floor_marker_left",
@@ -13704,7 +13652,7 @@
           ],
           "label_anchor": [
             724.0,
-            112.0
+            136.0
           ],
           "facing": "left",
           "priority": 10,
@@ -13729,8 +13677,8 @@
             72.0
           ],
           "label_anchor": [
-            859.0,
-            234.0
+            837.0,
+            244.0
           ],
           "facing": "left",
           "priority": 20,
@@ -13755,8 +13703,8 @@
             72.0
           ],
           "label_anchor": [
-            859.0,
-            138.0
+            837.0,
+            218.0
           ],
           "facing": "left",
           "priority": 10,
@@ -13781,8 +13729,8 @@
             64.0
           ],
           "label_anchor": [
-            742.0,
-            288.0
+            733.0,
+            384.0
           ],
           "facing": "none",
           "priority": 10,
@@ -13806,7 +13754,7 @@
           ],
           "label_anchor": [
             532.0,
-            274.0
+            384.0
           ],
           "facing": "left",
           "priority": 10,
@@ -13831,7 +13779,7 @@
             64.0
           ],
           "label_anchor": [
-            250.0,
+            261.0,
             164.0
           ],
           "facing": "right",
@@ -13882,7 +13830,7 @@
           ],
           "label_anchor": [
             146.0,
-            142.0
+            138.0
           ],
           "facing": "none",
           "priority": 10,
@@ -13905,8 +13853,8 @@
             48.0
           ],
           "label_anchor": [
-            40.0,
-            8.0
+            63.0,
+            52.0
           ],
           "facing": "none",
           "priority": 10,
@@ -15762,8 +15710,8 @@
             64.0
           ],
           "label_anchor": [
-            184.0,
-            200.0
+            189.0,
+            216.0
           ],
           "facing": "front",
           "priority": 10,
@@ -15815,7 +15763,7 @@
           ],
           "label_anchor": [
             864.0,
-            168.0
+            190.0
           ],
           "facing": "left",
           "priority": 20,
@@ -15840,8 +15788,8 @@
             72.0
           ],
           "label_anchor": [
-            390.0,
-            92.0
+            378.0,
+            190.0
           ],
           "facing": "left",
           "priority": 10,
@@ -15866,8 +15814,8 @@
             64.0
           ],
           "label_anchor": [
-            288.0,
-            240.0
+            277.0,
+            302.0
           ],
           "facing": "none",
           "priority": 10,
@@ -15914,8 +15862,8 @@
             80.0
           ],
           "label_anchor": [
-            496.0,
-            240.0
+            518.0,
+            232.0
           ],
           "facing": "right",
           "priority": 10,
@@ -15940,7 +15888,7 @@
             48.0
           ],
           "label_anchor": [
-            600.0,
+            644.0,
             240.0
           ],
           "facing": "none",
@@ -15964,8 +15912,8 @@
             48.0
           ],
           "label_anchor": [
-            78.0,
-            96.0
+            67.0,
+            114.0
           ],
           "facing": "none",
           "priority": 10,
@@ -15988,8 +15936,8 @@
             48.0
           ],
           "label_anchor": [
-            182.0,
-            96.0
+            171.0,
+            88.0
           ],
           "facing": "none",
           "priority": 20,
@@ -16012,8 +15960,8 @@
             48.0
           ],
           "label_anchor": [
-            286.0,
-            96.0
+            252.0,
+            190.0
           ],
           "facing": "none",
           "priority": 30,
@@ -16041,30 +15989,6 @@
           ],
           "facing": "none",
           "priority": 10,
-          "zone_id": "room",
-          "support_id": "wall",
-          "walk_lane_ids": []
-        },
-        {
-          "id": "base.event_wall_2",
-          "kind": "base",
-          "pos": [
-            156.0,
-            24.0
-          ],
-          "footprint_class": "wall_mounted",
-          "hit_rect": [
-            116.0,
-            0.0,
-            80.0,
-            48.0
-          ],
-          "label_anchor": [
-            156.0,
-            8.0
-          ],
-          "facing": "none",
-          "priority": 20,
           "zone_id": "room",
           "support_id": "wall",
           "walk_lane_ids": []
@@ -16588,9 +16512,9 @@
         "item:payout_pamphlet": "base.game_3",
         "item:tab_detector": "base.game_3",
         "event:grand_casino_invite": "base.event_wall_1",
-        "event:scenario_engine_trouble_repairs": "base.event_wall_2",
+        "event:scenario_engine_trouble_repairs": "base.event_wall_1",
         "event:scenario_whale_aboard_vouch": "base.event_wall_1",
-        "item:payment_calendar": "base.event_wall_2",
+        "item:payment_calendar": "base.event_wall_1",
         "event:side_door": "base.door_left_middle",
         "travel:leave": "base.door_right_middle"
       },
@@ -18036,7 +17960,7 @@
             72.0
           ],
           "label_anchor": [
-            352.0,
+            343.0,
             184.0
           ],
           "facing": "right",
@@ -18063,7 +17987,7 @@
           ],
           "label_anchor": [
             772.0,
-            106.0
+            112.0
           ],
           "facing": "left",
           "priority": 10,
@@ -18115,7 +18039,7 @@
           ],
           "label_anchor": [
             36.0,
-            320.0
+            390.0
           ],
           "facing": "right",
           "priority": 10,
@@ -18141,7 +18065,7 @@
           ],
           "label_anchor": [
             286.0,
-            288.0
+            390.0
           ],
           "facing": "none",
           "priority": 10,
@@ -18190,8 +18114,8 @@
             48.0
           ],
           "label_anchor": [
-            202.0,
-            130.0
+            205.0,
+            176.0
           ],
           "facing": "none",
           "priority": 60,
@@ -18238,7 +18162,7 @@
             48.0
           ],
           "label_anchor": [
-            314.0,
+            317.0,
             16.0
           ],
           "facing": "none",
@@ -18263,7 +18187,7 @@
           ],
           "label_anchor": [
             202.0,
-            16.0
+            110.0
           ],
           "facing": "none",
           "priority": 30,
@@ -18286,7 +18210,7 @@
             48.0
           ],
           "label_anchor": [
-            90.0,
+            76.0,
             130.0
           ],
           "facing": "none",
@@ -18310,7 +18234,7 @@
             48.0
           ],
           "label_anchor": [
-            90.0,
+            87.0,
             16.0
           ],
           "facing": "none",
@@ -19483,8 +19407,8 @@
             48.0
           ],
           "label_anchor": [
-            720.0,
-            32.0
+            709.0,
+            68.0
           ],
           "facing": "none",
           "priority": 50,
@@ -19508,7 +19432,7 @@
           ],
           "label_anchor": [
             210.0,
-            130.0
+            144.0
           ],
           "facing": "none",
           "priority": 60,
@@ -19531,8 +19455,8 @@
             48.0
           ],
           "label_anchor": [
-            690.0,
-            130.0
+            696.0,
+            144.0
           ],
           "facing": "none",
           "priority": 70,
@@ -19556,7 +19480,7 @@
           ],
           "label_anchor": [
             450.0,
-            170.0
+            172.0
           ],
           "facing": "front",
           "priority": 80,
@@ -19582,7 +19506,7 @@
           ],
           "label_anchor": [
             824.0,
-            46.0
+            42.0
           ],
           "facing": "none",
           "priority": 90,
@@ -19630,7 +19554,7 @@
           ],
           "label_anchor": [
             330.0,
-            218.0
+            214.0
           ],
           "facing": "none",
           "priority": 110,
@@ -19653,8 +19577,8 @@
             64.0
           ],
           "label_anchor": [
-            384.0,
-            270.0
+            373.0,
+            316.0
           ],
           "facing": "none",
           "priority": 120,
@@ -19677,8 +19601,8 @@
             64.0
           ],
           "label_anchor": [
-            156.0,
-            376.0
+            189.0,
+            354.0
           ],
           "facing": "none",
           "priority": 130,
@@ -19702,7 +19626,7 @@
           ],
           "label_anchor": [
             36.0,
-            348.0
+            352.0
           ],
           "facing": "front",
           "priority": 140,
@@ -20388,7 +20312,7 @@
             48.0
           ],
           "label_anchor": [
-            130.0,
+            124.0,
             130.0
           ],
           "facing": "none",
@@ -20436,7 +20360,7 @@
             48.0
           ],
           "label_anchor": [
-            650.0,
+            644.0,
             130.0
           ],
           "facing": "none",
@@ -20484,7 +20408,7 @@
             64.0
           ],
           "label_anchor": [
-            384.0,
+            383.0,
             288.0
           ],
           "facing": "none",
@@ -21233,7 +21157,7 @@
             48.0
           ],
           "label_anchor": [
-            96.0,
+            74.0,
             70.0
           ],
           "facing": "none",
@@ -21258,7 +21182,7 @@
           ],
           "label_anchor": [
             200.0,
-            70.0
+            62.0
           ],
           "facing": "none",
           "priority": 20,
@@ -21305,7 +21229,7 @@
             48.0
           ],
           "label_anchor": [
-            440.0,
+            446.0,
             206.0
           ],
           "facing": "none",
@@ -21329,8 +21253,8 @@
             64.0
           ],
           "label_anchor": [
-            330.0,
-            288.0
+            326.0,
+            300.0
           ],
           "facing": "none",
           "priority": 50,
@@ -21353,8 +21277,8 @@
             64.0
           ],
           "label_anchor": [
-            450.0,
-            288.0
+            452.0,
+            300.0
           ],
           "facing": "none",
           "priority": 60,
@@ -21404,7 +21328,7 @@
           ],
           "label_anchor": [
             847.0,
-            206.0
+            224.0
           ],
           "facing": "front",
           "priority": 80,

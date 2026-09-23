@@ -1254,6 +1254,136 @@ def main() -> int:
         "pawn_shop: generated Sal and the sell counter must prefer distinct fixed behind-counter slots",
     )
 
+    # The conservative maximum-label proof leaves one authenticated doorway in
+    # the Gas Station base plane. All generated travel choices remain distinct
+    # semantic records; deterministic binding places the first compatible
+    # record in-room and sends the rest to the geometry-free action list.
+    gas_map = maps_by_id.get("gas_station_casino", {})
+    gas_base_slots = {
+        str(slot.get("id", "")): slot
+        for slot in values(gas_map.get("base_slots"))
+        if isinstance(slot, dict)
+    }
+    gas_stage_slots = {
+        str(slot.get("id", "")): slot
+        for slot in values(gas_map.get("stage_slots"))
+        if isinstance(slot, dict)
+    }
+    gas_exit_slots = {
+        str(slot.get("id", "")): slot
+        for slot in values(gas_map.get("exit_slots"))
+        if isinstance(slot, dict)
+    }
+    gas_preferences = gas_map.get("object_slot_ids", {}) if isinstance(gas_map.get("object_slot_ids"), dict) else {}
+    gas_categories = gas_map.get("category_slot_ids", {}) if isinstance(gas_map.get("category_slot_ids"), dict) else {}
+    gas_doorway_occupants = {
+        "event:scenario_graveyard_maintenance",
+        "event:side_door",
+        "travel:back_alley",
+        "travel:corner_store",
+        "travel:delta_queen",
+        "travel:grand_casino",
+        "travel:kitty_cat_lounge",
+        "travel:leave",
+    }
+    gas_travel_indexes = {f"travel_spots:{index}" for index in range(7)}
+    check.require(
+        "base.door_right_middle" not in gas_base_slots
+        and len(gas_base_slots) == 7
+        and gas_base_slots.get("base.door_left_middle", {}).get("footprint_class") == "doorway"
+        and not any(str(slot_id) == "base.door_right_middle" for slot_id in gas_preferences.values())
+        and not any(str(slot_id) == "base.door_right_middle" for slot_id in gas_categories.values()),
+        "gas_station_casino: removed right base doorway must stay absent and unreferenced",
+    )
+    check.require(
+        all(str(gas_preferences.get(identity, "")) == "base.door_left_middle" for identity in gas_doorway_occupants)
+        and all(str(gas_categories.get(key, "")) == "base.door_left_middle" for key in gas_travel_indexes),
+        "gas_station_casino: every base-doorway identity and travel index must use the retained left doorway",
+    )
+    check.require(
+        gas_stage_slots.get("stage.event_right_door", {}).get("footprint_class") == "doorway"
+        and set(gas_exit_slots) == {"exit.left_upper", "exit.right_lower"},
+        "gas_station_casino: scenario right-door and both independent safe-exit authorities must survive the base simplification",
+    )
+
+    # Delta Queen's second base wall slot has no locally-associated 126x26
+    # label domain beside wall_1 and event_table_1. Keep the complete displaced
+    # occupant set closed here so a future catalog addition cannot silently
+    # depend on the removed geometry.
+    delta_map = maps_by_id.get("delta_queen", {})
+    delta_base_slots = {
+        str(slot.get("id", "")): slot
+        for slot in values(delta_map.get("base_slots"))
+        if isinstance(slot, dict)
+    }
+    delta_exit_slots = {
+        str(slot.get("id", "")): slot
+        for slot in values(delta_map.get("exit_slots"))
+        if isinstance(slot, dict)
+    }
+    delta_preferences = delta_map.get("object_slot_ids", {}) if isinstance(delta_map.get("object_slot_ids"), dict) else {}
+    delta_categories = delta_map.get("category_slot_ids", {}) if isinstance(delta_map.get("category_slot_ids"), dict) else {}
+    delta_wall_occupants = {
+        "event:grand_casino_invite",
+        "event:scenario_engine_trouble_repairs",
+        "event:scenario_whale_aboard_vouch",
+        "item:payment_calendar",
+    }
+    check.require(
+        "base.event_wall_2" not in delta_base_slots
+        and delta_base_slots.get("base.event_wall_1", {}).get("footprint_class") == "wall_mounted"
+        and delta_base_slots.get("base.event_table_1", {}).get("footprint_class") == "surface_item"
+        and not any(str(slot_id) == "base.event_wall_2" for slot_id in delta_preferences.values())
+        and not any(str(slot_id) == "base.event_wall_2" for slot_id in delta_categories.values()),
+        "delta_queen: removed second wall slot must stay absent and unreferenced",
+    )
+    check.require(
+        all(str(delta_preferences.get(identity, "")) == "base.event_wall_1" for identity in delta_wall_occupants)
+        and str(delta_preferences.get("event:scenario_captains_invitational_card", "")) == "base.event_table_1"
+        and str(delta_categories.get("item_spots:2", "")) == "base.event_table_1",
+        "delta_queen: wall occupants and event_table_1 identity/index remaps must remain exact",
+    )
+    check.require(
+        set(delta_exit_slots) == {"exit.left_lower", "exit.right_upper"},
+        "delta_queen: both independent safe exits must survive the wall-capacity simplification",
+    )
+
+    # Jazz keeps its guaranteed counter staff and one authored travel doorway.
+    # Every generated travel index shares that doorway and excess records keep
+    # their independent action authority in overflow.
+    jazz_map = maps_by_id.get("jazz_club", {})
+    jazz_base_slots = {
+        str(slot.get("id", "")): slot
+        for slot in values(jazz_map.get("base_slots"))
+        if isinstance(slot, dict)
+    }
+    jazz_exit_slots = {
+        str(slot.get("id", "")): slot
+        for slot in values(jazz_map.get("exit_slots"))
+        if isinstance(slot, dict)
+    }
+    jazz_preferences = jazz_map.get("object_slot_ids", {}) if isinstance(jazz_map.get("object_slot_ids"), dict) else {}
+    jazz_categories = jazz_map.get("category_slot_ids", {}) if isinstance(jazz_map.get("category_slot_ids"), dict) else {}
+    jazz_travel_indexes = {f"travel_spots:{index}" for index in range(5)}
+    check.require(
+        "base.door_right_middle" not in jazz_base_slots
+        and len(jazz_base_slots) == 9
+        and jazz_base_slots.get("base.door_right_upper", {}).get("footprint_class") == "doorway"
+        and jazz_base_slots.get("base.staff_bar", {}).get("footprint_class") == "behind_counter_person"
+        and not any(str(slot_id) == "base.door_right_middle" for slot_id in jazz_preferences.values())
+        and not any(str(slot_id) == "base.door_right_middle" for slot_id in jazz_categories.values()),
+        "jazz_club: removed middle doorway must stay absent while counter staff remains fixed",
+    )
+    check.require(
+        str(jazz_preferences.get("travel:leave", "")) == "base.door_right_upper"
+        and all(str(jazz_categories.get(key, "")) == "base.door_right_upper" for key in jazz_travel_indexes),
+        "jazz_club: travel identity and all five travel indexes must use the retained upper doorway",
+    )
+    check.require(
+        set(jazz_exit_slots) == {"exit.left_middle", "exit.left_upper"},
+        "jazz_club: both independent left safe exits must survive the doorway simplification",
+    )
+
     scenario_defs: dict[str, dict[str, Any]] = {}
     for source in sorted((root / "data/environments/scenario_sequences").glob("*.json")):
         package = json.loads(source.read_text(encoding="utf-8"))
