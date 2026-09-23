@@ -196,6 +196,7 @@ func _run() -> void:
 	_check_rendered_action_surface(action_list, records)
 	_check_source_aggregation_and_dedupe(multi_record, mirrored_record)
 	_check_action_key_authority_seal()
+	await _check_record_scenario_authority_staleness(app, action_list, records, activations)
 	_check_canvas_exclusion(records)
 	await _check_cancel_and_focus_recovery(action_list)
 	await _check_responsive_panel_width(action_list)
@@ -271,10 +272,14 @@ func _check_rendered_action_surface(action_list: Control, records: Array) -> voi
 
 func _check_dispatch_source_placement() -> void:
 	var source := FileAccess.get_file_as_string("res://scripts/ui/foundation_main.gd")
+	var action_list_source := FileAccess.get_file_as_string("res://scripts/ui/room_action_list.gd")
 	var blocking_body := _source_function_body(source, "_blocking_modal_message")
 	var slot_body := _source_function_body(source, "_main_floor_slot_game_id")
 	var talk_body := _source_function_body(source, "_talk_dock_input_is_blocked")
 	var dispatch_body := _source_function_body(source, "_activate_overflow_room_action")
+	var key_body := _source_function_body(action_list_source, "_action_key")
+	var identity_body := _source_function_body(action_list_source, "_logical_dispatch_identity")
+	var effective_body := _source_function_body(action_list_source, "_effective_scenario_command_id")
 	if source.count("Close Room actions before doing anything else.") != 1 \
 			or not blocking_body.contains("Close Room actions before doing anything else.") \
 			or slot_body.contains("Close Room actions"):
@@ -294,6 +299,22 @@ func _check_dispatch_source_placement() -> void:
 			or sequence_index > scenario_index or scenario_index > game_hook_index or game_hook_index > emit_index \
 			or dispatch_body.contains("live_action.get(\"id\", object_data.get(\"scenario_command_id\""):
 		failures.append("RW06-1 overflow dispatch no longer prioritizes sequence/scenario authority over generic emit tokens.")
+	var effective_sequence_index := effective_body.find("_uses_scenario_sequence_dispatch")
+	var effective_action_index := effective_body.find("action.get(\"scenario_command_id\"")
+	var effective_record_index := effective_body.find("record.get(\"scenario_command_id\"")
+	var effective_true_scenario_index := effective_body.find("== \"scenario\"")
+	var effective_id_fallback_index := effective_body.rfind("return str(action.get(\"id\"")
+	if effective_sequence_index < 0 or effective_action_index < 0 or effective_record_index < 0 \
+			or effective_true_scenario_index < 0 or effective_id_fallback_index < 0 \
+			or effective_sequence_index > effective_action_index \
+			or effective_action_index > effective_record_index \
+			or effective_record_index > effective_true_scenario_index \
+			or effective_true_scenario_index > effective_id_fallback_index \
+			or not key_body.contains("record_scenario_command_id") \
+			or not key_body.contains("effective_scenario_command_id") \
+			or not identity_body.contains("_effective_scenario_command_id(record, action, source)") \
+			or not identity_body.contains("object_type == \"scenario\""):
+		failures.append("RW06-1 RoomActionList key/dedupe authority no longer mirrors sequence/action/record scenario dispatch precedence.")
 
 
 func _check_source_aggregation_and_dedupe(multi_record: Dictionary, mirrored_record: Dictionary) -> void:
@@ -333,6 +354,45 @@ func _check_source_aggregation_and_dedupe(multi_record: Dictionary, mirrored_rec
 	var blank_optional_entries := RoomActionListScript.action_entries_for_record(blank_optional_record)
 	if blank_optional_entries.size() != 2:
 		failures.append("RW06-1 blank optional emit/command fields hid or collapsed valid distinct action ids.")
+	var record_authority_mirror := {
+		"object_id": "overflow_fixture:record_authority_mirror",
+		"object_type": "game",
+		"owner_namespace": "scenario",
+		"stable_object_id": "record_authority_mirror",
+		"scenario_command_id": "record_owned_command",
+		"inline_actions": [{"id": "inline_alias"}],
+		"scenario_sequence_actions": [{"id": "sequence_owned_command"}],
+		"available_actions": [{"id": "available_alias"}],
+	}
+	var record_authority_entries := RoomActionListScript.action_entries_for_record(record_authority_mirror)
+	if record_authority_entries.size() != 2 \
+			or str((record_authority_entries[0] as Dictionary).get("_overflow_source", "")) != RoomActionListScript.SOURCE_INLINE \
+			or str((record_authority_entries[0] as Dictionary).get("id", "")) != "inline_alias" \
+			or str((record_authority_entries[1] as Dictionary).get("_overflow_source", "")) != RoomActionListScript.SOURCE_SEQUENCE \
+			or str((record_authority_entries[1] as Dictionary).get("id", "")) != "sequence_owned_command":
+		failures.append("RW06-1 record-level scenario authority did not dedupe inline/available mirrors with first-source precedence while preserving the sequence-owned action: %s." % JSON.stringify(record_authority_entries))
+	var action_precedence_record := record_authority_mirror.duplicate(true)
+	action_precedence_record["scenario_sequence_actions"] = []
+	action_precedence_record["inline_actions"] = [{
+		"id": "action_override_alias",
+		"scenario_command_id": "action_owned_command",
+	}]
+	var action_precedence_entries := RoomActionListScript.action_entries_for_record(action_precedence_record)
+	if action_precedence_entries.size() != 2 \
+			or str((action_precedence_entries[0] as Dictionary).get("_overflow_dispatch_identity", "")) \
+			== str((action_precedence_entries[1] as Dictionary).get("_overflow_dispatch_identity", "")):
+		failures.append("RW06-1 action-level scenario authority did not override the record-level command before dedupe: %s." % JSON.stringify(action_precedence_entries))
+	var emit_only_scenario := {
+		"object_id": "scenario::emit_only",
+		"object_type": "scenario",
+		"owner_namespace": "scenario",
+		"stable_object_id": "emit_only",
+		"inline_actions": [{"id": "", "emit_object_id": "scenario_action:emit_only"}],
+	}
+	var emit_only_entries := RoomActionListScript.action_entries_for_record(emit_only_scenario)
+	if emit_only_entries.size() != 1 \
+			or not str((emit_only_entries[0] as Dictionary).get("_overflow_dispatch_identity", "")).begins_with("scenario:"):
+		failures.append("RW06-1 visible emit-only true-scenario action escaped scenario identity parity: %s." % JSON.stringify(emit_only_entries))
 
 
 func _check_action_key_authority_seal() -> void:
@@ -354,6 +414,7 @@ func _check_action_key_authority_seal() -> void:
 		"object_type": "scenario_sequence",
 		"owner_namespace": "scenario",
 		"stable_object_id": "console",
+		"scenario_command_id": "record_prepare",
 		"enabled": true,
 		"interactive": true,
 		"scenario_sequence_actions": [action],
@@ -385,13 +446,116 @@ func _check_action_key_authority_seal() -> void:
 		if changed_entries.size() != 1 \
 				or str((changed_entries[0] as Dictionary).get("_overflow_action_key", "")) == baseline_key:
 			failures.append("RW06-1 overflow action key did not seal %s." % str(field_value))
-	for record_field_value in ["owner_namespace", "stable_object_id"]:
+	for record_field_value in ["owner_namespace", "stable_object_id", "scenario_command_id"]:
 		var changed_record := record.duplicate(true)
 		changed_record[str(record_field_value)] = "%s_changed" % str(changed_record.get(str(record_field_value), "authority"))
 		var changed_entries := RoomActionListScript.action_entries_for_record(changed_record)
 		if changed_entries.size() != 1 \
 				or str((changed_entries[0] as Dictionary).get("_overflow_action_key", "")) == baseline_key:
 			failures.append("RW06-1 overflow action key did not seal record %s." % str(record_field_value))
+
+
+func _check_record_scenario_authority_staleness(
+	app: Control,
+	action_list: Control,
+	restore_records: Array,
+	activations: Array[String]
+) -> void:
+	var base_record := {
+		"object_id": "overflow_fixture:record_scenario_authority",
+		"object_type": "game",
+		"owner_namespace": "scenario",
+		"stable_object_id": "record_scenario_authority",
+		"scenario_owner_namespace": "scenario",
+		"scenario_stable_object_id": "record_scenario_authority",
+		"label": "Record scenario authority",
+		"presentation_mode": "overflow",
+		"presentation_required": true,
+		"visible": true,
+		"interactive": true,
+		"enabled": true,
+		"available_actions": [{
+			"id": "ordinary_action_alias",
+			"label": "Record-owned command",
+		}],
+	}
+	var cases := [
+		{
+			"name": "mutated",
+			"rendered_has_command": true,
+			"rendered_command": "record_owned_command",
+			"live_has_command": true,
+			"live_command": "changed_record_command",
+		},
+		{
+			"name": "removed",
+			"rendered_has_command": true,
+			"rendered_command": "record_owned_command",
+			"live_has_command": false,
+			"live_command": "",
+		},
+		{
+			"name": "added",
+			"rendered_has_command": false,
+			"rendered_command": "",
+			"live_has_command": true,
+			"live_command": "added_record_command",
+		},
+	]
+	for case_value in cases:
+		var case_data := case_value as Dictionary
+		var rendered_record := base_record.duplicate(true)
+		if bool(case_data.get("rendered_has_command", false)):
+			rendered_record["scenario_command_id"] = str(case_data.get("rendered_command", ""))
+		else:
+			rendered_record.erase("scenario_command_id")
+		var live_record := rendered_record.duplicate(true)
+		if bool(case_data.get("live_has_command", false)):
+			live_record["scenario_command_id"] = str(case_data.get("live_command", ""))
+		else:
+			live_record.erase("scenario_command_id")
+		var rendered_entries := RoomActionListScript.action_entries_for_record(rendered_record)
+		var live_entries := RoomActionListScript.action_entries_for_record(live_record)
+		if rendered_entries.size() != 1 or live_entries.size() != 1:
+			failures.append("RW06-1 %s record-authority fixture did not resolve one action per snapshot." % str(case_data.get("name", "unknown")))
+			continue
+		var stale_action := (rendered_entries[0] as Dictionary).duplicate(true)
+		var stale_key := str(stale_action.get("_overflow_action_key", ""))
+		var live_key := str((live_entries[0] as Dictionary).get("_overflow_action_key", ""))
+		if stale_key.is_empty() or live_key.is_empty() or stale_key == live_key:
+			failures.append("RW06-1 %s live record-level scenario command change did not rotate the sealed action key." % str(case_data.get("name", "unknown")))
+			continue
+		_install_fixture_records(app, action_list, [rendered_record])
+		await _settle_frames(2)
+		action_list.open()
+		await process_frame
+		var stale_button := _action_button_by_key(action_list, stale_key)
+		if stale_button == null:
+			failures.append("RW06-1 %s record-authority fixture did not render its sealed action." % str(case_data.get("name", "unknown")))
+			action_list.close()
+			continue
+		stale_button.grab_focus()
+		await process_frame
+		# Change only the production lookup snapshot. The modal deliberately keeps
+		# its rendered record/action so selecting it exercises stale-key rejection.
+		_install_fixture_records(app, null, [live_record])
+		var before := _mutation_snapshot(app)
+		var activation_count := activations.size()
+		_send_mouse(stale_button.get_global_rect().get_center())
+		await _settle_frames(3)
+		var direct_result := bool(app.call("_activate_overflow_room_action", rendered_record, stale_action))
+		var overlay := action_list.get("_overlay") as Control
+		if direct_result \
+				or activations.size() != activation_count \
+				or _mutation_snapshot(app) != before \
+				or not bool(action_list.call("is_open")) \
+				or overlay == null \
+				or root.gui_get_focus_owner() != stale_button \
+				or not overlay.is_ancestor_of(stale_button):
+			failures.append("RW06-1 %s live record-level scenario command change did not reject without signal/state/modal/focus drift." % str(case_data.get("name", "unknown")))
+		action_list.close()
+	_install_fixture_records(app, action_list, restore_records)
+	await _settle_frames(2)
 
 
 func _check_canvas_exclusion(records: Array) -> void:
@@ -991,6 +1155,9 @@ func _source_function_body(source: String, function_name: String) -> String:
 	if start < 0:
 		return ""
 	var finish := source.find("\nfunc ", start + marker.length())
+	var static_finish := source.find("\nstatic func ", start + marker.length())
+	if static_finish >= 0 and (finish < 0 or static_finish < finish):
+		finish = static_finish
 	return source.substr(start) if finish < 0 else source.substr(start, finish - start)
 
 

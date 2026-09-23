@@ -194,7 +194,7 @@ static func action_entries_for_record(record: Dictionary) -> Array:
 			var action := source_actions[index] as Dictionary
 			if not _action_is_visible(action):
 				continue
-			var dispatch_identity := _logical_dispatch_identity(record, action)
+			var dispatch_identity := _logical_dispatch_identity(record, action, source)
 			if seen_dispatch_identities.has(dispatch_identity):
 				continue
 			seen_dispatch_identities[dispatch_identity] = true
@@ -225,6 +225,7 @@ static func _action_is_visible(action: Dictionary) -> bool:
 
 static func _action_key(record: Dictionary, source: String, index: int, action: Dictionary) -> String:
 	var object_id := str(record.get("object_id", "")).strip_edges()
+	var effective_scenario_command_id := _effective_scenario_command_id(record, action, source)
 	var authority := {
 		"object_id": object_id,
 		"object_type": str(record.get("object_type", "")).strip_edges(),
@@ -232,10 +233,12 @@ static func _action_key(record: Dictionary, source: String, index: int, action: 
 		"record_stable_object_id": str(record.get("stable_object_id", "")).strip_edges(),
 		"record_scenario_owner_namespace": str(record.get("scenario_owner_namespace", "")).strip_edges(),
 		"record_scenario_stable_object_id": str(record.get("scenario_stable_object_id", "")).strip_edges(),
-		"dispatch_identity": str(action.get("_overflow_dispatch_identity", _logical_dispatch_identity(record, action))),
+		"dispatch_identity": str(action.get("_overflow_dispatch_identity", _logical_dispatch_identity(record, action, source))),
 		"emit_object_id": str(action.get("emit_object_id", "")).strip_edges(),
 		"action_id": str(action.get("id", "")).strip_edges(),
-		"scenario_command_id": _first_nonempty([action.get("scenario_command_id", ""), action.get("id", ""), record.get("scenario_command_id", "")]),
+		"action_scenario_command_id": str(action.get("scenario_command_id", "")).strip_edges(),
+		"record_scenario_command_id": str(record.get("scenario_command_id", "")).strip_edges(),
+		"effective_scenario_command_id": effective_scenario_command_id,
 		"scenario_owner_namespace": _first_nonempty([action.get("scenario_owner_namespace", ""), action.get("owner_namespace", ""), record.get("scenario_owner_namespace", ""), record.get("owner_namespace", ""), "scenario"]),
 		"scenario_stable_object_id": _first_nonempty([action.get("scenario_stable_object_id", ""), action.get("stable_object_id", ""), record.get("scenario_stable_object_id", ""), record.get("stable_object_id", ""), object_id]),
 		"scenario_idempotency_key": _first_nonempty([action.get("scenario_idempotency_key", ""), record.get("scenario_idempotency_key", "")]),
@@ -254,19 +257,21 @@ static func _action_key(record: Dictionary, source: String, index: int, action: 
 	return "%s:%s:%d:%s" % [object_id, source, index, JSON.stringify(authority).sha256_text()]
 
 
-static func _logical_dispatch_identity(record: Dictionary, action: Dictionary) -> String:
+static func _logical_dispatch_identity(record: Dictionary, action: Dictionary, source: String = "") -> String:
 	var object_id := str(record.get("object_id", "")).strip_edges()
 	var object_type := str(record.get("object_type", "")).strip_edges()
-	var action_id := _first_nonempty([action.get("scenario_command_id", ""), action.get("id", ""), action.get("emit_object_id", "")])
-	if object_type in ["scenario", "scenario_sequence", "scenario_scene_object", "scenario_actor", "character"] \
-			or not str(action.get("scenario_command_id", "")).strip_edges().is_empty():
+	var scenario_command_id := _effective_scenario_command_id(record, action, source)
+	if _uses_scenario_sequence_dispatch(record, source) \
+			or object_type == "scenario" \
+			or not scenario_command_id.is_empty():
 		var owner := _first_nonempty([action.get("scenario_owner_namespace", ""), action.get("owner_namespace", ""), record.get("scenario_owner_namespace", ""), record.get("owner_namespace", ""), "scenario"])
 		var stable_id := _first_nonempty([action.get("scenario_stable_object_id", ""), action.get("stable_object_id", ""), record.get("scenario_stable_object_id", ""), record.get("stable_object_id", ""), object_id])
 		var world_owner_token := _first_nonempty([action.get("world_sequence_owner_token", ""), record.get("world_sequence_owner_token", "")])
-		return "%s:%s:%s:%s" % ["world:%s" % world_owner_token if not world_owner_token.is_empty() else "scenario", owner, stable_id, action_id]
+		return "%s:%s:%s:%s" % ["world:%s" % world_owner_token if not world_owner_token.is_empty() else "scenario", owner, stable_id, scenario_command_id]
 	var emit_object_id := str(action.get("emit_object_id", "")).strip_edges()
 	if not emit_object_id.is_empty():
 		return "emit:%s" % emit_object_id
+	var action_id := str(action.get("id", "")).strip_edges()
 	if object_type == "game_hook":
 		return "game_hook:%s:%s:%s" % [
 			str(action.get("parent_id", record.get("parent_id", ""))),
@@ -274,6 +279,33 @@ static func _logical_dispatch_identity(record: Dictionary, action: Dictionary) -
 			action_id,
 		]
 	return "record:%s:%s" % [object_id, action_id]
+
+
+static func _effective_scenario_command_id(record: Dictionary, action: Dictionary, source: String) -> String:
+	# Sequence dispatch consumes only the action id. Every other path mirrors
+	# FoundationMain: action authority wins over record authority, and an
+	# ordinary id becomes a command only for a true scenario record.
+	if _uses_scenario_sequence_dispatch(record, source):
+		return str(action.get("id", "")).strip_edges()
+	var explicit_scenario_command_id := _first_nonempty([
+		action.get("scenario_command_id", ""),
+		record.get("scenario_command_id", ""),
+	])
+	if not explicit_scenario_command_id.is_empty():
+		return explicit_scenario_command_id
+	if str(record.get("object_type", "")).strip_edges() == "scenario":
+		return str(action.get("id", "")).strip_edges()
+	return ""
+
+
+static func _uses_scenario_sequence_dispatch(record: Dictionary, source: String) -> bool:
+	return source == SOURCE_SEQUENCE \
+		or str(record.get("object_type", "")).strip_edges() in [
+			"scenario_sequence",
+			"scenario_scene_object",
+			"scenario_actor",
+			"character",
+		]
 
 
 static func _first_nonempty(values: Array) -> String:
