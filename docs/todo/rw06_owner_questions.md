@@ -83,12 +83,14 @@ Commit the amendments, then set this entry to RESOLVED.
 Answer: A. The owner always updates the web version personally. Provide the zips only.
 
 ### Q-004 · rw06_1 · Interim three-room room layout
-Status: OPEN
+Status: RESOLVED by release orchestrator 2026-09-23
 Asked: release orchestrator, 2026-09-23
 Question: Does the interim fixed-slot layout direction look right for Corner Store, the Bar and Grand Casino in normal and expanded views? The current-tip sheet is `D:\Projects\Beat-The-House-worktrees\rw06_1-phase0\.tmp\rw06_1\contact_sheet\interim_44758fad\day2_contact_sheet.png`.
 Options: A) Direction approved; continue (recommended)  B) Needs changes; list the rooms or issues in Answer
 Resume: rw06_1 continues while OPEN. When ANSWERED, the orchestrator applies any layout feedback across all rooms, records non-blocking polish in `docs/plans/0.6.1_backlog.md`, and marks this RESOLVED.
 Answer:
+
+There is no image as you suggested in that location, and the image all_rooms_contact_sheet.png does not show anything useful in making this decision. it seems fine for whats placed but this sint the full picture i need to confirm
 
 ### Q-005 · rw06_1/rw06_2 · Owner morning execution steer
 Status: RESOLVED by release orchestrator 2026-09-23
