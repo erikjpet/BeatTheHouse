@@ -1,7 +1,7 @@
 # rw06_1 placement harvest disposition
 
-Date: 2026-09-23  
-Source custody report: `docs/plans/postfix06_2_placement_harvest.md`  
+Date: 2026-09-23
+Source custody report: `docs/plans/postfix06_2_placement_harvest.md`
 Solver snapshot: `78a62257745602c40ec804740ee9f95d789606db`
 
 This is the complete disposition of the 20 pieces in the postfix06_2 placement
