@@ -86,6 +86,18 @@ MAP_BASE_CAP = {
         "surface_item": 3,
         "wall_mounted": 1,
     },
+    "gas_station_casino": {
+        "behind_counter_person": 0,
+        "doorway": 2,
+        "floor_fixture": 2,
+        "ground_marker": 0,
+        "group": 0,
+        "hanging": 0,
+        "seated_person": 0,
+        "standing_person": 0,
+        "surface_item": 2,
+        "wall_mounted": 2,
+    },
     "bar": {
         "doorway": 2,
         "floor_fixture": 1,
@@ -1187,6 +1199,7 @@ def author_map(
     checkpoint("initialize")
     zones = copy.deepcopy(archetype.get("semantic_zones", {})) if isinstance(archetype.get("semantic_zones"), dict) else {}
     class_overrides = copy.deepcopy(map_data.get("class_overrides", {})) if isinstance(map_data.get("class_overrides"), dict) else {}
+    previous_scenario_slot_ids = copy.deepcopy(map_data.get("scenario_slot_ids", {})) if isinstance(map_data.get("scenario_slot_ids"), dict) else {}
     # Production game semantics outrank legacy placement hints. Several maps
     # still described full cabinets/racks as wall or countertop decorations,
     # which produced compatible-looking slots that the live classifier could
@@ -2604,6 +2617,20 @@ def author_map(
         if 0 <= color < len(exit_slots):
             slot_id = str(exit_slots[color]["id"])
             scenario_slot_ids[key] = slot_id
+
+    # Keep explicit data-authored preferences for states outside the common
+    # active-phase authoring set (notably aftermath evidence). The static
+    # validator replays those states and rejects stale, incompatible, or
+    # colliding choices; retaining the data here makes a targeted preference a
+    # stable JSON edit instead of a room-specific production-code exception.
+    authored_slot_ids = {
+        str(slot.get("id", ""))
+        for slot in stage_slots + exit_slots
+        if isinstance(slot, dict)
+    }
+    for key, slot_id in sorted(previous_scenario_slot_ids.items()):
+        if key not in scenario_slot_ids and str(slot_id) in authored_slot_ids:
+            scenario_slot_ids[str(key)] = str(slot_id)
 
     actor_routes: list[dict[str, Any]] = []
     for route_id, (start_key, end_key) in sorted(authored_route_states.items()):
