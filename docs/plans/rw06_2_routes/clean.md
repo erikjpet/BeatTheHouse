@@ -810,6 +810,73 @@ same process before launch, verify a zero pre-process census, and then execute
 one canonical Godot 4.6 `systems/content` process with no retry. It remains
 pending a fresh serialized lease.
 
+## 2026-09-23 isolated replacement focused PASS
+
+At exact pushed tip `fbcefad6903c3a5512480cda63fc690b9423b6f2` (the same
+product/test tree as `c3869acdc757d004fafa35be1e9dfb31db4c3ea5`), one
+serialized generated `systems/content` process executed only `content` with an
+evidence-local `APPDATA`. The authoritative JSON report passed with zero
+failures in 301,966 ms (278,261 ms in the check), and the global Godot process
+count was zero before and after. No retry occurred.
+
+Evidence root:
+`.tmp/rw06_2/focused-fbcefad6-isolated-content/20260923-150543-183`.
+The report SHA-256 is
+`C44C4311556872659F61053022534C4A366F5BB33198E06E2EA5FACFCBC910E0`,
+stdout is
+`2EF633B159E93C186C87D1FA2D8F0CF6900CC46C7B4D21BD1956CFF60936E7B3`,
+stderr is
+`7E8F5DEB3BF520C8ABB23951DEAFB0669C320CEBB4CEB6668C755C617C5FD7D3`,
+the Godot log is
+`F58140D0B03633D5D30265D38CFAD7E054779B66BB1DF510A745A3353E580DDF`,
+and metadata is
+`B8F2CDD9E02F42C54491B8F821C3D754963A0E2E0AC59238F069EFA11CB964E1`.
+The only diagnostics were the three external `misc2` controller mappings and
+the generic ObjectDB warning with exactly one `RefCounted` at reference count
+zero. The Windows PowerShell wrapper did not populate its native exit-code
+property, so the authoritative PASS report and completion output are retained
+without inventing that metadata value.
+
+## 2026-09-23 probe 17: required machine-jam event (non-qualifying)
+
+Exactly one clean replay used pushed tip `fbcefad6903c3a5512480cda63fc690b9423b6f2`.
+The route reached Kitty Cat Lounge with $63, accepted the Grand invitation, and
+then recognized Grand as a visible but temporarily unaffordable target. This
+proves the public-map correction reached the replay. The first $2 recovery spin
+settled at $61 / Heat 1 and opened the normal blocking `machine_jam` event with
+two public, enabled, confirmation-gated choices: `wait` (`Bankroll -3; Heat
+-3`) and `push` (`Heat +6`). The old boundary rejected every event modal before
+examining it, so the run failed closed at action 36. This is a replay-policy
+blocker, not a product arc interruption.
+
+Evidence root:
+`.tmp/rw06_2/exploratory/clean-tip-fbcefad6-probe17/20260923-151816-929-11848`.
+The summary SHA-256 is
+`D5F68A22DF266CB58C2A0D0937BDE5BCBCE205B873702297DF19EB3D37943BCE`,
+the public trace is
+`321627303036D31F88830E5377893024CF587AA8499D99FBF209214022E25FD8`,
+and the money curve is
+`64C52B5449F7CFC83F0658BCBB9442707AC9A946862BB518DACB0C1CF8A2D1F0`.
+The decisive public observation is
+`.tmp/agent_playtest/2026-09-23/rw062-clean-11848-1-efe7a2769c/0059.result.json`
+(SHA-256 `B280CEDB7934019CA8AB62B29266AE6E74BC01FB5A9B05774F8B384B8C0DE434`),
+with matching screenshot `0059.png` (SHA-256
+`548784BF966846ACD38057C2DC350C80295FA9042CDF8A791314156507ED1CBD`).
+The exact owned process exited without force, zero Godot processes remained,
+and no retry occurred.
+
+The replay now allowlists only that exact public modal during Grand-fare slot
+recovery. It validates the event shape, exact case-sensitive `wait`/`push`
+ids, enabled and confirmation signals, and visible consequence summaries. It
+chooses `push` through Heat 24 to preserve fare cash and `wait` above 24 to
+protect the clean cap, using the existing confirmation-aware visible-choice
+path. TalkDock, unknown/ambiguous events, schema drift, and unresolved or
+chained modals still fail closed. Two valid and nine hostile engine-free
+fixtures pass; the source-contract report SHA-256 is
+`3CDD3002EB48DE8E0716B14AF4BB232749A2E0EDC7DB4B90F211C9232459AD80`,
+and the full static project validator passes. A later serialized live probe
+must prove the new policy; no additional engine run was used for this change.
+
 ## Player intent
 
 Reach the Grand Casino, earn Bronze, Silver, and Gold Players Card tiers without

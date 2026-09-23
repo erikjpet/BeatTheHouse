@@ -6,6 +6,7 @@ $ErrorActionPreference = 'Stop'
 
 $Worktree = Split-Path -Parent $PSScriptRoot
 $RunnerPath = Join-Path $PSScriptRoot 'rw06_2_ending_replay.ps1'
+$ReplayPolicyPath = Join-Path $PSScriptRoot 'rw06_2_replay_policies.ps1'
 $LauncherPath = Join-Path $PSScriptRoot 'agent_playtest_session.ps1'
 $BridgePath = Join-Path $PSScriptRoot 'agent_playtest_session.gd'
 $SanitizerPath = Join-Path $PSScriptRoot 'agent_playtest_public_observation.gd'
@@ -18,6 +19,8 @@ $wheelSequenceValidFixtures = 0
 $wheelSequenceHostileFixtures = 0
 $buttonViewportValidFixtures = 0
 $buttonViewportHostileFixtures = 0
+$machineJamValidFixtures = 0
+$machineJamHostileFixtures = 0
 
 function Add-Failure {
     param([Parameter(Mandatory = $true)][string]$Message)
@@ -144,7 +147,27 @@ function Assert-ButtonInputRouteFixture {
     return $route
 }
 
-foreach ($path in @($RunnerPath, $LauncherPath, $BridgePath, $SanitizerPath, $ObservationContractPath)) {
+function New-MachineJamPolicyFixture {
+    param([int]$HeatLevel = 1)
+    return [pscustomobject]@{
+        event_popup = [pscustomobject]@{
+            visible = $true
+            blocking = $true
+            dismissible = $false
+            popup_type = 'triggered_event'
+            event_id = 'machine_jam'
+            choice_ids = @('wait', 'push')
+            choices = @(
+                [pscustomobject]@{ id = 'wait'; enabled = $true; requires_confirm = $true; consequence_summary = 'Bankroll -3; Heat -3'; impact_summary = 'Bankroll -3; Heat -3' },
+                [pscustomobject]@{ id = 'push'; enabled = $true; requires_confirm = $true; consequence_summary = 'Heat +6'; impact_summary = 'Heat +6' }
+            )
+        }
+        talk = [pscustomobject]@{ visible = $false }
+        heat_level = $HeatLevel
+    }
+}
+
+foreach ($path in @($RunnerPath, $ReplayPolicyPath, $LauncherPath, $BridgePath, $SanitizerPath, $ObservationContractPath)) {
     if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
         Add-Failure "Required rw06_2 source is missing: $path"
     }
@@ -152,13 +175,89 @@ foreach ($path in @($RunnerPath, $LauncherPath, $BridgePath, $SanitizerPath, $Ob
 
 if ($failures.Count -eq 0) {
     Assert-PowerShellParses $RunnerPath
+    Assert-PowerShellParses $ReplayPolicyPath
     Assert-PowerShellParses $LauncherPath
 
     $runner = Get-Content -LiteralPath $RunnerPath -Raw
+    $replayPolicy = Get-Content -LiteralPath $ReplayPolicyPath -Raw
     $launcher = Get-Content -LiteralPath $LauncherPath -Raw
     $bridge = Get-Content -LiteralPath $BridgePath -Raw
     $sanitizer = Get-Content -LiteralPath $SanitizerPath -Raw
     $observationContract = Get-Content -LiteralPath $ObservationContractPath -Raw
+
+    try {
+        . $ReplayPolicyPath
+    }
+    catch {
+        Add-Failure "Replay policy helper could not be loaded: $($_.Exception.Message)"
+    }
+
+    if ($null -ne (Get-Command 'Select-GrandFareMachineJamChoice' -ErrorAction SilentlyContinue)) {
+        $validMachineJamFixtures = @(
+            [pscustomobject]@{ label = 'low-heat-preserves-fare'; fixture = (New-MachineJamPolicyFixture -HeatLevel 1); expected = 'push' },
+            [pscustomobject]@{ label = 'high-heat-protects-clean-cap'; fixture = (New-MachineJamPolicyFixture -HeatLevel 25); expected = 'wait' }
+        )
+        $machineJamValidFixtures = $validMachineJamFixtures.Count
+        foreach ($case in $validMachineJamFixtures) {
+            try {
+                $actual = Select-GrandFareMachineJamChoice -EventPopup $case.fixture.event_popup -Talk $case.fixture.talk -HeatLevel $case.fixture.heat_level
+                if ([string]$actual -cne [string]$case.expected) {
+                    Add-Failure "Valid machine_jam fixture '$($case.label)' chose '$actual' instead of '$($case.expected)'."
+                }
+            }
+            catch {
+                Add-Failure "Valid machine_jam fixture '$($case.label)' threw: $($_.Exception.Message)"
+            }
+        }
+
+        $wrongEvent = New-MachineJamPolicyFixture
+        $wrongEvent.event_popup.event_id = 'unlisted_event'
+        $missingChoice = New-MachineJamPolicyFixture
+        $missingChoice.event_popup.choice_ids = @('wait')
+        $missingChoice.event_popup.choices = @($missingChoice.event_popup.choices | Where-Object { $_.id -ceq 'wait' })
+        $duplicateChoice = New-MachineJamPolicyFixture
+        $duplicateChoice.event_popup.choices = @($duplicateChoice.event_popup.choices[0], $duplicateChoice.event_popup.choices[0])
+        $disabledChoice = New-MachineJamPolicyFixture
+        $disabledChoice.event_popup.choices[1].enabled = $false
+        $changedConsequence = New-MachineJamPolicyFixture
+        $changedConsequence.event_popup.choices[1].consequence_summary = 'Heat +5'
+        $nonBooleanEnabled = New-MachineJamPolicyFixture
+        $nonBooleanEnabled.event_popup.choices[1].enabled = 'true'
+        $caseMutatedChoiceIds = New-MachineJamPolicyFixture
+        $caseMutatedChoiceIds.event_popup.choice_ids = @('WAIT', 'PUSH')
+        $visibleTalk = New-MachineJamPolicyFixture
+        $visibleTalk.talk.visible = $true
+        $extraChoice = New-MachineJamPolicyFixture
+        $extraChoice.event_popup.choice_ids = @('wait', 'push', 'guess')
+        $extraChoice.event_popup.choices = @($extraChoice.event_popup.choices) + @([pscustomobject]@{ id = 'guess'; enabled = $true; requires_confirm = $true; consequence_summary = ''; impact_summary = '' })
+        $hostileMachineJamFixtures = @(
+            [pscustomobject]@{ label = 'wrong-event-id'; fixture = $wrongEvent },
+            [pscustomobject]@{ label = 'missing-choice'; fixture = $missingChoice },
+            [pscustomobject]@{ label = 'duplicate-choice'; fixture = $duplicateChoice },
+            [pscustomobject]@{ label = 'disabled-choice'; fixture = $disabledChoice },
+            [pscustomobject]@{ label = 'changed-consequence'; fixture = $changedConsequence },
+            [pscustomobject]@{ label = 'non-boolean-enabled'; fixture = $nonBooleanEnabled },
+            [pscustomobject]@{ label = 'case-mutated-choice-ids'; fixture = $caseMutatedChoiceIds },
+            [pscustomobject]@{ label = 'visible-talk'; fixture = $visibleTalk },
+            [pscustomobject]@{ label = 'extra-choice'; fixture = $extraChoice }
+        )
+        $machineJamHostileFixtures = $hostileMachineJamFixtures.Count
+        foreach ($case in $hostileMachineJamFixtures) {
+            $threw = $false
+            try {
+                $null = Select-GrandFareMachineJamChoice -EventPopup $case.fixture.event_popup -Talk $case.fixture.talk -HeatLevel $case.fixture.heat_level
+            }
+            catch {
+                $threw = $true
+            }
+            if (-not $threw) {
+                Add-Failure "Hostile machine_jam fixture '$($case.label)' did not fail closed."
+            }
+        }
+    }
+    else {
+        Add-Failure 'Replay policy helper did not export Select-GrandFareMachineJamChoice.'
+    }
 
     $validWheelFixture = @'
 func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
@@ -475,6 +574,10 @@ func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
     Assert-NotMatch $runner 'Open-EventObject\s+-EventId\s+''grand_casino_invite''' 'The Grand Casino invitation must not use the generic event-open path when the selected object already exposes explicit actions.'
     Assert-Match $runner '(?s)function Reach-GrandCasino.*?\$grand\s*=\s*@\(\$nodes.*?archetype_id.*?grand_casino.*?\$grand\.Count\s+-gt\s+1.*?travel_enabled.*?Travel-ToNode.*?travel_disabled_reason.*?Not enough bankroll.*?\$cost\s+-le\s+\$cash.*?claims insufficient bankroll.*?Earn-GrandFareThroughVisibleSlot\s+-RequiredCash\s+\$cost.*?continue' 'The clean replay must prefer the exact visible Grand route, validate its public affordability math, and recover the shortfall before spending more on unrelated travel.'
     Assert-Match $runner '(?s)function Earn-GrandFareThroughVisibleSlot.*?MaximumSpins\s*=\s*24.*?Enter-VisibleSlotForGrandFare.*?Wait-ForVisibleSlotActionBoundary.*?status_hud.*?bankroll.*?slot_spin.*?Leave-GameSurface.*?Bounded visible slot play did not earn the Grand fare' 'Grand fare recovery must use bounded visible slot actions and public bankroll evidence, then leave through the rendered game control.'
+    Assert-Match $runner '(?s)function Resolve-GrandFareMachineJamIfVisible.*?status_hud.*?heat_level.*?Select-GrandFareMachineJamChoice.*?Choose-VisibleChoice.*?Wait-Frames.*?modal remained visible or chained into another modal' 'Grand fare recovery must route the exact public machine_jam policy through the confirmation-aware visible-choice path and fail closed if any modal remains.'
+    Assert-Match $runner '(?s)function Wait-ForVisibleSlotActionBoundary.*?Resolve-GrandFareMachineJamIfVisible.*?continue.*?slot_handpay_acknowledge' 'Only the Grand fare slot boundary may resolve the allowlisted public machine_jam before normal slot actions resume.'
+    Assert-Match $replayPolicy '(?s)function Select-GrandFareMachineJamChoice.*?TalkDock state.*?machine_jam.*?triggered_event.*?exactly one wait and one push.*?Bankroll -3; Heat -3.*?Heat \+6.*?requires_confirm.*?HeatLevel\s+-le\s+24.*?return ''push''.*?return ''wait''' 'The shared replay policy must strictly validate the public machine_jam shape and choose push only through heat 24.'
+    Assert-NotMatch $replayPolicy '(?:slot_nudge|slot_auto_toggle|autoplay|narrative_flags|run_state|local_narrative_flags|crew_heist_state|trigger_context|scenario_layout_audit)' 'The machine_jam policy must not use slot cheats, autoplay, or private state.'
     Assert-Match $runner '(?s)function Wait-ForVisibleSlotActionBoundary.*?slot_handpay_acknowledge.*?slot_bonus_.*?slot_spin.*?within twelve seconds' 'Grand fare recovery must finish visible slot presentation and deterministic bonus controls before the next Spin.'
     Assert-NotMatch $runner '(?ms)^function Enter-VisibleSlotForGrandFare(?:(?!^function Reach-GrandCasino).)*(?:slot_nudge|slot_auto_toggle|narrative_flags|run_state)' 'Grand fare recovery must not use a slot cheat, autoplay, or private state.'
     Assert-Match $runner '(?s)function Select-UniquePublicVerticalScrollSurface.*?SurfaceId\s+-cne\s+''run_menu''.*?matches\.Count\s+-ne\s+1.*?axis.*?vertical.*?rendered.*?can_scroll_\$Direction' 'Run-menu scroll selection must reject unsupported, ambiguous, hidden, wrong-axis, and direction-blocked public surfaces.'
@@ -577,6 +680,8 @@ $report = [ordered]@{
     wheel_sequence_hostile_fixtures = $wheelSequenceHostileFixtures
     button_viewport_valid_fixtures = $buttonViewportValidFixtures
     button_viewport_hostile_fixtures = $buttonViewportHostileFixtures
+    machine_jam_valid_fixtures = $machineJamValidFixtures
+    machine_jam_hostile_fixtures = $machineJamHostileFixtures
     failures = @($failures)
 }
 $report | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $ReportPath -Encoding utf8

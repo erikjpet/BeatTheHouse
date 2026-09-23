@@ -20,6 +20,7 @@ $ErrorActionPreference = 'Stop'
 
 $Worktree = Split-Path -Parent $PSScriptRoot
 $SessionTool = Join-Path $PSScriptRoot 'agent_playtest_session.ps1'
+$ReplayPolicyTool = Join-Path $PSScriptRoot 'rw06_2_replay_policies.ps1'
 $GodotBin = 'D:\Projects\Beat-The-House\.tools\godot-4.6-stable\Godot_v4.6-stable_win64_console.exe'
 $Schema = 'beat_the_house.agent_public_observation'
 $SchemaVersion = 1
@@ -38,6 +39,10 @@ $ExpectedOutcomes = @{
 if (-not (Test-Path -LiteralPath $SessionTool)) {
     throw "Production-input launcher is missing: $SessionTool"
 }
+if (-not (Test-Path -LiteralPath $ReplayPolicyTool)) {
+    throw "Replay policy helper is missing: $ReplayPolicyTool"
+}
+. $ReplayPolicyTool
 if (-not (Test-Path -LiteralPath $GodotBin)) {
     throw "Pinned Godot binary is missing: $GodotBin"
 }
@@ -1613,15 +1618,46 @@ function Enter-VisibleSlotForGrandFare {
 }
 
 
+function Resolve-GrandFareMachineJamIfVisible {
+    $eventVisible = Get-Value $script:LastObservation @('event_popup', 'visible') $null
+    $talkVisible = Get-Value $script:LastObservation @('talk', 'visible') $null
+    if ($eventVisible -isnot [bool] -or $talkVisible -isnot [bool]) {
+        throw 'Grand fare recovery requires boolean public modal visibility signals.'
+    }
+    if (-not [bool]$eventVisible -and -not [bool]$talkVisible) {
+        return $false
+    }
+
+    $heatLevel = Get-Value $script:LastObservation @('status_hud', 'heat_level') $null
+    $choiceId = Select-GrandFareMachineJamChoice `
+        -EventPopup (Get-Value $script:LastObservation @('event_popup') $null) `
+        -Talk (Get-Value $script:LastObservation @('talk') $null) `
+        -HeatLevel $heatLevel
+    $null = Choose-VisibleChoice `
+        -ChoiceId $choiceId `
+        -Intent "resolve the exact visible machine_jam during Grand fare recovery using public heat $heatLevel"
+    Wait-Frames -Frames 10 -Intent 'wait for the confirmed public machine_jam choice to resolve'
+
+    $postEventVisible = Get-Value $script:LastObservation @('event_popup', 'visible') $null
+    $postTalkVisible = Get-Value $script:LastObservation @('talk', 'visible') $null
+    if ($postEventVisible -isnot [bool] -or $postTalkVisible -isnot [bool]) {
+        throw 'The public modal visibility schema disappeared after the machine_jam confirmation.'
+    }
+    if ([bool]$postEventVisible -or [bool]$postTalkVisible) {
+        throw 'The allowlisted machine_jam modal remained visible or chained into another modal after confirmation.'
+    }
+    return $true
+}
+
+
 function Wait-ForVisibleSlotActionBoundary {
     for ($step = 0; $step -lt 24; $step++) {
         if ([string](Get-Value $script:LastObservation @('screen', 'screen') '') -ne 'GAME' -or
             [string](Get-Value $script:LastObservation @('game', 'game_id') '') -ne 'slot') {
             throw 'Grand fare recovery left the visible slot surface unexpectedly.'
         }
-        if ([bool](Get-Value $script:LastObservation @('event_popup', 'visible') $false) -or
-            [bool](Get-Value $script:LastObservation @('talk', 'visible') $false)) {
-            throw 'A modal interrupted Grand fare recovery; the replay will not guess through it.'
+        if (Resolve-GrandFareMachineJamIfVisible) {
+            continue
         }
 
         if ($null -ne (Find-GameAction -Action 'slot_handpay_acknowledge')) {
