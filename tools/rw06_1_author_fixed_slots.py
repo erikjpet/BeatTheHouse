@@ -105,6 +105,10 @@ MAP_BASE_CAP = {
         "standing_person": 0,
         "surface_item": 1,
     },
+    "small_underground_casino:casino": {
+        "group": 0,
+        "surface_item": 2,
+    },
 }
 LABEL_W = 88.0
 LABEL_H = 15.0
