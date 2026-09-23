@@ -1984,9 +1984,29 @@ func _check_connected_town_foundation(library: ContentLibrary, failures: Array) 
 	}
 	var rumor_event := EventModuleScript.new()
 	rumor_event.setup(library.event("town_rumor_staff"), library)
-	var rumor_choices := rumor_event.choices(run_state, run_state.current_environment)
+	var rumor_choices := rumor_event.choice_views(run_state, run_state.current_environment)
 	if rumor_choices.is_empty() or str((rumor_choices[0] as Dictionary).get("text", "")) != str(scenario_rumor.get("line", "")):
 		failures.append("Staff dialogue/event delivery did not surface the selected true rumor line.")
+	var rumor_conversation := rumor_event.conversation_summary(run_state, run_state.current_environment, rumor_choices)
+	if not rumor_conversation.contains(str(scenario_rumor.get("line", ""))) \
+			or not rumor_conversation.contains("before you choose your next room"):
+		failures.append("Staff rumor conversation did not hand over the live place/happening line and its authored importance cue.")
+	if not run_state.enqueue_triggered_event("town_rumor_staff", "event_object", {
+		"environment_snapshot": RunStateScript.environment_context_snapshot(run_state.current_environment),
+		"summary_override": rumor_conversation,
+	}, {"presentation": "talk", "speaker": {"role": "staff", "name": "Staff"}}):
+		failures.append("Staff rumor conversation could not be queued in the existing TalkDock state.")
+	if run_state.pending_talk_event("town_rumor_staff").is_empty() \
+			or JsonCoerceScript._raw_string_array(run_state.current_environment.get("resolved_event_ids", [])).has("town_rumor_staff") \
+			or not rumor_event.can_trigger(run_state, run_state.current_environment):
+		failures.append("Staff rumor actor did not remain live while its conversation was open.")
+	var restored_rumor_run := RunStateScript.new()
+	restored_rumor_run.from_dict(run_state.to_dict())
+	var restored_rumor_entry := restored_rumor_run.pending_talk_event("town_rumor_staff")
+	var restored_rumor_context := JsonCoerceScript._copy_dict(restored_rumor_entry.get("context", {}))
+	if restored_rumor_entry.is_empty() \
+			or str(restored_rumor_context.get("summary_override", "")) != rumor_conversation:
+		failures.append("An open staff rumor conversation did not survive save/load.")
 	var woven_event := EventModuleScript.new()
 	woven_event.setup(library.event("staff_shift_tip"), library)
 	var woven_choices := woven_event.choices(run_state, run_state.current_environment)
@@ -2011,10 +2031,15 @@ func _check_connected_town_foundation(library: ContentLibrary, failures: Array) 
 			or not str((dave_choices[0] as Dictionary).get("text", "")).contains("Dave") \
 			or not str((dave_choices[0] as Dictionary).get("text", "")).contains(str(scenario_rumor.get("line", ""))):
 		failures.append("Dave's existing bus delivery did not render a placeholder-free data-driven where-he's-been reference.")
-	var rumor_result := rumor_event.resolve(run_state, run_state.current_environment, "listen")
-	var heard := run_state.heard_rumor_for_node("bar")
+	var rumor_result := rumor_event.resolve(restored_rumor_run, restored_rumor_run.current_environment, "listen")
+	restored_rumor_run.complete_talk_event_resolution("town_rumor_staff")
+	var duplicate_rumor_result := rumor_event.resolve(restored_rumor_run, restored_rumor_run.current_environment, "listen")
+	var heard := restored_rumor_run.heard_rumor_for_node("bar")
+	run_state = restored_rumor_run
 	if not bool(rumor_result.get("ok", false)):
 		failures.append("Staff rumor event could not resolve through the existing event surface.")
+	if bool(duplicate_rumor_result.get("ok", false)) or not restored_rumor_run.pending_talk_event("town_rumor_staff").is_empty():
+		failures.append("Staff rumor conversation resolved more than once or survived its completed TalkDock choice.")
 	var heard_node := WorldMapScript.node_metadata_by_id(run_state.world_map, "bar")
 	if heard.is_empty() or JsonCoerceScript._copy_dict(heard_node.get("heard", {})).is_empty() or bool(heard_node.get("scouted", false)):
 		failures.append("Hearing a rumor did not write the distinct heard-tier map payload without granting full scouting.")

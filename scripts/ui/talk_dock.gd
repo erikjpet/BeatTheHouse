@@ -851,6 +851,10 @@ func _render_choices() -> void:
 		if choice_id.is_empty():
 			continue
 		var label := _choice_display_label(choice_data)
+		var enabled := bool(choice_data.get("enabled", true))
+		var disabled_reason := str(choice_data.get("disabled_reason", "")).strip_edges()
+		if not enabled and not disabled_reason.is_empty():
+			label = "%s\n%s" % [label, disabled_reason]
 		if _choice_requires_confirm(choice_data) and armed_choice_id == choice_id:
 			label = "Confirm: %s" % label
 		var response := HBoxContainer.new()
@@ -874,8 +878,6 @@ func _render_choices() -> void:
 		button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		button.clip_text = false
-		var enabled := bool(choice_data.get("enabled", true))
-		var disabled_reason := str(choice_data.get("disabled_reason", "")).strip_edges()
 		button.disabled = not enabled
 		button.tooltip_text = disabled_reason if not enabled else _response_icon_descriptions(icon_kinds)
 		response.add_child(button)

@@ -32,7 +32,6 @@ static func check(failures: Array) -> void:
 
 
 static func _check_live_event_presentation_restoration(failures: Array) -> void:
-	var listen_id := "event_response:town_rumor_staff:listen"
 	var live := {
 		"object_id": "event:town_rumor_staff",
 		"object_type": "event",
@@ -43,7 +42,9 @@ static func _check_live_event_presentation_restoration(failures: Array) -> void:
 		"icon_key": "conversation",
 		"prop": "staff",
 		"character_actor": {"name": "Staff", "role": "staff"},
-		"inline_actions": [{"id": listen_id, "emit_object_id": listen_id, "label": "Listen"}],
+		# Person events expose Talk through their sealed object action. They must
+		# never restore a response token that resolves the event before TalkDock.
+		"inline_actions": [],
 	}
 	var sealed := {
 		"object_id": "event:town_rumor_staff",
@@ -52,7 +53,7 @@ static func _check_live_event_presentation_restoration(failures: Array) -> void:
 		"label": "Word from Across Town",
 		"owner_namespace": "base",
 		"stable_object_id": "event:town_rumor_staff",
-		"available_actions": [{"id": "inspect_event_choices", "label": "Review responses"}],
+		"available_actions": [{"id": "inspect_event_choices", "label": "Talk"}],
 		"confirm_action_id": "inspect_event_choices",
 		"focus_rect": {"x": 0.2, "y": 0.2, "w": 0.1, "h": 0.1},
 	}
@@ -63,9 +64,8 @@ static func _check_live_event_presentation_restoration(failures: Array) -> void:
 	var actions := _array(restored.get("inline_actions", []))
 	if str(restored.get("visual_type", "")) != "character" \
 			or str(restored.get("asset_path", "")) != str(live.get("asset_path", "")) \
-			or actions.size() != 1 \
-			or str(_dict(actions[0]).get("emit_object_id", "")) != listen_id:
-		failures.append("Scenario finalization did not restore the authored Word from Across Town actor/icon and direct Listen response.")
+			or not actions.is_empty():
+		failures.append("Scenario finalization restored a direct Word from Across Town response instead of the conversation-first actor/icon presentation.")
 	if str(restored.get("confirm_action_id", "")) != "inspect_event_choices" or str(restored.get("focus_rect", {})) != str(sealed.get("focus_rect", {})):
 		failures.append("Live event presentation restoration overwrote sealed interaction authority.")
 

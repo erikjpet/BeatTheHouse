@@ -3130,7 +3130,10 @@ func resolve_event_choice(event_id: String, choice_id: String) -> Dictionary:
 	var event_environment := _event_environment_for_context(event_context)
 	if not event_module.can_trigger(run_state, event_environment, event_context):
 		_show_message("Event cannot trigger right now.")
-		if resolving_talk and run_state != null:
+		# Person conversations stay present until a choice actually resolves. This
+		# also protects a restored TalkDock entry from being retired by a transient
+		# eligibility change before the player can respond.
+		if resolving_talk and run_state != null and not _event_is_person_conversation(event_id):
 			run_state.complete_talk_event_resolution(event_id)
 			_refresh_talk_dock()
 		return {"ok": false, "errors": ["Event cannot trigger right now."]}
@@ -3177,7 +3180,7 @@ func resolve_event_choice(event_id: String, choice_id: String) -> Dictionary:
 	_play_result_drink_audio_cue(result)
 	if was_triggered_popup and run_state != null:
 		run_state.complete_triggered_event_resolution(event_id)
-	if resolving_talk and run_state != null:
+	if resolving_talk and run_state != null and bool(result.get("ok", false)):
 		run_state.complete_talk_event_resolution(event_id)
 	# Pal may explain debt only after the player has seen and resolved the actual
 	# family offer. Debt itself is applied slightly earlier inside EventModule,
@@ -4030,6 +4033,15 @@ func _refresh_talk_dock() -> void:
 	var entry_speaker: Dictionary = entry.get("speaker", {}) if typeof(entry.get("speaker", {})) == TYPE_DICTIONARY else {}
 	var entry_context: Dictionary = entry.get("context", {}) if typeof(entry.get("context", {})) == TYPE_DICTIONARY else {}
 	var summary_override := str(entry_context.get("summary_override", "")).strip_edges()
+	var summary_tracks_live_conditions := bool(entry_context.get("summary_tracks_live_conditions", false)) \
+		or _event_summary_tracks_live_conditions(event_id)
+	# Snapshot summaries preserve live rumor wording across save/reload. A
+	# condition-dependent line (Cass's missing-count response) must instead
+	# follow the current choice state while the same conversation stays queued.
+	# Inferring from content keeps pre-fix queued saves compatible.
+	if not summary_override.is_empty() and not summary_tracks_live_conditions:
+		option = option.duplicate(true)
+		option["summary"] = summary_override
 	var voice_line := str(entry_speaker.get("voice_line", "")).strip_edges()
 	var authored_guide_dialogue := bool(option.get("authored_guide_dialogue", false)) or (dialogue_id == "linda_cage_services" and run_state.is_tutorial_run())
 	# Dynamic dialogue summaries can contain exact run-state information such as
@@ -4306,6 +4318,84 @@ func _start_event_dialogue(event_id: String) -> bool:
 		"source": "event_object",
 		"source_object_id": "event:%s" % event_id,
 	})
+
+
+func _event_is_person_conversation(event_id: String, inspect_live_object: bool = false) -> bool:
+	if library == null:
+		return false
+	var event_definition := library.event(event_id)
+	if event_definition.is_empty():
+		return false
+	if EventModule.is_person_conversation_definition(event_definition):
+		return true
+	if inspect_live_object:
+		var object_data := _interactable_object("event:%s" % event_id)
+		return str(object_data.get("visual_type", "")) == "character"
+	return false
+
+
+func _event_summary_tracks_live_conditions(event_id: String) -> bool:
+	if library == null:
+		return false
+	var event_payload := JsonCoerceScript._copy_dict(library.event(event_id).get("payload", {}))
+	return not str(event_payload.get("active_count_missing_line", "")).strip_edges().is_empty()
+
+
+func _start_person_event_conversation(event_id: String) -> bool:
+	if run_state == null or library == null:
+		return false
+	var event_definition := library.event(event_id)
+	if event_definition.is_empty():
+		return false
+	var dialogue_id := str(event_definition.get("dialogue_id", "")).strip_edges()
+	if not dialogue_id.is_empty():
+		return _start_event_dialogue(event_id)
+	var event_option := _eligible_event_option(event_id)
+	if event_option.is_empty():
+		_show_message("Nothing is happening here right now.")
+		_refresh()
+		return false
+	if not run_state.pending_talk_event(event_id).is_empty():
+		_refresh_talk_dock()
+		_show_message("Conversation is already open.")
+		_refresh()
+		return true
+	_clear_recent_result_feedback()
+	var speaker: Dictionary = event_option.get("speaker", {}) if typeof(event_option.get("speaker", {})) == TYPE_DICTIONARY else {}
+	if speaker.is_empty() and typeof(event_definition.get("speaker", {})) == TYPE_DICTIONARY:
+		speaker = (event_definition.get("speaker", {}) as Dictionary).duplicate(true)
+	if speaker.is_empty():
+		speaker = {
+			"role": "stranger",
+			"name": str(event_option.get("display_name", event_id)),
+			"bind": "none",
+		}
+	speaker = _resolve_character_speaker(
+		_normalized_talk_speaker(speaker),
+		event_id,
+		str(speaker.get("voice_line_key", ""))
+	)
+	var context := {
+		"trigger": "event_object",
+		"type": "event_conversation",
+		"source": "event_object",
+		"source_object_id": "event:%s" % event_id,
+		"environment_snapshot": RunState.environment_context_snapshot(run_state.current_environment),
+		"summary_override": str(event_option.get("summary", "")).strip_edges(),
+		"summary_tracks_live_conditions": _event_summary_tracks_live_conditions(event_id),
+	}
+	if not run_state.enqueue_triggered_event(event_id, "event_object", context, {
+		"presentation": "talk",
+		"speaker": speaker,
+	}):
+		_show_message("Conversation is already queued.")
+		_refresh()
+		return false
+	_refresh_talk_dock()
+	_show_message("Talking to %s." % str(speaker.get("name", event_option.get("display_name", "the room"))))
+	_autosave_foundation_run("Autosaved.")
+	_refresh()
+	return true
 
 
 func _dialogue_option_for_entry(entry: Dictionary) -> Dictionary:
@@ -11138,6 +11228,9 @@ func _add_context_event_actions(card: VBoxContainer, event_id: String) -> void:
 		card.add_child(_muted_label("Nothing is happening here right now.", 13))
 		return
 	var event_definition := library.event(event_id) if library != null else {}
+	if _event_is_person_conversation(event_id):
+		_add_card_button(card, "Talk", Callable(self, "_start_person_event_conversation").bind(event_id), false, true)
+		return
 	if not str(event_definition.get("dialogue_id", "")).strip_edges().is_empty():
 		_add_card_button(card, "Talk", Callable(self, "_start_event_dialogue").bind(event_id), false, true)
 		return
@@ -11214,6 +11307,8 @@ func _event_choice_action_detail(choice_data: Dictionary) -> String:
 
 
 func _event_inline_response_actions(event_id: String, choices: Array) -> Array:
+	if _event_is_person_conversation(event_id):
+		return []
 	if _event_uses_canonical_popup_choice_surface(event_id) and not _event_allows_canvas_inline_response(event_id, choices):
 		return []
 	var actions: Array = []
@@ -14147,6 +14242,8 @@ func _activate_event_response_action(action_object_id: String) -> bool:
 		return false
 	var event_id := payload.substr(0, separator)
 	var choice_id := payload.substr(separator + 1)
+	if _event_is_person_conversation(event_id, true):
+		return _start_person_event_conversation(event_id)
 	event_choice_resolution_pending = true
 	call_deferred("_finish_deferred_event_response_action", event_id, choice_id)
 	return true
@@ -14213,6 +14310,8 @@ func _activate_event_object(event_id: String) -> bool:
 		_show_message("Nothing is happening here right now.")
 		_refresh()
 		return false
+	if _event_is_person_conversation(event_id, true):
+		return _start_person_event_conversation(event_id)
 	var choices: Array = event_option.get("choices", [])
 	if choices.is_empty():
 		_show_message("Choose a response.")

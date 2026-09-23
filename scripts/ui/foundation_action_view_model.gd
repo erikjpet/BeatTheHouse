@@ -794,11 +794,12 @@ static func eligible_event_option_with_context(host: Variant, event_id: String, 
 	var event_environment = environment_override if not environment_override.is_empty() else host.run_state.current_environment
 	if not event_module.can_trigger(host.run_state, event_environment, context):
 		return {}
-	var choices: Array = event_module.choices(host.run_state, event_environment)
+	var choices: Array = event_module.choice_views(host.run_state, event_environment)
 	if choices.is_empty():
 		return {}
 	var payload: Dictionary = event_definition.get("payload", {})
 	var option_choices: Array = []
+	var conversation_choices: Array = []
 	var scene_summary := str(payload.get("summary", ""))
 	var forced_choice_id: String = str(host._tutorial_forced_event_choice(event_id))
 	for choice in choices:
@@ -810,12 +811,11 @@ static func eligible_event_option_with_context(host: Variant, event_id: String, 
 			continue
 		if not forced_choice_id.is_empty() and choice_id != forced_choice_id:
 			continue
-		var choice_scene_summary := str(choice_data.get("scene_summary", "")).strip_edges()
-		if not choice_scene_summary.is_empty():
-			scene_summary = choice_scene_summary
+		conversation_choices.append(choice_data)
 		var consequence_summary := str(choice_data.get("presentation_consequence_summary", "")).strip_edges()
 		if consequence_summary.is_empty():
 			consequence_summary = host._event_choice_consequence_summary(choice_data)
+		var choice_enabled := bool(choice_data.get("enabled", true))
 		option_choices.append({
 			"id": choice_id,
 			"label": str(choice_data.get("label", choice_id)),
@@ -826,6 +826,8 @@ static func eligible_event_option_with_context(host: Variant, event_id: String, 
 			"check": JsonCoerceScript._copy_dict(choice_data.get("check", {})),
 			"consequence_summary": consequence_summary,
 			"requires_confirm": host._event_choice_requires_confirmation(choice_data),
+			"enabled": choice_enabled,
+			"disabled_reason": str(choice_data.get("disabled_reason", "")),
 			"identity_summary": "Choice ID: %s" % choice_id,
 			"impact_summary": consequence_summary,
 			"selected": event_id == host.selected_event_id and choice_id == host.selected_event_choice_id,
@@ -834,6 +836,7 @@ static func eligible_event_option_with_context(host: Variant, event_id: String, 
 		var option_choice: Dictionary = option_choices[last_index]
 		option_choice["attribute_badges"] = host.AttributeBadgesScript.for_event_choice(option_choice)
 		option_choices[last_index] = option_choice
+	scene_summary = event_module.conversation_summary(host.run_state, event_environment, conversation_choices)
 	var presentation := str(event_definition.get("presentation", "modal")).strip_edges()
 	var speaker: Dictionary = event_definition.get("speaker", {}) if typeof(event_definition.get("speaker", {})) == TYPE_DICTIONARY else {}
 	if presentation == "talk" and not speaker.is_empty():

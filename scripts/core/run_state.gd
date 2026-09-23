@@ -4792,6 +4792,50 @@ func consume_blackjack_authority_result_receipt(result: Dictionary, trusted_resu
 	return true
 
 
+# Reports whether this room contains any blackjack table where the player is
+# actively counting and has recorded at least one count answer on the current
+# shoe. A numeric zero is a valid recorded count; provenance, not magnitude,
+# distinguishes it from an unstarted or stale count.
+func active_player_count_status() -> Dictionary:
+	var status := {
+		"active": false,
+		"reason": "Come back when you're actually counting.",
+		"state_key": "",
+		"recorded_running_count": 0,
+		"shoe_generation": 0,
+	}
+	var states_value: Variant = current_environment.get("game_states", {})
+	if typeof(states_value) != TYPE_DICTIONARY:
+		return status
+	var game_states := states_value as Dictionary
+	var state_keys: Array = game_states.keys()
+	state_keys.sort()
+	for state_key_value in state_keys:
+		var state_key := str(state_key_value)
+		if state_key != "blackjack" and not state_key.begins_with("blackjack:"):
+			continue
+		var table_value: Variant = game_states.get(state_key_value)
+		if typeof(table_value) != TYPE_DICTIONARY:
+			continue
+		var table := table_value as Dictionary
+		if not bool(table.get("counting_enabled", false)):
+			continue
+		var shoe_generation := maxi(1, int(table.get("shoe_generation", 1)))
+		var recorded_generation := int(table.get("recorded_count_shoe_generation", 0))
+		var shoe_value: Variant = table.get("shoe", [])
+		var shoe_size := (shoe_value as Array).size() if typeof(shoe_value) == TYPE_ARRAY else 0
+		var shoe_remaining := int(table.get("shoe_remaining", shoe_size))
+		if shoe_remaining <= 0 or recorded_generation != shoe_generation:
+			continue
+		status["active"] = true
+		status["reason"] = ""
+		status["state_key"] = state_key
+		status["recorded_running_count"] = int(table.get("recorded_running_count", 0))
+		status["shoe_generation"] = shoe_generation
+		return status
+	return status
+
+
 func blackjack_authority_checkpoint_fingerprint() -> String:
 	# The durable authority ledger is reconciled against the canonical balances
 	# and RNG cursor on restore. Neither caller-authored UI nor ledger content is
