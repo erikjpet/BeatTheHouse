@@ -74,6 +74,18 @@ STAGE_CAP = {
 # Dense rooms trade nonessential randomized base capacity to action-list
 # overflow before reducing common scenario presentation capacity.
 MAP_BASE_CAP = {
+    "back_alley": {
+        "behind_counter_person": 1,
+        "doorway": 2,
+        "floor_fixture": 1,
+        "ground_marker": 0,
+        "group": 1,
+        "hanging": 0,
+        "seated_person": 0,
+        "standing_person": 0,
+        "surface_item": 3,
+        "wall_mounted": 1,
+    },
     "bar": {
         "doorway": 2,
         "floor_fixture": 1,
@@ -2194,7 +2206,9 @@ def author_map(
         diagnostics["search_nodes"] = search_nodes
         checkpoint("search")
         if search_nodes > 10000:
-            return False
+            diagnostics["watchdog"] = "native_search_node_limit"
+            diagnostics["search_node_limit"] = 10000
+            raise LayoutSearchLimit(diagnostics)
         if all(group_id in assignments for group_id in component):
             return routes_have_support()
         viable_masks: dict[tuple[str, int], int] = {}
@@ -2641,10 +2655,13 @@ def author_map(
     map_data["exit_slots"] = exit_slots
     map_data["walk_lanes"] = walk_lanes
     map_data["actor_routes"] = actor_routes
-    map_data["object_slot_ids"] = object_slot_ids
-    map_data["category_slot_ids"] = category_slot_ids
-    map_data["scenario_slot_ids"] = scenario_slot_ids
-    map_data["scenario_position_route_ids"] = scenario_position_route_ids
+    # Several source inventories are sets by design. Canonicalize every emitted
+    # lookup so separate Python processes produce byte-identical authored data
+    # and `--check` cannot flap on JSON object insertion order.
+    map_data["object_slot_ids"] = dict(sorted(object_slot_ids.items()))
+    map_data["category_slot_ids"] = dict(sorted(category_slot_ids.items()))
+    map_data["scenario_slot_ids"] = dict(sorted(scenario_slot_ids.items()))
+    map_data["scenario_position_route_ids"] = dict(sorted(scenario_position_route_ids.items()))
 
 
 def main() -> int:

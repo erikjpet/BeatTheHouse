@@ -46,7 +46,6 @@ func _ready() -> void:
 	_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
 	_overlay.mouse_force_pass_scroll_events = false
 	_overlay.focus_mode = Control.FOCUS_NONE
-	_overlay.gui_input.connect(_consume_overlay_input)
 	_modal_layer.add_child(_overlay)
 	var dimmer := ColorRect.new()
 	dimmer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -55,7 +54,9 @@ func _ready() -> void:
 	_overlay.add_child(dimmer)
 	var center := CenterContainer.new()
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# PASS keeps descendant buttons eligible for pointer/touch hit-testing while
+	# allowing empty panel surroundings to bubble into the STOP overlay shield.
+	center.mouse_filter = Control.MOUSE_FILTER_PASS
 	_overlay.add_child(center)
 	_panel = PanelContainer.new()
 	_panel.visible = false
@@ -115,6 +116,7 @@ func action_dispatcher_matches(expected: Callable) -> bool:
 
 
 func render(records: Array) -> void:
+	_enforce_persistent_target_sizes()
 	var filtered: Array = []
 	for value in records:
 		if typeof(value) != TYPE_DICTIONARY:
@@ -145,6 +147,7 @@ func render(records: Array) -> void:
 func open() -> void:
 	if _records.is_empty() or _overlay.visible:
 		return
+	_enforce_persistent_target_sizes()
 	_sync_panel_width()
 	_overlay.visible = true
 	_panel.visible = true
@@ -448,18 +451,30 @@ func is_open() -> bool:
 	return _overlay != null and _overlay.visible
 
 
-func _consume_overlay_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton or event is InputEventMouseMotion \
-			or event is InputEventScreenTouch or event is InputEventScreenDrag:
-		_overlay.accept_event()
-		get_viewport().set_input_as_handled()
-
-
 func _sync_panel_width() -> void:
 	if _panel == null or get_viewport() == null:
 		return
 	var available_width := maxf(MIN_TARGET.x, get_viewport_rect().size.x - PANEL_EDGE_MARGIN * 2.0)
 	_panel.custom_minimum_size.x = minf(PREFERRED_PANEL_WIDTH, available_width)
+	# CenterContainer can retain the former preferred allocation for one layout
+	# pass after a viewport shrink. Reset against the new combined minimum now so
+	# a 320px surface never spends a frame wider than its 16px edge margins.
+	_panel.reset_size()
+
+
+func _enforce_persistent_target_sizes() -> void:
+	# These controls outlive rebuilt action rows and can be visited by host-wide
+	# accessibility passes before this node's first render. Reassert both axes at
+	# every public layout boundary; action rows already receive the same floor at
+	# construction time.
+	for button_value in [_launcher, _close]:
+		var button := button_value as Button
+		if not is_instance_valid(button):
+			continue
+		button.custom_minimum_size = Vector2(
+			maxf(MIN_TARGET.x, button.custom_minimum_size.x),
+			maxf(MIN_TARGET.y, button.custom_minimum_size.y)
+		)
 
 
 func _disabled_reason(record: Dictionary, action: Dictionary) -> String:
