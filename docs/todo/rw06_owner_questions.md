@@ -89,3 +89,11 @@ Question: Does the interim fixed-slot layout direction look right for Corner Sto
 Options: A) Direction approved; continue (recommended)  B) Needs changes; list the rooms or issues in Answer
 Resume: rw06_1 continues while OPEN. When ANSWERED, the orchestrator applies any layout feedback across all rooms, records non-blocking polish in `docs/plans/0.6.1_backlog.md`, and marks this RESOLVED.
 Answer:
+
+### Q-005 · rw06_1/rw06_2 · Owner morning execution steer
+Status: RESOLVED by release orchestrator 2026-09-23
+Asked: PM (owner directive), 2026-09-23
+Question: None; this is the owner's binding release-week steer.
+Options: A) Execute the directive in Resume (the owner's decision)
+Resume: Ask Q-004 from an interim current-tip contact sheet now. Land rw06_1 on `main` by end of 2026-09-24; if optional walk/swept-route work threatens that, keep the actor stationary and log it for 0.6.1, and send non-fitting objects to overflow. Never weaken overlap, exit, action-reachability or hidden-state guarantees. Run focused rw06_1 Godot contracts now. Start non-qualifying rw06_2 exploratory ending runs on current `main` now; qualifying runs remain after rw06_1 lands.
+Answer: A. Directive received from the owner on 2026-09-23 morning.
