@@ -113,6 +113,9 @@ MAP_BASE_CAP = {
         "standing_person": 0,
         "surface_item": 2,
     },
+    "beach": {
+        "surface_item": 0,
+    },
 }
 # Exact authored label anchors for complete-state compositions whose longer
 # aftermath copy needs a small offset without moving the interaction target.
@@ -125,6 +128,7 @@ MAP_SLOT_LABEL_ANCHORS = {
 # need that persistent aftermath included in the one-time authoring census.
 # Runtime placement still consumes only the emitted slots and preferences.
 MAP_INCLUDE_AFTERMATH = {
+    "beach",
     "grand_casino",
     "jazz_club",
     "kitty_cat_lounge",
