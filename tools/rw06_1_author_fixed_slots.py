@@ -15,6 +15,7 @@ import hashlib
 import json
 import math
 from pathlib import Path
+import time
 from typing import Any, Iterable
 
 
@@ -74,6 +75,15 @@ LABEL_W = 88.0
 LABEL_H = 15.0
 WALK_LANE_RECT = (16.0, 378.0, 868.0, 36.0)
 EXIT_COLOR_OFFSET = 1000
+SPATIAL_BIN_SIZE = 64.0
+
+
+class LayoutSearchLimit(RuntimeError):
+    """A diagnostic watchdog expired; this is never evidence of UNSAT."""
+
+    def __init__(self, diagnostics: dict[str, Any]) -> None:
+        self.diagnostics = copy.deepcopy(diagnostics)
+        super().__init__(json.dumps(self.diagnostics, sort_keys=True))
 
 COUNTER_PERSON_TOKENS = ("bartender", "cashier", "clerk", "dealer", "shopkeeper", "staff", "teller", "vendor")
 PERSON_TOKENS = ("actor", "bouncer", "captain", "crew", "driver", "guard", "host", "landlord", "mate", "observer", "patron", "person", "regular", "runner", "staff")
@@ -211,6 +221,21 @@ def _polyline_slice_points(
 
 def intersects(a: tuple[float, float, float, float], b: tuple[float, float, float, float]) -> bool:
     return a[0] < b[0] + b[2] and a[0] + a[2] > b[0] and a[1] < b[1] + b[3] and a[1] + a[3] > b[1]
+
+
+def spatial_bins(bounds: tuple[float, float, float, float]) -> set[tuple[int, int]]:
+    """Return conservative grid cells touched by a positive-area rectangle."""
+    if bounds[2] <= 0.0 or bounds[3] <= 0.0:
+        return set()
+    min_x = math.floor(bounds[0] / SPATIAL_BIN_SIZE)
+    min_y = math.floor(bounds[1] / SPATIAL_BIN_SIZE)
+    max_x = math.floor((bounds[0] + bounds[2] - 0.000001) / SPATIAL_BIN_SIZE)
+    max_y = math.floor((bounds[1] + bounds[3] - 0.000001) / SPATIAL_BIN_SIZE)
+    return {
+        (x, y)
+        for x in range(min_x, max_x + 1)
+        for y in range(min_y, max_y + 1)
+    }
 
 
 def encloses(outer: tuple[float, float, float, float], inner: tuple[float, float, float, float]) -> bool:
@@ -818,6 +843,7 @@ def scenario_state_graph(
     dict[str, set[str]],
     dict[str, tuple[str, str]],
     dict[str, tuple[str, str]],
+    list[set[str]],
 ]:
     overrides = map_data.get("class_overrides", {}) if isinstance(map_data.get("class_overrides"), dict) else {}
     positions = map_data.get("scenario_object_slot_positions", {}) if isinstance(map_data.get("scenario_object_slot_positions"), dict) else {}
@@ -825,6 +851,7 @@ def scenario_state_graph(
     conflicts: dict[str, set[str]] = {}
     movements: dict[str, tuple[str, str]] = {}
     authored_routes: dict[str, tuple[str, str]] = {}
+    active_state_sets: list[set[str]] = []
 
     def ensure(stable_id: str, semantic: dict[str, Any], placement_class: str) -> str:
         preference_key = scenario_position_key(stable_id, semantic)
@@ -937,7 +964,8 @@ def scenario_state_graph(
                 if from_key != other:
                     conflicts[from_key].add(other)
                     conflicts[other].add(from_key)
-    return states, conflicts, movements, authored_routes
+        active_state_sets.append(set(active) | {from_key for from_key, _placement_class in movement_starts})
+    return states, conflicts, movements, authored_routes, active_state_sets
 
 
 def color_scenario_states(states: dict[str, dict[str, Any]], conflicts: dict[str, set[str]]) -> dict[str, int]:
@@ -1113,7 +1141,32 @@ def author_map(
     semantics: dict[str, dict[str, Any]],
     base_semantics: dict[str, dict[str, Any]],
     phase_snapshots: list[list[dict[str, Any]]],
+    diagnostic_deadline: float | None = None,
 ) -> None:
+    diagnostics: dict[str, Any] = {
+        "map": str(map_data.get("id", "")),
+        "phase": "initialize",
+        "groups": 0,
+        "domain_candidates": 0,
+        "max_domain": 0,
+        "route_relations": 0,
+        "route_families": 0,
+        "route_pairs": 0,
+        "overlap_tests": 0,
+        "route_pair_tests": 0,
+        "route_blocker_tests": 0,
+        "ac_candidate_checks": 0,
+        "gac_pair_checks": 0,
+        "gac_cycles": 0,
+        "search_nodes": 0,
+    }
+
+    def checkpoint(phase: str) -> None:
+        diagnostics["phase"] = phase
+        if diagnostic_deadline is not None and time.perf_counter() >= diagnostic_deadline:
+            raise LayoutSearchLimit(diagnostics)
+
+    checkpoint("initialize")
     zones = copy.deepcopy(archetype.get("semantic_zones", {})) if isinstance(archetype.get("semantic_zones"), dict) else {}
     class_overrides = copy.deepcopy(map_data.get("class_overrides", {})) if isinstance(map_data.get("class_overrides"), dict) else {}
     # Production game semantics outrank legacy placement hints. Several maps
@@ -1212,6 +1265,7 @@ def author_map(
 
     exit_states: dict[str, dict[str, Any]] = {}
     exit_conflicts: dict[str, set[str]] = {}
+    exit_snapshot_keys: list[set[str]] = []
     for snapshot in phase_snapshots:
         current: list[str] = []
         for semantic in snapshot:
@@ -1242,6 +1296,7 @@ def author_map(
                 if left != right:
                     exit_conflicts[left].add(right)
                     exit_conflicts[right].add(left)
+        exit_snapshot_keys.append(set(current))
     exit_colors = color_scenario_states(exit_states, exit_conflicts)
     exit_slots: list[dict[str, Any]] = []
     exit_target = max(exit_colors.values(), default=-1) + 1
@@ -1382,7 +1437,11 @@ def author_map(
     # Scenario state identities are colored against every reachable composition.
     # A set_position target reserves both its previous and target slots, giving
     # the renderer a reconstructible authored replay route instead of a teleport.
-    states, conflicts, movements, authored_route_states = scenario_state_graph(map_data, archetype, phase_snapshots)
+    states, conflicts, movements, authored_route_states, active_state_sets = scenario_state_graph(
+        map_data,
+        archetype,
+        phase_snapshots,
+    )
     colors: dict[str, int] = {}
     routed_classes = {
         str(state.get("placement_class", ""))
@@ -1651,10 +1710,19 @@ def author_map(
                 if candidate not in selected_candidates:
                     selected_candidates.append(candidate)
         group_domains[group_id] = selected_candidates
+        checkpoint("domain_selection")
+
+    diagnostics["groups"] = len(group_domains)
+    diagnostics["domain_candidates"] = sum(len(domain) for domain in group_domains.values())
+    diagnostics["max_domain"] = max((len(domain) for domain in group_domains.values()), default=0)
 
     state_group = {
         key: (str(state.get("placement_class", "")), colors.get(key, -1))
         for key, state in states.items()
+    }
+    exit_state_group = {
+        key: ("doorway", EXIT_COLOR_OFFSET + exit_colors.get(key, -1))
+        for key in exit_states
     }
     route_relations: list[
         tuple[tuple[str, int], tuple[str, int], str, str, str]
@@ -1674,14 +1742,28 @@ def author_map(
                     for key in coactive_keys
                     if key in state_group and state_group[key] in group_rows
                 }
+                # Base inventory is always physically present. Safe exits are
+                # physical blockers only in reachable snapshots where that
+                # exact exit color and this route endpoint coexist; reserving
+                # every inactive exit against every route can falsely strand a
+                # room that never renders those records together.
                 blockers.update(
                     group_id
                     for group_id, row in group_rows.items()
-                    if str(row.get("kind", "stage")) in {"base", "exit"}
+                    if str(row.get("kind", "stage")) == "base"
                 )
+                for snapshot_index, active_keys in enumerate(active_state_sets):
+                    if start_key not in active_keys and end_key not in active_keys:
+                        continue
+                    blockers.update(
+                        exit_state_group[exit_key]
+                        for exit_key in exit_snapshot_keys[snapshot_index]
+                        if exit_key in exit_state_group
+                    )
                 blockers.discard(start_group)
                 blockers.discard(end_group)
                 route_blocker_groups.append(blockers)
+    diagnostics["route_relations"] = len(route_relations)
     route_families: list[dict[str, Any]] = []
     route_family_by_key: dict[tuple[Any, ...], int] = {}
     for relation_index, relation in enumerate(route_relations):
@@ -1701,6 +1783,7 @@ def author_map(
             })
         route_families[family_index]["relation_indexes"].append(relation_index)
         route_families[family_index]["blockers"].update(route_blocker_groups[relation_index])
+    diagnostics["route_families"] = len(route_families)
 
     def groups_connected(left: tuple[str, int], right: tuple[str, int]) -> bool:
         if groups_conflict(left, right):
@@ -1716,11 +1799,31 @@ def author_map(
         group_id: {id(candidate): index for index, candidate in enumerate(domain)}
         for group_id, domain in group_domains.items()
     }
-    authority_cache = {
-        (group_id, index): candidate_authority(candidate, group_rows[group_id].get("label"))
-        for group_id, domain in group_domains.items()
-        for index, candidate in enumerate(domain)
-    }
+    authority_cache: dict[
+        tuple[tuple[str, int], int],
+        tuple[tuple[float, float, float, float], ...],
+    ] = {}
+    authority_bin_masks: dict[tuple[str, int], dict[tuple[int, int], int]] = {}
+    physical_hit_cache: dict[
+        tuple[tuple[str, int], int],
+        tuple[float, float, float, float],
+    ] = {}
+    physical_bin_masks: dict[tuple[str, int], dict[tuple[int, int], int]] = {}
+    for group_id, domain in group_domains.items():
+        authority_bins_for_group: dict[tuple[int, int], int] = {}
+        physical_bins_for_group: dict[tuple[int, int], int] = {}
+        for index, candidate in enumerate(domain):
+            authority = candidate_authority(candidate, group_rows[group_id].get("label"))
+            authority_cache[(group_id, index)] = authority
+            hit = reservation(candidate["rect"])
+            physical_hit_cache[(group_id, index)] = hit
+            for cell in {cell for bounds in authority for cell in spatial_bins(bounds)}:
+                authority_bins_for_group[cell] = authority_bins_for_group.get(cell, 0) | (1 << index)
+            for cell in spatial_bins(hit):
+                physical_bins_for_group[cell] = physical_bins_for_group.get(cell, 0) | (1 << index)
+        authority_bin_masks[group_id] = authority_bins_for_group
+        physical_bin_masks[group_id] = physical_bins_for_group
+        checkpoint("authority_cache")
     permanent_blocked = {
         group_id: {
             index
@@ -1729,36 +1832,45 @@ def author_map(
         }
         for group_id, domain in group_domains.items()
     }
-    overlap_matrices: dict[
+    # Construct exact directed conflict masks directly.  The spatial bins only
+    # discard rectangle pairs that cannot intersect; every candidate pair that
+    # shares a bin still receives the authoritative exact geometry test.
+    directed_conflict_masks: dict[
         tuple[tuple[str, int], tuple[str, int]],
-        set[tuple[int, int]],
+        list[int],
     ] = {}
     ordered_groups = sorted(group_domains)
     for left_offset, left_group in enumerate(ordered_groups):
         for right_group in ordered_groups[left_offset + 1:]:
             if not groups_conflict(left_group, right_group):
                 continue
-            overlap_matrices[(left_group, right_group)] = {
-                (left_index, right_index)
-                for left_index, _left_candidate in enumerate(group_domains[left_group])
-                for right_index, _right_candidate in enumerate(group_domains[right_group])
-                if authority_intersects(
-                    authority_cache[(left_group, left_index)],
-                    authority_cache[(right_group, right_index)],
-                )
-            }
-    directed_conflict_masks: dict[
-        tuple[tuple[str, int], tuple[str, int]],
-        list[int],
-    ] = {}
-    for (left_group, right_group), conflicts_for_pair in overlap_matrices.items():
-        left_masks = [0] * len(group_domains[left_group])
-        right_masks = [0] * len(group_domains[right_group])
-        for left_index, right_index in conflicts_for_pair:
-            left_masks[left_index] |= 1 << right_index
-            right_masks[right_index] |= 1 << left_index
-        directed_conflict_masks[(left_group, right_group)] = left_masks
-        directed_conflict_masks[(right_group, left_group)] = right_masks
+            left_masks = [0] * len(group_domains[left_group])
+            right_masks = [0] * len(group_domains[right_group])
+            right_bins = authority_bin_masks[right_group]
+            for left_index in range(len(group_domains[left_group])):
+                possible_right = 0
+                for cell in {
+                    cell
+                    for bounds in authority_cache[(left_group, left_index)]
+                    for cell in spatial_bins(bounds)
+                }:
+                    possible_right |= right_bins.get(cell, 0)
+                while possible_right:
+                    bit = possible_right & -possible_right
+                    right_index = bit.bit_length() - 1
+                    diagnostics["overlap_tests"] += 1
+                    if authority_intersects(
+                        authority_cache[(left_group, left_index)],
+                        authority_cache[(right_group, right_index)],
+                    ):
+                        left_masks[left_index] |= bit
+                        right_masks[right_index] |= 1 << left_index
+                    possible_right &= possible_right - 1
+                    if diagnostics["overlap_tests"] % 4096 == 0:
+                        checkpoint("overlap_masks")
+            directed_conflict_masks[(left_group, right_group)] = left_masks
+            directed_conflict_masks[(right_group, left_group)] = right_masks
+        checkpoint("overlap_masks")
 
     def candidate_index(group_id: tuple[str, int], candidate: dict[str, Any]) -> int:
         return domain_indexes[group_id][id(candidate)]
@@ -1773,11 +1885,9 @@ def author_map(
             return left_candidate is not right_candidate
         if not groups_conflict(left_group, right_group):
             return False
-        if left_group < right_group:
-            pair = (candidate_index(left_group, left_candidate), candidate_index(right_group, right_candidate))
-            return pair in overlap_matrices[(left_group, right_group)]
-        pair = (candidate_index(right_group, right_candidate), candidate_index(left_group, left_candidate))
-        return pair in overlap_matrices[(right_group, left_group)]
+        left_index = candidate_index(left_group, left_candidate)
+        right_index = candidate_index(right_group, right_candidate)
+        return bool(directed_conflict_masks[(left_group, right_group)][left_index] & (1 << right_index))
 
     route_family_pairs: list[
         list[tuple[int, int, tuple[tuple[float, float, float, float], ...]]]
@@ -1789,6 +1899,9 @@ def author_map(
         pairs: list[tuple[int, int, tuple[tuple[float, float, float, float], ...]]] = []
         for left_index, left_candidate in enumerate(group_domains[left_group]):
             for right_index, right_candidate in enumerate(group_domains[right_group]):
+                diagnostics["route_pair_tests"] += 1
+                if diagnostics["route_pair_tests"] % 1024 == 0:
+                    checkpoint("route_pair_enumeration")
                 if left_candidate["contact"] == right_candidate["contact"]:
                     continue
                 if candidates_conflict(left_group, left_candidate, right_group, right_candidate):
@@ -1802,11 +1915,14 @@ def author_map(
                     continue
                 pairs.append((left_index, right_index, sweeps))
         route_family_pairs.append(pairs)
+        diagnostics["route_pairs"] += len(pairs)
+        checkpoint("route_pair_enumeration")
 
     route_pair_blocker_support_masks: dict[
         tuple[int, int, tuple[str, int]],
         int,
     ] = {}
+    route_pair_sweep_bins: dict[tuple[int, int], set[tuple[int, int]]] = {}
 
     def route_pair_blocker_support_mask(
         family_index: int,
@@ -1834,14 +1950,29 @@ def author_map(
             support &= ~directed_conflict_masks[(left_group, blocker_group)][left_index]
         if blocker_group != right_group:
             support &= ~directed_conflict_masks[(right_group, blocker_group)][right_index]
-        remaining = support
+        sweep_cells = route_pair_sweep_bins.get((family_index, pair_index))
+        if sweep_cells is None:
+            sweep_cells = {
+                cell
+                for sweep in sweeps
+                for cell in spatial_bins(sweep)
+            }
+            route_pair_sweep_bins[(family_index, pair_index)] = sweep_cells
+        remaining = 0
+        blocker_bins = physical_bin_masks[blocker_group]
+        for cell in sweep_cells:
+            remaining |= blocker_bins.get(cell, 0)
+        remaining &= support
         while remaining:
             bit = remaining & -remaining
             blocker_index = bit.bit_length() - 1
-            blocker_hit = reservation(group_domains[blocker_group][blocker_index]["rect"])
+            blocker_hit = physical_hit_cache[(blocker_group, blocker_index)]
+            diagnostics["route_blocker_tests"] += 1
             if any(intersects(sweep, blocker_hit) for sweep in sweeps):
                 support &= ~bit
             remaining &= remaining - 1
+            if diagnostics["route_blocker_tests"] % 4096 == 0:
+                checkpoint("route_blocker_support")
         route_pair_blocker_support_masks[cache_key] = support
         return support
 
@@ -1948,6 +2079,8 @@ def author_map(
     def solve_stage_component(component: set[tuple[str, int]]) -> bool:
         nonlocal search_nodes
         search_nodes += 1
+        diagnostics["search_nodes"] = search_nodes
+        checkpoint("search")
         if search_nodes > 10000:
             return False
         if all(group_id in assignments for group_id in component):
@@ -1987,6 +2120,9 @@ def author_map(
                 while candidate_mask:
                     bit = candidate_mask & -candidate_mask
                     left_index = bit.bit_length() - 1
+                    diagnostics["ac_candidate_checks"] += 1
+                    if diagnostics["ac_candidate_checks"] % 4096 == 0:
+                        checkpoint("geometry_ac")
                     if right_mask & ~conflict_rows[left_index] == 0:
                         revised_mask &= ~bit
                     candidate_mask &= candidate_mask - 1
@@ -2008,6 +2144,8 @@ def author_map(
         # valid proof of a traversable route.
         active_family_pairs: dict[int, list[int]] = {}
         while True:
+            diagnostics["gac_cycles"] += 1
+            checkpoint("geometry_ac")
             geometry_ok, propagation_changed = revise_geometry_arcs()
             if not geometry_ok:
                 return False
@@ -2020,6 +2158,9 @@ def author_map(
                     return False
                 supported_pairs: list[int] = []
                 for pair_index, (left_index, right_index, _sweeps) in enumerate(route_family_pairs[family_index]):
+                    diagnostics["gac_pair_checks"] += 1
+                    if diagnostics["gac_pair_checks"] % 4096 == 0:
+                        checkpoint("route_family_gac")
                     if not left_mask & (1 << left_index) or not right_mask & (1 << right_index):
                         continue
                     pair_supported = True
@@ -2397,6 +2538,12 @@ def main() -> int:
     parser.add_argument("--root", type=Path, default=Path(__file__).resolve().parents[1])
     parser.add_argument("--check", action="store_true")
     parser.add_argument("--only-map", default="", help="diagnose one map without writing generated data")
+    parser.add_argument(
+        "--diagnostic-seconds",
+        type=float,
+        default=50.0,
+        help="only-map watchdog; expiration reports SEARCH_LIMIT, never UNSAT",
+    )
     args = parser.parse_args()
     root = args.root.resolve()
     surface_path = root / "data/environments/placement_surfaces.json"
@@ -2409,13 +2556,33 @@ def main() -> int:
     generated = copy.deepcopy(surface_root)
     generated["schema_version"] = 2
     generated["slot_schema_version"] = 1
+    diagnostic_deadline = (
+        time.perf_counter() + max(0.1, float(args.diagnostic_seconds))
+        if args.only_map
+        else None
+    )
     for map_data in generated.get("maps", []):
         if isinstance(map_data, dict):
             if args.only_map and str(map_data.get("id", "")) != args.only_map:
                 continue
             print(f"RW06_1 authoring {map_data.get('id', '<missing>')}", flush=True)
             map_id = str(map_data.get("id", ""))
-            author_map(map_data, archetype_for_map(map_id, archetypes), semantics, base_semantics, phase_snapshots.get(map_id, []))
+            try:
+                author_map(
+                    map_data,
+                    archetype_for_map(map_id, archetypes),
+                    semantics,
+                    base_semantics,
+                    phase_snapshots.get(map_id, []),
+                    diagnostic_deadline,
+                )
+            except LayoutSearchLimit as error:
+                print(
+                    "RW06_1_FIXED_SLOT_AUTHORING SEARCH_LIMIT "
+                    + json.dumps(error.diagnostics, sort_keys=True),
+                    flush=True,
+                )
+                return 3
     if args.only_map:
         print(f"RW06_1_FIXED_SLOT_AUTHORING MAP PASS {args.only_map}")
         return 0
