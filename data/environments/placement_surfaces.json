@@ -19300,18 +19300,18 @@
           "kind": "base",
           "pos": [
             36.0,
-            364.0
+            380.0
           ],
           "footprint_class": "doorway",
           "hit_rect": [
             4.0,
-            328.0,
+            344.0,
             64.0,
             72.0
           ],
           "label_anchor": [
             36.0,
-            322.0
+            338.0
           ],
           "facing": "right",
           "priority": 10,
@@ -19349,18 +19349,18 @@
           "id": "base.floor_fixture.03",
           "kind": "base",
           "pos": [
-            206.0,
+            174.0,
             276.0
           ],
           "footprint_class": "floor_fixture",
           "hit_rect": [
-            160.0,
+            128.0,
             212.0,
             92.0,
             64.0
           ],
           "label_anchor": [
-            206.0,
+            174.0,
             206.0
           ],
           "facing": "none",
@@ -19421,18 +19421,18 @@
           "id": "base.hanging.01",
           "kind": "base",
           "pos": [
-            404.0,
+            412.0,
             30.0
           ],
           "footprint_class": "hanging",
           "hit_rect": [
-            368.0,
+            376.0,
             8.0,
             72.0,
             44.0
           ],
           "label_anchor": [
-            404.0,
+            412.0,
             8.0
           ],
           "facing": "none",
@@ -19469,48 +19469,48 @@
           "id": "base.surface_item.02",
           "kind": "base",
           "pos": [
-            312.0,
-            244.0
+            302.0,
+            184.0
           ],
           "footprint_class": "surface_item",
           "hit_rect": [
-            276.0,
-            196.0,
+            266.0,
+            136.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            312.0,
-            190.0
+            302.0,
+            130.0
           ],
           "facing": "none",
           "priority": 20,
           "zone_id": "room",
-          "support_id": "scenario_audit_desk",
+          "support_id": "left_table_felt",
           "walk_lane_ids": []
         },
         {
           "id": "base.surface_item.01",
           "kind": "base",
           "pos": [
-            508.0,
-            430.0
+            710.0,
+            184.0
           ],
           "footprint_class": "surface_item",
           "hit_rect": [
-            472.0,
-            382.0,
+            674.0,
+            136.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            508.0,
-            376.0
+            710.0,
+            130.0
           ],
           "facing": "none",
           "priority": 10,
-          "zone_id": "room",
-          "support_id": "front_service_rail",
+          "zone_id": "right",
+          "support_id": "right_table_felt",
           "walk_lane_ids": []
         },
         {
@@ -19591,23 +19591,23 @@
           "id": "stage.floor_fixture.02",
           "kind": "stage",
           "pos": [
-            718.0,
+            62.0,
             204.0
           ],
           "footprint_class": "floor_fixture",
           "hit_rect": [
-            672.0,
+            16.0,
             140.0,
             92.0,
             64.0
           ],
           "label_anchor": [
-            718.0,
+            62.0,
             134.0
           ],
           "facing": "none",
           "priority": 20,
-          "zone_id": "right",
+          "zone_id": "room",
           "support_id": "stage",
           "walk_lane_ids": []
         },
@@ -19615,48 +19615,48 @@
           "id": "stage.ground_marker.01",
           "kind": "stage",
           "pos": [
-            52.0,
-            180.0
+            300.0,
+            430.0
           ],
           "footprint_class": "ground_marker",
           "hit_rect": [
-            16.0,
-            132.0,
+            264.0,
+            382.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            52.0,
-            126.0
+            300.0,
+            376.0
           ],
           "facing": "none",
           "priority": 10,
           "zone_id": "room",
-          "support_id": "stage",
+          "support_id": "floor",
           "walk_lane_ids": []
         },
         {
           "id": "stage.group.01",
           "kind": "stage",
           "pos": [
-            268.0,
-            430.0
+            292.0,
+            348.0
           ],
           "footprint_class": "group",
           "hit_rect": [
-            216.0,
-            352.0,
+            240.0,
+            270.0,
             104.0,
             78.0
           ],
           "label_anchor": [
-            268.0,
-            346.0
+            292.0,
+            264.0
           ],
           "facing": "right",
           "priority": 10,
           "zone_id": "room",
-          "support_id": "floor",
+          "support_id": "stage",
           "walk_lane_ids": [
             "lane.public"
           ]
@@ -19665,24 +19665,24 @@
           "id": "stage.standing_person.01",
           "kind": "stage",
           "pos": [
-            308.0,
-            172.0
+            420.0,
+            430.0
           ],
           "footprint_class": "standing_person",
           "hit_rect": [
-            272.0,
-            92.0,
+            384.0,
+            350.0,
             72.0,
             80.0
           ],
           "label_anchor": [
-            308.0,
-            86.0
+            420.0,
+            344.0
           ],
-          "facing": "right",
+          "facing": "front",
           "priority": 10,
           "zone_id": "room",
-          "support_id": "stage",
+          "support_id": "floor",
           "walk_lane_ids": [
             "lane.public"
           ]
@@ -19717,42 +19717,42 @@
           "id": "stage.surface_item.01",
           "kind": "stage",
           "pos": [
-            380.0,
-            430.0
+            294.0,
+            92.0
           ],
           "footprint_class": "surface_item",
           "hit_rect": [
-            344.0,
-            382.0,
+            258.0,
+            44.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            380.0,
-            376.0
+            294.0,
+            38.0
           ],
           "facing": "none",
           "priority": 10,
-          "zone_id": "room",
-          "support_id": "front_service_rail",
+          "zone_id": "background",
+          "support_id": "audit_notice_shelf",
           "walk_lane_ids": []
         },
         {
           "id": "stage.surface_item.02",
           "kind": "stage",
           "pos": [
-            526.0,
+            534.0,
             92.0
           ],
           "footprint_class": "surface_item",
           "hit_rect": [
-            490.0,
+            498.0,
             44.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            526.0,
+            534.0,
             38.0
           ],
           "facing": "none",
@@ -19765,18 +19765,18 @@
           "id": "stage.surface_item.03",
           "kind": "stage",
           "pos": [
-            646.0,
+            654.0,
             92.0
           ],
           "footprint_class": "surface_item",
           "hit_rect": [
-            610.0,
+            618.0,
             44.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            646.0,
+            654.0,
             38.0
           ],
           "facing": "none",
@@ -19888,18 +19888,18 @@
           "kind": "exit",
           "pos": [
             36.0,
-            252.0
+            268.0
           ],
           "footprint_class": "doorway",
           "hit_rect": [
             4.0,
-            216.0,
+            232.0,
             64.0,
             72.0
           ],
           "label_anchor": [
             36.0,
-            210.0
+            226.0
           ],
           "facing": "right",
           "priority": 10,
@@ -19960,39 +19960,43 @@
       ],
       "actor_routes": [],
       "object_slot_ids": {
+        "casino_fixture:host_desk": "base.floor_fixture.01",
         "event:chain06_cass_first_contact": "base.behind_counter_person.01",
+        "event:chain06_rourke_noticed": "base.surface_item.01",
         "event:comped_suite_offer": "base.behind_counter_person.01",
+        "event:scenario_audit_roster": "base.hanging.01",
+        "event:scenario_convention_badge": "base.wall_mounted.02",
+        "event:scenario_gala_cover": "base.floor_fixture.02",
         "event:the_house_calls": "base.behind_counter_person.01",
         "event:town_rumor_staff": "base.behind_counter_person.01",
-        "event:chain06_rourke_noticed": "base.surface_item.01",
+        "game:blackjack": "base.floor_fixture.03",
         "game:craps": "base.surface_item.02",
-        "event:scenario_convention_badge": "base.wall_mounted.02",
+        "game:pull_tabs": "base.floor_fixture.04",
+        "game:slot": "base.floor_fixture.03",
         "game:slot:2": "base.wall_mounted.01",
         "game:slot:3": "base.wall_mounted.02",
-        "event:scenario_audit_roster": "base.hanging.01",
+        "game:video_poker": "base.floor_fixture.04",
+        "game_hook:pull_tabs:ticket_redeemer": "base.floor_fixture.04",
+        "service:house_drink": "base.floor_fixture.02",
         "travel:grand_casino_back_room": "base.doorway.01",
         "travel:grand_casino_cage": "base.doorway.02",
         "travel:grand_casino_high_limit": "base.doorway.01",
         "travel:leave": "base.doorway.02",
         "travel:motel": "base.doorway.01",
-        "travel:small_underground_casino": "base.doorway.02",
-        "casino_fixture:host_desk": "base.floor_fixture.01",
-        "event:scenario_gala_cover": "base.floor_fixture.02",
-        "game:blackjack": "base.floor_fixture.03",
-        "game:pull_tabs": "base.floor_fixture.04",
-        "game:slot": "base.floor_fixture.03",
-        "game:video_poker": "base.floor_fixture.04",
-        "game_hook:pull_tabs:ticket_redeemer": "base.floor_fixture.04",
-        "service:house_drink": "base.floor_fixture.02"
+        "travel:small_underground_casino": "base.doorway.02"
       },
       "category_slot_ids": {
-        "game_hook_spots:0": "base.surface_item.03",
-        "game_hook_spots:1": "base.surface_item.02",
-        "service_spots:0": "base.surface_item.01",
-        "travel_spots:0": "base.doorway.01",
         "casino_door_spots:0": "base.doorway.02",
         "casino_door_spots:1": "base.doorway.01",
         "casino_door_spots:2": "base.doorway.01",
+        "casino_fixture_spots:0": "base.floor_fixture.01",
+        "casino_fixture_spots:1": "base.floor_fixture.02",
+        "event_spots:0": "base.floor_fixture.03",
+        "event_spots:1": "base.floor_fixture.04",
+        "event_spots:2": "base.floor_fixture.04",
+        "event_spots:3": "base.floor_fixture.02",
+        "game_hook_spots:0": "base.surface_item.03",
+        "game_hook_spots:1": "base.surface_item.02",
         "game_spots:0": "base.floor_fixture.03",
         "game_spots:1": "base.floor_fixture.01",
         "game_spots:2": "base.floor_fixture.04",
@@ -20000,14 +20004,16 @@
         "game_spots:4": "base.floor_fixture.04",
         "game_spots:5": "base.floor_fixture.04",
         "game_spots:6": "base.floor_fixture.04",
-        "event_spots:0": "base.floor_fixture.03",
-        "event_spots:1": "base.floor_fixture.04",
-        "event_spots:2": "base.floor_fixture.04",
-        "event_spots:3": "base.floor_fixture.02",
-        "casino_fixture_spots:0": "base.floor_fixture.01",
-        "casino_fixture_spots:1": "base.floor_fixture.02"
+        "service_spots:0": "base.surface_item.01",
+        "travel_spots:0": "base.doorway.01"
       },
       "scenario_slot_ids": {
+        "grand_casino_audit_night_aftermath_audit_interrupted_prop|grand_aftermath_scene|background|": "stage.ground_marker.01",
+        "grand_casino_audit_night_aftermath_closed_games_actor|grand_aftermath_actor|left|": "stage.standing_person.01",
+        "grand_casino_audit_night_aftermath_compliant_floor_actor|grand_aftermath_actor|right|": "stage.standing_person.01",
+        "grand_casino_audit_night_aftermath_compliant_floor_prop|grand_aftermath_scene|foreground|": "stage.surface_item.01",
+        "grand_casino_audit_night_aftermath_redirected_audit_actor|grand_aftermath_actor|left|": "stage.standing_person.01",
+        "grand_casino_audit_night_aftermath_redirected_audit_prop|grand_aftermath_scene|background|": "stage.ground_marker.01",
         "grand_casino_audit_night_audit_barrier|grand_scenario_top_800_low|background|": "stage.floor_fixture.01",
         "grand_casino_audit_night_audit_barrier|grand_work_object_left|center|": "stage.floor_fixture.01",
         "grand_casino_audit_night_cage_seal|grand_audit_cage|center|": "stage.wall_mounted.02",
@@ -20018,12 +20024,19 @@
         "grand_casino_audit_night_pit_ledger|grand_audit_pit_ledger|center|": "stage.surface_item.01",
         "grand_casino_audit_night_pit_manager|env06_8_audit_manager|left|": "stage.standing_person.02",
         "grand_casino_audit_night_pit_manager|grand_scenario_top_50_actor|left|grand_casino_audit_night_ledger_move_position": "stage.standing_person.02",
+        "grand_casino_audit_night_safe_exit|grand_scenario_safe_exit|exit_lane|": "exit.doorway.01",
         "grand_casino_audit_night_task_0|grand_scenario_top_520|foreground|": "stage.surface_item.02",
         "grand_casino_audit_night_task_2|grand_scenario_top_520|right|": "stage.surface_item.02",
         "grand_casino_audit_night_task_3|grand_scenario_top_520|foreground|": "stage.surface_item.02",
         "grand_casino_audit_night_work_1_choice_0|grand_decision_left|center|": "stage.surface_item.02",
         "grand_casino_audit_night_work_1_choice_1|grand_decision_middle_right|background|": "stage.surface_item.03",
         "grand_casino_audit_night_work_1_choice_2|grand_decision_right|left|": "stage.surface_item.04",
+        "grand_casino_convention_crowd_aftermath_camouflage_route_actor|grand_aftermath_actor|background|": "stage.group.01",
+        "grand_casino_convention_crowd_aftermath_camouflage_route_prop|grand_aftermath_scene|left|": "stage.wall_mounted.01",
+        "grand_casino_convention_crowd_aftermath_convention_departed_prop|grand_aftermath_scene|right|": "stage.ground_marker.01",
+        "grand_casino_convention_crowd_aftermath_floor_standoff_actor|grand_aftermath_actor|background|": "stage.group.01",
+        "grand_casino_convention_crowd_aftermath_split_schedule_actor|grand_aftermath_actor|left|": "stage.group.01",
+        "grand_casino_convention_crowd_aftermath_split_schedule_prop|grand_aftermath_scene|background|": "stage.wall_mounted.01",
         "grand_casino_convention_crowd_badge_delegations|grand_convention_badge_delegations|left|": "stage.group.01",
         "grand_casino_convention_crowd_badge_delegations|grand_convention_badge_delegations|left|grand_casino_convention_crowd_badge_move_position": "stage.group.01",
         "grand_casino_convention_crowd_booking_board|grand_scenario_bottom_830|foreground|": "stage.wall_mounted.01",
@@ -20031,6 +20044,7 @@
         "grand_casino_convention_crowd_convention_coordinator|grand_work_actor_right|center|grand_casino_convention_crowd_work_2_relocate_convention_coordinator": "stage.standing_person.01",
         "grand_casino_convention_crowd_machine_banks|grand_convention_machine_banks|center|": "stage.floor_fixture.01",
         "grand_casino_convention_crowd_machine_banks|grand_work_object_middle|center|": "stage.floor_fixture.01",
+        "grand_casino_convention_crowd_safe_exit|grand_scenario_safe_exit|exit_lane|": "exit.doorway.01",
         "grand_casino_convention_crowd_table_block|grand_convention_table_block|background|": "stage.floor_fixture.02",
         "grand_casino_convention_crowd_table_block|grand_work_object_left|center|": "stage.floor_fixture.02",
         "grand_casino_convention_crowd_task_0|grand_convention_task|right|": "stage.wall_mounted.02",
@@ -20039,11 +20053,18 @@
         "grand_casino_convention_crowd_work_2_choice_0|grand_decision_left|center|": "stage.wall_mounted.02",
         "grand_casino_convention_crowd_work_2_choice_1|grand_decision_middle|background|": "stage.wall_mounted.03",
         "grand_casino_convention_crowd_work_2_choice_2|grand_decision_middle_right|left|": "stage.ground_marker.01",
+        "grand_casino_gala_night_aftermath_cover_identity_accepted_actor|grand_aftermath_actor|background|": "stage.standing_person.01",
+        "grand_casino_gala_night_aftermath_cover_identity_accepted_prop|grand_aftermath_scene|left|": "stage.wall_mounted.01",
+        "grand_casino_gala_night_aftermath_credential_failed_actor|grand_aftermath_actor|right|": "stage.standing_person.01",
+        "grand_casino_gala_night_aftermath_gala_interrupted_prop|grand_aftermath_scene|foreground|": "stage.ground_marker.01",
+        "grand_casino_gala_night_aftermath_public_floor_reopened_actor|grand_aftermath_actor|left|": "stage.standing_person.01",
+        "grand_casino_gala_night_aftermath_public_floor_reopened_prop|grand_aftermath_scene|background|": "stage.floor_fixture.01",
         "grand_casino_gala_night_charity_badges|grand_scenario_top_520|center|": "stage.floor_fixture.01",
         "grand_casino_gala_night_charity_badges|grand_work_object_middle|center|": "stage.floor_fixture.01",
         "grand_casino_gala_night_coat_check|env06_8_gala_coat_check|service_lane|": "stage.wall_mounted.01",
         "grand_casino_gala_night_gala_host|env06_8_gala_host|background|": "stage.standing_person.01",
         "grand_casino_gala_night_gala_host|grand_work_actor_right|center|grand_casino_gala_night_work_2_relocate_gala_host": "stage.standing_person.01",
+        "grand_casino_gala_night_safe_exit|grand_scenario_safe_exit|exit_lane|": "exit.doorway.01",
         "grand_casino_gala_night_stage_hand|env06_8_gala_stagehand|left|": "stage.standing_person.02",
         "grand_casino_gala_night_stage_hand|grand_scenario_bottom_830|foreground|grand_casino_gala_night_badge_state_position": "stage.standing_person.02",
         "grand_casino_gala_night_stage_lift|env06_8_gala_lift|service_lane|": "stage.floor_fixture.02",
@@ -20053,10 +20074,7 @@
         "grand_casino_gala_night_task_3|grand_scenario_top_800|right|": "stage.wall_mounted.02",
         "grand_casino_gala_night_work_2_choice_0|grand_decision_left|center|": "stage.wall_mounted.02",
         "grand_casino_gala_night_work_2_choice_1|grand_decision_middle|background|": "stage.wall_mounted.03",
-        "grand_casino_gala_night_work_2_choice_2|grand_decision_middle_right|left|": "stage.ground_marker.01",
-        "grand_casino_audit_night_safe_exit|grand_scenario_safe_exit|exit_lane|": "exit.doorway.01",
-        "grand_casino_convention_crowd_safe_exit|grand_scenario_safe_exit|exit_lane|": "exit.doorway.01",
-        "grand_casino_gala_night_safe_exit|grand_scenario_safe_exit|exit_lane|": "exit.doorway.01"
+        "grand_casino_gala_night_work_2_choice_2|grand_decision_middle_right|left|": "stage.ground_marker.01"
       },
       "scenario_position_route_ids": {}
     },

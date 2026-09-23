@@ -121,6 +121,7 @@ MAP_SLOT_LABEL_ANCHORS = {
 # need that persistent aftermath included in the one-time authoring census.
 # Runtime placement still consumes only the emitted slots and preferences.
 MAP_INCLUDE_AFTERMATH = {
+    "grand_casino",
     "jazz_club",
 }
 LABEL_W = 88.0
