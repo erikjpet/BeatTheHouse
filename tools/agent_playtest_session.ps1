@@ -62,7 +62,7 @@ if ($Start) {
         '--script', 'res://tools/agent_playtest_session.gd',
         '--', "--session=$Session", "--session-dir=$($SessionRoot.Replace('\', '/'))"
     )
-    $process = Start-Process -FilePath $GodotBin -ArgumentList $arguments -RedirectStandardOutput $StdoutPath -RedirectStandardError $StderrPath -PassThru
+    $process = Start-Process -FilePath $GodotBin -ArgumentList $arguments -RedirectStandardOutput $StdoutPath -RedirectStandardError $StderrPath -WindowStyle Hidden -PassThru
     Set-Content -LiteralPath $PidPath -Value $process.Id -Encoding ascii
     $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
     while ((Get-Date) -lt $deadline -and -not (Test-Path -LiteralPath $ReadyPath)) {
@@ -74,6 +74,12 @@ if ($Start) {
     if (-not (Test-Path -LiteralPath $ReadyPath)) { throw "Session '$Session' did not become ready in $TimeoutSeconds seconds." }
     Write-Output "Session '$Session' started as PID $($process.Id)."
     Get-Content -Raw -LiteralPath $ReadyPath
+    if (-not $PSBoundParameters.ContainsKey('Command')) {
+        # The launcher is commonly called through a nested powershell.exe whose
+        # output is captured. Exit explicitly so the long-lived Godot child
+        # cannot keep that launcher host attached after ready.json is emitted.
+        exit 0
+    }
 }
 
 if ($PSBoundParameters.ContainsKey('Command')) {
@@ -83,7 +89,20 @@ if ($PSBoundParameters.ContainsKey('Command')) {
     $stem = '{0:D4}' -f ([int]$next)
     $commandPath = Join-Path $SessionRoot "$stem.command.txt"
     $resultPath = Join-Path $SessionRoot "$stem.result.json"
-    Set-Content -LiteralPath $commandPath -Value $Command -Encoding utf8
+    $commandTempToken = "$PID-$([Guid]::NewGuid().ToString('N'))"
+    if ($commandTempToken -notmatch '^[0-9]+-[a-f0-9]{32}$') {
+        throw 'Could not create a safe unique command-publish token.'
+    }
+    $commandTempPath = Join-Path $SessionRoot "$stem.command.$commandTempToken.tmp"
+    try {
+        Set-Content -LiteralPath $commandTempPath -Value $Command -Encoding utf8
+        # Same-directory rename is the publish boundary: Godot can never see a
+        # ####.command.txt path until all command bytes have reached disk.
+        Move-Item -LiteralPath $commandTempPath -Destination $commandPath -ErrorAction Stop
+    }
+    finally {
+        Remove-Item -LiteralPath $commandTempPath -ErrorAction SilentlyContinue
+    }
     $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
     $resultReady = $false
     while ((Get-Date) -lt $deadline -and -not $resultReady) {

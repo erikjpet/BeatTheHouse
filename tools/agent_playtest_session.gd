@@ -5,6 +5,7 @@ extends SceneTree
 
 const MainScene := preload("res://scenes/main.tscn")
 const Fidelity := preload("res://scripts/tests/foundation/harness_production_fidelity.gd")
+const PublicObservation := preload("res://tools/agent_playtest_public_observation.gd")
 
 var app: Control
 var session_name := "session"
@@ -87,6 +88,7 @@ func _poll_once() -> void:
 
 
 func _execute_command(raw: String, command_number: int) -> Dictionary:
+	var before_observable := PublicObservation.sanitize(Fidelity.observable_host_snapshot(app))
 	var accepted := false
 	var reason := ""
 	var detail: Dictionary = {}
@@ -99,6 +101,16 @@ func _execute_command(raw: String, command_number: int) -> Dictionary:
 		match verb:
 			"look":
 				accepted = true
+			"focus_field":
+				var focused := await _focus_field(argument)
+				accepted = bool(focused.get("ok", false))
+				reason = str(focused.get("reason", ""))
+				detail = focused
+			"set_field":
+				var set_result := await _set_field(argument)
+				accepted = bool(set_result.get("ok", false))
+				reason = str(set_result.get("reason", ""))
+				detail = set_result
 			"click_button":
 				var clicked := await _click_button(argument)
 				accepted = bool(clicked.get("ok", false))
@@ -113,6 +125,21 @@ func _execute_command(raw: String, command_number: int) -> Dictionary:
 				detail = clicked
 			"click_action":
 				var clicked := await _click_action(argument)
+				accepted = bool(clicked.get("ok", false))
+				reason = str(clicked.get("reason", ""))
+				detail = clicked
+			"click_map":
+				var clicked := await _click_map_node(argument)
+				accepted = bool(clicked.get("ok", false))
+				reason = str(clicked.get("reason", ""))
+				detail = clicked
+			"click_choice":
+				var clicked := await _click_choice(argument)
+				accepted = bool(clicked.get("ok", false))
+				reason = str(clicked.get("reason", ""))
+				detail = clicked
+			"click_inventory":
+				var clicked := await _click_inventory_item(argument)
 				accepted = bool(clicked.get("ok", false))
 				reason = str(clicked.get("reason", ""))
 				detail = clicked
@@ -146,6 +173,12 @@ func _execute_command(raw: String, command_number: int) -> Dictionary:
 				reason = "unknown command: %s" % verb
 	await _wait_frames(4)
 	var look := await _capture_look(command_number)
+	var transition := PublicObservation.transition_summary(
+		before_observable,
+		_dict(look.get("observable", {})),
+		raw,
+		accepted
+	)
 	return _json_safe({
 		"session": session_name,
 		"command_number": command_number,
@@ -154,8 +187,80 @@ func _execute_command(raw: String, command_number: int) -> Dictionary:
 		"reason": reason,
 		"detail": detail,
 		"look": look,
+		"trace": transition,
 		"quit": should_quit,
 	})
+
+
+func _focus_field(target: String) -> Dictionary:
+	var cleaned := target.strip_edges()
+	if cleaned.is_empty():
+		return {"ok": false, "reason": "field alias or id is required"}
+	var matches: Array = []
+	for entry_value in _visible_text_field_nodes():
+		var entry := entry_value as Dictionary
+		var field := entry.get("node") as Control
+		if field == null:
+			continue
+		var aliases: Array[String] = [
+			str(entry.get("id", "")),
+			str(field.name),
+			str(entry.get("placeholder", "")),
+		]
+		if field == app.get("seed_input"):
+			aliases.append("seed")
+		if field == app.get("game_test_seed_input"):
+			aliases.append("practice_seed")
+		if aliases.has(cleaned):
+			matches.append(entry)
+	if matches.is_empty():
+		return {"ok": false, "reason": "visible editable field not found: %s" % cleaned}
+	if matches.size() > 1:
+		var ids: Array[String] = []
+		for match_value in matches:
+			ids.append(str((match_value as Dictionary).get("id", "")))
+		return {"ok": false, "reason": "ambiguous field alias; use one of these ids: %s" % ", ".join(ids)}
+	var data := matches[0] as Dictionary
+	var field := data.get("node") as Control
+	var visible_rect: Rect2 = data.get("rect", Rect2())
+	if field == null or not field.is_visible_in_tree() or not visible_rect.has_area():
+		return {"ok": false, "reason": "field became hidden before focus"}
+	await _push_mouse_click(visible_rect.get_center(), false)
+	await process_frame
+	if root.gui_get_focus_owner() != field:
+		return {"ok": false, "reason": "field did not receive focus: %s" % str(data.get("id", ""))}
+	return {"ok": true, "field": cleaned, "id": str(data.get("id", ""))}
+
+
+func _set_field(argument: String) -> Dictionary:
+	var separator := argument.find(" ")
+	if separator <= 0:
+		return {"ok": false, "reason": "usage: set_field <alias-or-id> <value>"}
+	var target := argument.substr(0, separator).strip_edges()
+	var value := argument.substr(separator + 1)
+	var focused := await _focus_field(target)
+	if not bool(focused.get("ok", false)):
+		return focused
+	var selected := await _push_key("ctrl+a")
+	if not bool(selected.get("ok", false)):
+		return selected
+	var typed := await _type_text(value)
+	if not bool(typed.get("ok", false)):
+		return typed
+	var field := root.gui_get_focus_owner()
+	var visible_value := ""
+	if field is LineEdit:
+		visible_value = (field as LineEdit).text
+	elif field is TextEdit:
+		visible_value = (field as TextEdit).text
+	if visible_value != value:
+		return {"ok": false, "reason": "field text did not match the requested value", "field": target}
+	return {
+		"ok": true,
+		"field": target,
+		"id": str(focused.get("id", "")),
+		"characters": value.length(),
+	}
 
 
 func _click_button(target: String) -> Dictionary:
@@ -189,6 +294,147 @@ func _click_button(target: String) -> Dictionary:
 	return {"ok": true, "id": clicked_id, "text": clicked_text}
 
 
+func _click_map_node(node_id: String) -> Dictionary:
+	var cleaned := node_id.strip_edges()
+	if cleaned.is_empty():
+		return {"ok": false, "reason": "world-map node id is required"}
+	var expected_name := "WorldMapNode_%s" % cleaned
+	var matches: Array[Button] = []
+	_collect_named_buttons(app, expected_name, matches)
+	if matches.is_empty():
+		return {"ok": false, "reason": "visible world-map node not found: %s" % cleaned}
+	if matches.size() > 1:
+		return {"ok": false, "reason": "ambiguous visible world-map node: %s" % cleaned}
+	var button := matches[0]
+	if button.disabled:
+		return {"ok": false, "reason": "world-map node is disabled: %s" % cleaned}
+	var visible_rect := _clipped_control_rect(button)
+	if not visible_rect.has_area():
+		return {"ok": false, "reason": "world-map node has no visible hit area: %s" % cleaned}
+	await _push_mouse_click(visible_rect.get_center(), false)
+	return {"ok": true, "node_id": cleaned, "id": str(button.get_path())}
+
+
+func _collect_named_buttons(node: Node, expected_name: String, result: Array[Button]) -> void:
+	if node is CanvasItem and not (node as CanvasItem).visible:
+		return
+	if node is Button:
+		var button := node as Button
+		if str(button.name) == expected_name and button.is_visible_in_tree():
+			result.append(button)
+	for child in node.get_children():
+		_collect_named_buttons(child, expected_name, result)
+
+
+func _click_choice(choice_id: String) -> Dictionary:
+	var cleaned := choice_id.strip_edges()
+	if cleaned.is_empty():
+		return {"ok": false, "reason": "choice id is required"}
+	var public_observation := PublicObservation.sanitize(Fidelity.observable_host_snapshot(app))
+	var event_popup := _dict(public_observation.get("event_popup", {}))
+	if bool(event_popup.get("visible", false)):
+		var choices := _array(event_popup.get("choices", []))
+		var choice_index := -1
+		var choice: Dictionary = {}
+		for index in range(choices.size()):
+			var candidate := _dict(choices[index])
+			if str(candidate.get("id", "")) == cleaned:
+				choice_index = index
+				choice = candidate
+				break
+		if choice_index < 0:
+			return {"ok": false, "reason": "visible event choice not found: %s" % cleaned}
+		if bool(choice.get("disabled", false)) or not bool(choice.get("enabled", true)):
+			return {"ok": false, "reason": "visible event choice is disabled: %s" % cleaned}
+		var choice_list := app.get("event_choice_popup_choices_list") as Node
+		var buttons: Array[Button] = []
+		_collect_descendant_buttons(choice_list, buttons)
+		if choice_index >= buttons.size():
+			return {"ok": false, "reason": "event choice has no corresponding visible button: %s" % cleaned}
+		var button := buttons[choice_index]
+		if button.disabled:
+			return {"ok": false, "reason": "event choice button is disabled: %s" % cleaned}
+		var visible_rect := _clipped_control_rect(button)
+		if not visible_rect.has_area():
+			return {"ok": false, "reason": "event choice has no visible hit area: %s" % cleaned}
+		await _push_mouse_click(visible_rect.get_center(), false)
+		return {"ok": true, "choice_id": cleaned, "choice_index": choice_index, "surface": "event_popup"}
+	var talk := _dict(public_observation.get("talk", {}))
+	if bool(talk.get("visible", false)):
+		var choice_ids := _array(talk.get("choice_ids", []))
+		var choice_index := choice_ids.find(cleaned)
+		if choice_index < 0:
+			return {"ok": false, "reason": "visible talk choice not found: %s" % cleaned}
+		if choice_index >= 4:
+			return {"ok": false, "reason": "talk choice is outside the production 1-4 hotkey range: %s" % cleaned}
+		var keyed := await _push_key(str(choice_index + 1))
+		if not bool(keyed.get("ok", false)):
+			return keyed
+		return {"ok": true, "choice_id": cleaned, "choice_index": choice_index, "surface": "talk"}
+	return {"ok": false, "reason": "no visible event or talk choice surface"}
+
+
+func _collect_descendant_buttons(node: Node, result: Array[Button]) -> void:
+	if node == null:
+		return
+	if node is CanvasItem and not (node as CanvasItem).visible:
+		return
+	if node is Button and (node as Button).is_visible_in_tree():
+		result.append(node as Button)
+	for child in node.get_children():
+		_collect_descendant_buttons(child, result)
+
+
+func _click_inventory_item(argument: String) -> Dictionary:
+	var parts := argument.split(" ", false)
+	if parts.is_empty():
+		return {"ok": false, "reason": "usage: click_inventory <item-id> [storage-source]"}
+	var item_id := str(parts[0]).strip_edges()
+	var requested_source := str(parts[1]).strip_edges() if parts.size() > 1 else ""
+	var public_observation := PublicObservation.sanitize(Fidelity.observable_host_snapshot(app))
+	var inventory := _dict(public_observation.get("inventory", {}))
+	if not bool(inventory.get("visible", false)):
+		return {"ok": false, "reason": "run inventory is not visible"}
+	var matches: Array = []
+	for item_value in _array(inventory.get("items", [])):
+		var item := _dict(item_value)
+		var source := str(item.get("storage_source", item.get("source", "carried"))).strip_edges()
+		if str(item.get("id", item.get("item_id", ""))) != item_id:
+			continue
+		if not requested_source.is_empty() and source != requested_source:
+			continue
+		matches.append(item)
+	if matches.is_empty():
+		return {"ok": false, "reason": "visible inventory item not found: %s" % item_id}
+	if matches.size() > 1:
+		return {"ok": false, "reason": "inventory item is ambiguous; provide its storage source: %s" % item_id}
+	var item := matches[0] as Dictionary
+	var selection_key := str(item.get("selection_key", "")).strip_edges()
+	if selection_key.is_empty():
+		return {"ok": false, "reason": "inventory item has no public selection key: %s" % item_id}
+	var inventory_screen := app.get("run_inventory_screen") as Control
+	if inventory_screen == null or not inventory_screen.is_visible_in_tree() or not inventory_screen.has_method("layout_rects"):
+		return {"ok": false, "reason": "run inventory surface is unavailable"}
+	var layout := _dict(inventory_screen.call("layout_rects"))
+	var spatial := _dict(layout.get("spatial", {}))
+	for slot_value in _array(spatial.get("slots", [])):
+		var slot := _dict(slot_value)
+		if str(slot.get("selection_key", "")) != selection_key:
+			continue
+		var rect: Rect2 = slot.get("rect", Rect2()) if typeof(slot.get("rect", Rect2())) == TYPE_RECT2 else Rect2()
+		var visible_rect := rect.intersection(Rect2(Vector2.ZERO, Vector2(root.size)))
+		if not bool(slot.get("occupied", false)) or not visible_rect.has_area():
+			return {"ok": false, "reason": "inventory item is not on the visible container page: %s" % item_id}
+		await _push_mouse_click(visible_rect.get_center(), false)
+		return {
+			"ok": true,
+			"item_id": item_id,
+			"storage_source": str(item.get("storage_source", item.get("source", "carried"))),
+			"selection_key": selection_key,
+		}
+	return {"ok": false, "reason": "inventory item is not on the visible container page: %s" % item_id}
+
+
 func _click_object(semantic_id: String, double_click: bool) -> Dictionary:
 	var canvas := app.get("environment_canvas") as Control
 	var failures: Array = []
@@ -219,8 +465,10 @@ func _click_action(argument: String) -> Dictionary:
 		action = action.trim_suffix(" %s" % index_text).strip_edges()
 	var surface := app.get("game_surface_canvas") as Control
 	if surface != null and surface.visible and surface.has_method("local_position_for_surface_action"):
+		var public_observation := PublicObservation.sanitize(Fidelity.observable_host_snapshot(app))
+		var public_game := _dict(public_observation.get("game", {}))
 		var available := false
-		for value in _game_surface_actions(surface):
+		for value in _game_surface_actions(surface, public_game):
 			var hit := value as Dictionary
 			if str(hit.get("action", "")) == action and (not has_index or int(hit.get("index", 0)) == index):
 				available = bool(hit.get("enabled", true))
@@ -354,7 +602,7 @@ func _capture_look(command_number: int) -> Dictionary:
 	var image_path := _path("%04d.png" % command_number)
 	var image := root.get_texture().get_image()
 	var image_error := image.save_png(image_path)
-	var observable := Fidelity.observable_host_snapshot(app)
+	var observable := PublicObservation.sanitize(Fidelity.observable_host_snapshot(app))
 	var room_canvas := app.get("environment_canvas") as Control
 	var game_canvas := app.get("game_surface_canvas") as Control
 	var coach := app.get("coach_overlay") as Control
@@ -367,13 +615,13 @@ func _capture_look(command_number: int) -> Dictionary:
 		"png": image_path,
 		"png_error": error_string(image_error) if image_error != OK else "",
 		"observable": observable,
-		"coach": coach_snapshot,
+		"coach": _public_coach_snapshot(coach_snapshot),
 		"clickable": {
 			"buttons": _public_buttons(),
 			"text_fields": _visible_text_fields(),
 			"canvas_objects": _canvas_objects(room_canvas),
 			"room_actions": _room_selected_actions(room_canvas),
-			"game_surface_actions": _game_surface_actions(game_canvas),
+			"game_surface_actions": _game_surface_actions(game_canvas, _dict(observable.get("game", {}))),
 		},
 	}
 
@@ -417,25 +665,70 @@ func _public_buttons() -> Array:
 
 func _visible_text_fields() -> Array:
 	var result: Array = []
-	_collect_text_fields(app, result)
+	for entry_value in _visible_text_field_nodes():
+		var entry := entry_value as Dictionary
+		result.append({
+			"id": str(entry.get("id", "")),
+			"text": str(entry.get("text", "")),
+			"placeholder": str(entry.get("placeholder", "")),
+			"rect": entry.get("rect", Rect2()),
+			"focused": bool(entry.get("focused", false)),
+		})
 	return result
 
 
-func _collect_text_fields(node: Node, result: Array) -> void:
+func _visible_text_field_nodes() -> Array:
+	var result: Array = []
+	_collect_text_field_nodes(app, result)
+	return result
+
+
+func _collect_text_field_nodes(node: Node, result: Array) -> void:
 	if node is CanvasItem and not (node as CanvasItem).visible:
 		return
 	if node is LineEdit:
 		var field := node as LineEdit
 		var visible_rect := _clipped_control_rect(field)
 		if field.is_visible_in_tree() and field.editable and visible_rect.has_area():
-			result.append({"id": str(field.get_path()), "text": field.text, "placeholder": field.placeholder_text, "rect": visible_rect, "focused": field.has_focus()})
+			result.append({"node": field, "id": str(field.get_path()), "text": field.text, "placeholder": field.placeholder_text, "rect": visible_rect, "focused": field.has_focus()})
 	elif node is TextEdit:
 		var field := node as TextEdit
 		var visible_rect := _clipped_control_rect(field)
 		if field.is_visible_in_tree() and field.editable and visible_rect.has_area():
-			result.append({"id": str(field.get_path()), "rect": visible_rect, "focused": field.has_focus()})
+			result.append({"node": field, "id": str(field.get_path()), "text": field.text, "placeholder": field.placeholder_text, "rect": visible_rect, "focused": field.has_focus()})
 	for child in node.get_children():
-		_collect_text_fields(child, result)
+		_collect_text_field_nodes(child, result)
+
+
+func _public_coach_snapshot(source: Dictionary) -> Dictionary:
+	var result: Dictionary = {}
+	for key in [
+		"visible", "lesson_id", "voice", "eyebrow", "copy", "anchor_kind", "anchor_id",
+		"anchor_found", "completion_type", "delivery", "dialogue_id", "dialogue_node",
+		"dismissible", "dismiss_action_id", "dismiss_label", "gating", "highlight_emphasis",
+		"reduce_motion", "small_screen", "minimum_control_height",
+	]:
+		if not source.has(key):
+			continue
+		var value: Variant = source.get(key)
+		if typeof(value) in [TYPE_NIL, TYPE_BOOL, TYPE_INT, TYPE_FLOAT, TYPE_STRING, TYPE_STRING_NAME]:
+			result[key] = str(value) if typeof(value) == TYPE_STRING_NAME else value
+	for key in ["allowed_action_ids", "suggested_action_ids"]:
+		var values: Array = []
+		for value in _array(source.get(key, [])):
+			var text := str(value).strip_edges()
+			if not text.is_empty():
+				values.append(text)
+		result[key] = values
+	for key in ["anchor_rect", "bubble_rect", "viewport_rect", "live_room_anchor_rect"]:
+		if source.has(key):
+			result[key] = source.get(key)
+	var additional_rects: Array = []
+	for rect_value in _array(source.get("additional_anchor_rects", [])):
+		if typeof(rect_value) in [TYPE_RECT2, TYPE_DICTIONARY]:
+			additional_rects.append(rect_value)
+	result["additional_anchor_rects"] = additional_rects
+	return result
 
 
 func _clipped_control_rect(control: Control) -> Rect2:
@@ -479,14 +772,22 @@ func _room_selected_actions(canvas: Control) -> Array:
 		var action := actions[index] as Dictionary if typeof(actions[index]) == TYPE_DICTIONARY else {}
 		if action.is_empty():
 			continue
-		var copy := action.duplicate(true)
-		copy["index"] = index
-		copy["enabled"] = bool(action.get("enabled", true)) and not bool(action.get("disabled", false))
-		result.append(copy)
+		result.append({
+			"id": str(action.get("id", "")),
+			"action": str(action.get("action", "")),
+			"action_id": str(action.get("action_id", "")),
+			"emit_object_id": str(action.get("emit_object_id", "")),
+			"label": str(action.get("label", "")),
+			"text": str(action.get("text", "")),
+			"summary": str(action.get("summary", "")),
+			"disabled_reason": str(action.get("disabled_reason", "")),
+			"index": index,
+			"enabled": bool(action.get("enabled", true)) and not bool(action.get("disabled", false)),
+		})
 	return result
 
 
-func _game_surface_actions(canvas: Control) -> Array:
+func _game_surface_actions(canvas: Control, public_game: Dictionary = {}) -> Array:
 	if canvas == null or not canvas.visible or not canvas.has_method("current_view_snapshot"):
 		return []
 	var snapshot: Dictionary = canvas.call("current_view_snapshot")
@@ -495,9 +796,22 @@ func _game_surface_actions(canvas: Control) -> Array:
 		var action := value as Dictionary if typeof(value) == TYPE_DICTIONARY else {}
 		if action.is_empty():
 			continue
-		var copy := action.duplicate(true)
-		copy["enabled"] = not (canvas.has_method("surface_action_is_blocked") and bool(canvas.call("surface_action_is_blocked", str(action.get("action", "")))))
-		result.append(copy)
+		var action_id := str(action.get("action", ""))
+		# Blackjack keeps an intentionally invisible Deal hit region while a hand
+		# is active so keyboard/controller focus can retain its stable binding.
+		# That compatibility region is not a rendered player control and must never
+		# become an agent action. Admit Deal only when the public game projection
+		# says the visible DEAL control is currently available.
+		if str(public_game.get("game_id", "")) == "blackjack" \
+				and action_id == "blackjack_deal" \
+				and not bool(public_game.get("can_deal", false)):
+			continue
+		result.append({
+			"action": action_id,
+			"index": int(action.get("index", 0)),
+			"rect": action.get("rect", Rect2()),
+			"enabled": not (canvas.has_method("surface_action_is_blocked") and bool(canvas.call("surface_action_is_blocked", str(action.get("action", ""))))),
+		})
 	return result
 
 
@@ -569,3 +883,7 @@ func _json_safe(value: Variant) -> Variant:
 
 func _array(value: Variant) -> Array:
 	return value as Array if typeof(value) == TYPE_ARRAY else []
+
+
+func _dict(value: Variant) -> Dictionary:
+	return value as Dictionary if typeof(value) == TYPE_DICTIONARY else {}
