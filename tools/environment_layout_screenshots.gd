@@ -488,16 +488,25 @@ func _rw06_1_prepare_scenario_peak(definition: Dictionary, selection: Dictionary
 	if not bool(arrival.get("ok", false)):
 		return {"ok": false, "errors": local_failures if not local_failures.is_empty() else ["%s did not reach its host room." % scenario_id]}
 	var initial_state := _dict(run_state.current_environment.get("scenario_sequence_state", {}))
-	var phase_states := _rw06_1_reachable_phase_states(initial_state, definition, target_phase)
+	var reachable := _rw06_1_reachable_phase_states(initial_state, definition, target_phase)
+	var phase_states := _array(reachable.get("states", []))
+	var resolution_errors: Array = []
 	var best: Dictionary = {}
 	for state_value in phase_states:
 		var resolved := _rw06_1_resolve_capture_state(run_state.current_environment, _dict(state_value), definition)
 		if not bool(resolved.get("ok", false)):
+			for error_value in _array(resolved.get("errors", ["Peak layout resolution failed without an error."])):
+				_rw06_1_append_unique_error(resolution_errors, "%s peak %s layout: %s" % [scenario_id, target_phase, str(error_value)])
 			continue
 		if best.is_empty() or int(resolved.get("scenario_binding_count", -1)) > int(best.get("scenario_binding_count", -1)):
 			best = resolved
 	if best.is_empty():
-		return {"ok": false, "errors": ["%s has no resolvable reachable state at peak phase %s." % [scenario_id, target_phase]]}
+		var peak_errors: Array = ["%s has no resolvable reachable state at peak phase %s (target states=%d, explored states=%d, traversal truncated=%s)." % [scenario_id, target_phase, phase_states.size(), int(reachable.get("explored_state_count", 0)), str(bool(reachable.get("truncated", false)))]]
+		for error_value in _array(reachable.get("errors", [])):
+			_rw06_1_append_unique_error(peak_errors, str(error_value))
+		for error_value in resolution_errors:
+			_rw06_1_append_unique_error(peak_errors, str(error_value))
+		return {"ok": false, "errors": peak_errors}
 	var expected_count := int(selection.get("binding_count", 0))
 	if int(best.get("scenario_binding_count", -1)) != expected_count:
 		return {"ok": false, "errors": ["%s peak %s rendered %d scenario bindings; static manifest requires %d." % [scenario_id, target_phase, int(best.get("scenario_binding_count", -1)), expected_count]]}
@@ -519,7 +528,11 @@ func _rw06_1_resolve_capture_state(environment: Dictionary, state: Dictionary, d
 	var candidate := environment.duplicate(true)
 	candidate["scenario_sequence_state"] = state.duplicate(true)
 	candidate[ScenarioEngineScript.TRUSTED_STATE_REFERENCE_KEY] = ScenarioSequenceRuntimeScript.content_fingerprint(state)
-	var projection := ScenarioEngineScript.sequence_projection(candidate, definition)
+	# The trace only admits states returned by successful Runtime transactions (or
+	# the already trusted initial RunState state). Mirror ScenarioEngine's commit
+	# seam: those states are prevalidated, while re-entering sequence_projection()
+	# would compare them against the arrival phase's still-materialized layout.
+	var projection := ScenarioSequenceRuntimeScript.public_projection(state, definition, true)
 	if projection.is_empty():
 		return {"ok": false, "errors": ["Peak state did not produce a public projection."]}
 	var layout_environment := candidate.duplicate(false)
@@ -544,8 +557,9 @@ func _rw06_1_resolve_capture_state(environment: Dictionary, state: Dictionary, d
 	return {"ok": true, "environment": candidate, "scenario_binding_count": binding_count, "errors": []}
 
 
-func _rw06_1_reachable_phase_states(initial_state: Dictionary, definition: Dictionary, target_phase: String) -> Array:
+func _rw06_1_reachable_phase_states(initial_state: Dictionary, definition: Dictionary, target_phase: String) -> Dictionary:
 	var result: Array = []
+	var errors: Array = []
 	var pending: Array = [initial_state.duplicate(true)]
 	var visited: Dictionary = {}
 	var serial := 0
@@ -562,22 +576,40 @@ func _rw06_1_reachable_phase_states(initial_state: Dictionary, definition: Dicti
 		for branch_value in _array(phase.get("branches", [])):
 			var branch := _dict(branch_value)
 			var condition := _dict(branch.get("condition", {}))
+			var condition_type := str(condition.get("type", ""))
 			var applied: Dictionary = {}
-			if str(condition.get("type", "")) == "command":
+			if condition_type == "command":
 				applied = _rw06_1_apply_trace_command(state, definition, str(condition.get("command_id", "")), serial, branch_index)
-			elif str(condition.get("type", "")) == "fact":
+			elif condition_type == "fact":
 				applied = _rw06_1_apply_trace_fact(state, definition, condition, serial, branch_index)
+			elif condition_type == "always" and str(state.get("status", "")) != ScenarioSequenceRuntimeScript.STATUS_ACTIVE:
+				# Terminal outcome phases may retain their authored automatic branch;
+				# the successful transaction already evaluated it before returning.
+				branch_index += 1
+				continue
+			else:
+				applied = {"ok": false, "errors": ["Unsupported trace condition type %s." % condition_type]}
 			if bool(applied.get("ok", false)):
 				pending.append(_dict(applied.get("state", {})))
+			else:
+				var trigger_id := str(condition.get("command_id", condition.get("fact_type", "<unsupported>")))
+				var branch_errors := _array(applied.get("errors", ["trace branch returned no diagnostic"]))
+				for error_value in branch_errors:
+					_rw06_1_append_unique_error(errors, "%s phase %s branch %s: %s" % [str(definition.get("id", "<scenario>")), str(state.get("phase_id", "<phase>")), trigger_id, str(error_value)])
 			branch_index += 1
 		serial += 1
-	return result
+	return {
+		"states": result,
+		"errors": errors,
+		"explored_state_count": visited.size(),
+		"truncated": not pending.is_empty(),
+	}
 
 
 func _rw06_1_apply_trace_command(state: Dictionary, definition: Dictionary, command_id: String, serial: int, branch_index: int) -> Dictionary:
-	var origin := _rw06_1_find_action_origin(state, command_id)
+	var origin := _rw06_1_find_action_origin(state, definition, command_id)
 	if origin.is_empty():
-		return {"ok": false, "errors": ["No action origin for %s." % command_id]}
+		return {"ok": false, "errors": ["No publicly available action origin for %s." % command_id]}
 	var owner_namespace := str(origin.get("owner_namespace", ""))
 	var stable_object_id := str(origin.get("stable_object_id", ""))
 	var descriptor := ScenarioSequenceRuntimeScript._command_descriptor(state, definition, owner_namespace, stable_object_id, command_id, {})
@@ -594,8 +626,12 @@ func _rw06_1_apply_trace_command(state: Dictionary, definition: Dictionary, comm
 	return ScenarioSequenceRuntimeScript.apply_command(state, definition, command, {"available_funds": 100000})
 
 
-func _rw06_1_find_action_origin(state: Dictionary, command_id: String) -> Dictionary:
-	for interaction_value in _dict(_dict(state.get("semantic_state", {})).get("interactions", {})).values():
+func _rw06_1_find_action_origin(state: Dictionary, definition: Dictionary, command_id: String) -> Dictionary:
+	# Traverse the same closed, resolved action inventory presented to the player.
+	# Raw semantic_state.interactions omits base interactions and can retain an
+	# authored action whose public preconditions are not currently satisfied.
+	var projection := ScenarioSequenceRuntimeScript.public_projection(state, definition)
+	for interaction_value in _dict(_dict(projection.get("semantic_state", {})).get("interactions", {})).values():
 		var interaction := _dict(interaction_value)
 		if not bool(interaction.get("enabled", false)):
 			continue
@@ -603,6 +639,11 @@ func _rw06_1_find_action_origin(state: Dictionary, command_id: String) -> Dictio
 			if str(_dict(action_value).get("id", "")) == command_id:
 				return {"owner_namespace": str(interaction.get("owner_namespace", "")), "stable_object_id": str(interaction.get("stable_object_id", ""))}
 	return {}
+
+
+func _rw06_1_append_unique_error(errors: Array, message: String) -> void:
+	if not message.is_empty() and not errors.has(message):
+		errors.append(message)
 
 
 func _rw06_1_apply_trace_fact(state: Dictionary, definition: Dictionary, condition: Dictionary, serial: int, branch_index: int) -> Dictionary:

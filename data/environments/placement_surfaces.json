@@ -80,6 +80,7 @@
         "corner_store_inventory_night_exit": "doorway",
         "corner_store_lotto_fever_exit": "doorway",
         "event:call_brother_in_law": "surface_item",
+        "event:scenario_delivery_day_stock": "behind_counter_person",
         "delivery_event_gate": "wall_mounted"
       },
       "scenario_object_slot_positions": {

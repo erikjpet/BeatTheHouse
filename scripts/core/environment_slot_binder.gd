@@ -246,7 +246,20 @@ static func validate_base_layout_authority(environment: Dictionary, current_reco
 		else:
 			expected_class = _closed_semantic_placement_class(surface_map, record, object_id)
 		if not expected_class.is_empty() and str(record_binding.get("placement_class", "")) != expected_class:
-			errors.append("Current base record %s placement class does not match production classification." % object_id)
+			errors.append("Current base record %s placement class does not match production classification (binding=%s expected=%s record=%s type=%s presentation=%s source=%s/%s/%s visual=%s prop=%s icon=%s)." % [
+				object_id,
+				str(record_binding.get("placement_class", "")),
+				expected_class,
+				str(record.get("placement_class", "<closed>")),
+				str(record.get("object_type", "<closed>")),
+				str(record.get("presentation_object_id", "")),
+				str(record.get("source_kind", "")),
+				str(record.get("source_field", "")),
+				str(record.get("source_record_id", "")),
+				str(record.get("visual_prop", "")),
+				str(record.get("prop", "")),
+				str(record.get("icon_key", "")),
+			])
 		if source_id.is_empty():
 			continue
 		if aliases.has(object_id) and str(aliases.get(object_id, "")) != source_id:

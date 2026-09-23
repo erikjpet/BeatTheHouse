@@ -773,6 +773,56 @@ def main() -> int:
         check.require(archetype_id in archetypes, f"{map_id}: unknown archetype {archetype_id}")
         validate_map(check, map_data, archetypes.get(archetype_id, {}), board)
 
+    # Delivery Day's catalog event is presented by a clerk behind the Corner
+    # Store counter. Production sees the catalog placement hint, while the
+    # sealed semantic replay intentionally retains only its stable event id.
+    # The independently authored room override must make both paths agree.
+    events_by_id = {
+        str(item.get("id", "")): item
+        for item in values(event_catalog)
+        if isinstance(item, dict)
+    }
+    delivery_event_id = "scenario_delivery_day_stock"
+    delivery_object_id = f"event:{delivery_event_id}"
+    delivery_event = events_by_id.get(delivery_event_id, {})
+    delivery_map = maps_by_id.get("corner_store", {})
+    delivery_speaker = delivery_event.get("speaker", {}) if isinstance(delivery_event.get("speaker"), dict) else {}
+    delivery_hint = {
+        "visual_prop": str(delivery_event.get("environment_prop", "")),
+        "icon_key": str(delivery_event.get("icon_key", "")),
+        "role": str(delivery_speaker.get("role", "")),
+    }
+    hinted_delivery_class = SlotAuthoring.classify(
+        delivery_hint,
+        "event",
+        delivery_object_id,
+        str(delivery_hint.get("visual_prop", "")),
+    )
+    delivery_overrides = delivery_map.get("class_overrides", {}) if isinstance(delivery_map.get("class_overrides"), dict) else {}
+    replayed_delivery_class = SlotAuthoring.classify_with_override(
+        {},
+        "event",
+        delivery_object_id,
+        str(delivery_overrides.get(delivery_object_id, "")),
+    )
+    delivery_base_slots = {
+        str(slot.get("id", "")): slot
+        for slot in values(delivery_map.get("base_slots"))
+        if isinstance(slot, dict)
+    }
+    check.require(
+        hinted_delivery_class == "behind_counter_person",
+        "corner_store: Delivery Day catalog hint must classify its event as behind_counter_person",
+    )
+    check.require(
+        replayed_delivery_class == hinted_delivery_class,
+        "corner_store: compact Delivery Day event replay diverges from its catalog-hinted production class",
+    )
+    check.require(
+        delivery_base_slots.get("base.behind_counter_person.01", {}).get("footprint_class") == replayed_delivery_class,
+        "corner_store: Delivery Day event replay has no compatible fixed base slot",
+    )
+
     pawn_map = maps_by_id.get("pawn_shop", {})
     pawn_slots = {
         str(slot.get("id", "")): slot
@@ -932,6 +982,7 @@ def main() -> int:
     placement_source = (root / "scripts/core/environment_placement.gd").read_text(encoding="utf-8")
     canvas_source = (root / "scripts/ui/pixel_scene_canvas.gd").read_text(encoding="utf-8")
     meta_source = (root / "scripts/ui/meta_session_controller.gd").read_text(encoding="utf-8")
+    capture_source = (root / "tools/environment_layout_screenshots.gd").read_text(encoding="utf-8")
     check.require(not any(token in binder_source for token in ("randf(", "randi(", "randomize(", "Time.")), "slot binder must not use RNG/wall clock")
     check.require("EnvironmentSlotBinderScript.bind_base_layout" in instance_source, "generated base inventory does not use fixed-slot binder")
     ensure_source = instance_source.split("static func ensure_generated_layout", 1)[-1].split("static func _grounding_signature", 1)[0]
@@ -988,6 +1039,34 @@ def main() -> int:
         and '"slot_binding_source_id": "item:sal_shelf_%d" % index' in meta_source
         and '"slot_binding_source_id": "shopkeeper:merchant"' in meta_source,
         "pawn-shop actionable aliases do not reuse their generated fixed-slot bindings",
+    )
+    authority_validation_source = binder_source.split("static func validate_base_layout_authority", 1)[-1].split("static func bind_base_records", 1)[0]
+    override_index = authority_validation_source.find('surface_map.get("class_overrides", {})')
+    record_class_index = authority_validation_source.find('record.has("placement_class")')
+    closed_class_index = authority_validation_source.find("_closed_semantic_placement_class")
+    mismatch_index = authority_validation_source.find("placement class does not match production classification")
+    check.require(
+        -1 < override_index < record_class_index < closed_class_index < mismatch_index,
+        "base slot authority must prefer authored class overrides and still reject a mismatched persisted binding",
+    )
+    capture_resolver_source = capture_source.split("func _rw06_1_resolve_capture_state", 1)[-1].split("func _rw06_1_reachable_phase_states", 1)[0]
+    capture_trace_source = capture_source.split("func _rw06_1_reachable_phase_states", 1)[-1].split("func _rw06_1_apply_trace_command", 1)[0]
+    capture_prepare_source = capture_source.split("func _rw06_1_prepare_scenario_peak", 1)[-1].split("func _rw06_1_resolve_capture_state", 1)[0]
+    check.require(
+        "ScenarioSequenceRuntimeScript.public_projection(state, definition, true)" in capture_resolver_source
+        and "ScenarioEngineScript.sequence_projection" not in capture_resolver_source,
+        "contact-sheet capture must project successful traced states through the exact prevalidated commit seam",
+    )
+    check.require(
+        'condition_type == "always"' in capture_trace_source
+        and "ScenarioSequenceRuntimeScript.STATUS_ACTIVE" in capture_trace_source,
+        "contact-sheet trace must treat terminal automatic branches as already evaluated",
+    )
+    check.require(
+        'reachable.get("errors"' in capture_prepare_source
+        and 'resolved.get("errors"' in capture_prepare_source
+        and 'reachable.get("explored_state_count"' in capture_prepare_source,
+        "contact-sheet capture must retain traversal and layout diagnostics",
     )
 
     # Authored JSON is continuing authority. The migration helper remains a
