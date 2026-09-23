@@ -574,9 +574,10 @@ bounded correction makes the caller's existing priority order authoritative:
 it first replaces a non-priority new card, and only when none exists may a
 higher-priority promise replace a lower-priority new card. It never replaces a
 visited route and changes no fare, odds, wager, reward, or other economy value.
-A focused crowded-map regression preserves all four revisits while requiring
-Grand to replace Delta. The replay source contract and full static project gate
-both pass; engine confirmation remains pending a separate serialized lease.
+The first crowded-map regression preserved all four revisits while requiring
+Grand to replace Delta, but modeled only Grand as event-unlocked. Probe 15 below
+showed that the production route can have both destinations event-unlocked, so
+that first correction and its focused PASS were necessary but incomplete.
 
 Evidence:
 
@@ -607,6 +608,87 @@ The owned process exited without force, stderr was empty (empty-file SHA-256
 stdout SHA-256 was
 `FA2EA26AAADBCE94053905A7C805C47D0DE5FF59CD1009A25DEE2FB8B8762CC4`,
 and the global Godot process census returned zero. No retry used this lease.
+
+## 2026-09-23 crowded-route focused check and probe 15
+
+At exact pushed tip `7571c9420d79968550f58b4c016e596cbe5d3729`, one
+serialized repository-canonical generated `systems/content` process executed
+only `content`. Its JSON report passed with zero failures and native exit 0 in
+239,806 ms; the global Godot process count was zero before and after. The
+generated runner SHA-256 was
+`3E28512E22E8481AB233A00A99F58D88DBD5F286A6586C92D324F63E85CA9662`.
+This proved the first crowded-map regression, not the exact two-event-unlocked
+production state later exposed by the replay.
+
+Focused evidence root:
+`.tmp/rw06_2/focused-7571c942-split-content/20260923-140024-688`.
+The report SHA-256 is
+`0F73C768991284C4CB68245A66B6CA964F0D765D4CF353660627ECA5654B9456`,
+stdout is
+`F6DC258919F5A9E142208482FC48D4107F9C0BB29979D7B540F2250548333309`,
+stderr is
+`7E8F5DEB3BF520C8ABB23951DEAFB0669C320CEBB4CEB6668C755C617C5FD7D3`,
+the Godot log is
+`36B3CE82552788D1AB2371FB39E265EC01B4BF8F4CDECA4E581BC53789795F5A`,
+and run metadata is
+`9FD58799B10CEFE50393B77069E1C13E6DB26351A7ABE3D60DE5A8CE8AD90C67`.
+The three `misc2` controller-mapping warnings are external input-database
+noise. The generic ObjectDB exit warning lists exactly two `RefCounted`
+instances, both at reference count 0, which is the canonical gate's known
+allowlisted teardown case; there was no script error or unclassified leak.
+
+Exactly one non-qualifying probe 15 launch then used the same pushed tip. It
+reproduced the blocker at the same public checkpoint and money curve: the
+invitation was accepted, two waits settled, action 52 showed Delta plus all
+four revisit cards but no Grand, Delta travel consumed $16, and the replay
+failed closed at action 58 with **No visible unvisited route can advance the
+Grand Casino invitation.** It never reached the visible-slot recovery, Grand,
+or the Save -> relaunch -> Continue checkpoint.
+
+The refined cause is exact: Delta and Grand can both be event-unlocked. The
+selector authorized only the first score-ordered event destination to survive
+a temporary disabled-route filter. Delta scored first, so the unaffordable
+Grand was excluded before the declared Grand-first replacement order could act.
+The corrected regression marks both nodes event-unlocked. The smallest root fix
+adds Grand to the disabled-promise authorization only when its normalized node
+is already explicitly event-unlocked; it then uses the existing Grand-first
+priority and existing replacement logic. Hidden nodes remain ineligible, all
+revisits remain protected, and the card cap and every economy/placement value
+are unchanged. The replay source contract and full static project gate pass;
+focused engine confirmation of this exact case is pending a new serialized
+lease.
+
+Probe 15 evidence:
+
+- Run summary, 36 counted actions:
+  `.tmp/rw06_2/exploratory/clean-tip-7571c942-probe15/20260923-140637-564-28124/run-01/summary.json`
+  (SHA-256 `42590883CACDFD5AC3962D9141A7B0084B9E3D1E73E572653F49DB7A08FBECE5`).
+- Public trace:
+  `.tmp/rw06_2/exploratory/clean-tip-7571c942-probe15/20260923-140637-564-28124/run-01/public_trace.ndjson`
+  (SHA-256 `9274AEC844D95A3FCD6AFFA4F49E41F468DAD1FB900D1191AF5E914378FADF4D`).
+- Money curve:
+  `.tmp/rw06_2/exploratory/clean-tip-7571c942-probe15/20260923-140637-564-28124/run-01/money_curve.ndjson`
+  (SHA-256 `7E552A23EE8A2BD5C49E42B832896FEE864C1E8276517E0DE4267B23EA1FFF1D`).
+- Accepted invitation response:
+  `.tmp/agent_playtest/2026-09-23/rw062-clean-28124-1-844e25c919/0047.result.json`
+  (SHA-256 `14D2F8DB7BD99385AAC83709E1B30C82EC9C96E96BC3E75D3E24A049AC76B8B3`).
+- Post-wait map observation and screenshot:
+  `.tmp/agent_playtest/2026-09-23/rw062-clean-28124-1-844e25c919/0052.result.json`
+  (SHA-256 `1BD53120821C7B54188D7F06C324D76854C985452B27CEE559DC41E6FA600AC0`)
+  and `0052.png` (SHA-256
+  `2DAC4243BC82BE2FED3D6DB081670226FA8A295747172243F21A9A499F41EADC`).
+- Final blocked map observation and graceful quit response:
+  `0058.result.json` (SHA-256
+  `19808C610863E60D9D41785CFB5FF62444CAB26E181F021EEB31B5EC603B2F6B`)
+  and `0059.result.json` (SHA-256
+  `FB346652D0859974ADD1670204F11C897F29C675E6EA222DC024027868F3FF1A`).
+
+The probe's stdout SHA-256 was
+`FA2EA26AAADBCE94053905A7C805C47D0DE5FF59CD1009A25DEE2FB8B8762CC4`,
+stderr was empty (empty-file SHA-256
+`E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855`),
+cleanup was graceful, and the post-run global Godot count was zero. No retry
+used the lease.
 
 ## Player intent
 

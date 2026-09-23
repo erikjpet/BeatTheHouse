@@ -674,10 +674,17 @@ static func travel_target_ids(map_data: Dictionary, node_id: String = "", max_ne
 	# particular, accepting the Grand invitation below its fare must show the
 	# Grand card and its affordability reason instead of silently evicting it.
 	var event_priority_id := _first_event_unlocked_priority_node_id(all_priority_candidates, node_lookup)
+	var promised_disabled_priority_ids: Array = [event_priority_id]
+	var grand_priority_node: Dictionary = node_lookup.get(GRAND_CASINO_ID, {})
+	if bool(grand_priority_node.get("unlocked", false)) \
+			and str(grand_priority_node.get("discovery_source", "")) == DISCOVERY_SOURCE_EVENT \
+			and not promised_disabled_priority_ids.has(GRAND_CASINO_ID):
+		promised_disabled_priority_ids.append(GRAND_CASINO_ID)
 	# Preserve the invited Grand Casino at the same time when both progression
-	# targets are live; independently replacing the last card makes priority
-	# destinations evict one another under the three-card cap.
-	result = _ensure_priority_targets(result, all_priority_candidates, [GRAND_CASINO_ID, event_priority_id, tier_two_priority_id], total_limit, [event_priority_id])
+	# targets are live. Grand remains an explicit highest-priority promise even
+	# when another event-unlocked route scores first; only actually event-unlocked
+	# nodes may bypass a temporary route blocker such as insufficient fare.
+	result = _ensure_priority_targets(result, all_priority_candidates, [GRAND_CASINO_ID, event_priority_id, tier_two_priority_id], total_limit, promised_disabled_priority_ids)
 	return result
 
 

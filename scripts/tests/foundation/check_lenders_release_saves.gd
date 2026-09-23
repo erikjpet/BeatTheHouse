@@ -4711,10 +4711,10 @@ func _check_grand_casino_invite_gate(library: ContentLibrary, kitty: Dictionary,
 		failures.append("The event-unlocked Grand Casino disappeared from the capped production map while its fare was unaffordable: %s." % JSON.stringify(low_bankroll_targets))
 	if low_bankroll_targets.size() > WorldMapScript.TRAVEL_TOTAL_TARGET_LIMIT + accept_run.travel_option_bonus():
 		failures.append("Preserving the unaffordable event-unlocked Grand Casino exceeded the production travel-card cap.")
-	# A real late-route map can have one enabled new Tier-2 casino plus enough
-	# additive revisits that the unaffordable event-promised Grand card must take
-	# that new destination's slot. Revisit cards remain protected, while the
-	# caller-declared Grand priority wins over the lower-priority Tier-2 card.
+	# A real late-route map can have one enabled event-unlocked Tier-2 casino plus
+	# enough additive revisits that the second, unaffordable event-promised Grand
+	# card must take that new destination's slot. Revisit cards remain protected,
+	# while the caller-declared Grand priority wins over the lower-priority card.
 	var crowded_revisit_ids := ["back_alley", "bar", "gas_station_casino", "motel"]
 	var crowded_nodes: Array = [{
 		"id": "kitty_cat_lounge", "kind": "casino", "tier": 2,
@@ -4729,7 +4729,8 @@ func _check_grand_casino_invite_gate(library: ContentLibrary, kitty: Dictionary,
 		})
 	crowded_nodes.append({
 		"id": "delta_queen", "kind": "casino", "tier": 2,
-		"state": WorldMapScript.STATE_REVEALED, "seen": true,
+		"state": WorldMapScript.STATE_REVEALED, "seen": true, "unlocked": true,
+		"discovery_source": WorldMapScript.DISCOVERY_SOURCE_EVENT,
 		"position": {"x": 0.7, "y": 0.7},
 	})
 	crowded_nodes.append({
