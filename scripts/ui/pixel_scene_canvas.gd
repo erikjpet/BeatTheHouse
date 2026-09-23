@@ -158,6 +158,8 @@ var draw_text_width_cache: Dictionary = {}
 var fit_draw_text_cache: Dictionary = {}
 var object_animation_phase_cache: Dictionary = {}
 var actor_route_started_at_cache: Dictionary = {}
+var actor_position_receipt_cache: Dictionary = {}
+var actor_position_route_room_key := ""
 var actor_route_time := 0.0
 var person_transits: Dictionary = {}
 var person_transit_ids: Array[String] = []
@@ -3022,7 +3024,7 @@ func _objects_from_interactable_records(records: Array) -> Array:
 		var object_type := str(record.get("visual_type", interaction_type))
 		var normalized_rect := _normalized_rect_from_record(record)
 		var focus_point := normalized_rect.position + normalized_rect.size * 0.5
-		var layout_resolved := bool(record.get("scenario_layout_resolved", false))
+		var layout_resolved := bool(record.get("scenario_layout_resolved", false)) or bool(record.get("fixed_slot_geometry", false))
 		var minimum_visual_size := Vector2.ZERO if layout_resolved else _minimum_object_visual_size(object_type)
 		var scene_object := {
 			"id": object_id,
@@ -3069,6 +3071,9 @@ func _objects_from_interactable_records(records: Array) -> Array:
 			"actor_route_points": JsonCoerceScript._copy_array(record.get("actor_route_points", [])),
 			"actor_route_stage": _copy_dictionary(record.get("actor_route_stage", {})),
 			"small_screen_rect": _copy_dictionary(record.get("small_screen_rect", {})),
+			"label_rect": _copy_dictionary(record.get("label_rect", {})),
+			"small_screen_label_rect": _copy_dictionary(record.get("small_screen_label_rect", {})),
+			"fixed_slot_geometry": bool(record.get("fixed_slot_geometry", false)),
 			"scenario_z_order": int(record.get("scenario_z_order", index)),
 			"scenario_layout_resolved": bool(record.get("scenario_layout_resolved", false)),
 			"scenario_layout_authority_identity": str(record.get("scenario_layout_authority_identity", "")),
@@ -3092,6 +3097,7 @@ func _objects_from_interactable_records(records: Array) -> Array:
 			"pose": str(record.get("pose", "")),
 			"behavior": str(record.get("behavior", "")),
 			"route_id": str(record.get("route_id", "")),
+			"authored_position_route_id": str(record.get("authored_position_route_id", "")),
 			"route_points": JsonCoerceScript._copy_array(record.get("route_points", [])),
 			"non_color_state": str(record.get("non_color_state", "")),
 			"z_order": int(record.get("z_order", 0)),
@@ -3568,7 +3574,7 @@ func _production_game_prop(object_data: Dictionary) -> String:
 
 
 func _normalized_rect_from_record(record: Dictionary) -> Rect2:
-	var layout_resolved := bool(record.get("scenario_layout_resolved", false))
+	var layout_resolved := bool(record.get("scenario_layout_resolved", false)) or bool(record.get("fixed_slot_geometry", false))
 	var rect := _rect_from_dict(record.get("normalized_rect", record.get("focus_rect", {})))
 	if layout_resolved:
 		# Finalized scenario records are already board-bounded and digested by the
@@ -4920,7 +4926,7 @@ func _board_rect_for_object(object_data: Dictionary) -> Rect2:
 	if route_position.x >= 0.0 and route_position.y >= 0.0:
 		var route_rect := _board_rect_for_object_at_position(object_data, route_position)
 		if small_screen_mode:
-			if bool(object_data.get("scenario_layout_resolved", false)):
+			if bool(object_data.get("scenario_layout_resolved", false)) or bool(object_data.get("fixed_slot_geometry", false)):
 				var sealed_small := _rect_from_dict(object_data.get("small_screen_rect", {}))
 				var sealed_size := sealed_small.size * Vector2(BOARD_SIZE)
 				return Rect2(route_rect.get_center() - sealed_size * 0.5, sealed_size)
@@ -4939,7 +4945,7 @@ func _interaction_rect_for_object(object_data: Dictionary) -> Rect2:
 	if bool(object_data.get("person_transit_active", false)):
 		return Rect2()
 	var rect := _board_rect_for_object(object_data)
-	if not small_screen_mode or bool(object_data.get("scenario_layout_resolved", false)):
+	if not small_screen_mode or bool(object_data.get("scenario_layout_resolved", false)) or bool(object_data.get("fixed_slot_geometry", false)):
 		return rect
 	var minimum_size := SmallScreenPolicyScript.ENVIRONMENT_OBJECT_HIT_SIZE
 	var next_size := Vector2(maxf(rect.size.x, minimum_size.x), maxf(rect.size.y, minimum_size.y))
@@ -5015,20 +5021,49 @@ func _actor_route_cache_key(object_data: Dictionary) -> String:
 
 
 func _sync_actor_route_starts() -> void:
+	var room_key := _person_transit_snapshot_key(foundation_snapshot)
+	var fresh_room_snapshot := room_key != actor_position_route_room_key
+	if fresh_room_snapshot:
+		actor_position_route_room_key = room_key
+		actor_position_receipt_cache.clear()
+		actor_route_started_at_cache.clear()
 	var active: Dictionary = {}
+	var active_receipts: Dictionary = {}
 	for value in foundation_scene_objects:
 		if typeof(value) != TYPE_DICTIONARY:
 			continue
 		var object_data := value as Dictionary
+		var object_id := str(object_data.get("id", "")).strip_edges()
+		var receipt_id := str(object_data.get("authored_position_route_id", "")).strip_edges()
+		if not object_id.is_empty():
+			active_receipts[object_id] = true
 		if _copy_dictionary(object_data.get("actor_route_stage", {})).is_empty():
+			if not object_id.is_empty():
+				actor_position_receipt_cache[object_id] = receipt_id
 			continue
 		var key := _actor_route_cache_key(object_data)
 		active[key] = true
-		if not actor_route_started_at_cache.has(key):
-			actor_route_started_at_cache[key] = actor_route_time
+		if receipt_id.is_empty():
+			# Authored patrol/ambient routes retain their normal live animation.
+			if not actor_route_started_at_cache.has(key):
+				actor_route_started_at_cache[key] = actor_route_time
+		else:
+			var had_actor := actor_position_receipt_cache.has(object_id)
+			var previous_receipt := str(actor_position_receipt_cache.get(object_id, ""))
+			var duration := maxf(0.001, float(_copy_dictionary(object_data.get("actor_route_stage", {})).get("duration_sec", 1.0)))
+			if not fresh_room_snapshot and had_actor and previous_receipt != receipt_id:
+				# Only an already-rendered actor receiving a new persisted movement
+				# receipt animates. Reconstruction and revisit seal directly at endpoint.
+				actor_route_started_at_cache[key] = actor_route_time
+			elif not actor_route_started_at_cache.has(key):
+				actor_route_started_at_cache[key] = actor_route_time - duration
+			actor_position_receipt_cache[object_id] = receipt_id
 	for key_value in actor_route_started_at_cache.keys():
 		if not active.has(str(key_value)):
 			actor_route_started_at_cache.erase(key_value)
+	for object_id_value in actor_position_receipt_cache.keys():
+		if not active_receipts.has(str(object_id_value)):
+			actor_position_receipt_cache.erase(object_id_value)
 
 
 func _scene_object_z_key(object_data: Dictionary) -> int:
@@ -5137,6 +5172,17 @@ func _resolved_label_rect_for_object(object_data: Dictionary, object_rect: Rect2
 	var object_id := str(object_data.get("id", ""))
 	if not _object_label_moves_with_route(object_data) and object_label_rect_cache.has(object_id):
 		return object_label_rect_cache[object_id] as Rect2
+	var authority_key := "small_screen_label_rect" if small_screen_mode else "label_rect"
+	var authored := _rect_from_dict(object_data.get(authority_key, {}))
+	if authored.has_area():
+		authored = Rect2(authored.position * Vector2(BOARD_SIZE), authored.size * Vector2(BOARD_SIZE))
+		if _object_label_moves_with_route(object_data):
+			var hit_key := "small_screen_rect" if small_screen_mode else "normalized_rect"
+			var settled_hit := _rect_from_dict(object_data.get(hit_key, {}))
+			if settled_hit.has_area():
+				settled_hit = Rect2(settled_hit.position * Vector2(BOARD_SIZE), settled_hit.size * Vector2(BOARD_SIZE))
+				authored.position += object_rect.get_center() - settled_hit.get_center()
+		return _clamp_board_rect(authored)
 	return _label_rect_for_object(object_rect, str(object_data.get("label", "")))
 
 
@@ -5150,87 +5196,24 @@ func _object_label_moves_with_route(object_data: Dictionary) -> bool:
 func _rebuild_object_label_rect_cache(objects: Array) -> void:
 	object_label_rect_cache = {}
 	var object_rects: Array[Rect2] = []
-	var default_label_rects: Array[Rect2] = []
+	var resolved_label_rects: Array[Rect2] = []
 	for value in objects:
 		var object_data: Dictionary = value if typeof(value) == TYPE_DICTIONARY else {}
 		var object_rect := _board_rect_for_object(object_data)
 		object_rects.append(object_rect)
-		default_label_rects.append(_label_rect_for_object(object_rect, str(object_data.get("label", ""))))
-	var resolved_label_rects: Array[Rect2] = []
-	var moved_count := 0
-	for index in range(objects.size()):
-		var object_data: Dictionary = objects[index] if typeof(objects[index]) == TYPE_DICTIONARY else {}
+		var resolved := _resolved_label_rect_for_object(object_data, object_rect)
 		var object_id := str(object_data.get("id", ""))
-		var default_rect: Rect2 = default_label_rects[index]
-		if object_id.is_empty() or not default_rect.has_area():
-			resolved_label_rects.append(Rect2())
-			continue
-		var best_rect := default_rect
-		var best_score := INF
-		for candidate_value in _object_label_candidates(object_rects[index], default_rect.size):
-			var candidate: Rect2 = candidate_value
-			var label_overlap := _total_rect_overlap(candidate, resolved_label_rects)
-			var object_overlap := 0.0
-			for object_index in range(object_rects.size()):
-				if object_index != index:
-					object_overlap += _rect_overlap_area(candidate, object_rects[object_index])
-			var distance_cost := candidate.get_center().distance_squared_to(default_rect.get_center())
-			var score := label_overlap * 1000000.0 + object_overlap * 1000.0 + distance_cost
-			if score < best_score:
-				best_score = score
-				best_rect = candidate
-			if label_overlap <= 0.01 and object_overlap <= 0.01:
-				break
-		object_label_rect_cache[object_id] = best_rect
-		resolved_label_rects.append(best_rect)
-		if not best_rect.is_equal_approx(default_rect):
-			moved_count += 1
+		if not object_id.is_empty() and resolved.has_area() and not _object_label_moves_with_route(object_data):
+			object_label_rect_cache[object_id] = resolved
+		resolved_label_rects.append(resolved)
 	object_label_layout_stats = {
 		"label_count": object_label_rect_cache.size(),
-		"moved_count": moved_count,
-		"default_label_overlap_count": _rect_pair_overlap_count(default_label_rects),
+		"moved_count": 0,
+		"default_label_overlap_count": _rect_pair_overlap_count(resolved_label_rects),
 		"resolved_label_overlap_count": _rect_pair_overlap_count(resolved_label_rects),
-		"default_object_overlap_count": _label_object_overlap_count(default_label_rects, object_rects),
+		"default_object_overlap_count": _label_object_overlap_count(resolved_label_rects, object_rects),
 		"resolved_object_overlap_count": _label_object_overlap_count(resolved_label_rects, object_rects),
 	}
-
-
-func _object_label_candidates(object_rect: Rect2, label_size: Vector2) -> Array[Rect2]:
-	var centered_x := object_rect.get_center().x - label_size.x * 0.5
-	var centered_y := object_rect.get_center().y - label_size.y * 0.5
-	var above_y := object_rect.position.y - label_size.y - OBJECT_LABEL_GAP
-	var below_y := object_rect.end.y + OBJECT_LABEL_GAP
-	var tier_gap := label_size.y + 2.0
-	var raw_positions := [
-		Vector2(centered_x, above_y),
-		Vector2(centered_x, below_y),
-		Vector2(centered_x, above_y - tier_gap),
-		Vector2(centered_x, below_y + tier_gap),
-		Vector2(object_rect.position.x - label_size.x - OBJECT_LABEL_GAP, centered_y),
-		Vector2(object_rect.end.x + OBJECT_LABEL_GAP, centered_y),
-		Vector2(centered_x - label_size.x * 0.55, above_y),
-		Vector2(centered_x + label_size.x * 0.55, above_y),
-		Vector2(centered_x - label_size.x * 0.55, below_y),
-		Vector2(centered_x + label_size.x * 0.55, below_y),
-	]
-	var candidates: Array[Rect2] = []
-	for position in raw_positions:
-		var candidate := _clamp_board_rect(Rect2(position, label_size))
-		var duplicate := false
-		for existing in candidates:
-			if existing.is_equal_approx(candidate):
-				duplicate = true
-				break
-		if not duplicate:
-			candidates.append(candidate)
-	return candidates
-
-
-func _total_rect_overlap(rect: Rect2, others: Array[Rect2]) -> float:
-	var total := 0.0
-	for other in others:
-		total += _rect_overlap_area(rect, other)
-	return total
 
 
 func _rect_pair_overlap_count(rects: Array[Rect2]) -> int:

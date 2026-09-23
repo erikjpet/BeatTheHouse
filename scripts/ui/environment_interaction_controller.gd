@@ -209,6 +209,7 @@ static func _base_layout_reservations(records: Array, layout: Dictionary = {}) -
 		var record := _dict(value)
 		var object_id := str(record.get("object_id", "")).strip_edges()
 		if object_id.is_empty() or by_id.has(object_id) or not bool(record.get("visible", true)) \
+				or str(record.get("presentation_mode", "room")) == "overflow" \
 				or not _runtime_layout_reservation_id(object_id):
 			continue
 		var label := str(record.get("label", "")).strip_edges()
@@ -417,6 +418,8 @@ static func _finalized_actor_authority_errors(semantic_state: Dictionary, author
 			["presentation_object_id", semantic_presentation_id, sealed.get("presentation_object_id", "")],
 			["normalized_hit_rect", actor.get("normalized_hit_rect", {}), sealed.get("normalized_hit_rect", {})],
 			["small_screen_rect", actor.get("small_screen_rect", {}), sealed.get("small_screen_rect", {})],
+			["label_rect", actor.get("label_rect", {}), sealed.get("label_rect", {})],
+			["small_screen_label_rect", actor.get("small_screen_label_rect", {}), sealed.get("small_screen_label_rect", {})],
 			["route_points", actor.get("route_points", []), sealed.get("actor_route_points", [])],
 			["route_stage", actor.get("route_stage", {}), sealed.get("actor_route_stage", {})],
 			["presentation_mode", actor.get("presentation_mode", "room"), sealed.get("presentation_mode", "room")],
@@ -725,6 +728,7 @@ static func _merge_projected_actor(base: Dictionary, semantic: Dictionary, autho
 	result["pose"] = result["actor_pose"]
 	result["behavior"] = result["actor_behavior"]
 	result["actor_route_id"] = str(semantic.get("route_id", ""))
+	result["authored_position_route_id"] = str(semantic.get("authored_position_route_id", ""))
 	result["actor_route_points"] = _array(authority.get("actor_route_points", []))
 	result["actor_route_stage"] = _dict(authority.get("actor_route_stage", {}))
 	result["character_actor"] = ScenarioSemanticViewModelScript.actor_character_model(semantic)
@@ -756,6 +760,8 @@ static func _apply_layout_authority(record: Dictionary, authority: Dictionary, a
 	var result := record.duplicate(true)
 	var normalized := _dict(authority.get("normalized_hit_rect", {}))
 	var small := _dict(authority.get("small_screen_rect", {}))
+	var label_rect := _dict(authority.get("label_rect", {}))
+	var small_label_rect := _dict(authority.get("small_screen_label_rect", {}))
 	var final_rect := Rect2(float(normalized.get("x", 0.0)), float(normalized.get("y", 0.0)), float(normalized.get("w", 0.0)), float(normalized.get("h", 0.0)))
 	# Every production geometry consumer receives the same sealed rectangle.
 	# `normalized_rect` used to retain a producer's stale pre-sequence value and
@@ -764,6 +770,9 @@ static func _apply_layout_authority(record: Dictionary, authority: Dictionary, a
 	result["normalized_rect"] = normalized.duplicate(true)
 	result["focus_rect"] = final_rect
 	result["small_screen_rect"] = small
+	result["label_rect"] = label_rect
+	result["small_screen_label_rect"] = small_label_rect
+	result["fixed_slot_geometry"] = true
 	result["actor_route_points"] = _array(authority.get("actor_route_points", []))
 	result["actor_route_stage"] = _dict(authority.get("actor_route_stage", {}))
 	result["scenario_z_order"] = int(authority.get("z_order", 0))
@@ -896,6 +905,8 @@ static func _projected_record_authority_errors(records: Array, authority: Dictio
 			["object_id", record.get("object_id", ""), sealed.get("presentation_object_id", "")],
 			["normalized_rect", record.get("normalized_rect", {}), sealed.get("normalized_hit_rect", {})],
 			["small_screen_rect", record.get("small_screen_rect", {}), sealed.get("small_screen_rect", {})],
+			["label_rect", record.get("label_rect", {}), sealed.get("label_rect", {})],
+			["small_screen_label_rect", record.get("small_screen_label_rect", {}), sealed.get("small_screen_label_rect", {})],
 			["scenario_z_order", record.get("scenario_z_order", -1), sealed.get("z_order", -2)],
 			["actor_route_points", record.get("actor_route_points", []), sealed.get("actor_route_points", [])],
 			["actor_route_stage", record.get("actor_route_stage", {}), sealed.get("actor_route_stage", {})],

@@ -5,6 +5,10 @@ const EnvironmentPlacementScript := preload("res://scripts/core/environment_plac
 
 const BOARD_SIZE := Vector2(900.0, 430.0)
 const SMALL_SCREEN_TARGET := Vector2(44.0, 44.0)
+const LABEL_MIN_WIDTH := 48.0
+const LABEL_MAX_WIDTH := 126.0
+const LABEL_HEIGHT := 15.0
+const LABEL_TWO_LINE_HEIGHT := 26.0
 const SLOT_SCHEMA_VERSION := 1
 const PRESENTATION_ROOM := "room"
 const PRESENTATION_OVERFLOW := "overflow"
@@ -141,17 +145,23 @@ static func bind_base_records(environment: Dictionary, records: Array, existing_
 		record["presentation_mode"] = mode
 		record["slot_id"] = str(binding.get("slot_id", ""))
 		record["placement_class"] = str(binding.get("placement_class", ""))
+		record["fixed_slot_geometry"] = true
 		if mode == PRESENTATION_ROOM:
 			var normalized := _normalized_rect(_slot_rect(_dict(binding.get("slot", {}))))
+			var label_rect := label_rect_from_binding(binding, str(record.get("label", "")))
 			record["normalized_rect"] = normalized.duplicate(true)
 			record["focus_rect"] = normalized.duplicate(true)
 			record["small_screen_rect"] = _normalized_rect(expanded_rect(_slot_rect(_dict(binding.get("slot", {})))))
+			record["label_rect"] = _normalized_rect(label_rect)
+			record["small_screen_label_rect"] = _normalized_rect(label_rect)
 			var rect := _rect_from_dict(normalized)
 			record["focus_point"] = {"x": rect.get_center().x, "y": rect.get_center().y}
 		else:
 			record["normalized_rect"] = {}
 			record["focus_rect"] = {}
 			record["small_screen_rect"] = {}
+			record["label_rect"] = {}
+			record["small_screen_label_rect"] = {}
 			record["focus_point"] = {}
 			overflow_ids.append(object_id)
 		result_records.append(record)
@@ -175,10 +185,12 @@ static func bind_scenario_visuals(environment: Dictionary, visual_entries: Array
 	var all_slots := stage_slots + exit_slots
 	var slots_by_id := _slots_by_id(all_slots)
 	var preferences := _dict(surface_map.get("scenario_slot_ids", {}))
+	var position_routes := _dict(surface_map.get("scenario_position_route_ids", {}))
 	var routes_by_id := _routes_by_id(_array(surface_map.get("actor_routes", [])))
 	var occupied: Dictionary = {}
 	var bindings: Dictionary = {}
 	var overflow_ids: Array = []
+	var errors: Array = []
 	var entries := visual_entries.duplicate(true)
 	entries.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
 		return str(_dict(left_value).get("identity", "")) < str(_dict(right_value).get("identity", ""))
@@ -188,8 +200,18 @@ static func bind_scenario_visuals(environment: Dictionary, visual_entries: Array
 	entries.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
 		var left := _dict(left_value)
 		var right := _dict(right_value)
-		var left_rank := 0 if bool(left.get("safe_exit", false)) else 1 if not str(_dict(left.get("semantic", {})).get("route_id", "")).is_empty() else 2
-		var right_rank := 0 if bool(right.get("safe_exit", false)) else 1 if not str(_dict(right.get("semantic", {})).get("route_id", "")).is_empty() else 2
+		var left_semantic := _dict(left.get("semantic", {}))
+		var right_semantic := _dict(right.get("semantic", {}))
+		var left_stable := str(left.get("identity", "")).trim_prefix("scenario::")
+		var right_stable := str(right.get("identity", "")).trim_prefix("scenario::")
+		var left_route := str(left_semantic.get("route_id", "")).strip_edges()
+		var right_route := str(right_semantic.get("route_id", "")).strip_edges()
+		if left_route.is_empty():
+			left_route = str(position_routes.get(scenario_position_key(left_stable, left_semantic), "")).strip_edges()
+		if right_route.is_empty():
+			right_route = str(position_routes.get(scenario_position_key(right_stable, right_semantic), "")).strip_edges()
+		var left_rank := 0 if bool(left.get("safe_exit", false)) else 1 if not left_route.is_empty() else 2
+		var right_rank := 0 if bool(right.get("safe_exit", false)) else 1 if not right_route.is_empty() else 2
 		return str(left.get("identity", "")) < str(right.get("identity", "")) if left_rank == right_rank else left_rank < right_rank
 	)
 	for entry_value in entries:
@@ -207,26 +229,44 @@ static func bind_scenario_visuals(environment: Dictionary, visual_entries: Array
 				str(semantic.get("prop", semantic.get("icon_key", "")))
 			)
 		var stable_id := identity.trim_prefix("scenario::")
+		var position_key := scenario_position_key(stable_id, semantic)
 		var route_id := str(semantic.get("route_id", "")).strip_edges()
+		if route_id.is_empty():
+			route_id = str(position_routes.get(position_key, "")).strip_edges()
 		var route := _dict(routes_by_id.get(route_id, {}))
 		var slot: Dictionary = {}
-		if not route_id.is_empty() and not route.is_empty():
+		if not route_id.is_empty():
+			if route.is_empty():
+				errors.append("Scenario visual %s route %s has no authored route authority." % [identity, route_id])
+				bindings[identity] = _overflow_binding(identity, placement_class, "stage")
+				overflow_ids.append(identity)
+				continue
 			var start_id := str(route.get("start_slot_id", ""))
 			var end_id := str(route.get("end_slot_id", ""))
 			var start_slot := _dict(slots_by_id.get(start_id, {}))
 			var end_slot := _dict(slots_by_id.get(end_id, {}))
-			if not start_slot.is_empty() and not end_slot.is_empty() \
+			var lane_ids := _array(route.get("lane_ids", []))
+			var route_points := authored_route_points(surface_map, start_slot, end_slot, lane_ids)
+			if start_id != end_id and not start_slot.is_empty() and not end_slot.is_empty() \
 					and str(start_slot.get("footprint_class", "")) == placement_class \
-					and not occupied.has(start_id) and not occupied.has(end_id):
+					and str(end_slot.get("footprint_class", "")) == placement_class \
+					and not occupied.has(start_id) and not occupied.has(end_id) \
+					and route_points.size() >= 2:
 				slot = start_slot
 				occupied[start_id] = identity
 				occupied[end_id] = "route_endpoint::%s" % identity
+			else:
+				errors.append("Scenario visual %s route %s has invalid, incompatible, occupied, or disconnected authored endpoints." % [identity, route_id])
 		elif bool(entry.get("safe_exit", false)):
-			var preference := str(preferences.get(stable_id, preferences.get(identity, ""))).strip_edges()
-			slot = _select_slot(exit_slots, occupied, placement_class, preference)
+			var preference := str(preferences.get(position_key, preferences.get(stable_id, preferences.get(identity, "")))).strip_edges()
+			slot = _select_slot(exit_slots, occupied, placement_class, preference, not preference.is_empty())
+			if slot.is_empty():
+				errors.append("Required safe exit %s has no free compatible authored exit slot%s." % [identity, " for preferred slot %s" % preference if not preference.is_empty() else ""])
 		else:
-			var preference := str(preferences.get(stable_id, preferences.get(identity, ""))).strip_edges()
-			slot = _select_slot(stage_slots, occupied, placement_class, preference)
+			var preference := str(preferences.get(position_key, preferences.get(stable_id, preferences.get(identity, "")))).strip_edges()
+			slot = _select_slot(stage_slots, occupied, placement_class, preference, not preference.is_empty())
+			if slot.is_empty() and not preference.is_empty():
+				errors.append("Scenario visual %s cannot use its required preferred slot %s for class %s." % [identity, preference, placement_class])
 		if slot.is_empty():
 			bindings[identity] = _overflow_binding(identity, placement_class, "exit" if bool(entry.get("safe_exit", false)) else "stage")
 			overflow_ids.append(identity)
@@ -237,16 +277,17 @@ static func bind_scenario_visuals(environment: Dictionary, visual_entries: Array
 		var binding := _room_binding(identity, placement_class, "exit" if bool(entry.get("safe_exit", false)) else "stage", slot)
 		if not route.is_empty():
 			binding["route"] = route.duplicate(true)
+			binding["route_id"] = route_id
 		bindings[identity] = binding
 	return {
-		"ok": true,
+		"ok": errors.is_empty(),
 		"slot_schema_version": SLOT_SCHEMA_VERSION,
 		"slot_map_digest": slot_map_digest(surface_map),
 		"binding_digest": binding_digest(bindings),
 		"slot_bindings": bindings,
 		"overflow_ids": overflow_ids,
 		"occupied_slot_ids": occupied.keys(),
-		"errors": [],
+		"errors": errors,
 	}
 
 
@@ -262,7 +303,17 @@ static func slot_map_digest(surface_map: Dictionary) -> String:
 		"object_slot_ids": _dict(surface_map.get("object_slot_ids", {})),
 		"category_slot_ids": _dict(surface_map.get("category_slot_ids", {})),
 		"scenario_slot_ids": _dict(surface_map.get("scenario_slot_ids", {})),
+		"scenario_position_route_ids": _dict(surface_map.get("scenario_position_route_ids", {})),
 	}).sha256_text()
+
+
+static func scenario_position_key(stable_id: String, semantic: Dictionary) -> String:
+	return "%s|%s|%s|%s" % [
+		stable_id,
+		str(semantic.get("anchor_id", "")).strip_edges(),
+		str(semantic.get("zone_id", "")).strip_edges(),
+		str(semantic.get("authored_position_route_id", "")).strip_edges(),
+	]
 
 
 static func binding_digest(bindings: Dictionary) -> String:
@@ -287,6 +338,28 @@ static func expanded_rect(rect: Rect2) -> Rect2:
 
 static func normalized_rect(rect: Rect2) -> Dictionary:
 	return _normalized_rect(rect)
+
+
+# The slot's authored label anchor is the bottom-center of the exact renderer
+# rectangle. Text determines only its bounded size; runtime never searches an
+# alternate position.
+static func label_rect_from_binding(binding: Dictionary, label: String) -> Rect2:
+	return label_rect_from_slot(_dict(binding.get("slot", {})), label)
+
+
+static func label_rect_from_slot(slot: Dictionary, label: String) -> Rect2:
+	if label.strip_edges().is_empty():
+		return Rect2()
+	var anchor_values := _array(slot.get("label_anchor", []))
+	if anchor_values.size() < 2:
+		return Rect2()
+	var anchor := Vector2(float(anchor_values[0]), float(anchor_values[1]))
+	var raw_width := float(label.strip_edges().length()) * 5.8 + 12.0
+	var size := Vector2(
+		minf(maxf(LABEL_MIN_WIDTH, raw_width), LABEL_MAX_WIDTH),
+		LABEL_TWO_LINE_HEIGHT if raw_width > LABEL_MAX_WIDTH else LABEL_HEIGHT
+	)
+	return _clamp_inside_board(Rect2(anchor - Vector2(size.x * 0.5, size.y), size))
 
 
 # Returns actor-center points along only the portion of the ordered authored
@@ -327,7 +400,7 @@ static func authored_route_points(surface_map: Dictionary, start_slot: Dictionar
 	return result if result.size() >= 2 else []
 
 
-static func _select_slot(slots: Array, occupied: Dictionary, placement_class: String, preferred_slot_id: String) -> Dictionary:
+static func _select_slot(slots: Array, occupied: Dictionary, placement_class: String, preferred_slot_id: String, require_preferred: bool = false) -> Dictionary:
 	if not preferred_slot_id.is_empty():
 		for slot_value in slots:
 			var preferred := _dict(slot_value)
@@ -335,6 +408,8 @@ static func _select_slot(slots: Array, occupied: Dictionary, placement_class: St
 					and str(preferred.get("footprint_class", "")) == placement_class \
 					and not occupied.has(preferred_slot_id):
 				return preferred
+		if require_preferred:
+			return {}
 	for slot_value in slots:
 		var slot := _dict(slot_value)
 		var slot_id := str(slot.get("id", ""))

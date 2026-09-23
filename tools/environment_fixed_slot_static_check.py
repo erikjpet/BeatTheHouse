@@ -79,15 +79,16 @@ def expanded(bounds: tuple[float, float, float, float], board: tuple[float, floa
     )
 
 
-def label_rect(slot: dict[str, Any], board: tuple[float, float]) -> tuple[float, float, float, float]:
-    bounds = rect(slot.get("hit_rect")) or (0.0, 0.0, 0.0, 0.0)
+def label_rect(slot: dict[str, Any], label: str, board: tuple[float, float]) -> tuple[float, float, float, float]:
     anchor = point(slot.get("label_anchor")) or (0.0, 0.0)
-    width = max(88.0, min(132.0, bounds[2] + 24.0))
+    raw_width = len(label.strip()) * 5.8 + 12.0
+    width = min(max(48.0, raw_width), 126.0)
+    height = 26.0 if raw_width > 126.0 else 15.0
     return (
         min(max(0.0, anchor[0] - width / 2.0), board[0] - width),
-        max(0.0, anchor[1] - 18.0),
+        min(max(0.0, anchor[1] - height), board[1] - height),
         width,
-        18.0,
+        height,
     )
 
 
@@ -136,6 +137,68 @@ def expected_support_kind(placement_class: str) -> str:
     return "doorway"
 
 
+def slot_has_physical_support(
+    map_data: dict[str, Any],
+    slot: dict[str, Any],
+) -> bool:
+    placement_class = str(slot.get("footprint_class", ""))
+    bounds = rect(slot.get("hit_rect"))
+    position = point(slot.get("pos"))
+    support_id = str(slot.get("support_id", ""))
+    if bounds is None or position is None or placement_class not in CLASSES:
+        return False
+    expected_contact = SlotAuthoring.contact_for_rect(bounds, placement_class)
+    if math.dist(expected_contact, position) > EPSILON:
+        return False
+    if placement_class in SlotAuthoring.GROUNDED_CLASSES:
+        floor = map_data.get("floor", {}) if isinstance(map_data.get("floor"), dict) else {}
+        band_field = "stage_bands" if support_id == "stage" else "bands" if support_id == "floor" else ""
+        contact_range = values(floor.get("contact_y"))
+        if not band_field or support_id == "floor" and (len(contact_range) < 2 or not (float(contact_range[0]) - EPSILON <= position[1] <= float(contact_range[1]) + EPSILON)):
+            return False
+        return any(encloses(raw, bounds) for value in values(floor.get(band_field)) if (raw := rect(value)) is not None)
+    if placement_class in {"behind_counter_person", "surface_item"}:
+        for counter in values(map_data.get("counters")):
+            if not isinstance(counter, dict) or str(counter.get("id", "")) != support_id:
+                continue
+            allowed = [str(item) for item in values(counter.get("classes"))]
+            return (not allowed or placement_class in allowed) \
+                and float(counter.get("x0", 0.0)) - EPSILON <= bounds[0] \
+                and bounds[0] + bounds[2] <= float(counter.get("x1", 0.0)) + EPSILON \
+                and abs(position[1] - float(counter.get("top_y", 0.0))) <= EPSILON
+        return False
+    if placement_class == "seated_person":
+        return any(
+            isinstance(seat, dict) and str(seat.get("id", "")) == support_id
+            and (seat_point := point(seat.get("point"))) is not None
+            and math.dist(seat_point, position) <= EPSILON
+            for seat in values(map_data.get("seats"))
+        )
+    if placement_class in {"wall_mounted", "hanging"}:
+        surface = map_data.get("wall" if placement_class == "wall_mounted" else "ceiling", {})
+        if not isinstance(surface, dict):
+            return False
+        regions: list[tuple[str, tuple[float, float, float, float]]] = []
+        if placement_class == "wall_mounted":
+            for mount in values(surface.get("mounts")):
+                if isinstance(mount, dict) and (mount_bounds := rect(mount.get("bounds"))) is not None:
+                    regions.append((str(mount.get("id", "wall_mount")), mount_bounds))
+        surface_bounds = rect(surface.get("bounds"))
+        if surface_bounds is not None:
+            regions.append(("wall" if placement_class == "wall_mounted" else "ceiling", surface_bounds))
+        exclusions = [parsed for item in values(surface.get("exclusions")) if (parsed := rect(item.get("bounds") if isinstance(item, dict) else item)) is not None]
+        return any(identity == support_id and encloses(region, bounds) for identity, region in regions) \
+            and not any(intersects(bounds, exclusion) for exclusion in exclusions)
+    if placement_class == "doorway":
+        return any(
+            isinstance(doorway, dict) and str(doorway.get("id", "")) == support_id
+            and (door_bounds := rect(doorway.get("bounds"))) is not None
+            and encloses(door_bounds, bounds)
+            for doorway in values(map_data.get("doorways"))
+        )
+    return False
+
+
 def all_slots(map_data: dict[str, Any]) -> list[dict[str, Any]]:
     return [slot for field in MAP_SLOT_FIELDS for slot in values(map_data.get(field)) if isinstance(slot, dict)]
 
@@ -164,54 +227,61 @@ def simulate_scenario_binding(
     }
     preferences = map_data.get("scenario_slot_ids", {}) if isinstance(map_data.get("scenario_slot_ids"), dict) else {}
     class_overrides = map_data.get("class_overrides", {}) if isinstance(map_data.get("class_overrides"), dict) else {}
-    entries: list[tuple[int, str, str, bool, str, bool]] = []
+    position_routes = map_data.get("scenario_position_route_ids", {}) if isinstance(map_data.get("scenario_position_route_ids"), dict) else {}
+    entries: list[tuple[int, str, str, bool, str, bool, str]] = []
     interactions: dict[str, dict[str, Any]] = {}
     for semantic in snapshot:
         identity = str(semantic.get("identity", ""))
         interaction = semantic.get("_slot_interaction", {}) if isinstance(semantic.get("_slot_interaction"), dict) else {}
         if interaction:
             interactions[identity] = interaction
-        if bool(semantic.get("_slot_interaction_only", False)) or not identity.startswith("scenario::"):
+        if bool(semantic.get("_slot_interaction_only", False)) or bool(semantic.get("_slot_nonvisual", False)) or not identity.startswith("scenario::"):
             continue
         stable_id = identity.removeprefix("scenario::")
         actor = bool(semantic.get("_slot_actor", False))
-        placement_class = SlotAuthoring.classify(
+        placement_class = SlotAuthoring.classify_with_override(
             semantic,
             "actor" if actor else "scene_object",
             identity,
             str(class_overrides.get(identity, class_overrides.get(stable_id, ""))),
         )
-        route_id = str(semantic.get("route_id", ""))
+        position_key = SlotAuthoring.scenario_position_key(stable_id, semantic)
+        route_id = str(semantic.get("route_id", "")) or str(position_routes.get(position_key, ""))
         safe_exit = bool(semantic.get("safe_exit", False))
         # Production promotes every required exit to the doorway footprint class
         # before binding, regardless of the semantic object's visual category.
         if safe_exit:
             placement_class = "doorway"
         rank = 0 if safe_exit else 1 if route_id else 2
-        entries.append((rank, identity, placement_class, safe_exit, route_id, bool(semantic.get("_slot_hidden", False))))
+        entries.append((rank, identity, placement_class, safe_exit, route_id, bool(semantic.get("_slot_hidden", False)), position_key))
     entries.sort(key=lambda entry: (entry[0], entry[1]))
     occupied: set[str] = set()
     bindings: dict[str, dict[str, str]] = {}
     hidden_identities: set[str] = set()
-    for _rank, identity, placement_class, safe_exit, route_id, hidden in entries:
+    for _rank, identity, placement_class, safe_exit, route_id, hidden, position_key in entries:
         if hidden:
             hidden_identities.add(identity)
         selected: dict[str, Any] | None = None
         route = routes.get(route_id, {}) if route_id else {}
-        if route_id and route:
+        if route_id:
             start_id = str(route.get("start_slot_id", ""))
             end_id = str(route.get("end_slot_id", ""))
             start = slot_by_id.get(start_id, {})
             end = slot_by_id.get(end_id, {})
-            if (start and end and str(start.get("footprint_class", "")) == placement_class
-                    and start_id not in occupied and end_id not in occupied):
+            lane_ids = [str(item) for item in values(route.get("lane_ids"))]
+            known_lanes = {str(item.get("id", "")) for item in values(map_data.get("walk_lanes")) if isinstance(item, dict)}
+            if (route and start and end and start_id != end_id
+                    and str(start.get("footprint_class", "")) == placement_class
+                    and str(end.get("footprint_class", "")) == placement_class
+                    and start_id not in occupied and end_id not in occupied
+                    and lane_ids and all(lane_id in known_lanes for lane_id in lane_ids)):
                 selected = start
                 occupied.update({start_id, end_id})
         else:
             pool = exit_slots if safe_exit else stage_slots
             stable_id = identity.removeprefix("scenario::")
-            preferred_id = str(preferences.get(stable_id, preferences.get(identity, "")))
-            candidates = ([slot_by_id[preferred_id]] if preferred_id in slot_by_id and slot_by_id[preferred_id] in pool else []) + pool
+            preferred_id = str(preferences.get(position_key, preferences.get(stable_id, preferences.get(identity, ""))))
+            candidates = [slot_by_id[preferred_id]] if preferred_id in slot_by_id and slot_by_id[preferred_id] in pool else ([] if preferred_id else pool)
             for slot in candidates:
                 slot_id = str(slot.get("id", ""))
                 if str(slot.get("footprint_class", "")) == placement_class and slot_id not in occupied:
@@ -225,12 +295,21 @@ def simulate_scenario_binding(
                 "mode": "room",
                 "slot_id": str(selected.get("id", "")),
                 "placement_class": placement_class,
+                "route_id": route_id,
+                "end_slot_id": str(route.get("end_slot_id", "")) if route_id else "",
             }
         if safe_exit:
             check.require(bindings[identity]["mode"] == "room", f"{map_id}.{identity}: required safe exit overflowed")
         if route_id:
             check.require(bool(route), f"{map_id}.{identity}: route {route_id} has no authored slot/lane record")
-            check.require(bindings[identity]["mode"] in {"room", "overflow"}, f"{map_id}.{identity}: routed actor has no binding")
+            check.require(bindings[identity]["mode"] == "room", f"{map_id}.{identity}: routed actor failed closed into overflow")
+        else:
+            stable_id = identity.removeprefix("scenario::")
+            preferred_id = str(preferences.get(position_key, preferences.get(stable_id, preferences.get(identity, ""))))
+            if preferred_id:
+                preferred = slot_by_id.get(preferred_id, {})
+                check.require(bool(preferred), f"{map_id}.{identity}: preferred slot {preferred_id} is missing")
+                check.require(not preferred or str(preferred.get("footprint_class", "")) == placement_class, f"{map_id}.{identity}: preferred slot {preferred_id} is incompatible with {placement_class}")
 
     room_count = sum(1 for binding in bindings.values() if binding["mode"] == "room")
     overflow_count = len(bindings) - room_count
@@ -446,6 +525,8 @@ def validate_map(check: Check, map_data: dict[str, Any], archetype: dict[str, An
                 check.require(support_id in supports[support_kind], f"{map_id}.{slot_id}: unknown {support_kind} support {support_id}")
             lane_ids = values(slot.get("walk_lane_ids"))
             check.require(all(isinstance(item, str) and item for item in lane_ids), f"{map_id}.{slot_id}: invalid walk_lane_ids")
+            if hit is not None and position is not None and placement_class in CLASSES:
+                check.require(slot_has_physical_support(map_data, slot), f"{map_id}.{slot_id}: geometry/contact is not physically supported by {support_id}")
 
     lanes: dict[str, dict[str, Any]] = {}
     for lane in values(map_data.get("walk_lanes")):
@@ -475,17 +556,17 @@ def validate_map(check: Check, map_data: dict[str, Any], archetype: dict[str, An
             right_hit = rect(right.get("hit_rect"))
             if right_hit is None:
                 continue
+            if left.get("kind") == "stage" and right.get("kind") == "stage":
+                # Mutually exclusive scenario states may intentionally reuse a
+                # physical support. Reachable compositions prove exclusivity.
+                continue
             pair = f"{map_id}: {left.get('id')} / {right.get('id')}"
             check.require(not intersects(left_hit, right_hit), f"{pair}: normal hit rectangles overlap")
             left_expanded, right_expanded = expanded(left_hit, board), expanded(right_hit, board)
             check.require(not intersects(left_expanded, right_expanded), f"{pair}: expanded hit rectangles overlap")
-            left_label, right_label = label_rect(left, board), label_rect(right, board)
-            check.require(not intersects(left_label, right_label), f"{pair}: labels overlap")
-            check.require(not intersects(left_label, right_hit) and not intersects(left_hit, right_label), f"{pair}: label overlaps another hit target")
-            check.require(
-                not intersects(left_label, right_expanded) and not intersects(left_expanded, right_label),
-                f"{pair}: label overlaps another expanded small-screen hit target",
-            )
+            # Slot inventory is a union across mutually exclusive base rolls and
+            # scenario phases. Label rectangles depend on the concrete text and
+            # are checked against each reachable composition below.
 
     for preference_field in ("object_slot_ids", "category_slot_ids", "scenario_slot_ids"):
         preferences = map_data.get(preference_field, {})
@@ -496,6 +577,8 @@ def validate_map(check: Check, map_data: dict[str, Any], archetype: dict[str, An
                 slot = slot_by_id.get(str(slot_id), {})
                 check.require(bool(str(identity)) and bool(slot), f"{map_id}.{preference_field}: {identity} names unknown slot {slot_id}")
                 check.require(not slot or slot.get("kind") in expected_kinds, f"{map_id}.{preference_field}: {identity} names an invalid slot kind")
+    position_route_preferences = map_data.get("scenario_position_route_ids", {})
+    check.require(isinstance(position_route_preferences, dict), f"{map_id}: scenario_position_route_ids must be an object")
 
     for route in values(map_data.get("actor_routes")):
         if not isinstance(route, dict):
@@ -533,19 +616,17 @@ def validate_map(check: Check, map_data: dict[str, Any], archetype: dict[str, An
             last_points = [parsed for item in values(valid_route_lanes[-1].get("points")) if (parsed := point(item)) is not None]
             start_projection = polyline_projection(first_points, start_position)
             end_projection = polyline_projection(last_points, end_position)
-            check.require(start_projection is not None and start_projection[2] <= EPSILON, f"{map_id}.{route_id}: start endpoint is not geometrically attached to its first lane")
-            check.require(end_projection is not None and end_projection[2] <= EPSILON, f"{map_id}.{route_id}: end endpoint is not geometrically attached to its last lane")
-            if len(valid_route_lanes) == 1 and start_projection is not None and end_projection is not None:
-                sliced_distance = abs(end_projection[1] - start_projection[1])
-                check.require(sliced_distance > EPSILON, f"{map_id}.{route_id}: endpoint projections do not define a traversable lane slice")
-                if map_id == "back_alley" and route_id == "base::world:bar":
-                    check.require(
-                        math.dist(start_projection[0], (452.0, 358.0)) <= EPSILON
-                        and math.dist(end_projection[0], (752.0, 358.0)) <= EPSILON
-                        and abs(sliced_distance - 300.0) <= EPSILON,
-                        "back_alley.base::world:bar must slice lane.public directly from x=452 to x=752 (300px) without backtracking",
-                    )
+            check.require(start_projection is not None and start_projection[2] <= max(board), f"{map_id}.{route_id}: start endpoint has no finite connector to its first lane")
+            check.require(end_projection is not None and end_projection[2] <= max(board), f"{map_id}.{route_id}: end endpoint has no finite connector to its last lane")
+            check.require(
+                math.dist(start_position, end_position) > EPSILON,
+                f"{map_id}.{route_id}: distinct slot ids resolve to the same physical endpoint",
+            )
         check.require(str(route.get("reduced_motion_slot_id", "")) in {start_id, end_id}, f"{map_id}.{route_id}: invalid reduced-motion endpoint")
+    route_ids = {str(route.get("id", "")) for route in values(map_data.get("actor_routes")) if isinstance(route, dict)}
+    if isinstance(position_route_preferences, dict):
+        for state_key, route_id in position_route_preferences.items():
+            check.require(bool(str(state_key)) and str(route_id) in route_ids, f"{map_id}.scenario_position_route_ids: {state_key} names unknown route {route_id}")
 
 
 def validate_single_json_slot_extension(

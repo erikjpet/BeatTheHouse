@@ -234,6 +234,9 @@ static func sealed_renderer_snapshot(layout_result: Dictionary) -> Dictionary:
 				"normalized_rect": _dict(sealed.get("normalized_hit_rect", {})),
 				"focus_rect": _dict(sealed.get("normalized_hit_rect", {})),
 				"small_screen_rect": _dict(sealed.get("small_screen_rect", {})),
+				"label_rect": _dict(sealed.get("label_rect", {})),
+				"small_screen_label_rect": _dict(sealed.get("small_screen_label_rect", {})),
+				"fixed_slot_geometry": true,
 				"owner_namespace": str(semantic.get("owner_namespace", "")),
 				"stable_object_id": str(semantic.get("stable_object_id", "")),
 				"semantic_identity": identity,
@@ -314,17 +317,9 @@ static func resolve(base_records: Array, projection: Dictionary, environment: Di
 	var context_base_occupied := _context_base_occupied_records(context, base_records, errors)
 	occupied.append_array(context_base_occupied)
 	var base_by_identity := _base_records_by_identity(base_records)
-	var reserved_overlay := _context_overlay_rect(context)
-	if reserved_overlay.has_area():
-		# The TalkDock reservation is live production geometry, not merely a
-		# post-layout validator. Treat it as occupied during deterministic placement
-		# so interactive scenario controls can move to an authored fallback offset
-		# instead of invalidating the whole projection on Web-sized canvases.
-		occupied.append({
-			"identity": "system::reserved_overlay",
-			"rect": reserved_overlay,
-			"small_rect": reserved_overlay,
-		})
+	# TalkDock is transient modal/input geometry. It may cover immutable room
+	# slots while open, but it must never relocate them or invalidate their seal.
+	# The dock blocks underlying input and the same controls recover on close.
 	var authority := _base_layout_authority(base_records, errors, environment)
 	var collision_adjustments := 0
 	var visual_count := 0
@@ -437,6 +432,8 @@ static func failure_authority(_base_records: Array = []) -> Dictionary:
 		"presentation_object_id": "scenario::presentation_failure",
 		"normal": _normalized_rect(rect),
 		"small": _normalized_rect(_expanded_rect(rect, SMALL_SCREEN_TARGET)),
+		"label_rect": _normalized_rect(_label_rect(rect, "Scenario unavailable")),
+		"small_label_rect": _normalized_rect(_label_rect(rect, "Scenario unavailable")),
 		"z_order": MAX_VISUALS + 1,
 		"visual_kind": "system_failure",
 		"source": "trusted_runtime_fallback",
@@ -460,6 +457,8 @@ static func _resolve_visual_queue(queue: Array, environment: Dictionary, semanti
 		if not _record_pixel_rect(base_record).has_area() or not str(semantic.get("route_id", "")).is_empty():
 			bind_entries.append(queue_entry)
 	var binding_result := EnvironmentSlotBinderScript.bind_scenario_visuals(environment, bind_entries)
+	if not bool(binding_result.get("ok", false)):
+		queue_errors.append_array(_array(binding_result.get("errors", ["Scenario fixed-slot binding failed closed."])))
 	var bindings := _dict(binding_result.get("slot_bindings", {}))
 	for queue_value in queue:
 		var queue_entry := _dict(queue_value)
@@ -529,18 +528,24 @@ static func _resolve_fixed_visual(
 	if placement_class not in EnvironmentPlacementScript.CLASSES:
 		placement_class = EnvironmentPlacementScript.classify(semantic, "actor" if actor else "scene_object", identity, str(semantic.get("prop", semantic.get("icon_key", ""))))
 	var pixel_rect := _record_pixel_rect(base_record)
+	var label_rect := _pixel_rect(_dict(base_record.get("label_rect", {})))
+	var small_label_rect := _pixel_rect(_dict(base_record.get("small_screen_label_rect", {})))
 	var presentation_mode := str(base_record.get("presentation_mode", "room")) if not base_record.is_empty() else str(binding.get("presentation_mode", "overflow"))
 	var slot_id := str(base_record.get("slot_id", "")) if not base_record.is_empty() else str(binding.get("slot_id", ""))
 	if not binding.is_empty() and (not str(semantic.get("route_id", "")).is_empty() or not pixel_rect.has_area()):
 		presentation_mode = str(binding.get("presentation_mode", "overflow"))
 		slot_id = str(binding.get("slot_id", ""))
 		pixel_rect = EnvironmentSlotBinderScript.rect_from_binding(binding)
+		label_rect = EnvironmentSlotBinderScript.label_rect_from_binding(binding, label)
+		small_label_rect = label_rect
 	if presentation_mode == "room" and not pixel_rect.has_area():
 		errors.append("Scenario visual %s has a room binding without authored slot geometry." % identity)
 		return {}
 	var route_points: Array = []
 	var route_stage: Dictionary = {}
 	var route_id := str(semantic.get("route_id", "")).strip_edges()
+	if route_id.is_empty():
+		route_id = str(binding.get("route_id", "")).strip_edges()
 	if actor and presentation_mode == "room" and not route_id.is_empty():
 		var route := _dict(binding.get("route", {}))
 		var start_slot := _slot_by_id(environment, str(route.get("start_slot_id", "")))
@@ -582,6 +587,8 @@ static func _resolve_fixed_visual(
 	result["semantic_kind"] = "actor" if actor else "scene_object"
 	result["normalized_hit_rect"] = _normalized_rect(pixel_rect) if presentation_mode == "room" else {}
 	result["small_screen_rect"] = _normalized_rect(_expanded_rect(pixel_rect, SMALL_SCREEN_TARGET)) if presentation_mode == "room" else {}
+	result["label_rect"] = _normalized_rect(label_rect) if presentation_mode == "room" else {}
+	result["small_screen_label_rect"] = _normalized_rect(small_label_rect) if presentation_mode == "room" else {}
 	result["resolved_bounds"] = {"w": pixel_rect.size.x, "h": pixel_rect.size.y} if presentation_mode == "room" else {}
 	result["collision_adjusted"] = false
 	result["placement_spacing_warning"] = false
@@ -590,6 +597,7 @@ static func _resolve_fixed_visual(
 	result["contact"] = _placement_contact(placement_class)
 	result["presentation_mode"] = presentation_mode
 	result["slot_id"] = slot_id
+	result["route_id"] = route_id
 	result["route_points"] = route_points
 	result["route_stage"] = route_stage
 	result["visible"] = bool(result.get("visible", true))
@@ -610,7 +618,6 @@ static func _slot_by_id(environment: Dictionary, slot_id: String) -> Dictionary:
 
 
 static func _validate_visual_access(scenes: Dictionary, actors: Dictionary, obstacles: Array, interactions: Dictionary, base_records: Array, environment: Dictionary, errors: Array) -> void:
-	var overlay := _context_overlay_rect(_layout_context(environment))
 	var normal_labels: Array = []
 	var small_labels: Array = []
 	for base_value in base_records:
@@ -619,10 +626,9 @@ static func _validate_visual_access(scenes: Dictionary, actors: Dictionary, obst
 		if not bool(base_record.get("visible", true)) or str(base_record.get("presentation_mode", "room")) == "overflow" or scenes.has(base_identity) or actors.has(base_identity):
 			continue
 		var base_rect := _record_pixel_rect(base_record)
-		var base_small := _expanded_rect(base_rect, SMALL_SCREEN_TARGET)
-		var developer_placed := _developer_placement_room(environment)
-		normal_labels.append({"identity": base_identity, "rect": _label_rect(base_rect, str(base_record.get("label", ""))), "scenario": false, "developer_placed": developer_placed})
-		small_labels.append({"identity": base_identity, "rect": _label_rect(base_small, str(base_record.get("label", ""))), "scenario": false, "developer_placed": developer_placed})
+		var base_small := _record_small_rect(base_record)
+		normal_labels.append({"identity": base_identity, "rect": _record_label_rect(base_record), "target_rect": base_rect})
+		small_labels.append({"identity": base_identity, "rect": _record_label_rect(base_record, true), "target_rect": base_small})
 	for collection in [scenes, actors]:
 		var identities := (collection as Dictionary).keys()
 		identities.sort()
@@ -633,13 +639,10 @@ static func _validate_visual_access(scenes: Dictionary, actors: Dictionary, obst
 				continue
 			var rect := _pixel_rect(_dict(semantic.get("normalized_hit_rect", {})))
 			var small_rect := _pixel_rect(_dict(semantic.get("small_screen_rect", {})))
-			var label_rect := _label_rect(rect, str(semantic.get("label", "")))
-			var small_label_rect := _label_rect(small_rect, str(semantic.get("label", "")))
-			if interactions.has(identity) and overlay.has_area() and (rect.intersects(overlay) or small_rect.intersects(overlay) or label_rect.intersects(overlay) or small_label_rect.intersects(overlay)):
-				errors.append("Scenario visual %s collides with the reserved TalkDock overlay." % identity)
-			var developer_placed := _developer_placement_room(environment) or bool(semantic.get("placement_spacing_warning", false))
-			normal_labels.append({"identity": identity, "rect": label_rect, "scenario": true, "developer_placed": developer_placed})
-			small_labels.append({"identity": identity, "rect": small_label_rect, "scenario": true, "developer_placed": developer_placed})
+			var label_rect := _pixel_rect(_dict(semantic.get("label_rect", {})))
+			var small_label_rect := _pixel_rect(_dict(semantic.get("small_screen_label_rect", {})))
+			normal_labels.append({"identity": identity, "rect": label_rect, "target_rect": rect})
+			small_labels.append({"identity": identity, "rect": small_label_rect, "target_rect": small_rect})
 			var role := str(semantic.get("role", "")).to_lower()
 			if role in ["obstacle", "barrier", "blockade"] and (rect.intersects(WALK_LANE) or small_rect.intersects(WALK_LANE)):
 				errors.append("Scenario obstacle %s blocks the mandatory player access lane in normal or expanded small-screen layout." % identity)
@@ -666,15 +669,26 @@ static func _room_path_reachable(obstacles: Array, rect_key: String = "rect") ->
 	return false
 
 
-static func _validate_label_entries(_entries: Array, _layout_label: String, _errors: Array) -> void:
-	# Label overlap remains visible through the layout audit as a presentation
-	# warning. D2 makes normal interaction rectangles and route ambiguity fatal;
-	# a crowded label may hide until focus, but must not make the room unloadable.
-	return
+static func _validate_label_entries(entries: Array, layout_label: String, errors: Array) -> void:
+	for left_index in range(entries.size()):
+		var left := _dict(entries[left_index])
+		var left_label: Rect2 = left.get("rect", Rect2())
+		if not left_label.has_area():
+			errors.append("Layout label %s has no authored %s rectangle." % [str(left.get("identity", "")), layout_label])
+			continue
+		for right_index in range(left_index + 1, entries.size()):
+			var right := _dict(entries[right_index])
+			var right_label: Rect2 = right.get("rect", Rect2())
+			var left_target: Rect2 = left.get("target_rect", Rect2())
+			var right_target: Rect2 = right.get("target_rect", Rect2())
+			if left_label.intersects(right_label) and left_label.intersection(right_label).get_area() > 0.01:
+				errors.append("Layout labels %s and %s overlap in %s layout." % [str(left.get("identity", "")), str(right.get("identity", "")), layout_label])
+			if left_label.intersects(right_target) and left_label.intersection(right_target).get_area() > 0.01 \
+					or right_label.intersects(left_target) and right_label.intersection(left_target).get_area() > 0.01:
+				errors.append("Layout label and hit authority for %s / %s overlap in %s layout." % [str(left.get("identity", "")), str(right.get("identity", "")), layout_label])
 
 
 static func _validate_actor_routes(actors: Dictionary, obstacles: Array, occupied: Array, environment: Dictionary, errors: Array) -> void:
-	var overlay := _context_overlay_rect(_layout_context(environment))
 	for identity_value in actors.keys():
 		var identity := str(identity_value)
 		var actor := _dict(actors.get(identity_value, {}))
@@ -704,10 +718,15 @@ static func _validate_actor_routes(actors: Dictionary, obstacles: Array, occupie
 			errors.append("Scenario actor %s route endpoint cannot stage its full bounds inside the room." % identity)
 			continue
 		var endpoint_small := _expanded_rect(endpoint_rect, SMALL_SCREEN_TARGET)
-		if _substantially_overlaps(identity, endpoint_rect, occupied) or _expanded_overlaps(identity, endpoint_small, occupied):
+		var actor_start_rect := _pixel_rect(_dict(actor.get("normalized_hit_rect", {})))
+		var actor_small_start_rect := _pixel_rect(_dict(actor.get("small_screen_rect", {})))
+		var endpoint_label := _translated_label_rect(_pixel_rect(_dict(actor.get("label_rect", {}))), actor_start_rect, endpoint_rect)
+		var endpoint_small_label := _translated_label_rect(_pixel_rect(_dict(actor.get("small_screen_label_rect", {}))), actor_small_start_rect, endpoint_small)
+		if _substantially_overlaps(identity, endpoint_rect, occupied) \
+				or _expanded_overlaps(identity, endpoint_small, occupied) \
+				or endpoint_label.has_area() and _substantially_overlaps(identity, endpoint_label, occupied) \
+				or endpoint_small_label.has_area() and _expanded_overlaps(identity, endpoint_small_label, occupied):
 			errors.append("Scenario actor %s route endpoint collides in normal or expanded small-screen layout at %s with %s." % [identity, str(endpoint), JSON.stringify(_overlap_identities(identity, endpoint_rect, endpoint_small, occupied))])
-		if overlay.has_area() and (endpoint_rect.intersects(overlay) or endpoint_small.intersects(overlay) or _label_rect(endpoint_rect, str(actor.get("label", ""))).intersects(overlay) or _label_rect(endpoint_small, str(actor.get("label", ""))).intersects(overlay)):
-			errors.append("Scenario actor %s reduced-motion endpoint collides with the reserved TalkDock overlay." % identity)
 
 
 static func _validate_interactions(interactions: Dictionary, authority: Dictionary, obstacles: Array, base_records: Array, environment: Dictionary, errors: Array) -> Dictionary:
@@ -716,7 +735,6 @@ static func _validate_interactions(interactions: Dictionary, authority: Dictiona
 	var alternate_exit_ids: Array = []
 	var active_targets: Array = []
 	var blocked_exit_count := 0
-	var overlay := _context_overlay_rect(_layout_context(environment))
 	var identities := interactions.keys()
 	identities.sort()
 	for identity_value in identities:
@@ -735,8 +753,8 @@ static func _validate_interactions(interactions: Dictionary, authority: Dictiona
 		var overflow := str(authority_record.get("presentation_mode", "room")) == "overflow"
 		var rect := _pixel_rect(_dict(authority_record.get("normalized_hit_rect", {})))
 		var small_rect := _pixel_rect(_dict(authority_record.get("small_screen_rect", {})))
-		if not overflow and bool(interaction.get("enabled", false)) and overlay.has_area() and (rect.intersects(overlay) or small_rect.intersects(overlay) or _label_rect(rect, str(interaction.get("label", ""))).intersects(overlay) or _label_rect(small_rect, str(interaction.get("label", ""))).intersects(overlay)):
-			errors.append("Scenario interaction %s collides with the reserved TalkDock overlay." % identity)
+		var authority_label_rect := _pixel_rect(_dict(authority_record.get("label_rect", {})))
+		var authority_small_label_rect := _pixel_rect(_dict(authority_record.get("small_screen_label_rect", {})))
 		if not overflow:
 			active_targets.append({
 				"identity": identity,
@@ -744,8 +762,8 @@ static func _validate_interactions(interactions: Dictionary, authority: Dictiona
 				"developer_placed": _developer_placement_room(environment) or bool(authority_record.get("placement_spacing_warning", false)),
 				"rect": rect,
 				"small_rect": small_rect,
-				"label_rect": _label_rect(rect, str(interaction.get("label", ""))),
-				"small_label_rect": _label_rect(small_rect, str(interaction.get("label", ""))),
+				"label_rect": authority_label_rect,
+				"small_label_rect": authority_small_label_rect,
 			})
 		var normal_reachable := true if overflow else _path_reachable(WALK_LANE.get_center(), rect.get_center(), obstacles, identity)
 		var small_reachable := true if overflow else _path_reachable(WALK_LANE.get_center(), small_rect.get_center(), obstacles, identity, "small_rect")
@@ -783,12 +801,11 @@ static func _validate_interactions(interactions: Dictionary, authority: Dictiona
 				var right_rect: Rect2 = right.get(rect_key, Rect2())
 				if left_rect.intersects(right_rect) and left_rect.intersection(right_rect).get_area() > 0.01:
 					errors.append("Scenario interactions %s and %s have ambiguous %s hit authority (%s vs %s)." % [str(left.get("identity", "")), str(right.get("identity", "")), "expanded small-screen" if rect_key == "small_rect" else "normal", str(left_rect), str(right_rect)])
-			if not bool(left.get("developer_placed", false)) and not bool(right.get("developer_placed", false)):
-				for label_key in ["label_rect", "small_label_rect"]:
-					var left_label: Rect2 = left.get(label_key, Rect2())
-					var right_label: Rect2 = right.get(label_key, Rect2())
-					if left_label.intersects(right_label) and left_label.intersection(right_label).get_area() > 0.01:
-						errors.append("Scenario interaction labels %s and %s overlap in %s layout." % [str(left.get("identity", "")), str(right.get("identity", "")), "expanded small-screen" if label_key == "small_label_rect" else "normal"])
+			for label_key in ["label_rect", "small_label_rect"]:
+				var left_label: Rect2 = left.get(label_key, Rect2())
+				var right_label: Rect2 = right.get(label_key, Rect2())
+				if left_label.intersects(right_label) and left_label.intersection(right_label).get_area() > 0.01:
+					errors.append("Scenario interaction labels %s and %s overlap in %s layout." % [str(left.get("identity", "")), str(right.get("identity", "")), "expanded small-screen" if label_key == "small_label_rect" else "normal"])
 	for target_value in active_targets:
 		var target := _dict(target_value)
 		if not bool(target.get("scenario_owned", false)):
@@ -800,17 +817,15 @@ static func _validate_interactions(interactions: Dictionary, authority: Dictiona
 			if base_identity == target_identity or interactions.has(base_identity) or not bool(base_record.get("interactive", true)) or not bool(base_record.get("visible", true)) or str(base_record.get("presentation_mode", "room")) == "overflow":
 				continue
 			var base_rect := _record_pixel_rect(base_record)
-			var base_small := _expanded_rect(base_rect, SMALL_SCREEN_TARGET)
+			var base_small := _record_small_rect(base_record)
 			for pair in [[target.get("rect", Rect2()), base_rect, "normal"]]:
 				var target_rect: Rect2 = (pair as Array)[0]
 				var other_rect: Rect2 = (pair as Array)[1]
 				if target_rect.intersects(other_rect) and target_rect.intersection(other_rect).get_area() > 0.01:
 					errors.append("Scenario interaction %s has ambiguous %s hit authority with unrelated room control %s (%s vs %s)." % [target_identity, str((pair as Array)[2]), base_identity, str(target_rect), str(other_rect)])
-			if bool(target.get("developer_placed", false)) or _developer_placement_room(environment):
-				continue
 			for label_pair in [
-				[target.get("label_rect", Rect2()), _label_rect(base_rect, str(base_record.get("label", ""))), "normal"],
-				[target.get("small_label_rect", Rect2()), _label_rect(base_small, str(base_record.get("label", ""))), "expanded small-screen"],
+				[target.get("label_rect", Rect2()), _record_label_rect(base_record), "normal"],
+				[target.get("small_label_rect", Rect2()), _record_label_rect(base_record, true), "expanded small-screen"],
 			]:
 				var target_label: Rect2 = (label_pair as Array)[0]
 				var base_label: Rect2 = (label_pair as Array)[1]
@@ -888,6 +903,8 @@ static func _add_visual_authority(authority: Dictionary, collection: Dictionary,
 		var presentation_interactive := bool(existing.get("presentation_interactive", false))
 		var normal := _dict(semantic.get("normalized_hit_rect", {}))
 		var small := _dict(semantic.get("small_screen_rect", {}))
+		var label_rect := _dict(semantic.get("label_rect", {}))
+		var small_label_rect := _dict(semantic.get("small_screen_label_rect", {}))
 		var z_order := int(semantic.get("z_order", 0))
 		var authority_kind := visual_kind
 		var authority_source := "semantic_visual"
@@ -897,6 +914,8 @@ static func _add_visual_authority(authority: Dictionary, collection: Dictionary,
 			# geometry or jump ahead in a renderer-only z layer.
 			normal = _dict(existing.get("normalized_hit_rect", {}))
 			small = _dict(existing.get("small_screen_rect", {}))
+			label_rect = _dict(existing.get("label_rect", {}))
+			small_label_rect = _dict(existing.get("small_screen_label_rect", {}))
 			z_order = int(existing.get("z_order", 0))
 			authority_kind = str(existing.get("visual_kind", "base_record"))
 			authority_source = "sealed_base_record"
@@ -905,6 +924,8 @@ static func _add_visual_authority(authority: Dictionary, collection: Dictionary,
 			"presentation_object_id": presentation_object_id,
 			"normal": normal,
 			"small": small,
+			"label_rect": label_rect,
+			"small_label_rect": small_label_rect,
 			"z_order": z_order,
 			"visual_kind": authority_kind,
 			"source": authority_source,
@@ -941,11 +962,20 @@ static func _base_layout_authority(base_records: Array, errors: Array = [], envi
 		if class_override in EnvironmentPlacementScript.CLASSES:
 			classified_record["placement_class"] = class_override
 		var placement_class := EnvironmentPlacementScript.classify(classified_record, str(record.get("object_type", "")), object_id, str(record.get("prop", record.get("icon_key", ""))))
+		var record_label_rect := _dict(record.get("label_rect", {}))
+		var record_small_label_rect := _dict(record.get("small_screen_label_rect", {}))
+		if presentation_mode == "room" and record_label_rect.is_empty():
+			var record_slot := _slot_by_id(environment, str(record.get("slot_id", "")))
+			var authored_label := EnvironmentSlotBinderScript.label_rect_from_slot(record_slot, str(record.get("label", "")))
+			record_label_rect = _normalized_rect(authored_label)
+			record_small_label_rect = _normalized_rect(authored_label)
 		var sealed_record := _authority_record(FunctionOptions.ScenarioAuthorityRecordOptions.from({
 			"identity": identity,
 			"presentation_object_id": object_id.strip_edges(),
 			"normal": _normalized_rect(rect),
 			"small": _normalized_rect(_expanded_rect(rect, SMALL_SCREEN_TARGET)),
+			"label_rect": record_label_rect,
+			"small_label_rect": record_small_label_rect,
 			"z_order": int(record.get("scenario_z_order", record.get("z_order", 0))),
 			"visual_kind": "base_record",
 			"source": "sealed_base_record",
@@ -1059,7 +1089,7 @@ static func _seal_projection_coverage(authority: Dictionary, semantic_state: Dic
 
 
 static func _validate_authority(authority: Dictionary, errors: Array) -> void:
-	var expected_keys := ["actor_route_points", "actor_route_stage", "contact", "identity", "normalized_hit_rect", "placement_class", "presentation_interactive", "presentation_mode", "presentation_object_id", "presentation_required", "presentation_visible", "semantic_actor_member", "semantic_interaction_member", "semantic_scene_object_member", "slot_id", "small_screen_rect", "source", "visual_kind", "z_order"]
+	var expected_keys := ["actor_route_points", "actor_route_stage", "contact", "identity", "label_rect", "normalized_hit_rect", "placement_class", "presentation_interactive", "presentation_mode", "presentation_object_id", "presentation_required", "presentation_visible", "semantic_actor_member", "semantic_interaction_member", "semantic_scene_object_member", "slot_id", "small_screen_label_rect", "small_screen_rect", "source", "visual_kind", "z_order"]
 	expected_keys.sort()
 	var presentation_identities: Dictionary = {}
 	var identities := authority.keys()
@@ -1093,7 +1123,7 @@ static func _validate_authority(authority: Dictionary, errors: Array) -> void:
 		if mode not in ["room", "overflow"]:
 			errors.append("Layout authority %s has an invalid presentation mode." % identity)
 		var coverage_only := not bool(record.get("presentation_required", false)) and str(record.get("source", "")) == "semantic_tombstone"
-		for rect_key in ["normalized_hit_rect", "small_screen_rect"]:
+		for rect_key in ["normalized_hit_rect", "small_screen_rect", "label_rect", "small_screen_label_rect"]:
 			if (coverage_only or mode == "overflow") and _dict(record.get(rect_key, {})).is_empty():
 				continue
 			var rect := _pixel_rect(_dict(record.get(rect_key, {})))
@@ -1150,6 +1180,8 @@ static func _authority_record(options: FunctionOptions.ScenarioAuthorityRecordOp
 	var presentation_object_id := str(options.values.get("presentation_object_id", ""))
 	var normal: Dictionary = options.values.get("normal", {})
 	var small: Dictionary = options.values.get("small", {})
+	var label_rect: Dictionary = options.values.get("label_rect", {})
+	var small_label_rect: Dictionary = options.values.get("small_label_rect", {})
 	var z_order := int(options.values.get("z_order", 0))
 	var visual_kind := str(options.values.get("visual_kind", ""))
 	var source := str(options.values.get("source", ""))
@@ -1166,6 +1198,7 @@ static func _authority_record(options: FunctionOptions.ScenarioAuthorityRecordOp
 		"actor_route_stage": actor_route_stage.duplicate(true),
 		"contact": "",
 		"identity": identity,
+		"label_rect": label_rect,
 		"normalized_hit_rect": normal,
 		"placement_class": "",
 		"presentation_interactive": presentation_interactive,
@@ -1177,6 +1210,7 @@ static func _authority_record(options: FunctionOptions.ScenarioAuthorityRecordOp
 		"semantic_interaction_member": semantic_interaction_member,
 		"semantic_scene_object_member": semantic_scene_object_member,
 		"small_screen_rect": small,
+		"small_screen_label_rect": small_label_rect,
 		"slot_id": str(options.values.get("slot_id", "")),
 		"z_order": z_order,
 		"visual_kind": visual_kind,
@@ -1427,19 +1461,23 @@ static func _context_base_occupied_records(context: Dictionary, base_records: Ar
 	for index in range((value as Array).size()):
 		var source := _dict((value as Array)[index])
 		var object_id := str(source.get("object_id", "")).strip_edges()
+		var presentation_mode := str(source.get("presentation_mode", "room"))
 		var label := str(source.get("label", "")).strip_edges()
-		var rect := _normalized_or_pixel_rect(source.get("focus_rect", {}))
 		if source.is_empty() or object_id.is_empty() or seen.has(object_id):
 			errors.append("Scenario production base occupancy record %d has an empty or duplicate identity." % index)
 			continue
 		seen[object_id] = true
+		# Overflow objects live only in the action list and intentionally carry no
+		# room geometry. Likewise, an exact sealed presentation record supersedes
+		# the duplicate runtime reservation. Filter both before validating geometry.
+		if presentation_mode == "overflow" or sealed_presentation_ids.has(object_id):
+			continue
+		var rect := _normalized_or_pixel_rect(source.get("focus_rect", {}))
 		if label.length() > LABEL_MAX_LENGTH or not label.is_empty() and not _readable_text(label, LABEL_MAX_LENGTH):
 			errors.append("Scenario production base occupancy record %s has an invalid label." % object_id)
 			continue
 		if not rect.has_area() or not Rect2(Vector2.ZERO, BOARD_SIZE).encloses(rect):
 			errors.append("Scenario production base occupancy record %s has invalid room geometry." % object_id)
-			continue
-		if sealed_presentation_ids.has(object_id):
 			continue
 		result.append({
 			"identity": "runtime_base::%s" % object_id,
@@ -1463,6 +1501,14 @@ static func _label_rect(rect: Rect2, label: String) -> Rect2:
 	if y < 16.0:
 		y = rect.end.y + LABEL_GAP
 	return _clamp_label_inside_board(Rect2(Vector2(rect.get_center().x - width * 0.5, y), Vector2(width, LABEL_HEIGHT)))
+
+
+static func _translated_label_rect(label_rect: Rect2, start_rect: Rect2, target_rect: Rect2) -> Rect2:
+	if not label_rect.has_area() or not start_rect.has_area() or not target_rect.has_area():
+		return Rect2()
+	var translated := label_rect
+	translated.position += target_rect.get_center() - start_rect.get_center()
+	return _clamp_label_inside_board(translated)
 
 
 static func _clamp_label_inside_board(rect: Rect2) -> Rect2:
@@ -1618,6 +1664,16 @@ static func _record_pixel_rect(record: Dictionary) -> Rect2:
 	if record.is_empty():
 		return Rect2()
 	return _normalized_or_pixel_rect(record.get("focus_rect", record.get("normalized_rect", {})))
+
+
+static func _record_small_rect(record: Dictionary) -> Rect2:
+	var authored := _normalized_or_pixel_rect(record.get("small_screen_rect", {}))
+	return authored if authored.has_area() else _expanded_rect(_record_pixel_rect(record), SMALL_SCREEN_TARGET)
+
+
+static func _record_label_rect(record: Dictionary, small_screen: bool = false) -> Rect2:
+	var key := "small_screen_label_rect" if small_screen else "label_rect"
+	return _normalized_or_pixel_rect(record.get(key, {}))
 
 
 static func _normalized_or_pixel_rect(value: Variant) -> Rect2:

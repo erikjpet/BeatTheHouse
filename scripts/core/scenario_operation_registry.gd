@@ -611,6 +611,10 @@ static func _apply_operation(state: Dictionary, family: String, operation: Dicti
 			"move", "set_position":
 				current["anchor_id"] = str(operation.get("anchor_id", current.get("anchor_id", "")))
 				current["zone_id"] = str(operation.get("zone_id", current.get("zone_id", "")))
+				if family == "actor_ops" and op_id == "set_position":
+					# Persist the authored operation identity in semantic state so fixed-slot
+					# reconstruction can replay even a deliberate move within the same zone.
+					current["authored_position_route_id"] = receipt_id
 			"reveal": current["visible"] = true
 			"hide": current["visible"] = false
 			"enable": current["enabled"] = true
