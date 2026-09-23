@@ -3408,6 +3408,7 @@
     },
     "payload": {
       "summary": "Word has traveled from another room.",
+      "rumor_importance_line": "Worth knowing before you choose your next room.",
       "choices": [
         {
           "id": "listen",
@@ -4563,9 +4564,9 @@
     "speaker": {"role": "patron", "name": "Cass Venn", "character_id": "cass_rival_counter", "voice_line_key": "rival_counter", "silhouette": "glasses", "bind": "none"},
     "asset_path": "res://assets/art/events/suspicious_patron.png", "icon_key": "rowdy_regular", "environment_prop": "rowdy_patron", "start_summary": "Cass counts from the other end.", "trigger": {"type": "manual"},
     "conditions": {"requires_traveler_here": ["cass_rival_counter"], "missing_story_flags": ["chain06_cass_first_contact", "chain06_cass_ending_truce", "chain06_cass_ending_tipoff", "chain06_cass_ending_flameout"]},
-    "payload": {"summary": "Cass counts from the other end.", "choices": [
-      {"id": "share_the_read", "label": "Share the read", "text": "Cass checks your count and finds it close enough.", "consequences": {"story_flags_set": {"chain06_cass_first_contact": true}, "resolve_event": true}},
-      {"id": "keep_counting", "label": "Keep counting", "text": "You keep the number. Cass keeps your face.", "consequences": {"story_flags_set": {"chain06_cass_first_contact": true, "chain06_cass_guarded": true}, "resolve_event": true}}
+    "payload": {"summary": "Cass counts from the other end.", "active_count_missing_line": "Come back when you're actually counting.", "choices": [
+      {"id": "share_the_read", "label": "Share the read", "text": "Cass checks your count and finds it close enough.", "conditions": {"requires_active_count": true}, "consequences": {"story_flags_set": {"chain06_cass_first_contact": true}, "resolve_event": true}},
+      {"id": "keep_counting", "label": "Keep counting", "text": "You keep the number. Cass keeps your face.", "conditions": {"requires_active_count": true}, "consequences": {"story_flags_set": {"chain06_cass_first_contact": true, "chain06_cass_guarded": true}, "resolve_event": true}}
     ]}
   },
   {

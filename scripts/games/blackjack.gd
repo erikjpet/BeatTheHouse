@@ -560,6 +560,8 @@ func generate_environment_state(run_state: RunState, environment: Dictionary, rn
 		"hands_played": 0,
 		"running_count": 0,
 		"recorded_running_count": 0,
+		"shoe_generation": 1,
+		"recorded_count_shoe_generation": 0,
 		"count_accuracy_streak": 0,
 		"counter_observation_hands": 0,
 		"counter_observation_samples": [],
@@ -745,6 +747,8 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var hand_count_delta := int(session.get("count_delta", 0))
 	var live_recorded_count := _recorded_count_for_surface(table, session)
 	var live_true_count := _true_count_for_surface(table, session)
+	var between_hands := not dealt and not last_result.is_empty()
+	var between_hands_count_visible := between_hands and bool(table.get("counting_enabled", false))
 	var rules_for_surface: Dictionary = _table_rules(table)
 	var effective_stake_ceiling := _max_table_stake_for_blackjack(session, table, run_state, environment)
 	if not dealt and not bool(session.get("locked_stake", false)):
@@ -841,7 +845,10 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"payout_animation_id": payout_active_id,
 		"payout_started_msec": payout_started_msec,
 		"last_result": last_result,
-		"showdown_active": not last_result.is_empty() and not dealt,
+		"showdown_active": between_hands,
+		"between_hands": between_hands,
+		"between_hands_count_visible": between_hands_count_visible,
+		"between_hands_recorded_running_count": persisted_recorded_count,
 		"showdown_player_hands": _hand_array(last_result.get("player_hands", [])),
 		"showdown_dealer_cards": showdown_dealer_cards,
 		"result_message": str(last_result.get("summary", "")),
@@ -2046,6 +2053,8 @@ func _blackjack_in_place_session_surface_patch(session: Dictionary, run_state: R
 	var attention_started_msec := int(session.get("dealer_lookaway_started_msec", 0))
 	var attention_duration_msec := int(session.get("dealer_lookaway_duration_msec", 0))
 	var last_result := _local_copy_dict(table.get("last_result", {}))
+	var between_hands := not dealt and not last_result.is_empty()
+	var counting_enabled := bool(session.get("counting_enabled", table.get("counting_enabled", false)))
 	var payout_id := str(last_result.get("payout_animation_id", ""))
 	var payout_started_msec := _blackjack_payout_started_msec(last_result, deal_started_msec, deal_duration_msec)
 	var payout_active := not payout_id.is_empty() and payout_started_msec > 0 \
@@ -2068,6 +2077,9 @@ func _blackjack_in_place_session_surface_patch(session: Dictionary, run_state: R
 			GameModule.surface_animation_channel(PAYOUT_ANIMATION_CHANNEL, payout_id, PAYOUT_ANIMATION_DURATION_MSEC if not payout_id.is_empty() else 0, payout_started_msec, {"active": payout_active, "clock_source": "presentation"}),
 		],
 		"phase": "barred" if barred else "settling" if round_complete else "decision" if dealt else "betting",
+		"between_hands": between_hands,
+		"between_hands_count_visible": between_hands and counting_enabled,
+		"between_hands_recorded_running_count": int(table.get("recorded_running_count", 0)),
 		"table_barred": barred,
 		"barred_reason": str(table.get("barred_reason", "")),
 		"player_hands": hands,
@@ -2098,7 +2110,7 @@ func _blackjack_in_place_session_surface_patch(session: Dictionary, run_state: R
 		"can_change_side_bets": _can_change_side_bets(session) and not barred,
 		"basic_strategy_advice": _basic_strategy_advice(session, table, run_state),
 		"count_hint": _count_hint(run_state, table, session),
-		"counting_enabled": bool(session.get("counting_enabled", table.get("counting_enabled", false))),
+		"counting_enabled": counting_enabled,
 		"count_challenge": challenge,
 		"count_answered": bool(session.get("count_answered", false)),
 		"count_correct": bool(session.get("count_correct", false)),
@@ -3154,10 +3166,18 @@ func _draw_blackjack_room(surface, surface_state: Dictionary) -> void:
 	if rules_text.is_empty():
 		rules_text = _table_rules_text(surface_state)
 	surface.surface_label(rules_text.left(42), Vector2(42, 62), 10, C_SOFT)
-	surface.surface_label("shoe %d   count %+d" % [
-		int(surface_state.get("shoe_remaining", 0)),
-		int(surface_state.get("recorded_running_count", 0)),
-	], Vector2(344, 48), 12, C_SOFT)
+	surface.surface_label(_blackjack_shoe_status_text(surface_state), Vector2(344, 48), 12, C_SOFT)
+
+
+func _blackjack_shoe_status_text(surface_state: Dictionary) -> String:
+	var shoe_status := "shoe %d" % int(surface_state.get("shoe_remaining", 0))
+	if bool(surface_state.get("between_hands_count_visible", false)):
+		shoe_status += "   YOUR COUNT %+d" % int(surface_state.get("between_hands_recorded_running_count", 0))
+	elif bool(surface_state.get("counting_enabled", false)):
+		# Preserve the live-hand player count that this HUD already showed. The
+		# between-hands branch above deliberately switches to the persisted count.
+		shoe_status += "   YOUR COUNT %+d" % int(surface_state.get("recorded_running_count", 0))
+	return shoe_status
 
 
 func _draw_blackjack_table(surface, surface_state: Dictionary) -> void:
@@ -4563,6 +4583,8 @@ func _normalize_table_state(table: Dictionary, owns_table_state: bool = false) -
 	normalized["table_layout"] = str(normalized.get("table_layout", "immersive_blackjack"))
 	normalized["running_count"] = int(normalized.get("running_count", 0))
 	normalized["recorded_running_count"] = int(normalized.get("recorded_running_count", 0))
+	normalized["shoe_generation"] = maxi(1, int(normalized.get("shoe_generation", 1)))
+	normalized["recorded_count_shoe_generation"] = maxi(0, int(normalized.get("recorded_count_shoe_generation", 0)))
 	normalized["counting_enabled"] = bool(normalized.get("counting_enabled", false))
 	normalized["counter_observation_hands"] = maxi(0, int(normalized.get("counter_observation_hands", 0)))
 	normalized["counter_observation_samples"] = _counter_observation_samples(normalized.get("counter_observation_samples", []))
@@ -6089,6 +6111,7 @@ func _update_table_after_hand(table: Dictionary, session: Dictionary, dealer_car
 	_persist_counter_surveillance(table, cheat)
 	if bool(session.get("count_answered", false)):
 		table["recorded_running_count"] = int(table.get("recorded_running_count", 0)) + count_record_delta
+		table["recorded_count_shoe_generation"] = maxi(1, int(table.get("shoe_generation", 1)))
 	if bool(session.get("count_correct", false)):
 		table["count_accuracy_streak"] = int(table.get("count_accuracy_streak", 0)) + 1
 	elif bool(session.get("count_answered", false)):
@@ -6124,6 +6147,8 @@ func _update_table_after_hand(table: Dictionary, session: Dictionary, dealer_car
 		table["shoe_cursor"] = 0
 		table["running_count"] = 0
 		table["recorded_running_count"] = 0
+		table["shoe_generation"] = maxi(1, int(table.get("shoe_generation", 1))) + 1
+		table["recorded_count_shoe_generation"] = 0
 		table["last_shuffle_hand"] = int(table.get("hands_played", 0))
 		table["last_result"] = {"summary": "Shoe shuffled.", "dealer_cards": dealer_cards}
 	else:
@@ -6295,6 +6320,8 @@ func _toggle_counting_command(index: int, ui_state: Dictionary, table: Dictionar
 	ui_state["count_perfect"] = false
 	ui_state["count_delta"] = 0
 	ui_state["count_declared_delta"] = 0
+	table["recorded_running_count"] = 0
+	table["recorded_count_shoe_generation"] = 0
 	_update_environment_table(environment, table)
 	return GameModule.surface_command({
 		"handled": true,

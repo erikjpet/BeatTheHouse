@@ -2238,6 +2238,7 @@ func _validate_event_definitions() -> void:
 			if str(event_def.get("start_summary", "")).strip_edges().is_empty():
 				validation_errors.append("events %s is missing start_summary." % event_id)
 		var trigger: Dictionary = _as_dict(event_def.get("trigger", {}))
+		_validate_active_count_condition("events %s conditions" % event_id, _as_dict(event_def.get("conditions", {})))
 		var trigger_type := str(trigger.get("type", "manual")).strip_edges()
 		if not ["manual", "timed", "travel", "random", "heat_threshold", "table_approach"].has(trigger_type):
 			validation_errors.append("events %s has unknown trigger type: %s" % [event_id, trigger_type])
@@ -2292,6 +2293,7 @@ func _validate_event_definitions() -> void:
 			if not choice.has("label"):
 				validation_errors.append("events %s choice %s is missing label." % [event_id, choice_id])
 			var conditions := _as_dict(choice.get("conditions", {}))
+			_validate_active_count_condition("events %s choice %s conditions" % [event_id, choice_id], conditions)
 			_validate_event_layer_references(event_id, choice_id, conditions, _as_dict(choice.get("consequences", {})))
 			var consequences: Dictionary = _as_dict(choice.get("consequences", {}))
 			_validate_id_references("events %s choice %s set_next_archetypes" % [event_id, choice_id], consequences.get("set_next_archetypes", []), archetype_ids)
@@ -2313,6 +2315,12 @@ func _validate_event_definitions() -> void:
 					var chance := float(chance_value)
 					if chance < 0.0 or chance > 1.0:
 						validation_errors.append("events %s choice %s trigger_event chance must be between 0 and 1." % [event_id, choice_id])
+
+
+
+func _validate_active_count_condition(label: String, conditions: Dictionary) -> void:
+	if conditions.has("requires_active_count") and typeof(conditions.get("requires_active_count")) != TYPE_BOOL:
+		validation_errors.append("%s requires_active_count must be boolean." % label)
 
 
 func _validate_event_layer_references(event_id: String, choice_id: String, conditions: Dictionary, consequences: Dictionary) -> void:
