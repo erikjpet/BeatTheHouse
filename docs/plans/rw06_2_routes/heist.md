@@ -1,9 +1,9 @@
 # rw06_2 Crew heist ending route — first-pass replay
 
-Status: **IMPLEMENTED; QUALIFYING LIVE RUN PENDING rw06_1/rw06_5**  
-Implementation base: `origin/main` at `7da3e5dab59b`  
-Canonical terminal route: `crew_heist`  
-Preferred launch plan: **The Count (Plan A)**  
+Status: **IMPLEMENTED; QUALIFYING LIVE RUN PENDING rw06_1/rw06_5**
+Implementation base: `origin/main` at `7da3e5dab59b`
+Canonical terminal route: `crew_heist`
+Preferred launch plan: **The Count (Plan A)**
 Fixed replay seed: `PLAYTEST-CATALOG-01`
 
 `tools/rw06_2_ending_replay.ps1 -Ending heist` now encodes the full first-pass

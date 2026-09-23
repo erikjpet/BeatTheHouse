@@ -1,6 +1,6 @@
 # rw06_2 ending replay design — first-pass implementation
 
-Status: **IMPLEMENTED; LIVE ROUTE ACCEPTANCE PENDING rw06_1/rw06_5**  
+Status: **IMPLEMENTED; LIVE ROUTE ACCEPTANCE PENDING rw06_1/rw06_5**
 Implementation base: `origin/main` at `7da3e5dab59b`
 
 The release deliverable is `tools/rw06_2_ending_replay.ps1 -Ending
@@ -106,14 +106,19 @@ checkpoint, screenshots, and final summary used for acceptance.
   Concealed hole cards, shoe/order, run/session state, narrative flags, trigger
   context, Crew private capsule fields, and scenario audit fields do not alter
   the public fingerprint or appear in serialized output. Revealing the dealer
-  hand through its public flag does alter the checkpoint as intended.
+  hand through its public flag does alter the checkpoint as intended. Focused
+  evidence: `D:\Projects\Beat-The-House-worktrees\rw06_2-prep\.tmp\rw06_2\public_observation_contract.json`
+  (SHA-256 `F8F699846DB1CFD6C5659F7A9D10F42C77CAB4F8573C4C5EE19D28E683889195`).
 - The bridge itself compiled and reached `ready.json` in the first live probe.
   That probe exposed a Windows launcher-detach hang before command 0001; the
   launcher now explicitly exits its start-only helper process after publishing
   readiness. A serialized Start → look → second command → quit regression
   passed with atomic command files, strict public observations, zero log alerts,
-  no temporary-file residue, and no surviving engine process. Full route passes
-  remain pending the serialized Godot lease.
+  no temporary-file residue, and no surviving engine process. Focused evidence:
+  `D:\Projects\Beat-The-House-worktrees\rw06_2-prep\.tmp\rw06_2\clean\bridge-20260923-054711-435-14372\summary.json`
+  (SHA-256 `79F6D5CB75857BA83A66A475BA4EB5FC6C18A2D9311C7954B5B56AEA2C862CCF`).
+  These focused contracts are not full-route acceptance; all qualifying route
+  passes remain pending.
 - Final qualifying evidence intentionally waits for rw06_1 and rw06_5 to land.
 
 ## Open route risks

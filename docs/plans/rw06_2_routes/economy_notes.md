@@ -1,7 +1,7 @@
 # rw06_2 economy handoff
 
-Status: **FIRST-PASS RULE AUDIT; LIVE ROUTE CURVES PENDING**  
-Source base: `7da3e5dab59b`  
+Status: **FIRST-PASS RULE AUDIT; LIVE ROUTE CURVES PENDING**
+Source base: `7da3e5dab59b`
 Owner: rw06_3 (data-only tuning after rw06_2 produces qualifying traces)
 
 Do not change game rules, RNG, odds, payout math, wager math, or RTP from this

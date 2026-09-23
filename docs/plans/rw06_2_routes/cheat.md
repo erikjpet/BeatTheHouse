@@ -1,8 +1,8 @@
 # rw06_2 Pit Boss ending route — first-pass replay
 
-Status: **IMPLEMENTED; QUALIFYING LIVE RUN PENDING rw06_1/rw06_5**  
-Implementation base: `origin/main` at `7da3e5dab59b`  
-Canonical terminal route: `pit_boss_showdown`  
+Status: **IMPLEMENTED; QUALIFYING LIVE RUN PENDING rw06_1/rw06_5**
+Implementation base: `origin/main` at `7da3e5dab59b`
+Canonical terminal route: `pit_boss_showdown`
 Fixed replay seed: `RW06-CHEAT-ROUTE-01`
 
 `tools/rw06_2_ending_replay.ps1 -Ending cheat` now encodes this route through
