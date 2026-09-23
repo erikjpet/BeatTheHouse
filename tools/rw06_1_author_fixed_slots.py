@@ -110,6 +110,13 @@ MAP_BASE_CAP = {
         "surface_item": 2,
     },
 }
+# Exact authored label anchors for complete-state compositions whose longer
+# aftermath copy needs a small offset without moving the interaction target.
+MAP_SLOT_LABEL_ANCHORS = {
+    "motel": {
+        "stage.standing_person.01": (290.0, 328.0),
+    },
+}
 LABEL_W = 88.0
 LABEL_H = 15.0
 WALK_LANE_RECT = (16.0, 378.0, 868.0, 36.0)
@@ -2681,6 +2688,11 @@ def author_map(
             scenario_position_route_ids[preference_key] = route_id
 
     map_data["slot_schema_version"] = 1
+    label_anchor_overrides = MAP_SLOT_LABEL_ANCHORS.get(str(map_data.get("id", "")), {})
+    for slot in base_slots + stage_slots + exit_slots:
+        anchor = label_anchor_overrides.get(str(slot.get("id", "")))
+        if anchor is not None:
+            slot["label_anchor"] = [float(anchor[0]), float(anchor[1])]
     map_data["base_slots"] = base_slots
     map_data["stage_slots"] = stage_slots
     map_data["exit_slots"] = exit_slots
