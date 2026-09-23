@@ -66,7 +66,7 @@ next finds the answer resumes the work. Every row must follow its protocol.
 | --- | --- | --- | --- | --- |
 | 0 | rw06_pre | `../todone/rw06_pre_worker_handoff_message.md`: the running worker finishes on its branch, merges to main and deletes the branch | — | DONE (`54c7d788`) |
 | 1 | rw06_0 | `../todone/rw06_0_custody_commit_prompt.md` | rw06_pre reports MERGED (fixes on main, branch deleted) | DONE (`7da3e5da`) |
-| 1–4 | rw06_1 | `rw06_1_fixed_slot_rooms_prompt.md` | rw06_0 | IN_PROGRESS (pushed checkpoint `6fe7ee5c`; Corner Store/Bar/Grand Casino static slice is 209 snapshots / 1,411 bindings / zero active overflow / zero errors, but focused Godot is held for two newly found fail-closed overflow-authority seams; Q-004 gave no approval because its reserved artifact was absent; land on `main` by end of 2026-09-24) |
+| 1–4 | rw06_1 | `rw06_1_fixed_slot_rooms_prompt.md` | rw06_0 | IN_PROGRESS (pushed checkpoint `4ce68e59`; Corner Store/Bar/Grand Casino static slice is 209 snapshots / 1,411 bindings / zero active overflow / zero errors, and exact three-room capture mode is ready; focused Godot is held for three fail-closed overflow-authority seams on side branch `codex/rw06_1-authority-seams`; Q-004 gave no approval because its reserved artifact was absent; land on `main` by end of 2026-09-24) |
 | 1–5 | rw06_2 | `rw06_2_three_endings_prompt.md` | rw06_0 (runs parallel to rw06_1; final pass after rw06_1) | IN_PROGRESS (first Clean replay-policy blocker fixed at `760bdf4c`; second probe's public scroll-bridge gap is fixed at pushed tip `f5c56f72`, with engine-free regression green; third non-qualifying probe waits for the serialized Godot lease while qualifying routes wait for rw06_1) |
 | 1–3 | rw06_5 | `../todone/rw06_5_owner_gameplay_fixes_prompt.md`: clicking a person starts a conversation, blackjack count shown between hands, Cass needs a real count | rw06_0 (parallel with rw06_1/rw06_2) | DONE (`1038a31f`) |
 | 5 | owner run | Owner plays one ending start to finish; notes go to the scoreboard | rw06_1, rw06_5 | TODO (rw06_5 DONE; waits for rw06_1) |
@@ -93,7 +93,7 @@ place, and add one dated line to the history below.
 | Owner start-to-finish run | done, no blockers | not started | — |
 | Owner run notes | (owner writes blockers here; non-blockers go to the 0.6.1 backlog) | — | — |
 | Release gate items green (rw06_4) | all | 0 | — |
-| Unmerged row branches (`git branch -a`) | 0 | 3 active release-week branches (rw06_1 core, rw06_1 overflow UI, rw06_2) | release orchestrator |
+| Unmerged row branches (`git branch -a`) | 0 | 4 active release-week branches (rw06_1 core, rw06_1 overflow UI, short-lived rw06_1 authority seam, rw06_2) | release orchestrator |
 
 History (newest last):
 
