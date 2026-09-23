@@ -117,6 +117,12 @@ MAP_SLOT_LABEL_ANCHORS = {
         "stage.standing_person.01": (290.0, 328.0),
     },
 }
+# Rooms whose terminal outcome composition is denser than every active phase
+# need that persistent aftermath included in the one-time authoring census.
+# Runtime placement still consumes only the emitted slots and preferences.
+MAP_INCLUDE_AFTERMATH = {
+    "jazz_club",
+}
 LABEL_W = 88.0
 LABEL_H = 15.0
 WALK_LANE_RECT = (16.0, 378.0, 868.0, 36.0)
@@ -2731,6 +2737,11 @@ def main() -> int:
     semantics = collect_semantics(root)
     base_semantics = collect_base_semantics(root)
     phase_snapshots = collect_active_phase_snapshots(root)
+    complete_phase_snapshots = (
+        collect_active_phase_snapshots(root, include_aftermath=True)
+        if not selected_map or selected_map in MAP_INCLUDE_AFTERMATH
+        else {}
+    )
     generated = copy.deepcopy(surface_root)
     generated["schema_version"] = 2
     generated["slot_schema_version"] = 1
@@ -2751,7 +2762,11 @@ def main() -> int:
                     archetype_for_map(map_id, archetypes),
                     semantics,
                     base_semantics,
-                    phase_snapshots.get(map_id, []),
+                    (
+                        complete_phase_snapshots.get(map_id, [])
+                        if map_id in MAP_INCLUDE_AFTERMATH
+                        else phase_snapshots.get(map_id, [])
+                    ),
                     diagnostic_deadline,
                 )
             except LayoutSearchLimit as error:
