@@ -1,5 +1,5 @@
 param(
-    [string]$ProjectRoot = (Split-Path -Parent $PSScriptRoot),
+    [string]$ProjectRoot = "",
     [string]$GodotPath = "",
     [string]$OutputDirectory = "",
     [ValidateRange(30, 600)]
@@ -8,6 +8,10 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+. (Join-Path $PSScriptRoot "../../repository_root.ps1")
+if ([string]::IsNullOrWhiteSpace($ProjectRoot)) {
+    $ProjectRoot = Resolve-BthRepositoryRoot -StartPath $PSScriptRoot
+}
 $generator = Join-Path $PSScriptRoot "integ06_1_generate_v051_fixtures.ps1"
 $resolvedRoot = (Resolve-Path -LiteralPath $ProjectRoot).Path
 if ([string]::IsNullOrWhiteSpace($OutputDirectory)) {

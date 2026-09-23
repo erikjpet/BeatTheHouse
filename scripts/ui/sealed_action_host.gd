@@ -51,9 +51,25 @@ func _sealed_action_host_ledger(candidate: RunState, create: bool = true, reconc
 	var table: Dictionary = _foundation.current_game.call("_table_state", candidate, environment) if create else _foundation.current_game.call("_table_state_preview", candidate, environment)
 	var binding := _sealed_action_host_table_binding(environment)
 	var expected_checkpoint := candidate.action_authority_checkpoint_fingerprint() if reconcile_checkpoint else ""
-	var validated: Dictionary = _foundation.ActionAuthorityScript.validate_persisted_ledger_cow(table.get(_foundation.ActionAuthorityScript.LEDGER_KEY, {}), binding, expected_checkpoint)
+	var persisted_ledger: Variant = table.get(_foundation.ActionAuthorityScript.LEDGER_KEY, {})
+	var validated: Dictionary = _foundation.ActionAuthorityScript.validate_persisted_ledger_cow(persisted_ledger, binding, expected_checkpoint)
 	if not validated.is_empty() or not create:
 		return validated
+	# A trusted live account/RNG change invalidates replay evidence, but it must not
+	# erase the table session the player can still see (for example, Blackjack side
+	# bets while a background wager changes available funds). Rebase only a fully
+	# valid, delivery-free ledger: old responses/journal are discarded, pending
+	# authority is never carried across a checkpoint, and request identity remains
+	# monotonic. Hostile save restoration strips mismatched ledgers before this live
+	# boundary, so this path reconciles only state already owned by the active run.
+	if reconcile_checkpoint:
+		var prior: Dictionary = _foundation.ActionAuthorityScript.validate_persisted_ledger_cow(persisted_ledger, binding)
+		if not prior.is_empty() and (prior.get("pending_delivery", {}) as Dictionary).is_empty():
+			var rebased: Dictionary = _foundation.ActionAuthorityScript.default_ledger(binding, expected_checkpoint)
+			rebased["session"] = (prior.get("session", {}) as Dictionary).duplicate(true)
+			rebased["next_request_ordinal"] = maxi(1, int(prior.get("next_request_ordinal", 1)))
+			rebased["boundary_ordinal"] = maxi(0, int(prior.get("boundary_ordinal", 0)))
+			return rebased
 	return _foundation.ActionAuthorityScript.default_ledger(binding, candidate.action_authority_checkpoint_fingerprint())
 
 
@@ -184,12 +200,16 @@ func _sealed_action_host_delivery_stake(command: Dictionary, session: Dictionary
 	if command.has("set_stake"):
 		return maxi(0, int(command.get("set_stake", 0)))
 	if session.has("locked_stake"):
-		return maxi(0, int(session.get("locked_stake", 0)))
+		var locked_stake := maxi(0, int(session.get("locked_stake", 0)))
+		if locked_stake > 0:
+			return locked_stake
 	if session.has("selected_stake"):
-		return maxi(0, int(session.get("selected_stake", 0)))
-	# The UI setter has already normalized this host-owned value. Avoid rebuilding
-	# every action and surface projection as an eager Dictionary.get fallback.
-	return maxi(0, _foundation.selected_stake)
+		var selected_stake := maxi(0, int(session.get("selected_stake", 0)))
+		if selected_stake > 0:
+			return selected_stake
+	# An undealt normalized session carries locked_stake=0. Fall back to the same
+	# capacity-clamped value shown by the UI, never the stale raw host selection.
+	return maxi(0, int(_foundation._current_selected_stake()))
 
 
 func _sealed_action_host_in_place_session_intent_allowed(surface_action: String) -> bool:
@@ -316,6 +336,13 @@ func _sealed_action_host_rejection(error_code: String, message: String, request_
 	return rejection
 
 
+func _sealed_action_host_player_text_params() -> Dictionary:
+	var provider_label := ""
+	if _foundation != null and _foundation.current_game != null:
+		provider_label = str(_foundation.current_game.get_display_name()).strip_edges()
+	return {"provider_label": provider_label}
+
+
 func _sealed_action_host_surface_intent(surface_action: String, index: int, confirm_requested: bool = false, surface_time_msec: int = -1) -> Dictionary:
 	return surface_intent(surface_action, index, confirm_requested, surface_time_msec)
 
@@ -346,6 +373,7 @@ func _sealed_action_host_surface_intent_impl(surface_action: String, index: int,
 		var retry_surface_actions: Array = _foundation.action_authority_contract.get("retry_surface_actions", [])
 		var cancel_surface_actions: Array = _foundation.action_authority_contract.get("cancel_surface_actions", [])
 		if surface_action in retry_surface_actions:
+			var retry_message_params := _sealed_action_host_player_text_params()
 			return GameModule.surface_command({
 				"handled": true,
 				"action_id": str(pending.get("action_id", "")),
@@ -355,7 +383,9 @@ func _sealed_action_host_surface_intent_impl(surface_action: String, index: int,
 				"set_stake": int(pending.get("stake", 0)),
 				"ui_state": (ledger.get("session", {}) as Dictionary).duplicate(true),
 				"_sealed_action_host_delivery": pending.duplicate(true),
-				"message": "Retrying the sealed Blackjack action.",
+				"message": PlayerTextScript.resolve("sealed_action.retrying", retry_message_params),
+				"message_key": "sealed_action.retrying",
+				"message_params": retry_message_params,
 			})
 		if surface_action in cancel_surface_actions:
 			var cancelled: Dictionary = _foundation.ActionAuthorityScript.cancel_delivery_cow(ledger, pending)
@@ -365,10 +395,13 @@ func _sealed_action_host_surface_intent_impl(surface_action: String, index: int,
 			_sealed_action_host_store_ledger(candidate, cancelled_ledger)
 			if not _sealed_action_host_publish(candidate):
 				return _sealed_action_host_rejection("internal_fail_closed", "Blackjack cancellation could not restore the pre-delivery session.", str(pending.get("request_key", "")))
+			var cancel_message_params := _sealed_action_host_player_text_params()
 			return GameModule.surface_command({
 				"handled": true,
 				"ui_state": (cancelled_ledger.get("session", {}) as Dictionary).duplicate(true),
-				"message": "Pending Blackjack action cancelled; the pre-delivery table state is restored.",
+				"message": PlayerTextScript.resolve("sealed_action.cancelled", cancel_message_params),
+				"message_key": "sealed_action.cancelled",
+				"message_params": cancel_message_params,
 			})
 		return _sealed_action_host_rejection("pending_delivery", "Retry or cancel the pending Blackjack action before changing the table.", str(pending.get("request_key", "")))
 	var session: Dictionary = (ledger.get("session", {}) as Dictionary).duplicate(true)
@@ -378,8 +411,21 @@ func _sealed_action_host_surface_intent_impl(surface_action: String, index: int,
 		# surface clock tuple together so games cannot observe a new raw timestamp
 		# alongside an older slowed/presentation timestamp.
 		session = _foundation._apply_game_surface_time_fields(session, surface_time_msec)
-	if _foundation.current_game.has_method("_has_dealt_hand") and not _foundation.current_game.call("_has_dealt_hand", session) and _foundation.selected_stake > 0:
-		session["selected_stake"] = _foundation.selected_stake
+	if _foundation.current_game.has_method("_has_dealt_hand") and not _foundation.current_game.call("_has_dealt_hand", session):
+		# The visible stake control already clamps a stale prior selection to the
+		# player's current capacity. Seal that same affordable value into the
+		# detached session; copying the raw host field here used to let Blackjack
+		# reject a valid all-in before the shared resolver could normalize it.
+		var selected_stake: int = int(_foundation._current_selected_stake())
+		if selected_stake > 0:
+			session["selected_stake"] = selected_stake
+	# Once a provider ledger is initialized, Blackjack deliberately ignores durable
+	# wager fields supplied only through caller UI state. Stage this host-owned,
+	# capacity-clamped session on the detached candidate first so the provider sees
+	# the exact trusted stake that will be presented and sealed. Nothing reaches the
+	# live run until the complete command below has succeeded and is published.
+	ledger = _foundation.ActionAuthorityScript.stage_session_cow(ledger, session)
+	_sealed_action_host_store_ledger(candidate, ledger)
 	var command: Dictionary = _foundation.current_game.surface_action_command(surface_action, index, confirm_requested, session, candidate, candidate.current_environment)
 	command.erase("_sealed_action_host_prepared")
 	if bool(command.get("handled", false)):

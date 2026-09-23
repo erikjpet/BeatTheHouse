@@ -212,6 +212,7 @@ func surface_realtime_ui_state_keys() -> Array:
 func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
 	var table := _table_state_preview(run_state, environment)
 	var session := _normalized_session(run_state, environment, ui_state, table)
+	var wager_currency := GameModule.presentation_currency_for_game(run_state, get_id(), environment)
 	var bets := _bet_dict(session.get("baccarat_bets", {}))
 	var chip_denominations := _chip_denominations(table)
 	var selected_chip := int(session.get("selected_chip", chip_denominations[0]))
@@ -224,11 +225,11 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var min_ready := total_wager >= int(table.get("table_minimum", 20))
 	var timer_active := not deal_active and not payout_active
 	var round_timer := GameModule.table_round_timer_status_peek(table, now_msec, "Next hand") if timer_active else {}
-	var table_notice := _table_notice(table, session, last_result, deal_active, payout_active, round_timer)
+	var table_notice := _table_notice(table, session, last_result, deal_active, payout_active, round_timer, wager_currency)
 	var rules := _table_rules(table)
 	var targets := _baccarat_bet_targets(table)
 	var surface_patrons := GameModule.patrons_with_talk_focus(_patrons_for_surface(table, last_result, now_msec), ui_state.get("focused_talk_speaker", {}))
-	var hand_explainer := _baccarat_hand_explainer(session, last_result, deal_active, payout_active, round_timer)
+	var hand_explainer := _baccarat_hand_explainer(session, last_result, deal_active, payout_active, round_timer, wager_currency)
 	var edge_challenge := _normalized_edge_sort_challenge(table.get("edge_sort_challenge", {}))
 	var edge := _normalized_edge_sort_edge(table.get("edge_sort_edge", {}), table)
 	var edge_status := _edge_sort_surface_status(table, edge_challenge, edge, session)
@@ -249,6 +250,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var pending_delivery: Dictionary = authority_ledger.get("pending_delivery", {}) if typeof(authority_ledger.get("pending_delivery", {})) == TYPE_DICTIONARY else {}
 	var spec := GameModule.surface_spec({
 		"surface_renderer": "baccarat",
+		"wager_currency": wager_currency,
 		"surface_renderer_opaque": true,
 		"surface_life": "immersive_table",
 		"surface_cast": "dealer_table",
@@ -260,7 +262,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_dynamic_overlay_channels": [BACCARAT_DEAL_CHANNEL, BACCARAT_PAYOUT_CHANNEL],
 		"surface_realtime_state_refresh": deal_active or payout_active or shoe_read_active,
 		"surface_state_labels": [
-			{"label": "Wager", "value": "$%d" % total_wager},
+			{"label": "Wager", "value": PlayerTextScript.format_currency_amount(wager_currency, total_wager, true)},
 			{"label": "Shoe", "value": str(table.get("shoe_label", "8-deck shoe"))},
 		],
 		"surface_animation_channels": [
@@ -412,6 +414,9 @@ func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, 
 	if table.is_empty():
 		return {}
 	var session := _realtime_session_view(table, ui_state, current_surface_state)
+	var wager_currency := str(current_surface_state.get("wager_currency", GameModule.presentation_currency_for_game(run_state, get_id(), environment))).strip_edges().to_lower()
+	if wager_currency != "chips":
+		wager_currency = "cash"
 	var bets := _bet_dict(session.get("baccarat_bets", current_surface_state.get("baccarat_bets", {})))
 	var total_wager := _total_wager(bets)
 	# Stored results are immutable between sealed actions. Borrow the result for
@@ -425,14 +430,15 @@ func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, 
 	var min_ready := total_wager >= int(table.get("table_minimum", current_surface_state.get("table_minimum", 20)))
 	var timer_active := not deal_active and not payout_active
 	var round_timer := GameModule.table_round_timer_status_peek(table, now_msec, "Next hand") if timer_active else {}
-	var table_notice := _table_notice(table, session, last_result, deal_active, payout_active, round_timer)
-	var hand_explainer := _baccarat_hand_explainer(session, last_result, deal_active, payout_active, round_timer)
+	var table_notice := _table_notice(table, session, last_result, deal_active, payout_active, round_timer, wager_currency)
+	var hand_explainer := _baccarat_hand_explainer(session, last_result, deal_active, payout_active, round_timer, wager_currency)
 	var shoe_read_challenge := _normalized_shoe_read_challenge(session.get("shoe_read_challenge", current_surface_state.get("shoe_read_challenge", {})))
 	var shoe_read_status := _shoe_read_status(shoe_read_challenge, now_msec)
 	var shoe_read_active := not shoe_read_challenge.is_empty() and str(shoe_read_challenge.get("skill_grade", "")).is_empty()
 	var ritual_phase := _baccarat_ritual_phase(last_result, elapsed_msec)
 	return {
 		"surface_realtime_state_refresh": deal_active or payout_active or shoe_read_active,
+		"wager_currency": wager_currency,
 		"surface_time_msec": now_msec,
 		"surface_animation_channels": [
 			GameModule.surface_animation_channel(
@@ -2780,7 +2786,7 @@ func _selected_surface_actions(bets: Dictionary, session: Dictionary = {}) -> Ar
 	return result
 
 
-func _table_notice(table: Dictionary, session: Dictionary, last_result: Dictionary, deal_active: bool, payout_active: bool, round_timer: Dictionary = {}) -> String:
+func _table_notice(table: Dictionary, session: Dictionary, last_result: Dictionary, deal_active: bool, payout_active: bool, round_timer: Dictionary = {}, wager_currency: String = "cash") -> String:
 	if deal_active:
 		return "No more bets. Cards are sliding from the shoe."
 	if payout_active:
@@ -2805,13 +2811,14 @@ func _table_notice(table: Dictionary, session: Dictionary, last_result: Dictiona
 			return "Place chips or sit out; next hand in %ds." % seconds
 		return "Place chips or sit out the next hand."
 	if _total_wager(bets) < int(table.get("table_minimum", 20)):
-		return "Add chips to reach the $%d table minimum." % int(table.get("table_minimum", 20))
+		var account_noun := "chips" if wager_currency == "chips" else "cash"
+		return "Add %s to reach the %s table minimum." % [account_noun, PlayerTextScript.format_currency_amount(wager_currency, int(table.get("table_minimum", 20)))]
 	if not last_result.is_empty():
 		return str(last_result.get("summary", "The shoe is ready."))
-	return "$%d working across %d baccarat space%s." % [_total_wager(bets), bets.size(), "" if bets.size() == 1 else "s"]
+	return "%s working across %d baccarat space%s." % [PlayerTextScript.format_currency_amount(wager_currency, _total_wager(bets)), bets.size(), "" if bets.size() == 1 else "s"]
 
 
-func _baccarat_hand_explainer(session: Dictionary, last_result: Dictionary, deal_active: bool, payout_active: bool, round_timer: Dictionary = {}) -> Dictionary:
+func _baccarat_hand_explainer(session: Dictionary, last_result: Dictionary, deal_active: bool, payout_active: bool, round_timer: Dictionary = {}, wager_currency: String = "cash") -> Dictionary:
 	var bets := _bet_dict(session.get("baccarat_bets", {}))
 	if deal_active:
 		return {
@@ -2831,12 +2838,13 @@ func _baccarat_hand_explainer(session: Dictionary, last_result: Dictionary, deal
 		var banker_total := int(last_result.get("banker_total", 0))
 		var net := int(last_result.get("bankroll_delta", 0))
 		var natural := bool(last_result.get("natural", false))
+		var result_currency := _baccarat_result_currency(last_result, wager_currency)
 		return {
 			"mode": "payout" if payout_active else "last_hand",
 			"title": _winner_title(winner),
 			"primary": "Player %d  Banker %d" % [player_total, banker_total],
 			"secondary": _baccarat_winner_reason(winner, player_total, banker_total, natural),
-			"bet_summary": _baccarat_settlement_summary(_dictionary_array(last_result.get("bet_results", [])), net),
+			"bet_summary": _baccarat_settlement_summary(_dictionary_array(last_result.get("bet_results", [])), net, result_currency),
 			"winner": winner,
 			"player_total": player_total,
 			"banker_total": banker_total,
@@ -2859,7 +2867,7 @@ func _baccarat_hand_explainer(session: Dictionary, last_result: Dictionary, deal
 	return {
 		"mode": "betting",
 		"title": "READY TO DEAL",
-		"primary": "$%d placed on %s." % [_total_wager(bets), _bets_display(bets)],
+		"primary": "%s placed on %s." % [PlayerTextScript.format_currency_amount(wager_currency, _total_wager(bets)), _bets_display(bets, wager_currency)],
 		"secondary": "Player and Banker compare final totals.",
 		"bet_summary": "Pair side bets need matching first two cards.",
 		"winner": "",
@@ -2927,9 +2935,15 @@ func _baccarat_winner_reason(winner: String, player_total: int, banker_total: in
 	return "%s is closer to 9 than %d.%s" % [_winner_display(winner), trailing_total, natural_text]
 
 
-func _baccarat_settlement_summary(bet_results: Array, net: int) -> String:
+func _baccarat_result_currency(last_result: Dictionary, fallback: String = "cash") -> String:
+	var settlement := _draw_dict_view(last_result.get("settlement", {}))
+	var currency := str(settlement.get("currency", last_result.get("currency", fallback))).strip_edges().to_lower()
+	return "chips" if currency == "chips" else "cash"
+
+
+func _baccarat_settlement_summary(bet_results: Array, net: int, wager_currency: String = "cash") -> String:
 	if bet_results.is_empty():
-		return "You sat out. Net $0."
+		return PlayerTextScript.join_sentences(["You sat out.", PlayerTextScript.format_settlement_delta(wager_currency, 0)])
 	var won: Array = []
 	var lost: Array = []
 	var pushed: Array = []
@@ -2939,9 +2953,9 @@ func _baccarat_settlement_summary(bet_results: Array, net: int) -> String:
 		if bool(bet_result.get("push", false)):
 			pushed.append("%s push" % label)
 		elif bool(bet_result.get("won", false)):
-			won.append("%s +$%d" % [label, int(bet_result.get("payout", 0))])
+			won.append("%s +%s" % [label, PlayerTextScript.format_currency_amount(wager_currency, int(bet_result.get("payout", 0)))])
 		else:
-			lost.append("%s -$%d" % [label, int(bet_result.get("stake", 0))])
+			lost.append("%s -%s" % [label, PlayerTextScript.format_currency_amount(wager_currency, int(bet_result.get("stake", 0)))])
 	var parts: Array = []
 	if not won.is_empty():
 		parts.append("Won %s" % _join_limited(won, 2))
@@ -2949,15 +2963,15 @@ func _baccarat_settlement_summary(bet_results: Array, net: int) -> String:
 		parts.append("Lost %s" % _join_limited(lost, 2))
 	if not pushed.is_empty():
 		parts.append(_join_limited(pushed, 2))
-	return "%s. Net %+d." % ["; ".join(parts), net]
+	return PlayerTextScript.join_sentences(["%s." % "; ".join(parts), PlayerTextScript.format_settlement_delta(wager_currency, net)])
 
 
-func _bets_display(bets: Dictionary) -> String:
+func _bets_display(bets: Dictionary, wager_currency: String = "cash") -> String:
 	var labels: Array = []
 	for bet_id in bets.keys():
 		var amount := int(bets.get(bet_id, 0))
 		if amount > 0:
-			labels.append("%s $%d" % [_target_label(str(bet_id)), amount])
+			labels.append("%s %s" % [_target_label(str(bet_id)), PlayerTextScript.format_currency_amount(wager_currency, amount)])
 	return _join_limited(labels, 3)
 
 
@@ -3339,10 +3353,11 @@ func _patron_snitch_pressure(patrons: Array) -> int:
 
 
 func _baccarat_room_info(state: Dictionary) -> String:
-	return "%s | %d left | comm $%d" % [
+	var wager_currency := str(state.get("wager_currency", "cash"))
+	return "%s | %d left | comm %s" % [
 		str(state.get("shoe_label", "8-deck shoe")),
 		int(state.get("shoe_remaining", 0)),
-		int(state.get("commission_owed", 0)),
+		PlayerTextScript.format_currency_amount(wager_currency, int(state.get("commission_owed", 0))),
 	]
 
 
@@ -3757,9 +3772,13 @@ func _draw_action_console(surface, state: Dictionary) -> void:
 		_draw_table_button(surface, Rect2(650, CONSOLE_Y + 15, 104, 42), "RETRY", "table_game_retry_pending", 0, C_YELLOW, true, true)
 		_draw_table_button(surface, Rect2(762, CONSOLE_Y + 15, 112, 42), "CANCEL", "table_game_cancel_pending", 0, C_SOFT, bool(state.get("table_game_host_cancel_available", false)))
 		return
-	surface.surface_label("MIN $%d  MAX $%d" % [int(state.get("table_minimum", 20)), int(state.get("table_maximum", 500))], Vector2(342, CONSOLE_Y + 22), 12, C_SOFT)
-	surface.surface_label("WAGER $%d" % int(state.get("total_wager_cost", 0)), Vector2(342, CONSOLE_Y + 42), 14, C_YELLOW)
-	surface.surface_label("COMM $%d" % int(state.get("commission_owed", 0)), Vector2(342, CONSOLE_Y + 62), 12, C_PINK_2)
+	var wager_currency := str(state.get("wager_currency", "cash"))
+	surface.surface_label("MIN %s  MAX %s" % [
+		PlayerTextScript.format_currency_amount(wager_currency, int(state.get("table_minimum", 20)), true),
+		PlayerTextScript.format_currency_amount(wager_currency, int(state.get("table_maximum", 500)), true),
+	], Vector2(342, CONSOLE_Y + 22), 12, C_SOFT)
+	surface.surface_label("WAGER %s" % PlayerTextScript.format_currency_amount(wager_currency, int(state.get("total_wager_cost", 0)), true), Vector2(342, CONSOLE_Y + 42), 14, C_YELLOW)
+	surface.surface_label("COMM %s" % PlayerTextScript.format_currency_amount(wager_currency, int(state.get("commission_owed", 0)), true), Vector2(342, CONSOLE_Y + 62), 12, C_PINK_2)
 	_draw_table_button(surface, Rect2(520, CONSOLE_Y + 15, 62, 42), "CLEAR", "baccarat_clear", 0, C_ORANGE, bool(state.get("can_clear", false)))
 	_draw_table_button(surface, Rect2(590, CONSOLE_Y + 15, 62, 42), "UNDO", "baccarat_undo", 0, C_CYAN, bool(state.get("can_undo", false)))
 	_draw_table_button(surface, Rect2(660, CONSOLE_Y + 15, 70, 42), "REBET", "baccarat_rebet", 0, C_TEAL, bool(state.get("can_rebet", false)))

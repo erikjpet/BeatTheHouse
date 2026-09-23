@@ -13,7 +13,8 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$root = [IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))
+. (Join-Path $PSScriptRoot "../../repository_root.ps1")
+$root = Resolve-BthRepositoryRoot -StartPath $PSScriptRoot
 . (Join-Path $PSScriptRoot "integ06_1_terminal_soak_contract.ps1")
 if ($ShardCount -lt 1) { throw "ShardCount must be positive." }
 if ($Cpu -lt 1) { throw "Cpu must be positive." }
@@ -55,11 +56,11 @@ if (-not $out.StartsWith($allowedRoot + [IO.Path]::DirectorySeparatorChar, [Stri
 if (Test-Path -LiteralPath $out) { throw "OutDir already exists; evidence directories are immutable: $out" }
 
 $toolFiles = @(
-    (Join-Path $root "tools\integ06_1_terminal_soak.ps1"),
-    (Join-Path $root "tools\integ06_1_terminal_soak_main.gd"),
-    (Join-Path $root "tools\integ06_1_terminal_soak_main.tscn"),
-    (Join-Path $root "tools\integ06_1_terminal_soak_web_capture.mjs"),
-    (Join-Path $root "tools\integ06_1_terminal_soak_contract.ps1"),
+    (Join-Path $root "tools\archive\integ06_1\integ06_1_terminal_soak.ps1"),
+    (Join-Path $root "tools\archive\integ06_1\integ06_1_terminal_soak_main.gd"),
+    (Join-Path $root "tools\archive\integ06_1\integ06_1_terminal_soak_main.tscn"),
+    (Join-Path $root "tools\archive\integ06_1\integ06_1_terminal_soak_web_capture.mjs"),
+    (Join-Path $root "tools\archive\integ06_1\integ06_1_terminal_soak_contract.ps1"),
     (Join-Path $root "tools\endgame_metrics_probe.gd")
 )
 $toolHashInput = ($toolFiles | Sort-Object | ForEach-Object { "$(Split-Path -Leaf $_):$((Get-FileHash -LiteralPath $_ -Algorithm SHA256).Hash.ToLowerInvariant())" }) -join "`n"
@@ -238,7 +239,7 @@ try {
         $stem = "shard_${shard}_web"
         $webJson = Join-Path $out "$stem.json"
         $query = "candidate-commit=$candidate&candidate-tree=$candidateTree&tool-source-sha256=$toolHash&evidence-profile=$([Uri]::EscapeDataString($EvidenceProfile))&profile-path=$([Uri]::EscapeDataString($resolvedProfile))&profile-sha256=$profileHash&shard-index=$shard&shard-count=$ShardCount"
-        Invoke-BoundedProcess -FilePath "node" -ArgumentList @((Join-Path $root "tools\integ06_1_terminal_soak_web_capture.mjs"), "--url=http://127.0.0.1:$WebPort/index.html?$query", "--out=$webJson", "--profile=$(Join-Path $out "${stem}_profile")", "--cpu=$Cpu", "--timeout-ms=$TimeoutMs", "--playwright-package=$playwrightPackage", ('--chrome="{0}"' -f $chrome)) -StdoutPath (Join-Path $out "$stem.stdout.txt") -StderrPath (Join-Path $out "$stem.stderr.txt") -Label $stem -AllowFailure | Out-Null
+        Invoke-BoundedProcess -FilePath "node" -ArgumentList @((Join-Path $root "tools\archive\integ06_1\integ06_1_terminal_soak_web_capture.mjs"), "--url=http://127.0.0.1:$WebPort/index.html?$query", "--out=$webJson", "--profile=$(Join-Path $out "${stem}_profile")", "--cpu=$Cpu", "--timeout-ms=$TimeoutMs", "--playwright-package=$playwrightPackage", ('--chrome="{0}"' -f $chrome)) -StdoutPath (Join-Path $out "$stem.stdout.txt") -StderrPath (Join-Path $out "$stem.stderr.txt") -Label $stem -AllowFailure | Out-Null
         if (-not (Test-Path -LiteralPath $webJson -PathType Leaf)) { throw "$stem emitted no report." }
         $report = Get-Content -LiteralPath $webJson -Raw | ConvertFrom-Json
         Assert-Provenance -Report $report -Label $stem -Platform "Web" -ExpectedShardIndex $shard
@@ -353,7 +354,7 @@ $manifest = [ordered]@{
     artifacts = $artifactRecords
     failures = $failures
     passed = $failures.Count -eq 0
-    reproduction_command = "powershell -NoProfile -ExecutionPolicy Bypass -File tools\integ06_1_terminal_soak.ps1 -CandidateCommit $candidate -ProfilePath $ProfilePath -EvidenceProfile $EvidenceProfile -OutDir $OutDir -RequireGodot"
+    reproduction_command = "powershell -NoProfile -ExecutionPolicy Bypass -File tools\archive\integ06_1\integ06_1_terminal_soak.ps1 -CandidateCommit $candidate -ProfilePath $ProfilePath -EvidenceProfile $EvidenceProfile -OutDir $OutDir -RequireGodot"
 }
 $manifestPath = Join-Path $out "manifest.json"
 $manifest | ConvertTo-Json -Depth 100 | Set-Content -LiteralPath $manifestPath

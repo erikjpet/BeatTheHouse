@@ -8,6 +8,7 @@ const COUNT_FORMS := {
 	"ticket": ["ticket", "tickets"],
 	"active_row": ["active row", "active rows"],
 	"action": ["action", "actions"],
+	"chip": ["chip", "chips"],
 	"tray_ticket": ["tray ticket", "tray tickets"],
 	"deal_row": ["deal row", "deal rows"],
 	"bet_won": ["won", "won"],
@@ -47,12 +48,19 @@ static func resolve(key: String, params: Dictionary = {}) -> String:
 		"sealed_action.unavailable":
 			return "That action is not available right now."
 		"sealed_action.retrying":
-			return "Retrying the sealed action."
+			var retry_provider := str(params.get("provider_label", "")).strip_edges()
+			return "Retrying the sealed action." if retry_provider.is_empty() else "Retrying %s's sealed action." % retry_provider
 		"sealed_action.cancelled":
-			return "The pending sealed action was cancelled."
+			var cancel_provider := str(params.get("provider_label", "")).strip_edges()
+			return "The pending sealed action was cancelled." if cancel_provider.is_empty() else "%s's pending sealed action was cancelled." % cancel_provider
+		"sealed_action.mismatch":
+			var mismatch_provider := str(params.get("provider_label", "")).strip_edges()
+			return "The sealed action no longer matches this request. Nothing was changed." if mismatch_provider.is_empty() else "%s's sealed action no longer matches this request. Nothing was changed." % mismatch_provider
 		"sealed_action.failed_closed":
 			return "That action could not be verified. Nothing was changed."
 		"game.result.currency_settlement":
+			if params.has("currency") and params.has("delta"):
+				return format_settlement_delta(str(params.get("currency", "cash")), int(params.get("delta", 0)))
 			return format_currency_settlement(int(params.get("cash_delta", 0)), int(params.get("chips_delta", 0)))
 	return str(params.get("fallback", key))
 
@@ -60,6 +68,23 @@ static func resolve(key: String, params: Dictionary = {}) -> String:
 static func count_text(noun_key: String, count: int) -> String:
 	var forms: Array = COUNT_FORMS.get(noun_key, [noun_key.replace("_", " "), "%ss" % noun_key.replace("_", " ")])
 	return "%d %s" % [count, str(forms[0] if count == 1 else forms[1])]
+
+
+static func currency_account_label(currency: String) -> String:
+	return "CHIPS" if currency.strip_edges().to_lower() == "chips" else "CASH"
+
+
+static func format_currency_amount(currency: String, amount: int, uppercase_chip_noun: bool = false) -> String:
+	if currency.strip_edges().to_lower() == "chips":
+		var noun := "chip" if absi(amount) == 1 else "chips"
+		return "%d %s" % [amount, noun.to_upper() if uppercase_chip_noun else noun]
+	return "$%d" % amount
+
+
+static func format_currency_account_balance(currency: String, amount: int) -> String:
+	if currency.strip_edges().to_lower() == "chips":
+		return "%s %d" % [currency_account_label(currency), amount]
+	return "%s %s" % [currency_account_label(currency), format_currency_amount(currency, amount)]
 
 
 static func join_sentences(parts: Array) -> String:
@@ -91,7 +116,13 @@ static func format_game_clock(total_minutes: int, include_day: bool = true, day_
 static func format_currency_settlement(cash_delta: int, chips_delta: int) -> String:
 	var parts: Array[String] = []
 	if cash_delta != 0:
-		parts.append("Cash change: %+d." % cash_delta)
+		parts.append(format_settlement_delta("cash", cash_delta))
 	if chips_delta != 0:
-		parts.append("Chip change: %+d chips." % chips_delta)
+		parts.append(format_settlement_delta("chips", chips_delta))
 	return join_sentences(parts) if not parts.is_empty() else "No balance change."
+
+
+static func format_settlement_delta(currency: String, delta: int) -> String:
+	if currency.strip_edges().to_lower() == "chips":
+		return "Chip change: %+d %s." % [delta, count_text("chip", absi(delta)).trim_prefix("%d " % absi(delta))]
+	return "Cash change: %+d." % delta

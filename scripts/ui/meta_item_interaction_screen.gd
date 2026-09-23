@@ -29,29 +29,35 @@ var _detail_panel: PanelContainer
 var _detail_box: VBoxContainer
 var _close_button: Button
 var _focus_return_target: Control
+var modal_focus_scope: RefCounted
 
 
 func _init() -> void:
 	_build()
 
 
-func configure(texture_provider: Callable) -> void:
+func configure(texture_provider: Callable, focus_scope: RefCounted = null) -> void:
 	_texture_provider = texture_provider
+	modal_focus_scope = focus_scope
 	_surface.configure(texture_provider, CatalogScript.load_catalog())
 
 
 func open(model: Dictionary) -> void:
-	if not visible:
+	if modal_focus_scope == null and not visible:
 		var focus_owner := get_viewport().gui_get_focus_owner() if get_viewport() != null else null
 		if focus_owner is Control and focus_owner != self and not is_ancestor_of(focus_owner):
 			_focus_return_target = focus_owner as Control
 	visible = true
 	update_model(model)
 	move_to_front()
+	if modal_focus_scope != null:
+		modal_focus_scope.call("push_scope", self, _close_button)
 	if not selected_key().is_empty():
 		_surface.focus_selection(selected_key(), false)
 	else:
 		_close_button.grab_focus()
+	if modal_focus_scope != null:
+		modal_focus_scope.call("refresh_scope", self, _close_button)
 	_position_popup()
 	call_deferred("_position_popup")
 
@@ -63,15 +69,19 @@ func update_model(model: Dictionary) -> void:
 	_surface.update_model(_model)
 	_render_detail()
 	_position_popup()
+	if visible and modal_focus_scope != null:
+		modal_focus_scope.call("refresh_scope", self, _close_button)
 
 
 func close() -> void:
 	var was_visible := visible
+	if was_visible and modal_focus_scope != null:
+		modal_focus_scope.call("pop_scope", self)
 	visible = false
 	_model = {}
 	_surface.update_model({})
 	FoundationWidgets.clear(_detail_box)
-	if was_visible:
+	if was_visible and modal_focus_scope == null:
 		call_deferred("_restore_previous_focus")
 
 

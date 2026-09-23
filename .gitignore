@@ -6,6 +6,7 @@ docs/plans/0.3.2_function_census.md
 .godot/
 *.translation
 *.uid
+!tools/archive/**/*.gd.uid
 *.import
 !assets/audio/music/**/*.wav.import
 .tmp/

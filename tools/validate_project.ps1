@@ -618,10 +618,61 @@ try {
 catch {
     $failures.Add("Could not inspect git-tracked generated files: $($_.Exception.Message)")
 }
+$reviewedArchivedUidPaths = @{}
+$archiveToolManifestPath = Join-Path $root "tools/archive/health06_1_row_tools_manifest.json"
+if (-not (Test-Path -LiteralPath $archiveToolManifestPath -PathType Leaf)) {
+    $failures.Add("Reviewed archive-tool manifest is missing; tracked UID companions cannot be admitted.")
+}
+else {
+    try {
+        $archiveToolManifest = Get-Content -LiteralPath $archiveToolManifestPath -Raw | ConvertFrom-Json
+        foreach ($companion in @($archiveToolManifest.companion_moves)) {
+            $destination = ([string]$companion.destination).Replace('\', '/').TrimStart('/')
+            if ($destination -notmatch '^tools/archive/.+\.gd\.uid$') {
+                $failures.Add("Reviewed UID companion has an invalid archive destination: $destination")
+                continue
+            }
+            if ($reviewedArchivedUidPaths.ContainsKey($destination)) {
+                $failures.Add("Reviewed UID companion destination is duplicated: $destination")
+                continue
+            }
+            $uidPath = Join-Path $root $destination
+            $scriptPath = $uidPath -replace '\.uid$', ''
+            if (-not (Test-Path -LiteralPath $uidPath -PathType Leaf) -or -not (Test-Path -LiteralPath $scriptPath -PathType Leaf)) {
+                $failures.Add("Reviewed UID companion or its archived GDScript is missing: $destination")
+                continue
+            }
+            $uidRawText = Get-Content -LiteralPath $uidPath -Raw
+            $canonicalUidText = $uidRawText.Replace("`r`n", "`n").Replace("`r", "`n")
+            if ($canonicalUidText -notmatch '^uid://[a-z0-9]+\n\z') {
+                $failures.Add("Reviewed UID companion is malformed: $destination")
+                continue
+            }
+            $uidText = $canonicalUidText.Substring(0, $canonicalUidText.Length - 1)
+            $uidSha = [Security.Cryptography.SHA256]::Create()
+            try {
+                # Manifest hashes are canonical LF text hashes so checkout line-ending
+                # conversion cannot create platform-specific false drift.
+                $canonicalBytes = [Text.Encoding]::UTF8.GetBytes($canonicalUidText)
+                $actualHash = ([BitConverter]::ToString($uidSha.ComputeHash($canonicalBytes))).Replace("-", "").ToLowerInvariant()
+            }
+            finally { $uidSha.Dispose() }
+            if ($actualHash -cne ([string]$companion.sha256).ToLowerInvariant()) {
+                $failures.Add("Reviewed UID companion hash drifted: $destination")
+                continue
+            }
+            $reviewedArchivedUidPaths[$destination] = $true
+        }
+    }
+    catch {
+        $failures.Add("Could not validate reviewed archive UID companions: $($_.Exception.Message)")
+    }
+}
 foreach ($trackedGeneratedFile in $trackedGeneratedFiles) {
-    $relativeGeneratedPath = ([string]$trackedGeneratedFile).Trim()
+    $relativeGeneratedPath = ([string]$trackedGeneratedFile).Trim().Replace('\', '/')
     $isAuthoredMusicKeepContract = $relativeGeneratedPath -match '^assets/audio/music/.+\.wav\.import$'
-    if (-not [string]::IsNullOrWhiteSpace($relativeGeneratedPath) -and -not $isAuthoredMusicKeepContract) {
+    $isReviewedArchivedUid = $reviewedArchivedUidPaths.ContainsKey($relativeGeneratedPath)
+    if (-not [string]::IsNullOrWhiteSpace($relativeGeneratedPath) -and -not $isAuthoredMusicKeepContract -and -not $isReviewedArchivedUid) {
         $failures.Add("Generated Godot metadata must not be git-tracked: $relativeGeneratedPath")
     }
 }

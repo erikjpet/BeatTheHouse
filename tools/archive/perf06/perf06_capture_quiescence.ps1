@@ -10,7 +10,8 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$root = [IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))
+. (Join-Path $PSScriptRoot "../../repository_root.ps1")
+$root = Resolve-BthRepositoryRoot -StartPath $PSScriptRoot
 $candidate = (& git -C $root rev-parse "$CandidateCommit^{commit}").Trim()
 if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($candidate)) { throw "CandidateCommit does not resolve." }
 if ((& git -C $root rev-parse HEAD).Trim() -cne $candidate) { throw "Quiescence custody must bind the checked-out candidate." }

@@ -241,22 +241,7 @@ func buy_item_offer(item_id: String) -> Dictionary:
 		return _service_error("Item price is invalid.")
 	if run_state.bankroll < price:
 		return _service_error("Not enough bankroll for %s." % str(item_definition.get("display_name", item_id)))
-	var item_effect := ItemEffectScript.new()
-	item_effect.setup(item_definition)
-	var context := {
-		"domain": str(item_definition.get("domain", "global")),
-		"domains": [str(item_definition.get("domain", "global")), "global"],
-		"environment_id": str(run_state.current_environment.get("id", "")),
-		"action_id": "buy_item",
-	}
-	var effect_result: Dictionary = item_effect.apply(context)
-	var result := purchase_item_result(effect_result, item_definition, offer)
-	var transaction := _commit_money_transaction(result, price, "item", item_id, item_definition)
-	if not bool(transaction.get("ok", false)):
-		return transaction
-	if _definition_is_active_item(item_definition):
-		_auto_select_active_item_after_gain(item_id)
-	return transaction
+	return _commit_money_transaction(price, "item", item_id)
 
 
 func cage_gift_shop_offer_view_list() -> Array:
@@ -324,6 +309,11 @@ func buy_cage_gift_shop_offer(item_id: String) -> Dictionary:
 	var item_definition := library.item(item_id)
 	if item_definition.is_empty() or not _item_enabled_for_run(item_id):
 		return _service_error("That item is not part of this run.")
+	return _commit_cage_gift_transaction(item_id, price)
+
+
+func _cage_gift_purchase_result(item_id: String, offer: Dictionary, item_definition: Dictionary) -> Dictionary:
+	var price := maxi(1, int(offer.get("chip_price", offer.get("price", 1))))
 	var item_effect := ItemEffectScript.new()
 	item_effect.setup(item_definition)
 	var effect_result := item_effect.apply({
@@ -363,15 +353,55 @@ func buy_cage_gift_shop_offer(item_id: String) -> Dictionary:
 	result["chips_delta"] = -price
 	result["deltas"] = deltas
 	result["message"] = message
+	return result
+
+
+func _commit_cage_gift_transaction(item_id: String, quoted_price: int) -> Dictionary:
+	var candidate := run_state.detached_host_action_candidate()
+	if candidate == null:
+		return _service_error("The gift-case purchase could not create a safe state snapshot.")
+	var price := maxi(1, quoted_price)
+	if candidate.grand_casino_chips < price:
+		return _service_error("The quoted chip price is no longer affordable.")
+	candidate.change_grand_casino_chips(-price, true)
+	var boundary_result := candidate.advance_environment_turns(1)
+	if not bool(boundary_result.get("ok", false)):
+		return _money_transaction_cancelled(boundary_result, "The gift-case purchase boundary could not advance safely.")
+	candidate.evaluate_immediate_terminal_state(false)
+	if candidate.is_terminal() or candidate.closing_time_forced_travel_required():
+		return _service_error("The gift-case purchase was cancelled because its action boundary ended the run.")
+	var candidate_service := get_script().new() as RunActionService
+	candidate_service.setup(library, candidate)
+	if str(candidate.current_environment.get("archetype_id", "")) != RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID:
+		return _service_error("The gift case changed before the purchase could commit.")
+	var candidate_offer: Dictionary = {}
+	for offer_value in candidate_service.cage_gift_shop_offer_view_list():
+		if typeof(offer_value) == TYPE_DICTIONARY and str((offer_value as Dictionary).get("item_id", "")) == item_id:
+			candidate_offer = (offer_value as Dictionary).duplicate(true)
+			break
+	if candidate_offer.is_empty() or bool(candidate_offer.get("sold", false)) or int(candidate_offer.get("chip_price", -1)) != price:
+		return _service_error("The gift-case offer changed before the purchase could commit.")
+	var item_definition := library.item(item_id)
+	if item_definition.is_empty() or not candidate_service._item_enabled_for_run(item_id):
+		return _service_error("That item is no longer part of this run.")
+	var result := candidate_service._cage_gift_purchase_result(item_id, candidate_offer, item_definition)
 	if not bool(result.get("ok", false)):
 		return _service_error(str(result.get("message", "The gift case declines the purchase.")))
-	var turn_result := run_state.advance_environment_turns(1)
-	if not bool(turn_result.get("ok", false)):
-		return _boundary_service_error(turn_result, "The gift-case purchase boundary could not advance safely.")
-	GameModule.apply_result(run_state, result)
-	if _definition_is_active_item(item_definition):
-		_auto_select_active_item_after_gain(item_id)
-	_mark_cage_gift_shop_offer_sold(item_id)
+	var applied_result := result.duplicate(true)
+	var applied_deltas := candidate_service.copy_result_deltas(applied_result.get("deltas", {}))
+	applied_deltas["chips_delta"] = int(applied_deltas.get("chips_delta", 0)) + price
+	applied_result["deltas"] = applied_deltas
+	applied_result["chips_delta"] = int(applied_deltas.get("chips_delta", 0))
+	var applied := GameModule.apply_result(candidate, applied_result)
+	if not bool(applied.get("ok", false)):
+		return _service_error(str(applied.get("message", "The gift-case purchase could not settle safely.")))
+	if candidate.is_terminal() or candidate.closing_time_forced_travel_required():
+		return _service_error("The gift-case purchase was cancelled because its settlement ended the run.")
+	if candidate_service._definition_is_active_item(item_definition):
+		candidate_service._auto_select_active_item_after_gain(item_id)
+	candidate_service._mark_cage_gift_shop_offer_sold(item_id)
+	if not run_state.publish_host_action_candidate(candidate):
+		return _service_error("The gift-case purchase could not publish its completed state.")
 	return _service_success(result)
 
 
@@ -607,60 +637,85 @@ func pawn_inventory_item(item_id: String, lender_id: String = SALS_PAWN_COUNTER_
 	var status := hook_run_status("lender", definition)
 	if not bool(status.get("available", true)):
 		return _service_error(str(status.get("disabled_reason", "Pawn counter is not available.")))
-	if RunState.is_portable_ticket_pile_item(item_id):
-		var rollback_run := run_state.to_dict()
-		var rollback_environment := run_state.current_environment.duplicate(true)
-		var surrendered := run_state.surrender_portable_ticket_winners_to_sal(item_id)
+	if not RunState.is_portable_ticket_pile_item(item_id) and _pawn_quote_for_item(item_id, JsonCoerceScript._copy_dict(definition.get("debt_profile", {}))).is_empty():
+		return _service_error("Sal needs a sellable item as collateral.")
+	return _commit_pawn_transaction(item_id, lender_id, definition)
+
+
+func _portable_ticket_cashout_result(item_id: String, lender_id: String, surrendered: Dictionary) -> Dictionary:
+	var ticket_count := maxi(0, int(surrendered.get("ticket_count", 0)))
+	var face_value := maxi(0, int(surrendered.get("face_value", 0)))
+	var cash_value := maxi(0, int(surrendered.get("cash_value", 0)))
+	var item_name := str(inventory_item_detail(item_id).get("display_name", item_id.replace("_", " ").capitalize()))
+	var message := "Sal takes %d revealed winner%s from your %s and pays $%d (20%% of $%d)." % [ticket_count, "" if ticket_count == 1 else "s", item_name, cash_value, face_value]
+	var deltas := GameModule.empty_result_deltas()
+	deltas["bankroll_delta"] = cash_value
+	deltas["messages"] = [message]
+	deltas["story_log"] = [{
+		"type": "portable_ticket_sal_cashout",
+		"lender_id": lender_id,
+		"item_id": item_id,
+		"ticket_count": ticket_count,
+		"face_value": face_value,
+		"bankroll_delta": cash_value,
+		"environment_id": str(run_state.current_environment.get("id", "")),
+	}]
+	return GameModule.build_action_result({
+		"ok": true,
+		"type": "portable_ticket_sal_cashout",
+		"source_id": lender_id,
+		"action_id": "cash_portable_tickets",
+		"action_kind": "legal",
+		"stake": 0,
+		"bankroll_delta": cash_value,
+		"payout": cash_value,
+		"won": cash_value > 0,
+		"deltas": deltas,
+		"environment_id": str(run_state.current_environment.get("id", "")),
+		"message": message,
+	})
+
+
+func _commit_pawn_transaction(item_id: String, lender_id: String, definition: Dictionary) -> Dictionary:
+	var candidate := run_state.detached_host_action_candidate()
+	if candidate == null:
+		return _service_error("The pawn transaction could not create a safe state snapshot.")
+	var candidate_service := get_script().new() as RunActionService
+	candidate_service.setup(library, candidate)
+	if not candidate_service._hook_present_in_current_environment("lender", lender_id):
+		return _service_error("The pawn counter changed before the transaction could commit.")
+	var portable := RunState.is_portable_ticket_pile_item(item_id)
+	var surrendered: Dictionary = {}
+	if portable:
+		surrendered = candidate.surrender_portable_ticket_winners_to_sal(item_id)
 		if not bool(surrendered.get("ok", false)):
 			return _service_error(str(surrendered.get("message", "Sal cannot cash those tickets.")))
-		var ticket_count := maxi(0, int(surrendered.get("ticket_count", 0)))
-		var face_value := maxi(0, int(surrendered.get("face_value", 0)))
-		var cash_value := maxi(0, int(surrendered.get("cash_value", 0)))
-		var item_name := str(inventory_item_detail(item_id).get("display_name", item_id.replace("_", " ").capitalize()))
-		var message := "Sal takes %d revealed winner%s from your %s and pays $%d (20%% of $%d)." % [ticket_count, "" if ticket_count == 1 else "s", item_name, cash_value, face_value]
-		var deltas := GameModule.empty_result_deltas()
-		deltas["bankroll_delta"] = cash_value
-		deltas["messages"] = [message]
-		deltas["story_log"] = [{
-			"type": "portable_ticket_sal_cashout",
-			"lender_id": lender_id,
-			"item_id": item_id,
-			"ticket_count": ticket_count,
-			"face_value": face_value,
-			"bankroll_delta": cash_value,
-			"environment_id": str(run_state.current_environment.get("id", "")),
-		}]
-		var cashout_result := GameModule.build_action_result({
-			"ok": true,
-			"type": "portable_ticket_sal_cashout",
-			"source_id": lender_id,
-			"action_id": "cash_portable_tickets",
-			"action_kind": "legal",
-			"stake": 0,
-			"bankroll_delta": cash_value,
-			"payout": cash_value,
-			"won": cash_value > 0,
-			"deltas": deltas,
-			"environment_id": str(run_state.current_environment.get("id", "")),
-			"message": message,
-		})
-		var cashout_turn_result := run_state.advance_environment_turns(1)
-		if not bool(cashout_turn_result.get("ok", false)):
-			run_state.from_dict(rollback_run)
-			run_state.current_environment = rollback_environment
-			return _boundary_service_error(cashout_turn_result, "The ticket cash-out boundary could not advance safely.")
-		GameModule.apply_result(run_state, cashout_result)
-		return _service_success(cashout_result)
-	var quote := _pawn_quote_for_item(item_id, JsonCoerceScript._copy_dict(definition.get("debt_profile", {})))
-	if quote.is_empty():
-		return _service_error("Sal needs a sellable item as collateral.")
-	var result := _dynamic_lender_result(lender_id, definition, status, quote)
+	var boundary_result := candidate.advance_environment_turns(1)
+	if not bool(boundary_result.get("ok", false)):
+		return _money_transaction_cancelled(boundary_result, "The pawn boundary could not advance safely.")
+	candidate.evaluate_immediate_terminal_state(false)
+	if candidate.is_terminal() or candidate.closing_time_forced_travel_required():
+		return _service_error("The pawn transaction was cancelled because its action boundary ended the run.")
+	if not candidate_service._hook_present_in_current_environment("lender", lender_id):
+		return _service_error("The pawn counter changed before the transaction could commit.")
+	var result: Dictionary = {}
+	if portable:
+		result = candidate_service._portable_ticket_cashout_result(item_id, lender_id, surrendered)
+	else:
+		var status := candidate_service.hook_run_status("lender", definition)
+		var quote := candidate_service._pawn_quote_for_item(item_id, JsonCoerceScript._copy_dict(definition.get("debt_profile", {})))
+		if not bool(status.get("available", false)) or quote.is_empty():
+			return _service_error("The pawn quote changed before the transaction could commit.")
+		result = candidate_service._dynamic_lender_result(lender_id, definition, status, quote)
 	if result.is_empty():
 		return _service_error("Pawn counter is not available.")
-	var pawn_turn_result := run_state.advance_environment_turns(1)
-	if not bool(pawn_turn_result.get("ok", false)):
-		return _boundary_service_error(pawn_turn_result, "The pawn boundary could not advance safely.")
-	GameModule.apply_result(run_state, result)
+	var applied := GameModule.apply_result(candidate, result)
+	if not bool(applied.get("ok", false)):
+		return _service_error(str(applied.get("message", "The pawn transaction could not settle safely.")))
+	if candidate.is_terminal() or candidate.closing_time_forced_travel_required():
+		return _service_error("The pawn transaction was cancelled because its settlement ended the run.")
+	if not run_state.publish_host_action_candidate(candidate):
+		return _service_error("The pawn transaction could not publish its completed state.")
 	return _service_success(result)
 
 
@@ -905,11 +960,11 @@ func lender_hook(lender_id: String, selected_lender_id: String = "") -> Dictiona
 
 
 # Builds one service or lender hook presentation option.
-func hook_option(kind: String, hook_id: String, selected_hook_id: String = "") -> Dictionary:
+func hook_option(kind: String, hook_id: String, selected_hook_id: String = "", reserved_bankroll_credit: int = 0) -> Dictionary:
 	var definition := hook_definition(kind, hook_id)
 	var display_name := hook_display_name(kind, hook_id, definition)
 	var summary := str(definition.get("description", definition.get("summary", ""))) if not definition.is_empty() else ""
-	var hook_status := hook_run_status(kind, definition)
+	var hook_status := hook_run_status(kind, definition, reserved_bankroll_credit)
 	var deltas := hook_result_deltas(definition, kind, hook_status)
 	var loan_terms := lender_loan_terms(definition, deltas) if kind == "lender" else {}
 	var terms_summary := str(loan_terms.get("summary", ""))
@@ -974,6 +1029,8 @@ func _hook_availability_class(kind: String, hook_id: String, definition: Diction
 func use_hook(kind: String, hook_id: String) -> Dictionary:
 	if not is_ready():
 		return _service_error("That contact is not available.")
+	if not _hook_present_in_current_environment(kind, hook_id):
+		return _service_error("That %s is not available here." % kind)
 	var option := hook_option(kind, hook_id)
 	if option.is_empty():
 		return _service_error("That %s is not available." % kind)
@@ -981,44 +1038,27 @@ func use_hook(kind: String, hook_id: String) -> Dictionary:
 		return _service_error(str(option.get("status", "This %s is not usable yet." % kind)))
 	if not bool(option.get("enabled", true)):
 		return _service_error(str(option.get("disabled_reason", "%s cannot be used right now." % kind.capitalize())))
-	var result := hook_result(kind, hook_id)
-	if result.is_empty():
-		return _service_error("This %s is only informational right now." % kind)
 	var definition := hook_definition(kind, hook_id)
-	if kind == "service" and hook_id == JAZZ_SHOW_GLASSES_SERVICE_ID:
-		var rollback_run := run_state.to_dict()
-		var rollback_environment := run_state.current_environment.duplicate(true)
-		var rollback_world_map := run_state.world_map.duplicate(true)
-		var rollback_room_states := run_state.grand_casino_room_states.duplicate(true)
-		GameModule.apply_result(run_state, result)
-		var jazz_clock_result := _advance_hook_clock(kind, definition)
-		if not bool(jazz_clock_result.get("ok", false)):
-			run_state.from_dict(rollback_run)
-			run_state.current_environment = rollback_environment
-			run_state.world_map = rollback_world_map
-			run_state.grand_casino_room_states = rollback_room_states
-			var jazz_errors: Array = jazz_clock_result.get("errors", []) if typeof(jazz_clock_result.get("errors", [])) == TYPE_ARRAY else []
-			return _service_error(str(jazz_errors[0]) if not jazz_errors.is_empty() else "The service boundary could not advance safely.")
-		run_state.scenario_publish_service_result(kind, hook_id, result)
-		return _service_success(result)
 	var transaction_price := maxi(0, int(option.get("cost", definition.get("cost", 0)))) if kind == "service" else 0
-	if transaction_price > 0:
-		return _commit_money_transaction(result, transaction_price, kind, hook_id, definition)
-	var clock_result := _advance_hook_clock(kind, definition)
-	if not bool(clock_result.get("ok", false)):
-		var clock_errors: Array = clock_result.get("errors", []) if typeof(clock_result.get("errors", [])) == TYPE_ARRAY else []
-		return _service_error(str(clock_errors[0]) if not clock_errors.is_empty() else "The service boundary could not advance safely.")
-	GameModule.apply_result(run_state, result)
-	if kind == "lender" and hook_id == "the_crew":
-		_apply_crew_loan_trust(definition)
-	run_state.scenario_publish_service_result(kind, hook_id, result)
-	return _service_success(result)
+	return _commit_hook_transaction(transaction_price, kind, hook_id, definition)
 
 
-# Commits a quoted cash price, its fallible time boundary, and all rewards as a
-# single detached RunState publication. The price is reserved before the
-# boundary; the result copy then applies every non-price delta exactly once.
-func _commit_money_transaction(result: Dictionary, price: int, transaction_kind: String, source_id: String, definition: Dictionary) -> Dictionary:
+func _hook_present_in_current_environment(kind: String, hook_id: String) -> bool:
+	if run_state == null or hook_id.is_empty():
+		return false
+	if kind == "service":
+		if JsonCoerceScript._string_array(run_state.current_environment.get("service_ids", [])).has(hook_id):
+			return true
+		return hook_id == JAZZ_SHOW_GLASSES_SERVICE_ID and _jazz_glasses_service_visible()
+	if kind == "lender":
+		return JsonCoerceScript._string_array(run_state.current_environment.get("lender_hooks", [])).has(hook_id)
+	return false
+
+
+# Commits a quoted cash item, its fallible boundary, and every owned side effect
+# as one detached publication. The item effect is rebuilt from candidate state
+# after the boundary so no live-state proposal can become stale.
+func _commit_money_transaction(price: int, transaction_kind: String, source_id: String) -> Dictionary:
 	var candidate := run_state.detached_host_action_candidate()
 	if candidate == null:
 		return _service_error("The transaction could not create a safe state snapshot.")
@@ -1027,34 +1067,99 @@ func _commit_money_transaction(result: Dictionary, price: int, transaction_kind:
 		return _service_error("The quoted price is no longer affordable.")
 	if quoted_price > 0:
 		candidate.change_bankroll(-quoted_price, true)
-	var boundary_result := candidate.advance_environment_turns(1) if transaction_kind == "item" else _advance_transaction_hook_clock(candidate, transaction_kind, definition)
+	var boundary_result := candidate.advance_environment_turns(1)
 	if not bool(boundary_result.get("ok", false)):
 		return _money_transaction_cancelled(boundary_result, "The transaction boundary could not advance safely.")
 	var candidate_service := get_script().new() as RunActionService
 	candidate_service.setup(library, candidate)
-	if candidate.run_status != RunState.RUN_STATUS_ACTIVE:
+	candidate.evaluate_immediate_terminal_state(quoted_price > 0)
+	if candidate.is_terminal() or candidate.closing_time_forced_travel_required():
 		return _service_error("The transaction was cancelled because the action boundary ended the run.")
-	if transaction_kind == "item":
-		var live_offer := candidate_service.item_offer(source_id)
-		if live_offer.is_empty() or int(live_offer.get("price", -1)) != quoted_price:
-			return _service_error("The item offer changed before the purchase could commit.")
-	else:
-		var live_option := candidate_service.hook_option(transaction_kind, source_id)
-		if live_option.is_empty() or not bool(live_option.get("enabled", false)) or int(live_option.get("cost", -1)) != quoted_price:
-			return _service_error("The paid service changed before the transaction could commit.")
+	var live_offer := candidate_service.item_offer(source_id)
+	if transaction_kind != "item" or live_offer.is_empty() or int(live_offer.get("price", -1)) != quoted_price:
+		return _service_error("The item offer changed before the purchase could commit.")
+	var item_definition := library.item(source_id)
+	if item_definition.is_empty() or not candidate_service._item_enabled_for_run(source_id):
+		return _service_error("That item is no longer part of this run.")
+	var item_effect := ItemEffectScript.new()
+	item_effect.setup(item_definition)
+	var effect_result: Dictionary = item_effect.apply({
+		"domain": str(item_definition.get("domain", "global")),
+		"domains": [str(item_definition.get("domain", "global")), "global"],
+		"environment_id": str(candidate.current_environment.get("id", "")),
+		"action_id": "buy_item",
+	})
+	var result := candidate_service.purchase_item_result(effect_result, item_definition, live_offer)
 	var applied_result := result.duplicate(true)
-	var applied_deltas := copy_result_deltas(applied_result.get("deltas", {}))
+	var applied_deltas := candidate_service.copy_result_deltas(applied_result.get("deltas", {}))
 	applied_deltas["bankroll_delta"] = int(applied_deltas.get("bankroll_delta", 0)) + quoted_price
 	applied_result["deltas"] = applied_deltas
 	applied_result["bankroll_delta"] = int(applied_deltas.get("bankroll_delta", 0))
-	GameModule.apply_result(candidate, applied_result)
-	candidate.evaluate_immediate_terminal_state(false)
-	if candidate.run_status == RunState.RUN_STATUS_FAILED and not bool(result.get("terminal_settlement", false)):
-		return _service_error("The transaction was cancelled because its settlement would end the run.")
-	if transaction_kind == "item":
-		candidate.remove_item_offer(source_id)
-	else:
-		candidate.scenario_publish_service_result(transaction_kind, source_id, applied_result)
+	# The quote is already held on the candidate. Spending the last affordable
+	# dollar is valid for this action, so defer only bankroll-zero evaluation
+	# through settlement; every other terminal condition remains authoritative.
+	applied_result["defer_bankroll_zero_failure"] = quoted_price > 0
+	var applied := GameModule.apply_result(candidate, applied_result)
+	if not bool(applied.get("ok", false)):
+		return _service_error(str(applied.get("message", "The item purchase could not settle safely.")))
+	if candidate.is_terminal() or candidate.closing_time_forced_travel_required():
+		return _service_error("The item purchase was cancelled because its settlement ended the run.")
+	candidate.remove_item_offer(source_id)
+	if candidate_service._definition_is_active_item(item_definition):
+		candidate_service._auto_select_active_item_after_gain(source_id)
+	if not run_state.publish_host_action_candidate(candidate):
+		return _service_error("The transaction could not publish its completed state.")
+	return _service_success(result)
+
+
+# Hooks with a price of zero still own a fallible action boundary. All services
+# and lenders therefore use the same detached transaction as paid hooks.
+func _commit_hook_transaction(price: int, transaction_kind: String, source_id: String, definition: Dictionary) -> Dictionary:
+	var candidate := run_state.detached_host_action_candidate()
+	if candidate == null:
+		return _service_error("The transaction could not create a safe state snapshot.")
+	var quoted_price := maxi(0, price)
+	if candidate.bankroll < quoted_price:
+		return _service_error("The quoted price is no longer affordable.")
+	if quoted_price > 0:
+		candidate.change_bankroll(-quoted_price, true)
+	var boundary_result := _advance_transaction_hook_clock(candidate, transaction_kind, definition)
+	if not bool(boundary_result.get("ok", false)):
+		return _money_transaction_cancelled(boundary_result, "The transaction boundary could not advance safely.")
+	# Ignore only the already-reserved cash while deciding whether the boundary
+	# itself was terminal. Heat, an existing zero balance, and every other local
+	# terminal condition remain authoritative.
+	candidate.evaluate_immediate_terminal_state(quoted_price > 0)
+	if candidate.is_terminal() or candidate.closing_time_forced_travel_required():
+		return _service_error("The transaction was cancelled because the action boundary ended the run.")
+	var candidate_service := get_script().new() as RunActionService
+	candidate_service.setup(library, candidate)
+	if not candidate_service._hook_present_in_current_environment(transaction_kind, source_id):
+		return _service_error("The service location changed before the transaction could commit.")
+	var live_option := candidate_service.hook_option(transaction_kind, source_id, "", quoted_price)
+	if live_option.is_empty() or not bool(live_option.get("enabled", false)) or int(live_option.get("cost", -1)) != quoted_price:
+		return _service_error("The service changed before the transaction could commit.")
+	var result := candidate_service.hook_result(transaction_kind, source_id, quoted_price)
+	if result.is_empty():
+		return _service_error("This %s is only informational right now." % transaction_kind)
+	var applied_result := result.duplicate(true)
+	var applied_deltas := candidate_service.copy_result_deltas(applied_result.get("deltas", {}))
+	if quoted_price > 0:
+		applied_deltas["bankroll_delta"] = int(applied_deltas.get("bankroll_delta", 0)) + quoted_price
+		applied_result["deltas"] = applied_deltas
+		applied_result["bankroll_delta"] = int(applied_deltas.get("bankroll_delta", 0))
+		# Preserve the exact-price success contract while the reserved quote and
+		# authored deltas settle as one unit. Heat/debt/other failures are not
+		# deferred and are rejected below before candidate publication.
+		applied_result["defer_bankroll_zero_failure"] = true
+	var applied := GameModule.apply_result(candidate, applied_result)
+	if not bool(applied.get("ok", false)):
+		return _service_error(str(applied.get("message", "The service transaction could not settle safely.")))
+	if candidate.is_terminal() or candidate.closing_time_forced_travel_required():
+		return _service_error("The service transaction was cancelled because its settlement ended the run.")
+	if transaction_kind == "lender" and source_id == "the_crew":
+		candidate_service._apply_crew_loan_trust(definition)
+	candidate.scenario_publish_service_result(transaction_kind, source_id, applied_result)
 	if not run_state.publish_host_action_candidate(candidate):
 		return _service_error("The transaction could not publish its completed state.")
 	return _service_success(result)
@@ -1072,13 +1177,6 @@ func _money_transaction_cancelled(boundary_result: Dictionary, fallback: String)
 	var response := _service_error(str(errors[0]) if not errors.is_empty() else fallback)
 	response["error_code"] = "transaction_boundary_rejected"
 	return response
-
-
-func _advance_hook_clock(kind: String, definition: Dictionary) -> Dictionary:
-	var duration_minutes := maxi(0, int(definition.get("duration_minutes", 0))) if kind == "service" else 0
-	if duration_minutes > 0:
-		return run_state.advance_game_clock_minutes(duration_minutes)
-	return run_state.advance_environment_turns(1)
 
 
 # Converts an ItemEffect result plus offer data into a purchase result.
@@ -1165,11 +1263,11 @@ func _clear_active_purchase_use_deltas(deltas: Dictionary) -> void:
 
 
 # Builds a service/lender result without applying it.
-func hook_result(kind: String, hook_id: String) -> Dictionary:
+func hook_result(kind: String, hook_id: String, reserved_bankroll_credit: int = 0) -> Dictionary:
 	var definition := hook_definition(kind, hook_id)
 	if definition.is_empty():
 		return {}
-	var status := hook_run_status(kind, definition)
+	var status := hook_run_status(kind, definition, reserved_bankroll_credit)
 	if kind == "lender" and _lender_has_dynamic_contract(definition):
 		return _dynamic_lender_result(hook_id, definition, status)
 	if kind == "service" and _is_jazz_custom_service(hook_id):
@@ -1461,7 +1559,7 @@ func _runtime_item_definition(item_id: String) -> Dictionary:
 	return {}
 
 
-func hook_run_status(kind: String, definition: Dictionary) -> Dictionary:
+func hook_run_status(kind: String, definition: Dictionary, reserved_bankroll_credit: int = 0) -> Dictionary:
 	if run_state == null:
 		return {"available": true, "disabled_reason": "", "cost": int(definition.get("cost", 0))}
 	if kind == "service":
@@ -1473,11 +1571,11 @@ func hook_run_status(kind: String, definition: Dictionary) -> Dictionary:
 				"cost": int(definition.get("cost", 0)),
 			}
 		if _is_jazz_custom_service(service_id):
-			return _jazz_service_status(service_id, definition)
+			return _jazz_service_status(service_id, definition, reserved_bankroll_credit)
 		var service_definition := definition.duplicate(true)
 		if _jazz_comped_house_drink_applies(service_id):
 			service_definition["cost"] = 0
-		return run_state.service_hook_status(service_definition)
+		return run_state.service_hook_status(service_definition, reserved_bankroll_credit)
 	if kind == "lender":
 		var lender_status := run_state.lender_hook_status(definition)
 		return _dynamic_lender_status(definition, lender_status)
@@ -1916,7 +2014,7 @@ func _has_jazz_reward_item() -> bool:
 	return run_state.inventory.has(JAZZ_SAX_COIN_ITEM_ID) or run_state.inventory.has(JAZZ_CELLO_COIN_ITEM_ID) or run_state.inventory.has(JAZZ_DRUMMER_COIN_ITEM_ID) or run_state.inventory.has(JAZZ_DRUMMER_GLASSES_ITEM_ID)
 
 
-func _jazz_service_status(service_id: String, definition: Dictionary) -> Dictionary:
+func _jazz_service_status(service_id: String, definition: Dictionary, reserved_bankroll_credit: int = 0) -> Dictionary:
 	var cost := maxi(0, int(round(float(definition.get("cost", 0)) * run_state.challenge_service_cost_multiplier(definition))))
 	var status := {
 		"available": true,
@@ -1967,7 +2065,7 @@ func _jazz_service_status(service_id: String, definition: Dictionary) -> Diction
 		status["available"] = false
 		status["disabled_reason"] = "You already carry that musician's keepsake."
 		status["availability_class"] = RunState.AVAILABILITY_TRANSIENT_BLOCKED
-	elif int(status.get("cost", 0)) > run_state.bankroll:
+	elif int(status.get("cost", 0)) > run_state.bankroll + maxi(0, reserved_bankroll_credit):
 		status["available"] = false
 		status["disabled_reason"] = "Not enough bankroll for this round."
 		status["availability_class"] = RunState.AVAILABILITY_TRANSIENT_BLOCKED
@@ -2302,11 +2400,6 @@ func _service_success(result: Dictionary) -> Dictionary:
 		"result": result.duplicate(true),
 		KeysScript.MESSAGE: str(result.get(KeysScript.MESSAGE, "")),
 	})
-
-
-func _boundary_service_error(boundary_result: Dictionary, fallback: String) -> Dictionary:
-	var errors := JsonCoerceScript._copy_array(boundary_result.get("errors", []))
-	return _service_error(str(errors[0]) if not errors.is_empty() else fallback)
 
 
 func _service_error(message: String) -> Dictionary:

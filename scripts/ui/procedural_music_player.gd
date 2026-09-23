@@ -180,6 +180,8 @@ var _web_music_bed_cache: Dictionary = {}
 var _ambient_profile_cache: Dictionary = {}
 var _pcm_cache_budget_bytes := PCM_CACHE_DEFAULT_BUDGET_BYTES
 var _pcm_cache_entry_bytes: Dictionary = {}
+var _pcm_cache_entry_raw_bytes: Dictionary = {}
+var _pcm_cache_entry_encoded_bytes: Dictionary = {}
 var _pcm_cache_lru: Array[String] = []
 var _pcm_cache_eviction_count := 0
 var _current_cache_key: String = ""
@@ -224,6 +226,8 @@ var _authored_manifest_entries_loaded := false
 var _feature_stem_players: Dictionary = {}
 var _feature_stinger_players: Array = []
 var _feature_stem_cache: Dictionary = {}
+var _current_feature_cache_key: String = ""
+var _pending_feature_cache_key: String = ""
 var _current_feature_stem_set: Dictionary = {}
 var _current_feature_music_id: String = ""
 var _feature_mix_target: Dictionary = {}
@@ -342,9 +346,15 @@ func _exit_tree() -> void:
 	_ambient_primer_cache.clear()
 	_ambient_instant_cache.clear()
 	_web_music_bed_cache.clear()
+	_feature_stem_cache.clear()
 	_ambient_profile_cache.clear()
 	_pcm_cache_entry_bytes.clear()
+	_pcm_cache_entry_raw_bytes.clear()
+	_pcm_cache_entry_encoded_bytes.clear()
 	_pcm_cache_lru.clear()
+	WebAudioBridgeScript.set_shared_pcm_budget(_pcm_cache_budget_bytes, 0)
+	_current_feature_cache_key = ""
+	_pending_feature_cache_key = ""
 	_authored_manifest_cache.clear()
 	_authored_manifest_cache_order.clear()
 	_authored_manifest_entries_cache.clear()
@@ -381,13 +391,22 @@ func debug_soak_snapshot() -> Dictionary:
 
 
 func pcm_cache_policy_snapshot() -> Dictionary:
+	var shared_policy := WebAudioBridgeScript.shared_pcm_policy_snapshot()
 	return {
 		"budget_bytes": _pcm_cache_budget_bytes,
 		"bytes": _pcm_cache_total_bytes(),
+		"raw_bytes": _pcm_cache_entry_map_total(_pcm_cache_entry_raw_bytes),
+		"encoded_bytes": _pcm_cache_entry_map_total(_pcm_cache_entry_encoded_bytes),
 		"keys": _pcm_cache_lru.duplicate(),
 		"entry_bytes": _pcm_cache_entry_bytes.duplicate(true),
+		"entry_raw_bytes": _pcm_cache_entry_raw_bytes.duplicate(true),
+		"entry_encoded_bytes": _pcm_cache_entry_encoded_bytes.duplicate(true),
 		"protected_keys": _pcm_cache_protected_keys().keys(),
 		"eviction_count": _pcm_cache_eviction_count,
+		"web_decoded_bytes": int(shared_policy.get("web_decoded_bytes", 0)),
+		"combined_bytes": int(shared_policy.get("combined_pcm_bytes", _pcm_cache_total_bytes())),
+		"combined_budget_bytes": int(shared_policy.get("combined_pcm_budget_bytes", _pcm_cache_budget_bytes)),
+		"combined_within_budget": bool(shared_policy.get("combined_pcm_within_budget", false)),
 	}
 
 
@@ -402,12 +421,16 @@ func clear_run_scoped_caches() -> void:
 			keep[key] = true
 	if not _current_cache_key.is_empty() and not keep.has(_current_cache_key):
 		stop()
+	elif not _current_feature_cache_key.is_empty():
+		stop_feature_music()
+	_pending_feature_cache_key = ""
 	for key_value in _all_pcm_cache_keys():
 		var key := str(key_value)
 		if not keep.has(key):
 			_evict_pcm_cache_key(key)
 	_rebuild_pcm_cache_accounting()
 	WebAudioBridgeScript.clear_inactive_pcm()
+	_enforce_pcm_cache_budget()
 
 
 func debug_configure_pcm_cache_budget(byte_budget: int) -> void:
@@ -433,6 +456,8 @@ func _store_pcm_cache_entry(domain: String, cache_key: String, value: Dictionary
 			_ambient_instant_cache[cache_key] = value
 		"web":
 			_web_music_bed_cache[cache_key] = value
+		"feature":
+			_feature_stem_cache[cache_key] = value
 		_:
 			_ambient_stream_cache[cache_key] = value
 	_touch_pcm_cache_key(cache_key)
@@ -447,49 +472,61 @@ func _touch_pcm_cache_key(cache_key: String) -> void:
 
 func _recalculate_pcm_cache_key_bytes(cache_key: String) -> void:
 	var seen: Dictionary = {}
-	var total := 0
-	for cache in [_ambient_stream_cache, _ambient_primer_cache, _ambient_instant_cache, _web_music_bed_cache]:
+	var retained := {"raw_bytes": 0, "encoded_bytes": 0}
+	for cache in [_ambient_stream_cache, _ambient_primer_cache, _ambient_instant_cache, _web_music_bed_cache, _feature_stem_cache]:
 		if cache.has(cache_key):
-			total += _pcm_variant_bytes(cache.get(cache_key), seen)
+			_pcm_variant_retained_bytes(cache.get(cache_key), seen, retained)
+	var raw_bytes := int(retained.get("raw_bytes", 0))
+	var encoded_bytes := int(retained.get("encoded_bytes", 0))
+	var total := raw_bytes + encoded_bytes
 	if total > 0:
 		_pcm_cache_entry_bytes[cache_key] = total
+		_pcm_cache_entry_raw_bytes[cache_key] = raw_bytes
+		_pcm_cache_entry_encoded_bytes[cache_key] = encoded_bytes
 	else:
 		_pcm_cache_entry_bytes.erase(cache_key)
+		_pcm_cache_entry_raw_bytes.erase(cache_key)
+		_pcm_cache_entry_encoded_bytes.erase(cache_key)
 
 
-func _pcm_variant_bytes(value: Variant, seen: Dictionary) -> int:
+func _pcm_variant_retained_bytes(value: Variant, seen: Dictionary, retained: Dictionary) -> void:
 	if value is AudioStreamWAV:
 		var wav := value as AudioStreamWAV
 		var instance_id := wav.get_instance_id()
 		if seen.has(instance_id):
-			return 0
+			return
 		seen[instance_id] = true
-		return wav.data.size()
+		retained["raw_bytes"] = int(retained.get("raw_bytes", 0)) + wav.data.size()
+		var encoded := str(wav.get_meta(WebAudioBridgeScript.PCM_BASE64_META, ""))
+		if not encoded.is_empty():
+			retained["encoded_bytes"] = int(retained.get("encoded_bytes", 0)) + encoded.to_utf8_buffer().size()
+		return
 	if value is PackedByteArray:
-		return (value as PackedByteArray).size()
+		retained["raw_bytes"] = int(retained.get("raw_bytes", 0)) + (value as PackedByteArray).size()
+		return
 	if typeof(value) == TYPE_DICTIONARY:
-		var total := 0
 		for nested in (value as Dictionary).values():
-			total += _pcm_variant_bytes(nested, seen)
-		return total
+			_pcm_variant_retained_bytes(nested, seen, retained)
+		return
 	if typeof(value) == TYPE_ARRAY:
-		var total := 0
 		for nested in (value as Array):
-			total += _pcm_variant_bytes(nested, seen)
-		return total
-	return 0
+			_pcm_variant_retained_bytes(nested, seen, retained)
 
 
 func _pcm_cache_total_bytes() -> int:
+	return _pcm_cache_entry_map_total(_pcm_cache_entry_bytes)
+
+
+func _pcm_cache_entry_map_total(entries: Dictionary) -> int:
 	var total := 0
-	for value in _pcm_cache_entry_bytes.values():
+	for value in entries.values():
 		total += int(value)
 	return total
 
 
 func _pcm_cache_protected_keys() -> Dictionary:
 	var protected: Dictionary = {}
-	for key in [_current_cache_key, _current_web_music_bed_cache_key, _pending_cache_key, _transition_target_cache_key, _deferred_transition_cache_key, _thread_cache_key, _queued_generation_cache_key]:
+	for key in [_current_cache_key, _current_web_music_bed_cache_key, _current_feature_cache_key, _pending_feature_cache_key, _pending_cache_key, _transition_target_cache_key, _deferred_transition_cache_key, _thread_cache_key, _queued_generation_cache_key]:
 		if not str(key).is_empty():
 			protected[str(key)] = true
 	return protected
@@ -497,7 +534,9 @@ func _pcm_cache_protected_keys() -> Dictionary:
 
 func _enforce_pcm_cache_budget() -> void:
 	var protected := _pcm_cache_protected_keys()
-	while _pcm_cache_total_bytes() > _pcm_cache_budget_bytes:
+	var shared_policy := WebAudioBridgeScript.set_shared_pcm_budget(_pcm_cache_budget_bytes, _pcm_cache_total_bytes())
+	while _pcm_cache_total_bytes() > _pcm_cache_budget_bytes \
+			or int(shared_policy.get("combined_pcm_bytes", _pcm_cache_total_bytes())) > _pcm_cache_budget_bytes:
 		var victim := ""
 		for key in _pcm_cache_lru:
 			if not protected.has(key):
@@ -507,7 +546,10 @@ func _enforce_pcm_cache_budget() -> void:
 			break
 		_evict_pcm_cache_key(victim)
 		_pcm_cache_eviction_count += 1
-	if _pcm_cache_total_bytes() > _pcm_cache_budget_bytes:
+		shared_policy = WebAudioBridgeScript.set_shared_pcm_budget(_pcm_cache_budget_bytes, _pcm_cache_total_bytes())
+	shared_policy = WebAudioBridgeScript.set_shared_pcm_budget(_pcm_cache_budget_bytes, _pcm_cache_total_bytes())
+	if _pcm_cache_total_bytes() > _pcm_cache_budget_bytes \
+			or int(shared_policy.get("combined_pcm_bytes", _pcm_cache_total_bytes())) > _pcm_cache_budget_bytes:
 		# A single active composition may exceed the budget; it remains protected
 		# until playback moves, at which point the next insertion/clear evicts it.
 		return
@@ -518,14 +560,17 @@ func _evict_pcm_cache_key(cache_key: String) -> void:
 	_ambient_primer_cache.erase(cache_key)
 	_ambient_instant_cache.erase(cache_key)
 	_web_music_bed_cache.erase(cache_key)
+	_feature_stem_cache.erase(cache_key)
 	_ambient_profile_cache.erase(cache_key)
 	_pcm_cache_entry_bytes.erase(cache_key)
+	_pcm_cache_entry_raw_bytes.erase(cache_key)
+	_pcm_cache_entry_encoded_bytes.erase(cache_key)
 	_pcm_cache_lru.erase(cache_key)
 
 
 func _all_pcm_cache_keys() -> Array[String]:
 	var result: Array[String] = []
-	for cache in [_ambient_stream_cache, _ambient_primer_cache, _ambient_instant_cache, _web_music_bed_cache]:
+	for cache in [_ambient_stream_cache, _ambient_primer_cache, _ambient_instant_cache, _web_music_bed_cache, _feature_stem_cache]:
 		for key_value in cache.keys():
 			var key := str(key_value)
 			if not result.has(key):
@@ -535,6 +580,8 @@ func _all_pcm_cache_keys() -> Array[String]:
 
 func _rebuild_pcm_cache_accounting() -> void:
 	_pcm_cache_entry_bytes.clear()
+	_pcm_cache_entry_raw_bytes.clear()
+	_pcm_cache_entry_encoded_bytes.clear()
 	var keys := _all_pcm_cache_keys()
 	for key in keys:
 		_recalculate_pcm_cache_key_bytes(key)
@@ -727,6 +774,8 @@ func stop() -> void:
 	_current_stem_stage = ""
 	_current_feature_stem_set = {}
 	_current_feature_music_id = ""
+	_current_feature_cache_key = ""
+	_pending_feature_cache_key = ""
 	_feature_stinger_pending = []
 	_feature_stinger_history = []
 	_stinger_last_target_by_cue = {}
@@ -895,7 +944,9 @@ func update_feature_music_state(feature_state: Dictionary) -> void:
 			_current_feature_music_id = music_id
 			if audio_enabled and not _running_headless():
 				_ensure_feature_stem_players()
-				_play_feature_stem_set(_feature_stem_set_for_input(input), 0.0)
+				if not _play_feature_stem_set(_feature_stem_set_for_input(input), 0.0):
+					# A failed handoff must remain retryable on the next state update.
+					_current_feature_music_id = ""
 	else:
 		_current_feature_music_id = ""
 
@@ -903,6 +954,8 @@ func update_feature_music_state(feature_state: Dictionary) -> void:
 func stop_feature_music() -> void:
 	_current_feature_music_id = ""
 	_current_feature_stem_set = {}
+	_current_feature_cache_key = ""
+	_pending_feature_cache_key = ""
 	var retained_outcomes: Array = []
 	for pending_value in _feature_stinger_pending:
 		if typeof(pending_value) != TYPE_DICTIONARY:
@@ -914,6 +967,7 @@ func stop_feature_music() -> void:
 	_stinger_last_target_by_cue = {}
 	_stop_feature_stem_players()
 	_stop_feature_stinger_players()
+	_enforce_pcm_cache_budget()
 	if _music_choreography_recipe.is_empty():
 		_reset_feature_mix()
 	else:
@@ -4440,17 +4494,32 @@ func _feature_stem_set_for_input(input: Dictionary) -> Dictionary:
 		bpm = 96.0
 	var style := _feature_music_style(cue_id)
 	var palette_id := "%s_feature" % style
-	var cache_key := "feature:%d:%s:%s:%0.2f" % [AMBIENT_VERSION, cue_id, str(base_profile.get("palette_id", "")), bpm]
-	if _feature_stem_cache.has(cache_key):
-		return (_feature_stem_cache.get(cache_key, {}) as Dictionary).duplicate(true)
 	# Feature outcomes are known before the reels start. Baking their multi-stem
 	# PCM here used to block that first jackpot/bonus spin for several seconds.
-	# Load the deterministic delivery stems instead; procedural synthesis remains
-	# only as a development fallback when an asset is missing.
+	# Delivery PCM is physically identical for every cue/palette/BPM request of a
+	# style, so retain one shared pack per style and overlay contextual metadata.
+	var delivery_cache_key := "feature_delivery:%d:%s" % [AMBIENT_VERSION, style]
+	if _feature_stem_cache.has(delivery_cache_key):
+		_pending_feature_cache_key = delivery_cache_key
+		_touch_pcm_cache_key(delivery_cache_key)
+		return _feature_contract_for_context(
+			_feature_stem_cache.get(delivery_cache_key, {}) as Dictionary,
+			cue_id,
+			palette_id
+		)
 	var delivered := _delivered_feature_stem_set(style, cue_id, palette_id)
 	if not delivered.is_empty():
-		_feature_stem_cache[cache_key] = delivered.duplicate(true)
-		return delivered
+		delivered["pcm_cache_key"] = delivery_cache_key
+		_pending_feature_cache_key = delivery_cache_key
+		_store_pcm_cache_entry("feature", delivery_cache_key, delivered.duplicate(true))
+		return _feature_contract_for_context(delivered, cue_id, palette_id)
+	# Procedural synthesis remains a development fallback when a delivery asset
+	# is missing. Unlike delivered packs, its BPM/root alter the PCM identity.
+	var cache_key := "feature_fallback:%d:%s:%s:%0.2f" % [AMBIENT_VERSION, style, str(base_profile.get("palette_id", "")), bpm]
+	if _feature_stem_cache.has(cache_key):
+		_pending_feature_cache_key = cache_key
+		_touch_pcm_cache_key(cache_key)
+		return (_feature_stem_cache.get(cache_key, {}) as Dictionary).duplicate(true)
 	var bars := 2
 	var step_period := _step_period_from_bpm(bpm)
 	var frames := maxi(1, int(step_period * float(STEPS_PER_BAR * bars) * float(SAMPLE_RATE)))
@@ -4467,8 +4536,20 @@ func _feature_stem_set_for_input(input: Dictionary) -> Dictionary:
 		"palette_id": palette_id,
 		"root_midi": root_midi,
 	}
-	_feature_stem_cache[cache_key] = contract.duplicate(true)
+	contract["pcm_cache_key"] = cache_key
+	_pending_feature_cache_key = cache_key
+	_store_pcm_cache_entry("feature", cache_key, contract.duplicate(true))
 	return contract
+
+
+func _feature_contract_for_context(cached: Dictionary, cue_id: String, palette_id: String) -> Dictionary:
+	var result := cached.duplicate(true)
+	result["palette_id"] = palette_id
+	result["delivery_cue_id"] = cue_id
+	var profile: Dictionary = (result.get("profile", {}) as Dictionary).duplicate(true)
+	profile["palette_id"] = palette_id
+	result["profile"] = profile
+	return result
 
 
 func _delivered_feature_stem_set(style: String, cue_id: String, palette_id: String) -> Dictionary:
@@ -4588,13 +4669,16 @@ func _load_feature_stem_pack(path: String) -> Dictionary:
 	return stems
 
 
-func _play_feature_stem_set(stem_set: Dictionary, resume_position: float) -> void:
+func _play_feature_stem_set(stem_set: Dictionary, resume_position: float) -> bool:
 	if _feature_stem_players.is_empty() or not _stem_set_contract_valid(stem_set):
-		return
+		_pending_feature_cache_key = ""
+		_enforce_pcm_cache_budget()
+		return false
 	var stems: Dictionary = stem_set.get("stems", {}) as Dictionary
 	var safe_position := maxf(0.0, resume_position)
 	var role_volumes := _feature_role_volume_db_map(_feature_mix_live if not _feature_mix_live.is_empty() else _neutral_feature_mix_vector())
 	var web_audio_playback := WebAudioBridgeScript.available()
+	var native_handoff_count := 0
 	for role_value in MUSIC_STEM_PLAYBACK_ROLES:
 		var role := str(role_value)
 		var player: AudioStreamPlayer = _feature_stem_players.get(role, null)
@@ -4608,6 +4692,20 @@ func _play_feature_stem_set(stem_set: Dictionary, resume_position: float) -> voi
 			continue
 		player.stream = stream
 		player.volume_db = float(role_volumes.get(role, MUSIC_MIN_VOLUME_DB))
+		native_handoff_count += 1
+	var web_played := false
+	if web_audio_playback and _web_audio_stem_set_bridge_allowed(stem_set, "feature", AMBIENT_STAGE_FULL):
+		web_played = WebAudioBridgeScript.play_music_stems(
+			"feature",
+			_web_stem_set_key(stem_set, AMBIENT_STAGE_FULL, "feature"),
+			stem_set,
+			role_volumes,
+			safe_position
+		)
+	if (web_audio_playback and not web_played) or (not web_audio_playback and native_handoff_count <= 0):
+		_pending_feature_cache_key = ""
+		_enforce_pcm_cache_budget()
+		return false
 	if not web_audio_playback:
 		for role_value in MUSIC_STEM_PLAYBACK_ROLES:
 			var role := str(role_value)
@@ -4616,10 +4714,16 @@ func _play_feature_stem_set(stem_set: Dictionary, resume_position: float) -> voi
 				continue
 			_play_audio_player(player, safe_position, "feature_stems")
 	_current_feature_stem_set = stem_set.duplicate(true)
+	_current_feature_cache_key = str(stem_set.get("pcm_cache_key", ""))
+	_pending_feature_cache_key = ""
+	if not _current_feature_cache_key.is_empty():
+		_touch_pcm_cache_key(_current_feature_cache_key)
+	_enforce_pcm_cache_budget()
 	_stop_music_send_players(_feature_send_players, true)
-	if _web_audio_stem_set_bridge_allowed(stem_set, "feature", AMBIENT_STAGE_FULL):
-		WebAudioBridgeScript.play_music_stems("feature", _web_stem_set_key(stem_set, AMBIENT_STAGE_FULL, "feature"), stem_set, role_volumes, safe_position)
 	_apply_feature_mix_vector(_feature_mix_live if not _feature_mix_live.is_empty() else _neutral_feature_mix_vector(), true)
+	if web_audio_playback:
+		return web_played
+	return native_handoff_count > 0
 
 
 func _stop_feature_stem_players() -> void:
@@ -5132,6 +5236,10 @@ func _web_audio_stem_set_pcm_bytes(stem_set: Dictionary) -> int:
 func _web_stem_set_key(stem_set: Dictionary, stage: String, group_id: String) -> String:
 	var profile: Dictionary = stem_set.get("profile", {}) as Dictionary
 	var identity := str(stem_set.get("track_id", profile.get("palette_id", stem_set.get("palette_id", group_id)))).strip_edges()
+	# Feature context labels change for every outcome, but the decoded PCM is the
+	# shared physical delivery pack. Keep the Web key on that physical identity.
+	if group_id == "feature" and not str(stem_set.get("pcm_cache_key", "")).is_empty():
+		identity = str(stem_set.get("pcm_cache_key", ""))
 	if identity.is_empty():
 		identity = group_id
 	return "%s:%s:%s:%s:%d:%d" % [

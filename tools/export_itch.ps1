@@ -18,6 +18,7 @@ param(
 $ErrorActionPreference = "Stop"
 $root = [IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))
 . (Join-Path $PSScriptRoot "export_tree_identity.ps1")
+. (Join-Path $PSScriptRoot "export_itch_helpers.ps1")
 
 function Get-Sha256([string]$Path) {
     return (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant()
@@ -66,6 +67,7 @@ function Get-SourceIdentity {
     $dirty = -not [string]::IsNullOrWhiteSpace($status)
     $dirtyDigest = Get-StringSha256 $dirtyCanonical
     $short = $commit.Substring(0, 12)
+    $dirtyShort = $dirtyDigest.Substring(0, 12)
     $buildVersion = "0.6.0-dev+$short"
     return [ordered]@{
         source_commit = $commit
@@ -73,8 +75,9 @@ function Get-SourceIdentity {
         source_short_commit = $short
         source_dirty = $dirty
         dirty_state_digest = $dirtyDigest
+        source_dirty_short = $dirtyShort
         build_version = $buildVersion
-        candidate_key = "$($buildVersion)_$($tree.Substring(0,12))"
+        candidate_key = "$($buildVersion)_$($tree.Substring(0,12))_$dirtyShort"
     }
 }
 
@@ -116,13 +119,6 @@ function Assert-NativeSolverExport([string]$Directory, [string]$ExportTarget) {
     return $native[0]
 }
 
-function Get-NativeSourceLibrary([string]$ExportTarget) {
-    $extension = if ($ExportTarget -eq "web") { ".wasm" } else { ".dll" }
-    $native = @(Get-ChildItem -LiteralPath (Join-Path $root "addons/coin_pusher_native/bin") -File -Recurse -Force | Where-Object { $_.Name -like "coin_pusher_native*$extension" -and $_.Name -like "*.nothreads$extension" })
-    if ($native.Count -ne 1) { throw "Expected one built $ExportTarget native side library before export; found $($native.Count)." }
-    return $native[0]
-}
-
 function Invoke-WebExportWithLockedTemplate([string]$GodotPath, [string]$ExportFlag, [string]$PresetName, [string]$OutputPath) {
     $lock = Get-Content -LiteralPath (Join-Path $root "native/coin_pusher/toolchain.lock.json") -Raw | ConvertFrom-Json
     $templatePath = Join-Path $env:APPDATA "Godot/export_templates/$(([string]$lock.godot.version).Replace('-', '.'))/$([string]$lock.web.template)"
@@ -134,8 +130,7 @@ function Invoke-WebExportWithLockedTemplate([string]$GodotPath, [string]$ExportF
     $patched = [Text.RegularExpressions.Regex]::Replace($presetText, $pattern, ('$1"' + $templatePath.Replace('\','/') + '"'), 1)
     try {
         [IO.File]::WriteAllText($presetPath, $patched, [Text.UTF8Encoding]::new($false))
-        & $GodotPath --headless --path $root $ExportFlag $PresetName $OutputPath
-        return $LASTEXITCODE
+        return [int](Invoke-TypedConsoleProcess -FilePath $GodotPath -ArgumentList @("--headless", "--path", $root, $ExportFlag, $PresetName, $OutputPath))
     }
     finally { [IO.File]::WriteAllBytes($presetPath, $originalBytes) }
 }
@@ -180,6 +175,7 @@ function Write-CandidateManifest([string]$CandidateRoot, $Identity, [hashtable]$
         source_tree = $Identity.source_tree
         source_dirty = $Identity.source_dirty
         dirty_state_digest = $Identity.dirty_state_digest
+        candidate_key = $Identity.candidate_key
         export_presets_sha256 = Get-Sha256 (Join-Path $root "export_presets.cfg")
         platforms = $Platforms
     }
@@ -228,7 +224,7 @@ function Move-ToQuarantine([string]$Path, [string]$QuarantineRoot, [Collections.
     $destination = Join-Path $QuarantineRoot $relative
     New-Item -ItemType Directory -Force -Path (Split-Path -Parent $destination) | Out-Null
     $files = if (Test-Path -LiteralPath $full -PathType Container) { @(Get-ChildItem -LiteralPath $full -File -Recurse -Force) } else { @(Get-Item -LiteralPath $full -Force) }
-    $Rows.Add([ordered]@{ source = "builds/$($relative.Replace('\','/'))"; destination = $destination.Substring($root.Length).TrimStart([char[]]@('\','/')).Replace('\','/'); file_count = $files.Count; bytes = [int64](($files | Measure-Object Length -Sum).Sum) })
+    [void]$Rows.Add([ordered]@{ source = "builds/$($relative.Replace('\','/'))"; destination = $destination.Substring($root.Length).TrimStart([char[]]@('\','/')).Replace('\','/'); file_count = $files.Count; bytes = [int64](($files | Measure-Object Length -Sum).Sum) })
     Move-Item -LiteralPath $full -Destination $destination
 }
 
@@ -269,7 +265,7 @@ function Assert-UploadDirectoryOwned([string]$Directory, [string[]]$OwnedNames) 
 }
 
 if ($QuarantineLegacyOnly) {
-    $moved = Move-SupersededBuildArtifacts
+    $moved = @(Move-SupersededBuildArtifacts)
     Write-Host "BUILD QUARANTINE PASS moved=$($moved.Count)"
     return
 }
@@ -284,6 +280,7 @@ $godot = Resolve-Godot
 $engineHash = Get-Sha256 $godot
 $presetHash = Get-Sha256 (Join-Path $root "export_presets.cfg")
 $candidateRoot = Join-Path $root "builds/staging/$($identity.candidate_key)"
+$candidateWorkRoot = Join-Path $root "builds/staging/.work/$($identity.candidate_key)"
 New-Item -ItemType Directory -Force -Path $candidateRoot | Out-Null
 $targets = if ($Target -eq "all") { @("windows", "web") } else { @($Target) }
 $platforms = @{}
@@ -298,16 +295,76 @@ foreach ($platform in $targets) {
     if ((Get-ExportPresetCustomFeatures $preset) -notcontains "distribution_build") { throw "Export preset '$preset' must include distribution_build." }
     if ($platform -eq "web" -and (Get-ExportPresetOption $preset "variant/extensions_support") -cne "true") { throw "Web export must enable extensions_support." }
     $stage = Join-Path $candidateRoot $platform
-    $exeName = "BeatTheHouse-$($identity.build_version)-windows-$($identity.source_short_commit).exe"
+    $auditPath = Join-Path $candidateRoot "audits/$($platform)_pck_manifest.json"
+    $stageRelative = $stage.Substring($root.Length).TrimStart([char[]]@('\','/')).Replace('\','/')
+    $auditRelative = $auditPath.Substring($root.Length).TrimStart([char[]]@('\','/')).Replace('\','/')
+    $registeredPlatform = if ($platforms.ContainsKey($platform)) { $platforms[$platform] } else { $null }
+    if ($null -ne $registeredPlatform) {
+        if ([string]$registeredPlatform.staging_root -cne $stageRelative -or [string]$registeredPlatform.pck_audit -cne $auditRelative) {
+            throw "Registered $platform candidate paths do not match the immutable candidate root."
+        }
+        $registeredAttempt = Initialize-CandidatePlatformAttempt `
+            -CandidateRoot $candidateRoot `
+            -WorkRoot (Join-Path $candidateWorkRoot $platform) `
+            -Platform $platform `
+            -FinalAuditPath $auditPath `
+            -RegisteredPlatform $registeredPlatform
+        $registeredIdentity = Get-ExportTreeIdentityFromDirectory $registeredAttempt.final_stage
+        if ([string]$registeredIdentity.aggregate_sha256 -cne [string]$registeredPlatform.export_identity_sha256) {
+            throw "$platform staging tree changed after candidate registration."
+        }
+        Write-Host "Reusing registered immutable $platform candidate: $($registeredAttempt.final_stage)"
+        continue
+    }
+
+    $attempt = Initialize-CandidatePlatformAttempt `
+        -CandidateRoot $candidateRoot `
+        -WorkRoot (Join-Path $candidateWorkRoot $platform) `
+        -Platform $platform `
+        -FinalAuditPath $auditPath `
+        -UseExistingStage:$SkipExport
+    $stage = [string]$attempt.attempt_stage
+    $exeName = "BeatTheHouse-$($identity.build_version)-windows-$($identity.source_short_commit)-$($identity.source_dirty_short).exe"
     $outFile = if ($platform -eq "web") { Join-Path $stage "index.html" } else { Join-Path $stage $exeName }
+    $pipelineState = @{}
+    $auditAction = {
+        if (-not (Test-Path -LiteralPath $outFile -PathType Leaf)) {
+            if ($SkipExport) { throw "-SkipExport requires candidate output at $outFile" }
+            throw "Export output is missing: $outFile"
+        }
+        if (-not $SkipExport) {
+            [IO.File]::WriteAllText((Join-Path $stage "build_manifest.json"), ($buildManifest | ConvertTo-Json -Depth 12), [Text.UTF8Encoding]::new($false))
+        }
+        Assert-CleanDistributionOutput $stage
+        $pipelineState.native_output = Assert-NativeSolverExport $stage $platform
+        $pckPath = if ($platform -eq "web") { Join-Path $stage "index.pck" } else { $outFile }
+        $pipelineState.audit_path = [string]$attempt.attempt_audit
+        Invoke-PckAudit $pckPath $pipelineState.audit_path
+    }
+    $custodyAction = {
+        $treeIdentity = Get-ExportTreeIdentityFromDirectory $stage
+        $pipelineState.platform_record = [ordered]@{
+            platform = $platform
+            staging_root = $stageRelative
+            export_identity_sha256 = [string]$treeIdentity.aggregate_sha256
+            native_library_sha256 = Get-Sha256 $pipelineState.native_output.FullName
+            pck_audit = $auditRelative
+            files = Get-RelativeFiles $stage
+        }
+    }
+    $registrationAction = {
+        Complete-CandidatePlatformAttempt -Attempt $attempt | Out-Null
+        $platforms[$platform] = $pipelineState.platform_record
+        Write-CandidateManifest $candidateRoot $identity $platforms | Out-Null
+    }
+    $downstreamComplete = $false
     if (-not $SkipExport) {
-        if ((Test-Path -LiteralPath $stage) -and @(Get-ChildItem -LiteralPath $stage -Force).Count -gt 0) { throw "Immutable staging directory already contains files: $stage" }
-        New-Item -ItemType Directory -Force -Path $stage | Out-Null
         $nativePlatform = if ($platform -eq "web") { "Web" } else { "Windows" }
         $nativeTarget = if ($Debug) { "template_debug" } else { "template_release" }
+        $nativeArchitecture = if ($platform -eq "web") { "wasm32" } else { "x86_64" }
         & (Join-Path $PSScriptRoot "build_native_solver.ps1") -Platform $nativePlatform -Target $nativeTarget -GodotPath $godot
         if ($LASTEXITCODE -ne 0) { throw "Native Coin Pusher solver build/preflight failed." }
-        $nativeSource = Get-NativeSourceLibrary $platform
+        $nativeSource = Get-NativeSourceLibrary -Directory (Join-Path $root "addons/coin_pusher_native/bin") -Platform $platform -Target $nativeTarget -Architecture $nativeArchitecture -Threading "nothreads"
         $buildManifest = [ordered]@{
             schema = "beat_the_house.build_manifest/v1"
             build_version = $identity.build_version
@@ -323,32 +380,26 @@ foreach ($platform in $targets) {
             native_library_sha256 = Get-Sha256 $nativeSource.FullName
         }
         $flag = if ($Debug) { "--export-debug" } else { "--export-release" }
-        Invoke-WithEmbeddedManifest $buildManifest {
-            if ($platform -eq "web" -and -not $Debug) { $exitCode = Invoke-WebExportWithLockedTemplate $godot $flag $preset $outFile }
-            else { & $godot --headless --path $root $flag $preset $outFile; $exitCode = $LASTEXITCODE }
-            if ($exitCode -ne 0) { throw "Godot $platform export failed with exit $exitCode." }
+        if ($platform -eq "web" -and -not $Debug) {
+            Invoke-WebExportPipeline `
+                -ExportAction { Invoke-WithEmbeddedManifest $buildManifest { Invoke-WebExportWithLockedTemplate $godot $flag $preset $outFile } } `
+                -AuditAction $auditAction `
+                -CustodyAction $custodyAction `
+                -RegistrationAction $registrationAction
+            $downstreamComplete = $true
         }
-        if (-not (Test-Path -LiteralPath $outFile -PathType Leaf)) { throw "Export output is missing: $outFile" }
-        [IO.File]::WriteAllText((Join-Path $stage "build_manifest.json"), ($buildManifest | ConvertTo-Json -Depth 12), [Text.UTF8Encoding]::new($false))
+        else {
+            Invoke-WithEmbeddedManifest $buildManifest {
+                & $godot --headless --path $root $flag $preset $outFile
+                if ($LASTEXITCODE -ne 0) { throw "Godot $platform export failed with exit $LASTEXITCODE." }
+            }
+        }
     }
-    elseif (-not (Test-Path -LiteralPath $outFile -PathType Leaf)) { throw "-SkipExport requires candidate output at $outFile" }
-    Assert-CleanDistributionOutput $stage
-    $nativeOutput = Assert-NativeSolverExport $stage $platform
-    $auditDir = Join-Path $candidateRoot "audits"
-    New-Item -ItemType Directory -Force -Path $auditDir | Out-Null
-    $pckPath = if ($platform -eq "web") { Join-Path $stage "index.pck" } else { $outFile }
-    $auditPath = Join-Path $auditDir "$($platform)_pck_manifest.json"
-    Invoke-PckAudit $pckPath $auditPath
-    $treeIdentity = Get-ExportTreeIdentityFromDirectory $stage
-    $platforms[$platform] = [ordered]@{
-        platform = $platform
-        staging_root = $stage.Substring($root.Length).TrimStart([char[]]@('\','/')).Replace('\','/')
-        export_identity_sha256 = [string]$treeIdentity.aggregate_sha256
-        native_library_sha256 = Get-Sha256 $nativeOutput.FullName
-        pck_audit = $auditPath.Substring($root.Length).TrimStart([char[]]@('\','/')).Replace('\','/')
-        files = Get-RelativeFiles $stage
+    if (-not $downstreamComplete) {
+        & $auditAction
+        & $custodyAction
+        & $registrationAction
     }
-    Write-CandidateManifest $candidateRoot $identity $platforms | Out-Null
 }
 
 if ($NoPackage) {
@@ -366,10 +417,10 @@ foreach ($required in @("windows", "web")) {
 
 $distDir = Join-Path $root "builds/itch"
 New-Item -ItemType Directory -Force -Path $distDir | Out-Null
-$manifestName = "BeatTheHouse-$($identity.build_version)-$($identity.source_short_commit).manifest.json"
+$manifestName = "BeatTheHouse-$($identity.build_version)-$($identity.source_short_commit)-$($identity.source_dirty_short).manifest.json"
 $archiveNames = @(
-    "BeatTheHouse-$($identity.build_version)-windows-$($identity.source_short_commit).zip",
-    "BeatTheHouse-$($identity.build_version)-web-$($identity.source_short_commit).zip"
+    "BeatTheHouse-$($identity.build_version)-windows-$($identity.source_short_commit)-$($identity.source_dirty_short).zip",
+    "BeatTheHouse-$($identity.build_version)-web-$($identity.source_short_commit)-$($identity.source_dirty_short).zip"
 )
 $ownedNames = @($manifestName) + $archiveNames
 foreach ($ownedName in $ownedNames) {

@@ -269,6 +269,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var total_wager := _total_wager(bets)
 	var inside_total := _wager_total_for_family(bets, "inside")
 	var outside_total := _wager_total_for_family(bets, "outside")
+	var wager_currency := GameModule.presentation_currency_for_game(run_state, get_id(), environment)
 	var last_result_source := _last_result_source(table)
 	var last_result := _surface_last_result(last_result_source)
 	var now_msec := _surface_time_msec_for_result(ui_state, last_result_source)
@@ -330,7 +331,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_realtime_state_refresh": roulette_motion_active,
 		"surface_time_msec": now_msec,
 		"surface_state_labels": [
-			{"label": "Wager", "value": "$%d" % total_wager},
+			{"label": "Wager", "value": PlayerTextScript.format_currency_amount(wager_currency, total_wager)},
 			{"label": "Wheel", "value": "00" if int(rules.get("zero_count", 2)) == 2 else "0"},
 		],
 		"surface_animation_channels": [
@@ -354,6 +355,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		],
 		"surface_action_blocks": _surface_action_blocks(roulette_wheel_locked),
 		"phase": "barred" if barred else "spinning" if spin_active else "payout" if payout_active or result_reveal_active else "betting",
+		"wager_currency": wager_currency,
 		"ritual_contract": "game_ritual/1",
 		"ritual_id": "roulette.table.v1",
 		"ritual_phase": ritual_phase,
@@ -3019,6 +3021,10 @@ func _roulette_patron_layout(patrons: Array) -> Array:
 	return result
 
 
+func _roulette_surface_amount(surface_state: Dictionary, amount: int) -> String:
+	return PlayerTextScript.format_currency_amount(str(surface_state.get("wager_currency", "cash")), amount, true)
+
+
 func _draw_focused_patron_panel(surface, surface_state: Dictionary, patrons: Array, focused_index: int) -> void:
 	if focused_index < 0 or focused_index >= patrons.size():
 		return
@@ -3034,7 +3040,7 @@ func _draw_focused_patron_panel(surface, surface_state: Dictionary, patrons: Arr
 	_draw_table_button(surface, Rect2(rect.position.x + 84, rect.position.y + 10, 38, 20), "WITH", action, focused_index, C_TEAL, true)
 	_draw_table_button(surface, Rect2(rect.position.x + 128, rect.position.y + 10, 38, 20), "FADE", action, focused_index + 100, C_PINK, true)
 	var wager := _dict_ref(patron.get("visible_bet", {}))
-	var wager_text := "$%d %s" % [int(wager.get("stake", 0)), str(wager.get("label", "bet"))]
+	var wager_text := "%s %s" % [_roulette_surface_amount(surface_state, int(wager.get("stake", 0))), str(wager.get("label", "bet"))]
 	surface.surface_label(wager_text.left(22), rect.position + Vector2(84, 45), 8, C_YELLOW)
 
 
@@ -3245,7 +3251,7 @@ func _draw_chip_rack(surface, surface_state: Dictionary) -> void:
 	surface.draw_rect(rack, Color("#120b14"))
 	surface.draw_rect(rack, Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.28), false, 1)
 	surface.surface_label("CHIP RAIL", rack.position + Vector2(10, 14), 10, C_SOFT)
-	surface.surface_label("BET $%d" % int(surface_state.get("total_wager_cost", 0)), rack.position + Vector2(112, 14), 11, C_YELLOW)
+	surface.surface_label("BET %s" % _roulette_surface_amount(surface_state, int(surface_state.get("total_wager_cost", 0))), rack.position + Vector2(112, 14), 11, C_YELLOW)
 	var chips := _array_ref(surface_state.get("chip_denominations", []))
 	for i in range(chips.size()):
 		var center := Vector2(rack.position.x + 32 + float(i) * 40.0, rack.position.y + 44)
@@ -3291,7 +3297,7 @@ func _draw_table_actions(surface, surface_state: Dictionary) -> void:
 	if read_active:
 		_draw_wheel_read_meter(surface, surface_state, Rect2(panel.position.x + 188, panel.position.y + 58, 150, 12))
 	else:
-		surface.surface_label("Inside $%d  Outside $%d" % [int(surface_state.get("inside_wager_total", 0)), int(surface_state.get("outside_wager_total", 0))], panel.position + Vector2(188, 69), 8, C_SOFT)
+		surface.surface_label("Inside %s  Outside %s" % [_roulette_surface_amount(surface_state, int(surface_state.get("inside_wager_total", 0))), _roulette_surface_amount(surface_state, int(surface_state.get("outside_wager_total", 0)))], panel.position + Vector2(188, 69), 8, C_SOFT)
 
 
 func _draw_wheel_read_meter(surface, state: Dictionary, rect: Rect2) -> void:
@@ -4381,10 +4387,10 @@ func _nudge_wheel_heat(table: Dictionary, run_state: RunState, environment: Dict
 
 
 func _roulette_room_info(surface_state: Dictionary) -> String:
-	return "%s | inside $%d | outside $%d" % [
+	return "%s | inside %s | outside %s" % [
 		_physics_summary_for_surface(surface_state),
-		int(surface_state.get("inside_wager_total", 0)),
-		int(surface_state.get("outside_wager_total", 0)),
+		_roulette_surface_amount(surface_state, int(surface_state.get("inside_wager_total", 0))),
+		_roulette_surface_amount(surface_state, int(surface_state.get("outside_wager_total", 0))),
 	]
 
 

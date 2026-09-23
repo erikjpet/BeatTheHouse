@@ -1,6 +1,7 @@
 $ErrorActionPreference = "Stop"
-$root = [IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))
-. (Join-Path $PSScriptRoot "perf06_binding_preflight_contract.ps1")
+. (Join-Path $PSScriptRoot "repository_root.ps1")
+$root = Resolve-BthRepositoryRoot -StartPath $PSScriptRoot
+. (Join-Path $root "tools/archive/perf06/perf06_binding_preflight_contract.ps1")
 
 function Assert-Rejected {
     param(

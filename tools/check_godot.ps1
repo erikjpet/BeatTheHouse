@@ -401,6 +401,11 @@ $script:PostLandIdentity = $null
 $script:PostLandEndVerified = $false
 $FoundationSuiteBudgetMultiplier = 1.5
 $FoundationSuiteStageBaselinesSec = @{
+    # Postfix06_2 live-tree qualification measurements. These stages previously
+    # bypassed Get-StageTimeout with literal ceilings below their observed wall
+    # times, so Full could false-fail before reporting the underlying result.
+    "validate_project" = 162.100
+    "standalone_contract" = 221.000
     "foundation_all" = 153.768
     "foundation_systems" = 29.141
     # Expanded GC05.2 coverage and same-host Stage 1 control: .tmp/gc05_2_ui_baseline_evidence.md
@@ -903,7 +908,7 @@ function Invoke-StandaloneContracts {
             $env:BTH_META_COLLECTION_PATH = Join-Path $stageUserRoot "meta_collection.json"
             $env:BTH_USER_SETTINGS_PATH = Join-Path $stageUserRoot "settings.json"
             $env:BTH_DEVELOPER_PLACEMENT_PATH = Join-Path $stageUserRoot "developer_placements.json"
-            Invoke-GodotScript -Name $stageName -ScriptPath $resourcePath -StageTimeoutSec 180
+            Invoke-GodotScript -Name $stageName -ScriptPath $resourcePath -StageTimeoutSec (Get-StageTimeout "standalone_contract")
         }
     }
     finally {
@@ -1371,6 +1376,7 @@ function Invoke-Perf06ContractChecks {
         coin_pusher_action = "perf06_coin_pusher_action_diagnostic_contract.ps1"
         web_complementary_startup = "perf06_web_complementary_startup_contract.ps1"
         web_run_ui_deferral = "perf06_web_run_ui_deferral_contract.ps1"
+        feature_pcm_runtime = "postfix06_2_feature_pcm_runtime_contract_test.ps1"
         coin_pusher_backglass = "coin_pusher_backglass_readability_contract.ps1"
     }
     foreach ($contract in $contracts.GetEnumerator()) {
@@ -1409,7 +1415,7 @@ if ($PostLand -and -not (Add-PostLandIdentityStage -Phase "start")) {
     Write-TestSummary
     exit 1
 }
-Invoke-ProcessStage -Name "validate_project" -FilePath $powerShellExe -Arguments @("-ExecutionPolicy", "Bypass", "-File", (Join-Path $PSScriptRoot "validate_project.ps1"), "-Quiet") -StageTimeoutSec 120 | Out-Null
+Invoke-ProcessStage -Name "validate_project" -FilePath $powerShellExe -Arguments @("-ExecutionPolicy", "Bypass", "-File", (Join-Path $PSScriptRoot "validate_project.ps1"), "-Quiet") -StageTimeoutSec (Get-StageTimeout "validate_project") | Out-Null
 
 if (-not $script:Godot) {
     if ($RequireGodot) {
@@ -1444,7 +1450,7 @@ if (-not [string]::IsNullOrWhiteSpace($foundationSuiteKey)) {
         Invoke-GodotScript -Name "inventory_spatial_main_integration" -ScriptPath "res://scripts/tests/inventory_spatial_main_integration_check.gd" -StageTimeoutSec 180
         Invoke-GodotScript -Name "ui05_design_system" -ScriptPath "res://scripts/tests/ui05_design_system_check.gd" -StageTimeoutSec 120
     }
-    elseif ($foundationSuiteKey -eq "systems" -or $foundationSuiteKey -eq "games" -or $foundationSuiteKey -eq "contracts") {
+    elseif ($foundationSuiteKey -eq "systems" -or $foundationSuiteKey -eq "contracts") {
         if ($foundationSuiteKey -eq "contracts") {
             Invoke-StandaloneContracts
         }
@@ -1484,7 +1490,7 @@ switch ($suiteKey) {
     }
     "contract" {
         Invoke-StandaloneContracts
-        Invoke-FoundationSuite -FoundationSuite "contracts" -StageTimeoutSec 360
+        Invoke-FoundationSystemsSharded -FoundationSuite "contracts" -StageTimeoutSec (Get-StageTimeout "foundation_contracts") | Out-Null
         Invoke-GodotScript -Name "ui_scene_compile" -ScriptPath (Get-UiSceneSplitRunnerPath) -StageTimeoutSec 240
         Invoke-GodotScript -Name "game_library_launchers" -ScriptPath "res://scripts/tests/ui_scene/check_game_library_launchers.gd" -StageTimeoutSec 180
         Invoke-GodotScript -Name "tutorial_guardrail_stress" -ScriptPath "res://scripts/tests/tutorial_guardrail_recovery_stress_check.gd" -StageTimeoutSec 180

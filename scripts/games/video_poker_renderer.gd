@@ -440,8 +440,11 @@ func _draw_controls(surface, state: Dictionary, palette: Dictionary) -> void:
 	var meters := Rect2(704, y, 212, 40)
 	surface.draw_rect(meters, Color("#02050b"))
 	surface.draw_rect(meters, trim.darkened(0.25), false, 2)
-	surface.surface_label("CASH $%d    WIN $%d" % [int(state.get("bankroll", 0)), int(state.get("win_credits", 0))], Vector2(meters.position.x + 8, meters.position.y + 15), 9, C_YELLOW)
-	surface.surface_label("BET $%d (%d COIN/HAND)" % [wager, coins], Vector2(meters.position.x + 8, meters.position.y + 31), 9, C_CYAN)
+	var account_balance_text := str(state.get("account_balance_text", "CASH $%d" % int(state.get("bankroll", 0))))
+	var win_amount_text := str(state.get("win_amount_text", "$%d" % int(state.get("win_credits", 0))))
+	var bet_amount_text := str(state.get("bet_amount_text", "$%d" % wager))
+	surface.surface_label("%s    WIN %s" % [account_balance_text, win_amount_text], Vector2(meters.position.x + 8, meters.position.y + 15), 9, C_YELLOW)
+	surface.surface_label("BET %s (%d COIN/HAND)" % [bet_amount_text, coins], Vector2(meters.position.x + 8, meters.position.y + 31), 9, C_CYAN)
 
 
 func _button(surface, rect: Rect2, label: String, action: String, index: int, accent: Color, enabled: bool) -> void:

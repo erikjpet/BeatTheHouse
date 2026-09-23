@@ -78,9 +78,6 @@ func _init() -> void:
 
 
 func _run() -> void:
-	if _requested_seed_family.is_empty() and _requested_scenario.is_empty():
-		_run_parallel_seed_families()
-		return
 	var failures: Array = []
 	var library := ContentLibraryScript.new()
 	library.load()
@@ -167,67 +164,6 @@ func _run() -> void:
 	# census, preventing a collision repair from deleting scenario content.
 	EnvironmentReadabilityContractScript.check_static(library, failures)
 	_finish(failures, completed, definitions.size(), seed_families.size())
-
-
-func _run_parallel_seed_families() -> void:
-	var workers: Array[Thread] = []
-	var failures: Array = []
-	for seed_family_value in SEED_FAMILIES:
-		var worker := Thread.new()
-		var start_error := worker.start(_run_seed_family_process.bind(str(seed_family_value)))
-		if start_error != OK:
-			failures.append("Could not start seed-family worker %s: %s." % [str(seed_family_value), error_string(start_error)])
-			continue
-		workers.append(worker)
-	var reachable_states := 0
-	var distinct_layouts := 0
-	for worker in workers:
-		var result := _dict(worker.wait_to_finish())
-		var output := str(result.get("output", ""))
-		if int(result.get("exit_code", 1)) != 0:
-			failures.append("Seed-family worker %s failed:\n%s" % [str(result.get("seed_family", "unknown")), output])
-			continue
-		var summary := _parse_worker_summary(output)
-		if summary.is_empty():
-			failures.append("Seed-family worker %s returned no finalization summary:\n%s" % [str(result.get("seed_family", "unknown")), output])
-			continue
-		reachable_states += int(summary.get("reachable_states", 0))
-		distinct_layouts += int(summary.get("distinct_layouts", 0))
-		print(str(summary.get("line", "")))
-	if not failures.is_empty() or workers.size() != SEED_FAMILIES.size():
-		for failure in failures:
-			printerr("SCENARIO_ROOM_MULTISEED_FINALIZATION FAIL %s" % str(failure))
-		printerr("SCENARIO_ROOM_MULTISEED_FINALIZATION FAIL completed=0 expected=%d failures=%d" % [SEED_FAMILIES.size() * EXPECTED_SCENARIOS, failures.size()])
-		quit(1)
-		return
-	print("SCENARIO_ROOM_MULTISEED_FINALIZATION PASS families=%d scenarios=%d finalizations=%d reachable_states=%d distinct_layouts=%d normal_and_small=validated routes=validated object_census=preserved" % [SEED_FAMILIES.size(), EXPECTED_SCENARIOS, SEED_FAMILIES.size() * EXPECTED_SCENARIOS, reachable_states, distinct_layouts])
-	quit(0)
-
-
-func _run_seed_family_process(seed_family: String) -> Dictionary:
-	var output: Array = []
-	var arguments := PackedStringArray([
-		"--headless",
-		"--path", ProjectSettings.globalize_path("res://"),
-		"--script", "res://tools/scenario_room_multiseed_finalization.gd",
-		"--", "--seed-family=%s" % seed_family,
-	])
-	var exit_code := OS.execute(OS.get_executable_path(), arguments, output, true, false)
-	return {"seed_family": seed_family, "exit_code": exit_code, "output": "\n".join(output)}
-
-
-func _parse_worker_summary(output: String) -> Dictionary:
-	var pattern := RegEx.new()
-	if pattern.compile("SCENARIO_ROOM_MULTISEED_FINALIZATION PASS families=1 scenarios=55 finalizations=55 reachable_states=([0-9]+) distinct_layouts=([0-9]+)") != OK:
-		return {}
-	var match_result := pattern.search(output)
-	if match_result == null:
-		return {}
-	return {
-		"reachable_states": int(match_result.get_string(1)),
-		"distinct_layouts": int(match_result.get_string(2)),
-		"line": match_result.get_string(0),
-	}
 
 
 func _finish(failures: Array, completed: int, scenario_count: int = EXPECTED_SCENARIOS, seed_count: int = SEED_FAMILIES.size()) -> void:

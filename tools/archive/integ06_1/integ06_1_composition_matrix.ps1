@@ -18,7 +18,8 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$root = [IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))
+. (Join-Path $PSScriptRoot "../../repository_root.ps1")
+$root = Resolve-BthRepositoryRoot -StartPath $PSScriptRoot
 $head = (& git -C $root rev-parse HEAD).Trim()
 $candidate = (& git -C $root rev-parse "$CandidateCommit^{commit}").Trim()
 if ($head -cne $candidate) { throw "HEAD $head does not equal CandidateCommit $candidate." }

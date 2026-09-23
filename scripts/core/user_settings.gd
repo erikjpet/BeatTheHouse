@@ -22,7 +22,10 @@ const WINDOW_MODES := ["windowed", "fullscreen", "borderless"]
 const TEXT_SIZES := ["small", "normal", "large"]
 const DRUNK_EFFECT_MODES := ["distortion", "classic"]
 const HAPTICS_CUT_REASON := "Haptics are not used by the current demo input stack."
+const SETTINGS_SCHEMA_VERSION := 1
+const SETTINGS_SCHEMA_KEY := "settings_schema_version"
 const STORAGE_KEYS := [
+	SETTINGS_SCHEMA_KEY,
 	"resolution", "window_mode", "vsync_enabled", "master_volume",
 	"music_volume", "sfx_volume", "audio_calm", "ui_scale", "text_size",
 	"reduce_motion", "drunk_effect_mode", "high_contrast",
@@ -73,7 +76,7 @@ func reset() -> void:
 func load() -> Dictionary:
 	reset()
 	var path := settings_path()
-	last_load_outcome = DurableStoreScript.read_json(path)
+	last_load_outcome = DurableStoreScript.read_json(path, Callable(self, "_settings_payload_valid"))
 	if IoResultScript.is_ok(last_load_outcome):
 		from_dict(last_load_outcome.get("data", {}))
 		var code := "loaded_backup" if str(last_load_outcome.get("outcome", "")) == DurableStoreScript.OUTCOME_BACKUP else "loaded"
@@ -106,7 +109,7 @@ func _invalid_settings_detail(path: String) -> Dictionary:
 	var parser := JSON.new()
 	if parser.parse(text) != OK:
 		return {"detail": "malformed_json", "message": parser.get_error_message()}
-	return {"detail": "invalid_schema", "message": "Settings root must be an object."}
+	return {"detail": "invalid_schema", "message": "Settings do not contain a recognized settings schema."}
 
 
 func _recover_invalid_settings_file(path: String, detail: String, message: String) -> Dictionary:
@@ -125,7 +128,7 @@ func _recover_invalid_settings_file(path: String, detail: String, message: Strin
 
 # Saves preferences to disk.
 func save() -> Error:
-	var result := DurableStoreScript.write_json(settings_path(), to_dict())
+	var result := DurableStoreScript.write_json(settings_path(), to_dict(), Callable(self, "_settings_payload_valid"))
 	return int(result.get("error", FAILED))
 
 
@@ -140,6 +143,7 @@ static func settings_path() -> String:
 # Converts preferences to saveable data.
 func to_dict() -> Dictionary:
 	return {
+		SETTINGS_SCHEMA_KEY: SETTINGS_SCHEMA_VERSION,
 		"resolution": {
 			"width": resolution.x,
 			"height": resolution.y,
@@ -160,6 +164,55 @@ func to_dict() -> Dictionary:
 		"selected_home_type_id": selected_home_type_id,
 		"developer_placement_mode": developer_placement_mode,
 	}
+
+
+# Accept current versioned payloads and migrate schema-less preferences from
+# earlier releases when at least one genuine settings key is present. A random
+# JSON object is not a settings generation merely because it parses.
+func _settings_payload_valid(data: Dictionary) -> bool:
+	if data.has(SETTINGS_SCHEMA_KEY):
+		var version_value: Variant = data.get(SETTINGS_SCHEMA_KEY)
+		if typeof(version_value) != TYPE_INT and typeof(version_value) != TYPE_FLOAT:
+			return false
+		var version_number := float(version_value)
+		if version_number != floor(version_number):
+			return false
+		var version := int(version_number)
+		if version < 1 or version > SETTINGS_SCHEMA_VERSION:
+			return false
+	return _recognized_settings_values_valid(data)
+
+
+func _recognized_settings_values_valid(data: Dictionary) -> bool:
+	var recognized := false
+	for key_value in STORAGE_KEYS:
+		var key := str(key_value)
+		if key == SETTINGS_SCHEMA_KEY or not data.has(key):
+			continue
+		recognized = true
+		if not _settings_value_shape_valid(key, data.get(key)):
+			return false
+	return recognized
+
+
+func _settings_value_shape_valid(key: String, value: Variant) -> bool:
+	match key:
+		"resolution":
+			if typeof(value) != TYPE_DICTIONARY:
+				return false
+			var size := value as Dictionary
+			return _settings_number(size.get("width", null)) and _settings_number(size.get("height", null))
+		"master_volume", "music_volume", "sfx_volume", "ui_scale":
+			return _settings_number(value)
+		"vsync_enabled", "audio_calm", "reduce_motion", "high_contrast", "play_on_small_screen", "coach_tips_enabled", "developer_placement_mode":
+			return typeof(value) == TYPE_BOOL
+		"window_mode", "text_size", "drunk_effect_mode", "selected_home_type_id":
+			return typeof(value) == TYPE_STRING
+	return false
+
+
+func _settings_number(value: Variant) -> bool:
+	return typeof(value) == TYPE_INT or typeof(value) == TYPE_FLOAT
 
 
 # Restores and clamps preference data.

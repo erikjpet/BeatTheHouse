@@ -1673,10 +1673,11 @@ func crew_job_board_choices(payload: Dictionary = {}) -> Array:
 	for offer_value in crew_job_board_offers():
 		var offer: Dictionary = offer_value
 		var member_name := str(offer.get("member_id", "crew")).trim_prefix("crew_").capitalize()
-		var detail := "%s%s · %d actions · $%d / trust %+d." % [
+		var expiry_text := PlayerTextScript.count_text("action", int(offer.get("expiry_in_actions", 1)))
+		var detail := "%s%s · %s · $%d / trust %+d." % [
 			str(offer.get("kind", "job")).replace("_", " ").capitalize(),
 			" · here tonight",
-			int(offer.get("expiry_in_actions", 1)), int(offer.get("cash", 0)), int(offer.get("trust", 0))]
+			expiry_text, int(offer.get("cash", 0)), int(offer.get("trust", 0))]
 		# The event surface has no board-level subtitle, so project the rotating
 		# board note once on the first row instead of repeating it for every job.
 		if not flavor_line.is_empty() and result.is_empty():

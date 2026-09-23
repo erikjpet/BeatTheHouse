@@ -94,19 +94,9 @@ func _check_surface_pause_and_hold_recovery() -> void:
 	var phases: Array[String] = []
 	canvas.surface_pointer_action.connect(func(_action: String, _index: int, phase: String, _position: Vector2) -> void: phases.append(phase))
 	for modality in ["mouse", "touch", "key", "joy"]:
-		canvas.call("surface_add_hold_hit", Rect2(40, 40, 80, 60), "fixture_hold")
-		_send_hold_event(canvas, modality, true)
-		canvas.call("handle_application_lifecycle", false)
-		canvas.call("handle_application_lifecycle", false)
-		_send_hold_event(canvas, modality, false)
-		canvas.call("handle_application_lifecycle", true)
-		_send_hold_event(canvas, modality, true)
-		_send_hold_event(canvas, modality, false)
-	var expected: Array[String] = []
-	for modality in ["mouse", "touch", "key", "joy"]:
-		expected.append_array(["begin", "cancel", "begin", "end"])
-	if phases != expected:
-		failures.append("BTH-053: application focus loss did not cancel each hold exactly once or rejected a fresh gesture: %s." % JSON.stringify(phases))
+		_check_modal_capture_pause(canvas, modality, phases)
+		_check_focus_loss_capture_latch(canvas, modality, phases)
+		_check_teardown_capture_cleanup(canvas, modality, phases)
 	var final_debug: Dictionary = canvas.call("debug_pause_contract_snapshot")
 	if not str(final_debug.get("captured_surface_action", "")).is_empty() or bool(final_debug.get("captured_pointer_move_pending", true)):
 		failures.append("BTH-053: lifecycle recovery left capture/coalesced movement armed.")
@@ -114,10 +104,139 @@ func _check_surface_pause_and_hold_recovery() -> void:
 	await process_frame
 
 
+func _check_modal_capture_pause(canvas: Control, modality: String, phases: Array[String]) -> void:
+	_prepare_hold_fixture(canvas, "fixture_wager_hold", 25)
+	var phase_start := phases.size()
+	_send_hold_event(canvas, modality, true)
+	_send_hold_motion(canvas, modality)
+	var before_sim := int(canvas.call("surface_simulation_time_msec"))
+	var before_presentation := int(canvas.call("surface_presentation_time_msec"))
+	canvas.call("set_modal_activity_paused", true)
+	# A repeated cleanup notification must be idempotent without reasserting the
+	# pause owner and accidentally hiding a capture-cleanup ownership bug.
+	canvas.call("_cancel_captured_surface_pointer")
+	canvas.call("_process", 0.25)
+	_send_hold_event(canvas, modality, false)
+	var snapshot: Dictionary = canvas.call("debug_pause_contract_snapshot")
+	var observed: Array = phases.slice(phase_start)
+	if observed != ["begin", "cancel"]:
+		failures.append("UIENV-PF-001: %s modal opening did not cancel an active wager hold exactly once or admitted its stale release: %s." % [modality, JSON.stringify(observed)])
+	if not bool(snapshot.get("environment_activity_paused", false)) or not bool(snapshot.get("timed_feedback_paused", false)):
+		failures.append("UIENV-PF-001: %s capture cleanup cleared modal environment/timed-feedback pause ownership." % modality)
+	if int(canvas.call("surface_simulation_time_msec")) != before_sim or int(canvas.call("surface_presentation_time_msec")) != before_presentation:
+		failures.append("UIENV-PF-001: %s modal capture cancellation allowed a paused surface clock to advance." % modality)
+	if not bool((_dict(snapshot.get("surface_sfx", {}))).get("surface_activity_paused", false)):
+		failures.append("UIENV-PF-001: %s modal capture cancellation unpaused surface audio." % modality)
+	canvas.call("set_modal_activity_paused", false)
+	phase_start = phases.size()
+	_prepare_hold_fixture(canvas, "fixture_wager_hold", 25)
+	_send_hold_event(canvas, modality, true)
+	_send_hold_event(canvas, modality, false)
+	observed = phases.slice(phase_start)
+	if observed != ["begin", "end"]:
+		failures.append("UIENV-PF-001: %s did not accept a fresh wager hold after the modal owner cleared: %s." % [modality, JSON.stringify(observed)])
+
+
+func _check_focus_loss_capture_latch(canvas: Control, modality: String, phases: Array[String]) -> void:
+	_prepare_hold_fixture(canvas, "fixture_stateful_hold", 26)
+	var phase_start := phases.size()
+	_send_hold_event(canvas, modality, true)
+	_send_hold_motion(canvas, modality)
+	canvas.call("handle_application_lifecycle", false)
+	canvas.call("_cancel_captured_surface_pointer")
+	# FoundationMain establishes application pause immediately after notifying the
+	# surface. Preserve that real ordering so both ownership layers are exercised.
+	canvas.call("set_environment_activity_paused", true, true)
+	var before_sim := int(canvas.call("surface_simulation_time_msec"))
+	var before_presentation := int(canvas.call("surface_presentation_time_msec"))
+	canvas.call("_process", 0.25)
+	_send_hold_event(canvas, modality, false)
+	var snapshot: Dictionary = canvas.call("debug_pause_contract_snapshot")
+	var observed: Array = phases.slice(phase_start)
+	if observed != ["begin", "cancel"]:
+		failures.append("UIENV-PF-001: %s focus loss did not cancel an active stateful hold exactly once or admitted its stale release: %s." % [modality, JSON.stringify(observed)])
+	if not bool(snapshot.get("reject_orphan_surface_events", false)):
+		failures.append("UIENV-PF-001: %s capture cleanup cleared focus-loss orphan rejection before a fresh press." % modality)
+	if not bool(snapshot.get("environment_activity_paused", false)) or not bool(snapshot.get("timed_feedback_paused", false)):
+		failures.append("UIENV-PF-001: %s focus-loss capture cancellation did not retain application pause ownership." % modality)
+	if int(canvas.call("surface_simulation_time_msec")) != before_sim or int(canvas.call("surface_presentation_time_msec")) != before_presentation:
+		failures.append("UIENV-PF-001: %s focus-loss capture cancellation allowed a paused surface clock to advance." % modality)
+	if not bool((_dict(snapshot.get("surface_sfx", {}))).get("surface_activity_paused", false)):
+		failures.append("UIENV-PF-001: %s focus-loss capture cancellation unpaused surface audio." % modality)
+	canvas.call("set_environment_activity_paused", false, false)
+	canvas.call("handle_application_lifecycle", true)
+	phase_start = phases.size()
+	_prepare_hold_fixture(canvas, "fixture_stateful_hold", 26)
+	_send_hold_event(canvas, modality, true)
+	_send_hold_event(canvas, modality, false)
+	observed = phases.slice(phase_start)
+	if observed != ["begin", "end"]:
+		failures.append("UIENV-PF-001: %s focus recovery rejected a fresh stateful hold: %s." % [modality, JSON.stringify(observed)])
+	var recovered: Dictionary = canvas.call("debug_pause_contract_snapshot")
+	if bool(recovered.get("reject_orphan_surface_events", true)):
+		failures.append("UIENV-PF-001: %s fresh press did not clear focus-loss orphan rejection." % modality)
+
+
+func _check_teardown_capture_cleanup(canvas: Control, modality: String, phases: Array[String]) -> void:
+	_prepare_hold_fixture(canvas, "fixture_teardown_hold", 27)
+	var phase_start := phases.size()
+	_send_hold_event(canvas, modality, true)
+	_send_hold_motion(canvas, modality)
+	canvas.call("handle_application_lifecycle", false)
+	# FoundationMain owns the pause flags and applies them immediately after the
+	# surface receives focus loss. A runtime teardown must clear only game/capture
+	# state; it must not release these caller-owned lifecycle contracts.
+	canvas.call("set_environment_activity_paused", true, true)
+	var before_sim := int(canvas.call("surface_simulation_time_msec"))
+	var before_presentation := int(canvas.call("surface_presentation_time_msec"))
+	canvas.call("clear_runtime_state")
+	canvas.call("clear_runtime_state")
+	canvas.call("_process", 0.25)
+	_send_hold_event(canvas, modality, false)
+	var observed: Array = phases.slice(phase_start)
+	if observed != ["begin", "cancel"]:
+		failures.append("UIENV-PF-001: %s teardown did not cancel its active hold exactly once or admitted its stale release: %s." % [modality, JSON.stringify(observed)])
+	var snapshot: Dictionary = canvas.call("debug_pause_contract_snapshot")
+	if not str(snapshot.get("captured_surface_action", "")).is_empty() or bool(snapshot.get("captured_pointer_move_pending", true)):
+		failures.append("UIENV-PF-001: %s teardown left capture or a coalesced stateful movement armed." % modality)
+	if not bool(snapshot.get("reject_orphan_surface_events", false)):
+		failures.append("UIENV-PF-001: %s teardown cleared focus-loss orphan rejection before a fresh press." % modality)
+	if not bool(snapshot.get("environment_activity_paused", false)) or not bool(snapshot.get("timed_feedback_paused", false)):
+		failures.append("UIENV-PF-001: %s teardown cleared caller-owned application pause state." % modality)
+	if int(canvas.call("surface_simulation_time_msec")) != before_sim or int(canvas.call("surface_presentation_time_msec")) != before_presentation:
+		failures.append("UIENV-PF-001: %s teardown advanced a paused surface clock." % modality)
+	if not bool((_dict(snapshot.get("surface_sfx", {}))).get("surface_activity_paused", false)):
+		failures.append("UIENV-PF-001: %s teardown unpaused caller-owned surface audio." % modality)
+
+	canvas.call("set_environment_activity_paused", false, false)
+	canvas.call("handle_application_lifecycle", true)
+	canvas.call("render_game_snapshot", {"game_id": "fixture_teardown_recovery"})
+	if int(canvas.call("surface_simulation_time_msec")) != 0 or int(canvas.call("surface_presentation_time_msec")) != 0:
+		failures.append("UIENV-PF-001: %s teardown recovery leaked the prior surface clocks into a fresh snapshot: %s." % [modality, JSON.stringify(canvas.call("debug_pause_contract_snapshot"))])
+	phase_start = phases.size()
+	_prepare_hold_fixture(canvas, "fixture_teardown_hold", 27)
+	_send_hold_event(canvas, modality, true)
+	_send_hold_event(canvas, modality, false)
+	observed = phases.slice(phase_start)
+	if observed != ["begin", "end"]:
+		failures.append("UIENV-PF-001: %s teardown recovery rejected a fresh hold: %s." % [modality, JSON.stringify(observed)])
+	var recovered: Dictionary = canvas.call("debug_pause_contract_snapshot")
+	if bool(recovered.get("reject_orphan_surface_events", true)):
+		failures.append("UIENV-PF-001: %s fresh post-teardown press did not clear orphan rejection." % modality)
+
+
+func _prepare_hold_fixture(canvas: Control, action: String, index: int) -> void:
+	canvas.set("hit_regions", [])
+	canvas.set("state", {"surface_pointer_coalesce_moves": true})
+	canvas.call("surface_add_hold_hit", Rect2(40, 40, 80, 60), action, index)
+
+
 func _send_hold_event(canvas: Control, modality: String, pressed: bool) -> void:
 	var position := Vector2(80, 70)
 	match modality:
 		"mouse":
+			if pressed:
+				canvas.set("last_touch_press_msec", -100000)
 			var event := InputEventMouseButton.new()
 			event.button_index = MOUSE_BUTTON_LEFT
 			event.pressed = pressed
@@ -140,6 +259,22 @@ func _send_hold_event(canvas: Control, modality: String, pressed: bool) -> void:
 			event.button_index = JOY_BUTTON_A
 			event.pressed = pressed
 			canvas.call("_gui_input", event)
+
+
+func _send_hold_motion(canvas: Control, modality: String) -> void:
+	if modality == "mouse":
+		var event := InputEventMouseMotion.new()
+		event.position = Vector2(84, 72)
+		event.button_mask = MOUSE_BUTTON_MASK_LEFT
+		canvas.call("_gui_input", event)
+	elif modality == "touch":
+		var event := InputEventScreenDrag.new()
+		event.position = Vector2(84, 72)
+		canvas.call("_gui_input", event)
+
+
+func _dict(value: Variant) -> Dictionary:
+	return value as Dictionary if typeof(value) == TYPE_DICTIONARY else {}
 
 
 func _check_settings_cancel_matrix() -> void:

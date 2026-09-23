@@ -26,6 +26,7 @@ var detail_popup: PanelContainer
 var detail_label: Label
 var badge_slot: VBoxContainer
 var confirm_button: Button
+var close_button: Button
 var badge_row: HFlowContainer
 var badge_cells: Array = []
 var button_ids: Array = []
@@ -56,7 +57,7 @@ func clear_selection() -> void:
 	detail_badges_key = "__unset__"
 
 
-func configure_nodes(overlay_node: Control, holder_node: Control, nodes_layer_node: Control, title_node: Label, detail_popup_node: PanelContainer, detail_node: Label, badge_slot_node: VBoxContainer, confirm_node: Button) -> void:
+func configure_nodes(overlay_node: Control, holder_node: Control, nodes_layer_node: Control, title_node: Label, detail_popup_node: PanelContainer, detail_node: Label, badge_slot_node: VBoxContainer, confirm_node: Button, close_node: Button = null) -> void:
 	_clear_pressed_node()
 	overlay = overlay_node
 	holder = holder_node
@@ -66,6 +67,7 @@ func configure_nodes(overlay_node: Control, holder_node: Control, nodes_layer_no
 	detail_label = detail_node
 	badge_slot = badge_slot_node
 	confirm_button = confirm_node
+	close_button = close_node
 	if confirm_button != null:
 		var down_callback := Callable(self, "_on_confirm_button_down")
 		var up_callback := Callable(self, "_on_confirm_button_up")
@@ -77,6 +79,7 @@ func configure_nodes(overlay_node: Control, holder_node: Control, nodes_layer_no
 		holder.mouse_default_cursor_shape = Control.CURSOR_ARROW
 		holder.tooltip_text = "Scroll to zoom. Drag to move. Click empty space to reset."
 	_apply_small_screen_button_sizes()
+	_refresh_spatial_focus_neighbors()
 
 
 func set_small_screen_mode(enabled: bool) -> void:
@@ -796,6 +799,23 @@ func focus_first_available(fallback: Control = null) -> bool:
 	return false
 
 
+func focus_controls() -> Array[Control]:
+	var controls: Array[Control] = []
+	for index in range(WORLD_MAP_NODE_BUTTON_POOL_SIZE):
+		var button := _pool_button(index)
+		if button != null and button.is_visible_in_tree() and not button.disabled:
+			controls.append(button)
+	if confirm_button != null and confirm_button.is_visible_in_tree() and not confirm_button.disabled:
+		controls.append(confirm_button)
+	if close_button != null and close_button.is_visible_in_tree() and not close_button.disabled:
+		controls.append(close_button)
+	return controls
+
+
+func refresh_focus_neighbors() -> void:
+	_refresh_spatial_focus_neighbors()
+
+
 func _refresh_spatial_focus_neighbors() -> void:
 	var buttons: Array[Button] = []
 	for index in range(WORLD_MAP_NODE_BUTTON_POOL_SIZE):
@@ -807,15 +827,13 @@ func _refresh_spatial_focus_neighbors() -> void:
 		button.focus_neighbor_right = _focus_neighbor_path(button, buttons, Vector2.RIGHT)
 		button.focus_neighbor_top = _focus_neighbor_path(button, buttons, Vector2.UP)
 		button.focus_neighbor_bottom = _focus_neighbor_path(button, buttons, Vector2.DOWN)
-	for index in range(buttons.size()):
-		var button := buttons[index]
-		var next: Control = buttons[index + 1] if index + 1 < buttons.size() else confirm_button
-		var previous: Control = buttons[index - 1] if index > 0 else confirm_button
-		button.focus_next = button.get_path_to(next) if next != null else NodePath()
-		button.focus_previous = button.get_path_to(previous) if previous != null else NodePath()
-	if confirm_button != null and not buttons.is_empty():
-		confirm_button.focus_previous = confirm_button.get_path_to(buttons[buttons.size() - 1])
-		confirm_button.focus_next = confirm_button.get_path_to(buttons[0])
+	var ring := focus_controls()
+	for index in range(ring.size()):
+		var control := ring[index]
+		var next: Control = ring[posmod(index + 1, ring.size())]
+		var previous: Control = ring[posmod(index - 1, ring.size())]
+		control.focus_next = control.get_path_to(next)
+		control.focus_previous = control.get_path_to(previous)
 
 
 func _focus_neighbor_path(source: Button, candidates: Array[Button], direction: Vector2) -> NodePath:

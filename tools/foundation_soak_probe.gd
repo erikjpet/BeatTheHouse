@@ -27,6 +27,10 @@ const PINBALL_CACHE_STRESS_SESSIONS := 40
 const SOAK_SAVE_SLOT := "foundation_soak_probe"
 const RETAINED_MEASUREMENT_SEED := "FOUNDATION-SOAK-RETAINED-MEASUREMENT"
 const SOAK_PREWARM_GAME_IDS := ["blackjack", "baccarat", "roulette", "craps", "video_poker", "bar_dice", "pull_tabs", "slot"]
+const FEATURE_PCM_BOUNDARY_COUNT := 3
+const FEATURE_PCM_REQUESTS_PER_BOUNDARY := 32
+const FEATURE_PCM_MIN_DISTINCT_CONTEXTS := 25
+const FEATURE_PCM_EXPECTED_BUDGET_BYTES := 64 * 1024 * 1024
 
 const MAX_SERIALIZED_RUN_STATE_BYTES := 1500000
 const MAX_POST_WARMUP_MEMORY_PEAK_GROWTH_BYTES := 32 * 1024 * 1024
@@ -55,6 +59,7 @@ var seed_prefix := DEFAULT_SEED_PREFIX
 var sim_minutes := DEFAULT_SIM_MINUTES
 var actions_per_sample := DEFAULT_ACTIONS_PER_SAMPLE
 var sample_log_file: FileAccess
+var feature_pcm_evidence: Dictionary = {}
 
 
 func _init() -> void:
@@ -67,6 +72,7 @@ func _run() -> void:
 		seed_prefix = DEFAULT_SEED_PREFIX
 	sim_minutes = _configured_int("BTH_SOAK_MINUTES", DEFAULT_SIM_MINUTES)
 	actions_per_sample = _configured_int("BTH_SOAK_ACTIONS_PER_SAMPLE", DEFAULT_ACTIONS_PER_SAMPLE)
+	feature_pcm_evidence = _new_feature_pcm_evidence()
 	PinballFeatureScript.clear_runtime_session_cache()
 	sample_log_file = FileAccess.open(SAMPLE_LOG_PATH, FileAccess.WRITE)
 	if sample_log_file == null:
@@ -86,6 +92,7 @@ func _run() -> void:
 	}
 	await _open_fresh_app()
 	await _prewarm_runtime_caches()
+	await _exercise_feature_pcm_boundaries()
 	# The first scheduled autoplay block is action 97, after the action-84
 	# retained-growth warmup boundary. Repeated sessions reach their resource
 	# high-water on the second block, so cover session creation, replacement,
@@ -179,6 +186,283 @@ func _prewarm_runtime_caches() -> void:
 				coverage["slot_background_texture_cache_cap"] = int(cache_debug.get("background_texture_cache_cap", 0))
 	app.call("return_to_main_menu")
 	await _settle(4)
+
+
+func _new_feature_pcm_evidence() -> Dictionary:
+	return {
+		"schema": "beat_the_house.foundation_feature_pcm_soak/v1",
+		"passed": false,
+		"seed_prefix": seed_prefix,
+		"boundary_count": 0,
+		"requests_per_boundary": FEATURE_PCM_REQUESTS_PER_BOUNDARY,
+		"request_count": 0,
+		"distinct_context_count": 0,
+		"successful_load_count": 0,
+		"successful_play_count": 0,
+		"physical_cache_keys": [],
+		"cache_budget_bytes": FEATURE_PCM_EXPECTED_BUDGET_BYTES,
+		"maximum_populated_bytes": 0,
+		"maximum_combined_bytes": 0,
+		"cleanup_to_baseline_count": 0,
+		"cleanup_evicted_key_count": 0,
+		"baseline": {},
+		"boundaries": [],
+	}
+
+
+func _exercise_feature_pcm_boundaries() -> void:
+	var failure_count_before := failures.size()
+	if app == null:
+		failures.append("Feature PCM soak could not run without the foundation app.")
+		return
+	var player: Variant = app.get("procedural_music_player")
+	if player == null \
+			or not player.has_method("_feature_stem_set_for_input") \
+			or not player.has_method("_play_feature_stem_set") \
+			or not player.has_method("pcm_cache_policy_snapshot"):
+		failures.append("Feature PCM soak could not reach the production music load/play/accounting path.")
+		return
+	player.call("stop")
+	player.call("clear_run_scoped_caches")
+	player.call("_ensure_feature_stem_players")
+	await _settle(2)
+	var baseline_debug: Dictionary = player.call("debug_soak_snapshot")
+	var baseline_policy: Dictionary = player.call("pcm_cache_policy_snapshot")
+	var baseline := _feature_pcm_accounting(baseline_policy)
+	baseline["cache_bytes"] = int(baseline_policy.get("bytes", -1))
+	baseline["cache_raw_bytes"] = int(baseline_policy.get("raw_bytes", -1))
+	baseline["cache_encoded_bytes"] = int(baseline_policy.get("encoded_bytes", -1))
+	baseline["web_decoded_bytes"] = int(baseline_policy.get("web_decoded_bytes", -1))
+	baseline["combined_bytes"] = int(baseline_policy.get("combined_bytes", -1))
+	baseline["debug_feature_entry_count"] = int(baseline_debug.get("feature_stem_cache_size", -1))
+	if int(baseline.get("feature_entry_count", -1)) != 0 \
+			or int(baseline.get("feature_bytes", -1)) != 0 \
+			or int(baseline.get("debug_feature_entry_count", -1)) != 0 \
+			or not _feature_pcm_policy_within_budget(baseline_policy):
+		failures.append("Feature PCM soak could not establish an empty, within-budget production baseline.")
+
+	var all_contexts: Dictionary = {}
+	var all_physical_keys: Dictionary = {}
+	var boundaries: Array = []
+	var successful_load_count := 0
+	var successful_play_count := 0
+	var cleanup_to_baseline_count := 0
+	var cleanup_evicted_key_count := 0
+	var maximum_populated_bytes := 0
+	var maximum_combined_bytes := 0
+	for boundary_index in range(FEATURE_PCM_BOUNDARY_COUNT):
+		var boundary_contexts: Dictionary = {}
+		var boundary_physical_keys: Dictionary = {}
+		var boundary_load_count := 0
+		var boundary_play_count := 0
+		var boundary_policy_ok := true
+		for request_index in range(FEATURE_PCM_REQUESTS_PER_BOUNDARY):
+			var cue_id := "buffalo_feature_foundation_%02d_%02d" % [boundary_index, request_index] \
+				if request_index % 2 == 0 else "pinball_feature_foundation_%02d_%02d" % [boundary_index, request_index]
+			var palette_id := "foundation_feature_%s_%02d_%02d" % [seed_prefix, boundary_index, request_index]
+			var bpm := 70.0 + float(request_index)
+			var context_key := "%s|%s|%0.2f" % [cue_id, palette_id, bpm]
+			boundary_contexts[context_key] = true
+			all_contexts[context_key] = true
+			player.set("_current_stem_set", {
+				"bpm": bpm,
+				"profile": {
+					"palette_id": palette_id,
+					"theme": "slot",
+					"root_midi": 45 + request_index % 8,
+				},
+			})
+			var feature_set: Dictionary = player.call("_feature_stem_set_for_input", {"cue_id": cue_id})
+			var physical_key := str(feature_set.get("pcm_cache_key", ""))
+			if not physical_key.is_empty():
+				boundary_physical_keys[physical_key] = true
+				all_physical_keys[physical_key] = true
+			var request_policy: Dictionary = player.call("pcm_cache_policy_snapshot")
+			var request_entry_bytes := _dict(request_policy.get("entry_bytes", {}))
+			if not feature_set.is_empty() and not physical_key.is_empty() and int(request_entry_bytes.get(physical_key, 0)) > 0:
+				boundary_load_count += 1
+				successful_load_count += 1
+			if bool(player.call("_play_feature_stem_set", feature_set, 0.0)):
+				boundary_play_count += 1
+				successful_play_count += 1
+			boundary_policy_ok = boundary_policy_ok and _feature_pcm_policy_within_budget(request_policy)
+			await process_frame
+
+		var populated_debug: Dictionary = player.call("debug_soak_snapshot")
+		var populated_policy: Dictionary = player.call("pcm_cache_policy_snapshot")
+		var populated_feature := _feature_pcm_accounting(populated_policy)
+		maximum_populated_bytes = maxi(maximum_populated_bytes, int(populated_policy.get("bytes", -1)))
+		maximum_combined_bytes = maxi(maximum_combined_bytes, int(populated_policy.get("combined_bytes", -1)))
+		var populated_ok := boundary_contexts.size() >= FEATURE_PCM_MIN_DISTINCT_CONTEXTS \
+			and boundary_contexts.size() == FEATURE_PCM_REQUESTS_PER_BOUNDARY \
+			and boundary_load_count == FEATURE_PCM_REQUESTS_PER_BOUNDARY \
+			and boundary_play_count == FEATURE_PCM_REQUESTS_PER_BOUNDARY \
+			and boundary_physical_keys.size() == 2 \
+			and int(populated_debug.get("feature_stem_cache_size", -1)) == 2 \
+			and int(populated_feature.get("feature_entry_count", -1)) == 2 \
+			and int(populated_feature.get("feature_bytes", -1)) > 0 \
+			and int(populated_feature.get("feature_raw_bytes", -1)) > 0 \
+			and int(populated_feature.get("feature_bytes", -1)) == int(populated_feature.get("feature_raw_bytes", -1)) + int(populated_feature.get("feature_encoded_bytes", -1)) \
+			and boundary_policy_ok \
+			and _feature_pcm_policy_within_budget(populated_policy)
+
+		var boundary_seed := "%s-FEATURE-PCM-%02d" % [seed_prefix, boundary_index]
+		var boundary_challenge := RunStateScript.custom_challenge("soak_feature_pcm", boundary_seed, {
+			"starting_bankroll": 5000,
+			"hidden_seed": true,
+		})
+		var boundary_started := bool(app.call("start_foundation_run", boundary_seed, boundary_challenge))
+		await _settle(4)
+		var cleared_debug: Dictionary = player.call("debug_soak_snapshot")
+		var cleared_policy: Dictionary = player.call("pcm_cache_policy_snapshot")
+		var physical_keys: Array = boundary_physical_keys.keys()
+		physical_keys.sort()
+		var cleanup_ok := boundary_started and _feature_pcm_cleanup_matches_baseline(
+			cleared_debug,
+			cleared_policy,
+			baseline,
+			physical_keys
+		)
+		var cleared_entry_bytes := _dict(cleared_policy.get("entry_bytes", {}))
+		var cleared_keys := _array(cleared_policy.get("keys", []))
+		var evicted_key_count := 0
+		for physical_key_value in physical_keys:
+			var cleared_physical_key := str(physical_key_value)
+			if not cleared_entry_bytes.has(cleared_physical_key) and not cleared_keys.has(cleared_physical_key):
+				evicted_key_count += 1
+		cleanup_evicted_key_count += evicted_key_count
+		if cleanup_ok:
+			cleanup_to_baseline_count += 1
+		var boundary_passed := populated_ok and cleanup_ok and evicted_key_count == physical_keys.size()
+		if not populated_ok:
+			failures.append("Feature PCM boundary %d did not complete 32 distinct production load/play requests within the shared 64 MiB budget." % boundary_index)
+		if not boundary_started:
+			failures.append("Feature PCM boundary %d could not start its production run-boundary transition." % boundary_index)
+		elif not cleanup_ok or evicted_key_count != physical_keys.size():
+			failures.append("Feature PCM boundary %d did not evict its feature packs and return shared accounting to baseline." % boundary_index)
+		boundaries.append({
+			"index": boundary_index,
+			"passed": boundary_passed,
+			"request_count": FEATURE_PCM_REQUESTS_PER_BOUNDARY,
+			"distinct_context_count": boundary_contexts.size(),
+			"successful_load_count": boundary_load_count,
+			"successful_play_count": boundary_play_count,
+			"physical_cache_keys": physical_keys,
+			"populated_feature": populated_feature,
+			"populated_cache_bytes": int(populated_policy.get("bytes", -1)),
+			"populated_combined_bytes": int(populated_policy.get("combined_bytes", -1)),
+			"cleanup_to_baseline": cleanup_ok,
+			"cleanup_evicted_key_count": evicted_key_count,
+			"cleared_feature": _feature_pcm_accounting(cleared_policy),
+			"cleared_cache_bytes": int(cleared_policy.get("bytes", -1)),
+			"cleared_combined_bytes": int(cleared_policy.get("combined_bytes", -1)),
+		})
+		app.call("return_to_main_menu")
+		await _settle(4)
+
+	var physical_cache_keys: Array = all_physical_keys.keys()
+	physical_cache_keys.sort()
+	var expected_request_count := FEATURE_PCM_BOUNDARY_COUNT * FEATURE_PCM_REQUESTS_PER_BOUNDARY
+	var aggregate_ok := boundaries.size() == FEATURE_PCM_BOUNDARY_COUNT \
+		and all_contexts.size() == expected_request_count \
+		and successful_load_count == expected_request_count \
+		and successful_play_count == expected_request_count \
+		and physical_cache_keys.size() == 2 \
+		and cleanup_to_baseline_count == FEATURE_PCM_BOUNDARY_COUNT \
+		and cleanup_evicted_key_count == FEATURE_PCM_BOUNDARY_COUNT * physical_cache_keys.size()
+	if not aggregate_ok:
+		failures.append("Feature PCM soak aggregate did not complete all contextual requests, production handoffs, or run-boundary cleanups.")
+	feature_pcm_evidence = {
+		"schema": "beat_the_house.foundation_feature_pcm_soak/v1",
+		"passed": aggregate_ok and failures.size() == failure_count_before,
+		"seed_prefix": seed_prefix,
+		"boundary_count": boundaries.size(),
+		"requests_per_boundary": FEATURE_PCM_REQUESTS_PER_BOUNDARY,
+		"request_count": expected_request_count,
+		"distinct_context_count": all_contexts.size(),
+		"successful_load_count": successful_load_count,
+		"successful_play_count": successful_play_count,
+		"physical_cache_keys": physical_cache_keys,
+		"cache_budget_bytes": FEATURE_PCM_EXPECTED_BUDGET_BYTES,
+		"maximum_populated_bytes": maximum_populated_bytes,
+		"maximum_combined_bytes": maximum_combined_bytes,
+		"cleanup_to_baseline_count": cleanup_to_baseline_count,
+		"cleanup_evicted_key_count": cleanup_evicted_key_count,
+		"baseline": baseline,
+		"boundaries": boundaries,
+	}
+	player.call("stop")
+	player.call("clear_run_scoped_caches")
+	app.call("return_to_main_menu")
+	await _settle(4)
+
+
+func _feature_pcm_policy_within_budget(policy: Dictionary) -> bool:
+	var budget_bytes := int(policy.get("budget_bytes", -1))
+	var raw_bytes := int(policy.get("raw_bytes", -1))
+	var encoded_bytes := int(policy.get("encoded_bytes", -1))
+	var cache_bytes := int(policy.get("bytes", -1))
+	var web_decoded_bytes := int(policy.get("web_decoded_bytes", -1))
+	var combined_bytes := int(policy.get("combined_bytes", -1))
+	var combined_budget_bytes := int(policy.get("combined_budget_bytes", -1))
+	return budget_bytes == FEATURE_PCM_EXPECTED_BUDGET_BYTES \
+		and combined_budget_bytes == FEATURE_PCM_EXPECTED_BUDGET_BYTES \
+		and cache_bytes >= 0 \
+		and raw_bytes >= 0 \
+		and encoded_bytes >= 0 \
+		and web_decoded_bytes >= 0 \
+		and cache_bytes == raw_bytes + encoded_bytes \
+		and combined_bytes == cache_bytes + web_decoded_bytes \
+		and cache_bytes <= budget_bytes \
+		and combined_bytes <= combined_budget_bytes \
+		and bool(policy.get("combined_within_budget", false))
+
+
+func _feature_pcm_accounting(policy: Dictionary) -> Dictionary:
+	var entry_bytes := _dict(policy.get("entry_bytes", {}))
+	var entry_raw_bytes := _dict(policy.get("entry_raw_bytes", {}))
+	var entry_encoded_bytes := _dict(policy.get("entry_encoded_bytes", {}))
+	var feature_keys: Array = []
+	var feature_bytes := 0
+	var feature_raw_bytes := 0
+	var feature_encoded_bytes := 0
+	for key_value in entry_bytes.keys():
+		var key := str(key_value)
+		if not key.begins_with("feature_"):
+			continue
+		feature_keys.append(key)
+		feature_bytes += int(entry_bytes.get(key_value, 0))
+		feature_raw_bytes += int(entry_raw_bytes.get(key_value, 0))
+		feature_encoded_bytes += int(entry_encoded_bytes.get(key_value, 0))
+	feature_keys.sort()
+	return {
+		"feature_entry_count": feature_keys.size(),
+		"feature_bytes": feature_bytes,
+		"feature_raw_bytes": feature_raw_bytes,
+		"feature_encoded_bytes": feature_encoded_bytes,
+		"feature_keys": feature_keys,
+	}
+
+
+func _feature_pcm_cleanup_matches_baseline(debug_snapshot: Dictionary, policy: Dictionary, baseline: Dictionary, physical_keys: Array) -> bool:
+	var feature := _feature_pcm_accounting(policy)
+	var feature_entry_count := int(feature.get("feature_entry_count", -1))
+	var feature_bytes := int(feature.get("feature_bytes", -1))
+	var entry_bytes := _dict(policy.get("entry_bytes", {}))
+	var policy_keys := _array(policy.get("keys", []))
+	for physical_key_value in physical_keys:
+		var physical_key := str(physical_key_value)
+		if entry_bytes.has(physical_key) or policy_keys.has(physical_key):
+			return false
+	return feature_entry_count == int(baseline.get("feature_entry_count", -1)) \
+		and feature_bytes == int(baseline.get("feature_bytes", -1)) \
+		and int(debug_snapshot.get("feature_stem_cache_size", -1)) == int(baseline.get("debug_feature_entry_count", -1)) \
+		and int(policy.get("bytes", -1)) == int(baseline.get("cache_bytes", -1)) \
+		and int(policy.get("raw_bytes", -1)) == int(baseline.get("cache_raw_bytes", -1)) \
+		and int(policy.get("encoded_bytes", -1)) == int(baseline.get("cache_encoded_bytes", -1)) \
+		and int(policy.get("web_decoded_bytes", -1)) == int(baseline.get("web_decoded_bytes", -1)) \
+		and int(policy.get("combined_bytes", -1)) == int(baseline.get("combined_bytes", -1)) \
+		and _feature_pcm_policy_within_budget(policy)
 
 
 func _drive_action() -> void:
@@ -564,6 +848,30 @@ func _assert_coverage() -> void:
 	var slot_background_cache_cap := int(coverage.get("slot_background_texture_cache_cap", 0))
 	if slot_background_cache_cap <= 0 or int(coverage.get("slot_background_textures_prewarmed", 0)) != slot_background_cache_cap:
 		failures.append("Soak probe did not prewarm the bounded slot background cache to its cap.")
+	_assert_feature_pcm_coverage()
+
+
+func _assert_feature_pcm_coverage() -> void:
+	var expected_request_count := FEATURE_PCM_BOUNDARY_COUNT * FEATURE_PCM_REQUESTS_PER_BOUNDARY
+	if not bool(feature_pcm_evidence.get("passed", false)):
+		failures.append("Soak probe feature PCM evidence did not pass.")
+	if str(feature_pcm_evidence.get("seed_prefix", "")) != seed_prefix:
+		failures.append("Soak probe feature PCM evidence lost its seed-prefix provenance.")
+	if int(feature_pcm_evidence.get("boundary_count", 0)) != FEATURE_PCM_BOUNDARY_COUNT:
+		failures.append("Soak probe did not exercise feature PCM across %d run boundaries." % FEATURE_PCM_BOUNDARY_COUNT)
+	if int(feature_pcm_evidence.get("requests_per_boundary", 0)) != FEATURE_PCM_REQUESTS_PER_BOUNDARY \
+			or int(feature_pcm_evidence.get("distinct_context_count", 0)) != expected_request_count:
+		failures.append("Soak probe did not exercise %d distinct feature contexts per boundary." % FEATURE_PCM_REQUESTS_PER_BOUNDARY)
+	if int(feature_pcm_evidence.get("successful_load_count", 0)) != expected_request_count \
+			or int(feature_pcm_evidence.get("successful_play_count", 0)) != expected_request_count:
+		failures.append("Soak probe did not complete every production feature PCM load/play handoff.")
+	if _array(feature_pcm_evidence.get("physical_cache_keys", [])).size() != 2:
+		failures.append("Soak probe feature contexts did not deduplicate to the two delivered physical packs.")
+	if int(feature_pcm_evidence.get("cache_budget_bytes", 0)) != FEATURE_PCM_EXPECTED_BUDGET_BYTES:
+		failures.append("Soak probe feature PCM evidence changed the declared 64 MiB budget.")
+	if int(feature_pcm_evidence.get("cleanup_to_baseline_count", 0)) != FEATURE_PCM_BOUNDARY_COUNT \
+			or int(feature_pcm_evidence.get("cleanup_evicted_key_count", 0)) < FEATURE_PCM_BOUNDARY_COUNT * 2:
+		failures.append("Soak probe feature PCM did not return to baseline after every run boundary.")
 
 
 func _assert_growth() -> void:
@@ -731,11 +1039,19 @@ func _print_summary() -> void:
 	var retained_memory := _median_tail_value(retained_samples, "memory_static_bytes", RETAINED_VALUE_TAIL_SAMPLE_COUNT)
 	var retained_objects := _median_tail_value(retained_samples, "object_count", RETAINED_VALUE_TAIL_SAMPLE_COUNT)
 	var retained_nodes := _median_tail_value(retained_samples, "node_count", RETAINED_VALUE_TAIL_SAMPLE_COUNT)
-	print("FOUNDATION_SOAK_OVERALL status=%s samples=%d sim_minutes=%d actions=%d memory_growth=%d object_growth=%d node_growth=%d serialized_max=%d coverage=%s report=%s" % [
+	print("FOUNDATION_SOAK_OVERALL status=%s seed_prefix=%s samples=%d sim_minutes=%d actions=%d feature_boundaries=%d feature_contexts=%d feature_loads=%d feature_plays=%d feature_cleanups=%d feature_evicted_keys=%d pcm_budget=%d memory_growth=%d object_growth=%d node_growth=%d serialized_max=%d coverage=%s report=%s" % [
 		"PASS" if failures.is_empty() else "FAIL",
+		seed_prefix,
 		samples.size(),
 		sim_minutes,
 		action_counter,
+		int(feature_pcm_evidence.get("boundary_count", 0)),
+		int(feature_pcm_evidence.get("distinct_context_count", 0)),
+		int(feature_pcm_evidence.get("successful_load_count", 0)),
+		int(feature_pcm_evidence.get("successful_play_count", 0)),
+		int(feature_pcm_evidence.get("cleanup_to_baseline_count", 0)),
+		int(feature_pcm_evidence.get("cleanup_evicted_key_count", 0)),
+		int(feature_pcm_evidence.get("cache_budget_bytes", 0)),
 		int(retained_memory) - int(warmup_sample.get("memory_static_bytes", 0)),
 		int(retained_objects) - int(warmup_sample.get("object_count", 0)),
 		int(retained_nodes) - int(warmup_sample.get("node_count", 0)),
@@ -773,7 +1089,9 @@ func _write_report() -> void:
 		"warnings": warnings.duplicate(),
 		"coverage": coverage.duplicate(true),
 		"total_coverage": _total_coverage_snapshot(),
+		"feature_pcm": feature_pcm_evidence.duplicate(true),
 		"config": {
+			"seed_prefix": seed_prefix,
 			"sim_minutes": sim_minutes,
 			"sample_interval_minutes": SAMPLE_INTERVAL_MINUTES,
 			"actions_per_sample": actions_per_sample,
