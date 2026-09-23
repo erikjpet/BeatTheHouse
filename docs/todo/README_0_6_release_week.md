@@ -66,7 +66,7 @@ next finds the answer resumes the work. Every row must follow its protocol.
 | --- | --- | --- | --- | --- |
 | 0 | rw06_pre | `../todone/rw06_pre_worker_handoff_message.md`: the running worker finishes on its branch, merges to main and deletes the branch | — | DONE (`54c7d788`) |
 | 1 | rw06_0 | `../todone/rw06_0_custody_commit_prompt.md` | rw06_pre reports MERGED (fixes on main, branch deleted) | DONE (`7da3e5da`) |
-| 1–4 | rw06_1 | `rw06_1_fixed_slot_rooms_prompt.md` | rw06_0 | IN_PROGRESS / WAITING Q-004 (current pushed tip `0948d2b8`; parser is green, but focused overflow and three-room capture remain red; land on `main` by end of 2026-09-24, using stationary actors/overflow rather than delaying on optional route animation) |
+| 1–4 | rw06_1 | `rw06_1_fixed_slot_rooms_prompt.md` | rw06_0 | IN_PROGRESS (Q-004 confirmed the reserved sheet was absent and therefore gave no layout approval; corrected three-room evidence is being generated, then a new approval question will be asked; land on `main` by end of 2026-09-24, using stationary actors/authenticated overflow rather than delaying on optional route animation) |
 | 1–5 | rw06_2 | `rw06_2_three_endings_prompt.md` | rw06_0 (runs parallel to rw06_1; final pass after rw06_1) | IN_PROGRESS (first Clean replay-policy blocker fixed at `760bdf4c`; second probe's public scroll-bridge gap is fixed at pushed tip `f5c56f72`, with engine-free regression green; third non-qualifying probe waits for the serialized Godot lease while qualifying routes wait for rw06_1) |
 | 1–3 | rw06_5 | `../todone/rw06_5_owner_gameplay_fixes_prompt.md`: clicking a person starts a conversation, blackjack count shown between hands, Cass needs a real count | rw06_0 (parallel with rw06_1/rw06_2) | DONE (`1038a31f`) |
 | 5 | owner run | Owner plays one ending start to finish; notes go to the scoreboard | rw06_1, rw06_5 | TODO (rw06_5 DONE; waits for rw06_1) |
@@ -89,7 +89,7 @@ place, and add one dated line to the history below.
 | Open P1 (High) defects | 0 | 7 (UIENV-PF-003…008; RP-006 packaged proof) | release orchestrator |
 | Open P2 (Medium) defects | 0 | 1 placement (UIENV-PF-009); 0 non-placement | release orchestrator |
 | Endings reaching the win state through real UI | 3/3 | unknown | — |
-| Owner day-2 room sample (3 rooms) | approved | WAITING Q-004; requested path is reserved, but no reviewable sheet exists yet because fail-closed layout validation rejected Corner Store, Bar and Grand Casino; repair in progress at `0948d2b8` | release orchestrator |
+| Owner day-2 room sample (3 rooms) | approved | NOT APPROVED; Q-004 reported the requested file missing and the partial all-room sheet insufficient. Corrected Corner Store/Bar/Grand Casino normal+expanded capture is in progress; ask a new question only after the reviewable file exists. | release orchestrator |
 | Owner start-to-finish run | done, no blockers | not started | — |
 | Owner run notes | (owner writes blockers here; non-blockers go to the 0.6.1 backlog) | — | — |
 | Release gate items green (rw06_4) | all | 0 | — |
@@ -112,6 +112,7 @@ History (newest last):
 - 2026-09-23 release orchestrator: rw06_2 fixed that first replay-policy blocker narrowly at product commit `96ad4f9d` / pushed tip `760bdf4c`: only a visible tutorial-guide TalkDock with exactly one enabled public `continue` choice precedes coach dismissal. The strengthened source regression and full engine-free validator pass; a second non-qualifying Clean probe is using the otherwise-idle serialized Godot slot.
 - 2026-09-23 release orchestrator: the second non-qualifying Clean probe confirmed the TalkDock/coach fix, then stopped fail-closed after action 4 when `Skip Lessons` sat below a visible Run Menu scroll viewport and the production-input bridge had no semantic scroll command. This is a public harness-reachability gap, not an ending arc, placement or economy failure. Evidence: `.tmp/rw06_2/exploratory/clean-main-11c584bd-probe2/20260923-094003-789-18960/run-01/summary.json` (SHA-256 `D876EF3276898B59AC33B0E9F10C8A7953184E6EA29CA352A3DFFE03E74AF344`); a narrow public-only scroll bridge and hostile regression are in progress.
 - 2026-09-23 release orchestrator: rw06_2's public-only Run Menu scroll bridge and its pre-scroll `Skip Lessons` call site are corrected at product commit `00a832ba` / pushed tip `f5c56f72`. The bridge uses real wheel input, verifies visible viewport motion, remains bounded to public rendered state, and passes its hostile source regression. A third non-qualifying Clean probe is queued behind rw06_1's focused contract/contact-sheet lease.
+- 2026-09-23 release orchestrator: processed Q-004 without claiming approval: the owner confirmed the reserved day-2 sheet did not exist and the partial all-room image was insufficient to judge the full layouts. rw06_1 continues repairing and capturing the exact Corner Store, Bar and Grand Casino normal+expanded sample; a fresh owner question will be appended only after that artifact exists and is visually verified.
 
 ## Rules every row inherits
 
