@@ -81,3 +81,11 @@ Resume: Orchestrator: amend `rw06_4_release_gate_ship_prompt.md`, `README_0_6_re
 4. Tagging `v0.6.0` happens after the owner confirms in this file that they uploaded.
 Commit the amendments, then set this entry to RESOLVED.
 Answer: A. The owner always updates the web version personally. Provide the zips only.
+
+### Q-004 · rw06_1 · Interim three-room room layout
+Status: OPEN
+Asked: release orchestrator, 2026-09-23
+Question: Does the interim fixed-slot layout direction look right for Corner Store, the Bar and Grand Casino in normal and expanded views? The current-tip sheet is `D:\Projects\Beat-The-House-worktrees\rw06_1-phase0\.tmp\rw06_1\contact_sheet\interim_44758fad\day2_contact_sheet.png`.
+Options: A) Direction approved; continue (recommended)  B) Needs changes; list the rooms or issues in Answer
+Resume: rw06_1 continues while OPEN. When ANSWERED, the orchestrator applies any layout feedback across all rooms, records non-blocking polish in `docs/plans/0.6.1_backlog.md`, and marks this RESOLVED.
+Answer:
