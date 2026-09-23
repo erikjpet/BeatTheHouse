@@ -52,6 +52,16 @@ from 0 to 1. A clipped Dealer's Advice CTA stopped the run at action 15 before
 any game or Clean-ladder decision, so this is a preliminary visible checkpoint,
 not yet an affordability or tuning conclusion. Its money-curve SHA-256 is
 `DEE1A481172A67DBC49A4796534265736933D69713A4A6E2EB3AD614E2B3ED43`.
+The following fixed-seed probe continued naturally through Gas Station ($93,
+heat 1), Motel ($87, heat 0), Roadside Bar ($79, heat 0), and Kitty Cat Lounge
+($63, heat 2), where the visible High Roller Invitation appeared. That is $37
+of travel spend before accepting the invitation. Cash is below the nominal $70
+Grand Casino travel cost, but the invitation's effect on that cost is not yet
+observed; therefore this is an affordability signal, not evidence of an economy
+wall and not a tuning recommendation. The run stopped on an exact-action replay
+policy defect before accepting the clearly rendered choice. Its money-curve
+SHA-256 is
+`B0BC21CEF1AFCC823237881BAD87C8618EC03E691AE7F66DE2C96C1B12D56867`.
 Copy the exact values from the qualifying route summaries into this table:
 
 | Ending | Seed | Start cash | Grand entry cash | Lowest cash | Chips bought | End cash | Peak heat | Counted actions | Friction / rw06_3 recommendation |

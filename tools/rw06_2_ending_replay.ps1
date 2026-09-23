@@ -1589,8 +1589,7 @@ function Open-EventObject {
 
 function Accept-GrandCasinoInviteIfVisible {
     if ($null -eq (Find-CanvasObject -SemanticId 'event:grand_casino_invite')) { return $false }
-    Open-EventObject -EventId 'grand_casino_invite' -Intent 'open the visible High Roller Invitation'
-    $null = Choose-VisibleChoice -ChoiceId 'accept_invite' -Intent 'accept the visible invitation to the Grand Casino'
+    Invoke-EventObjectChoice -EventId 'grand_casino_invite' -ChoiceId 'accept_invite' -Intent 'accept the visible invitation to the Grand Casino'
     Wait-Frames -Frames 15
     return $true
 }

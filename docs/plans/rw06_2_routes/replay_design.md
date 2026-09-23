@@ -268,6 +268,21 @@ checkpoint, screenshots, and final summary used for acceptance.
   public trace SHA-256 is
   `313C5F9D389E32EBD37887B72312D14EB91D92C2AAD9BDBCE4F2FE65C752E266`.
   Cleanup was graceful with empty stderr and zero surviving Godot processes.
+- The following non-qualifying launch at pushed tip `ef082651` proved the coach
+  correction and reached the visible High Roller Invitation after 29 counted
+  actions. Selecting it published two exact enabled room actions, **Take the
+  invite** and **Not yet**. The runner then failed closed because its generic
+  event-open helper will not guess among explicit actions. This is a
+  replay-script policy defect, not a product arc breaker: the route now uses
+  `Invoke-EventObjectChoice` with exact event `grand_casino_invite` and choice
+  `accept_invite`, and a source contract prohibits returning to generic open.
+  The public trace SHA-256 is
+  `7426DB80D6390B9F722A1A39EC5535A98FEEB0FD22DF4B6165C756079E8B326F`;
+  the selected-object observation SHA-256 is
+  `6EBF309F25CA8A1806A1F2B25771DE72876516E221E2EBDFCDEFDE0FE797DBA3`.
+  Cleanup was graceful with empty stderr and zero surviving Godot processes.
+  The engine-free replay source and semantic hostile-fixture contracts plus the
+  full static project gate pass after the correction.
 - Final qualifying evidence intentionally waits for rw06_1 to land.
 
 ## Open route risks

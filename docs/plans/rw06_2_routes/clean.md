@@ -409,6 +409,57 @@ Evidence:
   `.tmp/agent_playtest/2026-09-23/rw062-clean-20992-1-6c21f053db/0027.result.json`
   (SHA-256 `19351D91B90D768B44D500C515B3CD2E32C9F3D297453039DE628BA93051731C`).
 
+## 2026-09-23 invitation-action exploratory probe (non-qualifying)
+
+Pushed replay tip `ef082651`. The long-copy coach correction and its strict
+fully-visible selector both worked. The fixed-seed normal route then traveled
+from $100 through Gas Station ($93, heat 1), Motel ($87, heat 0), Roadside Bar
+($79, heat 0), and Kitty Cat Lounge ($63, heat 2). At action 29 it selected the
+visible High Roller Invitation. The selected object clearly exposed two enabled
+room actions: **Take the invite**
+(`event_response:grand_casino_invite:accept_invite`) and **Not yet**
+(`event_response:grand_casino_invite:not_yet`).
+
+The replay stopped because `Accept-GrandCasinoInviteIfVisible` sent the object
+through the generic event-open path, which correctly refuses to guess between
+multiple explicit actions. This is a replay-script policy defect, not a product
+dead end or unclear-goal finding. The route now calls the existing exact-choice
+helper for `grand_casino_invite` / `accept_invite`, and its source contract
+rejects a regression to generic opening. No product code or game rule changed.
+
+Evidence:
+
+- Run summary, 29 counted actions:
+  `.tmp/rw06_2/exploratory/clean-tip-ef082651-probe12/20260923-123530-676-1168/run-01/summary.json`
+  (SHA-256 `6F4D1316A9F495A34482AF7D7B96026125F1CADCB0FD26660F8E9A7F6C773FD7`).
+- Public trace:
+  `.tmp/rw06_2/exploratory/clean-tip-ef082651-probe12/20260923-123530-676-1168/run-01/public_trace.ndjson`
+  (SHA-256 `7426DB80D6390B9F722A1A39EC5535A98FEEB0FD22DF4B6165C756079E8B326F`).
+- Money curve:
+  `.tmp/rw06_2/exploratory/clean-tip-ef082651-probe12/20260923-123530-676-1168/run-01/money_curve.ndjson`
+  (SHA-256 `B0BC21CEF1AFCC823237881BAD87C8618EC03E691AE7F66DE2C96C1B12D56867`).
+- Selected invitation observation with both exact actions:
+  `.tmp/agent_playtest/2026-09-23/rw062-clean-1168-1-d60ba4d132/0046.result.json`
+  (SHA-256 `6EBF309F25CA8A1806A1F2B25771DE72876516E221E2EBDFCDEFDE0FE797DBA3`).
+- Matching screenshot:
+  `.tmp/agent_playtest/2026-09-23/rw062-clean-1168-1-d60ba4d132/0046.png`
+  (SHA-256 `6FB442D98AEA4A8892DE82FAA93F7CEF8E94403E1ECB4D1874D951DBC8843B84`).
+- Graceful quit result:
+  `.tmp/agent_playtest/2026-09-23/rw062-clean-1168-1-d60ba4d132/0047.result.json`
+  (SHA-256 `42DC61B13004485CF5AB94101471CBDEEA780AEB329BAAC8069D1DCDB21399DF`).
+
+The exact owned process exited without force, stderr was empty, and the global
+process census returned zero. The $37 spent reaching the invitation is an early
+affordability signal only: whether accepting it changes or waives the nominal
+$70 Grand Casino trip cost remains unobserved, so this probe does not establish
+an economy wall. After the exact-choice correction, the engine-free replay
+source contract passed (report SHA-256
+`80D0FBB01FC8AC836682ECEEBF10873B395DD5CB5ED301226F90C3CF6E877C05`),
+its semantic hostile-fixture report passed (SHA-256
+`B6C94BE2377EBBE3D7F4EB1A00A37EC6DC35BCB519FA2B3CBDDF3146F1E6ED55`),
+and the full static project gate passed. No second Godot run was used for this
+lease.
+
 ## Player intent
 
 Reach the Grand Casino, earn Bronze, Silver, and Gold Players Card tiers without
