@@ -1,6 +1,32 @@
 # rw06_0 — Verify the worker merge, commit the plan, organize todo
 
-Status: TODO. Self-contained. Launch with this file only.
+Status: DONE. Completed 2026-09-23 by the release orchestrator.
+
+## Execution record
+
+- Verified postfix merge `54c7d788d418e1f1438ac99e24ee4c8f9a772246`,
+  SNAPSHOT `78a62257745602c40ec804740ee9f95d789606db`, harvest,
+  tested-tree identity, and deleted snapshot branch/worktree custody.
+- Committed the release-week plan at `64b5d747`, organized archived/deferred
+  custody at `f1996840`, and carried the owner-only artifact-handoff directive
+  through `c55e6f46` and `46412a1c`.
+- `tools/validate_project.ps1`: PASS on the merged custody tree.
+- Smoke: 9/10 stages passed in the full run at
+  `.tmp/rw06_0/20260923_004252_smoke/summary.json`. Its sole failure was
+  the fresh worktree's missing ignored `.godot/extension_list.cfg`, which made
+  the already-present, hash-identical native DLL fall back to GDScript. The
+  authored `tools/foundation_performance_probe.ps1` wrapper rebuilt and
+  registered the locked debug solver, then passed the unchanged Smoke profile
+  at `.tmp/rw06_0/foundation_perf_smoke_retest.json` with `native_v3`. Combined
+  census: PASS 10/10; no threshold or gate changed.
+- Contract census reused from worker head `54c7d788`: 18/18 Foundation shards
+  passed and the one inherited repeated-reprieve room/scenario-composition
+  standalone stage remained. This reuse is valid because
+  `git diff --stat 54c7d788 f1996840 -- . ':!docs'` is empty; the two subsequent
+  Q-003 commits are also docs-only, so the production tree is identical.
+- Superseded prompts were archived, deferred prompts moved intact, the legacy
+  board redirected to the live scoreboard, and no tracked test or product file
+  was changed by this row.
 
 ## Why
 

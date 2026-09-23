@@ -65,10 +65,10 @@ next finds the answer resumes the work. Every row must follow its protocol.
 | Day | Row | Prompt | Depends on | Status |
 | --- | --- | --- | --- | --- |
 | 0 | rw06_pre | `../todone/rw06_pre_worker_handoff_message.md`: the running worker finishes on its branch, merges to main and deletes the branch | — | DONE (`54c7d788`) |
-| 1 | rw06_0 | `rw06_0_custody_commit_prompt.md` | rw06_pre reports MERGED (fixes on main, branch deleted) | IN_PROGRESS |
-| 1–4 | rw06_1 | `rw06_1_fixed_slot_rooms_prompt.md` | rw06_0 | TODO |
-| 1–5 | rw06_2 | `rw06_2_three_endings_prompt.md` | rw06_0 (runs parallel to rw06_1; final pass after rw06_1) | TODO |
-| 1–3 | rw06_5 | `rw06_5_owner_gameplay_fixes_prompt.md`: clicking a person starts a conversation, blackjack count shown between hands, Cass needs a real count | rw06_0 (parallel with rw06_1/rw06_2) | TODO |
+| 1 | rw06_0 | `../todone/rw06_0_custody_commit_prompt.md` | rw06_pre reports MERGED (fixes on main, branch deleted) | DONE (`46412a1c`) |
+| 1–4 | rw06_1 | `rw06_1_fixed_slot_rooms_prompt.md` | rw06_0 | IN_PROGRESS |
+| 1–5 | rw06_2 | `rw06_2_three_endings_prompt.md` | rw06_0 (runs parallel to rw06_1; final pass after rw06_1) | IN_PROGRESS |
+| 1–3 | rw06_5 | `rw06_5_owner_gameplay_fixes_prompt.md`: clicking a person starts a conversation, blackjack count shown between hands, Cass needs a real count | rw06_0 (parallel with rw06_1/rw06_2) | IN_PROGRESS |
 | 5 | owner run | Owner plays one ending start to finish; notes go to the scoreboard | rw06_1, rw06_2 first pass | TODO |
 | 5 | rw06_3 | `rw06_3_balance_prompt.md` | rw06_2 routes exist | TODO |
 | 6–7 | rw06_4 | `rw06_4_release_gate_ship_prompt.md` | rw06_1, rw06_2, rw06_3, rw06_5 | TODO |
@@ -84,8 +84,8 @@ place, and add one dated line to the history below.
 
 | Metric | Target | Current | Last updated by |
 | --- | --- | --- | --- |
-| `check_godot.ps1 -Suite Smoke` | PASS | PASS (`54c7d788`, 10/10) | release orchestrator |
-| `check_godot.ps1 -Suite Contract` failing shards | 0 | 0/18 Foundation shards; 1 inherited repeated-reprieve standalone stage remains | release orchestrator |
+| `check_godot.ps1 -Suite Smoke` | PASS | PASS (`46412a1c`, 10/10 composite: 9/10 full suite plus authored native-solver retest of the sole fresh-worktree cache miss) | release orchestrator |
+| `check_godot.ps1 -Suite Contract` failing shards | 0 | 0/18 Foundation shards; 1 inherited repeated-reprieve room/scenario-composition standalone stage remains. Reused worker census at `54c7d788`: `git diff --stat 54c7d788 f1996840 -- . ':!docs'` is empty, and the later Q-003 commits are also docs-only. | release orchestrator |
 | Open P1 (High) defects | 0 | 7 (UIENV-PF-003…008; RP-006 packaged proof) | release orchestrator |
 | Open P2 (Medium) defects | 0 | 1 placement (UIENV-PF-009); 0 non-placement | release orchestrator |
 | Endings reaching the win state through real UI | 3/3 | unknown | — |
@@ -93,12 +93,13 @@ place, and add one dated line to the history below.
 | Owner start-to-finish run | done, no blockers | not started | — |
 | Owner run notes | (owner writes blockers here; non-blockers go to the 0.6.1 backlog) | — | — |
 | Release gate items green (rw06_4) | all | 0 | — |
-| Unmerged row branches (`git branch -a`) | 0 | 3 local release-week branches (rw06_0, rw06_1, rw06_2) | release orchestrator |
+| Unmerged row branches (`git branch -a`) | 0 | 3 active release-week branches (rw06_1, rw06_2, rw06_5) | release orchestrator |
 
 History (newest last):
 
 - 2026-09-22 PM: baseline recorded from the 9/21 post-fix ledger and playtest.
 - 2026-09-23 release orchestrator: verified postfix merge `54c7d788`, SNAPSHOT ancestry, harvest, tested-tree identity and complete branch/worktree cleanup; committed the release-week plan and started rw06_0.
+- 2026-09-23 release orchestrator: completed rw06_0 custody at `46412a1c`; validator passed, Smoke closed 10/10 after the authored native-solver wrapper corrected a fresh-worktree extension-cache miss without changing a budget, and the worker Contract census was reused because every change since `54c7d788` is docs-only. Started rw06_1, rw06_2 and rw06_5 in parallel.
 
 ## Rules every row inherits
 
