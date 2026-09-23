@@ -391,6 +391,190 @@ def simulate_scenario_binding(
     return bindings, room_count, overflow_count, action_count
 
 
+def conservative_base_label_scenario_census(
+    check: Check,
+    maps_by_id: dict[str, dict[str, Any]],
+    replay_rows: list[tuple[str, list[dict[str, Any]], dict[str, dict[str, str]]]],
+    expected_scenario_ids: set[str],
+    board: tuple[float, float],
+) -> dict[str, Any]:
+    """Prove the fixed base/stage planes are disjoint for every legal phase.
+
+    Base inventory occupants vary by seed and by randomized category.  The
+    production renderer bounds every non-empty room label to 126x26, so this
+    conservative draft treats every authored base slot as if it carried that
+    maximum rectangle.  That deliberately over-approximates base occupancy and
+    includes mutually exclusive/fallback-capacity slots; it is a stronger
+    authoring envelope, not a claim that every base combination is reachable.
+    Scenario authority remains exact: only catalog-authorized, reachable phase
+    snapshots and their actual deterministic bindings are compared.
+    """
+    pair_tests = 0
+    snapshot_count = 0
+    scenario_authority_count = 0
+    base_slot_observations = 0
+    legal_scenarios_seen: set[str] = set()
+    conflicts: dict[tuple[str, str, str, str], set[str]] = {}
+    base_base_pair_tests = 0
+    base_base_conflicts: list[tuple[str, str, str, str]] = []
+    base_slot_count = 0
+
+    def record_conflict(
+        map_id: str,
+        base_slot_id: str,
+        scenario_slot_id: str,
+        kind: str,
+        state: str,
+    ) -> None:
+        conflicts.setdefault((map_id, base_slot_id, scenario_slot_id, kind), set()).add(state)
+
+    # Deliberately stronger-than-runtime envelope: pair every reusable base slot
+    # at maximum renderer-bounded label size, including capacity/fallback slots
+    # that may be mutually exclusive. Exact legal witnesses may replace this
+    # draft if the conservative geometry cannot remain locally associated.
+    for map_id, map_data in sorted(maps_by_id.items()):
+        base_slots = [slot for slot in values(map_data.get("base_slots")) if isinstance(slot, dict)]
+        base_slot_count += len(base_slots)
+        parsed: list[tuple[str, tuple[float, float, float, float], tuple[float, float, float, float], tuple[float, float, float, float]]] = []
+        for base_slot in base_slots:
+            base_slot_id = str(base_slot.get("id", ""))
+            base_hit = rect(base_slot.get("hit_rect"))
+            base_anchor = point(base_slot.get("label_anchor"))
+            check.require(bool(base_slot_id), f"{map_id}: base label census found an unnamed slot")
+            check.require(base_hit is not None, f"{map_id}.{base_slot_id}: label-capable base slot has no target")
+            check.require(base_anchor is not None, f"{map_id}.{base_slot_id}: label-capable base slot has no label anchor")
+            if not base_slot_id or base_hit is None or base_anchor is None:
+                continue
+            base_label_bounds = label_rect(base_slot, "M" * 64, board)
+            horizontal_gap = max(
+                base_label_bounds[0] - (base_hit[0] + base_hit[2]),
+                base_hit[0] - (base_label_bounds[0] + base_label_bounds[2]),
+                0.0,
+            )
+            vertical_gap = max(
+                base_label_bounds[1] - (base_hit[1] + base_hit[3]),
+                base_hit[1] - (base_label_bounds[1] + base_label_bounds[3]),
+                0.0,
+            )
+            check.require(
+                math.hypot(horizontal_gap, vertical_gap) <= 32.0 + EPSILON,
+                f"{map_id}.{base_slot_id}: maximum base label is not visually associated with its target within 32px",
+            )
+            parsed.append((base_slot_id, base_hit, expanded(base_hit, board), base_label_bounds))
+        for index, (left_id, left_hit, left_small, left_label) in enumerate(parsed):
+            for right_id, right_hit, right_small, right_label in parsed[index + 1:]:
+                tests = (
+                    ("maximum labels overlap", left_label, right_label),
+                    ("left maximum label vs right normal target", left_label, right_hit),
+                    ("left maximum label vs right expanded target", left_label, right_small),
+                    ("right maximum label vs left normal target", right_label, left_hit),
+                    ("right maximum label vs left expanded target", right_label, left_small),
+                )
+                base_base_pair_tests += len(tests)
+                for kind, left_bounds, right_bounds in tests:
+                    if intersects(left_bounds, right_bounds):
+                        base_base_conflicts.append((map_id, left_id, right_id, kind))
+
+    for map_id, snapshot, bindings in replay_rows:
+        map_data = maps_by_id.get(map_id, {})
+        slots_by_id = {str(slot.get("id", "")): slot for slot in all_slots(map_data)}
+        base_slots = [slot for slot in values(map_data.get("base_slots")) if isinstance(slot, dict)]
+        scenario_id, phase_id = snapshot_tags(snapshot)
+        check.require(bool(scenario_id) and "|" not in scenario_id, f"{map_id}: legal phase snapshot has ambiguous scenario ownership {scenario_id!r}")
+        check.require(scenario_id in expected_scenario_ids, f"{map_id}: phase snapshot references unauthorized scenario {scenario_id!r}")
+        if scenario_id:
+            legal_scenarios_seen.add(scenario_id)
+        snapshot_count += 1
+        semantic_by_identity = {
+            str(semantic.get("identity", "")): semantic
+            for semantic in snapshot
+            if isinstance(semantic, dict)
+        }
+        scenario_authority: list[tuple[str, str, tuple[float, float, float, float], tuple[float, float, float, float], tuple[float, float, float, float] | None]] = []
+        for identity, binding in bindings.items():
+            if binding.get("mode") != "room":
+                continue
+            scenario_slot_id = str(binding.get("slot_id", ""))
+            scenario_slot = slots_by_id.get(scenario_slot_id, {})
+            scenario_hit = rect(scenario_slot.get("hit_rect"))
+            check.require(scenario_hit is not None, f"{map_id}.{identity}: bound scenario slot {scenario_slot_id} has no target")
+            if scenario_hit is None:
+                continue
+            scenario_label = SlotAuthoring.placement_label(semantic_by_identity.get(identity, {}))
+            scenario_label_bounds = label_rect(scenario_slot, scenario_label, board) if scenario_label.strip() else None
+            scenario_authority.append((
+                identity,
+                scenario_slot_id,
+                scenario_hit,
+                expanded(scenario_hit, board),
+                scenario_label_bounds,
+            ))
+        scenario_authority_count += len(scenario_authority)
+        state = f"{scenario_id}/{phase_id}"
+        for base_slot in base_slots:
+            base_slot_id = str(base_slot.get("id", ""))
+            base_hit = rect(base_slot.get("hit_rect"))
+            base_anchor = point(base_slot.get("label_anchor"))
+            check.require(bool(base_slot_id), f"{map_id}: base label census found an unnamed slot")
+            check.require(base_hit is not None, f"{map_id}.{base_slot_id}: label-capable base slot has no target")
+            check.require(base_anchor is not None, f"{map_id}.{base_slot_id}: label-capable base slot has no label anchor")
+            if not base_slot_id or base_hit is None or base_anchor is None:
+                continue
+            base_slot_observations += 1
+            # 64 non-space glyphs exceed both production width/wrap thresholds,
+            # yielding the renderer's exact maximum 126x26 label authority.
+            base_label_bounds = label_rect(base_slot, "M" * 64, board)
+            base_small_hit = expanded(base_hit, board)
+            for identity, scenario_slot_id, scenario_hit, scenario_small_hit, scenario_label_bounds in scenario_authority:
+                pair_tests += 2
+                if intersects(base_label_bounds, scenario_hit):
+                    record_conflict(map_id, base_slot_id, scenario_slot_id, "base label vs scenario normal target", f"{state}:{identity}")
+                if intersects(base_label_bounds, scenario_small_hit):
+                    record_conflict(map_id, base_slot_id, scenario_slot_id, "base label vs scenario expanded target", f"{state}:{identity}")
+                if scenario_label_bounds is None:
+                    continue
+                pair_tests += 3
+                if intersects(base_label_bounds, scenario_label_bounds):
+                    record_conflict(map_id, base_slot_id, scenario_slot_id, "base label vs scenario label", f"{state}:{identity}")
+                if intersects(scenario_label_bounds, base_hit):
+                    record_conflict(map_id, base_slot_id, scenario_slot_id, "scenario label vs base normal target", f"{state}:{identity}")
+                if intersects(scenario_label_bounds, base_small_hit):
+                    record_conflict(map_id, base_slot_id, scenario_slot_id, "scenario label vs base expanded target", f"{state}:{identity}")
+
+    check.require(
+        legal_scenarios_seen == expected_scenario_ids,
+        "conservative base/scenario label census did not cover the exact legal scenario catalog "
+        f"(missing={sorted(expected_scenario_ids - legal_scenarios_seen)} extra={sorted(legal_scenarios_seen - expected_scenario_ids)})",
+    )
+    check.require(snapshot_count > 0, "conservative base/scenario label census enumerated no legal phase snapshots")
+    check.require(base_slot_observations > 0, "conservative base/scenario label census observed no label-capable base slots")
+    check.require(scenario_authority_count > 0, "conservative base/scenario label census observed no bound scenario targets")
+    check.require(pair_tests > 0, "conservative base/scenario label census performed no pair tests")
+    for map_id, left_id, right_id, kind in base_base_conflicts:
+        check.errors.append(
+            f"{map_id}: conservative maximum base labels {left_id}/{right_id} conflict: {kind}"
+        )
+    for (map_id, base_slot_id, scenario_slot_id, kind), states in sorted(conflicts.items()):
+        examples = sorted(states)
+        suffix = f"; examples={examples[:4]}" if examples else ""
+        if len(examples) > 4:
+            suffix += f" (+{len(examples) - 4} more legal states)"
+        check.errors.append(
+            f"{map_id}: conservative maximum label at {base_slot_id} conflicts with {scenario_slot_id}: {kind}{suffix}"
+        )
+    return {
+        "snapshots": snapshot_count,
+        "legal_scenarios": len(legal_scenarios_seen),
+        "base_slot_observations": base_slot_observations,
+        "scenario_authorities": scenario_authority_count,
+        "pair_tests": pair_tests,
+        "conflict_count": len(conflicts),
+        "base_slots": base_slot_count,
+        "base_base_pair_tests": base_base_pair_tests,
+        "base_base_conflicts": len(base_base_conflicts),
+    }
+
+
 def snapshot_tags(snapshot: list[dict[str, Any]]) -> tuple[str, str]:
     scenario_ids = sorted({str(item.get("_slot_scenario_id", "")) for item in snapshot if str(item.get("_slot_scenario_id", ""))})
     phase_ids = sorted({str(item.get("_slot_phase_id", "")) for item in snapshot if str(item.get("_slot_phase_id", ""))})
@@ -1107,6 +1291,7 @@ def main() -> int:
     authored_action_count = 0
     complete_rows: list[dict[str, Any]] = []
     active_rows: list[dict[str, Any]] = []
+    complete_binding_replays: list[tuple[str, list[dict[str, Any]], dict[str, dict[str, str]]]] = []
     for map_id, snapshots in complete_snapshots.items():
         map_data = maps_by_id.get(map_id, {})
         check.require(bool(map_data), f"scenario phase inventory references missing map {map_id}")
@@ -1118,6 +1303,7 @@ def main() -> int:
             complete_binding_count += first[1] + first[2]
             complete_overflow_count += first[2]
             authored_action_count += first[3]
+            complete_binding_replays.append((map_id, snapshot, first[0]))
             scenario_id, phase_id = snapshot_tags(snapshot)
             complete_rows.append({
                 "map_id": map_id,
@@ -1156,6 +1342,13 @@ def main() -> int:
     # (including aftermath) still exercises overflow and action reachability.
     check.require(active_overflow_count == 0, f"common active phases must fit authored room slots; saw {active_overflow_count} overflow bindings")
     check.require(authored_action_count > 0, "scenario phase simulation enumerated no authored actions")
+    base_scenario_census = conservative_base_label_scenario_census(
+        check,
+        maps_by_id,
+        complete_binding_replays,
+        set(scenario_defs),
+        board,
+    )
 
     manifest_rows = values(exact_seed_manifest.get("expectations"))
     legal_room_combinations = values(exact_seed_manifest.get("legal_room_combinations"))
@@ -1441,6 +1634,15 @@ def main() -> int:
             "authored_actions": authored_action_count,
             "historical_exact_seeds": len(manifest_rows),
             "historical_legal_room_combinations": len(legal_room_combinations),
+            "base_scenario_snapshots": int(base_scenario_census.get("snapshots", 0)),
+            "base_scenario_legal_scenarios": int(base_scenario_census.get("legal_scenarios", 0)),
+            "base_scenario_base_slot_observations": int(base_scenario_census.get("base_slot_observations", 0)),
+            "base_scenario_authorities": int(base_scenario_census.get("scenario_authorities", 0)),
+            "base_scenario_pair_tests": int(base_scenario_census.get("pair_tests", 0)),
+            "base_scenario_conflicts": int(base_scenario_census.get("conflict_count", 0)),
+            "base_label_slots": int(base_scenario_census.get("base_slots", 0)),
+            "base_base_pair_tests": int(base_scenario_census.get("base_base_pair_tests", 0)),
+            "base_base_conflicts": int(base_scenario_census.get("base_base_conflicts", 0)),
         },
         "day2_samples": day2_sample_report(active_summaries),
         "contact_sheet": contact_sheet,
@@ -1463,7 +1665,10 @@ def main() -> int:
         f"active_overflow={active_overflow_count} active_overflow_rate={active_overflow_rate:.4f} "
         f"complete_snapshots={complete_snapshot_count} complete_bindings={complete_binding_count} "
         f"complete_overflow={complete_overflow_count} authored_actions={authored_action_count} "
-        f"historical_exact_seeds={len(manifest_rows)} report={report_path}"
+        f"historical_exact_seeds={len(manifest_rows)} base_scenario_pair_tests={base_scenario_census.get('pair_tests', 0)} "
+        f"base_scenario_conflicts={base_scenario_census.get('conflict_count', 0)} "
+        f"base_base_pair_tests={base_scenario_census.get('base_base_pair_tests', 0)} "
+        f"base_base_conflicts={base_scenario_census.get('base_base_conflicts', 0)} report={report_path}"
     )
     return 0
 
