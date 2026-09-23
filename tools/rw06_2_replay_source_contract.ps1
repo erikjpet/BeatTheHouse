@@ -180,9 +180,11 @@ func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
         'function Invoke-BridgeTransportRegression',
         'function Invoke-BridgeStatusRegression',
         'function Select-UniqueFullyVisibleButton',
+        'function Select-UniquePublicTutorialDialogButton',
         'function Select-UniquePublicVerticalScrollSurface',
         'function Reveal-ButtonByVerticalScroll',
         'function Click-RunMenuButton',
+        'function Click-TutorialConfirmationButton',
         'function Invoke-SemanticScrollRegression',
         "clean = @('players_card')",
         "cheat = @('showdown_survived')",
@@ -205,6 +207,7 @@ func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
         "Click-RunMenuButton -Text 'Save'",
         "Click-RunMenuButton -Text 'Main Menu'",
         "Click-RunMenuButton -Text 'Skip Lessons'",
+        "Click-TutorialConfirmationButton -Role ok",
         "Click-Button -Text 'CONTINUE'",
         'Save -> relaunch -> Continue',
         "@('before_fingerprint')",
@@ -274,6 +277,12 @@ func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
         'func _scroll_surface(argument: String) -> Dictionary:',
         'func _visible_vertical_scroll_surface(surface_id: String) -> Dictionary:',
         'func _public_scroll_surfaces() -> Array:',
+        'func _append_tutorial_confirmation_buttons(result: Array) -> void:',
+        'app.get("tutorial_skip_dialog") as ConfirmationDialog',
+        'dialog.get_ok_button()',
+        'dialog.get_cancel_button()',
+        '"id": "tutorial_skip_dialog:ok"',
+        '"id": "tutorial_skip_dialog:cancel"',
         'func _push_mouse_wheel(position: Vector2, button_index: int) -> void:',
         'func _rect_encloses_with_tolerance(outer: Rect2, inner: Rect2, tolerance: float = 0.75) -> bool:',
         'start_menu["seed_text_committed"] = seed_field_visible',
@@ -355,11 +364,16 @@ func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
     Assert-Match $runner '(?s)function Clear-VisibleCoach.*?Get-VisibleTutorialGuideAcknowledgment.*?Choose-VisibleChoice\s+-ChoiceId\s+''continue''.*?Wait-Frames.*?continue.*?dismissLabel' 'Coach recovery must follow the narrow public tutorial-guide acknowledgement before trying the rendered coach dismiss control.'
     Assert-Match $runner '(?s)function Select-UniquePublicVerticalScrollSurface.*?SurfaceId\s+-cne\s+''run_menu''.*?matches\.Count\s+-ne\s+1.*?axis.*?vertical.*?rendered.*?can_scroll_\$Direction' 'Run-menu scroll selection must reject unsupported, ambiguous, hidden, wrong-axis, and direction-blocked public surfaces.'
     Assert-Match $runner '(?s)function Select-UniqueFullyVisibleButton.*?matches\.Count\s+-gt\s+1.*?Properties\[''fully_visible''\].*?-isnot\s+\[bool\].*?fully_visible signal.*?return \$null' 'Run-menu button selection must fail closed on ambiguous, absent, non-boolean, and false fully-visible signals.'
+    Assert-Match $runner '(?s)function Select-UniquePublicTutorialDialogButton.*?tutorial_skip_dialog:\$Role.*?surface_id.*?dialog_role.*?matches\.Count\s+-ne\s+1.*?enabled.*?fully_visible.*?dialog_rendered.*?-isnot\s+\[bool\].*?-not\s+\[bool\]' 'Tutorial confirmation selection must require one exact stable-id control with true boolean enabled, fully-visible, and rendered signals.'
+    Assert-Match $runner '(?s)function Click-TutorialConfirmationButton.*?Select-UniquePublicTutorialDialogButton.*?tutorial_skip_dialog:\$Role.*?IsNullOrWhiteSpace.*?-cne\s+\$expectedId.*?click_button \$id' 'Tutorial confirmation clicks must use the exact validated stable public id.'
     Assert-Match $runner '(?s)function Reveal-ButtonByVerticalScroll.*?MaximumScrolls\s*=\s*12.*?Select-UniqueFullyVisibleButton.*?Get-PublicScrollSurfaces.*?scroll_surface \$surfaceId \$Direction.*?did not become visible within' 'Run-menu reveal must require a fully visible target, use bounded public semantic scroll inputs, and fail closed.'
     Assert-NotMatch $runner '\$null\s+-eq\s+\(Find-Button\s+-Text\s+''Skip Lessons''\)' 'The tutorial route must not demand an already visible Skip Lessons button before semantic scrolling can reveal it.'
+    Assert-NotMatch $runner '(?:Find-Button|Click-Button)\s+-Text\s+''OK''' 'The tutorial confirmation route must not select the generic OK label.'
     Assert-Match $bridge '(?s)func _scroll_surface\(argument: String\).*?surface_id != "run_menu".*?direction not in \["up", "down"\].*?surface\.get\(capability, false\).*?_push_mouse_wheel.*?after <= before.*?after >= before' 'The bridge semantic scroll command must allow only rendered public run-menu capabilities and verify real wheel movement.'
     Assert-Match $bridge '(?s)func _click_button\(target: String\).*?fully_visible.*?button became hidden, clipped, or disabled before click' 'The bridge must re-check that a semantic button is fully visible immediately before clicking it.'
     Assert-Match $bridge '(?s)func _collect_buttons\(node: Node, result: Array\).*?full_rect\s*:=\s*button\.get_global_rect\(\).*?visible_rect\s*:=\s*_clipped_control_rect\(button\).*?"fully_visible":\s*_rect_encloses_with_tolerance\(visible_rect, full_rect\)' 'The bridge must derive fully-visible button state by comparing the full global rect with the clipped visible rect.'
+    Assert-Match $bridge '(?s)func _append_tutorial_confirmation_buttons\(result: Array\).*?app\.get\("tutorial_skip_dialog"\) as ConfirmationDialog.*?_control_is_rendered\(dialog\).*?dialog\.get_ok_button\(\).*?tutorial_skip_dialog:ok.*?dialog\.get_cancel_button\(\).*?tutorial_skip_dialog:cancel.*?button\.disabled.*?button\.is_visible_in_tree\(\).*?_clipped_control_rect\(button\).*?visible_rect\.has_area\(\).*?"fully_visible":\s*_rect_encloses_with_tolerance\(visible_rect, full_rect\).*?"dialog_rendered":\s*true' 'The bridge may expose only the rendered, enabled, fully measured tutorial confirmation OK/Cancel controls under exact stable ids.'
+    Assert-NotMatch $bridge 'get_children\(true\)' 'The bridge must not broadly enumerate internal controls; only the tutorial confirmation whitelist is admissible.'
     Assert-NotMatch $bridge '\.scroll_vertical\s*=' 'The replay bridge must not inject scroll-container state directly.'
     Assert-Contains $runner "@('players_card_eligible') `$false" 'Clean-ending eligibility must fail closed when its public field is absent.'
     Assert-Contains $runner 'Stop-Process -Id $script:OwnedSessionPid -Force -ErrorAction Stop' 'Failure cleanup may force-stop only the exact recorded session-owned Godot PID.'
@@ -420,6 +434,9 @@ func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
         }
         if ([int]$scrollReport.hostile_button_fixtures -ne 5) {
             Add-Failure 'Semantic scroll hostile regression did not pass all five fully-visible button fixtures.'
+        }
+        if ([int]$scrollReport.valid_dialog_fixtures -ne 2 -or [int]$scrollReport.hostile_dialog_fixtures -ne 7) {
+            Add-Failure 'Tutorial confirmation regression did not pass both exact controls and all seven fail-closed fixtures.'
         }
         if (-not (Test-Path -LiteralPath $SemanticScrollReportPath -PathType Leaf)) {
             Add-Failure 'Semantic scroll hostile regression did not publish its deterministic report.'

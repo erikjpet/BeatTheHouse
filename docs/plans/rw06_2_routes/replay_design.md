@@ -174,6 +174,21 @@ checkpoint, screenshots, and final summary used for acceptance.
   The exact owned process exited with no survivor; its generic post-exit
   `ObjectDB instances leaked at exit` warning remains preserved. The wheel
   release correction still requires a later serialized live probe.
+- A fifth serialized, non-qualifying clean probe on current-main documentation
+  base `01a5dc32` proved both full visibility and the matching wheel release.
+  Clicking **Skip Lessons** visibly opened the native confirmation, including
+  enabled **OK** and **Cancel** controls, but those internal
+  `ConfirmationDialog` children were absent from the public bridge list. The
+  run therefore stopped fail-closed after seven counted actions. The bridge now
+  explicitly exposes only those two rendered, enabled controls under exact
+  `tutorial_skip_dialog:ok|cancel` ids, and the runner selects by exact surface,
+  role, id, and true boolean visibility signals rather than generic button
+  text. Seven hostile fixtures cover hidden, disabled, clipped, ambiguous,
+  wrong-id, absent-signal, and non-boolean cases. Summary evidence is
+  `.tmp/rw06_2/exploratory/clean-main-01a5dc32-probe5/20260923-110216-836-21584/run-01/summary.json`
+  (SHA-256 `E0FD3B4623BB0DC43CA5D3C7B09C7C7BD6B3EBFC7807E6A741EB0450FCA9038A`).
+  The exact owned process exited with empty stderr and no survivor. The narrow
+  dialog-control correction still requires a later serialized live probe.
 - Final qualifying evidence intentionally waits for rw06_1 to land.
 
 ## Open route risks

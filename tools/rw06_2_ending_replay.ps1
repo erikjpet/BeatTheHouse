@@ -684,6 +684,34 @@ function Select-UniqueFullyVisibleButton {
 }
 
 
+function Select-UniquePublicTutorialDialogButton {
+    param(
+        [Parameter(Mandatory = $true)][AllowEmptyCollection()][object[]]$Buttons,
+        [Parameter(Mandatory = $true)][ValidateSet('ok', 'cancel')][string]$Role
+    )
+    $expectedId = "tutorial_skip_dialog:$Role"
+    $matches = @($Buttons | Where-Object {
+        [string](Get-Value $_ @('surface_id') '') -ceq 'tutorial_skip_dialog' -and
+        [string](Get-Value $_ @('dialog_role') '') -ceq $Role -and
+        [string](Get-Value $_ @('id') '') -ceq $expectedId
+    })
+    if ($matches.Count -ne 1) {
+        throw "Expected exactly one rendered tutorial confirmation '$Role' control at '$expectedId'; found $($matches.Count)."
+    }
+    $button = $matches[0]
+    foreach ($signal in @('enabled', 'fully_visible', 'dialog_rendered')) {
+        $property = $button.PSObject.Properties[$signal]
+        if ($null -eq $property -or $property.Value -isnot [bool]) {
+            throw "Tutorial confirmation '$Role' control has no unambiguous $signal signal."
+        }
+        if (-not [bool]$property.Value) {
+            throw "Tutorial confirmation '$Role' control is not publicly enabled, fully visible, and rendered."
+        }
+    }
+    return $button
+}
+
+
 function Get-PublicScrollSurfaces {
     return @(Get-Array (Get-Value $script:LastResult @('look', 'clickable', 'scroll_surfaces') @()))
 }
@@ -768,6 +796,21 @@ function Click-Button {
     $id = [string](Get-Value $button @('id') '')
     if ([string]::IsNullOrWhiteSpace($id)) {
         throw "Visible button '$Text' has no stable public id."
+    }
+    return Invoke-BridgeCommand -Command "click_button $id" -Intent $Intent
+}
+
+
+function Click-TutorialConfirmationButton {
+    param(
+        [Parameter(Mandatory = $true)][ValidateSet('ok', 'cancel')][string]$Role,
+        [Parameter(Mandatory = $true)][string]$Intent
+    )
+    $button = Select-UniquePublicTutorialDialogButton -Buttons @(Get-Buttons) -Role $Role
+    $id = [string](Get-Value $button @('id') '')
+    $expectedId = "tutorial_skip_dialog:$Role"
+    if ([string]::IsNullOrWhiteSpace($id) -or $id -cne $expectedId) {
+        throw "Tutorial confirmation '$Role' control has no exact stable public id."
     }
     return Invoke-BridgeCommand -Command "click_button $id" -Intent $Intent
 }
@@ -1153,10 +1196,7 @@ function Start-NormalSeededRun {
         throw 'The live first-night lesson did not render its run menu.'
     }
     $null = Click-RunMenuButton -Text 'Skip Lessons' -RevealDirection down -Intent 'request the player-facing lesson skip'
-    if ($null -eq (Find-Button -Text 'OK')) {
-        throw 'Skip Lessons did not render its enabled player confirmation.'
-    }
-    $null = Click-Button -Text 'OK' -Intent 'confirm the lesson skip and return to the main menu'
+    $null = Click-TutorialConfirmationButton -Role ok -Intent 'confirm the lesson skip and return to the main menu'
     Wait-Frames -Frames 30
 
     if ([string](Get-Value $script:LastObservation @('screen', 'screen') '') -cne 'START' -or
@@ -2826,6 +2866,65 @@ function Invoke-SemanticScrollRegression {
         }
     }
 
+    $validDialogOk = [pscustomobject][ordered]@{
+        id = 'tutorial_skip_dialog:ok'
+        text = 'OK'
+        enabled = $true
+        fully_visible = $true
+        surface_id = 'tutorial_skip_dialog'
+        dialog_role = 'ok'
+        dialog_rendered = $true
+    }
+    $validDialogCancel = [pscustomobject][ordered]@{
+        id = 'tutorial_skip_dialog:cancel'
+        text = 'Cancel'
+        enabled = $true
+        fully_visible = $true
+        surface_id = 'tutorial_skip_dialog'
+        dialog_role = 'cancel'
+        dialog_rendered = $true
+    }
+    foreach ($validDialogFixture in @(
+        [pscustomobject]@{ role = 'ok'; expected_id = 'tutorial_skip_dialog:ok'; buttons = @($validDialogOk, $validDialogCancel) },
+        [pscustomobject]@{ role = 'cancel'; expected_id = 'tutorial_skip_dialog:cancel'; buttons = @($validDialogOk, $validDialogCancel) }
+    )) {
+        try {
+            $selectedDialogButton = Select-UniquePublicTutorialDialogButton `
+                -Buttons @($validDialogFixture.buttons) `
+                -Role ([string]$validDialogFixture.role)
+            if ([string](Get-Value $selectedDialogButton @('id') '') -cne [string]$validDialogFixture.expected_id) {
+                $failures.Add("Valid tutorial confirmation '$($validDialogFixture.role)' selection returned the wrong stable id.")
+            }
+        }
+        catch {
+            $failures.Add("Valid tutorial confirmation '$($validDialogFixture.role)' selection threw: $($_.Exception.Message)")
+        }
+    }
+
+    $dialogHostileFixtures = @(
+        [pscustomobject]@{ label = 'hidden-dialog'; role = 'ok'; buttons = @([pscustomobject]@{ id = 'tutorial_skip_dialog:ok'; text = 'OK'; enabled = $true; fully_visible = $true; surface_id = 'tutorial_skip_dialog'; dialog_role = 'ok'; dialog_rendered = $false }) },
+        [pscustomobject]@{ label = 'disabled-button'; role = 'ok'; buttons = @([pscustomobject]@{ id = 'tutorial_skip_dialog:ok'; text = 'OK'; enabled = $false; fully_visible = $true; surface_id = 'tutorial_skip_dialog'; dialog_role = 'ok'; dialog_rendered = $true }) },
+        [pscustomobject]@{ label = 'clipped-button'; role = 'ok'; buttons = @([pscustomobject]@{ id = 'tutorial_skip_dialog:ok'; text = 'OK'; enabled = $true; fully_visible = $false; surface_id = 'tutorial_skip_dialog'; dialog_role = 'ok'; dialog_rendered = $true }) },
+        [pscustomobject]@{ label = 'ambiguous-dialog'; role = 'ok'; buttons = @($validDialogOk, $validDialogOk) },
+        [pscustomobject]@{ label = 'wrong-stable-id'; role = 'ok'; buttons = @([pscustomobject]@{ id = '/root/internal/ok'; text = 'OK'; enabled = $true; fully_visible = $true; surface_id = 'tutorial_skip_dialog'; dialog_role = 'ok'; dialog_rendered = $true }) },
+        [pscustomobject]@{ label = 'missing-rendered-signal'; role = 'ok'; buttons = @([pscustomobject]@{ id = 'tutorial_skip_dialog:ok'; text = 'OK'; enabled = $true; fully_visible = $true; surface_id = 'tutorial_skip_dialog'; dialog_role = 'ok' }) },
+        [pscustomobject]@{ label = 'non-boolean-enabled-signal'; role = 'ok'; buttons = @([pscustomobject]@{ id = 'tutorial_skip_dialog:ok'; text = 'OK'; enabled = 'true'; fully_visible = $true; surface_id = 'tutorial_skip_dialog'; dialog_role = 'ok'; dialog_rendered = $true }) }
+    )
+    foreach ($fixture in $dialogHostileFixtures) {
+        $threw = $false
+        try {
+            $null = Select-UniquePublicTutorialDialogButton `
+                -Buttons @($fixture.buttons) `
+                -Role ([string]$fixture.role)
+        }
+        catch {
+            $threw = $true
+        }
+        if (-not $threw) {
+            $failures.Add("Hostile tutorial-confirmation fixture '$($fixture.label)' did not fail closed.")
+        }
+    }
+
     $validDown = [pscustomobject][ordered]@{
         id = 'run_menu'
         axis = 'vertical'
@@ -2887,6 +2986,8 @@ function Invoke-SemanticScrollRegression {
         passed = ($failures.Count -eq 0)
         valid_button_fixtures = 1
         hostile_button_fixtures = $buttonHostileFixtures.Count
+        valid_dialog_fixtures = 2
+        hostile_dialog_fixtures = $dialogHostileFixtures.Count
         valid_fixtures = 2
         hostile_fixtures = $hostileFixtures.Count
         failures = @($failures)

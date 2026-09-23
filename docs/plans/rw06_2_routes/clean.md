@@ -144,6 +144,46 @@ Evidence:
   preserved the generic engine warning `ObjectDB instances leaked at exit`
   (SHA-256 `7E8F5DEB3BF520C8ABB23951DEAFB0669C320CEBB4CEB6668C755C617C5FD7D3`).
 
+## 2026-09-23 fifth current-main exploratory probe (non-qualifying)
+
+Current-main documentation base `01a5dc32`; pushed replay tip `8d3fe210`.
+Exactly one additional `-Ending clean -Repeat 1` run was made under the
+serialized Godot lease. The full-visibility and matching wheel-release
+corrections both worked. The route clicked the fully rendered **Skip Lessons**
+control, and the screenshot visibly shows the **Skip the lessons?** confirmation
+with enabled **OK** and **Cancel** controls. The replay stopped fail-closed after
+seven counted actions because those two native `ConfirmationDialog` controls
+were absent from the bridge's public button list.
+
+Godot stores the dialog buttons as internal children, while the bridge's normal
+tree walk intentionally visits only public children. This is a harness
+reachability finding, not a product placement, ending, goal-clarity, or economy
+finding. The bridge now adds a narrow whitelist for only the rendered and
+enabled `tutorial_skip_dialog` OK/Cancel controls, gives them exact stable ids,
+and preserves full-visibility checks. The route selects the exact dialog role
+rather than generic `OK` text. Engine-free contracts accept only the two exact
+controls and reject hidden, disabled, clipped, ambiguous, wrong-id, missing-
+signal, and non-boolean fixtures. A later serialized probe must prove the
+correction; no additional engine run was consumed.
+
+Evidence:
+
+- Run summary:
+  `.tmp/rw06_2/exploratory/clean-main-01a5dc32-probe5/20260923-110216-836-21584/run-01/summary.json`
+  (SHA-256 `E0FD3B4623BB0DC43CA5D3C7B09C7C7BD6B3EBFC7807E6A741EB0450FCA9038A`).
+- Public trace, seven counted actions:
+  `.tmp/rw06_2/exploratory/clean-main-01a5dc32-probe5/20260923-110216-836-21584/run-01/public_trace.ndjson`
+  (SHA-256 `97DFB87747EFB35FE1DE3A30B1D3CFF0EC9B38D3A2455A157438E9F4AD48B077`).
+- Visible confirmation screenshot:
+  `.tmp/agent_playtest/2026-09-23/rw062-clean-21584-1-8686b09441/0013.png`
+  (SHA-256 `C48696B1846D386C57306C7DC17AE5E2EED994956C7576B455F73442535CC70D`).
+- Public result behind that screenshot:
+  `.tmp/agent_playtest/2026-09-23/rw062-clean-21584-1-8686b09441/0013.result.json`
+  (SHA-256 `87FA77EE669F3D104EF95ED0DEEA7A776B81FBDE357B760689095D85526FF81E`).
+- The exact owned process exited, stderr was empty (SHA-256
+  `E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855`),
+  and zero Godot processes remained before the lease was released.
+
 ## Player intent
 
 Reach the Grand Casino, earn Bronze, Silver, and Gold Players Card tiers without

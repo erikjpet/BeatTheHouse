@@ -784,6 +784,7 @@ func _replay_pause_is_valid(snapshot: Dictionary) -> bool:
 func _visible_buttons() -> Array:
 	var result: Array = []
 	_collect_buttons(app, result)
+	_append_tutorial_confirmation_buttons(result)
 	return result
 
 
@@ -807,17 +808,50 @@ func _collect_buttons(node: Node, result: Array) -> void:
 		_collect_buttons(child, result)
 
 
+func _append_tutorial_confirmation_buttons(result: Array) -> void:
+	var dialog := app.get("tutorial_skip_dialog") as ConfirmationDialog
+	if not _control_is_rendered(dialog):
+		return
+	var controls: Array[Dictionary] = [
+		{"button": dialog.get_ok_button(), "id": "tutorial_skip_dialog:ok", "role": "ok"},
+		{"button": dialog.get_cancel_button(), "id": "tutorial_skip_dialog:cancel", "role": "cancel"},
+	]
+	for control_data in controls:
+		var button := control_data.get("button") as Button
+		if button == null or button.disabled or not button.is_visible_in_tree():
+			continue
+		var full_rect := button.get_global_rect()
+		var visible_rect := _clipped_control_rect(button)
+		if not visible_rect.has_area():
+			continue
+		result.append({
+			"node": button,
+			"id": str(control_data.get("id", "")),
+			"text": button.text.strip_edges(),
+			"rect": visible_rect,
+			"fully_visible": _rect_encloses_with_tolerance(visible_rect, full_rect),
+			"click_position": visible_rect.get_center(),
+			"surface_id": "tutorial_skip_dialog",
+			"dialog_role": str(control_data.get("role", "")),
+			"dialog_rendered": true,
+		})
+
+
 func _public_buttons() -> Array:
 	var result: Array = []
 	for entry_value in _visible_buttons():
 		var entry := entry_value as Dictionary
-		result.append({
+		var public_entry := {
 			"id": entry.get("id", ""),
 			"text": entry.get("text", ""),
 			"enabled": true,
 			"rect": entry.get("rect", Rect2()),
 			"fully_visible": bool(entry.get("fully_visible", false)),
-		})
+		}
+		for key in ["surface_id", "dialog_role", "dialog_rendered"]:
+			if entry.has(key):
+				public_entry[key] = entry.get(key)
+		result.append(public_entry)
 	return result
 
 
