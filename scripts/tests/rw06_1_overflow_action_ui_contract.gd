@@ -5,6 +5,7 @@ const PixelSceneCanvasScript := preload("res://scripts/ui/pixel_scene_canvas.gd"
 const RoomActionListScript := preload("res://scripts/ui/room_action_list.gd")
 const EnvironmentInstanceScript := preload("res://scripts/core/environment_instance.gd")
 const EnvironmentBaseSemanticRecordsScript := preload("res://scripts/core/environment_base_semantic_records.gd")
+const EnvironmentPlacementScript := preload("res://scripts/core/environment_placement.gd")
 const EnvironmentSlotBinderScript := preload("res://scripts/core/environment_slot_binder.gd")
 const EnvironmentSemanticInventoryScript := preload("res://scripts/core/environment_semantic_inventory.gd")
 const ArtContractsScript := preload("res://scripts/core/art_contracts.gd")
@@ -48,6 +49,8 @@ func _init() -> void:
 
 
 func _run() -> void:
+	_check_authored_scenario_overflow_policy()
+	await _check_selected_info_action_enabled_gate()
 	var app := OverflowFoundationHost.new()
 	app.size = Vector2(1280.0, 720.0)
 	app.set("continuous_environment_clock_enabled", false)
@@ -195,6 +198,25 @@ func _run() -> void:
 		}],
 	}
 	var records: Array = [production_record, disabled_record, multi_record, mirrored_record, information_record, hidden_record]
+	var authored_info_order := 41
+	for spec_value in _authored_scenario_overflow_specs():
+		var spec := spec_value as Dictionary
+		records.append({
+			"object_id": "scenario::%s" % str(spec.get("stable_id", "")),
+			"object_type": "scenario_scene_object",
+			"label": str(spec.get("label", "")),
+			"short_description": str(spec.get("summary", "")),
+			"presentation_mode": "overflow",
+			"presentation_required": true,
+			"visible": true,
+			"interactive": true,
+			"enabled": true,
+			"focus_order": authored_info_order,
+			"inline_actions": [],
+			"scenario_sequence_actions": [],
+			"available_actions": [],
+		})
+		authored_info_order += 1
 	app.overflow_fixture_records = records.duplicate(true)
 	app.use_overflow_fixture = true
 	var production_handler := Callable(app, "_activate_overflow_room_action")
@@ -247,6 +269,11 @@ func _check_rendered_action_surface(action_list: Control, records: Array) -> voi
 	var represented_records: Dictionary = {}
 	var disabled_button: Button = null
 	var information_button: Button = null
+	var authored_information_buttons: Dictionary = {}
+	var authored_information_summaries: Dictionary = {}
+	for spec_value in _authored_scenario_overflow_specs():
+		var spec := spec_value as Dictionary
+		authored_information_summaries["scenario::%s" % str(spec.get("stable_id", ""))] = str(spec.get("summary", ""))
 	for button_value in action_list.find_children("*", "Button", true, false):
 		var button := button_value as Button
 		if button.custom_minimum_size.x < 44.0 or button.custom_minimum_size.y < 44.0:
@@ -261,6 +288,8 @@ func _check_rendered_action_surface(action_list: Control, records: Array) -> voi
 			disabled_button = button
 		elif object_id == "overflow_fixture:information":
 			information_button = button
+		elif authored_information_summaries.has(object_id):
+			authored_information_buttons[object_id] = button
 	for record_value in records:
 		var object_id := str((record_value as Dictionary).get("object_id", ""))
 		if not represented_records.has(object_id):
@@ -290,6 +319,13 @@ func _check_rendered_action_surface(action_list: Control, records: Array) -> voi
 		failures.append("RW06-1 disabled overflow action does not visibly explain why it is unavailable.")
 	if information_button == null or not information_button.disabled:
 		failures.append("RW06-1 actionless visible overflow record was omitted or remained actionable.")
+	for object_id_value in authored_information_summaries.keys():
+		var object_id := str(object_id_value)
+		var button := authored_information_buttons.get(object_id) as Button
+		var summary := str(authored_information_summaries.get(object_id, ""))
+		if button == null or not button.disabled \
+				or not button.text.contains(summary) or not button.tooltip_text.contains(summary):
+			failures.append("RW06-1 authored actionless obstacle %s lost its non-actionable label/summary row." % object_id)
 
 
 func _check_dispatch_source_placement() -> void:
@@ -578,6 +614,262 @@ func _check_record_scenario_authority_staleness(
 		action_list.close()
 	_install_fixture_records(app, action_list, restore_records)
 	await _settle_frames(2)
+
+
+func _authored_scenario_overflow_specs() -> Array:
+	return [
+		{
+			"map_id": "delta_queen",
+			"stable_id": "delta_queen_wedding_charter_ceremony_rope",
+			"anchor_id": "delta_wedding_rope",
+			"zone_id": "foreground",
+			"role": "barrier",
+			"exit_stable_id": "delta_queen_wedding_charter_safe_exit",
+			"exit_anchor_id": "delta_wedding_safe_exit",
+			"label": "Ceremony rope",
+			"summary": "Ceremony ropes divide the front promenade into competing lanes.",
+		},
+		{
+			"map_id": "grand_casino",
+			"stable_id": "grand_casino_convention_crowd_table_block",
+			"anchor_id": "grand_convention_table_block",
+			"zone_id": "background",
+			"role": "blockade",
+			"exit_stable_id": "grand_casino_convention_crowd_safe_exit",
+			"exit_anchor_id": "grand_scenario_safe_exit",
+			"label": "Convention table block",
+			"summary": "Convention tables block the central guest lane.",
+		},
+	]
+
+
+func _check_authored_scenario_overflow_policy() -> void:
+	for spec_value in _authored_scenario_overflow_specs():
+		var spec := spec_value as Dictionary
+		var map_id := str(spec.get("map_id", ""))
+		var stable_id := str(spec.get("stable_id", ""))
+		var identity := "scenario::%s" % stable_id
+		var exit_identity := "scenario::%s" % str(spec.get("exit_stable_id", ""))
+		var surface_map := EnvironmentPlacementScript.surface_map_by_id(map_id)
+		if surface_map.is_empty() or surface_map.get("scenario_overflow_ids", []) != [stable_id]:
+			failures.append("RW06-1 %s did not expose its exact authored scenario-overflow identity." % map_id)
+			continue
+		var policy_errors: Array = []
+		var policy := EnvironmentSlotBinderScript._scenario_overflow_policy(surface_map, policy_errors)
+		if not policy_errors.is_empty() or not policy.has(stable_id) or policy.size() != 1:
+			failures.append("RW06-1 %s authored scenario-overflow policy failed runtime validation: %s." % [map_id, JSON.stringify(policy_errors)])
+			continue
+		var target := {
+			"identity": identity,
+			"placement_class": "floor_fixture",
+			"actor": false,
+			"safe_exit": false,
+			"semantic": {
+				"owner_namespace": "scenario",
+				"stable_object_id": stable_id,
+				"present": true,
+				"visible": true,
+				"enabled": true,
+				"anchor_id": str(spec.get("anchor_id", "")),
+				"zone_id": str(spec.get("zone_id", "")),
+				"role": str(spec.get("role", "")),
+				"label": str(spec.get("label", "")),
+				"description": str(spec.get("summary", "")),
+			},
+		}
+		var safe_exit := {
+			"identity": exit_identity,
+			"placement_class": "doorway",
+			"actor": false,
+			"safe_exit": true,
+			"semantic": {
+				"owner_namespace": "scenario",
+				"stable_object_id": str(spec.get("exit_stable_id", "")),
+				"present": true,
+				"visible": true,
+				"enabled": true,
+				"anchor_id": str(spec.get("exit_anchor_id", "")),
+				"zone_id": "exit_lane",
+				"role": "exit",
+				"label": "Safe exit",
+			},
+		}
+		var environment := {"archetype_id": map_id}
+		var first := EnvironmentSlotBinderScript.bind_scenario_visuals(environment, [target, safe_exit])
+		var repeat := EnvironmentSlotBinderScript.bind_scenario_visuals(environment, [safe_exit, target])
+		var hidden_target := target.duplicate(true)
+		var hidden_semantic := (hidden_target.get("semantic", {}) as Dictionary).duplicate(true)
+		hidden_semantic["visible"] = false
+		hidden_target["semantic"] = hidden_semantic
+		var hidden := EnvironmentSlotBinderScript.bind_scenario_visuals(environment, [hidden_target, safe_exit])
+		var absent_phase := EnvironmentSlotBinderScript.bind_scenario_visuals(environment, [safe_exit])
+		if not bool(first.get("ok", false)) or not bool(repeat.get("ok", false)) \
+				or not bool(hidden.get("ok", false)) or not bool(absent_phase.get("ok", false)):
+			failures.append("RW06-1 %s authored overflow failed visible/hidden/absent-phase binding: %s." % [map_id, JSON.stringify([first.get("errors", []), repeat.get("errors", []), hidden.get("errors", []), absent_phase.get("errors", [])])])
+			continue
+		var first_bindings := first.get("slot_bindings", {}) as Dictionary
+		var hidden_bindings := hidden.get("slot_bindings", {}) as Dictionary
+		var target_binding := first_bindings.get(identity, {}) as Dictionary
+		var hidden_binding := hidden_bindings.get(identity, {}) as Dictionary
+		var exit_binding := first_bindings.get(exit_identity, {}) as Dictionary
+		if str(target_binding.get("presentation_mode", "")) != "overflow" \
+				or not str(target_binding.get("slot_id", "")).is_empty() \
+				or str(target_binding.get("placement_class", "")) != "floor_fixture" \
+				or JSON.stringify(hidden_binding) != JSON.stringify(target_binding) \
+				or not (first.get("overflow_ids", []) as Array).has(identity):
+			failures.append("RW06-1 %s configured obstacle did not retain geometry-free true-class overflow authority." % map_id)
+		if str(exit_binding.get("presentation_mode", "")) != "room" \
+				or str(exit_binding.get("slot_id", "")).is_empty() \
+				or (first.get("overflow_ids", []) as Array).has(exit_identity):
+			failures.append("RW06-1 %s authored overflow consumed or displaced its required safe exit." % map_id)
+		if str(first.get("binding_digest", "")) != str(repeat.get("binding_digest", "")) \
+				or JSON.stringify(first_bindings) != JSON.stringify(repeat.get("slot_bindings", {})):
+			failures.append("RW06-1 %s authored overflow binding changed with input order." % map_id)
+		var digest_mutation := surface_map.duplicate(true)
+		var mutated_ids := (digest_mutation.get("scenario_overflow_ids", []) as Array).duplicate()
+		mutated_ids.append("invented_digest_identity")
+		digest_mutation["scenario_overflow_ids"] = mutated_ids
+		if EnvironmentSlotBinderScript.slot_map_digest(surface_map) == EnvironmentSlotBinderScript.slot_map_digest(digest_mutation):
+			failures.append("RW06-1 %s slot-map digest ignored scenario-overflow authority mutation." % map_id)
+
+	var hostile_surface := EnvironmentPlacementScript.surface_map_by_id("delta_queen").duplicate(true)
+	var known_id := "delta_queen_wedding_charter_ceremony_rope"
+	for hostile_value in [
+		{"name": "non-array", "value": known_id},
+		{"name": "non-string", "value": [17]},
+		{"name": "prefixed", "value": ["scenario::%s" % known_id]},
+		{"name": "duplicate", "value": [known_id, known_id]},
+		{"name": "unknown", "value": ["invented_scenario_obstacle"]},
+	]:
+		var hostile := hostile_value as Dictionary
+		var candidate := hostile_surface.duplicate(true)
+		candidate["scenario_overflow_ids"] = hostile.get("value")
+		var hostile_errors: Array = []
+		EnvironmentSlotBinderScript._scenario_overflow_policy(candidate, hostile_errors)
+		if hostile_errors.is_empty():
+			failures.append("RW06-1 scenario-overflow runtime policy accepted hostile %s authority." % str(hostile.get("name", "unknown")))
+
+
+func _check_selected_info_action_enabled_gate() -> void:
+	var canvas := PixelSceneCanvasScript.new()
+	canvas.size = Vector2(900.0, 430.0)
+	root.add_child(canvas)
+	await process_frame
+	var records: Array = [
+		_selected_info_gate_record("inline_object_disabled", false, true, true, true, true),
+		_selected_info_gate_record("inline_action_disabled", true, false, true, true, true),
+		_selected_info_gate_record("single_object_disabled", false, true, false, true, true),
+		_selected_info_gate_record("single_action_disabled", true, false, false, true, true),
+		_selected_info_gate_record("single_missing_confirm", true, true, false, false, true),
+		_selected_info_gate_record("inline_enabled", true, true, true, true, true),
+		_selected_info_gate_record("single_enabled", true, true, false, true, true),
+	]
+	canvas.render_environment_snapshot({
+		"id": "rw06_1_selected_info_gate",
+		"archetype_id": "bar",
+		"display_name": "Selected action gate",
+		"reduce_motion": true,
+		"interactable_objects": records,
+	})
+	var activations: Array[String] = []
+	canvas.object_activated.connect(func(object_id: String) -> void: activations.append(object_id))
+	for record_index in range(5):
+		var record := records[record_index] as Dictionary
+		var object_id := str(record.get("object_id", ""))
+		canvas.set_selected_object(object_id)
+		var actions := canvas.current_view_snapshot().get("selected_info", {}).get("actions", []) as Array
+		if actions.size() != 1 or bool((actions[0] as Dictionary).get("enabled", true)):
+			failures.append("RW06-1 disabled selected-info case %s did not snapshot enabled:false." % object_id)
+			continue
+		var before := activations.size()
+		_send_canvas_accept(canvas)
+		_send_canvas_mouse(canvas, canvas.local_position_for_selected_info_action_button())
+		if activations.size() != before:
+			failures.append("RW06-1 disabled selected-info case %s emitted through keyboard or physical mouse." % object_id)
+
+	canvas.set_selected_object("selected_info:inline_enabled")
+	var inline_snapshot := canvas.current_view_snapshot().get("selected_info", {}) as Dictionary
+	var inline_actions := inline_snapshot.get("actions", []) as Array
+	var inline_before := activations.size()
+	_send_canvas_accept(canvas)
+	if inline_actions.size() != 1 or not bool((inline_actions[0] as Dictionary).get("enabled", false)) \
+			or str((inline_actions[0] as Dictionary).get("label", "")) != "Visible inline" \
+			or activations.size() != inline_before + 1 \
+			or activations.back() != "selected_info_emit:inline_enabled":
+		failures.append("RW06-1 enabled inline selected-info action did not omit hidden state and emit exactly once by keyboard.")
+
+	canvas.set_selected_object("selected_info:single_enabled")
+	var single_snapshot := canvas.current_view_snapshot().get("selected_info", {}) as Dictionary
+	var single_actions := single_snapshot.get("actions", []) as Array
+	var single_before := activations.size()
+	_send_canvas_mouse(canvas, canvas.local_position_for_selected_info_action_button())
+	if single_actions.size() != 1 or not bool((single_actions[0] as Dictionary).get("enabled", false)) \
+			or str((single_actions[0] as Dictionary).get("label", "")) != "Visible single" \
+			or activations.size() != single_before + 1 \
+			or activations.back() != "selected_info:single_enabled":
+		failures.append("RW06-1 enabled single selected-info action did not omit hidden state and emit exactly once by physical mouse.")
+	canvas.queue_free()
+	await process_frame
+
+
+func _selected_info_gate_record(
+	suffix: String,
+	object_enabled: bool,
+	action_enabled: bool,
+	inline: bool,
+	with_confirm: bool,
+	include_hidden: bool
+) -> Dictionary:
+	var object_id := "selected_info:%s" % suffix
+	var visible_action := {
+		"id": "visible_%s" % suffix,
+		"emit_object_id": "selected_info_emit:%s" % suffix,
+		"label": "Visible inline" if inline else "Visible single",
+		"enabled": action_enabled,
+		"disabled": not action_enabled,
+	}
+	var hidden_action := {
+		"id": "hidden_%s" % suffix,
+		"emit_object_id": "selected_info_emit:hidden_%s" % suffix,
+		"label": "Hidden action",
+		"hidden": true,
+	}
+	var actions: Array = [visible_action]
+	if include_hidden:
+		actions.push_front(hidden_action)
+	return {
+		"object_id": object_id,
+		"object_type": "event",
+		"visual_type": "event",
+		"label": suffix.replace("_", " ").capitalize(),
+		"short_description": "Selected action authority fixture.",
+		"presentation_mode": "room",
+		"visible": true,
+		"interactive": true,
+		"enabled": object_enabled,
+		"normalized_rect": {"x": 0.08, "y": 0.18, "w": 0.12, "h": 0.16},
+		"inline_actions": actions if inline else [],
+		"available_actions": [] if inline else actions,
+		"confirm_action_id": "confirm_%s" % suffix if with_confirm else "",
+	}
+
+
+func _send_canvas_accept(canvas: Control) -> void:
+	var event := InputEventKey.new()
+	event.keycode = KEY_ENTER
+	event.physical_keycode = KEY_ENTER
+	event.pressed = true
+	canvas.call("_gui_input", event)
+
+
+func _send_canvas_mouse(canvas: Control, position: Vector2) -> void:
+	var event := InputEventMouseButton.new()
+	event.button_index = MOUSE_BUTTON_LEFT
+	event.button_mask = MOUSE_BUTTON_MASK_LEFT
+	event.position = position
+	event.global_position = position
+	event.pressed = true
+	canvas.call("_gui_input", event)
 
 
 func _check_canvas_exclusion(records: Array) -> void:

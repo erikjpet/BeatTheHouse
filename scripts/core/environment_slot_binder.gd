@@ -494,6 +494,18 @@ static func bind_scenario_visuals(environment: Dictionary, visual_entries: Array
 	var bindings: Dictionary = {}
 	var overflow_ids: Array = []
 	var errors: Array = []
+	var authored_overflow_ids := _scenario_overflow_policy(surface_map, errors)
+	if not errors.is_empty():
+		return {
+			"ok": false,
+			"slot_schema_version": SLOT_SCHEMA_VERSION,
+			"slot_map_digest": slot_map_digest(surface_map),
+			"binding_digest": binding_digest({}),
+			"slot_bindings": {},
+			"overflow_ids": [],
+			"occupied_slot_ids": [],
+			"errors": errors,
+		}
 	var entries := visual_entries.duplicate(true)
 	entries.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
 		return str(_dict(left_value).get("identity", "")) < str(_dict(right_value).get("identity", ""))
@@ -536,6 +548,13 @@ static func bind_scenario_visuals(environment: Dictionary, visual_entries: Array
 		var route_id := str(semantic.get("route_id", "")).strip_edges()
 		if route_id.is_empty():
 			route_id = str(position_routes.get(position_key, "")).strip_edges()
+		if authored_overflow_ids.has(stable_id):
+			if not identity.begins_with("scenario::") or bool(entry.get("safe_exit", false)) or not route_id.is_empty():
+				errors.append("Authored scenario overflow %s must be a non-routed, non-exit scenario-owned visual." % identity)
+				continue
+			bindings[identity] = _overflow_binding(identity, placement_class, "stage")
+			overflow_ids.append(identity)
+			continue
 		var route := _dict(routes_by_id.get(route_id, {}))
 		var slot: Dictionary = {}
 		if not route_id.is_empty():
@@ -609,8 +628,52 @@ static func slot_map_digest(surface_map: Dictionary) -> String:
 		"object_slot_ids": _dict(surface_map.get("object_slot_ids", {})),
 		"category_slot_ids": _dict(surface_map.get("category_slot_ids", {})),
 		"scenario_slot_ids": _dict(surface_map.get("scenario_slot_ids", {})),
+		"scenario_overflow_ids": _array(surface_map.get("scenario_overflow_ids", [])),
 		"scenario_position_route_ids": _dict(surface_map.get("scenario_position_route_ids", {})),
 	}).sha256_text()
+
+
+static func _scenario_overflow_policy(surface_map: Dictionary, errors: Array) -> Dictionary:
+	var value: Variant = surface_map.get("scenario_overflow_ids")
+	if typeof(value) != TYPE_ARRAY:
+		errors.append("Scenario overflow authority must be an array.")
+		return {}
+	# Validate against map-wide authoring authority rather than the visual entries
+	# for the current phase. A legal obstacle may be absent (or hidden) in one
+	# phase, while an invented stable identity must still fail closed at runtime.
+	var authored_visual_ids := _authored_scenario_visual_ids(surface_map)
+	var result: Dictionary = {}
+	for stable_id_value in value as Array:
+		if typeof(stable_id_value) != TYPE_STRING:
+			errors.append("Scenario overflow authority contains a non-string identity.")
+			continue
+		var stable_id := str(stable_id_value)
+		if stable_id.is_empty() or stable_id != stable_id.strip_edges() or stable_id.begins_with("scenario::"):
+			errors.append("Scenario overflow authority contains a malformed stable identity.")
+			continue
+		if result.has(stable_id):
+			errors.append("Scenario overflow authority contains duplicate identity %s." % stable_id)
+			continue
+		if not authored_visual_ids.has(stable_id):
+			errors.append("Scenario overflow authority names unknown authored identity %s." % stable_id)
+			continue
+		result[stable_id] = true
+	return result
+
+
+static func _authored_scenario_visual_ids(surface_map: Dictionary) -> Dictionary:
+	var result: Dictionary = {}
+	var preferences_value: Variant = surface_map.get("scenario_slot_ids")
+	if typeof(preferences_value) != TYPE_DICTIONARY:
+		return result
+	for key_value in (preferences_value as Dictionary).keys():
+		if typeof(key_value) != TYPE_STRING:
+			continue
+		var authored_key := str(key_value).strip_edges().trim_prefix("scenario::")
+		var stable_id := authored_key.get_slice("|", 0).strip_edges()
+		if not stable_id.is_empty():
+			result[stable_id] = true
+	return result
 
 
 static func scenario_position_key(stable_id: String, semantic: Dictionary) -> String:

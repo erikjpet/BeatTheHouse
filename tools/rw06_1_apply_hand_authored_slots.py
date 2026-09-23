@@ -253,7 +253,7 @@ HAND_SLOTS.update({'back_alley': {'base': [('base.staff_merchant', 'behind_count
                                   ('stage.event_right_door', 'doorway', (859.0, 170.0), (859.0, 128.0), 'forecourt_right', 'left', 10, 'room'),
                                   ('stage.event_machine_left', 'floor_fixture', (158.0, 240.0), (158.0, 170.0), 'stage', 'none', 10, 'left'),
                                   ('stage.event_machine_right', 'floor_fixture', (614.0, 240.0), (614.0, 170.0), 'stage', 'none', 20, 'room'),
-                                  ('stage.event_foreground_marker', 'ground_marker', (284.0, 414.0), (284.0, 360.0), 'floor', 'none', 10, 'room'),
+                                  ('stage.event_foreground_marker', 'ground_marker', (836.0, 296.0), (836.0, 242.0), 'floor', 'none', 10, 'room'),
                                   ('stage.patron_group_right', 'group', (732.0, 414.0), (732.0, 330.0), 'floor', 'left', 10, 'room'),
                                   ('stage.patron_group_center', 'group', (292.0, 328.0), (292.0, 244.0), 'floor', 'right', 20, 'room'),
                                   ('stage.patron_floor_left', 'standing_person', (52.0, 414.0), (52.0, 328.0), 'floor', 'right', 10, 'room'),
@@ -266,7 +266,7 @@ HAND_SLOTS.update({'back_alley': {'base': [('base.staff_merchant', 'behind_count
                                   ('stage.event_wall_far_left', 'wall_mounted', (40.0, 24.0), (40.0, 8.0), 'wall', 'none', 30, 'room'),
                                   ('stage.event_service_wall', 'wall_mounted', (744.0, 160.0), (744.0, 130.0), 'wall', 'none', 40, 'service_lane'),
                                   ('stage.event_control_wall', 'wall_mounted', (732.0, 276.0), (732.0, 246.0), 'graveyard_control_rail', 'none', 50, 'right')],
-                        'exit': [('exit.right_lower', 'doorway', (859.0, 362.0), (859.0, 320.0), 'forecourt_right', 'left', 10, 'room'),
+                        'exit': [('exit.right_lower', 'doorway', (859.0, 362.0), (837.0, 430.0), 'forecourt_right', 'left', 10, 'room'),
                                  ('exit.left_upper', 'doorway', (41.0, 114.0), (41.0, 72.0), 'forecourt_left', 'right', 20, 'room')]},
  'small_underground_casino': {'base': [('base.door_right_lower', 'doorway', (841.0, 362.0), (836.0, 330.0), 'right_exit', 'left', 20, 'room'),
                                        ('base.door_right_upper', 'doorway', (841.0, 266.0), (836.0, 224.0), 'right_exit', 'left', 10, 'room'),
@@ -579,6 +579,22 @@ SCENARIO_SLOT_RENAMES.update({
     "apartment": {},
     "house": {},
 })
+
+
+SCENARIO_OVERFLOW_IDS = {
+    "delta_queen": ["delta_queen_wedding_charter_ceremony_rope"],
+    "grand_casino": ["grand_casino_convention_crowd_table_block"],
+}
+SCENARIO_SLOT_ADDITIONS = {
+    "delta_queen": {
+        "delta_queen_wedding_charter_ceremony_rope|delta_wedding_rope|foreground|": "stage.event_floor_2",
+        "delta_queen_wedding_charter_ceremony_rope|delta_wedding_rope|right|": "stage.event_floor_2",
+    },
+    "grand_casino": {
+        "grand_casino_convention_crowd_table_block|grand_convention_table_block|background|": "stage.event_floor_left",
+        "grand_casino_convention_crowd_table_block|grand_work_object_left|center|": "stage.event_floor_left",
+    },
+}
 
 
 OBJECT_SLOT_IDS = {
@@ -1165,6 +1181,12 @@ CLASS_OVERRIDES.update({
 })
 
 
+CLASS_OVERRIDE_DROPS = {
+    "delta_queen": {"delta_queen_wedding_charter_ceremony_rope"},
+    "grand_casino": {"grand_casino_convention_crowd_table_block"},
+}
+
+
 EXACT_LITERAL_MAPS = frozenset({
     "back_alley",
     "motel",
@@ -1307,11 +1329,18 @@ def apply_layout(map_data: dict[str, Any]) -> None:
         if new_slot_id not in valid_slot_ids:
             raise ValueError(f"{map_id}: no literal slot mapping for {identity} -> {old_slot_id}")
         scenario_preferences[str(identity)] = new_slot_id
+    for identity, slot_id in SCENARIO_SLOT_ADDITIONS.get(map_id, {}).items():
+        if slot_id not in valid_slot_ids:
+            raise ValueError(f"{map_id}: no literal slot for added scenario preference {identity} -> {slot_id}")
+        scenario_preferences[identity] = slot_id
     if map_id in EXACT_LITERAL_MAPS:
         map_data["scenario_slot_ids"] = scenario_preferences
     else:
         map_data["scenario_slot_ids"] = dict(sorted(scenario_preferences.items()))
+    map_data["scenario_overflow_ids"] = list(SCENARIO_OVERFLOW_IDS.get(map_id, []))
     class_overrides = dict(map_data.get("class_overrides", {}))
+    for identity in CLASS_OVERRIDE_DROPS.get(map_id, set()):
+        class_overrides.pop(identity, None)
     class_overrides.update(CLASS_OVERRIDES[map_id])
     if map_id in EXACT_LITERAL_MAPS:
         map_data["class_overrides"] = class_overrides

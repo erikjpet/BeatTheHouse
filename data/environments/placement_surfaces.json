@@ -1224,7 +1224,8 @@
         "sorting_shelf|delivery_verification_shelf|right|": "stage.event_cooler_2",
         "suspect_object||right|": "stage.event_cooler_1"
       },
-      "scenario_position_route_ids": {}
+      "scenario_position_route_ids": {},
+      "scenario_overflow_ids": []
     },
     {
       "id": "back_alley",
@@ -2049,7 +2050,8 @@
         "street_shooter|alley_background_right|background|back_alley_street_craps_shooter_lane": "stage.patron_center",
         "three_traces||left|": "stage.event_chalk_ring"
       },
-      "scenario_position_route_ids": {}
+      "scenario_position_route_ids": {},
+      "scenario_overflow_ids": []
     },
     {
       "id": "motel",
@@ -3850,7 +3852,8 @@
         "motel_weekly_rates_weekly_lamp||left|": "stage.event_bedspread",
         "motel_weekly_rates_weekly_sink||right|": "stage.event_wall_left"
       },
-      "scenario_position_route_ids": {}
+      "scenario_position_route_ids": {},
+      "scenario_overflow_ids": []
     },
     {
       "id": "bar",
@@ -5452,7 +5455,8 @@
         "bar_wake_wake_regular|wake_regular_work_1|foreground|bar_wake_work_1_position_wake_regular": "stage.patron_floor_2",
         "bar_wake_wake_regular||right|": "stage.patron_floor_2"
       },
-      "scenario_position_route_ids": {}
+      "scenario_position_route_ids": {},
+      "scenario_overflow_ids": []
     },
     {
       "id": "gas_station_casino",
@@ -6500,19 +6504,19 @@
           "id": "stage.event_foreground_marker",
           "kind": "stage",
           "pos": [
-            284.0,
-            414.0
+            836.0,
+            296.0
           ],
           "footprint_class": "ground_marker",
           "hit_rect": [
+            800.0,
             248.0,
-            366.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            284.0,
-            360.0
+            836.0,
+            242.0
           ],
           "facing": "none",
           "priority": 10,
@@ -6835,8 +6839,8 @@
             72.0
           ],
           "label_anchor": [
-            859.0,
-            320.0
+            837.0,
+            430.0
           ],
           "facing": "left",
           "priority": 10,
@@ -6990,7 +6994,8 @@
         "gas_station_trucker_convoy_station|env06_8_convoy_station|left|": "stage.event_service_wall",
         "gas_station_trucker_convoy_tail_rig|package_b_gas_top_left|right|": "stage.event_foreground_marker"
       },
-      "scenario_position_route_ids": {}
+      "scenario_position_route_ids": {},
+      "scenario_overflow_ids": []
     },
     {
       "id": "small_underground_casino",
@@ -8351,7 +8356,8 @@
         "travel_spots:0": "base.door_right_lower"
       },
       "scenario_slot_ids": {},
-      "scenario_position_route_ids": {}
+      "scenario_position_route_ids": {},
+      "scenario_overflow_ids": []
     },
     {
       "id": "small_underground_casino:club",
@@ -9947,7 +9953,8 @@
         "punchline_raid_jitters_task_3|punchline_raid_hide_cart|right|": "stage.event_wall_left",
         "punchline_raid_jitters_task_4|punchline_raid_hide_cart|center|": "stage.event_wall_left"
       },
-      "scenario_position_route_ids": {}
+      "scenario_position_route_ids": {},
+      "scenario_overflow_ids": []
     },
     {
       "id": "small_underground_casino:casino",
@@ -11005,7 +11012,8 @@
         "punchline_new_muscle_task_3|punchline_new_muscle_task|right|": "stage.event_wall_left",
         "punchline_new_muscle_task_4|punchline_new_muscle_task|center|": "stage.event_wall_left"
       },
-      "scenario_position_route_ids": {}
+      "scenario_position_route_ids": {},
+      "scenario_overflow_ids": []
     },
     {
       "id": "small_underground_casino:back_room",
@@ -11539,7 +11547,8 @@
         "event:crew_practice_rig": "floor_fixture",
         "event:crew_rook_ride": "doorway",
         "game:crew_draw_poker": "surface_item"
-      }
+      },
+      "scenario_overflow_ids": []
     },
     {
       "id": "jazz_club",
@@ -12714,7 +12723,8 @@
         "jazz_club_union_trouble_unbuilt_stage|env06_8_union_stage|center|": "stage.event_floor_right",
         "jazz_club_union_trouble_union_delegate|env06_8_union_delegate|background|": "stage.patron_floor_right"
       },
-      "scenario_position_route_ids": {}
+      "scenario_position_route_ids": {},
+      "scenario_overflow_ids": []
     },
     {
       "id": "kitty_cat_lounge",
@@ -14302,7 +14312,8 @@
         "kitty_cat_lounge_slow_night_task_2|kitty_slow_task|left|": "stage.event_wall_center",
         "kitty_cat_lounge_slow_night_task_3|kitty_slow_task|right|": "stage.event_wall_center"
       },
-      "scenario_position_route_ids": {}
+      "scenario_position_route_ids": {},
+      "scenario_overflow_ids": []
     },
     {
       "id": "delta_queen",
@@ -16587,8 +16598,6 @@
         "delta_queen_fog_delay_work_1_choice_2|delta_decision_right|background|": "stage.event_wall_6",
         "delta_queen_wedding_charter_best_man_table|delta_wedding_table|background|": "stage.event_floor_1",
         "delta_queen_wedding_charter_best_man|delta_wedding_best_man|background|": "stage.patron_floor",
-        "delta_queen_wedding_charter_ceremony_rope|delta_wedding_rope|foreground|": "stage.event_floor_2",
-        "delta_queen_wedding_charter_ceremony_rope|delta_wedding_rope|right|": "stage.event_floor_2",
         "delta_queen_wedding_charter_deck_coordinator|delta_wedding_coordinator|foreground|delta_queen_wedding_charter_ring_state_position": "stage.staff_right_table",
         "delta_queen_wedding_charter_deck_coordinator|delta_wedding_coordinator|left|": "stage.staff_right_table",
         "delta_queen_wedding_charter_ring_case|delta_wedding_ring_phase|foreground|": "stage.event_floor_3",
@@ -16616,9 +16625,14 @@
         "delta_queen_engine_trouble_safe_exit|delta_scenario_safe_exit|exit_lane|": "exit.left_lower",
         "delta_queen_fog_delay_safe_exit|delta_scenario_safe_exit|exit_lane|": "exit.left_lower",
         "delta_queen_wedding_charter_safe_exit|delta_wedding_safe_exit|exit_lane|": "exit.left_lower",
-        "delta_queen_whale_aboard_safe_exit|delta_scenario_safe_exit|exit_lane|": "exit.left_lower"
+        "delta_queen_whale_aboard_safe_exit|delta_scenario_safe_exit|exit_lane|": "exit.left_lower",
+        "delta_queen_wedding_charter_ceremony_rope|delta_wedding_rope|foreground|": "stage.event_floor_2",
+        "delta_queen_wedding_charter_ceremony_rope|delta_wedding_rope|right|": "stage.event_floor_2"
       },
-      "scenario_position_route_ids": {}
+      "scenario_position_route_ids": {},
+      "scenario_overflow_ids": [
+        "delta_queen_wedding_charter_ceremony_rope"
+      ]
     },
     {
       "id": "beach",
@@ -17475,7 +17489,8 @@
         "beach_storm_coming_warning_flag||foreground|": "stage.event_wall_left"
       },
       "scenario_position_route_ids": {},
-      "class_overrides": {}
+      "class_overrides": {},
+      "scenario_overflow_ids": []
     },
     {
       "id": "pawn_shop",
@@ -18501,7 +18516,8 @@
         "serial_station||left|": "stage.event_serial_station",
         "unfinished_jobs||left|": "stage.event_estate_cart"
       },
-      "scenario_position_route_ids": {}
+      "scenario_position_route_ids": {},
+      "scenario_overflow_ids": []
     },
     {
       "id": "grand_casino",
@@ -20170,7 +20186,10 @@
         "grand_casino_gala_night_work_2_choice_1|grand_decision_middle|background|": "stage.event_wall_left",
         "grand_casino_gala_night_work_2_choice_2|grand_decision_middle_right|left|": "stage.event_ground_1"
       },
-      "scenario_position_route_ids": {}
+      "scenario_position_route_ids": {},
+      "scenario_overflow_ids": [
+        "grand_casino_convention_crowd_table_block"
+      ]
     },
     {
       "id": "grand_casino_high_limit",
@@ -20668,7 +20687,8 @@
         "game:blackjack": "surface_item",
         "game:craps": "surface_item",
         "game:roulette": "surface_item"
-      }
+      },
+      "scenario_overflow_ids": []
     },
     {
       "id": "grand_casino_back_room",
@@ -21030,7 +21050,8 @@
       "class_overrides": {
         "game:blackjack": "surface_item",
         "game:craps": "surface_item"
-      }
+      },
+      "scenario_overflow_ids": []
     },
     {
       "id": "grand_casino_cage",
@@ -21505,7 +21526,8 @@
       },
       "scenario_slot_ids": {},
       "scenario_position_route_ids": {},
-      "class_overrides": {}
+      "class_overrides": {},
+      "scenario_overflow_ids": []
     },
     {
       "id": "motel_room",
@@ -21966,7 +21988,8 @@
         "home_tenure:status": "surface_item",
         "meta_trade_up:station": "surface_item",
         "meta_upgrade:home": "wall_mounted"
-      }
+      },
+      "scenario_overflow_ids": []
     },
     {
       "id": "apartment",
@@ -22454,7 +22477,8 @@
         "home_tenure:status": "surface_item",
         "meta_trade_up:station": "surface_item",
         "meta_upgrade:home": "wall_mounted"
-      }
+      },
+      "scenario_overflow_ids": []
     },
     {
       "id": "house",
@@ -22964,7 +22988,8 @@
         "home_tenure:status": "surface_item",
         "meta_trade_up:station": "surface_item",
         "meta_upgrade:home": "wall_mounted"
-      }
+      },
+      "scenario_overflow_ids": []
     }
   ],
   "slot_schema_version": 1

@@ -385,9 +385,13 @@ func _add_action_row(record: Dictionary, action: Dictionary) -> Button:
 func _add_unavailable_record_row(record: Dictionary) -> void:
 	var button := Button.new()
 	var label := str(record.get("label", record.get("object_id", "Room action"))).strip_edges()
-	var reason := _disabled_reason(record, {})
-	if bool(record.get("enabled", true)) and bool(record.get("interactive", true)):
+	var reason := str(record.get("disabled_reason", "")).strip_edges()
+	if reason.is_empty():
+		reason = str(record.get("short_description", "")).strip_edges()
+	if reason.is_empty() and bool(record.get("enabled", true)) and bool(record.get("interactive", true)):
 		reason = "No actions are available."
+	if reason.is_empty():
+		reason = "Unavailable."
 	button.text = "%s - %s" % [label, reason]
 	button.tooltip_text = reason
 	button.custom_minimum_size = MIN_TARGET

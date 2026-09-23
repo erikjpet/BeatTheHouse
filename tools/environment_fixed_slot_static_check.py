@@ -6,6 +6,7 @@ from __future__ import annotations
 import copy
 import json
 import math
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -28,6 +29,42 @@ SLOT_FIELDS = {
 MAP_SLOT_FIELDS = ("base_slots", "stage_slots", "exit_slots")
 EPSILON = 0.01
 MIN_INTERACTIVE_TARGET = (44.0, 44.0)
+# ScenarioLayoutResolver.WALK_LANE is immutable production access authority.
+# Keep this literal synchronized so the engine-free exact replay rejects the
+# same obstacle geometry before a seeded room finalization reaches Godot.
+MANDATORY_PLAYER_ACCESS_LANE = (16.0, 378.0, 868.0, 36.0)
+APPROVED_ACTIVE_SCENARIO_OVERFLOW = {
+    ("delta_queen", "scenario::delta_queen_wedding_charter_ceremony_rope"),
+    ("grand_casino", "scenario::grand_casino_convention_crowd_table_block"),
+}
+APPROVED_ACTIVE_OVERFLOW_PHASES = {
+    ("delta_queen", "scenario::delta_queen_wedding_charter_ceremony_rope"): (
+        "delta_queen_wedding_charter",
+        {"arrival", "work_1", "work_2", "work_3", "terminal_success", "terminal_failure", "terminal_refused", "terminal_interrupted"},
+    ),
+    ("grand_casino", "scenario::grand_casino_convention_crowd_table_block"): (
+        "grand_casino_convention_crowd",
+        {"arrival", "work_1", "work_2", "work_3", "terminal_success", "terminal_failure", "terminal_refused", "terminal_interrupted"},
+    ),
+}
+EXPECTED_COMPLETE_OVERFLOW_OCCURRENCES = {
+    ("back_alley", "scenario::brokered_exit"): 2,
+    ("back_alley", "scenario::erased_rumor_exit"): 2,
+    ("back_alley", "scenario::lookout_marker_abandoned"): 2,
+    ("back_alley", "scenario::opened_follow_exit"): 2,
+    ("back_alley", "scenario::shutter_gap_abandoned"): 2,
+    ("bar", "scenario::bar_dead_tuesday_aftermath_booth_zone_kept_actor"): 2,
+    ("bar", "scenario::bar_lock_in_aftermath_quiet_exit_prop"): 5,
+    ("corner_store", "scenario::watched_aisle"): 2,
+    ("corner_store", "scenario::watched_aisle_refused"): 2,
+    ("delta_queen", "scenario::delta_queen_wedding_charter_ceremony_rope"): 18,
+    ("grand_casino", "scenario::grand_casino_convention_crowd_table_block"): 18,
+    ("motel", "scenario::motel_conventioneers_aftermath_actor_crowd_jammed"): 1,
+    ("motel", "scenario::motel_conventioneers_aftermath_service_wing_open_secondary"): 1,
+    ("motel", "scenario::motel_stakeout_aftermath_observers_misdirected"): 1,
+    ("motel", "scenario::motel_stakeout_aftermath_stakeout_interrupted"): 1,
+    ("small_underground_casino:club", "scenario::punchline_bringer_show_aftermath_show_seated_actor"): 2,
+}
 
 
 class Check:
@@ -235,6 +272,11 @@ def simulate_scenario_binding(
         if isinstance(route, dict)
     }
     preferences = map_data.get("scenario_slot_ids", {}) if isinstance(map_data.get("scenario_slot_ids"), dict) else {}
+    authored_overflow_ids = {
+        str(identity)
+        for identity in values(map_data.get("scenario_overflow_ids"))
+        if isinstance(identity, str)
+    }
     class_overrides = map_data.get("class_overrides", {}) if isinstance(map_data.get("class_overrides"), dict) else {}
     position_routes = map_data.get("scenario_position_route_ids", {}) if isinstance(map_data.get("scenario_position_route_ids"), dict) else {}
     entries: list[tuple[int, str, str, bool, str, bool, str]] = []
@@ -272,6 +314,15 @@ def simulate_scenario_binding(
             hidden_identities.add(identity)
         selected: dict[str, Any] | None = None
         route = routes.get(route_id, {}) if route_id else {}
+        stable_id = identity.removeprefix("scenario::")
+        semantic = next((item for item in snapshot if str(item.get("identity", "")) == identity), {})
+        if stable_id in authored_overflow_ids:
+            check.require(
+                identity.startswith("scenario::") and not safe_exit and not route_id,
+                f"{map_id}.{identity}: authored scenario overflow must be a non-routed, non-exit scenario-owned visual",
+            )
+            bindings[identity] = {"mode": "overflow", "slot_id": "", "placement_class": placement_class}
+            continue
         if route_id:
             start_id = str(route.get("start_slot_id", ""))
             end_id = str(route.get("end_slot_id", ""))
@@ -418,6 +469,9 @@ def conservative_base_label_scenario_census(
     base_base_pair_tests = 0
     base_base_conflicts: list[tuple[str, str, str, str]] = []
     base_slot_count = 0
+    mandatory_lane_obstacle_checks = 0
+    mandatory_lane_obstacle_states: set[tuple[str, str, str, str]] = set()
+    mandatory_lane_overflow_states: set[tuple[str, str, str, str]] = set()
 
     def record_conflict(
         map_id: str,
@@ -492,7 +546,15 @@ def conservative_base_label_scenario_census(
         }
         scenario_authority: list[tuple[str, str, tuple[float, float, float, float], tuple[float, float, float, float], tuple[float, float, float, float] | None]] = []
         for identity, binding in bindings.items():
+            semantic = semantic_by_identity.get(identity, {})
+            role = str(semantic.get("role", "")).strip().lower()
             if binding.get("mode") != "room":
+                if role in {"obstacle", "barrier", "blockade"}:
+                    mandatory_lane_overflow_states.add((map_id, scenario_id, phase_id, identity))
+                    check.require(
+                        not str(binding.get("slot_id", "")),
+                        f"{map_id}.{scenario_id}/{phase_id}:{identity} overflow obstacle retained room geometry",
+                    )
                 continue
             scenario_slot_id = str(binding.get("slot_id", ""))
             scenario_slot = slots_by_id.get(scenario_slot_id, {})
@@ -502,11 +564,23 @@ def conservative_base_label_scenario_census(
                 continue
             scenario_label = SlotAuthoring.placement_label(semantic_by_identity.get(identity, {}))
             scenario_label_bounds = label_rect(scenario_slot, scenario_label, board) if scenario_label.strip() else None
+            scenario_small_hit = expanded(scenario_hit, board)
+            if role in {"obstacle", "barrier", "blockade"}:
+                mandatory_lane_obstacle_checks += 2
+                mandatory_lane_obstacle_states.add((map_id, scenario_id, phase_id, identity))
+                check.require(
+                    not intersects(scenario_hit, MANDATORY_PLAYER_ACCESS_LANE),
+                    f"{map_id}.{scenario_id}/{phase_id}:{identity} blocks the mandatory player access lane in normal layout",
+                )
+                check.require(
+                    not intersects(scenario_small_hit, MANDATORY_PLAYER_ACCESS_LANE),
+                    f"{map_id}.{scenario_id}/{phase_id}:{identity} blocks the mandatory player access lane in expanded small-screen layout",
+                )
             scenario_authority.append((
                 identity,
                 scenario_slot_id,
                 scenario_hit,
-                expanded(scenario_hit, board),
+                scenario_small_hit,
                 scenario_label_bounds,
             ))
         scenario_authority_count += len(scenario_authority)
@@ -550,6 +624,24 @@ def conservative_base_label_scenario_census(
     check.require(base_slot_observations > 0, "conservative base/scenario label census observed no label-capable base slots")
     check.require(scenario_authority_count > 0, "conservative base/scenario label census observed no bound scenario targets")
     check.require(pair_tests > 0, "conservative base/scenario label census performed no pair tests")
+    check.require(mandatory_lane_obstacle_checks > 0, "exact scenario replay performed no mandatory-lane obstacle checks")
+    check.require(
+        any(
+            map_id == "gas_station_casino"
+            and scenario_id == "gas_station_tour_bus_stop"
+            and identity == "scenario::gas_station_tour_bus_stop_restroom_queue"
+            for map_id, scenario_id, _phase_id, identity in mandatory_lane_obstacle_states
+        ),
+        "seed 063 regression: Gas Station tour-bus restroom queue was not covered by exact mandatory-lane replay",
+    )
+    check.require(
+        {
+            (map_id, identity)
+            for map_id, _scenario_id, _phase_id, identity in mandatory_lane_overflow_states
+        }
+        == APPROVED_ACTIVE_SCENARIO_OVERFLOW,
+        "mandatory-lane obstacle overflow diverged from the two exact Q-005 non-fitting identities",
+    )
     for map_id, left_id, right_id, kind in base_base_conflicts:
         check.errors.append(
             f"{map_id}: conservative maximum base labels {left_id}/{right_id} conflict: {kind}"
@@ -572,6 +664,9 @@ def conservative_base_label_scenario_census(
         "base_slots": base_slot_count,
         "base_base_pair_tests": base_base_pair_tests,
         "base_base_conflicts": len(base_base_conflicts),
+        "mandatory_lane_obstacle_checks": mandatory_lane_obstacle_checks,
+        "mandatory_lane_obstacle_states": len(mandatory_lane_obstacle_states),
+        "mandatory_lane_overflow_states": len(mandatory_lane_overflow_states),
     }
 
 
@@ -715,6 +810,25 @@ def contact_sheet_report(
 def validate_map(check: Check, map_data: dict[str, Any], archetype: dict[str, Any], board: tuple[float, float]) -> None:
     map_id = str(map_data.get("id", "<missing>"))
     check.require(map_data.get("slot_schema_version") == 1, f"{map_id}: slot_schema_version must be 1")
+    overflow_value = map_data.get("scenario_overflow_ids")
+    check.require(isinstance(overflow_value, list), f"{map_id}: scenario_overflow_ids must be an array")
+    overflow_ids = overflow_value if isinstance(overflow_value, list) else []
+    valid_overflow_ids = [
+        identity
+        for identity in overflow_ids
+        if isinstance(identity, str)
+        and bool(identity)
+        and identity == identity.strip()
+        and not identity.startswith("scenario::")
+    ]
+    check.require(
+        len(valid_overflow_ids) == len(overflow_ids),
+        f"{map_id}: scenario_overflow_ids must contain only non-empty unprefixed stable identities",
+    )
+    check.require(
+        valid_overflow_ids == sorted(set(valid_overflow_ids)),
+        f"{map_id}: scenario_overflow_ids must be sorted and duplicate-free",
+    )
     slots = all_slots(map_data)
     check.require(bool(values(map_data.get("base_slots"))), f"{map_id}: no base slots")
     check.require(bool(values(map_data.get("stage_slots"))), f"{map_id}: no stage slots")
@@ -938,9 +1052,21 @@ def main() -> int:
     scenario_catalog = json.loads(scenario_catalog_path.read_text(encoding="utf-8"))
     exact_seed_manifest = json.loads((root / "tools/fixtures/rw06_1_environment_exact_seed_manifest.json").read_text(encoding="utf-8"))
     event_catalog = json.loads((root / "data/events/events.json").read_text(encoding="utf-8"))
+    scenario_resolver_source = (root / "scripts/core/scenario_layout_resolver.gd").read_text(encoding="utf-8")
+    walk_lane_match = re.search(
+        r"(?m)^const\s+WALK_LANE\s*:=\s*Rect2\(\s*"
+        r"([-+]?\d+(?:\.\d+)?)\s*,\s*([-+]?\d+(?:\.\d+)?)\s*,\s*"
+        r"([-+]?\d+(?:\.\d+)?)\s*,\s*([-+]?\d+(?:\.\d+)?)\s*\)\s*$",
+        scenario_resolver_source,
+    )
+    production_walk_lane = tuple(float(item) for item in walk_lane_match.groups()) if walk_lane_match else None
     board_raw = point(placement.get("board_size"))
     check.require(placement.get("schema_version") == 2, "placement_surfaces.json schema_version must be 2")
     check.require(placement.get("slot_schema_version") == 1, "placement_surfaces.json slot_schema_version must be 1")
+    check.require(
+        production_walk_lane == MANDATORY_PLAYER_ACCESS_LANE,
+        "static mandatory-player-lane authority diverges from ScenarioLayoutResolver.WALK_LANE",
+    )
     check.require(board_raw is not None and board_raw[0] > 0 and board_raw[1] > 0, "invalid placement board_size")
     board = board_raw or (900.0, 430.0)
     archetypes = {str(item.get("id", "")): item for item in archetypes_list if isinstance(item, dict)}
@@ -1276,6 +1402,7 @@ def main() -> int:
     }
     gas_preferences = gas_map.get("object_slot_ids", {}) if isinstance(gas_map.get("object_slot_ids"), dict) else {}
     gas_categories = gas_map.get("category_slot_ids", {}) if isinstance(gas_map.get("category_slot_ids"), dict) else {}
+    gas_scenario_preferences = gas_map.get("scenario_slot_ids", {}) if isinstance(gas_map.get("scenario_slot_ids"), dict) else {}
     gas_doorway_occupants = {
         "event:scenario_graveyard_maintenance",
         "event:side_door",
@@ -1304,6 +1431,16 @@ def main() -> int:
         gas_stage_slots.get("stage.event_right_door", {}).get("footprint_class") == "doorway"
         and set(gas_exit_slots) == {"exit.left_upper", "exit.right_lower"},
         "gas_station_casino: scenario right-door and both independent safe-exit authorities must survive the base simplification",
+    )
+    restroom_queue_preference = "gas_station_tour_bus_stop_restroom_queue||right|"
+    restroom_queue_slot_id = str(gas_scenario_preferences.get(restroom_queue_preference, ""))
+    restroom_queue_hit = rect(gas_stage_slots.get(restroom_queue_slot_id, {}).get("hit_rect"))
+    check.require(
+        restroom_queue_slot_id == "stage.event_foreground_marker"
+        and restroom_queue_hit is not None
+        and not intersects(restroom_queue_hit, MANDATORY_PLAYER_ACCESS_LANE)
+        and not intersects(expanded(restroom_queue_hit, board), MANDATORY_PLAYER_ACCESS_LANE),
+        "seed 063 regression: apartment-to-Gas tour-bus restroom queue must clear the mandatory lane in normal and expanded layouts",
     )
 
     # Delta Queen's second base wall slot has no locally-associated 126x26
@@ -1394,6 +1531,7 @@ def main() -> int:
     check.require(len(scenario_defs) == 55, f"expected 55 scenario sequences, found {len(scenario_defs)}")
     check.require(len(catalog_rows) == 55, f"expected 55 legal scenario hosts, found {len(catalog_rows)}")
     scenario_visual_count = 0
+    legal_visual_ids_by_map: dict[str, set[str]] = {}
     for host, row in catalog_rows:
         scenario_id = str(row.get("id", ""))
         check.require(scenario_id in scenario_defs, f"{host}: missing sequence {scenario_id}")
@@ -1402,6 +1540,7 @@ def main() -> int:
         map_data = maps_by_id.get(map_id, {})
         check.require(bool(map_data), f"{scenario_id}: legal host map {map_id} is missing")
         visual_ids = scenario_visual_ids(scenario_defs.get(scenario_id, {}))
+        legal_visual_ids_by_map.setdefault(map_id, set()).update(visual_ids)
         scenario_visual_count += len(visual_ids)
         verbs = values(scenario_defs.get(scenario_id, {}).get("authoring", {}).get("player_verbs"))
         check.require(bool(verbs) and all(isinstance(verb, str) and verb for verb in verbs), f"{scenario_id}: authored actions are not statically enumerable")
@@ -1409,6 +1548,26 @@ def main() -> int:
         for field in ("next_archetypes_add", "rare_next_archetypes_add"):
             for destination in values(mutations.get(field)):
                 check.require(str(destination) in archetypes, f"{scenario_id}: offered destination {destination} is not installable")
+
+    actual_scenario_overflow_ids = {
+        (map_id, str(stable_id))
+        for map_id, map_data in maps_by_id.items()
+        for stable_id in values(map_data.get("scenario_overflow_ids"))
+        if isinstance(stable_id, str)
+    }
+    expected_scenario_overflow_ids = {
+        (map_id, identity.removeprefix("scenario::"))
+        for map_id, identity in APPROVED_ACTIVE_SCENARIO_OVERFLOW
+    }
+    check.require(
+        actual_scenario_overflow_ids == expected_scenario_overflow_ids,
+        "scenario_overflow_ids must be exactly the two Q-005 non-fitting obstacle identities",
+    )
+    for map_id, stable_id in sorted(actual_scenario_overflow_ids):
+        check.require(
+            stable_id in legal_visual_ids_by_map.get(map_id, set()),
+            f"{map_id}.scenario_overflow_ids names unknown legal scenario visual {stable_id}",
+        )
 
     active_snapshots = SlotAuthoring.collect_active_phase_snapshots(root)
     complete_snapshots = SlotAuthoring.collect_active_phase_snapshots(root, include_aftermath=True)
@@ -1421,6 +1580,9 @@ def main() -> int:
     authored_action_count = 0
     complete_rows: list[dict[str, Any]] = []
     active_rows: list[dict[str, Any]] = []
+    complete_overflow_occurrences: dict[tuple[str, str], int] = {}
+    active_overflow_occurrences: dict[tuple[str, str], int] = {}
+    active_overflow_phases: dict[tuple[str, str], set[tuple[str, str]]] = {}
     complete_binding_replays: list[tuple[str, list[dict[str, Any]], dict[str, dict[str, str]]]] = []
     for map_id, snapshots in complete_snapshots.items():
         map_data = maps_by_id.get(map_id, {})
@@ -1435,6 +1597,10 @@ def main() -> int:
             authored_action_count += first[3]
             complete_binding_replays.append((map_id, snapshot, first[0]))
             scenario_id, phase_id = snapshot_tags(snapshot)
+            for identity, binding in first[0].items():
+                if binding["mode"] == "overflow":
+                    key = (map_id, identity)
+                    complete_overflow_occurrences[key] = complete_overflow_occurrences.get(key, 0) + 1
             complete_rows.append({
                 "map_id": map_id,
                 "scenario_id": scenario_id,
@@ -1452,6 +1618,31 @@ def main() -> int:
             active_binding_count += room_count + overflow_count
             active_overflow_count += overflow_count
             scenario_id, phase_id = snapshot_tags(snapshot)
+            semantic_by_identity = {
+                str(semantic.get("identity", "")): semantic
+                for semantic in snapshot
+                if isinstance(semantic, dict)
+            }
+            for identity, binding in _bindings.items():
+                if binding["mode"] != "overflow":
+                    continue
+                key = (map_id, identity)
+                active_overflow_occurrences[key] = active_overflow_occurrences.get(key, 0) + 1
+                active_overflow_phases.setdefault(key, set()).add((scenario_id, phase_id))
+                if key in APPROVED_ACTIVE_SCENARIO_OVERFLOW:
+                    semantic = semantic_by_identity.get(identity, {})
+                    check.require(
+                        str(binding.get("slot_id", "")) == ""
+                        and binding.get("placement_class") == "floor_fixture",
+                        f"{map_id}.{identity}: approved overflow lost geometry-free true footprint-class authority",
+                    )
+                    check.require(
+                        bool(semantic.get("visible", True))
+                        and not bool(semantic.get("_slot_hidden", False))
+                        and bool(str(semantic.get("label", "")).strip())
+                        and bool(str(semantic.get("description", "")).strip()),
+                        f"{map_id}.{identity}: visible informational overflow row lost its player-facing label or summary",
+                    )
             active_rows.append({
                 "map_id": map_id,
                 "scenario_id": scenario_id,
@@ -1466,11 +1657,25 @@ def main() -> int:
     # visuals must fit authored room slots. Aftermath may use overflow more often
     # because it is persistent evidence, not a live task composition.
     check.require(active_overflow_rate <= 0.10, f"active-phase overflow is not rare: {active_overflow_count}/{active_binding_count} ({active_overflow_rate:.1%})")
-    # The release-week authoring has enough generic capacity for every common
-    # live phase. Keep that stronger result so a concentrated room regression
-    # cannot hide behind the global ten-percent ceiling. The complete census
-    # (including aftermath) still exercises overflow and action reachability.
-    check.require(active_overflow_count == 0, f"common active phases must fit authored room slots; saw {active_overflow_count} overflow bindings")
+    # Q-005 explicitly sends non-fitting objects to authenticated overflow.
+    # Keep that authority closed to these two obstacles and their exact phase
+    # envelopes; every other active visual must still fit in-room.
+    check.require(
+        active_overflow_occurrences
+        == {key: 18 for key in APPROVED_ACTIVE_SCENARIO_OVERFLOW},
+        f"active scenario overflow diverged from the exact Q-005 obstacle allowlist: {active_overflow_occurrences}",
+    )
+    for key, (expected_scenario_id, expected_phases) in APPROVED_ACTIVE_OVERFLOW_PHASES.items():
+        actual_states = active_overflow_phases.get(key, set())
+        check.require(
+            {scenario_id for scenario_id, _phase_id in actual_states} == {expected_scenario_id}
+            and {phase_id for _scenario_id, phase_id in actual_states} == expected_phases,
+            f"{key[0]}.{key[1]}: approved overflow scenario/phase envelope changed: {sorted(actual_states)}",
+        )
+    check.require(
+        complete_overflow_occurrences == EXPECTED_COMPLETE_OVERFLOW_OCCURRENCES,
+        f"complete scenario overflow admitted an unreviewed identity or count: {complete_overflow_occurrences}",
+    )
     check.require(authored_action_count > 0, "scenario phase simulation enumerated no authored actions")
     base_scenario_census = conservative_base_label_scenario_census(
         check,
@@ -1595,6 +1800,8 @@ def main() -> int:
     resolver_source = (root / "scripts/core/scenario_layout_resolver.gd").read_text(encoding="utf-8")
     placement_source = (root / "scripts/core/environment_placement.gd").read_text(encoding="utf-8")
     canvas_source = (root / "scripts/ui/pixel_scene_canvas.gd").read_text(encoding="utf-8")
+    room_action_source = (root / "scripts/ui/room_action_list.gd").read_text(encoding="utf-8")
+    overflow_contract_source = (root / "scripts/tests/rw06_1_overflow_action_ui_contract.gd").read_text(encoding="utf-8")
     meta_source = (root / "scripts/ui/meta_session_controller.gd").read_text(encoding="utf-8")
     capture_source = (root / "tools/environment_layout_screenshots.gd").read_text(encoding="utf-8")
     check.require(not any(token in binder_source for token in ("randf(", "randi(", "randomize(", "Time.")), "slot binder must not use RNG/wall clock")
@@ -1608,6 +1815,61 @@ def main() -> int:
     )
     queue_source = resolver_source.split("static func _resolve_visual_queue", 1)[-1].split("static func _validate_visual_access", 1)[0]
     check.require("bind_scenario_visuals" in queue_source and "_collision_safe_rect" not in queue_source, "scenario queue still performs runtime coordinate search")
+    scenario_binding_source = binder_source.split("static func bind_scenario_visuals", 1)[-1].split("static func slot_map_digest", 1)[0]
+    slot_digest_source = binder_source.split("static func slot_map_digest", 1)[-1].split("static func _scenario_overflow_policy", 1)[0]
+    overflow_policy_source = binder_source.split("static func _scenario_overflow_policy", 1)[-1].split("static func scenario_position_key", 1)[0]
+    check.require(
+        "_scenario_overflow_policy" in scenario_binding_source
+        and "authored_overflow_ids.has(stable_id)" in scenario_binding_source
+        and '_overflow_binding(identity, placement_class, "stage")' in scenario_binding_source
+        and "safe_exit" in scenario_binding_source
+        and "route_id" in scenario_binding_source,
+        "scenario overflow authority is not a generic, geometry-free, non-route/non-exit binder path",
+    )
+    check.require(
+        '"scenario_overflow_ids": _array(surface_map.get("scenario_overflow_ids", []))' in slot_digest_source,
+        "scenario overflow authority is absent from the deterministic slot-map digest",
+    )
+    check.require(
+        "_authored_scenario_visual_ids(surface_map)" in overflow_policy_source
+        and 'surface_map.get("scenario_slot_ids")' in overflow_policy_source
+        and "unknown authored identity" in overflow_policy_source,
+        "scenario overflow runtime policy does not reject unknown ids against map-wide authored preferences",
+    )
+    selected_action_source = canvas_source.split("func _selected_info_has_action_button", 1)[-1].split("func keyboard_reachable_object_ids", 1)[0]
+    selected_snapshot_source = canvas_source.split("func _selected_info_action_snapshot_list", 1)[-1].split("func _selected_info_badge_entries_for_rect", 1)[0]
+    selected_mouse_source = canvas_source.split("func _activate_selected_info_action_at_local_position", 1)[-1].split("func _activate_selected_info_action_by_index", 1)[0]
+    selected_entry_source = canvas_source.split("func _activate_selected_info_action_entry", 1)[-1].split("func keyboard_reachable_object_ids", 1)[0]
+    check.require(
+        '"enabled": not bool(object_data.get("disabled", false))' in selected_action_source
+        and 'not bool(action_data.get("disabled", false))' in selected_action_source
+        and 'not bool(first_action.get("disabled", false))' in selected_action_source
+        and 'object_data.get("confirm_action_id", "")' in selected_action_source
+        and "_selected_info_action_is_visible" in selected_action_source,
+        "selected-info action entries no longer derive visible fail-closed enabled authority from object/action state",
+    )
+    check.require(
+        '"enabled": bool(action_entry.get("enabled", false))' in selected_snapshot_source
+        and 'not bool(action_entry.get("enabled", false))' in selected_mouse_source
+        and 'not bool(action_entry.get("enabled", false))' in selected_entry_source,
+        "selected-info snapshots or mouse/keyboard activation no longer reject missing/disabled enabled authority",
+    )
+    unavailable_row_source = room_action_source.split("func _add_unavailable_record_row", 1)[-1].split("func _focus_controls", 1)[0]
+    check.require(
+        'record.get("short_description", "")' in unavailable_row_source
+        and 'button.disabled = true' in unavailable_row_source,
+        "actionless overflow rows no longer preserve a non-actionable authored information summary",
+    )
+    check.require(
+        "_check_authored_scenario_overflow_policy" in overflow_contract_source
+        and "_check_selected_info_action_enabled_gate" in overflow_contract_source
+        and "invented_scenario_obstacle" in overflow_contract_source
+        and "hidden_target" in overflow_contract_source
+        and "slot_map_digest(digest_mutation)" in overflow_contract_source
+        and "InputEventMouseButton.new()" in overflow_contract_source
+        and "InputEventKey.new()" in overflow_contract_source,
+        "focused authored-overflow or selected-action hostile regressions are missing",
+    )
     check.require(
         "EnvironmentSlotBinderScript.authored_route_points" in queue_source,
         "scenario actors do not slice their route between authored lane endpoint projections",
@@ -1773,6 +2035,9 @@ def main() -> int:
             "base_label_slots": int(base_scenario_census.get("base_slots", 0)),
             "base_base_pair_tests": int(base_scenario_census.get("base_base_pair_tests", 0)),
             "base_base_conflicts": int(base_scenario_census.get("base_base_conflicts", 0)),
+            "mandatory_lane_obstacle_checks": int(base_scenario_census.get("mandatory_lane_obstacle_checks", 0)),
+            "mandatory_lane_obstacle_states": int(base_scenario_census.get("mandatory_lane_obstacle_states", 0)),
+            "mandatory_lane_overflow_states": int(base_scenario_census.get("mandatory_lane_overflow_states", 0)),
         },
         "day2_samples": day2_sample_report(active_summaries),
         "contact_sheet": contact_sheet,
@@ -1798,7 +2063,9 @@ def main() -> int:
         f"historical_exact_seeds={len(manifest_rows)} base_scenario_pair_tests={base_scenario_census.get('pair_tests', 0)} "
         f"base_scenario_conflicts={base_scenario_census.get('conflict_count', 0)} "
         f"base_base_pair_tests={base_scenario_census.get('base_base_pair_tests', 0)} "
-        f"base_base_conflicts={base_scenario_census.get('base_base_conflicts', 0)} report={report_path}"
+        f"base_base_conflicts={base_scenario_census.get('base_base_conflicts', 0)} "
+        f"mandatory_lane_obstacle_checks={base_scenario_census.get('mandatory_lane_obstacle_checks', 0)} "
+        f"report={report_path}"
     )
     return 0
 

@@ -3944,11 +3944,33 @@ func _selected_info_has_single_action_button(object_data: Dictionary) -> bool:
 		return false
 	if str(object_data.get("id", "")) != selected_object_id:
 		return false
-	if bool(object_data.get("disabled", false)):
+	var authored_actions := _array_view(object_data.get("available_actions", []))
+	var visible_actions := _selected_info_available_actions(object_data)
+	# If action records exist, their presentation visibility is authoritative.
+	# An object-level confirm id must not resurrect an explicitly hidden action.
+	if not authored_actions.is_empty() and visible_actions.is_empty():
 		return false
 	if not str(object_data.get("confirm_action_id", "")).strip_edges().is_empty():
 		return true
-	return not _array_view(object_data.get("available_actions", [])).is_empty()
+	return not visible_actions.is_empty()
+
+
+func _selected_info_action_is_visible(action_data: Dictionary) -> bool:
+	return bool(action_data.get("visible", true)) \
+		and bool(action_data.get("presentation_visible", true)) \
+		and not bool(action_data.get("hidden", false)) \
+		and not bool(action_data.get("hidden_only", false))
+
+
+func _selected_info_available_actions(object_data: Dictionary) -> Array:
+	var result: Array = []
+	for action_value in _array_view(object_data.get("available_actions", [])):
+		if typeof(action_value) != TYPE_DICTIONARY:
+			continue
+		var action_data: Dictionary = action_value
+		if _selected_info_action_is_visible(action_data):
+			result.append(action_data)
+	return result
 
 
 func _selected_info_inline_actions(object_data: Dictionary) -> Array:
@@ -3956,14 +3978,14 @@ func _selected_info_inline_actions(object_data: Dictionary) -> Array:
 		return []
 	if str(object_data.get("id", "")) != selected_object_id:
 		return []
-	if bool(object_data.get("disabled", false)):
-		return []
 	var actions := _array_view(object_data.get("inline_actions", []))
 	var result: Array = []
 	for action in actions:
 		if typeof(action) != TYPE_DICTIONARY:
 			continue
 		var action_data: Dictionary = action
+		if not _selected_info_action_is_visible(action_data):
+			continue
 		var label := str(action_data.get("label", "")).strip_edges()
 		var emit_object_id := str(action_data.get("emit_object_id", action_data.get("id", ""))).strip_edges()
 		if label.is_empty() or emit_object_id.is_empty():
@@ -4018,7 +4040,7 @@ func _selected_info_action_label(object_data: Dictionary) -> String:
 	if not inline_actions.is_empty() and typeof(inline_actions[0]) == TYPE_DICTIONARY:
 		return str((inline_actions[0] as Dictionary).get("label", "")).strip_edges().capitalize()
 	var action_id := str(object_data.get("confirm_action_id", "")).strip_edges()
-	var actions := _array_view(object_data.get("available_actions", []))
+	var actions := _selected_info_available_actions(object_data)
 	var label := ""
 	if not actions.is_empty() and typeof(actions[0]) == TYPE_DICTIONARY:
 		label = str((actions[0] as Dictionary).get("label", "")).strip_edges()
@@ -4114,12 +4136,24 @@ func _selected_info_action_entries_for_rect(info: Dictionary, card: Rect2) -> Ar
 				"detail_rect": detail_rect,
 				"selected": entries.size() == selected_info_action_index,
 				"input_action": str(action_data.get("input_action", "")),
-				"enabled": bool(action_data.get("enabled", true)),
+				"enabled": not bool(object_data.get("disabled", false))
+					and bool(object_data.get("enabled", true))
+					and not bool(action_data.get("disabled", false))
+					and bool(action_data.get("enabled", true)),
 			})
 			y += button_height + detail_height + OBJECT_INFO_INLINE_ACTION_GAP
 		return entries
 	if _selected_info_has_single_action_button(object_data):
 		var action_height := _selected_info_action_height()
+		var available_actions := _selected_info_available_actions(object_data)
+		var first_action: Dictionary = {}
+		if not available_actions.is_empty() and typeof(available_actions[0]) == TYPE_DICTIONARY:
+			first_action = available_actions[0]
+		var single_enabled := not bool(object_data.get("disabled", false)) \
+			and bool(object_data.get("enabled", true)) \
+			and not bool(first_action.get("disabled", false)) \
+			and bool(first_action.get("enabled", true)) \
+			and not str(object_data.get("confirm_action_id", "")).strip_edges().is_empty()
 		entries.append({
 			"inline": false,
 			"label": _selected_info_action_label(object_data),
@@ -4131,6 +4165,7 @@ func _selected_info_action_entries_for_rect(info: Dictionary, card: Rect2) -> Ar
 			),
 			"detail_rect": Rect2(),
 			"selected": false,
+			"enabled": single_enabled,
 		})
 	return entries
 
@@ -4153,6 +4188,7 @@ func _selected_info_action_snapshot_list(entries: Array) -> Array:
 			"detail_rect": _rect_to_snapshot(action_entry.get("detail_rect", Rect2())),
 			"inline": bool(action_entry.get("inline", false)),
 			"selected": bool(action_entry.get("selected", false)),
+			"enabled": bool(action_entry.get("enabled", false)),
 		})
 	return snapshots
 
@@ -4230,7 +4266,7 @@ func _selected_info_badge_tooltip_at_local_position(local_position: Vector2) -> 
 
 func _activate_selected_info_action_at_local_position(local_position: Vector2) -> bool:
 	var action_entry := _selected_info_action_entry_at_local_position(local_position)
-	if action_entry.is_empty():
+	if action_entry.is_empty() or not bool(action_entry.get("enabled", false)):
 		return false
 	var info := _selected_object_info()
 	var object_id := str(info.get("object_id", selected_object_id))
@@ -4265,7 +4301,7 @@ func _activate_selected_info_action_for_authored_input(event: InputEvent) -> boo
 
 
 func _activate_selected_info_action_entry(action_entry: Dictionary) -> bool:
-	if action_entry.is_empty() or not bool(action_entry.get("enabled", true)):
+	if action_entry.is_empty() or not bool(action_entry.get("enabled", false)):
 		return false
 	var info := _selected_object_info()
 	var object_id := str(info.get("object_id", selected_object_id))
