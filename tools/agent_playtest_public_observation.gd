@@ -115,34 +115,67 @@ static func fingerprint(value: Variant) -> String:
 
 static func _screen(source: Dictionary) -> Dictionary:
 	var result := _scalars(source, [
-		"screen", "selected_category", "has_run", "has_game", "run_menu_visible",
+		"screen", "selected_category", "has_run", "has_game",
 		"run_journal_visible", "travel_transition_active", "travel_transition_target_id",
-		"travel_transition_target_label", "world_map_overlay_visible", "world_map_title_text",
-		"selected_world_map_node_id", "world_map_detail_text", "world_map_detail_popup_visible",
-		"world_map_confirm_enabled",
+		"travel_transition_target_label",
 	])
-	result["start_menu"] = _start_menu(_dict(source.get("start_menu", {})))
-	result["run_menu"] = _scalars(_dict(source.get("run_menu", {})), [
-		"visible", "screen", "slot_id", "has_save", "status_text", "resume_disabled",
-		"save_disabled", "load_disabled", "journal_disabled", "settings_disabled",
-		"abandon_disabled", "main_menu_disabled",
-	])
-	result["overlay_state"] = _scalars(_dict(source.get("overlay_state", {})), [
+	var overlay_state := _dict(source.get("overlay_state", {}))
+	result["overlay_state"] = _scalars(overlay_state, [
 		"screen", "event_choice_popup_visible", "event_choice_popup_type", "talk_dock_visible",
 		"world_map_visible", "run_inventory_visible", "run_journal_visible", "run_menu_visible",
 		"settings_visible", "travel_transition_active", "contract_valid",
 	])
-	result["world_map"] = _world_map(_dict(source.get("world_map", {})))
-	result["run_report"] = _run_report(_dict(source.get("run_report", {})))
+	# Cached screen snapshots remain populated after their controls close. Publish
+	# each overlay payload only when independent rendered-state witnesses agree.
+	var screen_id := str(source.get("screen", ""))
+	var start_menu_source := _dict(source.get("start_menu", {}))
+	var start_menu_rendered := screen_id == "START" and bool(start_menu_source.get("visible", false))
+	result["start_menu"] = _start_menu(start_menu_source) if start_menu_rendered else {}
+	var run_menu_rendered := bool(source.get("run_menu_visible", false)) \
+		and bool(overlay_state.get("run_menu_visible", false))
+	result["run_menu_visible"] = run_menu_rendered
+	result["run_menu"] = _scalars(_dict(source.get("run_menu", {})), [
+		"visible", "screen", "slot_id", "has_save", "status_text", "resume_disabled",
+		"save_disabled", "load_disabled", "journal_disabled", "settings_disabled",
+		"abandon_disabled", "main_menu_disabled",
+	]) if run_menu_rendered else {}
+	# FoundationMain keeps a populated map snapshot warm even while its overlay is
+	# closed. It is model/cache state until both rendered visibility witnesses say
+	# the player can actually see it, so fail closed instead of publishing markers.
+	var map_rendered := bool(source.get("world_map_overlay_visible", false)) \
+		and bool(overlay_state.get("world_map_visible", false))
+	result["world_map_overlay_visible"] = map_rendered
+	if map_rendered:
+		for key in [
+			"world_map_title_text", "selected_world_map_node_id", "world_map_detail_text",
+			"world_map_detail_popup_visible", "world_map_confirm_enabled",
+		]:
+			if source.has(key):
+				result[key] = source[key]
+	result["world_map"] = _world_map(_dict(source.get("world_map", {}))) if map_rendered else {}
+	var run_report_rendered := screen_id in ["VICTORY", "FAILURE"] \
+		and bool(source.get("run_report_visible", false))
+	result["run_report_visible"] = run_report_rendered
+	result["run_report"] = _run_report(_dict(source.get("run_report", {}))) if run_report_rendered else {}
 	return result
 
 
 static func _start_menu(source: Dictionary) -> Dictionary:
 	var result := _scalars(source, [
-		"seed_text", "selected_home_type_id", "selected_challenge_id", "content_group_config_visible",
-		"challenge_config_visible", "run_config_visible", "primary_action_text", "release_version_text",
+		"visible", "content_group_config_visible", "challenge_config_visible", "run_config_visible",
+		"primary_action_visible", "release_version_visible", "seed_field_visible", "seed_text_committed",
 	])
-	result["selected_content_groups"] = _string_array(source.get("selected_content_groups", []))
+	if bool(source.get("primary_action_visible", false)):
+		result["primary_action_text"] = str(source.get("primary_action_text", ""))
+	if bool(source.get("release_version_visible", false)):
+		result["release_version_text"] = str(source.get("release_version_text", ""))
+	if bool(source.get("seed_field_visible", false)) and bool(source.get("seed_text_committed", false)):
+		result["seed_text"] = str(source.get("seed_text", ""))
+	if bool(source.get("content_group_config_visible", false)) or bool(source.get("run_config_visible", false)):
+		result["selected_home_type_id"] = str(source.get("selected_home_type_id", ""))
+		result["selected_content_groups"] = _string_array(source.get("selected_content_groups", []))
+	if bool(source.get("challenge_config_visible", false)) or bool(source.get("run_config_visible", false)):
+		result["selected_challenge_id"] = str(source.get("selected_challenge_id", ""))
 	return result
 
 
@@ -301,9 +334,12 @@ static func _status_hud(source: Dictionary) -> Dictionary:
 		"bankroll", "bankroll_delta", "bankroll_text", "chips", "chips_delta", "show_chips",
 		"heat_level", "heat_delta", "heat_text", "clock_day", "clock_minute_of_day",
 		"clock_display", "clock_exact_display", "clock_text", "environment_text", "goal_text",
-		"objective_state", "objective_text", "next_text", "run_status", "run_text", "save_text",
+		"objective_state", "objective_text", "next_text", "run_status", "run_text",
 		"status_text", "inventory_text", "debt_text", "town_status_text", "home_text",
 	])
+	result["save_text_visible"] = bool(source.get("save_text_visible", false))
+	if bool(result["save_text_visible"]):
+		result["save_text"] = str(source.get("save_text", ""))
 	result["demo_objective"] = _demo_objective(_dict(source.get("demo_objective", {})))
 	result["objective_guidance"] = _objective_guidance(_dict(source.get("objective_guidance", {})))
 	result["next_objective"] = _scalars(_dict(source.get("next_objective", {})), [
@@ -340,7 +376,7 @@ static func _event_popup(source: Dictionary) -> Dictionary:
 static func _talk(source: Dictionary) -> Dictionary:
 	var result := _scalars(source, [
 		"visible", "expanded", "event_id", "speaker", "speaker_text", "summary", "topic",
-		"voice_line", "choice_count", "queue_count", "typewriter_active", "urgency_bar_visible",
+		"voice_line", "choice_count", "queue_count", "urgency_bar_visible",
 	])
 	result["choice_ids"] = _string_array(source.get("choice_ids", []))
 	var timing := _dict(source.get("timing", {}))

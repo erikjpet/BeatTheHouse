@@ -41,6 +41,151 @@ func _check_hidden_state_redaction() -> void:
 		_check(not public_environment.has(raw_environment_key), "Public environment leaked raw model key %s." % raw_environment_key)
 	var public_screen_map := _dict(_dict(public_a.get("screen", {})).get("world_map", {}))
 	_check(_array(public_screen_map.get("nodes", [])).size() == 1, "The rendered screen world map was removed with the raw environment map.")
+	var closed_map_host := hidden_a.duplicate(true)
+	var closed_map_screen := _dict(closed_map_host.get("screen", {}))
+	closed_map_screen["world_map_overlay_visible"] = false
+	closed_map_screen["overlay_state"] = {"world_map_visible": true}
+	closed_map_screen["world_map_title_text"] = "SECRET_CLOSED_MAP_TITLE"
+	closed_map_screen["selected_world_map_node_id"] = "SECRET_CLOSED_MAP_SELECTED"
+	closed_map_screen["world_map_detail_text"] = "SECRET_CLOSED_MAP_DETAIL"
+	closed_map_screen["world_map_detail_popup_visible"] = true
+	closed_map_screen["world_map_confirm_enabled"] = true
+	closed_map_screen["world_map"] = {
+		"current_node_id": "SECRET_CLOSED_MAP_CURRENT",
+		"nodes": [{
+			"id": "SECRET_CLOSED_MAP_TARGET",
+			"label": "SECRET_CLOSED_MAP_MARKER",
+			"delivery_target": true,
+			"travel_enabled": true,
+		}],
+		"edges": [{
+			"id": "SECRET_CLOSED_MAP_EDGE",
+			"a": "SECRET_CLOSED_MAP_CURRENT",
+			"b": "SECRET_CLOSED_MAP_TARGET",
+		}],
+	}
+	closed_map_host["screen"] = closed_map_screen
+	var closed_map_public := PublicObservation.sanitize(closed_map_host)
+	var closed_public_map := _dict(_dict(closed_map_public.get("screen", {})).get("world_map", {}))
+	_check(closed_public_map.is_empty(), "A populated closed-overlay world map escaped into public observation.")
+	_check(not JSON.stringify(closed_map_public).contains("SECRET_CLOSED_MAP"), "Closed-overlay map markers escaped into public observation.")
+	var unrendered_map_host := closed_map_host.duplicate(true)
+	var unrendered_map_screen := _dict(unrendered_map_host.get("screen", {}))
+	unrendered_map_screen["world_map_overlay_visible"] = true
+	unrendered_map_screen["overlay_state"] = {"world_map_visible": false}
+	unrendered_map_host["screen"] = unrendered_map_screen
+	var unrendered_public_map := _dict(_dict(PublicObservation.sanitize(unrendered_map_host).get("screen", {})).get("world_map", {}))
+	_check(unrendered_public_map.is_empty(), "An unrendered world-map snapshot escaped through a stale visible flag.")
+
+	var closed_menu_a := hidden_a.duplicate(true)
+	var closed_menu_screen_a := _dict(closed_menu_a.get("screen", {}))
+	var closed_menu_overlay_a := _dict(closed_menu_screen_a.get("overlay_state", {}))
+	closed_menu_screen_a["run_menu_visible"] = false
+	closed_menu_overlay_a["run_menu_visible"] = false
+	closed_menu_screen_a["overlay_state"] = closed_menu_overlay_a
+	closed_menu_screen_a["run_menu"] = {
+		"visible": false,
+		"has_save": true,
+		"status_text": "SECRET_CLOSED_MENU_ASYNC_A",
+	}
+	closed_menu_a["screen"] = closed_menu_screen_a
+	var closed_menu_b := closed_menu_a.duplicate(true)
+	var closed_menu_screen_b := _dict(closed_menu_b.get("screen", {}))
+	closed_menu_screen_b["run_menu"] = {
+		"visible": false,
+		"has_save": false,
+		"status_text": "SECRET_CLOSED_MENU_ASYNC_B",
+	}
+	closed_menu_b["screen"] = closed_menu_screen_b
+	var closed_menu_public_a := PublicObservation.sanitize(closed_menu_a)
+	var closed_menu_public_b := PublicObservation.sanitize(closed_menu_b)
+	_check(_dict(_dict(closed_menu_public_a.get("screen", {})).get("run_menu", {})).is_empty(), "Closed run-menu state escaped into public observation.")
+	_check(PublicObservation.fingerprint(closed_menu_public_a) == PublicObservation.fingerprint(closed_menu_public_b), "Closed run-menu async state altered the public trace.")
+	_check(not JSON.stringify(closed_menu_public_a).contains("SECRET_CLOSED_MENU"), "Closed run-menu text escaped into public observation.")
+
+	var talk_timing_a := hidden_a.duplicate(true)
+	talk_timing_a["talk"] = {
+		"visible": true,
+		"event_id": "linda_counter",
+		"speaker": "Linda",
+		"summary": "Pick a rendered choice.",
+		"choice_count": 2,
+		"choice_ids": ["open_chips", "leave_counter"],
+		"typewriter_active": true,
+	}
+	var talk_timing_b := talk_timing_a.duplicate(true)
+	var settled_talk := _dict(talk_timing_b.get("talk", {}))
+	settled_talk["typewriter_active"] = false
+	talk_timing_b["talk"] = settled_talk
+	var talk_timing_public_a := PublicObservation.sanitize(talk_timing_a)
+	var talk_timing_public_b := PublicObservation.sanitize(talk_timing_b)
+	var public_talk := _dict(talk_timing_public_a.get("talk", {}))
+	_check(PublicObservation.fingerprint(talk_timing_public_a) == PublicObservation.fingerprint(talk_timing_public_b), "Talk typewriter frame timing altered the canonical public trace.")
+	_check(str(public_talk.get("event_id", "")) == "linda_counter" and _array(public_talk.get("choice_ids", [])).size() == 2, "Deterministic talk normalization removed rendered conversation choices.")
+	_check(not public_talk.has("typewriter_active"), "Frame-time-dependent typewriter state escaped into the public trace.")
+
+	var generated_seed_a := hidden_a.duplicate(true)
+	var generated_seed_screen_a := _dict(generated_seed_a.get("screen", {}))
+	generated_seed_screen_a["screen"] = "START"
+	generated_seed_screen_a["has_run"] = false
+	generated_seed_screen_a["world_map_overlay_visible"] = false
+	generated_seed_screen_a["overlay_state"] = {"world_map_visible": false, "run_menu_visible": false}
+	generated_seed_screen_a["start_menu"] = {
+		"visible": true,
+		"primary_action_visible": true,
+		"primary_action_text": "PLAY",
+		"seed_field_visible": true,
+		"seed_text_committed": false,
+		"seed_text": "RUN-SECRET-WALL-CLOCK-A",
+	}
+	generated_seed_a["screen"] = generated_seed_screen_a
+	var generated_seed_b := generated_seed_a.duplicate(true)
+	var generated_seed_screen_b := _dict(generated_seed_b.get("screen", {}))
+	var generated_seed_menu_b := _dict(generated_seed_screen_b.get("start_menu", {}))
+	generated_seed_menu_b["seed_text"] = "RUN-SECRET-WALL-CLOCK-B"
+	generated_seed_screen_b["start_menu"] = generated_seed_menu_b
+	generated_seed_b["screen"] = generated_seed_screen_b
+	var generated_seed_public_a := PublicObservation.sanitize(generated_seed_a)
+	var generated_seed_public_b := PublicObservation.sanitize(generated_seed_b)
+	_check(PublicObservation.fingerprint(generated_seed_public_a) == PublicObservation.fingerprint(generated_seed_public_b), "Uncommitted generated menu seeds made replay traces nondeterministic.")
+	_check(not JSON.stringify(generated_seed_public_a).contains("RUN-SECRET-WALL-CLOCK"), "An uncommitted generated menu seed escaped into public observation.")
+	var committed_seed_a := generated_seed_a.duplicate(true)
+	var committed_seed_screen_a := _dict(committed_seed_a.get("screen", {}))
+	var committed_seed_menu_a := _dict(committed_seed_screen_a.get("start_menu", {}))
+	committed_seed_menu_a["seed_text_committed"] = true
+	committed_seed_menu_a["seed_text"] = "RW06-FIXED-SEED"
+	committed_seed_screen_a["start_menu"] = committed_seed_menu_a
+	committed_seed_a["screen"] = committed_seed_screen_a
+	var committed_seed_b := committed_seed_a.duplicate(true)
+	var committed_seed_screen_b := _dict(committed_seed_b.get("screen", {}))
+	var committed_seed_menu_b := _dict(committed_seed_screen_b.get("start_menu", {}))
+	committed_seed_menu_b["seed_text"] = "RW06-OTHER-FIXED-SEED"
+	committed_seed_screen_b["start_menu"] = committed_seed_menu_b
+	committed_seed_b["screen"] = committed_seed_screen_b
+	_check(str(_dict(_dict(PublicObservation.sanitize(committed_seed_a).get("screen", {})).get("start_menu", {})).get("seed_text", "")) == "RW06-FIXED-SEED", "An explicitly entered visible seed was not preserved.")
+	_check(PublicObservation.fingerprint(PublicObservation.sanitize(committed_seed_a)) != PublicObservation.fingerprint(PublicObservation.sanitize(committed_seed_b)), "Distinct explicitly entered visible seeds were incorrectly normalized away.")
+
+	var offscreen_terminal := hidden_a.duplicate(true)
+	var offscreen_terminal_screen := _dict(offscreen_terminal.get("screen", {}))
+	offscreen_terminal_screen["screen"] = "VICTORY"
+	offscreen_terminal_screen["run_report_visible"] = false
+	offscreen_terminal_screen["run_report"] = {
+		"seed": "SECRET_OFFSCREEN_TERMINAL_SEED",
+		"outcome": {"key": "SECRET_OFFSCREEN_TERMINAL_OUTCOME", "won": true},
+	}
+	offscreen_terminal["screen"] = offscreen_terminal_screen
+	var offscreen_terminal_public := PublicObservation.sanitize(offscreen_terminal)
+	var offscreen_terminal_public_screen := _dict(offscreen_terminal_public.get("screen", {}))
+	_check(_dict(offscreen_terminal_public_screen.get("run_report", {})).is_empty(), "An offscreen terminal report escaped into public observation.")
+	_check(not bool(offscreen_terminal_public_screen.get("run_report_visible", true)), "An offscreen terminal report claimed a rendered witness.")
+	_check(not JSON.stringify(offscreen_terminal_public).contains("SECRET_OFFSCREEN_TERMINAL"), "Offscreen terminal data escaped into public observation.")
+	var rendered_terminal := offscreen_terminal.duplicate(true)
+	var rendered_terminal_screen := _dict(rendered_terminal.get("screen", {}))
+	rendered_terminal_screen["run_report_visible"] = true
+	rendered_terminal["screen"] = rendered_terminal_screen
+	var rendered_terminal_public_screen := _dict(PublicObservation.sanitize(rendered_terminal).get("screen", {}))
+	_check(bool(rendered_terminal_public_screen.get("run_report_visible", false)), "A rendered terminal report lost its visibility witness.")
+	_check(str(_dict(_dict(rendered_terminal_public_screen.get("run_report", {})).get("outcome", {})).get("key", "")) == "SECRET_OFFSCREEN_TERMINAL_OUTCOME", "A rendered terminal report lost its visible outcome.")
 	_check(PublicObservation.fingerprint(public_a) == PublicObservation.fingerprint(public_b), "Private blackjack/run-state changes altered the public observation.")
 	_check(str(public_a.get("checkpoint_fingerprint", "")) == str(public_b.get("checkpoint_fingerprint", "")), "Private state altered the canonical public checkpoint.")
 	var private_transition := PublicObservation.transition_summary(public_a, public_b, "look", true)
@@ -89,9 +234,13 @@ func _check_hidden_state_redaction() -> void:
 func _check_bridge_source_contract() -> void:
 	var source := FileAccess.get_file_as_string("res://tools/agent_playtest_session.gd")
 	_check(not source.is_empty(), "Could not read the production-input bridge source.")
-	_check(source.contains("PublicObservation.sanitize(Fidelity.observable_host_snapshot(app))"), "Bridge observations do not pass through the strict sanitizer.")
+	_check(source.contains("func _public_observation() -> Dictionary:"), "Bridge is missing its rendered-witness observation boundary.")
+	_check(source.contains("return PublicObservation.sanitize(snapshot)"), "Bridge observations do not pass through the strict sanitizer.")
 	_check(not source.contains("var observable := Fidelity.observable_host_snapshot(app)"), "Bridge still publishes a raw host observation.")
 	_check(not source.contains("var copy := action.duplicate(true)"), "Bridge clickable metadata still duplicates raw action dictionaries.")
+	_check(source.contains('const REPLAY_PAUSE_OWNER := "agent_replay"'), "Bridge is missing deterministic action-boundary pause ownership.")
+	_check(source.contains('screen["run_report_visible"]'), "Bridge does not witness the rendered RunReport control.")
+	_check(source.contains('start_menu["seed_text_committed"]'), "Bridge does not distinguish an entered seed from a generated menu seed.")
 	for command in ["focus_field", "set_field", "click_map", "click_choice", "click_inventory"]:
 		_check(source.contains('"%s"' % command), "Bridge is missing semantic command %s." % command)
 	_check(source.contains('"trace": transition'), "Bridge results are missing a public before/after trace.")
@@ -104,6 +253,7 @@ func _host_fixture(hole_secret: String, shoe_secret: String, branch_secret: Stri
 			"has_run": true,
 			"private_slot": branch_secret,
 			"world_map_overlay_visible": true,
+			"overlay_state": {"world_map_visible": true},
 			"world_map": {
 				"current_node_id": "grand_casino",
 				"nodes": [{

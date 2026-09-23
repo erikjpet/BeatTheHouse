@@ -6,12 +6,14 @@ extends SceneTree
 const MainScene := preload("res://scenes/main.tscn")
 const Fidelity := preload("res://scripts/tests/foundation/harness_production_fidelity.gd")
 const PublicObservation := preload("res://tools/agent_playtest_public_observation.gd")
+const REPLAY_PAUSE_OWNER := "agent_replay"
 
 var app: Control
 var session_name := "session"
 var session_dir := ""
 var next_command := 1
 var shutting_down := false
+var committed_start_seed_text := ""
 
 
 func _init() -> void:
@@ -39,11 +41,23 @@ func _boot() -> void:
 		return
 	root.add_child(app)
 	await _wait_frames(8)
+	if not app.has_method("set_application_pause_owner") or not app.has_method("application_lifecycle_snapshot"):
+		push_error("Production host does not expose replay pause ownership.")
+		quit(2)
+		return
+	app.call("set_application_pause_owner", REPLAY_PAUSE_OWNER, true)
+	await process_frame
+	var ready_pause := _replay_pause_snapshot()
+	if not _replay_pause_is_valid(ready_pause):
+		push_error("Could not acquire deterministic replay pause ownership: %s" % JSON.stringify(ready_pause))
+		quit(2)
+		return
 	_write_json(_path("ready.json"), {
 		"ready": true,
 		"session": session_name,
 		"pid": OS.get_process_id(),
 		"viewport": {"width": root.size.x, "height": root.size.y},
+		"replay_pause": ready_pause,
 		"persistence": {
 			"distribution_root": OS.get_environment("BTH_DISTRIBUTION_DATA_ROOT"),
 			"settings": OS.get_environment("BTH_USER_SETTINGS_PATH"),
@@ -88,12 +102,15 @@ func _poll_once() -> void:
 
 
 func _execute_command(raw: String, command_number: int) -> Dictionary:
-	var before_observable := PublicObservation.sanitize(Fidelity.observable_host_snapshot(app))
+	var before_observable := _public_observation()
+	var pause_before := _replay_pause_snapshot()
 	var accepted := false
 	var reason := ""
 	var detail: Dictionary = {}
 	var should_quit := false
-	if raw.is_empty():
+	if not _replay_pause_is_valid(pause_before):
+		reason = "deterministic replay pause ownership was lost before command"
+	elif raw.is_empty():
 		reason = "empty command"
 	else:
 		var verb := raw.get_slice(" ", 0).to_lower()
@@ -187,6 +204,7 @@ func _execute_command(raw: String, command_number: int) -> Dictionary:
 		"reason": reason,
 		"detail": detail,
 		"look": look,
+		"replay_pause_before": pause_before,
 		"trace": transition,
 		"quit": should_quit,
 	})
@@ -255,6 +273,8 @@ func _set_field(argument: String) -> Dictionary:
 		visible_value = (field as TextEdit).text
 	if visible_value != value:
 		return {"ok": false, "reason": "field text did not match the requested value", "field": target}
+	if field == app.get("seed_input"):
+		committed_start_seed_text = value
 	return {
 		"ok": true,
 		"field": target,
@@ -330,7 +350,7 @@ func _click_choice(choice_id: String) -> Dictionary:
 	var cleaned := choice_id.strip_edges()
 	if cleaned.is_empty():
 		return {"ok": false, "reason": "choice id is required"}
-	var public_observation := PublicObservation.sanitize(Fidelity.observable_host_snapshot(app))
+	var public_observation := _public_observation()
 	var event_popup := _dict(public_observation.get("event_popup", {}))
 	if bool(event_popup.get("visible", false)):
 		var choices := _array(event_popup.get("choices", []))
@@ -365,11 +385,19 @@ func _click_choice(choice_id: String) -> Dictionary:
 		var choice_index := choice_ids.find(cleaned)
 		if choice_index < 0:
 			return {"ok": false, "reason": "visible talk choice not found: %s" % cleaned}
-		if choice_index >= 4:
-			return {"ok": false, "reason": "talk choice is outside the production 1-4 hotkey range: %s" % cleaned}
-		var keyed := await _push_key(str(choice_index + 1))
-		if not bool(keyed.get("ok", false)):
-			return keyed
+		var talk_dock := app.get("talk_dock") as Control
+		var choice_list := talk_dock.get("choice_list") as Node if talk_dock != null else null
+		var buttons: Array[Button] = []
+		_collect_descendant_buttons(choice_list, buttons)
+		if choice_index >= buttons.size():
+			return {"ok": false, "reason": "talk choice has no corresponding visible button: %s" % cleaned}
+		var button := buttons[choice_index]
+		if button.disabled:
+			return {"ok": false, "reason": "visible talk choice is disabled: %s" % cleaned}
+		var visible_rect := _clipped_control_rect(button)
+		if not visible_rect.has_area():
+			return {"ok": false, "reason": "talk choice has no visible hit area: %s" % cleaned}
+		await _push_mouse_click(visible_rect.get_center(), false)
 		return {"ok": true, "choice_id": cleaned, "choice_index": choice_index, "surface": "talk"}
 	return {"ok": false, "reason": "no visible event or talk choice surface"}
 
@@ -391,7 +419,7 @@ func _click_inventory_item(argument: String) -> Dictionary:
 		return {"ok": false, "reason": "usage: click_inventory <item-id> [storage-source]"}
 	var item_id := str(parts[0]).strip_edges()
 	var requested_source := str(parts[1]).strip_edges() if parts.size() > 1 else ""
-	var public_observation := PublicObservation.sanitize(Fidelity.observable_host_snapshot(app))
+	var public_observation := _public_observation()
 	var inventory := _dict(public_observation.get("inventory", {}))
 	if not bool(inventory.get("visible", false)):
 		return {"ok": false, "reason": "run inventory is not visible"}
@@ -465,7 +493,7 @@ func _click_action(argument: String) -> Dictionary:
 		action = action.trim_suffix(" %s" % index_text).strip_edges()
 	var surface := app.get("game_surface_canvas") as Control
 	if surface != null and surface.visible and surface.has_method("local_position_for_surface_action"):
-		var public_observation := PublicObservation.sanitize(Fidelity.observable_host_snapshot(app))
+		var public_observation := _public_observation()
 		var public_game := _dict(public_observation.get("game", {}))
 		var available := false
 		for value in _game_surface_actions(surface, public_game):
@@ -602,7 +630,7 @@ func _capture_look(command_number: int) -> Dictionary:
 	var image_path := _path("%04d.png" % command_number)
 	var image := root.get_texture().get_image()
 	var image_error := image.save_png(image_path)
-	var observable := PublicObservation.sanitize(Fidelity.observable_host_snapshot(app))
+	var observable := _public_observation()
 	var room_canvas := app.get("environment_canvas") as Control
 	var game_canvas := app.get("game_surface_canvas") as Control
 	var coach := app.get("coach_overlay") as Control
@@ -615,15 +643,83 @@ func _capture_look(command_number: int) -> Dictionary:
 		"png": image_path,
 		"png_error": error_string(image_error) if image_error != OK else "",
 		"observable": observable,
+		"replay_pause": _replay_pause_snapshot(),
 		"coach": _public_coach_snapshot(coach_snapshot),
 		"clickable": {
 			"buttons": _public_buttons(),
 			"text_fields": _visible_text_fields(),
+			"talk_choices": _public_talk_choices(observable),
 			"canvas_objects": _canvas_objects(room_canvas),
 			"room_actions": _room_selected_actions(room_canvas),
 			"game_surface_actions": _game_surface_actions(game_canvas, _dict(observable.get("game", {}))),
 		},
 	}
+
+
+func _public_observation() -> Dictionary:
+	var snapshot := Fidelity.observable_host_snapshot(app)
+	var screen := _dict(snapshot.get("screen", {})).duplicate(true)
+	var screen_id := str(screen.get("screen", ""))
+	var start_menu := _dict(screen.get("start_menu", {})).duplicate(true)
+	var seed_field := app.get("seed_input") as LineEdit
+	var seed_field_visible := screen_id == "START" and _control_is_rendered(seed_field)
+	start_menu["visible"] = screen_id == "START" and _control_is_rendered(app.get("main_menu_panel") as Control)
+	start_menu["primary_action_visible"] = screen_id == "START" and _control_is_rendered(app.get("new_run_button") as Control)
+	start_menu["release_version_visible"] = screen_id == "START" and _control_is_rendered(app.get("release_version_label") as Control)
+	start_menu["seed_field_visible"] = seed_field_visible
+	start_menu["seed_text_committed"] = seed_field_visible \
+		and not committed_start_seed_text.is_empty() \
+		and seed_field != null \
+		and seed_field.text == committed_start_seed_text
+	start_menu["content_group_config_visible"] = screen_id == "START" \
+		and _control_is_rendered(app.get("content_group_panel") as Control)
+	start_menu["challenge_config_visible"] = screen_id == "START" \
+		and _control_is_rendered(app.get("challenge_panel") as Control)
+	start_menu["run_config_visible"] = screen_id == "START" \
+		and _control_is_rendered(app.get("run_config_panel") as Control)
+	screen["start_menu"] = start_menu
+	var run_report := app.get("run_report_screen") as Control
+	screen["run_report_visible"] = screen_id in ["VICTORY", "FAILURE"] \
+		and _control_is_rendered(run_report)
+	snapshot["screen"] = screen
+	var status_hud := _dict(snapshot.get("status_hud", {})).duplicate(true)
+	status_hud["save_text_visible"] = _hud_status_tooltip_is_rendered(str(status_hud.get("save_text", "")))
+	snapshot["status_hud"] = status_hud
+	return PublicObservation.sanitize(snapshot)
+
+
+func _control_is_rendered(control: Control) -> bool:
+	return control != null and control.visible and control.is_visible_in_tree() \
+		and _clipped_control_rect(control).has_area()
+
+
+func _hud_status_tooltip_is_rendered(expected_text: String) -> bool:
+	if expected_text.is_empty():
+		return false
+	var structured_hud := app.get("structured_hud") as Control
+	var status_tray := structured_hud.get("status_tray") as Control if structured_hud != null else null
+	if not _control_is_rendered(status_tray):
+		return false
+	for child in status_tray.get_children():
+		var control := child as Control
+		if _control_is_rendered(control) and control.tooltip_text == expected_text:
+			return true
+	return false
+
+
+func _replay_pause_snapshot() -> Dictionary:
+	if app == null or not app.has_method("application_lifecycle_snapshot"):
+		return {}
+	return _dict(app.call("application_lifecycle_snapshot")).duplicate(true)
+
+
+func _replay_pause_is_valid(snapshot: Dictionary) -> bool:
+	var owners := _array(snapshot.get("pause_owners", []))
+	return owners.has(REPLAY_PAUSE_OWNER) \
+		and bool(snapshot.get("application_paused", false)) \
+		and bool(snapshot.get("simulation_paused", false)) \
+		and bool(snapshot.get("environment_canvas_paused", false)) \
+		and bool(snapshot.get("game_canvas_paused", false))
 
 
 func _visible_buttons() -> Array:
@@ -673,6 +769,31 @@ func _visible_text_fields() -> Array:
 			"placeholder": str(entry.get("placeholder", "")),
 			"rect": entry.get("rect", Rect2()),
 			"focused": bool(entry.get("focused", false)),
+		})
+	return result
+
+
+func _public_talk_choices(public_observation: Dictionary) -> Array:
+	var talk := _dict(public_observation.get("talk", {}))
+	if not bool(talk.get("visible", false)):
+		return []
+	var choice_ids := _array(talk.get("choice_ids", []))
+	var talk_dock := app.get("talk_dock") as Control
+	var choice_list := talk_dock.get("choice_list") as Node if talk_dock != null else null
+	var buttons: Array[Button] = []
+	_collect_descendant_buttons(choice_list, buttons)
+	var result: Array = []
+	for index in range(choice_ids.size()):
+		var choice_id := str(choice_ids[index]).strip_edges()
+		if choice_id.is_empty():
+			continue
+		var button: Button = buttons[index] if index < buttons.size() else null
+		var visible_rect := _clipped_control_rect(button) if button != null else Rect2()
+		result.append({
+			"id": choice_id,
+			"label": button.text.strip_edges() if button != null else "",
+			"enabled": button != null and not button.disabled and visible_rect.has_area(),
+			"rect": visible_rect,
 		})
 	return result
 

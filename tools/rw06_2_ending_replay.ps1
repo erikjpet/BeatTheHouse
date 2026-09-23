@@ -10,7 +10,6 @@ param(
     [ValidateRange(30, 300)]
     [int]$TimeoutSeconds = 120,
     [string]$EvidenceRoot = '',
-    [switch]$KeepSessionOnFailure,
     [switch]$BridgeTransportContract,
     [switch]$BridgeStatusContract
 )
@@ -60,6 +59,10 @@ $script:ActionCount = 0
 $script:TraceOrdinal = 0
 $script:LastMoneySignature = ''
 $script:MidpointSaved = $false
+$script:OwnedSessionPid = 0
+$script:OwnedSessionStartUtcTicks = 0L
+$script:OwnedSessionExecutablePath = ''
+$script:SessionRoot = ''
 
 
 function Get-Value {
@@ -87,6 +90,34 @@ function Get-Array {
 }
 
 
+function Assert-ReplayPauseOwnership {
+    param(
+        [AllowNull()]$Snapshot,
+        [Parameter(Mandatory = $true)][string]$Context
+    )
+    $owners = @(Get-Array (Get-Value $Snapshot @('pause_owners') @()))
+    if ('agent_replay' -notin $owners -or
+        -not [bool](Get-Value $Snapshot @('application_paused') $false) -or
+        -not [bool](Get-Value $Snapshot @('simulation_paused') $false) -or
+        -not [bool](Get-Value $Snapshot @('environment_canvas_paused') $false) -or
+        -not [bool](Get-Value $Snapshot @('game_canvas_paused') $false)) {
+        throw "Deterministic action-boundary pause ownership was absent $Context."
+    }
+}
+
+
+function New-AnchoredSessionRoot {
+    param(
+        [Parameter(Mandatory = $true)][string]$Session,
+        [string]$DateSegment = (Get-Date -Format 'yyyy-MM-dd')
+    )
+    if ($Session -notmatch '^[A-Za-z0-9_-]+$' -or $DateSegment -notmatch '^\d{4}-\d{2}-\d{2}$') {
+        throw 'Cannot create an anchored session root from unsafe path segments.'
+    }
+    return [IO.Path]::GetFullPath((Join-Path $Worktree ".tmp\agent_playtest\$DateSegment\$Session"))
+}
+
+
 function ConvertFrom-BridgeOutput {
     param([Parameter(Mandatory = $true)][string]$Text)
     $trimmed = $Text.Trim()
@@ -109,18 +140,28 @@ function Invoke-SessionTool {
         [Parameter(Mandatory = $true)][hashtable]$Parameters
     )
     [void](New-Item -ItemType Directory -Path $BridgeCallRoot -Force)
+    $effectiveParameters = @{}
+    foreach ($key in $Parameters.Keys) {
+        $effectiveParameters[$key] = $Parameters[$key]
+    }
+    if (-not [string]::IsNullOrWhiteSpace($script:SessionRoot) -and -not $effectiveParameters.ContainsKey('SessionRoot')) {
+        $effectiveParameters['SessionRoot'] = $script:SessionRoot
+    }
     $bridgeToken = "$PID-$([Guid]::NewGuid().ToString('N'))"
     if ($bridgeToken -notmatch '^[0-9]+-[a-f0-9]{32}$') {
         throw 'Could not create a safe unique bridge-call token.'
     }
     $stdoutPath = Join-Path $BridgeCallRoot "$bridgeToken.stdout.tmp"
     $stderrPath = Join-Path $BridgeCallRoot "$bridgeToken.stderr.tmp"
-    $parametersJson = $Parameters | ConvertTo-Json -Compress
+    $parametersJson = $effectiveParameters | ConvertTo-Json -Compress
     $escapedSessionTool = $SessionTool.Replace("'", "''")
     $escapedParametersJson = $parametersJson.Replace("'", "''")
     $bootstrap = @"
 `$ErrorActionPreference = 'Stop'
 `$ProgressPreference = 'SilentlyContinue'
+`$utf8 = New-Object Text.UTF8Encoding(`$false)
+`$OutputEncoding = `$utf8
+[Console]::OutputEncoding = `$utf8
 `$sessionTool = '$escapedSessionTool'
 `$parameterObject = '$escapedParametersJson' | ConvertFrom-Json
 `$bridgeParameters = @{}
@@ -131,9 +172,9 @@ foreach (`$property in `$parameterObject.PSObject.Properties) {
 "@
     $encodedBootstrap = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($bootstrap))
     $declaredTimeout = 15
-    if ($Parameters.ContainsKey('TimeoutSeconds')) {
+    if ($effectiveParameters.ContainsKey('TimeoutSeconds')) {
         $parsedTimeout = 0
-        if ([int]::TryParse([string]$Parameters['TimeoutSeconds'], [ref]$parsedTimeout)) {
+        if ([int]::TryParse([string]$effectiveParameters['TimeoutSeconds'], [ref]$parsedTimeout)) {
             $declaredTimeout = [Math]::Max(1, $parsedTimeout)
         }
     }
@@ -158,8 +199,8 @@ foreach (`$property in `$parameterObject.PSObject.Properties) {
         $bridgeProcess.WaitForExit()
         $bridgeProcess.Refresh()
         $bridgeExitCode = $bridgeProcess.ExitCode
-        $stdoutValue = if (Test-Path -LiteralPath $stdoutPath) { Get-Content -LiteralPath $stdoutPath -Raw } else { '' }
-        $stderrValue = if (Test-Path -LiteralPath $stderrPath) { Get-Content -LiteralPath $stderrPath -Raw } else { '' }
+        $stdoutValue = if (Test-Path -LiteralPath $stdoutPath) { Get-Content -LiteralPath $stdoutPath -Raw -Encoding utf8 } else { '' }
+        $stderrValue = if (Test-Path -LiteralPath $stderrPath) { Get-Content -LiteralPath $stderrPath -Raw -Encoding utf8 } else { '' }
         $stdout = if ($null -eq $stdoutValue) { '' } else { [string]$stdoutValue }
         $stderr = if ($null -eq $stderrValue) { '' } else { [string]$stderrValue }
         $mergedOutput = @($stdout.Trim(), $stderr.Trim()) | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
@@ -260,6 +301,8 @@ function Assert-HealthyResult {
         $reason = [string](Get-Value $Result @('reason') 'no reason supplied')
         throw "Production input was rejected for '$Command': $reason"
     }
+    Assert-ReplayPauseOwnership -Snapshot (Get-Value $Result @('replay_pause_before') $null) -Context "before '$Command'"
+    Assert-ReplayPauseOwnership -Snapshot (Get-Value $Result @('look', 'replay_pause') $null) -Context "after '$Command'"
     $alerts = @(Get-Array (Get-Value $Result @('log_alerts') @()))
     if ($alerts.Count -gt 0) {
         throw "Godot emitted a warning/error after '$Command': $($alerts -join ' | ')"
@@ -421,55 +464,169 @@ function Invoke-BridgeCommand {
 
 
 function Start-BridgeSession {
+    param([switch]$SkipInitialLook)
+    if ([string]::IsNullOrWhiteSpace($script:SessionRoot)) {
+        throw "Session '$($script:Session)' has no anchored absolute session root."
+    }
     $output = Invoke-SessionTool -Parameters @{
         Session = $script:Session
         Start = $true
         TimeoutSeconds = $TimeoutSeconds
     }
-    $null = ConvertFrom-BridgeOutput -Text $output
-    $null = Invoke-BridgeCommand -Command 'look' -Intent 'observe the current player surface' -ObservationOnly
+    $ready = ConvertFrom-BridgeOutput -Text $output
+    Assert-ReplayPauseOwnership -Snapshot (Get-Value $ready @('replay_pause') $null) -Context "at session '$($script:Session)' ready"
+    $status = Get-SessionStatus
+    if (-not [bool](Get-Value $status @('running') $false)) {
+        throw "Session '$($script:Session)' did not publish a running owned-process identity after start."
+    }
+    if (-not $SkipInitialLook) {
+        $null = Invoke-BridgeCommand -Command 'look' -Intent 'observe the current player surface' -ObservationOnly
+    }
 }
 
 
 function Get-SessionStatus {
     $output = Invoke-SessionTool -Parameters @{ Session = $script:Session }
-    return ConvertFrom-BridgeOutput -Text $output
+    $status = ConvertFrom-BridgeOutput -Text $output
+    if ([string](Get-Value $status @('session') '') -cne $script:Session) {
+        throw "Session status returned the wrong owner id for '$($script:Session)'."
+    }
+    $reportedRoot = [string](Get-Value $status @('folder') '')
+    if ([string]::IsNullOrWhiteSpace($reportedRoot) -or
+        -not ([IO.Path]::GetFullPath($reportedRoot)).Equals([IO.Path]::GetFullPath($script:SessionRoot), [StringComparison]::OrdinalIgnoreCase)) {
+        throw "Session status escaped the anchored root for '$($script:Session)'."
+    }
+    if ([bool](Get-Value $status @('running') $false)) {
+        $ownedPid = [int](Get-Value $status @('pid') 0)
+        $ownedStartUtcTicks = [long](Get-Value $status @('start_utc_ticks') 0L)
+        $ownedExecutablePath = [string](Get-Value $status @('executable_path') '')
+        if ($ownedPid -le 0 -or $ownedStartUtcTicks -le 0 -or [string]::IsNullOrWhiteSpace($ownedExecutablePath)) {
+            throw "Running session '$($script:Session)' did not publish a complete owned-process identity."
+        }
+        if (-not ([IO.Path]::GetFullPath($ownedExecutablePath)).Equals([IO.Path]::GetFullPath($GodotBin), [StringComparison]::OrdinalIgnoreCase)) {
+            throw "Running session '$($script:Session)' reported an unexpected executable path."
+        }
+        $script:OwnedSessionPid = $ownedPid
+        $script:OwnedSessionStartUtcTicks = $ownedStartUtcTicks
+        $script:OwnedSessionExecutablePath = $ownedExecutablePath
+    }
+    return $status
+}
+
+
+function Get-ExactOwnedSessionProcess {
+    if ($script:OwnedSessionPid -le 0 -or $script:OwnedSessionStartUtcTicks -le 0 -or
+        [string]::IsNullOrWhiteSpace($script:OwnedSessionExecutablePath)) {
+        return $null
+    }
+    $process = Get-Process -Id $script:OwnedSessionPid -ErrorAction SilentlyContinue
+    if (-not $process) { return $null }
+    try {
+        $actualStartUtcTicks = [long]$process.StartTime.ToUniversalTime().Ticks
+        $actualExecutablePath = [IO.Path]::GetFullPath([string]$process.Path)
+        $expectedExecutablePath = [IO.Path]::GetFullPath($script:OwnedSessionExecutablePath)
+        if ($actualStartUtcTicks -ne $script:OwnedSessionStartUtcTicks -or
+            -not $actualExecutablePath.Equals($expectedExecutablePath, [StringComparison]::OrdinalIgnoreCase)) {
+            return $null
+        }
+        return $process
+    }
+    catch {
+        return $null
+    }
+}
+
+
+function Stop-ExactOwnedSessionProcess {
+    $process = Get-ExactOwnedSessionProcess
+    if (-not $process) { return $false }
+    # PID reuse is not ownership. The exact start-time/path tuple above must
+    # still match before this runner may force-stop its own Godot host.
+    Stop-Process -Id $script:OwnedSessionPid -Force -ErrorAction Stop
+    $deadline = (Get-Date).AddSeconds(5)
+    while ((Get-Date) -lt $deadline) {
+        if (-not (Get-ExactOwnedSessionProcess)) {
+            return $true
+        }
+        Start-Sleep -Milliseconds 100
+    }
+    throw "Exact owned Godot PID $($script:OwnedSessionPid) remained alive after bounded force-stop."
+}
+
+
+function Assert-NoPostExitLogAlerts {
+    if (Get-ExactOwnedSessionProcess) {
+        throw "Cannot perform the final log rescan while session '$($script:Session)' is still running."
+    }
+    $alerts = @()
+    foreach ($logName in @('godot.stdout.log', 'godot.stderr.log')) {
+        $logPath = Join-Path $script:SessionRoot $logName
+        if (-not (Test-Path -LiteralPath $logPath -PathType Leaf)) {
+            $alerts += "$logName`: missing after process exit"
+            continue
+        }
+        $alerts += @(Get-Content -LiteralPath $logPath -Encoding utf8 | Where-Object {
+            $_ -match 'SCRIPT ERROR|(^|\s)ERROR[: ]|(^|\s)WARNING[: ]'
+        } | ForEach-Object { "$logName`: $_" })
+    }
+    if ($alerts.Count -gt 0) {
+        throw "Godot logs contained warning/error output after confirmed process exit: $($alerts -join ' | ')"
+    }
 }
 
 
 function Stop-BridgeSessionSafely {
     param([switch]$BestEffort)
+    $gracefulFailure = $null
+    $logFailure = $null
     try {
         $status = Get-SessionStatus
         if ([bool](Get-Value $status @('running') $false)) {
             $null = Invoke-BridgeCommand -Command 'quit' -Intent 'close the playtest host' -ObservationOnly
             Wait-ForSessionExit
         }
-        else {
-            Remove-OwnedBridgeCaptureResidue
-        }
     }
     catch {
+        $gracefulFailure = $_
+    }
+
+    $forced = Stop-ExactOwnedSessionProcess
+    if (Get-ExactOwnedSessionProcess) {
+        throw "Session '$($script:Session)' retained its exact owned Godot process after cleanup."
+    }
+    try {
+        Assert-NoPostExitLogAlerts
+    }
+    catch {
+        $logFailure = $_
+    }
+    Remove-OwnedBridgeCaptureResidue
+
+    if ($null -ne $gracefulFailure -or $null -ne $logFailure) {
+        $details = @()
+        if ($null -ne $gracefulFailure) { $details += "graceful=$($gracefulFailure.Exception.Message)" }
+        if ($null -ne $logFailure) { $details += "post_exit_logs=$($logFailure.Exception.Message)" }
+        $message = "Session '$($script:Session)' cleanup forced=$forced failed qualification: $($details -join '; ')"
         if ($BestEffort) {
-            Write-Warning "Could not close session '$($script:Session)' cleanly after a prior failure: $($_.Exception.Message)"
+            Write-Warning $message
             return
         }
-        throw
+        throw $message
     }
 }
 
 
 function Wait-ForSessionExit {
-    $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+    $graceSeconds = [Math]::Min(10, [Math]::Max(1, $TimeoutSeconds))
+    $deadline = (Get-Date).AddSeconds($graceSeconds)
     while ((Get-Date) -lt $deadline) {
         $status = Get-SessionStatus
-        if (-not [bool](Get-Value $status @('running') $false)) {
-            Remove-OwnedBridgeCaptureResidue
+        if (-not [bool](Get-Value $status @('running') $false) -and -not (Get-ExactOwnedSessionProcess)) {
             return
         }
         Start-Sleep -Milliseconds 100
     }
-    throw "Session '$($script:Session)' did not exit within $TimeoutSeconds seconds."
+    throw "Session '$($script:Session)' did not exit within its bounded $graceSeconds-second graceful-close window."
 }
 
 
@@ -724,6 +881,11 @@ function Get-VisibleChoiceIds {
 }
 
 
+function Get-PublicTalkChoices {
+    return @(Get-Array (Get-Value $script:LastResult @('look', 'clickable', 'talk_choices') @()))
+}
+
+
 function Choose-VisibleChoice {
     param(
         [Parameter(Mandatory = $true)][string]$ChoiceId,
@@ -732,6 +894,17 @@ function Choose-VisibleChoice {
     $choices = @(Get-VisibleChoiceIds)
     if ($ChoiceId -notin $choices) {
         throw "Required player-facing choice '$ChoiceId' is not visible. Visible: $($choices -join ', ')"
+    }
+    if ([bool](Get-Value $script:LastObservation @('talk', 'visible') $false)) {
+        $talkMatches = @(Get-PublicTalkChoices | Where-Object {
+            [string](Get-Value $_ @('id') '') -eq $ChoiceId
+        })
+        if ($talkMatches.Count -ne 1) {
+            throw "Visible TalkDock choice '$ChoiceId' has no unique rendered button binding."
+        }
+        if (-not [bool](Get-Value $talkMatches[0] @('enabled') $false)) {
+            throw "Visible TalkDock choice '$ChoiceId' is disabled or clipped."
+        }
     }
     $result = Invoke-BridgeCommand -Command "click_choice $ChoiceId" -Intent $Intent
 
@@ -843,20 +1016,43 @@ function Start-NormalSeededRun {
 
     $null = Click-Button -Text 'PLAY' -Intent 'start the mandatory first-night lesson on the fresh profile'
     Wait-Frames -Frames 30
+    $lessonScreen = [string](Get-Value $script:LastObservation @('screen', 'screen') '')
+    $lessonHasRun = [bool](Get-Value $script:LastObservation @('screen', 'has_run') $false)
+    $lessonStatus = [string](Get-Value $script:LastObservation @('status_hud', 'run_status') '')
+    if ($lessonScreen -ceq 'START' -or -not $lessonHasRun -or $lessonStatus -cne 'active') {
+        throw "PLAY did not visibly enter a live active first-night lesson (screen='$lessonScreen', has_run=$lessonHasRun, status='$lessonStatus')."
+    }
     Clear-VisibleCoach
 
-    if ([string](Get-Value $script:LastObservation @('screen', 'screen') '') -ne 'START') {
-        $null = Click-Button -Text 'Menu' -Intent 'open the run menu to use the player-facing lesson skip'
-        $null = Click-Button -Text 'Skip Lessons' -Intent 'request the player-facing lesson skip'
-        $null = Click-Button -Text 'OK' -Intent 'confirm the lesson skip and return to the main menu'
-        Wait-Frames -Frames 30
+    $null = Click-Button -Text 'Menu' -Intent 'open the run menu to use the player-facing lesson skip'
+    if (-not [bool](Get-Value $script:LastObservation @('screen', 'run_menu_visible') $false) -or
+        $null -eq (Find-Button -Text 'Skip Lessons')) {
+        throw 'The live first-night lesson did not render an enabled Skip Lessons control.'
     }
+    $null = Click-Button -Text 'Skip Lessons' -Intent 'request the player-facing lesson skip'
+    if ($null -eq (Find-Button -Text 'OK')) {
+        throw 'Skip Lessons did not render its enabled player confirmation.'
+    }
+    $null = Click-Button -Text 'OK' -Intent 'confirm the lesson skip and return to the main menu'
+    Wait-Frames -Frames 30
 
-    if ([string](Get-Value $script:LastObservation @('screen', 'screen') '') -ne 'START') {
+    if ([string](Get-Value $script:LastObservation @('screen', 'screen') '') -cne 'START' -or
+        [bool](Get-Value $script:LastObservation @('screen', 'has_run') $true)) {
         throw "Skipping the mandatory lesson did not return to the start screen."
     }
+    $postSkipPrimary = [string](Get-Value $script:LastObservation @('screen', 'start_menu', 'primary_action_text') '')
+    if ($postSkipPrimary -ceq 'CONTINUE' -or $postSkipPrimary -cne 'PLAY') {
+        throw "Lesson skip returned an unsafe start-menu primary action '$postSkipPrimary'."
+    }
     $null = Click-Button -Text 'RUN SETUP' -Intent 'open the visible seeded-run setup' -Contains
+    if (-not [bool](Get-Value $script:LastObservation @('screen', 'start_menu', 'run_config_visible') $false)) {
+        throw 'RUN SETUP did not render the seeded-run configuration panel.'
+    }
     $null = Invoke-BridgeCommand -Command "set_field seed $Seed" -Intent "type route seed $Seed into the visible seed field"
+    $visibleSeed = [string](Get-Value $script:LastObservation @('screen', 'start_menu', 'seed_text') '')
+    if ($visibleSeed -cne $Seed) {
+        throw "The semantic seed entry was not preserved as exact visible public evidence (found '$visibleSeed')."
+    }
     $null = Click-Button -Text 'START NEW RUN' -Intent 'start the normal seeded run through the visible setup'
     Wait-Frames -Frames 45
     Clear-VisibleCoach
@@ -1076,11 +1272,16 @@ function Get-FirstEnabledVisibleChoiceId {
     }
     $talkVisible = [bool](Get-Value $script:LastObservation @('talk', 'visible') $false)
     if ($talkVisible) {
-        $ids = @(Get-VisibleChoiceIds)
+        $choices = @(Get-PublicTalkChoices | Where-Object {
+            [bool](Get-Value $_ @('enabled') $false) -and
+            -not [string]::IsNullOrWhiteSpace([string](Get-Value $_ @('id') ''))
+        })
         foreach ($preferred in @('continue', 'acknowledge', 'move_on', 'keep_moving', 'leave', 'done')) {
-            if ($preferred -in $ids) { return $preferred }
+            if (@($choices | Where-Object { [string](Get-Value $_ @('id') '') -eq $preferred }).Count -eq 1) {
+                return $preferred
+            }
         }
-        if ($ids.Count -gt 0) { return [string]$ids[0] }
+        if ($choices.Count -gt 0) { return [string](Get-Value $choices[0] @('id') '') }
     }
     return ''
 }
@@ -1310,17 +1511,32 @@ function Ensure-GrandCasinoChips {
     if ($chips -ge $Minimum) { return }
     Open-CageCounter
     $null = Choose-VisibleChoice -ChoiceId 'open_chips' -Intent 'open Linda''s visible chips and cashout menu'
-    while ([int](Get-Value $script:LastObservation @('status_hud', 'chips') 0) -lt $Minimum) {
-        $choices = @(Get-VisibleChoiceIds)
-        if ('cage_buy_50' -in $choices) {
+    $maximumChipPurchases = 8 # 8 x the smallest $25 exchange covers the validated $200 ceiling.
+    for ($purchase = 0; $purchase -lt $maximumChipPurchases; $purchase++) {
+        $beforeChips = [int](Get-Value $script:LastObservation @('status_hud', 'chips') 0)
+        if ($beforeChips -ge $Minimum) { break }
+        $enabledChoices = @(Get-PublicTalkChoices | Where-Object {
+            [bool](Get-Value $_ @('enabled') $false)
+        } | ForEach-Object {
+            [string](Get-Value $_ @('id') '')
+        })
+        if ('cage_buy_50' -in $enabledChoices) {
             $null = Choose-VisibleChoice -ChoiceId 'cage_buy_50' -Intent 'exchange visible cash for 50 Grand Casino chips'
         }
-        elseif ('cage_buy_25' -in $choices) {
+        elseif ('cage_buy_25' -in $enabledChoices) {
             $null = Choose-VisibleChoice -ChoiceId 'cage_buy_25' -Intent 'exchange visible cash for 25 Grand Casino chips'
         }
         else {
             throw "Linda exposes no affordable chip purchase while the route needs $Minimum chips."
         }
+        $afterChips = [int](Get-Value $script:LastObservation @('status_hud', 'chips') 0)
+        if ($afterChips -le $beforeChips) {
+            throw "Linda's visible chip exchange made no public chip progress ($beforeChips -> $afterChips)."
+        }
+    }
+    $chips = [int](Get-Value $script:LastObservation @('status_hud', 'chips') 0)
+    if ($chips -lt $Minimum) {
+        throw "Grand Casino chip exchange did not reach $Minimum within $maximumChipPurchases bounded purchases (found $chips)."
     }
     $null = Choose-VisibleChoice -ChoiceId 'back_main' -Intent 'return to Linda''s main counter choices'
     $null = Choose-VisibleChoice -ChoiceId 'leave_counter' -Intent 'step away from Linda''s counter'
@@ -1561,23 +1777,35 @@ function Get-PersistenceCheckpoint {
 }
 
 
+function Assert-ExplicitSaveAcknowledged {
+    param([Parameter(Mandatory = $true)][string]$Milestone)
+    $hasSave = [bool](Get-Value $script:LastObservation @('screen', 'run_menu', 'has_save') $false)
+    $saveTextVisible = [bool](Get-Value $script:LastObservation @('status_hud', 'save_text_visible') $false)
+    $saveText = [string](Get-Value $script:LastObservation @('status_hud', 'save_text') '')
+    $separator = " $([char]0x00B7) "
+    $acknowledgment = 'Saved to Resume Slot.'
+    $expectedVisibleText = "Autosave On$separator$acknowledgment"
+    if (-not $hasSave -or -not $saveTextVisible -or $saveText -cne $expectedVisibleText) {
+        throw "The explicit Save at $Milestone did not render the exact success acknowledgment '$acknowledgment' (found '$saveText', visible=$saveTextVisible, has_save=$hasSave)."
+    }
+}
+
+
 function Assert-SaveRelaunchContinue {
     param([Parameter(Mandatory = $true)][string]$Milestone)
     $before = Get-PersistenceCheckpoint
     $beforeJson = $before | ConvertTo-Json -Depth 10 -Compress
     $null = Click-Button -Text 'Menu' -Intent "open the run menu at the $Milestone persistence checkpoint"
     $null = Click-Button -Text 'Save' -Intent "save the run through the visible run menu at $Milestone"
-    $hasSave = [bool](Get-Value $script:LastObservation @('screen', 'run_menu', 'has_save') $false)
-    $saveStatus = [string](Get-Value $script:LastObservation @('screen', 'run_menu', 'status_text') '')
-    if (-not $hasSave -or $saveStatus.IndexOf('save', [StringComparison]::OrdinalIgnoreCase) -lt 0) {
-        throw "The visible Save action did not confirm a persisted run at $Milestone."
-    }
+    Assert-ExplicitSaveAcknowledged -Milestone $Milestone
     $null = Click-Button -Text 'Main Menu' -Intent 'return to the main menu after the explicit save'
     if ([string](Get-Value $script:LastObservation @('screen', 'screen') '') -ne 'START') {
         throw "Main Menu did not return to the start screen after saving."
     }
     $null = Invoke-BridgeCommand -Command 'quit' -Intent 'quit the saved production host before relaunch' -ObservationOnly
     Wait-ForSessionExit
+    Assert-NoPostExitLogAlerts
+    Remove-OwnedBridgeCaptureResidue
     Start-BridgeSession
     if ([string](Get-Value $script:LastObservation @('screen', 'start_menu', 'primary_action_text') '') -ne 'CONTINUE') {
         throw "Relaunch after $Milestone did not expose CONTINUE."
@@ -1597,9 +1825,14 @@ function Assert-SaveRelaunchContinue {
 
 
 function Assert-TerminalOutcome {
+    $screenName = [string](Get-Value $script:LastObservation @('screen', 'screen') '')
+    $runReportVisible = [bool](Get-Value $script:LastObservation @('screen', 'run_report_visible') $false)
     $runStatus = [string](Get-Value $script:LastObservation @('status_hud', 'run_status') '')
     $outcome = [string](Get-Value $script:LastObservation @('screen', 'run_report', 'outcome', 'key') '')
     $won = [bool](Get-Value $script:LastObservation @('screen', 'run_report', 'outcome', 'won') $false)
+    if ($screenName -cne 'VICTORY' -or -not $runReportVisible) {
+        throw "Ending '$Ending' did not render the public VICTORY RunReport surface (screen='$screenName', visible=$runReportVisible)."
+    }
     if ($runStatus -ne 'ended') {
         throw "Ending '$Ending' did not reach the public ended run state (found '$runStatus')."
     }
@@ -1613,6 +1846,44 @@ function Assert-TerminalOutcome {
         throw "Ending '$Ending' exceeded the 350-action normal-route ceiling ($($script:ActionCount))."
     }
     return $outcome
+}
+
+
+function Write-FinalPublicCheckpoint {
+    # A terminal wait/look is observation-only and therefore is not written by
+    # Write-ActionEvidence. Take one final authenticated public observation and
+    # persist its outcome and visible economy explicitly into both hash streams.
+    $result = Invoke-BridgeCommand -Command 'look' -Intent 'capture the final public terminal checkpoint' -ObservationOnly
+    $outcome = Assert-TerminalOutcome
+    $observation = Get-Value $result @('look', 'observable') $null
+    $publicFingerprint = [string](Get-Value $result @('trace', 'after_fingerprint') '')
+    $checkpointFingerprint = [string](Get-Value $observation @('checkpoint_fingerprint') '')
+    $observedSeed = [string](Get-Value $observation @('screen', 'run_report', 'seed') '')
+    if ($publicFingerprint -notmatch '^[a-f0-9]{64}$' -or $checkpointFingerprint -notmatch '^[a-f0-9]{64}$') {
+        throw 'Final terminal observation did not publish complete authenticated public fingerprints.'
+    }
+    if ($observedSeed -cne $Seed) {
+        throw "Terminal run report seed '$observedSeed' did not exactly match requested fixed seed '$Seed'."
+    }
+    $final = [ordered]@{
+        schema_version = 1
+        record_kind = 'final_public_checkpoint'
+        observed_seed = $observedSeed
+        outcome_key = [string]$outcome
+        won = [bool](Get-Value $observation @('screen', 'run_report', 'outcome', 'won') $false)
+        public_fingerprint = $publicFingerprint
+        checkpoint_fingerprint = $checkpointFingerprint
+        bankroll = [int](Get-Value $observation @('status_hud', 'bankroll') 0)
+        chips = [int](Get-Value $observation @('status_hud', 'chips') 0)
+        heat = [int](Get-Value $observation @('status_hud', 'heat_level') 0)
+        clock_minute = [int](Get-Value $observation @('status_hud', 'clock_minute_of_day') 0)
+    }
+    $finalJson = $final | ConvertTo-Json -Compress
+    Add-Content -LiteralPath $script:TranscriptPath -Value $finalJson -Encoding utf8
+    Add-Content -LiteralPath $script:MoneyCurvePath -Value $finalJson -Encoding utf8
+    $finalPath = Join-Path $script:RunRoot 'final_public_checkpoint.json'
+    $final | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $finalPath -Encoding utf8
+    return [pscustomobject]$final
 }
 
 
@@ -1665,7 +1936,7 @@ function Invoke-CleanEndingRoute {
 
     for ($round = 0; $round -lt 80; $round++) {
         $objective = Get-Value $script:LastObservation @('status_hud', 'demo_objective') $null
-        if (-not [bool](Get-Value $objective @('players_card_eligible') $true)) {
+        if (-not [bool](Get-Value $objective @('players_card_eligible') $false)) {
             throw "Clean route lost Players Card eligibility: $([string](Get-Value $objective @('players_card_ineligible_reason') 'unknown reason'))"
         }
         if ([bool](Get-Value $objective @('players_card_ready_to_claim') $false)) {
@@ -2132,12 +2403,15 @@ function Assert-HeistSaveRelaunchContinue {
     Close-VisibleChoiceSurface
     $null = Click-Button -Text 'Menu' -Intent 'open the run menu at the completed heist setup checkpoint'
     $null = Click-Button -Text 'Save' -Intent 'save The Count after all visible setup chairs are filled'
-    if (-not [bool](Get-Value $script:LastObservation @('screen', 'run_menu', 'has_save') $false)) {
-        throw 'The visible Save action did not persist The Count setup.'
-    }
+    Assert-ExplicitSaveAcknowledged -Milestone 'The Count completed setup'
     $null = Click-Button -Text 'Main Menu' -Intent 'return to the main menu after saving The Count setup'
+    if ([string](Get-Value $script:LastObservation @('screen', 'screen') '') -cne 'START') {
+        throw 'Main Menu did not visibly return The Count checkpoint to START before relaunch.'
+    }
     $null = Invoke-BridgeCommand -Command 'quit' -Intent 'quit the saved heist host before relaunch' -ObservationOnly
     Wait-ForSessionExit
+    Assert-NoPostExitLogAlerts
+    Remove-OwnedBridgeCaptureResidue
     Start-BridgeSession
     if ([string](Get-Value $script:LastObservation @('screen', 'start_menu', 'primary_action_text') '') -ne 'CONTINUE') {
         throw 'Relaunch after The Count setup did not expose CONTINUE.'
@@ -2232,6 +2506,7 @@ function Invoke-BridgeTransportRegression {
     $invocationStamp = Get-Date -Format 'yyyyMMdd-HHmmss-fff'
     $nonce = [Guid]::NewGuid().ToString('N').Substring(0, 10)
     $script:Session = "rw062-bridge-$PID-$nonce"
+    $script:SessionRoot = New-AnchoredSessionRoot -Session $script:Session
     $script:RunRoot = Join-Path $EvidenceRoot "bridge-$invocationStamp-$PID"
     [void](New-Item -ItemType Directory -Path $script:RunRoot -Force)
     $script:TranscriptPath = Join-Path $script:RunRoot 'public_trace.ndjson'
@@ -2242,11 +2517,20 @@ function Invoke-BridgeTransportRegression {
     $script:TraceOrdinal = 0
     $script:LastMoneySignature = ''
     $script:MidpointSaved = $false
+    $script:OwnedSessionPid = 0
+    $script:OwnedSessionStartUtcTicks = 0L
+    $script:OwnedSessionExecutablePath = ''
 
     $lookResult = $null
     $waitResult = $null
     $quitResult = $null
+    $relaunchLookResult = $null
+    $relaunchQuitResult = $null
     $status = $null
+    $firstOwnedPid = 0
+    $firstOwnedStartUtcTicks = 0L
+    $secondOwnedPid = 0
+    $secondOwnedStartUtcTicks = 0L
     $failure = $null
     try {
         Start-BridgeSession
@@ -2256,14 +2540,43 @@ function Invoke-BridgeTransportRegression {
         }
         $waitResult = Invoke-BridgeCommand -Command 'wait 1' -Intent 'exercise a second atomically published command' -ObservationOnly
         $quitResult = Invoke-BridgeCommand -Command 'quit' -Intent 'close the bridge transport regression host' -ObservationOnly
+        $firstOwnedPid = $script:OwnedSessionPid
+        $firstOwnedStartUtcTicks = $script:OwnedSessionStartUtcTicks
         Wait-ForSessionExit
+        Assert-NoPostExitLogAlerts
+        Remove-OwnedBridgeCaptureResidue
+        if (Get-ExactOwnedSessionProcess) {
+            throw 'Bridge transport regression retained its first exact owned Godot process after quit.'
+        }
+
+        # Recreate a hostile stale cursor, then relaunch the same session. Start
+        # must atomically reset it before any command is allowed to inspect the
+        # newly truncated process logs.
+        $firstStatus = Get-SessionStatus
+        $sessionFolder = [string](Get-Value $firstStatus @('folder') '')
+        if ([string]::IsNullOrWhiteSpace($sessionFolder) -or -not (Test-Path -LiteralPath $sessionFolder -PathType Container)) {
+            throw 'Bridge transport regression could not resolve its session evidence folder.'
+        }
+        $logCursorPath = Join-Path $sessionFolder 'log_cursor.json'
+        @{ stdout = 999999; stderr = 999999 } | ConvertTo-Json | Set-Content -LiteralPath $logCursorPath -Encoding utf8
+        Start-BridgeSession -SkipInitialLook
+        $secondOwnedPid = $script:OwnedSessionPid
+        $secondOwnedStartUtcTicks = $script:OwnedSessionStartUtcTicks
+        $resetCursor = Get-Content -Raw -LiteralPath $logCursorPath -Encoding utf8 | ConvertFrom-Json
+        if ([int]$resetCursor.stdout -ne 0 -or [int]$resetCursor.stderr -ne 0) {
+            throw 'Same-session relaunch did not reset the new process log cursor before its first command.'
+        }
+        $relaunchLookResult = Invoke-BridgeCommand -Command 'look' -Intent 'exercise the same-session relaunch after atomic log-cursor reset' -ObservationOnly
+        $relaunchQuitResult = Invoke-BridgeCommand -Command 'quit' -Intent 'close the relaunched bridge transport host' -ObservationOnly
+        Wait-ForSessionExit
+        Assert-NoPostExitLogAlerts
+        Remove-OwnedBridgeCaptureResidue
         $status = Get-SessionStatus
         if ([bool](Get-Value $status @('running') $true)) {
             throw 'Bridge transport regression left its Godot session running.'
         }
-        $sessionFolder = [string](Get-Value $status @('folder') '')
-        if ([string]::IsNullOrWhiteSpace($sessionFolder) -or -not (Test-Path -LiteralPath $sessionFolder -PathType Container)) {
-            throw 'Bridge transport regression could not resolve its session evidence folder.'
+        if (Get-ExactOwnedSessionProcess) {
+            throw 'Bridge transport regression retained its relaunched exact owned Godot process after quit.'
         }
         Remove-OwnedBridgeCaptureResidue
         $sessionTempResidue = @(Get-ChildItem -LiteralPath $sessionFolder -Recurse -File -Filter '*.tmp' -ErrorAction SilentlyContinue)
@@ -2288,10 +2601,16 @@ function Invoke-BridgeTransportRegression {
         session = $script:Session
         evidence_root = $script:RunRoot
         session_folder = [string](Get-Value $status @('folder') '')
+        owned_processes = @(
+            [ordered]@{ pid = $firstOwnedPid; start_utc_ticks = $firstOwnedStartUtcTicks; residue = $false }
+            [ordered]@{ pid = $secondOwnedPid; start_utc_ticks = $secondOwnedStartUtcTicks; residue = $false }
+        )
         commands = @(
             [ordered]@{ command = [string](Get-Value $lookResult @('command') ''); accepted = [bool](Get-Value $lookResult @('accepted') $false) }
             [ordered]@{ command = [string](Get-Value $waitResult @('command') ''); accepted = [bool](Get-Value $waitResult @('accepted') $false) }
             [ordered]@{ command = [string](Get-Value $quitResult @('command') ''); accepted = [bool](Get-Value $quitResult @('accepted') $false) }
+            [ordered]@{ command = [string](Get-Value $relaunchLookResult @('command') ''); accepted = [bool](Get-Value $relaunchLookResult @('accepted') $false) }
+            [ordered]@{ command = [string](Get-Value $relaunchQuitResult @('command') ''); accepted = [bool](Get-Value $relaunchQuitResult @('accepted') $false) }
         )
         failure = if ($null -eq $failure) { '' } else { [string]$failure.Exception.Message }
     }
@@ -2308,6 +2627,12 @@ function Invoke-BridgeStatusRegression {
     $invocationStamp = Get-Date -Format 'yyyyMMdd-HHmmss-fff'
     $nonce = [Guid]::NewGuid().ToString('N').Substring(0, 10)
     $script:Session = "rw062-status-$PID-$nonce"
+    # Prove commands remain anchored to the exact supplied folder even when its
+    # date segment differs from today's wall clock.
+    $script:SessionRoot = New-AnchoredSessionRoot -Session $script:Session -DateSegment '1999-12-31'
+    $script:OwnedSessionPid = 0
+    $script:OwnedSessionStartUtcTicks = 0L
+    $script:OwnedSessionExecutablePath = ''
     $statusRoot = Join-Path $EvidenceRoot "status-$invocationStamp-$PID"
     [void](New-Item -ItemType Directory -Path $statusRoot -Force)
     $status = Get-SessionStatus
@@ -2316,6 +2641,9 @@ function Invoke-BridgeStatusRegression {
     }
     if ([string](Get-Value $status @('session') '') -cne $script:Session) {
         throw 'No-Godot bridge status regression returned the wrong session id.'
+    }
+    if (-not ([IO.Path]::GetFullPath([string](Get-Value $status @('folder') ''))).Equals($script:SessionRoot, [StringComparison]::OrdinalIgnoreCase)) {
+        throw 'No-Godot bridge status regression did not preserve its cross-date absolute session root.'
     }
     Remove-OwnedBridgeCaptureResidue
     $bridgeTempResidue = @(Get-ChildItem -LiteralPath $BridgeCallRoot -File -Filter '*.tmp' -ErrorAction SilentlyContinue)
@@ -2354,10 +2682,12 @@ New-Item -ItemType Directory -Force -Path $invocationRoot | Out-Null
 $runSummaries = @()
 $referenceTranscriptHash = ''
 $referenceMoneyHash = ''
+$referenceFinalCheckpointJson = ''
 
 for ($iteration = 1; $iteration -le $Repeat; $iteration++) {
     $nonce = [Guid]::NewGuid().ToString('N').Substring(0, 10)
     $script:Session = "rw062-$Ending-$PID-$iteration-$nonce"
+    $script:SessionRoot = New-AnchoredSessionRoot -Session $script:Session
     $script:RunRoot = Join-Path $invocationRoot ("run-{0:D2}" -f $iteration)
     New-Item -ItemType Directory -Force -Path $script:RunRoot | Out-Null
     $script:TranscriptPath = Join-Path $script:RunRoot 'public_trace.ndjson'
@@ -2368,13 +2698,18 @@ for ($iteration = 1; $iteration -le $Repeat; $iteration++) {
     $script:TraceOrdinal = 0
     $script:LastMoneySignature = ''
     $script:MidpointSaved = $false
+    $script:OwnedSessionPid = 0
+    $script:OwnedSessionStartUtcTicks = 0L
+    $script:OwnedSessionExecutablePath = ''
     $passed = $false
     $failureMessage = ''
+    $finalPublicCheckpoint = $null
     try {
         Start-BridgeSession
         Start-NormalSeededRun
         Invoke-SelectedEndingRoute
         $outcome = Assert-TerminalOutcome
+        $finalPublicCheckpoint = Write-FinalPublicCheckpoint
         $passed = $true
     }
     catch {
@@ -2385,7 +2720,7 @@ for ($iteration = 1; $iteration -le $Repeat; $iteration++) {
         if ($passed) {
             Stop-BridgeSessionSafely
         }
-        elseif (-not $KeepSessionOnFailure) {
+        else {
             Stop-BridgeSessionSafely -BestEffort
         }
         $transcriptHash = if (Test-Path -LiteralPath $script:TranscriptPath) { (Get-FileHash -LiteralPath $script:TranscriptPath -Algorithm SHA256).Hash.ToLowerInvariant() } else { '' }
@@ -2396,13 +2731,15 @@ for ($iteration = 1; $iteration -le $Repeat; $iteration++) {
             seed = $Seed
             session = $script:Session
             passed = $passed
-            outcome = if ($passed) { [string](Get-Value $script:LastObservation @('screen', 'run_report', 'outcome', 'key') '') } else { '' }
+            outcome = if ($null -ne $finalPublicCheckpoint) { [string]$finalPublicCheckpoint.outcome_key } else { '' }
+            observed_terminal_seed = if ($null -ne $finalPublicCheckpoint) { [string]$finalPublicCheckpoint.observed_seed } else { '' }
             action_count = $script:ActionCount
             midpoint_save_relaunch_continue = $script:MidpointSaved
             transcript = $script:TranscriptPath
             transcript_sha256 = $transcriptHash
             money_curve = $script:MoneyCurvePath
             money_curve_sha256 = $moneyHash
+            final_public_checkpoint = $finalPublicCheckpoint
             failure = $failureMessage
         }
         $runSummary | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath (Join-Path $script:RunRoot 'summary.json') -Encoding utf8
@@ -2411,22 +2748,35 @@ for ($iteration = 1; $iteration -le $Repeat; $iteration++) {
 
     $currentTranscriptHash = [string]$runSummaries[$runSummaries.Count - 1].transcript_sha256
     $currentMoneyHash = [string]$runSummaries[$runSummaries.Count - 1].money_curve_sha256
+    $currentFinalCheckpointJson = $runSummaries[$runSummaries.Count - 1].final_public_checkpoint | ConvertTo-Json -Depth 10 -Compress
     if ($iteration -eq 1) {
         $referenceTranscriptHash = $currentTranscriptHash
         $referenceMoneyHash = $currentMoneyHash
+        $referenceFinalCheckpointJson = $currentFinalCheckpointJson
     }
-    elseif ($currentTranscriptHash -cne $referenceTranscriptHash -or $currentMoneyHash -cne $referenceMoneyHash) {
+    elseif ($currentTranscriptHash -cne $referenceTranscriptHash -or
+        $currentMoneyHash -cne $referenceMoneyHash -or
+        $currentFinalCheckpointJson -cne $referenceFinalCheckpointJson) {
         throw "Deterministic replay mismatch for '$Ending': repeat $iteration differs from repeat 1."
     }
 }
 
+$deterministic = $Repeat -eq 2 -and
+    @($runSummaries | Select-Object -ExpandProperty transcript_sha256 -Unique).Count -eq 1 -and
+    @($runSummaries | Select-Object -ExpandProperty money_curve_sha256 -Unique).Count -eq 1 -and
+    @($runSummaries | ForEach-Object { $_.final_public_checkpoint | ConvertTo-Json -Depth 10 -Compress } | Select-Object -Unique).Count -eq 1
+$releaseQualifying = $Repeat -eq 2 -and $runSummaries.Count -eq 2 -and $deterministic -and
+    @($runSummaries | Where-Object { -not $_.passed }).Count -eq 0
 $finalSummary = [ordered]@{
     schema_version = 1
     check_id = 'rw06_2_ending_replay'
     ending = $Ending
     seed = $Seed
+    observed_terminal_seeds = @($runSummaries | Select-Object -ExpandProperty observed_terminal_seed)
     repeat = $Repeat
-    deterministic = $Repeat -lt 2 -or (@($runSummaries | Select-Object -ExpandProperty transcript_sha256 -Unique).Count -eq 1 -and @($runSummaries | Select-Object -ExpandProperty money_curve_sha256 -Unique).Count -eq 1)
+    deterministic = $deterministic
+    release_qualifying = $releaseQualifying
+    qualification = if ($releaseQualifying) { 'two_identical_repeats' } else { 'non_qualifying_development_run' }
     public_observation_schema = $Schema
     public_observation_schema_version = $SchemaVersion
     evidence_root = $invocationRoot
