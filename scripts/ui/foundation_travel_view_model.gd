@@ -89,7 +89,7 @@ static func enriched_world_map_snapshot(host: Variant, snapshot: Dictionary) -> 
 			closing_soon = bool(open_status.get("closing_soon", false))
 			if not open_now:
 				enabled = false
-		if not host._world_map_node_should_render(node, is_current, enabled) and node_id != sweep_marker_node_id and not courier_targets_by_id.has(node_id):
+		if not host._world_map_node_should_render(node, is_current, visible_travel_target and not route_locked) and node_id != sweep_marker_node_id and not courier_targets_by_id.has(node_id):
 			continue
 		node["current"] = is_current
 		if courier_targets_by_id.has(node_id):

@@ -4763,6 +4763,8 @@ func _check_grand_casino_invite_gate(library: ContentLibrary, kitty: Dictionary,
 	)
 	if not crowded_targets.has("grand_casino") or crowded_targets.has("delta_queen"):
 		failures.append("The promised Grand Casino did not replace the lower-priority new Tier-2 card on a revisit-crowded map: %s." % JSON.stringify(crowded_targets))
+	if crowded_targets.size() != crowded_revisit_ids.size() + 1:
+		failures.append("Preserving the promised Grand Casino changed the crowded map target cap: %s." % JSON.stringify(crowded_targets))
 	for crowded_revisit_id in crowded_revisit_ids:
 		if not crowded_targets.has(crowded_revisit_id):
 			failures.append("Preserving the promised Grand Casino erased protected revisit %s from a crowded map: %s." % [crowded_revisit_id, JSON.stringify(crowded_targets)])
@@ -4963,6 +4965,44 @@ func _check_grand_casino_locked_route_ui(library: ContentLibrary, delta: Diction
 	var unlocked_status := unlocked_run.travel_route_status(locked_route)
 	if not bool(unlocked_status.get("available", false)) or bool(unlocked_status.get("hidden", true)) or bool(unlocked_status.get("locked", true)):
 		failures.append("Grand Casino locked_hint route did not return normal status after the invite flag.")
+	unlocked_run.bankroll = 63
+	app.set("run_state", unlocked_run)
+	app.call("_invalidate_travel_view_cache")
+	app.call("_refresh")
+	var unaffordable_target_ids: Array = app.call("_travel_target_ids")
+	if not unaffordable_target_ids.has("grand_casino"):
+		failures.append("Invited Grand Casino was not selected as a public map target while its fare was unaffordable: %s." % JSON.stringify(unaffordable_target_ids))
+	var hidden_node_id := ""
+	for hidden_candidate_value in JsonCoerceScript._copy_array(unlocked_run.world_map.get("nodes", [])):
+		if typeof(hidden_candidate_value) != TYPE_DICTIONARY:
+			continue
+		var hidden_candidate_id := str((hidden_candidate_value as Dictionary).get("id", "")).strip_edges()
+		if not hidden_candidate_id.is_empty() and not WorldMapScript.is_node_visible(unlocked_run.world_map, hidden_candidate_id):
+			hidden_node_id = hidden_candidate_id
+			break
+	if hidden_node_id.is_empty():
+		failures.append("Grand Casino unaffordable-map fixture did not retain an unrevealed node for privacy coverage.")
+	var unaffordable_map_snapshot: Dictionary = app.call("_world_map_snapshot")
+	var unaffordable_grand_node: Dictionary = {}
+	var hidden_node_rendered := false
+	for node_value in JsonCoerceScript._copy_array(unaffordable_map_snapshot.get("nodes", [])):
+		if typeof(node_value) != TYPE_DICTIONARY:
+			continue
+		var node: Dictionary = node_value
+		var node_id := str(node.get("id", ""))
+		if node_id == "grand_casino":
+			unaffordable_grand_node = node
+		if not hidden_node_id.is_empty() and node_id == hidden_node_id:
+			hidden_node_rendered = true
+	if unaffordable_grand_node.is_empty():
+		failures.append("Selected, invited Grand Casino disappeared from the public map while its fare was unaffordable.")
+	else:
+		if not bool(unaffordable_grand_node.get("travel_target", false)) or bool(unaffordable_grand_node.get("travel_enabled", true)):
+			failures.append("Unaffordable Grand Casino public map node was not a disabled travel target.")
+		if str(unaffordable_grand_node.get("travel_disabled_reason", "")) != "Not enough bankroll for this route.":
+			failures.append("Unaffordable Grand Casino public map node did not retain the exact fare blocker.")
+	if hidden_node_rendered:
+		failures.append("Rendering an unaffordable selected destination leaked unrevealed map node %s." % hidden_node_id)
 	_sb4_dispose_app(app)
 
 

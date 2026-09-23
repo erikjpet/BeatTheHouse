@@ -690,6 +690,79 @@ stderr was empty (empty-file SHA-256
 cleanup was graceful, and the post-run global Godot count was zero. No retry
 used the lease.
 
+## 2026-09-23 two-event focused check, probe 16, and public-map diagnosis
+
+At exact pushed tip `8ddda237188529d0236514687b02238266d78e99`, one
+serialized repository-canonical generated `systems/content` process executed
+only `content`. Its JSON report passed with zero failures and native exit 0 in
+240,503 ms; the global Godot process count was zero before and after. The
+generated runner SHA-256 was
+`DFB1CBABC56ACC0CE9D960C2B9505E657853B1C813E517A491F90E9B8582B8DD`.
+Focused evidence root:
+`.tmp/rw06_2/focused-8ddda237-split-content/20260923-141916-658`.
+The report SHA-256 is
+`8C2908F5E67E656EC192337463400B178CC33B3CD3A9BF34540FE0274D0AB1BD`,
+stdout is
+`3D2A4ED9AE0E25E3C73C853A0BFB895853B431021D001DB309538D19DD1A0236`,
+stderr is empty (empty-file SHA-256
+`E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855`),
+the Godot log is
+`EBA467FF408AEF8373B25DE2AC23292B265FA5C4DF50AFC4C2890F3D4D960533`,
+and run metadata is
+`17B355C3CD17696EE277A71C707249D17DBD2019E3A5FF88071456A4B90A61F7`.
+The only warnings were the three standard external `misc2` controller-mapping
+lines; there was no ObjectDB warning, script error, or leak.
+
+Exactly one non-qualifying probe 16 launch then used the same pushed tip. It
+again accepted the invitation and settled two waits, but the public map still
+showed Delta plus four revisits and omitted Grand. After the script traveled to
+Delta, it failed closed with **No visible unvisited route can advance the Grand
+Casino invitation.** It did not reach Grand, the save/continue checkpoint, or
+the ending. The owned process quit gracefully, stderr was empty, stdout
+SHA-256 was
+`FA2EA26AAADBCE94053905A7C805C47D0DE5FF59CD1009A25DEE2FB8B8762CC4`,
+and the post-run global Godot count was zero. No retry used the lease.
+
+Probe 16 evidence:
+
+- Run summary, 36 counted actions:
+  `.tmp/rw06_2/exploratory/clean-tip-8ddda237-probe16/20260923-142428-225-22484/run-01/summary.json`
+  (SHA-256 `DE65F200C072A11FE801865EC3F7AE88F7D51873A4D9C56509679C116BF71C5B`).
+- Public trace and money curve:
+  `public_trace.ndjson` (SHA-256
+  `E8B819C8EE5774786E9F11B03C50B5C2CC0638951ABA0EF38C473F749A025E29`)
+  and `money_curve.ndjson` (SHA-256
+  `7E552A23EE8A2BD5C49E42B832896FEE864C1E8276517E0DE4267B23EA1FFF1D`).
+- Accepted invitation response:
+  `.tmp/agent_playtest/2026-09-23/rw062-clean-22484-1-5841d479d8/0047.result.json`
+  (SHA-256 `81AD791F6F72CDCE930412FC21187D24851888B55B06E19775DBFD7BE91CF094`).
+- Post-wait map observation and screenshot:
+  `0052.result.json` (SHA-256
+  `A9B2CF0D2E317536DD5C093A079451124F8DE86C2E18E71AFFFC1C4A694DE2DB`)
+  and `0052.png` (SHA-256
+  `669907630300286F2EFFFB23CCADCAB35EADB74C0AB3F4E4BF0FD00857BC4EE6`).
+- Final blocked map observation and graceful quit response:
+  `0058.result.json` (SHA-256
+  `A469CC2AABFC3F1B6DE23E3907A749896107DAC8F049B52555D5C4AB0E40F767`)
+  and `0059.result.json` (SHA-256
+  `EB9080A6102B759B64D27DDAA4C62AC507D3990F06E4668FBF039B0A548FBF70`).
+
+Probe 16 isolated the remaining defect below selection. The capped selector
+did retain Grand, but the public map view-model rendered a new destination only
+when its route was currently enabled. An invited Grand target below its $70
+fare was therefore removed before its disabled state and exact affordability
+reason could reach the player. The smallest correction renders a selected,
+non-hidden, non-locked target even when temporarily unaffordable. Invitation-
+locked targets and unrevealed nodes remain absent. The exact public-snapshot
+regression requires Grand to be present with `travel_target = true`,
+`travel_enabled = false`, and `Not enough bankroll for this route.`; it also
+proves one unrevealed node remains absent. Existing crowded-map coverage now
+asserts the exact cap as well as retention of all four revisits. The replay
+source contract passes (report SHA-256
+`80D0FBB01FC8AC836682ECEEBF10873B395DD5CB5ED301226F90C3CF6E877C05`)
+and the full engine-free project validator passes. Focused engine confirmation
+of this public-snapshot correction is pending a new serialized lease.
+
 ## Player intent
 
 Reach the Grand Casino, earn Bronze, Silver, and Gold Players Card tiers without
