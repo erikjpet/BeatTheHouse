@@ -17902,6 +17902,54 @@
           "walk_lane_ids": []
         },
         {
+          "id": "base.surface_item.05",
+          "kind": "base",
+          "pos": [
+            458.0,
+            176.0
+          ],
+          "footprint_class": "surface_item",
+          "hit_rect": [
+            422.0,
+            128.0,
+            72.0,
+            48.0
+          ],
+          "label_anchor": [
+            458.0,
+            122.0
+          ],
+          "facing": "none",
+          "priority": 50,
+          "zone_id": "service_lane",
+          "support_id": "estate_center_lower_shelf",
+          "walk_lane_ids": []
+        },
+        {
+          "id": "base.surface_item.06",
+          "kind": "base",
+          "pos": [
+            636.0,
+            184.0
+          ],
+          "footprint_class": "surface_item",
+          "hit_rect": [
+            600.0,
+            136.0,
+            72.0,
+            48.0
+          ],
+          "label_anchor": [
+            636.0,
+            130.0
+          ],
+          "facing": "none",
+          "priority": 60,
+          "zone_id": "service_lane",
+          "support_id": "estate_right_lower_shelf",
+          "walk_lane_ids": []
+        },
+        {
           "id": "base.doorway.01",
           "kind": "base",
           "pos": [
@@ -18165,6 +18213,13 @@
         "event:chain06_sal_estate_item": "base.surface_item.01",
         "event:scenario_sals_mood_read": "base.surface_item.01",
         "item:xray_glasses": "base.surface_item.03",
+        "item:sal_shelf_0": "base.surface_item.01",
+        "item:sal_shelf_1": "base.surface_item.02",
+        "item:sal_shelf_2": "base.surface_item.03",
+        "item:sal_shelf_3": "base.surface_item.04",
+        "item:sal_shelf_4": "base.surface_item.05",
+        "item:sal_shelf_5": "base.surface_item.06",
+        "meta_pawn_counter:sell": "base.behind_counter_person.02",
         "travel:leave": "base.doorway.01"
       },
       "category_slot_ids": {

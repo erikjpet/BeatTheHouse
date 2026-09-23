@@ -644,6 +644,30 @@ def main() -> int:
         check.require(archetype_id in archetypes, f"{map_id}: unknown archetype {archetype_id}")
         validate_map(check, map_data, archetypes.get(archetype_id, {}), board)
 
+    pawn_map = maps_by_id.get("pawn_shop", {})
+    pawn_slots = {
+        str(slot.get("id", "")): slot
+        for slot in values(pawn_map.get("base_slots"))
+        if isinstance(slot, dict)
+    }
+    pawn_preferences = pawn_map.get("object_slot_ids", {}) if isinstance(pawn_map.get("object_slot_ids"), dict) else {}
+    shelf_slot_ids = [str(pawn_preferences.get(f"item:sal_shelf_{index}", "")) for index in range(6)]
+    check.require(
+        len(set(shelf_slot_ids)) == 6
+        and all(pawn_slots.get(slot_id, {}).get("footprint_class") == "surface_item" for slot_id in shelf_slot_ids),
+        "pawn_shop: Sal's six generated shelf offers must prefer six distinct fixed surface-item slots",
+    )
+    merchant_slot_id = str(pawn_preferences.get("shopkeeper:merchant", ""))
+    counter_slot_id = str(pawn_preferences.get("meta_pawn_counter:sell", ""))
+    check.require(
+        bool(merchant_slot_id)
+        and bool(counter_slot_id)
+        and merchant_slot_id != counter_slot_id
+        and pawn_slots.get(merchant_slot_id, {}).get("footprint_class") == "behind_counter_person"
+        and pawn_slots.get(counter_slot_id, {}).get("footprint_class") == "behind_counter_person",
+        "pawn_shop: generated Sal and the sell counter must prefer distinct fixed behind-counter slots",
+    )
+
     scenario_defs: dict[str, dict[str, Any]] = {}
     for source in sorted((root / "data/environments/scenario_sequences").glob("*.json")):
         package = json.loads(source.read_text(encoding="utf-8"))
@@ -778,6 +802,7 @@ def main() -> int:
     resolver_source = (root / "scripts/core/scenario_layout_resolver.gd").read_text(encoding="utf-8")
     placement_source = (root / "scripts/core/environment_placement.gd").read_text(encoding="utf-8")
     canvas_source = (root / "scripts/ui/pixel_scene_canvas.gd").read_text(encoding="utf-8")
+    meta_source = (root / "scripts/ui/meta_session_controller.gd").read_text(encoding="utf-8")
     check.require(not any(token in binder_source for token in ("randf(", "randi(", "randomize(", "Time.")), "slot binder must not use RNG/wall clock")
     check.require("EnvironmentSlotBinderScript.bind_base_layout" in instance_source, "generated base inventory does not use fixed-slot binder")
     ensure_source = instance_source.split("static func ensure_generated_layout", 1)[-1].split("static func _grounding_signature", 1)[0]
@@ -828,6 +853,13 @@ def main() -> int:
     surface_body = placement_source.split("static func surface_map(environment", 1)[-1].split("static func surface_map_by_id", 1)[0]
     check.require("_with_developer_slots" not in surface_body, "developer placement overrides leak into shipping surface_map")
     check.require("static func authoring_surface_map" in placement_source, "developer placement has no isolated authoring API")
+    record_binding_source = binder_source.split("static func bind_base_records", 1)[-1].split("static func bind_scenario_visuals", 1)[0]
+    check.require(
+        "slot_binding_source_id" in record_binding_source
+        and '"slot_binding_source_id": "item:sal_shelf_%d" % index' in meta_source
+        and '"slot_binding_source_id": "shopkeeper:merchant"' in meta_source,
+        "pawn-shop actionable aliases do not reuse their generated fixed-slot bindings",
+    )
 
     # Authored JSON is continuing authority. The migration helper remains a
     # reproducibility tool, but acceptance must allow one valid slot to be added

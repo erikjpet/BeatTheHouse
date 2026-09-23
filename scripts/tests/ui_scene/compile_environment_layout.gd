@@ -179,7 +179,10 @@ func _check_meta_home_launcher_opens_room(app: Control) -> bool:
 		return false
 	var pawn_spatial: Dictionary = app.call("current_spatial_interaction_snapshot")
 	var pawn_objects := JsonCoerceScript._copy_array(pawn_spatial.get("objects", []))
-	if _object_by_id(pawn_objects, "meta_pawn_counter:sell").is_empty() or _object_by_id(pawn_objects, "meta_sal:talk").is_empty() or _object_by_id(pawn_objects, "travel:leave").is_empty():
+	var pawn_counter_object := _object_by_id(pawn_objects, "meta_pawn_counter:sell")
+	var sal_object := _object_by_id(pawn_objects, "meta_sal:talk")
+	var pawn_door_object := _object_by_id(pawn_objects, "travel:leave")
+	if pawn_counter_object.is_empty() or sal_object.is_empty() or pawn_door_object.is_empty():
 		push_error("Custom pawn-shop room did not expose separate Sal, sell-counter, and map-door interactions.")
 		return false
 	var shelf_offer_ids: Array = []
@@ -189,21 +192,42 @@ func _check_meta_home_launcher_opens_room(app: Control) -> bool:
 		if _object_by_id(pawn_objects, "meta_sal_shelf:%d" % slot_index).is_empty() or not shelf_offer_ids.has("sal_shelf_%d" % slot_index):
 			push_error("Custom pawn-shop room did not preserve stable shelf slot %d." % slot_index)
 			return false
-	var authored_shelf_points := [
-		Vector2(120.0 / 900.0, 164.0 / 430.0),
-		Vector2(186.0 / 900.0, 164.0 / 430.0),
-		Vector2(720.0 / 900.0, 156.0 / 430.0),
-		Vector2(786.0 / 900.0, 156.0 / 430.0),
-		Vector2(110.0 / 900.0, 238.0 / 430.0),
-		Vector2(794.0 / 900.0, 232.0 / 430.0),
-	]
-	for slot_index in range(authored_shelf_points.size()):
+	var pawn_layout_bindings := JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(pawn_environment.get("layout", {})).get("slot_bindings", {}))
+	var visible_shelf_slot_ids: Dictionary = {}
+	for slot_index in range(6):
 		var shelf_object := _object_by_id(pawn_objects, "meta_sal_shelf:%d" % slot_index)
-		var focus_point := JsonCoerceScript._copy_dict(shelf_object.get("focus_point", {}))
-		var actual_point := Vector2(float(focus_point.get("x", -1.0)), float(focus_point.get("y", -1.0)))
-		if actual_point.distance_to(authored_shelf_points[slot_index]) > 0.0001:
-			push_error("Sal shelf slot %d moved off its authored item spot: expected %s got %s." % [slot_index, str(authored_shelf_points[slot_index]), str(actual_point)])
+		var source_binding := JsonCoerceScript._copy_dict(pawn_layout_bindings.get("item:sal_shelf_%d" % slot_index, {}))
+		var shelf_slot_id := str(shelf_object.get("slot_id", ""))
+		var shelf_focus_rect := JsonCoerceScript._copy_dict(shelf_object.get("focus_rect", {}))
+		if str(shelf_object.get("presentation_mode", "")) != "room" \
+				or str(shelf_object.get("placement_class", "")) != "surface_item" \
+				or shelf_slot_id.is_empty() \
+				or shelf_slot_id != str(source_binding.get("slot_id", "")) \
+				or float(shelf_focus_rect.get("w", 0.0)) <= 0.0 \
+				or float(shelf_focus_rect.get("h", 0.0)) <= 0.0:
+			push_error("Sal shelf slot %d did not reuse its generated authored surface slot: %s / %s." % [slot_index, str(shelf_object), str(source_binding)])
 			return false
+		if visible_shelf_slot_ids.has(shelf_slot_id):
+			push_error("Sal shelf slot %d duplicated visible authored slot %s." % [slot_index, shelf_slot_id])
+			return false
+		visible_shelf_slot_ids[shelf_slot_id] = true
+	var generated_merchant_binding := JsonCoerceScript._copy_dict(pawn_layout_bindings.get("shopkeeper:merchant", {}))
+	if str(sal_object.get("presentation_mode", "")) != "room" \
+			or str(sal_object.get("placement_class", "")) != "behind_counter_person" \
+			or str(sal_object.get("slot_id", "")) != str(generated_merchant_binding.get("slot_id", "")):
+		push_error("Sal did not reuse the generated shopkeeper's fixed behind-counter slot: %s / %s." % [str(sal_object), str(generated_merchant_binding)])
+		return false
+	if str(pawn_counter_object.get("presentation_mode", "")) != "room" \
+			or str(pawn_counter_object.get("placement_class", "")) != "behind_counter_person" \
+			or str(pawn_counter_object.get("slot_id", "")).is_empty() \
+			or str(pawn_counter_object.get("slot_id", "")) == str(sal_object.get("slot_id", "")):
+		push_error("Sal and the sell counter did not receive distinct fixed behind-counter slots: %s / %s." % [str(sal_object), str(pawn_counter_object)])
+		return false
+	if str(pawn_door_object.get("presentation_mode", "")) != "room" \
+			or str(pawn_door_object.get("placement_class", "")) != "doorway" \
+			or str(pawn_door_object.get("slot_id", "")).is_empty():
+		push_error("Pawn-shop Street Door did not retain its fixed doorway slot: %s." % str(pawn_door_object))
+		return false
 	var pawn_canvas := app.get("environment_canvas") as Control
 	var pawn_canvas_view: Dictionary = pawn_canvas.call("current_view_snapshot")
 	var pawn_layout := JsonCoerceScript._copy_dict(pawn_canvas_view.get("object_layout", {}))

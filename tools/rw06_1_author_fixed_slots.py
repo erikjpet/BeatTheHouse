@@ -681,7 +681,8 @@ def author_map(
     base_slots: list[dict[str, Any]] = []
     for placement_class in CLASSES:
         desired = base_desires[placement_class]
-        cap = min(BASE_CAP[placement_class], max(1 if desired else 0, min(len(desired), BASE_CAP[placement_class])))
+        class_cap = 6 if map_data.get("id") == "pawn_shop" and placement_class == "surface_item" else BASE_CAP[placement_class]
+        cap = min(class_cap, max(1 if desired else 0, min(len(desired), class_cap)))
         for ordinal in range(1, cap + 1):
             wanted = desired[(ordinal - 1) % len(desired)][1] if desired else None
             slot = take("base", placement_class, wanted, "base", ordinal)

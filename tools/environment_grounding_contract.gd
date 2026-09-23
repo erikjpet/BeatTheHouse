@@ -21,6 +21,7 @@ func _run() -> void:
 	_check_scenario_exit_and_overflow(failures)
 	_check_authored_actor_route(failures)
 	_check_complete_record_binding(failures)
+	_check_shared_base_binding_aliases(failures)
 	_check_overflow_action_list(failures)
 	_check_semantic_classification(failures)
 	if failures.is_empty():
@@ -234,6 +235,82 @@ func _check_complete_record_binding(failures: Array) -> void:
 			failures.append("room record has no fixed focus rectangle")
 		elif mode == "overflow" and not (record.get("focus_rect", {}) as Dictionary).is_empty():
 			failures.append("overflow record retained canvas geometry")
+
+
+func _check_shared_base_binding_aliases(failures: Array) -> void:
+	var environment := {"archetype_id": "pawn_shop"}
+	var entries: Array = []
+	for index in range(6):
+		entries.append({
+			"object_id": "item:sal_shelf_%d" % index,
+			"object_type": "item",
+			"spot_field": "item_spots",
+			"index": index,
+		})
+	entries.append({"object_id": "shopkeeper:merchant", "object_type": "shopkeeper", "spot_field": "shopkeeper_spots", "index": 0})
+	entries.append({"object_id": "travel:leave", "object_type": "travel", "spot_field": "travel_spots", "index": 0})
+	var base_result := EnvironmentSlotBinderScript.bind_base_layout(environment, entries)
+	var base_bindings: Dictionary = base_result.get("slot_bindings", {})
+	var records: Array = []
+	for index in range(6):
+		records.append({
+			"object_id": "meta_sal_shelf:%d" % index,
+			"object_type": "meta_sal_shelf",
+			"slot_binding_source_id": "item:sal_shelf_%d" % index,
+			"placement_class": "surface_item",
+		})
+	records.append({
+		"object_id": "meta_sal:talk",
+		"object_type": "meta_sal_talk",
+		"slot_binding_source_id": "shopkeeper:merchant",
+		"placement_class": "behind_counter_person",
+	})
+	records.append({
+		"object_id": "meta_pawn_counter:sell",
+		"object_type": "meta_pawn_counter",
+		"placement_class": "behind_counter_person",
+	})
+	records.append({"object_id": "travel:leave", "object_type": "travel"})
+	var result := EnvironmentSlotBinderScript.bind_base_records(environment, records, base_bindings)
+	var bindings: Dictionary = result.get("slot_bindings", {})
+	var rebound_by_id: Dictionary = {}
+	for record_value in result.get("records", []):
+		var record: Dictionary = record_value
+		rebound_by_id[str(record.get("object_id", ""))] = record
+	var shelf_slots: Dictionary = {}
+	for index in range(6):
+		var source_id := "item:sal_shelf_%d" % index
+		var alias_id := "meta_sal_shelf:%d" % index
+		var source: Dictionary = bindings.get(source_id, {})
+		var alias: Dictionary = bindings.get(alias_id, {})
+		var rebound: Dictionary = rebound_by_id.get(alias_id, {})
+		var slot_id := str(alias.get("slot_id", ""))
+		if str(source.get("presentation_mode", "")) != "room" \
+				or str(alias.get("presentation_mode", "")) != "room" \
+				or slot_id != str(source.get("slot_id", "")) \
+				or str(alias.get("placement_class", "")) != "surface_item" \
+				or (rebound.get("focus_rect", {}) as Dictionary).is_empty():
+			failures.append("Sal shelf %d did not reuse its generated fixed surface-item binding" % index)
+		if shelf_slots.has(slot_id):
+			failures.append("Sal shelf %d reused another visible shelf slot %s" % [index, slot_id])
+		shelf_slots[slot_id] = true
+	var sal: Dictionary = bindings.get("meta_sal:talk", {})
+	var merchant: Dictionary = bindings.get("shopkeeper:merchant", {})
+	var counter: Dictionary = bindings.get("meta_pawn_counter:sell", {})
+	if str(sal.get("presentation_mode", "")) != "room" \
+			or str(sal.get("slot_id", "")) != str(merchant.get("slot_id", "")) \
+			or str(sal.get("placement_class", "")) != "behind_counter_person":
+		failures.append("Sal did not reuse the generated shopkeeper fixed binding")
+	if str(counter.get("presentation_mode", "")) != "room" \
+			or str(counter.get("placement_class", "")) != "behind_counter_person" \
+			or str(counter.get("slot_id", "")).is_empty() \
+			or str(counter.get("slot_id", "")) == str(sal.get("slot_id", "")):
+		failures.append("Sal and the pawn sell counter did not receive distinct fixed behind-counter slots")
+	var exit_record: Dictionary = rebound_by_id.get("travel:leave", {})
+	if str(exit_record.get("presentation_mode", "")) != "room" \
+			or str(exit_record.get("placement_class", "")) != "doorway" \
+			or str(exit_record.get("slot_id", "")).is_empty():
+		failures.append("pawn-shop Street Door lost its generated fixed doorway binding")
 
 
 func _check_overflow_action_list(failures: Array) -> void:

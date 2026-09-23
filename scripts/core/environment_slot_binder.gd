@@ -104,6 +104,18 @@ static func bind_base_records(environment: Dictionary, records: Array, existing_
 			object_id,
 			str(record.get("visual_prop", record.get("prop", record.get("icon_key", ""))))
 		)
+		# A late interaction can be the actionable representation of an object
+		# already present in the generated base inventory. Reuse that immutable
+		# binding instead of consuming a second slot for the same physical prop.
+		var binding_source_id := str(record.get("slot_binding_source_id", "")).strip_edges()
+		var shared_binding := _dict(bindings.get(binding_source_id, {}))
+		if not binding_source_id.is_empty() \
+				and binding_source_id != object_id \
+				and not shared_binding.is_empty() \
+				and str(shared_binding.get("placement_class", "")) == placement_class:
+			shared_binding["identity"] = object_id
+			bindings[object_id] = shared_binding
+			continue
 		var preference := str(object_preferences.get(object_id, "")).strip_edges()
 		if preference.is_empty():
 			var spot_field := str(record.get("layout_spot_field", "")).strip_edges()
