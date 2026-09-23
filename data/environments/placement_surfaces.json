@@ -21222,7 +21222,7 @@
       "slot_schema_version": 1,
       "base_slots": [
         {
-          "id": "base.doorway.01",
+          "id": "base.travel_door",
           "kind": "base",
           "pos": [
             864.0,
@@ -21248,7 +21248,7 @@
           ]
         },
         {
-          "id": "base.floor_fixture.01",
+          "id": "base.home_container_1",
           "kind": "base",
           "pos": [
             542.0,
@@ -21272,21 +21272,21 @@
           "walk_lane_ids": []
         },
         {
-          "id": "base.surface_item.03",
+          "id": "base.home_trade_up",
           "kind": "base",
           "pos": [
-            432.0,
+            540.0,
             236.0
           ],
           "footprint_class": "surface_item",
           "hit_rect": [
-            396.0,
+            504.0,
             188.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            432.0,
+            540.0,
             182.0
           ],
           "facing": "none",
@@ -21296,69 +21296,69 @@
           "walk_lane_ids": []
         },
         {
-          "id": "base.surface_item.02",
+          "id": "base.home_tenure",
           "kind": "base",
           "pos": [
-            328.0,
-            236.0
+            780.0,
+            188.0
           ],
           "footprint_class": "surface_item",
           "hit_rect": [
-            292.0,
-            188.0,
+            744.0,
+            140.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            328.0,
-            182.0
+            780.0,
+            134.0
           ],
           "facing": "none",
           "priority": 20,
           "zone_id": "room",
-          "support_id": "rug",
+          "support_id": "nightstand",
           "walk_lane_ids": []
         },
         {
-          "id": "base.surface_item.01",
+          "id": "base.home_sleep",
           "kind": "base",
           "pos": [
-            536.0,
-            236.0
+            400.0,
+            114.0
           ],
           "footprint_class": "surface_item",
           "hit_rect": [
-            500.0,
-            188.0,
+            364.0,
+            66.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            536.0,
-            182.0
+            400.0,
+            60.0
           ],
           "facing": "none",
           "priority": 10,
           "zone_id": "room",
-          "support_id": "rug",
+          "support_id": "bedspread",
           "walk_lane_ids": []
         },
         {
-          "id": "base.wall_mounted.02",
+          "id": "base.home_upgrade",
           "kind": "base",
           "pos": [
-            688.0,
+            820.0,
             24.0
           ],
           "footprint_class": "wall_mounted",
           "hit_rect": [
-            648.0,
+            780.0,
             0.0,
             80.0,
             48.0
           ],
           "label_anchor": [
-            688.0,
+            820.0,
             8.0
           ],
           "facing": "none",
@@ -21368,22 +21368,22 @@
           "walk_lane_ids": []
         },
         {
-          "id": "base.wall_mounted.01",
+          "id": "base.home_notice",
           "kind": "base",
           "pos": [
-            808.0,
-            168.0
+            600.0,
+            24.0
           ],
           "footprint_class": "wall_mounted",
           "hit_rect": [
-            768.0,
-            144.0,
+            560.0,
+            0.0,
             80.0,
             48.0
           ],
           "label_anchor": [
-            808.0,
-            138.0
+            600.0,
+            8.0
           ],
           "facing": "none",
           "priority": 10,
@@ -21394,7 +21394,7 @@
       ],
       "stage_slots": [
         {
-          "id": "stage.floor_fixture.01",
+          "id": "stage.event_floor_left",
           "kind": "stage",
           "pos": [
             302.0,
@@ -21418,7 +21418,7 @@
           "walk_lane_ids": []
         },
         {
-          "id": "stage.standing_person.01",
+          "id": "stage.patron_floor_left",
           "kind": "stage",
           "pos": [
             172.0,
@@ -21444,33 +21444,33 @@
           ]
         },
         {
-          "id": "stage.surface_item.01",
+          "id": "stage.event_rug",
           "kind": "stage",
           "pos": [
-            388.0,
-            114.0
+            420.0,
+            236.0
           ],
           "footprint_class": "surface_item",
           "hit_rect": [
-            352.0,
-            66.0,
+            384.0,
+            188.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            388.0,
-            60.0
+            420.0,
+            182.0
           ],
           "facing": "none",
           "priority": 10,
           "zone_id": "room",
-          "support_id": "bedspread",
+          "support_id": "rug",
           "walk_lane_ids": []
         }
       ],
       "exit_slots": [
         {
-          "id": "exit.doorway.01",
+          "id": "exit.left_door",
           "kind": "exit",
           "pos": [
             36.0,
@@ -21496,7 +21496,7 @@
           ]
         },
         {
-          "id": "exit.doorway.02",
+          "id": "exit.right_door",
           "kind": "exit",
           "pos": [
             864.0,
@@ -21545,22 +21545,41 @@
         }
       ],
       "actor_routes": [],
-      "object_slot_ids": {},
+      "object_slot_ids": {
+        "home_container:meta_bag_01": "base.home_container_1",
+        "home_container:meta_trunk_02": "base.home_container_1",
+        "home_container:trunk_01": "base.home_container_1",
+        "home_sleep:bed": "base.home_sleep",
+        "home_tenure:status": "base.home_tenure",
+        "meta_trade_up:station": "base.home_trade_up",
+        "meta_upgrade:home": "base.home_upgrade",
+        "travel:leave": "base.travel_door"
+      },
       "category_slot_ids": {
-        "home_bag_spots:0": "base.surface_item.03",
-        "home_bag_spots:1": "base.surface_item.01",
-        "home_container_spots:0": "base.surface_item.02",
-        "home_container_spots:1": "base.surface_item.03",
-        "home_sleep_spots:0": "base.floor_fixture.01",
-        "home_storage_spots:0": "base.floor_fixture.01",
-        "home_tenure_spots:0": "base.wall_mounted.01",
-        "home_upgrade_spots:0": "base.wall_mounted.02",
-        "item_spots:0": "base.surface_item.01",
-        "travel_spots:0": "base.doorway.01"
+        "home_bag_spots:0": "base.home_trade_up",
+        "home_bag_spots:1": "base.home_sleep",
+        "home_container_spots:0": "base.home_container_1",
+        "home_container_spots:1": "base.home_container_1",
+        "home_sleep_spots:0": "base.home_sleep",
+        "home_storage_spots:0": "base.home_container_1",
+        "home_tenure_spots:0": "base.home_tenure",
+        "home_upgrade_spots:0": "base.home_upgrade",
+        "home_trade_up_spots:0": "base.home_trade_up",
+        "item_spots:0": "base.home_trade_up",
+        "travel_spots:0": "base.travel_door"
       },
       "scenario_slot_ids": {},
       "scenario_position_route_ids": {},
-      "class_overrides": {}
+      "class_overrides": {
+        "home_container:meta_bag_01": "floor_fixture",
+        "home_container:meta_trunk_02": "floor_fixture",
+        "home_container:trunk_01": "floor_fixture",
+        "home_sleep:bed": "surface_item",
+        "home_storage:place": "floor_fixture",
+        "home_tenure:status": "surface_item",
+        "meta_trade_up:station": "surface_item",
+        "meta_upgrade:home": "wall_mounted"
+      }
     },
     {
       "id": "apartment",
@@ -21688,7 +21707,7 @@
       "slot_schema_version": 1,
       "base_slots": [
         {
-          "id": "base.doorway.01",
+          "id": "base.travel_door",
           "kind": "base",
           "pos": [
             864.0,
@@ -21714,21 +21733,21 @@
           ]
         },
         {
-          "id": "base.surface_item.01",
+          "id": "base.home_trade_up",
           "kind": "base",
           "pos": [
-            392.0,
+            500.0,
             246.0
           ],
           "footprint_class": "surface_item",
           "hit_rect": [
-            356.0,
+            464.0,
             198.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            392.0,
+            500.0,
             192.0
           ],
           "facing": "none",
@@ -21738,55 +21757,55 @@
           "walk_lane_ids": []
         },
         {
-          "id": "base.surface_item.02",
+          "id": "base.home_tenure",
           "kind": "base",
           "pos": [
-            488.0,
-            246.0
+            700.0,
+            132.0
           ],
           "footprint_class": "surface_item",
           "hit_rect": [
-            452.0,
-            198.0,
+            664.0,
+            84.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            488.0,
-            192.0
+            700.0,
+            78.0
           ],
           "facing": "none",
           "priority": 20,
           "zone_id": "room",
-          "support_id": "rug",
+          "support_id": "kitchen_counter",
           "walk_lane_ids": []
         },
         {
-          "id": "base.surface_item.03",
+          "id": "base.home_sleep",
           "kind": "base",
           "pos": [
-            296.0,
-            246.0
+            360.0,
+            118.0
           ],
           "footprint_class": "surface_item",
           "hit_rect": [
-            260.0,
-            198.0,
+            324.0,
+            70.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            296.0,
-            192.0
+            360.0,
+            64.0
           ],
           "facing": "none",
           "priority": 30,
           "zone_id": "room",
-          "support_id": "rug",
+          "support_id": "sofa",
           "walk_lane_ids": []
         },
         {
-          "id": "base.floor_fixture.01",
+          "id": "base.home_container_1",
           "kind": "base",
           "pos": [
             422.0,
@@ -21810,21 +21829,21 @@
           "walk_lane_ids": []
         },
         {
-          "id": "base.wall_mounted.01",
+          "id": "base.home_upgrade",
           "kind": "base",
           "pos": [
-            796.0,
+            850.0,
             24.0
           ],
           "footprint_class": "wall_mounted",
           "hit_rect": [
-            756.0,
+            810.0,
             0.0,
             80.0,
             48.0
           ],
           "label_anchor": [
-            796.0,
+            850.0,
             8.0
           ],
           "facing": "none",
@@ -21834,21 +21853,21 @@
           "walk_lane_ids": []
         },
         {
-          "id": "base.wall_mounted.02",
+          "id": "base.home_notice",
           "kind": "base",
           "pos": [
-            688.0,
+            560.0,
             24.0
           ],
           "footprint_class": "wall_mounted",
           "hit_rect": [
-            648.0,
+            520.0,
             0.0,
             80.0,
             48.0
           ],
           "label_anchor": [
-            688.0,
+            560.0,
             8.0
           ],
           "facing": "none",
@@ -21860,31 +21879,31 @@
       ],
       "stage_slots": [
         {
-          "id": "stage.surface_item.01",
+          "id": "stage.event_rug",
           "kind": "stage",
           "pos": [
-            332.0,
-            118.0
+            380.0,
+            246.0
           ],
           "footprint_class": "surface_item",
           "hit_rect": [
-            296.0,
-            70.0,
+            344.0,
+            198.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            332.0,
-            64.0
+            380.0,
+            192.0
           ],
           "facing": "none",
           "priority": 10,
           "zone_id": "room",
-          "support_id": "sofa",
+          "support_id": "rug",
           "walk_lane_ids": []
         },
         {
-          "id": "stage.floor_fixture.01",
+          "id": "stage.event_floor_center",
           "kind": "stage",
           "pos": [
             302.0,
@@ -21908,21 +21927,21 @@
           "walk_lane_ids": []
         },
         {
-          "id": "stage.standing_person.01",
+          "id": "stage.patron_floor_left",
           "kind": "stage",
           "pos": [
-            152.0,
+            172.0,
             358.0
           ],
           "footprint_class": "standing_person",
           "hit_rect": [
-            116.0,
+            136.0,
             278.0,
             72.0,
             80.0
           ],
           "label_anchor": [
-            152.0,
+            172.0,
             272.0
           ],
           "facing": "right",
@@ -21936,7 +21955,7 @@
       ],
       "exit_slots": [
         {
-          "id": "exit.doorway.01",
+          "id": "exit.left_door",
           "kind": "exit",
           "pos": [
             36.0,
@@ -21962,7 +21981,7 @@
           ]
         },
         {
-          "id": "exit.doorway.02",
+          "id": "exit.right_door",
           "kind": "exit",
           "pos": [
             864.0,
@@ -22011,26 +22030,44 @@
         }
       ],
       "actor_routes": [],
-      "object_slot_ids": {},
+      "object_slot_ids": {
+        "home_container:meta_bag_01": "base.home_container_1",
+        "home_container:meta_trunk_02": "base.home_container_1",
+        "home_container:trunk_01": "base.home_container_1",
+        "home_sleep:bed": "base.home_sleep",
+        "home_tenure:status": "base.home_tenure",
+        "meta_trade_up:station": "base.home_trade_up",
+        "meta_upgrade:home": "base.home_upgrade",
+        "travel:leave": "base.travel_door"
+      },
       "category_slot_ids": {
-        "item_spots:0": "base.surface_item.01",
-        "item_spots:1": "base.surface_item.02",
-        "travel_spots:0": "base.doorway.01",
-        "home_tenure_spots:0": "base.wall_mounted.01",
-        "home_sleep_spots:0": "base.floor_fixture.01",
-        "home_storage_spots:0": "base.floor_fixture.01",
-        "home_container_spots:0": "base.surface_item.03",
-        "home_container_spots:1": "base.surface_item.02",
-        "home_container_spots:2": "base.surface_item.02",
-        "home_bag_spots:0": "base.surface_item.01",
-        "home_bag_spots:1": "base.surface_item.02",
-        "home_bag_spots:2": "base.surface_item.02",
-        "home_upgrade_spots:0": "base.wall_mounted.02",
-        "home_trade_up_spots:0": "base.surface_item.02"
+        "item_spots:0": "base.home_trade_up",
+        "item_spots:1": "base.home_tenure",
+        "travel_spots:0": "base.travel_door",
+        "home_tenure_spots:0": "base.home_tenure",
+        "home_sleep_spots:0": "base.home_sleep",
+        "home_storage_spots:0": "base.home_container_1",
+        "home_container_spots:0": "base.home_container_1",
+        "home_container_spots:1": "base.home_container_1",
+        "home_container_spots:2": "base.home_container_1",
+        "home_bag_spots:0": "base.home_trade_up",
+        "home_bag_spots:1": "base.home_sleep",
+        "home_bag_spots:2": "base.home_tenure",
+        "home_upgrade_spots:0": "base.home_upgrade",
+        "home_trade_up_spots:0": "base.home_trade_up"
       },
       "scenario_slot_ids": {},
       "scenario_position_route_ids": {},
-      "class_overrides": {}
+      "class_overrides": {
+        "home_container:meta_bag_01": "floor_fixture",
+        "home_container:meta_trunk_02": "floor_fixture",
+        "home_container:trunk_01": "floor_fixture",
+        "home_sleep:bed": "surface_item",
+        "home_storage:place": "floor_fixture",
+        "home_tenure:status": "surface_item",
+        "meta_trade_up:station": "surface_item",
+        "meta_upgrade:home": "wall_mounted"
+      }
     },
     {
       "id": "house",
@@ -22179,7 +22216,7 @@
       "slot_schema_version": 1,
       "base_slots": [
         {
-          "id": "base.doorway.01",
+          "id": "base.travel_door",
           "kind": "base",
           "pos": [
             864.0,
@@ -22205,7 +22242,7 @@
           ]
         },
         {
-          "id": "base.floor_fixture.01",
+          "id": "base.home_container_1",
           "kind": "base",
           "pos": [
             422.0,
@@ -22229,94 +22266,94 @@
           "walk_lane_ids": []
         },
         {
-          "id": "base.surface_item.01",
+          "id": "base.home_sleep",
           "kind": "base",
           "pos": [
-            542.0,
-            234.0
+            180.0,
+            150.0
           ],
           "footprint_class": "surface_item",
           "hit_rect": [
-            506.0,
-            186.0,
+            144.0,
+            102.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            542.0,
-            180.0
+            180.0,
+            96.0
           ],
           "facing": "none",
           "priority": 10,
           "zone_id": "room",
-          "support_id": "rug",
+          "support_id": "sofa",
           "walk_lane_ids": []
         },
         {
-          "id": "base.surface_item.02",
+          "id": "base.home_tenure",
           "kind": "base",
           "pos": [
-            638.0,
-            234.0
+            700.0,
+            132.0
           ],
           "footprint_class": "surface_item",
           "hit_rect": [
-            602.0,
-            186.0,
+            664.0,
+            84.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            638.0,
-            180.0
+            700.0,
+            78.0
           ],
           "facing": "none",
           "priority": 20,
           "zone_id": "room",
-          "support_id": "rug",
+          "support_id": "dining_table",
           "walk_lane_ids": []
         },
         {
-          "id": "base.surface_item.03",
+          "id": "base.home_trade_up",
           "kind": "base",
           "pos": [
-            734.0,
-            234.0
+            300.0,
+            150.0
           ],
           "footprint_class": "surface_item",
           "hit_rect": [
-            698.0,
-            186.0,
+            264.0,
+            102.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            734.0,
-            180.0
+            300.0,
+            96.0
           ],
           "facing": "none",
           "priority": 30,
           "zone_id": "room",
-          "support_id": "rug",
+          "support_id": "sofa",
           "walk_lane_ids": []
         },
         {
-          "id": "base.wall_mounted.01",
+          "id": "base.home_upgrade",
           "kind": "base",
           "pos": [
-            472.0,
-            96.0
+            500.0,
+            150.0
           ],
           "footprint_class": "wall_mounted",
           "hit_rect": [
-            432.0,
-            72.0,
+            460.0,
+            126.0,
             80.0,
             48.0
           ],
           "label_anchor": [
-            472.0,
-            66.0
+            500.0,
+            120.0
           ],
           "facing": "none",
           "priority": 10,
@@ -22325,21 +22362,21 @@
           "walk_lane_ids": []
         },
         {
-          "id": "base.wall_mounted.02",
+          "id": "base.home_notice",
           "kind": "base",
           "pos": [
-            472.0,
+            500.0,
             24.0
           ],
           "footprint_class": "wall_mounted",
           "hit_rect": [
-            432.0,
+            460.0,
             0.0,
             80.0,
             48.0
           ],
           "label_anchor": [
-            472.0,
+            500.0,
             8.0
           ],
           "facing": "none",
@@ -22351,7 +22388,7 @@
       ],
       "stage_slots": [
         {
-          "id": "stage.floor_fixture.01",
+          "id": "stage.event_floor_center",
           "kind": "stage",
           "pos": [
             302.0,
@@ -22375,21 +22412,21 @@
           "walk_lane_ids": []
         },
         {
-          "id": "stage.standing_person.01",
+          "id": "stage.patron_floor_left",
           "kind": "stage",
           "pos": [
-            152.0,
+            172.0,
             358.0
           ],
           "footprint_class": "standing_person",
           "hit_rect": [
-            116.0,
+            136.0,
             278.0,
             72.0,
             80.0
           ],
           "label_anchor": [
-            152.0,
+            172.0,
             272.0
           ],
           "facing": "right",
@@ -22401,33 +22438,33 @@
           ]
         },
         {
-          "id": "stage.surface_item.01",
+          "id": "stage.event_rug",
           "kind": "stage",
           "pos": [
-            158.0,
-            150.0
+            660.0,
+            234.0
           ],
           "footprint_class": "surface_item",
           "hit_rect": [
-            122.0,
-            102.0,
+            624.0,
+            186.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            158.0,
-            96.0
+            660.0,
+            180.0
           ],
           "facing": "none",
           "priority": 10,
           "zone_id": "room",
-          "support_id": "sofa",
+          "support_id": "rug",
           "walk_lane_ids": []
         }
       ],
       "exit_slots": [
         {
-          "id": "exit.doorway.01",
+          "id": "exit.left_door",
           "kind": "exit",
           "pos": [
             36.0,
@@ -22453,7 +22490,7 @@
           ]
         },
         {
-          "id": "exit.doorway.02",
+          "id": "exit.right_door",
           "kind": "exit",
           "pos": [
             864.0,
@@ -22502,27 +22539,45 @@
         }
       ],
       "actor_routes": [],
-      "object_slot_ids": {},
+      "object_slot_ids": {
+        "home_container:meta_bag_01": "base.home_container_1",
+        "home_container:meta_trunk_02": "base.home_container_1",
+        "home_container:trunk_01": "base.home_container_1",
+        "home_sleep:bed": "base.home_sleep",
+        "home_tenure:status": "base.home_tenure",
+        "meta_trade_up:station": "base.home_trade_up",
+        "meta_upgrade:home": "base.home_upgrade",
+        "travel:leave": "base.travel_door"
+      },
       "category_slot_ids": {
-        "item_spots:0": "base.surface_item.01",
-        "item_spots:1": "base.surface_item.02",
-        "item_spots:2": "base.surface_item.03",
-        "travel_spots:0": "base.doorway.01",
-        "home_tenure_spots:0": "base.wall_mounted.01",
-        "home_sleep_spots:0": "base.floor_fixture.01",
-        "home_storage_spots:0": "base.floor_fixture.01",
-        "home_container_spots:0": "base.surface_item.01",
-        "home_container_spots:1": "base.surface_item.01",
-        "home_container_spots:2": "base.surface_item.02",
-        "home_bag_spots:0": "base.surface_item.01",
-        "home_bag_spots:1": "base.surface_item.01",
-        "home_bag_spots:2": "base.surface_item.02",
-        "home_upgrade_spots:0": "base.wall_mounted.02",
-        "home_trade_up_spots:0": "base.surface_item.01"
+        "item_spots:0": "base.home_trade_up",
+        "item_spots:1": "base.home_sleep",
+        "item_spots:2": "base.home_tenure",
+        "travel_spots:0": "base.travel_door",
+        "home_tenure_spots:0": "base.home_tenure",
+        "home_sleep_spots:0": "base.home_sleep",
+        "home_storage_spots:0": "base.home_container_1",
+        "home_container_spots:0": "base.home_container_1",
+        "home_container_spots:1": "base.home_container_1",
+        "home_container_spots:2": "base.home_container_1",
+        "home_bag_spots:0": "base.home_trade_up",
+        "home_bag_spots:1": "base.home_sleep",
+        "home_bag_spots:2": "base.home_tenure",
+        "home_upgrade_spots:0": "base.home_upgrade",
+        "home_trade_up_spots:0": "base.home_trade_up"
       },
       "scenario_slot_ids": {},
       "scenario_position_route_ids": {},
-      "class_overrides": {}
+      "class_overrides": {
+        "home_container:meta_bag_01": "floor_fixture",
+        "home_container:meta_trunk_02": "floor_fixture",
+        "home_container:trunk_01": "floor_fixture",
+        "home_sleep:bed": "surface_item",
+        "home_storage:place": "floor_fixture",
+        "home_tenure:status": "surface_item",
+        "meta_trade_up:station": "surface_item",
+        "meta_upgrade:home": "wall_mounted"
+      }
     }
   ],
   "slot_schema_version": 1
