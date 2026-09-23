@@ -1595,6 +1595,89 @@ function Accept-GrandCasinoInviteIfVisible {
 }
 
 
+function Enter-VisibleSlotForGrandFare {
+    Close-WorldMap
+    if ([string](Get-Value $script:LastObservation @('screen', 'screen') '') -eq 'GAME') {
+        if ([string](Get-Value $script:LastObservation @('game', 'game_id') '') -eq 'slot') { return }
+        Leave-GameSurface
+    }
+    if ($null -eq (Find-CanvasObject -SemanticId 'game:slot')) {
+        throw 'The invited Grand route is short of cash, but this room exposes no visible slot for bounded fare recovery.'
+    }
+    $null = Open-SemanticObject -SemanticId 'game:slot' -PreferredActions @('Enter', 'Play') -Intent 'use the visible slot to earn the displayed Grand Casino fare shortfall'
+    Wait-Frames -Frames 12
+    if ([string](Get-Value $script:LastObservation @('screen', 'screen') '') -ne 'GAME' -or
+        [string](Get-Value $script:LastObservation @('game', 'game_id') '') -ne 'slot') {
+        throw 'The visible slot did not open its public game surface for Grand fare recovery.'
+    }
+}
+
+
+function Wait-ForVisibleSlotActionBoundary {
+    for ($step = 0; $step -lt 24; $step++) {
+        if ([string](Get-Value $script:LastObservation @('screen', 'screen') '') -ne 'GAME' -or
+            [string](Get-Value $script:LastObservation @('game', 'game_id') '') -ne 'slot') {
+            throw 'Grand fare recovery left the visible slot surface unexpectedly.'
+        }
+        if ([bool](Get-Value $script:LastObservation @('event_popup', 'visible') $false) -or
+            [bool](Get-Value $script:LastObservation @('talk', 'visible') $false)) {
+            throw 'A modal interrupted Grand fare recovery; the replay will not guess through it.'
+        }
+
+        if ($null -ne (Find-GameAction -Action 'slot_handpay_acknowledge')) {
+            $null = Invoke-GameAction -Action 'slot_handpay_acknowledge' -Intent 'acknowledge the visible sealed slot payout'
+            Wait-Frames -Frames 20
+            continue
+        }
+        $bonusActions = @(Get-GameActions | Where-Object {
+            [bool](Get-Value $_ @('enabled') $false) -and
+            ([string](Get-Value $_ @('action') '')).StartsWith('slot_bonus_', [StringComparison]::Ordinal)
+        } | Sort-Object @{ Expression = { [string](Get-Value $_ @('action') '') } }, @{ Expression = { [int](Get-Value $_ @('index') 0) } })
+        if ($bonusActions.Count -gt 0) {
+            $bonusAction = [string](Get-Value $bonusActions[0] @('action') '')
+            $bonusIndex = [int](Get-Value $bonusActions[0] @('index') 0)
+            $null = Invoke-GameAction -Action $bonusAction -Index $bonusIndex -Intent "take the first deterministic visible slot bonus control $bonusAction"
+            Wait-Frames -Frames 20
+            continue
+        }
+        if ($null -ne (Find-GameAction -Action 'slot_spin')) { return }
+        Wait-Frames -Frames 30 -Intent 'wait for the visible slot result to finish presenting'
+    }
+    throw 'The visible slot did not return to a legal Spin boundary within twelve seconds.'
+}
+
+
+function Earn-GrandFareThroughVisibleSlot {
+    param(
+        [ValidateRange(1, 1000)][int]$RequiredCash,
+        [ValidateRange(1, 40)][int]$MaximumSpins = 24
+    )
+    Enter-VisibleSlotForGrandFare
+    $startingCash = [int](Get-Value $script:LastObservation @('status_hud', 'bankroll') 0)
+    for ($spin = 0; $spin -lt $MaximumSpins; $spin++) {
+        Wait-ForVisibleSlotActionBoundary
+        $cash = [int](Get-Value $script:LastObservation @('status_hud', 'bankroll') 0)
+        if ($cash -ge $RequiredCash) {
+            Leave-GameSurface
+            return
+        }
+        if ($null -eq (Find-GameAction -Action 'slot_spin')) {
+            throw "The visible slot exposes no legal Spin while Grand fare recovery is short (`$$cash of `$$RequiredCash)."
+        }
+        $null = Invoke-GameAction -Action 'slot_spin' -Intent "spin the visible slot at its rendered stake for Grand fare recovery ($($spin + 1)/$MaximumSpins)"
+        Wait-Frames -Frames 30 -Intent 'watch the visible slot result begin resolving'
+    }
+    Wait-ForVisibleSlotActionBoundary
+    $endingCash = [int](Get-Value $script:LastObservation @('status_hud', 'bankroll') 0)
+    if ($endingCash -ge $RequiredCash) {
+        Leave-GameSurface
+        return
+    }
+    Leave-GameSurface
+    throw "Bounded visible slot play did not earn the Grand fare: start=`$$startingCash, end=`$$endingCash, required=`$$RequiredCash, spins=$MaximumSpins."
+}
+
+
 function Reach-GrandCasino {
     $visitedByRunner = New-Object 'System.Collections.Generic.HashSet[string]'
     for ($step = 0; $step -lt 24; $step++) {
@@ -1619,7 +1702,11 @@ function Reach-GrandCasino {
             $cost = [int](Get-Value $grand[0] @('cost') 0)
             $cash = [int](Get-Value $script:LastObservation @('status_hud', 'bankroll') 0)
             if ($reason -match 'Not enough bankroll') {
-                throw "The invited Grand Casino route is visibly unaffordable: cash=$cash, route_cost=$cost, reason=$reason Earn the shortfall through visible play before retrying."
+                if ($cost -le $cash) {
+                    throw "The Grand card claims insufficient bankroll but publishes cash=$cash and route_cost=$cost."
+                }
+                Earn-GrandFareThroughVisibleSlot -RequiredCash $cost
+                continue
             }
             throw "The invited Grand Casino route is visible but unavailable: $reason"
         }

@@ -522,6 +522,38 @@ does not identify a retained object, so it is preserved as a qualification
 warning rather than classified as a new product blocker. No second run used
 the lease.
 
+## 2026-09-23 invited-route focused contract
+
+At exact pushed tip `91fad55c`, the repository-canonical generated foundation
+runner executed only the registered `systems/content` check. The report passed
+with one executed check, zero failures, and `last_started_check=content` after
+211,645 ms. This confirms the focused regression: after accepting the
+invitation with $63 at Delta Queen, Grand Casino remains in the production
+travel-target list, is disabled with the exact public reason **Not enough
+bankroll for this route.**, and remains inside the existing travel-card cap.
+
+Evidence root:
+`.tmp/rw06_2/focused-91fad55c-split-content/20260923-132017-889`.
+The report SHA-256 is
+`954BCD9CD63FA2E5AFC5F1E92F8A0712163222A06960448C1A95FF661B7B2E32`,
+stdout is
+`17027FE5B3468D682168484D9D4DAE4C5915825031A770B8DCD42BD114B617D1`,
+and the Godot log is
+`19519FC4486063486D04CCBBA43D0FB4BFF0AB9327CF4CB38B8F9EF744947752`.
+Stderr was empty (empty-file SHA-256
+`E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855`),
+and the global Godot process count returned to zero. The Windows console
+wrapper did not populate its numeric native-exit property, so the JSON PASS and
+the emitted `Foundation Godot checks passed` completion banner are retained as
+the exact outcome evidence rather than inventing an exit code.
+
+An earlier attempt to execute the inheritance shard directly stopped during
+parse because that shard is intentionally composed by the split-runner helper.
+It produced no test report and has no product conclusion. Its evidence is
+`.tmp/rw06_2/focused-91fad55c-content/20260923-131509-394`; the Godot-log SHA-256
+is `475A808B814B9EF0DC1730F6E69F37CDFDF72B173508F792BDC706C5434C7101`.
+No retry occurred under that lease.
+
 ## Player intent
 
 Reach the Grand Casino, earn Bronze, Silver, and Gold Players Card tiers without
