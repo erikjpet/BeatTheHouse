@@ -313,13 +313,16 @@ func _click_button(target: String) -> Dictionary:
 	if button == null or not button.is_visible_in_tree() or button.disabled \
 			or not bool(data.get("fully_visible", false)):
 		return {"ok": false, "reason": "button became hidden, clipped, or disabled before click"}
-	var input_viewport := _button_input_viewport(data, button)
-	if input_viewport == null:
+	var click_position: Vector2 = data.get("click_position", button.get_global_rect().get_center())
+	var input_route := _button_input_route(data, button, click_position)
+	var input_viewport := input_route.get("viewport") as Viewport
+	var input_position_value: Variant = input_route.get("position")
+	if input_viewport == null or typeof(input_position_value) != TYPE_VECTOR2:
 		return {"ok": false, "reason": "button input viewport became missing, changed, or ambiguous before click"}
+	var input_position: Vector2 = input_position_value
 	var clicked_id := str(data.get("id", ""))
 	var clicked_text := button.text
-	var click_position: Vector2 = data.get("click_position", button.get_global_rect().get_center())
-	await _push_mouse_click_in_viewport(input_viewport, click_position, false)
+	await _push_mouse_click_in_viewport(input_viewport, input_position, false)
 	return {"ok": true, "id": clicked_id, "text": clicked_text}
 
 
@@ -864,15 +867,34 @@ func _public_buttons() -> Array:
 	return result
 
 
-func _button_input_viewport(data: Dictionary, button: Button) -> Viewport:
+func _button_input_route(data: Dictionary, button: Button, local_position: Vector2) -> Dictionary:
 	var viewport_candidates := _array(data.get("input_viewport_candidates", []))
 	if viewport_candidates.size() != 1:
-		return null
+		return {}
 	var recorded_viewport := viewport_candidates[0] as Viewport
 	var live_viewport := button.get_viewport() if button != null else null
 	if recorded_viewport == null or live_viewport == null or recorded_viewport != live_viewport:
-		return null
-	return recorded_viewport
+		return {}
+	var root_viewport := app.get_viewport()
+	if recorded_viewport == root_viewport:
+		return {"viewport": root_viewport, "position": local_position}
+	if str(data.get("surface_id", "")) != "tutorial_skip_dialog":
+		return {}
+	var dialog := app.get("tutorial_skip_dialog") as ConfirmationDialog
+	if dialog == null or not dialog.visible or recorded_viewport != dialog or not dialog.is_embedded():
+		return {}
+	var role := str(data.get("dialog_role", ""))
+	var expected_button: Button = dialog.get_ok_button() if role == "ok" else dialog.get_cancel_button() if role == "cancel" else null
+	var expected_id := "tutorial_skip_dialog:%s" % role
+	if button != expected_button or str(data.get("id", "")) != expected_id:
+		return {}
+	var embedder_viewport := dialog.get_parent_viewport()
+	if embedder_viewport == null or embedder_viewport != root_viewport:
+		return {}
+	return {
+		"viewport": embedder_viewport,
+		"position": Vector2(dialog.position) + local_position,
+	}
 
 
 func _visible_vertical_scroll_surface(surface_id: String) -> Dictionary:

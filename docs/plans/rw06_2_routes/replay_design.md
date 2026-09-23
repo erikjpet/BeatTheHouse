@@ -204,6 +204,20 @@ checkpoint, screenshots, and final summary used for acceptance.
   The exact owned process exited without force; the generic post-exit ObjectDB
   warning remains preserved, and no Godot process survived. This Viewport
   correction still requires a later serialized live probe.
+- A seventh serialized, non-qualifying clean probe at pushed tip `7af48369`
+  disproved direct input injection into the child Window Viewport: the strict
+  route was accepted, but the confirmation and tutorial state were unchanged,
+  producing the same public trace and eight-action failure as probe six. The
+  embedded Window is physically routed by its parent Viewport, so the bridge
+  now translates the exact dialog-local target by `Window.position` and sends
+  the unchanged motion/press/release sequence through the root embedder. Root
+  buttons remain unchanged. Two valid and six null/wrong/ambiguous/nonembedded/
+  nested/untranslated hostile fixtures pass engine-free. Summary evidence is
+  `.tmp/rw06_2/exploratory/clean-tip-7af48369-probe7/20260923-113929-307-21240/run-01/summary.json`
+  (SHA-256 `CC9EDA352A82F91B183D28E2EB10E827A8DF56A56AC6D71EB48BC1A14EA212F3`).
+  The exact owned process exited without force; its generic ObjectDB warning is
+  preserved and no Godot process survived. The embedder-coordinate correction
+  still requires a later serialized live probe.
 - Final qualifying evidence intentionally waits for rw06_1 to land.
 
 ## Open route risks

@@ -225,6 +225,46 @@ Evidence:
   engine warning `ObjectDB instances leaked at exit` (SHA-256
   `7E8F5DEB3BF520C8ABB23951DEAFB0669C320CEBB4CEB6668C755C617C5FD7D3`).
 
+## 2026-09-23 seventh current-tip exploratory probe (non-qualifying)
+
+Pushed replay tip `7af48369`; viewport-routing implementation `48cc7dc7`.
+Exactly one additional `-Ending clean -Repeat 1` run was made under the
+serialized Godot lease. The strict dialog identity and child-Window Viewport
+route were both accepted, but the resulting public trace was identical to the
+sixth probe: the confirmation remained visible, the tutorial run stayed active,
+and the route stopped fail-closed after eight counted actions.
+
+The live result disproved direct `push_input(..., true)` into the child Window
+as the physical path for this embedded dialog. Godot composites and routes the
+embedded Window through its parent Viewport. The correction now keeps the
+exact dialog/button identity, translates the dialog-local point by
+`Window.position`, and injects the unchanged real motion/press/release sequence
+through the root embedder. Ordinary root controls retain their original point
+and Viewport. Engine-free fixtures accept the exact root and translated dialog
+routes and reject null, identity-mismatched, ambiguous, non-embedded, nested,
+and untranslated-offset cases. This remains a harness input-routing blocker,
+not product placement, ending logic, goal-clarity, or economy evidence. A later
+serialized probe must prove the embedder correction.
+
+Evidence:
+
+- Run summary:
+  `.tmp/rw06_2/exploratory/clean-tip-7af48369-probe7/20260923-113929-307-21240/run-01/summary.json`
+  (SHA-256 `CC9EDA352A82F91B183D28E2EB10E827A8DF56A56AC6D71EB48BC1A14EA212F3`).
+- Public trace, eight counted actions:
+  `.tmp/rw06_2/exploratory/clean-tip-7af48369-probe7/20260923-113929-307-21240/run-01/public_trace.ndjson`
+  (SHA-256 `4FAD80C8F41E23913D31DB9BB53F263B6C4DD09B77893EA8DFBFE8BB72AF1310`).
+- Accepted exact-OK screenshot:
+  `.tmp/agent_playtest/2026-09-23/rw062-clean-21240-1-9d2a6b8c18/0014.png`
+  (SHA-256 `C8EBA0C1FE548D24F33D99248261182248E1ED1FA61D974EA69B6A5559082B14`).
+- Public result for that screenshot:
+  `.tmp/agent_playtest/2026-09-23/rw062-clean-21240-1-9d2a6b8c18/0014.result.json`
+  (SHA-256 `6F76ECF7E53322BFBD67E1C464483DE32801FD627D245B991FFDAF7E38E57496`).
+- The exact owned process exited without force and zero Godot processes
+  remained before the lease was released. Its stderr preserves the generic
+  engine warning `ObjectDB instances leaked at exit` (SHA-256
+  `7E8F5DEB3BF520C8ABB23951DEAFB0669C320CEBB4CEB6668C755C617C5FD7D3`).
+
 ## Player intent
 
 Reach the Grand Casino, earn Bronze, Silver, and Gold Players Card tiers without
