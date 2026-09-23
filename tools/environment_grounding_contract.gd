@@ -100,7 +100,7 @@ func _check_slot_map_cache_invalidation(failures: Array) -> void:
 	var restored_environment := environment.duplicate(true)
 	restored_environment["layout"] = forged
 	var rebound := EnvironmentInstanceScript.ensure_generated_layout(restored_environment)
-	var rebound_rect := (rebound.get("object_rects", {}) as Dictionary).get("game:slot", {})
+	var rebound_rect: Dictionary = (rebound.get("object_rects", {}) as Dictionary).get("game:slot", {})
 	if str(rebound.get("grounding_signature", "")) != str(first.get("grounding_signature", "")) \
 			or str(rebound.get("slot_map_digest", "")) != str(first.get("slot_map_digest", "")) \
 			or str(rebound.get("slot_binding_digest", "")) != str(first.get("slot_binding_digest", "")) \
