@@ -869,7 +869,15 @@ static func _validate_scene_payload(payload: Dictionary, errors: Array) -> void:
 
 
 static func _validate_interaction_payload(payload: Dictionary, errors: Array) -> void:
-	_append_unknown_keys("interaction payload", payload, ["owner_namespace", "stable_object_id", "presentation_object_id", "source_kind", "source_field", "source_record_id", "label", "state_label", "prompt", "enabled", "disabled_reason", "available_actions", "input_actions", "non_color_state", "focus_order", "hit_bounds", "normalized_hit_rect", "min_target_size", "safe_exit", "alternate_exit", "mode", "target_owner_namespace", "target_stable_object_id", "source_id", "operation_receipt_key", "operation_boundary_id", "operation_fingerprint"], errors)
+	_append_unknown_keys("interaction payload", payload, ["owner_namespace", "stable_object_id", "presentation_object_id", "source_kind", "source_field", "source_record_id", "label", "state_label", "prompt", "enabled", "disabled_reason", "available_actions", "input_actions", "non_color_state", "focus_order", "hit_bounds", "normalized_hit_rect", "min_target_size", "safe_exit", "alternate_exit", "presentation_mode", "mode", "target_owner_namespace", "target_stable_object_id", "source_id", "operation_receipt_key", "operation_boundary_id", "operation_fingerprint"], errors)
+	if payload.has("presentation_mode"):
+		var presentation_mode := str(payload.get("presentation_mode", ""))
+		# The optional durable extension marks only the non-default, geometry-free
+		# action-list presentation. Room presentation remains field absence.
+		if presentation_mode != "overflow":
+			errors.append("interaction presentation_mode may only declare overflow.")
+		elif payload.has("normalized_hit_rect"):
+			errors.append("overflow interaction presentation must be geometry-free.")
 	for provenance_key in ["source_kind", "source_field", "source_record_id"]:
 		if payload.has(provenance_key) and str(payload.get(provenance_key, "")).strip_edges().is_empty():
 			errors.append("interaction producer provenance %s cannot be blank." % provenance_key)

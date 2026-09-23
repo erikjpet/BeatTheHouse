@@ -14,16 +14,23 @@ const DYNAMIC_SOURCE_FIELDS := ["active_delivery_run.handoff_pending_node_id", "
 static func authoritative_interactable_records(environment: Dictionary, library: Variant) -> Dictionary:
 	if library == null:
 		return {"ok": false, "records": [], "errors": ["authoritative base semantic production requires ContentLibrary."]}
-	var object_rects := _dict(_dict(environment.get("layout", {})).get("object_rects", {}))
-	var slot_bindings := _dict(_dict(environment.get("layout", {})).get("slot_bindings", {}))
+	var layout := _dict(environment.get("layout", {}))
+	var object_rects := _dict(layout.get("object_rects", {}))
+	var slot_bindings := _dict(layout.get("slot_bindings", {}))
 	var records: Array = []
 	var errors: Array = []
+	var slot_authority: Dictionary = {}
+	if _layout_has_slot_authority(layout):
+		slot_authority = EnvironmentSlotBinderScript.validate_base_layout_authority(environment)
+		if not bool(slot_authority.get("ok", false)):
+			return {"ok": false, "records": [], "errors": _array(slot_authority.get("errors", []))}
 	# Fixed-slot overflow is intentional presentation authority, not absence from
 	# the room. Generated layouts keep those identities in slot_bindings while
-	# object_rects contains only room-bound objects, so seal the closed union.
+	# object_rects contains only room-bound objects. Never resurrect a room binding
+	# whose rendered rectangle is absent; add only authenticated overflow ids.
 	var object_ids: Array = object_rects.keys()
-	for object_id_value in slot_bindings.keys():
-		if not object_ids.has(object_id_value):
+	for object_id_value in _array(slot_authority.get("overflow_ids", [])):
+		if _base_identity_is_live(environment, str(object_id_value)) and not object_ids.has(object_id_value):
 			object_ids.append(object_id_value)
 	object_ids.sort_custom(func(left: Variant, right: Variant) -> bool: return str(left) < str(right))
 	for object_id_value in object_ids:
@@ -102,6 +109,8 @@ static func authoritative_interactable_records(environment: Dictionary, library:
 			"confirm_action_id": str(available_actions[0].get("id", "")),
 			"presentation_mode": presentation_mode,
 		}
+		if not binding.is_empty():
+			record["placement_class"] = str(binding.get("placement_class", ""))
 		if presentation_mode == "room":
 			record["normalized_rect"] = rect.duplicate(true)
 			record["focus_rect"] = rect.duplicate(true)
@@ -124,6 +133,12 @@ static func authoritative_interactable_records(environment: Dictionary, library:
 static func stamp_interactable_records(records_value: Array, environment: Dictionary, library: Variant, producer_context: Dictionary = {}) -> Dictionary:
 	var records: Array = []
 	var errors: Array = []
+	var layout := _dict(environment.get("layout", {}))
+	var slot_authority: Dictionary = {}
+	if _layout_has_slot_authority(layout):
+		slot_authority = EnvironmentSlotBinderScript.validate_base_layout_authority(environment, records_value)
+		if not bool(slot_authority.get("ok", false)):
+			return {"ok": false, "records": records_value.duplicate(true), "errors": _array(slot_authority.get("errors", []))}
 	for index in range(records_value.size()):
 		if typeof(records_value[index]) != TYPE_DICTIONARY:
 			errors.append("base presentation record %d must be a dictionary." % index)
@@ -146,7 +161,7 @@ static func stamp_interactable_records(records_value: Array, environment: Dictio
 			# Overflow actions live in RoomActionList, outside the environment board.
 			# Keep their semantic identity/action authority without inventing a room
 			# hit rectangle that could bypass slot capacity or overlap validation.
-			if not _authorized_overflow_binding(record, environment):
+			if not _authorized_overflow_binding(record, slot_authority):
 				errors.append("base presentation record %d has no exact generated overflow binding authority." % index)
 				continue
 			for geometry_key in ["normalized_rect", "focus_rect", "focus_point", "normalized_hit_rect", "coordinate_space", "coordinate_board_size", "pixel_hit_bounds", "small_screen_rect", "label_rect", "small_screen_label_rect"]:
@@ -252,6 +267,8 @@ static func from_interactable_records(records_value: Array) -> Dictionary:
 			"alternate_exit": false,
 			"source_id": str(source.get("source_id", "")),
 		}
+		if str(source.get("presentation_mode", "room")) == "overflow":
+			interaction["presentation_mode"] = "overflow"
 		var normalized_hit_rect := _dict(geometry.get("normalized_hit_rect", {}))
 		if not normalized_hit_rect.is_empty():
 			interaction["normalized_hit_rect"] = normalized_hit_rect
@@ -274,7 +291,7 @@ static func is_dynamic_interaction_record(record: Dictionary) -> bool:
 
 # Producer-only records have no final layout entry to independently prove them,
 # so exact inventory admission replays their closed producer authority here.
-static func validate_dynamic_interaction_record(record: Dictionary, environment: Dictionary, library: Variant) -> Array:
+static func validate_dynamic_interaction_record(record: Dictionary, environment: Dictionary, library: Variant, authenticated_overflow: bool = false) -> Array:
 	var errors: Array = []
 	var source_field := str(record.get("source_field", ""))
 	var source_record_id := str(record.get("source_record_id", ""))
@@ -288,7 +305,7 @@ static func validate_dynamic_interaction_record(record: Dictionary, environment:
 	var expected_owner := str({"game_ids.environment_interactable_objects": "game", "game_ids.environment_interactable_objects.dialogue_id": "game", "crew_presence": "crew", "active_delivery_run.handoff_pending_node_id": "traveler"}.get(source_field, "base"))
 	if str(record.get("owner_namespace", "")) != expected_owner or str(record.get("stable_object_id", "")) != presentation_id:
 		errors.append("dynamic interaction identity does not match its producer-owned presentation object.")
-	if not _interaction_geometry_valid(record):
+	if not _interaction_geometry_valid(record, authenticated_overflow):
 		errors.append("dynamic interaction lacks valid normalized and pixel hit bounds.")
 	match source_field:
 		"game_ids.environment_interactable_objects", "game_ids.environment_interactable_objects.dialogue_id":
@@ -502,22 +519,10 @@ static func _bounds(record: Dictionary) -> Dictionary:
 	return {"pixel_hit_bounds": {"w": pixel_width, "h": pixel_height}, "normalized_hit_rect": {"x": x, "y": y, "w": width, "h": height}}
 
 
-static func _authorized_overflow_binding(record: Dictionary, environment: Dictionary) -> bool:
+static func _authorized_overflow_binding(record: Dictionary, slot_authority: Dictionary) -> bool:
 	var object_id := str(record.get("object_id", "")).strip_edges()
-	if object_id.is_empty():
-		return false
-	var layout := _dict(environment.get("layout", {}))
-	var bindings := _dict(layout.get("slot_bindings", {}))
-	var binding := _dict(bindings.get(object_id, {}))
-	if binding.is_empty() \
-			or str(binding.get("identity", "")) != object_id \
-			or str(binding.get("presentation_mode", "")) != "overflow" \
-			or not str(binding.get("slot_id", "")).strip_edges().is_empty() \
-			or not _dict(binding.get("slot", {})).is_empty() \
-			or not _exact_id(layout.get("slot_overflow_ids", []), object_id):
-		return false
-	var stored_digest := str(layout.get("slot_binding_digest", "")).strip_edges()
-	return not stored_digest.is_empty() and stored_digest == EnvironmentSlotBinderScript.binding_digest(bindings)
+	return not object_id.is_empty() and bool(slot_authority.get("ok", false)) \
+		and _exact_id(slot_authority.get("overflow_ids", []), object_id)
 
 
 static func _producer_geometry(record: Dictionary) -> Dictionary:
@@ -541,9 +546,14 @@ static func _producer_geometry(record: Dictionary) -> Dictionary:
 	}
 
 
-static func _interaction_geometry_valid(record: Dictionary) -> bool:
+static func _interaction_geometry_valid(record: Dictionary, authenticated_overflow: bool = false) -> bool:
 	var rect := _dict(record.get("normalized_hit_rect", {}))
 	var pixels := _dict(record.get("hit_bounds", record.get("pixel_hit_bounds", {})))
+	if authenticated_overflow:
+		return rect.is_empty() and str(record.get("presentation_mode", "")) == "overflow" \
+			and _finite_number(pixels.get("w")) and _finite_number(pixels.get("h")) \
+			and float(pixels.get("w")) >= OperationRegistryScript.MIN_TARGET_SIZE \
+			and float(pixels.get("h")) >= OperationRegistryScript.MIN_TARGET_SIZE
 	for key in ["x", "y", "w", "h"]:
 		if not _finite_number(rect.get(key)): return false
 	for key in ["w", "h"]:
@@ -684,7 +694,37 @@ static func _deep_merge(base: Dictionary, overlay: Dictionary) -> Dictionary:
 
 static func _layout_present(environment: Dictionary, presentation_id: String) -> bool:
 	var layout := _dict(environment.get("layout", {}))
-	return _dict(layout.get("object_rects", {})).has(presentation_id) or _dict(layout.get("slot_bindings", {})).has(presentation_id)
+	if _dict(layout.get("object_rects", {})).has(presentation_id):
+		return true
+	if not _layout_has_slot_authority(layout):
+		return false
+	var authority := EnvironmentSlotBinderScript.validate_base_layout_authority(environment)
+	return bool(authority.get("ok", false)) and _exact_id(authority.get("overflow_ids", []), presentation_id)
+
+
+static func _base_identity_is_live(environment: Dictionary, presentation_id: String) -> bool:
+	var parts := presentation_id.split(":", false)
+	if parts.size() < 2: return false
+	var domain := str(parts[0])
+	var source_id := str(parts[1])
+	match domain:
+		"game": return _exact_id(environment.get("game_ids", []), source_id)
+		"event": return _exact_id(environment.get("event_ids", []), source_id)
+		"service": return _exact_id(environment.get("service_ids", []), source_id)
+		"lender": return _exact_id(environment.get("lender_hooks", []), source_id)
+		"travel":
+			if source_id == "leave":
+				return not _ids(_array(environment.get("travel_hooks", [])) + _array(environment.get("next_archetypes", []))).is_empty()
+			return _exact_id(environment.get("travel_hooks", []), source_id) \
+				or _exact_id(environment.get("next_archetypes", []), source_id) \
+				or _exact_id(_dict(environment.get("local_narrative_flags", {})).get("casino_room_targets", []), source_id)
+	return false
+
+
+static func _layout_has_slot_authority(layout: Dictionary) -> bool:
+	for key in ["slot_schema_version", "slot_map_digest", "slot_binding_digest", "slot_bindings", "slot_overflow_ids"]:
+		if layout.has(key): return true
+	return false
 
 
 static func _dict(value: Variant) -> Dictionary:

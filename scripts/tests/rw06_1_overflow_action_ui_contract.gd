@@ -6,6 +6,7 @@ const RoomActionListScript := preload("res://scripts/ui/room_action_list.gd")
 const EnvironmentInstanceScript := preload("res://scripts/core/environment_instance.gd")
 const EnvironmentBaseSemanticRecordsScript := preload("res://scripts/core/environment_base_semantic_records.gd")
 const EnvironmentSlotBinderScript := preload("res://scripts/core/environment_slot_binder.gd")
+const EnvironmentSemanticInventoryScript := preload("res://scripts/core/environment_semantic_inventory.gd")
 const ArtContractsScript := preload("res://scripts/core/art_contracts.gd")
 const ScenarioLayoutResolverScript := preload("res://scripts/core/scenario_layout_resolver.gd")
 const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
@@ -762,44 +763,64 @@ func _check_exact_overflow_semantic_retention(app: Control, production_record: D
 	if source_id.is_empty() or presentation_id.is_empty():
 		failures.append("RW06-1 overflow semantic regression could not identify its production game record.")
 		return
-	# Prove both closed-union overflow retention and repeated-fixture identity.
-	# Neither object has an object_rects entry; both are authorized only by their
-	# exact slot binding and must remain distinct actionable semantic records.
-	var duplicate_id := "game:%s:2" % source_id
-	if duplicate_id == presentation_id:
-		duplicate_id = "game:%s:3" % source_id
-	var overflow_binding := {
-		"presentation_mode": "overflow",
-		"identity": presentation_id,
-		"placement_class": "machine",
-		"role": "base",
-		"slot_id": "",
-		"slot": {},
-	}
-	var duplicate_binding := overflow_binding.duplicate(true)
-	duplicate_binding["identity"] = duplicate_id
-	environment["layout"] = {
-		"object_rects": {},
-		"slot_bindings": {
-			presentation_id: overflow_binding,
-			duplicate_id: duplicate_binding,
-		},
-		"slot_overflow_ids": [presentation_id, duplicate_id],
-	}
-	(environment["layout"] as Dictionary)["slot_binding_digest"] = EnvironmentSlotBinderScript.binding_digest(
-		(environment["layout"] as Dictionary).get("slot_bindings", {}) as Dictionary
+	# Derive the positive fixture from the production binder. This proves real
+	# class/kind/schema/map authority instead of handcrafting a plausible seal.
+	var requested_records: Array = []
+	for index in range(64):
+		var record := production_record.duplicate(true)
+		record["object_id"] = "game:%s:%d" % [source_id, index + 100]
+		record["source_id"] = source_id
+		record.erase("slot_binding_source_id")
+		requested_records.append(record)
+	var original_layout := (environment.get("layout", {}) as Dictionary).duplicate(true)
+	var binding_environment := environment.duplicate(true)
+	binding_environment["layout"] = original_layout
+	var binding := EnvironmentSlotBinderScript.bind_base_records(
+		binding_environment,
+		requested_records,
+		original_layout.get("slot_bindings", {}) as Dictionary
 	)
+	if not bool(binding.get("ok", false)):
+		failures.append("RW06-1 production binder could not create the overflow semantic fixture: %s." % JSON.stringify(binding.get("errors", [])))
+		return
+	var layout := original_layout.duplicate(true)
+	layout["slot_schema_version"] = int(binding.get("slot_schema_version", 0))
+	layout["slot_map_digest"] = str(binding.get("slot_map_digest", ""))
+	layout["slot_binding_digest"] = str(binding.get("binding_digest", ""))
+	layout["slot_bindings"] = (binding.get("slot_bindings", {}) as Dictionary).duplicate(true)
+	layout["slot_overflow_ids"] = (binding.get("overflow_ids", []) as Array).duplicate(true)
+	layout["object_rects"] = (binding.get("object_rects", {}) as Dictionary).duplicate(true)
+	environment["layout"] = layout
+	var selected_overflow_ids: Array = []
+	for record_value in requested_records:
+		var object_id := str((record_value as Dictionary).get("object_id", ""))
+		if (layout.get("slot_overflow_ids", []) as Array).has(object_id):
+			selected_overflow_ids.append(object_id)
+			if selected_overflow_ids.size() == 2: break
+	if selected_overflow_ids.size() != 2:
+		failures.append("RW06-1 production binder did not yield two repeated-fixture overflow identities.")
+		return
 	var authoritative := EnvironmentBaseSemanticRecordsScript.authoritative_interactable_records(environment, library)
-	var authoritative_records: Array = authoritative.get("records", [])
+	var authoritative_records: Array = []
+	for record_value in authoritative.get("records", []) as Array:
+		if selected_overflow_ids.has(str((record_value as Dictionary).get("object_id", ""))):
+			authoritative_records.append(record_value)
 	var stamped := EnvironmentBaseSemanticRecordsScript.stamp_interactable_records(authoritative_records, environment, library)
 	var stamped_records: Array = stamped.get("records", [])
 	var produced := EnvironmentBaseSemanticRecordsScript.from_interactable_records(stamped_records)
 	var interactions: Array = produced.get("interactions", [])
-	if not bool(authoritative.get("ok", false)) or not bool(stamped.get("ok", false)) or not bool(produced.get("ok", false)):
+	environment["scenario_base_interactions"] = interactions.duplicate(true)
+	environment["scenario_base_actors"] = []
+	var inventory := EnvironmentSemanticInventoryScript.for_instance(environment, library, interactions, [])
+	var inventory_errors := EnvironmentSemanticInventoryScript.validate(inventory)
+	var binding_errors := EnvironmentSemanticInventoryScript.validate_instance_binding(inventory, environment)
+	if not bool(authoritative.get("ok", false)) or not bool(stamped.get("ok", false)) or not bool(produced.get("ok", false)) or not inventory_errors.is_empty() or not binding_errors.is_empty():
 		var semantic_errors: Array = []
 		semantic_errors.append_array(authoritative.get("errors", []) as Array)
 		semantic_errors.append_array(stamped.get("errors", []) as Array)
 		semantic_errors.append_array(produced.get("errors", []) as Array)
+		semantic_errors.append_array(inventory_errors)
+		semantic_errors.append_array(binding_errors)
 		failures.append("RW06-1 exact overflow semantic retention failed: %s." % JSON.stringify(semantic_errors))
 		return
 	if authoritative_records.size() != 2 or stamped_records.size() != 2 or interactions.size() != 2:
@@ -819,30 +840,109 @@ func _check_exact_overflow_semantic_retention(app: Control, production_record: D
 				or float((interaction.get("hit_bounds", {}) as Dictionary).get("w", 0.0)) < 44.0 \
 				or (interaction.get("available_actions", []) as Array).is_empty():
 			failures.append("RW06-1 overflow interaction lost geometry-free action/identity authority: %s." % JSON.stringify(interaction))
-	if not seen.has(presentation_id) or not seen.has(duplicate_id):
+	if not seen.has(selected_overflow_ids[0]) or not seen.has(selected_overflow_ids[1]):
 		failures.append("RW06-1 repeated overflow fixture identities collapsed: %s." % JSON.stringify(seen.keys()))
-	var forged_environment := environment.duplicate(true)
-	var forged_layout := forged_environment.get("layout", {}) as Dictionary
-	var forged_overflow_ids := forged_layout.get("slot_overflow_ids", []) as Array
-	forged_overflow_ids.erase(presentation_id)
-	forged_layout["slot_overflow_ids"] = forged_overflow_ids
-	forged_environment["layout"] = forged_layout
-	if bool(EnvironmentBaseSemanticRecordsScript.stamp_interactable_records(authoritative_records, forged_environment, library).get("ok", true)):
-		failures.append("RW06-1 caller-supplied overflow mode bypassed exact generated layout authority.")
-	var missing_digest_environment := environment.duplicate(true)
-	var missing_digest_layout := missing_digest_environment.get("layout", {}) as Dictionary
-	missing_digest_layout.erase("slot_binding_digest")
-	missing_digest_environment["layout"] = missing_digest_layout
-	if bool(EnvironmentBaseSemanticRecordsScript.stamp_interactable_records(authoritative_records, missing_digest_environment, library).get("ok", true)):
-		failures.append("RW06-1 overflow authority accepted a missing generated binding digest.")
-	var stale_digest_environment := environment.duplicate(true)
-	var stale_digest_layout := stale_digest_environment.get("layout", {}) as Dictionary
-	stale_digest_layout["slot_binding_digest"] = "0".repeat(64)
-	stale_digest_environment["layout"] = stale_digest_layout
-	if bool(EnvironmentBaseSemanticRecordsScript.stamp_interactable_records(authoritative_records, stale_digest_environment, library).get("ok", true)):
-		failures.append("RW06-1 overflow authority accepted a stale generated binding digest.")
-
-
+	var target_id := str(selected_overflow_ids[0])
+	var hostile_layouts: Dictionary = {}
+	var missing_digest := layout.duplicate(true)
+	missing_digest.erase("slot_binding_digest")
+	hostile_layouts["missing digest"] = missing_digest
+	var stale_digest := layout.duplicate(true)
+	stale_digest["slot_binding_digest"] = "0".repeat(64)
+	hostile_layouts["stale digest"] = stale_digest
+	var wrong_schema := layout.duplicate(true)
+	wrong_schema["slot_schema_version"] = int(layout.get("slot_schema_version", 0)) + 1
+	hostile_layouts["wrong schema"] = wrong_schema
+	var wrong_map := layout.duplicate(true)
+	wrong_map["slot_map_digest"] = "0".repeat(64)
+	hostile_layouts["wrong map digest"] = wrong_map
+	var missing_membership := layout.duplicate(true)
+	var missing_membership_ids := (missing_membership.get("slot_overflow_ids", []) as Array).duplicate(true)
+	missing_membership_ids.erase(target_id)
+	missing_membership["slot_overflow_ids"] = missing_membership_ids
+	hostile_layouts["overflow membership"] = missing_membership
+	var wrong_kind := layout.duplicate(true)
+	var wrong_kind_bindings := (wrong_kind.get("slot_bindings", {}) as Dictionary).duplicate(true)
+	(wrong_kind_bindings[target_id] as Dictionary)["kind"] = "stage"
+	wrong_kind["slot_bindings"] = wrong_kind_bindings
+	wrong_kind["slot_binding_digest"] = EnvironmentSlotBinderScript.binding_digest(wrong_kind_bindings)
+	hostile_layouts["wrong kind"] = wrong_kind
+	var open_binding := layout.duplicate(true)
+	var open_bindings := (open_binding.get("slot_bindings", {}) as Dictionary).duplicate(true)
+	var open_target_binding := (open_bindings.get(target_id, {}) as Dictionary).duplicate(true)
+	open_target_binding["forged"] = true
+	open_bindings[target_id] = open_target_binding
+	open_binding["slot_bindings"] = open_bindings
+	open_binding["slot_binding_digest"] = EnvironmentSlotBinderScript.binding_digest(open_bindings)
+	hostile_layouts["open binding schema"] = open_binding
+	var wrong_class := layout.duplicate(true)
+	var wrong_class_bindings := (wrong_class.get("slot_bindings", {}) as Dictionary).duplicate(true)
+	var target_binding := wrong_class_bindings.get(target_id, {}) as Dictionary
+	target_binding["placement_class"] = "standing_person" if str(target_binding.get("placement_class", "")) != "standing_person" else "floor_fixture"
+	wrong_class_bindings[target_id] = target_binding
+	wrong_class["slot_bindings"] = wrong_class_bindings
+	wrong_class["slot_binding_digest"] = EnvironmentSlotBinderScript.binding_digest(wrong_class_bindings)
+	hostile_layouts["wrong class"] = wrong_class
+	var wrong_slot := layout.duplicate(true)
+	var wrong_slot_bindings := (wrong_slot.get("slot_bindings", {}) as Dictionary).duplicate(true)
+	var wrong_slot_binding := wrong_slot_bindings.get(target_id, {}) as Dictionary
+	wrong_slot_binding["presentation_mode"] = "room"
+	wrong_slot_binding["slot_id"] = "forged.slot"
+	wrong_slot_binding["slot"] = {"id": "forged.slot", "footprint_class": str(wrong_slot_binding.get("placement_class", "")), "hit_rect": [10, 10, 44, 44]}
+	wrong_slot_bindings[target_id] = wrong_slot_binding
+	wrong_slot["slot_bindings"] = wrong_slot_bindings
+	var wrong_slot_overflow := (wrong_slot.get("slot_overflow_ids", []) as Array).duplicate(true)
+	wrong_slot_overflow.erase(target_id)
+	wrong_slot["slot_overflow_ids"] = wrong_slot_overflow
+	var wrong_slot_rects := (wrong_slot.get("object_rects", {}) as Dictionary).duplicate(true)
+	wrong_slot_rects[target_id] = {"x": 10.0 / 900.0, "y": 10.0 / 430.0, "w": 44.0 / 900.0, "h": 44.0 / 430.0}
+	wrong_slot["object_rects"] = wrong_slot_rects
+	wrong_slot["slot_binding_digest"] = EnvironmentSlotBinderScript.binding_digest(wrong_slot_bindings)
+	hostile_layouts["wrong slot"] = wrong_slot
+	var overflow_geometry := layout.duplicate(true)
+	var overflow_geometry_rects := (overflow_geometry.get("object_rects", {}) as Dictionary).duplicate(true)
+	overflow_geometry_rects[target_id] = {"x": 0.1, "y": 0.1, "w": 0.1, "h": 0.1}
+	overflow_geometry["object_rects"] = overflow_geometry_rects
+	hostile_layouts["overflow object_rect"] = overflow_geometry
+	for label_value in hostile_layouts.keys():
+		var hostile_environment := environment.duplicate(true)
+		hostile_environment["layout"] = hostile_layouts.get(label_value)
+		if bool(EnvironmentBaseSemanticRecordsScript.stamp_interactable_records(authoritative_records, hostile_environment, library).get("ok", true)) \
+				or EnvironmentSemanticInventoryScript.validate(EnvironmentSemanticInventoryScript.for_instance(hostile_environment, library, interactions, [])).is_empty():
+			failures.append("RW06-1 %s hostile slot authority survived stamp/inventory validation." % str(label_value))
+	var room_source_id := ""
+	for record_value in requested_records:
+		var candidate_id := str((record_value as Dictionary).get("object_id", ""))
+		if str(((layout.get("slot_bindings", {}) as Dictionary).get(candidate_id, {}) as Dictionary).get("presentation_mode", "")) == "room":
+			room_source_id = candidate_id
+			break
+	if room_source_id.is_empty():
+		failures.append("RW06-1 alias authority regression found no production room binding.")
+	else:
+		var alias_id := "game:%s:9998" % source_id
+		var alias_layout := layout.duplicate(true)
+		var alias_bindings := (alias_layout.get("slot_bindings", {}) as Dictionary).duplicate(true)
+		var alias_binding := (alias_bindings.get(room_source_id, {}) as Dictionary).duplicate(true)
+		alias_binding["identity"] = alias_id
+		alias_bindings[alias_id] = alias_binding
+		alias_layout["slot_bindings"] = alias_bindings
+		var alias_rects := (alias_layout.get("object_rects", {}) as Dictionary).duplicate(true)
+		alias_rects[alias_id] = alias_rects.get(room_source_id, {})
+		alias_layout["object_rects"] = alias_rects
+		alias_layout["slot_binding_digest"] = EnvironmentSlotBinderScript.binding_digest(alias_bindings)
+		var alias_environment := environment.duplicate(true)
+		alias_environment["layout"] = alias_layout
+		var alias_record := production_record.duplicate(true)
+		alias_record["object_id"] = alias_id
+		alias_record["source_id"] = source_id
+		alias_record["placement_class"] = str(alias_binding.get("placement_class", ""))
+		alias_record["slot_binding_source_id"] = room_source_id
+		if not bool(EnvironmentSlotBinderScript.validate_base_layout_authority(alias_environment, [alias_record]).get("ok", false)):
+			failures.append("RW06-1 explicit current slot-binding alias was rejected.")
+		var unaliased_record := alias_record.duplicate(true)
+		unaliased_record.erase("slot_binding_source_id")
+		if bool(EnvironmentSlotBinderScript.validate_base_layout_authority(alias_environment, [unaliased_record]).get("ok", true)):
+			failures.append("RW06-1 duplicate room slot without an explicit current alias was accepted.")
 func _check_canonical_expanded_target() -> void:
 	var canonical := Vector2(ArtContractsScript.ENVIRONMENT_OBJECT_HIT_SIZE)
 	var expanded := EnvironmentSlotBinderScript.expanded_rect(Rect2(200.0, 200.0, 44.0, 44.0))
@@ -901,7 +1001,347 @@ func _check_late_binding_persistence(app: Control, production_record: Dictionary
 			or str(reloaded_layout.get("slot_binding_digest", "")) != committed_digest \
 			or str(((reloaded_layout.get("slot_bindings", {}) as Dictionary).get(late_overflow_id, {}) as Dictionary).get("presentation_mode", "")) != "overflow":
 		failures.append("RW06-1 late overflow binding authority did not survive RunState reload.")
+	_check_controller_authority_rejection(app, original_snapshot)
+	_check_terminal_service_refresh(app, original_snapshot)
 	run_state.from_dict(original_snapshot)
+	_invalidate_interactable_caches(app)
+
+
+func _check_controller_authority_rejection(app: Control, baseline_snapshot: Dictionary) -> void:
+	var run_state: Variant = app.get("run_state")
+	run_state.from_dict(baseline_snapshot.duplicate(true))
+	_invalidate_interactable_caches(app)
+	app.call("_interactable_object_view_list")
+	var stable_snapshot: Dictionary = run_state.to_dict()
+	_check_cache_key_authority_rotation(app, stable_snapshot)
+	var environment := (run_state.get("current_environment") as Dictionary).duplicate(true)
+	var layout := (environment.get("layout", {}) as Dictionary).duplicate(true)
+	var room_id := ""
+	for binding_id_value in (layout.get("slot_bindings", {}) as Dictionary).keys():
+		if str(((layout.get("slot_bindings", {}) as Dictionary).get(binding_id_value, {}) as Dictionary).get("presentation_mode", "")) == "room":
+			room_id = str(binding_id_value)
+			break
+	if room_id.is_empty():
+		failures.append("RW06-1 controller hostile-authority regression found no room binding.")
+		return
+	var hostile_layouts: Dictionary = {}
+	var missing_digest := layout.duplicate(true)
+	missing_digest.erase("slot_binding_digest")
+	hostile_layouts["missing digest"] = missing_digest
+	var stale_digest := layout.duplicate(true)
+	stale_digest["slot_binding_digest"] = "f".repeat(64)
+	hostile_layouts["stale digest"] = stale_digest
+	var wrong_schema := layout.duplicate(true)
+	wrong_schema["slot_schema_version"] = int(layout.get("slot_schema_version", 0)) + 1
+	hostile_layouts["wrong schema"] = wrong_schema
+	var wrong_map := layout.duplicate(true)
+	wrong_map["slot_map_digest"] = "f".repeat(64)
+	hostile_layouts["wrong map digest"] = wrong_map
+	var wrong_kind := layout.duplicate(true)
+	var wrong_kind_bindings := (wrong_kind.get("slot_bindings", {}) as Dictionary).duplicate(true)
+	(wrong_kind_bindings[room_id] as Dictionary)["kind"] = "stage"
+	wrong_kind["slot_bindings"] = wrong_kind_bindings
+	wrong_kind["slot_binding_digest"] = EnvironmentSlotBinderScript.binding_digest(wrong_kind_bindings)
+	hostile_layouts["wrong kind"] = wrong_kind
+	var open_binding := layout.duplicate(true)
+	var open_bindings := (open_binding.get("slot_bindings", {}) as Dictionary).duplicate(true)
+	var open_room_binding := (open_bindings.get(room_id, {}) as Dictionary).duplicate(true)
+	open_room_binding["forged"] = true
+	open_bindings[room_id] = open_room_binding
+	open_binding["slot_bindings"] = open_bindings
+	open_binding["slot_binding_digest"] = EnvironmentSlotBinderScript.binding_digest(open_bindings)
+	hostile_layouts["open binding schema"] = open_binding
+	var wrong_class := layout.duplicate(true)
+	var wrong_class_bindings := (wrong_class.get("slot_bindings", {}) as Dictionary).duplicate(true)
+	var wrong_class_binding := wrong_class_bindings.get(room_id, {}) as Dictionary
+	wrong_class_binding["placement_class"] = "standing_person" if str(wrong_class_binding.get("placement_class", "")) != "standing_person" else "floor_fixture"
+	wrong_class_bindings[room_id] = wrong_class_binding
+	wrong_class["slot_bindings"] = wrong_class_bindings
+	wrong_class["slot_binding_digest"] = EnvironmentSlotBinderScript.binding_digest(wrong_class_bindings)
+	hostile_layouts["wrong class"] = wrong_class
+	var wrong_slot := layout.duplicate(true)
+	var wrong_slot_bindings := (wrong_slot.get("slot_bindings", {}) as Dictionary).duplicate(true)
+	var wrong_slot_binding := wrong_slot_bindings.get(room_id, {}) as Dictionary
+	wrong_slot_binding["slot_id"] = "forged.slot"
+	wrong_slot_binding["slot"] = {"id": "forged.slot", "footprint_class": str(wrong_slot_binding.get("placement_class", "")), "hit_rect": [10, 10, 44, 44]}
+	wrong_slot_bindings[room_id] = wrong_slot_binding
+	wrong_slot["slot_bindings"] = wrong_slot_bindings
+	wrong_slot["slot_binding_digest"] = EnvironmentSlotBinderScript.binding_digest(wrong_slot_bindings)
+	hostile_layouts["wrong slot"] = wrong_slot
+	var forged_membership := layout.duplicate(true)
+	var forged_membership_ids := (forged_membership.get("slot_overflow_ids", []) as Array).duplicate(true)
+	forged_membership_ids.append(room_id)
+	forged_membership_ids.sort()
+	forged_membership["slot_overflow_ids"] = forged_membership_ids
+	hostile_layouts["overflow membership"] = forged_membership
+	var wrong_rect := layout.duplicate(true)
+	var wrong_rects := (wrong_rect.get("object_rects", {}) as Dictionary).duplicate(true)
+	var mutated_rect := (wrong_rects.get(room_id, {}) as Dictionary).duplicate(true)
+	mutated_rect["x"] = float(mutated_rect.get("x", 0.0)) + 0.001
+	wrong_rects[room_id] = mutated_rect
+	wrong_rect["object_rects"] = wrong_rects
+	hostile_layouts["object_rect mismatch"] = wrong_rect
+	var duplicate_slot := layout.duplicate(true)
+	var duplicate_bindings := (duplicate_slot.get("slot_bindings", {}) as Dictionary).duplicate(true)
+	var duplicate_id := "%s:forged_duplicate" % room_id
+	var duplicate_binding := (duplicate_bindings.get(room_id, {}) as Dictionary).duplicate(true)
+	duplicate_binding["identity"] = duplicate_id
+	duplicate_bindings[duplicate_id] = duplicate_binding
+	duplicate_slot["slot_bindings"] = duplicate_bindings
+	var duplicate_rects := (duplicate_slot.get("object_rects", {}) as Dictionary).duplicate(true)
+	duplicate_rects[duplicate_id] = duplicate_rects.get(room_id, {})
+	duplicate_slot["object_rects"] = duplicate_rects
+	duplicate_slot["slot_binding_digest"] = EnvironmentSlotBinderScript.binding_digest(duplicate_bindings)
+	hostile_layouts["duplicate room slot"] = duplicate_slot
+	for label_value in hostile_layouts.keys():
+		run_state.from_dict(stable_snapshot.duplicate(true))
+		var hostile_environment := (run_state.get("current_environment") as Dictionary).duplicate(true)
+		hostile_environment["layout"] = hostile_layouts.get(label_value)
+		run_state.set("current_environment", hostile_environment)
+		var before := JSON.stringify(run_state.get("current_environment"))
+		_invalidate_interactable_caches(app)
+		app.call("_interactable_object_view_list")
+		var after := JSON.stringify(run_state.get("current_environment"))
+		if after != before:
+			failures.append("RW06-1 controller mutated or healed %s base authority." % str(label_value))
+	run_state.from_dict(stable_snapshot)
+	_invalidate_interactable_caches(app)
+
+
+func _check_cache_key_authority_rotation(app: Control, stable_snapshot: Dictionary) -> void:
+	var run_state: Variant = app.get("run_state")
+	run_state.from_dict(stable_snapshot.duplicate(true))
+	var baseline_key := str(app.call("_interactable_object_cache_key"))
+	var stable_environment := run_state.get("current_environment") as Dictionary
+	var stable_layout := stable_environment.get("layout", {}) as Dictionary
+	var mutations := {
+		"slot schema version": int(stable_layout.get("slot_schema_version", 0)) + 1,
+		"slot map digest": "cache-key-map-mutation",
+		"slot binding digest": "cache-key-binding-mutation",
+		"slot overflow ids": ["cache-key-overflow-mutation"],
+	}
+	var fields := {
+		"slot schema version": "slot_schema_version",
+		"slot map digest": "slot_map_digest",
+		"slot binding digest": "slot_binding_digest",
+		"slot overflow ids": "slot_overflow_ids",
+	}
+	for label_value in fields.keys():
+		run_state.from_dict(stable_snapshot.duplicate(true))
+		var environment := (run_state.get("current_environment") as Dictionary).duplicate(true)
+		var layout := (environment.get("layout", {}) as Dictionary).duplicate(true)
+		layout[str(fields.get(label_value))] = mutations.get(label_value)
+		environment["layout"] = layout
+		run_state.set("current_environment", environment)
+		if str(app.call("_interactable_object_cache_key")) == baseline_key:
+			failures.append("RW06-1 interactable catalog cache key ignored %s authority." % str(label_value))
+	run_state.from_dict(stable_snapshot.duplicate(true))
+
+
+func _check_terminal_service_refresh(app: Control, baseline_snapshot: Dictionary) -> void:
+	var run_state: Variant = app.get("run_state")
+	var library: Variant = app.get("library")
+	if run_state == null or library == null:
+		failures.append("RW06-1 terminal-service refresh regression lacks production state/library authority.")
+		return
+	run_state.from_dict(baseline_snapshot.duplicate(true))
+	_invalidate_interactable_caches(app)
+	app.call("_interactable_object_view_list")
+	var environment := run_state.get("current_environment") as Dictionary
+	var layout := environment.get("layout", {}) as Dictionary
+	var bindings := layout.get("slot_bindings", {}) as Dictionary
+	var object_rects := layout.get("object_rects", {}) as Dictionary
+	var service_source_id := ""
+	var service_object_id := ""
+	var installed_service_ids := environment.get("service_ids", []) as Array
+	for service_id_value in installed_service_ids:
+		var candidate_source_id := str(service_id_value)
+		var candidate_object_id := "service:%s" % candidate_source_id
+		var candidate_binding := bindings.get(candidate_object_id, {}) as Dictionary
+		if not candidate_binding.is_empty():
+			service_source_id = candidate_source_id
+			service_object_id = candidate_object_id
+			break
+	if service_object_id.is_empty():
+		failures.append("RW06-1 terminal-service refresh found no live production service binding.")
+		run_state.from_dict(baseline_snapshot.duplicate(true))
+		return
+	# The deterministic Bar may initially overflow its drink behind a room-bound
+	# surface game. Swap those same-class authorities so the first half exercises
+	# a real room reservation; both records remain production controller inputs.
+	var service_binding := bindings.get(service_object_id, {}) as Dictionary
+	if str(service_binding.get("presentation_mode", "")) != "room" or not object_rects.has(service_object_id):
+		var donor_id := ""
+		for binding_id_value in bindings.keys():
+			var candidate_id := str(binding_id_value)
+			var candidate_binding := bindings.get(candidate_id, {}) as Dictionary
+			if candidate_id != service_object_id \
+					and str(candidate_binding.get("presentation_mode", "")) == "room" \
+					and str(candidate_binding.get("placement_class", "")) == str(service_binding.get("placement_class", "")) \
+					and object_rects.has(candidate_id):
+				donor_id = candidate_id
+				break
+		if donor_id.is_empty():
+			failures.append("RW06-1 terminal-service refresh found no same-class production room donor.")
+			run_state.from_dict(baseline_snapshot.duplicate(true))
+			return
+		var swapped_environment := environment.duplicate(true)
+		var swapped_layout := (swapped_environment.get("layout", {}) as Dictionary).duplicate(true)
+		var swapped_bindings := (swapped_layout.get("slot_bindings", {}) as Dictionary).duplicate(true)
+		var donor_binding := (swapped_bindings.get(donor_id, {}) as Dictionary).duplicate(true)
+		var room_service_binding := donor_binding.duplicate(true)
+		room_service_binding["identity"] = service_object_id
+		var overflow_donor_binding := service_binding.duplicate(true)
+		overflow_donor_binding["identity"] = donor_id
+		overflow_donor_binding["presentation_mode"] = "overflow"
+		overflow_donor_binding["slot_id"] = ""
+		overflow_donor_binding["slot"] = {}
+		swapped_bindings[service_object_id] = room_service_binding
+		swapped_bindings[donor_id] = overflow_donor_binding
+		var swapped_rects := (swapped_layout.get("object_rects", {}) as Dictionary).duplicate(true)
+		swapped_rects[service_object_id] = swapped_rects.get(donor_id, {})
+		swapped_rects.erase(donor_id)
+		var swapped_overflow_ids := (swapped_layout.get("slot_overflow_ids", []) as Array).duplicate(true)
+		swapped_overflow_ids.erase(service_object_id)
+		if not swapped_overflow_ids.has(donor_id): swapped_overflow_ids.append(donor_id)
+		swapped_overflow_ids.sort()
+		swapped_layout["slot_bindings"] = swapped_bindings
+		swapped_layout["slot_overflow_ids"] = swapped_overflow_ids
+		swapped_layout["slot_binding_digest"] = EnvironmentSlotBinderScript.binding_digest(swapped_bindings)
+		swapped_layout["object_rects"] = swapped_rects
+		swapped_environment["layout"] = swapped_layout
+		var swapped_authority := EnvironmentSlotBinderScript.validate_base_layout_authority(swapped_environment)
+		if not bool(swapped_authority.get("ok", false)):
+			failures.append("RW06-1 could not construct a valid production room service fixture: %s." % JSON.stringify(swapped_authority.get("errors", [])))
+			run_state.from_dict(baseline_snapshot.duplicate(true))
+			return
+		run_state.set("current_environment", swapped_environment)
+		_invalidate_interactable_caches(app)
+		app.call("_interactable_object_view_list")
+		environment = run_state.get("current_environment") as Dictionary
+		layout = environment.get("layout", {}) as Dictionary
+		bindings = layout.get("slot_bindings", {}) as Dictionary
+		object_rects = layout.get("object_rects", {}) as Dictionary
+		service_binding = bindings.get(service_object_id, {}) as Dictionary
+	if str(service_binding.get("presentation_mode", "")) != "room" or not object_rects.has(service_object_id):
+		failures.append("RW06-1 terminal-service room fixture did not survive the production controller.")
+		run_state.from_dict(baseline_snapshot.duplicate(true))
+		return
+	var stable_snapshot: Dictionary = run_state.to_dict()
+	var definition: Dictionary = library.call("service", service_source_id)
+	var category := str(definition.get("category", "")).strip_edges()
+	if category.is_empty():
+		failures.append("RW06-1 terminal-service refresh found no catalog category for %s." % service_source_id)
+		run_state.from_dict(baseline_snapshot.duplicate(true))
+		return
+
+	# The service remains installed in the environment while challenge category
+	# availability removes it from the complete live interaction refresh.
+	_set_blocked_service_category(run_state, category)
+	var service_options := app.call("_service_hook_view_list") as Array
+	for option_value in service_options:
+		if typeof(option_value) == TYPE_DICTIONARY and str((option_value as Dictionary).get("id", "")) == service_source_id:
+			failures.append("RW06-1 blocked service category did not hide %s from the production service view." % service_source_id)
+			break
+	_invalidate_interactable_caches(app)
+	var room_refresh_records := app.call("_interactable_object_view_list") as Array
+	if not _record_by_object_id(room_refresh_records, service_object_id).is_empty():
+		failures.append("RW06-1 categorical-unavailable room service survived the production controller refresh.")
+	_assert_terminal_service_state(run_state, library, service_source_id, service_object_id, true, "room refresh")
+	var room_committed_snapshot: Dictionary = run_state.to_dict()
+	run_state.from_dict(room_committed_snapshot.duplicate(true))
+	_invalidate_interactable_caches(app)
+	app.call("_interactable_object_view_list")
+	_assert_terminal_service_state(run_state, library, service_source_id, service_object_id, true, "room reload")
+	_revisit_terminal_service_environment(app, service_source_id, service_object_id, true, library, "room revisit")
+
+	# Exercise the same actual refresh starting from valid geometry-free overflow
+	# authority. Unlike a room reservation, absent overflow has nothing durable to
+	# reserve and must be removed from the envelope completely.
+	run_state.from_dict(stable_snapshot.duplicate(true))
+	var overflow_environment := (run_state.get("current_environment") as Dictionary).duplicate(true)
+	var overflow_layout := (overflow_environment.get("layout", {}) as Dictionary).duplicate(true)
+	var overflow_bindings := (overflow_layout.get("slot_bindings", {}) as Dictionary).duplicate(true)
+	var overflow_binding := (overflow_bindings.get(service_object_id, {}) as Dictionary).duplicate(true)
+	overflow_binding["presentation_mode"] = "overflow"
+	overflow_binding["slot_id"] = ""
+	overflow_binding["slot"] = {}
+	overflow_bindings[service_object_id] = overflow_binding
+	var overflow_rects := (overflow_layout.get("object_rects", {}) as Dictionary).duplicate(true)
+	overflow_rects.erase(service_object_id)
+	var overflow_ids := (overflow_layout.get("slot_overflow_ids", []) as Array).duplicate(true)
+	if not overflow_ids.has(service_object_id): overflow_ids.append(service_object_id)
+	overflow_ids.sort()
+	overflow_layout["slot_bindings"] = overflow_bindings
+	overflow_layout["slot_overflow_ids"] = overflow_ids
+	overflow_layout["slot_binding_digest"] = EnvironmentSlotBinderScript.binding_digest(overflow_bindings)
+	overflow_layout["object_rects"] = overflow_rects
+	overflow_environment["layout"] = overflow_layout
+	var overflow_authority := EnvironmentSlotBinderScript.validate_base_layout_authority(overflow_environment)
+	if not bool(overflow_authority.get("ok", false)):
+		failures.append("RW06-1 could not construct valid production overflow service authority: %s." % JSON.stringify(overflow_authority.get("errors", [])))
+		run_state.from_dict(baseline_snapshot.duplicate(true))
+		return
+	run_state.set("current_environment", overflow_environment)
+	_set_blocked_service_category(run_state, category)
+	_invalidate_interactable_caches(app)
+	var overflow_refresh_records := app.call("_interactable_object_view_list") as Array
+	if not _record_by_object_id(overflow_refresh_records, service_object_id).is_empty():
+		failures.append("RW06-1 categorical-unavailable overflow service survived the production controller refresh.")
+	_assert_terminal_service_state(run_state, library, service_source_id, service_object_id, false, "overflow refresh")
+	var overflow_committed_snapshot: Dictionary = run_state.to_dict()
+	run_state.from_dict(overflow_committed_snapshot.duplicate(true))
+	_invalidate_interactable_caches(app)
+	app.call("_interactable_object_view_list")
+	_assert_terminal_service_state(run_state, library, service_source_id, service_object_id, false, "overflow reload")
+	_revisit_terminal_service_environment(app, service_source_id, service_object_id, false, library, "overflow revisit")
+	run_state.from_dict(baseline_snapshot.duplicate(true))
+	_invalidate_interactable_caches(app)
+
+
+func _revisit_terminal_service_environment(app: Control, service_source_id: String, service_object_id: String, preserve_room_binding: bool, library: Variant, label: String) -> void:
+	var run_state: Variant = app.get("run_state")
+	var revisit_environment := (run_state.get("current_environment") as Dictionary).duplicate(true)
+	revisit_environment["departed_game_clock_minutes"] = int(revisit_environment.get("entered_game_clock_minutes", 0))
+	var installation: Dictionary = run_state.call("set_environment", revisit_environment)
+	if not bool(installation.get("ok", false)):
+		failures.append("RW06-1 %s could not reinstall the production environment: %s." % [label, JSON.stringify(installation.get("errors", []))])
+		return
+	_invalidate_interactable_caches(app)
+	app.call("_interactable_object_view_list")
+	_assert_terminal_service_state(run_state, library, service_source_id, service_object_id, preserve_room_binding, label)
+
+
+func _assert_terminal_service_state(run_state: Variant, library: Variant, service_source_id: String, service_object_id: String, preserve_room_binding: bool, label: String) -> void:
+	var environment := run_state.get("current_environment") as Dictionary
+	var layout := environment.get("layout", {}) as Dictionary
+	var bindings := layout.get("slot_bindings", {}) as Dictionary
+	var overflow_ids := layout.get("slot_overflow_ids", []) as Array
+	var object_rects := layout.get("object_rects", {}) as Dictionary
+	if not (environment.get("service_ids", []) as Array).has(service_source_id):
+		failures.append("RW06-1 %s removed the categorically unavailable service from environment.service_ids." % label)
+	if preserve_room_binding:
+		var binding := bindings.get(service_object_id, {}) as Dictionary
+		if str(binding.get("presentation_mode", "")) != "room" or object_rects.has(service_object_id) or overflow_ids.has(service_object_id):
+			failures.append("RW06-1 %s did not retain only the dormant room reservation." % label)
+	elif bindings.has(service_object_id) or object_rects.has(service_object_id) or overflow_ids.has(service_object_id):
+		failures.append("RW06-1 %s retained absent overflow service authority." % label)
+	var authoritative := EnvironmentBaseSemanticRecordsScript.authoritative_interactable_records(environment, library)
+	if not bool(authoritative.get("ok", false)) or not _record_by_object_id(authoritative.get("records", []) as Array, service_object_id).is_empty():
+		failures.append("RW06-1 %s resurrected categorical terminal service authority: %s." % [label, JSON.stringify(authoritative.get("errors", []))])
+
+
+func _set_blocked_service_category(run_state: Variant, category: String) -> void:
+	var challenge := (run_state.get("challenge_config") as Dictionary).duplicate(true)
+	var modifiers := (challenge.get("modifiers", {}) as Dictionary).duplicate(true)
+	modifiers["blocked_service_categories"] = [category]
+	challenge["modifiers"] = modifiers
+	run_state.set("challenge_config", challenge)
+
+
+func _invalidate_interactable_caches(app: Control) -> void:
+	app.set("interactable_object_catalog_cache_valid", false)
+	app.set("interactable_object_view_cache_valid", false)
 
 
 func _restore_run(app: Control, action_list: Control, snapshot: Dictionary) -> void:

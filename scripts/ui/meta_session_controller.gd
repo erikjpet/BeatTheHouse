@@ -95,7 +95,9 @@ func interactable_object_view_list(location_id: String, run_state: RunState, hov
 		var layout := _current_environment_layout(run_state)
 		environment["layout"] = layout
 		var binding := EnvironmentSlotBinderScript.bind_base_records(environment, objects, JsonCoerceScript._copy_dict(layout.get("slot_bindings", {})))
-		objects = JsonCoerceScript._copy_array(binding.get("records", objects))
+		# A persisted fixed-slot envelope is authority here too. Never fall back to
+		# unbound source objects when its closed schema/digests fail validation.
+		objects = JsonCoerceScript._copy_array(binding.get("records", [])) if bool(binding.get("ok", false)) else []
 	interactable_object_view_cache_key = cache_key
 	interactable_object_view_cache = JsonCoerceScript._copy_array(objects)
 	return objects
