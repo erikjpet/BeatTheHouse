@@ -109,6 +109,10 @@ MAP_BASE_CAP = {
         "group": 0,
         "surface_item": 2,
     },
+    "kitty_cat_lounge": {
+        "standing_person": 0,
+        "surface_item": 2,
+    },
 }
 # Exact authored label anchors for complete-state compositions whose longer
 # aftermath copy needs a small offset without moving the interaction target.
@@ -123,6 +127,7 @@ MAP_SLOT_LABEL_ANCHORS = {
 MAP_INCLUDE_AFTERMATH = {
     "grand_casino",
     "jazz_club",
+    "kitty_cat_lounge",
 }
 LABEL_W = 88.0
 LABEL_H = 15.0
