@@ -44,7 +44,7 @@ SLOT_SIZE = {
     "ground_marker": (72.0, 48.0),
     "surface_item": (72.0, 48.0),
     "wall_mounted": (80.0, 48.0),
-    "hanging": (72.0, 32.0),
+    "hanging": (72.0, 44.0),
     "doorway": (64.0, 72.0),
 }
 BASE_CAP = {
@@ -70,6 +70,17 @@ STAGE_CAP = {
     "wall_mounted": 2,
     "hanging": 1,
     "doorway": 0,
+}
+# Dense rooms trade nonessential randomized base capacity to action-list
+# overflow before reducing common scenario presentation capacity.
+MAP_BASE_CAP = {
+    "bar": {
+        "doorway": 2,
+        "floor_fixture": 1,
+        "seated_person": 1,
+        "standing_person": 0,
+        "surface_item": 1,
+    },
 }
 LABEL_W = 88.0
 LABEL_H = 15.0
@@ -255,8 +266,10 @@ def contact_for_rect(bounds: tuple[float, float, float, float], placement_class:
 
 
 def expanded(bounds: tuple[float, float, float, float]) -> tuple[float, float, float, float]:
-    width = max(44.0, bounds[2])
-    height = max(44.0, bounds[3])
+    # ArtContracts.ENVIRONMENT_OBJECT_HIT_SIZE; keep in lock-step with the
+    # production resolver/binder and the static acceptance validator.
+    width = max(104.0, bounds[2])
+    height = max(76.0, bounds[3])
     center = (bounds[0] + bounds[2] / 2.0, bounds[1] + bounds[3] / 2.0)
     x = min(max(0.0, center[0] - width / 2.0), BOARD_W - width)
     y = min(max(0.0, center[1] - height / 2.0), BOARD_H - height)
@@ -794,7 +807,7 @@ def stage_class_targets(map_data: dict[str, Any], snapshots: list[list[dict[str,
                 str(class_overrides.get(identity, class_overrides.get(stable_id, ""))),
             )
             demand[placement_class] += 1
-            if str(semantic.get("route_id", "")) or isinstance(semantic.get("_slot_route_from"), dict):
+            if str(semantic.get("route_id", "")):
                 # A routed actor reserves a distinct authored endpoint too.
                 demand[placement_class] += 1
                 route_actor_present = True
@@ -943,17 +956,10 @@ def scenario_state_graph(
             key = ensure(stable_id, semantic, placement_class)
             active.append(key)
             classes[key] = placement_class
-            route_from = semantic.get("_slot_route_from")
-            if actor and isinstance(route_from, dict):
-                from_semantic = copy.deepcopy(route_from)
-                from_semantic["label"] = placement_label(semantic)
-                from_key = ensure(stable_id, from_semantic, placement_class)
-                if from_key != key:
-                    previous = movements.get(key)
-                    if previous is not None and previous[0] != from_key:
-                        raise ValueError(f"{map_data.get('id')}.{key}: position target has multiple route starts")
-                    movements[key] = (from_key, key)
-                    movement_starts.append((from_key, placement_class))
+            # Release-week timebox: set_position receipts snap to the authored
+            # target slot at the phase boundary. They do not reserve the prior
+            # phase's slot or author a walking sweep. This preserves exact
+            # phase geometry while deferring optional between-slot animation.
         for index, left in enumerate(active):
             for right in active[index + 1:]:
                 if left != right:
@@ -1299,7 +1305,9 @@ def author_map(
         exit_snapshot_keys.append(set(current))
     exit_colors = color_scenario_states(exit_states, exit_conflicts)
     exit_slots: list[dict[str, Any]] = []
-    exit_target = max(exit_colors.values(), default=-1) + 1
+    # Every map retains a second globally disjoint safe egress support even
+    # when its currently shipped scenarios color to one active exit.
+    exit_target = max(2, max(exit_colors.values(), default=-1) + 1)
 
     base_desires: dict[str, list[tuple[str, tuple[float, float] | None]]] = {key: [] for key in CLASSES}
     object_positions = map_data.get("object_slot_positions", {}) if isinstance(map_data.get("object_slot_positions"), dict) else {}
@@ -1392,6 +1400,7 @@ def author_map(
             class_cap = BASE_CAP[placement_class]
         if placement_class == "floor_fixture":
             class_cap = max(floor_game_capacity, 1 if desired else 0)
+        class_cap = MAP_BASE_CAP.get(str(map_data.get("id", "")), {}).get(placement_class, class_cap)
         cap = min(class_cap, max(1 if desired else 0, min(len(desired), class_cap)))
         for ordinal in range(1, cap + 1):
             wanted = desired[(ordinal - 1) % len(desired)][1] if desired else None
@@ -1471,10 +1480,8 @@ def author_map(
     for placement_class in CLASSES:
         class_colors = [colors[key] for key, state in states.items() if state["placement_class"] == placement_class]
         if class_colors:
-            # Reachable graph colors are the exact active-capacity proof.  The
-            # earlier demand estimate may count transient route endpoints twice;
-            # carrying that excess forward creates unowned spare slots with no
-            # truthful simultaneous-occupancy rule.
+            # Reachable graph colors are the exact active-capacity proof. The
+            # earlier demand estimate may count transient route endpoints twice.
             stage_targets[placement_class] = max(class_colors) + 1
     floor = map_data.get("floor", {}) if isinstance(map_data.get("floor"), dict) else {}
     contacts = values(floor.get("contact_y"))
@@ -1632,9 +1639,9 @@ def author_map(
         }
 
     def groups_conflict(left: tuple[str, int], right: tuple[str, int]) -> bool:
-        # Every emitted record is part of one immutable slot inventory. States
-        # may reuse a graph-color record, but two distinct records may never
-        # overlap merely because their scenarios are mutually exclusive.
+        # Every emitted slot is immutable map authority. Its normal and expanded
+        # geometry must be disjoint from every other emitted slot even when the
+        # scenario records using those slots are mutually exclusive.
         return left != right
 
     group_domains: dict[tuple[str, int], list[dict[str, Any]]] = {}
@@ -2076,6 +2083,111 @@ def author_map(
 
     search_nodes = 0
 
+    def solve_geometry_component_milp(component: set[tuple[str, int]]) -> bool | None:
+        """Solve a route-free component as exact multiple-choice independent set.
+
+        HiGHS gives the dense Bar packing problem a complete feasibility engine;
+        every variable and conflict comes from the same bounded domains and exact
+        collision masks used by the native backtracker. Return None only when the
+        optional local solver is unavailable or reaches its time bound.
+        """
+        if route_families:
+            return None
+        try:
+            import numpy as np
+            from scipy.optimize import Bounds, LinearConstraint, milp
+            from scipy.sparse import coo_array
+        except ImportError:
+            return None
+        groups = sorted(component)
+        offsets: dict[tuple[str, int], int] = {}
+        variable_count = 0
+        for group_id in groups:
+            offsets[group_id] = variable_count
+            variable_count += len(group_domains[group_id])
+        row_indexes: list[int] = []
+        column_indexes: list[int] = []
+        coefficients: list[float] = []
+        lower: list[float] = []
+        upper: list[float] = []
+
+        def add_row(columns: list[int], values_: list[float], minimum: float, maximum: float) -> None:
+            row = len(lower)
+            row_indexes.extend([row] * len(columns))
+            column_indexes.extend(columns)
+            coefficients.extend(values_)
+            lower.append(minimum)
+            upper.append(maximum)
+
+        for group_id in groups:
+            columns = [offsets[group_id] + index for index in range(len(group_domains[group_id]))]
+            add_row(columns, [1.0] * len(columns), 1.0, 1.0)
+        for left_offset, left_group in enumerate(groups):
+            for right_group in groups[left_offset + 1:]:
+                if not groups_conflict(left_group, right_group):
+                    continue
+                conflict_rows = directed_conflict_masks[(left_group, right_group)]
+                for left_index, conflict_mask in enumerate(conflict_rows):
+                    remaining = conflict_mask
+                    while remaining:
+                        bit = remaining & -remaining
+                        right_index = bit.bit_length() - 1
+                        add_row(
+                            [offsets[left_group] + left_index, offsets[right_group] + right_index],
+                            [1.0, 1.0],
+                            -np.inf,
+                            1.0,
+                        )
+                        remaining &= remaining - 1
+        matrix = coo_array(
+            (np.asarray(coefficients), (np.asarray(row_indexes), np.asarray(column_indexes))),
+            shape=(len(lower), variable_count),
+        ).tocsc()
+        variable_upper = np.ones(variable_count)
+        objective = np.zeros(variable_count)
+        for group_rank_index, group_id in enumerate(groups):
+            for candidate_index_ in range(len(group_domains[group_id])):
+                variable = offsets[group_id] + candidate_index_
+                if candidate_index_ in permanent_blocked[group_id]:
+                    variable_upper[variable] = 0.0
+                # Domains are already ordered retained/nearest first. A tiny,
+                # deterministic preference selects stable data among solutions.
+                objective[variable] = candidate_index_ + group_rank_index / max(1, len(groups))
+        remaining_seconds = None if diagnostic_deadline is None else max(0.1, diagnostic_deadline - time.perf_counter())
+        result = milp(
+            c=objective,
+            integrality=np.ones(variable_count),
+            bounds=Bounds(np.zeros(variable_count), variable_upper),
+            constraints=LinearConstraint(matrix, np.asarray(lower), np.asarray(upper)),
+            options={"presolve": True, **({"time_limit": remaining_seconds} if remaining_seconds is not None else {})},
+        )
+        diagnostics["milp_status"] = int(result.status)
+        diagnostics["milp_variables"] = variable_count
+        diagnostics["milp_constraints"] = len(lower)
+        if result.status == 2:
+            return False
+        if result.x is None:
+            return None
+        selected_assignments: dict[tuple[str, int], dict[str, Any]] = {}
+        for group_id in groups:
+            selected_indexes = [
+                index
+                for index in range(len(group_domains[group_id]))
+                if float(result.x[offsets[group_id] + index]) > 0.5
+            ]
+            if len(selected_indexes) != 1:
+                return None
+            selected_assignments[group_id] = group_domains[group_id][selected_indexes[0]]
+        before = set(assignments)
+        for group_id in groups:
+            candidate = selected_assignments[group_id]
+            if not candidate_consistent(group_id, candidate):
+                for added in set(assignments) - before:
+                    del assignments[added]
+                return None
+            assignments[group_id] = candidate
+        return True
+
     def solve_stage_component(component: set[tuple[str, int]]) -> bool:
         nonlocal search_nodes
         search_nodes += 1
@@ -2350,7 +2462,9 @@ def author_map(
     for component in components:
         search_nodes = 0
         before = set(assignments)
-        if not solve_stage_component(component):
+        milp_result = solve_geometry_component_milp(component)
+        component_solved = bool(milp_result) if milp_result is not None else solve_stage_component(component)
+        if not component_solved:
             for group_id in set(assignments) - before:
                 del assignments[group_id]
             failed_component = component
@@ -2538,6 +2652,7 @@ def main() -> int:
     parser.add_argument("--root", type=Path, default=Path(__file__).resolve().parents[1])
     parser.add_argument("--check", action="store_true")
     parser.add_argument("--only-map", default="", help="diagnose one map without writing generated data")
+    parser.add_argument("--write-only-map", default="", help="author and write one map while preserving all other generated maps")
     parser.add_argument(
         "--diagnostic-seconds",
         type=float,
@@ -2545,6 +2660,9 @@ def main() -> int:
         help="only-map watchdog; expiration reports SEARCH_LIMIT, never UNSAT",
     )
     args = parser.parse_args()
+    if args.only_map and args.write_only_map:
+        parser.error("--only-map and --write-only-map are mutually exclusive")
+    selected_map = args.only_map or args.write_only_map
     root = args.root.resolve()
     surface_path = root / "data/environments/placement_surfaces.json"
     surface_root = json.loads(surface_path.read_text(encoding="utf-8"))
@@ -2558,12 +2676,12 @@ def main() -> int:
     generated["slot_schema_version"] = 1
     diagnostic_deadline = (
         time.perf_counter() + max(0.1, float(args.diagnostic_seconds))
-        if args.only_map
+        if selected_map
         else None
     )
     for map_data in generated.get("maps", []):
         if isinstance(map_data, dict):
-            if args.only_map and str(map_data.get("id", "")) != args.only_map:
+            if selected_map and str(map_data.get("id", "")) != selected_map:
                 continue
             print(f"RW06_1 authoring {map_data.get('id', '<missing>')}", flush=True)
             map_id = str(map_data.get("id", ""))
@@ -2594,7 +2712,10 @@ def main() -> int:
         print("RW06_1_FIXED_SLOT_AUTHORING_CHECK PASS")
         return 0
     surface_path.write_text(encoded, encoding="utf-8", newline="\n")
-    print(f"RW06_1_FIXED_SLOT_AUTHORING PASS maps={len(generated.get('maps', []))}")
+    if args.write_only_map:
+        print(f"RW06_1_FIXED_SLOT_AUTHORING MAP WRITE PASS {args.write_only_map}")
+    else:
+        print(f"RW06_1_FIXED_SLOT_AUTHORING PASS maps={len(generated.get('maps', []))}")
     return 0
 
 

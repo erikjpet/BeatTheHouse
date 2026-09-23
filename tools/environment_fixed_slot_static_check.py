@@ -26,6 +26,7 @@ SLOT_FIELDS = {
 }
 MAP_SLOT_FIELDS = ("base_slots", "stage_slots", "exit_slots")
 EPSILON = 0.01
+MIN_INTERACTIVE_TARGET = (44.0, 44.0)
 
 
 class Check:
@@ -69,7 +70,9 @@ def intersects(left: tuple[float, float, float, float], right: tuple[float, floa
 
 
 def expanded(bounds: tuple[float, float, float, float], board: tuple[float, float]) -> tuple[float, float, float, float]:
-    width, height = max(44.0, bounds[2]), max(44.0, bounds[3])
+    # ArtContracts.ENVIRONMENT_OBJECT_HIT_SIZE; this checker must model the
+    # exact production small-screen collision authority.
+    width, height = max(104.0, bounds[2]), max(76.0, bounds[3])
     center_x, center_y = bounds[0] + bounds[2] / 2.0, bounds[1] + bounds[3] / 2.0
     return (
         min(max(0.0, center_x - width / 2.0), board[0] - width),
@@ -77,6 +80,11 @@ def expanded(bounds: tuple[float, float, float, float], board: tuple[float, floa
         width,
         height,
     )
+
+
+def slot_meets_interactive_minimum(slot: dict[str, Any]) -> bool:
+    bounds = rect(slot.get("hit_rect"))
+    return bounds is not None and bounds[2] >= MIN_INTERACTIVE_TARGET[0] and bounds[3] >= MIN_INTERACTIVE_TARGET[1]
 
 
 def label_rect(slot: dict[str, Any], label: str, board: tuple[float, float]) -> tuple[float, float, float, float]:
@@ -273,6 +281,8 @@ def simulate_scenario_binding(
             if (route and start and end and start_id != end_id
                     and str(start.get("footprint_class", "")) == placement_class
                     and str(end.get("footprint_class", "")) == placement_class
+                    and slot_meets_interactive_minimum(start)
+                    and slot_meets_interactive_minimum(end)
                     and start_id not in occupied and end_id not in occupied
                     and lane_ids and all(lane_id in known_lanes for lane_id in lane_ids)):
                 selected = start
@@ -281,10 +291,16 @@ def simulate_scenario_binding(
             pool = exit_slots if safe_exit else stage_slots
             stable_id = identity.removeprefix("scenario::")
             preferred_id = str(preferences.get(position_key, preferences.get(stable_id, preferences.get(identity, ""))))
-            candidates = [slot_by_id[preferred_id]] if preferred_id in slot_by_id and slot_by_id[preferred_id] in pool else ([] if preferred_id else pool)
+            candidates: list[dict[str, Any]] = []
+            if preferred_id in slot_by_id and slot_by_id[preferred_id] in pool:
+                candidates.append(slot_by_id[preferred_id])
+            if not safe_exit or not preferred_id:
+                candidates.extend(slot for slot in pool if slot not in candidates)
             for slot in candidates:
                 slot_id = str(slot.get("id", ""))
-                if str(slot.get("footprint_class", "")) == placement_class and slot_id not in occupied:
+                if (str(slot.get("footprint_class", "")) == placement_class
+                        and slot_id not in occupied
+                        and slot_meets_interactive_minimum(slot)):
                     selected = slot
                     occupied.add(slot_id)
                     break
@@ -310,6 +326,8 @@ def simulate_scenario_binding(
                 preferred = slot_by_id.get(preferred_id, {})
                 check.require(bool(preferred), f"{map_id}.{identity}: preferred slot {preferred_id} is missing")
                 check.require(not preferred or str(preferred.get("footprint_class", "")) == placement_class, f"{map_id}.{identity}: preferred slot {preferred_id} is incompatible with {placement_class}")
+        if selected is not None:
+            check.require(slot_meets_interactive_minimum(selected), f"{map_id}.{identity}: room target is below the 44x44 interactive minimum")
 
     room_count = sum(1 for binding in bindings.values() if binding["mode"] == "room")
     overflow_count = len(bindings) - room_count
@@ -334,6 +352,40 @@ def simulate_scenario_binding(
             # the static map only needs at least one compatible base class because
             # exhaustion is explicitly represented by the shared overflow list.
             check.require(bool(values(map_data.get("base_slots"))), f"{map_id}.{identity}: base action has no base-slot/overflow authority")
+    # Independently replay exact label authority for this reachable composition.
+    # A label may touch its own object, but never another active normal/expanded
+    # target or another active label. Persistent base slots are unrelated hits.
+    semantic_by_identity = {
+        str(semantic.get("identity", "")): semantic
+        for semantic in snapshot
+        if isinstance(semantic, dict)
+    }
+    room_authority: list[tuple[str, tuple[float, float, float, float], tuple[float, float, float, float], tuple[float, float, float, float]]] = []
+    for identity, binding in bindings.items():
+        if binding["mode"] != "room":
+            continue
+        slot = slot_by_id.get(binding["slot_id"], {})
+        hit = rect(slot.get("hit_rect"))
+        semantic = semantic_by_identity.get(identity, {})
+        label = SlotAuthoring.placement_label(semantic)
+        if hit is None or not label.strip():
+            continue
+        room_authority.append((identity, hit, expanded(hit, (900.0, 430.0)), label_rect(slot, label, (900.0, 430.0))))
+    base_hits = [
+        (str(slot.get("id", "")), parsed)
+        for slot in values(map_data.get("base_slots"))
+        if isinstance(slot, dict) and (parsed := rect(slot.get("hit_rect"))) is not None
+    ]
+    for index, (identity, _hit, _small_hit, label_bounds) in enumerate(room_authority):
+        for other_identity, other_hit, other_small_hit, other_label in room_authority[index + 1:]:
+            check.require(not intersects(label_bounds, other_label), f"{map_id}.{identity}/{other_identity}: active label rectangles overlap")
+            check.require(not intersects(label_bounds, other_hit), f"{map_id}.{identity}: label overlaps unrelated normal target {other_identity}")
+            check.require(not intersects(label_bounds, other_small_hit), f"{map_id}.{identity}: label overlaps unrelated expanded target {other_identity}")
+            check.require(not intersects(other_label, _hit), f"{map_id}.{other_identity}: label overlaps unrelated normal target {identity}")
+            check.require(not intersects(other_label, _small_hit), f"{map_id}.{other_identity}: label overlaps unrelated expanded target {identity}")
+        for base_slot_id, base_hit in base_hits:
+            check.require(not intersects(label_bounds, base_hit), f"{map_id}.{identity}: label overlaps persistent base target {base_slot_id}")
+            check.require(not intersects(label_bounds, expanded(base_hit, (900.0, 430.0))), f"{map_id}.{identity}: label overlaps persistent expanded base target {base_slot_id}")
     check.require(len(bindings) == len(entries), f"{map_id}: scenario binding silently omitted a visual")
     return bindings, room_count, overflow_count, action_count
 
@@ -555,10 +607,6 @@ def validate_map(check: Check, map_data: dict[str, Any], archetype: dict[str, An
         for right in slots[left_index + 1:]:
             right_hit = rect(right.get("hit_rect"))
             if right_hit is None:
-                continue
-            if left.get("kind") == "stage" and right.get("kind") == "stage":
-                # Mutually exclusive scenario states may intentionally reuse a
-                # physical support. Reachable compositions prove exclusivity.
                 continue
             pair = f"{map_id}: {left.get('id')} / {right.get('id')}"
             check.require(not intersects(left_hit, right_hit), f"{pair}: normal hit rectangles overlap")

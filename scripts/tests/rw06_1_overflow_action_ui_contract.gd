@@ -4,8 +4,13 @@ const FoundationMainScript := preload("res://scripts/ui/foundation_main.gd")
 const PixelSceneCanvasScript := preload("res://scripts/ui/pixel_scene_canvas.gd")
 const RoomActionListScript := preload("res://scripts/ui/room_action_list.gd")
 const EnvironmentInstanceScript := preload("res://scripts/core/environment_instance.gd")
+const EnvironmentBaseSemanticRecordsScript := preload("res://scripts/core/environment_base_semantic_records.gd")
+const EnvironmentSlotBinderScript := preload("res://scripts/core/environment_slot_binder.gd")
+const ArtContractsScript := preload("res://scripts/core/art_contracts.gd")
+const ScenarioLayoutResolverScript := preload("res://scripts/core/scenario_layout_resolver.gd")
 const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
 const ScenarioSemanticViewModelScript := preload("res://scripts/ui/scenario_semantic_view_model.gd")
+const EnvironmentInteractionControllerScript := preload("res://scripts/ui/environment_interaction_controller.gd")
 const ScenarioSequenceProbeSupportScript := preload("res://tools/scenario_sequence_probe_support.gd")
 const HarnessProductionFidelityScript := preload("res://scripts/tests/foundation/harness_production_fidelity.gd")
 
@@ -51,12 +56,24 @@ func _run() -> void:
 		await _finish(app)
 		return
 	await _settle_frames(4)
+	var action_list = app.get("room_action_list")
+	if action_list == null:
+		failures.append("RW06-1 production Foundation host did not mount RoomActionList.")
+		await _finish(app)
+		return
+	var production_room_installed: bool = await _install_production_game_room(app)
+	if not production_room_installed:
+		await _finish(app)
+		return
 
 	var production_record := _first_enabled_game_record(app.call("_interactable_object_view_list"))
 	if production_record.is_empty():
 		failures.append("RW06-1 overflow contract found no live production game action; a synthetic fallback is forbidden.")
 		await _finish(app)
 		return
+	_check_exact_overflow_semantic_retention(app, production_record)
+	_check_late_binding_persistence(app, production_record)
+	_check_canonical_expanded_target()
 	production_record["presentation_mode"] = "overflow"
 	production_record["presentation_required"] = true
 	production_record["visible"] = true
@@ -176,11 +193,6 @@ func _run() -> void:
 	var records: Array = [production_record, disabled_record, multi_record, mirrored_record, information_record, hidden_record]
 	app.overflow_fixture_records = records.duplicate(true)
 	app.use_overflow_fixture = true
-	var action_list = app.get("room_action_list")
-	if action_list == null:
-		failures.append("RW06-1 production Foundation host did not mount RoomActionList.")
-		await _finish(app)
-		return
 	var production_handler := Callable(app, "_activate_overflow_room_action")
 	if not bool(action_list.call("has_action_dispatcher")) \
 			or not bool(action_list.call("action_dispatcher_matches", production_handler)):
@@ -701,6 +713,195 @@ func _install_delivery_day(app: Control, action_list: Control) -> Dictionary:
 		"arrival_snapshot": run_state.to_dict(),
 		"live_records": live_records,
 	}
+
+
+func _install_production_game_room(app: Control) -> bool:
+	var library: Variant = app.get("library")
+	var run_state: Variant = app.get("run_state")
+	var archetype: Dictionary = library.call("environment_archetype", "bar") if library != null else {}
+	if run_state == null or archetype.is_empty():
+		failures.append("RW06-1 overflow contract could not load the production Bar archetype.")
+		return false
+	var rng: Variant = run_state.call("create_rng", "rw06_1:production-overflow-game")
+	var environment: Variant = EnvironmentInstanceScript.from_archetype(archetype, 1, rng, library)
+	if environment == null:
+		failures.append("RW06-1 overflow contract could not instantiate a production Bar.")
+		return false
+	var data: Dictionary = environment.call("to_dict")
+	# A dedicated unseeded node guarantees this is a plain production room, not a
+	# synthetic game record and not an unrelated world-map scenario fixture.
+	data["world_node_id"] = "rw06_1_overflow_bar"
+	var generator := RunGeneratorScript.new(library)
+	data["game_states"] = generator.call("_generated_game_states", run_state, data, rng)
+	data["layout"] = EnvironmentInstanceScript.ensure_generated_layout(data, library)
+	var installation: Dictionary = run_state.call("set_environment", data)
+	if not bool(installation.get("ok", false)):
+		failures.append("RW06-1 production Bar install failed: %s." % JSON.stringify(installation.get("errors", [])))
+		return false
+	app.call("_clear_selected_game_action")
+	app.call("_refresh")
+	await _settle_frames(6)
+	if _first_enabled_game_record(app.call("_interactable_object_view_list")).is_empty():
+		failures.append("RW06-1 installed production Bar exposed no enabled game action.")
+		return false
+	return true
+
+
+func _check_exact_overflow_semantic_retention(app: Control, production_record: Dictionary) -> void:
+	var run_state: Variant = app.get("run_state")
+	var library: Variant = app.get("library")
+	if run_state == null or library == null:
+		failures.append("RW06-1 overflow semantic regression lacks production state/library authority.")
+		return
+	var environment: Dictionary = (run_state.get("current_environment") as Dictionary).duplicate(true)
+	var source_id := str(production_record.get("source_id", "")).strip_edges()
+	var presentation_id := str(production_record.get("object_id", "")).strip_edges()
+	var presentation_parts := presentation_id.split(":", false)
+	if source_id.is_empty() and presentation_parts.size() >= 2:
+		source_id = str(presentation_parts[1])
+	if source_id.is_empty() or presentation_id.is_empty():
+		failures.append("RW06-1 overflow semantic regression could not identify its production game record.")
+		return
+	# Prove both closed-union overflow retention and repeated-fixture identity.
+	# Neither object has an object_rects entry; both are authorized only by their
+	# exact slot binding and must remain distinct actionable semantic records.
+	var duplicate_id := "game:%s:2" % source_id
+	if duplicate_id == presentation_id:
+		duplicate_id = "game:%s:3" % source_id
+	var overflow_binding := {
+		"presentation_mode": "overflow",
+		"identity": presentation_id,
+		"placement_class": "machine",
+		"role": "base",
+		"slot_id": "",
+		"slot": {},
+	}
+	var duplicate_binding := overflow_binding.duplicate(true)
+	duplicate_binding["identity"] = duplicate_id
+	environment["layout"] = {
+		"object_rects": {},
+		"slot_bindings": {
+			presentation_id: overflow_binding,
+			duplicate_id: duplicate_binding,
+		},
+		"slot_overflow_ids": [presentation_id, duplicate_id],
+	}
+	(environment["layout"] as Dictionary)["slot_binding_digest"] = EnvironmentSlotBinderScript.binding_digest(
+		(environment["layout"] as Dictionary).get("slot_bindings", {}) as Dictionary
+	)
+	var authoritative := EnvironmentBaseSemanticRecordsScript.authoritative_interactable_records(environment, library)
+	var authoritative_records: Array = authoritative.get("records", [])
+	var stamped := EnvironmentBaseSemanticRecordsScript.stamp_interactable_records(authoritative_records, environment, library)
+	var stamped_records: Array = stamped.get("records", [])
+	var produced := EnvironmentBaseSemanticRecordsScript.from_interactable_records(stamped_records)
+	var interactions: Array = produced.get("interactions", [])
+	if not bool(authoritative.get("ok", false)) or not bool(stamped.get("ok", false)) or not bool(produced.get("ok", false)):
+		var semantic_errors: Array = []
+		semantic_errors.append_array(authoritative.get("errors", []) as Array)
+		semantic_errors.append_array(stamped.get("errors", []) as Array)
+		semantic_errors.append_array(produced.get("errors", []) as Array)
+		failures.append("RW06-1 exact overflow semantic retention failed: %s." % JSON.stringify(semantic_errors))
+		return
+	if authoritative_records.size() != 2 or stamped_records.size() != 2 or interactions.size() != 2:
+		failures.append("RW06-1 slot-binding-only repeated game fixtures were omitted: authority=%d stamped=%d interactions=%d." % [authoritative_records.size(), stamped_records.size(), interactions.size()])
+		return
+	var seen: Dictionary = {}
+	for index in range(stamped_records.size()):
+		var stamped_record := stamped_records[index] as Dictionary
+		var interaction := interactions[index] as Dictionary
+		var object_id := str(stamped_record.get("object_id", ""))
+		seen[object_id] = true
+		if str(stamped_record.get("presentation_mode", "")) != "overflow" \
+				or stamped_record.has("normalized_hit_rect") \
+				or stamped_record.has("focus_rect") \
+				or interaction.has("normalized_hit_rect") \
+				or str(interaction.get("presentation_object_id", "")) != object_id \
+				or float((interaction.get("hit_bounds", {}) as Dictionary).get("w", 0.0)) < 44.0 \
+				or (interaction.get("available_actions", []) as Array).is_empty():
+			failures.append("RW06-1 overflow interaction lost geometry-free action/identity authority: %s." % JSON.stringify(interaction))
+	if not seen.has(presentation_id) or not seen.has(duplicate_id):
+		failures.append("RW06-1 repeated overflow fixture identities collapsed: %s." % JSON.stringify(seen.keys()))
+	var forged_environment := environment.duplicate(true)
+	var forged_layout := forged_environment.get("layout", {}) as Dictionary
+	var forged_overflow_ids := forged_layout.get("slot_overflow_ids", []) as Array
+	forged_overflow_ids.erase(presentation_id)
+	forged_layout["slot_overflow_ids"] = forged_overflow_ids
+	forged_environment["layout"] = forged_layout
+	if bool(EnvironmentBaseSemanticRecordsScript.stamp_interactable_records(authoritative_records, forged_environment, library).get("ok", true)):
+		failures.append("RW06-1 caller-supplied overflow mode bypassed exact generated layout authority.")
+	var missing_digest_environment := environment.duplicate(true)
+	var missing_digest_layout := missing_digest_environment.get("layout", {}) as Dictionary
+	missing_digest_layout.erase("slot_binding_digest")
+	missing_digest_environment["layout"] = missing_digest_layout
+	if bool(EnvironmentBaseSemanticRecordsScript.stamp_interactable_records(authoritative_records, missing_digest_environment, library).get("ok", true)):
+		failures.append("RW06-1 overflow authority accepted a missing generated binding digest.")
+	var stale_digest_environment := environment.duplicate(true)
+	var stale_digest_layout := stale_digest_environment.get("layout", {}) as Dictionary
+	stale_digest_layout["slot_binding_digest"] = "0".repeat(64)
+	stale_digest_environment["layout"] = stale_digest_layout
+	if bool(EnvironmentBaseSemanticRecordsScript.stamp_interactable_records(authoritative_records, stale_digest_environment, library).get("ok", true)):
+		failures.append("RW06-1 overflow authority accepted a stale generated binding digest.")
+
+
+func _check_canonical_expanded_target() -> void:
+	var canonical := Vector2(ArtContractsScript.ENVIRONMENT_OBJECT_HIT_SIZE)
+	var expanded := EnvironmentSlotBinderScript.expanded_rect(Rect2(200.0, 200.0, 44.0, 44.0))
+	if expanded.size != canonical or Vector2(ScenarioLayoutResolverScript.SMALL_SCREEN_TARGET) != canonical:
+		failures.append("RW06-1 expanded slot authority diverges from ArtContracts: binder=%s resolver=%s canonical=%s." % [expanded.size, ScenarioLayoutResolverScript.SMALL_SCREEN_TARGET, canonical])
+
+
+func _check_late_binding_persistence(app: Control, production_record: Dictionary) -> void:
+	var run_state: Variant = app.get("run_state")
+	if run_state == null:
+		failures.append("RW06-1 late overflow reload regression lacks RunState.")
+		return
+	var original_snapshot: Dictionary = run_state.to_dict()
+	var environment := (run_state.get("current_environment") as Dictionary).duplicate(true)
+	var layout := (environment.get("layout", {}) as Dictionary).duplicate(true)
+	var source_id := str(production_record.get("source_id", "")).strip_edges()
+	if source_id.is_empty():
+		var parts := str(production_record.get("object_id", "")).split(":", false)
+		if parts.size() >= 2:
+			source_id = str(parts[1])
+	var records: Array = []
+	var late_ids: Array = []
+	var late_count := 64
+	for index in range(late_count):
+		var record := production_record.duplicate(true)
+		var object_id := "game:%s:%d" % [source_id, index + 100]
+		record["object_id"] = object_id
+		record["source_id"] = source_id
+		record.erase("slot_binding_source_id")
+		records.append(record)
+		late_ids.append(object_id)
+	var binding_environment := environment.duplicate(true)
+	binding_environment["layout"] = layout
+	var binding := EnvironmentSlotBinderScript.bind_base_records(
+		binding_environment,
+		records,
+		layout.get("slot_bindings", {}) as Dictionary
+	)
+	var overflow_ids := binding.get("overflow_ids", []) as Array
+	var late_overflow_id := ""
+	for object_id_value in late_ids:
+		if overflow_ids.has(object_id_value):
+			late_overflow_id = str(object_id_value)
+			break
+	if late_overflow_id.is_empty():
+		failures.append("RW06-1 late production records did not exercise fixed-slot overflow.")
+		run_state.from_dict(original_snapshot)
+		return
+	var committed_layout := EnvironmentInteractionControllerScript.commit_base_record_binding(run_state, layout, binding)
+	var committed_digest := str(committed_layout.get("slot_binding_digest", ""))
+	var committed_snapshot: Dictionary = run_state.to_dict()
+	run_state.from_dict(committed_snapshot)
+	var reloaded_environment := run_state.get("current_environment") as Dictionary
+	var reloaded_layout := reloaded_environment.get("layout", {}) as Dictionary
+	if not (reloaded_layout.get("slot_overflow_ids", []) as Array).has(late_overflow_id) \
+			or str(reloaded_layout.get("slot_binding_digest", "")) != committed_digest \
+			or str(((reloaded_layout.get("slot_bindings", {}) as Dictionary).get(late_overflow_id, {}) as Dictionary).get("presentation_mode", "")) != "overflow":
+		failures.append("RW06-1 late overflow binding authority did not survive RunState reload.")
+	run_state.from_dict(original_snapshot)
 
 
 func _restore_run(app: Control, action_list: Control, snapshot: Dictionary) -> void:

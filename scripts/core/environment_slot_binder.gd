@@ -2,9 +2,11 @@ class_name EnvironmentSlotBinder
 extends RefCounted
 
 const EnvironmentPlacementScript := preload("res://scripts/core/environment_placement.gd")
+const ArtContractsScript := preload("res://scripts/core/art_contracts.gd")
 
 const BOARD_SIZE := Vector2(900.0, 430.0)
-const SMALL_SCREEN_TARGET := Vector2(44.0, 44.0)
+const MIN_INTERACTIVE_TARGET := Vector2(44.0, 44.0)
+const SMALL_SCREEN_TARGET := Vector2(ArtContractsScript.ENVIRONMENT_OBJECT_HIT_SIZE)
 const LABEL_MIN_WIDTH := 48.0
 const LABEL_MAX_WIDTH := 126.0
 const LABEL_HEIGHT := 15.0
@@ -46,7 +48,9 @@ static func bind_base_layout(environment: Dictionary, active_entries: Array) -> 
 		if preference.is_empty():
 			var category_key := "%s:%d" % [str(entry.get("spot_field", "")), int(entry.get("index", 0))]
 			preference = str(category_preferences.get(category_key, "")).strip_edges()
-		var slot := _select_slot(slots, occupied, placement_class, preference)
+		# Generated base records are actionable by default. Decorative-only late
+		# records bypass this inventory; never serialize an undersized room target.
+		var slot := _select_slot(slots, occupied, placement_class, preference, false, MIN_INTERACTIVE_TARGET)
 		if slot.is_empty():
 			bindings[object_id] = _overflow_binding(object_id, placement_class, "base")
 			overflow_ids.append(object_id)
@@ -125,7 +129,8 @@ static func bind_base_records(environment: Dictionary, records: Array, existing_
 			var spot_field := str(record.get("layout_spot_field", "")).strip_edges()
 			var category_key := "%s:%d" % [spot_field, int(record.get("layout_index", 0))]
 			preference = str(category_preferences.get(category_key, "")).strip_edges()
-		var slot := _select_slot(slots, occupied, placement_class, preference)
+		var minimum_size := MIN_INTERACTIVE_TARGET if bool(record.get("interactive", true)) else Vector2.ZERO
+		var slot := _select_slot(slots, occupied, placement_class, preference, false, minimum_size)
 		if slot.is_empty():
 			bindings[object_id] = _overflow_binding(object_id, placement_class, "base")
 			continue
@@ -163,8 +168,15 @@ static func bind_base_records(environment: Dictionary, records: Array, existing_
 			record["label_rect"] = {}
 			record["small_screen_label_rect"] = {}
 			record["focus_point"] = {}
-			overflow_ids.append(object_id)
 		result_records.append(record)
+	# Report the complete binding authority, including persisted/generated
+	# overflow identities that were not part of this particular record refresh.
+	overflow_ids = []
+	var binding_ids := bindings.keys()
+	binding_ids.sort_custom(func(left: Variant, right: Variant) -> bool: return str(left) < str(right))
+	for object_id_value in binding_ids:
+		if str(_dict(bindings.get(object_id_value, {})).get("presentation_mode", "")) == PRESENTATION_OVERFLOW:
+			overflow_ids.append(str(object_id_value))
 	return {
 		"ok": true,
 		"records": result_records,
@@ -250,6 +262,8 @@ static func bind_scenario_visuals(environment: Dictionary, visual_entries: Array
 			if start_id != end_id and not start_slot.is_empty() and not end_slot.is_empty() \
 					and str(start_slot.get("footprint_class", "")) == placement_class \
 					and str(end_slot.get("footprint_class", "")) == placement_class \
+					and _slot_meets_minimum(start_slot, MIN_INTERACTIVE_TARGET) \
+					and _slot_meets_minimum(end_slot, MIN_INTERACTIVE_TARGET) \
 					and not occupied.has(start_id) and not occupied.has(end_id) \
 					and route_points.size() >= 2:
 				slot = start_slot
@@ -259,14 +273,15 @@ static func bind_scenario_visuals(environment: Dictionary, visual_entries: Array
 				errors.append("Scenario visual %s route %s has invalid, incompatible, occupied, or disconnected authored endpoints." % [identity, route_id])
 		elif bool(entry.get("safe_exit", false)):
 			var preference := str(preferences.get(position_key, preferences.get(stable_id, preferences.get(identity, "")))).strip_edges()
-			slot = _select_slot(exit_slots, occupied, placement_class, preference, not preference.is_empty())
+			slot = _select_slot(exit_slots, occupied, placement_class, preference, not preference.is_empty(), MIN_INTERACTIVE_TARGET)
 			if slot.is_empty():
 				errors.append("Required safe exit %s has no free compatible authored exit slot%s." % [identity, " for preferred slot %s" % preference if not preference.is_empty() else ""])
 		else:
 			var preference := str(preferences.get(position_key, preferences.get(stable_id, preferences.get(identity, "")))).strip_edges()
-			slot = _select_slot(stage_slots, occupied, placement_class, preference, not preference.is_empty())
-			if slot.is_empty() and not preference.is_empty():
-				errors.append("Scenario visual %s cannot use its required preferred slot %s for class %s." % [identity, preference, placement_class])
+			# Ordinary stage preferences are hints, never hard authority. A stale,
+			# occupied, or class-incompatible preferred id falls through to the
+			# deterministic (priority, id) order before overflow.
+			slot = _select_slot(stage_slots, occupied, placement_class, preference, false, MIN_INTERACTIVE_TARGET)
 		if slot.is_empty():
 			bindings[identity] = _overflow_binding(identity, placement_class, "exit" if bool(entry.get("safe_exit", false)) else "stage")
 			overflow_ids.append(identity)
@@ -400,22 +415,32 @@ static func authored_route_points(surface_map: Dictionary, start_slot: Dictionar
 	return result if result.size() >= 2 else []
 
 
-static func _select_slot(slots: Array, occupied: Dictionary, placement_class: String, preferred_slot_id: String, require_preferred: bool = false) -> Dictionary:
+static func _select_slot(slots: Array, occupied: Dictionary, placement_class: String, preferred_slot_id: String, require_preferred: bool = false, minimum_size: Vector2 = Vector2.ZERO) -> Dictionary:
 	if not preferred_slot_id.is_empty():
 		for slot_value in slots:
 			var preferred := _dict(slot_value)
 			if str(preferred.get("id", "")) == preferred_slot_id \
 					and str(preferred.get("footprint_class", "")) == placement_class \
-					and not occupied.has(preferred_slot_id):
+					and not occupied.has(preferred_slot_id) \
+					and _slot_meets_minimum(preferred, minimum_size):
 				return preferred
 		if require_preferred:
 			return {}
 	for slot_value in slots:
 		var slot := _dict(slot_value)
 		var slot_id := str(slot.get("id", ""))
-		if str(slot.get("footprint_class", "")) == placement_class and not occupied.has(slot_id):
+		if str(slot.get("footprint_class", "")) == placement_class \
+				and not occupied.has(slot_id) \
+				and _slot_meets_minimum(slot, minimum_size):
 			return slot
 	return {}
+
+
+static func _slot_meets_minimum(slot: Dictionary, minimum_size: Vector2) -> bool:
+	if minimum_size == Vector2.ZERO:
+		return true
+	var rect := _slot_rect(slot)
+	return rect.has_area() and rect.size.x >= minimum_size.x and rect.size.y >= minimum_size.y
 
 
 static func _ordered_slots(values: Array) -> Array:

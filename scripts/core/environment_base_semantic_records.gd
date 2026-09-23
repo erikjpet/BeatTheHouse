@@ -3,6 +3,7 @@ extends RefCounted
 
 const OperationRegistryScript := preload("res://scripts/core/scenario_operation_registry.gd")
 const ArtContractsScript := preload("res://scripts/core/art_contracts.gd")
+const EnvironmentSlotBinderScript := preload("res://scripts/core/environment_slot_binder.gd")
 const DYNAMIC_SOURCE_FIELDS := ["active_delivery_run.handoff_pending_node_id", "numbers_state.venue_status", "numbers_state.silas_presence", "crew_presence", "game_ids.environment_interactable_objects", "game_ids.environment_interactable_objects.dialogue_id"]
 
 
@@ -14,12 +15,23 @@ static func authoritative_interactable_records(environment: Dictionary, library:
 	if library == null:
 		return {"ok": false, "records": [], "errors": ["authoritative base semantic production requires ContentLibrary."]}
 	var object_rects := _dict(_dict(environment.get("layout", {})).get("object_rects", {}))
+	var slot_bindings := _dict(_dict(environment.get("layout", {})).get("slot_bindings", {}))
 	var records: Array = []
 	var errors: Array = []
-	for object_id_value in object_rects.keys():
+	# Fixed-slot overflow is intentional presentation authority, not absence from
+	# the room. Generated layouts keep those identities in slot_bindings while
+	# object_rects contains only room-bound objects, so seal the closed union.
+	var object_ids: Array = object_rects.keys()
+	for object_id_value in slot_bindings.keys():
+		if not object_ids.has(object_id_value):
+			object_ids.append(object_id_value)
+	object_ids.sort_custom(func(left: Variant, right: Variant) -> bool: return str(left) < str(right))
+	for object_id_value in object_ids:
 		var object_id := str(object_id_value).strip_edges()
 		var parts := object_id.split(":", false)
-		if parts.size() != 2:
+		# Repeated fixtures retain one catalog source id and a unique presentation
+		# suffix (for example game:slot:2). The full object_id remains identity.
+		if parts.size() < 2:
 			continue
 		var domain := str(parts[0])
 		var source_id := str(parts[1])
@@ -42,13 +54,19 @@ static func authoritative_interactable_records(environment: Dictionary, library:
 		if definition.is_empty():
 			errors.append("authoritative base semantic source %s is not catalog-backed." % object_id)
 			continue
-		var rect := _dict(object_rects.get(object_id, {}))
-		for rect_key in ["x", "y", "w", "h"]:
-			if not _finite_number(rect.get(rect_key)):
-				errors.append("authoritative base semantic source %s has malformed layout geometry." % object_id)
-				break
-		if not errors.is_empty() and str(errors[-1]).contains(object_id):
+		var binding := _dict(slot_bindings.get(object_id, {}))
+		var presentation_mode := str(binding.get("presentation_mode", "room" if object_rects.has(object_id) else ""))
+		if presentation_mode not in ["room", "overflow"]:
+			errors.append("authoritative base semantic source %s has no closed room/overflow presentation authority." % object_id)
 			continue
+		var rect := _dict(object_rects.get(object_id, {}))
+		if presentation_mode == "room":
+			for rect_key in ["x", "y", "w", "h"]:
+				if not _finite_number(rect.get(rect_key)):
+					errors.append("authoritative base semantic source %s has malformed layout geometry." % object_id)
+					break
+			if not errors.is_empty() and str(errors[-1]).contains(object_id):
+				continue
 		var action_id := str({
 			"game": "enter_game",
 			"event": "inspect_event_choices",
@@ -71,25 +89,36 @@ static func authoritative_interactable_records(environment: Dictionary, library:
 			"travel": "Open map." if source_id == "leave" else "Double-click to travel.",
 		}.get(domain, "Choose an action."))
 		var available_actions := [{"id": action_id, "label": action_label, "input_action": "confirm", "non_color_state": "available"}]
+		var label := str(definition.get("display_name", definition.get("label", source_id.replace("_", " ").capitalize())))
 		var record := {
 			"object_id": object_id,
 			"object_type": object_type,
 			"source_id": source_id,
-			"label": str(definition.get("display_name", definition.get("label", source_id.replace("_", " ").capitalize()))),
+			"label": label,
 			"action_summary": action_summary,
 			"enabled": true,
 			"disabled_reason": "",
 			"available_actions": available_actions,
 			"confirm_action_id": str(available_actions[0].get("id", "")),
-			"normalized_rect": rect.duplicate(true),
-			"focus_rect": rect,
-			"focus_point": {
+			"presentation_mode": presentation_mode,
+		}
+		if presentation_mode == "room":
+			record["normalized_rect"] = rect.duplicate(true)
+			record["focus_rect"] = rect.duplicate(true)
+			record["focus_point"] = {
 				"x": float(rect.get("x", 0.0)) + float(rect.get("w", 0.0)) * 0.5,
 				"y": float(rect.get("y", 0.0)) + float(rect.get("h", 0.0)) * 0.5,
-			},
-		}
+			}
 		records.append(record)
-	return {"ok": errors.is_empty(), "records": records if errors.is_empty() else [], "errors": errors}
+	if not errors.is_empty():
+		return {"ok": false, "records": [], "errors": errors}
+	# Use the same immutable slot projection as the production interaction UI.
+	# This derives exact room/label rectangles and deliberately clears all room
+	# geometry for overflow records while preserving their actions and identity.
+	var bound := EnvironmentSlotBinderScript.bind_base_records(environment, records, slot_bindings)
+	if not bool(bound.get("ok", false)):
+		return {"ok": false, "records": [], "errors": _array(bound.get("errors", []))}
+	return {"ok": true, "records": _array(bound.get("records", [])), "errors": []}
 
 
 static func stamp_interactable_records(records_value: Array, environment: Dictionary, library: Variant, producer_context: Dictionary = {}) -> Dictionary:
@@ -103,11 +132,25 @@ static func stamp_interactable_records(records_value: Array, environment: Dictio
 		if not bool(record.get("interactive", true)):
 			records.append(record)
 			continue
-		var geometry := _producer_geometry(record)
-		if geometry.is_empty():
-			errors.append("base presentation record %d has no valid normalized environment-board geometry." % index)
+		var presentation_mode := str(record.get("presentation_mode", "room"))
+		if presentation_mode not in ["room", "overflow"]:
+			errors.append("base presentation record %d has invalid presentation mode." % index)
 			continue
-		for geometry_key in geometry.keys(): record[geometry_key] = geometry.get(geometry_key)
+		if presentation_mode == "room":
+			var geometry := _producer_geometry(record)
+			if geometry.is_empty():
+				errors.append("base presentation record %d has no valid normalized environment-board geometry." % index)
+				continue
+			for geometry_key in geometry.keys(): record[geometry_key] = geometry.get(geometry_key)
+		else:
+			# Overflow actions live in RoomActionList, outside the environment board.
+			# Keep their semantic identity/action authority without inventing a room
+			# hit rectangle that could bypass slot capacity or overlap validation.
+			if not _authorized_overflow_binding(record, environment):
+				errors.append("base presentation record %d has no exact generated overflow binding authority." % index)
+				continue
+			for geometry_key in ["normalized_rect", "focus_rect", "focus_point", "normalized_hit_rect", "coordinate_space", "coordinate_board_size", "pixel_hit_bounds", "small_screen_rect", "label_rect", "small_screen_label_rect"]:
+				record.erase(geometry_key)
 		var identity := _identity_for_record(record, environment, library, producer_context)
 		if identity.is_empty():
 			errors.append("base presentation record %d is not backed by an exact environment source (%s/%s/%s)." % [index, str(record.get("object_id", "")), str(record.get("object_type", "")), str(record.get("source_id", ""))])
@@ -204,12 +247,14 @@ static func from_interactable_records(records_value: Array) -> Dictionary:
 			"non_color_state": non_color_state,
 			"focus_order": index,
 			"hit_bounds": bounds,
-			"normalized_hit_rect": _dict(geometry.get("normalized_hit_rect", {})),
 			"min_target_size": OperationRegistryScript.MIN_TARGET_SIZE,
 			"safe_exit": presentation_id == "travel:leave" or presentation_id.begins_with("environment_layer:") or presentation_id.begins_with("travel:"),
 			"alternate_exit": false,
 			"source_id": str(source.get("source_id", "")),
 		}
+		var normalized_hit_rect := _dict(geometry.get("normalized_hit_rect", {}))
+		if not normalized_hit_rect.is_empty():
+			interaction["normalized_hit_rect"] = normalized_hit_rect
 		interactions.append(interaction)
 		if source.has("semantic_actor") or source.has("semantic_actor_id") or source.has("semantic_actor_owner_namespace") or source.has("semantic_actor_provenance"):
 			errors.append("base interactable %s cannot promote presentation metadata into a semantic actor." % presentation_id)
@@ -432,6 +477,10 @@ static func _identity_for_record(source: Dictionary, environment: Dictionary, li
 
 
 static func _bounds(record: Dictionary) -> Dictionary:
+	if str(record.get("presentation_mode", "room")) == "overflow":
+		# OperationRegistry models the actionable list control's accessible extent,
+		# not a room-space rectangle. RoomActionList owns the actual responsive row.
+		return {"pixel_hit_bounds": {"w": OperationRegistryScript.MIN_TARGET_SIZE, "h": OperationRegistryScript.MIN_TARGET_SIZE}}
 	if str(record.get("coordinate_space", "")) != "normalized_environment_board": return {}
 	var board := _dict(record.get("coordinate_board_size", {}))
 	var expected := Vector2(ArtContractsScript.ENVIRONMENT_BOARD_SIZE)
@@ -451,6 +500,24 @@ static func _bounds(record: Dictionary) -> Dictionary:
 	if not is_equal_approx(pixel_width, width * expected.x) or not is_equal_approx(pixel_height, height * expected.y): return {}
 	if pixel_width < OperationRegistryScript.MIN_TARGET_SIZE or pixel_height < OperationRegistryScript.MIN_TARGET_SIZE: return {}
 	return {"pixel_hit_bounds": {"w": pixel_width, "h": pixel_height}, "normalized_hit_rect": {"x": x, "y": y, "w": width, "h": height}}
+
+
+static func _authorized_overflow_binding(record: Dictionary, environment: Dictionary) -> bool:
+	var object_id := str(record.get("object_id", "")).strip_edges()
+	if object_id.is_empty():
+		return false
+	var layout := _dict(environment.get("layout", {}))
+	var bindings := _dict(layout.get("slot_bindings", {}))
+	var binding := _dict(bindings.get(object_id, {}))
+	if binding.is_empty() \
+			or str(binding.get("identity", "")) != object_id \
+			or str(binding.get("presentation_mode", "")) != "overflow" \
+			or not str(binding.get("slot_id", "")).strip_edges().is_empty() \
+			or not _dict(binding.get("slot", {})).is_empty() \
+			or not _exact_id(layout.get("slot_overflow_ids", []), object_id):
+		return false
+	var stored_digest := str(layout.get("slot_binding_digest", "")).strip_edges()
+	return not stored_digest.is_empty() and stored_digest == EnvironmentSlotBinderScript.binding_digest(bindings)
 
 
 static func _producer_geometry(record: Dictionary) -> Dictionary:
@@ -616,7 +683,8 @@ static func _deep_merge(base: Dictionary, overlay: Dictionary) -> Dictionary:
 
 
 static func _layout_present(environment: Dictionary, presentation_id: String) -> bool:
-	return _dict(_dict(environment.get("layout", {})).get("object_rects", {})).has(presentation_id)
+	var layout := _dict(environment.get("layout", {}))
+	return _dict(layout.get("object_rects", {})).has(presentation_id) or _dict(layout.get("slot_bindings", {})).has(presentation_id)
 
 
 static func _dict(value: Variant) -> Dictionary:
