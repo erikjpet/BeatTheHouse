@@ -9112,6 +9112,32 @@
       "slot_schema_version": 1,
       "base_slots": [
         {
+          "id": "base.doorway.02",
+          "kind": "base",
+          "pos": [
+            841.0,
+            362.0
+          ],
+          "footprint_class": "doorway",
+          "hit_rect": [
+            809.0,
+            326.0,
+            64.0,
+            72.0
+          ],
+          "label_anchor": [
+            841.0,
+            320.0
+          ],
+          "facing": "left",
+          "priority": 20,
+          "zone_id": "room",
+          "support_id": "right_exit",
+          "walk_lane_ids": [
+            "lane.public"
+          ]
+        },
+        {
           "id": "base.doorway.01",
           "kind": "base",
           "pos": [
@@ -9138,33 +9164,81 @@
           ]
         },
         {
-          "id": "base.doorway.02",
+          "id": "base.floor_fixture.01",
           "kind": "base",
           "pos": [
-            846.0,
-            194.0
+            734.0,
+            358.0
           ],
-          "footprint_class": "doorway",
+          "footprint_class": "floor_fixture",
           "hit_rect": [
-            814.0,
-            158.0,
-            64.0,
-            72.0
+            688.0,
+            294.0,
+            92.0,
+            64.0
           ],
           "label_anchor": [
-            846.0,
-            152.0
+            734.0,
+            288.0
+          ],
+          "facing": "none",
+          "priority": 10,
+          "zone_id": "right",
+          "support_id": "floor",
+          "walk_lane_ids": []
+        },
+        {
+          "id": "base.standing_person.01",
+          "kind": "base",
+          "pos": [
+            628.0,
+            358.0
+          ],
+          "footprint_class": "standing_person",
+          "hit_rect": [
+            592.0,
+            278.0,
+            72.0,
+            80.0
+          ],
+          "label_anchor": [
+            628.0,
+            272.0
           ],
           "facing": "left",
-          "priority": 20,
+          "priority": 10,
           "zone_id": "room",
-          "support_id": "side_door",
+          "support_id": "floor",
           "walk_lane_ids": [
             "lane.public"
           ]
         },
         {
-          "id": "base.surface_item.01",
+          "id": "base.surface_item.03",
+          "kind": "base",
+          "pos": [
+            332.0,
+            202.0
+          ],
+          "footprint_class": "surface_item",
+          "hit_rect": [
+            296.0,
+            154.0,
+            72.0,
+            48.0
+          ],
+          "label_anchor": [
+            332.0,
+            148.0
+          ],
+          "facing": "none",
+          "priority": 30,
+          "zone_id": "center",
+          "support_id": "stage",
+          "walk_lane_ids": []
+        },
+        {
+          "id": "base.surface_item.02",
           "kind": "base",
           "pos": [
             110.0,
@@ -9182,241 +9256,37 @@
             140.0
           ],
           "facing": "none",
-          "priority": 10,
+          "priority": 20,
           "zone_id": "left",
           "support_id": "left_table",
           "walk_lane_ids": []
         },
         {
-          "id": "base.surface_item.02",
+          "id": "base.surface_item.01",
           "kind": "base",
           "pos": [
-            190.0,
+            706.0,
             194.0
           ],
           "footprint_class": "surface_item",
           "hit_rect": [
-            154.0,
+            670.0,
             146.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            190.0,
+            706.0,
             140.0
           ],
           "facing": "none",
-          "priority": 20,
-          "zone_id": "left",
-          "support_id": "left_table",
-          "walk_lane_ids": []
-        },
-        {
-          "id": "base.surface_item.03",
-          "kind": "base",
-          "pos": [
-            300.0,
-            202.0
-          ],
-          "footprint_class": "surface_item",
-          "hit_rect": [
-            264.0,
-            154.0,
-            72.0,
-            48.0
-          ],
-          "label_anchor": [
-            300.0,
-            148.0
-          ],
-          "facing": "none",
-          "priority": 30,
-          "zone_id": "room",
-          "support_id": "stage",
-          "walk_lane_ids": []
-        },
-        {
-          "id": "base.standing_person.01",
-          "kind": "base",
-          "pos": [
-            252.0,
-            358.0
-          ],
-          "footprint_class": "standing_person",
-          "hit_rect": [
-            216.0,
-            278.0,
-            72.0,
-            80.0
-          ],
-          "label_anchor": [
-            252.0,
-            272.0
-          ],
-          "facing": "right",
           "priority": 10,
-          "zone_id": "left",
-          "support_id": "floor",
-          "walk_lane_ids": [
-            "lane.public"
-          ]
-        },
-        {
-          "id": "base.floor_fixture.01",
-          "kind": "base",
-          "pos": [
-            606.0,
-            142.0
-          ],
-          "footprint_class": "floor_fixture",
-          "hit_rect": [
-            560.0,
-            78.0,
-            92.0,
-            64.0
-          ],
-          "label_anchor": [
-            606.0,
-            72.0
-          ],
-          "facing": "none",
-          "priority": 10,
-          "zone_id": "room",
-          "support_id": "stage",
+          "zone_id": "right",
+          "support_id": "right_table",
           "walk_lane_ids": []
         }
       ],
       "stage_slots": [
-        {
-          "id": "stage.group.02",
-          "kind": "stage",
-          "pos": [
-            740.0,
-            358.0
-          ],
-          "footprint_class": "group",
-          "hit_rect": [
-            688.0,
-            280.0,
-            104.0,
-            78.0
-          ],
-          "label_anchor": [
-            740.0,
-            274.0
-          ],
-          "facing": "left",
-          "priority": 20,
-          "zone_id": "right",
-          "support_id": "floor",
-          "walk_lane_ids": [
-            "lane.public"
-          ]
-        },
-        {
-          "id": "stage.group.01",
-          "kind": "stage",
-          "pos": [
-            628.0,
-            358.0
-          ],
-          "footprint_class": "group",
-          "hit_rect": [
-            576.0,
-            280.0,
-            104.0,
-            78.0
-          ],
-          "label_anchor": [
-            628.0,
-            274.0
-          ],
-          "facing": "left",
-          "priority": 10,
-          "zone_id": "room",
-          "support_id": "floor",
-          "walk_lane_ids": [
-            "lane.public"
-          ]
-        },
-        {
-          "id": "stage.standing_person.01",
-          "kind": "stage",
-          "pos": [
-            152.0,
-            358.0
-          ],
-          "footprint_class": "standing_person",
-          "hit_rect": [
-            116.0,
-            278.0,
-            72.0,
-            80.0
-          ],
-          "label_anchor": [
-            152.0,
-            272.0
-          ],
-          "facing": "right",
-          "priority": 10,
-          "zone_id": "left",
-          "support_id": "floor",
-          "walk_lane_ids": [
-            "lane.public"
-          ]
-        },
-        {
-          "id": "stage.standing_person.03",
-          "kind": "stage",
-          "pos": [
-            352.0,
-            358.0
-          ],
-          "footprint_class": "standing_person",
-          "hit_rect": [
-            316.0,
-            278.0,
-            72.0,
-            80.0
-          ],
-          "label_anchor": [
-            352.0,
-            272.0
-          ],
-          "facing": "right",
-          "priority": 30,
-          "zone_id": "center",
-          "support_id": "floor",
-          "walk_lane_ids": [
-            "lane.public"
-          ]
-        },
-        {
-          "id": "stage.standing_person.02",
-          "kind": "stage",
-          "pos": [
-            452.0,
-            358.0
-          ],
-          "footprint_class": "standing_person",
-          "hit_rect": [
-            416.0,
-            278.0,
-            72.0,
-            80.0
-          ],
-          "label_anchor": [
-            452.0,
-            272.0
-          ],
-          "facing": "front",
-          "priority": 20,
-          "zone_id": "center",
-          "support_id": "floor",
-          "walk_lane_ids": [
-            "lane.public"
-          ]
-        },
         {
           "id": "stage.doorway.01",
           "kind": "stage",
@@ -9442,30 +9312,6 @@
           "walk_lane_ids": [
             "lane.public"
           ]
-        },
-        {
-          "id": "stage.surface_item.01",
-          "kind": "stage",
-          "pos": [
-            706.0,
-            194.0
-          ],
-          "footprint_class": "surface_item",
-          "hit_rect": [
-            670.0,
-            146.0,
-            72.0,
-            48.0
-          ],
-          "label_anchor": [
-            706.0,
-            140.0
-          ],
-          "facing": "none",
-          "priority": 10,
-          "zone_id": "right",
-          "support_id": "right_table",
-          "walk_lane_ids": []
         },
         {
           "id": "stage.floor_fixture.01",
@@ -9495,18 +9341,18 @@
           "id": "stage.floor_fixture.02",
           "kind": "stage",
           "pos": [
-            306.0,
+            574.0,
             142.0
           ],
           "footprint_class": "floor_fixture",
           "hit_rect": [
-            260.0,
+            528.0,
             78.0,
             92.0,
             64.0
           ],
           "label_anchor": [
-            306.0,
+            574.0,
             72.0
           ],
           "facing": "none",
@@ -9519,18 +9365,18 @@
           "id": "stage.floor_fixture.03",
           "kind": "stage",
           "pos": [
-            206.0,
+            222.0,
             142.0
           ],
           "footprint_class": "floor_fixture",
           "hit_rect": [
-            160.0,
+            176.0,
             78.0,
             92.0,
             64.0
           ],
           "label_anchor": [
-            206.0,
+            222.0,
             72.0
           ],
           "facing": "none",
@@ -9543,42 +9389,144 @@
           "id": "stage.ground_marker.01",
           "kind": "stage",
           "pos": [
-            532.0,
-            358.0
+            164.0,
+            302.0
           ],
           "footprint_class": "ground_marker",
           "hit_rect": [
-            496.0,
-            310.0,
+            128.0,
+            254.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            532.0,
-            304.0
+            164.0,
+            248.0
           ],
           "facing": "none",
           "priority": 10,
+          "zone_id": "left",
+          "support_id": "floor",
+          "walk_lane_ids": []
+        },
+        {
+          "id": "stage.group.01",
+          "kind": "stage",
+          "pos": [
+            388.0,
+            358.0
+          ],
+          "footprint_class": "group",
+          "hit_rect": [
+            336.0,
+            280.0,
+            104.0,
+            78.0
+          ],
+          "label_anchor": [
+            388.0,
+            274.0
+          ],
+          "facing": "front",
+          "priority": 10,
           "zone_id": "center",
           "support_id": "floor",
+          "walk_lane_ids": [
+            "lane.public"
+          ]
+        },
+        {
+          "id": "stage.standing_person.01",
+          "kind": "stage",
+          "pos": [
+            284.0,
+            358.0
+          ],
+          "footprint_class": "standing_person",
+          "hit_rect": [
+            248.0,
+            278.0,
+            72.0,
+            80.0
+          ],
+          "label_anchor": [
+            284.0,
+            272.0
+          ],
+          "facing": "right",
+          "priority": 10,
+          "zone_id": "room",
+          "support_id": "floor",
+          "walk_lane_ids": [
+            "lane.public"
+          ]
+        },
+        {
+          "id": "stage.standing_person.02",
+          "kind": "stage",
+          "pos": [
+            500.0,
+            358.0
+          ],
+          "footprint_class": "standing_person",
+          "hit_rect": [
+            464.0,
+            278.0,
+            72.0,
+            80.0
+          ],
+          "label_anchor": [
+            500.0,
+            272.0
+          ],
+          "facing": "front",
+          "priority": 20,
+          "zone_id": "center",
+          "support_id": "floor",
+          "walk_lane_ids": [
+            "lane.public"
+          ]
+        },
+        {
+          "id": "stage.surface_item.01",
+          "kind": "stage",
+          "pos": [
+            738.0,
+            108.0
+          ],
+          "footprint_class": "surface_item",
+          "hit_rect": [
+            702.0,
+            60.0,
+            72.0,
+            48.0
+          ],
+          "label_anchor": [
+            738.0,
+            54.0
+          ],
+          "facing": "none",
+          "priority": 10,
+          "zone_id": "background",
+          "support_id": "refreshment_shelf",
           "walk_lane_ids": []
         },
         {
           "id": "stage.wall_mounted.01",
           "kind": "stage",
           "pos": [
-            688.0,
+            40.0,
             24.0
           ],
           "footprint_class": "wall_mounted",
           "hit_rect": [
-            648.0,
+            0.0,
             0.0,
             80.0,
             48.0
           ],
           "label_anchor": [
-            688.0,
+            40.0,
             8.0
           ],
           "facing": "none",
@@ -9620,18 +9568,18 @@
           "kind": "exit",
           "pos": [
             36.0,
-            338.0
+            346.0
           ],
           "footprint_class": "doorway",
           "hit_rect": [
             4.0,
-            302.0,
+            310.0,
             64.0,
             72.0
           ],
           "label_anchor": [
             36.0,
-            296.0
+            304.0
           ],
           "facing": "right",
           "priority": 20,
@@ -9664,89 +9612,34 @@
           "entry": true
         }
       ],
-      "actor_routes": [
-        {
-          "id": "position::7d08e358e629bc6f",
-          "footprint_class": "group",
-          "start_slot_id": "stage.group.02",
-          "end_slot_id": "stage.group.01",
-          "lane_ids": [
-            "lane.public"
-          ],
-          "motion": "to_endpoint",
-          "reduced_motion_slot_id": "stage.group.01"
-        },
-        {
-          "id": "position::400423635ff72410",
-          "footprint_class": "standing_person",
-          "start_slot_id": "stage.standing_person.03",
-          "end_slot_id": "stage.standing_person.02",
-          "lane_ids": [
-            "lane.public"
-          ],
-          "motion": "to_endpoint",
-          "reduced_motion_slot_id": "stage.standing_person.02"
-        },
-        {
-          "id": "position::fca00412d9efbe2e",
-          "footprint_class": "standing_person",
-          "start_slot_id": "stage.standing_person.02",
-          "end_slot_id": "stage.standing_person.03",
-          "lane_ids": [
-            "lane.public"
-          ],
-          "motion": "to_endpoint",
-          "reduced_motion_slot_id": "stage.standing_person.03"
-        },
-        {
-          "id": "position::937443f65933cec4",
-          "footprint_class": "standing_person",
-          "start_slot_id": "stage.standing_person.03",
-          "end_slot_id": "stage.standing_person.02",
-          "lane_ids": [
-            "lane.public"
-          ],
-          "motion": "to_endpoint",
-          "reduced_motion_slot_id": "stage.standing_person.02"
-        },
-        {
-          "id": "position::e0941cf2e3c9af05",
-          "footprint_class": "standing_person",
-          "start_slot_id": "stage.standing_person.03",
-          "end_slot_id": "stage.standing_person.02",
-          "lane_ids": [
-            "lane.public"
-          ],
-          "motion": "to_endpoint",
-          "reduced_motion_slot_id": "stage.standing_person.02"
-        }
-      ],
+      "actor_routes": [],
       "object_slot_ids": {
         "event:chain06_cass_first_contact": "base.standing_person.01",
-        "event:town_rumor_staff": "base.standing_person.01",
-        "numbers:book": "base.surface_item.03",
-        "service:house_drink": "base.surface_item.01",
-        "service:punchline_cover_charge": "base.surface_item.02",
-        "service:punchline_two_drink_minimum": "base.surface_item.03",
         "event:scenario_headliner_cover": "base.doorway.01",
         "event:side_door": "base.doorway.02",
+        "event:town_rumor_staff": "base.standing_person.01",
+        "numbers:book": "base.surface_item.01",
+        "service:house_drink": "base.surface_item.02",
+        "service:punchline_cover_charge": "base.surface_item.03",
+        "service:punchline_two_drink_minimum": "base.surface_item.03",
         "travel:leave": "base.doorway.02"
       },
       "category_slot_ids": {
         "event_spots:0": "base.floor_fixture.01",
-        "travel_spots:0": "base.doorway.02",
-        "service_spots:0": "base.surface_item.02",
         "layer_spots:0": "base.doorway.01",
         "layer_spots:1": "base.doorway.02",
-        "numbers_spots:0": "base.surface_item.03",
-        "numbers_silas_spots:0": "base.standing_person.01"
+        "numbers_silas_spots:0": "base.standing_person.01",
+        "numbers_spots:0": "base.surface_item.01",
+        "service_spots:0": "base.surface_item.02",
+        "travel_spots:0": "base.doorway.02"
       },
       "scenario_slot_ids": {
         "punchline_bringer_show_bringer_performer|punchline_bringer_performer_arrival|right|": "stage.standing_person.01",
         "punchline_bringer_show_crowd_captain|punchline_bringer_crowd_captain|background|punchline_bringer_show_crowd_move_position": "stage.group.01",
-        "punchline_bringer_show_crowd_captain||background|": "stage.group.02",
+        "punchline_bringer_show_crowd_captain||background|": "stage.group.01",
         "punchline_bringer_show_crowd_ropes|env06_8_bringer_ropes|center|": "stage.floor_fixture.03",
         "punchline_bringer_show_crowd_ropes|punchline_bringer_ropes_work_1|center|": "stage.floor_fixture.03",
+        "punchline_bringer_show_safe_exit|punchline_headliner_door_guard|exit_lane|": "exit.doorway.01",
         "punchline_bringer_show_seat_blocks|env06_8_bringer_seats|background|": "stage.floor_fixture.01",
         "punchline_bringer_show_task_0|env06_8_bringer_task|center|": "stage.wall_mounted.01",
         "punchline_bringer_show_task_1|punchline_bringer_crowd_ropes|background|": "stage.wall_mounted.01",
@@ -9758,7 +9651,8 @@
         "punchline_debt_court_hearing_chairs|punchline_debt_chairs_work_1|center|": "stage.floor_fixture.01",
         "punchline_debt_court_paused_table_rope||left|": "stage.floor_fixture.02",
         "punchline_debt_court_room_witness|punchline_debt_witness_work_2|background|punchline_debt_court_evidence_place_position": "stage.standing_person.02",
-        "punchline_debt_court_room_witness||background|": "stage.standing_person.03",
+        "punchline_debt_court_room_witness||background|": "stage.standing_person.02",
+        "punchline_debt_court_safe_exit|punchline_headliner_door_guard|exit_lane|": "exit.doorway.01",
         "punchline_debt_court_task_0|punchline_debt_task|center|": "stage.wall_mounted.01",
         "punchline_debt_court_task_1|punchline_debt_task|right|": "stage.wall_mounted.01",
         "punchline_debt_court_task_2|punchline_debt_task|left|": "stage.wall_mounted.01",
@@ -9767,8 +9661,9 @@
         "punchline_headliner_night_credential_rope|punchline_headliner_rope_work_1|center|": "stage.floor_fixture.01",
         "punchline_headliner_night_credential_runner|env06_8_headliner_runner|background|": "stage.standing_person.01",
         "punchline_headliner_night_door_guard|env06_8_headliner_guard|right|": "stage.standing_person.02",
-        "punchline_headliner_night_door_guard|punchline_headliner_door_guard|background|punchline_headliner_night_case_transfer_position": "stage.standing_person.03",
+        "punchline_headliner_night_door_guard|punchline_headliner_door_guard|background|punchline_headliner_night_case_transfer_position": "stage.standing_person.02",
         "punchline_headliner_night_runner_case|env06_8_headliner_case|background|": "stage.surface_item.01",
+        "punchline_headliner_night_safe_exit|punchline_headliner_door_guard|exit_lane|": "exit.doorway.01",
         "punchline_headliner_night_service_door|env06_8_headliner_door|left|": "stage.doorway.01",
         "punchline_headliner_night_task_0|punchline_headliner_task|center|": "stage.wall_mounted.01",
         "punchline_headliner_night_task_1|punchline_headliner_task|background|": "stage.wall_mounted.01",
@@ -9777,6 +9672,7 @@
         "punchline_headliner_night_task_4|punchline_headliner_task|center|": "stage.wall_mounted.01",
         "punchline_open_mic_night_chair_bank||left|": "stage.floor_fixture.01",
         "punchline_open_mic_night_open_mic_host||right|": "stage.standing_person.01",
+        "punchline_open_mic_night_safe_exit|punchline_headliner_door_guard|exit_lane|": "exit.doorway.01",
         "punchline_open_mic_night_signup_lectern|punchline_open_mic_lectern_work_1|center|": "stage.floor_fixture.03",
         "punchline_open_mic_night_signup_lectern||center|": "stage.floor_fixture.03",
         "punchline_open_mic_night_stage_steps||background|": "stage.floor_fixture.02",
@@ -9785,31 +9681,21 @@
         "punchline_open_mic_night_task_2|punchline_open_mic_signup|left|": "stage.wall_mounted.01",
         "punchline_open_mic_night_task_3|punchline_open_mic_signup|right|": "stage.wall_mounted.01",
         "punchline_open_mic_night_waiting_comic|punchline_open_mic_waiting_comic|background|punchline_open_mic_night_steps_move_position": "stage.standing_person.02",
-        "punchline_open_mic_night_waiting_comic||background|": "stage.standing_person.03",
+        "punchline_open_mic_night_waiting_comic||background|": "stage.standing_person.02",
         "punchline_raid_jitters_hide_cart|punchline_raid_cart_work_1|center|": "stage.floor_fixture.03",
         "punchline_raid_jitters_hide_cart||center|": "stage.floor_fixture.03",
         "punchline_raid_jitters_raid_lookout||right|": "stage.standing_person.01",
         "punchline_raid_jitters_reopen_steward|punchline_raid_reopen_steward|background|punchline_raid_jitters_lane_clear_position": "stage.standing_person.02",
-        "punchline_raid_jitters_reopen_steward|punchline_raid_steward_arrival|background|": "stage.standing_person.03",
+        "punchline_raid_jitters_reopen_steward|punchline_raid_steward_arrival|background|": "stage.standing_person.02",
         "punchline_raid_jitters_room_screen||left|": "stage.floor_fixture.02",
+        "punchline_raid_jitters_safe_exit|punchline_headliner_door_guard|exit_lane|": "exit.doorway.01",
         "punchline_raid_jitters_task_0|punchline_raid_hide_cart|center|": "stage.wall_mounted.01",
         "punchline_raid_jitters_task_1|punchline_raid_hide_cart|background|": "stage.wall_mounted.01",
         "punchline_raid_jitters_task_2|punchline_raid_hide_cart|left|": "stage.wall_mounted.01",
         "punchline_raid_jitters_task_3|punchline_raid_hide_cart|right|": "stage.wall_mounted.01",
-        "punchline_raid_jitters_task_4|punchline_raid_hide_cart|center|": "stage.wall_mounted.01",
-        "punchline_bringer_show_safe_exit|punchline_headliner_door_guard|exit_lane|": "exit.doorway.01",
-        "punchline_debt_court_safe_exit|punchline_headliner_door_guard|exit_lane|": "exit.doorway.01",
-        "punchline_headliner_night_safe_exit|punchline_headliner_door_guard|exit_lane|": "exit.doorway.01",
-        "punchline_open_mic_night_safe_exit|punchline_headliner_door_guard|exit_lane|": "exit.doorway.01",
-        "punchline_raid_jitters_safe_exit|punchline_headliner_door_guard|exit_lane|": "exit.doorway.01"
+        "punchline_raid_jitters_task_4|punchline_raid_hide_cart|center|": "stage.wall_mounted.01"
       },
-      "scenario_position_route_ids": {
-        "punchline_bringer_show_crowd_captain|punchline_bringer_crowd_captain|background|punchline_bringer_show_crowd_move_position": "position::7d08e358e629bc6f",
-        "punchline_debt_court_room_witness|punchline_debt_witness_work_2|background|punchline_debt_court_evidence_place_position": "position::400423635ff72410",
-        "punchline_headliner_night_door_guard|punchline_headliner_door_guard|background|punchline_headliner_night_case_transfer_position": "position::fca00412d9efbe2e",
-        "punchline_open_mic_night_waiting_comic|punchline_open_mic_waiting_comic|background|punchline_open_mic_night_steps_move_position": "position::937443f65933cec4",
-        "punchline_raid_jitters_reopen_steward|punchline_raid_reopen_steward|background|punchline_raid_jitters_lane_clear_position": "position::e0941cf2e3c9af05"
-      }
+      "scenario_position_route_ids": {}
     },
     {
       "id": "small_underground_casino:casino",
