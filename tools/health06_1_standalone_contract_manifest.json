@@ -35,7 +35,6 @@
     "integ06_1_v051_fixture_driver.gd",
     "integ06_1_v051_migration_smoke.gd",
     "normal_grand_host_greeting_contract.gd",
-    "postfix06_2_environment_composition_contract.gd",
     "punchline_event_scope_contract.gd",
     "scenario_uniqueness_boot_diagnostics_contract.gd",
     "scenario_uniqueness_pair_precompute_contract.gd",

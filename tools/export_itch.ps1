@@ -224,7 +224,7 @@ function Move-ToQuarantine([string]$Path, [string]$QuarantineRoot, [Collections.
     $destination = Join-Path $QuarantineRoot $relative
     New-Item -ItemType Directory -Force -Path (Split-Path -Parent $destination) | Out-Null
     $files = if (Test-Path -LiteralPath $full -PathType Container) { @(Get-ChildItem -LiteralPath $full -File -Recurse -Force) } else { @(Get-Item -LiteralPath $full -Force) }
-    $Rows.Add([ordered]@{ source = "builds/$($relative.Replace('\','/'))"; destination = $destination.Substring($root.Length).TrimStart([char[]]@('\','/')).Replace('\','/'); file_count = $files.Count; bytes = [int64](($files | Measure-Object Length -Sum).Sum) })
+    [void]$Rows.Add([ordered]@{ source = "builds/$($relative.Replace('\','/'))"; destination = $destination.Substring($root.Length).TrimStart([char[]]@('\','/')).Replace('\','/'); file_count = $files.Count; bytes = [int64](($files | Measure-Object Length -Sum).Sum) })
     Move-Item -LiteralPath $full -Destination $destination
 }
 
@@ -265,7 +265,7 @@ function Assert-UploadDirectoryOwned([string]$Directory, [string[]]$OwnedNames) 
 }
 
 if ($QuarantineLegacyOnly) {
-    $moved = Move-SupersededBuildArtifacts
+    $moved = @(Move-SupersededBuildArtifacts)
     Write-Host "BUILD QUARANTINE PASS moved=$($moved.Count)"
     return
 }

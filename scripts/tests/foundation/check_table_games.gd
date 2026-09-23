@@ -3132,8 +3132,13 @@ func _check_baccarat_surface_contract(game: GameModule, failures: Array, library
 		failures.append("Baccarat hand explainer winner did not match the resolved hand.")
 	if int(settled_explainer.get("player_total", -1)) < 0 or int(settled_explainer.get("banker_total", -1)) < 0:
 		failures.append("Baccarat hand explainer did not expose Player and Banker totals.")
-	if str(settled_explainer.get("primary", "")).find("Player") < 0 or str(settled_explainer.get("primary", "")).find("Banker") < 0 or str(settled_explainer.get("bet_summary", "")).find("Net") < 0:
+	var settled_bet_summary := str(settled_explainer.get("bet_summary", ""))
+	var settled_wager_currency := str(settled_surface.get("wager_currency", "cash")).strip_edges().to_lower()
+	var expected_settlement_prefix := "Chip change:" if settled_wager_currency == "chips" else "Cash change:"
+	if str(settled_explainer.get("primary", "")).find("Player") < 0 or str(settled_explainer.get("primary", "")).find("Banker") < 0 or settled_bet_summary.find(expected_settlement_prefix) < 0:
 		failures.append("Baccarat hand explainer did not summarize totals and player bet outcome.")
+	if settled_wager_currency == "chips" and (settled_bet_summary.find("$") >= 0 or settled_bet_summary.findn("cash") >= 0):
+		failures.append("Baccarat hand explainer used cash wording for a chip settlement.")
 	var settled_road: Dictionary = settled_surface.get("baccarat_road", {}) if typeof(settled_surface.get("baccarat_road", {})) == TYPE_DICTIONARY else {}
 	if int(settled_road.get("visible_count", 0)) < 1 or (_baccarat_dictionary_array(settled_road.get("beads", []))).is_empty():
 		failures.append("Baccarat bead-plate road did not record the resolved hand.")

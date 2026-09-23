@@ -272,10 +272,8 @@ static func support_for_rect_on_surfaces(surfaces: Dictionary, placement_class: 
 		for band_key in ["bands", "stage_bands"]:
 			for band_value in _array(floor_data.get(str(band_key), [])):
 				var band := _rect_array(band_value)
-				var stage_band := str(band_key) == "stage_bands"
-				if _rect_has_point_closed(band, contact) and (stage_band \
-						or contact.y >= contact_range.x - 0.5 and contact.y <= contact_range.y + 0.5):
-					return {"surface_id": "stage" if stage_band else "floor"}
+				if band.has_point(contact) and contact.y >= contact_range.x - 0.5 and contact.y <= contact_range.y + 0.5:
+					return {"surface_id": "stage" if str(band_key) == "stage_bands" else "floor"}
 	elif placement_class in ["behind_counter_person", "surface_item"]:
 		for counter_value in _array(surfaces.get("counters", [])):
 			var counter := _dict(counter_value)
@@ -305,16 +303,9 @@ static func support_for_rect_on_surfaces(surfaces: Dictionary, placement_class: 
 	elif placement_class == "doorway":
 		for doorway_value in _array(surfaces.get("doorways", [])):
 			var doorway := _dict(doorway_value)
-			if _rect_has_point_closed(_rect_array(doorway.get("bounds", [])), contact):
+			if _rect_array(doorway.get("bounds", [])).has_point(contact):
 				return {"surface_id": str(doorway.get("id", "doorway"))}
 	return {}
-
-
-static func _rect_has_point_closed(rect: Rect2, point: Vector2, tolerance: float = 0.5) -> bool:
-	return point.x >= rect.position.x - tolerance \
-			and point.x <= rect.end.x + tolerance \
-			and point.y >= rect.position.y - tolerance \
-			and point.y <= rect.end.y + tolerance
 
 
 static func class_default_rect(environment: Dictionary, placement_class: String, size: Vector2) -> Dictionary:

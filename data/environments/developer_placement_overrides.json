@@ -39,12 +39,12 @@
     "bar": {
       "object_slot_positions": {
         "event:town_rumor_staff": [
-          150.0,
-          114.0
+          89.0,
+          350.0
         ],
         "game_hook:pull_tabs:ticket_redeemer": [
-          300.0,
-          120.0
+          590.0,
+          108.0
         ],
         "game:bar_dice": [
           570.0,
@@ -100,30 +100,18 @@
           648.0,
           329.0
         ],
-        "item_spots:0": [
-          60.0,
-          54.0
-        ],
         "item_spots:1": [
-          82.0,
-          224.0
+          189.0,
+          144.0
         ],
         "item_spots:2": [
           190.0,
           78.0
-        ],
-        "item_spots:3": [
-          494.0,
-          88.0
-        ],
-        "item_spots:4": [
-          60.0,
-          138.0
         ]
       },
       "object_slot_positions": {
         "game:coin_pusher": [
-          261.0,
+          25.0,
           223.0
         ],
         "lender:the_crew": [
@@ -131,40 +119,24 @@
           342.0
         ],
         "numbers:book": [
-          180.0,
-          150.0
+          766.0,
+          226.0
         ],
         "item:odds_notebook": [
           60.0,
           144.0
         ],
         "event:late_shift_discount": [
-          620.0,
-          156.0
-        ],
-        "event:parking_lot_tip": [
-          332.0,
-          144.0
-        ],
-        "event:call_brother_in_law": [
-          484.0,
-          190.0
-        ],
-        "event:chatty_clerk": [
-          493.0,
-          67.0
-        ],
-        "service:cashier_tip": [
-          620.0,
-          82.0
+          650.0,
+          270.0
         ],
         "service:house_drink": [
-          737.0,
-          82.0
+          641.0,
+          145.0
         ],
         "shopkeeper:merchant": [
-          726.0,
-          150.0
+          338.0,
+          70.0
         ],
         "item:trunk": [
           300.0,
@@ -189,12 +161,12 @@
           344.0
         ],
         "event_spots:1": [
-          784.0,
-          185.0
+          792.0,
+          345.0
         ],
         "event_spots:2": [
           508.0,
-          347.0
+          243.0
         ],
         "event_spots:3": [
           130.0,
@@ -227,12 +199,8 @@
           126.0
         ],
         "game_hook:scratch_tickets:scratch_ticket_clerk": [
-          660.0,
-          22.0
-        ],
-        "game_hook:pull_tabs:ticket_redeemer": [
-          320.0,
-          22.0
+          691.0,
+          149.0
         ],
         "numbers:book": [
           71.0,

@@ -110,24 +110,50 @@ if (-not (Test-Path -LiteralPath $toolManifestPath)) {
                 continue
             }
 
-            $uidText = (Get-Content -LiteralPath $destinationPath -Raw).Trim()
-            if ($uidText -notmatch '^uid://[a-z0-9]+$') { Add-Failure "RP-002 UID companion is malformed: $($companion.destination)" }
+            $uidRawText = Get-Content -LiteralPath $destinationPath -Raw
+            $canonicalUidText = $uidRawText.Replace("`r`n", "`n").Replace("`r", "`n")
+            if ($canonicalUidText -notmatch '^uid://[a-z0-9]+\n\z') {
+                Add-Failure "RP-002 UID companion is malformed: $($companion.destination)"
+                continue
+            }
+            $uidText = $canonicalUidText.Substring(0, $canonicalUidText.Length - 1)
             if ($seenUids.ContainsKey($uidText)) {
                 Add-Failure "RP-002 duplicate archived GDScript UID '$uidText': $($seenUids[$uidText]), $($companion.destination)"
             } else {
                 $seenUids[$uidText] = $companion.destination
             }
 
-            $actualHash = (Get-FileHash -LiteralPath $destinationPath -Algorithm SHA256).Hash.ToLowerInvariant()
+            $uidSha = [Security.Cryptography.SHA256]::Create()
+            try {
+                # The manifest records canonical LF text. Hashing raw checkout
+                # bytes makes the same UID drift only because Git wrote CRLF.
+                $canonicalBytes = [Text.Encoding]::UTF8.GetBytes($canonicalUidText)
+                $actualHash = ([BitConverter]::ToString($uidSha.ComputeHash($canonicalBytes))).Replace("-", "").ToLowerInvariant()
+            }
+            finally { $uidSha.Dispose() }
             if ($actualHash -ne ([string]$companion.sha256).ToLowerInvariant()) {
                 Add-Failure "RP-002 UID companion hash drifted: $($companion.destination)"
             }
+        }
+
+        $expectedTrackedUids = @($uidMoves | ForEach-Object { ([string]$_.destination).Replace('\', '/') } | Sort-Object -Unique)
+        $actualTrackedUids = @(git -C $root ls-files "*.uid" 2>$null | ForEach-Object { ([string]$_).Trim().Replace('\', '/') } | Where-Object { $_ } | Sort-Object -Unique)
+        $uidSetDifference = @(Compare-Object -ReferenceObject $expectedTrackedUids -DifferenceObject $actualTrackedUids)
+        if ($uidSetDifference.Count -ne 0) {
+            Add-Failure "RP-002 tracked UID set must exactly match reviewed archive companions: $($uidSetDifference | Out-String)"
         }
     }
 
     $gitIgnore = Get-Content -LiteralPath (Join-Path $root ".gitignore")
     if ($gitIgnore -notcontains '!tools/archive/**/*.gd.uid') {
         Add-Failure "RP-002 archived GDScript UID companions are still excluded from source control."
+    }
+
+    $validatorSource = Get-Content -LiteralPath (Join-Path $root "tools/validate_project.ps1") -Raw
+    foreach ($requiredValidatorToken in @('$reviewedArchivedUidPaths', 'health06_1_row_tools_manifest.json', '$isReviewedArchivedUid', 'Generated Godot metadata must not be git-tracked')) {
+        if (-not $validatorSource.Contains($requiredValidatorToken)) {
+            Add-Failure "RP-002 repository validator does not admit only reviewed archive UID companions: $requiredValidatorToken"
+        }
     }
 }
 
@@ -137,9 +163,37 @@ if (-not (Test-Path -LiteralPath $docsManifestPath)) {
 } else {
     $docsManifest = Get-Content -LiteralPath $docsManifestPath -Raw | ConvertFrom-Json
     if (@($docsManifest.moves).Count -lt 1) { Add-Failure "CH-33 documentation archive manifest is empty." }
+    $expectedArchivePaths = [Collections.Generic.List[string]]::new()
+    $seenArchivePaths = @{}
     foreach ($move in @($docsManifest.moves)) {
+        $source = ([string]$move.source).Replace('\', '/').TrimStart('/')
+        $destination = ([string]$move.destination).Replace('\', '/').TrimStart('/')
+        if ($source -like '*.import' -or $destination -like '*.import') {
+            Add-Failure "CH-33 documentation archive manifest must not claim ignored Godot import-cache files: $($move.destination)"
+            continue
+        }
+        if ($destination -notmatch '^docs/archive/.+' -or $destination -ceq 'docs/archive/health06_1_docs_manifest.json') {
+            Add-Failure "CH-33 documentation archive destination escapes the reviewed artifact set: $destination"
+            continue
+        }
+        if ($seenArchivePaths.ContainsKey($destination)) {
+            Add-Failure "CH-33 documentation archive destination is duplicated: $destination"
+            continue
+        }
+        $seenArchivePaths[$destination] = $true
+        [void]$expectedArchivePaths.Add($destination)
         if (Test-Path -LiteralPath (Join-Path $root $move.source)) { Add-Failure "CH-33 source was not moved: $($move.source)" }
         if (-not (Test-Path -LiteralPath (Join-Path $root $move.destination))) { Add-Failure "CH-33 destination is missing: $($move.destination)" }
+    }
+    $actualArchivePaths = @(
+        git -C $root ls-files -- "docs/archive" 2>$null |
+            ForEach-Object { ([string]$_).Trim().Replace('\', '/') } |
+            Where-Object { $_ -and $_ -cne 'docs/archive/health06_1_docs_manifest.json' } |
+            Sort-Object -Unique
+    )
+    $archiveSetDifference = @(Compare-Object -ReferenceObject @($expectedArchivePaths | Sort-Object -Unique) -DifferenceObject $actualArchivePaths)
+    if ($archiveSetDifference.Count -ne 0) {
+        Add-Failure "CH-33 manifest must exactly cover tracked docs/archive artifacts: $($archiveSetDifference | Out-String)"
     }
 }
 

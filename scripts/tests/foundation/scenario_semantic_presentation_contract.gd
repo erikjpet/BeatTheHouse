@@ -14,7 +14,6 @@ const ScenarioSequenceSchemaScript := preload("res://scripts/core/scenario_seque
 const ScenarioSequenceRuntimeScript := preload("res://scripts/core/scenario_sequence_runtime.gd")
 const ScenarioSequenceContractScript := preload("res://scripts/tests/foundation/scenario_sequence_contract.gd")
 const ScenarioLayoutResolverScript := preload("res://scripts/core/scenario_layout_resolver.gd")
-const EnvironmentPlacementScript := preload("res://scripts/core/environment_placement.gd")
 const EnvironmentSemanticInventoryScript := preload("res://scripts/core/environment_semantic_inventory.gd")
 const Env068EnvironmentReadabilityContractScript := preload("res://scripts/tests/foundation/env06_8_environment_readability_contract.gd")
 
@@ -42,9 +41,6 @@ static func check(library: Variant, failures: Array) -> void:
 	Env068EnvironmentReadabilityContractScript.check(library, failures)
 	_check_ordinary_interaction_coexistence(failures)
 	_check_single_environment_plane(failures)
-	_check_label_overlap_repack_contract(failures)
-	_check_strict_fine_before_passive_relaxation(failures)
-	_check_same_identity_base_geometry_authority(failures)
 	_check_public_removal_tombstones(failures)
 	_check_finalized_canvas_authority(library, failures)
 	_check_atomic_finalization_layout(library, failures)
@@ -69,9 +65,6 @@ static func check_static_and_geometry(library: Variant, failures: Array) -> void
 	Env068EnvironmentReadabilityContractScript.check_static(library, failures)
 	_check_ordinary_interaction_coexistence(failures)
 	_check_single_environment_plane(failures)
-	_check_label_overlap_repack_contract(failures)
-	_check_strict_fine_before_passive_relaxation(failures)
-	_check_same_identity_base_geometry_authority(failures)
 	_check_public_removal_tombstones(failures)
 	_check_finalized_canvas_authority(library, failures)
 	_check_atomic_finalization_layout(library, failures)
@@ -438,210 +431,10 @@ static func _check_collision_adjusted_renderer_authority(failures: Array) -> voi
 	for visual_value in _array(renderer.get("visual_objects", [])):
 		if str(_dict(visual_value).get("semantic_identity", "")) == "scenario::adjusted_prop":
 			visual = _dict(visual_value)
-	var semantic_rect := _snapshot_rect(_dict(semantic).get("normalized_hit_rect", {}))
-	var authority_rect := _snapshot_rect(authority.get("normalized_hit_rect", {}))
-	var visual_rect := _snapshot_rect(visual.get("normalized_rect", {}))
-	var visual_focus_rect := _snapshot_rect(visual.get("focus_rect", {}))
-	var visual_small_rect := _snapshot_rect(visual.get("small_screen_rect", {}))
-	var authority_small_rect := _snapshot_rect(authority.get("small_screen_rect", {}))
-	var adjusted_pixel_rect := semantic_rect
-	adjusted_pixel_rect = Rect2(adjusted_pixel_rect.position * BOARD_SIZE, adjusted_pixel_rect.size * BOARD_SIZE)
-	var base_pixel_rect := Rect2(0.2 * BOARD_SIZE.x, 0.2 * BOARD_SIZE.y, 0.08 * BOARD_SIZE.x, 0.12 * BOARD_SIZE.y)
-	var geometry_agrees := semantic_rect.is_equal_approx(authority_rect) \
-			and visual_rect.is_equal_approx(authority_rect) \
-			and visual_focus_rect.is_equal_approx(authority_rect) \
-			and visual_small_rect.is_equal_approx(authority_small_rect)
-	var resolved_ok := bool(resolved.get("ok", false))
-	var renderer_ok := bool(renderer.get("ok", false))
-	var collision_adjusted := bool(_dict(semantic).get("collision_adjusted", false))
-	var intersects_base := adjusted_pixel_rect.intersects(base_pixel_rect)
-	if not resolved_ok \
-			or not renderer_ok \
-			or not collision_adjusted \
-			or not geometry_agrees \
-			or intersects_base:
-		var diagnostics := {
-			"resolved_ok": resolved_ok,
-			"resolved_errors": _array(resolved.get("errors", [])),
-			"renderer_ok": renderer_ok,
-			"renderer_errors": _array(renderer.get("errors", [])),
-			"semantic_present": not semantic.is_empty(),
-			"authority_present": not authority.is_empty(),
-			"visual_present": not visual.is_empty(),
-			"collision_adjusted": collision_adjusted,
-			"geometry_agrees": geometry_agrees,
-			"intersects_base": intersects_base,
-			"semantic_rect": str(semantic_rect),
-			"authority_rect": str(authority_rect),
-			"visual_rect": str(visual_rect),
-			"visual_focus_rect": str(visual_focus_rect),
-			"visual_small_rect": str(visual_small_rect),
-			"authority_small_rect": str(authority_small_rect),
-		}
-		failures.append("Collision-adjusted scenario geometry diverged between semantic hit state, sealed authority, and renderer draw/focus rectangles. Diagnostics: %s" % JSON.stringify(diagnostics))
-
-
-static func _check_label_overlap_repack_contract(failures: Array) -> void:
-	var interactions := {
-		"scenario::label_a": {
-			"owner_namespace": "scenario", "stable_object_id": "label_a", "present": true,
-			"enabled": true, "label": "First unusually wide control label", "prompt": "Use the first control.",
-			"available_actions": [{"id": "use_a", "label": "Use"}],
-		},
-		"scenario::label_b": {
-			"owner_namespace": "scenario", "stable_object_id": "label_b", "present": true,
-			"enabled": true, "label": "Second unusually wide control label", "prompt": "Use the second control.",
-			"available_actions": [{"id": "use_b", "label": "Use"}],
-		},
-	}
-	var authority := {
-		"scenario::label_a": {
-			"normalized_hit_rect": {"x": 0.25, "y": 0.42, "w": 0.04, "h": 0.08},
-			"small_screen_rect": {"x": 0.25, "y": 0.42, "w": 0.04, "h": 0.08},
-		},
-		"scenario::label_b": {
-			"normalized_hit_rect": {"x": 0.33, "y": 0.42, "w": 0.04, "h": 0.08},
-			"small_screen_rect": {"x": 0.33, "y": 0.42, "w": 0.04, "h": 0.08},
-		},
-	}
-	var scenario_errors: Array = []
-	var scenario_audit := ScenarioLayoutResolverScript._validate_interactions(interactions, authority, [], [], {}, scenario_errors)
-	if not _contains_text(scenario_errors, "labels scenario::label_a and scenario::label_b overlap") \
-			or _array(scenario_audit.get("repack_requests", [])).is_empty():
-		failures.append("Scenario/scenario label overlap no longer fails closed with a deterministic repack request.")
-	var base_errors: Array = []
-	var base_audit := ScenarioLayoutResolverScript._validate_interactions(
-		{"scenario::label_a": interactions["scenario::label_a"]},
-		{"scenario::label_a": authority["scenario::label_a"]},
-		[],
-		[{
-			"object_id": "base:label_fixture", "owner_namespace": "base", "stable_object_id": "label_fixture",
-			"label": "Unrelated unusually wide room control", "visible": true, "interactive": true,
-			"normalized_rect": {"x": 0.33, "y": 0.42, "w": 0.04, "h": 0.08},
-		}],
-		{},
-		base_errors
-	)
-	if not _contains_text(base_errors, "label overlaps unrelated room control") \
-			or _array(base_audit.get("repack_requests", [])).is_empty():
-		failures.append("Scenario/base label overlap no longer fails closed with a deterministic repack request.")
-
-
-static func _check_strict_fine_before_passive_relaxation(failures: Array) -> void:
-	var environment := {"archetype_id": "back_alley", "id": "back_alley"}
-	var placement_class := "floor_fixture"
-	var authored := Rect2(386.0, 286.0, 32.0, 24.0)
-	var surface_map := EnvironmentPlacementScript.surface_map(environment)
-	var grounded_result := EnvironmentPlacementScript.authored_or_local_rect(environment, placement_class, authored)
-	var grounded: Rect2 = grounded_result.get("rect", authored)
-	var initial_candidates: Array = [grounded]
-	for offset_value in ScenarioLayoutResolverScript.COLLISION_OFFSETS:
-		var offset := offset_value as Vector2
-		if not offset.is_zero_approx():
-			initial_candidates.append(Rect2(grounded.position + offset, grounded.size))
-	for supported_value in EnvironmentPlacementScript.supported_rect_candidates(environment, placement_class, grounded):
-		var supported_rect: Rect2 = _dict(supported_value).get("rect", Rect2())
-		if supported_rect.has_area():
-			initial_candidates.append(supported_rect)
-	var coarse_candidates := ScenarioLayoutResolverScript._coarse_collision_candidates(grounded)
-	var fine_candidates := ScenarioLayoutResolverScript._fine_collision_candidates(grounded)
-	var initial_keys: Dictionary = {}
-	var coarse_keys: Dictionary = {}
-	for candidate_value in initial_candidates:
-		initial_keys[ScenarioLayoutResolverScript._placement_rect_key(candidate_value as Rect2)] = true
-	for candidate_value in coarse_candidates:
-		coarse_keys[ScenarioLayoutResolverScript._placement_rect_key(candidate_value as Rect2)] = true
-	var strict_fine := Rect2()
-	for candidate_value in fine_candidates:
-		var candidate := candidate_value as Rect2
-		var candidate_key := ScenarioLayoutResolverScript._placement_rect_key(candidate)
-		if initial_keys.has(candidate_key) or coarse_keys.has(candidate_key) \
-				or candidate.position.distance_to(grounded.position) < 120.0 \
-				or EnvironmentPlacementScript.support_for_rect_on_surfaces(surface_map, placement_class, candidate).is_empty():
-			continue
-		strict_fine = candidate
-		break
-	if not strict_fine.has_area():
-		failures.append("Strict-fine-before-passive-relaxation fixture could not find a class-valid fine-only candidate.")
-		return
-	var grounded_key := ScenarioLayoutResolverScript._placement_rect_key(grounded)
-	var strict_fine_key := ScenarioLayoutResolverScript._placement_rect_key(strict_fine)
-	var excluded_rect_keys: Dictionary = {}
-	for candidate_group in [initial_candidates, coarse_candidates, fine_candidates]:
-		for candidate_value in candidate_group:
-			var candidate_key := ScenarioLayoutResolverScript._placement_rect_key(candidate_value as Rect2)
-			if candidate_key != grounded_key and candidate_key != strict_fine_key:
-				excluded_rect_keys[candidate_key] = true
-	var occupied := [{
-		"identity": "scenario::passive_blocker",
-		"rect": grounded,
-		"small_rect": _expanded_target_rect(grounded),
-		"label": "",
-		"interactive": true,
-		"exclusive_authority": false,
-	}]
-	var placement := ScenarioLayoutResolverScript._collision_safe_rect(
-		"scenario::fine_search_probe", authored, occupied, "", Rect2(), environment,
-		placement_class, Rect2(), excluded_rect_keys, false
-	)
-	var resolved_rect: Rect2 = placement.get("rect", Rect2())
-	if bool(placement.get("colliding", true)) \
-			or not resolved_rect.is_equal_approx(strict_fine) \
-			or bool(placement.get("spacing_warning", false)) \
-			or bool(placement.get("crowded", false)):
-		failures.append("Passive relaxation ran before a strict class-valid fine candidate was exhausted: %s" % JSON.stringify({"placement": str(resolved_rect), "expected": str(strict_fine), "metadata": placement}))
-
-
-static func _check_same_identity_base_geometry_authority(failures: Array) -> void:
-	var original_rect := {"x": 0.2, "y": 0.2, "w": 0.08, "h": 0.12}
-	var base_records := [
-		{
-			"object_id": "scenario::persisted_fixture", "object_type": "scenario_scene_object",
-			"owner_namespace": "scenario", "stable_object_id": "persisted_fixture",
-			"label": "Persisted fixture", "visible": true, "interactive": false,
-			"normalized_rect": original_rect,
-		},
-		{
-			"object_id": "base:blocker", "object_type": "fixture",
-			"owner_namespace": "base", "stable_object_id": "blocker",
-			"label": "Blocking control", "visible": true, "interactive": true,
-			"normalized_rect": original_rect,
-		},
-	]
-	var projection := {
-		"scenario_id": "same_identity_geometry_fixture", "phase_id": "arrival", "status": "active", "boundary_serial": 1,
-		"semantic_state": {
-			"scene_objects": {"scenario::persisted_fixture": {
-				"owner_namespace": "scenario", "stable_object_id": "persisted_fixture", "present": true,
-				"label": "Persisted fixture", "role": "prop", "visible": true, "enabled": true,
-			}},
-			"actors": {}, "interactions": {}, "services": {}, "games": {}, "routes": {},
-		},
-	}
-	var resolved := ScenarioLayoutResolverScript.resolve(base_records, projection, {"_scenario_layout_context": _production_layout_context()})
-	var renderer := ScenarioLayoutResolverScript.sealed_renderer_snapshot(resolved)
-	var semantic := _dict(_dict(_dict(_dict(resolved.get("projection", {})).get("semantic_state", {})).get("scene_objects", {})).get("scenario::persisted_fixture", {}))
-	var authority := _dict(_dict(resolved.get("layout_authority", {})).get("scenario::persisted_fixture", {}))
-	var blocker_authority := _dict(_dict(resolved.get("layout_authority", {})).get("base::blocker", {}))
-	var visual: Dictionary = {}
-	for visual_value in _array(renderer.get("visual_objects", [])):
-		if str(_dict(visual_value).get("semantic_identity", "")) == "scenario::persisted_fixture":
-			visual = _dict(visual_value)
-	var original := _snapshot_rect(original_rect)
-	var semantic_rect := _snapshot_rect(_dict(semantic).get("normalized_hit_rect", {}))
-	var authority_rect := _snapshot_rect(authority.get("normalized_hit_rect", {}))
-	var visual_rect := _snapshot_rect(visual.get("normalized_rect", {}))
-	var visual_focus_rect := _snapshot_rect(visual.get("focus_rect", {}))
-	var blocker_rect := _snapshot_rect(blocker_authority.get("normalized_hit_rect", {}))
-	if not bool(resolved.get("ok", false)) \
-			or not bool(renderer.get("ok", false)) \
-			or not bool(_dict(semantic).get("collision_adjusted", false)) \
-			or semantic_rect.is_equal_approx(original) \
-			or not semantic_rect.is_equal_approx(authority_rect) \
-			or not visual_rect.is_equal_approx(authority_rect) \
-			or not visual_focus_rect.is_equal_approx(authority_rect) \
-			or not blocker_rect.is_equal_approx(original):
-		failures.append("A relocated same-identity scenario/base visual diverged from sealed semantic/renderer geometry or mutated an unrelated base control: %s" % JSON.stringify(resolved.get("errors", [])))
+	var semantic_rect := _dict(_dict(semantic).get("normalized_hit_rect", {}))
+	var authority_rect := _dict(authority.get("normalized_hit_rect", {}))
+	if not bool(resolved.get("ok", false)) or not bool(renderer.get("ok", false)) or not bool(_dict(semantic).get("collision_adjusted", false)) or semantic_rect != authority_rect or _dict(visual.get("normalized_rect", {})) != authority_rect or _dict(visual.get("focus_rect", {})) != authority_rect or _dict(visual.get("small_screen_rect", {})) != _dict(authority.get("small_screen_rect", {})):
+		failures.append("Collision-adjusted scenario geometry diverged between semantic hit state, sealed authority, and renderer draw/focus rectangles.")
 
 
 static func _check_finalized_actor_route(library: Variant, failures: Array) -> void:
@@ -1277,17 +1070,12 @@ static func _check_single_environment_plane(failures: Array) -> void:
 	}
 	var runtime_resolved := ScenarioLayoutResolverScript.resolve([machine, merchandise], runtime_projection, runtime_environment)
 	var runtime_authority := _dict(runtime_resolved.get("layout_authority", {}))
-	var neighbor_authority := _dict(runtime_authority.get("scenario::runtime_neighbor", {}))
-	var neighbor_rect := _snapshot_rect(neighbor_authority.get("normalized_hit_rect", {}))
-	var neighbor_small_rect := _snapshot_rect(neighbor_authority.get("small_screen_rect", {}))
-	var runtime_pixel_rect := Rect2(runtime_rect.position * BOARD_SIZE, runtime_rect.size * BOARD_SIZE)
-	var runtime_small_rect := _expanded_target_rect(runtime_pixel_rect)
+	var neighbor_rect := _snapshot_rect(_dict(runtime_authority.get("scenario::runtime_neighbor", {})).get("normalized_hit_rect", {}))
 	var runtime_audit := _dict(runtime_resolved.get("layout_audit", {}))
 	if not bool(runtime_resolved.get("ok", false)) \
 			or int(runtime_audit.get("context_base_occupied_count", 0)) != 1 \
 			or runtime_authority.has("runtime_base::numbers:book") \
-			or (Rect2(neighbor_rect.position * BOARD_SIZE, neighbor_rect.size * BOARD_SIZE)).intersects(runtime_pixel_rect) \
-			or (Rect2(neighbor_small_rect.position * BOARD_SIZE, neighbor_small_rect.size * BOARD_SIZE)).intersects(runtime_small_rect):
+			or (Rect2(neighbor_rect.position * BOARD_SIZE, neighbor_rect.size * BOARD_SIZE)).intersects(Rect2(runtime_rect.position * BOARD_SIZE, runtime_rect.size * BOARD_SIZE)):
 		failures.append("Runtime-only room controls did not reserve collision-free space on the unified environment plane.")
 	var controller_reservations := EnvironmentInteractionControllerScript._base_layout_reservations([
 		{"object_id": "game:slot", "visible": true, "focus_rect": Rect2(0.1, 0.1, 0.1, 0.1)},
@@ -1506,13 +1294,7 @@ static func _check_atomic_projection_failures(failures: Array) -> void:
 		},
 	}
 	var divergent := EnvironmentInteractionControllerScript.project_sequence_interaction_result([], divergent_projection, {"id": "divergence_fixture", "semantic_anchors": {"control": {"position": [450.0, 180.0]}}})
-	var divergent_records := _array(divergent.get("records", []))
-	var divergent_authority := _dict(divergent.get("layout_authority", {}))
-	if bool(divergent.get("ok", true)) \
-			or not _contains_text(_array(divergent.get("errors", [])), "remains actionable") \
-			or not _record(divergent_records, "scenario::disabled_visual").is_empty() \
-			or divergent_authority.has("scenario::disabled_visual") \
-			or _record(divergent_records, "scenario::presentation_failure").is_empty():
+	if bool(divergent.get("ok", true)) or not _contains_text(_array(divergent.get("errors", [])), "remains actionable") or not _record(_array(divergent.get("records", [])), "scenario::disabled_visual").is_empty():
 		failures.append("Actionable scenario semantics diverged from a disabled visual instead of failing atomically.")
 
 
@@ -1605,14 +1387,8 @@ static func _check_accessibility_failures(failures: Array) -> void:
 			"endpoint": {"position": [620.0, 220.0]},
 		},
 	})
-	var endpoint_audit := _dict(endpoint_result.get("layout_audit", {}))
-	var endpoint_semantic := _dict(_dict(endpoint_result.get("projection", {})).get("semantic_state", {}))
-	var relocated_endpoint_prop := _dict(_dict(endpoint_semantic.get("scene_objects", {})).get("scenario::endpoint_prop", {}))
-	if not bool(endpoint_result.get("ok", false)) \
-			or not bool(relocated_endpoint_prop.get("collision_adjusted", false)) \
-			or int(endpoint_audit.get("normal_overlap_count", -1)) != 0 \
-			or int(endpoint_audit.get("small_screen_overlap_count", -1)) != 0:
-		failures.append("A later visual was not deterministically repacked away from a moving actor's normal and expanded route endpoint: %s" % JSON.stringify(endpoint_result.get("errors", [])))
+	if bool(endpoint_result.get("ok", true)) or not _contains_text(_array(endpoint_result.get("errors", [])), "route endpoint collides"):
+		failures.append("A moving actor route/reduced-motion endpoint collided with another visual without failing projection.")
 
 
 static func _geometry_projection() -> Dictionary:
@@ -1996,11 +1772,6 @@ static func _snapshot_rect(value: Variant) -> Rect2:
 		float(rect.get("w", 0.0)),
 		float(rect.get("h", 0.0))
 	)
-
-
-static func _expanded_target_rect(rect: Rect2) -> Rect2:
-	var expanded_size := Vector2(maxf(rect.size.x, SMALL_SCREEN_TARGET.x), maxf(rect.size.y, SMALL_SCREEN_TARGET.y))
-	return Rect2(rect.get_center() - expanded_size * 0.5, expanded_size)
 
 
 static func _contains_text(values: Array, needle: String) -> bool:

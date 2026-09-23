@@ -1,17 +1,3 @@
-<#
-.SYNOPSIS
-Runs the maintained environment generation and travel audit.
-
-.PARAMETER AuditSurvivalReserve
-Enables a tool-only, minimally funded reserve that prevents audit-selected
-events and travel settlements from ending a trajectory at zero bankroll and
-makes an incomplete requested trajectory fail the audit. The production
-generation, travel, and room-finalization paths are unchanged, and every
-reserve grant is written to the JSON evidence.
-
-.EXAMPLE
-powershell -NoProfile -ExecutionPolicy Bypass -File tools/environment_generation_audit.ps1 -Runs 100 -Visits 6 -SeedPrefix POSTFIX06_2-FRESH100 -AuditSurvivalReserve -RequireGodot
-#>
 param(
     [int]$Runs = 100,
     [int]$Visits = 6,
@@ -19,7 +5,6 @@ param(
     [string]$Report = "res://.tmp/environment_generation_audit/report.md",
     [string]$SeedPrefix = "",
     [string]$ExactSeed = "",
-    [switch]$AuditSurvivalReserve,
     [switch]$RequireGodot
 )
 
@@ -79,9 +64,6 @@ if ($SeedPrefix.Trim().Length -gt 0) {
 }
 if ($ExactSeed.Trim().Length -gt 0) {
     $argsList += "--exact-seed=$ExactSeed"
-}
-if ($AuditSurvivalReserve) {
-    $argsList += "--audit-survival-reserve"
 }
 
 & $godot --headless --path $root --script "res://tools/environment_generation_audit.gd" -- $argsList

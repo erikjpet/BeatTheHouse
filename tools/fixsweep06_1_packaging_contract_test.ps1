@@ -111,8 +111,49 @@ if (Test-Path -LiteralPath $auditContractPath -PathType Leaf) {
 }
 
 Assert-True (-not (Test-Path -LiteralPath (Join-Path $root "builds/itch/BeatTheHouse.exe"))) "BTH-041: loose itch executable remains outside quarantine."
-$quarantinedLoose = @(Get-ChildItem -LiteralPath (Join-Path $root "builds/quarantine") -Filter "BeatTheHouse.exe" -File -Recurse -ErrorAction SilentlyContinue)
-Assert-True ($quarantinedLoose.Count -ge 1) "BTH-041: loose itch executable has no reversible quarantine copy."
+$quarantineFixtureRoot = Join-Path ([IO.Path]::GetTempPath()) ("bth-quarantine-contract-" + [guid]::NewGuid().ToString("N"))
+try {
+    $fixtureTools = Join-Path $quarantineFixtureRoot "tools"
+    $fixtureItch = Join-Path $quarantineFixtureRoot "builds/itch"
+    New-Item -ItemType Directory -Path $fixtureTools,$fixtureItch -Force | Out-Null
+    foreach ($toolName in @("export_itch.ps1", "export_itch_helpers.ps1", "export_tree_identity.ps1")) {
+        Copy-Item -LiteralPath (Join-Path $root "tools/$toolName") -Destination (Join-Path $fixtureTools $toolName)
+    }
+    $looseFixture = Join-Path $fixtureItch "BeatTheHouse.exe"
+    $fixtureBytes = [byte[]]@(66, 84, 72, 45, 48, 52, 49)
+    [IO.File]::WriteAllBytes($looseFixture, $fixtureBytes)
+    $quarantineOutput = @(& powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $fixtureTools "export_itch.ps1") -QuarantineLegacyOnly 2>&1)
+    Assert-True ($LASTEXITCODE -eq 0 -and ($quarantineOutput -join "`n").Contains("BUILD QUARANTINE PASS moved=1")) "BTH-041: production quarantine fixture did not complete exactly one reversible move."
+    Assert-True (-not (Test-Path -LiteralPath $looseFixture)) "BTH-041: production quarantine fixture left the loose itch executable in place."
+    $quarantinedLoose = @(Get-ChildItem -LiteralPath (Join-Path $quarantineFixtureRoot "builds/quarantine") -Filter "BeatTheHouse.exe" -File -Recurse -ErrorAction SilentlyContinue)
+    Assert-True ($quarantinedLoose.Count -eq 1) "BTH-041: production quarantine fixture did not retain exactly one reversible executable copy."
+    if ($quarantinedLoose.Count -eq 1) {
+        $quarantinedBytes = [IO.File]::ReadAllBytes($quarantinedLoose[0].FullName)
+        Assert-True ([Convert]::ToBase64String($fixtureBytes) -ceq [Convert]::ToBase64String($quarantinedBytes)) "BTH-041: reversible quarantine changed the loose executable bytes."
+        $quarantineManifest = Get-ChildItem -LiteralPath (Join-Path $quarantineFixtureRoot "builds/quarantine") -Filter "quarantine_manifest.json" -File -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+        Assert-True ($null -ne $quarantineManifest) "BTH-041: reversible quarantine fixture wrote no custody manifest."
+        if ($null -ne $quarantineManifest) {
+            $custody = Get-Content -LiteralPath $quarantineManifest.FullName -Raw | ConvertFrom-Json
+            $custodyRows = @($custody.entries)
+            Assert-True ([string]$custody.schema -ceq "beat_the_house.build_quarantine/v1" -and $custodyRows.Count -eq 1) "BTH-041: reversible quarantine custody manifest has the wrong schema or row count."
+            if ($custodyRows.Count -eq 1) {
+                Assert-True (
+                    [string]$custodyRows[0].source -ceq "builds/itch/BeatTheHouse.exe" -and
+                    [string]$custodyRows[0].destination -match '^builds/quarantine/\d{8}T\d{6}Z/itch/BeatTheHouse\.exe$' -and
+                    [int]$custodyRows[0].file_count -eq 1 -and
+                    [int64]$custodyRows[0].bytes -eq $fixtureBytes.Length
+                ) "BTH-041: reversible quarantine custody row does not bind the exact source, destination, file count, and bytes."
+            }
+        }
+    }
+}
+finally {
+    $resolvedFixtureRoot = [IO.Path]::GetFullPath($quarantineFixtureRoot)
+    $resolvedTempRoot = [IO.Path]::GetFullPath([IO.Path]::GetTempPath())
+    if ((Test-Path -LiteralPath $resolvedFixtureRoot) -and $resolvedFixtureRoot.StartsWith($resolvedTempRoot, [StringComparison]::OrdinalIgnoreCase)) {
+        Remove-Item -LiteralPath $resolvedFixtureRoot -Recurse -Force
+    }
+}
 Assert-True ($solver.Contains("native_extension_required")) "BTH-041: distribution Coin Pusher still silently falls back without its native extension."
 Assert-True ($exportTool.Contains("unexpected executable-looking artifact")) "BTH-041: upload-directory preflight does not reject unowned executables."
 

@@ -692,8 +692,7 @@ func apply_interactable_object_state_patch(object_id: String, object_state: Dict
 func _object_ids_at_local_position(local_position: Vector2, interactive_only: bool = true) -> Array[String]:
 	var board_position := _local_to_board_position(local_position)
 	var objects := _active_scene_objects()
-	var action_authority_ids: Array[String] = []
-	var inspectable_ids: Array[String] = []
+	var interactive_ids: Array[String] = []
 	var passive_ids: Array[String] = []
 	for index in range(objects.size() - 1, -1, -1):
 		var object_data: Dictionary = objects[index]
@@ -702,29 +701,13 @@ func _object_ids_at_local_position(local_position: Vector2, interactive_only: bo
 			if object_id.is_empty():
 				continue
 			if bool(object_data.get("interactive", true)):
-				var destination := action_authority_ids if _object_has_action_authority(object_data) else inspectable_ids
-				if not destination.has(object_id):
-					destination.append(object_id)
+				if not interactive_ids.has(object_id):
+					interactive_ids.append(object_id)
 			elif not interactive_only and not passive_ids.has(object_id):
 				passive_ids.append(object_id)
-	# Read-only scenario detail deliberately remains selectable. When dense room
-	# composition shares a hit region, action-bearing controls receive first
-	# authority; repeated focus clicks then cycle the stable front-to-back list.
-	action_authority_ids.append_array(inspectable_ids)
 	if not interactive_only:
-		action_authority_ids.append_array(passive_ids)
-	return action_authority_ids
-
-
-func _object_has_action_authority(object_data: Dictionary) -> bool:
-	if not _object_info_is_actionable(object_data):
-		return false
-	if not str(object_data.get("confirm_action_id", "")).strip_edges().is_empty():
-		return true
-	for field in ["available_actions", "inline_actions", "scenario_sequence_actions"]:
-		if not _array_view(object_data.get(field, [])).is_empty():
-			return true
-	return false
+		interactive_ids.append_array(passive_ids)
+	return interactive_ids
 
 
 # Returns canvas-owned view data only; this is not a simulation source.
@@ -4820,22 +4803,7 @@ func _focus_object_at_local_position(local_position: Vector2) -> void:
 
 func _activate_object_at_local_position(local_position: Vector2) -> void:
 	var object_ids := _object_ids_at_local_position(local_position)
-	var object_id := ""
-	# Focus cycling intentionally includes read-only detail, but pointer/touch
-	# activation must keep authority with an actionable control sharing the hit.
-	# Preserve an explicitly selected actionable control when several overlap;
-	# otherwise use the deterministic action-first ordering from the hit query.
-	if object_ids.has(selected_object_id) and _object_has_action_authority(_scene_object(selected_object_id)):
-		object_id = selected_object_id
-	else:
-		for candidate_id in object_ids:
-			if _object_has_action_authority(_scene_object(candidate_id)):
-				object_id = candidate_id
-				break
-	# A region containing only inspectable objects retains the established
-	# selection behavior so read-only focus/inspection remains available.
-	if object_id.is_empty() and object_ids.has(selected_object_id):
-		object_id = selected_object_id
+	var object_id := selected_object_id if object_ids.has(selected_object_id) else ""
 	if object_id.is_empty() and not object_ids.is_empty():
 		object_id = object_ids[0]
 	if object_id.is_empty():

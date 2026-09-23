@@ -48,7 +48,7 @@ $standaloneBaselineMatch = [regex]::Match($source, '"standalone_contract"\s*=\s*
 if (-not $standaloneBaselineMatch.Success -or [double]$standaloneBaselineMatch.Groups[1].Value -lt 221.0) {
     $timeoutFailures.Add("standalone_contract has no reviewed >=221.0-second measured baseline")
 }
-$validatorInvocation = [regex]::Match($source, '(?m)^Invoke-ProcessStage -Name "validate_project"[^\r\n]+$')
+$validatorInvocation = [regex]::Match($source, '(?m)^Invoke-ProcessStage -Name "validate_project"[^\r\n]+\r?$')
 if (-not $validatorInvocation.Success -or -not $validatorInvocation.Value.Contains('-StageTimeoutSec (Get-StageTimeout "validate_project")')) {
     $timeoutFailures.Add("validate_project still bypasses its caller/stage-derived timeout")
 }

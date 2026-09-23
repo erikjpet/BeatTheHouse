@@ -12,7 +12,6 @@ const DEFAULT_RUN_COUNT := 100
 const DEFAULT_VISITS_PER_RUN := 6
 const DEFAULT_OUTPUT_JSON := "res://.tmp/environment_generation_audit/report.json"
 const DEFAULT_OUTPUT_MARKDOWN := "res://.tmp/environment_generation_audit/report.md"
-const AUDIT_SURVIVAL_BANKROLL_FLOOR := 1
 
 var library: ContentLibrary
 var generator: RunGenerator
@@ -21,8 +20,6 @@ var travel_records: Array = []
 var run_summaries: Array = []
 var failures: Array = []
 var warnings: Array = []
-var audit_survival_reserve_enabled := false
-var audit_survival_reserve_grants: Array = []
 
 
 func _init() -> void:
@@ -37,7 +34,6 @@ func _run() -> void:
 	var output_markdown := str(options.get("output_markdown", DEFAULT_OUTPUT_MARKDOWN))
 	var exact_seed := str(options.get("exact_seed", "")).strip_edges()
 	var seed_prefix := str(options.get("seed_prefix", "")).strip_edges()
-	audit_survival_reserve_enabled = bool(options.get("audit_survival_reserve", false))
 	if seed_prefix.is_empty():
 		seed_prefix = _random_seed_prefix()
 	if not exact_seed.is_empty():
@@ -70,7 +66,6 @@ func _run() -> void:
 		"passed": failures.is_empty(),
 		"failure_count": failures.size(),
 		"warning_count": warnings.size(),
-		"audit_survival_reserve": _audit_survival_reserve_evidence(),
 		"method": _method_notes(),
 		"aggregate": aggregate,
 		"runs": run_summaries,
@@ -106,11 +101,6 @@ func _parse_options() -> Dictionary:
 			options["seed_prefix"] = text.trim_prefix("--seed-prefix=")
 		elif text.begins_with("--exact-seed="):
 			options["exact_seed"] = text.trim_prefix("--exact-seed=")
-		elif text == "--audit-survival-reserve":
-			options["audit_survival_reserve"] = true
-		elif text.begins_with("--audit-survival-reserve="):
-			var reserve_value := text.trim_prefix("--audit-survival-reserve=").strip_edges().to_lower()
-			options["audit_survival_reserve"] = reserve_value == "1" or reserve_value == "true" or reserve_value == "yes" or reserve_value == "on"
 	return options
 
 
@@ -153,13 +143,6 @@ func _simulate_run(run_index: int, seed: String, visits_per_run: int) -> void:
 		"events_resolved": 0,
 		"travel_count": 0,
 		"travel_lock_wait_actions": 0,
-		"audit_survival_reserve": {
-			"enabled": audit_survival_reserve_enabled,
-			"bankroll_floor": AUDIT_SURVIVAL_BANKROLL_FLOOR,
-			"grant_count": 0,
-			"total_granted": 0,
-			"grants": [],
-		},
 	}
 
 	for visit_index in range(visits_per_run):
@@ -168,7 +151,7 @@ func _simulate_run(run_index: int, seed: String, visits_per_run: int) -> void:
 			break
 		var record := _record_environment(run_state, run_index, seed, visit_index)
 		_audit_environment_unique_object_classes(run_state.current_environment, seed, visit_index)
-		var event_results := _resolve_travel_unlock_events(run_state, path_rng, run_summary, run_index, seed, visit_index)
+		var event_results := _resolve_travel_unlock_events(run_state, path_rng)
 		record["events_resolved_for_travel"] = event_results
 		record["resolved_event_ids_after_policy"] = _copy_array(run_state.current_environment.get("resolved_event_ids", []))
 		record["next_archetypes_after_events"] = _copy_array(run_state.current_environment.get("next_archetypes", []))
@@ -198,13 +181,10 @@ func _simulate_run(run_index: int, seed: String, visits_per_run: int) -> void:
 				run_state.advance_environment_turns(wait_actions)
 				run_summary["travel_lock_wait_actions"] = int(run_summary.get("travel_lock_wait_actions", 0)) + wait_actions
 				choice = _pick_travel_choice(run_state, path_rng)
-		if choice.is_empty() and audit_survival_reserve_enabled:
-			_grant_audit_route_access_reserve(run_state, run_summary, run_index, seed, visit_index)
-			choice = _pick_travel_choice(run_state, path_rng)
 		if choice.is_empty():
 			run_summary["stopped_reason"] = "no_enabled_travel"
 			break
-		var travel_record := _travel_to(run_state, choice, run_summary, run_index, seed, visit_index)
+		var travel_record := _travel_to(run_state, choice)
 		travel_record["run_index"] = run_index
 		travel_record["seed"] = seed
 		travel_record["from_visit_index"] = visit_index
@@ -220,14 +200,6 @@ func _simulate_run(run_index: int, seed: String, visits_per_run: int) -> void:
 	run_summary["end_bankroll"] = run_state.bankroll
 	run_summary["end_suspicion"] = run_state.suspicion_level()
 	run_summary["environment_count"] = (run_summary.get("visited", []) as Array).size()
-	run_summary["requested_visits_satisfied"] = int(run_summary.get("environment_count", 0)) >= visits_per_run
-	if audit_survival_reserve_enabled and not bool(run_summary.get("requested_visits_satisfied", false)):
-		failures.append("%s: audit-only survival-reserve trajectory stopped at %d of %d requested visits (%s)." % [
-			seed,
-			int(run_summary.get("environment_count", 0)),
-			visits_per_run,
-			str(run_summary.get("stopped_reason", "unknown")),
-		])
 	run_summaries.append(run_summary)
 
 
@@ -436,7 +408,7 @@ func _event_trigger_status(run_state: RunState) -> Array:
 	return result
 
 
-func _resolve_travel_unlock_events(run_state: RunState, path_rng: RngStream, run_summary: Dictionary, run_index: int, seed: String, visit_index: int) -> Array:
+func _resolve_travel_unlock_events(run_state: RunState, path_rng: RngStream) -> Array:
 	var resolved: Array = []
 	for _pass_index in range(6):
 		var enabled_travel := _enabled_travel_choices(run_state)
@@ -446,19 +418,6 @@ func _resolve_travel_unlock_events(run_state: RunState, path_rng: RngStream, run
 			break
 		var event_id := str(candidate.get("event_id", ""))
 		var choice_id := str(candidate.get("choice_id", ""))
-		var event_bankroll_delta := int(candidate.get("bankroll_delta", 0))
-		if event_bankroll_delta < 0:
-			_grant_audit_survival_reserve(
-				run_state,
-				run_summary,
-				run_index,
-				seed,
-				visit_index,
-				"pre_event_settlement",
-				"event:%s:%s" % [event_id, choice_id],
-				AUDIT_SURVIVAL_BANKROLL_FLOOR - event_bankroll_delta,
-				event_bankroll_delta
-			)
 		var definition := library.event(event_id)
 		if definition.is_empty():
 			break
@@ -512,7 +471,6 @@ func _best_event_choice(run_state: RunState, allow_bankroll_help: bool) -> Dicti
 					"choice_id": str(choice_data.get("id", "")),
 					"score": score,
 					"reason": str(score_data.get("reason", "")),
-					"bankroll_delta": int(_copy_dict(choice_data.get("consequences", {})).get("bankroll_delta", 0)),
 				}
 	return best
 
@@ -628,7 +586,7 @@ func _current_travel_lock_remaining(run_state: RunState) -> int:
 	return maxi(0, int(run_state.current_environment.get("travel_lock_remaining", 0)))
 
 
-func _travel_to(run_state: RunState, choice: Dictionary, run_summary: Dictionary, run_index: int, seed: String, visit_index: int) -> Dictionary:
+func _travel_to(run_state: RunState, choice: Dictionary) -> Dictionary:
 	var target_id := str(choice.get("id", ""))
 	var source_id := run_state.current_world_node_id()
 	var admitted_targets_before := generator._world_travel_target_ids(run_state, run_state.world_map, source_id) if run_state.has_world_map() else []
@@ -661,19 +619,6 @@ func _travel_to(run_state: RunState, choice: Dictionary, run_summary: Dictionary
 	var travel_decay := run_state.finish_travel_suspicion_decay(travel_heat)
 	var destination_name := str(run_state.current_environment.get("display_name", target_id))
 	var result := _travel_result(run_state, target_id, destination_name, route, previous_environment, run_state.current_environment, travel_decay, route_risk)
-	var result_deltas := _copy_dict(result.get("deltas", {}))
-	var travel_bankroll_delta := int(result_deltas.get("bankroll_delta", result.get("bankroll_delta", 0)))
-	var reserve_grant := _grant_audit_survival_reserve(
-		run_state,
-		run_summary,
-		run_index,
-		seed,
-		visit_index,
-		"pre_travel_settlement",
-		target_id,
-		AUDIT_SURVIVAL_BANKROLL_FLOOR - travel_bankroll_delta,
-		travel_bankroll_delta
-	)
 	GameModule.apply_result(run_state, result)
 	return {
 		"target_id": target_id,
@@ -689,90 +634,7 @@ func _travel_to(run_state: RunState, choice: Dictionary, run_summary: Dictionary
 		"suspicion_after": run_state.suspicion_level(),
 		"travel_decay": travel_decay,
 		"route_risk": route_risk,
-		"audit_survival_reserve_grant": reserve_grant,
 		"message": str(result.get("message", "")),
-	}
-
-
-func _grant_audit_route_access_reserve(run_state: RunState, run_summary: Dictionary, run_index: int, seed: String, visit_index: int) -> Dictionary:
-	if not audit_survival_reserve_enabled or run_state == null or run_state.is_terminal():
-		return {}
-	var candidate := {}
-	for choice_value in _travel_choices(run_state, false):
-		if typeof(choice_value) != TYPE_DICTIONARY:
-			continue
-		var choice: Dictionary = choice_value
-		if bool(choice.get("enabled", false)) or bool(choice.get("hidden", false)):
-			continue
-		if str(choice.get("disabled_reason", "")) != "Not enough bankroll for this route.":
-			continue
-		var cost := maxi(0, int(choice.get("cost", 0)))
-		if cost <= run_state.bankroll:
-			continue
-		if candidate.is_empty() or cost < int(candidate.get("cost", 0)) or (cost == int(candidate.get("cost", 0)) and str(choice.get("id", "")) < str(candidate.get("id", ""))):
-			candidate = choice.duplicate(true)
-	if candidate.is_empty():
-		return {}
-	return _grant_audit_survival_reserve(
-		run_state,
-		run_summary,
-		run_index,
-		seed,
-		visit_index,
-		"route_access",
-		str(candidate.get("id", "")),
-		int(candidate.get("cost", 0)),
-		-int(candidate.get("cost", 0))
-	)
-
-
-func _grant_audit_survival_reserve(run_state: RunState, run_summary: Dictionary, run_index: int, seed: String, visit_index: int, phase: String, target_id: String, required_bankroll: int, settlement_delta: int) -> Dictionary:
-	if not audit_survival_reserve_enabled or run_state == null or run_state.is_terminal():
-		return {}
-	var bankroll_before := run_state.bankroll
-	var minimum_bankroll := maxi(0, required_bankroll)
-	if bankroll_before >= minimum_bankroll:
-		return {}
-	var amount := minimum_bankroll - bankroll_before
-	run_state.change_bankroll(amount)
-	var grant := {
-		"audit_only": true,
-		"run_index": run_index,
-		"seed": seed,
-		"from_visit_index": visit_index,
-		"phase": phase,
-		"target_id": target_id,
-		"bankroll_before": bankroll_before,
-		"settlement_delta": settlement_delta,
-		"projected_bankroll_without_grant": bankroll_before + settlement_delta,
-		"amount": amount,
-		"bankroll_after_grant": run_state.bankroll,
-	}
-	audit_survival_reserve_grants.append(grant.duplicate(true))
-	if not run_summary.is_empty():
-		var summary_evidence := _copy_dict(run_summary.get("audit_survival_reserve", {}))
-		var summary_grants := _copy_array(summary_evidence.get("grants", []))
-		summary_grants.append(grant.duplicate(true))
-		summary_evidence["grants"] = summary_grants
-		summary_evidence["grant_count"] = summary_grants.size()
-		summary_evidence["total_granted"] = int(summary_evidence.get("total_granted", 0)) + amount
-		run_summary["audit_survival_reserve"] = summary_evidence
-	return grant
-
-
-func _audit_survival_reserve_evidence() -> Dictionary:
-	var total_granted := 0
-	for grant_value in audit_survival_reserve_grants:
-		if typeof(grant_value) == TYPE_DICTIONARY:
-			total_granted += int((grant_value as Dictionary).get("amount", 0))
-	return {
-		"enabled": audit_survival_reserve_enabled,
-		"scope": "audit_process_only",
-		"policy": "minimal_event_and_travel_continuity",
-		"bankroll_floor": AUDIT_SURVIVAL_BANKROLL_FLOOR,
-		"grant_count": audit_survival_reserve_grants.size(),
-		"total_granted": total_granted,
-		"grants": audit_survival_reserve_grants.duplicate(true),
 	}
 
 
@@ -1063,9 +925,6 @@ func _build_markdown(report: Dictionary) -> String:
 	lines.append("| Travel transitions | %d |" % int(aggregate.get("travel_count", 0)))
 	lines.append("| Travel risk events | %d |" % _count_total(aggregate.get("travel_risk_events", {})))
 	lines.append("| Event choices resolved for travel | %d |" % int(aggregate.get("events_resolved_for_travel", 0)))
-	var reserve_evidence := _copy_dict(report.get("audit_survival_reserve", {}))
-	lines.append("| Audit-only survival reserve | %s |" % ("enabled" if bool(reserve_evidence.get("enabled", false)) else "disabled"))
-	lines.append("| Audit-only reserve grants | %d ($%d) |" % [int(reserve_evidence.get("grant_count", 0)), int(reserve_evidence.get("total_granted", 0))])
 	lines.append("| Failures | %d |" % int(report.get("failure_count", 0)))
 	lines.append("| Warnings | %d |" % int(report.get("warning_count", 0)))
 	lines.append("")
@@ -1258,7 +1117,7 @@ func _print_summary(output_json: String, output_markdown: String, aggregate: Dic
 
 
 func _method_notes() -> Array:
-	var notes: Array = [
+	return [
 		"100 unique randomly generated seed runs by default.",
 		"Each run targets six generated location visits.",
 		"No game is entered or resolved; game state is only generated by the environment generator.",
@@ -1267,9 +1126,6 @@ func _method_notes() -> Array:
 		"Travel-locked venues advance their lock countdown when no route is enabled, simulating non-game ride actions for audit continuity.",
 		"Travel uses the same route status, route cost, suspicion decay, and travel result application path as the Foundation UI.",
 	]
-	if audit_survival_reserve_enabled:
-		notes.append("The explicit audit-only survival reserve grants only the minimum bankroll needed to resolve an audit-selected event or travel settlement without zero-bankroll termination; each grant is preserved in JSON evidence, incomplete requested trajectories fail the audit, and no production runtime behavior is changed.")
-	return notes
 
 
 func _empty_presence_groups() -> Dictionary:

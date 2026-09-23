@@ -25,33 +25,18 @@ static func generate_and_finalize(
 ) -> Dictionary:
 	if generator == null or run_state == null:
 		return _fail(failures, "%s requires a generator and active RunState." % context, "generation")
-	var generation_result: Dictionary = {}
-	var generated: Variant = null
-	if generator.has_method("next_environment_result"):
-		generation_result = generator.next_environment_result(run_state, target_id, target_prevalidated)
-		if not bool(generation_result.get("ok", false)):
-			return _fail(
-				failures,
-				"%s could not install an initial environment: %s" % [context, JSON.stringify(generation_result.get("errors", []))],
-				"generation",
-				generation_result
-			)
-		generated = generation_result.get("environment", {})
-	else:
-		generated = generator.next_environment(run_state, target_id, target_prevalidated)
+	var generated: Variant = generator.next_environment(run_state, target_id, target_prevalidated)
 	if generated == null or run_state.current_environment.is_empty():
 		return _fail(failures, "%s did not install an initial environment." % context, "generation")
 	var arrived_id := str(run_state.current_world_node_id())
 	if not target_id.strip_edges().is_empty() and arrived_id != target_id.strip_edges():
 		return _fail(failures, "%s requested %s but installed %s." % [context, target_id, arrived_id], "generation")
-	if generation_result.is_empty():
-		generation_result = {
-			"ok": true,
-			"source_id": "",
-			"target_id": arrived_id,
-			"environment": run_state.current_environment.duplicate(true),
-		}
-	return finalize_arrival(run_state, generator.library, failures, context, layout_context, generation_result)
+	return finalize_arrival(run_state, generator.library, failures, context, layout_context, {
+		"ok": true,
+		"source_id": "",
+		"target_id": arrived_id,
+		"environment": run_state.current_environment.duplicate(true),
+	})
 
 
 static func travel_and_finalize(
@@ -93,77 +78,7 @@ static func finalize_arrival(
 	# install. Mirror that boundary exactly; direct generation and custom fixture
 	# generators omit the marker and still exercise the explicit fallback.
 	var finalized: Dictionary = {"ok": true, "inactive": true, "already_finalized": true, "errors": []}
-	var reuse_install_seal := bool(travel.get("scenario_finalized", false))
-	if reuse_install_seal:
-		var receipt := _dict(travel.get("finalization_receipt", {}))
-		var receipt_target := str(receipt.get("target_id", "")).strip_edges()
-		var receipt_environment_id := str(receipt.get("environment_id", ""))
-		# Older/custom shims may carry the legacy marker without an install-owned
-		# receipt. They stay compatible through the explicit finalizer, but a marker
-		# alone is never authority to reuse production's semantic seal.
-		var receipt_complete := not receipt.is_empty() \
-				and bool(receipt.get("scenario_finalized", false)) \
-				and receipt.has("inactive") \
-				and receipt.has("scenario_layout_context") \
-				and not receipt_target.is_empty() \
-				and not receipt_environment_id.is_empty()
-		if not receipt_complete:
-			reuse_install_seal = false
-		var installed_environment: Dictionary = run_state.current_environment
-		if reuse_install_seal and receipt_target != target_id:
-			return _fail(
-				failures,
-				"%s finalization receipt targets %s instead of installed node %s." % [context, receipt_target, target_id],
-				"finalization",
-				travel
-			)
-		if reuse_install_seal and receipt_environment_id != str(installed_environment.get("id", "")):
-			return _fail(
-				failures,
-				"%s finalization receipt environment does not match the installed room at %s." % [context, target_id],
-				"finalization",
-				travel
-			)
-		var receipt_digest := str(receipt.get("semantic_digest", ""))
-		if reuse_install_seal and not receipt_digest.is_empty() and receipt_digest != str(installed_environment.get("scenario_semantic_digest", "")):
-			return _fail(
-				failures,
-				"%s finalization receipt digest does not match the installed room at %s." % [context, target_id],
-				"finalization",
-				travel
-			)
-		var installed_context := _dict(installed_environment.get("scenario_layout_context", {}))
-		if reuse_install_seal and var_to_bytes(_dict(receipt.get("scenario_layout_context", {}))) != var_to_bytes(installed_context):
-			return _fail(
-				failures,
-				"%s finalization receipt context does not match the installed room at %s." % [context, target_id],
-				"finalization",
-				travel
-			)
-		if reuse_install_seal:
-			var destination_definition: Dictionary = run_state._scenario_sequence_definition_readonly()
-			var has_active_sequence := ScenarioSequenceSchemaScript.is_sequence(destination_definition)
-			var receipt_inactive := bool(receipt.get("inactive", true))
-			if receipt_inactive == has_active_sequence:
-				return _fail(
-					failures,
-					"%s finalization receipt activity does not match the installed room at %s." % [context, target_id],
-					"finalization",
-					travel
-				)
-			if not receipt_inactive and (receipt_digest.is_empty() or not run_state._scenario_semantic_ready()):
-				return _fail(
-					failures,
-					"%s active finalization receipt has no valid destination semantic seal at %s." % [context, target_id],
-					"finalization",
-					travel
-				)
-		# A seal is reusable only for the exact material context it proved. Reserved
-		# overlays, supplemental base occupancy, motion, or canvas flags require a
-		# fresh deterministic seal even when installation itself already finalized.
-		if reuse_install_seal and var_to_bytes(_material_layout_context(installed_context)) != var_to_bytes(_material_layout_context(layout_context)):
-			reuse_install_seal = false
-	if not reuse_install_seal:
+	if not bool(travel.get("scenario_finalized", false)):
 		finalized = run_state.scenario_finalize_installed_environment(library, layout_context.duplicate(true))
 	else:
 		# A marker proves work only when the installed destination owns the expected
@@ -505,19 +420,6 @@ static func _rect(value: Variant) -> Rect2:
 
 static func _dict(value: Variant) -> Dictionary:
 	return value as Dictionary if typeof(value) == TYPE_DICTIONARY else {}
-
-
-static func _material_layout_context(context: Dictionary) -> Dictionary:
-	var source := context.duplicate(true)
-	var material: Dictionary = {}
-	for key in ["base_occupied_records", "small_screen_mode", "reduce_motion", "production_canvas"]:
-		if source.has(key):
-			material[key] = source.get(key)
-	if source.has("reserved_overlay_board_rect"):
-		material["reserved_overlay_rect"] = source.get("reserved_overlay_board_rect")
-	elif source.has("reserved_overlay_rect"):
-		material["reserved_overlay_rect"] = source.get("reserved_overlay_rect")
-	return material
 
 
 static func _array(value: Variant) -> Array:
