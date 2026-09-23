@@ -14,6 +14,7 @@ const ScenarioSemanticViewModelScript := preload("res://scripts/ui/scenario_sema
 const EnvironmentInteractionControllerScript := preload("res://scripts/ui/environment_interaction_controller.gd")
 const ScenarioSequenceProbeSupportScript := preload("res://tools/scenario_sequence_probe_support.gd")
 const HarnessProductionFidelityScript := preload("res://scripts/tests/foundation/harness_production_fidelity.gd")
+const TOUCH_MODALITY_ISOLATION_SECONDS := 0.80
 
 var failures: Array[String] = []
 
@@ -75,6 +76,7 @@ func _run() -> void:
 	_check_exact_overflow_semantic_retention(app, production_record)
 	_check_late_binding_persistence(app, production_record)
 	_check_canonical_expanded_target()
+	_check_authority_geometry_round_trip()
 	production_record["presentation_mode"] = "overflow"
 	production_record["presentation_required"] = true
 	production_record["visible"] = true
@@ -215,6 +217,8 @@ func _run() -> void:
 	await _check_responsive_panel_width(action_list)
 	await _check_refresh_focus_recovery(app, action_list, records)
 	for mode in ["mouse", "touch", "keyboard", "controller"]:
+		if mode == "touch":
+			await _isolate_touch_from_prior_mouse()
 		await _check_rejected_actions_for_mode(app, action_list, disabled_record, hidden_record, activations, str(mode))
 	await _check_downstream_rejection_reopens(app, action_list, activations)
 
@@ -223,12 +227,16 @@ func _run() -> void:
 	if bool(delivery_setup.get("ok", false)):
 		var arrival_snapshot := (delivery_setup.get("arrival_snapshot", {}) as Dictionary).duplicate(true)
 		await _check_background_pointer_shield(app, action_list, arrival_snapshot, "mouse")
+		await _isolate_touch_from_prior_mouse()
 		await _check_background_pointer_shield(app, action_list, arrival_snapshot, "touch")
 		await _check_stale_authority_rejection(app, action_list, arrival_snapshot, activations)
 		await _check_inline_scenario_mutation(app, action_list, arrival_snapshot, activations)
+		await _isolate_touch_from_prior_mouse()
 		await _check_sequence_scenario_mutation(app, action_list, arrival_snapshot, activations)
 	await _restore_run(app, action_list, baseline_run_snapshot)
 	for mode in ["mouse", "touch", "keyboard", "controller"]:
+		if mode == "touch":
+			await _isolate_touch_from_prior_mouse()
 		await _check_production_mutation_for_mode(app, action_list, production_record, activations, str(mode))
 	await _finish(app)
 
@@ -611,7 +619,22 @@ func _check_responsive_panel_width(action_list: Control) -> void:
 			or panel.custom_minimum_size.x > 288.0 \
 			or panel.size.x > 288.0 \
 			or not overlay.get_global_rect().encloses(panel.get_global_rect()):
-		failures.append("RW06-1 compact action panel overflows a 320px-wide viewport.")
+		var viewport_size := root.get_visible_rect().size
+		var overlay_rect := overlay.get_global_rect() if overlay != null else Rect2()
+		var panel_rect := panel.get_global_rect() if panel != null else Rect2()
+		var panel_minimum := panel.custom_minimum_size if panel != null else Vector2.ZERO
+		var panel_combined := panel.get_combined_minimum_size() if panel != null else Vector2.ZERO
+		var list_combined := (action_list.get("_list") as Control).get_combined_minimum_size() if action_list.get("_list") is Control else Vector2.ZERO
+		failures.append("RW06-1 compact action panel overflows a 320px-wide viewport: %s." % JSON.stringify({
+			"root_size": {"x": root.size.x, "y": root.size.y},
+			"viewport_size": {"x": viewport_size.x, "y": viewport_size.y},
+			"overlay_rect": {"x": overlay_rect.position.x, "y": overlay_rect.position.y, "w": overlay_rect.size.x, "h": overlay_rect.size.y},
+			"panel_rect": {"x": panel_rect.position.x, "y": panel_rect.position.y, "w": panel_rect.size.x, "h": panel_rect.size.y},
+			"panel_size": {"x": panel.size.x if panel != null else 0.0, "y": panel.size.y if panel != null else 0.0},
+			"panel_custom_minimum": {"x": panel_minimum.x, "y": panel_minimum.y},
+			"panel_combined_minimum": {"x": panel_combined.x, "y": panel_combined.y},
+			"list_combined_minimum": {"x": list_combined.x, "y": list_combined.y},
+		}))
 	action_list.close()
 	root.size = original_size
 	await _settle_frames(3)
@@ -702,7 +725,13 @@ func _install_delivery_day(app: Control, action_list: Control) -> Dictionary:
 	var projection: Dictionary = run_state.call("scenario_sequence_projection")
 	if str(projection.get("scenario_id", "")) != ScenarioSequenceProbeSupportScript.SCENARIO_ID \
 			or str(projection.get("phase_id", "")) != "arrival":
-		failures.append("RW06-1 shipped delivery-day scenario did not finalize at arrival: %s." % JSON.stringify(projection))
+		var failed_environment := run_state.get("current_environment") as Dictionary
+		failures.append("RW06-1 shipped delivery-day scenario did not finalize at arrival: %s." % JSON.stringify({
+			"projection": projection,
+			"semantic_ready": bool(failed_environment.get("scenario_semantic_ready", false)),
+			"lifecycle_errors": failed_environment.get("scenario_sequence_lifecycle_errors", []),
+			"layout_audit": failed_environment.get("scenario_layout_audit", {}),
+		}))
 		return {"ok": false}
 	var live_records := _current_interactable_records(app)
 	if _record_by_object_id(live_records, "scenario::delivery_event_gate").is_empty() \
@@ -911,9 +940,12 @@ func _check_exact_overflow_semantic_retention(app: Control, production_record: D
 				or EnvironmentSemanticInventoryScript.validate(EnvironmentSemanticInventoryScript.for_instance(hostile_environment, library, interactions, [])).is_empty():
 			failures.append("RW06-1 %s hostile slot authority survived stamp/inventory validation." % str(label_value))
 	var room_source_id := ""
-	for record_value in requested_records:
-		var candidate_id := str((record_value as Dictionary).get("object_id", ""))
-		if str(((layout.get("slot_bindings", {}) as Dictionary).get(candidate_id, {}) as Dictionary).get("presentation_mode", "")) == "room":
+	var layout_bindings := layout.get("slot_bindings", {}) as Dictionary
+	var binding_ids := layout_bindings.keys()
+	binding_ids.sort_custom(func(left: Variant, right: Variant) -> bool: return str(left) < str(right))
+	for binding_id_value in binding_ids:
+		var candidate_id := str(binding_id_value)
+		if str((layout_bindings.get(candidate_id, {}) as Dictionary).get("presentation_mode", "")) == "room":
 			room_source_id = candidate_id
 			break
 	if room_source_id.is_empty():
@@ -927,7 +959,8 @@ func _check_exact_overflow_semantic_retention(app: Control, production_record: D
 		alias_bindings[alias_id] = alias_binding
 		alias_layout["slot_bindings"] = alias_bindings
 		var alias_rects := (alias_layout.get("object_rects", {}) as Dictionary).duplicate(true)
-		alias_rects[alias_id] = alias_rects.get(room_source_id, {})
+		if alias_rects.has(room_source_id):
+			alias_rects[alias_id] = alias_rects.get(room_source_id, {})
 		alias_layout["object_rects"] = alias_rects
 		alias_layout["slot_binding_digest"] = EnvironmentSlotBinderScript.binding_digest(alias_bindings)
 		var alias_environment := environment.duplicate(true)
@@ -948,6 +981,78 @@ func _check_canonical_expanded_target() -> void:
 	var expanded := EnvironmentSlotBinderScript.expanded_rect(Rect2(200.0, 200.0, 44.0, 44.0))
 	if expanded.size != canonical or Vector2(ScenarioLayoutResolverScript.SMALL_SCREEN_TARGET) != canonical:
 		failures.append("RW06-1 expanded slot authority diverges from ArtContracts: binder=%s resolver=%s canonical=%s." % [expanded.size, ScenarioLayoutResolverScript.SMALL_SCREEN_TARGET, canonical])
+
+
+func _check_authority_geometry_round_trip() -> void:
+	var edge_rect := {
+		"x": (900.0 - 44.0) / 900.0,
+		"y": (430.0 - 44.0) / 430.0,
+		"w": 44.0 / 900.0,
+		"h": 44.0 / 430.0,
+	}
+	var label_rect := {"x": 0.8, "y": 0.8, "w": 0.1, "h": 0.05}
+	var authority_record := {
+		"actor_route_points": [],
+		"actor_route_stage": {},
+		"contact": "base",
+		"identity": "base::edge_round_trip",
+		"label_rect": label_rect.duplicate(true),
+		"normalized_hit_rect": edge_rect.duplicate(true),
+		"placement_class": "floor_fixture",
+		"presentation_interactive": true,
+		"presentation_mode": "room",
+		"presentation_object_id": "game:edge_round_trip",
+		"presentation_required": true,
+		"presentation_visible": true,
+		"semantic_actor_member": false,
+		"semantic_interaction_member": true,
+		"semantic_scene_object_member": true,
+		"slot_id": "edge.slot",
+		"small_screen_label_rect": label_rect.duplicate(true),
+		"small_screen_rect": edge_rect.duplicate(true),
+		"source": "sealed_base_record",
+		"visual_kind": "base_record",
+		"z_order": 0,
+	}
+	var edge_errors: Array = []
+	ScenarioLayoutResolverScript._validate_authority({"base::edge_round_trip": authority_record}, edge_errors)
+	if not edge_errors.is_empty():
+		failures.append("RW06-1 exact board-edge normalized round trip was rejected: %s." % JSON.stringify(edge_errors))
+	var forged := authority_record.duplicate(true)
+	var forged_rect := edge_rect.duplicate(true)
+	forged_rect["x"] = float(forged_rect.get("x", 0.0)) + 0.01
+	forged["normalized_hit_rect"] = forged_rect
+	var forged_errors: Array = []
+	ScenarioLayoutResolverScript._validate_authority({"base::edge_round_trip": forged}, forged_errors)
+	if forged_errors.is_empty():
+		failures.append("RW06-1 beyond-epsilon board geometry survived sealed authority validation.")
+	var overflow_record := {
+		"owner_namespace": "base",
+		"stable_object_id": "overflow_round_trip",
+		"object_id": "game:overflow_round_trip",
+		"object_type": "game",
+		"presentation_mode": "overflow",
+		"visible": true,
+		"interactive": true,
+		"focus_rect": {},
+		"label_rect": {},
+		"small_screen_rect": {},
+		"small_screen_label_rect": {},
+	}
+	var overflow_build_errors: Array = []
+	var overflow_authority := ScenarioLayoutResolverScript._base_layout_authority([overflow_record], overflow_build_errors)
+	var sealed_overflow := overflow_authority.get("base::overflow_round_trip", {}) as Dictionary
+	var overflow_validation_errors: Array = []
+	ScenarioLayoutResolverScript._validate_authority(overflow_authority, overflow_validation_errors)
+	for rect_key in ["normalized_hit_rect", "small_screen_rect", "label_rect", "small_screen_label_rect"]:
+		if not (sealed_overflow.get(rect_key, {}) as Dictionary).is_empty():
+			overflow_build_errors.append("Overflow authority retained %s geometry." % rect_key)
+	if not overflow_build_errors.is_empty() or not overflow_validation_errors.is_empty():
+		failures.append("RW06-1 geometry-free overflow authority did not survive build/validation: %s." % JSON.stringify({
+			"build_errors": overflow_build_errors,
+			"validation_errors": overflow_validation_errors,
+			"authority": sealed_overflow,
+		}))
 
 
 func _check_late_binding_persistence(app: Control, production_record: Dictionary) -> void:
@@ -1247,12 +1352,13 @@ func _check_terminal_service_refresh(app: Control, baseline_snapshot: Dictionary
 	var room_refresh_records := app.call("_interactable_object_view_list") as Array
 	if not _record_by_object_id(room_refresh_records, service_object_id).is_empty():
 		failures.append("RW06-1 categorical-unavailable room service survived the production controller refresh.")
-	_assert_terminal_service_state(run_state, library, service_source_id, service_object_id, true, "room refresh")
+	_assert_terminal_service_state(run_state, library, service_source_id, service_object_id, true, "room refresh", room_refresh_records)
 	var room_committed_snapshot: Dictionary = run_state.to_dict()
 	run_state.from_dict(room_committed_snapshot.duplicate(true))
 	_invalidate_interactable_caches(app)
-	app.call("_interactable_object_view_list")
-	_assert_terminal_service_state(run_state, library, service_source_id, service_object_id, true, "room reload")
+	var room_reload_records := app.call("_interactable_object_view_list") as Array
+	_assert_terminal_service_records(room_reload_records, service_object_id, "room reload")
+	_assert_terminal_service_state(run_state, library, service_source_id, service_object_id, true, "room reload", room_reload_records)
 	_revisit_terminal_service_environment(app, service_source_id, service_object_id, true, library, "room revisit")
 
 	# Exercise the same actual refresh starting from valid geometry-free overflow
@@ -1288,12 +1394,13 @@ func _check_terminal_service_refresh(app: Control, baseline_snapshot: Dictionary
 	var overflow_refresh_records := app.call("_interactable_object_view_list") as Array
 	if not _record_by_object_id(overflow_refresh_records, service_object_id).is_empty():
 		failures.append("RW06-1 categorical-unavailable overflow service survived the production controller refresh.")
-	_assert_terminal_service_state(run_state, library, service_source_id, service_object_id, false, "overflow refresh")
+	_assert_terminal_service_state(run_state, library, service_source_id, service_object_id, false, "overflow refresh", overflow_refresh_records)
 	var overflow_committed_snapshot: Dictionary = run_state.to_dict()
 	run_state.from_dict(overflow_committed_snapshot.duplicate(true))
 	_invalidate_interactable_caches(app)
-	app.call("_interactable_object_view_list")
-	_assert_terminal_service_state(run_state, library, service_source_id, service_object_id, false, "overflow reload")
+	var overflow_reload_records := app.call("_interactable_object_view_list") as Array
+	_assert_terminal_service_records(overflow_reload_records, service_object_id, "overflow reload")
+	_assert_terminal_service_state(run_state, library, service_source_id, service_object_id, false, "overflow reload", overflow_reload_records)
 	_revisit_terminal_service_environment(app, service_source_id, service_object_id, false, library, "overflow revisit")
 	run_state.from_dict(baseline_snapshot.duplicate(true))
 	_invalidate_interactable_caches(app)
@@ -1308,11 +1415,17 @@ func _revisit_terminal_service_environment(app: Control, service_source_id: Stri
 		failures.append("RW06-1 %s could not reinstall the production environment: %s." % [label, JSON.stringify(installation.get("errors", []))])
 		return
 	_invalidate_interactable_caches(app)
-	app.call("_interactable_object_view_list")
-	_assert_terminal_service_state(run_state, library, service_source_id, service_object_id, preserve_room_binding, label)
+	var revisit_records := app.call("_interactable_object_view_list") as Array
+	_assert_terminal_service_records(revisit_records, service_object_id, label)
+	_assert_terminal_service_state(run_state, library, service_source_id, service_object_id, preserve_room_binding, label, revisit_records)
 
 
-func _assert_terminal_service_state(run_state: Variant, library: Variant, service_source_id: String, service_object_id: String, preserve_room_binding: bool, label: String) -> void:
+func _assert_terminal_service_records(records: Array, service_object_id: String, label: String) -> void:
+	if not _record_by_object_id(records, service_object_id).is_empty():
+		failures.append("RW06-1 %s resurrected the categorically unavailable service through the production controller." % label)
+
+
+func _assert_terminal_service_state(run_state: Variant, _library: Variant, service_source_id: String, service_object_id: String, preserve_room_binding: bool, label: String, records: Array) -> void:
 	var environment := run_state.get("current_environment") as Dictionary
 	var layout := environment.get("layout", {}) as Dictionary
 	var bindings := layout.get("slot_bindings", {}) as Dictionary
@@ -1323,12 +1436,69 @@ func _assert_terminal_service_state(run_state: Variant, library: Variant, servic
 	if preserve_room_binding:
 		var binding := bindings.get(service_object_id, {}) as Dictionary
 		if str(binding.get("presentation_mode", "")) != "room" or object_rects.has(service_object_id) or overflow_ids.has(service_object_id):
-			failures.append("RW06-1 %s did not retain only the dormant room reservation." % label)
+			failures.append("RW06-1 %s did not retain only the dormant room reservation: %s." % [label, JSON.stringify({
+				"binding": binding,
+				"has_rect": object_rects.has(service_object_id),
+				"in_overflow": overflow_ids.has(service_object_id),
+				"commit_diagnostics": _terminal_binding_diagnostics(environment, records, service_object_id),
+			})])
 	elif bindings.has(service_object_id) or object_rects.has(service_object_id) or overflow_ids.has(service_object_id):
-		failures.append("RW06-1 %s retained absent overflow service authority." % label)
-	var authoritative := EnvironmentBaseSemanticRecordsScript.authoritative_interactable_records(environment, library)
-	if not bool(authoritative.get("ok", false)) or not _record_by_object_id(authoritative.get("records", []) as Array, service_object_id).is_empty():
-		failures.append("RW06-1 %s resurrected categorical terminal service authority: %s." % [label, JSON.stringify(authoritative.get("errors", []))])
+		failures.append("RW06-1 %s retained absent overflow service authority: %s." % [label, JSON.stringify({
+			"binding": bindings.get(service_object_id, {}),
+			"has_rect": object_rects.has(service_object_id),
+			"in_overflow": overflow_ids.has(service_object_id),
+			"commit_diagnostics": _terminal_binding_diagnostics(environment, records, service_object_id),
+		})])
+	# Category availability is RunState authority; the environment-only semantic
+	# constructor cannot infer it. Authenticate the persisted room/overflow envelope
+	# here, while the surrounding assertions prove the real controller excludes the
+	# service before and after reload/revisit.
+	var authenticated := EnvironmentSlotBinderScript.validate_base_layout_authority(environment)
+	if not bool(authenticated.get("ok", false)):
+		failures.append("RW06-1 %s left unauthenticated terminal-service layout authority: %s." % [label, JSON.stringify(authenticated.get("errors", []))])
+
+
+func _terminal_binding_diagnostics(environment: Dictionary, records: Array, service_object_id: String) -> Dictionary:
+	var controller_errors: Array = []
+	var binding_records: Array = []
+	for record_value in records:
+		if typeof(record_value) != TYPE_DICTIONARY:
+			continue
+		var record := record_value as Dictionary
+		if str(record.get("object_id", "")) == "scenario::presentation_failure":
+			controller_errors.append_array(record.get("scenario_projection_errors", []) as Array)
+			continue
+		binding_records.append(record)
+	var layout := environment.get("layout", {}) as Dictionary
+	var bindings := layout.get("slot_bindings", {}) as Dictionary
+	var prior_authority := EnvironmentSlotBinderScript.validate_base_layout_authority(environment, binding_records, true)
+	var rebinding := EnvironmentSlotBinderScript.bind_base_records(environment, binding_records, bindings)
+	var diagnostics := {
+		"controller_errors": controller_errors,
+		"prior_authority_errors": prior_authority.get("errors", []),
+		"rebinding_ok": bool(rebinding.get("ok", false)),
+		"rebinding_errors": rebinding.get("errors", []),
+	}
+	if not bool(rebinding.get("ok", false)):
+		return diagnostics
+	var candidate_layout := layout.duplicate(true)
+	candidate_layout["slot_schema_version"] = int(rebinding.get("slot_schema_version", 0))
+	candidate_layout["slot_map_digest"] = str(rebinding.get("slot_map_digest", ""))
+	candidate_layout["slot_bindings"] = (rebinding.get("slot_bindings", {}) as Dictionary).duplicate(true)
+	candidate_layout["slot_overflow_ids"] = (rebinding.get("overflow_ids", []) as Array).duplicate(true)
+	candidate_layout["slot_binding_digest"] = str(rebinding.get("binding_digest", ""))
+	candidate_layout["object_rects"] = (rebinding.get("object_rects", {}) as Dictionary).duplicate(true)
+	var candidate_environment := environment.duplicate(true)
+	candidate_environment["layout"] = candidate_layout
+	var candidate_authority := EnvironmentSlotBinderScript.validate_base_layout_authority(
+		candidate_environment,
+		rebinding.get("records", []) as Array
+	)
+	diagnostics["candidate_authority_errors"] = candidate_authority.get("errors", [])
+	diagnostics["candidate_service_binding"] = (candidate_layout.get("slot_bindings", {}) as Dictionary).get(service_object_id, {})
+	diagnostics["candidate_has_rect"] = (candidate_layout.get("object_rects", {}) as Dictionary).has(service_object_id)
+	diagnostics["candidate_in_overflow"] = (candidate_layout.get("slot_overflow_ids", []) as Array).has(service_object_id)
+	return diagnostics
 
 
 func _set_blocked_service_category(run_state: Variant, category: String) -> void:
@@ -1394,10 +1564,13 @@ func _check_background_pointer_shield(app: Control, action_list: Control, arriva
 				false
 			)
 		"touch":
-			_send_touch(global_position)
+			await _send_touch(global_position)
 	await _settle_frames(3)
 	if int(app.get("delivery_exit_focus_routes")) != control_focus_count + 1:
-		failures.append("RW06-1 %s live control did not route to the real delivery-exit canvas target." % mode)
+		failures.append("RW06-1 %s live control did not route to the real delivery-exit canvas target: %s." % [
+			mode,
+			JSON.stringify(_touch_route_diagnostics(global_position, canvas) if mode == "touch" else {}),
+		])
 	await create_timer(0.45).timeout
 	action_list.open()
 	await _settle_frames(2)
@@ -1425,7 +1598,7 @@ func _check_background_pointer_shield(app: Control, action_list: Control, arriva
 				true
 			)
 		"touch":
-			_send_touch(global_position, true)
+			await _send_touch(global_position, true)
 	await _settle_frames(4)
 	var focus_owner := root.gui_get_focus_owner()
 	if _mutation_snapshot(app) != before \
@@ -1572,14 +1745,15 @@ func _check_sequence_scenario_mutation(app: Control, action_list: Control, arriv
 		failures.append("RW06-1 shipping sequence action was not rendered.")
 		action_list.close()
 		return
-	_send_touch(button.get_global_rect().get_center())
+	var touch_diagnostics := _touch_route_diagnostics(button.get_global_rect().get_center(), button)
+	await _send_touch(button.get_global_rect().get_center())
 	await _settle_frames(8)
 	var after_projection: Dictionary = run_state.call("scenario_sequence_projection")
 	if str(after_projection.get("phase_id", "")) != "sorting" \
 			or _scenario_command_receipt_count(run_state) != before_receipts + 1 \
 			or activations.count(expected_key) != prior_count + 1 \
 			or bool(action_list.call("is_open")):
-		failures.append("RW06-1 shipping scenario_sequence action did not reach the real arrival-to-sorting mutation.")
+		failures.append("RW06-1 shipping scenario_sequence action did not reach the real arrival-to-sorting mutation: %s." % JSON.stringify(touch_diagnostics))
 
 
 func _check_production_mutation_for_mode(app: Control, action_list: Control, production_record: Dictionary, activations: Array[String], mode: String) -> void:
@@ -1605,11 +1779,12 @@ func _check_production_mutation_for_mode(app: Control, action_list: Control, pro
 		failures.append("RW06-1 %s mutation check could not find its production button." % mode)
 		action_list.close()
 		return
+	var touch_diagnostics := _touch_route_diagnostics(button.get_global_rect().get_center(), button) if mode == "touch" else {}
 	match mode:
 		"mouse":
 			_send_mouse(button.get_global_rect().get_center())
 		"touch":
-			_send_touch(button.get_global_rect().get_center())
+			await _send_touch(button.get_global_rect().get_center())
 		"keyboard":
 			button.grab_focus()
 			_send_key(KEY_ENTER)
@@ -1618,9 +1793,9 @@ func _check_production_mutation_for_mode(app: Control, action_list: Control, pro
 			_send_joy_button(JOY_BUTTON_A)
 	await _settle_frames(5)
 	if activations.count(expected_key) != prior_count + 1:
-		failures.append("RW06-1 %s did not activate the production overflow action exactly once." % mode)
+		failures.append("RW06-1 %s did not activate the production overflow action exactly once: %s." % [mode, JSON.stringify(touch_diagnostics)])
 	if str(app.get("current_screen")) != "GAME" or app.get("current_game") == null or _mutation_snapshot(app) == before:
-		failures.append("RW06-1 %s overflow action did not reach a real production game-entry mutation." % mode)
+		failures.append("RW06-1 %s overflow action did not reach a real production game-entry mutation: %s." % [mode, JSON.stringify(touch_diagnostics)])
 	if app.get("current_game") != null:
 		app.call("_complete_back_to_environment")
 		await _settle_frames(4)
@@ -1653,7 +1828,7 @@ func _check_rejected_actions_for_mode(app: Control, action_list: Control, disabl
 			"mouse":
 				_send_mouse(disabled_button.get_global_rect().get_center())
 			"touch":
-				_send_touch(disabled_button.get_global_rect().get_center())
+				await _send_touch(disabled_button.get_global_rect().get_center())
 			"keyboard":
 				disabled_button.grab_focus()
 				await process_frame
@@ -1878,31 +2053,89 @@ func _send_joy_button(button_index: int) -> void:
 
 
 func _send_mouse(position: Vector2) -> void:
+	var motion := InputEventMouseMotion.new()
+	motion.position = position
+	motion.global_position = position
+	root.push_input(motion, true)
 	var pressed := InputEventMouseButton.new()
 	pressed.button_index = MOUSE_BUTTON_LEFT
 	pressed.position = position
+	pressed.global_position = position
+	pressed.button_mask = MOUSE_BUTTON_MASK_LEFT
 	pressed.pressed = true
-	root.push_input(pressed)
+	root.push_input(pressed, true)
 	var released := InputEventMouseButton.new()
 	released.button_index = MOUSE_BUTTON_LEFT
 	released.position = position
+	released.global_position = position
+	released.button_mask = 0
 	released.pressed = false
-	root.push_input(released)
+	root.push_input(released, true)
 
 
 func _send_touch(position: Vector2, double_tap: bool = false) -> void:
+	# Input.parse_input_event accepts screen/window coordinates, while every caller
+	# resolves an exact logical canvas-global hit point. The root may be physically
+	# tiny in headless mode (64x64 with a stretched 1280x720 canvas), so use Godot's
+	# canonical Viewport transform instead of an ad-hoc size ratio.
+	var screen_position := root.get_screen_transform() * position
 	var pressed := InputEventScreenTouch.new()
 	pressed.index = 0
-	pressed.position = position
+	pressed.position = screen_position
 	pressed.pressed = true
 	pressed.double_tap = double_tap
-	root.push_input(pressed)
+	# Feed touch through Input so the engine's production touch-to-pointer path is
+	# exercised. Viewport.push_input bypasses that emulation layer in headless runs.
+	Input.parse_input_event(pressed)
+	await process_frame
 	var released := InputEventScreenTouch.new()
 	released.index = 0
-	released.position = position
+	released.position = screen_position
 	released.pressed = false
 	released.double_tap = double_tap
-	root.push_input(released)
+	Input.parse_input_event(released)
+	await process_frame
+
+
+func _isolate_touch_from_prior_mouse() -> void:
+	# PixelSceneCanvas rejects mouse/touch pairs at the same point for 750 ms so
+	# browsers cannot apply one physical gesture twice. Separate independent
+	# modality fixtures beyond that production window instead of disabling it.
+	await create_timer(TOUCH_MODALITY_ISOLATION_SECONDS).timeout
+
+
+func _touch_route_diagnostics(position: Vector2, target: Control = null) -> Dictionary:
+	var now_msec := Time.get_ticks_msec()
+	var viewport_size := root.get_visible_rect().size
+	var screen_position := root.get_screen_transform() * position
+	var result := {
+		"now_msec": now_msec,
+		"logical_position": {"x": position.x, "y": position.y},
+		"screen_position": {"x": screen_position.x, "y": screen_position.y},
+		"screen_transform": str(root.get_screen_transform()),
+		"root_size": {"x": root.size.x, "y": root.size.y},
+		"viewport_size": {"x": viewport_size.x, "y": viewport_size.y},
+		"emulate_mouse_from_touch": bool(ProjectSettings.get_setting("input_devices/pointing/emulate_mouse_from_touch", false)),
+		"emulate_touch_from_mouse": bool(ProjectSettings.get_setting("input_devices/pointing/emulate_touch_from_mouse", false)),
+	}
+	if target != null:
+		var target_rect := target.get_global_rect()
+		result["target_rect"] = {
+			"x": target_rect.position.x,
+			"y": target_rect.position.y,
+			"w": target_rect.size.x,
+			"h": target_rect.size.y,
+		}
+		result["target_visible"] = target.is_visible_in_tree()
+		result["target_mouse_filter"] = int(target.mouse_filter)
+		if target.has_method("_touch_duplicates_recent_mouse_press"):
+			var last_mouse_msec := int(target.get("last_mouse_press_msec"))
+			var last_touch_msec := int(target.get("last_touch_press_msec"))
+			result["last_mouse_press_msec"] = last_mouse_msec
+			result["last_touch_press_msec"] = last_touch_msec
+			result["elapsed_since_mouse_msec"] = now_msec - last_mouse_msec
+			result["elapsed_since_touch_msec"] = now_msec - last_touch_msec
+	return result
 
 
 func _settle_frames(count: int) -> void:
