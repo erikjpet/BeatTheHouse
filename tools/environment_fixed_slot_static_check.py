@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 
 import rw06_1_author_fixed_slots as SlotAuthoring
+import rw06_1_apply_hand_authored_slots as HandAuthoredSlots
 
 
 CLASSES = {
@@ -692,10 +693,10 @@ def validate_single_json_slot_extension(
     extra_slot = {
         "id": "stage.wall_mounted.modularity_probe",
         "kind": "stage",
-        "pos": [274.0, 34.0],
+        "pos": [334.0, 34.0],
         "footprint_class": "wall_mounted",
-        "hit_rect": [242.0, 14.0, 64.0, 40.0],
-        "label_anchor": [274.0, 18.0],
+        "hit_rect": [302.0, 14.0, 64.0, 40.0],
+        "label_anchor": [334.0, 18.0],
         "facing": "front",
         "priority": 999,
         "zone_id": "room",
@@ -773,6 +774,82 @@ def main() -> int:
         check.require(archetype_id in archetypes, f"{map_id}: unknown archetype {archetype_id}")
         validate_map(check, map_data, archetypes.get(archetype_id, {}), board)
 
+    # Q-007 fixes the authored fixture groups while leaving the concrete game,
+    # item, and event instances free to vary by seed.  These two day-2 rooms are
+    # serialized from literal art-reviewed coordinates, never from the retired
+    # packing/search authorer.
+    for map_id in sorted(HandAuthoredSlots.HAND_SLOTS):
+        replayed = copy.deepcopy(maps_by_id.get(map_id, {}))
+        check.require(bool(replayed), f"hand-authored serializer references missing map {map_id}")
+        if replayed:
+            HandAuthoredSlots.apply_layout(replayed)
+            check.require(
+                replayed == maps_by_id.get(map_id, {}),
+                f"{map_id}: placement_surfaces.json is stale against its literal hand-authored slot table",
+            )
+    hand_author_source = (root / "tools/rw06_1_apply_hand_authored_slots.py").read_text(encoding="utf-8")
+    check.require("HAND_SLOTS" in hand_author_source, "hand-authored slot serializer has no literal coordinate table")
+    for forbidden in ("import rw06_1_author_fixed_slots", "supported_rect_candidates(", "candidate_rects(", "itertools.product("):
+        check.require(forbidden not in hand_author_source, f"hand-authored slot serializer contains forbidden search dependency {forbidden}")
+
+    bar_map = maps_by_id.get("bar", {})
+    bar_base_slots = {
+        str(slot.get("id", "")): slot
+        for slot in values(bar_map.get("base_slots"))
+        if isinstance(slot, dict)
+    }
+    bar_categories = bar_map.get("category_slot_ids", {}) if isinstance(bar_map.get("category_slot_ids"), dict) else {}
+    bar_game_slot_ids = [str(bar_categories.get(f"game_spots:{index}", "")) for index in range(3)]
+    check.require(
+        len(set(bar_game_slot_ids)) == 3
+        and all(
+            slot_id.startswith("base.game_")
+            and bar_base_slots.get(slot_id, {}).get("footprint_class") == "surface_item"
+            and bar_base_slots.get(slot_id, {}).get("support_id") == "bar_counter"
+            for slot_id in bar_game_slot_ids
+        ),
+        "bar: three game categories must use three distinct named counter slots",
+    )
+    bar_object_preferences = bar_map.get("object_slot_ids", {}) if isinstance(bar_map.get("object_slot_ids"), dict) else {}
+    check.require(
+        not any(str(identity).startswith("game:") for identity in bar_object_preferences),
+        "bar: concrete game identities must remain seed-random rather than pinned to slots",
+    )
+    bar_overrides = bar_map.get("class_overrides", {}) if isinstance(bar_map.get("class_overrides"), dict) else {}
+    check.require(
+        all(str(bar_overrides.get(f"game:{game_id}", "")) == "surface_item" for game_id in values(archetypes.get("bar", {}).get("game_pool"))),
+        "bar: every random game-pool member must classify as a counter-supported surface item",
+    )
+
+    store_map = maps_by_id.get("corner_store", {})
+    store_base_slots = {
+        str(slot.get("id", "")): slot
+        for slot in values(store_map.get("base_slots"))
+        if isinstance(slot, dict)
+    }
+    store_categories = store_map.get("category_slot_ids", {}) if isinstance(store_map.get("category_slot_ids"), dict) else {}
+    store_item_slot_ids = [str(store_categories.get(f"item_spots:{index}", "")) for index in range(5)]
+    store_preferences = store_map.get("object_slot_ids", {}) if isinstance(store_map.get("object_slot_ids"), dict) else {}
+    check.require(
+        len(set(store_item_slot_ids)) == 5
+        and all(slot_id.startswith("base.shop_item_") for slot_id in store_item_slot_ids)
+        and all(store_base_slots.get(slot_id, {}).get("footprint_class") == "surface_item" for slot_id in store_item_slot_ids),
+        "corner_store: five item categories must use five distinct named shop-item slots",
+    )
+    check.require(
+        all(str(store_base_slots.get(slot_id, {}).get("support_id", "")).startswith("shelf_row_") for slot_id in store_item_slot_ids[:4]),
+        "corner_store: the four visible shelf offers must stay aligned to the left shelf rows",
+    )
+    check.require(
+        store_preferences.get("shopkeeper:merchant") == "base.staff_shopkeeper"
+        and store_base_slots.get("base.staff_shopkeeper", {}).get("footprint_class") == "behind_counter_person"
+        and store_preferences.get("event:call_brother_in_law") == "base.fixed_phone"
+        and store_base_slots.get("base.fixed_phone", {}).get("support_id") == "register"
+        and store_preferences.get("service:house_drink") == "base.fixed_drink"
+        and str(store_base_slots.get("base.fixed_drink", {}).get("support_id", "")).startswith("cooler_"),
+        "corner_store: shopkeeper, fixed phone, and drink must remain on their named art fixtures",
+    )
+
     # Delivery Day's catalog event is presented by a clerk behind the Corner
     # Store counter. Production sees the catalog placement hint, while the
     # sealed semantic replay intentionally retains only its stable event id.
@@ -819,7 +896,7 @@ def main() -> int:
         "corner_store: compact Delivery Day event replay diverges from its catalog-hinted production class",
     )
     check.require(
-        delivery_base_slots.get("base.behind_counter_person.01", {}).get("footprint_class") == replayed_delivery_class,
+        delivery_base_slots.get("base.staff_dialogue", {}).get("footprint_class") == replayed_delivery_class,
         "corner_store: Delivery Day event replay has no compatible fixed base slot",
     )
 
