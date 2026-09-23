@@ -10,6 +10,7 @@ const EnvironmentPlacementScript := preload("res://scripts/core/environment_plac
 const EnvironmentSlotBinderScript := preload("res://scripts/core/environment_slot_binder.gd")
 
 const BOARD_SIZE := Vector2(ArtContractsScript.ENVIRONMENT_BOARD_SIZE)
+const AUTHORITY_GEOMETRY_EPSILON := 0.001
 const SMALL_SCREEN_TARGET := Vector2(ArtContractsScript.ENVIRONMENT_OBJECT_HIT_SIZE)
 const MAX_VISUALS := 128
 const MIN_SCENE_SIZE := Vector2(16.0, 16.0)
@@ -685,7 +686,15 @@ static func _validate_label_entries(entries: Array, layout_label: String, errors
 				errors.append("Layout labels %s and %s overlap in %s layout." % [str(left.get("identity", "")), str(right.get("identity", "")), layout_label])
 			if left_label.intersects(right_target) and left_label.intersection(right_target).get_area() > 0.01 \
 					or right_label.intersects(left_target) and right_label.intersection(left_target).get_area() > 0.01:
-				errors.append("Layout label and hit authority for %s / %s overlap in %s layout." % [str(left.get("identity", "")), str(right.get("identity", "")), layout_label])
+				errors.append("Layout label and hit authority for %s / %s overlap in %s layout (left_label=%s left_target=%s right_label=%s right_target=%s)." % [
+					str(left.get("identity", "")),
+					str(right.get("identity", "")),
+					layout_label,
+					str(left_label),
+					str(left_target),
+					str(right_label),
+					str(right_target),
+				])
 
 
 static func _validate_actor_routes(actors: Dictionary, obstacles: Array, occupied: Array, environment: Dictionary, errors: Array) -> void:
@@ -972,10 +981,13 @@ static func _base_layout_authority(base_records: Array, errors: Array = [], envi
 		var sealed_record := _authority_record(FunctionOptions.ScenarioAuthorityRecordOptions.from({
 			"identity": identity,
 			"presentation_object_id": object_id.strip_edges(),
-			"normal": _normalized_rect(rect),
-			"small": _normalized_rect(_expanded_rect(rect, SMALL_SCREEN_TARGET)),
-			"label_rect": record_label_rect,
-			"small_label_rect": record_small_label_rect,
+			# Overflow is the deliberately geometry-free presentation. Serializing an
+			# empty Rect2 still produces a non-empty zero dictionary, which then fails
+			# the sealed authority validator and can strand an otherwise valid scenario.
+			"normal": _normalized_rect(rect) if presentation_mode == "room" else {},
+			"small": _normalized_rect(_expanded_rect(rect, SMALL_SCREEN_TARGET)) if presentation_mode == "room" else {},
+			"label_rect": record_label_rect if presentation_mode == "room" else {},
+			"small_label_rect": record_small_label_rect if presentation_mode == "room" else {},
 			"z_order": int(record.get("scenario_z_order", record.get("z_order", 0))),
 			"visual_kind": "base_record",
 			"source": "sealed_base_record",
@@ -1127,7 +1139,7 @@ static func _validate_authority(authority: Dictionary, errors: Array) -> void:
 			if (coverage_only or mode == "overflow") and _dict(record.get(rect_key, {})).is_empty():
 				continue
 			var rect := _pixel_rect(_dict(record.get(rect_key, {})))
-			if not rect.has_area() or not Rect2(Vector2.ZERO, BOARD_SIZE).encloses(rect):
+			if not _board_encloses_serialized_rect(rect):
 				errors.append("Layout authority %s contains invalid %s geometry." % [identity, rect_key])
 		_validate_actor_route_authority(identity, record, errors)
 
@@ -1710,6 +1722,19 @@ static func _normalized_rect(rect: Rect2) -> Dictionary:
 
 static func _pixel_rect(value: Dictionary) -> Rect2:
 	return Rect2(float(value.get("x", 0.0)) * BOARD_SIZE.x, float(value.get("y", 0.0)) * BOARD_SIZE.y, float(value.get("w", 0.0)) * BOARD_SIZE.x, float(value.get("h", 0.0)) * BOARD_SIZE.y)
+
+
+static func _board_encloses_serialized_rect(rect: Rect2) -> bool:
+	# Exact authored pixel rectangles are serialized as normalized floats and then
+	# multiplied back by the board dimensions. Permit only the sub-pixel round-trip
+	# residue; forged geometry beyond that tiny envelope remains invalid.
+	return rect.has_area() \
+		and _finite_point(rect.position) \
+		and _finite_point(rect.size) \
+		and rect.position.x >= -AUTHORITY_GEOMETRY_EPSILON \
+		and rect.position.y >= -AUTHORITY_GEOMETRY_EPSILON \
+		and rect.end.x <= BOARD_SIZE.x + AUTHORITY_GEOMETRY_EPSILON \
+		and rect.end.y <= BOARD_SIZE.y + AUTHORITY_GEOMETRY_EPSILON
 
 
 static func _normalized_point(point: Vector2) -> Dictionary:

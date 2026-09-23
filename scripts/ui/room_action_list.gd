@@ -151,6 +151,10 @@ func open() -> void:
 	_sync_panel_width()
 	_overlay.visible = true
 	_panel.visible = true
+	# Hidden container children do not participate in a layout pass. Reapply the
+	# viewport cap after showing the panel so a prior desktop allocation cannot
+	# survive into the first compact frame.
+	_sync_panel_width()
 	var controls := _focus_controls()
 	var first := controls[0] as Control if not controls.is_empty() else _close
 	if _modal_focus_scope != null and _modal_focus_scope.has_method("push_scope"):
@@ -454,12 +458,22 @@ func is_open() -> bool:
 func _sync_panel_width() -> void:
 	if _panel == null or get_viewport() == null:
 		return
-	var available_width := maxf(MIN_TARGET.x, get_viewport_rect().size.x - PANEL_EDGE_MARGIN * 2.0)
+	var layout_width := get_viewport_rect().size.x
+	var window := get_window()
+	# The project stretches its logical 1280px canvas into the real Window. On a
+	# compact native window the viewport therefore remains 1280px wide; cap against
+	# both authorities so the modal itself still observes the physical safe width.
+	if window != null and window.size.x > 0:
+		layout_width = minf(layout_width, float(window.size.x))
+	var available_width := maxf(MIN_TARGET.x, layout_width - PANEL_EDGE_MARGIN * 2.0)
 	_panel.custom_minimum_size.x = minf(PREFERRED_PANEL_WIDTH, available_width)
 	# CenterContainer can retain the former preferred allocation for one layout
 	# pass after a viewport shrink. Reset against the new combined minimum now so
 	# a 320px surface never spends a frame wider than its 16px edge margins.
 	_panel.reset_size()
+	var parent_container := _panel.get_parent() as Container
+	if parent_container != null:
+		parent_container.queue_sort()
 
 
 func _enforce_persistent_target_sizes() -> void:

@@ -218,17 +218,35 @@ static func validate_base_layout_authority(environment: Dictionary, current_reco
 				errors.append("Current base record %s has no authenticated slot binding." % object_id)
 			continue
 		# Live production records carry their source class inputs. Durable semantic
-		# interactions deliberately do not widen their closed payload with placement
-		# metadata; the binding still proves a valid class against its authored slot.
-		if record.has("placement_class") or record.has("object_type"):
-			var expected_class := EnvironmentPlacementScript.classify(
+		# interactions deliberately keep a closed payload, so replay the same stable
+		# type/id classification used by EnvironmentInstance for its base domains.
+		# This keeps placement_class out of semantic authority without letting a
+		# re-digested wrong-class binding authenticate itself.
+		var expected_class := ""
+		var class_override := str(_dict(surface_map.get("class_overrides", {})).get(object_id, ""))
+		if class_override in EnvironmentPlacementScript.CLASSES:
+			# Generated layout inputs apply the room's exact class override before
+			# binding. Raw live records may retain their generic inferred class, so
+			# the authored room override has the same first priority during replay.
+			expected_class = class_override
+		elif record.has("placement_class"):
+			expected_class = EnvironmentPlacementScript.classify(
 				record,
 				str(record.get("object_type", "")),
 				object_id,
 				str(record.get("visual_prop", record.get("prop", record.get("icon_key", ""))))
 			)
-			if str(record_binding.get("placement_class", "")) != expected_class:
-				errors.append("Current base record %s placement class does not match production classification." % object_id)
+		elif record.has("object_type"):
+			expected_class = EnvironmentPlacementScript.classify(
+				record,
+				str(record.get("object_type", "")),
+				object_id,
+				str(record.get("visual_prop", record.get("prop", record.get("icon_key", ""))))
+			)
+		else:
+			expected_class = _closed_semantic_placement_class(surface_map, record, object_id)
+		if not expected_class.is_empty() and str(record_binding.get("placement_class", "")) != expected_class:
+			errors.append("Current base record %s placement class does not match production classification." % object_id)
 		if source_id.is_empty():
 			continue
 		if aliases.has(object_id) and str(aliases.get(object_id, "")) != source_id:
@@ -259,6 +277,24 @@ static func validate_base_layout_authority(environment: Dictionary, current_reco
 		"binding_digest": stored_digest,
 		"errors": errors,
 	}
+
+
+static func _closed_semantic_placement_class(surface_map: Dictionary, record: Dictionary, object_id: String) -> String:
+	if not record.has("presentation_object_id"):
+		return ""
+	var parts := object_id.split(":", false)
+	if parts.size() < 2:
+		return ""
+	var object_type := str(parts[0])
+	# These are the catalog-backed base domains emitted by
+	# EnvironmentBaseSemanticRecords.authoritative_interactable_records(). Their
+	# generated placement input is exactly type + stable presentation id.
+	if object_type not in ["game", "event", "service", "lender", "travel"]:
+		return ""
+	var class_override := str(_dict(surface_map.get("class_overrides", {})).get(object_id, ""))
+	if class_override in EnvironmentPlacementScript.CLASSES:
+		return class_override
+	return EnvironmentPlacementScript.classify({}, object_type, object_id)
 
 
 # Applies the same authority to the complete interaction inventory. Some live
