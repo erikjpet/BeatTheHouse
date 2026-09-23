@@ -1,6 +1,8 @@
+Superseded 2026-09-22 by rw06_0 (completed work archived).
+
 # Agent Prompt - health06_1: Code Health Remediation (CH-01 ... CH-36)
 
-Status: TODO. Self-contained. This file is the only coordination document for
+Status: DONE. Landed on `main` at `b7c51bf4`. Self-contained. This file is the only coordination document for
 this work; there is no board, queue, claim or archive ceremony to follow.
 
 ## How to launch this row

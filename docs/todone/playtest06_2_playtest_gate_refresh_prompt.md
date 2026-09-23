@@ -1,3 +1,5 @@
+Superseded 2026-09-22 by rw06_2 and rw06_4.
+
 Status: PARKED — intake prestage landed; the full seed verification and gate refresh wait for accepted placement and the binding performance pass
 Board row: `playtest06_2` in `docs/todo/README_0_6_board.md`
 

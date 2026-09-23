@@ -1,9 +1,18 @@
 # rw06_pre — Worker steer: finish on a branch, merge to main, delete the branch
 
-Status: TODO. The owner sends the block below to the running postfix06_2 worker
+Status: DONE. The owner sent the block below to the running postfix06_2 worker
 at the same moment the execution agent is launched
 (`rw06_execute_release_week_prompt.md`). The execution agent prepares in its own
 worktrees and does not write to `main` until this row reports MERGED.
+
+## Execution record
+
+- Completed: 2026-09-23.
+- Merge: `54c7d788d418e1f1438ac99e24ee4c8f9a772246`.
+- SNAPSHOT: `78a62257745602c40ec804740ee9f95d789606db`.
+- Deactivation commit: `e74458f768696ea9c6dd936d8f18a587d0c0db2e`.
+- Verification: validator PASS; Smoke 10/10; focused Godot 6/6; focused static 14/14; Contract retained only the inherited repeated-reprieve red and introduced no failing stage or shard; all 18 Foundation shards passed.
+- Custody: merge tree equals the tested deactivation tree; both commits are ancestors of `origin/main`; snapshot branch deleted locally and remotely; worktree removed.
 
 End state of this row:
 

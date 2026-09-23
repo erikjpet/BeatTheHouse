@@ -1,3 +1,5 @@
+Superseded 2026-09-22 by rw06_3.
+
 Status: PARKED - do not claim until triage and owner-required fixes are complete
 Board row: `balance06_2` in `docs/todo/README_0_6_board.md`
 

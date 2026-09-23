@@ -61,8 +61,8 @@ next finds the answer resumes the work. Every row must follow its protocol.
 
 | Day | Row | Prompt | Depends on | Status |
 | --- | --- | --- | --- | --- |
-| 0 | rw06_pre | `rw06_pre_worker_handoff_message.md`: the running worker finishes on its branch, merges to main and deletes the branch | — | TODO |
-| 1 | rw06_0 | `rw06_0_custody_commit_prompt.md` | rw06_pre reports MERGED (fixes on main, branch deleted) | TODO |
+| 0 | rw06_pre | `../todone/rw06_pre_worker_handoff_message.md`: the running worker finishes on its branch, merges to main and deletes the branch | — | DONE (`54c7d788`) |
+| 1 | rw06_0 | `rw06_0_custody_commit_prompt.md` | rw06_pre reports MERGED (fixes on main, branch deleted) | IN_PROGRESS |
 | 1–4 | rw06_1 | `rw06_1_fixed_slot_rooms_prompt.md` | rw06_0 | TODO |
 | 1–5 | rw06_2 | `rw06_2_three_endings_prompt.md` | rw06_0 (runs parallel to rw06_1; final pass after rw06_1) | TODO |
 | 1–3 | rw06_5 | `rw06_5_owner_gameplay_fixes_prompt.md`: clicking a person starts a conversation, blackjack count shown between hands, Cass needs a real count | rw06_0 (parallel with rw06_1/rw06_2) | TODO |
@@ -81,20 +81,21 @@ place, and add one dated line to the history below.
 
 | Metric | Target | Current | Last updated by |
 | --- | --- | --- | --- |
-| `check_godot.ps1 -Suite Smoke` | PASS | PASS (b7c51bf4, 9/21) | PM audit |
-| `check_godot.ps1 -Suite Contract` failing shards | 0 | RED (room/scenario composition) | PM audit |
-| Open P1 (High) defects | 0 | 8 (UIENV-PF-003…009, RP-006 packaged proof) | PM audit |
-| Open P2 (Medium) defects | 0 | 0 non-placement | PM audit |
+| `check_godot.ps1 -Suite Smoke` | PASS | PASS (`54c7d788`, 10/10) | release orchestrator |
+| `check_godot.ps1 -Suite Contract` failing shards | 0 | 0/18 Foundation shards; 1 inherited repeated-reprieve standalone stage remains | release orchestrator |
+| Open P1 (High) defects | 0 | 7 (UIENV-PF-003…008; RP-006 packaged proof) | release orchestrator |
+| Open P2 (Medium) defects | 0 | 1 placement (UIENV-PF-009); 0 non-placement | release orchestrator |
 | Endings reaching the win state through real UI | 3/3 | unknown | — |
 | Owner day-2 room sample (3 rooms) | approved | not started | — |
 | Owner start-to-finish run | done, no blockers | not started | — |
 | Owner run notes | (owner writes blockers here; non-blockers go to the 0.6.1 backlog) | — | — |
 | Release gate items green (rw06_4) | all | 0 | — |
-| Unmerged row branches (`git branch -a`) | 0 | 0 (plus 1 while rw06_pre runs) | PM audit |
+| Unmerged row branches (`git branch -a`) | 0 | 3 local release-week branches (rw06_0, rw06_1, rw06_2) | release orchestrator |
 
 History (newest last):
 
 - 2026-09-22 PM: baseline recorded from the 9/21 post-fix ledger and playtest.
+- 2026-09-23 release orchestrator: verified postfix merge `54c7d788`, SNAPSHOT ancestry, harvest, tested-tree identity and complete branch/worktree cleanup; committed the release-week plan and started rw06_0.
 
 ## Rules every row inherits
 

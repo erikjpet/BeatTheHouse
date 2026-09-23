@@ -1,8 +1,14 @@
 # 0.6 Active Task Board — The Living Town & The Crew
 
+> **Release-week override (2026-09-22):** Active execution state and the
+> current owner-directed sequence now live in
+> [`README_0_6_release_week.md`](README_0_6_release_week.md). This legacy board
+> remains historical design and execution context; its older claim sequence is
+> not active.
+
 Created: 2026-08-13 · Binding design contract:
 `docs/plans/0.6_living_world_roadmap.md` (v4, owner-approved).
-This board is the **single source of truth for 0.6 execution state**.
+This board is retained as the historical source of pre-release-week execution state.
 The roadmap is the single source of truth for **design intent**. When
 code reality disagrees with either, code reality wins — record the
 disagreement in the linked Discovery & Decision Log companion.
@@ -399,16 +405,11 @@ below remain independently actionable.
 
 ### Current owner-directed sequence
 
-The first owner playtest has already produced the `playtest_fixes01…03` repair
-series. The current order is now binding:
-
-1. Maintain the two-branch custody state. The rejected placement experiment is
-   deleted, and all other assessed completed work is integrated on `main`.
-2. Rethink room construction for the expanded object inventory and land an
-   accepted placement update.
-3. Rerun the performance/platform and full playtest gates on that accepted
-   placement tree, then follow owner direction for balance, polish, and release.
-   Do not begin release activity before placement is complete.
+The binding release sequence, live scoreboard, owner checkpoints, and scope
+boundary are maintained in
+[`README_0_6_release_week.md`](README_0_6_release_week.md). Do not claim work
+from this board's historical sequence unless the release-week plan explicitly
+moves it into the active 0.6.0 path.
 
 ## Owner Questions (current verdicts; do not guess)
 

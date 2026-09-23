@@ -1,3 +1,5 @@
+Superseded 2026-09-22 by rw06_0 (completed work archived).
+
 # Agent Prompt - fixsweep06_1: Extended Playtest Bug Sweep (BTH-001 ... BTH-058)
 
 Status: DONE. Self-contained. This file is the only coordination document for

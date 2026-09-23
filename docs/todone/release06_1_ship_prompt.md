@@ -1,3 +1,5 @@
+Superseded 2026-09-22 by rw06_4.
+
 Status: PARKED — do not claim until playtest, triage, tuning, voice, and cleanup are complete
 Board row: `release06_1` in `docs/todo/README_0_6_board.md`
 
