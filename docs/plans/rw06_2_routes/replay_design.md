@@ -240,6 +240,19 @@ checkpoint, screenshots, and final summary used for acceptance.
   while waiting for that same call instead of detaching or reinvoking it. An
   engine-free check of that exact orchestration stayed attached for 7.016
   seconds and passed without starting Godot.
+- The next attached launch at pushed tip `7e522069` reached the confirmation
+  after seven counted actions and then proved `ConfirmationDialog` has no
+  `get_parent_viewport()` runtime method. The session's bounded failure path
+  issued graceful `quit`, exited without force, and left zero Godot processes.
+  This remains a harness-only API blocker before the dialog OK input, with no
+  product route or economy conclusion. Summary SHA-256 is
+  `205B6BE06FF7BB85FD276D0BB39866114C47031394023F963B04877228751A03`;
+  stderr SHA-256 is
+  `71B8317D9CA43A2736710BB5B5BA341D52DD0A5D9B214689303D4655A78E17F3`.
+  The correction requires the dialog's direct parent to be the application
+  node and derives the embedder from that parent's `get_viewport()`, retaining
+  every existing identity, embedded-state, root-viewport, and offset guard.
+  Two valid and eight hostile route fixtures pass engine-free.
 - Final qualifying evidence intentionally waits for rw06_1 to land.
 
 ## Open route risks

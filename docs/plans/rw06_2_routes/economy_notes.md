@@ -42,6 +42,10 @@ The next authorized launch was then cut off by its caller's five-second outer
 timeout before the engine's normal nine-second readiness publication. It also
 issued no gameplay command and adds no economy observation; the exact session
 was closed gracefully with empty stderr and zero surviving Godot processes.
+The following attached launch reached the confirmation after seven actions but
+failed on a nonexistent dialog-parent viewport method before OK input. It adds
+no route economy observation; its bounded cleanup exited without force and
+left zero Godot processes while the API correction proceeds engine-free.
 Copy the exact values from the qualifying route summaries into this table:
 
 | Ending | Seed | Start cash | Grand entry cash | Lowest cash | Chips bought | End cash | Peak heat | Counted actions | Friction / rw06_3 recommendation |

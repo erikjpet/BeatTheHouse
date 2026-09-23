@@ -87,6 +87,7 @@ function Resolve-ButtonInputRouteFixture {
         [Parameter(Mandatory = $true)][string]$RootViewport,
         [string]$SurfaceId = '',
         [bool]$Embedded = $false,
+        [string]$ParentNode = '',
         [string]$EmbedderViewport = '',
         [double]$WindowX = 0,
         [double]$WindowY = 0,
@@ -107,6 +108,7 @@ function Resolve-ButtonInputRouteFixture {
         return [pscustomobject]@{ viewport = $RootViewport; x = $LocalX; y = $LocalY }
     }
     if ($SurfaceId -cne 'tutorial_skip_dialog' -or -not $Embedded -or
+        $ParentNode -cne 'app' -or
         [string]::IsNullOrWhiteSpace($EmbedderViewport) -or
         $EmbedderViewport -cne $RootViewport) {
         throw 'Embedded tutorial dialog route is missing, non-embedded, nested, or bound to the wrong embedder.'
@@ -128,6 +130,7 @@ function Assert-ButtonInputRouteFixture {
         -RootViewport ([string]$Fixture.root) `
         -SurfaceId ([string]$Fixture.surface_id) `
         -Embedded ([bool]$Fixture.embedded) `
+        -ParentNode ([string]$Fixture.parent_node) `
         -EmbedderViewport ([string]$Fixture.embedder) `
         -WindowX ([double]$Fixture.window_x) `
         -WindowY ([double]$Fixture.window_y) `
@@ -237,8 +240,8 @@ func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
     }
 
     $validButtonViewportFixtures = @(
-        [pscustomobject]@{ label = 'ordinary-root-button'; candidates = @('app-root'); live = 'app-root'; root = 'app-root'; surface_id = ''; embedded = $false; embedder = ''; window_x = 0; window_y = 0; local_x = 420.0; local_y = 210.0; expected_viewport = 'app-root'; expected_x = 420.0; expected_y = 210.0 },
-        [pscustomobject]@{ label = 'embedded-confirmation-dialog-button'; candidates = @('tutorial-dialog'); live = 'tutorial-dialog'; root = 'app-root'; surface_id = 'tutorial_skip_dialog'; embedded = $true; embedder = 'app-root'; window_x = 380.0; window_y = 265.0; local_x = 161.5; local_y = 166.5; expected_viewport = 'app-root'; expected_x = 541.5; expected_y = 431.5 }
+        [pscustomobject]@{ label = 'ordinary-root-button'; candidates = @('app-root'); live = 'app-root'; root = 'app-root'; surface_id = ''; embedded = $false; parent_node = ''; embedder = ''; window_x = 0; window_y = 0; local_x = 420.0; local_y = 210.0; expected_viewport = 'app-root'; expected_x = 420.0; expected_y = 210.0 },
+        [pscustomobject]@{ label = 'embedded-confirmation-dialog-button'; candidates = @('tutorial-dialog'); live = 'tutorial-dialog'; root = 'app-root'; surface_id = 'tutorial_skip_dialog'; embedded = $true; parent_node = 'app'; embedder = 'app-root'; window_x = 380.0; window_y = 265.0; local_x = 161.5; local_y = 166.5; expected_viewport = 'app-root'; expected_x = 541.5; expected_y = 431.5 }
     )
     $buttonViewportValidFixtures = $validButtonViewportFixtures.Count
     foreach ($fixture in $validButtonViewportFixtures) {
@@ -250,12 +253,14 @@ func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
         }
     }
     $hostileButtonViewportFixtures = @(
-        [pscustomobject]@{ label = 'null-recorded-viewport'; candidates = @($null); live = 'app-root'; root = 'app-root'; surface_id = ''; embedded = $false; embedder = ''; window_x = 0; window_y = 0; local_x = 420.0; local_y = 210.0; expected_viewport = 'app-root'; expected_x = 420.0; expected_y = 210.0 },
-        [pscustomobject]@{ label = 'wrong-recorded-viewport'; candidates = @('app-root'); live = 'tutorial-dialog'; root = 'app-root'; surface_id = 'tutorial_skip_dialog'; embedded = $true; embedder = 'app-root'; window_x = 380.0; window_y = 265.0; local_x = 161.5; local_y = 166.5; expected_viewport = 'app-root'; expected_x = 541.5; expected_y = 431.5 },
-        [pscustomobject]@{ label = 'ambiguous-recorded-viewports'; candidates = @('app-root', 'tutorial-dialog'); live = 'tutorial-dialog'; root = 'app-root'; surface_id = 'tutorial_skip_dialog'; embedded = $true; embedder = 'app-root'; window_x = 380.0; window_y = 265.0; local_x = 161.5; local_y = 166.5; expected_viewport = 'app-root'; expected_x = 541.5; expected_y = 431.5 },
-        [pscustomobject]@{ label = 'non-embedded-dialog'; candidates = @('tutorial-dialog'); live = 'tutorial-dialog'; root = 'app-root'; surface_id = 'tutorial_skip_dialog'; embedded = $false; embedder = 'app-root'; window_x = 380.0; window_y = 265.0; local_x = 161.5; local_y = 166.5; expected_viewport = 'app-root'; expected_x = 541.5; expected_y = 431.5 },
-        [pscustomobject]@{ label = 'nested-dialog-embedder'; candidates = @('tutorial-dialog'); live = 'tutorial-dialog'; root = 'app-root'; surface_id = 'tutorial_skip_dialog'; embedded = $true; embedder = 'outer-dialog'; window_x = 380.0; window_y = 265.0; local_x = 161.5; local_y = 166.5; expected_viewport = 'app-root'; expected_x = 541.5; expected_y = 431.5 },
-        [pscustomobject]@{ label = 'untranslated-dialog-offset'; candidates = @('tutorial-dialog'); live = 'tutorial-dialog'; root = 'app-root'; surface_id = 'tutorial_skip_dialog'; embedded = $true; embedder = 'app-root'; window_x = 380.0; window_y = 265.0; local_x = 161.5; local_y = 166.5; expected_viewport = 'app-root'; expected_x = 161.5; expected_y = 166.5 }
+        [pscustomobject]@{ label = 'null-recorded-viewport'; candidates = @($null); live = 'app-root'; root = 'app-root'; surface_id = ''; embedded = $false; parent_node = ''; embedder = ''; window_x = 0; window_y = 0; local_x = 420.0; local_y = 210.0; expected_viewport = 'app-root'; expected_x = 420.0; expected_y = 210.0 },
+        [pscustomobject]@{ label = 'wrong-recorded-viewport'; candidates = @('app-root'); live = 'tutorial-dialog'; root = 'app-root'; surface_id = 'tutorial_skip_dialog'; embedded = $true; parent_node = 'app'; embedder = 'app-root'; window_x = 380.0; window_y = 265.0; local_x = 161.5; local_y = 166.5; expected_viewport = 'app-root'; expected_x = 541.5; expected_y = 431.5 },
+        [pscustomobject]@{ label = 'ambiguous-recorded-viewports'; candidates = @('app-root', 'tutorial-dialog'); live = 'tutorial-dialog'; root = 'app-root'; surface_id = 'tutorial_skip_dialog'; embedded = $true; parent_node = 'app'; embedder = 'app-root'; window_x = 380.0; window_y = 265.0; local_x = 161.5; local_y = 166.5; expected_viewport = 'app-root'; expected_x = 541.5; expected_y = 431.5 },
+        [pscustomobject]@{ label = 'non-embedded-dialog'; candidates = @('tutorial-dialog'); live = 'tutorial-dialog'; root = 'app-root'; surface_id = 'tutorial_skip_dialog'; embedded = $false; parent_node = 'app'; embedder = 'app-root'; window_x = 380.0; window_y = 265.0; local_x = 161.5; local_y = 166.5; expected_viewport = 'app-root'; expected_x = 541.5; expected_y = 431.5 },
+        [pscustomobject]@{ label = 'missing-dialog-parent'; candidates = @('tutorial-dialog'); live = 'tutorial-dialog'; root = 'app-root'; surface_id = 'tutorial_skip_dialog'; embedded = $true; parent_node = ''; embedder = 'app-root'; window_x = 380.0; window_y = 265.0; local_x = 161.5; local_y = 166.5; expected_viewport = 'app-root'; expected_x = 541.5; expected_y = 431.5 },
+        [pscustomobject]@{ label = 'wrong-dialog-parent'; candidates = @('tutorial-dialog'); live = 'tutorial-dialog'; root = 'app-root'; surface_id = 'tutorial_skip_dialog'; embedded = $true; parent_node = 'wrapper'; embedder = 'app-root'; window_x = 380.0; window_y = 265.0; local_x = 161.5; local_y = 166.5; expected_viewport = 'app-root'; expected_x = 541.5; expected_y = 431.5 },
+        [pscustomobject]@{ label = 'nested-dialog-embedder'; candidates = @('tutorial-dialog'); live = 'tutorial-dialog'; root = 'app-root'; surface_id = 'tutorial_skip_dialog'; embedded = $true; parent_node = 'outer-dialog'; embedder = 'outer-dialog'; window_x = 380.0; window_y = 265.0; local_x = 161.5; local_y = 166.5; expected_viewport = 'app-root'; expected_x = 541.5; expected_y = 431.5 },
+        [pscustomobject]@{ label = 'untranslated-dialog-offset'; candidates = @('tutorial-dialog'); live = 'tutorial-dialog'; root = 'app-root'; surface_id = 'tutorial_skip_dialog'; embedded = $true; parent_node = 'app'; embedder = 'app-root'; window_x = 380.0; window_y = 265.0; local_x = 161.5; local_y = 166.5; expected_viewport = 'app-root'; expected_x = 161.5; expected_y = 166.5 }
     )
     $buttonViewportHostileFixtures = $hostileButtonViewportFixtures.Count
     foreach ($fixture in $hostileButtonViewportFixtures) {
@@ -473,7 +478,8 @@ func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
     Assert-Match $bridge '(?s)func _scroll_surface\(argument: String\).*?surface_id != "run_menu".*?direction not in \["up", "down"\].*?surface\.get\(capability, false\).*?_push_mouse_wheel.*?after <= before.*?after >= before' 'The bridge semantic scroll command must allow only rendered public run-menu capabilities and verify real wheel movement.'
     Assert-Match $bridge '(?s)func _click_button\(target: String\).*?fully_visible.*?button became hidden, clipped, or disabled before click' 'The bridge must re-check that a semantic button is fully visible immediately before clicking it.'
     Assert-Match $bridge '(?s)func _click_button\(target: String\).*?_button_input_route\(data, button, click_position\).*?input_viewport\s*==\s*null.*?TYPE_VECTOR2.*?missing, changed, or ambiguous.*?_push_mouse_click_in_viewport\(input_viewport, input_position, false\)' 'Every semantic button click must fail closed on a stale input route and use its exact physical viewport coordinate.'
-    Assert-Match $bridge '(?s)func _button_input_route\(data: Dictionary, button: Button, local_position: Vector2\).*?input_viewport_candidates.*?viewport_candidates\.size\(\)\s*!=\s*1.*?viewport_candidates\[0\]\s+as\s+Viewport.*?button\.get_viewport\(\).*?recorded_viewport\s*!=\s*live_viewport.*?recorded_viewport\s*==\s*root_viewport.*?tutorial_skip_dialog.*?dialog\.is_embedded\(\).*?dialog\.get_ok_button\(\).*?dialog\.get_cancel_button\(\).*?tutorial_skip_dialog:%s.*?button\s*!=\s*expected_button.*?data\.get\("id".*?expected_id.*?var\s+embedder_viewport:\s*Viewport\s*=\s*dialog\.get_parent_viewport\(\).*?embedder_viewport\s*!=\s*root_viewport.*?Vector2\(dialog\.position\)\s*\+\s*local_position' 'Button input routing must keep root controls unchanged, explicitly type the parent Viewport, and admit only the exact embedded tutorial dialog controls translated into root embedder coordinates.'
+    Assert-Match $bridge '(?s)func _button_input_route\(data: Dictionary, button: Button, local_position: Vector2\).*?input_viewport_candidates.*?viewport_candidates\.size\(\)\s*!=\s*1.*?viewport_candidates\[0\]\s+as\s+Viewport.*?button\.get_viewport\(\).*?recorded_viewport\s*!=\s*live_viewport.*?recorded_viewport\s*==\s*root_viewport.*?tutorial_skip_dialog.*?dialog\.is_embedded\(\).*?dialog\.get_ok_button\(\).*?dialog\.get_cancel_button\(\).*?tutorial_skip_dialog:%s.*?button\s*!=\s*expected_button.*?data\.get\("id".*?expected_id.*?var\s+dialog_parent:\s*Node\s*=\s*dialog\.get_parent\(\).*?dialog_parent\s*==\s*null.*?dialog_parent\s*!=\s*app.*?var\s+embedder_viewport:\s*Viewport\s*=\s*dialog_parent\.get_viewport\(\).*?embedder_viewport\s*!=\s*root_viewport.*?Vector2\(dialog\.position\)\s*\+\s*local_position' 'Button input routing must keep root controls unchanged, require the exact application parent and its explicitly typed Viewport, and admit only the exact embedded tutorial dialog controls translated into root embedder coordinates.'
+    Assert-NotMatch $bridge 'dialog\.get_parent_viewport\(' 'ConfirmationDialog must not call the nonexistent get_parent_viewport API.'
     Assert-Match $bridge '(?s)func _push_mouse_click\(position: Vector2, double_click: bool\).*?_push_mouse_click_in_viewport\(app\.get_viewport\(\), position, double_click\).*?func _push_mouse_click_in_viewport\(viewport: Viewport.*?viewport\.push_input\(motion, true\).*?viewport\.push_input\(press, true\).*?viewport\.push_input\(release, true\)' 'Ordinary clicks and translated embedded-dialog clicks must retain the same physical motion, press, and release sequence through the root embedder viewport.'
     Assert-Match $bridge '(?s)func _collect_buttons\(node: Node, result: Array\).*?full_rect\s*:=\s*button\.get_global_rect\(\).*?visible_rect\s*:=\s*_clipped_control_rect\(button\).*?"fully_visible":\s*_rect_encloses_with_tolerance\(visible_rect, full_rect\)' 'The bridge must derive fully-visible button state by comparing the full global rect with the clipped visible rect.'
     Assert-Match $bridge '(?s)func _append_tutorial_confirmation_buttons\(result: Array\).*?app\.get\("tutorial_skip_dialog"\) as ConfirmationDialog.*?dialog\s*==\s*null.*?not\s+dialog\.visible.*?dialog\.size\.x\s*<=\s*0.*?dialog\.size\.y\s*<=\s*0.*?dialog\.get_ok_button\(\).*?tutorial_skip_dialog:ok.*?dialog\.get_cancel_button\(\).*?tutorial_skip_dialog:cancel.*?button\.disabled.*?button\.is_visible_in_tree\(\).*?_clipped_control_rect\(button\).*?visible_rect\.has_area\(\).*?"fully_visible":\s*_rect_encloses_with_tolerance\(visible_rect, full_rect\).*?"dialog_rendered":\s*true' 'The bridge may expose only the rendered, enabled, fully measured tutorial confirmation OK/Cancel controls under exact stable ids.'

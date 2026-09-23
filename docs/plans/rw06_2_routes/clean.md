@@ -321,6 +321,45 @@ Evidence:
   stderr is empty (SHA-256
   `E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855`).
 
+## 2026-09-23 parent-viewport runtime launch (no gameplay conclusion)
+
+Pushed replay tip `7e522069`. The corrected long-timeout/yielding outer caller
+remained attached for the full 293-second failure/cleanup cycle. The replay
+again reached the rendered confirmation after seven counted actions, then its
+first attempt to resolve the embedded dialog's physical route raised a runtime
+error: `ConfirmationDialog` has no `get_parent_viewport()` method. No OK click
+was issued and the route never left the tutorial, so this is a harness runtime
+API blocker rather than placement, ending logic, goal-clarity, or economy
+evidence.
+
+The session's bounded error path issued one graceful `quit`; the exact owned
+process exited without force and the process census returned zero. The
+engine-free correction now requires the dialog's direct parent to be the
+production application node, obtains the embedder with that parent node's
+`get_viewport()`, and still requires the result to equal the application root
+viewport. It preserves the exact recorded/live dialog viewport, embedded-only,
+role/button/id, and translated-position checks. Two valid and eight hostile
+route fixtures cover missing/wrong parents as well as null, wrong, ambiguous,
+non-embedded, nested, and untranslated routes.
+
+Evidence:
+
+- Run summary:
+  `.tmp/rw06_2/exploratory/clean-tip-7e522069-probe10/20260923-120631-649-9868/run-01/summary.json`
+  (SHA-256 `205B6BE06FF7BB85FD276D0BB39866114C47031394023F963B04877228751A03`).
+- Public trace, seven counted actions:
+  `.tmp/rw06_2/exploratory/clean-tip-7e522069-probe10/20260923-120631-649-9868/run-01/public_trace.ndjson`
+  (SHA-256 `B713C906EF6EDEC0EC2FE93E74D29792EA55125ED3A8F0E3F8C1A82C789B9378`).
+- Error log:
+  `.tmp/agent_playtest/2026-09-23/rw062-clean-9868-1-6e64059196/godot.stderr.log`
+  (SHA-256 `71B8317D9CA43A2736710BB5B5BA341D52DD0A5D9B214689303D4655A78E17F3`).
+- Failure screenshot:
+  `.tmp/agent_playtest/2026-09-23/rw062-clean-9868-1-6e64059196/0014.png`
+  (SHA-256 `3F786AEC9BFC04C9A8019048D25B2469E827C8513DE0BCC8FDBA04F76C888EA8`).
+- Graceful quit result:
+  `.tmp/agent_playtest/2026-09-23/rw062-clean-9868-1-6e64059196/0015.result.json`
+  (SHA-256 `D2DFA9CC4F8D99557AE76AE7002619E4CB2E45DF291675A11974573DBFF97878`).
+
 ## Player intent
 
 Reach the Grand Casino, earn Bronze, Silver, and Gold Players Card tiers without
