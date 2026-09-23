@@ -4,12 +4,17 @@ extends VBoxContainer
 signal action_selected(record: Dictionary, action: Dictionary)
 
 const MIN_TARGET := Vector2(44.0, 44.0)
+const PREFERRED_PANEL_WIDTH := 520.0
+const PANEL_EDGE_MARGIN := 16.0
 const SOURCE_INLINE := "inline_actions"
 const SOURCE_SEQUENCE := "scenario_sequence_actions"
 const SOURCE_AVAILABLE := "available_actions"
 
 var _modal_focus_scope: RefCounted
+var _action_dispatcher: Callable
 var _launcher: Button
+var _modal_layer: CanvasLayer
+var _overlay: Control
 var _panel: PanelContainer
 var _list: VBoxContainer
 var _close: Button
@@ -25,17 +30,41 @@ func _ready() -> void:
 	_launcher.text = "More room actions"
 	_launcher.tooltip_text = "Open actions that do not have a free authored room slot."
 	_launcher.custom_minimum_size = MIN_TARGET
+	_launcher.clip_text = true
 	_launcher.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_launcher.focus_mode = Control.FOCUS_ALL
 	_launcher.pressed.connect(open)
 	add_child(_launcher)
 
+	_modal_layer = CanvasLayer.new()
+	_modal_layer.layer = 50
+	add_child(_modal_layer)
+	_overlay = Control.new()
+	_overlay.name = "RoomActionOverlay"
+	_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_overlay.visible = false
+	_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	_overlay.mouse_force_pass_scroll_events = false
+	_overlay.focus_mode = Control.FOCUS_NONE
+	_overlay.gui_input.connect(_consume_overlay_input)
+	_modal_layer.add_child(_overlay)
+	var dimmer := ColorRect.new()
+	dimmer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	dimmer.color = Color(0.02, 0.03, 0.05, 0.72)
+	dimmer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_overlay.add_child(dimmer)
+	var center := CenterContainer.new()
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_overlay.add_child(center)
 	_panel = PanelContainer.new()
 	_panel.visible = false
-	_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_panel.custom_minimum_size = Vector2(MIN_TARGET.x, 0.0)
+	_panel.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	_panel.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_panel.focus_mode = Control.FOCUS_NONE
 	_panel.mouse_filter = Control.MOUSE_FILTER_STOP
-	add_child(_panel)
+	center.add_child(_panel)
 	var margin := MarginContainer.new()
 	for side in ["margin_left", "margin_top", "margin_right", "margin_bottom"]:
 		margin.add_theme_constant_override(side, 8)
@@ -45,6 +74,7 @@ func _ready() -> void:
 	margin.add_child(stack)
 	var heading := Label.new()
 	heading.text = "Room actions"
+	heading.clip_text = true
 	heading.tooltip_text = "These objects remain available here without being drawn on the room canvas."
 	stack.add_child(heading)
 	var scroll := ScrollContainer.new()
@@ -61,15 +91,27 @@ func _ready() -> void:
 	_close = Button.new()
 	_close.text = "Close"
 	_close.custom_minimum_size = MIN_TARGET
+	_close.clip_text = true
 	_close.focus_mode = Control.FOCUS_ALL
 	_close.pressed.connect(close)
 	stack.add_child(_close)
+	get_viewport().size_changed.connect(_sync_panel_width)
+	_sync_panel_width()
 	set_process_unhandled_input(true)
 	render([])
 
 
-func configure(modal_focus_scope: RefCounted) -> void:
+func configure(modal_focus_scope: RefCounted, action_dispatcher: Callable = Callable()) -> void:
 	_modal_focus_scope = modal_focus_scope
+	_action_dispatcher = action_dispatcher
+
+
+func has_action_dispatcher() -> bool:
+	return _action_dispatcher.is_valid()
+
+
+func action_dispatcher_matches(expected: Callable) -> bool:
+	return _action_dispatcher == expected
 
 
 func render(records: Array) -> void:
@@ -101,26 +143,29 @@ func render(records: Array) -> void:
 
 
 func open() -> void:
-	if _records.is_empty() or _panel.visible:
+	if _records.is_empty() or _overlay.visible:
 		return
+	_sync_panel_width()
+	_overlay.visible = true
 	_panel.visible = true
 	var controls := _focus_controls()
 	var first := controls[0] as Control if not controls.is_empty() else _close
 	if _modal_focus_scope != null and _modal_focus_scope.has_method("push_scope"):
-		_modal_focus_scope.call("push_scope", _panel, first, _launcher, controls)
+		_modal_focus_scope.call("push_scope", _overlay, first, _launcher, controls)
 	elif first != null:
 		first.grab_focus()
 
 
 func close() -> void:
-	if _panel == null or not _panel.visible:
+	if _overlay == null or not _overlay.visible:
 		return
 	var scope_was_top := true
 	if _modal_focus_scope != null and _modal_focus_scope.has_method("active_root"):
-		scope_was_top = _modal_focus_scope.call("active_root") == _panel
+		scope_was_top = _modal_focus_scope.call("active_root") == _overlay
 	if _modal_focus_scope != null and _modal_focus_scope.has_method("pop_scope"):
-		_modal_focus_scope.call("pop_scope", _panel)
+		_modal_focus_scope.call("pop_scope", _overlay)
 	_panel.visible = false
+	_overlay.visible = false
 	_last_focus_key = ""
 	if (_modal_focus_scope == null or not _modal_focus_scope.has_method("pop_scope")) \
 			and scope_was_top and is_instance_valid(_launcher) and _launcher.visible:
@@ -136,6 +181,7 @@ static func is_visible_overflow_record(record: Dictionary) -> bool:
 
 static func action_entries_for_record(record: Dictionary) -> Array:
 	var entries: Array = []
+	var seen_dispatch_identities: Dictionary = {}
 	for candidate_source in [SOURCE_INLINE, SOURCE_SEQUENCE, SOURCE_AVAILABLE]:
 		var source := str(candidate_source)
 		var actions_value: Variant = record.get(source, [])
@@ -148,10 +194,15 @@ static func action_entries_for_record(record: Dictionary) -> Array:
 			var action := source_actions[index] as Dictionary
 			if not _action_is_visible(action):
 				continue
+			var dispatch_identity := _logical_dispatch_identity(record, action)
+			if seen_dispatch_identities.has(dispatch_identity):
+				continue
+			seen_dispatch_identities[dispatch_identity] = true
 			var entry := action.duplicate(true)
 			entry["_overflow_source"] = source
 			entry["_overflow_index"] = index
-			entry["_overflow_action_key"] = _action_key(str(record.get("object_id", "")), source, index, entry)
+			entry["_overflow_dispatch_identity"] = dispatch_identity
+			entry["_overflow_action_key"] = _action_key(record, source, index, entry)
 			entries.append(entry)
 	return entries
 
@@ -168,13 +219,69 @@ static func _action_is_visible(action: Dictionary) -> bool:
 			or bool(action.get("hidden", false)) \
 			or bool(action.get("hidden_only", false)):
 		return false
-	var action_id := str(action.get("emit_object_id", action.get("id", ""))).strip_edges()
+	var action_id := _first_nonempty([action.get("emit_object_id", ""), action.get("id", "")])
 	return not action_id.is_empty()
 
 
-static func _action_key(object_id: String, source: String, index: int, action: Dictionary) -> String:
-	var identity := str(action.get("emit_object_id", action.get("id", ""))).strip_edges()
-	return "%s:%s:%d:%s" % [object_id, source, index, identity]
+static func _action_key(record: Dictionary, source: String, index: int, action: Dictionary) -> String:
+	var object_id := str(record.get("object_id", "")).strip_edges()
+	var authority := {
+		"object_id": object_id,
+		"object_type": str(record.get("object_type", "")).strip_edges(),
+		"record_owner_namespace": str(record.get("owner_namespace", "")).strip_edges(),
+		"record_stable_object_id": str(record.get("stable_object_id", "")).strip_edges(),
+		"record_scenario_owner_namespace": str(record.get("scenario_owner_namespace", "")).strip_edges(),
+		"record_scenario_stable_object_id": str(record.get("scenario_stable_object_id", "")).strip_edges(),
+		"dispatch_identity": str(action.get("_overflow_dispatch_identity", _logical_dispatch_identity(record, action))),
+		"emit_object_id": str(action.get("emit_object_id", "")).strip_edges(),
+		"action_id": str(action.get("id", "")).strip_edges(),
+		"scenario_command_id": _first_nonempty([action.get("scenario_command_id", ""), action.get("id", ""), record.get("scenario_command_id", "")]),
+		"scenario_owner_namespace": _first_nonempty([action.get("scenario_owner_namespace", ""), action.get("owner_namespace", ""), record.get("scenario_owner_namespace", ""), record.get("owner_namespace", ""), "scenario"]),
+		"scenario_stable_object_id": _first_nonempty([action.get("scenario_stable_object_id", ""), action.get("stable_object_id", ""), record.get("scenario_stable_object_id", ""), record.get("stable_object_id", ""), object_id]),
+		"scenario_idempotency_key": _first_nonempty([action.get("scenario_idempotency_key", ""), record.get("scenario_idempotency_key", "")]),
+		"action_origin_owner_namespace": _first_nonempty([action.get("action_origin_owner_namespace", ""), record.get("action_origin_owner_namespace", "")]),
+		"action_origin_stable_object_id": _first_nonempty([action.get("action_origin_stable_object_id", ""), record.get("action_origin_stable_object_id", "")]),
+		"action_origin_receipt_key": _first_nonempty([action.get("action_origin_receipt_key", ""), record.get("action_origin_receipt_key", "")]),
+		"action_origin_boundary_id": _first_nonempty([action.get("action_origin_boundary_id", ""), record.get("action_origin_boundary_id", "")]),
+		"action_origin_fingerprint": _first_nonempty([action.get("action_origin_fingerprint", ""), record.get("action_origin_fingerprint", "")]),
+		"world_sequence_owner_token": _first_nonempty([action.get("world_sequence_owner_token", ""), record.get("world_sequence_owner_token", "")]),
+		"parent_id": _first_nonempty([action.get("parent_id", ""), record.get("parent_id", "")]),
+		"source_id": _first_nonempty([action.get("source_id", ""), action.get("hook_id", ""), record.get("source_id", "")]),
+		"handler": str(action.get("handler", "")).strip_edges(),
+		"inputs": action.get("inputs", {}),
+		"cost": int(action.get("cost", 0)),
+	}
+	return "%s:%s:%d:%s" % [object_id, source, index, JSON.stringify(authority).sha256_text()]
+
+
+static func _logical_dispatch_identity(record: Dictionary, action: Dictionary) -> String:
+	var object_id := str(record.get("object_id", "")).strip_edges()
+	var object_type := str(record.get("object_type", "")).strip_edges()
+	var action_id := _first_nonempty([action.get("scenario_command_id", ""), action.get("id", ""), action.get("emit_object_id", "")])
+	if object_type in ["scenario", "scenario_sequence", "scenario_scene_object", "scenario_actor", "character"] \
+			or not str(action.get("scenario_command_id", "")).strip_edges().is_empty():
+		var owner := _first_nonempty([action.get("scenario_owner_namespace", ""), action.get("owner_namespace", ""), record.get("scenario_owner_namespace", ""), record.get("owner_namespace", ""), "scenario"])
+		var stable_id := _first_nonempty([action.get("scenario_stable_object_id", ""), action.get("stable_object_id", ""), record.get("scenario_stable_object_id", ""), record.get("stable_object_id", ""), object_id])
+		var world_owner_token := _first_nonempty([action.get("world_sequence_owner_token", ""), record.get("world_sequence_owner_token", "")])
+		return "%s:%s:%s:%s" % ["world:%s" % world_owner_token if not world_owner_token.is_empty() else "scenario", owner, stable_id, action_id]
+	var emit_object_id := str(action.get("emit_object_id", "")).strip_edges()
+	if not emit_object_id.is_empty():
+		return "emit:%s" % emit_object_id
+	if object_type == "game_hook":
+		return "game_hook:%s:%s:%s" % [
+			str(action.get("parent_id", record.get("parent_id", ""))),
+			str(action.get("source_id", action.get("hook_id", record.get("source_id", "")))),
+			action_id,
+		]
+	return "record:%s:%s" % [object_id, action_id]
+
+
+static func _first_nonempty(values: Array) -> String:
+	for value in values:
+		var text := str(value).strip_edges()
+		if not text.is_empty():
+			return text
+	return ""
 
 
 func _rebuild_rows() -> void:
@@ -198,12 +305,12 @@ func _rebuild_rows() -> void:
 			var button := _add_action_row(record, action)
 			if str(action.get("_overflow_action_key", "")) == _last_focus_key and not button.disabled:
 				preferred = button
-	if _panel != null and _panel.visible:
+	if _overlay != null and _overlay.visible:
 		var controls := _focus_controls()
 		if preferred == null:
 			preferred = controls[0] as Control if not controls.is_empty() else _close
 		if _modal_focus_scope != null and _modal_focus_scope.has_method("refresh_scope"):
-			_modal_focus_scope.call("refresh_scope", _panel, preferred, controls)
+			_modal_focus_scope.call("refresh_scope", _overlay, preferred, controls)
 		if preferred != null:
 			preferred.grab_focus()
 
@@ -213,20 +320,21 @@ func _add_action_row(record: Dictionary, action: Dictionary) -> Button:
 	var record_label := str(record.get("label", record.get("object_id", "Room action"))).strip_edges()
 	var action_label := str(action.get("label", "")).strip_edges()
 	if action_label.is_empty():
-		action_label = str(action.get("id", action.get("emit_object_id", "Use"))).replace("_", " ").capitalize()
+		action_label = _first_nonempty([action.get("id", ""), action.get("emit_object_id", ""), "Use"]).replace("_", " ").capitalize()
 	var enabled := action_is_enabled(record, action)
 	var reason := _disabled_reason(record, action) if not enabled else ""
 	button.text = "%s: %s%s" % [record_label, action_label, " - %s" % reason if not reason.is_empty() else ""]
 	var description := str(action.get("text", action.get("short_description", record.get("short_description", "")))).strip_edges()
 	button.tooltip_text = reason if not reason.is_empty() else description
 	button.custom_minimum_size = MIN_TARGET
+	button.clip_text = true
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.focus_mode = Control.FOCUS_ALL
 	button.disabled = not enabled
 	var object_id := str(record.get("object_id", ""))
 	var action_key := str(action.get("_overflow_action_key", ""))
 	button.set_meta("object_id", object_id)
-	button.set_meta("action_id", str(action.get("emit_object_id", action.get("id", ""))))
+	button.set_meta("action_id", _first_nonempty([action.get("emit_object_id", ""), action.get("id", "")]))
 	button.set_meta("action_source", str(action.get("_overflow_source", "")))
 	button.set_meta("action_key", action_key)
 	button.focus_entered.connect(_remember_focus.bind(action_key))
@@ -244,6 +352,7 @@ func _add_unavailable_record_row(record: Dictionary) -> void:
 	button.text = "%s - %s" % [label, reason]
 	button.tooltip_text = reason
 	button.custom_minimum_size = MIN_TARGET
+	button.clip_text = true
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.focus_mode = Control.FOCUS_ALL
 	button.disabled = true
@@ -276,8 +385,17 @@ func _select_action(object_id: String, action_key: String) -> void:
 				continue
 			if not action_is_enabled(record, action):
 				return
-			action_selected.emit(record.duplicate(true), action.duplicate(true))
-			close()
+			var record_snapshot := record.duplicate(true)
+			var action_snapshot := action.duplicate(true)
+			if _action_dispatcher.is_valid():
+				if not bool(_action_dispatcher.call(record_snapshot, action_snapshot)):
+					return
+				action_selected.emit(record_snapshot, action_snapshot)
+				if is_open():
+					close()
+			else:
+				action_selected.emit(record_snapshot, action_snapshot)
+				close()
 			return
 
 
@@ -286,12 +404,30 @@ func _remember_focus(action_key: String) -> void:
 
 
 func _focused_action_key() -> String:
-	if _panel == null or not _panel.visible or get_viewport() == null:
+	if _overlay == null or not _overlay.visible or get_viewport() == null:
 		return ""
 	var owner := get_viewport().gui_get_focus_owner()
-	if owner == null or not _panel.is_ancestor_of(owner):
+	if owner == null or not _overlay.is_ancestor_of(owner):
 		return ""
 	return str(owner.get_meta("action_key", ""))
+
+
+func is_open() -> bool:
+	return _overlay != null and _overlay.visible
+
+
+func _consume_overlay_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton or event is InputEventMouseMotion \
+			or event is InputEventScreenTouch or event is InputEventScreenDrag:
+		_overlay.accept_event()
+		get_viewport().set_input_as_handled()
+
+
+func _sync_panel_width() -> void:
+	if _panel == null or get_viewport() == null:
+		return
+	var available_width := maxf(MIN_TARGET.x, get_viewport_rect().size.x - PANEL_EDGE_MARGIN * 2.0)
+	_panel.custom_minimum_size.x = minf(PREFERRED_PANEL_WIDTH, available_width)
 
 
 func _disabled_reason(record: Dictionary, action: Dictionary) -> String:
@@ -317,6 +453,6 @@ func _records_signature(records: Array) -> String:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if _panel != null and _panel.visible and event.is_action_pressed("ui_cancel"):
+	if is_open() and event.is_action_pressed("ui_cancel"):
 		close()
 		get_viewport().set_input_as_handled()

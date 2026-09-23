@@ -3,6 +3,11 @@ extends SceneTree
 const FoundationMainScript := preload("res://scripts/ui/foundation_main.gd")
 const PixelSceneCanvasScript := preload("res://scripts/ui/pixel_scene_canvas.gd")
 const RoomActionListScript := preload("res://scripts/ui/room_action_list.gd")
+const EnvironmentInstanceScript := preload("res://scripts/core/environment_instance.gd")
+const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
+const ScenarioSemanticViewModelScript := preload("res://scripts/ui/scenario_semantic_view_model.gd")
+const ScenarioSequenceProbeSupportScript := preload("res://tools/scenario_sequence_probe_support.gd")
+const HarnessProductionFidelityScript := preload("res://scripts/tests/foundation/harness_production_fidelity.gd")
 
 var failures: Array[String] = []
 
@@ -12,11 +17,23 @@ class OverflowFoundationHost:
 
 	var overflow_fixture_records: Array = []
 	var use_overflow_fixture := false
+	var delivery_exit_focus_routes := 0
+	var delivery_exit_activation_routes := 0
 
 	func _interactable_object_view_list() -> Array:
 		if use_overflow_fixture:
 			return overflow_fixture_records.duplicate(true)
 		return super._interactable_object_view_list()
+
+	func _on_environment_object_focused(object_id: String) -> void:
+		if object_id == "scenario::delivery_exit":
+			delivery_exit_focus_routes += 1
+		super._on_environment_object_focused(object_id)
+
+	func _on_environment_object_activated(object_id: String) -> void:
+		if object_id == "scenario::delivery_exit":
+			delivery_exit_activation_routes += 1
+		super._on_environment_object_activated(object_id)
 
 
 func _init() -> void:
@@ -37,9 +54,7 @@ func _run() -> void:
 
 	var production_record := _first_enabled_game_record(app.call("_interactable_object_view_list"))
 	if production_record.is_empty():
-		production_record = _fallback_production_game_record(app)
-	if production_record.is_empty():
-		failures.append("RW06-1 overflow contract found no resolvable production game action.")
+		failures.append("RW06-1 overflow contract found no live production game action; a synthetic fallback is forbidden.")
 		await _finish(app)
 		return
 	production_record["presentation_mode"] = "overflow"
@@ -86,6 +101,48 @@ func _run() -> void:
 			{"id": "secret_available", "emit_object_id": "overflow_fixture_action:secret_available", "label": "Secret available", "hidden_only": true},
 		],
 	}
+	var mirrored_record := {
+		"object_id": "overflow_fixture:mirrored",
+		"object_type": "scenario",
+		"owner_namespace": "scenario",
+		"stable_object_id": "mirrored_console",
+		"label": "Mirrored authority fixture",
+		"short_description": "The same command is projected through three source fields.",
+		"presentation_mode": "overflow",
+		"presentation_required": true,
+		"visible": true,
+		"interactive": true,
+		"enabled": true,
+		"focus_order": 35,
+		"inline_actions": [{
+			"id": "mirrored",
+			"scenario_command_id": "mirrored",
+			"scenario_owner_namespace": "scenario",
+			"scenario_stable_object_id": "mirrored_console",
+			"emit_object_id": "scenario_action:4:scenario:mirrored_console:mirrored",
+			"label": "Mirrored inline route",
+		}],
+		"scenario_sequence_actions": [{
+			"id": "mirrored",
+			"scenario_owner_namespace": "scenario",
+			"scenario_stable_object_id": "mirrored_console",
+			"label": "Mirrored sequence route",
+		}],
+		"available_actions": [
+			{
+				"id": "mirrored",
+				"scenario_owner_namespace": "scenario",
+				"scenario_stable_object_id": "mirrored_console",
+				"label": "Mirrored available route",
+			},
+			{
+				"id": "distinct_later",
+				"scenario_owner_namespace": "scenario",
+				"scenario_stable_object_id": "mirrored_console",
+				"label": "Distinct later route",
+			},
+		],
+	}
 	var information_record := {
 		"object_id": "overflow_fixture:information",
 		"object_type": "scenario_scene_object",
@@ -116,7 +173,7 @@ func _run() -> void:
 			"hidden": true,
 		}],
 	}
-	var records: Array = [production_record, disabled_record, multi_record, information_record, hidden_record]
+	var records: Array = [production_record, disabled_record, multi_record, mirrored_record, information_record, hidden_record]
 	app.overflow_fixture_records = records.duplicate(true)
 	app.use_overflow_fixture = true
 	var action_list = app.get("room_action_list")
@@ -125,8 +182,9 @@ func _run() -> void:
 		await _finish(app)
 		return
 	var production_handler := Callable(app, "_activate_overflow_room_action")
-	if not action_list.action_selected.is_connected(production_handler):
-		failures.append("RW06-1 production Foundation builder did not connect overflow actions to its live dispatch hook.")
+	if not bool(action_list.call("has_action_dispatcher")) \
+			or not bool(action_list.call("action_dispatcher_matches", production_handler)):
+		failures.append("RW06-1 production Foundation builder did not configure the fail-closed live overflow dispatcher.")
 	var activations: Array[String] = []
 	action_list.action_selected.connect(func(_record: Dictionary, action: Dictionary) -> void:
 		activations.append(_activation_key(action))
@@ -134,14 +192,30 @@ func _run() -> void:
 	action_list.render(records)
 	await _settle_frames(2)
 
+	_check_dispatch_source_placement()
 	_check_rendered_action_surface(action_list, records)
+	_check_source_aggregation_and_dedupe(multi_record, mirrored_record)
+	_check_action_key_authority_seal()
 	_check_canvas_exclusion(records)
 	await _check_cancel_and_focus_recovery(action_list)
+	await _check_responsive_panel_width(action_list)
 	await _check_refresh_focus_recovery(app, action_list, records)
-	await _check_mixed_source_dispatch(app, action_list, records, activations)
+	for mode in ["mouse", "touch", "keyboard", "controller"]:
+		await _check_rejected_actions_for_mode(app, action_list, disabled_record, hidden_record, activations, str(mode))
+	await _check_downstream_rejection_reopens(app, action_list, activations)
+
+	var baseline_run_snapshot: Dictionary = app.get("run_state").to_dict()
+	var delivery_setup := await _install_delivery_day(app, action_list)
+	if bool(delivery_setup.get("ok", false)):
+		var arrival_snapshot := (delivery_setup.get("arrival_snapshot", {}) as Dictionary).duplicate(true)
+		await _check_background_pointer_shield(app, action_list, arrival_snapshot, "mouse")
+		await _check_background_pointer_shield(app, action_list, arrival_snapshot, "touch")
+		await _check_stale_authority_rejection(app, action_list, arrival_snapshot, activations)
+		await _check_inline_scenario_mutation(app, action_list, arrival_snapshot, activations)
+		await _check_sequence_scenario_mutation(app, action_list, arrival_snapshot, activations)
+	await _restore_run(app, action_list, baseline_run_snapshot)
 	for mode in ["mouse", "touch", "keyboard", "controller"]:
 		await _check_production_mutation_for_mode(app, action_list, production_record, activations, str(mode))
-		await _check_rejected_actions_for_mode(app, action_list, disabled_record, hidden_record, activations, str(mode))
 	await _finish(app)
 
 
@@ -173,6 +247,8 @@ func _check_rendered_action_surface(action_list: Control, records: Array) -> voi
 		"overflow_fixture_action:second": RoomActionListScript.SOURCE_INLINE,
 		"overflow_fixture_action:sequence": RoomActionListScript.SOURCE_SEQUENCE,
 		"overflow_fixture_action:available": RoomActionListScript.SOURCE_AVAILABLE,
+		"scenario_action:4:scenario:mirrored_console:mirrored": RoomActionListScript.SOURCE_INLINE,
+		"distinct_later": RoomActionListScript.SOURCE_AVAILABLE,
 	}
 	for action_id in expected_sources:
 		if str(action_sources.get(action_id, "")) != str(expected_sources[action_id]):
@@ -191,6 +267,124 @@ func _check_rendered_action_surface(action_list: Control, records: Array) -> voi
 		failures.append("RW06-1 disabled overflow action does not visibly explain why it is unavailable.")
 	if information_button == null or not information_button.disabled:
 		failures.append("RW06-1 actionless visible overflow record was omitted or remained actionable.")
+
+
+func _check_dispatch_source_placement() -> void:
+	var source := FileAccess.get_file_as_string("res://scripts/ui/foundation_main.gd")
+	var blocking_body := _source_function_body(source, "_blocking_modal_message")
+	var slot_body := _source_function_body(source, "_main_floor_slot_game_id")
+	var talk_body := _source_function_body(source, "_talk_dock_input_is_blocked")
+	var dispatch_body := _source_function_body(source, "_activate_overflow_room_action")
+	if source.count("Close Room actions before doing anything else.") != 1 \
+			or not blocking_body.contains("Close Room actions before doing anything else.") \
+			or slot_body.contains("Close Room actions"):
+		failures.append("RW06-1 RoomActionList modal guard is not confined to _blocking_modal_message().")
+	if not talk_body.contains("room_action_list") or not talk_body.contains("is_open"):
+		failures.append("RW06-1 TalkDock's separate input route is not blocked while RoomActionList is open.")
+	var sequence_index := dispatch_body.find("SOURCE_SEQUENCE")
+	var command_index := dispatch_body.find("scenario_command_id")
+	var emit_index := dispatch_body.find("var emit_object_id")
+	if sequence_index < 0 or command_index < 0 or emit_index < 0 \
+			or sequence_index > emit_index or command_index > emit_index:
+		failures.append("RW06-1 overflow dispatch no longer prioritizes sequence/scenario authority over generic emit tokens.")
+
+
+func _check_source_aggregation_and_dedupe(multi_record: Dictionary, mirrored_record: Dictionary) -> void:
+	var distinct_entries := RoomActionListScript.action_entries_for_record(multi_record)
+	var distinct_sources: Array = []
+	for entry_value in distinct_entries:
+		distinct_sources.append(str((entry_value as Dictionary).get("_overflow_source", "")))
+	if distinct_entries.size() != 4 \
+			or distinct_sources != [
+				RoomActionListScript.SOURCE_INLINE,
+				RoomActionListScript.SOURCE_INLINE,
+				RoomActionListScript.SOURCE_SEQUENCE,
+				RoomActionListScript.SOURCE_AVAILABLE,
+			]:
+		failures.append("RW06-1 distinct mixed-source actions were collapsed or reordered: %s." % JSON.stringify(distinct_sources))
+	var mirrored_entries := RoomActionListScript.action_entries_for_record(mirrored_record)
+	if mirrored_entries.size() != 2:
+		failures.append("RW06-1 mirrored command did not collapse to one row while retaining its distinct later-source action: %s." % JSON.stringify(mirrored_entries))
+		return
+	var mirrored := mirrored_entries[0] as Dictionary
+	var distinct := mirrored_entries[1] as Dictionary
+	if str(mirrored.get("_overflow_source", "")) != RoomActionListScript.SOURCE_INLINE \
+			or str(mirrored.get("scenario_command_id", mirrored.get("id", ""))) != "mirrored" \
+			or str(distinct.get("_overflow_source", "")) != RoomActionListScript.SOURCE_AVAILABLE \
+			or str(distinct.get("id", "")) != "distinct_later":
+		failures.append("RW06-1 mirrored-command dedupe lost deterministic first-source precedence: %s." % JSON.stringify(mirrored_entries))
+	var blank_optional_record := {
+		"object_id": "scenario::blank_optional",
+		"object_type": "scenario",
+		"owner_namespace": "scenario",
+		"stable_object_id": "blank_optional",
+		"inline_actions": [
+			{"id": "first_valid_id", "emit_object_id": "", "scenario_command_id": ""},
+			{"id": "second_valid_id", "emit_object_id": "", "scenario_command_id": ""},
+		],
+	}
+	var blank_optional_entries := RoomActionListScript.action_entries_for_record(blank_optional_record)
+	if blank_optional_entries.size() != 2:
+		failures.append("RW06-1 blank optional emit/command fields hid or collapsed valid distinct action ids.")
+
+
+func _check_action_key_authority_seal() -> void:
+	var action := {
+		"id": "prepare",
+		"scenario_command_id": "prepare",
+		"scenario_owner_namespace": "scenario",
+		"scenario_stable_object_id": "console",
+		"scenario_idempotency_key": "ui:3:scenario:console:prepare",
+		"action_origin_owner_namespace": "scenario",
+		"action_origin_stable_object_id": "console",
+		"action_origin_receipt_key": "receipt:prepare",
+		"action_origin_boundary_id": "arrival:3",
+		"action_origin_fingerprint": "a".repeat(64),
+		"world_sequence_owner_token": "world:owner:3",
+	}
+	var record := {
+		"object_id": "scenario::console",
+		"object_type": "scenario_sequence",
+		"owner_namespace": "scenario",
+		"stable_object_id": "console",
+		"enabled": true,
+		"interactive": true,
+		"scenario_sequence_actions": [action],
+	}
+	var baseline_entries := RoomActionListScript.action_entries_for_record(record)
+	if baseline_entries.size() != 1:
+		failures.append("RW06-1 authority-seal fixture could not produce its baseline action.")
+		return
+	var baseline_key := str((baseline_entries[0] as Dictionary).get("_overflow_action_key", ""))
+	for field_value in [
+		"scenario_owner_namespace",
+		"scenario_stable_object_id",
+		"scenario_command_id",
+		"scenario_idempotency_key",
+		"action_origin_owner_namespace",
+		"action_origin_stable_object_id",
+		"action_origin_receipt_key",
+		"action_origin_boundary_id",
+		"action_origin_fingerprint",
+		"world_sequence_owner_token",
+	]:
+		var changed_record := record.duplicate(true)
+		var changed_actions := (changed_record.get("scenario_sequence_actions", []) as Array).duplicate(true)
+		var changed_action := (changed_actions[0] as Dictionary).duplicate(true)
+		changed_action[str(field_value)] = "%s_changed" % str(changed_action.get(str(field_value), "authority"))
+		changed_actions[0] = changed_action
+		changed_record["scenario_sequence_actions"] = changed_actions
+		var changed_entries := RoomActionListScript.action_entries_for_record(changed_record)
+		if changed_entries.size() != 1 \
+				or str((changed_entries[0] as Dictionary).get("_overflow_action_key", "")) == baseline_key:
+			failures.append("RW06-1 overflow action key did not seal %s." % str(field_value))
+	for record_field_value in ["owner_namespace", "stable_object_id"]:
+		var changed_record := record.duplicate(true)
+		changed_record[str(record_field_value)] = "%s_changed" % str(changed_record.get(str(record_field_value), "authority"))
+		var changed_entries := RoomActionListScript.action_entries_for_record(changed_record)
+		if changed_entries.size() != 1 \
+				or str((changed_entries[0] as Dictionary).get("_overflow_action_key", "")) == baseline_key:
+			failures.append("RW06-1 overflow action key did not seal record %s." % str(record_field_value))
 
 
 func _check_canvas_exclusion(records: Array) -> void:
@@ -215,11 +409,28 @@ func _check_cancel_and_focus_recovery(action_list: Control) -> void:
 	await process_frame
 	_send_key(KEY_ESCAPE)
 	await _settle_frames(2)
-	var panel := action_list.get("_panel") as Control
-	if panel != null and panel.visible:
+	if bool(action_list.call("is_open")):
 		failures.append("RW06-1 ui_cancel did not close the overflow modal.")
 	if launcher == null or root.gui_get_focus_owner() != launcher:
 		failures.append("RW06-1 overflow cancel did not restore focus to its launcher.")
+
+
+func _check_responsive_panel_width(action_list: Control) -> void:
+	var original_size := root.size
+	root.size = Vector2i(320, 360)
+	await _settle_frames(3)
+	action_list.open()
+	await _settle_frames(2)
+	var overlay := action_list.get("_overlay") as Control
+	var panel := action_list.get("_panel") as Control
+	if overlay == null or panel == null \
+			or panel.custom_minimum_size.x > 288.0 \
+			or panel.size.x > 288.0 \
+			or not overlay.get_global_rect().encloses(panel.get_global_rect()):
+		failures.append("RW06-1 compact action panel overflows a 320px-wide viewport.")
+	action_list.close()
+	root.size = original_size
+	await _settle_frames(3)
 
 
 func _check_refresh_focus_recovery(app: Control, action_list: Control, records: Array) -> void:
@@ -252,43 +463,319 @@ func _check_refresh_focus_recovery(app: Control, action_list: Control, records: 
 	await process_frame
 
 
-func _check_mixed_source_dispatch(app: Control, action_list: Control, records: Array, activations: Array[String]) -> void:
-	app.set("overflow_fixture_records", records.duplicate(true))
-	action_list.render(records)
-	var before := _mutation_snapshot(app)
-	for case_value in [
-		{"id": "overflow_fixture_action:first", "source": RoomActionListScript.SOURCE_INLINE},
-		{"id": "overflow_fixture_action:second", "source": RoomActionListScript.SOURCE_INLINE},
-		{"id": "overflow_fixture_action:sequence", "source": RoomActionListScript.SOURCE_SEQUENCE},
-		{"id": "overflow_fixture_action:available", "source": RoomActionListScript.SOURCE_AVAILABLE},
-	]:
-		var case_data := case_value as Dictionary
-		var expected_key := "%s|%s" % [str(case_data.get("source", "")), str(case_data.get("id", ""))]
-		var prior_count := activations.count(expected_key)
-		action_list.open()
-		await process_frame
-		var button := _action_button(action_list, str(case_data.get("id", "")))
-		if button == null:
-			failures.append("RW06-1 mixed-source dispatch could not find %s." % expected_key)
-			action_list.close()
+func _install_delivery_day(app: Control, action_list: Control) -> Dictionary:
+	action_list.close()
+	action_list.render([])
+	app.set("use_overflow_fixture", false)
+	app.set("interactable_object_view_cache_valid", false)
+	var library: Variant = app.get("library")
+	var run_state: Variant = app.get("run_state")
+	var definition: Dictionary = library.call("scenario", ScenarioSequenceProbeSupportScript.SCENARIO_ID) if library != null else {}
+	var archetype: Dictionary = library.call("environment_archetype", ScenarioSequenceProbeSupportScript.ARCHETYPE_ID) if library != null else {}
+	if run_state == null or definition.is_empty() or archetype.is_empty():
+		failures.append("RW06-1 could not load the shipped delivery-day scenario and corner-store archetype.")
+		return {"ok": false}
+	var rng: Variant = run_state.call("create_rng", "rw06_1:delivery-day-overflow")
+	var environment: Variant = EnvironmentInstanceScript.from_archetype(archetype, 1, rng, library, {}, definition)
+	if environment == null:
+		failures.append("RW06-1 could not instantiate the shipped delivery-day environment.")
+		return {"ok": false}
+	var data: Dictionary = environment.call("to_dict")
+	data["world_node_id"] = ScenarioSequenceProbeSupportScript.NODE_ID
+	var generator := RunGeneratorScript.new(library)
+	data["game_states"] = generator.call("_generated_game_states", run_state, data, rng)
+	data["layout"] = EnvironmentInstanceScript.ensure_generated_layout(data)
+	var proof_map: Dictionary = (run_state.get("world_map") as Dictionary).duplicate(true)
+	var proof_nodes: Array = (proof_map.get("nodes", []) as Array).duplicate(true)
+	var proof_node: Dictionary = {}
+	for node_value in proof_nodes:
+		if typeof(node_value) != TYPE_DICTIONARY:
 			continue
-		button.emit_signal("pressed")
-		await _settle_frames(2)
-		if activations.count(expected_key) != prior_count + 1:
-			failures.append("RW06-1 mixed-source action did not dispatch independently: %s." % expected_key)
-	if _mutation_snapshot(app) != before:
-		failures.append("RW06-1 unresolved mixed-source fixture actions mutated production state.")
+		var node := node_value as Dictionary
+		if str(node.get("id", "")) == ScenarioSequenceProbeSupportScript.ARCHETYPE_ID:
+			proof_node = node.duplicate(true)
+			break
+	if proof_node.is_empty():
+		failures.append("RW06-1 production world map has no corner-store node for the delivery-day fixture.")
+		return {"ok": false}
+	proof_node["id"] = ScenarioSequenceProbeSupportScript.NODE_ID
+	proof_node["environment"] = {}
+	proof_nodes.append(proof_node)
+	proof_map["nodes"] = proof_nodes
+	proof_map["current_node_id"] = ScenarioSequenceProbeSupportScript.NODE_ID
+	run_state.set("current_environment", {})
+	run_state.set("world_map", proof_map)
+	if not bool(run_state.call("seed_scenario_for_node", ScenarioSequenceProbeSupportScript.NODE_ID, definition)):
+		failures.append("RW06-1 production RunState rejected the shipped delivery-day scenario seed.")
+		return {"ok": false}
+	var installation: Dictionary = run_state.call("set_environment", data)
+	if not bool(installation.get("ok", false)):
+		failures.append("RW06-1 production RunState rejected the delivery-day environment: %s." % JSON.stringify(installation.get("errors", [])))
+		return {"ok": false}
+	app.call("_clear_selected_game_action")
+	app.call("_refresh")
+	await _settle_frames(6)
+	var projection: Dictionary = run_state.call("scenario_sequence_projection")
+	if str(projection.get("scenario_id", "")) != ScenarioSequenceProbeSupportScript.SCENARIO_ID \
+			or str(projection.get("phase_id", "")) != "arrival":
+		failures.append("RW06-1 shipped delivery-day scenario did not finalize at arrival: %s." % JSON.stringify(projection))
+		return {"ok": false}
+	var live_records := _current_interactable_records(app)
+	if _record_by_object_id(live_records, "scenario::delivery_event_gate").is_empty() \
+			or _record_by_object_id(live_records, "scenario::delivery_exit").is_empty():
+		failures.append("RW06-1 shipped delivery-day obstruction records are unavailable after finalization.")
+		return {"ok": false}
+	return {
+		"ok": true,
+		"arrival_snapshot": run_state.to_dict(),
+		"live_records": live_records,
+	}
+
+
+func _restore_run(app: Control, action_list: Control, snapshot: Dictionary) -> void:
+	action_list.close()
+	app.set("use_overflow_fixture", false)
+	app.set("interactable_object_view_cache_valid", false)
+	var run_state: Variant = app.get("run_state")
+	if run_state != null:
+		run_state.from_dict(snapshot.duplicate(true))
+	app.call("_clear_selected_game_action")
+	app.call("_refresh")
+	await _settle_frames(5)
+
+
+func _check_background_pointer_shield(app: Control, action_list: Control, arrival_snapshot: Dictionary, mode: String) -> void:
+	await _restore_run(app, action_list, arrival_snapshot)
+	var live_records := _current_interactable_records(app)
+	var gate := _record_by_object_id(live_records, "scenario::delivery_event_gate")
+	var exit_record := _record_by_object_id(live_records, "scenario::delivery_exit")
+	if gate.is_empty() or exit_record.is_empty():
+		failures.append("RW06-1 %s background shield check lost a shipped delivery obstruction." % mode)
+		return
+	gate = _as_overflow_record(gate, 1)
+	for index in range(live_records.size()):
+		if str((live_records[index] as Dictionary).get("object_id", "")) == "scenario::delivery_event_gate":
+			live_records[index] = gate
+			break
+	_install_fixture_records(app, action_list, live_records)
+	await _settle_frames(2)
+	var canvas: Control = app.get("environment_canvas") as Control
+	var resolved := HarnessProductionFidelityScript.resolve_exact_canvas_object(
+		canvas,
+		"scenario::delivery_exit",
+		failures,
+		"RW06-1 %s modal background shield" % mode
+	)
+	if not bool(resolved.get("ok", false)):
+		return
+	var local_position: Vector2 = resolved.get("local_hit_position", Vector2(-1.0, -1.0))
+	var global_position := canvas.get_global_transform_with_canvas() * local_position
+	var control_focus_count := int(app.get("delivery_exit_focus_routes"))
+	match mode:
+		"mouse":
+			HarnessProductionFidelityScript.push_exact_canvas_mouse_click(
+				root,
+				canvas,
+				"scenario::delivery_exit",
+				failures,
+				"RW06-1 mouse background live control",
+				false
+			)
+		"touch":
+			_send_touch(global_position)
+	await _settle_frames(3)
+	if int(app.get("delivery_exit_focus_routes")) != control_focus_count + 1:
+		failures.append("RW06-1 %s live control did not route to the real delivery-exit canvas target." % mode)
+	await create_timer(0.45).timeout
+	action_list.open()
+	await _settle_frames(2)
+	var first_action := _first_enabled_action_button(action_list)
+	if first_action != null:
+		first_action.grab_focus()
+	await process_frame
+	var overlay := action_list.get("_overlay") as Control
+	var panel := action_list.get("_panel") as Control
+	if overlay == null or not overlay.get_global_rect().has_point(global_position):
+		failures.append("RW06-1 %s shield does not cover the real delivery-exit hit point." % mode)
+	if panel != null and panel.get_global_rect().has_point(global_position):
+		failures.append("RW06-1 %s shield fixture did not exercise a point outside the compact action panel." % mode)
+	var before := _mutation_snapshot(app)
+	var before_focus_routes := int(app.get("delivery_exit_focus_routes"))
+	var before_activation_routes := int(app.get("delivery_exit_activation_routes"))
+	match mode:
+		"mouse":
+			HarnessProductionFidelityScript.push_exact_canvas_mouse_click(
+				root,
+				canvas,
+				"scenario::delivery_exit",
+				failures,
+				"RW06-1 mouse modal background shield",
+				true
+			)
+		"touch":
+			_send_touch(global_position, true)
+	await _settle_frames(4)
+	var focus_owner := root.gui_get_focus_owner()
+	if _mutation_snapshot(app) != before \
+			or int(app.get("delivery_exit_focus_routes")) != before_focus_routes \
+			or int(app.get("delivery_exit_activation_routes")) != before_activation_routes \
+			or not bool(action_list.call("is_open")) \
+			or overlay == null \
+			or focus_owner == null \
+			or not overlay.is_ancestor_of(focus_owner):
+		failures.append("RW06-1 %s escaped the full-screen modal shield or mutated the real delivery exit." % mode)
+	if str(app.call("_blocking_modal_message")) != "Close Room actions before doing anything else.":
+		failures.append("RW06-1 %s modal did not own the production input guard while open." % mode)
+	action_list.close()
+	await create_timer(0.45).timeout
+
+
+func _check_stale_authority_rejection(app: Control, action_list: Control, arrival_snapshot: Dictionary, activations: Array[String]) -> void:
+	await _restore_run(app, action_list, arrival_snapshot)
+	var gate := _record_by_object_id(_current_interactable_records(app), "scenario::delivery_event_gate")
+	if gate.is_empty():
+		failures.append("RW06-1 stale-authority check could not find the shipped inspect_manifest record.")
+		return
+	gate = _as_overflow_record(gate, 1)
+	_install_fixture_records(app, action_list, [gate])
+	await _settle_frames(2)
+	var entries := RoomActionListScript.action_entries_for_record(gate)
+	if entries.size() != 1:
+		failures.append("RW06-1 stale-authority check expected one deduplicated shipped action: %s." % JSON.stringify(entries))
+		return
+	var stale_action := (entries[0] as Dictionary).duplicate(true)
+	action_list.open()
+	await process_frame
+	var stale_button := _action_button_by_key(action_list, str(stale_action.get("_overflow_action_key", "")))
+	if stale_button == null:
+		failures.append("RW06-1 stale-authority check could not find its rendered action snapshot.")
+		action_list.close()
+		return
+	stale_button.grab_focus()
+	var changed_gate := gate.duplicate(true)
+	var changed_actions := (changed_gate.get("scenario_sequence_actions", []) as Array).duplicate(true)
+	var changed_action := (changed_actions[0] as Dictionary).duplicate(true)
+	changed_action["action_origin_stable_object_id"] = "delivery_exit"
+	changed_action["action_origin_fingerprint"] = "0".repeat(64)
+	changed_actions[0] = changed_action
+	changed_gate["scenario_sequence_actions"] = changed_actions
+	_install_fixture_records(app, null, [changed_gate])
+	var before := _mutation_snapshot(app)
+	var activation_count := activations.size()
+	_send_mouse(stale_button.get_global_rect().get_center())
+	await _settle_frames(3)
+	var direct_result := bool(app.call("_activate_overflow_room_action", gate, stale_action))
+	var overlay := action_list.get("_overlay") as Control
+	var focus_owner := root.gui_get_focus_owner()
+	if direct_result \
+			or activations.size() != activation_count \
+			or _mutation_snapshot(app) != before \
+			or not bool(action_list.call("is_open")) \
+			or overlay == null \
+			or focus_owner == null \
+			or not overlay.is_ancestor_of(focus_owner):
+		failures.append("RW06-1 same-ID changed-origin action did not reject byte-stably with its modal/focus intact.")
+	action_list.close()
+
+
+func _check_inline_scenario_mutation(app: Control, action_list: Control, arrival_snapshot: Dictionary, activations: Array[String]) -> void:
+	await _restore_run(app, action_list, arrival_snapshot)
+	var run_state: Variant = app.get("run_state")
+	var projection: Dictionary = run_state.call("scenario_sequence_projection")
+	var semantic := projection.get("semantic_state", {}) as Dictionary
+	var interaction := (semantic.get("interactions", {}) as Dictionary).get("scenario::delivery_event_gate", {}) as Dictionary
+	var visual := (semantic.get("scene_objects", {}) as Dictionary).get("scenario::delivery_event_gate", {}) as Dictionary
+	var inline_record := ScenarioSemanticViewModelScript._scenario_record(
+		interaction,
+		visual,
+		{},
+		int(projection.get("boundary_serial", 0))
+	)
+	if inline_record.is_empty():
+		failures.append("RW06-1 could not derive the shipping compatibility inline record.")
+		return
+	inline_record = _as_overflow_record(inline_record, 1)
+	var authentic_entries := RoomActionListScript.action_entries_for_record(inline_record)
+	if authentic_entries.size() != 1 \
+			or str((authentic_entries[0] as Dictionary).get("_overflow_source", "")) != RoomActionListScript.SOURCE_INLINE:
+		failures.append("RW06-1 shipping inline+available projection did not dedupe to SOURCE_INLINE: %s." % JSON.stringify(authentic_entries))
+		return
+	# Compatibility actions can be attached to a base/game record. The sealed
+	# scenario_command_id, not this presentation type, owns their dispatch.
+	inline_record["object_type"] = "game"
+	inline_record["available_actions"] = []
+	_install_fixture_records(app, action_list, [inline_record])
+	await _settle_frames(2)
+	var entries := RoomActionListScript.action_entries_for_record(inline_record)
+	if entries.size() != 1 or str((entries[0] as Dictionary).get("_overflow_source", "")) != RoomActionListScript.SOURCE_INLINE:
+		failures.append("RW06-1 shipping compatibility action did not remain SOURCE_INLINE: %s." % JSON.stringify(entries))
+		return
+	var action := entries[0] as Dictionary
+	var expected_key := _activation_key(action)
+	var prior_count := activations.count(expected_key)
+	var before_receipts := _scenario_command_receipt_count(run_state)
+	action_list.open()
+	await process_frame
+	var button := _action_button_by_key(action_list, str(action.get("_overflow_action_key", "")))
+	if button == null:
+		failures.append("RW06-1 shipping inline scenario action was not rendered.")
+		action_list.close()
+		return
+	_send_mouse(button.get_global_rect().get_center())
+	await _settle_frames(6)
+	var after_projection: Dictionary = run_state.call("scenario_sequence_projection")
+	if str(after_projection.get("phase_id", "")) != "sorting" \
+			or _scenario_command_receipt_count(run_state) != before_receipts + 1 \
+			or activations.count(expected_key) != prior_count + 1 \
+			or bool(action_list.call("is_open")):
+		failures.append("RW06-1 shipping tokenized inline action did not reach the real arrival-to-sorting mutation.")
+
+
+func _check_sequence_scenario_mutation(app: Control, action_list: Control, arrival_snapshot: Dictionary, activations: Array[String]) -> void:
+	await _restore_run(app, action_list, arrival_snapshot)
+	var run_state: Variant = app.get("run_state")
+	var sequence_record := _record_by_object_id(_current_interactable_records(app), "scenario::delivery_event_gate")
+	if sequence_record.is_empty():
+		failures.append("RW06-1 could not resolve the shipping sequence interaction.")
+		return
+	sequence_record = _as_overflow_record(sequence_record, 1)
+	_install_fixture_records(app, action_list, [sequence_record])
+	await _settle_frames(2)
+	var entries := RoomActionListScript.action_entries_for_record(sequence_record)
+	if entries.size() != 1 or str((entries[0] as Dictionary).get("_overflow_source", "")) != RoomActionListScript.SOURCE_SEQUENCE:
+		failures.append("RW06-1 shipping sequence+available projection did not dedupe to SOURCE_SEQUENCE: %s." % JSON.stringify(entries))
+		return
+	var action := entries[0] as Dictionary
+	var expected_key := _activation_key(action)
+	var prior_count := activations.count(expected_key)
+	var before_receipts := _scenario_command_receipt_count(run_state)
+	action_list.open()
+	await process_frame
+	var button := _action_button_by_key(action_list, str(action.get("_overflow_action_key", "")))
+	if button == null:
+		failures.append("RW06-1 shipping sequence action was not rendered.")
+		action_list.close()
+		return
+	_send_touch(button.get_global_rect().get_center())
+	await _settle_frames(8)
+	var after_projection: Dictionary = run_state.call("scenario_sequence_projection")
+	if str(after_projection.get("phase_id", "")) != "sorting" \
+			or _scenario_command_receipt_count(run_state) != before_receipts + 1 \
+			or activations.count(expected_key) != prior_count + 1 \
+			or bool(action_list.call("is_open")):
+		failures.append("RW06-1 shipping scenario_sequence action did not reach the real arrival-to-sorting mutation.")
 
 
 func _check_production_mutation_for_mode(app: Control, action_list: Control, production_record: Dictionary, activations: Array[String], mode: String) -> void:
-	app.set("overflow_fixture_records", [production_record.duplicate(true)])
-	action_list.render([production_record])
+	_install_fixture_records(app, action_list, [production_record.duplicate(true)])
 	await _settle_frames(2)
 	var entries := RoomActionListScript.action_entries_for_record(production_record)
 	if entries.is_empty():
 		failures.append("RW06-1 %s mutation check found no production action entry." % mode)
 		return
 	var production_action := entries[0] as Dictionary
+	if str(production_action.get("_overflow_source", "")) != RoomActionListScript.SOURCE_AVAILABLE:
+		failures.append("RW06-1 live game action did not exercise SOURCE_AVAILABLE for %s." % mode)
 	var expected_key := _activation_key(production_action)
 	var prior_count := activations.count(expected_key)
 	var before := _mutation_snapshot(app)
@@ -324,8 +811,7 @@ func _check_production_mutation_for_mode(app: Control, action_list: Control, pro
 
 func _check_rejected_actions_for_mode(app: Control, action_list: Control, disabled_record: Dictionary, hidden_record: Dictionary, activations: Array[String], mode: String) -> void:
 	var rejection_records: Array = [disabled_record.duplicate(true), hidden_record.duplicate(true)]
-	app.set("overflow_fixture_records", rejection_records.duplicate(true))
-	action_list.render(rejection_records)
+	_install_fixture_records(app, action_list, rejection_records)
 	await _settle_frames(2)
 	var disabled_entries := RoomActionListScript.action_entries_for_record(disabled_record)
 	if disabled_entries.is_empty():
@@ -335,11 +821,7 @@ func _check_rejected_actions_for_mode(app: Control, action_list: Control, disabl
 	var hidden_raw := ((hidden_record.get("inline_actions", []) as Array)[0] as Dictionary).duplicate(true)
 	hidden_raw["_overflow_source"] = RoomActionListScript.SOURCE_INLINE
 	hidden_raw["_overflow_index"] = 0
-	hidden_raw["_overflow_action_key"] = "%s:%s:0:%s" % [
-		str(hidden_record.get("object_id", "")),
-		RoomActionListScript.SOURCE_INLINE,
-		str(hidden_raw.get("emit_object_id", hidden_raw.get("id", ""))),
-	]
+	hidden_raw["_overflow_action_key"] = "forged:hidden-action-key"
 	var before := _mutation_snapshot(app)
 	var activation_count := activations.size()
 	action_list.open()
@@ -372,10 +854,59 @@ func _check_rejected_actions_for_mode(app: Control, action_list: Control, disabl
 	var hidden_result := bool(app.call("_activate_overflow_room_action", hidden_record, hidden_raw))
 	if disabled_result or hidden_result or activations.size() != activation_count or _mutation_snapshot(app) != before:
 		failures.append("RW06-1 %s disabled/hidden action path emitted or mutated production state." % mode)
-	var panel := action_list.get("_panel") as Control
-	if panel != null and panel.visible:
-		action_list.close()
+	if not bool(action_list.call("is_open")):
+		failures.append("RW06-1 %s rejected action released the overflow modal." % mode)
+	action_list.close()
 	await process_frame
+
+
+func _check_downstream_rejection_reopens(app: Control, action_list: Control, activations: Array[String]) -> void:
+	var rejected_record := {
+		"object_id": "overflow_fixture:missing_scenario_authority",
+		"object_type": "scenario",
+		"owner_namespace": "scenario",
+		"stable_object_id": "missing_scenario_authority",
+		"label": "Missing scenario authority",
+		"presentation_mode": "overflow",
+		"presentation_required": true,
+		"visible": true,
+		"interactive": true,
+		"enabled": true,
+		"inline_actions": [{
+			"id": "missing_command",
+			"scenario_command_id": "missing_command",
+			"scenario_owner_namespace": "scenario",
+			"scenario_stable_object_id": "missing_scenario_authority",
+		}],
+	}
+	_install_fixture_records(app, action_list, [rejected_record])
+	await _settle_frames(2)
+	var entries := RoomActionListScript.action_entries_for_record(rejected_record)
+	if entries.size() != 1:
+		failures.append("RW06-1 downstream-rejection fixture could not resolve its action.")
+		return
+	var action := entries[0] as Dictionary
+	action_list.open()
+	await process_frame
+	var button := _action_button_by_key(action_list, str(action.get("_overflow_action_key", "")))
+	if button == null:
+		failures.append("RW06-1 downstream-rejection fixture was not rendered.")
+		action_list.close()
+		return
+	var before := _mutation_snapshot(app)
+	var activation_count := activations.size()
+	_send_mouse(button.get_global_rect().get_center())
+	await _settle_frames(4)
+	var overlay := action_list.get("_overlay") as Control
+	var focus_owner := root.gui_get_focus_owner()
+	if activations.size() != activation_count \
+			or _mutation_snapshot(app) != before \
+			or not bool(action_list.call("is_open")) \
+			or overlay == null \
+			or focus_owner == null \
+			or not overlay.is_ancestor_of(focus_owner):
+		failures.append("RW06-1 downstream production refusal did not reopen the modal fail-closed.")
+	action_list.close()
 
 
 func _first_enabled_game_record(records: Array) -> Dictionary:
@@ -389,32 +920,72 @@ func _first_enabled_game_record(records: Array) -> Dictionary:
 				or not bool(record.get("interactive", true)):
 			continue
 		var actions: Array = record.get("available_actions", [])
-		if not actions.is_empty():
+		if not actions.is_empty() \
+				and (record.get("inline_actions", []) as Array).is_empty() \
+				and (record.get("scenario_sequence_actions", []) as Array).is_empty():
 			return record.duplicate(true)
 	return {}
 
 
-func _fallback_production_game_record(app: Control) -> Dictionary:
-	var library: Variant = app.get("library")
-	if library == null:
-		return {}
-	for game_id_value in ["blackjack", "slot", "video_poker", "bar_dice"]:
-		var game_id := str(game_id_value)
-		var definition: Dictionary = library.game(game_id)
-		if definition.is_empty():
+func _install_fixture_records(app: Control, action_list: Control, records: Array) -> void:
+	app.set("overflow_fixture_records", records.duplicate(true))
+	app.set("use_overflow_fixture", true)
+	app.set("interactable_object_view_cache_valid", false)
+	if action_list != null:
+		action_list.render(records)
+
+
+func _current_interactable_records(app: Control) -> Array:
+	var snapshot: Dictionary = app.call("current_environment_view_snapshot")
+	var value: Variant = snapshot.get("interactable_objects", [])
+	return (value as Array).duplicate(true) if typeof(value) == TYPE_ARRAY else []
+
+
+func _record_by_object_id(records: Array, object_id: String) -> Dictionary:
+	for record_value in records:
+		if typeof(record_value) != TYPE_DICTIONARY:
 			continue
-		return {
-			"object_id": "game:%s" % game_id,
-			"object_type": "game",
-			"source_id": game_id,
-			"label": str(definition.get("display_name", game_id.capitalize())),
-			"short_description": "Production game-entry fixture.",
-			"interactive": true,
-			"enabled": true,
-			"available_actions": [{"id": "enter_game", "label": "Enter game"}],
-			"confirm_action_id": "enter_game",
-		}
+		var record := record_value as Dictionary
+		if str(record.get("object_id", "")) == object_id:
+			return record.duplicate(true)
 	return {}
+
+
+func _as_overflow_record(record_value: Dictionary, focus_order: int) -> Dictionary:
+	var record := record_value.duplicate(true)
+	record["presentation_mode"] = "overflow"
+	record["presentation_required"] = true
+	record["visible"] = true
+	record["focus_order"] = focus_order
+	return record
+
+
+func _scenario_command_receipt_count(run_state: Variant) -> int:
+	if run_state == null:
+		return -1
+	var environment: Dictionary = run_state.get("current_environment")
+	var state_value: Variant = environment.get("scenario_sequence_state", {})
+	if typeof(state_value) != TYPE_DICTIONARY:
+		return -1
+	var receipts_value: Variant = (state_value as Dictionary).get("command_receipts", [])
+	return (receipts_value as Array).size() if typeof(receipts_value) == TYPE_ARRAY else -1
+
+
+func _source_function_body(source: String, function_name: String) -> String:
+	var marker := "func %s(" % function_name
+	var start := source.find(marker)
+	if start < 0:
+		return ""
+	var finish := source.find("\nfunc ", start + marker.length())
+	return source.substr(start) if finish < 0 else source.substr(start, finish - start)
+
+
+func _first_enabled_action_button(action_list: Control) -> Button:
+	for node in action_list.find_children("*", "Button", true, false):
+		var button := node as Button
+		if not str(button.get_meta("action_key", "")).is_empty() and button.visible and not button.disabled:
+			return button
+	return null
 
 
 func _mutation_snapshot(app: Control) -> String:
@@ -423,13 +994,18 @@ func _mutation_snapshot(app: Control) -> String:
 		"run": run_state.to_dict() if run_state != null else {},
 		"screen": str(app.get("current_screen")),
 		"game_active": app.get("current_game") != null,
+		"selected_object_id": str(app.get("selected_object_id")),
+		"focus_target_id": str(app.get("focus_target_id")),
 	})
 
 
 func _activation_key(action: Dictionary) -> String:
+	var action_id := str(action.get("emit_object_id", "")).strip_edges()
+	if action_id.is_empty():
+		action_id = str(action.get("id", "")).strip_edges()
 	return "%s|%s" % [
 		str(action.get("_overflow_source", "")),
-		str(action.get("emit_object_id", action.get("id", ""))),
+		action_id,
 	]
 
 
@@ -492,16 +1068,18 @@ func _send_mouse(position: Vector2) -> void:
 	root.push_input(released)
 
 
-func _send_touch(position: Vector2) -> void:
+func _send_touch(position: Vector2, double_tap: bool = false) -> void:
 	var pressed := InputEventScreenTouch.new()
 	pressed.index = 0
 	pressed.position = position
 	pressed.pressed = true
+	pressed.double_tap = double_tap
 	root.push_input(pressed)
 	var released := InputEventScreenTouch.new()
 	released.index = 0
 	released.position = position
 	released.pressed = false
+	released.double_tap = double_tap
 	root.push_input(released)
 
 
