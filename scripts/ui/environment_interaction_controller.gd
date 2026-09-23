@@ -15,6 +15,10 @@ static func interactable_object_view_list(host: Variant) -> Array:
 		return []
 	if host._is_meta_session():
 		return host._meta_interactable_object_view_list()
+	# Some normal preparation helpers populate public scenario context. If the
+	# persisted base envelope later fails authentication, restore the exact entry
+	# environment so a read-only catalog request cannot partially mutate it.
+	var entry_environment := JsonCoerceScript._copy_dict(host.run_state.current_environment)
 	var preparation: Dictionary = _dict(host.run_state.scenario_prepare_semantic_finalization())
 	var world_preparation: Dictionary = _dict(host.run_state.world_sequence_prepare_semantic_finalization())
 	var failed = host._run_failed_without_recovery()
@@ -140,6 +144,13 @@ static func interactable_object_view_list(host: Variant) -> Array:
 		result,
 		_dict(layout.get("slot_bindings", {}))
 	)
+	if not bool(record_binding.get("ok", false)):
+		var binding_failure := projection_failure_result(result, _array(record_binding.get("errors", [])))
+		# The persisted base envelope failed before scenario composition. Present the
+		# read-only failure surface, but do not let scenario rejection mutate or heal
+		# the exact hostile/current environment being diagnosed.
+		host.run_state.set("current_environment", entry_environment)
+		return _array(binding_failure.get("records", result))
 	result = _array(record_binding.get("records", result))
 	# The exact fixed-slot result is semantic authority, not an ephemeral view
 	# detail. Commit it atomically before any sequence stamps records so a real
@@ -209,35 +220,25 @@ static func interactable_object_view_list(host: Variant) -> Array:
 static func commit_base_record_binding(run_state: Variant, layout_value: Dictionary, record_binding: Dictionary) -> Dictionary:
 	if run_state == null or not bool(record_binding.get("ok", false)):
 		return layout_value
-	var bindings := _dict(record_binding.get("slot_bindings", {}))
 	var records := _array(record_binding.get("records", []))
-	var layout := layout_value.duplicate(true)
-	var object_rects := _dict(layout.get("object_rects", {}))
-	var overflow_ids: Array = []
-	var binding_ids := bindings.keys()
-	binding_ids.sort_custom(func(left: Variant, right: Variant) -> bool: return str(left) < str(right))
-	for object_id_value in binding_ids:
-		var object_id := str(object_id_value)
-		var binding := _dict(bindings.get(object_id, {}))
-		if str(binding.get("presentation_mode", "")) == "overflow":
-			overflow_ids.append(object_id)
-			object_rects.erase(object_id)
-	for record_value in records:
-		var record := _dict(record_value)
-		var object_id := str(record.get("object_id", "")).strip_edges()
-		if object_id.is_empty():
-			continue
-		if str(record.get("presentation_mode", "")) == "room":
-			var normalized := _dict(record.get("normalized_rect", {}))
-			if not normalized.is_empty():
-				object_rects[object_id] = normalized
-		else:
-			object_rects.erase(object_id)
-	layout["slot_bindings"] = bindings
-	layout["slot_overflow_ids"] = overflow_ids
-	layout["slot_binding_digest"] = EnvironmentSlotBinderScript.binding_digest(bindings)
-	layout["object_rects"] = object_rects
 	var environment := _dict(run_state.get("current_environment"))
+	var prior_environment := environment.duplicate(true)
+	prior_environment["layout"] = layout_value.duplicate(true)
+	var prior_authority := EnvironmentSlotBinderScript.validate_base_layout_authority(prior_environment, records, true)
+	if not bool(prior_authority.get("ok", false)):
+		return layout_value
+	var layout := layout_value.duplicate(true)
+	layout["slot_schema_version"] = int(record_binding.get("slot_schema_version", 0))
+	layout["slot_map_digest"] = str(record_binding.get("slot_map_digest", ""))
+	layout["slot_bindings"] = _dict(record_binding.get("slot_bindings", {}))
+	layout["slot_overflow_ids"] = _array(record_binding.get("overflow_ids", []))
+	layout["slot_binding_digest"] = str(record_binding.get("binding_digest", ""))
+	layout["object_rects"] = _dict(record_binding.get("object_rects", {}))
+	var candidate_environment := environment.duplicate(true)
+	candidate_environment["layout"] = layout
+	var candidate_authority := EnvironmentSlotBinderScript.validate_base_layout_authority(candidate_environment, records)
+	if not bool(candidate_authority.get("ok", false)):
+		return layout_value
 	environment["layout"] = layout.duplicate(true)
 	run_state.set("current_environment", environment)
 	return layout

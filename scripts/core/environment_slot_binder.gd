@@ -14,6 +14,8 @@ const LABEL_TWO_LINE_HEIGHT := 26.0
 const SLOT_SCHEMA_VERSION := 1
 const PRESENTATION_ROOM := "room"
 const PRESENTATION_OVERFLOW := "overflow"
+const BASE_BINDING_KEYS := ["identity", "kind", "presentation_mode", "slot_id", "placement_class", "slot"]
+const BASE_LAYOUT_AUTHORITY_KEYS := ["slot_schema_version", "slot_map_digest", "slot_binding_digest", "slot_bindings", "slot_overflow_ids", "object_rects"]
 
 
 # Binds the complete generated base inventory to immutable authored slots.
@@ -73,6 +75,192 @@ static func bind_base_layout(environment: Dictionary, active_entries: Array) -> 
 	}
 
 
+# Authenticates the complete persisted base-slot envelope before any caller may
+# reuse it, extend it with late records, or derive semantic authority from it.
+# Room bindings are immutable authored reservations; only bindings with a live
+# object_rect are rendered. Overflow is the one geometry-free presentation.
+static func validate_base_layout_authority(environment: Dictionary, current_records: Array = [], allow_unbound_records: bool = false) -> Dictionary:
+	var errors: Array = []
+	var layout_value: Variant = environment.get("layout")
+	if typeof(layout_value) != TYPE_DICTIONARY:
+		return {"ok": false, "errors": ["Persisted base slot authority has no layout dictionary."]}
+	var layout := _dict(layout_value)
+	for key in BASE_LAYOUT_AUTHORITY_KEYS:
+		if not layout.has(key):
+			errors.append("Persisted base slot authority is missing %s." % key)
+	if not errors.is_empty():
+		return {"ok": false, "errors": errors}
+	if typeof(layout.get("slot_schema_version")) != TYPE_INT or int(layout.get("slot_schema_version", 0)) != SLOT_SCHEMA_VERSION:
+		errors.append("Persisted base slot authority has an invalid schema version.")
+	var surface_map := EnvironmentPlacementScript.surface_map(environment)
+	var expected_map_digest := slot_map_digest(surface_map)
+	if typeof(layout.get("slot_map_digest")) != TYPE_STRING or str(layout.get("slot_map_digest", "")) != expected_map_digest:
+		errors.append("Persisted base slot authority does not match the authored slot map digest.")
+	if typeof(layout.get("slot_bindings")) != TYPE_DICTIONARY:
+		errors.append("Persisted base slot authority bindings must be a dictionary.")
+	if typeof(layout.get("slot_overflow_ids")) != TYPE_ARRAY:
+		errors.append("Persisted base slot authority overflow ids must be an array.")
+	if typeof(layout.get("object_rects")) != TYPE_DICTIONARY:
+		errors.append("Persisted base slot authority object_rects must be a dictionary.")
+	if typeof(layout.get("slot_binding_digest")) != TYPE_STRING:
+		errors.append("Persisted base slot authority binding digest must be a string.")
+	if not errors.is_empty():
+		return {"ok": false, "errors": errors}
+	var bindings := _dict(layout.get("slot_bindings", {}))
+	var object_rects := _dict(layout.get("object_rects", {}))
+	var current_records_by_id: Dictionary = {}
+	for record_value in current_records:
+		var record := _dict(record_value)
+		var record_id := str(record.get("object_id", record.get("presentation_object_id", ""))).strip_edges()
+		if not record_id.is_empty() and not current_records_by_id.has(record_id):
+			current_records_by_id[record_id] = record
+	var stored_digest := str(layout.get("slot_binding_digest", ""))
+	if stored_digest.is_empty() or stored_digest != binding_digest(bindings):
+		errors.append("Persisted base slot authority binding digest is missing or stale.")
+	var authored_slots := _slots_by_id(_array(surface_map.get("base_slots", [])))
+	var overflow_ids: Array = []
+	var room_ids_by_slot: Dictionary = {}
+	var binding_ids := bindings.keys()
+	binding_ids.sort_custom(func(left: Variant, right: Variant) -> bool: return str(left) < str(right))
+	for identity_value in binding_ids:
+		if typeof(identity_value) != TYPE_STRING:
+			errors.append("Persisted base slot authority contains a non-string binding key.")
+			continue
+		var identity := str(identity_value)
+		if identity.is_empty() or identity != identity.strip_edges():
+			errors.append("Persisted base slot authority contains a malformed binding key.")
+			continue
+		var binding_value: Variant = bindings.get(identity_value)
+		if typeof(binding_value) != TYPE_DICTIONARY:
+			errors.append("Persisted base slot binding %s must be a dictionary." % identity)
+			continue
+		var binding := _dict(binding_value)
+		if not _closed_dictionary(binding, BASE_BINDING_KEYS):
+			errors.append("Persisted base slot binding %s is not closed." % identity)
+			continue
+		var field_types_valid := true
+		for string_key in ["identity", "kind", "presentation_mode", "slot_id", "placement_class"]:
+			if typeof(binding.get(string_key)) != TYPE_STRING:
+				errors.append("Persisted base slot binding %s field %s must be a string." % [identity, string_key])
+				field_types_valid = false
+		if typeof(binding.get("slot")) != TYPE_DICTIONARY:
+			errors.append("Persisted base slot binding %s slot must be a dictionary." % identity)
+			field_types_valid = false
+		if not field_types_valid:
+			continue
+		if str(binding.get("identity", "")) != identity:
+			errors.append("Persisted base slot binding %s does not match its dictionary key." % identity)
+		if str(binding.get("kind", "")) != "base":
+			errors.append("Persisted base slot binding %s does not have base kind." % identity)
+		var placement_class := str(binding.get("placement_class", ""))
+		if placement_class not in EnvironmentPlacementScript.CLASSES:
+			errors.append("Persisted base slot binding %s has an invalid placement class." % identity)
+		var mode := str(binding.get("presentation_mode", ""))
+		var slot_id := str(binding.get("slot_id", ""))
+		var binding_slot := _dict(binding.get("slot", {}))
+		if mode == PRESENTATION_OVERFLOW:
+			overflow_ids.append(identity)
+			if not slot_id.is_empty() or not binding_slot.is_empty() or object_rects.has(identity):
+				errors.append("Persisted base overflow binding %s is not geometry-free." % identity)
+		elif mode == PRESENTATION_ROOM:
+			var authored_slot := _dict(authored_slots.get(slot_id, {}))
+			var minimum_required := true
+			if current_records_by_id.has(identity):
+				minimum_required = bool(_dict(current_records_by_id.get(identity, {})).get("interactive", true))
+			if slot_id.is_empty() or authored_slot.is_empty() or JSON.stringify(binding_slot) != JSON.stringify(authored_slot):
+				errors.append("Persisted base room binding %s does not match its exact authored slot." % identity)
+			elif str(authored_slot.get("footprint_class", "")) != placement_class or minimum_required and not _slot_meets_minimum(authored_slot, MIN_INTERACTIVE_TARGET):
+				errors.append("Persisted base room binding %s has an incompatible or undersized authored slot." % identity)
+			else:
+				if not room_ids_by_slot.has(slot_id): room_ids_by_slot[slot_id] = []
+				(room_ids_by_slot[slot_id] as Array).append(identity)
+				if object_rects.has(identity) and not _same_normalized_rect(object_rects.get(identity), _normalized_rect(_slot_rect(authored_slot))):
+					errors.append("Persisted base room binding %s object_rect does not match its exact authored slot." % identity)
+		else:
+			errors.append("Persisted base slot binding %s has an invalid presentation mode." % identity)
+	for object_id_value in object_rects.keys():
+		if typeof(object_id_value) != TYPE_STRING:
+			errors.append("Persisted base slot authority contains a non-string object_rect id.")
+			continue
+		var object_id := str(object_id_value)
+		var object_binding := _dict(bindings.get(object_id, {}))
+		if object_id.is_empty() or object_id != object_id.strip_edges() or str(object_binding.get("presentation_mode", "")) != PRESENTATION_ROOM:
+			errors.append("Persisted base object_rect %s has no exact room binding." % object_id)
+	var stored_overflow_value: Variant = layout.get("slot_overflow_ids")
+	var stored_overflow: Array = []
+	var stored_overflow_valid := true
+	var seen_overflow: Dictionary = {}
+	for identity_value in stored_overflow_value as Array:
+		if typeof(identity_value) != TYPE_STRING:
+			stored_overflow_valid = false
+			continue
+		var identity := str(identity_value)
+		if identity.is_empty() or identity != identity.strip_edges() or seen_overflow.has(identity):
+			stored_overflow_valid = false
+			continue
+		seen_overflow[identity] = true
+		stored_overflow.append(identity)
+	overflow_ids.sort()
+	var sorted_stored := stored_overflow.duplicate()
+	sorted_stored.sort()
+	if not stored_overflow_valid or stored_overflow != sorted_stored or stored_overflow != overflow_ids:
+		errors.append("Persisted base slot authority overflow ids are not the exact sorted unique overflow binding set.")
+	var aliases: Dictionary = {}
+	for record_value in current_records:
+		var record := _dict(record_value)
+		var object_id := str(record.get("object_id", record.get("presentation_object_id", ""))).strip_edges()
+		var source_id := str(record.get("slot_binding_source_id", "")).strip_edges()
+		if object_id.is_empty():
+			continue
+		var record_binding := _dict(bindings.get(object_id, {}))
+		if record_binding.is_empty():
+			if not allow_unbound_records:
+				errors.append("Current base record %s has no authenticated slot binding." % object_id)
+			continue
+		# Live production records carry their source class inputs. Durable semantic
+		# interactions deliberately do not widen their closed payload with placement
+		# metadata; the binding still proves a valid class against its authored slot.
+		if record.has("placement_class") or record.has("object_type"):
+			var expected_class := EnvironmentPlacementScript.classify(
+				record,
+				str(record.get("object_type", "")),
+				object_id,
+				str(record.get("visual_prop", record.get("prop", record.get("icon_key", ""))))
+			)
+			if str(record_binding.get("placement_class", "")) != expected_class:
+				errors.append("Current base record %s placement class does not match production classification." % object_id)
+		if source_id.is_empty():
+			continue
+		if aliases.has(object_id) and str(aliases.get(object_id, "")) != source_id:
+			errors.append("Current base record %s declares conflicting slot-binding aliases." % object_id)
+		else:
+			aliases[object_id] = source_id
+	for slot_id_value in room_ids_by_slot.keys():
+		var identities := _array(room_ids_by_slot.get(slot_id_value, []))
+		if identities.size() <= 1:
+			continue
+		identities.sort()
+		var roots: Array = []
+		for identity_value in identities:
+			var identity := str(identity_value)
+			var source_id := str(aliases.get(identity, ""))
+			if source_id.is_empty():
+				roots.append(identity)
+			elif source_id == identity or not identities.has(source_id):
+				errors.append("Persisted base room binding %s duplicates slot %s without an explicit current source alias." % [identity, str(slot_id_value)])
+		if roots.size() != 1:
+			errors.append("Persisted base room slot %s has duplicate bindings without exactly one unaliased source." % str(slot_id_value))
+	return {
+		"ok": errors.is_empty(),
+		"slot_bindings": bindings if errors.is_empty() else {},
+		"overflow_ids": overflow_ids if errors.is_empty() else [],
+		"object_rects": object_rects if errors.is_empty() else {},
+		"slot_map_digest": expected_map_digest,
+		"binding_digest": stored_digest,
+		"errors": errors,
+	}
+
+
 # Applies the same authority to the complete interaction inventory. Some live
 # records (deliveries, transient contacts, and meta controls) are assembled
 # after EnvironmentInstance generated its serialized layout. They consume only
@@ -83,7 +271,34 @@ static func bind_base_records(environment: Dictionary, records: Array, existing_
 	var slots := _ordered_slots(_array(surface_map.get("base_slots", [])))
 	var object_preferences := _dict(surface_map.get("object_slot_ids", {}))
 	var category_preferences := _dict(surface_map.get("category_slot_ids", {}))
-	var bindings := existing_bindings.duplicate(true)
+	var layout := _dict(environment.get("layout", {}))
+	var bindings: Dictionary = {}
+	var object_rects: Dictionary = {}
+	var has_persisted_authority := _has_any_base_layout_authority(layout)
+	if has_persisted_authority or not existing_bindings.is_empty():
+		var prior_authority := validate_base_layout_authority(environment, records, true)
+		if not bool(prior_authority.get("ok", false)):
+			return {"ok": false, "records": records.duplicate(true), "slot_bindings": {}, "overflow_ids": [], "object_rects": {}, "errors": _array(prior_authority.get("errors", []))}
+		bindings = _dict(prior_authority.get("slot_bindings", {}))
+		object_rects = _dict(prior_authority.get("object_rects", {}))
+		if not existing_bindings.is_empty() and JSON.stringify(existing_bindings) != JSON.stringify(bindings):
+			return {"ok": false, "records": records.duplicate(true), "slot_bindings": {}, "overflow_ids": [], "object_rects": {}, "errors": ["Caller base bindings do not match the authenticated persisted authority."]}
+	# bind_base_records consumes the complete current interaction refresh. A prior
+	# room reservation may remain intentionally dormant, but geometry-free overflow
+	# has no physical reservation and must retain live membership to persist.
+	var current_record_ids: Dictionary = {}
+	for record_value in records:
+		var current_id := str(_dict(record_value).get("object_id", "")).strip_edges()
+		if not current_id.is_empty(): current_record_ids[current_id] = true
+	for binding_id_value in bindings.keys():
+		var binding_id := str(binding_id_value)
+		if current_record_ids.has(binding_id):
+			continue
+		if str(_dict(bindings.get(binding_id_value, {})).get("presentation_mode", "")) == PRESENTATION_OVERFLOW:
+			bindings.erase(binding_id_value)
+		# A dormant room binding reserves its authored slot, but it cannot keep live
+		# render geometry after the complete interaction refresh omits its identity.
+		object_rects.erase(binding_id)
 	var occupied: Dictionary = {}
 	for existing_value in bindings.values():
 		var existing := _dict(existing_value)
@@ -175,15 +390,42 @@ static func bind_base_records(environment: Dictionary, records: Array, existing_
 	var binding_ids := bindings.keys()
 	binding_ids.sort_custom(func(left: Variant, right: Variant) -> bool: return str(left) < str(right))
 	for object_id_value in binding_ids:
+		var object_id := str(object_id_value)
 		if str(_dict(bindings.get(object_id_value, {})).get("presentation_mode", "")) == PRESENTATION_OVERFLOW:
-			overflow_ids.append(str(object_id_value))
+			overflow_ids.append(object_id)
+			object_rects.erase(object_id)
+	for record_value in result_records:
+		var record := _dict(record_value)
+		var object_id := str(record.get("object_id", "")).strip_edges()
+		if object_id.is_empty():
+			continue
+		if str(record.get("presentation_mode", "")) == PRESENTATION_ROOM:
+			var normalized := _dict(record.get("normalized_rect", {}))
+			if not normalized.is_empty(): object_rects[object_id] = normalized
+		else:
+			object_rects.erase(object_id)
+	var binding_digest_value := binding_digest(bindings)
+	var candidate_layout := layout.duplicate(true)
+	candidate_layout["slot_schema_version"] = SLOT_SCHEMA_VERSION
+	candidate_layout["slot_map_digest"] = slot_map_digest(surface_map)
+	candidate_layout["slot_binding_digest"] = binding_digest_value
+	candidate_layout["slot_bindings"] = bindings.duplicate(true)
+	candidate_layout["slot_overflow_ids"] = overflow_ids.duplicate(true)
+	candidate_layout["object_rects"] = object_rects.duplicate(true)
+	var candidate_environment := environment.duplicate(true)
+	candidate_environment["layout"] = candidate_layout
+	var candidate_authority := validate_base_layout_authority(candidate_environment, result_records)
+	if not bool(candidate_authority.get("ok", false)):
+		return {"ok": false, "records": records.duplicate(true), "slot_bindings": {}, "overflow_ids": [], "object_rects": {}, "errors": _array(candidate_authority.get("errors", []))}
 	return {
 		"ok": true,
 		"records": result_records,
 		"slot_bindings": bindings,
 		"overflow_ids": overflow_ids,
+		"object_rects": object_rects,
+		"slot_schema_version": SLOT_SCHEMA_VERSION,
 		"slot_map_digest": slot_map_digest(surface_map),
-		"binding_digest": binding_digest(bindings),
+		"binding_digest": binding_digest_value,
 		"errors": [],
 	}
 
@@ -645,6 +887,39 @@ static func _clamp_inside_board(rect: Rect2) -> Rect2:
 		Vector2(clampf(rect.position.x, 0.0, BOARD_SIZE.x - size.x), clampf(rect.position.y, 0.0, BOARD_SIZE.y - size.y)),
 		size
 	)
+
+
+static func _has_any_base_layout_authority(layout: Dictionary) -> bool:
+	# object_rects predates fixed-slot authority and remains a supported legacy
+	# input. Any slot-specific field, however, makes the whole envelope mandatory.
+	for key in ["slot_schema_version", "slot_map_digest", "slot_binding_digest", "slot_bindings", "slot_overflow_ids"]:
+		if layout.has(key):
+			return true
+	return false
+
+
+static func _closed_dictionary(value: Dictionary, expected_keys: Array) -> bool:
+	if value.size() != expected_keys.size():
+		return false
+	for key in expected_keys:
+		if not value.has(key):
+			return false
+	return true
+
+
+static func _same_normalized_rect(left_value: Variant, right_value: Variant) -> bool:
+	if typeof(left_value) != TYPE_DICTIONARY or typeof(right_value) != TYPE_DICTIONARY:
+		return false
+	var left := left_value as Dictionary
+	var right := right_value as Dictionary
+	if not _closed_dictionary(left, ["x", "y", "w", "h"]) or not _closed_dictionary(right, ["x", "y", "w", "h"]):
+		return false
+	for key in ["x", "y", "w", "h"]:
+		if typeof(left.get(key)) not in [TYPE_INT, TYPE_FLOAT] or typeof(right.get(key)) not in [TYPE_INT, TYPE_FLOAT] \
+				or not is_finite(float(left.get(key))) or not is_finite(float(right.get(key))) \
+				or not is_equal_approx(float(left.get(key)), float(right.get(key))):
+			return false
+	return true
 
 
 static func _dict(value: Variant) -> Dictionary:

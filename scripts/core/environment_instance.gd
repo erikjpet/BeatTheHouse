@@ -614,10 +614,12 @@ static func ensure_generated_layout(environment_data: Dictionary, library: Conte
 	var current_slot_map_digest := EnvironmentSlotBinderScript.slot_map_digest(
 		EnvironmentPlacementScript.surface_map(placement_environment)
 	)
+	var persisted_slot_authority := EnvironmentSlotBinderScript.validate_base_layout_authority(placement_environment)
 	if int(layout.get("generated_object_rect_version", 0)) == GENERATED_LAYOUT_VERSION \
 			and str(layout.get("grounding_signature", "")) == grounding_signature \
 			and int(layout.get("slot_schema_version", 0)) == EnvironmentSlotBinderScript.SLOT_SCHEMA_VERSION \
-			and str(layout.get("slot_map_digest", "")) == current_slot_map_digest:
+			and str(layout.get("slot_map_digest", "")) == current_slot_map_digest \
+			and bool(persisted_slot_authority.get("ok", false)):
 		return layout
 	var binding_result := EnvironmentSlotBinderScript.bind_base_layout(placement_environment, active_entries)
 	layout["object_rects"] = JsonCoerceScript._copy_dict(binding_result.get("object_rects", {}))

@@ -14897,6 +14897,7 @@ func _interactable_environment_cache_token(environment: Dictionary) -> String:
 	# the room object catalog and made late-run lender selection take hundreds of
 	# milliseconds. Include the small authored interaction collections explicitly
 	# so in-place host/test updates cannot reuse a stale catalog.
+	var layout := JsonCoerceScript._copy_dict(environment.get("layout", {}))
 	return JSON.stringify([
 		str(environment.get("id", "")),
 		str(environment.get("world_node_id", "")),
@@ -14914,7 +14915,11 @@ func _interactable_environment_cache_token(environment: Dictionary) -> String:
 		environment.has("scenario_sequence_projection"),
 		str(environment.get("current_layer_id", "")),
 		str(environment.get("kind", "")),
-		JsonCoerceScript._copy_dict(environment.get("layout", {})).get("object_rects", {}),
+		int(layout.get("slot_schema_version", 0)),
+		str(layout.get("slot_map_digest", "")),
+		str(layout.get("slot_binding_digest", "")),
+		layout.get("slot_overflow_ids", []),
+		layout.get("object_rects", {}),
 		environment.get("game_ids", []),
 		environment.get("event_ids", []),
 		environment.get("resolved_event_ids", []),

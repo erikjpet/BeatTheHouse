@@ -4,6 +4,7 @@ extends RefCounted
 const OperationRegistryScript := preload("res://scripts/core/scenario_operation_registry.gd")
 const ArtContractsScript := preload("res://scripts/core/art_contracts.gd")
 const BaseSemanticRecordsScript := preload("res://scripts/core/environment_base_semantic_records.gd")
+const EnvironmentSlotBinderScript := preload("res://scripts/core/environment_slot_binder.gd")
 const EnvironmentEventResolverScript := preload("res://scripts/core/environment_event_resolver.gd")
 
 # Immutable proof of semantic identities that genuinely exist in authored
@@ -19,6 +20,7 @@ const PROVENANCE_RECORD_KEYS := ["source_kind", "source_field", "source_record_i
 const SOURCE_PROVENANCE_KEYS := ["world_node_id", "archetype_id", "layout_object_rects", "game_ids", "event_ids", "item_offer_authority", "shopkeeper_offer_source_present", "service_ids", "lender_ids", "layer_ids", "route_ids", "layer_transition_ids", "casino_room_target_ids", "casino_fixture_ids", "crew_presence_ids", "home_profile", "home_container_ids", "semantic_zones", "semantic_anchors", "semantic_actors", "base_interaction_authority", "base_actor_authority"]
 const ITEM_OFFER_AUTHORITY_KEYS := ["id", "object_id"]
 const BASE_INTERACTION_AUTHORITY_KEYS := ["owner_namespace", "stable_object_id", "presentation_object_id", "normalized_hit_rect", "hit_bounds", "source_kind", "source_field", "source_record_id"]
+const BASE_INTERACTION_AUTHORITY_OPTIONAL_KEYS := ["presentation_mode"]
 const BASE_ACTOR_AUTHORITY_KEYS := ["owner_namespace", "stable_object_id", "actor_id", "anchor_id", "zone_id", "behavior", "source_kind", "source_field", "source_record_id"]
 const NORMALIZED_RECT_KEYS := ["x", "y", "w", "h"]
 const HIT_BOUNDS_KEYS := ["w", "h"]
@@ -254,11 +256,26 @@ static func for_instance(environment: Dictionary, library: Variant = null, base_
 	var presentation_ids: Dictionary = {}
 	var provenance: Dictionary = {}
 	var errors: Array = []
-	var layout_rects := _dict(_dict(environment.get("layout", {})).get("object_rects", {}))
-	for object_id_value in layout_rects.keys():
+	var layout := _dict(environment.get("layout", {}))
+	var layout_rects := _dict(layout.get("object_rects", {}))
+	var slot_authority: Dictionary = {}
+	if _layout_has_slot_authority(layout):
+		slot_authority = EnvironmentSlotBinderScript.validate_base_layout_authority(environment, base_interactions)
+		if not bool(slot_authority.get("ok", false)):
+			errors.append_array(_array(slot_authority.get("errors", [])))
+	var authenticated_overflow_ids: Array = []
+	var layout_overflow_ids := _array(slot_authority.get("overflow_ids", [])) if bool(slot_authority.get("ok", false)) else []
+	for interaction_value in base_interactions:
+		var presentation_id := str(_dict(interaction_value).get("presentation_object_id", _dict(interaction_value).get("object_id", "")))
+		if layout_overflow_ids.has(presentation_id) and not authenticated_overflow_ids.has(presentation_id):
+			authenticated_overflow_ids.append(presentation_id)
+	var scene_object_ids: Array = layout_rects.keys()
+	for object_id_value in authenticated_overflow_ids:
+		if not scene_object_ids.has(object_id_value): scene_object_ids.append(object_id_value)
+	for object_id_value in scene_object_ids:
 		var scene_identity := _add_presentation_identity(exact, presentation_ids, "scene_objects", str(object_id_value))
 		if scene_identity.is_empty(): errors.append("environment layout object %s cannot form a canonical owned identity." % str(object_id_value))
-		else: _set_provenance(provenance, "scene_objects", scene_identity, "environment_instance", "layout.object_rects", str(object_id_value))
+		else: _set_provenance(provenance, "scene_objects", scene_identity, "environment_instance", "layout.slot_overflow_ids" if authenticated_overflow_ids.has(object_id_value) else "layout.object_rects", str(object_id_value))
 	var interaction_identities: Dictionary = {}
 	var interaction_presentations: Dictionary = {}
 	for record_value in base_interactions:
@@ -268,18 +285,23 @@ static func for_instance(environment: Dictionary, library: Variant = null, base_
 		var record := record_value as Dictionary
 		var identity := "%s::%s" % [str(record.get("owner_namespace", "")), str(record.get("stable_object_id", ""))]
 		var presentation_id := str(record.get("presentation_object_id", record.get("object_id", "")))
+		var authenticated_overflow := authenticated_overflow_ids.has(presentation_id)
+		var claimed_overflow := str(record.get("presentation_mode", "")) == "overflow"
 		var dynamic_record := BaseSemanticRecordsScript.is_dynamic_interaction_record(record)
 		var dynamic_errors: Array = []
-		var casino_room_errors := _casino_room_interaction_errors(record, environment, library)
+		var casino_room_errors := _casino_room_interaction_errors(record, environment, library, authenticated_overflow)
 		if dynamic_record:
-			dynamic_errors.append_array(BaseSemanticRecordsScript.validate_dynamic_interaction_record(record, environment, library))
+			dynamic_errors.append_array(BaseSemanticRecordsScript.validate_dynamic_interaction_record(record, environment, library, authenticated_overflow))
 			var resolved_dynamic := OperationRegistryScript.resolve_interactions([record], [])
 			if not bool(resolved_dynamic.get("ok", false)): dynamic_errors.append_array(_array(resolved_dynamic.get("errors", [])))
 		if not _valid_identity(identity): errors.append("base interaction inventory contains an invalid identity.")
 		elif interaction_identities.has(identity) or interaction_presentations.has(presentation_id): errors.append("base interaction inventory contains duplicate/colliding identity or presentation id %s." % presentation_id)
 		elif not casino_room_errors.is_empty(): errors.append_array(casino_room_errors)
 		elif dynamic_record and not dynamic_errors.is_empty(): errors.append_array(dynamic_errors)
-		elif not layout_rects.has(presentation_id) and not dynamic_record: errors.append("base interaction %s has no exact final layout geometry or authorized dynamic producer." % presentation_id)
+		elif claimed_overflow != authenticated_overflow: errors.append("base interaction %s overflow presentation does not match authenticated whole-layout authority." % presentation_id)
+		elif authenticated_overflow and (not _dict(record.get("normalized_hit_rect", {})).is_empty() or not _accessible_hit_bounds(record.get("hit_bounds", {}))):
+			errors.append("base overflow interaction %s must be geometry-free with accessible action-list bounds." % presentation_id)
+		elif not layout_rects.has(presentation_id) and not authenticated_overflow and not dynamic_record: errors.append("base interaction %s has no exact final layout geometry or authorized dynamic producer." % presentation_id)
 		elif layout_rects.has(presentation_id) and not _same_normalized_rect(record.get("normalized_hit_rect", {}), layout_rects.get(presentation_id)):
 			errors.append("base interaction %s geometry does not match final layout.object_rects." % presentation_id)
 		else:
@@ -341,7 +363,7 @@ static func for_instance(environment: Dictionary, library: Variant = null, base_
 		var rendered_identity := "base::%s" % presentation_id
 		if not _authored_casino_room_target(environment, library, room_id): errors.append("environment instance room route %s is not authorized by its selected archetype/layer." % room_id)
 		elif library != null and (not library.has_method("environment_archetype") or _dict(library.call("environment_archetype", room_id)).is_empty()): errors.append("environment instance references an unknown room route %s." % room_id)
-		elif not layout_rects.has(presentation_id): errors.append("environment instance room route %s has no exact travel layout geometry." % room_id)
+		elif not layout_rects.has(presentation_id) and not authenticated_overflow_ids.has(presentation_id): errors.append("environment instance room route %s has no exact travel layout geometry or authenticated overflow interaction." % room_id)
 		elif not interaction_identities.has(rendered_identity): errors.append("environment instance room route %s has no exact rendered travel interaction." % room_id)
 		else:
 			var identity := "base::room:%s" % room_id
@@ -399,6 +421,19 @@ static func validate_instance_binding(inventory: Dictionary, environment: Dictio
 		errors.append("semantic inventory proof is not bound to the current environment layer.")
 	if _canonical(inventory.get("source_provenance", {})) != _canonical(_instance_source_provenance(environment)):
 		errors.append("semantic inventory proof source provenance does not match the current environment.")
+	var layout := _dict(environment.get("layout", {}))
+	if _layout_has_slot_authority(layout):
+		var interactions := _array(environment.get("scenario_base_interactions", []))
+		var slot_authority := EnvironmentSlotBinderScript.validate_base_layout_authority(environment, interactions)
+		if not bool(slot_authority.get("ok", false)):
+			errors.append_array(_array(slot_authority.get("errors", [])))
+		else:
+			var overflow_ids := _array(slot_authority.get("overflow_ids", []))
+			for interaction_value in interactions:
+				var interaction := _dict(interaction_value)
+				var presentation_id := str(interaction.get("presentation_object_id", ""))
+				if (str(interaction.get("presentation_mode", "")) == "overflow") != overflow_ids.has(presentation_id):
+					errors.append("semantic inventory overflow interaction %s no longer matches authenticated whole-layout authority." % presentation_id)
 	errors.append_array(_validate_consumed_dynamic_sources(inventory, environment))
 	return errors
 
@@ -629,16 +664,16 @@ static func _validate_source_provenance(value: Variant, errors: Array) -> void:
 	}, null, "instance semantic inventory source_provenance", semantic_errors)
 	errors.append_array(semantic_errors)
 	_validate_authority_records(source.get("item_offer_authority"), ITEM_OFFER_AUTHORITY_KEYS, [], "item_offer_authority", errors)
-	_validate_authority_records(source.get("base_interaction_authority"), BASE_INTERACTION_AUTHORITY_KEYS, ["normalized_hit_rect", "hit_bounds"], "base_interaction_authority", errors)
+	_validate_authority_records(source.get("base_interaction_authority"), BASE_INTERACTION_AUTHORITY_KEYS, ["normalized_hit_rect", "hit_bounds"], "base_interaction_authority", errors, BASE_INTERACTION_AUTHORITY_OPTIONAL_KEYS)
 	_validate_authority_records(source.get("base_actor_authority"), BASE_ACTOR_AUTHORITY_KEYS, [], "base_actor_authority", errors)
 
 
-static func _validate_authority_records(value: Variant, keys: Array, dictionary_keys: Array, label: String, errors: Array) -> void:
+static func _validate_authority_records(value: Variant, keys: Array, dictionary_keys: Array, label: String, errors: Array, optional_keys: Array = []) -> void:
 	if typeof(value) != TYPE_ARRAY:
 		errors.append("instance semantic inventory %s must be an array." % label)
 		return
 	for record_value in value as Array:
-		if typeof(record_value) != TYPE_DICTIONARY or not _closed_dictionary(record_value as Dictionary, keys, []):
+		if typeof(record_value) != TYPE_DICTIONARY or not _closed_dictionary(record_value as Dictionary, keys, optional_keys):
 			errors.append("instance semantic inventory %s record is not closed." % label)
 			continue
 		var record := record_value as Dictionary
@@ -658,7 +693,14 @@ static func _validate_authority_records(value: Variant, keys: Array, dictionary_
 			var provenance_empty := source_kind.is_empty() and source_field.is_empty() and source_record_id.is_empty()
 			if str(record.get("owner_namespace", "")).is_empty() or str(record.get("stable_object_id", "")).is_empty() or str(record.get("presentation_object_id", "")).is_empty() or not _valid_identity(OperationRegistryScript.identity(str(record.get("owner_namespace", "")), str(record.get("stable_object_id", "")))) or not provenance_empty and (not SOURCE_KINDS.has(source_kind) or source_field.is_empty() or source_record_id.is_empty()):
 				errors.append("instance semantic inventory base_interaction_authority has invalid identity or provenance.")
-			_validate_normalized_rect(record.get("normalized_hit_rect"), "base_interaction_authority.normalized_hit_rect", errors)
+			var presentation_mode := str(record.get("presentation_mode", "room"))
+			if record.has("presentation_mode") and presentation_mode != "overflow":
+				errors.append("instance semantic inventory base_interaction_authority has an invalid optional presentation mode.")
+			if presentation_mode == "overflow":
+				if not _dict(record.get("normalized_hit_rect", {})).is_empty():
+					errors.append("instance semantic inventory overflow authority must not contain normalized room geometry.")
+			else:
+				_validate_normalized_rect(record.get("normalized_hit_rect"), "base_interaction_authority.normalized_hit_rect", errors)
 			_validate_hit_bounds(record.get("hit_bounds"), "base_interaction_authority.hit_bounds", errors)
 		elif label == "base_actor_authority":
 			for key in BASE_ACTOR_AUTHORITY_KEYS:
@@ -751,6 +793,20 @@ static func _validate_hit_bounds(value: Variant, label: String, errors: Array) -
 	var bounds := value as Dictionary
 	if not _finite_number(bounds.get("w")) or not _finite_number(bounds.get("h")) or float(bounds.get("w", 0.0)) < OperationRegistryScript.MIN_TARGET_SIZE or float(bounds.get("h", 0.0)) < OperationRegistryScript.MIN_TARGET_SIZE:
 		errors.append("instance semantic inventory %s is not finite or accessible." % label)
+
+
+static func _accessible_hit_bounds(value: Variant) -> bool:
+	var bounds := _dict(value)
+	return _closed_dictionary(bounds, HIT_BOUNDS_KEYS, []) \
+		and _finite_number(bounds.get("w")) and _finite_number(bounds.get("h")) \
+		and float(bounds.get("w")) >= OperationRegistryScript.MIN_TARGET_SIZE \
+		and float(bounds.get("h")) >= OperationRegistryScript.MIN_TARGET_SIZE
+
+
+static func _layout_has_slot_authority(layout: Dictionary) -> bool:
+	for key in ["slot_schema_version", "slot_map_digest", "slot_binding_digest", "slot_bindings", "slot_overflow_ids"]:
+		if layout.has(key): return true
+	return false
 
 
 static func _finite_number(value: Variant) -> bool:
@@ -1095,7 +1151,7 @@ static func _recognized_fixture(environment: Dictionary, presentation_id: String
 	return false
 
 
-static func _casino_room_interaction_errors(record: Dictionary, environment: Dictionary, library: Variant) -> Array:
+static func _casino_room_interaction_errors(record: Dictionary, environment: Dictionary, library: Variant, authenticated_overflow: bool = false) -> Array:
 	var presentation_id := str(record.get("presentation_object_id", record.get("object_id", "")))
 	var source_id := str(record.get("source_id", "")).strip_edges()
 	var presentation_source := presentation_id.trim_prefix("travel:") if presentation_id.begins_with("travel:") else ""
@@ -1114,8 +1170,8 @@ static func _casino_room_interaction_errors(record: Dictionary, environment: Dic
 		errors.append("casino room interaction lacks exact installed room-target authority.")
 	if not _authored_casino_room_target(environment, library, source_id):
 		errors.append("casino room interaction lacks selected archetype/layer authority.")
-	if not _dict(_dict(environment.get("layout", {})).get("object_rects", {})).has(presentation_id):
-		errors.append("casino room interaction lacks exact travel layout geometry.")
+	if not _dict(_dict(environment.get("layout", {})).get("object_rects", {})).has(presentation_id) and not authenticated_overflow:
+		errors.append("casino room interaction lacks exact travel layout geometry or authenticated overflow authority.")
 	return errors
 
 
@@ -1188,7 +1244,7 @@ static func _base_interaction_authority(value: Variant) -> Array:
 	var result: Array = []
 	for record_value in _array(value):
 		var record := _dict(record_value)
-		result.append({
+		var authority := {
 			"owner_namespace": str(record.get("owner_namespace", "")),
 			"stable_object_id": str(record.get("stable_object_id", "")),
 			"presentation_object_id": str(record.get("presentation_object_id", record.get("object_id", ""))),
@@ -1197,7 +1253,12 @@ static func _base_interaction_authority(value: Variant) -> Array:
 			"source_kind": str(record.get("source_kind", "")),
 			"source_field": str(record.get("source_field", "")),
 			"source_record_id": str(record.get("source_record_id", "")),
-		})
+		}
+		# Backward-compatible optional extension: legacy room proofs retain their
+		# schema/digest shape, while new geometry-free overflow proves its mode.
+		if str(record.get("presentation_mode", "")) == "overflow":
+			authority["presentation_mode"] = "overflow"
+		result.append(authority)
 	result.sort_custom(func(a: Variant, b: Variant) -> bool: return JSON.stringify(_canonical(a)) < JSON.stringify(_canonical(b)))
 	return result
 

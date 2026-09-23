@@ -4,6 +4,7 @@ const EnvironmentInstanceScript := preload("res://scripts/core/environment_insta
 const EnvironmentEventResolverScript := preload("res://scripts/core/environment_event_resolver.gd")
 const EnvironmentSemanticInventoryScript := preload("res://scripts/core/environment_semantic_inventory.gd")
 const EnvironmentBaseSemanticRecordsScript := preload("res://scripts/core/environment_base_semantic_records.gd")
+const EnvironmentSlotBinderScript := preload("res://scripts/core/environment_slot_binder.gd")
 const OperationRegistryScript := preload("res://scripts/core/scenario_operation_registry.gd")
 
 const RECORD_KEYS := ["collection", "owner_namespace", "stable_object_id", "owned_identity", "presentation_object_id", "availability", "source_kind", "source_field", "source_record_id", "record"]
@@ -741,6 +742,7 @@ static func _check_casino_room_route_authority(failures: Array) -> void:
 		var rendered_provenance := _dict(_dict(inventory.get("provenance", {})).get("interactions|%s" % rendered_identity, {}))
 		if str(route_provenance.get("source_field", "")) != "local_narrative_flags.casino_room_targets" or str(route_provenance.get("source_record_id", "")) != room_id or str(rendered_provenance.get("source_kind", "")) != "environment_instance_ui" or str(rendered_provenance.get("source_record_id", "")) != room_id:
 			failures.append("Grand Casino room %s lost exact room-target provenance." % room_id)
+	_check_casino_room_route_overflow_authority(environment, library, room_ids, _array(authoritative.get("records", [])), failures)
 	var missing_interaction := interactions.duplicate(true)
 	missing_interaction.pop_front()
 	if EnvironmentSemanticInventoryScript.validate(EnvironmentSemanticInventoryScript.for_instance(environment, library, missing_interaction)).is_empty():
@@ -793,6 +795,87 @@ static func _check_casino_room_route_authority(failures: Array) -> void:
 	changed_layout["layout"]["object_rects"]["travel:%s" % room_ids[0]]["x"] = 0.2
 	if EnvironmentSemanticInventoryScript.validate_instance_binding(inventory, changed_layout).is_empty():
 		failures.append("Post-seal casino room layout mutation retained stale semantic authority.")
+
+
+static func _check_casino_room_route_overflow_authority(environment: Dictionary, library: Variant, room_ids: Array, source_records: Array, failures: Array) -> void:
+	var binding := EnvironmentSlotBinderScript.bind_base_records(environment, source_records)
+	if not bool(binding.get("ok", false)):
+		failures.append("Grand Casino room-route overflow fixture could not bind production slots: %s" % JSON.stringify(binding.get("errors", [])))
+		return
+	var overflow_environment := environment.duplicate(true)
+	var overflow_layout := (overflow_environment.get("layout", {}) as Dictionary).duplicate(true)
+	overflow_layout["slot_schema_version"] = int(binding.get("slot_schema_version", 0))
+	overflow_layout["slot_map_digest"] = str(binding.get("slot_map_digest", ""))
+	overflow_layout["slot_binding_digest"] = str(binding.get("binding_digest", ""))
+	overflow_layout["slot_bindings"] = (binding.get("slot_bindings", {}) as Dictionary).duplicate(true)
+	overflow_layout["slot_overflow_ids"] = (binding.get("overflow_ids", []) as Array).duplicate(true)
+	overflow_layout["object_rects"] = (binding.get("object_rects", {}) as Dictionary).duplicate(true)
+	overflow_environment["layout"] = overflow_layout
+	var expected_overflow_id := "travel:grand_casino_high_limit"
+	if not (overflow_layout.get("slot_overflow_ids", []) as Array).has(expected_overflow_id):
+		failures.append("Grand Casino three-room fixture did not overflow the expected third doorway control.")
+		return
+	var authoritative := EnvironmentBaseSemanticRecordsScript.authoritative_interactable_records(overflow_environment, library)
+	var stamped := EnvironmentBaseSemanticRecordsScript.stamp_interactable_records(_array(authoritative.get("records", [])), overflow_environment, library)
+	var produced := EnvironmentBaseSemanticRecordsScript.from_interactable_records(_array(stamped.get("records", [])))
+	var interactions := _array(produced.get("interactions", []))
+	var inventory := EnvironmentSemanticInventoryScript.for_instance(overflow_environment, library, interactions)
+	var overflow_interaction: Dictionary = {}
+	for interaction_value in interactions:
+		var interaction := _dict(interaction_value)
+		if str(interaction.get("presentation_object_id", "")) == expected_overflow_id:
+			overflow_interaction = interaction
+			break
+	var bounds := _dict(overflow_interaction.get("hit_bounds", {}))
+	if not bool(authoritative.get("ok", false)) or not bool(stamped.get("ok", false)) or not bool(produced.get("ok", false)) \
+			or not EnvironmentSemanticInventoryScript.validate(inventory).is_empty() \
+			or str(overflow_interaction.get("presentation_mode", "")) != "overflow" \
+			or overflow_interaction.has("normalized_hit_rect") \
+			or float(bounds.get("w", 0.0)) < OperationRegistryScript.MIN_TARGET_SIZE \
+			or float(bounds.get("h", 0.0)) < OperationRegistryScript.MIN_TARGET_SIZE:
+		failures.append("Authenticated Grand Casino room-route overflow did not remain geometry-free and accessible: %s" % JSON.stringify(_array(authoritative.get("errors", [])) + _array(stamped.get("errors", [])) + _array(produced.get("errors", [])) + _array(inventory.get("errors", []))))
+		return
+	var resolved := OperationRegistryScript.resolve_interactions(interactions, [])
+	if not bool(resolved.get("ok", false)):
+		failures.append("Closed interaction resolver rejected authenticated overflow presentation_mode: %s" % JSON.stringify(resolved.get("errors", [])))
+	var unknown_mode := interactions.duplicate(true)
+	for index in range(unknown_mode.size()):
+		if str(_dict(unknown_mode[index]).get("presentation_object_id", "")) == expected_overflow_id:
+			var hostile := _dict(unknown_mode[index])
+			hostile["presentation_mode"] = "floating"
+			unknown_mode[index] = hostile
+	if bool(OperationRegistryScript.resolve_interactions(unknown_mode, []).get("ok", true)):
+		failures.append("Closed interaction resolver accepted an unknown presentation_mode.")
+	var forged_mode := interactions.duplicate(true)
+	for index in range(forged_mode.size()):
+		if str(_dict(forged_mode[index]).get("presentation_object_id", "")) == expected_overflow_id:
+			var hostile := _dict(forged_mode[index])
+			hostile["presentation_mode"] = "room"
+			forged_mode[index] = hostile
+	if bool(OperationRegistryScript.resolve_interactions(forged_mode, []).get("ok", true)) \
+			or EnvironmentSemanticInventoryScript.validate(EnvironmentSemanticInventoryScript.for_instance(overflow_environment, library, forged_mode)).is_empty():
+		failures.append("Grand Casino overflow route accepted a forged room presentation mode.")
+	var forged_membership := overflow_environment.duplicate(true)
+	var forged_layout := (forged_membership.get("layout", {}) as Dictionary).duplicate(true)
+	var forged_ids := (forged_layout.get("slot_overflow_ids", []) as Array).duplicate(true)
+	var room_presentation_id := ""
+	for room_id_value in room_ids:
+		var candidate_id := "travel:%s" % str(room_id_value)
+		if candidate_id != expected_overflow_id:
+			room_presentation_id = candidate_id
+			break
+	forged_ids.append(room_presentation_id)
+	forged_ids.sort()
+	forged_layout["slot_overflow_ids"] = forged_ids
+	forged_membership["layout"] = forged_layout
+	if EnvironmentSemanticInventoryScript.validate(EnvironmentSemanticInventoryScript.for_instance(forged_membership, library, interactions)).is_empty():
+		failures.append("Grand Casino room-route sealing accepted forged overflow membership.")
+	var missing_interaction := interactions.duplicate(true)
+	for index in range(missing_interaction.size() - 1, -1, -1):
+		if str(_dict(missing_interaction[index]).get("presentation_object_id", "")) == expected_overflow_id:
+			missing_interaction.remove_at(index)
+	if EnvironmentSemanticInventoryScript.validate(EnvironmentSemanticInventoryScript.for_instance(overflow_environment, library, missing_interaction)).is_empty():
+		failures.append("Grand Casino overflow route survived without its matching rendered interaction.")
 
 
 static func _check_consumed_dynamic_source_binding(failures: Array) -> void:
