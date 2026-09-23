@@ -99,3 +99,11 @@ Question: None; this is the owner's binding release-week steer.
 Options: A) Execute the directive in Resume (the owner's decision)
 Resume: Ask Q-004 from an interim current-tip contact sheet now. Land rw06_1 on `main` by end of 2026-09-24; if optional walk/swept-route work threatens that, keep the actor stationary and log it for 0.6.1, and send non-fitting objects to overflow. Never weaken overlap, exit, action-reachability or hidden-state guarantees. Run focused rw06_1 Godot contracts now. Start non-qualifying rw06_2 exploratory ending runs on current `main` now; qualifying runs remain after rw06_1 lands.
 Answer: A. Directive received from the owner on 2026-09-23 morning.
+
+### Q-006 · rw06_1 · Reviewable three-room fixed-slot sample
+Status: OPEN
+Asked: release orchestrator, 2026-09-23
+Question: Does this fixed-slot direction look right for Bar, Corner Store and Grand Casino in normal and expanded views? Sheet: `D:\Projects\Beat-The-House-worktrees\rw06_1-phase0\.tmp\rw06_1\contact_sheet\day2_4fd4c350_repair2_20260923-1312\day2_contact_sheet.png` (SHA-256 `8F37493B765573E4BDFE0C5F03A196B82F6E537A9600405EB0E6AC8E127D29C1`).
+Options: A) Direction approved; continue (recommended)  B) Needs changes; list the rooms or issues in Answer
+Resume: rw06_1 continues while OPEN. When ANSWERED, the release orchestrator applies blocking layout feedback before landing, logs non-blocking polish in `docs/plans/0.6.1_backlog.md`, updates the scoreboard, and marks Q-006 RESOLVED.
+Answer:
