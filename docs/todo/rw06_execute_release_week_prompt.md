@@ -101,8 +101,9 @@ Once the merge lands, rebase your Phase 0 worktrees onto the new `main`.
    - Watch for drift. rw06_2 must not edit placement files, and rw06_1 must not
      edit game, Crew or ending logic.
    - rw06_2 does its final three-ending pass on `main` **after** rw06_1 lands.
-3. **Owner checkpoint.** Once rw06_1 and rw06_5 have landed and rw06_2 has 3/3
-   endings green, ask the owner in the questions file:
+3. **Owner checkpoint.** Once rw06_1 and rw06_5 have landed, ask the owner in
+   the questions file. rw06_2 continues its 3/3 ending work in parallel and does
+   not delay this requested playthrough:
    - the build is ready for their start-to-finish run;
    - the rw06_1 contact sheet link, for their visual review of room placement.
 
@@ -110,7 +111,8 @@ Once the merge lands, rebase your Phase 0 worktrees onto the new `main`.
    anything that doesn't depend on them.
    Owner blockers become scoped fixes, assigned to rw06_1 for placement or
    rw06_2 for everything else. Non-blockers go to the 0.6.1 backlog.
-4. **rw06_3** (balance) after the owner's notes are handled.
+4. **rw06_3** (balance) after the owner's notes are handled and rw06_2's route
+   evidence exists.
 5. **rw06_4** (gate and artifact handoff). It has three hard owner stops: source
    approval, artifact approval, and artifact handoff/upload confirmation. Each
    is asked in the questions file. Agents post the two zip paths and SHA-256

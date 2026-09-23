@@ -69,7 +69,7 @@ next finds the answer resumes the work. Every row must follow its protocol.
 | 1–4 | rw06_1 | `rw06_1_fixed_slot_rooms_prompt.md` | rw06_0 | IN_PROGRESS (17-point exact-tip audit checklist at `78dfa8e1`; core/data/static repair and isolated overflow-action UI repair are in progress; Godot off pending a clean audited tip) |
 | 1–5 | rw06_2 | `rw06_2_three_endings_prompt.md` | rw06_0 (runs parallel to rw06_1; final pass after rw06_1) | IN_PROGRESS (replay safety harness focused PASS at `172731ee`; qualifying routes wait for rw06_1) |
 | 1–3 | rw06_5 | `../todone/rw06_5_owner_gameplay_fixes_prompt.md`: clicking a person starts a conversation, blackjack count shown between hands, Cass needs a real count | rw06_0 (parallel with rw06_1/rw06_2) | DONE (`1038a31f`) |
-| 5 | owner run | Owner plays one ending start to finish; notes go to the scoreboard | rw06_1, rw06_2 first pass | TODO |
+| 5 | owner run | Owner plays one ending start to finish; notes go to the scoreboard | rw06_1, rw06_5 | TODO (rw06_5 DONE; waits for rw06_1) |
 | 5 | rw06_3 | `rw06_3_balance_prompt.md` | rw06_2 routes exist | TODO |
 | 6–7 | rw06_4 | `rw06_4_release_gate_ship_prompt.md` | rw06_1, rw06_2, rw06_3, rw06_5 | TODO |
 
@@ -104,6 +104,7 @@ History (newest last):
 - 2026-09-23 release orchestrator: rw06_2 replay safety harness reached exact branch tip `172731ee`; its engine-free source contract, hostile public-observation contract, and two-launch bridge lifecycle contract passed. Focused evidence is `.tmp/rw06_2/public_observation_contract.json` (SHA-256 `F8F699846DB1CFD6C5659F7A9D10F42C77CAB4F8573C4C5EE19D28E683889195`) and `.tmp/rw06_2/clean/bridge-20260923-054711-435-14372/summary.json` (SHA-256 `79F6D5CB75857BA83A66A475BA4EB5FC6C18A2D9311C7954B5B56AEA2C862CCF`). Qualifying ending runs remain deferred until rw06_1 lands.
 - 2026-09-23 release orchestrator: rw06_1's first focused grounding run at `78dfa8e1` failed on a real generated-base slot mismatch. Read-only audit also found unstable phase-to-phase scenario bindings, two barriers intersecting the mandatory walk lane, runtime label placement still bypassing authored anchors, and an incomplete static phase/action census. The row remains IN_PROGRESS while those root causes and their non-weakened regressions are repaired; Godot is off pending a new audited tip.
 - 2026-09-23 release orchestrator: expanded rw06_1's exact-tip checklist to 17 findings before spending more engine time. It now covers production-canvas/base/label authority, reachable multi-action overflow controls, fail-closed safe exits and binder errors, transient TalkDock ownership, reconstructible actor moves, and swept-body route collisions (including the Back Alley lender crossing). Core/data/static work remains on `codex/rw06_1-phase0`; the non-overlapping overflow UI and Foundation integration contract run in `codex/rw06_1-overflow-ui`. No Godot resumes until both land on one clean pushed tip and pass read-only audit.
+- 2026-09-23 release orchestrator: applied the owner's latest checkpoint order: request the start-to-finish owner playthrough as soon as rw06_1 and rw06_5 are on `main`; rw06_2 continues in parallel and no longer delays that request. rw06_3 still waits for both the owner's notes and rw06_2 route evidence.
 
 ## Rules every row inherits
 
