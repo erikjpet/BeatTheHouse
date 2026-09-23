@@ -132,13 +132,27 @@ checkpoint, screenshots, and final summary used for acceptance.
   (SHA-256 `6225DC1798DEE8A4EE5772047E6256D76A2C5B099F886B8F03047E9B6E72CDC9`).
   The exact owned process exited with no survivor; its generic post-exit
   `ObjectDB instances leaked at exit` warning is retained in the session logs.
+- A second serialized, non-qualifying clean probe on product base `11c584bd`
+  confirmed that tutorial correction: both Pal's rendered `continue` choice
+  and the subsequent **Skip tip** control worked. The replay then stopped after
+  four counted actions because **Skip Lessons** was below the clipped run-menu
+  viewport. The visible scrollbar made this a replay-bridge reachability gap,
+  not a product arc, placement, goal, or economy finding. The bridge now
+  publishes only the rendered `run_menu` vertical-scroll capability and uses
+  real mouse-wheel input with verified movement; the route bounds its public
+  scroll search and fails closed on ambiguous or stale surfaces. Seven hostile
+  fixtures pass engine-free. Summary evidence is
+  `.tmp/rw06_2/exploratory/clean-main-11c584bd-probe2/20260923-094003-789-18960/run-01/summary.json`
+  (SHA-256 `D876EF3276898B59AC33B0E9F10C8A7953184E6EA29CA352A3DFFE03E74AF344`).
+  The exact owned process exited with empty stderr and no survivor. The scroll
+  correction still requires a serialized live probe.
 - Final qualifying evidence intentionally waits for rw06_1 to land.
 
 ## Open route risks
 
 1. Exact visible labels and semantic targets still require live-route audit.
-2. No hands-on UI run is permitted yet, so seeds and wager policies are
-   provisional.
+2. Exploratory UI runs have not reached the route economy yet, so seeds and
+   wager policies remain provisional.
 3. The clean lane is sequential: 1/+5, then 3/+15, then 5/+30. Its nine games
    and +$50 total may conflict with shorter player-facing summaries.
 4. The Grand Casino route costs $70 before gambling capital.

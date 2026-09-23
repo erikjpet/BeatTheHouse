@@ -11,7 +11,8 @@ param(
     [int]$TimeoutSeconds = 120,
     [string]$EvidenceRoot = '',
     [switch]$BridgeTransportContract,
-    [switch]$BridgeStatusContract
+    [switch]$BridgeStatusContract,
+    [switch]$SemanticScrollContract
 )
 
 Set-StrictMode -Version Latest
@@ -661,6 +662,77 @@ function Find-Button {
 }
 
 
+function Get-PublicScrollSurfaces {
+    return @(Get-Array (Get-Value $script:LastResult @('look', 'clickable', 'scroll_surfaces') @()))
+}
+
+
+function Select-UniquePublicVerticalScrollSurface {
+    param(
+        [Parameter(Mandatory = $true)][AllowEmptyCollection()][object[]]$Surfaces,
+        [Parameter(Mandatory = $true)][string]$SurfaceId,
+        [Parameter(Mandatory = $true)][ValidateSet('up', 'down')][string]$Direction
+    )
+    if ($SurfaceId -cne 'run_menu') {
+        throw "Unsupported public scroll surface '$SurfaceId'."
+    }
+    $matches = @($Surfaces | Where-Object {
+        [string](Get-Value $_ @('id') '') -ceq $SurfaceId
+    })
+    if ($matches.Count -ne 1) {
+        throw "Expected exactly one public '$SurfaceId' scroll surface; found $($matches.Count)."
+    }
+    $surface = $matches[0]
+    if ([string](Get-Value $surface @('axis') '') -cne 'vertical' -or
+        -not [bool](Get-Value $surface @('rendered') $false)) {
+        throw "Public '$SurfaceId' scroll surface is not a rendered vertical control."
+    }
+    $capability = "can_scroll_$Direction"
+    if (-not [bool](Get-Value $surface @($capability) $false)) {
+        throw "Public '$SurfaceId' scroll surface cannot scroll $Direction."
+    }
+    return $surface
+}
+
+
+function Reveal-ButtonByVerticalScroll {
+    param(
+        [Parameter(Mandatory = $true)][string]$Text,
+        [Parameter(Mandatory = $true)][ValidateSet('up', 'down')][string]$Direction,
+        [ValidateRange(1, 16)][int]$MaximumScrolls = 12
+    )
+    for ($attempt = 0; $attempt -le $MaximumScrolls; $attempt++) {
+        $button = Find-Button -Text $Text
+        if ($null -ne $button) { return $button }
+        if ($attempt -eq $MaximumScrolls) { break }
+        $surface = Select-UniquePublicVerticalScrollSurface `
+            -Surfaces @(Get-PublicScrollSurfaces) `
+            -SurfaceId 'run_menu' `
+            -Direction $Direction
+        $surfaceId = [string](Get-Value $surface @('id') '')
+        $null = Invoke-BridgeCommand `
+            -Command "scroll_surface $surfaceId $Direction" `
+            -Intent "scroll the visible run menu $Direction toward $Text"
+        Wait-Frames -Frames 2
+    }
+    throw "Required run-menu button '$Text' did not become visible within $MaximumScrolls public scroll inputs."
+}
+
+
+function Click-RunMenuButton {
+    param(
+        [Parameter(Mandatory = $true)][string]$Text,
+        [Parameter(Mandatory = $true)][string]$Intent,
+        [Parameter(Mandatory = $true)][ValidateSet('up', 'down')][string]$RevealDirection
+    )
+    if (-not [bool](Get-Value $script:LastObservation @('screen', 'run_menu_visible') $false)) {
+        throw "Cannot click run-menu button '$Text' while the public run menu is closed."
+    }
+    $null = Reveal-ButtonByVerticalScroll -Text $Text -Direction $RevealDirection
+    return Click-Button -Text $Text -Intent $Intent
+}
+
+
 function Click-Button {
     param(
         [Parameter(Mandatory = $true)][string]$Text,
@@ -1059,7 +1131,7 @@ function Start-NormalSeededRun {
         $null -eq (Find-Button -Text 'Skip Lessons')) {
         throw 'The live first-night lesson did not render an enabled Skip Lessons control.'
     }
-    $null = Click-Button -Text 'Skip Lessons' -Intent 'request the player-facing lesson skip'
+    $null = Click-RunMenuButton -Text 'Skip Lessons' -RevealDirection down -Intent 'request the player-facing lesson skip'
     if ($null -eq (Find-Button -Text 'OK')) {
         throw 'Skip Lessons did not render its enabled player confirmation.'
     }
@@ -1826,9 +1898,9 @@ function Assert-SaveRelaunchContinue {
     $before = Get-PersistenceCheckpoint
     $beforeJson = $before | ConvertTo-Json -Depth 10 -Compress
     $null = Click-Button -Text 'Menu' -Intent "open the run menu at the $Milestone persistence checkpoint"
-    $null = Click-Button -Text 'Save' -Intent "save the run through the visible run menu at $Milestone"
+    $null = Click-RunMenuButton -Text 'Save' -RevealDirection up -Intent "save the run through the visible run menu at $Milestone"
     Assert-ExplicitSaveAcknowledged -Milestone $Milestone
-    $null = Click-Button -Text 'Main Menu' -Intent 'return to the main menu after the explicit save'
+    $null = Click-RunMenuButton -Text 'Main Menu' -RevealDirection down -Intent 'return to the main menu after the explicit save'
     if ([string](Get-Value $script:LastObservation @('screen', 'screen') '') -ne 'START') {
         throw "Main Menu did not return to the start screen after saving."
     }
@@ -2432,9 +2504,9 @@ function Assert-HeistSaveRelaunchContinue {
     $beforeJson = $before | ConvertTo-Json -Depth 20 -Compress
     Close-VisibleChoiceSurface
     $null = Click-Button -Text 'Menu' -Intent 'open the run menu at the completed heist setup checkpoint'
-    $null = Click-Button -Text 'Save' -Intent 'save The Count after all visible setup chairs are filled'
+    $null = Click-RunMenuButton -Text 'Save' -RevealDirection up -Intent 'save The Count after all visible setup chairs are filled'
     Assert-ExplicitSaveAcknowledged -Milestone 'The Count completed setup'
-    $null = Click-Button -Text 'Main Menu' -Intent 'return to the main menu after saving The Count setup'
+    $null = Click-RunMenuButton -Text 'Main Menu' -RevealDirection down -Intent 'return to the main menu after saving The Count setup'
     if ([string](Get-Value $script:LastObservation @('screen', 'screen') '') -cne 'START') {
         throw 'Main Menu did not visibly return The Count checkpoint to START before relaunch.'
     }
@@ -2691,6 +2763,86 @@ function Invoke-BridgeStatusRegression {
     }
     $summary | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $statusRoot 'summary.json') -Encoding utf8
     return [pscustomobject]$summary
+}
+
+
+function Invoke-SemanticScrollRegression {
+    $failures = [Collections.Generic.List[string]]::new()
+    $validDown = [pscustomobject][ordered]@{
+        id = 'run_menu'
+        axis = 'vertical'
+        rendered = $true
+        can_scroll_up = $false
+        can_scroll_down = $true
+    }
+    $validUp = [pscustomobject][ordered]@{
+        id = 'run_menu'
+        axis = 'vertical'
+        rendered = $true
+        can_scroll_up = $true
+        can_scroll_down = $false
+    }
+    try {
+        $selectedDown = Select-UniquePublicVerticalScrollSurface -Surfaces @($validDown) -SurfaceId 'run_menu' -Direction down
+        if ([string](Get-Value $selectedDown @('id') '') -cne 'run_menu') {
+            $failures.Add('Valid downward public scroll selection returned the wrong surface.')
+        }
+        $selectedUp = Select-UniquePublicVerticalScrollSurface -Surfaces @($validUp) -SurfaceId 'run_menu' -Direction up
+        if ([string](Get-Value $selectedUp @('id') '') -cne 'run_menu') {
+            $failures.Add('Valid upward public scroll selection returned the wrong surface.')
+        }
+    }
+    catch {
+        $failures.Add("Valid public scroll selection threw: $($_.Exception.Message)")
+    }
+
+    $hostileFixtures = @(
+        [pscustomobject]@{ label = 'missing'; surfaces = @(); surface_id = 'run_menu'; direction = 'down' },
+        [pscustomobject]@{ label = 'duplicate'; surfaces = @($validDown, $validDown); surface_id = 'run_menu'; direction = 'down' },
+        [pscustomobject]@{ label = 'unsupported-id'; surfaces = @($validDown); surface_id = 'journal'; direction = 'down' },
+        [pscustomobject]@{ label = 'not-rendered'; surfaces = @([pscustomobject]@{ id = 'run_menu'; axis = 'vertical'; rendered = $false; can_scroll_down = $true }); surface_id = 'run_menu'; direction = 'down' },
+        [pscustomobject]@{ label = 'wrong-axis'; surfaces = @([pscustomobject]@{ id = 'run_menu'; axis = 'horizontal'; rendered = $true; can_scroll_down = $true }); surface_id = 'run_menu'; direction = 'down' },
+        [pscustomobject]@{ label = 'blocked-direction'; surfaces = @($validUp); surface_id = 'run_menu'; direction = 'down' },
+        [pscustomobject]@{ label = 'blank-public-id'; surfaces = @([pscustomobject]@{ id = ''; axis = 'vertical'; rendered = $true; can_scroll_down = $true }); surface_id = 'run_menu'; direction = 'down' }
+    )
+    foreach ($fixture in $hostileFixtures) {
+        $threw = $false
+        try {
+            $null = Select-UniquePublicVerticalScrollSurface `
+                -Surfaces @($fixture.surfaces) `
+                -SurfaceId ([string]$fixture.surface_id) `
+                -Direction ([string]$fixture.direction)
+        }
+        catch {
+            $threw = $true
+        }
+        if (-not $threw) {
+            $failures.Add("Hostile semantic-scroll fixture '$($fixture.label)' did not fail closed.")
+        }
+    }
+
+    $reportPath = Join-Path $Worktree '.tmp\rw06_2\semantic_scroll_contract.json'
+    [void](New-Item -ItemType Directory -Path (Split-Path -Parent $reportPath) -Force)
+    $summary = [ordered]@{
+        schema_version = 1
+        check_id = 'rw06_2_semantic_scroll_contract'
+        passed = ($failures.Count -eq 0)
+        valid_fixtures = 2
+        hostile_fixtures = $hostileFixtures.Count
+        failures = @($failures)
+        report = $reportPath
+    }
+    $summary | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $reportPath -Encoding utf8
+    if ($failures.Count -gt 0) {
+        throw "RW06_2_SEMANTIC_SCROLL_CONTRACT FAIL ($($failures.Count) failure(s)); report: $reportPath"
+    }
+    return [pscustomobject]$summary
+}
+
+
+if ($SemanticScrollContract) {
+    Invoke-SemanticScrollRegression | ConvertTo-Json -Depth 8
+    exit 0
 }
 
 

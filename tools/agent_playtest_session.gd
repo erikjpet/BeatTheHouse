@@ -155,6 +155,11 @@ func _execute_command(raw: String, command_number: int) -> Dictionary:
 				accepted = bool(clicked.get("ok", false))
 				reason = str(clicked.get("reason", ""))
 				detail = clicked
+			"scroll_surface":
+				var scrolled := await _scroll_surface(argument)
+				accepted = bool(scrolled.get("ok", false))
+				reason = str(scrolled.get("reason", ""))
+				detail = scrolled
 			"click_inventory":
 				var clicked := await _click_inventory_item(argument)
 				accepted = bool(clicked.get("ok", false))
@@ -312,6 +317,38 @@ func _click_button(target: String) -> Dictionary:
 	var click_position: Vector2 = data.get("click_position", button.get_global_rect().get_center())
 	await _push_mouse_click(click_position, false)
 	return {"ok": true, "id": clicked_id, "text": clicked_text}
+
+
+func _scroll_surface(argument: String) -> Dictionary:
+	var parts := argument.split(" ", false)
+	if parts.size() != 2:
+		return {"ok": false, "reason": "scroll_surface requires one public surface id and up/down direction"}
+	var surface_id := str(parts[0]).strip_edges()
+	var direction := str(parts[1]).strip_edges().to_lower()
+	if surface_id != "run_menu":
+		return {"ok": false, "reason": "unsupported public scroll surface: %s" % surface_id}
+	if direction not in ["up", "down"]:
+		return {"ok": false, "reason": "scroll_surface direction must be up or down"}
+	var surface := _visible_vertical_scroll_surface(surface_id)
+	if surface.is_empty():
+		return {"ok": false, "reason": "public scroll surface is not visibly scrollable: %s" % surface_id}
+	var capability := "can_scroll_%s" % direction
+	if not bool(surface.get(capability, false)):
+		return {"ok": false, "reason": "public scroll surface cannot scroll %s: %s" % [direction, surface_id]}
+	var container := surface.get("node") as ScrollContainer
+	if container == null:
+		return {"ok": false, "reason": "public scroll surface lost its live container: %s" % surface_id}
+	var visible_rect: Rect2 = surface.get("rect", Rect2())
+	if not visible_rect.has_area():
+		return {"ok": false, "reason": "public scroll surface lost its visible hit area: %s" % surface_id}
+	var before := container.scroll_vertical
+	var button_index := MOUSE_BUTTON_WHEEL_UP if direction == "up" else MOUSE_BUTTON_WHEEL_DOWN
+	await _push_mouse_wheel(visible_rect.get_center(), button_index)
+	await process_frame
+	var after := container.scroll_vertical
+	if (direction == "down" and after <= before) or (direction == "up" and after >= before):
+		return {"ok": false, "reason": "visible mouse-wheel input did not move public scroll surface %s %s" % [surface_id, direction]}
+	return {"ok": true, "surface_id": surface_id, "direction": direction, "moved": true}
 
 
 func _click_map_node(node_id: String) -> Dictionary:
@@ -625,6 +662,22 @@ func _push_mouse_click(position: Vector2, double_click: bool) -> void:
 	await process_frame
 
 
+func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
+	var motion := InputEventMouseMotion.new()
+	motion.position = position
+	motion.global_position = position
+	app.get_viewport().push_input(motion, true)
+	await process_frame
+	var wheel := InputEventMouseButton.new()
+	wheel.button_index = button_index
+	wheel.pressed = true
+	wheel.factor = 1.0
+	wheel.position = position
+	wheel.global_position = position
+	app.get_viewport().push_input(wheel, true)
+	await process_frame
+
+
 func _capture_look(command_number: int) -> Dictionary:
 	await RenderingServer.frame_post_draw
 	var image_path := _path("%04d.png" % command_number)
@@ -647,6 +700,7 @@ func _capture_look(command_number: int) -> Dictionary:
 		"coach": _public_coach_snapshot(coach_snapshot),
 		"clickable": {
 			"buttons": _public_buttons(),
+			"scroll_surfaces": _public_scroll_surfaces(),
 			"text_fields": _visible_text_fields(),
 			"talk_choices": _public_talk_choices(observable),
 			"canvas_objects": _canvas_objects(room_canvas),
@@ -757,6 +811,44 @@ func _public_buttons() -> Array:
 			"rect": entry.get("rect", Rect2()),
 		})
 	return result
+
+
+func _visible_vertical_scroll_surface(surface_id: String) -> Dictionary:
+	var container: ScrollContainer = null
+	if surface_id == "run_menu":
+		container = app.get("run_menu_scroll") as ScrollContainer
+	if not _control_is_rendered(container):
+		return {}
+	var bar := container.get_v_scroll_bar()
+	if bar == null:
+		return {}
+	var maximum := maxi(0, int(ceil(bar.max_value - bar.page)))
+	if maximum <= 0:
+		return {}
+	var current := clampi(container.scroll_vertical, 0, maximum)
+	return {
+		"node": container,
+		"id": surface_id,
+		"axis": "vertical",
+		"rendered": true,
+		"rect": _clipped_control_rect(container),
+		"can_scroll_up": current > 0,
+		"can_scroll_down": current < maximum,
+	}
+
+
+func _public_scroll_surfaces() -> Array:
+	var surface := _visible_vertical_scroll_surface("run_menu")
+	if surface.is_empty():
+		return []
+	return [{
+		"id": str(surface.get("id", "")),
+		"axis": str(surface.get("axis", "")),
+		"rendered": bool(surface.get("rendered", false)),
+		"rect": surface.get("rect", Rect2()),
+		"can_scroll_up": bool(surface.get("can_scroll_up", false)),
+		"can_scroll_down": bool(surface.get("can_scroll_down", false)),
+	}]
 
 
 func _visible_text_fields() -> Array:

@@ -11,6 +11,7 @@ $BridgePath = Join-Path $PSScriptRoot 'agent_playtest_session.gd'
 $SanitizerPath = Join-Path $PSScriptRoot 'agent_playtest_public_observation.gd'
 $ObservationContractPath = Join-Path $PSScriptRoot 'rw06_2_public_observation_contract.gd'
 $ReportPath = Join-Path $Worktree '.tmp\rw06_2\replay_source_contract.json'
+$SemanticScrollReportPath = Join-Path $Worktree '.tmp\rw06_2\semantic_scroll_contract.json'
 
 $failures = [Collections.Generic.List[string]]::new()
 
@@ -84,6 +85,10 @@ if ($failures.Count -eq 0) {
         'function Invoke-HeistEndingRoute',
         'function Invoke-BridgeTransportRegression',
         'function Invoke-BridgeStatusRegression',
+        'function Select-UniquePublicVerticalScrollSurface',
+        'function Reveal-ButtonByVerticalScroll',
+        'function Click-RunMenuButton',
+        'function Invoke-SemanticScrollRegression',
         "clean = @('players_card')",
         "cheat = @('showdown_survived')",
         "heist = @('heist_clean_sweep', 'heist_out_hot', 'heist_somebody_got_pinched')",
@@ -102,8 +107,9 @@ if ($failures.Count -eq 0) {
         "'travel:grand_casino_cage'",
         "'environment_layer:casino'",
         'left the same visible handoff and map marker active',
-        "Click-Button -Text 'Save'",
-        "Click-Button -Text 'Main Menu'",
+        "Click-RunMenuButton -Text 'Save'",
+        "Click-RunMenuButton -Text 'Main Menu'",
+        "Click-RunMenuButton -Text 'Skip Lessons'",
         "Click-Button -Text 'CONTINUE'",
         'Save -> relaunch -> Continue',
         "@('before_fingerprint')",
@@ -166,7 +172,13 @@ if ($failures.Count -eq 0) {
         '"click_map"',
         '"click_choice"',
         '"click_inventory"',
+        '"scroll_surface"',
         '"talk_choices": _public_talk_choices(observable)',
+        '"scroll_surfaces": _public_scroll_surfaces()',
+        'func _scroll_surface(argument: String) -> Dictionary:',
+        'func _visible_vertical_scroll_surface(surface_id: String) -> Dictionary:',
+        'func _public_scroll_surfaces() -> Array:',
+        'func _push_mouse_wheel(position: Vector2, button_index: int) -> void:',
         'start_menu["seed_text_committed"] = seed_field_visible',
         'screen["run_report_visible"] = screen_id in ["VICTORY", "FAILURE"]',
         'status_hud["save_text_visible"] = _hud_status_tooltip_is_rendered',
@@ -241,8 +253,13 @@ if ($failures.Count -eq 0) {
     Assert-NotMatch $bridge 'set_application_pause_owner[^\r\n]+false' 'The bridge must retain its deterministic replay pause owner for the entire process lifetime.'
     Assert-Contains $bridge 'var choice_list := talk_dock.get("choice_list") as Node if talk_dock != null else null' 'Semantic TalkDock choices must bind to the actual rendered choice list.'
     Assert-Contains $runner "@('look', 'clickable', 'talk_choices')" 'Replay routes must consume the rendered TalkDock enabled-state mapping.'
+    Assert-Contains $runner "@('look', 'clickable', 'scroll_surfaces')" 'Replay routes must consume only the public rendered scroll-surface mapping.'
     Assert-Match $runner '(?s)function Get-VisibleTutorialGuideAcknowledgment.*?tutorial_guide:.*?choiceIds\.Count\s+-ne\s+1.*?choiceIds\[0\].*?continue.*?Get-PublicTalkChoices.*?enabled' 'Coach recovery must accept only one rendered enabled continue choice from the public tutorial-guide TalkDock.'
     Assert-Match $runner '(?s)function Clear-VisibleCoach.*?Get-VisibleTutorialGuideAcknowledgment.*?Choose-VisibleChoice\s+-ChoiceId\s+''continue''.*?Wait-Frames.*?continue.*?dismissLabel' 'Coach recovery must follow the narrow public tutorial-guide acknowledgement before trying the rendered coach dismiss control.'
+    Assert-Match $runner '(?s)function Select-UniquePublicVerticalScrollSurface.*?SurfaceId\s+-cne\s+''run_menu''.*?matches\.Count\s+-ne\s+1.*?axis.*?vertical.*?rendered.*?can_scroll_\$Direction' 'Run-menu scroll selection must reject unsupported, ambiguous, hidden, wrong-axis, and direction-blocked public surfaces.'
+    Assert-Match $runner '(?s)function Reveal-ButtonByVerticalScroll.*?MaximumScrolls\s*=\s*12.*?Get-PublicScrollSurfaces.*?scroll_surface \$surfaceId \$Direction.*?did not become visible within' 'Run-menu reveal must use bounded public semantic scroll inputs and fail closed.'
+    Assert-Match $bridge '(?s)func _scroll_surface\(argument: String\).*?surface_id != "run_menu".*?direction not in \["up", "down"\].*?surface\.get\(capability, false\).*?_push_mouse_wheel.*?after <= before.*?after >= before' 'The bridge semantic scroll command must allow only rendered public run-menu capabilities and verify real wheel movement.'
+    Assert-NotMatch $bridge '\.scroll_vertical\s*=' 'The replay bridge must not inject scroll-container state directly.'
     Assert-Contains $runner "@('players_card_eligible') `$false" 'Clean-ending eligibility must fail closed when its public field is absent.'
     Assert-Contains $runner 'Stop-Process -Id $script:OwnedSessionPid -Force -ErrorAction Stop' 'Failure cleanup may force-stop only the exact recorded session-owned Godot PID.'
     Assert-Contains $runner '$actualStartUtcTicks -ne $script:OwnedSessionStartUtcTicks' 'Failure cleanup must verify process start identity before force-stop.'
@@ -292,6 +309,20 @@ if ($failures.Count -eq 0) {
     }
     catch {
         Add-Failure "Launcher cross-date contract failed: $($_.Exception.Message)"
+    }
+
+    try {
+        $scrollOutput = & $RunnerPath -Ending clean -SemanticScrollContract | Out-String
+        $scrollReport = $scrollOutput | ConvertFrom-Json
+        if (-not [bool]$scrollReport.passed -or [int]$scrollReport.hostile_fixtures -ne 7) {
+            Add-Failure 'Semantic scroll hostile regression did not pass all seven fail-closed fixtures.'
+        }
+        if (-not (Test-Path -LiteralPath $SemanticScrollReportPath -PathType Leaf)) {
+            Add-Failure 'Semantic scroll hostile regression did not publish its deterministic report.'
+        }
+    }
+    catch {
+        Add-Failure "Semantic scroll hostile regression failed: $($_.Exception.Message)"
     }
 }
 

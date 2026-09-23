@@ -45,6 +45,39 @@ Evidence:
   that warning remains preserved with the session evidence rather than being
   ignored or treated as a passing run.
 
+## 2026-09-23 second current-main exploratory probe (non-qualifying)
+
+Product base `11c584bd`; pushed replay tip `760bdf4c`. Exactly one additional
+`-Ending clean -Repeat 1` run was made under the serialized Godot lease. The
+narrow tutorial-policy correction worked: the replay chose Pal's rendered
+**Pick them up** action, then used the rendered **Skip tip** control. It opened
+the run menu and stopped fail-closed after four counted actions because
+**Skip Lessons** was below the clipped viewport. The visible run-menu scroll
+bar could reach it, but the production-input bridge did not yet expose that
+rendered scroll capability.
+
+This is another replay/bridge reachability issue, not a product ending,
+placement, goal-clarity, or economy finding. The bridge and route now expose
+and consume only the rendered `run_menu` vertical-scroll capability, issue
+real mouse-wheel input, verify movement, bound the search, and reject missing,
+duplicate, hidden, wrong-axis, unsupported, and direction-blocked surfaces.
+No direct scroll state is assigned. The engine-free source contract covers
+seven hostile fixtures; a later serialized live run must prove this correction.
+
+Evidence:
+
+- Run summary:
+  `.tmp/rw06_2/exploratory/clean-main-11c584bd-probe2/20260923-094003-789-18960/run-01/summary.json`
+  (SHA-256 `D876EF3276898B59AC33B0E9F10C8A7953184E6EA29CA352A3DFFE03E74AF344`).
+- Public trace:
+  `.tmp/rw06_2/exploratory/clean-main-11c584bd-probe2/20260923-094003-789-18960/run-01/public_trace.ndjson`
+  (SHA-256 `7EA758E46F604730476B12327A9FB0CC201915B59DDE56DCC56F2D2CAEDF03FF`).
+- Screenshot:
+  `.tmp/agent_playtest/2026-09-23/rw062-clean-18960-1-5c4bd2eceb/0008.png`
+  (SHA-256 `8AAE60B91887F0416C2D4960D3A66E58E4793779EAB2ED169D10B5D6C62FDD9F`).
+- The exact owned process exited, stderr was empty, and no Godot process
+  survived.
+
 ## Player intent
 
 Reach the Grand Casino, earn Bronze, Silver, and Gold Players Card tiers without
