@@ -810,7 +810,7 @@ func _collect_buttons(node: Node, result: Array) -> void:
 
 func _append_tutorial_confirmation_buttons(result: Array) -> void:
 	var dialog := app.get("tutorial_skip_dialog") as ConfirmationDialog
-	if not _control_is_rendered(dialog):
+	if dialog == null or not dialog.visible or dialog.size.x <= 0 or dialog.size.y <= 0:
 		return
 	var controls: Array[Dictionary] = [
 		{"button": dialog.get_ok_button(), "id": "tutorial_skip_dialog:ok", "role": "ok"},
