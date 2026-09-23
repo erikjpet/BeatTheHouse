@@ -11,6 +11,10 @@ const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 const SequenceCatalogScript := preload("res://scripts/core/scenario_sequence_catalog.gd")
 const ScenarioLayoutResolverScript := preload("res://scripts/core/scenario_layout_resolver.gd")
+const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")
+const ScenarioSequenceRuntimeScript := preload("res://scripts/core/scenario_sequence_runtime.gd")
+const ScenarioSequenceSchemaScript := preload("res://scripts/core/scenario_sequence_schema.gd")
+const FunctionOptionsScript := preload("res://scripts/core/function_options.gd")
 const EnvironmentPlacementScript := preload("res://scripts/core/environment_placement.gd")
 const HarnessProductionFidelityScript := preload("res://scripts/tests/foundation/harness_production_fidelity.gd")
 const SEED_TEXT := "LAYOUT-SURVEY-QA"
@@ -34,6 +38,8 @@ var fix06_31_scenario_filter := ""
 var fix06_31_room_filter := ""
 var fix06_31_skip_base := false
 var fix06_31_surface_maps: Dictionary = {}
+var rw06_1_contact_sheet := false
+var rw06_1_static_report := "res://.tmp/rw06_1/static/slot_report.json"
 
 
 func _init() -> void:
@@ -55,6 +61,10 @@ func _init() -> void:
 			fix06_31_room_filter = argument.trim_prefix("--fix06-31-room=")
 		elif argument == "--fix06-31-skip-base":
 			fix06_31_skip_base = true
+		elif argument == "--rw06-1-contact-sheet":
+			rw06_1_contact_sheet = true
+		elif argument.begins_with("--rw06-1-static-report="):
+			rw06_1_static_report = argument.trim_prefix("--rw06-1-static-report=")
 	call_deferred("_run")
 
 
@@ -76,6 +86,9 @@ func _run() -> void:
 		return
 	if fix06_31_audit:
 		await _run_fix06_31_audit(library)
+		return
+	if rw06_1_contact_sheet:
+		await _run_rw06_1_contact_sheet(library)
 		return
 	var archetypes: Array = library.environment_archetypes
 	for archetype_value in archetypes:
@@ -353,6 +366,369 @@ func _direct_interaction_overlaps(layout: Dictionary) -> Array:
 					"area": intersection.get_area(),
 				})
 	return overlaps
+
+
+func _run_rw06_1_contact_sheet(library: Variant) -> void:
+	var failures: Array = []
+	var static_report := _rw06_1_read_json(rw06_1_static_report)
+	var selections := _array(static_report.get("contact_sheet", []))
+	if selections.size() != 18:
+		failures.append("rw06_1 contact-sheet manifest must contain 18 rooms; found %d." % selections.size())
+	var definitions: Dictionary = {}
+	for definition_value in _fix06_31_scenario_definitions(library):
+		var definition := _dict(definition_value)
+		definitions[str(definition.get("id", ""))] = definition
+	var archetypes: Dictionary = {}
+	for archetype_value in library.environment_archetypes:
+		var archetype := _dict(archetype_value)
+		archetypes[str(archetype.get("id", ""))] = archetype
+	DirAccess.make_dir_recursive_absolute("%s/normal" % out_dir)
+	DirAccess.make_dir_recursive_absolute("%s/expanded" % out_dir)
+	var capture_rows: Array = []
+	for selection_value in selections:
+		var selection := _dict(selection_value)
+		var archetype_id := str(selection.get("archetype_id", ""))
+		var scenario_id := str(selection.get("scenario_id", ""))
+		var prepared: Dictionary = {}
+		if scenario_id.is_empty():
+			prepared = await _rw06_1_prepare_base_room(_dict(archetypes.get(archetype_id, {})), library)
+		else:
+			prepared = await _rw06_1_prepare_scenario_peak(_dict(definitions.get(scenario_id, {})), selection, library)
+		if not bool(prepared.get("ok", false)):
+			failures.append_array(_array(prepared.get("errors", ["%s could not be prepared." % archetype_id])))
+			continue
+		var captured := await _rw06_1_capture_pair(selection)
+		if not bool(captured.get("ok", false)):
+			failures.append_array(_array(captured.get("errors", ["%s could not be captured." % archetype_id])))
+			continue
+		capture_rows.append(captured)
+	var day2_rows: Array = []
+	for row_value in capture_rows:
+		var row := _dict(row_value)
+		if bool(_dict(row.get("selection", {})).get("day2_sample", false)):
+			day2_rows.append(row)
+	var full_sheet := _rw06_1_build_sheet(capture_rows, "%s/all_rooms_contact_sheet.png" % out_dir, 3)
+	var day2_sheet := _rw06_1_build_sheet(day2_rows, "%s/day2_contact_sheet.png" % out_dir, 1)
+	if not bool(full_sheet.get("ok", false)):
+		failures.append_array(_array(full_sheet.get("errors", [])))
+	if not bool(day2_sheet.get("ok", false)):
+		failures.append_array(_array(day2_sheet.get("errors", [])))
+	var report_payload := {
+		"schema": "rw06_1_fixed_slot_contact_sheet/v1",
+		"source_static_report": rw06_1_static_report,
+		"room_count": capture_rows.size(),
+		"day2_room_count": day2_rows.size(),
+		"captures": capture_rows,
+		"all_rooms_sheet": full_sheet,
+		"day2_sheet": day2_sheet,
+		"failures": failures,
+	}
+	_write_fix06_31_json("%s/contact_sheet_report.json" % out_dir, report_payload)
+	print("RW06_1_CONTACT_SHEET rooms=%d day2=%d failures=%d out=%s" % [capture_rows.size(), day2_rows.size(), failures.size(), out_dir])
+	app.free()
+	app = null
+	await _settle(4)
+	quit(0 if failures.is_empty() and capture_rows.size() == 18 and day2_rows.size() == 3 else 1)
+
+
+func _rw06_1_prepare_base_room(archetype: Dictionary, library: Variant) -> Dictionary:
+	var archetype_id := str(archetype.get("id", ""))
+	if archetype_id.is_empty():
+		return {"ok": false, "errors": ["rw06_1 base-room capture has no archetype definition."]}
+	var run_state: Variant = app.get("run_state")
+	var rng: Variant = run_state.create_rng("rw06_1_contact_base:%s" % archetype_id)
+	var environment: Variant = EnvironmentInstance.from_archetype(archetype, 1, rng, library, run_state.challenge_config)
+	var data: Dictionary = environment.to_dict()
+	data["world_node_id"] = archetype_id
+	if str(archetype.get("kind", "")) == "home":
+		var profile := _dict(archetype.get("home_profile", {}))
+		run_state.initialize_home_from_profile(archetype, archetype_id, profile)
+		data["home_profile"] = profile.duplicate(true)
+		data["home_containers"] = _survey_home_containers(profile)
+		data["home_container_index"] = _array(data.get("home_containers", [])).size()
+		data["home_lost"] = false
+	var generator := RunGeneratorScript.new(library)
+	data["game_states"] = generator.call("_generated_game_states", run_state, data, rng)
+	data["layout"] = EnvironmentInstance.ensure_generated_layout(data, library)
+	run_state.save_rng(rng)
+	run_state.set_environment(data)
+	app.call("_clear_selected_game_action")
+	app.call("_set_current_screen", "ENVIRONMENT")
+	app.call("_render_environment_screen")
+	await _settle(3)
+	return {"ok": true, "errors": []}
+
+
+func _rw06_1_prepare_scenario_peak(definition: Dictionary, selection: Dictionary, library: Variant) -> Dictionary:
+	var scenario_id := str(selection.get("scenario_id", ""))
+	var archetype_id := str(selection.get("archetype_id", ""))
+	var target_phase := str(selection.get("phase_id", ""))
+	if definition.is_empty() or str(definition.get("id", "")) != scenario_id:
+		return {"ok": false, "errors": ["rw06_1 contact definition is missing for %s." % scenario_id]}
+	var original_pool: Array = _array(library.environment_scenarios.get(archetype_id, [])).duplicate(true)
+	library.environment_scenarios[archetype_id] = [definition.duplicate(true)]
+	var run_state := RunStateScript.new()
+	run_state.start_new("RW06-1-CONTACT-%s" % scenario_id)
+	var generator := RunGeneratorScript.new(library)
+	var local_failures: Array = []
+	var initial := HarnessProductionFidelityScript.generate_and_finalize(generator, run_state, local_failures, "%s initial" % scenario_id)
+	var target_node := _fix06_31_node_for_archetype(run_state, archetype_id)
+	var arrival: Dictionary = initial if str(run_state.current_environment.get("archetype_id", "")) == archetype_id else {}
+	if bool(initial.get("ok", false)) and arrival.is_empty() and not target_node.is_empty():
+		arrival = HarnessProductionFidelityScript.travel_and_finalize(generator, run_state, target_node, true, library, local_failures, "%s arrival" % scenario_id)
+	library.environment_scenarios[archetype_id] = original_pool
+	if not bool(arrival.get("ok", false)):
+		return {"ok": false, "errors": local_failures if not local_failures.is_empty() else ["%s did not reach its host room." % scenario_id]}
+	var initial_state := _dict(run_state.current_environment.get("scenario_sequence_state", {}))
+	var phase_states := _rw06_1_reachable_phase_states(initial_state, definition, target_phase)
+	var best: Dictionary = {}
+	for state_value in phase_states:
+		var resolved := _rw06_1_resolve_capture_state(run_state.current_environment, _dict(state_value), definition)
+		if not bool(resolved.get("ok", false)):
+			continue
+		if best.is_empty() or int(resolved.get("scenario_binding_count", -1)) > int(best.get("scenario_binding_count", -1)):
+			best = resolved
+	if best.is_empty():
+		return {"ok": false, "errors": ["%s has no resolvable reachable state at peak phase %s." % [scenario_id, target_phase]]}
+	var expected_count := int(selection.get("binding_count", 0))
+	if int(best.get("scenario_binding_count", -1)) != expected_count:
+		return {"ok": false, "errors": ["%s peak %s rendered %d scenario bindings; static manifest requires %d." % [scenario_id, target_phase, int(best.get("scenario_binding_count", -1)), expected_count]]}
+	run_state.current_environment = _dict(best.get("environment", {}))
+	run_state.bankroll = maxi(run_state.bankroll, 10000)
+	run_state.run_status = RunStateScript.RUN_STATUS_ACTIVE
+	run_state.run_failure_reason = ""
+	run_state.run_failure_message = ""
+	app.set("run_state", run_state)
+	app.set("generator", generator)
+	app.call("_set_current_screen", "ENVIRONMENT")
+	app.call("_clear_selected_game_action")
+	app.call("_render_environment_screen")
+	await _settle(3)
+	return {"ok": true, "errors": []}
+
+
+func _rw06_1_resolve_capture_state(environment: Dictionary, state: Dictionary, definition: Dictionary) -> Dictionary:
+	var candidate := environment.duplicate(true)
+	candidate["scenario_sequence_state"] = state.duplicate(true)
+	candidate[ScenarioEngineScript.TRUSTED_STATE_REFERENCE_KEY] = ScenarioSequenceRuntimeScript.content_fingerprint(state)
+	var projection := ScenarioEngineScript.sequence_projection(candidate, definition)
+	if projection.is_empty():
+		return {"ok": false, "errors": ["Peak state did not produce a public projection."]}
+	var layout_environment := candidate.duplicate(false)
+	var layout_context := _dict(candidate.get("scenario_layout_context", {}))
+	if not layout_context.is_empty():
+		layout_environment["_scenario_layout_context"] = layout_context.duplicate(true)
+	var layout_result := ScenarioLayoutResolverScript.resolve(_array(candidate.get("scenario_layout_base_records", [])), projection, layout_environment)
+	if not bool(layout_result.get("ok", false)):
+		return {"ok": false, "errors": _array(layout_result.get("errors", ["Peak layout resolution failed."]))}
+	var renderer_snapshot := ScenarioLayoutResolverScript.sealed_renderer_snapshot(layout_result)
+	if not bool(renderer_snapshot.get("ok", false)):
+		return {"ok": false, "errors": _array(renderer_snapshot.get("errors", ["Peak renderer snapshot failed."]))}
+	candidate["scenario_sequence_projection"] = _dict(layout_result.get("projection", projection))
+	candidate["scenario_layout_authority"] = _dict(layout_result.get("layout_authority", {}))
+	candidate["scenario_layout_audit"] = _dict(layout_result.get("layout_audit", {}))
+	candidate["scenario_layout_authority_digest"] = str(layout_result.get("layout_authority_digest", ""))
+	candidate["scenario_render_snapshot"] = renderer_snapshot.duplicate(true)
+	var binding_count := 0
+	for identity_value in _dict(candidate.get("scenario_layout_authority", {})).keys():
+		if str(identity_value).begins_with("scenario::"):
+			binding_count += 1
+	return {"ok": true, "environment": candidate, "scenario_binding_count": binding_count, "errors": []}
+
+
+func _rw06_1_reachable_phase_states(initial_state: Dictionary, definition: Dictionary, target_phase: String) -> Array:
+	var result: Array = []
+	var pending: Array = [initial_state.duplicate(true)]
+	var visited: Dictionary = {}
+	var serial := 0
+	while not pending.is_empty() and serial < 256:
+		var state := _dict(pending.pop_front())
+		var state_key := ScenarioSequenceRuntimeScript.content_fingerprint(ScenarioSequenceRuntimeScript.public_projection(state, definition))
+		if visited.has(state_key):
+			continue
+		visited[state_key] = true
+		if str(state.get("status", "")) == ScenarioSequenceRuntimeScript.STATUS_ACTIVE and str(state.get("phase_id", "")) == target_phase:
+			result.append(state.duplicate(true))
+		var phase := ScenarioSequenceSchemaScript.phase(definition, str(state.get("phase_id", "")))
+		var branch_index := 0
+		for branch_value in _array(phase.get("branches", [])):
+			var branch := _dict(branch_value)
+			var condition := _dict(branch.get("condition", {}))
+			var applied: Dictionary = {}
+			if str(condition.get("type", "")) == "command":
+				applied = _rw06_1_apply_trace_command(state, definition, str(condition.get("command_id", "")), serial, branch_index)
+			elif str(condition.get("type", "")) == "fact":
+				applied = _rw06_1_apply_trace_fact(state, definition, condition, serial, branch_index)
+			if bool(applied.get("ok", false)):
+				pending.append(_dict(applied.get("state", {})))
+			branch_index += 1
+		serial += 1
+	return result
+
+
+func _rw06_1_apply_trace_command(state: Dictionary, definition: Dictionary, command_id: String, serial: int, branch_index: int) -> Dictionary:
+	var origin := _rw06_1_find_action_origin(state, command_id)
+	if origin.is_empty():
+		return {"ok": false, "errors": ["No action origin for %s." % command_id]}
+	var owner_namespace := str(origin.get("owner_namespace", ""))
+	var stable_object_id := str(origin.get("stable_object_id", ""))
+	var descriptor := ScenarioSequenceRuntimeScript._command_descriptor(state, definition, owner_namespace, stable_object_id, command_id, {})
+	var command := ScenarioSequenceRuntimeScript.command(FunctionOptionsScript.scenario_sequence_command(command_id, str(state.get("node_id", "")), str(state.get("phase_id", "")), "rw06_1:contact:%d:%d" % [serial, branch_index], {
+		"payload": {},
+		"owner_namespace": owner_namespace,
+		"stable_object_id": stable_object_id,
+		"action_origin_owner_namespace": str(descriptor.get("action_origin_owner_namespace", "")),
+		"action_origin_stable_object_id": str(descriptor.get("action_origin_stable_object_id", "")),
+		"action_origin_receipt_key": str(descriptor.get("action_origin_receipt_key", "")),
+		"action_origin_boundary_id": str(descriptor.get("action_origin_boundary_id", "")),
+		"action_origin_fingerprint": str(descriptor.get("action_origin_fingerprint", "")),
+	}))
+	return ScenarioSequenceRuntimeScript.apply_command(state, definition, command, {"available_funds": 100000})
+
+
+func _rw06_1_find_action_origin(state: Dictionary, command_id: String) -> Dictionary:
+	for interaction_value in _dict(_dict(state.get("semantic_state", {})).get("interactions", {})).values():
+		var interaction := _dict(interaction_value)
+		if not bool(interaction.get("enabled", false)):
+			continue
+		for action_value in _array(interaction.get("available_actions", [])):
+			if str(_dict(action_value).get("id", "")) == command_id:
+				return {"owner_namespace": str(interaction.get("owner_namespace", "")), "stable_object_id": str(interaction.get("stable_object_id", ""))}
+	return {}
+
+
+func _rw06_1_apply_trace_fact(state: Dictionary, definition: Dictionary, condition: Dictionary, serial: int, branch_index: int) -> Dictionary:
+	var fact_type := str(condition.get("fact_type", ""))
+	var boundary := int(state.get("boundary_serial", 0)) + 1
+	var payload := _rw06_1_trace_fact_payload(fact_type, state)
+	for key_value in _dict(condition.get("payload_equals", {})).keys():
+		payload[str(key_value)] = _dict(condition.get("payload_equals", {})).get(key_value)
+	var fact := ScenarioSequenceRuntimeScript.fact(fact_type, _rw06_1_trace_fact_producer(fact_type), str(state.get("node_id", "")), "rw06_1:contact:fact:%d:%d" % [serial, branch_index], 1, boundary, payload)
+	var queued := ScenarioSequenceRuntimeScript.enqueue_fact(state, definition, fact)
+	if not bool(queued.get("ok", false)):
+		return queued
+	var flushed := ScenarioSequenceRuntimeScript.flush_facts(_dict(queued.get("state", {})), definition, boundary)
+	if bool(flushed.get("ok", false)) and str(_dict(flushed.get("state", {})).get("status", "")) == ScenarioSequenceRuntimeScript.STATUS_ACTIVE:
+		var second_boundary := boundary + 1
+		var second := ScenarioSequenceRuntimeScript.fact(fact_type, _rw06_1_trace_fact_producer(fact_type), str(state.get("node_id", "")), "rw06_1:contact:fact:%d:%d:second" % [serial, branch_index], 2, second_boundary, payload)
+		var second_queued := ScenarioSequenceRuntimeScript.enqueue_fact(_dict(flushed.get("state", {})), definition, second)
+		if bool(second_queued.get("ok", false)):
+			flushed = ScenarioSequenceRuntimeScript.flush_facts(_dict(second_queued.get("state", {})), definition, second_boundary)
+	return flushed
+
+
+func _rw06_1_trace_fact_producer(fact_type: String) -> String:
+	for producer_value in ScenarioSequenceRuntimeScript.FACT_TYPES_BY_PRODUCER.keys():
+		if _array(ScenarioSequenceRuntimeScript.FACT_TYPES_BY_PRODUCER.get(producer_value, [])).has(fact_type):
+			return str(producer_value)
+	return "scenario"
+
+
+func _rw06_1_trace_fact_payload(fact_type: String, state: Dictionary) -> Dictionary:
+	match fact_type:
+		"game_result": return {"game_id": "rw06_1_game", "action_id": "settled", "won": false, "ended": true, "bankroll_delta": 0, "chips_delta": 0, "applied_heat_delta": 0}
+		"event_result": return {"event_id": "rw06_1_event", "choice_id": "leave", "resolved": false, "ok": true}
+		"service_result": return {"kind": "rest", "service_id": "rw06_1_service", "ok": true, "action_id": "resolved"}
+		"travel_departed", "travel_arrived": return {"source_id": "rw06_1_source", "target_id": "rw06_1_target", "travel_kind": "road"}
+		"crew_changed": return {"member_id": "rw06_1_crew", "change": "trust", "value": 2}
+		"crew_job_changed": return {"job_id": "rw06_1_job", "status": "active", "definition_id": "rw06_1_job", "member_id": "rw06_1_crew", "outcome": "complete"}
+		"heat_changed": return {"previous": 2, "current": 4, "applied_delta": 2, "source": "rw06_1"}
+		"heat_band_changed": return {"previous_band": "quiet", "current_band": "caution", "current": 25, "source": "rw06_1"}
+		"sweep_changed": return {"action_index": 1, "node_id": str(state.get("node_id", "")), "segment_index": 1, "active": true}
+		"town_transition": return {"action_index": 1, "weather": "storm", "day_type": "night", "happening_ids": ["rw06_1_weather"]}
+		"world_boundary": return {"amount": 1, "action_index": 1}
+		"scenario_command": return {"command_id": "rw06_1", "receipt_id": "rw06_1_command"}
+	return {}
+
+
+func _rw06_1_capture_pair(selection: Dictionary) -> Dictionary:
+	var failures: Array = []
+	var archetype_id := str(selection.get("archetype_id", ""))
+	var canvas: Variant = app.get("environment_canvas")
+	if canvas == null:
+		return {"ok": false, "errors": ["%s has no production environment canvas." % archetype_id]}
+	var layouts: Dictionary = {}
+	for mode in ["normal", "expanded"]:
+		canvas.call("set_small_screen_mode", mode == "expanded")
+		canvas.call("queue_redraw")
+		await _settle(3)
+		await RenderingServer.frame_post_draw
+		var image := root.get_viewport().get_texture().get_image()
+		var path := "%s/%s/%s.png" % [out_dir, mode, archetype_id]
+		var save_error := image.save_png(path)
+		if save_error != OK:
+			failures.append("%s %s capture could not be written (%s)." % [archetype_id, mode, error_string(save_error)])
+		var object_layout := _canvas_object_layout()
+		layouts[mode] = {
+			"path": path,
+			"sha256": FileAccess.get_sha256(path) if save_error == OK else "",
+			"object_layout": object_layout,
+			"direct_interaction_overlaps": _direct_interaction_overlaps(object_layout),
+		}
+	canvas.call("set_small_screen_mode", false)
+	return {
+		"ok": failures.is_empty(),
+		"selection": selection.duplicate(true),
+		"normal": _dict(layouts.get("normal", {})),
+		"expanded": _dict(layouts.get("expanded", {})),
+		"errors": failures,
+	}
+
+
+func _rw06_1_build_sheet(rows: Array, path: String, rooms_per_row: int) -> Dictionary:
+	var failures: Array = []
+	if rows.is_empty():
+		return {"ok": false, "path": path, "errors": ["Contact sheet %s has no rows." % path], "cells": []}
+	var cell_size := Vector2i(320, 180)
+	var pair_size := Vector2i(cell_size.x * 2, cell_size.y)
+	var row_count := ceili(float(rows.size()) / float(maxi(1, rooms_per_row)))
+	var sheet := Image.create(pair_size.x * rooms_per_row, cell_size.y * row_count, false, Image.FORMAT_RGBA8)
+	sheet.fill(Color("#10151f"))
+	var cells: Array = []
+	for index in range(rows.size()):
+		var row := _dict(rows[index])
+		var selection := _dict(row.get("selection", {}))
+		var room_column := index % rooms_per_row
+		var room_row := floori(float(index) / float(rooms_per_row))
+		for mode_index in range(2):
+			var mode := "normal" if mode_index == 0 else "expanded"
+			var source_path := str(_dict(row.get(mode, {})).get("path", ""))
+			var source := Image.load_from_file(source_path)
+			if source == null or source.is_empty():
+				failures.append("Contact sheet source is missing: %s." % source_path)
+				continue
+			source.resize(cell_size.x, cell_size.y, Image.INTERPOLATE_LANCZOS)
+			var destination := Vector2i(room_column * pair_size.x + mode_index * cell_size.x, room_row * cell_size.y)
+			sheet.blit_rect(source, Rect2i(Vector2i.ZERO, cell_size), destination)
+			var border_color := Color("#f5c451") if mode == "normal" else Color("#58c7ff")
+			_rw06_1_image_border(sheet, Rect2i(destination, cell_size), border_color, 3)
+			cells.append({
+				"archetype_id": str(selection.get("archetype_id", "")),
+				"scenario_id": str(selection.get("scenario_id", "")),
+				"phase_id": str(selection.get("phase_id", "")),
+				"mode": mode,
+				"rect": {"x": destination.x, "y": destination.y, "w": cell_size.x, "h": cell_size.y},
+			})
+	var save_error := sheet.save_png(path)
+	if save_error != OK:
+		failures.append("Contact sheet could not be written to %s (%s)." % [path, error_string(save_error)])
+	return {"ok": failures.is_empty(), "path": path, "sha256": FileAccess.get_sha256(path) if save_error == OK else "", "cells": cells, "errors": failures}
+
+
+func _rw06_1_image_border(image: Image, rect: Rect2i, color: Color, width: int) -> void:
+	image.fill_rect(Rect2i(rect.position.x, rect.position.y, rect.size.x, width), color)
+	image.fill_rect(Rect2i(rect.position.x, rect.end.y - width, rect.size.x, width), color)
+	image.fill_rect(Rect2i(rect.position.x, rect.position.y, width, rect.size.y), color)
+	image.fill_rect(Rect2i(rect.end.x - width, rect.position.y, width, rect.size.y), color)
+
+
+func _rw06_1_read_json(path: String) -> Dictionary:
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		return {}
+	var parsed: Variant = JSON.parse_string(file.get_as_text())
+	file.close()
+	return _dict(parsed)
 
 
 func _run_fix06_31_audit(library: Variant) -> void:

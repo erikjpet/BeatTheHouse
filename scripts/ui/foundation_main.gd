@@ -658,6 +658,7 @@ var action_hint_label: Label
 var stake_input: SpinBox
 var actions_list: VBoxContainer
 var environment_canvas: PixelSceneCanvas
+var room_action_list
 var game_surface_canvas
 var run_layout_dirty := true
 var run_layout_last_screen_size := Vector2(-1.0, -1.0)
@@ -14505,6 +14506,8 @@ func _render_foundation_snapshots() -> void:
 	var game_snapshot: Dictionary = _game_view_snapshot(true) if game_visible else {}
 	if environment_canvas != null and environment_visible:
 		_render_environment_canvas_snapshot()
+	if room_action_list != null:
+		room_action_list.render(_interactable_object_view_list() if environment_visible else [])
 	if game_surface_canvas != null:
 		game_surface_canvas.set_game_module(current_game)
 		if game_visible:

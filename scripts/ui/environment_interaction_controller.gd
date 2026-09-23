@@ -7,7 +7,7 @@ const ScenarioSequenceSchemaScript := preload("res://scripts/core/scenario_seque
 const ScenarioSemanticViewModelScript := preload("res://scripts/ui/scenario_semantic_view_model.gd")
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const EnvironmentPlacementScript := preload("res://scripts/core/environment_placement.gd")
-const DELIVERY_LAYOUT_GAP_PIXELS := 8.0
+const EnvironmentSlotBinderScript := preload("res://scripts/core/environment_slot_binder.gd")
 
 
 static func interactable_object_view_list(host: Variant) -> Array:
@@ -130,19 +130,27 @@ static func interactable_object_view_list(host: Variant) -> Array:
 		"closing_time_locked": host._closing_time_blocks_environment_actions(),
 		"closing_time_reason": host._closing_time_disabled_reason(),
 	}))
+	# Seal the complete live base inventory against authored slots before scenario
+	# composition. Runtime-only controls consume remaining base capacity and use
+	# the action-list overflow mode when capacity is exhausted.
+	var binding_environment := JsonCoerceScript._copy_dict(host.run_state.current_environment)
+	binding_environment["layout"] = layout
+	var record_binding := EnvironmentSlotBinderScript.bind_base_records(
+		binding_environment,
+		result,
+		_dict(layout.get("slot_bindings", {}))
+	)
+	result = _array(record_binding.get("records", result))
 	var definition: Dictionary = _dict(host.run_state.scenario_sequence_definition())
 	var trusted_base_result := result.duplicate(true)
 	var layout_context: Dictionary = {}
 	if host.environment_canvas != null and host.environment_canvas.has_method("scenario_layout_context"):
 		layout_context = _dict(host.environment_canvas.call("scenario_layout_context"))
 	# The sealed scenario inventory deliberately excludes runtime-only controls
-	# such as Numbers, Crew arrivals, and live game clerks. Delivery controls are
-	# placed around the already sealed scenario authority instead of moving that
-	# authority when cargo state changes.
-	# Their geometry is nevertheless part of the room the player sees. Feed a
-	# bounded, read-only reservation list into layout resolution so scenario props
-	# are placed around the complete production plane instead of composing a late
-	# collision-prone layer. These records authorize no scenario behavior.
+	# such as Numbers, Crew arrivals, and live game clerks. They are already bound
+	# to authored base slots above. Feed those immutable rectangles into scenario
+	# validation so the base/stage disjointness invariant is checked against the
+	# complete production plane; these records authorize no scenario behavior.
 	layout_context["base_occupied_records"] = _base_layout_reservations(trusted_base_result, layout)
 	if not bool(preparation.get("ok", false)):
 		var preparation_failure := projection_failure_result(result, _array(preparation.get("errors", [])))
@@ -191,7 +199,7 @@ static func interactable_object_view_list(host: Variant) -> Array:
 		host.run_state.current_environment.erase("scenario_layout_audit")
 		host.run_state.current_environment.erase("scenario_layout_authority_digest")
 	result = _attach_delivery_handoff_to_contact(host, result)
-	return _reflow_delivery_records(host, result)
+	return result
 
 
 static func _base_layout_reservations(records: Array, layout: Dictionary = {}) -> Array:
@@ -411,6 +419,8 @@ static func _finalized_actor_authority_errors(semantic_state: Dictionary, author
 			["small_screen_rect", actor.get("small_screen_rect", {}), sealed.get("small_screen_rect", {})],
 			["route_points", actor.get("route_points", []), sealed.get("actor_route_points", [])],
 			["route_stage", actor.get("route_stage", {}), sealed.get("actor_route_stage", {})],
+			["presentation_mode", actor.get("presentation_mode", "room"), sealed.get("presentation_mode", "room")],
+			["slot_id", actor.get("slot_id", ""), sealed.get("slot_id", "")],
 			["z_order", actor.get("z_order", -1), sealed.get("z_order", -2)],
 		]:
 			var values := pair as Array
@@ -759,6 +769,8 @@ static func _apply_layout_authority(record: Dictionary, authority: Dictionary, a
 	result["scenario_z_order"] = int(authority.get("z_order", 0))
 	result["placement_class"] = str(authority.get("placement_class", result.get("placement_class", "")))
 	result["contact"] = str(authority.get("contact", result.get("contact", "")))
+	result["presentation_mode"] = str(authority.get("presentation_mode", result.get("presentation_mode", "room")))
+	result["slot_id"] = str(authority.get("slot_id", result.get("slot_id", "")))
 	result["scenario_layout_resolved"] = true
 	result["scenario_layout_authority_identity"] = str(authority.get("identity", ""))
 	result["scenario_layout_authority_digest"] = authority_digest
@@ -887,6 +899,8 @@ static func _projected_record_authority_errors(records: Array, authority: Dictio
 			["scenario_z_order", record.get("scenario_z_order", -1), sealed.get("z_order", -2)],
 			["actor_route_points", record.get("actor_route_points", []), sealed.get("actor_route_points", [])],
 			["actor_route_stage", record.get("actor_route_stage", {}), sealed.get("actor_route_stage", {})],
+			["presentation_mode", record.get("presentation_mode", "room"), sealed.get("presentation_mode", "room")],
+			["slot_id", record.get("slot_id", ""), sealed.get("slot_id", "")],
 			["visible", record.get("visible", true), sealed.get("presentation_visible", false)],
 			["interactive", record.get("interactive", true), sealed.get("presentation_interactive", false)],
 		]:
@@ -1238,36 +1252,9 @@ static func _reflow_delivery_records(host: Variant, records: Array) -> Array:
 
 
 static func _delivery_available_rect(host: Variant, occupied_rects: Array[Rect2], preferred_index: int, placement_class: String = "standing_person") -> Rect2:
-	var focus_rect: Rect2 = host._interaction_rect_for_object("", host.CONTEXT_MODE_DELIVERY, preferred_index)
-	# Delivery verbs can coexist with a fully composed scenario room. Keep their
-	# hit areas at the renderer's accessible 72x48 minimum rather than consuming
-	# the old 100x70 card footprint for each of four simultaneous choices.
-	var board_size := Vector2(VisualStyleScript.ENVIRONMENT_BOARD_SIZE)
-	var compact_size := Vector2(72.0 / board_size.x, 48.0 / board_size.y)
-	focus_rect = Rect2(focus_rect.get_center() - compact_size * 0.5, compact_size)
-	var best_overlap := INF
-	var candidates: Array[Rect2] = []
-	var environment: Dictionary = host.run_state.current_environment if host.run_state != null and typeof(host.run_state.current_environment) == TYPE_DICTIONARY else {}
-	var authored_pixel := Rect2(focus_rect.position * board_size, focus_rect.size * board_size)
-	for candidate_value in EnvironmentPlacementScript.candidate_rects(environment, placement_class, authored_pixel):
-		var candidate_data: Dictionary = candidate_value if typeof(candidate_value) == TYPE_DICTIONARY else {}
-		var candidate_pixel: Rect2 = candidate_data.get("rect", Rect2())
-		candidates.append(Rect2(candidate_pixel.position / board_size, candidate_pixel.size / board_size))
-	if candidates.is_empty():
-		return Rect2()
-	for candidate in candidates:
-		var overlap := 0.0
-		var gap := Vector2(DELIVERY_LAYOUT_GAP_PIXELS / board_size.x, DELIVERY_LAYOUT_GAP_PIXELS / board_size.y)
-		var candidate_footprint := Rect2(candidate.position - gap, candidate.size + gap * 2.0)
-		for occupied_rect in occupied_rects:
-			var occupied_footprint := Rect2(occupied_rect.position - gap, occupied_rect.size + gap * 2.0)
-			overlap += candidate_footprint.intersection(occupied_footprint).get_area()
-		if overlap < best_overlap:
-			best_overlap = overlap
-			focus_rect = candidate
-		if is_zero_approx(overlap):
-			break
-	return focus_rect
+	# Geometry is intentionally deferred to bind_base_records(). Constructing a
+	# live record never searches for or invents a room position.
+	return Rect2()
 
 
 static func _delivery_board_bounded_rect(rect: Rect2) -> Rect2:

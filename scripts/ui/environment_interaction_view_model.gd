@@ -532,6 +532,9 @@ static func make_interactable_object(source: Dictionary, selection: Dictionary) 
 		"behavior": str(source.get("behavior", "")),
 		"route_id": str(source.get("route_id", "")),
 		"route_points": JsonCoerceScript._copy_array(source.get("route_points", [])),
+		"presentation_mode": str(source.get("presentation_mode", "room")),
+		"slot_id": str(source.get("slot_id", "")),
+		"placement_class": str(source.get("placement_class", "")),
 		"small_screen_rect": JsonCoerceScript._copy_dict(source.get("small_screen_rect", {})),
 		"z_order": int(source.get("z_order", 0)),
 		"z_order_explicit": source.has("z_order"),
@@ -615,8 +618,9 @@ static func interaction_rect_for_object(object_id: String, object_type: String, 
 		var generated := rect_from_dict((object_rects as Dictionary).get(object_id, {}))
 		if generated.size.x > 0.0 and generated.size.y > 0.0:
 			return generated
-	var authored := authored_interaction_rect(object_type, index, layout)
-	return authored if authored.size.x > 0.0 and authored.size.y > 0.0 else normalized_interaction_rect(object_type, index)
+	# A missing fixed binding is overflow, never permission to synthesize a
+	# coordinate from a legacy category array or fallback grid.
+	return Rect2()
 
 
 static func authored_interaction_rect(object_type: String, index: int, layout: Dictionary) -> Rect2:
@@ -828,6 +832,11 @@ static func _object_with_rect(source: Dictionary, selection: Dictionary, layout:
 		index,
 		layout
 	)
+	var binding := JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(layout.get("slot_bindings", {})).get(str(object_data.get("object_id", "")), {}))
+	if not binding.is_empty():
+		object_data["presentation_mode"] = str(binding.get("presentation_mode", "overflow"))
+		object_data["slot_id"] = str(binding.get("slot_id", ""))
+		object_data["placement_class"] = str(binding.get("placement_class", ""))
 	return make_interactable_object(object_data, selection)
 
 

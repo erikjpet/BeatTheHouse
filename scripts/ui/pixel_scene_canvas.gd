@@ -21,6 +21,7 @@ const DrunkDistortionOverlayScript := preload("res://scripts/ui/drunk_distortion
 const HeatFeedbackVisualsScript := preload("res://scripts/ui/heat_feedback_visuals.gd")
 const TableGameVisualsScript := preload("res://scripts/games/table_game_visuals.gd")
 const EnvironmentPlacementScript := preload("res://scripts/core/environment_placement.gd")
+const EnvironmentSlotBinderScript := preload("res://scripts/core/environment_slot_binder.gd")
 const CoinPusherRoomPropScript := preload("res://scripts/ui/game_props/coin_pusher_room_prop.gd")
 const ScratchTicketRoomPropScript := preload("res://scripts/ui/game_props/scratch_ticket_room_prop.gd")
 const CrapsRoomPropScript := preload("res://scripts/ui/game_props/craps_room_prop.gd")
@@ -2638,9 +2639,11 @@ func _draw_scenario_actor(rect: Rect2, object_data: Dictionary, active: bool) ->
 	var center := rect.get_center()
 	var route_points := JsonCoerceScript._copy_array(object_data.get("route_points", []))
 	if route_points.size() >= 2:
-		var start := _vector2_from_dict(route_points[0], Vector2.ZERO) * Vector2(BOARD_SIZE)
-		var finish := _vector2_from_dict(route_points[1], Vector2.ZERO) * Vector2(BOARD_SIZE)
-		draw_dashed_line(start, finish, accent, 2.0, 7.0, true)
+		var finish := Vector2.ZERO
+		for route_index in range(1, route_points.size()):
+			var start := _vector2_from_dict(route_points[route_index - 1], Vector2.ZERO) * Vector2(BOARD_SIZE)
+			finish = _vector2_from_dict(route_points[route_index], Vector2.ZERO) * Vector2(BOARD_SIZE)
+			draw_dashed_line(start, finish, accent, 2.0, 7.0, true)
 		draw_circle(finish, 4.0, accent)
 	var head_radius := clampf(rect.size.x * 0.15, 6.0, 12.0)
 	draw_circle(Vector2(center.x, rect.position.y + head_radius + 4.0), head_radius, C_SOFT.darkened(0.15))
@@ -3010,7 +3013,7 @@ func _objects_from_interactable_records(records: Array) -> Array:
 		if typeof(records[index]) != TYPE_DICTIONARY:
 			continue
 		var record: Dictionary = records[index]
-		if not bool(record.get("visible", true)):
+		if not bool(record.get("visible", true)) or str(record.get("presentation_mode", "room")) == "overflow":
 			continue
 		var object_id := str(record.get("object_id", ""))
 		if object_id.is_empty():
@@ -3097,6 +3100,8 @@ func _objects_from_interactable_records(records: Array) -> Array:
 			"layout_index": maxi(0, int(record.get("layout_index", 0))),
 			"layout_spot_field": str(record.get("layout_spot_field", "")),
 			"placement_class": str(record.get("placement_class", "")),
+			"slot_id": str(record.get("slot_id", "")),
+			"presentation_mode": str(record.get("presentation_mode", "room")),
 			"contact": str(record.get("contact", "")),
 		}
 		objects.append(_apply_draw_hints(scene_object, object_type, index))
@@ -3209,52 +3214,34 @@ func _start_person_transit(object_id: String, settled_value: Variant, kind: Stri
 
 func _person_transit_route(settled: Dictionary, kind: String) -> Dictionary:
 	var surfaces := EnvironmentPlacementScript.surface_map(foundation_snapshot)
-	var doorway_values: Variant = surfaces.get("doorways", [])
-	var floor_data: Dictionary = surfaces.get("floor", {}) if typeof(surfaces.get("floor", {})) == TYPE_DICTIONARY else {}
-	var band_values: Variant = floor_data.get("bands", [])
-	if typeof(doorway_values) != TYPE_ARRAY or (doorway_values as Array).is_empty() or typeof(band_values) != TYPE_ARRAY or (band_values as Array).is_empty():
+	var settled_slot_id := str(settled.get("slot_id", "")).strip_edges()
+	if settled_slot_id.is_empty():
 		return {}
-	var settled_position: Vector2 = settled.get("position", Vector2(0.5, 0.5))
-	var settled_center := settled_position * Vector2(BOARD_SIZE)
-	var object_size: Vector2 = settled.get("size", Vector2(64.0, 96.0))
-	var settled_contact := Vector2(settled_center.x, settled_center.y + object_size.y * 0.5)
-	var doorway_center := Vector2(-1.0, -1.0)
-	var doorway_distance := INF
-	for doorway_value in doorway_values as Array:
-		if typeof(doorway_value) != TYPE_DICTIONARY:
-			continue
-		var doorway_rect := _pixel_bounds_rect((doorway_value as Dictionary).get("bounds", []))
-		if not doorway_rect.has_area():
-			continue
-		var candidate := doorway_rect.get_center()
-		var distance := candidate.distance_squared_to(settled_contact)
-		if distance < doorway_distance:
-			doorway_distance = distance
-			doorway_center = candidate
-	if doorway_center.x < 0.0:
+	var exit_slots := JsonCoerceScript._copy_array(surfaces.get("exit_slots", []))
+	exit_slots.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
+		var left := _copy_dictionary(left_value)
+		var right := _copy_dictionary(right_value)
+		var left_priority := int(left.get("priority", 0))
+		var right_priority := int(right.get("priority", 0))
+		return str(left.get("id", "")) < str(right.get("id", "")) if left_priority == right_priority else left_priority < right_priority
+	)
+	if exit_slots.is_empty():
 		return {}
-	var floor_band := Rect2()
-	var band_distance := INF
-	for band_value in band_values as Array:
-		var candidate_band := _pixel_bounds_rect(band_value)
-		if not candidate_band.has_area():
-			continue
-		var candidate_contact := Vector2(
-			clampf(settled_contact.x, candidate_band.position.x, candidate_band.end.x),
-			clampf(settled_contact.y, candidate_band.position.y, candidate_band.end.y)
-		)
-		var distance := candidate_contact.distance_squared_to(settled_contact)
-		if distance < band_distance:
-			band_distance = distance
-			floor_band = candidate_band
-	if not floor_band.has_area():
+	var exit_slot := _copy_dictionary(exit_slots[0])
+	var exit_rect := _pixel_bounds_rect(exit_slot.get("hit_rect", []))
+	if not exit_rect.has_area():
 		return {}
-	var lane_contact_y := clampf(settled_contact.y, floor_band.position.y + 2.0, floor_band.end.y - 2.0)
-	var doorway_x := clampf(doorway_center.x, floor_band.position.x + 2.0, floor_band.end.x - 2.0)
-	var lane_y := lane_contact_y - object_size.y * 0.5
-	var doorway_position := Vector2(doorway_x, lane_y)
-	var lane_position := Vector2(clampf(settled_center.x, floor_band.position.x + 2.0, floor_band.end.x - 2.0), lane_y)
-	var pixel_points := [doorway_position, lane_position, settled_center]
+	var settled_slot := _surface_slot_by_id(surfaces, settled_slot_id)
+	if settled_slot.is_empty():
+		return {}
+	var settled_lane_ids := JsonCoerceScript._copy_array(settled_slot.get("walk_lane_ids", []))
+	var lane_ids: Array = []
+	for lane_id_value in JsonCoerceScript._copy_array(exit_slot.get("walk_lane_ids", [])):
+		if settled_lane_ids.has(lane_id_value):
+			lane_ids.append(lane_id_value)
+	var pixel_points := EnvironmentSlotBinderScript.authored_route_points(surfaces, exit_slot, settled_slot, lane_ids)
+	if pixel_points.size() < 2:
+		return {}
 	if kind == "departure":
 		pixel_points.reverse()
 	var points: Array = []
@@ -3267,7 +3254,7 @@ func _person_transit_route(settled: Dictionary, kind: String) -> Dictionary:
 	var small_rect := _rect_from_dict(settled.get("small_screen_rect", {}))
 	var small_endpoint := small_rect.get_center() if small_rect.has_area() else endpoint / Vector2(BOARD_SIZE)
 	if kind == "departure":
-		small_endpoint = doorway_position / Vector2(BOARD_SIZE)
+		small_endpoint = exit_rect.get_center() / Vector2(BOARD_SIZE)
 	var stage := {
 		"mode": "to_endpoint",
 		"duration_sec": clampf(distance / PERSON_TRANSIT_SPEED_PIXELS_PER_SEC, PERSON_TRANSIT_MIN_DURATION_SEC, PERSON_TRANSIT_MAX_DURATION_SEC),
@@ -3278,6 +3265,15 @@ func _person_transit_route(settled: Dictionary, kind: String) -> Dictionary:
 		"small_screen_endpoint": {"x": small_endpoint.x, "y": small_endpoint.y},
 	}
 	return {"points": points, "stage": stage}
+
+
+func _surface_slot_by_id(surfaces: Dictionary, slot_id: String) -> Dictionary:
+	for field in ["base_slots", "stage_slots", "exit_slots"]:
+		for slot_value in JsonCoerceScript._copy_array(surfaces.get(field, [])):
+			var slot := _copy_dictionary(slot_value)
+			if str(slot.get("id", "")) == slot_id:
+				return slot
+	return {}
 
 
 func _apply_person_transit_to_scene_object(object_id: String, transit: Dictionary) -> void:
