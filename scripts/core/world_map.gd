@@ -1705,7 +1705,7 @@ static func _ensure_priority_targets(result: Array, candidates: Array, target_id
 	var normalized_result := result.duplicate(true)
 	if total_limit <= 0:
 		return normalized_result
-	var eligible_ids: Array = []
+	var eligible_candidate_ids: Array = []
 	var visited_ids: Array = []
 	for candidate_value in candidates:
 		if typeof(candidate_value) != TYPE_DICTIONARY:
@@ -1715,22 +1715,47 @@ static func _ensure_priority_targets(result: Array, candidates: Array, target_id
 		if bool(candidate.get("visited", false)) and not candidate_id.is_empty() and not visited_ids.has(candidate_id):
 			visited_ids.append(candidate_id)
 		var enabled_or_promised := bool(candidate.get("enabled_hint", true)) or allowed_disabled_target_ids.has(candidate_id)
-		if target_ids.has(candidate_id) and not candidate_id.is_empty() and enabled_or_promised and not eligible_ids.has(candidate_id):
-			eligible_ids.append(candidate_id)
-	for target_id in eligible_ids:
+		if target_ids.has(candidate_id) and not candidate_id.is_empty() and enabled_or_promised and not eligible_candidate_ids.has(candidate_id):
+			eligible_candidate_ids.append(candidate_id)
+	# The caller's order is the progression contract. Candidate score order may
+	# put a lower-priority revealed casino ahead of an event-promised destination,
+	# especially when every other visible card is a protected revisit.
+	var eligible_ids: Array = []
+	for target_id_value in target_ids:
+		var target_id := str(target_id_value)
+		if eligible_candidate_ids.has(target_id) and not eligible_ids.has(target_id):
+			eligible_ids.append(target_id)
+	for priority_index in range(eligible_ids.size()):
+		var target_id := str(eligible_ids[priority_index])
 		if normalized_result.has(target_id):
 			continue
 		if normalized_result.size() < total_limit:
 			normalized_result.append(target_id)
 			continue
+		var replacement_index := -1
 		for index in range(normalized_result.size() - 1, -1, -1):
 			var existing_id := str(normalized_result[index])
 			# Revisit routes are intentionally additive to the new-destination cap.
 			# A progression priority must replace another new candidate, never erase
 			# a known way back to a previously visited stop.
-			if not eligible_ids.has(existing_id) and not visited_ids.has(existing_id):
-				normalized_result[index] = target_id
+			if visited_ids.has(existing_id):
+				continue
+			if not eligible_ids.has(existing_id):
+				replacement_index = index
 				break
+		# Keep every declared priority when a non-priority card can move. Only a
+		# lower-priority new card may yield when revisits consume every other slot.
+		if replacement_index < 0:
+			for index in range(normalized_result.size() - 1, -1, -1):
+				var existing_id := str(normalized_result[index])
+				if visited_ids.has(existing_id):
+					continue
+				var existing_priority_index := eligible_ids.find(existing_id)
+				if existing_priority_index > priority_index:
+					replacement_index = index
+					break
+		if replacement_index >= 0:
+			normalized_result[replacement_index] = target_id
 	return normalized_result
 
 

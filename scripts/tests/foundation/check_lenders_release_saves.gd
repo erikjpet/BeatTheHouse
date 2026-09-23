@@ -4711,6 +4711,60 @@ func _check_grand_casino_invite_gate(library: ContentLibrary, kitty: Dictionary,
 		failures.append("The event-unlocked Grand Casino disappeared from the capped production map while its fare was unaffordable: %s." % JSON.stringify(low_bankroll_targets))
 	if low_bankroll_targets.size() > WorldMapScript.TRAVEL_TOTAL_TARGET_LIMIT + accept_run.travel_option_bonus():
 		failures.append("Preserving the unaffordable event-unlocked Grand Casino exceeded the production travel-card cap.")
+	# A real late-route map can have one enabled new Tier-2 casino plus enough
+	# additive revisits that the unaffordable event-promised Grand card must take
+	# that new destination's slot. Revisit cards remain protected, while the
+	# caller-declared Grand priority wins over the lower-priority Tier-2 card.
+	var crowded_revisit_ids := ["back_alley", "bar", "gas_station_casino", "motel"]
+	var crowded_nodes: Array = [{
+		"id": "kitty_cat_lounge", "kind": "casino", "tier": 2,
+		"state": WorldMapScript.STATE_VISITED, "seen": true,
+		"position": {"x": 0.5, "y": 0.5},
+	}]
+	for revisit_index in range(crowded_revisit_ids.size()):
+		crowded_nodes.append({
+			"id": str(crowded_revisit_ids[revisit_index]), "kind": "casino", "tier": 1,
+			"state": WorldMapScript.STATE_VISITED, "seen": true,
+			"position": {"x": 0.1 + float(revisit_index) * 0.15, "y": 0.2},
+		})
+	crowded_nodes.append({
+		"id": "delta_queen", "kind": "casino", "tier": 2,
+		"state": WorldMapScript.STATE_REVEALED, "seen": true,
+		"position": {"x": 0.7, "y": 0.7},
+	})
+	crowded_nodes.append({
+		"id": "grand_casino", "kind": "boss", "tier": 3,
+		"state": WorldMapScript.STATE_REVEALED, "seen": true, "unlocked": true,
+		"discovery_source": WorldMapScript.DISCOVERY_SOURCE_EVENT,
+		"position": {"x": 0.9, "y": 0.5},
+	})
+	var crowded_edges: Array = []
+	for crowded_target_id in crowded_revisit_ids + ["delta_queen", "grand_casino"]:
+		crowded_edges.append({
+			"a": "kitty_cat_lounge", "b": str(crowded_target_id),
+			"distance_blocks": 2, "base_cost": 8, "cost": 8,
+		})
+	var crowded_map := {
+		"seed_text": "GRAND-INVITE-CROWDED",
+		"start_node_id": "back_alley",
+		"current_node_id": "kitty_cat_lounge",
+		"nodes": crowded_nodes,
+		"edges": crowded_edges,
+		"visited_path": crowded_revisit_ids + ["kitty_cat_lounge"],
+	}
+	var crowded_enabled_ids := crowded_revisit_ids + ["delta_queen"]
+	var crowded_targets := WorldMapScript.travel_target_ids(
+		crowded_map,
+		"kitty_cat_lounge",
+		WorldMapScript.TRAVEL_NEW_TARGET_LIMIT,
+		WorldMapScript.TRAVEL_TOTAL_TARGET_LIMIT,
+		crowded_enabled_ids
+	)
+	if not crowded_targets.has("grand_casino") or crowded_targets.has("delta_queen"):
+		failures.append("The promised Grand Casino did not replace the lower-priority new Tier-2 card on a revisit-crowded map: %s." % JSON.stringify(crowded_targets))
+	for crowded_revisit_id in crowded_revisit_ids:
+		if not crowded_targets.has(crowded_revisit_id):
+			failures.append("Preserving the promised Grand Casino erased protected revisit %s from a crowded map: %s." % [crowded_revisit_id, JSON.stringify(crowded_targets)])
 	accept_run.bankroll = 500
 	var suppressed_env := EnvironmentInstance.from_archetype(kitty, 2, accept_run.create_rng("suppressed_kitty"), library).to_dict()
 	if invite_module.can_trigger(accept_run, suppressed_env):

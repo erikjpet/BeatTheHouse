@@ -554,6 +554,60 @@ It produced no test report and has no product conclusion. Its evidence is
 is `475A808B814B9EF0DC1730F6E69F37CDFDF72B173508F792BDC706C5434C7101`.
 No retry occurred under that lease.
 
+## 2026-09-23 crowded invited-route reproduction (non-qualifying)
+
+At exact pushed replay tip `b0aee96f`, the invitation was accepted at action
+47 and the public message again said **The Grand Casino opens.** Two settled
+waits followed. The map observation at action 52 still omitted Grand Casino:
+the only unvisited destination shown was Delta Queen, alongside the protected
+Back Alley, Roadside Bar, Gas Station Casino, and Motel revisits. Cash remained
+$63. The replay then selected Delta, paid $16, encountered its two-action travel
+lock, and failed closed at action 58 before the visible-slot recovery step could
+run.
+
+This isolates a product selector defect rather than replay observation timing
+or an economy change. `travel_target_ids` correctly kept every visited route,
+but `_ensure_priority_targets` derived its effective order from candidate score
+order. With every other card protected as a revisit, lower-priority Delta was
+therefore protected from the higher-priority event-promised Grand route. The
+bounded correction makes the caller's existing priority order authoritative:
+it first replaces a non-priority new card, and only when none exists may a
+higher-priority promise replace a lower-priority new card. It never replaces a
+visited route and changes no fare, odds, wager, reward, or other economy value.
+A focused crowded-map regression preserves all four revisits while requiring
+Grand to replace Delta. The replay source contract and full static project gate
+both pass; engine confirmation remains pending a separate serialized lease.
+
+Evidence:
+
+- Run summary, 36 counted actions:
+  `.tmp/rw06_2/exploratory/clean-tip-b0aee96f-probe14/20260923-134033-285-24908/run-01/summary.json`
+  (SHA-256 `8F02C84599143F741DE28BE7B4AF0C64E6174BB4D7AC3A1E272927E483DE0233`).
+- Public trace:
+  `.tmp/rw06_2/exploratory/clean-tip-b0aee96f-probe14/20260923-134033-285-24908/run-01/public_trace.ndjson`
+  (SHA-256 `FCA532C78B5D89EDCA4016B9A4FC38719C6F0107C32BF990D13976861ED88905`).
+- Money curve:
+  `.tmp/rw06_2/exploratory/clean-tip-b0aee96f-probe14/20260923-134033-285-24908/run-01/money_curve.ndjson`
+  (SHA-256 `7E552A23EE8A2BD5C49E42B832896FEE864C1E8276517E0DE4267B23EA1FFF1D`).
+- Accepted invitation response:
+  `.tmp/agent_playtest/2026-09-23/rw062-clean-24908-1-173781f22a/0047.result.json`
+  (SHA-256 `3A7C14738E870E1B177625ACF09B594A25406731D9DA568FCFF39213CF27541D`).
+- Post-wait map observation:
+  `.tmp/agent_playtest/2026-09-23/rw062-clean-24908-1-173781f22a/0052.result.json`
+  (SHA-256 `82BDDA68012AA2FCAB0F813D88889B4586E2EB134E70824826D852EA888A58A0`).
+- Matching map screenshot:
+  `.tmp/agent_playtest/2026-09-23/rw062-clean-24908-1-173781f22a/0052.png`
+  (SHA-256 `DCCBB6DDDDA47A2EC088C0ACD7CC6BDD6C441DB2C0EE3817E1D361E59010960D`).
+- Graceful quit response:
+  `.tmp/agent_playtest/2026-09-23/rw062-clean-24908-1-173781f22a/0059.result.json`
+  (SHA-256 `4B4FBFC9193109488444C0CF6C0430086398FFBC371CC264B812610B3507FA94`).
+
+The owned process exited without force, stderr was empty (empty-file SHA-256
+`E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855`),
+stdout SHA-256 was
+`FA2EA26AAADBCE94053905A7C805C47D0DE5FF59CD1009A25DEE2FB8B8762CC4`,
+and the global Godot process census returned zero. No retry used this lease.
+
 ## Player intent
 
 Reach the Grand Casino, earn Bronze, Silver, and Gold Players Card tiers without
