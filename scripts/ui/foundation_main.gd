@@ -13357,20 +13357,19 @@ func _activate_overflow_room_action(record_snapshot: Dictionary, action_snapshot
 		room_action_list.close()
 	var source := str(live_action.get("_overflow_source", ""))
 	var object_type := str(object_data.get("object_type", CONTEXT_MODE_ROOM))
-	var scenario_command_id := str(live_action.get("scenario_command_id", "")).strip_edges()
-	if scenario_command_id.is_empty():
-		scenario_command_id = str(live_action.get("id", object_data.get("scenario_command_id", ""))).strip_edges()
+	var explicit_scenario_command_id := str(live_action.get("scenario_command_id", "")).strip_edges()
+	if explicit_scenario_command_id.is_empty():
+		explicit_scenario_command_id = str(object_data.get("scenario_command_id", "")).strip_edges()
+	var route_as_scenario := object_type == CONTEXT_MODE_SCENARIO \
+			or not explicit_scenario_command_id.is_empty()
+	var scenario_command_id := explicit_scenario_command_id
+	if route_as_scenario and scenario_command_id.is_empty():
+		scenario_command_id = str(live_action.get("id", "")).strip_edges()
 	var activated := false
 	if source == RoomActionListScript.SOURCE_SEQUENCE \
 			or object_type in [CONTEXT_MODE_SCENARIO_SEQUENCE, "scenario_scene_object", "scenario_actor", "character"]:
 		activated = _activate_scenario_sequence_action(object_data, live_action)
-	elif object_type == CONTEXT_MODE_GAME_HOOK:
-		activated = use_game_environment_hook(
-			str(live_action.get("parent_id", object_data.get("parent_id", ""))),
-			str(live_action.get("source_id", live_action.get("hook_id", object_data.get("source_id", "")))),
-			str(live_action.get("id", object_data.get("confirm_action_id", "")))
-		)
-	elif object_type == CONTEXT_MODE_SCENARIO or not scenario_command_id.is_empty():
+	elif route_as_scenario:
 		var scenario_owner_namespace := str(live_action.get("scenario_owner_namespace", "")).strip_edges()
 		if scenario_owner_namespace.is_empty():
 			scenario_owner_namespace = str(object_data.get("scenario_owner_namespace", object_data.get("owner_namespace", "scenario"))).strip_edges()
@@ -13387,6 +13386,12 @@ func _activate_overflow_room_action(record_snapshot: Dictionary, action_snapshot
 			str(live_action.get("action_origin_receipt_key", "")),
 			str(live_action.get("action_origin_boundary_id", "")),
 			str(live_action.get("action_origin_fingerprint", ""))
+		)
+	elif object_type == CONTEXT_MODE_GAME_HOOK:
+		activated = use_game_environment_hook(
+			str(live_action.get("parent_id", object_data.get("parent_id", ""))),
+			str(live_action.get("source_id", live_action.get("hook_id", object_data.get("source_id", "")))),
+			str(live_action.get("id", object_data.get("confirm_action_id", "")))
 		)
 	else:
 		var emit_object_id := str(live_action.get("emit_object_id", "")).strip_edges()

@@ -282,10 +282,17 @@ func _check_dispatch_source_placement() -> void:
 	if not talk_body.contains("room_action_list") or not talk_body.contains("is_open"):
 		failures.append("RW06-1 TalkDock's separate input route is not blocked while RoomActionList is open.")
 	var sequence_index := dispatch_body.find("SOURCE_SEQUENCE")
-	var command_index := dispatch_body.find("scenario_command_id")
+	var explicit_index := dispatch_body.find("var explicit_scenario_command_id")
+	var route_index := dispatch_body.find("var route_as_scenario")
+	var id_fallback_index := dispatch_body.find("scenario_command_id = str(live_action.get(\"id\", \"\"))")
+	var scenario_index := dispatch_body.find("elif route_as_scenario")
+	var game_hook_index := dispatch_body.find("elif object_type == CONTEXT_MODE_GAME_HOOK")
 	var emit_index := dispatch_body.find("var emit_object_id")
-	if sequence_index < 0 or command_index < 0 or emit_index < 0 \
-			or sequence_index > emit_index or command_index > emit_index:
+	if sequence_index < 0 or explicit_index < 0 or route_index < 0 or id_fallback_index < 0 \
+			or scenario_index < 0 or game_hook_index < 0 or emit_index < 0 \
+			or explicit_index > route_index or route_index > id_fallback_index \
+			or sequence_index > scenario_index or scenario_index > game_hook_index or game_hook_index > emit_index \
+			or dispatch_body.contains("live_action.get(\"id\", object_data.get(\"scenario_command_id\""):
 		failures.append("RW06-1 overflow dispatch no longer prioritizes sequence/scenario authority over generic emit tokens.")
 
 
@@ -711,6 +718,10 @@ func _check_inline_scenario_mutation(app: Control, action_list: Control, arrival
 		failures.append("RW06-1 shipping compatibility action did not remain SOURCE_INLINE: %s." % JSON.stringify(entries))
 		return
 	var action := entries[0] as Dictionary
+	if str(inline_record.get("object_type", "")) == "scenario" \
+			or str(action.get("scenario_command_id", "")).strip_edges().is_empty():
+		failures.append("RW06-1 compatibility fixture does not prove explicit scenario authority on a non-scenario record.")
+		return
 	var expected_key := _activation_key(action)
 	var prior_count := activations.count(expected_key)
 	var before_receipts := _scenario_command_receipt_count(run_state)
@@ -776,6 +787,9 @@ func _check_production_mutation_for_mode(app: Control, action_list: Control, pro
 	var production_action := entries[0] as Dictionary
 	if str(production_action.get("_overflow_source", "")) != RoomActionListScript.SOURCE_AVAILABLE:
 		failures.append("RW06-1 live game action did not exercise SOURCE_AVAILABLE for %s." % mode)
+	if not str(production_action.get("scenario_command_id", "")).strip_edges().is_empty() \
+			or not str(production_record.get("scenario_command_id", "")).strip_edges().is_empty():
+		failures.append("RW06-1 live game action unexpectedly carries explicit scenario authority for %s." % mode)
 	var expected_key := _activation_key(production_action)
 	var prior_count := activations.count(expected_key)
 	var before := _mutation_snapshot(app)
