@@ -13350,7 +13350,7 @@ func _activate_overflow_room_action(record_snapshot: Dictionary, action_snapshot
 	# selected record/action has been re-resolved against the live room and just
 	# before entering an existing production action path. Rejected stale, hidden,
 	# and disabled actions intentionally leave the surface open.
-	var overflow_was_open := room_action_list != null \
+	var overflow_was_open: bool = room_action_list != null \
 			and room_action_list.has_method("is_open") \
 			and bool(room_action_list.is_open())
 	if overflow_was_open and room_action_list.has_method("close"):
