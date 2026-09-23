@@ -101,9 +101,34 @@ Resume: Ask Q-004 from an interim current-tip contact sheet now. Land rw06_1 on 
 Answer: A. Directive received from the owner on 2026-09-23 morning.
 
 ### Q-006 · rw06_1 · Reviewable three-room fixed-slot sample
-Status: OPEN
+Status: ANSWERED
 Asked: release orchestrator, 2026-09-23
 Question: Does this fixed-slot direction look right for Bar, Corner Store and Grand Casino in normal and expanded views? Sheet: `D:\Projects\Beat-The-House-worktrees\rw06_1-phase0\.tmp\rw06_1\contact_sheet\day2_4fd4c350_repair2_20260923-1312\day2_contact_sheet.png` (SHA-256 `8F37493B765573E4BDFE0C5F03A196B82F6E537A9600405EB0E6AC8E127D29C1`).
 Options: A) Direction approved; continue (recommended)  B) Needs changes; list the rooms or issues in Answer
 Resume: rw06_1 continues while OPEN. When ANSWERED, the release orchestrator applies blocking layout feedback before landing, logs non-blocking polish in `docs/plans/0.6.1_backlog.md`, updates the scoreboard, and marks Q-006 RESOLVED.
 Answer:
+
+B: this is not only disfunctional but worse than it was. things need to be in assigned locations but still randomized. for example game 1 2 and 3 must always be in the same spot. shop slot 1,2,3 etc. so it is defined where items go but the specific instances of items or games, or events is the randomized part. do you understand? so here is my specific responses.
+BAR: all games should be on counter event objects should go in slots by pool table bar and floor. people need to be behind bar not floating in air. bartender behind bar etc. intuitively place items where they would be in a real situation of the environment.
+STORE: good that items are on left shelf but they need to be alligned and not overlapping, also we need to ensure scenerio objects dont overlapp and are place in an intuitive close lcoation like below item shelf etc. ensure all people are on ground except shopkeeper who is lined up behind counter. we need to make sure all of the shopkeeper dialogue events span here by him, also make the counter phone on the counter consistently and drinks solf by the beer sign.
+grand casino: this is the worst one. objects ar eeverywhere we need clear defined areas for each so they are intuitive and in known groupings instead of random and no  associated with the background general layout and background image. re assess this rooms palcement completely and ensure slots are in known locations card tables coorelate with background locations and machines are alligned accordingly.
+### Q-007 · rw06_1 · Owner amendment to Q-006: hand-authored, art-aligned slots
+Status: ANSWERED
+Asked: PM (owner amendment), 2026-09-23
+Question: None; this is a binding owner amendment that clarifies how to apply Q-006.
+Options: A) Apply as described in Resume (the owner's decision)
+Resume: rw06_1 must rework the slot layout under these rules before landing:
+1. Place slots by hand against each room's background art, not computed by `tools/rw06_1_author_fixed_slots.py` or any search or solver. The generator may only be used to write out hand-chosen coordinates.
+2. Give each room named, typed slot groups in fixed positions:
+   - `game_1..N` on counters, tables or machine rows that match the art;
+   - `shop_item_1..N` on shelves, aligned and non-overlapping;
+   - `staff_*` behind counters;
+   - `patron_*` on the floor;
+   - `event_*` near the matching fixture (pool table, bar, shelf, counter);
+   - fixed spots for recurring props (phone on the counter, drinks by the beer sign).
+   Only which instance fills a slot is random.
+3. Nothing floats: people stand on the floor or behind counters, and objects sit on a surface.
+4. Scenario objects get their own slots next to the fixture they relate to. They never overlap base objects.
+5. Grand Casino: redo it completely. Card tables go where the art shows tables, machines line up in rows, and each area gets a clear grouping.
+6. Before landing, ask a new questions-file item with a fresh 3-room sheet (Bar, Corner Store, Grand Casino), shown without debug overlays so the owner sees what a player sees. Also apply these rules to all other rooms.
+Answer: A. Owner amendment to Q-006, 2026-09-23.
