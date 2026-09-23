@@ -121,6 +121,8 @@ func actions(run_state: RunState, _environment: Dictionary) -> Dictionary:
 # Provides display/input state for the pull-tab cabinet without mutating state.
 func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
 	var machine := _read_machine_state(run_state, environment)
+	var wager_currency := GameModule.presentation_currency_for_game(run_state, get_id(), environment)
+	var pending_payout := _pending_winner_payout(machine)
 	var stack_count := _array_size(machine.get("ticket_stack", []))
 	var tray_count := _array_size(machine.get("tray_stack", []))
 	var winner_count := _array_size(machine.get("winner_pile", []))
@@ -161,6 +163,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_web_idle_animation_fps": 15.0,
 		"surface_embeds_outcomes": true,
 		"machine_name": str(machine.get("machine_name", "Bar Pull-Tab Dispenser")),
+		"wager_currency": wager_currency,
 		"pull_tab_rules": "Buy a ticket, then peel its three windows top to bottom. Match three symbols on a row to win.",
 		"pull_tab_format": "Deal flare: game, form, serial, ticket count, price, prize chart. Ticket: same form/serial plus three sealed windows.",
 		"pull_tab_item_state": item_surface,
@@ -170,7 +173,9 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"pull_tab_tray_column_counts": _tray_column_counts(machine),
 		"pull_tab_winner_pile": winner_pile_views,
 		"pull_tab_loser_pile": loser_pile_views,
-		"pull_tab_pending_payout": _pending_winner_payout(machine),
+		"pull_tab_pending_payout": pending_payout,
+		"pull_tab_pending_payout_label": PlayerTextScript.format_currency_account_balance(wager_currency, pending_payout),
+		"pull_tab_pending_payout_text": PlayerTextScript.format_currency_amount(wager_currency, pending_payout),
 		"pull_tab_redeemable_count": winner_count,
 		"pull_tab_winner_count": winner_count,
 		"pull_tab_loser_count": loser_count,
@@ -278,6 +283,9 @@ func environment_interactable_objects(run_state: RunState, environment: Dictiona
 	var pending_payout := _pending_winner_payout(machine)
 	var winner_count := _array_size(machine.get("winner_pile", []))
 	var label := _redeemer_label(environment)
+	var wager_currency := GameModule.presentation_currency_for_game(run_state, get_id(), environment)
+	var payout_text := PlayerTextScript.format_currency_amount(wager_currency, pending_payout)
+	var account_noun := "chips" if wager_currency == "chips" else "cash"
 	return [{
 		"id": CLERK_DIALOGUE_HOOK_ID,
 		"object_id": "dialogue:%s" % CLERK_DIALOGUE_ID,
@@ -300,11 +308,11 @@ func environment_interactable_objects(run_state: RunState, environment: Dictiona
 		"id": REDEEM_HOOK_ID,
 		"object_id": "game_hook:%s:%s" % [get_id(), REDEEM_HOOK_ID],
 		"label": label,
-		"short_description": "Turns the room's winning tabs into cash.",
+		"short_description": "Turns the room's winning tabs into %s." % account_noun,
 		"enabled": true,
 		"recovery": pending_payout > 0,
-		"action_summary": "Redeem %d winner%s for $%d." % [winner_count, "" if winner_count == 1 else "s", pending_payout] if winner_count > 0 else "No winning tabs to redeem.",
-		"effect_summary": "Pending payout $%d." % pending_payout if pending_payout > 0 else "Sort winners here before cashing out.",
+		"action_summary": "Redeem %d winner%s for %s." % [winner_count, "" if winner_count == 1 else "s", payout_text] if winner_count > 0 else "No winning tabs to redeem.",
+		"effect_summary": "Pending payout %s." % payout_text if pending_payout > 0 else "Sort winners here before redeeming.",
 		"risk_summary": _redemption_risk_summary(machine, run_state),
 		"cost_summary": "",
 		"visual_key": "pull_tab_redeemer",
@@ -312,7 +320,7 @@ func environment_interactable_objects(run_state: RunState, environment: Dictiona
 		"icon_key": "service",
 		"unique_object_class": "lottery_redemption_clerk",
 		"unique_object_priority": 120 if pending_payout > 0 else 90,
-		"available_actions": [{"id": REDEEM_ACTION_ID, "label": "Cash In"}],
+		"available_actions": [{"id": REDEEM_ACTION_ID, "label": "Redeem" if wager_currency == "chips" else "Cash In"}],
 		"confirm_action_id": REDEEM_ACTION_ID,
 	}]
 
@@ -327,9 +335,11 @@ func environment_runtime_state(run_state: RunState, environment: Dictionary) -> 
 	var tray_count := _array_size(machine.get("tray_stack", []))
 	var unresolved_count := _unresolved_pull_tab_ticket_count(machine)
 	var deferred := run_state != null and not run_state.has_liquid_run_funds() and _pull_tab_bankroll_zero_failure_deferred(machine)
+	var wager_currency := GameModule.presentation_currency_for_game(run_state, get_id(), environment)
+	var payout_text := PlayerTextScript.format_currency_amount(wager_currency, pending_payout)
 	var status_bits: Array[String] = []
 	if pending_payout > 0:
-		status_bits.append("CASH $%d" % pending_payout)
+		status_bits.append(PlayerTextScript.format_currency_account_balance(wager_currency, pending_payout))
 	if tray_count > 0:
 		status_bits.append("%d TRAY" % tray_count)
 	if stack_count > 0:
@@ -342,8 +352,9 @@ func environment_runtime_state(run_state: RunState, environment: Dictionary) -> 
 		"stack_count": stack_count,
 		"tray_count": tray_count,
 		"unresolved_ticket_count": unresolved_count,
+		"wager_currency": wager_currency,
 		"status_label": " ".join(status_bits),
-		"status_summary": "Pending pull-tabs: %d tray, %d in play, $%d to redeem." % [tray_count, stack_count, pending_payout],
+		"status_summary": "Pending pull-tabs: %d tray, %d in play, %s to redeem." % [tray_count, stack_count, payout_text],
 	}
 
 
@@ -356,12 +367,14 @@ func environment_object_state(run_state: RunState, environment: Dictionary) -> D
 	var winner_count := _array_size(machine.get("winner_pile", []))
 	var stack_count := _array_size(machine.get("ticket_stack", []))
 	var tray_count := _array_size(machine.get("tray_stack", []))
+	var wager_currency := GameModule.presentation_currency_for_game(run_state, get_id(), environment)
+	var payout_text := PlayerTextScript.format_currency_amount(wager_currency, pending_payout)
 	var remaining := 0
 	for deal in _deal_array(machine.get("deals", [])):
 		remaining += int((deal as Dictionary).get("remaining", 0))
 	var badge := ""
 	if pending_payout > 0:
-		badge = "CASH $%d" % pending_payout
+		badge = PlayerTextScript.format_currency_account_balance(wager_currency, pending_payout)
 	elif tray_count > 0:
 		badge = "%d IN TRAY" % tray_count
 	elif stack_count > 0:
@@ -370,7 +383,7 @@ func environment_object_state(run_state: RunState, environment: Dictionary) -> D
 	runtime_state["tickets_remaining"] = remaining
 	return {
 		"status_summary": "%s remain across %s." % [PlayerTextScript.count_text("ticket", remaining), PlayerTextScript.count_text("deal_row", 4)],
-		"effect_summary": "Pending payout $%d; %s; %d in play." % [pending_payout, PlayerTextScript.count_text("tray_ticket", tray_count), stack_count],
+		"effect_summary": "Pending payout %s; %s; %d in play." % [payout_text, PlayerTextScript.count_text("tray_ticket", tray_count), stack_count],
 		"status_message_key": "pull_tabs.stock_summary",
 		"status_message_params": {"ticket_count": remaining, "deal_row_count": 4, "tray_ticket_count": tray_count, "in_play_count": stack_count},
 		"state_badge": badge,
@@ -3650,7 +3663,8 @@ func _draw_pull_tab_stack_panel(surface, rect: Rect2, surface_state: Dictionary,
 	var visible_ticket_number := 0 if count <= 0 else mini(cursor + 1, count)
 	surface.surface_label("%d/%d" % [visible_ticket_number, count], rect.position + Vector2(118, 22), 14, C_SOFT)
 	if pending_payout > 0:
-		surface.surface_label("CASH $%d" % pending_payout, rect.position + Vector2(312, 42), 9, C_YELLOW)
+		var payout_label := str(surface_state.get("pull_tab_pending_payout_label", "CASH $%d" % pending_payout))
+		surface.surface_label(payout_label, rect.position + Vector2(312, 42), 9, C_YELLOW)
 	var display_start_index := 0
 	if bool(surface.surface_animation_active(PULL_TAB_DISPENSE_CHANNEL)) and not stack.is_empty():
 		var arriving: Dictionary = stack[0] as Dictionary

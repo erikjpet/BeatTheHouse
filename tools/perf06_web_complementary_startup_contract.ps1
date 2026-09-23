@@ -3,10 +3,11 @@ $ErrorActionPreference = "Stop"
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $foundationSource = [System.IO.File]::ReadAllText((Join-Path $repoRoot "scripts/ui/foundation_main.gd"))
 $generatorSource = [System.IO.File]::ReadAllText((Join-Path $repoRoot "scripts/core/run_generator.gd"))
+$registrySource = [System.IO.File]::ReadAllText((Join-Path $repoRoot "scripts/core/game_module_registry.gd"))
 $telemetrySource = [System.IO.File]::ReadAllText((Join-Path $repoRoot "scripts/ui/perf_telemetry_overlay.gd"))
 
 function Get-FunctionBody([string]$Source, [string]$Name) {
-    $match = [regex]::Match($Source, "(?ms)^func $([regex]::Escape($Name))\([^\r\n]*\).*?(?=^func |\z)")
+    $match = [regex]::Match($Source, "(?ms)^(?:static )?func $([regex]::Escape($Name))\([^\r\n]*\).*?(?=^(?:static )?func |\z)")
     if (-not $match.Success) {
         throw "Missing function required by complementary startup contract: $Name"
     }
@@ -17,8 +18,30 @@ $generatorPreload = 'const CoinPusherGameScript := preload("res://scripts/games/
 if ($generatorSource.Contains($generatorPreload)) {
     throw "RunGenerator still eagerly parses the Coin Pusher module graph."
 }
-if (-not $generatorSource.Contains('module_script = load(module_path)')) {
-    throw "RunGenerator no longer falls back to the ordinary dynamic module loader after its retained cache lookup."
+foreach ($contract in @(
+    'const GameModuleRegistryScript := preload("res://scripts/core/game_module_registry.gd")',
+    'GameModuleRegistryScript.cache_script(module_path, module_script)',
+    'return GameModuleRegistryScript.create_module(definition, library)'
+)) {
+    if (-not $generatorSource.Contains($contract)) {
+        throw "RunGenerator lost its delegated game-module registry contract: $contract"
+    }
+}
+$registryLoader = Get-FunctionBody $registrySource "script_for_definition"
+if ($registryLoader.IndexOf('_script_cache.get(module_path)') -lt 0 -or
+        $registryLoader.IndexOf('_script_cache.get(module_path)') -gt $registryLoader.IndexOf('load(module_path) as Script')) {
+    throw "GameModuleRegistry no longer checks its retained cache before the dynamic module load fallback."
+}
+foreach ($contract in @('const SCRIPT_CACHE_MAX_ENTRIES := 32', '_script_cache.size() >= SCRIPT_CACHE_MAX_ENTRIES', '_script_cache.clear()', '_script_cache[module_path] = module_script')) {
+    if (-not $registrySource.Contains($contract)) {
+        throw "GameModuleRegistry lost its bounded dynamic-loader cache contract: $contract"
+    }
+}
+$registryCreate = Get-FunctionBody $registrySource "create_module"
+foreach ($contract in @('script_for_definition(definition)', 'module_script.new()', 'game.setup(definition, library)', 'return game')) {
+    if (-not $registryCreate.Contains($contract)) {
+        throw "GameModuleRegistry lost delegated module construction behavior: $contract"
+    }
 }
 
 $foundationContracts = @(

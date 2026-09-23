@@ -2,6 +2,7 @@ class_name WorldMapCanvas
 extends Control
 
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+const PlayerTextScript := preload("res://scripts/ui/player_text.gd")
 
 signal layout_changed
 
@@ -660,9 +661,9 @@ func _rebuild_snapshot_cache() -> void:
 	courier_header_text = ""
 	if courier_active:
 		var cargo := JsonCoerceScript._copy_dict(courier_layer.get("cargo", {}))
-		courier_header_text = "%s · CONTRABAND · %d ACTIONS" % [
+		courier_header_text = "%s · CONTRABAND · %s" % [
 			str(cargo.get("label", "Cargo")).to_upper(),
-			int(courier_layer.get("deadline_remaining", 0)),
+			PlayerTextScript.count_text("action", int(courier_layer.get("deadline_remaining", 0))).to_upper(),
 		]
 		for read_value in _array_view(courier_layer.get("edge_reads", [])):
 			if typeof(read_value) != TYPE_DICTIONARY:

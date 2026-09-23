@@ -513,6 +513,8 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var coin_value := _coin_value(state, denomination_index)
 	var hand_count := _hand_count(state)
 	var total_bet := _wager_for(state, ui)
+	var wager_currency := GameModule.presentation_currency_for_game(run_state, get_id(), environment)
+	var wager_capacity := maxi(0, run_state.wager_capacity_for_game(get_id(), environment))
 
 	var hand: Array = []
 	var final_hands: Array = []
@@ -574,7 +576,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var outcome_headline := ""
 	if phase == "settled":
 		if win_credits > 0:
-			outcome_headline = "WIN: %s • PAID $%d" % [pay_label.to_upper(), win_credits]
+			outcome_headline = "WIN: %s • PAID %s" % [pay_label.to_upper(), PlayerTextScript.format_currency_amount(wager_currency, win_credits, true)]
 		else:
 			outcome_headline = "NO PAY • SET YOUR BET AND PRESS DEAL"
 	elif phase == "double_result":
@@ -639,7 +641,11 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"multi_hand_mode": "%d Play" % hand_count,
 		"bet_credits": total_bet,
 		"win_credits": win_credits,
-		"bankroll": maxi(0, run_state.wager_capacity_for_game(get_id(), environment)),
+		"bankroll": wager_capacity,
+		"wager_currency": wager_currency,
+		"account_balance_text": PlayerTextScript.format_currency_account_balance(wager_currency, wager_capacity),
+		"win_amount_text": PlayerTextScript.format_currency_amount(wager_currency, win_credits, true),
+		"bet_amount_text": PlayerTextScript.format_currency_amount(wager_currency, total_bet, true),
 		"progressive_meter": int(state.get("progressive_meter", PROGRESSIVE_BASE)),
 		"holdout_tell": str(state.get("holdout_tell", "")),
 		"hand": hand,

@@ -647,6 +647,7 @@ func _is_rourke_duel(run_state: RunState, environment: Dictionary) -> bool:
 func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
 	var table: Dictionary = _surface_table_state(run_state, environment)
 	var session: Dictionary = _normalized_session(run_state, environment, ui_state, table)
+	var wager_currency := GameModule.presentation_currency_for_game(run_state, get_id(), environment)
 	var now_msec := int(ui_state.get("surface_time_msec", Time.get_ticks_msec()))
 	session["surface_time_msec"] = now_msec
 	var presentation_msec := _blackjack_presentation_time_msec(session, now_msec)
@@ -758,6 +759,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var pending_delivery: Dictionary = authority_ledger.get("pending_delivery", {}) if typeof(authority_ledger.get("pending_delivery", {})) == TYPE_DICTIONARY else {}
 	var spec := GameModule.surface_spec({
 		"surface_renderer": "blackjack",
+		"wager_currency": wager_currency,
 		"surface_renderer_opaque": true,
 		"surface_time_msec": now_msec,
 		"surface_presentation_time_msec": presentation_msec,
@@ -1441,12 +1443,13 @@ func _draw_blackjack_ritual_layer(surface, surface_state: Dictionary) -> void:
 	var money_rect := Rect2(246, 300, 408, 12)
 	surface.draw_rect(money_rect, Color("#071612"))
 	surface.draw_rect(money_rect, Color(accent.r, accent.g, accent.b, 0.38), false, 1)
-	surface.surface_label_centered("AVAILABLE $%d   PENDING $%d   AT RISK $%d   RETURN $%d   PAYS $%d" % [
-		int(totals.get("available_funds", 0)),
-		int(totals.get("pending_total", 0)),
-		int(totals.get("at_risk_total", 0)),
-		int(totals.get("returned_stake", 0)),
-		int(totals.get("payout", 0)),
+	var wager_currency := _blackjack_surface_currency(surface_state)
+	surface.surface_label_centered("AVAILABLE %s   PENDING %s   AT RISK %s   RETURN %s   PAYS %s" % [
+		PlayerTextScript.format_currency_amount(wager_currency, int(totals.get("available_funds", 0)), true),
+		PlayerTextScript.format_currency_amount(wager_currency, int(totals.get("pending_total", 0)), true),
+		PlayerTextScript.format_currency_amount(wager_currency, int(totals.get("at_risk_total", 0)), true),
+		PlayerTextScript.format_currency_amount(wager_currency, int(totals.get("returned_stake", 0)), true),
+		PlayerTextScript.format_currency_amount(wager_currency, int(totals.get("payout", 0)), true),
 	], money_rect, 6, C_WHITE)
 	var pit_actor: Dictionary = {}
 	for actor_value in _draw_array_view(projection.get("actors", [])):
@@ -1785,6 +1788,15 @@ func _blackjack_surface_action_command(surface_action: String, index: int, confi
 	var table: Dictionary = _table_state_preview(run_state, environment)
 	var next_state: Dictionary = _normalized_session(run_state, environment, ui_state, table)
 	var selected_stake: int = _effective_table_stake(_session_stake(int(ui_state.get("selected_stake", next_state.get("selected_stake", 1))), next_state), next_state, run_state, environment)
+	# The ordinary host range clamps against bankroll, but Blackjack's visible main
+	# wager also reserves every active side bet. Reapply that exact table-specific
+	# ceiling at the command boundary so a stale selection cannot be sealed above
+	# the wager the felt currently presents as affordable.
+	if not _has_dealt_hand(next_state) and not bool(next_state.get("locked_stake", false)):
+		var effective_floor := _surface_stake_floor(run_state, environment)
+		var effective_ceiling := _max_table_stake_for_blackjack(next_state, table, run_state, environment)
+		selected_stake = effective_floor if effective_ceiling < effective_floor else clampi(selected_stake, effective_floor, effective_ceiling)
+		next_state["selected_stake"] = selected_stake
 	_update_live_count_state(next_state, table, run_state, true)
 	if bool(table.get("barred", false)):
 		return _message_command(next_state, str(table.get("barred_reason", "The dealer refuses to let you play this blackjack table.")))
@@ -3820,17 +3832,18 @@ func _draw_chip_payout_animation(surface, surface_state: Dictionary) -> void:
 	var label_rect := Rect2(312, 290, 276, 34)
 	var accent := C_TEAL if delta > 0 else C_ORANGE if delta < 0 else C_YELLOW
 	TableVisualsScript._draw_neon_panel(surface, label_rect, accent, 0.18 * (1.0 - clampf(t - 0.68, 0.0, 1.0)))
-	var label := "PUSH: CHIPS RETURN"
+	var wager_currency := _blackjack_surface_currency(surface_state, result)
+	var label := "PUSH: %s RETURN" % PlayerTextScript.currency_account_label(wager_currency)
 	if delta > 0:
-		label = "DEALER PAYS $%+d" % delta
+		label = "DEALER PAYS %s" % _blackjack_signed_currency_amount(wager_currency, delta)
 	elif delta < 0:
-		label = "DEALER COLLECTS $%d" % abs(delta)
+		label = "DEALER COLLECTS %s" % PlayerTextScript.format_currency_amount(wager_currency, abs(delta), true)
 	if side_delta != 0:
-		label += " / SIDE %+d" % side_delta
+		label += " / SIDE %s" % _blackjack_signed_currency_amount(wager_currency, side_delta)
 	elif main_delta != delta:
-		label += " / MAIN %+d" % main_delta
+		label += " / MAIN %s" % _blackjack_signed_currency_amount(wager_currency, main_delta)
 	if settlement_delta != delta:
-		label += " / RETURN %+d" % settlement_delta
+		label += " / RETURN %s" % _blackjack_signed_currency_amount(wager_currency, settlement_delta)
 	surface.surface_label_centered(label.left(42), label_rect.grow(-5), 12, accent)
 
 
@@ -4024,7 +4037,8 @@ func _draw_blackjack_result_board(surface, surface_state: Dictionary) -> void:
 		accent = C_PINK
 	TableVisualsScript._draw_neon_panel(surface, rect, accent, 0.22)
 	surface.surface_label(str(result.get("headline", "RESULT")).left(18), rect.position + Vector2(10, 18), 12, accent)
-	surface.surface_label("$%+d" % delta, rect.position + Vector2(10, 38), 12, C_TEAL if delta >= 0 else C_ORANGE)
+	var wager_currency := _blackjack_surface_currency(surface_state, result)
+	surface.surface_label(_blackjack_signed_currency_amount(wager_currency, delta), rect.position + Vector2(10, 38), 12, C_TEAL if delta >= 0 else C_ORANGE)
 	surface.surface_label("heat %+d" % heat, rect.position + Vector2(128, 38), 9, C_PINK if heat > 0 else C_SOFT)
 	var dealer_total := int(result.get("dealer_total", 0))
 	var hand_results: Array = _draw_array_view(result.get("hand_results", []))
@@ -4039,6 +4053,19 @@ func _draw_blackjack_result_board(surface, surface_state: Dictionary) -> void:
 	if not side_line.is_empty():
 		compare = side_line
 	surface.surface_label(compare.left(38), rect.position + Vector2(10, 58), 8, C_SOFT)
+
+
+func _blackjack_surface_currency(surface_state: Dictionary, result: Dictionary = {}) -> String:
+	var settlement := _draw_dict_view(result.get("settlement", {}))
+	var currency := str(settlement.get("currency", result.get("currency", surface_state.get("wager_currency", "cash")))).strip_edges().to_lower()
+	return "chips" if currency == "chips" else "cash"
+
+
+func _blackjack_signed_currency_amount(currency: String, amount: int) -> String:
+	if currency.strip_edges().to_lower() == "chips":
+		var noun := "CHIP" if absi(amount) == 1 else "CHIPS"
+		return "%+d %s" % [amount, noun]
+	return "$%+d" % amount
 
 
 func _side_bet_result_line(side_results: Array) -> String:

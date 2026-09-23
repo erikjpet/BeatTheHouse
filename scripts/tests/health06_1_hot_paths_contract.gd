@@ -1,9 +1,12 @@
 extends SceneTree
 
 const GameModuleRegistryScript := preload("res://scripts/core/game_module_registry.gd")
+const GameModuleScript := preload("res://scripts/core/game_module.gd")
+const GameRitualRuntimeScript := preload("res://scripts/core/game_ritual_runtime.gd")
 const ContentLibraryScript := preload("res://scripts/core/content_library.gd")
 const CardShoeScript := preload("res://scripts/core/card_shoe.gd")
 const RngStreamScript := preload("res://scripts/core/rng_stream.gd")
+const SLOT_RESOLVER_PATH := "res://scripts/games/slots/slot_resolver.gd"
 
 var failures: Array[String] = []
 
@@ -17,6 +20,7 @@ func _run() -> void:
 	_check_archetype_index()
 	_check_card_copy_boundaries()
 	_check_rng_shuffles()
+	_check_slot_owned_result_builder()
 	if failures.is_empty():
 		print("HEALTH06_1_HOT_PATHS PASS")
 		quit(0)
@@ -84,6 +88,78 @@ func _check_rng_shuffles() -> void:
 	var partial := partial_rng.pick_many([nested, "x"], 1)
 	if not partial.is_empty() and typeof(partial[0]) == TYPE_DICTIONARY:
 		_expect(is_same(partial[0], nested), "CH-14: partial selection deep-copied a nested value.")
+
+
+func _check_slot_owned_result_builder() -> void:
+	var source := FileAccess.get_file_as_string(SLOT_RESOLVER_PATH)
+	var function_start := source.find("func _spin_result(")
+	var function_end := source.find("\nfunc _message_for_spin(", function_start)
+	_expect(function_start >= 0 and function_end > function_start, "CH-13: Slot spin result builder boundary is unavailable.")
+	if function_start < 0 or function_end <= function_start:
+		return
+	var function_source := source.substr(function_start, function_end - function_start)
+	_expect(function_source.find("GameModule.build_canonical_owned_action_result(") >= 0, "CH-13: Slot spins do not transfer their fresh canonical deltas to the owned result builder.")
+	_expect(function_source.find("GameModule.build_action_result(") < 0, "CH-13: Slot spins still route through the recursively copying result builder.")
+
+	var copied_deltas := _representative_slot_deltas()
+	var owned_deltas := _representative_slot_deltas()
+	var copied := GameModuleScript.build_action_result(_representative_slot_payload(copied_deltas))
+	var owned := GameModuleScript.build_canonical_owned_action_result(_representative_slot_payload(owned_deltas))
+	_expect(
+		GameRitualRuntimeScript.canonical_json(copied) == GameRitualRuntimeScript.canonical_json(owned),
+		"CH-13: canonical owned Slot result construction changed the public result shape."
+	)
+	var copied_result_deltas: Dictionary = copied.get("deltas", {})
+	var owned_result_deltas: Dictionary = owned.get("deltas", {})
+	var copied_messages: Array = copied.get("messages", [])
+	var copied_delta_messages: Array = copied_result_deltas.get("messages", [])
+	var owned_messages: Array = owned.get("messages", [])
+	var owned_delta_messages: Array = owned_result_deltas.get("messages", [])
+	_expect(not is_same(copied_messages, copied_delta_messages), "CH-13: copying result builder aliases public messages to delta messages.")
+	_expect(not is_same(owned_messages, owned_delta_messages), "CH-13: owned result builder aliases public messages to delta messages.")
+	if not copied_messages.is_empty():
+		copied_messages[0] = "Mutated copied presentation."
+	if not owned_messages.is_empty():
+		owned_messages[0] = "Mutated owned presentation."
+	_expect(copied_delta_messages == ["Slot fixture lost $2."], "CH-13: copying result presentation mutation escaped into delta messages.")
+	_expect(owned_delta_messages == ["Slot fixture lost $2."], "CH-13: owned result presentation mutation escaped into delta messages.")
+	var copied_story: Array = copied_result_deltas.get("story_log", [])
+	var owned_story: Array = owned_result_deltas.get("story_log", [])
+	if not copied_story.is_empty() and typeof(copied_story[0]) == TYPE_DICTIONARY:
+		(copied_story[0] as Dictionary)["classification"] = "mutated"
+	_expect(not owned_story.is_empty() and str((owned_story[0] as Dictionary).get("classification", "")) == "zero_loss", "CH-13: independent owned and copying Slot results share nested story state.")
+
+
+func _representative_slot_deltas() -> Dictionary:
+	var deltas := GameModuleScript.empty_result_deltas()
+	deltas["bankroll_delta"] = -2
+	deltas["messages"] = ["Slot fixture lost $2."]
+	deltas["story_log"] = [{
+		"type": "game_action",
+		"slot_event": "slot_spin",
+		"game_id": "slot",
+		"action_id": "spin",
+		"classification": "zero_loss",
+		"stake_cost": 2,
+		"bankroll_delta": -2,
+	}]
+	return deltas
+
+
+func _representative_slot_payload(deltas: Dictionary) -> Dictionary:
+	return {
+		"ok": true,
+		"type": "game_action",
+		"source_id": "slot",
+		"game_id": "slot",
+		"action_id": "spin",
+		"action_kind": "legal",
+		"stake": 2,
+		"deltas": deltas,
+		"won": false,
+		"environment_id": "practice_slot",
+		"message": "Slot fixture lost $2.",
+	}
 
 
 func _expect(condition: bool, message: String) -> void:

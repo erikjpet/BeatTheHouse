@@ -16,7 +16,8 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$root = [IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))
+. (Join-Path $PSScriptRoot "../../repository_root.ps1")
+$root = Resolve-BthRepositoryRoot -StartPath $PSScriptRoot
 $profileFile = if ([IO.Path]::IsPathRooted($ProfilePath)) { [IO.Path]::GetFullPath($ProfilePath) } else { [IO.Path]::GetFullPath((Join-Path $root $ProfilePath)) }
 if (-not (Test-Path -LiteralPath $profileFile -PathType Leaf)) { throw "Low-end profile is missing: $profileFile" }
 $profileRoot = [IO.Path]::GetFullPath((Join-Path $root ".tmp"))
@@ -127,7 +128,7 @@ try {
     & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "perf06_deferred_validation_contract.ps1") -GodotPath $GodotPath
     if ($LASTEXITCODE -ne 0) { throw "Deferred runtime validation contract failed." }
 
-    & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "foundation_performance_probe.ps1") -RunCount $RunCount -FramesPerSurface $Frames -ResolveSampleCount $ResolveSampleCount -SeedPrefix $SeedPrefix -Out (Join-Path $out "native_surface_probe.json") -CandidateCommit $head -ProfileManifestSha256 $profileHash -EvidenceProfile "low_end:$($profile.profile_id)" -RequireGodot
+    & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $root "tools/foundation_performance_probe.ps1") -RunCount $RunCount -FramesPerSurface $Frames -ResolveSampleCount $ResolveSampleCount -SeedPrefix $SeedPrefix -Out (Join-Path $out "native_surface_probe.json") -CandidateCommit $head -ProfileManifestSha256 $profileHash -EvidenceProfile "low_end:$($profile.profile_id)" -RequireGodot
     if ($LASTEXITCODE -ne 0) { throw "Native low-end surface matrix failed." }
 
     $staticAudit = Join-Path $out "allocation_call_root_audit.json"
@@ -136,11 +137,11 @@ try {
 
     $surfaceReports = [Collections.Generic.List[string]]::new()
     $nativeDistributionOut = Join-Path $out "native_runtime_distribution_fresh_start"
-    & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "perf06_native_runtime_matrix.ps1") -ProfilePath $profileFile -GodotPath $GodotPath -OutDir $nativeDistributionOut -Plan distribution_fresh_start -EvidenceProfile "low_end:$($profile.profile_id)" -Frames $Frames -ActiveFrames $ActiveFrames -MemorySeconds $MemorySeconds -TimeoutMs 900000
+    & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $root "tools/perf06_native_runtime_matrix.ps1") -ProfilePath $profileFile -GodotPath $GodotPath -OutDir $nativeDistributionOut -Plan distribution_fresh_start -EvidenceProfile "low_end:$($profile.profile_id)" -Frames $Frames -ActiveFrames $ActiveFrames -MemorySeconds $MemorySeconds -TimeoutMs 900000
     if ($LASTEXITCODE -ne 0) { throw "Low-end native distribution fresh-start contract failed." }
     foreach ($nativePlan in @("l02", "grand_casino", "coin_pusher")) {
         $nativeOut = Join-Path $out ("native_runtime_{0}" -f $nativePlan)
-        & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "perf06_native_runtime_matrix.ps1") -ProfilePath $profileFile -GodotPath $GodotPath -OutDir $nativeOut -Plan $nativePlan -EvidenceProfile "low_end:$($profile.profile_id)" -Frames $Frames -ActiveFrames $ActiveFrames -MemorySeconds $MemorySeconds -TimeoutMs 900000
+        & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $root "tools/perf06_native_runtime_matrix.ps1") -ProfilePath $profileFile -GodotPath $GodotPath -OutDir $nativeOut -Plan $nativePlan -EvidenceProfile "low_end:$($profile.profile_id)" -Frames $Frames -ActiveFrames $ActiveFrames -MemorySeconds $MemorySeconds -TimeoutMs 900000
         if ($LASTEXITCODE -ne 0) { throw "Low-end native runtime plan failed: $nativePlan." }
         $nativeSurfaceReport = Join-Path $nativeOut "surface_report.json"
         & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "perf06_build_surface_report.ps1") -CandidateCommit $head -Platform native -Profile low_end -ProfilePath $profileFile -LaunchSummary (Join-Path $nativeOut "summary.json") -StaticAudit $staticAudit -Out $nativeSurfaceReport
@@ -157,7 +158,7 @@ try {
     )
     foreach ($run in $webRuns) {
         $webOut = Join-Path $out ("web_{0}_{1}.json" -f $run.plan, $run.cache)
-        & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "web_perf_smoke.ps1") -Browser chrome -Cpu ([int]$profile.web_cpu_throttle_rate) -Port $run.port -Frames $Frames -ActiveFrames $ActiveFrames -MemorySeconds $MemorySeconds -TimeoutMs 900000 -Plan $run.plan -CacheMode $run.cache -EvidenceProfile "low_end:$($profile.profile_id)" -Out $webOut
+        & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $root "tools/web_perf_smoke.ps1") -Browser chrome -Cpu ([int]$profile.web_cpu_throttle_rate) -Port $run.port -Frames $Frames -ActiveFrames $ActiveFrames -MemorySeconds $MemorySeconds -TimeoutMs 900000 -Plan $run.plan -CacheMode $run.cache -EvidenceProfile "low_end:$($profile.profile_id)" -Out $webOut
         if ($LASTEXITCODE -ne 0) { throw "Low-end Web run failed: $($run.plan)/$($run.cache)." }
         $captured = Get-Content -LiteralPath $webOut -Raw | ConvertFrom-Json
         if ([int]$captured.cpu_throttle_rate -ne [int]$profile.web_cpu_throttle_rate) { throw "Web capture did not apply the declared CPU throttle." }
@@ -177,7 +178,7 @@ try {
 
     $integrationManifests = @{}
     $compositionName = "integ06_1_composition_matrix.ps1"
-    $compositionPath = Join-Path $PSScriptRoot $compositionName
+    $compositionPath = Join-Path $root "tools/archive/integ06_1/$compositionName"
     $compositionOut = Join-Path $out "integ06_1_composition_matrix"
     $compositionOutRelative = $compositionOut.Substring($root.Length).TrimStart([char[]]@('\', '/'))
     & powershell -NoProfile -ExecutionPolicy Bypass -File $compositionPath -CandidateCommit $head -ProfilePath $profileFileRelative -EvidenceProfile "low_end:$($profile.profile_id)" -OutDir $compositionOutRelative -GodotPath $GodotPath -SeedCount $CompositionSeedCount -ShardCount $CompositionShardCount -RequireGodot
@@ -185,7 +186,7 @@ try {
     $integrationManifests[$compositionName] = Join-Path $compositionOut "manifest.json"
 
     $terminalName = "integ06_1_terminal_soak.ps1"
-    $terminalPath = Join-Path $PSScriptRoot $terminalName
+    $terminalPath = Join-Path $root "tools/archive/integ06_1/$terminalName"
     $terminalOut = Join-Path $out "integ06_1_terminal_soak"
     $terminalOutRelative = $terminalOut.Substring($root.Length).TrimStart([char[]]@('\', '/'))
     & powershell -NoProfile -ExecutionPolicy Bypass -File $terminalPath -CandidateCommit $head -ProfilePath $profileFileRelative -EvidenceProfile "low_end:$($profile.profile_id)" -OutDir $terminalOutRelative -GodotPath $GodotPath -ShardCount $TerminalShardCount -Cpu ([int]$profile.web_cpu_throttle_rate) -RequireGodot

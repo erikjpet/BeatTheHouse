@@ -64,6 +64,9 @@ const GAME_SURFACE_REALTIME_REFRESH_INTERVAL_MSEC := 16
 const AUTOSAVE_INTERACTION_DEBOUNCE_MSEC := 250
 const AUTOSAVE_GAME_INTERACTION_DEBOUNCE_MSEC := 400
 const AUTOSAVE_MAX_DEFER_MSEC := 1500
+const AUTOSAVE_RETRY_BASE_MSEC := 1000
+const AUTOSAVE_RETRY_MAX_MSEC := 30000
+const AUTOSAVE_TRANSIENT_RETRY_LIMIT := 5
 # Environment time is continuous: one in-game hour passes every 40 real
 # seconds while the player is on an active, unpaused run surface.
 const GAME_CLOCK_REAL_SECONDS_PER_GAME_HOUR := 40.0
@@ -133,6 +136,7 @@ const MetaCollectionServiceScript := preload("res://scripts/core/meta_collection
 const CollectionDropServiceScript := preload("res://scripts/core/collection_drop_service.gd")
 const CollectionItemResolverScript := preload("res://scripts/core/collection_item_resolver.gd")
 const SettingsMenuScript := preload("res://scripts/ui/settings_menu.gd")
+const ModalFocusScopeScript := preload("res://scripts/ui/modal_focus_scope.gd")
 const PixelSceneCanvasScript := preload("res://scripts/ui/pixel_scene_canvas.gd")
 const FoundationWidgetsScript := preload("res://scripts/ui/foundation_widgets.gd")
 const UIArtScript := preload("res://scripts/ui/ui_art.gd")
@@ -409,6 +413,11 @@ var autosave_dirty_generation := 0
 var autosave_inflight_generation := 0
 var autosave_completed_generation := 0
 var autosave_loadable_available := false
+var autosave_failure_generation := 0
+var autosave_failure_count := 0
+var autosave_last_error: Error = OK
+var autosave_last_error_code := ""
+var autosave_retry_blocked := false
 var tutorial_meta_home_handoff_scheduled := false
 
 var start_screen: Control
@@ -490,6 +499,9 @@ var delivery_action_strip: HFlowContainer
 var delivery_action_buttons: Dictionary = {}
 var run_menu_overlay: Control
 var run_menu_panel: PanelContainer
+var run_menu_header: Control
+var run_menu_scroll: ScrollContainer
+var run_menu_action_controls: Array[Control] = []
 var run_menu_status_label: Label
 var run_menu_resume_button: Button
 var run_menu_save_button: Button
@@ -560,6 +572,9 @@ var run_inventory_list: GridContainer
 var run_inventory_detail_box: VBoxContainer
 var run_journal_overlay: Control
 var run_journal_panel: PanelContainer
+var run_journal_header: Control
+var run_journal_scroll: ScrollContainer
+var run_journal_close_button: Button
 var run_journal_summary_label: Label
 var run_journal_list: VBoxContainer
 var travel_transition_overlay: Control
@@ -580,6 +595,7 @@ var world_map_confirm_button: Button
 var world_map_close_button: Button
 var world_map_overlay_controller
 var world_map_previous_focus_owner: Control
+var modal_focus_scope: RefCounted = ModalFocusScopeScript.new()
 var wager_confirmation_controller
 var selected_world_map_node_id: String = ""
 var world_map_button_ids: Array = []
@@ -784,6 +800,9 @@ func _input(event: InputEvent) -> void:
 		if procedural_music_player != null and procedural_music_player.has_method("web_audio_user_gesture"):
 			procedural_music_player.web_audio_user_gesture()
 		_schedule_web_audio_unlock_refresh()
+	if modal_focus_scope != null and bool(modal_focus_scope.call("handle_input", event)):
+		get_viewport().set_input_as_handled()
+		return
 	if event.is_action_pressed("ui_cancel") and _route_topmost_modal_cancel():
 		get_viewport().set_input_as_handled()
 		return
@@ -809,6 +828,8 @@ func _notification(what: int) -> void:
 		_invalidate_run_screen_layout()
 		_apply_run_screen_layout()
 		_layout_world_map_panel()
+		_layout_run_menu_panel()
+		_layout_run_journal_panel()
 		_layout_settings_overlay()
 		if _event_choice_popup_is_visible():
 			call_deferred("_position_event_choice_popup")
@@ -820,6 +841,8 @@ func _notification(what: int) -> void:
 
 
 func _exit_tree() -> void:
+	if modal_focus_scope != null and modal_focus_scope.has_method("clear"):
+		modal_focus_scope.call("clear")
 	_drain_script_prewarm_requests_for_shutdown()
 
 
@@ -877,6 +900,7 @@ func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Di
 	pending_autosave_after_frame = -1
 	pending_autosave_not_before_msec = 0
 	pending_autosave_first_queued_msec = 0
+	_clear_autosave_failure_state()
 	environment_clock_fractional_minutes = 0.0
 	stored_grand_casino_runtime_last_msec = -100000
 	environment_runtime_state_key_cache.clear()
@@ -2794,7 +2818,7 @@ func open_world_map(force_closing_allowed: bool = false) -> bool:
 		return false
 	if _guard_player_input_route(force_closing_allowed, "map"):
 		return false
-	world_map_previous_focus_owner = get_viewport().gui_get_focus_owner()
+	world_map_previous_focus_owner = get_viewport().gui_get_focus_owner() if modal_focus_scope == null else null
 	# The map becomes the sole interaction surface. Leaving the room selection
 	# alive kept its info/action card visible beneath the modal map and made the
 	# travel screen look like two competing layers.
@@ -2811,6 +2835,10 @@ func open_world_map(force_closing_allowed: bool = false) -> bool:
 	_sync_coach_focus_visibility()
 	_request_world_map_button_relayout()
 	_refresh()
+	if modal_focus_scope != null and world_map_overlay != null:
+		var map_controls := _world_map_focus_controls()
+		var initial_focus: Control = map_controls[0] if not map_controls.is_empty() else world_map_close_button
+		modal_focus_scope.call("push_scope", world_map_overlay, initial_focus, null, map_controls)
 	call_deferred("_focus_world_map_entry")
 	return true
 
@@ -2832,12 +2860,17 @@ func _prewarm_world_map_overlay_for_run() -> void:
 func close_world_map() -> void:
 	_clear_world_map_selection(false)
 	if world_map_overlay != null:
+		if modal_focus_scope != null:
+			modal_focus_scope.call("pop_scope", world_map_overlay)
 		world_map_overlay.visible = false
 	_sync_coach_focus_visibility()
 	if current_screen == SCREEN_TRAVEL:
 		_set_current_screen(SCREEN_ENVIRONMENT)
 		_refresh()
-	call_deferred("_restore_world_map_focus")
+	if modal_focus_scope == null:
+		call_deferred("_restore_world_map_focus")
+	else:
+		world_map_previous_focus_owner = null
 
 
 func _focus_world_map_entry() -> void:
@@ -2845,6 +2878,28 @@ func _focus_world_map_entry() -> void:
 		return
 	_ensure_world_map_overlay_controller()
 	world_map_overlay_controller.focus_first_available(world_map_close_button)
+	_refresh_world_map_focus_scope()
+
+
+func _world_map_focus_controls() -> Array[Control]:
+	var controls: Array[Control] = []
+	if world_map_overlay_controller == null or not world_map_overlay_controller.has_method("focus_controls"):
+		return controls
+	for value in world_map_overlay_controller.call("focus_controls"):
+		var control := value as Control
+		if control != null:
+			controls.append(control)
+	return controls
+
+
+func _refresh_world_map_focus_scope() -> void:
+	if modal_focus_scope == null or world_map_overlay == null or not world_map_overlay.visible:
+		return
+	if modal_focus_scope.call("active_root") != world_map_overlay:
+		return
+	var controls := _world_map_focus_controls()
+	var preferred: Control = controls[0] if not controls.is_empty() else world_map_close_button
+	modal_focus_scope.call("refresh_scope", world_map_overlay, preferred, controls)
 
 
 func _restore_world_map_focus() -> void:
@@ -2856,7 +2911,10 @@ func _restore_world_map_focus() -> void:
 func _hide_world_map_overlay() -> void:
 	_clear_world_map_selection(false)
 	if world_map_overlay != null:
+		if modal_focus_scope != null:
+			modal_focus_scope.call("pop_scope", world_map_overlay)
 		world_map_overlay.visible = false
+	world_map_previous_focus_owner = null
 
 
 func _clear_world_map_selection(refresh_overlay: bool = true) -> void:
@@ -2925,6 +2983,8 @@ func confirm_world_map_travel() -> Dictionary:
 		_restore_foundation_lifecycle_snapshot(caller_rollback)
 		return {"ok": false, "errors": [message if not message.is_empty() else "Map travel is not available."]}
 	if world_map_overlay != null:
+		if modal_focus_scope != null:
+			modal_focus_scope.call("pop_scope", world_map_overlay)
 		world_map_overlay.visible = false
 	_sync_coach_focus_visibility()
 	_protect_foundation_coach_attention(caller_rollback)
@@ -2967,6 +3027,8 @@ func _confirm_meta_world_map_travel() -> Dictionary:
 		_restore_foundation_lifecycle_snapshot(caller_rollback)
 		return {"ok": false, "errors": [message if not message.is_empty() else "Meta travel is not available."]}
 	if world_map_overlay != null:
+		if modal_focus_scope != null:
+			modal_focus_scope.call("pop_scope", world_map_overlay)
 		world_map_overlay.visible = false
 	var target_id := str(result.get("target_id", META_LOCATION_HOME))
 	if target_id == META_LOCATION_START_RUN:
@@ -5717,7 +5779,7 @@ func _autosave_foundation_run(status_text: String = "Autosaved.", force: bool = 
 		save_status_message = "Practice sessions are not autosaved."
 		return false
 	if current_game != null and not current_game.foundation_save_ready(run_state, run_state.current_environment):
-		autosave_dirty_generation += 1
+		_mark_autosave_dirty()
 		save_status_message = "Save waits for the live machine to settle." if force else status_text
 		return true
 	# Capture the completed action while it is still the active context. This is
@@ -5731,7 +5793,7 @@ func _autosave_foundation_run(status_text: String = "Autosaved.", force: bool = 
 	if not force:
 		_queue_pending_autosave(status_text, 1)
 		return true
-	autosave_dirty_generation += 1
+	_mark_autosave_dirty()
 	return _write_foundation_run_save(status_text, true)
 
 
@@ -5753,7 +5815,8 @@ func _write_foundation_run_save(status_text: String = "Autosaved.", synchronous:
 	if synchronous and save_service.async_save_in_flight():
 		var pending_error := save_service.wait_for_async_save()
 		if pending_error != OK:
-			save_status_message = "Autosave failed."
+			_record_autosave_failure(pending_error, "async_wait_failed", autosave_inflight_generation)
+			autosave_inflight_generation = 0
 			return false
 	var requested_generation := autosave_dirty_generation
 	var error := save_service.save_run(run_state, autosave_slot_id) if synchronous else save_service.begin_save_run(run_state, autosave_slot_id)
@@ -5762,6 +5825,7 @@ func _write_foundation_run_save(status_text: String = "Autosaved.", synchronous:
 			autosave_completed_generation = maxi(autosave_completed_generation, requested_generation)
 			autosave_inflight_generation = 0
 			autosave_loadable_available = true
+			_clear_autosave_failure_state()
 		else:
 			autosave_inflight_generation = requested_generation
 		pending_autosave = autosave_dirty_generation > requested_generation
@@ -5781,16 +5845,17 @@ func _write_foundation_run_save(status_text: String = "Autosaved.", synchronous:
 			_refresh_start_screen()
 		return true
 	if error == ERR_BUSY:
-		pending_autosave = true
-		pending_autosave_after_frame = Engine.get_process_frames() + 1
+		_record_autosave_failure(error, "save_service_busy", requested_generation)
 		return true
-	save_status_message = "Autosave failed."
+	_record_autosave_failure(error, "save_start_failed", requested_generation)
 	return false
 
 
 func _flush_pending_autosave_if_ready() -> void:
 	_poll_async_foundation_save()
 	if not pending_autosave:
+		return
+	if autosave_retry_blocked:
 		return
 	if pending_autosave_after_frame >= 0 and Engine.get_process_frames() < pending_autosave_after_frame:
 		return
@@ -5811,6 +5876,7 @@ func _poll_async_foundation_save() -> void:
 		autosave_completed_generation = maxi(autosave_completed_generation, autosave_inflight_generation)
 		autosave_inflight_generation = 0
 		autosave_loadable_available = true
+		_clear_autosave_failure_state()
 		pending_autosave = autosave_dirty_generation > autosave_completed_generation
 		if pending_autosave:
 			pending_autosave_after_frame = Engine.get_process_frames() + 1
@@ -5819,10 +5885,14 @@ func _poll_async_foundation_save() -> void:
 			pending_autosave_not_before_msec = 0
 			pending_autosave_first_queued_msec = 0
 	else:
+		var failed_generation := autosave_inflight_generation
+		var result_error: Error = int(result.get("error", FAILED))
 		autosave_inflight_generation = 0
-		save_status_message = "Autosave failed."
-		pending_autosave = true
-		pending_autosave_after_frame = Engine.get_process_frames() + 1
+		_record_autosave_failure(
+			result_error,
+			str(result.get("error_code", "async_save_failed")),
+			failed_generation
+		)
 	if save_status_label != null:
 		save_status_label.text = _save_status_text()
 
@@ -5831,7 +5901,7 @@ func _queue_pending_autosave(status_text: String, defer_frames: int) -> void:
 	var now_msec := Time.get_ticks_msec()
 	if not pending_autosave or pending_autosave_first_queued_msec <= 0:
 		pending_autosave_first_queued_msec = now_msec
-	autosave_dirty_generation += 1
+	_mark_autosave_dirty()
 	pending_autosave = true
 	pending_autosave_status_text = status_text
 	pending_autosave_after_frame = maxi(pending_autosave_after_frame, Engine.get_process_frames() + maxi(0, defer_frames))
@@ -5848,6 +5918,90 @@ func _queue_pending_autosave(status_text: String, defer_frames: int) -> void:
 	# never disagree during the deferred capture window.
 	if save_status_label != null:
 		save_status_label.text = _save_status_text()
+
+
+func retry_failed_autosave() -> bool:
+	if not pending_autosave or run_state == null:
+		return false
+	_clear_autosave_failure_state()
+	pending_autosave_after_frame = Engine.get_process_frames() + 1
+	pending_autosave_not_before_msec = 0
+	save_status_message = "Autosave retry requested."
+	return true
+
+
+func autosave_recovery_snapshot() -> Dictionary:
+	return {
+		"dirty_generation": autosave_dirty_generation,
+		"completed_generation": autosave_completed_generation,
+		"failure_generation": autosave_failure_generation,
+		"failure_count": autosave_failure_count,
+		"last_error": autosave_last_error,
+		"last_error_code": autosave_last_error_code,
+		"retry_blocked": autosave_retry_blocked,
+		"retry_not_before_msec": pending_autosave_not_before_msec,
+		"pending": pending_autosave,
+		"status": save_status_message,
+	}
+
+
+func _mark_autosave_dirty() -> void:
+	autosave_dirty_generation += 1
+	if autosave_dirty_generation > autosave_failure_generation:
+		_clear_autosave_failure_state()
+
+
+func _record_autosave_failure(error: Error, error_code: String, failed_generation: int) -> void:
+	# Attribute the error to the generation that was actually written. A newer
+	# action may become dirty while that request is in flight; assigning the old
+	# I/O failure to the newest generation would latch it without one attempt.
+	var generation := maxi(0, failed_generation)
+	if generation <= 0:
+		generation = autosave_dirty_generation
+	if generation != autosave_failure_generation:
+		autosave_failure_count = 0
+	autosave_failure_generation = generation
+	autosave_failure_count += 1
+	autosave_last_error = error
+	autosave_last_error_code = error_code
+	pending_autosave = true
+	var transient := _autosave_error_is_transient(error)
+	var newer_dirty_generation := autosave_dirty_generation > generation
+	if transient and autosave_failure_count <= AUTOSAVE_TRANSIENT_RETRY_LIMIT:
+		var delay_msec := _autosave_retry_delay_msec(autosave_failure_count)
+		autosave_retry_blocked = false
+		pending_autosave_after_frame = Engine.get_process_frames() + 1
+		pending_autosave_not_before_msec = Time.get_ticks_msec() + delay_msec
+		save_status_message = "Autosave retry scheduled in %.1f seconds." % (float(delay_msec) / 1000.0)
+	elif newer_dirty_generation:
+		# Permanent failure still latches the generation that failed, but a newer
+		# already-dirty snapshot receives its own single attempt. Preserve any
+		# debounce deadline established when that generation was queued.
+		autosave_retry_blocked = false
+		pending_autosave_after_frame = Engine.get_process_frames() + 1
+		save_status_message = "Earlier autosave failed. Newer changes remain queued."
+	else:
+		autosave_retry_blocked = true
+		pending_autosave_after_frame = -1
+		pending_autosave_not_before_msec = 0
+		save_status_message = "Autosave failed. Retry from Run Menu or after another action."
+
+
+func _autosave_error_is_transient(error: Error) -> bool:
+	return error == ERR_BUSY or error == ERR_TIMEOUT
+
+
+func _autosave_retry_delay_msec(failure_count: int) -> int:
+	var exponent := mini(maxi(0, failure_count - 1), 20)
+	return mini(AUTOSAVE_RETRY_BASE_MSEC * (1 << exponent), AUTOSAVE_RETRY_MAX_MSEC)
+
+
+func _clear_autosave_failure_state() -> void:
+	autosave_failure_generation = 0
+	autosave_failure_count = 0
+	autosave_last_error = OK
+	autosave_last_error_code = ""
+	autosave_retry_blocked = false
 
 
 func _should_defer_autosave_for_game_surface() -> bool:
@@ -5984,6 +6138,13 @@ func open_run_menu() -> void:
 	_refresh_run_menu()
 	run_menu_overlay.visible = true
 	run_menu_overlay.move_to_front()
+	_layout_run_menu_panel()
+	# ScrollContainer minimums settle after the first visible layout pass. Reapply
+	# the authoritative viewport clamp so a first-ever open cannot retain the
+	# unbounded content minimum for one or more frames.
+	call_deferred("_settle_run_menu_panel_layout")
+	if modal_focus_scope != null:
+		modal_focus_scope.call("push_scope", run_menu_overlay, run_menu_resume_button)
 	_sync_coach_focus_visibility()
 	_refresh_talk_dock()
 
@@ -6057,6 +6218,7 @@ func _foundation_lifecycle_snapshot() -> Dictionary:
 		"game_surface_auto_resolving", "last_game_surface_realtime_refresh_msec", "surface_feature_music_active", "surface_feature_music_ducking", "drunk_time_anchor_real_msec", "drunk_time_anchor_scaled_msec", "drunk_time_last_scale",
 		"pending_autosave", "pending_autosave_status_text", "pending_autosave_after_frame", "pending_autosave_not_before_msec", "pending_autosave_first_queued_msec",
 		"autosave_dirty_generation", "autosave_inflight_generation", "autosave_completed_generation", "save_status_message",
+		"autosave_failure_generation", "autosave_failure_count", "autosave_last_error", "autosave_last_error_code", "autosave_retry_blocked",
 	]:
 		var value: Variant = get(field_name)
 		fields[field_name] = value.duplicate(true) if typeof(value) == TYPE_DICTIONARY or typeof(value) == TYPE_ARRAY else value
@@ -8852,7 +9014,7 @@ func _build_conclusion_animation_overlay() -> void:
 
 func _build_run_inventory_overlay() -> void:
 	run_inventory_screen = RunInventoryScreenScript.new()
-	run_inventory_screen.configure(Callable(self, "_run_item_texture_for_asset_path"))
+	run_inventory_screen.configure(Callable(self, "_run_item_texture_for_asset_path"), modal_focus_scope)
 	run_inventory_screen.close_requested.connect(Callable(self, "close_run_inventory"))
 	run_inventory_screen.item_selected.connect(Callable(self, "_on_run_inventory_screen_item_selected"))
 	run_inventory_screen.set_active_requested.connect(Callable(self, "select_active_inventory_item"))
@@ -8870,7 +9032,7 @@ func _build_run_inventory_overlay() -> void:
 
 func _build_meta_item_interaction_overlay() -> void:
 	meta_item_interaction_screen = MetaItemInteractionScreenScript.new()
-	meta_item_interaction_screen.configure(Callable(self, "_run_item_texture_for_asset_path"))
+	meta_item_interaction_screen.configure(Callable(self, "_run_item_texture_for_asset_path"), modal_focus_scope)
 	meta_item_interaction_screen.close_requested.connect(Callable(self, "close_meta_item_interaction"))
 	meta_item_interaction_screen.selection_changed.connect(Callable(self, "_on_meta_item_selection_changed"))
 	meta_item_interaction_screen.action_requested.connect(Callable(self, "_on_meta_item_action_requested"))
@@ -8895,7 +9057,8 @@ func _build_run_journal_overlay() -> void:
 	run_journal_overlay.add_child(shade)
 
 	run_journal_panel = _panel_container(Color("#080817", 0.98), VisualStyle.TEAL)
-	run_journal_panel.custom_minimum_size = Vector2(600, 440)
+	run_journal_panel.custom_minimum_size = Vector2.ZERO
+	run_journal_panel.clip_contents = true
 	run_journal_panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	run_journal_overlay.add_child(run_journal_panel)
 
@@ -8905,33 +9068,39 @@ func _build_run_journal_overlay() -> void:
 	stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	run_journal_panel.add_child(stack)
 
-	var header := HBoxContainer.new()
-	header.add_theme_constant_override("separation", 8)
-	stack.add_child(header)
+	run_journal_header = HBoxContainer.new()
+	run_journal_header.add_theme_constant_override("separation", 8)
+	stack.add_child(run_journal_header)
 	var title := _label("Run Journal", 20)
 	_set_control_font_color(title, VisualStyle.YELLOW)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	header.add_child(title)
-	var close_button := _button("Close", Callable(self, "close_run_journal"))
-	close_button.custom_minimum_size = Vector2(96, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
-	header.add_child(close_button)
+	run_journal_header.add_child(title)
+	run_journal_close_button = _button("Close", Callable(self, "close_run_journal"))
+	run_journal_close_button.custom_minimum_size = Vector2(96, SmallScreenPolicyScript.CONTROL_TOUCH_TARGET_HEIGHT)
+	run_journal_header.add_child(run_journal_close_button)
+
+	run_journal_scroll = ScrollContainer.new()
+	run_journal_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	run_journal_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	run_journal_scroll.follow_focus = true
+	run_journal_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	run_journal_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	stack.add_child(run_journal_scroll)
+
+	var scroll_stack := VBoxContainer.new()
+	scroll_stack.add_theme_constant_override("separation", 8)
+	scroll_stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	run_journal_scroll.add_child(scroll_stack)
 
 	run_journal_summary_label = _label("", 12)
 	_set_control_font_color(run_journal_summary_label, VisualStyle.CYAN)
 	run_journal_summary_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	stack.add_child(run_journal_summary_label)
-
-	var scroll := ScrollContainer.new()
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	stack.add_child(scroll)
+	scroll_stack.add_child(run_journal_summary_label)
 
 	run_journal_list = VBoxContainer.new()
 	run_journal_list.add_theme_constant_override("separation", 8)
 	run_journal_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.add_child(run_journal_list)
+	scroll_stack.add_child(run_journal_list)
 
 
 func _build_travel_transition_overlay() -> void:
@@ -9081,7 +9250,7 @@ func _build_world_map_overlay() -> void:
 	world_map_confirm_button = _button("Travel", Callable(self, "confirm_world_map_travel"))
 	world_map_confirm_button.custom_minimum_size = Vector2(132, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
 	popup_stack.add_child(world_map_confirm_button)
-	world_map_overlay_controller.configure_nodes(world_map_overlay, world_map_holder, world_map_nodes_layer, world_map_title_label, world_map_detail_popup, world_map_detail_label, world_map_badge_slot, world_map_confirm_button)
+	world_map_overlay_controller.configure_nodes(world_map_overlay, world_map_holder, world_map_nodes_layer, world_map_title_label, world_map_detail_popup, world_map_detail_label, world_map_badge_slot, world_map_confirm_button, world_map_close_button)
 	_layout_world_map_panel()
 
 
@@ -9110,6 +9279,66 @@ func _world_map_panel_rect_for_viewport(viewport_size: Vector2) -> Rect2:
 	var compact := _small_screen_enabled() or viewport_size.x < 960.0 or viewport_size.y < 540.0
 	var margin := Vector2(12.0, 12.0) if compact else Vector2(24.0, 24.0)
 	return _bounded_centered_modal_rect(viewport_size, Vector2(860.0, 540.0), margin)
+
+
+func _run_menu_panel_rect_for_viewport(viewport_size: Vector2) -> Rect2:
+	return _bounded_centered_modal_rect(viewport_size, Vector2(540.0, 430.0), Vector2(12.0, 12.0))
+
+
+func _run_journal_panel_rect_for_viewport(viewport_size: Vector2) -> Rect2:
+	return _bounded_centered_modal_rect(viewport_size, Vector2(720.0, 560.0), Vector2(12.0, 12.0))
+
+
+func _layout_run_menu_panel() -> void:
+	if run_menu_panel == null:
+		return
+	var viewport_size := run_menu_overlay.size if run_menu_overlay != null and run_menu_overlay.size.x > 0.0 and run_menu_overlay.size.y > 0.0 else _modal_viewport_size()
+	var rect := _run_menu_panel_rect_for_viewport(viewport_size)
+	run_menu_panel.position = rect.position
+	run_menu_panel.size = rect.size
+
+
+func _settle_run_menu_panel_layout() -> void:
+	await get_tree().process_frame
+	if run_menu_overlay != null and run_menu_overlay.visible:
+		_layout_run_menu_panel()
+
+
+func _on_run_menu_action_focus_entered(action: Control) -> void:
+	if run_menu_scroll == null or action == null or not run_menu_scroll.is_ancestor_of(action):
+		return
+	run_menu_scroll.ensure_control_visible(action)
+	call_deferred("_settle_run_menu_action_visibility", action)
+
+
+func _settle_run_menu_action_visibility(action: Control) -> void:
+	await get_tree().process_frame
+	_clamp_run_menu_action_visibility(action)
+	await get_tree().process_frame
+	_clamp_run_menu_action_visibility(action)
+
+
+func _clamp_run_menu_action_visibility(action: Control) -> void:
+	if run_menu_scroll == null or action == null or not is_instance_valid(action) or not run_menu_scroll.is_ancestor_of(action):
+		return
+	var viewport_rect := run_menu_scroll.get_global_rect()
+	var action_rect := action.get_global_rect()
+	var correction := 0.0
+	if action_rect.position.y < viewport_rect.position.y:
+		correction = action_rect.position.y - viewport_rect.position.y
+	elif action_rect.end.y > viewport_rect.end.y:
+		correction = action_rect.end.y - viewport_rect.end.y
+	if not is_zero_approx(correction):
+		run_menu_scroll.scroll_vertical += int(round(correction))
+
+
+func _layout_run_journal_panel() -> void:
+	if run_journal_panel == null:
+		return
+	var viewport_size := run_journal_overlay.size if run_journal_overlay != null and run_journal_overlay.size.x > 0.0 and run_journal_overlay.size.y > 0.0 else _modal_viewport_size()
+	var rect := _run_journal_panel_rect_for_viewport(viewport_size)
+	run_journal_panel.position = rect.position
+	run_journal_panel.size = rect.size
 
 
 func _settings_panel_rect_for_viewport(viewport_size: Vector2) -> Rect2:
@@ -9150,26 +9379,6 @@ func _layout_settings_overlay() -> void:
 	settings_margin.add_theme_constant_override("margin_right", int(round(viewport_size.x - rect.end.x)))
 	settings_margin.add_theme_constant_override("margin_top", int(round(rect.position.y)))
 	settings_margin.add_theme_constant_override("margin_bottom", int(round(viewport_size.y - rect.end.y)))
-
-
-func debug_apply_accessibility_viewport(viewport_size: Vector2) -> Dictionary:
-	var map_rect := _world_map_panel_rect_for_viewport(viewport_size)
-	var settings_rect := _settings_panel_rect_for_viewport(viewport_size)
-	var actions: Array[Rect2] = []
-	var action_height := SmallScreenPolicyScript.control_height(MIN_NATIVE_TOUCH_TARGET_HEIGHT, _small_screen_enabled())
-	var gap := 10.0
-	var action_width := maxf(1.0, (settings_rect.size.x - gap * 2.0) / 3.0)
-	for index in range(3):
-		actions.append(Rect2(
-			Vector2(settings_rect.position.x + float(index) * (action_width + gap), settings_rect.end.y - action_height),
-			Vector2(action_width, action_height)
-		))
-	return {
-		"viewport_rect": Rect2(Vector2.ZERO, viewport_size),
-		"world_map_panel_rect": map_rect,
-		"settings_panel_rect": settings_rect,
-		"settings_action_rects": actions,
-	}
 
 
 func _sync_world_map_overlay_controller_from_host() -> void:
@@ -9488,15 +9697,11 @@ func _build_run_menu_overlay() -> void:
 	shade.add_theme_stylebox_override("panel", VisualStyle.pixel_box(Color("#03030a", 0.84), VisualStyle.CYAN_2, 1))
 	run_menu_overlay.add_child(shade)
 
-	var center := CenterContainer.new()
-	center.set_anchors_preset(Control.PRESET_FULL_RECT)
-	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	run_menu_overlay.add_child(center)
-
 	run_menu_panel = _panel_container(Color("#080817", 0.98), VisualStyle.CYAN)
-	run_menu_panel.custom_minimum_size = Vector2(540, 430)
+	run_menu_panel.custom_minimum_size = Vector2.ZERO
+	run_menu_panel.clip_contents = true
 	run_menu_panel.mouse_filter = Control.MOUSE_FILTER_STOP
-	center.add_child(run_menu_panel)
+	run_menu_overlay.add_child(run_menu_panel)
 
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 18)
@@ -9511,62 +9716,94 @@ func _build_run_menu_overlay() -> void:
 	stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	margin.add_child(stack)
 
+	run_menu_header = VBoxContainer.new()
+	run_menu_header.add_theme_constant_override("separation", 6)
+	run_menu_header.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	stack.add_child(run_menu_header)
+
 	var title := _label("Run Menu", 24)
 	_set_control_font_color(title, VisualStyle.YELLOW)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	stack.add_child(title)
+	run_menu_header.add_child(title)
 
 	run_menu_status_label = _label("", 13)
 	_set_control_font_color(run_menu_status_label, VisualStyle.CYAN_2)
 	run_menu_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	run_menu_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	run_menu_status_label.custom_minimum_size = Vector2(0, 50)
-	stack.add_child(run_menu_status_label)
+	run_menu_header.add_child(run_menu_status_label)
+
+	run_menu_scroll = ScrollContainer.new()
+	run_menu_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	run_menu_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	run_menu_scroll.follow_focus = true
+	run_menu_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	run_menu_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	stack.add_child(run_menu_scroll)
+
+	var scroll_stack := VBoxContainer.new()
+	scroll_stack.add_theme_constant_override("separation", 10)
+	scroll_stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	run_menu_scroll.add_child(scroll_stack)
 
 	var slot_note := _label("Resume Slot: one local save. Save overwrites it; Load replaces this run from it.", 12)
 	_set_control_font_color(slot_note, VisualStyle.SOFT)
 	slot_note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	slot_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	stack.add_child(slot_note)
-	stack.add_child(_attribute_glyph_legend_panel())
+	scroll_stack.add_child(slot_note)
+	scroll_stack.add_child(_attribute_glyph_legend_panel())
 
 	var button_grid := GridContainer.new()
 	button_grid.columns = 2
 	button_grid.add_theme_constant_override("h_separation", 10)
 	button_grid.add_theme_constant_override("v_separation", 10)
 	button_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	stack.add_child(button_grid)
+	scroll_stack.add_child(button_grid)
 
 	run_menu_resume_button = _button("Resume", Callable(self, "close_run_menu"))
-	run_menu_resume_button.custom_minimum_size = Vector2(0, 42)
+	run_menu_resume_button.custom_minimum_size = Vector2(0, SmallScreenPolicyScript.CONTROL_TOUCH_TARGET_HEIGHT)
 	button_grid.add_child(run_menu_resume_button)
 	run_menu_save_button = _button("Save", Callable(self, "save_run_from_menu"))
-	run_menu_save_button.custom_minimum_size = Vector2(0, 42)
+	run_menu_save_button.custom_minimum_size = Vector2(0, SmallScreenPolicyScript.CONTROL_TOUCH_TARGET_HEIGHT)
 	button_grid.add_child(run_menu_save_button)
 	run_menu_load_button = _button("Load", Callable(self, "load_run_from_menu"))
-	run_menu_load_button.custom_minimum_size = Vector2(0, 42)
+	run_menu_load_button.custom_minimum_size = Vector2(0, SmallScreenPolicyScript.CONTROL_TOUCH_TARGET_HEIGHT)
 	button_grid.add_child(run_menu_load_button)
 	run_menu_journal_button = _button("Journal", Callable(self, "open_run_journal"))
-	run_menu_journal_button.custom_minimum_size = Vector2(0, 42)
+	run_menu_journal_button.custom_minimum_size = Vector2(0, SmallScreenPolicyScript.CONTROL_TOUCH_TARGET_HEIGHT)
 	button_grid.add_child(run_menu_journal_button)
 	run_menu_settings_button = _button("Settings", Callable(self, "open_settings_menu"))
-	run_menu_settings_button.custom_minimum_size = Vector2(0, 42)
+	run_menu_settings_button.custom_minimum_size = Vector2(0, SmallScreenPolicyScript.CONTROL_TOUCH_TARGET_HEIGHT)
 	button_grid.add_child(run_menu_settings_button)
 	run_menu_abandon_button = _button("Abandon Run", Callable(self, "abandon_run_from_menu"))
-	run_menu_abandon_button.custom_minimum_size = Vector2(0, 42)
+	run_menu_abandon_button.custom_minimum_size = Vector2(0, SmallScreenPolicyScript.CONTROL_TOUCH_TARGET_HEIGHT)
 	button_grid.add_child(run_menu_abandon_button)
 	run_menu_main_menu_button = _button("Main Menu", Callable(self, "return_to_main_menu"))
-	run_menu_main_menu_button.custom_minimum_size = Vector2(0, 42)
+	run_menu_main_menu_button.custom_minimum_size = Vector2(0, SmallScreenPolicyScript.CONTROL_TOUCH_TARGET_HEIGHT)
 	button_grid.add_child(run_menu_main_menu_button)
 	run_menu_skip_tutorial_button = _button("Skip Lessons", Callable(self, "request_skip_tutorial"))
-	run_menu_skip_tutorial_button.custom_minimum_size = Vector2(0, 42)
+	run_menu_skip_tutorial_button.custom_minimum_size = Vector2(0, SmallScreenPolicyScript.CONTROL_TOUCH_TARGET_HEIGHT)
 	button_grid.add_child(run_menu_skip_tutorial_button)
+	run_menu_action_controls = [
+		run_menu_resume_button,
+		run_menu_save_button,
+		run_menu_load_button,
+		run_menu_journal_button,
+		run_menu_settings_button,
+		run_menu_abandon_button,
+		run_menu_main_menu_button,
+		run_menu_skip_tutorial_button,
+	]
+	for action_control in run_menu_action_controls:
+		if action_control != null:
+			action_control.focus_entered.connect(Callable(self, "_on_run_menu_action_focus_entered").bind(action_control))
 
 	tutorial_skip_dialog = ConfirmationDialog.new()
 	tutorial_skip_dialog.title = "Skip the lessons?"
 	tutorial_skip_dialog.dialog_text = "End this guided run? You can replay Lessons from the main menu."
 	tutorial_skip_dialog.confirmed.connect(_confirm_skip_tutorial)
 	add_child(tutorial_skip_dialog)
+	_layout_run_menu_panel()
 
 
 func _attribute_glyph_legend_panel() -> Control:
@@ -11319,7 +11556,9 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 		return
 	if current_action_uses_authority and not authority_delivery.is_empty():
 		if str(authority_delivery.get("action_id", "")) != action_id:
-			_show_message("Blackjack replay failed closed because its action did not match the sealed delivery.")
+			_show_message(PlayerTextScript.resolve("sealed_action.mismatch", {
+				"provider_label": current_game.get_display_name(),
+			}))
 			_refresh()
 			return
 		# A synchronous prepared handoff already owns the fully validated candidate,
@@ -11330,7 +11569,7 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 			if not early_replay.is_empty():
 				if early_replay.has(resolved_action_authority_script.HOST_REPLAY_KEY) and _sealed_action_host_present_cached_replay(early_replay):
 					return
-				_show_message(str(early_replay.get("message", "Blackjack replay failed closed.")))
+				_show_message(str(early_replay.get("message", PlayerTextScript.resolve("sealed_action.failed_closed"))))
 				_refresh()
 				return
 	var debug_coin_pusher_host := bool(resolved_surface_ui_state.get("coin_pusher_debug_profile_stages", false))
@@ -11433,7 +11672,7 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 		debug_host_stage_started_usec = Time.get_ticks_usec()
 	if resolved_action_authority_script != null and result.has(resolved_action_authority_script.HOST_REPLAY_KEY):
 		if not _sealed_action_host_present_cached_replay(result):
-			result = _sealed_action_host_rejection("invalid_cache", "Blackjack replay did not match the canonical committed response.", str(result.get(resolved_action_authority_script.HOST_REQUEST_KEY, "")))
+			result = _sealed_action_host_rejection("invalid_cache", "Sealed action replay did not match the canonical committed response.", str(result.get(resolved_action_authority_script.HOST_REQUEST_KEY, "")))
 		else:
 			return
 	if bool(result.get("ok", false)):
@@ -11735,10 +11974,32 @@ func confirm_pending_wager_action() -> void:
 
 
 func cancel_pending_wager_confirmation() -> void:
-	_clear_pending_wager_confirmation()
+	var sealed_cancel_command := _pending_wager_sealed_cancel_command()
+	if not sealed_cancel_command.is_empty() and not bool(sealed_cancel_command.get("handled", false)):
+		_show_message(str(sealed_cancel_command.get("message", "The pending wager could not be canceled safely.")))
+		return
 	_hide_event_choice_popup()
-	_show_message("All-in wager canceled. Choose a smaller stake or another action.")
-	_refresh()
+	if bool(sealed_cancel_command.get("handled", false)):
+		# The sealed host has already restored and published the recovery candidate.
+		# Apply its presentation command only after the modal releases input ownership.
+		_apply_game_surface_command(sealed_cancel_command, -1, false, false, true)
+	else:
+		_show_message("All-in wager canceled. Choose a smaller stake or another action.")
+		_refresh()
+
+
+func _pending_wager_sealed_cancel_command() -> Dictionary:
+	if pending_wager_confirm_action_id.is_empty() or run_state == null or not pending_wager_confirm_source_game_id.is_empty() \
+			or not _current_game_uses_action_authority():
+		return {}
+	var ledger := _sealed_action_host_ledger(run_state, false, false)
+	var pending: Dictionary = ledger.get("pending_delivery", {}) if typeof(ledger.get("pending_delivery", {})) == TYPE_DICTIONARY else {}
+	if pending.is_empty():
+		return {}
+	var cancel_actions: Array = action_authority_contract.get("cancel_surface_actions", []) if typeof(action_authority_contract.get("cancel_surface_actions", [])) == TYPE_ARRAY else []
+	if cancel_actions.is_empty() or str(cancel_actions[0]).is_empty():
+		return _sealed_action_host_rejection("invalid_intent", "The sealed provider has no cancellation action.", str(pending.get("request_key", "")))
+	return _sealed_action_host_surface_intent(str(cancel_actions[0]), 0, false, _current_game_surface_input_time_msec())
 
 
 func _wager_cost_for_action(action_id: String, stake: int, surface_ui_state: Dictionary = {}) -> int:
@@ -15487,11 +15748,17 @@ func open_settings_menu() -> void:
 	settings_overlay.move_to_front()
 	_layout_settings_overlay()
 	_sync_coach_focus_visibility()
+	if modal_focus_scope != null:
+		modal_focus_scope.call("push_scope", settings_overlay)
 	settings_menu.open()
+	if modal_focus_scope != null:
+		modal_focus_scope.call("refresh_scope", settings_overlay, get_viewport().gui_get_focus_owner())
 	_refresh_talk_dock()
 
 
 func close_settings_menu() -> void:
+	if settings_overlay != null and settings_overlay.visible and modal_focus_scope != null:
+		modal_focus_scope.call("pop_scope", settings_overlay)
 	if settings_menu != null:
 		settings_menu.discard_draft()
 	if settings_menu != null:
@@ -16679,6 +16946,11 @@ func save_status_snapshot() -> Dictionary:
 		"save_path": save_service.run_save_path(autosave_slot_id) if save_service != null else "",
 		"status_text": _save_status_text(),
 		"pending_autosave": pending_autosave,
+		"autosave_failure_count": autosave_failure_count,
+		"autosave_last_error": autosave_last_error,
+		"autosave_last_error_code": autosave_last_error_code,
+		"autosave_retry_blocked": autosave_retry_blocked,
+		"autosave_retry_not_before_msec": pending_autosave_not_before_msec,
 		"active_summary": _run_summary_text(run_state) if run_state != null else "",
 		"visible_objective": _objective_hud_text() if run_state != null else "",
 		"visible_bankroll": _presented_bankroll() if run_state != null else 0,
@@ -16707,6 +16979,8 @@ func _run_menu_is_visible() -> bool:
 
 func _hide_run_menu() -> void:
 	if run_menu_overlay != null:
+		if run_menu_overlay.visible and modal_focus_scope != null:
+			modal_focus_scope.call("pop_scope", run_menu_overlay)
 		run_menu_overlay.visible = false
 	_sync_coach_focus_visibility()
 
@@ -16751,6 +17025,8 @@ func _refresh_run_menu() -> void:
 	if run_menu_skip_tutorial_button != null:
 		run_menu_skip_tutorial_button.visible = run_state != null and run_state.is_tutorial_run()
 		run_menu_skip_tutorial_button.disabled = not run_menu_skip_tutorial_button.visible
+	if modal_focus_scope != null and run_menu_overlay != null and run_menu_overlay.visible:
+		modal_focus_scope.call("refresh_scope", run_menu_overlay, run_menu_resume_button)
 
 
 func _configure_coach_for_run() -> void:
@@ -18381,11 +18657,16 @@ func _open_run_journal_popup() -> void:
 	if run_journal_overlay == null or run_journal_list == null:
 		return
 	_render_run_journal_contents()
+	if run_journal_scroll != null:
+		run_journal_scroll.scroll_vertical = 0
 	run_journal_overlay.visible = true
 	run_journal_overlay.move_to_front()
 	_sync_coach_focus_visibility()
 	_position_run_journal_popup()
+	if modal_focus_scope != null:
+		modal_focus_scope.call("push_scope", run_journal_overlay, run_journal_close_button)
 	call_deferred("_position_run_journal_popup")
+	call_deferred("_reset_run_journal_scroll_position")
 
 
 func _render_run_journal_contents() -> void:
@@ -18408,27 +18689,44 @@ func _add_run_journal_card(entry: Dictionary) -> void:
 		return
 	var category := str(entry.get("category", "story"))
 	var border := _run_journal_category_color(category)
+	var entry_index := int(entry.get("index", 0))
+	var entry_title := str(entry.get("title", "Story"))
+	var entry_body := str(entry.get("body", ""))
+	var detail_lines := JsonCoerceScript._copy_array(entry.get("detail_lines", []))
 	var card := _panel_container(VisualStyle.DARK_2, border)
+	card.name = "RunJournalEntry%d" % entry_index
 	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	card.focus_mode = Control.FOCUS_ALL
+	card.mouse_filter = Control.MOUSE_FILTER_STOP
+	card.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	var accessible_parts := ["Journal entry %d: %s" % [entry_index, entry_title]]
+	if not entry_body.strip_edges().is_empty():
+		accessible_parts.append(entry_body.strip_edges())
+	if not detail_lines.is_empty():
+		accessible_parts.append("; ".join(detail_lines))
+	card.accessibility_name = ". ".join(accessible_parts)
+	card.tooltip_text = card.accessibility_name
+	card.focus_entered.connect(Callable(self, "_on_run_journal_card_focus_changed").bind(card, border, true))
+	card.focus_exited.connect(Callable(self, "_on_run_journal_card_focus_changed").bind(card, border, false))
+	card.gui_input.connect(Callable(self, "_on_run_journal_card_gui_input").bind(card))
 	run_journal_list.add_child(card)
 	var stack := VBoxContainer.new()
 	stack.add_theme_constant_override("separation", 4)
 	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	card.add_child(stack)
 
-	var heading := _label("#%d %s" % [int(entry.get("index", 0)), str(entry.get("title", "Story"))], 14)
+	var heading := _label("#%d %s" % [entry_index, entry_title], 14)
 	_set_control_font_color(heading, border)
 	heading.clip_text = true
 	heading.max_lines_visible = 1
 	stack.add_child(heading)
 
-	var body := _label(str(entry.get("body", "")), 12)
+	var body := _label(entry_body, 12)
 	_set_control_font_color(body, VisualStyle.SOFT)
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	body.max_lines_visible = 3
 	stack.add_child(body)
 
-	var detail_lines := JsonCoerceScript._copy_array(entry.get("detail_lines", []))
 	if detail_lines.is_empty():
 		return
 	var details := _label(" | ".join(detail_lines), 10)
@@ -18438,39 +18736,49 @@ func _add_run_journal_card(entry: Dictionary) -> void:
 	stack.add_child(details)
 
 
+func _on_run_journal_card_focus_changed(card: PanelContainer, border: Color, focused: bool) -> void:
+	if not is_instance_valid(card):
+		return
+	card.add_theme_stylebox_override("panel", VisualStyle.pixel_box(
+		VisualStyle.DARK_2,
+		VisualStyle.YELLOW if focused else border,
+		3 if focused else VisualStyle.UI_BORDER_WIDTH
+	))
+	if focused and run_journal_scroll != null:
+		run_journal_scroll.ensure_control_visible(card)
+
+
+func _on_run_journal_card_gui_input(event: InputEvent, card: PanelContainer) -> void:
+	if not is_instance_valid(card):
+		return
+	if (event is InputEventMouseButton and (event as InputEventMouseButton).pressed) \
+			or (event is InputEventScreenTouch and (event as InputEventScreenTouch).pressed):
+		card.grab_focus()
+
+
+func _reset_run_journal_scroll_position() -> void:
+	if run_journal_scroll != null and run_journal_overlay != null and run_journal_overlay.visible:
+		run_journal_scroll.scroll_vertical = 0
+
+
 func _position_run_journal_popup() -> void:
 	if run_journal_overlay == null or run_journal_panel == null:
 		return
-	var overlay_rect := run_journal_overlay.get_global_rect()
-	if overlay_rect.size.x <= 0.0 or overlay_rect.size.y <= 0.0:
-		return
-	var margin := 12.0
-	var width := clampf(overlay_rect.size.x * 0.62, 520.0, 720.0)
-	var height := clampf(overlay_rect.size.y * 0.68, 360.0, 560.0)
-	if overlay_rect.size.x < 620.0:
-		width = clampf(overlay_rect.size.x - margin * 2.0, 300.0, 540.0)
-	if overlay_rect.size.y < 480.0:
-		height = clampf(overlay_rect.size.y - margin * 2.0, 300.0, 420.0)
-	var popup_size := Vector2(width, height)
-	var global_position := Vector2(
-		overlay_rect.position.x + (overlay_rect.size.x - popup_size.x) * 0.5,
-		overlay_rect.position.y + (overlay_rect.size.y - popup_size.y) * 0.5
-	)
-	global_position.x = clampf(global_position.x, overlay_rect.position.x + margin, overlay_rect.position.x + overlay_rect.size.x - popup_size.x - margin)
-	global_position.y = clampf(global_position.y, overlay_rect.position.y + margin, overlay_rect.position.y + overlay_rect.size.y - popup_size.y - margin)
-	run_journal_panel.position = global_position - overlay_rect.position
-	run_journal_panel.size = popup_size
+	_layout_run_journal_panel()
 
 
 func _hide_run_journal_popup() -> void:
 	if run_journal_overlay != null:
+		if run_journal_overlay.visible and modal_focus_scope != null:
+			modal_focus_scope.call("pop_scope", run_journal_overlay)
 		run_journal_overlay.visible = false
 	_sync_coach_focus_visibility()
 	if run_journal_list != null:
 		_clear(run_journal_list)
+	if run_journal_scroll != null:
+		run_journal_scroll.scroll_vertical = 0
 	if run_journal_panel != null:
-		run_journal_panel.position = Vector2.ZERO
-		run_journal_panel.size = run_journal_panel.custom_minimum_size
+		_layout_run_journal_panel()
 
 
 func _run_journal_popup_is_visible() -> bool:
@@ -18803,6 +19111,7 @@ func _refresh_world_map_overlay() -> void:
 	world_map_overlay_controller.apply_title(_world_map_title_text(current_label))
 	_refresh_world_map_detail()
 	_position_world_map_detail_popup(snapshot)
+	_refresh_world_map_focus_scope()
 
 
 func _on_world_map_canvas_layout_changed() -> void:
@@ -18827,6 +19136,7 @@ func _refresh_world_map_overlay_after_layout() -> void:
 	var snapshot := _world_map_snapshot()
 	world_map_overlay_controller.sync_node_buttons(snapshot)
 	_position_world_map_detail_popup(snapshot)
+	_refresh_world_map_focus_scope()
 	_sync_coach_world_map_anchor_geometry()
 
 
@@ -18869,7 +19179,10 @@ func _world_map_title_text(current_label: String) -> String:
 		current_label,
 	]
 	if run_state.delivery_has_active_run():
-		title += " | Courier: %d actions" % int(run_state.delivery_snapshot().get("deadline_remaining", 0))
+		title += " | Courier: %s" % PlayerTextScript.count_text(
+			"action",
+			int(run_state.delivery_snapshot().get("deadline_remaining", 0))
+		)
 	return title
 
 
@@ -18880,6 +19193,11 @@ func _position_world_map_detail_popup(snapshot: Dictionary) -> void:
 		reserved_rect = talk_dock.environment_reserved_global_rect()
 	world_map_overlay_controller.set_reserved_overlay_global_rect(reserved_rect)
 	world_map_overlay_controller.position_detail_popup(snapshot)
+	# Detail visibility changes whether Travel belongs to the focus ring. Rebuild
+	# both directions only after the popup has taken its final visible state.
+	if world_map_overlay_controller.has_method("refresh_focus_neighbors"):
+		world_map_overlay_controller.call("refresh_focus_neighbors")
+	_refresh_world_map_focus_scope()
 
 
 func _refresh_world_map_detail() -> void:
@@ -18935,8 +19253,8 @@ func _refresh_world_map_detail() -> void:
 	if not delivery_layer.is_empty():
 		for target_value in JsonCoerceScript._copy_array(delivery_layer.get("targets", [])):
 			if typeof(target_value) == TYPE_DICTIONARY and str((target_value as Dictionary).get("node_id", "")) == selected_world_map_node_id:
-				detail_lines.append("Courier target · %d actions · %s" % [
-					int(delivery_layer.get("deadline_remaining", 0)),
+				detail_lines.append("Courier target · %s · %s" % [
+					PlayerTextScript.count_text("action", int(delivery_layer.get("deadline_remaining", 0))),
 					str((target_value as Dictionary).get("status", "pending")),
 				])
 				break
@@ -19052,6 +19370,9 @@ func _set_world_map_confirm_enabled(enabled: bool) -> void:
 	if world_map_confirm_button == null:
 		return
 	world_map_confirm_button.disabled = not enabled
+	if world_map_overlay_controller != null and world_map_overlay_controller.has_method("refresh_focus_neighbors"):
+		world_map_overlay_controller.call("refresh_focus_neighbors")
+	_refresh_world_map_focus_scope()
 
 
 func _world_map_snapshot() -> Dictionary:
@@ -19914,6 +20235,8 @@ func _apply_accessibility_settings() -> void:
 	accessibility_tree_transform_active = transform_active
 	_layout_settings_overlay()
 	_layout_world_map_panel()
+	_layout_run_menu_panel()
+	_layout_run_journal_panel()
 	_invalidate_run_screen_layout()
 
 

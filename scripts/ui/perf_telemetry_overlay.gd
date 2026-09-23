@@ -9,6 +9,7 @@ const CrewTurnModelScript := preload("res://scripts/core/crew_turn_model.gd")
 const CrewRecruitmentModelScript := preload("res://scripts/core/crew_recruitment_model.gd")
 const TutorialFlowScript := preload("res://scripts/core/tutorial_flow.gd")
 const WebAudioBridgeScript := preload("res://scripts/ui/web_audio_bridge.gd")
+const ProceduralMusicPlayerScript := preload("res://scripts/ui/procedural_music_player.gd")
 const BuildIdentityScript := preload("res://scripts/core/build_identity.gd")
 const DurableStoreScript := preload("res://scripts/core/durable_store.gd")
 
@@ -105,6 +106,15 @@ const IDLE_LIVENESS_MINIMUM_INTERVALS := 2
 const IDLE_LIVENESS_WAIT_GRACE_MSEC := 5000
 const ACTIVE_PHASE_MINIMUM_FRAMES := 12
 const ACTIVE_PHASE_MINIMUM_MSEC := 500
+const FEATURE_PCM_SOAK_BOUNDARIES := 3
+const FEATURE_PCM_SOAK_REQUESTS_PER_BOUNDARY := 32
+const FEATURE_PCM_SOAK_MIN_DISTINCT_CONTEXTS := 25
+const FEATURE_PCM_MEMORY_WARMUP_BOUNDARIES := 2
+# Native allocator telemetry reaches its reusable high-water mark on the second
+# completed boundary. From that fixed reference onward, one complete two-style
+# raw-plus-base64 delivery working set (just under 16 MiB) is the maximum slack;
+# a further monotonic working-set increase is treated as leakage.
+const FEATURE_PCM_MEMORY_PLATEAU_ALLOWANCE_BYTES := 16 * 1024 * 1024
 const ACTIVE_PHASE_CHANNELS := {
 	"baccarat": "baccarat_deal",
 	"roulette": "roulette_spin",
@@ -264,6 +274,8 @@ func configure(owner: FoundationMain) -> void:
 		call_deferred("_run_distribution_fresh_start_plan")
 	elif plan_id == "secure_entropy":
 		call_deferred("_run_secure_entropy_plan")
+	elif plan_id == "feature_pcm_cache":
+		call_deferred("_run_feature_pcm_cache_plan")
 	elif plan_id == "corner_store":
 		call_deferred("_run_corner_store_plan")
 	elif plan_id == "lb3":
@@ -528,6 +540,286 @@ func _run_secure_entropy_plan() -> void:
 	l02_driver_complete = true
 	dump_report()
 	await _quit_after_report_flush()
+
+
+func _run_feature_pcm_cache_plan() -> void:
+	if l02_driver_started:
+		return
+	l02_driver_started = true
+	await _wait_frames(8)
+	_end_scenario()
+	var evidence: Dictionary = await _feature_pcm_cache_soak_contract()
+	mark_event("feature_pcm_cache_soak_contract", evidence)
+	l02_driver_complete = true
+	dump_report()
+	await _quit_after_report_flush()
+
+
+func _feature_pcm_cache_soak_contract() -> Dictionary:
+	# Stop the menu transport so Web bridge baselines cannot change while the
+	# feature-only probe crosses repeated run boundaries. The process exits as
+	# soon as evidence is emitted, so restoring diagnostic playback is unnecessary.
+	var app_player: Variant = app.get("procedural_music_player") if app != null else null
+	if app_player != null:
+		app_player.call("stop")
+		app_player.call("clear_run_scoped_caches")
+	await _wait_frames(2)
+
+	var probe := ProceduralMusicPlayerScript.new()
+	add_child(probe)
+	probe.call("_ensure_feature_stem_players")
+	var bridge_baseline := WebAudioBridgeScript.debug_stats()
+	var bridge_baseline_keys: Array = (bridge_baseline.get("registered_pcm_keys", []) as Array).duplicate()
+	bridge_baseline_keys.sort()
+	var boundaries: Array = []
+	var all_contexts: Dictionary = {}
+	var all_physical_keys: Dictionary = {}
+	var cleanup_memory_samples: Array[int] = []
+	var passed := not OS.has_feature("web") or bool(bridge_baseline.get("pcm_diagnostics_actual", false))
+	for boundary_index in range(FEATURE_PCM_SOAK_BOUNDARIES):
+		var boundary_contexts: Dictionary = {}
+		var requested_physical_keys: Dictionary = {}
+		var successful_load_count := 0
+		var successful_play_count := 0
+		var production_entry_bytes_positive := true
+		var web_pcm_plateau_keys: Array = []
+		var web_pcm_plateau_count := -1
+		var web_pcm_plateau_bytes := -1
+		var web_pcm_plateau_unchanged := true
+		var memory_before := _current_memory_bytes()
+		for request_index in range(FEATURE_PCM_SOAK_REQUESTS_PER_BOUNDARY):
+			var cue_id := "buffalo_feature_%d_%02d" % [boundary_index, request_index] \
+				if request_index % 2 == 0 else "pinball_feature_%d_%02d" % [boundary_index, request_index]
+			var palette_id := "feature_pcm_soak_%d_%02d" % [boundary_index, request_index]
+			var bpm := 70.0 + float(request_index)
+			var context_key := "%s|%s|%0.2f" % [cue_id, palette_id, bpm]
+			boundary_contexts[context_key] = true
+			all_contexts[context_key] = true
+			probe.set("_current_stem_set", {
+				"bpm": bpm,
+				"profile": {
+					"palette_id": palette_id,
+					"theme": "slot",
+					"root_midi": 45 + request_index % 8,
+				},
+			})
+			var feature_set: Dictionary = probe.call("_feature_stem_set_for_input", {"cue_id": cue_id})
+			var physical_key := str(feature_set.get("pcm_cache_key", ""))
+			if not physical_key.is_empty():
+				requested_physical_keys[physical_key] = true
+				all_physical_keys[physical_key] = true
+			var load_policy: Dictionary = probe.call("pcm_cache_policy_snapshot")
+			var load_entry_bytes: Dictionary = load_policy.get("entry_bytes", {}) if typeof(load_policy.get("entry_bytes", {})) == TYPE_DICTIONARY else {}
+			var entry_bytes := int(load_entry_bytes.get(physical_key, 0))
+			var load_succeeded := not feature_set.is_empty() and not physical_key.is_empty() and entry_bytes > 0
+			if load_succeeded:
+				successful_load_count += 1
+			else:
+				production_entry_bytes_positive = false
+			var play_succeeded := bool(probe.call("_play_feature_stem_set", feature_set, 0.0))
+			if play_succeeded:
+				successful_play_count += 1
+			await get_tree().process_frame
+			if OS.has_feature("web"):
+				var request_bridge := WebAudioBridgeScript.debug_stats()
+				var request_keys: Array = (request_bridge.get("registered_pcm_keys", []) as Array).duplicate()
+				request_keys.sort()
+				if request_index == 1:
+					web_pcm_plateau_keys = request_keys
+					web_pcm_plateau_count = int(request_bridge.get("registered_pcm_count", -1))
+					web_pcm_plateau_bytes = int(request_bridge.get("registered_pcm_bytes", -1))
+					web_pcm_plateau_unchanged = bool(request_bridge.get("pcm_diagnostics_actual", false)) \
+						and web_pcm_plateau_count > int(bridge_baseline.get("registered_pcm_count", -1)) \
+						and web_pcm_plateau_bytes > int(bridge_baseline.get("registered_pcm_bytes", -1)) \
+						and web_pcm_plateau_keys.size() == web_pcm_plateau_count
+				elif request_index > 1:
+					web_pcm_plateau_unchanged = web_pcm_plateau_unchanged \
+						and bool(request_bridge.get("pcm_diagnostics_actual", false)) \
+						and request_keys == web_pcm_plateau_keys \
+						and int(request_bridge.get("registered_pcm_count", -1)) == web_pcm_plateau_count \
+						and int(request_bridge.get("registered_pcm_bytes", -1)) == web_pcm_plateau_bytes
+
+		var boundary_context_keys: Array = boundary_contexts.keys()
+		boundary_context_keys.sort()
+		var populated_snapshot: Dictionary = probe.call("debug_soak_snapshot")
+		var populated_policy: Dictionary = probe.call("pcm_cache_policy_snapshot")
+		var populated_feature := _feature_pcm_accounting(populated_policy)
+		var populated_bridge := WebAudioBridgeScript.debug_stats()
+		var populated_ok := boundary_contexts.size() >= FEATURE_PCM_SOAK_MIN_DISTINCT_CONTEXTS \
+			and boundary_contexts.size() == FEATURE_PCM_SOAK_REQUESTS_PER_BOUNDARY \
+			and successful_load_count == FEATURE_PCM_SOAK_REQUESTS_PER_BOUNDARY \
+			and successful_play_count == FEATURE_PCM_SOAK_REQUESTS_PER_BOUNDARY \
+			and production_entry_bytes_positive \
+			and requested_physical_keys.size() == 2 \
+			and int(populated_snapshot.get("feature_stem_cache_size", -1)) == 2 \
+			and int(populated_feature.get("key_count", 0)) == 2 \
+			and int(populated_feature.get("bytes", 0)) > 0 \
+			and int(populated_policy.get("bytes", -1)) <= int(populated_policy.get("budget_bytes", -1)) \
+			and bool(populated_policy.get("combined_within_budget", false)) \
+			and int(populated_policy.get("combined_bytes", -1)) <= int(populated_policy.get("combined_budget_bytes", -1))
+		if OS.has_feature("web"):
+			var populated_bridge_keys: Array = (populated_bridge.get("registered_pcm_keys", []) as Array).duplicate()
+			populated_bridge_keys.sort()
+			populated_ok = populated_ok \
+				and bool(populated_bridge.get("pcm_diagnostics_actual", false)) \
+				and web_pcm_plateau_unchanged \
+				and populated_bridge_keys == web_pcm_plateau_keys \
+				and int(populated_bridge.get("registered_pcm_count", -1)) == web_pcm_plateau_count \
+				and int(populated_bridge.get("registered_pcm_bytes", -1)) == web_pcm_plateau_bytes \
+				and int(populated_bridge.get("registered_pcm_bytes", 0)) > int(bridge_baseline.get("registered_pcm_bytes", 0)) \
+				and int(populated_bridge.get("registered_pcm_bytes", -1)) <= int(populated_bridge.get("pcm_budget_bytes", -1))
+
+		probe.call("stop_feature_music")
+		probe.call("clear_run_scoped_caches")
+		await _wait_frames(2)
+		var cleared_snapshot: Dictionary = probe.call("debug_soak_snapshot")
+		var cleared_policy: Dictionary = probe.call("pcm_cache_policy_snapshot")
+		var cleared_feature := _feature_pcm_accounting(cleared_policy)
+		var cleared_bridge := WebAudioBridgeScript.debug_stats()
+		var cleanup_ok := int(cleared_snapshot.get("feature_stem_cache_size", -1)) == 0 \
+			and int(cleared_feature.get("key_count", -1)) == 0 \
+			and int(cleared_feature.get("bytes", -1)) == 0 \
+			and int(cleared_policy.get("bytes", -1)) == 0 \
+			and bool(cleared_policy.get("combined_within_budget", false)) \
+			and int(cleared_policy.get("combined_bytes", -1)) <= int(cleared_policy.get("combined_budget_bytes", -1))
+		if OS.has_feature("web"):
+			var cleared_bridge_keys: Array = (cleared_bridge.get("registered_pcm_keys", []) as Array).duplicate()
+			cleared_bridge_keys.sort()
+			cleanup_ok = cleanup_ok \
+				and bool(cleared_bridge.get("pcm_diagnostics_actual", false)) \
+				and cleared_bridge_keys == bridge_baseline_keys \
+				and int(cleared_bridge.get("registered_pcm_count", -1)) == int(bridge_baseline.get("registered_pcm_count", -1)) \
+				and int(cleared_bridge.get("registered_pcm_bytes", -1)) == int(bridge_baseline.get("registered_pcm_bytes", -1))
+		var boundary_passed := populated_ok and cleanup_ok
+		passed = passed and boundary_passed
+		var memory_after_cleanup := _current_memory_bytes()
+		cleanup_memory_samples.append(memory_after_cleanup)
+		boundaries.append({
+			"index": boundary_index,
+			"passed": boundary_passed,
+			"request_count": FEATURE_PCM_SOAK_REQUESTS_PER_BOUNDARY,
+			"distinct_context_count": boundary_contexts.size(),
+			"context_keys": boundary_context_keys,
+			"successful_load_count": successful_load_count,
+			"successful_play_count": successful_play_count,
+			"production_entry_bytes_positive": production_entry_bytes_positive,
+			"physical_cache_keys": requested_physical_keys.keys(),
+			"web_pcm_plateau_keys": web_pcm_plateau_keys,
+			"web_pcm_plateau_count": web_pcm_plateau_count,
+			"web_pcm_plateau_bytes": web_pcm_plateau_bytes,
+			"web_pcm_plateau_unchanged": web_pcm_plateau_unchanged,
+			"populated": {
+				"feature_entry_count": int(populated_snapshot.get("feature_stem_cache_size", -1)),
+				"feature_accounting": populated_feature,
+				"cache_bytes": int(populated_policy.get("bytes", -1)),
+				"cache_raw_bytes": int(populated_policy.get("raw_bytes", -1)),
+				"cache_encoded_bytes": int(populated_policy.get("encoded_bytes", -1)),
+				"cache_budget_bytes": int(populated_policy.get("budget_bytes", -1)),
+				"cache_evictions": int(populated_policy.get("eviction_count", -1)),
+				"web_decoded_bytes": int(populated_policy.get("web_decoded_bytes", -1)),
+				"combined_pcm_bytes": int(populated_policy.get("combined_bytes", -1)),
+				"combined_pcm_budget_bytes": int(populated_policy.get("combined_budget_bytes", -1)),
+				"combined_pcm_within_budget": bool(populated_policy.get("combined_within_budget", false)),
+				"web_bridge": populated_bridge,
+			},
+			"cleared": {
+				"feature_entry_count": int(cleared_snapshot.get("feature_stem_cache_size", -1)),
+				"feature_accounting": cleared_feature,
+				"cache_bytes": int(cleared_policy.get("bytes", -1)),
+				"cache_raw_bytes": int(cleared_policy.get("raw_bytes", -1)),
+				"cache_encoded_bytes": int(cleared_policy.get("encoded_bytes", -1)),
+				"web_decoded_bytes": int(cleared_policy.get("web_decoded_bytes", -1)),
+				"combined_pcm_bytes": int(cleared_policy.get("combined_bytes", -1)),
+				"combined_pcm_budget_bytes": int(cleared_policy.get("combined_budget_bytes", -1)),
+				"combined_pcm_within_budget": bool(cleared_policy.get("combined_within_budget", false)),
+				"web_bridge": cleared_bridge,
+			},
+			"static_memory_before_bytes": memory_before,
+			"static_memory_after_cleanup_bytes": memory_after_cleanup,
+		})
+
+	var memory_plateau_reference := cleanup_memory_samples[FEATURE_PCM_MEMORY_WARMUP_BOUNDARIES - 1] \
+		if cleanup_memory_samples.size() >= FEATURE_PCM_MEMORY_WARMUP_BOUNDARIES else 0
+	var memory_plateau_max := memory_plateau_reference
+	var memory_stability_passed := cleanup_memory_samples.size() == FEATURE_PCM_SOAK_BOUNDARIES \
+		and memory_plateau_reference > 0
+	for memory_index in range(cleanup_memory_samples.size()):
+		var sample := cleanup_memory_samples[memory_index]
+		var plateau_enforced := memory_index >= FEATURE_PCM_MEMORY_WARMUP_BOUNDARIES
+		if memory_index >= FEATURE_PCM_MEMORY_WARMUP_BOUNDARIES - 1:
+			memory_plateau_max = maxi(memory_plateau_max, sample)
+		if sample <= 0 or (plateau_enforced and sample > memory_plateau_reference + FEATURE_PCM_MEMORY_PLATEAU_ALLOWANCE_BYTES):
+			memory_stability_passed = false
+		var boundary: Dictionary = boundaries[memory_index]
+		boundary["memory_phase"] = "warmup_initial" if memory_index == 0 else \
+			"warmup_plateau_reference" if memory_index < FEATURE_PCM_MEMORY_WARMUP_BOUNDARIES else "plateau_validation"
+		boundary["memory_plateau_enforced"] = plateau_enforced
+		boundary["memory_plateau_ok"] = sample > 0 and (not plateau_enforced or sample <= memory_plateau_reference + FEATURE_PCM_MEMORY_PLATEAU_ALLOWANCE_BYTES)
+		boundary["passed"] = bool(boundary.get("passed", false)) and bool(boundary.get("memory_plateau_ok", false))
+		boundaries[memory_index] = boundary
+	probe.call("stop")
+	probe.call("clear_run_scoped_caches")
+	probe.queue_free()
+	await _wait_frames(2)
+	var post_probe_cleanup_memory := _current_memory_bytes()
+	memory_plateau_max = maxi(memory_plateau_max, post_probe_cleanup_memory)
+	memory_stability_passed = memory_stability_passed \
+		and post_probe_cleanup_memory > 0 \
+		and post_probe_cleanup_memory <= memory_plateau_reference + FEATURE_PCM_MEMORY_PLATEAU_ALLOWANCE_BYTES
+	passed = passed and memory_stability_passed
+	var all_context_keys: Array = all_contexts.keys()
+	all_context_keys.sort()
+	return {
+		"schema": "beat_the_house.feature_pcm_cache_soak/v1",
+		"passed": passed \
+			and all_contexts.size() == FEATURE_PCM_SOAK_BOUNDARIES * FEATURE_PCM_SOAK_REQUESTS_PER_BOUNDARY \
+			and all_physical_keys.size() == 2,
+		"platform": _platform_label(),
+		"boundary_count": FEATURE_PCM_SOAK_BOUNDARIES,
+		"requests_per_boundary": FEATURE_PCM_SOAK_REQUESTS_PER_BOUNDARY,
+		"request_count": FEATURE_PCM_SOAK_BOUNDARIES * FEATURE_PCM_SOAK_REQUESTS_PER_BOUNDARY,
+		"distinct_context_count": all_contexts.size(),
+		"context_keys": all_context_keys,
+		"physical_cache_keys": all_physical_keys.keys(),
+		"memory_stability": {
+			"passed": memory_stability_passed,
+			"warmup_boundary_count": FEATURE_PCM_MEMORY_WARMUP_BOUNDARIES,
+			"plateau_reference_boundary_index": FEATURE_PCM_MEMORY_WARMUP_BOUNDARIES - 1,
+			"plateau_reference_bytes": memory_plateau_reference,
+			"maximum_cleanup_bytes": memory_plateau_max,
+			"plateau_allowance_bytes": FEATURE_PCM_MEMORY_PLATEAU_ALLOWANCE_BYTES,
+			"cleanup_samples_bytes": cleanup_memory_samples,
+			"post_probe_cleanup_bytes": post_probe_cleanup_memory,
+		},
+		"web_bridge_baseline": bridge_baseline,
+		"boundaries": boundaries,
+	}
+
+
+func _feature_pcm_accounting(policy: Dictionary) -> Dictionary:
+	var feature_keys: Array[String] = []
+	var feature_bytes := 0
+	var feature_raw_bytes := 0
+	var feature_encoded_bytes := 0
+	var entry_bytes: Dictionary = policy.get("entry_bytes", {}) if typeof(policy.get("entry_bytes", {})) == TYPE_DICTIONARY else {}
+	var entry_raw_bytes: Dictionary = policy.get("entry_raw_bytes", {}) if typeof(policy.get("entry_raw_bytes", {})) == TYPE_DICTIONARY else {}
+	var entry_encoded_bytes: Dictionary = policy.get("entry_encoded_bytes", {}) if typeof(policy.get("entry_encoded_bytes", {})) == TYPE_DICTIONARY else {}
+	for key_value in entry_bytes.keys():
+		var key := str(key_value)
+		if not key.begins_with("feature_"):
+			continue
+		feature_keys.append(key)
+		feature_bytes += int(entry_bytes.get(key_value, 0))
+		feature_raw_bytes += int(entry_raw_bytes.get(key_value, 0))
+		feature_encoded_bytes += int(entry_encoded_bytes.get(key_value, 0))
+	feature_keys.sort()
+	return {
+		"key_count": feature_keys.size(),
+		"bytes": feature_bytes,
+		"raw_bytes": feature_raw_bytes,
+		"encoded_bytes": feature_encoded_bytes,
+		"keys": feature_keys,
+	}
 
 
 func _run_distribution_fresh_start_plan() -> void:

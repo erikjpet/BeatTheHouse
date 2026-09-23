@@ -375,6 +375,99 @@ static func _check_layout_validation_scope(failures: Array) -> void:
 	if not caught_scenario_collision:
 		failures.append("env06_8 scenario layout validator no longer catches scenario-to-base collisions.")
 
+	# UIENV-PF-009: normal rectangles can remain disjoint while their required
+	# 44px small-screen authorities overlap. This is click authority, not advisory
+	# visual spacing, and must be detected for both sealed base interactions and
+	# unrelated live base controls.
+	var expansion_base_authority := {
+		"normalized_hit_rect": {"x": 0.20, "y": 0.30, "w": 0.03, "h": 0.06},
+		"small_screen_rect": {"x": 0.190555556, "y": 0.278837209, "w": 0.048888889, "h": 0.102325581},
+		"presentation_visible": true,
+		"presentation_interactive": true,
+		"semantic_interaction_member": true,
+		"source": "sealed_base_record",
+	}
+	var expansion_scenario_authority := {
+		"normalized_hit_rect": {"x": 0.235, "y": 0.30, "w": 0.03, "h": 0.06},
+		"small_screen_rect": {"x": 0.225555556, "y": 0.278837209, "w": 0.048888889, "h": 0.102325581},
+		"presentation_visible": true,
+		"presentation_interactive": true,
+		"semantic_interaction_member": true,
+		"source": "semantic_visual",
+	}
+	var expansion_interactions := {
+		"base::expanded_neighbor": base_interaction.duplicate(true),
+		"scenario::expanded_target": scenario_interaction.duplicate(true),
+	}
+	var expansion_authority := {
+		"base::expanded_neighbor": expansion_base_authority,
+		"scenario::expanded_target": expansion_scenario_authority,
+	}
+	if ScenarioLayoutResolverScript._overlap_count(expansion_authority, "normalized_hit_rect") != 0 \
+			or ScenarioLayoutResolverScript._overlap_count(expansion_authority, "small_screen_rect") != 1:
+		failures.append("UIENV-PF-009 regression fixture no longer isolates one expansion-only authority collision.")
+	var expansion_errors: Array = []
+	ScenarioLayoutResolverScript._validate_interactions(expansion_interactions, expansion_authority, [], [], {}, expansion_errors)
+	if not _has_expanded_hit_authority_error(expansion_errors, "scenario::expanded_target", "base::expanded_neighbor"):
+		failures.append("UIENV-PF-009: scenario-to-base sealed interaction expansion-only collision was accepted: %s" % JSON.stringify(expansion_errors))
+
+	var scenario_neighbor_interaction := scenario_interaction.duplicate(true)
+	scenario_neighbor_interaction["label"] = "Second scenario control"
+	scenario_neighbor_interaction["prompt"] = "Use the second scenario control."
+	var scenario_neighbor_authority := expansion_base_authority.duplicate(true)
+	scenario_neighbor_authority["source"] = "semantic_visual"
+	var scenario_expansion_interactions := {
+		"scenario::expanded_neighbor": scenario_neighbor_interaction,
+		"scenario::expanded_target": scenario_interaction.duplicate(true),
+	}
+	var scenario_expansion_authority := {
+		"scenario::expanded_neighbor": scenario_neighbor_authority,
+		"scenario::expanded_target": expansion_scenario_authority,
+	}
+	if ScenarioLayoutResolverScript._overlap_count(scenario_expansion_authority, "normalized_hit_rect") != 0 \
+			or ScenarioLayoutResolverScript._overlap_count(scenario_expansion_authority, "small_screen_rect") != 1:
+		failures.append("UIENV-PF-009 regression fixture no longer isolates one scenario-to-scenario expansion-only authority collision.")
+	var scenario_expansion_errors: Array = []
+	ScenarioLayoutResolverScript._validate_interactions(
+		scenario_expansion_interactions,
+		scenario_expansion_authority,
+		[],
+		[],
+		{},
+		scenario_expansion_errors
+	)
+	if not _has_expanded_hit_authority_error(scenario_expansion_errors, "scenario::expanded_target", "scenario::expanded_neighbor"):
+		failures.append("UIENV-PF-009: scenario-to-scenario expansion-only collision was accepted: %s" % JSON.stringify(scenario_expansion_errors))
+
+	var unrelated_base_record := {
+		"owner_namespace": "event",
+		"stable_object_id": "expanded_live_neighbor",
+		"label": "Live base control",
+		"focus_rect": expansion_base_authority.get("normalized_hit_rect", {}),
+		"interactive": true,
+		"visible": true,
+	}
+	var live_expansion_errors: Array = []
+	ScenarioLayoutResolverScript._validate_interactions(
+		{"scenario::expanded_target": scenario_interaction.duplicate(true)},
+		{"scenario::expanded_target": expansion_scenario_authority},
+		[],
+		[unrelated_base_record],
+		{},
+		live_expansion_errors
+	)
+	if not _has_expanded_hit_authority_error(live_expansion_errors, "scenario::expanded_target", "event::expanded_live_neighbor"):
+		failures.append("UIENV-PF-009: scenario-to-unrelated-base-control expansion-only collision was accepted: %s" % JSON.stringify(live_expansion_errors))
+
+
+static func _has_expanded_hit_authority_error(errors: Array, left_identity: String, right_identity: String) -> bool:
+	for error_value in errors:
+		var error := str(error_value)
+		if error.contains(left_identity) and error.contains(right_identity) \
+				and error.contains("expanded small-screen") and error.contains("hit authority"):
+			return true
+	return false
+
 
 static func _check_icon_vocabulary(failures: Array) -> void:
 	var canvas := PixelSceneCanvasScript.new()
@@ -525,6 +618,64 @@ static func _check_read_only_visual_composition(failures: Array) -> void:
 	var records := _array(composed.get("records", []))
 	if not bool(composed.get("ok", false)) or records.size() != 1 or str(_dict(records[0]).get("object_type", "")) != "scenario_scene_object" or str(_dict(records[0]).get("visual_type", "")) != "scenario_object" or str(_dict(records[0]).get("role", "")) != "evidence" or not bool(_dict(records[0]).get("interactive", false)) or not _array(_dict(records[0]).get("scenario_sequence_actions", [])).is_empty():
 		failures.append("env06_8 read-only scenario decoration is not selectable as an inspectable information-panel record.")
+	var canvas := PixelSceneCanvasScript.new()
+	canvas.size = Vector2(900.0, 430.0)
+	canvas.scene_objects = [
+		{"id": "scenario::action_target", "position": Vector2(0.5, 0.5), "size": Vector2(100.0, 80.0), "interactive": true, "available_actions": [{"id": "use", "label": "Use"}]},
+		{"id": "scenario::readable_fixture", "position": Vector2(0.5, 0.5), "size": Vector2(100.0, 80.0), "interactive": true},
+	]
+	var shared_point := Vector2(450.0, 215.0)
+	var overlapping_ids := _array(canvas.call("_object_ids_at_local_position", shared_point, false))
+	if overlapping_ids != ["scenario::action_target", "scenario::readable_fixture"] \
+			or canvas.object_id_at_local_position(shared_point) != "scenario::action_target":
+		failures.append("env06_8 deterministic shared-geometry disambiguation does not preserve action authority ahead of read-only inspectability: %s" % JSON.stringify(overlapping_ids))
+	# Both double-click and double-tap enter this shared production activation path.
+	# Focus cycling may inspect the passive detail, but it must not grant that detail
+	# pointer/touch activation authority over a control at the same point.
+	canvas.call("_focus_object_at_local_position", shared_point)
+	canvas.call("_focus_object_at_local_position", shared_point)
+	var normal_passive_focus := canvas.selected_object_id
+	var normal_activated_ids: Array[String] = []
+	canvas.object_activated.connect(func(object_id: String) -> void: normal_activated_ids.append(object_id))
+	canvas.call("_activate_object_at_local_position", shared_point)
+	if normal_passive_focus != "scenario::readable_fixture" \
+			or normal_activated_ids != ["scenario::action_target"]:
+		failures.append("env06_8 shared normal-hit activation allowed cycled read-only detail to override action authority: %s" % JSON.stringify({"focus": normal_passive_focus, "activated": normal_activated_ids}))
+	# Expanded-only overlap must preserve the same action-first ordering without
+	# requiring visual overlap. Repeated focus remains a deterministic way to inspect
+	# the lower-priority detail and cycle back to the actionable control.
+	canvas.scene_objects = [
+		{"id": "scenario::action_target", "position": Vector2(0.48, 0.5), "size": Vector2(24.0, 24.0), "interactive": true, "available_actions": [{"id": "use", "label": "Use"}]},
+		{"id": "scenario::readable_fixture", "position": Vector2(0.52, 0.5), "size": Vector2(24.0, 24.0), "interactive": true},
+	]
+	canvas.small_screen_mode = true
+	canvas.selected_object_id = ""
+	var action_visual_rect := Rect2(Vector2(432.0, 215.0) - Vector2(12.0, 12.0), Vector2(24.0, 24.0))
+	var detail_visual_rect := Rect2(Vector2(468.0, 215.0) - Vector2(12.0, 12.0), Vector2(24.0, 24.0))
+	var expanded_overlap_point := Vector2(450.0, 215.0)
+	var expanded_ids := _array(canvas.call("_object_ids_at_local_position", expanded_overlap_point, false))
+	canvas.call("_focus_object_at_local_position", expanded_overlap_point)
+	var first_focus := canvas.selected_object_id
+	canvas.call("_focus_object_at_local_position", expanded_overlap_point)
+	var second_focus := canvas.selected_object_id
+	canvas.call("_focus_object_at_local_position", expanded_overlap_point)
+	var third_focus := canvas.selected_object_id
+	if action_visual_rect.intersects(detail_visual_rect) \
+			or expanded_ids != ["scenario::action_target", "scenario::readable_fixture"] \
+			or canvas.object_id_at_local_position(expanded_overlap_point) != "scenario::action_target" \
+			or [first_focus, second_focus, third_focus] != ["scenario::action_target", "scenario::readable_fixture", "scenario::action_target"]:
+		failures.append("env06_8 expanded shared-geometry disambiguation lost action-first selection, stable cycling, or non-overlapping visual bounds: %s" % JSON.stringify({"ids": expanded_ids, "focus": [first_focus, second_focus, third_focus]}))
+	# Leave focus on the read-only detail, then exercise the exact helper shared by
+	# double-click and double-tap. The expanded hit authority remains actionable.
+	canvas.call("_focus_object_at_local_position", expanded_overlap_point)
+	var expanded_passive_focus := canvas.selected_object_id
+	var activated_count_before_expanded := normal_activated_ids.size()
+	canvas.call("_activate_object_at_local_position", expanded_overlap_point)
+	var expanded_activated_ids := normal_activated_ids.slice(activated_count_before_expanded)
+	if expanded_passive_focus != "scenario::readable_fixture" \
+			or expanded_activated_ids != ["scenario::action_target"]:
+		failures.append("env06_8 shared expanded-hit activation allowed cycled read-only detail to override action authority: %s" % JSON.stringify({"focus": expanded_passive_focus, "activated": expanded_activated_ids}))
+	canvas.free()
 
 
 static func _check_definition(definition: Dictionary, counts: Dictionary, presentation_records: Array, failures: Array) -> void:

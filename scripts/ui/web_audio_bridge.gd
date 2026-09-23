@@ -13,8 +13,11 @@ static var _call_counts: Dictionary = {}
 static var _payload_bytes := 0
 static var _preencoded_payload_hits := 0
 static var _synchronous_payload_encodes := 0
+static var _shared_pcm_owner_bytes := 0
+static var _shared_pcm_budget_bytes := 64 * 1024 * 1024
+static var _bridge_pcm_budget_bytes := 64 * 1024 * 1024
 
-const WEB_AUDIO_VERSION := 10
+const WEB_AUDIO_VERSION := 11
 const WEB_PCM_CACHE_BUDGET_BYTES := 64 * 1024 * 1024
 const WEB_AUDIO_MIN_BUFFER_SAMPLE_RATE := 3000
 const PCM_BASE64_META: StringName = &"_bth_web_pcm_base64"
@@ -30,7 +33,7 @@ const WEB_MUSIC_STEM_ROLES := ["pad", "bass", "bass_dark", "lead", "drums_low", 
 
 const WEB_AUDIO_SCRIPT := """
 (function () {
-	var BRIDGE_VERSION = 10;
+	var BRIDGE_VERSION = 11;
 	var PCM_BUDGET_BYTES = 67108864;
 	if (window.BTHWebAudio && window.BTHWebAudio.version === BRIDGE_VERSION) {
 		return true;
@@ -273,6 +276,11 @@ const WEB_AUDIO_SCRIPT := """
 			var active = this.activePcmKeys();
 			var inactive = Object.keys(this.pcmBuffers).filter(function (key) { return !active[key]; });
 			return this.disposePcm({ keys: inactive });
+		},
+		setPcmBudget: function (payload) {
+			payload = parsePayload(payload, {});
+			this.pcmBudgetBytes = Math.max(0, Math.floor(Number(payload.budget_bytes || 0)));
+			return this.evictPcm(Array.isArray(payload.protected_keys) ? payload.protected_keys : []);
 		},
 		evictPcm: function (protectedKeys) {
 			var protectedSet = this.activePcmKeys();
@@ -591,6 +599,10 @@ static func ensure() -> void:
 		JavaScriptBridge.eval(WEB_AUDIO_SCRIPT, true)
 		_ensured = true
 	_bridge_interface = JavaScriptBridge.get_interface("BTHWebAudio")
+	if _bridge_interface != null:
+		var budget_payload := JSON.stringify({"budget_bytes": _bridge_pcm_budget_bytes, "protected_keys": []})
+		_record_bridge_call("set_pcm_budget", budget_payload.length())
+		_bridge_interface.setPcmBudget(budget_payload)
 
 
 static func _bridge_ready() -> bool:
@@ -797,6 +809,40 @@ static func clear_inactive_pcm() -> Dictionary:
 	return result
 
 
+# Coordinates the bridge's decoded AudioBuffer LRU with the raw/base64 owner.
+# The caller reports its retained bytes and the browser receives only the
+# remaining portion of the one process-wide PCM ceiling.
+static func set_shared_pcm_budget(total_budget_bytes: int, owner_retained_bytes: int) -> Dictionary:
+	_shared_pcm_budget_bytes = maxi(1, total_budget_bytes)
+	_shared_pcm_owner_bytes = clampi(owner_retained_bytes, 0, _shared_pcm_budget_bytes)
+	_bridge_pcm_budget_bytes = maxi(0, _shared_pcm_budget_bytes - _shared_pcm_owner_bytes)
+	if available() and _bridge_ready():
+		var payload := JSON.stringify({
+			"budget_bytes": _bridge_pcm_budget_bytes,
+			# The JavaScript LRU derives protection from live loops, one-shots, and
+			# music groups. Supplying stale GDScript registrations here would make
+			# inactive decoded buffers unevictable.
+			"protected_keys": [],
+		})
+		_record_bridge_call("set_pcm_budget", payload.length())
+		var result := _parse_bridge_pcm_result(_bridge_interface.setPcmBudget(payload))
+		_sync_registered_pcm_from_result(result)
+	return shared_pcm_policy_snapshot()
+
+
+static func shared_pcm_policy_snapshot() -> Dictionary:
+	var bridge := _actual_pcm_stats()
+	var bridge_bytes := int(bridge.get("bytes", 0))
+	var combined_bytes := _shared_pcm_owner_bytes + bridge_bytes
+	return {
+		"shared_pcm_owner_bytes": _shared_pcm_owner_bytes,
+		"web_decoded_bytes": bridge_bytes,
+		"combined_pcm_bytes": combined_bytes,
+		"combined_pcm_budget_bytes": _shared_pcm_budget_bytes,
+		"combined_pcm_within_budget": combined_bytes <= _shared_pcm_budget_bytes,
+		"web_decoded_budget_bytes": int(bridge.get("budget_bytes", _bridge_pcm_budget_bytes)),
+		"web_decoded_actual": bool(bridge.get("actual", false)),
+	}
 static func reset_debug_stats() -> void:
 	_call_counts = {}
 	_payload_bytes = 0
@@ -831,6 +877,7 @@ static func _audio_bus_linear(bus_name: String) -> float:
 
 static func debug_stats() -> Dictionary:
 	var pcm := _actual_pcm_stats()
+	var shared := shared_pcm_policy_snapshot()
 	return {
 		"available": available(),
 		"ensured": _ensured,
@@ -840,8 +887,13 @@ static func debug_stats() -> Dictionary:
 		"synchronous_payload_encodes": _synchronous_payload_encodes,
 		"registered_pcm_count": int(pcm.get("count", _registered_pcm_keys.size())),
 		"registered_pcm_bytes": int(pcm.get("bytes", 0)),
-		"pcm_budget_bytes": int(pcm.get("budget_bytes", WEB_PCM_CACHE_BUDGET_BYTES)),
+		"registered_pcm_keys": (pcm.get("keys", []) as Array).duplicate(),
+		"pcm_budget_bytes": int(pcm.get("budget_bytes", _bridge_pcm_budget_bytes)),
 		"pcm_diagnostics_actual": bool(pcm.get("actual", false)),
+		"shared_pcm_owner_bytes": int(shared.get("shared_pcm_owner_bytes", 0)),
+		"combined_pcm_bytes": int(shared.get("combined_pcm_bytes", 0)),
+		"combined_pcm_budget_bytes": int(shared.get("combined_pcm_budget_bytes", _shared_pcm_budget_bytes)),
+		"combined_pcm_within_budget": bool(shared.get("combined_pcm_within_budget", false)),
 		"active_music_group_count": _active_music_groups.size(),
 	}
 
@@ -966,7 +1018,7 @@ static func _tracked_pcm_stats() -> Dictionary:
 	return {
 		"count": _registered_pcm_keys.size(),
 		"bytes": bytes,
-		"budget_bytes": WEB_PCM_CACHE_BUDGET_BYTES,
+		"budget_bytes": _bridge_pcm_budget_bytes,
 		"keys": _registered_pcm_keys.keys(),
 		"actual": false,
 	}
@@ -976,9 +1028,54 @@ static func _actual_pcm_stats() -> Dictionary:
 	if not available() or not _bridge_ready():
 		return _tracked_pcm_stats()
 	var parsed := _parse_bridge_pcm_result(_bridge_interface.pcmStats())
-	var stats: Dictionary = parsed.get("stats", parsed) as Dictionary
-	stats["actual"] = true
-	return stats
+	return _validated_actual_pcm_stats(parsed.get("stats", parsed))
+
+
+static func _validated_actual_pcm_stats(value: Variant) -> Dictionary:
+	if typeof(value) != TYPE_DICTIONARY:
+		return _tracked_pcm_stats()
+	var stats := value as Dictionary
+	for field in ["count", "bytes", "budget_bytes", "keys"]:
+		if not stats.has(field):
+			return _tracked_pcm_stats()
+	if not _valid_nonnegative_integer(stats.get("count")) \
+		or not _valid_nonnegative_integer(stats.get("bytes")) \
+		or not _valid_nonnegative_integer(stats.get("budget_bytes")) \
+		or typeof(stats.get("keys")) != TYPE_ARRAY:
+		return _tracked_pcm_stats()
+	var count := int(stats.get("count"))
+	var byte_count := int(stats.get("bytes"))
+	var budget_bytes := int(stats.get("budget_bytes"))
+	if budget_bytes != _bridge_pcm_budget_bytes:
+		return _tracked_pcm_stats()
+	if (count == 0) != (byte_count == 0):
+		return _tracked_pcm_stats()
+	var retained_keys: Dictionary = {}
+	for key_value in (stats.get("keys") as Array):
+		if typeof(key_value) != TYPE_STRING:
+			return _tracked_pcm_stats()
+		var key := str(key_value)
+		if key.is_empty() or retained_keys.has(key):
+			return _tracked_pcm_stats()
+		retained_keys[key] = true
+	if retained_keys.size() != count:
+		return _tracked_pcm_stats()
+	var keys: Array = retained_keys.keys()
+	keys.sort()
+	return {
+		"count": count,
+		"bytes": byte_count,
+		"budget_bytes": budget_bytes,
+		"keys": keys,
+		"actual": true,
+	}
+
+
+static func _valid_nonnegative_integer(value: Variant) -> bool:
+	if not [TYPE_INT, TYPE_FLOAT].has(typeof(value)):
+		return false
+	var numeric := float(value)
+	return numeric >= 0.0 and numeric == floor(numeric) and numeric <= 9007199254740991.0
 
 
 static func _parse_bridge_pcm_result(value: Variant) -> Dictionary:
@@ -986,17 +1083,14 @@ static func _parse_bridge_pcm_result(value: Variant) -> Dictionary:
 	if typeof(value) == TYPE_STRING:
 		parsed = JSON.parse_string(str(value))
 	if typeof(parsed) != TYPE_DICTIONARY:
-		return _tracked_pcm_stats()
-	var result := (parsed as Dictionary).duplicate(true)
-	if result.has("stats") and typeof(result.get("stats")) == TYPE_DICTIONARY:
-		(result["stats"] as Dictionary)["actual"] = true
-	else:
-		result["actual"] = true
-	return result
+		return {}
+	return (parsed as Dictionary).duplicate(true)
 
 
 static func _sync_registered_pcm_from_result(result: Dictionary) -> void:
-	var stats: Dictionary = result.get("stats", result) as Dictionary
+	var stats := _validated_actual_pcm_stats(result.get("stats", result))
+	if not bool(stats.get("actual", false)):
+		return
 	var keys_value: Variant = stats.get("keys", [])
 	if typeof(keys_value) != TYPE_ARRAY:
 		return

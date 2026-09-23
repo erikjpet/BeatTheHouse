@@ -9,7 +9,8 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$root = [IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))
+. (Join-Path $PSScriptRoot "../../repository_root.ps1")
+$root = Resolve-BthRepositoryRoot -StartPath $PSScriptRoot
 $failures = [Collections.Generic.List[string]]::new()
 $loadedReports = [Collections.Generic.List[object]]::new()
 . (Join-Path $PSScriptRoot "perf06_phase_qualification_contract.ps1")

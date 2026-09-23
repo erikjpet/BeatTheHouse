@@ -1,6 +1,8 @@
 $ErrorActionPreference = "Stop"
-$capture = Get-Content -LiteralPath (Join-Path $PSScriptRoot "perf06_capture_quiescence.ps1") -Raw
-$runbook = Get-Content -LiteralPath (Join-Path (Split-Path -Parent $PSScriptRoot) "docs/plans/perf06_1_final_runtime_runbook.md") -Raw
+. (Join-Path $PSScriptRoot "repository_root.ps1")
+$root = Resolve-BthRepositoryRoot -StartPath $PSScriptRoot
+$capture = Get-Content -LiteralPath (Join-Path $root "tools/archive/perf06/perf06_capture_quiescence.ps1") -Raw
+$runbook = Get-Content -LiteralPath (Join-Path $root "docs/plans/perf06_1_final_runtime_runbook.md") -Raw
 
 foreach ($token in @("WorkerWitness", "DirectorWitness", '[ValidateRange(3, 3)][int]$SampleCount = 3', "idle_cpu_memory_samples", "process_inventory", "Refusing to overwrite immutable quiescence evidence", "RequireNoQualificationProcesses")) {
     if (-not $capture.Contains($token)) { throw "Quiescence capture lost '$token'." }

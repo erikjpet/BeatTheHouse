@@ -1,12 +1,13 @@
 $ErrorActionPreference = "Stop"
-$root = [IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))
+. (Join-Path $PSScriptRoot "repository_root.ps1")
+$root = Resolve-BthRepositoryRoot -StartPath $PSScriptRoot
 $matrix = Get-Content -LiteralPath (Join-Path $PSScriptRoot "perf06_required_matrix.json") -Raw | ConvertFrom-Json
 $budget = Get-Content -LiteralPath (Join-Path $PSScriptRoot "perf06_budget_table.json") -Raw | ConvertFrom-Json
 $fixture = Get-Content -LiteralPath (Join-Path $root "scripts/tests/fixtures/perf06/uninstrumented_phase_samples.json") -Raw | ConvertFrom-Json
-$validatorText = Get-Content -LiteralPath (Join-Path $PSScriptRoot "perf06_matrix_contract.ps1") -Raw
+$validatorText = Get-Content -LiteralPath (Join-Path $root "tools/archive/perf06/perf06_matrix_contract.ps1") -Raw
 $overlayText = Get-Content -LiteralPath (Join-Path $root "scripts/ui/perf_telemetry_overlay.gd") -Raw
-$builderText = Get-Content -LiteralPath (Join-Path $PSScriptRoot "perf06_build_surface_report.ps1") -Raw
-. (Join-Path $PSScriptRoot "perf06_phase_qualification_contract.ps1")
+$builderText = Get-Content -LiteralPath (Join-Path $root "tools/archive/perf06/perf06_build_surface_report.ps1") -Raw
+. (Join-Path $root "tools/archive/perf06/perf06_phase_qualification_contract.ps1")
 
 function Test-AllocationCoverage($Row) {
     $required = @($matrix.allocation_roots.PSObject.Properties[[string]$Row.surface_id].Value)

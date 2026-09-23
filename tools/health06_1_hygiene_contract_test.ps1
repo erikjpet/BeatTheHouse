@@ -80,6 +80,55 @@ if (-not (Test-Path -LiteralPath $toolManifestPath)) {
         if (Test-Path -LiteralPath (Join-Path $root $move.source)) { Add-Failure "CH-32 source was not moved: $($move.source)" }
         if (-not (Test-Path -LiteralPath (Join-Path $root $move.destination))) { Add-Failure "CH-32 destination is missing: $($move.destination)" }
     }
+
+    # RP-002: a GDScript archive move must carry its stable Godot UID with it.
+    # Keeping this relation in the move manifest prevents a later archive sweep
+    # from recreating the same stale top-level UID identities.
+    $gdMoves = @($toolManifest.moves | Where-Object { [string]$_.source -like "*.gd" })
+    $uidMoves = if ($null -eq $toolManifest.companion_moves) { @() } else { @($toolManifest.companion_moves) }
+    if ($uidMoves.Count -ne $gdMoves.Count) {
+        Add-Failure "RP-002 manifest must pair every archived GDScript move with one UID companion move (GDScripts=$($gdMoves.Count), companions=$($uidMoves.Count))."
+    } else {
+        $seenUids = @{}
+        foreach ($move in $gdMoves) {
+            $expectedSource = "$($move.source).uid"
+            $expectedDestination = "$($move.destination).uid"
+            $companions = @($uidMoves | Where-Object {
+                [string]$_.source -eq $expectedSource -and [string]$_.destination -eq $expectedDestination
+            })
+            if ($companions.Count -ne 1) {
+                Add-Failure "RP-002 UID companion mapping is missing or ambiguous: $expectedSource -> $expectedDestination"
+                continue
+            }
+
+            $companion = $companions[0]
+            $sourcePath = Join-Path $root $companion.source
+            $destinationPath = Join-Path $root $companion.destination
+            if (Test-Path -LiteralPath $sourcePath) { Add-Failure "RP-002 UID source was not moved: $($companion.source)" }
+            if (-not (Test-Path -LiteralPath $destinationPath -PathType Leaf)) {
+                Add-Failure "RP-002 UID destination is missing: $($companion.destination)"
+                continue
+            }
+
+            $uidText = (Get-Content -LiteralPath $destinationPath -Raw).Trim()
+            if ($uidText -notmatch '^uid://[a-z0-9]+$') { Add-Failure "RP-002 UID companion is malformed: $($companion.destination)" }
+            if ($seenUids.ContainsKey($uidText)) {
+                Add-Failure "RP-002 duplicate archived GDScript UID '$uidText': $($seenUids[$uidText]), $($companion.destination)"
+            } else {
+                $seenUids[$uidText] = $companion.destination
+            }
+
+            $actualHash = (Get-FileHash -LiteralPath $destinationPath -Algorithm SHA256).Hash.ToLowerInvariant()
+            if ($actualHash -ne ([string]$companion.sha256).ToLowerInvariant()) {
+                Add-Failure "RP-002 UID companion hash drifted: $($companion.destination)"
+            }
+        }
+    }
+
+    $gitIgnore = Get-Content -LiteralPath (Join-Path $root ".gitignore")
+    if ($gitIgnore -notcontains '!tools/archive/**/*.gd.uid') {
+        Add-Failure "RP-002 archived GDScript UID companions are still excluded from source control."
+    }
 }
 
 $docsManifestPath = Join-Path $root "docs/archive/health06_1_docs_manifest.json"

@@ -3107,41 +3107,138 @@ func _sb4_dispose_app(app: Control) -> void:
 	app.free()
 
 
-func _sb4_check_blackjack_stale_stake_all_in(library: ContentLibrary, app: Control, failures: Array) -> void:
-	var blackjack: GameModule = _load_surface_contract_game(library, "blackjack", failures)
-	if blackjack == null:
+func _sb4_check_blackjack_stale_stake_all_in(_library: ContentLibrary, app: Control, failures: Array) -> void:
+	var run_state := _sb4_start_blackjack_authority_fixture(app, 20, failures, "cancel")
+	if run_state == null:
 		return
-	var run_state: RunState = RunStateScript.new()
-	run_state.start_new("SB4-BLACKJACK-STALE-STAKE-ALL-IN")
+	if not _sb4_open_blackjack_stale_all_in(app, run_state, 20, "cancel", failures):
+		return
+	app.call("cancel_pending_wager_confirmation")
+	if not _sb4_blackjack_pending_delivery(app, run_state).is_empty():
+		failures.append("Canceling the Blackjack all-in modal left a sealed pending delivery that blocks the next table action.")
+	if bool((app.call("current_event_choice_popup_snapshot") as Dictionary).get("visible", false)):
+		failures.append("Canceling the Blackjack all-in modal left the blocking popup visible.")
+	app.set("selected_stake", 10)
+	app.call("_on_game_surface_action", "blackjack_deal", 0, false)
+	if not _sb4_blackjack_pending_delivery(app, run_state).is_empty():
+		failures.append("A new Blackjack deal after all-in cancellation remained blocked by the canceled sealed delivery.")
+	if run_state.bankroll != 10:
+		failures.append("A clean $10 Blackjack deal after all-in cancellation did not charge exactly once; bankroll=%d." % run_state.bankroll)
+
+	run_state = _sb4_start_blackjack_authority_fixture(app, 20, failures, "confirm")
+	if run_state == null or not _sb4_open_blackjack_stale_all_in(app, run_state, 20, "confirm", failures):
+		return
+	app.call("confirm_pending_wager_action")
+	var confirmed_ledger := _sb4_blackjack_authority_ledger(app, run_state)
+	if not JsonCoerceScript._copy_dict(confirmed_ledger.get("pending_delivery", {})).is_empty():
+		failures.append("Confirming the clamped Blackjack all-in left its sealed delivery pending.")
+	var confirmed_session := JsonCoerceScript._copy_dict(confirmed_ledger.get("session", {}))
+	if int(confirmed_session.get("locked_stake", 0)) != 20 or run_state.bankroll != 0:
+		failures.append("Confirmed Blackjack all-in did not lock and charge the exact displayed $20 stake (locked=%d bankroll=%d)." % [int(confirmed_session.get("locked_stake", 0)), run_state.bankroll])
+	var confirmed_snapshot := JSON.stringify(run_state.to_dict())
+	app.call("confirm_pending_wager_action")
+	if JSON.stringify(run_state.to_dict()) != confirmed_snapshot:
+		failures.append("Repeated Blackjack all-in confirmation mutated the committed hand a second time.")
+
+	run_state = _sb4_start_blackjack_authority_fixture(app, 100, failures, "side-bet")
+	if run_state == null:
+		return
+	var blackjack: GameModule = app.get("current_game")
+	var initial_ledger := _sb4_blackjack_authority_ledger(app, run_state)
+	var initial_surface := blackjack.surface_state(run_state, run_state.current_environment, JsonCoerceScript._copy_dict(initial_ledger.get("session", {})))
+	var side_bet_index := -1
+	var available_side_bets := JsonCoerceScript._copy_array(initial_surface.get("side_bets_available", []))
+	for index in range(available_side_bets.size()):
+		var side_bet := JsonCoerceScript._copy_dict(available_side_bets[index])
+		if bool(side_bet.get("surface_enabled", false)):
+			side_bet_index = index
+			break
+	if side_bet_index < 0:
+		failures.append("Blackjack side-bet stale-stake fixture found no enabled authored side bet.")
+		return
+	app.call("_on_game_surface_action", "blackjack_side_bet", side_bet_index, false)
+	var side_bet_ledger := _sb4_blackjack_authority_ledger(app, run_state)
+	var side_bet_session := JsonCoerceScript._copy_dict(side_bet_ledger.get("session", {}))
+	if JsonCoerceScript._copy_array(side_bet_session.get("blackjack_side_bets", [])).is_empty():
+		failures.append("Blackjack side-bet stale-stake fixture did not stage its side bet through the sealed host.")
+		return
 	run_state.bankroll = 20
-	var environment := _surface_contract_environment()
-	environment["game_ids"] = ["blackjack"]
-	environment["economic_profile"] = {"stake_floor": 1, "stake_ceiling": 100}
-	var table: Dictionary = blackjack.generate_environment_state(run_state, environment, run_state.create_rng("sb4_blackjack_stale_stake_table"))
-	table["patrons"] = []
-	table["side_bets"] = []
-	environment["game_states"] = {"blackjack": table}
-	run_state.set_environment(environment)
-	app.set("library", library)
-	app.set("run_state", run_state)
-	app.set("current_game", blackjack)
-	var game_cache: Dictionary = app.get("game_module_cache")
-	game_cache["blackjack"] = blackjack
-	app.set("game_module_cache", game_cache)
-	app.set("game_surface_ui_state", {})
-	# Reproduce a previous $60 selection after the bankroll has fallen to $20.
+	var side_environment := run_state.current_environment.duplicate(true)
+	side_environment["economic_profile"] = {"stake_floor": 1, "stake_ceiling": 100}
+	run_state.current_environment = side_environment
+	var side_surface := blackjack.surface_state(run_state, run_state.current_environment, side_bet_session)
+	var side_aware_stake := int(side_surface.get("stake_ceiling", 0))
+	if side_aware_stake <= 0 or side_aware_stake >= 20:
+		failures.append("Blackjack side-bet fixture did not establish a reduced affordable main stake; ceiling=%d." % side_aware_stake)
+		return
+	if not _sb4_open_blackjack_stale_all_in(app, run_state, side_aware_stake, "side-bet", failures):
+		return
+	app.call("cancel_pending_wager_confirmation")
+	if not _sb4_blackjack_pending_delivery(app, run_state).is_empty():
+		failures.append("Canceling the side-bet-aware Blackjack all-in left a sealed pending delivery.")
+
+	run_state = _sb4_start_blackjack_authority_fixture(app, 0, failures, "zero-capacity")
+	if run_state == null:
+		return
 	app.set("selected_stake", 60)
-	app.call("_set_current_screen", "GAME")
+	app.call("_on_game_surface_action", "blackjack_deal", 0, false)
+	var zero_popup: Dictionary = app.call("current_event_choice_popup_snapshot")
+	if bool(zero_popup.get("visible", false)) or not _sb4_blackjack_pending_delivery(app, run_state).is_empty() or run_state.bankroll != 0:
+		failures.append("Zero-capacity Blackjack input opened or sealed an unaffordable wager (popup=%s pending=%s bankroll=%d)." % [JSON.stringify(zero_popup), JSON.stringify(_sb4_blackjack_pending_delivery(app, run_state)), run_state.bankroll])
+
+
+func _sb4_start_blackjack_authority_fixture(app: Control, bankroll: int, failures: Array, label: String) -> RunState:
+	if not bool(app.call("start_foundation_run", "UI-ALL-IN-RESULT", {}, false)):
+		failures.append("Blackjack %s fixture could not reset the FoundationMain run lifecycle." % label)
+		return null
+	var session: Dictionary = app.call("start_game_test_session", "blackjack")
+	if not bool(session.get("ok", false)):
+		failures.append("Blackjack %s fixture could not enter the canonical game-test session: %s" % [label, JSON.stringify(session.get("errors", []))])
+		return null
+	var run_state: RunState = app.get("run_state")
+	if run_state == null:
+		failures.append("Blackjack %s fixture entered without an active RunState." % label)
+		return null
+	run_state.bankroll = bankroll
+	var environment := run_state.current_environment.duplicate(true)
+	environment["economic_profile"] = {"stake_floor": 1, "stake_ceiling": 100}
+	run_state.current_environment = environment
 	app.call("_hide_event_choice_popup")
+	return run_state
+
+
+func _sb4_open_blackjack_stale_all_in(app: Control, run_state: RunState, expected_stake: int, label: String, failures: Array) -> bool:
+	var bankroll_before := run_state.bankroll
+	app.set("selected_stake", 60)
+	var expected_generic_clamp := int(app.call("_current_selected_stake"))
+	var pre_action_blocked := bool(app.call("_deferred_embedded_refresh_blocks_current_surface_input"))
+	var pre_action_modal := str(app.call("_blocking_modal_message"))
 	app.call("_on_game_surface_action", "blackjack_deal", 0, false)
 	var popup: Dictionary = app.call("current_event_choice_popup_snapshot")
+	var pending := _sb4_blackjack_pending_delivery(app, run_state)
 	if not bool(popup.get("visible", false)) or str(popup.get("popup_type", "")) != "wager_confirmation":
-		failures.append("Blackjack rejected the affordable $20 clamped all-in instead of opening confirmation for a stale $60 selection.")
-	elif int(app.get("pending_wager_confirm_stake")) != 20 or int(app.get("selected_stake")) != 20:
-		failures.append("Blackjack all-in confirmation retained the stale $60 stake instead of the displayed affordable $20 stake.")
-	if run_state.bankroll != 20:
-		failures.append("Blackjack stale-stake all-in changed bankroll before player confirmation.")
-	app.call("cancel_pending_wager_confirmation")
+		var message_label: Label = app.get("message_label") as Label
+		var message_text := message_label.text if message_label != null else ""
+		failures.append("Blackjack %s rejected the affordable clamped all-in (selected=%d generic_clamp=%d expected=%d pending=%s pre_action_blocked=%s pre_action_modal=%s message=%s popup=%s)." % [label, int(app.get("selected_stake")), expected_generic_clamp, expected_stake, JSON.stringify(pending), str(pre_action_blocked), pre_action_modal, message_text, JSON.stringify(popup)])
+		return false
+	if int(app.get("pending_wager_confirm_stake")) != expected_stake or int(app.get("selected_stake")) != expected_stake or int(pending.get("stake", -1)) != expected_stake:
+		var diagnostic_ledger := _sb4_blackjack_authority_ledger(app, run_state)
+		var diagnostic_session := JsonCoerceScript._copy_dict(diagnostic_ledger.get("session", {}))
+		failures.append("Blackjack %s all-in did not seal the exact displayed affordable stake (selected=%d modal=%d delivery=%d expected=%d bankroll=%d locked=%s dealt=%s side_bets=%s session_stake=%s)." % [label, int(app.get("selected_stake")), int(app.get("pending_wager_confirm_stake")), int(pending.get("stake", -1)), expected_stake, run_state.bankroll, str(diagnostic_session.get("locked_stake", null)), str(not JsonCoerceScript._copy_array(diagnostic_session.get("dealer_cards", [])).is_empty()), JSON.stringify(diagnostic_session.get("blackjack_side_bets", [])), str(diagnostic_session.get("selected_stake", null))])
+		return false
+	if run_state.bankroll != bankroll_before:
+		failures.append("Blackjack %s all-in changed bankroll before confirmation." % label)
+		return false
+	return true
+
+
+func _sb4_blackjack_authority_ledger(app: Control, run_state: RunState) -> Dictionary:
+	var value: Variant = app.call("_sealed_action_host_ledger", run_state, false, false)
+	return JsonCoerceScript._copy_dict(value)
+
+
+func _sb4_blackjack_pending_delivery(app: Control, run_state: RunState) -> Dictionary:
+	return JsonCoerceScript._copy_dict(_sb4_blackjack_authority_ledger(app, run_state).get("pending_delivery", {}))
 
 
 func _sb4_check_background_runtime_does_not_block_active_game(library: ContentLibrary, app: Control, failures: Array) -> void:
@@ -3416,7 +3513,9 @@ func _sb4_first_triggerable_event_id(library: ContentLibrary, run_state: RunStat
 
 
 func _sb4_check_wager_modal_routes(library: ContentLibrary, app: Control, failures: Array) -> void:
-	app.call("start_foundation_run", "SB4-WAGER-MODAL")
+	if not bool(app.call("start_foundation_run", "UI-ALL-IN-RESULT", {}, false)):
+		failures.append("SB.4 all-in wager modal coverage could not start its known-viable foundation run.")
+		return
 	var run_state: RunState = app.get("run_state")
 	if run_state == null:
 		failures.append("SB.4 all-in wager modal coverage could not start a run.")

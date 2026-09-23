@@ -1942,12 +1942,16 @@ func _town_force_condition(run_state: RunState, weather_id: String, day_type_id:
 
 
 func _check_connected_town_foundation(library: ContentLibrary, failures: Array) -> void:
+	var town_seed := "CONNECTED-TOWN-FOUNDATION"
+	var town_challenge := RunStateScript.custom_challenge("connected_town_foundation", town_seed, {
+		"scenario_pins": {"bar": "bar_fight_night"},
+	})
 	var run_state := RunStateScript.new()
-	run_state.start_new("CONNECTED-TOWN-FOUNDATION")
+	run_state.start_new(town_seed, town_challenge)
 	var generator := RunGeneratorScript.new(library)
 	generator.next_environment(run_state)
 	var deterministic_twin := RunStateScript.new()
-	deterministic_twin.start_new("CONNECTED-TOWN-FOUNDATION")
+	deterministic_twin.start_new(town_seed, town_challenge)
 	RunGeneratorScript.new(library).next_environment(deterministic_twin)
 	if JSON.stringify(deterministic_twin.town_snapshot()) != JSON.stringify(run_state.town_snapshot()):
 		failures.append("Same seed did not produce identical scenario seeds and traveler itineraries.")
@@ -2177,7 +2181,7 @@ func _check_connected_town_foundation(library: ContentLibrary, failures: Array) 
 			deterministic_twin.record_reputation_incident("thrown_out", source_node, 1.0, {"fixture": true})
 			var deterministic_reputation := JSON.stringify(deterministic_twin.local_reputation(adjacent_node))
 			var timeline_twin := RunStateScript.new()
-			timeline_twin.start_new("CONNECTED-TOWN-FOUNDATION")
+			timeline_twin.start_new(town_seed, town_challenge)
 			RunGeneratorScript.new(library).next_environment(timeline_twin)
 			timeline_twin.advance_environment_turns(int(run_state.town_state.action_index))
 			timeline_twin.record_reputation_incident("thrown_out", source_node, 1.0, {"fixture": true})

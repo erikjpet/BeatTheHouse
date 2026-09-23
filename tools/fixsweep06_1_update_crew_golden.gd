@@ -20,8 +20,8 @@ func _run() -> void:
 	var document: Dictionary = existing_value
 	document["capture"] = CrewIgnoredGoldenProbeScript.capture(library)
 	var provenance: Dictionary = document.get("provenance", {}) if typeof(document.get("provenance", {})) == TYPE_DICTIONARY else {}
-	provenance["reason"] = "health06_1 intentionally tightened canonical RunState persistence while preserving Crew-ignored behavior, immutable scenario producer context, and collision-free interaction placement."
-	provenance["proof"] = "Both fixed Crew-ignored seeds were recaptured through all five production checkpoints after the persistence and extraction gates passed; the contract still requires exact normalized bytes and hashes, inactive world-sequence no-ops, and zero Crew trust."
+	provenance["reason"] = "postfix06_2 corrected production environment scenario placement and canonical RunState persistence while preserving Crew-ignored behavior and immutable producer context."
+	provenance["proof"] = "Both fixed Crew-ignored seeds were recaptured through all five production checkpoints after the postfix06_2 focused persistence and scenario-placement regressions passed; the contract still requires exact normalized bytes and hashes, inactive world-sequence no-ops, and zero Crew trust."
 	document["provenance"] = provenance
 	var file := FileAccess.open(TARGET, FileAccess.WRITE)
 	if file == null:

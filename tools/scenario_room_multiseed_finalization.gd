@@ -78,9 +78,6 @@ func _init() -> void:
 
 
 func _run() -> void:
-	if _requested_seed_family.is_empty() and _requested_scenario.is_empty():
-		_run_parallel_seed_families()
-		return
 	var failures: Array = []
 	var library := ContentLibraryScript.new()
 	library.load()
@@ -158,6 +155,7 @@ func _run() -> void:
 				case_failures.append("%s/%s base placement errors: %s" % [seed_family, scenario_id, JSON.stringify(generated_layout.get("placement_errors", []))])
 			if not _array(generated_layout.get("placement_fallback_ids", [])).is_empty():
 				case_failures.append("%s/%s base placement used fallback slots: %s" % [seed_family, scenario_id, JSON.stringify(generated_layout.get("placement_fallback_ids", []))])
+			_check_base_physical_authority(run_state.current_environment, "%s/%s" % [seed_family, scenario_id], case_failures)
 			library.environment_scenarios[archetype_id] = original_pool
 			if case_failures.is_empty():
 				completed += 1
@@ -168,73 +166,11 @@ func _run() -> void:
 	EnvironmentReadabilityContractScript.check_static(library, failures)
 	_finish(failures, completed, definitions.size(), seed_families.size())
 
-
-func _run_parallel_seed_families() -> void:
-	var workers: Array[Thread] = []
-	var failures: Array = []
-	for seed_family_value in SEED_FAMILIES:
-		var worker := Thread.new()
-		var start_error := worker.start(_run_seed_family_process.bind(str(seed_family_value)))
-		if start_error != OK:
-			failures.append("Could not start seed-family worker %s: %s." % [str(seed_family_value), error_string(start_error)])
-			continue
-		workers.append(worker)
-	var reachable_states := 0
-	var distinct_layouts := 0
-	for worker in workers:
-		var result := _dict(worker.wait_to_finish())
-		var output := str(result.get("output", ""))
-		if int(result.get("exit_code", 1)) != 0:
-			failures.append("Seed-family worker %s failed:\n%s" % [str(result.get("seed_family", "unknown")), output])
-			continue
-		var summary := _parse_worker_summary(output)
-		if summary.is_empty():
-			failures.append("Seed-family worker %s returned no finalization summary:\n%s" % [str(result.get("seed_family", "unknown")), output])
-			continue
-		reachable_states += int(summary.get("reachable_states", 0))
-		distinct_layouts += int(summary.get("distinct_layouts", 0))
-		print(str(summary.get("line", "")))
-	if not failures.is_empty() or workers.size() != SEED_FAMILIES.size():
-		for failure in failures:
-			printerr("SCENARIO_ROOM_MULTISEED_FINALIZATION FAIL %s" % str(failure))
-		printerr("SCENARIO_ROOM_MULTISEED_FINALIZATION FAIL completed=0 expected=%d failures=%d" % [SEED_FAMILIES.size() * EXPECTED_SCENARIOS, failures.size()])
-		quit(1)
-		return
-	print("SCENARIO_ROOM_MULTISEED_FINALIZATION PASS families=%d scenarios=%d finalizations=%d reachable_states=%d distinct_layouts=%d normal_and_small=validated routes=validated object_census=preserved" % [SEED_FAMILIES.size(), EXPECTED_SCENARIOS, SEED_FAMILIES.size() * EXPECTED_SCENARIOS, reachable_states, distinct_layouts])
-	quit(0)
-
-
-func _run_seed_family_process(seed_family: String) -> Dictionary:
-	var output: Array = []
-	var arguments := PackedStringArray([
-		"--headless",
-		"--path", ProjectSettings.globalize_path("res://"),
-		"--script", "res://tools/scenario_room_multiseed_finalization.gd",
-		"--", "--seed-family=%s" % seed_family,
-	])
-	var exit_code := OS.execute(OS.get_executable_path(), arguments, output, true, false)
-	return {"seed_family": seed_family, "exit_code": exit_code, "output": "\n".join(output)}
-
-
-func _parse_worker_summary(output: String) -> Dictionary:
-	var pattern := RegEx.new()
-	if pattern.compile("SCENARIO_ROOM_MULTISEED_FINALIZATION PASS families=1 scenarios=55 finalizations=55 reachable_states=([0-9]+) distinct_layouts=([0-9]+)") != OK:
-		return {}
-	var match_result := pattern.search(output)
-	if match_result == null:
-		return {}
-	return {
-		"reachable_states": int(match_result.get_string(1)),
-		"distinct_layouts": int(match_result.get_string(2)),
-		"line": match_result.get_string(0),
-	}
-
-
 func _finish(failures: Array, completed: int, scenario_count: int = EXPECTED_SCENARIOS, seed_count: int = SEED_FAMILIES.size()) -> void:
 	_write_base_dump()
 	var expected := seed_count * scenario_count
 	if failures.is_empty() and completed == expected:
-		print("SCENARIO_ROOM_MULTISEED_FINALIZATION PASS families=%d scenarios=%d finalizations=%d reachable_states=%d distinct_layouts=%d normal_and_small=validated routes=validated object_census=preserved" % [seed_count, scenario_count, completed, _reachable_state_checks, _reachable_layout_checks])
+		print("SCENARIO_ROOM_MULTISEED_FINALIZATION PASS families=%d scenarios=%d finalizations=%d reachable_states=%d distinct_layouts=%d normal_and_small=validated routes=validated physical_supports=validated actionable_base=validated object_census=preserved" % [seed_count, scenario_count, completed, _reachable_state_checks, _reachable_layout_checks])
 		quit(0)
 		return
 	for failure in failures:
@@ -246,10 +182,33 @@ func _finish(failures: Array, completed: int, scenario_count: int = EXPECTED_SCE
 func _record_base_layout(environment: Dictionary, scenario_id: String) -> void:
 	if _base_dump_path.is_empty():
 		return
+	var generated_layout := _dict(environment.get("layout", {}))
+	var object_rects := _dict(generated_layout.get("object_rects", {}))
+	var placement_classes := _dict(generated_layout.get("placement_classes", {}))
+	var placement_surfaces := _dict(generated_layout.get("placement_surfaces", {}))
+	var object_ids := object_rects.keys()
+	object_ids.sort()
+	for object_id_value in object_ids:
+		var object_id := str(object_id_value)
+		var object_rect := _normalized_pixel_rect(object_rects.get(object_id, {}))
+		_base_dump_records.append({
+			"record_kind": "generated_layout",
+			"archetype_id": str(environment.get("archetype_id", "")),
+			"scenario_id": scenario_id,
+			"stable_id": object_id,
+			"object_type": object_id.get_slice(":", 0),
+			"placement_class": str(placement_classes.get(object_id, "")),
+			"placement_surface": str(placement_surfaces.get(object_id, "")),
+			"x": snappedf(object_rect.position.x, 0.01),
+			"y": snappedf(object_rect.position.y, 0.01),
+			"w": snappedf(object_rect.size.x, 0.01),
+			"h": snappedf(object_rect.size.y, 0.01),
+		})
 	for record_value in _array(environment.get("scenario_layout_base_records", [])):
 		var record := _dict(record_value)
 		var rect := _normalized_pixel_rect(record.get("focus_rect", record.get("normalized_rect", {})))
 		_base_dump_records.append({
+			"record_kind": "base_authority",
 			"archetype_id": str(environment.get("archetype_id", "")),
 			"scenario_id": scenario_id,
 			"stable_id": str(record.get("stable_object_id", "")),
@@ -258,6 +217,39 @@ func _record_base_layout(environment: Dictionary, scenario_id: String) -> void:
 			"x": snappedf(rect.position.x, 0.01),
 			"y": snappedf(rect.position.y, 0.01),
 		})
+
+
+func _check_base_physical_authority(environment: Dictionary, label: String, failures: Array) -> void:
+	var generated_layout := _dict(environment.get("layout", {}))
+	var object_rects := _dict(generated_layout.get("object_rects", {}))
+	var placement_classes := _dict(generated_layout.get("placement_classes", {}))
+	var placement_surfaces := _dict(generated_layout.get("placement_surfaces", {}))
+	var board := Rect2(0.0, 0.0, 900.0, 430.0)
+	var object_ids := object_rects.keys()
+	object_ids.sort()
+	for object_id_value in object_ids:
+		var object_id := str(object_id_value)
+		var placement_class := str(placement_classes.get(object_id, ""))
+		var rect := _normalized_pixel_rect(object_rects.get(object_id, {}))
+		if placement_class not in EnvironmentPlacementScript.CLASSES:
+			failures.append("%s base object %s has no closed physical placement class." % [label, object_id])
+		elif not rect.has_area() or not board.encloses(rect):
+			failures.append("%s base object %s has invalid board geometry %s." % [label, object_id, str(rect)])
+		elif str(placement_surfaces.get(object_id, "")) != "developer_free" \
+				and not EnvironmentPlacementScript.valid_rect(environment, placement_class, rect):
+			failures.append("%s base object %s left its %s physical support at %s." % [label, object_id, placement_class, str(rect)])
+	for record_value in _array(environment.get("scenario_layout_base_records", [])):
+		var record := _dict(record_value)
+		if not bool(record.get("interactive", true)):
+			continue
+		var object_id := str(record.get("object_id", ""))
+		if bool(record.get("enabled", false)) and _array(record.get("available_actions", [])).is_empty():
+			failures.append("%s enabled base control %s has no actionable operation." % [label, object_id])
+		if object_rects.has(object_id):
+			var layout_rect := _normalized_pixel_rect(object_rects.get(object_id, {}))
+			var control_rect := _normalized_pixel_rect(record.get("focus_rect", record.get("normalized_hit_rect", {})))
+			if not control_rect.is_equal_approx(layout_rect):
+				failures.append("%s actionable base control %s drifted from its physical layout rect (%s vs %s)." % [label, object_id, str(control_rect), str(layout_rect)])
 
 
 func _write_base_dump() -> void:

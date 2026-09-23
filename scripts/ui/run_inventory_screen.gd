@@ -51,14 +51,16 @@ var _empty_label: Label
 var _small_screen_mode := false
 var _reduced_motion := false
 var _focus_return_target: Control
+var modal_focus_scope: RefCounted
 
 
 func _init() -> void:
 	_build()
 
 
-func configure(texture_provider: Callable) -> void:
+func configure(texture_provider: Callable, focus_scope: RefCounted = null) -> void:
 	_texture_provider = texture_provider
+	modal_focus_scope = focus_scope
 	if _container_surface != null:
 		_container_surface.configure(texture_provider, InventoryContainerCatalogScript.load_catalog())
 
@@ -82,7 +84,7 @@ func set_reduced_motion(enabled: bool) -> void:
 
 
 func open(model: Dictionary) -> void:
-	if not visible and is_inside_tree():
+	if modal_focus_scope == null and not visible and is_inside_tree():
 		var focus_owner := get_viewport().gui_get_focus_owner() if get_viewport() != null else null
 		if focus_owner is Control and focus_owner != self and not is_ancestor_of(focus_owner):
 			_focus_return_target = focus_owner as Control
@@ -90,10 +92,14 @@ func open(model: Dictionary) -> void:
 	update_model(model)
 	if is_inside_tree():
 		move_to_front()
+		if modal_focus_scope != null:
+			modal_focus_scope.call("push_scope", self, _close_button)
 		if _container_surface != null and not _container_surface.selected_key().is_empty():
 			_container_surface.focus_selection(_container_surface.selected_key(), false)
 		else:
 			_close_button.grab_focus()
+		if modal_focus_scope != null:
+			modal_focus_scope.call("refresh_scope", self, _close_button)
 	_position_popup()
 	call_deferred("_position_popup")
 
@@ -109,10 +115,14 @@ func update_model(model: Dictionary) -> void:
 	_render()
 	_sync_selection_from_surface()
 	_position_popup()
+	if visible and modal_focus_scope != null:
+		modal_focus_scope.call("refresh_scope", self, _close_button)
 
 
 func close() -> void:
 	var was_visible := visible
+	if was_visible and modal_focus_scope != null:
+		modal_focus_scope.call("pop_scope", self)
 	visible = false
 	if _container_surface != null:
 		_container_surface.update_model({})
@@ -124,7 +134,7 @@ func close() -> void:
 	_selected_item_source = ""
 	_selected_item_selection_key = ""
 	_model = {}
-	if was_visible:
+	if was_visible and modal_focus_scope == null:
 		call_deferred("_restore_previous_focus")
 
 

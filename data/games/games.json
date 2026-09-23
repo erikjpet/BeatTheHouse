@@ -3588,7 +3588,6 @@
           "false_bottom_cup"
         ],
         "loaded_dice_item_ids": [
-          "precision_loaded_dice",
           "mags_loaded_dice"
         ],
         "loaded_dice_bias_bonus_permille": 80,

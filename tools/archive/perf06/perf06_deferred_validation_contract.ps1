@@ -1,7 +1,8 @@
 param([string]$GodotPath = "")
 
 $ErrorActionPreference = "Stop"
-$root = [IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))
+. (Join-Path $PSScriptRoot "../../repository_root.ps1")
+$root = Resolve-BthRepositoryRoot -StartPath $PSScriptRoot
 if (-not $GodotPath) { $GodotPath = $env:GODOT_BIN }
 if (-not $GodotPath) {
     $common = (& git -C $root rev-parse --path-format=absolute --git-common-dir).Trim()

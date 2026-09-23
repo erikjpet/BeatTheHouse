@@ -854,40 +854,223 @@ static func patrons_with_talk_focus(patrons: Array, focused_speaker_value: Varia
 	return result
 
 
-# Rewrites authored money copy only after the environment has routed the
-# balance. The original message remains available to diagnostics and replays.
+static func presentation_currency_for_game(run_state: RunState, game_id: String, environment: Dictionary = {}) -> String:
+	if run_state != null and run_state.grand_casino_game_uses_chips(game_id, environment):
+		return "chips"
+	return "cash"
+
+
+# Compatibility entry point for callers that only own a transient result. New
+# action settlement uses finalize_routed_settlement() so the durable embedded
+# surface receives the same structured currency record.
 static func finalize_routed_player_message(result: Dictionary, deltas: Dictionary) -> void:
+	finalize_routed_settlement(null, result, deltas)
+
+
+# Establishes one post-routing settlement authority for transient and persisted
+# presentation. Zero-net results are intentional records too: a push still has
+# a routed account and must not fall back to pre-routing Bankroll/CASH copy.
+static func finalize_routed_settlement(run_state: RunState, result: Dictionary, deltas: Dictionary, sync_persisted: bool = true) -> void:
 	var cash_delta := int(deltas.get("bankroll_delta", 0))
 	var chips_delta := int(deltas.get("chips_delta", 0))
-	if cash_delta == 0 and chips_delta == 0:
+	if cash_delta == 0 and chips_delta == 0 and not _zero_routed_settlement_is_authoritative(run_state, result):
 		return
-	var message_key := "game.result.currency_settlement"
-	var message_params := {"cash_delta": cash_delta, "chips_delta": chips_delta}
+	var currency := _routed_settlement_currency(result, cash_delta, chips_delta)
+	var delta := chips_delta if currency == "chips" else cash_delta
+	var settlement_message := PlayerTextScript.format_settlement_delta(currency, delta)
+	var settlement := {
+		"currency": currency,
+		"delta": delta,
+		"message": settlement_message,
+	}
 	var authored_message := str(result.get("message", ""))
-	var settlement_message := PlayerTextScript.resolve(message_key, message_params)
-	var routed_authored_message := authored_message
-	if chips_delta != 0 and cash_delta == 0:
-		var cash_amount := RegEx.new()
-		cash_amount.compile("\\$([0-9]+)")
-		routed_authored_message = cash_amount.sub(routed_authored_message, "$1 chips", true)
-		routed_authored_message = routed_authored_message.replace("Bankroll", "Chips").replace("bankroll", "chips")
-		routed_authored_message = routed_authored_message.replace("Cash", "Chips").replace("cash", "chips")
-	var player_message := PlayerTextScript.join_sentences([routed_authored_message, settlement_message]) if not routed_authored_message.is_empty() else settlement_message
-	if not authored_message.is_empty():
+	var player_message := _routed_settlement_message(authored_message, currency, delta, settlement_message)
+	var player_messages := _merge_routed_settlement_messages(result, deltas, authored_message, player_message, settlement_message)
+	var message_key := "game.result.currency_settlement"
+	var message_params := {
+		"currency": currency,
+		"delta": delta,
+		"cash_delta": cash_delta,
+		"chips_delta": chips_delta,
+	}
+	if not authored_message.is_empty() and authored_message != player_message:
 		result["diagnostic_message"] = authored_message
+	result["currency"] = currency
+	result["currency_delta"] = delta
+	result["settlement"] = settlement.duplicate(true)
 	result["message_key"] = message_key
-	result["message_params"] = message_params
+	result["message_params"] = message_params.duplicate(true)
 	result["message"] = player_message
+	result["messages"] = player_messages.duplicate()
+	deltas["settlement"] = settlement.duplicate(true)
 	deltas["message_key"] = message_key
-	deltas["message_params"] = message_params
+	deltas["message_params"] = message_params.duplicate(true)
 	deltas["message"] = player_message
+	deltas["messages"] = player_messages.duplicate()
 	result["deltas"] = deltas
+	if sync_persisted:
+		_sync_persisted_routed_settlement(run_state, result, settlement, message_key, message_params)
+
+
+static func _zero_routed_settlement_is_authoritative(run_state: RunState, result: Dictionary) -> bool:
+	if typeof(result.get("settlement", null)) == TYPE_DICTIONARY and not (result.get("settlement", {}) as Dictionary).is_empty():
+		return true
+	if run_state == null:
+		return false
+	var environment := run_state.current_environment
+	var states_value: Variant = environment.get("game_states", {})
+	if typeof(states_value) != TYPE_DICTIONARY:
+		return false
+	var states := states_value as Dictionary
+	var game_id := str(result.get("game_id", result.get("source_id", ""))).strip_edges()
+	var state_key := _routed_settlement_state_key(environment, states, game_id, result)
+	if state_key.is_empty() or typeof(states.get(state_key, null)) != TYPE_DICTIONARY:
+		return false
+	var state := states.get(state_key, {}) as Dictionary
+	var last_value: Variant = state.get("last_result", {})
+	if typeof(last_value) != TYPE_DICTIONARY or (last_value as Dictionary).is_empty():
+		return false
+	var last_result := last_value as Dictionary
+	if not last_result.has("bankroll_delta") or int(last_result.get("bankroll_delta", 1)) != 0:
+		return false
+	var result_action := str(result.get("action_id", "")).strip_edges()
+	var stored_action := str(last_result.get("action_id", "")).strip_edges()
+	if not result_action.is_empty() and stored_action == result_action:
+		return true
+	var authored_message := str(result.get("message", "")).strip_edges().to_lower()
+	var stored_message := str(last_result.get("message", last_result.get("summary", ""))).strip_edges().to_lower()
+	return not authored_message.is_empty() \
+		and not stored_message.is_empty() \
+		and (authored_message.find(stored_message) >= 0 or stored_message.find(authored_message) >= 0)
+
+
+static func _routed_settlement_currency(result: Dictionary, cash_delta: int, chips_delta: int) -> String:
+	var authored_currency := str(result.get("currency", "")).strip_edges().to_lower()
+	if authored_currency == "chips" or (chips_delta != 0 and cash_delta == 0):
+		return "chips"
+	return "cash"
+
+
+static func _routed_settlement_message(authored_message: String, currency: String, delta: int, settlement_message: String) -> String:
+	var routed_authored := authored_message.strip_edges()
+	if currency == "chips":
+		routed_authored = _replace_cash_amounts_with_chips(routed_authored)
+		routed_authored = routed_authored.replace("Bankroll", "Chip balance").replace("bankroll", "chip balance")
+		routed_authored = routed_authored.replace("Cash", "Chips").replace("cash", "chips")
+	if routed_authored.to_lower().find(settlement_message.to_lower()) >= 0:
+		return routed_authored
+	return PlayerTextScript.join_sentences([routed_authored, settlement_message]) if not routed_authored.is_empty() else settlement_message
+
+
+static func _merge_routed_settlement_messages(result: Dictionary, deltas: Dictionary, authored_message: String, player_message: String, settlement_message: String) -> Array:
+	var source_messages := _copy_array(deltas.get("messages", []))
+	for value in _copy_array(result.get("messages", [])):
+		if not source_messages.has(value):
+			source_messages.append(value)
+	var merged: Array = []
+	if not player_message.is_empty():
+		merged.append(player_message)
+	for value in source_messages:
+		var message := str(value).strip_edges()
+		if message.is_empty() \
+				or message == authored_message.strip_edges() \
+				or message == settlement_message.strip_edges() \
+				or merged.has(message):
+			continue
+		merged.append(message)
+	return merged
+
+
+static func _replace_cash_amounts_with_chips(message: String) -> String:
+	var cash_amount := RegEx.new()
+	if cash_amount.compile("\\$([+-]?[0-9][0-9,]*)") != OK:
+		return message
+	var matches := cash_amount.search_all(message)
+	var result := message
+	for index in range(matches.size() - 1, -1, -1):
+		var amount_match: RegExMatch = matches[index]
+		var amount_text := amount_match.get_string(1)
+		var amount := int(amount_text.replace(",", ""))
+		var noun := "chip" if absi(amount) == 1 else "chips"
+		var replacement := "%s %s" % [amount_text, noun]
+		result = "%s%s%s" % [
+			result.substr(0, amount_match.get_start()),
+			replacement,
+			result.substr(amount_match.get_end()),
+		]
+	return result
+
+
+static func _sync_persisted_routed_settlement(run_state: RunState, result: Dictionary, settlement: Dictionary, message_key: String, message_params: Dictionary) -> void:
+	if run_state == null or settlement.is_empty():
+		return
+	var environment := run_state.current_environment
+	var states_value: Variant = environment.get("game_states", {})
+	if typeof(states_value) != TYPE_DICTIONARY:
+		return
+	var states := states_value as Dictionary
+	var game_id := str(result.get("game_id", result.get("source_id", ""))).strip_edges()
+	var state_key := _routed_settlement_state_key(environment, states, game_id, result)
+	if state_key.is_empty() or typeof(states.get(state_key, null)) != TYPE_DICTIONARY:
+		return
+	var state := (states.get(state_key, {}) as Dictionary).duplicate(false)
+	var last_value: Variant = state.get("last_result", {})
+	if typeof(last_value) != TYPE_DICTIONARY or (last_value as Dictionary).is_empty():
+		return
+	var last_result := (last_value as Dictionary).duplicate(true)
+	var authored_message := str(last_result.get("message", last_result.get("summary", "")))
+	var persisted_message := _routed_settlement_message(
+		authored_message,
+		str(settlement.get("currency", "cash")),
+		int(settlement.get("delta", 0)),
+		str(settlement.get("message", ""))
+	)
+	if not authored_message.is_empty() and authored_message != persisted_message:
+		last_result["diagnostic_message"] = authored_message
+	last_result["currency"] = str(settlement.get("currency", "cash"))
+	last_result["currency_delta"] = int(settlement.get("delta", 0))
+	last_result["settlement"] = settlement.duplicate(true)
+	last_result["message_key"] = message_key
+	last_result["message_params"] = message_params.duplicate(true)
+	last_result["message"] = persisted_message
+	last_result["summary"] = persisted_message
+	state["last_result"] = last_result
+	states[state_key] = state
+	environment["game_states"] = states
+	run_state.current_environment = environment
+
+
+static func _routed_settlement_state_key(environment: Dictionary, states: Dictionary, game_id: String, result: Dictionary) -> String:
+	for explicit_value in [result.get("game_state_key", ""), result.get("state_key", "")]:
+		var explicit_key := str(explicit_value).strip_edges()
+		if not explicit_key.is_empty() and states.has(explicit_key):
+			return explicit_key
+	var active_keys: Dictionary = environment.get("active_game_state_keys", {}) if typeof(environment.get("active_game_state_keys", {})) == TYPE_DICTIONARY else {}
+	var active_key := str(active_keys.get(game_id, "")).strip_edges()
+	if not active_key.is_empty() and states.has(active_key):
+		return active_key
+	if not game_id.is_empty() and states.has(game_id):
+		return game_id
+	var candidates: Array[String] = []
+	for key_value in states.keys():
+		var candidate := str(key_value)
+		var candidate_state_value: Variant = states.get(key_value, {})
+		if candidate.begins_with("%s:" % game_id) \
+				and typeof(candidate_state_value) == TYPE_DICTIONARY \
+				and typeof((candidate_state_value as Dictionary).get("last_result", null)) == TYPE_DICTIONARY:
+			candidates.append(candidate)
+	return candidates[0] if candidates.size() == 1 else ""
 
 
 # Applies structured module changes through RunState.
 static func apply_result(run_state: RunState, result: Dictionary, rng: RngStream = null, trusted_result_fingerprint: String = "") -> Dictionary:
 	if run_state == null:
 		return IoResultScript.failed(ERR_INVALID_PARAMETER, "missing_run_state", "Run state is required to apply a game result.")
+	# Reject before receipt consumption, currency routing, or any other mutation.
+	# Explicit terminal settlements are the only results allowed to finalize an
+	# already-ended run.
+	if bool(result.get(KeysScript.OK, false)) and run_state.is_terminal() and not bool(result.get("terminal_settlement", false)):
+		return IoResultScript.failed(FAILED, "terminal_state_rejected", "A non-terminal result cannot be applied after the run has ended.")
 	if not bool(result.get(KeysScript.OK, false)):
 		run_state.clear_deferred_bankroll_zero_resolution()
 		return IoResultScript.failed(
@@ -906,7 +1089,7 @@ static func apply_result(run_state: RunState, result: Dictionary, rng: RngStream
 	var deltas := _normalize_result_deltas(result.get("deltas", {}))
 	run_state.record_score_spending_from_result(result, deltas)
 	deltas = run_state.route_grand_casino_game_currency(result, deltas)
-	finalize_routed_player_message(result, deltas)
+	finalize_routed_settlement(run_state, result, deltas, false)
 	var defer_bankroll_zero := bool(result.get("defer_bankroll_zero_failure", false)) or run_state.defer_next_bankroll_zero_failure
 	if defer_bankroll_zero:
 		result["defer_bankroll_zero_failure"] = true
@@ -920,6 +1103,13 @@ static func apply_result(run_state: RunState, result: Dictionary, rng: RngStream
 	if not failed_before_money and run_state.run_status == RunState.RUN_STATUS_FAILED and not bool(result.get("terminal_settlement", false)):
 		run_state.clear_deferred_bankroll_zero_resolution()
 		return IoResultScript.failed(FAILED, "terminal_settlement_rejected", "The game settlement ended the run before it could be published.")
+	_sync_persisted_routed_settlement(
+		run_state,
+		result,
+		result.get("settlement", {}) if typeof(result.get("settlement", {})) == TYPE_DICTIONARY else {},
+		str(result.get("message_key", "")),
+		result.get("message_params", {}) if typeof(result.get("message_params", {})) == TYPE_DICTIONARY else {}
+	)
 	var suspicion_delta := int(deltas.get("suspicion_delta", 0))
 	var blackjack_heat_attempt := suspicion_delta > 0 and result_game_id == "blackjack"
 	if blackjack_heat_attempt:

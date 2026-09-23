@@ -9,7 +9,8 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$root = [IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))
+. (Join-Path $PSScriptRoot "../../repository_root.ps1")
+$root = Resolve-BthRepositoryRoot -StartPath $PSScriptRoot
 function Resolve-RepoPath([string]$Path) {
     if ([IO.Path]::IsPathRooted($Path)) { return [IO.Path]::GetFullPath($Path) }
     return [IO.Path]::GetFullPath((Join-Path $root $Path))
@@ -32,7 +33,7 @@ if (@(& git -C $root status --short --untracked-files=no).Count -ne 0) { throw "
 $profileFile = Resolve-RepoPath $ProfilePath
 $summaryFile = Resolve-RepoPath $LaunchSummary
 $auditFile = Resolve-RepoPath $StaticAudit
-$budgetFile = Join-Path $PSScriptRoot "perf06_budget_table.json"
+$budgetFile = Join-Path $root "tools/perf06_budget_table.json"
 $outFile = Resolve-RepoPath $Out
 foreach ($path in @($profileFile, $summaryFile, $auditFile, $budgetFile)) { if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw "Required evidence is missing: $path" } }
 if (Test-Path -LiteralPath $outFile) { throw "Refusing to overwrite immutable surface report: $outFile" }

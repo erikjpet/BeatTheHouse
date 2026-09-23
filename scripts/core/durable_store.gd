@@ -15,6 +15,12 @@ const OUTCOME_SAVED := "saved-primary"
 
 static var debug_force_write_failure := false
 static var debug_force_rename_failure := false
+static var debug_fail_transition := ""
+
+const TRANSITION_STAGE_BACKUP := "stage_backup"
+const TRANSITION_ROTATE_PRIMARY := "rotate_primary"
+const TRANSITION_INSTALL_PRIMARY := "install_primary"
+const TRANSITION_VALIDATE_PRIMARY := "validate_primary"
 
 
 static func write_json(path: String, payload: Dictionary, validator: Callable = Callable()) -> Dictionary:
@@ -48,43 +54,89 @@ static func write_json(path: String, payload: Dictionary, validator: Callable = 
 
 	var primary := _read_generation(clean_path, validator)
 	var backup_absolute := ProjectSettings.globalize_path(backup_path(clean_path))
-	var rotated_primary := false
-	if bool(primary.get("loadable", false)):
-		var remove_backup_error := _remove_if_exists(backup_absolute)
-		if remove_backup_error != OK:
+	var backup_rollback_absolute := "%s.rollback" % backup_absolute
+	var invalid_primary_rollback_absolute := "%s.rollback" % absolute_path
+	# Rollback names are private to one synchronous install. A prior completed
+	# transaction must not leave either name behind, and an interrupted one is
+	# surfaced instead of silently overwriting a recoverable generation.
+	for rollback_path in [backup_rollback_absolute, invalid_primary_rollback_absolute]:
+		if FileAccess.file_exists(rollback_path):
 			_remove_if_exists(temp_absolute)
-			return _result(false, remove_backup_error, "backup_remove_failed", OUTCOME_NONE)
+			return _result(false, ERR_ALREADY_IN_USE, "stale_transaction_rollback", OUTCOME_NONE)
+	var staged_backup := false
+	var rotated_primary := false
+	var staged_invalid_primary := false
+	if bool(primary.get("loadable", false)):
+		if FileAccess.file_exists(backup_absolute):
+			if _debug_transition_fails(TRANSITION_STAGE_BACKUP):
+				_remove_if_exists(temp_absolute)
+				return _result(false, ERR_CANT_CREATE, "debug_forced_backup_stage_failure", OUTCOME_NONE)
+			var stage_backup_error := DirAccess.rename_absolute(backup_absolute, backup_rollback_absolute)
+			if stage_backup_error != OK:
+				_remove_if_exists(temp_absolute)
+				return _result(false, stage_backup_error, "backup_stage_failed", OUTCOME_NONE)
+			staged_backup = true
+		if _debug_transition_fails(TRANSITION_ROTATE_PRIMARY):
+			_remove_if_exists(temp_absolute)
+			var restore_staged_error := _restore_install_generations(
+				absolute_path, backup_absolute, backup_rollback_absolute,
+				invalid_primary_rollback_absolute, false, staged_backup, false, false
+			)
+			return _result(false, ERR_CANT_CREATE if restore_staged_error == OK else restore_staged_error, "debug_forced_primary_rotation_failure", OUTCOME_NONE)
 		var rotate_error := DirAccess.rename_absolute(absolute_path, backup_absolute)
 		if rotate_error != OK:
 			_remove_if_exists(temp_absolute)
-			return _result(false, rotate_error, "backup_rotation_failed", OUTCOME_NONE)
+			var restore_staged_error := _restore_install_generations(
+				absolute_path, backup_absolute, backup_rollback_absolute,
+				invalid_primary_rollback_absolute, false, staged_backup, false, false
+			)
+			return _result(false, rotate_error if restore_staged_error == OK else restore_staged_error, "backup_rotation_failed", OUTCOME_NONE)
 		rotated_primary = true
 	elif bool(primary.get("exists", false)):
-		var remove_primary_error := _remove_if_exists(absolute_path)
-		if remove_primary_error != OK:
+		if _debug_transition_fails(TRANSITION_ROTATE_PRIMARY):
 			_remove_if_exists(temp_absolute)
-			return _result(false, remove_primary_error, "invalid_primary_remove_failed", OUTCOME_NONE)
+			return _result(false, ERR_CANT_CREATE, "debug_forced_invalid_primary_stage_failure", OUTCOME_NONE)
+		var stage_invalid_error := DirAccess.rename_absolute(absolute_path, invalid_primary_rollback_absolute)
+		if stage_invalid_error != OK:
+			_remove_if_exists(temp_absolute)
+			return _result(false, stage_invalid_error, "invalid_primary_stage_failed", OUTCOME_NONE)
+		staged_invalid_primary = true
 
-	if debug_force_rename_failure:
+	if debug_force_rename_failure or _debug_transition_fails(TRANSITION_INSTALL_PRIMARY):
 		_remove_if_exists(temp_absolute)
-		var restore_error := _restore_rotated_primary(absolute_path, backup_absolute, rotated_primary)
+		var restore_error := _restore_install_generations(
+			absolute_path, backup_absolute, backup_rollback_absolute,
+			invalid_primary_rollback_absolute, rotated_primary, staged_backup,
+			staged_invalid_primary, false
+		)
 		return _result(false, ERR_CANT_CREATE if restore_error == OK else restore_error, "debug_forced_rename_failure", OUTCOME_NONE)
 
 	var install_error := DirAccess.rename_absolute(temp_absolute, absolute_path)
 	if install_error != OK:
 		_remove_if_exists(temp_absolute)
-		var restore_error := _restore_rotated_primary(absolute_path, backup_absolute, rotated_primary)
+		var restore_error := _restore_install_generations(
+			absolute_path, backup_absolute, backup_rollback_absolute,
+			invalid_primary_rollback_absolute, rotated_primary, staged_backup,
+			staged_invalid_primary, false
+		)
 		if restore_error != OK:
 			return _result(false, restore_error, "primary_restore_failed", OUTCOME_NONE)
 		return _result(false, install_error, "primary_install_failed", OUTCOME_NONE)
 
 	var installed := _read_generation(clean_path, validator)
-	if not bool(installed.get("loadable", false)):
-		_remove_if_exists(absolute_path)
-		var restore_error := _restore_rotated_primary(absolute_path, backup_absolute, rotated_primary)
+	if _debug_transition_fails(TRANSITION_VALIDATE_PRIMARY) or not bool(installed.get("loadable", false)):
+		var restore_error := _restore_install_generations(
+			absolute_path, backup_absolute, backup_rollback_absolute,
+			invalid_primary_rollback_absolute, rotated_primary, staged_backup,
+			staged_invalid_primary, true
+		)
 		if restore_error != OK:
 			return _result(false, restore_error, "installed_invalid_restore_failed", OUTCOME_NONE)
 		return _result(false, ERR_FILE_CORRUPT, "installed_generation_invalid", OUTCOME_NONE)
+	# The new primary has been validated and the old primary is now the normal
+	# backup. Only now may the pre-transaction backup be discarded.
+	_remove_if_exists(backup_rollback_absolute)
+	_remove_if_exists(invalid_primary_rollback_absolute)
 	return _result(true, OK, "", OUTCOME_SAVED, installed.get("data", {}))
 
 
@@ -127,6 +179,7 @@ static func status(path: String, validator: Callable = Callable()) -> Dictionary
 static func reset_debug_faults() -> void:
 	debug_force_write_failure = false
 	debug_force_rename_failure = false
+	debug_fail_transition = ""
 
 
 static func set_debug_force_write_failure(enabled: bool) -> void:
@@ -135,6 +188,10 @@ static func set_debug_force_write_failure(enabled: bool) -> void:
 
 static func set_debug_force_rename_failure(enabled: bool) -> void:
 	debug_force_rename_failure = enabled
+
+
+static func set_debug_fail_transition(transition: String) -> void:
+	debug_fail_transition = transition.strip_edges()
 
 
 static func _read_generation(path: String, validator: Callable) -> Dictionary:
@@ -158,14 +215,44 @@ static func _read_generation(path: String, validator: Callable) -> Dictionary:
 	return {"exists": true, "loadable": true, "data": data, "error": OK}
 
 
-static func _restore_rotated_primary(primary_absolute: String, backup_absolute: String, rotated_primary: bool) -> Error:
-	if not rotated_primary:
-		return OK
-	if FileAccess.file_exists(primary_absolute):
-		var remove_error := _remove_if_exists(primary_absolute)
-		if remove_error != OK:
-			return remove_error
-	return DirAccess.rename_absolute(backup_absolute, primary_absolute)
+static func _debug_transition_fails(transition: String) -> bool:
+	return not transition.is_empty() and debug_fail_transition == transition
+
+
+static func _restore_install_generations(
+	primary_absolute: String,
+	backup_absolute: String,
+	backup_rollback_absolute: String,
+	invalid_primary_rollback_absolute: String,
+	rotated_primary: bool,
+	staged_backup: bool,
+	staged_invalid_primary: bool,
+	installed_primary: bool
+) -> Error:
+	var first_error: Error = OK
+	if installed_primary and FileAccess.file_exists(primary_absolute):
+		first_error = _remove_if_exists(primary_absolute)
+	if rotated_primary:
+		if not FileAccess.file_exists(primary_absolute):
+			var restore_primary_error := DirAccess.rename_absolute(backup_absolute, primary_absolute)
+			if first_error == OK and restore_primary_error != OK:
+				first_error = restore_primary_error
+	elif staged_invalid_primary and not FileAccess.file_exists(primary_absolute):
+		var restore_invalid_error := DirAccess.rename_absolute(invalid_primary_rollback_absolute, primary_absolute)
+		if first_error == OK and restore_invalid_error != OK:
+			first_error = restore_invalid_error
+	# Do not displace the rotated primary if restoring it failed: both prior
+	# generations remain recoverable under the backup and rollback names.
+	if staged_backup and FileAccess.file_exists(primary_absolute):
+		if FileAccess.file_exists(backup_absolute):
+			var remove_backup_error := _remove_if_exists(backup_absolute)
+			if first_error == OK and remove_backup_error != OK:
+				first_error = remove_backup_error
+		if not FileAccess.file_exists(backup_absolute):
+			var restore_backup_error := DirAccess.rename_absolute(backup_rollback_absolute, backup_absolute)
+			if first_error == OK and restore_backup_error != OK:
+				first_error = restore_backup_error
+	return first_error
 
 
 static func _remove_if_exists(absolute_path: String) -> Error:

@@ -1,5 +1,5 @@
 param(
-    [string]$ProjectRoot = (Split-Path -Parent $PSScriptRoot),
+    [string]$ProjectRoot = "",
     [string]$GodotPath = "",
     [string]$HistoricalCommit = "f1ce7ec814b5034c229f53dcc0db6e799aaaee0b",
     [ValidateSet("v0_5_1", "mid_0_6")]
@@ -15,6 +15,10 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+. (Join-Path $PSScriptRoot "../../repository_root.ps1")
+if ([string]::IsNullOrWhiteSpace($ProjectRoot)) {
+    $ProjectRoot = Resolve-BthRepositoryRoot -StartPath $PSScriptRoot
+}
 $PinnedV051Commit = "f1ce7ec814b5034c229f53dcc0db6e799aaaee0b"
 $PinnedMid06Commits = @{
     "31e434c412ba8bdeda03bee86db1f8b4d899c962" = "pre_game_depth"

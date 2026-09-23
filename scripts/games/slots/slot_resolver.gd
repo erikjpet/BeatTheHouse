@@ -1797,7 +1797,7 @@ func _spin_result(options: FunctionOptions.SlotSpinResultOptions) -> Dictionary:
 		"pit_boss_heat_bonus": int(cross_effects.get("pit_boss_heat_bonus", 0)),
 		"environment_id": str(environment.get("id", "")),
 	})]
-	var result := GameModule.build_action_result({
+	var result := GameModule.build_canonical_owned_action_result({
 		"ok": true,
 		"type": "game_action",
 		"source_id": "slot",

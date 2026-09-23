@@ -53,11 +53,20 @@ static func display_version() -> String:
 static func telemetry_identity(runtime_options: Dictionary = {}) -> Dictionary:
 	var value := manifest()
 	if manifest_is_valid(value):
+		# The complete export-tree hash is non-circular evidence computed only
+		# after the export exists, so it cannot be embedded in the tree it hashes.
+		# Accept only the runner's exact SHA-256 shape when the authoritative
+		# embedded manifest has no export hash of its own.
+		var export_sha256 := str(value.get("export_identity_sha256", "")).strip_edges()
+		if export_sha256.is_empty():
+			var runtime_export_sha256 := str(runtime_options.get("bth_perf_export_sha256", "")).strip_edges()
+			if runtime_export_sha256.length() == 64 and runtime_export_sha256.is_valid_hex_number(false):
+				export_sha256 = runtime_export_sha256.to_lower()
 		return {
 			"source_commit": str(value.get("source_commit", "")),
 			"source_tree": str(value.get("source_tree", "")),
 			"dirty_state_digest": str(value.get("dirty_state_digest", "")),
-			"export_sha256": str(value.get("export_identity_sha256", "")),
+			"export_sha256": export_sha256,
 			"build_version": str(value.get("build_version", "")),
 			"platform": str(value.get("platform", "")),
 			"manifest_schema": str(value.get("schema", "")),

@@ -3,6 +3,200 @@
     "audit_baseline":  "4384378a",
     "generated_utc":  "2026-09-21T14:23:29.8580359Z",
     "policy":  "Move completed-row one-shot artifacts; retain 14 permanent-gate inputs and shared dependencies at tools root.",
+    "companion_moves":  [
+                            {
+                                "row_id":  "audio06_1",
+                                "source":  "tools/audio06_1_surface_sfx_audit.gd.uid",
+                                "destination":  "tools/archive/audio06_1/audio06_1_surface_sfx_audit.gd.uid",
+                                "sha256":  "d28efbddba144c4ac510b16e9914624f41d2570257033c76a5a099377d2f57cc"
+                            },
+                            {
+                                "row_id":  "content06",
+                                "source":  "tools/content06_manual_smoke.gd.uid",
+                                "destination":  "tools/archive/content06/content06_manual_smoke.gd.uid",
+                                "sha256":  "f367148e67092c23bfb06513934b80d729151046faf0b440bc803963d9ff0a41"
+                            },
+                            {
+                                "row_id":  "env06_7",
+                                "source":  "tools/env06_7_package_a_check.gd.uid",
+                                "destination":  "tools/archive/env06_7/env06_7_package_a_check.gd.uid",
+                                "sha256":  "4c097229f275c6a420edc81a9f11fa65aaea8551a6888abaca1f424ca29d7683"
+                            },
+                            {
+                                "row_id":  "env06_7",
+                                "source":  "tools/env06_7_package_a_generate.gd.uid",
+                                "destination":  "tools/archive/env06_7/env06_7_package_a_generate.gd.uid",
+                                "sha256":  "1b3abf635f86262fe3ba4ed6414a6c30749bf6a03d41ed154aad8bf332c9413a"
+                            },
+                            {
+                                "row_id":  "env06_7",
+                                "source":  "tools/env06_7_package_a_platform_probe.gd.uid",
+                                "destination":  "tools/archive/env06_7/env06_7_package_a_platform_probe.gd.uid",
+                                "sha256":  "369bb3497d7c3eaac3c18548c0c769a260caedeb3c48a1e3437996deaed60857"
+                            },
+                            {
+                                "row_id":  "env06_7",
+                                "source":  "tools/env06_7_package_b_platform_probe.gd.uid",
+                                "destination":  "tools/archive/env06_7/env06_7_package_b_platform_probe.gd.uid",
+                                "sha256":  "298fc515dbd84805d141d8c641b94669b74157b77962731f7f12b945e894cc22"
+                            },
+                            {
+                                "row_id":  "env06_7",
+                                "source":  "tools/env06_7_package_b_sign.gd.uid",
+                                "destination":  "tools/archive/env06_7/env06_7_package_b_sign.gd.uid",
+                                "sha256":  "3edba94bd7f6ccbc8de33077f2aef98598f9906f178ce880db09dff9458b85b7"
+                            },
+                            {
+                                "row_id":  "env06_7",
+                                "source":  "tools/env06_7_package_c_author.gd.uid",
+                                "destination":  "tools/archive/env06_7/env06_7_package_c_author.gd.uid",
+                                "sha256":  "18c1dd28726ebc5666d04e45f36c279ffbfd860668f79a70347809302f018965"
+                            },
+                            {
+                                "row_id":  "env06_7",
+                                "source":  "tools/env06_7_package_d_author.gd.uid",
+                                "destination":  "tools/archive/env06_7/env06_7_package_d_author.gd.uid",
+                                "sha256":  "7929d88da46123b8b82afdf69e3e37328ea2f1a2eaed92109dc7b6fe9fd94577"
+                            },
+                            {
+                                "row_id":  "env06_7",
+                                "source":  "tools/env06_7_package_e_author.gd.uid",
+                                "destination":  "tools/archive/env06_7/env06_7_package_e_author.gd.uid",
+                                "sha256":  "cf5b2c23bd53a2b580d4a35d55199ddcae130e785a73de9d54a18c8b6450c9e7"
+                            },
+                            {
+                                "row_id":  "env06_7",
+                                "source":  "tools/env06_7_package_e_platform_probe.gd.uid",
+                                "destination":  "tools/archive/env06_7/env06_7_package_e_platform_probe.gd.uid",
+                                "sha256":  "6c3380d3a2116ea9b5a5d8fd6d049e376166ad94faa99cb898062609a4b24f3f"
+                            },
+                            {
+                                "row_id":  "env06_8",
+                                "source":  "tools/env06_8_resign_package.gd.uid",
+                                "destination":  "tools/archive/env06_8/env06_8_resign_package.gd.uid",
+                                "sha256":  "1c4b7097adb154c5d9abdddb8a47a16a2bf99884672cab423f40a7814577ae50"
+                            },
+                            {
+                                "row_id":  "env06_8",
+                                "source":  "tools/env06_8_unlabeled_contact_sheet_probe.gd.uid",
+                                "destination":  "tools/archive/env06_8/env06_8_unlabeled_contact_sheet_probe.gd.uid",
+                                "sha256":  "c52084abedcb8ed7795327515a6773bd2aa1970302a79c9a9fece8d81f2c944e"
+                            },
+                            {
+                                "row_id":  "fix06_28",
+                                "source":  "tools/fix06_28_punchline_player_route.gd.uid",
+                                "destination":  "tools/archive/fix06_28/fix06_28_punchline_player_route.gd.uid",
+                                "sha256":  "12d39d8813e786e455efcf92ef3605a87f8fc65a66872c746d7f2446468f882b"
+                            },
+                            {
+                                "row_id":  "fix06_28",
+                                "source":  "tools/fix06_28_working_order_driver.gd.uid",
+                                "destination":  "tools/archive/fix06_28/fix06_28_working_order_driver.gd.uid",
+                                "sha256":  "668bc42f2ccdb6d0785aeb11619f240513a3befe9449d7d99627700d3ba144d0"
+                            },
+                            {
+                                "row_id":  "fix06_29",
+                                "source":  "tools/fix06_29_punchline_natural_l3_route.gd.uid",
+                                "destination":  "tools/archive/fix06_29/fix06_29_punchline_natural_l3_route.gd.uid",
+                                "sha256":  "07d888a5653bcbef67adf75d71c4fabaac42fc363e06a5e071ee87834fd85b5a"
+                            },
+                            {
+                                "row_id":  "game06_3",
+                                "source":  "tools/game06_3_platform_parity_main.gd.uid",
+                                "destination":  "tools/archive/game06_3/game06_3_platform_parity_main.gd.uid",
+                                "sha256":  "d0a7be2cfde8de70620ed404d2e42ce5332746c1331c24325c650940abba9f8e"
+                            },
+                            {
+                                "row_id":  "game06_4",
+                                "source":  "tools/game06_4_machine_games_platform_probe.gd.uid",
+                                "destination":  "tools/archive/game06_4/game06_4_machine_games_platform_probe.gd.uid",
+                                "sha256":  "dba35ac0f60259dd397557d6702de54474e366d3f11ac3c12160cea6a564a47f"
+                            },
+                            {
+                                "row_id":  "game06_6",
+                                "source":  "tools/game06_6_bar_dice_platform_probe.gd.uid",
+                                "destination":  "tools/archive/game06_6/game06_6_bar_dice_platform_probe.gd.uid",
+                                "sha256":  "0c72b246a9e222967a372a4a0e0f3ce0b2715cce1fa8cb4b253033f5c6e7295e"
+                            },
+                            {
+                                "row_id":  "game06_7",
+                                "source":  "tools/game06_7_showdown_duel_platform_probe.gd.uid",
+                                "destination":  "tools/archive/game06_7/game06_7_showdown_duel_platform_probe.gd.uid",
+                                "sha256":  "3ff0c1f5c7052b849da9cb60dd9de181955b6f7c739d5ec858bee6f78de2461d"
+                            },
+                            {
+                                "row_id":  "integ06_1",
+                                "source":  "tools/integ06_1_crew_play_entry_repro.gd.uid",
+                                "destination":  "tools/archive/integ06_1/integ06_1_crew_play_entry_repro.gd.uid",
+                                "sha256":  "c6d9d20e9254035eba16c9bccbdb4cb089ed458f3f007e34f15d55c319699dd0"
+                            },
+                            {
+                                "row_id":  "integ06_1",
+                                "source":  "tools/integ06_1_terminal_soak_main.gd.uid",
+                                "destination":  "tools/archive/integ06_1/integ06_1_terminal_soak_main.gd.uid",
+                                "sha256":  "f655648ffafcea6700166dd447d92d7e421462785ab804d8ba7920366b3e5c94"
+                            },
+                            {
+                                "row_id":  "meta06_1",
+                                "source":  "tools/meta06_1_career_capture.gd.uid",
+                                "destination":  "tools/archive/meta06_1/meta06_1_career_capture.gd.uid",
+                                "sha256":  "6fdf165ea7affe97eca77b3b007c16e2a13e5fb6955cf7fe0d8a1da39e2fa6aa"
+                            },
+                            {
+                                "row_id":  "perf06",
+                                "source":  "tools/perf06_deferred_validation_contract.gd.uid",
+                                "destination":  "tools/archive/perf06/perf06_deferred_validation_contract.gd.uid",
+                                "sha256":  "73df7268db593b813da2ccb4cf367bfda35ff4e968951c73fd3e83cc727e2560"
+                            },
+                            {
+                                "row_id":  "perf06",
+                                "source":  "tools/perf06_idle_liveness_runtime_contract.gd.uid",
+                                "destination":  "tools/archive/perf06/perf06_idle_liveness_runtime_contract.gd.uid",
+                                "sha256":  "6fc66451fbb17fe64b96a7d7e0ec57bd3cf1426943d24c2e3a29a41a66e06b69"
+                            },
+                            {
+                                "row_id":  "perf06",
+                                "source":  "tools/perf06_web_ready_snapshot_contract.gd.uid",
+                                "destination":  "tools/archive/perf06/perf06_web_ready_snapshot_contract.gd.uid",
+                                "sha256":  "5139385ff214122118db58f781c9ee41da82b8917180241c9f5b683d04c8ef10"
+                            },
+                            {
+                                "row_id":  "playtest06_2",
+                                "source":  "tools/playtest06_2_seed_catalog_probe.gd.uid",
+                                "destination":  "tools/archive/playtest06_2/playtest06_2_seed_catalog_probe.gd.uid",
+                                "sha256":  "7b2ea8b85f73b8e9f1bf286853d073503dbc975a2b2aa55be162d9f3e2339e8f"
+                            },
+                            {
+                                "row_id":  "playtest06",
+                                "source":  "tools/playtest06_surface_family_playability_contract.gd.uid",
+                                "destination":  "tools/archive/playtest06/playtest06_surface_family_playability_contract.gd.uid",
+                                "sha256":  "e79282b602ab93e9d6fbe13fc7e35d9995a02d2c573b90ab5e02c299c22973b5"
+                            },
+                            {
+                                "row_id":  "test11",
+                                "source":  "tools/test11_environment_time_screenshots.gd.uid",
+                                "destination":  "tools/archive/test11/test11_environment_time_screenshots.gd.uid",
+                                "sha256":  "0a9ed84f82a1e3684feceff981959cfb11804f4501288772025d6da78a0d4703"
+                            },
+                            {
+                                "row_id":  "tier1",
+                                "source":  "tools/tier1_scenario_audit.gd.uid",
+                                "destination":  "tools/archive/tier1/tier1_scenario_audit.gd.uid",
+                                "sha256":  "ef45ec191d64bc972dcfe608e89f680cc521b5f92b699db1c3e2dbd532e3356d"
+                            },
+                            {
+                                "row_id":  "tier1",
+                                "source":  "tools/tier1_scenario_screenshots.gd.uid",
+                                "destination":  "tools/archive/tier1/tier1_scenario_screenshots.gd.uid",
+                                "sha256":  "7d2bebec5c09b1ec06d4f56325a58ce7429bae5587928883b344d0378bc2d2ca"
+                            },
+                            {
+                                "row_id":  "world06_6",
+                                "source":  "tools/world06_6_sign_packages.gd.uid",
+                                "destination":  "tools/archive/world06_6/world06_6_sign_packages.gd.uid",
+                                "sha256":  "82a46a5d1aa576470c823a51a562f11475ef625204db868e6f0cc879a14d3899"
+                            }
+                        ],
     "retained":  [
                      "tools/fix06_31_contact_sheets.ps1",
                      "tools/integ06_1_terminal_soak_launcher_contract_test.ps1",

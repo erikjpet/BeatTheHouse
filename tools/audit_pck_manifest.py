@@ -27,7 +27,7 @@ FORBIDDEN_SUFFIXES = (
     ".pem", ".pfx", ".ps1", ".py", ".pyc", ".sh", ".tmp",
 )
 ALLOWED_SUFFIXES = (
-    ".bin", ".binary", ".bthadpcm", ".bthsfx", ".bthstems", ".cfg", ".css", ".csv", ".ctex", ".data", ".dll",
+    ".bin", ".binary", ".bthadpcm", ".bthpcm", ".bthsfx", ".bthstems", ".cfg", ".css", ".csv", ".ctex", ".data", ".dll",
     ".fontdata", ".gd", ".gdc", ".gdextension", ".glsl", ".gz", ".html",
     ".ico", ".import", ".ini", ".jpeg", ".jpg", ".js", ".json", ".mo",
     ".mp3", ".ogg", ".otf", ".po", ".png", ".res", ".sample", ".scn",

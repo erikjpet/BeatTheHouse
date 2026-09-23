@@ -1783,6 +1783,7 @@ func _validate_collection(label: String, values: Array, required_fields: Array) 
 # Validates module routing and action shape for game definitions.
 func _validate_game_definitions() -> void:
 	var group_ids := _ids_for(content_groups)
+	var item_ids := _ids_for(items)
 	for game_def in games:
 		if typeof(game_def) != TYPE_DICTIONARY:
 			continue
@@ -1795,6 +1796,35 @@ func _validate_game_definitions() -> void:
 			validation_errors.append("games %s references missing module_path: %s" % [game_id, module_path])
 		_validate_actions("games %s legal_actions" % game_id, game_def.get("legal_actions", []))
 		_validate_actions("games %s cheat_actions" % game_id, game_def.get("cheat_actions", []))
+		_validate_nested_game_item_references(game_def, "games %s" % game_id, item_ids)
+
+
+func _validate_nested_game_item_references(value: Variant, label: String, valid_item_ids: Dictionary) -> void:
+	if typeof(value) == TYPE_DICTIONARY:
+		for key_value in (value as Dictionary).keys():
+			var key := str(key_value)
+			var child: Variant = (value as Dictionary).get(key_value)
+			var child_label := "%s.%s" % [label, key]
+			if key.ends_with("_item_ids"):
+				if typeof(child) != TYPE_ARRAY:
+					validation_errors.append("%s must be an array of item ids." % child_label)
+				else:
+					for index in range((child as Array).size()):
+						var item_id := str((child as Array)[index]).strip_edges()
+						if item_id.is_empty():
+							validation_errors.append("%s[%d] contains an empty item id." % [child_label, index])
+						elif not valid_item_ids.has(item_id):
+							validation_errors.append("%s[%d] references unknown item id: %s" % [child_label, index, item_id])
+			elif key.ends_with("_item_id"):
+				var item_id := str(child).strip_edges()
+				if item_id.is_empty():
+					validation_errors.append("%s contains an empty item id." % child_label)
+				elif not valid_item_ids.has(item_id):
+					validation_errors.append("%s references unknown item id: %s" % [child_label, item_id])
+			_validate_nested_game_item_references(child, child_label, valid_item_ids)
+	elif typeof(value) == TYPE_ARRAY:
+		for index in range((value as Array).size()):
+			_validate_nested_game_item_references((value as Array)[index], "%s[%d]" % [label, index], valid_item_ids)
 
 
 func _validate_scratch_ticket_definitions() -> void:

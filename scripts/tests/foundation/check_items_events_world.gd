@@ -909,6 +909,10 @@ func _check_talk_decision_system_foundation(library: ContentLibrary, failures: A
 		failures.append("Talk ignore fixture requires FoundationMain runtime nodes.")
 		_sb4_dispose_app(app)
 		return
+	if not bool(app.call("start_foundation_run", "TALK-IGNORE-PENALTY", {}, false)):
+		failures.append("Talk ignore fixture could not build and start the staged FoundationMain run UI.")
+		_sb4_dispose_app(app)
+		return
 	var ignore_run: RunState = RunStateScript.new()
 	ignore_run.start_new("TALK-IGNORE-PENALTY")
 	ignore_run.set_environment(_t4_3_fixture_environment("bar", "bar", 1, ["blackjack"], [], ["motel"]))
@@ -964,6 +968,10 @@ func _check_dialogue_system_foundation(library: ContentLibrary, failures: Array)
 	var pending := run_state.next_pending_talk_event()
 	if str(pending.get("dialogue_id", "")) != "pull_tab_clerk" or str(pending.get("current_node", "")) != "greeting":
 		failures.append("Dialogue queue entry did not expose dialogue_id/current_node.")
+	var pending_event_id := str(pending.get("event_id", ""))
+	if pending_event_id.is_empty():
+		failures.append("Dialogue queue entry did not expose its triggered-event authority id.")
+		return
 	var restored: RunState = RunStateScript.new()
 	restored.from_dict(run_state.to_dict())
 	var restored_pending := restored.next_pending_talk_event()
@@ -976,8 +984,10 @@ func _check_dialogue_system_foundation(library: ContentLibrary, failures: Array)
 	else:
 		var route_effects: Dictionary = ask_routes.get("effects", {}) if typeof(ask_routes.get("effects", {})) == TYPE_DICTIONARY else {}
 		var route_event := EventModule.new()
-		route_event.setup(_dialogue_test_event_definition("dialogue_route_fixture", "ask_routes", route_effects), library)
-		route_event.resolve(run_state, run_state.current_environment, "ask_routes")
+		route_event.setup(_dialogue_test_event_definition(pending_event_id, "ask_routes", route_effects), library)
+		var route_result := route_event.resolve(run_state, run_state.current_environment, "ask_routes")
+		if not bool(route_result.get("ok", false)):
+			failures.append("Dialogue ask_routes choice could not resolve through its queued triggered-event authority.")
 		if not bool(run_state.story_flags.get("pull_tab_clerk_route_tip", false)) or not bool(run_state.narrative_flags.get("pull_tab_clerk_route_tip", false)):
 			failures.append("Dialogue set_story_flag did not sync story_flags and narrative_flags.")
 		if not run_state.unlocked_travel.has("gas_station_casino"):
@@ -1001,8 +1011,10 @@ func _check_dialogue_system_foundation(library: ContentLibrary, failures: Array)
 		var loose_effects: Dictionary = ask_loose.get("effects", {}) if typeof(ask_loose.get("effects", {})) == TYPE_DICTIONARY else {}
 		var heat_before := run_state.suspicion_level()
 		var loose_event := EventModule.new()
-		loose_event.setup(_dialogue_test_event_definition("dialogue_loose_fixture", "ask_loose", loose_effects), library)
-		loose_event.resolve(run_state, run_state.current_environment, "ask_loose")
+		loose_event.setup(_dialogue_test_event_definition(pending_event_id, "ask_loose", loose_effects), library)
+		var loose_result := loose_event.resolve(run_state, run_state.current_environment, "ask_loose")
+		if not bool(loose_result.get("ok", false)):
+			failures.append("Dialogue ask_loose choice could not resolve through its queued triggered-event authority.")
 		if run_state.suspicion_level() < heat_before + 2:
 			failures.append("Dialogue risky branch did not apply its heat cost.")
 
@@ -4446,11 +4458,11 @@ func _check_family_lender_lifecycle(library: ContentLibrary, failures: Array) ->
 
 
 func _check_pawn_lender_lifecycle(library: ContentLibrary, failures: Array) -> void:
-	var empty_fixture := _lender_fixture(library, "LENDER-PAWN-EMPTY", ["sals_pawn_counter"], [], [])
+	var empty_fixture := _pawn_lender_fixture(library, "LENDER-PAWN-EMPTY", [])
 	var empty_resolver: RunActionService = empty_fixture.get("resolver", null)
 	if bool(empty_resolver.hook_option("lender", "sals_pawn_counter").get("enabled", true)):
 		failures.append("Sal's Pawn Counter was enabled without collateral.")
-	var fixture := _lender_fixture(library, "LENDER-PAWN", ["sals_pawn_counter"], [], ["creased_luck_card", "cheap_sunglasses", "scratch_pad", "payment_calendar", "pawn_receipt_sleeve"])
+	var fixture := _pawn_lender_fixture(library, "LENDER-PAWN", ["creased_luck_card", "cheap_sunglasses", "scratch_pad", "payment_calendar", "pawn_receipt_sleeve"])
 	var run_state: RunState = fixture.get("run_state", null)
 	var resolver: RunActionService = fixture.get("resolver", null)
 	var quotes := resolver.pawn_quote_options("sals_pawn_counter")
@@ -4520,7 +4532,7 @@ func _check_pawn_lender_lifecycle(library: ContentLibrary, failures: Array) -> v
 	if run_state.bankroll != 500 - middle_payoff:
 		failures.append("Pawn selective repayment did not charge exactly the ticket buy-back amount.")
 
-	var default_fixture := _lender_fixture(library, "LENDER-PAWN-DEFAULT", ["sals_pawn_counter"], [], ["creased_luck_card"])
+	var default_fixture := _pawn_lender_fixture(library, "LENDER-PAWN-DEFAULT", ["creased_luck_card"])
 	var default_state: RunState = default_fixture.get("run_state", null)
 	var default_resolver: RunActionService = default_fixture.get("resolver", null)
 	default_resolver.use_hook("lender", "sals_pawn_counter")
@@ -4648,6 +4660,28 @@ func _item_offer_by_id(offers: Variant, item_id: String) -> Dictionary:
 		if typeof(offer_value) == TYPE_DICTIONARY and str((offer_value as Dictionary).get("id", "")) == item_id:
 			return (offer_value as Dictionary).duplicate(true)
 	return {}
+
+
+func _pawn_lender_fixture(library: ContentLibrary, seed: String, inventory_ids: Array) -> Dictionary:
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new(seed)
+	run_state.bankroll = 100
+	var pawn_archetype := _archetype_by_id(library, "pawn_shop")
+	var pawn_environment := EnvironmentInstance.from_archetype(
+		pawn_archetype,
+		2,
+		run_state.create_rng("%s_pawn_shop" % seed.to_lower()),
+		library
+	).to_dict()
+	run_state.set_environment(pawn_environment)
+	for item_id in JsonCoerceScript._string_array(inventory_ids):
+		run_state.add_item(item_id)
+	var resolver: RunActionService = RunActionServiceScript.new()
+	resolver.setup(library, run_state)
+	return {
+		"run_state": run_state,
+		"resolver": resolver,
+	}
 
 
 func _lender_fixture(library: ContentLibrary, seed: String, lender_ids: Array, service_ids: Array, inventory_ids: Array) -> Dictionary:

@@ -102,6 +102,7 @@ var surface_animation_handoff_until_msec := 0
 var surface_render_elapsed_sec := 0.0
 var surface_simulation_clock_msec := 0.0
 var surface_presentation_clock_msec := 0.0
+var surface_clock_reset_pending := false
 var transient_surface_loop_deadline_msec := 0
 var transient_surface_loop_id := ""
 var environment_activity_paused := false
@@ -187,8 +188,10 @@ func clear_runtime_state() -> void:
 	perf_surface_animation_scheduler_elapsed_sec = 0.0
 	surface_animation_handoff_until_msec = 0
 	surface_render_elapsed_sec = 0.0
-	surface_simulation_clock_msec = 0.0
-	surface_presentation_clock_msec = 0.0
+	# Teardown can run while FoundationMain still owns an application/modal pause.
+	# Preserve the frozen clock values until that owner releases them; the next
+	# surface snapshot starts from authored time (or zero when it has no clock).
+	surface_clock_reset_pending = true
 	transient_surface_loop_deadline_msec = 0
 	transient_surface_loop_id = ""
 	surface_render_state_dirty = false
@@ -206,8 +209,11 @@ func render_game_snapshot(snapshot: Dictionary) -> void:
 	view_data.erase("surface_defer_patch_redraw")
 	game_id = str(view_data.get("game_id", game_id))
 	state = view_data
-	surface_simulation_clock_msec = float(state.get("surface_time_msec", surface_simulation_clock_msec))
-	surface_presentation_clock_msec = float(state.get("surface_presentation_time_msec", state.get("surface_time_msec", surface_presentation_clock_msec)))
+	var simulation_clock_default := 0.0 if surface_clock_reset_pending else surface_simulation_clock_msec
+	var presentation_clock_default := 0.0 if surface_clock_reset_pending else surface_presentation_clock_msec
+	surface_simulation_clock_msec = float(state.get("surface_time_msec", simulation_clock_default))
+	surface_presentation_clock_msec = float(state.get("surface_presentation_time_msec", state.get("surface_time_msec", presentation_clock_default)))
+	surface_clock_reset_pending = false
 	reduce_motion = bool(state.get("reduce_motion", false))
 	drunk_time_scale = clampf(float(state.get("drunk_time_scale", 1.0)), DRUNK_TIME_SCALE_MIN, 1.0)
 	drunk_effect_mode = _normalized_drunk_effect_mode(str(state.get("drunk_effect_mode", drunk_effect_mode)))
@@ -1264,9 +1270,6 @@ func _clear_captured_surface_pointer_state() -> void:
 	captured_surface_keyboard = false
 	captured_pointer_move_pending = false
 	captured_pointer_move_position = Vector2.ZERO
-	environment_activity_paused = false
-	timed_feedback_paused = false
-	reject_orphan_surface_events = false
 
 
 func _notification(what: int) -> void:
@@ -1331,6 +1334,7 @@ func debug_pause_contract_snapshot() -> Dictionary:
 		"captured_pointer_move_pending": captured_pointer_move_pending,
 		"surface_simulation_time_msec": surface_simulation_time_msec(),
 		"surface_presentation_time_msec": surface_presentation_time_msec(),
+		"surface_clock_reset_pending": surface_clock_reset_pending,
 		"surface_sfx": surface_sfx_player.call("debug_soak_snapshot") if surface_sfx_player != null and surface_sfx_player.has_method("debug_soak_snapshot") else {},
 	}
 

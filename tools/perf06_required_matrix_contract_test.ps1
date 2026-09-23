@@ -1,7 +1,34 @@
 $ErrorActionPreference = "Stop"
-$root = [IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))
+. (Join-Path $PSScriptRoot "repository_root.ps1")
+$root = Resolve-BthRepositoryRoot -StartPath $PSScriptRoot
 $matrix = Get-Content -LiteralPath (Join-Path $PSScriptRoot "perf06_required_matrix.json") -Raw | ConvertFrom-Json
 $games = Get-Content -LiteralPath (Join-Path $root "data/games/games.json") -Raw | ConvertFrom-Json
+foreach ($startPath in @($PSScriptRoot, (Join-Path $root "tools/archive/perf06"), (Join-Path $root "tools/archive/integ06_1"))) {
+    $resolved = Resolve-BthRepositoryRoot -StartPath $startPath
+    if (-not $resolved.Equals($root, [StringComparison]::OrdinalIgnoreCase)) {
+        throw "Repository-root resolver returned '$resolved' from '$startPath', expected '$root'."
+    }
+}
+$movedEntryPoints = @(
+    "tools/archive/perf06/perf06_allocation_call_root_audit.ps1",
+    "tools/archive/perf06/perf06_binding_preflight.ps1",
+    "tools/archive/perf06/perf06_build_surface_report.ps1",
+    "tools/archive/perf06/perf06_capture_host_profile.ps1",
+    "tools/archive/perf06/perf06_capture_quiescence.ps1",
+    "tools/archive/perf06/perf06_deferred_validation_contract.ps1",
+    "tools/archive/perf06/perf06_low_end_matrix.ps1",
+    "tools/archive/perf06/perf06_matrix_contract.ps1",
+    "tools/archive/integ06_1/integ06_1_composition_matrix.ps1",
+    "tools/archive/integ06_1/integ06_1_generate_mid06_fixtures.ps1",
+    "tools/archive/integ06_1/integ06_1_generate_v051_fixtures.ps1",
+    "tools/archive/integ06_1/integ06_1_terminal_soak.ps1"
+)
+foreach ($relativePath in $movedEntryPoints) {
+    $entryPoint = Get-Content -LiteralPath (Join-Path $root $relativePath) -Raw
+    if (-not $entryPoint.Contains("Resolve-BthRepositoryRoot")) {
+        throw "Moved entry point does not use the shared repository-root resolver: $relativePath"
+    }
+}
 if ([string]$matrix.schema -cne "beat_the_house.perf06_required_matrix/v1") { throw "Required matrix schema changed." }
 $shippedIds = @($games | ForEach-Object { [string]$_.id } | Sort-Object)
 $matrixIds = @($matrix.games.PSObject.Properties.Name | Sort-Object)
@@ -23,7 +50,7 @@ foreach ($surfaceOverride in @($matrix.allocation_roots_by_phase.PSObject.Proper
         foreach ($rootName in $phaseRoots) { if ($unionRoots -cnotcontains [string]$rootName) { throw "Allocation override '$rootName' is not in the surface union for '$($surfaceOverride.Name)'." } }
     }
 }
-$lowEndLauncher = Get-Content -LiteralPath (Join-Path $PSScriptRoot "perf06_low_end_matrix.ps1") -Raw
+$lowEndLauncher = Get-Content -LiteralPath (Join-Path $root "tools/archive/perf06/perf06_low_end_matrix.ps1") -Raw
 foreach ($needle in @("reproducible_whole_matrix_throttle", "ProcessorAffinity", "PriorityClass", "native_surface_probe.json", "ProfileManifestSha256", "profileFileRelative", "Low-end profile must resolve below", "PERF06 LOW-END PREFLIGHT PASS", '[string]$SeedPrefix = "PERF06-FINAL"', "-SeedPrefix `$SeedPrefix")) {
     if (-not $lowEndLauncher.Contains($needle)) { throw "Low-end launcher lost reproducible whole-matrix binding '$needle'." }
 }
@@ -31,7 +58,7 @@ $nativeWrapper = Get-Content -LiteralPath (Join-Path $PSScriptRoot "foundation_p
 foreach ($needle in @("BTH_PERF_REPORT_PATH", "BTH_PERF_CANDIDATE_COMMIT", "BTH_PERF_PROFILE_MANIFEST_SHA256")) {
     if (-not $nativeWrapper.Contains($needle)) { throw "Native performance report lost immutable identity seam '$needle'." }
 }
-$profileCapture = Get-Content -LiteralPath (Join-Path $PSScriptRoot "perf06_capture_host_profile.ps1") -Raw
+$profileCapture = Get-Content -LiteralPath (Join-Path $root "tools/archive/perf06/perf06_capture_host_profile.ps1") -Raw
 foreach ($needle in @("hardware_fingerprint_sha256", "reproducible_whole_matrix_throttle", "Refusing to overwrite immutable host profile")) {
     if (-not $profileCapture.Contains($needle)) { throw "Host-profile capture lost '$needle'." }
 }
@@ -51,14 +78,14 @@ $overlay = Get-Content -LiteralPath (Join-Path $root "scripts/ui/perf_telemetry_
 foreach ($needle in @('"surface_draw_time_ms"', '"production_game_canvas"', '"complete_frame_upper_bound"', 'reset_performance_counters')) {
     if (-not $overlay.Contains($needle)) { throw "Runtime surface measurement lost '$needle'." }
 }
-$surfaceBuilder = Get-Content -LiteralPath (Join-Path $PSScriptRoot "perf06_build_surface_report.ps1") -Raw
+$surfaceBuilder = Get-Content -LiteralPath (Join-Path $root "tools/archive/perf06/perf06_build_surface_report.ps1") -Raw
 foreach ($needle in @("perf06_surface_id", "perf06_phase_id", "surface_draw_time_ms", "action_evidence", "static_call_root_audit_sha256", "Refusing to overwrite immutable surface report")) {
     if (-not $surfaceBuilder.Contains($needle)) { throw "Surface-report builder lost '$needle'." }
 }
 foreach ($needle in @("Get-Perf06PhaseLivenessEvaluation", "Get-Perf06PhaseBudgetEvaluation", "budget_evaluation")) {
     if (-not $surfaceBuilder.Contains($needle)) { throw "Surface-report builder lost fail-closed phase qualification '$needle'." }
 }
-$matrixConsumer = Get-Content -LiteralPath (Join-Path $PSScriptRoot "perf06_matrix_contract.ps1") -Raw
+$matrixConsumer = Get-Content -LiteralPath (Join-Path $root "tools/archive/perf06/perf06_matrix_contract.ps1") -Raw
 foreach ($needle in @('liveness.measured -lt [int]$Row.liveness.floor', 'observed -gt [double]$check.maximum', 'budget_evaluation')) {
     if (-not $matrixConsumer.Contains($needle)) { throw "Matrix consumer lost fail-closed budget/liveness enforcement '$needle'." }
 }

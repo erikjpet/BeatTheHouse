@@ -6941,7 +6941,7 @@ func pit_boss_watch_status(environment: Dictionary = {}) -> Dictionary:
 	var bonus := effective_base_bonus if watched else 0
 	var summary := str(boss.get("watched_text", "%s is watching." % label)) if watched else str(boss.get("clear_text", "%s is turned away." % label))
 	if shift_actions > 0:
-		summary = "%s A rookie is on handoff; cheat heat is softened for %d actions." % [summary, shift_actions]
+		summary = "%s A rookie is on handoff; cheat heat is softened for %s." % [summary, PlayerTextScript.count_text("action", shift_actions)]
 	return {
 		"active": true,
 		"label": label,
@@ -7287,7 +7287,7 @@ func _begin_rourke_escort(index: int, rival: Dictionary) -> void:
 		"environment_archetype_id": str(current_environment.get("archetype_id", "")),
 		"caught_room": caught_room,
 		"cheater_id": str(rival.get("id", "")),
-		"message": "Rourke catches %s's tell and walks them across the Main Floor to the Back Room. He is off the floor for %d actions." % [rival_name, ROURKE_OFF_FLOOR_ACTIONS],
+		"message": "Rourke catches %s's tell and walks them across the Main Floor to the Back Room. He is off the floor for %s." % [rival_name, PlayerTextScript.count_text("action", ROURKE_OFF_FLOOR_ACTIONS)],
 	})
 
 
@@ -10587,7 +10587,7 @@ func finish_travel_suspicion_decay(travel_heat: Dictionary) -> Dictionary:
 
 
 # Returns whether a service hook can currently be used without mutating state.
-func service_hook_status(service_data: Dictionary) -> Dictionary:
+func service_hook_status(service_data: Dictionary, reserved_bankroll_credit: int = 0) -> Dictionary:
 	var cost := maxi(0, int(round(float(service_data.get("cost", 0)) * challenge_service_cost_multiplier(service_data))))
 	var status := {
 		"available": true,
@@ -10625,7 +10625,10 @@ func service_hook_status(service_data: Dictionary) -> Dictionary:
 			status["disabled_reason"] = str(availability.get("blocked_text", "This service is not available now."))
 			status["availability_class"] = AVAILABILITY_CATEGORICAL_UNAVAILABLE
 			return status
-	if cost > bankroll:
+	# Transaction callers reserve an already-approved quote before advancing the
+	# fallible action boundary. Credit only that exact escrow during the second
+	# availability check so the price is not counted twice.
+	if cost > bankroll + maxi(0, reserved_bankroll_credit):
 		status["available"] = false
 		status["disabled_reason"] = "Not enough bankroll for this service."
 		status["availability_class"] = AVAILABILITY_TRANSIENT_BLOCKED

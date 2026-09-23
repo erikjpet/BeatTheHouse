@@ -2635,13 +2635,14 @@ func _check_delivery_ordinary_travel_baseline(app: Control, phase: String) -> bo
 	# only the layout-derived environment/world-map records changed. The 0.6
 	# Collision recovery searches every valid physical surface candidate and the
 	# harness isolates user placement state. health06_1 CH-14 replaces full-size
-	# pick_many removal loops with deterministic Fisher-Yates shuffles. That
-	# deliberately refreshes the three order/layout-bearing hashes below while
-	# route identity, RNG end state, story, and economy remain byte-identical.
+	# pick_many removal loops with deterministic Fisher-Yates shuffles. The
+	# postfix06_2 layout-v13/placement-authority-v3 upgrade refreshes the serialized
+	# environment and containing world-map hashes below while route identity, RNG
+	# end state, story, and economy remain byte-identical.
 	const EXPECTED := {
 		"bankroll_delta": -4,
 		"clock_delta": 42,
-		"current_environment_sha256": "a3c72dca6bd1f5a379816b791c551624c3d94685a27900b5f5bc88de22b8599a",
+		"current_environment_sha256": "4a30818af33ca4ff85959775b60329b3fe98ca4d00cbf35952301e2ce7bfd347",
 		"current_world_node_id": "bar",
 		"heat_delta": 0,
 		"provenance_commit": "7ddb7685efb21e45979ea10ab89e660d99c6e891",
@@ -2652,7 +2653,7 @@ func _check_delivery_ordinary_travel_baseline(app: Control, phase: String) -> bo
 		"town_action_index": 0,
 		"travel_count_delta": 1,
 		"travel_story_sha256": "0257877551b37226fd62316ee2af5e047a27387fbb87d5acfa0273d1366a0e81",
-		"world_map_sha256": "bdd23471756818d2e71456bb1afb5dd47f51db81cc061bfd378532670323d04b",
+		"world_map_sha256": "82329cfd4cd52821b58897752fa811035dba35930a5a02ab5943206676570f78",
 	}
 	app.call("start_foundation_run", "DELIVERY-ORDINARY-BASELINE", {}, false)
 	for _start_frame in range(3):
