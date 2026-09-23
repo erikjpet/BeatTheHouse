@@ -111,6 +111,39 @@ Evidence:
 - Exact owned process exited, stderr was empty, and zero Godot processes
   remained before the lease was released.
 
+## 2026-09-23 fourth current-main exploratory probe (non-qualifying)
+
+Product base `d7d09f6a`; pushed replay tip `e52cd0f8`. Exactly one additional
+`-Ending clean -Repeat 1` run was made under the serialized Godot lease. The
+full-visibility policy worked: two wheel steps brought all 52 pixels and the
+label of **Skip Lessons** inside the run-menu viewport. The semantic click then
+reported acceptance and visibly hovered the button, but no confirmation opened,
+so the replay stopped fail-closed after seven counted actions.
+
+Repository-native UI route helpers emit a matching `pressed = false` wheel
+event before later input; the replay bridge emitted only the press. This is a
+narrow harness input-lifecycle finding, not a product placement, ending,
+goal-clarity, or economy finding. The bridge now mirrors that production-input
+pattern by publishing the matching wheel release immediately after its press.
+The source contract accepts the exact sequence and rejects five hostile
+press-only, reordered, still-pressed, intervening-input, and mismatched-release
+fixtures. A later serialized live probe must prove the correction.
+
+Evidence:
+
+- Run summary:
+  `.tmp/rw06_2/exploratory/clean-main-d7d09f6a-probe4/20260923-105053-444-27868/run-01/summary.json`
+  (SHA-256 `E83AE7119BECECA09CE852F8C266DCBD2EB21B55DCD8A9463E057381019A844B`).
+- Public trace, seven counted actions:
+  `.tmp/rw06_2/exploratory/clean-main-d7d09f6a-probe4/20260923-105053-444-27868/run-01/public_trace.ndjson`
+  (SHA-256 `B713C906EF6EDEC0EC2FE93E74D29792EA55125ED3A8F0E3F8C1A82C789B9378`).
+- Post-click screenshot:
+  `.tmp/agent_playtest/2026-09-23/rw062-clean-27868-1-c4483ceed7/0013.png`
+  (SHA-256 `AF462BFC76B7871F60881B8AE867536AC08714C6701C118F6C3EB8A9A5D05243`).
+- The exact owned process exited and zero Godot processes remained. Its stderr
+  preserved the generic engine warning `ObjectDB instances leaked at exit`
+  (SHA-256 `7E8F5DEB3BF520C8ABB23951DEAFB0669C320CEBB4CEB6668C755C617C5FD7D3`).
+
 ## Player intent
 
 Reach the Grand Casino, earn Bronze, Silver, and Gold Players Card tiers without

@@ -160,6 +160,20 @@ checkpoint, screenshots, and final summary used for acceptance.
   (SHA-256 `AF3293A2F0499FE1FCC9A2599E6C116C6F83B4020DC5387BD1464854B35EB6A1`).
   The exact owned process exited with empty stderr and no survivor. The
   full-visibility correction still requires a later serialized live probe.
+- A fourth serialized, non-qualifying clean probe on product base `d7d09f6a`
+  proved the full-visibility correction: two wheel steps brought the entire
+  **Skip Lessons** button and label into view. Its semantic click reported
+  acceptance and visibly hovered the target, but the confirmation did not
+  open; the run stopped fail-closed after seven counted actions. Repository UI
+  input helpers release wheel-button events before later input, while the
+  bridge had emitted only the press. The bridge now publishes the matching
+  release immediately after every wheel press, and the source contract rejects
+  five hostile order/lifecycle variants. Summary evidence is
+  `.tmp/rw06_2/exploratory/clean-main-d7d09f6a-probe4/20260923-105053-444-27868/run-01/summary.json`
+  (SHA-256 `E83AE7119BECECA09CE852F8C266DCBD2EB21B55DCD8A9463E057381019A844B`).
+  The exact owned process exited with no survivor; its generic post-exit
+  `ObjectDB instances leaked at exit` warning remains preserved. The wheel
+  release correction still requires a later serialized live probe.
 - Final qualifying evidence intentionally waits for rw06_1 to land.
 
 ## Open route risks

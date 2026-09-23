@@ -14,6 +14,8 @@ $ReportPath = Join-Path $Worktree '.tmp\rw06_2\replay_source_contract.json'
 $SemanticScrollReportPath = Join-Path $Worktree '.tmp\rw06_2\semantic_scroll_contract.json'
 
 $failures = [Collections.Generic.List[string]]::new()
+$wheelSequenceValidFixtures = 0
+$wheelSequenceHostileFixtures = 0
 
 function Add-Failure {
     param([Parameter(Mandatory = $true)][string]$Message)
@@ -63,6 +65,19 @@ function Assert-PowerShellParses {
     }
 }
 
+function Test-WheelPressReleaseSequence {
+    param([Parameter(Mandatory = $true)][string]$Source)
+    $functionMatch = [regex]::Match(
+        $Source,
+        '(?ms)^func\s+_push_mouse_wheel\([^\r\n]*\).*?(?=^func\s|\z)'
+    )
+    if (-not $functionMatch.Success) { return $false }
+    return [regex]::IsMatch(
+        $functionMatch.Value,
+        '(?s)var\s+wheel\s*:=\s*InputEventMouseButton\.new\(\).*?wheel\.pressed\s*=\s*true.*?app\.get_viewport\(\)\.push_input\(wheel,\s*true\)\s*await\s+process_frame\s*var\s+release\s*:=\s*wheel\.duplicate\(\)\s+as\s+InputEventMouseButton\s*release\.pressed\s*=\s*false\s*app\.get_viewport\(\)\.push_input\(release,\s*true\)\s*await\s+process_frame'
+    )
+}
+
 foreach ($path in @($RunnerPath, $LauncherPath, $BridgePath, $SanitizerPath, $ObservationContractPath)) {
     if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
         Add-Failure "Required rw06_2 source is missing: $path"
@@ -78,6 +93,85 @@ if ($failures.Count -eq 0) {
     $bridge = Get-Content -LiteralPath $BridgePath -Raw
     $sanitizer = Get-Content -LiteralPath $SanitizerPath -Raw
     $observationContract = Get-Content -LiteralPath $ObservationContractPath -Raw
+
+    $validWheelFixture = @'
+func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
+	var wheel := InputEventMouseButton.new()
+	wheel.pressed = true
+	app.get_viewport().push_input(wheel, true)
+	await process_frame
+	var release := wheel.duplicate() as InputEventMouseButton
+	release.pressed = false
+	app.get_viewport().push_input(release, true)
+	await process_frame
+'@
+    $hostileWheelFixtures = @(
+        [pscustomobject]@{ label = 'press-only'; source = @'
+func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
+	var wheel := InputEventMouseButton.new()
+	wheel.pressed = true
+	app.get_viewport().push_input(wheel, true)
+	await process_frame
+'@ },
+        [pscustomobject]@{ label = 'release-before-press'; source = @'
+func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
+	var wheel := InputEventMouseButton.new()
+	var release := wheel.duplicate() as InputEventMouseButton
+	release.pressed = false
+	app.get_viewport().push_input(release, true)
+	await process_frame
+	wheel.pressed = true
+	app.get_viewport().push_input(wheel, true)
+	await process_frame
+'@ },
+        [pscustomobject]@{ label = 'release-still-pressed'; source = @'
+func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
+	var wheel := InputEventMouseButton.new()
+	wheel.pressed = true
+	app.get_viewport().push_input(wheel, true)
+	await process_frame
+	var release := wheel.duplicate() as InputEventMouseButton
+	release.pressed = true
+	app.get_viewport().push_input(release, true)
+	await process_frame
+'@ },
+        [pscustomobject]@{ label = 'intervening-input'; source = @'
+func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
+	var wheel := InputEventMouseButton.new()
+	wheel.pressed = true
+	app.get_viewport().push_input(wheel, true)
+	await process_frame
+	app.get_viewport().push_input(InputEventMouseMotion.new(), true)
+	var release := wheel.duplicate() as InputEventMouseButton
+	release.pressed = false
+	app.get_viewport().push_input(release, true)
+	await process_frame
+'@ },
+        [pscustomobject]@{ label = 'different-release-source'; source = @'
+func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
+	var wheel := InputEventMouseButton.new()
+	wheel.pressed = true
+	app.get_viewport().push_input(wheel, true)
+	await process_frame
+	var release := InputEventMouseButton.new()
+	release.pressed = false
+	app.get_viewport().push_input(release, true)
+	await process_frame
+'@ }
+    )
+    $wheelSequenceValidFixtures = 1
+    $wheelSequenceHostileFixtures = $hostileWheelFixtures.Count
+    if (-not (Test-WheelPressReleaseSequence -Source $validWheelFixture)) {
+        Add-Failure 'Valid wheel press-release fixture was rejected.'
+    }
+    foreach ($fixture in $hostileWheelFixtures) {
+        if (Test-WheelPressReleaseSequence -Source ([string]$fixture.source)) {
+            Add-Failure "Hostile wheel press-release fixture '$($fixture.label)' did not fail closed."
+        }
+    }
+    if (-not (Test-WheelPressReleaseSequence -Source $bridge)) {
+        Add-Failure 'Production bridge wheel input must publish its matching release immediately after every press.'
+    }
 
     foreach ($required in @(
         'function Invoke-CleanEndingRoute',
@@ -341,6 +435,8 @@ $reportDirectory = Split-Path -Parent $ReportPath
 $report = [ordered]@{
     contract = 'rw06_2_replay_source'
     passed = ($failures.Count -eq 0)
+    wheel_sequence_valid_fixtures = $wheelSequenceValidFixtures
+    wheel_sequence_hostile_fixtures = $wheelSequenceHostileFixtures
     failures = @($failures)
 }
 $report | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $ReportPath -Encoding utf8

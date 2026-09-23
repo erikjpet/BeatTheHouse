@@ -677,6 +677,10 @@ func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
 	wheel.global_position = position
 	app.get_viewport().push_input(wheel, true)
 	await process_frame
+	var release := wheel.duplicate() as InputEventMouseButton
+	release.pressed = false
+	app.get_viewport().push_input(release, true)
+	await process_frame
 
 
 func _capture_look(command_number: int) -> Dictionary:
