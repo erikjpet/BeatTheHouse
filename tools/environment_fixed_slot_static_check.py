@@ -1263,6 +1263,15 @@ def main() -> int:
         and '"slot_binding_source_id": "shopkeeper:merchant"' in meta_source,
         "pawn-shop actionable aliases do not reuse their generated fixed-slot bindings",
     )
+    home_meta_source = meta_source.split("func _home_interactable_objects", 1)[-1].split("func _pawn_interactable_objects", 1)[0]
+    check.require(
+        '"slot_binding_source_id": "home_container:%s" % container_id' in home_meta_source
+        and home_meta_source.count('"placement_class": "floor_fixture"') >= 1
+        and home_meta_source.count('"placement_class": "wall_mounted"') >= 1
+        and home_meta_source.count('"placement_class": "surface_item"') >= 1
+        and home_meta_source.count('"placement_class": "doorway"') >= 1,
+        "home meta controls do not carry exact generated aliases and explicit named-slot classes",
+    )
     authority_validation_source = binder_source.split("static func validate_base_layout_authority", 1)[-1].split("static func bind_base_records", 1)[0]
     override_index = authority_validation_source.find('surface_map.get("class_overrides", {})')
     record_class_index = authority_validation_source.find('record.has("placement_class")')

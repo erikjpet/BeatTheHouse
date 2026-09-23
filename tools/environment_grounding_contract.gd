@@ -22,6 +22,7 @@ func _run() -> void:
 	_check_authored_actor_route(failures)
 	_check_complete_record_binding(failures)
 	_check_shared_base_binding_aliases(failures)
+	_check_home_meta_binding_aliases(failures)
 	_check_overflow_action_list(failures)
 	_check_semantic_classification(failures)
 	if failures.is_empty():
@@ -311,6 +312,81 @@ func _check_shared_base_binding_aliases(failures: Array) -> void:
 			or str(exit_record.get("placement_class", "")) != "doorway" \
 			or str(exit_record.get("slot_id", "")).is_empty():
 		failures.append("pawn-shop Street Door lost its generated fixed doorway binding")
+
+
+func _check_home_meta_binding_aliases(failures: Array) -> void:
+	var container_id := "home_alias_probe_01"
+	var source_id := "home_container:%s" % container_id
+	var environment := {
+		"id": "home_alias_fixture",
+		"archetype_id": "house",
+		"kind": "home",
+		"home_lost": false,
+		"home_containers": [{"id": container_id, "item_id": "bag", "display_name": "Probe Bag", "capacity": 3, "items": []}],
+		"game_ids": [],
+		"event_ids": [],
+		"item_offers": [],
+		"service_ids": [],
+		"lender_hooks": [],
+		"travel_hooks": ["pawn_shop"],
+		"next_archetypes": [],
+		"layout": {},
+	}
+	environment["layout"] = EnvironmentInstanceScript.ensure_generated_layout(environment)
+	var base_bindings: Dictionary = (environment.get("layout", {}) as Dictionary).get("slot_bindings", {})
+	var source: Dictionary = base_bindings.get(source_id, {})
+	if str(source.get("presentation_mode", "")) != "room" \
+			or str(source.get("placement_class", "")) != "floor_fixture" \
+			or str(source.get("slot_id", "")) != "base.home_container_1":
+		failures.append("generated home container did not receive the expected fixed floor-fixture source binding")
+		return
+	var records := [
+		{
+			"object_id": "meta_container:%s" % container_id,
+			"object_type": "home_container",
+			"slot_binding_source_id": source_id,
+			"placement_class": "floor_fixture",
+			"label": "Probe Bag",
+		},
+		{
+			"object_id": "meta_upgrade:home",
+			"object_type": "meta_upgrade",
+			"placement_class": "wall_mounted",
+			"label": "Upgrade Sign",
+		},
+		{
+			"object_id": "meta_trade_up:station",
+			"object_type": "meta_trade_up",
+			"placement_class": "surface_item",
+			"label": "Trade-Up Station",
+		},
+		{
+			"object_id": "travel:leave",
+			"object_type": "travel",
+			"placement_class": "doorway",
+			"label": "Map Door",
+		},
+	]
+	var result := EnvironmentSlotBinderScript.bind_base_records(environment, records, base_bindings)
+	if not bool(result.get("ok", false)):
+		failures.append("home late-record fixed-slot binding failed: %s" % JSON.stringify(result.get("errors", [])))
+		return
+	var bindings: Dictionary = result.get("slot_bindings", {})
+	var alias: Dictionary = bindings.get("meta_container:%s" % container_id, {})
+	if str(alias.get("presentation_mode", "")) != "room" \
+			or str(alias.get("slot_id", "")) != str(source.get("slot_id", "")) \
+			or str(alias.get("placement_class", "")) != "floor_fixture":
+		failures.append("late meta container did not reuse its exact generated home-container fixed binding")
+	for expectation in [
+		["meta_upgrade:home", "base.home_upgrade", "wall_mounted"],
+		["meta_trade_up:station", "base.home_trade_up", "surface_item"],
+		["travel:leave", "base.travel_door", "doorway"],
+	]:
+		var binding: Dictionary = bindings.get(str(expectation[0]), {})
+		if str(binding.get("presentation_mode", "")) != "room" \
+				or str(binding.get("slot_id", "")) != str(expectation[1]) \
+				or str(binding.get("placement_class", "")) != str(expectation[2]):
+			failures.append("home late control %s did not bind its named %s slot as %s" % expectation)
 
 
 func _check_overflow_action_list(failures: Array) -> void:
