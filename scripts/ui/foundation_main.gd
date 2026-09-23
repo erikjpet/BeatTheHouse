@@ -6,6 +6,7 @@ const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 const ScenarioSemanticViewModelScript := preload("res://scripts/ui/scenario_semantic_view_model.gd")
 const PlayerTextScript := preload("res://scripts/ui/player_text.gd")
 const BuildIdentityScript := preload("res://scripts/core/build_identity.gd")
+const RoomActionListScript := preload("res://scripts/ui/room_action_list.gd")
 
 # Thin UI shell for the README foundation runtime.
 
@@ -12266,7 +12267,8 @@ func _pal_tutorial_time_freeze_active() -> bool:
 func _talk_dock_input_is_blocked() -> bool:
 	# A map can intentionally host a tutorial conversation. It remains modal to
 	# the room behind it, but must not make its own TalkDock unresponsive.
-	return travel_transition_active or _event_choice_popup_is_visible() or _meta_item_interaction_is_visible() or _run_inventory_popup_is_visible() or _run_journal_popup_is_visible() or _run_menu_is_visible()
+	return travel_transition_active or _event_choice_popup_is_visible() or _meta_item_interaction_is_visible() or _run_inventory_popup_is_visible() or _run_journal_popup_is_visible() or _run_menu_is_visible() \
+		or (room_action_list != null and room_action_list.has_method("is_open") and bool(room_action_list.is_open()))
 
 
 func _blocking_modal_message() -> String:
@@ -12284,6 +12286,8 @@ func _blocking_modal_message() -> String:
 		return "Close the journal before doing anything else."
 	if _run_menu_is_visible():
 		return "Close the menu before doing anything else."
+	if room_action_list != null and room_action_list.has_method("is_open") and bool(room_action_list.is_open()):
+		return "Close Room actions before doing anything else."
 	return ""
 
 
@@ -13322,6 +13326,79 @@ func activate_interactable_object(object_id: String) -> bool:
 	var action_ok := _activate_interactable_object_with_lifecycle_snapshot(object_id, caller_rollback)
 	_commit_foundation_coach_attention(caller_rollback)
 	return action_ok
+
+
+func _activate_overflow_room_action(record_snapshot: Dictionary, action_snapshot: Dictionary) -> bool:
+	var object_id := str(record_snapshot.get("object_id", "")).strip_edges()
+	if object_id.is_empty():
+		return false
+	var object_data := _interactable_object(object_id)
+	if object_data.is_empty() or not RoomActionListScript.is_visible_overflow_record(object_data):
+		return false
+	var wanted_key := str(action_snapshot.get("_overflow_action_key", ""))
+	if wanted_key.is_empty():
+		return false
+	var live_action: Dictionary = {}
+	for action_value in RoomActionListScript.action_entries_for_record(object_data):
+		var candidate := action_value as Dictionary
+		if str(candidate.get("_overflow_action_key", "")) == wanted_key:
+			live_action = candidate
+			break
+	if live_action.is_empty() or not RoomActionListScript.action_is_enabled(object_data, live_action):
+		return false
+	# This surface owns the modal guard while open. Release it only after the
+	# selected record/action has been re-resolved against the live room and just
+	# before entering an existing production action path. Rejected stale, hidden,
+	# and disabled actions intentionally leave the surface open.
+	var overflow_was_open := room_action_list != null \
+			and room_action_list.has_method("is_open") \
+			and bool(room_action_list.is_open())
+	if overflow_was_open and room_action_list.has_method("close"):
+		room_action_list.close()
+	var source := str(live_action.get("_overflow_source", ""))
+	var object_type := str(object_data.get("object_type", CONTEXT_MODE_ROOM))
+	var explicit_scenario_command_id := str(live_action.get("scenario_command_id", "")).strip_edges()
+	if explicit_scenario_command_id.is_empty():
+		explicit_scenario_command_id = str(object_data.get("scenario_command_id", "")).strip_edges()
+	var route_as_scenario := object_type == CONTEXT_MODE_SCENARIO \
+			or not explicit_scenario_command_id.is_empty()
+	var scenario_command_id := explicit_scenario_command_id
+	if route_as_scenario and scenario_command_id.is_empty():
+		scenario_command_id = str(live_action.get("id", "")).strip_edges()
+	var activated := false
+	if source == RoomActionListScript.SOURCE_SEQUENCE \
+			or object_type in [CONTEXT_MODE_SCENARIO_SEQUENCE, "scenario_scene_object", "scenario_actor", "character"]:
+		activated = _activate_scenario_sequence_action(object_data, live_action)
+	elif route_as_scenario:
+		var scenario_owner_namespace := str(live_action.get("scenario_owner_namespace", "")).strip_edges()
+		if scenario_owner_namespace.is_empty():
+			scenario_owner_namespace = str(object_data.get("scenario_owner_namespace", object_data.get("owner_namespace", "scenario"))).strip_edges()
+		var scenario_stable_object_id := str(live_action.get("scenario_stable_object_id", "")).strip_edges()
+		if scenario_stable_object_id.is_empty():
+			scenario_stable_object_id = str(object_data.get("scenario_stable_object_id", object_data.get("stable_object_id", ""))).strip_edges()
+		activated = _activate_scenario_action(
+			scenario_owner_namespace,
+			scenario_stable_object_id,
+			scenario_command_id,
+			str(live_action.get("scenario_idempotency_key", "")),
+			str(live_action.get("action_origin_owner_namespace", object_data.get("scenario_owner_namespace", ""))),
+			str(live_action.get("action_origin_stable_object_id", object_data.get("scenario_stable_object_id", ""))),
+			str(live_action.get("action_origin_receipt_key", "")),
+			str(live_action.get("action_origin_boundary_id", "")),
+			str(live_action.get("action_origin_fingerprint", ""))
+		)
+	elif object_type == CONTEXT_MODE_GAME_HOOK:
+		activated = use_game_environment_hook(
+			str(live_action.get("parent_id", object_data.get("parent_id", ""))),
+			str(live_action.get("source_id", live_action.get("hook_id", object_data.get("source_id", "")))),
+			str(live_action.get("id", object_data.get("confirm_action_id", "")))
+		)
+	else:
+		var emit_object_id := str(live_action.get("emit_object_id", "")).strip_edges()
+		activated = activate_interactable_object(emit_object_id) if not emit_object_id.is_empty() else activate_interactable_object(object_id)
+	if not activated and overflow_was_open and room_action_list != null and room_action_list.has_method("open"):
+		room_action_list.open()
+	return activated
 
 
 func _activate_interactable_object_with_lifecycle_snapshot(object_id: String, caller_rollback: Dictionary) -> bool:

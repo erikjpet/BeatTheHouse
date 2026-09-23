@@ -349,29 +349,37 @@ func _check_overflow_action_list(failures: Array) -> void:
 	action_list.configure(focus_scope)
 	get_root().add_child(action_list)
 	var selected: Array = []
-	action_list.record_selected.connect(func(record: Dictionary) -> void:
-		selected.append(record)
+	action_list.action_selected.connect(func(record: Dictionary, action: Dictionary) -> void:
+		selected.append({"record": record, "action": action})
 	)
 	action_list.render(records)
 	var buttons := action_list.find_children("*", "Button", true, false)
-	var row_button: Button = null
+	var enabled_row: Button = null
+	var disabled_row: Button = null
 	var all_targets_accessible := true
 	for button_value in buttons:
 		var button := button_value as Button
 		if button.custom_minimum_size.x < 44.0 or button.custom_minimum_size.y < 44.0 or button.focus_mode != Control.FOCUS_ALL:
 			all_targets_accessible = false
-		if button.text.begins_with("Overflow disabled"):
-			row_button = button
-	if not action_list.visible or buttons.size() != 4 or not all_targets_accessible or row_button == null:
+		if str(button.get_meta("object_id", "")) == "scenario::overflow_enabled":
+			enabled_row = button
+		elif str(button.get_meta("object_id", "")) == "scenario::overflow_disabled":
+			disabled_row = button
+	if not action_list.visible or buttons.size() != 4 or not all_targets_accessible or enabled_row == null or disabled_row == null:
 		failures.append("overflow action list did not expose exactly two sorted 44-pixel keyboard/controller/touch rows")
 	else:
 		action_list.open()
 		if focus_scope.active_root() == null:
 			failures.append("overflow action list did not enter the shared modal focus scope")
-		row_button.emit_signal("pressed")
-		if selected.size() != 1 or str((selected[0] as Dictionary).get("object_id", "")) != "scenario::overflow_disabled" \
-				or focus_scope.active_root() != null:
-			failures.append("overflow action selection did not route the exact disabled record and close its modal scope")
+		disabled_row.emit_signal("pressed")
+		if not selected.is_empty() or focus_scope.active_root() == null:
+			failures.append("disabled overflow action emitted or closed its owned modal scope")
+		enabled_row.emit_signal("pressed")
+		var selected_record: Dictionary = (selected[0] as Dictionary).get("record", {}) if selected.size() == 1 else {}
+		var selected_action: Dictionary = (selected[0] as Dictionary).get("action", {}) if selected.size() == 1 else {}
+		if selected.size() != 1 or str(selected_record.get("object_id", "")) != "scenario::overflow_enabled" \
+				or str(selected_action.get("id", "")) != "inspect" or focus_scope.active_root() != null:
+			failures.append("enabled overflow action did not route its exact production record/action and close its modal scope")
 	var canvas = PixelSceneCanvasScript.new()
 	canvas.size = Vector2(900.0, 430.0)
 	canvas.render_environment_snapshot({"id": "overflow_list_contract", "archetype_id": "bar", "interactable_objects": records})
