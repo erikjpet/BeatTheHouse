@@ -538,7 +538,7 @@ static func build_run_screen(host: Variant) -> void:
 	visual_stack.add_child(host.summary_label)
 	host.room_action_list = RoomActionListScript.new()
 	host.room_action_list.configure(host.modal_focus_scope)
-	host.room_action_list.record_selected.connect(host.focus_interactable_object_from_view)
+	host.room_action_list.action_selected.connect(host._activate_overflow_room_action)
 	visual_stack.add_child(host.room_action_list)
 	host._build_run_report_screen(visual_stack)
 	host.environment_canvas = PixelSceneCanvasScript.new()
