@@ -87,24 +87,67 @@ memorized.
 
 ## Evidence layout
 
-Each invocation creates an ignored timestamp/PID root:
+The prepared final fixed-repeat launcher creates one ignored aggregate root
+with two independently profiled one-run children:
 
 ```text
-.tmp/rw06_2/<ending>/<timestamp>-<pid>/
+.tmp/rw06_2/final_fixed/<ending>-<timestamp>-<pid>-<nonce>/
+  launcher.invoked.ps1
   run-01/
-    public_trace.ndjson
-    money_curve.ndjson
-    summary.json
+    launcher.stdout.txt
+    launcher.stderr.txt
+    profile_roaming/
+    profile_local/
+    replay/<invocation>/
+      summary.json
+      heist_seed_preflight.json  # Heist only
+      run-01/
+        public_trace.ndjson
+        money_curve.ndjson
+        checkpoint_before.json
+        checkpoint_after.json
+        final_public_checkpoint.json
+        summary.json
   run-02/
-    public_trace.ndjson
-    money_curve.ndjson
-    summary.json
-  summary.json
+    launcher.stdout.txt
+    launcher.stderr.txt
+    profile_roaming/
+    profile_local/
+    replay/<invocation>/
+      summary.json
+      heist_seed_preflight.json  # Heist only
+      run-01/
+        public_trace.ndjson
+        money_curve.ndjson
+        checkpoint_before.json
+        checkpoint_after.json
+        final_public_checkpoint.json
+        summary.json
+  aggregate_summary.json
+  run_metadata.json
+  artifact_manifest.json
 ```
+
+`tools/rw06_2_final_evidence.ps1` qualifies only the fixed two-run portion. It
+pins the exact Git head/tree and route seed, requires a clean worktree, holds
+the Q-009 engine gate across both children, proves each child wrote through its
+own profile, and compares the canonical trace, money curve, persistence
+checkpoint and terminal checkpoint. A separate `fresh-interactive` evidence
+root and experience log are still required for each ending. Q-017 controls only
+how that separate Heist run is admitted; it never loosens the exact `0002`
+fixed-repeat route.
+
+The inner `rw06_2_ending_replay.ps1` remains non-qualifying even when invoked
+directly with `-Repeat 2`, because both iterations inherit that invocation's
+single external profile. Only the aggregate launcher may promote the fixed
+repeat after it proves two distinct profiles and compares their artifacts.
 
 Keep milestone/failure screenshots rather than reviewing hundreds of redundant
 frames. The committed route documents should link the exact transcript,
-checkpoint, screenshots, and final summary used for acceptance.
+before/after Continue checkpoints, screenshots, child summaries, aggregate
+manifest, and final summary used for acceptance. The fresh-interactive log must
+also record the player's believed goal, the exact rendered cue that communicated
+it, notable moments, and every arc-breaker disposition.
 
 ## Integration and ownership boundaries
 

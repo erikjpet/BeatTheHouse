@@ -67,6 +67,10 @@ $heistAuditHookValidFixtures = 0
 $heistAuditHookHostileFixtures = 0
 $heistConventionHookValidFixtures = 0
 $heistConventionHookHostileFixtures = 0
+$persistenceCheckpointValidFixtures = 0
+$persistenceCheckpointHostileFixtures = 0
+$directQualificationValidFixtures = 0
+$directQualificationHostileFixtures = 0
 
 function Add-Failure {
     param([Parameter(Mandatory = $true)][string]$Message)
@@ -722,6 +726,226 @@ function Test-CheatReplayBarredPeekExitOrder {
     )
 }
 
+
+function Test-PersistenceCheckpointWriteSequence {
+    param(
+        [Parameter(Mandatory = $true)][string]$Source,
+        [Parameter(Mandatory = $true)][string]$FunctionName,
+        [Parameter(Mandatory = $true)][ValidateSet(10, 20)][int]$Depth
+    )
+
+    $tokens = $null
+    $parseErrors = $null
+    $ast = [Management.Automation.Language.Parser]::ParseInput($Source, [ref]$tokens, [ref]$parseErrors)
+    if ($parseErrors.Count -ne 0) { return $false }
+    $functionAsts = @($ast.FindAll({
+        param($node)
+        $node -is [Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -ceq $FunctionName
+    }, $true))
+    if ($functionAsts.Count -cne 1 -or $null -ceq $functionAsts[0].Body.EndBlock) { return $false }
+    $functionAst = $functionAsts[0]
+    $body = $functionAst.Extent.Text
+    $directStatements = @($functionAst.Body.EndBlock.Statements)
+    $beforeCaptureToken = '$beforeJson = $before | ConvertTo-Json -Depth {0} -Compress' -f $Depth
+    $afterCaptureToken = '$afterJson = $after | ConvertTo-Json -Depth {0} -Compress' -f $Depth
+    $beforeWriteToken = '$before | ConvertTo-Json -Depth {0} | Set-Content -LiteralPath (Join-Path $script:RunRoot ''checkpoint_before.json'') -Encoding utf8' -f $Depth
+    $afterWriteToken = '$after | ConvertTo-Json -Depth {0} | Set-Content -LiteralPath (Join-Path $script:RunRoot ''checkpoint_after.json'') -Encoding utf8' -f $Depth
+    $comparisonToken = 'if ($afterJson -cne $beforeJson) {'
+    $midpointToken = '$script:MidpointSaved = $true'
+    $beforeCaptureIndex = $body.IndexOf($beforeCaptureToken, [StringComparison]::Ordinal)
+    $afterCaptureIndex = $body.IndexOf($afterCaptureToken, [StringComparison]::Ordinal)
+    $beforeWriteIndex = $body.IndexOf($beforeWriteToken, [StringComparison]::Ordinal)
+    $afterWriteIndex = $body.IndexOf($afterWriteToken, [StringComparison]::Ordinal)
+    $comparisonIndex = $body.IndexOf($comparisonToken, [StringComparison]::Ordinal)
+    $midpointIndex = $body.IndexOf($midpointToken, [StringComparison]::Ordinal)
+    $directBeforeWrites = @($directStatements | Where-Object { $_.Extent.Text.Trim() -ceq $beforeWriteToken })
+    $directAfterWrites = @($directStatements | Where-Object { $_.Extent.Text.Trim() -ceq $afterWriteToken })
+    $unconditionalStopsBeforeWrites = @($directStatements | Where-Object {
+        $_.Extent.StartOffset -gt ($functionAst.Extent.StartOffset + $afterCaptureIndex) -and
+            $_.Extent.StartOffset -lt ($functionAst.Extent.StartOffset + $beforeWriteIndex) -and
+            ($_ -is [Management.Automation.Language.ReturnStatementAst] -or
+                $_ -is [Management.Automation.Language.ThrowStatementAst] -or
+                $_ -is [Management.Automation.Language.ExitStatementAst])
+    })
+    return [regex]::Matches($body, [regex]::Escape($beforeCaptureToken)).Count -ceq 1 -and
+        [regex]::Matches($body, [regex]::Escape($afterCaptureToken)).Count -ceq 1 -and
+        [regex]::Matches($body, [regex]::Escape($beforeWriteToken)).Count -ceq 1 -and
+        [regex]::Matches($body, [regex]::Escape($afterWriteToken)).Count -ceq 1 -and
+        $directBeforeWrites.Count -ceq 1 -and
+        $directAfterWrites.Count -ceq 1 -and
+        $unconditionalStopsBeforeWrites.Count -ceq 0 -and
+        $beforeCaptureIndex -ge 0 -and
+        $afterCaptureIndex -gt $beforeCaptureIndex -and
+        $beforeWriteIndex -gt $afterCaptureIndex -and
+        $afterWriteIndex -gt $beforeWriteIndex -and
+        $comparisonIndex -gt $afterWriteIndex -and
+        $midpointIndex -gt $comparisonIndex
+}
+
+
+function Test-EndingNormalizationSequence {
+    param([Parameter(Mandatory = $true)][string]$Source)
+    $normalizationToken = '$Ending = $Ending.ToLowerInvariant()'
+    $defaultSeedToken = '$Seed = $FixedSeeds[$Ending]'
+    $heistGuardToken = "if (`$Ending -ceq 'heist' -and `$Seed -cne [string]`$FixedSeeds.heist)"
+    $heistPreflightToken = "if (`$Ending -ceq 'heist') {"
+    $normalizationIndex = $Source.IndexOf($normalizationToken, [StringComparison]::Ordinal)
+    $defaultSeedIndex = $Source.IndexOf($defaultSeedToken, [StringComparison]::Ordinal)
+    $heistGuardIndex = $Source.IndexOf($heistGuardToken, [StringComparison]::Ordinal)
+    $heistPreflightIndex = $Source.LastIndexOf($heistPreflightToken, [StringComparison]::Ordinal)
+    return [regex]::Matches($Source, [regex]::Escape($normalizationToken)).Count -ceq 1 -and
+        $normalizationIndex -ge 0 -and
+        $defaultSeedIndex -gt $normalizationIndex -and
+        $heistGuardIndex -gt $normalizationIndex -and
+        $heistPreflightIndex -gt $normalizationIndex
+}
+
+
+function Test-ExclusiveEvidenceDirectorySource {
+    param([Parameter(Mandatory = $true)][string]$Source)
+    $functionMatch = [regex]::Match($Source, '(?ms)^function\s+New-ExclusiveEvidenceDirectory\s*\{.*?(?=^function |\z)')
+    if (-not $functionMatch.Success) { return $false }
+    $body = $functionMatch.Value
+    $existsToken = 'if (Test-Path -LiteralPath $absolutePath) {'
+    $createToken = '[void](New-Item -ItemType Directory -Path $absolutePath -ErrorAction Stop)'
+    $existsIndex = $body.IndexOf($existsToken, [StringComparison]::Ordinal)
+    $createIndex = $body.IndexOf($createToken, [StringComparison]::Ordinal)
+    return $body.Contains('$absolutePath = [IO.Path]::GetFullPath($Path)') -and
+        $existsIndex -ge 0 -and
+        $createIndex -gt $existsIndex -and
+        $body.Contains('refusing stale artifact reuse') -and
+        -not [regex]::IsMatch($body, '(?s)New-Item[^\r\n]*\$absolutePath[^\r\n]*-Force')
+}
+
+
+function Test-CleanSilverPersistenceSource {
+    param([Parameter(Mandatory = $true)][string]$Source)
+    $projection = [regex]::Match($Source, '(?ms)^function\s+Get-CleanSilverPlayersCardProjection\s*\{.*?(?=^function |\z)').Value
+    $save = [regex]::Match($Source, '(?ms)^function\s+Assert-SaveRelaunchContinue\s*\{.*?(?=^function |\z)').Value
+    if ([string]::IsNullOrWhiteSpace($projection) -or [string]::IsNullOrWhiteSpace($save)) { return $false }
+    foreach ($token in @(
+        'Open-CageCounter',
+        "Choose-VisibleChoice -ChoiceId 'open_card'",
+        "Get-Value `$talk @('summary')",
+        "StartsWith('Silver. Gold:', [StringComparison]::Ordinal)",
+        'Get-PublicTalkChoices',
+        "`$expectedChoiceIds = @('cage_claim_card', 'cage_ambient', 'back_main')",
+        "tier_witness = 'Silver'",
+        "next_tier_witness = 'Gold'",
+        "Choose-VisibleChoice -ChoiceId 'back_main'",
+        "Choose-VisibleChoice -ChoiceId 'leave_counter'"
+    )) {
+        if ($projection.IndexOf($token, [StringComparison]::Ordinal) -lt 0) { return $false }
+    }
+    if ($projection -match 'run_state|narrative_flags|demo_objective|players_card_tier_label') { return $false }
+    foreach ($token in @(
+        "`$beforeCleanPlayersCard = if (`$Ending -ceq 'clean') { Get-CleanSilverPlayersCardProjection } else { `$null }",
+        'clean_players_card = $beforeCleanPlayersCard',
+        "`$afterCleanPlayersCard = if (`$Ending -ceq 'clean') { Get-CleanSilverPlayersCardProjection } else { `$null }",
+        'clean_players_card = $afterCleanPlayersCard'
+    )) {
+        if ($save.IndexOf($token, [StringComparison]::Ordinal) -lt 0) { return $false }
+    }
+    return $true
+}
+
+
+function Test-CheckpointDeterminismFailureSource {
+    param([Parameter(Mandatory = $true)][string]$Source)
+    return [regex]::IsMatch(
+        $Source,
+        '(?s)\$referenceCheckpointBeforeHash\s*=\s*''''.*?\$referenceCheckpointAfterHash\s*=\s*''''.*?\$currentCheckpointBeforeHash\s*=.*?persistence_checkpoint_before_sha256.*?\$currentCheckpointAfterHash\s*=.*?persistence_checkpoint_after_sha256.*?elseif\s*\(\$currentTranscriptHash.*?\$currentCheckpointBeforeHash\s+-cne\s+\$referenceCheckpointBeforeHash.*?\$currentCheckpointAfterHash\s+-cne\s+\$referenceCheckpointAfterHash.*?\)\s*\{\s*throw\s+"Deterministic replay mismatch',
+        [Text.RegularExpressions.RegexOptions]::IgnoreCase
+    )
+}
+
+
+function Test-MidpointCheckpointCompletenessSource {
+    param([Parameter(Mandatory = $true)][string]$Source)
+    return [regex]::IsMatch(
+        $Source,
+        '(?s)\$checkpointEvidenceComplete\s*=\s*\$script:MidpointSaved\s+-and\s*\$checkpointBeforeHash\s+-match\s+''\^\[a-f0-9\]\{64\}\$''.*?\$checkpointAfterHash\s+-match\s+''\^\[a-f0-9\]\{64\}\$''.*?\$checkpointBeforeHash\s+-ceq\s+\$checkpointAfterHash'
+    )
+}
+
+
+function Test-DirectDeterminismFormulaSource {
+    param([Parameter(Mandatory = $true)][string]$Source)
+    if ([regex]::Matches($Source, '(?im)^[ \t]*\$deterministic[ \t]*=').Count -cne 1) {
+        return $false
+    }
+    $formulaMatch = [regex]::Match(
+        $Source,
+        '(?ms)^[ \t]*\$deterministic[ \t]*=[ \t]*(?<formula>.*?)^[ \t]*\$checkpointEvidenceComplete[ \t]*='
+    )
+    if (-not $formulaMatch.Success) { return $false }
+    $actualFormula = [regex]::Replace($formulaMatch.Groups['formula'].Value, '\s+', '')
+    $expectedFormula = '$Repeat-ceq2-and@($runSummaries|Select-Object-ExpandPropertytranscript_sha256-Unique).Count-ceq1-and@($runSummaries|Select-Object-ExpandPropertymoney_curve_sha256-Unique).Count-ceq1-and@($runSummaries|Select-Object-ExpandPropertypersistence_checkpoint_before_sha256-Unique).Count-ceq1-and@($runSummaries|Select-Object-ExpandPropertypersistence_checkpoint_after_sha256-Unique).Count-ceq1-and@($runSummaries|ForEach-Object{$_.final_public_checkpoint|ConvertTo-Json-Depth10-Compress}|Select-Object-Unique).Count-ceq1'
+    return $actualFormula -ceq $expectedFormula
+}
+
+
+function Test-DirectDevelopmentQualificationSource {
+    param([Parameter(Mandatory = $true)][string]$Source)
+    if ([regex]::IsMatch($Source, '(?i)\$releaseQualifying\b|\$fixedRepeatQualifying\b|\bfixed_repeat_qualifying\b')) { return $false }
+    if ([regex]::Matches($Source, '(?i)\brelease_qualifying\b').Count -cne 2) { return $false }
+    if ([regex]::IsMatch($Source, '(?i)\bfixed_route_repeat\b|\btwo_identical_repeats\b|\brw06_2_final_evidence\b|\baggregate_summary\.json\b')) { return $false }
+    if ([regex]::IsMatch($Source, '(?im)\$env:(?:APPDATA|LOCALAPPDATA)\s*=|(?:Set-Item|New-Item)\b[^\r\n]*(?:Env:APPDATA|Env:LOCALAPPDATA)|SetEnvironmentVariable\s*\(\s*[''"](?:APPDATA|LOCALAPPDATA)[''"]|(?:^|\s)-Environment\b|\bProcessStartInfo\b|\.(?:Environment|EnvironmentVariables)\s*(?:\[|\.|=)')) { return $false }
+    if ([regex]::IsMatch($Source, '(?im)^[ \t]*\$(?!finalSummary\b|runSummary\b)[A-Za-z_][A-Za-z0-9_]*[ \t]*=[ \t]*\$(?:finalSummary|runSummary)\b')) { return $false }
+    if ([regex]::IsMatch($Source, '(?im)\$(?:finalSummary|runSummary)\s*(?:\.[A-Za-z_][A-Za-z0-9_]*|\[[^\]]+\])\s*=|\$(?:finalSummary|runSummary)\s*\.\s*Add\s*\(|\$(?:finalSummary|runSummary)\s*\|\s*Add-Member\b|Add-Member\b[^\r\n]*\$(?:finalSummary|runSummary)|\$(?:finalSummary|runSummary)\.PSObject\.Properties')) { return $false }
+    if (-not (Test-DirectDeterminismFormulaSource -Source $Source)) { return $false }
+
+    $runSummaryMatch = [regex]::Match($Source, '(?ms)^[ \t]*\$runSummary\s*=\s*\[ordered\]@\{(?<body>.*?)^[ \t]*\}')
+    if (-not $runSummaryMatch.Success) { return $false }
+    $runBody = $runSummaryMatch.Groups['body'].Value
+    $exactRunFields = [ordered]@{
+        role = "role = 'child_development_iteration'"
+        repeat_profile_scope = "repeat_profile_scope = 'shared_caller_appdata'"
+        fixed_repeat_qualification_authority = "fixed_repeat_qualification_authority = 'outer_independent_profile_aggregate_only'"
+        release_qualifying = 'release_qualifying = $false'
+        qualification = "qualification = 'non_qualifying_development_iteration'"
+    }
+    foreach ($field in $exactRunFields.Keys) {
+        $matches = @([regex]::Matches($runBody, "(?m)^\s*$([regex]::Escape([string]$field))\s*=.*$"))
+        if ($matches.Count -cne 1 -or $matches[0].Value.Trim() -cne [string]$exactRunFields[$field]) {
+            return $false
+        }
+    }
+
+    $summaryMatch = [regex]::Match($Source, '(?ms)^[ \t]*\$finalSummary\s*=\s*\[ordered\]@\{(?<body>.*?)^[ \t]*\}')
+    if (-not $summaryMatch.Success) { return $false }
+    $body = $summaryMatch.Groups['body'].Value
+    $exactFields = [ordered]@{
+        role = "role = 'child_development_run'"
+        repeat_profile_scope = "repeat_profile_scope = 'shared_caller_appdata'"
+        fixed_repeat_qualification_authority = "fixed_repeat_qualification_authority = 'outer_independent_profile_aggregate_only'"
+        deterministic = 'deterministic = $deterministic'
+        release_qualifying = 'release_qualifying = $false'
+        qualification = "qualification = 'non_qualifying_development_run'"
+    }
+    foreach ($field in $exactFields.Keys) {
+        $matches = @([regex]::Matches($body, "(?m)^\s*$([regex]::Escape([string]$field))\s*=.*$"))
+        if ($matches.Count -cne 1 -or $matches[0].Value.Trim() -cne [string]$exactFields[$field]) {
+            return $false
+        }
+    }
+    $allowedKeys = @(
+        'schema_version', 'check_id', 'role', 'repeat_profile_scope',
+        'fixed_repeat_qualification_authority', 'ending', 'seed',
+        'observed_terminal_seeds', 'repeat', 'deterministic',
+        'checkpoint_evidence_complete', 'release_qualifying', 'qualification',
+        'public_observation_schema', 'public_observation_schema_version',
+        'heist_seed_preflight', 'evidence_root', 'runs'
+    )
+    $summaryKeys = @([regex]::Matches($body, '(?m)^\s*(?<key>[A-Za-z_][A-Za-z0-9_]*)\s*=') | ForEach-Object { $_.Groups['key'].Value })
+    if (@($summaryKeys | Select-Object -Unique).Count -cne $summaryKeys.Count -or
+        @($summaryKeys | Where-Object { $_ -cnotin $allowedKeys }).Count -ne 0) {
+        return $false
+    }
+    return $true
+}
+
+
 foreach ($path in @(
     $RunnerPath, $ReplayPolicyPath, $HeistSeedPreflightPath, $LauncherPath, $BridgePath, $SanitizerPath,
     $ObservationContractPath, $FoundationMainPath, $FoundationHudBarPath,
@@ -760,6 +984,134 @@ if ($failures.Count -eq 0) {
     $foundationWorldTest = Get-Content -LiteralPath $FoundationWorldTestPath -Raw
     $crewHeistTest = Get-Content -LiteralPath $CrewHeistTestPath -Raw
     $uiMainFlowTest = Get-Content -LiteralPath $UiMainFlowTestPath -Raw
+
+    $validEndingNormalizationFixture = @'
+$Ending = $Ending.ToLowerInvariant()
+$Seed = $FixedSeeds[$Ending]
+if ($Ending -ceq 'heist' -and $Seed -cne [string]$FixedSeeds.heist) { throw 'wrong seed' }
+if ($Ending -ceq 'heist') { Invoke-HeistSeedPreflight }
+'@
+    $hostileMixedCaseEndingFixture = @'
+$Seed = $FixedSeeds[$Ending]
+if ($Ending -ceq 'heist' -and $Seed -cne [string]$FixedSeeds.heist) { throw 'wrong seed' }
+if ($Ending -ceq 'heist') { Invoke-HeistSeedPreflight }
+'@
+    if (-not (Test-EndingNormalizationSequence -Source $validEndingNormalizationFixture) -or
+        -not (Test-EndingNormalizationSequence -Source $runner)) {
+        Add-Failure 'Ending input must normalize once before fixed-seed lookup, Q-013 rejection, or Heist preflight.'
+    }
+    if (Test-EndingNormalizationSequence -Source $hostileMixedCaseEndingFixture) {
+        Add-Failure 'A mixed-case Heist hostile without normalization did not fail closed.'
+    }
+
+    $validExclusiveEvidenceFixture = @'
+function New-ExclusiveEvidenceDirectory {
+    $absolutePath = [IO.Path]::GetFullPath($Path)
+    if (Test-Path -LiteralPath $absolutePath) { throw 'refusing stale artifact reuse' }
+    [void](New-Item -ItemType Directory -Path $absolutePath -ErrorAction Stop)
+}
+'@
+    $hostileForcedEvidenceFixture = $validExclusiveEvidenceFixture.Replace('-ErrorAction Stop)', '-Force -ErrorAction Stop)')
+    $hostileUncheckedEvidenceFixture = $validExclusiveEvidenceFixture.Replace("if (Test-Path -LiteralPath `$absolutePath) { throw 'refusing stale artifact reuse' }", '')
+    if (-not (Test-ExclusiveEvidenceDirectorySource -Source $validExclusiveEvidenceFixture) -or
+        -not (Test-ExclusiveEvidenceDirectorySource -Source $runner)) {
+        Add-Failure 'Invocation and run evidence directories must be absolute, new, and created without stale-target reuse.'
+    }
+    foreach ($hostileEvidenceFixture in @($hostileForcedEvidenceFixture, $hostileUncheckedEvidenceFixture)) {
+        if (Test-ExclusiveEvidenceDirectorySource -Source $hostileEvidenceFixture) {
+            Add-Failure 'A stale-evidence directory hostile did not fail closed.'
+        }
+    }
+    Assert-Match $runner '(?s)\$invocationRoot\s*=\s*New-ExclusiveEvidenceDirectory\s+-Path.*?\$script:RunRoot\s*=\s*New-ExclusiveEvidenceDirectory\s+-Path' 'Both invocation and per-run evidence roots must use exclusive non-reusing creation.'
+
+    if (-not (Test-CleanSilverPersistenceSource -Source $runner)) {
+        Add-Failure 'Clean Save/Continue must retain the exact rendered Silver-to-Gold Cage ledger and its public controls before and after process exit.'
+    }
+    $hostilePrivateCleanState = $runner.Replace("Get-Value `$talk @('summary') `$null", 'Get-PrivatePlayersCardTier')
+    $hostileMissingCleanAfter = $runner.Replace('clean_players_card = $afterCleanPlayersCard', 'clean_players_card = $null')
+    foreach ($hostileCleanFixture in @($hostilePrivateCleanState, $hostileMissingCleanAfter)) {
+        if ($hostileCleanFixture -ceq $runner -or (Test-CleanSilverPersistenceSource -Source $hostileCleanFixture)) {
+            Add-Failure 'A missing or private Clean Silver persistence hostile did not fail closed.'
+        }
+    }
+
+    if (-not (Test-CheckpointDeterminismFailureSource -Source $runner)) {
+        Add-Failure 'Repeat-2 determinism must compare both retained checkpoint hashes inside the outward mismatch throw.'
+    }
+    $hostileCheckpointDeterminism = $runner.Replace('$currentCheckpointBeforeHash -cne $referenceCheckpointBeforeHash', '$currentCheckpointBeforeHash -ceq $currentCheckpointBeforeHash')
+    if ($hostileCheckpointDeterminism -ceq $runner -or (Test-CheckpointDeterminismFailureSource -Source $hostileCheckpointDeterminism)) {
+        Add-Failure 'A repeat mismatch that omits one retained checkpoint hash did not fail closed.'
+    }
+
+    if (-not (Test-MidpointCheckpointCompletenessSource -Source $runner)) {
+        Add-Failure 'Per-run checkpoint completeness must require the current run to have reached its authenticated midpoint.'
+    }
+    $hostileStaleCheckpointCompleteness = $runner.Replace('$checkpointEvidenceComplete = $script:MidpointSaved -and', '$checkpointEvidenceComplete =')
+    if ($hostileStaleCheckpointCompleteness -ceq $runner -or (Test-MidpointCheckpointCompletenessSource -Source $hostileStaleCheckpointCompleteness)) {
+        Add-Failure 'A stale equal-file completeness hostile without MidpointSaved did not fail closed.'
+    }
+
+    $validDirectDevelopmentQualificationFixture = @'
+$runSummary = [ordered]@{
+    role = 'child_development_iteration'
+    repeat_profile_scope = 'shared_caller_appdata'
+    fixed_repeat_qualification_authority = 'outer_independent_profile_aggregate_only'
+    release_qualifying = $false
+    qualification = 'non_qualifying_development_iteration'
+}
+$deterministic = $Repeat -ceq 2 -and
+    @($runSummaries | Select-Object -ExpandProperty transcript_sha256 -Unique).Count -ceq 1 -and
+    @($runSummaries | Select-Object -ExpandProperty money_curve_sha256 -Unique).Count -ceq 1 -and
+    @($runSummaries | Select-Object -ExpandProperty persistence_checkpoint_before_sha256 -Unique).Count -ceq 1 -and
+    @($runSummaries | Select-Object -ExpandProperty persistence_checkpoint_after_sha256 -Unique).Count -ceq 1 -and
+    @($runSummaries | ForEach-Object { $_.final_public_checkpoint | ConvertTo-Json -Depth 10 -Compress } | Select-Object -Unique).Count -ceq 1
+$checkpointEvidenceComplete = $true
+$finalSummary = [ordered]@{
+    role = 'child_development_run'
+    repeat_profile_scope = 'shared_caller_appdata'
+    fixed_repeat_qualification_authority = 'outer_independent_profile_aggregate_only'
+    deterministic = $deterministic
+    release_qualifying = $false
+    qualification = 'non_qualifying_development_run'
+}
+'@
+    if (-not (Test-DirectDevelopmentQualificationSource -Source $validDirectDevelopmentQualificationFixture) -or
+        -not (Test-DirectDevelopmentQualificationSource -Source $runner)) {
+        Add-Failure 'The direct replay must stay explicitly child/development/non-qualifying even when Repeat=2 is deterministic.'
+    }
+    $directQualificationValidFixtures = 2
+    $hostileDirectQualificationFixtures = @(
+        $validDirectDevelopmentQualificationFixture.Replace('release_qualifying = $false', 'release_qualifying = $true'),
+        $validDirectDevelopmentQualificationFixture.Replace('release_qualifying = $false', 'release_qualifying = $deterministic'),
+        $validDirectDevelopmentQualificationFixture.Replace('release_qualifying = $false', 'release_qualifying = ($Repeat -ceq 2)'),
+        $validDirectDevelopmentQualificationFixture.Replace('release_qualifying = $false', 'release_qualifying = $releaseQualifying'),
+        $validDirectDevelopmentQualificationFixture.Replace("qualification = 'non_qualifying_development_run'", "qualification = 'two_identical_repeats'"),
+        $validDirectDevelopmentQualificationFixture.Replace("role = 'child_development_run'", "role = 'fixed_route_repeat'"),
+        $validDirectDevelopmentQualificationFixture.Replace("fixed_repeat_qualification_authority = 'outer_independent_profile_aggregate_only'", "fixed_repeat_qualification_authority = 'direct_runner'"),
+        $validDirectDevelopmentQualificationFixture.Replace('deterministic = $deterministic', 'deterministic = $true'),
+        $validDirectDevelopmentQualificationFixture.Replace("role = 'child_development_iteration'", "role = 'fixed_route_repeat'"),
+        $validDirectDevelopmentQualificationFixture.Replace("qualification = 'non_qualifying_development_iteration'", "qualification = 'fixed_route_repeat'"),
+        $validDirectDevelopmentQualificationFixture.Replace('$deterministic = $Repeat -ceq 2 -and', '$deterministic = $Repeat -ceq 2 -or'),
+        $validDirectDevelopmentQualificationFixture.Replace('@($runSummaries | Select-Object -ExpandProperty persistence_checkpoint_after_sha256 -Unique).Count -ceq 1 -and', '$true -and'),
+        $validDirectDevelopmentQualificationFixture.Replace('release_qualifying = $false', "fixed_repeat_qualifying = `$true`n    release_qualifying = `$false"),
+        ('$runSummary = [ordered]@{ fixed_repeat_qualifying = $true }' + [Environment]::NewLine + $validDirectDevelopmentQualificationFixture),
+        ('$inlineSummary = [ordered]@{ release_qualifying = $true }' + [Environment]::NewLine + $validDirectDevelopmentQualificationFixture),
+        ($validDirectDevelopmentQualificationFixture + [Environment]::NewLine + '$finalSummary.release_qualifying = $true'),
+        ($validDirectDevelopmentQualificationFixture + [Environment]::NewLine + '$alias = $finalSummary; $alias[''release_qualifying''] = $true'),
+        ('$env:APPDATA = ''C:\hostile-profile''' + [Environment]::NewLine + $validDirectDevelopmentQualificationFixture),
+        ('[Environment]::SetEnvironmentVariable(''LOCALAPPDATA'', ''C:\hostile-profile'', ''Process'')' + [Environment]::NewLine + $validDirectDevelopmentQualificationFixture),
+        ('Start-Process pwsh -Environment @{ APPDATA = ''C:\hostile-profile'' }' + [Environment]::NewLine + $validDirectDevelopmentQualificationFixture),
+        ("Start-Process pwsh ```r`n    -Environment @{ APPDATA = 'C:\hostile-profile' }" + [Environment]::NewLine + $validDirectDevelopmentQualificationFixture),
+        ('$psi = [Diagnostics.ProcessStartInfo]::new(); $psi.Environment[''LOCALAPPDATA''] = ''C:\hostile-profile''' + [Environment]::NewLine + $validDirectDevelopmentQualificationFixture),
+        $validDirectDevelopmentQualificationFixture.Replace("qualification = 'non_qualifying_development_run'", "qualification_alias = 'fixed_route_repeat'`n    qualification = 'non_qualifying_development_run'")
+    )
+    $directQualificationHostileFixtures = $hostileDirectQualificationFixtures.Count
+    foreach ($hostileDirectQualificationFixture in $hostileDirectQualificationFixtures) {
+        if ($hostileDirectQualificationFixture -ceq $validDirectDevelopmentQualificationFixture -or
+            (Test-DirectDevelopmentQualificationSource -Source $hostileDirectQualificationFixture)) {
+            Add-Failure 'A hardcoded or direct fixed-repeat qualification hostile did not fail closed.'
+        }
+    }
 
     $worldMapNormalize = Get-GDScriptFunctionSource -Source $worldMap -Name 'normalize'
     $worldMapTopologyNormalize = Get-GDScriptFunctionSource -Source $worldMap -Name 'normalize_topology'
@@ -2413,6 +2765,12 @@ func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
         "@('after_fingerprint')",
         'Get-FileHash -LiteralPath $script:TranscriptPath',
         'Get-FileHash -LiteralPath $script:MoneyCurvePath',
+        "Join-Path `$script:RunRoot 'checkpoint_before.json'",
+        "Join-Path `$script:RunRoot 'checkpoint_after.json'",
+        'persistence_checkpoint_before_sha256 = $checkpointBeforeHash',
+        'persistence_checkpoint_after_sha256 = $checkpointAfterHash',
+        'persistence_checkpoint_complete = $checkpointEvidenceComplete',
+        'checkpoint_evidence_complete = $checkpointEvidenceComplete',
         "record_kind = 'final_public_checkpoint'",
         'public_fingerprint = $publicFingerprint',
         'checkpoint_fingerprint = $checkpointFingerprint',
@@ -2439,7 +2797,11 @@ func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
         "`$screenName -cne 'VICTORY'",
         "@('screen', 'run_report_visible') `$null",
         '$Repeat -ceq 2',
-        'release_qualifying = $releaseQualifying',
+        "role = 'child_development_run'",
+        "repeat_profile_scope = 'shared_caller_appdata'",
+        "fixed_repeat_qualification_authority = 'outer_independent_profile_aggregate_only'",
+        'release_qualifying = $false',
+        "qualification = 'non_qualifying_development_run'",
         'heist_seed_preflight = $heistSeedPreflight',
         'heist_launch_setup = $script:HeistLaunchSetup',
         'PLAY did not visibly enter a live first-night lesson',
@@ -2532,6 +2894,139 @@ func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
             if ($shutdownSlice -match 'create_timer\s*\(') {
                 Add-Failure 'The production-input bridge must not create any SceneTreeTimer after entering shutdown.'
             }
+        }
+    }
+
+    $validPersistenceCheckpointFixture = @'
+function Assert-SaveRelaunchContinue {
+    $beforeJson = $before | ConvertTo-Json -Depth 10 -Compress
+    $afterJson = $after | ConvertTo-Json -Depth 10 -Compress
+    $before | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath (Join-Path $script:RunRoot 'checkpoint_before.json') -Encoding utf8
+    $after | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath (Join-Path $script:RunRoot 'checkpoint_after.json') -Encoding utf8
+    if ($afterJson -cne $beforeJson) {
+        throw 'mismatch'
+    }
+    $script:MidpointSaved = $true
+}
+'@
+    $persistenceCheckpointValidFixtures = 3
+    if (-not (Test-PersistenceCheckpointWriteSequence -Source $validPersistenceCheckpointFixture -FunctionName 'Assert-SaveRelaunchContinue' -Depth 10)) {
+        Add-Failure 'Valid persistence checkpoint write-order fixture was rejected.'
+    }
+    if (-not (Test-PersistenceCheckpointWriteSequence -Source $runner -FunctionName 'Assert-SaveRelaunchContinue' -Depth 10)) {
+        Add-Failure 'Generic Save/Continue must write distinct before/after checkpoints after capture and before comparison or success.'
+    }
+    if (-not (Test-PersistenceCheckpointWriteSequence -Source $runner -FunctionName 'Assert-HeistAuditKnowledgeSaveRelaunchContinue' -Depth 20)) {
+        Add-Failure 'Q-013 Save/Continue must write distinct learned-Count before/after checkpoints after capture and before comparison or success.'
+    }
+    $hostilePersistenceCheckpointFixtures = @(
+        [pscustomobject]@{ label = 'missing-before-write'; source = @'
+function Assert-SaveRelaunchContinue {
+    $beforeJson = $before | ConvertTo-Json -Depth 10 -Compress
+    $afterJson = $after | ConvertTo-Json -Depth 10 -Compress
+    $after | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath (Join-Path $script:RunRoot 'checkpoint_after.json') -Encoding utf8
+    if ($afterJson -cne $beforeJson) { throw 'mismatch' }
+    $script:MidpointSaved = $true
+}
+'@ },
+        [pscustomobject]@{ label = 'missing-after-write'; source = @'
+function Assert-SaveRelaunchContinue {
+    $beforeJson = $before | ConvertTo-Json -Depth 10 -Compress
+    $afterJson = $after | ConvertTo-Json -Depth 10 -Compress
+    $before | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath (Join-Path $script:RunRoot 'checkpoint_before.json') -Encoding utf8
+    if ($afterJson -cne $beforeJson) { throw 'mismatch' }
+    $script:MidpointSaved = $true
+}
+'@ },
+        [pscustomobject]@{ label = 'same-path'; source = @'
+function Assert-SaveRelaunchContinue {
+    $beforeJson = $before | ConvertTo-Json -Depth 10 -Compress
+    $afterJson = $after | ConvertTo-Json -Depth 10 -Compress
+    $before | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath (Join-Path $script:RunRoot 'checkpoint_before.json') -Encoding utf8
+    $after | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath (Join-Path $script:RunRoot 'checkpoint_before.json') -Encoding utf8
+    if ($afterJson -cne $beforeJson) { throw 'mismatch' }
+    $script:MidpointSaved = $true
+}
+'@ },
+        [pscustomobject]@{ label = 'swapped-snapshots'; source = @'
+function Assert-SaveRelaunchContinue {
+    $beforeJson = $before | ConvertTo-Json -Depth 10 -Compress
+    $afterJson = $after | ConvertTo-Json -Depth 10 -Compress
+    $after | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath (Join-Path $script:RunRoot 'checkpoint_before.json') -Encoding utf8
+    $before | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath (Join-Path $script:RunRoot 'checkpoint_after.json') -Encoding utf8
+    if ($afterJson -cne $beforeJson) { throw 'mismatch' }
+    $script:MidpointSaved = $true
+}
+'@ },
+        [pscustomobject]@{ label = 'writes-only-on-mismatch'; source = @'
+function Assert-SaveRelaunchContinue {
+    $beforeJson = $before | ConvertTo-Json -Depth 10 -Compress
+    $afterJson = $after | ConvertTo-Json -Depth 10 -Compress
+    if ($afterJson -cne $beforeJson) {
+        $before | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath (Join-Path $script:RunRoot 'checkpoint_before.json') -Encoding utf8
+        $after | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath (Join-Path $script:RunRoot 'checkpoint_after.json') -Encoding utf8
+        throw 'mismatch'
+    }
+    $script:MidpointSaved = $true
+}
+'@ },
+        [pscustomobject]@{ label = 'writes-after-comparison'; source = @'
+function Assert-SaveRelaunchContinue {
+    $beforeJson = $before | ConvertTo-Json -Depth 10 -Compress
+    $afterJson = $after | ConvertTo-Json -Depth 10 -Compress
+    if ($afterJson -cne $beforeJson) { throw 'mismatch' }
+    $before | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath (Join-Path $script:RunRoot 'checkpoint_before.json') -Encoding utf8
+    $after | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath (Join-Path $script:RunRoot 'checkpoint_after.json') -Encoding utf8
+    $script:MidpointSaved = $true
+}
+'@ },
+        [pscustomobject]@{ label = 'success-before-writes'; source = @'
+function Assert-SaveRelaunchContinue {
+    $beforeJson = $before | ConvertTo-Json -Depth 10 -Compress
+    $afterJson = $after | ConvertTo-Json -Depth 10 -Compress
+    $script:MidpointSaved = $true
+    $before | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath (Join-Path $script:RunRoot 'checkpoint_before.json') -Encoding utf8
+    $after | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath (Join-Path $script:RunRoot 'checkpoint_after.json') -Encoding utf8
+    if ($afterJson -cne $beforeJson) { throw 'mismatch' }
+}
+'@ },
+        [pscustomobject]@{ label = 'writes-in-unreachable-branch'; source = @'
+function Assert-SaveRelaunchContinue {
+    $beforeJson = $before | ConvertTo-Json -Depth 10 -Compress
+    $afterJson = $after | ConvertTo-Json -Depth 10 -Compress
+    if ($false) {
+        $before | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath (Join-Path $script:RunRoot 'checkpoint_before.json') -Encoding utf8
+        $after | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath (Join-Path $script:RunRoot 'checkpoint_after.json') -Encoding utf8
+    }
+    if ($afterJson -cne $beforeJson) { throw 'mismatch' }
+    $script:MidpointSaved = $true
+}
+'@ },
+        [pscustomobject]@{ label = 'unconditional-return-before-writes'; source = @'
+function Assert-SaveRelaunchContinue {
+    $beforeJson = $before | ConvertTo-Json -Depth 10 -Compress
+    $afterJson = $after | ConvertTo-Json -Depth 10 -Compress
+    return
+    $before | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath (Join-Path $script:RunRoot 'checkpoint_before.json') -Encoding utf8
+    $after | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath (Join-Path $script:RunRoot 'checkpoint_after.json') -Encoding utf8
+    if ($afterJson -cne $beforeJson) { throw 'mismatch' }
+    $script:MidpointSaved = $true
+}
+'@ },
+        [pscustomobject]@{ label = 'missing-before-capture'; source = @'
+function Assert-SaveRelaunchContinue {
+    $afterJson = $after | ConvertTo-Json -Depth 10 -Compress
+    $before | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath (Join-Path $script:RunRoot 'checkpoint_before.json') -Encoding utf8
+    $after | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath (Join-Path $script:RunRoot 'checkpoint_after.json') -Encoding utf8
+    if ($afterJson -cne $beforeJson) { throw 'mismatch' }
+    $script:MidpointSaved = $true
+}
+'@ }
+    )
+    $persistenceCheckpointHostileFixtures = $hostilePersistenceCheckpointFixtures.Count
+    foreach ($fixture in $hostilePersistenceCheckpointFixtures) {
+        if (Test-PersistenceCheckpointWriteSequence -Source ([string]$fixture.source) -FunctionName 'Assert-SaveRelaunchContinue' -Depth 10) {
+            Add-Failure "Hostile persistence checkpoint fixture '$($fixture.label)' did not fail closed."
         }
     }
 
@@ -2629,6 +3124,8 @@ func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
     $planningProjectionSource = [regex]::Match($runner, '(?ms)^function Get-PlanningTableProjection\s*\{.*?(?=^function |\z)').Value
     Assert-Match $planningProjectionSource '(?s)enabled.*?-isnot\s+\[bool\].*?rendered.*?-isnot\s+\[bool\].*?rendered\s*=\s*\[bool\]\$rendered.*?no public room-action rows with rendered witnesses' 'The persisted planning projection must retain exact boolean enabled/rendered room-action witnesses and reject an unrendered fallback.'
     Assert-NotMatch $planningProjectionSource 'event_popup|Get-VisibleChoiceIds|Get-PublicTalkChoices' 'The Q-013 persistence projection must not replace rendered room-action proof with modal choice metadata.'
+    $heistPersistenceSource = [regex]::Match($runner, '(?ms)^function Assert-HeistAuditKnowledgeSaveRelaunchContinue\s*\{.*?(?=^function |\z)').Value
+    Assert-Match $heistPersistenceSource '(?s)\$before\s*=\s*\[ordered\]@\{\s*checkpoint\s*=\s*Get-PersistenceCheckpoint\s*planning_choices\s*=\s*\$beforeProjection\s*\}.*?\$beforeJson.*?\$after\s*=\s*\[ordered\]@\{\s*checkpoint\s*=\s*Get-PersistenceCheckpoint\s*planning_choices\s*=\s*\$afterProjection\s*\}.*?\$afterJson' 'Q-013 retained checkpoint files must include both the public economy/location checkpoint and the exact rendered planning-table projection before and after Continue.'
     Assert-Match $runner '(?ms)^function Assert-HeistAuditKnowledgeSaveRelaunchContinue\s*\{.*?Get-PlanningTableProjection.*?choice_id\s+-ceq\s+''lock_the_count''.*?Count\s+-cne\s+1.*?enabled\s+-isnot\s+\[bool\].*?rendered\s+-isnot\s+\[bool\].*?Click-RunMenuButton\s+-Text\s+''Save''.*?The Count learned Audit route before plan lock.*?Start-BridgeSession.*?CONTINUE.*?Get-PlanningTableProjection.*?choice_id\s+-ceq\s+''lock_the_count''.*?enabled\s+-isnot\s+\[bool\].*?rendered\s+-isnot\s+\[bool\].*?Public learned-Audit planning state changed.*?(?=^function |\z)' 'Q-013 persistence must require one exactly rendered and enabled Count lock before Save and after a full process relaunch/Continue, before the plan itself is locked.'
     Assert-Match $runner '(?ms)^function Invoke-HeistEndingRoute\s*\{\s*Establish-CrewMarker\s*\r?\n\s*Reach-GrandCasino\s*\r?\n\s*Restore-EnvironmentSurfaceAfterTravelResult\s*\r?\n\s*Observe-RenderedAuditNightHook\s*\r?\n\s*Clear-CrewMarkerFavors\s*\r?\n\s*Ensure-PunchlineCasinoDiscovered\s*\r?\n\s*Recruit-Bishop\s*\r?\n\s*Promote-BishopToInnerCircle\s*\r?\n\s*Assert-HeistAuditKnowledgeUnderHostileRevisit\s*\r?\n\s*Assert-HeistAuditKnowledgeSaveRelaunchContinue.*?(?=^function |\z)' 'The Count route must naturally read fresh Audit, prove a hostile revisit, and prove restored learned knowledge before it locks Plan A.'
     $heistRouteSource = [regex]::Match($runner, '(?ms)^function Invoke-HeistEndingRoute\s*\{.*?(?=^function |\z)').Value
@@ -2669,6 +3166,13 @@ func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
     Assert-NotMatch $heistSeedPreflight 'scenario_pins|tutorial_overrides|debug|inject' 'Natural Heist preflight must not pin, inject, or use tutorial/debug scenario authority.'
     Assert-Match $replayPolicy '(?s)function Assert-DeltaQueenBeachPublicRoute.*?ArchetypeId\s+-cne\s+''delta_queen''.*?beachNodes\.Count\s+-cne\s+1.*?state.*?revealed.*?visited.*?beachCost.*?-cne\s+0.*?beachTravelTarget\s+-isnot\s+\[bool\].*?-not\s+\[bool\]\$beachTravelTarget.*?beachEnabled\s+-isnot\s+\[bool\].*?exact transient boat travel lock.*?another normal Delta Queen travel destination was enabled' 'Q-011 policy must require one visible final-selection zero-fare Beach route and allow it disabled only during the exact global boat travel lock.'
     Assert-Match $runner '(?s)function Assert-DeltaQueenBeachRouteInvariant.*?Open-WorldMap.*?Assert-DeltaQueenBeachPublicRoute.*?finally.*?Close-WorldMap.*?function Travel-ToNode.*?Assert-DeltaQueenBeachRouteInvariant.*?function Assert-SaveRelaunchContinue.*?Public persistence checkpoint changed.*?Assert-DeltaQueenBeachRouteInvariant' 'Every real Delta Queen arrival and restored Continue checkpoint must verify the Q-011 Beach route through the public map.'
+    Assert-Match $runner '(?s)\$checkpointBeforePath\s*=\s*\[IO\.Path\]::GetFullPath\(\(Join-Path \$script:RunRoot ''checkpoint_before\.json''\)\).*?\$checkpointAfterPath\s*=\s*\[IO\.Path\]::GetFullPath\(\(Join-Path \$script:RunRoot ''checkpoint_after\.json''\)\).*?Get-FileHash\s+-LiteralPath\s+\$checkpointBeforePath\s+-Algorithm\s+SHA256.*?Get-FileHash\s+-LiteralPath\s+\$checkpointAfterPath\s+-Algorithm\s+SHA256' 'Each run must hash exact absolute before/after checkpoint files after the process-relaunch comparison.'
+    Assert-Match $runner '(?s)\$checkpointEvidenceComplete\s*=\s*\$script:MidpointSaved\s+-and\s*\$checkpointBeforeHash\s+-match\s+''\^\[a-f0-9\]\{64\}\$''.*?\$checkpointAfterHash\s+-match\s+''\^\[a-f0-9\]\{64\}\$''.*?\$checkpointBeforeHash\s+-ceq\s+\$checkpointAfterHash.*?if\s*\(\$passed\s+-and\s+-not\s+\$checkpointEvidenceComplete\).*?\$passed\s*=\s*\$false.*?missing, unhashed, or unequal' 'A route cannot remain passed when its authenticated midpoint was not reached or either retained checkpoint is missing, unhashed, or unequal.'
+    Assert-Match $runner '(?s)\$runSummary\s*=\s*\[ordered\]@\{.*?persistence_checkpoint_before\s*=.*?\$checkpointBeforePath.*?persistence_checkpoint_before_sha256\s*=\s*\$checkpointBeforeHash.*?persistence_checkpoint_after\s*=.*?\$checkpointAfterPath.*?persistence_checkpoint_after_sha256\s*=\s*\$checkpointAfterHash.*?persistence_checkpoint_equal\s*=\s*\$checkpointEvidenceComplete.*?persistence_checkpoint_complete\s*=\s*\$checkpointEvidenceComplete.*?\}.*?if\s*\(-not\s+\[bool\].*?\.passed\).*?throw' 'Each run summary must retain exact checkpoint paths/hashes and fail outward if its success attestation is incomplete.'
+    Assert-Match $runner '(?s)\$checkpointEvidenceComplete\s*=\s*\$runSummaries\.Count\s+-eq\s+\$Repeat.*?persistence_checkpoint_complete.*?checkpoint_evidence_complete\s*=\s*\$checkpointEvidenceComplete' 'Invocation reporting must require complete checkpoint evidence for every requested run.'
+    if (-not (Test-DirectDevelopmentQualificationSource -Source $runner)) {
+        Add-Failure 'Direct replay output regained fixed-repeat authority; only the outer independent-profile aggregate may qualify release evidence.'
+    }
     Assert-Match $runner '(?s)function Clear-VisibleCoach.*?Get-VisibleTutorialGuideAcknowledgment.*?Choose-VisibleChoice\s+-ChoiceId\s+''continue''.*?Wait-Frames.*?continue.*?dismissLabel.*?Select-UniqueFullyVisibleButton\s+-Buttons\s+@\(Get-Buttons\)\s+-Text\s+\$dismissLabel.*?Select-UniqueFullyVisibleButton\s+-Buttons\s+@\(Get-Buttons\)\s+-Text\s+''Skip tip''.*?fully visible public dismiss control' 'Coach recovery must follow the narrow public tutorial-guide acknowledgement, then require a unique boolean-true fully-visible dismiss control before input.'
     Assert-Match $runner '(?s)function Accept-GrandCasinoInviteIfVisible\s*\{.*?Invoke-EventObjectChoice\s+-EventId\s+''grand_casino_invite''\s+-ChoiceId\s+''accept_invite''\s+-Intent\s+''accept the visible invitation to the Grand Casino''.*?return \$true\s*\}' 'The clean replay must choose the exact visible invitation action instead of asking a selected multi-action object for a generic open action.'
     Assert-NotMatch $runner 'Open-EventObject\s+-EventId\s+''grand_casino_invite''' 'The Grand Casino invitation must not use the generic event-open path when the selected object already exposes explicit actions.'
@@ -2923,6 +3427,10 @@ $report = [ordered]@{
     heist_audit_hook_hostile_fixtures = $heistAuditHookHostileFixtures
     heist_convention_hook_valid_fixtures = $heistConventionHookValidFixtures
     heist_convention_hook_hostile_fixtures = $heistConventionHookHostileFixtures
+    persistence_checkpoint_valid_fixtures = $persistenceCheckpointValidFixtures
+    persistence_checkpoint_hostile_fixtures = $persistenceCheckpointHostileFixtures
+    direct_qualification_valid_fixtures = $directQualificationValidFixtures
+    direct_qualification_hostile_fixtures = $directQualificationHostileFixtures
     failures = @($failures)
 }
 $report | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $ReportPath -Encoding utf8

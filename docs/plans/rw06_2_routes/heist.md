@@ -1,6 +1,6 @@
 # rw06_2 Crew heist ending route — first-pass replay
 
-Status: **Q-013A IMPLEMENTED ENGINE-FREE; LIVE ROUTE PROOF PENDING**
+Status: **Q-013A FOCUSED CONTRACT GREEN; NATURAL LIVE ROUTE PROOF PENDING**
 Peer branch baseline: `5f5955b2cff36262c402aa2ee57c1f07c3ccb8d4`
 Canonical terminal route: `crew_heist`
 Preferred launch plan: **The Count (Plan A)**
@@ -112,8 +112,9 @@ action release replay.
 13. Optional corridor exit: complete the Debt Court/Knuckles Associate marker if
     it occurs naturally. The replay may instead use the always-available dock
     exit; do not add this detour only to improve the outcome rung.
-14. Choose **Begin the Play** only after the two setup chairs are visibly filled,
-    then go to the designated Grand blackjack table.
+14. Choose **Begin the Play** only after all three setup requirements are visibly
+    filled: the three-visit identity requirement plus the schedule and swap-cart
+    world actions. Then go to the designated Grand blackjack table.
     Settle three $8–30 rounds, interleaving the visible decisions:
     - round 0: `early` or `hold`;
     - round 1: `sit` or `dump`;
@@ -153,7 +154,7 @@ action release replay.
 | Made | Open the Punchline back room | jobs should be net-positive | 11+ favors become a dead stretch |
 | Bishop | Recruit the required specialist | trust 30 -> 90 | member presence/jobs are too rare or opaque |
 | Hook | Recognize Audit Night as an opportunity | retain Grand travel/wager funds | hook is seed-rare or not surfaced as plan progress |
-| Setup | Fill three concrete chairs | three bets $8–30; heat <= 35 | visit-session rule or deadlines are unclear |
+| Setup | Fill identity plus the two remaining world tasks | three visit-session bets $8–30; heat <= 35 and rise < 35 | visit-session rule or deadlines are unclear |
 | Save/Continue | Trust learned Audit knowledge survives | hostile Convention still leaves Count enabled before and after Continue | knowledge disappears, current scenario leaks, or plan is pre-locked |
 | Play | Execute the plan under pressure | three table rounds, bounded heat | decision beat fails to appear between settlements |
 | Getaway | Read and finish the route | target shown on map | package target/travel lock is ambiguous |
@@ -166,8 +167,9 @@ action release replay.
       pinned seed `0013` is Convention while candidate `0002` is Audit; empty and
       non-Audit seeds plus recent-Audit history fail closed engine-free.
 - [x] Apply Q-013A: use exact seed `0002` and persist Count knowledge only from
-      the natural `scenario_audit_roster/read_the_shift` result. Never inject
-      Audit or silently choose Plan B.
+      the natural `scenario_audit_roster/read_the_shift` result. The exact
+      focused contract proves its Save/Continue restore. Never inject Audit or
+      silently choose Plan B.
 - [ ] Prove the candidate reaches the rendered Audit Roster and the terminal
       heist win through the full public route.
 - [ ] Measure the full marker -> Bishop 90 path and keep it within 150–350 player

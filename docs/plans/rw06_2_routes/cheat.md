@@ -35,8 +35,10 @@ like an accidental clean-route failure.
 ## Source-derived route
 
 1. Follow the same natural world path as the clean route: discover tier 2,
-   accept the High Roller Invitation, retain the $70 travel fare, and enter the
-   Grand Casino through the visible map.
+   accept the High Roller Invitation and its disclosed $50 grant, then take the
+   visible $0 Grand route from Kitty Cat Lounge, Delta Queen, or Beach. Without
+   an already-earned Rook travel discount, a route from any other origin must
+   still show and charge its positive authored fare.
 2. Carry no classified contraband or surveillance gear into the showdown. In
    particular avoid `marked_cards`, `foil_sleeve`, `weighted_keyring`,
    `xray_glasses`, `tab_detector`, and `tarot_card`.
@@ -85,7 +87,7 @@ like an accidental clean-route failure.
 
 | Beat | Player-visible goal | Money/heat checkpoint | What could break the arc |
 |---|---|---|---|
-| Invitation | Reach the watched floor | preserve $70 fare | same early economy risk as clean route |
+| Invitation | Reach the watched floor | verify the disclosed +$50 and eligible $0 trip | the advertised stake is spent or the comped route is not visible |
 | Provocation | Make Rourke notice on purpose | net >= +$30 with cheat, or heat threshold | trigger reason is invisible or fires too early |
 | Escort | Understand that this is the alternate ending | inventory should be safe | surprise pat-down failure from an innocuous-looking item |
 | Save/Continue | Trust the confrontation persists | same showdown phase/margin | event resumes at wrong beat or loses duel state |

@@ -17,6 +17,7 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+$Ending = $Ending.ToLowerInvariant()
 
 $Worktree = Split-Path -Parent $PSScriptRoot
 $SessionTool = Join-Path $PSScriptRoot 'agent_playtest_session.ps1'
@@ -211,6 +212,22 @@ function New-AnchoredSessionRoot {
         throw 'Cannot create an anchored session root from unsafe path segments.'
     }
     return [IO.Path]::GetFullPath((Join-Path $Worktree ".tmp\agent_playtest\$DateSegment\$Session"))
+}
+
+
+function New-ExclusiveEvidenceDirectory {
+    param([Parameter(Mandatory = $true)][string]$Path)
+    $absolutePath = [IO.Path]::GetFullPath($Path)
+    $parentPath = Split-Path -Parent $absolutePath
+    [void](New-Item -ItemType Directory -Path $parentPath -Force)
+    if (Test-Path -LiteralPath $absolutePath) {
+        throw "Evidence directory already exists; refusing stale artifact reuse: $absolutePath"
+    }
+    [void](New-Item -ItemType Directory -Path $absolutePath -ErrorAction Stop)
+    if (-not (Test-Path -LiteralPath $absolutePath -PathType Container)) {
+        throw "Evidence directory was not created as an exact directory: $absolutePath"
+    }
+    return $absolutePath
 }
 
 
@@ -2964,6 +2981,95 @@ function Play-OneBlackjackRound {
 }
 
 
+function Get-CleanSilverPlayersCardProjection {
+    Open-CageCounter
+    $null = Choose-VisibleChoice -ChoiceId 'open_card' -Intent "open Linda's rendered Silver Players Card ledger for persistence evidence"
+    Wait-Frames -Frames 8
+
+    $talk = Get-Value $script:LastObservation @('talk') $null
+    $talkVisible = Get-Value $talk @('visible') $null
+    $talkExpanded = Get-Value $talk @('expanded') $null
+    $talkRenderValid = Get-Value $talk @('render_valid') $null
+    $talkBodyComplete = Get-Value $talk @('body_complete') $null
+    $talkTypewriterActive = Get-Value $talk @('typewriter_active') $null
+    $talkEventId = Get-Value $talk @('event_id') $null
+    $summary = Get-Value $talk @('summary') $null
+    if ($talkVisible -isnot [bool] -or -not [bool]$talkVisible -or
+        $talkExpanded -isnot [bool] -or -not [bool]$talkExpanded -or
+        $talkRenderValid -isnot [bool] -or -not [bool]$talkRenderValid -or
+        $talkBodyComplete -isnot [bool] -or -not [bool]$talkBodyComplete -or
+        $talkTypewriterActive -isnot [bool] -or [bool]$talkTypewriterActive -or
+        $talkEventId -isnot [string] -or [string]$talkEventId -cne 'dialogue:linda_cage_services' -or
+        $summary -isnot [string] -or -not ([string]$summary).StartsWith('Silver. Gold:', [StringComparison]::Ordinal)) {
+        throw "The Clean persistence checkpoint did not render Linda's exact Silver-to-Gold Players Card ledger."
+    }
+
+    $choiceIds = @(Get-Array (Get-Value $talk @('choice_ids') @()))
+    $expectedChoiceIds = @('cage_claim_card', 'cage_ambient', 'back_main')
+    if (($choiceIds -join ',') -cne ($expectedChoiceIds -join ',')) {
+        throw "Linda's Silver Players Card ledger exposed unexpected rendered choices: $($choiceIds -join ', ')."
+    }
+    $renderedChoices = @(Get-PublicTalkChoices)
+    if ($renderedChoices.Count -cne $expectedChoiceIds.Count) {
+        throw "Linda's Silver Players Card ledger did not expose all three exact rendered controls."
+    }
+    $expectedLabels = @{
+        cage_ambient = 'Ask Linda'
+        back_main = 'Back'
+    }
+    $projectionChoices = @()
+    for ($index = 0; $index -lt $expectedChoiceIds.Count; $index++) {
+        $choice = $renderedChoices[$index]
+        $choiceId = Get-Value $choice @('id') $null
+        $choiceEventId = Get-Value $choice @('event_id') $null
+        $choiceLabel = Get-Value $choice @('label') $null
+        $choiceEnabled = Get-Value $choice @('enabled') $null
+        $expectedChoiceId = $expectedChoiceIds[$index]
+        $labelIsExact = if ($expectedChoiceId -ceq 'cage_claim_card') {
+            $choiceLabel -is [string] -and
+                ([string]$choiceLabel).StartsWith("Claim Players Card`n", [StringComparison]::Ordinal) -and
+                ([string]$choiceLabel).Length -gt 'Claim Players Card'.Length + 1
+        }
+        else {
+            $choiceLabel -is [string] -and [string]$choiceLabel -ceq [string]$expectedLabels[$expectedChoiceId]
+        }
+        if ($choiceId -isnot [string] -or [string]$choiceId -cne $expectedChoiceId -or
+            $choiceEventId -isnot [string] -or [string]$choiceEventId -cne 'dialogue:linda_cage_services' -or
+            -not $labelIsExact -or
+            $choiceEnabled -isnot [bool]) {
+            throw "Linda's Silver Players Card control '$expectedChoiceId' lacked its exact rendered public binding."
+        }
+        $projectionChoices += [pscustomobject][ordered]@{
+            id = [string]$choiceId
+            label = [string]$choiceLabel
+            enabled = [bool]$choiceEnabled
+        }
+    }
+    if ([bool]$projectionChoices[0].enabled -or
+        -not [bool]$projectionChoices[1].enabled -or
+        -not [bool]$projectionChoices[2].enabled) {
+        throw "Linda's post-Silver ledger did not show Gold as pending with only Ask Linda and Back enabled."
+    }
+
+    $projection = [ordered]@{
+        location_archetype = [string](Get-Value $script:LastObservation @('environment', 'archetype_id') '')
+        talk_event_id = [string]$talkEventId
+        tier_witness = 'Silver'
+        next_tier_witness = 'Gold'
+        summary = [string]$summary
+        choice_ids = @($choiceIds | ForEach-Object { [string]$_ })
+        choices = $projectionChoices
+    }
+    if ([string]$projection.location_archetype -cne 'grand_casino_cage') {
+        throw "Linda's rendered Silver Players Card ledger was not observed in the Grand Casino Cage."
+    }
+    $null = Choose-VisibleChoice -ChoiceId 'back_main' -Intent "return from Linda's rendered Silver Players Card ledger"
+    $null = Choose-VisibleChoice -ChoiceId 'leave_counter' -Intent "close Linda's Cage counter after retaining the Silver Players Card evidence"
+    Wait-Frames -Frames 8
+    return [pscustomobject]$projection
+}
+
+
 function Get-PersistenceCheckpoint {
     $hud = Get-Value $script:LastObservation @('status_hud') $null
     $game = Get-Value $script:LastObservation @('game') $null
@@ -3011,7 +3117,14 @@ function Assert-ExplicitSaveAcknowledged {
 
 function Assert-SaveRelaunchContinue {
     param([Parameter(Mandatory = $true)][string]$Milestone)
-    $before = Get-PersistenceCheckpoint
+    if ($Ending -ceq 'clean' -and $Milestone -cne 'Silver Players Card') {
+        throw "The Clean route may retain persistence evidence only at the exact Silver Players Card milestone."
+    }
+    $beforeCleanPlayersCard = if ($Ending -ceq 'clean') { Get-CleanSilverPlayersCardProjection } else { $null }
+    $before = [ordered]@{
+        checkpoint = Get-PersistenceCheckpoint
+        clean_players_card = $beforeCleanPlayersCard
+    }
     $beforeJson = $before | ConvertTo-Json -Depth 10 -Compress
     $null = Click-Button -Text 'Menu' -Intent "open the run menu at the $Milestone persistence checkpoint"
     $null = Click-RunMenuButton -Text 'Save' -RevealDirection up -Intent "save the run through the visible run menu at $Milestone"
@@ -3031,11 +3144,15 @@ function Assert-SaveRelaunchContinue {
     $null = Click-Button -Text 'CONTINUE' -Intent "continue the saved $Milestone run after a full relaunch"
     Wait-Frames -Frames 45
     Clear-VisibleCoach
-    $after = Get-PersistenceCheckpoint
+    $afterCleanPlayersCard = if ($Ending -ceq 'clean') { Get-CleanSilverPlayersCardProjection } else { $null }
+    $after = [ordered]@{
+        checkpoint = Get-PersistenceCheckpoint
+        clean_players_card = $afterCleanPlayersCard
+    }
     $afterJson = $after | ConvertTo-Json -Depth 10 -Compress
+    $before | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath (Join-Path $script:RunRoot 'checkpoint_before.json') -Encoding utf8
+    $after | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath (Join-Path $script:RunRoot 'checkpoint_after.json') -Encoding utf8
     if ($afterJson -cne $beforeJson) {
-        $before | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath (Join-Path $script:RunRoot 'checkpoint_before.json') -Encoding utf8
-        $after | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath (Join-Path $script:RunRoot 'checkpoint_after.json') -Encoding utf8
         throw "Public persistence checkpoint changed across Save -> relaunch -> Continue at $Milestone."
     }
     Assert-DeltaQueenBeachRouteInvariant
@@ -3803,9 +3920,9 @@ function Assert-HeistAuditKnowledgeSaveRelaunchContinue {
         planning_choices = $afterProjection
     }
     $afterJson = $after | ConvertTo-Json -Depth 20 -Compress
+    $before | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath (Join-Path $script:RunRoot 'checkpoint_before.json') -Encoding utf8
+    $after | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath (Join-Path $script:RunRoot 'checkpoint_after.json') -Encoding utf8
     if ($afterJson -cne $beforeJson) {
-        $before | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath (Join-Path $script:RunRoot 'checkpoint_before.json') -Encoding utf8
-        $after | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath (Join-Path $script:RunRoot 'checkpoint_after.json') -Encoding utf8
         throw 'Public learned-Audit planning state changed across Save -> relaunch -> Continue.'
     }
     Close-VisibleChoiceSurface
@@ -4497,8 +4614,7 @@ if ($BridgeTransportContract) {
 
 
 $invocationStamp = Get-Date -Format 'yyyyMMdd-HHmmss-fff'
-$invocationRoot = Join-Path $EvidenceRoot "$invocationStamp-$PID"
-New-Item -ItemType Directory -Force -Path $invocationRoot | Out-Null
+$invocationRoot = New-ExclusiveEvidenceDirectory -Path (Join-Path $EvidenceRoot "$invocationStamp-$PID")
 $heistSeedPreflight = $null
 if ($Ending -ceq 'heist') {
     $heistSeedPreflight = Invoke-HeistSeedPreflight -OutputPath (Join-Path $invocationRoot 'heist_seed_preflight.json')
@@ -4506,14 +4622,15 @@ if ($Ending -ceq 'heist') {
 $runSummaries = @()
 $referenceTranscriptHash = ''
 $referenceMoneyHash = ''
+$referenceCheckpointBeforeHash = ''
+$referenceCheckpointAfterHash = ''
 $referenceFinalCheckpointJson = ''
 
 for ($iteration = 1; $iteration -le $Repeat; $iteration++) {
     $nonce = [Guid]::NewGuid().ToString('N').Substring(0, 10)
     $script:Session = "rw062-$Ending-$PID-$iteration-$nonce"
     $script:SessionRoot = New-AnchoredSessionRoot -Session $script:Session
-    $script:RunRoot = Join-Path $invocationRoot ("run-{0:D2}" -f $iteration)
-    New-Item -ItemType Directory -Force -Path $script:RunRoot | Out-Null
+    $script:RunRoot = New-ExclusiveEvidenceDirectory -Path (Join-Path $invocationRoot ("run-{0:D2}" -f $iteration))
     $script:TranscriptPath = Join-Path $script:RunRoot 'public_trace.ndjson'
     $script:MoneyCurvePath = Join-Path $script:RunRoot 'money_curve.ndjson'
     $script:LastResult = $null
@@ -4555,7 +4672,24 @@ for ($iteration = 1; $iteration -le $Repeat; $iteration++) {
         }
         $transcriptHash = if (Test-Path -LiteralPath $script:TranscriptPath) { (Get-FileHash -LiteralPath $script:TranscriptPath -Algorithm SHA256).Hash.ToLowerInvariant() } else { '' }
         $moneyHash = if (Test-Path -LiteralPath $script:MoneyCurvePath) { (Get-FileHash -LiteralPath $script:MoneyCurvePath -Algorithm SHA256).Hash.ToLowerInvariant() } else { '' }
+        $checkpointBeforePath = [IO.Path]::GetFullPath((Join-Path $script:RunRoot 'checkpoint_before.json'))
+        $checkpointAfterPath = [IO.Path]::GetFullPath((Join-Path $script:RunRoot 'checkpoint_after.json'))
+        $checkpointBeforeHash = if (Test-Path -LiteralPath $checkpointBeforePath -PathType Leaf) { (Get-FileHash -LiteralPath $checkpointBeforePath -Algorithm SHA256).Hash.ToLowerInvariant() } else { '' }
+        $checkpointAfterHash = if (Test-Path -LiteralPath $checkpointAfterPath -PathType Leaf) { (Get-FileHash -LiteralPath $checkpointAfterPath -Algorithm SHA256).Hash.ToLowerInvariant() } else { '' }
+        $checkpointEvidenceComplete = $script:MidpointSaved -and
+            $checkpointBeforeHash -match '^[a-f0-9]{64}$' -and
+            $checkpointAfterHash -match '^[a-f0-9]{64}$' -and
+            $checkpointBeforeHash -ceq $checkpointAfterHash
+        if ($passed -and -not $checkpointEvidenceComplete) {
+            $passed = $false
+            $failureMessage = 'Successful Save -> process-exit -> Continue evidence is missing, unhashed, or unequal.'
+        }
         $runSummary = [ordered]@{
+            role = 'child_development_iteration'
+            repeat_profile_scope = 'shared_caller_appdata'
+            fixed_repeat_qualification_authority = 'outer_independent_profile_aggregate_only'
+            release_qualifying = $false
+            qualification = 'non_qualifying_development_iteration'
             iteration = $iteration
             ending = $Ending
             seed = $Seed
@@ -4571,6 +4705,12 @@ for ($iteration = 1; $iteration -le $Repeat; $iteration++) {
             transcript_sha256 = $transcriptHash
             money_curve = $script:MoneyCurvePath
             money_curve_sha256 = $moneyHash
+            persistence_checkpoint_before = if ($checkpointBeforeHash) { $checkpointBeforePath } else { '' }
+            persistence_checkpoint_before_sha256 = $checkpointBeforeHash
+            persistence_checkpoint_after = if ($checkpointAfterHash) { $checkpointAfterPath } else { '' }
+            persistence_checkpoint_after_sha256 = $checkpointAfterHash
+            persistence_checkpoint_equal = $checkpointEvidenceComplete
+            persistence_checkpoint_complete = $checkpointEvidenceComplete
             final_public_checkpoint = $finalPublicCheckpoint
             failure = $failureMessage
         }
@@ -4578,16 +4718,26 @@ for ($iteration = 1; $iteration -le $Repeat; $iteration++) {
         $runSummaries += [pscustomobject]$runSummary
     }
 
+    if (-not [bool]$runSummaries[$runSummaries.Count - 1].passed) {
+        throw [string]$runSummaries[$runSummaries.Count - 1].failure
+    }
+
     $currentTranscriptHash = [string]$runSummaries[$runSummaries.Count - 1].transcript_sha256
     $currentMoneyHash = [string]$runSummaries[$runSummaries.Count - 1].money_curve_sha256
+    $currentCheckpointBeforeHash = [string]$runSummaries[$runSummaries.Count - 1].persistence_checkpoint_before_sha256
+    $currentCheckpointAfterHash = [string]$runSummaries[$runSummaries.Count - 1].persistence_checkpoint_after_sha256
     $currentFinalCheckpointJson = $runSummaries[$runSummaries.Count - 1].final_public_checkpoint | ConvertTo-Json -Depth 10 -Compress
     if ($iteration -ceq 1) {
         $referenceTranscriptHash = $currentTranscriptHash
         $referenceMoneyHash = $currentMoneyHash
+        $referenceCheckpointBeforeHash = $currentCheckpointBeforeHash
+        $referenceCheckpointAfterHash = $currentCheckpointAfterHash
         $referenceFinalCheckpointJson = $currentFinalCheckpointJson
     }
     elseif ($currentTranscriptHash -cne $referenceTranscriptHash -or
         $currentMoneyHash -cne $referenceMoneyHash -or
+        $currentCheckpointBeforeHash -cne $referenceCheckpointBeforeHash -or
+        $currentCheckpointAfterHash -cne $referenceCheckpointAfterHash -or
         $currentFinalCheckpointJson -cne $referenceFinalCheckpointJson) {
         throw "Deterministic replay mismatch for '$Ending': repeat $iteration differs from repeat 1."
     }
@@ -4596,19 +4746,28 @@ for ($iteration = 1; $iteration -le $Repeat; $iteration++) {
 $deterministic = $Repeat -ceq 2 -and
     @($runSummaries | Select-Object -ExpandProperty transcript_sha256 -Unique).Count -ceq 1 -and
     @($runSummaries | Select-Object -ExpandProperty money_curve_sha256 -Unique).Count -ceq 1 -and
+    @($runSummaries | Select-Object -ExpandProperty persistence_checkpoint_before_sha256 -Unique).Count -ceq 1 -and
+    @($runSummaries | Select-Object -ExpandProperty persistence_checkpoint_after_sha256 -Unique).Count -ceq 1 -and
     @($runSummaries | ForEach-Object { $_.final_public_checkpoint | ConvertTo-Json -Depth 10 -Compress } | Select-Object -Unique).Count -ceq 1
-$releaseQualifying = $Repeat -ceq 2 -and $runSummaries.Count -ceq 2 -and $deterministic -and
-    @($runSummaries | Where-Object { -not $_.passed }).Count -ceq 0
+$checkpointEvidenceComplete = $runSummaries.Count -eq $Repeat -and
+    @($runSummaries | Where-Object { -not [bool]$_.persistence_checkpoint_complete }).Count -ceq 0
+# Repeats inside this direct runner inherit one caller APPDATA/LOCALAPPDATA
+# environment. They may prove deterministic behavior for development, but only
+# the outer launcher can create and attest two independent profiles.
 $finalSummary = [ordered]@{
     schema_version = 1
     check_id = 'rw06_2_ending_replay'
+    role = 'child_development_run'
+    repeat_profile_scope = 'shared_caller_appdata'
+    fixed_repeat_qualification_authority = 'outer_independent_profile_aggregate_only'
     ending = $Ending
     seed = $Seed
     observed_terminal_seeds = @($runSummaries | Select-Object -ExpandProperty observed_terminal_seed)
     repeat = $Repeat
     deterministic = $deterministic
-    release_qualifying = $releaseQualifying
-    qualification = if ($releaseQualifying) { 'two_identical_repeats' } else { 'non_qualifying_development_run' }
+    checkpoint_evidence_complete = $checkpointEvidenceComplete
+    release_qualifying = $false
+    qualification = 'non_qualifying_development_run'
     public_observation_schema = $Schema
     public_observation_schema_version = $SchemaVersion
     heist_seed_preflight = $heistSeedPreflight

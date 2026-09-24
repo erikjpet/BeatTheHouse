@@ -7,7 +7,8 @@ RTP are unchanged.
 
 Status: implemented; lightweight JSON/PowerShell checks and the combined replay
 source contract pass. Focused Foundation evidence and the post-change route
-measurement wait for the active rw06_1 engine lane.
+measurement remain pending the accepted rw06_1 landing and an authorized engine
+slot.
 
 - `grand_casino_invite.accept_invite` bankroll grant: absent / `$0` -> `$50`.
 - `grand_casino` route comp origins: absent -> exactly
@@ -22,7 +23,7 @@ stake. The resulting `$145` entry requirement left a measured `$19` shortfall.
 Twenty-four straight lowest-stake Slot losses in Probe 19 also show that a
 gambling win is not an acceptable deterministic recovery requirement.
 
-Measured effect:
+Projected effect pending the post-change replay:
 
 - Before: `$126 - $95 fare = $31`, which is `$19` below the `$50` stake floor.
 - After, on the same Kitty/Delta/Beach invitation route: the `$50` grant raises
@@ -30,14 +31,22 @@ Measured effect:
   arrival. That is a deterministic `$126` margin above the immediate `$50`
   stake floor, subject to confirmation by the next no-retry replay.
 - A player who accepts at `$1` reaches `$51` and can enter with the full stake.
-  Zero bankroll remains terminal, non-comp origins keep the positive authored
-  fare, and ordinary global travel locks still apply.
+  Zero bankroll remains terminal; absent an existing Rook discount, non-comp
+  origins keep the positive authored fare. Ordinary global travel locks still
+  apply.
 
 This is one authored invitation package, not two independent tuning passes: the
 grant supplies the promised first stake and the three-origin comp prevents that
 stake from being consumed by the invitation trip. Reckless pre-invite losses,
 all game variance, the `$70` base fare from other origins, and bankruptcy risk
 remain intact.
+
+The package intentionally moves its two coupled data fields together, so it is
+the one documented exception to the ordinary one-change-at-a-time diagnostic
+sequence. No later balance value may change until a real Clean replay measures
+the combined package and the Cheat/Heist public curves exist. Accepting the
+invitation awards the `$50` only once, after which it is ordinary bankroll; the
+eligible-origin travel comp is repeatable under the current data model.
 
 ## Departure-price integrity repair (rw06_2 blocker fix)
 
@@ -48,7 +57,7 @@ then recomputed the charge from that new room. A comp could therefore render as
 
 This is classified as an rw06_2 arc fix, not another balance lever.
 `FoundationMain` now snapshots the authoritative route status at departure and
-uses that same status when constructing the arrival result. The regression
-confirms real Delta-to-Grand travel preserves a `$51` bankroll, records a `$0`
-route cost, and starts Grand net winnings at zero; a real Bar-to-Grand control
-still deducts its positive departure fare exactly once.
+uses that same status when constructing the arrival result. The exact focused
+gate confirms real Delta-to-Grand travel preserves a `$51` bankroll, records a
+`$0` route cost, and starts Grand net winnings at zero; its real Bar-to-Grand
+control deducts the positive departure fare exactly once.
