@@ -78,6 +78,7 @@ func _run() -> void:
 		failures.append("RW06-1 production Foundation host did not mount RoomActionList.")
 		_finish(app)
 		return
+	await _check_sealed_overflow_production_chain(action_list)
 	var production_room_installed: bool = await _install_production_game_room(app)
 	if not production_room_installed:
 		_finish(app)
@@ -969,6 +970,136 @@ func _check_canvas_exclusion(records: Array) -> void:
 			break
 	canvas.queue_free()
 	await process_frame
+
+
+func _check_sealed_overflow_production_chain(action_list: Control) -> void:
+	var identity := "scenario::sealed_overflow_probe"
+	var scene_objects: Dictionary = {}
+	scene_objects[identity] = {
+		"owner_namespace": "scenario",
+		"stable_object_id": "sealed_overflow_probe",
+		"present": true,
+		"visible": true,
+		"enabled": true,
+		"label": "Sealed overflow probe",
+		"description": "An abstract room task that must stay in More room actions.",
+		"role": "task_station",
+	}
+	var interactions: Dictionary = {}
+	interactions[identity] = {
+		"owner_namespace": "scenario",
+		"stable_object_id": "sealed_overflow_probe",
+		"present": true,
+		"label": "Sealed overflow probe",
+		"prompt": "Inspect the abstract room task.",
+		"enabled": true,
+		"disabled_reason": "",
+		"available_actions": [{
+			"id": "inspect_probe",
+			"label": "Inspect probe",
+			"input_action": "confirm",
+			"non_color_state": "ready",
+		}],
+		"input_actions": ["confirm"],
+		"non_color_state": "available",
+		"focus_order": 1,
+		"hit_bounds": {"w": 44.0, "h": 44.0},
+	}
+	var projection := {
+		"scenario_id": "rw06_1_sealed_overflow_probe",
+		"phase_id": "arrival",
+		"status": "active",
+		"boundary_serial": 1,
+		"semantic_state": {
+			"scene_objects": scene_objects,
+			"actors": {},
+			"interactions": interactions,
+			"services": {},
+			"games": {},
+			"routes": {},
+		},
+	}
+	var resolved := ScenarioLayoutResolverScript.resolve([], projection, {
+		"id": "rw06_1_sealed_overflow_probe",
+		"archetype_id": "bar",
+	})
+	if not bool(resolved.get("ok", false)):
+		failures.append("RW06-1 abstract production-chain probe did not resolve: %s." % JSON.stringify(resolved.get("errors", [])))
+		return
+	var renderer_snapshot := ScenarioLayoutResolverScript.sealed_renderer_snapshot(resolved)
+	if not bool(renderer_snapshot.get("ok", false)):
+		failures.append("RW06-1 abstract production-chain probe did not produce a sealed renderer snapshot: %s." % JSON.stringify(renderer_snapshot.get("errors", [])))
+		return
+	var authority := (resolved.get("layout_authority", {}) as Dictionary).get(identity, {}) as Dictionary
+	var sealed_visual: Dictionary = {}
+	for visual_value in renderer_snapshot.get("visual_objects", []) as Array:
+		var visual := visual_value as Dictionary
+		if str(visual.get("semantic_identity", "")) == identity:
+			sealed_visual = visual
+			break
+	if sealed_visual.is_empty() \
+			or str(sealed_visual.get("presentation_mode", "")) != "overflow" \
+			or str(sealed_visual.get("presentation_mode", "")) != str(authority.get("presentation_mode", "")) \
+			or str(sealed_visual.get("placement_class", "")) != str(authority.get("placement_class", "")) \
+			or str(sealed_visual.get("slot_id", "")) != str(authority.get("slot_id", "")) \
+			or str(sealed_visual.get("contact", "")) != str(authority.get("contact", "")) \
+			or not (sealed_visual.get("normalized_rect", {}) as Dictionary).is_empty() \
+			or not (sealed_visual.get("focus_rect", {}) as Dictionary).is_empty() \
+			or not (sealed_visual.get("small_screen_rect", {}) as Dictionary).is_empty() \
+			or not (sealed_visual.get("label_rect", {}) as Dictionary).is_empty() \
+			or not (sealed_visual.get("small_screen_label_rect", {}) as Dictionary).is_empty():
+		failures.append("RW06-1 sealed renderer DTO lost geometry-free overflow authority: %s." % JSON.stringify(sealed_visual))
+
+	var composed := EnvironmentInteractionControllerScript.project_finalized_sequence_interaction_result([], resolved)
+	var composed_records := composed.get("records", []) as Array
+	var composed_record: Dictionary = {}
+	for record_value in composed_records:
+		var record := record_value as Dictionary
+		if str(record.get("object_id", "")) == identity:
+			composed_record = record
+			break
+	var action_entries := RoomActionListScript.action_entries_for_record(composed_record)
+	if not bool(composed.get("ok", false)) \
+			or composed_record.is_empty() \
+			or str(composed_record.get("presentation_mode", "")) != "overflow" \
+			or not (composed_record.get("normalized_rect", {}) as Dictionary).is_empty() \
+			or not (composed_record.get("small_screen_rect", {}) as Dictionary).is_empty() \
+			or action_entries.size() != 1 \
+			or str((action_entries[0] as Dictionary).get("id", "")) != "inspect_probe":
+		failures.append("RW06-1 production composition lost the abstract action-list record or public action: %s." % JSON.stringify({
+			"composition_errors": composed.get("errors", []),
+			"record": composed_record,
+			"action_entries": action_entries,
+		}))
+	else:
+		action_list.render(composed_records)
+		await _settle_frames(2)
+		var action_key := str((action_entries[0] as Dictionary).get("_overflow_action_key", ""))
+		if not bool(action_list.visible) or action_key.is_empty() or _action_button_by_key(action_list, action_key) == null:
+			failures.append("RW06-1 actual More room actions UI omitted the sealed abstract public action.")
+		action_list.render([])
+
+	for path_value in [
+		{"label": "composed", "interactable_objects": composed_records},
+		{"label": "renderer fallback", "interactable_objects": []},
+	]:
+		var path := path_value as Dictionary
+		var canvas := PixelSceneCanvasScript.new()
+		canvas.size = Vector2(900.0, 430.0)
+		root.add_child(canvas)
+		canvas.render_environment_snapshot({
+			"id": "rw06_1_sealed_overflow_probe",
+			"archetype_id": "bar",
+			"interactable_objects": path.get("interactable_objects", []),
+			"scenario_render_snapshot": renderer_snapshot,
+		})
+		await process_frame
+		for object_value in canvas.current_view_snapshot().get("objects", []) as Array:
+			if str((object_value as Dictionary).get("id", "")) == identity:
+				failures.append("RW06-1 PixelSceneCanvas %s path rendered the sealed overflow-only abstract record." % str(path.get("label", "")))
+				break
+		canvas.queue_free()
+		await process_frame
 
 
 func _check_cancel_and_focus_recovery(action_list: Control) -> void:
