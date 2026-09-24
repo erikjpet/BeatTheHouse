@@ -73,7 +73,7 @@ next finds the answer resumes the work. Every row must follow its protocol.
 | --- | --- | --- | --- | --- |
 | 0 | rw06_pre | `../todone/rw06_pre_worker_handoff_message.md`: the running worker finishes on its branch, merges to main and deletes the branch | — | DONE (`54c7d788`) |
 | 1 | rw06_0 | `../todone/rw06_0_custody_commit_prompt.md` | rw06_pre reports MERGED (fixes on main, branch deleted) | DONE (`7da3e5da`) |
-| 1–4 | rw06_1 | `rw06_1_fixed_slot_rooms_prompt.md` | rw06_0 | WAITING Q-010 for safe engine access / Q-008 REJECTED (engine-free all-room visual rework continues: nonphysical scenario concepts move to authenticated overflow, people/objects must sit on the rendered art, behind-counter actors need real fixture occlusion, and the Grand Casino must be regrouped. Exact pushed diagnostic tip `72641df2`; no landing before a replacement owner-approved sheet) |
+| 1–4 | rw06_1 | `rw06_1_fixed_slot_rooms_prompt.md` | rw06_0 | WAITING Q-010 for safe engine access / Q-008 REJECTED / Q-011 ACTIVE (engine-free all-room visual rework continues; an independent branch is making Beach an unconditional visible and enabled boat destination with production UI/save coverage. Exact pushed diagnostic tip `72641df2`; no landing before a replacement owner-approved sheet) |
 | 1–5 | rw06_2 | `rw06_2p_endings_peer_agent_prompt.md` → `rw06_2_three_endings_prompt.md` | rw06_0 (runs parallel to rw06_1; final pass after rw06_1) | HANDED OFF TO PEER (`codex/rw06_2-prep` at `1c1642db`; engine-free gates and focused public-observation contract green; next is one isolated no-retry Clean probe, qualifying 3/3 waits for rw06_1; canonical state is `rw06_2p_status.md`) |
 | 1–3 | rw06_5 | `../todone/rw06_5_owner_gameplay_fixes_prompt.md`: clicking a person starts a conversation, blackjack count shown between hands, Cass needs a real count | rw06_0 (parallel with rw06_1/rw06_2) | DONE (`1038a31f`) |
 | 5 | owner run | Owner plays one ending start to finish; notes go to the scoreboard | rw06_1, rw06_5 | TODO (rw06_5 DONE; waits for rw06_1) |
@@ -101,7 +101,7 @@ place, and add one dated line to the history below.
 | Owner start-to-finish run | done, no blockers | not started | — |
 | Owner run notes | (owner writes blockers here; non-blockers go to the 0.6.1 backlog) | — | — |
 | Release gate items green (rw06_4) | all | 0 | — |
-| Unmerged row branches (`git branch -a`) | 0 | 4 active release-week branches (rw06_1 core, rw06_1 non-core hand layouts, rw06_1 meta-room hand layouts, rw06_2) | release orchestrator |
+| Unmerged row branches (`git branch -a`) | 0 | 7 active release-week branches (rw06_1 core, two rw06_1 hand-layout ancestors, rw06_1 Beach-route repair, and three peer-owned rw06_2 work branches) | release orchestrator |
 
 History (newest last):
 
@@ -200,6 +200,7 @@ History (newest last):
 - 2026-09-23 release orchestrator: rw06_2 pushed hardening checkpoint `1c1642db` after all engine-free source/semantic contracts and full repository validation passed. One explicitly leased Godot 4.6 public-observation contract then passed in a single launch with no warning, error or leak; report `.tmp/rw06_2/public_observation_contract.json`, SHA-256 `F8F699846DB1CFD6C5659F7A9D10F42C77CAB4F8573C4C5EE19D28E683889195`, pre/post process census zero. The commit binds physical clicks to an unchanged fully rendered live object, uses only public rendered feedback and exact save acknowledgements, and adds production-shaped multi-lender fixtures. The rw06_1-owned local Pixel canvas dependency was deliberately excluded and must be reconciled after rw06_1 lands before qualifying routes.
 - 2026-09-23 release orchestrator: applied owner Q-009. The existing rw06_2 worker stopped without launching Probe 20 and handed pushed tip `1c1642db` to the separate rw06_2/rw06_3 peer through `rw06_2p_status.md`; the release orchestrator will no longer edit those rows. Q-009 also replaces machine-wide serialization with up to four properly isolated focused runs coordinated by live-PID lease files, while full suites, performance/timing, soak and rw06_4 remain exclusive. The shared lease directory is `D:\Projects\Beat-The-House-worktrees\.godot_leases\`.
 - 2026-09-23 release orchestrator: rw06_1 is WAITING Q-010 only for safe engine access after an unleased Godot 4.6 process appeared against the primary checkout at 20:27 CT with no surviving launcher. No unknown process was terminated and no overlapping run was started. Engine-free Q-008 corrections continue; the shared patch now uses exact stable-ID plus closed renderer authority for physical scenario props and sends unmapped abstractions to More room actions.
+- 2026-09-23 release orchestrator: accepted binding Q-011. Beach must always be a visible and enabled destination from the Delta Queen whenever normal travel is available, independent of seed, scenario, discovery, revisit and save/Continue. A separate `codex/rw06_1-beach-route` worker owns the root-cause production travel/UI regression; rw06_1 layout work must preserve a reachable boat-to-Beach control, and the peer owns matching ending-route assumptions.
 
 ## Rules every row inherits
 
