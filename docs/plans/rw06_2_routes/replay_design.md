@@ -1,9 +1,11 @@
 # rw06_2 ending replay design — exploratory implementation
 
-Status: **ENGINE-FREE GREEN; LIVE CONTRACT AND QUALIFYING ROUTES PENDING**
-Working base: pushed rw06_2 tip `f8c37e1079a84a2cfd4a849732c8a461025ebc68`;
-latest fetched `origin/main` is `48b0895e`. Qualifying runs remain blocked until
-rw06_1 lands.
+Status: **Q-017A ENGINE-FREE ADMISSION GREEN; LIVE CONTRACT AND QUALIFYING ROUTES PENDING**
+The peer branch contains canonical release-closeout reconciliation
+`d2605866034fda5d69c0abc4abd418e198352028` and the Q-017A scoreboard mirror
+through `d60c5d928f6ca4d973f158410816a00de55f87d3`.
+Qualifying runs remain blocked until rw06_1 lands and the resulting immutable
+implementation checkpoint receives independent clearance.
 
 The release deliverable is `tools/rw06_2_ending_replay.ps1 -Ending
 clean|cheat|heist`. It must drive the production `scenes/main.tscn` host through
@@ -83,7 +85,10 @@ and animation-only timing. The two canonical traces must be identical.
 
 Then complete a third interactive run on a fresh seed. The fresh run need not
 match the fixed trace; it proves the route is understandable rather than merely
-memorized.
+memorized. For Heist, Q-017A makes this a distinct `fresh-interactive` role:
+exact seed `RW06-HEIST-AUDIT-0000`, exactly one run, the same Count/Plan A route,
+and a separately checked natural day-zero Audit witness. No other seed, ending,
+repeat count, scenario authority, or Plan B fallback is admissible.
 
 ## Evidence layout
 
@@ -136,6 +141,16 @@ checkpoint and terminal checkpoint. A separate `fresh-interactive` evidence
 root and experience log are still required for each ending. Q-017 controls only
 how that separate Heist run is admitted; it never loosens the exact `0002`
 fixed-repeat route.
+
+The inner replay has two explicit admission roles. `fixed-repeat` preserves the
+existing route defaults and locks Heist to `RW06-HEIST-AUDIT-0002`.
+`fresh-interactive` is Heist-only, requires explicit seed
+`RW06-HEIST-AUDIT-0000` and `Repeat 1`, then runs the unchanged
+`Invoke-HeistEndingRoute` Count path. Both roles remain child/development and
+non-qualifying. The fixed outer launcher passes `fixed-repeat` literally,
+validates that role plus its complete admission and natural-Audit receipt at
+both summary levels, carries the verified role into each proof, and rejects a
+fresh child before fixed promotion.
 
 The inner `rw06_2_ending_replay.ps1` remains non-qualifying even when invoked
 directly with `-Repeat 2`, because both iterations inherit that invocation's
@@ -438,7 +453,12 @@ it, notable moments, and every arc-breaker disposition.
    `scenario_audit_roster/read_the_shift` choice; current Audit also qualifies,
    while unvisited seed data, stored prior-cycle hooks, narrative-only claims,
    and non-boolean save values fail closed. The runner does not inject Audit or
-   choose Plan B, and rejects any Heist seed override other than exact `0002`.
+   choose Plan B. Fixed repeats reject every Heist seed except exact `0002`.
+   Q-017A separately admits only exact `RW06-HEIST-AUDIT-0000` as a
+   `fresh-interactive`, Repeat-1 pass after the production model proves its
+   natural `day:0` Audit witness (run seed `1262406216`, stream seed `501255064`,
+   none roll `96`, weighted roll `22402/26000`). It does not admit another
+   natural-Audit candidate, inject a scenario, pin a cycle, or change routes.
    Before plan lock, the runner now requires the later visible
    Convention Crowd badge with no Audit Roster, returns to an enabled Count row,
    and preserves that exact public planning projection across a full
@@ -461,6 +481,9 @@ it, notable moments, and every arc-breaker disposition.
 - [x] Implement strict route helpers and public terminal assertions.
 - [x] Add persistence checkpoints and canonical trace comparison.
 - [x] Add hostile source-level redaction and semantic-command contracts.
+- [x] Add Q-017A role/seed admission plus fail-closed source and data contracts;
+      preserve exact fixed Heist `0002`, and pin fresh-interactive Heist `0000`
+      to one natural-Audit Count run without scenario authority or Plan B.
 - [x] Run the expanded Godot public-observation contract under a fresh serialized
       lease and retain its current report.
 - [ ] Run each fixed seed twice and one fresh seed once.

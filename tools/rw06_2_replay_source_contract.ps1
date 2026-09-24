@@ -7,6 +7,8 @@ $ErrorActionPreference = 'Stop'
 $Worktree = Split-Path -Parent $PSScriptRoot
 $RunnerPath = Join-Path $PSScriptRoot 'rw06_2_ending_replay.ps1'
 $ReplayPolicyPath = Join-Path $PSScriptRoot 'rw06_2_replay_policies.ps1'
+$EvidenceAdmissionPath = Join-Path $PSScriptRoot 'rw06_2_evidence_admission.ps1'
+$EvidenceAdmissionContractPath = Join-Path $PSScriptRoot 'rw06_2_evidence_admission_contract.ps1'
 $HeistSeedPreflightPath = Join-Path $PSScriptRoot 'rw06_2_heist_seed_preflight.ps1'
 $LauncherPath = Join-Path $PSScriptRoot 'agent_playtest_session.ps1'
 $BridgePath = Join-Path $PSScriptRoot 'agent_playtest_session.gd'
@@ -29,6 +31,7 @@ $ServicesPath = Join-Path $Worktree 'data\services\services.json'
 $ArchetypesPath = Join-Path $Worktree 'data\environments\archetypes.json'
 $ReportPath = Join-Path $Worktree '.tmp\rw06_2\replay_source_contract.json'
 $SemanticScrollReportPath = Join-Path $Worktree '.tmp\rw06_2\semantic_scroll_contract.json'
+$EvidenceAdmissionReportPath = Join-Path $Worktree '.tmp\rw06_2\evidence_admission_contract.json'
 
 $failures = [Collections.Generic.List[string]]::new()
 $wheelSequenceValidFixtures = 0
@@ -71,6 +74,8 @@ $persistenceCheckpointValidFixtures = 0
 $persistenceCheckpointHostileFixtures = 0
 $directQualificationValidFixtures = 0
 $directQualificationHostileFixtures = 0
+$evidenceAdmissionValidFixtures = 0
+$evidenceAdmissionHostileFixtures = 0
 
 function Add-Failure {
     param([Parameter(Mandatory = $true)][string]$Message)
@@ -786,18 +791,19 @@ function Test-PersistenceCheckpointWriteSequence {
 function Test-EndingNormalizationSequence {
     param([Parameter(Mandatory = $true)][string]$Source)
     $normalizationToken = '$Ending = $Ending.ToLowerInvariant()'
-    $defaultSeedToken = '$Seed = $FixedSeeds[$Ending]'
-    $heistGuardToken = "if (`$Ending -ceq 'heist' -and `$Seed -cne [string]`$FixedSeeds.heist)"
+    $roleNormalizationToken = '$EvidenceRole = $EvidenceRole.ToLowerInvariant()'
+    $admissionToken = '$script:ReplayAdmission = Resolve-Rw062ReplayAdmission'
     $heistPreflightToken = "if (`$Ending -ceq 'heist') {"
     $normalizationIndex = $Source.IndexOf($normalizationToken, [StringComparison]::Ordinal)
-    $defaultSeedIndex = $Source.IndexOf($defaultSeedToken, [StringComparison]::Ordinal)
-    $heistGuardIndex = $Source.IndexOf($heistGuardToken, [StringComparison]::Ordinal)
+    $roleNormalizationIndex = $Source.IndexOf($roleNormalizationToken, [StringComparison]::Ordinal)
+    $admissionIndex = $Source.IndexOf($admissionToken, [StringComparison]::Ordinal)
     $heistPreflightIndex = $Source.LastIndexOf($heistPreflightToken, [StringComparison]::Ordinal)
     return [regex]::Matches($Source, [regex]::Escape($normalizationToken)).Count -ceq 1 -and
+        [regex]::Matches($Source, [regex]::Escape($roleNormalizationToken)).Count -ceq 1 -and
         $normalizationIndex -ge 0 -and
-        $defaultSeedIndex -gt $normalizationIndex -and
-        $heistGuardIndex -gt $normalizationIndex -and
-        $heistPreflightIndex -gt $normalizationIndex
+        $roleNormalizationIndex -gt $normalizationIndex -and
+        $admissionIndex -gt $roleNormalizationIndex -and
+        $heistPreflightIndex -gt $admissionIndex
 }
 
 
@@ -932,10 +938,11 @@ function Test-DirectDevelopmentQualificationSource {
     $allowedKeys = @(
         'schema_version', 'check_id', 'role', 'repeat_profile_scope',
         'fixed_repeat_qualification_authority', 'ending', 'seed',
+        'requested_evidence_role', 'replay_admission',
         'observed_terminal_seeds', 'repeat', 'deterministic',
         'checkpoint_evidence_complete', 'release_qualifying', 'qualification',
         'public_observation_schema', 'public_observation_schema_version',
-        'heist_seed_preflight', 'evidence_root', 'runs'
+        'heist_seed_preflight', 'heist_preflight_admission', 'evidence_root', 'runs'
     )
     $summaryKeys = @([regex]::Matches($body, '(?m)^\s*(?<key>[A-Za-z_][A-Za-z0-9_]*)\s*=') | ForEach-Object { $_.Groups['key'].Value })
     if (@($summaryKeys | Select-Object -Unique).Count -cne $summaryKeys.Count -or
@@ -947,7 +954,8 @@ function Test-DirectDevelopmentQualificationSource {
 
 
 foreach ($path in @(
-    $RunnerPath, $ReplayPolicyPath, $HeistSeedPreflightPath, $LauncherPath, $BridgePath, $SanitizerPath,
+    $RunnerPath, $ReplayPolicyPath, $EvidenceAdmissionPath, $EvidenceAdmissionContractPath,
+    $HeistSeedPreflightPath, $LauncherPath, $BridgePath, $SanitizerPath,
     $ObservationContractPath, $FoundationMainPath, $FoundationHudBarPath,
     $FoundationScreenBuilderPath, $PixelSceneCanvasPath, $TalkDockPath, $RunStatePath,
     $RunActionServicePath, $CrewRunFacadePath, $WorldMapPath, $FoundationWorldTestPath,
@@ -962,11 +970,15 @@ foreach ($path in @(
 if ($failures.Count -eq 0) {
     Assert-PowerShellParses $RunnerPath
     Assert-PowerShellParses $ReplayPolicyPath
+    Assert-PowerShellParses $EvidenceAdmissionPath
+    Assert-PowerShellParses $EvidenceAdmissionContractPath
     Assert-PowerShellParses $HeistSeedPreflightPath
     Assert-PowerShellParses $LauncherPath
 
     $runner = Get-Content -LiteralPath $RunnerPath -Raw
     $replayPolicy = Get-Content -LiteralPath $ReplayPolicyPath -Raw
+    $evidenceAdmission = Get-Content -LiteralPath $EvidenceAdmissionPath -Raw
+    $evidenceAdmissionContract = Get-Content -LiteralPath $EvidenceAdmissionContractPath -Raw
     $heistSeedPreflight = Get-Content -LiteralPath $HeistSeedPreflightPath -Raw
     $launcher = Get-Content -LiteralPath $LauncherPath -Raw
     $bridge = Get-Content -LiteralPath $BridgePath -Raw
@@ -987,21 +999,21 @@ if ($failures.Count -eq 0) {
 
     $validEndingNormalizationFixture = @'
 $Ending = $Ending.ToLowerInvariant()
-$Seed = $FixedSeeds[$Ending]
-if ($Ending -ceq 'heist' -and $Seed -cne [string]$FixedSeeds.heist) { throw 'wrong seed' }
+$EvidenceRole = $EvidenceRole.ToLowerInvariant()
+$script:ReplayAdmission = Resolve-Rw062ReplayAdmission
 if ($Ending -ceq 'heist') { Invoke-HeistSeedPreflight }
 '@
     $hostileMixedCaseEndingFixture = @'
-$Seed = $FixedSeeds[$Ending]
-if ($Ending -ceq 'heist' -and $Seed -cne [string]$FixedSeeds.heist) { throw 'wrong seed' }
+$Ending = $Ending.ToLowerInvariant()
+$script:ReplayAdmission = Resolve-Rw062ReplayAdmission
 if ($Ending -ceq 'heist') { Invoke-HeistSeedPreflight }
 '@
     if (-not (Test-EndingNormalizationSequence -Source $validEndingNormalizationFixture) -or
         -not (Test-EndingNormalizationSequence -Source $runner)) {
-        Add-Failure 'Ending input must normalize once before fixed-seed lookup, Q-013 rejection, or Heist preflight.'
+        Add-Failure 'Ending and evidence-role inputs must normalize once before fail-closed admission or Heist preflight.'
     }
     if (Test-EndingNormalizationSequence -Source $hostileMixedCaseEndingFixture) {
-        Add-Failure 'A mixed-case Heist hostile without normalization did not fail closed.'
+        Add-Failure 'A mixed-case evidence-role hostile without normalization did not fail closed.'
     }
 
     $validExclusiveEvidenceFixture = @'
@@ -1357,8 +1369,9 @@ $finalSummary = [ordered]@{
             throw "Heist seed preflight returned $($heistSeedOutput.Count) records instead of one report."
         }
         $heistSeedReport = [string]$heistSeedOutput[0] | ConvertFrom-Json
+        $ownerDecisions = @($heistSeedReport.owner_decisions)
         if ($heistSeedReport.passed -isnot [bool] -or -not [bool]$heistSeedReport.passed -or
-            [int]$heistSeedReport.valid_fixtures -ne 1 -or
+            [int]$heistSeedReport.valid_fixtures -ne 2 -or
             [int]$heistSeedReport.hostile_fixtures -ne 4 -or
             [string]$heistSeedReport.selection.seed_text -cne 'RW06-HEIST-AUDIT-0002' -or
             [string]$heistSeedReport.selection.selected_scenario -cne 'grand_casino_audit_night' -or
@@ -1366,6 +1379,12 @@ $finalSummary = [ordered]@{
             [int64]$heistSeedReport.selection.stream_seed -ne 1392077385 -or
             [int]$heistSeedReport.selection.none_roll -ne 59 -or
             [int]$heistSeedReport.selection.weighted_roll -ne 24088 -or
+            [string]$heistSeedReport.fresh_interactive_selection.seed_text -cne 'RW06-HEIST-AUDIT-0000' -or
+            [string]$heistSeedReport.fresh_interactive_selection.selected_scenario -cne 'grand_casino_audit_night' -or
+            [int64]$heistSeedReport.fresh_interactive_selection.run_seed -ne 1262406216 -or
+            [int64]$heistSeedReport.fresh_interactive_selection.stream_seed -ne 501255064 -or
+            [int]$heistSeedReport.fresh_interactive_selection.none_roll -ne 96 -or
+            [int]$heistSeedReport.fresh_interactive_selection.weighted_roll -ne 22402 -or
             [int64]$heistSeedReport.serialization_calibration.run_seed -ne 6620395 -or
             [string]$heistSeedReport.serialization_calibration.seed_text -cne 'RW06-CLEAN-ROUTE-01' -or
             [string]$heistSeedReport.launch_model.screen -cne 'START' -or
@@ -1380,7 +1399,9 @@ $finalSummary = [ordered]@{
             [int]$heistSeedReport.arrival_history_hostile.total_weight -ne 19000 -or
             [int]$heistSeedReport.arrival_history_hostile.weighted_roll -ne 15327 -or
             [string]$heistSeedReport.arrival_history_hostile.selected_scenario -cne 'grand_casino_convention_crowd' -or
-            [string]$heistSeedReport.owner_decision -cne 'Q-013') {
+            $ownerDecisions.Count -ne 2 -or
+            [string]$ownerDecisions[0] -cne 'Q-013A' -or
+            [string]$ownerDecisions[1] -cne 'Q-017A') {
             throw 'Heist seed preflight lost its exact valid/hostile deterministic witness.'
         }
         $expectedChallengeKey = "standard|standard|RW06-HEIST-AUDIT-0002|$([string]$heistSeedReport.launch_model.fresh_profile_modifier_text)"
@@ -1393,6 +1414,40 @@ $finalSummary = [ordered]@{
     }
     catch {
         Add-Failure "Heist seed preflight contract failed: $($_.Exception.Message)"
+    }
+
+    try {
+        $admissionOutput = @(& $EvidenceAdmissionContractPath -ReportPath $EvidenceAdmissionReportPath)
+        if ($admissionOutput.Count -ne 1 -or
+            [string]$admissionOutput[0] -cnotmatch '^RW06_2_EVIDENCE_ADMISSION_CONTRACT PASS;') {
+            throw "Evidence admission contract returned an unexpected result: $($admissionOutput -join ' | ')"
+        }
+        $admissionReport = Get-Content -Raw -LiteralPath $EvidenceAdmissionReportPath -Encoding utf8 | ConvertFrom-Json
+        if ($admissionReport.passed -isnot [bool] -or -not [bool]$admissionReport.passed -or
+            [string]$admissionReport.fixed_heist_seed -cne 'RW06-HEIST-AUDIT-0002' -or
+            [string]$admissionReport.fresh_interactive_seed -cne 'RW06-HEIST-AUDIT-0000' -or
+            [string]$admissionReport.fresh_interactive_route_plan -cne 'count' -or
+            [int]$admissionReport.resolver_valid_fixtures -ne 3 -or
+            [int]$admissionReport.resolver_hostile_fixtures -ne 10 -or
+            [int]$admissionReport.preflight_valid_fixtures -ne 2 -or
+            [int]$admissionReport.admission_object_hostile_fixtures -ne 19 -or
+            [int]$admissionReport.preflight_hostile_fixtures -ne 65 -or
+            [int]$admissionReport.source_valid_fixtures -ne 1 -or
+            [int]$admissionReport.source_hostile_fixtures -ne 17 -or
+            [int]$admissionReport.outer_valid_fixtures -ne 3 -or
+            [int]$admissionReport.outer_hostile_fixtures -ne 6) {
+            throw 'Evidence admission report lost an exact valid/hostile Q-017 witness.'
+        }
+        $evidenceAdmissionValidFixtures = [int]$admissionReport.resolver_valid_fixtures +
+            [int]$admissionReport.preflight_valid_fixtures + [int]$admissionReport.source_valid_fixtures +
+            [int]$admissionReport.outer_valid_fixtures
+        $evidenceAdmissionHostileFixtures = [int]$admissionReport.resolver_hostile_fixtures +
+            [int]$admissionReport.admission_object_hostile_fixtures +
+            [int]$admissionReport.preflight_hostile_fixtures + [int]$admissionReport.source_hostile_fixtures +
+            [int]$admissionReport.outer_hostile_fixtures
+    }
+    catch {
+        Add-Failure "Evidence admission contract failed: $($_.Exception.Message)"
     }
 
     if ($null -ne (Get-Command 'Select-HeistAuditNightPublicHook' -ErrorAction SilentlyContinue)) {
@@ -2729,7 +2784,12 @@ func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
         "clean = @('players_card')",
         "cheat = @('showdown_survived')",
         "heist = @('heist_clean_sweep', 'heist_out_hot', 'heist_somebody_got_pinched')",
-        "heist = 'RW06-HEIST-AUDIT-0002'",
+        "`$EvidenceAdmissionTool = Join-Path `$PSScriptRoot 'rw06_2_evidence_admission.ps1'",
+        'Resolve-Rw062ReplayAdmission',
+        'Assert-Rw062HeistPreflightAdmission',
+        'requested_evidence_role = $EvidenceRole',
+        'replay_admission = $script:ReplayAdmission',
+        'heist_preflight_admission = $script:HeistPreflightAdmissionReceipt',
         'click_object $SemanticId',
         'click_action $action',
         'click_map $NodeId',
@@ -3110,9 +3170,11 @@ function Assert-SaveRelaunchContinue {
     Assert-Match $runner '(?s)function Get-VisibleTutorialGuideAcknowledgment.*?render_valid.*?tutorial_guide:.*?choiceIds\.Count\s+-cne\s+1.*?choiceIds\[0\].*?continue.*?Get-PublicTalkChoices.*?enabled\s+-is\s+\[bool\]' 'Coach recovery must accept only one fully rendered, exactly typed, enabled continue choice from the public tutorial-guide TalkDock.'
     Assert-NotMatch $runner 'PLAYTEST-CATALOG-01' 'The stale historical Heist seed must not remain in the live replay runner.'
     Assert-Contains $runner "`$HeistSeedPreflightTool = Join-Path `$PSScriptRoot 'rw06_2_heist_seed_preflight.ps1'" 'Heist replay must bind its engine-free preflight from the checked-in tool path.'
-    Assert-Match $runner '(?s)heist\s*=\s*''RW06-HEIST-AUDIT-0002''.*?function Invoke-HeistSeedPreflight.*?& \$HeistSeedPreflightTool.*?grand_casino_audit_night.*?selected_scenario.*?function ConvertTo-BridgeBase64Token' 'Q-013A Heist replay must use exact seed 0002 and fail it through the strict production-tree preflight before engine launch.'
+    Assert-Contains $runner "`$EvidenceAdmissionTool = Join-Path `$PSScriptRoot 'rw06_2_evidence_admission.ps1'" 'Heist replay must bind its fail-closed evidence role/seed admission from the checked-in helper.'
+    Assert-Match $runner '(?s)\$EvidenceRole\s*=\s*\$EvidenceRole\.ToLowerInvariant\(\).*?Resolve-Rw062ReplayAdmission.*?function Invoke-HeistSeedPreflight.*?& \$HeistSeedPreflightTool.*?Assert-Rw062HeistPreflightAdmission.*?function ConvertTo-BridgeBase64Token' 'Q-013A/Q-017A Heist replay must resolve exact role/seed admission, then bind the production-tree preflight receipt before engine launch.'
     Assert-NotMatch $runner 'heist\s*=\s*''RW06-HEIST-AUDIT-0013''' 'The rejected Convention seed must not remain the live Heist runner default.'
-    Assert-Match $runner '(?s)if\s*\(\[string\]::IsNullOrWhiteSpace\(\$Seed\)\).*?\$Seed\s*=\s*\$FixedSeeds\[\$Ending\].*?if\s*\(\$Ending\s+-ceq\s+''heist''\s+-and\s+\$Seed\s+-cne\s+\[string\]\$FixedSeeds\.heist\).*?Q-013 requires exact Heist seed' 'Q-013A live replay must reject every caller-supplied Heist seed except exact 0002 before engine launch.'
+    Assert-Match $evidenceAdmission '(?s)fixed\s*=.*?heist\s*=\s*''RW06-HEIST-AUDIT-0002''.*?fresh_interactive\s*=.*?heist\s*=\s*''RW06-HEIST-AUDIT-0000''.*?\$EvidenceRole\s+-ceq\s+''fresh-interactive''.*?\$Ending\s+-cne\s+''heist''.*?\$Repeat\s+-ne\s+1.*?authorizedFreshSeed.*?if\s*\(\$Ending\s+-ceq\s+''heist''\s+-and\s+\$resolvedSeed\s+-cne\s+\$fixedHeistSeed\)' 'Q-013A/Q-017A admission must keep fixed Heist on exact 0002 and admit only one explicit Heist/Repeat-1 fresh seed 0000.'
+    Assert-Match $runner '(?s)\$runSummary\s*=\s*\[ordered\]@\{.*?requested_evidence_role\s*=\s*\$EvidenceRole.*?replay_admission\s*=\s*\$script:ReplayAdmission.*?heist_preflight_admission\s*=\s*\$script:HeistPreflightAdmissionReceipt.*?\$finalSummary\s*=\s*\[ordered\]@\{.*?requested_evidence_role\s*=\s*\$EvidenceRole.*?replay_admission\s*=\s*\$script:ReplayAdmission.*?heist_preflight_admission\s*=\s*\$script:HeistPreflightAdmissionReceipt' 'Every direct replay report level must retain its exact evidence role, seed admission, and authenticated Heist preflight receipt.'
     Assert-Match $runner '(?s)\$invocationRoot\s*=.*?Invoke-HeistSeedPreflight.*?for \(\$iteration.*?Start-BridgeSession' 'Heist seed preflight must finish before any live replay iteration can start an engine session.'
     Assert-Match $runner '(?ms)^function Start-NormalSeededRun\s*\{.*?Click-Button\s+-Text\s+''RUN SETUP''.*?run_config_visible.*?\$Ending\s+-ceq\s+''heist''.*?Assert-HeistFreshStandardRunSetup\s+-Observation\s+\$script:LastObservation.*?set_field seed \$Seed.*?(?=^function |\z)' 'The live Heist route must authenticate exact visible fresh Standard/Random/default-content setup before typing its seed.'
     Assert-Match $replayPolicy '(?ms)^function Assert-HeistFreshStandardRunSetup.*?screen.*?START.*?run_config_visible.*?selected_challenge_id.*?selected_home_type_id.*?selected_content_groups.*?universal_passive_items.*?numbers_pack.*?challengeId\s+-isnot\s+\[string\].*?challengeId\s+-cne\s+''''.*?homeTypeId\s+-cne\s+''random''.*?contentGroups\s+-isnot\s+\[array\].*?non-default visible content group index.*?(?=^function |\z)' 'Fresh Heist launch policy must fail closed on screen, type, challenge, home, content-group membership, case, or order drift.'
@@ -3431,6 +3493,8 @@ $report = [ordered]@{
     persistence_checkpoint_hostile_fixtures = $persistenceCheckpointHostileFixtures
     direct_qualification_valid_fixtures = $directQualificationValidFixtures
     direct_qualification_hostile_fixtures = $directQualificationHostileFixtures
+    evidence_admission_valid_fixtures = $evidenceAdmissionValidFixtures
+    evidence_admission_hostile_fixtures = $evidenceAdmissionHostileFixtures
     failures = @($failures)
 }
 $report | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $ReportPath -Encoding utf8

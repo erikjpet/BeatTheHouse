@@ -3,6 +3,8 @@ param(
     [Parameter(Mandatory = $true)]
     [ValidateSet('clean', 'cheat', 'heist')]
     [string]$Ending,
+    [ValidateSet('fixed-repeat', 'fresh-interactive')]
+    [string]$EvidenceRole = 'fixed-repeat',
     [ValidatePattern('^[A-Za-z0-9_-]+$')]
     [string]$Seed = '',
     [ValidateRange(1, 2)]
@@ -18,20 +20,17 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $Ending = $Ending.ToLowerInvariant()
+$EvidenceRole = $EvidenceRole.ToLowerInvariant()
 
 $Worktree = Split-Path -Parent $PSScriptRoot
 $SessionTool = Join-Path $PSScriptRoot 'agent_playtest_session.ps1'
 $ReplayPolicyTool = Join-Path $PSScriptRoot 'rw06_2_replay_policies.ps1'
+$EvidenceAdmissionTool = Join-Path $PSScriptRoot 'rw06_2_evidence_admission.ps1'
 $HeistSeedPreflightTool = Join-Path $PSScriptRoot 'rw06_2_heist_seed_preflight.ps1'
 $GodotBin = 'D:\Projects\Beat-The-House\.tools\godot-4.6-stable\Godot_v4.6-stable_win64_console.exe'
 $Schema = 'beat_the_house.agent_public_observation'
 $SchemaVersion = 1
 $BridgeCallRoot = Join-Path $Worktree '.tmp\rw06_2\bridge_calls'
-$FixedSeeds = @{
-    clean = 'RW06-CLEAN-ROUTE-01'
-    cheat = 'RW06-CHEAT-ROUTE-01'
-    heist = 'RW06-HEIST-AUDIT-0002'
-}
 $ExpectedOutcomes = @{
     clean = @('players_card')
     cheat = @('showdown_survived')
@@ -45,21 +44,27 @@ if (-not (Test-Path -LiteralPath $SessionTool)) {
 if (-not (Test-Path -LiteralPath $ReplayPolicyTool)) {
     throw "Replay policy helper is missing: $ReplayPolicyTool"
 }
+if (-not (Test-Path -LiteralPath $EvidenceAdmissionTool)) {
+    throw "Replay evidence admission helper is missing: $EvidenceAdmissionTool"
+}
 if (-not (Test-Path -LiteralPath $HeistSeedPreflightTool)) {
     throw "Heist seed preflight is missing: $HeistSeedPreflightTool"
 }
 . $ReplayPolicyTool
+. $EvidenceAdmissionTool
 if (-not (Test-Path -LiteralPath $GodotBin)) {
     throw "Pinned Godot binary is missing: $GodotBin"
 }
-if ([string]::IsNullOrWhiteSpace($Seed)) {
-    $Seed = $FixedSeeds[$Ending]
-}
-if ($Ending -ceq 'heist' -and $Seed -cne [string]$FixedSeeds.heist) {
-    throw "Q-013 requires exact Heist seed '$($FixedSeeds.heist)'; override '$Seed' is not allowed."
-}
+$script:ReplayAdmission = Resolve-Rw062ReplayAdmission `
+    -Ending $Ending `
+    -EvidenceRole $EvidenceRole `
+    -Seed $Seed `
+    -Repeat $Repeat
+$EvidenceRole = [string]$script:ReplayAdmission.evidence_role
+$Seed = [string]$script:ReplayAdmission.seed
 if ([string]::IsNullOrWhiteSpace($EvidenceRoot)) {
-    $EvidenceRoot = Join-Path $Worktree ".tmp\rw06_2\$Ending"
+    $evidenceScope = if ($EvidenceRole -ceq 'fresh-interactive') { 'fresh_interactive' } else { $Ending }
+    $EvidenceRoot = Join-Path $Worktree ".tmp\rw06_2\$evidenceScope"
 }
 
 $env:GODOT_BIN = $GodotBin
@@ -84,6 +89,7 @@ $script:GrandFareAcceptedLenderIds = New-Object 'System.Collections.Generic.Hash
 $script:GrandFareResolvedCashEventKeys = New-Object 'System.Collections.Generic.HashSet[string]'
 $script:GrandFareRecoveryVisitedNodes = New-Object 'System.Collections.Generic.HashSet[string]'
 $script:HeistLaunchSetup = $null
+$script:HeistPreflightAdmissionReceipt = $null
 
 
 function Get-Value {
@@ -146,6 +152,9 @@ function Invoke-HeistSeedPreflight {
         $cycleId -isnot [string] -or [string]::IsNullOrWhiteSpace([string]$cycleId)) {
         throw 'Heist seed preflight did not prove the exact requested seed selects Grand Casino Audit Night on the current production tree.'
     }
+    $script:HeistPreflightAdmissionReceipt = Assert-Rw062HeistPreflightAdmission `
+        -Admission $script:ReplayAdmission `
+        -Report $report
     return $report
 }
 
@@ -4686,10 +4695,12 @@ for ($iteration = 1; $iteration -le $Repeat; $iteration++) {
         }
         $runSummary = [ordered]@{
             role = 'child_development_iteration'
+            requested_evidence_role = $EvidenceRole
             repeat_profile_scope = 'shared_caller_appdata'
             fixed_repeat_qualification_authority = 'outer_independent_profile_aggregate_only'
             release_qualifying = $false
             qualification = 'non_qualifying_development_iteration'
+            replay_admission = $script:ReplayAdmission
             iteration = $iteration
             ending = $Ending
             seed = $Seed
@@ -4700,6 +4711,7 @@ for ($iteration = 1; $iteration -le $Repeat; $iteration++) {
             action_count = $script:ActionCount
             midpoint_save_relaunch_continue = $script:MidpointSaved
             heist_seed_preflight = $heistSeedPreflight
+            heist_preflight_admission = $script:HeistPreflightAdmissionReceipt
             heist_launch_setup = $script:HeistLaunchSetup
             transcript = $script:TranscriptPath
             transcript_sha256 = $transcriptHash
@@ -4758,6 +4770,7 @@ $finalSummary = [ordered]@{
     schema_version = 1
     check_id = 'rw06_2_ending_replay'
     role = 'child_development_run'
+    requested_evidence_role = $EvidenceRole
     repeat_profile_scope = 'shared_caller_appdata'
     fixed_repeat_qualification_authority = 'outer_independent_profile_aggregate_only'
     ending = $Ending
@@ -4768,9 +4781,11 @@ $finalSummary = [ordered]@{
     checkpoint_evidence_complete = $checkpointEvidenceComplete
     release_qualifying = $false
     qualification = 'non_qualifying_development_run'
+    replay_admission = $script:ReplayAdmission
     public_observation_schema = $Schema
     public_observation_schema_version = $SchemaVersion
     heist_seed_preflight = $heistSeedPreflight
+    heist_preflight_admission = $script:HeistPreflightAdmissionReceipt
     evidence_root = $invocationRoot
     runs = $runSummaries
 }

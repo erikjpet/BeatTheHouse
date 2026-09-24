@@ -21,6 +21,7 @@ $ErrorActionPreference = 'Stop'
 $Ending = $Ending.ToLowerInvariant()
 $Worktree = Split-Path -Parent $PSScriptRoot
 $ReplayTool = Join-Path $PSScriptRoot 'rw06_2_ending_replay.ps1'
+$EvidenceAdmissionTool = Join-Path $PSScriptRoot 'rw06_2_evidence_admission.ps1'
 $GodotBin = 'D:\Projects\Beat-The-House\.tools\godot-4.6-stable\Godot_v4.6-stable_win64_console.exe'
 $LeaseRoot = 'D:\Projects\Beat-The-House-worktrees\.godot_leases'
 $LaunchLockPath = Join-Path $LeaseRoot '.launch.lock'
@@ -106,6 +107,72 @@ function Get-ExactValue {
     }
     if ($null -eq $current) { return $Default }
     return $current
+}
+
+
+function Test-ExactStringArray {
+    param(
+        [AllowNull()]$Value,
+        [Parameter(Mandatory = $true)][AllowEmptyCollection()][string[]]$Expected
+    )
+    if ($null -eq $Value -or $Value -is [string] -or
+        $Value -isnot [Collections.IEnumerable]) {
+        return $false
+    }
+    $actual = @($Value)
+    if ($actual.Count -ne $Expected.Count) { return $false }
+    for ($index = 0; $index -lt $Expected.Count; $index++) {
+        if ($actual[$index] -isnot [string] -or
+            [string]$actual[$index] -cne [string]$Expected[$index]) {
+            return $false
+        }
+    }
+    return $true
+}
+
+
+function Assert-FixedReplayAdmission {
+    param(
+        [Parameter(Mandatory = $true)]$Admission,
+        [Parameter(Mandatory = $true)][string]$Label
+    )
+    Assert-Rw062ExactPropertyNames -InputObject $Admission -Label "$Label replay admission" -Expected @(
+        'evidence_role', 'ending', 'seed', 'repeat', 'route_plan',
+        'expected_initial_scenario', 'scenario_authority', 'scenario_injection_allowed',
+        'plan_b_allowed', 'requires_isolated_profile', 'release_qualifying',
+        'qualification_authority', 'owner_decisions'
+    )
+    $expectedRoutePlan = if ($Ending -ceq 'heist') { 'count' } else { '' }
+    $expectedScenario = if ($Ending -ceq 'heist') { 'grand_casino_audit_night' } else { '' }
+    $expectedAuthority = if ($Ending -ceq 'heist') { 'natural_fresh_profile_first_arrival_preflight' } else { 'route_seed' }
+    $expectedOwnerDecisions = if ($Ending -ceq 'heist') { @('Q-013A', 'Q-017A') } else { @() }
+    $actualOwnerDecisions = Get-ExactValue $Admission @('owner_decisions') '__missing_owner_decisions__'
+    $ownerDecisionsValid = if ($Ending -ceq 'heist') {
+        Test-ExactStringArray -Value $actualOwnerDecisions -Expected $expectedOwnerDecisions
+    }
+    else {
+        $null -eq $actualOwnerDecisions
+    }
+    if ([string](Get-ExactValue $Admission @('evidence_role') '') -cne 'fixed-repeat' -or
+        [string](Get-ExactValue $Admission @('ending') '') -cne $Ending -or
+        [string](Get-ExactValue $Admission @('seed') '') -cne $Seed -or
+        (Get-ExactValue $Admission @('repeat') $null) -isnot [int32] -or
+        [int](Get-ExactValue $Admission @('repeat') 0) -ne 1 -or
+        [string](Get-ExactValue $Admission @('route_plan') '<missing>') -cne $expectedRoutePlan -or
+        [string](Get-ExactValue $Admission @('expected_initial_scenario') '<missing>') -cne $expectedScenario -or
+        [string](Get-ExactValue $Admission @('scenario_authority') '') -cne $expectedAuthority -or
+        (Get-ExactValue $Admission @('scenario_injection_allowed') $null) -isnot [bool] -or
+        [bool](Get-ExactValue $Admission @('scenario_injection_allowed') $true) -or
+        (Get-ExactValue $Admission @('plan_b_allowed') $null) -isnot [bool] -or
+        [bool](Get-ExactValue $Admission @('plan_b_allowed') $true) -or
+        (Get-ExactValue $Admission @('requires_isolated_profile') $null) -isnot [bool] -or
+        -not [bool](Get-ExactValue $Admission @('requires_isolated_profile') $false) -or
+        (Get-ExactValue $Admission @('release_qualifying') $null) -isnot [bool] -or
+        [bool](Get-ExactValue $Admission @('release_qualifying') $true) -or
+        [string](Get-ExactValue $Admission @('qualification_authority') '') -cne 'outer_independent_profile_aggregate_only' -or
+        -not $ownerDecisionsValid) {
+        throw "$Label did not retain the exact fixed-repeat replay admission."
+    }
 }
 
 
@@ -794,6 +861,7 @@ function Assert-OneRunEvidence {
         -ExpectedPath $invocations[0].FullName `
         -Label "Run $RunIndex invocation evidence root"
     if ([string](Get-ExactValue $summary @('check_id') '') -cne 'rw06_2_ending_replay' -or
+        [string](Get-ExactValue $summary @('requested_evidence_role') '') -cne 'fixed-repeat' -or
         [string](Get-ExactValue $summary @('ending') '') -cne $Ending -or
         [string](Get-ExactValue $summary @('seed') '') -cne $Seed -or
         [int](Get-ExactValue $summary @('repeat') 0) -ne 1 -or
@@ -802,6 +870,8 @@ function Assert-OneRunEvidence {
         [string](Get-ExactValue $summary @('qualification') '') -cne 'non_qualifying_development_run') {
         throw "Run $RunIndex invocation summary did not match the exact one-run child contract."
     }
+    $summaryAdmission = Get-ExactValue $summary @('replay_admission') $null
+    Assert-FixedReplayAdmission -Admission $summaryAdmission -Label "Run $RunIndex invocation summary"
     $terminalSeeds = @(Get-ExactValue $summary @('observed_terminal_seeds') @() | ForEach-Object { [string]$_ })
     if ($terminalSeeds.Count -ne 1 -or $terminalSeeds[0] -cne $Seed) {
         throw "Run $RunIndex did not report the exact fixed terminal seed."
@@ -814,6 +884,7 @@ function Assert-OneRunEvidence {
     $actionCount = [int](Get-ExactValue $run @('action_count') 0)
     $outcome = [string](Get-ExactValue $run @('outcome') '')
     if ([string](Get-ExactValue $run @('role') '') -cne 'child_development_iteration' -or
+        [string](Get-ExactValue $run @('requested_evidence_role') '') -cne 'fixed-repeat' -or
         [string](Get-ExactValue $run @('repeat_profile_scope') '') -cne 'shared_caller_appdata' -or
         [string](Get-ExactValue $run @('fixed_repeat_qualification_authority') '') -cne 'outer_independent_profile_aggregate_only' -or
         (Get-ExactValue $run @('release_qualifying') $null) -isnot [bool] -or [bool](Get-ExactValue $run @('release_qualifying') $true) -or
@@ -827,6 +898,12 @@ function Assert-OneRunEvidence {
         $actionCount -le 0 -or $actionCount -gt 350) {
         throw "Run $RunIndex did not prove its terminal win, midpoint persistence, exact seed, and 1..350 action bound."
     }
+    $runAdmission = Get-ExactValue $run @('replay_admission') $null
+    Assert-FixedReplayAdmission -Admission $runAdmission -Label "Run $RunIndex iteration summary"
+    if (($runAdmission | ConvertTo-Json -Depth 20 -Compress) -cne
+        ($summaryAdmission | ConvertTo-Json -Depth 20 -Compress)) {
+        throw "Run $RunIndex iteration replay admission differs from its invocation admission."
+    }
 
     if ($Ending -ceq 'heist') {
         $preflight = Get-ExactValue $summary @('heist_seed_preflight') $null
@@ -835,6 +912,16 @@ function Assert-OneRunEvidence {
             [string](Get-ExactValue $preflight @('selection', 'selected_scenario') '') -cne 'grand_casino_audit_night') {
             throw "Run $RunIndex did not retain the exact Q-013 seed/Audit preflight."
         }
+        $expectedPreflightAdmission = Assert-Rw062HeistPreflightAdmission `
+            -Admission $summaryAdmission `
+            -Report $preflight
+        $publishedSummaryPreflightAdmission = Get-ExactValue $summary @('heist_preflight_admission') $null
+        $publishedRunPreflightAdmission = Get-ExactValue $run @('heist_preflight_admission') $null
+        $expectedPreflightJson = $expectedPreflightAdmission | ConvertTo-Json -Depth 20 -Compress
+        if (($publishedSummaryPreflightAdmission | ConvertTo-Json -Depth 20 -Compress) -cne $expectedPreflightJson -or
+            ($publishedRunPreflightAdmission | ConvertTo-Json -Depth 20 -Compress) -cne $expectedPreflightJson) {
+            throw "Run $RunIndex did not retain its exact fixed-repeat Heist preflight admission receipt."
+        }
         $launchSetup = Get-ExactValue $run @('heist_launch_setup') $null
         $contentGroups = @(Get-ExactValue $launchSetup @('selected_content_groups') @())
         if ([string](Get-ExactValue $launchSetup @('selected_challenge_id') '<missing>') -cne '' -or
@@ -842,6 +929,10 @@ function Assert-OneRunEvidence {
             $contentGroups.Count -ne 14) {
             throw "Run $RunIndex did not retain the visible fresh Standard/Random/default-content Heist setup."
         }
+    }
+    elseif ($null -ne (Get-ExactValue $summary @('heist_preflight_admission') $null) -or
+        $null -ne (Get-ExactValue $run @('heist_preflight_admission') $null)) {
+        throw "Run $RunIndex published a Heist admission receipt for a non-Heist fixed route."
     }
 
     $runRoot = Join-Path $invocations[0].FullName 'run-01'
@@ -970,6 +1061,7 @@ function Assert-OneRunEvidence {
     return [pscustomobject][ordered]@{
         run_index = $RunIndex
         role = 'fixed_route_repeat'
+        evidence_role = [string](Get-ExactValue $summary @('requested_evidence_role') '')
         ending = $Ending
         seed = $Seed
         replay_pid = [int]$Identity.pid
@@ -1027,7 +1119,7 @@ function Invoke-OneFixedRun {
         $powerShellExe = [Diagnostics.Process]::GetCurrentProcess().MainModule.FileName
         $arguments = @(
             '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', $ReplayTool,
-            '-Ending', $Ending, '-Seed', $Seed, '-Repeat', '1',
+            '-Ending', $Ending, '-EvidenceRole', 'fixed-repeat', '-Seed', $Seed, '-Repeat', '1',
             '-TimeoutSeconds', [string]$CommandTimeoutSeconds, '-EvidenceRoot', $replayEvidenceRoot
         )
         $process = Start-Process -FilePath $powerShellExe -ArgumentList $arguments `
@@ -1116,6 +1208,7 @@ function Compare-FixedRunProofs {
     $second = $Proofs[1]
     foreach ($proof in $Proofs) {
         if ([string]$proof.role -cne 'fixed_route_repeat' -or
+            [string]$proof.evidence_role -cne 'fixed-repeat' -or
             [string]$proof.ending -cne $Ending -or [string]$proof.seed -cne $Seed -or
             [string]$proof.persistence_checkpoint_before_sha256 -cne [string]$proof.persistence_checkpoint_after_sha256 -or
             [string]$proof.profile_inventory_sha256 -notmatch '^[a-f0-9]{64}$' -or
@@ -1144,6 +1237,7 @@ function Compare-FixedRunProofs {
         throw 'Fixed-repeat runs did not use two distinct profiles, sessions, roots, and replay processes.'
     }
     return [pscustomobject][ordered]@{
+        evidence_role = 'fixed-repeat'
         deterministic = $true
         isolated_profiles = $true
         transcript_sha256 = [string]$first.transcript_sha256
@@ -1195,6 +1289,10 @@ if ($Ending -ceq 'heist' -and $Seed -cne 'RW06-HEIST-AUDIT-0002') {
 if (-not (Test-Path -LiteralPath $ReplayTool -PathType Leaf)) {
     throw "Replay tool is missing: $ReplayTool"
 }
+if (-not (Test-Path -LiteralPath $EvidenceAdmissionTool -PathType Leaf)) {
+    throw "Replay evidence admission helper is missing: $EvidenceAdmissionTool"
+}
+. $EvidenceAdmissionTool
 if (-not (Test-Path -LiteralPath $GodotBin -PathType Leaf)) {
     throw "Pinned Godot console is missing: $GodotBin"
 }
@@ -1321,6 +1419,8 @@ $fixedRepeatQualifying = $null -eq $script:TerminalError -and
     $script:Outcome -ceq 'green' -and
     $script:RunProofs.Count -eq 2 -and
     $null -ne $script:CanonicalProof -and
+    [string]$script:CanonicalProof.evidence_role -ceq 'fixed-repeat' -and
+    @($script:RunProofs | Where-Object { [string]$_.evidence_role -cne 'fixed-repeat' }).Count -eq 0 -and
     -not $script:LeaseOwned -and
     $script:FinalProcessCensus.Count -eq 0 -and
     $script:FinalHead -ceq $ExpectedHead.ToLowerInvariant() -and
@@ -1333,6 +1433,7 @@ $aggregateSummary = [ordered]@{
     schema_version = 1
     check_id = 'rw06_2_final_evidence'
     role = 'fixed_route_repeat'
+    evidence_role = 'fixed-repeat'
     ending = $Ending
     seed = $Seed
     repeat = 2
@@ -1344,7 +1445,7 @@ $aggregateSummary = [ordered]@{
     observed_tree = $script:FinalTree
     independent_profiles = if ($null -ne $script:CanonicalProof) { [bool]$script:CanonicalProof.isolated_profiles } else { $false }
     fresh_interactive_authorized = $false
-    q017_status = if ($Ending -ceq 'heist') { 'OPEN_NOT_IN_SCOPE' } else { 'NOT_APPLICABLE' }
+    q017_status = if ($Ending -ceq 'heist') { 'ANSWERED_SEPARATE_FRESH_INTERACTIVE_SCOPE' } else { 'NOT_APPLICABLE' }
     deterministic = if ($null -ne $script:CanonicalProof) { [bool]$script:CanonicalProof.deterministic } else { $false }
     fixed_repeat_qualifying = [bool]$fixedRepeatQualifying
     canonical_proof = $script:CanonicalProof
@@ -1359,6 +1460,7 @@ $metadata = [ordered]@{
     ending = $Ending
     seed = $Seed
     role = 'fixed_route_repeat'
+    evidence_role = 'fixed-repeat'
     outcome = $script:Outcome
     error = Get-FailureMessage -Failure $script:TerminalError
     expected_head = $ExpectedHead.ToLowerInvariant()
@@ -1421,6 +1523,7 @@ $manifest = [ordered]@{
     schema_version = 1
     check_id = 'rw06_2_final_evidence_manifest'
     role = 'fixed_route_repeat'
+    evidence_role = 'fixed-repeat'
     ending = $Ending
     seed = $Seed
     fixed_repeat_qualifying = [bool]$fixedRepeatQualifying

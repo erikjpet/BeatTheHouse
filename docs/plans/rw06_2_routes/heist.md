@@ -1,10 +1,11 @@
 # rw06_2 Crew heist ending route — first-pass replay
 
-Status: **Q-013A FOCUSED CONTRACT GREEN; NATURAL LIVE ROUTE PROOF PENDING**
-Peer branch baseline: `5f5955b2cff36262c402aa2ee57c1f07c3ccb8d4`
+Status: **Q-013A/Q-017A ENGINE-FREE ADMISSION GREEN; NATURAL LIVE ROUTE PROOF PENDING**
+Integrated canonical baseline: `d60c5d928f6ca4d973f158410816a00de55f87d3`
 Canonical terminal route: `crew_heist`
 Preferred launch plan: **The Count (Plan A)**
 Current fail-closed runner seed: `RW06-HEIST-AUDIT-0002`
+Separate fresh-interactive seed: `RW06-HEIST-AUDIT-0000`
 Rejected stale pin: `RW06-HEIST-AUDIT-0013` (selects Convention)
 
 `tools/rw06_2_ending_replay.ps1 -Ending heist` now encodes the full first-pass
@@ -17,9 +18,12 @@ Godot, its production-tree preflight replays the visible START defaults,
 fresh-profile meta modifier serialization, shipped challenge seed, RNG stream,
 operating cycle, recent-scenario suppression, and weighted scenario-selection
 algorithms against current data. That exact launch path rejects pinned seed
-`0013`: it selects Convention, not Audit. Q-013A adopts seed `0002`, whose exact
-day-zero witness selects Audit, and the Heist runner rejects every caller seed
-override other than that exact value. The route learns lasting Count eligibility only
+`0013`: it selects Convention, not Audit. Q-013A keeps both fixed-repeat runs on
+seed `0002`, whose exact day-zero witness selects Audit. Q-017A separately admits
+exact seed `0000` only for one `fresh-interactive`, Repeat-1 pass after the same
+production-model preflight proves its natural day-zero Audit selection. Neither
+role accepts another Heist seed, and the fixed launcher explicitly rejects or
+relabels no fresh child. The route learns lasting Count eligibility only
 by resolving the rendered **The Audit Roster** choice **Read the shift**; an
 unvisited seed, stored prior-cycle environment, or narrative-only claim does not
 qualify. The guaranteed Corner Store Crew marker supplies the initial Grand fare.
@@ -90,7 +94,12 @@ action release replay.
    challenge key deterministically selects Convention (run seed `1868801668`,
    none roll `44`, weighted roll `12067/26000`). `RW06-HEIST-AUDIT-0002` is the
    Q-013A canonical seed (run seed `919325714`, none roll `59`, weighted roll
-   `24088/26000`). Only the authored `read_the_shift` fact outlives Audit's cycle.
+   `24088/26000`) for both fixed repeats. Q-017A's separate fresh-interactive
+   seed `RW06-HEIST-AUDIT-0000` has run seed `1262406216`, scenario stream seed
+   `501255064`, none roll `96`, and weighted roll `22402/26000`, selecting Audit
+   naturally on `day:0`. It is admitted only as explicit Heist/Repeat-1 input;
+   seed `0007` and every other alternate remain rejected even if a scan currently
+   finds Audit. Only the authored `read_the_shift` fact outlives Audit's cycle.
 8. After Bishop reaches Inner Circle, revisit Grand Casino Main and require the
    exact rendered **Borrowed Badge** event for Convention Crowd while requiring
    the Audit Roster to be absent. Return to the Punchline Planning Table and
@@ -170,6 +179,11 @@ action release replay.
       the natural `scenario_audit_roster/read_the_shift` result. The exact
       focused contract proves its Save/Continue restore. Never inject Audit or
       silently choose Plan B.
+- [x] Apply Q-017A engine-free admission: keep both fixed repeats on exact
+      `0002`; admit only exact natural-Audit `0000` for one separate
+      `fresh-interactive` Heist/Repeat-1 pass on the same Count route. The
+      admission and source contracts reject alternate seeds, scenario authority,
+      Plan B, type drift, and fixed-launcher relabeling.
 - [ ] Prove the candidate reaches the rendered Audit Roster and the terminal
       heist win through the full public route.
 - [ ] Measure the full marker -> Bishop 90 path and keep it within 150–350 player
@@ -177,6 +191,7 @@ action release replay.
 - [ ] Record exact contact, planning-table, setup, game, and delivery semantic IDs.
 - [ ] Prove the same seed and public decision policy reaches the same Crew win
       twice without private-state inspection.
-- [ ] Complete one additional fresh-seed interactive heist run.
+- [ ] Complete the separately reviewed `fresh-interactive` seed-`0000` Heist
+      pass after rw06_1 lands and the immutable checkpoint independently clears.
 - [ ] Add actual action count, transcript/evidence paths,
       money curve, next-goal notes, and arc-breaker findings.

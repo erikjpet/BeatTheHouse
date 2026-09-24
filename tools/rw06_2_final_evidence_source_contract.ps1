@@ -9,6 +9,7 @@ $ErrorActionPreference = 'Stop'
 $Worktree = Split-Path -Parent $PSScriptRoot
 $LauncherPath = Join-Path $PSScriptRoot 'rw06_2_final_evidence.ps1'
 $ReplayPath = Join-Path $PSScriptRoot 'rw06_2_ending_replay.ps1'
+$AdmissionPath = Join-Path $PSScriptRoot 'rw06_2_evidence_admission.ps1'
 if ([string]::IsNullOrWhiteSpace($ReportPath)) {
     $ReportPath = Join-Path $Worktree '.tmp\rw06_2\final_evidence_source_contract.json'
 }
@@ -161,6 +162,116 @@ function Replace-SourceOnce {
 }
 
 
+function Get-UniqueTopLevelOrderedHashtable {
+    param(
+        [Parameter(Mandatory = $true)]$Analysis,
+        [Parameter(Mandatory = $true)][string]$VariableName
+    )
+    $variableToken = '$' + $VariableName
+    $assignments = @($Analysis.ast.FindAll({
+        param($node)
+        $node -is [Management.Automation.Language.AssignmentStatementAst] -and
+            [string]$node.Left.Extent.Text -ceq $variableToken
+    }, $true))
+    if ($assignments.Count -ne 1 -or
+        -not [object]::ReferenceEquals($assignments[0].Parent, $Analysis.ast.EndBlock)) {
+        return $null
+    }
+    $right = $assignments[0].Right
+    if ($right -isnot [Management.Automation.Language.CommandExpressionAst] -or
+        $right.Expression -isnot [Management.Automation.Language.ConvertExpressionAst] -or
+        [string]$right.Expression.Type.TypeName.FullName -cne 'ordered' -or
+        $right.Expression.Child -isnot [Management.Automation.Language.HashtableAst]) {
+        return $null
+    }
+    return $right.Expression.Child
+}
+
+
+function ConvertTo-NormalizedSourceText {
+    param([Parameter(Mandatory = $true)][string]$Text)
+    return [regex]::Replace($Text.Trim(), '\s+', ' ')
+}
+
+
+function Test-ExactTopLevelOrderedHashtableValues {
+    param(
+        [Parameter(Mandatory = $true)]$Analysis,
+        [Parameter(Mandatory = $true)][string]$VariableName,
+        [Parameter(Mandatory = $true)][Collections.IDictionary]$Expected,
+        [switch]$ValidateOptionalEvidenceRole
+    )
+    $table = Get-UniqueTopLevelOrderedHashtable -Analysis $Analysis -VariableName $VariableName
+    if ($null -eq $table) { return $false }
+    foreach ($entry in $Expected.GetEnumerator()) {
+        $matches = @($table.KeyValuePairs | Where-Object {
+            $_.Item1 -is [Management.Automation.Language.StringConstantExpressionAst] -and
+                [string]$_.Item1.Value -ceq [string]$entry.Key
+        })
+        if ($matches.Count -ne 1 -or
+            (ConvertTo-NormalizedSourceText -Text ([string]$matches[0].Item2.Extent.Text)) -cne
+                (ConvertTo-NormalizedSourceText -Text ([string]$entry.Value))) {
+            return $false
+        }
+    }
+    if ($ValidateOptionalEvidenceRole) {
+        $evidenceRolePairs = @($table.KeyValuePairs | Where-Object {
+            $_.Item1 -is [Management.Automation.Language.StringConstantExpressionAst] -and
+                [string]$_.Item1.Value -ceq 'evidence_role'
+        })
+        if ($evidenceRolePairs.Count -gt 1 -or
+            ($evidenceRolePairs.Count -eq 1 -and
+                (ConvertTo-NormalizedSourceText -Text ([string]$evidenceRolePairs[0].Item2.Extent.Text)) -cne "'fixed-repeat'")) {
+            return $false
+        }
+    }
+    return $true
+}
+
+
+function Replace-TopLevelHashtableValue {
+    param(
+        [Parameter(Mandatory = $true)][string]$Source,
+        [Parameter(Mandatory = $true)][string]$VariableName,
+        [Parameter(Mandatory = $true)][string]$PropertyName,
+        [Parameter(Mandatory = $true)][string]$Replacement
+    )
+    $analysis = ConvertTo-PowerShellAnalysis -Source $Source
+    if ($analysis.parse_errors.Count -ne 0) {
+        throw "Cannot mutate invalid PowerShell source for '$VariableName.$PropertyName'."
+    }
+    $table = Get-UniqueTopLevelOrderedHashtable -Analysis $analysis -VariableName $VariableName
+    if ($null -eq $table) { throw "Hostile fixture could not find unique ordered table '$VariableName'." }
+    $matches = @($table.KeyValuePairs | Where-Object {
+        $_.Item1 -is [Management.Automation.Language.StringConstantExpressionAst] -and
+            [string]$_.Item1.Value -ceq $PropertyName
+    })
+    if ($matches.Count -ne 1) {
+        throw "Hostile fixture requires exactly one '$VariableName.$PropertyName' value."
+    }
+    $extent = $matches[0].Item2.Extent
+    return $Source.Substring(0, $extent.StartOffset) + $Replacement + $Source.Substring($extent.EndOffset)
+}
+
+
+function Add-TopLevelHashtableEntry {
+    param(
+        [Parameter(Mandatory = $true)][string]$Source,
+        [Parameter(Mandatory = $true)][string]$VariableName,
+        [Parameter(Mandatory = $true)][string]$EntrySource
+    )
+    $analysis = ConvertTo-PowerShellAnalysis -Source $Source
+    if ($analysis.parse_errors.Count -ne 0) {
+        throw "Cannot mutate invalid PowerShell source for '$VariableName'."
+    }
+    $table = Get-UniqueTopLevelOrderedHashtable -Analysis $analysis -VariableName $VariableName
+    if ($null -eq $table) { throw "Hostile fixture could not find unique ordered table '$VariableName'." }
+    $insertOffset = $table.Extent.EndOffset - 1
+    $insertion = "`r`n    $EntrySource`r`n"
+    return $Source.Substring(0, $insertOffset) + $insertion + $Source.Substring($insertOffset)
+}
+
+
 function Assert-HostileMutationRejected {
     param(
         [Parameter(Mandatory = $true)][string]$Name,
@@ -193,6 +304,16 @@ $launcher = Read-PowerShellSource -Path $LauncherPath
 $replay = Read-PowerShellSource -Path $ReplayPath
 $launcherSource = [string]$launcher.source
 $replaySource = [string]$replay.source
+if (-not (Test-Path -LiteralPath $AdmissionPath -PathType Leaf)) {
+    throw "Required PowerShell source is missing: $AdmissionPath"
+}
+$admissionTokens = $null
+$admissionParseErrors = $null
+[void][Management.Automation.Language.Parser]::ParseFile($AdmissionPath, [ref]$admissionTokens, [ref]$admissionParseErrors)
+if ($admissionParseErrors.Count -ne 0) {
+    Add-Failure -Message "PowerShell parse failed for $AdmissionPath`: $($admissionParseErrors[0].Message)"
+}
+$admissionSource = Get-Content -Raw -LiteralPath $AdmissionPath -Encoding utf8
 $launcherTopLevel = Get-ExecutableTopLevelSource -Analysis $launcher
 
 $endingNormalizationValidator = {
@@ -291,19 +412,53 @@ $proofPromotionValidator = {
 $qualificationValidator = {
     param($analysis)
     $topLevel = Get-ExecutableTopLevelSource -Analysis $analysis
-    [regex]::IsMatch($topLevel, '(?s)\$fixedRepeatQualifying\s*=\s*\$null -eq \$script:TerminalError\s+-and\s+\$script:Outcome -ceq ''green''\s+-and\s+\$script:RunProofs\.Count -eq 2\s+-and\s+\$null -ne \$script:CanonicalProof\s+-and\s+-not \$script:LeaseOwned\s+-and\s+\$script:FinalProcessCensus\.Count -eq 0\s+-and\s+\$script:FinalHead -ceq \$ExpectedHead\.ToLowerInvariant\(\)\s+-and\s+\$script:FinalTree -ceq \$ExpectedTree\.ToLowerInvariant\(\)')
+    Test-TokensInOrder -Source $topLevel -Needles @(
+        '$fixedRepeatQualifying = $null -eq $script:TerminalError -and',
+        "`$script:Outcome -ceq 'green' -and",
+        '$script:RunProofs.Count -eq 2 -and',
+        '$null -ne $script:CanonicalProof -and',
+        "[string]`$script:CanonicalProof.evidence_role -ceq 'fixed-repeat' -and",
+        "@(`$script:RunProofs | Where-Object { [string]`$_.evidence_role -cne 'fixed-repeat' }).Count -eq 0 -and",
+        '-not $script:LeaseOwned -and',
+        '$script:FinalProcessCensus.Count -eq 0 -and',
+        '$script:FinalHead -ceq $ExpectedHead.ToLowerInvariant() -and',
+        '$script:FinalTree -ceq $ExpectedTree.ToLowerInvariant()'
+    )
 }
 $childIterationBoundaryValidator = {
     param($analysis)
     $oneRun = Get-FunctionSource -Analysis $analysis -Name 'Assert-OneRunEvidence'
     Test-TokensInOrder -Source $oneRun -Needles @(
         "[string](Get-ExactValue `$run @('role') '') -cne 'child_development_iteration'",
+        "[string](Get-ExactValue `$run @('requested_evidence_role') '') -cne 'fixed-repeat'",
         "[string](Get-ExactValue `$run @('repeat_profile_scope') '') -cne 'shared_caller_appdata'",
         "[string](Get-ExactValue `$run @('fixed_repeat_qualification_authority') '') -cne 'outer_independent_profile_aggregate_only'",
         "(Get-ExactValue `$run @('release_qualifying') `$null) -isnot [bool]",
         "[bool](Get-ExactValue `$run @('release_qualifying') `$true)",
         "[string](Get-ExactValue `$run @('qualification') '') -cne 'non_qualifying_development_iteration'"
     )
+}
+$fixedRoleIsolationValidator = {
+    param($analysis)
+    $oneRun = Get-FunctionSource -Analysis $analysis -Name 'Assert-OneRunEvidence'
+    $invoke = Get-FunctionSource -Analysis $analysis -Name 'Invoke-OneFixedRun'
+    $compare = Get-FunctionSource -Analysis $analysis -Name 'Compare-FixedRunProofs'
+    -not [string]::IsNullOrWhiteSpace($oneRun) -and
+        -not [string]::IsNullOrWhiteSpace($invoke) -and
+        -not [string]::IsNullOrWhiteSpace($compare) -and
+        (Test-TokensInOrder -Source $oneRun -Needles @(
+            "[string](Get-ExactValue `$summary @('requested_evidence_role') '') -cne 'fixed-repeat'",
+            "`$summaryAdmission = Get-ExactValue `$summary @('replay_admission') `$null",
+            'Assert-FixedReplayAdmission -Admission $summaryAdmission',
+            "[string](Get-ExactValue `$run @('requested_evidence_role') '') -cne 'fixed-repeat'",
+            "`$runAdmission = Get-ExactValue `$run @('replay_admission') `$null",
+            'Assert-FixedReplayAdmission -Admission $runAdmission',
+            'Assert-Rw062HeistPreflightAdmission',
+            "evidence_role = [string](Get-ExactValue `$summary @('requested_evidence_role') '')"
+        )) -and
+        $invoke.IndexOf("'-Ending', `$Ending, '-EvidenceRole', 'fixed-repeat', '-Seed', `$Seed, '-Repeat', '1'", [StringComparison]::Ordinal) -ge 0 -and
+        $compare.IndexOf("[string]`$proof.evidence_role -cne 'fixed-repeat'", [StringComparison]::Ordinal) -ge 0 -and
+        $compare.IndexOf("evidence_role = 'fixed-repeat'", [StringComparison]::Ordinal) -ge 0
 }
 $exactPathValidator = {
     param($analysis)
@@ -386,6 +541,34 @@ $manifestOrderValidator = {
         $topLevel.IndexOf('$requiredManifestArtifacts', [StringComparison]::Ordinal) -ge 0 -and
         $topLevel.IndexOf('Evidence artifact changed during manifest finalization', [StringComparison]::Ordinal) -ge 0
 }
+$aggregateSummaryValidator = {
+    param($analysis)
+    Test-ExactTopLevelOrderedHashtableValues -Analysis $analysis -VariableName 'aggregateSummary' -Expected ([ordered]@{
+        check_id = "'rw06_2_final_evidence'"
+        role = "'fixed_route_repeat'"
+        evidence_role = "'fixed-repeat'"
+        repeat = '2'
+        fresh_interactive_authorized = '$false'
+        q017_status = "if (`$Ending -ceq 'heist') { 'ANSWERED_SEPARATE_FRESH_INTERACTIVE_SCOPE' } else { 'NOT_APPLICABLE' }"
+    })
+}
+$metadataLabelValidator = {
+    param($analysis)
+    Test-ExactTopLevelOrderedHashtableValues -Analysis $analysis -VariableName 'metadata' -Expected ([ordered]@{
+        lane = "'rw06_2p'"
+        kind = "'exclusive-real-input-fixed-repeat-final-evidence'"
+        role = "'fixed_route_repeat'"
+        evidence_role = "'fixed-repeat'"
+    })
+}
+$manifestLabelValidator = {
+    param($analysis)
+    Test-ExactTopLevelOrderedHashtableValues -Analysis $analysis -VariableName 'manifest' -Expected ([ordered]@{
+        check_id = "'rw06_2_final_evidence_manifest'"
+        role = "'fixed_route_repeat'"
+        evidence_role = "'fixed-repeat'"
+    })
+}
 $manifestClosureValidator = {
     param($analysis)
     $topLevel = Get-ExecutableTopLevelSource -Analysis $analysis
@@ -435,7 +618,7 @@ foreach ($parameter in $expectedParameters) {
     Assert-True -Condition ($parameter -cin $launcher.parameters) `
         -Message "Final-evidence launcher is missing parameter '$parameter'."
 }
-foreach ($forbiddenParameter in @('Seed', 'Repeat', 'Fresh', 'Interactive', 'Scenario', 'Plan')) {
+foreach ($forbiddenParameter in @('Seed', 'Repeat', 'EvidenceRole', 'FreshSeed', 'Fresh', 'Interactive', 'Scenario', 'Plan')) {
     Assert-True -Condition ($forbiddenParameter -cnotin $launcher.parameters) `
         -Message "Fixed-repeat launcher must not admit '$forbiddenParameter' as a caller-controlled parameter."
 }
@@ -450,10 +633,16 @@ Assert-Contains -Source $launcherSource -Needle "Q-013 fixed-repeat evidence req
     -Message 'Final launcher lost its explicit Q-013 exact-seed guard.'
 Assert-Contains -Source $launcherSource -Needle "fresh_interactive_authorized = `$false" `
     -Message 'Final launcher must record that fresh-interactive evidence is not authorized here.'
-Assert-Contains -Source $launcherSource -Needle "'OPEN_NOT_IN_SCOPE'" `
-    -Message 'Final launcher must keep open Q-017 outside fixed-repeat scope.'
-Assert-NotMatch -Source $launcherSource -Pattern '(?i)inject[_ -]?scenario|plan[_ -]?b' `
+Assert-Contains -Source $launcherSource -Needle "'ANSWERED_SEPARATE_FRESH_INTERACTIVE_SCOPE'" `
+    -Message 'Final launcher must record answered Q-017 as a separate fresh-interactive scope.'
+Assert-NotMatch -Source $launcherSource -Pattern '(?i)(scenario_(?:pin|override)|injected_scenario|scenario_injection_allowed\s*=\s*\$true|plan_b_allowed\s*=\s*\$true|Invoke-[A-Za-z0-9_-]*(?:PlanB|Whale))' `
     -Message 'Final fixed-repeat launcher must not contain scenario-injection or Plan-B behavior.'
+Assert-Contains -Source $launcherSource -Needle "`$EvidenceAdmissionTool = Join-Path `$PSScriptRoot 'rw06_2_evidence_admission.ps1'" `
+    -Message 'Final launcher must load the checked-in exact admission helper.'
+Assert-Contains -Source $launcherSource -Needle '. $EvidenceAdmissionTool' `
+    -Message 'Final launcher must execute the checked-in exact admission helper before inspecting child evidence.'
+Assert-Contains -Source $admissionSource -Needle "heist = 'RW06-HEIST-AUDIT-0000'" `
+    -Message 'Admission helper lost the separately authorized Q-017 fresh-interactive seed.'
 Assert-True -Condition ([bool](& $endingNormalizationValidator $launcher)) `
     -Message 'Ending must be canonicalized before any seed lookup or exact Heist/Q-017 guard.'
 
@@ -502,8 +691,8 @@ Assert-Contains -Source $launcherSource -Needle "Restore-ProcessEnvironmentValue
 Assert-Contains -Source $launcherSource -Needle "Restore-ProcessEnvironmentValue -Name 'LOCALAPPDATA'" `
     -Message 'Aggregate launcher no longer restores its process LOCALAPPDATA after child creation.'
 Assert-Match -Source $launcherSource `
-    -Pattern '(?s)''-Ending'', \$Ending, ''-Seed'', \$Seed, ''-Repeat'', ''1''.*?''-TimeoutSeconds''.*?''-EvidenceRoot'', \$replayEvidenceRoot' `
-    -Message 'Each child must be an exact Repeat=1 production replay with only the fixed seed and isolated evidence root.'
+    -Pattern '(?s)''-Ending'', \$Ending, ''-EvidenceRole'', ''fixed-repeat'', ''-Seed'', \$Seed, ''-Repeat'', ''1''.*?''-TimeoutSeconds''.*?''-EvidenceRoot'', \$replayEvidenceRoot' `
+    -Message 'Each child must be an exact fixed-repeat/Repeat=1 production replay with only the fixed seed and isolated evidence root.'
 Assert-True -Condition ([bool](& $spawnCustodyValidator $launcher)) `
     -Message 'Child environment, spawn, identity registration/fail-clean cleanup, restoration and wait are not in the required order.'
 Assert-True -Condition ([bool](& $profileArtifactValidator $launcher)) `
@@ -524,6 +713,8 @@ Assert-Contains -Source $launcherSource -Needle "midpoint_save_relaunch_continue
     -Message 'Final launcher no longer requires the midpoint Save/relaunch/Continue witness.'
 Assert-True -Condition ([bool](& $childIterationBoundaryValidator $launcher)) `
     -Message 'Final launcher no longer requires each retained child iteration to remain explicitly development-only and non-qualifying.'
+Assert-True -Condition ([bool](& $fixedRoleIsolationValidator $launcher)) `
+    -Message 'Final launcher no longer binds, validates, and promotes only exact fixed-repeat child evidence.'
 Assert-Contains -Source $launcherSource -Needle "persistence_checkpoint_equal" `
     -Message 'Final launcher no longer requires the replay checkpoint-comparison witness.'
 Assert-Contains -Source $launcherSource -Needle "`$checkpointBeforeHash -cne `$checkpointAfterHash" `
@@ -548,6 +739,12 @@ Assert-True -Condition ([bool](& $proofPromotionValidator $launcher)) `
     -Message 'Green promotion is no longer ordered strictly after cross-profile proof comparison.'
 Assert-True -Condition ([bool](& $qualificationValidator $launcher)) `
     -Message 'Fixed-repeat qualification no longer has the exact fail-closed conjunction.'
+Assert-True -Condition ([bool](& $aggregateSummaryValidator $launcher)) `
+    -Message 'Aggregate summary no longer binds the exact fixed-repeat role, repeat, fresh authorization, and Q-017 status.'
+Assert-True -Condition ([bool](& $metadataLabelValidator $launcher)) `
+    -Message 'Retained aggregate metadata no longer binds the exact fixed-repeat role labels.'
+Assert-True -Condition ([bool](& $manifestLabelValidator $launcher)) `
+    -Message 'Retained aggregate manifest no longer binds its exact fixed-repeat role label.'
 Assert-True -Condition ([bool](& $manifestOrderValidator $launcher)) `
     -Message 'Summary/metadata/manifest creation and final manifest hashing are not in the required order.'
 Assert-True -Condition ([bool](& $manifestClosureValidator $launcher)) `
@@ -572,6 +769,28 @@ Assert-Contains -Source $replaySource -Needle "`$checkpointEvidenceComplete" `
 Assert-HostileMutationRejected -Name 'mixed-case-ending-bypass' -Validator $endingNormalizationValidator -Mutate {
     param($source)
     Replace-SourceOnce -Source $source -Needle '$Ending = $Ending.ToLowerInvariant()' -Replacement '$null = $Ending'
+}
+Assert-HostileMutationRejected -Name 'fixed-role-launch-substitution' -Validator $fixedRoleIsolationValidator -Mutate {
+    param($source)
+    Replace-SourceOnce -Source $source -Needle "'-EvidenceRole', 'fixed-repeat'" -Replacement "'-EvidenceRole', 'fresh-interactive'"
+}
+Assert-HostileMutationRejected -Name 'fixed-role-invocation-check-bypass' -Validator $fixedRoleIsolationValidator -Mutate {
+    param($source)
+    Replace-SourceOnce -Source $source `
+        -Needle "        [string](Get-ExactValue `$summary @('requested_evidence_role') '') -cne 'fixed-repeat' -or" `
+        -Replacement '        $false -or'
+}
+Assert-HostileMutationRejected -Name 'fixed-role-iteration-check-bypass' -Validator $fixedRoleIsolationValidator -Mutate {
+    param($source)
+    Replace-SourceOnce -Source $source `
+        -Needle "        [string](Get-ExactValue `$run @('requested_evidence_role') '') -cne 'fixed-repeat' -or" `
+        -Replacement '        $false -or'
+}
+Assert-HostileMutationRejected -Name 'fixed-role-proof-check-bypass' -Validator $fixedRoleIsolationValidator -Mutate {
+    param($source)
+    Replace-SourceOnce -Source $source `
+        -Needle "            [string]`$proof.evidence_role -cne 'fixed-repeat' -or" `
+        -Replacement '            $false -or'
 }
 Assert-HostileMutationRejected -Name 'exclusive-admission-bypass' -Validator $exclusiveAdmissionValidator -Mutate {
     param($source)
@@ -665,6 +884,59 @@ Assert-HostileMutationRejected -Name 'proof-derived-manifest-population-omitted'
     param($source)
     Replace-SourceOnce -Source $source -Needle '        [string]$proof.replay_summary,' -Replacement "        '',"
 }
+Assert-HostileMutationRejected -Name 'aggregate-summary-role-relabel' -Validator $aggregateSummaryValidator -Mutate {
+    param($source)
+    Replace-TopLevelHashtableValue -Source $source -VariableName 'aggregateSummary' -PropertyName 'role' -Replacement "'fresh_interactive'"
+}
+Assert-HostileMutationRejected -Name 'aggregate-summary-check-id-relabel' -Validator $aggregateSummaryValidator -Mutate {
+    param($source)
+    Replace-TopLevelHashtableValue -Source $source -VariableName 'aggregateSummary' -PropertyName 'check_id' -Replacement "'rw06_2_fresh_interactive_evidence'"
+}
+Assert-HostileMutationRejected -Name 'aggregate-summary-evidence-role-relabel' -Validator $aggregateSummaryValidator -Mutate {
+    param($source)
+    Replace-TopLevelHashtableValue -Source $source -VariableName 'aggregateSummary' -PropertyName 'evidence_role' -Replacement "'fresh-interactive'"
+}
+Assert-HostileMutationRejected -Name 'aggregate-summary-repeat-relabel' -Validator $aggregateSummaryValidator -Mutate {
+    param($source)
+    Replace-TopLevelHashtableValue -Source $source -VariableName 'aggregateSummary' -PropertyName 'repeat' -Replacement '1'
+}
+Assert-HostileMutationRejected -Name 'aggregate-summary-fresh-authorization-enabled' -Validator $aggregateSummaryValidator -Mutate {
+    param($source)
+    Replace-TopLevelHashtableValue -Source $source -VariableName 'aggregateSummary' -PropertyName 'fresh_interactive_authorized' -Replacement '$true'
+}
+Assert-HostileMutationRejected -Name 'aggregate-summary-q017-status-relabel' -Validator $aggregateSummaryValidator -Mutate {
+    param($source)
+    Replace-TopLevelHashtableValue -Source $source -VariableName 'aggregateSummary' -PropertyName 'q017_status' `
+        -Replacement "if (`$Ending -ceq 'heist') { 'OPEN' } else { 'NOT_APPLICABLE' }"
+}
+Assert-HostileMutationRejected -Name 'metadata-role-relabel' -Validator $metadataLabelValidator -Mutate {
+    param($source)
+    Replace-TopLevelHashtableValue -Source $source -VariableName 'metadata' -PropertyName 'role' -Replacement "'fresh_interactive'"
+}
+Assert-HostileMutationRejected -Name 'metadata-lane-relabel' -Validator $metadataLabelValidator -Mutate {
+    param($source)
+    Replace-TopLevelHashtableValue -Source $source -VariableName 'metadata' -PropertyName 'lane' -Replacement "'rw06_2p_fresh'"
+}
+Assert-HostileMutationRejected -Name 'metadata-kind-relabel' -Validator $metadataLabelValidator -Mutate {
+    param($source)
+    Replace-TopLevelHashtableValue -Source $source -VariableName 'metadata' -PropertyName 'kind' -Replacement "'fresh-interactive-final-evidence'"
+}
+Assert-HostileMutationRejected -Name 'metadata-evidence-role-relabel' -Validator $metadataLabelValidator -Mutate {
+    param($source)
+    Replace-TopLevelHashtableValue -Source $source -VariableName 'metadata' -PropertyName 'evidence_role' -Replacement "'fresh-interactive'"
+}
+Assert-HostileMutationRejected -Name 'manifest-role-relabel' -Validator $manifestLabelValidator -Mutate {
+    param($source)
+    Replace-TopLevelHashtableValue -Source $source -VariableName 'manifest' -PropertyName 'role' -Replacement "'fresh_interactive'"
+}
+Assert-HostileMutationRejected -Name 'manifest-check-id-relabel' -Validator $manifestLabelValidator -Mutate {
+    param($source)
+    Replace-TopLevelHashtableValue -Source $source -VariableName 'manifest' -PropertyName 'check_id' -Replacement "'rw06_2_fresh_interactive_manifest'"
+}
+Assert-HostileMutationRejected -Name 'manifest-evidence-role-relabel' -Validator $manifestLabelValidator -Mutate {
+    param($source)
+    Replace-TopLevelHashtableValue -Source $source -VariableName 'manifest' -PropertyName 'evidence_role' -Replacement "'fresh-interactive'"
+}
 
 $reportDirectory = Split-Path -Parent $ReportPath
 New-Item -ItemType Directory -Path $reportDirectory -Force | Out-Null
@@ -676,13 +948,15 @@ $report = [ordered]@{
     launcher_sha256 = (Get-FileHash -LiteralPath $LauncherPath -Algorithm SHA256).Hash.ToLowerInvariant()
     replay = $ReplayPath
     replay_sha256 = (Get-FileHash -LiteralPath $ReplayPath -Algorithm SHA256).Hash.ToLowerInvariant()
+    admission = $AdmissionPath
+    admission_sha256 = (Get-FileHash -LiteralPath $AdmissionPath -Algorithm SHA256).Hash.ToLowerInvariant()
     fixed_seeds = [ordered]@{
         clean = 'RW06-CLEAN-ROUTE-01'
         cheat = 'RW06-CHEAT-ROUTE-01'
         heist = 'RW06-HEIST-AUDIT-0002'
     }
     fresh_interactive_in_scope = $false
-    hostile_case_count = 19
+    hostile_case_count = 36
     failures = @($failures)
 }
 $report | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $ReportPath -Encoding utf8
