@@ -39,9 +39,12 @@ stall. Only the release orchestrator edits the scoreboard.
 
 Keep the product change in `scripts/games/pull_tabs.gd`. Add a focused
 standalone contract at `scripts/tests/rw06_6_pull_tab_glimmer_contract.gd` and
-one narrow launcher under `tools/`. Do not change `game_surface_canvas.gd`,
-`foundation_main.gd`, placement files, ending routes, ticket data, or shared
-save schemas unless a proved blocker is first reported to the orchestrator.
+one narrow launcher under `tools/`. The only existing contract file in scope is
+`scripts/tests/foundation/check_table_games.gd`, whose pull-tab surface checks
+must be updated for the intentional new auto-tick keys. Do not change
+`game_surface_canvas.gd`, `foundation_main.gd`, placement files, ending routes,
+ticket data, or shared save schemas unless a proved blocker is first reported
+to the orchestrator.
 
 - Extend the existing pull-tab UI-local auto-tick seam
   (`PULL_TAB_AUTO_TICK_STATE_KEYS`, `surface_auto_tick_may_be_active`,
@@ -75,6 +78,13 @@ save schemas unless a proved blocker is first reported to the orchestrator.
 - Exiting the surface already clears host UI/canvas state; reset private
   presenter state on entry. Save/Continue must therefore start a fresh
   schedule and contain no glimmer state or hidden target metadata.
+- Reuse the production pull-tab fixture and finite-sleeve checks in
+  `check_table_games.gd::_check_pull_tabs_surface_contract` where practical.
+  Its Auto Open assertions currently require exactly the two original retained
+  keys; update that exact expectation for the glimmer keys while preserving the
+  hostile assertion that bulky `pull_tab_reveals` is excluded. The new root
+  `rw06_6_pull_tab_glimmer_contract.gd` is auto-discovered by the existing
+  standalone-contract scan, so do not edit a gate allowlist or manifest.
 
 ## Required regression evidence
 
