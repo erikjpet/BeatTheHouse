@@ -268,3 +268,11 @@ Options: A) Keep `0002` for the fixed repeat and authorize one different, prefli
 Resume: rw06_2 keeps every current `0002` fail-closed guard and continues Q-017-independent launcher work while OPEN. If A, add an explicit fresh-interactive role that accepts only a separately preflighted natural-Audit seed, with no scenario injection and no Plan B. If B, retain exact `0002` everywhere and record the owner's waiver of the distinct-seed acceptance wording. Do not launch the Heist fresh pass until answered.
 Answer:
 A
+
+### Q-018 · rw06_6 · Preserve unproven self-test residue
+Status: OPEN
+Asked: release orchestrator, 2026-09-24
+Question: The repaired launcher found 77 old ignored self-test roots with no original identity receipts, so it must not delete or adopt them. May I move them byte-for-byte into a hash-sealed recovery archive outside the Git worktree, then remove the empty worktree after rw06_6 lands?
+Options: A) Preserve in a sealed archive and continue (recommended)  B) Leave them in place; rw06_6 stays blocked for manual cleanup
+Resume: rw06_6 implementation and fresh-worktree validation continue while OPEN. If A, inventory every object, reject reparses, atomically move only the 77 sealed roots to a non-worktree recovery directory without deleting their contents, verify the post-move manifest/hash, record the recovery path on the scoreboard, and retain it through 0.6.0. If B, preserve the current worktree and do not mark rw06_6 DONE. This does not authorize deleting unknown or replacement objects.
+Answer:
