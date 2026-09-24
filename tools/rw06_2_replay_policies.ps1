@@ -49,12 +49,14 @@ function Assert-DeltaQueenBeachPublicRoute {
     $beachId = Get-Rw062RequiredPublicProperty -InputObject $beach -Name 'id' -Context 'Delta Queen Beach destination'
     $beachState = Get-Rw062RequiredPublicProperty -InputObject $beach -Name 'state' -Context 'Delta Queen Beach destination'
     $beachCost = Get-Rw062RequiredPublicProperty -InputObject $beach -Name 'cost' -Context 'Delta Queen Beach destination'
+    $beachTravelTarget = Get-Rw062RequiredPublicProperty -InputObject $beach -Name 'travel_target' -Context 'Delta Queen Beach destination'
     $beachEnabled = Get-Rw062RequiredPublicProperty -InputObject $beach -Name 'travel_enabled' -Context 'Delta Queen Beach destination'
     if ($beachId -isnot [string] -or [string]$beachId -cnotmatch '^[a-z0-9_]+$' -or
         $beachState -isnot [string] -or [string]$beachState -cnotin @('revealed', 'visited') -or
         ($beachCost -isnot [int32] -and $beachCost -isnot [int64]) -or [long]$beachCost -cne 0 -or
+        $beachTravelTarget -isnot [bool] -or -not [bool]$beachTravelTarget -or
         $beachEnabled -isnot [bool]) {
-        throw 'Delta Queen Beach destination changed its exact visible identity, state, zero fare, or boolean enabled witness.'
+        throw 'Delta Queen Beach destination changed its exact visible identity, state, target membership, zero fare, or boolean enabled witness.'
     }
     if ([bool]$beachEnabled) { return $true }
 

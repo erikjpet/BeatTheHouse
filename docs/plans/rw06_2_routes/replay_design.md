@@ -41,6 +41,10 @@ arrival and after Continue. Metadata-only checks do not qualify: regressions
 must not manually unlock Beach or pass an injected `['beach']` target list
 around production `_travel_target_ids` selection.
 
+Coverage must also present more than three otherwise eligible visible targets.
+Beach is checked in the final capped target list after Grand/event/Tier-2
+promotion, so a correct early insertion that is later evicted still fails.
+
 ## Controller shape
 
 1. Resolve a per-ending route definition with its verified seed and expected

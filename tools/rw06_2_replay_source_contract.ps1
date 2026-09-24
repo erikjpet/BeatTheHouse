@@ -399,6 +399,7 @@ function New-DeltaQueenBeachPolicyFixture {
                 archetype_id = 'beach'
                 state = 'revealed'
                 cost = 0
+                travel_target = $true
                 travel_enabled = (-not $Locked)
                 travel_disabled_reason = if ($Locked) { $lockReason } else { '' }
             },
@@ -610,6 +611,8 @@ if ($failures.Count -eq 0) {
         $hostileBeachFixtures.Add([pscustomobject]@{ label = 'beach-not-free'; fixture = $fixture })
         $fixture = New-DeltaQueenBeachPolicyFixture; $fixture.nodes[0].travel_enabled = 'true'
         $hostileBeachFixtures.Add([pscustomobject]@{ label = 'beach-enabled-non-boolean'; fixture = $fixture })
+        $fixture = New-DeltaQueenBeachPolicyFixture; $fixture.nodes[0].travel_target = $false
+        $hostileBeachFixtures.Add([pscustomobject]@{ label = 'beach-not-final-travel-target'; fixture = $fixture })
         $fixture = New-DeltaQueenBeachPolicyFixture; $fixture.nodes[0].state = 'hidden'
         $hostileBeachFixtures.Add([pscustomobject]@{ label = 'beach-hidden-state'; fixture = $fixture })
         $fixture = New-DeltaQueenBeachPolicyFixture; $fixture.nodes[0].id = 'Beach_011'
@@ -618,10 +621,19 @@ if ($failures.Count -eq 0) {
         $hostileBeachFixtures.Add([pscustomobject]@{ label = 'wrong-disabled-reason'; fixture = $fixture })
         $fixture = New-DeltaQueenBeachPolicyFixture -Locked; $fixture.nodes[1].travel_enabled = $true
         $hostileBeachFixtures.Add([pscustomobject]@{ label = 'another-route-enabled'; fixture = $fixture })
-        $fixture = New-DeltaQueenBeachPolicyFixture; $fixture.nodes[0] = [pscustomobject]@{ id = 'beach_011'; Archetype_Id = 'beach'; state = 'revealed'; cost = 0; travel_enabled = $true; travel_disabled_reason = '' }
+        $fixture = New-DeltaQueenBeachPolicyFixture; $fixture.nodes[0] = [pscustomobject]@{ id = 'beach_011'; Archetype_Id = 'beach'; state = 'revealed'; cost = 0; travel_target = $true; travel_enabled = $true; travel_disabled_reason = '' }
         $hostileBeachFixtures.Add([pscustomobject]@{ label = 'beach-archetype-property-case'; fixture = $fixture })
         $fixture = New-DeltaQueenBeachPolicyFixture -Locked; $fixture.nodes[1].travel_enabled = 0
         $hostileBeachFixtures.Add([pscustomobject]@{ label = 'comparison-enabled-non-boolean'; fixture = $fixture })
+        $fixture = New-DeltaQueenBeachPolicyFixture
+        $fixture.nodes = @(
+            [pscustomobject]@{ id = 'grand_101'; archetype_id = 'grand_casino'; state = 'revealed'; cost = 50; travel_target = $true; travel_enabled = $true; travel_disabled_reason = '' },
+            [pscustomobject]@{ id = 'event_102'; archetype_id = 'bar'; state = 'revealed'; cost = 8; travel_target = $true; travel_enabled = $true; travel_disabled_reason = '' },
+            [pscustomobject]@{ id = 'tier2_103'; archetype_id = 'kitty_cat_lounge'; state = 'revealed'; cost = 15; travel_target = $true; travel_enabled = $true; travel_disabled_reason = '' },
+            [pscustomobject]@{ id = 'visited_104'; archetype_id = 'motel'; state = 'visited'; cost = 6; travel_target = $true; travel_enabled = $true; travel_disabled_reason = '' },
+            [pscustomobject]@{ id = 'delta_queen_009'; archetype_id = 'delta_queen'; state = 'current'; cost = 0; travel_target = $false; travel_enabled = $false; travel_disabled_reason = 'Already here.' }
+        )
+        $hostileBeachFixtures.Add([pscustomobject]@{ label = 'beach-evicted-by-four-competing-visible-targets'; fixture = $fixture })
 
         $deltaQueenBeachHostileFixtures = $hostileBeachFixtures.Count
         foreach ($case in $hostileBeachFixtures) {
@@ -1734,7 +1746,7 @@ func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
     Assert-Contains $runner "@('look', 'clickable', 'talk_choices')" 'Replay routes must consume the rendered TalkDock enabled-state mapping.'
     Assert-Contains $runner "@('look', 'clickable', 'scroll_surfaces')" 'Replay routes must consume only the public rendered scroll-surface mapping.'
     Assert-Match $runner '(?s)function Get-VisibleTutorialGuideAcknowledgment.*?render_valid.*?tutorial_guide:.*?choiceIds\.Count\s+-cne\s+1.*?choiceIds\[0\].*?continue.*?Get-PublicTalkChoices.*?enabled\s+-is\s+\[bool\]' 'Coach recovery must accept only one fully rendered, exactly typed, enabled continue choice from the public tutorial-guide TalkDock.'
-    Assert-Match $replayPolicy '(?s)function Assert-DeltaQueenBeachPublicRoute.*?ArchetypeId\s+-cne\s+''delta_queen''.*?beachNodes\.Count\s+-cne\s+1.*?state.*?revealed.*?visited.*?beachCost.*?-cne\s+0.*?beachEnabled\s+-isnot\s+\[bool\].*?exact transient boat travel lock.*?another normal Delta Queen travel destination was enabled' 'Q-011 policy must require one visible zero-fare Beach route and allow it disabled only during the exact global boat travel lock.'
+    Assert-Match $replayPolicy '(?s)function Assert-DeltaQueenBeachPublicRoute.*?ArchetypeId\s+-cne\s+''delta_queen''.*?beachNodes\.Count\s+-cne\s+1.*?state.*?revealed.*?visited.*?beachCost.*?-cne\s+0.*?beachTravelTarget\s+-isnot\s+\[bool\].*?-not\s+\[bool\]\$beachTravelTarget.*?beachEnabled\s+-isnot\s+\[bool\].*?exact transient boat travel lock.*?another normal Delta Queen travel destination was enabled' 'Q-011 policy must require one visible final-selection zero-fare Beach route and allow it disabled only during the exact global boat travel lock.'
     Assert-Match $runner '(?s)function Assert-DeltaQueenBeachRouteInvariant.*?Open-WorldMap.*?Assert-DeltaQueenBeachPublicRoute.*?finally.*?Close-WorldMap.*?function Travel-ToNode.*?Assert-DeltaQueenBeachRouteInvariant.*?function Assert-SaveRelaunchContinue.*?Public persistence checkpoint changed.*?Assert-DeltaQueenBeachRouteInvariant' 'Every real Delta Queen arrival and restored Continue checkpoint must verify the Q-011 Beach route through the public map.'
     Assert-Match $runner '(?s)function Clear-VisibleCoach.*?Get-VisibleTutorialGuideAcknowledgment.*?Choose-VisibleChoice\s+-ChoiceId\s+''continue''.*?Wait-Frames.*?continue.*?dismissLabel.*?Select-UniqueFullyVisibleButton\s+-Buttons\s+@\(Get-Buttons\)\s+-Text\s+\$dismissLabel.*?Select-UniqueFullyVisibleButton\s+-Buttons\s+@\(Get-Buttons\)\s+-Text\s+''Skip tip''.*?fully visible public dismiss control' 'Coach recovery must follow the narrow public tutorial-guide acknowledgement, then require a unique boolean-true fully-visible dismiss control before input.'
     Assert-Match $runner '(?s)function Accept-GrandCasinoInviteIfVisible\s*\{.*?Invoke-EventObjectChoice\s+-EventId\s+''grand_casino_invite''\s+-ChoiceId\s+''accept_invite''\s+-Intent\s+''accept the visible invitation to the Grand Casino''.*?return \$true\s*\}' 'The clean replay must choose the exact visible invitation action instead of asking a selected multi-action object for a generic open action.'
