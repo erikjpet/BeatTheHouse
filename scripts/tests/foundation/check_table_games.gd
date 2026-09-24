@@ -6647,14 +6647,43 @@ func _check_pull_tabs_surface_contract(game: GameModule, failures: Array) -> voi
 	var auto_due_msec := int(auto_state.get("pull_tab_auto_open_next_msec", 0))
 	if not bool(auto_state.get("pull_tab_auto_open_active", false)) or auto_due_msec <= auto_start_msec:
 		failures.append("Pull Tabs Auto Open did not activate and schedule its first simulated click.")
-	if game.surface_auto_tick_may_be_active({}) or not game.surface_auto_tick_may_be_active(auto_state):
-		failures.append("Pull Tabs automation fast gate did not distinguish dormant and active retained state.")
-	if game.surface_needs_auto_tick(auto_state, run_state, environment):
-		failures.append("Pull Tabs Auto Open requested work before its first scheduled click.")
+	if not game.surface_auto_tick_may_be_active({}) or not game.surface_auto_tick_may_be_active(auto_state):
+		failures.append("Pull Tabs automation fast gate did not keep the glimmer scheduler available while Auto Open was dormant or active.")
+	if not game.surface_needs_auto_tick(auto_state, run_state, environment):
+		failures.append("Pull Tabs glimmer scheduler did not request its missing initialization patch.")
+	var glimmer_init := game.surface_auto_action_command(auto_state, run_state, environment, {})
+	var initialized_auto_state: Dictionary = glimmer_init.get("ui_state", {}) if typeof(glimmer_init.get("ui_state", {})) == TYPE_DICTIONARY else {}
+	var glimmer_due_msec := int(initialized_auto_state.get("pull_tab_glimmer_next_due_msec", 0))
+	if (
+		not bool(glimmer_init.get("handled", false))
+		or not bool(glimmer_init.get("surface_transient", false))
+		or not bool(initialized_auto_state.get("pull_tab_glimmer_initialized", false))
+		or glimmer_due_msec < auto_start_msec + 25000
+		or glimmer_due_msec > auto_start_msec + 35000
+		or int(initialized_auto_state.get("pull_tab_auto_open_next_msec", -1)) != auto_due_msec
+		or not bool(initialized_auto_state.get("pull_tab_auto_open_active", false))
+	):
+		failures.append("Pull Tabs glimmer initialization did not schedule 25-35 seconds ahead while preserving Auto Open.")
+	if game.surface_needs_auto_tick(initialized_auto_state, run_state, environment):
+		failures.append("Pull Tabs automation requested work before either initialized schedule was due.")
 	var auto_tick_keys := game.surface_auto_tick_state_keys()
-	if not auto_tick_keys.has("pull_tab_auto_open_active") or not auto_tick_keys.has("pull_tab_auto_open_next_msec") or auto_tick_keys.has("pull_tab_reveals"):
-		failures.append("Pull Tabs Auto Open per-frame gate did not keep its state-key view minimal.")
-	var auto_due_state := auto_state.duplicate(true)
+	var expected_auto_tick_keys := [
+		"pull_tab_auto_open_active",
+		"pull_tab_auto_open_next_msec",
+		"pull_tab_glimmer_initialized",
+		"pull_tab_glimmer_enabled",
+		"pull_tab_glimmer_session_ordinal",
+		"pull_tab_glimmer_event_ordinal",
+		"pull_tab_glimmer_next_due_msec",
+		"pull_tab_glimmer_hide_due_msec",
+	]
+	if auto_tick_keys != expected_auto_tick_keys or auto_tick_keys.has("pull_tab_reveals"):
+		failures.append("Pull Tabs auto-tick state keys did not match the minimal Auto Open plus glimmer schedule scalars.")
+	for forbidden_fragment in ["target", "fingerprint", "prize", "payout", "tier", "rank", "symbol", "contents"]:
+		if forbidden_fragment in JSON.stringify(auto_tick_keys).to_lower():
+			failures.append("Pull Tabs auto-tick state keys exposed forbidden private glimmer data: %s." % forbidden_fragment)
+			break
+	var auto_due_state := initialized_auto_state.duplicate(true)
 	auto_due_state["surface_time_msec"] = auto_due_msec
 	auto_due_state["drunk_scaled_surface_time_msec"] = auto_due_msec
 	if not game.surface_needs_auto_tick(auto_due_state, run_state, environment):
@@ -6676,12 +6705,32 @@ func _check_pull_tabs_surface_contract(game: GameModule, failures: Array) -> voi
 		failures.append("Pull Tabs Auto Open did not route its next tick through the normal ticket filing path.")
 	if str(auto_file.get("surface_audio_cue", "")) != "ticket_navigation" or str(auto_file.get("surface_audio_action", "")) != "pull_tab_file_ticket":
 		failures.append("Pull Tabs Auto Open file tick did not request the normal filing/navigation SFX cue.")
-	var auto_off := game.surface_action_command("pull_tab_auto_open", 0, false, auto_file.get("ui_state", {}), run_state, environment)
+	var both_due_msec := maxi(glimmer_due_msec, int((auto_file.get("ui_state", {}) as Dictionary).get("pull_tab_auto_open_next_msec", 0)))
+	var both_due_state: Dictionary = (auto_file.get("ui_state", {}) as Dictionary).duplicate(true)
+	both_due_state["surface_time_msec"] = both_due_msec
+	both_due_state["drunk_scaled_surface_time_msec"] = both_due_msec
+	both_due_state["pull_tab_auto_open_active"] = true
+	both_due_state["pull_tab_auto_open_next_msec"] = both_due_msec
+	both_due_state["pull_tab_glimmer_next_due_msec"] = both_due_msec
+	both_due_state["pull_tab_glimmer_hide_due_msec"] = 0
+	var both_due_glimmer := game.surface_auto_action_command(both_due_state, run_state, environment, {})
+	var both_due_glimmer_state: Dictionary = both_due_glimmer.get("ui_state", {}) if typeof(both_due_glimmer.get("ui_state", {})) == TYPE_DICTIONARY else {}
+	if (
+		not bool(both_due_glimmer.get("handled", false))
+		or int(both_due_glimmer_state.get("pull_tab_glimmer_event_ordinal", 0)) <= int(both_due_state.get("pull_tab_glimmer_event_ordinal", 0))
+		or int(both_due_glimmer_state.get("pull_tab_auto_open_next_msec", -1)) != both_due_msec
+	):
+		failures.append("Pull Tabs simultaneous due frame did not process the glimmer while leaving Auto Open due.")
+	var both_due_auto := game.surface_auto_action_command(both_due_glimmer_state, run_state, environment, {})
+	var both_due_auto_state: Dictionary = both_due_auto.get("ui_state", {}) if typeof(both_due_auto.get("ui_state", {})) == TYPE_DICTIONARY else {}
+	if not bool(both_due_auto.get("handled", false)) or int(both_due_auto_state.get("pull_tab_auto_open_next_msec", 0)) <= both_due_msec:
+		failures.append("Pull Tabs simultaneous due frame did not process the still-due Auto Open action on the next frame.")
+	var auto_off := game.surface_action_command("pull_tab_auto_open", 0, false, both_due_auto_state, run_state, environment)
 	var auto_off_state: Dictionary = auto_off.get("ui_state", {}) if typeof(auto_off.get("ui_state", {})) == TYPE_DICTIONARY else {}
 	if bool(auto_off_state.get("pull_tab_auto_open_active", true)) or int(auto_off_state.get("pull_tab_auto_open_next_msec", -1)) != 0:
 		failures.append("Pull Tabs Stop Auto did not cancel the repeating click schedule.")
-	if game.surface_auto_tick_may_be_active(auto_off_state):
-		failures.append("Pull Tabs automation fast gate stayed active after Stop Auto.")
+	if not game.surface_auto_tick_may_be_active(auto_off_state):
+		failures.append("Pull Tabs automation fast gate stopped the glimmer scheduler after Stop Auto.")
 	var next_ticket_click := _check_surface_command_non_mutating(game, "pull_tab_next", 0, false, {}, run_state, environment, "pull-tab next ticket", failures)
 	var next_ticket_state: Dictionary = next_ticket_click.get("ui_state", {})
 	if int(next_ticket_state.get("pull_tab_stack_cursor", 0)) != mini(1, int(game.surface_state(run_state, environment, {}).get("pull_tab_stack_count", 1)) - 1):
