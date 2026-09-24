@@ -30,8 +30,9 @@ work in a worktree. Worktree or `origin/main` copies may be stale.
    - Put the context the next agent needs in `Resume`, not in the question.
 5. **Git.** Only the orchestrator commits this file, from the primary checkout,
    after `git pull --ff-only`, as a commit touching this file alone. Other agents
-   only edit it on disk. Hard owner gates (source approval, artifact approval,
-   publish authorization, day-2 room sample) are asked here too.
+   only edit it on disk. Hard owner gates (source approval, release-copy
+   approval, artifact approval, artifact handoff/owner-upload confirmation,
+   day-2 room sample) are asked here too.
 
 Entry format:
 
@@ -46,6 +47,11 @@ Answer: <owner writes here, then sets Status: ANSWERED>
 ```
 
 ---
+
+**Current release policy:** Q-003 supersedes Q-001's historical `-Push` and
+publish-authorization wording. Agents build and verify the two local zips,
+obtain the owner gates above, and post paths plus SHA-256 hashes here. Only the
+owner uploads; agents never run butler or an upload/publish command.
 
 ## Entries
 
