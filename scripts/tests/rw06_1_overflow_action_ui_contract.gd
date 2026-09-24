@@ -260,9 +260,7 @@ func _run() -> void:
 	for mode in ["mouse", "touch", "keyboard", "controller"]:
 		if mode == "touch":
 			await _isolate_touch_from_prior_mouse()
-		print("RW06_1_PRODUCTION_MODE before=%s" % mode)
 		await _check_production_mutation_for_mode(app, action_list, production_record, activations, str(mode))
-		print("RW06_1_PRODUCTION_MODE after=%s" % mode)
 	await _finish(app)
 
 
@@ -2249,6 +2247,9 @@ func _check_production_mutation_for_mode(app: Control, action_list: Control, pro
 		action_list.close()
 		return
 	var touch_diagnostics := _touch_route_diagnostics(button.get_global_rect().get_center(), button) if mode == "touch" else {}
+	if mode == "mouse" or mode == "touch":
+		root.notify_mouse_entered()
+		await process_frame
 	match mode:
 		"mouse":
 			_send_mouse(button.get_global_rect().get_center())
@@ -2261,16 +2262,19 @@ func _check_production_mutation_for_mode(app: Control, action_list: Control, pro
 			button.grab_focus()
 			_send_joy_button(JOY_BUTTON_A)
 	await _settle_frames(5)
-	print("RW06_1_PRODUCTION_MODE activated=%s" % mode)
 	if activations.count(expected_key) != prior_count + 1:
 		failures.append("RW06-1 %s did not activate the production overflow action exactly once: %s." % [mode, JSON.stringify(touch_diagnostics)])
 	if str(app.get("current_screen")) != "GAME" or app.get("current_game") == null or _mutation_snapshot(app) == before:
 		failures.append("RW06-1 %s overflow action did not reach a real production game-entry mutation: %s." % [mode, JSON.stringify(touch_diagnostics)])
+	if mode == "mouse" or mode == "touch":
+		# Clear the synthetic pointer while the game subtree it hovers is still
+		# alive. Godot 4.6 otherwise retains a removed Control until the next
+		# pointer event and emits Node::can_process(!is_inside_tree()).
+		root.notify_mouse_exited()
+		await process_frame
 	if app.get("current_game") != null:
-		print("RW06_1_PRODUCTION_MODE leaving_game=%s" % mode)
 		app.call("_complete_back_to_environment")
 		await _settle_frames(4)
-		print("RW06_1_PRODUCTION_MODE left_game=%s" % mode)
 	if str(app.get("current_screen")) != "ENVIRONMENT" or app.get("current_game") != null:
 		failures.append("RW06-1 %s production fixture could not return to the room for the next modality." % mode)
 
