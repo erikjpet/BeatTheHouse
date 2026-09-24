@@ -414,6 +414,26 @@ foreach ($requiredOverlayProbe in @('collision_overlay', 'z_equal_augment', 'swe
         $failures.Add("Scenario presentation contract is missing collision probe: $requiredOverlayProbe")
     }
 }
+foreach ($requiredLiveReconciliationProbe in @(
+    '_check_live_base_record_reconciliation', 'lender:brother_in_law',
+    'event:call_brother_in_law', 'PRIVATE_PHONE_RUNTIME',
+    'Scenario live reconciliation resurrected an absent dynamic service/lender',
+    'Production room rendering did not show Counter Phone'
+)) {
+    if (-not $scenarioPresentationSource.Contains($requiredLiveReconciliationProbe)) {
+        $failures.Add("Scenario presentation contract is missing live base reconciliation probe: $requiredLiveReconciliationProbe")
+    }
+}
+$environmentInteractionControllerSource = Get-Content -LiteralPath (Join-Path $root "scripts/ui/environment_interaction_controller.gd") -Raw
+foreach ($requiredLiveReconciliationSeam in @(
+    'LIVE_AVAILABILITY_ACTION_FIELDS', 'LIVE_PRESENTATION_FIELDS',
+    'LIVE_RENDER_FIELDS', 'LIVE_MEMBERSHIP_OBJECT_TYPES',
+    '_requires_live_membership'
+)) {
+    if (-not $environmentInteractionControllerSource.Contains($requiredLiveReconciliationSeam)) {
+        $failures.Add("Environment interaction controller is missing live base reconciliation seam: $requiredLiveReconciliationSeam")
+    }
+}
 
 $assetDimensions = @{
     "assets/art/environments/corner_store.png" = @(900, 430)

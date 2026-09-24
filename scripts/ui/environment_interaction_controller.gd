@@ -9,6 +9,23 @@ const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const EnvironmentPlacementScript := preload("res://scripts/core/environment_placement.gd")
 const EnvironmentSlotBinderScript := preload("res://scripts/core/environment_slot_binder.gd")
 
+const LIVE_MEMBERSHIP_OBJECT_TYPES := ["service", "lender"]
+const LIVE_PRESENTATION_FIELDS := [
+	"visual_type", "short_description", "identity_summary", "presence",
+	"status_summary", "effect_summary", "impact_summary", "risk_summary",
+	"cost_summary", "choice_summary", "classification_summary",
+	"attribute_badges", "visual_key", "prop", "surface", "icon_key",
+	"asset_path", "icon_sprite", "character_actor",
+]
+const LIVE_AVAILABILITY_ACTION_FIELDS := [
+	"interactive", "decorative", "enabled", "disabled_reason", "action_summary",
+	"available_actions", "inline_actions", "confirm_action_id", "state_badge",
+	"non_color_state",
+]
+const LIVE_RENDER_FIELDS := [
+	"visible", "presentation_required", "presentation_mode", "hovered", "focused", "selected",
+]
+
 
 static func interactable_object_view_list(host: Variant) -> Array:
 	if host.run_state == null or host.library == null:
@@ -302,9 +319,12 @@ static func _runtime_layout_reservation_id(object_id: String) -> bool:
 	return false
 
 
-# Scenario authority seals identity, geometry, and any fields it explicitly
-# changes. Its compact base inventory intentionally omits live presentation
-# data, so restore only absent fields from the already trusted UI projection.
+# Scenario authority seals identity and geometry. Its compact base inventory is
+# an immutable authorization baseline, not current dynamic membership: hidden
+# services/lenders may be absent now, while present records carry the current
+# public availability, actions, and presentation. Reconcile only the closed
+# public allowlists below; arbitrary live runtime/local state never crosses this
+# boundary and sealed identity/provenance/geometry always wins.
 # Resolved base events remain in the immutable semantic seal for authorization,
 # but they no longer own a live room object and must be removed after the sealed
 # projection passes. Scenario-owned event records remain governed by their own
@@ -319,13 +339,6 @@ static func restore_live_presentation_fields(projected_records: Array, live_reco
 		if not live_id.is_empty():
 			live_by_id[live_id] = live
 	var result: Array = []
-	var presentation_fields := [
-		"visual_type", "short_description", "identity_summary", "presence",
-		"status_summary", "effect_summary", "impact_summary", "risk_summary",
-		"cost_summary", "choice_summary", "classification_summary",
-		"attribute_badges", "visual_key", "prop", "surface", "icon_key",
-		"asset_path", "icon_sprite", "character_actor", "inline_actions",
-	]
 	for record_value in projected_records:
 		var record := _dict(record_value).duplicate(true)
 		var object_id := str(record.get("object_id", "")).strip_edges()
@@ -336,12 +349,30 @@ static func restore_live_presentation_fields(projected_records: Array, live_reco
 			and resolved_event_ids.has(str(record.get("source_id", "")).strip_edges())
 		if resolved_base_event:
 			continue
+		if owner_namespace != "scenario" and _requires_live_membership(record) and live.is_empty():
+			continue
 		if not live.is_empty() and owner_namespace != "scenario":
-			for field in presentation_fields:
-				if not record.has(field) and live.has(field):
+			var scenario_augmented_inline_actions := _array(record.get("scenario_augmented_inline_actions", []))
+			for field in LIVE_PRESENTATION_FIELDS + LIVE_AVAILABILITY_ACTION_FIELDS + LIVE_RENDER_FIELDS:
+				if live.has(field):
 					record[field] = _duplicate_variant(live.get(field))
+			# Live base actions replace their stale sealed snapshot. Authenticated
+			# scenario augments remain additive and must still resolve by token.
+			if live.has("inline_actions") and not scenario_augmented_inline_actions.is_empty():
+				var reconciled_inline_actions := _array(record.get("inline_actions", []))
+				for action_value in scenario_augmented_inline_actions:
+					if not reconciled_inline_actions.has(action_value):
+						reconciled_inline_actions.append(_duplicate_variant(action_value))
+				record["inline_actions"] = reconciled_inline_actions
 		result.append(record)
 	return result
+
+
+static func _requires_live_membership(record: Dictionary) -> bool:
+	var object_type := str(record.get("object_type", "")).strip_edges()
+	if not LIVE_MEMBERSHIP_OBJECT_TYPES.has(object_type):
+		return false
+	return str(record.get("object_id", "")).strip_edges().begins_with("%s:" % object_type)
 
 
 # Static scenario authority owns every record it seals, including removals.
