@@ -2613,6 +2613,7 @@ func _settle_frames(count: int) -> void:
 
 
 func _finish(app: Control) -> void:
+	app.call("_drain_script_prewarm_requests_for_shutdown")
 	app.queue_free()
 	# Physical touch dispatch and deferred production selection retain native
 	# RefCounted event state briefly after the Foundation subtree exits.
