@@ -2,7 +2,7 @@ Endings: clean partial · cheat partial · heist partial (Q-013 A in progress)
 Replay script: ready
 Balance (rw06_3): in progress · Probe 29 measured; Grand invitation package implemented, validation pending
 Blocked on: exact Heist 0002/persistent-Audit implementation evidence, post-change Clean replay, rw06_1 landing for qualifying routes, and clearance of the new unleased primary-checkout Godot pair (24328/30092); current branch still carries the intentionally unstaged rw06_1 Pixel canvas dependency
-Updated: 2026-09-23 22:48 CT
+Updated: 2026-09-23 22:50 CT
 
 ## Orchestrator handoff
 
@@ -10,6 +10,7 @@ Take over pushed branch `codex/rw06_2-prep` at exact tip `1c1642dbb2716f745475be
 
 ## Milestones
 
+- 2026-09-23 22:50 CT — Pushed the rw06_3 Grand invitation package and rw06_2 departure-price integrity repair at product commit `8db49923`, integrated through peer tip `fe3cbccf`. JSON parsing, PowerShell parser, diff hygiene and the combined replay source contract pass; report SHA-256 is `E13685E1787ADC13DF420CE31DEEE708AC172B29157A5F21366462A362AA313A`. The shared Pixel dependency stayed unstaged. Focused Foundation and the one no-retry post-change Clean replay remain pending the engine gate, so this is not yet claimed as route evidence.
 - 2026-09-23 22:48 CT — A new unleased Godot console/child pair (PIDs 24328/30092) appeared against the primary checkout under interactive PowerShell PID 20764 after the prior isolated lane ended. rw06_2p did not launch or terminate it and will not start peer engine evidence until the release coordinator clears or reauthorizes that exact pair. Q-013 implementation and contracts continue engine-free.
 - 2026-09-23 22:39 CT — Owner answered Q-013 option A on `origin/main` at `e84fbb59`; Heist resumed immediately. The owned route now uses exact fresh-profile seed `RW06-HEIST-AUDIT-0002` and may persist only Audit-plan knowledge learned through the naturally visible Audit roster. Required evidence covers fresh observation, revisit after cycle change, hostile non-Audit, and Save/Continue restore; scenario injection and Plan B fallback remain forbidden. Q-013 stays ANSWERED until the implementing tip and exact evidence are complete.
 - 2026-09-23 22:30 CT — Heist is WAITING Q-013, committed alone on `origin/main` at `b8917b24`. Exact fresh-profile serialization invalidated proposed seed `RW06-HEIST-AUDIT-0013` (Convention) and identified `RW06-HEIST-AUDIT-0002` as the first Audit candidate, while production scenario cycling makes Audit cease to qualify The Count before repeated Bishop promotion visits finish. Q-013 recommends the exact-seed correction plus persistent knowledge only after naturally observing Audit; no scenario injection or Plan B fallback is allowed. The dirty Heist preflight worktree's 276-line change set plus untracked launcher remains preserved. Independent review also found that normal travel does not age Crew favor debt, so the Q-013-independent replay repair now uses two exact visible `$4` Cashier Tip action boundaries per favor instead of travel-only waiting.
