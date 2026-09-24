@@ -212,7 +212,7 @@ Resume: Make the Beach an unconditional, visible and enabled destination from th
 Answer: The beach needs to always be open from the boat. Ensure the agents know this and adjust gameplay accordingly.
 
 ### Q-012 · rw06_1 · Primary Godot reopened during isolated verification
-Status: ANSWERED
+Status: RESOLVED by release orchestrator 2026-09-23
 Asked: release orchestrator, 2026-09-23
 Question: Godot 4.6 reopened against the primary checkout at 21:18 CT without a lease while isolated release checks were running. May I close only that exact primary console/child pair and keep the primary editor closed through engine verification?
 Options: A) Close the exact pair if still running (recommended)  B) I will close it and keep it closed
