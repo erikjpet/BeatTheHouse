@@ -3063,12 +3063,71 @@ func _world_map_beach_delta_adjacency_ok(map_data: Dictionary, label: String, fa
 
 
 func _world_map_beach_route_gate_ok(map_data: Dictionary, label: String, library: ContentLibrary, failures: Array) -> bool:
-	var gated_map := WorldMapScript.unlock_nodes(map_data, ["beach"], WorldMapScript.DISCOVERY_SOURCE_EVENT)
-	gated_map = WorldMapScript.enter_node(gated_map, "delta_queen", {})
+	var gated_map := WorldMapScript.enter_node(map_data, "delta_queen", {})
+	# Recreate the shipped failure after arrival: an old save can keep Beach
+	# hidden and spawn-locked while several other visible routes compete for the
+	# three-card cap. The production selector must repair this without a test-only
+	# unlock or a caller-injected target id.
+	var nodes: Array = JsonCoerceScript._copy_array(gated_map.get("nodes", []))
+	var ordinary_yield_id := str(gated_map.get("start_node_id", ""))
+	if ordinary_yield_id in ["", "beach", "delta_queen"]:
+		for candidate_value in nodes:
+			if typeof(candidate_value) != TYPE_DICTIONARY:
+				continue
+			var candidate_id := str((candidate_value as Dictionary).get("id", ""))
+			if not candidate_id in ["", "beach", "delta_queen"]:
+				ordinary_yield_id = candidate_id
+				break
+	for node_index in range(nodes.size()):
+		if typeof(nodes[node_index]) != TYPE_DICTIONARY:
+			continue
+		var node: Dictionary = nodes[node_index]
+		var node_id := str(node.get("id", ""))
+		if node_id == "beach":
+			node["state"] = WorldMapScript.STATE_HIDDEN
+			node["seen"] = false
+			node["unlocked"] = false
+			node["route_spawn_open"] = false
+			node["discovery_source"] = WorldMapScript.DISCOVERY_SOURCE_NONE
+			# Keep the mandatory connector below the ordinary candidate cut so this
+			# fixture proves post-priority replacement rather than lucky early rank.
+			node["tier"] = 99
+		else:
+			node["state"] = WorldMapScript.STATE_VISITED if node_id in ["delta_queen", ordinary_yield_id] else WorldMapScript.STATE_REVEALED
+			node["seen"] = true
+			node["unlocked"] = true
+			node["route_spawn_open"] = true
+			node["home_lost"] = false
+			node["discovery_source"] = WorldMapScript.DISCOVERY_SOURCE_SPAWN
+		nodes[node_index] = node
+	gated_map["nodes"] = nodes
+	gated_map["visited_path"] = [ordinary_yield_id, "delta_queen"]
 	var map_service: Variant = WorldMapScript.new(library)
+	var no_beach_control := gated_map.duplicate(true)
+	var control_nodes: Array = JsonCoerceScript._copy_array(no_beach_control.get("nodes", []))
+	for node_index in range(control_nodes.size()):
+		if typeof(control_nodes[node_index]) != TYPE_DICTIONARY:
+			continue
+		var control_node: Dictionary = control_nodes[node_index]
+		if str(control_node.get("id", "")) == "beach":
+			control_node["home_lost"] = true
+			control_nodes[node_index] = control_node
+			break
+	no_beach_control["nodes"] = control_nodes
+	var expanded_competitors := WorldMapScript.travel_target_ids(no_beach_control, "delta_queen", 32, 32)
+	if expanded_competitors.has("beach") or expanded_competitors.size() <= WorldMapScript.TRAVEL_TOTAL_TARGET_LIMIT:
+		failures.append("World map Beach cap fixture did not create more than three eligible ordinary competitors for %s: %s." % [label, str(expanded_competitors)])
+		return false
+	var capped_control := WorldMapScript.travel_target_ids(no_beach_control, "delta_queen")
+	if capped_control.size() != WorldMapScript.TRAVEL_TOTAL_TARGET_LIMIT or str(capped_control[-1]) != ordinary_yield_id:
+		failures.append("World map Beach cap control did not end with the intended lowest-ranked ordinary card for %s: yield=%s targets=%s." % [label, ordinary_yield_id, str(capped_control)])
+		return false
 	var delta_targets := WorldMapScript.travel_target_ids(gated_map, "delta_queen")
-	if not delta_targets.has("beach"):
-		failures.append("World map beach should be travelable from delta_queen for %s." % label)
+	if delta_targets.count("beach") != 1:
+		failures.append("World map beach should survive hidden/locked state and capped route competition exactly once from delta_queen for %s: %s." % [label, str(delta_targets)])
+		return false
+	if delta_targets.size() != WorldMapScript.TRAVEL_TOTAL_TARGET_LIMIT or delta_targets.has(ordinary_yield_id):
+		failures.append("Beach connector did not replace the lowest-ranked ordinary card inside the configured cap for %s: yield=%s targets=%s." % [label, ordinary_yield_id, str(delta_targets)])
 		return false
 	var access_route: Dictionary = map_service.route_for_target(gated_map, "delta_queen", "beach")
 	if access_route.is_empty():
@@ -3084,6 +3143,12 @@ func _world_map_beach_route_gate_ok(map_data: Dictionary, label: String, library
 	var broke_access_run: RunState = RunStateScript.new()
 	broke_access_run.start_new("BEACH-ACCESS-FREE")
 	broke_access_run.bankroll = 0
+	broke_access_run.set_environment({"id": "beach_access_lock", "archetype_id": "delta_queen", "travel_lock_remaining": 2})
+	var globally_locked_status := broke_access_run.travel_route_status(access_route)
+	if bool(globally_locked_status.get("available", true)) or str(globally_locked_status.get("disabled_reason", "")).strip_edges().is_empty():
+		failures.append("Required Beach access bypassed the ordinary global travel lock for %s." % label)
+		return false
+	broke_access_run.current_environment["travel_lock_remaining"] = 0
 	var access_status := broke_access_run.travel_route_status(access_route)
 	if not bool(access_status.get("available", false)) or int(access_status.get("cost", -1)) != 0:
 		failures.append("A broke player could not take the free Delta Queen to Beach walk for %s." % label)
@@ -3111,6 +3176,11 @@ func _world_map_beach_route_gate_ok(map_data: Dictionary, label: String, library
 	var return_status := broke_return_run.travel_route_status(return_route)
 	if not bool(return_status.get("available", false)) or int(return_status.get("cost", -1)) != 0:
 		failures.append("A broke player could not take the free Beach return walk for %s." % label)
+		return false
+	var revisit_map := WorldMapScript.enter_node(gated_map, "delta_queen", {})
+	var revisit_targets := WorldMapScript.travel_target_ids(revisit_map, "delta_queen")
+	if revisit_targets.count("beach") != 1:
+		failures.append("Revisiting the Delta Queen did not preserve exactly one Beach destination for %s: %s." % [label, str(revisit_targets)])
 		return false
 	var delta_archetype := _archetype_by_id(library, "delta_queen")
 	if delta_archetype.is_empty() \
