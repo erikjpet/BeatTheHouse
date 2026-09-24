@@ -877,6 +877,265 @@ function Test-PhaseMarkerContract {
 }
 
 
+function Get-RegistryBootstrapArguments {
+    param([string]$Root)
+    return @(
+        '--headless', '--verbose', '--disable-crash-handler',
+        '--audio-driver', 'Dummy', '--path', $Root,
+        '--recovery-mode', '--import'
+    )
+}
+
+
+function Test-RegistryBootstrapArguments {
+    param(
+        [string[]]$Arguments,
+        [string]$Root,
+        [string]$GodotLogPath = ''
+    )
+    $expected = @(Get-RegistryBootstrapArguments -Root $Root)
+    if (-not [string]::IsNullOrWhiteSpace($GodotLogPath)) {
+        $expected = @('--log-file', $GodotLogPath) + $expected
+    }
+    if ($Arguments.Count -ne $expected.Count) { return $false }
+    for ($index = 0; $index -lt $expected.Count; $index += 1) {
+        if ([string]$Arguments[$index] -cne [string]$expected[$index]) { return $false }
+    }
+    return $true
+}
+
+
+function Get-FullContractArguments {
+    param(
+        [string]$Root,
+        [string]$ScriptPath
+    )
+    return @(
+        '--headless', '--verbose', '--disable-crash-handler',
+        '--audio-driver', 'Dummy', '--path', $Root,
+        '--script', $ScriptPath
+    )
+}
+
+
+function Test-FullContractArguments {
+    param(
+        [string[]]$Arguments,
+        [string]$Root,
+        [string]$ScriptPath,
+        [string]$GodotLogPath = ''
+    )
+    $expected = @(Get-FullContractArguments -Root $Root -ScriptPath $ScriptPath)
+    if (-not [string]::IsNullOrWhiteSpace($GodotLogPath)) {
+        $expected = @('--log-file', $GodotLogPath) + $expected
+    }
+    if ($Arguments.Count -ne $expected.Count) { return $false }
+    for ($index = 0; $index -lt $expected.Count; $index += 1) {
+        if ([string]$Arguments[$index] -cne [string]$expected[$index]) { return $false }
+    }
+    return $true
+}
+
+
+function Get-RegistryLifecycleEvidence {
+    param(
+        [AllowEmptyString()][string]$StdoutText = '',
+        [AllowEmptyString()][string]$StderrText = '',
+        [AllowEmptyString()][string]$GodotLogText = ''
+    )
+    $allPhaseText = [string]::Join("`n", @($StdoutText, $StderrText, $GodotLogText))
+    return [ordered]@{
+        first_scan_done = [regex]::IsMatch($allPhaseText, '(?m)^\[ DONE \]\s+first_scan_filesystem\s*$')
+        update_scripts_classes_done = [regex]::IsMatch($allPhaseText, '(?m)^\[ DONE \]\s+update_scripts_classes\s*$')
+        reimport_done_count = [regex]::Matches($allPhaseText, '(?m)^\[ DONE \]\s+reimport\s*$').Count
+        main_scene_loaded = $allPhaseText.Contains('Loading resource: res://scenes/main.tscn')
+        foundation_main_loaded = $allPhaseText.Contains('Loading resource: res://scripts/ui/foundation_main.gd')
+    }
+}
+
+
+function Test-RegistryLifecycleContract {
+    param($Lifecycle)
+    if ($null -eq $Lifecycle) { return $false }
+    return (
+        [bool]$Lifecycle.first_scan_done `
+        -and [bool]$Lifecycle.update_scripts_classes_done `
+        -and [int]$Lifecycle.reimport_done_count -ge 1 `
+        -and -not [bool]$Lifecycle.main_scene_loaded `
+        -and -not [bool]$Lifecycle.foundation_main_loaded
+    )
+}
+
+
+function Get-ProjectSectionEntries {
+    param(
+        [string]$Text,
+        [string]$SectionName
+    )
+    $escapedSection = [regex]::Escape($SectionName)
+    $matches = [regex]::Matches($Text, '(?ms)^\[' + $escapedSection + '\]\s*\r?\n(?<body>.*?)(?=^\[|\z)')
+    if ($matches.Count -gt 1) {
+        throw "Project file contains duplicate [$SectionName] sections."
+    }
+    if ($matches.Count -eq 0) { return @() }
+    return @($matches[0].Groups['body'].Value -split '\r?\n' | ForEach-Object { $_.Trim() } | Where-Object {
+        -not [string]::IsNullOrWhiteSpace($_) -and -not $_.StartsWith(';')
+    })
+}
+
+
+function Get-RecoveryBootstrapDependencyCensusSha256 {
+    param($Census)
+    $hashPayload = [ordered]@{
+        inventory_mode = [string]$Census.inventory_mode
+        inventory_file_count = [int]$Census.inventory_file_count
+        tracked_file_count = [int]$Census.tracked_file_count
+        gd_script_count = [int]$Census.gd_script_count
+        project_file_present = [bool]$Census.project_file_present
+        addon_paths = @($Census.addon_paths)
+        plugin_config_paths = @($Census.plugin_config_paths)
+        gdextension_paths = @($Census.gdextension_paths)
+        tool_script_paths = @($Census.tool_script_paths)
+        autoload_entries = @($Census.autoload_entries)
+        editor_plugin_entries = @($Census.editor_plugin_entries)
+        clean = [bool]$Census.clean
+    }
+    return Get-StringSha256 -Value (($hashPayload | ConvertTo-Json -Depth 6 -Compress))
+}
+
+
+function Get-RecoveryBootstrapDependencyCensus {
+    param(
+        [string]$Root,
+        [ValidateSet('Tracked', 'Filesystem')]
+        [string]$InventoryMode = 'Tracked'
+    )
+    $resolvedRoot = [System.IO.Path]::GetFullPath($Root).TrimEnd([char[]]@([char]'\', [char]'/'))
+    if (-not (Test-Path -LiteralPath $resolvedRoot -PathType Container)) {
+        throw "Recovery-bootstrap dependency census root is unavailable: $resolvedRoot"
+    }
+    $rootItem = Get-Item -LiteralPath $resolvedRoot -Force
+    if (($rootItem.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0) {
+        throw "Recovery-bootstrap dependency census root is a reparse point: $resolvedRoot"
+    }
+
+    $inventoryPaths = @()
+    $filesystemAddonDirectoryPaths = @()
+    if ($InventoryMode -eq 'Tracked') {
+        $inventoryPaths = @(& git -C $resolvedRoot ls-files -- | ForEach-Object { ([string]$_).Replace('\', '/') })
+        if ($LASTEXITCODE -ne 0 -or $inventoryPaths.Count -eq 0) {
+            throw 'Could not enumerate tracked files for the recovery-bootstrap dependency census.'
+        }
+    }
+    else {
+        $allItems = @(Get-ChildItem -LiteralPath $resolvedRoot -Recurse -Force -ErrorAction Stop)
+        foreach ($item in $allItems) {
+            if (($item.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0) {
+                throw "Recovery-bootstrap dependency fixture contains a reparse point: $($item.FullName)"
+            }
+        }
+        $inventoryPaths = @($allItems | Where-Object { -not $_.PSIsContainer } | ForEach-Object {
+            $_.FullName.Substring($resolvedRoot.Length).TrimStart([char[]]@([char]'\', [char]'/')).Replace('\', '/')
+        } | Where-Object { $_ -notmatch '(?i)(^|/)(?:\.git|\.godot|\.tmp)(?:/|$)' } | Sort-Object -Unique)
+        $filesystemAddonDirectoryPaths = @($allItems | Where-Object { $_.PSIsContainer } | ForEach-Object {
+            $_.FullName.Substring($resolvedRoot.Length).TrimStart([char[]]@([char]'\', [char]'/')).Replace('\', '/')
+        } | Where-Object { $_ -match '(?i)^addons(?:/|$)' } | Sort-Object -Unique)
+        if ($inventoryPaths.Count -eq 0) {
+            throw 'Could not enumerate files in the recovery-bootstrap dependency fixture.'
+        }
+    }
+
+    $addonPaths = @(@($inventoryPaths | Where-Object { $_ -match '(?i)^addons(?:/|$)' }) + @($filesystemAddonDirectoryPaths) | Sort-Object -Unique)
+    $pluginConfigPaths = @($inventoryPaths | Where-Object { $_ -match '(?i)(^|/)plugin\.cfg$' })
+    $gdextensionPaths = @($inventoryPaths | Where-Object { $_ -match '(?i)\.gdextension$' })
+    $gdScriptPaths = @($inventoryPaths | Where-Object { $_ -match '(?i)\.gd$' })
+    $toolScriptPaths = [System.Collections.Generic.List[string]]::new()
+    foreach ($relativePath in $gdScriptPaths) {
+        $fullPath = [System.IO.Path]::GetFullPath((Join-Path $resolvedRoot ($relativePath.Replace('/', '\'))))
+        if (-not $fullPath.StartsWith($resolvedRoot + [System.IO.Path]::DirectorySeparatorChar, [System.StringComparison]::OrdinalIgnoreCase)) {
+            throw "Inventoried script escaped the census root: $relativePath"
+        }
+        if (-not (Test-Path -LiteralPath $fullPath -PathType Leaf)) {
+            throw "Inventoried script is absent from the census root: $relativePath"
+        }
+        $scriptItem = Get-Item -LiteralPath $fullPath -Force
+        if (($scriptItem.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0) {
+            throw "Inventoried script is a reparse point: $relativePath"
+        }
+        $source = [System.IO.File]::ReadAllText($fullPath)
+        if ([regex]::IsMatch($source, '(?im)^\s*@tool\s*(?:#.*)?$')) {
+            $toolScriptPaths.Add([string]$relativePath)
+        }
+    }
+
+    $projectPath = Join-Path $resolvedRoot 'project.godot'
+    if (-not (Test-Path -LiteralPath $projectPath -PathType Leaf)) {
+        throw 'Recovery-bootstrap dependency census could not find project.godot.'
+    }
+    $projectText = [System.IO.File]::ReadAllText($projectPath)
+    $autoloadEntries = @(Get-ProjectSectionEntries -Text $projectText -SectionName 'autoload')
+    $editorPluginEntries = @(Get-ProjectSectionEntries -Text $projectText -SectionName 'editor_plugins')
+    $clean = (
+        $addonPaths.Count -eq 0 `
+        -and $pluginConfigPaths.Count -eq 0 `
+        -and $gdextensionPaths.Count -eq 0 `
+        -and $toolScriptPaths.Count -eq 0 `
+        -and $autoloadEntries.Count -eq 0 `
+        -and $editorPluginEntries.Count -eq 0
+    )
+    $census = [ordered]@{
+        inventory_mode = $InventoryMode
+        inventory_file_count = $inventoryPaths.Count
+        tracked_file_count = if ($InventoryMode -eq 'Tracked') { $inventoryPaths.Count } else { 0 }
+        gd_script_count = $gdScriptPaths.Count
+        project_file_present = $true
+        addon_paths = @($addonPaths)
+        plugin_config_paths = @($pluginConfigPaths)
+        gdextension_paths = @($gdextensionPaths)
+        tool_script_paths = @($toolScriptPaths)
+        autoload_entries = @($autoloadEntries)
+        editor_plugin_entries = @($editorPluginEntries)
+        clean = $clean
+    }
+    $census.sha256 = Get-RecoveryBootstrapDependencyCensusSha256 -Census $census
+    return $census
+}
+
+
+function Test-RecoveryBootstrapDependencyCensus {
+    param($Census)
+    if ($null -eq $Census) { return $false }
+    foreach ($requiredKey in @(
+        'inventory_mode', 'inventory_file_count', 'tracked_file_count',
+        'gd_script_count', 'project_file_present',
+        'addon_paths', 'plugin_config_paths', 'gdextension_paths',
+        'tool_script_paths', 'autoload_entries', 'editor_plugin_entries',
+        'clean', 'sha256'
+    )) {
+        if (-not $Census.Contains($requiredKey)) { return $false }
+    }
+    if ([string]$Census.inventory_mode -notin @('Tracked', 'Filesystem')) { return $false }
+    if ([string]$Census.sha256 -cne (Get-RecoveryBootstrapDependencyCensusSha256 -Census $Census)) { return $false }
+    return (
+        [int]$Census.inventory_file_count -gt 0 `
+        -and (
+            ([string]$Census.inventory_mode -ceq 'Tracked' -and [int]$Census.tracked_file_count -eq [int]$Census.inventory_file_count) `
+            -or ([string]$Census.inventory_mode -ceq 'Filesystem' -and [int]$Census.tracked_file_count -eq 0)
+        ) `
+        -and [int]$Census.gd_script_count -gt 0 `
+        -and [bool]$Census.project_file_present `
+        -and $Census.addon_paths.Count -eq 0 `
+        -and $Census.plugin_config_paths.Count -eq 0 `
+        -and $Census.gdextension_paths.Count -eq 0 `
+        -and $Census.tool_script_paths.Count -eq 0 `
+        -and $Census.autoload_entries.Count -eq 0 `
+        -and $Census.editor_plugin_entries.Count -eq 0 `
+        -and [bool]$Census.clean `
+        -and -not [string]::IsNullOrWhiteSpace([string]$Census.sha256)
+    )
+}
+
+
 function Test-Q016ApprovalText {
     param([string]$Text)
     $sectionMatches = [regex]::Matches($Text, '(?ims)^### Q-016\b(?<body>.*?)(?=^### |\z)')
@@ -1143,13 +1402,27 @@ function Invoke-GodotPhase {
     }
 
     $combinedText = ''
+    $stdoutText = ''
+    $stderrText = ''
+    $godotLogText = ''
     foreach ($path in @($stdoutPath, $stderrPath, $godotLogPath)) {
         if (Test-Path -LiteralPath $path) {
+            $streamText = [System.IO.File]::ReadAllText($path)
             $combinedText += "`n--- $([System.IO.Path]::GetFileName($path)) ---`n"
-            $combinedText += [System.IO.File]::ReadAllText($path)
+            $combinedText += $streamText
+            if ($path -ceq $stdoutPath) {
+                $stdoutText = $streamText
+            }
+            elseif ($path -ceq $stderrPath) {
+                $stderrText = $streamText
+            }
+            elseif ($path -ceq $godotLogPath) {
+                $godotLogText = $streamText
+            }
         }
     }
     $diagnostics = @(Get-DiagnosticLines -Text $combinedText)
+    $registryLifecycle = Get-RegistryLifecycleEvidence -StdoutText $stdoutText -StderrText $stderrText -GodotLogText $godotLogText
     $hashes = [ordered]@{}
     foreach ($path in @($stdoutPath, $stderrPath, $godotLogPath)) {
         if (Test-Path -LiteralPath $path) {
@@ -1181,6 +1454,7 @@ function Invoke-GodotPhase {
         full_pass_marker = $combinedText.Contains('RW06_6_PULL_TAB_GLIMMER PASS')
         diagnostics_clean = ($diagnostics.Count -eq 0)
         diagnostics = $diagnostics
+        registry_lifecycle = $registryLifecycle
         evidence_root = $PhaseEvidenceRoot
         sha256 = $hashes
     }
@@ -1459,6 +1733,126 @@ if ($ValidateOnly) {
     Assert-LauncherContract (-not (Test-PhaseMarkerContract -Phase Full -ProductRedMarkerSeen $false -GuardPassMarkerSeen $true -InfraFailureMarkerSeen $false -FullPassMarkerSeen $true)) 'Full marker classifier accepted GUARD_PASS alongside PASS.'
     Assert-LauncherContract (-not (Test-PhaseMarkerContract -Phase Full -ProductRedMarkerSeen $false -GuardPassMarkerSeen $false -InfraFailureMarkerSeen $true -FullPassMarkerSeen $true)) 'Full marker classifier accepted GUARD_INFRA_FAILURE alongside PASS.'
 
+    $registryArgumentProbe = @(Get-RegistryBootstrapArguments -Root $projectRoot)
+    $registryLogProbe = Join-Path $projectRoot '.tmp\rw06_6\registry-bootstrap-probe.log'
+    Assert-LauncherContract (Test-RegistryBootstrapArguments -Arguments $registryArgumentProbe -Root $projectRoot) 'Registry bootstrap argument contract rejected exact recovery import arguments.'
+    Assert-LauncherContract (Test-RegistryBootstrapArguments -Arguments (@('--log-file', $registryLogProbe) + $registryArgumentProbe) -Root $projectRoot -GodotLogPath $registryLogProbe) 'Registry bootstrap argument contract rejected the exact logged recovery import arguments.'
+    $reorderedRegistryArguments = @($registryArgumentProbe)
+    $reorderedRegistryArguments[0] = '--verbose'
+    $reorderedRegistryArguments[1] = '--headless'
+    Assert-LauncherContract (-not (Test-RegistryBootstrapArguments -Arguments $reorderedRegistryArguments -Root $projectRoot)) 'Registry bootstrap argument contract accepted reordered headless/verbose flags.'
+    Assert-LauncherContract (-not (Test-RegistryBootstrapArguments -Arguments @($registryArgumentProbe | Where-Object { $_ -cne '--headless' }) -Root $projectRoot)) 'Registry bootstrap argument contract accepted missing headless mode.'
+    Assert-LauncherContract (-not (Test-RegistryBootstrapArguments -Arguments @($registryArgumentProbe | Where-Object { $_ -cne '--recovery-mode' }) -Root $projectRoot)) 'Registry bootstrap argument contract accepted missing recovery mode.'
+    Assert-LauncherContract (-not (Test-RegistryBootstrapArguments -Arguments @($registryArgumentProbe | Where-Object { $_ -cne '--verbose' }) -Root $projectRoot)) 'Registry bootstrap argument contract accepted missing verbose diagnostics.'
+    Assert-LauncherContract (-not (Test-RegistryBootstrapArguments -Arguments @($registryArgumentProbe | Where-Object { $_ -cne '--import' }) -Root $projectRoot)) 'Registry bootstrap argument contract accepted missing import mode.'
+    Assert-LauncherContract (-not (Test-RegistryBootstrapArguments -Arguments ($registryArgumentProbe + @('--quiet')) -Root $projectRoot)) 'Registry bootstrap argument contract accepted quiet diagnostic suppression.'
+    Assert-LauncherContract (-not (Test-RegistryBootstrapArguments -Arguments @('--headless', '--verbose', '--path', $projectRoot, '--editor', '--quit') -Root $projectRoot)) 'Registry bootstrap argument contract accepted the known-leaking immediate editor-quit path.'
+
+    $fullArgumentProbe = @(Get-FullContractArguments -Root $projectRoot -ScriptPath $fullContractScriptPath)
+    $fullLogProbe = Join-Path $projectRoot '.tmp\rw06_6\full-contract-probe.log'
+    Assert-LauncherContract (Test-FullContractArguments -Arguments $fullArgumentProbe -Root $projectRoot -ScriptPath $fullContractScriptPath) 'Full-contract argument contract rejected exact normal headless arguments.'
+    Assert-LauncherContract (Test-FullContractArguments -Arguments (@('--log-file', $fullLogProbe) + $fullArgumentProbe) -Root $projectRoot -ScriptPath $fullContractScriptPath -GodotLogPath $fullLogProbe) 'Full-contract argument contract rejected exact logged normal headless arguments.'
+    Assert-LauncherContract (-not (Test-FullContractArguments -Arguments ($fullArgumentProbe + @('--recovery-mode')) -Root $projectRoot -ScriptPath $fullContractScriptPath)) 'Full-contract argument contract accepted recovery mode.'
+    Assert-LauncherContract (-not (Test-FullContractArguments -Arguments ($fullArgumentProbe + @('--import')) -Root $projectRoot -ScriptPath $fullContractScriptPath)) 'Full-contract argument contract accepted import mode.'
+    Assert-LauncherContract (-not (Test-FullContractArguments -Arguments ($fullArgumentProbe + @('--quiet')) -Root $projectRoot -ScriptPath $fullContractScriptPath)) 'Full-contract argument contract accepted quiet diagnostic suppression.'
+
+    $validRegistryLifecycle = Get-RegistryLifecycleEvidence `
+        -StdoutText "[ DONE ] first_scan_filesystem`n" `
+        -StderrText "[ DONE ] update_scripts_classes`n" `
+        -GodotLogText "[ DONE ] reimport`n"
+    Assert-LauncherContract (Test-RegistryLifecycleContract -Lifecycle $validRegistryLifecycle) 'Registry lifecycle contract rejected a complete recovery import.'
+    foreach ($missingDoneMarker in @('first_scan_done', 'update_scripts_classes_done')) {
+        $hostileLifecycle = [ordered]@{}
+        foreach ($entry in $validRegistryLifecycle.GetEnumerator()) { $hostileLifecycle[$entry.Key] = $entry.Value }
+        $hostileLifecycle[$missingDoneMarker] = $false
+        Assert-LauncherContract (-not (Test-RegistryLifecycleContract -Lifecycle $hostileLifecycle)) "Registry lifecycle contract accepted missing $missingDoneMarker."
+    }
+    $missingReimportLifecycle = [ordered]@{}
+    foreach ($entry in $validRegistryLifecycle.GetEnumerator()) { $missingReimportLifecycle[$entry.Key] = $entry.Value }
+    $missingReimportLifecycle.reimport_done_count = 0
+    Assert-LauncherContract (-not (Test-RegistryLifecycleContract -Lifecycle $missingReimportLifecycle)) 'Registry lifecycle contract accepted a missing reimport DONE marker.'
+    $stdoutMainSceneLifecycle = Get-RegistryLifecycleEvidence `
+        -StdoutText "Loading resource: res://scenes/main.tscn`n" `
+        -StderrText "[ DONE ] update_scripts_classes`n" `
+        -GodotLogText "[ DONE ] first_scan_filesystem`n[ DONE ] reimport`n"
+    Assert-LauncherContract ([bool]$stdoutMainSceneLifecycle.main_scene_loaded -and -not [bool]$stdoutMainSceneLifecycle.foundation_main_loaded) 'Registry lifecycle extraction missed a forbidden main-scene load present solely in stdout.'
+    Assert-LauncherContract (-not (Test-RegistryLifecycleContract -Lifecycle $stdoutMainSceneLifecycle)) 'Registry lifecycle contract accepted a forbidden main-scene load present solely in stdout.'
+    $stderrFoundationLifecycle = Get-RegistryLifecycleEvidence `
+        -StdoutText "[ DONE ] first_scan_filesystem`n" `
+        -StderrText "Loading resource: res://scripts/ui/foundation_main.gd`n" `
+        -GodotLogText "[ DONE ] update_scripts_classes`n[ DONE ] reimport`n"
+    Assert-LauncherContract ([bool]$stderrFoundationLifecycle.foundation_main_loaded -and -not [bool]$stderrFoundationLifecycle.main_scene_loaded) 'Registry lifecycle extraction missed a forbidden foundation-main load present solely in stderr.'
+    Assert-LauncherContract (-not (Test-RegistryLifecycleContract -Lifecycle $stderrFoundationLifecycle)) 'Registry lifecycle contract accepted a forbidden foundation-main load present solely in stderr.'
+
+    $recoveryDependencyCensusProbe = Get-RecoveryBootstrapDependencyCensus -Root $projectRoot -InventoryMode Tracked
+    Assert-LauncherContract (Test-RecoveryBootstrapDependencyCensus -Census $recoveryDependencyCensusProbe) 'Current candidate has an addon, editor plugin, GDExtension, @tool script, or autoload dependency suppressed by recovery mode.'
+    Assert-LauncherContract ([string]$recoveryDependencyCensusProbe.inventory_mode -ceq 'Tracked' -and [int]$recoveryDependencyCensusProbe.tracked_file_count -gt 100 -and [int]$recoveryDependencyCensusProbe.gd_script_count -gt 100) 'Recovery dependency census did not substantively scan the tracked candidate tree.'
+
+    $dependencyFixtureRoot = Join-Path $projectRoot ('.tmp\rw06_6\recovery-dependency-selftest-' + [guid]::NewGuid().ToString('N'))
+    $dependencyFields = @('addon_paths', 'plugin_config_paths', 'gdextension_paths', 'tool_script_paths', 'autoload_entries', 'editor_plugin_entries')
+    try {
+        foreach ($fixtureName in @('clean', 'addons', 'plugin_cfg', 'gdextension', 'tool_script', 'autoload', 'editor_plugins')) {
+            $fixtureRoot = Join-Path $dependencyFixtureRoot $fixtureName
+            $fixtureScripts = Join-Path $fixtureRoot 'scripts'
+            New-Item -ItemType Directory -Force -Path $fixtureScripts | Out-Null
+            $fixtureProjectText = "[application]`nconfig/name=`"rw06_6 recovery census fixture`"`n"
+            [System.IO.File]::WriteAllText((Join-Path $fixtureRoot 'project.godot'), $fixtureProjectText)
+            [System.IO.File]::WriteAllText((Join-Path $fixtureScripts 'clean.gd'), "extends Node`n")
+
+            $expectedDependencyField = ''
+            switch ($fixtureName) {
+                'addons' {
+                    $addonFixture = Join-Path $fixtureRoot 'addons\probe'
+                    New-Item -ItemType Directory -Force -Path $addonFixture | Out-Null
+                    [System.IO.File]::WriteAllText((Join-Path $addonFixture 'marker.txt'), "probe`n")
+                    $expectedDependencyField = 'addon_paths'
+                }
+                'plugin_cfg' {
+                    [System.IO.File]::WriteAllText((Join-Path $fixtureRoot 'plugin.cfg'), "[plugin]`nname=`"probe`"`n")
+                    $expectedDependencyField = 'plugin_config_paths'
+                }
+                'gdextension' {
+                    $nativeFixture = Join-Path $fixtureRoot 'native'
+                    New-Item -ItemType Directory -Force -Path $nativeFixture | Out-Null
+                    [System.IO.File]::WriteAllText((Join-Path $nativeFixture 'probe.gdextension'), "[configuration]`nentry_symbol=`"probe`"`n")
+                    $expectedDependencyField = 'gdextension_paths'
+                }
+                'tool_script' {
+                    [System.IO.File]::WriteAllText((Join-Path $fixtureScripts 'tool_probe.gd'), "@tool`nextends Node`n")
+                    $expectedDependencyField = 'tool_script_paths'
+                }
+                'autoload' {
+                    [System.IO.File]::AppendAllText((Join-Path $fixtureRoot 'project.godot'), "`n[autoload]`nProbe=`"*res://scripts/clean.gd`"`n")
+                    $expectedDependencyField = 'autoload_entries'
+                }
+                'editor_plugins' {
+                    [System.IO.File]::AppendAllText((Join-Path $fixtureRoot 'project.godot'), "`n[editor_plugins]`nenabled=PackedStringArray(`"probe`")`n")
+                    $expectedDependencyField = 'editor_plugin_entries'
+                }
+            }
+
+            $fixtureCensus = Get-RecoveryBootstrapDependencyCensus -Root $fixtureRoot -InventoryMode Filesystem
+            if ($fixtureName -eq 'clean') {
+                Assert-LauncherContract (Test-RecoveryBootstrapDependencyCensus -Census $fixtureCensus) 'Recovery dependency census rejected a clean disposable project fixture.'
+                foreach ($dependencyField in $dependencyFields) {
+                    Assert-LauncherContract ($fixtureCensus[$dependencyField].Count -eq 0) "Clean recovery dependency fixture unexpectedly populated $dependencyField."
+                }
+            }
+            else {
+                Assert-LauncherContract (-not (Test-RecoveryBootstrapDependencyCensus -Census $fixtureCensus)) "Recovery dependency census accepted the $fixtureName disposable project fixture."
+                Assert-LauncherContract (-not [string]::IsNullOrWhiteSpace($expectedDependencyField) -and $fixtureCensus[$expectedDependencyField].Count -gt 0) "Recovery dependency census did not detect $fixtureName in its exact field."
+                foreach ($dependencyField in $dependencyFields | Where-Object { $_ -cne $expectedDependencyField }) {
+                    Assert-LauncherContract ($fixtureCensus[$dependencyField].Count -eq 0) "Recovery dependency fixture $fixtureName also populated unrelated $dependencyField."
+                }
+            }
+        }
+    }
+    finally {
+        if (Test-Path -LiteralPath $dependencyFixtureRoot) {
+            Remove-Item -LiteralPath $dependencyFixtureRoot -Recurse -Force
+        }
+    }
+
     Assert-LauncherContract (Test-Q016ApprovalText "### Q-016`nStatus: ANSWERED`nAnswer:`nA`n") 'Q-016 parser rejected a multiline ANSWERED A.'
     Assert-LauncherContract (-not (Test-Q016ApprovalText "### Q-016`nStatus: OPEN`nAnswer:`n")) 'Q-016 parser accepted OPEN.'
     Assert-LauncherContract (-not (Test-Q016ApprovalText "### Q-016`nStatus: ANSWERED`nAnswer: B. Refactor.`n")) 'Q-016 parser accepted option B.'
@@ -1541,7 +1935,20 @@ if ($ValidateOnly) {
         'registration_process_identity',
         '$process.Refresh()',
         '$process.HasExited',
-        "'--import'",
+        'Get-RegistryBootstrapArguments',
+        'Test-RegistryBootstrapArguments',
+        "'--recovery-mode', '--import'",
+        'Get-RegistryLifecycleEvidence',
+        'Test-RegistryLifecycleContract',
+        'Get-RecoveryBootstrapDependencyCensus',
+        'Test-RecoveryBootstrapDependencyCensus',
+        'Get-FullContractArguments',
+        'Test-FullContractArguments',
+        'first_scan_done',
+        'update_scripts_classes_done',
+        'reimport_done_count',
+        'main_scene_loaded',
+        'foundation_main_loaded',
         'Assert-CleanExactCandidate',
         'Assert-Q016ApprovalSnapshot',
         'Assert-OwnedLease',
@@ -1560,6 +1967,15 @@ if ($ValidateOnly) {
     )) {
         Assert-LauncherContract ($runtimeLauncherSource.Contains($required)) "Launcher runtime contract is missing: $required"
     }
+    Assert-LauncherContract ([regex]::Matches($runtimeLauncherSource, [regex]::Escape("'--recovery-mode', '--import'")).Count -eq 1) 'Launcher runtime must contain exactly one recovery-import argument pair.'
+    Assert-LauncherContract (-not $runtimeLauncherSource.Contains("'--editor'")) 'Launcher runtime contains the known-leaking editor bootstrap mode.'
+    Assert-LauncherContract ($runtimeLauncherSource.Contains('$importArguments = @(Get-RegistryBootstrapArguments -Root $projectRoot)')) 'Runtime registry phase does not consume the exact recovery-import argument builder.'
+    Assert-LauncherContract ($runtimeLauncherSource.Contains('$fullArguments = @(Get-FullContractArguments -Root $projectRoot -ScriptPath $fullContractScriptPath)')) 'Runtime full phase does not consume the exact normal argument builder.'
+    Assert-LauncherContract ($runtimeLauncherSource.Contains('$registryArgumentsExact = Test-RegistryBootstrapArguments')) 'Runtime registry acceptance does not revalidate exact recorded arguments.'
+    Assert-LauncherContract ($runtimeLauncherSource.Contains('$registryLifecycle = Get-RegistryLifecycleEvidence -StdoutText $stdoutText -StderrText $stderrText -GodotLogText $godotLogText')) 'Runtime registry lifecycle extraction does not consume stdout, stderr, and Godot log together.'
+    Assert-LauncherContract ($runtimeLauncherSource.Contains('$registryLifecyclePassed = Test-RegistryLifecycleContract')) 'Runtime registry acceptance does not require lifecycle DONE markers and forbidden-load absence.'
+    Assert-LauncherContract ($runtimeLauncherSource.Contains('$registryBootstrapSummary.dependency_census = Get-RecoveryBootstrapDependencyCensus -Root $projectRoot -InventoryMode Tracked')) 'Runtime recovery dependency census is not bound to the tracked candidate tree.'
+    Assert-LauncherContract ($runtimeLauncherSource.Contains('$fullArgumentsExact = Test-FullContractArguments')) 'Runtime full acceptance does not revalidate exact normal recorded arguments.'
     $environmentRestoreIndex = $runtimeLauncherSource.IndexOf('$environmentRestoreResult = Restore-ProcessEnvironmentSafely -Snapshot $oldEnvironment')
     $leaseCleanupIndex = $runtimeLauncherSource.IndexOf('if ($leaseOwned -and (Test-Path -LiteralPath $leasePath))', [Math]::Max(0, $environmentRestoreIndex))
     Assert-LauncherContract ($environmentRestoreIndex -ge 0 -and $leaseCleanupIndex -gt $environmentRestoreIndex) 'Environment restoration is not contained ahead of exact lease cleanup.'
@@ -1760,6 +2176,35 @@ $cacheSummary = [ordered]@{
     cleanup_authorized = $false
     removed_after_evidence = $false
 }
+$registryBootstrapSummary = [ordered]@{
+    mode = 'recovery_import'
+    required_arguments = @()
+    arguments_exact = $false
+    diagnostic_suppression_absent = $false
+    dependency_census = [ordered]@{}
+    dependency_census_validated = $false
+    lifecycle = [ordered]@{
+        first_scan_done = $false
+        update_scripts_classes_done = $false
+        reimport_done_count = 0
+        main_scene_loaded = $false
+        foundation_main_loaded = $false
+    }
+    lifecycle_contract_passed = $false
+    class_cache_validated = $false
+    uid_cache_validated = $false
+    imported_manifest_validated = $false
+    accepted = $false
+}
+$fullContractSummary = [ordered]@{
+    mode = 'normal_headless_script'
+    required_arguments = @()
+    arguments_exact = $false
+    recovery_mode_absent = $false
+    import_mode_absent = $false
+    diagnostic_suppression_absent = $false
+    accepted = $false
+}
 $oldEnvironment = [ordered]@{
     APPDATA = [Environment]::GetEnvironmentVariable('APPDATA', 'Process')
     LOCALAPPDATA = [Environment]::GetEnvironmentVariable('LOCALAPPDATA', 'Process')
@@ -1803,6 +2248,12 @@ try {
     $harnessFiles.guard = Get-TrackedFileIdentity -Root $projectRoot -Commit $candidateCommit -RelativePath $guardRelativePath
     $harnessFiles.full_contract = Get-TrackedFileIdentity -Root $projectRoot -Commit $candidateCommit -RelativePath $fullContractRelativePath
     $harnessFiles.product = Get-TrackedFileIdentity -Root $projectRoot -Commit $candidateCommit -RelativePath $productRelativePath
+    $harnessFiles.project = Get-TrackedFileIdentity -Root $projectRoot -Commit $candidateCommit -RelativePath 'project.godot'
+    $registryBootstrapSummary.dependency_census = Get-RecoveryBootstrapDependencyCensus -Root $projectRoot -InventoryMode Tracked
+    if (-not (Test-RecoveryBootstrapDependencyCensus -Census $registryBootstrapSummary.dependency_census)) {
+        throw 'Recovery-mode registry bootstrap would suppress a tracked addon, editor plugin, GDExtension, @tool script, or autoload dependency.'
+    }
+    $registryBootstrapSummary.dependency_census_validated = $true
 
     $profileRoot = Join-Path $EvidenceRoot 'profile'
     $appData = Join-Path $profileRoot 'AppData\Roaming'
@@ -1883,13 +2334,21 @@ try {
         [void](Assert-Q016ApprovalSnapshot -ExpectedSectionSha256 $q016Snapshot.section_sha256)
         $cacheSummary.registration_allowed = $true
         Assert-ProjectCacheAbsent -Context 'RW06_6 pre-import handoff'
-        $importArguments = @(
-            '--headless', '--verbose', '--disable-crash-handler',
-            '--audio-driver', 'Dummy', '--path', $projectRoot, '--import'
-        )
+        $importArguments = @(Get-RegistryBootstrapArguments -Root $projectRoot)
+        $registryBootstrapSummary.required_arguments = @($importArguments)
         $importEvidenceRoot = Join-Path $EvidenceRoot '02-global-class-registration'
         $importPhase = Invoke-GodotPhase -Name 'global_class_registration' -Arguments $importArguments -Root $projectRoot -RequiredCommit $ExpectedCommit -RequiredTree $ExpectedTree -OwnedLeasePath $leasePath -Q016SectionSha256 $q016Snapshot.section_sha256 -PhaseEvidenceRoot $importEvidenceRoot -TimeoutSec $ProcessTimeoutSec
         [void]$phases.Add($importPhase)
+        $registryLogPath = Join-Path $importEvidenceRoot 'godot.log'
+        $registryArgumentsExact = Test-RegistryBootstrapArguments -Arguments @($importPhase.arguments) -Root $projectRoot -GodotLogPath $registryLogPath
+        $registryLifecyclePassed = Test-RegistryLifecycleContract -Lifecycle $importPhase.registry_lifecycle
+        $registryBootstrapSummary.arguments_exact = $registryArgumentsExact
+        $registryBootstrapSummary.diagnostic_suppression_absent = (
+            @($importPhase.arguments | Where-Object { [string]$_ -ceq '--verbose' }).Count -eq 1 `
+            -and @($importPhase.arguments | Where-Object { [string]$_ -ceq '--quiet' }).Count -eq 0
+        )
+        $registryBootstrapSummary.lifecycle = $importPhase.registry_lifecycle
+        $registryBootstrapSummary.lifecycle_contract_passed = $registryLifecyclePassed
         $registrationPhaseStarted = (
             [bool]$importPhase.process_started `
             -and (Test-ProcessIdentityProofShape -Identity $importPhase.process_identity) `
@@ -1908,45 +2367,67 @@ try {
             -or $importPhase.effective_exit_code -ne 0 `
             -or $importPhase.timed_out `
             -or -not [string]::IsNullOrWhiteSpace([string]$importPhase.launcher_error) `
+            -or -not $registryArgumentsExact `
+            -or -not $registryBootstrapSummary.diagnostic_suppression_absent `
+            -or -not $registryLifecyclePassed `
             -or -not (Test-PhaseMarkerContract -Phase Registry -ProductRedMarkerSeen ([bool]$importPhase.product_red_marker) -GuardPassMarkerSeen ([bool]$importPhase.guard_pass_marker) -InfraFailureMarkerSeen ([bool]$importPhase.infra_failure_marker) -FullPassMarkerSeen ([bool]$importPhase.full_pass_marker)) `
             -or -not $importPhase.diagnostics_clean
         ) {
-            throw 'Explicit Godot --import global-class registration failed closed.'
+            throw 'Explicit Godot recovery-mode --import global-class registration failed closed.'
         }
         if (-not (Test-Path -LiteralPath $globalClassCachePath -PathType Leaf) -or (Get-Item -LiteralPath $globalClassCachePath).Length -le 0) {
-            throw 'Explicit Godot --import did not produce a nonempty global script class cache.'
+            throw 'Explicit Godot recovery-mode --import did not produce a nonempty global script class cache.'
         }
         if (-not (Test-Path -LiteralPath $uidCachePath -PathType Leaf) -or (Get-Item -LiteralPath $uidCachePath).Length -le 0) {
-            throw 'Explicit Godot --import did not produce a nonempty UID cache.'
+            throw 'Explicit Godot recovery-mode --import did not produce a nonempty UID cache.'
         }
+        $registryBootstrapSummary.uid_cache_validated = $true
         $cacheItem = Get-Item -LiteralPath $projectCacheRoot -Force
         if (($cacheItem.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0) {
             throw 'Explicit Godot --import produced a reparse-point .godot cache.'
         }
         Assert-RequiredGlobalClassEntries -CachePath $globalClassCachePath
+        $registryBootstrapSummary.class_cache_validated = $true
         $cacheSummary.created = $true
         $cacheSummary.global_class_cache_sha256 = (Get-FileHash -LiteralPath $globalClassCachePath -Algorithm SHA256).Hash
         $cacheSummary.uid_cache_sha256 = (Get-FileHash -LiteralPath $uidCachePath -Algorithm SHA256).Hash
         $cacheSummary.imported_manifest = Write-ImportedArtifactManifest -DestinationPath (Join-Path $importEvidenceRoot 'imported-artifacts.json')
+        $registryBootstrapSummary.imported_manifest_validated = ([int]$cacheSummary.imported_manifest.count -gt 0 -and -not [string]::IsNullOrWhiteSpace([string]$cacheSummary.imported_manifest.sha256))
+        if (-not $registryBootstrapSummary.imported_manifest_validated) {
+            throw 'Recovery-mode registry bootstrap did not produce a nonempty hashed import manifest.'
+        }
+        $registryBootstrapSummary.accepted = $true
 
-        $fullArguments = @(
-            '--headless', '--verbose', '--disable-crash-handler',
-            '--audio-driver', 'Dummy', '--path', $projectRoot,
-            '--script', $fullContractScriptPath
-        )
-        $fullPhase = Invoke-GodotPhase -Name 'full_contract' -Arguments $fullArguments -Root $projectRoot -RequiredCommit $ExpectedCommit -RequiredTree $ExpectedTree -OwnedLeasePath $leasePath -Q016SectionSha256 $q016Snapshot.section_sha256 -PhaseEvidenceRoot (Join-Path $EvidenceRoot '03-full-contract') -TimeoutSec $ProcessTimeoutSec
+        $fullArguments = @(Get-FullContractArguments -Root $projectRoot -ScriptPath $fullContractScriptPath)
+        $fullContractSummary.required_arguments = @($fullArguments)
+        $fullEvidenceRoot = Join-Path $EvidenceRoot '03-full-contract'
+        $fullPhase = Invoke-GodotPhase -Name 'full_contract' -Arguments $fullArguments -Root $projectRoot -RequiredCommit $ExpectedCommit -RequiredTree $ExpectedTree -OwnedLeasePath $leasePath -Q016SectionSha256 $q016Snapshot.section_sha256 -PhaseEvidenceRoot $fullEvidenceRoot -TimeoutSec $ProcessTimeoutSec
         [void]$phases.Add($fullPhase)
+        $fullLogPath = Join-Path $fullEvidenceRoot 'godot.log'
+        $fullArgumentsExact = Test-FullContractArguments -Arguments @($fullPhase.arguments) -Root $projectRoot -ScriptPath $fullContractScriptPath -GodotLogPath $fullLogPath
+        $fullContractSummary.arguments_exact = $fullArgumentsExact
+        $fullContractSummary.recovery_mode_absent = (@($fullPhase.arguments | Where-Object { [string]$_ -ceq '--recovery-mode' }).Count -eq 0)
+        $fullContractSummary.import_mode_absent = (@($fullPhase.arguments | Where-Object { [string]$_ -ceq '--import' }).Count -eq 0)
+        $fullContractSummary.diagnostic_suppression_absent = (
+            @($fullPhase.arguments | Where-Object { [string]$_ -ceq '--verbose' }).Count -eq 1 `
+            -and @($fullPhase.arguments | Where-Object { [string]$_ -ceq '--quiet' }).Count -eq 0
+        )
         if (
             -not $fullPhase.native_exit_observed `
             -or $fullPhase.native_exit_code -ne 0 `
             -or $fullPhase.effective_exit_code -ne 0 `
             -or $fullPhase.timed_out `
             -or -not [string]::IsNullOrWhiteSpace([string]$fullPhase.launcher_error) `
+            -or -not $fullArgumentsExact `
+            -or -not $fullContractSummary.recovery_mode_absent `
+            -or -not $fullContractSummary.import_mode_absent `
+            -or -not $fullContractSummary.diagnostic_suppression_absent `
             -or -not (Test-PhaseMarkerContract -Phase Full -ProductRedMarkerSeen ([bool]$fullPhase.product_red_marker) -GuardPassMarkerSeen ([bool]$fullPhase.guard_pass_marker) -InfraFailureMarkerSeen ([bool]$fullPhase.infra_failure_marker) -FullPassMarkerSeen ([bool]$fullPhase.full_pass_marker)) `
             -or -not $fullPhase.diagnostics_clean
         ) {
             throw 'Full RW06_6 contract failed GREEN acceptance.'
         }
+        $fullContractSummary.accepted = $true
         $outcome = 'green_pass'
         $overallExitCode = 0
     }
@@ -2070,6 +2551,8 @@ $summary = [ordered]@{
     skipped_phases = @($skippedPhases)
     files = $harnessFiles
     cache = $cacheSummary
+    registry_bootstrap = $registryBootstrapSummary
+    full_contract_execution = $fullContractSummary
     final = [ordered]@{
         clean_tree = ($postStatus.Count -eq 0)
         commit = $postCommit
