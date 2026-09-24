@@ -7706,6 +7706,10 @@ func _travel_result(target_id: String, destination_name: String, route: Dictiona
 		"deltas": deltas,
 		"message": message,
 	})
+	# The shared builder intentionally normalizes to the canonical action-result
+	# keys. Restore the travel receipt's exact departure price so public observers
+	# can distinguish a real comp from a paid route without parsing display copy.
+	built["route_cost"] = cost
 	return built
 
 
