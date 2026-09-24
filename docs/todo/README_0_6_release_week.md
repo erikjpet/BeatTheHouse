@@ -102,7 +102,7 @@ place, and add one dated line to the history below.
 | Owner start-to-finish run | done, no blockers | not started | — |
 | Owner run notes | (owner writes blockers here; non-blockers go to the 0.6.1 backlog) | — | — |
 | Release gate items green (rw06_4) | all | 0 | — |
-| Unmerged row branches (`git branch -a`) | 0 | 14 active release-week branches (six rw06_1 lanes including visual evidence, six peer-owned rw06_2 lanes, and the rw06_6 Green plus pre-fix RED custody lanes) | release orchestrator |
+| Unmerged row branches (`git branch -a`) | 0 | 15 active release-week branches (six rw06_1 lanes including visual evidence, six peer-owned rw06_2 lanes, the rw06_6 Green plus pre-fix RED custody lanes, and the separate Q-018/Q-019 forensic-archive lane) | release orchestrator |
 
 History (newest last):
 
