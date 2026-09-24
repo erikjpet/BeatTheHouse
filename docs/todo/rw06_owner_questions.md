@@ -235,3 +235,11 @@ Question: None; this is a binding owner-directed 0.6.0 presentation feature.
 Options: A) Implement the narrow pull-tab glimmer described in Resume (the owner's decision)
 Resume: Add a rare yellow light glimmer while the pull-tab machine screen is active. Each interval is randomly 25–35 seconds; its target is one of the best 16 eligible high-tier winning tickets still remaining and unrevealed in that machine. Cover no hint before 25 seconds and one by 35 seconds under controlled time/RNG; never target revealed, removed or stale tickets; preserve ticket contents, odds, payout tables and economy; preserve close/reopen and Save/Continue behavior; use a non-animated yellow highlight under reduced motion; and serialize no hidden prize/value beyond the requested visual location. Implement on a dedicated rw06_6 branch/worktree outside rw06_1 placement and rw06_2 endings, with focused fail-before/pass-after evidence and the inherited release gates. Never package, upload or publish for this row.
 Answer: A. Add the rare yellow pull-tab glimmer with the scope and invariants above.
+
+### Q-015 · all active rows · Primary Godot reopened again
+Status: OPEN
+Asked: release orchestrator, 2026-09-23
+Question: A new unleased Godot 4.6 console/child pair opened at 22:46 CT against `D:\Projects\Beat-The-House`. May I close only that exact pair so isolated release verification can resume?
+Options: A) Close the exact pair if still running (recommended)  B) I will close it and keep the primary editor closed
+Resume: Revalidate console PID 24328 and child PID 30092 still target the primary checkout and have no lease. If A, terminate only that exact pair, confirm zero unleased Godot processes, then resume Q-009 isolated focused runs. Do not launch another engine while OPEN; continue engine-free audits, implementation and validation.
+Answer:
