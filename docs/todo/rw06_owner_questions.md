@@ -286,3 +286,11 @@ Options: A) Seal and preserve them beside the Q-018 archive (recommended)  B) Le
 Resume: rw06_6 implementation and fresh-worktree preparation continue while OPEN. If A, revalidate native identities and zero reparses, atomically move exactly `C:\Users\theep\AppData\Local\Temp\rw06-native-create-probe-a664c4427d654986b1a8e5cfbf67a19c` and `C:\Users\theep\AppData\Local\Temp\rw06-native-create-probe-25f812dfb56542ee8728290cbfe14f92` into a separate hash-sealed non-worktree recovery inventory without deleting contents, and retain it through 0.6.0. If B, leave both exact roots untouched and keep final residue accounting open. This never authorizes deleting or adopting unknown or replacement objects.
 Answer:
 A
+
+### Q-020 · rw06_6 · Live archive mutation boundary
+Status: OPEN
+Asked: release orchestrator, 2026-09-24
+Question: Windows can atomically rename the 79 approved roots, but it cannot continuously freeze every child, data stream and permission change during a live rename; strict exclusion requires offline maintenance. Which boundary should we use?
+Options: A) Use sealed no-overwrite live renames with exact before/after detection and stop while preserving every object if anything drifts (recommended)  B) Require strict exclusion and pause rw06_6 until the owner can schedule offline archival
+Resume: Keep all 79 roots untouched while OPEN. If A, implement crash-safe per-root intent/result receipts, held source/destination ancestry, exact pre/post native-ID/content/stream/security manifests and hard detect-and-hold on any drift; never delete, overwrite, copy, adopt or roll back. If B, prepare an owner-run WinRE/WinPE maintenance procedure and do not move any root live. Continue rw06_1 and engine-free rw06_6 product work either way.
+Answer:
