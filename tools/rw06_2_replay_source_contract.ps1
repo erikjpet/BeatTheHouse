@@ -2362,6 +2362,7 @@ func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
         'func _public_observation() -> Dictionary:',
         'return PublicObservation.sanitize(snapshot)',
         'const REPLAY_PAUSE_OWNER := "agent_replay"',
+        'const SHUTDOWN_DRAIN_FRAMES := 12',
         'app.call("set_application_pause_owner", REPLAY_PAUSE_OWNER, true)',
         '"replay_pause": ready_pause',
         '"replay_pause_before": pause_before',
@@ -2402,6 +2403,40 @@ func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
         'visible talk choice is disabled'
     )) {
         Assert-Contains $bridge $required "Production-input bridge is missing required source contract token: $required"
+    }
+    Assert-Match $bridge '(?s)while not shutting_down:\s*await _poll_once\(\)\s*if shutting_down:\s*break\s*await create_timer\(0\.05\)\.timeout' 'The production-input bridge must not create another SceneTreeTimer after a quit command starts shutdown.'
+    $pollMatch = [regex]::Match($bridge, '(?ms)^func _poll_once\(\) -> void:\s*(?<body>.*?)(?=^func |\z)')
+    if (-not $pollMatch.Success) {
+        Add-Failure 'The production-input bridge has no uniquely bounded _poll_once body for shutdown custody.'
+    }
+    else {
+        $pollBody = $pollMatch.Groups['body'].Value
+        $writeIndex = $pollBody.IndexOf('_write_json(_path("%04d.result.json" % next_command), result)', [StringComparison]::Ordinal)
+        $shutdownIndex = $pollBody.IndexOf('if bool(result.get("quit", false)):', [StringComparison]::Ordinal)
+        $queueIndex = $pollBody.IndexOf('app.queue_free()', [StringComparison]::Ordinal)
+        $nullIndex = $pollBody.IndexOf('app = null', [StringComparison]::Ordinal)
+        $drainIndex = $pollBody.IndexOf('for _frame in range(SHUTDOWN_DRAIN_FRAMES):', [StringComparison]::Ordinal)
+        $awaitIndex = if ($drainIndex -ge 0) { $pollBody.IndexOf('await process_frame', $drainIndex, [StringComparison]::Ordinal) } else { -1 }
+        $quitIndex = $pollBody.IndexOf('quit(0)', [StringComparison]::Ordinal)
+        $quitCount = [regex]::Matches($pollBody, [regex]::Escape('quit(0)')).Count
+        $ordered = $writeIndex -ge 0 -and $shutdownIndex -gt $writeIndex -and $queueIndex -gt $shutdownIndex -and
+            $nullIndex -gt $queueIndex -and $drainIndex -gt $nullIndex -and $awaitIndex -gt $drainIndex -and
+            $quitIndex -gt $awaitIndex -and $quitCount -ceq 1
+        if (-not $ordered) {
+            Add-Failure 'The production-input bridge must persist the accepted quit result, free/null the production host, drain a bounded frame window, and only then issue its sole quit.'
+        }
+        if ($shutdownIndex -ge 0 -and $drainIndex -gt $shutdownIndex) {
+            $beforeDrain = $pollBody.Substring($shutdownIndex, $drainIndex - $shutdownIndex)
+            if ($beforeDrain -match 'create_timer\s*\(' -or $beforeDrain -match 'quit\s*\(') {
+                Add-Failure 'The production-input bridge must not create a timer or quit between entering shutdown and starting its bounded frame drain.'
+            }
+        }
+        if ($shutdownIndex -ge 0) {
+            $shutdownSlice = $pollBody.Substring($shutdownIndex)
+            if ($shutdownSlice -match 'create_timer\s*\(') {
+                Add-Failure 'The production-input bridge must not create any SceneTreeTimer after entering shutdown.'
+            }
+        }
     }
 
     foreach ($required in @(
