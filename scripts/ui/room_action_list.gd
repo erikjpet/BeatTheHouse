@@ -22,9 +22,12 @@ var _records: Array = []
 var _render_signature := ""
 var _last_focus_key := ""
 var _selection_dispatch_pending := false
+var _pending_selection_object_id := ""
+var _pending_selection_action_key := ""
 
 
 func _ready() -> void:
+	set_process(false)
 	add_theme_constant_override("separation", 4)
 	size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_launcher = Button.new()
@@ -425,11 +428,25 @@ func _defer_select_action(object_id: String, action_key: String) -> void:
 	if _selection_dispatch_pending:
 		return
 	_selection_dispatch_pending = true
-	call_deferred("_select_action", object_id, action_key)
+	_pending_selection_object_id = object_id
+	_pending_selection_action_key = action_key
+	set_process(true)
+
+
+func _process(_delta: float) -> void:
+	if not _selection_dispatch_pending:
+		set_process(false)
+		return
+	var object_id := _pending_selection_object_id
+	var action_key := _pending_selection_action_key
+	_selection_dispatch_pending = false
+	_pending_selection_object_id = ""
+	_pending_selection_action_key = ""
+	set_process(false)
+	_select_action(object_id, action_key)
 
 
 func _select_action(object_id: String, action_key: String) -> void:
-	_selection_dispatch_pending = false
 	for record_value in _records:
 		var record := record_value as Dictionary
 		if str(record.get("object_id", "")) != object_id:
