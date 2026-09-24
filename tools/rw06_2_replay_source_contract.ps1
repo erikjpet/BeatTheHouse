@@ -1875,7 +1875,6 @@ function Test-CheatReplayBarredPeekExitOrder {
     )
 }
 
-
 function Test-PersistenceCheckpointWriteSequence {
     param(
         [Parameter(Mandatory = $true)][string]$Source,
