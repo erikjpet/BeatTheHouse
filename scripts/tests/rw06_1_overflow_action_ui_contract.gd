@@ -60,9 +60,19 @@ class RunDriver:
 	extends Node
 
 	var harness: Variant
+	var run_state: Variant
 
 	func _ready() -> void:
-		await harness._run()
+		# Callable.call returns the otherwise-hidden Godot 4 coroutine state. Keep
+		# it referenced until the full awaited run emits its completion signal.
+		run_state = Callable(harness, "_run").call()
+		if run_state is Object and (run_state as Object).has_signal("completed"):
+			(run_state as Object).connect("completed", _on_run_completed, CONNECT_ONE_SHOT)
+			return
+		_on_run_completed()
+
+	func _on_run_completed(_result: Variant = null) -> void:
+		run_state = null
 		harness = null
 		queue_free()
 
@@ -2650,9 +2660,6 @@ func _finish(app: Control) -> void:
 		if save_error != OK or bool(save_service.call("async_save_in_flight")):
 			failures.append("RW06-1 teardown could not join its production autosave: %d." % save_error)
 	app.call("_drain_script_prewarm_requests_for_shutdown")
-	_debug_plain_refcounted_fields(app, "app")
-	for child in app.find_children("*", "Node", true, false):
-		_debug_plain_refcounted_fields(child, str(app.get_path_to(child)))
 	app.queue_free()
 	var exit_code := 0
 	if failures.is_empty():
@@ -2664,24 +2671,3 @@ func _finish(app: Control) -> void:
 	var quitter := CleanupQuitter.new()
 	quitter.exit_code = exit_code
 	root.add_child(quitter)
-
-
-func _debug_plain_refcounted_fields(owner: Object, owner_label: String) -> void:
-	for property_value in owner.get_property_list():
-		var property := property_value as Dictionary
-		var property_name := str(property.get("name", ""))
-		if property_name.is_empty():
-			continue
-		var value: Variant = owner.get(property_name)
-		if value is RefCounted and (value as RefCounted).get_class() == "RefCounted":
-			var script_path := ""
-			var script: Variant = (value as RefCounted).get_script()
-			if script is Script:
-				script_path = str((script as Script).resource_path)
-			print("RW06_1_REF id=%d refs=%d owner=%s property=%s script=%s" % [
-				(value as RefCounted).get_instance_id(),
-				(value as RefCounted).get_reference_count(),
-				owner_label,
-				property_name,
-				script_path,
-			])
