@@ -194,3 +194,11 @@ Resume: Orchestrator: apply now, update `README_0_6_release_week.md` and `rw06_e
    - The peer reports progress only in `docs/todo/rw06_2p_status.md`. The orchestrator copies it into the scoreboard.
    - Both agents use this questions file for the owner.
 Answer: A. Owner amendment, 2026-09-23.
+
+### Q-010 · rw06_1 · Unleased Godot on primary checkout
+Status: OPEN
+Asked: release orchestrator, 2026-09-23
+Question: Godot 4.6 has been running against the primary checkout since 20:27 CT without a lease or live launcher. May I close it so the isolated focused rw06_1 contract can run safely?
+Options: A) Close it if still running (recommended)  B) Leave it; I will close it
+Resume: Verify the process still targets `D:\Projects\Beat-The-House`; if A, terminate only that exact console/child pair, then run the focused rw06_1 contract under Q-009 isolation. Continue engine-free rw06_1 work while OPEN.
+Answer:
