@@ -184,6 +184,43 @@ function Select-CheatReplayBlackjackCheatAction {
 }
 
 
+function Select-CheatReplayPostPeekTransition {
+    param(
+        [Parameter(Mandatory = $true)]$Game,
+        [Parameter(Mandatory = $true)]$StatusHud,
+        [Parameter(Mandatory = $true)][AllowEmptyCollection()][object[]]$SurfaceActions
+    )
+
+    $phase = Get-Rw062RequiredPublicProperty -InputObject $Game -Name 'phase' -Context 'Post-Peek Blackjack public game state'
+    if ($phase -isnot [string] -or [string]$phase -cnotin @('betting', 'decision', 'settling', 'barred')) {
+        throw 'Post-Peek Blackjack state has no exact supported public phase.'
+    }
+    if ([string]$phase -cne 'barred') {
+        return [pscustomobject][ordered]@{ stage = 'continue_hand'; action = ''; index = -1 }
+    }
+
+    $heatRendered = Get-Rw062RequiredPublicProperty -InputObject $StatusHud -Name 'heat_rendered' -Context 'Barred post-Peek status HUD'
+    $heatLevel = Get-Rw062RequiredPublicProperty -InputObject $StatusHud -Name 'heat_level' -Context 'Barred post-Peek status HUD'
+    if ($heatRendered -isnot [bool] -or -not [bool]$heatRendered -or
+        ($heatLevel -isnot [int32] -and $heatLevel -isnot [int64]) -or
+        [long]$heatLevel -lt 70 -or [long]$heatLevel -gt 100) {
+        throw 'A barred post-Peek table requires an exact rendered 70-100 Heat witness.'
+    }
+
+    $backControls = @(Get-Rw062PublicSurfaceActionMatches -SurfaceActions $SurfaceActions -Action 'surface_back')
+    if ($backControls.Count -ne 1) {
+        throw "A barred post-Peek table must expose exactly one public surface_back control; found $($backControls.Count)."
+    }
+    $enabled = Get-Rw062RequiredPublicProperty -InputObject $backControls[0] -Name 'enabled' -Context 'Barred post-Peek surface_back control'
+    $index = Get-Rw062RequiredPublicProperty -InputObject $backControls[0] -Name 'index' -Context 'Barred post-Peek surface_back control'
+    if ($enabled -isnot [bool] -or -not [bool]$enabled -or
+        ($index -isnot [int32] -and $index -isnot [int64]) -or [long]$index -ne -1) {
+        throw 'The barred post-Peek surface_back control is disabled or has lost its exact index -1 binding.'
+    }
+    return [pscustomobject][ordered]@{ stage = 'leave_for_showdown'; action = 'surface_back'; index = -1 }
+}
+
+
 function Select-CheatReplayBossCalloutAction {
     param(
         [Parameter(Mandatory = $true)]$Game,
@@ -262,6 +299,52 @@ function Select-CheatReplayBossCalloutAction {
         throw "Rourke's post-deal callout index $matchingIndex is not enabled."
     }
     return [pscustomobject][ordered]@{ stage = 'call'; action = 'blackjack_boss_callout'; index = $matchingIndex }
+}
+
+
+function Select-CheatReplayShowdownInterrogationChoice {
+    param([Parameter(Mandatory = $true)]$EventPopup)
+
+    $visible = Get-Rw062RequiredPublicProperty -InputObject $EventPopup -Name 'visible' -Context 'Showdown interrogation popup'
+    $renderValid = Get-Rw062RequiredPublicProperty -InputObject $EventPopup -Name 'render_valid' -Context 'Showdown interrogation popup'
+    $eventId = Get-Rw062RequiredPublicProperty -InputObject $EventPopup -Name 'event_id' -Context 'Showdown interrogation popup'
+    if ($visible -isnot [bool] -or -not [bool]$visible -or
+        $renderValid -isnot [bool] -or -not [bool]$renderValid -or
+        $eventId -isnot [string] -or [string]$eventId -cne 'the_house_calls') {
+        throw 'Showdown interrogation policy requires the exact fully rendered the_house_calls popup.'
+    }
+
+    $expectedChoiceIds = @('hold_steady', 'talk_down', 'take_the_edge')
+    $choiceIds = @(Get-Rw062RequiredPublicProperty -InputObject $EventPopup -Name 'choice_ids' -Context 'Showdown interrogation popup')
+    $choices = @(Get-Rw062RequiredPublicProperty -InputObject $EventPopup -Name 'choices' -Context 'Showdown interrogation popup')
+    if ($choiceIds.Count -ne $expectedChoiceIds.Count -or $choices.Count -ne $expectedChoiceIds.Count) {
+        throw 'Showdown interrogation changed its exact public choice count.'
+    }
+    foreach ($expectedChoiceId in $expectedChoiceIds) {
+        if (@($choiceIds | Where-Object { $_ -is [string] -and [string]$_ -ceq $expectedChoiceId }).Count -ne 1) {
+            throw "Showdown interrogation must expose exactly one public '$expectedChoiceId' choice id."
+        }
+        $matches = @($choices | Where-Object {
+            $idProperties = @(Get-Rw062ExactPublicPropertyMatches -InputObject $_ -Name 'id')
+            $idProperties.Count -eq 1 -and $idProperties[0].Value -is [string] -and
+                [string]$idProperties[0].Value -ceq $expectedChoiceId
+        })
+        if ($matches.Count -ne 1) {
+            throw "Showdown interrogation choice '$expectedChoiceId' is missing or ambiguous in rendered choices."
+        }
+        $enabled = Get-Rw062RequiredPublicProperty -InputObject $matches[0] -Name 'enabled' -Context "Showdown interrogation choice '$expectedChoiceId'"
+        $label = Get-Rw062RequiredPublicProperty -InputObject $matches[0] -Name 'label' -Context "Showdown interrogation choice '$expectedChoiceId'"
+        $text = Get-Rw062RequiredPublicProperty -InputObject $matches[0] -Name 'text' -Context "Showdown interrogation choice '$expectedChoiceId'"
+        if ($enabled -isnot [bool] -or
+            $label -isnot [string] -or [string]::IsNullOrWhiteSpace([string]$label) -or
+            $text -isnot [string] -or [string]::IsNullOrWhiteSpace([string]$text)) {
+            throw "Showdown interrogation choice '$expectedChoiceId' has malformed public state or rendered copy."
+        }
+        if ($expectedChoiceId -ceq 'take_the_edge' -and -not [bool]$enabled) {
+            throw "Showdown interrogation's public take_the_edge choice is disabled."
+        }
+    }
+    return 'take_the_edge'
 }
 
 
