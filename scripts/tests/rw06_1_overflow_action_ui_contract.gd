@@ -2554,6 +2554,7 @@ func _send_touch(position: Vector2, double_tap: bool = false) -> void:
 	# Feed touch through Input so the engine's production touch-to-pointer path is
 	# exercised. Viewport.push_input bypasses that emulation layer in headless runs.
 	Input.parse_input_event(pressed)
+	pressed = null
 	await process_frame
 	var released := InputEventScreenTouch.new()
 	released.index = 0
@@ -2561,6 +2562,7 @@ func _send_touch(position: Vector2, double_tap: bool = false) -> void:
 	released.pressed = false
 	released.double_tap = double_tap
 	Input.parse_input_event(released)
+	released = null
 	await process_frame
 
 
