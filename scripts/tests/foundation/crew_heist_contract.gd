@@ -258,8 +258,37 @@ static func _check_plan_a(library: ContentLibrary, failures: Array) -> void:
 	var corridor := RunStateScript.new()
 	corridor.from_dict(run.to_dict())
 	corridor.crew_heist_state["play"]["decisions"]["exit"] = "corridor"
-	if not bool(_event_choice(corridor, library, "heist_live_table", "begin_getaway").get("ok", false)) or int(corridor.delivery_snapshot().get("pursuit_pressure", -1)) != 1 or str(_dict(corridor.crew_heist_snapshot().get("getaway", {})).get("exit", "")) != "corridor":
-		failures.append("Plan A slow/quiet corridor route lost its distinct pressure-1 contract.")
+	var missing_delta := RunStateScript.new()
+	missing_delta.from_dict(corridor.to_dict())
+	var missing_delta_map := missing_delta.world_map.duplicate(true)
+	var remaining_nodes: Array = []
+	for node_value in _array(missing_delta_map.get("nodes", [])):
+		if str(_dict(node_value).get("id", "")) != "delta_queen":
+			remaining_nodes.append(node_value)
+	var remaining_edges: Array = []
+	for edge_value in _array(missing_delta_map.get("edges", [])):
+		var edge := _dict(edge_value)
+		if str(edge.get("a", "")) != "delta_queen" and str(edge.get("b", "")) != "delta_queen":
+			remaining_edges.append(edge_value)
+	missing_delta_map["nodes"] = remaining_nodes
+	missing_delta_map["edges"] = remaining_edges
+	missing_delta.set_world_map(missing_delta_map)
+	var missing_delta_before := JSON.stringify(missing_delta.to_dict())
+	if bool(_event_choice(missing_delta, library, "heist_live_table", "begin_getaway").get("ok", false)) \
+			or JSON.stringify(missing_delta.to_dict()) != missing_delta_before:
+		failures.append("Plan A getaway did not fail closed and preserve state without its canonical Delta Queen endpoint.")
+	var corridor_started := _event_choice(corridor, library, "heist_live_table", "begin_getaway")
+	var corridor_targets := _array(corridor.delivery_snapshot().get("targets", []))
+	var corridor_getaway := _dict(corridor.crew_heist_snapshot().get("getaway", {}))
+	if not bool(corridor_started.get("ok", false)) or int(corridor.delivery_snapshot().get("pursuit_pressure", -1)) != 1 \
+			or str(corridor_getaway.get("exit", "")) != "corridor" or str(corridor_getaway.get("target_node_id", "")) != "delta_queen" \
+			or corridor_targets.size() != 1 or str(_dict(corridor_targets[0]).get("node_id", "")) != "delta_queen":
+		failures.append("Plan A slow/quiet corridor route did not target the canonical Delta Queen getaway with its distinct pressure-1 contract.")
+	else:
+		_move(corridor, "delta_queen", library, failures)
+		corridor.delivery_resolve_travel_arrival()
+		if corridor.run_status != RunState.RUN_STATUS_ENDED or str(corridor.crew_heist_snapshot().get("outcome", "")) != "clean_sweep":
+			failures.append("Plan A slow/quiet corridor route did not resolve through the real Delta Queen arrival to Act 1 victory.")
 	if not bool(live_table.resolve(run, run.current_environment, "begin_getaway").get("ok", false)) or str(run.delivery_snapshot().get("mode", "")) != "getaway":
 		failures.append("Plan A did not enter the real getaway mode.")
 		return

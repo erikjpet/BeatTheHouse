@@ -1520,18 +1520,16 @@ func _crew_heist_node_for_archetype(archetype_id: String) -> String:
 	return ""
 
 
-func _crew_heist_getaway_target(plan_id: String, exit_choice: String = "") -> String:
+func _crew_heist_getaway_target(plan_id: String, _exit_choice: String = "") -> String:
 	var preferred_archetype := "small_underground_casino"
 	if plan_id == _run.CrewHeistModelScript.PLAN_COUNT:
-		preferred_archetype = _run.GRAND_CASINO_CAGE_ARCHETYPE_ID if exit_choice == "corridor" else "delta_queen"
+		# Dock and corridor are distinct cart exits inside the score, but both
+		# converge on Rook's real dock-side getaway node. Grand Casino rooms are
+		# interiors, never town-map destinations.
+		preferred_archetype = "delta_queen"
 	var preferred := _crew_heist_node_for_archetype(preferred_archetype)
 	if not preferred.is_empty() and preferred != _run.current_world_node_id():
 		return preferred
-	for node_value in JsonCoerceScript._copy_array(_run.world_map.get("nodes", [])):
-		var node := JsonCoerceScript._copy_dict(node_value)
-		var node_id := str(node.get("id", ""))
-		if not node_id.is_empty() and node_id != _run.current_world_node_id():
-			return node_id
 	return ""
 
 
