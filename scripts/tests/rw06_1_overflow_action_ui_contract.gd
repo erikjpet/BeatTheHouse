@@ -2247,12 +2247,6 @@ func _check_production_mutation_for_mode(app: Control, action_list: Control, pro
 		action_list.close()
 		return
 	var touch_diagnostics := _touch_route_diagnostics(button.get_global_rect().get_center(), button) if mode == "touch" else {}
-	if mode == "touch":
-		print("RW06_1_POINTER touch_notify_enter_before")
-		root.notify_mouse_entered()
-		await process_frame
-		print("RW06_1_POINTER touch_notify_enter_after")
-	print("RW06_1_POINTER input_before=%s" % mode)
 	match mode:
 		"mouse":
 			_send_mouse(button.get_global_rect().get_center())
@@ -2264,21 +2258,11 @@ func _check_production_mutation_for_mode(app: Control, action_list: Control, pro
 		"controller":
 			button.grab_focus()
 			_send_joy_button(JOY_BUTTON_A)
-	print("RW06_1_POINTER input_after=%s" % mode)
 	await _settle_frames(5)
-	print("RW06_1_POINTER settled=%s" % mode)
 	if activations.count(expected_key) != prior_count + 1:
 		failures.append("RW06-1 %s did not activate the production overflow action exactly once: %s." % [mode, JSON.stringify(touch_diagnostics)])
 	if str(app.get("current_screen")) != "GAME" or app.get("current_game") == null or _mutation_snapshot(app) == before:
 		failures.append("RW06-1 %s overflow action did not reach a real production game-entry mutation: %s." % [mode, JSON.stringify(touch_diagnostics)])
-	if mode == "mouse" or mode == "touch":
-		# Clear the synthetic pointer while the game subtree it hovers is still
-		# alive. Godot 4.6 otherwise retains a removed Control until the next
-		# pointer event and emits Node::can_process(!is_inside_tree()).
-		print("RW06_1_POINTER notify_exit_before=%s" % mode)
-		root.notify_mouse_exited()
-		await process_frame
-		print("RW06_1_POINTER notify_exit_after=%s" % mode)
 	if app.get("current_game") != null:
 		app.call("_complete_back_to_environment")
 		await _settle_frames(4)

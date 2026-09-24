@@ -21,6 +21,7 @@ var _close: Button
 var _records: Array = []
 var _render_signature := ""
 var _last_focus_key := ""
+var _selection_dispatch_pending := false
 
 
 func _ready() -> void:
@@ -377,7 +378,7 @@ func _add_action_row(record: Dictionary, action: Dictionary) -> Button:
 	button.set_meta("action_source", str(action.get("_overflow_source", "")))
 	button.set_meta("action_key", action_key)
 	button.focus_entered.connect(_remember_focus.bind(action_key))
-	button.pressed.connect(_select_action.bind(object_id, action_key))
+	button.pressed.connect(_defer_select_action.bind(object_id, action_key))
 	_list.add_child(button)
 	return button
 
@@ -417,7 +418,18 @@ func _focus_controls() -> Array:
 	return controls
 
 
+func _defer_select_action(object_id: String, action_key: String) -> void:
+	# A touch release is dispatched after its emulated mouse release. Defer any
+	# screen transition until both events have unwound so rebuilding the list
+	# cannot detach the pressed Control while Viewport still owns touch focus.
+	if _selection_dispatch_pending:
+		return
+	_selection_dispatch_pending = true
+	_select_action.call_deferred(object_id, action_key)
+
+
 func _select_action(object_id: String, action_key: String) -> void:
+	_selection_dispatch_pending = false
 	for record_value in _records:
 		var record := record_value as Dictionary
 		if str(record.get("object_id", "")) != object_id:
