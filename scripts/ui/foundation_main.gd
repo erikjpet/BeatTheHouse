@@ -867,10 +867,18 @@ func _consume_script_prewarm_request(requests: Dictionary, script_path: String) 
 	# FAILED still owns ResourceLoader's native LoadToken. Calling get returns
 	# null for that state while releasing the token. INVALID means no request is
 	# alive, so there is nothing for get to consume.
-	if status != ResourceLoader.THREAD_LOAD_INVALID_RESOURCE:
+	if _script_prewarm_status_has_live_request(status):
 		loaded_resource = ResourceLoader.load_threaded_get(script_path)
 	requests.erase(script_path)
 	return loaded_resource
+
+
+func _script_prewarm_status_has_live_request(status: int) -> bool:
+	return status in [
+		ResourceLoader.THREAD_LOAD_IN_PROGRESS,
+		ResourceLoader.THREAD_LOAD_LOADED,
+		ResourceLoader.THREAD_LOAD_FAILED,
+	]
 
 
 func _initialize_perf_telemetry() -> void:

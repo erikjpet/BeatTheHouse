@@ -60,6 +60,7 @@ func _init() -> void:
 
 
 func _run() -> void:
+	_check_host_generator_ownership_contract()
 	_check_semantic_scenario_presentation_policy()
 	await _check_selected_info_action_enabled_gate()
 	var app := OverflowFoundationHost.new()
@@ -665,6 +666,18 @@ func _abstract_scenario_action_specs() -> Array:
 			"summary": "The bartender work zone is one available focus for the night.",
 		},
 	]
+
+
+func _check_host_generator_ownership_contract() -> void:
+	var source := FileAccess.get_file_as_string("res://scripts/tests/rw06_1_overflow_action_ui_contract.gd")
+	var constructor_token := "RunGenerator" + "Script.new"
+	var preload_token := "res://scripts/core/run_" + "generator.gd"
+	if source.contains(constructor_token) or source.contains(preload_token):
+		failures.append("RW06-1 overflow fixtures must reuse the production host generator instead of constructing another owner.")
+	for function_name in ["_install_delivery_day", "_install_production_game_room"]:
+		var function_body := _source_function_body(source, function_name)
+		if not function_body.contains('app.get("generator")'):
+			failures.append("RW06-1 %s does not obtain its generator from the production host." % function_name)
 
 
 func _check_semantic_scenario_presentation_policy() -> void:

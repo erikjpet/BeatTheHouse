@@ -1154,6 +1154,32 @@ Require-Text "tools/integ06_1_terminal_soak_launcher_contract_test.ps1" '$candid
 Require-Text "tools/check_godot.ps1" 'eligible_for_done' "Post-land reports must make DONE eligibility explicitly fail closed."
 Require-Text "tools/check_godot.ps1" 'gdscript_load_check.gd' "Godot check script must run the one-process GDScript load checker."
 Require-Text "tools/check_godot.ps1" 'Stop-NewGodotProcesses' "Godot check script must clean up timed-out Godot child processes."
+$checkGodotSource = Get-ProjectText "tools/check_godot.ps1"
+$strictObjectDbStageBlock = [regex]::Match($checkGodotSource, '(?ms)\$script:StrictObjectDbLeakStageNames\s*=\s*@\((.*?)\r?\n\)')
+$expectedStrictObjectDbStages = @(
+    "standalone_contract_fixsweep06_1_accessibility_contract",
+    "standalone_contract_rw06_1_overflow_action_ui_contract"
+)
+if (-not $strictObjectDbStageBlock.Success) {
+    $failures.Add("Godot checks do not declare the reviewed strict ObjectDB-leak stage set.")
+} else {
+    $actualStrictObjectDbStages = @([regex]::Matches($strictObjectDbStageBlock.Groups[1].Value, '"([^"\r\n]+)"') | ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique)
+    $strictObjectDbDifference = @(Compare-Object -ReferenceObject @($expectedStrictObjectDbStages | Sort-Object) -DifferenceObject $actualStrictObjectDbStages)
+    if ($strictObjectDbDifference.Count -ne 0) {
+        $failures.Add("Strict ObjectDB-leak stages must be exactly the accessibility and overflow standalone contracts: $($strictObjectDbDifference | Out-String)")
+    }
+}
+$strictObjectDbPlumbing = @(
+    'Get-GodotStderrIssues -StdoutText $stdoutTask.Result -StderrText $stderrTask.Result -StrictObjectDbLeaks:$StrictObjectDbLeaks',
+    'Invoke-ProcessStage -Name $Name -FilePath $script:Godot -Arguments $args -StageTimeoutSec $StageTimeoutSec -StrictObjectDbLeaks:$StrictObjectDbLeaks',
+    '$strictObjectDbLeaks = $script:StrictObjectDbLeakStageNames -contains $stageName',
+    'Invoke-GodotScript -Name $stageName -ScriptPath $resourcePath -StageTimeoutSec (Get-StageTimeout "standalone_contract") -StrictObjectDbLeaks:$strictObjectDbLeaks'
+)
+foreach ($plumbingNeedle in $strictObjectDbPlumbing) {
+    if (-not $checkGodotSource.Contains($plumbingNeedle)) {
+        $failures.Add("Strict ObjectDB-leak policy is declared but not plumbed through the focused standalone stage: $plumbingNeedle")
+    }
+}
 Require-TextInAny $foundationCheckFiles '--suite=' "Foundation check must support suite selection."
 Require-TextInAny $foundationCheckFiles 'FOUNDATION_SUITES' "Foundation check must declare available suites."
 Require-TextInAny $foundationCheckFiles 'FOUNDATION_DEFAULT_REPORT_PATH' "Foundation check must write a structured report."

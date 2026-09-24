@@ -22,6 +22,10 @@ $root = Split-Path -Parent $PSScriptRoot
 . (Join-Path $PSScriptRoot "split_test_runner_helpers.ps1")
 $suiteKey = $Suite.ToLowerInvariant()
 $foundationSuiteKey = $FoundationSuite.Trim().ToLowerInvariant()
+$script:StrictObjectDbLeakStageNames = @(
+    "standalone_contract_fixsweep06_1_accessibility_contract",
+    "standalone_contract_rw06_1_overflow_action_ui_contract"
+)
 $postLandInvocationErrors = New-Object System.Collections.Generic.List[string]
 if ($PostLand) {
     if ($suiteKey -ne "smoke") {
@@ -223,13 +227,14 @@ function Convert-ProjectResourcePath {
 function Get-GodotStderrIssues {
     param(
         [string]$StdoutText,
-        [string]$StderrText
+        [string]$StderrText,
+        [switch]$StrictObjectDbLeaks
     )
     $issues = @($StderrText -split "`r?`n" | Where-Object {
         $_ -match '^\s*(SCRIPT ERROR|ERROR|WARNING):'
     })
     $objectDbWarning = 'WARNING: ObjectDB instances leaked at exit (run with --verbose for details).'
-    if ($issues -notcontains $objectDbWarning) {
+    if ($StrictObjectDbLeaks -or $issues -notcontains $objectDbWarning) {
         return $issues
     }
     $leakedInstances = @($StdoutText -split "`r?`n" | Where-Object {
@@ -615,7 +620,8 @@ function Invoke-ProcessStage {
         [string]$Name,
         [string]$FilePath,
         [string[]]$Arguments,
-        [int]$StageTimeoutSec = 0
+        [int]$StageTimeoutSec = 0,
+        [switch]$StrictObjectDbLeaks
     )
     $timeout = if ($StageTimeoutSec -gt 0) { $StageTimeoutSec } else { Get-StageTimeout $Name }
     $safeName = ($Name -replace "[^A-Za-z0-9_.-]", "_")
@@ -665,7 +671,7 @@ function Invoke-ProcessStage {
         $stderrTask.Wait(5000) | Out-Null
         [System.IO.File]::WriteAllText($stdout, $stdoutTask.Result)
         [System.IO.File]::WriteAllText($stderr, $stderrTask.Result)
-        $stderrIssues = @(Get-GodotStderrIssues -StdoutText $stdoutTask.Result -StderrText $stderrTask.Result)
+        $stderrIssues = @(Get-GodotStderrIssues -StdoutText $stdoutTask.Result -StderrText $stderrTask.Result -StrictObjectDbLeaks:$StrictObjectDbLeaks)
         if ($exitCode -eq 0 -and $stderrIssues.Count -gt 0) {
             $exitCode = 127
             $errorText = "Godot reported $($stderrIssues.Count) error/warning line(s) on stderr despite returning exit code 0."
@@ -810,14 +816,15 @@ function Invoke-GodotScript {
         [string]$Name,
         [string]$ScriptPath,
         [string[]]$UserArgs = @(),
-        [int]$StageTimeoutSec = 0
+        [int]$StageTimeoutSec = 0,
+        [switch]$StrictObjectDbLeaks
     )
     $args = @("--headless", "--verbose", "--path", $root, "--script", $ScriptPath)
     if ($UserArgs.Count -gt 0) {
         $args += "--"
         $args += $UserArgs
     }
-    Invoke-ProcessStage -Name $Name -FilePath $script:Godot -Arguments $args -StageTimeoutSec $StageTimeoutSec | Out-Null
+    Invoke-ProcessStage -Name $Name -FilePath $script:Godot -Arguments $args -StageTimeoutSec $StageTimeoutSec -StrictObjectDbLeaks:$StrictObjectDbLeaks | Out-Null
 }
 
 function Invoke-GameReworkVerificationGates {
@@ -908,7 +915,8 @@ function Invoke-StandaloneContracts {
             $env:BTH_META_COLLECTION_PATH = Join-Path $stageUserRoot "meta_collection.json"
             $env:BTH_USER_SETTINGS_PATH = Join-Path $stageUserRoot "settings.json"
             $env:BTH_DEVELOPER_PLACEMENT_PATH = Join-Path $stageUserRoot "developer_placements.json"
-            Invoke-GodotScript -Name $stageName -ScriptPath $resourcePath -StageTimeoutSec (Get-StageTimeout "standalone_contract")
+            $strictObjectDbLeaks = $script:StrictObjectDbLeakStageNames -contains $stageName
+            Invoke-GodotScript -Name $stageName -ScriptPath $resourcePath -StageTimeoutSec (Get-StageTimeout "standalone_contract") -StrictObjectDbLeaks:$strictObjectDbLeaks
         }
     }
     finally {

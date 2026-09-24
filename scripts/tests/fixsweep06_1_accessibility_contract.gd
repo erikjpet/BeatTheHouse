@@ -12,6 +12,9 @@ const TEST_SETTINGS_PATH := "user://fixsweep06_1_accessibility_settings.json"
 const POSTFIX_MODAL_SCOPE_PATH := "res://scripts/ui/modal_focus_scope.gd"
 const POSTFIX_SAFE_MARGIN := 12.0
 const POSTFIX_MIN_TARGET_HEIGHT := 52.0
+const PREWARM_POLL_PROBE_PATH := "res://scripts/tests/fixsweep06_1_audio_recovery_contract.gd"
+const PREWARM_DRAIN_PROBE_PATH := "res://scripts/tests/fixsweep06_1_lifecycle_contract.gd"
+const PREWARM_TERMINAL_WAIT_FRAMES := 240
 
 var failures: Array[String] = []
 
@@ -26,6 +29,7 @@ func _run() -> void:
 	isolated.reset()
 	isolated.save()
 	_check_script_prewarm_token_cleanup_contract()
+	await _check_script_prewarm_behavior_contract()
 	_check_controller_actions()
 	await _check_world_map_keyboard_contract()
 	await _check_settings_cancel_contract()
@@ -55,11 +59,17 @@ func _check_script_prewarm_token_cleanup_contract() -> void:
 	if helper_body.is_empty():
 		failures.append("RW06-1-PREWARM-TOKEN: FoundationMain has no centralized threaded-prewarm request consumer.")
 		return
-	var status_guard := helper_body.find("status != ResourceLoader.THREAD_LOAD_INVALID_RESOURCE")
+	var status_guard := helper_body.find("_script_prewarm_status_has_live_request(status)")
 	var consume_call := helper_body.find("ResourceLoader.load_threaded_get(script_path)")
 	var erase_call := helper_body.find("requests.erase(script_path)")
 	if status_guard < 0 or consume_call < 0 or erase_call < 0 or consume_call > erase_call:
 		failures.append("RW06-1-PREWARM-TOKEN: threaded prewarm cleanup does not consume every live LoadToken before erasing its request.")
+	var status_body := _source_function_body(source, "_script_prewarm_status_has_live_request")
+	for live_status in ["THREAD_LOAD_IN_PROGRESS", "THREAD_LOAD_LOADED", "THREAD_LOAD_FAILED"]:
+		if not status_body.contains(live_status):
+			failures.append("RW06-1-PREWARM-TOKEN: live status predicate omits %s." % live_status)
+	if status_body.contains("THREAD_LOAD_INVALID_RESOURCE"):
+		failures.append("RW06-1-PREWARM-TOKEN: live status predicate treats INVALID as an owned request.")
 	for forbidden in [
 		"run_ui_script_prewarm_requests.clear()",
 		"game_module_script_prewarm_requests.clear()",
@@ -79,6 +89,116 @@ func _check_script_prewarm_token_cleanup_contract() -> void:
 	var immediate_play_body := _source_function_body(source, "_ensure_run_ui_stage_scripts")
 	if not immediate_play_body.contains("loaded_script = _consume_script_prewarm_request(run_ui_script_prewarm_requests, script_path)"):
 		failures.append("RW06-1-PREWARM-TOKEN: immediate Play bypasses the prewarm-token consumer.")
+
+
+func _check_script_prewarm_behavior_contract() -> void:
+	var app: Control = MainScene.instantiate()
+	app.set("continuous_environment_clock_enabled", false)
+	root.add_child(app)
+	# Keep the automatic poller from racing the controlled terminal-state probes.
+	app.set_process(false)
+
+	for live_status in [
+		ResourceLoader.THREAD_LOAD_IN_PROGRESS,
+		ResourceLoader.THREAD_LOAD_LOADED,
+		ResourceLoader.THREAD_LOAD_FAILED,
+	]:
+		if not bool(app.call("_script_prewarm_status_has_live_request", live_status)):
+			failures.append("RW06-1-PREWARM-TOKEN: status %d was not classified as a live request." % live_status)
+	if bool(app.call("_script_prewarm_status_has_live_request", ResourceLoader.THREAD_LOAD_INVALID_RESOURCE)):
+		failures.append("RW06-1-PREWARM-TOKEN: INVALID was classified as a live request.")
+
+	var immediate_requests: Dictionary = app.get("run_ui_script_prewarm_requests")
+	var immediate_paths: Array[String] = []
+	for path_value in immediate_requests.keys():
+		immediate_paths.append(str(path_value))
+	if immediate_paths.is_empty():
+		failures.append("RW06-1-PREWARM-TOKEN: native immediate-Play probe established no real run-UI threaded requests.")
+	var built := bool(app.call("_ensure_run_ui_built"))
+	if not built:
+		failures.append("RW06-1-PREWARM-TOKEN: immediate Play could not build the production run UI.")
+	if not (app.get("run_ui_script_prewarm_requests") as Dictionary).is_empty():
+		failures.append("RW06-1-PREWARM-TOKEN: immediate Play left run-UI threaded requests queued.")
+	_assert_threaded_requests_consumed(immediate_paths, "immediate Play")
+
+	var game_requests: Dictionary = app.get("game_module_script_prewarm_requests")
+	if ResourceLoader.has_cached(PREWARM_POLL_PROBE_PATH):
+		failures.append("RW06-1-PREWARM-TOKEN: poll probe path was already cached; no real request could be established.")
+	else:
+		var poll_error := ResourceLoader.load_threaded_request(PREWARM_POLL_PROBE_PATH)
+		if poll_error != OK:
+			failures.append("RW06-1-PREWARM-TOKEN: poll probe request failed to start with error %d." % poll_error)
+		else:
+			game_requests[PREWARM_POLL_PROBE_PATH] = true
+			app.set("game_module_script_prewarm_requests", game_requests)
+			var poll_status := await _wait_for_threaded_terminal_status(PREWARM_POLL_PROBE_PATH)
+			if poll_status != ResourceLoader.THREAD_LOAD_LOADED:
+				failures.append("RW06-1-PREWARM-TOKEN: poll probe did not reach LOADED; status=%d." % poll_status)
+			else:
+				app.call("_poll_game_module_script_prewarm")
+				if (app.get("game_module_script_prewarm_requests") as Dictionary).has(PREWARM_POLL_PROBE_PATH):
+					failures.append("RW06-1-PREWARM-TOKEN: poller left its LOADED request queued.")
+				if not ((app.get("game_module_script_cache") as Dictionary).get(PREWARM_POLL_PROBE_PATH) is Script):
+					failures.append("RW06-1-PREWARM-TOKEN: poller did not publish the consumed Script.")
+				var consumed_poll_paths: Array[String] = [PREWARM_POLL_PROBE_PATH]
+				_assert_threaded_requests_consumed(consumed_poll_paths, "LOADED poll")
+
+	var stale_invalid_path := "res://scripts/tests/fixtures/rw06_1_missing_prewarm_probe.gd"
+	if ResourceLoader.load_threaded_get_status(stale_invalid_path) != ResourceLoader.THREAD_LOAD_INVALID_RESOURCE:
+		failures.append("RW06-1-PREWARM-TOKEN: stale-path probe unexpectedly owns a live request.")
+	else:
+		game_requests = app.get("game_module_script_prewarm_requests")
+		game_requests[stale_invalid_path] = true
+		app.set("game_module_script_prewarm_requests", game_requests)
+		app.call("_poll_game_module_script_prewarm")
+		if (app.get("game_module_script_prewarm_requests") as Dictionary).has(stale_invalid_path):
+			failures.append("RW06-1-PREWARM-TOKEN: poller retained an INVALID stale request record.")
+
+	var run_requests: Dictionary = app.get("run_ui_script_prewarm_requests")
+	if ResourceLoader.has_cached(PREWARM_DRAIN_PROBE_PATH):
+		failures.append("RW06-1-PREWARM-TOKEN: drain probe path was already cached; no real request could be established.")
+	else:
+		var drain_error := ResourceLoader.load_threaded_request(PREWARM_DRAIN_PROBE_PATH)
+		if drain_error != OK:
+			failures.append("RW06-1-PREWARM-TOKEN: drain probe request failed to start with error %d." % drain_error)
+		else:
+			run_requests[PREWARM_DRAIN_PROBE_PATH] = true
+			app.set("run_ui_script_prewarm_requests", run_requests)
+			_drain_app_script_prewarm_and_assert(app, "controlled shutdown drain")
+
+	app.queue_free()
+	await _settle_frames(4)
+
+
+func _wait_for_threaded_terminal_status(script_path: String) -> int:
+	for _frame in range(PREWARM_TERMINAL_WAIT_FRAMES):
+		var status := ResourceLoader.load_threaded_get_status(script_path)
+		if status != ResourceLoader.THREAD_LOAD_IN_PROGRESS:
+			return status
+		await process_frame
+	return ResourceLoader.load_threaded_get_status(script_path)
+
+
+func _assert_threaded_requests_consumed(script_paths: Array[String], label: String) -> void:
+	for script_path in script_paths:
+		var status := ResourceLoader.load_threaded_get_status(script_path)
+		if status != ResourceLoader.THREAD_LOAD_INVALID_RESOURCE:
+			failures.append("RW06-1-PREWARM-TOKEN: %s left %s at status %d instead of INVALID." % [label, script_path, status])
+
+
+func _drain_app_script_prewarm_and_assert(app: Control, label: String) -> void:
+	var requested_paths: Array[String] = []
+	for property_name in ["run_ui_script_prewarm_requests", "game_module_script_prewarm_requests"]:
+		var requests: Dictionary = app.get(property_name)
+		for path_value in requests.keys():
+			var script_path := str(path_value)
+			if not requested_paths.has(script_path):
+				requested_paths.append(script_path)
+	app.call("_drain_script_prewarm_requests_for_shutdown")
+	if not (app.get("run_ui_script_prewarm_requests") as Dictionary).is_empty() \
+			or not (app.get("game_module_script_prewarm_requests") as Dictionary).is_empty():
+		failures.append("RW06-1-PREWARM-TOKEN: %s did not empty both request queues." % label)
+	_assert_threaded_requests_consumed(requested_paths, label)
 
 
 func _source_function_body(source: String, function_name: String) -> String:
@@ -349,7 +469,7 @@ func _check_postfix_modal_focus_contract() -> void:
 		if root.gui_get_focus_owner() != background:
 			failures.append("UIENV-PF-002: closing World Map did not restore the prior focus owner.")
 
-	app.call("_drain_script_prewarm_requests_for_shutdown")
+	_drain_app_script_prewarm_and_assert(app, "modal-focus teardown")
 	app.queue_free()
 	await _settle_frames(4)
 
@@ -365,7 +485,7 @@ func _check_postfix_responsive_overlay_contract() -> void:
 	await _settle_frames(8)
 	if not started:
 		failures.append("AIF-002/AIF-003: responsive live fixture could not start its production run.")
-		app.call("_drain_script_prewarm_requests_for_shutdown")
+		_drain_app_script_prewarm_and_assert(app, "responsive start-failure teardown")
 		app.queue_free()
 		root.content_scale_size = original_content_scale_size
 		root.size = original_root_size
@@ -374,7 +494,7 @@ func _check_postfix_responsive_overlay_contract() -> void:
 	var settings := app.get("user_settings") as UserSettings
 	if settings == null:
 		failures.append("AIF-002/AIF-003: responsive live fixture has no production UserSettings.")
-		app.call("_drain_script_prewarm_requests_for_shutdown")
+		_drain_app_script_prewarm_and_assert(app, "responsive settings-failure teardown")
 		app.queue_free()
 		root.content_scale_size = original_content_scale_size
 		root.size = original_root_size
@@ -420,7 +540,7 @@ func _check_postfix_responsive_overlay_contract() -> void:
 	await _assert_live_open_overlay_relayout(app, settings)
 	await _assert_live_tutorial_menu_action(app, settings)
 
-	app.call("_drain_script_prewarm_requests_for_shutdown")
+	_drain_app_script_prewarm_and_assert(app, "responsive teardown")
 	app.queue_free()
 	root.content_scale_size = original_content_scale_size
 	root.size = original_root_size
@@ -537,7 +657,7 @@ func _check_host_accessibility_contracts() -> void:
 	await process_frame
 	if not bool(app.call("_ensure_run_ui_built")):
 		failures.append("BTH-036/BTH-037: production run UI could not be built for live viewport validation.")
-		app.call("_drain_script_prewarm_requests_for_shutdown")
+		_drain_app_script_prewarm_and_assert(app, "host build-failure teardown")
 		app.queue_free()
 		root.content_scale_size = original_content_scale_size
 		root.size = original_root_size
@@ -643,7 +763,7 @@ func _check_host_accessibility_contracts() -> void:
 								failures.append("BTH-037: live fixed Settings action escaped 640x360 for %s." % label)
 				app.call("close_settings_menu")
 				await _settle_frames(2)
-	app.call("_drain_script_prewarm_requests_for_shutdown")
+	_drain_app_script_prewarm_and_assert(app, "host teardown")
 	app.queue_free()
 	root.content_scale_size = original_content_scale_size
 	root.size = original_root_size
