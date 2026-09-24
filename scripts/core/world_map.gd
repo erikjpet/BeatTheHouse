@@ -647,6 +647,8 @@ static func travel_target_ids(map_data: Dictionary, node_id: String = "", max_ne
 		if not target_id.is_empty() and not result.has(target_id):
 			result.append(target_id)
 	for candidate_value in enabled_old_candidates:
+		if result.size() >= total_limit:
+			break
 		var candidate: Dictionary = candidate_value
 		var target_id := str(candidate.get("id", ""))
 		if target_id.is_empty() or result.has(target_id):
@@ -1814,6 +1816,26 @@ static func _ensure_priority_targets(result: Array, candidates: Array, target_id
 				if existing_priority_index > priority_index:
 					replacement_index = index
 					break
+		# A disabled event-promised destination still needs a visible card with its
+		# blocker. If every capped slot is a revisit, one lowest-ranked ordinary
+		# revisit yields only when no stronger promise is already represented; lower
+		# promises cannot drain the familiar-route surface. Already-promoted
+		# priorities stay intact.
+		var promised_priority_visible := false
+		for promised_id_value in allowed_disabled_target_ids:
+			var promised_id := str(promised_id_value)
+			if not promised_id.is_empty() and normalized_result.has(promised_id):
+				promised_priority_visible = true
+				break
+		if replacement_index < 0 \
+				and not promised_priority_visible \
+				and allowed_disabled_target_ids.has(target_id):
+			for index in range(normalized_result.size() - 1, -1, -1):
+				var existing_id := str(normalized_result[index])
+				if not visited_ids.has(existing_id) or eligible_ids.has(existing_id):
+					continue
+				replacement_index = index
+				break
 		if replacement_index >= 0:
 			normalized_result[replacement_index] = target_id
 	return normalized_result

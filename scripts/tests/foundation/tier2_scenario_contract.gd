@@ -270,8 +270,17 @@ static func _check_grand_casino_routes(library: ContentLibrary, failures: Array)
 		for choice_value in _array(_dict(library.event(event_id).get("payload", {})).get("choices", [])):
 			if typeof(choice_value) != TYPE_DICTIONARY:
 				continue
-			for consequence_key_value in _dict((choice_value as Dictionary).get("consequences", {})).keys():
-				if not ["suspicion_delta", "resolve_event"].has(str(consequence_key_value)):
+			var choice: Dictionary = choice_value
+			var choice_id := str(choice.get("id", ""))
+			var consequences := _dict(choice.get("consequences", {}))
+			for consequence_key_value in consequences.keys():
+				var consequence_key := str(consequence_key_value)
+				var exact_audit_fact := scenario_id == "grand_casino_audit_night" \
+					and event_id == "scenario_audit_roster" \
+					and choice_id == "read_the_shift" \
+					and consequence_key == "story_flags_set" \
+					and _json_equal(_dict(consequences.get("story_flags_set", {})), {"crew_heist_count_audit_roster_read": true})
+				if not ["suspicion_delta", "resolve_event"].has(consequence_key) and not exact_audit_fact:
 					failures.append("Grand scenario %s exclusive restored non-heat consequence %s." % [scenario_id, str(consequence_key_value)])
 		var baseline_run := RunStateScript.new()
 		baseline_run.start_new("GRAND-%s" % scenario_id)

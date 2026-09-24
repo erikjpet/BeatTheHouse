@@ -1,10 +1,19 @@
 # rw06_2 Crew heist ending route — first-pass replay
 
-Status: **Q-013A IMPLEMENTED ENGINE-FREE; LIVE ROUTE PROOF PENDING**
-Peer branch baseline: `5f5955b2cff36262c402aa2ee57c1f07c3ccb8d4`
+Status: **Q-013A/Q-017A CALLER-OWNED STATIC CANDIDATE HELD; NO QUALIFYING EVIDENCE**
+Last integrated canonical baseline: `d60c5d928f6ca4d973f158410816a00de55f87d3`
+Current-main gate: `37fdf371` (or its successor) must be an ancestor of the
+eventual immutable candidate after the shared helper lands.
+Withdrawn checkpoint: `a84ef022b6d5d2858339f33df636718a0d4c08ad`
+is non-evidence after independent custody/schema review and must not be promoted.
+The current repair remains held until the landed shared Q-009 helper is integrated,
+current `origin/main` is reconciled, the full engine-free matrix is rerun from one
+immutable checkpoint, and that exact checkpoint independently clears. No live
+route or Godot pass is authorized by this document.
 Canonical terminal route: `crew_heist`
 Preferred launch plan: **The Count (Plan A)**
 Current fail-closed runner seed: `RW06-HEIST-AUDIT-0002`
+Separate fresh-interactive seed: `RW06-HEIST-AUDIT-0000`
 Rejected stale pin: `RW06-HEIST-AUDIT-0013` (selects Convention)
 
 `tools/rw06_2_ending_replay.ps1 -Ending heist` now encodes the full first-pass
@@ -17,17 +26,26 @@ Godot, its production-tree preflight replays the visible START defaults,
 fresh-profile meta modifier serialization, shipped challenge seed, RNG stream,
 operating cycle, recent-scenario suppression, and weighted scenario-selection
 algorithms against current data. That exact launch path rejects pinned seed
-`0013`: it selects Convention, not Audit. Q-013A adopts seed `0002`, whose exact
-day-zero witness selects Audit. The route learns lasting Count eligibility only
+`0013`: it selects Convention, not Audit. Q-013A keeps both fixed-repeat runs on
+seed `0002`, whose exact day-zero witness selects Audit. Q-017A separately admits
+exact seed `0000` only for one `fresh-interactive`, Repeat-1 pass after the same
+production-model preflight proves its natural day-zero Audit selection. Neither
+role accepts another Heist seed, and the fixed launcher rejects every fresh
+child instead of relabeling it as fixed-repeat evidence. The route learns
+lasting Count eligibility only
 by resolving the rendered **The Audit Roster** choice **Read the shift**; an
 unvisited seed, stored prior-cycle environment, or narrative-only claim does not
 qualify. The guaranteed Corner Store Crew marker supplies the initial Grand fare.
 After the Audit choice, the route uses the repeatable visible $4 Cashier Tip only
 for any remaining favor action boundaries; ordinary travel is not treated as an
-action boundary. It performs a specialized public planning-table Save → process exit →
-relaunch → Continue checkpoint and accepts all three authored Crew win rungs.
+action boundary. After Bishop reaches Inner Circle, the route must revisit a
+visibly non-Audit Convention Crowd, return to a still-enabled Count plan, then
+perform its public planning-table Save → process exit → relaunch → Continue
+checkpoint before locking the plan. This binds lasting knowledge to the natural
+Audit read instead of an already locked heist. The route accepts all three
+authored Crew win rungs.
 Natural reachability and the twice-identical/fresh-seed passes remain to be
-proved after the shared gameplay work lands.
+proved after rw06_1 and the shared custody helper land.
 
 Q-011 is a required getaway invariant, not an optional recovery detour. The
 dock exit delivers the player to Delta Queen, whose production destination
@@ -85,25 +103,36 @@ action release replay.
    challenge key deterministically selects Convention (run seed `1868801668`,
    none roll `44`, weighted roll `12067/26000`). `RW06-HEIST-AUDIT-0002` is the
    Q-013A canonical seed (run seed `919325714`, none roll `59`, weighted roll
-   `24088/26000`). Only the authored `read_the_shift` fact outlives Audit's cycle.
-8. At the Punchline Planning Table, verify The Count is visibly live because
-   Bishop is Inner Circle and the Audit roster was read. Lock **The Count**. Do not
-   confront a member or change seats when the route has no grievance evidence.
-9. Complete identity setup: on three distinct Grand Casino visit sessions,
+   `24088/26000`) for both fixed repeats. Q-017A's separate fresh-interactive
+   seed `RW06-HEIST-AUDIT-0000` has run seed `1262406216`, scenario stream seed
+   `501255064`, none roll `96`, and weighted roll `22402/26000`, selecting Audit
+   naturally on `day:0`. It is admitted only as explicit Heist/Repeat-1 input;
+   seed `0007` and every other alternate remain rejected even if a scan currently
+   finds Audit. Only the authored `read_the_shift` fact outlives Audit's cycle.
+8. After Bishop reaches Inner Circle, revisit Grand Casino Main and require the
+   exact rendered **Borrowed Badge** event for Convention Crowd while requiring
+   the Audit Roster to be absent. Return to the Punchline Planning Table and
+   verify The Count remains visibly live because the earlier Audit roster was
+   read. No current Audit hook may supply this proof.
+9. **Required Q-013 persistence checkpoint:** with exactly one fully rendered
+   and enabled
+   **Lock The Count** row visible but before selecting it, Save, return to Main
+   Menu, quit, relaunch the same isolated session, and Continue. Require the
+   same public planning projection and fully rendered, enabled Count row after restoration.
+   Then lock **The Count**. Do not confront a member or change seats when the
+   route has no grievance evidence.
+10. Complete identity setup: on three distinct Grand Casino visit sessions,
    settle one blackjack wager of $8–30 and keep the heat peak <= 35.
-10. From the Planning Table, start **Watch the schedule**. Reach the Cage and hold
+11. From the Planning Table, start **Watch the schedule**. Reach the Cage and hold
    for two visible actions before its deadline/attention cap.
-11. Return to the Planning Table, start **Move the swap cart**, carry the package
+12. Return to the Planning Table, start **Move the swap cart**, carry the package
     to Grand Casino Main, and complete the visible handoff.
-12. Optional corridor exit: complete the Debt Court/Knuckles Associate marker if
+13. Optional corridor exit: complete the Debt Court/Knuckles Associate marker if
     it occurs naturally. The replay may instead use the always-available dock
     exit; do not add this detour only to improve the outcome rung.
-13. **Required persistence checkpoint:** after all setup chairs are visibly
-    filled but before **Begin the Play**, Save, return to Main Menu, quit,
-    relaunch the same isolated session, and Continue. Confirm the locked plan,
-    Bishop relationship, completed setup, current room, bankroll, and heat from
-    public UI only.
-14. Choose **Begin the Play** and go to the designated Grand blackjack table.
+14. Choose **Begin the Play** only after all three setup requirements are visibly
+    filled: the three-visit identity requirement plus the schedule and swap-cart
+    world actions. Then go to the designated Grand blackjack table.
     Settle three $8–30 rounds, interleaving the visible decisions:
     - round 0: `early` or `hold`;
     - round 1: `sit` or `dump`;
@@ -143,21 +172,28 @@ action release replay.
 | Made | Open the Punchline back room | jobs should be net-positive | 11+ favors become a dead stretch |
 | Bishop | Recruit the required specialist | trust 30 -> 90 | member presence/jobs are too rare or opaque |
 | Hook | Recognize Audit Night as an opportunity | retain Grand travel/wager funds | hook is seed-rare or not surfaced as plan progress |
-| Setup | Fill three concrete chairs | three bets $8–30; heat <= 35 | visit-session rule or deadlines are unclear |
-| Save/Continue | Trust the long route persists | same plan/setup state | package/task state disappears or duplicates |
+| Setup | Fill identity plus the two remaining world tasks | three visit-session bets $8–30; heat <= 35 and rise < 35 | visit-session rule or deadlines are unclear |
+| Save/Continue | Trust learned Audit knowledge survives | hostile Convention still leaves Count enabled before and after Continue | knowledge disappears, current scenario leaks, or plan is pre-locked |
 | Play | Execute the plan under pressure | three table rounds, bounded heat | decision beat fails to appear between settlements |
 | Getaway | Read and finish the route | target shown on map | package target/travel lock is ambiguous |
 | Outcome | Understand the outcome rung | terminal report visible | success rung looks like ordinary job completion |
 
-## Acceptance checklist
+## Static route checklist (held, non-evidence)
 
 - [x] Rebase/re-read Crew, world hook, and heist logic on the accepted rw06_0 `origin/main`.
 - [x] Bind the exact visible fresh-profile launch serialization and prove that
       pinned seed `0013` is Convention while candidate `0002` is Audit; empty and
       non-Audit seeds plus recent-Audit history fail closed engine-free.
 - [x] Apply Q-013A: use exact seed `0002` and persist Count knowledge only from
-      the natural `scenario_audit_roster/read_the_shift` result. Never inject
+      the natural `scenario_audit_roster/read_the_shift` result. The exact
+      source/fixture contract requires its Save/Continue restore. Never inject
       Audit or silently choose Plan B.
+- [x] Encode Q-017A engine-free admission: keep both fixed repeats on exact
+      `0002`; admit only exact natural-Audit `0000` for one separate
+      `fresh-interactive` Heist/Repeat-1 pass on the same Count route. The
+      held admission/source candidate fail-closes alternate seeds, scenario
+      authority, Plan B, type drift, and fixed-launcher relabeling; it is not a
+      qualifying pass until the immutable post-helper matrix clears.
 - [ ] Prove the candidate reaches the rendered Audit Roster and the terminal
       heist win through the full public route.
 - [ ] Measure the full marker -> Bishop 90 path and keep it within 150–350 player
@@ -165,6 +201,12 @@ action release replay.
 - [ ] Record exact contact, planning-table, setup, game, and delivery semantic IDs.
 - [ ] Prove the same seed and public decision policy reaches the same Crew win
       twice without private-state inspection.
-- [ ] Complete one additional fresh-seed interactive heist run.
+- [ ] Complete the separately reviewed `fresh-interactive` seed-`0000` Heist
+      pass after rw06_1 lands and the immutable checkpoint independently clears.
 - [ ] Add actual action count, transcript/evidence paths,
       money curve, next-goal notes, and arc-breaker findings.
+
+`rw06_3` remains **PREPARATORY ONLY** until owner notes and qualifying live routes
+exist. Owner playthrough and release-copy approval are downstream release-
+orchestrator/`rw06_4` gates; they are not blockers that this peer lane may use to
+declare `rw06_2` or `rw06_3` complete.

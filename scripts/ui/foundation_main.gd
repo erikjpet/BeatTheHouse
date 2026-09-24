@@ -7633,11 +7633,13 @@ func _queue_normal_grand_host_greeting(previous_environment: Dictionary) -> void
 		return
 	if bool(run_state.narrative_flags.get("grand_host_greeting_seen", false)):
 		return
-	if _enqueue_normal_grand_host_greeting_without_refresh():
+	# Travel has already committed its public Result receipt. Opening the one-time
+	# welcome must not erase that receipt before observers can read the fare.
+	if _enqueue_normal_grand_host_greeting_without_refresh(true):
 		run_state.narrative_flags["grand_host_greeting_seen"] = true
 
 
-func _enqueue_normal_grand_host_greeting_without_refresh() -> bool:
+func _enqueue_normal_grand_host_greeting_without_refresh(preserve_recent_result_feedback: bool = false) -> bool:
 	if run_state == null or library == null or run_state.is_terminal():
 		return false
 	var dialogue := library.dialogue(NORMAL_GRAND_HOST_DIALOGUE_ID)
@@ -7656,7 +7658,8 @@ func _enqueue_normal_grand_host_greeting_without_refresh() -> bool:
 		_refresh_talk_dock()
 		_show_message("Conversation is already open.")
 		return true
-	_clear_recent_result_feedback()
+	if not preserve_recent_result_feedback:
+		_clear_recent_result_feedback()
 	var speaker: Dictionary = dialogue.get("speaker", {}) if typeof(dialogue.get("speaker", {})) == TYPE_DICTIONARY else {}
 	speaker = _resolve_character_speaker(_normalized_talk_speaker(speaker), NORMAL_GRAND_HOST_DIALOGUE_ID, str(speaker.get("voice_line_key", "")))
 	var start_node := str(dialogue.get("start", "")).strip_edges()
@@ -7898,6 +7901,10 @@ func _travel_result(target_id: String, destination_name: String, route: Dictiona
 		"deltas": deltas,
 		"message": message,
 	})
+	# The shared builder intentionally normalizes to the canonical action-result
+	# keys. Restore the travel receipt's exact departure price so public observers
+	# can distinguish a real comp from a paid route without parsing display copy.
+	built["route_cost"] = cost
 	return built
 
 

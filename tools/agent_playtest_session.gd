@@ -7,6 +7,7 @@ const MainScene := preload("res://scenes/main.tscn")
 const Fidelity := preload("res://scripts/tests/foundation/harness_production_fidelity.gd")
 const PublicObservation := preload("res://tools/agent_playtest_public_observation.gd")
 const REPLAY_PAUSE_OWNER := "agent_replay"
+const SHUTDOWN_DRAIN_FRAMES := 12
 
 var app: Control
 var session_name := "session"
@@ -67,6 +68,8 @@ func _boot() -> void:
 	})
 	while not shutting_down:
 		await _poll_once()
+		if shutting_down:
+			break
 		await create_timer(0.05).timeout
 
 
@@ -98,7 +101,15 @@ func _poll_once() -> void:
 	next_command += 1
 	if bool(result.get("quit", false)):
 		shutting_down = true
-		await process_frame
+		# Publish the accepted quit result above, then tear down the production
+		# host while the SceneTree is still alive. This lets FoundationMain run
+		# its normal _exit_tree cleanup and gives queued/native zero-reference
+		# notifications a bounded drain before engine leak diagnostics execute.
+		if is_instance_valid(app):
+			app.queue_free()
+			app = null
+		for _frame in range(SHUTDOWN_DRAIN_FRAMES):
+			await process_frame
 		quit(0)
 
 

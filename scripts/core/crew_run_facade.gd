@@ -1474,8 +1474,10 @@ func _crew_heist_world_has_hook(hook_id: String) -> bool:
 	# this fact from an unvisited seed or a stale stored environment: both leak
 	# private/cycle-old scenario selection into the planning table.
 	if hook_id == "audit_night":
-		return JsonCoerceScript._copy_dict(_run.current_environment.get("scenario_hook_flags", {})).get(hook_id, false) == true \
-			or _run.story_flags.get(COUNT_AUDIT_KNOWLEDGE_FLAG, false) == true
+		var current_hook_value = JsonCoerceScript._copy_dict(_run.current_environment.get("scenario_hook_flags", {})).get(hook_id, false)
+		var learned_audit_value = _run.story_flags.get(COUNT_AUDIT_KNOWLEDGE_FLAG, false)
+		return (typeof(current_hook_value) == TYPE_BOOL and bool(current_hook_value)) \
+			or (typeof(learned_audit_value) == TYPE_BOOL and bool(learned_audit_value))
 	if bool(JsonCoerceScript._copy_dict(_run.current_environment.get("scenario_hook_flags", {})).get(hook_id, false)):
 		return true
 	for node_value in JsonCoerceScript._copy_array(_run.world_map.get("nodes", [])):

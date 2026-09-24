@@ -445,6 +445,7 @@ $failures = [Collections.Generic.List[string]]::new()
 $validCount = 0
 $hostileCount = 0
 $selection = $null
+$freshInteractiveSelection = $null
 $serializationCalibration = $null
 $arrivalHistoryHostile = $null
 
@@ -474,6 +475,31 @@ if ($Contract) {
     }
     catch {
         $failures.Add("Valid fresh-profile Audit candidate failed: $($_.Exception.Message)")
+    }
+
+    try {
+        # Q-017A authorizes exactly one distinct seed for the separate
+        # fresh-interactive Plan A pass. This is still a natural fresh-profile
+        # first-arrival selection; only the production selector participates.
+        $freshInteractiveSelection = Assert-Rw062AuditNightSelection `
+            -CandidateSeed 'RW06-HEIST-AUDIT-0000' `
+            -Expected 'grand_casino_audit_night' `
+            -Production $production
+        $validCount++
+        if ([int64]$freshInteractiveSelection.run_seed -ne 1262406216 -or
+            [string]$freshInteractiveSelection.cycle_id -cne 'day:0' -or
+            [int64]$freshInteractiveSelection.stream_seed -ne 501255064 -or
+            [int]$freshInteractiveSelection.none_roll -ne 96 -or
+            [int]$freshInteractiveSelection.total_weight -ne 26000 -or
+            [int]$freshInteractiveSelection.weighted_roll -ne 22402 -or
+            [string]$freshInteractiveSelection.selected_scenario -cne 'grand_casino_audit_night' -or
+            [double]$freshInteractiveSelection.town_multiplier -ne 1.0 -or
+            @($freshInteractiveSelection.recent_scenario_ids).Count -ne 0) {
+            throw 'Q-017A fresh-interactive seed no longer has its exact current-tree first-arrival Audit witness.'
+        }
+    }
+    catch {
+        $failures.Add("Valid Q-017A fresh-interactive Audit candidate failed: $($_.Exception.Message)")
     }
 
     $hostiles = @(
@@ -573,6 +599,7 @@ $report = [ordered]@{
     passed = ($failures.Count -eq 0)
     expected_scenario = $ExpectedScenario
     selection = $selection
+    fresh_interactive_selection = $freshInteractiveSelection
     launch_model = [ordered]@{
         screen = 'START'
         run_config = $true
@@ -587,7 +614,7 @@ $report = [ordered]@{
     }
     serialization_calibration = $serializationCalibration
     arrival_history_hostile = $arrivalHistoryHostile
-    owner_decision = 'Q-013'
+    owner_decisions = @('Q-013A', 'Q-017A')
     valid_fixtures = $validCount
     hostile_fixtures = $hostileCount
     failures = @($failures)

@@ -42,9 +42,9 @@ a deterministic recovery policy.
 
 | Route | Required visible economy | First-pass risk to measure |
 | --- | --- | --- |
-| Clean / Players Card | Preserve the currently rendered Grand Casino fare. Qualifying segments are Bronze: 1 settled game and +$5; Silver: 3 and +$15; Gold: 5 and +$30. Each segment must stay at or below 30 heat. This is at least 9 settled games and +$50 aggregate Grand net winnings. | Record entry cash/chips, hands required, deepest drawdown, refills at Linda, and whether a basic-strategy player can finish without an exploit or a long variance grind. |
-| Cheat / Pit Boss | Preserve the currently rendered Grand Casino fare and enough chips for the five-hand fixed-ante duel. The intended dirty-money trigger needs a visible cheat plus at least +$30 Grand net winnings; public heat alternatives are 70 for staff attention and 95 forced. A duel margin of at least -60 is a win. | Record cash/chips when Rourke triggers, the cost of provoking him, five-hand duel drawdown, and whether the successful `shown_the_door` rung reads as a win. |
-| Crew / The Count | Preserve the currently rendered Grand Casino fare. Identity setup requires one settled blackjack wager of $8-$30 on each of three distinct visits, with heat peak at or below 35. The first-pass route acquires 125 chips before setup/play and settles three additional live-play rounds at $8-$30. | Record income from the Crew favor/Bishop-job ladder, travel and package costs, chip purchases, total setup bankroll floor, heat peak, and getaway cash. Flag any >25-action stretch without new income or a new goal. |
+| Clean / Players Card | Verify the invitation's disclosed +$50 grant and the $0 Grand trip from Kitty Cat Lounge, Delta Queen, or Beach; without an existing Rook discount, any other origin keeps its rendered positive fare. Qualifying segments are Bronze: 1 settled game and +$5; Silver: 3 and +$15; Gold: 5 and +$30. Each segment must stay at or below 30 heat. This is at least 9 settled games and +$50 aggregate Grand net winnings. | Record entry cash/chips, hands required, deepest drawdown, refills at Linda, and whether a basic-strategy player can finish without an exploit or a long variance grind. |
+| Cheat / Pit Boss | Verify the same invitation grant/eligible-origin comp through the public route and retain enough ordinary chips only for the pre-showdown trigger hands. The five-hand Rourke duel uses internal stacks. The intended dirty-money trigger needs a visible cheat plus at least +$30 Grand net winnings; public heat alternatives are 70 for staff attention and 95 forced. A duel margin of at least -60 is a win. | Record cash/chips when Rourke triggers, the cost of provoking him, the internal five-hand duel margin curve, and whether the successful `shown_the_door` rung reads as a win. |
+| Crew / The Count | Verify the applicable rendered Grand route price. Identity setup requires one settled blackjack wager of $8-$30 on each of three distinct visits, with heat peak at or below 35 and the rise from starting heat strictly below 35. The first-pass route acquires 125 chips before setup/play and settles three additional live-play rounds at $8-$30. | Record income from the Crew favor/Bishop-job ladder, travel and package costs, chip purchases, total setup bankroll floor, heat peak, and getaway cash. Flag any >25-action stretch without new income or a new goal. |
 
 ## Live measurements still required
 
@@ -163,7 +163,7 @@ Copy the exact values from the qualifying route summaries into this table:
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
 | Clean | `RW06-CLEAN-ROUTE-01` | 100 | blocked before entry at 126 | 81 | 0 | 126 at stop | pending | 63 | Probe 29: $95 fare + $50 reserve left a measured $19 shortfall; invitation grant/comp repair pending replay. |
 | Cheat | `RW06-CHEAT-ROUTE-01` | pending | pending | pending | pending | pending | pending | pending | pending |
-| Crew | `PLAYTEST-CATALOG-01` | pending | pending | pending | pending | pending | pending | pending | pending |
+| Crew | `RW06-HEIST-AUDIT-0002` | pending | pending | pending | pending | pending | pending | pending | Q-013 natural Audit/Count fixed route; live curve pending. |
 
 The Grand invitation package is the sole current rw06_3 change. Do not tune
 another value until this package is replayed and the Cheat/Heist public curves

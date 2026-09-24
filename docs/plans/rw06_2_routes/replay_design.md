@@ -1,9 +1,11 @@
 # rw06_2 ending replay design — exploratory implementation
 
-Status: **ENGINE-FREE GREEN; LIVE CONTRACT AND QUALIFYING ROUTES PENDING**
-Working base: pushed rw06_2 tip `f8c37e1079a84a2cfd4a849732c8a461025ebc68`;
-latest fetched `origin/main` is `48b0895e`. Qualifying runs remain blocked until
-rw06_1 lands.
+Status: **Q-017A ENGINE-FREE ADMISSION GREEN; LIVE CONTRACT AND QUALIFYING ROUTES PENDING**
+The peer branch contains canonical release-closeout reconciliation
+`d2605866034fda5d69c0abc4abd418e198352028` and the Q-017A scoreboard mirror
+through `d60c5d928f6ca4d973f158410816a00de55f87d3`.
+Qualifying runs remain blocked until rw06_1 lands and the resulting immutable
+implementation checkpoint receives independent clearance.
 
 The release deliverable is `tools/rw06_2_ending_replay.ps1 -Ending
 clean|cheat|heist`. It must drive the production `scenes/main.tscn` host through
@@ -83,28 +85,92 @@ and animation-only timing. The two canonical traces must be identical.
 
 Then complete a third interactive run on a fresh seed. The fresh run need not
 match the fixed trace; it proves the route is understandable rather than merely
-memorized.
+memorized. For Heist, Q-017A makes this a distinct `fresh-interactive` role:
+exact seed `RW06-HEIST-AUDIT-0000`, exactly one run, the same Count/Plan A route,
+and a separately checked natural day-zero Audit witness. No other seed, ending,
+repeat count, scenario authority, or Plan B fallback is admissible.
 
 ## Evidence layout
 
-Each invocation creates an ignored timestamp/PID root:
+The prepared final fixed-repeat launcher creates one ignored aggregate root
+with two independently profiled one-run children:
 
 ```text
-.tmp/rw06_2/<ending>/<timestamp>-<pid>/
+.tmp/rw06_2/final_fixed/<ending>-<timestamp>-<pid>-<nonce>/
+  launcher.invoked.ps1
+  source_custody_pre.json
+  source_custody_final.json
   run-01/
-    public_trace.ndjson
-    money_curve.ndjson
-    summary.json
+    launcher.stdout.txt
+    launcher.stderr.txt
+    profile_roaming/
+    profile_local/
+    replay/<invocation>/
+      summary.json
+      heist_seed_preflight.json  # Heist only
+      run-01/
+        public_trace.ndjson
+        money_curve.ndjson
+        checkpoint_before.json
+        checkpoint_after.json
+        final_public_checkpoint.json
+        summary.json
   run-02/
-    public_trace.ndjson
-    money_curve.ndjson
-    summary.json
-  summary.json
+    launcher.stdout.txt
+    launcher.stderr.txt
+    profile_roaming/
+    profile_local/
+    replay/<invocation>/
+      summary.json
+      heist_seed_preflight.json  # Heist only
+      run-01/
+        public_trace.ndjson
+        money_curve.ndjson
+        checkpoint_before.json
+        checkpoint_after.json
+        final_public_checkpoint.json
+        summary.json
+  aggregate_summary.json
+  run_metadata.json
+  artifact_manifest.json
 ```
+
+`tools/rw06_2_final_evidence.ps1` qualifies only the fixed two-run portion. It
+pins the exact Git head/tree and route seed, requires a clean worktree, holds
+the Q-009 engine gate across both children, and holds read-only/no-delete file
+custody over every tracked production input, the PowerShell host, and both
+pinned Godot executables from before child launch through final verification.
+The pre/post custody receipts are explicitly manifested and every run proof
+binds the pre-execution receipt hash. The launcher also requires each Heist
+`heist_seed_preflight.json`, authenticates it against both embedded summaries,
+and explicitly manifests it. It proves each child wrote through its own profile
+and compares the canonical trace, money curve, persistence checkpoint and
+terminal checkpoint. A separate `fresh-interactive` evidence
+root and experience log are still required for each ending. Q-017 controls only
+how that separate Heist run is admitted; it never loosens the exact `0002`
+fixed-repeat route.
+
+The inner replay has two explicit admission roles. `fixed-repeat` preserves the
+existing route defaults and locks Heist to `RW06-HEIST-AUDIT-0002`.
+`fresh-interactive` is Heist-only, requires explicit seed
+`RW06-HEIST-AUDIT-0000` and `Repeat 1`, then runs the unchanged
+`Invoke-HeistEndingRoute` Count path. Both roles remain child/development and
+non-qualifying. The fixed outer launcher passes `fixed-repeat` literally,
+validates that role plus its complete admission and natural-Audit receipt at
+both summary levels, carries the verified role into each proof, and rejects a
+fresh child before fixed promotion.
+
+The inner `rw06_2_ending_replay.ps1` remains non-qualifying even when invoked
+directly with `-Repeat 2`, because both iterations inherit that invocation's
+single external profile. Only the aggregate launcher may promote the fixed
+repeat after it proves two distinct profiles and compares their artifacts.
 
 Keep milestone/failure screenshots rather than reviewing hundreds of redundant
 frames. The committed route documents should link the exact transcript,
-checkpoint, screenshots, and final summary used for acceptance.
+before/after Continue checkpoints, screenshots, child summaries, aggregate
+manifest, and final summary used for acceptance. The fresh-interactive log must
+also record the player's believed goal, the exact rendered cue that communicated
+it, notable moments, and every arc-breaker disposition.
 
 ## Integration and ownership boundaries
 
@@ -395,14 +461,25 @@ checkpoint, screenshots, and final summary used for acceptance.
    `scenario_audit_roster/read_the_shift` choice; current Audit also qualifies,
    while unvisited seed data, stored prior-cycle hooks, narrative-only claims,
    and non-boolean save values fail closed. The runner does not inject Audit or
-   choose Plan B. The rendered hook, Bishop Inner Circle route, and terminal win
-   still need live proof, and the relationship/job cadence may exceed the target
-   run length.
+   choose Plan B. Fixed repeats reject every Heist seed except exact `0002`.
+   Q-017A separately admits only exact `RW06-HEIST-AUDIT-0000` as a
+   `fresh-interactive`, Repeat-1 pass after the production model proves its
+   natural `day:0` Audit witness (run seed `1262406216`, stream seed `501255064`,
+   none roll `96`, weighted roll `22402/26000`). It does not admit another
+   natural-Audit candidate, inject a scenario, pin a cycle, or change routes.
+   Before plan lock, the runner now requires the later visible
+   Convention Crowd badge with no Audit Roster, returns to an enabled Count row,
+   and preserves that exact public planning projection across a full
+   Save/process-exit/Continue. The fresh hook, hostile revisit, Bishop Inner
+   Circle route, restored authorization, and terminal win still need live proof,
+   and the relationship/job cadence may exceed the target run length.
 7. Plan B is materially longer, more expensive, and has no qualifying replay.
    It is not a fallback: the fixed route fails closed when Plan A is unavailable.
 8. Save/quit/Continue must reuse isolated persistence without confusing a stale
-   session process for a successful relaunch; the replay compares only a
-   canonical public checkpoint.
+   session process for a successful relaunch. Heist now compares the canonical
+   public checkpoint plus the full visible planning projection and requires one
+   fully rendered and enabled Count lock both before and after restoration,
+   before lock mutation.
 
 ## Acceptance checklist
 
@@ -412,6 +489,9 @@ checkpoint, screenshots, and final summary used for acceptance.
 - [x] Implement strict route helpers and public terminal assertions.
 - [x] Add persistence checkpoints and canonical trace comparison.
 - [x] Add hostile source-level redaction and semantic-command contracts.
+- [x] Add Q-017A role/seed admission plus fail-closed source and data contracts;
+      preserve exact fixed Heist `0002`, and pin fresh-interactive Heist `0000`
+      to one natural-Audit Count run without scenario authority or Plan B.
 - [x] Run the expanded Godot public-observation contract under a fresh serialized
       lease and retain its current report.
 - [ ] Run each fixed seed twice and one fresh seed once.
