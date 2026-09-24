@@ -4770,9 +4770,9 @@ func _check_grand_casino_invite_gate(library: ContentLibrary, kitty: Dictionary,
 	if low_bankroll_targets.size() > WorldMapScript.TRAVEL_TOTAL_TARGET_LIMIT + low_bankroll_run.travel_option_bonus():
 		failures.append("Preserving the unaffordable event-unlocked Grand Casino exceeded the production travel-card cap.")
 	# A real late-route map can have one enabled event-unlocked Tier-2 casino plus
-	# enough additive revisits that the second, unaffordable event-promised Grand
-	# card must take that new destination's slot. Revisit cards remain protected,
-	# while the caller-declared Grand priority wins over the lower-priority card.
+	# more additive revisits than the three-card surface can render. The promised
+	# Grand card must replace the lower-priority new destination, while the
+	# deterministic revisit subset fills only the remaining capped slots.
 	var crowded_revisit_ids := ["back_alley", "bar", "gas_station_casino", "motel"]
 	var crowded_nodes: Array = [{
 		"id": "kitty_cat_lounge", "kind": "casino", "tier": 2,
@@ -4821,11 +4821,38 @@ func _check_grand_casino_invite_gate(library: ContentLibrary, kitty: Dictionary,
 	)
 	if not crowded_targets.has("grand_casino") or crowded_targets.has("delta_queen"):
 		failures.append("The promised Grand Casino did not replace the lower-priority new Tier-2 card on a revisit-crowded map: %s." % JSON.stringify(crowded_targets))
-	if crowded_targets.size() != crowded_revisit_ids.size() + 1:
-		failures.append("Preserving the promised Grand Casino changed the crowded map target cap: %s." % JSON.stringify(crowded_targets))
-	for crowded_revisit_id in crowded_revisit_ids:
-		if not crowded_targets.has(crowded_revisit_id):
-			failures.append("Preserving the promised Grand Casino erased protected revisit %s from a crowded map: %s." % [crowded_revisit_id, JSON.stringify(crowded_targets)])
+	if crowded_targets.size() != WorldMapScript.TRAVEL_TOTAL_TARGET_LIMIT:
+		failures.append("The promised Grand Casino and crowded revisits did not obey the production travel-card cap: %s." % JSON.stringify(crowded_targets))
+	var selected_crowded_revisits := 0
+	for crowded_target_id_value in crowded_targets:
+		var crowded_target_id := str(crowded_target_id_value)
+		if crowded_target_id == "grand_casino":
+			continue
+		if not crowded_revisit_ids.has(crowded_target_id):
+			failures.append("The crowded travel-card subset admitted an unexpected target %s: %s." % [crowded_target_id, JSON.stringify(crowded_targets)])
+		else:
+			selected_crowded_revisits += 1
+	if selected_crowded_revisits != WorldMapScript.TRAVEL_TOTAL_TARGET_LIMIT - 1:
+		failures.append("The promised Grand Casino did not preserve exactly two deterministic revisit cards under the cap: %s." % JSON.stringify(crowded_targets))
+	# A temporarily unaffordable event promise cannot rely on a lower-priority new
+	# card being available to displace. It must remain visible, with its blocker,
+	# even when every competing capped card is an enabled revisit.
+	var revisit_only_targets := WorldMapScript.travel_target_ids(
+		crowded_map,
+		"kitty_cat_lounge",
+		WorldMapScript.TRAVEL_NEW_TARGET_LIMIT,
+		WorldMapScript.TRAVEL_TOTAL_TARGET_LIMIT,
+		crowded_revisit_ids
+	)
+	var revisit_only_selected_count := 0
+	for revisit_only_target_value in revisit_only_targets:
+		if crowded_revisit_ids.has(str(revisit_only_target_value)):
+			revisit_only_selected_count += 1
+	if revisit_only_targets.size() != WorldMapScript.TRAVEL_TOTAL_TARGET_LIMIT \
+			or not revisit_only_targets.has("grand_casino") \
+			or revisit_only_targets.has("delta_queen") \
+			or revisit_only_selected_count != WorldMapScript.TRAVEL_TOTAL_TARGET_LIMIT - 1:
+		failures.append("The disabled promised Grand Casino disappeared behind an all-revisit travel-card cap: %s." % JSON.stringify(revisit_only_targets))
 	var suppressed_env := EnvironmentInstance.from_archetype(kitty, 2, accept_run.create_rng("suppressed_kitty"), library).to_dict()
 	if invite_module.can_trigger(accept_run, suppressed_env):
 		failures.append("Grand Casino invite copy at the other tier-2 venue was not suppressed after acceptance.")
