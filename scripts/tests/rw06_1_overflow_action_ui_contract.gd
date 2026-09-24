@@ -2612,7 +2612,9 @@ func _settle_frames(count: int) -> void:
 
 func _finish(app: Control) -> void:
 	app.queue_free()
-	await _settle_frames(5)
+	# Physical touch dispatch and deferred production selection retain native
+	# RefCounted event state briefly after the Foundation subtree exits.
+	await _settle_frames(12)
 	if failures.is_empty():
 		print("RW06_1_OVERFLOW_ACTION_UI PASS")
 		quit(0)
