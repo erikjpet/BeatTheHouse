@@ -1117,8 +1117,19 @@ static func _check_lifecycle_finalization(library: ContentLibrary, failures: Arr
 			"bar_floor_100": {"position": [90, 120]},
 			"bar_actor": {"position": [180, 120]},
 		},
-		"layout": {"object_rects": {"game:slot": {"x": 0.1, "y": 0.1, "w": 0.12, "h": 0.18}}},
 	}
+	# Lifecycle finalization consumes the same immutable slot/label authority as
+	# the production room UI. A hand-written object_rect alone is no longer a
+	# complete base presentation contract.
+	run_state.current_environment["layout"] = EnvironmentInstanceScript.ensure_generated_layout(run_state.current_environment, library)
+	var production_records := EnvironmentBaseSemanticRecordsScript.authoritative_interactable_records(run_state.current_environment, library)
+	if not bool(production_records.get("ok", false)):
+		failures.append("Lifecycle finalization fixture could not build production base records: %s" % JSON.stringify(production_records))
+		return
+	var presentation := _record_by_object_id(_array(production_records.get("records", [])), "game:slot")
+	if presentation.is_empty():
+		failures.append("Lifecycle finalization fixture did not retain its production game:slot record.")
+		return
 	var before_ingress := JSON.stringify(run_state.current_environment)
 	var premature_command := run_state.scenario_sequence_command("prepare", "premature:command", {}, "scenario", "command_console")
 	var premature_fact := run_state.scenario_enqueue_fact("world_boundary", "scenario", {"amount": 1, "action_index": 0}, "premature:fact")
@@ -1126,7 +1137,6 @@ static func _check_lifecycle_finalization(library: ContentLibrary, failures: Arr
 	if bool(premature_command.get("ok", true)) or bool(premature_fact.get("ok", true)) or bool(premature_flush.get("ok", true)) or JSON.stringify(run_state.current_environment) != before_ingress:
 		failures.append("Sequence command/fact/flush ingress mutated or opened before semantic finalization.")
 	run_state.scenario_prepare_semantic_finalization()
-	var presentation := _presentation_record("game:slot", "game", "slot", Rect2(0.1, 0.1, 0.12, 0.18))
 	var finalized := run_state.scenario_finalize_base_semantics([presentation], library)
 	var first_receipts := _array(_dict(run_state.current_environment.get("scenario_sequence_state", {})).get("visit_receipts", [])).size()
 	var replayed := run_state.scenario_finalize_base_semantics([presentation], library)

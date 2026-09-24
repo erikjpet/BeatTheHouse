@@ -1,6 +1,7 @@
 extends RefCounted
 
 const PixelSceneCanvasScript := preload("res://scripts/ui/pixel_scene_canvas.gd")
+const RoomActionListScript := preload("res://scripts/ui/room_action_list.gd")
 
 
 static func build_start_screen(host: Variant) -> void:
@@ -535,6 +536,9 @@ static func build_run_screen(host: Variant) -> void:
 	compact_environment_row.add_child(title_row)
 	visual_stack.add_child(compact_environment_row)
 	visual_stack.add_child(host.summary_label)
+	host.room_action_list = RoomActionListScript.new()
+	host.room_action_list.configure(host.modal_focus_scope, Callable(host, "_activate_overflow_room_action"))
+	visual_stack.add_child(host.room_action_list)
 	host._build_run_report_screen(visual_stack)
 	host.environment_canvas = PixelSceneCanvasScript.new()
 	host.environment_canvas.clip_contents = true

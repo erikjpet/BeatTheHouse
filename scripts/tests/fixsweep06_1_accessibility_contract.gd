@@ -12,8 +12,18 @@ const TEST_SETTINGS_PATH := "user://fixsweep06_1_accessibility_settings.json"
 const POSTFIX_MODAL_SCOPE_PATH := "res://scripts/ui/modal_focus_scope.gd"
 const POSTFIX_SAFE_MARGIN := 12.0
 const POSTFIX_MIN_TARGET_HEIGHT := 52.0
+const PREWARM_DRAIN_PROBE_PATH := "res://scripts/tests/fixtures/rw06_1_prewarm_drain_probe.gd"
+const PREWARM_POLL_MAX_ATTEMPTS := 240
+const PREWARM_POLL_WAIT_SECONDS := 0.01
 
 var failures: Array[String] = []
+
+
+class RecordingRunGenerator extends RunGenerator:
+	var published_scripts: Dictionary = {}
+
+	func cache_game_module_script(module_path: String, module_script: Script) -> void:
+		published_scripts[module_path] = module_script
 
 
 func _init() -> void:
@@ -25,6 +35,8 @@ func _run() -> void:
 	var isolated := UserSettingsScript.new()
 	isolated.reset()
 	isolated.save()
+	_check_script_prewarm_thread_contract()
+	await _check_script_prewarm_behavior_contract()
 	_check_controller_actions()
 	await _check_world_map_keyboard_contract()
 	await _check_settings_cancel_contract()
@@ -46,6 +58,581 @@ func _run() -> void:
 	for failure in failures:
 		push_error(failure)
 	quit(1)
+
+
+func _check_script_prewarm_thread_contract() -> void:
+	var source := FileAccess.get_file_as_string("res://scripts/ui/foundation_main.gd")
+	if "load_threaded_" in source:
+		failures.append("RW06-1-PREWARM-THREAD: FoundationMain still uses Godot's native threaded-load request API.")
+	var process_body := _source_function_body(source, "_process")
+	if not process_body.contains("_poll_script_prewarm_worker()"):
+		failures.append("RW06-1-PREWARM-THREAD: the main-frame loop does not poll the owned prewarm Thread.")
+	var next_path_body := _source_function_body(source, "_next_script_prewarm_path")
+	var ui_pick := next_path_body.find("run_ui_script_prewarm_requests.keys()[0]")
+	var game_pick := next_path_body.find("game_module_script_prewarm_requests.keys()[0]")
+	if ui_pick < 0 or game_pick < 0 or ui_pick > game_pick:
+		failures.append("RW06-1-PREWARM-THREAD: canonical run-UI work is not selected before game-only work.")
+	var worker_body := _source_function_body(source, "_load_script_prewarm_path_on_worker")
+	if not worker_body.contains("return ResourceLoader.load(script_path)"):
+		failures.append("RW06-1-PREWARM-THREAD: the worker does not load exactly its immutable path.")
+	for forbidden in [
+		"run_ui_script_prewarm_requests",
+		"game_module_script_prewarm_requests",
+		"run_ui_script_prewarm_results",
+		"script_prewarm_terminal_results",
+		"script_prewarm_thread",
+		"script_prewarm_active_path",
+		"script_prewarm_stopping",
+		"game_module_script_cache",
+		"generator",
+		"get_tree(",
+	]:
+		if worker_body.contains(forbidden):
+			failures.append("RW06-1-PREWARM-THREAD: the worker touches main-thread-owned state: %s." % forbidden)
+	var start_body := _source_function_body(source, "_start_next_script_prewarm_worker")
+	if not start_body.contains("script_prewarm_thread = Thread.new()") \
+			or not start_body.contains("script_prewarm_thread.start(") \
+			or not start_body.contains("Callable(self, \"_load_script_prewarm_path_on_worker\").bind(script_path)") \
+			or not start_body.contains("script_prewarm_force_start_error_for_test"):
+		failures.append("RW06-1-PREWARM-THREAD: prewarming does not start one owned Thread with one immutable path.")
+	var poll_body := _source_function_body(source, "_poll_script_prewarm_worker")
+	if not poll_body.contains("script_prewarm_thread.is_alive()") \
+			or not poll_body.contains("_join_active_script_prewarm_worker()"):
+		failures.append("RW06-1-PREWARM-THREAD: the nonblocking poller does not detect and join completed work.")
+	var join_body := _source_function_body(source, "_join_active_script_prewarm_worker")
+	var started_check := join_body.find("script_prewarm_thread.is_started()")
+	var join_call := join_body.find("script_prewarm_thread.wait_to_finish()")
+	var release_call := join_body.find("script_prewarm_thread = null")
+	if started_check < 0 or join_call < 0 or release_call < 0 or started_check > join_call or join_call > release_call:
+		failures.append("RW06-1-PREWARM-THREAD: the owned Thread is released without an ordered is_started/wait_to_finish join.")
+	var publish_body := _source_function_body(source, "_publish_script_prewarm_result")
+	for required in [
+		"script_prewarm_terminal_results[script_path] = loaded_script",
+		"run_ui_script_prewarm_requests.erase(script_path)",
+		"game_module_script_prewarm_requests.erase(script_path)",
+		"run_ui_script_prewarm_results[script_path] = loaded_script",
+		"_cache_game_module_script(script_path, loaded_script)",
+	]:
+		if not publish_body.contains(required):
+			failures.append("RW06-1-PREWARM-THREAD: shared-path publication is not atomic: %s." % required)
+	var load_body := _source_function_body(source, "_load_and_publish_script_prewarm_path")
+	var active_join := load_body.find("_join_active_script_prewarm_worker()")
+	var cached_ui_lookup := load_body.find("run_ui_script_prewarm_results.get(script_path)")
+	var terminal_lookup := load_body.find("script_prewarm_terminal_results.get(script_path)")
+	var resource_load := load_body.find("ResourceLoader.load(script_path)")
+	if active_join < 0 or cached_ui_lookup < 0 or terminal_lookup < 0 or resource_load < 0 \
+			or active_join > cached_ui_lookup \
+			or cached_ui_lookup > terminal_lookup \
+			or terminal_lookup > resource_load \
+			or load_body.count("ResourceLoader.load(script_path)") != 1:
+		failures.append("RW06-1-PREWARM-THREAD: the immediate loader does not join active work and reuse a result before its single fallback load.")
+	for required in [
+		"run_ui_script_prewarm_requests.erase(script_path)",
+		"game_module_script_prewarm_requests.erase(script_path)",
+		"run_ui_script_prewarm_results[script_path] = loaded_script",
+		"_cache_game_module_script(script_path, loaded_script)",
+	]:
+		if not load_body.contains(required):
+			failures.append("RW06-1-PREWARM-THREAD: immediate shared-path publication is not atomic: %s." % required)
+	var request_ui_body := _source_function_body(source, "_request_run_ui_script_prewarm")
+	if not request_ui_body.contains("get(field_name) is Script") \
+			or not request_ui_body.contains("run_ui_script_prewarm_results.has(script_path)") \
+			or not request_ui_body.contains("script_prewarm_terminal_results.has(script_path)"):
+		failures.append("RW06-1-PREWARM-THREAD: installed or completed run-UI scripts can be requeued.")
+	var request_game_body := _source_function_body(source, "_request_game_module_script_prewarm")
+	if not request_game_body.contains("script_prewarm_terminal_results.has(module_path)") \
+			or not request_game_body.contains("_installed_run_ui_script_for_path(module_path)") \
+			or not request_game_body.contains("_cache_game_module_script(module_path, resolved_ui_script)"):
+		failures.append("RW06-1-PREWARM-THREAD: a terminal failed game-module path can be requeued.")
+	var readiness_body := _source_function_body(source, "_run_ui_stage_scripts_ready")
+	if not readiness_body.contains("_poll_script_prewarm_worker()") \
+			or not readiness_body.contains("not run_ui_script_prewarm_results.has(script_path)"):
+		failures.append("RW06-1-PREWARM-THREAD: deferred run-UI readiness ignores owned-worker results.")
+	var immediate_play_body := _source_function_body(source, "_ensure_run_ui_stage_scripts")
+	if not immediate_play_body.contains("_consume_run_ui_script_prewarm_result(script_path)") \
+			or immediate_play_body.contains("ResourceLoader.load(script_path)"):
+		failures.append("RW06-1-PREWARM-THREAD: immediate Play bypasses the centralized join/load/cancel path.")
+	var create_game_body := _source_function_body(source, "_create_game_module")
+	if not create_game_body.contains("_load_and_publish_script_prewarm_path(module_path, false, true)") \
+			or create_game_body.contains("load(module_path)"):
+		failures.append("RW06-1-PREWARM-THREAD: runtime-first game creation bypasses the centralized join/load/cancel path.")
+	if source.contains("load(str(RUN_UI_SCRIPT_PATHS"):
+		failures.append("RW06-1-PREWARM-THREAD: a lazy run-UI fallback bypasses the centralized join/load/cancel path.")
+	for fallback_name in ["_current_game_surface_ui_state", "_run_status_hud_model"]:
+		var fallback_body := _source_function_body(source, fallback_name)
+		if not fallback_body.contains("_consume_run_ui_script_prewarm_result("):
+			failures.append("RW06-1-PREWARM-THREAD: %s bypasses the centralized UI result consumer." % fallback_name)
+	var finish_body := _source_function_body(source, "_finish_all_script_prewarm_work")
+	if not finish_body.contains("pending_before") \
+			or not finish_body.contains("pending_after") \
+			or not finish_body.contains("continue"):
+		failures.append("RW06-1-PREWARM-THREAD: the full drain can stop after one synchronous Thread.start fallback.")
+	var settle_body := _source_function_body(source, "_settle_script_prewarm_before_runtime")
+	var settle_join := settle_body.find("_join_active_script_prewarm_worker()")
+	var settle_clear := settle_body.find("game_module_script_prewarm_requests.clear()")
+	if settle_join < 0 or settle_clear < 0 or settle_join > settle_clear \
+			or settle_body.contains("run_ui_script_prewarm_requests.clear()") \
+			or settle_body.contains("game_module_script_cache.clear()") \
+			or settle_body.contains("script_prewarm_terminal_results.clear()"):
+		failures.append("RW06-1-PREWARM-THREAD: the runtime boundary does not join one active worker before clearing only unstarted game requests.")
+	var cache_publish_body := _source_function_body(source, "_publish_cached_game_module_scripts_to_generator")
+	if not cache_publish_body.contains("game_module_script_cache.keys()") \
+			or not cache_publish_body.contains("generator.cache_game_module_script(module_path, module_script)") \
+			or cache_publish_body.contains("ResourceLoader") \
+			or cache_publish_body.contains("_queue_script_prewarm_request") \
+			or cache_publish_body.contains("_request_game_module_script_prewarm") \
+			or cache_publish_body.contains("game_module_script_cache.clear()") \
+			or cache_publish_body.contains("game_module_script_cache.erase(") \
+			or cache_publish_body.contains("game_module_script_cache =") \
+			or cache_publish_body.contains("script_prewarm_terminal_results"):
+		failures.append("RW06-1-PREWARM-THREAD: fresh-generator publication is not a cache-only handoff.")
+	var runtime_entrypoints := {
+		"start_foundation_run": "generator = RunGenerator.new(library)",
+		"_load_foundation_run_from_slot": "save_service.load_run(autosave_slot_id)",
+		"start_game_test_session": "_game_module_for_id(game_id)",
+	}
+	for entrypoint_value in runtime_entrypoints.keys():
+		var entrypoint := str(entrypoint_value)
+		var entrypoint_body := _source_function_body(source, entrypoint)
+		var content_call := entrypoint_body.find("_ensure_full_content_library_loaded()")
+		var settle_call := entrypoint_body.find("_settle_script_prewarm_before_runtime()")
+		var runtime_call := entrypoint_body.find(str(runtime_entrypoints.get(entrypoint)))
+		if content_call < 0 or settle_call < 0 or runtime_call < 0 \
+				or content_call > settle_call or settle_call > runtime_call:
+			failures.append("RW06-1-PREWARM-THREAD: %s does not settle speculative worker work immediately before its first runtime consumer." % entrypoint)
+	var start_body_entry := _source_function_body(source, "start_foundation_run")
+	var fresh_generator_call := start_body_entry.find("generator = RunGenerator.new(library)")
+	var cached_handoff_call := start_body_entry.find("_publish_cached_game_module_scripts_to_generator()")
+	if fresh_generator_call < 0 or cached_handoff_call < 0 or fresh_generator_call > cached_handoff_call:
+		failures.append("RW06-1-PREWARM-THREAD: Play does not hand completed scripts to its fresh generator.")
+	var replacement_functions := [
+		"start_foundation_run",
+		"_recover_unplayable_environment",
+		"_retry_travel_without_invalid_scenario",
+		"_initialize_foundation",
+		"_ensure_full_content_library_loaded",
+	]
+	var reviewed_replacement_count := 0
+	var reviewed_handoff_count := 0
+	for replacement_function in replacement_functions:
+		var replacement_body := _source_function_body(source, replacement_function)
+		var replacement_needle := "generator = RunGenerator.new(library)"
+		var handoff_needle := "_publish_cached_game_module_scripts_to_generator()"
+		var replacement_count := replacement_body.count(replacement_needle)
+		var handoff_count := replacement_body.count(handoff_needle)
+		reviewed_replacement_count += replacement_count
+		reviewed_handoff_count += handoff_count
+		var replacement_cursor := 0
+		var replacement_order_valid := replacement_count == handoff_count
+		while replacement_order_valid:
+			var replacement_index := replacement_body.find(replacement_needle, replacement_cursor)
+			if replacement_index < 0:
+				break
+			var next_replacement_index := replacement_body.find(replacement_needle, replacement_index + replacement_needle.length())
+			var handoff_index := replacement_body.find(handoff_needle, replacement_index + replacement_needle.length())
+			if handoff_index < 0 or (next_replacement_index >= 0 and handoff_index > next_replacement_index):
+				replacement_order_valid = false
+				break
+			var intervening_source := replacement_body.substr(
+				replacement_index + replacement_needle.length(),
+				handoff_index - replacement_index - replacement_needle.length()
+			)
+			for intervening_line in intervening_source.split("\n"):
+				var stripped_line := str(intervening_line).strip_edges()
+				if not stripped_line.is_empty() and not stripped_line.begins_with("#"):
+					replacement_order_valid = false
+					break
+			replacement_cursor = replacement_index + replacement_needle.length()
+		if not replacement_order_valid:
+			failures.append("RW06-1-PREWARM-THREAD: %s replaces a generator without an immediately following cache-only handoff." % replacement_function)
+	var source_replacement_count := source.count("generator = RunGenerator.new(library)")
+	# The source-wide handoff count includes the helper's own declaration once.
+	var source_handoff_count := source.count("_publish_cached_game_module_scripts_to_generator()") - 1
+	if reviewed_replacement_count != source_replacement_count \
+			or reviewed_handoff_count != source_handoff_count:
+		failures.append("RW06-1-PREWARM-THREAD: the reviewed fresh-generator census does not cover every source replacement and handoff.")
+	var shutdown_body := _source_function_body(source, "_drain_script_prewarm_requests_for_shutdown")
+	for required in [
+		"script_prewarm_stopping = true",
+		"script_prewarm_thread.is_started()",
+		"script_prewarm_thread.wait_to_finish()",
+		"run_ui_script_prewarm_requests.clear()",
+		"game_module_script_prewarm_requests.clear()",
+		"run_ui_script_prewarm_results.clear()",
+		"script_prewarm_terminal_results.clear()",
+	]:
+		if not shutdown_body.contains(required):
+			failures.append("RW06-1-PREWARM-THREAD: shutdown does not own %s." % required)
+	if shutdown_body.contains("ResourceLoader") or shutdown_body.contains("_load_and_publish_script_prewarm_path"):
+		failures.append("RW06-1-PREWARM-THREAD: shutdown starts new resource work instead of only joining and clearing.")
+	var notification_body := _source_function_body(source, "_notification")
+	var exit_body := _source_function_body(source, "_exit_tree")
+	if not notification_body.contains("NOTIFICATION_PREDELETE") \
+			or not notification_body.contains("_drain_script_prewarm_requests_for_shutdown()"):
+		failures.append("RW06-1-PREWARM-THREAD: predelete does not drain the owned Thread.")
+	if not exit_body.contains("_drain_script_prewarm_requests_for_shutdown()"):
+		failures.append("RW06-1-PREWARM-THREAD: tree exit does not drain the owned Thread.")
+
+
+func _check_script_prewarm_behavior_contract() -> void:
+	# Cold desktop boot has only the light menu catalog. Coin Pusher is a UI
+	# owner first and becomes a game-module owner only when Play loads full
+	# content. Its successful terminal result must survive UI consumption so the
+	# late owner receives the same Script without requeue or reload.
+	var cold_app: Control = MainScene.instantiate()
+	cold_app.set("continuous_environment_clock_enabled", false)
+	cold_app.set("run_ui_build_in_progress", true)
+	root.add_child(cold_app)
+	cold_app.set_process(false)
+	var cold_library: Variant = cold_app.get("library")
+	if not cold_library.games.is_empty():
+		failures.append("RW06-1-PREWARM-THREAD: cold late-owner probe did not start from the light menu catalog.")
+	var cold_constants: Dictionary = (cold_app.get_script() as Script).get_script_constant_map()
+	var cold_script_paths: Dictionary = cold_constants.get("RUN_UI_SCRIPT_PATHS", {})
+	var coin_pusher_path := str(cold_script_paths.get("CoinPusherGameScript", ""))
+	var cold_ui_requests: Dictionary = cold_app.get("run_ui_script_prewarm_requests")
+	var cold_game_requests: Dictionary = cold_app.get("game_module_script_prewarm_requests")
+	if coin_pusher_path.is_empty() \
+			or not cold_ui_requests.has(coin_pusher_path) \
+			or cold_game_requests.has(coin_pusher_path):
+		failures.append("RW06-1-PREWARM-THREAD: cold Coin Pusher path was not owned only by the run UI.")
+	else:
+		var cold_single_owner_requests: Dictionary = {}
+		cold_single_owner_requests[coin_pusher_path] = true
+		cold_app.set("run_ui_script_prewarm_requests", cold_single_owner_requests)
+		cold_app.call("_poll_script_prewarm_worker")
+		for _attempt in range(PREWARM_POLL_MAX_ATTEMPTS):
+			if (cold_app.get("run_ui_script_prewarm_results") as Dictionary).has(coin_pusher_path):
+				break
+			await create_timer(PREWARM_POLL_WAIT_SECONDS).timeout
+			cold_app.call("_poll_script_prewarm_worker")
+		var cold_coin_script: Variant = (cold_app.get("run_ui_script_prewarm_results") as Dictionary).get(coin_pusher_path)
+		var consumed_coin_script: Variant = cold_app.call("_consume_run_ui_script_prewarm_result", coin_pusher_path)
+		if not (cold_coin_script is Script) \
+				or consumed_coin_script != cold_coin_script \
+				or (cold_app.get("run_ui_script_prewarm_results") as Dictionary).has(coin_pusher_path) \
+				or (cold_app.get("game_module_script_cache") as Dictionary).has(coin_pusher_path) \
+				or (cold_app.get("script_prewarm_terminal_results") as Dictionary).get(coin_pusher_path) != cold_coin_script:
+			failures.append("RW06-1-PREWARM-THREAD: UI-only Coin Pusher success was not retained for a late owner.")
+		cold_app.call("_ensure_full_content_library_loaded")
+		var late_game_script: Variant = (cold_app.get("game_module_script_cache") as Dictionary).get(coin_pusher_path)
+		var late_definition: Dictionary = {}
+		for definition_value in cold_library.games:
+			if typeof(definition_value) == TYPE_DICTIONARY \
+					and str((definition_value as Dictionary).get("module_path", "")) == coin_pusher_path:
+				late_definition = definition_value
+				break
+		var late_module: Variant = cold_app.call("_create_game_module", late_definition) if not late_definition.is_empty() else null
+		if late_game_script != cold_coin_script \
+				or (cold_app.get("game_module_script_prewarm_requests") as Dictionary).has(coin_pusher_path) \
+				or late_module == null:
+			failures.append("RW06-1-PREWARM-THREAD: full content did not satisfy the late Coin Pusher game owner from the retained UI result.")
+		cold_coin_script = null
+		consumed_coin_script = null
+		late_game_script = null
+		late_module = null
+	_drain_app_script_prewarm_and_assert(cold_app, "cold late-owner teardown")
+	cold_app.queue_free()
+	await _settle_frames(4)
+
+	var app: Control = MainScene.instantiate()
+	app.set("continuous_environment_clock_enabled", false)
+	# Suppress the deferred UI coroutine so this probe alone owns every poll.
+	app.set("run_ui_build_in_progress", true)
+	root.add_child(app)
+	# Keep the automatic poller from racing controlled ownership probes.
+	app.set_process(false)
+	app.call("_ensure_full_content_library_loaded")
+
+	var ui_requests: Dictionary = app.get("run_ui_script_prewarm_requests")
+	var game_requests: Dictionary = app.get("game_module_script_prewarm_requests")
+	if ui_requests.is_empty():
+		failures.append("RW06-1-PREWARM-THREAD: production established no real run-UI queue.")
+	if game_requests.is_empty():
+		failures.append("RW06-1-PREWARM-THREAD: production established no real game-module queue.")
+	var shared_path := ""
+	for path_value in ui_requests.keys():
+		var candidate := str(path_value)
+		if game_requests.has(candidate):
+			shared_path = candidate
+			break
+	var completed_ui_path := str(ui_requests.keys()[0]) if not ui_requests.is_empty() else ""
+	var completed_ui_script: Variant = null
+	if not completed_ui_path.is_empty():
+		app.call("_poll_script_prewarm_worker")
+		var first_thread: Variant = app.get("script_prewarm_thread")
+		if not (first_thread is Thread) \
+				or not (first_thread as Thread).is_started() \
+				or str(app.get("script_prewarm_active_path")) != completed_ui_path:
+			failures.append("RW06-1-PREWARM-THREAD: production did not start one owned Thread for the first canonical UI path.")
+		for _attempt in range(PREWARM_POLL_MAX_ATTEMPTS):
+			if (app.get("run_ui_script_prewarm_results") as Dictionary).has(completed_ui_path):
+				break
+			await create_timer(PREWARM_POLL_WAIT_SECONDS).timeout
+			app.call("_poll_script_prewarm_worker")
+		ui_requests = app.get("run_ui_script_prewarm_requests")
+		var ui_results: Dictionary = app.get("run_ui_script_prewarm_results")
+		completed_ui_script = ui_results.get(completed_ui_path)
+		if ui_requests.has(completed_ui_path) or not (completed_ui_script is Script):
+			failures.append("RW06-1-PREWARM-THREAD: the owned worker did not join and publish the first canonical UI script.")
+
+	ui_requests = app.get("run_ui_script_prewarm_requests")
+	game_requests = app.get("game_module_script_prewarm_requests")
+	if shared_path.is_empty():
+		failures.append("RW06-1-PREWARM-THREAD: production queues exposed no dual-owner UI/game path.")
+	else:
+		var shared_script: Variant = app.call("_load_and_publish_script_prewarm_path", shared_path)
+		ui_requests = app.get("run_ui_script_prewarm_requests")
+		game_requests = app.get("game_module_script_prewarm_requests")
+		var shared_ui_result: Variant = (app.get("run_ui_script_prewarm_results") as Dictionary).get(shared_path)
+		var shared_game_result: Variant = (app.get("game_module_script_cache") as Dictionary).get(shared_path)
+		if not (shared_script is Script) \
+				or ui_requests.has(shared_path) \
+				or game_requests.has(shared_path) \
+				or shared_ui_result != shared_script \
+				or shared_game_result != shared_script:
+			failures.append("RW06-1-PREWARM-THREAD: one shared-path result did not satisfy and publish both owners atomically.")
+
+	# Exercise the production stage consumer against a completed result whose
+	# pending request was already erased by worker publication.
+	if not completed_ui_path.is_empty() and completed_ui_script is Script:
+		var constants: Dictionary = (app.get_script() as Script).get_script_constant_map()
+		var script_paths: Dictionary = constants.get("RUN_UI_SCRIPT_PATHS", {})
+		var stage_fields: Dictionary = constants.get("RUN_UI_STAGE_SCRIPT_FIELDS", {})
+		var completed_field := ""
+		var completed_stage := -1
+		for field_value in script_paths.keys():
+			if str(script_paths.get(field_value)) == completed_ui_path:
+				completed_field = str(field_value)
+				break
+		for stage_value in stage_fields.keys():
+			if (stage_fields.get(stage_value, []) as Array).has(completed_field):
+				completed_stage = int(stage_value)
+				break
+		if completed_field.is_empty() or completed_stage < 0 \
+				or not bool(app.call("_ensure_run_ui_stage_scripts", completed_stage)) \
+				or app.get(completed_field) != completed_ui_script \
+				or (app.get("run_ui_script_prewarm_results") as Dictionary).has(completed_ui_path):
+			failures.append("RW06-1-PREWARM-THREAD: a completed worker result was not consumed and erased by its production UI stage.")
+
+	var built := bool(app.call("_ensure_run_ui_built"))
+	if not built:
+		failures.append("RW06-1-PREWARM-THREAD: immediate Play could not build the production run UI.")
+	if not (app.get("run_ui_script_prewarm_requests") as Dictionary).is_empty():
+		failures.append("RW06-1-PREWARM-THREAD: immediate Play left run-UI requests queued.")
+	if not (app.get("run_ui_script_prewarm_results") as Dictionary).is_empty():
+		failures.append("RW06-1-PREWARM-THREAD: immediate Play did not consume completed run-UI results.")
+	app.call("_request_run_ui_script_prewarm")
+	if not (app.get("run_ui_script_prewarm_requests") as Dictionary).is_empty():
+		failures.append("RW06-1-PREWARM-THREAD: installed run-UI scripts were requeued.")
+
+	# Drive one real game-module path through worker -> join -> main-thread cache.
+	game_requests = app.get("game_module_script_prewarm_requests")
+	var worker_game_path := str(game_requests.keys()[0]) if not game_requests.is_empty() else ""
+	if worker_game_path.is_empty():
+		failures.append("RW06-1-PREWARM-THREAD: no production game path remained for worker publication proof.")
+	else:
+		app.call("_poll_script_prewarm_worker")
+		for _attempt in range(PREWARM_POLL_MAX_ATTEMPTS):
+			if not (app.get("game_module_script_prewarm_requests") as Dictionary).has(worker_game_path):
+				break
+			await create_timer(PREWARM_POLL_WAIT_SECONDS).timeout
+			app.call("_poll_script_prewarm_worker")
+		if (app.get("game_module_script_prewarm_requests") as Dictionary).has(worker_game_path) \
+				or not ((app.get("game_module_script_cache") as Dictionary).get(worker_game_path) is Script):
+			failures.append("RW06-1-PREWARM-THREAD: production game worker result was not joined into the main-thread cache.")
+
+	game_requests = app.get("game_module_script_prewarm_requests")
+	var runtime_path := ""
+	var runtime_definition: Dictionary = {}
+	var content_library: Variant = app.get("library")
+	for definition_value in content_library.games:
+		if typeof(definition_value) != TYPE_DICTIONARY:
+			continue
+		var definition: Dictionary = definition_value
+		var candidate_path := str(definition.get("module_path", ""))
+		if game_requests.has(candidate_path):
+			runtime_path = candidate_path
+			runtime_definition = definition
+			break
+	if runtime_path.is_empty():
+		failures.append("RW06-1-PREWARM-THREAD: no queued production game remained for runtime-first proof.")
+	else:
+		var runtime_module: Variant = app.call("_create_game_module", runtime_definition)
+		var runtime_script: Variant = (app.get("game_module_script_cache") as Dictionary).get(runtime_path)
+		if runtime_module == null \
+				or not (runtime_script is Script) \
+				or (app.get("game_module_script_prewarm_requests") as Dictionary).has(runtime_path):
+			failures.append("RW06-1-PREWARM-THREAD: runtime-first game creation did not join, cache, and cancel its queued path.")
+		app.call("_request_game_module_script_prewarm")
+		if (app.get("game_module_script_prewarm_requests") as Dictionary).has(runtime_path) \
+				or (app.get("game_module_script_cache") as Dictionary).get(runtime_path) != runtime_script:
+			failures.append("RW06-1-PREWARM-THREAD: a completed runtime-first game path was requeued or replaced.")
+
+	# Model a worker returning no Script without asking ResourceLoader to emit an
+	# intentional error. The terminal attempted state must block later requeue.
+	if app.get("script_prewarm_thread") != null:
+		app.call("_join_active_script_prewarm_worker")
+	game_requests = app.get("game_module_script_prewarm_requests")
+	var failed_game_path := str(game_requests.keys()[0]) if not game_requests.is_empty() else ""
+	if failed_game_path.is_empty():
+		failures.append("RW06-1-PREWARM-THREAD: no production game path remained for failed-result proof.")
+	else:
+		app.call("_publish_script_prewarm_result", failed_game_path, null)
+		if not (app.get("script_prewarm_terminal_results") as Dictionary).has(failed_game_path) \
+				or (app.get("script_prewarm_terminal_results") as Dictionary).get(failed_game_path) != null \
+				or (app.get("game_module_script_prewarm_requests") as Dictionary).has(failed_game_path) \
+				or (app.get("game_module_script_cache") as Dictionary).has(failed_game_path):
+			failures.append("RW06-1-PREWARM-THREAD: a failed worker result did not become terminal attempted state.")
+		app.call("_request_game_module_script_prewarm")
+		if (app.get("game_module_script_prewarm_requests") as Dictionary).has(failed_game_path):
+			failures.append("RW06-1-PREWARM-THREAD: a terminal failed game-module path was requeued.")
+
+	# The runtime boundary joins exactly the current worker and clears every
+	# unstarted speculative game path. Completed results remain available and are
+	# handed to a fresh generator without starting or queuing more resource work.
+	var retained_cache: Dictionary = (app.get("game_module_script_cache") as Dictionary).duplicate()
+	var retained_terminal: Dictionary = (app.get("script_prewarm_terminal_results") as Dictionary).duplicate()
+	game_requests = app.get("game_module_script_prewarm_requests")
+	var active_boundary_path := str(game_requests.keys()[0]) if not game_requests.is_empty() else ""
+	var unstarted_boundary_paths: Array[String] = []
+	for path_value in game_requests.keys():
+		var queued_path := str(path_value)
+		if queued_path != active_boundary_path:
+			unstarted_boundary_paths.append(queued_path)
+	if active_boundary_path.is_empty() or unstarted_boundary_paths.is_empty():
+		failures.append("RW06-1-PREWARM-THREAD: runtime-boundary proof has no active and unstarted production game paths.")
+	else:
+		app.call("_poll_script_prewarm_worker")
+		if app.get("script_prewarm_thread") == null \
+				or str(app.get("script_prewarm_active_path")) != active_boundary_path:
+			failures.append("RW06-1-PREWARM-THREAD: runtime-boundary proof did not establish one active game worker.")
+		app.call("_settle_script_prewarm_before_runtime")
+		if app.get("script_prewarm_thread") != null \
+				or not str(app.get("script_prewarm_active_path")).is_empty() \
+				or not (app.get("game_module_script_prewarm_requests") as Dictionary).is_empty():
+			failures.append("RW06-1-PREWARM-THREAD: runtime boundary left a worker or speculative game request active.")
+		var settled_cache: Dictionary = app.get("game_module_script_cache")
+		var settled_terminal: Dictionary = app.get("script_prewarm_terminal_results")
+		for retained_path_value in retained_cache.keys():
+			var retained_path := str(retained_path_value)
+			if settled_cache.get(retained_path) != retained_cache.get(retained_path):
+				failures.append("RW06-1-PREWARM-THREAD: runtime boundary discarded a completed game script.")
+		for retained_path_value in retained_terminal.keys():
+			var retained_path := str(retained_path_value)
+			if not settled_terminal.has(retained_path) \
+					or settled_terminal.get(retained_path) != retained_terminal.get(retained_path):
+				failures.append("RW06-1-PREWARM-THREAD: runtime boundary discarded a terminal script result.")
+		for unstarted_path in unstarted_boundary_paths:
+			if settled_cache.has(unstarted_path) or settled_terminal.has(unstarted_path):
+				failures.append("RW06-1-PREWARM-THREAD: runtime boundary loaded an unstarted speculative game path.")
+		var active_boundary_script: Script = settled_cache.get(active_boundary_path) as Script
+		if active_boundary_script == null \
+				or settled_terminal.get(active_boundary_path) != active_boundary_script:
+			failures.append("RW06-1-PREWARM-THREAD: runtime boundary did not retain the joined active game result.")
+		var settled_cache_snapshot := settled_cache.duplicate()
+		var settled_terminal_snapshot := settled_terminal.duplicate()
+		var recording_generator := RecordingRunGenerator.new(content_library)
+		app.set("generator", recording_generator)
+		app.call("_publish_cached_game_module_scripts_to_generator")
+		var cache_after_handoff: Dictionary = app.get("game_module_script_cache")
+		var terminal_after_handoff: Dictionary = app.get("script_prewarm_terminal_results")
+		if cache_after_handoff != settled_cache_snapshot \
+				or terminal_after_handoff != settled_terminal_snapshot:
+			failures.append("RW06-1-PREWARM-THREAD: cache-only generator publication mutated host cache or terminal state.")
+		for cached_path_value in settled_cache_snapshot.keys():
+			var cached_path := str(cached_path_value)
+			if recording_generator.published_scripts.get(cached_path) != settled_cache_snapshot.get(cached_path):
+				failures.append("RW06-1-PREWARM-THREAD: a completed game script did not reach the fresh generator.")
+		if recording_generator.published_scripts.get(active_boundary_path) != active_boundary_script:
+			failures.append("RW06-1-PREWARM-THREAD: the joined active game result did not reach the fresh generator.")
+		if app.get("script_prewarm_thread") != null \
+				or not (app.get("game_module_script_prewarm_requests") as Dictionary).is_empty():
+			failures.append("RW06-1-PREWARM-THREAD: cache-only generator publication started or queued resource work.")
+
+	# Re-establish the deliberately discarded speculative queue for the bounded
+	# full-drain and deterministic Thread.start failure probes below.
+	app.call("_request_game_module_script_prewarm")
+	app.call("_finish_all_script_prewarm_work")
+	_assert_app_script_prewarm_idle(app, "finished production queue")
+	var terminal_path_map: Dictionary = (app.get_script() as Script).get_script_constant_map().get("RUN_UI_SCRIPT_PATHS", {})
+	var terminal_bound: int = terminal_path_map.size() + int(content_library.games.size())
+	if (app.get("script_prewarm_terminal_results") as Dictionary).size() > terminal_bound:
+		failures.append("RW06-1-PREWARM-THREAD: terminal result ownership exceeded the finite UI/game catalog bound.")
+	# Force two Thread.start failures over already-cached production paths. The
+	# barrier must make forward progress through both synchronous fallbacks.
+	var cached_game_paths: Array = (app.get("game_module_script_cache") as Dictionary).keys()
+	if cached_game_paths.size() < 2:
+		failures.append("RW06-1-PREWARM-THREAD: too few cached game paths for the deterministic Thread.start failure proof.")
+	else:
+		var forced_requests := {
+			str(cached_game_paths[0]): true,
+			str(cached_game_paths[1]): true,
+		}
+		app.set("game_module_script_prewarm_requests", forced_requests)
+		app.set("script_prewarm_force_start_error_for_test", true)
+		app.call("_finish_all_script_prewarm_work")
+		app.set("script_prewarm_force_start_error_for_test", false)
+		_assert_app_script_prewarm_idle(app, "forced Thread.start fallback drain")
+
+	var run_requests: Dictionary = app.get("run_ui_script_prewarm_requests")
+	if ResourceLoader.has_cached(PREWARM_DRAIN_PROBE_PATH):
+		failures.append("RW06-1-PREWARM-THREAD: drain probe path was already cached; queued-clear proof is invalid.")
+	else:
+		app.call("_queue_script_prewarm_request", run_requests, PREWARM_DRAIN_PROBE_PATH)
+		if not (app.get("run_ui_script_prewarm_requests") as Dictionary).has(PREWARM_DRAIN_PROBE_PATH):
+			failures.append("RW06-1-PREWARM-THREAD: drain probe was not registered as pending work.")
+		_drain_app_script_prewarm_and_assert(app, "queued shutdown drain")
+		if ResourceLoader.has_cached(PREWARM_DRAIN_PROBE_PATH):
+			failures.append("RW06-1-PREWARM-THREAD: shutdown loaded an unstarted queued probe instead of clearing it.")
+
+	app.queue_free()
+	await _settle_frames(4)
+
+	# A separate host proves shutdown joins even a worker that is still active.
+	var active_shutdown_app: Control = MainScene.instantiate()
+	active_shutdown_app.set("continuous_environment_clock_enabled", false)
+	active_shutdown_app.set("run_ui_build_in_progress", true)
+	root.add_child(active_shutdown_app)
+	active_shutdown_app.set_process(false)
+	active_shutdown_app.call("_poll_script_prewarm_worker")
+	var active_shutdown_thread: Variant = active_shutdown_app.get("script_prewarm_thread")
+	if not (active_shutdown_thread is Thread) or not (active_shutdown_thread as Thread).is_started():
+		failures.append("RW06-1-PREWARM-THREAD: active-shutdown probe did not start an owned Thread.")
+	_drain_app_script_prewarm_and_assert(active_shutdown_app, "active shutdown join")
+	active_shutdown_app.queue_free()
+	await _settle_frames(4)
+
+
+func _drain_app_script_prewarm_and_assert(app: Control, label: String) -> void:
+	app.call("_drain_script_prewarm_requests_for_shutdown")
+	_assert_app_script_prewarm_idle(app, label)
+	if not bool(app.get("script_prewarm_stopping")):
+		failures.append("RW06-1-PREWARM-THREAD: %s did not stop future worker starts." % label)
+	if not (app.get("script_prewarm_terminal_results") as Dictionary).is_empty():
+		failures.append("RW06-1-PREWARM-THREAD: %s retained terminal Script/failure results after shutdown." % label)
+
+
+func _assert_app_script_prewarm_idle(app: Control, label: String) -> void:
+	if not (app.get("run_ui_script_prewarm_requests") as Dictionary).is_empty() \
+			or not (app.get("game_module_script_prewarm_requests") as Dictionary).is_empty():
+		failures.append("RW06-1-PREWARM-THREAD: %s did not empty both request maps." % label)
+	if not (app.get("run_ui_script_prewarm_results") as Dictionary).is_empty():
+		failures.append("RW06-1-PREWARM-THREAD: %s retained unpublished run-UI results." % label)
+	if app.get("script_prewarm_thread") != null:
+		failures.append("RW06-1-PREWARM-THREAD: %s retained its Thread reference." % label)
+	if not str(app.get("script_prewarm_active_path")).is_empty():
+		failures.append("RW06-1-PREWARM-THREAD: %s retained an active worker path." % label)
+
+
+func _source_function_body(source: String, function_name: String) -> String:
+	var start := source.find("func %s(" % function_name)
+	if start < 0:
+		return ""
+	var finish := source.find("\nfunc ", start + 1)
+	if finish < 0:
+		finish = source.length()
+	return source.substr(start, finish - start)
 
 
 func _check_controller_actions() -> void:
@@ -306,7 +893,7 @@ func _check_postfix_modal_focus_contract() -> void:
 		if root.gui_get_focus_owner() != background:
 			failures.append("UIENV-PF-002: closing World Map did not restore the prior focus owner.")
 
-	app.call("_drain_script_prewarm_requests_for_shutdown")
+	_drain_app_script_prewarm_and_assert(app, "modal-focus teardown")
 	app.queue_free()
 	await _settle_frames(4)
 
@@ -322,7 +909,7 @@ func _check_postfix_responsive_overlay_contract() -> void:
 	await _settle_frames(8)
 	if not started:
 		failures.append("AIF-002/AIF-003: responsive live fixture could not start its production run.")
-		app.call("_drain_script_prewarm_requests_for_shutdown")
+		_drain_app_script_prewarm_and_assert(app, "responsive start-failure teardown")
 		app.queue_free()
 		root.content_scale_size = original_content_scale_size
 		root.size = original_root_size
@@ -331,7 +918,7 @@ func _check_postfix_responsive_overlay_contract() -> void:
 	var settings := app.get("user_settings") as UserSettings
 	if settings == null:
 		failures.append("AIF-002/AIF-003: responsive live fixture has no production UserSettings.")
-		app.call("_drain_script_prewarm_requests_for_shutdown")
+		_drain_app_script_prewarm_and_assert(app, "responsive settings-failure teardown")
 		app.queue_free()
 		root.content_scale_size = original_content_scale_size
 		root.size = original_root_size
@@ -377,7 +964,7 @@ func _check_postfix_responsive_overlay_contract() -> void:
 	await _assert_live_open_overlay_relayout(app, settings)
 	await _assert_live_tutorial_menu_action(app, settings)
 
-	app.call("_drain_script_prewarm_requests_for_shutdown")
+	_drain_app_script_prewarm_and_assert(app, "responsive teardown")
 	app.queue_free()
 	root.content_scale_size = original_content_scale_size
 	root.size = original_root_size
@@ -494,7 +1081,7 @@ func _check_host_accessibility_contracts() -> void:
 	await process_frame
 	if not bool(app.call("_ensure_run_ui_built")):
 		failures.append("BTH-036/BTH-037: production run UI could not be built for live viewport validation.")
-		app.call("_drain_script_prewarm_requests_for_shutdown")
+		_drain_app_script_prewarm_and_assert(app, "host build-failure teardown")
 		app.queue_free()
 		root.content_scale_size = original_content_scale_size
 		root.size = original_root_size
@@ -600,7 +1187,7 @@ func _check_host_accessibility_contracts() -> void:
 								failures.append("BTH-037: live fixed Settings action escaped 640x360 for %s." % label)
 				app.call("close_settings_menu")
 				await _settle_frames(2)
-	app.call("_drain_script_prewarm_requests_for_shutdown")
+	_drain_app_script_prewarm_and_assert(app, "host teardown")
 	app.queue_free()
 	root.content_scale_size = original_content_scale_size
 	root.size = original_root_size

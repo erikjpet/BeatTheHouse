@@ -21,6 +21,7 @@ const META_LOCATION_START_RUN := "start_run"
 const MetaCollectionServiceScript := preload("res://scripts/core/meta_collection_service.gd")
 const CollectionItemResolverScript := preload("res://scripts/core/collection_item_resolver.gd")
 const EnvironmentInstanceScript := preload("res://scripts/core/environment_instance.gd")
+const EnvironmentSlotBinderScript := preload("res://scripts/core/environment_slot_binder.gd")
 const MetaCollectionViewModelScript := preload("res://scripts/ui/meta_collection_view_model.gd")
 const WorldMapScript := preload("res://scripts/core/world_map.gd")
 const AttributeBadgesScript := preload("res://scripts/core/attribute_badges.gd")
@@ -89,6 +90,14 @@ func interactable_object_view_list(location_id: String, run_state: RunState, hov
 	if cache_key == interactable_object_view_cache_key and not interactable_object_view_cache.is_empty():
 		return JsonCoerceScript._copy_array(interactable_object_view_cache)
 	var objects := _pawn_interactable_objects(run_state, hover_target_id, focus_target_id, selected_object_id) if location_id == pawn_location_id() else _home_interactable_objects(run_state, hover_target_id, focus_target_id, selected_object_id)
+	if run_state != null:
+		var environment := JsonCoerceScript._copy_dict(run_state.current_environment)
+		var layout := _current_environment_layout(run_state)
+		environment["layout"] = layout
+		var binding := EnvironmentSlotBinderScript.bind_base_records(environment, objects, JsonCoerceScript._copy_dict(layout.get("slot_bindings", {})))
+		# A persisted fixed-slot envelope is authority here too. Never fall back to
+		# unbound source objects when its closed schema/digests fail validation.
+		objects = JsonCoerceScript._copy_array(binding.get("records", [])) if bool(binding.get("ok", false)) else []
 	interactable_object_view_cache_key = cache_key
 	interactable_object_view_cache = JsonCoerceScript._copy_array(objects)
 	return objects
@@ -518,6 +527,8 @@ func _home_interactable_objects(run_state: RunState, hover_target_id: String, fo
 			"object_id": "meta_container:%s" % container_id,
 			"object_type": CONTEXT_MODE_HOME_CONTAINER,
 			"visual_type": CONTEXT_MODE_HOME_CONTAINER,
+			"slot_binding_source_id": "home_container:%s" % container_id,
+			"placement_class": "floor_fixture",
 			"source_id": container_id,
 			"label": str(container.get("display_name", "Container")),
 			"short_description": "Storage you own. Click to inspect packed and stored collection items.",
@@ -587,6 +598,7 @@ func _home_interactable_objects(run_state: RunState, hover_target_id: String, fo
 		"object_id": "meta_upgrade:home",
 		"object_type": CONTEXT_MODE_META_UPGRADE,
 		"visual_type": CONTEXT_MODE_META_UPGRADE,
+		"placement_class": "wall_mounted",
 		"source_id": "home",
 		"label": "Upgrade Sign",
 		"short_description": "Buy the next housing tier with pawn-shop gold.",
@@ -609,6 +621,7 @@ func _home_interactable_objects(run_state: RunState, hover_target_id: String, fo
 			"object_id": "meta_trade_up:station",
 			"object_type": CONTEXT_MODE_META_TRADE_UP,
 			"visual_type": CONTEXT_MODE_META_TRADE_UP,
+			"placement_class": "surface_item",
 			"source_id": "station",
 			"label": "Trade-Up Station",
 			"short_description": "Trade five matching collection items for one next-tier item.",
@@ -627,6 +640,7 @@ func _home_interactable_objects(run_state: RunState, hover_target_id: String, fo
 	objects.append(_make_interactable_object({
 		"object_id": "travel:leave",
 		"object_type": CONTEXT_MODE_TRAVEL,
+		"placement_class": "doorway",
 		"source_id": "leave",
 		"label": "Map Door",
 		"short_description": "Open the meta travel map.",
@@ -656,6 +670,8 @@ func _pawn_interactable_objects(run_state: RunState, hover_target_id: String, fo
 			"object_id": "meta_sal_shelf:%d" % index,
 			"object_type": CONTEXT_MODE_META_SAL_SHELF,
 			"visual_type": CONTEXT_MODE_META_SAL_SHELF,
+			"slot_binding_source_id": "item:sal_shelf_%d" % index,
+			"placement_class": "surface_item",
 			"source_id": str(index),
 			"label": str(slot.get("display_name", "Empty Shelf")),
 			"short_description": "%s, %s." % [str(slot.get("collection_display_name", "Collection")), str(slot.get("tier", "")).capitalize()] if occupied else "An empty spot behind Sal's locked glass.",
@@ -683,6 +699,7 @@ func _pawn_interactable_objects(run_state: RunState, hover_target_id: String, fo
 			"object_id": "meta_pawn_counter:sell",
 			"object_type": CONTEXT_MODE_META_PAWN_COUNTER,
 			"visual_type": CONTEXT_MODE_META_PAWN_COUNTER,
+			"placement_class": "behind_counter_person",
 			"source_id": "sell",
 			"label": "Sell Counter",
 			"short_description": "Sal buys collection items and unopened bags for gold.",
@@ -702,6 +719,8 @@ func _pawn_interactable_objects(run_state: RunState, hover_target_id: String, fo
 			"object_id": "meta_sal:talk",
 			"object_type": CONTEXT_MODE_META_SAL_TALK,
 			"visual_type": CONTEXT_MODE_META_SAL_TALK,
+			"slot_binding_source_id": "shopkeeper:merchant",
+			"placement_class": "behind_counter_person",
 			"source_id": "sal",
 			"label": "Sal",
 			"short_description": "Sal waits behind the barred counter.",
@@ -754,8 +773,7 @@ func _sal_layout_item_offers() -> Array:
 
 
 func _sal_shelf_interaction_rect(run_state: RunState, index: int) -> Rect2:
-	var layout := _current_environment_layout(run_state)
-	var authored: Rect2 = EnvironmentInstanceScript._object_rect_from_layout(layout, "item", index, "item_spots")
+	var authored := _generated_object_interaction_rect(run_state, "item:sal_shelf_%d" % index)
 	if authored.size.x > 0.0 and authored.size.y > 0.0:
 		var center := authored.position + authored.size * 0.5
 		var board_size := Vector2(VisualStyle.ENVIRONMENT_BOARD_SIZE)
@@ -765,8 +783,7 @@ func _sal_shelf_interaction_rect(run_state: RunState, index: int) -> Rect2:
 
 
 func _pawn_exit_interaction_rect(run_state: RunState) -> Rect2:
-	var layout := _current_environment_layout(run_state)
-	var authored: Rect2 = EnvironmentInstanceScript._object_rect_from_layout(layout, "travel", 0, "travel_spots")
+	var authored := _generated_object_interaction_rect(run_state, "travel:leave")
 	if authored.size.x > 0.0 and authored.size.y > 0.0:
 		return authored
 	return _normalized_interaction_rect(CONTEXT_MODE_TRAVEL, 0)
@@ -845,6 +862,7 @@ func _make_interactable_object(source: Dictionary, hover_target_id: String, focu
 		"object_id": object_id,
 		"object_type": str(source.get("object_type", "info")),
 		"visual_type": str(source.get("visual_type", source.get("object_type", "info"))),
+		"slot_binding_source_id": str(source.get("slot_binding_source_id", "")),
 		"presence": str(source.get("presence", "dynamic")),
 		"interactive": interactive,
 		"decorative": not interactive,
@@ -873,6 +891,9 @@ func _make_interactable_object(source: Dictionary, hover_target_id: String, focu
 		"prop": str(source.get("prop", "")),
 		"surface": str(source.get("surface", "")),
 		"icon_key": str(source.get("icon_key", "")),
+		"presentation_mode": str(source.get("presentation_mode", "room")),
+		"slot_id": str(source.get("slot_id", "")),
+		"placement_class": str(source.get("placement_class", "")),
 		"asset_path": str(source.get("asset_path", "")),
 		"unique_object_class": str(source.get("unique_object_class", "")).strip_edges(),
 		"unique_object_priority": int(source.get("unique_object_priority", 0)),
@@ -890,7 +911,7 @@ func _interaction_rect_for_object(run_state: RunState, object_id: String, object
 	var object_rect := _generated_object_interaction_rect(run_state, object_id)
 	if object_rect.size.x > 0.0 and object_rect.size.y > 0.0:
 		return object_rect
-	return _normalized_interaction_rect(object_type, index)
+	return Rect2()
 
 
 func _generated_object_interaction_rect(run_state: RunState, object_id: String) -> Rect2:

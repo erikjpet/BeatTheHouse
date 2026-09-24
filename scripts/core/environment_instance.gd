@@ -5,7 +5,6 @@ const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 
 # One generated location, regardless of venue type.
 
-const ArtContractsScript := preload("res://scripts/core/art_contracts.gd")
 const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")
 const ScenarioOperationRegistryScript := preload("res://scripts/core/scenario_operation_registry.gd")
 const ScenarioSequenceRuntimeScript := preload("res://scripts/core/scenario_sequence_runtime.gd")
@@ -13,9 +12,9 @@ const CrewWorldSequenceAdapterScript := preload("res://scripts/core/crew_world_s
 const EnvironmentSemanticInventoryScript := preload("res://scripts/core/environment_semantic_inventory.gd")
 const EnvironmentEventResolverScript := preload("res://scripts/core/environment_event_resolver.gd")
 const EnvironmentPlacementScript := preload("res://scripts/core/environment_placement.gd")
+const EnvironmentSlotBinderScript := preload("res://scripts/core/environment_slot_binder.gd")
 
-const ENVIRONMENT_BOARD_SIZE := Vector2(ArtContractsScript.ENVIRONMENT_BOARD_SIZE)
-const GENERATED_LAYOUT_VERSION := 12
+const GENERATED_LAYOUT_VERSION := 13
 const ENVIRONMENT_LAYER_SCHEMA_VERSION := 1
 const EMPTY_MUSIC_NOTE := -999
 const SALS_PAWN_COUNTER_ID := "sals_pawn_counter"
@@ -605,46 +604,36 @@ static func ensure_generated_layout(environment_data: Dictionary, library: Conte
 		var refreshed_hints := _event_placement_hints(JsonCoerceScript._copy_array(environment_data.get("event_ids", [])), library, environment_data)
 		if not refreshed_hints.is_empty():
 			layout["object_placement_hints"] = refreshed_hints
-	var object_rects := JsonCoerceScript._copy_dict(layout.get("object_rects", {}))
-	if int(layout.get("generated_object_rect_version", 0)) != GENERATED_LAYOUT_VERSION:
-		object_rects = {}
 	# Town/scenario modifiers can add events after the EnvironmentInstance was
 	# first built. Classify those late additions from the refreshed hints above,
 	# rather than the stale hints still held by the serialized input dictionary.
 	var placement_environment := environment_data.duplicate(true)
 	placement_environment["layout"] = layout
 	var active_entries := _active_object_layout_entries(placement_environment)
-	var active_object_ids := _active_object_ids_from_entries(active_entries)
 	var grounding_signature := _grounding_signature(environment_data, layout, active_entries)
+	var current_slot_map_digest := EnvironmentSlotBinderScript.slot_map_digest(
+		EnvironmentPlacementScript.surface_map(placement_environment)
+	)
+	var persisted_slot_authority := EnvironmentSlotBinderScript.validate_base_layout_authority(placement_environment)
 	if int(layout.get("generated_object_rect_version", 0)) == GENERATED_LAYOUT_VERSION \
 			and str(layout.get("grounding_signature", "")) == grounding_signature \
-			and JsonCoerceScript._copy_array(layout.get("placement_errors", [])).is_empty() \
-			and JsonCoerceScript._copy_array(layout.get("placement_fallback_ids", [])).is_empty():
+			and int(layout.get("slot_schema_version", 0)) == EnvironmentSlotBinderScript.SLOT_SCHEMA_VERSION \
+			and str(layout.get("slot_map_digest", "")) == current_slot_map_digest \
+			and bool(persisted_slot_authority.get("ok", false)):
 		return layout
-	var prioritize_services := bool(layout.get("prioritize_service_spots", false))
-	_prune_inactive_object_rects(object_rects, active_object_ids)
-	_assign_object_layout_entries(object_rects, layout, _game_layout_entries(environment_data), active_object_ids)
-	_assign_string_object_rects(object_rects, layout, "event", JsonCoerceScript._copy_array(environment_data.get("event_ids", [])), "event_spots", active_object_ids)
-	_assign_object_layout_entries(object_rects, layout, _environment_layer_layout_entries(environment_data), active_object_ids)
-	if not prioritize_services:
-		_assign_item_offer_rects(object_rects, layout, JsonCoerceScript._copy_array(environment_data.get("item_offers", [])), active_object_ids)
-	_assign_object_layout_entries(object_rects, layout, _cage_gift_layout_entries(environment_data), active_object_ids)
-	_assign_single_object_rect(object_rects, layout, "shopkeeper:merchant", "shopkeeper", 0, "shopkeeper_spots", _shopkeeper_should_exist(environment_data), active_object_ids)
-	_assign_single_object_rect(object_rects, layout, "travel:leave", "travel", 0, "travel_spots", not _travel_target_ids(environment_data).is_empty(), active_object_ids)
-	_assign_string_object_rects(object_rects, layout, "travel", _grand_casino_local_target_ids(environment_data), "casino_door_spots", active_object_ids)
-	_assign_string_object_rects(object_rects, layout, "casino_fixture", _casino_fixture_ids(environment_data), "casino_fixture_spots", active_object_ids)
-	_assign_string_object_rects(object_rects, layout, "service", JsonCoerceScript._copy_array(environment_data.get("service_ids", [])), "service_spots", active_object_ids)
-	_assign_string_object_rects(object_rects, layout, "lender", JsonCoerceScript._copy_array(environment_data.get("lender_hooks", [])), "lender_spots", active_object_ids)
-	_assign_object_layout_entries(object_rects, layout, _filter_unique_object_layout_entries(_game_hook_layout_entries(environment_data)), active_object_ids)
-	_assign_object_layout_entries(object_rects, layout, _numbers_layout_entries(environment_data), active_object_ids)
-	_assign_single_object_rect(object_rects, layout, "home_tenure:status", "home_tenure", 0, "home_tenure_spots", _home_tenure_should_exist(environment_data), active_object_ids)
-	_assign_single_object_rect(object_rects, layout, "home_sleep:bed", "home_sleep", 0, "home_sleep_spots", _home_sleep_should_exist(environment_data), active_object_ids)
-	_assign_single_object_rect(object_rects, layout, "home_storage:place", "home_storage", 0, "home_storage_spots", _home_storage_should_exist(environment_data), active_object_ids)
-	_assign_string_object_rects(object_rects, layout, "home_container", _home_container_ids(environment_data), "home_container_spots", active_object_ids)
-	if prioritize_services:
-		_assign_item_offer_rects(object_rects, layout, JsonCoerceScript._copy_array(environment_data.get("item_offers", [])), active_object_ids)
-	_ground_authored_object_rects(object_rects, layout, environment_data, active_entries)
-	layout["object_rects"] = object_rects
+	var binding_result := EnvironmentSlotBinderScript.bind_base_layout(placement_environment, active_entries)
+	layout["object_rects"] = JsonCoerceScript._copy_dict(binding_result.get("object_rects", {}))
+	layout["slot_bindings"] = JsonCoerceScript._copy_dict(binding_result.get("slot_bindings", {}))
+	layout["slot_overflow_ids"] = JsonCoerceScript._copy_array(binding_result.get("overflow_ids", []))
+	layout["slot_schema_version"] = int(binding_result.get("slot_schema_version", 0))
+	layout["slot_map_digest"] = str(binding_result.get("slot_map_digest", ""))
+	layout["slot_binding_digest"] = str(binding_result.get("binding_digest", ""))
+	# Legacy recovery diagnostics are removed deliberately. Overflow is a normal,
+	# first-class presentation mode and is never an emergency placement fallback.
+	layout.erase("placement_classes")
+	layout.erase("placement_surfaces")
+	layout.erase("placement_errors")
+	layout.erase("placement_fallback_ids")
 	layout["generated_object_rect_version"] = GENERATED_LAYOUT_VERSION
 	layout["grounding_signature"] = grounding_signature
 	return layout
@@ -652,7 +641,7 @@ static func ensure_generated_layout(environment_data: Dictionary, library: Conte
 
 static func _grounding_signature(environment_data: Dictionary, layout: Dictionary, active_entries: Array) -> String:
 	var layout_source := layout.duplicate(true)
-	for generated_key in ["object_rects", "placement_classes", "placement_surfaces", "placement_errors", "placement_fallback_ids", "grounding_signature", "generated_object_rect_version"]:
+	for generated_key in ["object_rects", "slot_bindings", "slot_overflow_ids", "slot_schema_version", "slot_map_digest", "slot_binding_digest", "placement_classes", "placement_surfaces", "placement_errors", "placement_fallback_ids", "grounding_signature", "generated_object_rect_version"]:
 		layout_source.erase(generated_key)
 	var signature_source := {
 		"version": GENERATED_LAYOUT_VERSION,
@@ -666,147 +655,6 @@ static func _grounding_signature(environment_data: Dictionary, layout: Dictionar
 	return JSON.stringify(signature_source).sha256_text()
 
 
-# Applies the same class/surface authority used by scenario projection. Existing
-# saved rects are inputs, not authority: restores therefore receive the current
-# grounded placement without a save-schema change or a new RNG draw.
-static func _ground_authored_object_rects(object_rects: Dictionary, layout: Dictionary, environment_data: Dictionary, active_entries: Array) -> void:
-	var placed: Dictionary = {}
-	var placement_classes: Dictionary = {}
-	var placement_surfaces: Dictionary = {}
-	var placement_map := EnvironmentPlacementScript.surface_map(environment_data)
-	var preferred_slots := JsonCoerceScript._copy_dict(placement_map.get("object_slot_positions", {}))
-	var developer_object_slots := JsonCoerceScript._copy_dict(placement_map.get("developer_object_slot_positions", {}))
-	var developer_category_slots := JsonCoerceScript._copy_dict(placement_map.get("developer_category_slot_positions", {}))
-	var placement_errors: Array = []
-	var placement_fallback_ids: Array = []
-	var ordered_entries := active_entries.duplicate(true)
-	ordered_entries.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
-		var left := JsonCoerceScript._copy_dict(left_value)
-		var right := JsonCoerceScript._copy_dict(right_value)
-		var left_id := str(left.get("object_id", ""))
-		var right_id := str(right.get("object_id", ""))
-		var left_class := EnvironmentPlacementScript.classify(left, str(left.get("object_type", "")), left_id)
-		var right_class := EnvironmentPlacementScript.classify(right, str(right.get("object_type", "")), right_id)
-		var left_route := left_class == "doorway" or str(left.get("object_type", "")) in ["travel", "casino_door"]
-		var right_route := right_class == "doorway" or str(right.get("object_type", "")) in ["travel", "casino_door"]
-		if left_route != right_route:
-			return left_route
-		var left_has_slot := preferred_slots.has(left_id)
-		var right_has_slot := preferred_slots.has(right_id)
-		return left_has_slot if left_has_slot != right_has_slot else left_id < right_id
-	)
-	for entry_value in ordered_entries:
-		var entry := JsonCoerceScript._copy_dict(entry_value)
-		var object_id := str(entry.get("object_id", ""))
-		if object_id.is_empty() or placed.has(object_id):
-			continue
-		var object_type := str(entry.get("object_type", ""))
-		var placement_class := EnvironmentPlacementScript.classify(entry, object_type, object_id)
-		placement_classes[object_id] = placement_class
-		var authored_normalized := _rect_from_dict(object_rects.get(object_id, {}))
-		var authored := Rect2(authored_normalized.position * ENVIRONMENT_BOARD_SIZE, authored_normalized.size * ENVIRONMENT_BOARD_SIZE)
-		var slot_values := JsonCoerceScript._copy_array(preferred_slots.get(object_id, []))
-		if slot_values.size() >= 2:
-			authored.position = Vector2(float(slot_values[0]), float(slot_values[1]))
-		var category_key := "%s:%d" % [str(entry.get("spot_field", "")), int(entry.get("index", 0))]
-		var category_slot_values := JsonCoerceScript._copy_array(developer_category_slots.get(category_key, []))
-		var developer_slot_values := JsonCoerceScript._copy_array(developer_object_slots.get(object_id, []))
-		# An exact object decision is more specific than a category/index default.
-		# The old reverse precedence silently moved doors and other reserved objects
-		# back onto crowded generic slots.
-		var manual_values := developer_slot_values if developer_slot_values.size() >= 2 else category_slot_values
-		var manually_placed := manual_values.size() >= 2
-		if manually_placed:
-			authored.position = Vector2(float(manual_values[0]), float(manual_values[1]))
-			authored.position.x = clampf(authored.position.x, 0.0, maxf(0.0, ENVIRONMENT_BOARD_SIZE.x - authored.size.x))
-			authored.position.y = clampf(authored.position.y, 0.0, maxf(0.0, ENVIRONMENT_BOARD_SIZE.y - authored.size.y))
-		var resolved := {"rect": authored, "surface_id": "developer_free", "adjusted": false} if manually_placed else EnvironmentPlacementScript.authored_or_local_rect(environment_data, placement_class, authored)
-		var selected: Rect2 = resolved.get("rect", authored)
-		var selected_surface := str(resolved.get("surface_id", ""))
-		# Project-authored overrides are shipping content, not an exemption from hit
-		# authority. Every origin participates in the same deterministic recovery.
-		var selected_normalized := Rect2(selected.position / ENVIRONMENT_BOARD_SIZE, selected.size / ENVIRONMENT_BOARD_SIZE)
-		var initial_direct_collision := _object_rect_direct_collides_with_any(placed, selected_normalized)
-		if _object_rect_collides_with_any(placed, selected_normalized):
-			var recovered := false
-			var recovered_via_grid := false
-			for candidate_value in EnvironmentPlacementScript.supported_rect_candidates(environment_data, placement_class, selected):
-				var candidate: Dictionary = candidate_value
-				var candidate_rect: Rect2 = candidate.get("rect", Rect2())
-				var normalized_candidate := Rect2(candidate_rect.position / ENVIRONMENT_BOARD_SIZE, candidate_rect.size / ENVIRONMENT_BOARD_SIZE)
-				if candidate_rect.has_area() and not _object_rect_collides_with_any(placed, normalized_candidate):
-					selected = candidate_rect
-					selected_surface = str(candidate.get("surface_id", selected_surface))
-					recovered = true
-					break
-			# Spacing is advisory (D2), while direct interaction authority is not.
-			# Dense rooms may lack a margin-perfect support even though a support is
-			# directly disjoint. Prefer that truthful placement over retaining the
-			# original direct collision or incorrectly reporting exhaustion.
-			if not recovered and initial_direct_collision:
-				for candidate_value in EnvironmentPlacementScript.supported_rect_candidates(environment_data, placement_class, selected):
-					var candidate: Dictionary = candidate_value
-					var candidate_rect: Rect2 = candidate.get("rect", Rect2())
-					var normalized_candidate := Rect2(candidate_rect.position / ENVIRONMENT_BOARD_SIZE, candidate_rect.size / ENVIRONMENT_BOARD_SIZE)
-					if candidate_rect.has_area() and not _object_rect_direct_collides_with_any(placed, normalized_candidate):
-						selected = candidate_rect
-						selected_surface = str(candidate.get("surface_id", selected_surface))
-						recovered = true
-						break
-			if not recovered:
-				for fallback_value in _fallback_grid_object_rects(object_type, int(entry.get("index", 0)), selected_normalized):
-					var fallback_normalized: Rect2 = fallback_value
-					if not _object_rect_collides_with_any(placed, fallback_normalized):
-						selected = Rect2(fallback_normalized.position * ENVIRONMENT_BOARD_SIZE, fallback_normalized.size * ENVIRONMENT_BOARD_SIZE)
-						selected_surface = "fallback_grid"
-						recovered = true
-						recovered_via_grid = true
-						break
-			if not recovered and initial_direct_collision:
-				for fallback_value in _fallback_grid_object_rects(object_type, int(entry.get("index", 0)), selected_normalized):
-					var fallback_normalized: Rect2 = fallback_value
-					if not _object_rect_direct_collides_with_any(placed, fallback_normalized):
-						selected = Rect2(fallback_normalized.position * ENVIRONMENT_BOARD_SIZE, fallback_normalized.size * ENVIRONMENT_BOARD_SIZE)
-						selected_surface = "fallback_grid"
-						recovered = true
-						recovered_via_grid = true
-						break
-			# Moving to another valid authored support is ordinary packing. Reserve
-			# fallback diagnostics for the generic grid, whose use means content has
-			# no semantically appropriate slot and therefore needs author attention.
-			if recovered_via_grid:
-				placement_fallback_ids.append(object_id)
-			elif not recovered and initial_direct_collision:
-				placement_errors.append("No collision-free placement exists for %s (%s)." % [object_id, placement_class])
-		# Surface grounding may shift an authored hotspot near the right or bottom
-		# edge. Preserve its size while keeping the complete interactive rectangle
-		# on the environment board; semantic validation rejects clipped controls.
-		selected.position.x = clampf(selected.position.x, 0.0, maxf(0.0, ENVIRONMENT_BOARD_SIZE.x - selected.size.x))
-		selected.position.y = clampf(selected.position.y, 0.0, maxf(0.0, ENVIRONMENT_BOARD_SIZE.y - selected.size.y))
-		var normalized_selected := Rect2(selected.position / ENVIRONMENT_BOARD_SIZE, selected.size / ENVIRONMENT_BOARD_SIZE)
-		object_rects[object_id] = _rect_to_dict(normalized_selected)
-		placed[object_id] = _rect_to_dict(normalized_selected)
-		placement_surfaces[object_id] = selected_surface
-	# Re-audit the complete assembled set. Generated entries that appear after a
-	# manual override may never turn an earlier exact placement into a silent
-	# success.
-	var placed_ids := placed.keys()
-	placed_ids.sort()
-	for left_index in range(placed_ids.size()):
-		var left_id := str(placed_ids[left_index])
-		var left_rect := _rect_from_dict(placed.get(left_id, {}))
-		for right_index in range(left_index + 1, placed_ids.size()):
-			var right_id := str(placed_ids[right_index])
-			var right_rect := _rect_from_dict(placed.get(right_id, {}))
-			if left_rect.intersects(right_rect) and left_rect.intersection(right_rect).get_area() > 0.000001:
-				placement_errors.append("Interactive placements %s and %s overlap after final packing." % [left_id, right_id])
-	layout["placement_classes"] = placement_classes
-	layout["placement_surfaces"] = placement_surfaces
-	layout["placement_errors"] = placement_errors
-	layout["placement_fallback_ids"] = placement_fallback_ids
-
-
-# Creates a generated display name from archetype name parts.
 static func _build_name(archetype: Dictionary, rng: RngStream) -> String:
 	var prefixes: Array = archetype.get("name_prefixes", ["Unnamed"])
 	var nouns: Array = archetype.get("name_nouns", ["Room"])
@@ -893,17 +741,11 @@ static func _simulation_visual_context(archetype: Dictionary, p_art_key: String)
 	return _strip_presentation_paths(JsonCoerceScript._copy_dict(archetype.get("visual_context", {})), p_art_key)
 
 
-# Builds the per-instance room layout variant. Authored object families stay in their
-# authored zones, while encounters can trade spots between runs.
-static func _generated_layout_variant(archetype: Dictionary, rng: RngStream) -> Dictionary:
-	var layout := JsonCoerceScript._copy_dict(archetype.get("layout", {}))
-	var randomized_fields := JsonCoerceScript._string_array(archetype.get("randomized_spot_fields", ["event_spots", "lender_spots"]))
-	for field_name_value in randomized_fields:
-		var field_name := str(field_name_value)
-		var spots := JsonCoerceScript._copy_array(layout.get(field_name, []))
-		if spots.size() > 1:
-			layout[field_name] = rng.shuffled(spots)
-	return layout
+# Builds the per-instance room layout variant without randomizing spatial data.
+static func _generated_layout_variant(archetype: Dictionary, _rng: RngStream) -> Dictionary:
+	# Spatial composition is authored data. Run RNG may select content, but may
+	# never permute the slots to which that content binds.
+	return JsonCoerceScript._copy_dict(archetype.get("layout", {}))
 
 
 # Removes presentation-only paths from generated environment state.
@@ -1069,14 +911,6 @@ static func _count(requested_count: Variant, rng: RngStream) -> int:
 
 
 # Assigns stable rects to simple string-id object families.
-static func _assign_string_object_rects(object_rects: Dictionary, layout: Dictionary, object_type: String, ids: Array, spot_field: String, active_object_ids: Dictionary) -> void:
-	var stable_ids := JsonCoerceScript._string_array(ids)
-	for index in range(stable_ids.size()):
-		_assign_single_object_rect(object_rects, layout, "%s:%s" % [object_type, stable_ids[index]], object_type, index, spot_field, true, active_object_ids)
-
-
-# Expands authored fixture counts without duplicating game simulation state.
-# Extra fixtures route to the same game id while receiving stable object ids and spots.
 static func _game_layout_entries(environment_data: Dictionary) -> Array:
 	var entries: Array = []
 	var layout := JsonCoerceScript._copy_dict(environment_data.get("layout", {}))
@@ -1095,60 +929,6 @@ static func _game_layout_entries(environment_data: Dictionary) -> Array:
 	return entries
 
 
-static func _assign_object_layout_entries(object_rects: Dictionary, layout: Dictionary, entries: Array, active_object_ids: Dictionary) -> void:
-	for entry_value in entries:
-		if typeof(entry_value) != TYPE_DICTIONARY:
-			continue
-		var entry: Dictionary = entry_value
-		_assign_single_object_rect(
-			object_rects,
-			layout,
-			str(entry.get("object_id", "")),
-			str(entry.get("object_type", "")),
-			int(entry.get("index", 0)),
-			str(entry.get("spot_field", "")),
-			true,
-			active_object_ids
-		)
-
-
-# Assigns stable rects to generated item offers by item id.
-static func _assign_item_offer_rects(object_rects: Dictionary, layout: Dictionary, offers: Array, active_object_ids: Dictionary) -> void:
-	var item_ids: Array = []
-	for offer in offers:
-		if typeof(offer) != TYPE_DICTIONARY:
-			continue
-		var item_id := str((offer as Dictionary).get("id", ""))
-		if not item_id.is_empty() and not item_ids.has(item_id):
-			item_ids.append(item_id)
-	for index in range(item_ids.size()):
-		_assign_single_object_rect(object_rects, layout, "item:%s" % item_ids[index], "item", index, "item_spots", true, active_object_ids)
-
-
-# Assigns one object rect without disturbing an existing generated rect.
-static func _assign_single_object_rect(object_rects: Dictionary, layout: Dictionary, object_id: String, object_type: String, index: int, spot_field: String, should_assign: bool, _active_object_ids: Dictionary) -> void:
-	if not should_assign or object_id.is_empty() or object_rects.has(object_id):
-		return
-	var rect := _object_rect_from_layout(layout, object_type, index, spot_field)
-	object_rects[object_id] = _rect_to_dict(rect)
-
-
-# Keeps late-added objects from taking a spot already owned by a persistent object.
-static func _first_available_object_rect(object_rects: Dictionary, active_object_ids: Dictionary, object_id: String, layout: Dictionary, object_type: String, index: int, spot_field: String, desired_rect: Rect2) -> Rect2:
-	if not _object_rect_collides_with_active(object_rects, active_object_ids, object_id, desired_rect):
-		return desired_rect
-	var slot_count := maxi(maxi(_layout_spot_count(layout, spot_field), index + 1), 8)
-	for slot_index in range(slot_count):
-		var candidate := _object_rect_from_layout(layout, object_type, slot_index, spot_field)
-		if not _object_rect_collides_with_active(object_rects, active_object_ids, object_id, candidate):
-			return candidate
-	for candidate_value in _fallback_grid_object_rects(object_type, index, desired_rect):
-		var candidate: Rect2 = candidate_value
-		if not _object_rect_collides_with_active(object_rects, active_object_ids, object_id, candidate):
-			return candidate
-	return desired_rect
-
-
 static func _layout_spot_count(layout: Dictionary, spot_field: String) -> int:
 	if spot_field.is_empty():
 		return 0
@@ -1156,296 +936,6 @@ static func _layout_spot_count(layout: Dictionary, spot_field: String) -> int:
 	if typeof(spots) != TYPE_ARRAY:
 		return 0
 	return (spots as Array).size()
-
-
-static func _object_rect_collides_with_active(object_rects: Dictionary, active_object_ids: Dictionary, object_id: String, rect: Rect2) -> bool:
-	for key in object_rects.keys():
-		var existing_id := str(key)
-		if existing_id == object_id or not bool(active_object_ids.get(existing_id, false)):
-			continue
-		var existing_rect := _rect_from_dict(object_rects.get(key, {}))
-		if existing_rect.size.x <= 0.0 or existing_rect.size.y <= 0.0:
-			continue
-		if _rects_overlap_with_layout_gap(existing_rect, rect):
-			return true
-	return false
-
-
-static func _rects_overlap_with_layout_gap(a: Rect2, b: Rect2) -> bool:
-	var gap := Vector2(8.0 / ENVIRONMENT_BOARD_SIZE.x, 8.0 / ENVIRONMENT_BOARD_SIZE.y)
-	var a_padded := Rect2(a.position - gap, a.size + gap * 2.0)
-	var b_padded := Rect2(b.position - gap, b.size + gap * 2.0)
-	return a_padded.intersects(b_padded)
-
-
-# Returns authored spot placement when available, otherwise the generated fallback slot.
-static func _object_rect_from_layout(layout: Dictionary, object_type: String, index: int, spot_field: String) -> Rect2:
-	var fallback_rect := _fallback_object_rect(object_type, index)
-	var spot := _layout_spot(layout, spot_field, index)
-	if spot.x < 0.0 or spot.y < 0.0:
-		return fallback_rect
-	var center := Vector2(
-		clampf(spot.x / ENVIRONMENT_BOARD_SIZE.x, 0.0, 1.0),
-		clampf(spot.y / ENVIRONMENT_BOARD_SIZE.y, 0.0, 1.0)
-	)
-	return _clamped_rect_from_center(center, fallback_rect.size)
-
-
-# Mirrors the foundation UI fallback slots so generated layouts remain stable without authored spots.
-static func _fallback_object_rect(object_type: String, index: int) -> Rect2:
-	var center := Vector2(0.5, 0.5)
-	var size := Vector2(0.12, 0.18)
-	match object_type:
-		"game":
-			center = Vector2(0.28 + float(index % 3) * 0.18, 0.56 + float(index / 3) * 0.13)
-			size = Vector2(110.0 / ENVIRONMENT_BOARD_SIZE.x, 72.0 / ENVIRONMENT_BOARD_SIZE.y)
-		"event":
-			center = Vector2(0.68 + float(index % 2) * 0.12, 0.42 + float(index / 2) * 0.14)
-			size = Vector2(100.0 / ENVIRONMENT_BOARD_SIZE.x, 64.0 / ENVIRONMENT_BOARD_SIZE.y)
-		"item":
-			var item_columns := 5
-			center = Vector2(0.20 + float(index % item_columns) * 0.15, 0.36 + float(index / item_columns) * 0.14)
-			size = Vector2(90.0 / ENVIRONMENT_BOARD_SIZE.x, 54.0 / ENVIRONMENT_BOARD_SIZE.y)
-		"shopkeeper":
-			center = Vector2(0.80, 0.34)
-			size = Vector2(108.0 / ENVIRONMENT_BOARD_SIZE.x, 70.0 / ENVIRONMENT_BOARD_SIZE.y)
-		"game_hook":
-			var hook_columns := 5
-			center = Vector2(0.18 + float(index % hook_columns) * 0.16, 0.82 - float(index / hook_columns) * 0.14)
-			size = Vector2(104.0 / ENVIRONMENT_BOARD_SIZE.x, 58.0 / ENVIRONMENT_BOARD_SIZE.y)
-		"travel":
-			var travel_centers := [
-				Vector2(0.84, 0.34),
-				Vector2(0.84, 0.60),
-				Vector2(0.50, 0.18),
-				Vector2(0.50, 0.50),
-				Vector2(0.30, 0.28),
-				Vector2(0.30, 0.78),
-				Vector2(0.64, 0.30),
-				Vector2(0.64, 0.70),
-				Vector2(0.84, 0.84),
-			]
-			center = travel_centers[index % travel_centers.size()]
-			size = Vector2(104.0 / ENVIRONMENT_BOARD_SIZE.x, 64.0 / ENVIRONMENT_BOARD_SIZE.y)
-		"service":
-			var service_columns := 6
-			center = Vector2(0.14 + float(index % service_columns) * 0.14, 0.30 + float(index / service_columns) * 0.13)
-			size = Vector2(96.0 / ENVIRONMENT_BOARD_SIZE.x, 54.0 / ENVIRONMENT_BOARD_SIZE.y)
-		"lender":
-			var lender_columns := 5
-			center = Vector2(0.22 + float(index % lender_columns) * 0.15, 0.70 + float(index / lender_columns) * 0.12)
-			size = Vector2(102.0 / ENVIRONMENT_BOARD_SIZE.x, 58.0 / ENVIRONMENT_BOARD_SIZE.y)
-		"numbers", "numbers_silas":
-			center = Vector2(0.42 + float(index % 2) * 0.24, 0.68)
-			size = Vector2(106.0 / ENVIRONMENT_BOARD_SIZE.x, 62.0 / ENVIRONMENT_BOARD_SIZE.y)
-		"environment_layer":
-			center = Vector2(0.80, 0.26 + float(index % 3) * 0.24)
-			size = Vector2(118.0 / ENVIRONMENT_BOARD_SIZE.x, 72.0 / ENVIRONMENT_BOARD_SIZE.y)
-		"home_tenure":
-			center = Vector2(0.78, 0.46)
-			size = Vector2(116.0 / ENVIRONMENT_BOARD_SIZE.x, 58.0 / ENVIRONMENT_BOARD_SIZE.y)
-		"home_sleep":
-			center = Vector2(0.50, 0.42)
-			size = Vector2(150.0 / ENVIRONMENT_BOARD_SIZE.x, 74.0 / ENVIRONMENT_BOARD_SIZE.y)
-		"home_storage":
-			center = Vector2(0.20, 0.72)
-			size = Vector2(108.0 / ENVIRONMENT_BOARD_SIZE.x, 58.0 / ENVIRONMENT_BOARD_SIZE.y)
-		"home_container":
-			var container_columns := 4
-			center = Vector2(0.22 + float(index % container_columns) * 0.18, 0.76 + float(index / container_columns) * 0.11)
-			size = Vector2(104.0 / ENVIRONMENT_BOARD_SIZE.x, 58.0 / ENVIRONMENT_BOARD_SIZE.y)
-	return _clamped_rect_from_center(center, size)
-
-
-# Reads an authored board-coordinate spot from a generated layout.
-static func _layout_spot(layout: Dictionary, spot_field: String, index: int) -> Vector2:
-	if spot_field.is_empty():
-		return Vector2(-1.0, -1.0)
-	var spots: Variant = layout.get(spot_field, [])
-	if typeof(spots) != TYPE_ARRAY or index < 0 or index >= (spots as Array).size():
-		return Vector2(-1.0, -1.0)
-	return _layout_spot_to_board_position((spots as Array)[index])
-
-
-# Converts supported authoring spot formats to board coordinates.
-static func _layout_spot_to_board_position(value: Variant) -> Vector2:
-	if typeof(value) == TYPE_VECTOR2:
-		return value as Vector2
-	if typeof(value) == TYPE_VECTOR2I:
-		var spot_i := value as Vector2i
-		return Vector2(float(spot_i.x), float(spot_i.y))
-	if typeof(value) == TYPE_ARRAY:
-		var parts := value as Array
-		if parts.size() >= 2:
-			return Vector2(float(parts[0]), float(parts[1]))
-	if typeof(value) == TYPE_DICTIONARY:
-		var data := value as Dictionary
-		return Vector2(float(data.get("x", -1.0)), float(data.get("y", -1.0)))
-	return Vector2(-1.0, -1.0)
-
-
-# Keeps generated rects in the normalized environment canvas.
-static func _clamped_rect_from_center(center: Vector2, size: Vector2) -> Rect2:
-	var clamped_size := Vector2(clampf(size.x, 0.08, 0.22), clampf(size.y, 0.12, 0.28))
-	var max_position := Vector2(0.98, 0.96) - clamped_size
-	var position := center - clamped_size * 0.5
-	return Rect2(
-		Vector2(
-			clampf(position.x, 0.02, maxf(0.02, max_position.x)),
-			clampf(position.y, 0.04, maxf(0.04, max_position.y))
-		),
-		clamped_size
-	)
-
-
-# Converts a normalized rect to saveable primitive data.
-static func _rect_to_dict(rect: Rect2) -> Dictionary:
-	return {
-		"x": rect.position.x,
-		"y": rect.position.y,
-		"w": rect.size.x,
-		"h": rect.size.y,
-	}
-
-
-static func _rect_from_dict(value: Variant) -> Rect2:
-	if typeof(value) == TYPE_RECT2:
-		return value as Rect2
-	if typeof(value) != TYPE_DICTIONARY:
-		return Rect2()
-	var data: Dictionary = value
-	return Rect2(
-		Vector2(float(data.get("x", 0.0)), float(data.get("y", 0.0))),
-		Vector2(float(data.get("w", 0.0)), float(data.get("h", 0.0)))
-	)
-
-
-static func _resolve_active_object_rect_collisions(object_rects: Dictionary, layout: Dictionary, active_entries: Array) -> void:
-	var kept_rects: Dictionary = {}
-	for entry_value in active_entries:
-		if typeof(entry_value) != TYPE_DICTIONARY:
-			continue
-		var entry: Dictionary = entry_value
-		var object_id := str(entry.get("object_id", ""))
-		if object_id.is_empty():
-			continue
-		var object_type := str(entry.get("object_type", ""))
-		var index := int(entry.get("index", 0))
-		var spot_field := str(entry.get("spot_field", ""))
-		var rect := _rect_from_dict(object_rects.get(object_id, {}))
-		if rect.size.x <= 0.0 or rect.size.y <= 0.0 or _object_rect_collides_with_any(kept_rects, rect):
-			var desired_rect := _object_rect_from_layout(layout, object_type, index, spot_field)
-			rect = _first_noncolliding_object_rect(kept_rects, layout, object_type, index, spot_field, desired_rect)
-			object_rects[object_id] = _rect_to_dict(rect)
-		kept_rects[object_id] = _rect_to_dict(rect)
-
-
-static func _first_noncolliding_object_rect(placed_rects: Dictionary, layout: Dictionary, object_type: String, index: int, spot_field: String, desired_rect: Rect2) -> Rect2:
-	if not _object_rect_collides_with_any(placed_rects, desired_rect):
-		return desired_rect
-	var slot_count := maxi(maxi(_layout_spot_count(layout, spot_field), index + 1), 48)
-	for slot_index in range(slot_count):
-		var candidate := _object_rect_from_layout(layout, object_type, slot_index, spot_field)
-		if not _object_rect_collides_with_any(placed_rects, candidate):
-			return candidate
-	for candidate_value in _fallback_grid_object_rects(object_type, index, desired_rect):
-		var candidate: Rect2 = candidate_value
-		if not _object_rect_collides_with_any(placed_rects, candidate):
-			return candidate
-	return desired_rect
-
-
-static func _object_rect_collides_with_any(placed_rects: Dictionary, rect: Rect2) -> bool:
-	for key in placed_rects.keys():
-		var existing_rect := _rect_from_dict(placed_rects.get(key, {}))
-		if existing_rect.size.x <= 0.0 or existing_rect.size.y <= 0.0:
-			continue
-		if _rects_overlap_with_layout_gap(existing_rect, rect):
-			return true
-	return false
-
-
-static func _object_rect_direct_collides_with_any(placed_rects: Dictionary, rect: Rect2) -> bool:
-	for key in placed_rects.keys():
-		var existing_rect := _rect_from_dict(placed_rects.get(key, {}))
-		if existing_rect.has_area() and rect.has_area() and existing_rect.intersects(rect) \
-				and existing_rect.intersection(rect).get_area() > 0.000001:
-			return true
-	return false
-
-
-static func _fallback_grid_object_rects(object_type: String, index: int, desired_rect: Rect2) -> Array:
-	var size := _fallback_object_rect(object_type, index).size
-	var desired_center := desired_rect.position + desired_rect.size * 0.5
-	var centers := [
-		Vector2(0.12, 0.20),
-		Vector2(0.28, 0.20),
-		Vector2(0.44, 0.20),
-		Vector2(0.60, 0.20),
-		Vector2(0.76, 0.20),
-		Vector2(0.88, 0.20),
-		Vector2(0.12, 0.34),
-		Vector2(0.28, 0.34),
-		Vector2(0.44, 0.34),
-		Vector2(0.60, 0.34),
-		Vector2(0.76, 0.34),
-		Vector2(0.88, 0.34),
-		Vector2(0.12, 0.48),
-		Vector2(0.28, 0.48),
-		Vector2(0.44, 0.48),
-		Vector2(0.60, 0.48),
-		Vector2(0.76, 0.48),
-		Vector2(0.88, 0.48),
-		Vector2(0.12, 0.62),
-		Vector2(0.28, 0.62),
-		Vector2(0.44, 0.62),
-		Vector2(0.60, 0.62),
-		Vector2(0.76, 0.62),
-		Vector2(0.88, 0.62),
-		Vector2(0.12, 0.76),
-		Vector2(0.28, 0.76),
-		Vector2(0.44, 0.76),
-		Vector2(0.60, 0.76),
-		Vector2(0.76, 0.76),
-		Vector2(0.88, 0.76),
-		Vector2(0.12, 0.88),
-		Vector2(0.28, 0.88),
-		Vector2(0.44, 0.88),
-		Vector2(0.60, 0.88),
-		Vector2(0.76, 0.88),
-		Vector2(0.88, 0.88),
-	]
-	var scored: Array = []
-	for center_value in centers:
-		var center: Vector2 = center_value
-		var rect := _clamped_rect_from_center(center, size)
-		var candidate_center := rect.position + rect.size * 0.5
-		scored.append({
-			"rect": rect,
-			"score": desired_center.distance_squared_to(candidate_center),
-		})
-	scored.sort_custom(func(a: Variant, b: Variant) -> bool:
-		return _sort_layout_rect_candidate(a, b)
-	)
-	var result: Array = []
-	for entry_value in scored:
-		var entry: Dictionary = entry_value
-		result.append(entry.get("rect", Rect2()))
-	return result
-
-
-static func _sort_layout_rect_candidate(a: Variant, b: Variant) -> bool:
-	var entry_a: Dictionary = a
-	var entry_b: Dictionary = b
-	var score_a := float(entry_a.get("score", 0.0))
-	var score_b := float(entry_b.get("score", 0.0))
-	if score_a == score_b:
-		var rect_a: Rect2 = entry_a.get("rect", Rect2())
-		var rect_b: Rect2 = entry_b.get("rect", Rect2())
-		if rect_a.position.y == rect_b.position.y:
-			return rect_a.position.x < rect_b.position.x
-		return rect_a.position.y < rect_b.position.y
-	return score_a < score_b
 
 
 static func _active_object_layout_entries(environment_data: Dictionary) -> Array:
@@ -1588,79 +1078,6 @@ static func _cage_gift_layout_entries(environment_data: Dictionary) -> Array:
 			"spot_field": "item_spots",
 		})
 	return result
-
-
-static func _active_object_ids_from_entries(entries: Array) -> Dictionary:
-	var result: Dictionary = {}
-	for entry_value in entries:
-		if typeof(entry_value) != TYPE_DICTIONARY:
-			continue
-		var object_id := str((entry_value as Dictionary).get("object_id", ""))
-		if not object_id.is_empty():
-			result[object_id] = true
-	return result
-
-
-static func _active_object_ids(environment_data: Dictionary) -> Dictionary:
-	var result: Dictionary = {}
-	for entry_value in _game_layout_entries(environment_data):
-		if typeof(entry_value) != TYPE_DICTIONARY:
-			continue
-		var object_id := str((entry_value as Dictionary).get("object_id", ""))
-		if not object_id.is_empty():
-			result[object_id] = true
-	for event_id in JsonCoerceScript._string_array(environment_data.get("event_ids", [])):
-		result["event:%s" % event_id] = true
-	for offer in JsonCoerceScript._copy_array(environment_data.get("item_offers", [])):
-		if typeof(offer) != TYPE_DICTIONARY:
-			continue
-		var item_id := str((offer as Dictionary).get("id", ""))
-		if not item_id.is_empty():
-			result["item:%s" % item_id] = true
-	if _shopkeeper_should_exist(environment_data):
-		result["shopkeeper:merchant"] = true
-	if not _travel_target_ids(environment_data).is_empty():
-		result["travel:leave"] = true
-	for fixture_id in _casino_fixture_ids(environment_data):
-		result["casino_fixture:%s" % fixture_id] = true
-	for target_id in _grand_casino_local_target_ids(environment_data):
-		result["travel:%s" % target_id] = true
-	for service_id in JsonCoerceScript._string_array(environment_data.get("service_ids", [])):
-		result["service:%s" % service_id] = true
-	for lender_id in JsonCoerceScript._string_array(environment_data.get("lender_hooks", [])):
-		result["lender:%s" % lender_id] = true
-	for entry_value in _environment_layer_layout_entries(environment_data):
-		if typeof(entry_value) == TYPE_DICTIONARY:
-			result[str((entry_value as Dictionary).get("object_id", ""))] = true
-	for entry_value in _game_hook_layout_entries(environment_data):
-		if typeof(entry_value) != TYPE_DICTIONARY:
-			continue
-		var object_id := str((entry_value as Dictionary).get("object_id", ""))
-		if not object_id.is_empty():
-			result[object_id] = true
-	if _home_tenure_should_exist(environment_data):
-		result["home_tenure:status"] = true
-	if _home_sleep_should_exist(environment_data):
-		result["home_sleep:bed"] = true
-	if _home_storage_should_exist(environment_data):
-		result["home_storage:place"] = true
-	for container_id in _home_container_ids(environment_data):
-		result["home_container:%s" % container_id] = true
-	return result
-
-
-static func _prune_inactive_object_rects(object_rects: Dictionary, active_object_ids: Dictionary) -> void:
-	for key in object_rects.keys():
-		var object_id := str(key)
-		if _is_managed_object_id(object_id) and not bool(active_object_ids.get(object_id, false)):
-			object_rects.erase(key)
-
-
-static func _is_managed_object_id(object_id: String) -> bool:
-	for prefix in ["game:", "event:", "item:", "shopkeeper:", "travel:", "service:", "lender:", "game_hook:", "dialogue:", "casino_fixture:", "home_tenure:", "home_sleep:", "home_storage:", "home_container:", "environment_layer:", "numbers:"]:
-		if object_id.begins_with(prefix):
-			return true
-	return false
 
 
 # Returns unique route target ids in the same order the UI exposes them.

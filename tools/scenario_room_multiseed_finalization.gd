@@ -12,6 +12,7 @@ const SequenceCatalogScript := preload("res://scripts/core/scenario_sequence_cat
 const ScenarioLayoutResolverScript := preload("res://scripts/core/scenario_layout_resolver.gd")
 const ScenarioSequenceRuntimeScript := preload("res://scripts/core/scenario_sequence_runtime.gd")
 const EnvironmentPlacementScript := preload("res://scripts/core/environment_placement.gd")
+const EnvironmentSlotBinderScript := preload("res://scripts/core/environment_slot_binder.gd")
 const HarnessProductionFidelityScript := preload("res://scripts/tests/foundation/harness_production_fidelity.gd")
 const EnvironmentReadabilityContractScript := preload("res://scripts/tests/foundation/env06_8_environment_readability_contract.gd")
 
@@ -370,28 +371,46 @@ func _check_barrier_placements(library: Variant, definitions: Array, failures: A
 		_collect_barrier_placement_ops(_dict(definition.get("sequence", {})), known, placements)
 		placement_count += placements.size()
 		var environment := _dict(library.environment_archetype(str(definition.get("archetype_id", ""))))
+		var bind_entries: Array = []
+		var bound_ids: Dictionary = {}
 		for placement_value in placements:
 			var placement_op := _dict(placement_value)
 			var stable_id := str(placement_op.get("stable_object_id", ""))
 			var base_object := _dict(known.get(stable_id, {}))
 			var payload := _dict(placement_op.get("object", {}))
-			var anchor_id := str(placement_op.get("anchor_id", payload.get("anchor_id", base_object.get("anchor_id", ""))))
-			var zone_id := str(placement_op.get("zone_id", payload.get("zone_id", base_object.get("zone_id", ""))))
-			var center := ScenarioLayoutResolverScript._resolve_center(environment, anchor_id, zone_id)
-			var bounds := _dict(base_object.get("bounds", {}))
-			var size := Vector2(float(bounds.get("w", 48.0)), float(bounds.get("h", 48.0)))
-			var authored := ScenarioLayoutResolverScript._clamp_inside_board(Rect2(center - size * 0.5, size))
-			var resolved := ScenarioLayoutResolverScript._collision_safe_rect(
-				"scenario::%s" % stable_id,
-				authored,
-				[],
-				str(base_object.get("label", "")),
-				ScenarioLayoutResolverScript.WALK_LANE
-			)
-			var rect: Rect2 = resolved.get("rect", authored)
-			var small_rect := ScenarioLayoutResolverScript._expanded_rect(rect, ScenarioLayoutResolverScript.SMALL_SCREEN_TARGET)
-			if bool(resolved.get("colliding", true)) or rect.intersects(ScenarioLayoutResolverScript.WALK_LANE) or small_rect.intersects(ScenarioLayoutResolverScript.WALK_LANE):
-				failures.append("Barrier placement %s/%s op=%s anchor=%s zone=%s intersects WALK_LANE in normal or expanded small-screen geometry." % [str(definition.get("id", "")), stable_id, str(placement_op.get("op", "")), anchor_id, zone_id])
+			if stable_id.is_empty() or bound_ids.has(stable_id):
+				continue
+			bound_ids[stable_id] = true
+			var semantic := base_object.duplicate(true)
+			semantic.merge(payload, true)
+			semantic["present"] = true
+			semantic["role"] = str(semantic.get("role", "obstacle"))
+			var identity := "scenario::%s" % stable_id
+			bind_entries.append({
+				"identity": identity,
+				"semantic": semantic,
+				"actor": false,
+				"placement_class": EnvironmentPlacementScript.classify(semantic, "scene_object", identity, str(semantic.get("prop", semantic.get("icon_key", "")))),
+				"safe_exit": false,
+			})
+		var binding_result := EnvironmentSlotBinderScript.bind_scenario_visuals(environment, bind_entries)
+		var bindings := _dict(binding_result.get("slot_bindings", {}))
+		for entry_value in bind_entries:
+			var entry := _dict(entry_value)
+			var identity := str(entry.get("identity", ""))
+			var binding := _dict(bindings.get(identity, {}))
+			var mode := str(binding.get("presentation_mode", ""))
+			if binding.is_empty() or mode not in ["room", "overflow"]:
+				failures.append("Barrier %s/%s has neither an authored stage slot nor an explicit overflow binding." % [str(definition.get("id", "")), identity])
+				continue
+			if mode == "overflow":
+				continue
+			var slot := _dict(binding.get("slot", {}))
+			var rect := EnvironmentSlotBinderScript.rect_from_binding(binding)
+			var small_rect := EnvironmentSlotBinderScript.expanded_rect(rect)
+			if not str(binding.get("slot_id", "")).begins_with("stage.") or not rect.has_area() or not small_rect.has_area() \
+					or str(slot.get("footprint_class", "")) != str(entry.get("placement_class", "")):
+				failures.append("Barrier %s/%s did not preserve class-compatible fixed-slot authority in normal and expanded layouts." % [str(definition.get("id", "")), identity])
 	if object_count != EXPECTED_BARRIER_OBJECTS or placement_count != EXPECTED_BARRIER_PLACEMENTS or role_counts != {"obstacle": 7, "barrier": 18, "blockade": 0}:
 		failures.append("Barrier sweep census changed: objects=%d placements=%d roles=%s." % [object_count, placement_count, JSON.stringify(role_counts)])
 

@@ -28,6 +28,7 @@ const PlayerTextScript := preload("res://scripts/ui/player_text.gd")
 const CrewWorldSequenceAdapterScript := preload("res://scripts/core/crew_world_sequence_adapter.gd")
 const WorldSequencePackageCatalogScript := preload("res://scripts/core/world_sequence_package_catalog.gd")
 const EnvironmentBaseSemanticRecordsScript := preload("res://scripts/core/environment_base_semantic_records.gd")
+const EnvironmentSlotBinderScript := preload("res://scripts/core/environment_slot_binder.gd")
 const EnvironmentSemanticInventoryScript := preload("res://scripts/core/environment_semantic_inventory.gd")
 const ScenarioLayoutResolverScript := preload("res://scripts/core/scenario_layout_resolver.gd")
 const ArtContractsScript := preload("res://scripts/core/art_contracts.gd")
@@ -2589,7 +2590,18 @@ func scenario_finalize_installed_environment(library: ContentLibrary, layout_con
 	var authoritative := EnvironmentBaseSemanticRecordsScript.authoritative_interactable_records(authoritative_environment, library)
 	if not bool(authoritative.get("ok", false)):
 		return _scenario_semantic_finalization_failure(JsonCoerceScript._copy_array(authoritative.get("errors", [])), bool(current_environment.get("scenario_semantic_ready", false)))
-	return _scenario_finalize_trusted_base_semantics(JsonCoerceScript._copy_array(authoritative.get("records", [])), library, layout_context)
+	# Finalization must cross the same fixed-slot seam as the live production UI.
+	# In particular, slot overflow remains actionable authority even though it has
+	# no environment-board rectangle.
+	var authoritative_layout := JsonCoerceScript._copy_dict(authoritative_environment.get("layout", {}))
+	var bound := EnvironmentSlotBinderScript.bind_base_records(
+		authoritative_environment,
+		JsonCoerceScript._copy_array(authoritative.get("records", [])),
+		JsonCoerceScript._copy_dict(authoritative_layout.get("slot_bindings", {}))
+	)
+	if not bool(bound.get("ok", false)):
+		return _scenario_semantic_finalization_failure(JsonCoerceScript._copy_array(bound.get("errors", [])), bool(current_environment.get("scenario_semantic_ready", false)))
+	return _scenario_finalize_trusted_base_semantics(JsonCoerceScript._copy_array(bound.get("records", [])), library, layout_context)
 
 
 func _scenario_event_choice_authority(definition: Dictionary, library: ContentLibrary, environment_override: Dictionary = {}) -> Dictionary:

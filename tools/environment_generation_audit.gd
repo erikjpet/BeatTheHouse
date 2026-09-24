@@ -5,13 +5,112 @@ extends SceneTree
 const ContentLibraryScript := preload("res://scripts/core/content_library.gd")
 const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
+const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")
+const ScenarioLayoutResolverScript := preload("res://scripts/core/scenario_layout_resolver.gd")
+const ScenarioSequenceRuntimeScript := preload("res://scripts/core/scenario_sequence_runtime.gd")
 const WorldMapScript := preload("res://scripts/core/world_map.gd")
 const HarnessProductionFidelityScript := preload("res://scripts/tests/foundation/harness_production_fidelity.gd")
+const FoundationTravelViewModelScript := preload("res://scripts/ui/foundation_travel_view_model.gd")
+const TutorialFlowScript := preload("res://scripts/core/tutorial_flow.gd")
+const AttributeBadgesScript := preload("res://scripts/core/attribute_badges.gd")
 
 const DEFAULT_RUN_COUNT := 100
 const DEFAULT_VISITS_PER_RUN := 6
 const DEFAULT_OUTPUT_JSON := "res://.tmp/environment_generation_audit/report.json"
 const DEFAULT_OUTPUT_MARKDOWN := "res://.tmp/environment_generation_audit/report.md"
+
+# A deliberately narrow adapter lets the audit call the shipped travel view
+# model without constructing FoundationMain or a UI scene. The qualifying
+# contract below excludes every overlay whose host behavior is not represented
+# here; target ranking, route opening hours, locked-route cards, authored Walk
+# timing and choice enablement still execute in the production view model.
+class AuditFoundationTravelHost:
+	const TRAVEL_CLOCK_MINUTES_PER_BLOCK := 6
+	const WALK_CLOCK_MINUTES_PER_BLOCK := 10
+
+	var view_model_script: Script
+	var WorldMapScript: Script
+	var TutorialFlowScript: Script
+	var AttributeBadgesScript: Script
+	var run_state: Variant
+	var generator: Variant
+	var library: Variant
+	var current_screen := "ENVIRONMENT"
+	var selected_travel_target_id := ""
+	var selected_world_map_node_id := ""
+	var world_map_overlay: Variant = null
+	var travel_target_ids_cache_key := ""
+	var travel_target_ids_cache: Array = []
+	var travel_choice_cache_key := ""
+	var travel_choice_cache: Array = []
+	var world_route_cache_key := ""
+	var world_route_cache: Dictionary = {}
+
+	func _init(
+		p_view_model_script: Script,
+		p_world_map_script: Script,
+		p_tutorial_flow_script: Script,
+		p_attribute_badges_script: Script,
+		p_run_state: Variant,
+		p_generator: Variant,
+		p_library: Variant
+	) -> void:
+		view_model_script = p_view_model_script
+		WorldMapScript = p_world_map_script
+		TutorialFlowScript = p_tutorial_flow_script
+		AttributeBadgesScript = p_attribute_badges_script
+		run_state = p_run_state
+		generator = p_generator
+		library = p_library
+
+	func _is_meta_session() -> bool:
+		return false
+
+	func _travel_base_cache_key() -> String:
+		return str(view_model_script.travel_base_cache_key(self))
+
+	func _enabled_world_route_ids(source_id: String) -> Array:
+		return view_model_script.enabled_world_route_ids(self, source_id)
+
+	func _world_route_for_target(target_id: String, path_query: Dictionary = {}) -> Dictionary:
+		return view_model_script.world_route_for_target(self, target_id, path_query)
+
+	func _environment_archetype(archetype_id: String) -> Dictionary:
+		return view_model_script.environment_archetype(self, archetype_id)
+
+	func _travel_clock_minutes_for_route(route: Dictionary, force_walk: bool = false) -> int:
+		return int(view_model_script.travel_clock_minutes_for_route(self, route, force_walk))
+
+	func _arrival_minute_for_route(route: Dictionary, force_walk: bool = false) -> int:
+		return int(view_model_script.arrival_minute_for_route(self, route, force_walk))
+
+	func _environment_open_status_at(archetype: Dictionary, minute_of_day: int) -> Dictionary:
+		return view_model_script.environment_open_status_at(self, archetype, minute_of_day)
+
+	func _travel_label_from_archetype(archetype: Dictionary, fallback_id: String) -> String:
+		return str(view_model_script.travel_label_from_archetype(self, archetype, fallback_id))
+
+	func _travel_full_preview_enabled() -> bool:
+		return bool(view_model_script.travel_full_preview_enabled(self))
+
+	func _travel_full_preview_enabled_for(target_id: String) -> bool:
+		return bool(view_model_script.travel_full_preview_enabled_for(self, target_id))
+
+	func _local_parent_home_door_travel_choice(_target_id: String) -> Dictionary:
+		return {}
+
+	func _closing_time_blocks_environment_actions() -> bool:
+		return false
+
+	func _closing_time_walk_fallback_target_id() -> String:
+		return ""
+
+	func _travel_target_ids() -> Array:
+		return view_model_script.travel_target_ids(self)
+
+	func _travel_choice(target_id: String, known_target_ids: Array) -> Dictionary:
+		return view_model_script.travel_choice(self, target_id, known_target_ids)
+
 
 var library: ContentLibrary
 var generator: RunGenerator
@@ -34,6 +133,15 @@ func _run() -> void:
 	var output_markdown := str(options.get("output_markdown", DEFAULT_OUTPUT_MARKDOWN))
 	var exact_seed := str(options.get("exact_seed", "")).strip_edges()
 	var seed_prefix := str(options.get("seed_prefix", "")).strip_edges()
+	var attempt_id := str(options.get("attempt_id", "")).strip_edges()
+	var attempt_id_contract_requested := bool(options.get("require_attempt_id", false))
+	var require_attempt_id := true
+	var attempt_id_valid := attempt_id_contract_requested and not attempt_id.is_empty()
+	if not attempt_id_valid:
+		failures.append("A qualifying environment audit requires --require-attempt-id and a nonempty launcher-issued attempt id.")
+	var visit_contract_valid := visits_per_run == DEFAULT_VISITS_PER_RUN
+	if not visit_contract_valid:
+		failures.append("A qualifying environment audit requires exactly %d visits per run." % DEFAULT_VISITS_PER_RUN)
 	if seed_prefix.is_empty():
 		seed_prefix = _random_seed_prefix()
 	if not exact_seed.is_empty():
@@ -53,19 +161,64 @@ func _run() -> void:
 	for run_index in range(run_count):
 		var seed := exact_seed if not exact_seed.is_empty() else _unique_seed(seed_prefix, run_index, entropy, used_seeds)
 		print("ENVIRONMENT_GENERATION_AUDIT RUN %d/%d seed=%s" % [run_index + 1, run_count, seed])
-		_simulate_run(run_index, seed, visits_per_run)
+		_simulate_run(run_index, seed, visits_per_run, attempt_id, require_attempt_id)
 		print("ENVIRONMENT_GENERATION_AUDIT RUN_COMPLETE %d/%d" % [run_index + 1, run_count])
 
 	var aggregate := _build_aggregate(run_count, visits_per_run, seed_prefix)
+	var requested_visits_satisfied := run_summaries.size() == run_count
+	var installed_finalized_visit_count := 0
+	var successful_linked_travel_count := 0
+	var crew_state_unchanged := run_summaries.size() == run_count
+	for summary_value in run_summaries:
+		if typeof(summary_value) != TYPE_DICTIONARY:
+			requested_visits_satisfied = false
+			crew_state_unchanged = false
+			break
+		var summary: Dictionary = summary_value
+		installed_finalized_visit_count += int(summary.get("installed_finalized_visit_count", 0))
+		successful_linked_travel_count += int(summary.get("successful_linked_travel_count", 0))
+		if not bool(summary.get("requested_visits_satisfied", false)):
+			requested_visits_satisfied = false
+		if not bool(summary.get("crew_state_unchanged", false)):
+			crew_state_unchanged = false
+	var native_diagnostics := _native_diagnostic_totals()
+	var native_diagnostic_failure_count := int(native_diagnostics.get("failure_count", 0))
+	var native_diagnostic_warning_count := int(native_diagnostics.get("warning_count", 0))
+	var native_diagnostics_clean := native_diagnostic_failure_count == 0 and native_diagnostic_warning_count == 0
+	var evidence_satisfied := requested_visits_satisfied \
+		and crew_state_unchanged \
+		and attempt_id_valid \
+		and visit_contract_valid \
+		and native_diagnostics_clean
+	var qualifying_passed := failures.is_empty() and warnings.is_empty() and evidence_satisfied
 	var report := {
 		"tool": "environment_generation_audit",
+		"evidence_schema_version": 2,
 		"generated_at_unix": Time.get_unix_time_from_system(),
+		"attempt_id": attempt_id,
+		"attempt_id_required": require_attempt_id,
+		"attempt_id_valid": attempt_id_valid,
 		"run_count": run_count,
 		"visits_per_run_target": visits_per_run,
+		"travels_per_run_target": maxi(0, visits_per_run - 1),
 		"seed_prefix": seed_prefix,
-		"passed": failures.is_empty(),
-		"failure_count": failures.size(),
-		"warning_count": warnings.size(),
+		"exact_seed_requested": not exact_seed.is_empty(),
+		"requested_seed_text": exact_seed,
+		"requested_total_visit_count": run_count * visits_per_run,
+		"requested_total_travel_count": run_count * maxi(0, visits_per_run - 1),
+		"installed_finalized_visit_count": installed_finalized_visit_count,
+		"successful_linked_travel_count": successful_linked_travel_count,
+		"requested_visits_satisfied": requested_visits_satisfied,
+		"crew_state_unchanged": crew_state_unchanged,
+		"private_state_evidence_policy": "digest_only",
+		"native_diagnostics_clean": native_diagnostics_clean,
+		"native_diagnostics": native_diagnostics,
+		"tool_failure_count": failures.size(),
+		"tool_warning_count": warnings.size(),
+		"warnings_clean": warnings.is_empty() and native_diagnostic_warning_count == 0,
+		"passed": qualifying_passed,
+		"failure_count": failures.size() + native_diagnostic_failure_count,
+		"warning_count": warnings.size() + native_diagnostic_warning_count,
 		"method": _method_notes(),
 		"aggregate": aggregate,
 		"runs": run_summaries,
@@ -76,8 +229,8 @@ func _run() -> void:
 	}
 	_write_json(output_json, report)
 	_write_markdown(output_markdown, report)
-	_print_summary(output_json, output_markdown, aggregate)
-	await _finish(0 if failures.is_empty() else 1)
+	_print_summary(output_json, output_markdown, aggregate, evidence_satisfied)
+	await _finish(0 if qualifying_passed else 1)
 
 
 func _finish(exit_code: int) -> void:
@@ -101,6 +254,10 @@ func _parse_options() -> Dictionary:
 			options["seed_prefix"] = text.trim_prefix("--seed-prefix=")
 		elif text.begins_with("--exact-seed="):
 			options["exact_seed"] = text.trim_prefix("--exact-seed=")
+		elif text.begins_with("--attempt-id="):
+			options["attempt_id"] = text.trim_prefix("--attempt-id=")
+		elif text == "--require-attempt-id":
+			options["require_attempt_id"] = true
 	return options
 
 
@@ -122,48 +279,122 @@ func _unique_seed(prefix: String, run_index: int, entropy: RandomNumberGenerator
 	return seed
 
 
-func _simulate_run(run_index: int, seed: String, visits_per_run: int) -> void:
+func _simulate_run(run_index: int, seed: String, visits_per_run: int, attempt_id: String, require_attempt_id: bool) -> void:
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new(seed)
+	var crew_state_before_json := _crew_state_json(run_state)
 	var path_rng := run_state.create_rng("environment_generation_audit_path")
-	if not bool(HarnessProductionFidelityScript.generate_and_finalize(
-		generator, run_state, failures, "environment-generation initial arrival for %s" % seed
-	).get("ok", false)):
-		return
-	_audit_world_map_beach_delta(run_state.world_map, seed)
-
+	var seed_binding := _seed_binding(run_state, seed)
+	seed_binding["attempt_id_required"] = require_attempt_id
 	var run_summary := {
 		"run_index": run_index,
+		"attempt_id": attempt_id,
 		"seed": seed,
+		"requested_seed_text": str(seed_binding.get("requested_seed_text", "")),
+		"seed_text": str(seed_binding.get("seed_text", "")),
+		"seed_value": int(seed_binding.get("seed_value", 0)),
+		"challenge_key": str(seed_binding.get("challenge_key", "")),
+		"challenge_id": str(seed_binding.get("challenge_id", "")),
+		"challenge_mode": str(seed_binding.get("challenge_mode", "")),
+		"challenge_seed_text": str(seed_binding.get("challenge_seed_text", "")),
+		"derived_seed_value": int(seed_binding.get("derived_seed_value", 0)),
+		"expected_challenge_key": str(seed_binding.get("expected_challenge_key", "")),
+		"expected_seed_value": int(seed_binding.get("expected_seed_value", 0)),
+		"seed_binding_valid": bool(seed_binding.get("seed_binding_valid", false)),
+		"attempt_id_required": require_attempt_id,
+		"attempt_id_valid": not require_attempt_id or not attempt_id.is_empty(),
+		"final_seed_binding": {},
+		"final_seed_binding_valid": false,
+		"post_event_seed_binding_count": 0,
+		"requested_visit_count": visits_per_run,
+		"requested_travel_count": maxi(0, visits_per_run - 1),
 		"visited": [],
+		"visit_indices": [],
+		"travel_indices": [],
+		"initial_arrival_receipt": {},
 		"stopped_reason": "completed",
 		"start_bankroll": run_state.bankroll,
 		"end_bankroll": run_state.bankroll,
 		"end_suspicion": run_state.suspicion_level(),
 		"events_resolved": 0,
 		"travel_count": 0,
+		"environment_count": 0,
+		"installed_finalized_visit_count": 0,
+		"successful_linked_travel_count": 0,
+		"contiguous_visit_indices": false,
+		"contiguous_travel_indices": false,
+		"requested_visits_satisfied": false,
+		"crew_state_before_sha256": crew_state_before_json.sha256_text(),
+		"crew_state_after_sha256": "",
+		"crew_state_unchanged": false,
 		"travel_lock_wait_actions": 0,
 	}
+	var initial_arrival: Dictionary = HarnessProductionFidelityScript.generate_and_finalize(
+		generator, run_state, failures, "environment-generation initial arrival for %s" % seed
+	)
+	var initial_projection_rebuild := _independent_live_projection_binding(run_state)
+	var pending_arrival_receipt := _arrival_receipt(
+		initial_arrival, run_state.current_environment, "initial", 0, -1, -1,
+		attempt_id, seed_binding, run_state._scenario_semantic_ready(), initial_projection_rebuild
+	)
+	run_summary["initial_arrival_receipt"] = pending_arrival_receipt.duplicate(true)
+	if not bool(initial_arrival.get("ok", false)):
+		run_summary["stopped_reason"] = "initial_arrival_failed"
+		_seal_final_seed_binding(run_summary, run_state, seed, attempt_id, require_attempt_id)
+		_seal_crew_noop_evidence(run_summary, run_state, crew_state_before_json)
+		_finalize_run_evidence(run_summary, visits_per_run)
+		run_summaries.append(run_summary)
+		return
+	_audit_world_map_beach_delta(run_state.world_map, seed)
 
 	for visit_index in range(visits_per_run):
 		if run_state.current_environment.is_empty():
 			run_summary["stopped_reason"] = "missing_environment"
 			break
-		var record := _record_environment(run_state, run_index, seed, visit_index)
+		var record := _record_environment(run_state, run_index, seed, visit_index, pending_arrival_receipt, attempt_id)
 		_audit_environment_unique_object_classes(run_state.current_environment, seed, visit_index)
 		var event_results := _resolve_travel_unlock_events(run_state, path_rng)
 		record["events_resolved_for_travel"] = event_results
 		record["resolved_event_ids_after_policy"] = _copy_array(run_state.current_environment.get("resolved_event_ids", []))
 		record["next_archetypes_after_events"] = _copy_array(run_state.current_environment.get("next_archetypes", []))
-		record["travel_after_events"] = _travel_choices(run_state, true)
+		# Qualifying evidence is public/player-visible evidence. Hidden routes must
+		# never be serialized merely because this is an audit process.
+		record["travel_after_events"] = _travel_choices(run_state, false)
+		record["travel_after_events_digest"] = _json_sha256(record["travel_after_events"])
 		record["bankroll_after_events"] = run_state.bankroll
 		record["suspicion_after_events"] = run_state.suspicion_level()
+		var terminal_after_event_policy := run_state.is_terminal()
+		var post_event_seed_binding := _seed_binding(run_state, seed)
+		post_event_seed_binding["attempt_id"] = attempt_id
+		post_event_seed_binding["attempt_id_required"] = require_attempt_id
+		seed_binding = post_event_seed_binding
+		record["seed_binding_after_event_policy"] = post_event_seed_binding.duplicate(true)
+		record["seed_binding_after_event_policy_valid"] = bool(post_event_seed_binding.get("seed_binding_valid", false))
+		record["terminal_after_event_policy"] = terminal_after_event_policy
+		record["run_status_after_event_policy"] = str(run_state.run_status)
+		record["terminal_reason_after_event_policy"] = str(run_state.run_failure_reason) if terminal_after_event_policy else ""
+		record["terminal_message_after_event_policy"] = str(run_state.run_failure_message) if terminal_after_event_policy else ""
 		records.append(record)
 		var visited: Array = run_summary.get("visited", [])
 		visited.append({
+			"attempt_id": attempt_id,
+			"requested_seed_text": str(seed_binding.get("requested_seed_text", "")),
+			"seed_text": str(seed_binding.get("seed_text", "")),
+			"seed_value": int(seed_binding.get("seed_value", 0)),
+			"challenge_key": str(seed_binding.get("challenge_key", "")),
+			"challenge_id": str(seed_binding.get("challenge_id", "")),
+			"challenge_mode": str(seed_binding.get("challenge_mode", "")),
+			"derived_seed_value": int(seed_binding.get("derived_seed_value", 0)),
+			"seed_binding_valid": bool(seed_binding.get("seed_binding_valid", false)),
 			"visit_index": visit_index,
 			"environment_id": str(run_state.current_environment.get("id", "")),
 			"archetype_id": str(run_state.current_environment.get("archetype_id", "")),
+			"world_node_id": str(run_state.current_environment.get("world_node_id", run_state.current_world_node_id())),
+			"scenario_id": str(run_state.current_environment.get("scenario_id", "")),
+			"arrival_kind": str(pending_arrival_receipt.get("kind", "")),
+			"arrival_ok": bool(pending_arrival_receipt.get("ok", false)),
+			"installed_finalized": bool(pending_arrival_receipt.get("installed_finalized", false)),
+			"scenario_layout_authority_digest": str(_copy_dict(pending_arrival_receipt.get("runtime_scenario_layout", {})).get("authority_digest", "")),
 			"kind": str(run_state.current_environment.get("kind", "")),
 			"games": _copy_array(run_state.current_environment.get("game_ids", [])),
 			"events": _copy_array(run_state.current_environment.get("event_ids", [])),
@@ -171,6 +402,11 @@ func _simulate_run(run_index: int, seed: String, visits_per_run: int) -> void:
 		})
 		run_summary["visited"] = visited
 		run_summary["events_resolved"] = int(run_summary.get("events_resolved", 0)) + event_results.size()
+		if terminal_after_event_policy:
+			run_summary["stopped_reason"] = str(run_state.run_failure_reason)
+			if str(run_summary.get("stopped_reason", "")).is_empty():
+				run_summary["stopped_reason"] = "terminal_after_event_policy"
+			break
 
 		if visit_index >= visits_per_run - 1:
 			break
@@ -184,27 +420,40 @@ func _simulate_run(run_index: int, seed: String, visits_per_run: int) -> void:
 		if choice.is_empty():
 			run_summary["stopped_reason"] = "no_enabled_travel"
 			break
-		var travel_record := _travel_to(run_state, choice)
+		var travel_record := _travel_to(run_state, choice, visit_index, visit_index, visit_index + 1, attempt_id, seed_binding)
 		travel_record["run_index"] = run_index
+		travel_record["attempt_id"] = attempt_id
 		travel_record["seed"] = seed
-		travel_record["from_visit_index"] = visit_index
+		travel_record["requested_seed_text"] = str(seed_binding.get("requested_seed_text", ""))
+		travel_record["seed_text"] = str(seed_binding.get("seed_text", ""))
+		travel_record["seed_value"] = int(seed_binding.get("seed_value", 0))
+		travel_record["challenge_key"] = str(seed_binding.get("challenge_key", ""))
+		travel_record["challenge_id"] = str(seed_binding.get("challenge_id", ""))
+		travel_record["challenge_mode"] = str(seed_binding.get("challenge_mode", ""))
+		travel_record["derived_seed_value"] = int(seed_binding.get("derived_seed_value", 0))
+		travel_record["seed_binding_valid"] = bool(seed_binding.get("seed_binding_valid", false))
 		travel_records.append(travel_record)
 		if not bool(travel_record.get("ok", true)):
 			run_summary["stopped_reason"] = "room_finalization_failed"
 			break
 		run_summary["travel_count"] = int(run_summary.get("travel_count", 0)) + 1
+		pending_arrival_receipt = _copy_dict(travel_record.get("arrival_receipt", {}))
 		if run_state.is_terminal():
 			run_summary["stopped_reason"] = str(run_state.run_failure_reason)
 			break
 
 	run_summary["end_bankroll"] = run_state.bankroll
 	run_summary["end_suspicion"] = run_state.suspicion_level()
-	run_summary["environment_count"] = (run_summary.get("visited", []) as Array).size()
+	_seal_final_seed_binding(run_summary, run_state, seed, attempt_id, require_attempt_id)
+	_seal_crew_noop_evidence(run_summary, run_state, crew_state_before_json)
+	_finalize_run_evidence(run_summary, visits_per_run)
 	run_summaries.append(run_summary)
 
 
-func _record_environment(run_state: RunState, run_index: int, seed: String, visit_index: int) -> Dictionary:
+func _record_environment(run_state: RunState, run_index: int, seed: String, visit_index: int, arrival_receipt: Dictionary, attempt_id: String) -> Dictionary:
 	var environment := run_state.current_environment.duplicate(true)
+	var seed_binding := _seed_binding(run_state, seed)
+	var travel_initial := _travel_choices(run_state, false)
 	var game_ids := _string_array(environment.get("game_ids", []))
 	var game_states := _copy_dict(environment.get("game_states", {}))
 	var state_summaries := {}
@@ -213,10 +462,28 @@ func _record_environment(run_state: RunState, run_index: int, seed: String, visi
 		state_summaries[game_id] = _summarize_game_state(game_id, state)
 	return {
 		"run_index": run_index,
+		"attempt_id": attempt_id,
 		"seed": seed,
+		"requested_seed_text": str(seed_binding.get("requested_seed_text", "")),
+		"seed_text": str(seed_binding.get("seed_text", "")),
+		"seed_value": int(seed_binding.get("seed_value", 0)),
+		"challenge_key": str(seed_binding.get("challenge_key", "")),
+		"challenge_id": str(seed_binding.get("challenge_id", "")),
+		"challenge_mode": str(seed_binding.get("challenge_mode", "")),
+		"challenge_seed_text": str(seed_binding.get("challenge_seed_text", "")),
+		"derived_seed_value": int(seed_binding.get("derived_seed_value", 0)),
+		"expected_challenge_key": str(seed_binding.get("expected_challenge_key", "")),
+		"expected_seed_value": int(seed_binding.get("expected_seed_value", 0)),
+		"seed_binding_valid": bool(seed_binding.get("seed_binding_valid", false)),
 		"visit_index": visit_index,
+		"capture_boundary": "arrival_before_event_policy",
+		"arrival_receipt": arrival_receipt.duplicate(true),
+		"installed_finalized": bool(arrival_receipt.get("installed_finalized", false)),
 		"environment_id": str(environment.get("id", "")),
 		"archetype_id": str(environment.get("archetype_id", "")),
+		"world_node_id": str(environment.get("world_node_id", run_state.current_world_node_id())),
+		"scenario_id": str(environment.get("scenario_id", "")),
+		"runtime_scenario_layout": _runtime_scenario_layout_receipt(environment, run_state._scenario_semantic_ready()),
 		"display_name": str(environment.get("display_name", "")),
 		"kind": str(environment.get("kind", "")),
 		"tier": int(environment.get("tier", 1)),
@@ -226,7 +493,7 @@ func _record_environment(run_state: RunState, run_index: int, seed: String, visi
 		"visual_context": _copy_dict(environment.get("visual_context", {})),
 		"security_profile": _copy_dict(environment.get("security_profile", {})),
 		"economic_profile": _copy_dict(environment.get("economic_profile", {})),
-		"local_narrative_flags": _copy_dict(environment.get("local_narrative_flags", {})),
+		"local_narrative_flag_count": _copy_dict(environment.get("local_narrative_flags", {})).size(),
 		"suspicion_cues": _copy_array(environment.get("suspicion_cues", [])),
 		"games": game_ids,
 		"game_state_summaries": state_summaries,
@@ -237,12 +504,1165 @@ func _record_environment(run_state: RunState, run_index: int, seed: String, visi
 		"lenders": _string_array(environment.get("lender_hooks", [])),
 		"next_archetypes_initial": _string_array(environment.get("next_archetypes", [])),
 		"travel_hooks_initial": _string_array(environment.get("travel_hooks", [])),
-		"travel_initial": _travel_choices(run_state, true),
+		"travel_initial": travel_initial,
+		"travel_initial_digest": _json_sha256(travel_initial),
 		"travel_lock_remaining": int(environment.get("travel_lock_remaining", 0)),
 		"turns": int(environment.get("turns", 0)),
 		"bankroll_on_entry": run_state.bankroll,
 		"suspicion_on_entry": run_state.suspicion_level(),
 	}
+
+
+func _seed_binding(run_state: RunState, requested_seed_text: String) -> Dictionary:
+	var challenge := _copy_dict(run_state.challenge_config)
+	var challenge_key := RunStateScript.challenge_key(challenge)
+	var derived_seed_value := RunStateScript.text_to_seed(challenge_key)
+	var expected_challenge := RunStateScript.standard_challenge(requested_seed_text)
+	var expected_challenge_key := RunStateScript.challenge_key(expected_challenge)
+	var expected_seed_value := RunStateScript.text_to_seed(expected_challenge_key)
+	var challenge_modifiers := _copy_dict(challenge.get("modifiers", {}))
+	var seed_binding_valid := not requested_seed_text.is_empty() \
+		and run_state.seed_text == requested_seed_text \
+		and str(challenge.get("seed_text", "")) == requested_seed_text \
+		and str(challenge.get("mode", "")) == "standard" \
+		and str(challenge.get("id", "")) == "standard" \
+		and str(challenge.get("daily_id", "")) == "" \
+		and not bool(challenge.get("hidden_seed", true)) \
+		and challenge_modifiers.is_empty() \
+		and challenge_key == expected_challenge_key \
+		and run_state.seed_value == derived_seed_value \
+		and run_state.seed_value == expected_seed_value
+	return {
+		"requested_seed_text": requested_seed_text,
+		"seed_text": run_state.seed_text,
+		"seed_value": run_state.seed_value,
+		"challenge_key": challenge_key,
+		"challenge_id": str(challenge.get("id", "")),
+		"challenge_mode": str(challenge.get("mode", "")),
+		"challenge_seed_text": str(challenge.get("seed_text", "")),
+		"challenge_daily_id": str(challenge.get("daily_id", "")),
+		"challenge_hidden_seed": bool(challenge.get("hidden_seed", true)),
+		"challenge_modifier_count": challenge_modifiers.size(),
+		"derived_seed_value": derived_seed_value,
+		"expected_challenge_key": expected_challenge_key,
+		"expected_seed_value": expected_seed_value,
+		"seed_binding_valid": seed_binding_valid,
+	}
+
+
+func _seal_final_seed_binding(run_summary: Dictionary, run_state: RunState, requested_seed_text: String, attempt_id: String, require_attempt_id: bool) -> void:
+	var binding := _seed_binding(run_state, requested_seed_text)
+	binding["attempt_id"] = attempt_id
+	binding["attempt_id_required"] = require_attempt_id
+	run_summary["final_seed_binding"] = binding.duplicate(true)
+	run_summary["final_seed_binding_valid"] = bool(binding.get("seed_binding_valid", false)) \
+		and (not require_attempt_id or not attempt_id.is_empty())
+
+
+func _crew_state_json(run_state: RunState) -> String:
+	return JSON.stringify(run_state._crew_state_for_save(true, true))
+
+
+func _seal_crew_noop_evidence(run_summary: Dictionary, run_state: RunState, before_json: String) -> void:
+	var after_json := _crew_state_json(run_state)
+	run_summary["crew_state_before_sha256"] = before_json.sha256_text()
+	run_summary["crew_state_after_sha256"] = after_json.sha256_text()
+	run_summary["crew_state_unchanged"] = after_json == before_json
+
+
+func _arrival_receipt(
+	arrival: Dictionary,
+	environment: Dictionary,
+	kind: String,
+	visit_index: int,
+	travel_index: int,
+	from_visit_index: int,
+	attempt_id: String,
+	seed_binding: Dictionary,
+	live_semantic_ready: bool,
+	independent_projection_binding: Dictionary
+) -> Dictionary:
+	# HarnessProductionFidelity is the production-boundary witness. Never repair a
+	# missing field from the live RunState here: doing so would let a malformed
+	# harness receipt prove its own destination/finalization contract.
+	var installed_environment := _copy_dict(arrival.get("environment", {}))
+	var travel := _copy_dict(arrival.get("travel", {}))
+	var travel_environment := _copy_dict(travel.get("environment", {}))
+	var finalization := _copy_dict(arrival.get("finalization", {}))
+	var installed_identity_shape := _environment_identity_shape(installed_environment)
+	var current_identity_shape := _environment_identity_shape(environment)
+	var travel_identity_shape := _environment_identity_shape(travel_environment)
+	var installed_identity_shape_valid := not installed_identity_shape.is_empty()
+	var current_identity_shape_valid := not current_identity_shape.is_empty()
+	var travel_identity_shape_valid := not travel_identity_shape.is_empty()
+	var source_id := str(arrival.get("source_id", "")).strip_edges()
+	var travel_source_id := str(travel.get("source_id", "")).strip_edges()
+	var target_id := str(arrival.get("target_id", "")).strip_edges()
+	var travel_target_id := str(travel.get("target_id", "")).strip_edges()
+	var installed_environment_id := str(installed_identity_shape.get("environment_id", "")).strip_edges()
+	var installed_archetype_id := str(installed_identity_shape.get("archetype_id", "")).strip_edges()
+	var installed_world_node_id := str(installed_identity_shape.get("world_node_id", "")).strip_edges()
+	var installed_scenario_id := str(installed_identity_shape.get("scenario_id", "")).strip_edges()
+	var travel_environment_id := str(travel_identity_shape.get("environment_id", "")).strip_edges()
+	var travel_archetype_id := str(travel_identity_shape.get("archetype_id", "")).strip_edges()
+	var travel_world_node_id := str(travel_identity_shape.get("world_node_id", "")).strip_edges()
+	var travel_scenario_id := str(travel_identity_shape.get("scenario_id", "")).strip_edges()
+	var current_environment_id := str(current_identity_shape.get("environment_id", "")).strip_edges()
+	var current_archetype_id := str(current_identity_shape.get("archetype_id", "")).strip_edges()
+	var current_world_node_id := str(current_identity_shape.get("world_node_id", "")).strip_edges()
+	var current_scenario_id := str(current_identity_shape.get("scenario_id", "")).strip_edges()
+	var installed_projection_binding := _environment_projection_binding(installed_environment)
+	var live_projection_binding := _environment_projection_binding(environment)
+	var installed_travel_envelope_binding := _durable_travel_envelope_binding(installed_environment)
+	var travel_projection_binding := _durable_travel_envelope_binding(travel_environment)
+	var installed := installed_identity_shape_valid \
+		and not installed_environment_id.is_empty() \
+		and not installed_archetype_id.is_empty() \
+		and not installed_world_node_id.is_empty()
+	var finalization_receipt := _finalization_receipt(finalization, installed_environment)
+	var runtime_layout := _runtime_scenario_layout_receipt(installed_environment, live_semantic_ready)
+	var finalization_inactive := bool(finalization_receipt.get("inactive", false))
+	var independent_projection_binding_valid := bool(independent_projection_binding.get("canonical_valid", false)) \
+		and ((finalization_inactive and not bool(independent_projection_binding.get("active", false))) \
+			or (not finalization_inactive \
+				and bool(independent_projection_binding.get("active", false)) \
+				and str(independent_projection_binding.get("fingerprint", "")) == str(installed_projection_binding.get("resolved_projection_fingerprint", ""))))
+	var installed_projection_binding_valid := bool(installed_projection_binding.get("canonical_valid", false))
+	var live_projection_binding_valid := bool(live_projection_binding.get("canonical_valid", false))
+	var installed_live_projection_binding_valid := installed_projection_binding_valid \
+		and live_projection_binding_valid \
+		and str(installed_projection_binding.get("fingerprint", "")) == str(live_projection_binding.get("fingerprint", ""))
+	# EnvironmentInstance.to_dict deliberately carries only durable travel state,
+	# never the ephemeral renderer/layout proof. Bind that exact durable envelope
+	# here; full projection authority is independently bound arrival <-> live and
+	# against the finalizer below.
+	var travel_projection_binding_required := kind != "initial"
+	var travel_projection_binding_valid := not travel_projection_binding_required \
+		or (bool(installed_travel_envelope_binding.get("canonical_valid", false)) \
+			and bool(travel_projection_binding.get("canonical_valid", false)) \
+			and str(travel_projection_binding.get("fingerprint", "")) == str(installed_travel_envelope_binding.get("fingerprint", "")))
+	var expected_finalization_fingerprint := str(installed_projection_binding.get(
+		"finalization_fingerprint_with_renderer" if bool(finalization_receipt.get("renderer_snapshot_present", false)) else "finalization_fingerprint",
+		""
+	))
+	var finalization_projection_binding_valid := finalization_inactive \
+		or (bool(finalization_receipt.get("projection_binding_valid", false)) \
+			and str(finalization_receipt.get("projection_fingerprint", "")) == expected_finalization_fingerprint)
+	var finalization_matches_runtime := str(finalization_receipt.get("semantic_digest", "")) == str(runtime_layout.get("semantic_digest", "")) \
+		and str(finalization_receipt.get("layout_authority_digest", "")) == str(runtime_layout.get("authority_digest", "")) \
+		and int(finalization_receipt.get("layout_authority_count", 0)) == int(runtime_layout.get("authority_count", 0)) \
+		and finalization_projection_binding_valid
+	var runtime_layout_valid := false
+	if finalization_inactive:
+		runtime_layout_valid = not bool(runtime_layout.get("semantic_ready", false)) \
+			and not bool(runtime_layout.get("live_semantic_ready", false)) \
+			and installed_scenario_id.is_empty() \
+			and str(runtime_layout.get("semantic_digest", "")).is_empty() \
+			and str(runtime_layout.get("semantic_action_digest", "")).is_empty() \
+			and int(runtime_layout.get("authority_count", 0)) == 0 \
+			and int(runtime_layout.get("layout_audit_field_count", 0)) == 0 \
+			and int(runtime_layout.get("renderer_field_count", 0)) == 0
+	else:
+		runtime_layout_valid = bool(runtime_layout.get("semantic_ready", false)) \
+			and bool(runtime_layout.get("live_semantic_ready", false)) \
+			and str(runtime_layout.get("scenario_id", "")) == installed_scenario_id \
+			and not installed_scenario_id.is_empty() \
+			and int(runtime_layout.get("state_error_count", 0)) == 0 \
+			and int(runtime_layout.get("semantic_error_count", 0)) == 0 \
+			and int(runtime_layout.get("renderer_error_count", 0)) == 0 \
+			and bool(runtime_layout.get("layout_audit_valid", false)) \
+			and (bool(runtime_layout.get("layout_audit_active", false)) or bool(runtime_layout.get("layout_audit_sealed_passive", false))) \
+			and bool(runtime_layout.get("authority_count_matches_audit", false)) \
+			and bool(runtime_layout.get("authority_digest_matches_audit", false)) \
+			and bool(runtime_layout.get("renderer_ok", false)) \
+			and bool(runtime_layout.get("renderer_digest_matches_authority", false)) \
+			and bool(runtime_layout.get("action_authority_contract_valid", false)) \
+			and str(runtime_layout.get("semantic_digest", "")).length() == 64 \
+			and str(runtime_layout.get("authority_digest", "")).length() == 64
+	var arrival_errors := _copy_array(arrival.get("errors", []))
+	var travel_errors := _copy_array(travel.get("errors", []))
+	var arrival_contract_shape_valid := typeof(arrival.get("ok")) == TYPE_BOOL \
+		and typeof(arrival.get("stage")) == TYPE_STRING \
+		and typeof(arrival.get("source_id")) == TYPE_STRING \
+		and typeof(arrival.get("target_id")) == TYPE_STRING \
+		and typeof(arrival.get("travel")) == TYPE_DICTIONARY \
+		and typeof(arrival.get("finalization")) == TYPE_DICTIONARY \
+		and typeof(arrival.get("environment")) == TYPE_DICTIONARY \
+		and installed_identity_shape_valid \
+		and typeof(arrival.get("errors")) == TYPE_ARRAY
+	var travel_contract_shape_valid := typeof(travel.get("ok")) == TYPE_BOOL \
+		and typeof(travel.get("source_id")) == TYPE_STRING \
+		and typeof(travel.get("target_id")) == TYPE_STRING \
+		and typeof(travel.get("environment")) == TYPE_DICTIONARY \
+		and travel_identity_shape_valid
+	if kind != "initial":
+		travel_contract_shape_valid = travel_contract_shape_valid \
+			and typeof(travel.get("errors")) == TYPE_ARRAY \
+			and typeof(travel.get("scenario_finalized")) == TYPE_BOOL
+	var finalization_clean := bool(finalization_receipt.get("ok", false)) \
+		and bool(finalization_receipt.get("contract_shape_valid", false)) \
+		and int(finalization_receipt.get("warning_count", -1)) == 0 \
+		and int(finalization_receipt.get("error_count", -1)) == 0
+	var target_binding_valid := installed_identity_shape_valid \
+		and not target_id.is_empty() \
+		and travel_target_id == target_id \
+		and installed_world_node_id == target_id
+	var source_binding_valid := source_id.is_empty() and travel_source_id.is_empty()
+	if kind != "initial":
+		source_binding_valid = not source_id.is_empty() and travel_source_id == source_id
+	var current_install_binding_valid := installed_identity_shape_valid \
+		and current_identity_shape_valid \
+		and installed_environment_id == current_environment_id \
+		and installed_archetype_id == current_archetype_id \
+		and installed_world_node_id == current_world_node_id \
+		and installed_scenario_id == current_scenario_id
+	var travel_install_binding_valid := installed_identity_shape_valid \
+		and travel_identity_shape_valid \
+		and travel_environment_id == installed_environment_id \
+		and travel_archetype_id == installed_archetype_id \
+		and travel_world_node_id == installed_world_node_id \
+		and travel_scenario_id == installed_scenario_id
+	var production_boundary_valid := kind == "initial" or bool(travel.get("scenario_finalized", false))
+	var projection_binding_valid := installed_live_projection_binding_valid \
+		and travel_projection_binding_valid \
+		and finalization_projection_binding_valid \
+		and independent_projection_binding_valid
+	var receipt_valid := bool(arrival.get("ok", false)) \
+		and str(arrival.get("stage", "")) == "complete" \
+		and bool(travel.get("ok", false)) \
+		and arrival_contract_shape_valid \
+		and travel_contract_shape_valid \
+		and arrival_errors.is_empty() \
+		and travel_errors.is_empty() \
+		and installed \
+		and source_binding_valid \
+		and target_binding_valid \
+		and current_install_binding_valid \
+		and travel_install_binding_valid \
+		and production_boundary_valid \
+		and projection_binding_valid \
+		and finalization_clean \
+		and finalization_matches_runtime \
+		and runtime_layout_valid \
+		and current_identity_shape_valid \
+		and (not bool(seed_binding.get("attempt_id_required", false)) or not attempt_id.is_empty()) \
+		and bool(seed_binding.get("seed_binding_valid", false))
+	return {
+		"ok": bool(arrival.get("ok", false)),
+		"kind": kind,
+		"production_path": "generate_and_finalize" if kind == "initial" else "travel_and_finalize",
+		"stage": str(arrival.get("stage", "")),
+		"visit_index": visit_index,
+		"travel_index": travel_index,
+		"from_visit_index": from_visit_index,
+		"attempt_id": attempt_id,
+		"attempt_id_required": bool(seed_binding.get("attempt_id_required", false)),
+		"requested_seed_text": str(seed_binding.get("requested_seed_text", "")),
+		"seed_text": str(seed_binding.get("seed_text", "")),
+		"seed_value": int(seed_binding.get("seed_value", 0)),
+		"challenge_key": str(seed_binding.get("challenge_key", "")),
+		"challenge_id": str(seed_binding.get("challenge_id", "")),
+		"challenge_mode": str(seed_binding.get("challenge_mode", "")),
+		"challenge_seed_text": str(seed_binding.get("challenge_seed_text", "")),
+		"challenge_daily_id": str(seed_binding.get("challenge_daily_id", "")),
+		"challenge_hidden_seed": bool(seed_binding.get("challenge_hidden_seed", true)),
+		"challenge_modifier_count": int(seed_binding.get("challenge_modifier_count", -1)),
+		"derived_seed_value": int(seed_binding.get("derived_seed_value", 0)),
+		"expected_challenge_key": str(seed_binding.get("expected_challenge_key", "")),
+		"expected_seed_value": int(seed_binding.get("expected_seed_value", 0)),
+		"seed_binding_valid": bool(seed_binding.get("seed_binding_valid", false)),
+		"source_id": source_id,
+		"travel_source_id": travel_source_id,
+		"target_id": target_id,
+		"travel_target_id": travel_target_id,
+		"travel_ok": bool(travel.get("ok", false)),
+		"production_scenario_finalized": bool(travel.get("scenario_finalized", false)),
+		"production_boundary_valid": production_boundary_valid,
+		"installed_projection_binding_valid": installed_projection_binding_valid,
+		"live_projection_binding_valid": live_projection_binding_valid,
+		"installed_live_projection_binding_valid": installed_live_projection_binding_valid,
+		"travel_projection_binding_required": travel_projection_binding_required,
+		"travel_projection_binding_valid": travel_projection_binding_valid,
+		"finalization_projection_binding_valid": finalization_projection_binding_valid,
+		"independent_projection_binding_valid": independent_projection_binding_valid,
+		"projection_binding_valid": projection_binding_valid,
+		"installed_projection_fingerprint": str(installed_projection_binding.get("fingerprint", "")),
+		"live_projection_fingerprint": str(live_projection_binding.get("fingerprint", "")),
+		"travel_projection_fingerprint": str(travel_projection_binding.get("fingerprint", "")),
+		"finalization_projection_fingerprint": str(finalization_receipt.get("projection_fingerprint", "")),
+		"independent_projection_fingerprint": str(independent_projection_binding.get("fingerprint", "")),
+		"arrival_contract_shape_valid": arrival_contract_shape_valid,
+		"travel_contract_shape_valid": travel_contract_shape_valid,
+		"installed": installed,
+		"installed_environment_id": installed_environment_id,
+		"installed_archetype_id": installed_archetype_id,
+		"installed_world_node_id": installed_world_node_id,
+		"installed_scenario_id": installed_scenario_id,
+		"travel_environment_id": travel_environment_id,
+		"travel_archetype_id": travel_archetype_id,
+		"travel_world_node_id": travel_world_node_id,
+		"travel_scenario_id": travel_scenario_id,
+		"source_binding_valid": source_binding_valid,
+		"target_binding_valid": target_binding_valid,
+		"current_install_binding_valid": current_install_binding_valid,
+		"travel_install_binding_valid": travel_install_binding_valid,
+		"finalization": finalization_receipt,
+		"finalization_matches_runtime": finalization_matches_runtime,
+		"runtime_layout_valid": runtime_layout_valid,
+		"finalization_clean": finalization_clean,
+		"installed_finalized": receipt_valid,
+		"runtime_scenario_layout": runtime_layout,
+		"arrival_error_count": arrival_errors.size(),
+		"travel_error_count": travel_errors.size(),
+		"errors": arrival_errors,
+		"travel_errors": travel_errors,
+	}
+
+
+func _finalization_receipt(finalization: Dictionary, _environment: Dictionary) -> Dictionary:
+	var inactive := bool(finalization.get("inactive", false))
+	var authority := _copy_dict(finalization.get("layout_authority", {}))
+	var projection_binding := _finalization_projection_binding(finalization)
+	var contract_shape_valid := typeof(finalization.get("ok")) == TYPE_BOOL \
+		and (not finalization.has("inactive") or typeof(finalization.get("inactive")) == TYPE_BOOL) \
+		and typeof(finalization.get("errors")) == TYPE_ARRAY
+	if not inactive:
+		contract_shape_valid = contract_shape_valid \
+			and typeof(finalization.get("digest")) == TYPE_STRING \
+			and typeof(finalization.get("layout_authority")) == TYPE_DICTIONARY \
+			and typeof(finalization.get("layout_authority_digest")) == TYPE_STRING \
+			and typeof(finalization.get("warnings")) == TYPE_ARRAY \
+			and str(finalization.get("digest", "")).length() == 64 \
+			and str(finalization.get("layout_authority_digest", "")).length() == 64
+	return {
+		"ok": bool(finalization.get("ok", false)),
+		"inactive": inactive,
+		"already_finalized": bool(finalization.get("already_finalized", false)),
+		"contract_shape_valid": contract_shape_valid,
+		"semantic_digest": str(finalization.get("digest", "")),
+		"layout_authority_digest": str(finalization.get("layout_authority_digest", "")),
+		"layout_authority_count": authority.size(),
+		"projection_binding_valid": inactive or bool(projection_binding.get("canonical_valid", false)),
+		"projection_fingerprint": str(projection_binding.get("fingerprint", "")),
+		"renderer_snapshot_present": bool(projection_binding.get("renderer_snapshot_present", false)),
+		"warning_count": _copy_array(finalization.get("warnings", [])).size(),
+		"error_count": _copy_array(finalization.get("errors", [])).size(),
+		"warnings": _copy_array(finalization.get("warnings", [])),
+		"errors": _copy_array(finalization.get("errors", [])),
+	}
+
+
+func _environment_projection_binding(environment: Dictionary) -> Dictionary:
+	var identity_shape := _environment_identity_shape(environment)
+	var identity_shape_valid := not identity_shape.is_empty()
+	var scenario_id := str(identity_shape.get("scenario_id", "")).strip_edges()
+	var semantic_ready := bool(environment.get("scenario_semantic_ready", false))
+	var inventory_version := int(environment.get("scenario_semantic_inventory_version", 0))
+	var semantic_digest := str(environment.get("scenario_semantic_digest", ""))
+	var semantic_action_digest := str(environment.get("scenario_semantic_action_digest", ""))
+	var inventory := _copy_dict(environment.get("scenario_semantic_inventory", {}))
+	var base_interactions := _copy_array(environment.get("scenario_base_interactions", []))
+	var state := _copy_dict(environment.get("scenario_sequence_state", {}))
+	var semantic := _copy_dict(state.get("semantic_state", {}))
+	var base_records := _copy_array(environment.get("scenario_layout_base_records", []))
+	var layout_context := _copy_dict(environment.get("scenario_layout_context", {}))
+	var projection := _copy_dict(environment.get("scenario_sequence_projection", {}))
+	var projection_semantic := _copy_dict(projection.get("semantic_state", {}))
+	var authority := _copy_dict(environment.get("scenario_layout_authority", {}))
+	var authority_digest := str(environment.get("scenario_layout_authority_digest", ""))
+	var audit := _copy_dict(environment.get("scenario_layout_audit", {}))
+	var renderer := _copy_dict(environment.get("scenario_render_snapshot", {}))
+	var trusted_state_digest := str(environment.get(ScenarioEngineScript.TRUSTED_STATE_REFERENCE_KEY, ""))
+	var trusted_layout_input_digest := str(environment.get(ScenarioEngineScript.TRUSTED_LAYOUT_INPUT_DIGEST_KEY, ""))
+	var state_fingerprint := _json_sha256(state)
+	var action_authority_digest := ScenarioSequenceRuntimeScript.base_interaction_action_authority_digest(base_interactions)
+	var canonical_authority_digest := _layout_authority_digest(authority)
+	var finalization_shape := {
+		"semantic_digest": semantic_digest,
+		"state_sha256": state_fingerprint,
+		"base_records_sha256": _json_sha256(base_records),
+		"projection_sha256": _json_sha256(projection),
+		"authority_sha256": _json_sha256(authority),
+		"authority_digest": authority_digest,
+		"audit_sha256": _json_sha256(audit),
+	}
+	var resolved_projection_shape := {
+		"projection_sha256": _json_sha256(projection),
+		"authority_sha256": _json_sha256(authority),
+		"authority_digest": authority_digest,
+		"audit_sha256": _json_sha256(audit),
+		"renderer_sha256": _json_sha256(renderer),
+		"renderer_authority_digest": str(renderer.get("layout_authority_digest", "")),
+	}
+	var finalization_shape_with_renderer := finalization_shape.duplicate(true)
+	finalization_shape_with_renderer["renderer_present"] = true
+	finalization_shape_with_renderer["renderer_sha256"] = _json_sha256(renderer)
+	finalization_shape_with_renderer["renderer_authority_digest"] = str(renderer.get("layout_authority_digest", ""))
+	var full_shape := finalization_shape.duplicate(true)
+	full_shape["scenario_id"] = scenario_id
+	full_shape["semantic_ready"] = semantic_ready
+	full_shape["semantic_inventory_version"] = inventory_version
+	full_shape["semantic_action_digest"] = semantic_action_digest
+	full_shape["semantic_inventory_sha256"] = _json_sha256(inventory)
+	full_shape["base_interactions_sha256"] = _json_sha256(base_interactions)
+	full_shape["layout_context_sha256"] = _json_sha256(layout_context)
+	full_shape["trusted_state_digest"] = trusted_state_digest
+	full_shape["trusted_layout_input_digest"] = trusted_layout_input_digest
+	full_shape["renderer_sha256"] = _json_sha256(renderer)
+	full_shape["renderer_authority_digest"] = str(renderer.get("layout_authority_digest", ""))
+	var active := semantic_ready or not scenario_id.is_empty()
+	var canonical_valid := false
+	if active:
+		canonical_valid = identity_shape_valid \
+			and semantic_ready \
+			and not scenario_id.is_empty() \
+			and inventory_version > 0 \
+			and semantic_digest.length() == 64 \
+			and semantic_action_digest.length() == 64 \
+			and not inventory.is_empty() \
+			and int(inventory.get("schema_version", 0)) == inventory_version \
+			and str(inventory.get("digest", "")) == semantic_digest \
+			and int(semantic.get("inventory_schema_version", 0)) == inventory_version \
+			and str(semantic.get("inventory_digest", "")) == semantic_digest \
+			and action_authority_digest == semantic_action_digest \
+			and trusted_state_digest == state_fingerprint \
+			and trusted_layout_input_digest.length() == 64 \
+			and authority_digest.length() == 64 \
+			and canonical_authority_digest == authority_digest \
+			and str(projection_semantic.get("layout_authority_digest", "")) == authority_digest \
+			and bool(audit.get("valid", false)) \
+			and str(audit.get("authority_digest", "")) == authority_digest \
+			and bool(renderer.get("ok", false)) \
+			and str(renderer.get("layout_authority_digest", "")) == authority_digest
+	else:
+		canonical_valid = identity_shape_valid \
+			and scenario_id.is_empty() \
+			and not semantic_ready \
+			and inventory_version == 0 \
+			and semantic_digest.is_empty() \
+			and semantic_action_digest.is_empty() \
+			and inventory.is_empty() \
+			and base_interactions.is_empty() \
+			and state.is_empty() \
+			and base_records.is_empty() \
+			and layout_context.is_empty() \
+			and projection.is_empty() \
+			and authority.is_empty() \
+			and audit.is_empty() \
+			and renderer.is_empty() \
+			and trusted_state_digest.is_empty() \
+			and trusted_layout_input_digest.is_empty()
+	return {
+		"active": active,
+		"canonical_valid": canonical_valid,
+		"scenario_id": scenario_id,
+		"semantic_digest": semantic_digest,
+		"semantic_action_digest": semantic_action_digest,
+		"layout_authority_digest": authority_digest,
+		"canonical_layout_authority_digest": canonical_authority_digest,
+		"resolved_projection_fingerprint": _json_sha256(resolved_projection_shape) if identity_shape_valid else "",
+		"finalization_fingerprint": _json_sha256(finalization_shape) if identity_shape_valid else "",
+		"finalization_fingerprint_with_renderer": _json_sha256(finalization_shape_with_renderer) if identity_shape_valid else "",
+		"fingerprint": _json_sha256(full_shape) if identity_shape_valid else "",
+	}
+
+
+func _environment_identity_shape(environment: Dictionary) -> Dictionary:
+	# Missing scenario_id is the canonical inactive value. If present, it must
+	# remain a String; no raw identity may be normalized into a colliding string.
+	if typeof(environment.get("id")) != TYPE_STRING \
+			or typeof(environment.get("archetype_id")) != TYPE_STRING \
+			or typeof(environment.get("world_node_id")) != TYPE_STRING \
+			or typeof(environment.get("scenario_id", "")) != TYPE_STRING:
+		return {}
+	return {
+		"environment_id": environment.get("id"),
+		"archetype_id": environment.get("archetype_id"),
+		"world_node_id": environment.get("world_node_id"),
+		"scenario_id": environment.get("scenario_id", ""),
+	}
+
+
+func _durable_travel_envelope_binding(environment: Dictionary) -> Dictionary:
+	# RunGenerator returns the generated EnvironmentInstance.to_dict() object,
+	# which intentionally predates installation/finalization. Bind only immutable
+	# generated identity here; never pretend it carries IDs/context stamped during
+	# installation or the live semantic projection proof.
+	var shape := _environment_identity_shape(environment)
+	var identity_shape_valid := not shape.is_empty()
+	return {
+		"canonical_valid": identity_shape_valid \
+			and not str(shape.get("environment_id", "")).is_empty() \
+			and not str(shape.get("archetype_id", "")).is_empty() \
+			and not str(shape.get("world_node_id", "")).is_empty(),
+		"fingerprint": _json_sha256(shape) if identity_shape_valid else "",
+	}
+
+
+func _independent_live_projection_binding(run_state: RunState) -> Dictionary:
+	if run_state == null:
+		return {"active": false, "canonical_valid": false, "fingerprint": ""}
+	var environment := run_state.current_environment
+	var identity_shape := _environment_identity_shape(environment)
+	if identity_shape.is_empty():
+		return {"active": false, "canonical_valid": false, "fingerprint": ""}
+	if not run_state._scenario_semantic_ready():
+		var inactive_valid := str(identity_shape.get("scenario_id", "")).strip_edges().is_empty()
+		return {
+			"active": false,
+			"canonical_valid": inactive_valid,
+			"fingerprint": _json_sha256({"active": false}),
+		}
+	var raw_projection := run_state.world_sequence_composed_projection()
+	if raw_projection.is_empty() or not bool(raw_projection.get("ok", true)):
+		return {"active": true, "canonical_valid": false, "fingerprint": ""}
+	var layout_environment := environment.duplicate(false)
+	var layout_context := _copy_dict(environment.get("scenario_layout_context", {}))
+	if not layout_context.is_empty():
+		layout_environment["_scenario_layout_context"] = layout_context
+	var base_records := _copy_array(environment.get("scenario_layout_base_records", []))
+	var layout_result := ScenarioLayoutResolverScript.resolve(base_records, raw_projection, layout_environment)
+	if not bool(layout_result.get("ok", false)):
+		return {"active": true, "canonical_valid": false, "fingerprint": ""}
+	var projection := _copy_dict(layout_result.get("projection", {}))
+	var authority := _copy_dict(layout_result.get("layout_authority", {}))
+	var authority_digest := str(layout_result.get("layout_authority_digest", ""))
+	var audit := _copy_dict(layout_result.get("layout_audit", {}))
+	var renderer := ScenarioLayoutResolverScript.sealed_renderer_snapshot(layout_result)
+	var trusted_layout_input_digest := str(environment.get(ScenarioEngineScript.TRUSTED_LAYOUT_INPUT_DIGEST_KEY, ""))
+	var recomputed_layout_input_digest := ScenarioEngineScript._sequence_layout_input_digest(environment, raw_projection)
+	var projection_semantic := _copy_dict(projection.get("semantic_state", {}))
+	var shape := {
+		"projection_sha256": _json_sha256(projection),
+		"authority_sha256": _json_sha256(authority),
+		"authority_digest": authority_digest,
+		"audit_sha256": _json_sha256(audit),
+		"renderer_sha256": _json_sha256(renderer),
+		"renderer_authority_digest": str(renderer.get("layout_authority_digest", "")),
+	}
+	var canonical_valid := authority_digest.length() == 64 \
+		and _layout_authority_digest(authority) == authority_digest \
+		and bool(audit.get("valid", false)) \
+		and str(audit.get("authority_digest", "")) == authority_digest \
+		and str(projection_semantic.get("layout_authority_digest", "")) == authority_digest \
+		and bool(renderer.get("ok", false)) \
+		and str(renderer.get("layout_authority_digest", "")) == authority_digest \
+		and trusted_layout_input_digest.length() == 64 \
+		and trusted_layout_input_digest == recomputed_layout_input_digest
+	return {
+		"active": true,
+		"canonical_valid": canonical_valid,
+		"fingerprint": _json_sha256(shape),
+		"trusted_layout_input_digest": trusted_layout_input_digest,
+		"recomputed_layout_input_digest": recomputed_layout_input_digest,
+	}
+
+
+func _finalization_projection_binding(finalization: Dictionary) -> Dictionary:
+	var inactive := bool(finalization.get("inactive", false))
+	if inactive:
+		return {"active": false, "canonical_valid": true, "fingerprint": ""}
+	var authority := _copy_dict(finalization.get("layout_authority", {}))
+	var authority_digest := str(finalization.get("layout_authority_digest", ""))
+	var projection := _copy_dict(finalization.get("projection", {}))
+	var projection_semantic := _copy_dict(projection.get("semantic_state", {}))
+	var audit := _copy_dict(finalization.get("layout_audit", {}))
+	var renderer_present := finalization.has("renderer_snapshot")
+	var renderer := _copy_dict(finalization.get("renderer_snapshot", {}))
+	var shape := {
+		"semantic_digest": str(finalization.get("digest", "")),
+		"state_sha256": _json_sha256(_copy_dict(finalization.get("state", {}))),
+		"base_records_sha256": _json_sha256(_copy_array(finalization.get("records", []))),
+		"projection_sha256": _json_sha256(projection),
+		"authority_sha256": _json_sha256(authority),
+		"authority_digest": authority_digest,
+		"audit_sha256": _json_sha256(audit),
+	}
+	if renderer_present:
+		shape["renderer_present"] = true
+		shape["renderer_sha256"] = _json_sha256(renderer)
+		shape["renderer_authority_digest"] = str(renderer.get("layout_authority_digest", ""))
+	var canonical_valid := str(finalization.get("digest", "")).length() == 64 \
+		and authority_digest.length() == 64 \
+		and _layout_authority_digest(authority) == authority_digest \
+		and typeof(finalization.get("state")) == TYPE_DICTIONARY \
+		and typeof(finalization.get("records")) == TYPE_ARRAY \
+		and typeof(finalization.get("projection")) == TYPE_DICTIONARY \
+		and typeof(finalization.get("layout_authority")) == TYPE_DICTIONARY \
+		and typeof(finalization.get("layout_audit")) == TYPE_DICTIONARY \
+		and bool(audit.get("valid", false)) \
+		and str(audit.get("authority_digest", "")) == authority_digest \
+		and str(projection_semantic.get("layout_authority_digest", "")) == authority_digest \
+		and (not renderer_present or (typeof(finalization.get("renderer_snapshot")) == TYPE_DICTIONARY \
+			and bool(renderer.get("ok", false)) \
+			and str(renderer.get("layout_authority_digest", "")) == authority_digest))
+	return {
+		"active": true,
+		"canonical_valid": canonical_valid,
+		"renderer_snapshot_present": renderer_present,
+		"fingerprint": _json_sha256(shape),
+	}
+
+
+func _layout_authority_digest(authority: Dictionary) -> String:
+	var canonical: Array = []
+	var identities := authority.keys()
+	identities.sort()
+	for identity_value in identities:
+		canonical.append(_copy_dict(authority.get(identity_value, {})))
+	return JSON.stringify(canonical).sha256_text()
+
+
+func _json_sha256(value: Variant) -> String:
+	return ScenarioSequenceRuntimeScript.content_fingerprint(value)
+
+
+func _runtime_scenario_layout_receipt(environment: Dictionary, live_semantic_ready: bool = false) -> Dictionary:
+	var state := _copy_dict(environment.get("scenario_sequence_state", {}))
+	var state_semantic := _copy_dict(state.get("semantic_state", {}))
+	# Actionability must come from the same sealed public projection consumed by
+	# the renderer/UI. The private sequence state may still contain authored
+	# actions that production preconditions removed from the player-facing view.
+	var projection := _copy_dict(environment.get("scenario_sequence_projection", {}))
+	var semantic := _copy_dict(projection.get("semantic_state", {}))
+	var authority := _copy_dict(environment.get("scenario_layout_authority", {}))
+	var interactions := _copy_dict(semantic.get("interactions", {}))
+	var authority_digest := str(environment.get("scenario_layout_authority_digest", ""))
+	var base_by_identity: Dictionary = {}
+	for record_value in _copy_array(environment.get("scenario_layout_base_records", [])):
+		if typeof(record_value) != TYPE_DICTIONARY:
+			continue
+		var base_record: Dictionary = record_value
+		var base_identity := "%s::%s" % [str(base_record.get("owner_namespace", "")), str(base_record.get("stable_object_id", ""))]
+		if base_identity != "::":
+			base_by_identity[base_identity] = base_record
+	var audit := _copy_dict(environment.get("scenario_layout_audit", {}))
+	var reachable_interaction_ids := _string_array(audit.get("reachable_interaction_ids", []))
+	var authority_identities := _sorted_keys(authority)
+	var authority_receipts: Array = []
+	var action_authority_member_count := 0
+	var actionable_authority_count := 0
+	var invalid_action_authority_count := 0
+	for identity_value in authority_identities:
+		var identity := str(identity_value)
+		var sealed := _copy_dict(authority.get(identity, {}))
+		var interaction := _copy_dict(interactions.get(identity, {}))
+		var base_record := _copy_dict(base_by_identity.get(identity, {}))
+		var semantic_interaction_member := bool(sealed.get("semantic_interaction_member", false))
+		var presentation_mode := str(sealed.get("presentation_mode", ""))
+		var semantic_interaction_present := semantic_interaction_member \
+			and not interaction.is_empty() \
+			and bool(interaction.get("present", true))
+		var semantic_interaction_sealed := semantic_interaction_present \
+			and "%s::%s" % [str(interaction.get("owner_namespace", "")), str(interaction.get("stable_object_id", ""))] == identity \
+			and str(interaction.get("presentation_object_id", "")) == str(sealed.get("presentation_object_id", ""))
+		var exact_sealed_authority := str(sealed.get("identity", "")) == identity \
+			and not str(sealed.get("presentation_object_id", "")).is_empty() \
+			and presentation_mode in ["room", "overflow"]
+		var base_record_sealed := not base_record.is_empty() \
+			and "%s::%s" % [str(base_record.get("owner_namespace", "")), str(base_record.get("stable_object_id", ""))] == identity \
+			and str(base_record.get("object_id", "")) == str(sealed.get("presentation_object_id", "")) \
+			and str(base_record.get("presentation_mode", "room")) == presentation_mode \
+			and str(base_record.get("slot_id", "")) == str(sealed.get("slot_id", ""))
+		var semantic_raw_actions := _copy_array(interaction.get("available_actions", []))
+		var base_raw_actions := _copy_array(base_record.get("available_actions", []))
+		var semantic_action_ids := _enabled_action_ids(interaction)
+		var base_action_ids := _enabled_action_ids(base_record)
+		var sealed_room_geometry_valid := presentation_mode == "room" \
+			and _serialized_rect_has_positive_area(_copy_dict(sealed.get("normalized_hit_rect", {}))) \
+			and _serialized_rect_has_positive_area(_copy_dict(sealed.get("small_screen_rect", {})))
+		var sealed_overflow_valid := presentation_mode == "overflow" \
+			and _copy_dict(sealed.get("normalized_hit_rect", {})).is_empty() \
+			and _copy_dict(sealed.get("small_screen_rect", {})).is_empty()
+		var sealed_geometry_valid := sealed_room_geometry_valid or sealed_overflow_valid
+		var base_geometry_matches_seal := base_record_sealed \
+			and JSON.stringify(base_record.get("normalized_rect", {})) == JSON.stringify(sealed.get("normalized_hit_rect", {})) \
+			and JSON.stringify(base_record.get("small_screen_rect", {})) == JSON.stringify(sealed.get("small_screen_rect", {}))
+		# The layout audit's reachable_interaction_ids covers semantic interactions
+		# only. Ordinary/base controls have a separate closed reachability proof:
+		# their exact stamped record must match the sealed room/overflow authority.
+		var semantic_reachable := semantic_interaction_sealed \
+			and reachable_interaction_ids.has(identity) \
+			and sealed_geometry_valid
+		var base_reachable := not semantic_interaction_member \
+			and base_record_sealed \
+			and base_geometry_matches_seal \
+			and sealed_geometry_valid \
+			and bool(sealed.get("presentation_required", false)) \
+			and bool(sealed.get("presentation_visible", false)) \
+			and bool(sealed.get("presentation_interactive", false)) \
+			and bool(base_record.get("visible", true)) \
+			and bool(base_record.get("interactive", true))
+		var reachable := semantic_reachable or base_reachable
+		var reachability_basis := "layout_audit_room" if semantic_reachable and presentation_mode == "room" \
+			else ("layout_audit_overflow" if semantic_reachable \
+			else ("sealed_base_room" if base_reachable and presentation_mode == "room" \
+			else ("sealed_base_overflow" if base_reachable else "")))
+		var semantic_enabled := bool(interaction.get("enabled", false))
+		var base_enabled := bool(base_record.get("enabled", false))
+		var semantic_disabled_reason := str(interaction.get("disabled_reason", "")).strip_edges()
+		var base_disabled_reason := str(base_record.get("disabled_reason", "")).strip_edges()
+		var semantic_authority_core_valid := semantic_interaction_sealed \
+			and exact_sealed_authority \
+			and bool(sealed.get("presentation_required", false)) \
+			and bool(sealed.get("presentation_visible", false)) \
+			and bool(sealed.get("presentation_interactive", false)) \
+			and semantic_reachable \
+			and typeof(interaction.get("enabled")) == TYPE_BOOL \
+			and typeof(interaction.get("available_actions")) == TYPE_ARRAY \
+			and typeof(interaction.get("disabled_reason", "")) == TYPE_STRING
+		var base_authority_core_valid := not semantic_interaction_member \
+			and base_record_sealed \
+			and base_geometry_matches_seal \
+			and exact_sealed_authority \
+			and base_reachable \
+			and typeof(base_record.get("enabled")) == TYPE_BOOL \
+			and typeof(base_record.get("available_actions")) == TYPE_ARRAY \
+			and typeof(base_record.get("disabled_reason", "")) == TYPE_STRING
+		var semantic_actionable := semantic_authority_core_valid \
+			and semantic_enabled \
+			and not semantic_action_ids.is_empty()
+		var base_actionable := base_authority_core_valid \
+			and base_enabled \
+			and not base_action_ids.is_empty()
+		var semantic_disabled_authority_valid := semantic_authority_core_valid \
+			and not semantic_enabled \
+			and semantic_raw_actions.is_empty() \
+			and not semantic_disabled_reason.is_empty()
+		var base_disabled_authority_valid := base_authority_core_valid \
+			and not base_enabled \
+			and base_raw_actions.is_empty() \
+			and not base_disabled_reason.is_empty()
+		var base_action_authority_member := not semantic_interaction_member \
+			and bool(sealed.get("presentation_required", false)) \
+			and bool(sealed.get("presentation_interactive", false)) \
+			and not base_record.is_empty() \
+			and bool(base_record.get("interactive", true)) \
+			and (base_record.has("available_actions") or base_record.has("disabled_reason"))
+		var action_authority_member := bool(sealed.get("presentation_required", false)) \
+			and ((semantic_interaction_member and semantic_interaction_present) or base_action_authority_member)
+		var actionable := semantic_actionable or base_actionable
+		var disabled_authority_valid := semantic_disabled_authority_valid or base_disabled_authority_valid
+		var authority_valid := not action_authority_member or actionable or disabled_authority_valid
+		var action_authority_valid := authority_valid
+		if action_authority_member:
+			action_authority_member_count += 1
+			if actionable:
+				actionable_authority_count += 1
+			if not action_authority_valid:
+				invalid_action_authority_count += 1
+		var runtime_enabled := bool(interaction.get("enabled", false)) if semantic_interaction_member else bool(base_record.get("enabled", false))
+		var runtime_visible := bool(sealed.get("presentation_visible", false)) \
+			and (bool(interaction.get("present", true)) if semantic_interaction_member else bool(base_record.get("visible", true)))
+		var runtime_interactive := bool(sealed.get("presentation_interactive", false)) \
+			and (semantic_interaction_present if semantic_interaction_member else bool(base_record.get("interactive", true)))
+		var action_ids := semantic_action_ids if semantic_interaction_member else base_action_ids
+		var raw_actions := semantic_raw_actions if semantic_interaction_member else base_raw_actions
+		authority_receipts.append({
+			"identity": identity,
+			"presentation_object_id": str(sealed.get("presentation_object_id", "")),
+			"source": str(sealed.get("source", "")),
+			"presentation_mode": presentation_mode,
+			"slot_id": str(sealed.get("slot_id", "")),
+			"presentation_required": bool(sealed.get("presentation_required", false)),
+			"presentation_visible": bool(sealed.get("presentation_visible", false)),
+			"presentation_interactive": bool(sealed.get("presentation_interactive", false)),
+			"semantic_scene_object_member": bool(sealed.get("semantic_scene_object_member", false)),
+			"semantic_actor_member": bool(sealed.get("semantic_actor_member", false)),
+			"semantic_interaction_member": semantic_interaction_member,
+			"semantic_interaction_present": semantic_interaction_present,
+			"semantic_interaction_sealed": semantic_interaction_sealed,
+			"base_record_present": not base_record.is_empty(),
+			"base_object_id": str(base_record.get("object_id", "")),
+			"exact_sealed_authority": exact_sealed_authority,
+			"projected_record_sealed": base_record_sealed,
+			"base_record_sealed": base_record_sealed,
+			"base_geometry_matches_seal": base_geometry_matches_seal,
+			"runtime_enabled": runtime_enabled,
+			"runtime_visible": runtime_visible,
+			"runtime_interactive": runtime_interactive,
+			"raw_action_count": raw_actions.size(),
+			"enabled_action_count": action_ids.size(),
+			"enabled_action_ids": action_ids,
+			"semantic_enabled_action_ids": semantic_action_ids,
+			"projected_enabled_action_ids": base_action_ids,
+			"action_authority_member": action_authority_member,
+			"base_action_authority_member": base_action_authority_member,
+			"action_authority_present": not action_ids.is_empty(),
+			"authority_valid": authority_valid,
+			"disabled_authority_valid": disabled_authority_valid,
+			"disabled_reason": semantic_disabled_reason if semantic_interaction_member else base_disabled_reason,
+			"action_authority_valid": action_authority_valid,
+			"authority_branch": "semantic" if semantic_interaction_member else ("base_record" if not base_record.is_empty() else "none"),
+			"sealed_geometry_valid": sealed_geometry_valid,
+			"semantic_reachable": semantic_reachable,
+			"base_reachable": base_reachable,
+			"reachable": reachable,
+			"reachability_basis": reachability_basis,
+			"actionable": actionable,
+		})
+	var renderer := _copy_dict(environment.get("scenario_render_snapshot", {}))
+	return {
+		"scenario_id": str(environment.get("scenario_id", "")),
+		"status": str(projection.get("status", state.get("status", ""))),
+		"node_id": str(projection.get("node_id", state.get("node_id", state_semantic.get("node_id", "")))),
+		"phase_id": str(projection.get("phase_id", state.get("phase_id", state_semantic.get("phase_id", "")))),
+		"semantic_ready": bool(environment.get("scenario_semantic_ready", false)),
+		"live_semantic_ready": live_semantic_ready,
+		"semantic_digest": str(environment.get("scenario_semantic_digest", "")),
+		"semantic_action_digest": str(environment.get("scenario_semantic_action_digest", "")),
+		"semantic_inventory_version": int(environment.get("scenario_semantic_inventory_version", 0)),
+		"state_error_count": _copy_array(state.get("errors", [])).size(),
+		"semantic_error_count": _copy_array(semantic.get("errors", [])).size(),
+		"authority_digest": authority_digest,
+		"authority_count": authority.size(),
+		"authority_identities": authority_identities,
+		"authority_receipts": authority_receipts,
+		"action_authority_member_count": action_authority_member_count,
+		"actionable_authority_count": actionable_authority_count,
+		"invalid_action_authority_count": invalid_action_authority_count,
+		"action_authority_contract_valid": invalid_action_authority_count == 0,
+		"layout_audit_active": bool(audit.get("active", false)),
+		"layout_audit_valid": bool(audit.get("valid", false)),
+		"layout_audit_sealed_passive": bool(audit.get("sealed_passive", false)),
+		"layout_audit_field_count": audit.size(),
+		"layout_audit_authority_count": int(audit.get("authority_count", 0)),
+		"layout_audit_authority_digest": str(audit.get("authority_digest", "")),
+		"authority_count_matches_audit": authority.size() == int(audit.get("authority_count", 0)),
+		"authority_digest_matches_audit": authority_digest == str(audit.get("authority_digest", "")),
+		"renderer_ok": bool(renderer.get("ok", false)),
+		"renderer_field_count": renderer.size(),
+		"renderer_error_count": _copy_array(renderer.get("errors", [])).size(),
+		"renderer_presentation_mode": str(renderer.get("presentation_mode", "")),
+		"renderer_authority_digest": str(renderer.get("layout_authority_digest", "")),
+		"renderer_digest_matches_authority": str(renderer.get("layout_authority_digest", "")) == authority_digest,
+		"reachable_interaction_ids": reachable_interaction_ids,
+		"safe_exit_ids": _string_array(audit.get("safe_exit_ids", [])),
+		"alternate_exit_ids": _string_array(audit.get("alternate_exit_ids", [])),
+	}
+
+
+func _enabled_action_ids(record: Dictionary) -> Array:
+	var result: Array = []
+	for action_value in _copy_array(record.get("available_actions", [])):
+		if typeof(action_value) != TYPE_DICTIONARY:
+			continue
+		var action: Dictionary = action_value
+		var action_id := str(action.get("id", "")).strip_edges()
+		if not action_id.is_empty() and bool(action.get("enabled", true)):
+			result.append(action_id)
+	result.sort()
+	return result
+
+
+func _serialized_rect_has_positive_area(rect: Dictionary) -> bool:
+	for key in ["x", "y", "w", "h"]:
+		if not rect.has(key) or typeof(rect.get(key)) not in [TYPE_INT, TYPE_FLOAT]:
+			return false
+	var x := float(rect.get("x", -1.0))
+	var y := float(rect.get("y", -1.0))
+	var width := float(rect.get("w", 0.0))
+	var height := float(rect.get("h", 0.0))
+	return is_finite(x) and is_finite(y) and is_finite(width) and is_finite(height) \
+		and x >= 0.0 and y >= 0.0 and width > 0.0 and height > 0.0 \
+		and x + width <= 1.00001 and y + height <= 1.00001
+
+
+func _native_diagnostic_totals() -> Dictionary:
+	var totals := {
+		"receipt_count": 0,
+		"receipt_missing_count": 0,
+		"receipt_invalid_count": 0,
+		"arrival_ok_invalid_count": 0,
+		"travel_ok_invalid_count": 0,
+		"arrival_stage_invalid_count": 0,
+		"arrival_error_count": 0,
+		"travel_error_count": 0,
+		"finalization_warning_count": 0,
+		"finalization_error_count": 0,
+		"scenario_state_error_count": 0,
+		"semantic_error_count": 0,
+		"renderer_error_count": 0,
+		"arrival_contract_invalid_count": 0,
+		"travel_contract_invalid_count": 0,
+		"finalization_contract_invalid_count": 0,
+		"runtime_layout_invalid_count": 0,
+		"layout_audit_invalid_count": 0,
+		"action_authority_invalid_count": 0,
+		"installed_invalid_count": 0,
+		"source_binding_invalid_count": 0,
+		"target_binding_invalid_count": 0,
+		"current_install_binding_invalid_count": 0,
+		"travel_install_binding_invalid_count": 0,
+		"production_boundary_invalid_count": 0,
+		"projection_binding_invalid_count": 0,
+		"installed_live_projection_binding_invalid_count": 0,
+		"travel_projection_binding_invalid_count": 0,
+		"finalization_projection_binding_invalid_count": 0,
+		"independent_projection_binding_invalid_count": 0,
+		"finalization_runtime_invalid_count": 0,
+		"finalization_clean_invalid_count": 0,
+		"seed_binding_invalid_count": 0,
+		"attempt_binding_invalid_count": 0,
+	}
+	# Count the unique native receipt stream. Failed initial arrivals never append
+	# an environment record, and failed travel arrivals live only on travel_records;
+	# walking successful records alone would make those diagnostics disappear.
+	var receipts: Array = []
+	for summary_value in run_summaries:
+		if typeof(summary_value) != TYPE_DICTIONARY:
+			totals["receipt_missing_count"] = int(totals.get("receipt_missing_count", 0)) + 1
+			continue
+		var initial_receipt := _copy_dict((summary_value as Dictionary).get("initial_arrival_receipt", {}))
+		if initial_receipt.is_empty():
+			totals["receipt_missing_count"] = int(totals.get("receipt_missing_count", 0)) + 1
+		else:
+			receipts.append(initial_receipt)
+	for travel_value in travel_records:
+		if typeof(travel_value) != TYPE_DICTIONARY:
+			totals["receipt_missing_count"] = int(totals.get("receipt_missing_count", 0)) + 1
+			continue
+		var travel_receipt := _copy_dict((travel_value as Dictionary).get("arrival_receipt", {}))
+		if travel_receipt.is_empty():
+			totals["receipt_missing_count"] = int(totals.get("receipt_missing_count", 0)) + 1
+		else:
+			receipts.append(travel_receipt)
+	totals["receipt_count"] = receipts.size()
+	for receipt_value in receipts:
+		var arrival := _copy_dict(receipt_value)
+		var finalization := _copy_dict(arrival.get("finalization", {}))
+		var runtime_layout := _copy_dict(arrival.get("runtime_scenario_layout", {}))
+		totals["arrival_error_count"] = int(totals.get("arrival_error_count", 0)) + int(arrival.get("arrival_error_count", 0))
+		totals["travel_error_count"] = int(totals.get("travel_error_count", 0)) + int(arrival.get("travel_error_count", 0))
+		totals["finalization_warning_count"] = int(totals.get("finalization_warning_count", 0)) + int(finalization.get("warning_count", 0))
+		totals["finalization_error_count"] = int(totals.get("finalization_error_count", 0)) + int(finalization.get("error_count", 0))
+		totals["scenario_state_error_count"] = int(totals.get("scenario_state_error_count", 0)) + int(runtime_layout.get("state_error_count", 0))
+		totals["semantic_error_count"] = int(totals.get("semantic_error_count", 0)) + int(runtime_layout.get("semantic_error_count", 0))
+		totals["renderer_error_count"] = int(totals.get("renderer_error_count", 0)) + int(runtime_layout.get("renderer_error_count", 0))
+		totals["action_authority_invalid_count"] = int(totals.get("action_authority_invalid_count", 0)) + int(runtime_layout.get("invalid_action_authority_count", 0))
+		if not bool(arrival.get("arrival_contract_shape_valid", false)):
+			totals["arrival_contract_invalid_count"] = int(totals.get("arrival_contract_invalid_count", 0)) + 1
+		if not bool(arrival.get("travel_contract_shape_valid", false)):
+			totals["travel_contract_invalid_count"] = int(totals.get("travel_contract_invalid_count", 0)) + 1
+		if not bool(finalization.get("contract_shape_valid", false)):
+			totals["finalization_contract_invalid_count"] = int(totals.get("finalization_contract_invalid_count", 0)) + 1
+		if not bool(arrival.get("runtime_layout_valid", false)):
+			totals["runtime_layout_invalid_count"] = int(totals.get("runtime_layout_invalid_count", 0)) + 1
+		if not bool(finalization.get("inactive", false)) and not bool(runtime_layout.get("layout_audit_valid", false)):
+			totals["layout_audit_invalid_count"] = int(totals.get("layout_audit_invalid_count", 0)) + 1
+		if not bool(arrival.get("installed_finalized", false)):
+			totals["receipt_invalid_count"] = int(totals.get("receipt_invalid_count", 0)) + 1
+		if not bool(arrival.get("ok", false)):
+			totals["arrival_ok_invalid_count"] = int(totals.get("arrival_ok_invalid_count", 0)) + 1
+		if not bool(arrival.get("travel_ok", false)):
+			totals["travel_ok_invalid_count"] = int(totals.get("travel_ok_invalid_count", 0)) + 1
+		if str(arrival.get("stage", "")) != "complete":
+			totals["arrival_stage_invalid_count"] = int(totals.get("arrival_stage_invalid_count", 0)) + 1
+		if not bool(arrival.get("installed", false)):
+			totals["installed_invalid_count"] = int(totals.get("installed_invalid_count", 0)) + 1
+		for binding_value in [
+			["source_binding_valid", "source_binding_invalid_count"],
+			["target_binding_valid", "target_binding_invalid_count"],
+			["current_install_binding_valid", "current_install_binding_invalid_count"],
+			["travel_install_binding_valid", "travel_install_binding_invalid_count"],
+			["production_boundary_valid", "production_boundary_invalid_count"],
+			["projection_binding_valid", "projection_binding_invalid_count"],
+			["installed_live_projection_binding_valid", "installed_live_projection_binding_invalid_count"],
+			["travel_projection_binding_valid", "travel_projection_binding_invalid_count"],
+			["finalization_projection_binding_valid", "finalization_projection_binding_invalid_count"],
+			["independent_projection_binding_valid", "independent_projection_binding_invalid_count"],
+			["finalization_matches_runtime", "finalization_runtime_invalid_count"],
+			["finalization_clean", "finalization_clean_invalid_count"],
+			["seed_binding_valid", "seed_binding_invalid_count"],
+		]:
+			var binding := binding_value as Array
+			if not bool(arrival.get(str(binding[0]), false)):
+				var count_key := str(binding[1])
+				totals[count_key] = int(totals.get(count_key, 0)) + 1
+		if bool(arrival.get("attempt_id_required", false)) and str(arrival.get("attempt_id", "")).is_empty():
+			totals["attempt_binding_invalid_count"] = int(totals.get("attempt_binding_invalid_count", 0)) + 1
+	var warning_count := int(totals.get("finalization_warning_count", 0))
+	var failure_count := 0
+	for key_value in totals.keys():
+		var key := str(key_value)
+		if key not in ["receipt_count", "finalization_warning_count"]:
+			failure_count += int(totals.get(key, 0))
+	totals["warning_count"] = warning_count
+	totals["failure_count"] = failure_count
+	totals["clean"] = warning_count == 0 and failure_count == 0
+	return totals
+
+
+func _finalize_run_evidence(run_summary: Dictionary, visits_per_run: int) -> void:
+	var run_index := int(run_summary.get("run_index", -1))
+	var visit_records: Array = []
+	var visit_by_index: Dictionary = {}
+	var visit_indices: Array = []
+	var installed_finalized_visit_count := 0
+	var identity_bound_visit_count := 0
+	var post_event_seed_binding_count := 0
+	var terminal_visit_count := 0
+	for record_value in records:
+		if typeof(record_value) != TYPE_DICTIONARY:
+			continue
+		var record: Dictionary = record_value
+		if int(record.get("run_index", -2)) != run_index:
+			continue
+		visit_records.append(record)
+		var visit_index := int(record.get("visit_index", -1))
+		visit_indices.append(visit_index)
+		visit_by_index[visit_index] = record
+		if bool(record.get("installed_finalized", false)):
+			installed_finalized_visit_count += 1
+		if _run_identity_tuple_matches(record, run_summary):
+			identity_bound_visit_count += 1
+		if _run_identity_tuple_matches(_copy_dict(record.get("seed_binding_after_event_policy", {})), run_summary):
+			post_event_seed_binding_count += 1
+		if bool(record.get("terminal_after_event_policy", false)):
+			terminal_visit_count += 1
+	var run_travel_records: Array = []
+	var travel_indices: Array = []
+	var successful_linked_travel_count := 0
+	for global_index in range(travel_records.size()):
+		if typeof(travel_records[global_index]) != TYPE_DICTIONARY:
+			continue
+		var travel: Dictionary = travel_records[global_index]
+		if int(travel.get("run_index", -2)) != run_index:
+			continue
+		run_travel_records.append(travel)
+		travel_indices.append(int(travel.get("travel_index", -1)))
+		var source_visit_index := int(travel.get("from_visit_index", -1))
+		var destination_visit_index := int(travel.get("to_visit_index", -1))
+		var source_record := _copy_dict(visit_by_index.get(source_visit_index, {}))
+		var destination_record := _copy_dict(visit_by_index.get(destination_visit_index, {}))
+		var arrival_receipt := _copy_dict(travel.get("arrival_receipt", {}))
+		var source_world_node_id := str(source_record.get("world_node_id", ""))
+		var destination_world_node_id := str(destination_record.get("world_node_id", ""))
+		var linked := bool(travel.get("ok", false)) \
+			and destination_visit_index == source_visit_index + 1 \
+			and not source_record.is_empty() \
+			and not destination_record.is_empty() \
+			and _run_identity_tuple_matches(travel, run_summary) \
+			and _run_identity_tuple_matches(source_record, run_summary) \
+			and _run_identity_tuple_matches(destination_record, run_summary) \
+			and _run_identity_tuple_matches(arrival_receipt, run_summary) \
+			and str(travel.get("from_environment_id", "")) == str(source_record.get("environment_id", "")) \
+			and str(travel.get("to_environment_id", "")) == str(destination_record.get("environment_id", "")) \
+			and str(travel.get("to_archetype_id", "")) == str(destination_record.get("archetype_id", "")) \
+			and not source_world_node_id.is_empty() \
+			and not destination_world_node_id.is_empty() \
+			and str(travel.get("source_id", "")) == source_world_node_id \
+			and str(travel.get("from_world_node_id", "")) == source_world_node_id \
+			and str(travel.get("target_id", "")) == destination_world_node_id \
+			and str(travel.get("to_world_node_id", "")) == destination_world_node_id \
+			and str(arrival_receipt.get("source_id", "")) == source_world_node_id \
+			and str(arrival_receipt.get("travel_source_id", "")) == source_world_node_id \
+			and str(arrival_receipt.get("target_id", "")) == destination_world_node_id \
+			and str(arrival_receipt.get("travel_target_id", "")) == destination_world_node_id \
+			and str(arrival_receipt.get("installed_world_node_id", "")) == destination_world_node_id \
+			and str(arrival_receipt.get("installed_environment_id", "")) == str(destination_record.get("environment_id", "")) \
+			and str(arrival_receipt.get("installed_archetype_id", "")) == str(destination_record.get("archetype_id", "")) \
+			and str(arrival_receipt.get("installed_scenario_id", "")) == str(destination_record.get("scenario_id", "")) \
+			and str(arrival_receipt.get("kind", "")) == "travel" \
+			and int(arrival_receipt.get("travel_index", -1)) == int(travel.get("travel_index", -2)) \
+			and int(arrival_receipt.get("from_visit_index", -1)) == source_visit_index \
+			and int(arrival_receipt.get("visit_index", -1)) == destination_visit_index \
+			and bool(arrival_receipt.get("source_binding_valid", false)) \
+			and bool(arrival_receipt.get("target_binding_valid", false)) \
+			and bool(arrival_receipt.get("current_install_binding_valid", false)) \
+			and bool(arrival_receipt.get("production_boundary_valid", false)) \
+			and bool(arrival_receipt.get("installed_finalized", false))
+		travel["linked_to_recorded_visits"] = linked
+		travel_records[global_index] = travel
+		if linked:
+			successful_linked_travel_count += 1
+	var requested_travel_count := maxi(0, visits_per_run - 1)
+	var contiguous_visits := _indices_are_contiguous(visit_indices, visits_per_run)
+	var contiguous_travels := _indices_are_contiguous(travel_indices, requested_travel_count)
+	var visited_summaries := _copy_array(run_summary.get("visited", []))
+	var bound_visited_summary_count := 0
+	for visited_value in visited_summaries:
+		if typeof(visited_value) != TYPE_DICTIONARY:
+			continue
+		var visited_summary: Dictionary = visited_value
+		var visit_index := int(visited_summary.get("visit_index", -1))
+		var full_record := _copy_dict(visit_by_index.get(visit_index, {}))
+		if _run_identity_tuple_matches(visited_summary, run_summary) \
+				and not full_record.is_empty() \
+				and str(visited_summary.get("environment_id", "")) == str(full_record.get("environment_id", "")) \
+				and str(visited_summary.get("world_node_id", "")) == str(full_record.get("world_node_id", "")) \
+				and str(visited_summary.get("scenario_id", "")) == str(full_record.get("scenario_id", "")):
+			bound_visited_summary_count += 1
+	var seed_binding_satisfied := bool(run_summary.get("seed_binding_valid", false)) \
+		and str(run_summary.get("requested_seed_text", "")) == str(run_summary.get("seed_text", "")) \
+		and int(run_summary.get("seed_value", 0)) == int(run_summary.get("derived_seed_value", -1)) \
+		and int(run_summary.get("seed_value", 0)) == int(run_summary.get("expected_seed_value", -2)) \
+		and str(run_summary.get("challenge_key", "")) == str(run_summary.get("expected_challenge_key", ""))
+	var final_seed_binding := _copy_dict(run_summary.get("final_seed_binding", {}))
+	var final_seed_binding_satisfied := bool(run_summary.get("final_seed_binding_valid", false)) \
+		and _run_identity_tuple_matches(final_seed_binding, run_summary)
+	var attempt_binding_satisfied := not bool(run_summary.get("attempt_id_required", false)) \
+		or not str(run_summary.get("attempt_id", "")).is_empty()
+	var initial_arrival_receipt := _copy_dict(run_summary.get("initial_arrival_receipt", {}))
+	run_summary["environment_count"] = visit_records.size()
+	run_summary["travel_record_count"] = run_travel_records.size()
+	run_summary["visit_indices"] = visit_indices
+	run_summary["travel_indices"] = travel_indices
+	run_summary["installed_finalized_visit_count"] = installed_finalized_visit_count
+	run_summary["identity_bound_visit_count"] = identity_bound_visit_count
+	run_summary["post_event_seed_binding_count"] = post_event_seed_binding_count
+	run_summary["identity_bound_visited_summary_count"] = bound_visited_summary_count
+	run_summary["terminal_visit_count"] = terminal_visit_count
+	run_summary["successful_linked_travel_count"] = successful_linked_travel_count
+	run_summary["contiguous_visit_indices"] = contiguous_visits
+	run_summary["contiguous_travel_indices"] = contiguous_travels
+	run_summary["seed_binding_satisfied"] = seed_binding_satisfied
+	run_summary["final_seed_binding_satisfied"] = final_seed_binding_satisfied
+	run_summary["attempt_binding_satisfied"] = attempt_binding_satisfied
+	run_summary["requested_visits_satisfied"] = str(run_summary.get("stopped_reason", "")) == "completed" \
+		and seed_binding_satisfied \
+		and final_seed_binding_satisfied \
+		and attempt_binding_satisfied \
+		and bool(run_summary.get("crew_state_unchanged", false)) \
+		and visit_records.size() == visits_per_run \
+		and installed_finalized_visit_count == visits_per_run \
+		and identity_bound_visit_count == visits_per_run \
+		and post_event_seed_binding_count == visits_per_run \
+		and visited_summaries.size() == visits_per_run \
+		and bound_visited_summary_count == visits_per_run \
+		and terminal_visit_count == 0 \
+		and run_travel_records.size() == requested_travel_count \
+		and int(run_summary.get("travel_count", 0)) == requested_travel_count \
+		and successful_linked_travel_count == requested_travel_count \
+		and contiguous_visits \
+		and contiguous_travels \
+		and _run_identity_tuple_matches(initial_arrival_receipt, run_summary) \
+		and bool(initial_arrival_receipt.get("installed_finalized", false))
+
+
+func _run_identity_tuple_matches(evidence: Dictionary, run_summary: Dictionary) -> bool:
+	if evidence.is_empty() or not bool(evidence.get("seed_binding_valid", false)):
+		return false
+	var attempt_required := bool(run_summary.get("attempt_id_required", false))
+	var expected_attempt := str(run_summary.get("attempt_id", ""))
+	return (not attempt_required or not expected_attempt.is_empty()) \
+		and str(evidence.get("attempt_id", "")) == expected_attempt \
+		and str(evidence.get("requested_seed_text", "")) == str(run_summary.get("requested_seed_text", "")) \
+		and str(evidence.get("seed_text", "")) == str(run_summary.get("seed_text", "")) \
+		and int(evidence.get("seed_value", 0)) == int(run_summary.get("seed_value", -1)) \
+		and int(evidence.get("derived_seed_value", 0)) == int(run_summary.get("derived_seed_value", -1)) \
+		and str(evidence.get("challenge_key", "")) == str(run_summary.get("challenge_key", "")) \
+		and str(evidence.get("challenge_id", "")) == str(run_summary.get("challenge_id", "")) \
+		and str(evidence.get("challenge_mode", "")) == str(run_summary.get("challenge_mode", ""))
+
+
+func _indices_are_contiguous(indices: Array, expected_count: int) -> bool:
+	if indices.size() != expected_count:
+		return false
+	for index in range(expected_count):
+		if int(indices[index]) != index:
+			return false
+	return true
 
 
 func _audit_world_map_beach_delta(map_data: Dictionary, seed: String) -> void:
@@ -335,7 +1755,9 @@ func _unique_class_by_layout_object_id(environment: Dictionary) -> Dictionary:
 func _summarize_game_state(game_id: String, state: Dictionary) -> Dictionary:
 	var summary := {
 		"present": not state.is_empty(),
-		"keys": _sorted_keys(state),
+		# Count only. Field names can disclose hidden turn, draw, traitor, rigging,
+		# or ticket-order state even when their values are omitted.
+		"state_key_count": state.size(),
 	}
 	match game_id:
 		"blackjack":
@@ -350,7 +1772,7 @@ func _summarize_game_state(game_id: String, state: Dictionary) -> Dictionary:
 			summary["side_bets"] = side_bets
 			summary["side_bet_count"] = side_bets.size()
 			summary["patron_count"] = _copy_array(state.get("patrons", [])).size()
-			summary["rules"] = _copy_dict(state.get("rules", {}))
+			summary["rule_field_count"] = _copy_dict(state.get("rules", {})).size()
 		"pull_tabs":
 			var deals := _copy_array(state.get("deals", []))
 			var deal_summaries := []
@@ -551,30 +1973,37 @@ func _enabled_travel_choices(run_state: RunState) -> Array:
 
 func _travel_choices(run_state: RunState, include_hidden: bool) -> Array:
 	var choices: Array = []
-	for target_id in _travel_target_ids(run_state):
-		var route := generator.world_route_for_target(run_state, target_id)
-		var archetype := _archetype(target_id)
-		var status := run_state.travel_route_status(route)
-		if bool(status.get("hidden", false)) and not include_hidden:
+	var target_ids := _travel_target_ids(run_state)
+	var production_host := _production_foundation_travel_host(run_state)
+	for target_id in target_ids:
+		var production_choice: Dictionary = production_host._travel_choice(str(target_id), target_ids)
+		if production_choice.is_empty():
+			var missing_message := "Production travel view omitted admitted target %s at %s." % [
+				str(target_id), run_state.current_world_node_id()
+			]
+			if not failures.has(missing_message):
+				failures.append(missing_message)
+			continue
+		if bool(production_choice.get("hidden", false)) and not include_hidden:
 			continue
 		var choice := {
-			"id": target_id,
-			"label": str(route.get("label", _travel_label_from_archetype(archetype, target_id))),
-			"kind": str(archetype.get("kind", "")),
-			"tier": int(archetype.get("tier", 1)),
-			"enabled": bool(status.get("available", true)),
-			"hidden": bool(status.get("hidden", false)),
-			"disabled_reason": str(status.get("disabled_reason", "")),
-			"cost": int(status.get("cost", route.get("cost", 0))),
-			"risk": str(route.get("risk", "")),
-			"distance": str(status.get("distance", route.get("distance", ""))),
-			"risk_decay": int(status.get("risk_decay", route.get("risk_decay", 0))),
-			"suspicion_delta": int(status.get("suspicion_delta", route.get("suspicion_delta", 0))),
-			"risk_text": str(status.get("risk_text", "")),
-			"risk_event": _copy_dict(status.get("risk_event", {})),
-			"unlock_conditions": _copy_array(status.get("unlock_conditions", [])),
-			"travel_lock_remaining": int(status.get("travel_lock_remaining", 0)),
-			"availability_turn": int(status.get("availability_turn", -1)),
+			"id": str(production_choice.get("id", target_id)),
+			"label": str(production_choice.get("label", target_id)),
+			"kind": str(production_choice.get("kind", "")),
+			"tier": int(production_choice.get("tier", 1)),
+			"enabled": bool(production_choice.get("enabled", false)),
+			"hidden": false,
+			"disabled_reason": str(production_choice.get("disabled_reason", "")),
+			"cost": int(production_choice.get("cost", 0)),
+			"risk": str(production_choice.get("risk", "")),
+			"distance": str(production_choice.get("distance", "")),
+			"risk_decay": int(production_choice.get("risk_decay", 0)),
+			"suspicion_delta": int(production_choice.get("suspicion_delta", 0)),
+			"risk_text": str(production_choice.get("risk_text", "")),
+			"risk_event": _copy_dict(production_choice.get("risk_event", {})),
+			"unlock_conditions": _copy_array(production_choice.get("unlock_conditions", [])),
+			"travel_lock_remaining": int(production_choice.get("travel_lock_remaining", 0)),
+			"availability_turn": int(production_choice.get("availability_turn", -1)),
 		}
 		choices.append(choice)
 	return choices
@@ -586,17 +2015,25 @@ func _current_travel_lock_remaining(run_state: RunState) -> int:
 	return maxi(0, int(run_state.current_environment.get("travel_lock_remaining", 0)))
 
 
-func _travel_to(run_state: RunState, choice: Dictionary) -> Dictionary:
+func _travel_to(
+	run_state: RunState,
+	choice: Dictionary,
+	travel_index: int,
+	from_visit_index: int,
+	to_visit_index: int,
+	attempt_id: String,
+	seed_binding: Dictionary
+) -> Dictionary:
 	var target_id := str(choice.get("id", ""))
 	var source_id := run_state.current_world_node_id()
-	var admitted_targets_before := generator._world_travel_target_ids(run_state, run_state.world_map, source_id) if run_state.has_world_map() else []
+	var admitted_targets_before := _travel_target_ids(run_state)
 	var route := generator.world_route_for_target(run_state, target_id)
 	var previous_environment := run_state.current_environment.duplicate(true)
 	var previous_bankroll := run_state.bankroll
 	var previous_heat := run_state.suspicion_level()
 	var route_risk := run_state.travel_route_risk(route, target_id)
 	var travel_heat := run_state.begin_travel_suspicion_decay(route, target_id)
-	var admitted_targets_after_heat := generator._world_travel_target_ids(run_state, run_state.world_map, source_id) if run_state.has_world_map() else []
+	var admitted_targets_after_heat := _travel_target_ids(run_state)
 	var arrival := HarnessProductionFidelityScript.travel_and_finalize(
 		# This choice came from the same capped route catalog and availability
 		# checks as production. The UI likewise passes a prevalidated destination
@@ -605,13 +2042,28 @@ func _travel_to(run_state: RunState, choice: Dictionary) -> Dictionary:
 		generator, run_state, target_id, true, library, failures,
 		"environment-generation travel to %s" % target_id
 	)
+	var travel_projection_rebuild := _independent_live_projection_binding(run_state)
+	var arrival_receipt := _arrival_receipt(
+		arrival, run_state.current_environment, "travel", to_visit_index, travel_index, from_visit_index,
+		attempt_id, seed_binding, run_state._scenario_semantic_ready(), travel_projection_rebuild
+	)
 	if not bool(arrival.get("ok", false)):
 		var target_node := WorldMapScript.node_by_id(run_state.world_map, target_id)
 		return {
 			"ok": false,
+			"travel_index": travel_index,
+			"from_visit_index": from_visit_index,
+			"to_visit_index": to_visit_index,
+			"source_id": source_id,
 			"target_id": target_id,
+			"arrival_receipt": arrival_receipt,
+			"finalization_receipt": _copy_dict(arrival_receipt.get("finalization", {})),
 			"admitted_targets_before": admitted_targets_before,
 			"admitted_targets_after_heat": admitted_targets_after_heat,
+			"admitted_targets_before_digest": _json_sha256(admitted_targets_before),
+			"admitted_targets_after_heat_digest": _json_sha256(admitted_targets_after_heat),
+			"selected_choice": choice.duplicate(true),
+			"selected_choice_digest": _json_sha256(choice),
 			"generator_install_errors": generator._last_environment_install_errors.duplicate(true),
 			"source_scenario_state": _scenario_state_diagnostic(run_state.current_environment),
 			"stored_destination_scenario_state": _scenario_state_diagnostic(_copy_dict(target_node.get("environment", {}))),
@@ -621,7 +2073,22 @@ func _travel_to(run_state: RunState, choice: Dictionary) -> Dictionary:
 	var result := _travel_result(run_state, target_id, destination_name, route, previous_environment, run_state.current_environment, travel_decay, route_risk)
 	GameModule.apply_result(run_state, result)
 	return {
+		"ok": true,
+		"travel_index": travel_index,
+		"from_visit_index": from_visit_index,
+		"to_visit_index": to_visit_index,
+		"source_id": source_id,
 		"target_id": target_id,
+		"from_world_node_id": source_id,
+		"to_world_node_id": str(run_state.current_world_node_id()),
+		"arrival_receipt": arrival_receipt,
+		"finalization_receipt": _copy_dict(arrival_receipt.get("finalization", {})),
+		"admitted_targets_before": admitted_targets_before,
+		"admitted_targets_after_heat": admitted_targets_after_heat,
+		"admitted_targets_before_digest": _json_sha256(admitted_targets_before),
+		"admitted_targets_after_heat_digest": _json_sha256(admitted_targets_after_heat),
+		"selected_choice": choice.duplicate(true),
+		"selected_choice_digest": _json_sha256(choice),
 		"label": str(choice.get("label", target_id)),
 		"from_environment_id": str(previous_environment.get("id", "")),
 		"from_archetype_id": str(previous_environment.get("archetype_id", "")),
@@ -745,27 +2212,53 @@ func _travel_result(run_state: RunState, target_id: String, destination_name: St
 
 
 func _travel_target_ids(run_state: RunState) -> Array:
-	if run_state.has_world_map():
-		var source_id := run_state.current_world_node_id()
-		# Match the production travel view and RunGenerator admission boundary.
-		# Every visible neighbor is useful topology, but only the capped, ranked
-		# target catalog is actually selectable by the player on this visit.
-		return WorldMapScript.travel_target_ids(
-			run_state.world_map,
-			source_id,
-			WorldMapScript.TRAVEL_NEW_TARGET_LIMIT,
-			WorldMapScript.TRAVEL_TOTAL_TARGET_LIMIT,
-			generator._enabled_world_route_ids(run_state, run_state.world_map, source_id)
-		)
-	var result: Array = []
-	for source in [
-		run_state.current_environment.get("next_archetypes", []),
-		run_state.current_environment.get("travel_hooks", []),
-	]:
-		for target_id in _string_array(source):
-			if not result.has(target_id):
-				result.append(target_id)
-	return result
+	if not _qualifying_world_travel_contract_holds(run_state):
+		return []
+	# Invoke the shipped Foundation travel view directly. The qualifying contract
+	# below excludes the meta/tutorial/delivery/local-door/closing overlays while
+	# retaining its exact route ranking, Walk timing and locked-card semantics.
+	return _production_foundation_travel_host(run_state)._travel_target_ids()
+
+
+func _production_foundation_travel_host(run_state: RunState) -> AuditFoundationTravelHost:
+	return AuditFoundationTravelHost.new(
+		FoundationTravelViewModelScript,
+		WorldMapScript,
+		TutorialFlowScript,
+		AttributeBadgesScript,
+		run_state,
+		generator,
+		library
+	)
+
+
+func _qualifying_world_travel_contract_holds(run_state: RunState) -> bool:
+	var issues: Array = []
+	if run_state == null or not run_state.has_world_map():
+		issues.append("a generated world map is required")
+	if run_state != null and run_state.is_tutorial_run():
+		issues.append("tutorial route filtering is outside this normal-run audit")
+	if run_state != null and bool(run_state.narrative_flags.get("_meta_home_session", false)):
+		issues.append("meta-session travel is outside this normal-run audit")
+	if run_state != null and run_state.delivery_has_active_run():
+		issues.append("active delivery next-hop promotion is outside this audit")
+	if run_state != null and run_state.closing_time_forced_travel_required():
+		issues.append("forced closing-time walk presentation is outside this audit")
+	if run_state != null and run_state.travel_option_bonus() != 0:
+		issues.append("the fixed three-card evidence schema requires zero travel-option bonus")
+	if run_state != null:
+		var local_flags_value: Variant = run_state.current_environment.get("local_narrative_flags", {})
+		var local_flags: Dictionary = local_flags_value if typeof(local_flags_value) == TYPE_DICTIONARY else {}
+		if not _string_array(local_flags.get("casino_room_targets", [])).is_empty():
+			issues.append("local casino-room door presentation is outside this world-route audit")
+	if issues.is_empty():
+		return true
+	var node_id := run_state.current_world_node_id() if run_state != null else "missing-run"
+	for issue_value in issues:
+		var message := "Qualifying world-travel contract failed at %s: %s." % [node_id, str(issue_value)]
+		if not failures.has(message):
+			failures.append(message)
+	return false
 
 
 func _build_aggregate(run_count: int, visits_per_run: int, seed_prefix: String) -> Dictionary:
@@ -1103,17 +2596,21 @@ func _top_inline(counts: Dictionary, limit: int) -> String:
 	return ", ".join(parts)
 
 
-func _print_summary(output_json: String, output_markdown: String, aggregate: Dictionary) -> void:
+func _print_summary(output_json: String, output_markdown: String, aggregate: Dictionary, evidence_satisfied: bool) -> void:
 	print("Environment generation audit complete.")
 	print("Environment samples: %d" % int(aggregate.get("environment_visit_count", 0)))
 	print("Travel transitions: %d" % int(aggregate.get("travel_count", 0)))
 	print("Markdown report: %s" % ProjectSettings.globalize_path(output_markdown))
 	print("JSON report: %s" % ProjectSettings.globalize_path(output_json))
-	if failures.is_empty():
+	if failures.is_empty() and warnings.is_empty() and evidence_satisfied:
 		print("Environment generation audit passed.")
 	else:
 		for failure in failures:
 			push_error(failure)
+		for warning in warnings:
+			push_error("Qualifying audit warning: %s" % warning)
+		if not evidence_satisfied:
+			push_error("Environment generation audit did not satisfy its requested visit/travel or Crew no-op evidence contract.")
 
 
 func _method_notes() -> Array:

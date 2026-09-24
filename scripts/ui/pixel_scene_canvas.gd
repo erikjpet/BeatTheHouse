@@ -21,6 +21,7 @@ const DrunkDistortionOverlayScript := preload("res://scripts/ui/drunk_distortion
 const HeatFeedbackVisualsScript := preload("res://scripts/ui/heat_feedback_visuals.gd")
 const TableGameVisualsScript := preload("res://scripts/games/table_game_visuals.gd")
 const EnvironmentPlacementScript := preload("res://scripts/core/environment_placement.gd")
+const EnvironmentSlotBinderScript := preload("res://scripts/core/environment_slot_binder.gd")
 const CoinPusherRoomPropScript := preload("res://scripts/ui/game_props/coin_pusher_room_prop.gd")
 const ScratchTicketRoomPropScript := preload("res://scripts/ui/game_props/scratch_ticket_room_prop.gd")
 const CrapsRoomPropScript := preload("res://scripts/ui/game_props/craps_room_prop.gd")
@@ -157,6 +158,8 @@ var draw_text_width_cache: Dictionary = {}
 var fit_draw_text_cache: Dictionary = {}
 var object_animation_phase_cache: Dictionary = {}
 var actor_route_started_at_cache: Dictionary = {}
+var actor_position_receipt_cache: Dictionary = {}
+var actor_position_route_room_key := ""
 var actor_route_time := 0.0
 var person_transits: Dictionary = {}
 var person_transit_ids: Array[String] = []
@@ -1275,6 +1278,10 @@ func _draw() -> void:
 				_draw_grand_casino_cage()
 			_:
 				_draw_corner_store()
+	# These closed, authored fixture faces are part of the room art. The exact
+	# same routine is replayed after behind-counter bodies, so occlusion cannot
+	# recolor or approximate the original counter.
+	_draw_authored_counter_foregrounds()
 	_draw_scenario_palette()
 	_draw_scenario_crowd()
 	_draw_scene_life()
@@ -2571,48 +2578,74 @@ func _draw_string_lights() -> void:
 func _draw_scene_objects() -> void:
 	# Interactable props are rendered here; transparent buttons only provide hit testing.
 	var low_detail := _grand_casino_web_low_detail()
-	for object_data in _active_scene_objects():
-		var rect := _board_rect_for_object(object_data)
-		var object_id := str(object_data.get("id", ""))
-		var object_type := str(object_data.get("type", "item"))
-		var selected := object_id == selected_object_id
-		var hovered := object_id == hovered_object_id
-		var disabled := bool(object_data.get("disabled", false))
-		_draw_object_shadow(rect, selected or hovered, str(object_data.get("shadow_kind", "base")))
-		match object_type:
-			"game":
-				_draw_game_prop(rect, object_data, selected or hovered)
-			"travel":
-				_draw_travel_prop(rect, object_data, selected or hovered)
-			"event":
-				_draw_event_prop(rect, object_data, selected or hovered)
-			"character":
-				_draw_character_actor(rect, object_data)
-			"scenario_actor":
-				_draw_scenario_actor(rect, object_data, selected or hovered)
-			"scenario_object":
-				_draw_scenario_prop(rect, object_data, selected or hovered)
-			"drink":
-				_draw_drink_prop(rect, selected or hovered)
-			_:
-				_draw_item_prop(rect, object_data, selected or hovered, str(object_data.get("surface", "counter")))
+	var objects := _active_scene_objects()
+	var behind_counter: Array = []
+	var room_front: Array = []
+	for object_value in objects:
+		var object_data := object_value as Dictionary
 		if str(object_data.get("placement_class", "")) == "behind_counter_person":
-			_draw_counter_person_occlusion(rect, selected or hovered)
-		if disabled:
-			_draw_disabled_scene_mark(rect)
-		if disabled and (selected or hovered):
-			_draw_disabled_focus_mark(rect, selected)
-		elif selected:
-			_draw_selected_scene_mark(rect)
-			if object_type in ["item", "drink"]:
-				_draw_selected_item_frame(rect, object_type)
-		elif hovered:
-			_draw_hover_scene_mark(rect)
-		elif should_draw_hotspot_hint(object_data, low_detail):
-			_draw_hotspot_hint(rect, object_type)
-		_draw_object_label(rect, str(object_data.get("label", "")), object_type, disabled, selected or hovered, object_data)
+			behind_counter.append(object_data)
+		else:
+			room_front.append(object_data)
+	# Counter staff and their shadows are painted before the exact foreground
+	# fixture faces. Everyone else remains in normal deterministic room order.
+	for object_value in behind_counter:
+		_draw_scene_object_body(object_value as Dictionary)
+	_draw_room_foreground_occluders(behind_counter)
+	for object_value in room_front:
+		_draw_scene_object_body(object_value as Dictionary)
+	# Labels and focus affordances stay above fixtures and remain fully usable.
+	for object_value in objects:
+		_draw_scene_object_adornments(object_value as Dictionary, low_detail)
 	if not developer_placement_mode:
 		_draw_selected_object_info()
+
+
+func _draw_scene_object_body(object_data: Dictionary) -> void:
+	var rect := _board_rect_for_object(object_data)
+	var object_id := str(object_data.get("id", ""))
+	var object_type := str(object_data.get("type", "item"))
+	var active := object_id == selected_object_id or object_id == hovered_object_id
+	_draw_object_shadow(rect, active, str(object_data.get("shadow_kind", "base")))
+	match object_type:
+		"game":
+			_draw_game_prop(rect, object_data, active)
+		"travel":
+			_draw_travel_prop(rect, object_data, active)
+		"event":
+			_draw_event_prop(rect, object_data, active)
+		"character":
+			_draw_character_actor(rect, object_data)
+		"scenario_actor":
+			_draw_scenario_actor(rect, object_data, active)
+		"scenario_object":
+			_draw_scenario_prop(rect, object_data, active)
+		"drink":
+			_draw_drink_prop(rect, active)
+		_:
+			_draw_item_prop(rect, object_data, active, str(object_data.get("surface", "counter")))
+
+
+func _draw_scene_object_adornments(object_data: Dictionary, low_detail: bool) -> void:
+	var rect := _board_rect_for_object(object_data)
+	var object_id := str(object_data.get("id", ""))
+	var object_type := str(object_data.get("type", "item"))
+	var selected := object_id == selected_object_id
+	var hovered := object_id == hovered_object_id
+	var disabled := bool(object_data.get("disabled", false))
+	if disabled:
+		_draw_disabled_scene_mark(rect)
+	if disabled and (selected or hovered):
+		_draw_disabled_focus_mark(rect, selected)
+	elif selected:
+		_draw_selected_scene_mark(rect)
+		if object_type in ["item", "drink"]:
+			_draw_selected_item_frame(rect, object_type)
+	elif hovered:
+		_draw_hover_scene_mark(rect)
+	elif should_draw_hotspot_hint(object_data, low_detail):
+		_draw_hotspot_hint(rect, object_type)
+	_draw_object_label(rect, str(object_data.get("label", "")), object_type, disabled, selected or hovered, object_data)
 
 
 func _draw_scenario_prop(rect: Rect2, object_data: Dictionary, active: bool) -> void:
@@ -2620,9 +2653,9 @@ func _draw_scenario_prop(rect: Rect2, object_data: Dictionary, active: bool) -> 
 	var accent := C_ORANGE if role == "obstacle" else C_PURPLE_2 if role == "exit" else C_CYAN_2
 	# Scenario props use the same concrete icon vocabulary as ordinary event
 	# props. The semantic icon key chooses paper, furniture, barriers, lights,
-	# refreshments, machinery, doors, or a neutral fixture silhouette.
+	# refreshments, machinery, or doors. Room placement never authorizes the
+	# generic room-fixture fallback.
 	_draw_event_prop(rect, object_data, active)
-	draw_rect(rect, accent.lightened(0.16) if active else accent, false, 2.0)
 	if role in ["obstacle", "exit"]:
 		var mark := "!" if role == "obstacle" else ">"
 		_neon_text(mark, rect.position + Vector2(5.0, 14.0), 12, C_WHITE)
@@ -2636,12 +2669,6 @@ func _draw_scenario_actor(rect: Rect2, object_data: Dictionary, active: bool) ->
 	var pose := str(object_data.get("pose", "idle"))
 	var accent := C_ORANGE if behavior in ["guard", "fight", "flee"] else C_TEAL
 	var center := rect.get_center()
-	var route_points := JsonCoerceScript._copy_array(object_data.get("route_points", []))
-	if route_points.size() >= 2:
-		var start := _vector2_from_dict(route_points[0], Vector2.ZERO) * Vector2(BOARD_SIZE)
-		var finish := _vector2_from_dict(route_points[1], Vector2.ZERO) * Vector2(BOARD_SIZE)
-		draw_dashed_line(start, finish, accent, 2.0, 7.0, true)
-		draw_circle(finish, 4.0, accent)
 	var head_radius := clampf(rect.size.x * 0.15, 6.0, 12.0)
 	draw_circle(Vector2(center.x, rect.position.y + head_radius + 4.0), head_radius, C_SOFT.darkened(0.15))
 	var body_top := rect.position.y + head_radius * 2.0 + 6.0
@@ -3010,7 +3037,7 @@ func _objects_from_interactable_records(records: Array) -> Array:
 		if typeof(records[index]) != TYPE_DICTIONARY:
 			continue
 		var record: Dictionary = records[index]
-		if not bool(record.get("visible", true)):
+		if not bool(record.get("visible", true)) or str(record.get("presentation_mode", "room")) == "overflow":
 			continue
 		var object_id := str(record.get("object_id", ""))
 		if object_id.is_empty():
@@ -3019,7 +3046,7 @@ func _objects_from_interactable_records(records: Array) -> Array:
 		var object_type := str(record.get("visual_type", interaction_type))
 		var normalized_rect := _normalized_rect_from_record(record)
 		var focus_point := normalized_rect.position + normalized_rect.size * 0.5
-		var layout_resolved := bool(record.get("scenario_layout_resolved", false))
+		var layout_resolved := bool(record.get("scenario_layout_resolved", false)) or bool(record.get("fixed_slot_geometry", false))
 		var minimum_visual_size := Vector2.ZERO if layout_resolved else _minimum_object_visual_size(object_type)
 		var scene_object := {
 			"id": object_id,
@@ -3066,6 +3093,9 @@ func _objects_from_interactable_records(records: Array) -> Array:
 			"actor_route_points": JsonCoerceScript._copy_array(record.get("actor_route_points", [])),
 			"actor_route_stage": _copy_dictionary(record.get("actor_route_stage", {})),
 			"small_screen_rect": _copy_dictionary(record.get("small_screen_rect", {})),
+			"label_rect": _copy_dictionary(record.get("label_rect", {})),
+			"small_screen_label_rect": _copy_dictionary(record.get("small_screen_label_rect", {})),
+			"fixed_slot_geometry": bool(record.get("fixed_slot_geometry", false)),
 			"scenario_z_order": int(record.get("scenario_z_order", index)),
 			"scenario_layout_resolved": bool(record.get("scenario_layout_resolved", false)),
 			"scenario_layout_authority_identity": str(record.get("scenario_layout_authority_identity", "")),
@@ -3089,6 +3119,7 @@ func _objects_from_interactable_records(records: Array) -> Array:
 			"pose": str(record.get("pose", "")),
 			"behavior": str(record.get("behavior", "")),
 			"route_id": str(record.get("route_id", "")),
+			"authored_position_route_id": str(record.get("authored_position_route_id", "")),
 			"route_points": JsonCoerceScript._copy_array(record.get("route_points", [])),
 			"non_color_state": str(record.get("non_color_state", "")),
 			"z_order": int(record.get("z_order", 0)),
@@ -3097,6 +3128,8 @@ func _objects_from_interactable_records(records: Array) -> Array:
 			"layout_index": maxi(0, int(record.get("layout_index", 0))),
 			"layout_spot_field": str(record.get("layout_spot_field", "")),
 			"placement_class": str(record.get("placement_class", "")),
+			"slot_id": str(record.get("slot_id", "")),
+			"presentation_mode": str(record.get("presentation_mode", "room")),
 			"contact": str(record.get("contact", "")),
 		}
 		objects.append(_apply_draw_hints(scene_object, object_type, index))
@@ -3209,52 +3242,34 @@ func _start_person_transit(object_id: String, settled_value: Variant, kind: Stri
 
 func _person_transit_route(settled: Dictionary, kind: String) -> Dictionary:
 	var surfaces := EnvironmentPlacementScript.surface_map(foundation_snapshot)
-	var doorway_values: Variant = surfaces.get("doorways", [])
-	var floor_data: Dictionary = surfaces.get("floor", {}) if typeof(surfaces.get("floor", {})) == TYPE_DICTIONARY else {}
-	var band_values: Variant = floor_data.get("bands", [])
-	if typeof(doorway_values) != TYPE_ARRAY or (doorway_values as Array).is_empty() or typeof(band_values) != TYPE_ARRAY or (band_values as Array).is_empty():
+	var settled_slot_id := str(settled.get("slot_id", "")).strip_edges()
+	if settled_slot_id.is_empty():
 		return {}
-	var settled_position: Vector2 = settled.get("position", Vector2(0.5, 0.5))
-	var settled_center := settled_position * Vector2(BOARD_SIZE)
-	var object_size: Vector2 = settled.get("size", Vector2(64.0, 96.0))
-	var settled_contact := Vector2(settled_center.x, settled_center.y + object_size.y * 0.5)
-	var doorway_center := Vector2(-1.0, -1.0)
-	var doorway_distance := INF
-	for doorway_value in doorway_values as Array:
-		if typeof(doorway_value) != TYPE_DICTIONARY:
-			continue
-		var doorway_rect := _pixel_bounds_rect((doorway_value as Dictionary).get("bounds", []))
-		if not doorway_rect.has_area():
-			continue
-		var candidate := doorway_rect.get_center()
-		var distance := candidate.distance_squared_to(settled_contact)
-		if distance < doorway_distance:
-			doorway_distance = distance
-			doorway_center = candidate
-	if doorway_center.x < 0.0:
+	var exit_slots := JsonCoerceScript._copy_array(surfaces.get("exit_slots", []))
+	exit_slots.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
+		var left := _copy_dictionary(left_value)
+		var right := _copy_dictionary(right_value)
+		var left_priority := int(left.get("priority", 0))
+		var right_priority := int(right.get("priority", 0))
+		return str(left.get("id", "")) < str(right.get("id", "")) if left_priority == right_priority else left_priority < right_priority
+	)
+	if exit_slots.is_empty():
 		return {}
-	var floor_band := Rect2()
-	var band_distance := INF
-	for band_value in band_values as Array:
-		var candidate_band := _pixel_bounds_rect(band_value)
-		if not candidate_band.has_area():
-			continue
-		var candidate_contact := Vector2(
-			clampf(settled_contact.x, candidate_band.position.x, candidate_band.end.x),
-			clampf(settled_contact.y, candidate_band.position.y, candidate_band.end.y)
-		)
-		var distance := candidate_contact.distance_squared_to(settled_contact)
-		if distance < band_distance:
-			band_distance = distance
-			floor_band = candidate_band
-	if not floor_band.has_area():
+	var exit_slot := _copy_dictionary(exit_slots[0])
+	var exit_rect := _pixel_bounds_rect(exit_slot.get("hit_rect", []))
+	if not exit_rect.has_area():
 		return {}
-	var lane_contact_y := clampf(settled_contact.y, floor_band.position.y + 2.0, floor_band.end.y - 2.0)
-	var doorway_x := clampf(doorway_center.x, floor_band.position.x + 2.0, floor_band.end.x - 2.0)
-	var lane_y := lane_contact_y - object_size.y * 0.5
-	var doorway_position := Vector2(doorway_x, lane_y)
-	var lane_position := Vector2(clampf(settled_center.x, floor_band.position.x + 2.0, floor_band.end.x - 2.0), lane_y)
-	var pixel_points := [doorway_position, lane_position, settled_center]
+	var settled_slot := _surface_slot_by_id(surfaces, settled_slot_id)
+	if settled_slot.is_empty():
+		return {}
+	var settled_lane_ids := JsonCoerceScript._copy_array(settled_slot.get("walk_lane_ids", []))
+	var lane_ids: Array = []
+	for lane_id_value in JsonCoerceScript._copy_array(exit_slot.get("walk_lane_ids", [])):
+		if settled_lane_ids.has(lane_id_value):
+			lane_ids.append(lane_id_value)
+	var pixel_points := EnvironmentSlotBinderScript.authored_route_points(surfaces, exit_slot, settled_slot, lane_ids)
+	if pixel_points.size() < 2:
+		return {}
 	if kind == "departure":
 		pixel_points.reverse()
 	var points: Array = []
@@ -3267,7 +3282,7 @@ func _person_transit_route(settled: Dictionary, kind: String) -> Dictionary:
 	var small_rect := _rect_from_dict(settled.get("small_screen_rect", {}))
 	var small_endpoint := small_rect.get_center() if small_rect.has_area() else endpoint / Vector2(BOARD_SIZE)
 	if kind == "departure":
-		small_endpoint = doorway_position / Vector2(BOARD_SIZE)
+		small_endpoint = exit_rect.get_center() / Vector2(BOARD_SIZE)
 	var stage := {
 		"mode": "to_endpoint",
 		"duration_sec": clampf(distance / PERSON_TRANSIT_SPEED_PIXELS_PER_SEC, PERSON_TRANSIT_MIN_DURATION_SEC, PERSON_TRANSIT_MAX_DURATION_SEC),
@@ -3278,6 +3293,15 @@ func _person_transit_route(settled: Dictionary, kind: String) -> Dictionary:
 		"small_screen_endpoint": {"x": small_endpoint.x, "y": small_endpoint.y},
 	}
 	return {"points": points, "stage": stage}
+
+
+func _surface_slot_by_id(surfaces: Dictionary, slot_id: String) -> Dictionary:
+	for field in ["base_slots", "stage_slots", "exit_slots"]:
+		for slot_value in JsonCoerceScript._copy_array(surfaces.get(field, [])):
+			var slot := _copy_dictionary(slot_value)
+			if str(slot.get("id", "")) == slot_id:
+				return slot
+	return {}
 
 
 func _apply_person_transit_to_scene_object(object_id: String, transit: Dictionary) -> void:
@@ -3572,7 +3596,7 @@ func _production_game_prop(object_data: Dictionary) -> String:
 
 
 func _normalized_rect_from_record(record: Dictionary) -> Rect2:
-	var layout_resolved := bool(record.get("scenario_layout_resolved", false))
+	var layout_resolved := bool(record.get("scenario_layout_resolved", false)) or bool(record.get("fixed_slot_geometry", false))
 	var rect := _rect_from_dict(record.get("normalized_rect", record.get("focus_rect", {})))
 	if layout_resolved:
 		# Finalized scenario records are already board-bounded and digested by the
@@ -3942,11 +3966,33 @@ func _selected_info_has_single_action_button(object_data: Dictionary) -> bool:
 		return false
 	if str(object_data.get("id", "")) != selected_object_id:
 		return false
-	if bool(object_data.get("disabled", false)):
+	var authored_actions := _array_view(object_data.get("available_actions", []))
+	var visible_actions := _selected_info_available_actions(object_data)
+	# If action records exist, their presentation visibility is authoritative.
+	# An object-level confirm id must not resurrect an explicitly hidden action.
+	if not authored_actions.is_empty() and visible_actions.is_empty():
 		return false
 	if not str(object_data.get("confirm_action_id", "")).strip_edges().is_empty():
 		return true
-	return not _array_view(object_data.get("available_actions", [])).is_empty()
+	return not visible_actions.is_empty()
+
+
+func _selected_info_action_is_visible(action_data: Dictionary) -> bool:
+	return bool(action_data.get("visible", true)) \
+		and bool(action_data.get("presentation_visible", true)) \
+		and not bool(action_data.get("hidden", false)) \
+		and not bool(action_data.get("hidden_only", false))
+
+
+func _selected_info_available_actions(object_data: Dictionary) -> Array:
+	var result: Array = []
+	for action_value in _array_view(object_data.get("available_actions", [])):
+		if typeof(action_value) != TYPE_DICTIONARY:
+			continue
+		var action_data: Dictionary = action_value
+		if _selected_info_action_is_visible(action_data):
+			result.append(action_data)
+	return result
 
 
 func _selected_info_inline_actions(object_data: Dictionary) -> Array:
@@ -3954,14 +4000,14 @@ func _selected_info_inline_actions(object_data: Dictionary) -> Array:
 		return []
 	if str(object_data.get("id", "")) != selected_object_id:
 		return []
-	if bool(object_data.get("disabled", false)):
-		return []
 	var actions := _array_view(object_data.get("inline_actions", []))
 	var result: Array = []
 	for action in actions:
 		if typeof(action) != TYPE_DICTIONARY:
 			continue
 		var action_data: Dictionary = action
+		if not _selected_info_action_is_visible(action_data):
+			continue
 		var label := str(action_data.get("label", "")).strip_edges()
 		var emit_object_id := str(action_data.get("emit_object_id", action_data.get("id", ""))).strip_edges()
 		if label.is_empty() or emit_object_id.is_empty():
@@ -4016,7 +4062,7 @@ func _selected_info_action_label(object_data: Dictionary) -> String:
 	if not inline_actions.is_empty() and typeof(inline_actions[0]) == TYPE_DICTIONARY:
 		return str((inline_actions[0] as Dictionary).get("label", "")).strip_edges().capitalize()
 	var action_id := str(object_data.get("confirm_action_id", "")).strip_edges()
-	var actions := _array_view(object_data.get("available_actions", []))
+	var actions := _selected_info_available_actions(object_data)
 	var label := ""
 	if not actions.is_empty() and typeof(actions[0]) == TYPE_DICTIONARY:
 		label = str((actions[0] as Dictionary).get("label", "")).strip_edges()
@@ -4112,12 +4158,24 @@ func _selected_info_action_entries_for_rect(info: Dictionary, card: Rect2) -> Ar
 				"detail_rect": detail_rect,
 				"selected": entries.size() == selected_info_action_index,
 				"input_action": str(action_data.get("input_action", "")),
-				"enabled": bool(action_data.get("enabled", true)),
+				"enabled": not bool(object_data.get("disabled", false))
+					and bool(object_data.get("enabled", true))
+					and not bool(action_data.get("disabled", false))
+					and bool(action_data.get("enabled", true)),
 			})
 			y += button_height + detail_height + OBJECT_INFO_INLINE_ACTION_GAP
 		return entries
 	if _selected_info_has_single_action_button(object_data):
 		var action_height := _selected_info_action_height()
+		var available_actions := _selected_info_available_actions(object_data)
+		var first_action: Dictionary = {}
+		if not available_actions.is_empty() and typeof(available_actions[0]) == TYPE_DICTIONARY:
+			first_action = available_actions[0]
+		var single_enabled := not bool(object_data.get("disabled", false)) \
+			and bool(object_data.get("enabled", true)) \
+			and not bool(first_action.get("disabled", false)) \
+			and bool(first_action.get("enabled", true)) \
+			and not str(object_data.get("confirm_action_id", "")).strip_edges().is_empty()
 		entries.append({
 			"inline": false,
 			"label": _selected_info_action_label(object_data),
@@ -4129,6 +4187,7 @@ func _selected_info_action_entries_for_rect(info: Dictionary, card: Rect2) -> Ar
 			),
 			"detail_rect": Rect2(),
 			"selected": false,
+			"enabled": single_enabled,
 		})
 	return entries
 
@@ -4151,6 +4210,7 @@ func _selected_info_action_snapshot_list(entries: Array) -> Array:
 			"detail_rect": _rect_to_snapshot(action_entry.get("detail_rect", Rect2())),
 			"inline": bool(action_entry.get("inline", false)),
 			"selected": bool(action_entry.get("selected", false)),
+			"enabled": bool(action_entry.get("enabled", false)),
 		})
 	return snapshots
 
@@ -4228,7 +4288,7 @@ func _selected_info_badge_tooltip_at_local_position(local_position: Vector2) -> 
 
 func _activate_selected_info_action_at_local_position(local_position: Vector2) -> bool:
 	var action_entry := _selected_info_action_entry_at_local_position(local_position)
-	if action_entry.is_empty():
+	if action_entry.is_empty() or not bool(action_entry.get("enabled", false)):
 		return false
 	var info := _selected_object_info()
 	var object_id := str(info.get("object_id", selected_object_id))
@@ -4263,7 +4323,7 @@ func _activate_selected_info_action_for_authored_input(event: InputEvent) -> boo
 
 
 func _activate_selected_info_action_entry(action_entry: Dictionary) -> bool:
-	if action_entry.is_empty() or not bool(action_entry.get("enabled", true)):
+	if action_entry.is_empty() or not bool(action_entry.get("enabled", false)):
 		return false
 	var info := _selected_object_info()
 	var object_id := str(info.get("object_id", selected_object_id))
@@ -4924,7 +4984,7 @@ func _board_rect_for_object(object_data: Dictionary) -> Rect2:
 	if route_position.x >= 0.0 and route_position.y >= 0.0:
 		var route_rect := _board_rect_for_object_at_position(object_data, route_position)
 		if small_screen_mode:
-			if bool(object_data.get("scenario_layout_resolved", false)):
+			if bool(object_data.get("scenario_layout_resolved", false)) or bool(object_data.get("fixed_slot_geometry", false)):
 				var sealed_small := _rect_from_dict(object_data.get("small_screen_rect", {}))
 				var sealed_size := sealed_small.size * Vector2(BOARD_SIZE)
 				return Rect2(route_rect.get_center() - sealed_size * 0.5, sealed_size)
@@ -4943,7 +5003,7 @@ func _interaction_rect_for_object(object_data: Dictionary) -> Rect2:
 	if bool(object_data.get("person_transit_active", false)):
 		return Rect2()
 	var rect := _board_rect_for_object(object_data)
-	if not small_screen_mode or bool(object_data.get("scenario_layout_resolved", false)):
+	if not small_screen_mode or bool(object_data.get("scenario_layout_resolved", false)) or bool(object_data.get("fixed_slot_geometry", false)):
 		return rect
 	var minimum_size := SmallScreenPolicyScript.ENVIRONMENT_OBJECT_HIT_SIZE
 	var next_size := Vector2(maxf(rect.size.x, minimum_size.x), maxf(rect.size.y, minimum_size.y))
@@ -5019,20 +5079,49 @@ func _actor_route_cache_key(object_data: Dictionary) -> String:
 
 
 func _sync_actor_route_starts() -> void:
+	var room_key := _person_transit_snapshot_key(foundation_snapshot)
+	var fresh_room_snapshot := room_key != actor_position_route_room_key
+	if fresh_room_snapshot:
+		actor_position_route_room_key = room_key
+		actor_position_receipt_cache.clear()
+		actor_route_started_at_cache.clear()
 	var active: Dictionary = {}
+	var active_receipts: Dictionary = {}
 	for value in foundation_scene_objects:
 		if typeof(value) != TYPE_DICTIONARY:
 			continue
 		var object_data := value as Dictionary
+		var object_id := str(object_data.get("id", "")).strip_edges()
+		var receipt_id := str(object_data.get("authored_position_route_id", "")).strip_edges()
+		if not object_id.is_empty():
+			active_receipts[object_id] = true
 		if _copy_dictionary(object_data.get("actor_route_stage", {})).is_empty():
+			if not object_id.is_empty():
+				actor_position_receipt_cache[object_id] = receipt_id
 			continue
 		var key := _actor_route_cache_key(object_data)
 		active[key] = true
-		if not actor_route_started_at_cache.has(key):
-			actor_route_started_at_cache[key] = actor_route_time
+		if receipt_id.is_empty():
+			# Authored patrol/ambient routes retain their normal live animation.
+			if not actor_route_started_at_cache.has(key):
+				actor_route_started_at_cache[key] = actor_route_time
+		else:
+			var had_actor := actor_position_receipt_cache.has(object_id)
+			var previous_receipt := str(actor_position_receipt_cache.get(object_id, ""))
+			var duration := maxf(0.001, float(_copy_dictionary(object_data.get("actor_route_stage", {})).get("duration_sec", 1.0)))
+			if not fresh_room_snapshot and had_actor and previous_receipt != receipt_id:
+				# Only an already-rendered actor receiving a new persisted movement
+				# receipt animates. Reconstruction and revisit seal directly at endpoint.
+				actor_route_started_at_cache[key] = actor_route_time
+			elif not actor_route_started_at_cache.has(key):
+				actor_route_started_at_cache[key] = actor_route_time - duration
+			actor_position_receipt_cache[object_id] = receipt_id
 	for key_value in actor_route_started_at_cache.keys():
 		if not active.has(str(key_value)):
 			actor_route_started_at_cache.erase(key_value)
+	for object_id_value in actor_position_receipt_cache.keys():
+		if not active_receipts.has(str(object_id_value)):
+			actor_position_receipt_cache.erase(object_id_value)
 
 
 func _scene_object_z_key(object_data: Dictionary) -> int:
@@ -5141,6 +5230,17 @@ func _resolved_label_rect_for_object(object_data: Dictionary, object_rect: Rect2
 	var object_id := str(object_data.get("id", ""))
 	if not _object_label_moves_with_route(object_data) and object_label_rect_cache.has(object_id):
 		return object_label_rect_cache[object_id] as Rect2
+	var authority_key := "small_screen_label_rect" if small_screen_mode else "label_rect"
+	var authored := _rect_from_dict(object_data.get(authority_key, {}))
+	if authored.has_area():
+		authored = Rect2(authored.position * Vector2(BOARD_SIZE), authored.size * Vector2(BOARD_SIZE))
+		if _object_label_moves_with_route(object_data):
+			var hit_key := "small_screen_rect" if small_screen_mode else "normalized_rect"
+			var settled_hit := _rect_from_dict(object_data.get(hit_key, {}))
+			if settled_hit.has_area():
+				settled_hit = Rect2(settled_hit.position * Vector2(BOARD_SIZE), settled_hit.size * Vector2(BOARD_SIZE))
+				authored.position += object_rect.get_center() - settled_hit.get_center()
+		return _clamp_board_rect(authored)
 	return _label_rect_for_object(object_rect, str(object_data.get("label", "")))
 
 
@@ -5154,87 +5254,24 @@ func _object_label_moves_with_route(object_data: Dictionary) -> bool:
 func _rebuild_object_label_rect_cache(objects: Array) -> void:
 	object_label_rect_cache = {}
 	var object_rects: Array[Rect2] = []
-	var default_label_rects: Array[Rect2] = []
+	var resolved_label_rects: Array[Rect2] = []
 	for value in objects:
 		var object_data: Dictionary = value if typeof(value) == TYPE_DICTIONARY else {}
 		var object_rect := _board_rect_for_object(object_data)
 		object_rects.append(object_rect)
-		default_label_rects.append(_label_rect_for_object(object_rect, str(object_data.get("label", ""))))
-	var resolved_label_rects: Array[Rect2] = []
-	var moved_count := 0
-	for index in range(objects.size()):
-		var object_data: Dictionary = objects[index] if typeof(objects[index]) == TYPE_DICTIONARY else {}
+		var resolved := _resolved_label_rect_for_object(object_data, object_rect)
 		var object_id := str(object_data.get("id", ""))
-		var default_rect: Rect2 = default_label_rects[index]
-		if object_id.is_empty() or not default_rect.has_area():
-			resolved_label_rects.append(Rect2())
-			continue
-		var best_rect := default_rect
-		var best_score := INF
-		for candidate_value in _object_label_candidates(object_rects[index], default_rect.size):
-			var candidate: Rect2 = candidate_value
-			var label_overlap := _total_rect_overlap(candidate, resolved_label_rects)
-			var object_overlap := 0.0
-			for object_index in range(object_rects.size()):
-				if object_index != index:
-					object_overlap += _rect_overlap_area(candidate, object_rects[object_index])
-			var distance_cost := candidate.get_center().distance_squared_to(default_rect.get_center())
-			var score := label_overlap * 1000000.0 + object_overlap * 1000.0 + distance_cost
-			if score < best_score:
-				best_score = score
-				best_rect = candidate
-			if label_overlap <= 0.01 and object_overlap <= 0.01:
-				break
-		object_label_rect_cache[object_id] = best_rect
-		resolved_label_rects.append(best_rect)
-		if not best_rect.is_equal_approx(default_rect):
-			moved_count += 1
+		if not object_id.is_empty() and resolved.has_area() and not _object_label_moves_with_route(object_data):
+			object_label_rect_cache[object_id] = resolved
+		resolved_label_rects.append(resolved)
 	object_label_layout_stats = {
 		"label_count": object_label_rect_cache.size(),
-		"moved_count": moved_count,
-		"default_label_overlap_count": _rect_pair_overlap_count(default_label_rects),
+		"moved_count": 0,
+		"default_label_overlap_count": _rect_pair_overlap_count(resolved_label_rects),
 		"resolved_label_overlap_count": _rect_pair_overlap_count(resolved_label_rects),
-		"default_object_overlap_count": _label_object_overlap_count(default_label_rects, object_rects),
+		"default_object_overlap_count": _label_object_overlap_count(resolved_label_rects, object_rects),
 		"resolved_object_overlap_count": _label_object_overlap_count(resolved_label_rects, object_rects),
 	}
-
-
-func _object_label_candidates(object_rect: Rect2, label_size: Vector2) -> Array[Rect2]:
-	var centered_x := object_rect.get_center().x - label_size.x * 0.5
-	var centered_y := object_rect.get_center().y - label_size.y * 0.5
-	var above_y := object_rect.position.y - label_size.y - OBJECT_LABEL_GAP
-	var below_y := object_rect.end.y + OBJECT_LABEL_GAP
-	var tier_gap := label_size.y + 2.0
-	var raw_positions := [
-		Vector2(centered_x, above_y),
-		Vector2(centered_x, below_y),
-		Vector2(centered_x, above_y - tier_gap),
-		Vector2(centered_x, below_y + tier_gap),
-		Vector2(object_rect.position.x - label_size.x - OBJECT_LABEL_GAP, centered_y),
-		Vector2(object_rect.end.x + OBJECT_LABEL_GAP, centered_y),
-		Vector2(centered_x - label_size.x * 0.55, above_y),
-		Vector2(centered_x + label_size.x * 0.55, above_y),
-		Vector2(centered_x - label_size.x * 0.55, below_y),
-		Vector2(centered_x + label_size.x * 0.55, below_y),
-	]
-	var candidates: Array[Rect2] = []
-	for position in raw_positions:
-		var candidate := _clamp_board_rect(Rect2(position, label_size))
-		var duplicate := false
-		for existing in candidates:
-			if existing.is_equal_approx(candidate):
-				duplicate = true
-				break
-		if not duplicate:
-			candidates.append(candidate)
-	return candidates
-
-
-func _total_rect_overlap(rect: Rect2, others: Array[Rect2]) -> float:
-	var total := 0.0
-	for other in others:
-		total += _rect_overlap_area(rect, other)
-	return total
 
 
 func _rect_pair_overlap_count(rects: Array[Rect2]) -> int:
@@ -5327,11 +5364,135 @@ func _draw_object_shadow(rect: Rect2, selected: bool, shadow_kind: String) -> vo
 		draw_rect(Rect2(Vector2(rect.position.x + rect.size.x * 0.08, shadow_y - 4.0), Vector2(rect.size.x * 0.84, 4)), Color(glow.r, glow.g, glow.b, 0.32))
 
 
-func _draw_counter_person_occlusion(rect: Rect2, selected: bool) -> void:
-	var front := Color(C_DARK_2.r, C_DARK_2.g, C_DARK_2.b, 0.94)
-	draw_rect(Rect2(Vector2(rect.position.x - 3.0, rect.end.y - 4.0), Vector2(rect.size.x + 6.0, 8.0)), front)
-	if selected:
-		draw_line(Vector2(rect.position.x - 3.0, rect.end.y - 4.0), Vector2(rect.end.x + 3.0, rect.end.y - 4.0), C_YELLOW, 2.0)
+func _draw_room_foreground_occluders(behind_counter_objects: Array) -> void:
+	if behind_counter_objects.is_empty():
+		return
+	var environment := {
+		"archetype_id": str(foundation_snapshot.get("archetype_id", foundation_snapshot.get("id", environment_id))),
+		"current_layer_id": str(foundation_snapshot.get("current_layer_id", foundation_snapshot.get("layer_id", ""))),
+	}
+	var surface_map := EnvironmentPlacementScript.surface_map(environment)
+	if surface_map.is_empty():
+		return
+	var slots_by_id: Dictionary = {}
+	for field in ["base_slots", "stage_slots", "exit_slots"]:
+		var slot_values: Variant = surface_map.get(field, [])
+		if typeof(slot_values) != TYPE_ARRAY:
+			continue
+		for slot_value in slot_values as Array:
+			if typeof(slot_value) != TYPE_DICTIONARY:
+				continue
+			var slot := slot_value as Dictionary
+			slots_by_id[str(slot.get("id", ""))] = slot
+	var counters_by_id: Dictionary = {}
+	var counter_values: Variant = surface_map.get("counters", [])
+	if typeof(counter_values) == TYPE_ARRAY:
+		for counter_value in counter_values as Array:
+			if typeof(counter_value) != TYPE_DICTIONARY:
+				continue
+			var counter := counter_value as Dictionary
+			counters_by_id[str(counter.get("id", ""))] = counter
+	var support_ids: Dictionary = {}
+	for object_value in behind_counter_objects:
+		var object_data := object_value as Dictionary
+		var slot := slots_by_id.get(str(object_data.get("slot_id", "")), {}) as Dictionary
+		var support_id := str(slot.get("support_id", ""))
+		if counters_by_id.has(support_id):
+			support_ids[support_id] = true
+	var ordered_supports := support_ids.keys()
+	ordered_supports.sort()
+	for support_id_value in ordered_supports:
+		var support_id := str(support_id_value)
+		var counter := counters_by_id.get(support_id, {}) as Dictionary
+		_draw_counter_foreground_art(counter)
+
+
+func _draw_authored_counter_foregrounds() -> void:
+	var environment := {
+		"archetype_id": str(foundation_snapshot.get("archetype_id", foundation_snapshot.get("id", environment_id))),
+		"current_layer_id": str(foundation_snapshot.get("current_layer_id", foundation_snapshot.get("layer_id", ""))),
+	}
+	var surface_map := EnvironmentPlacementScript.surface_map(environment)
+	var counter_values: Variant = surface_map.get("counters", [])
+	if typeof(counter_values) != TYPE_ARRAY:
+		return
+	var counters: Array = []
+	for counter_value in counter_values as Array:
+		if typeof(counter_value) == TYPE_DICTIONARY and not str((counter_value as Dictionary).get("foreground_art_id", "")).is_empty():
+			counters.append(counter_value)
+	counters.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
+		return str((left_value as Dictionary).get("id", "")) < str((right_value as Dictionary).get("id", ""))
+	)
+	for counter_value in counters:
+		_draw_counter_foreground_art(counter_value as Dictionary)
+
+
+func _draw_counter_foreground_art(counter: Dictionary) -> bool:
+	var art_id := str(counter.get("foreground_art_id", ""))
+	var x0 := float(counter.get("x0", 0.0))
+	var x1 := float(counter.get("x1", 0.0))
+	var top_y := float(counter.get("top_y", 0.0))
+	var front_y := float(counter.get("front_y", top_y))
+	var front := Rect2(Vector2(x0, top_y), Vector2(x1 - x0, front_y - top_y))
+	if not front.has_area():
+		return false
+	match art_id:
+		"corner_store_register":
+			draw_rect(front, Color("#20203c"))
+			draw_line(front.position, Vector2(front.end.x, front.position.y), C_CYAN, 3.0)
+			for x in range(int(front.position.x) + 20, int(front.end.x) - 12, 38):
+				draw_rect(Rect2(x, front.position.y + 10, 28, maxf(4.0, front.size.y - 20.0)), C_AMBER.darkened(0.18))
+		"back_alley_crate_display":
+			draw_rect(front, Color("#4a2d1f"))
+			draw_line(front.position, Vector2(front.end.x, front.position.y), C_AMBER.darkened(0.18), 3.0)
+			for x in range(int(front.position.x) + 8, int(front.end.x), 42):
+				draw_line(Vector2(x, front.position.y + 5), Vector2(x + 24, front.end.y - 5), Color("#2a1812"), 3.0)
+		"motel_merchandise_counter", "motel_lobby_table":
+			draw_rect(front, Color("#18161f"))
+			draw_line(front.position, Vector2(front.end.x, front.position.y), C_PINK.darkened(0.30), 3.0)
+			draw_line(front.position + Vector2(8, front.size.y - 7), front.end - Vector2(8, 7), Color("#0e0c14"), 3.0)
+		"bar_main_counter":
+			draw_rect(front, Color("#3a1c16"))
+			draw_line(front.position, Vector2(front.end.x, front.position.y), C_AMBER.darkened(0.12), 4.0)
+			for x in range(int(front.position.x) + 24, int(front.end.x), 80):
+				draw_line(Vector2(x, front.position.y + 8), Vector2(x + 18, front.end.y - 8), Color("#24100d"), 3.0)
+		"gas_station_staff_window":
+			draw_rect(front, Color("#493116"))
+			draw_line(front.position, Vector2(front.end.x, front.position.y), C_AMBER.darkened(0.22), 2.0)
+		"punchline_right_table":
+			draw_rect(front, Color("#123c30"))
+			draw_line(front.position, Vector2(front.end.x, front.position.y), Color("#187452"), 4.0)
+			draw_line(front.position + Vector2(12, front.size.y - 8), front.end - Vector2(12, 8), Color("#0b2b22"), 3.0)
+		"jazz_bar":
+			draw_rect(front, Color("#3b1f15"))
+			draw_line(front.position, Vector2(front.end.x, front.position.y), C_AMBER, 3.0)
+			for x in range(int(front.position.x) + 16, int(front.end.x), 44):
+				draw_rect(Rect2(x, front.position.y + 10, 26, maxf(3.0, front.size.y - 18.0)), Color("#21100d"))
+		"kitty_champagne_bar":
+			draw_rect(front, Color("#3a1932"))
+			draw_line(front.position, Vector2(front.end.x, front.position.y), C_PINK, 3.0)
+			for x in range(int(front.position.x) + 18, int(front.end.x), 48):
+				draw_circle(Vector2(x, front.position.y + front.size.y * 0.56), 4.0, C_YELLOW.darkened(0.10))
+		"delta_right_table":
+			draw_rect(front, Color("#362319"))
+			draw_line(front.position, Vector2(front.end.x, front.position.y), C_AMBER, 4.0)
+			draw_line(front.position + Vector2(10, front.size.y - 9), front.end - Vector2(10, 9), Color("#21150f"), 3.0)
+		"beach_towel_stall":
+			draw_rect(front, Color("#6b4327"))
+			draw_line(front.position, Vector2(front.end.x, front.position.y), C_YELLOW.darkened(0.16), 3.0)
+			for x in range(int(front.position.x) + 12, int(front.end.x), 34):
+				draw_rect(Rect2(x, front.position.y + 8, 20, maxf(4.0, front.size.y - 16.0)), _cycle_color(x).darkened(0.25))
+		"pawn_counter", "pawn_estate_shelf":
+			draw_rect(front, Color("#4a2d1f"))
+			draw_line(front.position, Vector2(front.end.x, front.position.y), C_AMBER.darkened(0.20), 3.0)
+			draw_line(front.position + Vector2(8, front.size.y - 6), front.end - Vector2(8, 6), Color("#241717"), 2.0)
+		"grand_host_station":
+			draw_rect(front, Color("#171225"))
+			draw_line(front.position, Vector2(front.end.x, front.position.y), C_AMBER.darkened(0.18), 3.0)
+			draw_line(front.position + Vector2(8, front.size.y - 5), front.end - Vector2(8, 5), Color("#090914"), 2.0)
+		_:
+			return false
+	return true
 
 
 func _draw_hotspot_hint(rect: Rect2, object_type: String) -> void:

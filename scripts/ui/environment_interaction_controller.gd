@@ -7,7 +7,24 @@ const ScenarioSequenceSchemaScript := preload("res://scripts/core/scenario_seque
 const ScenarioSemanticViewModelScript := preload("res://scripts/ui/scenario_semantic_view_model.gd")
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const EnvironmentPlacementScript := preload("res://scripts/core/environment_placement.gd")
-const DELIVERY_LAYOUT_GAP_PIXELS := 8.0
+const EnvironmentSlotBinderScript := preload("res://scripts/core/environment_slot_binder.gd")
+
+const LIVE_MEMBERSHIP_OBJECT_TYPES := ["service", "lender"]
+const LIVE_PRESENTATION_FIELDS := [
+	"visual_type", "short_description", "identity_summary", "presence",
+	"status_summary", "effect_summary", "impact_summary", "risk_summary",
+	"cost_summary", "choice_summary", "classification_summary",
+	"attribute_badges", "visual_key", "prop", "surface", "icon_key",
+	"asset_path", "icon_sprite", "character_actor",
+]
+const LIVE_AVAILABILITY_ACTION_FIELDS := [
+	"interactive", "decorative", "enabled", "disabled_reason", "action_summary",
+	"available_actions", "inline_actions", "confirm_action_id", "state_badge",
+	"non_color_state",
+]
+const LIVE_RENDER_FIELDS := [
+	"visible", "presentation_required", "presentation_mode", "hovered", "focused", "selected",
+]
 
 
 static func interactable_object_view_list(host: Variant) -> Array:
@@ -15,6 +32,10 @@ static func interactable_object_view_list(host: Variant) -> Array:
 		return []
 	if host._is_meta_session():
 		return host._meta_interactable_object_view_list()
+	# Some normal preparation helpers populate public scenario context. If the
+	# persisted base envelope later fails authentication, restore the exact entry
+	# environment so a read-only catalog request cannot partially mutate it.
+	var entry_environment := JsonCoerceScript._copy_dict(host.run_state.current_environment)
 	var preparation: Dictionary = _dict(host.run_state.scenario_prepare_semantic_finalization())
 	var world_preparation: Dictionary = _dict(host.run_state.world_sequence_prepare_semantic_finalization())
 	var failed = host._run_failed_without_recovery()
@@ -130,19 +151,38 @@ static func interactable_object_view_list(host: Variant) -> Array:
 		"closing_time_locked": host._closing_time_blocks_environment_actions(),
 		"closing_time_reason": host._closing_time_disabled_reason(),
 	}))
+	# Seal the complete live base inventory against authored slots before scenario
+	# composition. Runtime-only controls consume remaining base capacity and use
+	# the action-list overflow mode when capacity is exhausted.
+	var binding_environment := JsonCoerceScript._copy_dict(host.run_state.current_environment)
+	binding_environment["layout"] = layout
+	var record_binding := EnvironmentSlotBinderScript.bind_base_records(
+		binding_environment,
+		result,
+		_dict(layout.get("slot_bindings", {}))
+	)
+	if not bool(record_binding.get("ok", false)):
+		var binding_failure := projection_failure_result(result, _array(record_binding.get("errors", [])))
+		# The persisted base envelope failed before scenario composition. Present the
+		# read-only failure surface, but do not let scenario rejection mutate or heal
+		# the exact hostile/current environment being diagnosed.
+		host.run_state.set("current_environment", entry_environment)
+		return _array(binding_failure.get("records", result))
+	result = _array(record_binding.get("records", result))
+	# The exact fixed-slot result is semantic authority, not an ephemeral view
+	# detail. Commit it atomically before any sequence stamps records so a real
+	# late overflow has the same identity/membership/digest proof after reload.
+	layout = commit_base_record_binding(host.run_state, layout, record_binding)
 	var definition: Dictionary = _dict(host.run_state.scenario_sequence_definition())
 	var trusted_base_result := result.duplicate(true)
 	var layout_context: Dictionary = {}
 	if host.environment_canvas != null and host.environment_canvas.has_method("scenario_layout_context"):
 		layout_context = _dict(host.environment_canvas.call("scenario_layout_context"))
 	# The sealed scenario inventory deliberately excludes runtime-only controls
-	# such as Numbers, Crew arrivals, and live game clerks. Delivery controls are
-	# placed around the already sealed scenario authority instead of moving that
-	# authority when cargo state changes.
-	# Their geometry is nevertheless part of the room the player sees. Feed a
-	# bounded, read-only reservation list into layout resolution so scenario props
-	# are placed around the complete production plane instead of composing a late
-	# collision-prone layer. These records authorize no scenario behavior.
+	# such as Numbers, Crew arrivals, and live game clerks. They are already bound
+	# to authored base slots above. Feed those immutable rectangles into scenario
+	# validation so the base/stage disjointness invariant is checked against the
+	# complete production plane; these records authorize no scenario behavior.
 	layout_context["base_occupied_records"] = _base_layout_reservations(trusted_base_result, layout)
 	if not bool(preparation.get("ok", false)):
 		var preparation_failure := projection_failure_result(result, _array(preparation.get("errors", [])))
@@ -191,7 +231,34 @@ static func interactable_object_view_list(host: Variant) -> Array:
 		host.run_state.current_environment.erase("scenario_layout_audit")
 		host.run_state.current_environment.erase("scenario_layout_authority_digest")
 	result = _attach_delivery_handoff_to_contact(host, result)
-	return _reflow_delivery_records(host, result)
+	return result
+
+
+static func commit_base_record_binding(run_state: Variant, layout_value: Dictionary, record_binding: Dictionary) -> Dictionary:
+	if run_state == null or not bool(record_binding.get("ok", false)):
+		return layout_value
+	var records := _array(record_binding.get("records", []))
+	var environment := _dict(run_state.get("current_environment"))
+	var prior_environment := environment.duplicate(true)
+	prior_environment["layout"] = layout_value.duplicate(true)
+	var prior_authority := EnvironmentSlotBinderScript.validate_base_layout_authority(prior_environment, records, true)
+	if not bool(prior_authority.get("ok", false)):
+		return layout_value
+	var layout := layout_value.duplicate(true)
+	layout["slot_schema_version"] = int(record_binding.get("slot_schema_version", 0))
+	layout["slot_map_digest"] = str(record_binding.get("slot_map_digest", ""))
+	layout["slot_bindings"] = _dict(record_binding.get("slot_bindings", {}))
+	layout["slot_overflow_ids"] = _array(record_binding.get("overflow_ids", []))
+	layout["slot_binding_digest"] = str(record_binding.get("binding_digest", ""))
+	layout["object_rects"] = _dict(record_binding.get("object_rects", {}))
+	var candidate_environment := environment.duplicate(true)
+	candidate_environment["layout"] = layout
+	var candidate_authority := EnvironmentSlotBinderScript.validate_base_layout_authority(candidate_environment, records)
+	if not bool(candidate_authority.get("ok", false)):
+		return layout_value
+	environment["layout"] = layout.duplicate(true)
+	run_state.set("current_environment", environment)
+	return layout
 
 
 static func _base_layout_reservations(records: Array, layout: Dictionary = {}) -> Array:
@@ -201,6 +268,7 @@ static func _base_layout_reservations(records: Array, layout: Dictionary = {}) -
 		var record := _dict(value)
 		var object_id := str(record.get("object_id", "")).strip_edges()
 		if object_id.is_empty() or by_id.has(object_id) or not bool(record.get("visible", true)) \
+				or str(record.get("presentation_mode", "room")) == "overflow" \
 				or not _runtime_layout_reservation_id(object_id):
 			continue
 		var label := str(record.get("label", "")).strip_edges()
@@ -251,9 +319,12 @@ static func _runtime_layout_reservation_id(object_id: String) -> bool:
 	return false
 
 
-# Scenario authority seals identity, geometry, and any fields it explicitly
-# changes. Its compact base inventory intentionally omits live presentation
-# data, so restore only absent fields from the already trusted UI projection.
+# Scenario authority seals identity and geometry. Its compact base inventory is
+# an immutable authorization baseline, not current dynamic membership: hidden
+# services/lenders may be absent now, while present records carry the current
+# public availability, actions, and presentation. Reconcile only the closed
+# public allowlists below; arbitrary live runtime/local state never crosses this
+# boundary and sealed identity/provenance/geometry always wins.
 # Resolved base events remain in the immutable semantic seal for authorization,
 # but they no longer own a live room object and must be removed after the sealed
 # projection passes. Scenario-owned event records remain governed by their own
@@ -268,13 +339,6 @@ static func restore_live_presentation_fields(projected_records: Array, live_reco
 		if not live_id.is_empty():
 			live_by_id[live_id] = live
 	var result: Array = []
-	var presentation_fields := [
-		"visual_type", "short_description", "identity_summary", "presence",
-		"status_summary", "effect_summary", "impact_summary", "risk_summary",
-		"cost_summary", "choice_summary", "classification_summary",
-		"attribute_badges", "visual_key", "prop", "surface", "icon_key",
-		"asset_path", "icon_sprite", "character_actor", "inline_actions",
-	]
 	for record_value in projected_records:
 		var record := _dict(record_value).duplicate(true)
 		var object_id := str(record.get("object_id", "")).strip_edges()
@@ -285,12 +349,30 @@ static func restore_live_presentation_fields(projected_records: Array, live_reco
 			and resolved_event_ids.has(str(record.get("source_id", "")).strip_edges())
 		if resolved_base_event:
 			continue
+		if owner_namespace != "scenario" and _requires_live_membership(record) and live.is_empty():
+			continue
 		if not live.is_empty() and owner_namespace != "scenario":
-			for field in presentation_fields:
-				if not record.has(field) and live.has(field):
+			var scenario_augmented_inline_actions := _array(record.get("scenario_augmented_inline_actions", []))
+			for field in LIVE_PRESENTATION_FIELDS + LIVE_AVAILABILITY_ACTION_FIELDS + LIVE_RENDER_FIELDS:
+				if live.has(field):
 					record[field] = _duplicate_variant(live.get(field))
+			# Live base actions replace their stale sealed snapshot. Authenticated
+			# scenario augments remain additive and must still resolve by token.
+			if live.has("inline_actions") and not scenario_augmented_inline_actions.is_empty():
+				var reconciled_inline_actions := _array(record.get("inline_actions", []))
+				for action_value in scenario_augmented_inline_actions:
+					if not reconciled_inline_actions.has(action_value):
+						reconciled_inline_actions.append(_duplicate_variant(action_value))
+				record["inline_actions"] = reconciled_inline_actions
 		result.append(record)
 	return result
+
+
+static func _requires_live_membership(record: Dictionary) -> bool:
+	var object_type := str(record.get("object_type", "")).strip_edges()
+	if not LIVE_MEMBERSHIP_OBJECT_TYPES.has(object_type):
+		return false
+	return str(record.get("object_id", "")).strip_edges().begins_with("%s:" % object_type)
 
 
 # Static scenario authority owns every record it seals, including removals.
@@ -409,8 +491,12 @@ static func _finalized_actor_authority_errors(semantic_state: Dictionary, author
 			["presentation_object_id", semantic_presentation_id, sealed.get("presentation_object_id", "")],
 			["normalized_hit_rect", actor.get("normalized_hit_rect", {}), sealed.get("normalized_hit_rect", {})],
 			["small_screen_rect", actor.get("small_screen_rect", {}), sealed.get("small_screen_rect", {})],
+			["label_rect", actor.get("label_rect", {}), sealed.get("label_rect", {})],
+			["small_screen_label_rect", actor.get("small_screen_label_rect", {}), sealed.get("small_screen_label_rect", {})],
 			["route_points", actor.get("route_points", []), sealed.get("actor_route_points", [])],
 			["route_stage", actor.get("route_stage", {}), sealed.get("actor_route_stage", {})],
+			["presentation_mode", actor.get("presentation_mode", "room"), sealed.get("presentation_mode", "room")],
+			["slot_id", actor.get("slot_id", ""), sealed.get("slot_id", "")],
 			["z_order", actor.get("z_order", -1), sealed.get("z_order", -2)],
 		]:
 			var values := pair as Array
@@ -715,6 +801,7 @@ static func _merge_projected_actor(base: Dictionary, semantic: Dictionary, autho
 	result["pose"] = result["actor_pose"]
 	result["behavior"] = result["actor_behavior"]
 	result["actor_route_id"] = str(semantic.get("route_id", ""))
+	result["authored_position_route_id"] = str(semantic.get("authored_position_route_id", ""))
 	result["actor_route_points"] = _array(authority.get("actor_route_points", []))
 	result["actor_route_stage"] = _dict(authority.get("actor_route_stage", {}))
 	result["character_actor"] = ScenarioSemanticViewModelScript.actor_character_model(semantic)
@@ -746,6 +833,8 @@ static func _apply_layout_authority(record: Dictionary, authority: Dictionary, a
 	var result := record.duplicate(true)
 	var normalized := _dict(authority.get("normalized_hit_rect", {}))
 	var small := _dict(authority.get("small_screen_rect", {}))
+	var label_rect := _dict(authority.get("label_rect", {}))
+	var small_label_rect := _dict(authority.get("small_screen_label_rect", {}))
 	var final_rect := Rect2(float(normalized.get("x", 0.0)), float(normalized.get("y", 0.0)), float(normalized.get("w", 0.0)), float(normalized.get("h", 0.0)))
 	# Every production geometry consumer receives the same sealed rectangle.
 	# `normalized_rect` used to retain a producer's stale pre-sequence value and
@@ -754,11 +843,16 @@ static func _apply_layout_authority(record: Dictionary, authority: Dictionary, a
 	result["normalized_rect"] = normalized.duplicate(true)
 	result["focus_rect"] = final_rect
 	result["small_screen_rect"] = small
+	result["label_rect"] = label_rect
+	result["small_screen_label_rect"] = small_label_rect
+	result["fixed_slot_geometry"] = true
 	result["actor_route_points"] = _array(authority.get("actor_route_points", []))
 	result["actor_route_stage"] = _dict(authority.get("actor_route_stage", {}))
 	result["scenario_z_order"] = int(authority.get("z_order", 0))
 	result["placement_class"] = str(authority.get("placement_class", result.get("placement_class", "")))
 	result["contact"] = str(authority.get("contact", result.get("contact", "")))
+	result["presentation_mode"] = str(authority.get("presentation_mode", result.get("presentation_mode", "room")))
+	result["slot_id"] = str(authority.get("slot_id", result.get("slot_id", "")))
 	result["scenario_layout_resolved"] = true
 	result["scenario_layout_authority_identity"] = str(authority.get("identity", ""))
 	result["scenario_layout_authority_digest"] = authority_digest
@@ -884,9 +978,13 @@ static func _projected_record_authority_errors(records: Array, authority: Dictio
 			["object_id", record.get("object_id", ""), sealed.get("presentation_object_id", "")],
 			["normalized_rect", record.get("normalized_rect", {}), sealed.get("normalized_hit_rect", {})],
 			["small_screen_rect", record.get("small_screen_rect", {}), sealed.get("small_screen_rect", {})],
+			["label_rect", record.get("label_rect", {}), sealed.get("label_rect", {})],
+			["small_screen_label_rect", record.get("small_screen_label_rect", {}), sealed.get("small_screen_label_rect", {})],
 			["scenario_z_order", record.get("scenario_z_order", -1), sealed.get("z_order", -2)],
 			["actor_route_points", record.get("actor_route_points", []), sealed.get("actor_route_points", [])],
 			["actor_route_stage", record.get("actor_route_stage", {}), sealed.get("actor_route_stage", {})],
+			["presentation_mode", record.get("presentation_mode", "room"), sealed.get("presentation_mode", "room")],
+			["slot_id", record.get("slot_id", ""), sealed.get("slot_id", "")],
 			["visible", record.get("visible", true), sealed.get("presentation_visible", false)],
 			["interactive", record.get("interactive", true), sealed.get("presentation_interactive", false)],
 		]:
@@ -1238,36 +1336,9 @@ static func _reflow_delivery_records(host: Variant, records: Array) -> Array:
 
 
 static func _delivery_available_rect(host: Variant, occupied_rects: Array[Rect2], preferred_index: int, placement_class: String = "standing_person") -> Rect2:
-	var focus_rect: Rect2 = host._interaction_rect_for_object("", host.CONTEXT_MODE_DELIVERY, preferred_index)
-	# Delivery verbs can coexist with a fully composed scenario room. Keep their
-	# hit areas at the renderer's accessible 72x48 minimum rather than consuming
-	# the old 100x70 card footprint for each of four simultaneous choices.
-	var board_size := Vector2(VisualStyleScript.ENVIRONMENT_BOARD_SIZE)
-	var compact_size := Vector2(72.0 / board_size.x, 48.0 / board_size.y)
-	focus_rect = Rect2(focus_rect.get_center() - compact_size * 0.5, compact_size)
-	var best_overlap := INF
-	var candidates: Array[Rect2] = []
-	var environment: Dictionary = host.run_state.current_environment if host.run_state != null and typeof(host.run_state.current_environment) == TYPE_DICTIONARY else {}
-	var authored_pixel := Rect2(focus_rect.position * board_size, focus_rect.size * board_size)
-	for candidate_value in EnvironmentPlacementScript.candidate_rects(environment, placement_class, authored_pixel):
-		var candidate_data: Dictionary = candidate_value if typeof(candidate_value) == TYPE_DICTIONARY else {}
-		var candidate_pixel: Rect2 = candidate_data.get("rect", Rect2())
-		candidates.append(Rect2(candidate_pixel.position / board_size, candidate_pixel.size / board_size))
-	if candidates.is_empty():
-		return Rect2()
-	for candidate in candidates:
-		var overlap := 0.0
-		var gap := Vector2(DELIVERY_LAYOUT_GAP_PIXELS / board_size.x, DELIVERY_LAYOUT_GAP_PIXELS / board_size.y)
-		var candidate_footprint := Rect2(candidate.position - gap, candidate.size + gap * 2.0)
-		for occupied_rect in occupied_rects:
-			var occupied_footprint := Rect2(occupied_rect.position - gap, occupied_rect.size + gap * 2.0)
-			overlap += candidate_footprint.intersection(occupied_footprint).get_area()
-		if overlap < best_overlap:
-			best_overlap = overlap
-			focus_rect = candidate
-		if is_zero_approx(overlap):
-			break
-	return focus_rect
+	# Geometry is intentionally deferred to bind_base_records(). Constructing a
+	# live record never searches for or invents a room position.
+	return Rect2()
 
 
 static func _delivery_board_bounded_rect(rect: Rect2) -> Rect2:

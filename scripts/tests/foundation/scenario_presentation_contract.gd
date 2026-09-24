@@ -29,6 +29,7 @@ static func check(failures: Array) -> void:
 	_check_competing_augment_presentation(failures)
 	_check_fail_closed_presentation(failures)
 	_check_live_event_presentation_restoration(failures)
+	_check_live_base_record_reconciliation(failures)
 
 
 static func _check_live_event_presentation_restoration(failures: Array) -> void:
@@ -68,6 +69,175 @@ static func _check_live_event_presentation_restoration(failures: Array) -> void:
 		failures.append("Scenario finalization restored a direct Word from Across Town response instead of the conversation-first actor/icon presentation.")
 	if str(restored.get("confirm_action_id", "")) != "inspect_event_choices" or str(restored.get("focus_rect", {})) != str(sealed.get("focus_rect", {})):
 		failures.append("Live event presentation restoration overwrote sealed interaction authority.")
+
+
+static func _check_live_base_record_reconciliation(failures: Array) -> void:
+	var phone_rect := {"x": 0.14, "y": 0.12, "w": 0.10, "h": 0.12}
+	var lender_rect := {"x": 0.74, "y": 0.60, "w": 0.10, "h": 0.20}
+	var make_call_id := "event_response:call_brother_in_law:make_call"
+	var scenario_action_id := "scenario_action:17:scenario:wedding_phone:listen"
+	var projected := [{
+		"object_id": "lender:brother_in_law",
+		"object_type": "lender",
+		"source_id": "brother_in_law",
+		"owner_namespace": "service",
+		"stable_object_id": "lender:brother_in_law",
+		"label": "Your Brother-in-Law",
+		"visible": true,
+		"interactive": true,
+		"enabled": true,
+		"available_actions": [{"id": "use_lender_hook", "label": "Use"}],
+		"confirm_action_id": "use_lender_hook",
+		"presentation_mode": "room",
+		"focus_rect": lender_rect,
+	}, {
+		"object_id": "service:house_drink",
+		"object_type": "service",
+		"source_id": "house_drink",
+		"owner_namespace": "service",
+		"stable_object_id": "service:house_drink",
+		"visible": true,
+		"enabled": true,
+		"available_actions": [{"id": "use_service_hook", "label": "Use"}],
+	}, {
+		"object_id": "event:call_brother_in_law",
+		"object_type": "event",
+		"source_id": "call_brother_in_law",
+		"owner_namespace": "event",
+		"stable_object_id": "event:call_brother_in_law",
+		"label": "Counter Phone",
+		"visible": false,
+		"interactive": false,
+		"enabled": false,
+		"disabled_reason": "Stale sealed state.",
+		"action_summary": "Stale sealed action.",
+		"available_actions": [],
+		"inline_actions": [{"id": "stale_response", "emit_object_id": "event_response:call_brother_in_law:stale_response", "label": "Stale"}, {"id": "listen", "emit_object_id": scenario_action_id, "label": "Listen"}],
+		"scenario_augmented_inline_actions": [{"id": "listen", "emit_object_id": scenario_action_id, "label": "Listen"}],
+		"confirm_action_id": "",
+		"presentation_mode": "overflow",
+		"normalized_rect": phone_rect,
+		"focus_rect": phone_rect,
+	}, {
+		"object_id": "lender:motel_friend",
+		"object_type": "lender",
+		"source_id": "motel_friend",
+		"owner_namespace": "service",
+		"stable_object_id": "lender:motel_friend",
+		"label": "Motel Friend",
+		"visible": true,
+		"interactive": false,
+		"enabled": false,
+		"disabled_reason": "Stale sealed state.",
+		"available_actions": [],
+		"confirm_action_id": "",
+		"presentation_mode": "room",
+		"normalized_rect": lender_rect,
+		"focus_rect": lender_rect,
+	}, {
+		"object_id": "service:scenario_open_bar",
+		"object_type": "service",
+		"source_id": "scenario_open_bar",
+		"owner_namespace": "scenario",
+		"stable_object_id": "scenario_open_bar",
+		"enabled": true,
+		"presentation_mode": "room",
+		"focus_rect": {"x": 0.42, "y": 0.40, "w": 0.12, "h": 0.14},
+	}, {
+		# Exact family/prefix matching prevents a malformed non-service identity from
+		# being interpreted as a dynamic service tombstone.
+		"object_id": "event:service_alias",
+		"object_type": "service",
+		"source_id": "service_alias",
+		"owner_namespace": "event",
+		"stable_object_id": "event:service_alias",
+		"enabled": true,
+		"presentation_mode": "room",
+		"focus_rect": {"x": 0.58, "y": 0.40, "w": 0.10, "h": 0.12},
+	}]
+	var live := [{
+		"object_id": "event:call_brother_in_law",
+		"object_type": "event",
+		"source_id": "call_brother_in_law",
+		"visual_type": "event",
+		"short_description": "A counter phone. Family guilt is free.",
+		"visible": true,
+		"interactive": true,
+		"decorative": false,
+		"enabled": true,
+		"disabled_reason": "",
+		"action_summary": "Choose a response.",
+		"available_actions": [{"id": "inspect_event_choices", "label": "Review responses"}],
+		"inline_actions": [{"id": "make_call", "emit_object_id": make_call_id, "label": "Make the call"}],
+		"confirm_action_id": "inspect_event_choices",
+		"presentation_mode": "room",
+		"normalized_rect": {"x": 0.88, "y": 0.88, "w": 0.04, "h": 0.04},
+		"focus_rect": {"x": 0.88, "y": 0.88, "w": 0.04, "h": 0.04},
+		"runtime_state": {"private_token": "PRIVATE_PHONE_RUNTIME"},
+		"visual_state": {"private_token": "PRIVATE_PHONE_VISUAL"},
+		"local_state": {"traitor": "PRIVATE_TRAITOR"},
+		"rigged_draw": "PRIVATE_RIGGED_DRAW",
+		"unrevealed_turn": "PRIVATE_UNREVEALED_TURN",
+	}, {
+		"object_id": "lender:motel_friend",
+		"object_type": "lender",
+		"source_id": "motel_friend",
+		"visual_type": "character",
+		"visible": true,
+		"interactive": true,
+		"decorative": false,
+		"enabled": true,
+		"disabled_reason": "",
+		"action_summary": "Double-click to use.",
+		"available_actions": [{"id": "use_lender_hook", "label": "Use"}],
+		"inline_actions": [],
+		"confirm_action_id": "use_lender_hook",
+		"presentation_mode": "overflow",
+		"normalized_rect": {"x": 0.02, "y": 0.02, "w": 0.04, "h": 0.04},
+		"focus_rect": {"x": 0.02, "y": 0.02, "w": 0.04, "h": 0.04},
+	}]
+	var restored_records := EnvironmentInteractionControllerScript.restore_live_presentation_fields(projected, live)
+	if not _record_by_id(restored_records, "lender:brother_in_law").is_empty() \
+			or not _record_by_id(restored_records, "service:house_drink").is_empty():
+		failures.append("Scenario live reconciliation resurrected an absent dynamic service/lender from the sealed base inventory.")
+	if _record_by_id(restored_records, "service:scenario_open_bar").is_empty() \
+			or _record_by_id(restored_records, "event:service_alias").is_empty():
+		failures.append("Scenario live reconciliation treated scenario-owned or non-prefix records as dynamic service/lender tombstones.")
+	var phone := _record_by_id(restored_records, "event:call_brother_in_law")
+	var phone_inline := _array(phone.get("inline_actions", []))
+	if not bool(phone.get("visible", false)) or not bool(phone.get("interactive", false)) or not bool(phone.get("enabled", false)) \
+			or str(phone.get("disabled_reason", "missing")) != "" \
+			or str(phone.get("action_summary", "")) != "Choose a response." \
+			or str(phone.get("confirm_action_id", "")) != "inspect_event_choices" \
+			or str(phone.get("presentation_mode", "")) != "room" \
+			or not _action_emit_ids(phone_inline).has(make_call_id) \
+			or not _action_emit_ids(phone_inline).has(scenario_action_id) \
+			or _action_emit_ids(phone_inline).has("event_response:call_brother_in_law:stale_response"):
+		failures.append("Counter Phone did not restore its current visible, enabled, actionable room presentation while retaining its scenario augment.")
+	if str(phone.get("focus_rect", {})) != str(phone_rect) \
+			or str(phone.get("normalized_rect", {})) != str(phone_rect) \
+			or str(phone.get("owner_namespace", "")) != "event" \
+			or str(phone.get("stable_object_id", "")) != "event:call_brother_in_law":
+		failures.append("Counter Phone live reconciliation overwrote sealed geometry or semantic identity.")
+	var current_lender := _record_by_id(restored_records, "lender:motel_friend")
+	if not bool(current_lender.get("enabled", false)) or not bool(current_lender.get("interactive", false)) \
+			or str(current_lender.get("confirm_action_id", "")) != "use_lender_hook" \
+			or str(current_lender.get("presentation_mode", "")) != "overflow" \
+			or _array(current_lender.get("available_actions", [])).size() != 1:
+		failures.append("Present live lender availability/action/presentation did not replace the stale sealed snapshot.")
+	if str(current_lender.get("focus_rect", {})) != str(lender_rect) or str(current_lender.get("normalized_rect", {})) != str(lender_rect):
+		failures.append("Present live lender reconciliation overwrote sealed slot geometry.")
+	if JSON.stringify(restored_records).contains("PRIVATE_") \
+			or phone.has("runtime_state") or phone.has("visual_state") or phone.has("local_state") \
+			or phone.has("rigged_draw") or phone.has("unrevealed_turn"):
+		failures.append("Live base reconciliation copied private runtime/visual/local state outside the public allowlist.")
+	var canvas = PixelSceneCanvasScript.new()
+	canvas.render_environment_snapshot({"id": "live_reconciliation", "archetype_id": "motel", "interactable_objects": restored_records})
+	var rendered_objects := _array(canvas.current_view_snapshot().get("objects", []))
+	if _record_by_id(rendered_objects, "event:call_brother_in_law").is_empty() \
+			or not _record_by_id(rendered_objects, "lender:brother_in_law").is_empty():
+		failures.append("Production room rendering did not show Counter Phone while omitting the unavailable Brother-in-Law lender.")
+	canvas.free()
 
 
 static func _check_observable_action_consequence(failures: Array) -> void:
@@ -680,6 +850,14 @@ static func _record_by_id(records: Array, object_id: String) -> Dictionary:
 		if str(record.get("object_id", record.get("id", ""))) == object_id:
 			return record
 	return {}
+
+
+static func _action_emit_ids(actions: Array) -> Array:
+	var ids: Array = []
+	for action_value in actions:
+		var action := _dict(action_value)
+		ids.append(str(action.get("emit_object_id", action.get("id", ""))))
+	return ids
 
 
 static func _layout_by_id(layout: Dictionary, object_id: String) -> Dictionary:

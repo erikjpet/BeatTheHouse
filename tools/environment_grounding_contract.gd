@@ -2,7 +2,10 @@ extends SceneTree
 
 const EnvironmentPlacementScript := preload("res://scripts/core/environment_placement.gd")
 const EnvironmentInstanceScript := preload("res://scripts/core/environment_instance.gd")
-const ScenarioLayoutResolverScript := preload("res://scripts/core/scenario_layout_resolver.gd")
+const EnvironmentSlotBinderScript := preload("res://scripts/core/environment_slot_binder.gd")
+const ModalFocusScopeScript := preload("res://scripts/ui/modal_focus_scope.gd")
+const PixelSceneCanvasScript := preload("res://scripts/ui/pixel_scene_canvas.gd")
+const RoomActionListScript := preload("res://scripts/ui/room_action_list.gd")
 
 
 func _init() -> void:
@@ -11,16 +14,19 @@ func _init() -> void:
 
 func _run() -> void:
 	var failures: Array = []
-	_check_authored_placement_authority(failures)
-	_check_zone_person(failures)
-	_check_content_aware_classes(failures)
-	_check_named_people_classes(failures)
-	_check_hidden_state_neutrality(failures)
-	_check_scenario_reservation_lifecycle(failures)
-	_check_scenario_surface_overrides(failures)
-	_check_bounded_grounding_fallback(failures)
+	_check_map_inventory(failures)
+	_check_deterministic_base_binding(failures)
+	_check_slot_map_cache_invalidation(failures)
+	_check_base_overflow(failures)
+	_check_scenario_exit_and_overflow(failures)
+	_check_authored_actor_route(failures)
+	_check_complete_record_binding(failures)
+	_check_shared_base_binding_aliases(failures)
+	_check_home_meta_binding_aliases(failures)
+	_check_overflow_action_list(failures)
+	_check_semantic_classification(failures)
 	if failures.is_empty():
-		print("ENVIRONMENT_GROUNDING_CONTRACT_OK authored=sacrosanct bounded_fallback=grounded zone_person=feet named_people=person person_event=floor wall_sign=wall hidden_state=neutral scenario_reservations=active_only scenario_overrides=bound hanging=multiple")
+		print("ENVIRONMENT_GROUNDING_CONTRACT_OK authority=fixed_slots maps=21 base=deterministic overflow=action_list scenario=stage_exit routes=authored")
 		quit(0)
 		return
 	for failure_value in failures:
@@ -28,186 +34,478 @@ func _run() -> void:
 	quit(1)
 
 
-func _check_authored_placement_authority(failures: Array) -> void:
+func _check_map_inventory(failures: Array) -> void:
+	var source := FileAccess.open("res://data/environments/placement_surfaces.json", FileAccess.READ)
+	if source == null:
+		failures.append("placement_surfaces.json could not be opened")
+		return
+	var parsed: Variant = JSON.parse_string(source.get_as_text())
+	if typeof(parsed) != TYPE_DICTIONARY:
+		failures.append("placement_surfaces.json is not an object")
+		return
+	var root := parsed as Dictionary
+	var maps: Array = root.get("maps", [])
+	if int(root.get("schema_version", 0)) != 2 or int(root.get("slot_schema_version", 0)) != 1 or maps.size() != 21:
+		failures.append("fixed-slot source does not seal schema 2 / slot schema 1 / 21 maps")
+	for map_value in maps:
+		var map_data: Dictionary = map_value if typeof(map_value) == TYPE_DICTIONARY else {}
+		if (map_data.get("base_slots", []) as Array).is_empty() \
+				or (map_data.get("stage_slots", []) as Array).is_empty() \
+				or (map_data.get("exit_slots", []) as Array).size() < 2:
+			failures.append("map %s has incomplete base/stage/exit capacity" % str(map_data.get("id", "")))
+
+
+func _check_deterministic_base_binding(failures: Array) -> void:
 	var environment := {"archetype_id": "bar"}
-	var authored := Rect2(250.0, 270.0, 72.0, 80.0)
-	var occupied := [{
-		"identity": "base::blocker",
-		"rect": authored,
-		"small_rect": authored,
-		"label_rect": Rect2(),
-		"small_label_rect": Rect2(),
-	}]
-	var resolved := ScenarioLayoutResolverScript._collision_safe_rect(
-		"scenario::floor_person", authored, occupied, "Floor Person", Rect2(),
-		environment, "standing_person"
-	)
-	var rect: Rect2 = resolved.get("rect", Rect2())
-	if bool(resolved.get("colliding", true)) or bool(resolved.get("adjusted", true)) or not rect.is_equal_approx(authored):
-		failures.append("A supported authored placement was displaced by runtime packing.")
-	elif not EnvironmentPlacementScript.valid_rect(environment, "standing_person", rect):
-		failures.append("The authored-authority fixture did not remain on the Bar floor.")
+	var entries := [
+		{"object_id": "travel:leave", "object_type": "travel", "spot_field": "travel_spots", "index": 0},
+		{"object_id": "game:blackjack", "object_type": "game", "spot_field": "game_spots", "index": 0, "label": "Blackjack"},
+		{"object_id": "service:house_drink", "object_type": "service", "spot_field": "service_spots", "index": 0, "label": "House Drink"},
+	]
+	var first := EnvironmentSlotBinderScript.bind_base_layout(environment, entries)
+	var reversed := entries.duplicate(true)
+	reversed.reverse()
+	var second := EnvironmentSlotBinderScript.bind_base_layout(environment, reversed)
+	if JSON.stringify(first.get("slot_bindings", {})) != JSON.stringify(second.get("slot_bindings", {})) \
+			or str(first.get("binding_digest", "")) != str(second.get("binding_digest", "")):
+		failures.append("base binding depends on producer order")
+	for binding_value in (first.get("slot_bindings", {}) as Dictionary).values():
+		var binding: Dictionary = binding_value
+		if str(binding.get("presentation_mode", "")) == "room" and str(binding.get("slot_id", "")).is_empty():
+			failures.append("room binding has no authored slot id")
 
 
-func _check_zone_person(failures: Array) -> void:
-	var semantic := {
-		"owner_namespace": "scenario",
-		"stable_object_id": "zone_person",
-		"semantic_kind": "actor",
-		"label": "Zone Person",
-		"description": "A person waits beside the back wall.",
-		"appearance": "patron",
-		"role": "patron",
-		"zone_id": "background",
-		"present": true,
-	}
-	var projection := {
-		"scenario_id": "grounding_contract",
-		"phase_id": "arrival",
-		"status": "active",
-		"boundary_serial": 0,
-		"semantic_state": {
-			"scene_objects": {},
-			"actors": {"scenario::zone_person": semantic},
-			"interactions": {}, "services": {}, "games": {}, "routes": {},
-		},
-		"active_stages": [],
-	}
+func _check_slot_map_cache_invalidation(failures: Array) -> void:
 	var environment := {
+		"id": "bar_cache_fixture",
 		"archetype_id": "bar",
-		"semantic_zones": {"background": {"bounds": [32, 32, 836, 100]}},
+		"layout": {},
+		"game_ids": ["slot"],
+		"event_ids": [],
+		"item_offers": [],
+		"service_ids": ["house_drink"],
+		"lender_hooks": [],
+		"travel_hooks": ["pawn_shop"],
+		"next_archetypes": [],
 	}
-	var resolved := ScenarioLayoutResolverScript.resolve([], projection, environment)
-	if not bool(resolved.get("ok", false)):
-		failures.append("Zone-only person failed class-aware resolution: %s" % JSON.stringify(resolved.get("errors", [])))
+	var first := EnvironmentInstanceScript.ensure_generated_layout(environment)
+	var first_rects: Dictionary = first.get("object_rects", {})
+	if not first_rects.has("game:slot"):
+		failures.append("slot-map cache fixture did not bind its probe game")
 		return
-	var resolved_projection: Dictionary = resolved.get("projection", {})
-	var resolved_semantic: Dictionary = resolved_projection.get("semantic_state", {})
-	var resolved_actors: Dictionary = resolved_semantic.get("actors", {})
-	if resolved_actors.size() != 1:
-		failures.append("Zone-only person did not produce one resolved visual.")
+	var forged := first.duplicate(true)
+	forged["slot_map_digest"] = "0".repeat(64)
+	var forged_rects: Dictionary = forged.get("object_rects", {})
+	forged_rects["game:slot"] = {"x": 0.91, "y": 0.91, "w": 0.01, "h": 0.01}
+	forged["object_rects"] = forged_rects
+	var restored_environment := environment.duplicate(true)
+	restored_environment["layout"] = forged
+	var rebound := EnvironmentInstanceScript.ensure_generated_layout(restored_environment)
+	var rebound_rect: Dictionary = (rebound.get("object_rects", {}) as Dictionary).get("game:slot", {})
+	if str(rebound.get("grounding_signature", "")) != str(first.get("grounding_signature", "")) \
+			or str(rebound.get("slot_map_digest", "")) != str(first.get("slot_map_digest", "")) \
+			or str(rebound.get("slot_binding_digest", "")) != str(first.get("slot_binding_digest", "")) \
+			or JSON.stringify(rebound_rect) != JSON.stringify(first_rects.get("game:slot", {})):
+		failures.append("a stale saved slot-map digest did not invalidate and deterministically rebind fixed room slots")
+
+
+func _check_base_overflow(failures: Array) -> void:
+	var entries: Array = []
+	for index in range(32):
+		entries.append({
+			"object_id": "actor:overflow_%02d" % index,
+			"object_type": "actor",
+			"role": "patron",
+			"label": "Overflow Patron %02d" % index,
+			"spot_field": "event_spots",
+			"index": index,
+		})
+	var result := EnvironmentSlotBinderScript.bind_base_layout({"archetype_id": "bar"}, entries)
+	var overflow: Array = result.get("overflow_ids", [])
+	if overflow.is_empty():
+		failures.append("base capacity exhaustion did not produce overflow")
+	for object_id_value in overflow:
+		var binding: Dictionary = (result.get("slot_bindings", {}) as Dictionary).get(str(object_id_value), {})
+		if str(binding.get("presentation_mode", "")) != "overflow" or not str(binding.get("slot_id", "")).is_empty():
+			failures.append("base overflow retained room geometry authority")
+
+
+func _check_scenario_exit_and_overflow(failures: Array) -> void:
+	var entries: Array = [{
+		"identity": "scenario::safe_exit",
+		"semantic": {"present": true, "label": "Safe Exit", "role": "exit", "placement_class": "doorway"},
+		"placement_class": "doorway",
+		"safe_exit": true,
+	}]
+	for index in range(24):
+		entries.append({
+			"identity": "scenario::fixture_%02d" % index,
+			"semantic": {"present": true, "label": "Fixture %02d" % index, "role": "fixture", "placement_class": "floor_fixture"},
+			"placement_class": "floor_fixture",
+			"safe_exit": false,
+		})
+	var first := EnvironmentSlotBinderScript.bind_scenario_visuals({"archetype_id": "bar"}, entries)
+	var second := EnvironmentSlotBinderScript.bind_scenario_visuals({"archetype_id": "bar"}, entries)
+	var bindings: Dictionary = first.get("slot_bindings", {})
+	var exit_binding: Dictionary = bindings.get("scenario::safe_exit", {})
+	if str(exit_binding.get("kind", "")) != "exit" or str(exit_binding.get("presentation_mode", "")) != "room":
+		failures.append("required safe exit did not bind to an authored exit slot")
+	if (first.get("overflow_ids", []) as Array).is_empty():
+		failures.append("scenario capacity exhaustion did not produce overflow")
+	if str(first.get("binding_digest", "")) != str(second.get("binding_digest", "")):
+		failures.append("scenario binding is not stable across revisit/reload")
+
+
+func _check_authored_actor_route(failures: Array) -> void:
+	var surface_map := EnvironmentPlacementScript.surface_map({"archetype_id": "back_alley"})
+	var result := EnvironmentSlotBinderScript.bind_scenario_visuals({"archetype_id": "back_alley"}, [{
+		"identity": "scenario::patrol_officer",
+		"semantic": {"present": true, "label": "Patrol Officer", "role": "guard", "route_id": "base::world:bar"},
+		"placement_class": "standing_person",
+		"actor": true,
+	}])
+	var binding: Dictionary = (result.get("slot_bindings", {}) as Dictionary).get("scenario::patrol_officer", {})
+	var route: Dictionary = binding.get("route", {})
+	if str(binding.get("slot_id", "")) != str(route.get("start_slot_id", "")) \
+			or str(route.get("start_slot_id", "")) == str(route.get("end_slot_id", "")) \
+			or (route.get("lane_ids", []) as Array).is_empty():
+		failures.append("actor route did not reserve distinct authored endpoints and lane")
 		return
-	var visual: Dictionary = resolved_actors.values()[0]
-	var rect := _rect_from_normalized(visual.get("normalized_hit_rect", {}))
-	if str(visual.get("placement_class", "")) != "standing_person" \
-			or not EnvironmentPlacementScript.valid_rect(environment, "standing_person", rect):
-		failures.append("Zone-only person did not resolve feet onto the Bar floor.")
+	var start_slot := _slot_by_id(surface_map, str(route.get("start_slot_id", "")))
+	var end_slot := _slot_by_id(surface_map, str(route.get("end_slot_id", "")))
+	var route_lane_ids: Array = route.get("lane_ids", [])
+	var route_points := EnvironmentSlotBinderScript.authored_route_points(surface_map, start_slot, end_slot, route_lane_ids)
+	if route_points.size() != 2 \
+			or not route_points[0].is_equal_approx(Vector2(452.0, 318.0)) \
+			or not route_points[1].is_equal_approx(Vector2(752.0, 318.0)) \
+			or not is_equal_approx(route_points[0].distance_to(route_points[1]), 300.0):
+		failures.append("back-alley actor route did not use the exact 300px authored-lane slice without backtracking: %s" % str(route_points))
+
+	var corner_map := EnvironmentPlacementScript.surface_map({"archetype_id": "corner_store"})
+	var settled_slot := _slot_by_id(corner_map, "base.standing_person.01")
+	var settled_rect := EnvironmentSlotBinderScript.rect_from_binding({"slot": settled_slot})
+	var canvas = PixelSceneCanvasScript.new()
+	canvas.foundation_snapshot = {"id": "corner_route_fixture", "archetype_id": "corner_store"}
+	var settled := {
+		"slot_id": "base.standing_person.01",
+		"position": settled_rect.get_center() / Vector2(900.0, 430.0),
+		"small_screen_rect": EnvironmentSlotBinderScript.normalized_rect(EnvironmentSlotBinderScript.expanded_rect(settled_rect)),
+	}
+	var arrival: Dictionary = canvas.call("_person_transit_route", settled, "arrival")
+	var departure: Dictionary = canvas.call("_person_transit_route", settled, "departure")
+	var arrival_pixels := _route_pixels(arrival.get("points", []))
+	var departure_pixels := _route_pixels(departure.get("points", []))
+	var expected_arrival: Array[Vector2] = [
+		Vector2(41.0, 76.0),
+		Vector2(64.0, 318.0),
+		Vector2(450.0, 318.0),
+		Vector2(652.0, 318.0),
+	]
+	var expected_departure: Array[Vector2] = expected_arrival.duplicate()
+	expected_departure.reverse()
+	var expected_distance := expected_arrival[0].distance_to(expected_arrival[1]) + 588.0
+	if not _route_points_match(arrival_pixels, expected_arrival) \
+			or not _route_points_match(departure_pixels, expected_departure) \
+			or not is_equal_approx(float((arrival.get("stage", {}) as Dictionary).get("duration_sec", 0.0)), clampf(expected_distance / 82.0, 0.75, 8.0)):
+		failures.append("person arrival/departure did not use the shortest ordered exit-to-slot lane slice: arrival=%s departure=%s" % [str(arrival_pixels), str(departure_pixels)])
+	canvas.free()
 
 
-func _check_content_aware_classes(failures: Array) -> void:
-	var environment := {"archetype_id": "bar"}
-	var person := {"label": "Rowdy Regular", "visual_prop": "rowdy_patron", "role": "patron"}
-	var person_class := EnvironmentPlacementScript.classify(person, "event", "event:rowdy_regular")
-	if person_class != "standing_person":
-		failures.append("Person event classified as %s instead of standing_person." % person_class)
+func _check_complete_record_binding(failures: Array) -> void:
+	var environment := {"archetype_id": "beach"}
+	var records: Array = []
+	for index in range(12):
+		records.append({
+			"object_id": "service:test_%02d" % index,
+			"object_type": "service",
+			"label": "Test Service %02d" % index,
+			"visible": true,
+			"enabled": true,
+			"interactive": true,
+			"layout_spot_field": "service_spots",
+			"layout_index": index,
+		})
+	var result := EnvironmentSlotBinderScript.bind_base_records(environment, records)
+	var rebound: Array = result.get("records", [])
+	if rebound.size() != records.size():
+		failures.append("complete record binder dropped generated inventory")
+	for record_value in rebound:
+		var record: Dictionary = record_value
+		var mode := str(record.get("presentation_mode", ""))
+		if mode == "room" and (record.get("focus_rect", {}) as Dictionary).is_empty():
+			failures.append("room record has no fixed focus rectangle")
+		elif mode == "overflow" and not (record.get("focus_rect", {}) as Dictionary).is_empty():
+			failures.append("overflow record retained canvas geometry")
+
+
+func _check_shared_base_binding_aliases(failures: Array) -> void:
+	var environment := {"archetype_id": "pawn_shop"}
+	var entries: Array = []
+	for index in range(6):
+		entries.append({
+			"object_id": "item:sal_shelf_%d" % index,
+			"object_type": "item",
+			"spot_field": "item_spots",
+			"index": index,
+		})
+	entries.append({"object_id": "shopkeeper:merchant", "object_type": "shopkeeper", "spot_field": "shopkeeper_spots", "index": 0})
+	entries.append({"object_id": "travel:leave", "object_type": "travel", "spot_field": "travel_spots", "index": 0})
+	var base_result := EnvironmentSlotBinderScript.bind_base_layout(environment, entries)
+	var base_bindings: Dictionary = base_result.get("slot_bindings", {})
+	var records: Array = []
+	for index in range(6):
+		records.append({
+			"object_id": "meta_sal_shelf:%d" % index,
+			"object_type": "meta_sal_shelf",
+			"slot_binding_source_id": "item:sal_shelf_%d" % index,
+			"placement_class": "surface_item",
+		})
+	records.append({
+		"object_id": "meta_sal:talk",
+		"object_type": "meta_sal_talk",
+		"slot_binding_source_id": "shopkeeper:merchant",
+		"placement_class": "behind_counter_person",
+	})
+	records.append({
+		"object_id": "meta_pawn_counter:sell",
+		"object_type": "meta_pawn_counter",
+		"placement_class": "behind_counter_person",
+	})
+	records.append({"object_id": "travel:leave", "object_type": "travel"})
+	var result := EnvironmentSlotBinderScript.bind_base_records(environment, records, base_bindings)
+	var bindings: Dictionary = result.get("slot_bindings", {})
+	var rebound_by_id: Dictionary = {}
+	for record_value in result.get("records", []):
+		var record: Dictionary = record_value
+		rebound_by_id[str(record.get("object_id", ""))] = record
+	var shelf_slots: Dictionary = {}
+	for index in range(6):
+		var source_id := "item:sal_shelf_%d" % index
+		var alias_id := "meta_sal_shelf:%d" % index
+		var source: Dictionary = bindings.get(source_id, {})
+		var alias: Dictionary = bindings.get(alias_id, {})
+		var rebound: Dictionary = rebound_by_id.get(alias_id, {})
+		var slot_id := str(alias.get("slot_id", ""))
+		if str(source.get("presentation_mode", "")) != "room" \
+				or str(alias.get("presentation_mode", "")) != "room" \
+				or slot_id != str(source.get("slot_id", "")) \
+				or str(alias.get("placement_class", "")) != "surface_item" \
+				or (rebound.get("focus_rect", {}) as Dictionary).is_empty():
+			failures.append("Sal shelf %d did not reuse its generated fixed surface-item binding" % index)
+		if shelf_slots.has(slot_id):
+			failures.append("Sal shelf %d reused another visible shelf slot %s" % [index, slot_id])
+		shelf_slots[slot_id] = true
+	var sal: Dictionary = bindings.get("meta_sal:talk", {})
+	var merchant: Dictionary = bindings.get("shopkeeper:merchant", {})
+	var counter: Dictionary = bindings.get("meta_pawn_counter:sell", {})
+	if str(sal.get("presentation_mode", "")) != "room" \
+			or str(sal.get("slot_id", "")) != str(merchant.get("slot_id", "")) \
+			or str(sal.get("placement_class", "")) != "behind_counter_person":
+		failures.append("Sal did not reuse the generated shopkeeper fixed binding")
+	if str(counter.get("presentation_mode", "")) != "room" \
+			or str(counter.get("placement_class", "")) != "behind_counter_person" \
+			or str(counter.get("slot_id", "")).is_empty() \
+			or str(counter.get("slot_id", "")) == str(sal.get("slot_id", "")):
+		failures.append("Sal and the pawn sell counter did not receive distinct fixed behind-counter slots")
+	var exit_record: Dictionary = rebound_by_id.get("travel:leave", {})
+	if str(exit_record.get("presentation_mode", "")) != "room" \
+			or str(exit_record.get("placement_class", "")) != "doorway" \
+			or str(exit_record.get("slot_id", "")).is_empty():
+		failures.append("pawn-shop Street Door lost its generated fixed doorway binding")
+
+
+func _check_home_meta_binding_aliases(failures: Array) -> void:
+	var container_id := "home_alias_probe_01"
+	var source_id := "home_container:%s" % container_id
+	var environment := {
+		"id": "home_alias_fixture",
+		"archetype_id": "house",
+		"kind": "home",
+		"home_lost": false,
+		"home_containers": [{"id": container_id, "item_id": "bag", "display_name": "Probe Bag", "capacity": 3, "items": []}],
+		"game_ids": [],
+		"event_ids": [],
+		"item_offers": [],
+		"service_ids": [],
+		"lender_hooks": [],
+		"travel_hooks": ["pawn_shop"],
+		"next_archetypes": [],
+		"layout": {},
+	}
+	environment["layout"] = EnvironmentInstanceScript.ensure_generated_layout(environment)
+	var base_bindings: Dictionary = (environment.get("layout", {}) as Dictionary).get("slot_bindings", {})
+	var source: Dictionary = base_bindings.get(source_id, {})
+	if str(source.get("presentation_mode", "")) != "room" \
+			or str(source.get("placement_class", "")) != "floor_fixture" \
+			or str(source.get("slot_id", "")) != "base.home_container_1":
+		failures.append("generated home container did not receive the expected fixed floor-fixture source binding")
+		return
+	var records := [
+		{
+			"object_id": "meta_container:%s" % container_id,
+			"object_type": "home_container",
+			"slot_binding_source_id": source_id,
+			"placement_class": "floor_fixture",
+			"label": "Probe Bag",
+		},
+		{
+			"object_id": "meta_upgrade:home",
+			"object_type": "meta_upgrade",
+			"placement_class": "wall_mounted",
+			"label": "Upgrade Sign",
+		},
+		{
+			"object_id": "meta_trade_up:station",
+			"object_type": "meta_trade_up",
+			"placement_class": "surface_item",
+			"label": "Trade-Up Station",
+		},
+		{
+			"object_id": "travel:leave",
+			"object_type": "travel",
+			"placement_class": "doorway",
+			"label": "Map Door",
+		},
+	]
+	var result := EnvironmentSlotBinderScript.bind_base_records(environment, records, base_bindings)
+	if not bool(result.get("ok", false)):
+		failures.append("home late-record fixed-slot binding failed: %s" % JSON.stringify(result.get("errors", [])))
+		return
+	var bindings: Dictionary = result.get("slot_bindings", {})
+	var alias: Dictionary = bindings.get("meta_container:%s" % container_id, {})
+	if str(alias.get("presentation_mode", "")) != "room" \
+			or str(alias.get("slot_id", "")) != str(source.get("slot_id", "")) \
+			or str(alias.get("placement_class", "")) != "floor_fixture":
+		failures.append("late meta container did not reuse its exact generated home-container fixed binding")
+	for expectation in [
+		["meta_upgrade:home", "base.home_upgrade", "wall_mounted"],
+		["meta_trade_up:station", "base.home_trade_up", "surface_item"],
+		["travel:leave", "base.travel_door", "doorway"],
+	]:
+		var binding: Dictionary = bindings.get(str(expectation[0]), {})
+		if str(binding.get("presentation_mode", "")) != "room" \
+				or str(binding.get("slot_id", "")) != str(expectation[1]) \
+				or str(binding.get("placement_class", "")) != str(expectation[2]):
+			failures.append("home late control %s did not bind its named %s slot as %s" % expectation)
+
+
+func _check_overflow_action_list(failures: Array) -> void:
+	var records := [
+		{
+			"object_id": "scenario::overflow_enabled", "object_type": "scenario_object",
+			"label": "Overflow enabled", "presentation_mode": "overflow", "visible": true,
+			"presentation_required": true, "enabled": true, "focus_order": 20,
+			"available_actions": [{"id": "inspect", "label": "Inspect"}],
+			"focus_rect": Rect2(0.2, 0.2, 0.1, 0.1),
+		},
+		{
+			"object_id": "scenario::overflow_disabled", "object_type": "scenario_object",
+			"label": "Overflow disabled", "presentation_mode": "overflow", "visible": true,
+			"presentation_required": true, "enabled": false, "focus_order": 10,
+			"disabled_reason": "Not yet available.", "available_actions": [],
+		},
+		{
+			"object_id": "scenario::hidden", "label": "Hidden", "presentation_mode": "overflow",
+			"visible": false, "presentation_required": true, "enabled": true,
+			"available_actions": [{"id": "leak", "label": "Leak"}],
+		},
+		{
+			"object_id": "scenario::not_required", "label": "Not required", "presentation_mode": "overflow",
+			"visible": true, "presentation_required": false, "enabled": true,
+			"available_actions": [{"id": "leak", "label": "Leak"}],
+		},
+		{
+			"object_id": "scenario::room", "label": "In room", "presentation_mode": "room",
+			"visible": true, "presentation_required": true, "enabled": true,
+			"available_actions": [{"id": "inspect", "label": "Inspect"}],
+		},
+	]
+	var focus_scope := ModalFocusScopeScript.new()
+	var action_list = RoomActionListScript.new()
+	action_list.configure(focus_scope)
+	get_root().add_child(action_list)
+	var selected: Array = []
+	action_list.action_selected.connect(func(record: Dictionary, action: Dictionary) -> void:
+		selected.append({"record": record, "action": action})
+	)
+	action_list.render(records)
+	var buttons := action_list.find_children("*", "Button", true, false)
+	var enabled_row: Button = null
+	var disabled_row: Button = null
+	var all_targets_accessible := true
+	for button_value in buttons:
+		var button := button_value as Button
+		if button.custom_minimum_size.x < 44.0 or button.custom_minimum_size.y < 44.0 or button.focus_mode != Control.FOCUS_ALL:
+			all_targets_accessible = false
+		if str(button.get_meta("object_id", "")) == "scenario::overflow_enabled":
+			enabled_row = button
+		elif str(button.get_meta("object_id", "")) == "scenario::overflow_disabled":
+			disabled_row = button
+	if not action_list.visible or buttons.size() != 4 or not all_targets_accessible or enabled_row == null or disabled_row == null:
+		failures.append("overflow action list did not expose exactly two sorted 44-pixel keyboard/controller/touch rows")
 	else:
-		var candidates := EnvironmentPlacementScript.candidate_rects(environment, person_class, Rect2(100, 80, 100, 64))
-		if candidates.is_empty() or str((candidates[0] as Dictionary).get("surface_id", "")).contains("wall"):
-			failures.append("Person event received a wall candidate.")
-	var sign := {"label": "League Notice", "visual_prop": "room_display", "role": "notice"}
-	var sign_class := EnvironmentPlacementScript.classify(sign, "event", "event:league_notice")
-	if sign_class != "wall_mounted":
-		failures.append("Wall sign classified as %s instead of wall_mounted." % sign_class)
-	else:
-		var candidates := EnvironmentPlacementScript.candidate_rects(environment, sign_class, Rect2(680, 70, 96, 54))
-		if candidates.is_empty() or str((candidates[0] as Dictionary).get("surface_id", "")) != "wall":
-			failures.append("Wall sign received a non-wall candidate.")
+		action_list.open()
+		if focus_scope.active_root() == null:
+			failures.append("overflow action list did not enter the shared modal focus scope")
+		disabled_row.emit_signal("pressed")
+		if not selected.is_empty() or focus_scope.active_root() == null:
+			failures.append("disabled overflow action emitted or closed its owned modal scope")
+		enabled_row.emit_signal("pressed")
+		var selected_record: Dictionary = (selected[0] as Dictionary).get("record", {}) if selected.size() == 1 else {}
+		var selected_action: Dictionary = (selected[0] as Dictionary).get("action", {}) if selected.size() == 1 else {}
+		if selected.size() != 1 or str(selected_record.get("object_id", "")) != "scenario::overflow_enabled" \
+				or str(selected_action.get("id", "")) != "inspect" or focus_scope.active_root() != null:
+			failures.append("enabled overflow action did not route its exact production record/action and close its modal scope")
+	var canvas = PixelSceneCanvasScript.new()
+	canvas.size = Vector2(900.0, 430.0)
+	canvas.render_environment_snapshot({"id": "overflow_list_contract", "archetype_id": "bar", "interactable_objects": records})
+	for object_value in canvas.current_view_snapshot().get("objects", []):
+		if str((object_value as Dictionary).get("presentation_mode", "room")) == "overflow":
+			failures.append("overflow action remained drawable/hittable on the room canvas")
+			break
+	canvas.free()
+	action_list.render([])
+	if action_list.visible:
+		failures.append("empty overflow action list left a visible launcher")
+	action_list.free()
 
 
-func _check_named_people_classes(failures: Array) -> void:
+func _check_semantic_classification(failures: Array) -> void:
 	var fixtures := [
 		[{"label": "Tomas Reed", "role": "shopkeeper"}, "base_object", "shopkeeper:merchant", "behind_counter_person"],
-		[{"label": "Malik Stone", "role": "merchant"}, "item_offer", "merchant:malik", "behind_counter_person"],
 		[{"label": "Priya Moss", "character_id": "priya_moss"}, "scene_object", "priya_moss", "standing_person"],
-		[{"label": "Pit Boss", "visual_prop": "pit_boss"}, "event", "pit_boss", "standing_person"],
-		[{"label": "Silas", "role": "lender"}, "numbers_silas", "numbers:silas", "standing_person"],
+		[{"label": "League Notice", "visual_prop": "room_display", "role": "notice"}, "event", "event:league_notice", "wall_mounted"],
 	]
 	for fixture_value in fixtures:
 		var fixture: Array = fixture_value
 		var actual := EnvironmentPlacementScript.classify(fixture[0], str(fixture[1]), str(fixture[2]))
 		if actual != str(fixture[3]):
-			failures.append("Named person %s classified as %s instead of %s." % [str((fixture[0] as Dictionary).get("label", "person")), actual, str(fixture[3])])
+			failures.append("semantic fixture %s classified as %s instead of %s" % [str(fixture[2]), actual, str(fixture[3])])
 
 
-func _check_hidden_state_neutrality(failures: Array) -> void:
-	var clean := {"archetype_id": "bar"}
-	var hidden := {
-		"archetype_id": "bar",
-		"unrevealed_ticket": {"payout": 500},
-		"traitor_member_id": "cass",
-		"grievance_weight": 9,
-	}
-	var authored := Rect2(220, 270, 72, 80)
-	var clean_candidates := EnvironmentPlacementScript.candidate_rects(clean, "standing_person", authored, Rect2(), true)
-	var hidden_candidates := EnvironmentPlacementScript.candidate_rects(hidden, "standing_person", authored, Rect2(), true)
-	if JSON.stringify(_candidate_snapshot(clean_candidates)) != JSON.stringify(_candidate_snapshot(hidden_candidates)):
-		failures.append("Hidden state changed deterministic placement candidates.")
+func _slot_by_id(surface_map: Dictionary, slot_id: String) -> Dictionary:
+	for field in ["base_slots", "stage_slots", "exit_slots"]:
+		for slot_value in surface_map.get(field, []):
+			var slot: Dictionary = slot_value if typeof(slot_value) == TYPE_DICTIONARY else {}
+			if str(slot.get("id", "")) == slot_id:
+				return slot.duplicate(true)
+	return {}
 
 
-func _check_scenario_reservation_lifecycle(failures: Array) -> void:
-	var base_map := EnvironmentPlacementScript.surface_map({"archetype_id": "delta_queen"})
-	var active_map := EnvironmentPlacementScript.surface_map({"archetype_id": "delta_queen", "scenario_id": "delta_queen_engine_trouble"})
-	if base_map.has("scenario_reserved_surfaces") or base_map.has("scenario_reserved_clear_rects"):
-		failures.append("Scenario-only capacity remained blocked before a scenario was active.")
-	var reserved_surfaces: Array = active_map.get("scenario_reserved_surfaces", [])
-	var reserved_clear_rects: Array = active_map.get("scenario_reserved_clear_rects", [])
-	if not reserved_surfaces.has("scenario_table") or reserved_clear_rects.is_empty():
-		failures.append("Active scenario did not restore its authored surface reservations.")
-
-
-func _check_scenario_surface_overrides(failures: Array) -> void:
-	var environment := {"archetype_id": "motel", "scenario_id": "motel_wedding_overflow"}
-	var surface_map := EnvironmentPlacementScript.surface_map(environment)
-	var overrides: Dictionary = surface_map.get("class_overrides", {})
-	if str(overrides.get("motel_wedding_overflow_station", "")) != "surface_item" \
-			or str(overrides.get("event:town_rumor_staff", "")) != "standing_person":
-		failures.append("Scenario surface-map merge replaced global placement classes instead of applying the local override.")
-	var station_region: Dictionary = (surface_map.get("scenario_object_regions", {}) as Dictionary).get("motel_wedding_overflow_station", {})
-	if station_region.is_empty() or not (station_region.get("surface_ids", []) as Array).has("phone_desk"):
-		failures.append("A scenario object region was not present at the shared placement boundary.")
-	var hanging := EnvironmentPlacementScript.candidate_rects(environment, "hanging", Rect2(100.0, 0.0, 60.0, 44.0))
-	if hanging.size() < 2:
-		failures.append("Hanging placement exposed only one ceiling candidate to collision recovery.")
-	var projected_environment := {"archetype_id": "motel", "semantic_anchors": {"station": {"position": [622.0, 258.0]}}}
-	var projected := ScenarioLayoutResolverScript.resolve([], {
-		"scenario_id": "motel_wedding_overflow", "phase_id": "arrival", "status": "active",
-		"semantic_state": {"scene_objects": {"scenario::motel_wedding_overflow_station": {
-			"owner_namespace": "scenario", "stable_object_id": "motel_wedding_overflow_station", "present": true,
-			"label": "Read the room-key trail", "role": "task_station", "anchor_id": "station",
-			"bounds": {"w": 64.0, "h": 56.0}, "visible": true, "enabled": true,
-		}}, "actors": {}, "interactions": {}},
-	}, projected_environment)
-	var authority: Dictionary = projected.get("layout_authority", {})
-	var station: Dictionary = authority.get("scenario::motel_wedding_overflow_station", {})
-	var station_rect := _rect_from_normalized(station.get("normalized_hit_rect", {}))
-	if not bool(projected.get("ok", false)) or station_rect.position.x < 588.0 or station_rect.position.x > 612.0:
-		failures.append("Resolver did not carry the projected scenario id into placement-map selection.")
-
-
-func _check_bounded_grounding_fallback(failures: Array) -> void:
-	var authored := Rect2(300.0, 20.0, 72.0, 80.0)
-	var resolved := EnvironmentPlacementScript.authored_or_local_rect({"archetype_id": "bar"}, "standing_person", authored)
-	var rect: Rect2 = resolved.get("rect", Rect2())
-	if not bool(resolved.get("ok", false)) or not bool(resolved.get("adjusted", false)):
-		failures.append("A malformed person placement did not use the bounded safety net.")
-	elif EnvironmentPlacementScript.support_for_rect({"archetype_id": "bar"}, "standing_person", rect).is_empty():
-		failures.append("The bounded safety net left a person outside a floor support.")
-
-
-func _candidate_snapshot(candidates: Array) -> Array:
-	var result: Array = []
-	for candidate_value in candidates:
-		var candidate: Dictionary = candidate_value
-		var rect: Rect2 = candidate.get("rect", Rect2())
-		result.append({"surface_id": str(candidate.get("surface_id", "")), "rect": str(rect)})
+func _route_pixels(points_value: Variant) -> Array[Vector2]:
+	var result: Array[Vector2] = []
+	if typeof(points_value) != TYPE_ARRAY:
+		return result
+	for point_value in points_value as Array:
+		var point: Dictionary = point_value if typeof(point_value) == TYPE_DICTIONARY else {}
+		result.append(Vector2(float(point.get("x", -1.0)) * 900.0, float(point.get("y", -1.0)) * 430.0))
 	return result
 
 
-func _rect_from_normalized(value: Variant) -> Rect2:
-	var data: Dictionary = value if typeof(value) == TYPE_DICTIONARY else {}
-	return Rect2(
-		float(data.get("x", 0.0)) * 900.0,
-		float(data.get("y", 0.0)) * 430.0,
-		float(data.get("w", 0.0)) * 900.0,
-		float(data.get("h", 0.0)) * 430.0
-	)
+func _route_points_match(actual: Array[Vector2], expected: Array[Vector2]) -> bool:
+	if actual.size() != expected.size():
+		return false
+	for index in range(actual.size()):
+		if not actual[index].is_equal_approx(expected[index]):
+			return false
+	return true

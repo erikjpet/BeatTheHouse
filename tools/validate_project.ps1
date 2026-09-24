@@ -24,6 +24,408 @@ function Test-JsonObjectRoot {
     return $null -ne $Value -and $Value.GetType() -eq [System.Management.Automation.PSCustomObject]
 }
 
+function Test-ExactJsonString {
+    param([AllowNull()][object]$Value)
+    return $null -ne $Value -and $Value -is [string]
+}
+
+function Assert-ExactJsonString {
+    param([AllowNull()][object]$Value, [string]$FieldName)
+    if (-not (Test-ExactJsonString $Value)) {
+        throw "$FieldName must be an exact JSON string scalar"
+    }
+}
+
+function Get-Rw061GdScriptTopLevelFunctionExtent {
+    param([string]$Source,[string]$FunctionName)
+    if([string]::IsNullOrWhiteSpace($Source)-or$FunctionName-cnotmatch'^[A-Za-z_][A-Za-z0-9_]*$'){throw 'rw06_1 validator GDScript function lookup requires one exact identifier and nonempty source'}
+    $declarations=[regex]::Matches($Source,'(?m)^(?:static[ \t]+)?func[ \t]+([A-Za-z_][A-Za-z0-9_]*)[ \t]*\(')
+    $matches=@($declarations|Where-Object{[string]$_.Groups[1].Value-ceq$FunctionName})
+    if($matches.Count-ne1){throw "rw06_1 validator GDScript function extent was not unique: $FunctionName"}
+    $start=[int]$matches[0].Index;$end=$Source.Length
+    foreach($declaration in $declarations){if([int]$declaration.Index-gt$start){$end=[int]$declaration.Index;break}}
+    $extent=$Source.Substring($start,$end-$start)
+    if($extent.Contains('"""')-or$extent.Contains("'''")){throw "rw06_1 validator refuses multiline-string ambiguity in $FunctionName"}
+    return $extent
+}
+
+function Get-Rw061GdScriptNestedFunctionExtent {
+    param([string]$ClassExtent,[string]$FunctionName)
+    if([string]::IsNullOrWhiteSpace($ClassExtent)-or$FunctionName-cnotmatch'^[A-Za-z_][A-Za-z0-9_]*$'){throw 'rw06_1 validator nested GDScript function lookup requires one exact identifier and nonempty class source'}
+    $declarations=[regex]::Matches($ClassExtent,'(?m)^\tfunc[ \t]+([A-Za-z_][A-Za-z0-9_]*)[ \t]*\(')
+    $matches=@($declarations|Where-Object{[string]$_.Groups[1].Value-ceq$FunctionName})
+    if($matches.Count-ne1){throw "rw06_1 validator nested GDScript function extent was not unique: $FunctionName"}
+    $start=[int]$matches[0].Index;$end=$ClassExtent.Length
+    foreach($declaration in $declarations){if([int]$declaration.Index-gt$start){$end=[int]$declaration.Index;break}}
+    return $ClassExtent.Substring($start,$end-$start)
+}
+
+function Get-Rw061AuditTravelSourceIssues {
+    param([string]$Source)
+    $issues=[Collections.Generic.List[string]]::new()
+    try{
+        if($Source.Contains('"""')-or$Source.Contains("'''")){throw 'rw06_1 validator refuses any GDScript multiline-string ambiguity'}
+        $simulate=Get-Rw061GdScriptTopLevelFunctionExtent $Source '_simulate_run'
+        $record=Get-Rw061GdScriptTopLevelFunctionExtent $Source '_record_environment'
+        $choices=Get-Rw061GdScriptTopLevelFunctionExtent $Source '_travel_choices'
+        $targets=Get-Rw061GdScriptTopLevelFunctionExtent $Source '_travel_target_ids'
+        $productionHost=Get-Rw061GdScriptTopLevelFunctionExtent $Source '_production_foundation_travel_host'
+        $overlay=Get-Rw061GdScriptTopLevelFunctionExtent $Source '_qualifying_world_travel_contract_holds'
+        $travel=Get-Rw061GdScriptTopLevelFunctionExtent $Source '_travel_to'
+        $hostStart=$Source.IndexOf('class AuditFoundationTravelHost:',[StringComparison]::Ordinal)
+        $hostEnd=$Source.IndexOf('var library: ContentLibrary',$hostStart,[StringComparison]::Ordinal)
+        if($hostStart-lt0-or$hostEnd-le$hostStart-or$Source.IndexOf('class AuditFoundationTravelHost:',$hostStart+1,[StringComparison]::Ordinal)-ge0){throw 'rw06_1 validator production travel host adapter extent was not exact and unique'}
+        $foundationHost=$Source.Substring($hostStart,$hostEnd-$hostStart)
+        $hostMethodReturns=[ordered]@{
+            _is_meta_session='return false'
+            _travel_base_cache_key='return str(view_model_script.travel_base_cache_key(self))'
+            _enabled_world_route_ids='return view_model_script.enabled_world_route_ids(self, source_id)'
+            _world_route_for_target='return view_model_script.world_route_for_target(self, target_id, path_query)'
+            _environment_archetype='return view_model_script.environment_archetype(self, archetype_id)'
+            _travel_clock_minutes_for_route='return int(view_model_script.travel_clock_minutes_for_route(self, route, force_walk))'
+            _arrival_minute_for_route='return int(view_model_script.arrival_minute_for_route(self, route, force_walk))'
+            _environment_open_status_at='return view_model_script.environment_open_status_at(self, archetype, minute_of_day)'
+            _travel_label_from_archetype='return str(view_model_script.travel_label_from_archetype(self, archetype, fallback_id))'
+            _travel_full_preview_enabled='return bool(view_model_script.travel_full_preview_enabled(self))'
+            _travel_full_preview_enabled_for='return bool(view_model_script.travel_full_preview_enabled_for(self, target_id))'
+            _local_parent_home_door_travel_choice='return {}'
+            _closing_time_blocks_environment_actions='return false'
+            _closing_time_walk_fallback_target_id='return ""'
+            _travel_target_ids='return view_model_script.travel_target_ids(self)'
+            _travel_choice='return view_model_script.travel_choice(self, target_id, known_target_ids)'
+        }
+        foreach($methodName in @($hostMethodReturns.Keys)){
+            $methodExtent=Get-Rw061GdScriptNestedFunctionExtent $foundationHost ([string]$methodName)
+            $expectedReturn=[string]$hostMethodReturns[$methodName]
+            if([regex]::Matches($methodExtent,'(?m)^\t\treturn[ \t]+').Count-ne1-or[regex]::Matches($methodExtent,'(?m)^\t\t'+[regex]::Escape($expectedReturn)+'[ \t]*$').Count-ne1){[void]$issues.Add("Foundation host adapter method was not exact: $methodName")}
+        }
+        foreach($preloadLine in @('const FoundationTravelViewModelScript := preload("res://scripts/ui/foundation_travel_view_model.gd")','const TutorialFlowScript := preload("res://scripts/core/tutorial_flow.gd")','const AttributeBadgesScript := preload("res://scripts/core/attribute_badges.gd")')){if([regex]::Matches($Source,'(?m)^'+[regex]::Escape($preloadLine)+'[ \t]*$').Count-ne1){[void]$issues.Add("Foundation dependency binding was not exact: $preloadLine")}}
+        foreach($hostConstant in @('const TRAVEL_CLOCK_MINUTES_PER_BLOCK := 6','const WALK_CLOCK_MINUTES_PER_BLOCK := 10')){if([regex]::Matches($foundationHost,'(?m)^\t'+[regex]::Escape($hostConstant)+'[ \t]*$').Count-ne1){[void]$issues.Add("Foundation timing constant was not exact: $hostConstant")}}
+        if([regex]::Matches($foundationHost,'(?m)^\tvar world_map_overlay: Variant = null[ \t]*$').Count-ne1){[void]$issues.Add('Foundation host omitted the explicit null world-map overlay used by scouting preview gating')}
+        $hostInit=Get-Rw061GdScriptNestedFunctionExtent $foundationHost '_init'
+        if([regex]::Matches($hostInit,'(?ms)^\tfunc _init\([ \t]*\r?\n\t\tp_view_model_script: Script,[ \t]*\r?\n\t\tp_world_map_script: Script,[ \t]*\r?\n\t\tp_tutorial_flow_script: Script,[ \t]*\r?\n\t\tp_attribute_badges_script: Script,[ \t]*\r?\n\t\tp_run_state: Variant,[ \t]*\r?\n\t\tp_generator: Variant,[ \t]*\r?\n\t\tp_library: Variant[ \t]*\r?\n\t\) -> void:[ \t]*$').Count-ne1){[void]$issues.Add('Foundation host constructor signature/order was not exact')}
+        foreach($assignment in @('view_model_script = p_view_model_script','WorldMapScript = p_world_map_script','TutorialFlowScript = p_tutorial_flow_script','AttributeBadgesScript = p_attribute_badges_script','run_state = p_run_state','generator = p_generator','library = p_library')){if([regex]::Matches($hostInit,'(?m)^\t\t'+[regex]::Escape($assignment)+'[ \t]*$').Count-ne1){[void]$issues.Add("Foundation host constructor omitted exact assignment: $assignment")}}
+        if([regex]::Matches($simulate,'(?m)^\trecord\["travel_after_events"\][ \t]*=[ \t]*_travel_choices\(run_state, false\)[ \t]*$').Count-ne1){[void]$issues.Add('post-event producer escaped _simulate_run')}
+        if([regex]::Matches($record,'(?m)^\tvar[ \t]+travel_initial[ \t]*:=[ \t]*_travel_choices\(run_state, false\)[ \t]*$').Count-ne1-or[regex]::Matches($record,'(?m)^\t\t"travel_initial"[ \t]*:[ \t]*travel_initial,[ \t]*$').Count-ne1){[void]$issues.Add('initial producer/record escaped _record_environment')}
+        if([regex]::Matches($Source,'(?m)^[ \t]*record\["travel_after_events"\][ \t]*=[ \t]*_travel_choices\(run_state, false\)[ \t]*$').Count-ne1-or[regex]::Matches($Source,'(?m)^[ \t]*var[ \t]+travel_initial[ \t]*:=[ \t]*_travel_choices\(run_state, false\)[ \t]*$').Count-ne1-or[regex]::Matches($Source,'(?m)^[ \t]*"travel_initial"[ \t]*:[ \t]*travel_initial,[ \t]*$').Count-ne1-or[regex]::IsMatch($Source,'(?m)^[ \t]*(?:record\["travel_after_events"\][ \t]*=|var[ \t]+travel_initial[ \t]*:=)[ \t]*_travel_choices\(run_state, true\)')){[void]$issues.Add('public producer tokens were duplicated, omitted, or hidden-inclusive')}
+        if([regex]::Matches($targets,'(?m)^\tif not _qualifying_world_travel_contract_holds\(run_state\):[ \t]*$').Count-ne1-or[regex]::Matches($targets,'(?m)^\treturn _production_foundation_travel_host\(run_state\)\._travel_target_ids\(\)[ \t]*$').Count-ne1-or[regex]::Matches($targets,'(?m)^\treturn[ \t]+').Count-ne2-or$targets.Contains('WorldMapScript.travel_target_ids')-or$targets.Contains('generator._world_travel_target_ids')){[void]$issues.Add('target catalog bypasses the exact production Foundation view/overlay guard')}
+        if([regex]::Matches($productionHost,'(?m)^\treturn[ \t]+').Count-ne1-or[regex]::Matches($productionHost,'(?ms)^\treturn AuditFoundationTravelHost\.new\([ \t]*\r?\n\t\tFoundationTravelViewModelScript,[ \t]*\r?\n\t\tWorldMapScript,[ \t]*\r?\n\t\tTutorialFlowScript,[ \t]*\r?\n\t\tAttributeBadgesScript,[ \t]*\r?\n\t\trun_state,[ \t]*\r?\n\t\tgenerator,[ \t]*\r?\n\t\tlibrary[ \t]*\r?\n\t\)[ \t]*$').Count-ne1){[void]$issues.Add('Foundation travel host was not constructed in exact order from the shipped collaborators and run state')}
+        if([regex]::Matches($choices,'(?m)^\tvar target_ids := _travel_target_ids\(run_state\)[ \t]*$').Count-ne1-or[regex]::Matches($choices,'(?m)^\tvar production_host := _production_foundation_travel_host\(run_state\)[ \t]*$').Count-ne1-or[regex]::Matches($choices,'(?m)^\t\tvar production_choice: Dictionary = production_host\._travel_choice\(str\(target_id\), target_ids\)[ \t]*$').Count-ne1-or[regex]::Matches($choices,'(?m)^\t\t\t"enabled": bool\(production_choice\.get\("enabled", false\)\),[ \t]*$').Count-ne1-or$choices.Contains('generator._world_target_is_available')){[void]$issues.Add('choice projection bypasses the production Foundation choice')}
+        foreach($required in @('not run_state.has_world_map()','run_state.is_tutorial_run()','run_state.narrative_flags.get("_meta_home_session", false)','run_state.delivery_has_active_run()','run_state.closing_time_forced_travel_required()','run_state.travel_option_bonus() != 0','_string_array(local_flags.get("casino_room_targets", [])).is_empty()')){if(-not$overlay.Contains($required)){[void]$issues.Add("overlay exclusion omitted: $required")}}
+        if([regex]::Matches($overlay,'(?m)^\t\t\tfailures\.append\(message\)[ \t]*$').Count-ne1-or[regex]::Matches($overlay,'(?m)^\treturn[ \t]+').Count-ne2-or[regex]::Matches($overlay,'(?m)^\t\treturn true[ \t]*$').Count-ne1-or[regex]::Matches($overlay,'(?m)^\treturn false[ \t]*$').Count-ne1){[void]$issues.Add('overlay violation bypasses exact failure control flow')}
+        if([regex]::Matches($travel,'_travel_target_ids\(run_state\)').Count-ne2){[void]$issues.Add('pre/post-heat admission bypasses the constrained production target catalog')}
+    }catch{[void]$issues.Add($_.Exception.Message)}
+    return @($issues)
+}
+
+if($null-ne('BeatTheHouse.Rw061.ValidatorReadPinNativeV2' -as [type])){
+    throw 'rw06_1 validator refuses ambient reuse of its native read-pin authority type.'
+}
+Add-Type -Language CSharp -TypeDefinition @'
+using System;
+using System.ComponentModel;
+using System.Runtime.InteropServices;
+using System.Text;
+using Microsoft.Win32.SafeHandles;
+namespace BeatTheHouse.Rw061 {
+  public static class ValidatorReadPinNativeV2 {
+    [StructLayout(LayoutKind.Sequential)] private struct FILETIME { public uint Low; public uint High; }
+    [StructLayout(LayoutKind.Sequential)] private struct BY_HANDLE_FILE_INFORMATION {
+      public uint FileAttributes; public FILETIME CreationTime; public FILETIME LastAccessTime; public FILETIME LastWriteTime;
+      public uint VolumeSerialNumber; public uint FileSizeHigh; public uint FileSizeLow; public uint NumberOfLinks;
+      public uint FileIndexHigh; public uint FileIndexLow;
+    }
+    [DllImport("kernel32.dll", SetLastError=true)] private static extern bool GetFileInformationByHandle(SafeFileHandle handle,out BY_HANDLE_FILE_INFORMATION info);
+    [DllImport("kernel32.dll", CharSet=CharSet.Unicode, SetLastError=true)] private static extern uint GetFinalPathNameByHandle(SafeFileHandle handle,StringBuilder path,uint length,uint flags);
+    private static long Ticks(FILETIME value){return unchecked((long)(((ulong)value.High<<32)|value.Low));}
+    private static string FinalPath(SafeFileHandle handle){var path=new StringBuilder(32768);uint n=GetFinalPathNameByHandle(handle,path,(uint)path.Capacity,0u);if(n==0||n>=(uint)path.Capacity)throw new Win32Exception(Marshal.GetLastWin32Error(),"validator pin final-path proof failed");string value=path.ToString();if(value.StartsWith(@"\\?\UNC\",StringComparison.OrdinalIgnoreCase))return @"\\"+value.Substring(8);if(value.StartsWith(@"\\?\",StringComparison.OrdinalIgnoreCase))return value.Substring(4);return value;}
+    public static string[] Describe(SafeFileHandle handle){if(handle==null||handle.IsInvalid||handle.IsClosed)throw new ArgumentException("validator pin handle is not live");BY_HANDLE_FILE_INFORMATION info;if(!GetFileInformationByHandle(handle,out info))throw new Win32Exception(Marshal.GetLastWin32Error(),"validator pin native identity proof failed");long length=unchecked((long)(((ulong)info.FileSizeHigh<<32)|info.FileSizeLow));return new[]{FinalPath(handle),info.VolumeSerialNumber.ToString("X8")+":"+(((ulong)info.FileIndexHigh<<32)|info.FileIndexLow).ToString("X16"),Ticks(info.CreationTime).ToString(),info.FileAttributes.ToString(),length.ToString()};}
+  }
+}
+'@
+
+function Open-Rw061ValidatorReadPin {
+    param([string]$Path)
+    $resolved = [IO.Path]::GetFullPath($Path)
+    $stream = $null
+    $memory = $null
+    $hasher = $null
+    try {
+        # FileShare.Read is deliberate: while this handle is live the exact
+        # source may be read by a child, but it cannot be rewritten, replaced,
+        # renamed, or deleted between hashing and execution.
+        $stream = [IO.FileStream]::new(
+            $resolved,
+            [IO.FileMode]::Open,
+            [IO.FileAccess]::Read,
+            [IO.FileShare]::Read
+        )
+        $memory = [IO.MemoryStream]::new()
+        $stream.CopyTo($memory)
+        $bytes = $memory.ToArray()
+        $stream.Position = 0
+        $hasher = [Security.Cryptography.SHA256]::Create()
+        $sha256 = ([BitConverter]::ToString($hasher.ComputeHash($bytes))).Replace('-', '')
+        $native=[BeatTheHouse.Rw061.ValidatorReadPinNativeV2]::Describe($stream.SafeFileHandle)
+        $finalPath=[IO.Path]::GetFullPath([string]$native[0])
+        $attributes=[uint32]$native[3]
+        if(-not[string]::Equals($resolved,$finalPath,[StringComparison]::OrdinalIgnoreCase)-or($attributes-band[IO.FileAttributes]::Directory)-ne0-or($attributes-band[IO.FileAttributes]::ReparsePoint)-ne0-or[long]$native[4]-ne[long]$bytes.LongLength){throw 'Validator source pin failed native final-path/type/length admission before execution.'}
+        return [ordered]@{
+            path = $resolved
+            final_path = $finalPath
+            native_key = [string]$native[1]
+            creation_ticks = [long]$native[2]
+            attributes = $attributes
+            length = [long]$bytes.LongLength
+            sha256 = [string]$sha256
+            bytes = $bytes
+            stream = $stream
+        }
+    }
+    catch {
+        if ($null -ne $stream) { try { $stream.Dispose() } catch {} }
+        throw
+    }
+    finally {
+        if ($null -ne $hasher) { $hasher.Dispose() }
+        if ($null -ne $memory) { $memory.Dispose() }
+    }
+}
+
+function Close-Rw061ValidatorReadPin {
+    param([AllowNull()][object]$Pin)
+    if ($null -eq $Pin -or $null -eq $Pin.stream) { return }
+    $Pin.stream.Dispose()
+}
+
+function Get-Rw061ValidatorReadPinReceipt {
+    param([object]$Pin)
+    if ($null -eq $Pin -or $null -eq $Pin.stream -or $Pin.stream.SafeFileHandle.IsClosed -or $Pin.stream.SafeFileHandle.IsInvalid) {
+        throw 'Validator source pin was absent or closed before receipt capture.'
+    }
+    $native=[BeatTheHouse.Rw061.ValidatorReadPinNativeV2]::Describe($Pin.stream.SafeFileHandle)
+    $finalPath=[IO.Path]::GetFullPath([string]$native[0])
+    if (-not [string]::Equals([IO.Path]::GetFullPath($Pin.path), $finalPath, [StringComparison]::OrdinalIgnoreCase) -or
+        $finalPath-cne[string]$Pin.final_path-or[string]$native[1]-cne[string]$Pin.native_key-or[long]$native[2]-ne[long]$Pin.creation_ticks-or[uint32]$native[3]-ne[uint32]$Pin.attributes-or[long]$native[4]-ne[long]$Pin.length-or
+        ([uint32]$native[3]-band[IO.FileAttributes]::ReparsePoint)-ne0-or([uint32]$native[3]-band[IO.FileAttributes]::Directory)-ne0) {
+        throw "Validator source pin final path changed: $($Pin.path) -> $finalPath"
+    }
+    if ($Pin.length -isnot [long] -or [long]$Pin.length -le 0 -or $Pin.sha256 -isnot [string] -or $Pin.sha256 -cnotmatch '^[0-9A-F]{64}$') {
+        throw 'Validator source pin length/hash receipt was malformed.'
+    }
+    return [ordered]@{
+        path = [string]$Pin.path
+        final_path = [string]$finalPath
+        identity = [ordered]@{path=[string]$Pin.path;native_key=[string]$Pin.native_key;creation_ticks=[long]$Pin.creation_ticks;is_directory=[bool]$false;reparse_point=[bool]$false;attributes=[uint32]$Pin.attributes;key=('{0}|{1}|file'-f[string]$Pin.native_key,[long]$Pin.creation_ticks)}
+        length = [long]$Pin.length
+        sha256 = [string]$Pin.sha256
+        held = $true
+    }
+}
+
+function New-Rw061ValidatorShadowFile {
+    param(
+        [object]$CustodyCell,
+        [object]$RootReceipt,
+        [string]$Path,
+        [string]$Slot,
+        [byte[]]$Bytes
+    )
+    $receipt = New-Q009ExactOwnedFileHeld -Path $Path -Payload $Bytes -CustodyCell $CustodyCell -ParentSlot 'root_creation' -Slot $Slot -ExpectedParentIdentity $RootReceipt.identity
+    if ($receipt.path -cne [IO.Path]::GetFullPath($Path) -or $receipt.handle_state -cne 'OPEN') {
+        throw "Validator shadow file did not return exact held custody: $Path"
+    }
+    return $receipt
+}
+
+function Open-Rw061ValidatorShadowArtifact {
+    param(
+        [object]$CustodyCell,
+        [object]$RootReceipt,
+        [string]$Path,
+        [string]$Slot
+    )
+    $resolved = [IO.Path]::GetFullPath($Path)
+    if ([IO.Path]::GetDirectoryName($resolved) -cne [string]$RootReceipt.identity.path) {
+        throw "Validator artifact escaped the exact owned shadow root: $resolved"
+    }
+    $identity = Get-Q009FileSystemEntryIdentity $resolved
+    if ([bool]$identity.is_directory -or [bool]$identity.reparse_point) {
+        throw "Validator artifact was not an ordinary file: $resolved"
+    }
+    [void](Open-Q009ExactFileHeld -Path $resolved -ExpectedIdentity $identity -CustodyCell $CustodyCell -Slot $Slot)
+    $description = Get-Q009HeldFileDescription $CustodyCell $Slot $resolved
+    if ([string]$description.native_key -cne [string]$identity.native_key -or [long]$description.creation_ticks -ne [long]$identity.creation_ticks) {
+        throw "Validator artifact identity changed during handle-bound capture: $resolved"
+    }
+    return [ordered]@{
+        path = $resolved
+        identity = $identity
+        length = [long]$description.length
+        sha256 = [string]$description.sha256
+        slot = [string]$Slot
+        held = $true
+    }
+}
+
+function Assert-Rw061ValidatorArtifactsBoundToClosedProcess {
+    param([object]$Completion,[object]$RunContext,[object]$RootReceipt,[object[]]$ArtifactReceipts)
+    if (-not (Test-Q009CompletionResultShape $Completion)) { throw 'validator artifact binding requires one exact completion receipt' }
+    $closed = @($Completion.owned_artifact_manifests | Where-Object { [string]$_.role -ceq 'validator_shadow' })
+    if ($closed.Count -ne 1 -or -not (Test-Q009ClosedArtifactManifestReceiptShape $closed[0] $RunContext $Completion.process_identity) -or
+            [string]$closed[0].root_identity.key -cne [string]$RootReceipt.identity.key) {
+        throw 'validator child omitted or changed its exact closed shadow-root manifest'
+    }
+    foreach ($artifact in @($ArtifactReceipts)) {
+        $relative = [IO.Path]::GetFileName([string]$artifact.path)
+        $matches = @($closed[0].manifest.entries | Where-Object { [string]$_.path -ceq $relative })
+        if ($matches.Count -ne 1 -or [bool]$matches[0].is_directory -or
+                [string]$matches[0].native_key -cne [string]$artifact.identity.native_key -or
+                [long]$matches[0].creation_ticks -ne [long]$artifact.identity.creation_ticks -or
+                [long]$matches[0].length -ne [long]$artifact.length -or
+                [string]$matches[0].sha256 -cne [string]$artifact.sha256) {
+            throw "validator child artifact was not byte/identity-bound to its closed producer job: $relative"
+        }
+    }
+    return $closed[0]
+}
+
+function Assert-Rw061ValidatorShadowMembers {
+    param([string]$RootPath,[string[]]$ExpectedLeafNames)
+    $rootPathFull = [IO.Path]::GetFullPath($RootPath).TrimEnd('\','/')
+    $entries = @(Get-ChildItem -LiteralPath $rootPathFull -Force -ErrorAction Stop | Sort-Object Name)
+    foreach ($entry in $entries) {
+        if (-not ($entry -is [IO.FileInfo]) -or ($entry.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) {
+            throw "Validator shadow root contained a non-ordinary child: $($entry.FullName)"
+        }
+    }
+    $actual = @($entries | ForEach-Object { [string]$_.Name })
+    $expected = @($ExpectedLeafNames | Sort-Object)
+    if (($actual -join "`n") -cne ($expected -join "`n") -or @($actual | Sort-Object -Unique).Count -ne $actual.Count) {
+        throw "Validator shadow root exact member set drifted. Expected: $($expected -join ', '); actual: $($actual -join ', ')"
+    }
+}
+
+function Get-Rw061ValidatorProcessCensus {
+    $names = @('powershell','pwsh','python','python3','Godot_v4.6-stable_win64_console','Godot_v4.6-stable_win64')
+    $records = [System.Collections.Generic.List[object]]::new()
+    foreach ($process in @(Get-Process -ErrorAction Stop | Where-Object { $names -contains $_.ProcessName })) {
+        try {
+            $start = $process.StartTime.ToUniversalTime()
+            [void]$records.Add([ordered]@{
+                pid = [int]$process.Id
+                name = [string]$process.ProcessName
+                start_ticks = [long]$start.Ticks
+                key = ('{0}|{1}|{2}' -f [int]$process.Id,[long]$start.Ticks,[string]$process.ProcessName)
+            })
+        }
+        catch {
+            try { [void][Diagnostics.Process]::GetProcessById([int]$process.Id) }
+            catch [ArgumentException] { continue }
+            throw "Could not bind validator process census identity for PID $($process.Id): $($_.Exception.Message)"
+        }
+    }
+    return @($records | Sort-Object key)
+}
+
+function Get-Rw061ValidatorLeaseCensus {
+    param([string]$LeaseRoot)
+    $rootPath = [IO.Path]::GetFullPath($LeaseRoot)
+    if (-not (Test-Path -LiteralPath $rootPath -PathType Container)) { return @() }
+    $rootItem = Get-Item -LiteralPath $rootPath -Force -ErrorAction Stop
+    if (-not ($rootItem -is [IO.DirectoryInfo]) -or ($rootItem.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) {
+        throw 'Canonical lease root is not an ordinary directory during validator census.'
+    }
+    $records = [System.Collections.Generic.List[object]]::new()
+    foreach ($entry in @(Get-ChildItem -LiteralPath $rootPath -Filter '*.lease' -Force -ErrorAction Stop | Sort-Object FullName)) {
+        $isFile = $entry -is [IO.FileInfo]
+        $isReparse = ($entry.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0
+        $sha = ''
+        if ($isFile -and -not $isReparse) { $sha = (Get-FileHash -LiteralPath $entry.FullName -Algorithm SHA256).Hash }
+        [void]$records.Add([ordered]@{
+            path = [IO.Path]::GetFullPath($entry.FullName)
+            type = if ($isFile) { 'file' } else { 'non_file' }
+            reparse = $isReparse
+            creation_ticks = [long]$entry.CreationTimeUtc.Ticks
+            length = if ($isFile) { [long]$entry.Length } else { -1L }
+            sha256 = $sha
+        })
+    }
+    return @($records)
+}
+
+function Get-Rw061ValidatorSelfTestResidueCensus {
+    $tempRoot = [IO.Path]::GetFullPath([IO.Path]::GetTempPath())
+    $records = [System.Collections.Generic.List[object]]::new()
+    foreach ($entry in @(Get-ChildItem -LiteralPath $tempRoot -Filter 'rw06-q009-selftest-*' -Force -ErrorAction Stop | Sort-Object FullName)) {
+        [void]$records.Add([ordered]@{
+            path = [IO.Path]::GetFullPath($entry.FullName)
+            type = if ($entry -is [IO.DirectoryInfo]) { 'directory' } elseif ($entry -is [IO.FileInfo]) { 'file' } else { 'other' }
+            reparse = (($entry.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0)
+            creation_ticks = [long]$entry.CreationTimeUtc.Ticks
+        })
+    }
+    return @($records)
+}
+
+function Get-Rw061ValidatorTreeCensus {
+    param([string]$Path)
+    $rootPath = [IO.Path]::GetFullPath($Path).TrimEnd('\','/')
+    if (-not (Test-Path -LiteralPath $rootPath)) {
+        return [ordered]@{present=$false;root=$null;entries=[object[]]@()}
+    }
+    $rootItem = Get-Item -LiteralPath $rootPath -Force -ErrorAction Stop
+    if (-not ($rootItem -is [IO.DirectoryInfo]) -or ($rootItem.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) {
+        throw "Validator tree census root is not an ordinary directory: $rootPath"
+    }
+    $entries = [Collections.Generic.List[object]]::new()
+    $pending = [Collections.Generic.Stack[string]]::new()
+    $pending.Push($rootPath)
+    while ($pending.Count -gt 0) {
+        $directory = $pending.Pop()
+        foreach ($entry in @(Get-ChildItem -LiteralPath $directory -Force -ErrorAction Stop | Sort-Object FullName)) {
+            $full = [IO.Path]::GetFullPath($entry.FullName)
+            $isReparse = ($entry.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0
+            if ($isReparse) { throw "Validator tree census found a reparse point: $full" }
+            $isDirectory = $entry -is [IO.DirectoryInfo]
+            [void]$entries.Add([ordered]@{
+                path = $full.Substring($rootPath.Length).TrimStart('\','/').Replace('\','/')
+                type = if ($isDirectory) { 'directory' } elseif ($entry -is [IO.FileInfo]) { 'file' } else { 'other' }
+                creation_ticks = [long]$entry.CreationTimeUtc.Ticks
+                last_write_ticks = [long]$entry.LastWriteTimeUtc.Ticks
+                length = if ($entry -is [IO.FileInfo]) { [long]$entry.Length } else { -1L }
+                sha256 = if ($entry -is [IO.FileInfo]) { (Get-FileHash -LiteralPath $full -Algorithm SHA256).Hash } else { '' }
+            })
+            if ($isDirectory) { $pending.Push($full) }
+        }
+    }
+    return [ordered]@{
+        present = $true
+        root = [ordered]@{path=$rootPath;creation_ticks=[long]$rootItem.CreationTimeUtc.Ticks;last_write_ticks=[long]$rootItem.LastWriteTimeUtc.Ticks}
+        entries = @($entries | Sort-Object path)
+    }
+}
+
+function Get-Rw061ValidatorEnvironmentCensus {
+    $snapshot = [ordered]@{}
+    foreach ($name in @('APPDATA','LOCALAPPDATA','XDG_DATA_HOME','XDG_CACHE_HOME','XDG_CONFIG_HOME')) {
+        $snapshot[$name] = [Environment]::GetEnvironmentVariable($name,'Process')
+    }
+    return $snapshot
+}
+
+function Get-Rw061ValidatorFileIdentityCensus {
+    param([string[]]$Paths)
+    $records = [ordered]@{}
+    foreach ($path in $Paths) {
+        $full = [IO.Path]::GetFullPath($path)
+        $item = Get-Item -LiteralPath $full -Force -ErrorAction Stop
+        if (-not ($item -is [IO.FileInfo]) -or ($item.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) { throw "Validator-bound source is not an ordinary file: $full" }
+        $records[$full] = [ordered]@{length=[long]$item.Length;creation_ticks=[long]$item.CreationTimeUtc.Ticks;last_write_ticks=[long]$item.LastWriteTimeUtc.Ticks;sha256=(Get-FileHash -LiteralPath $full -Algorithm SHA256).Hash}
+    }
+    return $records
+}
+
 function Get-FoundationUiContentSelectionScan {
     param([string]$Source)
     $normalized = $Source.Replace("`r`n", "`n")
@@ -100,6 +502,11 @@ $requiredFiles = @(
     "tools/scenario_sequence_audit.gd",
     "tools/environment_grounding_static_check.ps1",
     "tools/environment_grounding_contract.gd",
+    "tools/environment_fixed_slot_static_check.py",
+    "tools/environment_generation_audit.gd",
+    "tools/rw06_q009_process_support.ps1",
+    "tools/rw06_1_environment_exact_seed_contract_test.ps1",
+    "tools/fixtures/rw06_1_environment_exact_seed_manifest.json",
     "tools/fix06_31_contact_sheets.ps1",
     "tools/scenario_room_multiseed_finalization.gd",
     "tools/scenario_sequence_probe_support.gd",
@@ -412,6 +819,26 @@ $scenarioPresentationSource = Get-Content -LiteralPath (Join-Path $root "scripts
 foreach ($requiredOverlayProbe in @('collision_overlay', 'z_equal_augment', 'sweep_unique')) {
     if (-not $scenarioPresentationSource.Contains($requiredOverlayProbe)) {
         $failures.Add("Scenario presentation contract is missing collision probe: $requiredOverlayProbe")
+    }
+}
+foreach ($requiredLiveReconciliationProbe in @(
+    '_check_live_base_record_reconciliation', 'lender:brother_in_law',
+    'event:call_brother_in_law', 'PRIVATE_PHONE_RUNTIME',
+    'Scenario live reconciliation resurrected an absent dynamic service/lender',
+    'Production room rendering did not show Counter Phone'
+)) {
+    if (-not $scenarioPresentationSource.Contains($requiredLiveReconciliationProbe)) {
+        $failures.Add("Scenario presentation contract is missing live base reconciliation probe: $requiredLiveReconciliationProbe")
+    }
+}
+$environmentInteractionControllerSource = Get-Content -LiteralPath (Join-Path $root "scripts/ui/environment_interaction_controller.gd") -Raw
+foreach ($requiredLiveReconciliationSeam in @(
+    'LIVE_AVAILABILITY_ACTION_FIELDS', 'LIVE_PRESENTATION_FIELDS',
+    'LIVE_RENDER_FIELDS', 'LIVE_MEMBERSHIP_OBJECT_TYPES',
+    '_requires_live_membership'
+)) {
+    if (-not $environmentInteractionControllerSource.Contains($requiredLiveReconciliationSeam)) {
+        $failures.Add("Environment interaction controller is missing live base reconciliation seam: $requiredLiveReconciliationSeam")
     }
 }
 
@@ -1134,6 +1561,32 @@ Require-Text "tools/integ06_1_terminal_soak_launcher_contract_test.ps1" '$candid
 Require-Text "tools/check_godot.ps1" 'eligible_for_done' "Post-land reports must make DONE eligibility explicitly fail closed."
 Require-Text "tools/check_godot.ps1" 'gdscript_load_check.gd' "Godot check script must run the one-process GDScript load checker."
 Require-Text "tools/check_godot.ps1" 'Stop-NewGodotProcesses' "Godot check script must clean up timed-out Godot child processes."
+$checkGodotSource = Get-ProjectText "tools/check_godot.ps1"
+$strictObjectDbStageBlock = [regex]::Match($checkGodotSource, '(?ms)\$script:StrictObjectDbLeakStageNames\s*=\s*@\((.*?)\r?\n\)')
+$expectedStrictObjectDbStages = @(
+    "standalone_contract_fixsweep06_1_accessibility_contract",
+    "standalone_contract_rw06_1_overflow_action_ui_contract"
+)
+if (-not $strictObjectDbStageBlock.Success) {
+    $failures.Add("Godot checks do not declare the reviewed strict ObjectDB-leak stage set.")
+} else {
+    $actualStrictObjectDbStages = @([regex]::Matches($strictObjectDbStageBlock.Groups[1].Value, '"([^"\r\n]+)"') | ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique)
+    $strictObjectDbDifference = @(Compare-Object -ReferenceObject @($expectedStrictObjectDbStages | Sort-Object) -DifferenceObject $actualStrictObjectDbStages)
+    if ($strictObjectDbDifference.Count -ne 0) {
+        $failures.Add("Strict ObjectDB-leak stages must be exactly the accessibility and overflow standalone contracts: $($strictObjectDbDifference | Out-String)")
+    }
+}
+$strictObjectDbPlumbing = @(
+    'Get-GodotStderrIssues -StdoutText $stdoutTask.Result -StderrText $stderrTask.Result -StrictObjectDbLeaks:$StrictObjectDbLeaks',
+    'Invoke-ProcessStage -Name $Name -FilePath $script:Godot -Arguments $args -StageTimeoutSec $StageTimeoutSec -StrictObjectDbLeaks:$StrictObjectDbLeaks',
+    '$strictObjectDbLeaks = $script:StrictObjectDbLeakStageNames -contains $stageName',
+    'Invoke-GodotScript -Name $stageName -ScriptPath $resourcePath -StageTimeoutSec (Get-StageTimeout "standalone_contract") -StrictObjectDbLeaks:$strictObjectDbLeaks'
+)
+foreach ($plumbingNeedle in $strictObjectDbPlumbing) {
+    if (-not $checkGodotSource.Contains($plumbingNeedle)) {
+        $failures.Add("Strict ObjectDB-leak policy is declared but not plumbed through the focused standalone stage: $plumbingNeedle")
+    }
+}
 Require-TextInAny $foundationCheckFiles '--suite=' "Foundation check must support suite selection."
 Require-TextInAny $foundationCheckFiles 'FOUNDATION_SUITES' "Foundation check must declare available suites."
 Require-TextInAny $foundationCheckFiles 'FOUNDATION_DEFAULT_REPORT_PATH' "Foundation check must write a structured report."
@@ -1768,6 +2221,683 @@ try {
 }
 catch {
     $failures.Add("Environment grounding static check failed: $($_.Exception.Message)")
+}
+
+try {
+    $exactSeedCandidateLauncher = Join-Path $root "tools/rw06_1_environment_exact_seed_contract_test.ps1"
+    $exactSeedCandidateSupport = Join-Path $root "tools/rw06_q009_process_support.ps1"
+    $exactSeedManifest = Join-Path $root "tools/fixtures/rw06_1_environment_exact_seed_manifest.json"
+    $exactSeedAudit = Join-Path $root "tools/environment_generation_audit.gd"
+    $exactSeedStaticChecker = Join-Path $root "tools/environment_fixed_slot_static_check.py"
+    $exactSeedScenarioCatalog = Join-Path $root "data/environments/scenarios.json"
+    $exactSeedFidelityHelper = Join-Path $root "scripts/tests/foundation/harness_production_fidelity.gd"
+    $exactSeedFoundationTravelViewModel = Join-Path $root "scripts/ui/foundation_travel_view_model.gd"
+    $exactSeedTutorialFlow = Join-Path $root "scripts/core/tutorial_flow.gd"
+    $exactSeedAttributeBadges = Join-Path $root "scripts/core/attribute_badges.gd"
+    $exactSeedValidatorNonce = [Guid]::NewGuid().ToString("N")
+    $exactSeedAttemptId = "rw06-q009-validator-$exactSeedValidatorNonce"
+    $exactSeedSupportPin = $null
+    $exactSeedLauncherPin = $null
+    $exactSeedPowerShellPin = $null
+    $exactSeedDependencyPins = [ordered]@{}
+    $exactSeedDependencyPinReceipts = [ordered]@{}
+    $exactSeedHeldGitBlobs = [ordered]@{}
+    $exactSeedShadowCell = $null
+    $exactSeedShadowRootReceipt = $null
+    $exactSeedShadowChain = $null
+    $exactSeedShadowCleanupReceipt = $null
+    $exactSeedShadowMembers = [System.Collections.Generic.List[string]]::new()
+    $exactSeedInnerFailure = $null
+    $exactSeedShadowRoot = Join-Path ([System.IO.Path]::GetTempPath()) $exactSeedAttemptId
+    $exactSeedShadowQuarantine = $exactSeedShadowRoot + '.quarantine-' + $exactSeedValidatorNonce
+    $exactSeedLauncher = Join-Path $exactSeedShadowRoot 'rw06_1_environment_exact_seed_contract_test.ps1'
+    $exactSeedSupport = Join-Path $exactSeedShadowRoot 'rw06_q009_process_support.ps1'
+    $exactSeedSelfTestReport = Join-Path $exactSeedShadowRoot 'selftest-report.json'
+    $exactSeedLauncherStdout = Join-Path $exactSeedShadowRoot 'selftest.stdout.log'
+    $exactSeedLauncherStderr = Join-Path $exactSeedShadowRoot 'selftest.stderr.log'
+    $exactSeedIndependentDriver = Join-Path $exactSeedShadowRoot 'independent-driver.ps1'
+    $exactSeedIndependentReport = Join-Path $exactSeedShadowRoot 'independent-report.json'
+    $exactSeedIndependentStdout = Join-Path $exactSeedShadowRoot 'independent.stdout.log'
+    $exactSeedIndependentStderr = Join-Path $exactSeedShadowRoot 'independent.stderr.log'
+    $exactSeedLeaseRoot = 'D:\Projects\Beat-The-House-worktrees\.godot_leases'
+    $exactSeedProjectCache = Join-Path $root '.godot'
+    $exactSeedBoundPaths = @($exactSeedCandidateLauncher,$exactSeedCandidateSupport,$exactSeedManifest,$exactSeedAudit,$exactSeedStaticChecker,$exactSeedScenarioCatalog,$exactSeedFidelityHelper,$exactSeedFoundationTravelViewModel,$exactSeedTutorialFlow,$exactSeedAttributeBadges,$PSCommandPath)
+    $exactSeedPreFileCensus = Get-Rw061ValidatorFileIdentityCensus $exactSeedBoundPaths
+    $exactSeedPreProcessCensus = @(Get-Rw061ValidatorProcessCensus)
+    $exactSeedPreLeaseCensus = @(Get-Rw061ValidatorLeaseCensus $exactSeedLeaseRoot)
+    $exactSeedPreResidueCensus = @(Get-Rw061ValidatorSelfTestResidueCensus)
+    $exactSeedPreCacheCensus = Get-Rw061ValidatorTreeCensus $exactSeedProjectCache
+    $exactSeedPreEnvironmentCensus = Get-Rw061ValidatorEnvironmentCensus
+    if (@($exactSeedPreProcessCensus | Where-Object { [string]$_.name -like 'Godot*' }).Count -ne 0) {
+        throw 'rw06_1 engine-free validator refuses to run while Godot is active.'
+    }
+    if ((Test-Path -LiteralPath $exactSeedShadowRoot) -or (Test-Path -LiteralPath $exactSeedShadowQuarantine)) {
+        throw 'rw06_1 validator shadow or quarantine path already exists.'
+    }
+    # Pin both source files before loading any helper by path. The exact support
+    # bytes are evaluated in memory; only byte-identical held copies are later
+    # exposed to a child process.
+    $exactSeedSupportPin = Open-Rw061ValidatorReadPin $exactSeedCandidateSupport
+    $exactSeedLauncherPin = Open-Rw061ValidatorReadPin $exactSeedCandidateLauncher
+    $exactSeedDependencyMap=[ordered]@{
+        manifest=$exactSeedManifest;audit=$exactSeedAudit;static_checker=$exactSeedStaticChecker;
+        scenario_catalog=$exactSeedScenarioCatalog;fidelity_helper=$exactSeedFidelityHelper;
+        foundation_travel_view_model=$exactSeedFoundationTravelViewModel;tutorial_flow=$exactSeedTutorialFlow;
+        attribute_badges=$exactSeedAttributeBadges;validator=$PSCommandPath
+    }
+    foreach($dependency in $exactSeedDependencyMap.GetEnumerator()){
+        $pin=Open-Rw061ValidatorReadPin ([string]$dependency.Value)
+        $exactSeedDependencyPins[[string]$dependency.Key]=$pin
+        $exactSeedDependencyPinReceipts[[string]$dependency.Key]=Get-Rw061ValidatorReadPinReceipt $pin
+    }
+    $strictUtf8 = [Text.UTF8Encoding]::new($false, $true)
+    # Capture native identity, final path, ordinary-file/reparse status, length,
+    # and held bytes before the support can define any helper or native type.
+    $exactSeedSupportPinReceipt = Get-Rw061ValidatorReadPinReceipt $exactSeedSupportPin
+    $exactSeedLauncherPinReceipt = Get-Rw061ValidatorReadPinReceipt $exactSeedLauncherPin
+    foreach($blobSpec in @(
+        @('launcher_git_blob',$exactSeedCandidateLauncher),@('support_git_blob',$exactSeedCandidateSupport),
+        @('manifest_git_blob',$exactSeedManifest),@('audit_gd_git_blob',$exactSeedAudit),
+        @('static_checker_git_blob',$exactSeedStaticChecker),@('scenario_catalog_git_blob',$exactSeedScenarioCatalog),
+        @('fidelity_helper_git_blob',$exactSeedFidelityHelper),@('foundation_travel_view_model_git_blob',$exactSeedFoundationTravelViewModel),
+        @('tutorial_flow_git_blob',$exactSeedTutorialFlow),@('attribute_badges_git_blob',$exactSeedAttributeBadges),@('validator_git_blob',$PSCommandPath)
+    )){
+        $blobOutput=@(& git -C $root hash-object -- ([string]$blobSpec[1]) 2>&1)
+        if($LASTEXITCODE-ne0-or$blobOutput.Count-ne1-or[string]$blobOutput[0]-notmatch'^[0-9a-f]{40}$'){throw "could not pre-bind held Git blob for $([string]$blobSpec[0])"}
+        $exactSeedHeldGitBlobs[[string]$blobSpec[0]]=[string]$blobOutput[0]
+    }
+    $exactSeedSupportScript = [scriptblock]::Create($strictUtf8.GetString([byte[]]$exactSeedSupportPin.bytes))
+    . $exactSeedSupportScript
+    # Independently inspect only the qualifying runtime bodies from the held
+    # source bytes. The launcher's ValidateOnly checklist is removed from the
+    # search region, so these gates cannot satisfy themselves with literals.
+    $exactSeedHeldLauncherSource = $strictUtf8.GetString([byte[]]$exactSeedLauncherPin.bytes)
+    $exactSeedHeldSupportSource = $strictUtf8.GetString([byte[]]$exactSeedSupportPin.bytes)
+    $heldLauncherTokens = $null
+    $heldLauncherParseErrors = $null
+    $heldLauncherAst = [Management.Automation.Language.Parser]::ParseInput($exactSeedHeldLauncherSource,[ref]$heldLauncherTokens,[ref]$heldLauncherParseErrors)
+    if ($heldLauncherParseErrors.Count -ne 0) { throw 'held rw06_1 qualifying supervisor source did not parse' }
+    $heldValidateOnlyFunctions = @($heldLauncherAst.FindAll({param($node)$node -is [Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -ceq 'Invoke-ValidateOnlySelfTest'},$true))
+    if ($heldValidateOnlyFunctions.Count -ne 1) { throw 'held rw06_1 supervisor did not expose exactly one removable ValidateOnly checklist' }
+    $heldValidateOnlyExtent = $heldValidateOnlyFunctions[0].Extent
+    $heldRuntimeSource = $exactSeedHeldLauncherSource.Substring(0,$heldValidateOnlyExtent.StartOffset) + $exactSeedHeldLauncherSource.Substring($heldValidateOnlyExtent.EndOffset)
+    if ($heldRuntimeSource.Contains('runtime-source-custody-lifecycle-provenance-seams')) { throw 'held runtime source still contains its self-test checklist' }
+    $heldEntryMarker = 'if($LoadAdmissionFunctionsOnly){return}'
+    $heldEntryOffset = $heldRuntimeSource.IndexOf($heldEntryMarker,[StringComparison]::Ordinal)
+    if ($heldEntryOffset -lt 0) { throw 'held runtime source lacked the admission-only boundary' }
+    $heldRuntimeEntry = $heldRuntimeSource.Substring($heldEntryOffset + $heldEntryMarker.Length)
+    foreach ($requiredRuntimeToken in @(
+        '[void](Remove-ExactOwnedTree $EvidenceRoot $profileRoot $profileRootIdentity $profileManifestChain $attemptId)',
+        '$dependencyPins=New-Q009TrackedDependencyPins $pinned $runContext',
+        '$dependencyPinReceipts=Assert-Q009TrackedDependencyPinsStable $pinned $dependencyPins $runContext',
+        '$prePublicationCustody=Invoke-Q009MutexCritical -RunContext $runContext -Body {',
+        'Test-Q009PrePublicationCustodyShape $prePublicationCustody $runContext $heldExclusiveLease.receipt $pinned $dependencyPinReceipts',
+        'Test-Q009EvidenceTerminalOwnerReceiptShape $evidenceTerminalOwnerReceipt $runContext $evidenceRootOwnership $heldExclusiveReceipt $pinned $dependencyPinReceipts',
+        "-Boundary 'evidence_terminal_before_summary'",
+        '$summaryPublication=Publish-SummaryPairNoOverwrite $EvidenceRoot $summaryPath $summaryShaPath $summary $evidenceTerminalManifestChain $attemptId',
+        "-Boundary 'summary_published_under_exclusive'",
+        '$releaseDependencyPins=Close-Q009TrackedDependencyPins $pinned $dependencyPins $runContext $dependencyPinReceipts',
+        '$releaseReceipt=Close-Q009HeldExclusiveLease $heldExclusiveLease $runContext',
+        'Test-Q009ReleaseEvidenceShape $preReleaseZeroGodot $runContext $heldExclusiveReceipt $pinned $dependencyPinReceipts',
+        'Test-Q009TerminalCompletionReceiptShape $terminalReceipt $runContext $heldExclusiveReceipt $summaryPublication $pinned $dependencyPinReceipts',
+        "-ArtifactName 'terminal.json'",
+        'Test-Q009TerminalTreeDelta $postSummaryManifestChain.manifest $finalEvidenceTree $terminalPublication'
+    )) {
+        if (-not $heldRuntimeEntry.Contains($requiredRuntimeToken)) { throw "held rw06_1 runtime entry lost independent custody seam: $requiredRuntimeToken" }
+    }
+    $heldPrePublicationToken = '$prePublicationCustody=Invoke-Q009MutexCritical -RunContext $runContext -Body {'
+    $heldPrePublicationShapeToken = 'if(-not(Test-Q009PrePublicationCustodyShape $prePublicationCustody $runContext $heldExclusiveLease.receipt $pinned $dependencyPinReceipts))'
+    $heldTerminalSafeToken = '$terminalEvidenceSafe=$cleanupSucceeded-and$finalProvenanceValid-and$leaseOwned-and(Test-Q009RunContextShape $runContext)-and(Test-Q009PrePublicationCustodyShape $prePublicationCustody $runContext $heldExclusiveReceipt $pinned $dependencyPinReceipts)'
+    $heldTerminalOwnerToken = '$evidenceTerminalOwnerReceipt=[ordered]@{'
+    $heldTerminalOwnerShapeToken = 'if(-not(Test-Q009EvidenceTerminalOwnerReceiptShape $evidenceTerminalOwnerReceipt $runContext $evidenceRootOwnership $heldExclusiveReceipt $pinned $dependencyPinReceipts))'
+    $heldTerminalManifestToken = "`$evidenceTerminalManifestChain=New-Q009OwnedChildManifestChainHead -RootPath `$EvidenceRoot -RootIdentity `$evidenceRootOwnership.root_identity -AttemptId `$attemptId -Boundary 'evidence_terminal_before_summary'"
+    $heldSummaryConstructionToken = '$summary=[ordered]@{'
+    $heldSummaryPublishToken = '$summaryPublication=Publish-SummaryPairNoOverwrite $EvidenceRoot $summaryPath $summaryShaPath $summary $evidenceTerminalManifestChain $attemptId'
+    $heldPostSummaryManifestToken = "`$postSummaryManifestChain=New-Q009OwnedChildManifestChainHead -RootPath `$EvidenceRoot -RootIdentity `$evidenceRootOwnership.root_identity -AttemptId `$attemptId -Boundary 'summary_published_under_exclusive'"
+    $heldPreReleaseToken = '$preReleaseZeroGodot=Invoke-Q009MutexCritical -RunContext $runContext -Body {'
+    $heldDependencyReleaseToken = '$releaseDependencyPins=Close-Q009TrackedDependencyPins $pinned $dependencyPins $runContext $dependencyPinReceipts'
+    $heldReleaseCloseToken = '$releaseReceipt=Close-Q009HeldExclusiveLease $heldExclusiveLease $runContext'
+    $heldReleaseShapeToken = 'if(-not(Test-Q009ReleaseEvidenceShape $preReleaseZeroGodot $runContext $heldExclusiveReceipt $pinned $dependencyPinReceipts))'
+    $heldTerminalCompletionToken = '$terminalReceipt=[ordered]@{'
+    $heldTerminalCompletionShapeToken = 'if(-not(Test-Q009TerminalCompletionReceiptShape $terminalReceipt $runContext $heldExclusiveReceipt $summaryPublication $pinned $dependencyPinReceipts))'
+    $heldTerminalPublishToken = "`$terminalPublication=Publish-SummaryPairNoOverwrite `$EvidenceRoot `$terminalPath `$terminalShaPath `$terminalReceipt `$postSummaryManifestChain `$attemptId -ArtifactName 'terminal.json'"
+    $heldFinalTreeToken = '$finalEvidenceTree=Get-Q009ExactOwnedTreeManifest $EvidenceRoot'
+    $heldFinalTreeDeltaToken = 'Test-Q009TerminalTreeDelta $postSummaryManifestChain.manifest $finalEvidenceTree $terminalPublication'
+    $heldSummaryReceiptToken = '$summaryReceiptHash=if($summaryPublished)'
+    $heldLifecyclePositions = @(
+        $heldRuntimeEntry.IndexOf($heldPrePublicationToken,[StringComparison]::Ordinal),
+        $heldRuntimeEntry.IndexOf($heldPrePublicationShapeToken,[StringComparison]::Ordinal),
+        $heldRuntimeEntry.IndexOf($heldTerminalSafeToken,[StringComparison]::Ordinal),
+        $heldRuntimeEntry.IndexOf($heldTerminalOwnerToken,[StringComparison]::Ordinal),
+        $heldRuntimeEntry.IndexOf($heldTerminalOwnerShapeToken,[StringComparison]::Ordinal),
+        $heldRuntimeEntry.IndexOf($heldTerminalManifestToken,[StringComparison]::Ordinal),
+        $heldRuntimeEntry.IndexOf($heldSummaryConstructionToken,[StringComparison]::Ordinal),
+        $heldRuntimeEntry.IndexOf($heldSummaryPublishToken,[StringComparison]::Ordinal),
+        $heldRuntimeEntry.IndexOf($heldPostSummaryManifestToken,[StringComparison]::Ordinal),
+        $heldRuntimeEntry.IndexOf($heldPreReleaseToken,[StringComparison]::Ordinal),
+        $heldRuntimeEntry.IndexOf($heldDependencyReleaseToken,[StringComparison]::Ordinal),
+        $heldRuntimeEntry.IndexOf($heldReleaseCloseToken,[StringComparison]::Ordinal),
+        $heldRuntimeEntry.IndexOf($heldReleaseShapeToken,[StringComparison]::Ordinal),
+        $heldRuntimeEntry.IndexOf($heldTerminalCompletionToken,[StringComparison]::Ordinal),
+        $heldRuntimeEntry.IndexOf($heldTerminalCompletionShapeToken,[StringComparison]::Ordinal),
+        $heldRuntimeEntry.IndexOf($heldTerminalPublishToken,[StringComparison]::Ordinal),
+        $heldRuntimeEntry.IndexOf($heldFinalTreeToken,[StringComparison]::Ordinal),
+        $heldRuntimeEntry.IndexOf($heldFinalTreeDeltaToken,[StringComparison]::Ordinal),
+        $heldRuntimeEntry.IndexOf($heldSummaryReceiptToken,[StringComparison]::Ordinal)
+    )
+    for ($heldLifecycleIndex = 0; $heldLifecycleIndex -lt $heldLifecyclePositions.Count; $heldLifecycleIndex += 1) {
+        if ($heldLifecyclePositions[$heldLifecycleIndex] -lt 0 -or ($heldLifecycleIndex -gt 0 -and $heldLifecyclePositions[$heldLifecycleIndex] -le $heldLifecyclePositions[$heldLifecycleIndex - 1])) {
+            throw 'held rw06_1 runtime entry lost the independently ordered held-EXCLUSIVE summary publication, exact release, terminal receipt, and final-tree lifecycle'
+        }
+    }
+    $heldSupportTokens = $null
+    $heldSupportParseErrors = $null
+    $heldSupportAst = [Management.Automation.Language.Parser]::ParseInput($exactSeedHeldSupportSource,[ref]$heldSupportTokens,[ref]$heldSupportParseErrors)
+    if ($heldSupportParseErrors.Count -ne 0) { throw 'held rw06_1 shared Q-009 support source did not parse' }
+    $requiredSupportFunctionBodies = [ordered]@{
+        'Remove-Q009ExactOwnedTree' = @('MoveOwnedCleanupTreeToQuarantineNoReplace','DeleteTreeExact','Test-Q009OwnedChildManifestChainHeadShape')
+        'New-OwnedLeaseFile' = @('New-Q009ExactOwnedFileHeld','Set-Q009HeldHandleDeletePending','Assert-Q009PathAbsentStrict')
+        'New-Q009HeldExclusiveLease' = @('CreateFileNewHeld','Set-Q009HeldHandleDeletePending','Close-Q009CheckedNativeHandle')
+        'Close-Q009HeldExclusiveLease' = @('Set-Q009HeldHandleDeletePending','Close-Q009CheckedNativeHandle','Assert-Q009PathAbsentStrict','ForceReplacementAfterFileCloseForTest')
+    }
+    foreach ($functionName in $requiredSupportFunctionBodies.Keys) {
+        $targetFunctionName = [string]$functionName
+        $matches = @($heldSupportAst.FindAll({param($node)$node -is [Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -ceq $targetFunctionName},$true))
+        if ($matches.Count -ne 1) { throw "held Q-009 support function was not unique: $functionName" }
+        $body = $matches[0].Extent.Text
+        foreach ($requiredBodyToken in $requiredSupportFunctionBodies[$functionName]) {
+            if (-not $body.Contains($requiredBodyToken)) { throw "held Q-009 support function $functionName lost exact seam $requiredBodyToken" }
+        }
+        if ([regex]::IsMatch($body,'(?im)^\s*Remove-Item\b|\[IO\.(?:File|Directory)\]::Delete\s*\(')) { throw "held Q-009 support function $functionName retained path-based deletion" }
+    }
+    $heldPublicationFunctions = @($heldLauncherAst.FindAll({param($node)$node -is [Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -ceq 'Publish-SummaryPairNoOverwrite'},$true))
+    if ($heldPublicationFunctions.Count -ne 1) { throw 'held rw06_1 summary publication function was not unique' }
+    $heldPublicationBody = $heldPublicationFunctions[0].Extent.Text
+    $heldPublicationPositions = @(
+        $heldPublicationBody.IndexOf('$authorizedManifest=Get-Q009ExactOwnedTreeManifest $OwnedRoot',[StringComparison]::Ordinal),
+        $heldPublicationBody.IndexOf("-Boundary 'summary_pair_staged'",[StringComparison]::Ordinal),
+        $heldPublicationBody.IndexOf('Publish-Q009OwnedEvidenceArtifact -SourcePath $stageSha -DestinationPath $ShaPath',[StringComparison]::Ordinal),
+        $heldPublicationBody.IndexOf("-Boundary 'summary_sidecar_committed_json_staged'",[StringComparison]::Ordinal),
+        $heldPublicationBody.IndexOf('Test-Q009SummaryPublicationReceiptShape $publication',[StringComparison]::Ordinal),
+        $heldPublicationBody.IndexOf('Publish-Q009OwnedEvidenceArtifact -SourcePath $stageJson -DestinationPath $JsonPath',[StringComparison]::Ordinal),
+        $heldPublicationBody.IndexOf('$committed=$true',[StringComparison]::Ordinal)
+    )
+    for ($heldPublicationIndex = 0; $heldPublicationIndex -lt $heldPublicationPositions.Count; $heldPublicationIndex += 1) {
+        if ($heldPublicationPositions[$heldPublicationIndex] -lt 0 -or ($heldPublicationIndex -gt 0 -and $heldPublicationPositions[$heldPublicationIndex] -le $heldPublicationPositions[$heldPublicationIndex - 1])) {
+            throw 'held rw06_1 summary publisher lost terminal-manifest admission, sidecar-first publication, exact receipt validation, or JSON-last commit ordering'
+        }
+    }
+    $exactSeedShadowCell = New-Q009CacheCustodyCell ($exactSeedAttemptId + '-shadow')
+    $exactSeedShadowRootReceipt = New-Q009ExactOwnedDirectoryHeld -Path $exactSeedShadowRoot -CustodyCell $exactSeedShadowCell -Slot 'root_creation'
+    if (-not (Test-Q009CacheRootReceiptShape $exactSeedShadowRootReceipt)) {
+        throw 'rw06_1 validator shadow root creation receipt was malformed.'
+    }
+    Assert-Rw061ValidatorShadowMembers $exactSeedShadowRoot @()
+    $exactSeedShadowChain = New-Q009OwnedChildManifestChainHead -RootPath $exactSeedShadowRoot -RootIdentity $exactSeedShadowRootReceipt.identity -AttemptId $exactSeedAttemptId -Boundary 'held-shadow-root-empty' -OwnerKind validator_shadow -OwnerReceipt $exactSeedShadowRootReceipt
+    $shadowSupportReceipt = New-Rw061ValidatorShadowFile $exactSeedShadowCell $exactSeedShadowRootReceipt $exactSeedSupport 'shadow_support' ([byte[]]$exactSeedSupportPin.bytes)
+    if ([string]$shadowSupportReceipt.payload_sha256 -cne [string]$exactSeedSupportPinReceipt.sha256 -or [int]$shadowSupportReceipt.payload_length -ne [long]$exactSeedSupportPinReceipt.length) {
+        throw 'held support shadow did not remain byte-identical to its no-write/no-delete source pin'
+    }
+    [void]$exactSeedShadowMembers.Add([IO.Path]::GetFileName($exactSeedSupport))
+    Assert-Rw061ValidatorShadowMembers $exactSeedShadowRoot @($exactSeedShadowMembers)
+    $exactSeedShadowChain = New-Q009OwnedChildManifestChainHead -RootPath $exactSeedShadowRoot -RootIdentity $exactSeedShadowRootReceipt.identity -AttemptId $exactSeedAttemptId -Boundary 'held-shadow-support' -OwnerKind validator_shadow -OwnerReceipt $shadowSupportReceipt -PreviousHead $exactSeedShadowChain
+    $shadowLauncherReceipt = New-Rw061ValidatorShadowFile $exactSeedShadowCell $exactSeedShadowRootReceipt $exactSeedLauncher 'shadow_launcher' ([byte[]]$exactSeedLauncherPin.bytes)
+    if ([string]$shadowLauncherReceipt.payload_sha256 -cne [string]$exactSeedLauncherPinReceipt.sha256 -or [int]$shadowLauncherReceipt.payload_length -ne [long]$exactSeedLauncherPinReceipt.length) {
+        throw 'held launcher shadow did not remain byte-identical to its no-write/no-delete source pin'
+    }
+    [void]$exactSeedShadowMembers.Add([IO.Path]::GetFileName($exactSeedLauncher))
+    Assert-Rw061ValidatorShadowMembers $exactSeedShadowRoot @($exactSeedShadowMembers)
+    $exactSeedShadowChain = New-Q009OwnedChildManifestChainHead -RootPath $exactSeedShadowRoot -RootIdentity $exactSeedShadowRootReceipt.identity -AttemptId $exactSeedAttemptId -Boundary 'held-shadow-launcher' -OwnerKind validator_shadow -OwnerReceipt $shadowLauncherReceipt -PreviousHead $exactSeedShadowChain
+    $expectedExactSeedSelfTestCases = @(
+        "manifest-exact-order-distribution-and-identity",
+        "manifest-substitution-order-extra-types-and-safe-name-collision",
+        "authority-conflict-and-seed009-combination-shapes",
+        "base-authority-enabled-disabled-and-seal-geometry",
+        "nested-attempt-and-seed-tuple-binding",
+        "final-post-event-visited-arrival-travel-and-admission-cross-binding",
+        "initial-arrival-independent-identity-index-and-type-hostiles",
+        "historical-six-visit-five-link-semantic-mutation-matrix",
+        "exact-index-arrays-envelope-bool-and-decimal-time-hostiles",
+        "ordinary-row-arrival-errors-and-authority-collection-hostiles",
+        "inactive-independent-projection-sentinel",
+        "private-turn-traitor-rigged-ticket-field-scan",
+        "diagnostics-log-only-warning-leak-orphan-rid",
+        "qualifying-predicate-and-product-red-diagnostics-exactly-report-bound",
+        "native-diagnostic-fixed-schema-types-and-derived-totals",
+        "envelope-collection-object-types-and-incomplete-product-matrix",
+        "native-exit-strict-types",
+        "lineage-reused-intermediate-negative-and-exact-cim-ticks",
+        "lease-create-write-removal-failure-contention-and-replacement",
+        "exclusive-reservation-waits-for-focused-lease-or-godot",
+        "process-cim-enumeration-failures-block-readiness-residual-and-release",
+        "import-cache-immediate-prelaunch-race-is-not-owned-or-deleted",
+        "cache-exclusive-creator-claim-not-lifetime-adoption",
+        "handle-bound-tree-quarantine-rejects-path-replacement",
+        "stale-cache-and-cleanup-retains-exclusive-policy",
+        "atomic-evidence-root-pre-post-move-native-identity",
+        "attempt-owner-hash-containment-and-executable-provenance",
+        "executable-swap-before-handle-locked-launch-is-rejected",
+        "runtime-source-custody-lifecycle-provenance-seams",
+        "abandoned-launch-mutex-owned-release-and-fail-closed",
+        "windows-argv-space-quote-trailing-slash-empty",
+        "dual-256k-pipes-and-nonzero-int-exit",
+        "owned-job-three-level-setup-exception-exact-python-godot",
+        "true-post-start-property-failure-matrix-and-child-custody",
+        "owned-job-three-level-normal-exact-python-godot",
+        "owned-job-three-level-timeout-124-exact-python-godot",
+        "tip-blob-environment-drift-pure-guards",
+        "exact-remote-tip-not-ancestor-or-symbolic",
+        "static-count-schema-json-fraction-finite-range-and-identity",
+        "summary-pair-staging-collisions-and-commit-marker"
+    )
+    try {
+        $canonicalWindowsPowerShell = [System.IO.Path]::GetFullPath((Join-Path $PSHOME "powershell.exe"))
+        $canonicalPowerShellHome = [System.IO.Path]::GetFullPath($PSHOME).TrimEnd("\", "/")
+        if (-not (Test-Path -LiteralPath $canonicalWindowsPowerShell -PathType Leaf)) {
+            throw "canonical Windows PowerShell executable is missing: $canonicalWindowsPowerShell"
+        }
+        $canonicalWindowsPowerShellItem = Get-Item -LiteralPath $canonicalWindowsPowerShell -Force -ErrorAction Stop
+        if (-not ($canonicalWindowsPowerShellItem -is [System.IO.FileInfo]) -or
+                ($canonicalWindowsPowerShellItem.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0 -or
+                [System.IO.Path]::GetFullPath($canonicalWindowsPowerShellItem.DirectoryName).TrimEnd("\", "/") -cne $canonicalPowerShellHome -or
+                $canonicalWindowsPowerShellItem.Name -cne "powershell.exe") {
+            throw "canonical Windows PowerShell path/type validation failed"
+        }
+        $exactSeedPowerShellPin = Open-Rw061ValidatorReadPin $canonicalWindowsPowerShell
+        $exactSeedPowerShellPinReceipt = Get-Rw061ValidatorReadPinReceipt $exactSeedPowerShellPin
+        $exactSeedValidatorCommit = (& git -C $root rev-parse HEAD).Trim()
+        $exactSeedValidatorCommitExit = $LASTEXITCODE
+        $exactSeedValidatorTree = (& git -C $root rev-parse 'HEAD^{tree}').Trim()
+        $exactSeedValidatorTreeExit = $LASTEXITCODE
+        if ($exactSeedValidatorCommitExit -ne 0 -or $exactSeedValidatorTreeExit -ne 0 -or $exactSeedValidatorCommit -notmatch '^[0-9a-f]{40}$' -or $exactSeedValidatorTree -notmatch '^[0-9a-f]{40}$') {
+            throw 'could not bind validator-owned child context to the current commit/tree'
+        }
+        $exactSeedValidatorLauncherIdentity = Get-ProcessIdentityRecord ([Diagnostics.Process]::GetCurrentProcess())
+        $exactSeedValidatorRunContext = New-Q009RunContext -AttemptId $exactSeedAttemptId -CandidateCommit $exactSeedValidatorCommit -CandidateTree $exactSeedValidatorTree -LauncherIdentity $exactSeedValidatorLauncherIdentity -CanonicalLeaseRoot $exactSeedLeaseRoot -WorkingDirectory $root -ProjectRoot $root -LaunchMutexName ('Local\BeatTheHouse-Q009-validator-'+$exactSeedValidatorNonce)
+        $exactSeedPowerShellExpectedIdentity = [ordered]@{
+            path = [string]$exactSeedPowerShellPinReceipt.final_path
+            length = [long]$exactSeedPowerShellPinReceipt.length
+            sha256 = [string]$exactSeedPowerShellPinReceipt.sha256
+            filesystem_identity = $exactSeedPowerShellPinReceipt.identity
+        }
+        $ambientShadowPath = Join-Path $exactSeedShadowRoot "powershell.cmd"
+        $ambientShadowBytes = [Text.ASCIIEncoding]::new().GetBytes("@echo AMBIENT_POWERSHELL_SHADOW_INVOKED`r`n@exit /b 97`r`n")
+        $ambientShadowReceipt = New-Rw061ValidatorShadowFile $exactSeedShadowCell $exactSeedShadowRootReceipt $ambientShadowPath 'ambient_powershell_shadow' $ambientShadowBytes
+        [void]$exactSeedShadowMembers.Add([IO.Path]::GetFileName($ambientShadowPath))
+        Assert-Rw061ValidatorShadowMembers $exactSeedShadowRoot @($exactSeedShadowMembers)
+        $exactSeedShadowOwnerReceipt = [ordered]@{
+            attempt_id = $exactSeedAttemptId
+            support_source = $exactSeedSupportPinReceipt
+            launcher_source = $exactSeedLauncherPinReceipt
+            powershell_source = $exactSeedPowerShellPinReceipt
+            dependency_sources = $exactSeedDependencyPinReceipts
+            shadow_support = $shadowSupportReceipt
+            shadow_launcher = $shadowLauncherReceipt
+            ambient_shadow = $ambientShadowReceipt
+        }
+        $exactSeedShadowChain = New-Q009OwnedChildManifestChainHead -RootPath $exactSeedShadowRoot -RootIdentity $exactSeedShadowRootReceipt.identity -AttemptId $exactSeedAttemptId -Boundary 'held-shadow-sources' -OwnerKind validator_shadow -OwnerReceipt $exactSeedShadowOwnerReceipt -PreviousHead $exactSeedShadowChain
+        $priorValidatorPath = [Environment]::GetEnvironmentVariable("PATH", "Process")
+        try {
+            [Environment]::SetEnvironmentVariable("PATH", ($exactSeedShadowRoot + [System.IO.Path]::PathSeparator + $priorValidatorPath), "Process")
+            $ambientPowerShell = Get-Command powershell -CommandType Application -ErrorAction Stop | Select-Object -First 1
+            if ([System.IO.Path]::GetFullPath($ambientPowerShell.Source) -cne [System.IO.Path]::GetFullPath($ambientShadowPath)) {
+                throw "ambient PowerShell hostile shadow was not active"
+            }
+            $exactSeedLauncherStarted = Start-RedirectedProcess -FilePath $canonicalWindowsPowerShell -Arguments @('-NoProfile','-ExecutionPolicy','Bypass','-File',$exactSeedLauncher,'-ProjectRoot',$root,'-ValidateOnly','-SelfTestReport',$exactSeedSelfTestReport) -StdoutPath $exactSeedLauncherStdout -StderrPath $exactSeedLauncherStderr -ProcessKind Exact -BaselineGodotIdentityKeys @() -TimeoutSec 300 -ExpectedExecutableIdentity $exactSeedPowerShellExpectedIdentity -RunContext $exactSeedValidatorRunContext
+            $exactSeedLauncherCompletion = Complete-RedirectedProcess -Started $exactSeedLauncherStarted -TimeoutSec 300 -ProcessKind Exact -BaselineGodotIdentityKeys @() -OwnedArtifactRoots @([ordered]@{role='validator_shadow';path=[IO.Path]::GetFullPath($exactSeedShadowRoot).TrimEnd('\','/');root_identity=$exactSeedShadowRootReceipt.identity}) -RunContext $exactSeedValidatorRunContext
+            if (-not (Test-Q009CompletionResultShape $exactSeedLauncherCompletion) -or -not [bool]$exactSeedLauncherCompletion.native_exit_observed -or [bool]$exactSeedLauncherCompletion.timed_out -or -not [bool]$exactSeedLauncherCompletion.job_cleanup_succeeded -or -not [bool]$exactSeedLauncherCompletion.job_final_membership_empty -or [int]$exactSeedLauncherCompletion.job_final_active_process_count -ne 0 -or -not [bool]$exactSeedLauncherCompletion.executable_pin_clean -or -not [string]::IsNullOrWhiteSpace([string]$exactSeedLauncherCompletion.error)) {
+                throw 'validator-owned hostile launcher process did not complete with exact empty-job/executable/channel custody'
+            }
+            $exactSeedLauncherExitCode = [int]$exactSeedLauncherCompletion.native_exit_code
+        }
+        finally {
+            [Environment]::SetEnvironmentVariable("PATH", $priorValidatorPath, "Process")
+        }
+        if (-not (Test-Path -LiteralPath $exactSeedLauncherStdout -PathType Leaf) -or -not (Test-Path -LiteralPath $exactSeedLauncherStderr -PathType Leaf)) {
+            throw "launcher hostile contracts did not produce separate stdout/stderr captures"
+        }
+        $exactSeedLauncherStdoutReceipt = Open-Rw061ValidatorShadowArtifact $exactSeedShadowCell $exactSeedShadowRootReceipt $exactSeedLauncherStdout 'selftest_stdout'
+        [void]$exactSeedShadowMembers.Add([IO.Path]::GetFileName($exactSeedLauncherStdout))
+        $exactSeedLauncherStderrReceipt = Open-Rw061ValidatorShadowArtifact $exactSeedShadowCell $exactSeedShadowRootReceipt $exactSeedLauncherStderr 'selftest_stderr'
+        [void]$exactSeedShadowMembers.Add([IO.Path]::GetFileName($exactSeedLauncherStderr))
+        $exactSeedLauncherOutput = @(Get-Content -LiteralPath $exactSeedLauncherStdout)
+        $exactSeedLauncherErrorText = [System.IO.File]::ReadAllText($exactSeedLauncherStderr)
+        if (-not [string]::IsNullOrEmpty($exactSeedLauncherErrorText)) {
+            throw "launcher hostile contracts emitted stderr: $exactSeedLauncherErrorText"
+        }
+        if ($exactSeedLauncherExitCode -ne 0) {
+            $launcherDetail = ($exactSeedLauncherOutput | ForEach-Object { [string]$_ }) -join " | "
+            throw "launcher hostile contracts exited $exactSeedLauncherExitCode. $launcherDetail"
+        }
+        if (-not (Test-Path -LiteralPath $exactSeedSelfTestReport -PathType Leaf)) {
+            throw "launcher hostile contracts did not publish the requested structured self-test report"
+        }
+        $exactSeedSelfTestReportReceipt = Open-Rw061ValidatorShadowArtifact $exactSeedShadowCell $exactSeedShadowRootReceipt $exactSeedSelfTestReport 'selftest_report'
+        [void]$exactSeedShadowMembers.Add([IO.Path]::GetFileName($exactSeedSelfTestReport))
+        [void](Assert-Rw061ValidatorArtifactsBoundToClosedProcess $exactSeedLauncherCompletion $exactSeedValidatorRunContext $exactSeedShadowRootReceipt @($exactSeedLauncherStdoutReceipt,$exactSeedLauncherStderrReceipt,$exactSeedSelfTestReportReceipt))
+        if ([string]$exactSeedLauncherCompletion.stdout_identity.key -cne [string]$exactSeedLauncherStdoutReceipt.identity.key -or
+                [string]$exactSeedLauncherCompletion.stderr_identity.key -cne [string]$exactSeedLauncherStderrReceipt.identity.key) {
+            throw 'validator hostile launcher redirect identities did not match their held closed-job artifacts'
+        }
+        Assert-Rw061ValidatorShadowMembers $exactSeedShadowRoot @($exactSeedShadowMembers)
+        $exactSeedShadowChain = New-Q009OwnedChildManifestChainHead -RootPath $exactSeedShadowRoot -RootIdentity $exactSeedShadowRootReceipt.identity -AttemptId $exactSeedAttemptId -Boundary 'selftest-terminal-artifacts' -OwnerKind validator_shadow -OwnerReceipt ([ordered]@{exit_code=[int]$exactSeedLauncherExitCode;stdout=$exactSeedLauncherStdoutReceipt;stderr=$exactSeedLauncherStderrReceipt;report=$exactSeedSelfTestReportReceipt}) -PreviousHead $exactSeedShadowChain
+        $exactSeedSelfTest = Get-Content -LiteralPath $exactSeedSelfTestReport -Raw | ConvertFrom-Json
+        if (-not (Test-JsonObjectRoot $exactSeedSelfTest)) {
+            throw "launcher hostile-contract report must be an object"
+        }
+        $oneElementStringArray = ('{"value":["string"]}' | ConvertFrom-Json -ErrorAction Stop).value
+        if (Test-ExactJsonString $oneElementStringArray) {
+            throw "exact JSON string validator accepted a parsed one-element JSON array"
+        }
+        $expectedExactSeedTopLevelKeys = @(
+            "tool", "schema_version", "marker", "passed", "mode", "godot_started",
+            "canonical_lease_touched", "canonical_cache_touched", "case_count", "case_names",
+            "cases", "hashes", "completed_utc"
+        )
+        $actualExactSeedTopLevelKeys = @($exactSeedSelfTest.PSObject.Properties.Name | Sort-Object)
+        if (($actualExactSeedTopLevelKeys -join "`n") -cne (@($expectedExactSeedTopLevelKeys | Sort-Object) -join "`n")) {
+            throw "launcher hostile-contract report has unexpected or missing top-level keys"
+        }
+        foreach ($topLevelStringField in @("tool", "marker", "mode", "completed_utc")) {
+            Assert-ExactJsonString $exactSeedSelfTest.$topLevelStringField "launcher hostile-contract $topLevelStringField"
+        }
+        [DateTimeOffset]$exactSeedCompletedUtc = [DateTimeOffset]::MinValue
+        if (-not [DateTimeOffset]::TryParse(
+                $exactSeedSelfTest.completed_utc,
+                [Globalization.CultureInfo]::InvariantCulture,
+                [Globalization.DateTimeStyles]::RoundtripKind,
+                [ref]$exactSeedCompletedUtc
+            ) -or $exactSeedCompletedUtc.Offset -ne [TimeSpan]::Zero) {
+            throw "launcher hostile-contract completed_utc is not a parseable UTC timestamp"
+        }
+        $numericSchemaVersion = ($exactSeedSelfTest.schema_version -is [int]) -or ($exactSeedSelfTest.schema_version -is [long])
+        $numericCaseCount = ($exactSeedSelfTest.case_count -is [int]) -or ($exactSeedSelfTest.case_count -is [long])
+        if ($exactSeedSelfTest.tool -cne "rw06_1_environment_qualifying_supervisor_selftest" -or
+                -not $numericSchemaVersion -or [int]$exactSeedSelfTest.schema_version -ne 2 -or
+                $exactSeedSelfTest.marker -cne "RW06_1_Q009_VALIDATE_ONLY_PASS" -or
+                -not ($exactSeedSelfTest.passed -is [bool]) -or -not [bool]$exactSeedSelfTest.passed -or
+                $exactSeedSelfTest.mode -cne "Historical22" -or
+                -not ($exactSeedSelfTest.godot_started -is [bool]) -or [bool]$exactSeedSelfTest.godot_started -or
+                -not ($exactSeedSelfTest.canonical_lease_touched -is [bool]) -or [bool]$exactSeedSelfTest.canonical_lease_touched -or
+                -not ($exactSeedSelfTest.canonical_cache_touched -is [bool]) -or [bool]$exactSeedSelfTest.canonical_cache_touched -or
+                -not $numericCaseCount -or [int]$exactSeedSelfTest.case_count -ne $expectedExactSeedSelfTestCases.Count) {
+            throw "launcher hostile-contract report has an invalid closed top-level schema"
+        }
+        $actualExactSeedCaseNames = @($exactSeedSelfTest.case_names)
+        for ($caseNameIndex = 0; $caseNameIndex -lt $actualExactSeedCaseNames.Count; $caseNameIndex++) {
+            Assert-ExactJsonString $actualExactSeedCaseNames[$caseNameIndex] "launcher hostile-contract case_names[$caseNameIndex]"
+        }
+        $actualExactSeedCases = @($exactSeedSelfTest.cases)
+        if ($actualExactSeedCaseNames.Count -ne $expectedExactSeedSelfTestCases.Count -or
+                ($actualExactSeedCaseNames -join "`n") -cne ($expectedExactSeedSelfTestCases -join "`n") -or
+                @($actualExactSeedCaseNames | Select-Object -Unique).Count -ne $expectedExactSeedSelfTestCases.Count -or
+                $actualExactSeedCases.Count -ne $expectedExactSeedSelfTestCases.Count) {
+            throw "launcher hostile-contract report does not contain the exact ordered $($expectedExactSeedSelfTestCases.Count)-case matrix"
+        }
+        $expectedExactSeedCaseKeys = @("name", "passed", "detail")
+        for ($caseIndex = 0; $caseIndex -lt $expectedExactSeedSelfTestCases.Count; $caseIndex++) {
+            $case = $actualExactSeedCases[$caseIndex]
+            if (-not (Test-JsonObjectRoot $case)) {
+                throw "launcher hostile-contract case $caseIndex is not an object"
+            }
+            Assert-ExactJsonString $case.name "launcher hostile-contract cases[$caseIndex].name"
+            Assert-ExactJsonString $case.detail "launcher hostile-contract cases[$caseIndex].detail"
+            $actualCaseKeys = @($case.PSObject.Properties.Name | Sort-Object)
+            if (($actualCaseKeys -join "`n") -cne (@($expectedExactSeedCaseKeys | Sort-Object) -join "`n") -or
+                    $case.name -cne $expectedExactSeedSelfTestCases[$caseIndex] -or
+                    -not ($case.passed -is [bool]) -or -not [bool]$case.passed -or
+                    $case.detail -cne "") {
+                throw "launcher hostile-contract case $caseIndex is malformed or did not pass"
+            }
+        }
+        if (-not (Test-JsonObjectRoot $exactSeedSelfTest.hashes)) {
+            throw "launcher hostile-contract report is missing its exact source hashes"
+        }
+        $expectedExactSeedHashes = [ordered]@{
+            launcher_sha256 = [string]$exactSeedLauncherPinReceipt.sha256
+            support_sha256 = [string]$exactSeedSupportPinReceipt.sha256
+            manifest_sha256 = [string]$exactSeedDependencyPinReceipts.manifest.sha256
+            audit_gd_sha256 = [string]$exactSeedDependencyPinReceipts.audit.sha256
+            static_checker_sha256 = [string]$exactSeedDependencyPinReceipts.static_checker.sha256
+            scenario_catalog_sha256 = [string]$exactSeedDependencyPinReceipts.scenario_catalog.sha256
+            fidelity_helper_sha256 = [string]$exactSeedDependencyPinReceipts.fidelity_helper.sha256
+            foundation_travel_view_model_sha256 = [string]$exactSeedDependencyPinReceipts.foundation_travel_view_model.sha256
+            tutorial_flow_sha256 = [string]$exactSeedDependencyPinReceipts.tutorial_flow.sha256
+            attribute_badges_sha256 = [string]$exactSeedDependencyPinReceipts.attribute_badges.sha256
+        }
+        foreach ($hashName in $expectedExactSeedHashes.Keys) {
+            Assert-ExactJsonString $exactSeedSelfTest.hashes.$hashName "launcher hostile-contract hashes.$hashName"
+            if ($exactSeedSelfTest.hashes.$hashName -cne [string]$expectedExactSeedHashes[$hashName]) {
+                throw "launcher hostile-contract report $hashName does not bind the validated file"
+            }
+        }
+        $expectedExactSeedBlobs = [ordered]@{
+            launcher_git_blob=[string]$exactSeedHeldGitBlobs.launcher_git_blob
+            support_git_blob=[string]$exactSeedHeldGitBlobs.support_git_blob
+            manifest_git_blob=[string]$exactSeedHeldGitBlobs.manifest_git_blob
+            audit_gd_git_blob=[string]$exactSeedHeldGitBlobs.audit_gd_git_blob
+            static_checker_git_blob=[string]$exactSeedHeldGitBlobs.static_checker_git_blob
+            scenario_catalog_git_blob=[string]$exactSeedHeldGitBlobs.scenario_catalog_git_blob
+            fidelity_helper_git_blob=[string]$exactSeedHeldGitBlobs.fidelity_helper_git_blob
+            foundation_travel_view_model_git_blob=[string]$exactSeedHeldGitBlobs.foundation_travel_view_model_git_blob
+            tutorial_flow_git_blob=[string]$exactSeedHeldGitBlobs.tutorial_flow_git_blob
+            attribute_badges_git_blob=[string]$exactSeedHeldGitBlobs.attribute_badges_git_blob
+        }
+        foreach ($blobName in $expectedExactSeedBlobs.Keys) {
+            Assert-ExactJsonString $exactSeedSelfTest.hashes.$blobName "launcher hostile-contract hashes.$blobName"
+            if ($exactSeedSelfTest.hashes.$blobName -cne [string]$expectedExactSeedBlobs[$blobName]) {
+                throw "launcher hostile-contract report $blobName does not bind the validated file"
+            }
+        }
+        $expectedExactSeedHashKeys = @($expectedExactSeedHashes.Keys) + @($expectedExactSeedBlobs.Keys)
+        $actualExactSeedHashKeys = @($exactSeedSelfTest.hashes.PSObject.Properties.Name | Sort-Object)
+        if (($actualExactSeedHashKeys -join "`n") -cne (@($expectedExactSeedHashKeys | Sort-Object) -join "`n")) {
+            throw "launcher hostile-contract report has unexpected or missing source-hash keys"
+        }
+        $expectedSelfTestMarker = "RW06_1_Q009_VALIDATE_ONLY_PASS report=$exactSeedSelfTestReport cases=$($expectedExactSeedSelfTestCases.Count) sha256=$($exactSeedSelfTestReportReceipt.sha256) native_key=$($exactSeedSelfTestReportReceipt.identity.native_key) creation_ticks=$($exactSeedSelfTestReportReceipt.identity.creation_ticks)"
+        if ($exactSeedLauncherOutput.Count -ne 1 -or
+                -not (Test-ExactJsonString $exactSeedLauncherOutput[0]) -or
+                $exactSeedLauncherOutput[0] -cne $expectedSelfTestMarker) {
+            throw "launcher hostile contracts did not emit only the exact success marker on stdout"
+        }
+
+        $auditSource = $strictUtf8.GetString([byte[]]$exactSeedDependencyPins.audit.bytes)
+        if (@(Get-Rw061AuditTravelSourceIssues $auditSource).Count -ne 0) {
+            throw 'environment generation evidence does not function-scope both catalogs to the constrained production world-route view'
+        }
+        $misScopedAudit=$auditSource.Replace('func _simulate_run(','func _misplaced_simulate_run(')+"`nfunc _simulate_run() -> void:`n`tpass`n"
+        if(@(Get-Rw061AuditTravelSourceIssues $misScopedAudit).Count-eq0){throw 'validator hostile accepted a post-event catalog producer moved outside _simulate_run'}
+        $missingOverlayGuard=$auditSource.Replace('if run_state != null and run_state.delivery_has_active_run():','if run_state != null and false:')
+        if(@(Get-Rw061AuditTravelSourceIssues $missingOverlayGuard).Count-eq0){throw 'validator hostile accepted a missing delivery-overlay exclusion'}
+        $manualTargetCatalog=$auditSource.Replace('return _production_foundation_travel_host(run_state)._travel_target_ids()','return WorldMapScript.travel_target_ids(run_state.world_map, run_state.current_world_node_id(), 2, 3, [])')
+        if(@(Get-Rw061AuditTravelSourceIssues $manualTargetCatalog).Count-eq0){throw 'validator hostile accepted a hand-built world target catalog'}
+        $earlyTargetReturn=$auditSource.Replace('func _travel_target_ids(run_state: RunState) -> Array:',"func _travel_target_ids(run_state: RunState) -> Array:`n`treturn []")
+        if(@(Get-Rw061AuditTravelSourceIssues $earlyTargetReturn).Count-eq0){throw 'validator hostile accepted an extra early return before the production Foundation catalog'}
+        $choiceHostBypass=$auditSource.Replace('return view_model_script.travel_choice(self, target_id, known_target_ids)','return {}')
+        if(@(Get-Rw061AuditTravelSourceIssues $choiceHostBypass).Count-eq0){throw 'validator hostile accepted a bypassed production Foundation travel choice'}
+        $walkTimingBypass=$auditSource.Replace('const WALK_CLOCK_MINUTES_PER_BLOCK := 10','const WALK_CLOCK_MINUTES_PER_BLOCK := 6')
+        if(@(Get-Rw061AuditTravelSourceIssues $walkTimingBypass).Count-eq0){throw 'validator hostile accepted generator-style timing for authored Walk routes'}
+        $multilineTravelAmbiguity='"""hostile`n'+$auditSource
+        if(@(Get-Rw061AuditTravelSourceIssues $multilineTravelAmbiguity).Count-eq0){throw 'validator hostile accepted multiline-string GDScript ambiguity'}
+        if ([regex]::Matches($auditSource,'(?m)^\s*"fingerprint"\s*:\s*_json_sha256\(\{"active"\s*:\s*false\}\),\s*$').Count -ne 1) {
+            throw 'environment generation evidence lacks exactly one canonical inactive projection producer witness'
+        }
+        $inactiveBytes = [Text.Encoding]::UTF8.GetBytes('{"active":false}')
+        $inactiveHasher = [Security.Cryptography.SHA256]::Create()
+        try { $inactiveFingerprint = ([BitConverter]::ToString($inactiveHasher.ComputeHash($inactiveBytes))).Replace('-','').ToLowerInvariant() }
+        finally { $inactiveHasher.Dispose() }
+        if ($inactiveFingerprint -cne '78b558bd2357fbe7ad52804fb3af1b8664b23db096b1deb22d215dde25b152bf') {
+            throw 'validator canonical inactive producer payload fingerprint changed'
+        }
+
+        $independentDriverSource = @'
+param([Parameter(Mandatory=$true)][string]$LauncherPath,[Parameter(Mandatory=$true)][string]$ProjectRoot,[Parameter(Mandatory=$true)][string]$ReportPath)
+$ErrorActionPreference='Stop'
+. $LauncherPath -LoadAdmissionFunctionsOnly -ProjectRoot $ProjectRoot
+$cases=[Collections.Generic.List[object]]::new()
+function Add-IndependentMutation([string]$Name,[scriptblock]$Mutate){
+    $fixture=New-HistoricalSemanticSelfTestFixture
+    & $Mutate $fixture
+    $raw=$fixture.report|ConvertTo-Json -Depth 100
+    $issues=@(Get-AuditSemanticIssues $fixture.report $fixture.attempt_id 1 6 5 $fixture.expectation $fixture.combo $raw)
+    if($issues.Count-le0){throw "independent mutation was accepted: $Name"}
+    [void]$cases.Add([ordered]@{name=$Name;passed=$true;issue_count=$issues.Count})
+}
+$baseline=New-HistoricalSemanticSelfTestFixture
+$baselineRaw=$baseline.report|ConvertTo-Json -Depth 100
+$baselineIssues=@(Get-AuditSemanticIssues $baseline.report $baseline.attempt_id 1 6 5 $baseline.expectation $baseline.combo $baselineRaw)
+if($baselineIssues.Count-ne0){throw ('independent baseline was rejected: '+($baselineIssues-join'; '))}
+Add-IndependentMutation 'omitted-arrival-seed-field' {param($f)$f.report.environment_records[2].arrival_receipt.PSObject.Properties.Remove('challenge_daily_id')}
+Add-IndependentMutation 'initial-finalization-true' {param($f)$f.report.environment_records[0].arrival_receipt.production_scenario_finalized=$true;$f.report.runs[0].initial_arrival_receipt.production_scenario_finalized=$true}
+Add-IndependentMutation 'travel-finalization-false' {param($f)$f.report.environment_records[1].arrival_receipt.production_scenario_finalized=$false;$f.report.travel_records[0].arrival_receipt.production_scenario_finalized=$false}
+Add-IndependentMutation 'post-heat-target-removal' {param($f)$f.report.travel_records[0].admitted_targets_after_heat=[object[]]@('spare-a')}
+Add-IndependentMutation 'travel-errors-count-mismatch' {param($f)$f.report.environment_records[1].arrival_receipt.travel_errors=[object[]]@('forged travel error');$f.report.environment_records[1].arrival_receipt.travel_error_count=0}
+Add-IndependentMutation 'ordinary-authority-bool-count-tamper' {param($f)$f.report.environment_records[0].runtime_scenario_layout.authority_receipts[0].authority_valid=$false;$f.report.environment_records[0].runtime_scenario_layout.actionable_authority_count=0}
+Add-IndependentMutation 'selected-choice-resealed-splice' {param($f)$f.report.travel_records[0].selected_choice.label='validator-resealed-splice';$f.report.travel_records[0].selected_choice_digest=Get-Q009CanonicalJsonSha256 $f.report.travel_records[0].selected_choice}
+Add-IndependentMutation 'public-catalog-digest-mismatch' {param($f)$f.report.environment_records[1].travel_after_events_digest='0'.PadLeft(64,'0')}
+Add-IndependentMutation 'catalog-extra-resealed' {param($f)$extra=$f.report.environment_records[0].travel_after_events[0]|ConvertTo-Json -Depth 20|ConvertFrom-Json;$extra.id='validator-extra';$extra.label='validator-extra';$f.report.environment_records[0].travel_after_events=[object[]]@($f.report.environment_records[0].travel_after_events)+@($extra);$f.report.environment_records[0].travel_after_events_digest=Get-Q009CanonicalJsonSha256 $f.report.environment_records[0].travel_after_events}
+Add-IndependentMutation 'catalog-null-resealed' {param($f)$f.report.environment_records[0].travel_after_events[1].risk_event=$null;$f.report.environment_records[0].travel_after_events_digest=Get-Q009CanonicalJsonSha256 $f.report.environment_records[0].travel_after_events}
+Add-IndependentMutation 'admission-reordered-resealed' {param($f)$row=$f.report.travel_records[0];$row.admitted_targets_before=[object[]]@($row.admitted_targets_before[2],$row.admitted_targets_before[1],$row.admitted_targets_before[0]);$row.admitted_targets_before_digest=Get-Q009CanonicalJsonSha256 $row.admitted_targets_before}
+$expected=@('omitted-arrival-seed-field','initial-finalization-true','travel-finalization-false','post-heat-target-removal','travel-errors-count-mismatch','ordinary-authority-bool-count-tamper','selected-choice-resealed-splice','public-catalog-digest-mismatch','catalog-extra-resealed','catalog-null-resealed','admission-reordered-resealed')
+if($cases.Count-ne$expected.Count-or(@($cases|ForEach-Object{[string]$_.name})-join"`n")-cne($expected-join"`n")){throw 'independent mutation matrix order/count drifted'}
+if(Test-Path -LiteralPath $ReportPath){throw 'independent mutation report already exists'}
+$report=[ordered]@{tool='rw06_1_validator_independent_admission_hostiles';schema_version=1;passed=$true;case_count=$cases.Count;case_names=@($cases|ForEach-Object{[string]$_.name});cases=@($cases)}
+[IO.File]::WriteAllText($ReportPath,($report|ConvertTo-Json -Depth 8),[Text.UTF8Encoding]::new($false))
+Write-Output "RW06_1_INDEPENDENT_ADMISSION_PASS report=$ReportPath cases=$($cases.Count)"
+'@
+        $independentDriverBytes = [Text.UTF8Encoding]::new($false).GetBytes($independentDriverSource)
+        $exactSeedIndependentDriverReceipt = New-Rw061ValidatorShadowFile $exactSeedShadowCell $exactSeedShadowRootReceipt $exactSeedIndependentDriver 'independent_driver' $independentDriverBytes
+        [void]$exactSeedShadowMembers.Add([IO.Path]::GetFileName($exactSeedIndependentDriver))
+        Assert-Rw061ValidatorShadowMembers $exactSeedShadowRoot @($exactSeedShadowMembers)
+        $exactSeedShadowChain = New-Q009OwnedChildManifestChainHead -RootPath $exactSeedShadowRoot -RootIdentity $exactSeedShadowRootReceipt.identity -AttemptId $exactSeedAttemptId -Boundary 'independent-driver-held' -OwnerKind validator_shadow -OwnerReceipt $exactSeedIndependentDriverReceipt -PreviousHead $exactSeedShadowChain
+        $exactSeedIndependentStarted = Start-RedirectedProcess -FilePath $canonicalWindowsPowerShell -Arguments @('-NoProfile','-ExecutionPolicy','Bypass','-File',$exactSeedIndependentDriver,'-LauncherPath',$exactSeedLauncher,'-ProjectRoot',$root,'-ReportPath',$exactSeedIndependentReport) -StdoutPath $exactSeedIndependentStdout -StderrPath $exactSeedIndependentStderr -ProcessKind Exact -BaselineGodotIdentityKeys @() -TimeoutSec 300 -ExpectedExecutableIdentity $exactSeedPowerShellExpectedIdentity -RunContext $exactSeedValidatorRunContext
+        $exactSeedIndependentCompletion = Complete-RedirectedProcess -Started $exactSeedIndependentStarted -TimeoutSec 300 -ProcessKind Exact -BaselineGodotIdentityKeys @() -OwnedArtifactRoots @([ordered]@{role='validator_shadow';path=[IO.Path]::GetFullPath($exactSeedShadowRoot).TrimEnd('\','/');root_identity=$exactSeedShadowRootReceipt.identity}) -RunContext $exactSeedValidatorRunContext
+        if (-not (Test-Q009CompletionResultShape $exactSeedIndependentCompletion) -or -not [bool]$exactSeedIndependentCompletion.native_exit_observed -or [bool]$exactSeedIndependentCompletion.timed_out -or -not [bool]$exactSeedIndependentCompletion.job_cleanup_succeeded -or -not [bool]$exactSeedIndependentCompletion.job_final_membership_empty -or [int]$exactSeedIndependentCompletion.job_final_active_process_count -ne 0 -or -not [bool]$exactSeedIndependentCompletion.executable_pin_clean -or -not [string]::IsNullOrWhiteSpace([string]$exactSeedIndependentCompletion.error)) {
+            throw 'validator-owned independent mutation process did not complete with exact empty-job/executable/channel custody'
+        }
+        $exactSeedIndependentExitCode=[int]$exactSeedIndependentCompletion.native_exit_code
+        $exactSeedIndependentStdoutReceipt = Open-Rw061ValidatorShadowArtifact $exactSeedShadowCell $exactSeedShadowRootReceipt $exactSeedIndependentStdout 'independent_stdout'
+        [void]$exactSeedShadowMembers.Add([IO.Path]::GetFileName($exactSeedIndependentStdout))
+        $exactSeedIndependentStderrReceipt = Open-Rw061ValidatorShadowArtifact $exactSeedShadowCell $exactSeedShadowRootReceipt $exactSeedIndependentStderr 'independent_stderr'
+        [void]$exactSeedShadowMembers.Add([IO.Path]::GetFileName($exactSeedIndependentStderr))
+        $independentError=[IO.File]::ReadAllText($exactSeedIndependentStderr)
+        $independentOutput=@(Get-Content -LiteralPath $exactSeedIndependentStdout)
+        if($exactSeedIndependentExitCode-ne0-or-not[string]::IsNullOrEmpty($independentError)-or-not(Test-Path -LiteralPath $exactSeedIndependentReport -PathType Leaf)){
+            throw "independent validator-authored admission hostiles failed: exit=$exactSeedIndependentExitCode stderr=$independentError stdout=$($independentOutput-join' | ')"
+        }
+        $exactSeedIndependentReportReceipt = Open-Rw061ValidatorShadowArtifact $exactSeedShadowCell $exactSeedShadowRootReceipt $exactSeedIndependentReport 'independent_report'
+        [void]$exactSeedShadowMembers.Add([IO.Path]::GetFileName($exactSeedIndependentReport))
+        [void](Assert-Rw061ValidatorArtifactsBoundToClosedProcess $exactSeedIndependentCompletion $exactSeedValidatorRunContext $exactSeedShadowRootReceipt @($exactSeedIndependentStdoutReceipt,$exactSeedIndependentStderrReceipt,$exactSeedIndependentReportReceipt))
+        if ([string]$exactSeedIndependentCompletion.stdout_identity.key -cne [string]$exactSeedIndependentStdoutReceipt.identity.key -or
+                [string]$exactSeedIndependentCompletion.stderr_identity.key -cne [string]$exactSeedIndependentStderrReceipt.identity.key) {
+            throw 'validator independent-run redirect identities did not match their held closed-job artifacts'
+        }
+        Assert-Rw061ValidatorShadowMembers $exactSeedShadowRoot @($exactSeedShadowMembers)
+        $exactSeedShadowChain = New-Q009OwnedChildManifestChainHead -RootPath $exactSeedShadowRoot -RootIdentity $exactSeedShadowRootReceipt.identity -AttemptId $exactSeedAttemptId -Boundary 'independent-terminal-artifacts' -OwnerKind validator_shadow -OwnerReceipt ([ordered]@{exit_code=[int]$exactSeedIndependentExitCode;stdout=$exactSeedIndependentStdoutReceipt;stderr=$exactSeedIndependentStderrReceipt;report=$exactSeedIndependentReportReceipt}) -PreviousHead $exactSeedShadowChain
+        $independentReport=Get-Content -LiteralPath $exactSeedIndependentReport -Raw|ConvertFrom-Json
+        $expectedIndependentNames=@('omitted-arrival-seed-field','initial-finalization-true','travel-finalization-false','post-heat-target-removal','travel-errors-count-mismatch','ordinary-authority-bool-count-tamper','selected-choice-resealed-splice','public-catalog-digest-mismatch','catalog-extra-resealed','catalog-null-resealed','admission-reordered-resealed')
+        $expectedIndependentTopKeys=@('tool','schema_version','passed','case_count','case_names','cases')|Sort-Object
+        if(-not(Test-JsonObjectRoot $independentReport)-or(@($independentReport.PSObject.Properties.Name|Sort-Object)-join"`n")-cne($expectedIndependentTopKeys-join"`n")){throw 'independent validator-authored admission hostile report root schema was invalid'}
+        Assert-ExactJsonString $independentReport.tool 'independent validator-authored tool'
+        if($independentReport.tool-cne'rw06_1_validator_independent_admission_hostiles'-or-not($independentReport.schema_version-is[int]-or$independentReport.schema_version-is[long])-or[int]$independentReport.schema_version-ne1-or-not($independentReport.passed-is[bool])-or-not[bool]$independentReport.passed-or-not($independentReport.case_count-is[int]-or$independentReport.case_count-is[long])-or[int]$independentReport.case_count-ne$expectedIndependentNames.Count-or-not($independentReport.case_names-is[System.Array])-or-not($independentReport.cases-is[System.Array])-or@($independentReport.case_names).Count-ne$expectedIndependentNames.Count-or@($independentReport.cases).Count-ne$expectedIndependentNames.Count){throw 'independent validator-authored admission hostile report schema/order was invalid'}
+        for($nameIndex=0;$nameIndex-lt$expectedIndependentNames.Count;$nameIndex+=1){Assert-ExactJsonString $independentReport.case_names[$nameIndex] "independent case_names[$nameIndex]";if($independentReport.case_names[$nameIndex]-cne$expectedIndependentNames[$nameIndex]){throw "independent case_names[$nameIndex] changed"}}
+        $expectedIndependentCaseKeys=@('name','passed','issue_count')|Sort-Object
+        for($index=0;$index-lt$expectedIndependentNames.Count;$index+=1){$case=$independentReport.cases[$index];if(-not(Test-JsonObjectRoot $case)-or(@($case.PSObject.Properties.Name|Sort-Object)-join"`n")-cne($expectedIndependentCaseKeys-join"`n")){throw "independent admission case $index schema was malformed"};Assert-ExactJsonString $case.name "independent cases[$index].name";if($case.name-cne$expectedIndependentNames[$index]-or-not($case.passed-is[bool])-or-not[bool]$case.passed-or-not($case.issue_count-is[int]-or$case.issue_count-is[long])-or[int]$case.issue_count-le0){throw "independent admission case $index was malformed or did not reject"}}
+        $expectedIndependentMarker="RW06_1_INDEPENDENT_ADMISSION_PASS report=$exactSeedIndependentReport cases=$($expectedIndependentNames.Count)"
+        if($independentOutput.Count-ne1-or$independentOutput[0]-cne$expectedIndependentMarker){throw 'independent admission hostile runner did not emit only its exact success marker'}
+        $supportPinTerminal = Get-Rw061ValidatorReadPinReceipt $exactSeedSupportPin
+        $launcherPinTerminal = Get-Rw061ValidatorReadPinReceipt $exactSeedLauncherPin
+        $powerShellPinTerminal = Get-Rw061ValidatorReadPinReceipt $exactSeedPowerShellPin
+        if (($supportPinTerminal | ConvertTo-Json -Depth 8 -Compress) -cne ($exactSeedSupportPinReceipt | ConvertTo-Json -Depth 8 -Compress) -or
+                ($launcherPinTerminal | ConvertTo-Json -Depth 8 -Compress) -cne ($exactSeedLauncherPinReceipt | ConvertTo-Json -Depth 8 -Compress) -or
+                ($powerShellPinTerminal | ConvertTo-Json -Depth 8 -Compress) -cne ($exactSeedPowerShellPinReceipt | ConvertTo-Json -Depth 8 -Compress)) {
+            throw 'validator held source/executable identity changed across child execution'
+        }
+        foreach($dependencyName in @($exactSeedDependencyPins.Keys)){
+            $terminal=Get-Rw061ValidatorReadPinReceipt $exactSeedDependencyPins[$dependencyName]
+            if(($terminal|ConvertTo-Json -Depth 8 -Compress)-cne($exactSeedDependencyPinReceipts[$dependencyName]|ConvertTo-Json -Depth 8 -Compress)){throw "validator held dependency identity changed across child execution: $dependencyName"}
+        }
+        Assert-Rw061ValidatorShadowMembers $exactSeedShadowRoot @($exactSeedShadowMembers)
+        $exactSeedShadowChain = New-Q009OwnedChildManifestChainHead -RootPath $exactSeedShadowRoot -RootIdentity $exactSeedShadowRootReceipt.identity -AttemptId $exactSeedAttemptId -Boundary 'validator-terminal-green' -OwnerKind validator_shadow -OwnerReceipt ([ordered]@{selftest_exit=[int]$exactSeedLauncherExitCode;independent_exit=[int]$exactSeedIndependentExitCode;support_pin=$supportPinTerminal;launcher_pin=$launcherPinTerminal;powershell_pin=$powerShellPinTerminal}) -PreviousHead $exactSeedShadowChain
+    }
+    catch {
+        $exactSeedInnerFailure = $_.Exception
+    }
+    finally {
+        $shadowCleanupError = ''
+        if ($null -ne $exactSeedShadowCell) {
+            try {
+                $shadowRelease = Close-Q009AllOpenNativeHandles $exactSeedShadowCell 'rw06_1 validator shadow terminal handle release'
+                if (-not [bool]$shadowRelease.all_terminal -or @($shadowRelease.errors).Count -ne 0 -or @($shadowRelease.nonterminal_slots).Count -ne 0) {
+                    throw 'validator shadow handles did not all close with checked native success'
+                }
+                if ($null -eq $exactSeedShadowRootReceipt -or -not (Test-Q009OwnedChildManifestChainHeadShape $exactSeedShadowChain $exactSeedShadowRootReceipt.identity $exactSeedAttemptId)) {
+                    throw 'validator shadow lacked a sealed authorized child-manifest chain at cleanup'
+                }
+                $exactSeedShadowCleanupReceipt = Remove-Q009ExactOwnedTree -OwnedPath $exactSeedShadowRoot -QuarantinePath $exactSeedShadowQuarantine -ExpectedRootIdentity $exactSeedShadowRootReceipt.identity -AuthorizedChainHead $exactSeedShadowChain -ExpectedAttemptId $exactSeedAttemptId
+                if ($exactSeedShadowCleanupReceipt.removed -isnot [bool] -or -not [bool]$exactSeedShadowCleanupReceipt.removed -or (Test-Path -LiteralPath $exactSeedShadowRoot) -or (Test-Path -LiteralPath $exactSeedShadowQuarantine)) {
+                    throw 'validator shadow cleanup did not prove exact root/quarantine absence'
+                }
+            }
+            catch {
+                $shadowCleanupError = $_.Exception.Message
+            }
+        }
+        foreach ($sourcePin in @($exactSeedPowerShellPin,$exactSeedLauncherPin,$exactSeedSupportPin)+@($exactSeedDependencyPins.Values)) {
+            try { Close-Rw061ValidatorReadPin $sourcePin } catch { $shadowCleanupError = if ($shadowCleanupError) { $shadowCleanupError + ' | source pin close: ' + $_.Exception.Message } else { 'source pin close: ' + $_.Exception.Message } }
+        }
+        if (-not [string]::IsNullOrWhiteSpace($shadowCleanupError)) {
+            $cleanupFailure = [InvalidOperationException]::new('rw06_1 validator exact shadow cleanup failed: ' + $shadowCleanupError)
+            if ($null -eq $exactSeedInnerFailure) { $exactSeedInnerFailure = $cleanupFailure }
+            else { $exactSeedInnerFailure = [AggregateException]::new('rw06_1 validator inner failure plus exact shadow cleanup failure', @($exactSeedInnerFailure,$cleanupFailure)) }
+        }
+    }
+    $exactSeedPostFileCensus = Get-Rw061ValidatorFileIdentityCensus $exactSeedBoundPaths
+    foreach($path in $exactSeedPreFileCensus.Keys){
+        $before=$exactSeedPreFileCensus[$path];$after=$exactSeedPostFileCensus[$path]
+        if($null-eq$after-or($before|ConvertTo-Json -Compress)-cne($after|ConvertTo-Json -Compress)){throw "rw06_1 validator-bound source identity drifted: $path"}
+    }
+    $exactSeedPostProcessCensus=@(Get-Rw061ValidatorProcessCensus);$preProcessKeys=@($exactSeedPreProcessCensus|ForEach-Object{[string]$_.key});$newProcesses=@($exactSeedPostProcessCensus|Where-Object{$preProcessKeys-notcontains[string]$_.key})
+    if($newProcesses.Count-ne0){throw "rw06_1 validator left or observed new relevant process identities: $(@($newProcesses|ForEach-Object{[string]$_.key})-join', ')"}
+    $exactSeedPostLeaseCensus=@(Get-Rw061ValidatorLeaseCensus $exactSeedLeaseRoot)
+    if((@($exactSeedPreLeaseCensus)|ConvertTo-Json -Compress -Depth 5)-cne(@($exactSeedPostLeaseCensus)|ConvertTo-Json -Compress -Depth 5)){throw 'rw06_1 engine-free validator changed the canonical Q-009 lease census'}
+    $exactSeedPostResidueCensus=@(Get-Rw061ValidatorSelfTestResidueCensus)
+    if((@($exactSeedPreResidueCensus)|ConvertTo-Json -Compress -Depth 5)-cne(@($exactSeedPostResidueCensus)|ConvertTo-Json -Compress -Depth 5)){throw 'rw06_1 launcher self-test created or changed a residual rw06-q009-selftest root'}
+    $exactSeedPostCacheCensus=Get-Rw061ValidatorTreeCensus $exactSeedProjectCache
+    if(($exactSeedPreCacheCensus|ConvertTo-Json -Compress -Depth 8)-cne($exactSeedPostCacheCensus|ConvertTo-Json -Compress -Depth 8)){throw 'rw06_1 launcher self-test changed the candidate project cache tree'}
+    $exactSeedPostEnvironmentCensus=Get-Rw061ValidatorEnvironmentCensus
+    if(($exactSeedPreEnvironmentCensus|ConvertTo-Json -Compress)-cne($exactSeedPostEnvironmentCensus|ConvertTo-Json -Compress)){throw 'rw06_1 launcher self-test changed the validator process environment'}
+    if($null-ne$exactSeedInnerFailure){throw $exactSeedInnerFailure}
+}
+catch {
+    $failures.Add("rw06_1 exact-seed launcher hostile contracts failed: $($_.Exception.Message)")
+}
+finally {
+    # This fallback covers failures before the inner execution/cleanup block was
+    # entered. It never invents ownership: an unsealed or changed shadow is
+    # retained and reported instead of being adopted or removed by pathname.
+    if ($null -ne $exactSeedShadowCell -and $null -ne $exactSeedShadowRootReceipt -and (Test-Path -LiteralPath $exactSeedShadowRoot)) {
+        try {
+            $fallbackRelease = Close-Q009AllOpenNativeHandles $exactSeedShadowCell 'rw06_1 validator outer fallback handle release'
+            if (-not [bool]$fallbackRelease.all_terminal -or @($fallbackRelease.errors).Count -ne 0 -or @($fallbackRelease.nonterminal_slots).Count -ne 0) {
+                throw 'outer fallback did not close every exact shadow handle'
+            }
+            if (-not (Test-Q009OwnedChildManifestChainHeadShape $exactSeedShadowChain $exactSeedShadowRootReceipt.identity $exactSeedAttemptId)) {
+                throw 'outer fallback refused an unsealed validator shadow'
+            }
+            $fallbackCleanup = Remove-Q009ExactOwnedTree -OwnedPath $exactSeedShadowRoot -QuarantinePath $exactSeedShadowQuarantine -ExpectedRootIdentity $exactSeedShadowRootReceipt.identity -AuthorizedChainHead $exactSeedShadowChain -ExpectedAttemptId $exactSeedAttemptId
+            if ($fallbackCleanup.removed -isnot [bool] -or -not [bool]$fallbackCleanup.removed -or (Test-Path -LiteralPath $exactSeedShadowRoot) -or (Test-Path -LiteralPath $exactSeedShadowQuarantine)) {
+                throw 'outer fallback did not prove validator shadow absence'
+            }
+        }
+        catch {
+            $failures.Add("rw06_1 validator retained an exact shadow after fail-closed cleanup: $($_.Exception.Message)")
+        }
+    }
+    foreach ($sourcePin in @($exactSeedPowerShellPin,$exactSeedLauncherPin,$exactSeedSupportPin)+@($exactSeedDependencyPins.Values)) {
+        try { Close-Rw061ValidatorReadPin $sourcePin }
+        catch { $failures.Add("rw06_1 validator source pin close failed: $($_.Exception.Message)") }
+    }
 }
 
 try {

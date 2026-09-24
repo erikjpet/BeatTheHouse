@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "source": "postfix06_2 exact historical UIENV contract",
+  "legal_room_combinations": [
+    {
+      "seed": "POSTFIX-UIENV-009-4151570434",
+      "destination": "corner_store",
+      "scenario_id": "corner_store_delivery_day",
+      "phase_id": "arrival",
+      "base_event_id": "town_rumor_staff",
+      "base_slot_id": "base.staff_shopkeeper",
+      "scenario_identity": "scenario::delivery_event_gate"
+    }
+  ],
+  "expectations": [
+    {"seed":"POSTFIX-UIENV-009-4151570434","destination":"bar","scenario_id":"bar_fight_night","required_marker":"scenario_fight_night_swing_bet","required_interaction":"scenario::bar_fight_night_safe_exit"},
+    {"seed":"POSTFIX-UIENV-015-1938529946","destination":"bar","scenario_id":"bar_fight_night","required_marker":"scenario_fight_night_swing_bet","required_interaction":"scenario::bar_fight_night_safe_exit"},
+    {"seed":"POSTFIX-UIENV-031-2491917705","destination":"bar","scenario_id":"bar_fight_night","required_marker":"scenario_fight_night_swing_bet","required_interaction":"scenario::bar_fight_night_safe_exit"},
+    {"seed":"POSTFIX-UIENV-036-3073861592","destination":"bar","scenario_id":"bar_fight_night","required_marker":"scenario_fight_night_swing_bet","required_interaction":"scenario::bar_fight_night_safe_exit"},
+    {"seed":"POSTFIX-UIENV-037-655530953","destination":"bar","scenario_id":"bar_fight_night","required_marker":"scenario_fight_night_swing_bet","required_interaction":"scenario::bar_fight_night_safe_exit"},
+    {"seed":"POSTFIX-UIENV-043-934268634","destination":"bar","scenario_id":"bar_fight_night","required_marker":"scenario_fight_night_swing_bet","required_interaction":"scenario::bar_fight_night_safe_exit"},
+    {"seed":"POSTFIX-UIENV-054-1002983031","destination":"bar","scenario_id":"bar_fight_night","required_marker":"scenario_fight_night_swing_bet","required_interaction":"scenario::bar_fight_night_safe_exit"},
+    {"seed":"POSTFIX-UIENV-073-140575119","destination":"bar","scenario_id":"bar_fight_night","required_marker":"scenario_fight_night_swing_bet","required_interaction":"scenario::bar_fight_night_safe_exit"},
+    {"seed":"POSTFIX-UIENV-093-397681310","destination":"bar","scenario_id":"bar_fight_night","required_marker":"scenario_fight_night_swing_bet","required_interaction":"scenario::bar_fight_night_safe_exit"},
+    {"seed":"POSTFIX-UIENV-098-1674379668","destination":"bar","scenario_id":"bar_fight_night","required_marker":"scenario_fight_night_swing_bet","required_interaction":"scenario::bar_fight_night_safe_exit"},
+
+    {"seed":"POSTFIX-UIENV-007-2898334884","destination":"gas_station_casino","scenario_id":"gas_station_road_crew_payday","required_marker":"scenario_road_crew_payday_pool","required_object":"side_door","required_interaction":"scenario::gas_station_road_crew_payday_station","conflict_identity":"event::event:side_door"},
+    {"seed":"POSTFIX-UIENV-008-2688401675","destination":"gas_station_casino","scenario_id":"gas_station_road_crew_payday","required_marker":"scenario_road_crew_payday_pool","required_object":"side_door","required_interaction":"scenario::gas_station_road_crew_payday_station","conflict_identity":"event::event:side_door"},
+    {"seed":"POSTFIX-UIENV-018-2408131097","destination":"gas_station_casino","scenario_id":"gas_station_road_crew_payday","required_marker":"scenario_road_crew_payday_pool","required_object":"side_door","required_interaction":"scenario::gas_station_road_crew_payday_station","conflict_identity":"event::event:side_door"},
+    {"seed":"POSTFIX-UIENV-033-405233240","destination":"gas_station_casino","scenario_id":"gas_station_road_crew_payday","required_marker":"scenario_road_crew_payday_pool","required_object":"side_door","required_interaction":"scenario::gas_station_road_crew_payday_station","conflict_identity":"event::event:side_door"},
+    {"seed":"POSTFIX-UIENV-082-1306411836","destination":"gas_station_casino","scenario_id":"gas_station_road_crew_payday","required_marker":"scenario_road_crew_payday_pool","required_object":"side_door","required_interaction":"scenario::gas_station_road_crew_payday_station","conflict_identity":"event::event:side_door"},
+    {"seed":"POSTFIX-UIENV-092-1191177531","destination":"gas_station_casino","scenario_id":"gas_station_road_crew_payday","required_marker":"scenario_road_crew_payday_pool","required_object":"side_door","required_interaction":"scenario::gas_station_road_crew_payday_station","conflict_identity":"event::event:side_door"},
+
+    {"seed":"POSTFIX-UIENV-061-1987792568","destination":"corner_store","scenario_id":"corner_store_dead_shift","required_marker":"scenario_dead_shift_rumor","required_object":"town_rumor_staff","required_interaction":"scenario::corner_store_dead_shift_exit","conflict_identity":"event::event:town_rumor_staff"},
+    {"seed":"POSTFIX-UIENV-062-84881432","destination":"corner_store","scenario_id":"corner_store_dead_shift","required_marker":"scenario_dead_shift_rumor","required_object":"town_rumor_staff","required_interaction":"scenario::corner_store_dead_shift_exit","conflict_identity":"event::event:town_rumor_staff"},
+    {"seed":"POSTFIX-UIENV-087-3894813921","destination":"corner_store","scenario_id":"corner_store_dead_shift","required_marker":"scenario_dead_shift_rumor","required_object":"town_rumor_staff","required_interaction":"scenario::corner_store_dead_shift_exit","conflict_identity":"event::event:town_rumor_staff"},
+    {"seed":"POSTFIX-UIENV-090-235429475","destination":"corner_store","scenario_id":"corner_store_dead_shift","required_marker":"scenario_dead_shift_rumor","required_object":"late_shift_discount","required_interaction":"scenario::corner_store_dead_shift_exit","conflict_identity":"event::event:late_shift_discount"},
+    {"seed":"POSTFIX-UIENV-040-2723440700","destination":"corner_store","scenario_id":"corner_store_inventory_night","required_marker":"scenario_inventory_night_count","required_object":"scenario_inventory_night_count","required_interaction":"scenario::count_cage","conflict_identity":"event::event:scenario_inventory_night_count"},
+    {"seed":"POSTFIX-UIENV-063-608418289","destination":"corner_store","scenario_id":"corner_store_inventory_night","required_marker":"scenario_inventory_night_count","required_object":"parking_lot_tip","required_interaction":"scenario::count_cage","conflict_identity":"event::event:parking_lot_tip"}
+  ]
+}
