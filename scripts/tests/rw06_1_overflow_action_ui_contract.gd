@@ -822,7 +822,6 @@ func _check_selected_info_action_enabled_gate() -> void:
 			"selected_object_id": str(canvas.get("selected_object_id")),
 		}))
 	canvas.release_focus()
-	_send_mouse_motion(Vector2(-1024.0, -1024.0))
 	await process_frame
 	canvas.queue_free()
 	await process_frame
@@ -903,8 +902,6 @@ func _check_canvas_exclusion(records: Array) -> void:
 		if str((object_value as Dictionary).get("presentation_mode", "room")) == "overflow":
 			failures.append("RW06-1 PixelSceneCanvas rendered an overflow-only action record.")
 			break
-	_send_mouse_motion(Vector2(-1024.0, -1024.0))
-	await process_frame
 	canvas.queue_free()
 	await process_frame
 
@@ -2523,7 +2520,10 @@ func _send_joy_button(button_index: int) -> void:
 
 
 func _send_mouse(position: Vector2) -> void:
-	_send_mouse_motion(position)
+	var motion := InputEventMouseMotion.new()
+	motion.position = position
+	motion.global_position = position
+	root.push_input(motion, true)
 	var pressed := InputEventMouseButton.new()
 	pressed.button_index = MOUSE_BUTTON_LEFT
 	pressed.position = position
@@ -2538,13 +2538,6 @@ func _send_mouse(position: Vector2) -> void:
 	released.button_mask = 0
 	released.pressed = false
 	root.push_input(released, true)
-
-
-func _send_mouse_motion(position: Vector2) -> void:
-	var motion := InputEventMouseMotion.new()
-	motion.position = position
-	motion.global_position = position
-	root.push_input(motion, true)
 
 
 func _send_touch(position: Vector2, double_tap: bool = false) -> void:
@@ -2619,7 +2612,8 @@ func _settle_frames(count: int) -> void:
 
 func _finish(app: Control) -> void:
 	root.gui_release_focus()
-	_send_mouse_motion(Vector2(-1024.0, -1024.0))
+	for tween in get_processed_tweens():
+		tween.kill()
 	await _settle_frames(2)
 	app.queue_free()
 	await _settle_frames(5)
