@@ -802,7 +802,9 @@ function Get-DiagnosticLines {
         '(?im)^.*SCRIPT ERROR.*$',
         '(?im)^\s*ERROR(?:\s|:).*$',
         '(?im)^\s*WARNING(?:\s|:).*$',
-        '(?im)^.*ObjectDB.*(?:leak|still alive|instance).*$'
+        '(?im)^.*ObjectDB.*(?:leak|still alive|instance).*$',
+        '(?im)^\s*Orphan StringName:.*$',
+        '(?im)^\s*StringName:.*\bunclaimed string names?\b.*$'
     )
     $lines = [System.Collections.Generic.List[string]]::new()
     foreach ($pattern in $patterns) {
@@ -1440,6 +1442,10 @@ if ($ValidateOnly) {
     Assert-LauncherContract ((Resolve-GuardDisposition -NativeExitCode 0 -NativeExitObserved $true -EffectiveExitCode 0 -TimedOut $false -RunnerError '' -ProductRedMarkerSeen $false -GuardPassMarkerSeen $true -InfraFailureMarkerSeen $false -FullPassMarkerSeen $false -UnexpectedDiagnosticCount 0) -eq 'green_handoff') 'Guard classifier rejected a clean GREEN handoff.'
     Assert-LauncherContract ((Resolve-GuardDisposition -NativeExitCode 2 -NativeExitObserved $true -EffectiveExitCode 2 -TimedOut $false -RunnerError '' -ProductRedMarkerSeen $false -GuardPassMarkerSeen $false -InfraFailureMarkerSeen $true -FullPassMarkerSeen $false -UnexpectedDiagnosticCount 0) -eq 'invalid') 'Guard classifier accepted an infrastructure failure.'
     Assert-LauncherContract ((Resolve-GuardDisposition -NativeExitCode 10 -NativeExitObserved $true -EffectiveExitCode 10 -TimedOut $false -RunnerError '' -ProductRedMarkerSeen $true -GuardPassMarkerSeen $false -InfraFailureMarkerSeen $false -FullPassMarkerSeen $false -UnexpectedDiagnosticCount 1) -eq 'invalid') 'Guard classifier accepted a parser/import diagnostic.'
+    $orphanDiagnostics = @(Get-DiagnosticLines -Text "Orphan StringName: Node (static: 3, total: 4)`nStringName: 1 unclaimed string names at exit.`n")
+    Assert-LauncherContract ($orphanDiagnostics.Count -eq 2) 'Diagnostic classifier did not fail closed on both registry StringName orphan forms.'
+    Assert-LauncherContract ($orphanDiagnostics -contains 'Orphan StringName: Node (static: 3, total: 4)') 'Diagnostic classifier missed the Orphan StringName form.'
+    Assert-LauncherContract ($orphanDiagnostics -contains 'StringName: 1 unclaimed string names at exit.') 'Diagnostic classifier missed the unclaimed StringName form.'
     Assert-LauncherContract ((Resolve-GuardDisposition -NativeExitCode 0 -NativeExitObserved $true -EffectiveExitCode 0 -TimedOut $false -RunnerError '' -ProductRedMarkerSeen $true -GuardPassMarkerSeen $true -InfraFailureMarkerSeen $false -FullPassMarkerSeen $false -UnexpectedDiagnosticCount 0) -eq 'invalid') 'Guard classifier accepted mixed RED/GREEN markers.'
     Assert-LauncherContract ((Resolve-GuardDisposition -NativeExitCode $nativeExitSentinel -NativeExitObserved $false -EffectiveExitCode 125 -TimedOut $false -RunnerError 'missing exit' -ProductRedMarkerSeen $true -GuardPassMarkerSeen $false -InfraFailureMarkerSeen $false -FullPassMarkerSeen $false -UnexpectedDiagnosticCount 0) -eq 'invalid') 'Guard classifier accepted an unobserved native exit.'
     Assert-LauncherContract (Test-PhaseMarkerContract -Phase Registry -ProductRedMarkerSeen $false -GuardPassMarkerSeen $false -InfraFailureMarkerSeen $false -FullPassMarkerSeen $false) 'Registry marker classifier rejected a marker-free phase.'
@@ -1502,6 +1508,7 @@ if ($ValidateOnly) {
     Assert-LauncherContract ($guardSource.Contains('quit(10)') -and $guardSource.Contains('quit(2)') -and $guardSource.Contains('quit(0)')) 'Guard lacks distinct product-red, infrastructure, and pass native exits.'
     Assert-LauncherContract ($fullContractSource.Contains('const PullTabsScript := preload("res://scripts/games/pull_tabs.gd")')) 'Full root contract no longer exercises the production pull-tabs script.'
     Assert-LauncherContract ($fullContractSource.Contains('RW06_6_PULL_TAB_GLIMMER PASS')) 'Full root contract lost its PASS marker.'
+    Assert-LauncherContract (-not [regex]::IsMatch($fullContractSource, '(?im)^\s*var\s+[A-Za-z_][A-Za-z0-9_]*\s*:=\s*game\.surface_action_command\s*\(')) 'Full root contract still relies on unsafe dynamic surface-action type inference.'
 
     $launcherSource = [System.IO.File]::ReadAllText($PSCommandPath)
     Assert-LauncherContract (-not [regex]::IsMatch($launcherSource, '(?im)^\s*Start-Process\b')) 'Launcher still invokes Start-Process.'
