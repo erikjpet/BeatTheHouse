@@ -17,6 +17,9 @@ $FoundationScreenBuilderPath = Join-Path $Worktree 'scripts\ui\foundation_screen
 $PixelSceneCanvasPath = Join-Path $Worktree 'scripts\ui\pixel_scene_canvas.gd'
 $TalkDockPath = Join-Path $Worktree 'scripts\ui\talk_dock.gd'
 $RunStatePath = Join-Path $Worktree 'scripts\core\run_state.gd'
+$WorldMapPath = Join-Path $Worktree 'scripts\core\world_map.gd'
+$FoundationWorldTestPath = Join-Path $Worktree 'scripts\tests\foundation\check_items_events_world.gd'
+$UiMainFlowTestPath = Join-Path $Worktree 'scripts\tests\ui_scene\compile_components_and_main_flow.gd'
 $EventsPath = Join-Path $Worktree 'data\events\events.json'
 $ReportPath = Join-Path $Worktree '.tmp\rw06_2\replay_source_contract.json'
 $SemanticScrollReportPath = Join-Path $Worktree '.tmp\rw06_2\semantic_scroll_contract.json'
@@ -423,6 +426,23 @@ function New-DeltaQueenBeachPolicyFixture {
     }
 }
 
+function Get-GDScriptFunctionSource {
+    param(
+        [Parameter(Mandatory = $true)][string]$Source,
+        [Parameter(Mandatory = $true)][string]$Name
+    )
+    $escapedName = [regex]::Escape($Name)
+    $functionMatch = [regex]::Match(
+        $Source,
+        "(?ms)^(?:static\s+)?func\s+$escapedName\([^\r\n]*\).*?(?=^(?:static\s+)?func\s|\z)"
+    )
+    if (-not $functionMatch.Success) {
+        Add-Failure "Required GDScript function is missing: $Name"
+        return ''
+    }
+    return $functionMatch.Value
+}
+
 function New-CheatReplayBlackjackPolicyFixture {
     param([ValidateSet('wait_for_deal', 'open_window', 'peek', 'complete')][string]$Stage = 'open_window')
 
@@ -530,7 +550,7 @@ foreach ($path in @(
     $RunnerPath, $ReplayPolicyPath, $LauncherPath, $BridgePath, $SanitizerPath,
     $ObservationContractPath, $FoundationMainPath, $FoundationHudBarPath,
     $FoundationScreenBuilderPath, $PixelSceneCanvasPath, $TalkDockPath, $RunStatePath,
-    $EventsPath
+    $WorldMapPath, $FoundationWorldTestPath, $UiMainFlowTestPath, $EventsPath
 )) {
     if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
         Add-Failure "Required rw06_2 source is missing: $path"
@@ -554,6 +574,48 @@ if ($failures.Count -eq 0) {
     $pixelSceneCanvas = Get-Content -LiteralPath $PixelSceneCanvasPath -Raw
     $talkDock = Get-Content -LiteralPath $TalkDockPath -Raw
     $runState = Get-Content -LiteralPath $RunStatePath -Raw
+    $worldMap = Get-Content -LiteralPath $WorldMapPath -Raw
+    $foundationWorldTest = Get-Content -LiteralPath $FoundationWorldTestPath -Raw
+    $uiMainFlowTest = Get-Content -LiteralPath $UiMainFlowTestPath -Raw
+
+    $worldMapNormalize = Get-GDScriptFunctionSource -Source $worldMap -Name 'normalize'
+    $worldMapTopologyNormalize = Get-GDScriptFunctionSource -Source $worldMap -Name 'normalize_topology'
+    $worldMapTravelTargets = Get-GDScriptFunctionSource -Source $worldMap -Name 'travel_target_ids'
+    $worldMapBeachEnforcement = Get-GDScriptFunctionSource -Source $worldMap -Name '_enforce_beach_gateway_access'
+    $foundationBeachRegression = Get-GDScriptFunctionSource -Source $foundationWorldTest -Name '_world_map_beach_route_gate_ok'
+    $uiBeachRegression = Get-GDScriptFunctionSource -Source $uiMainFlowTest -Name '_check_beach_return_travel_choice'
+
+    if (-not [string]::IsNullOrWhiteSpace($worldMapNormalize)) {
+        Assert-Contains $worldMapNormalize 'return _enforce_beach_gateway_access(normalized)' 'World-map normalization must repair legacy hidden Beach state while the player is on the Delta Queen.'
+    }
+    if (-not [string]::IsNullOrWhiteSpace($worldMapTopologyNormalize)) {
+        Assert-Contains $worldMapTopologyNormalize 'return _enforce_beach_gateway_access(normalized)' 'Topology-only Continue/UI projection must repair legacy hidden Beach state.'
+    }
+    if (-not [string]::IsNullOrWhiteSpace($worldMapBeachEnforcement)) {
+        Assert-Match $worldMapBeachEnforcement '(?s)effective_source_id\s*==\s*BEACH_GATEWAY_ID.*?state.*?STATE_REVEALED.*?seen.*?true.*?unlocked.*?true.*?route_spawn_open.*?true' 'Delta-current normalization must reveal and unlock Beach through the production map model.'
+    }
+    if (-not [string]::IsNullOrWhiteSpace($worldMapTravelTargets)) {
+        Assert-Match $worldMapTravelTargets '(?s)normalized\s*=\s*_enforce_beach_gateway_access\(normalized,\s*source_id\)' 'Production target selection must enforce the Beach invariant for an explicit Delta Queen source.'
+        $genericPriorityIndex = $worldMapTravelTargets.IndexOf('result = _ensure_priority_targets', [StringComparison]::Ordinal)
+        $mandatoryBeachIndex = $worldMapTravelTargets.IndexOf('if source_id == BEACH_GATEWAY_ID and total_limit > 0:', [StringComparison]::Ordinal)
+        if ($genericPriorityIndex -lt 0 -or $mandatoryBeachIndex -le $genericPriorityIndex) {
+            Add-Failure 'Mandatory Delta Queen Beach promotion must run after generic Grand/event/Tier-2 priority ordering so the three-card cap cannot evict it.'
+        }
+        Assert-Match $worldMapTravelTargets '(?s)if\s+source_id\s*==\s*BEACH_GATEWAY_ID\s+and\s+total_limit\s*>\s*0:.*?_ensure_visible_neighbor_target\(result,\s*source_id,\s*BEACH_ID,\s*total_limit' 'Production target selection must keep exactly one mandatory Beach connector inside the ordinary total-card cap.'
+    }
+    if (-not [string]::IsNullOrWhiteSpace($foundationBeachRegression)) {
+        Assert-NotMatch $foundationBeachRegression 'WorldMapScript\.unlock_nodes\s*\([^\r\n]*beach' 'Foundation Q-011 coverage must not manually unlock Beach.'
+        Assert-Match $foundationBeachRegression '(?s)node_id\s*==\s*"beach".*?STATE_HIDDEN.*?route_spawn_open.*?false.*?travel_target_ids\(no_beach_control,\s*"delta_queen",\s*32,\s*32\).*?expanded_competitors\.size\(\)\s*<=\s*WorldMapScript\.TRAVEL_TOTAL_TARGET_LIMIT.*?travel_target_ids\(gated_map,\s*"delta_queen"\).*?count\("beach"\)\s*!=\s*1' 'Foundation Q-011 coverage must drive a hidden Beach and more than three eligible competitors through the real capped target selector.'
+        Assert-Match $foundationBeachRegression '(?s)travel_lock_remaining.*?2.*?travel_route_status\(access_route\).*?available.*?true.*?travel_lock_remaining.*?0.*?travel_route_status\(access_route\)' 'Foundation Q-011 coverage must keep Beach subject to the ordinary global travel lock and enable it after the lock clears.'
+    }
+    if (-not [string]::IsNullOrWhiteSpace($uiBeachRegression)) {
+        Assert-NotMatch $uiBeachRegression 'WorldMapScript\.unlock_nodes\s*\([^\r\n]*beach' 'UI Q-011 coverage must not manually unlock Beach.'
+        Assert-NotMatch $uiBeachRegression '_travel_choice\s*\(\s*"beach"\s*,\s*\[\s*"beach"\s*\]' 'UI Q-011 coverage must not inject Beach into the production choice builder.'
+        Assert-Match $uiBeachRegression '(?s)access_targets.*?_travel_target_ids.*?count\("beach"\)\s*!=\s*1.*?open_world_map.*?select_world_map_node",\s*"beach".*?world_map_confirm_button.*?disabled' 'Fresh Delta Queen coverage must prove Beach through production selection and its rendered enabled Travel control.'
+        Assert-Match $uiBeachRegression '(?s)travel_lock_remaining.*?2.*?locked_targets.*?_travel_target_ids.*?locked_choice.*?enabled.*?true.*?travel_lock_remaining.*?0' 'UI Q-011 coverage must prove Beach remains visible-but-disabled under the global lock and returns to normal availability.'
+        Assert-Match $uiBeachRegression '(?s)hostile_id\s*==\s*"beach".*?STATE_HIDDEN.*?enabled_non_beach_competitors\.size\(\)\s*<=\s*WorldMapScript\.TRAVEL_TOTAL_TARGET_LIMIT.*?revisit_targets.*?_travel_target_ids.*?count\("beach"\)\s*!=\s*1.*?has\(ordinary_yield_id\)' 'Revisit coverage must prove Beach displaces the lowest-ranked card after more than three real enabled competitors.'
+        Assert-Match $uiBeachRegression '(?s)save_service\.save_run.*?load_foundation_run.*?continued_targets.*?_travel_target_ids.*?continued_targets\.count\("beach"\)\s*!=\s*1.*?continued_choice.*?enabled.*?continued_beach_node.*?travel_enabled.*?select_world_map_node",\s*"beach"' 'Save plus production Continue coverage must restore exactly one enabled rendered Beach destination.'
+    }
 
     try {
         $eventCatalogValue = Get-Content -LiteralPath $EventsPath -Raw | ConvertFrom-Json
