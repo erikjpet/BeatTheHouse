@@ -60,13 +60,23 @@ to the orchestrator.
   state solely for stale/other-machine validation. Never place payout, prize,
   tier, rank, symbols, contents, or the private identity/fingerprint in UI
   state, surface state, machine state, RunState, or a save.
+- Add only the non-sensitive schedule scalars (initialized/enabled, event or
+  session ordinal, next-due and hide-due timestamps) to
+  `surface_state.surface_ui_preference_keys`. Without that production seam,
+  `FoundationActionViewModel` drops them after each successful purchase/result
+  and incorrectly restarts the 25–35 second interval. Never preserve exact
+  target identity, payout, prize, tier, rank, symbols, machine fingerprint, or
+  private selection data in those keys.
 - Build candidates from each current `deals[].ticket_sleeve`, resolving only
   positive-payout prize instances through that deal's private `prizes` array.
   Sort payout descending with stable tie order, then keep 16. Do not consider
   `tray_stack`, `ticket_stack`, winner/loser piles, removed sleeve entries, or
   the existing public X-ray target payload. Preserve the absolute ticket number
-  privately so a later sale invalidates the target instead of silently
-  retargeting the same offset.
+  and prize index privately. Revalidate with deal ID plus serial, absolute
+  ticket number, and prize index: purchases ahead of the target move that same
+  target to its correct new visible depth; purchasing/removing the target
+  invalidates it immediately; and another machine must reject it. Never let an
+  unchanged offset silently retarget a different ticket.
 - Use presentation-only `RngStream` domains derived from run seed, exact public
   machine identity, private session ordinal, and event ordinal. Use separate
   subkeys for interval and target selection. Never advance action/gameplay RNG
