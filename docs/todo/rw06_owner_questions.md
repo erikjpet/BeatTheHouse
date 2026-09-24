@@ -210,3 +210,11 @@ Question: None; this is a binding gameplay directive from the owner.
 Options: A) Apply the directive in Resume (the owner's decision)
 Resume: Make the Beach an unconditional, visible and enabled destination from the Delta Queen/boat whenever normal travel is available. It must not depend on seed, scenario, discovery or revisit state, and must remain true across save/Continue. rw06_1 must preserve a reachable boat-to-Beach travel control in the fixed-slot/action-list UI; the rw06_2 peer must update route assumptions and coverage. Add a regression through the production destination/UI path, then report the implementing commit and evidence before marking this entry RESOLVED.
 Answer: The beach needs to always be open from the boat. Ensure the agents know this and adjust gameplay accordingly.
+
+### Q-012 · rw06_1 · Primary Godot reopened during isolated verification
+Status: OPEN
+Asked: release orchestrator, 2026-09-23
+Question: Godot 4.6 reopened against the primary checkout at 21:18 CT without a lease while isolated release checks were running. May I close only that exact primary console/child pair and keep the primary editor closed through engine verification?
+Options: A) Close the exact pair if still running (recommended)  B) I will close it and keep it closed
+Resume: Verify the unleased processes still target `D:\Projects\Beat-The-House`; if A, terminate only that exact console/child pair. Do not start another engine run while the machine is at the four-process ceiling; continue engine-free work while OPEN.
+Answer:
