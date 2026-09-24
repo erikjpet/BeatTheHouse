@@ -46,6 +46,10 @@ are binding.
   for the final qualifying runs.
 - You may run up to 3 sub-agents, one per ending (clean, cheat, heist), each in
   its own worktree.
+- The canonical Godot 4.6 console is
+  `D:\Projects\Beat-The-House\.tools\godot-4.6-stable\Godot_v4.6-stable_win64_console.exe`.
+  Put that exact path in every sub-agent brief; worktrees must not try to
+  auto-detect another engine.
 - Godot: follow Q-009. Isolated focused runs may run in parallel under the
   shared lease folder `D:\Projects\Beat-The-House-worktrees\.godot_leases\`
   (at most 4 Godot processes machine-wide). Full Smoke/Contract suites and any

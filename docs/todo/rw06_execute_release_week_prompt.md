@@ -172,6 +172,10 @@ Once the merge lands, rebase your Phase 0 worktrees onto the new `main`.
 - **Godot leases (Q-009).** Isolated focused runs may overlap, up to four Godot
   processes machine-wide, only when each has its own worktree, isolated
   `APPDATA`/`LOCALAPPDATA`, explicit `--log-file`, and own-process cleanup. Use
+  the canonical console at
+  `D:\Projects\Beat-The-House\.tools\godot-4.6-stable\Godot_v4.6-stable_win64_console.exe`
+  and repeat that exact path in every sub-agent brief. Worktrees must not
+  auto-detect another engine. Use
   `check_godot.ps1 -AllowConcurrentGodot` for such focused runs. Coordinate in
   `D:\Projects\Beat-The-House-worktrees\.godot_leases\`: clear only leases whose
   filename PID is dead; a normal run waits while `EXCLUSIVE.lease` exists or
