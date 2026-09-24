@@ -3,6 +3,7 @@ extends SceneTree
 const PullTabsScript := preload("res://scripts/games/pull_tabs.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 const FoundationMainScript := preload("res://scripts/ui/foundation_main.gd")
+const FoundationActionViewModelFixtureScript := preload("res://scripts/ui/foundation_action_view_model.gd")
 
 const MIN_INTERVAL_MSEC := 25000
 const MAX_INTERVAL_MSEC := 35000
@@ -524,6 +525,7 @@ func _check_preference_preservation_after_result() -> void:
 		failures.append("RW06_6 preference lifecycle fixture could not complete a real successful pull-tab purchase.")
 		return
 	var host = FoundationMainScript.new()
+	host.set("FoundationActionViewModelScript", FoundationActionViewModelFixtureScript)
 	host.set("current_game", game)
 	host.set("run_state", run)
 	var preserved: Dictionary = host.call("_preserved_game_surface_preference_state", hostile_ui)
