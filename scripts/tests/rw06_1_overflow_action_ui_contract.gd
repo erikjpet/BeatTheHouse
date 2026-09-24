@@ -821,6 +821,8 @@ func _check_selected_info_action_enabled_gate() -> void:
 			"activations": activations,
 			"selected_object_id": str(canvas.get("selected_object_id")),
 		}))
+	canvas.release_focus()
+	await process_frame
 	canvas.queue_free()
 	await process_frame
 
