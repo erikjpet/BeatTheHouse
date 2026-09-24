@@ -755,6 +755,10 @@ func _check_selected_info_action_enabled_gate() -> void:
 	canvas.size = Vector2(900.0, 430.0)
 	root.add_child(canvas)
 	await process_frame
+	canvas.grab_focus()
+	await process_frame
+	if root.gui_get_focus_owner() != canvas:
+		failures.append("RW06-1 selected-info input fixture could not focus its live canvas.")
 	var records: Array = [
 		_selected_info_gate_record("inline_object_disabled", false, true, true, true, true),
 		_selected_info_gate_record("inline_action_disabled", true, false, true, true, true),
@@ -806,7 +810,7 @@ func _check_selected_info_action_enabled_gate() -> void:
 	var single_entry_before := canvas.call("_selected_info_action_entry_at_local_position", single_position) as Dictionary
 	_send_canvas_mouse(canvas, single_position)
 	if single_actions.size() != 1 or not bool((single_actions[0] as Dictionary).get("enabled", false)) \
-			or str((single_actions[0] as Dictionary).get("label", "")) != "Visible single" \
+			or str((single_actions[0] as Dictionary).get("label", "")) != "Visible Single" \
 			or activations.size() != single_before + 1 \
 			or activations.back() != "selected_info:single_enabled":
 		failures.append("RW06-1 enabled single selected-info action did not omit hidden state and emit exactly once by physical mouse: %s." % JSON.stringify({
@@ -864,11 +868,12 @@ func _selected_info_gate_record(
 
 
 func _send_canvas_accept(canvas: Control) -> void:
-	var event := InputEventKey.new()
-	event.keycode = KEY_ENTER
-	event.physical_keycode = KEY_ENTER
-	event.pressed = true
-	canvas.call("_gui_input", event)
+	# Exercise the same focused viewport dispatch used by a real keyboard.
+	if canvas == null or not canvas.is_inside_tree():
+		failures.append("RW06-1 selected-info keyboard fixture lost its live canvas.")
+		return
+	canvas.grab_focus()
+	_send_key(KEY_ENTER)
 
 
 func _send_canvas_mouse(canvas: Control, position: Vector2) -> void:
