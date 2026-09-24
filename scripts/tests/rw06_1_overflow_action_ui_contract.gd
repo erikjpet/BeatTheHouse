@@ -802,12 +802,21 @@ func _check_selected_info_action_enabled_gate() -> void:
 	var single_snapshot := canvas.current_view_snapshot().get("selected_info", {}) as Dictionary
 	var single_actions := single_snapshot.get("actions", []) as Array
 	var single_before := activations.size()
-	_send_canvas_mouse(canvas, canvas.local_position_for_selected_info_action_button())
+	var single_position := canvas.local_position_for_selected_info_action_button()
+	var single_entry_before := canvas.call("_selected_info_action_entry_at_local_position", single_position) as Dictionary
+	_send_canvas_mouse(canvas, single_position)
 	if single_actions.size() != 1 or not bool((single_actions[0] as Dictionary).get("enabled", false)) \
 			or str((single_actions[0] as Dictionary).get("label", "")) != "Visible single" \
 			or activations.size() != single_before + 1 \
 			or activations.back() != "selected_info:single_enabled":
-		failures.append("RW06-1 enabled single selected-info action did not omit hidden state and emit exactly once by physical mouse.")
+		failures.append("RW06-1 enabled single selected-info action did not omit hidden state and emit exactly once by physical mouse: %s." % JSON.stringify({
+			"position": str(single_position),
+			"entry_before": single_entry_before,
+			"snapshot": single_snapshot,
+			"activation_count_before": single_before,
+			"activations": activations,
+			"selected_object_id": str(canvas.get("selected_object_id")),
+		}))
 	canvas.queue_free()
 	await process_frame
 
