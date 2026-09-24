@@ -1,7 +1,7 @@
 # rw06_2 economy handoff
 
-Status: **PROBES 19/28 RETAINED; SCOUTING-CASH CORRECTION ENGINE-FREE GREEN; QUALIFYING CURVES PENDING**
-Working base: pushed rw06_2 tip `7485405d`
+Status: **PROBES 19/28 RETAINED; FIXED-SEED DEFICIT IDENTIFIED; LIVE/QUALIFYING CURVES PENDING**
+Working base: current rw06_2 peer branch
 Owner: rw06_3 (data-only tuning after rw06_2 produces qualifying traces)
 
 Do not change game rules, RNG, odds, payout math, wager math, or RTP from this
@@ -23,8 +23,11 @@ The contemporaneous storm target was `$109` displayed fare plus the replay's
 available liquidity. The route correction therefore banks the strictly
 verified positive Hallway cash event during the first required Motel visit,
 before the later fare, rather than changing a game number or relying on the 75%
-family-call outcome. Probe 29 must measure that correction live when the engine
-lane is free.
+family-call outcome. Engine-free reconstruction nevertheless leaves the fixed
+seed at `$126` against `$109` fare plus the `$50` reserve, a predicted `$33`
+deficit. Probe 29 must measure that correction live when the engine lane is
+free. The Clean replay now stops at the exact current-stop shortfall instead of
+roaming into a changed fare or treating Slot luck as qualifying recovery.
 
 If Clean later exceeds the 350-action release budget or repeatedly bankrolls
 out after reaching Grand, inspect the three Players Card segment thresholds

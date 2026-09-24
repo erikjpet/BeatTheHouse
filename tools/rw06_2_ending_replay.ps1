@@ -2172,6 +2172,42 @@ function Invoke-GrandFarePublicCashEvent {
 }
 
 
+function Recover-CleanGrandFareAtCurrentStop {
+    param([ValidateRange(1, 1000)][int]$RequiredCash)
+    if ($Ending -cne 'clean') {
+        throw 'Clean Grand fare recovery cannot run for another ending.'
+    }
+    if ($script:GrandFareRecoveryActive) {
+        throw 'Clean Grand fare recovery cannot be nested.'
+    }
+
+    # Once the invited Grand card is public, keep the affordability diagnosis
+    # anchored to that exact stop. Travelling elsewhere changes the published
+    # fare and can spend more than a generated offer returns; Slot play is a
+    # lucky outcome, not qualifying deterministic liquidity. Consume only the
+    # current room's authenticated lender/event, then either proceed or report
+    # the exact public shortfall for rw06_3.
+    $script:GrandFareRecoveryActive = $true
+    try {
+        Close-WorldMap
+        $null = Invoke-GrandFarePublicFundingOffer
+        $null = Invoke-GrandFarePublicCashEvent
+        $requirement = Get-PublicGrandFareRequirement
+        $cash = Get-Value $script:LastObservation @('status_hud', 'bankroll') $null
+        if ($cash -isnot [int32] -and $cash -isnot [int64]) {
+            throw 'Clean Grand fare recovery lost its integral public bankroll signal.'
+        }
+        Close-WorldMap
+        if ([int]$cash -ge [int]$requirement.required_cash) { return }
+        $shortfall = [int]$requirement.required_cash - [int]$cash
+        throw "Clean Grand entry remains unaffordable after deterministic current-stop liquidity: cash=`$$cash, fare=`$$($requirement.fare), chip_reserve=`$$GrandCasinoChipReserve, required=`$$($requirement.required_cash), initial_required=`$$RequiredCash, shortfall=`$$shortfall."
+    }
+    finally {
+        $script:GrandFareRecoveryActive = $false
+    }
+}
+
+
 function Get-GrandFareRecoveryNodePreference {
     param([Parameter(Mandatory = $true)][string]$ArchetypeId)
     # Prefer venues whose authored public lender pool is distinct from the
@@ -2451,7 +2487,12 @@ function Reach-GrandCasino {
             $cash = [int]$cashValue
             if ($cash -lt $requiredCash) {
                 Close-WorldMap
-                Recover-GrandFareThroughPublicFunding -RequiredCash $requiredCash
+                if ($Ending -ceq 'clean') {
+                    Recover-CleanGrandFareAtCurrentStop -RequiredCash $requiredCash
+                }
+                else {
+                    Recover-GrandFareThroughPublicFunding -RequiredCash $requiredCash
+                }
                 continue
             }
             if ([bool](Get-Value $grand[0] @('travel_enabled') $false)) {

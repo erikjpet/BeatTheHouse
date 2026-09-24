@@ -1,7 +1,7 @@
 # rw06_2 clean ending route — first-pass replay
 
-Status: **SCOUTING-CASH CORRECTION ENGINE-FREE GREEN; NEXT LIVE PROBE AND QUALIFYING RUNS PENDING**
-Working base: pushed rw06_2 tip `7485405d`;
+Status: **FIXED-SEED GRAND DEFICIT IDENTIFIED; LIVE CONFIRMATION AND QUALIFYING RUNS PENDING**
+Working base: current rw06_2 peer branch;
 qualifying evidence waits for rw06_1 to land.
 Canonical terminal route: `high_roller_cashout`
 Fixed replay seed: `RW06-CLEAN-ROUTE-01`
@@ -32,9 +32,15 @@ outcome. During its first required Motel scouting visit it takes the strictly
 verified positive Hallway event before incurring any extra fare. The measured
 pre-correction curve was `$100 -> $93 -> $87 -> $79 -> $63 -> $108` after the
 Crew loan, then `$86` after returning to Motel. Banking the Hallway cash on the
-first visit supplies the missing deterministic margin without changing economy
-data. One no-retry Probe 29 must now prove that path live after the orchestrator
-releases the serialized engine lane; qualifying evidence still waits for rw06_1.
+first visit reduces the deficit without changing economy data, but it does not
+clear the fixed seed by itself. Engine-free reconstruction now predicts `$126`
+after the two verified cash events and Crew loan against `$159` for the observed
+storm fare plus the `$50` chip reserve: a `$33` shortfall. The replay now consumes
+only current-stop deterministic liquidity and reports the exact public deficit;
+it will not hide the wall by buying extra travel or gambling on Slot. One
+no-retry Probe 29 must confirm those live values after the orchestrator releases
+the engine lane. Any fare/threshold adjustment belongs to rw06_3 and still needs
+fresh-seed evidence; qualifying evidence waits for rw06_1.
 
 ## 2026-09-23 current-main exploratory probe (non-qualifying)
 
