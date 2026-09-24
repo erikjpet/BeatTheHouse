@@ -362,7 +362,7 @@ static func bind_legacy_position(state_value: Variant, host_node_id: String) -> 
 	return state
 
 
-static func advance_boundaries(state_value: Variant, amount: int, current_node_id: String, attention: int, action_index: int) -> Dictionary:
+static func advance_boundaries(state_value: Variant, amount: int, current_node_id: String, attention: int, action_index: int, current_archetype_id: String = "") -> Dictionary:
 	var state := normalize_state(state_value)
 	if state.is_empty() or str(state.get("status", "")) != "active" or amount <= 0:
 		return state
@@ -375,7 +375,7 @@ static func advance_boundaries(state_value: Variant, amount: int, current_node_i
 		state["last_boundary_action"] = maxi(int(state.get("last_boundary_action", 0)), action_index - amount + _boundary + 1)
 		if str(state.get("mode", "")) == MODE_HOLD:
 			var target_node_id := str(((state.get("targets", []) as Array)[0] as Dictionary).get("node_id", ""))
-			if current_node_id == target_node_id:
+			if current_node_id == target_node_id and _required_target_room_matches(state, current_archetype_id):
 				if attention > int(state.get("hold_attention_limit", 70)):
 					state = _resolve(state, "failed", "attention", false)
 					continue
@@ -450,9 +450,10 @@ static func _note_arrival_state(state_value: Dictionary, node_id: String) -> Dic
 	return state
 
 
-static func complete_handoff(state_value: Variant, node_id: String) -> Dictionary:
+static func complete_handoff(state_value: Variant, node_id: String, current_archetype_id: String = "") -> Dictionary:
 	var state := normalize_state(state_value)
-	if state.is_empty() or str(state.get("status", "")) != "active":
+	if state.is_empty() or str(state.get("status", "")) != "active" \
+			or not _required_target_room_matches(state, current_archetype_id):
 		return state
 	var clean_node_id := node_id.strip_edges()
 	if clean_node_id.is_empty() or clean_node_id != str(state.get("handoff_pending_node_id", "")):
@@ -486,16 +487,20 @@ static func complete_handoff(state_value: Variant, node_id: String) -> Dictionar
 # state and passes a closed record only after the physical action has occurred.
 # UI callers can request a verb, but cannot supply location, route, cover,
 # attention, target, or consequence authority.
-static func apply_host_action(state_value: Variant, verb: String, receipt_key: String, host_context_value: Dictionary) -> Dictionary:
+static func apply_host_action(state_value: Variant, verb: String, receipt_key: String, host_context_value: Dictionary, current_archetype_id: String = "") -> Dictionary:
 	var state := normalize_state(state_value)
 	if state.is_empty():
 		return {}
 	var action := verb.strip_edges()
 	var clean_receipt := receipt_key.strip_edges()
+	var clean_archetype_id := current_archetype_id.strip_edges()
 	var host_context := _normalize_host_context(host_context_value)
-	if action not in HOST_VERBS or clean_receipt.is_empty() or clean_receipt.length() > MAX_DEPTH_TEXT or clean_receipt != receipt_key or host_context.is_empty():
+	if action not in HOST_VERBS or clean_receipt.is_empty() or clean_receipt.length() > MAX_DEPTH_TEXT or clean_receipt != receipt_key \
+			or clean_archetype_id.length() > MAX_DEPTH_TEXT or clean_archetype_id != current_archetype_id or host_context.is_empty():
 		return state
 	var envelope := {"command_id": action, "host_context": host_context}
+	if not _required_target_room_archetype_id(state).is_empty():
+		envelope["current_archetype_id"] = clean_archetype_id
 	var replay := _depth_receipt_replay(state, clean_receipt, envelope)
 	if replay >= 0:
 		return state
@@ -532,9 +537,11 @@ static func apply_host_action(state_value: Variant, verb: String, receipt_key: S
 		"wait":
 			if node_id.is_empty() or node_id != str(position.get("node_id", "")):
 				return state
+			if str(state.get("mode", "")) == MODE_HOLD and not _required_target_room_matches(state, clean_archetype_id):
+				return state
 			state = _record_physical_position(state, node_id, action)
 			if str(state.get("mode", "")) == MODE_HOLD:
-				state = _advance_hold_choice(state, node_id, attention, action_index, "")
+				state = _advance_hold_choice(state, node_id, attention, action_index, "", clean_archetype_id)
 			else:
 				state = advance_boundaries(state, 1, node_id, attention, action_index)
 		"duck":
@@ -582,10 +589,10 @@ static func apply_host_action(state_value: Variant, verb: String, receipt_key: S
 			state["depth_state"] = depth
 			state = _resolve(state, "failed", "cargo_found", false)
 		"signal":
-			if str(state.get("mode", "")) != MODE_HOLD or signal_id.is_empty():
+			if str(state.get("mode", "")) != MODE_HOLD or signal_id.is_empty() or not _required_target_room_matches(state, clean_archetype_id):
 				return state
 			state = _record_physical_position(state, node_id, action)
-			state = _advance_hold_choice(state, node_id, attention, action_index, signal_id)
+			state = _advance_hold_choice(state, node_id, attention, action_index, signal_id, clean_archetype_id)
 		"break_hold":
 			if str(state.get("mode", "")) != MODE_HOLD or node_id != str(position.get("node_id", "")):
 				return state
@@ -608,13 +615,15 @@ static func apply_host_action(state_value: Variant, verb: String, receipt_key: S
 			if abandon_reason.is_empty(): abandon_reason = "abandoned"
 			state = _resolve(state, "failed", abandon_reason, false)
 		"handoff":
+			if not _required_target_room_matches(state, clean_archetype_id):
+				return state
 			var handoff_target_index := _pending_target_index(state, node_id)
 			if handoff_target_index < 0:
 				return state
 			var handoff_target := JsonCoerceScript._copy_dict(JsonCoerceScript._copy_array(state.get("targets", []))[handoff_target_index])
 			if target_id.is_empty() or target_id != str(handoff_target.get("id", "")):
 				return state
-			var handed := complete_handoff(state, node_id)
+			var handed := complete_handoff(state, node_id, clean_archetype_id)
 			if JSON.stringify(handed) == JSON.stringify(state):
 				return state
 			state = handed
@@ -731,7 +740,7 @@ static func _record_physical_position(state_value: Dictionary, node_id: String, 
 	return state
 
 
-static func _advance_hold_choice(state_value: Dictionary, node_id: String, attention: int, action_index: int, signal_id: String) -> Dictionary:
+static func _advance_hold_choice(state_value: Dictionary, node_id: String, attention: int, action_index: int, signal_id: String, current_archetype_id: String) -> Dictionary:
 	var state := state_value.duplicate(true)
 	var targets := JsonCoerceScript._copy_array(state.get("targets", []))
 	if targets.is_empty() or node_id != str(JsonCoerceScript._copy_dict(targets[0]).get("node_id", "")):
@@ -744,12 +753,21 @@ static func _advance_hold_choice(state_value: Dictionary, node_id: String, atten
 		signals.append({"signal_id": signal_id, "node_id": node_id, "action_index": action_index})
 		depth["hold_signals"] = signals
 		state["depth_state"] = depth
-	state = advance_boundaries(state, 1, node_id, clampi(attention, 0, 100), action_index)
+	state = advance_boundaries(state, 1, node_id, clampi(attention, 0, 100), action_index, current_archetype_id)
 	if str(state.get("status", "")) == "resolved":
 		depth = JsonCoerceScript._copy_dict(state.get("depth_state", {}))
 		depth["hold_aftermath"] = {"outcome": str(JsonCoerceScript._copy_dict(state.get("resolution", {})).get("reason", "failed")), "node_id": node_id, "action_index": action_index}
 		state["depth_state"] = depth
 	return state
+
+
+static func _required_target_room_matches(state: Dictionary, current_archetype_id: String) -> bool:
+	var required_archetype_id := _required_target_room_archetype_id(state)
+	return required_archetype_id.is_empty() or current_archetype_id.strip_edges() == required_archetype_id
+
+
+static func _required_target_room_archetype_id(state: Dictionary) -> String:
+	return str(JsonCoerceScript._copy_dict(state.get("consumer_payload", {})).get("required_target_archetype_id", "")).strip_edges()
 
 
 static func _normalize_host_context(value: Variant) -> Dictionary:

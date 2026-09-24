@@ -1488,7 +1488,12 @@ func _crew_heist_begin_setup_delivery(step: String, hold: bool) -> Dictionary:
 	var setup := JsonCoerceScript._copy_dict(state.get("setup", {}))
 	if bool(setup.get(step, false)):
 		return {"ok": false, "message": "That setup is already complete."}
-	var target_id := _crew_heist_node_for_archetype(_run.GRAND_CASINO_CAGE_ARCHETYPE_ID if hold else _run.GRAND_CASINO_ARCHETYPE_ID)
+	# Every Grand Casino room is an interior of the one real town-map node. Keep
+	# the route on that canonical node and carry the exact room as an opt-in
+	# delivery constraint; map-hidden Cage/Main room ids must never masquerade as
+	# world destinations.
+	var target_room_archetype_id := str(_run.GRAND_CASINO_CAGE_ARCHETYPE_ID if hold else _run.GRAND_CASINO_ARCHETYPE_ID)
+	var target_id := _crew_heist_node_for_archetype(_run.GRAND_CASINO_ARCHETYPE_ID)
 	if target_id.is_empty():
 		return {"ok": false, "message": "The setup has no real venue tonight."}
 	var tuning := JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(_run.CrewHeistModelScript.plan(_run.CrewHeistModelScript.PLAN_COUNT).get("setup", {})).get(step, {}))
@@ -1499,6 +1504,7 @@ func _crew_heist_begin_setup_delivery(step: String, hold: bool) -> Dictionary:
 		"cargo_id": "heist_swap_cart" if not hold else "heist_schedule_watch",
 		"cargo_label": "Swap cart" if not hold else "Shift schedule",
 		"cargo_heat_per_travel": 0,
+		"consumer_payload": {"required_target_archetype_id": target_room_archetype_id},
 	}
 	if hold:
 		spec["hold_required_actions"] = int(tuning.get("hold_required_actions", 2))

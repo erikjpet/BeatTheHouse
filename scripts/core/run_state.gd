@@ -11577,7 +11577,8 @@ func _advance_global_boundary_start(safe_amount: int) -> void:
 			safe_amount,
 			current_world_node_id(),
 			suspicion_level(),
-			_crew_action_index()
+			_crew_action_index(),
+			str(current_environment.get("archetype_id", "")).strip_edges()
 		)
 		_apply_delivery_resolution()
 	simulation_msec = maxi(0, simulation_msec + safe_amount * SIMULATION_ACTION_MSEC)
@@ -13125,8 +13126,14 @@ func world_sequence_checkpoint_delivery_outcome(token: String, node_id: String =
 	var target_id := node_id.strip_edges()
 	if target_id.is_empty(): target_id = current_world_node_id()
 	if not delivery_has_active_run(): return {"ok": false, "errors": ["delivery owner is not active at the terminal handoff"]}
+	if target_id != current_world_node_id() or delivery_arrival_interaction().is_empty():
+		return {"ok": false, "errors": ["delivery owner is not present at the terminal handoff"]}
 	var before := JSON.stringify(delivery_snapshot())
-	active_delivery_run = DeliveryRunModelScript.complete_handoff(active_delivery_run, target_id)
+	active_delivery_run = DeliveryRunModelScript.complete_handoff(
+		active_delivery_run,
+		target_id,
+		str(current_environment.get("archetype_id", "")).strip_edges()
+	)
 	if JSON.stringify(delivery_snapshot()) == before or str(active_delivery_run.get("status", "")) != "resolved":
 		return {"ok": false, "errors": ["delivery owner rejected the terminal handoff"]}
 	var applied := _apply_delivery_resolution(JsonCoerceScript._copy_dict(preview.get("receipt", {})), false)
