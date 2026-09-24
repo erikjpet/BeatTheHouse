@@ -1,8 +1,8 @@
 Endings: clean partial · cheat partial · heist partial (Q-013 A in progress)
 Replay script: ready
-Balance (rw06_3): in progress · Grand invitation package implemented; combined source validation green; focused/live validation next
+Balance (rw06_3): in progress · Grand invitation package implemented; focused RED root-cause repairs in progress
 Blocked on: exact natural Heist 0002 and post-change Clean/Cheat live evidence, plus rw06_1 landing for qualifying 3/3; current branch still carries the intentionally unstaged rw06_1 Pixel canvas dependency
-Updated: 2026-09-23 23:21 CT
+Updated: 2026-09-23 23:53 CT
 
 ## Orchestrator handoff
 
@@ -10,6 +10,7 @@ Take over pushed branch `codex/rw06_2-prep` at exact tip `1c1642dbb2716f745475be
 
 ## Milestones
 
+- 2026-09-23 23:53 CT — Exact focused rerun on Heist type-guard tip `67db1efd` is RED and non-evidence. All five requested systems checks ran; `travel_route_foundation`, `world_map_foundation`, and `recovery_loss_pressure_foundation` passed, while `content` reported four failures (Grand comp/paid travel receipts cleared by the automatic greeting, uncapped visited cards, and the pre-Q-013 exclusive-consequence allowlist) and `crew_heist_contract` reported one persistence-fixture failure. Report SHA-256 `D7F53F7D449E774DDC9D0798F76B27064E8DBE47FA334BDD7AA67691B93F17ED`; nonempty stderr SHA-256 `22FFED3C30D66EC7643E9533E28B062BF1C223473835DC5CEBFA4F26125EA809`; Godot log SHA-256 `3B413A9D07AEC1AD45A929BF1E9F61B0DF08CE3632BF2086F020C16CBD3DF613`. No result from this run is promoted; root-cause repairs preserve exact route, cap, hostile-type, and Save/Continue coverage.
 - 2026-09-23 23:21 CT — Q-013 Answer A is implemented and pushed on the combined peer lane: natural Audit knowledge product/foundation commit `6c6e44fc`, exact seed/replay/docs commit `31070b7d`, strict shared Grand-arrival replay commit `22c52eb8`, and current-main integration tip `23a4abd9`. Exact seed `RW06-HEIST-AUDIT-0002` preflight passes without scenario injection or Plan B (report SHA-256 `CEA5143FD3253AF01B4FF19A48AAC9884D072092CEDE7B463FF061E340AB6146`); the current replay source contract passes 2 valid and 23 hostile Grand-greeting fixtures (report SHA-256 `C7200E690598A3D3CC7E1A570A635B624798D10A45D21FD8961A73291C4DFDBF`). Exact-tip full engine-free validation passes with stdout SHA-256 `6CD0BC0C15E737313CEADDA118A27EBCD36517D2B82756D2EF4455F03EF297E4` and empty stderr SHA-256 `E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855`. Q-013 remains ANSWERED until focused Godot plus the natural public replay prove fresh observation, revisit, hostile non-Audit, and Save/Continue restore.
 - 2026-09-23 23:16 CT — Q-015 is RESOLVED on current `origin/main`; the owner closed the primary editor pair and the release orchestrator reopened isolated lanes. Peer rechecked zero Godot processes and zero leases before the combined validation. rw06_1 has not landed, so live runs before that merge remain non-qualifying route evidence.
 - 2026-09-23 22:50 CT — Pushed the rw06_3 Grand invitation package and rw06_2 departure-price integrity repair at product commit `8db49923`, integrated through peer tip `fe3cbccf`. JSON parsing, PowerShell parser, diff hygiene and the combined replay source contract pass; report SHA-256 is `E13685E1787ADC13DF420CE31DEEE708AC172B29157A5F21366462A362AA313A`. The shared Pixel dependency stayed unstaged. Focused Foundation and the one no-retry post-change Clean replay remain pending the engine gate, so this is not yet claimed as route evidence.
