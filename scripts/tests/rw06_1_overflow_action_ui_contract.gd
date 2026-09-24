@@ -863,13 +863,13 @@ func _send_canvas_accept(canvas: Control) -> void:
 
 
 func _send_canvas_mouse(canvas: Control, position: Vector2) -> void:
-	var event := InputEventMouseButton.new()
-	event.button_index = MOUSE_BUTTON_LEFT
-	event.button_mask = MOUSE_BUTTON_MASK_LEFT
-	event.position = position
-	event.global_position = position
-	event.pressed = true
-	canvas.call("_gui_input", event)
+	# Route through the viewport's production input dispatch. Calling _gui_input
+	# directly is not a physical mouse proof and makes accept_event() run outside
+	# the viewport dispatch lifecycle.
+	if canvas == null or not canvas.is_inside_tree():
+		failures.append("RW06-1 selected-info mouse fixture lost its live canvas.")
+		return
+	_send_mouse(position)
 
 
 func _check_canvas_exclusion(records: Array) -> void:
