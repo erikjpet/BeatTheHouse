@@ -1,13 +1,20 @@
-Status: PARKED COMPANION TEMPLATE - `release06_1` only; not independently claimable
-Board row: existing `release06_1` (no new row)
+Status: PARKED COMPANION TEMPLATE - populate only from `rw06_4`; not independently claimable
+Board row: existing `rw06_4` (no new row)
 Destination: `docs/plans/0.6_final_rc_evidence.md`
+
+> **RW06 EXECUTION NOTE (2026-09-24):** This final record follows
+> `rw06_4_release_gate_ship_prompt.md`'s slim gate. Mark native/Web parity, the
+> full 11-game campaign, broad balance, soaks B/C and aggregate analysis
+> `DEFERRED TO 0.6.1`; do not resurrect the superseded matrix. Soak A remains
+> mandatory. Under Q-003, agents deliver two verified zips; the owner uploads.
 
 # Beat the House 0.6 Final RC Evidence - Template
 
 Required finished-build inputs: owner-approved source candidate; engine/tool
 versions; versioned artifacts built from that hash; complete fresh matrix;
-manual route/platform results; SHA-256 hashes; final visual inventory; all
-three owner decisions; tag/publication facts when they actually exist.
+manual route/platform results; SHA-256 hashes; final visual inventory; the
+completed owner playthrough and all four release owner decisions; tag/upload
+facts when they actually exist.
 
 ## Candidate identity
 
@@ -18,8 +25,9 @@ three owner decisions; tag/publication facts when they actually exist.
 - Engine/tool identity:
 - Project/export/UI/public version identity:
 
-`SOURCE APPROVED`, `PACKAGE APPROVED`, `PUBLISH AUTHORIZED` and `RELEASED` are
-separate states. Never collapse or prefill them.
+`SOURCE APPROVED`, `COPY APPROVED`, `PACKAGE APPROVED`, `HANDED OFF`,
+`OWNER UPLOADED` and `RELEASED` are separate states. Never collapse or prefill
+them.
 
 ## Automated gate matrix
 
@@ -27,9 +35,8 @@ separate states. Never collapse or prefill them.
 | --- | --- | --- | --- |
 | | | | |
 
-Include complete Foundation systems/UI, determinism, native/Web parity,
-performance plus liveness, accessibility/visual, balance before/after, save/
-migration, soak and end-to-end routes. Record any measured miss honestly.
+Include the complete rw06_4 slim gate and record any measured miss honestly.
+List each larger deferred matrix item explicitly with the 0.6.1 backlog link.
 
 ## Player-facing and manual evidence
 
@@ -50,8 +57,9 @@ migration, soak and end-to-end routes. Record any measured miss honestly.
 | Gate/event | Exact scope/hash | Owner wording/date or factual URL/tag |
 | --- | --- | --- |
 | Final source approval | | |
+| Release-copy approval | | |
 | Packaged-artifact approval | | |
-| Publish/upload authorization | | |
+| Artifact handoff / owner upload confirmation | | |
 | Annotated `v0.6.0` tag | | |
 | Public release/download URLs | | |
 

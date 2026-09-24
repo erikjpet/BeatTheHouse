@@ -122,10 +122,12 @@ Once the merge lands, rebase your Phase 0 worktrees onto the new `main`.
    backlog.
 4. **rw06_3** is owned by the peer and starts after the owner's notes are
    handled and rw06_2's route evidence exists.
-5. **rw06_4** (gate and artifact handoff) starts only after rw06_6 also lands.
-   It has three hard owner stops: source
-   approval, artifact approval, and artifact handoff/upload confirmation. Each
-   is asked in the questions file. Agents post the two zip paths and SHA-256
+5. **rw06_4** (gate and artifact handoff) starts only after rw06_6 also lands,
+   the owner's required start-to-finish run is complete, and every blocking
+   owner note is handled. It has four release hard stops after that playthrough:
+   source approval, release-copy approval, artifact approval, and artifact
+   handoff/upload confirmation. Each is asked in the questions file. Agents
+   post the two zip paths and SHA-256
    hashes for the owner, never run `export_itch.ps1 -Push`, butler, or any
    upload/publish command, and tag only after the owner confirms they uploaded.
 
@@ -168,11 +170,13 @@ Once the merge lands, rebase your Phase 0 worktrees onto the new `main`.
 - **Git.** You and your sub-agents may commit and push to `main` via worktree
   branches and fast-forward. Every branch and worktree you or a sub-agent
   creates is merged into `main` and then deleted, both locally and on origin,
-  before its row is DONE. Before each owner checkpoint and at the end,
-  `git branch -a` and `git worktree list` must show no leftover rw06 or
-  postfix06_2 branches. Never force-push, never rewrite history, never
-  delete branches you didn't create, never stage `.tmp/`. Archive; never
-  delete docs.
+  before its row is DONE. At an intermediate owner checkpoint, `git branch -a`
+  and `git worktree list` must show no leftover branch or worktree for a row
+  already completed or abandoned; active parallel rw06 rows remain visible and
+  are recorded on the scoreboard. At final closeout, no rw06 or postfix06_2
+  branch or worktree may remain. Never force-push, never rewrite history,
+  never delete branches you didn't create, never stage `.tmp/`. Archive;
+  never delete docs.
 - **Godot leases (Q-009).** Isolated focused runs may overlap, up to four Godot
   processes machine-wide, only when each has its own worktree, isolated
   `APPDATA`/`LOCALAPPDATA`, explicit `--log-file`, and own-process cleanup. Use
