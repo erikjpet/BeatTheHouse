@@ -839,7 +839,8 @@ if ($failures.Count -eq 0) {
         }
         else {
             $auditBranch = $crewWorldHookSource.Substring($auditBranchIndex, $genericNodeScanIndex - $auditBranchIndex)
-            Assert-Match $auditBranch '(?s)current_environment\.get\("scenario_hook_flags".*?get\(hook_id,\s*false\)\s*==\s*true.*?or\s+_run\.story_flags\.get\(COUNT_AUDIT_KNOWLEDGE_FLAG,\s*false\)\s*==\s*true' 'The Count must accept only exact boolean current Audit or authored story facts.'
+            Assert-Match $auditBranch '(?s)var\s+current_hook_value\s*=.*?current_environment\.get\("scenario_hook_flags".*?get\(hook_id,\s*false\).*?var\s+learned_audit_value\s*=\s*_run\.story_flags\.get\(COUNT_AUDIT_KNOWLEDGE_FLAG,\s*false\).*?typeof\(current_hook_value\)\s*==\s*TYPE_BOOL\s+and\s+bool\(current_hook_value\).*?or\s+\(typeof\(learned_audit_value\)\s*==\s*TYPE_BOOL\s+and\s+bool\(learned_audit_value\)\)' 'The Count must accept only exact boolean current Audit or authored story facts.'
+            Assert-NotMatch $auditBranch 'get\([^\r\n]*\)\s*==\s*true' 'The Count Audit gate must type-check hostile Variant values before comparing or coercing them.'
             Assert-NotMatch $auditBranch 'narrative_flags|_seeded_scenario_definition_for_node_readonly|world_map' 'The Count Audit early return must not consume narrative mirrors, stored nodes, or private seed definitions.'
         }
     }
