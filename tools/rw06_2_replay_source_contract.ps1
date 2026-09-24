@@ -7,6 +7,7 @@ $ErrorActionPreference = 'Stop'
 $Worktree = Split-Path -Parent $PSScriptRoot
 $RunnerPath = Join-Path $PSScriptRoot 'rw06_2_ending_replay.ps1'
 $ReplayPolicyPath = Join-Path $PSScriptRoot 'rw06_2_replay_policies.ps1'
+$HeistSeedPreflightPath = Join-Path $PSScriptRoot 'rw06_2_heist_seed_preflight.ps1'
 $LauncherPath = Join-Path $PSScriptRoot 'agent_playtest_session.ps1'
 $BridgePath = Join-Path $PSScriptRoot 'agent_playtest_session.gd'
 $SanitizerPath = Join-Path $PSScriptRoot 'agent_playtest_public_observation.gd'
@@ -17,10 +18,15 @@ $FoundationScreenBuilderPath = Join-Path $Worktree 'scripts\ui\foundation_screen
 $PixelSceneCanvasPath = Join-Path $Worktree 'scripts\ui\pixel_scene_canvas.gd'
 $TalkDockPath = Join-Path $Worktree 'scripts\ui\talk_dock.gd'
 $RunStatePath = Join-Path $Worktree 'scripts\core\run_state.gd'
+$RunActionServicePath = Join-Path $Worktree 'scripts\core\run_action_service.gd'
+$CrewRunFacadePath = Join-Path $Worktree 'scripts\core\crew_run_facade.gd'
 $WorldMapPath = Join-Path $Worktree 'scripts\core\world_map.gd'
 $FoundationWorldTestPath = Join-Path $Worktree 'scripts\tests\foundation\check_items_events_world.gd'
+$CrewHeistTestPath = Join-Path $Worktree 'scripts\tests\foundation\crew_heist_contract.gd'
 $UiMainFlowTestPath = Join-Path $Worktree 'scripts\tests\ui_scene\compile_components_and_main_flow.gd'
 $EventsPath = Join-Path $Worktree 'data\events\events.json'
+$ServicesPath = Join-Path $Worktree 'data\services\services.json'
+$ArchetypesPath = Join-Path $Worktree 'data\environments\archetypes.json'
 $ReportPath = Join-Path $Worktree '.tmp\rw06_2\replay_source_contract.json'
 $SemanticScrollReportPath = Join-Path $Worktree '.tmp\rw06_2\semantic_scroll_contract.json'
 
@@ -47,6 +53,12 @@ $cheatShowdownWalkValidFixtures = 0
 $cheatShowdownWalkHostileFixtures = 0
 $cheatDuelContinuationValidFixtures = 0
 $cheatDuelContinuationHostileFixtures = 0
+$heistSeedValidFixtures = 0
+$heistSeedHostileFixtures = 0
+$heistLaunchSetupValidFixtures = 0
+$heistLaunchSetupHostileFixtures = 0
+$heistAuditHookValidFixtures = 0
+$heistAuditHookHostileFixtures = 0
 
 function Add-Failure {
     param([Parameter(Mandatory = $true)][string]$Message)
@@ -426,6 +438,53 @@ function New-DeltaQueenBeachPolicyFixture {
     }
 }
 
+
+function New-HeistFreshSetupPolicyFixture {
+    return [pscustomobject]@{
+        screen = [pscustomobject]@{
+            screen = 'START'
+            start_menu = [pscustomobject]@{
+                run_config_visible = $true
+                selected_challenge_id = ''
+                selected_home_type_id = 'random'
+                selected_content_groups = @(
+                    'universal_passive_items', 'universal_active_items', 'scratch_tickets_pack',
+                    'pull_tabs_pack', 'slot_pack', 'coin_pusher_pack', 'bar_dice_pack',
+                    'craps_pack', 'crew_poker_pack', 'blackjack_pack', 'baccarat_pack',
+                    'roulette_pack', 'video_poker_pack', 'numbers_pack'
+                )
+            }
+        }
+    }
+}
+
+
+function New-HeistAuditHookPolicyFixture {
+    return [pscustomobject]@{
+        observation = [pscustomobject]@{
+            screen = [pscustomobject]@{ screen = 'ENVIRONMENT' }
+            environment = [pscustomobject]@{ archetype_id = 'grand_casino' }
+        }
+        canvas_objects = @(
+            [pscustomobject]@{
+                semantic_id = 'event:scenario_audit_roster'
+                label = 'The Audit Roster'
+                object_type = 'event'
+                rendered = $true
+                enabled = $true
+            },
+            [pscustomobject]@{
+                semantic_id = 'game:blackjack'
+                label = 'Blackjack'
+                object_type = 'game'
+                rendered = $true
+                enabled = $true
+            }
+        )
+    }
+}
+
+
 function Get-GDScriptFunctionSource {
     param(
         [Parameter(Mandatory = $true)][string]$Source,
@@ -547,10 +606,12 @@ function Test-CheatReplayDuelContinuationOrder {
 }
 
 foreach ($path in @(
-    $RunnerPath, $ReplayPolicyPath, $LauncherPath, $BridgePath, $SanitizerPath,
+    $RunnerPath, $ReplayPolicyPath, $HeistSeedPreflightPath, $LauncherPath, $BridgePath, $SanitizerPath,
     $ObservationContractPath, $FoundationMainPath, $FoundationHudBarPath,
     $FoundationScreenBuilderPath, $PixelSceneCanvasPath, $TalkDockPath, $RunStatePath,
-    $WorldMapPath, $FoundationWorldTestPath, $UiMainFlowTestPath, $EventsPath
+    $RunActionServicePath, $CrewRunFacadePath, $WorldMapPath, $FoundationWorldTestPath,
+    $CrewHeistTestPath, $UiMainFlowTestPath,
+    $EventsPath, $ServicesPath, $ArchetypesPath
 )) {
     if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
         Add-Failure "Required rw06_2 source is missing: $path"
@@ -560,10 +621,12 @@ foreach ($path in @(
 if ($failures.Count -eq 0) {
     Assert-PowerShellParses $RunnerPath
     Assert-PowerShellParses $ReplayPolicyPath
+    Assert-PowerShellParses $HeistSeedPreflightPath
     Assert-PowerShellParses $LauncherPath
 
     $runner = Get-Content -LiteralPath $RunnerPath -Raw
     $replayPolicy = Get-Content -LiteralPath $ReplayPolicyPath -Raw
+    $heistSeedPreflight = Get-Content -LiteralPath $HeistSeedPreflightPath -Raw
     $launcher = Get-Content -LiteralPath $LauncherPath -Raw
     $bridge = Get-Content -LiteralPath $BridgePath -Raw
     $sanitizer = Get-Content -LiteralPath $SanitizerPath -Raw
@@ -574,8 +637,11 @@ if ($failures.Count -eq 0) {
     $pixelSceneCanvas = Get-Content -LiteralPath $PixelSceneCanvasPath -Raw
     $talkDock = Get-Content -LiteralPath $TalkDockPath -Raw
     $runState = Get-Content -LiteralPath $RunStatePath -Raw
+    $runActionService = Get-Content -LiteralPath $RunActionServicePath -Raw
+    $crewRunFacade = Get-Content -LiteralPath $CrewRunFacadePath -Raw
     $worldMap = Get-Content -LiteralPath $WorldMapPath -Raw
     $foundationWorldTest = Get-Content -LiteralPath $FoundationWorldTestPath -Raw
+    $crewHeistTest = Get-Content -LiteralPath $CrewHeistTestPath -Raw
     $uiMainFlowTest = Get-Content -LiteralPath $UiMainFlowTestPath -Raw
 
     $worldMapNormalize = Get-GDScriptFunctionSource -Source $worldMap -Name 'normalize'
@@ -618,8 +684,104 @@ if ($failures.Count -eq 0) {
     }
 
     try {
+        $serviceCatalogValue = Get-Content -LiteralPath $ServicesPath -Raw | ConvertFrom-Json
+        $serviceCatalog = @($serviceCatalogValue | ForEach-Object { $_ })
+        $cashierTips = @($serviceCatalog | Where-Object {
+            $_.id -is [string] -and [string]$_.id -ceq 'cashier_tip'
+        })
+        if ($cashierTips.Count -ne 1) {
+            throw "Expected one exact cashier_tip service; found $($cashierTips.Count)."
+        }
+        $cashierTip = $cashierTips[0]
+        $cashierFields = @($cashierTip.PSObject.Properties | ForEach-Object { [string]$_.Name })
+        if (($cashierFields -join ',') -cne 'id,display_name,category,description,cost,effect' -or
+            ($cashierTip.cost -isnot [int32] -and $cashierTip.cost -isnot [int64]) -or
+            [int]$cashierTip.cost -ne 4) {
+            throw 'Cashier Tip must remain an exact $4 zero-duration definition with no one-use or cooldown field.'
+        }
+
+        $archetypeCatalogValue = Get-Content -LiteralPath $ArchetypesPath -Raw | ConvertFrom-Json
+        $archetypeCatalog = @($archetypeCatalogValue | ForEach-Object { $_ })
+        $cornerStores = @($archetypeCatalog | Where-Object {
+            $_.id -is [string] -and [string]$_.id -ceq 'corner_store'
+        })
+        if ($cornerStores.Count -ne 1 -or
+            (@($cornerStores[0].service_pool) -join ',') -cne 'cashier_tip,house_drink' -or
+            (@($cornerStores[0].lender_hooks) -join ',') -cne 'the_crew' -or
+            (@($cornerStores[0].lender_count) -join ',') -cne '1,1') {
+            throw 'Corner Store must guarantee one Crew lender and the repeatable Cashier Tip service.'
+        }
+    }
+    catch {
+        Add-Failure "Crew Cashier Tip catalog contract failed: $($_.Exception.Message)"
+    }
+
+    $serviceViewSource = Get-GDScriptFunctionSource -Source $runActionService -Name 'service_hook_view_list'
+    $serviceUseSource = Get-GDScriptFunctionSource -Source $runActionService -Name 'use_hook'
+    $serviceCommitSource = Get-GDScriptFunctionSource -Source $runActionService -Name '_commit_hook_transaction'
+    $serviceBoundarySource = Get-GDScriptFunctionSource -Source $runActionService -Name '_advance_transaction_hook_clock'
+    $normalTravelSource = Get-GDScriptFunctionSource -Source $foundationMain -Name '_travel_to'
+    if (-not [string]::IsNullOrWhiteSpace($serviceViewSource)) {
+        Assert-Match $serviceViewSource '(?s)current_environment\.get\("service_ids".*?hook_option\("service",\s*service_id' 'Service projection must rebuild Cashier Tip from the current public environment on every use.'
+    }
+    if (-not [string]::IsNullOrWhiteSpace($serviceUseSource)) {
+        Assert-Match $serviceUseSource '(?s)_hook_present_in_current_environment.*?hook_option\(kind,\s*hook_id\).*?_commit_hook_transaction\(transaction_price,\s*kind,\s*hook_id,\s*definition\)' 'Cashier Tip must commit through the ordinary revalidated service transaction path.'
+        Assert-NotMatch $serviceUseSource 'remove_service|service_ids.*(?:erase|remove)' 'Using Cashier Tip must not consume its service definition.'
+    }
+    if (-not [string]::IsNullOrWhiteSpace($serviceCommitSource)) {
+        Assert-Match $serviceCommitSource '(?s)_advance_transaction_hook_clock\(candidate,\s*transaction_kind,\s*definition\).*?_hook_present_in_current_environment.*?hook_option\(transaction_kind,\s*source_id.*?publish_host_action_candidate' 'Service transaction must advance and publish only after revalidating the live Cashier Tip option.'
+        Assert-NotMatch $serviceCommitSource 'remove_service|service_ids.*(?:erase|remove)' 'Cashier Tip transaction must remain repeatable after publication.'
+    }
+    if (-not [string]::IsNullOrWhiteSpace($serviceBoundarySource)) {
+        Assert-Match $serviceBoundarySource '(?s)duration_minutes.*?definition\.get\("duration_minutes",\s*0\).*?duration_minutes\s*>\s*0.*?advance_game_clock_minutes\(duration_minutes\).*?advance_environment_turns\(1\)' 'A zero-duration Cashier Tip must advance exactly one environment action boundary.'
+    }
+    if (-not [string]::IsNullOrWhiteSpace($normalTravelSource)) {
+        Assert-Contains $normalTravelSource 'run_state.advance_game_clock_minutes(travel_minutes)' 'Normal travel must advance its published clock duration.'
+        Assert-NotMatch $normalTravelSource 'advance_environment_turns' 'Normal travel must not masquerade as a Crew debt action boundary.'
+    }
+
+    $crewWorldHookSource = Get-GDScriptFunctionSource -Source $crewRunFacade -Name '_crew_heist_world_has_hook'
+    if (-not [string]::IsNullOrWhiteSpace($crewWorldHookSource)) {
+        Assert-Contains $crewRunFacade 'const COUNT_AUDIT_KNOWLEDGE_FLAG := "crew_heist_count_audit_roster_read"' 'The Count Audit fact must have one canonical story-flag id.'
+        $auditBranchIndex = $crewWorldHookSource.IndexOf('if hook_id == "audit_night":', [StringComparison]::Ordinal)
+        $genericNodeScanIndex = $crewWorldHookSource.IndexOf('for node_value in JsonCoerceScript._copy_array(_run.world_map.get("nodes", [])):', [StringComparison]::Ordinal)
+        if ($auditBranchIndex -lt 0 -or $genericNodeScanIndex -le $auditBranchIndex) {
+            Add-Failure 'Audit gating must return before the generic stored/seeded world-node scan.'
+        }
+        else {
+            $auditBranch = $crewWorldHookSource.Substring($auditBranchIndex, $genericNodeScanIndex - $auditBranchIndex)
+            Assert-Match $auditBranch '(?s)current_environment\.get\("scenario_hook_flags".*?get\(hook_id,\s*false\)\s*==\s*true.*?or\s+_run\.story_flags\.get\(COUNT_AUDIT_KNOWLEDGE_FLAG,\s*false\)\s*==\s*true' 'The Count must accept only exact boolean current Audit or authored story facts.'
+            Assert-NotMatch $auditBranch 'narrative_flags|_seeded_scenario_definition_for_node_readonly|world_map' 'The Count Audit early return must not consume narrative mirrors, stored nodes, or private seed definitions.'
+        }
+    }
+
+    $auditKnowledgeTestSource = Get-GDScriptFunctionSource -Source $crewHeistTest -Name '_check_audit_knowledge_gating'
+    if (-not [string]::IsNullOrWhiteSpace($auditKnowledgeTestSource)) {
+        Assert-Match $auditKnowledgeTestSource '(?s)HEIST-AUDIT-SEEDED-ONLY.*?seed_scenario_for_node\("grand_casino".*?grand_casino_audit_night.*?unvisited seeded Audit.*?HEIST-AUDIT-HOSTILE.*?narrative_flags\[KNOWLEDGE_FLAG\]\s*=\s*true.*?story_flags\[KNOWLEDGE_FLAG\]\s*=\s*"true".*?audit_night":\s*"true".*?malformed/forged knowledge' 'Audit gating coverage must reject unvisited seed selection, narrative-only forgery, non-boolean story data, and non-boolean active hooks.'
+        Assert-Match $auditKnowledgeTestSource '(?s)HEIST-AUDIT-DECLINED.*?leave_the_count_clean.*?grand_casino_convention_crowd.*?remained live.*?HEIST-AUDIT-OBSERVED.*?read_the_shift.*?heat_before_read\s*\+\s*3.*?resolved_event_ids.*?scenario_audit_roster.*?replayed or charged its Heat twice.*?grand_casino_convention_crowd.*?to_save_snapshot\(\).*?Save/Continue restore' 'Audit gating coverage must bind the exact natural read, single +3 Heat result, resolved receipt, replay rejection, rollover/revisit, and real save projection.'
+        Assert-NotMatch $auditKnowledgeTestSource 'story_flags\[KNOWLEDGE_FLAG\]\s*=\s*true' 'The valid Audit knowledge fixture must not inject its positive story fact directly.'
+    }
+
+    try {
         $eventCatalogValue = Get-Content -LiteralPath $EventsPath -Raw | ConvertFrom-Json
-        $eventCatalog = @($eventCatalogValue)
+        $eventCatalog = @($eventCatalogValue | ForEach-Object { $_ })
+        $auditEvents = @($eventCatalog | Where-Object { $_.id -is [string] -and [string]$_.id -ceq 'scenario_audit_roster' })
+        if ($auditEvents.Count -ne 1) {
+            throw "Expected one exact scenario_audit_roster event; found $($auditEvents.Count)."
+        }
+        $auditChoices = @($auditEvents[0].payload.choices)
+        $readChoices = @($auditChoices | Where-Object { $_.id -is [string] -and [string]$_.id -ceq 'read_the_shift' })
+        $leaveChoices = @($auditChoices | Where-Object { $_.id -is [string] -and [string]$_.id -ceq 'leave_the_count_clean' })
+        if ($auditChoices.Count -ne 2 -or $readChoices.Count -ne 1 -or $leaveChoices.Count -ne 1 -or
+            [string]$readChoices[0].label -cne 'Read the shift' -or
+            [string]$readChoices[0].consequence_summary -cne 'Heat +3; Count route learned' -or
+            [int]$readChoices[0].consequences.suspicion_delta -ne 3 -or
+            $readChoices[0].consequences.resolve_event -isnot [bool] -or -not [bool]$readChoices[0].consequences.resolve_event -or
+            $readChoices[0].consequences.story_flags_set.crew_heist_count_audit_roster_read -isnot [bool] -or
+            -not [bool]$readChoices[0].consequences.story_flags_set.crew_heist_count_audit_roster_read -or
+            $leaveChoices[0].consequences.PSObject.Properties.Name -contains 'story_flags_set') {
+            throw 'Audit knowledge must be one disclosed exact boolean story fact granted only by read_the_shift.'
+        }
         $showdownEvents = @($eventCatalog | Where-Object { $_.id -is [string] -and [string]$_.id -ceq 'the_house_calls' })
         if ($showdownEvents.Count -ne 1) {
             throw "Expected one exact the_house_calls event; found $($showdownEvents.Count)."
@@ -634,7 +796,7 @@ if ($failures.Count -eq 0) {
         }
     }
     catch {
-        Add-Failure "Showdown classified-item source contract failed: $($_.Exception.Message)"
+        Add-Failure "Event source contract failed: $($_.Exception.Message)"
     }
 
     try {
@@ -642,6 +804,180 @@ if ($failures.Count -eq 0) {
     }
     catch {
         Add-Failure "Replay policy helper could not be loaded: $($_.Exception.Message)"
+    }
+
+    if ($null -ne (Get-Command 'Assert-HeistFreshStandardRunSetup' -ErrorAction SilentlyContinue)) {
+        try {
+            $validSetup = New-HeistFreshSetupPolicyFixture
+            $selectedSetup = Assert-HeistFreshStandardRunSetup -Observation $validSetup
+            if ([string]$selectedSetup.selected_challenge_id -cne '' -or
+                [string]$selectedSetup.selected_home_type_id -cne 'random' -or
+                @($selectedSetup.selected_content_groups).Count -ne 14) {
+                throw 'Valid fresh Heist launch setup returned a changed selection.'
+            }
+            $heistLaunchSetupValidFixtures = 1
+        }
+        catch {
+            Add-Failure "Valid fresh Heist launch setup threw: $($_.Exception.Message)"
+        }
+
+        $hostileSetupFixtures = [Collections.Generic.List[object]]::new()
+        $fixture = New-HeistFreshSetupPolicyFixture; $fixture.screen.screen = 'ENVIRONMENT'
+        $hostileSetupFixtures.Add([pscustomobject]@{ label = 'wrong-screen'; fixture = $fixture })
+        $fixture = New-HeistFreshSetupPolicyFixture; $fixture.screen.PSObject.Properties.Remove('start_menu')
+        $hostileSetupFixtures.Add([pscustomobject]@{ label = 'start-menu-missing'; fixture = $fixture })
+        $fixture = New-HeistFreshSetupPolicyFixture; $fixture.screen.start_menu.run_config_visible = $false
+        $hostileSetupFixtures.Add([pscustomobject]@{ label = 'run-config-hidden'; fixture = $fixture })
+        $fixture = New-HeistFreshSetupPolicyFixture; $fixture.screen.start_menu.run_config_visible = 'true'
+        $hostileSetupFixtures.Add([pscustomobject]@{ label = 'run-config-non-boolean'; fixture = $fixture })
+        $fixture = New-HeistFreshSetupPolicyFixture; $fixture.screen.start_menu.selected_challenge_id = 'standard'
+        $hostileSetupFixtures.Add([pscustomobject]@{ label = 'challenge-not-default'; fixture = $fixture })
+        $fixture = New-HeistFreshSetupPolicyFixture; $fixture.screen.start_menu.selected_challenge_id = 0
+        $hostileSetupFixtures.Add([pscustomobject]@{ label = 'challenge-non-string'; fixture = $fixture })
+        $fixture = New-HeistFreshSetupPolicyFixture; $fixture.screen.start_menu.selected_home_type_id = 'back_alley'
+        $hostileSetupFixtures.Add([pscustomobject]@{ label = 'home-not-random'; fixture = $fixture })
+        $fixture = New-HeistFreshSetupPolicyFixture; $fixture.screen.start_menu.selected_home_type_id = $true
+        $hostileSetupFixtures.Add([pscustomobject]@{ label = 'home-non-string'; fixture = $fixture })
+        $fixture = New-HeistFreshSetupPolicyFixture; $fixture.screen.start_menu.selected_content_groups = @($fixture.screen.start_menu.selected_content_groups | Select-Object -Skip 1)
+        $hostileSetupFixtures.Add([pscustomobject]@{ label = 'content-group-missing'; fixture = $fixture })
+        $fixture = New-HeistFreshSetupPolicyFixture; $fixture.screen.start_menu.selected_content_groups += 'bonus_pack'
+        $hostileSetupFixtures.Add([pscustomobject]@{ label = 'content-group-extra'; fixture = $fixture })
+        $fixture = New-HeistFreshSetupPolicyFixture; $swap = $fixture.screen.start_menu.selected_content_groups[0]; $fixture.screen.start_menu.selected_content_groups[0] = $fixture.screen.start_menu.selected_content_groups[1]; $fixture.screen.start_menu.selected_content_groups[1] = $swap
+        $hostileSetupFixtures.Add([pscustomobject]@{ label = 'content-group-reordered'; fixture = $fixture })
+        $fixture = New-HeistFreshSetupPolicyFixture; $fixture.screen.start_menu.selected_content_groups[0] = 'Universal_Passive_Items'
+        $hostileSetupFixtures.Add([pscustomobject]@{ label = 'content-group-case'; fixture = $fixture })
+        $fixture = New-HeistFreshSetupPolicyFixture; $fixture.screen.start_menu.selected_content_groups[0] = 1
+        $hostileSetupFixtures.Add([pscustomobject]@{ label = 'content-group-non-string'; fixture = $fixture })
+        $fixture = New-HeistFreshSetupPolicyFixture; $fixture.screen.start_menu.selected_content_groups = 'universal_passive_items'
+        $hostileSetupFixtures.Add([pscustomobject]@{ label = 'content-groups-non-array'; fixture = $fixture })
+
+        $heistLaunchSetupHostileFixtures = $hostileSetupFixtures.Count
+        foreach ($case in $hostileSetupFixtures) {
+            $threw = $false
+            try {
+                $null = Assert-HeistFreshStandardRunSetup -Observation $case.fixture
+            }
+            catch {
+                $threw = $true
+            }
+            if (-not $threw) {
+                Add-Failure "Hostile fresh Heist launch fixture '$($case.label)' did not fail closed."
+            }
+        }
+    }
+    else {
+        Add-Failure 'Replay policy helper did not export the fresh Standard-run setup assertion.'
+    }
+
+    try {
+        $heistSeedOutput = @(& $HeistSeedPreflightPath `
+            -Contract `
+            -ReportPath (Join-Path $Worktree '.tmp\rw06_2\heist_seed_preflight_contract.json'))
+        if ($heistSeedOutput.Count -ne 1) {
+            throw "Heist seed preflight returned $($heistSeedOutput.Count) records instead of one report."
+        }
+        $heistSeedReport = [string]$heistSeedOutput[0] | ConvertFrom-Json
+        if ($heistSeedReport.passed -isnot [bool] -or -not [bool]$heistSeedReport.passed -or
+            [int]$heistSeedReport.valid_fixtures -ne 1 -or
+            [int]$heistSeedReport.hostile_fixtures -ne 4 -or
+            [string]$heistSeedReport.selection.seed_text -cne 'RW06-HEIST-AUDIT-0002' -or
+            [string]$heistSeedReport.selection.selected_scenario -cne 'grand_casino_audit_night' -or
+            [int64]$heistSeedReport.selection.run_seed -ne 919325714 -or
+            [int64]$heistSeedReport.selection.stream_seed -ne 1392077385 -or
+            [int]$heistSeedReport.selection.none_roll -ne 59 -or
+            [int]$heistSeedReport.selection.weighted_roll -ne 24088 -or
+            [int64]$heistSeedReport.serialization_calibration.run_seed -ne 6620395 -or
+            [string]$heistSeedReport.serialization_calibration.seed_text -cne 'RW06-CLEAN-ROUTE-01' -or
+            [string]$heistSeedReport.launch_model.screen -cne 'START' -or
+            $heistSeedReport.launch_model.run_config -isnot [bool] -or
+            -not [bool]$heistSeedReport.launch_model.run_config -or
+            [string]$heistSeedReport.launch_model.selected_challenge -cne '' -or
+            [string]$heistSeedReport.launch_model.selected_home -cne 'random' -or
+            @($heistSeedReport.launch_model.selected_content_groups).Count -ne 14 -or
+            [string]$heistSeedReport.arrival_history_hostile.cycle_id -cne 'day:1' -or
+            [int64]$heistSeedReport.arrival_history_hostile.stream_seed -ne 1392125656 -or
+            [int]$heistSeedReport.arrival_history_hostile.none_roll -ne 53 -or
+            [int]$heistSeedReport.arrival_history_hostile.total_weight -ne 19000 -or
+            [int]$heistSeedReport.arrival_history_hostile.weighted_roll -ne 15327 -or
+            [string]$heistSeedReport.arrival_history_hostile.selected_scenario -cne 'grand_casino_convention_crowd' -or
+            [string]$heistSeedReport.owner_decision -cne 'Q-013') {
+            throw 'Heist seed preflight lost its exact valid/hostile deterministic witness.'
+        }
+        $expectedChallengeKey = "standard|standard|RW06-HEIST-AUDIT-0002|$([string]$heistSeedReport.launch_model.fresh_profile_modifier_text)"
+        if ([string]$heistSeedReport.selection.challenge_key -cne $expectedChallengeKey -or
+            [string]$heistSeedReport.serialization_calibration.challenge_key -cne "standard|standard|RW06-CLEAN-ROUTE-01|$([string]$heistSeedReport.launch_model.fresh_profile_modifier_text)") {
+            throw 'Heist seed preflight did not use the exact reported fresh-profile modifier serialization in both witnesses.'
+        }
+        $heistSeedValidFixtures = [int]$heistSeedReport.valid_fixtures
+        $heistSeedHostileFixtures = [int]$heistSeedReport.hostile_fixtures
+    }
+    catch {
+        Add-Failure "Heist seed preflight contract failed: $($_.Exception.Message)"
+    }
+
+    if ($null -ne (Get-Command 'Select-HeistAuditNightPublicHook' -ErrorAction SilentlyContinue)) {
+        $validAuditFixture = New-HeistAuditHookPolicyFixture
+        try {
+            $selectedAuditHook = Select-HeistAuditNightPublicHook `
+                -Observation $validAuditFixture.observation `
+                -CanvasObjects @($validAuditFixture.canvas_objects)
+            if ([string]$selectedAuditHook.semantic_id -cne 'event:scenario_audit_roster') {
+                Add-Failure 'Valid rendered Audit Night hook did not return the exact public event.'
+            }
+            else {
+                $heistAuditHookValidFixtures = 1
+            }
+        }
+        catch {
+            Add-Failure "Valid rendered Audit Night hook threw: $($_.Exception.Message)"
+        }
+
+        $hostileAuditFixtures = [Collections.Generic.List[object]]::new()
+        $fixture = New-HeistAuditHookPolicyFixture; $fixture.observation.screen.screen = 'RESULT'
+        $hostileAuditFixtures.Add([pscustomobject]@{ label = 'wrong-screen'; fixture = $fixture })
+        $fixture = New-HeistAuditHookPolicyFixture; $fixture.observation.environment.archetype_id = 'grand_casino_cage'
+        $hostileAuditFixtures.Add([pscustomobject]@{ label = 'wrong-room'; fixture = $fixture })
+        $fixture = New-HeistAuditHookPolicyFixture; $fixture.canvas_objects = @($fixture.canvas_objects | Where-Object { $_.semantic_id -cne 'event:scenario_audit_roster' })
+        $hostileAuditFixtures.Add([pscustomobject]@{ label = 'hook-missing'; fixture = $fixture })
+        $fixture = New-HeistAuditHookPolicyFixture; $fixture.canvas_objects += [pscustomobject]@{ semantic_id = 'event:scenario_audit_roster'; label = 'The Audit Roster'; object_type = 'event'; rendered = $true; enabled = $true }
+        $hostileAuditFixtures.Add([pscustomobject]@{ label = 'hook-duplicate'; fixture = $fixture })
+        $fixture = New-HeistAuditHookPolicyFixture; $fixture.canvas_objects[0].semantic_id = 'event:Scenario_Audit_Roster'
+        $hostileAuditFixtures.Add([pscustomobject]@{ label = 'semantic-id-case'; fixture = $fixture })
+        $fixture = New-HeistAuditHookPolicyFixture; $fixture.canvas_objects[0].label = 'Audit Roster'
+        $hostileAuditFixtures.Add([pscustomobject]@{ label = 'wrong-label'; fixture = $fixture })
+        $fixture = New-HeistAuditHookPolicyFixture; $fixture.canvas_objects[0].object_type = 'security'
+        $hostileAuditFixtures.Add([pscustomobject]@{ label = 'wrong-object-type'; fixture = $fixture })
+        $fixture = New-HeistAuditHookPolicyFixture; $fixture.canvas_objects[0].rendered = $false
+        $hostileAuditFixtures.Add([pscustomobject]@{ label = 'not-rendered'; fixture = $fixture })
+        $fixture = New-HeistAuditHookPolicyFixture; $fixture.canvas_objects[0].rendered = 'true'
+        $hostileAuditFixtures.Add([pscustomobject]@{ label = 'rendered-non-boolean'; fixture = $fixture })
+        $fixture = New-HeistAuditHookPolicyFixture; $fixture.canvas_objects[0].enabled = $false
+        $hostileAuditFixtures.Add([pscustomobject]@{ label = 'disabled'; fixture = $fixture })
+        $fixture = New-HeistAuditHookPolicyFixture; $fixture.canvas_objects[0].enabled = 1
+        $hostileAuditFixtures.Add([pscustomobject]@{ label = 'enabled-non-boolean'; fixture = $fixture })
+        $fixture = New-HeistAuditHookPolicyFixture; $fixture.canvas_objects[0].PSObject.Properties.Remove('rendered')
+        $hostileAuditFixtures.Add([pscustomobject]@{ label = 'rendered-missing'; fixture = $fixture })
+        $fixture = New-HeistAuditHookPolicyFixture; $fixture.canvas_objects = @($fixture.canvas_objects | Where-Object { $_.semantic_id -cne 'event:scenario_audit_roster' }); $fixture.observation.environment | Add-Member -NotePropertyName scenario_hook_flags -NotePropertyValue ([pscustomobject]@{ audit_night = $true })
+        $hostileAuditFixtures.Add([pscustomobject]@{ label = 'private-hook-without-rendered-event'; fixture = $fixture })
+
+        $heistAuditHookHostileFixtures = $hostileAuditFixtures.Count
+        foreach ($case in $hostileAuditFixtures) {
+            $threw = $false
+            try {
+                $null = Select-HeistAuditNightPublicHook `
+                    -Observation $case.fixture.observation `
+                    -CanvasObjects @($case.fixture.canvas_objects)
+            }
+            catch {
+                $threw = $true
+            }
+            if (-not $threw) {
+                Add-Failure "Hostile rendered Audit Night fixture '$($case.label)' did not fail closed."
+            }
+        }
+    }
+    else {
+        Add-Failure 'Replay policy helper did not export the rendered Audit Night hook selector.'
     }
 
     if ($null -ne (Get-Command 'Assert-DeltaQueenBeachPublicRoute' -ErrorAction SilentlyContinue)) {
@@ -1598,6 +1934,13 @@ func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
         'function Invoke-CleanEndingRoute',
         'function Invoke-CheatEndingRoute',
         'function Invoke-HeistEndingRoute',
+        'function Invoke-HeistSeedPreflight',
+        'function Test-CrewFavorPublicSurface',
+        'function Invoke-CrewFavorCashierTipBoundary',
+        'function Establish-CrewMarker',
+        'function Clear-CrewMarkerFavors',
+        'function Assert-RenderedAuditNightHook',
+        'function Observe-RenderedAuditNightHook',
         'Select-CheatReplayBlackjackCheatAction',
         'Select-CheatReplayBossCalloutAction',
         'Select-CheatReplayShowdownWalkChoice',
@@ -1613,6 +1956,7 @@ func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
         "clean = @('players_card')",
         "cheat = @('showdown_survived')",
         "heist = @('heist_clean_sweep', 'heist_out_hot', 'heist_somebody_got_pinched')",
+        "heist = 'RW06-HEIST-AUDIT-0002'",
         'click_object $SemanticId',
         'click_action $action',
         'click_map $NodeId',
@@ -1674,6 +2018,8 @@ func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
         "@('screen', 'run_report_visible') `$null",
         '$Repeat -ceq 2',
         'release_qualifying = $releaseQualifying',
+        'heist_seed_preflight = $heistSeedPreflight',
+        'heist_launch_setup = $script:HeistLaunchSetup',
         'PLAY did not visibly enter a live first-night lesson',
         "StartsWith('tutorial_guide:', [StringComparison]::Ordinal)",
         "`$choiceIds.Count -cne 1 -or [string]`$choiceIds[0] -cne 'continue'",
@@ -1810,6 +2156,42 @@ func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
     Assert-Contains $runner "@('look', 'clickable', 'talk_choices')" 'Replay routes must consume the rendered TalkDock enabled-state mapping.'
     Assert-Contains $runner "@('look', 'clickable', 'scroll_surfaces')" 'Replay routes must consume only the public rendered scroll-surface mapping.'
     Assert-Match $runner '(?s)function Get-VisibleTutorialGuideAcknowledgment.*?render_valid.*?tutorial_guide:.*?choiceIds\.Count\s+-cne\s+1.*?choiceIds\[0\].*?continue.*?Get-PublicTalkChoices.*?enabled\s+-is\s+\[bool\]' 'Coach recovery must accept only one fully rendered, exactly typed, enabled continue choice from the public tutorial-guide TalkDock.'
+    Assert-NotMatch $runner 'PLAYTEST-CATALOG-01' 'The stale historical Heist seed must not remain in the live replay runner.'
+    Assert-Contains $runner "`$HeistSeedPreflightTool = Join-Path `$PSScriptRoot 'rw06_2_heist_seed_preflight.ps1'" 'Heist replay must bind its engine-free preflight from the checked-in tool path.'
+    Assert-Match $runner '(?s)heist\s*=\s*''RW06-HEIST-AUDIT-0002''.*?function Invoke-HeistSeedPreflight.*?& \$HeistSeedPreflightTool.*?grand_casino_audit_night.*?selected_scenario.*?function ConvertTo-BridgeBase64Token' 'Q-013A Heist replay must use exact seed 0002 and fail it through the strict production-tree preflight before engine launch.'
+    Assert-NotMatch $runner 'heist\s*=\s*''RW06-HEIST-AUDIT-0013''' 'The rejected Convention seed must not remain the live Heist runner default.'
+    Assert-Match $runner '(?s)\$invocationRoot\s*=.*?Invoke-HeistSeedPreflight.*?for \(\$iteration.*?Start-BridgeSession' 'Heist seed preflight must finish before any live replay iteration can start an engine session.'
+    Assert-Match $runner '(?ms)^function Start-NormalSeededRun\s*\{.*?Click-Button\s+-Text\s+''RUN SETUP''.*?run_config_visible.*?\$Ending\s+-ceq\s+''heist''.*?Assert-HeistFreshStandardRunSetup\s+-Observation\s+\$script:LastObservation.*?set_field seed \$Seed.*?(?=^function |\z)' 'The live Heist route must authenticate exact visible fresh Standard/Random/default-content setup before typing its seed.'
+    Assert-Match $replayPolicy '(?ms)^function Assert-HeistFreshStandardRunSetup.*?screen.*?START.*?run_config_visible.*?selected_challenge_id.*?selected_home_type_id.*?selected_content_groups.*?universal_passive_items.*?numbers_pack.*?challengeId\s+-isnot\s+\[string\].*?challengeId\s+-cne\s+''''.*?homeTypeId\s+-cne\s+''random''.*?contentGroups\s+-isnot\s+\[array\].*?non-default visible content group index.*?(?=^function |\z)' 'Fresh Heist launch policy must fail closed on screen, type, challenge, home, content-group membership, case, or order drift.'
+    Assert-Match $runner '(?ms)^function Assert-RenderedAuditNightHook\s*\{.*?canvas_objects.*?Select-HeistAuditNightPublicHook.*?-Observation \$script:LastObservation.*?-CanvasObjects \$canvasObjects.*?(?=^function |\z)' 'The live route must bind its Audit assertion only to the public observation and rendered canvas-object list.'
+    Assert-Match $runner '(?ms)^function Observe-RenderedAuditNightHook\s*\{.*?Assert-RenderedAuditNightHook.*?Invoke-EventObjectChoice\s*`?\s*-EventId\s+''scenario_audit_roster''\s*`?\s*-ChoiceId\s+''read_the_shift''.*?Restore-EnvironmentSurfaceAfterTravelResult.*?(?=^function |\z)' 'The live route must resolve the exact visible Audit roster/read_the_shift choice and restore the ordinary public room surface.'
+    Assert-Match $runner '(?ms)^function Invoke-HeistEndingRoute\s*\{\s*Establish-CrewMarker\s*\r?\n\s*Reach-GrandCasino\s*\r?\n\s*Restore-EnvironmentSurfaceAfterTravelResult\s*\r?\n\s*Observe-RenderedAuditNightHook\s*\r?\n\s*Clear-CrewMarkerFavors\s*\r?\n\s*Ensure-PunchlineCasinoDiscovered\s*\r?\n\s*Recruit-Bishop\s*\r?\n\s*Promote-BishopToInnerCircle.*?(?=^function |\z)' 'The Count route must take only its funding marker before Grand, naturally read Audit on the first arrival, clear the marker, then begin the Punchline/Bishop grind.'
+    $heistRouteSource = [regex]::Match($runner, '(?ms)^function Invoke-HeistEndingRoute\s*\{.*?(?=^function |\z)').Value
+    Assert-NotMatch $heistRouteSource 'whale|the_whale_game|Plan B' 'The fixed Heist replay must not claim or silently select an unproved Plan B fallback.'
+    $crewBoundarySource = [regex]::Match($runner, '(?ms)^function Invoke-CrewFavorCashierTipBoundary\s*\{.*?(?=^function |\z)').Value
+    $crewMarkerSource = [regex]::Match($runner, '(?ms)^function Establish-CrewMarker\s*\{.*?(?=^function |\z)').Value
+    $crewClearSource = [regex]::Match($runner, '(?ms)^function Clear-CrewMarkerFavors\s*\{.*?(?=^function |\z)').Value
+    Assert-Match $crewBoundarySource '(?s)Navigate-ToArchetype\s+-ArchetypeId\s+''corner_store''.*?Find-CanvasObject\s+-SemanticId\s+''service:cashier_tip''.*?Cashier Tip.*?object_type.*?service.*?Get-RenderedHudInteger\s+-Name bankroll.*?Open-SemanticObject.*?-SemanticId\s+''service:cashier_tip''.*?-PreferredActions\s+@\(''Use''\).*?afterCash\s+-ne\s+\$beforeCash\s+-\s*4' 'Crew marker aging must use the exact rendered Corner Store Cashier Tip action and verify its visible $4 bankroll charge.'
+    Assert-NotMatch $crewBoundarySource 'run_state|debt|turns_remaining|narrative_flags|crew_state|Open-CageCounter|cage_buy|cage_cashout' 'Crew Cashier Tip boundary must not read private timing/state or return to the wider Grand/Cage exchange.'
+    Assert-Match $crewMarkerSource '(?s)Navigate-ToArchetype\s+-ArchetypeId\s+''corner_store''.*?Select-GrandFareFundingObject.*?lender_id\s+-cne\s+''the_crew''.*?beforeDebtCount\s+-ne\s+0.*?click_object lender:the_crew.*?Select-GrandFareFundingObjectAction.*?lender_conversation:borrow:the_crew.*?Select-GrandFareFundingTalkOffer.*?principal\s+-ne\s+45.*?click_choice accept.*?Assert-GrandFareFundingConfirmation.*?click_choice accept.*?Assert-GrandFareFundingResult.*?GrandFareAcceptedLenderIds\.Add\(''the_crew''\)' 'Crew marker funding must validate the exact debt-free public offer, both confirmation presses, $45 principal, and exact bankroll/debt result.'
+    Assert-Match $crewClearSource '(?s)for\s*\(\$favor\s*=\s*1;\s*\$favor\s*-le\s*2.*?for\s*\(\$boundary\s*=\s*1;\s*\$boundary\s*-le\s*2\s+-and\s+-not\s+\(Test-CrewFavorPublicSurface\).*?Invoke-CrewFavorCashierTipBoundary.*?Test-CrewFavorPublicSurface.*?run_package.*?Complete-PublicDelivery' 'Crew route must clear both favors, using at most two exact Cashier Tip boundaries only while no public favor is due, then complete each visible delivery.'
+    Assert-NotMatch ($crewMarkerSource + $crewClearSource) 'Travel-ToNode|Reach-GrandCasino|Open-CageCounter|Invoke-CrewFavorPublicActionBoundary' 'Crew marker aging must not fall back to travel or the removed Grand/Cage boundary.'
+    Assert-NotMatch $runner '(?ms)^function Invoke-CrewFavorPublicActionBoundary\s*\{' 'The obsolete Grand/Cage Crew boundary helper must stay removed.'
+    Assert-Match $replayPolicy '(?ms)^function Select-HeistAuditNightPublicHook.*?screen.*?ENVIRONMENT.*?archetype_id.*?grand_casino.*?semantic_id.*?event:scenario_audit_roster.*?matches\.Count\s+-ne\s+1.*?The Audit Roster.*?object_type.*?rendered\s+-isnot\s+\[bool\].*?enabled\s+-isnot\s+\[bool\].*?(?=^function |\z)' 'Audit route policy must require exactly one enabled and rendered public Audit Roster event on Grand Main.'
+    $auditPolicySource = [regex]::Match($replayPolicy, '(?ms)^function Select-HeistAuditNightPublicHook.*?(?=^function |\z)').Value
+    Assert-NotMatch $auditPolicySource 'scenario_hook_flags|narrative_flags|run_state|crew_heist_state' 'Audit route policy must not infer the hook from private model state.'
+    Assert-Match $heistSeedPreflight '(?s)function Get-Rw062ProductionScenarioContract.*?\$TownStatePath.*?\$PoliceSweepPath.*?\$CharacterChainPath.*?\$townState\s*=\s*Get-Content.*?\$policeSweep\s*=\s*Get-Content.*?\$characterChain\s*=\s*Get-Content' 'Engine-free Heist preflight must load the complete production multiplier chain.'
+    foreach ($requiredPreflightToken in @(
+        '_on_start_pressed', 'normal_run_start_modifiers', 'carried_container_rows',
+        'text_to_seed', 'challenge_key', 'ENVIRONMENT_SITUATION_NONE_PERCENT',
+        'recent_scenario_ids', 'town_state', 'CharacterChainModelScript',
+        'police_sweep', 'GRAND_CASINO_IDS', 'pawn_shop_sals_mood'
+    )) {
+        Assert-Contains $heistSeedPreflight $requiredPreflightToken "Engine-free Heist preflight is missing production binding token: $requiredPreflightToken"
+    }
+    Assert-Match $heistSeedPreflight '(?s)function Get-Rw062GrandScenarioSelection.*?Get-Rw062FreshProfileChallengeKey.*?grand_casino.*?function Assert-Rw062AuditNightSelection' 'Engine-free Heist preflight must model the exact Grand weighted selection and fail-closed Audit assertion.'
+    Assert-Match $heistSeedPreflight '(?s)RW06-CLEAN-ROUTE-01.*?6620395.*?RW06-HEIST-AUDIT-0002.*?run_seed\s*-ne\s*919325714.*?stream_seed\s*-ne\s*1392077385.*?none_roll\s*-ne\s*59.*?weighted_roll\s*-ne\s*24088.*?RW06-HEIST-AUDIT-0013.*?run_seed\s*=\s*1868801668.*?selected\s*=\s*''grand_casino_convention_crowd''.*?PLAYTEST-CATALOG-01.*?FIRST-NIGHT-ACE-17.*?RecentScenarioIds\s+@\(''grand_casino_audit_night''\).*?Recent Audit history did not fail closed' 'Heist seed contract must preserve the packed-save calibration, exact `0002` candidate, rejected `0013`, empty/non-Audit hostiles, and recent-Audit suppression.'
+    Assert-NotMatch $heistSeedPreflight 'scenario_pins|tutorial_overrides|debug|inject' 'Natural Heist preflight must not pin, inject, or use tutorial/debug scenario authority.'
     Assert-Match $replayPolicy '(?s)function Assert-DeltaQueenBeachPublicRoute.*?ArchetypeId\s+-cne\s+''delta_queen''.*?beachNodes\.Count\s+-cne\s+1.*?state.*?revealed.*?visited.*?beachCost.*?-cne\s+0.*?beachTravelTarget\s+-isnot\s+\[bool\].*?-not\s+\[bool\]\$beachTravelTarget.*?beachEnabled\s+-isnot\s+\[bool\].*?exact transient boat travel lock.*?another normal Delta Queen travel destination was enabled' 'Q-011 policy must require one visible final-selection zero-fare Beach route and allow it disabled only during the exact global boat travel lock.'
     Assert-Match $runner '(?s)function Assert-DeltaQueenBeachRouteInvariant.*?Open-WorldMap.*?Assert-DeltaQueenBeachPublicRoute.*?finally.*?Close-WorldMap.*?function Travel-ToNode.*?Assert-DeltaQueenBeachRouteInvariant.*?function Assert-SaveRelaunchContinue.*?Public persistence checkpoint changed.*?Assert-DeltaQueenBeachRouteInvariant' 'Every real Delta Queen arrival and restored Continue checkpoint must verify the Q-011 Beach route through the public map.'
     Assert-Match $runner '(?s)function Clear-VisibleCoach.*?Get-VisibleTutorialGuideAcknowledgment.*?Choose-VisibleChoice\s+-ChoiceId\s+''continue''.*?Wait-Frames.*?continue.*?dismissLabel.*?Select-UniqueFullyVisibleButton\s+-Buttons\s+@\(Get-Buttons\)\s+-Text\s+\$dismissLabel.*?Select-UniqueFullyVisibleButton\s+-Buttons\s+@\(Get-Buttons\)\s+-Text\s+''Skip tip''.*?fully visible public dismiss control' 'Coach recovery must follow the narrow public tutorial-guide acknowledgement, then require a unique boolean-true fully-visible dismiss control before input.'
@@ -2022,6 +2404,12 @@ $report = [ordered]@{
     cheat_showdown_walk_hostile_fixtures = $cheatShowdownWalkHostileFixtures
     cheat_duel_continuation_valid_fixtures = $cheatDuelContinuationValidFixtures
     cheat_duel_continuation_hostile_fixtures = $cheatDuelContinuationHostileFixtures
+    heist_seed_valid_fixtures = $heistSeedValidFixtures
+    heist_seed_hostile_fixtures = $heistSeedHostileFixtures
+    heist_launch_setup_valid_fixtures = $heistLaunchSetupValidFixtures
+    heist_launch_setup_hostile_fixtures = $heistLaunchSetupHostileFixtures
+    heist_audit_hook_valid_fixtures = $heistAuditHookValidFixtures
+    heist_audit_hook_hostile_fixtures = $heistAuditHookHostileFixtures
     failures = @($failures)
 }
 $report | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $ReportPath -Encoding utf8

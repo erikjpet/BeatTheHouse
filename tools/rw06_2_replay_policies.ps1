@@ -27,6 +27,82 @@ function Get-Rw062RequiredPublicProperty {
 }
 
 
+function Assert-HeistFreshStandardRunSetup {
+    param([Parameter(Mandatory = $true)]$Observation)
+
+    $screen = Get-Rw062RequiredPublicProperty -InputObject $Observation -Name 'screen' -Context 'Heist fresh run setup observation'
+    $screenName = Get-Rw062RequiredPublicProperty -InputObject $screen -Name 'screen' -Context 'Heist fresh run setup screen'
+    $startMenu = Get-Rw062RequiredPublicProperty -InputObject $screen -Name 'start_menu' -Context 'Heist fresh run setup screen'
+    $runConfigVisible = Get-Rw062RequiredPublicProperty -InputObject $startMenu -Name 'run_config_visible' -Context 'Heist fresh run setup menu'
+    $challengeId = Get-Rw062RequiredPublicProperty -InputObject $startMenu -Name 'selected_challenge_id' -Context 'Heist fresh run setup menu'
+    $homeTypeId = Get-Rw062RequiredPublicProperty -InputObject $startMenu -Name 'selected_home_type_id' -Context 'Heist fresh run setup menu'
+    $contentGroups = Get-Rw062RequiredPublicProperty -InputObject $startMenu -Name 'selected_content_groups' -Context 'Heist fresh run setup menu'
+    $expectedContentGroups = @(
+        'universal_passive_items', 'universal_active_items', 'scratch_tickets_pack',
+        'pull_tabs_pack', 'slot_pack', 'coin_pusher_pack', 'bar_dice_pack',
+        'craps_pack', 'crew_poker_pack', 'blackjack_pack', 'baccarat_pack',
+        'roulette_pack', 'video_poker_pack', 'numbers_pack'
+    )
+    if ($screenName -isnot [string] -or [string]$screenName -cne 'START' -or
+        $runConfigVisible -isnot [bool] -or -not [bool]$runConfigVisible -or
+        $challengeId -isnot [string] -or [string]$challengeId -cne '' -or
+        $homeTypeId -isnot [string] -or [string]$homeTypeId -cne 'random' -or
+        $contentGroups -isnot [array] -or $contentGroups.Count -ne $expectedContentGroups.Count) {
+        throw 'Heist seed authority requires the visible fresh Standard/Random/default-content run setup.'
+    }
+    for ($index = 0; $index -lt $expectedContentGroups.Count; $index++) {
+        if ($contentGroups[$index] -isnot [string] -or
+            [string]$contentGroups[$index] -cne [string]$expectedContentGroups[$index]) {
+            throw "Heist seed authority found non-default visible content group index $index."
+        }
+    }
+    return [pscustomobject][ordered]@{
+        selected_challenge_id = [string]$challengeId
+        selected_home_type_id = [string]$homeTypeId
+        selected_content_groups = @($contentGroups)
+    }
+}
+
+
+function Select-HeistAuditNightPublicHook {
+    param(
+        [Parameter(Mandatory = $true)]$Observation,
+        [Parameter(Mandatory = $true)][AllowEmptyCollection()][object[]]$CanvasObjects
+    )
+
+    $screen = Get-Rw062RequiredPublicProperty -InputObject $Observation -Name 'screen' -Context 'Heist Audit preflight observation'
+    $screenName = Get-Rw062RequiredPublicProperty -InputObject $screen -Name 'screen' -Context 'Heist Audit preflight screen'
+    $environment = Get-Rw062RequiredPublicProperty -InputObject $Observation -Name 'environment' -Context 'Heist Audit preflight observation'
+    $archetypeId = Get-Rw062RequiredPublicProperty -InputObject $environment -Name 'archetype_id' -Context 'Heist Audit preflight environment'
+    if ($screenName -isnot [string] -or [string]$screenName -cne 'ENVIRONMENT' -or
+        $archetypeId -isnot [string] -or [string]$archetypeId -cne 'grand_casino') {
+        throw 'The Count route must verify Audit Night on the rendered Grand Casino Main environment screen.'
+    }
+
+    $matches = @($CanvasObjects | Where-Object {
+        $semanticProperties = @(Get-Rw062ExactPublicPropertyMatches -InputObject $_ -Name 'semantic_id')
+        $semanticProperties.Count -eq 1 -and $semanticProperties[0].Value -is [string] -and
+            [string]$semanticProperties[0].Value -ceq 'event:scenario_audit_roster'
+    })
+    if ($matches.Count -ne 1) {
+        throw "The rendered Grand Casino must expose exactly one Audit Roster hook before the Crew grind; found $($matches.Count)."
+    }
+
+    $hook = $matches[0]
+    $label = Get-Rw062RequiredPublicProperty -InputObject $hook -Name 'label' -Context 'Rendered Audit Night hook'
+    $objectType = Get-Rw062RequiredPublicProperty -InputObject $hook -Name 'object_type' -Context 'Rendered Audit Night hook'
+    $rendered = Get-Rw062RequiredPublicProperty -InputObject $hook -Name 'rendered' -Context 'Rendered Audit Night hook'
+    $enabled = Get-Rw062RequiredPublicProperty -InputObject $hook -Name 'enabled' -Context 'Rendered Audit Night hook'
+    if ($label -isnot [string] -or [string]$label -cne 'The Audit Roster' -or
+        $objectType -isnot [string] -or [string]$objectType -cne 'event' -or
+        $rendered -isnot [bool] -or -not [bool]$rendered -or
+        $enabled -isnot [bool] -or -not [bool]$enabled) {
+        throw 'Audit Night is not present as the exact rendered and enabled public Audit Roster event.'
+    }
+    return $hook
+}
+
+
 function Assert-DeltaQueenBeachPublicRoute {
     param(
         [Parameter(Mandatory = $true)][string]$ArchetypeId,

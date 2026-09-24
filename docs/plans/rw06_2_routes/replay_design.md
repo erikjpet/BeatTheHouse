@@ -388,10 +388,18 @@ checkpoint, screenshots, and final summary used for acceptance.
 4. The Grand Casino route costs $70 before gambling capital.
 5. A watched cheat plus contraband can turn the Pit Boss route into immediate
    failure; the replay should carry no classified gear.
-6. Plan A needs a naturally reached Audit Night plus Bishop Inner Circle. The
-   relationship/job cadence may exceed the target run length.
-7. Plan B is materially longer and more expensive, so it is a fallback route,
-   not the initial replay target.
+6. The exact visible fresh-profile launch rejects stale seed
+   `RW06-HEIST-AUDIT-0013`: its initial Grand cycle selects Convention. Q-013A
+   adopts `RW06-HEIST-AUDIT-0002`, whose first Grand cycle selects Audit. Lasting
+   Count eligibility is earned only by resolving the rendered
+   `scenario_audit_roster/read_the_shift` choice; current Audit also qualifies,
+   while unvisited seed data, stored prior-cycle hooks, narrative-only claims,
+   and non-boolean save values fail closed. The runner does not inject Audit or
+   choose Plan B. The rendered hook, Bishop Inner Circle route, and terminal win
+   still need live proof, and the relationship/job cadence may exceed the target
+   run length.
+7. Plan B is materially longer, more expensive, and has no qualifying replay.
+   It is not a fallback: the fixed route fails closed when Plan A is unavailable.
 8. Save/quit/Continue must reuse isolated persistence without confusing a stale
    session process for a successful relaunch; the replay compares only a
    canonical public checkpoint.

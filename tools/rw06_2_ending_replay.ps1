@@ -21,6 +21,7 @@ $ErrorActionPreference = 'Stop'
 $Worktree = Split-Path -Parent $PSScriptRoot
 $SessionTool = Join-Path $PSScriptRoot 'agent_playtest_session.ps1'
 $ReplayPolicyTool = Join-Path $PSScriptRoot 'rw06_2_replay_policies.ps1'
+$HeistSeedPreflightTool = Join-Path $PSScriptRoot 'rw06_2_heist_seed_preflight.ps1'
 $GodotBin = 'D:\Projects\Beat-The-House\.tools\godot-4.6-stable\Godot_v4.6-stable_win64_console.exe'
 $Schema = 'beat_the_house.agent_public_observation'
 $SchemaVersion = 1
@@ -28,7 +29,7 @@ $BridgeCallRoot = Join-Path $Worktree '.tmp\rw06_2\bridge_calls'
 $FixedSeeds = @{
     clean = 'RW06-CLEAN-ROUTE-01'
     cheat = 'RW06-CHEAT-ROUTE-01'
-    heist = 'PLAYTEST-CATALOG-01'
+    heist = 'RW06-HEIST-AUDIT-0002'
 }
 $ExpectedOutcomes = @{
     clean = @('players_card')
@@ -42,6 +43,9 @@ if (-not (Test-Path -LiteralPath $SessionTool)) {
 }
 if (-not (Test-Path -LiteralPath $ReplayPolicyTool)) {
     throw "Replay policy helper is missing: $ReplayPolicyTool"
+}
+if (-not (Test-Path -LiteralPath $HeistSeedPreflightTool)) {
+    throw "Heist seed preflight is missing: $HeistSeedPreflightTool"
 }
 . $ReplayPolicyTool
 if (-not (Test-Path -LiteralPath $GodotBin)) {
@@ -75,6 +79,7 @@ $script:GrandFareAcceptedOfferKeys = New-Object 'System.Collections.Generic.Hash
 $script:GrandFareAcceptedLenderIds = New-Object 'System.Collections.Generic.HashSet[string]'
 $script:GrandFareResolvedCashEventKeys = New-Object 'System.Collections.Generic.HashSet[string]'
 $script:GrandFareRecoveryVisitedNodes = New-Object 'System.Collections.Generic.HashSet[string]'
+$script:HeistLaunchSetup = $null
 
 
 function Get-Value {
@@ -108,6 +113,36 @@ function Get-Array {
     param([AllowNull()]$Value)
     if ($null -ceq $Value) { return @() }
     return @($Value)
+}
+
+
+function Invoke-HeistSeedPreflight {
+    param([Parameter(Mandatory = $true)][string]$OutputPath)
+
+    $jsonLines = @(& $HeistSeedPreflightTool `
+        -SeedText $Seed `
+        -ExpectedScenario 'grand_casino_audit_night' `
+        -ReportPath $OutputPath)
+    if ($jsonLines.Count -ne 1) {
+        throw "Heist seed preflight returned $($jsonLines.Count) output records instead of one exact JSON report."
+    }
+    try {
+        $report = [string]$jsonLines[0] | ConvertFrom-Json
+    }
+    catch {
+        throw "Heist seed preflight did not return valid JSON: $($_.Exception.Message)"
+    }
+    $passed = Get-Value $report @('passed') $null
+    $reportedSeed = Get-Value $report @('selection', 'seed_text') $null
+    $selectedScenario = Get-Value $report @('selection', 'selected_scenario') $null
+    $cycleId = Get-Value $report @('selection', 'cycle_id') $null
+    if ($passed -isnot [bool] -or -not [bool]$passed -or
+        $reportedSeed -isnot [string] -or [string]$reportedSeed -cne $Seed -or
+        $selectedScenario -isnot [string] -or [string]$selectedScenario -cne 'grand_casino_audit_night' -or
+        $cycleId -isnot [string] -or [string]::IsNullOrWhiteSpace([string]$cycleId)) {
+        throw 'Heist seed preflight did not prove the exact requested seed selects Grand Casino Audit Night on the current production tree.'
+    }
+    return $report
 }
 
 
@@ -1421,6 +1456,9 @@ function Start-NormalSeededRun {
     $null = Click-Button -Text 'RUN SETUP' -Intent 'open the visible seeded-run setup' -Contains
     if (-not [bool](Get-Value $script:LastObservation @('screen', 'start_menu', 'run_config_visible') $false)) {
         throw 'RUN SETUP did not render the seeded-run configuration panel.'
+    }
+    if ($Ending -ceq 'heist') {
+        $script:HeistLaunchSetup = Assert-HeistFreshStandardRunSetup -Observation $script:LastObservation
     }
     $null = Invoke-BridgeCommand -Command "set_field seed $Seed" -Intent "type route seed $Seed into the visible seed field"
     $visibleSeed = [string](Get-Value $script:LastObservation @('screen', 'start_menu', 'seed_text') '')
@@ -3116,6 +3154,28 @@ function Find-WorldNodeIdByArchetype {
 }
 
 
+function Assert-RenderedAuditNightHook {
+    $canvasObjects = @(Get-Array (Get-Value $script:LastResult @('look', 'clickable', 'canvas_objects') @()))
+    $hook = Select-HeistAuditNightPublicHook `
+        -Observation $script:LastObservation `
+        -CanvasObjects $canvasObjects
+    if ($null -eq $hook) {
+        throw 'The public Audit Night hook selector returned no rendered hook.'
+    }
+    return $hook
+}
+
+
+function Observe-RenderedAuditNightHook {
+    $null = Assert-RenderedAuditNightHook
+    Invoke-EventObjectChoice `
+        -EventId 'scenario_audit_roster' `
+        -ChoiceId 'read_the_shift' `
+        -Intent 'read the visible Audit roster and learn The Count route'
+    Restore-EnvironmentSurfaceAfterTravelResult
+}
+
+
 function Navigate-ToArchetype {
     param(
         [Parameter(Mandatory = $true)][string]$ArchetypeId,
@@ -3130,66 +3190,130 @@ function Navigate-ToArchetype {
 }
 
 
+function Test-CrewFavorPublicSurface {
+    $eventId = [string](Get-Value $script:LastObservation @('event_popup', 'event_id') '')
+    $talkId = [string](Get-Value $script:LastObservation @('talk', 'event_id') '')
+    return $eventId -ceq 'crew_favor_delivery' -or
+        $talkId -ceq 'crew_favor_delivery' -or
+        $null -cne (Find-CanvasObject -SemanticId 'event:crew_favor_delivery')
+}
+
+
+function Invoke-CrewFavorCashierTipBoundary {
+    param(
+        [Parameter(Mandatory = $true)][ValidateRange(1, 2)][int]$FavorNumber,
+        [Parameter(Mandatory = $true)][ValidateRange(1, 2)][int]$BoundaryNumber
+    )
+    Navigate-ToArchetype -ArchetypeId 'corner_store' -Intent "return to the Corner Store for Crew favor $FavorNumber boundary $BoundaryNumber"
+    Restore-EnvironmentSurfaceAfterTravelResult
+
+    $service = Find-CanvasObject -SemanticId 'service:cashier_tip'
+    if ($null -ceq $service -or
+        [string](Get-Value $service @('label') '') -cne 'Cashier Tip' -or
+        [string](Get-Value $service @('object_type') '') -cne 'service') {
+        throw 'The Corner Store does not expose exactly the rendered, enabled Cashier Tip service required for Crew-marker timing.'
+    }
+    $beforeCash = Get-RenderedHudInteger -Name bankroll -Context "Crew favor $FavorNumber boundary $BoundaryNumber bankroll before the visible Cashier Tip"
+    if ($beforeCash -lt 4) {
+        throw "The visible Cashier Tip costs `$4, but only `$$beforeCash remains before Crew favor $FavorNumber boundary $BoundaryNumber."
+    }
+    $null = Open-SemanticObject `
+        -SemanticId 'service:cashier_tip' `
+        -PreferredActions @('Use') `
+        -Intent "pay the visible `$4 Cashier Tip for Crew favor $FavorNumber boundary $BoundaryNumber"
+    Wait-Frames -Frames 10
+    $afterCash = Get-RenderedHudInteger -Name bankroll -Context "Crew favor $FavorNumber boundary $BoundaryNumber bankroll after the visible Cashier Tip"
+    if ($afterCash -ne $beforeCash - 4) {
+        throw "The visible Cashier Tip did not charge its exact `$4 price at Crew favor $FavorNumber boundary $BoundaryNumber (`$$beforeCash -> `$$afterCash)."
+    }
+    if (-not (Test-CrewFavorPublicSurface)) {
+        Restore-EnvironmentSurfaceAfterTravelResult
+    }
+}
+
+
 function Establish-CrewMarker {
-    $candidateArchetypes = @('back_alley', 'corner_store', 'motel', 'bar', 'gas_station_casino')
-    $accepted = $false
-    foreach ($archetype in $candidateArchetypes) {
-        $nodeId = Find-WorldNodeIdByArchetype -ArchetypeId $archetype
-        if ([string]::IsNullOrWhiteSpace($nodeId)) { continue }
-        Navigate-ToNode -NodeId $nodeId -Intent "visit $archetype to find the Crew's visible lender"
-        if ($null -ceq (Find-CanvasObject -SemanticId 'lender:the_crew')) { continue }
-        $null = Open-SemanticObject -SemanticId 'lender:the_crew' -PreferredActions @('Borrow', 'Talk', 'Ask', 'Open') -Intent 'ask the visible Crew lender for terms'
-        Wait-Frames -Frames 8
-        $null = Choose-VisibleChoice -ChoiceId 'accept' -Intent 'accept the visible Crew favor terms and marker'
-        Wait-Frames -Frames 12
-        $accepted = $true
-        break
+    Navigate-ToArchetype -ArchetypeId 'corner_store' -Intent 'visit the Corner Store for its visible Crew lender and repeatable cashier service'
+    Restore-EnvironmentSurfaceAfterTravelResult
+    $canvasObjects = @(Get-Array (Get-Value $script:LastResult @('look', 'clickable', 'canvas_objects') @()))
+    $worldNodeId = Get-Value $script:LastObservation @('environment', 'world_node_id') $null
+    if ($worldNodeId -isnot [string] -or [string]$worldNodeId -cnotmatch '^[a-z0-9_]+$') {
+        throw 'The Corner Store Crew marker has no stable public world-node identity.'
     }
-    if (-not $accepted) {
-        throw "The normal seeded run exposed no player-visible Crew lender across the public lender route."
+    $selection = Select-GrandFareFundingObject `
+        -CanvasObjects $canvasObjects `
+        -WorldNodeId ([string]$worldNodeId) `
+        -AcceptedOfferKeys @($script:GrandFareAcceptedOfferKeys) `
+        -AcceptedLenderIds @($script:GrandFareAcceptedLenderIds)
+    if ([string]$selection.lender_id -cne 'the_crew' -or [string]$selection.semantic_id -cne 'lender:the_crew') {
+        throw "The normal seeded Corner Store selected an unexpected lender '$($selection.semantic_id)'."
     }
+    $beforeBankroll = Get-RenderedHudInteger -Name bankroll -Context 'Crew marker bankroll before the public offer'
+    $beforeDebtIndicator = Get-Value $script:LastObservation @('status_hud', 'debt_indicator') $null
+    $beforeDebtCount = Get-GrandFarePublicDebtCount -DebtIndicator $beforeDebtIndicator -Context 'Crew marker pre-acceptance HUD'
+    if ($beforeDebtCount -ne 0) {
+        throw 'The fixed Heist route reached its one Crew marker with another active debt already visible.'
+    }
+
+    $null = Invoke-BridgeCommand -Command 'click_object lender:the_crew' -Intent 'focus the visible Corner Store Crew lender'
+    $selection = Select-GrandFareFundingObjectAction -Selection $selection -RoomActions @(Get-RoomActions)
+    $null = Invoke-RoomActionRow -Row $selection.action -Intent 'open the Crew lender terms'
+    Wait-ForFullyRenderedFundingTalk -ExpectedEventId 'lender_conversation:borrow:the_crew'
+    $offer = Select-GrandFareFundingTalkOffer `
+        -Selection $selection `
+        -Talk (Get-Value $script:LastObservation @('talk') $null) `
+        -TalkChoices @(Get-PublicTalkChoices)
+    if ([int]$offer.principal -ne 45) {
+        throw "The visible Crew marker principal changed from `$45 to `$$($offer.principal)."
+    }
+    $null = Invoke-BridgeCommand -Command 'click_choice accept' -Intent 'arm the visibly disclosed Crew marker offer'
+    $null = Assert-GrandFareFundingConfirmation `
+        -Offer $offer `
+        -Talk (Get-Value $script:LastObservation @('talk') $null) `
+        -TalkChoices @(Get-PublicTalkChoices)
+    $null = Invoke-BridgeCommand -Command 'click_choice accept' -Intent 'confirm the visibly armed Crew marker offer'
+    Wait-Frames -Frames 10
+    $null = Assert-GrandFareFundingResult `
+        -Offer $offer `
+        -BeforeBankroll $beforeBankroll `
+        -BeforeDebtIndicator $beforeDebtIndicator `
+        -AfterObservation $script:LastObservation
+    $null = $script:GrandFareAcceptedOfferKeys.Add([string]$selection.offer_key)
+    $null = $script:GrandFareAcceptedLenderIds.Add('the_crew')
+    Restore-EnvironmentSurfaceAfterTravelResult
+}
+
+
+function Clear-CrewMarkerFavors {
 
     # The public lender terms create a two-favor marker. Clear both favors now
     # so the long heist route cannot be interrupted later by a second overdue
-    # Crew call.
-    $favorsCompleted = 0
-    for ($boundary = 0; $boundary -lt 28; $boundary++) {
+    # Crew call. Normal travel advances only the clock, not RunState's action
+    # index. Audit/invitation choices may already have consumed a boundary; use
+    # the repeatable rendered $4 Cashier Tip only for the remaining boundaries.
+    for ($favor = 1; $favor -le 2; $favor++) {
+        for ($boundary = 1; $boundary -le 2 -and -not (Test-CrewFavorPublicSurface); $boundary++) {
+            Invoke-CrewFavorCashierTipBoundary -FavorNumber $favor -BoundaryNumber $boundary
+        }
+        if (-not (Test-CrewFavorPublicSurface)) {
+            throw "Crew favor $favor did not surface after at most two visible Cashier Tip action boundaries."
+        }
         $eventId = [string](Get-Value $script:LastObservation @('event_popup', 'event_id') '')
         $talkId = [string](Get-Value $script:LastObservation @('talk', 'event_id') '')
         if (($eventId -ceq 'crew_favor_delivery' -or $talkId -ceq 'crew_favor_delivery') -and
             'run_package' -cin @(Get-VisibleChoiceIds)) {
-            $null = Choose-VisibleChoice -ChoiceId 'run_package' -Intent "honor the Crew's visible favor $($favorsCompleted + 1) of 2"
+            $null = Choose-VisibleChoice -ChoiceId 'run_package' -Intent "honor the Crew's visible favor $favor of 2"
             Wait-Frames -Frames 10
-            Complete-PublicDelivery -Intent "complete Crew favor $($favorsCompleted + 1) of 2"
-            $favorsCompleted++
-            if ($favorsCompleted -ge 2) { return }
+            Complete-PublicDelivery -Intent "complete Crew favor $favor of 2"
             continue
         }
         if ($null -cne (Find-CanvasObject -SemanticId 'event:crew_favor_delivery')) {
-            Invoke-EventObjectChoice -EventId 'crew_favor_delivery' -ChoiceId 'run_package' -Intent "honor the Crew's visible favor $($favorsCompleted + 1) of 2"
-            Complete-PublicDelivery -Intent "complete Crew favor $($favorsCompleted + 1) of 2"
-            $favorsCompleted++
-            if ($favorsCompleted -ge 2) { return }
+            Invoke-EventObjectChoice -EventId 'crew_favor_delivery' -ChoiceId 'run_package' -Intent "honor the Crew's visible favor $favor of 2"
+            Complete-PublicDelivery -Intent "complete Crew favor $favor of 2"
             continue
         }
-        if ($null -cne (Find-CanvasObject -SemanticId 'event:parking_lot_tip')) {
-            Invoke-EventObjectChoice -EventId 'parking_lot_tip' -ChoiceId 'follow_tip' -Intent 'follow the visible underground route tip while the Crew calls in its favor'
-            continue
-        }
-        Open-WorldMap
-        $current = [string](Get-Value $script:LastObservation @('environment', 'world_node_id') '')
-        $next = @(Get-MapNodes | Where-Object {
-            [bool](Get-Value $_ @('travel_enabled') $false) -and
-            [string](Get-Value $_ @('id') '') -cne $current
-        } | Sort-Object @{ Expression = { [int](Get-Value $_ @('cost') 0) } }, @{ Expression = { [string](Get-Value $_ @('id') '') } } | Select-Object -First 1)
-        if ($next.Count -ceq 0) {
-            Close-WorldMap
-            throw "The Crew favor did not surface and the public map exposed no ordinary action boundary."
-        }
-        $nextId = [string](Get-Value $next[0] @('id') '')
-        Travel-ToNode -NodeId $nextId -Intent "take an ordinary public route boundary while waiting for the Crew favor"
+        throw "Crew favor $favor surfaced without an enabled public Run the package response."
     }
-    throw "The accepted Crew marker did not surface and clear both visible favors within twenty-eight ordinary boundaries."
 }
 
 
@@ -3491,8 +3615,11 @@ function Assert-HeistSaveRelaunchContinue {
 
 function Invoke-HeistEndingRoute {
     Establish-CrewMarker
-    Ensure-PunchlineCasinoDiscovered
     Reach-GrandCasino
+    Restore-EnvironmentSurfaceAfterTravelResult
+    Observe-RenderedAuditNightHook
+    Clear-CrewMarkerFavors
+    Ensure-PunchlineCasinoDiscovered
     Recruit-Bishop
     Promote-BishopToInnerCircle
 
@@ -4171,6 +4298,10 @@ if ($BridgeTransportContract) {
 $invocationStamp = Get-Date -Format 'yyyyMMdd-HHmmss-fff'
 $invocationRoot = Join-Path $EvidenceRoot "$invocationStamp-$PID"
 New-Item -ItemType Directory -Force -Path $invocationRoot | Out-Null
+$heistSeedPreflight = $null
+if ($Ending -ceq 'heist') {
+    $heistSeedPreflight = Invoke-HeistSeedPreflight -OutputPath (Join-Path $invocationRoot 'heist_seed_preflight.json')
+}
 $runSummaries = @()
 $referenceTranscriptHash = ''
 $referenceMoneyHash = ''
@@ -4198,6 +4329,7 @@ for ($iteration = 1; $iteration -le $Repeat; $iteration++) {
     $script:GrandFareAcceptedLenderIds = New-Object 'System.Collections.Generic.HashSet[string]'
     $script:GrandFareResolvedCashEventKeys = New-Object 'System.Collections.Generic.HashSet[string]'
     $script:GrandFareRecoveryVisitedNodes = New-Object 'System.Collections.Generic.HashSet[string]'
+    $script:HeistLaunchSetup = $null
     $passed = $false
     $failureMessage = ''
     $finalPublicCheckpoint = $null
@@ -4232,6 +4364,8 @@ for ($iteration = 1; $iteration -le $Repeat; $iteration++) {
             observed_terminal_seed = if ($null -cne $finalPublicCheckpoint) { [string]$finalPublicCheckpoint.observed_seed } else { '' }
             action_count = $script:ActionCount
             midpoint_save_relaunch_continue = $script:MidpointSaved
+            heist_seed_preflight = $heistSeedPreflight
+            heist_launch_setup = $script:HeistLaunchSetup
             transcript = $script:TranscriptPath
             transcript_sha256 = $transcriptHash
             money_curve = $script:MoneyCurvePath
@@ -4276,6 +4410,7 @@ $finalSummary = [ordered]@{
     qualification = if ($releaseQualifying) { 'two_identical_repeats' } else { 'non_qualifying_development_run' }
     public_observation_schema = $Schema
     public_observation_schema_version = $SchemaVersion
+    heist_seed_preflight = $heistSeedPreflight
     evidence_root = $invocationRoot
     runs = $runSummaries
 }
