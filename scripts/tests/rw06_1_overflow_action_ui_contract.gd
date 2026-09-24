@@ -2620,8 +2620,14 @@ func _finish(app: Control) -> void:
 	await _settle_frames(12)
 	if failures.is_empty():
 		print("RW06_1_OVERFLOW_ACTION_UI PASS")
-		quit(0)
+		call_deferred("_quit_after_unwind", 0)
 		return
 	for failure in failures:
 		push_error(failure)
-	quit(1)
+	call_deferred("_quit_after_unwind", 1)
+
+
+func _quit_after_unwind(exit_code: int) -> void:
+	# SceneTree quit is requested only after the awaited test stack has returned;
+	# otherwise Godot may retain its coroutine state as a bare RefCounted at exit.
+	quit(exit_code)
