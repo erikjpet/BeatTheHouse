@@ -196,7 +196,7 @@ Resume: Orchestrator: apply now, update `README_0_6_release_week.md` and `rw06_e
 Answer: A. Owner amendment, 2026-09-23.
 
 ### Q-010 · rw06_1 · Unleased Godot on primary checkout
-Status: ANSWERED
+Status: RESOLVED by release orchestrator 2026-09-23
 Asked: release orchestrator, 2026-09-23
 Question: Godot 4.6 has been running against the primary checkout since 20:27 CT without a lease or live launcher. May I close it so the isolated focused rw06_1 contract can run safely?
 Options: A) Close it if still running (recommended)  B) Leave it; I will close it
