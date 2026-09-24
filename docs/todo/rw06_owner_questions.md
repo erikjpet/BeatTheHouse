@@ -237,9 +237,10 @@ Resume: Add a rare yellow light glimmer while the pull-tab machine screen is act
 Answer: A. Add the rare yellow pull-tab glimmer with the scope and invariants above.
 
 ### Q-015 · all active rows · Primary Godot reopened again
-Status: OPEN
+Status: RESOLVED by release orchestrator 2026-09-23
 Asked: release orchestrator, 2026-09-23
 Question: A new unleased Godot 4.6 console/child pair opened at 22:46 CT against `D:\Projects\Beat-The-House`. May I close only that exact pair so isolated release verification can resume?
 Options: A) Close the exact pair if still running (recommended)  B) I will close it and keep the primary editor closed
 Resume: Revalidate console PID 24328 and child PID 30092 still target the primary checkout and have no lease. If A, terminate only that exact pair, confirm zero unleased Godot processes, then resume Q-009 isolated focused runs. Do not launch another engine while OPEN; continue engine-free audits, implementation and validation.
 Answer:
+cklosed you can close things if nessesary
