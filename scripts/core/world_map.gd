@@ -246,7 +246,7 @@ static func normalize(map_data: Dictionary) -> Dictionary:
 	normalized["nodes"] = _normalize_nodes(JsonCoerceScript._copy_array(normalized.get("nodes", [])))
 	normalized["edges"] = _normalize_edges(JsonCoerceScript._copy_array(normalized.get("edges", [])))
 	normalized["visited_path"] = JsonCoerceScript._string_array(normalized.get("visited_path", []))
-	return normalized
+	return _enforce_beach_gateway_access(normalized)
 
 
 # Read-only path/map presentation needs node identity and topology, not the
@@ -258,7 +258,7 @@ static func normalize_topology(map_data: Dictionary) -> Dictionary:
 	var edges_value: Variant = map_data.get("edges", [])
 	var nodes: Array = nodes_value as Array if typeof(nodes_value) == TYPE_ARRAY else []
 	var edges: Array = edges_value as Array if typeof(edges_value) == TYPE_ARRAY else []
-	return {
+	var normalized := {
 		"version": maxi(1, int(map_data.get("version", VERSION))),
 		"seed_text": str(map_data.get("seed_text", "")),
 		"start_node_id": str(map_data.get("start_node_id", "")),
@@ -271,6 +271,7 @@ static func normalize_topology(map_data: Dictionary) -> Dictionary:
 		"edges": _normalize_edges(edges),
 		"visited_path": JsonCoerceScript._string_array(map_data.get("visited_path", [])),
 	}
+	return _enforce_beach_gateway_access(normalized)
 
 
 static func current_node_id(map_data: Dictionary) -> String:
@@ -335,6 +336,10 @@ static func visible_node_ids(map_data: Dictionary) -> Array:
 		var node_id := str(node.get("id", ""))
 		if not node_id.is_empty() and _node_is_visible(node):
 			result.append(node_id)
+	if current_node_id(map_data) == BEACH_GATEWAY_ID and not result.has(BEACH_ID):
+		var beach_node := node_metadata_by_id(map_data, BEACH_ID)
+		if not beach_node.is_empty() and not bool(beach_node.get("home_lost", false)):
+			result.append(BEACH_ID)
 	return result
 
 
@@ -342,6 +347,8 @@ static func is_node_visible(map_data: Dictionary, node_id: String) -> bool:
 	var node := node_metadata_by_id(map_data, node_id)
 	if node.is_empty():
 		return false
+	if current_node_id(map_data) == BEACH_GATEWAY_ID and node_id.strip_edges() == BEACH_ID:
+		return not bool(node.get("home_lost", false))
 	return _node_is_visible(node)
 
 
@@ -454,8 +461,8 @@ static func path_between(map_data: Dictionary, a: String, b: String, visible_onl
 # The query owns topology-only dictionaries and never retains environment
 # payloads from the source map.
 static func prepare_path_query(map_data: Dictionary, source_node_id: String, visible_only: bool = true) -> Dictionary:
-	var normalized := normalize_topology(map_data)
 	var source_id := source_node_id.strip_edges()
+	var normalized := _enforce_beach_gateway_access(normalize_topology(map_data), source_id)
 	var visible_lookup := _visible_node_lookup(normalized)
 	var previous_by_node_id: Dictionary = {}
 	var query := {
@@ -607,6 +614,10 @@ static func travel_target_ids(map_data: Dictionary, node_id: String = "", max_ne
 	var source_id := node_id.strip_edges()
 	if source_id.is_empty():
 		source_id = current_node_id(normalized)
+	# Callers may project choices for an explicit source before moving the map
+	# cursor there. Apply the same physical dock invariant to that source rather
+	# than relying only on the persisted current_node_id migration.
+	normalized = _enforce_beach_gateway_access(normalized, source_id)
 	var result: Array = []
 	var visible_data := _visible_ids_and_lookup(normalized)
 	var visible_ids: Array = visible_data.get("ids", [])
@@ -657,9 +668,7 @@ static func travel_target_ids(map_data: Dictionary, node_id: String = "", max_ne
 			result.append(target_id)
 	var enabled_priority_candidates := enabled_new_candidates + enabled_old_candidates
 	var all_priority_candidates := enabled_priority_candidates + fallback_new_candidates + fallback_old_candidates
-	if source_id == BEACH_GATEWAY_ID:
-		result = _ensure_visible_neighbor_target(result, source_id, BEACH_ID, total_limit, visible_lookup, edge_lookup, node_lookup)
-	elif source_id == BEACH_ID:
+	if source_id == BEACH_ID:
 		result = _ensure_visible_neighbor_target(result, source_id, BEACH_GATEWAY_ID, total_limit, visible_lookup, edge_lookup, node_lookup)
 	# Once a Tier-2 casino has been revealed and passes its route gates, it must
 	# survive the small travel-card cap. Otherwise cheaper familiar stops can
@@ -685,6 +694,12 @@ static func travel_target_ids(map_data: Dictionary, node_id: String = "", max_ne
 	# when another event-unlocked route scores first; only actually event-unlocked
 	# nodes may bypass a temporary route blocker such as insufficient fare.
 	result = _ensure_priority_targets(result, all_priority_candidates, [GRAND_CASINO_ID, event_priority_id, tier_two_priority_id], total_limit, promised_disabled_priority_ids)
+	# The physical dock-to-Beach exit is mandatory, but remains inside the normal
+	# travel-card cap. Apply it after generic priority promotion so a later
+	# replacement cannot evict it; when full, the last (lowest-ranked) ordinary
+	# card yields to the local connector.
+	if source_id == BEACH_GATEWAY_ID and total_limit > 0:
+		result = _ensure_visible_neighbor_target(result, source_id, BEACH_ID, total_limit, visible_lookup, edge_lookup, node_lookup)
 	return result
 
 
@@ -745,7 +760,7 @@ static func enter_node(map_data: Dictionary, node_id: String, environment_data: 
 	if path.is_empty() or str(path[path.size() - 1]) != target_id:
 		path.append(target_id)
 	normalized["visited_path"] = path
-	return _bump_revision(normalized)
+	return _bump_revision(_enforce_beach_gateway_access(normalized, target_id))
 
 
 static func mark_scouted(map_data: Dictionary, node_id: String) -> Dictionary:
@@ -1640,6 +1655,44 @@ static func _normalize_edges(edges: Array) -> Array:
 			"travel_method": travel_method_label(method_kind),
 		})
 	return result
+
+
+static func _enforce_beach_gateway_access(map_data: Dictionary, source_id: String = "") -> Dictionary:
+	var nodes_value: Variant = map_data.get("nodes", [])
+	if typeof(nodes_value) != TYPE_ARRAY:
+		return map_data
+	var nodes: Array = nodes_value
+	var beach_index := -1
+	var has_gateway := false
+	for index in range(nodes.size()):
+		if typeof(nodes[index]) != TYPE_DICTIONARY:
+			continue
+		var node_id := str((nodes[index] as Dictionary).get("id", ""))
+		if node_id == BEACH_ID:
+			beach_index = index
+		elif node_id == BEACH_GATEWAY_ID:
+			has_gateway = true
+	if beach_index < 0 or not has_gateway:
+		return map_data
+	# A continued run can carry the Beach as hidden even while the player is on
+	# the boat. Repair that old discovery record at the shared normalization seam
+	# used by both save restoration and the live read-only UI projection.
+	var effective_source_id := source_id.strip_edges()
+	if effective_source_id.is_empty():
+		effective_source_id = current_node_id(map_data)
+	if effective_source_id == BEACH_GATEWAY_ID:
+		var beach_node: Dictionary = nodes[beach_index]
+		if str(beach_node.get("state", STATE_HIDDEN)) != STATE_VISITED:
+			beach_node["state"] = STATE_REVEALED
+		beach_node["seen"] = true
+		beach_node["unlocked"] = true
+		beach_node["route_spawn_open"] = true
+		beach_node["discovered_by_travel"] = true
+		if str(beach_node.get("discovery_source", "")).strip_edges().is_empty():
+			beach_node["discovery_source"] = DISCOVERY_SOURCE_TRAVEL
+		nodes[beach_index] = beach_node
+		map_data["nodes"] = nodes
+	return map_data
 
 
 static func _normalized_state(state: String) -> String:

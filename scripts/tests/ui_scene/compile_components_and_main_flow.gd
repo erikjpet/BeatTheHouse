@@ -3215,49 +3215,264 @@ func _check_beach_return_travel_choice(app: Control) -> bool:
 	beach_environment["display_name"] = "The Beach"
 	beach_environment["kind"] = "recovery"
 	beach_environment["tier"] = 2
-	var map_data := WorldMapScript.unlock_nodes(
-		run_state.world_map,
-		["beach", "delta_queen"],
-		WorldMapScript.DISCOVERY_SOURCE_EVENT
-	)
 	var delta_environment := beach_environment.duplicate(true)
 	delta_environment["id"] = "ui_delta_queen_beach_access"
 	delta_environment["archetype_id"] = "delta_queen"
 	delta_environment["world_node_id"] = "delta_queen"
 	delta_environment["display_name"] = "The River Queen"
 	delta_environment["kind"] = "casino"
-	map_data = WorldMapScript.enter_node(map_data, "delta_queen", delta_environment)
+	delta_environment["travel_lock_remaining"] = 0
+	# This is the production arrival boundary. Do not pre-unlock Beach and do not
+	# pass a caller-authored target list: the shipped regression was precisely
+	# that the real selector could retain the node as hidden.
+	var map_data := WorldMapScript.enter_node(run_state.world_map, "delta_queen", delta_environment)
 	run_state.set_environment(delta_environment)
 	run_state.set_world_map(map_data)
 	run_state.bankroll = 0
 	run_state.game_clock_minutes = 12 * 60
 	app.call("_invalidate_travel_view_cache")
-	var access_choice: Dictionary = app.call("_travel_choice", "beach", ["beach"])
-	if not bool(access_choice.get("enabled", false)) \
-		or int(access_choice.get("cost", -1)) != 0 \
-		or str(access_choice.get("travel_method", "")) != "Walk":
-		push_error("Delta Queen did not expose the free Beach access walk: %s" % JSON.stringify(access_choice))
+	var access_targets: Array = app.call("_travel_target_ids")
+	if access_targets.count("beach") != 1:
+		push_error("Fresh Delta Queen arrival did not expose exactly one Beach through the production target selector: %s" % JSON.stringify(access_targets))
 		return false
+	var access_choice: Dictionary = {}
+	for choice_value in app.call("_travel_choice_view_list"):
+		if typeof(choice_value) == TYPE_DICTIONARY and str((choice_value as Dictionary).get("id", "")) == "beach":
+			access_choice = (choice_value as Dictionary).duplicate(true)
+			break
+	if not bool(access_choice.get("enabled", false)) \
+			or int(access_choice.get("cost", -1)) != 0 \
+			or str(access_choice.get("travel_method", "")) != "Walk":
+		push_error("Production travel choices did not expose the fresh Delta Queen-to-Beach walk: %s" % JSON.stringify(access_choice))
+		return false
+	var access_snapshot: Dictionary = app.call("_world_map_snapshot")
+	var access_beach_node: Dictionary = {}
+	for node_value in access_snapshot.get("nodes", []):
+		if typeof(node_value) == TYPE_DICTIONARY and str((node_value as Dictionary).get("id", "")) == "beach":
+			access_beach_node = node_value
+			break
+	if access_beach_node.is_empty() or not bool(access_beach_node.get("travel_target", false)) or not bool(access_beach_node.get("travel_enabled", false)):
+		push_error("Production world-map projection did not render Beach as an enabled fresh-arrival destination: %s" % JSON.stringify(access_beach_node))
+		return false
+	var travel_leave_count := 0
+	var fake_beach_hotspot_count := 0
+	for object_value in app.call("_interactable_object_view_list"):
+		if typeof(object_value) != TYPE_DICTIONARY:
+			continue
+		var object_id := str((object_value as Dictionary).get("object_id", ""))
+		if object_id == "travel:leave":
+			travel_leave_count += 1
+		elif object_id == "travel:beach":
+			fake_beach_hotspot_count += 1
+	if travel_leave_count != 1 or fake_beach_hotspot_count != 0:
+		push_error("Delta Queen must retain one generic travel:leave control and no fake Beach hotspot: leave=%d beach=%d" % [travel_leave_count, fake_beach_hotspot_count])
+		return false
+	if not bool(app.call("open_world_map")):
+		push_error("Fresh Delta Queen could not open the production world map.")
+		return false
+	await process_frame
+	if not bool(app.call("select_world_map_node", "beach")):
+		push_error("Rendered fresh-arrival Beach destination was not selectable.")
+		return false
+	await process_frame
+	var access_confirm_button: Button = app.get("world_map_confirm_button")
+	if access_confirm_button == null or access_confirm_button.disabled:
+		push_error("Rendered fresh-arrival Beach destination did not enable its Travel confirmation.")
+		return false
+	app.call("close_world_map")
+	await process_frame
+
+	# A global scenario/environment travel lock still governs every destination.
+	# Beach remains visible during the lock and becomes enabled when normal travel
+	# resumes; the owner directive does not bypass that shared gate.
+	run_state.current_environment["travel_lock_remaining"] = 2
+	app.call("_invalidate_travel_view_cache")
+	var locked_targets: Array = app.call("_travel_target_ids")
+	var locked_choice: Dictionary = {}
+	for choice_value in app.call("_travel_choice_view_list"):
+		if typeof(choice_value) == TYPE_DICTIONARY and str((choice_value as Dictionary).get("id", "")) == "beach":
+			locked_choice = choice_value
+			break
+	if locked_targets.count("beach") != 1 or bool(locked_choice.get("enabled", true)) or str(locked_choice.get("disabled_reason", "")).strip_edges().is_empty():
+		push_error("Beach did not remain visible-but-disabled under the ordinary global travel lock: targets=%s choice=%s" % [JSON.stringify(locked_targets), JSON.stringify(locked_choice)])
+		return false
+	run_state.current_environment["travel_lock_remaining"] = 0
+	app.call("_invalidate_travel_view_cache")
 	map_data = WorldMapScript.enter_node(map_data, "beach", beach_environment)
 	run_state.set_environment(beach_environment)
 	run_state.set_world_map(map_data)
 	run_state.bankroll = 0
 	run_state.game_clock_minutes = 12 * 60
 	app.call("_invalidate_travel_view_cache")
-	var open_choice: Dictionary = app.call("_travel_choice", "delta_queen", ["delta_queen"])
-	if not bool(open_choice.get("enabled", false)) \
-		or int(open_choice.get("cost", -1)) != 0 \
-		or str(open_choice.get("travel_method", "")) != "Walk":
+	var beach_targets: Array = app.call("_travel_target_ids")
+	var open_choice: Dictionary = {}
+	for choice_value in app.call("_travel_choice_view_list"):
+		if typeof(choice_value) == TYPE_DICTIONARY and str((choice_value as Dictionary).get("id", "")) == "delta_queen":
+			open_choice = choice_value
+			break
+	if not beach_targets.has("delta_queen") or not bool(open_choice.get("enabled", false)) \
+			or int(open_choice.get("cost", -1)) != 0 \
+			or str(open_choice.get("travel_method", "")) != "Walk":
 		push_error("Open River Queen did not expose the free Beach return walk: %s" % JSON.stringify(open_choice))
 		return false
 	run_state.game_clock_minutes = 3 * 60
 	app.call("_invalidate_travel_view_cache")
-	var closed_choice: Dictionary = app.call("_travel_choice", "delta_queen", ["delta_queen"])
+	var closed_choice: Dictionary = {}
+	for choice_value in app.call("_travel_choice_view_list"):
+		if typeof(choice_value) == TYPE_DICTIONARY and str((choice_value as Dictionary).get("id", "")) == "delta_queen":
+			closed_choice = choice_value
+			break
 	if bool(closed_choice.get("enabled", true)) \
-		or int(closed_choice.get("cost", -1)) != 0 \
-		or str(closed_choice.get("disabled_reason", "")).findn("opens at") == -1:
+			or int(closed_choice.get("cost", -1)) != 0 \
+			or str(closed_choice.get("disabled_reason", "")).findn("opens at") == -1:
 		push_error("Closed River Queen did not retain its hours gate on the free Beach return: %s" % JSON.stringify(closed_choice))
 		return false
+
+	# Revisit Delta, then recreate a pre-fix save: Beach is hidden, locked and
+	# competing with more than three visible destinations. Production selection,
+	# UI projection and Continue must all repair that state without injection.
+	run_state.game_clock_minutes = 12 * 60
+	map_data = WorldMapScript.enter_node(map_data, "delta_queen", delta_environment)
+	var hostile_nodes: Array = JsonCoerceScript._copy_array(map_data.get("nodes", []))
+	var ordinary_yield_id := str(map_data.get("start_node_id", ""))
+	if ordinary_yield_id in ["", "beach", "delta_queen"]:
+		for candidate_value in hostile_nodes:
+			if typeof(candidate_value) != TYPE_DICTIONARY:
+				continue
+			var candidate_id := str((candidate_value as Dictionary).get("id", ""))
+			if not candidate_id in ["", "beach", "delta_queen"]:
+				ordinary_yield_id = candidate_id
+				break
+	for node_index in range(hostile_nodes.size()):
+		if typeof(hostile_nodes[node_index]) != TYPE_DICTIONARY:
+			continue
+		var hostile_node: Dictionary = hostile_nodes[node_index]
+		var hostile_id := str(hostile_node.get("id", ""))
+		if hostile_id == "beach":
+			hostile_node["state"] = WorldMapScript.STATE_HIDDEN
+			hostile_node["seen"] = false
+			hostile_node["unlocked"] = false
+			hostile_node["route_spawn_open"] = false
+			hostile_node["discovery_source"] = WorldMapScript.DISCOVERY_SOURCE_NONE
+			hostile_node["tier"] = 99
+		else:
+			hostile_node["state"] = WorldMapScript.STATE_VISITED if hostile_id in ["delta_queen", ordinary_yield_id] else WorldMapScript.STATE_REVEALED
+			hostile_node["seen"] = true
+			hostile_node["unlocked"] = true
+			hostile_node["route_spawn_open"] = true
+			hostile_node["home_lost"] = false
+			hostile_node["discovery_source"] = WorldMapScript.DISCOVERY_SOURCE_SPAWN
+		hostile_nodes[node_index] = hostile_node
+	map_data["nodes"] = hostile_nodes
+	map_data["visited_path"] = [ordinary_yield_id, "delta_queen"]
+	run_state.set_environment(delta_environment)
+	var no_beach_control := map_data.duplicate(true)
+	var control_nodes: Array = JsonCoerceScript._copy_array(no_beach_control.get("nodes", []))
+	for node_index in range(control_nodes.size()):
+		if typeof(control_nodes[node_index]) != TYPE_DICTIONARY:
+			continue
+		var control_node: Dictionary = control_nodes[node_index]
+		if str(control_node.get("id", "")) == "beach":
+			control_node["home_lost"] = true
+			control_nodes[node_index] = control_node
+			break
+	no_beach_control["nodes"] = control_nodes
+	# Project the exact production UI control list without Beach. More than three
+	# routes must be genuinely enabled, and the known visited ordinary route fills
+	# the last capped card that Beach must replace.
+	run_state.world_map = no_beach_control
+	app.call("_invalidate_travel_view_cache")
+	var control_enabled_targets: Array = app.call("_enabled_world_route_ids", "delta_queen")
+	var enabled_non_beach_competitors: Array = []
+	for control_target_value in control_enabled_targets:
+		var control_target_id := str(control_target_value)
+		if control_target_id != "beach" and not enabled_non_beach_competitors.has(control_target_id):
+			enabled_non_beach_competitors.append(control_target_id)
+	if enabled_non_beach_competitors.size() <= WorldMapScript.TRAVEL_TOTAL_TARGET_LIMIT:
+		push_error("Beach Continue fixture did not create more than three production-enabled non-Beach competitors: enabled=%s non_beach=%s" % [JSON.stringify(control_enabled_targets), JSON.stringify(enabled_non_beach_competitors)])
+		return false
+	var capped_control_targets: Array = app.call("_travel_target_ids")
+	if capped_control_targets.has("beach") \
+			or capped_control_targets.size() != WorldMapScript.TRAVEL_TOTAL_TARGET_LIMIT \
+			or str(capped_control_targets[-1]) != ordinary_yield_id:
+		push_error("Beach Continue control list did not end with its intended lowest-ranked ordinary card: yield=%s targets=%s" % [ordinary_yield_id, JSON.stringify(capped_control_targets)])
+		return false
+	# Deliberately bypass set_world_map normalization to model the exact legacy
+	# generation already present on disk before Continue repairs it.
+	run_state.world_map = map_data
+	run_state.bankroll = 0
+	app.call("_invalidate_travel_view_cache")
+	var revisit_targets: Array = app.call("_travel_target_ids")
+	if revisit_targets.count("beach") != 1 \
+			or revisit_targets.size() != WorldMapScript.TRAVEL_TOTAL_TARGET_LIMIT \
+			or revisit_targets.has(ordinary_yield_id):
+		push_error("Revisited Delta Queen did not replace the lowest-ranked ordinary card with one Beach inside the cap: yield=%s targets=%s" % [ordinary_yield_id, JSON.stringify(revisit_targets)])
+		return false
+	var revisit_choice: Dictionary = {}
+	for choice_value in app.call("_travel_choice_view_list"):
+		if typeof(choice_value) == TYPE_DICTIONARY and str((choice_value as Dictionary).get("id", "")) == "beach":
+			revisit_choice = choice_value
+			break
+	if not bool(revisit_choice.get("enabled", false)):
+		push_error("Revisited Delta Queen did not enable its hidden-save Beach choice: %s" % JSON.stringify(revisit_choice))
+		return false
+
+	var save_service: SaveService = app.get("save_service")
+	var original_slot := str(app.get("autosave_slot_id"))
+	var continue_slot := "ui_beach_access_continue"
+	if save_service == null or save_service.clear_run(continue_slot) != OK:
+		push_error("Beach Continue regression could not prepare its isolated save slot.")
+		return false
+	app.set("autosave_slot_id", continue_slot)
+	var save_error := save_service.save_run(run_state, continue_slot)
+	if save_error != OK:
+		app.set("autosave_slot_id", original_slot)
+		push_error("Beach Continue regression could not save its Delta Queen state: %s" % error_string(save_error))
+		return false
+	if not bool(app.call("load_foundation_run")):
+		save_service.clear_run(continue_slot)
+		app.set("autosave_slot_id", original_slot)
+		push_error("Beach Continue regression could not load through the production Continue path.")
+		return false
+	await process_frame
+	run_state = app.get("run_state")
+	app.call("_invalidate_travel_view_cache")
+	var continued_targets: Array = app.call("_travel_target_ids")
+	var continued_choice: Dictionary = {}
+	for choice_value in app.call("_travel_choice_view_list"):
+		if typeof(choice_value) == TYPE_DICTIONARY and str((choice_value as Dictionary).get("id", "")) == "beach":
+			continued_choice = choice_value
+			break
+	var continued_snapshot: Dictionary = app.call("_world_map_snapshot")
+	var continued_beach_node: Dictionary = {}
+	for node_value in continued_snapshot.get("nodes", []):
+		if typeof(node_value) == TYPE_DICTIONARY and str((node_value as Dictionary).get("id", "")) == "beach":
+			continued_beach_node = node_value
+			break
+	if run_state == null or run_state.current_world_node_id() != "delta_queen" \
+			or continued_targets.count("beach") != 1 \
+			or not bool(continued_choice.get("enabled", false)) \
+			or not bool(continued_beach_node.get("travel_enabled", false)):
+		save_service.clear_run(continue_slot)
+		app.set("autosave_slot_id", original_slot)
+		push_error("Continue did not restore one visible, enabled Beach destination: targets=%s choice=%s node=%s" % [JSON.stringify(continued_targets), JSON.stringify(continued_choice), JSON.stringify(continued_beach_node)])
+		return false
+	if not bool(app.call("open_world_map")):
+		save_service.clear_run(continue_slot)
+		app.set("autosave_slot_id", original_slot)
+		push_error("Continued Delta Queen run could not open its production world map.")
+		return false
+	await process_frame
+	var continued_selected := bool(app.call("select_world_map_node", "beach"))
+	var continued_confirm_button: Button = app.get("world_map_confirm_button")
+	if not continued_selected or continued_confirm_button == null or continued_confirm_button.disabled:
+		save_service.clear_run(continue_slot)
+		app.set("autosave_slot_id", original_slot)
+		push_error("Continued Delta Queen run did not expose an enabled rendered Beach control.")
+		return false
+	app.call("close_world_map")
+	save_service.clear_run(continue_slot)
+	app.set("autosave_slot_id", original_slot)
 	return true
 
 
