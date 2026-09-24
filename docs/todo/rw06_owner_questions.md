@@ -202,3 +202,11 @@ Question: Godot 4.6 has been running against the primary checkout since 20:27 CT
 Options: A) Close it if still running (recommended)  B) Leave it; I will close it
 Resume: Verify the process still targets `D:\Projects\Beat-The-House`; if A, terminate only that exact console/child pair, then run the focused rw06_1 contract under Q-009 isolation. Continue engine-free rw06_1 work while OPEN.
 Answer:
+
+### Q-011 · rw06_1/rw06_2 · Beach always open from the boat
+Status: ANSWERED
+Asked: owner directive, 2026-09-23
+Question: None; this is a binding gameplay directive from the owner.
+Options: A) Apply the directive in Resume (the owner's decision)
+Resume: Make the Beach an unconditional, visible and enabled destination from the Delta Queen/boat whenever normal travel is available. It must not depend on seed, scenario, discovery or revisit state, and must remain true across save/Continue. rw06_1 must preserve a reachable boat-to-Beach travel control in the fixed-slot/action-list UI; the rw06_2 peer must update route assumptions and coverage. Add a regression through the production destination/UI path, then report the implementing commit and evidence before marking this entry RESOLVED.
+Answer: The beach needs to always be open from the boat. Ensure the agents know this and adjust gameplay accordingly.
