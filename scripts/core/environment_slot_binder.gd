@@ -688,7 +688,18 @@ static func scenario_visual_art_key(surface_map: Dictionary, entry: Dictionary) 
 		return ""
 	var position_key := scenario_position_key(stable_id, semantic)
 	var preferences := _dict(surface_map.get("scenario_slot_ids", {}))
-	if not preferences.has(position_key) and not preferences.has(stable_id) and not preferences.has(identity):
+	var has_slot_preference := preferences.has(position_key) or preferences.has(stable_id) or preferences.has(identity)
+	if not has_slot_preference:
+		# A stable object can have several reviewed, position-specific bindings.
+		# The concrete-art authority is object-wide, so any exact stable-id
+		# composite proves the independent slot half of that authority even when
+		# the caller is inspecting the semantic before a position is selected.
+		for preference_key_value in preferences.keys():
+			if typeof(preference_key_value) == TYPE_STRING \
+					and str(preference_key_value).begins_with("%s|" % stable_id):
+				has_slot_preference = true
+				break
+	if not has_slot_preference:
 		return ""
 	var art_keys := _dict(surface_map.get("scenario_art_keys", {}))
 	var art_key := str(art_keys.get(stable_id, art_keys.get(identity, ""))).strip_edges()
