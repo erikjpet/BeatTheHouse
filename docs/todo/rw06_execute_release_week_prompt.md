@@ -12,12 +12,12 @@ for verifying every row before it counts as DONE.
 1. `docs/todo/README_0_6_release_week.md`: the plan, owner decisions, order,
    scoreboard and shared rules. It is binding.
 2. Each row prompt, when you reach it:
-   - `rw06_0_custody_commit_prompt.md`
+   - `docs/todone/rw06_0_custody_commit_prompt.md` (completed/archive record)
    - `rw06_1_fixed_slot_rooms_prompt.md`
    - `rw06_2_three_endings_prompt.md`
    - `rw06_3_balance_prompt.md`
    - `rw06_4_release_gate_ship_prompt.md`
-   - `rw06_5_owner_gameplay_fixes_prompt.md`
+   - `docs/todone/rw06_5_owner_gameplay_fixes_prompt.md` (completed/archive record)
    - `rw06_6_pull_tab_glimmer_prompt.md`
 3. `docs/todo/rw06_2p_endings_peer_agent_prompt.md` and
    `docs/todo/rw06_2p_status.md`: the Q-009 peer handoff for rw06_2/rw06_3.
@@ -109,9 +109,11 @@ Once the merge lands, rebase your Phase 0 worktrees onto the new `main`.
      not edit game, Crew, ending or balance logic.
    - The peer does rw06_2's final three-ending pass on `main` **after** rw06_1
      lands.
-3. **Owner checkpoint.** Once rw06_1 and rw06_5 have landed, ask the owner in
-   the questions file. The peer continues rw06_2's 3/3 ending work in parallel
-   and does not delay this requested playthrough:
+3. **Owner checkpoint.** Once rw06_1 and rw06_5 have landed **and** the peer has
+   produced the qualifying rw06_2 live route evidence, ask the owner in the
+   questions file. The peer continues its remaining non-blocking closure work
+   in parallel, but the playable ending routes must exist before this requested
+   playthrough:
    - the build is ready for their start-to-finish run;
    - the rw06_1 contact sheet link, for their visual review of room placement.
 

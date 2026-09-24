@@ -1,14 +1,20 @@
-Status: PARKED COMPANION TEMPLATE - `release06_1` only; not independently claimable
-Board row: existing `release06_1` (no new row)
+Status: PARKED COMPANION TEMPLATE - populate only from `rw06_4`; not independently claimable
+Board row: existing `rw06_4` (no new row)
 Destination: `docs/plans/0.6.0_devlog_post.md`
+
+> Prepare and obtain release-copy approval before artifact handoff. Do not post
+> it. A public URL is not required until the owner uploads; reconcile the URL
+> afterward from the owner's confirmation. Trailer production is deferred to
+> 0.6.1, and screenshots are included only when the owner approves exact final
+> captures.
 
 # Beat the House 0.6.0 Devlog Post - Template
 
-Status: **DRAFT - DO NOT POST BEFORE OWNER AUTHORIZATION.**
+Status: **DRAFT - AGENTS NEVER POST. OWNER-ONLY POSTING AFTER APPROVAL.**
 
 Required finished-build inputs: exact shipped feature set; representative
 owner-approved captures; accurate comparison with 0.5.1; final audio/music
-status; release URL; owner-approved tone and exclusions.
+status; owner-approved tone and exclusions; and approved final captures if used.
 
 ## Title
 
@@ -25,8 +31,9 @@ travelers and the Police Sweep. Use a real finished-build example.
 
 ## The Crew path
 
-Describe trust, the Punchline, Streets, Numbers, coordinated plays and both
-heist plans without naming hidden Turn state, traitor identity or clue ledger.
+Describe only the exact Crew/heist route verified for 0.6.0. Do not imply both
+heist plans were release-qualified, and do not name hidden Turn state, traitor
+identity or clue ledger.
 
 ## New games
 
@@ -46,8 +53,8 @@ work in plain language. Include honest limitations and final audio status.
 
 ## Changelog and closing
 
-Use concise finished-build facts, the approved release URL and the simulated-
-gambling safety line.
+Use concise finished-build facts and the simulated-gambling safety line.
+Insert the release URL only after the owner uploads and confirms it.
 
 ## Images to attach
 

@@ -126,7 +126,7 @@ Record every replaced or removed assertion, and the guarantee that now covers
 it, in `docs/plans/rw06_1_placement_harvest_disposition.md`. Dropping a
 guarantee is weakening a test and is forbidden.
 
-## Early owner look (day 2, non-blocking)
+## Early owner look (day 2; implementation continues, landing approval blocks)
 
 As soon as 3 representative rooms work, ask the owner for a quick yes or no in
 `rw06_owner_questions.md`, with the contact sheet path. Use
@@ -134,7 +134,9 @@ As soon as 3 representative rooms work, ask the owner for a quick yes or no in
 scenario, in normal and expanded layouts. Keep working on other rooms while
 waiting, and apply the owner's feedback to all rooms. The owner rejected the
 last placement attempt only after it was finished; this check exists so that
-can't happen again.
+can't happen again. Waiting never blocks unrelated implementation, but after
+Q-008's rejection a replacement player-view sheet and a new owner approval are
+hard prerequisites to landing rw06_1.
 
 ## File ownership (rw06_2 runs at the same time)
 
