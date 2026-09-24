@@ -56,8 +56,25 @@ class CleanupQuitter:
 			get_tree().quit(exit_code)
 
 
+class RunDriver:
+	extends Node
+
+	var harness: Variant
+
+	func _ready() -> void:
+		await harness._run()
+
+
 func _init() -> void:
-	call_deferred("_run")
+	call_deferred("_mount_run_driver")
+
+
+func _mount_run_driver() -> void:
+	# Node lifecycle callbacks own awaited function state; a deferred direct call
+	# to this async SceneTree method would discard that state at the entry point.
+	var driver := RunDriver.new()
+	driver.harness = self
+	root.add_child(driver)
 
 
 func _run() -> void:
