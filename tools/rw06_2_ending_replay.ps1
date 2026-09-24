@@ -2510,11 +2510,13 @@ function Ensure-GrandCasinoChips {
 
 
 function Enter-BlackjackTable {
-    Enter-GrandRoom -Room main
     if ([string](Get-Value $script:LastObservation @('screen', 'screen') '') -ceq 'GAME' -and
         [string](Get-Value $script:LastObservation @('game', 'game_id') '') -ceq 'blackjack') {
+        # Save -> relaunch -> Continue restores the locked Rourke table directly.
+        # Preserve any live Blackjack surface before attempting room navigation.
         return
     }
+    Enter-GrandRoom -Room main
     $null = Open-SemanticObject -SemanticId 'game:blackjack' -PreferredActions @('Enter', 'Play') -Intent 'sit at the visible blackjack table'
     Wait-Frames -Frames 12
     if ([string](Get-Value $script:LastObservation @('screen', 'screen') '') -cne 'GAME' -or
@@ -2575,48 +2577,61 @@ function Invoke-PublicBlackjackDecision {
 function Invoke-PublicBossCalloutIfShown {
     $tell = [string](Get-Value $script:LastObservation @('game', 'boss_tell') '')
     if ([string]::IsNullOrWhiteSpace($tell)) { return }
-    if ($tell -match 'gives\s+nothing\s+away') { return }
 
-    # The tell and both callout labels are rendered at Rourke's table. Resolve the
-    # visible prose the same way a player would, then click the matching rendered
-    # button by its surface index. Do not use the duel's private edge schedule.
-    $expectedLabelFragment = if ($tell -match '(slug|squares\s+one)') {
-        'stack'
-    } elseif ($tell -match '(thumb|down\s+card)') {
-        'swap'
-    } else {
-        throw "Rourke exposed an unrecognized public tell: $tell"
-    }
+    # Rourke renders the tell while the wager is staged, but the matching
+    # callout is intentionally disabled until Deal. The public policy therefore
+    # validates the tell now and either defers or returns its exact post-deal row.
+    $selection = Select-CheatReplayBossCalloutAction `
+        -Game (Get-Value $script:LastObservation @('game') $null) `
+        -SurfaceActions @(Get-GameActions)
+    if ([string]$selection.stage -cne 'call') { return }
 
-    $callouts = @(Get-Array (Get-Value $script:LastObservation @('game', 'boss_callouts') @()))
-    for ($index = 0; $index -lt $callouts.Count; $index++) {
-        $label = [string](Get-Value $callouts[$index] @('label') '')
-        if ($label.IndexOf($expectedLabelFragment, [StringComparison]::OrdinalIgnoreCase) -lt 0) { continue }
-        if ($null -ceq (Find-GameAction -Action 'blackjack_boss_callout' -Index $index)) {
-            throw "Rourke's matching public '$label' callout is not an enabled rendered action."
-        }
-        $null = Invoke-GameAction -Action 'blackjack_boss_callout' -Index $index -Intent "call Rourke's publicly rendered $tell tell with $label"
-        return
+    $index = [int]$selection.index
+    $label = [string](Get-Value (Get-Array (Get-Value $script:LastObservation @('game', 'boss_callouts') @()))[$index] @('label') '')
+    $null = Invoke-GameAction -Action 'blackjack_boss_callout' -Index $index -Intent "call Rourke's publicly rendered $tell tell with $label"
+    Wait-Frames -Frames 4
+    $used = Get-Value $script:LastObservation @('game', 'boss_callout_used') $null
+    if ($used -isnot [bool] -or -not [bool]$used) {
+        throw "Rourke's rendered callout did not produce an exact public used witness."
     }
-    throw "Rourke's public tell '$tell' has no matching rendered '$expectedLabelFragment' callout."
 }
 
 
 function Invoke-VisibleCheatIfAvailable {
-    $cheats = @(Get-Array (Get-Value $script:LastObservation @('game', 'cheat_actions') @()))
-    $preferred = @('blackjack_distraction', 'blackjack_peek')
-    foreach ($actionName in $preferred) {
-        if ($null -ceq (Find-GameAction -Action $actionName)) { continue }
-        $published = @($cheats | Where-Object {
-            ([string](Get-Value $_ @('id') '') -ceq $actionName) -or
-            ([string](Get-Value $_ @('action') '') -ceq $actionName) -or
-            ([string](Get-Value $_ @('action_id') '') -ceq $actionName)
-        })
-        if ($published.Count -ceq 0 -and $cheats.Count -gt 0) { continue }
-        $null = Invoke-GameAction -Action $actionName -Intent 'use the visible blackjack edge to make Rourke notice'
-        Wait-Frames -Frames 8
-        return
+    $openedWindow = $false
+    for ($transition = 0; $transition -lt 3; $transition++) {
+        $selection = Select-CheatReplayBlackjackCheatAction `
+            -Game (Get-Value $script:LastObservation @('game') $null) `
+            -SurfaceActions @(Get-GameActions)
+        switch ([string]$selection.stage) {
+            'wait_for_deal' { return $false }
+            'complete' { return $true }
+            'open_window' {
+                if ($openedWindow) {
+                    throw 'The rendered Distraction control did not open its public Peek window.'
+                }
+                $null = Invoke-GameAction -Action 'blackjack_distraction' -Index ([int]$selection.index) -Intent "open the rendered lookaway window for the published peek_hole_card cheat"
+                Wait-Frames -Frames 4
+                $windowOpen = Get-Value $script:LastObservation @('game', 'peek_window_open') $null
+                if ($windowOpen -isnot [bool] -or -not [bool]$windowOpen) {
+                    throw 'The rendered Distraction control did not expose an exact open Peek-window witness.'
+                }
+                $openedWindow = $true
+                continue
+            }
+            'peek' {
+                $null = Invoke-GameAction -Action 'blackjack_peek' -Index ([int]$selection.index) -Intent "use the rendered Peek control authorized by published cheat id peek_hole_card"
+                Wait-Frames -Frames 4
+                $holeVisible = Get-Value $script:LastObservation @('game', 'dealer_hole_visible') $null
+                if ($holeVisible -isnot [bool] -or -not [bool]$holeVisible) {
+                    throw "The published 'peek_hole_card' cheat did not produce an exact visible-hole-card witness."
+                }
+                return $true
+            }
+            default { throw "Unknown public Blackjack cheat-policy stage '$($selection.stage)'." }
+        }
     }
+    throw "The published 'peek_hole_card' sequence did not finish within three public transitions."
 }
 
 
@@ -2933,17 +2948,35 @@ function Resolve-ShowdownChoiceSurface {
     $choices = @(Get-VisibleChoiceIds)
     $choiceIntents = @{
         enter_back_room = "follow Rourke into the visible back-room sequence"
-        keep_everything = 'keep the verified non-classified inventory during Rourke''s walk'
         face_rourke = 'take the chair after the visible clean pat-down'
         hold_steady = 'answer Rourke from the visible run record'
     }
-    foreach ($choice in @('enter_back_room', 'keep_everything', 'face_rourke', 'hold_steady')) {
+    foreach ($choice in @('enter_back_room', 'face_rourke', 'hold_steady')) {
         if ($choices -ccontains $choice) {
             $intent = $choiceIntents[$choice]
             $null = Choose-VisibleChoice -ChoiceId $choice -Intent $intent
             Wait-Frames -Frames 12
             return $true
         }
+    }
+
+    $walkChoices = @($choices | Where-Object {
+        [string]$_ -ceq 'keep_everything' -or
+            ([string]$_).StartsWith('trash_item__', [StringComparison]::Ordinal) -or
+            ([string]$_).StartsWith('hand_to_crew__', [StringComparison]::Ordinal)
+    })
+    if ($walkChoices.Count -gt 0) {
+        $choice = Select-CheatReplayShowdownWalkChoice -EventPopup (Get-Value $script:LastObservation @('event_popup') $null)
+        $intent = if ($choice -ceq 'keep_everything') {
+            'keep the publicly verified non-classified inventory during Rourke''s walk'
+        } elseif ($choice.StartsWith('hand_to_crew__', [StringComparison]::Ordinal)) {
+            "hand the one publicly identified classified item to the Crew before Rourke's search"
+        } else {
+            "trash the one publicly identified classified item before Rourke's search"
+        }
+        $null = Choose-VisibleChoice -ChoiceId $choice -Intent $intent
+        Wait-Frames -Frames 12
+        return $true
     }
     return $false
 }

@@ -17,6 +17,7 @@ $FoundationScreenBuilderPath = Join-Path $Worktree 'scripts\ui\foundation_screen
 $PixelSceneCanvasPath = Join-Path $Worktree 'scripts\ui\pixel_scene_canvas.gd'
 $TalkDockPath = Join-Path $Worktree 'scripts\ui\talk_dock.gd'
 $RunStatePath = Join-Path $Worktree 'scripts\core\run_state.gd'
+$EventsPath = Join-Path $Worktree 'data\events\events.json'
 $ReportPath = Join-Path $Worktree '.tmp\rw06_2\replay_source_contract.json'
 $SemanticScrollReportPath = Join-Path $Worktree '.tmp\rw06_2\semantic_scroll_contract.json'
 
@@ -35,6 +36,14 @@ $grandFareCashEventValidFixtures = 0
 $grandFareCashEventHostileFixtures = 0
 $commandOpenValidFixtures = 0
 $commandOpenHostileFixtures = 0
+$cheatBlackjackValidFixtures = 0
+$cheatBlackjackHostileFixtures = 0
+$cheatBossCalloutValidFixtures = 0
+$cheatBossCalloutHostileFixtures = 0
+$cheatShowdownWalkValidFixtures = 0
+$cheatShowdownWalkHostileFixtures = 0
+$cheatDuelContinuationValidFixtures = 0
+$cheatDuelContinuationHostileFixtures = 0
 
 function Add-Failure {
     param([Parameter(Mandatory = $true)][string]$Message)
@@ -413,10 +422,114 @@ function New-DeltaQueenBeachPolicyFixture {
     }
 }
 
+function New-CheatReplayBlackjackPolicyFixture {
+    param([ValidateSet('wait_for_deal', 'open_window', 'peek', 'complete')][string]$Stage = 'open_window')
+
+    $peekAvailable = $Stage -cin @('open_window', 'peek')
+    $peekWindowOpen = $Stage -ceq 'peek'
+    $dealerHoleVisible = $Stage -ceq 'complete'
+    $canDeal = $Stage -ceq 'wait_for_deal'
+    return [pscustomobject]@{
+        game = [pscustomobject]@{
+            peek_available = $peekAvailable
+            peek_window_open = $peekWindowOpen
+            dealer_hole_visible = $dealerHoleVisible
+            can_deal = $canDeal
+            cheat_actions = @(
+                [pscustomobject]@{ id = 'peek_hole_card'; kind = 'cheat'; label = 'Peek Hole Card' },
+                [pscustomobject]@{ id = 'count_cards'; kind = 'cheat'; label = 'Count Cards' }
+            )
+        }
+        surface_actions = @(
+            [pscustomobject]@{ action = 'blackjack_distraction'; index = 1; enabled = $true },
+            [pscustomobject]@{ action = 'blackjack_distraction'; index = 0; enabled = $true },
+            [pscustomobject]@{ action = 'blackjack_peek'; index = 0; enabled = $true }
+        )
+        expected_stage = $Stage
+        expected_index = if ($Stage -ceq 'open_window' -or $Stage -ceq 'peek') { 0 } else { -1 }
+    }
+}
+
+
+function New-CheatReplayBossCalloutPolicyFixture {
+    param(
+        [ValidateSet('defer_until_dealt', 'call_stack', 'call_swap', 'none')][string]$Stage = 'call_stack'
+    )
+
+    $tell = switch ($Stage) {
+        'call_swap' { 'Rourke thumbs the down card before the cut.' }
+        'none' { 'Rourke gives nothing away.' }
+        default { 'Rourke squares one slug against the stack.' }
+    }
+    return [pscustomobject]@{
+        game = [pscustomobject]@{
+            boss_duel_active = $true
+            boss_tell = $tell
+            boss_callouts = @(
+                [pscustomobject]@{ id = 'stacked_shoe'; label = 'Call the stack' },
+                [pscustomobject]@{ id = 'hole_swap'; label = 'Call the swap' }
+            )
+            boss_callout_used = $false
+            can_deal = $Stage -ceq 'defer_until_dealt'
+        }
+        surface_actions = @(
+            [pscustomobject]@{ action = 'blackjack_boss_callout'; index = 0; enabled = $true },
+            [pscustomobject]@{ action = 'blackjack_boss_callout'; index = 1; enabled = $true }
+        )
+        expected_stage = if ($Stage -cin @('call_stack', 'call_swap')) { 'call' } else { $Stage }
+        expected_index = if ($Stage -ceq 'call_stack') { 0 } elseif ($Stage -ceq 'call_swap') { 1 } elseif ($Stage -ceq 'defer_until_dealt') { 0 } else { -1 }
+    }
+}
+
+
+function New-CheatReplayShowdownWalkPolicyFixture {
+    param(
+        [AllowEmptyCollection()][string[]]$ChoiceIds = @('keep_everything'),
+        [string]$ExpectedChoice = 'keep_everything'
+    )
+
+    $choices = @($ChoiceIds | ForEach-Object {
+        [pscustomobject]@{
+            id = [string]$_
+            label = ([string]$_).Replace('_', ' ')
+            text = "Visible consequence for $($_)."
+            enabled = $true
+        }
+    })
+    return [pscustomobject]@{
+        popup = [pscustomobject]@{
+            visible = $true
+            render_valid = $true
+            event_id = 'the_house_calls'
+            choice_ids = @($ChoiceIds)
+            choices = $choices
+        }
+        expected_choice = $ExpectedChoice
+    }
+}
+
+
+function Test-CheatReplayDuelContinuationOrder {
+    param([Parameter(Mandatory = $true)][string]$Source)
+
+    $functionMatch = [regex]::Match($Source, '(?ms)^function Enter-BlackjackTable\s*\{.*?(?=^function |\z)')
+    if (-not $functionMatch.Success) { return $false }
+    $body = $functionMatch.Value
+    $navigationIndex = $body.IndexOf('Enter-GrandRoom -Room main', [StringComparison]::Ordinal)
+    $screenIndex = $body.IndexOf("@('screen', 'screen')", [StringComparison]::Ordinal)
+    $gameIndex = $body.IndexOf("@('game', 'game_id')", [StringComparison]::Ordinal)
+    $returnIndex = $body.IndexOf('return', [StringComparison]::Ordinal)
+    return $navigationIndex -gt 0 -and
+        $screenIndex -ge 0 -and $screenIndex -lt $navigationIndex -and
+        $gameIndex -ge 0 -and $gameIndex -lt $navigationIndex -and
+        $returnIndex -ge 0 -and $returnIndex -lt $navigationIndex
+}
+
 foreach ($path in @(
     $RunnerPath, $ReplayPolicyPath, $LauncherPath, $BridgePath, $SanitizerPath,
     $ObservationContractPath, $FoundationMainPath, $FoundationHudBarPath,
-    $FoundationScreenBuilderPath, $PixelSceneCanvasPath, $TalkDockPath, $RunStatePath
+    $FoundationScreenBuilderPath, $PixelSceneCanvasPath, $TalkDockPath, $RunStatePath,
+    $EventsPath
 )) {
     if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
         Add-Failure "Required rw06_2 source is missing: $path"
@@ -440,6 +553,26 @@ if ($failures.Count -eq 0) {
     $pixelSceneCanvas = Get-Content -LiteralPath $PixelSceneCanvasPath -Raw
     $talkDock = Get-Content -LiteralPath $TalkDockPath -Raw
     $runState = Get-Content -LiteralPath $RunStatePath -Raw
+
+    try {
+        $eventCatalogValue = Get-Content -LiteralPath $EventsPath -Raw | ConvertFrom-Json
+        $eventCatalog = @($eventCatalogValue)
+        $showdownEvents = @($eventCatalog | Where-Object { $_.id -is [string] -and [string]$_.id -ceq 'the_house_calls' })
+        if ($showdownEvents.Count -ne 1) {
+            throw "Expected one exact the_house_calls event; found $($showdownEvents.Count)."
+        }
+        $classifications = @($showdownEvents[0].payload.pat_down.classifications)
+        $contraband = @($classifications | Where-Object { $_.id -is [string] -and [string]$_.id -ceq 'contraband' })
+        $surveillance = @($classifications | Where-Object { $_.id -is [string] -and [string]$_.id -ceq 'surveillance' })
+        if ($classifications.Count -ne 2 -or $contraband.Count -ne 1 -or $surveillance.Count -ne 1 -or
+            (@($contraband[0].item_ids) -join ',') -cne 'marked_cards,foil_sleeve,weighted_keyring' -or
+            (@($surveillance[0].item_ids) -join ',') -cne 'xray_glasses,tab_detector,tarot_card') {
+            throw 'Showdown classified-item catalog changed without an updated public walk policy.'
+        }
+    }
+    catch {
+        Add-Failure "Showdown classified-item source contract failed: $($_.Exception.Message)"
+    }
 
     try {
         . $ReplayPolicyPath
@@ -506,6 +639,218 @@ if ($failures.Count -eq 0) {
     }
     else {
         Add-Failure 'Replay policy helper did not export the Q-011 Delta Queen Beach invariant.'
+    }
+
+    $blackjackPolicyCommand = Get-Command 'Select-CheatReplayBlackjackCheatAction' -ErrorAction SilentlyContinue
+    if ($null -ne $blackjackPolicyCommand) {
+        $validBlackjackCases = @(
+            New-CheatReplayBlackjackPolicyFixture -Stage wait_for_deal
+            New-CheatReplayBlackjackPolicyFixture -Stage open_window
+            New-CheatReplayBlackjackPolicyFixture -Stage peek
+            New-CheatReplayBlackjackPolicyFixture -Stage complete
+        )
+        $cheatBlackjackValidFixtures = $validBlackjackCases.Count
+        foreach ($fixture in $validBlackjackCases) {
+            try {
+                $selection = Select-CheatReplayBlackjackCheatAction -Game $fixture.game -SurfaceActions @($fixture.surface_actions)
+                if ([string]$selection.stage -cne [string]$fixture.expected_stage -or
+                    [int]$selection.index -ne [int]$fixture.expected_index) {
+                    Add-Failure "Valid Cheat Blackjack fixture '$($fixture.expected_stage)' selected the wrong public transition."
+                }
+            }
+            catch {
+                Add-Failure "Valid Cheat Blackjack fixture '$($fixture.expected_stage)' threw: $($_.Exception.Message)"
+            }
+        }
+
+        $hostileBlackjackCases = [Collections.Generic.List[object]]::new()
+        $fixture = New-CheatReplayBlackjackPolicyFixture -Stage open_window; $fixture.game.cheat_actions[0].id = 'blackjack_peek'
+        $hostileBlackjackCases.Add([pscustomobject]@{ label = 'semantic-cheat-id-replaced-by-control-id'; fixture = $fixture })
+        $fixture = New-CheatReplayBlackjackPolicyFixture -Stage open_window; $fixture.game.cheat_actions += [pscustomobject]@{ id = 'peek_hole_card'; kind = 'cheat'; label = 'Other Peek' }
+        $hostileBlackjackCases.Add([pscustomobject]@{ label = 'semantic-cheat-id-duplicate'; fixture = $fixture })
+        $fixture = New-CheatReplayBlackjackPolicyFixture -Stage open_window; $fixture.game.peek_available = 'true'
+        $hostileBlackjackCases.Add([pscustomobject]@{ label = 'peek-available-non-boolean'; fixture = $fixture })
+        $fixture = New-CheatReplayBlackjackPolicyFixture -Stage open_window; $fixture.game.can_deal = $true
+        $hostileBlackjackCases.Add([pscustomobject]@{ label = 'peek-and-deal-both-available'; fixture = $fixture })
+        $fixture = New-CheatReplayBlackjackPolicyFixture -Stage wait_for_deal; $fixture.game.peek_window_open = $true
+        $hostileBlackjackCases.Add([pscustomobject]@{ label = 'window-without-active-peek'; fixture = $fixture })
+        $fixture = New-CheatReplayBlackjackPolicyFixture -Stage open_window; $fixture.surface_actions = @($fixture.surface_actions | Where-Object { $_.action -cne 'blackjack_distraction' })
+        $hostileBlackjackCases.Add([pscustomobject]@{ label = 'distraction-missing'; fixture = $fixture })
+        $fixture = New-CheatReplayBlackjackPolicyFixture -Stage open_window; $fixture.surface_actions[0].enabled = $false
+        $hostileBlackjackCases.Add([pscustomobject]@{ label = 'distraction-disabled'; fixture = $fixture })
+        $fixture = New-CheatReplayBlackjackPolicyFixture -Stage open_window; $fixture.surface_actions[0].index = 0
+        $hostileBlackjackCases.Add([pscustomobject]@{ label = 'distraction-index-duplicate'; fixture = $fixture })
+        $fixture = New-CheatReplayBlackjackPolicyFixture -Stage peek; $fixture.surface_actions = @($fixture.surface_actions | Where-Object { $_.action -cne 'blackjack_peek' })
+        $hostileBlackjackCases.Add([pscustomobject]@{ label = 'peek-control-missing'; fixture = $fixture })
+        $fixture = New-CheatReplayBlackjackPolicyFixture -Stage peek; $fixture.surface_actions += [pscustomobject]@{ action = 'blackjack_peek'; index = 0; enabled = $true }
+        $hostileBlackjackCases.Add([pscustomobject]@{ label = 'peek-control-duplicate'; fixture = $fixture })
+        $fixture = New-CheatReplayBlackjackPolicyFixture -Stage peek; $fixture.surface_actions[2].index = 1
+        $hostileBlackjackCases.Add([pscustomobject]@{ label = 'peek-control-wrong-index'; fixture = $fixture })
+
+        $cheatBlackjackHostileFixtures = $hostileBlackjackCases.Count
+        foreach ($case in $hostileBlackjackCases) {
+            $threw = $false
+            try {
+                $null = Select-CheatReplayBlackjackCheatAction -Game $case.fixture.game -SurfaceActions @($case.fixture.surface_actions)
+            }
+            catch { $threw = $true }
+            if (-not $threw) {
+                Add-Failure "Hostile Cheat Blackjack fixture '$($case.label)' did not fail closed."
+            }
+        }
+    }
+    else {
+        Add-Failure 'Replay policy helper did not export Select-CheatReplayBlackjackCheatAction.'
+    }
+
+    $bossCalloutPolicyCommand = Get-Command 'Select-CheatReplayBossCalloutAction' -ErrorAction SilentlyContinue
+    if ($null -ne $bossCalloutPolicyCommand) {
+        $validBossCases = @(
+            New-CheatReplayBossCalloutPolicyFixture -Stage defer_until_dealt
+            New-CheatReplayBossCalloutPolicyFixture -Stage call_stack
+            New-CheatReplayBossCalloutPolicyFixture -Stage call_swap
+            New-CheatReplayBossCalloutPolicyFixture -Stage none
+        )
+        $validBossCases[0].surface_actions = @()
+        $validBossCases[3].surface_actions = @()
+        $cheatBossCalloutValidFixtures = $validBossCases.Count
+        foreach ($fixture in $validBossCases) {
+            try {
+                $selection = Select-CheatReplayBossCalloutAction -Game $fixture.game -SurfaceActions @($fixture.surface_actions)
+                if ([string]$selection.stage -cne [string]$fixture.expected_stage -or
+                    [int]$selection.index -ne [int]$fixture.expected_index) {
+                    Add-Failure "Valid Cheat boss-callout fixture '$($fixture.expected_stage)' selected the wrong public transition."
+                }
+            }
+            catch {
+                Add-Failure "Valid Cheat boss-callout fixture '$($fixture.expected_stage)' threw: $($_.Exception.Message)"
+            }
+        }
+
+        $hostileBossCases = [Collections.Generic.List[object]]::new()
+        $fixture = New-CheatReplayBossCalloutPolicyFixture; $fixture.game.boss_duel_active = $false
+        $hostileBossCases.Add([pscustomobject]@{ label = 'duel-inactive'; fixture = $fixture })
+        $fixture = New-CheatReplayBossCalloutPolicyFixture; $fixture.game.boss_duel_active = 'true'
+        $hostileBossCases.Add([pscustomobject]@{ label = 'duel-active-non-boolean'; fixture = $fixture })
+        $fixture = New-CheatReplayBossCalloutPolicyFixture; $fixture.game.boss_tell = 'Rourke blinks.'
+        $hostileBossCases.Add([pscustomobject]@{ label = 'tell-unrecognized'; fixture = $fixture })
+        $fixture = New-CheatReplayBossCalloutPolicyFixture; $fixture.game.boss_callouts = @($fixture.game.boss_callouts[0])
+        $hostileBossCases.Add([pscustomobject]@{ label = 'callout-missing'; fixture = $fixture })
+        $fixture = New-CheatReplayBossCalloutPolicyFixture; $fixture.game.boss_callouts[1].id = 'stacked_shoe'
+        $hostileBossCases.Add([pscustomobject]@{ label = 'callout-id-duplicate'; fixture = $fixture })
+        $fixture = New-CheatReplayBossCalloutPolicyFixture; $fixture.game.boss_callouts[1].label = 'Stack the swap'
+        $hostileBossCases.Add([pscustomobject]@{ label = 'tell-label-ambiguous'; fixture = $fixture })
+        $fixture = New-CheatReplayBossCalloutPolicyFixture -Stage defer_until_dealt; $fixture.game.can_deal = 1
+        $hostileBossCases.Add([pscustomobject]@{ label = 'can-deal-non-boolean'; fixture = $fixture })
+        $fixture = New-CheatReplayBossCalloutPolicyFixture; $fixture.surface_actions = @($fixture.surface_actions | Where-Object { [int]$_.index -ne 0 })
+        $hostileBossCases.Add([pscustomobject]@{ label = 'matching-surface-row-missing'; fixture = $fixture })
+        $fixture = New-CheatReplayBossCalloutPolicyFixture; $fixture.surface_actions[0].enabled = $false
+        $hostileBossCases.Add([pscustomobject]@{ label = 'matching-surface-row-disabled'; fixture = $fixture })
+        $fixture = New-CheatReplayBossCalloutPolicyFixture; $fixture.surface_actions[0].index = '0'
+        $hostileBossCases.Add([pscustomobject]@{ label = 'matching-surface-index-non-integral'; fixture = $fixture })
+        $fixture = New-CheatReplayBossCalloutPolicyFixture; $fixture.game.PSObject.Properties.Remove('boss_callout_used')
+        $hostileBossCases.Add([pscustomobject]@{ label = 'callout-used-witness-missing'; fixture = $fixture })
+
+        $cheatBossCalloutHostileFixtures = $hostileBossCases.Count
+        foreach ($case in $hostileBossCases) {
+            $threw = $false
+            try {
+                $null = Select-CheatReplayBossCalloutAction -Game $case.fixture.game -SurfaceActions @($case.fixture.surface_actions)
+            }
+            catch { $threw = $true }
+            if (-not $threw) {
+                Add-Failure "Hostile Cheat boss-callout fixture '$($case.label)' did not fail closed."
+            }
+        }
+    }
+    else {
+        Add-Failure 'Replay policy helper did not export Select-CheatReplayBossCalloutAction.'
+    }
+
+    $walkPolicyCommand = Get-Command 'Select-CheatReplayShowdownWalkChoice' -ErrorAction SilentlyContinue
+    if ($null -ne $walkPolicyCommand) {
+        $validWalkCases = @(
+            (New-CheatReplayShowdownWalkPolicyFixture),
+            (New-CheatReplayShowdownWalkPolicyFixture -ChoiceIds @('keep_everything', 'trash_item__instant_coffee') -ExpectedChoice 'keep_everything'),
+            (New-CheatReplayShowdownWalkPolicyFixture -ChoiceIds @('keep_everything', 'trash_item__marked_cards') -ExpectedChoice 'trash_item__marked_cards'),
+            (New-CheatReplayShowdownWalkPolicyFixture -ChoiceIds @('keep_everything', 'trash_item__xray_glasses', 'hand_to_crew__xray_glasses') -ExpectedChoice 'hand_to_crew__xray_glasses')
+        )
+        $cheatShowdownWalkValidFixtures = $validWalkCases.Count
+        foreach ($fixture in $validWalkCases) {
+            try {
+                $choice = Select-CheatReplayShowdownWalkChoice -EventPopup $fixture.popup
+                if ($choice -isnot [string] -or [string]$choice -cne [string]$fixture.expected_choice) {
+                    Add-Failure "Valid Cheat showdown-walk fixture expected '$($fixture.expected_choice)' but selected '$choice'."
+                }
+            }
+            catch {
+                Add-Failure "Valid Cheat showdown-walk fixture '$($fixture.expected_choice)' threw: $($_.Exception.Message)"
+            }
+        }
+
+        $hostileWalkCases = [Collections.Generic.List[object]]::new()
+        $fixture = New-CheatReplayShowdownWalkPolicyFixture; $fixture.popup.visible = $false
+        $hostileWalkCases.Add([pscustomobject]@{ label = 'popup-hidden'; fixture = $fixture })
+        $fixture = New-CheatReplayShowdownWalkPolicyFixture; $fixture.popup.visible = 'true'
+        $hostileWalkCases.Add([pscustomobject]@{ label = 'popup-visible-non-boolean'; fixture = $fixture })
+        $fixture = New-CheatReplayShowdownWalkPolicyFixture; $fixture.popup.render_valid = $false
+        $hostileWalkCases.Add([pscustomobject]@{ label = 'popup-clipped'; fixture = $fixture })
+        $fixture = New-CheatReplayShowdownWalkPolicyFixture; $fixture.popup.event_id = 'The_House_Calls'
+        $hostileWalkCases.Add([pscustomobject]@{ label = 'event-id-case'; fixture = $fixture })
+        $fixture = New-CheatReplayShowdownWalkPolicyFixture; $fixture.popup.choices = @()
+        $hostileWalkCases.Add([pscustomobject]@{ label = 'choice-count-mismatch'; fixture = $fixture })
+        $fixture = New-CheatReplayShowdownWalkPolicyFixture -ChoiceIds @('keep_everything', 'guess');
+        $hostileWalkCases.Add([pscustomobject]@{ label = 'unsupported-choice'; fixture = $fixture })
+        $fixture = New-CheatReplayShowdownWalkPolicyFixture -ChoiceIds @('keep_everything', 'keep_everything');
+        $hostileWalkCases.Add([pscustomobject]@{ label = 'choice-id-duplicate'; fixture = $fixture })
+        $fixture = New-CheatReplayShowdownWalkPolicyFixture; $fixture.popup.choices[0].enabled = $false
+        $hostileWalkCases.Add([pscustomobject]@{ label = 'choice-disabled'; fixture = $fixture })
+        $fixture = New-CheatReplayShowdownWalkPolicyFixture -ChoiceIds @('keep_everything', 'trash_item__marked_cards', 'trash_item__xray_glasses')
+        $hostileWalkCases.Add([pscustomobject]@{ label = 'multiple-classified-items'; fixture = $fixture })
+        $fixture = New-CheatReplayShowdownWalkPolicyFixture -ChoiceIds @('trash_item__marked_cards')
+        $hostileWalkCases.Add([pscustomobject]@{ label = 'keep-control-missing'; fixture = $fixture })
+        $fixture = New-CheatReplayShowdownWalkPolicyFixture; $fixture.popup.choices[0] = [pscustomobject]@{ Id = 'keep_everything'; label = 'Keep Everything'; text = 'Keep it.'; enabled = $true }
+        $hostileWalkCases.Add([pscustomobject]@{ label = 'choice-property-case'; fixture = $fixture })
+        $fixture = New-CheatReplayShowdownWalkPolicyFixture -ChoiceIds @()
+        $hostileWalkCases.Add([pscustomobject]@{ label = 'choice-list-empty'; fixture = $fixture })
+
+        $cheatShowdownWalkHostileFixtures = $hostileWalkCases.Count
+        foreach ($case in $hostileWalkCases) {
+            $threw = $false
+            try { $null = Select-CheatReplayShowdownWalkChoice -EventPopup $case.fixture.popup }
+            catch { $threw = $true }
+            if (-not $threw) {
+                Add-Failure "Hostile Cheat showdown-walk fixture '$($case.label)' did not fail closed."
+            }
+        }
+    }
+    else {
+        Add-Failure 'Replay policy helper did not export Select-CheatReplayShowdownWalkChoice.'
+    }
+
+    $cheatDuelContinuationValidFixtures = 1
+    if (-not (Test-CheatReplayDuelContinuationOrder -Source $runner)) {
+        Add-Failure 'Enter-BlackjackTable no longer preserves a restored Blackjack duel surface before Grand-room navigation.'
+    }
+    $hostileDuelContinuationSources = @(
+@'
+function Enter-BlackjackTable {
+    Enter-GrandRoom -Room main
+    if ([string](Get-Value $script:LastObservation @('screen', 'screen') '') -ceq 'GAME' -and [string](Get-Value $script:LastObservation @('game', 'game_id') '') -ceq 'blackjack') { return }
+}
+'@,
+@'
+function Enter-BlackjackTable {
+    if ([string](Get-Value $script:LastObservation @('screen', 'screen') '') -ceq 'GAME' -and [string](Get-Value $script:LastObservation @('game', 'game_id') '') -ceq 'blackjack') { Write-Output 'seen' }
+    Enter-GrandRoom -Room main
+}
+'@
+    )
+    $cheatDuelContinuationHostileFixtures = $hostileDuelContinuationSources.Count
+    foreach ($source in $hostileDuelContinuationSources) {
+        if (Test-CheatReplayDuelContinuationOrder -Source $source) {
+            Add-Failure 'Hostile Cheat duel-continuation ordering fixture did not fail closed.'
+        }
     }
 
     if ($null -ne (Get-Command 'Select-GrandFareMachineJamChoice' -ErrorAction SilentlyContinue)) {
@@ -1179,6 +1524,9 @@ func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
         'function Invoke-CleanEndingRoute',
         'function Invoke-CheatEndingRoute',
         'function Invoke-HeistEndingRoute',
+        'Select-CheatReplayBlackjackCheatAction',
+        'Select-CheatReplayBossCalloutAction',
+        'Select-CheatReplayShowdownWalkChoice',
         'function Invoke-BridgeTransportRegression',
         'function Invoke-BridgeStatusRegression',
         'function Select-UniqueFullyVisibleButton',
@@ -1490,6 +1838,12 @@ func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
     Assert-NotMatch $runner '\.\s*(?:call|set)\s*\(' 'Replay runner must not call or mutate Godot objects directly.'
     Assert-NotMatch $sanitizer '"(?:turns|game_ids|event_ids|resolved_event_ids|service_ids|travel_hooks|event_options|travel_choices|item_offers|service_options|lender_options|interactable_objects)"' 'Public sanitizer must not admit raw environment model lists or option catalogs.'
     Assert-Match $sanitizer '(?s)static func _talk\(.*?typewriter_active.*?typeof\(typewriter_value\) == TYPE_BOOL' 'Public TalkDock observation must retain its exact visible typewriter-state witness while rejecting non-boolean values.'
+    Assert-Match $runner '(?s)function Invoke-VisibleCheatIfAvailable.*?Select-CheatReplayBlackjackCheatAction.*?''open_window''.*?blackjack_distraction.*?peek_window_open.*?''peek''.*?blackjack_peek.*?dealer_hole_visible' 'Cheat replay must bind published peek_hole_card policy to the rendered Distraction -> open window -> Peek sequence and exact public completion witness.'
+    Assert-NotMatch $runner '\$preferred\s*=\s*@\(''blackjack_distraction'',\s*''blackjack_peek''\)' 'Cheat replay must not return after the old control-id preference loop before performing Peek.'
+    Assert-Match $replayPolicy '(?s)function Select-CheatReplayBlackjackCheatAction.*?''peek_hole_card''.*?''blackjack_distraction''.*?''blackjack_peek''' 'Cheat replay policy must distinguish the published semantic cheat id from the two rendered control ids.'
+    Assert-Match $runner '(?s)function Invoke-PublicBossCalloutIfShown.*?Select-CheatReplayBossCalloutAction.*?stage\s+-cne\s+''call''.*?blackjack_boss_callout.*?boss_callout_used' 'Rourke replay must defer through the public policy and verify a post-deal rendered callout witness.'
+    Assert-Match $runner '(?s)function Resolve-ShowdownChoiceSurface.*?Select-CheatReplayShowdownWalkChoice.*?keep_everything.*?hand_to_crew__.*?trash' 'Showdown walk must use the public classified-item policy instead of blindly keeping every inventory.'
+    Assert-Match $replayPolicy '(?s)function Select-CheatReplayShowdownWalkChoice.*?marked_cards.*?foil_sleeve.*?weighted_keyring.*?xray_glasses.*?tab_detector.*?tarot_card.*?multiple classified items' 'Showdown walk policy must fail closed when its one pocket change cannot remove every classified item.'
     Assert-Contains $runner "Invoke-GameAction -Action 'blackjack_boss_callout' -Index `$index" 'Rourke callouts must click the matching rendered indexed control.'
     Assert-Contains $runner "@('game', 'boss_hand_number') 0) -cne 1" 'Rourke persistence must recognize the publicly numbered first hand.'
     Assert-Match $runner '(?s)function Assert-VisibleTalkChoiceConfirmation.*?render_valid.*?eventId.*?-cne\s+\$ExpectedEventId.*?Confirm:\s+\$OriginalLabel.*?label.*?-cne\s+\$expectedConfirmLabel.*?function Choose-VisibleChoice.*?Assert-VisibleTalkChoiceConfirmation' 'Replay choices must bind the second press to the same fully rendered TalkDock event and exact Confirm label.'
@@ -1581,6 +1935,14 @@ $report = [ordered]@{
     grand_fare_cash_event_hostile_fixtures = $grandFareCashEventHostileFixtures
     command_open_valid_fixtures = $commandOpenValidFixtures
     command_open_hostile_fixtures = $commandOpenHostileFixtures
+    cheat_blackjack_valid_fixtures = $cheatBlackjackValidFixtures
+    cheat_blackjack_hostile_fixtures = $cheatBlackjackHostileFixtures
+    cheat_boss_callout_valid_fixtures = $cheatBossCalloutValidFixtures
+    cheat_boss_callout_hostile_fixtures = $cheatBossCalloutHostileFixtures
+    cheat_showdown_walk_valid_fixtures = $cheatShowdownWalkValidFixtures
+    cheat_showdown_walk_hostile_fixtures = $cheatShowdownWalkHostileFixtures
+    cheat_duel_continuation_valid_fixtures = $cheatDuelContinuationValidFixtures
+    cheat_duel_continuation_hostile_fixtures = $cheatDuelContinuationHostileFixtures
     failures = @($failures)
 }
 $report | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $ReportPath -Encoding utf8

@@ -78,6 +78,269 @@ function Assert-DeltaQueenBeachPublicRoute {
 }
 
 
+function Get-Rw062PublicSurfaceActionMatches {
+    param(
+        [Parameter(Mandatory = $true)][AllowEmptyCollection()][object[]]$SurfaceActions,
+        [Parameter(Mandatory = $true)][string]$Action
+    )
+
+    return @($SurfaceActions | Where-Object {
+        $properties = @(Get-Rw062ExactPublicPropertyMatches -InputObject $_ -Name 'action')
+        $properties.Count -eq 1 -and $properties[0].Value -is [string] -and
+            [string]$properties[0].Value -ceq $Action
+    })
+}
+
+
+function Select-CheatReplayBlackjackCheatAction {
+    param(
+        [Parameter(Mandatory = $true)]$Game,
+        [Parameter(Mandatory = $true)][AllowEmptyCollection()][object[]]$SurfaceActions
+    )
+
+    $peekAvailable = Get-Rw062RequiredPublicProperty -InputObject $Game -Name 'peek_available' -Context 'Blackjack public game state'
+    $peekWindowOpen = Get-Rw062RequiredPublicProperty -InputObject $Game -Name 'peek_window_open' -Context 'Blackjack public game state'
+    $dealerHoleVisible = Get-Rw062RequiredPublicProperty -InputObject $Game -Name 'dealer_hole_visible' -Context 'Blackjack public game state'
+    $canDeal = Get-Rw062RequiredPublicProperty -InputObject $Game -Name 'can_deal' -Context 'Blackjack public game state'
+    foreach ($signal in @(
+        [pscustomobject]@{ name = 'peek_available'; value = $peekAvailable },
+        [pscustomobject]@{ name = 'peek_window_open'; value = $peekWindowOpen },
+        [pscustomobject]@{ name = 'dealer_hole_visible'; value = $dealerHoleVisible },
+        [pscustomobject]@{ name = 'can_deal'; value = $canDeal }
+    )) {
+        if ($signal.value -isnot [bool]) {
+            throw "Blackjack public game state has a missing or non-boolean '$($signal.name)' witness."
+        }
+    }
+    if ([bool]$peekAvailable -and [bool]$canDeal) {
+        throw 'Blackjack cannot publicly offer Peek while Deal is still available.'
+    }
+    if ([bool]$dealerHoleVisible -and [bool]$peekAvailable) {
+        throw 'Blackjack publicly exposes an impossible visible-hole-card Peek state.'
+    }
+    if ([bool]$peekWindowOpen -and -not [bool]$peekAvailable -and -not [bool]$dealerHoleVisible) {
+        throw 'Blackjack exposes a Peek window without an active Peek or visible hole card.'
+    }
+
+    $cheatActions = @(Get-Rw062RequiredPublicProperty -InputObject $Game -Name 'cheat_actions' -Context 'Blackjack public game state')
+    $publishedPeek = @($cheatActions | Where-Object {
+        $idProperties = @(Get-Rw062ExactPublicPropertyMatches -InputObject $_ -Name 'id')
+        $idProperties.Count -eq 1 -and $idProperties[0].Value -is [string] -and
+            [string]$idProperties[0].Value -ceq 'peek_hole_card'
+    })
+    if ($publishedPeek.Count -ne 1) {
+        throw "Blackjack must publish exactly one semantic 'peek_hole_card' cheat; found $($publishedPeek.Count)."
+    }
+    $publishedKind = Get-Rw062RequiredPublicProperty -InputObject $publishedPeek[0] -Name 'kind' -Context "Published 'peek_hole_card' cheat"
+    $publishedLabel = Get-Rw062RequiredPublicProperty -InputObject $publishedPeek[0] -Name 'label' -Context "Published 'peek_hole_card' cheat"
+    if ($publishedKind -isnot [string] -or [string]$publishedKind -cne 'cheat' -or
+        $publishedLabel -isnot [string] -or [string]::IsNullOrWhiteSpace([string]$publishedLabel)) {
+        throw "Published 'peek_hole_card' cheat has changed kind or lost its rendered label."
+    }
+
+    if ([bool]$dealerHoleVisible) {
+        return [pscustomobject][ordered]@{ stage = 'complete'; action = ''; index = -1 }
+    }
+    if (-not [bool]$peekAvailable) {
+        return [pscustomobject][ordered]@{ stage = 'wait_for_deal'; action = ''; index = -1 }
+    }
+
+    if (-not [bool]$peekWindowOpen) {
+        $distractions = @(Get-Rw062PublicSurfaceActionMatches -SurfaceActions $SurfaceActions -Action 'blackjack_distraction')
+        if ($distractions.Count -eq 0) {
+            throw "Published 'peek_hole_card' is available, but no rendered Distraction control can open its public window."
+        }
+        $validated = @()
+        foreach ($row in $distractions) {
+            $enabled = Get-Rw062RequiredPublicProperty -InputObject $row -Name 'enabled' -Context 'Blackjack Distraction control'
+            $index = Get-Rw062RequiredPublicProperty -InputObject $row -Name 'index' -Context 'Blackjack Distraction control'
+            if ($enabled -isnot [bool] -or -not [bool]$enabled -or
+                ($index -isnot [int32] -and $index -isnot [int64]) -or [long]$index -lt 0 -or [long]$index -gt [int]::MaxValue) {
+                throw 'Blackjack Distraction control is disabled or has no exact non-negative integral index.'
+            }
+            $validated += [pscustomobject]@{ row = $row; index = [int]$index }
+        }
+        $duplicateIndices = @($validated | Group-Object -Property index | Where-Object { $_.Count -gt 1 })
+        if ($duplicateIndices.Count -gt 0) {
+            throw 'Blackjack exposes duplicate rendered Distraction indices.'
+        }
+        $selected = @($validated | Sort-Object -Property index)[0]
+        return [pscustomobject][ordered]@{ stage = 'open_window'; action = 'blackjack_distraction'; index = [int]$selected.index }
+    }
+
+    $peekControls = @(Get-Rw062PublicSurfaceActionMatches -SurfaceActions $SurfaceActions -Action 'blackjack_peek')
+    if ($peekControls.Count -ne 1) {
+        throw "The open public Peek window must expose exactly one rendered Peek control; found $($peekControls.Count)."
+    }
+    $peekEnabled = Get-Rw062RequiredPublicProperty -InputObject $peekControls[0] -Name 'enabled' -Context 'Blackjack Peek control'
+    $peekIndex = Get-Rw062RequiredPublicProperty -InputObject $peekControls[0] -Name 'index' -Context 'Blackjack Peek control'
+    if ($peekEnabled -isnot [bool] -or -not [bool]$peekEnabled -or
+        ($peekIndex -isnot [int32] -and $peekIndex -isnot [int64]) -or [long]$peekIndex -ne 0) {
+        throw 'The rendered Blackjack Peek control is disabled or no longer has its exact index zero binding.'
+    }
+    return [pscustomobject][ordered]@{ stage = 'peek'; action = 'blackjack_peek'; index = 0 }
+}
+
+
+function Select-CheatReplayBossCalloutAction {
+    param(
+        [Parameter(Mandatory = $true)]$Game,
+        [Parameter(Mandatory = $true)][AllowEmptyCollection()][object[]]$SurfaceActions
+    )
+
+    $bossActive = Get-Rw062RequiredPublicProperty -InputObject $Game -Name 'boss_duel_active' -Context 'Rourke public game state'
+    $tell = Get-Rw062RequiredPublicProperty -InputObject $Game -Name 'boss_tell' -Context 'Rourke public game state'
+    if ($bossActive -isnot [bool] -or -not [bool]$bossActive -or $tell -isnot [string]) {
+        throw 'Rourke callout policy requires an exact active-duel boolean and rendered tell text.'
+    }
+    if ([string]::IsNullOrWhiteSpace([string]$tell) -or [string]$tell -match 'gives\s+nothing\s+away') {
+        return [pscustomobject][ordered]@{ stage = 'none'; action = ''; index = -1 }
+    }
+
+    $expectedLabelFragment = if ([string]$tell -match '(slug|squares\s+one)') {
+        'stack'
+    } elseif ([string]$tell -match '(thumb|down\s+card)') {
+        'swap'
+    } else {
+        throw "Rourke exposed an unrecognized public tell: $tell"
+    }
+
+    $callouts = @(Get-Rw062RequiredPublicProperty -InputObject $Game -Name 'boss_callouts' -Context 'Rourke public game state')
+    if ($callouts.Count -ne 2) {
+        throw "Rourke must expose exactly two public callout labels; found $($callouts.Count)."
+    }
+    $matchingIndices = @()
+    $seenIds = @()
+    for ($index = 0; $index -lt $callouts.Count; $index++) {
+        $id = Get-Rw062RequiredPublicProperty -InputObject $callouts[$index] -Name 'id' -Context "Rourke callout $index"
+        $label = Get-Rw062RequiredPublicProperty -InputObject $callouts[$index] -Name 'label' -Context "Rourke callout $index"
+        if ($id -isnot [string] -or [string]$id -cnotmatch '^[a-z0-9_]+$' -or
+            $label -isnot [string] -or [string]::IsNullOrWhiteSpace([string]$label)) {
+            throw "Rourke callout $index has no stable public id and label."
+        }
+        if (@($seenIds | Where-Object { [string]$_ -ceq [string]$id }).Count -gt 0) {
+            throw "Rourke exposes duplicate public callout id '$id'."
+        }
+        $seenIds += [string]$id
+        $labelText = [string]$label
+        if ($labelText.IndexOf($expectedLabelFragment, [StringComparison]::OrdinalIgnoreCase) -ge 0) {
+            $matchingIndices += $index
+        }
+    }
+    if ($matchingIndices.Count -ne 1) {
+        throw "Rourke's public tell '$tell' has no unique rendered '$expectedLabelFragment' callout."
+    }
+
+    $calloutUsed = Get-Rw062RequiredPublicProperty -InputObject $Game -Name 'boss_callout_used' -Context 'Rourke public game state'
+    $canDeal = Get-Rw062RequiredPublicProperty -InputObject $Game -Name 'can_deal' -Context 'Rourke public game state'
+    if ($calloutUsed -isnot [bool] -or $canDeal -isnot [bool]) {
+        throw 'Rourke callout policy requires exact boolean used/deal witnesses.'
+    }
+    if ([bool]$calloutUsed) {
+        return [pscustomobject][ordered]@{ stage = 'used'; action = ''; index = -1 }
+    }
+    $matchingIndex = [int]$matchingIndices[0]
+    if ([bool]$canDeal) {
+        # The tell is rendered before Deal, but production intentionally enables
+        # its indexed callout only after cards are on the felt.
+        return [pscustomobject][ordered]@{ stage = 'defer_until_dealt'; action = ''; index = $matchingIndex }
+    }
+
+    $surfaceMatches = @(Get-Rw062PublicSurfaceActionMatches -SurfaceActions $SurfaceActions -Action 'blackjack_boss_callout' | Where-Object {
+        $indexProperties = @(Get-Rw062ExactPublicPropertyMatches -InputObject $_ -Name 'index')
+        $indexProperties.Count -eq 1 -and
+            ($indexProperties[0].Value -is [int32] -or $indexProperties[0].Value -is [int64]) -and
+            [long]$indexProperties[0].Value -eq $matchingIndex
+    })
+    if ($surfaceMatches.Count -ne 1) {
+        throw "Rourke's post-deal callout index $matchingIndex is missing or ambiguous on the rendered surface."
+    }
+    $enabled = Get-Rw062RequiredPublicProperty -InputObject $surfaceMatches[0] -Name 'enabled' -Context "Rourke callout index $matchingIndex"
+    if ($enabled -isnot [bool] -or -not [bool]$enabled) {
+        throw "Rourke's post-deal callout index $matchingIndex is not enabled."
+    }
+    return [pscustomobject][ordered]@{ stage = 'call'; action = 'blackjack_boss_callout'; index = $matchingIndex }
+}
+
+
+function Select-CheatReplayShowdownWalkChoice {
+    param([Parameter(Mandatory = $true)]$EventPopup)
+
+    $visible = Get-Rw062RequiredPublicProperty -InputObject $EventPopup -Name 'visible' -Context 'Showdown walk popup'
+    $renderValid = Get-Rw062RequiredPublicProperty -InputObject $EventPopup -Name 'render_valid' -Context 'Showdown walk popup'
+    $eventId = Get-Rw062RequiredPublicProperty -InputObject $EventPopup -Name 'event_id' -Context 'Showdown walk popup'
+    if ($visible -isnot [bool] -or -not [bool]$visible -or
+        $renderValid -isnot [bool] -or -not [bool]$renderValid -or
+        $eventId -isnot [string] -or [string]$eventId -cne 'the_house_calls') {
+        throw 'Showdown walk policy requires the exact fully rendered the_house_calls popup.'
+    }
+
+    $choiceIds = @(Get-Rw062RequiredPublicProperty -InputObject $EventPopup -Name 'choice_ids' -Context 'Showdown walk popup')
+    $choices = @(Get-Rw062RequiredPublicProperty -InputObject $EventPopup -Name 'choices' -Context 'Showdown walk popup')
+    if ($choiceIds.Count -eq 0 -or $choiceIds.Count -ne $choices.Count) {
+        throw 'Showdown walk choice ids and rendered choices are empty or disagree in count.'
+    }
+    foreach ($choiceIdValue in $choiceIds) {
+        if ($choiceIdValue -isnot [string]) {
+            throw 'Showdown walk exposes a non-string public choice id.'
+        }
+        $choiceId = [string]$choiceIdValue
+        if ($choiceId -cne 'keep_everything' -and
+            $choiceId -cnotmatch '^(?:trash_item|hand_to_crew)__[a-z0-9_]+$') {
+            throw "Showdown walk exposes unsupported public choice '$choiceId'."
+        }
+        if (@($choiceIds | Where-Object { $_ -is [string] -and [string]$_ -ceq $choiceId }).Count -ne 1) {
+            throw "Showdown walk exposes duplicate public choice '$choiceId'."
+        }
+        $matches = @($choices | Where-Object {
+            $idProperties = @(Get-Rw062ExactPublicPropertyMatches -InputObject $_ -Name 'id')
+            $idProperties.Count -eq 1 -and $idProperties[0].Value -is [string] -and
+                [string]$idProperties[0].Value -ceq $choiceId
+        })
+        if ($matches.Count -ne 1) {
+            throw "Showdown walk choice '$choiceId' is missing or ambiguous in rendered choices."
+        }
+        $enabled = Get-Rw062RequiredPublicProperty -InputObject $matches[0] -Name 'enabled' -Context "Showdown walk choice '$choiceId'"
+        $label = Get-Rw062RequiredPublicProperty -InputObject $matches[0] -Name 'label' -Context "Showdown walk choice '$choiceId'"
+        $text = Get-Rw062RequiredPublicProperty -InputObject $matches[0] -Name 'text' -Context "Showdown walk choice '$choiceId'"
+        if ($enabled -isnot [bool] -or -not [bool]$enabled -or
+            $label -isnot [string] -or [string]::IsNullOrWhiteSpace([string]$label) -or
+            $text -isnot [string] -or [string]::IsNullOrWhiteSpace([string]$text)) {
+            throw "Showdown walk choice '$choiceId' is disabled or missing rendered copy."
+        }
+    }
+    if (@($choiceIds | Where-Object { $_ -is [string] -and [string]$_ -ceq 'keep_everything' }).Count -ne 1) {
+        throw "Showdown walk must expose exactly one 'keep_everything' control."
+    }
+
+    $classifiedItemIds = @(
+        'marked_cards', 'foil_sleeve', 'weighted_keyring',
+        'xray_glasses', 'tab_detector', 'tarot_card'
+    )
+    $presentClassifiedItems = @($classifiedItemIds | Where-Object {
+        $itemId = [string]$_
+        @($choiceIds | Where-Object { $_ -is [string] -and [string]$_ -ceq "trash_item__$itemId" }).Count -eq 1
+    })
+    if ($presentClassifiedItems.Count -gt 1) {
+        throw "Showdown walk carries multiple classified items that cannot all be removed in its one public pocket change: $($presentClassifiedItems -join ', ')."
+    }
+    if ($presentClassifiedItems.Count -eq 0) {
+        return 'keep_everything'
+    }
+
+    $classifiedItemId = [string]$presentClassifiedItems[0]
+    $crewChoice = "hand_to_crew__$classifiedItemId"
+    if (@($choiceIds | Where-Object { $_ -is [string] -and [string]$_ -ceq $crewChoice }).Count -eq 1) {
+        return $crewChoice
+    }
+    $trashChoice = "trash_item__$classifiedItemId"
+    if (@($choiceIds | Where-Object { $_ -is [string] -and [string]$_ -ceq $trashChoice }).Count -eq 1) {
+        return $trashChoice
+    }
+    throw "Showdown walk exposed classified item '$classifiedItemId' without a rendered removal choice."
+}
+
+
 function Select-GrandFareMachineJamChoice {
     param(
         [Parameter(Mandatory = $true)]$EventPopup,
