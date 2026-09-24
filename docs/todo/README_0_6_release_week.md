@@ -59,6 +59,13 @@ next finds the answer resumes the work. Every row must follow its protocol.
   jackpot or finds a legitimate fast route. Don't remove those shortcuts.
 - **Commits.** Worker agents executing these prompts commit and push their own
   work. The PM (planning) session never commits.
+- **Parallel execution (Q-009).** Isolated focused Godot runs may overlap under
+  the shared four-slot lease folder. Full suites, timing/performance work, soak
+  and every release gate remain exclusive. The release orchestrator owns rooms,
+  the scoreboard, owner checkpoints and rw06_4; the peer prompt
+  `rw06_2p_endings_peer_agent_prompt.md` owns endings and then balance. After
+  the shared Q-008 rendering fixes land, rw06_1 map data splits into Grand;
+  Bar plus Corner Store; and all other rooms.
 
 ## Order
 
@@ -67,15 +74,16 @@ next finds the answer resumes the work. Every row must follow its protocol.
 | 0 | rw06_pre | `../todone/rw06_pre_worker_handoff_message.md`: the running worker finishes on its branch, merges to main and deletes the branch | — | DONE (`54c7d788`) |
 | 1 | rw06_0 | `../todone/rw06_0_custody_commit_prompt.md` | rw06_pre reports MERGED (fixes on main, branch deleted) | DONE (`7da3e5da`) |
 | 1–4 | rw06_1 | `rw06_1_fixed_slot_rooms_prompt.md` | rw06_0 | IN_PROGRESS / Q-008 REJECTED (blocking all-room visual rework: nonphysical scenario concepts move to authenticated overflow, people/objects must sit on the rendered art, behind-counter actors need real fixture occlusion, and the Grand Casino must be regrouped. Exact pushed diagnostic tip `72641df2`; no landing before a replacement owner-approved sheet) |
-| 1–5 | rw06_2 | `rw06_2_three_endings_prompt.md` | rw06_0 (runs parallel to rw06_1; final pass after rw06_1) | IN_PROGRESS (pushed tip `1c1642db`: public-route hardening now revalidates exact live identity/index/geometry before physical clicks, accepts only rendered public feedback and exact-bool save acknowledgements, and covers production Back Alley/Motel lender combinations. Engine-free suites and full validation pass; one serialized Godot 4.6 public-observation contract passed clean. Non-qualifying exploratory routes continue; qualifying 3/3 evidence waits for rw06_1) |
+| 1–5 | rw06_2 | `rw06_2p_endings_peer_agent_prompt.md` → `rw06_2_three_endings_prompt.md` | rw06_0 (runs parallel to rw06_1; final pass after rw06_1) | HANDED OFF TO PEER (`codex/rw06_2-prep` at `1c1642db`; engine-free gates and focused public-observation contract green; next is one isolated no-retry Clean probe, qualifying 3/3 waits for rw06_1; canonical state is `rw06_2p_status.md`) |
 | 1–3 | rw06_5 | `../todone/rw06_5_owner_gameplay_fixes_prompt.md`: clicking a person starts a conversation, blackjack count shown between hands, Cass needs a real count | rw06_0 (parallel with rw06_1/rw06_2) | DONE (`1038a31f`) |
 | 5 | owner run | Owner plays one ending start to finish; notes go to the scoreboard | rw06_1, rw06_5 | TODO (rw06_5 DONE; waits for rw06_1) |
-| 5 | rw06_3 | `rw06_3_balance_prompt.md` | rw06_2 routes exist | TODO |
+| 5 | rw06_3 | `rw06_2p_endings_peer_agent_prompt.md` → `rw06_3_balance_prompt.md` | rw06_2 routes exist | PEER OWNED / NOT STARTED |
 | 6–7 | rw06_4 | `rw06_4_release_gate_ship_prompt.md` | rw06_1, rw06_2, rw06_3, rw06_5 | TODO |
 
-One orchestrator runs rows rw06_0 through rw06_5:
-`rw06_execute_release_week_prompt.md`. rw06_1, rw06_2 and rw06_5 run at the same time. The file-ownership rule is in each
-prompt.
+The release orchestrator runs rw06_0, rw06_1, owner checkpoints and rw06_4 via
+`rw06_execute_release_week_prompt.md`; rw06_5 is complete. The Q-009 peer owns
+rw06_2 and rw06_3 via `rw06_2p_endings_peer_agent_prompt.md` and reports only in
+`rw06_2p_status.md`. The file-ownership rule is in each prompt.
 
 ## Scoreboard (only the orchestrator edits it; rows report to the orchestrator)
 
@@ -190,6 +198,7 @@ History (newest last):
 - 2026-09-23 release orchestrator: rw06_1 repaired the exact seed-063 Gas Station lane failure without weakening a guarantee and reached clean pushed tip `8a7a1ae8`. Independent engine-free validation passed: 21 maps, 55 legal hosts, 767 active and 1,504 complete snapshots, exact active/complete overflow 36/63, 303,450 base/scenario plus 4,065 base/base conservative pair checks with zero conflicts, and 750 mandatory-lane checks. The serialized isolated no-retry Godot lease then passed historical seeds 009, 061, 090, 040 and 063 in order with zero pre/post processes (`.tmp/rw06_1/lease5_8a7a1ae8/smoke_metadata.json`, SHA-256 `119F914FC3EB9C007EF45448815D51DC29D97434B3C588B69ADABD2CF37A96AD`). A fresh six-image player-view capture passed its report/hash assertions and was visually inspected; Q-008 now links its sheet (SHA-256 `40CF5E5B771C9A8BEF01562E486CAC5A6429434BA2DF2D3FF1C24C0C5500E6BF`). The capture log records the tool's generic ObjectDB exit warning; it is review evidence, not a qualifying substitute for the remaining acceptance gates.
 - 2026-09-23 release orchestrator: owner Q-008 rejected the `8a7a1ae8` player-view sheet and superseded zero-visual-overflow as a goal: abstract tasks, zones, routes, barriers, ledgers, seals and similar nonphysical concepts must use the authenticated room action list, while only people, games, shop items and real props with art occupy room slots. The blocking rework applies to every room, includes real counter occlusion and a complete art-aligned Grand Casino regroup, and requires a new primary-checkout review image plus owner approval before landing. The rw06_1 writer is working engine-free while rw06_2 uses one serialized Godot lease; the Sep-24 timebox and overlap, exit, reachability and hidden-state guarantees remain unchanged.
 - 2026-09-23 release orchestrator: rw06_2 pushed hardening checkpoint `1c1642db` after all engine-free source/semantic contracts and full repository validation passed. One explicitly leased Godot 4.6 public-observation contract then passed in a single launch with no warning, error or leak; report `.tmp/rw06_2/public_observation_contract.json`, SHA-256 `F8F699846DB1CFD6C5659F7A9D10F42C77CAB4F8573C4C5EE19D28E683889195`, pre/post process census zero. The commit binds physical clicks to an unchanged fully rendered live object, uses only public rendered feedback and exact save acknowledgements, and adds production-shaped multi-lender fixtures. The rw06_1-owned local Pixel canvas dependency was deliberately excluded and must be reconciled after rw06_1 lands before qualifying routes.
+- 2026-09-23 release orchestrator: applied owner Q-009. The existing rw06_2 worker stopped without launching Probe 20 and handed pushed tip `1c1642db` to the separate rw06_2/rw06_3 peer through `rw06_2p_status.md`; the release orchestrator will no longer edit those rows. Q-009 also replaces machine-wide serialization with up to four properly isolated focused runs coordinated by live-PID lease files, while full suites, performance/timing, soak and rw06_4 remain exclusive. The shared lease directory is `D:\Projects\Beat-The-House-worktrees\.godot_leases\`.
 
 ## Rules every row inherits
 
@@ -206,4 +215,7 @@ History (newest last):
 - Scope discipline: if something doesn't block this week's goal, it goes into
   `../plans/0.6.1_backlog.md` with enough detail to act on later. It is never
   silently dropped.
-- Serialize Godot runs. One heavy Godot process at a time per machine.
+- Q-009 Godot policy: at most four isolated focused runs may overlap, each with
+  its own worktree, `APPDATA`/`LOCALAPPDATA`, log, live-PID lease and owned
+  cleanup. Full Smoke/Contract/Full, performance/timing, soak and rw06_4 are
+  exclusive and run only after every other lease and Godot process clears.
