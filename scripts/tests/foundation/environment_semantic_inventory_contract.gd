@@ -78,7 +78,7 @@ static func check(library: ContentLibrary, failures: Array) -> void:
 	_check_noninteractive_actor_independence(failures)
 	_check_game_interactable_authority(library, failures)
 	_check_dynamic_interaction_revalidation(library, failures)
-	_check_casino_room_route_authority(failures)
+	_check_casino_room_route_authority(library, failures)
 	_check_instance_source_binding(failures)
 	_check_consumed_dynamic_source_binding(failures)
 	_check_record_contract(library, failures)
@@ -702,26 +702,13 @@ static func _check_instance_source_binding(failures: Array) -> void:
 		failures.append("Unconsumed Numbers/Silas/delivery producer churn invalidated or changed a stable semantic inventory.")
 
 
-static func _check_casino_room_route_authority(failures: Array) -> void:
-	var library := FixtureLibrary.new()
+static func _check_casino_room_route_authority(library: ContentLibrary, failures: Array) -> void:
 	var room_ids := ["grand_casino_high_limit", "grand_casino_back_room", "grand_casino_cage"]
-	library.archetypes_by_id = {
-		"grand_casino": {"id": "grand_casino", "local_narrative_flags": {"casino_room_targets": room_ids.duplicate()}},
-		"grand_casino_high_limit": {"id": "grand_casino_high_limit", "display_name": "High-Limit Room"},
-		"grand_casino_back_room": {"id": "grand_casino_back_room", "display_name": "Back Room"},
-		"grand_casino_cage": {"id": "grand_casino_cage", "display_name": "Cage"},
-	}
-	var rects: Dictionary = {}
-	for room_id in room_ids: rects["travel:%s" % room_id] = {"x": 0.1, "y": 0.1, "w": 0.1, "h": 0.2}
-	var environment := {
-		"id": "grand_casino_fixture_001",
-		"archetype_id": "grand_casino",
-		"world_node_id": "grand_casino",
-		"current_layer_id": "",
-		"layout": {"object_rects": rects},
-		"local_narrative_flags": {"casino_room_targets": room_ids.duplicate()},
-		"game_ids": [], "event_ids": [], "item_offers": [], "service_ids": [], "lender_hooks": [], "travel_hooks": [], "next_archetypes": [],
-	}
+	var environment := _generated_environment(library, "grand_casino", {}, 606103)
+	var generated_room_ids := _array(_dict(environment.get("local_narrative_flags", {})).get("casino_room_targets", []))
+	if not _same_string_set(generated_room_ids, room_ids):
+		failures.append("Production Grand Casino generation did not install the exact three canonical room targets.")
+		return
 	var authoritative := EnvironmentBaseSemanticRecordsScript.authoritative_interactable_records(environment, library)
 	var stamped := EnvironmentBaseSemanticRecordsScript.stamp_interactable_records(_array(authoritative.get("records", [])), environment, library)
 	var produced := EnvironmentBaseSemanticRecordsScript.from_interactable_records(_array(stamped.get("records", [])))
@@ -730,7 +717,17 @@ static func _check_casino_room_route_authority(failures: Array) -> void:
 	environment["scenario_base_actors"] = []
 	var inventory := EnvironmentSemanticInventoryScript.for_instance(environment, library, interactions)
 	var exact := EnvironmentSemanticInventoryScript.exact_collections(inventory)
-	if not bool(authoritative.get("ok", false)) or not bool(stamped.get("ok", false)) or not bool(produced.get("ok", false)) or not EnvironmentSemanticInventoryScript.validate(inventory).is_empty() or interactions.size() != room_ids.size():
+	var expected_room_interaction_ids: Array = []
+	var actual_room_interaction_ids: Array = []
+	# The production room also has games, events, and services. Exactness here is
+	# the closed three-control room-route subset, not an artificial empty room.
+	for room_id in room_ids:
+		expected_room_interaction_ids.append("travel:%s" % room_id)
+	for interaction_value in interactions:
+		var presentation_id := str(_dict(interaction_value).get("presentation_object_id", ""))
+		if expected_room_interaction_ids.has(presentation_id):
+			actual_room_interaction_ids.append(presentation_id)
+	if not bool(authoritative.get("ok", false)) or not bool(stamped.get("ok", false)) or not bool(produced.get("ok", false)) or not EnvironmentSemanticInventoryScript.validate(inventory).is_empty() or not _same_string_set(actual_room_interaction_ids, expected_room_interaction_ids):
 		failures.append("Exact Grand Casino room controls did not survive authoritative production and instance sealing: %s" % JSON.stringify(_array(authoritative.get("errors", [])) + _array(stamped.get("errors", [])) + _array(produced.get("errors", [])) + _array(inventory.get("errors", []))))
 		return
 	for room_id in room_ids:
@@ -742,34 +739,58 @@ static func _check_casino_room_route_authority(failures: Array) -> void:
 		var rendered_provenance := _dict(_dict(inventory.get("provenance", {})).get("interactions|%s" % rendered_identity, {}))
 		if str(route_provenance.get("source_field", "")) != "local_narrative_flags.casino_room_targets" or str(route_provenance.get("source_record_id", "")) != room_id or str(rendered_provenance.get("source_kind", "")) != "environment_instance_ui" or str(rendered_provenance.get("source_record_id", "")) != room_id:
 			failures.append("Grand Casino room %s lost exact room-target provenance." % room_id)
-	_check_casino_room_route_overflow_authority(environment, library, room_ids, _array(authoritative.get("records", [])), failures)
+	_check_casino_room_route_overflow_authority(environment, library, room_ids, failures)
 	var missing_interaction := interactions.duplicate(true)
-	missing_interaction.pop_front()
+	for index in range(missing_interaction.size() - 1, -1, -1):
+		if str(_dict(missing_interaction[index]).get("presentation_object_id", "")) == str(expected_room_interaction_ids[0]):
+			missing_interaction.remove_at(index)
+			break
 	if EnvironmentSemanticInventoryScript.validate(EnvironmentSemanticInventoryScript.for_instance(environment, library, missing_interaction)).is_empty():
 		failures.append("Casino room route survived without its exact rendered travel interaction.")
 
 	var caller_only := environment.duplicate(true)
-	var caller_library := FixtureLibrary.new()
-	caller_library.archetypes_by_id = library.archetypes_by_id.duplicate(true)
-	caller_library.archetypes_by_id["grand_casino"]["local_narrative_flags"]["casino_room_targets"] = []
+	var caller_library := ContentLibrary.new()
+	caller_library.load()
+	var unauthorized_parent := caller_library.environment_archetype("grand_casino").duplicate(true)
+	unauthorized_parent["local_narrative_flags"]["casino_room_targets"] = []
+	caller_library.archetype_by_id["grand_casino"] = unauthorized_parent
 	if EnvironmentSemanticInventoryScript.validate(EnvironmentSemanticInventoryScript.for_instance(caller_only, caller_library, interactions)).is_empty():
 		failures.append("Caller-only casino_room_targets flags bypassed selected-archetype authority.")
 
+	var canonical_room_record: Dictionary = {}
+	for record_value in _array(authoritative.get("records", [])):
+		var record := _dict(record_value)
+		if str(record.get("object_id", "")) == str(expected_room_interaction_ids[0]):
+			canonical_room_record = record
+			break
+	if canonical_room_record.is_empty():
+		failures.append("Production Grand Casino authority omitted its canonical high-limit presentation record.")
+		return
 	var authored_without_flag := environment.duplicate(true)
 	authored_without_flag["local_narrative_flags"]["casino_room_targets"] = []
-	var authored_record := _producer_presentation_record("travel:%s" % room_ids[0], "travel", str(room_ids[0]), "")
-	if bool(EnvironmentBaseSemanticRecordsScript.stamp_interactable_records([authored_record], authored_without_flag, library).get("ok", true)):
+	if bool(EnvironmentBaseSemanticRecordsScript.stamp_interactable_records([canonical_room_record], authored_without_flag, library).get("ok", true)):
 		failures.append("Authored casino room target without an exact installed flag produced a travel interaction.")
 
+	var room_bound_presentation_id := ""
+	var slot_bindings := _dict(_dict(environment.get("layout", {})).get("slot_bindings", {}))
+	for room_id in room_ids:
+		var candidate_id := "travel:%s" % room_id
+		if str(_dict(slot_bindings.get(candidate_id, {})).get("presentation_mode", "")) == "room":
+			room_bound_presentation_id = candidate_id
+			break
+	if room_bound_presentation_id.is_empty():
+		failures.append("Production Grand Casino generation exposed no room-bound casino route for geometry rejection checks.")
+		return
 	var flag_without_layout := environment.duplicate(true)
-	flag_without_layout["layout"]["object_rects"].erase("travel:%s" % room_ids[0])
+	flag_without_layout["layout"]["object_rects"].erase(room_bound_presentation_id)
 	if EnvironmentSemanticInventoryScript.validate(EnvironmentSemanticInventoryScript.for_instance(flag_without_layout, library, interactions)).is_empty():
 		failures.append("Casino room flag without exact travel layout geometry survived instance sealing.")
 
-	var mismatched := _producer_presentation_record("travel:%s" % room_ids[0], "travel", str(room_ids[1]), "")
+	var mismatched := canonical_room_record.duplicate(true)
+	mismatched["source_id"] = str(room_ids[1])
 	if bool(EnvironmentBaseSemanticRecordsScript.stamp_interactable_records([mismatched], environment, library).get("ok", true)):
 		failures.append("Mismatched casino room presentation/source identity survived producer stamping.")
-	var spoofed := _producer_presentation_record("travel:%s" % room_ids[0], "travel", str(room_ids[0]), "")
+	var spoofed := canonical_room_record.duplicate(true)
 	spoofed["source_kind"] = "environment_archetype"
 	spoofed["source_field"] = "travel_hooks"
 	spoofed["source_record_id"] = str(room_ids[1])
@@ -779,9 +800,15 @@ static func _check_casino_room_route_authority(failures: Array) -> void:
 	ghost_library.archetypes_by_id = {
 		"grand_casino": {"id": "grand_casino", "local_narrative_flags": {"casino_room_targets": ["ghost_room"]}},
 	}
-	var ghost_environment := environment.duplicate(true)
-	ghost_environment["local_narrative_flags"]["casino_room_targets"] = ["ghost_room"]
-	ghost_environment["layout"]["object_rects"] = {"travel:ghost_room": {"x": 0.1, "y": 0.1, "w": 0.1, "h": 0.2}}
+	var ghost_environment := {
+		"id": "grand_casino_ghost_fixture_001",
+		"archetype_id": "grand_casino",
+		"world_node_id": "grand_casino",
+		"current_layer_id": "",
+		"layout": {"object_rects": {"travel:ghost_room": {"x": 0.1, "y": 0.1, "w": 0.1, "h": 0.2}}},
+		"local_narrative_flags": {"casino_room_targets": ["ghost_room"]},
+		"game_ids": [], "event_ids": [], "item_offers": [], "service_ids": [], "lender_hooks": [], "travel_hooks": [], "next_archetypes": [],
+	}
 	var ghost_authoritative := EnvironmentBaseSemanticRecordsScript.authoritative_interactable_records(ghost_environment, ghost_library)
 	var ghost_inventory := EnvironmentSemanticInventoryScript.for_instance(ghost_environment, ghost_library, [])
 	if bool(ghost_authoritative.get("ok", true)) or EnvironmentSemanticInventoryScript.validate(ghost_inventory).is_empty():
@@ -792,28 +819,21 @@ static func _check_casino_room_route_authority(failures: Array) -> void:
 	if EnvironmentSemanticInventoryScript.validate_instance_binding(inventory, changed_flag).is_empty():
 		failures.append("Post-seal casino room flag mutation retained stale semantic authority.")
 	var changed_layout := environment.duplicate(true)
-	changed_layout["layout"]["object_rects"]["travel:%s" % room_ids[0]]["x"] = 0.2
+	changed_layout["layout"]["object_rects"][room_bound_presentation_id]["x"] = 0.2
 	if EnvironmentSemanticInventoryScript.validate_instance_binding(inventory, changed_layout).is_empty():
 		failures.append("Post-seal casino room layout mutation retained stale semantic authority.")
 
 
-static func _check_casino_room_route_overflow_authority(environment: Dictionary, library: Variant, room_ids: Array, source_records: Array, failures: Array) -> void:
-	var binding := EnvironmentSlotBinderScript.bind_base_records(environment, source_records)
-	if not bool(binding.get("ok", false)):
-		failures.append("Grand Casino room-route overflow fixture could not bind production slots: %s" % JSON.stringify(binding.get("errors", [])))
-		return
+static func _check_casino_room_route_overflow_authority(environment: Dictionary, library: Variant, room_ids: Array, failures: Array) -> void:
 	var overflow_environment := environment.duplicate(true)
 	var overflow_layout := (overflow_environment.get("layout", {}) as Dictionary).duplicate(true)
-	overflow_layout["slot_schema_version"] = int(binding.get("slot_schema_version", 0))
-	overflow_layout["slot_map_digest"] = str(binding.get("slot_map_digest", ""))
-	overflow_layout["slot_binding_digest"] = str(binding.get("binding_digest", ""))
-	overflow_layout["slot_bindings"] = (binding.get("slot_bindings", {}) as Dictionary).duplicate(true)
-	overflow_layout["slot_overflow_ids"] = (binding.get("overflow_ids", []) as Array).duplicate(true)
-	overflow_layout["object_rects"] = (binding.get("object_rects", {}) as Dictionary).duplicate(true)
-	overflow_environment["layout"] = overflow_layout
+	var slot_authority := EnvironmentSlotBinderScript.validate_base_layout_authority(overflow_environment)
+	if not bool(slot_authority.get("ok", false)):
+		failures.append("Production Grand Casino generation did not retain valid fixed-slot authority: %s" % JSON.stringify(slot_authority.get("errors", [])))
+		return
 	var expected_overflow_id := "travel:grand_casino_high_limit"
 	if not (overflow_layout.get("slot_overflow_ids", []) as Array).has(expected_overflow_id):
-		failures.append("Grand Casino three-room fixture did not overflow the expected third doorway control.")
+		failures.append("Production Grand Casino generation did not overflow the expected third doorway control.")
 		return
 	var authoritative := EnvironmentBaseSemanticRecordsScript.authoritative_interactable_records(overflow_environment, library)
 	var stamped := EnvironmentBaseSemanticRecordsScript.stamp_interactable_records(_array(authoritative.get("records", [])), overflow_environment, library)
