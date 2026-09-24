@@ -18,6 +18,7 @@ for verifying every row before it counts as DONE.
    - `rw06_3_balance_prompt.md`
    - `rw06_4_release_gate_ship_prompt.md`
    - `rw06_5_owner_gameplay_fixes_prompt.md`
+   - `rw06_6_pull_tab_glimmer_prompt.md`
 3. `docs/todo/rw06_2p_endings_peer_agent_prompt.md` and
    `docs/todo/rw06_2p_status.md`: the Q-009 peer handoff for rw06_2/rw06_3.
 4. `docs/plans/0.6.1_backlog.md`: where everything out of scope goes.
@@ -96,8 +97,10 @@ Once the merge lands, rebase your Phase 0 worktrees onto the new `main`.
 
 1. **rw06_0.** Run it and verify it. Nothing else starts until `main` has the
    finished fixes and the todo folder is organized.
-2. **rw06_1 and rw06_5 are the release orchestrator's implementation rows.**
-   rw06_5 holds the owner's requested fixes. A separate Q-009 peer owns rw06_2
+2. **rw06_1, rw06_5 and rw06_6 are the release orchestrator's implementation
+   rows.** rw06_5 holds the owner's original requested fixes. Q-014 adds rw06_6
+   as a separate narrow pull-tab presentation lane; it must not overlap rw06_1
+   placement or rw06_2/rw06_3 ending work. A separate Q-009 peer owns rw06_2
    and then rw06_3 from the pushed handoff in `rw06_2p_status.md`.
    - The release orchestrator stops editing rw06_2/rw06_3 code and branches
      after that handoff. It reads the peer status and copies milestones into the
@@ -119,7 +122,8 @@ Once the merge lands, rebase your Phase 0 worktrees onto the new `main`.
    backlog.
 4. **rw06_3** is owned by the peer and starts after the owner's notes are
    handled and rw06_2's route evidence exists.
-5. **rw06_4** (gate and artifact handoff). It has three hard owner stops: source
+5. **rw06_4** (gate and artifact handoff) starts only after rw06_6 also lands.
+   It has three hard owner stops: source
    approval, artifact approval, and artifact handoff/upload confirmation. Each
    is asked in the questions file. Agents post the two zip paths and SHA-256
    hashes for the owner, never run `export_itch.ps1 -Push`, butler, or any
@@ -156,7 +160,7 @@ Once the merge lands, rebase your Phase 0 worktrees onto the new `main`.
   gates yourself on the merged `main`. A branch or a sub-agent's claim is not
   evidence.
 - **Scope.** If something doesn't block "three endings to the win state, stable
-  rooms, owner-requested fixes (rw06_5), slim gate green", it goes to `docs/plans/0.6.1_backlog.md` with enough
+  rooms, owner-requested fixes (rw06_5 and Q-014/rw06_6), slim gate green", it goes to `docs/plans/0.6.1_backlog.md` with enough
   detail to act on. Nothing is silently dropped.
 - **Schedule.** If a row is going to overrun its day budget, raise a question
   early. Give one recommended cut: narrow an ending, or reduce slots and rely on
