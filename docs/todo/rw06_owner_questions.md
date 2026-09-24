@@ -276,3 +276,11 @@ Question: The repaired launcher found 77 old ignored self-test roots with no ori
 Options: A) Preserve in a sealed archive and continue (recommended)  B) Leave them in place; rw06_6 stays blocked for manual cleanup
 Resume: rw06_6 implementation and fresh-worktree validation continue while OPEN. If A, inventory every object, reject reparses, atomically move only the 77 sealed roots to a non-worktree recovery directory without deleting their contents, verify the post-move manifest/hash, record the recovery path on the scoreboard, and retain it through 0.6.0. If B, preserve the current worktree and do not mark rw06_6 DONE. This does not authorize deleting unknown or replacement objects.
 Answer:
+
+### Q-019 · rw06_6 · Preserve two failed-probe remnants
+Status: OPEN
+Asked: release orchestrator, 2026-09-24
+Question: Two failed engine-free cache-creator probes left two unreceipted Temp roots, each containing only an empty `.godot` directory; Q-018 covers exactly the separate 77 historical roots. May I preserve these two in their own sealed recovery inventory?
+Options: A) Seal and preserve them beside the Q-018 archive (recommended)  B) Leave them in Temp and keep their custody open
+Resume: rw06_6 implementation and fresh-worktree preparation continue while OPEN. If A, revalidate native identities and zero reparses, atomically move exactly `C:\Users\theep\AppData\Local\Temp\rw06-native-create-probe-a664c4427d654986b1a8e5cfbf67a19c` and `C:\Users\theep\AppData\Local\Temp\rw06-native-create-probe-25f812dfb56542ee8728290cbfe14f92` into a separate hash-sealed non-worktree recovery inventory without deleting contents, and retain it through 0.6.0. If B, leave both exact roots untouched and keep final residue accounting open. This never authorizes deleting or adopting unknown or replacement objects.
+Answer:
