@@ -379,8 +379,8 @@ func _check_private_identity_revalidation() -> void:
 		failures.append("RW06_6 kept a removed/consumed target visible or silently retargeted its old offset.")
 	if _production_pool_contains_key(game, _machine(environment), target_key):
 		failures.append("RW06_6 production candidate pool retained the exact target after its real sleeve purchase/removal.")
-	var collect := game.surface_action_command("pull_tab_collect_tray", 0, false, ui_state, run, environment)
-	var reveal := game.surface_action_command("pull_tab_reveal_next", 0, false, _dict(collect.get("ui_state", {})), run, environment)
+	var collect: Dictionary = game.surface_action_command("pull_tab_collect_tray", 0, false, ui_state, run, environment)
+	var reveal: Dictionary = game.surface_action_command("pull_tab_reveal_next", 0, false, _dict(collect.get("ui_state", {})), run, environment)
 	var reveal_state := _dict(reveal.get("ui_state", {}))
 	game.checkpoint_surface_ui_state(reveal_state, run, environment)
 	var revealed_ticket := _find_ticket_in_collection(_array(_machine(environment).get("ticket_stack", [])), target_deal_id, target_serial, target_number)
@@ -390,7 +390,7 @@ func _check_private_identity_revalidation() -> void:
 		failures.append("RW06_6 production candidate pool accepted the exact target after its real reveal completion.")
 	if bool(_projection(game.surface_state(run, environment, reveal_state)).get("visible", true)):
 		failures.append("RW06_6 accepted the purchased target after its real reveal path.")
-	var file_command := game.surface_action_command("pull_tab_file_ticket", 0, false, reveal_state, run, environment)
+	var file_command: Dictionary = game.surface_action_command("pull_tab_file_ticket", 0, false, reveal_state, run, environment)
 	var file_result: Dictionary = game.resolve_with_context("sort_tab_ticket", 0, run, environment, run.create_rng("glimmer_consume_target"), _dict(file_command.get("ui_state", {})))
 	var filed_machine := _machine(environment)
 	var filed_ticket := _find_ticket_in_collection(_array(filed_machine.get("winner_pile", [])), target_deal_id, target_serial, target_number)
