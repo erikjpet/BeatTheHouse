@@ -69,7 +69,28 @@ const PULL_TAB_FILE_TICKET_ACTION := "pull_tab_file_ticket"
 const PULL_TAB_AUTO_OPEN_ACTION := "pull_tab_auto_open"
 const PULL_TAB_AUTO_OPEN_INITIAL_DELAY_MSEC := 90
 const PULL_TAB_AUTO_OPEN_STEP_GAP_MSEC := 80
-const PULL_TAB_AUTO_TICK_STATE_KEYS := ["pull_tab_auto_open_active", "pull_tab_auto_open_next_msec"]
+const PULL_TAB_GLIMMER_MIN_INTERVAL_MSEC := 25000
+const PULL_TAB_GLIMMER_MAX_INTERVAL_MSEC := 35000
+const PULL_TAB_GLIMMER_VISIBLE_MSEC := 1100
+const PULL_TAB_GLIMMER_CANDIDATE_LIMIT := 16
+const PULL_TAB_GLIMMER_UI_STATE_KEYS := [
+	"pull_tab_glimmer_initialized",
+	"pull_tab_glimmer_enabled",
+	"pull_tab_glimmer_session_ordinal",
+	"pull_tab_glimmer_event_ordinal",
+	"pull_tab_glimmer_next_due_msec",
+	"pull_tab_glimmer_hide_due_msec",
+]
+const PULL_TAB_AUTO_TICK_STATE_KEYS := [
+	"pull_tab_auto_open_active",
+	"pull_tab_auto_open_next_msec",
+	"pull_tab_glimmer_initialized",
+	"pull_tab_glimmer_enabled",
+	"pull_tab_glimmer_session_ordinal",
+	"pull_tab_glimmer_event_ordinal",
+	"pull_tab_glimmer_next_due_msec",
+	"pull_tab_glimmer_hide_due_msec",
+]
 const PULL_TAB_STACK_HEADER_BUTTON_WIDTHS := [18.0, 18.0, 34.0, 50.0]
 const PULL_TAB_STACK_HEADER_BUTTON_GAP := 2.0
 const PULL_TAB_STACK_HEADER_RIGHT_MARGIN := 8.0
@@ -87,6 +108,10 @@ const PULL_TAB_LOW_TICKET_RATIO := 0.12
 const PULL_TAB_THIN_TICKET_RATIO := 0.25
 const PULL_TAB_LAST_TICKET_COUNT := 12
 
+var _pull_tab_glimmer_session_ordinal := 0
+var _pull_tab_glimmer_target: Dictionary = {}
+var _pull_tab_glimmer_target_machine_fingerprint := ""
+
 
 # Creates the entry message from the deal machine already generated with the room.
 func gameplay_model() -> String:
@@ -94,6 +119,9 @@ func gameplay_model() -> String:
 
 
 func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
+	_pull_tab_glimmer_session_ordinal += 1
+	_pull_tab_glimmer_target = {}
+	_pull_tab_glimmer_target_machine_fingerprint = ""
 	var machine := _ensure_machine_state(run_state, environment, false)
 	var result := super.enter(run_state, environment)
 	result["message"] = "A pull-tab dispenser waits by the bar: four deals, sealed paper windows, and a flare chart under glass."
@@ -145,6 +173,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var winner_pile_views := _ticket_pile_view_list(machine, "winner_pile")
 	var loser_pile_views := _ticket_pile_view_list(machine, "loser_pile")
 	var counter_ritual := _pull_tab_counter_ritual(machine, run_state, environment)
+	var glimmer_projection := _pull_tab_glimmer_public_projection(machine, environment, ui_state)
 	return GameModule.surface_spec({
 		"surface_renderer": "pull_tab_machine",
 		"surface_life": "ticket_dispenser",
@@ -162,6 +191,8 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_animates_idle": true,
 		"surface_web_idle_animation_fps": 15.0,
 		"surface_embeds_outcomes": true,
+		"surface_ui_preference_keys": PULL_TAB_GLIMMER_UI_STATE_KEYS,
+		"reduce_motion": bool(ui_state.get("reduce_motion", false)),
 		"machine_name": str(machine.get("machine_name", "Bar Pull-Tab Dispenser")),
 		"wager_currency": wager_currency,
 		"pull_tab_rules": "Buy a ticket, then peel its three windows top to bottom. Match three symbols on a row to win.",
@@ -192,6 +223,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"pull_tab_file_animation_ticket": file_ticket,
 		"pull_tab_file_animation_pile": file_pile,
 		"pull_tab_auto_open_active": bool(ui_state.get("pull_tab_auto_open_active", false)),
+		"pull_tab_glimmer": glimmer_projection,
 		"native_selected_surface_actions": _selected_surface_actions(ui_state),
 		"surface_action_bindings": {
 			"legal": {"action": "pull_tab_buy", "index": 0},
@@ -781,15 +813,29 @@ func surface_uses_auto_tick() -> bool:
 
 
 func surface_auto_tick_may_be_active(retained_ui_state: Dictionary) -> bool:
-	return bool(retained_ui_state.get("pull_tab_auto_open_active", false))
+	return (
+		not bool(retained_ui_state.get("pull_tab_glimmer_initialized", false))
+		or bool(retained_ui_state.get("pull_tab_glimmer_enabled", false))
+		or bool(retained_ui_state.get("pull_tab_auto_open_active", false))
+	)
 
 
 func surface_needs_auto_tick(ui_state: Dictionary, _run_state: RunState, _environment: Dictionary) -> bool:
+	var glimmer_surface_time := _pull_tab_glimmer_surface_time_msec(ui_state)
+	var initialized := bool(ui_state.get("pull_tab_glimmer_initialized", false))
+	var session_matches := int(ui_state.get("pull_tab_glimmer_session_ordinal", -1)) == _pull_tab_glimmer_session_ordinal
+	if not initialized or not session_matches:
+		return true
+	if bool(ui_state.get("pull_tab_glimmer_enabled", false)):
+		var hide_due_msec := int(ui_state.get("pull_tab_glimmer_hide_due_msec", 0))
+		var glimmer_due_msec := int(ui_state.get("pull_tab_glimmer_next_due_msec", 0))
+		if (hide_due_msec > 0 and glimmer_surface_time >= hide_due_msec) or glimmer_due_msec <= 0 or glimmer_surface_time >= glimmer_due_msec:
+			return true
 	if not bool(ui_state.get("pull_tab_auto_open_active", false)):
 		return false
-	var surface_time := _pull_tab_surface_time_msec(ui_state)
-	var next_msec := int(ui_state.get("pull_tab_auto_open_next_msec", 0))
-	return next_msec <= 0 or surface_time >= next_msec
+	var auto_open_surface_time := _pull_tab_surface_time_msec(ui_state)
+	var auto_open_due_msec := int(ui_state.get("pull_tab_auto_open_next_msec", 0))
+	return auto_open_due_msec <= 0 or auto_open_surface_time >= auto_open_due_msec
 
 
 func surface_auto_tick_state_keys() -> Array:
@@ -797,13 +843,17 @@ func surface_auto_tick_state_keys() -> Array:
 
 
 func surface_auto_action_command(ui_state: Dictionary, _run_state: RunState, environment: Dictionary, _surface_status: Dictionary = {}) -> Dictionary:
-	if not bool(ui_state.get("pull_tab_auto_open_active", false)):
-		return {"handled": false}
-	var surface_time := _pull_tab_surface_time_msec(ui_state)
-	var next_msec := int(ui_state.get("pull_tab_auto_open_next_msec", 0))
-	if next_msec > 0 and surface_time < next_msec:
-		return {"handled": false}
+	var auto_open_surface_time := _pull_tab_surface_time_msec(ui_state)
+	var glimmer_surface_time := _pull_tab_glimmer_surface_time_msec(ui_state)
 	var machine := _read_machine_state(_run_state, environment)
+	var auto_open_active := bool(ui_state.get("pull_tab_auto_open_active", false))
+	var auto_open_next_msec := int(ui_state.get("pull_tab_auto_open_next_msec", 0))
+	var auto_open_due := auto_open_active and (auto_open_next_msec <= 0 or auto_open_surface_time >= auto_open_next_msec)
+	var glimmer_command := _pull_tab_glimmer_auto_command(ui_state, _run_state, environment, machine, glimmer_surface_time)
+	if bool(glimmer_command.get("handled", false)):
+		return glimmer_command
+	if not auto_open_due:
+		return {"handled": false}
 	var tickets := _array_view(machine.get("ticket_stack", []))
 	if tickets.is_empty():
 		return _stop_auto_open_command(ui_state, "Auto Open finished. No purchased tickets remain.")
@@ -819,7 +869,7 @@ func surface_auto_action_command(ui_state: Dictionary, _run_state: RunState, env
 	var command_state: Dictionary = command.get("ui_state", {}) if typeof(command.get("ui_state", {})) == TYPE_DICTIONARY else ui_state.duplicate(true)
 	command_state["pull_tab_auto_open_active"] = true
 	var action_delay := PULL_TAB_FILE_DURATION_MSEC if str(command.get("action_id", "")) == SORT_TICKET_ACTION else PULL_TAB_REVEAL_TOTAL_MSEC
-	command_state["pull_tab_auto_open_next_msec"] = surface_time + action_delay + PULL_TAB_AUTO_OPEN_STEP_GAP_MSEC
+	command_state["pull_tab_auto_open_next_msec"] = auto_open_surface_time + action_delay + PULL_TAB_AUTO_OPEN_STEP_GAP_MSEC
 	command["ui_state"] = command_state
 	if str(command.get("action_id", "")) == SORT_TICKET_ACTION:
 		command["surface_audio_cue"] = "ticket_navigation"
@@ -829,6 +879,206 @@ func surface_auto_action_command(ui_state: Dictionary, _run_state: RunState, env
 			command["surface_audio_cue"] = "ticket_peel"
 		command["surface_audio_action"] = "pull_tab_reveal_next"
 	return GameModule.surface_command(command)
+
+
+func _pull_tab_glimmer_auto_command(ui_state: Dictionary, run_state: RunState, environment: Dictionary, machine: Dictionary, surface_time: int) -> Dictionary:
+	if _pull_tab_glimmer_session_ordinal <= 0:
+		_pull_tab_glimmer_session_ordinal = 1
+	var initialized := (
+		bool(ui_state.get("pull_tab_glimmer_initialized", false))
+		and int(ui_state.get("pull_tab_glimmer_session_ordinal", -1)) == _pull_tab_glimmer_session_ordinal
+	)
+	if not initialized:
+		_pull_tab_glimmer_target = {}
+		_pull_tab_glimmer_target_machine_fingerprint = ""
+		var initialized_state := ui_state.duplicate(true)
+		initialized_state["pull_tab_glimmer_initialized"] = true
+		initialized_state["pull_tab_glimmer_enabled"] = true
+		initialized_state["pull_tab_glimmer_session_ordinal"] = _pull_tab_glimmer_session_ordinal
+		initialized_state["pull_tab_glimmer_event_ordinal"] = 0
+		initialized_state["pull_tab_glimmer_next_due_msec"] = surface_time + _pull_tab_glimmer_interval_msec(
+			run_state,
+			environment,
+			machine,
+			_pull_tab_glimmer_session_ordinal,
+			0
+		)
+		initialized_state["pull_tab_glimmer_hide_due_msec"] = 0
+		return GameModule.surface_command({
+			"handled": true,
+			"surface_transient": true,
+			"ui_state": initialized_state,
+		})
+	if not bool(ui_state.get("pull_tab_glimmer_enabled", false)):
+		return {"handled": false}
+	var hide_due_msec := int(ui_state.get("pull_tab_glimmer_hide_due_msec", 0))
+	if hide_due_msec > 0 and surface_time >= hide_due_msec:
+		_pull_tab_glimmer_target = {}
+		_pull_tab_glimmer_target_machine_fingerprint = ""
+		var hidden_state := ui_state.duplicate(true)
+		hidden_state["pull_tab_glimmer_hide_due_msec"] = 0
+		return GameModule.surface_command({
+			"handled": true,
+			"surface_transient": true,
+			"ui_state": hidden_state,
+		})
+	var next_due_msec := int(ui_state.get("pull_tab_glimmer_next_due_msec", 0))
+	if next_due_msec > 0 and surface_time < next_due_msec:
+		return {"handled": false}
+	var event_ordinal := maxi(0, int(ui_state.get("pull_tab_glimmer_event_ordinal", 0))) + 1
+	var candidates := _pull_tab_glimmer_candidate_pool(machine)
+	_pull_tab_glimmer_target = _pull_tab_glimmer_choose_target(candidates, run_state, environment, machine, event_ordinal)
+	_pull_tab_glimmer_target_machine_fingerprint = _pull_tab_glimmer_machine_fingerprint(machine, environment) if not _pull_tab_glimmer_target.is_empty() else ""
+	var event_state := ui_state.duplicate(true)
+	event_state["pull_tab_glimmer_event_ordinal"] = event_ordinal
+	event_state["pull_tab_glimmer_next_due_msec"] = surface_time + _pull_tab_glimmer_interval_msec(
+		run_state,
+		environment,
+		machine,
+		_pull_tab_glimmer_session_ordinal,
+		event_ordinal
+	)
+	event_state["pull_tab_glimmer_hide_due_msec"] = surface_time + PULL_TAB_GLIMMER_VISIBLE_MSEC if not _pull_tab_glimmer_target.is_empty() else 0
+	return GameModule.surface_command({
+		"handled": true,
+		"surface_transient": true,
+		"ui_state": event_state,
+	})
+
+
+func _pull_tab_glimmer_interval_msec(run_state: RunState, environment: Dictionary, machine: Dictionary, session_ordinal: int, event_ordinal: int) -> int:
+	var rng := _pull_tab_glimmer_rng(run_state, environment, machine, session_ordinal, event_ordinal, "interval")
+	return rng.randi_range(PULL_TAB_GLIMMER_MIN_INTERVAL_MSEC, PULL_TAB_GLIMMER_MAX_INTERVAL_MSEC)
+
+
+func _pull_tab_glimmer_choose_target(candidates: Array, run_state: RunState, environment: Dictionary, machine: Dictionary, event_ordinal: int) -> Dictionary:
+	if candidates.is_empty():
+		return {}
+	var rng := _pull_tab_glimmer_rng(
+		run_state,
+		environment,
+		machine,
+		_pull_tab_glimmer_session_ordinal,
+		event_ordinal,
+		"target"
+	)
+	var candidate: Dictionary = candidates[rng.randi_range(0, candidates.size() - 1)]
+	return {
+		"deal_index": int(candidate.get("deal_index", -1)),
+		"deal_id": str(candidate.get("deal_id", "")),
+		"serial": str(candidate.get("serial", "")),
+		"ticket_number": int(candidate.get("ticket_number", -1)),
+		"prize_index": int(candidate.get("prize_index", -1)),
+	}
+
+
+func _pull_tab_glimmer_rng(run_state: RunState, environment: Dictionary, machine: Dictionary, session_ordinal: int, event_ordinal: int, subkey: String) -> RngStream:
+	var run_seed := run_state.seed_value if run_state != null else 1
+	var identity := _pull_tab_glimmer_machine_fingerprint(machine, environment)
+	var stream_key := "pull_tab_glimmer|%s|session:%d|event:%d|%s" % [identity, session_ordinal, event_ordinal, subkey]
+	var rng := RngStream.new()
+	rng.configure(RngStream.derive_seed(run_seed, session_ordinal, stream_key))
+	return rng
+
+
+func _pull_tab_glimmer_candidate_pool(machine: Dictionary) -> Array:
+	var candidates: Array = []
+	var stable_order := 0
+	var deals := _array_view(machine.get("deals", []))
+	for deal_index in range(deals.size()):
+		if typeof(deals[deal_index]) != TYPE_DICTIONARY:
+			continue
+		var deal: Dictionary = deals[deal_index]
+		var sleeve := _int_array(deal.get("ticket_sleeve", []))
+		var prizes := _dictionary_array(deal.get("prizes", []))
+		var unit_cursor := maxi(0, int(deal.get("unit_cursor", int(deal.get("initial_removed_count", 0)))))
+		for offset in range(sleeve.size()):
+			var prize_index := int(sleeve[offset])
+			if prize_index < 0 or prize_index >= prizes.size():
+				stable_order += 1
+				continue
+			var payout := maxi(0, int((prizes[prize_index] as Dictionary).get("payout", 0)))
+			if payout > 0:
+				candidates.append({
+					"deal_index": deal_index,
+					"deal_id": str(deal.get("id", "")),
+					"serial": str(deal.get("serial", "")),
+					"ticket_number": unit_cursor + offset + 1,
+					"prize_index": prize_index,
+					"payout": payout,
+					"stable_order": stable_order,
+				})
+			stable_order += 1
+	candidates.sort_custom(func(left: Dictionary, right: Dictionary) -> bool:
+		var left_payout := int(left.get("payout", 0))
+		var right_payout := int(right.get("payout", 0))
+		return left_payout > right_payout if left_payout != right_payout else int(left.get("stable_order", 0)) < int(right.get("stable_order", 0))
+	)
+	if candidates.size() > PULL_TAB_GLIMMER_CANDIDATE_LIMIT:
+		candidates.resize(PULL_TAB_GLIMMER_CANDIDATE_LIMIT)
+	return candidates
+
+
+func _pull_tab_glimmer_public_projection(machine: Dictionary, environment: Dictionary, ui_state: Dictionary) -> Dictionary:
+	var hidden := {"visible": false, "deal_index": -1, "offset": -1}
+	if (
+		not bool(ui_state.get("pull_tab_glimmer_initialized", false))
+		or not bool(ui_state.get("pull_tab_glimmer_enabled", false))
+		or int(ui_state.get("pull_tab_glimmer_session_ordinal", -1)) != _pull_tab_glimmer_session_ordinal
+		or int(ui_state.get("pull_tab_glimmer_hide_due_msec", 0)) <= _pull_tab_glimmer_surface_time_msec(ui_state)
+	):
+		return hidden
+	if _pull_tab_glimmer_target.is_empty():
+		return hidden
+	if _pull_tab_glimmer_target_machine_fingerprint != _pull_tab_glimmer_machine_fingerprint(machine, environment):
+		return hidden
+	var deal_index := int(_pull_tab_glimmer_target.get("deal_index", -1))
+	var deals := _array_view(machine.get("deals", []))
+	if deal_index < 0 or deal_index >= deals.size() or typeof(deals[deal_index]) != TYPE_DICTIONARY:
+		return hidden
+	var deal: Dictionary = deals[deal_index]
+	if (
+		str(deal.get("id", "")) != str(_pull_tab_glimmer_target.get("deal_id", ""))
+		or str(deal.get("serial", "")) != str(_pull_tab_glimmer_target.get("serial", ""))
+	):
+		return hidden
+	var ticket_number := int(_pull_tab_glimmer_target.get("ticket_number", -1))
+	var offset := ticket_number - maxi(0, int(deal.get("unit_cursor", int(deal.get("initial_removed_count", 0))))) - 1
+	var sleeve := _int_array(deal.get("ticket_sleeve", []))
+	if offset < 0 or offset >= sleeve.size():
+		return hidden
+	var prize_index := int(_pull_tab_glimmer_target.get("prize_index", -1))
+	if int(sleeve[offset]) != prize_index:
+		return hidden
+	var prizes := _dictionary_array(deal.get("prizes", []))
+	if prize_index < 0 or prize_index >= prizes.size() or int((prizes[prize_index] as Dictionary).get("payout", 0)) <= 0:
+		return hidden
+	return {"visible": true, "deal_index": deal_index, "offset": offset}
+
+
+func _pull_tab_glimmer_machine_fingerprint(machine: Dictionary, environment: Dictionary) -> String:
+	var deal_identity: Array = []
+	for deal_value in _array_view(machine.get("deals", [])):
+		if typeof(deal_value) != TYPE_DICTIONARY:
+			continue
+		var deal: Dictionary = deal_value
+		deal_identity.append({
+			"id": str(deal.get("id", "")),
+			"serial": str(deal.get("serial", "")),
+			"form": str(deal.get("form", "")),
+			"ticket_count": int(deal.get("ticket_count", 0)),
+			"initial_removed_count": int(deal.get("initial_removed_count", 0)),
+		})
+	var public_identity := {
+		"game_id": get_id(),
+		"state_key": transient_state_key_context(),
+		"environment_id": str(environment.get("id", "")),
+		"archetype_id": str(environment.get("archetype_id", "")),
+		"world_node_id": str(environment.get("world_node_id", environment.get("node_id", ""))),
+		"machine_name": str(machine.get("machine_name", "")),
+		"deals": deal_identity,
+	}
+	return JSON.stringify(public_identity).sha256_text()
 
 
 # Resolves data-authored action buttons through the same finite-deal path used
@@ -1366,6 +1616,13 @@ func _stop_auto_open_command(ui_state: Dictionary, message: String) -> Dictionar
 
 func _pull_tab_surface_time_msec(ui_state: Dictionary) -> int:
 	return int(ui_state.get("drunk_scaled_surface_time_msec", ui_state.get("surface_time_msec", Time.get_ticks_msec())))
+
+
+# Presentation hints use the host's pause-safe real surface clock. Drunk time
+# scaling remains an Auto Open cadence concern and must not stretch 25-35 real
+# active seconds or the bounded visible glimmer.
+func _pull_tab_glimmer_surface_time_msec(ui_state: Dictionary) -> int:
+	return int(ui_state.get("surface_time_msec", Time.get_ticks_msec()))
 
 
 func _reveal_next_command(machine: Dictionary, ui_state: Dictionary, _run_state: RunState, _environment: Dictionary) -> Dictionary:
@@ -3444,13 +3701,19 @@ func _draw_pull_tab_column_stack(surface, rect: Rect2, deal: Dictionary, index: 
 	var top := Rect2(stack_rect.position + Vector2(4, -2), Vector2(stack_rect.size.x - 8, 10))
 	surface.draw_rect(top, paper)
 	surface.draw_rect(top, accent, false, 1)
+	var glimmer: Dictionary = surface_state.get("pull_tab_glimmer", {}) if typeof(surface_state.get("pull_tab_glimmer", {})) == TYPE_DICTIONARY else {}
+	if bool(glimmer.get("visible", false)) and int(glimmer.get("deal_index", -1)) == index:
+		var glimmer_offset := clampi(int(glimmer.get("offset", -1)), 0, maxi(0, remaining - 1))
+		var glimmer_rect := _pull_tab_stack_glow_rect(stack_rect, remaining, glimmer_offset)
+		var reduced_motion := bool(surface_state.get("reduce_motion", false))
+		var glimmer_strength := 0.78 if reduced_motion else 0.55 + absf(sin(float(surface.surface_flicker()) * 4.7 + float(index))) * 0.30
+		surface.draw_rect(glimmer_rect.grow(3.0), Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.18 * glimmer_strength))
+		surface.draw_rect(glimmer_rect, Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.82 * glimmer_strength), false, 2)
 	var xray_target := deal.get("xray_target", {}) as Dictionary if typeof(deal.get("xray_target", {})) == TYPE_DICTIONARY else {}
 	if not xray_target.is_empty():
 		var offset := clampi(int(xray_target.get("offset", 0)), 0, maxi(0, remaining - 1))
-		var depth_ratio := clampf((float(offset) + 0.5) / float(maxi(1, remaining)), 0.0, 1.0)
-		var target_y := stack_rect.end.y - stack_height * depth_ratio
 		var glow := 0.55 + absf(sin(float(surface.surface_flicker()) * 4.7 + float(index))) * 0.30
-		var glow_rect := Rect2(Vector2(stack_rect.position.x + 1, target_y - 5.0), Vector2(stack_rect.size.x - 2.0, 10.0))
+		var glow_rect := _pull_tab_stack_glow_rect(stack_rect, remaining, offset)
 		surface.draw_rect(glow_rect.grow(3.0), Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.15 * glow))
 		surface.draw_rect(glow_rect, Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.72 * glow), false, 2)
 		surface.surface_label("$%d" % int(xray_target.get("payout", 0)), glow_rect.position + Vector2(4, 8), 7, C_YELLOW)
@@ -3464,6 +3727,12 @@ func _draw_pull_tab_column_stack(surface, rect: Rect2, deal: Dictionary, index: 
 	elif tension_state == "thin":
 		var thin_rect := Rect2(rect.position + Vector2(2, 2), Vector2(rect.size.x - 4, 8))
 		surface.draw_rect(thin_rect, Color(C_AMBER.r, C_AMBER.g, C_AMBER.b, 0.42))
+
+
+func _pull_tab_stack_glow_rect(stack_rect: Rect2, remaining: int, offset: int) -> Rect2:
+	var depth_ratio := clampf((float(offset) + 0.5) / float(maxi(1, remaining)), 0.0, 1.0)
+	var target_y := stack_rect.end.y - stack_rect.size.y * depth_ratio
+	return Rect2(Vector2(stack_rect.position.x + 1, target_y - 5.0), Vector2(stack_rect.size.x - 2.0, 10.0))
 
 
 func _draw_pull_tab_control_panel(surface, rect: Rect2, deals: Array, surface_state: Dictionary) -> void:
