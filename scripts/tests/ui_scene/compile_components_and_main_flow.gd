@@ -3380,6 +3380,11 @@ func _check_beach_return_travel_choice(app: Control) -> bool:
 	# Project the exact production UI control list without Beach. More than three
 	# routes must be genuinely enabled, and the known visited ordinary route fills
 	# the last capped card that Beach must replace.
+	# The earlier zero-bankroll assertions already prove Beach itself is free. Give
+	# this independent cap-pressure fixture enough real bankroll for every ordinary
+	# production route to participate in the selector before and after Continue.
+	var cap_competitor_bankroll := 10_000
+	run_state.bankroll = cap_competitor_bankroll
 	run_state.world_map = no_beach_control
 	app.call("_invalidate_travel_view_cache")
 	var control_enabled_targets: Array = app.call("_enabled_world_route_ids", "delta_queen")
@@ -3400,7 +3405,7 @@ func _check_beach_return_travel_choice(app: Control) -> bool:
 	# Deliberately bypass set_world_map normalization to model the exact legacy
 	# generation already present on disk before Continue repairs it.
 	run_state.world_map = map_data
-	run_state.bankroll = 0
+	run_state.bankroll = cap_competitor_bankroll
 	app.call("_invalidate_travel_view_cache")
 	var revisit_targets: Array = app.call("_travel_target_ids")
 	if revisit_targets.count("beach") != 1 \
@@ -3438,6 +3443,12 @@ func _check_beach_return_travel_choice(app: Control) -> bool:
 	run_state = app.get("run_state")
 	app.call("_invalidate_travel_view_cache")
 	var continued_targets: Array = app.call("_travel_target_ids")
+	var continued_enabled_targets: Array = app.call("_enabled_world_route_ids", "delta_queen")
+	var continued_enabled_non_beach_competitors: Array = []
+	for continued_target_value in continued_enabled_targets:
+		var continued_target_id := str(continued_target_value)
+		if continued_target_id != "beach" and not continued_enabled_non_beach_competitors.has(continued_target_id):
+			continued_enabled_non_beach_competitors.append(continued_target_id)
 	var continued_choice: Dictionary = {}
 	for choice_value in app.call("_travel_choice_view_list"):
 		if typeof(choice_value) == TYPE_DICTIONARY and str((choice_value as Dictionary).get("id", "")) == "beach":
@@ -3450,12 +3461,18 @@ func _check_beach_return_travel_choice(app: Control) -> bool:
 			continued_beach_node = node_value
 			break
 	if run_state == null or run_state.current_world_node_id() != "delta_queen" \
+			or run_state.bankroll != cap_competitor_bankroll \
+			or continued_enabled_non_beach_competitors.size() <= WorldMapScript.TRAVEL_TOTAL_TARGET_LIMIT \
 			or continued_targets.count("beach") != 1 \
+			or continued_targets.size() != WorldMapScript.TRAVEL_TOTAL_TARGET_LIMIT \
+			or continued_targets.has(ordinary_yield_id) \
 			or not bool(continued_choice.get("enabled", false)) \
+			or int(continued_choice.get("cost", -1)) != 0 \
+			or str(continued_choice.get("travel_method", "")) != "Walk" \
 			or not bool(continued_beach_node.get("travel_enabled", false)):
 		save_service.clear_run(continue_slot)
 		app.set("autosave_slot_id", original_slot)
-		push_error("Continue did not restore one visible, enabled Beach destination: targets=%s choice=%s node=%s" % [JSON.stringify(continued_targets), JSON.stringify(continued_choice), JSON.stringify(continued_beach_node)])
+		push_error("Continue did not restore one visible, enabled Beach destination under real cap pressure: bankroll=%d enabled=%s non_beach=%s targets=%s choice=%s node=%s" % [run_state.bankroll if run_state != null else -1, JSON.stringify(continued_enabled_targets), JSON.stringify(continued_enabled_non_beach_competitors), JSON.stringify(continued_targets), JSON.stringify(continued_choice), JSON.stringify(continued_beach_node)])
 		return false
 	if not bool(app.call("open_world_map")):
 		save_service.clear_run(continue_slot)

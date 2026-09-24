@@ -1909,6 +1909,12 @@ func _check_travel_route_foundation(library: ContentLibrary, failures: Array) ->
 	if boss_route.is_empty():
 		failures.append("Travel route fixture is missing: grand_casino.")
 	else:
+		var expected_free_origins := ["beach", "delta_queen", "kitty_cat_lounge"]
+		var authored_free_origins := JsonCoerceScript._string_array(JsonCoerceScript._copy_array(boss_route.get("free_from_archetypes", [])))
+		expected_free_origins.sort()
+		authored_free_origins.sort()
+		if authored_free_origins != expected_free_origins:
+			failures.append("Grand Casino route free origins must be exactly Kitty Cat Lounge, Delta Queen, and Beach: %s." % JSON.stringify(authored_free_origins))
 		var boss_run: RunState = RunStateScript.new()
 		boss_run.start_new("TRAVEL-GRAND-GATE")
 		boss_run.bankroll = 200
@@ -1927,6 +1933,51 @@ func _check_travel_route_foundation(library: ContentLibrary, failures: Array) ->
 		var boss_unlocked_status := boss_run.travel_route_status(boss_route)
 		if bool(boss_unlocked_status.get("hidden", true)) or not bool(boss_unlocked_status.get("available", false)):
 			failures.append("Grand Casino route should be available after travel count, bankroll, and invitation.")
+
+		# The invitation comp is origin-specific and must win before weather pricing,
+		# while the invitation and global travel gates remain authoritative.
+		var comp_run: RunState = RunStateScript.new()
+		comp_run.start_new("TOWN-HOOKS")
+		comp_run.bankroll = 1
+		comp_run.environment_history.append({"id": "visited_once", "archetype_id": "corner_store"})
+		comp_run.set_environment({"id": "grand_comp_locked", "archetype_id": "delta_queen", "travel_lock_remaining": 0})
+		var initial_town := comp_run.town_snapshot()
+		var found_storm := false
+		for action_index in range(maxi(1, int(initial_town.get("turn_horizon", 240)))):
+			var storm_town := initial_town.duplicate(true)
+			storm_town["action_index"] = action_index
+			comp_run.town_state.restore(storm_town, comp_run.seed_value)
+			if comp_run.weather_now() == "storm":
+				found_storm = true
+				break
+		if not found_storm:
+			failures.append("Grand Casino comp regression could not reach its storm-weather fixture.")
+		var comp_preinvite_status := comp_run.travel_route_status(boss_route)
+		if bool(comp_preinvite_status.get("available", true)) or bool(comp_preinvite_status.get("hidden", true)) or not bool(comp_preinvite_status.get("locked", false)):
+			failures.append("A comp origin bypassed the Grand Casino invitation gate.")
+		comp_run.narrative_flags["grand_casino_invite"] = true
+		for comp_origin in ["kitty_cat_lounge", "delta_queen", "beach"]:
+			comp_run.set_environment({"id": "grand_comp_%s" % comp_origin, "archetype_id": comp_origin, "travel_lock_remaining": 0})
+			var comp_status := comp_run.travel_route_status(boss_route)
+			if int(comp_status.get("cost", -1)) != 0 or not bool(comp_status.get("available", false)):
+				failures.append("Invited Grand Casino travel from %s was not free and available under storm weather: %s." % [comp_origin, JSON.stringify(comp_status)])
+		comp_run.set_environment({"id": "grand_comp_beach_locked", "archetype_id": "beach", "travel_lock_remaining": 2})
+		var comp_travel_locked_status := comp_run.travel_route_status(boss_route)
+		if int(comp_travel_locked_status.get("cost", -1)) != 0 or bool(comp_travel_locked_status.get("available", true)) \
+				or bool(comp_travel_locked_status.get("hidden", true)) or str(comp_travel_locked_status.get("disabled_reason", "")).strip_edges().is_empty():
+			failures.append("Free Beach-to-Grand travel bypassed the ordinary global travel lock.")
+		comp_run.current_environment["travel_lock_remaining"] = 0
+		comp_run.bankroll = 500
+		comp_run.set_environment({"id": "grand_paid_bar", "archetype_id": "bar", "travel_lock_remaining": 0})
+		var paid_grand_status := comp_run.travel_route_status(boss_route)
+		var paid_grand_cost := int(paid_grand_status.get("cost", 0))
+		if paid_grand_cost <= 0 or not bool(paid_grand_status.get("available", false)):
+			failures.append("A non-comp Bar origin did not retain a positive Grand Casino fare under storm weather: %s." % JSON.stringify(paid_grand_status))
+		else:
+			comp_run.bankroll = paid_grand_cost - 1
+			var unaffordable_paid_status := comp_run.travel_route_status(boss_route)
+			if bool(unaffordable_paid_status.get("available", true)) or str(unaffordable_paid_status.get("disabled_reason", "")) != "Not enough bankroll for this route.":
+				failures.append("A non-comp Grand Casino fare did not retain its exact affordability blocker.")
 
 	var back_alley_route := library.route("back_alley")
 	if back_alley_route.is_empty():
@@ -3157,6 +3208,35 @@ func _world_map_beach_route_gate_ok(map_data: Dictionary, label: String, library
 	var beach_targets := WorldMapScript.travel_target_ids(gated_map, "beach")
 	if not beach_targets.has("delta_queen"):
 		failures.append("World map beach should still allow return travel to delta_queen for %s." % label)
+		return false
+	# An accepted invitation can detour through the mandatory Beach connector and
+	# still take the real, capped production route to Grand without losing its comp.
+	var invited_beach_run: RunState = RunStateScript.new()
+	invited_beach_run.start_new("BEACH-GRAND-DETOUR-%s" % label)
+	invited_beach_run.bankroll = 1
+	invited_beach_run.environment_history.append({"id": "visited_once", "archetype_id": "corner_store"})
+	invited_beach_run.narrative_flags["grand_casino_invite"] = true
+	invited_beach_run.set_world_map(gated_map)
+	invited_beach_run.set_environment({"id": "beach_grand_detour", "archetype_id": "beach", "travel_lock_remaining": 2})
+	var beach_grand_generator: RunGenerator = RunGeneratorScript.new(library)
+	var beach_grand_route := beach_grand_generator.world_route_for_target(invited_beach_run, "grand_casino")
+	if beach_grand_route.is_empty():
+		failures.append("Invited Beach detour could not resolve a real generated Grand Casino route for %s." % label)
+		return false
+	var beach_grand_locked_status := invited_beach_run.travel_route_status(beach_grand_route)
+	if int(beach_grand_locked_status.get("cost", -1)) != 0 or bool(beach_grand_locked_status.get("available", true)) \
+			or bool(beach_grand_locked_status.get("hidden", true)) or str(beach_grand_locked_status.get("disabled_reason", "")).strip_edges().is_empty():
+		failures.append("Invited Beach detour bypassed the global travel lock or lost its zero fare for %s: %s." % [label, JSON.stringify(beach_grand_locked_status)])
+		return false
+	invited_beach_run.current_environment["travel_lock_remaining"] = 0
+	var invited_beach_targets := beach_grand_generator._world_travel_target_ids(
+		invited_beach_run,
+		invited_beach_run.world_map,
+		invited_beach_run.current_world_node_id()
+	)
+	var beach_grand_status := invited_beach_run.travel_route_status(beach_grand_route)
+	if not invited_beach_targets.has("grand_casino") or int(beach_grand_status.get("cost", -1)) != 0 or not bool(beach_grand_status.get("available", false)):
+		failures.append("Invited Beach detour did not expose an enabled zero-cost Grand Casino production target for %s: targets=%s status=%s." % [label, JSON.stringify(invited_beach_targets), JSON.stringify(beach_grand_status)])
 		return false
 	var return_route: Dictionary = map_service.route_for_target(gated_map, "beach", "delta_queen")
 	if int(return_route.get("cost", -1)) != 0 \

@@ -3812,6 +3812,17 @@ func _check_terminal_evaluator_behavior_matrix(library: ContentLibrary, failures
 		"event_recovery_available": true, "recovery_available": true,
 	}), RunState.RUN_STATUS_ACTIVE, RunState.FAILURE_NONE, "event recovery", failures)
 
+	var zero_invite_run := _terminal_recovery_run("TERMINAL-PUBLIC-ZERO-INVITE", {
+		"kind": "casino", "event_ids": ["grand_casino_invite"],
+	})
+	zero_invite_run.change_bankroll(-zero_invite_run.bankroll, true)
+	_assert_public_terminal_result(zero_invite_run, library, _terminal_expected({
+		"failed": true,
+		"terminal": true,
+		"reason": RunState.FAILURE_BANKROLL_ZERO,
+		"message": RunState.BANKROLL_ZERO_FAILURE_MESSAGE,
+	}), RunState.RUN_STATUS_FAILED, RunState.FAILURE_BANKROLL_ZERO, "zero-bankroll invitation cannot rescue bankruptcy", failures)
+
 	var merchant_run := _terminal_recovery_run("TERMINAL-PUBLIC-MERCHANT", {
 		"kind": "shop", "item_offers": [{"id": "fixture_offer"}],
 	})
@@ -4631,7 +4642,7 @@ func _check_tier_two_route_gates(library: ContentLibrary, delta: Dictionary, del
 		failures.append("Delta Queen did not expose Grand Casino as a visible locked route before the invitation was earned.")
 	loaded.narrative_flags["grand_casino_invite"] = true
 	var invite_status := loaded.travel_route_status(grand_route)
-	if not bool(invite_status.get("available", false)) or bool(invite_status.get("hidden", true)) or bool(invite_status.get("locked", true)):
+	if not bool(invite_status.get("available", false)) or bool(invite_status.get("hidden", true)) or bool(invite_status.get("locked", true)) or int(invite_status.get("cost", -1)) != 0:
 		failures.append("Delta Queen did not allow onward travel after ride lock and invitation: %s." % str(invite_status.get("disabled_reason", "")))
 
 
@@ -4664,9 +4675,13 @@ func _check_grand_casino_invite_gate(library: ContentLibrary, kitty: Dictionary,
 	_check_grand_casino_invite_table_win_spawn(library, invite_module, kitty, delta, failures)
 	if not invite_module.can_trigger(decline_run, decline_env):
 		failures.append("Grand Casino invite did not trigger at a tier-2 casino before acceptance.")
+	var decline_bankroll_before := decline_run.bankroll
 	var decline_result := invite_module.resolve(decline_run, decline_env, "not_yet")
 	if not bool(decline_result.get("ok", false)):
 		failures.append("Grand Casino invite decline choice did not resolve.")
+	var decline_deltas := JsonCoerceScript._copy_dict(decline_result.get("deltas", {}))
+	if decline_run.bankroll != decline_bankroll_before or int(decline_result.get("bankroll_delta", 0)) != 0 or int(decline_deltas.get("bankroll_delta", 0)) != 0:
+		failures.append("Declining Grand Casino invite granted bankroll.")
 	if bool(decline_run.narrative_flags.get("grand_casino_invite", false)) or JsonCoerceScript._string_array(decline_run.current_environment.get("resolved_event_ids", [])).has("grand_casino_invite"):
 		failures.append("Declining Grand Casino invite set the flag or resolved the event.")
 	if not invite_module.can_trigger(decline_run, decline_run.current_environment):
@@ -4680,7 +4695,14 @@ func _check_grand_casino_invite_gate(library: ContentLibrary, kitty: Dictionary,
 	var accept_env := EnvironmentInstance.from_archetype(delta, 2, accept_run.create_rng("accept_delta"), library).to_dict()
 	accept_run.set_environment(accept_env)
 	accept_run.current_environment["travel_lock_remaining"] = 0
+	accept_run.enter_world_node("delta_queen", accept_run.current_environment)
 	var locked_route := library.route("grand_casino")
+	var expected_free_origins := ["beach", "delta_queen", "kitty_cat_lounge"]
+	var authored_free_origins := JsonCoerceScript._string_array(JsonCoerceScript._copy_array(locked_route.get("free_from_archetypes", [])))
+	expected_free_origins.sort()
+	authored_free_origins.sort()
+	if authored_free_origins != expected_free_origins:
+		failures.append("Grand Casino route free origins must be exactly Kitty Cat Lounge, Delta Queen, and Beach: %s." % JSON.stringify(authored_free_origins))
 	var locked_status := accept_run.travel_route_status(locked_route)
 	if bool(locked_status.get("available", true)) or bool(locked_status.get("hidden", true)) or not bool(locked_status.get("locked", false)):
 		failures.append("Grand Casino route was not exposed as a locked route before accepting the invite.")
@@ -4688,28 +4710,64 @@ func _check_grand_casino_invite_gate(library: ContentLibrary, kitty: Dictionary,
 	if bool(underground_locked_status.get("available", true)) or not bool(underground_locked_status.get("hidden", false)) or bool(underground_locked_status.get("locked", false)):
 		failures.append("Underground route without locked_hint should remain fully hidden before its tip.")
 	_check_grand_casino_locked_route_ui(library, delta, locked_route, failures)
+	var accept_bankroll_before := accept_run.bankroll
 	var accept_result := invite_module.resolve(accept_run, accept_run.current_environment, "accept_invite")
 	if not bool(accept_result.get("ok", false)) or not bool(accept_run.narrative_flags.get("grand_casino_invite", false)):
 		failures.append("Accepting Grand Casino invite did not set the unlock flag.")
+	var accept_deltas := JsonCoerceScript._copy_dict(accept_result.get("deltas", {}))
+	if int(accept_result.get("bankroll_delta", 0)) != 50 or int(accept_deltas.get("bankroll_delta", 0)) != 50 or accept_run.bankroll != accept_bankroll_before + 50:
+		failures.append("Accepting Grand Casino invite did not grant exactly +50 bankroll once.")
 	if not JsonCoerceScript._string_array(accept_run.current_environment.get("resolved_event_ids", [])).has("grand_casino_invite"):
 		failures.append("Accepting Grand Casino invite did not resolve the event instance.")
 	var grand_node := WorldMapScript.node_by_id(accept_run.world_map, "grand_casino")
 	if not bool(grand_node.get("unlocked", false)) or str(grand_node.get("discovery_source", "")) != WorldMapScript.DISCOVERY_SOURCE_EVENT:
 		failures.append("Accepting Grand Casino invite did not unlock the Grand Casino map node as an event discovery.")
 	var unlocked_status := accept_run.travel_route_status(locked_route)
-	if not bool(unlocked_status.get("available", false)) or bool(unlocked_status.get("hidden", true)) or bool(unlocked_status.get("locked", true)):
+	if not bool(unlocked_status.get("available", false)) or bool(unlocked_status.get("hidden", true)) or bool(unlocked_status.get("locked", true)) or int(unlocked_status.get("cost", -1)) != 0:
 		failures.append("Grand Casino route did not become available after accepting the invite.")
-	accept_run.bankroll = 63
-	accept_run.enter_world_node("delta_queen", accept_run.current_environment)
+	var accepted_bankroll := accept_run.bankroll
+	var retry_result := invite_module.resolve(accept_run, accept_run.current_environment, "accept_invite")
+	var retry_deltas := JsonCoerceScript._copy_dict(retry_result.get("deltas", {}))
+	if bool(retry_result.get("ok", false)) or accept_run.bankroll != accepted_bankroll \
+			or int(retry_result.get("bankroll_delta", 0)) != 0 or int(retry_deltas.get("bankroll_delta", 0)) != 0:
+		failures.append("Resolved Grand Casino invite granted bankroll again on retry.")
+
+	var floor_run: RunState = RunStateScript.new()
+	floor_run.start_new("GRAND-INVITE-ONE-DOLLAR")
+	floor_run.change_bankroll(-(floor_run.bankroll - 1))
+	floor_run.environment_history.append({"id": "visited_once", "archetype_id": "corner_store"})
+	floor_run.set_world_map(WorldMapScript.new(library).build(floor_run, floor_run.create_rng("grand_invite_floor_map")))
+	var floor_env := EnvironmentInstance.from_archetype(delta, 2, floor_run.create_rng("grand_invite_floor_delta"), library).to_dict()
+	floor_env["travel_lock_remaining"] = 0
+	floor_run.set_environment(floor_env)
+	floor_run.enter_world_node("delta_queen", floor_run.current_environment)
+	var floor_result := invite_module.resolve(floor_run, floor_run.current_environment, "accept_invite")
+	var floor_status := floor_run.travel_route_status(locked_route)
+	if not bool(floor_result.get("ok", false)) or floor_run.bankroll != 51 or floor_run.run_status != RunState.RUN_STATUS_ACTIVE or floor_run.is_terminal() \
+			or int(floor_status.get("cost", -1)) != 0 or not bool(floor_status.get("available", false)):
+		failures.append("A live $1 Delta Queen run did not become an active $51 run with free invited Grand travel.")
+
+	var low_bankroll_run: RunState = RunStateScript.new()
+	low_bankroll_run.from_dict(accept_run.to_dict())
+	var bar_archetype := _archetype_by_id(library, "bar")
+	var low_bankroll_env := EnvironmentInstance.from_archetype(bar_archetype, 1, low_bankroll_run.create_rng("grand_invite_low_bar"), library).to_dict()
+	low_bankroll_env["travel_lock_remaining"] = 0
+	low_bankroll_run.world_map = WorldMapScript.unlock_nodes(low_bankroll_run.world_map, ["bar"], WorldMapScript.DISCOVERY_SOURCE_TRAVEL)
+	low_bankroll_run.set_environment(low_bankroll_env)
+	low_bankroll_run.enter_world_node("bar", low_bankroll_run.current_environment)
+	low_bankroll_run.bankroll = 500
 	var low_bankroll_map := WorldMapScript.new(library)
-	var low_bankroll_route := low_bankroll_map.route_for_target(accept_run.world_map, "delta_queen", "grand_casino")
-	var low_bankroll_status := accept_run.travel_route_status(low_bankroll_route)
-	if bool(low_bankroll_status.get("available", true)) or str(low_bankroll_status.get("disabled_reason", "")) != "Not enough bankroll for this route.":
+	var low_bankroll_route := low_bankroll_map.route_for_target(low_bankroll_run.world_map, "bar", "grand_casino")
+	var priced_low_bankroll_status := low_bankroll_run.travel_route_status(low_bankroll_route)
+	var priced_low_bankroll_cost := int(priced_low_bankroll_status.get("cost", 0))
+	low_bankroll_run.bankroll = maxi(0, priced_low_bankroll_cost - 1)
+	var low_bankroll_status := low_bankroll_run.travel_route_status(low_bankroll_route)
+	if low_bankroll_route.is_empty() or priced_low_bankroll_cost <= 0 or bool(low_bankroll_status.get("available", true)) or str(low_bankroll_status.get("disabled_reason", "")) != "Not enough bankroll for this route.":
 		failures.append("Low-bankroll invited Grand route did not retain its exact affordability blocker.")
-	var low_bankroll_targets := RunGeneratorScript.new(library)._world_travel_target_ids(accept_run, accept_run.world_map, "delta_queen")
+	var low_bankroll_targets := RunGeneratorScript.new(library)._world_travel_target_ids(low_bankroll_run, low_bankroll_run.world_map, "bar")
 	if not low_bankroll_targets.has("grand_casino"):
 		failures.append("The event-unlocked Grand Casino disappeared from the capped production map while its fare was unaffordable: %s." % JSON.stringify(low_bankroll_targets))
-	if low_bankroll_targets.size() > WorldMapScript.TRAVEL_TOTAL_TARGET_LIMIT + accept_run.travel_option_bonus():
+	if low_bankroll_targets.size() > WorldMapScript.TRAVEL_TOTAL_TARGET_LIMIT + low_bankroll_run.travel_option_bonus():
 		failures.append("Preserving the unaffordable event-unlocked Grand Casino exceeded the production travel-card cap.")
 	# A real late-route map can have one enabled event-unlocked Tier-2 casino plus
 	# enough additive revisits that the second, unaffordable event-promised Grand
@@ -4768,7 +4826,6 @@ func _check_grand_casino_invite_gate(library: ContentLibrary, kitty: Dictionary,
 	for crowded_revisit_id in crowded_revisit_ids:
 		if not crowded_targets.has(crowded_revisit_id):
 			failures.append("Preserving the promised Grand Casino erased protected revisit %s from a crowded map: %s." % [crowded_revisit_id, JSON.stringify(crowded_targets)])
-	accept_run.bankroll = 500
 	var suppressed_env := EnvironmentInstance.from_archetype(kitty, 2, accept_run.create_rng("suppressed_kitty"), library).to_dict()
 	if invite_module.can_trigger(accept_run, suppressed_env):
 		failures.append("Grand Casino invite copy at the other tier-2 venue was not suppressed after acceptance.")
@@ -4783,8 +4840,18 @@ func _check_grand_casino_invite_gate(library: ContentLibrary, kitty: Dictionary,
 			failures.append("Save service could not reload Grand Casino invite progress.")
 		else:
 			var loaded_status: Dictionary = loaded_accept.travel_route_status(locked_route)
-			if not bool(loaded_status.get("available", false)):
+			if loaded_accept.bankroll != accepted_bankroll \
+					or not bool(loaded_accept.narrative_flags.get("grand_casino_invite", false)) \
+					or not JsonCoerceScript._string_array(loaded_accept.current_environment.get("resolved_event_ids", [])).has("grand_casino_invite") \
+					or int(loaded_status.get("cost", -1)) != 0 \
+					or not bool(loaded_status.get("available", false)):
 				failures.append("Grand Casino invite route availability did not survive save/load.")
+			var loaded_bankroll_before_retry: int = loaded_accept.bankroll
+			var loaded_retry: Dictionary = invite_module.resolve(loaded_accept, loaded_accept.current_environment, "accept_invite")
+			var loaded_retry_deltas := JsonCoerceScript._copy_dict(loaded_retry.get("deltas", {}))
+			if bool(loaded_retry.get("ok", false)) or loaded_accept.bankroll != loaded_bankroll_before_retry \
+					or int(loaded_retry.get("bankroll_delta", 0)) != 0 or int(loaded_retry_deltas.get("bankroll_delta", 0)) != 0:
+				failures.append("Save/load rearmed the resolved Grand Casino invite or granted its bankroll twice.")
 	var gated_run: RunState = RunStateScript.new()
 	gated_run.start_new("GRAND-INVITE-GATED-LOAD")
 	gated_run.bankroll = 500
@@ -4865,9 +4932,13 @@ func _check_grand_casino_invite_table_win_spawn(library: ContentLibrary, invite_
 	if not invite_module.can_trigger(loaded, loaded.current_environment):
 		failures.append("The earned invitation was not interactable after returning to its saved location.")
 	else:
+		var table_win_accept_bankroll_before := loaded.bankroll
 		var accept_result := invite_module.resolve(loaded, loaded.current_environment, "accept_invite")
 		if not bool(accept_result.get("ok", false)) or not bool(loaded.narrative_flags.get("grand_casino_invite", false)):
 			failures.append("The earned table-win invitation could not be accepted normally.")
+		var table_win_accept_deltas := JsonCoerceScript._copy_dict(accept_result.get("deltas", {}))
+		if int(accept_result.get("bankroll_delta", 0)) != 50 or int(table_win_accept_deltas.get("bankroll_delta", 0)) != 50 or loaded.bankroll != table_win_accept_bankroll_before + 50:
+			failures.append("The saved table-win invitation did not grant exactly +50 bankroll once.")
 		if JsonCoerceScript._string_array(loaded.current_environment.get("event_ids", [])).has(RunState.GRAND_CASINO_INVITATION_EVENT_ID) or _world_map_stored_event_count(loaded.world_map, RunState.GRAND_CASINO_INVITATION_EVENT_ID) != 0:
 			failures.append("Accepting the table-win invitation left another spawned copy in the run.")
 
@@ -4963,21 +5034,40 @@ func _check_grand_casino_locked_route_ui(library: ContentLibrary, delta: Diction
 	unlocked_run.from_dict(ui_run.to_dict())
 	unlocked_run.narrative_flags["grand_casino_invite"] = true
 	var unlocked_status := unlocked_run.travel_route_status(locked_route)
-	if not bool(unlocked_status.get("available", false)) or bool(unlocked_status.get("hidden", true)) or bool(unlocked_status.get("locked", true)):
+	if not bool(unlocked_status.get("available", false)) or bool(unlocked_status.get("hidden", true)) or bool(unlocked_status.get("locked", true)) or int(unlocked_status.get("cost", -1)) != 0:
 		failures.append("Grand Casino locked_hint route did not return normal status after the invite flag.")
-	unlocked_run.bankroll = 63
-	app.set("run_state", unlocked_run)
+	var unaffordable_run: RunState = RunStateScript.new()
+	unaffordable_run.from_dict(unlocked_run.to_dict())
+	var bar_archetype := _archetype_by_id(library, "bar")
+	if bar_archetype.is_empty():
+		failures.append("Grand Casino unaffordable-map fixture requires the Bar archetype.")
+		_sb4_dispose_app(app)
+		return
+	var bar_env := EnvironmentInstance.from_archetype(bar_archetype, 1, unaffordable_run.create_rng("grand_locked_ui_bar"), library).to_dict()
+	bar_env["travel_lock_remaining"] = 0
+	unaffordable_run.world_map = WorldMapScript.unlock_nodes(unaffordable_run.world_map, ["bar"], WorldMapScript.DISCOVERY_SOURCE_TRAVEL)
+	unaffordable_run.set_environment(bar_env)
+	unaffordable_run.enter_world_node("bar", unaffordable_run.current_environment)
+	unaffordable_run.bankroll = 500
+	var unaffordable_route := RunGeneratorScript.new(library).world_route_for_target(unaffordable_run, "grand_casino")
+	var priced_unaffordable_status := unaffordable_run.travel_route_status(unaffordable_route)
+	var priced_unaffordable_cost := int(priced_unaffordable_status.get("cost", 0))
+	unaffordable_run.bankroll = maxi(0, priced_unaffordable_cost - 1)
+	var unaffordable_status := unaffordable_run.travel_route_status(unaffordable_route)
+	if unaffordable_route.is_empty() or priced_unaffordable_cost <= 0 or bool(unaffordable_status.get("available", true)) or str(unaffordable_status.get("disabled_reason", "")) != "Not enough bankroll for this route.":
+		failures.append("Non-comp Grand Casino UI fixture did not retain its positive unaffordable fare.")
+	app.set("run_state", unaffordable_run)
 	app.call("_invalidate_travel_view_cache")
 	app.call("_refresh")
 	var unaffordable_target_ids: Array = app.call("_travel_target_ids")
 	if not unaffordable_target_ids.has("grand_casino"):
 		failures.append("Invited Grand Casino was not selected as a public map target while its fare was unaffordable: %s." % JSON.stringify(unaffordable_target_ids))
 	var hidden_node_id := ""
-	for hidden_candidate_value in JsonCoerceScript._copy_array(unlocked_run.world_map.get("nodes", [])):
+	for hidden_candidate_value in JsonCoerceScript._copy_array(unaffordable_run.world_map.get("nodes", [])):
 		if typeof(hidden_candidate_value) != TYPE_DICTIONARY:
 			continue
 		var hidden_candidate_id := str((hidden_candidate_value as Dictionary).get("id", "")).strip_edges()
-		if not hidden_candidate_id.is_empty() and not WorldMapScript.is_node_visible(unlocked_run.world_map, hidden_candidate_id):
+		if not hidden_candidate_id.is_empty() and not WorldMapScript.is_node_visible(unaffordable_run.world_map, hidden_candidate_id):
 			hidden_node_id = hidden_candidate_id
 			break
 	if hidden_node_id.is_empty():
@@ -5003,6 +5093,63 @@ func _check_grand_casino_locked_route_ui(library: ContentLibrary, delta: Diction
 			failures.append("Unaffordable Grand Casino public map node did not retain the exact fare blocker.")
 	if hidden_node_rendered:
 		failures.append("Rendering an unaffordable selected destination leaked unrevealed map node %s." % hidden_node_id)
+
+	# Confirm through FoundationMain rather than stopping at route-status preview:
+	# destination installation replaces current_environment before the travel
+	# result is built, so this catches any late recomputation of a departure comp.
+	var comp_run: RunState = RunStateScript.new()
+	comp_run.from_dict(unlocked_run.to_dict())
+	comp_run.bankroll = 51
+	var comp_generator: RunGenerator = RunGeneratorScript.new(library)
+	var comp_route := comp_generator.world_route_for_target(comp_run, "grand_casino")
+	var comp_status := comp_run.travel_route_status(comp_route)
+	if comp_route.is_empty() or int(comp_status.get("cost", -1)) != 0 or not bool(comp_status.get("available", false)):
+		failures.append("Grand Casino production comp-travel fixture was not enabled at zero fare before confirmation.")
+	else:
+		app.set("run_state", comp_run)
+		app.set("generator", comp_generator)
+		app.set("current_game", null)
+		app.call("_clear_selected_travel")
+		app.call("_invalidate_travel_view_cache")
+		app.call("_set_current_screen", "ENVIRONMENT")
+		app.call("_refresh")
+		var comp_selected := bool(app.call("select_travel_option", "grand_casino"))
+		var comp_confirmed := bool(app.call("confirm_selected_travel", true)) if comp_selected else false
+		var comp_result: Dictionary = app.get("last_hook_result") if typeof(app.get("last_hook_result")) == TYPE_DICTIONARY else {}
+		if not comp_selected or not comp_confirmed \
+				or str(comp_run.current_environment.get("archetype_id", "")) != RunState.GRAND_CASINO_ARCHETYPE_ID \
+				or comp_run.bankroll != 51 or comp_run.run_status != RunState.RUN_STATUS_ACTIVE or comp_run.is_terminal() \
+				or int(comp_result.get("route_cost", -1)) != 0 or int(comp_result.get("bankroll_delta", -1)) != 0 \
+				or int(comp_run.narrative_flags.get("grand_casino_entry_bankroll", -1)) != 51 \
+				or int(comp_run.narrative_flags.get("grand_casino_net_winnings", -1)) != 0:
+			failures.append("Real Delta Queen-to-Grand confirmation did not preserve the $51 comp stake as the active zero-net entry baseline: selected=%s confirmed=%s bankroll=%d status=%s result=%s." % [comp_selected, comp_confirmed, comp_run.bankroll, comp_run.run_status, JSON.stringify(comp_result)])
+
+	var paid_run: RunState = RunStateScript.new()
+	paid_run.from_dict(unaffordable_run.to_dict())
+	paid_run.bankroll = 500
+	var paid_generator: RunGenerator = RunGeneratorScript.new(library)
+	var paid_route := paid_generator.world_route_for_target(paid_run, "grand_casino")
+	var paid_status := paid_run.travel_route_status(paid_route)
+	var paid_cost := int(paid_status.get("cost", 0))
+	if paid_route.is_empty() or paid_cost <= 0 or not bool(paid_status.get("available", false)):
+		failures.append("Grand Casino production paid-travel fixture did not retain an available positive Bar fare.")
+	else:
+		var paid_bankroll_before := paid_run.bankroll
+		app.set("run_state", paid_run)
+		app.set("generator", paid_generator)
+		app.set("current_game", null)
+		app.call("_clear_selected_travel")
+		app.call("_invalidate_travel_view_cache")
+		app.call("_set_current_screen", "ENVIRONMENT")
+		app.call("_refresh")
+		var paid_selected := bool(app.call("select_travel_option", "grand_casino"))
+		var paid_confirmed := bool(app.call("confirm_selected_travel", true)) if paid_selected else false
+		var paid_result: Dictionary = app.get("last_hook_result") if typeof(app.get("last_hook_result")) == TYPE_DICTIONARY else {}
+		if not paid_selected or not paid_confirmed \
+				or str(paid_run.current_environment.get("archetype_id", "")) != RunState.GRAND_CASINO_ARCHETYPE_ID \
+				or paid_run.bankroll != paid_bankroll_before - paid_cost or paid_run.run_status != RunState.RUN_STATUS_ACTIVE \
+				or int(paid_result.get("route_cost", -1)) != paid_cost or int(paid_result.get("bankroll_delta", 0)) != -paid_cost:
+			failures.append("Real Bar-to-Grand confirmation did not charge its positive departure fare exactly once: selected=%s confirmed=%s expected=%d bankroll=%d result=%s." % [paid_selected, paid_confirmed, paid_cost, paid_run.bankroll, JSON.stringify(paid_result)])
 	_sb4_dispose_app(app)
 
 

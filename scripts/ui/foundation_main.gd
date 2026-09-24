@@ -7201,6 +7201,11 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 	route["travel_method"] = WorldMapScript.travel_method_label(travel_method_kind)
 	if str(route.get("method", "")).strip_edges().is_empty() or force_walk:
 		route["method"] = str(route.get("travel_method", ""))
+	# Contextual fares belong to the departure boundary. In particular,
+	# free_from_archetypes must be resolved before destination installation
+	# replaces current_environment, or a route shown as comped can be charged at
+	# its authored fare after arrival.
+	var departure_route_status := run_state.travel_route_status(route)
 	var travel_minutes := maxi(1, int(choice_data.get("travel_minutes", _travel_clock_minutes_for_route(route, force_walk))))
 	var departed_game_clock_minutes := maxi(0, run_state.game_clock_minutes)
 	route["travel_minutes"] = travel_minutes
@@ -7325,7 +7330,7 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 	if environment_canvas != null:
 		environment_canvas.set_selected_object("", true)
 	var destination_name := str(run_state.current_environment.get("display_name", target_label))
-	var travel_result := _travel_result(target_id, destination_name, route, previous_environment, run_state.current_environment, travel_decay, route_risk)
+	var travel_result := _travel_result(target_id, destination_name, route, previous_environment, run_state.current_environment, travel_decay, route_risk, departure_route_status)
 	if not local_casino_room_move:
 		# Rook's service discounts exactly one successful ordinary route. Interior
 		# room doors do not consume the promised ride.
@@ -7595,8 +7600,8 @@ func _tutorial_linda_exit_guardrail_node() -> String:
 	return ""
 
 
-func _travel_result(target_id: String, destination_name: String, route: Dictionary, previous_environment: Dictionary, destination_environment: Dictionary, travel_decay: Dictionary = {}, route_risk: Dictionary = {}) -> Dictionary:
-	var route_status := run_state.travel_route_status(route)
+func _travel_result(target_id: String, destination_name: String, route: Dictionary, previous_environment: Dictionary, destination_environment: Dictionary, travel_decay: Dictionary = {}, route_risk: Dictionary = {}, departure_route_status: Dictionary = {}) -> Dictionary:
+	var route_status := departure_route_status.duplicate(true) if not departure_route_status.is_empty() else run_state.travel_route_status(route)
 	var travel_method_kind := WorldMapScript.travel_method_kind(route, str(route_status.get("distance", route.get("distance", ""))))
 	var travel_method := WorldMapScript.travel_method_label(travel_method_kind)
 	var cost := int(route_status.get("cost", 0))

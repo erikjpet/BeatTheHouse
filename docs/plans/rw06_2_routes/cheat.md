@@ -1,7 +1,7 @@
 # rw06_2 Pit Boss ending route — first-pass replay
 
 Status: **IMPLEMENTED; QUALIFYING LIVE RUN PENDING rw06_1/rw06_5**
-Implementation base: `origin/main` at `7da3e5dab59b`
+Implementation checkpoint: peer branch `codex/rw06_2-prep` at `5e9f2a14`
 Canonical terminal route: `pit_boss_showdown`
 Fixed replay seed: `RW06-CHEAT-ROUTE-01`
 
@@ -11,6 +11,13 @@ cards/actions, Rourke's rendered tell, and public objective state; it performs
 Save → process exit → relaunch → Continue before duel hand one and accepts only
 the public `showdown_survived` win. The qualifying twice-identical run and
 fresh-seed experience pass remain open until the shared gameplay work lands.
+
+Latest engine-free checkpoint: a newly applied public Peek can raise Heat into
+the exact table-barred range (70--100) while the hand is still open. The replay
+now recognizes that rendered state, leaves through the sole public Back control
+before it attempts a disabled Hit/Stand action, and lets the outer route open
+House Calls. It then selects the visible `take_the_edge` interrogation choice,
+which is the authored stronger answer for the confrontation.
 
 Q-011 route assumption: any Pit Boss scouting leg through Delta Queen must keep
 the Beach visible and free through the production destination list on arrival,
@@ -45,10 +52,10 @@ like an accidental clean-route failure.
 6. Pass the pat-down. A watched cheat plus any contraband, or three contraband
    items, is an immediate terminal failure; surveillance items are serious.
 7. Choose **Take Chair** and answer the three interrogation beats from visible
-   evidence. Default to `hold_steady` for a clean record; use `talk_down` only
-   when the visible relationship strength supports it. Avoid `take_the_edge`
-   unless live evidence proves it is necessary because it adds watched-cheat
-   evidence.
+   evidence. Select the exact visible **Take the Edge** choice: the authored
+   interrogation branch makes it stronger than `hold_steady` for surviving the
+   confrontation, and this route already accepts watched-cheat evidence to reach
+   the Pit Boss ending.
 8. **Required persistence checkpoint:** once the showdown is visibly active and
    before the first duel hand, Save, return to Main Menu, quit, relaunch the same
    isolated session, and Continue. Confirm the back-room phase, public duel
@@ -83,7 +90,7 @@ like an accidental clean-route failure.
 | Escort | Understand that this is the alternate ending | inventory should be safe | surprise pat-down failure from an innocuous-looking item |
 | Save/Continue | Trust the confrontation persists | same showdown phase/margin | event resumes at wrong beat or loses duel state |
 | Interrogation | Read the social stakes | visible strength/copy only | choices do not explain consequences |
-| Duel | Survive five tense hands | margin must stay >= -60 | tell/callout is unreadable; game surface stalls |
+| Duel | Survive five tense hands | internal duel stacks; margin must stay >= -60 | tell/callout is unreadable; game surface stalls |
 | Outcome | See that shown-the-door still counts as a win | terminal report visible | report copy makes success look like failure |
 
 ## Acceptance checklist
@@ -97,3 +104,7 @@ like an accidental clean-route failure.
 - [ ] Complete one additional fresh-seed interactive Pit Boss run.
 - [ ] Add actual action count, transcript/evidence paths,
       money curve, next-goal notes, and arc-breaker findings.
+
+The ordinary $50 chip reserve belongs to the pre-showdown trigger hands. Once
+the Pit Boss duel begins, it uses its own internal stacks rather than the
+player's bankroll or ordinary table-chip balance.

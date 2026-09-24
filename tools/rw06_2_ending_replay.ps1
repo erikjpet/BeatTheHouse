@@ -2210,6 +2210,42 @@ function Invoke-GrandFarePublicCashEvent {
 }
 
 
+function Recover-CleanGrandFareAtCurrentStop {
+    param([ValidateRange(1, 1000)][int]$RequiredCash)
+    if ($Ending -cne 'clean') {
+        throw 'Clean Grand fare recovery cannot run for another ending.'
+    }
+    if ($script:GrandFareRecoveryActive) {
+        throw 'Clean Grand fare recovery cannot be nested.'
+    }
+
+    # Once the invited Grand card is public, keep the affordability diagnosis
+    # anchored to that exact stop. Travelling elsewhere changes the published
+    # fare and can spend more than a generated offer returns; Slot play is a
+    # lucky outcome, not qualifying deterministic liquidity. Consume only the
+    # current room's authenticated lender/event, then either proceed or report
+    # the exact public shortfall for rw06_3.
+    $script:GrandFareRecoveryActive = $true
+    try {
+        Close-WorldMap
+        $null = Invoke-GrandFarePublicFundingOffer
+        $null = Invoke-GrandFarePublicCashEvent
+        $requirement = Get-PublicGrandFareRequirement
+        $cash = Get-Value $script:LastObservation @('status_hud', 'bankroll') $null
+        if ($cash -isnot [int32] -and $cash -isnot [int64]) {
+            throw 'Clean Grand fare recovery lost its integral public bankroll signal.'
+        }
+        Close-WorldMap
+        if ([int]$cash -ge [int]$requirement.required_cash) { return }
+        $shortfall = [int]$requirement.required_cash - [int]$cash
+        throw "Clean Grand entry remains unaffordable after deterministic current-stop liquidity: cash=`$$cash, fare=`$$($requirement.fare), chip_reserve=`$$GrandCasinoChipReserve, required=`$$($requirement.required_cash), initial_required=`$$RequiredCash, shortfall=`$$shortfall."
+    }
+    finally {
+        $script:GrandFareRecoveryActive = $false
+    }
+}
+
+
 function Get-GrandFareRecoveryNodePreference {
     param([Parameter(Mandatory = $true)][string]$ArchetypeId)
     # Prefer venues whose authored public lender pool is distinct from the
@@ -2489,7 +2525,12 @@ function Reach-GrandCasino {
             $cash = [int]$cashValue
             if ($cash -lt $requiredCash) {
                 Close-WorldMap
-                Recover-GrandFareThroughPublicFunding -RequiredCash $requiredCash
+                if ($Ending -ceq 'clean') {
+                    Recover-CleanGrandFareAtCurrentStop -RequiredCash $requiredCash
+                }
+                else {
+                    Recover-GrandFareThroughPublicFunding -RequiredCash $requiredCash
+                }
                 continue
             }
             if ([bool](Get-Value $grand[0] @('travel_enabled') $false)) {
@@ -2696,7 +2737,7 @@ function Invoke-VisibleCheatIfAvailable {
             -SurfaceActions @(Get-GameActions)
         switch ([string]$selection.stage) {
             'wait_for_deal' { return $false }
-            'complete' { return $true }
+            'complete' { return $false }
             'open_window' {
                 if ($openedWindow) {
                     throw 'The rendered Distraction control did not open its public Peek window.'
@@ -2792,7 +2833,26 @@ function Play-OneBlackjackRound {
 
         Invoke-PublicBossCalloutIfShown
         $phase = [string](Get-Value $script:LastObservation @('game', 'phase') '')
-        if ($UseVisibleCheat) { Invoke-VisibleCheatIfAvailable }
+        $peekApplied = $false
+        if ($UseVisibleCheat) {
+            $peekApplied = Invoke-VisibleCheatIfAvailable
+            if ($peekApplied -isnot [bool]) {
+                throw 'Visible Peek did not return an exact public applied-state witness.'
+            }
+        }
+        if ([bool]$peekApplied) {
+            $postPeek = Select-CheatReplayPostPeekTransition `
+                -Game (Get-Value $script:LastObservation @('game') $null) `
+                -StatusHud (Get-Value $script:LastObservation @('status_hud') $null) `
+                -SurfaceActions @(Get-GameActions)
+            if ([string]$postPeek.stage -ceq 'leave_for_showdown') {
+                return
+            }
+            if ([string]$postPeek.stage -cne 'continue_hand') {
+                throw "Unknown public post-Peek transition '$($postPeek.stage)'."
+            }
+            $phase = [string](Get-Value $script:LastObservation @('game', 'phase') '')
+        }
         if ($null -cne (Find-GameAction -Action 'blackjack_settle')) {
             $null = Invoke-GameAction -Action 'blackjack_settle' -Intent 'settle the publicly completed blackjack hand'
             Wait-Frames -Frames 12
@@ -3040,15 +3100,24 @@ function Resolve-ShowdownChoiceSurface {
     $choiceIntents = @{
         enter_back_room = "follow Rourke into the visible back-room sequence"
         face_rourke = 'take the chair after the visible clean pat-down'
-        hold_steady = 'answer Rourke from the visible run record'
     }
-    foreach ($choice in @('enter_back_room', 'face_rourke', 'hold_steady')) {
+    foreach ($choice in @('enter_back_room', 'face_rourke')) {
         if ($choices -ccontains $choice) {
             $intent = $choiceIntents[$choice]
             $null = Choose-VisibleChoice -ChoiceId $choice -Intent $intent
             Wait-Frames -Frames 12
             return $true
         }
+    }
+
+    $interrogationChoices = @($choices | Where-Object {
+        [string]$_ -cin @('hold_steady', 'talk_down', 'take_the_edge')
+    })
+    if ($interrogationChoices.Count -gt 0) {
+        $choice = Select-CheatReplayShowdownInterrogationChoice -EventPopup (Get-Value $script:LastObservation @('event_popup') $null)
+        $null = Choose-VisibleChoice -ChoiceId $choice -Intent 'take the exact visible edge against Rourke during interrogation'
+        Wait-Frames -Frames 12
+        return $true
     }
 
     $walkChoices = @($choices | Where-Object {
