@@ -581,10 +581,85 @@ SCENARIO_SLOT_RENAMES.update({
 })
 
 
-SCENARIO_OVERFLOW_IDS = {
-    "delta_queen": ["delta_queen_wedding_charter_ceremony_rope"],
-    "grand_casino": ["grand_casino_convention_crowd_table_block"],
+SCENARIO_OVERFLOW_IDS: dict[str, list[str]] = {}
+
+# Exact reviewed scene-object -> concrete renderer authority. Actors and
+# required exits use their dedicated contracts and do not belong here. Map
+# passes populate this closed table while pruning scenario_slot_ids; missing
+# entries deliberately render through More room actions instead of receiving a
+# generic room fixture.
+SCENARIO_ART_KEYS: dict[str, dict[str, str]] = {
+    map_id: {} for map_id in HAND_SLOTS
 }
+SCENARIO_ART_KEYS.update({
+    "corner_store": {
+        "discrepancy_shelf": "room_storage",
+        "number_board": "room_display",
+    },
+    "motel": {
+        "motel_conventioneers_room_board": "room_display",
+        "motel_stakeout_south_camera": "security_camera",
+        "motel_stakeout_watched_door": "motel_door",
+        "motel_wedding_overflow_garment_rack": "room_storage",
+        "motel_weekly_rates_weekly_lamp": "room_signal",
+    },
+    "bar": {
+        "bar_darts_league_night_bracket_easel": "room_display",
+        "bar_fight_night_split_table": "room_surface",
+        "bar_fight_night_toppled_chair": "room_seating",
+        "bar_live_band_band_stage": "room_surface",
+        "bar_wake_memorial_tables": "room_surface",
+    },
+    "gas_station_casino": {
+        "gas_station_storm_shelter_supply_shelves": "room_storage",
+        "gas_station_tour_bus_stop_boarding_counter": "room_surface",
+        "gas_station_tour_bus_stop_tour_bus_door": "side_door",
+        "gas_station_trucker_convoy_departure_board": "room_display",
+    },
+    "small_underground_casino:club": {
+        "punchline_bringer_show_seat_blocks": "room_seating",
+        "punchline_bringer_show_unlit_stage": "room_surface",
+        "punchline_debt_court_evidence_stand": "room_surface",
+        "punchline_debt_court_hearing_chairs": "room_seating",
+        "punchline_open_mic_night_chair_bank": "room_seating",
+        "punchline_open_mic_night_signup_lectern": "room_surface",
+    },
+    "small_underground_casino:casino": {
+        "punchline_high_stakes_night_chair_stack": "room_seating",
+        "punchline_high_stakes_night_protected_table": "room_surface",
+    },
+    "jazz_club": {
+        "jazz_club_guest_legend_guest_table": "room_surface",
+        "jazz_club_recording_night_recording_desk": "room_surface",
+        "jazz_club_rent_party_donation_station": "room_surface",
+        "jazz_club_union_trouble_unbuilt_stage": "room_surface",
+    },
+    "kitty_cat_lounge": {
+        "kitty_cat_lounge_amateur_night_amateur_signup": "room_surface",
+        "kitty_cat_lounge_amateur_night_dressing_rack": "room_storage",
+        "kitty_cat_lounge_buyout_guest_desk": "room_surface",
+        "kitty_cat_lounge_slow_night_mini_stage": "room_surface",
+    },
+    "delta_queen": {
+        "delta_queen_captains_invitational_bracket_tables": "room_surface",
+        "delta_queen_engine_trouble_evacuation_benches": "room_seating",
+        "delta_queen_fog_delay_drift_board": "room_display",
+        "delta_queen_fog_delay_fog_signal": "room_signal",
+        "delta_queen_wedding_charter_best_man_table": "room_surface",
+        "delta_queen_whale_aboard_premium_table": "room_surface",
+    },
+    "beach": {
+        "beach_bonfire_night_beach_seats": "room_seating",
+        "beach_festival_weekend_craft_stall": "room_surface",
+        "beach_festival_weekend_festival_stage": "room_surface",
+        "beach_festival_weekend_food_stall": "room_surface",
+        "beach_festival_weekend_schedule_board": "room_display",
+        "beach_storm_coming_closed_stall": "room_surface",
+    },
+    "grand_casino": {
+        "grand_casino_gala_night_charity_badges": "room_surface",
+    },
+})
 SCENARIO_SLOT_ADDITIONS = {
     "delta_queen": {
         "delta_queen_wedding_charter_ceremony_rope|delta_wedding_rope|foreground|": "stage.event_floor_2",
@@ -1225,7 +1300,27 @@ SCENARIO_POSITION_ROUTE_IDS: dict[str, dict[str, str]] = {}
 
 
 COUNTER_UPDATES = {
-    "corner_store": {"register": {"x1": 624.0}},
+    "corner_store": {"register": {"x1": 624.0, "foreground_art_id": "corner_store_register"}},
+    "back_alley": {"right_crate_display": {"foreground_art_id": "back_alley_crate_display"}},
+    "motel": {
+        "merchandise_lower": {"foreground_art_id": "motel_merchandise_counter"},
+        "lobby_table": {"foreground_art_id": "motel_lobby_table"},
+    },
+    "bar": {"bar_counter": {"foreground_art_id": "bar_main_counter"}},
+    "gas_station_casino": {"staff_window": {"foreground_art_id": "gas_station_staff_window"}},
+    "small_underground_casino:casino": {"right_table": {"foreground_art_id": "punchline_right_table"}},
+    "jazz_club": {"bar": {"foreground_art_id": "jazz_bar"}},
+    "kitty_cat_lounge": {"champagne_bar": {"foreground_art_id": "kitty_champagne_bar"}},
+    "delta_queen": {"right_table": {"foreground_art_id": "delta_right_table"}},
+    "beach": {"towel": {"foreground_art_id": "beach_towel_stall"}},
+    "pawn_shop": {
+        "pawn_counter": {"foreground_art_id": "pawn_counter"},
+        "estate_right_lower_shelf": {"foreground_art_id": "pawn_estate_shelf"},
+    },
+    "grand_casino": {
+        "mid_game_rail": {"foreground_art_id": "grand_host_station"},
+        "cocktail_service": {"foreground_art_id": "grand_host_station"},
+    },
 }
 
 
@@ -1337,6 +1432,7 @@ def apply_layout(map_data: dict[str, Any]) -> None:
         map_data["scenario_slot_ids"] = scenario_preferences
     else:
         map_data["scenario_slot_ids"] = dict(sorted(scenario_preferences.items()))
+    map_data["scenario_art_keys"] = dict(sorted(SCENARIO_ART_KEYS.get(map_id, {}).items()))
     map_data["scenario_overflow_ids"] = list(SCENARIO_OVERFLOW_IDS.get(map_id, []))
     class_overrides = dict(map_data.get("class_overrides", {}))
     for identity in CLASS_OVERRIDE_DROPS.get(map_id, set()):

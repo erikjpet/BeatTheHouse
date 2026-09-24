@@ -17,6 +17,32 @@ const PRESENTATION_OVERFLOW := "overflow"
 const BASE_BINDING_KEYS := ["identity", "kind", "presentation_mode", "slot_id", "placement_class", "slot"]
 const BASE_LAYOUT_AUTHORITY_KEYS := ["slot_schema_version", "slot_map_digest", "slot_binding_digest", "slot_bindings", "slot_overflow_ids", "object_rects"]
 
+# Scenario scene objects may consume geometry only when two independent,
+# reviewed authorities agree: scenario_slot_ids names the exact stable object
+# and scenario_art_keys names a renderer that draws a concrete prop. Labels,
+# roles, and keyword classification are never positive physical authority.
+const CONCRETE_SCENARIO_ART_KEYS := [
+	"counter_phone", "jammed_machine", "motel_door", "paper_note", "payphone",
+	"room_display", "room_hazard", "room_refreshment",
+	"room_seating", "room_signal", "room_storage", "room_surface",
+	"room_vehicle", "security_camera", "side_door", "trunk_offer",
+]
+
+# These semantic families are action/route explanations even when their label
+# mentions a physical noun or an old icon fallback happens to resemble a prop.
+# A real prop used by one of these actions must be authored as a separate scene
+# object with its own stable id, slot preference, and concrete art key.
+const ABSTRACT_SCENARIO_ROLES := [
+	"barrier", "decision_route", "exit", "game_lane",
+	"ledger", "primary_task", "route",
+	"route_hazard", "route_marker", "task_station", "task_zone",
+]
+
+const ABSTRACT_SCENARIO_ID_TOKENS := [
+	"barrier", "choice", "ledger", "marker", "route", "seal", "task",
+	"trace", "work_zone", "zone",
+]
+
 
 # Binds the complete generated base inventory to immutable authored slots.
 # No coordinate search, displacement, repack, fallback grid, or RNG is used.
@@ -488,12 +514,14 @@ static func bind_scenario_visuals(environment: Dictionary, visual_entries: Array
 	var all_slots := stage_slots + exit_slots
 	var slots_by_id := _slots_by_id(all_slots)
 	var preferences := _dict(surface_map.get("scenario_slot_ids", {}))
+	var art_keys := _dict(surface_map.get("scenario_art_keys", {}))
 	var position_routes := _dict(surface_map.get("scenario_position_route_ids", {}))
 	var routes_by_id := _routes_by_id(_array(surface_map.get("actor_routes", [])))
 	var occupied: Dictionary = {}
 	var bindings: Dictionary = {}
 	var overflow_ids: Array = []
 	var errors: Array = []
+	_validate_scenario_art_policy(surface_map, art_keys, errors)
 	var authored_overflow_ids := _scenario_overflow_policy(surface_map, errors)
 	if not errors.is_empty():
 		return {
@@ -510,8 +538,8 @@ static func bind_scenario_visuals(environment: Dictionary, visual_entries: Array
 	entries.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
 		return str(_dict(left_value).get("identity", "")) < str(_dict(right_value).get("identity", ""))
 	)
-	# Required exits are hard spatial authority and moving routes reserve both
-	# endpoints before ordinary stage visuals consume capacity.
+	# Physical exits and moving actors reserve first. Semantic exit controls and
+	# routes are authenticated overflow rows and consume no room geometry.
 	entries.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
 		var left := _dict(left_value)
 		var right := _dict(right_value)
@@ -535,6 +563,20 @@ static func bind_scenario_visuals(environment: Dictionary, visual_entries: Array
 		var semantic := _dict(entry.get("semantic", {}))
 		if identity.is_empty() or bindings.has(identity) or not bool(semantic.get("present", true)):
 			continue
+		var stable_id := identity.trim_prefix("scenario::")
+		var position_key := scenario_position_key(stable_id, semantic)
+		var art_key := scenario_visual_art_key(surface_map, entry)
+		if not scenario_visual_requires_room_slot(surface_map, entry):
+			bindings[identity] = _overflow_binding(
+				identity,
+				"",
+				"exit" if bool(entry.get("safe_exit", false)) else "stage",
+				"action_list_authored"
+			)
+			overflow_ids.append(identity)
+			continue
+		if not art_key.is_empty():
+			semantic["icon_key"] = art_key
 		var placement_class := str(entry.get("placement_class", ""))
 		if placement_class not in EnvironmentPlacementScript.CLASSES:
 			placement_class = EnvironmentPlacementScript.classify(
@@ -543,8 +585,6 @@ static func bind_scenario_visuals(environment: Dictionary, visual_entries: Array
 				identity,
 				str(semantic.get("prop", semantic.get("icon_key", "")))
 			)
-		var stable_id := identity.trim_prefix("scenario::")
-		var position_key := scenario_position_key(stable_id, semantic)
 		var route_id := str(semantic.get("route_id", "")).strip_edges()
 		if route_id.is_empty():
 			route_id = str(position_routes.get(position_key, "")).strip_edges()
@@ -552,7 +592,7 @@ static func bind_scenario_visuals(environment: Dictionary, visual_entries: Array
 			if not identity.begins_with("scenario::") or bool(entry.get("safe_exit", false)) or not route_id.is_empty():
 				errors.append("Authored scenario overflow %s must be a non-routed, non-exit scenario-owned visual." % identity)
 				continue
-			bindings[identity] = _overflow_binding(identity, placement_class, "stage")
+			bindings[identity] = _overflow_binding(identity, placement_class, "stage", "physical_spill")
 			overflow_ids.append(identity)
 			continue
 		var route := _dict(routes_by_id.get(route_id, {}))
@@ -560,7 +600,7 @@ static func bind_scenario_visuals(environment: Dictionary, visual_entries: Array
 		if not route_id.is_empty():
 			if route.is_empty():
 				errors.append("Scenario visual %s route %s has no authored route authority." % [identity, route_id])
-				bindings[identity] = _overflow_binding(identity, placement_class, "stage")
+				bindings[identity] = _overflow_binding(identity, placement_class, "stage", "invalid_physical_route")
 				overflow_ids.append(identity)
 				continue
 			var start_id := str(route.get("start_slot_id", ""))
@@ -593,13 +633,21 @@ static func bind_scenario_visuals(environment: Dictionary, visual_entries: Array
 			# deterministic (priority, id) order before overflow.
 			slot = _select_slot(stage_slots, occupied, placement_class, preference, false, MIN_INTERACTIVE_TARGET)
 		if slot.is_empty():
-			bindings[identity] = _overflow_binding(identity, placement_class, "exit" if bool(entry.get("safe_exit", false)) else "stage")
+			errors.append("Physical scenario visual %s has no slot; add an authored slot or list the stable id in scenario_overflow_ids." % identity)
+			bindings[identity] = _overflow_binding(
+				identity,
+				placement_class,
+				"exit" if bool(entry.get("safe_exit", false)) else "stage",
+				"unapproved_physical_spill"
+			)
 			overflow_ids.append(identity)
 			continue
 		var slot_id := str(slot.get("id", ""))
 		if not occupied.has(slot_id):
 			occupied[slot_id] = identity
 		var binding := _room_binding(identity, placement_class, "exit" if bool(entry.get("safe_exit", false)) else "stage", slot)
+		if not art_key.is_empty():
+			binding["scenario_art_key"] = art_key
 		if not route.is_empty():
 			binding["route"] = route.duplicate(true)
 			binding["route_id"] = route_id
@@ -616,6 +664,49 @@ static func bind_scenario_visuals(environment: Dictionary, visual_entries: Array
 	}
 
 
+# True means the entry has closed physical authority and may own an authored
+# room slot. False means it remains reachable through the geometry-free More
+# room actions presentation. Positive authority never comes from role/label
+# inference.
+static func scenario_visual_requires_room_slot(surface_map: Dictionary, entry: Dictionary) -> bool:
+	if bool(entry.get("actor", false)):
+		return true
+	if bool(entry.get("safe_exit", false)):
+		return true
+	return not scenario_visual_art_key(surface_map, entry).is_empty()
+
+
+static func scenario_visual_art_key(surface_map: Dictionary, entry: Dictionary) -> String:
+	if bool(entry.get("actor", false)):
+		return ""
+	if bool(entry.get("safe_exit", false)):
+		return "side_door"
+	var identity := str(entry.get("identity", "")).strip_edges()
+	var semantic := _dict(entry.get("semantic", {}))
+	var stable_id := str(semantic.get("stable_object_id", identity.trim_prefix("scenario::"))).strip_edges()
+	if _scenario_semantic_is_abstract(stable_id, semantic):
+		return ""
+	var position_key := scenario_position_key(stable_id, semantic)
+	var preferences := _dict(surface_map.get("scenario_slot_ids", {}))
+	if not preferences.has(position_key) and not preferences.has(stable_id) and not preferences.has(identity):
+		return ""
+	var art_keys := _dict(surface_map.get("scenario_art_keys", {}))
+	var art_key := str(art_keys.get(stable_id, art_keys.get(identity, ""))).strip_edges()
+	return art_key if art_key in CONCRETE_SCENARIO_ART_KEYS else ""
+
+
+static func _scenario_semantic_is_abstract(stable_id: String, semantic: Dictionary) -> bool:
+	if str(semantic.get("role", "")).strip_edges().to_lower() in ABSTRACT_SCENARIO_ROLES:
+		return true
+	var normalized_id := stable_id.strip_edges().to_lower()
+	for token_value in ABSTRACT_SCENARIO_ID_TOKENS:
+		var token := str(token_value)
+		if normalized_id == token or normalized_id.begins_with("%s_" % token) \
+				or normalized_id.ends_with("_%s" % token) or normalized_id.contains("_%s_" % token):
+			return true
+	return false
+
+
 static func slot_map_digest(surface_map: Dictionary) -> String:
 	return JSON.stringify({
 		"schema_version": int(surface_map.get("slot_schema_version", 0)),
@@ -628,9 +719,38 @@ static func slot_map_digest(surface_map: Dictionary) -> String:
 		"object_slot_ids": _dict(surface_map.get("object_slot_ids", {})),
 		"category_slot_ids": _dict(surface_map.get("category_slot_ids", {})),
 		"scenario_slot_ids": _dict(surface_map.get("scenario_slot_ids", {})),
+		"scenario_art_keys": _dict(surface_map.get("scenario_art_keys", {})),
 		"scenario_overflow_ids": _array(surface_map.get("scenario_overflow_ids", [])),
 		"scenario_position_route_ids": _dict(surface_map.get("scenario_position_route_ids", {})),
 	}).sha256_text()
+
+
+static func _validate_scenario_art_policy(surface_map: Dictionary, art_keys: Dictionary, errors: Array) -> void:
+	var value: Variant = surface_map.get("scenario_art_keys")
+	if typeof(value) != TYPE_DICTIONARY:
+		errors.append("Scenario art authority must be an object.")
+		return
+	var authored_visual_ids := _authored_scenario_visual_ids(surface_map)
+	var preferences := _dict(surface_map.get("scenario_slot_ids", {}))
+	for stable_id_value in art_keys.keys():
+		var stable_id := str(stable_id_value)
+		var art_key_value: Variant = art_keys.get(stable_id_value)
+		if typeof(stable_id_value) != TYPE_STRING or stable_id.is_empty() \
+				or stable_id != stable_id.strip_edges() or stable_id.begins_with("scenario::") or stable_id.contains("|"):
+			errors.append("Scenario art authority contains a malformed stable identity.")
+			continue
+		if typeof(art_key_value) != TYPE_STRING or str(art_key_value) not in CONCRETE_SCENARIO_ART_KEYS:
+			errors.append("Scenario art authority %s names an unsupported concrete renderer." % stable_id)
+		if not authored_visual_ids.has(stable_id):
+			errors.append("Scenario art authority contains unknown authored identity %s." % stable_id)
+		var has_slot_preference := preferences.has(stable_id) or preferences.has("scenario::%s" % stable_id)
+		if not has_slot_preference:
+			for preference_key_value in preferences.keys():
+				if str(preference_key_value).begins_with("%s|" % stable_id):
+					has_slot_preference = true
+					break
+		if not has_slot_preference:
+			errors.append("Scenario art authority %s has no exact authored slot preference." % stable_id)
 
 
 static func _scenario_overflow_policy(surface_map: Dictionary, errors: Array) -> Dictionary:
@@ -642,6 +762,7 @@ static func _scenario_overflow_policy(surface_map: Dictionary, errors: Array) ->
 	# for the current phase. A legal obstacle may be absent (or hidden) in one
 	# phase, while an invented stable identity must still fail closed at runtime.
 	var authored_visual_ids := _authored_scenario_visual_ids(surface_map)
+	var art_keys := _dict(surface_map.get("scenario_art_keys", {}))
 	var result: Dictionary = {}
 	for stable_id_value in value as Array:
 		if typeof(stable_id_value) != TYPE_STRING:
@@ -656,6 +777,9 @@ static func _scenario_overflow_policy(surface_map: Dictionary, errors: Array) ->
 			continue
 		if not authored_visual_ids.has(stable_id):
 			errors.append("Scenario overflow authority names unknown authored identity %s." % stable_id)
+			continue
+		if not art_keys.has(stable_id):
+			errors.append("Scenario overflow authority %s is not a concrete physical scene object." % stable_id)
 			continue
 		result[stable_id] = true
 	return result
@@ -840,8 +964,8 @@ static func _room_binding(identity: String, placement_class: String, kind: Strin
 	}
 
 
-static func _overflow_binding(identity: String, placement_class: String, kind: String) -> Dictionary:
-	return {
+static func _overflow_binding(identity: String, placement_class: String, kind: String, overflow_reason: String = "") -> Dictionary:
+	var binding := {
 		"identity": identity,
 		"kind": kind,
 		"presentation_mode": PRESENTATION_OVERFLOW,
@@ -849,6 +973,9 @@ static func _overflow_binding(identity: String, placement_class: String, kind: S
 		"placement_class": placement_class,
 		"slot": {},
 	}
+	if not overflow_reason.is_empty():
+		binding["overflow_reason"] = overflow_reason
+	return binding
 
 
 static func _slot_rect(slot: Dictionary) -> Rect2:

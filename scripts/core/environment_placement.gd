@@ -252,7 +252,11 @@ static func support_for_rect_on_surfaces(surfaces: Dictionary, placement_class: 
 			var allowed_classes := _array(counter.get("classes", []))
 			if not allowed_classes.is_empty() and placement_class not in allowed_classes:
 				continue
-			if absf(contact.y - float(counter.get("top_y", -1000.0))) <= 0.5 \
+			var top_y := float(counter.get("top_y", -1000.0))
+			var front_y := float(counter.get("front_y", top_y))
+			var vertical_contact := contact.y > top_y + 0.5 and contact.y <= front_y + 0.5 \
+					if placement_class == "behind_counter_person" else absf(contact.y - top_y) <= 0.5
+			if vertical_contact \
 					and rect.position.x >= float(counter.get("x0", 0.0)) - 0.5 \
 					and rect.end.x <= float(counter.get("x1", 0.0)) + 0.5:
 				return {"surface_id": str(counter.get("id", "counter"))}

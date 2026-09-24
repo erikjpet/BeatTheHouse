@@ -328,6 +328,7 @@ static func resolve(base_records: Array, projection: Dictionary, environment: Di
 	var resolved_actors: Dictionary = {}
 	var interactions := _dict(semantic_state.get("interactions", {}))
 	var placement_queue: Array = []
+	var surface_map := EnvironmentPlacementScript.surface_map(environment)
 	for collection_entry in [[semantic_state.get("scene_objects", {}), false], [semantic_state.get("actors", {}), true]]:
 		var collection := _dict((collection_entry as Array)[0])
 		var actor := bool((collection_entry as Array)[1])
@@ -335,23 +336,34 @@ static func resolve(base_records: Array, projection: Dictionary, environment: Di
 			var identity := str(identity_value)
 			var semantic := _dict(collection.get(identity_value, {}))
 			var classified_semantic := semantic.duplicate(true)
-			var class_overrides := _dict(EnvironmentPlacementScript.surface_map(environment).get("class_overrides", {}))
-			var stable_identity := identity.trim_prefix("scenario::")
-			var class_override := str(class_overrides.get(identity, class_overrides.get(stable_identity, "")))
-			if class_override in EnvironmentPlacementScript.CLASSES:
-				classified_semantic["placement_class"] = class_override
-			var placement_class := EnvironmentPlacementScript.classify(classified_semantic, "actor" if actor else "scene_object", identity, str(semantic.get("prop", semantic.get("icon_key", ""))))
 			var interaction := _dict(interactions.get(identity, {}))
-			if bool(interaction.get("safe_exit", false)):
-				placement_class = "doorway"
-				classified_semantic["placement_class"] = placement_class
-			placement_queue.append({
+			var safe_exit := bool(interaction.get("safe_exit", false))
+			var queue_entry := {
 				"identity": identity,
 				"semantic": classified_semantic,
 				"actor": actor,
-				"placement_class": placement_class,
-				"safe_exit": bool(interaction.get("safe_exit", false)),
-			})
+				"placement_class": "",
+				"safe_exit": safe_exit,
+			}
+			var placement_class := ""
+			# Footprint classification is allowed only after exact physical/art
+			# authorization. Action-list semantics never acquire inferred geometry.
+			if EnvironmentSlotBinderScript.scenario_visual_requires_room_slot(surface_map, queue_entry):
+				var art_key := EnvironmentSlotBinderScript.scenario_visual_art_key(surface_map, queue_entry)
+				if not art_key.is_empty():
+					classified_semantic["icon_key"] = art_key
+				var class_overrides := _dict(surface_map.get("class_overrides", {}))
+				var stable_identity := identity.trim_prefix("scenario::")
+				var class_override := str(class_overrides.get(identity, class_overrides.get(stable_identity, "")))
+				if class_override in EnvironmentPlacementScript.CLASSES:
+					classified_semantic["placement_class"] = class_override
+				placement_class = EnvironmentPlacementScript.classify(classified_semantic, "actor" if actor else "scene_object", identity, art_key if not art_key.is_empty() else str(semantic.get("prop", semantic.get("icon_key", ""))))
+			if safe_exit:
+				placement_class = "doorway"
+				classified_semantic["placement_class"] = placement_class
+			queue_entry["semantic"] = classified_semantic
+			queue_entry["placement_class"] = placement_class
+			placement_queue.append(queue_entry)
 	placement_queue.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
 		var left := _dict(left_value)
 		var right := _dict(right_value)
@@ -526,8 +538,6 @@ static func _resolve_fixed_visual(
 	if not _readable_text(label, LABEL_MAX_LENGTH):
 		errors.append("Scenario visual %s requires a bounded, readable label." % identity)
 		return {}
-	if placement_class not in EnvironmentPlacementScript.CLASSES:
-		placement_class = EnvironmentPlacementScript.classify(semantic, "actor" if actor else "scene_object", identity, str(semantic.get("prop", semantic.get("icon_key", ""))))
 	var pixel_rect := _record_pixel_rect(base_record)
 	var label_rect := _pixel_rect(_dict(base_record.get("label_rect", {})))
 	var small_label_rect := _pixel_rect(_dict(base_record.get("small_screen_label_rect", {})))
@@ -539,9 +549,18 @@ static func _resolve_fixed_visual(
 		pixel_rect = EnvironmentSlotBinderScript.rect_from_binding(binding)
 		label_rect = EnvironmentSlotBinderScript.label_rect_from_binding(binding, label)
 		small_label_rect = label_rect
+	if presentation_mode == "room" and placement_class not in EnvironmentPlacementScript.CLASSES:
+		placement_class = EnvironmentPlacementScript.classify(semantic, "actor" if actor else "scene_object", identity, str(semantic.get("prop", semantic.get("icon_key", ""))))
 	if presentation_mode == "room" and not pixel_rect.has_area():
 		errors.append("Scenario visual %s has a room binding without authored slot geometry." % identity)
 		return {}
+	var scenario_art_key := str(binding.get("scenario_art_key", "")).strip_edges()
+	if presentation_mode == "room" and not actor:
+		if scenario_art_key.is_empty():
+			errors.append("Scenario scene object %s has room geometry without sealed concrete art authority." % identity)
+			return {}
+		result["icon_key"] = scenario_art_key
+		result["scenario_art_key"] = scenario_art_key
 	var route_points: Array = []
 	var route_stage: Dictionary = {}
 	var route_id := str(semantic.get("route_id", "")).strip_edges()
@@ -1272,6 +1291,9 @@ static func _scenario_obstacles(scenes: Dictionary) -> Array:
 	for identity_value in scenes.keys():
 		var semantic := _dict(scenes.get(identity_value, {}))
 		if semantic.is_empty() or not bool(semantic.get("present", true)) or not bool(semantic.get("visible", true)):
+			continue
+		if str(semantic.get("presentation_mode", "overflow")) != "room" \
+				or not _pixel_rect(_dict(semantic.get("normalized_hit_rect", {}))).has_area():
 			continue
 		if str(semantic.get("role", "")).to_lower() not in ["obstacle", "barrier", "blockade"]:
 			continue

@@ -1278,6 +1278,10 @@ func _draw() -> void:
 				_draw_grand_casino_cage()
 			_:
 				_draw_corner_store()
+	# These closed, authored fixture faces are part of the room art. The exact
+	# same routine is replayed after behind-counter bodies, so occlusion cannot
+	# recolor or approximate the original counter.
+	_draw_authored_counter_foregrounds()
 	_draw_scenario_palette()
 	_draw_scenario_crowd()
 	_draw_scene_life()
@@ -2574,48 +2578,74 @@ func _draw_string_lights() -> void:
 func _draw_scene_objects() -> void:
 	# Interactable props are rendered here; transparent buttons only provide hit testing.
 	var low_detail := _grand_casino_web_low_detail()
-	for object_data in _active_scene_objects():
-		var rect := _board_rect_for_object(object_data)
-		var object_id := str(object_data.get("id", ""))
-		var object_type := str(object_data.get("type", "item"))
-		var selected := object_id == selected_object_id
-		var hovered := object_id == hovered_object_id
-		var disabled := bool(object_data.get("disabled", false))
-		_draw_object_shadow(rect, selected or hovered, str(object_data.get("shadow_kind", "base")))
-		match object_type:
-			"game":
-				_draw_game_prop(rect, object_data, selected or hovered)
-			"travel":
-				_draw_travel_prop(rect, object_data, selected or hovered)
-			"event":
-				_draw_event_prop(rect, object_data, selected or hovered)
-			"character":
-				_draw_character_actor(rect, object_data)
-			"scenario_actor":
-				_draw_scenario_actor(rect, object_data, selected or hovered)
-			"scenario_object":
-				_draw_scenario_prop(rect, object_data, selected or hovered)
-			"drink":
-				_draw_drink_prop(rect, selected or hovered)
-			_:
-				_draw_item_prop(rect, object_data, selected or hovered, str(object_data.get("surface", "counter")))
+	var objects := _active_scene_objects()
+	var behind_counter: Array = []
+	var room_front: Array = []
+	for object_value in objects:
+		var object_data := object_value as Dictionary
 		if str(object_data.get("placement_class", "")) == "behind_counter_person":
-			_draw_counter_person_occlusion(rect, selected or hovered)
-		if disabled:
-			_draw_disabled_scene_mark(rect)
-		if disabled and (selected or hovered):
-			_draw_disabled_focus_mark(rect, selected)
-		elif selected:
-			_draw_selected_scene_mark(rect)
-			if object_type in ["item", "drink"]:
-				_draw_selected_item_frame(rect, object_type)
-		elif hovered:
-			_draw_hover_scene_mark(rect)
-		elif should_draw_hotspot_hint(object_data, low_detail):
-			_draw_hotspot_hint(rect, object_type)
-		_draw_object_label(rect, str(object_data.get("label", "")), object_type, disabled, selected or hovered, object_data)
+			behind_counter.append(object_data)
+		else:
+			room_front.append(object_data)
+	# Counter staff and their shadows are painted before the exact foreground
+	# fixture faces. Everyone else remains in normal deterministic room order.
+	for object_value in behind_counter:
+		_draw_scene_object_body(object_value as Dictionary)
+	_draw_room_foreground_occluders(behind_counter)
+	for object_value in room_front:
+		_draw_scene_object_body(object_value as Dictionary)
+	# Labels and focus affordances stay above fixtures and remain fully usable.
+	for object_value in objects:
+		_draw_scene_object_adornments(object_value as Dictionary, low_detail)
 	if not developer_placement_mode:
 		_draw_selected_object_info()
+
+
+func _draw_scene_object_body(object_data: Dictionary) -> void:
+	var rect := _board_rect_for_object(object_data)
+	var object_id := str(object_data.get("id", ""))
+	var object_type := str(object_data.get("type", "item"))
+	var active := object_id == selected_object_id or object_id == hovered_object_id
+	_draw_object_shadow(rect, active, str(object_data.get("shadow_kind", "base")))
+	match object_type:
+		"game":
+			_draw_game_prop(rect, object_data, active)
+		"travel":
+			_draw_travel_prop(rect, object_data, active)
+		"event":
+			_draw_event_prop(rect, object_data, active)
+		"character":
+			_draw_character_actor(rect, object_data)
+		"scenario_actor":
+			_draw_scenario_actor(rect, object_data, active)
+		"scenario_object":
+			_draw_scenario_prop(rect, object_data, active)
+		"drink":
+			_draw_drink_prop(rect, active)
+		_:
+			_draw_item_prop(rect, object_data, active, str(object_data.get("surface", "counter")))
+
+
+func _draw_scene_object_adornments(object_data: Dictionary, low_detail: bool) -> void:
+	var rect := _board_rect_for_object(object_data)
+	var object_id := str(object_data.get("id", ""))
+	var object_type := str(object_data.get("type", "item"))
+	var selected := object_id == selected_object_id
+	var hovered := object_id == hovered_object_id
+	var disabled := bool(object_data.get("disabled", false))
+	if disabled:
+		_draw_disabled_scene_mark(rect)
+	if disabled and (selected or hovered):
+		_draw_disabled_focus_mark(rect, selected)
+	elif selected:
+		_draw_selected_scene_mark(rect)
+		if object_type in ["item", "drink"]:
+			_draw_selected_item_frame(rect, object_type)
+	elif hovered:
+		_draw_hover_scene_mark(rect)
+	elif should_draw_hotspot_hint(object_data, low_detail):
+		_draw_hotspot_hint(rect, object_type)
+	_draw_object_label(rect, str(object_data.get("label", "")), object_type, disabled, selected or hovered, object_data)
 
 
 func _draw_scenario_prop(rect: Rect2, object_data: Dictionary, active: bool) -> void:
@@ -2623,9 +2653,9 @@ func _draw_scenario_prop(rect: Rect2, object_data: Dictionary, active: bool) -> 
 	var accent := C_ORANGE if role == "obstacle" else C_PURPLE_2 if role == "exit" else C_CYAN_2
 	# Scenario props use the same concrete icon vocabulary as ordinary event
 	# props. The semantic icon key chooses paper, furniture, barriers, lights,
-	# refreshments, machinery, doors, or a neutral fixture silhouette.
+	# refreshments, machinery, or doors. Room placement never authorizes the
+	# generic room-fixture fallback.
 	_draw_event_prop(rect, object_data, active)
-	draw_rect(rect, accent.lightened(0.16) if active else accent, false, 2.0)
 	if role in ["obstacle", "exit"]:
 		var mark := "!" if role == "obstacle" else ">"
 		_neon_text(mark, rect.position + Vector2(5.0, 14.0), 12, C_WHITE)
@@ -2639,14 +2669,6 @@ func _draw_scenario_actor(rect: Rect2, object_data: Dictionary, active: bool) ->
 	var pose := str(object_data.get("pose", "idle"))
 	var accent := C_ORANGE if behavior in ["guard", "fight", "flee"] else C_TEAL
 	var center := rect.get_center()
-	var route_points := JsonCoerceScript._copy_array(object_data.get("route_points", []))
-	if route_points.size() >= 2:
-		var finish := Vector2.ZERO
-		for route_index in range(1, route_points.size()):
-			var start := _vector2_from_dict(route_points[route_index - 1], Vector2.ZERO) * Vector2(BOARD_SIZE)
-			finish = _vector2_from_dict(route_points[route_index], Vector2.ZERO) * Vector2(BOARD_SIZE)
-			draw_dashed_line(start, finish, accent, 2.0, 7.0, true)
-		draw_circle(finish, 4.0, accent)
 	var head_radius := clampf(rect.size.x * 0.15, 6.0, 12.0)
 	draw_circle(Vector2(center.x, rect.position.y + head_radius + 4.0), head_radius, C_SOFT.darkened(0.15))
 	var body_top := rect.position.y + head_radius * 2.0 + 6.0
@@ -5342,11 +5364,135 @@ func _draw_object_shadow(rect: Rect2, selected: bool, shadow_kind: String) -> vo
 		draw_rect(Rect2(Vector2(rect.position.x + rect.size.x * 0.08, shadow_y - 4.0), Vector2(rect.size.x * 0.84, 4)), Color(glow.r, glow.g, glow.b, 0.32))
 
 
-func _draw_counter_person_occlusion(rect: Rect2, selected: bool) -> void:
-	var front := Color(C_DARK_2.r, C_DARK_2.g, C_DARK_2.b, 0.94)
-	draw_rect(Rect2(Vector2(rect.position.x - 3.0, rect.end.y - 4.0), Vector2(rect.size.x + 6.0, 8.0)), front)
-	if selected:
-		draw_line(Vector2(rect.position.x - 3.0, rect.end.y - 4.0), Vector2(rect.end.x + 3.0, rect.end.y - 4.0), C_YELLOW, 2.0)
+func _draw_room_foreground_occluders(behind_counter_objects: Array) -> void:
+	if behind_counter_objects.is_empty():
+		return
+	var environment := {
+		"archetype_id": str(foundation_snapshot.get("archetype_id", foundation_snapshot.get("id", environment_id))),
+		"current_layer_id": str(foundation_snapshot.get("current_layer_id", foundation_snapshot.get("layer_id", ""))),
+	}
+	var surface_map := EnvironmentPlacementScript.surface_map(environment)
+	if surface_map.is_empty():
+		return
+	var slots_by_id: Dictionary = {}
+	for field in ["base_slots", "stage_slots", "exit_slots"]:
+		var slot_values: Variant = surface_map.get(field, [])
+		if typeof(slot_values) != TYPE_ARRAY:
+			continue
+		for slot_value in slot_values as Array:
+			if typeof(slot_value) != TYPE_DICTIONARY:
+				continue
+			var slot := slot_value as Dictionary
+			slots_by_id[str(slot.get("id", ""))] = slot
+	var counters_by_id: Dictionary = {}
+	var counter_values: Variant = surface_map.get("counters", [])
+	if typeof(counter_values) == TYPE_ARRAY:
+		for counter_value in counter_values as Array:
+			if typeof(counter_value) != TYPE_DICTIONARY:
+				continue
+			var counter := counter_value as Dictionary
+			counters_by_id[str(counter.get("id", ""))] = counter
+	var support_ids: Dictionary = {}
+	for object_value in behind_counter_objects:
+		var object_data := object_value as Dictionary
+		var slot := slots_by_id.get(str(object_data.get("slot_id", "")), {}) as Dictionary
+		var support_id := str(slot.get("support_id", ""))
+		if counters_by_id.has(support_id):
+			support_ids[support_id] = true
+	var ordered_supports := support_ids.keys()
+	ordered_supports.sort()
+	for support_id_value in ordered_supports:
+		var support_id := str(support_id_value)
+		var counter := counters_by_id.get(support_id, {}) as Dictionary
+		_draw_counter_foreground_art(counter)
+
+
+func _draw_authored_counter_foregrounds() -> void:
+	var environment := {
+		"archetype_id": str(foundation_snapshot.get("archetype_id", foundation_snapshot.get("id", environment_id))),
+		"current_layer_id": str(foundation_snapshot.get("current_layer_id", foundation_snapshot.get("layer_id", ""))),
+	}
+	var surface_map := EnvironmentPlacementScript.surface_map(environment)
+	var counter_values: Variant = surface_map.get("counters", [])
+	if typeof(counter_values) != TYPE_ARRAY:
+		return
+	var counters: Array = []
+	for counter_value in counter_values as Array:
+		if typeof(counter_value) == TYPE_DICTIONARY and not str((counter_value as Dictionary).get("foreground_art_id", "")).is_empty():
+			counters.append(counter_value)
+	counters.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
+		return str((left_value as Dictionary).get("id", "")) < str((right_value as Dictionary).get("id", ""))
+	)
+	for counter_value in counters:
+		_draw_counter_foreground_art(counter_value as Dictionary)
+
+
+func _draw_counter_foreground_art(counter: Dictionary) -> bool:
+	var art_id := str(counter.get("foreground_art_id", ""))
+	var x0 := float(counter.get("x0", 0.0))
+	var x1 := float(counter.get("x1", 0.0))
+	var top_y := float(counter.get("top_y", 0.0))
+	var front_y := float(counter.get("front_y", top_y))
+	var front := Rect2(Vector2(x0, top_y), Vector2(x1 - x0, front_y - top_y))
+	if not front.has_area():
+		return false
+	match art_id:
+		"corner_store_register":
+			draw_rect(front, Color("#20203c"))
+			draw_line(front.position, Vector2(front.end.x, front.position.y), C_CYAN, 3.0)
+			for x in range(int(front.position.x) + 20, int(front.end.x) - 12, 38):
+				draw_rect(Rect2(x, front.position.y + 10, 28, maxf(4.0, front.size.y - 20.0)), C_AMBER.darkened(0.18))
+		"back_alley_crate_display":
+			draw_rect(front, Color("#4a2d1f"))
+			draw_line(front.position, Vector2(front.end.x, front.position.y), C_AMBER.darkened(0.18), 3.0)
+			for x in range(int(front.position.x) + 8, int(front.end.x), 42):
+				draw_line(Vector2(x, front.position.y + 5), Vector2(x + 24, front.end.y - 5), Color("#2a1812"), 3.0)
+		"motel_merchandise_counter", "motel_lobby_table":
+			draw_rect(front, Color("#18161f"))
+			draw_line(front.position, Vector2(front.end.x, front.position.y), C_PINK.darkened(0.30), 3.0)
+			draw_line(front.position + Vector2(8, front.size.y - 7), front.end - Vector2(8, 7), Color("#0e0c14"), 3.0)
+		"bar_main_counter":
+			draw_rect(front, Color("#3a1c16"))
+			draw_line(front.position, Vector2(front.end.x, front.position.y), C_AMBER.darkened(0.12), 4.0)
+			for x in range(int(front.position.x) + 24, int(front.end.x), 80):
+				draw_line(Vector2(x, front.position.y + 8), Vector2(x + 18, front.end.y - 8), Color("#24100d"), 3.0)
+		"gas_station_staff_window":
+			draw_rect(front, Color("#493116"))
+			draw_line(front.position, Vector2(front.end.x, front.position.y), C_AMBER.darkened(0.22), 2.0)
+		"punchline_right_table":
+			draw_rect(front, Color("#123c30"))
+			draw_line(front.position, Vector2(front.end.x, front.position.y), Color("#187452"), 4.0)
+			draw_line(front.position + Vector2(12, front.size.y - 8), front.end - Vector2(12, 8), Color("#0b2b22"), 3.0)
+		"jazz_bar":
+			draw_rect(front, Color("#3b1f15"))
+			draw_line(front.position, Vector2(front.end.x, front.position.y), C_AMBER, 3.0)
+			for x in range(int(front.position.x) + 16, int(front.end.x), 44):
+				draw_rect(Rect2(x, front.position.y + 10, 26, maxf(3.0, front.size.y - 18.0)), Color("#21100d"))
+		"kitty_champagne_bar":
+			draw_rect(front, Color("#3a1932"))
+			draw_line(front.position, Vector2(front.end.x, front.position.y), C_PINK, 3.0)
+			for x in range(int(front.position.x) + 18, int(front.end.x), 48):
+				draw_circle(Vector2(x, front.position.y + front.size.y * 0.56), 4.0, C_YELLOW.darkened(0.10))
+		"delta_right_table":
+			draw_rect(front, Color("#362319"))
+			draw_line(front.position, Vector2(front.end.x, front.position.y), C_AMBER, 4.0)
+			draw_line(front.position + Vector2(10, front.size.y - 9), front.end - Vector2(10, 9), Color("#21150f"), 3.0)
+		"beach_towel_stall":
+			draw_rect(front, Color("#6b4327"))
+			draw_line(front.position, Vector2(front.end.x, front.position.y), C_YELLOW.darkened(0.16), 3.0)
+			for x in range(int(front.position.x) + 12, int(front.end.x), 34):
+				draw_rect(Rect2(x, front.position.y + 8, 20, maxf(4.0, front.size.y - 16.0)), _cycle_color(x).darkened(0.25))
+		"pawn_counter", "pawn_estate_shelf":
+			draw_rect(front, Color("#4a2d1f"))
+			draw_line(front.position, Vector2(front.end.x, front.position.y), C_AMBER.darkened(0.20), 3.0)
+			draw_line(front.position + Vector2(8, front.size.y - 6), front.end - Vector2(8, 6), Color("#241717"), 2.0)
+		"grand_host_station":
+			draw_rect(front, Color("#171225"))
+			draw_line(front.position, Vector2(front.end.x, front.position.y), C_AMBER.darkened(0.18), 3.0)
+			draw_line(front.position + Vector2(8, front.size.y - 5), front.end - Vector2(8, 5), Color("#090914"), 2.0)
+		_:
+			return false
+	return true
 
 
 func _draw_hotspot_hint(rect: Rect2, object_type: String) -> void:

@@ -61,7 +61,7 @@ func _init() -> void:
 
 
 func _run() -> void:
-	_check_authored_scenario_overflow_policy()
+	_check_semantic_scenario_presentation_policy()
 	await _check_selected_info_action_enabled_gate()
 	var app := OverflowFoundationHost.new()
 	app.size = Vector2(1280.0, 720.0)
@@ -211,7 +211,7 @@ func _run() -> void:
 	}
 	var records: Array = [production_record, disabled_record, multi_record, mirrored_record, information_record, hidden_record]
 	var authored_info_order := 41
-	for spec_value in _authored_scenario_overflow_specs():
+	for spec_value in _abstract_scenario_action_specs():
 		var spec := spec_value as Dictionary
 		records.append({
 			"object_id": "scenario::%s" % str(spec.get("stable_id", "")),
@@ -287,7 +287,7 @@ func _check_rendered_action_surface(action_list: Control, records: Array) -> voi
 	var information_button: Button = null
 	var authored_information_buttons: Dictionary = {}
 	var authored_information_summaries: Dictionary = {}
-	for spec_value in _authored_scenario_overflow_specs():
+	for spec_value in _abstract_scenario_action_specs():
 		var spec := spec_value as Dictionary
 		authored_information_summaries["scenario::%s" % str(spec.get("stable_id", ""))] = str(spec.get("summary", ""))
 	for button_value in action_list.find_children("*", "Button", true, false):
@@ -632,124 +632,159 @@ func _check_record_scenario_authority_staleness(
 	await _settle_frames(2)
 
 
-func _authored_scenario_overflow_specs() -> Array:
+func _abstract_scenario_action_specs() -> Array:
 	return [
 		{
-			"map_id": "delta_queen",
 			"stable_id": "delta_queen_wedding_charter_ceremony_rope",
-			"anchor_id": "delta_wedding_rope",
-			"zone_id": "foreground",
 			"role": "barrier",
-			"exit_stable_id": "delta_queen_wedding_charter_safe_exit",
-			"exit_anchor_id": "delta_wedding_safe_exit",
 			"label": "Ceremony rope",
 			"summary": "Ceremony ropes divide the front promenade into competing lanes.",
 		},
 		{
-			"map_id": "grand_casino",
-			"stable_id": "grand_casino_convention_crowd_table_block",
-			"anchor_id": "grand_convention_table_block",
-			"zone_id": "background",
-			"role": "blockade",
-			"exit_stable_id": "grand_casino_convention_crowd_safe_exit",
-			"exit_anchor_id": "grand_scenario_safe_exit",
-			"label": "Convention table block",
-			"summary": "Convention tables block the central guest lane.",
+			"stable_id": "bar_live_band_task_0",
+			"role": "task_station",
+			"label": "Trace dead cable",
+			"summary": "Trace the dead cable from the stage before the set can continue.",
+		},
+		{
+			"stable_id": "grand_casino_audit_night_work_1_choice_0",
+			"role": "decision_route",
+			"label": "Route 1",
+			"summary": "Choose the first public audit route.",
+		},
+		{
+			"stable_id": "grand_casino_audit_night_cage_seal",
+			"role": "evidence",
+			"label": "Audit cage seal",
+			"summary": "The intact seal identifies the first inspected zone.",
+		},
+		{
+			"stable_id": "bar_dead_tuesday_bartender_zone",
+			"role": "task_zone",
+			"label": "Bartender work zone",
+			"summary": "The bartender work zone is one available focus for the night.",
 		},
 	]
 
 
-func _check_authored_scenario_overflow_policy() -> void:
-	for spec_value in _authored_scenario_overflow_specs():
+func _check_semantic_scenario_presentation_policy() -> void:
+	var surface_map := EnvironmentPlacementScript.surface_map_by_id("bar").duplicate(true)
+	var synthetic_preferences := (surface_map.get("scenario_slot_ids", {}) as Dictionary).duplicate(true)
+	var synthetic_art := (surface_map.get("scenario_art_keys", {}) as Dictionary).duplicate(true)
+	synthetic_preferences["physical_table"] = "stage.event_pool_table_1"
+	synthetic_art["physical_table"] = "room_surface"
+	for spec_value in _abstract_scenario_action_specs():
 		var spec := spec_value as Dictionary
-		var map_id := str(spec.get("map_id", ""))
 		var stable_id := str(spec.get("stable_id", ""))
-		var identity := "scenario::%s" % stable_id
-		var exit_identity := "scenario::%s" % str(spec.get("exit_stable_id", ""))
-		var surface_map := EnvironmentPlacementScript.surface_map_by_id(map_id)
-		if surface_map.is_empty() or surface_map.get("scenario_overflow_ids", []) != [stable_id]:
-			failures.append("RW06-1 %s did not expose its exact authored scenario-overflow identity." % map_id)
-			continue
-		var policy_errors: Array = []
-		var policy := EnvironmentSlotBinderScript._scenario_overflow_policy(surface_map, policy_errors)
-		if not policy_errors.is_empty() or not policy.has(stable_id) or policy.size() != 1:
-			failures.append("RW06-1 %s authored scenario-overflow policy failed runtime validation: %s." % [map_id, JSON.stringify(policy_errors)])
-			continue
-		var target := {
-			"identity": identity,
-			"placement_class": "floor_fixture",
+		synthetic_preferences[stable_id] = "stage.event_floor_fixture_1"
+		synthetic_art[stable_id] = "room_surface"
+	surface_map["scenario_slot_ids"] = synthetic_preferences
+	surface_map["scenario_art_keys"] = synthetic_art
+	surface_map["scenario_overflow_ids"] = []
+
+	var abstract_entries: Array = []
+	for spec_value in _abstract_scenario_action_specs():
+		var spec := spec_value as Dictionary
+		var stable_id := str(spec.get("stable_id", ""))
+		var entry := {
+			"identity": "scenario::%s" % stable_id,
 			"actor": false,
 			"safe_exit": false,
 			"semantic": {
-				"owner_namespace": "scenario",
-				"stable_object_id": stable_id,
-				"present": true,
-				"visible": true,
-				"enabled": true,
-				"anchor_id": str(spec.get("anchor_id", "")),
-				"zone_id": str(spec.get("zone_id", "")),
-				"role": str(spec.get("role", "")),
-				"label": str(spec.get("label", "")),
+				"owner_namespace": "scenario", "stable_object_id": stable_id,
+				"present": true, "visible": true, "enabled": true,
+				"role": str(spec.get("role", "")), "label": str(spec.get("label", "")),
 				"description": str(spec.get("summary", "")),
 			},
 		}
-		var safe_exit := {
-			"identity": exit_identity,
-			"placement_class": "doorway",
-			"actor": false,
-			"safe_exit": true,
-			"semantic": {
-				"owner_namespace": "scenario",
-				"stable_object_id": str(spec.get("exit_stable_id", "")),
-				"present": true,
-				"visible": true,
-				"enabled": true,
-				"anchor_id": str(spec.get("exit_anchor_id", "")),
-				"zone_id": "exit_lane",
-				"role": "exit",
-				"label": "Safe exit",
-			},
-		}
-		var environment := {"archetype_id": map_id}
-		var first := EnvironmentSlotBinderScript.bind_scenario_visuals(environment, [target, safe_exit])
-		var repeat := EnvironmentSlotBinderScript.bind_scenario_visuals(environment, [safe_exit, target])
-		var hidden_target := target.duplicate(true)
-		var hidden_semantic := (hidden_target.get("semantic", {}) as Dictionary).duplicate(true)
-		hidden_semantic["visible"] = false
-		hidden_target["semantic"] = hidden_semantic
-		var hidden := EnvironmentSlotBinderScript.bind_scenario_visuals(environment, [hidden_target, safe_exit])
-		var absent_phase := EnvironmentSlotBinderScript.bind_scenario_visuals(environment, [safe_exit])
-		if not bool(first.get("ok", false)) or not bool(repeat.get("ok", false)) \
-				or not bool(hidden.get("ok", false)) or not bool(absent_phase.get("ok", false)):
-			failures.append("RW06-1 %s authored overflow failed visible/hidden/absent-phase binding: %s." % [map_id, JSON.stringify([first.get("errors", []), repeat.get("errors", []), hidden.get("errors", []), absent_phase.get("errors", [])])])
-			continue
-		var first_bindings := first.get("slot_bindings", {}) as Dictionary
-		var hidden_bindings := hidden.get("slot_bindings", {}) as Dictionary
-		var target_binding := first_bindings.get(identity, {}) as Dictionary
-		var hidden_binding := hidden_bindings.get(identity, {}) as Dictionary
-		var exit_binding := first_bindings.get(exit_identity, {}) as Dictionary
-		if str(target_binding.get("presentation_mode", "")) != "overflow" \
-				or not str(target_binding.get("slot_id", "")).is_empty() \
-				or str(target_binding.get("placement_class", "")) != "floor_fixture" \
-				or JSON.stringify(hidden_binding) != JSON.stringify(target_binding) \
-				or not (first.get("overflow_ids", []) as Array).has(identity):
-			failures.append("RW06-1 %s configured obstacle did not retain geometry-free true-class overflow authority." % map_id)
-		if str(exit_binding.get("presentation_mode", "")) != "room" \
-				or str(exit_binding.get("slot_id", "")).is_empty() \
-				or (first.get("overflow_ids", []) as Array).has(exit_identity):
-			failures.append("RW06-1 %s authored overflow consumed or displaced its required safe exit." % map_id)
-		if str(first.get("binding_digest", "")) != str(repeat.get("binding_digest", "")) \
-				or JSON.stringify(first_bindings) != JSON.stringify(repeat.get("slot_bindings", {})):
-			failures.append("RW06-1 %s authored overflow binding changed with input order." % map_id)
-		var digest_mutation := surface_map.duplicate(true)
-		var mutated_ids := (digest_mutation.get("scenario_overflow_ids", []) as Array).duplicate()
-		mutated_ids.append("invented_digest_identity")
-		digest_mutation["scenario_overflow_ids"] = mutated_ids
-		if EnvironmentSlotBinderScript.slot_map_digest(surface_map) == EnvironmentSlotBinderScript.slot_map_digest(digest_mutation):
-			failures.append("RW06-1 %s slot-map digest ignored scenario-overflow authority mutation." % map_id)
+		abstract_entries.append(entry)
+		if EnvironmentSlotBinderScript.scenario_visual_requires_room_slot(surface_map, entry) \
+				or not EnvironmentSlotBinderScript.scenario_visual_art_key(surface_map, entry).is_empty():
+			failures.append("RW06-1 abstract %s acquired physical authority from a slot/art hint." % stable_id)
 
-	var hostile_surface := EnvironmentPlacementScript.surface_map_by_id("delta_queen").duplicate(true)
-	var known_id := "delta_queen_wedding_charter_ceremony_rope"
+	var physical_prop := {
+		"identity": "scenario::physical_table", "actor": false, "safe_exit": false,
+		"semantic": {"stable_object_id": "physical_table", "present": true, "visible": true, "role": "game_fixture", "label": "Physical table"},
+	}
+	if not EnvironmentSlotBinderScript.scenario_visual_requires_room_slot(surface_map, physical_prop) \
+			or EnvironmentSlotBinderScript.scenario_visual_art_key(surface_map, physical_prop) != "room_surface":
+		failures.append("RW06-1 exact stable-id plus closed art authority did not authorize a concrete physical prop.")
+	var delta_surface := EnvironmentPlacementScript.surface_map_by_id("delta_queen").duplicate(true)
+	var navigation_lamp := {
+		"identity": "scenario::delta_queen_fog_delay_fog_signal", "actor": false, "safe_exit": false,
+		"semantic": {
+			"stable_object_id": "delta_queen_fog_delay_fog_signal", "present": true,
+			"visible": true, "role": "navigation", "label": "Fog signal",
+		},
+	}
+	if not EnvironmentSlotBinderScript.scenario_visual_requires_room_slot(delta_surface, navigation_lamp) \
+			or EnvironmentSlotBinderScript.scenario_visual_art_key(delta_surface, navigation_lamp) != "room_signal":
+		failures.append("RW06-1 reviewed navigation lamp did not receive its exact concrete room authority.")
+	var unmapped_delta := delta_surface.duplicate(true)
+	var unmapped_art := (unmapped_delta.get("scenario_art_keys", {}) as Dictionary).duplicate(true)
+	unmapped_art.erase("delta_queen_fog_delay_fog_signal")
+	unmapped_delta["scenario_art_keys"] = unmapped_art
+	if EnvironmentSlotBinderScript.scenario_visual_requires_room_slot(unmapped_delta, navigation_lamp) \
+			or not EnvironmentSlotBinderScript.scenario_visual_art_key(unmapped_delta, navigation_lamp).is_empty():
+		failures.append("RW06-1 unmapped navigation semantic escaped the geometry-free action list.")
+	var unknown_prop := physical_prop.duplicate(true)
+	unknown_prop["identity"] = "scenario::unknown_physical_prop"
+	var unknown_semantic := (unknown_prop.get("semantic", {}) as Dictionary).duplicate(true)
+	unknown_semantic["stable_object_id"] = "unknown_physical_prop"
+	unknown_prop["semantic"] = unknown_semantic
+	if EnvironmentSlotBinderScript.scenario_visual_requires_room_slot(surface_map, unknown_prop):
+		failures.append("RW06-1 unreviewed scene object acquired room geometry from physical-sounding semantics.")
+
+	# Runtime binding uses production Bar data: abstract records stay geometry-free
+	# while actors and required exits retain their dedicated physical contracts.
+	var actor := {
+		"identity": "scenario::contract_actor", "actor": true, "safe_exit": false,
+		"placement_class": "standing_person",
+		"semantic": {"stable_object_id": "contract_actor", "present": true, "visible": true, "role": "patron", "label": "Contract actor"},
+	}
+	var safe_exit := {
+		"identity": "scenario::contract_safe_exit", "actor": false, "safe_exit": true,
+		"placement_class": "doorway",
+		"semantic": {"stable_object_id": "contract_safe_exit", "present": true, "visible": true, "role": "exit", "label": "Safe exit"},
+	}
+	var first_entries := abstract_entries.duplicate(true) + [actor, safe_exit]
+	var repeat_entries := first_entries.duplicate(true)
+	repeat_entries.reverse()
+	var first := EnvironmentSlotBinderScript.bind_scenario_visuals({"archetype_id": "bar"}, first_entries)
+	var repeat := EnvironmentSlotBinderScript.bind_scenario_visuals({"archetype_id": "bar"}, repeat_entries)
+	if not bool(first.get("ok", false)) or not bool(repeat.get("ok", false)):
+		failures.append("RW06-1 semantic room/action-list binding failed: %s." % JSON.stringify([first.get("errors", []), repeat.get("errors", [])]))
+	else:
+		var bindings := first.get("slot_bindings", {}) as Dictionary
+		for entry_value in abstract_entries:
+			var identity := str((entry_value as Dictionary).get("identity", ""))
+			var binding := bindings.get(identity, {}) as Dictionary
+			if str(binding.get("presentation_mode", "")) != "overflow" \
+					or str(binding.get("overflow_reason", "")) != "action_list_authored" \
+					or not str(binding.get("slot_id", "")).is_empty() \
+					or not str(binding.get("placement_class", "")).is_empty():
+				failures.append("RW06-1 %s did not retain geometry-free authored action-list authority." % identity)
+		for identity in ["scenario::contract_actor", "scenario::contract_safe_exit"]:
+			var binding := bindings.get(identity, {}) as Dictionary
+			if str(binding.get("presentation_mode", "")) != "room" or str(binding.get("slot_id", "")).is_empty():
+				failures.append("RW06-1 dedicated actor/required-exit physical contract failed for %s." % identity)
+		if str(first.get("binding_digest", "")) != str(repeat.get("binding_digest", "")) \
+				or JSON.stringify(bindings) != JSON.stringify(repeat.get("slot_bindings", {})):
+			failures.append("RW06-1 semantic binding changed with input order.")
+
+	var digest_mutation := surface_map.duplicate(true)
+	var mutated_art := (digest_mutation.get("scenario_art_keys", {}) as Dictionary).duplicate(true)
+	mutated_art["physical_table"] = "paper_note"
+	digest_mutation["scenario_art_keys"] = mutated_art
+	if EnvironmentSlotBinderScript.slot_map_digest(surface_map) == EnvironmentSlotBinderScript.slot_map_digest(digest_mutation):
+		failures.append("RW06-1 slot-map digest ignored scenario-art authority mutation.")
+
+	var hostile_surface := surface_map.duplicate(true)
+	var known_id := "physical_table"
+	hostile_surface["scenario_overflow_ids"] = [known_id]
+	var valid_overflow_errors: Array = []
+	if not EnvironmentSlotBinderScript._scenario_overflow_policy(hostile_surface, valid_overflow_errors).has(known_id) or not valid_overflow_errors.is_empty():
+		failures.append("RW06-1 concrete physical-spill policy rejected valid exact authority.")
 	for hostile_value in [
 		{"name": "non-array", "value": known_id},
 		{"name": "non-string", "value": [17]},
@@ -764,6 +799,20 @@ func _check_authored_scenario_overflow_policy() -> void:
 		EnvironmentSlotBinderScript._scenario_overflow_policy(candidate, hostile_errors)
 		if hostile_errors.is_empty():
 			failures.append("RW06-1 scenario-overflow runtime policy accepted hostile %s authority." % str(hostile.get("name", "unknown")))
+
+	for hostile_art_value in [
+		{"name": "non-object", "value": ["physical_table"]},
+		{"name": "generic-placeholder", "value": {"physical_table": "room_fixture"}},
+		{"name": "unknown-id", "value": {"invented_physical_prop": "room_surface"}},
+	]:
+		var hostile_art := hostile_art_value as Dictionary
+		var candidate := surface_map.duplicate(true)
+		candidate["scenario_art_keys"] = hostile_art.get("value")
+		var art_errors: Array = []
+		var candidate_art: Dictionary = candidate.get("scenario_art_keys", {}) if typeof(candidate.get("scenario_art_keys", {})) == TYPE_DICTIONARY else {}
+		EnvironmentSlotBinderScript._validate_scenario_art_policy(candidate, candidate_art, art_errors)
+		if art_errors.is_empty():
+			failures.append("RW06-1 scenario-art policy accepted hostile %s authority." % str(hostile_art.get("name", "unknown")))
 
 
 func _check_selected_info_action_enabled_gate() -> void:
