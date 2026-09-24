@@ -1966,6 +1966,73 @@ function Restore-EnvironmentSurfaceAfterTravelResult {
 }
 
 
+function Restore-GrandCasinoEnvironmentSurface {
+    param([ValidateRange(1, 64)][int]$MaximumPolls = 48)
+
+    $archetype = Get-Value $script:LastObservation @('environment', 'archetype_id') $null
+    if ($archetype -isnot [string] -or [string]$archetype -cnotin @('grand_casino', 'grand_casino_cage', 'grand_casino_high_limit')) {
+        throw "Grand surface normalization requires an exact Grand Casino room; found '$archetype'."
+    }
+
+    $greetingSettled = $false
+    for ($poll = 0; $poll -lt $MaximumPolls; $poll++) {
+        $eventVisible = Get-Value $script:LastObservation @('event_popup', 'visible') $null
+        $talkVisible = Get-Value $script:LastObservation @('talk', 'visible') $null
+        if ($eventVisible -isnot [bool] -or $talkVisible -isnot [bool]) {
+            throw 'Grand surface normalization lost its exact boolean modal visibility signals.'
+        }
+        if ([bool]$eventVisible) {
+            throw 'Grand surface normalization encountered an unrelated visible event popup.'
+        }
+        if (-not [bool]$talkVisible) {
+            $greetingSettled = $true
+            break
+        }
+
+        $eventId = Get-Value $script:LastObservation @('talk', 'event_id') $null
+        if ($eventId -isnot [string] -or [string]$eventId -cne 'dialogue:normal_grand_host_greeting') {
+            throw "Grand surface normalization refuses unexpected TalkDock '$eventId'."
+        }
+        $expanded = Get-Value $script:LastObservation @('talk', 'expanded') $null
+        $renderValid = Get-Value $script:LastObservation @('talk', 'render_valid') $null
+        $bodyComplete = Get-Value $script:LastObservation @('talk', 'body_complete') $null
+        $typewriterActive = Get-Value $script:LastObservation @('talk', 'typewriter_active') $null
+        if ($expanded -isnot [bool] -or $renderValid -isnot [bool] -or
+            $bodyComplete -isnot [bool] -or $typewriterActive -isnot [bool]) {
+            throw 'Grand host greeting lost an exact boolean render-state witness.'
+        }
+        if ([bool]$expanded -and [bool]$renderValid -and [bool]$bodyComplete -and -not [bool]$typewriterActive) {
+            $choice = Select-GrandArrivalGreetingChoice `
+                -Talk (Get-Value $script:LastObservation @('talk') $null) `
+                -TalkChoices @(Get-PublicTalkChoices) `
+                -EventPopup (Get-Value $script:LastObservation @('event_popup') $null)
+            $null = Choose-VisibleChoice -ChoiceId $choice -Intent 'accept Vivienne''s exact visible Grand Casino welcome'
+            Wait-Frames -Frames 8 -Intent 'let the exact Grand Casino welcome close'
+            $afterEventVisible = Get-Value $script:LastObservation @('event_popup', 'visible') $null
+            $afterTalkVisible = Get-Value $script:LastObservation @('talk', 'visible') $null
+            if ($afterEventVisible -isnot [bool] -or $afterTalkVisible -isnot [bool] -or
+                [bool]$afterEventVisible -or [bool]$afterTalkVisible) {
+                throw 'The exact Grand Casino welcome remained visible or chained into another modal.'
+            }
+            $greetingSettled = $true
+            break
+        }
+        Wait-Frames -Frames 4 -Intent 'wait for Vivienne''s exact Grand Casino welcome to finish rendering'
+    }
+    if (-not $greetingSettled) {
+        throw 'The exact Grand Casino welcome did not settle within the bounded public wait.'
+    }
+
+    Restore-EnvironmentSurfaceAfterTravelResult
+    $finalEventVisible = Get-Value $script:LastObservation @('event_popup', 'visible') $null
+    $finalTalkVisible = Get-Value $script:LastObservation @('talk', 'visible') $null
+    if ($finalEventVisible -isnot [bool] -or $finalTalkVisible -isnot [bool] -or
+        [bool]$finalEventVisible -or [bool]$finalTalkVisible) {
+        throw 'Grand surface normalization did not restore a modal-free public room.'
+    }
+}
+
+
 function Wait-ForFullyRenderedFundingTalk {
     param(
         [Parameter(Mandatory = $true)][string]$ExpectedEventId,
@@ -2495,7 +2562,15 @@ function Reach-GrandCasino {
     $visitedByRunner = New-Object 'System.Collections.Generic.HashSet[string]'
     for ($step = 0; $step -lt 24; $step++) {
         $archetype = [string](Get-Value $script:LastObservation @('environment', 'archetype_id') '')
-        if ($archetype -cin @('grand_casino', 'grand_casino_cage', 'grand_casino_high_limit')) { return }
+        if ($archetype -cin @('grand_casino', 'grand_casino_cage', 'grand_casino_high_limit')) {
+            $screen = Get-Value $script:LastObservation @('screen', 'screen') $null
+            if ($screen -isnot [string]) {
+                throw 'Grand arrival lost its exact public screen identity.'
+            }
+            if ([string]$screen -ceq 'GAME') { return }
+            Restore-GrandCasinoEnvironmentSurface
+            return
+        }
 
         $null = Invoke-CleanScoutingCashOpportunity
         if (Accept-GrandCasinoInviteIfVisible) { continue }
@@ -2578,17 +2653,25 @@ function Enter-GrandRoom {
     param(
         [Parameter(Mandatory = $true)][ValidateSet('main', 'cage')][string]$Room
     )
+    $expected = if ($Room -ceq 'cage') { 'grand_casino_cage' } else { 'grand_casino' }
     $archetype = [string](Get-Value $script:LastObservation @('environment', 'archetype_id') '')
-    if ($Room -ceq 'cage' -and $archetype -ceq 'grand_casino_cage') { return }
-    if ($Room -ceq 'main' -and $archetype -ceq 'grand_casino') { return }
+    if ($archetype -ceq $expected) {
+        $screen = Get-Value $script:LastObservation @('screen', 'screen') $null
+        if ($screen -isnot [string]) {
+            throw 'Grand room navigation lost its exact public screen identity.'
+        }
+        if ([string]$screen -ceq 'GAME') { return }
+        Restore-GrandCasinoEnvironmentSurface
+        return
+    }
     $semantic = if ($Room -ceq 'cage') { 'travel:grand_casino_cage' } else { 'travel:grand_casino' }
     $null = Open-SemanticObject -SemanticId $semantic -PreferredActions @('Enter Room', 'Travel', 'Enter') -Intent "walk through the real Grand Casino door to $Room"
     Wait-ForTravelToSettle
     Wait-Frames -Frames 12
-    $expected = if ($Room -ceq 'cage') { 'grand_casino_cage' } else { 'grand_casino' }
     if ([string](Get-Value $script:LastObservation @('environment', 'archetype_id') '') -cne $expected) {
         throw "The real Grand Casino door did not reach '$expected'."
     }
+    Restore-GrandCasinoEnvironmentSurface
 }
 
 

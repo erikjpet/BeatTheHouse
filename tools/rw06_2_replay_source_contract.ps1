@@ -35,6 +35,8 @@ $wheelSequenceValidFixtures = 0
 $wheelSequenceHostileFixtures = 0
 $buttonViewportValidFixtures = 0
 $buttonViewportHostileFixtures = 0
+$grandArrivalGreetingValidFixtures = 0
+$grandArrivalGreetingHostileFixtures = 0
 $machineJamValidFixtures = 0
 $machineJamHostileFixtures = 0
 $deltaQueenBeachValidFixtures = 0
@@ -201,6 +203,38 @@ function Assert-ButtonInputRouteFixture {
     }
     return $route
 }
+
+function New-GrandArrivalGreetingPolicyFixture {
+    param([switch]$WithHiddenSentinels)
+
+    $fixture = [pscustomobject]@{
+        event_popup = [pscustomobject]@{ visible = $false }
+        talk = [pscustomobject]@{
+            visible = $true
+            expanded = $true
+            render_valid = $true
+            body_complete = $true
+            typewriter_active = $false
+            event_id = 'dialogue:normal_grand_host_greeting'
+            summary = "Welcome to the Grand. I'm Vivienne, your host. The floor is yours."
+            choice_ids = @('continue')
+        }
+        talk_choices = @(
+            [pscustomobject]@{
+                event_id = 'dialogue:normal_grand_host_greeting'
+                id = 'continue'
+                label = 'Enter the floor'
+                enabled = $true
+            }
+        )
+    }
+    if ($WithHiddenSentinels) {
+        $fixture.talk | Add-Member -NotePropertyName private_dialogue_state -NotePropertyValue 'HIDDEN SENTINEL'
+        $fixture.talk_choices[0] | Add-Member -NotePropertyName requires_confirm -NotePropertyValue $true
+    }
+    return $fixture
+}
+
 
 function New-MachineJamPolicyFixture {
     param([switch]$WithHiddenSentinels)
@@ -1458,6 +1492,99 @@ function Enter-BlackjackTable {
         }
     }
 
+    if ($null -ne (Get-Command 'Select-GrandArrivalGreetingChoice' -ErrorAction SilentlyContinue)) {
+        $validGrandArrivalGreetingFixtures = @(
+            [pscustomobject]@{ label = 'exact-rendered-greeting'; fixture = (New-GrandArrivalGreetingPolicyFixture) },
+            [pscustomobject]@{ label = 'hidden-private-sentinels-are-inert'; fixture = (New-GrandArrivalGreetingPolicyFixture -WithHiddenSentinels) }
+        )
+        $grandArrivalGreetingValidFixtures = $validGrandArrivalGreetingFixtures.Count
+        foreach ($case in $validGrandArrivalGreetingFixtures) {
+            try {
+                $actual = Select-GrandArrivalGreetingChoice `
+                    -Talk $case.fixture.talk `
+                    -TalkChoices @($case.fixture.talk_choices) `
+                    -EventPopup $case.fixture.event_popup
+                if ($actual -isnot [string] -or [string]$actual -cne 'continue') {
+                    Add-Failure "Valid Grand arrival fixture '$($case.label)' did not choose the exact visible continuation."
+                }
+            }
+            catch {
+                Add-Failure "Valid Grand arrival fixture '$($case.label)' threw: $($_.Exception.Message)"
+            }
+        }
+
+        $hostileGrandArrivalGreetingFixtures = [Collections.Generic.List[object]]::new()
+        $fixture = New-GrandArrivalGreetingPolicyFixture; $fixture.event_popup.visible = $true
+        $hostileGrandArrivalGreetingFixtures.Add([pscustomobject]@{ label = 'event-popup-visible'; fixture = $fixture })
+        $fixture = New-GrandArrivalGreetingPolicyFixture; $fixture.event_popup.visible = 'false'
+        $hostileGrandArrivalGreetingFixtures.Add([pscustomobject]@{ label = 'event-popup-visible-non-boolean'; fixture = $fixture })
+        $fixture = New-GrandArrivalGreetingPolicyFixture; $fixture.talk.visible = $false
+        $hostileGrandArrivalGreetingFixtures.Add([pscustomobject]@{ label = 'talk-hidden'; fixture = $fixture })
+        $fixture = New-GrandArrivalGreetingPolicyFixture; $fixture.talk.visible = 1
+        $hostileGrandArrivalGreetingFixtures.Add([pscustomobject]@{ label = 'talk-visible-non-boolean'; fixture = $fixture })
+        $fixture = New-GrandArrivalGreetingPolicyFixture; $fixture.talk.expanded = $false
+        $hostileGrandArrivalGreetingFixtures.Add([pscustomobject]@{ label = 'talk-collapsed'; fixture = $fixture })
+        $fixture = New-GrandArrivalGreetingPolicyFixture; $fixture.talk.render_valid = $false
+        $hostileGrandArrivalGreetingFixtures.Add([pscustomobject]@{ label = 'talk-render-invalid'; fixture = $fixture })
+        $fixture = New-GrandArrivalGreetingPolicyFixture; $fixture.talk.body_complete = $false
+        $hostileGrandArrivalGreetingFixtures.Add([pscustomobject]@{ label = 'talk-body-incomplete'; fixture = $fixture })
+        $fixture = New-GrandArrivalGreetingPolicyFixture; $fixture.talk.typewriter_active = $true
+        $hostileGrandArrivalGreetingFixtures.Add([pscustomobject]@{ label = 'talk-typewriter-active'; fixture = $fixture })
+        $fixture = New-GrandArrivalGreetingPolicyFixture; $fixture.talk.typewriter_active = 0
+        $hostileGrandArrivalGreetingFixtures.Add([pscustomobject]@{ label = 'talk-typewriter-non-boolean'; fixture = $fixture })
+        $fixture = New-GrandArrivalGreetingPolicyFixture; $fixture.talk.event_id = 'dialogue:Normal_Grand_Host_Greeting'
+        $hostileGrandArrivalGreetingFixtures.Add([pscustomobject]@{ label = 'event-id-case'; fixture = $fixture })
+        $fixture = New-GrandArrivalGreetingPolicyFixture; $fixture.talk.summary = 'Welcome to the Grand.'
+        $hostileGrandArrivalGreetingFixtures.Add([pscustomobject]@{ label = 'summary-copy'; fixture = $fixture })
+        $fixture = New-GrandArrivalGreetingPolicyFixture; $fixture.talk.choice_ids = @()
+        $hostileGrandArrivalGreetingFixtures.Add([pscustomobject]@{ label = 'choice-id-missing'; fixture = $fixture })
+        $fixture = New-GrandArrivalGreetingPolicyFixture; $fixture.talk.choice_ids = @('continue', 'leave')
+        $hostileGrandArrivalGreetingFixtures.Add([pscustomobject]@{ label = 'choice-id-extra'; fixture = $fixture })
+        $fixture = New-GrandArrivalGreetingPolicyFixture; $fixture.talk.choice_ids = @('continue', 'continue')
+        $hostileGrandArrivalGreetingFixtures.Add([pscustomobject]@{ label = 'choice-id-duplicate'; fixture = $fixture })
+        $fixture = New-GrandArrivalGreetingPolicyFixture; $fixture.talk.choice_ids = @('Continue')
+        $hostileGrandArrivalGreetingFixtures.Add([pscustomobject]@{ label = 'choice-id-case'; fixture = $fixture })
+        $fixture = New-GrandArrivalGreetingPolicyFixture; $fixture.talk_choices = @()
+        $hostileGrandArrivalGreetingFixtures.Add([pscustomobject]@{ label = 'choice-row-missing'; fixture = $fixture })
+        $fixture = New-GrandArrivalGreetingPolicyFixture; $fixture.talk_choices = @($fixture.talk_choices[0], $fixture.talk_choices[0])
+        $hostileGrandArrivalGreetingFixtures.Add([pscustomobject]@{ label = 'choice-row-duplicate'; fixture = $fixture })
+        $fixture = New-GrandArrivalGreetingPolicyFixture; $fixture.talk_choices[0].event_id = 'dialogue:other'
+        $hostileGrandArrivalGreetingFixtures.Add([pscustomobject]@{ label = 'choice-row-event-id'; fixture = $fixture })
+        $fixture = New-GrandArrivalGreetingPolicyFixture; $fixture.talk_choices[0].id = 'Continue'
+        $hostileGrandArrivalGreetingFixtures.Add([pscustomobject]@{ label = 'choice-row-id-case'; fixture = $fixture })
+        $fixture = New-GrandArrivalGreetingPolicyFixture; $fixture.talk_choices[0].label = 'Enter'
+        $hostileGrandArrivalGreetingFixtures.Add([pscustomobject]@{ label = 'choice-row-copy'; fixture = $fixture })
+        $fixture = New-GrandArrivalGreetingPolicyFixture; $fixture.talk_choices[0].enabled = $false
+        $hostileGrandArrivalGreetingFixtures.Add([pscustomobject]@{ label = 'choice-row-disabled'; fixture = $fixture })
+        $fixture = New-GrandArrivalGreetingPolicyFixture; $fixture.talk_choices[0].enabled = 'true'
+        $hostileGrandArrivalGreetingFixtures.Add([pscustomobject]@{ label = 'choice-row-enabled-non-boolean'; fixture = $fixture })
+        $fixture = New-GrandArrivalGreetingPolicyFixture
+        $fixture.talk_choices = @([pscustomobject]@{
+            event_id = 'dialogue:normal_grand_host_greeting'; ID = 'continue'; label = 'Enter the floor'; enabled = $true
+        })
+        $hostileGrandArrivalGreetingFixtures.Add([pscustomobject]@{ label = 'choice-row-property-case'; fixture = $fixture })
+
+        $grandArrivalGreetingHostileFixtures = $hostileGrandArrivalGreetingFixtures.Count
+        foreach ($case in $hostileGrandArrivalGreetingFixtures) {
+            $threw = $false
+            try {
+                $null = Select-GrandArrivalGreetingChoice `
+                    -Talk $case.fixture.talk `
+                    -TalkChoices @($case.fixture.talk_choices) `
+                    -EventPopup $case.fixture.event_popup
+            }
+            catch {
+                $threw = $true
+            }
+            if (-not $threw) {
+                Add-Failure "Hostile Grand arrival fixture '$($case.label)' did not fail closed."
+            }
+        }
+    }
+    else {
+        Add-Failure 'Replay policy helper did not export Select-GrandArrivalGreetingChoice.'
+    }
+
     if ($null -ne (Get-Command 'Select-GrandFareMachineJamChoice' -ErrorAction SilentlyContinue)) {
         $validMachineJamFixtures = @(
             [pscustomobject]@{ label = 'exact-rendered-copy'; fixture = (New-MachineJamPolicyFixture) },
@@ -2402,6 +2529,25 @@ func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
     Assert-Match $runner '(?s)function Invoke-CleanScoutingCashOpportunity.*?\$Ending\s+-cne\s+''clean''.*?GrandFareRecoveryActive\s*=\s*\$true.*?Invoke-GrandFarePublicCashEvent.*?finally.*?GrandFareRecoveryActive\s*=\s*\$false.*?function Reach-GrandCasino.*?Invoke-CleanScoutingCashOpportunity.*?Accept-GrandCasinoInviteIfVisible' 'The Clean route must take a strictly verified positive cash event while already scouting, before paying a second recovery trip or depending on the probabilistic family phone.'
     Assert-Match $runner '(?s)function Invoke-GrandFarePublicFundingOffer.*?Select-GrandFareFundingObject.*?Test-GrandFareFundingPreflight.*?click_object.*?Select-GrandFareFundingObjectAction.*?Invoke-RoomActionRow.*?Select-GrandFareFundingTalkOffer.*?click_choice accept.*?Assert-GrandFareFundingConfirmation.*?click_choice accept.*?Assert-GrandFareFundingResult.*?GrandFareAcceptedOfferKeys\.Add.*?GrandFareAcceptedLenderIds\.Add' 'Grand fare lender recovery must validate one public object and debt preflight before focus, validate its unique action and rendered terms, verify confirmation and the exact bankroll/debt result, then record both one-use keys.'
     Assert-Match $runner '(?s)function Restore-EnvironmentSurfaceAfterTravelResult.*?screen.*?-ceq\s+''ENVIRONMENT''.*?-cne\s+''RESULT''.*?Open-WorldMap\s*Close-WorldMap.*?restoredScreen.*?-cne\s+''ENVIRONMENT''.*?function Invoke-GrandFarePublicFundingOffer.*?Restore-EnvironmentSurfaceAfterTravelResult.*?function Invoke-GrandFarePublicCashEvent.*?Restore-EnvironmentSurfaceAfterTravelResult' 'Grand fare recovery must clear a travel Result panel only through a real public map round trip before physical room actions.'
+    Assert-Match $replayPolicy '(?ms)^function Select-GrandArrivalGreetingChoice.*?event popup.*?visible.*?Grand arrival TalkDock.*?expanded.*?render_valid.*?body_complete.*?typewriter_active.*?dialogue:normal_grand_host_greeting.*?Welcome to the Grand\. I''m Vivienne, your host\. The floor is yours\..*?choice_ids.*?Count\s+-ne\s+1.*?Enter the floor.*?enabled.*?return ''continue''.*?(?=^function |\z)' 'Grand arrival policy must authenticate the exact settled Vivienne greeting, its sole enabled continuation, and rendered copy.'
+    $grandSurfaceNormalizerSource = [regex]::Match($runner, '(?ms)^function Restore-GrandCasinoEnvironmentSurface\s*\{.*?(?=^function |\z)').Value
+    if ([string]::IsNullOrWhiteSpace($grandSurfaceNormalizerSource)) {
+        Add-Failure 'Replay runner did not export Restore-GrandCasinoEnvironmentSurface.'
+    }
+    else {
+        Assert-Match $grandSurfaceNormalizerSource '(?s)grand_casino.*?grand_casino_cage.*?grand_casino_high_limit.*?event_popup.*?talk.*?dialogue:normal_grand_host_greeting.*?Select-GrandArrivalGreetingChoice.*?Get-PublicTalkChoices.*?Choose-VisibleChoice.*?remained visible or chained into another modal.*?Restore-EnvironmentSurfaceAfterTravelResult.*?modal-free public room' 'Grand surface normalization must fail closed on unrelated modals, resolve only the exact rendered greeting, then restore a modal-free Environment surface through the public map round trip.'
+        Assert-NotMatch $grandSurfaceNormalizerSource 'Resolve-VisibleBlockingPresentation|Get-FirstEnabledVisibleChoiceId' 'Grand surface normalization must never choose a generic visible modal response.'
+    }
+    $reachGrandSource = [regex]::Match($runner, '(?ms)^function Reach-GrandCasino\s*\{.*?(?=^function |\z)').Value
+    Assert-Match $reachGrandSource '(?s)grand_casino.*?grand_casino_cage.*?grand_casino_high_limit.*?screen.*?GAME.*?Restore-GrandCasinoEnvironmentSurface.*?return' 'Every shared Grand arrival must preserve a restored live game or normalize the public Grand room surface before returning.'
+    $enterGrandRoomSource = [regex]::Match($runner, '(?ms)^function Enter-GrandRoom\s*\{.*?(?=^function |\z)').Value
+    if ([regex]::Matches($enterGrandRoomSource, 'Restore-GrandCasinoEnvironmentSurface', [Text.RegularExpressions.RegexOptions]::CultureInvariant).Count -lt 2) {
+        Add-Failure 'Grand room navigation must normalize both an already-current target and every completed real door transition.'
+    }
+    Assert-Match $enterGrandRoomSource '(?s)\$archetype\s+-ceq\s+\$expected.*?screen.*?GAME.*?Restore-GrandCasinoEnvironmentSurface.*?Open-SemanticObject.*?Wait-ForTravelToSettle.*?archetype_id.*?-cne\s+\$expected.*?Restore-GrandCasinoEnvironmentSurface' 'Grand room navigation must preserve restored games, normalize an already-current room, and normalize every successful Main/Cage door transition.'
+    Assert-Match $runner '(?ms)^function Invoke-CleanEndingRoute\s*\{\s*Reach-GrandCasino.*?(?=^function |\z)' 'The Clean route must enter the shared normalized Grand arrival boundary.'
+    Assert-Match $runner '(?ms)^function Invoke-CheatEndingRoute\s*\{\s*Reach-GrandCasino.*?(?=^function |\z)' 'The Cheat route must enter the shared normalized Grand arrival boundary.'
+    Assert-Match $runner '(?ms)^function Invoke-HeistEndingRoute\s*\{.*?Reach-GrandCasino.*?(?=^function |\z)' 'The Heist route must enter the shared normalized Grand arrival boundary.'
     Assert-Match $runner '(?s)function Invoke-GrandFarePublicCashEvent.*?Select-GrandFareCashEventChoice.*?Invoke-RoomActionRow.*?Assert-GrandFareCashEventResult.*?GrandFareResolvedCashEventKeys\.Add' 'Grand fare cash-event recovery must use the exact public allowlist, one direct-resolve rendered room action, a positive public HUD delta, and one-use bookkeeping.'
     Assert-Match $runner '(?s)function Invoke-GrandFarePublicCashEvent.*?\$eventObjects\s*=\s*@\(.*?\$eventObjects\.Count.*?Get-Value\s+\$eventObjects\[0\].*?-cnotmatch.*?Select-GrandFareCashEventChoice.*?-EventObject\s+\$eventObjects\[0\]' 'Grand fare cash-event recovery must preserve its selected public event across regex validation instead of colliding with PowerShell automatic $Matches state.'
     Assert-Match $runner '(?s)function Get-GrandFareRecoveryNodePreference.*?motel''\) \{ return 0 \}.*?back_alley''\) \{ return 1 \}.*?small_underground_casino''\) \{ return 2 \}.*?delta_queen''\) \{ return 4 \}' 'Grand fare recovery must prefer distinct public lender pools before revisiting another Crew-only casino.'
@@ -2595,6 +2741,8 @@ $report = [ordered]@{
     wheel_sequence_hostile_fixtures = $wheelSequenceHostileFixtures
     button_viewport_valid_fixtures = $buttonViewportValidFixtures
     button_viewport_hostile_fixtures = $buttonViewportHostileFixtures
+    grand_arrival_greeting_valid_fixtures = $grandArrivalGreetingValidFixtures
+    grand_arrival_greeting_hostile_fixtures = $grandArrivalGreetingHostileFixtures
     machine_jam_valid_fixtures = $machineJamValidFixtures
     machine_jam_hostile_fixtures = $machineJamHostileFixtures
     delta_queen_beach_valid_fixtures = $deltaQueenBeachValidFixtures

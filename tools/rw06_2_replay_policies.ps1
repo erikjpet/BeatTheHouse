@@ -502,6 +502,61 @@ function Select-CheatReplayShowdownWalkChoice {
 }
 
 
+function Select-GrandArrivalGreetingChoice {
+    param(
+        [Parameter(Mandatory = $true)]$Talk,
+        [Parameter(Mandatory = $true)][AllowEmptyCollection()][object[]]$TalkChoices,
+        [Parameter(Mandatory = $true)]$EventPopup
+    )
+
+    $eventVisible = Get-Rw062RequiredPublicProperty -InputObject $EventPopup -Name 'visible' -Context 'Grand arrival event popup'
+    if ($eventVisible -isnot [bool] -or [bool]$eventVisible) {
+        throw 'Grand arrival requires an explicitly hidden event popup before resolving its exact host greeting.'
+    }
+
+    $talkVisible = Get-Rw062RequiredPublicProperty -InputObject $Talk -Name 'visible' -Context 'Grand arrival TalkDock'
+    $expanded = Get-Rw062RequiredPublicProperty -InputObject $Talk -Name 'expanded' -Context 'Grand arrival TalkDock'
+    $renderValid = Get-Rw062RequiredPublicProperty -InputObject $Talk -Name 'render_valid' -Context 'Grand arrival TalkDock'
+    $bodyComplete = Get-Rw062RequiredPublicProperty -InputObject $Talk -Name 'body_complete' -Context 'Grand arrival TalkDock'
+    $typewriterActive = Get-Rw062RequiredPublicProperty -InputObject $Talk -Name 'typewriter_active' -Context 'Grand arrival TalkDock'
+    if ($talkVisible -isnot [bool] -or -not [bool]$talkVisible -or
+        $expanded -isnot [bool] -or -not [bool]$expanded -or
+        $renderValid -isnot [bool] -or -not [bool]$renderValid -or
+        $bodyComplete -isnot [bool] -or -not [bool]$bodyComplete -or
+        $typewriterActive -isnot [bool] -or [bool]$typewriterActive) {
+        throw 'Grand arrival requires one visible, expanded, fully rendered, complete, and settled TalkDock greeting.'
+    }
+
+    $eventId = Get-Rw062RequiredPublicProperty -InputObject $Talk -Name 'event_id' -Context 'Grand arrival TalkDock'
+    $summary = Get-Rw062RequiredPublicProperty -InputObject $Talk -Name 'summary' -Context 'Grand arrival TalkDock'
+    if ($eventId -isnot [string] -or [string]$eventId -cne 'dialogue:normal_grand_host_greeting' -or
+        $summary -isnot [string] -or [string]$summary -cne "Welcome to the Grand. I'm Vivienne, your host. The floor is yours.") {
+        throw 'Grand arrival refuses an unknown or changed host greeting.'
+    }
+
+    $choiceIds = @(Get-Rw062RequiredPublicProperty -InputObject $Talk -Name 'choice_ids' -Context 'Grand arrival TalkDock')
+    if ($choiceIds.Count -ne 1 -or $choiceIds[0] -isnot [string] -or [string]$choiceIds[0] -cne 'continue') {
+        throw "Grand arrival requires exactly one rendered 'continue' choice id."
+    }
+    if ($TalkChoices.Count -ne 1) {
+        throw "Grand arrival requires exactly one rendered TalkDock choice row; found $($TalkChoices.Count)."
+    }
+
+    $choice = $TalkChoices[0]
+    $choiceEventId = Get-Rw062RequiredPublicProperty -InputObject $choice -Name 'event_id' -Context 'Grand arrival TalkDock choice'
+    $choiceId = Get-Rw062RequiredPublicProperty -InputObject $choice -Name 'id' -Context 'Grand arrival TalkDock choice'
+    $label = Get-Rw062RequiredPublicProperty -InputObject $choice -Name 'label' -Context 'Grand arrival TalkDock choice'
+    $enabled = Get-Rw062RequiredPublicProperty -InputObject $choice -Name 'enabled' -Context 'Grand arrival TalkDock choice'
+    if ($choiceEventId -isnot [string] -or [string]$choiceEventId -cne 'dialogue:normal_grand_host_greeting' -or
+        $choiceId -isnot [string] -or [string]$choiceId -cne 'continue' -or
+        $label -isnot [string] -or [string]$label -cne 'Enter the floor' -or
+        $enabled -isnot [bool] -or -not [bool]$enabled) {
+        throw 'Grand arrival host greeting choice identity, copy, or enabled state changed.'
+    }
+    return 'continue'
+}
+
+
 function Select-GrandFareMachineJamChoice {
     param(
         [Parameter(Mandatory = $true)]$EventPopup,
