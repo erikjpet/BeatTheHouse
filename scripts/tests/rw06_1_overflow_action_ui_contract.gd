@@ -56,37 +56,8 @@ class CleanupQuitter:
 			get_tree().quit(exit_code)
 
 
-class RunDriver:
-	extends Node
-
-	var harness: Variant
-	var run_state: Variant
-
-	func _ready() -> void:
-		# Callable.call returns the otherwise-hidden Godot 4 coroutine state. Keep
-		# it referenced until the full awaited run emits its completion signal.
-		run_state = Callable(harness, "_run").call()
-		if run_state is Object and (run_state as Object).has_signal("completed"):
-			(run_state as Object).connect("completed", _on_run_completed, CONNECT_ONE_SHOT)
-			return
-		_on_run_completed()
-
-	func _on_run_completed(_result: Variant = null) -> void:
-		run_state = null
-		harness = null
-		queue_free()
-
-
 func _init() -> void:
-	call_deferred("_mount_run_driver")
-
-
-func _mount_run_driver() -> void:
-	# Node lifecycle callbacks own awaited function state; a deferred direct call
-	# to this async SceneTree method would discard that state at the entry point.
-	var driver := RunDriver.new()
-	driver.harness = self
-	root.add_child(driver)
+	call_deferred("_run")
 
 
 func _run() -> void:
