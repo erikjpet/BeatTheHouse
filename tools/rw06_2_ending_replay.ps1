@@ -1904,6 +1904,30 @@ function Get-PublicGrandFareRequirement {
 }
 
 
+function Restore-EnvironmentSurfaceAfterTravelResult {
+    $screen = Get-Value $script:LastObservation @('screen', 'screen') $null
+    if ($screen -isnot [string]) {
+        throw 'Grand fare recovery lost its exact public screen identity.'
+    }
+    if ([string]$screen -ceq 'ENVIRONMENT') { return }
+    if ([string]$screen -cne 'RESULT') {
+        throw "Grand fare recovery cannot normalize unexpected public screen '$screen'."
+    }
+
+    # Travel leaves an informational Result state layered over the destination
+    # room. Some room-action rows can be geometrically covered by that panel.
+    # A real player can open and close the map to return to the ordinary room
+    # surface without changing simulation state, so do the same through public
+    # controls before clicking a lender or cash-event action.
+    Open-WorldMap
+    Close-WorldMap
+    $restoredScreen = Get-Value $script:LastObservation @('screen', 'screen') $null
+    if ($restoredScreen -isnot [string] -or [string]$restoredScreen -cne 'ENVIRONMENT') {
+        throw 'The public map round trip did not restore the ordinary room surface after travel.'
+    }
+}
+
+
 function Wait-ForFullyRenderedFundingTalk {
     param(
         [Parameter(Mandatory = $true)][string]$ExpectedEventId,
@@ -1950,6 +1974,7 @@ function Invoke-GrandFarePublicFundingOffer {
     if (-not $script:GrandFareRecoveryActive) {
         throw 'Public lender funding is permitted only inside Grand fare recovery.'
     }
+    Restore-EnvironmentSurfaceAfterTravelResult
     Close-WorldMap
     if ([bool](Get-Value $script:LastObservation @('event_popup', 'visible') $false) -or
         [bool](Get-Value $script:LastObservation @('talk', 'visible') $false)) {
@@ -2049,6 +2074,7 @@ function Invoke-GrandFarePublicCashEvent {
     if (-not $script:GrandFareRecoveryActive) {
         throw 'Public cash events are permitted only inside Grand fare recovery.'
     }
+    Restore-EnvironmentSurfaceAfterTravelResult
     Close-WorldMap
     if ([bool](Get-Value $script:LastObservation @('event_popup', 'visible') $false) -or
         [bool](Get-Value $script:LastObservation @('talk', 'visible') $false)) {
