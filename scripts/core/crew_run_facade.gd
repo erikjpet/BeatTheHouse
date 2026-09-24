@@ -5,6 +5,7 @@ const CrewTurnModelScript := preload("res://scripts/core/crew_turn_model.gd")
 const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 const PlayerTextScript := preload("res://scripts/ui/player_text.gd")
+const COUNT_AUDIT_KNOWLEDGE_FLAG := "crew_heist_count_audit_roster_read"
 
 var trust_by_member: Dictionary = {}
 var grievance_ledger: Array = []
@@ -1468,6 +1469,13 @@ func _crew_heist_sync_live_table_event(state: Dictionary) -> void:
 func _crew_heist_world_has_hook(hook_id: String) -> bool:
 	if hook_id.is_empty():
 		return false
+	# The Count may use the Audit only while it is literally the current public
+	# situation, or after the player has read its visible roster. Do not infer
+	# this fact from an unvisited seed or a stale stored environment: both leak
+	# private/cycle-old scenario selection into the planning table.
+	if hook_id == "audit_night":
+		return JsonCoerceScript._copy_dict(_run.current_environment.get("scenario_hook_flags", {})).get(hook_id, false) == true \
+			or _run.story_flags.get(COUNT_AUDIT_KNOWLEDGE_FLAG, false) == true
 	if bool(JsonCoerceScript._copy_dict(_run.current_environment.get("scenario_hook_flags", {})).get(hook_id, false)):
 		return true
 	for node_value in JsonCoerceScript._copy_array(_run.world_map.get("nodes", [])):

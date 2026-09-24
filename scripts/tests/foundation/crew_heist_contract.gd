@@ -18,7 +18,7 @@ static func check(_library: ContentLibrary, failures: Array) -> void:
 	failures.append_array(CrewHeistModelScript.validate_content())
 	if _array(CrewHeistModelScript.plan("the_count").get("architects", [])) != ["crew_bishop"] or _array(CrewHeistModelScript.plan("the_whale_game").get("architects", [])) != ["crew_velvet", "crew_mags"]:
 		failures.append("The crew06_9 seam lost its exact plan architect arrays.")
-	_check_gating(failures)
+	_check_gating(_library, failures)
 	_check_production_paths(_library, failures)
 	_check_plan_a(_library, failures)
 	_check_plan_b(_library, failures)
@@ -27,7 +27,7 @@ static func check(_library: ContentLibrary, failures: Array) -> void:
 	_check_determinism(_library, failures)
 
 
-static func _check_gating(failures: Array) -> void:
+static func _check_gating(library: ContentLibrary, failures: Array) -> void:
 	var hidden := _run("HEIST-GATE-HIDDEN", {})
 	if bool(hidden.crew_heist_planning_status().get("visible", true)):
 		failures.append("Planning table appeared without an Inner Circle member.")
@@ -50,6 +50,7 @@ static func _check_gating(failures: Array) -> void:
 	_set_inner(gala, "crew_velvet")
 	if not bool(_dict(_rows(gala).get("the_whale_game", {})).get("live", false)):
 		failures.append("Plan B did not accept Gala Night as its alternate seeded whale anchor.")
+	_check_audit_knowledge_gating(library, failures)
 	var direct := _run("HEIST-DIRECT-REJECT", {"audit_night": true})
 	_set_inner(direct, "crew_bishop")
 	var direct_before := JSON.stringify(direct.to_dict())
@@ -59,6 +60,62 @@ static func _check_gating(failures: Array) -> void:
 	direct.current_environment["event_ids"] = ["crew_planning_table"]
 	if bool(direct.crew_record_heist_event_result(forged).get("ok", false)) or not direct.crew_heist_state.is_empty():
 		failures.append("A substituted or self-asserted resolved heist hook crossed the exact Event host boundary.")
+
+
+static func _check_audit_knowledge_gating(library: ContentLibrary, failures: Array) -> void:
+	const KNOWLEDGE_FLAG := "crew_heist_count_audit_roster_read"
+	var seeded_only := _run("HEIST-AUDIT-SEEDED-ONLY", {})
+	_set_inner(seeded_only, "crew_bishop")
+	seeded_only.seed_scenario_for_node("grand_casino", library.scenario("grand_casino_audit_night"))
+	if bool(_dict(_rows(seeded_only).get("the_count", {})).get("live", false)):
+		failures.append("An unvisited seeded Audit leaked private scenario selection into The Count gate.")
+
+	var hostile := _run("HEIST-AUDIT-HOSTILE", {})
+	_set_inner(hostile, "crew_bishop")
+	hostile.narrative_flags[KNOWLEDGE_FLAG] = true
+	hostile.story_flags[KNOWLEDGE_FLAG] = "true"
+	_set_grand_situation(hostile, "grand_casino_convention_crowd", {"audit_night": "true"})
+	if bool(_dict(_rows(hostile).get("the_count", {})).get("live", false)):
+		failures.append("A non-Audit situation or malformed/forged knowledge unlocked The Count.")
+
+	var declined := _run("HEIST-AUDIT-DECLINED", {})
+	_set_inner(declined, "crew_bishop")
+	_set_grand_situation(declined, "grand_casino_audit_night", {"audit_night": true}, ["scenario_audit_roster"])
+	if not bool(_dict(_rows(declined).get("the_count", {})).get("live", false)):
+		failures.append("The currently active Audit did not make The Count live.")
+	var decline_result := _event_choice(declined, library, "scenario_audit_roster", "leave_the_count_clean")
+	if not bool(decline_result.get("ok", false)) or bool(declined.story_flags.get(KNOWLEDGE_FLAG, false)):
+		failures.append("Leaving the Audit roster either failed or incorrectly taught lasting Count knowledge.")
+	_set_grand_situation(declined, "grand_casino_convention_crowd", {})
+	if bool(_dict(_rows(declined).get("the_count", {})).get("live", false)):
+		failures.append("The Count remained live after an unobserved Audit rolled over to Convention.")
+
+	var observed := _run("HEIST-AUDIT-OBSERVED", {})
+	_set_inner(observed, "crew_bishop")
+	_set_grand_situation(observed, "grand_casino_audit_night", {"audit_night": true}, ["scenario_audit_roster"])
+	var heat_before_read := observed.suspicion_level()
+	var read_result := _event_choice(observed, library, "scenario_audit_roster", "read_the_shift")
+	if not bool(read_result.get("ok", false)) or str(read_result.get("choice_id", "")) != "read_the_shift" \
+			or observed.suspicion_level() != heat_before_read + 3 \
+			or not _array(observed.current_environment.get("resolved_event_ids", [])).has("scenario_audit_roster") \
+			or not bool(observed.story_flags.get(KNOWLEDGE_FLAG, false)) \
+			or not bool(observed.narrative_flags.get(KNOWLEDGE_FLAG, false)):
+		failures.append("Resolving the real Audit roster/read_the_shift choice did not teach the public Count fact.")
+	var heat_after_read := observed.suspicion_level()
+	if bool(_event_choice(observed, library, "scenario_audit_roster", "read_the_shift").get("ok", false)) \
+			or observed.suspicion_level() != heat_after_read:
+		failures.append("The resolved Audit roster replayed or charged its Heat twice.")
+	_set_grand_situation(observed, "grand_casino_convention_crowd", {})
+	if not bool(_dict(_rows(observed).get("the_count", {})).get("live", false)):
+		failures.append("Learned Audit knowledge did not survive a Convention rollover/revisit.")
+
+	var restored := RunStateScript.new()
+	restored.from_dict(observed.to_save_snapshot())
+	if not bool(restored.story_flags.get(KNOWLEDGE_FLAG, false)) \
+			or not bool(restored.narrative_flags.get(KNOWLEDGE_FLAG, false)) \
+			or str(restored.current_environment.get("scenario_id", "")) != "grand_casino_convention_crowd" \
+			or not bool(_dict(_rows(restored).get("the_count", {})).get("live", false)):
+		failures.append("Learned Audit knowledge did not survive Save/Continue restore.")
 
 
 static func _check_production_paths(library: ContentLibrary, failures: Array) -> void:
@@ -727,6 +784,26 @@ static func _run(seed: String, hooks: Dictionary) -> RunState:
 	run.set_world_map({"version": 3, "seed_text": seed, "start_node_id": "small_underground_casino", "current_node_id": "small_underground_casino", "nodes": nodes, "edges": edges, "visited_path": ["small_underground_casino"]})
 	run.set_environment({"id": "small_underground_casino", "world_node_id": "small_underground_casino", "archetype_id": "small_underground_casino", "kind": "crew", "turns": 0, "scenario_hook_flags": hooks.duplicate(true), "event_ids": ["crew_planning_table"], "resolved_event_ids": []})
 	return run
+
+
+static func _set_grand_situation(run: RunState, scenario_id: String, hooks: Dictionary, event_ids: Array = []) -> void:
+	run.set_environment({
+		"id": "grand_casino",
+		"world_node_id": "grand_casino",
+		"archetype_id": "grand_casino",
+		"kind": "boss",
+		"turns": 0,
+		"scenario_id": scenario_id,
+		"scenario_hook_flags": hooks.duplicate(true),
+		"event_ids": event_ids.duplicate(true),
+		"resolved_event_ids": [],
+	})
+	run.world_map["current_node_id"] = "grand_casino"
+	var visited_path := _array(run.world_map.get("visited_path", []))
+	if not visited_path.has("grand_casino"):
+		visited_path.append("grand_casino")
+	run.world_map["visited_path"] = visited_path
+	run.store_current_world_node_environment()
 
 
 static func _move(run: RunState, node_id: String, library: ContentLibrary, failures: Array) -> void:
