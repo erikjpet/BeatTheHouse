@@ -273,6 +273,10 @@ func _run() -> void:
 		if mode == "touch":
 			await _isolate_touch_from_prior_mouse()
 		await _check_production_mutation_for_mode(app, action_list, production_record, activations, str(mode))
+	# Keep the production host alive while its final environment refresh and any
+	# UI coroutines resume. Freeing it on the same frame can strand anonymous
+	# GDScriptFunctionState objects at engine shutdown.
+	await _settle_frames(12)
 	_finish(app)
 
 
