@@ -44,6 +44,18 @@ class OverflowFoundationHost:
 		super._on_environment_object_activated(object_id)
 
 
+class CleanupQuitter:
+	extends Node
+
+	var frames_remaining := 12
+	var exit_code := 0
+
+	func _process(_delta: float) -> void:
+		frames_remaining -= 1
+		if frames_remaining <= 0:
+			get_tree().quit(exit_code)
+
+
 func _init() -> void:
 	call_deferred("_run")
 
@@ -58,23 +70,23 @@ func _run() -> void:
 	await _settle_frames(3)
 	if not app.start_foundation_run("RW06-1-OVERFLOW-ACTIONS", {}, false):
 		failures.append("RW06-1 overflow contract could not start its production Foundation run.")
-		await _finish(app)
+		_finish(app)
 		return
 	await _settle_frames(4)
 	var action_list = app.get("room_action_list")
 	if action_list == null:
 		failures.append("RW06-1 production Foundation host did not mount RoomActionList.")
-		await _finish(app)
+		_finish(app)
 		return
 	var production_room_installed: bool = await _install_production_game_room(app)
 	if not production_room_installed:
-		await _finish(app)
+		_finish(app)
 		return
 
 	var production_record := _first_enabled_game_record(app.call("_interactable_object_view_list"))
 	if production_record.is_empty():
 		failures.append("RW06-1 overflow contract found no live production game action; a synthetic fallback is forbidden.")
-		await _finish(app)
+		_finish(app)
 		return
 	_check_exact_overflow_semantic_retention(app, production_record)
 	_check_late_binding_persistence(app, production_record)
@@ -261,7 +273,7 @@ func _run() -> void:
 		if mode == "touch":
 			await _isolate_touch_from_prior_mouse()
 		await _check_production_mutation_for_mode(app, action_list, production_record, activations, str(mode))
-	await _finish(app)
+	_finish(app)
 
 
 func _check_rendered_action_surface(action_list: Control, records: Array) -> void:
@@ -2620,13 +2632,13 @@ func _finish(app: Control) -> void:
 			failures.append("RW06-1 teardown could not join its production autosave: %d." % save_error)
 	app.call("_drain_script_prewarm_requests_for_shutdown")
 	app.queue_free()
-	# Physical touch dispatch and deferred production selection retain native
-	# RefCounted event state briefly after the Foundation subtree exits.
-	await _settle_frames(12)
+	var exit_code := 0
 	if failures.is_empty():
 		print("RW06_1_OVERFLOW_ACTION_UI PASS")
-		quit(0)
-		return
-	for failure in failures:
-		push_error(failure)
-	quit(1)
+	else:
+		exit_code = 1
+		for failure in failures:
+			push_error(failure)
+	var quitter := CleanupQuitter.new()
+	quitter.exit_code = exit_code
+	root.add_child(quitter)
