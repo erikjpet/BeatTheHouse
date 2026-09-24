@@ -1,7 +1,15 @@
 # rw06_2 Crew heist ending route — first-pass replay
 
-Status: **Q-013A/Q-017A ENGINE-FREE ADMISSION GREEN; NATURAL LIVE ROUTE PROOF PENDING**
-Integrated canonical baseline: `d60c5d928f6ca4d973f158410816a00de55f87d3`
+Status: **Q-013A/Q-017A CALLER-OWNED STATIC CANDIDATE HELD; NO QUALIFYING EVIDENCE**
+Last integrated canonical baseline: `d60c5d928f6ca4d973f158410816a00de55f87d3`
+Current-main gate: `37fdf371` (or its successor) must be an ancestor of the
+eventual immutable candidate after the shared helper lands.
+Withdrawn checkpoint: `a84ef022b6d5d2858339f33df636718a0d4c08ad`
+is non-evidence after independent custody/schema review and must not be promoted.
+The current repair remains held until the landed shared Q-009 helper is integrated,
+current `origin/main` is reconciled, the full engine-free matrix is rerun from one
+immutable checkpoint, and that exact checkpoint independently clears. No live
+route or Godot pass is authorized by this document.
 Canonical terminal route: `crew_heist`
 Preferred launch plan: **The Count (Plan A)**
 Current fail-closed runner seed: `RW06-HEIST-AUDIT-0002`
@@ -22,8 +30,9 @@ algorithms against current data. That exact launch path rejects pinned seed
 seed `0002`, whose exact day-zero witness selects Audit. Q-017A separately admits
 exact seed `0000` only for one `fresh-interactive`, Repeat-1 pass after the same
 production-model preflight proves its natural day-zero Audit selection. Neither
-role accepts another Heist seed, and the fixed launcher explicitly rejects or
-relabels any fresh child. The route learns lasting Count eligibility only
+role accepts another Heist seed, and the fixed launcher rejects every fresh
+child instead of relabeling it as fixed-repeat evidence. The route learns
+lasting Count eligibility only
 by resolving the rendered **The Audit Roster** choice **Read the shift**; an
 unvisited seed, stored prior-cycle environment, or narrative-only claim does not
 qualify. The guaranteed Corner Store Crew marker supplies the initial Grand fare.
@@ -36,7 +45,7 @@ checkpoint before locking the plan. This binds lasting knowledge to the natural
 Audit read instead of an already locked heist. The route accepts all three
 authored Crew win rungs.
 Natural reachability and the twice-identical/fresh-seed passes remain to be
-proved after the shared gameplay work lands.
+proved after rw06_1 and the shared custody helper land.
 
 Q-011 is a required getaway invariant, not an optional recovery detour. The
 dock exit delivers the player to Delta Queen, whose production destination
@@ -169,7 +178,7 @@ action release replay.
 | Getaway | Read and finish the route | target shown on map | package target/travel lock is ambiguous |
 | Outcome | Understand the outcome rung | terminal report visible | success rung looks like ordinary job completion |
 
-## Acceptance checklist
+## Static route checklist (held, non-evidence)
 
 - [x] Rebase/re-read Crew, world hook, and heist logic on the accepted rw06_0 `origin/main`.
 - [x] Bind the exact visible fresh-profile launch serialization and prove that
@@ -177,13 +186,14 @@ action release replay.
       non-Audit seeds plus recent-Audit history fail closed engine-free.
 - [x] Apply Q-013A: use exact seed `0002` and persist Count knowledge only from
       the natural `scenario_audit_roster/read_the_shift` result. The exact
-      focused contract proves its Save/Continue restore. Never inject Audit or
-      silently choose Plan B.
-- [x] Apply Q-017A engine-free admission: keep both fixed repeats on exact
+      source/fixture contract requires its Save/Continue restore. Never inject
+      Audit or silently choose Plan B.
+- [x] Encode Q-017A engine-free admission: keep both fixed repeats on exact
       `0002`; admit only exact natural-Audit `0000` for one separate
       `fresh-interactive` Heist/Repeat-1 pass on the same Count route. The
-      admission and source contracts reject alternate seeds, scenario authority,
-      Plan B, type drift, and fixed-launcher relabeling.
+      held admission/source candidate fail-closes alternate seeds, scenario
+      authority, Plan B, type drift, and fixed-launcher relabeling; it is not a
+      qualifying pass until the immutable post-helper matrix clears.
 - [ ] Prove the candidate reaches the rendered Audit Roster and the terminal
       heist win through the full public route.
 - [ ] Measure the full marker -> Bishop 90 path and keep it within 150–350 player
@@ -195,3 +205,8 @@ action release replay.
       pass after rw06_1 lands and the immutable checkpoint independently clears.
 - [ ] Add actual action count, transcript/evidence paths,
       money curve, next-goal notes, and arc-breaker findings.
+
+`rw06_3` remains **PREPARATORY ONLY** until owner notes and qualifying live routes
+exist. Owner playthrough and release-copy approval are downstream release-
+orchestrator/`rw06_4` gates; they are not blockers that this peer lane may use to
+declare `rw06_2` or `rw06_3` complete.

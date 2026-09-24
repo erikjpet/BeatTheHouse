@@ -27,6 +27,23 @@ function Get-Rw062RequiredPublicProperty {
 }
 
 
+function Get-Rw062RequiredPublicPropertyDescriptor {
+    param(
+        [AllowNull()]$InputObject,
+        [Parameter(Mandatory = $true)][string]$Name,
+        [Parameter(Mandatory = $true)][string]$Context
+    )
+    if ($InputObject -isnot [System.Management.Automation.PSCustomObject]) {
+        throw "$Context is not one exact public object."
+    }
+    $properties = @($InputObject.PSObject.Properties | Where-Object { $_.Name -ceq $Name })
+    if ($properties.Count -ne 1 -or $null -eq $properties[0].Value) {
+        throw "$Context is missing required public property '$Name'."
+    }
+    return $properties[0]
+}
+
+
 function Assert-HeistFreshStandardRunSetup {
     param([Parameter(Mandatory = $true)]$Observation)
 
@@ -215,6 +232,55 @@ function Get-Rw062PublicSurfaceActionMatches {
         $properties.Count -eq 1 -and $properties[0].Value -is [string] -and
             [string]$properties[0].Value -ceq $Action
     })
+}
+
+
+function Select-CheatReplayDuelCheckpointAction {
+    param(
+        [Parameter(Mandatory = $true)]$Game,
+        [Parameter(Mandatory = $true)][AllowEmptyCollection()]$SurfaceActions
+    )
+
+    $gameId = (Get-Rw062RequiredPublicPropertyDescriptor -InputObject $Game -Name 'game_id' -Context 'Rourke checkpoint game').Value
+    $phase = (Get-Rw062RequiredPublicPropertyDescriptor -InputObject $Game -Name 'phase' -Context 'Rourke checkpoint game').Value
+    $duelActive = (Get-Rw062RequiredPublicPropertyDescriptor -InputObject $Game -Name 'boss_duel_active' -Context 'Rourke checkpoint game').Value
+    $handNumber = (Get-Rw062RequiredPublicPropertyDescriptor -InputObject $Game -Name 'boss_hand_number' -Context 'Rourke checkpoint game').Value
+    $canDeal = (Get-Rw062RequiredPublicPropertyDescriptor -InputObject $Game -Name 'can_deal' -Context 'Rourke checkpoint game').Value
+    if ($gameId -isnot [string] -or $gameId -cne 'blackjack' -or
+        $phase -isnot [string] -or $phase -cne 'betting' -or
+        $duelActive -isnot [bool] -or -not $duelActive -or
+        $handNumber -isnot [int32] -or $handNumber -ne 1 -or
+        $canDeal -isnot [bool] -or -not $canDeal) {
+        throw 'Rourke checkpoint requires exact active, pre-hand-one, dealable Blackjack public state.'
+    }
+    if ($SurfaceActions -isnot [object[]]) {
+        throw 'Rourke checkpoint surface actions are not one exact public array.'
+    }
+
+    $dealRows = [Collections.Generic.List[object]]::new()
+    foreach ($row in $SurfaceActions) {
+        if ($row -isnot [System.Management.Automation.PSCustomObject]) {
+            throw 'Rourke checkpoint published a non-object game action.'
+        }
+        $action = (Get-Rw062RequiredPublicPropertyDescriptor -InputObject $row -Name 'action' -Context 'Rourke checkpoint action').Value
+        $index = (Get-Rw062RequiredPublicPropertyDescriptor -InputObject $row -Name 'index' -Context 'Rourke checkpoint action').Value
+        $enabled = (Get-Rw062RequiredPublicPropertyDescriptor -InputObject $row -Name 'enabled' -Context 'Rourke checkpoint action').Value
+        if ($action -isnot [string] -or [string]::IsNullOrWhiteSpace($action) -or
+            $index -isnot [int32] -or $index -lt 0 -or
+            $enabled -isnot [bool]) {
+            throw 'Rourke checkpoint action has a non-exact action, index, or enabled scalar.'
+        }
+        if ($action -ceq 'blackjack_deal') {
+            if ($index -ne 0 -or -not $enabled) {
+                throw 'Rourke checkpoint Deal action is not exactly enabled at index zero.'
+            }
+            $dealRows.Add($row)
+        }
+    }
+    if ($dealRows.Count -ne 1) {
+        throw "Rourke checkpoint must expose exactly one enabled index-zero blackjack Deal action; found $($dealRows.Count)."
+    }
+    return [pscustomobject][ordered]@{ action = 'blackjack_deal'; index = [int32]0 }
 }
 
 

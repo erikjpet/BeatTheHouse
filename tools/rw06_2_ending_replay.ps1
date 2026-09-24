@@ -126,6 +126,478 @@ function Get-Array {
 }
 
 
+function Get-ReplayPathValue {
+    param(
+        [AllowNull()]$InputObject,
+        [Parameter(Mandatory = $true)][string[]]$Path,
+        [Parameter(Mandatory = $true)][ref]$Found,
+        [Parameter(Mandatory = $true)][string]$Context
+    )
+    $Found.Value = $false
+    $current = $InputObject
+    foreach ($segment in $Path) {
+        if ($null -ceq $current) {
+            return $null
+        }
+        if ($current -is [System.Collections.IDictionary]) {
+            $matchingKeys = @($current.Keys | Where-Object { $_ -is [string] -and $_ -ceq $segment })
+            if ($matchingKeys.Count -ceq 0) {
+                return $null
+            }
+            if ($matchingKeys.Count -cne 1) {
+                throw "$Context has an ambiguous exact property '$segment'."
+            }
+            $current = $current[$matchingKeys[0]]
+            continue
+        }
+        if ($current -isnot [System.Management.Automation.PSCustomObject]) {
+            throw "$Context traverses a non-object value before exact property '$segment'."
+        }
+        $properties = @($current.PSObject.Properties | Where-Object { $_.Name -ceq $segment })
+        if ($properties.Count -ceq 0) {
+            return $null
+        }
+        if ($properties.Count -cne 1) {
+            throw "$Context has an ambiguous exact property '$segment'."
+        }
+        $current = $properties[0].Value
+    }
+    $Found.Value = $true
+    Write-Output -NoEnumerate $current
+}
+
+
+function Test-ReplayPathPresent {
+    param(
+        [AllowNull()]$InputObject,
+        [Parameter(Mandatory = $true)][string[]]$Path,
+        [Parameter(Mandatory = $true)][string]$Context
+    )
+    $found = $false
+    $null = Get-ReplayPathValue -InputObject $InputObject -Path $Path -Found ([ref]$found) -Context $Context
+    return $found
+}
+
+
+function Get-ExactReplayString {
+    param(
+        [AllowNull()]$InputObject,
+        [Parameter(Mandatory = $true)][string[]]$Path,
+        [Parameter(Mandatory = $true)][string]$Context,
+        [switch]$AllowMissing,
+        [string]$Default = ''
+    )
+    $found = $false
+    $value = Get-ReplayPathValue -InputObject $InputObject -Path $Path -Found ([ref]$found) -Context $Context
+    if (-not $found) {
+        if ($AllowMissing) { return $Default }
+        throw "$Context is missing its exact string value."
+    }
+    if ($value -isnot [string]) {
+        throw "$Context must be an exact string."
+    }
+    return $value
+}
+
+
+function Get-ExactReplayBoolean {
+    param(
+        [AllowNull()]$InputObject,
+        [Parameter(Mandatory = $true)][string[]]$Path,
+        [Parameter(Mandatory = $true)][string]$Context,
+        [switch]$AllowMissing,
+        [bool]$Default = $false
+    )
+    $found = $false
+    $value = Get-ReplayPathValue -InputObject $InputObject -Path $Path -Found ([ref]$found) -Context $Context
+    if (-not $found) {
+        if ($AllowMissing) { return $Default }
+        throw "$Context is missing its exact boolean value."
+    }
+    if ($value -isnot [bool]) {
+        throw "$Context must be an exact boolean."
+    }
+    return $value
+}
+
+
+function Get-ExactReplayInt32 {
+    param(
+        [AllowNull()]$InputObject,
+        [Parameter(Mandatory = $true)][string[]]$Path,
+        [Parameter(Mandatory = $true)][string]$Context,
+        [switch]$AllowMissing,
+        [int32]$Default = 0
+    )
+    $found = $false
+    $value = Get-ReplayPathValue -InputObject $InputObject -Path $Path -Found ([ref]$found) -Context $Context
+    if (-not $found) {
+        if ($AllowMissing) { return $Default }
+        throw "$Context is missing its exact Int32 value."
+    }
+    if ($value -isnot [int32]) {
+        throw "$Context must be an exact Int32."
+    }
+    return $value
+}
+
+
+function Get-ExactReplayObjectArray {
+    param(
+        [AllowNull()]$InputObject,
+        [Parameter(Mandatory = $true)][string[]]$Path,
+        [Parameter(Mandatory = $true)][string]$Context,
+        [ValidateSet('Any', 'String', 'PSCustomObject')][string]$ElementType = 'Any',
+        [switch]$AllowMissing
+    )
+    $found = $false
+    $value = Get-ReplayPathValue -InputObject $InputObject -Path $Path -Found ([ref]$found) -Context $Context
+    if (-not $found) {
+        if ($AllowMissing) {
+            Write-Output -NoEnumerate ([object[]]@())
+            return
+        }
+        throw "$Context is missing its exact array value."
+    }
+    if ($value -isnot [object[]]) {
+        throw "$Context must be an exact JSON array."
+    }
+    for ($index = 0; $index -lt $value.Count; $index++) {
+        if ($ElementType -ceq 'String' -and $value[$index] -isnot [string]) {
+            throw "$Context contains a non-string element at index $index."
+        }
+        if ($ElementType -ceq 'PSCustomObject' -and
+            $value[$index] -isnot [System.Management.Automation.PSCustomObject]) {
+            throw "$Context contains a non-object element at index $index."
+        }
+    }
+    Write-Output -NoEnumerate $value
+}
+
+
+function Get-ExactReplayPsCustomObject {
+    param(
+        [AllowNull()]$InputObject,
+        [Parameter(Mandatory = $true)][string[]]$Path,
+        [Parameter(Mandatory = $true)][string]$Context,
+        [switch]$AllowMissing,
+        [switch]$AllowNull
+    )
+    $found = $false
+    $value = Get-ReplayPathValue -InputObject $InputObject -Path $Path -Found ([ref]$found) -Context $Context
+    if (-not $found) {
+        if ($AllowMissing) { return $null }
+        throw "$Context is missing its exact object value."
+    }
+    if ($null -ceq $value) {
+        if ($AllowNull) { return $null }
+        throw "$Context must not be null."
+    }
+    if ($value -isnot [System.Management.Automation.PSCustomObject]) {
+        throw "$Context must be an exact JSON object."
+    }
+    return $value
+}
+
+
+function Assert-ExactReplayPsCustomObject {
+    param(
+        [AllowNull()]$Value,
+        [Parameter(Mandatory = $true)][string]$Context
+    )
+    if ($Value -isnot [System.Management.Automation.PSCustomObject]) {
+        throw "$Context must be an exact JSON object."
+    }
+}
+
+
+function Assert-ExactReplayObjectKeys {
+    param(
+        [AllowNull()]$Value,
+        [Parameter(Mandatory = $true)][string[]]$ExpectedKeys,
+        [Parameter(Mandatory = $true)][string]$Context
+    )
+    Assert-ExactReplayPsCustomObject -Value $Value -Context $Context
+    $actualKeys = @($Value.PSObject.Properties | ForEach-Object { $_.Name })
+    if ($actualKeys.Count -cne $ExpectedKeys.Count) {
+        throw "$Context must contain exactly $($ExpectedKeys.Count) properties; found $($actualKeys.Count)."
+    }
+    for ($index = 0; $index -lt $ExpectedKeys.Count; $index++) {
+        if ($actualKeys[$index] -cne $ExpectedKeys[$index]) {
+            throw "$Context property $index must be '$($ExpectedKeys[$index])', not '$($actualKeys[$index])'."
+        }
+    }
+}
+
+
+function Assert-ExactFinalPublicCheckpoint {
+    param(
+        [AllowNull()]$Checkpoint,
+        [Parameter(Mandatory = $true)][string]$ExpectedSeed,
+        [Parameter(Mandatory = $true)][string]$Context
+    )
+    Assert-ExactReplayObjectKeys -Value $Checkpoint -ExpectedKeys @(
+        'schema_version',
+        'record_kind',
+        'observed_seed',
+        'outcome_key',
+        'won',
+        'public_fingerprint',
+        'checkpoint_fingerprint',
+        'bankroll',
+        'chips',
+        'heat'
+    ) -Context $Context
+    $schemaVersion = Get-ExactReplayInt32 -InputObject $Checkpoint -Path @('schema_version') -Context "$Context schema version"
+    $recordKind = Get-ExactReplayString -InputObject $Checkpoint -Path @('record_kind') -Context "$Context record kind"
+    $observedSeed = Get-ExactReplayString -InputObject $Checkpoint -Path @('observed_seed') -Context "$Context observed seed"
+    $outcomeKey = Get-ExactReplayString -InputObject $Checkpoint -Path @('outcome_key') -Context "$Context outcome key"
+    $won = Get-ExactReplayBoolean -InputObject $Checkpoint -Path @('won') -Context "$Context win witness"
+    $publicFingerprint = Get-ExactReplayString -InputObject $Checkpoint -Path @('public_fingerprint') -Context "$Context public fingerprint"
+    $checkpointFingerprint = Get-ExactReplayString -InputObject $Checkpoint -Path @('checkpoint_fingerprint') -Context "$Context checkpoint fingerprint"
+    $bankroll = Get-ExactReplayInt32 -InputObject $Checkpoint -Path @('bankroll') -Context "$Context bankroll"
+    $chips = Get-ExactReplayInt32 -InputObject $Checkpoint -Path @('chips') -Context "$Context chips"
+    $heat = Get-ExactReplayInt32 -InputObject $Checkpoint -Path @('heat') -Context "$Context heat"
+    if ($schemaVersion -cne 1 -or
+        $recordKind -cne 'final_public_checkpoint' -or
+        $observedSeed -cne $ExpectedSeed -or
+        [string]::IsNullOrWhiteSpace($outcomeKey) -or
+        -not $won -or
+        $publicFingerprint -cnotmatch '^[a-f0-9]{64}$' -or
+        $checkpointFingerprint -cnotmatch '^[a-f0-9]{64}$' -or
+        $bankroll -lt 0 -or $chips -lt 0 -or $heat -lt 0) {
+        throw "$Context did not retain its exact successful public terminal values."
+    }
+}
+
+
+function Assert-ExactReplayRunSummary {
+    param(
+        [AllowNull()]$Summary,
+        [Parameter(Mandatory = $true)][string]$ExpectedEnding,
+        [Parameter(Mandatory = $true)][string]$ExpectedSeed,
+        [Parameter(Mandatory = $true)][int32]$ExpectedIteration
+    )
+    $context = "Replay child summary $ExpectedIteration"
+    Assert-ExactReplayObjectKeys -Value $Summary -ExpectedKeys @(
+        'role',
+        'requested_evidence_role',
+        'repeat_profile_scope',
+        'fixed_repeat_qualification_authority',
+        'release_qualifying',
+        'qualification',
+        'replay_admission',
+        'iteration',
+        'ending',
+        'seed',
+        'session',
+        'passed',
+        'outcome',
+        'observed_terminal_seed',
+        'action_count',
+        'midpoint_save_relaunch_continue',
+        'heist_seed_preflight',
+        'heist_preflight_admission',
+        'heist_launch_setup',
+        'transcript',
+        'transcript_sha256',
+        'money_curve',
+        'money_curve_sha256',
+        'persistence_checkpoint_before',
+        'persistence_checkpoint_before_sha256',
+        'persistence_checkpoint_after',
+        'persistence_checkpoint_after_sha256',
+        'persistence_checkpoint_equal',
+        'persistence_checkpoint_complete',
+        'final_public_checkpoint',
+        'failure'
+    ) -Context $context
+    $role = Get-ExactReplayString -InputObject $Summary -Path @('role') -Context "$context role"
+    $requestedRole = Get-ExactReplayString -InputObject $Summary -Path @('requested_evidence_role') -Context "$context requested evidence role"
+    $profileScope = Get-ExactReplayString -InputObject $Summary -Path @('repeat_profile_scope') -Context "$context profile scope"
+    $qualificationAuthority = Get-ExactReplayString -InputObject $Summary -Path @('fixed_repeat_qualification_authority') -Context "$context qualification authority"
+    $releaseQualificationValue = Get-ExactReplayBoolean -InputObject $Summary -Path @('release_qualifying') -Context "$context release qualification"
+    $qualification = Get-ExactReplayString -InputObject $Summary -Path @('qualification') -Context "$context qualification label"
+    $null = Get-ExactReplayPsCustomObject -InputObject $Summary -Path @('replay_admission') -Context "$context replay admission"
+    $iterationValue = Get-ExactReplayInt32 -InputObject $Summary -Path @('iteration') -Context "$context iteration"
+    $endingValue = Get-ExactReplayString -InputObject $Summary -Path @('ending') -Context "$context ending"
+    $seedValue = Get-ExactReplayString -InputObject $Summary -Path @('seed') -Context "$context seed"
+    $sessionValue = Get-ExactReplayString -InputObject $Summary -Path @('session') -Context "$context session"
+    $passed = Get-ExactReplayBoolean -InputObject $Summary -Path @('passed') -Context "$context passed witness"
+    $outcome = Get-ExactReplayString -InputObject $Summary -Path @('outcome') -Context "$context outcome"
+    $observedSeed = Get-ExactReplayString -InputObject $Summary -Path @('observed_terminal_seed') -Context "$context terminal seed"
+    $actionCount = Get-ExactReplayInt32 -InputObject $Summary -Path @('action_count') -Context "$context action count"
+    $midpointSaved = Get-ExactReplayBoolean -InputObject $Summary -Path @('midpoint_save_relaunch_continue') -Context "$context midpoint witness"
+    $heistPreflight = Get-ExactReplayPsCustomObject -InputObject $Summary -Path @('heist_seed_preflight') -Context "$context Heist seed preflight" -AllowNull
+    $heistAdmission = Get-ExactReplayPsCustomObject -InputObject $Summary -Path @('heist_preflight_admission') -Context "$context Heist preflight admission" -AllowNull
+    $heistLaunchSetup = Get-ExactReplayPsCustomObject -InputObject $Summary -Path @('heist_launch_setup') -Context "$context Heist launch setup" -AllowNull
+    $transcript = Get-ExactReplayString -InputObject $Summary -Path @('transcript') -Context "$context transcript path"
+    $transcriptHash = Get-ExactReplayString -InputObject $Summary -Path @('transcript_sha256') -Context "$context transcript hash"
+    $moneyCurve = Get-ExactReplayString -InputObject $Summary -Path @('money_curve') -Context "$context money-curve path"
+    $moneyHash = Get-ExactReplayString -InputObject $Summary -Path @('money_curve_sha256') -Context "$context money-curve hash"
+    $checkpointBefore = Get-ExactReplayString -InputObject $Summary -Path @('persistence_checkpoint_before') -Context "$context pre-Continue checkpoint path"
+    $checkpointBeforeHash = Get-ExactReplayString -InputObject $Summary -Path @('persistence_checkpoint_before_sha256') -Context "$context pre-Continue checkpoint hash"
+    $checkpointAfter = Get-ExactReplayString -InputObject $Summary -Path @('persistence_checkpoint_after') -Context "$context post-Continue checkpoint path"
+    $checkpointAfterHash = Get-ExactReplayString -InputObject $Summary -Path @('persistence_checkpoint_after_sha256') -Context "$context post-Continue checkpoint hash"
+    $checkpointEqual = Get-ExactReplayBoolean -InputObject $Summary -Path @('persistence_checkpoint_equal') -Context "$context checkpoint equality witness"
+    $checkpointComplete = Get-ExactReplayBoolean -InputObject $Summary -Path @('persistence_checkpoint_complete') -Context "$context checkpoint completeness witness"
+    $finalCheckpoint = Get-ExactReplayPsCustomObject -InputObject $Summary -Path @('final_public_checkpoint') -Context "$context final checkpoint" -AllowNull
+    $failure = Get-ExactReplayString -InputObject $Summary -Path @('failure') -Context "$context failure text"
+    if ($role -cne 'child_development_iteration' -or
+        $requestedRole -cnotin @('fixed-repeat', 'fresh-interactive') -or
+        $profileScope -cne 'shared_caller_appdata' -or
+        $qualificationAuthority -cne 'outer_independent_profile_aggregate_only' -or
+        $releaseQualificationValue -or
+        $qualification -cne 'non_qualifying_development_iteration' -or
+        $iterationValue -cne $ExpectedIteration -or
+        $endingValue -cne $ExpectedEnding -or
+        $seedValue -cne $ExpectedSeed -or
+        [string]::IsNullOrWhiteSpace($sessionValue) -or
+        $actionCount -lt 0 -or $actionCount -gt 350) {
+        throw "$context has malformed identity or qualification values."
+    }
+    if ($ExpectedEnding -ceq 'heist') {
+        if ($null -ceq $heistPreflight -or $null -ceq $heistAdmission -or ($passed -and $null -ceq $heistLaunchSetup)) {
+            throw "$context is missing its conditional Heist evidence objects."
+        }
+    }
+    elseif ($null -cne $heistPreflight -or $null -cne $heistAdmission -or $null -cne $heistLaunchSetup) {
+        throw "$context retained Heist-only evidence for a non-Heist route."
+    }
+    if ($passed) {
+        Assert-ExactFinalPublicCheckpoint -Checkpoint $finalCheckpoint -ExpectedSeed $ExpectedSeed -Context "$context final checkpoint"
+        if ([string]::IsNullOrWhiteSpace($outcome) -or
+            $observedSeed -cne $ExpectedSeed -or
+            -not $midpointSaved -or
+            -not $checkpointEqual -or
+            -not $checkpointComplete -or
+            [string]::IsNullOrWhiteSpace($transcript) -or
+            [string]::IsNullOrWhiteSpace($moneyCurve) -or
+            [string]::IsNullOrWhiteSpace($checkpointBefore) -or
+            [string]::IsNullOrWhiteSpace($checkpointAfter) -or
+            $transcriptHash -cnotmatch '^[a-f0-9]{64}$' -or
+            $moneyHash -cnotmatch '^[a-f0-9]{64}$' -or
+            $checkpointBeforeHash -cnotmatch '^[a-f0-9]{64}$' -or
+            $checkpointAfterHash -cnotmatch '^[a-f0-9]{64}$' -or
+            $checkpointBeforeHash -cne $checkpointAfterHash -or
+            -not [string]::IsNullOrEmpty($failure)) {
+            throw "$context does not contain complete successful evidence."
+        }
+    }
+    elseif ($null -cne $finalCheckpoint -or $failure.Length -ceq 0) {
+        throw "$context has neither a successful final checkpoint nor a failure reason."
+    }
+    return [pscustomobject][ordered]@{
+        passed = $passed
+        failure = $failure
+        outcome = $outcome
+        observed_terminal_seed = $observedSeed
+        transcript_sha256 = $transcriptHash
+        money_curve_sha256 = $moneyHash
+        persistence_checkpoint_before_sha256 = $checkpointBeforeHash
+        persistence_checkpoint_after_sha256 = $checkpointAfterHash
+        persistence_checkpoint_complete = $checkpointComplete
+        final_public_checkpoint = $finalCheckpoint
+    }
+}
+
+
+function Assert-ExactReplayFinalSummary {
+    param(
+        [AllowNull()]$Summary,
+        [Parameter(Mandatory = $true)][string]$ExpectedEnding,
+        [Parameter(Mandatory = $true)][string]$ExpectedSeed,
+        [Parameter(Mandatory = $true)][int32]$ExpectedRepeat
+    )
+    $context = 'Replay aggregate summary'
+    Assert-ExactReplayObjectKeys -Value $Summary -ExpectedKeys @(
+        'schema_version',
+        'check_id',
+        'role',
+        'requested_evidence_role',
+        'repeat_profile_scope',
+        'fixed_repeat_qualification_authority',
+        'ending',
+        'seed',
+        'observed_terminal_seeds',
+        'repeat',
+        'deterministic',
+        'checkpoint_evidence_complete',
+        'release_qualifying',
+        'qualification',
+        'replay_admission',
+        'public_observation_schema',
+        'public_observation_schema_version',
+        'heist_seed_preflight',
+        'heist_preflight_admission',
+        'evidence_root',
+        'runs'
+    ) -Context $context
+    $schemaVersion = Get-ExactReplayInt32 -InputObject $Summary -Path @('schema_version') -Context "$context schema version"
+    $checkId = Get-ExactReplayString -InputObject $Summary -Path @('check_id') -Context "$context check id"
+    $role = Get-ExactReplayString -InputObject $Summary -Path @('role') -Context "$context role"
+    $requestedRole = Get-ExactReplayString -InputObject $Summary -Path @('requested_evidence_role') -Context "$context requested evidence role"
+    $profileScope = Get-ExactReplayString -InputObject $Summary -Path @('repeat_profile_scope') -Context "$context profile scope"
+    $authority = Get-ExactReplayString -InputObject $Summary -Path @('fixed_repeat_qualification_authority') -Context "$context qualification authority"
+    $endingValue = Get-ExactReplayString -InputObject $Summary -Path @('ending') -Context "$context ending"
+    $seedValue = Get-ExactReplayString -InputObject $Summary -Path @('seed') -Context "$context seed"
+    $observedSeeds = Get-ExactReplayObjectArray -InputObject $Summary -Path @('observed_terminal_seeds') -ElementType String -Context "$context observed terminal seeds"
+    $repeatValue = Get-ExactReplayInt32 -InputObject $Summary -Path @('repeat') -Context "$context repeat count"
+    $deterministicWitness = Get-ExactReplayBoolean -InputObject $Summary -Path @('deterministic') -Context "$context deterministic witness"
+    $checkpointComplete = Get-ExactReplayBoolean -InputObject $Summary -Path @('checkpoint_evidence_complete') -Context "$context checkpoint completeness witness"
+    $releaseQualificationValue = Get-ExactReplayBoolean -InputObject $Summary -Path @('release_qualifying') -Context "$context release qualification"
+    $qualification = Get-ExactReplayString -InputObject $Summary -Path @('qualification') -Context "$context qualification label"
+    $null = Get-ExactReplayPsCustomObject -InputObject $Summary -Path @('replay_admission') -Context "$context replay admission"
+    $schemaName = Get-ExactReplayString -InputObject $Summary -Path @('public_observation_schema') -Context "$context public schema"
+    $publicSchemaVersion = Get-ExactReplayInt32 -InputObject $Summary -Path @('public_observation_schema_version') -Context "$context public schema version"
+    $heistPreflight = Get-ExactReplayPsCustomObject -InputObject $Summary -Path @('heist_seed_preflight') -Context "$context Heist seed preflight" -AllowNull
+    $heistAdmission = Get-ExactReplayPsCustomObject -InputObject $Summary -Path @('heist_preflight_admission') -Context "$context Heist preflight admission" -AllowNull
+    $evidenceRootValue = Get-ExactReplayString -InputObject $Summary -Path @('evidence_root') -Context "$context evidence root"
+    $runs = Get-ExactReplayObjectArray -InputObject $Summary -Path @('runs') -ElementType PSCustomObject -Context "$context child runs"
+    if ($schemaVersion -cne 1 -or
+        $checkId -cne 'rw06_2_ending_replay' -or
+        $role -cne 'child_development_run' -or
+        $requestedRole -cnotin @('fixed-repeat', 'fresh-interactive') -or
+        $profileScope -cne 'shared_caller_appdata' -or
+        $authority -cne 'outer_independent_profile_aggregate_only' -or
+        $endingValue -cne $ExpectedEnding -or
+        $seedValue -cne $ExpectedSeed -or
+        $repeatValue -cne $ExpectedRepeat -or
+        $observedSeeds.Count -cne $ExpectedRepeat -or
+        @($observedSeeds | Where-Object { $_ -cne $ExpectedSeed }).Count -cne 0 -or
+        -not $checkpointComplete -or
+        $releaseQualificationValue -or
+        $qualification -cne 'non_qualifying_development_run' -or
+        $schemaName -cne $Schema -or
+        $publicSchemaVersion -cne $SchemaVersion -or
+        [string]::IsNullOrWhiteSpace($evidenceRootValue) -or
+        $runs.Count -cne $ExpectedRepeat) {
+        throw "$context has malformed identity, schema, or qualification values."
+    }
+    if ($ExpectedRepeat -ceq 2 -and -not $deterministicWitness) {
+        throw "$context did not retain deterministic fixed-repeat evidence."
+    }
+    if ($ExpectedRepeat -ceq 1 -and $deterministicWitness) {
+        throw "$context mislabeled one fresh run as deterministic repeat evidence."
+    }
+    if ($ExpectedEnding -ceq 'heist') {
+        if ($null -ceq $heistPreflight -or $null -ceq $heistAdmission) {
+            throw "$context is missing its Heist preflight objects."
+        }
+    }
+    elseif ($null -cne $heistPreflight -or $null -cne $heistAdmission) {
+        throw "$context retained Heist-only evidence for a non-Heist route."
+    }
+    for ($index = 0; $index -lt $runs.Count; $index++) {
+        $null = Assert-ExactReplayRunSummary `
+            -Summary $runs[$index] `
+            -ExpectedEnding $ExpectedEnding `
+            -ExpectedSeed $ExpectedSeed `
+            -ExpectedIteration ([int32]($index + 1))
+    }
+}
+
+
 function Invoke-HeistSeedPreflight {
     param([Parameter(Mandatory = $true)][string]$OutputPath)
 
@@ -142,14 +614,15 @@ function Invoke-HeistSeedPreflight {
     catch {
         throw "Heist seed preflight did not return valid JSON: $($_.Exception.Message)"
     }
-    $passed = Get-Value $report @('passed') $null
-    $reportedSeed = Get-Value $report @('selection', 'seed_text') $null
-    $selectedScenario = Get-Value $report @('selection', 'selected_scenario') $null
-    $cycleId = Get-Value $report @('selection', 'cycle_id') $null
-    if ($passed -isnot [bool] -or -not [bool]$passed -or
-        $reportedSeed -isnot [string] -or [string]$reportedSeed -cne $Seed -or
-        $selectedScenario -isnot [string] -or [string]$selectedScenario -cne 'grand_casino_audit_night' -or
-        $cycleId -isnot [string] -or [string]::IsNullOrWhiteSpace([string]$cycleId)) {
+    Assert-ExactReplayPsCustomObject -Value $report -Context 'Heist seed preflight report'
+    $passed = Get-ExactReplayBoolean -InputObject $report -Path @('passed') -Context 'Heist seed preflight result'
+    $reportedSeed = Get-ExactReplayString -InputObject $report -Path @('selection', 'seed_text') -Context 'Heist seed preflight seed'
+    $selectedScenario = Get-ExactReplayString -InputObject $report -Path @('selection', 'selected_scenario') -Context 'Heist seed preflight scenario'
+    $cycleId = Get-ExactReplayString -InputObject $report -Path @('selection', 'cycle_id') -Context 'Heist seed preflight cycle'
+    if (-not $passed -or
+        $reportedSeed -cne $Seed -or
+        $selectedScenario -cne 'grand_casino_audit_night' -or
+        [string]::IsNullOrWhiteSpace($cycleId)) {
         throw 'Heist seed preflight did not prove the exact requested seed selects Grand Casino Audit Night on the current production tree.'
     }
     $script:HeistPreflightAdmissionReceipt = Assert-Rw062HeistPreflightAdmission `
@@ -174,22 +647,26 @@ function Get-RenderedHudInteger {
         [Parameter(Mandatory = $true)][string]$Context
     )
     $witnessName = if ($Name -ceq 'heat_level') { 'heat_rendered' } else { "${Name}_rendered" }
-    $witness = Get-Value $script:LastObservation @('status_hud', $witnessName) $null
-    $value = Get-Value $script:LastObservation @('status_hud', $Name) $null
-    if ($witness -isnot [bool] -or -not [bool]$witness -or
-        ($value -isnot [int32] -and $value -isnot [int64]) -or [long]$value -lt 0 -or
-        [long]$value -gt [int]::MaxValue) {
+    $witness = Get-ExactReplayBoolean `
+        -InputObject $script:LastObservation `
+        -Path @('status_hud', $witnessName) `
+        -Context "$Context rendered HUD $Name witness"
+    $value = Get-ExactReplayInt32 `
+        -InputObject $script:LastObservation `
+        -Path @('status_hud', $Name) `
+        -Context "$Context rendered HUD $Name value"
+    if (-not $witness -or $value -lt 0) {
         throw "$Context has no exact fully rendered HUD $Name integer."
     }
-    return [int]$value
+    return $value
 }
 
 
 function Test-PublicTerminalSurface {
-    $screen = [string](Get-Value $script:LastObservation @('screen', 'screen') '')
+    $screen = Get-ExactReplayString -InputObject $script:LastObservation -Path @('screen', 'screen') -Context 'Public terminal screen'
     if ($screen -cnotin @('VICTORY', 'FAILURE')) { return $false }
-    $visible = Get-Value $script:LastObservation @('screen', 'run_report_visible') $null
-    if ($visible -isnot [bool] -or -not [bool]$visible) {
+    $visible = Get-ExactReplayBoolean -InputObject $script:LastObservation -Path @('screen', 'run_report_visible') -Context "Terminal RunReport visibility for '$screen'"
+    if (-not $visible) {
         throw "Terminal screen '$screen' has no exact rendered RunReport witness."
     }
     return $true
@@ -201,12 +678,21 @@ function Assert-ReplayPauseOwnership {
         [AllowNull()]$Snapshot,
         [Parameter(Mandatory = $true)][string]$Context
     )
-    $owners = @(Get-Array (Get-Value $Snapshot @('pause_owners') @()))
+    Assert-ExactReplayPsCustomObject -Value $Snapshot -Context "$Context replay-pause snapshot"
+    $owners = Get-ExactReplayObjectArray `
+        -InputObject $Snapshot `
+        -Path @('pause_owners') `
+        -ElementType String `
+        -Context "$Context replay-pause owners"
+    $applicationPaused = Get-ExactReplayBoolean -InputObject $Snapshot -Path @('application_paused') -Context "$Context application pause witness"
+    $simulationPaused = Get-ExactReplayBoolean -InputObject $Snapshot -Path @('simulation_paused') -Context "$Context simulation pause witness"
+    $environmentPaused = Get-ExactReplayBoolean -InputObject $Snapshot -Path @('environment_canvas_paused') -Context "$Context environment pause witness"
+    $gamePaused = Get-ExactReplayBoolean -InputObject $Snapshot -Path @('game_canvas_paused') -Context "$Context game pause witness"
     if ('agent_replay' -cnotin $owners -or
-        -not [bool](Get-Value $Snapshot @('application_paused') $false) -or
-        -not [bool](Get-Value $Snapshot @('simulation_paused') $false) -or
-        -not [bool](Get-Value $Snapshot @('environment_canvas_paused') $false) -or
-        -not [bool](Get-Value $Snapshot @('game_canvas_paused') $false)) {
+        -not $applicationPaused -or
+        -not $simulationPaused -or
+        -not $environmentPaused -or
+        -not $gamePaused) {
         throw "Deterministic action-boundary pause ownership was absent $Context."
     }
 }
@@ -270,7 +756,7 @@ function Invoke-SessionTool {
         $effectiveParameters['SessionRoot'] = $script:SessionRoot
     }
     $bridgeToken = "$PID-$([Guid]::NewGuid().ToString('N'))"
-    if ($bridgeToken -notmatch '^[0-9]+-[a-f0-9]{32}$') {
+    if ($bridgeToken -cnotmatch '^[0-9]+-[a-f0-9]{32}$') {
         throw 'Could not create a safe unique bridge-call token.'
     }
     $stdoutPath = Join-Path $BridgeCallRoot "$bridgeToken.stdout.tmp"
@@ -422,40 +908,56 @@ function Assert-HealthyResult {
         [Parameter(Mandatory = $true)]$Result,
         [Parameter(Mandatory = $true)][string]$Command
     )
-    if (-not [bool](Get-Value $Result @('accepted') $false)) {
-        $reason = [string](Get-Value $Result @('reason') 'no reason supplied')
+    Assert-ExactReplayPsCustomObject -Value $Result -Context "Bridge result for '$Command'"
+    $accepted = Get-ExactReplayBoolean -InputObject $Result -Path @('accepted') -Context "Bridge acceptance for '$Command'"
+    $reason = Get-ExactReplayString -InputObject $Result -Path @('reason') -Context "Bridge rejection reason for '$Command'"
+    if (-not $accepted) {
         throw "Production input was rejected for '$Command': $reason"
     }
-    Assert-ReplayPauseOwnership -Snapshot (Get-Value $Result @('replay_pause_before') $null) -Context "before '$Command'"
-    Assert-ReplayPauseOwnership -Snapshot (Get-Value $Result @('look', 'replay_pause') $null) -Context "after '$Command'"
-    $alerts = @(Get-Array (Get-Value $Result @('log_alerts') @()))
+    $pauseBefore = Get-ExactReplayPsCustomObject -InputObject $Result -Path @('replay_pause_before') -Context "Replay-pause snapshot before '$Command'"
+    $pauseAfter = Get-ExactReplayPsCustomObject -InputObject $Result -Path @('look', 'replay_pause') -Context "Replay-pause snapshot after '$Command'"
+    Assert-ReplayPauseOwnership -Snapshot $pauseBefore -Context "before '$Command'"
+    Assert-ReplayPauseOwnership -Snapshot $pauseAfter -Context "after '$Command'"
+    $alerts = Get-ExactReplayObjectArray `
+        -InputObject $Result `
+        -Path @('log_alerts') `
+        -ElementType String `
+        -Context "Godot log alerts after '$Command'"
     if ($alerts.Count -gt 0) {
         throw "Godot emitted a warning/error after '$Command': $($alerts -join ' | ')"
     }
-    $pngError = [string](Get-Value $Result @('look', 'png_error') '')
+    $pngError = Get-ExactReplayString -InputObject $Result -Path @('look', 'png_error') -Context "Screenshot result after '$Command'"
     if (-not [string]::IsNullOrWhiteSpace($pngError)) {
         throw "Screenshot capture failed after '$Command': $pngError"
     }
-    $observation = Get-Value $Result @('look', 'observable') $null
-    if ($null -ceq $observation) {
-        throw "No public observation followed '$Command'."
-    }
-    if ([string](Get-Value $observation @('schema') '') -cne $Schema -or
-        [int](Get-Value $observation @('schema_version') 0) -cne $SchemaVersion) {
+    $observation = Get-ExactReplayPsCustomObject `
+        -InputObject $Result `
+        -Path @('look', 'observable') `
+        -Context "Public observation after '$Command'"
+    $schemaName = Get-ExactReplayString -InputObject $observation -Path @('schema') -Context "Public observation schema after '$Command'"
+    $schemaVersionValue = Get-ExactReplayInt32 -InputObject $observation -Path @('schema_version') -Context "Public observation schema version after '$Command'"
+    if ($schemaName -cne $Schema -or $schemaVersionValue -cne $SchemaVersion) {
         throw "Unexpected public observation schema after '$Command'."
     }
-    if ([string](Get-Value $observation @('privacy', 'policy') '') -cne 'strict_allowlist') {
+    $privacyPolicy = Get-ExactReplayString -InputObject $observation -Path @('privacy', 'policy') -Context "Public observation privacy policy after '$Command'"
+    if ($privacyPolicy -cne 'strict_allowlist') {
         throw "The bridge did not declare the strict public allowlist after '$Command'."
     }
-    $trace = Get-Value $Result @('trace') $null
-    if ($null -ceq $trace -or [string](Get-Value $trace @('command') '') -cne $Command -or
-        -not [bool](Get-Value $trace @('input_emitted') $false)) {
+    $trace = Get-ExactReplayPsCustomObject -InputObject $Result -Path @('trace') -Context "Public transition trace after '$Command'"
+    $traceCommand = Get-ExactReplayString -InputObject $trace -Path @('command') -Context "Public transition command after '$Command'"
+    $inputEmitted = Get-ExactReplayBoolean -InputObject $trace -Path @('input_emitted') -Context "Public transition input witness after '$Command'"
+    if ($traceCommand -cne $Command -or -not $inputEmitted) {
         throw "The bridge did not return an authenticated public transition trace for '$Command'."
     }
     Assert-NoForbiddenObservationKey -Value $observation
-    $gameId = [string](Get-Value $observation @('game', 'game_id') '')
-    $holeVisible = [bool](Get-Value $observation @('game', 'dealer_hole_visible') $false)
-    $dealerCards = @(Get-Array (Get-Value $observation @('game', 'dealer_cards') @()))
+    $gameId = Get-ExactReplayString -InputObject $observation -Path @('game', 'game_id') -Context "Public game id after '$Command'" -AllowMissing
+    $holeVisible = if ($gameId -ceq 'blackjack') {
+        Get-ExactReplayBoolean -InputObject $observation -Path @('game', 'dealer_hole_visible') -Context "Blackjack dealer-hole witness after '$Command'"
+    }
+    else {
+        Get-ExactReplayBoolean -InputObject $observation -Path @('game', 'dealer_hole_visible') -Context "Dealer-hole witness after '$Command'" -AllowMissing
+    }
+    $dealerCards = Get-ExactReplayObjectArray -InputObject $observation -Path @('game', 'dealer_cards') -ElementType PSCustomObject -Context "Public dealer cards after '$Command'"
     if ($gameId -ceq 'blackjack' -and -not $holeVisible -and $dealerCards.Count -cne 0) {
         throw "Blackjack dealer cards escaped before the public reveal after '$Command'."
     }
@@ -467,67 +969,138 @@ function New-CanonicalRecord {
         [Parameter(Mandatory = $true)]$Result,
         [Parameter(Mandatory = $true)][string]$Intent
     )
-    $observation = Get-Value $Result @('look', 'observable') $null
-    $checkpoint = Get-Value $observation @('checkpoint') $null
-    $game = Get-Value $observation @('game') $null
-    $event = Get-Value $observation @('event_popup') $null
-    $talk = Get-Value $observation @('talk') $null
-    $feedback = Get-Value $observation @('feedback') $null
-    $report = Get-Value $observation @('screen', 'run_report', 'outcome') $null
-    $transition = Get-Value $Result @('trace') $null
+    Assert-ExactReplayPsCustomObject -Value $Result -Context "Canonical result for '$Intent'"
+    $observation = Get-ExactReplayPsCustomObject -InputObject $Result -Path @('look', 'observable') -Context "Canonical observation for '$Intent'"
+    $checkpoint = Get-ExactReplayPsCustomObject -InputObject $observation -Path @('checkpoint') -Context "Canonical checkpoint for '$Intent'"
+    $game = Get-ExactReplayPsCustomObject -InputObject $observation -Path @('game') -Context "Canonical game projection for '$Intent'"
+    $event = Get-ExactReplayPsCustomObject -InputObject $observation -Path @('event_popup') -Context "Canonical event projection for '$Intent'"
+    $talk = Get-ExactReplayPsCustomObject -InputObject $observation -Path @('talk') -Context "Canonical talk projection for '$Intent'"
+    $feedback = Get-ExactReplayPsCustomObject -InputObject $observation -Path @('feedback') -Context "Canonical feedback projection for '$Intent'"
+    $screen = Get-ExactReplayPsCustomObject -InputObject $observation -Path @('screen') -Context "Canonical screen projection for '$Intent'"
+    $runReportVisible = Get-ExactReplayBoolean -InputObject $screen -Path @('run_report_visible') -Context "Canonical RunReport visibility for '$Intent'"
+    $runReport = Get-ExactReplayPsCustomObject -InputObject $screen -Path @('run_report') -Context "Canonical RunReport for '$Intent'"
+    $reportPresent = Test-ReplayPathPresent -InputObject $runReport -Path @('outcome') -Context "Canonical terminal projection for '$Intent'"
+    if ($runReportVisible -and -not $reportPresent) {
+        throw "Canonical visible RunReport for '$Intent' has no exact outcome object."
+    }
+    if (-not $runReportVisible -and $reportPresent) {
+        throw "Canonical hidden RunReport for '$Intent' exposed an outcome object."
+    }
+    $report = if ($runReportVisible) {
+        Get-ExactReplayPsCustomObject -InputObject $runReport -Path @('outcome') -Context "Canonical terminal projection for '$Intent'"
+    }
+    else {
+        $null
+    }
+    $transition = Get-ExactReplayPsCustomObject -InputObject $Result -Path @('trace') -Context "Canonical transition for '$Intent'"
+    $eventVisible = Get-ExactReplayBoolean -InputObject $event -Path @('visible') -Context "Canonical event visibility for '$Intent'"
+    $eventRenderValid = Get-ExactReplayBoolean -InputObject $event -Path @('render_valid') -Context "Canonical event render witness for '$Intent'"
+    $eventIdPresent = Test-ReplayPathPresent -InputObject $event -Path @('event_id') -Context "Canonical event id for '$Intent'"
+    $eventChoicesPresent = Test-ReplayPathPresent -InputObject $event -Path @('choice_ids') -Context "Canonical event choices for '$Intent'"
+    $eventId = Get-ExactReplayString -InputObject $event -Path @('event_id') -Context "Canonical event id for '$Intent'" -AllowMissing
+    $eventChoices = Get-ExactReplayObjectArray -InputObject $event -Path @('choice_ids') -ElementType String -Context "Canonical event choices for '$Intent'" -AllowMissing
+    if ($eventVisible -and $eventRenderValid -and
+        (-not $eventIdPresent -or [string]::IsNullOrWhiteSpace($eventId) -or -not $eventChoicesPresent)) {
+        throw "Canonical rendered event evidence for '$Intent' is incomplete."
+    }
+    if ((-not $eventVisible -or -not $eventRenderValid) -and ($eventIdPresent -or $eventChoicesPresent)) {
+        throw "Canonical hidden or invalid event evidence for '$Intent' exposed private event fields."
+    }
+    $talkVisible = Get-ExactReplayBoolean -InputObject $talk -Path @('visible') -Context "Canonical talk visibility for '$Intent'"
+    $talkExpanded = Get-ExactReplayBoolean -InputObject $talk -Path @('expanded') -Context "Canonical talk expansion for '$Intent'"
+    $talkRenderValid = Get-ExactReplayBoolean -InputObject $talk -Path @('render_valid') -Context "Canonical talk render witness for '$Intent'"
+    $talkBodyComplete = Get-ExactReplayBoolean -InputObject $talk -Path @('body_complete') -Context "Canonical talk body witness for '$Intent'"
+    $talkTypewriterPresent = Test-ReplayPathPresent -InputObject $talk -Path @('typewriter_active') -Context "Canonical talk typewriter witness for '$Intent'"
+    $talkTypewriterActive = Get-ExactReplayBoolean -InputObject $talk -Path @('typewriter_active') -Context "Canonical talk typewriter witness for '$Intent'" -AllowMissing
+    $talkIdPresent = Test-ReplayPathPresent -InputObject $talk -Path @('event_id') -Context "Canonical talk id for '$Intent'"
+    $talkChoicesPresent = Test-ReplayPathPresent -InputObject $talk -Path @('choice_ids') -Context "Canonical talk choices for '$Intent'"
+    $talkId = Get-ExactReplayString -InputObject $talk -Path @('event_id') -Context "Canonical talk id for '$Intent'" -AllowMissing
+    $talkChoices = Get-ExactReplayObjectArray -InputObject $talk -Path @('choice_ids') -ElementType String -Context "Canonical talk choices for '$Intent'" -AllowMissing
+    if ($talkVisible -and -not $talkTypewriterPresent) {
+        throw "Canonical visible talk evidence for '$Intent' has no exact typewriter witness."
+    }
+    if ($talkVisible -and $talkExpanded -and $talkRenderValid -and
+        (-not $talkIdPresent -or [string]::IsNullOrWhiteSpace($talkId) -or -not $talkChoicesPresent)) {
+        throw "Canonical rendered talk evidence for '$Intent' is incomplete."
+    }
+    if ((-not $talkVisible -or -not $talkExpanded -or -not $talkRenderValid) -and ($talkIdPresent -or $talkChoicesPresent)) {
+        throw "Canonical hidden or invalid talk evidence for '$Intent' exposed private talk fields."
+    }
+    if (-not $talkVisible -and $talkTypewriterPresent) {
+        throw "Canonical hidden talk evidence for '$Intent' exposed a typewriter witness."
+    }
+    $talkSummaryPresent = Test-ReplayPathPresent -InputObject $talk -Path @('summary') -Context "Canonical talk summary for '$Intent'"
+    $talkSummary = Get-ExactReplayString -InputObject $talk -Path @('summary') -Context "Canonical talk summary for '$Intent'" -AllowMissing
+    if ($talkVisible -and $talkExpanded -and $talkRenderValid -and $talkBodyComplete -and
+        -not $talkTypewriterActive -and -not $talkSummaryPresent) {
+        throw "Canonical complete talk evidence for '$Intent' has no exact summary."
+    }
+    if ((-not $talkVisible -or -not $talkExpanded -or -not $talkRenderValid -or -not $talkBodyComplete -or $talkTypewriterActive) -and $talkSummaryPresent) {
+        throw "Canonical incomplete talk evidence for '$Intent' exposed a summary."
+    }
+    $feedbackVisible = Get-ExactReplayBoolean -InputObject $feedback -Path @('visible') -Context "Canonical feedback visibility for '$Intent'"
+    $feedbackTitlePresent = Test-ReplayPathPresent -InputObject $feedback -Path @('title') -Context "Canonical feedback title for '$Intent'"
+    $feedbackTextPresent = Test-ReplayPathPresent -InputObject $feedback -Path @('text') -Context "Canonical feedback text for '$Intent'"
+    $feedbackTitle = Get-ExactReplayString -InputObject $feedback -Path @('title') -Context "Canonical feedback title for '$Intent'" -AllowMissing
+    $feedbackText = Get-ExactReplayString -InputObject $feedback -Path @('text') -Context "Canonical feedback text for '$Intent'" -AllowMissing
+    if ($feedbackVisible -and (-not $feedbackTitlePresent -or -not $feedbackTextPresent)) {
+        throw "Canonical visible feedback for '$Intent' is incomplete."
+    }
+    if (-not $feedbackVisible -and ($feedbackTitlePresent -or $feedbackTextPresent)) {
+        throw "Canonical hidden feedback for '$Intent' exposed feedback copy."
+    }
+    $terminalKey = if ($null -ceq $report) { '' } else { Get-ExactReplayString -InputObject $report -Path @('key') -Context "Canonical terminal key for '$Intent'" }
+    $terminalWon = if ($null -ceq $report) { $false } else { Get-ExactReplayBoolean -InputObject $report -Path @('won') -Context "Canonical terminal win witness for '$Intent'" }
     return [ordered]@{
         ordinal = $script:TraceOrdinal
         intent = $Intent
-        command = [string](Get-Value $Result @('command') '')
+        command = Get-ExactReplayString -InputObject $Result -Path @('command') -Context "Canonical command for '$Intent'"
         checkpoint = [ordered]@{
-            screen = [string](Get-Value $checkpoint @('screen') '')
-            location_id = [string](Get-Value $checkpoint @('location_id') '')
-            location_archetype = [string](Get-Value $checkpoint @('location_archetype') '')
-            bankroll = [int](Get-Value $checkpoint @('bankroll') 0)
-            chips = [int](Get-Value $checkpoint @('chips') 0)
-            heat = [int](Get-Value $checkpoint @('heat') 0)
+            screen = Get-ExactReplayString -InputObject $checkpoint -Path @('screen') -Context "Canonical checkpoint screen for '$Intent'"
+            location_id = Get-ExactReplayString -InputObject $checkpoint -Path @('location_id') -Context "Canonical checkpoint location for '$Intent'"
+            location_archetype = Get-ExactReplayString -InputObject $checkpoint -Path @('location_archetype') -Context "Canonical checkpoint archetype for '$Intent'"
+            bankroll = Get-ExactReplayInt32 -InputObject $checkpoint -Path @('bankroll') -Context "Canonical checkpoint bankroll for '$Intent'"
+            chips = Get-ExactReplayInt32 -InputObject $checkpoint -Path @('chips') -Context "Canonical checkpoint chips for '$Intent'"
+            heat = Get-ExactReplayInt32 -InputObject $checkpoint -Path @('heat') -Context "Canonical checkpoint heat for '$Intent'"
         }
         game = [ordered]@{
-            id = [string](Get-Value $game @('game_id') '')
-            phase = [string](Get-Value $game @('phase') '')
-            outcome = [string](Get-Value $game @('outcome_message') '')
-            selected_stake = [int](Get-Value $game @('selected_stake') 0)
-            player_hands = @(Get-Array (Get-Value $game @('player_hands') @()))
-            dealer_up_card = Get-Value $game @('dealer_up_card') ([ordered]@{})
-            dealer_hole_visible = [bool](Get-Value $game @('dealer_hole_visible') $false)
-            dealer_cards = @(Get-Array (Get-Value $game @('dealer_cards') @()))
-            boss_hand_number = [int](Get-Value $game @('boss_hand_number') 0)
-            boss_tell = [string](Get-Value $game @('boss_tell') '')
+            id = Get-ExactReplayString -InputObject $game -Path @('game_id') -Context "Canonical game id for '$Intent'" -AllowMissing
+            phase = Get-ExactReplayString -InputObject $game -Path @('phase') -Context "Canonical game phase for '$Intent'" -AllowMissing
+            outcome = Get-ExactReplayString -InputObject $game -Path @('outcome_message') -Context "Canonical game outcome for '$Intent'" -AllowMissing
+            selected_stake = Get-ExactReplayInt32 -InputObject $game -Path @('selected_stake') -Context "Canonical selected stake for '$Intent'" -AllowMissing
+            player_hands = Get-ExactReplayObjectArray -InputObject $game -Path @('player_hands') -ElementType PSCustomObject -Context "Canonical player hands for '$Intent'"
+            dealer_up_card = Get-ExactReplayPsCustomObject -InputObject $game -Path @('dealer_up_card') -Context "Canonical dealer up-card for '$Intent'"
+            dealer_hole_visible = Get-ExactReplayBoolean -InputObject $game -Path @('dealer_hole_visible') -Context "Canonical dealer-hole witness for '$Intent'" -AllowMissing
+            dealer_cards = Get-ExactReplayObjectArray -InputObject $game -Path @('dealer_cards') -ElementType PSCustomObject -Context "Canonical dealer cards for '$Intent'"
+            boss_hand_number = Get-ExactReplayInt32 -InputObject $game -Path @('boss_hand_number') -Context "Canonical boss hand number for '$Intent'" -AllowMissing
+            boss_tell = Get-ExactReplayString -InputObject $game -Path @('boss_tell') -Context "Canonical boss tell for '$Intent'" -AllowMissing
         }
         event = [ordered]@{
-            id = [string](Get-Value $event @('event_id') '')
-            choices = @(Get-Array (Get-Value $event @('choice_ids') @()))
+            id = $eventId
+            choices = $eventChoices
         }
         talk = [ordered]@{
-            id = [string](Get-Value $talk @('event_id') '')
-            choices = @(Get-Array (Get-Value $talk @('choice_ids') @()))
+            id = $talkId
+            summary = $talkSummary
+            choices = $talkChoices
         }
         feedback = [ordered]@{
-            object_id = [string](Get-Value $feedback @('object_id') '')
-            text = [string](Get-Value $feedback @('text') '')
-            bankroll_delta = [int](Get-Value $feedback @('bankroll_delta') 0)
-            suspicion_delta = [int](Get-Value $feedback @('suspicion_delta') 0)
+            title = $feedbackTitle
+            text = $feedbackText
         }
         transition = [ordered]@{
-            before_fingerprint = [string](Get-Value $transition @('before_fingerprint') '')
-            after_fingerprint = [string](Get-Value $transition @('after_fingerprint') '')
-            public_state_changed = [bool](Get-Value $transition @('public_state_changed') $false)
-            screen_changed = [bool](Get-Value $transition @('screen_changed') $false)
-            location_changed = [bool](Get-Value $transition @('location_changed') $false)
-            modal_changed = [bool](Get-Value $transition @('modal_changed') $false)
-            economy_changed = [bool](Get-Value $transition @('economy_changed') $false)
-            heat_changed = [bool](Get-Value $transition @('heat_changed') $false)
-            clock_changed = [bool](Get-Value $transition @('clock_changed') $false)
-            objective_changed = [bool](Get-Value $transition @('objective_changed') $false)
+            before_fingerprint = Get-ExactReplayString -InputObject $transition -Path @('before_fingerprint') -Context "Canonical pre-transition fingerprint for '$Intent'"
+            after_fingerprint = Get-ExactReplayString -InputObject $transition -Path @('after_fingerprint') -Context "Canonical post-transition fingerprint for '$Intent'"
+            public_state_changed = Get-ExactReplayBoolean -InputObject $transition -Path @('public_state_changed') -Context "Canonical public-state transition for '$Intent'"
+            screen_changed = Get-ExactReplayBoolean -InputObject $transition -Path @('screen_changed') -Context "Canonical screen transition for '$Intent'"
+            location_changed = Get-ExactReplayBoolean -InputObject $transition -Path @('location_changed') -Context "Canonical location transition for '$Intent'"
+            modal_changed = Get-ExactReplayBoolean -InputObject $transition -Path @('modal_changed') -Context "Canonical modal transition for '$Intent'"
+            economy_changed = Get-ExactReplayBoolean -InputObject $transition -Path @('economy_changed') -Context "Canonical economy transition for '$Intent'"
+            heat_changed = Get-ExactReplayBoolean -InputObject $transition -Path @('heat_changed') -Context "Canonical heat transition for '$Intent'"
         }
         terminal = [ordered]@{
-            key = [string](Get-Value $report @('key') '')
-            won = [bool](Get-Value $report @('won') $false)
+            key = $terminalKey
+            won = $terminalWon
         }
     }
 }
@@ -2995,30 +3568,34 @@ function Get-CleanSilverPlayersCardProjection {
     $null = Choose-VisibleChoice -ChoiceId 'open_card' -Intent "open Linda's rendered Silver Players Card ledger for persistence evidence"
     Wait-Frames -Frames 8
 
-    $talk = Get-Value $script:LastObservation @('talk') $null
-    $talkVisible = Get-Value $talk @('visible') $null
-    $talkExpanded = Get-Value $talk @('expanded') $null
-    $talkRenderValid = Get-Value $talk @('render_valid') $null
-    $talkBodyComplete = Get-Value $talk @('body_complete') $null
-    $talkTypewriterActive = Get-Value $talk @('typewriter_active') $null
-    $talkEventId = Get-Value $talk @('event_id') $null
-    $summary = Get-Value $talk @('summary') $null
-    if ($talkVisible -isnot [bool] -or -not [bool]$talkVisible -or
-        $talkExpanded -isnot [bool] -or -not [bool]$talkExpanded -or
-        $talkRenderValid -isnot [bool] -or -not [bool]$talkRenderValid -or
-        $talkBodyComplete -isnot [bool] -or -not [bool]$talkBodyComplete -or
-        $talkTypewriterActive -isnot [bool] -or [bool]$talkTypewriterActive -or
-        $talkEventId -isnot [string] -or [string]$talkEventId -cne 'dialogue:linda_cage_services' -or
-        $summary -isnot [string] -or -not ([string]$summary).StartsWith('Silver. Gold:', [StringComparison]::Ordinal)) {
+    $talk = Get-ExactReplayPsCustomObject -InputObject $script:LastObservation -Path @('talk') -Context "Clean Players Card talk projection"
+    $talkVisible = Get-ExactReplayBoolean -InputObject $talk -Path @('visible') -Context 'Clean Players Card talk visibility'
+    $talkExpanded = Get-ExactReplayBoolean -InputObject $talk -Path @('expanded') -Context 'Clean Players Card talk expansion'
+    $talkRenderValid = Get-ExactReplayBoolean -InputObject $talk -Path @('render_valid') -Context 'Clean Players Card render witness'
+    $talkBodyComplete = Get-ExactReplayBoolean -InputObject $talk -Path @('body_complete') -Context 'Clean Players Card body witness'
+    $talkTypewriterActive = Get-ExactReplayBoolean -InputObject $talk -Path @('typewriter_active') -Context 'Clean Players Card typewriter witness'
+    $talkEventId = Get-ExactReplayString -InputObject $talk -Path @('event_id') -Context 'Clean Players Card talk event id'
+    $summary = Get-ExactReplayString -InputObject $talk -Path @('summary') -Context 'Clean Players Card summary'
+    if (-not $talkVisible -or
+        -not $talkExpanded -or
+        -not $talkRenderValid -or
+        -not $talkBodyComplete -or
+        $talkTypewriterActive -or
+        $talkEventId -cne 'dialogue:linda_cage_services' -or
+        -not $summary.StartsWith('Silver. Gold:', [StringComparison]::Ordinal)) {
         throw "The Clean persistence checkpoint did not render Linda's exact Silver-to-Gold Players Card ledger."
     }
 
-    $choiceIds = @(Get-Array (Get-Value $talk @('choice_ids') @()))
+    $choiceIds = Get-ExactReplayObjectArray -InputObject $talk -Path @('choice_ids') -ElementType String -Context "Clean Players Card choice ids"
     $expectedChoiceIds = @('cage_claim_card', 'cage_ambient', 'back_main')
     if (($choiceIds -join ',') -cne ($expectedChoiceIds -join ',')) {
         throw "Linda's Silver Players Card ledger exposed unexpected rendered choices: $($choiceIds -join ', ')."
     }
-    $renderedChoices = @(Get-PublicTalkChoices)
+    $renderedChoices = Get-ExactReplayObjectArray `
+        -InputObject $script:LastResult `
+        -Path @('look', 'clickable', 'talk_choices') `
+        -ElementType PSCustomObject `
+        -Context 'Clean Players Card rendered choices'
     if ($renderedChoices.Count -cne $expectedChoiceIds.Count) {
         throw "Linda's Silver Players Card ledger did not expose all three exact rendered controls."
     }
@@ -3029,47 +3606,49 @@ function Get-CleanSilverPlayersCardProjection {
     $projectionChoices = @()
     for ($index = 0; $index -lt $expectedChoiceIds.Count; $index++) {
         $choice = $renderedChoices[$index]
-        $choiceId = Get-Value $choice @('id') $null
-        $choiceEventId = Get-Value $choice @('event_id') $null
-        $choiceLabel = Get-Value $choice @('label') $null
-        $choiceEnabled = Get-Value $choice @('enabled') $null
+        $choiceId = Get-ExactReplayString -InputObject $choice -Path @('id') -Context "Clean Players Card choice $index id"
+        $choiceEventId = Get-ExactReplayString -InputObject $choice -Path @('event_id') -Context "Clean Players Card choice $index event id"
+        $choiceLabel = Get-ExactReplayString -InputObject $choice -Path @('label') -Context "Clean Players Card choice $index label"
+        $choiceEnabled = Get-ExactReplayBoolean -InputObject $choice -Path @('enabled') -Context "Clean Players Card choice $index enabled witness"
         $expectedChoiceId = $expectedChoiceIds[$index]
         $labelIsExact = if ($expectedChoiceId -ceq 'cage_claim_card') {
-            $choiceLabel -is [string] -and
-                ([string]$choiceLabel).StartsWith("Claim Players Card`n", [StringComparison]::Ordinal) -and
-                ([string]$choiceLabel).Length -gt 'Claim Players Card'.Length + 1
+            $choiceLabel.StartsWith("Claim Players Card`n", [StringComparison]::Ordinal) -and
+                $choiceLabel.Length -gt 'Claim Players Card'.Length + 1
         }
         else {
-            $choiceLabel -is [string] -and [string]$choiceLabel -ceq [string]$expectedLabels[$expectedChoiceId]
+            $choiceLabel -ceq [string]$expectedLabels[$expectedChoiceId]
         }
-        if ($choiceId -isnot [string] -or [string]$choiceId -cne $expectedChoiceId -or
-            $choiceEventId -isnot [string] -or [string]$choiceEventId -cne 'dialogue:linda_cage_services' -or
-            -not $labelIsExact -or
-            $choiceEnabled -isnot [bool]) {
+        if ($choiceId -cne $expectedChoiceId -or
+            $choiceEventId -cne 'dialogue:linda_cage_services' -or
+            -not $labelIsExact) {
             throw "Linda's Silver Players Card control '$expectedChoiceId' lacked its exact rendered public binding."
         }
         $projectionChoices += [pscustomobject][ordered]@{
-            id = [string]$choiceId
-            label = [string]$choiceLabel
-            enabled = [bool]$choiceEnabled
+            id = $choiceId
+            label = $choiceLabel
+            enabled = $choiceEnabled
         }
     }
-    if ([bool]$projectionChoices[0].enabled -or
-        -not [bool]$projectionChoices[1].enabled -or
-        -not [bool]$projectionChoices[2].enabled) {
+    if ($projectionChoices[0].enabled -or
+        -not $projectionChoices[1].enabled -or
+        -not $projectionChoices[2].enabled) {
         throw "Linda's post-Silver ledger did not show Gold as pending with only Ask Linda and Back enabled."
     }
 
+    $locationArchetype = Get-ExactReplayString `
+        -InputObject $script:LastObservation `
+        -Path @('environment', 'archetype_id') `
+        -Context "Clean Players Card location archetype"
     $projection = [ordered]@{
-        location_archetype = [string](Get-Value $script:LastObservation @('environment', 'archetype_id') '')
-        talk_event_id = [string]$talkEventId
+        location_archetype = $locationArchetype
+        talk_event_id = $talkEventId
         tier_witness = 'Silver'
         next_tier_witness = 'Gold'
-        summary = [string]$summary
-        choice_ids = @($choiceIds | ForEach-Object { [string]$_ })
+        summary = $summary
+        choice_ids = @($choiceIds)
         choices = $projectionChoices
     }
-    if ([string]$projection.location_archetype -cne 'grand_casino_cage') {
+    if ($projection.location_archetype -cne 'grand_casino_cage') {
         throw "Linda's rendered Silver Players Card ledger was not observed in the Grand Casino Cage."
     }
     $null = Choose-VisibleChoice -ChoiceId 'back_main' -Intent "return from Linda's rendered Silver Players Card ledger"
@@ -3080,20 +3659,47 @@ function Get-CleanSilverPlayersCardProjection {
 
 
 function Get-PersistenceCheckpoint {
-    $hud = Get-Value $script:LastObservation @('status_hud') $null
-    $game = Get-Value $script:LastObservation @('game') $null
+    $game = Get-ExactReplayPsCustomObject -InputObject $script:LastObservation -Path @('game') -Context 'Persistence checkpoint game projection'
     return [ordered]@{
-        location_id = [string](Get-Value $script:LastObservation @('environment', 'id') '')
-        location_archetype = [string](Get-Value $script:LastObservation @('environment', 'archetype_id') '')
-        world_node_id = [string](Get-Value $script:LastObservation @('environment', 'world_node_id') '')
+        location_id = Get-ExactReplayString -InputObject $script:LastObservation -Path @('environment', 'id') -Context 'Persistence checkpoint location id'
+        location_archetype = Get-ExactReplayString -InputObject $script:LastObservation -Path @('environment', 'archetype_id') -Context 'Persistence checkpoint location archetype'
+        world_node_id = Get-ExactReplayString -InputObject $script:LastObservation -Path @('environment', 'world_node_id') -Context 'Persistence checkpoint world node id'
         bankroll = Get-RenderedHudInteger -Name bankroll -Context 'Persistence checkpoint'
         chips = Get-RenderedHudInteger -Name chips -Context 'Persistence checkpoint'
         heat = Get-RenderedHudInteger -Name heat_level -Context 'Persistence checkpoint'
-        game_id = [string](Get-Value $game @('game_id') '')
-        game_phase = [string](Get-Value $game @('phase') '')
-        boss_hand_number = [int](Get-Value $game @('boss_hand_number') 0)
-        boss_player_stack = [int](Get-Value $game @('boss_player_stack') 0)
-        boss_rourke_stack = [int](Get-Value $game @('boss_rourke_stack') 0)
+        game_id = Get-ExactReplayString -InputObject $game -Path @('game_id') -Context 'Persistence checkpoint game id' -AllowMissing
+        game_phase = Get-ExactReplayString -InputObject $game -Path @('phase') -Context 'Persistence checkpoint game phase' -AllowMissing
+        boss_hand_number = Get-ExactReplayInt32 -InputObject $game -Path @('boss_hand_number') -Context 'Persistence checkpoint boss hand number' -AllowMissing
+        boss_player_stack = Get-ExactReplayInt32 -InputObject $game -Path @('boss_player_stack') -Context 'Persistence checkpoint player stack' -AllowMissing
+        boss_rourke_stack = Get-ExactReplayInt32 -InputObject $game -Path @('boss_rourke_stack') -Context 'Persistence checkpoint Rourke stack' -AllowMissing
+    }
+}
+
+
+function Assert-CheatRourkeDuelBeforeHandOne {
+    param([Parameter(Mandatory = $true)][string]$Context)
+
+    $game = (Get-Rw062RequiredPublicPropertyDescriptor `
+        -InputObject $script:LastObservation `
+        -Name 'game' `
+        -Context "Rourke's duel $Context observation").Value
+    $look = (Get-Rw062RequiredPublicPropertyDescriptor `
+        -InputObject $script:LastResult `
+        -Name 'look' `
+        -Context "Rourke's duel $Context bridge result").Value
+    $clickable = (Get-Rw062RequiredPublicPropertyDescriptor `
+        -InputObject $look `
+        -Name 'clickable' `
+        -Context "Rourke's duel $Context public look").Value
+    $surfaceActions = (Get-Rw062RequiredPublicPropertyDescriptor `
+        -InputObject $clickable `
+        -Name 'game_surface_actions' `
+        -Context "Rourke's duel $Context public clickable surface").Value
+    $selection = Select-CheatReplayDuelCheckpointAction -Game $game -SurfaceActions $surfaceActions
+    if ($selection -isnot [System.Management.Automation.PSCustomObject] -or
+        $selection.action -isnot [string] -or $selection.action -cne 'blackjack_deal' -or
+        $selection.index -isnot [int32] -or $selection.index -ne 0) {
+        throw "Rourke's duel $Context did not return the exact public Deal selection."
     }
 }
 
@@ -3129,6 +3735,12 @@ function Assert-SaveRelaunchContinue {
     if ($Ending -ceq 'clean' -and $Milestone -cne 'Silver Players Card') {
         throw "The Clean route may retain persistence evidence only at the exact Silver Players Card milestone."
     }
+    if ($Ending -ceq 'cheat' -and $Milestone -cne 'Rourke duel before hand one') {
+        throw "The Cheat route may retain persistence evidence only before hand one of Rourke's active, dealable duel."
+    }
+    if ($Ending -ceq 'cheat') {
+        Assert-CheatRourkeDuelBeforeHandOne -Context 'before Save'
+    }
     $beforeCleanPlayersCard = if ($Ending -ceq 'clean') { Get-CleanSilverPlayersCardProjection } else { $null }
     $before = [ordered]@{
         checkpoint = Get-PersistenceCheckpoint
@@ -3153,6 +3765,9 @@ function Assert-SaveRelaunchContinue {
     $null = Click-Button -Text 'CONTINUE' -Intent "continue the saved $Milestone run after a full relaunch"
     Wait-Frames -Frames 45
     Clear-VisibleCoach
+    if ($Ending -ceq 'cheat') {
+        Assert-CheatRourkeDuelBeforeHandOne -Context 'after relaunch and Continue'
+    }
     $afterCleanPlayersCard = if ($Ending -ceq 'clean') { Get-CleanSilverPlayersCardProjection } else { $null }
     $after = [ordered]@{
         checkpoint = Get-PersistenceCheckpoint
@@ -3170,14 +3785,14 @@ function Assert-SaveRelaunchContinue {
 
 
 function Assert-TerminalOutcome {
-    $screenName = [string](Get-Value $script:LastObservation @('screen', 'screen') '')
-    $runReportVisible = Get-Value $script:LastObservation @('screen', 'run_report_visible') $null
-    $outcome = [string](Get-Value $script:LastObservation @('screen', 'run_report', 'outcome', 'key') '')
-    $won = Get-Value $script:LastObservation @('screen', 'run_report', 'outcome', 'won') $null
-    if ($screenName -cne 'VICTORY' -or $runReportVisible -isnot [bool] -or -not [bool]$runReportVisible) {
+    $screenName = Get-ExactReplayString -InputObject $script:LastObservation -Path @('screen', 'screen') -Context "Terminal screen for '$Ending'"
+    $runReportVisible = Get-ExactReplayBoolean -InputObject $script:LastObservation -Path @('screen', 'run_report_visible') -Context "Terminal RunReport visibility for '$Ending'"
+    $outcome = Get-ExactReplayString -InputObject $script:LastObservation -Path @('screen', 'run_report', 'outcome', 'key') -Context "Terminal outcome for '$Ending'"
+    $won = Get-ExactReplayBoolean -InputObject $script:LastObservation -Path @('screen', 'run_report', 'outcome', 'won') -Context "Terminal win witness for '$Ending'"
+    if ($screenName -cne 'VICTORY' -or -not $runReportVisible) {
         throw "Ending '$Ending' did not render the public VICTORY RunReport surface (screen='$screenName', visible=$runReportVisible)."
     }
-    if ($won -isnot [bool] -or -not [bool]$won -or $outcome -cnotin $ExpectedOutcomes[$Ending]) {
+    if (-not $won -or $outcome -cnotin $ExpectedOutcomes[$Ending]) {
         throw "Ending '$Ending' produced unexpected public outcome '$outcome' (won=$won)."
     }
     if (-not $script:MidpointSaved) {
@@ -3196,11 +3811,11 @@ function Write-FinalPublicCheckpoint {
     # persist its outcome and visible economy explicitly into both hash streams.
     $result = Invoke-BridgeCommand -Command 'look' -Intent 'capture the final public terminal checkpoint' -ObservationOnly
     $outcome = Assert-TerminalOutcome
-    $observation = Get-Value $result @('look', 'observable') $null
-    $publicFingerprint = [string](Get-Value $result @('trace', 'after_fingerprint') '')
-    $checkpointFingerprint = [string](Get-Value $observation @('checkpoint_fingerprint') '')
-    $observedSeed = [string](Get-Value $observation @('screen', 'run_report', 'seed') '')
-    if ($publicFingerprint -notmatch '^[a-f0-9]{64}$' -or $checkpointFingerprint -notmatch '^[a-f0-9]{64}$') {
+    $observation = Get-ExactReplayPsCustomObject -InputObject $result -Path @('look', 'observable') -Context 'Final public observation'
+    $publicFingerprint = Get-ExactReplayString -InputObject $result -Path @('trace', 'after_fingerprint') -Context 'Final public fingerprint'
+    $checkpointFingerprint = Get-ExactReplayString -InputObject $observation -Path @('checkpoint_fingerprint') -Context 'Final checkpoint fingerprint'
+    $observedSeed = Get-ExactReplayString -InputObject $observation -Path @('screen', 'run_report', 'seed') -Context 'Final observed seed'
+    if ($publicFingerprint -cnotmatch '^[a-f0-9]{64}$' -or $checkpointFingerprint -cnotmatch '^[a-f0-9]{64}$') {
         throw 'Final terminal observation did not publish complete authenticated public fingerprints.'
     }
     if ($observedSeed -cne $Seed) {
@@ -3210,7 +3825,7 @@ function Write-FinalPublicCheckpoint {
         schema_version = 1
         record_kind = 'final_public_checkpoint'
         observed_seed = $observedSeed
-        outcome_key = [string]$outcome
+        outcome_key = $outcome
         won = $true
         public_fingerprint = $publicFingerprint
         checkpoint_fingerprint = $checkpointFingerprint
@@ -3218,12 +3833,14 @@ function Write-FinalPublicCheckpoint {
         chips = Get-RenderedHudInteger -Name chips -Context 'Final terminal checkpoint'
         heat = Get-RenderedHudInteger -Name heat_level -Context 'Final terminal checkpoint'
     }
-    $finalJson = $final | ConvertTo-Json -Compress
+    $finalObject = [pscustomobject]$final
+    Assert-ExactFinalPublicCheckpoint -Checkpoint $finalObject -ExpectedSeed $Seed -Context 'Final public checkpoint'
+    $finalJson = $finalObject | ConvertTo-Json -Compress
     Add-Content -LiteralPath $script:TranscriptPath -Value $finalJson -Encoding utf8
     Add-Content -LiteralPath $script:MoneyCurvePath -Value $finalJson -Encoding utf8
     $finalPath = Join-Path $script:RunRoot 'final_public_checkpoint.json'
-    $final | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $finalPath -Encoding utf8
-    return [pscustomobject]$final
+    $finalObject | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $finalPath -Encoding utf8
+    return $finalObject
 }
 
 
@@ -3385,13 +4002,6 @@ function Invoke-CheatEndingRoute {
                 throw "Rourke's showdown stopped before the duel became publicly active."
             }
         }
-    }
-    if (-not [bool](Get-Value $script:LastObservation @('game', 'boss_duel_active') $false)) {
-        throw "Rourke's five-hand duel never became publicly active."
-    }
-    if ([int](Get-Value $script:LastObservation @('game', 'boss_hand_number') 0) -cne 1 -or
-        -not [bool](Get-Value $script:LastObservation @('game', 'can_deal') $false)) {
-        throw "Rourke's duel is not visibly waiting before hand one at the required persistence checkpoint."
     }
     Assert-SaveRelaunchContinue -Milestone 'Rourke duel before hand one'
 
@@ -3859,26 +4469,53 @@ function Complete-CountIdentitySessions {
 function Get-PlanningTableProjection {
     Select-EventObject -EventId 'crew_planning_table'
     $rows = @()
-    foreach ($row in Get-RoomActions) {
-        $emitId = [string](Get-Value $row @('emit_object_id') '')
+    $roomActions = Get-ExactReplayObjectArray `
+        -InputObject $script:LastResult `
+        -Path @('look', 'clickable', 'room_actions') `
+        -ElementType PSCustomObject `
+        -Context 'Heist planning-table room actions'
+    foreach ($row in $roomActions) {
+        $emitId = Get-ExactReplayString -InputObject $row -Path @('emit_object_id') -Context 'Heist planning-table emitted action id'
         if (-not $emitId.StartsWith('event_response:crew_planning_table:', [StringComparison]::Ordinal)) { continue }
-        $enabled = Get-Value $row @('enabled') $null
-        $rendered = Get-Value $row @('rendered') $null
-        if ($enabled -isnot [bool] -or $rendered -isnot [bool]) {
-            throw "Planning row '$emitId' has no exact rendered/enabled public witnesses."
+        $choiceId = $emitId.Substring('event_response:crew_planning_table:'.Length)
+        if ([string]::IsNullOrWhiteSpace($choiceId)) {
+            throw "Planning row '$emitId' has no exact choice-id suffix."
         }
+        $label = Get-ExactReplayString -InputObject $row -Path @('label') -Context "Planning row '$emitId' label"
+        $enabled = Get-ExactReplayBoolean -InputObject $row -Path @('enabled') -Context "Planning row '$emitId' enabled witness"
+        $rendered = Get-ExactReplayBoolean -InputObject $row -Path @('rendered') -Context "Planning row '$emitId' rendered witness"
+        $disabledReason = Get-ExactReplayString -InputObject $row -Path @('disabled_reason') -Context "Planning row '$emitId' disabled reason"
         $rows += [pscustomobject][ordered]@{
-            choice_id = $emitId.Substring('event_response:crew_planning_table:'.Length)
-            label = [string](Get-Value $row @('label') '')
-            enabled = [bool]$enabled
-            rendered = [bool]$rendered
-            disabled_reason = [string](Get-Value $row @('disabled_reason') '')
+            choice_id = $choiceId
+            label = $label
+            enabled = $enabled
+            rendered = $rendered
+            disabled_reason = $disabledReason
         }
     }
     if ($rows.Count -ceq 0) {
         throw 'The planning table exposes no public room-action rows with rendered witnesses.'
     }
-    return @($rows | Sort-Object choice_id)
+    $choiceIds = [string[]]@($rows | ForEach-Object { $_.choice_id })
+    $uniqueChoiceIds = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+    foreach ($choiceId in $choiceIds) {
+        if (-not $uniqueChoiceIds.Add($choiceId)) {
+            throw "The planning table exposes duplicate exact choice id '$choiceId'."
+        }
+    }
+    [Array]::Sort($choiceIds, [StringComparer]::Ordinal)
+    $sortedRows = @(
+        foreach ($choiceId in $choiceIds) {
+            @($rows | Where-Object { $_.choice_id -ceq $choiceId })[0]
+        }
+    )
+    $countLocks = @($sortedRows | Where-Object {
+        $_.choice_id -ceq 'lock_the_count' -and $_.enabled -and $_.rendered
+    })
+    if ($countLocks.Count -cne 1) {
+        throw 'The planning table must expose exactly one rendered and enabled Count lock.'
+    }
+    return $sortedRows
 }
 
 
@@ -4629,6 +5266,7 @@ if ($Ending -ceq 'heist') {
     $heistSeedPreflight = Invoke-HeistSeedPreflight -OutputPath (Join-Path $invocationRoot 'heist_seed_preflight.json')
 }
 $runSummaries = @()
+$validatedRunReceipts = @()
 $referenceTranscriptHash = ''
 $referenceMoneyHash = ''
 $referenceCheckpointBeforeHash = ''
@@ -4686,12 +5324,20 @@ for ($iteration = 1; $iteration -le $Repeat; $iteration++) {
         $checkpointBeforeHash = if (Test-Path -LiteralPath $checkpointBeforePath -PathType Leaf) { (Get-FileHash -LiteralPath $checkpointBeforePath -Algorithm SHA256).Hash.ToLowerInvariant() } else { '' }
         $checkpointAfterHash = if (Test-Path -LiteralPath $checkpointAfterPath -PathType Leaf) { (Get-FileHash -LiteralPath $checkpointAfterPath -Algorithm SHA256).Hash.ToLowerInvariant() } else { '' }
         $checkpointEvidenceComplete = $script:MidpointSaved -and
-            $checkpointBeforeHash -match '^[a-f0-9]{64}$' -and
-            $checkpointAfterHash -match '^[a-f0-9]{64}$' -and
+            $checkpointBeforeHash -cmatch '^[a-f0-9]{64}$' -and
+            $checkpointAfterHash -cmatch '^[a-f0-9]{64}$' -and
             $checkpointBeforeHash -ceq $checkpointAfterHash
         if ($passed -and -not $checkpointEvidenceComplete) {
             $passed = $false
             $failureMessage = 'Successful Save -> process-exit -> Continue evidence is missing, unhashed, or unequal.'
+            $finalPublicCheckpoint = $null
+        }
+        $summaryOutcome = ''
+        $summaryObservedSeed = ''
+        if ($passed) {
+            Assert-ExactFinalPublicCheckpoint -Checkpoint $finalPublicCheckpoint -ExpectedSeed $Seed -Context "Replay child $iteration final checkpoint"
+            $summaryOutcome = Get-ExactReplayString -InputObject $finalPublicCheckpoint -Path @('outcome_key') -Context "Replay child $iteration outcome"
+            $summaryObservedSeed = Get-ExactReplayString -InputObject $finalPublicCheckpoint -Path @('observed_seed') -Context "Replay child $iteration terminal seed"
         }
         $runSummary = [ordered]@{
             role = 'child_development_iteration'
@@ -4706,8 +5352,8 @@ for ($iteration = 1; $iteration -le $Repeat; $iteration++) {
             seed = $Seed
             session = $script:Session
             passed = $passed
-            outcome = if ($null -cne $finalPublicCheckpoint) { [string]$finalPublicCheckpoint.outcome_key } else { '' }
-            observed_terminal_seed = if ($null -cne $finalPublicCheckpoint) { [string]$finalPublicCheckpoint.observed_seed } else { '' }
+            outcome = $summaryOutcome
+            observed_terminal_seed = $summaryObservedSeed
             action_count = $script:ActionCount
             midpoint_save_relaunch_continue = $script:MidpointSaved
             heist_seed_preflight = $heistSeedPreflight
@@ -4726,19 +5372,27 @@ for ($iteration = 1; $iteration -le $Repeat; $iteration++) {
             final_public_checkpoint = $finalPublicCheckpoint
             failure = $failureMessage
         }
-        $runSummary | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath (Join-Path $script:RunRoot 'summary.json') -Encoding utf8
-        $runSummaries += [pscustomobject]$runSummary
+        $runSummaryObject = [pscustomobject]$runSummary
+        $runReceipt = Assert-ExactReplayRunSummary `
+            -Summary $runSummaryObject `
+            -ExpectedEnding $Ending `
+            -ExpectedSeed $Seed `
+            -ExpectedIteration ([int32]$iteration)
+        $runSummaryObject | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath (Join-Path $script:RunRoot 'summary.json') -Encoding utf8
+        $runSummaries += $runSummaryObject
+        $validatedRunReceipts += $runReceipt
     }
 
-    if (-not [bool]$runSummaries[$runSummaries.Count - 1].passed) {
-        throw [string]$runSummaries[$runSummaries.Count - 1].failure
+    $latestRunReceipt = $validatedRunReceipts[$validatedRunReceipts.Count - 1]
+    if ($latestRunReceipt.passed -isnot [bool] -or -not $latestRunReceipt.passed) {
+        throw $latestRunReceipt.failure
     }
 
-    $currentTranscriptHash = [string]$runSummaries[$runSummaries.Count - 1].transcript_sha256
-    $currentMoneyHash = [string]$runSummaries[$runSummaries.Count - 1].money_curve_sha256
-    $currentCheckpointBeforeHash = [string]$runSummaries[$runSummaries.Count - 1].persistence_checkpoint_before_sha256
-    $currentCheckpointAfterHash = [string]$runSummaries[$runSummaries.Count - 1].persistence_checkpoint_after_sha256
-    $currentFinalCheckpointJson = $runSummaries[$runSummaries.Count - 1].final_public_checkpoint | ConvertTo-Json -Depth 10 -Compress
+    $currentTranscriptHash = $latestRunReceipt.transcript_sha256
+    $currentMoneyHash = $latestRunReceipt.money_curve_sha256
+    $currentCheckpointBeforeHash = $latestRunReceipt.persistence_checkpoint_before_sha256
+    $currentCheckpointAfterHash = $latestRunReceipt.persistence_checkpoint_after_sha256
+    $currentFinalCheckpointJson = $latestRunReceipt.final_public_checkpoint | ConvertTo-Json -Depth 10 -Compress
     if ($iteration -ceq 1) {
         $referenceTranscriptHash = $currentTranscriptHash
         $referenceMoneyHash = $currentMoneyHash
@@ -4756,13 +5410,15 @@ for ($iteration = 1; $iteration -le $Repeat; $iteration++) {
 }
 
 $deterministic = $Repeat -ceq 2 -and
-    @($runSummaries | Select-Object -ExpandProperty transcript_sha256 -Unique).Count -ceq 1 -and
-    @($runSummaries | Select-Object -ExpandProperty money_curve_sha256 -Unique).Count -ceq 1 -and
-    @($runSummaries | Select-Object -ExpandProperty persistence_checkpoint_before_sha256 -Unique).Count -ceq 1 -and
-    @($runSummaries | Select-Object -ExpandProperty persistence_checkpoint_after_sha256 -Unique).Count -ceq 1 -and
-    @($runSummaries | ForEach-Object { $_.final_public_checkpoint | ConvertTo-Json -Depth 10 -Compress } | Select-Object -Unique).Count -ceq 1
-$checkpointEvidenceComplete = $runSummaries.Count -eq $Repeat -and
-    @($runSummaries | Where-Object { -not [bool]$_.persistence_checkpoint_complete }).Count -ceq 0
+    @($validatedRunReceipts | Select-Object -ExpandProperty transcript_sha256 -Unique).Count -ceq 1 -and
+    @($validatedRunReceipts | Select-Object -ExpandProperty money_curve_sha256 -Unique).Count -ceq 1 -and
+    @($validatedRunReceipts | Select-Object -ExpandProperty persistence_checkpoint_before_sha256 -Unique).Count -ceq 1 -and
+    @($validatedRunReceipts | Select-Object -ExpandProperty persistence_checkpoint_after_sha256 -Unique).Count -ceq 1 -and
+    @($validatedRunReceipts | ForEach-Object { $_.final_public_checkpoint | ConvertTo-Json -Depth 10 -Compress } | Select-Object -Unique).Count -ceq 1
+$checkpointEvidenceComplete = $validatedRunReceipts.Count -eq $Repeat -and
+    @($validatedRunReceipts | Where-Object {
+        $_.persistence_checkpoint_complete -isnot [bool] -or -not $_.persistence_checkpoint_complete
+    }).Count -ceq 0
 # Repeats inside this direct runner inherit one caller APPDATA/LOCALAPPDATA
 # environment. They may prove deterministic behavior for development, but only
 # the outer launcher can create and attest two independent profiles.
@@ -4775,7 +5431,7 @@ $finalSummary = [ordered]@{
     fixed_repeat_qualification_authority = 'outer_independent_profile_aggregate_only'
     ending = $Ending
     seed = $Seed
-    observed_terminal_seeds = @($runSummaries | Select-Object -ExpandProperty observed_terminal_seed)
+    observed_terminal_seeds = @($validatedRunReceipts | Select-Object -ExpandProperty observed_terminal_seed)
     repeat = $Repeat
     deterministic = $deterministic
     checkpoint_evidence_complete = $checkpointEvidenceComplete
@@ -4789,6 +5445,12 @@ $finalSummary = [ordered]@{
     evidence_root = $invocationRoot
     runs = $runSummaries
 }
+$finalSummaryObject = [pscustomobject]$finalSummary
+Assert-ExactReplayFinalSummary `
+    -Summary $finalSummaryObject `
+    -ExpectedEnding $Ending `
+    -ExpectedSeed $Seed `
+    -ExpectedRepeat ([int32]$Repeat)
 $summaryPath = Join-Path $invocationRoot 'summary.json'
-$finalSummary | ConvertTo-Json -Depth 30 | Set-Content -LiteralPath $summaryPath -Encoding utf8
-$finalSummary | ConvertTo-Json -Depth 30
+$finalSummaryObject | ConvertTo-Json -Depth 30 | Set-Content -LiteralPath $summaryPath -Encoding utf8
+$finalSummaryObject | ConvertTo-Json -Depth 30
