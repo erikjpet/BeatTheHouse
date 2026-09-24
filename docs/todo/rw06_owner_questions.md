@@ -244,3 +244,11 @@ Options: A) Close the exact pair if still running (recommended)  B) I will close
 Resume: Revalidate console PID 24328 and child PID 30092 still target the primary checkout and have no lease. If A, terminate only that exact pair, confirm zero unleased Godot processes, then resume Q-009 isolated focused runs. Do not launch another engine while OPEN; continue engine-free audits, implementation and validation.
 Answer:
 cklosed you can close things if nessesary
+
+### Q-016 · rw06_6 · Focused-test class registry bootstrap
+Status: OPEN
+Asked: primary remediation agent, 2026-09-24
+Question: Fresh worktrees cannot load the production pull-tab path without Godot's global-class registry because `ContentLibrary` and `RunState` form a class-name cycle. May the focused test explicitly build an isolated registry after its zero-preload product-red guard?
+Options: A) Allow the isolated, logged registry bootstrap (recommended)  B) Refactor the production core classes to remove the cycle
+Resume: If A, keep one byte-identical launcher/guard in red and green: run the zero-preload Godot product guard first, bootstrap only the green candidate's isolated ignored `.godot` registry with separate logs/hashes, then run the full production-path contract; remove/ignore the cache afterward and change no product/save/economy behavior. If B, stop rw06_6 and scope the larger `GameModule`/`RunState`/`ContentLibrary` refactor before continuing. Never treat ordered `preload()` calls as registration.
+Answer:
