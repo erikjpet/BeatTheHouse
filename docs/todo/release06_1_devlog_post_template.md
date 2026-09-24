@@ -12,9 +12,9 @@ Destination: `docs/plans/0.6.0_devlog_post.md`
 
 Status: **DRAFT - AGENTS NEVER POST. OWNER-ONLY POSTING AFTER APPROVAL.**
 
-Required finished-build inputs: exact shipped feature set; representative
-owner-approved captures; accurate comparison with 0.5.1; final audio/music
-status; owner-approved tone and exclusions; and approved final captures if used.
+Required finished-build inputs: exact shipped feature set; accurate comparison
+with 0.5.1; final audio/music status; owner-approved tone and exclusions; and
+approved final captures if used.
 
 ## Title
 
