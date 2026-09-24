@@ -39,27 +39,28 @@ HAND_SLOTS: dict[str, dict[str, list[SlotSpec]]] = {
             ("base.game_1", "surface_item", (74.0, 178.0), (74.0, 142.0), "bar_counter"),
             ("base.game_2", "surface_item", (194.0, 178.0), (194.0, 176.0), "bar_counter"),
             ("base.game_3", "surface_item", (314.0, 178.0), (314.0, 142.0), "bar_counter"),
-            ("base.staff_bartender", "behind_counter_person", (430.0, 178.0), (430.0, 100.0), "bar_counter"),
+            ("base.staff_bartender", "behind_counter_person", (430.0, 218.0), (430.0, 114.0), "bar_counter"),
             ("base.fixed_ticket_redeemer", "surface_item", (300.0, 92.0), (300.0, 38.0), "bottle_rail"),
             ("base.fixed_drink", "surface_item", (100.0, 92.0), (100.0, 38.0), "bottle_rail"),
-            ("base.event_floor_1", "floor_fixture", (160.0, 278.0), (160.0, 240.0), "stage"),
-            ("base.event_floor_2", "floor_fixture", (276.0, 278.0), (276.0, 278.0), "stage"),
-            ("base.patron_floor_1", "standing_person", (508.0, 366.0), (508.0, 340.0), "floor"),
+            ("base.event_floor_1", "floor_fixture", (160.0, 290.0), (160.0, 270.0), "stage"),
+            ("base.event_floor_2", "floor_fixture", (276.0, 290.0), (276.0, 296.0), "stage"),
+            ("base.patron_floor_1", "standing_person", (508.0, 376.0), (508.0, 340.0), "floor"),
             ("base.travel_left", "doorway", (38.0, 370.0), (38.0, 406.0), "left_exit"),
             ("base.travel_right", "doorway", (862.0, 370.0), (862.0, 406.0), "right_exit"),
         ],
         "stage": [
-            ("stage.staff_bar_1", "behind_counter_person", (550.0, 178.0), (550.0, 204.0), "bar_counter"),
+            ("stage.staff_bar_1", "behind_counter_person", (550.0, 218.0), (550.0, 140.0), "bar_counter"),
             ("stage.event_pool_table_1", "surface_item", (666.0, 188.0), (666.0, 134.0), "pool_table"),
             ("stage.event_pool_table_2", "surface_item", (786.0, 188.0), (786.0, 112.0), "pool_table"),
-            ("stage.event_floor_fixture_1", "floor_fixture", (392.0, 278.0), (392.0, 240.0), "stage"),
-            ("stage.event_floor_fixture_2", "floor_fixture", (508.0, 278.0), (508.0, 270.0), "stage"),
-            ("stage.event_floor_fixture_3", "floor_fixture", (624.0, 278.0), (624.0, 240.0), "stage"),
+            ("stage.event_floor_fixture_1", "floor_fixture", (392.0, 290.0), (392.0, 270.0), "stage"),
+            ("stage.event_floor_fixture_2", "floor_fixture", (508.0, 290.0), (508.0, 296.0), "stage"),
+            ("stage.event_floor_fixture_3", "floor_fixture", (624.0, 290.0), (624.0, 270.0), "stage"),
             ("stage.event_floor_marker_1", "ground_marker", (160.0, 366.0), (174.0, 380.0), "floor"),
             ("stage.event_floor_marker_2", "ground_marker", (276.0, 366.0), (276.0, 410.0), "floor"),
             ("stage.event_floor_marker_3", "ground_marker", (392.0, 366.0), (392.0, 380.0), "floor"),
-            ("stage.patron_floor_1", "standing_person", (624.0, 366.0), (584.0, 410.0), "floor"),
-            ("stage.patron_floor_2", "standing_person", (740.0, 366.0), (710.0, 410.0), "floor"),
+            ("stage.patron_floor_1", "standing_person", (624.0, 376.0), (584.0, 410.0), "floor"),
+            ("stage.patron_floor_2", "standing_person", (740.0, 376.0), (710.0, 410.0), "floor"),
+            ("stage.seated_booth_right", "seated_person", (742.0, 272.0), (742.0, 312.0), "right_booth"),
             ("stage.event_wall_1", "wall_mounted", (560.0, 24.0), (560.0, 60.0), "wall"),
             ("stage.event_wall_2", "wall_mounted", (680.0, 24.0), (680.0, 86.0), "wall"),
             ("stage.event_wall_3", "wall_mounted", (800.0, 24.0), (800.0, 60.0), "wall"),
@@ -76,9 +77,9 @@ HAND_SLOTS: dict[str, dict[str, list[SlotSpec]]] = {
             ("base.shop_item_3", "surface_item", (100.0, 192.0), (100.0, 180.0), "shelf_row_4"),
             ("base.shop_item_4", "surface_item", (230.0, 192.0), (230.0, 180.0), "shelf_row_4"),
             ("base.shop_item_5", "surface_item", (692.0, 136.0), (676.0, 82.0), "cooler_upper"),
-            ("base.staff_shopkeeper", "behind_counter_person", (374.0, 206.0), (374.0, 128.0), "register"),
-            ("base.staff_dialogue", "behind_counter_person", (480.0, 206.0), (480.0, 244.0), "register"),
-            ("base.staff_dialogue_2", "behind_counter_person", (586.0, 206.0), (550.0, 128.0), "register"),
+            ("base.staff_shopkeeper", "behind_counter_person", (374.0, 238.0), (374.0, 276.0), "register"),
+            ("base.staff_dialogue", "behind_counter_person", (480.0, 238.0), (480.0, 134.0), "register"),
+            ("base.staff_dialogue_2", "behind_counter_person", (586.0, 238.0), (586.0, 276.0), "register"),
             ("base.fixed_phone", "surface_item", (220.0, 270.0), (220.0, 286.0), "left_checkout_counter"),
             ("base.fixed_drink", "surface_item", (796.0, 136.0), (812.0, 82.0), "cooler_upper"),
             ("base.game_1", "floor_fixture", (270.0, 358.0), (310.0, 416.0), "floor"),
@@ -91,7 +92,7 @@ HAND_SLOTS: dict[str, dict[str, list[SlotSpec]]] = {
             ("stage.event_delivery_floor_1", "floor_fixture", (156.0, 358.0), (180.0, 398.0), "floor"),
             ("stage.staff_floor_1", "standing_person", (612.0, 358.0), (612.0, 398.0), "floor"),
             ("stage.patron_floor_1", "standing_person", (726.0, 358.0), (730.0, 370.0), "floor"),
-            ("stage.event_cooler_1", "surface_item", (692.0, 220.0), (670.0, 246.0), "cooler_top"),
+            ("stage.event_cooler_1", "surface_item", (692.0, 220.0), (706.0, 246.0), "cooler_top"),
             ("stage.event_cooler_2", "surface_item", (796.0, 220.0), (730.0, 272.0), "cooler_top"),
             ("stage.event_wall_1", "wall_mounted", (450.0, 50.0), (450.0, 82.0), "wall"),
         ],
@@ -661,6 +662,9 @@ SCENARIO_ART_KEYS.update({
     },
 })
 SCENARIO_SLOT_ADDITIONS = {
+    "bar": {
+        "bar_dead_tuesday_aftermath_booth_zone_kept_actor||right|": "stage.seated_booth_right",
+    },
     "delta_queen": {
         "delta_queen_wedding_charter_ceremony_rope|delta_wedding_rope|foreground|": "stage.event_floor_2",
         "delta_queen_wedding_charter_ceremony_rope|delta_wedding_rope|right|": "stage.event_floor_2",
@@ -1338,6 +1342,24 @@ COUNTER_ADDITIONS = {
 }
 
 
+SEAT_ADDITIONS = {
+    "bar": [
+        {
+            "id": "right_booth",
+            "point": [742.0, 272.0],
+        },
+    ],
+}
+
+
+FLOOR_UPDATES = {
+    "bar": {
+        "stage_bands": [[40.0, 226.0, 820.0, 64.0]],
+        "contact_y": [244.0, 376.0],
+    },
+}
+
+
 LANE_Y = {
     "bar": 366.0,
     "corner_store": 358.0,
@@ -1450,6 +1472,13 @@ def apply_layout(map_data: dict[str, Any]) -> None:
     additions = {str(counter["id"]): counter for counter in COUNTER_ADDITIONS.get(map_id, [])}
     map_data["counters"] = [counter for counter in counters if str(counter.get("id", "")) not in additions]
     map_data["counters"].extend(additions.values())
+    seats = [seat for seat in map_data.get("seats", []) if isinstance(seat, dict)]
+    seat_additions = {str(seat["id"]): seat for seat in SEAT_ADDITIONS.get(map_id, [])}
+    map_data["seats"] = [seat for seat in seats if str(seat.get("id", "")) not in seat_additions]
+    map_data["seats"].extend(seat_additions.values())
+    floor = map_data.get("floor", {})
+    if isinstance(floor, dict):
+        floor.update(FLOOR_UPDATES.get(map_id, {}))
 
 
 def main() -> int:
