@@ -35,6 +35,47 @@ stall. Only the release orchestrator edits the scoreboard.
 - If fewer than 16 eligible winning tickets remain, select from all eligible
   ones. If none remain, show no glimmer and keep the presentation stable.
 
+## Architecture and file custody
+
+Keep the product change in `scripts/games/pull_tabs.gd`. Add a focused
+standalone contract at `scripts/tests/rw06_6_pull_tab_glimmer_contract.gd` and
+one narrow launcher under `tools/`. Do not change `game_surface_canvas.gd`,
+`foundation_main.gd`, placement files, ending routes, ticket data, or shared
+save schemas unless a proved blocker is first reported to the orchestrator.
+
+- Extend the existing pull-tab UI-local auto-tick seam
+  (`PULL_TAB_AUTO_TICK_STATE_KEYS`, `surface_auto_tick_may_be_active`,
+  `surface_needs_auto_tick`, and `surface_auto_action_command`). The host's
+  controlled `surface_time_msec` is pause-safe and works under reduced motion.
+  Initialize a missing due time to `now + 25_000..35_000`; show a bounded
+  roughly 1.0–1.2 second hint at due time; hide it at its hide deadline; and
+  schedule the next independently sampled interval. Coexist with Auto Open: if
+  both are due, process one and leave the other due for the next frame.
+- UI-local public state may contain only timing/session counters and the visible
+  projection `{visible, deal_index, offset}`. Keep exact ticket identity and an
+  exact machine fingerprint in private transient `PullTabsGame` presentation
+  state solely for stale/other-machine validation. Never place payout, prize,
+  tier, rank, symbols, contents, or the private identity/fingerprint in UI
+  state, surface state, machine state, RunState, or a save.
+- Build candidates from each current `deals[].ticket_sleeve`, resolving only
+  positive-payout prize instances through that deal's private `prizes` array.
+  Sort payout descending with stable tie order, then keep 16. Do not consider
+  `tray_stack`, `ticket_stack`, winner/loser piles, removed sleeve entries, or
+  the existing public X-ray target payload. Preserve the absolute ticket number
+  privately so a later sale invalidates the target instead of silently
+  retargeting the same offset.
+- Use presentation-only `RngStream` domains derived from run seed, exact public
+  machine identity, private session ordinal, and event ordinal. Use separate
+  subkeys for interval and target selection. Never advance action/gameplay RNG
+  and never mutate the machine to choose or draw a hint.
+- Render through the existing cabinet column-stack geometry used by the X-ray
+  depth marker, but draw only a yellow glow with no value label. Normal motion
+  may use the existing surface flicker/idle redraw. When `reduce_motion` is
+  true, draw fixed geometry/color at every phase.
+- Exiting the surface already clears host UI/canvas state; reset private
+  presenter state on entry. Save/Continue must therefore start a fresh
+  schedule and contain no glimmer state or hidden target metadata.
+
 ## Required regression evidence
 
 Add a focused production-path regression that proves, under controlled time and
@@ -50,6 +91,15 @@ RNG:
 6. close/reopen and Save/Continue follow the transient-state rules above;
 7. reduced motion produces a static yellow highlight; and
 8. public/save serialization contains no hidden target prize/value/tier/rank.
+
+The contract must call the production generation, surface auto-tick and draw
+paths with controlled clocks/RNG; it must not inject a target. It should
+independently derive the pre-event top-16 set, test private-target invalidation
+through a real sleeve purchase on a disposable copy, reject a second machine,
+and byte-compare the untouched machine/economy/prize/sleeve data before and
+after ordinary scheduling and rendering. Guard the pre-fix missing feature and
+emit a deliberate product assertion failure so red evidence is a real product
+red, never a parse/fixture error or 35-second wall-clock wait.
 
 Capture a meaningful fail-before run against the pre-fix product and a
 pass-after run on the exact pushed implementation commit. Record commands,
