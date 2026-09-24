@@ -157,6 +157,7 @@ func delivery_top_actions() -> Array:
 	var physical := JsonCoerceScript._copy_dict(delivery_snapshot().get("physical", {}))
 	if _run.current_world_node_id() != str(physical.get("position_node_id", "")):
 		return []
+	var target_room_blocked := _delivery_target_room_blocked()
 	var labels := {
 		"wait": "Hold Sightline", "duck": "Duck Cover", "stash": "Stash Package",
 		"ditch": "Ditch Package", "signal": "Send Signal", "break_hold": "Break Hold",
@@ -165,6 +166,8 @@ func delivery_top_actions() -> Array:
 	for verb_value in JsonCoerceScript._copy_array(physical.get("available_verbs", [])):
 		var verb := str(verb_value)
 		if not labels.has(verb):
+			continue
+		if target_room_blocked and verb in ["wait", "signal"]:
 			continue
 		result.append({"id": verb, "label": str(labels.get(verb)), "message": _delivery_physical_action_message(verb)})
 	return result
@@ -181,6 +184,8 @@ func delivery_apply_physical_action(verb: String, idempotency_key: String) -> Di
 	var physical := JsonCoerceScript._copy_dict(snapshot.get("physical", {}))
 	if not JsonCoerceScript._copy_array(physical.get("available_verbs", [])).has(action):
 		return {"ok": false, "message": "That street action is not available now."}
+	if action in ["wait", "signal"] and _delivery_target_room_blocked():
+		return {"ok": false, "message": _delivery_required_room_message()}
 	var node_id = _run.current_world_node_id()
 	if node_id.is_empty() or node_id != str(physical.get("position_node_id", "")):
 		return {"ok": false, "message": "That street action is not at your present position."}
@@ -198,7 +203,13 @@ func delivery_apply_physical_action(verb: String, idempotency_key: String) -> Di
 	var host_context := _delivery_host_context(node_id, "", target_id, place_id, cover_id, signal_id, action)
 	var before := JSON.stringify(active_delivery_run)
 	var rollback_run = _run.to_dict()
-	var candidate := DeliveryRunModelScript.apply_host_action(active_delivery_run, action, receipt_key, host_context)
+	var candidate := DeliveryRunModelScript.apply_host_action(
+		active_delivery_run,
+		action,
+		receipt_key,
+		host_context,
+		str(_run.current_environment.get("archetype_id", "")).strip_edges()
+	)
 	if JSON.stringify(candidate) == before:
 		return {"ok": false, "message": "The route no longer accepts that action."}
 	active_delivery_run = candidate
@@ -245,6 +256,8 @@ func delivery_arrival_interaction() -> Dictionary:
 	var node_id = _run.current_world_node_id()
 	if node_id.is_empty() or node_id != str(active_delivery_run.get("handoff_pending_node_id", "")):
 		return {}
+	if _delivery_target_room_blocked():
+		return {}
 	return {
 		"object_id": "delivery:handoff:%s" % node_id,
 		"node_id": node_id,
@@ -265,10 +278,18 @@ func delivery_complete_handoff(node_id: String = "") -> Dictionary:
 	var target := _delivery_pending_target_at(target_id)
 	if target.is_empty():
 		return {"ok": false, "message": "This is not the marked handoff."}
+	if _delivery_target_room_blocked():
+		return {"ok": false, "message": _delivery_required_room_message()}
 	var before := JSON.stringify(delivery_snapshot())
 	var rollback_run = _run.to_dict()
 	var receipt_key := "handoff:%s:%s:%d" % [str(active_delivery_run.get("run_id", "delivery")), str(target.get("id", "target")), maxi(0, _run._crew_action_index())]
-	active_delivery_run = DeliveryRunModelScript.apply_host_action(active_delivery_run, "handoff", receipt_key, _delivery_host_context(target_id, "", str(target.get("id", "")), "", "", "", "handoff"))
+	active_delivery_run = DeliveryRunModelScript.apply_host_action(
+		active_delivery_run,
+		"handoff",
+		receipt_key,
+		_delivery_host_context(target_id, "", str(target.get("id", "")), "", "", "", "handoff"),
+		str(_run.current_environment.get("archetype_id", "")).strip_edges()
+	)
 	if JSON.stringify(delivery_snapshot()) == before:
 		return {"ok": false, "message": "This is not the marked handoff."}
 	_delivery_remove_inventory_cargo()
@@ -331,6 +352,25 @@ func delivery_resolve_travel_arrival(route: Dictionary = {}, route_risk: Diction
 	var node_id = _run.current_world_node_id()
 	var physical_before := JsonCoerceScript._copy_dict(delivery_snapshot().get("physical", {}))
 	var source_node_id := str(physical_before.get("position_node_id", ""))
+	var current_archetype_id := str(_run.current_environment.get("archetype_id", "")).strip_edges()
+	# Grand Casino interior doors retain one canonical world-node identity. They
+	# may change which authored room can complete a delivery, but they are not a
+	# second street movement and must not be rejected or counted twice. Require
+	# the exact authored local-door envelope so an empty or stale arrival call at
+	# Grand cannot masquerade as a room transition.
+	if not source_node_id.is_empty() and source_node_id == node_id \
+			and node_id == _run.GRAND_CASINO_ARCHETYPE_ID \
+			and current_archetype_id in _run.GRAND_CASINO_ARCHETYPE_IDS \
+			and bool(route.get("local_casino_room", false)) \
+			and str(route.get("target_node_id", "")).strip_edges() == node_id \
+			and str(route.get("destination_archetype", "")).strip_edges() == current_archetype_id:
+		return {
+			"ok": true,
+			"resolved": false,
+			"room_transition": true,
+			"handoff_ready": not delivery_arrival_interaction().is_empty(),
+			"snapshot": delivery_snapshot(),
+		}
 	var route_query := WorldMap.prepare_path_query(_run.world_map, source_node_id, true)
 	var authoritative_path := WorldMap.prepared_path(route_query, node_id)
 	if source_node_id.is_empty() or source_node_id == node_id or authoritative_path.is_empty() or not WorldMap.prepared_path_uses_real_edges(route_query, authoritative_path):
@@ -367,10 +407,36 @@ func delivery_resolve_travel_arrival(route: Dictionary = {}, route_risk: Diction
 	return {
 		"ok": true,
 		"resolved": not delivery_has_active_run(),
-		"handoff_ready": str(active_delivery_run.get("handoff_pending_node_id", "")) == node_id,
+		"handoff_ready": not delivery_arrival_interaction().is_empty(),
 		"route_id": str(route.get("id", route.get("target_node_id", node_id))),
 		"snapshot": delivery_snapshot(),
 	}
+
+
+func _delivery_required_target_archetype_id() -> String:
+	return str(JsonCoerceScript._copy_dict(active_delivery_run.get("consumer_payload", {})).get("required_target_archetype_id", "")).strip_edges()
+
+
+func _delivery_target_room_blocked() -> bool:
+	var required_archetype_id := _delivery_required_target_archetype_id()
+	if required_archetype_id.is_empty() or not delivery_has_active_run():
+		return false
+	var target_node_id := ""
+	for target_value in JsonCoerceScript._copy_array(delivery_snapshot().get("targets", [])):
+		var target := JsonCoerceScript._copy_dict(target_value)
+		if str(target.get("status", "pending")) == "pending":
+			target_node_id = str(target.get("node_id", "")).strip_edges()
+			break
+	return not target_node_id.is_empty() \
+		and _run.current_world_node_id() == target_node_id \
+		and str(_run.current_environment.get("archetype_id", "")).strip_edges() != required_archetype_id
+
+
+func _delivery_required_room_message() -> String:
+	var required_archetype_id := _delivery_required_target_archetype_id()
+	if required_archetype_id.is_empty():
+		return "This is not the marked handoff."
+	return "The marked route continues inside %s." % required_archetype_id.replace("_", " ").capitalize()
 
 
 func delivery_map_layer() -> Dictionary:
