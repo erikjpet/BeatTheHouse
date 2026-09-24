@@ -1430,12 +1430,12 @@ $finalSummary = [ordered]@{
             [int]$admissionReport.resolver_valid_fixtures -ne 3 -or
             [int]$admissionReport.resolver_hostile_fixtures -ne 10 -or
             [int]$admissionReport.preflight_valid_fixtures -ne 2 -or
-            [int]$admissionReport.admission_object_hostile_fixtures -ne 19 -or
-            [int]$admissionReport.preflight_hostile_fixtures -ne 65 -or
+            [int]$admissionReport.admission_object_hostile_fixtures -ne 32 -or
+            [int]$admissionReport.preflight_hostile_fixtures -ne 109 -or
             [int]$admissionReport.source_valid_fixtures -ne 1 -or
             [int]$admissionReport.source_hostile_fixtures -ne 17 -or
             [int]$admissionReport.outer_valid_fixtures -ne 3 -or
-            [int]$admissionReport.outer_hostile_fixtures -ne 6) {
+            [int]$admissionReport.outer_hostile_fixtures -ne 20) {
             throw 'Evidence admission report lost an exact valid/hostile Q-017 witness.'
         }
         $evidenceAdmissionValidFixtures = [int]$admissionReport.resolver_valid_fixtures +

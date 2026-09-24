@@ -23,7 +23,7 @@ seed `0002`, whose exact day-zero witness selects Audit. Q-017A separately admit
 exact seed `0000` only for one `fresh-interactive`, Repeat-1 pass after the same
 production-model preflight proves its natural day-zero Audit selection. Neither
 role accepts another Heist seed, and the fixed launcher explicitly rejects or
-relabels no fresh child. The route learns lasting Count eligibility only
+relabels any fresh child. The route learns lasting Count eligibility only
 by resolving the rendered **The Audit Roster** choice **Read the shift**; an
 unvisited seed, stored prior-cycle environment, or narrative-only claim does not
 qualify. The guaranteed Corner Store Crew marker supplies the initial Grand fare.

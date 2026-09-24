@@ -98,6 +98,8 @@ with two independently profiled one-run children:
 ```text
 .tmp/rw06_2/final_fixed/<ending>-<timestamp>-<pid>-<nonce>/
   launcher.invoked.ps1
+  source_custody_pre.json
+  source_custody_final.json
   run-01/
     launcher.stdout.txt
     launcher.stderr.txt
@@ -135,9 +137,15 @@ with two independently profiled one-run children:
 
 `tools/rw06_2_final_evidence.ps1` qualifies only the fixed two-run portion. It
 pins the exact Git head/tree and route seed, requires a clean worktree, holds
-the Q-009 engine gate across both children, proves each child wrote through its
-own profile, and compares the canonical trace, money curve, persistence
-checkpoint and terminal checkpoint. A separate `fresh-interactive` evidence
+the Q-009 engine gate across both children, and holds read-only/no-delete file
+custody over every tracked production input, the PowerShell host, and both
+pinned Godot executables from before child launch through final verification.
+The pre/post custody receipts are explicitly manifested and every run proof
+binds the pre-execution receipt hash. The launcher also requires each Heist
+`heist_seed_preflight.json`, authenticates it against both embedded summaries,
+and explicitly manifests it. It proves each child wrote through its own profile
+and compares the canonical trace, money curve, persistence checkpoint and
+terminal checkpoint. A separate `fresh-interactive` evidence
 root and experience log are still required for each ending. Q-017 controls only
 how that separate Heist run is admitted; it never loosens the exact `0002`
 fixed-repeat route.

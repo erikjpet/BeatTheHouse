@@ -127,7 +127,9 @@ function Assert-Rw062ExactPropertyNames {
         [Parameter(Mandatory = $true)][string]$Label
     )
     if ($null -eq $InputObject -or $InputObject -is [string] -or
-        $InputObject -is [ValueType]) {
+        $InputObject -is [ValueType] -or
+        ($InputObject -is [Collections.IEnumerable] -and
+            $InputObject -isnot [Collections.IDictionary])) {
         throw "$Label must be an exact object."
     }
     $actual = if ($InputObject -is [Collections.IDictionary]) {
@@ -172,8 +174,7 @@ function Test-Rw062ExactStringArray {
         [AllowNull()]$Value,
         [Parameter(Mandatory = $true)][string[]]$Expected
     )
-    if ($null -eq $Value -or $Value -is [string] -or
-        $Value -isnot [Collections.IEnumerable]) {
+    if ($null -eq $Value -or $Value -isnot [Array]) {
         return $false
     }
     $actual = @($Value)
@@ -283,8 +284,8 @@ function Assert-Rw062HeistPreflightAdmission {
         'launch_model', 'serialization_calibration', 'arrival_history_hostile',
         'owner_decisions', 'valid_fixtures', 'hostile_fixtures', 'failures'
     )
-    $selectionObject = Get-Rw062AdmissionValue $Report @('selection') $null
-    $launchModelObject = Get-Rw062AdmissionValue $Report @('launch_model') $null
+    $selectionObject = Get-Rw062AdmissionValueNoEnumerate $Report @('selection') $null
+    $launchModelObject = Get-Rw062AdmissionValueNoEnumerate $Report @('launch_model') $null
     Assert-Rw062ExactPropertyNames -InputObject $selectionObject -Label 'Heist preflight selection' -Expected @(
         'seed_text', 'challenge_key', 'run_seed', 'cycle_id', 'stream_key', 'stream_seed',
         'none_roll', 'none_percent', 'absolute_minutes', 'recent_scenario_ids',
@@ -299,27 +300,31 @@ function Assert-Rw062HeistPreflightAdmission {
     )
     Assert-Rw062NoScenarioAuthorityFields -InputObject $Report
 
-    $role = [string](Get-Rw062AdmissionValue $Admission @('evidence_role') '')
-    $ending = [string](Get-Rw062AdmissionValue $Admission @('ending') '')
-    $seed = [string](Get-Rw062AdmissionValue $Admission @('seed') '')
-    $repeat = Get-Rw062AdmissionValue $Admission @('repeat') $null
-    $routePlan = Get-Rw062AdmissionValue $Admission @('route_plan') $null
-    $expectedInitialScenario = Get-Rw062AdmissionValue $Admission @('expected_initial_scenario') $null
-    $scenarioAuthority = Get-Rw062AdmissionValue $Admission @('scenario_authority') $null
-    $scenarioInjectionAllowed = Get-Rw062AdmissionValue $Admission @('scenario_injection_allowed') $null
-    $planBAllowed = Get-Rw062AdmissionValue $Admission @('plan_b_allowed') $null
-    $requiresIsolatedProfile = Get-Rw062AdmissionValue $Admission @('requires_isolated_profile') $null
-    $releaseQualifying = Get-Rw062AdmissionValue $Admission @('release_qualifying') $null
-    $qualificationAuthority = Get-Rw062AdmissionValue $Admission @('qualification_authority') $null
-    $admissionOwnerDecisions = Get-Rw062AdmissionValue $Admission @('owner_decisions') $null
+    $role = Get-Rw062AdmissionValueNoEnumerate $Admission @('evidence_role') $null
+    $ending = Get-Rw062AdmissionValueNoEnumerate $Admission @('ending') $null
+    $seed = Get-Rw062AdmissionValueNoEnumerate $Admission @('seed') $null
+    $repeat = Get-Rw062AdmissionValueNoEnumerate $Admission @('repeat') $null
+    $routePlan = Get-Rw062AdmissionValueNoEnumerate $Admission @('route_plan') $null
+    $expectedInitialScenario = Get-Rw062AdmissionValueNoEnumerate $Admission @('expected_initial_scenario') $null
+    $scenarioAuthority = Get-Rw062AdmissionValueNoEnumerate $Admission @('scenario_authority') $null
+    $scenarioInjectionAllowed = Get-Rw062AdmissionValueNoEnumerate $Admission @('scenario_injection_allowed') $null
+    $planBAllowed = Get-Rw062AdmissionValueNoEnumerate $Admission @('plan_b_allowed') $null
+    $requiresIsolatedProfile = Get-Rw062AdmissionValueNoEnumerate $Admission @('requires_isolated_profile') $null
+    $releaseQualifying = Get-Rw062AdmissionValueNoEnumerate $Admission @('release_qualifying') $null
+    $qualificationAuthority = Get-Rw062AdmissionValueNoEnumerate $Admission @('qualification_authority') $null
+    $admissionOwnerDecisions = Get-Rw062AdmissionValueNoEnumerate $Admission @('owner_decisions') $null
+    if ($role -isnot [string] -or $role -cnotin @('fixed-repeat', 'fresh-interactive') -or
+        $ending -isnot [string] -or $ending -cne 'heist' -or
+        $seed -isnot [string]) {
+        throw 'Heist preflight admission string identity fields are not exact strings.'
+    }
     $expectedQualificationAuthority = if ($role -ceq 'fresh-interactive') {
         'post_run_interactive_review_only'
     }
     else {
         'outer_independent_profile_aggregate_only'
     }
-    if ($ending -cne 'heist' -or $role -cnotin @('fixed-repeat', 'fresh-interactive') -or
-        $repeat -isnot [int32] -or [int]$repeat -lt 1 -or [int]$repeat -gt 2 -or
+    if ($repeat -isnot [int32] -or [int]$repeat -lt 1 -or [int]$repeat -gt 2 -or
         ($role -ceq 'fresh-interactive' -and [int]$repeat -ne 1) -or
         $routePlan -isnot [string] -or [string]$routePlan -cne 'count' -or
         $expectedInitialScenario -isnot [string] -or [string]$expectedInitialScenario -cne 'grand_casino_audit_night' -or
@@ -357,30 +362,28 @@ function Assert-Rw062HeistPreflightAdmission {
         throw "Heist admission seed '$seed' does not match the exact $role witness '$($expected.seed)'."
     }
 
-    $contract = Get-Rw062AdmissionValue $Report @('contract') $null
-    $expectedScenario = Get-Rw062AdmissionValue $Report @('expected_scenario') $null
-    $reportOwnerDecisions = Get-Rw062AdmissionValue $Report @('owner_decisions') $null
-    $validFixtures = Get-Rw062AdmissionValue $Report @('valid_fixtures') $null
-    $hostileFixtures = Get-Rw062AdmissionValue $Report @('hostile_fixtures') $null
-    $passed = Get-Rw062AdmissionValue $Report @('passed') $null
-    $reportedSeed = Get-Rw062AdmissionValue $Report @('selection', 'seed_text') $null
-    $challengeKey = Get-Rw062AdmissionValue $Report @('selection', 'challenge_key') $null
-    $selectedScenario = Get-Rw062AdmissionValue $Report @('selection', 'selected_scenario') $null
-    $cycleId = Get-Rw062AdmissionValue $Report @('selection', 'cycle_id') $null
-    $streamKey = Get-Rw062AdmissionValue $Report @('selection', 'stream_key') $null
-    $runSeed = Get-Rw062AdmissionValue $Report @('selection', 'run_seed') $null
-    $streamSeed = Get-Rw062AdmissionValue $Report @('selection', 'stream_seed') $null
-    $noneRoll = Get-Rw062AdmissionValue $Report @('selection', 'none_roll') $null
-    $nonePercent = Get-Rw062AdmissionValue $Report @('selection', 'none_percent') $null
-    $absoluteMinutes = Get-Rw062AdmissionValue $Report @('selection', 'absolute_minutes') $null
-    $totalWeight = Get-Rw062AdmissionValue $Report @('selection', 'total_weight') $null
-    $weightedRoll = Get-Rw062AdmissionValue $Report @('selection', 'weighted_roll') $null
+    $contract = Get-Rw062AdmissionValueNoEnumerate $Report @('contract') $null
+    $expectedScenario = Get-Rw062AdmissionValueNoEnumerate $Report @('expected_scenario') $null
+    $reportOwnerDecisions = Get-Rw062AdmissionValueNoEnumerate $Report @('owner_decisions') $null
+    $validFixtures = Get-Rw062AdmissionValueNoEnumerate $Report @('valid_fixtures') $null
+    $hostileFixtures = Get-Rw062AdmissionValueNoEnumerate $Report @('hostile_fixtures') $null
+    $passed = Get-Rw062AdmissionValueNoEnumerate $Report @('passed') $null
+    $reportedSeed = Get-Rw062AdmissionValueNoEnumerate $Report @('selection', 'seed_text') $null
+    $challengeKey = Get-Rw062AdmissionValueNoEnumerate $Report @('selection', 'challenge_key') $null
+    $selectedScenario = Get-Rw062AdmissionValueNoEnumerate $Report @('selection', 'selected_scenario') $null
+    $cycleId = Get-Rw062AdmissionValueNoEnumerate $Report @('selection', 'cycle_id') $null
+    $streamKey = Get-Rw062AdmissionValueNoEnumerate $Report @('selection', 'stream_key') $null
+    $runSeed = Get-Rw062AdmissionValueNoEnumerate $Report @('selection', 'run_seed') $null
+    $streamSeed = Get-Rw062AdmissionValueNoEnumerate $Report @('selection', 'stream_seed') $null
+    $noneRoll = Get-Rw062AdmissionValueNoEnumerate $Report @('selection', 'none_roll') $null
+    $nonePercent = Get-Rw062AdmissionValueNoEnumerate $Report @('selection', 'none_percent') $null
+    $absoluteMinutes = Get-Rw062AdmissionValueNoEnumerate $Report @('selection', 'absolute_minutes') $null
+    $totalWeight = Get-Rw062AdmissionValueNoEnumerate $Report @('selection', 'total_weight') $null
+    $weightedRoll = Get-Rw062AdmissionValueNoEnumerate $Report @('selection', 'weighted_roll') $null
     $recentScenarioIdsRaw = Get-Rw062AdmissionValueNoEnumerate $Report @('selection', 'recent_scenario_ids') '__missing_recent_scenario_ids__'
-    $recentScenarioIds = @($recentScenarioIdsRaw)
-    $townMultiplier = Get-Rw062AdmissionValue $Report @('selection', 'town_multiplier') $null
-    $weightedEntries = @(Get-Rw062AdmissionValue $Report @('selection', 'weighted_entries') @())
+    $townMultiplier = Get-Rw062AdmissionValueNoEnumerate $Report @('selection', 'town_multiplier') $null
+    $weightedEntriesRaw = Get-Rw062AdmissionValueNoEnumerate $Report @('selection', 'weighted_entries') $null
     $failuresRaw = Get-Rw062AdmissionValueNoEnumerate $Report @('failures') '__missing_failures__'
-    $failures = @($failuresRaw)
     $modifierText = 'home_archetype_id=back_alley;meta_collection_carried_instance_ids=[];meta_collection_containers=[{ "id": "meta_bag_01", "item_id": "bag", "capacity": 3, "items": [], "item_definitions": {  }, "meta_loadout": true, "meta_container_instance_id": 0 }];meta_collection_enabled=true;meta_collection_loadout=[]'
     $expectedChallengeKey = "standard|standard|$($expected.seed)|$modifierText"
     if ($contract -isnot [string] -or [string]$contract -cne 'rw06_2_heist_seed_preflight' -or
@@ -404,11 +407,10 @@ function Assert-Rw062HeistPreflightAdmission {
         -not (Test-Rw062IntegralValue $absoluteMinutes) -or [int64]$absoluteMinutes -ne 720 -or
         -not (Test-Rw062IntegralValue $totalWeight) -or [int64]$totalWeight -ne [int64]$expected.total_weight -or
         -not (Test-Rw062IntegralValue $weightedRoll) -or [int64]$weightedRoll -ne [int64]$expected.weighted_roll -or
-        $null -eq $recentScenarioIdsRaw -or $recentScenarioIdsRaw -is [string] -or
-        $recentScenarioIdsRaw -isnot [Collections.IEnumerable] -or $recentScenarioIds.Count -ne 0 -or
+        $recentScenarioIdsRaw -isnot [object[]] -or $recentScenarioIdsRaw.Count -ne 0 -or
         -not (Test-Rw062IntegralValue $townMultiplier) -or [int64]$townMultiplier -ne 1 -or
-        $null -eq $failuresRaw -or $failuresRaw -is [string] -or
-        $failuresRaw -isnot [Collections.IEnumerable] -or $failures.Count -ne 0) {
+        $weightedEntriesRaw -isnot [object[]] -or
+        $failuresRaw -isnot [object[]] -or $failuresRaw.Count -ne 0) {
         throw "Heist $role preflight did not preserve its exact natural first-arrival Audit witness."
     }
     $expectedWeightedEntries = @(
@@ -416,20 +418,20 @@ function Assert-Rw062HeistPreflightAdmission {
         [pscustomobject]@{ id = 'grand_casino_convention_crowd'; weight = 11000; ceiling = 19000 },
         [pscustomobject]@{ id = 'grand_casino_audit_night'; weight = 7000; ceiling = 26000 }
     )
-    if ($weightedEntries.Count -ne $expectedWeightedEntries.Count) {
+    if ($weightedEntriesRaw.Count -ne $expectedWeightedEntries.Count) {
         throw "Heist $role preflight weighted-entry count drifted from the exact production witness."
     }
     for ($index = 0; $index -lt $expectedWeightedEntries.Count; $index++) {
-        $entry = $weightedEntries[$index]
+        $entry = $weightedEntriesRaw[$index]
         $expectedEntry = $expectedWeightedEntries[$index]
         Assert-Rw062ExactPropertyNames -InputObject $entry -Label "Heist preflight weighted entry $index" -Expected @(
             'id', 'repeat_multiplier', 'town_multiplier', 'scaled_weight', 'ceiling'
         )
-        $entryId = Get-Rw062AdmissionValue $entry @('id') $null
-        $repeatMultiplier = Get-Rw062AdmissionValue $entry @('repeat_multiplier') $null
-        $entryTownMultiplier = Get-Rw062AdmissionValue $entry @('town_multiplier') $null
-        $scaledWeight = Get-Rw062AdmissionValue $entry @('scaled_weight') $null
-        $ceiling = Get-Rw062AdmissionValue $entry @('ceiling') $null
+        $entryId = Get-Rw062AdmissionValueNoEnumerate $entry @('id') $null
+        $repeatMultiplier = Get-Rw062AdmissionValueNoEnumerate $entry @('repeat_multiplier') $null
+        $entryTownMultiplier = Get-Rw062AdmissionValueNoEnumerate $entry @('town_multiplier') $null
+        $scaledWeight = Get-Rw062AdmissionValueNoEnumerate $entry @('scaled_weight') $null
+        $ceiling = Get-Rw062AdmissionValueNoEnumerate $entry @('ceiling') $null
         if ($entryId -isnot [string] -or [string]$entryId -cne [string]$expectedEntry.id -or
             -not (Test-Rw062IntegralValue $repeatMultiplier) -or [int64]$repeatMultiplier -ne 1 -or
             -not (Test-Rw062IntegralValue $entryTownMultiplier) -or [int64]$entryTownMultiplier -ne 1 -or
@@ -439,17 +441,16 @@ function Assert-Rw062HeistPreflightAdmission {
         }
     }
 
-    $screen = Get-Rw062AdmissionValue $Report @('launch_model', 'screen') $null
-    $runConfig = Get-Rw062AdmissionValue $Report @('launch_model', 'run_config') $null
-    $selectedChallenge = Get-Rw062AdmissionValue $Report @('launch_model', 'selected_challenge') $null
-    $selectedHome = Get-Rw062AdmissionValue $Report @('launch_model', 'selected_home') $null
-    $challengeMode = Get-Rw062AdmissionValue $Report @('launch_model', 'challenge_mode') $null
-    $challengeId = Get-Rw062AdmissionValue $Report @('launch_model', 'challenge_id') $null
-    $reportedModifierText = Get-Rw062AdmissionValue $Report @('launch_model', 'fresh_profile_modifier_text') $null
-    $startAbsoluteMinutes = Get-Rw062AdmissionValue $Report @('launch_model', 'start_absolute_minutes') $null
-    $contentGroups = @(Get-Rw062AdmissionValue $Report @('launch_model', 'selected_content_groups') @())
+    $screen = Get-Rw062AdmissionValueNoEnumerate $Report @('launch_model', 'screen') $null
+    $runConfig = Get-Rw062AdmissionValueNoEnumerate $Report @('launch_model', 'run_config') $null
+    $selectedChallenge = Get-Rw062AdmissionValueNoEnumerate $Report @('launch_model', 'selected_challenge') $null
+    $selectedHome = Get-Rw062AdmissionValueNoEnumerate $Report @('launch_model', 'selected_home') $null
+    $challengeMode = Get-Rw062AdmissionValueNoEnumerate $Report @('launch_model', 'challenge_mode') $null
+    $challengeId = Get-Rw062AdmissionValueNoEnumerate $Report @('launch_model', 'challenge_id') $null
+    $reportedModifierText = Get-Rw062AdmissionValueNoEnumerate $Report @('launch_model', 'fresh_profile_modifier_text') $null
+    $startAbsoluteMinutes = Get-Rw062AdmissionValueNoEnumerate $Report @('launch_model', 'start_absolute_minutes') $null
+    $contentGroupsRaw = Get-Rw062AdmissionValueNoEnumerate $Report @('launch_model', 'selected_content_groups') $null
     $firstArrivalRecentRaw = Get-Rw062AdmissionValueNoEnumerate $Report @('launch_model', 'first_arrival_recent_scenario_ids') '__missing_first_arrival_recent_scenario_ids__'
-    $firstArrivalRecent = @($firstArrivalRecentRaw)
     $expectedContentGroups = @(
         'universal_passive_items', 'universal_active_items', 'scratch_tickets_pack',
         'pull_tabs_pack', 'slot_pack', 'coin_pusher_pack', 'bar_dice_pack',
@@ -464,19 +465,11 @@ function Assert-Rw062HeistPreflightAdmission {
         $challengeId -isnot [string] -or [string]$challengeId -cne 'standard' -or
         $reportedModifierText -isnot [string] -or [string]$reportedModifierText -cne $modifierText -or
         -not (Test-Rw062IntegralValue $startAbsoluteMinutes) -or [int64]$startAbsoluteMinutes -ne 720 -or
-        $contentGroups.Count -ne $expectedContentGroups.Count -or
-        $null -eq $firstArrivalRecentRaw -or $firstArrivalRecentRaw -is [string] -or
-        $firstArrivalRecentRaw -isnot [Collections.IEnumerable] -or
-        $firstArrivalRecent.Count -ne 0) {
+        -not (Test-Rw062ExactStringArray $contentGroupsRaw $expectedContentGroups) -or
+        $firstArrivalRecentRaw -isnot [object[]] -or
+        $firstArrivalRecentRaw.Count -ne 0) {
         throw "Heist $role preflight did not preserve fresh Standard/Random/default-content admission."
     }
-    for ($index = 0; $index -lt $expectedContentGroups.Count; $index++) {
-        if ($contentGroups[$index] -isnot [string] -or
-            [string]$contentGroups[$index] -cne [string]$expectedContentGroups[$index]) {
-            throw "Heist $role preflight content group $index drifted from the exact fresh-profile order."
-        }
-    }
-
     return [pscustomobject][ordered]@{
         evidence_role = $role
         ending = 'heist'

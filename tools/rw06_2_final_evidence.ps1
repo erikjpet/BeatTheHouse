@@ -44,6 +44,9 @@ $LauncherSnapshotPath = Join-Path $EvidenceRoot 'launcher.invoked.ps1'
 $AggregateSummaryPath = Join-Path $EvidenceRoot 'aggregate_summary.json'
 $MetadataPath = Join-Path $EvidenceRoot 'run_metadata.json'
 $ManifestPath = Join-Path $EvidenceRoot 'artifact_manifest.json'
+$SourceCustodyPrePath = Join-Path $EvidenceRoot 'source_custody_pre.json'
+$SourceCustodyFinalPath = Join-Path $EvidenceRoot 'source_custody_final.json'
+$GodotRuntimeBin = Join-Path (Split-Path -Parent $GodotBin) 'Godot_v4.6-stable_win64.exe'
 $StartedAt = [DateTimeOffset]::Now
 
 $script:TerminalError = $null
@@ -59,6 +62,14 @@ $script:InitialProcessCensus = @()
 $script:FinalProcessCensus = @()
 $script:FinalHead = ''
 $script:FinalTree = ''
+$script:SourceCustodyStreams = [Collections.Generic.List[IO.FileStream]]::new()
+$script:SourceCustodyRows = [Collections.Generic.List[object]]::new()
+$script:SourceCustodyPreStream = $null
+$script:SourceCustodyFinalStream = $null
+$script:EvidenceArtifactStreams = [Collections.Generic.List[IO.FileStream]]::new()
+$script:SourceCustodyPreSha256 = ''
+$script:SourceCustodyFinalSha256 = ''
+$script:SourceCustodyComplete = $false
 
 function Get-FailureMessage {
     param([AllowNull()]$Failure)
@@ -110,13 +121,51 @@ function Get-ExactValue {
 }
 
 
+function Get-ExactValueNoEnumerate {
+    param(
+        [AllowNull()]$InputObject,
+        [Parameter(Mandatory = $true)][string[]]$Path,
+        [AllowNull()]$Default = $null
+    )
+    $current = $InputObject
+    foreach ($segment in $Path) {
+        if ($null -eq $current) {
+            Write-Output -NoEnumerate $Default
+            return
+        }
+        if ($current -is [Collections.IDictionary]) {
+            $matches = @($current.Keys | Where-Object { [string]$_ -ceq $segment })
+            if ($matches.Count -eq 0) {
+                Write-Output -NoEnumerate $Default
+                return
+            }
+            if ($matches.Count -ne 1) { throw "Ambiguous exact property '$segment'." }
+            $current = $current[$matches[0]]
+        }
+        else {
+            $properties = @($current.PSObject.Properties | Where-Object { $_.Name -ceq $segment })
+            if ($properties.Count -eq 0) {
+                Write-Output -NoEnumerate $Default
+                return
+            }
+            if ($properties.Count -ne 1) { throw "Ambiguous exact property '$segment'." }
+            $current = $properties[0].Value
+        }
+    }
+    if ($null -eq $current) {
+        Write-Output -NoEnumerate $Default
+        return
+    }
+    Write-Output -NoEnumerate $current
+}
+
+
 function Test-ExactStringArray {
     param(
         [AllowNull()]$Value,
         [Parameter(Mandatory = $true)][AllowEmptyCollection()][string[]]$Expected
     )
-    if ($null -eq $Value -or $Value -is [string] -or
-        $Value -isnot [Collections.IEnumerable]) {
+    if ($null -eq $Value -or $Value -isnot [Array]) {
         return $false
     }
     $actual = @($Value)
@@ -128,6 +177,42 @@ function Test-ExactStringArray {
         }
     }
     return $true
+}
+
+
+function Get-ExactPositivePid {
+    param(
+        [Parameter(Mandatory = $true)]$InputObject,
+        [Parameter(Mandatory = $true)][string]$Name
+    )
+    $value = Get-ExactValueNoEnumerate $InputObject @($Name) $null
+    if (($value -isnot [int32] -and $value -isnot [int64]) -or
+        [int64]$value -le 0 -or [int64]$value -gt [int32]::MaxValue) {
+        throw "Lease/process field '$Name' is not one exact positive PID."
+    }
+    return [int]$value
+}
+
+
+function Get-ExactPidArray {
+    param(
+        [Parameter(Mandatory = $true)]$InputObject,
+        [Parameter(Mandatory = $true)][string]$Name
+    )
+    $raw = Get-ExactValueNoEnumerate $InputObject @($Name) $null
+    if ($null -eq $raw -or $raw -is [string] -or
+        $raw -isnot [Collections.IEnumerable]) {
+        throw "Lease/process field '$Name' is not one exact PID collection."
+    }
+    $pids = [Collections.Generic.List[int]]::new()
+    foreach ($value in @($raw)) {
+        if (($value -isnot [int32] -and $value -isnot [int64]) -or
+            [int64]$value -le 0 -or [int64]$value -gt [int32]::MaxValue) {
+            throw "Lease/process field '$Name' contains an invalid PID."
+        }
+        $pids.Add([int]$value)
+    }
+    return @($pids)
 }
 
 
@@ -145,31 +230,35 @@ function Assert-FixedReplayAdmission {
     $expectedRoutePlan = if ($Ending -ceq 'heist') { 'count' } else { '' }
     $expectedScenario = if ($Ending -ceq 'heist') { 'grand_casino_audit_night' } else { '' }
     $expectedAuthority = if ($Ending -ceq 'heist') { 'natural_fresh_profile_first_arrival_preflight' } else { 'route_seed' }
-    $expectedOwnerDecisions = if ($Ending -ceq 'heist') { @('Q-013A', 'Q-017A') } else { @() }
-    $actualOwnerDecisions = Get-ExactValue $Admission @('owner_decisions') '__missing_owner_decisions__'
-    $ownerDecisionsValid = if ($Ending -ceq 'heist') {
-        Test-ExactStringArray -Value $actualOwnerDecisions -Expected $expectedOwnerDecisions
-    }
-    else {
-        $null -eq $actualOwnerDecisions
-    }
-    if ([string](Get-ExactValue $Admission @('evidence_role') '') -cne 'fixed-repeat' -or
-        [string](Get-ExactValue $Admission @('ending') '') -cne $Ending -or
-        [string](Get-ExactValue $Admission @('seed') '') -cne $Seed -or
-        (Get-ExactValue $Admission @('repeat') $null) -isnot [int32] -or
-        [int](Get-ExactValue $Admission @('repeat') 0) -ne 1 -or
-        [string](Get-ExactValue $Admission @('route_plan') '<missing>') -cne $expectedRoutePlan -or
-        [string](Get-ExactValue $Admission @('expected_initial_scenario') '<missing>') -cne $expectedScenario -or
-        [string](Get-ExactValue $Admission @('scenario_authority') '') -cne $expectedAuthority -or
-        (Get-ExactValue $Admission @('scenario_injection_allowed') $null) -isnot [bool] -or
-        [bool](Get-ExactValue $Admission @('scenario_injection_allowed') $true) -or
-        (Get-ExactValue $Admission @('plan_b_allowed') $null) -isnot [bool] -or
-        [bool](Get-ExactValue $Admission @('plan_b_allowed') $true) -or
-        (Get-ExactValue $Admission @('requires_isolated_profile') $null) -isnot [bool] -or
-        -not [bool](Get-ExactValue $Admission @('requires_isolated_profile') $false) -or
-        (Get-ExactValue $Admission @('release_qualifying') $null) -isnot [bool] -or
-        [bool](Get-ExactValue $Admission @('release_qualifying') $true) -or
-        [string](Get-ExactValue $Admission @('qualification_authority') '') -cne 'outer_independent_profile_aggregate_only' -or
+    $expectedOwnerDecisions = [string[]]@()
+    if ($Ending -ceq 'heist') { $expectedOwnerDecisions = [string[]]@('Q-013A', 'Q-017A') }
+    $actualEvidenceRole = Get-ExactValueNoEnumerate $Admission @('evidence_role') $null
+    $actualEnding = Get-ExactValueNoEnumerate $Admission @('ending') $null
+    $actualSeed = Get-ExactValueNoEnumerate $Admission @('seed') $null
+    $actualRepeat = Get-ExactValueNoEnumerate $Admission @('repeat') $null
+    $actualRoutePlan = Get-ExactValueNoEnumerate $Admission @('route_plan') $null
+    $actualExpectedScenario = Get-ExactValueNoEnumerate $Admission @('expected_initial_scenario') $null
+    $actualScenarioAuthority = Get-ExactValueNoEnumerate $Admission @('scenario_authority') $null
+    $actualScenarioInjectionAllowed = Get-ExactValueNoEnumerate $Admission @('scenario_injection_allowed') $null
+    $actualPlanBAllowed = Get-ExactValueNoEnumerate $Admission @('plan_b_allowed') $null
+    $actualRequiresIsolatedProfile = Get-ExactValueNoEnumerate $Admission @('requires_isolated_profile') $null
+    $actualReleaseQualifying = Get-ExactValueNoEnumerate $Admission @('release_qualifying') $null
+    $actualQualificationAuthority = Get-ExactValueNoEnumerate $Admission @('qualification_authority') $null
+    $actualOwnerDecisions = Get-ExactValueNoEnumerate $Admission @('owner_decisions') '__missing_owner_decisions__'
+    $ownerDecisionsValid = Test-ExactStringArray -Value $actualOwnerDecisions -Expected $expectedOwnerDecisions
+    if ($actualEvidenceRole -isnot [string] -or $actualEvidenceRole -cne 'fixed-repeat' -or
+        $actualEnding -isnot [string] -or $actualEnding -cne $Ending -or
+        $actualSeed -isnot [string] -or $actualSeed -cne $Seed -or
+        $actualRepeat -isnot [int32] -or [int]$actualRepeat -ne 1 -or
+        $actualRoutePlan -isnot [string] -or $actualRoutePlan -cne $expectedRoutePlan -or
+        $actualExpectedScenario -isnot [string] -or $actualExpectedScenario -cne $expectedScenario -or
+        $actualScenarioAuthority -isnot [string] -or $actualScenarioAuthority -cne $expectedAuthority -or
+        $actualScenarioInjectionAllowed -isnot [bool] -or [bool]$actualScenarioInjectionAllowed -or
+        $actualPlanBAllowed -isnot [bool] -or [bool]$actualPlanBAllowed -or
+        $actualRequiresIsolatedProfile -isnot [bool] -or -not [bool]$actualRequiresIsolatedProfile -or
+        $actualReleaseQualifying -isnot [bool] -or [bool]$actualReleaseQualifying -or
+        $actualQualificationAuthority -isnot [string] -or
+        $actualQualificationAuthority -cne 'outer_independent_profile_aggregate_only' -or
         -not $ownerDecisionsValid) {
         throw "$Label did not retain the exact fixed-repeat replay admission."
     }
@@ -192,6 +281,397 @@ function Get-Sha256 {
         throw "Required evidence file is missing: $Path"
     }
     return (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant()
+}
+
+
+function Test-ExactPsCustomObject {
+    param([AllowNull()]$Value)
+    return $null -ne $Value -and
+        $Value.GetType().FullName -ceq 'System.Management.Automation.PSCustomObject'
+}
+
+
+function ConvertFrom-ExactJsonObjectText {
+    param(
+        [Parameter(Mandatory = $true)][string]$Json,
+        [Parameter(Mandatory = $true)][string]$Label
+    )
+    $trimmed = $Json.Trim()
+    if ([string]::IsNullOrWhiteSpace($trimmed) -or
+        $trimmed[0] -cne '{' -or $trimmed[$trimmed.Length - 1] -cne '}') {
+        throw "$Label is not one exact JSON object."
+    }
+    try { $value = $trimmed | ConvertFrom-Json }
+    catch { throw "$Label is not valid JSON: $($_.Exception.Message)" }
+    if (-not (Test-ExactPsCustomObject -Value $value)) {
+        throw "$Label is not one exact JSON object."
+    }
+    Write-Output -NoEnumerate $value
+}
+
+
+function ConvertTo-CanonicalExactObjectJson {
+    param(
+        [Parameter(Mandatory = $true)]$InputObject,
+        [Parameter(Mandatory = $true)][string]$Label,
+        [ValidateRange(2, 100)][int]$Depth = 30
+    )
+    if (-not (Test-ExactPsCustomObject -Value $InputObject)) {
+        throw "$Label is not one exact object."
+    }
+    return ConvertTo-Json -InputObject $InputObject -Depth $Depth -Compress
+}
+
+
+function Get-HeldFileDigests {
+    param([Parameter(Mandatory = $true)][IO.FileStream]$Stream)
+    if (-not $Stream.CanRead -or -not $Stream.CanSeek) {
+        throw 'Held file stream is not readable and seekable.'
+    }
+    $originalPosition = $Stream.Position
+    $sha1 = [Security.Cryptography.SHA1]::Create()
+    $sha256 = [Security.Cryptography.SHA256]::Create()
+    try {
+        $length = [int64]$Stream.Length
+        $header = [Text.Encoding]::UTF8.GetBytes("blob $length`0")
+        $null = $sha1.TransformBlock($header, 0, $header.Length, $header, 0)
+        $Stream.Position = 0
+        $buffer = [byte[]]::new(1048576)
+        while (($read = $Stream.Read($buffer, 0, $buffer.Length)) -gt 0) {
+            $null = $sha1.TransformBlock($buffer, 0, $read, $buffer, 0)
+            $null = $sha256.TransformBlock($buffer, 0, $read, $buffer, 0)
+        }
+        $empty = [byte[]]::new(0)
+        $null = $sha1.TransformFinalBlock($empty, 0, 0)
+        $null = $sha256.TransformFinalBlock($empty, 0, 0)
+        return [pscustomobject][ordered]@{
+            byte_length = $length
+            raw_git_blob = ([BitConverter]::ToString($sha1.Hash)).Replace('-', '').ToLowerInvariant()
+            sha256 = ([BitConverter]::ToString($sha256.Hash)).Replace('-', '').ToLowerInvariant()
+        }
+    }
+    finally {
+        $Stream.Position = $originalPosition
+        $sha1.Dispose()
+        $sha256.Dispose()
+    }
+}
+
+
+function Get-HeldUtf8Text {
+    param([Parameter(Mandatory = $true)][IO.FileStream]$Stream)
+    if (-not $Stream.CanRead -or -not $Stream.CanSeek) {
+        throw 'Held UTF-8 file stream is not readable and seekable.'
+    }
+    $originalPosition = $Stream.Position
+    $reader = $null
+    try {
+        $Stream.Position = 0
+        $reader = [IO.StreamReader]::new($Stream, [Text.Encoding]::UTF8, $true, 4096, $true)
+        return $reader.ReadToEnd()
+    }
+    finally {
+        if ($null -ne $reader) { $reader.Dispose() }
+        $Stream.Position = $originalPosition
+    }
+}
+
+
+function New-LockedJsonReceipt {
+    param(
+        [Parameter(Mandatory = $true)][string]$Path,
+        [Parameter(Mandatory = $true)]$Receipt,
+        [Parameter(Mandatory = $true)][string]$Label
+    )
+    if (Test-Path -LiteralPath $Path) { throw "$Label path already exists: $Path" }
+    $receiptObject = if (Test-ExactPsCustomObject -Value $Receipt) { $Receipt } else { [pscustomobject]$Receipt }
+    $json = (ConvertTo-Json -InputObject $receiptObject -Depth 10) + [Environment]::NewLine
+    $bytes = [Text.UTF8Encoding]::new($false).GetBytes($json)
+    $stream = $null
+    try {
+        $stream = [IO.File]::Open($Path, [IO.FileMode]::CreateNew, [IO.FileAccess]::ReadWrite, [IO.FileShare]::Read)
+        $stream.Write($bytes, 0, $bytes.Length)
+        $stream.Flush($true)
+        $stream.Position = 0
+        $digests = Get-HeldFileDigests -Stream $stream
+        $parsed = ConvertFrom-ExactJsonObjectText -Json (Get-HeldUtf8Text -Stream $stream) -Label $Label
+        if ((ConvertTo-CanonicalExactObjectJson -InputObject $parsed -Label "$Label parsed receipt" -Depth 30) -cne
+            (ConvertTo-CanonicalExactObjectJson -InputObject $receiptObject -Label "$Label in-memory receipt" -Depth 30)) {
+            throw "$Label bytes differ from the in-memory receipt."
+        }
+        return [pscustomobject][ordered]@{ stream = $stream; sha256 = $digests.sha256 }
+    }
+    catch {
+        if ($null -ne $stream) { $stream.Dispose() }
+        throw
+    }
+}
+
+
+function Get-TrackedSourceDescriptors {
+    $lines = @(& git -C $Worktree -c core.quotepath=false ls-tree -r --full-tree $ExpectedHead)
+    if ($LASTEXITCODE -ne 0 -or $lines.Count -eq 0) {
+        throw 'Could not enumerate the immutable HEAD production input tree.'
+    }
+    $rows = [Collections.Generic.List[object]]::new()
+    foreach ($line in $lines) {
+        $match = [regex]::Match([string]$line, '^(?<mode>100644|100755) blob (?<blob>[a-f0-9]{40})\t(?<path>.+)$')
+        if (-not $match.Success) {
+            throw "Immutable HEAD production input row is not one exact regular blob: $line"
+        }
+        $relativePath = [string]$match.Groups['path'].Value
+        $absolutePath = [IO.Path]::GetFullPath((Join-Path $Worktree $relativePath))
+        $rows.Add([pscustomobject][ordered]@{
+            id = "repository:$relativePath"
+            scope = 'repository_tracked_production_tree'
+            repository_path = $relativePath
+            absolute_path = $absolutePath
+            expected_git_mode = [string]$match.Groups['mode'].Value
+            expected_git_blob = [string]$match.Groups['blob'].Value
+        })
+    }
+    foreach ($external in @(
+        [pscustomobject]@{ id = 'godot:console'; scope = 'pinned_engine'; path = $GodotBin },
+        [pscustomobject]@{ id = 'godot:runtime'; scope = 'pinned_engine'; path = $GodotRuntimeBin },
+        [pscustomobject]@{ id = 'powershell:host'; scope = 'process_host'; path = [Diagnostics.Process]::GetCurrentProcess().MainModule.FileName }
+    )) {
+        $rows.Add([pscustomobject][ordered]@{
+            id = [string]$external.id
+            scope = [string]$external.scope
+            repository_path = ''
+            absolute_path = [IO.Path]::GetFullPath([string]$external.path)
+            expected_git_mode = ''
+            expected_git_blob = ''
+        })
+    }
+    return @($rows)
+}
+
+
+function Assert-RepositoryBlobIdentity {
+    $repositoryRows = @($script:SourceCustodyRows | Where-Object {
+        $scope = Get-ExactValueNoEnumerate $_ @('scope') $null
+        $scope -is [string] -and $scope -ceq 'repository_tracked_production_tree'
+    })
+    if ($repositoryRows.Count -eq 0) {
+        throw 'Source custody has no immutable HEAD repository rows.'
+    }
+    for ($offset = 0; $offset -lt $repositoryRows.Count; $offset += 64) {
+        $upper = [Math]::Min($offset + 63, $repositoryRows.Count - 1)
+        $batch = @($repositoryRows[$offset..$upper])
+        $paths = @($batch | ForEach-Object {
+            $path = Get-ExactValueNoEnumerate $_ @('absolute_path') $null
+            if ($path -isnot [string]) { throw 'Repository custody row has a non-string path.' }
+            $path
+        })
+        $actualBlobs = @(& git -C $Worktree hash-object -- $paths)
+        if ($LASTEXITCODE -ne 0 -or $actualBlobs.Count -ne $batch.Count) {
+            throw 'Could not compute every held worktree blob through repository clean filters.'
+        }
+        for ($index = 0; $index -lt $batch.Count; $index++) {
+            $expectedBlob = Get-ExactValueNoEnumerate $batch[$index] @('expected_git_blob') $null
+            $actualBlob = [string]$actualBlobs[$index]
+            if ($expectedBlob -isnot [string] -or $expectedBlob -notmatch '^[a-f0-9]{40}$' -or
+                $actualBlob -notmatch '^[a-f0-9]{40}$' -or $actualBlob -cne $expectedBlob) {
+                throw "Held worktree bytes do not match immutable HEAD blob: $($batch[$index].repository_path)"
+            }
+        }
+    }
+}
+
+
+function Assert-SourceCustody {
+    if ($script:SourceCustodyRows.Count -eq 0 -or
+        $script:SourceCustodyStreams.Count -ne $script:SourceCustodyRows.Count) {
+        throw 'Source custody is absent or incomplete.'
+    }
+    for ($index = 0; $index -lt $script:SourceCustodyRows.Count; $index++) {
+        $row = $script:SourceCustodyRows[$index]
+        $stream = $script:SourceCustodyStreams[$index]
+        if ($null -eq $stream -or -not $stream.CanRead) {
+            throw "Source custody handle is not readable: $($row.id)"
+        }
+        $path = Get-ExactValueNoEnumerate $row @('absolute_path') $null
+        $preHash = Get-ExactValueNoEnumerate $row @('pre_sha256') $null
+        $byteLength = Get-ExactValueNoEnumerate $row @('byte_length') $null
+        $scope = Get-ExactValueNoEnumerate $row @('scope') $null
+        $expectedMode = Get-ExactValueNoEnumerate $row @('expected_git_mode') $null
+        $expectedBlob = Get-ExactValueNoEnumerate $row @('expected_git_blob') $null
+        if ($path -isnot [string] -or $preHash -isnot [string] -or
+            $preHash -notmatch '^[a-f0-9]{64}$' -or
+            ($byteLength -isnot [int64] -and $byteLength -isnot [int32]) -or
+            $scope -isnot [string] -or $expectedMode -isnot [string] -or
+            $expectedBlob -isnot [string] -or
+            -not (Test-Path -LiteralPath $path -PathType Leaf)) {
+            throw "Source custody receipt row is invalid: $($row.id)"
+        }
+        if ($scope -ceq 'repository_tracked_production_tree' -and
+            ($expectedMode -notmatch '^100(644|755)$' -or $expectedBlob -notmatch '^[a-f0-9]{40}$')) {
+            throw "Repository source custody identity is invalid: $($row.id)"
+        }
+        if ($scope -cne 'repository_tracked_production_tree' -and
+            (-not [string]::IsNullOrEmpty($expectedMode) -or -not [string]::IsNullOrEmpty($expectedBlob))) {
+            throw "External source custody row published a repository identity: $($row.id)"
+        }
+        $digests = Get-HeldFileDigests -Stream $stream
+        if ([int64]$digests.byte_length -ne [int64]$byteLength -or
+            $digests.sha256 -cne $preHash) {
+            throw "Custodied source input changed: $($row.id)"
+        }
+    }
+    if ($null -ne $script:SourceCustodyPreStream) {
+        $preReceiptDigests = Get-HeldFileDigests -Stream $script:SourceCustodyPreStream
+        if (-not $script:SourceCustodyPreStream.CanRead -or
+            $preReceiptDigests.sha256 -cne $script:SourceCustodyPreSha256) {
+            throw 'Source custody pre-execution receipt changed while held.'
+        }
+    }
+    if ($null -ne $script:SourceCustodyFinalStream) {
+        $finalReceiptDigests = Get-HeldFileDigests -Stream $script:SourceCustodyFinalStream
+        if (-not $script:SourceCustodyFinalStream.CanRead -or
+            $finalReceiptDigests.sha256 -cne $script:SourceCustodyFinalSha256) {
+            throw 'Source custody final receipt changed while held.'
+        }
+    }
+}
+
+
+function Open-SourceCustodyHandle {
+    param([Parameter(Mandatory = $true)][string]$Path)
+    return [IO.File]::Open(
+        $Path,
+        [IO.FileMode]::Open,
+        [IO.FileAccess]::Read,
+        [IO.FileShare]::Read
+    )
+}
+
+
+function New-SourceCustody {
+    if ($script:SourceCustodyRows.Count -ne 0 -or $script:SourceCustodyStreams.Count -ne 0) {
+        throw 'Source custody cannot be acquired twice.'
+    }
+    $seen = [Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+    try {
+        foreach ($descriptor in @(Get-TrackedSourceDescriptors)) {
+            $path = Get-ExactValueNoEnumerate $descriptor @('absolute_path') $null
+            if ($path -isnot [string] -or -not $seen.Add($path)) {
+                throw "Source custody input path is invalid or duplicated: $path"
+            }
+            if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
+                throw "Required source custody input is missing: $path"
+            }
+            $stream = Open-SourceCustodyHandle -Path $path
+            $script:SourceCustodyStreams.Add($stream)
+            $digests = Get-HeldFileDigests -Stream $stream
+            $script:SourceCustodyRows.Add([pscustomobject][ordered]@{
+                id = [string]$descriptor.id
+                scope = [string]$descriptor.scope
+                repository_path = [string]$descriptor.repository_path
+                absolute_path = $path
+                expected_git_mode = [string]$descriptor.expected_git_mode
+                expected_git_blob = [string]$descriptor.expected_git_blob
+                byte_length = [int64]$digests.byte_length
+                raw_git_blob = [string]$digests.raw_git_blob
+                pre_sha256 = [string]$digests.sha256
+            })
+        }
+        Assert-RepositoryBlobIdentity
+        Assert-SourceCustody
+        $preReceipt = [pscustomobject][ordered]@{
+            schema_version = 1
+            check_id = 'rw06_2_source_custody_pre'
+            expected_head = $ExpectedHead.ToLowerInvariant()
+            expected_tree = $ExpectedTree.ToLowerInvariant()
+            file_share = 'Read'
+            input_count = $script:SourceCustodyRows.Count
+            inputs = @($script:SourceCustodyRows)
+        }
+        $lockedPreReceipt = New-LockedJsonReceipt -Path $SourceCustodyPrePath -Receipt $preReceipt -Label 'Source custody pre-execution receipt'
+        $script:SourceCustodyPreStream = $lockedPreReceipt.stream
+        $script:SourceCustodyPreSha256 = [string]$lockedPreReceipt.sha256
+        Assert-SourceCustody
+    }
+    catch {
+        if ($null -ne $script:SourceCustodyPreStream) {
+            $script:SourceCustodyPreStream.Dispose()
+            $script:SourceCustodyPreStream = $null
+        }
+        if ($null -ne $script:SourceCustodyFinalStream) {
+            $script:SourceCustodyFinalStream.Dispose()
+            $script:SourceCustodyFinalStream = $null
+        }
+        foreach ($stream in @($script:SourceCustodyStreams)) {
+            try { $stream.Dispose() } catch {}
+        }
+        $script:SourceCustodyStreams.Clear()
+        $script:SourceCustodyRows.Clear()
+        throw
+    }
+}
+
+
+function Complete-SourceCustody {
+    Assert-SourceCustody
+    $completedRows = [Collections.Generic.List[object]]::new()
+    for ($index = 0; $index -lt $script:SourceCustodyRows.Count; $index++) {
+        $row = $script:SourceCustodyRows[$index]
+        $postDigests = Get-HeldFileDigests -Stream $script:SourceCustodyStreams[$index]
+        if ($postDigests.sha256 -cne $row.pre_sha256 -or
+            [int64]$postDigests.byte_length -ne [int64]$row.byte_length) {
+            throw "Custodied source input changed before final receipt: $($row.id)"
+        }
+        $completedRows.Add([pscustomobject][ordered]@{
+            id = $row.id
+            scope = $row.scope
+            repository_path = $row.repository_path
+            absolute_path = $row.absolute_path
+            expected_git_blob = $row.expected_git_blob
+            expected_git_mode = $row.expected_git_mode
+            byte_length = $row.byte_length
+            raw_git_blob = $row.raw_git_blob
+            pre_sha256 = $row.pre_sha256
+            post_sha256 = [string]$postDigests.sha256
+            stable = $true
+        })
+    }
+    $finalReceipt = [pscustomobject][ordered]@{
+        schema_version = 1
+        check_id = 'rw06_2_source_custody_final'
+        expected_head = $ExpectedHead.ToLowerInvariant()
+        expected_tree = $ExpectedTree.ToLowerInvariant()
+        pre_receipt = $SourceCustodyPrePath
+        pre_receipt_sha256 = $script:SourceCustodyPreSha256
+        file_share = 'Read'
+        input_count = $completedRows.Count
+        inputs = @($completedRows)
+        custody_complete = $true
+    }
+    $lockedFinalReceipt = New-LockedJsonReceipt -Path $SourceCustodyFinalPath -Receipt $finalReceipt -Label 'Source custody final receipt'
+    $script:SourceCustodyFinalStream = $lockedFinalReceipt.stream
+    $script:SourceCustodyFinalSha256 = [string]$lockedFinalReceipt.sha256
+    $script:SourceCustodyComplete = $true
+    Assert-SourceCustody
+}
+
+
+function Close-SourceCustody {
+    if ($null -ne $script:SourceCustodyPreStream) {
+        $script:SourceCustodyPreStream.Dispose()
+        $script:SourceCustodyPreStream = $null
+    }
+    if ($null -ne $script:SourceCustodyFinalStream) {
+        $script:SourceCustodyFinalStream.Dispose()
+        $script:SourceCustodyFinalStream = $null
+    }
+    foreach ($stream in @($script:EvidenceArtifactStreams)) {
+        try { $stream.Dispose() } catch {}
+    }
+    $script:EvidenceArtifactStreams.Clear()
+    foreach ($stream in @($script:SourceCustodyStreams)) {
+        try { $stream.Dispose() } catch {}
+    }
+    $script:SourceCustodyStreams.Clear()
 }
 
 
@@ -236,8 +716,8 @@ function Get-LeaseOwnerPids {
     if ($Lease.Name -ceq 'EXCLUSIVE.lease') {
         try {
             $record = Get-Content -Raw -LiteralPath $Lease.FullName -Encoding utf8 | ConvertFrom-Json
-            $ownerPid = [int](Get-ExactValue $record @('pid') 0)
-            $guardPids = @(Get-ExactValue $record @('guard_pids') @() | ForEach-Object { [int]$_ })
+            $ownerPid = Get-ExactPositivePid -InputObject $record -Name 'pid'
+            $guardPids = @(Get-ExactPidArray -InputObject $record -Name 'guard_pids')
         }
         catch {
             throw "Could not read exclusive lease owner from $($Lease.FullName): $($_.Exception.Message)"
@@ -330,8 +810,10 @@ function Test-OwnedExclusiveLease {
     if (-not (Test-Path -LiteralPath $LeasePath -PathType Leaf)) { return $false }
     try {
         $record = Get-Content -Raw -LiteralPath $LeasePath -Encoding utf8 | ConvertFrom-Json
-        return [int](Get-ExactValue $record @('pid') 0) -eq $PID -and
-            [string](Get-ExactValue $record @('kind') '') -ceq 'exclusive-real-input-fixed-repeat-final-evidence'
+        $ownerPid = Get-ExactPositivePid -InputObject $record -Name 'pid'
+        $kind = Get-ExactValueNoEnumerate $record @('kind') $null
+        return $kind -is [string] -and $ownerPid -eq $PID -and
+            $kind -ceq 'exclusive-real-input-fixed-repeat-final-evidence'
     }
     catch {
         return $false
@@ -452,8 +934,12 @@ function Get-LiveSurvivorPids {
     param([Parameter(Mandatory = $true)][object[]]$Survivors)
     $livePidList = [Collections.Generic.List[int]]::new()
     foreach ($survivor in $Survivors) {
-        $candidatePid = [int](Get-ExactValue $survivor @('pid') 0)
-        if ($candidatePid -le 0) { $candidatePid = [int](Get-ExactValue $survivor @('ProcessId') 0) }
+        $candidatePid = 0
+        try { $candidatePid = Get-ExactPositivePid -InputObject $survivor -Name 'pid' }
+        catch {
+            try { $candidatePid = Get-ExactPositivePid -InputObject $survivor -Name 'ProcessId' }
+            catch { $candidatePid = 0 }
+        }
         if ($candidatePid -gt 0 -and
             -not $livePidList.Contains($candidatePid) -and
             $null -ne (Get-Process -Id $candidatePid -ErrorAction SilentlyContinue)) {
@@ -468,11 +954,15 @@ function Test-LauncherCustodyLease {
     if (-not (Test-Path -LiteralPath $LeasePath -PathType Leaf)) { return $false }
     try {
         $record = Get-Content -Raw -LiteralPath $LeasePath -Encoding utf8 | ConvertFrom-Json
-        $kind = [string](Get-ExactValue $record @('kind') '')
-        return ($kind -ceq 'exclusive-real-input-fixed-repeat-final-evidence' -and
-                [int](Get-ExactValue $record @('pid') 0) -eq $PID) -or
-            ($kind -ceq 'exclusive-survivor-custody' -and
-                [int](Get-ExactValue $record @('original_launcher_pid') 0) -eq $PID)
+        $kind = Get-ExactValueNoEnumerate $record @('kind') $null
+        if ($kind -isnot [string]) { return $false }
+        if ($kind -ceq 'exclusive-real-input-fixed-repeat-final-evidence') {
+            return (Get-ExactPositivePid -InputObject $record -Name 'pid') -eq $PID
+        }
+        if ($kind -ceq 'exclusive-survivor-custody') {
+            return (Get-ExactPositivePid -InputObject $record -Name 'original_launcher_pid') -eq $PID
+        }
+        return $false
     }
     catch { return $false }
 }
@@ -483,11 +973,13 @@ function Test-ExclusiveSurvivorCustody {
     if ($ExpectedLivePids.Count -eq 0 -or -not (Test-Path -LiteralPath $LeasePath -PathType Leaf)) { return $false }
     try {
         $record = Get-Content -Raw -LiteralPath $LeasePath -Encoding utf8 | ConvertFrom-Json
-        $ownerPid = [int](Get-ExactValue $record @('pid') 0)
-        $guardPids = @(Get-ExactValue $record @('guard_pids') @() | ForEach-Object { [int]$_ } | Sort-Object -Unique)
+        $ownerPid = Get-ExactPositivePid -InputObject $record -Name 'pid'
+        $guardPids = @(Get-ExactPidArray -InputObject $record -Name 'guard_pids' | Sort-Object -Unique)
         $expected = @($ExpectedLivePids | Sort-Object -Unique)
-        if ([string](Get-ExactValue $record @('kind') '') -cne 'exclusive-survivor-custody' -or
-            [int](Get-ExactValue $record @('original_launcher_pid') 0) -ne $PID -or
+        $kind = Get-ExactValueNoEnumerate $record @('kind') $null
+        $originalLauncherPid = Get-ExactPositivePid -InputObject $record -Name 'original_launcher_pid'
+        if ($kind -isnot [string] -or $kind -cne 'exclusive-survivor-custody' -or
+            $originalLauncherPid -ne $PID -or
             $ownerPid -cnotin $expected -or
             $null -eq (Get-Process -Id $ownerPid -ErrorAction SilentlyContinue) -or
             $guardPids.Count -ne $expected.Count) {
@@ -773,11 +1265,13 @@ function Restore-ProcessEnvironmentValue {
 
 function Assert-ExactPublishedPath {
     param(
-        [Parameter(Mandatory = $true)][string]$PublishedPath,
+        [Parameter(Mandatory = $true)]$PublishedPath,
         [Parameter(Mandatory = $true)][string]$ExpectedPath,
         [Parameter(Mandatory = $true)][string]$Label
     )
-    if ([string]::IsNullOrWhiteSpace($PublishedPath) -or -not [IO.Path]::IsPathRooted($PublishedPath)) {
+    if ($PublishedPath -isnot [string] -or
+        [string]::IsNullOrWhiteSpace($PublishedPath) -or
+        -not [IO.Path]::IsPathRooted($PublishedPath)) {
         throw "$Label is missing or is not an absolute path."
     }
     $publishedFullPath = [IO.Path]::GetFullPath($PublishedPath)
@@ -829,6 +1323,268 @@ function Assert-StrictSessionLogs {
 }
 
 
+function Assert-RetainedHeistPreflightArtifact {
+    param(
+        [Parameter(Mandatory = $true)][int]$RunIndex,
+        [Parameter(Mandatory = $true)][string]$InvocationRoot,
+        [Parameter(Mandatory = $true)]$InvocationPreflight,
+        [Parameter(Mandatory = $true)]$RunPreflight
+    )
+    $path = Join-Path $InvocationRoot 'heist_seed_preflight.json'
+    if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
+        throw "Run $RunIndex did not retain its Heist seed preflight file."
+    }
+    if (-not (Test-ExactPsCustomObject -Value $InvocationPreflight) -or
+        -not (Test-ExactPsCustomObject -Value $RunPreflight)) {
+        throw "Run $RunIndex Heist seed preflight embeddings are not exact objects."
+    }
+    $stream = Open-SourceCustodyHandle -Path $path
+    $script:EvidenceArtifactStreams.Add($stream)
+    $item = Get-Item -LiteralPath $path
+    if ($item.Length -le 0 -or
+        ($item.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) {
+        throw "Run $RunIndex retained Heist seed preflight is empty or is a reparse point."
+    }
+    $digests = Get-HeldFileDigests -Stream $stream
+    $retained = ConvertFrom-ExactJsonObjectText `
+        -Json (Get-HeldUtf8Text -Stream $stream) `
+        -Label "Run $RunIndex retained Heist seed preflight"
+    $passed = Get-ExactValueNoEnumerate $retained @('passed') $null
+    $seed = Get-ExactValueNoEnumerate $retained @('selection', 'seed_text') $null
+    $scenario = Get-ExactValueNoEnumerate $retained @('selection', 'selected_scenario') $null
+    if ($passed -isnot [bool] -or -not [bool]$passed -or
+        $seed -isnot [string] -or $seed -cne 'RW06-HEIST-AUDIT-0002' -or
+        $scenario -isnot [string] -or $scenario -cne 'grand_casino_audit_night') {
+        throw "Run $RunIndex retained Heist seed preflight has invalid exact witness fields."
+    }
+    $retainedJson = ConvertTo-CanonicalExactObjectJson -InputObject $retained -Label "Run $RunIndex retained Heist preflight"
+    if ($retainedJson -cne (ConvertTo-CanonicalExactObjectJson -InputObject $InvocationPreflight -Label "Run $RunIndex invocation Heist preflight") -or
+        $retainedJson -cne (ConvertTo-CanonicalExactObjectJson -InputObject $RunPreflight -Label "Run $RunIndex iteration Heist preflight")) {
+        throw "Run $RunIndex retained Heist seed preflight differs from its invocation or run summary object."
+    }
+    return [pscustomobject][ordered]@{
+        path = [IO.Path]::GetFullPath($path)
+        sha256 = [string]$digests.sha256
+        report = $retained
+    }
+}
+
+
+function Assert-OneRunJsonShapes {
+    param(
+        [Parameter(Mandatory = $true)]$Summary,
+        [Parameter(Mandatory = $true)]$Run,
+        [Parameter(Mandatory = $true)][string]$Label
+    )
+    if (-not (Test-ExactPsCustomObject -Value $Summary) -or
+        -not (Test-ExactPsCustomObject -Value $Run)) {
+        throw "$Label summary and run must each be one exact object."
+    }
+    $summaryPropertyNames = @(
+        'schema_version', 'check_id', 'role', 'requested_evidence_role',
+        'repeat_profile_scope', 'fixed_repeat_qualification_authority', 'ending', 'seed',
+        'observed_terminal_seeds', 'repeat', 'deterministic', 'checkpoint_evidence_complete',
+        'release_qualifying', 'qualification', 'replay_admission',
+        'public_observation_schema', 'public_observation_schema_version',
+        'heist_seed_preflight', 'heist_preflight_admission', 'evidence_root', 'runs'
+    )
+    $runPropertyNames = @(
+        'role', 'requested_evidence_role', 'repeat_profile_scope',
+        'fixed_repeat_qualification_authority', 'release_qualifying', 'qualification',
+        'replay_admission', 'iteration', 'ending', 'seed', 'session', 'passed', 'outcome',
+        'observed_terminal_seed', 'action_count', 'midpoint_save_relaunch_continue',
+        'heist_seed_preflight', 'heist_preflight_admission', 'heist_launch_setup',
+        'transcript', 'transcript_sha256', 'money_curve', 'money_curve_sha256',
+        'persistence_checkpoint_before', 'persistence_checkpoint_before_sha256',
+        'persistence_checkpoint_after', 'persistence_checkpoint_after_sha256',
+        'persistence_checkpoint_equal', 'persistence_checkpoint_complete',
+        'final_public_checkpoint', 'failure'
+    )
+    Assert-Rw062ExactPropertyNames -InputObject $Summary -Expected $summaryPropertyNames -Label "$Label summary"
+    Assert-Rw062ExactPropertyNames -InputObject $Run -Expected $runPropertyNames -Label "$Label run"
+    $scalarSpecs = @(
+        [pscustomobject]@{ source = $Summary; path = @('schema_version'); type = 'int32' },
+        [pscustomobject]@{ source = $Summary; path = @('evidence_root'); type = 'string' },
+        [pscustomobject]@{ source = $Summary; path = @('check_id'); type = 'string' },
+        [pscustomobject]@{ source = $Summary; path = @('role'); type = 'string' },
+        [pscustomobject]@{ source = $Summary; path = @('requested_evidence_role'); type = 'string' },
+        [pscustomobject]@{ source = $Summary; path = @('repeat_profile_scope'); type = 'string' },
+        [pscustomobject]@{ source = $Summary; path = @('fixed_repeat_qualification_authority'); type = 'string' },
+        [pscustomobject]@{ source = $Summary; path = @('ending'); type = 'string' },
+        [pscustomobject]@{ source = $Summary; path = @('seed'); type = 'string' },
+        [pscustomobject]@{ source = $Summary; path = @('repeat'); type = 'int32' },
+        [pscustomobject]@{ source = $Summary; path = @('deterministic'); type = 'bool' },
+        [pscustomobject]@{ source = $Summary; path = @('checkpoint_evidence_complete'); type = 'bool' },
+        [pscustomobject]@{ source = $Summary; path = @('release_qualifying'); type = 'bool' },
+        [pscustomobject]@{ source = $Summary; path = @('qualification'); type = 'string' },
+        [pscustomobject]@{ source = $Summary; path = @('public_observation_schema'); type = 'string' },
+        [pscustomobject]@{ source = $Summary; path = @('public_observation_schema_version'); type = 'int32' },
+        [pscustomobject]@{ source = $Run; path = @('action_count'); type = 'int32' },
+        [pscustomobject]@{ source = $Run; path = @('outcome'); type = 'string' },
+        [pscustomobject]@{ source = $Run; path = @('role'); type = 'string' },
+        [pscustomobject]@{ source = $Run; path = @('requested_evidence_role'); type = 'string' },
+        [pscustomobject]@{ source = $Run; path = @('repeat_profile_scope'); type = 'string' },
+        [pscustomobject]@{ source = $Run; path = @('fixed_repeat_qualification_authority'); type = 'string' },
+        [pscustomobject]@{ source = $Run; path = @('release_qualifying'); type = 'bool' },
+        [pscustomobject]@{ source = $Run; path = @('qualification'); type = 'string' },
+        [pscustomobject]@{ source = $Run; path = @('iteration'); type = 'int32' },
+        [pscustomobject]@{ source = $Run; path = @('ending'); type = 'string' },
+        [pscustomobject]@{ source = $Run; path = @('passed'); type = 'bool' },
+        [pscustomobject]@{ source = $Run; path = @('seed'); type = 'string' },
+        [pscustomobject]@{ source = $Run; path = @('observed_terminal_seed'); type = 'string' },
+        [pscustomobject]@{ source = $Run; path = @('midpoint_save_relaunch_continue'); type = 'bool' },
+        [pscustomobject]@{ source = $Run; path = @('failure'); type = 'string' },
+        [pscustomobject]@{ source = $Run; path = @('transcript'); type = 'string' },
+        [pscustomobject]@{ source = $Run; path = @('money_curve'); type = 'string' },
+        [pscustomobject]@{ source = $Run; path = @('persistence_checkpoint_before'); type = 'string' },
+        [pscustomobject]@{ source = $Run; path = @('persistence_checkpoint_after'); type = 'string' },
+        [pscustomobject]@{ source = $Run; path = @('transcript_sha256'); type = 'string' },
+        [pscustomobject]@{ source = $Run; path = @('money_curve_sha256'); type = 'string' },
+        [pscustomobject]@{ source = $Run; path = @('persistence_checkpoint_before_sha256'); type = 'string' },
+        [pscustomobject]@{ source = $Run; path = @('persistence_checkpoint_after_sha256'); type = 'string' },
+        [pscustomobject]@{ source = $Run; path = @('persistence_checkpoint_equal'); type = 'bool' },
+        [pscustomobject]@{ source = $Run; path = @('persistence_checkpoint_complete'); type = 'bool' },
+        [pscustomobject]@{ source = $Run; path = @('session'); type = 'string' }
+    )
+    foreach ($spec in $scalarSpecs) {
+        $value = Get-ExactValueNoEnumerate $spec.source $spec.path $null
+        $valid = switch ($spec.type) {
+            'string' { $value -is [string] }
+            'int32' { $value -is [int32] }
+            'bool' { $value -is [bool] }
+            default { $false }
+        }
+        if (-not $valid) {
+            throw "$Label field '$($spec.path -join '.')' is not one exact $($spec.type) value."
+        }
+    }
+    $summarySchemaVersion = Get-ExactValueNoEnumerate $Summary @('schema_version') $null
+    $summaryRole = Get-ExactValueNoEnumerate $Summary @('role') $null
+    $summaryProfileScope = Get-ExactValueNoEnumerate $Summary @('repeat_profile_scope') $null
+    $summaryQualificationAuthority = Get-ExactValueNoEnumerate $Summary @('fixed_repeat_qualification_authority') $null
+    $summaryCheckpointComplete = Get-ExactValueNoEnumerate $Summary @('checkpoint_evidence_complete') $null
+    $summaryObservationSchema = Get-ExactValueNoEnumerate $Summary @('public_observation_schema') $null
+    $summaryObservationSchemaVersion = Get-ExactValueNoEnumerate $Summary @('public_observation_schema_version') $null
+    $runIteration = Get-ExactValueNoEnumerate $Run @('iteration') $null
+    $runEnding = Get-ExactValueNoEnumerate $Run @('ending') $null
+    if ($summarySchemaVersion -ne 1 -or
+        $summaryRole -cne 'child_development_run' -or
+        $summaryProfileScope -cne 'shared_caller_appdata' -or
+        $summaryQualificationAuthority -cne 'outer_independent_profile_aggregate_only' -or
+        -not $summaryCheckpointComplete -or
+        $summaryObservationSchema -cne 'beat_the_house.agent_public_observation' -or
+        $summaryObservationSchemaVersion -ne 1 -or
+        $runIteration -ne 1 -or $runEnding -cne $Ending) {
+        throw "$Label summary or run has drifted from the exact one-run evidence schema."
+    }
+    $summarySeeds = Get-ExactValueNoEnumerate $Summary @('observed_terminal_seeds') $null
+    $summaryRuns = Get-ExactValueNoEnumerate $Summary @('runs') $null
+    if ($summarySeeds -isnot [object[]] -or $summarySeeds.Count -ne 1 -or
+        $summaryRuns -isnot [object[]] -or $summaryRuns.Count -ne 1 -or
+        -not (Test-ExactPsCustomObject -Value $summaryRuns[0])) {
+        throw "$Label observed-terminal-seeds and runs must be exact JSON arrays."
+    }
+    foreach ($seedValue in $summarySeeds) {
+        if ($seedValue -isnot [string]) { throw "$Label observed-terminal-seeds contains a non-string value." }
+    }
+    foreach ($objectSpec in @(
+        [pscustomobject]@{ source = $Summary; path = @('replay_admission') },
+        [pscustomobject]@{ source = $Run; path = @('replay_admission') },
+        [pscustomobject]@{ source = $Run; path = @('final_public_checkpoint') }
+    )) {
+        $objectValue = Get-ExactValueNoEnumerate $objectSpec.source $objectSpec.path $null
+        if (-not (Test-ExactPsCustomObject -Value $objectValue)) {
+            throw "$Label field '$($objectSpec.path -join '.')' is not one exact object."
+        }
+    }
+    if ($Ending -ceq 'heist') {
+        foreach ($objectSpec in @(
+            [pscustomobject]@{ source = $Summary; path = @('heist_seed_preflight') },
+            [pscustomobject]@{ source = $Run; path = @('heist_seed_preflight') },
+            [pscustomobject]@{ source = $Summary; path = @('heist_preflight_admission') },
+            [pscustomobject]@{ source = $Run; path = @('heist_preflight_admission') },
+            [pscustomobject]@{ source = $Run; path = @('heist_launch_setup') }
+        )) {
+            $objectValue = Get-ExactValueNoEnumerate $objectSpec.source $objectSpec.path $null
+            if (-not (Test-ExactPsCustomObject -Value $objectValue)) {
+                throw "$Label Heist field '$($objectSpec.path -join '.')' is not one exact object."
+            }
+        }
+        $launchSetup = Get-ExactValueNoEnumerate $Run @('heist_launch_setup') $null
+        Assert-Rw062ExactPropertyNames -InputObject $launchSetup -Expected @(
+            'selected_challenge_id', 'selected_home_type_id', 'selected_content_groups'
+        ) -Label "$Label Heist launch setup"
+        $launchChallenge = Get-ExactValueNoEnumerate $launchSetup @('selected_challenge_id') $null
+        $launchHome = Get-ExactValueNoEnumerate $launchSetup @('selected_home_type_id') $null
+        $contentGroups = Get-ExactValueNoEnumerate $launchSetup @('selected_content_groups') $null
+        if ($launchChallenge -isnot [string] -or $launchHome -isnot [string] -or
+            $contentGroups -isnot [object[]]) {
+            throw "$Label Heist launch setup has a non-exact scalar or array shape."
+        }
+        foreach ($contentGroup in $contentGroups) {
+            if ($contentGroup -isnot [string]) { throw "$Label Heist launch setup contains a non-string content group." }
+        }
+    }
+    elseif (-not (Test-Rw062ExactNullProperty -InputObject $Summary -Name 'heist_seed_preflight') -or
+        -not (Test-Rw062ExactNullProperty -InputObject $Summary -Name 'heist_preflight_admission') -or
+        -not (Test-Rw062ExactNullProperty -InputObject $Run -Name 'heist_seed_preflight') -or
+        -not (Test-Rw062ExactNullProperty -InputObject $Run -Name 'heist_preflight_admission') -or
+        -not (Test-Rw062ExactNullProperty -InputObject $Run -Name 'heist_launch_setup')) {
+        throw "$Label non-Heist evidence must retain exact null Heist-only fields."
+    }
+}
+
+
+function Assert-FinalCheckpointJsonShapes {
+    param(
+        [Parameter(Mandatory = $true)]$Retained,
+        [Parameter(Mandatory = $true)]$Published,
+        [Parameter(Mandatory = $true)][string]$Label
+    )
+    if (-not (Test-ExactPsCustomObject -Value $Retained) -or
+        -not (Test-ExactPsCustomObject -Value $Published)) {
+        throw "$Label retained and published checkpoints must each be one exact object."
+    }
+    $checkpointPropertyNames = @(
+        'schema_version', 'record_kind', 'observed_seed', 'outcome_key', 'won',
+        'public_fingerprint', 'checkpoint_fingerprint', 'bankroll', 'chips', 'heat'
+    )
+    Assert-Rw062ExactPropertyNames -InputObject $Retained -Expected $checkpointPropertyNames -Label "$Label retained"
+    Assert-Rw062ExactPropertyNames -InputObject $Published -Expected $checkpointPropertyNames -Label "$Label published"
+    foreach ($spec in @(
+        [pscustomobject]@{ path = @('schema_version'); type = 'int32' },
+        [pscustomobject]@{ path = @('record_kind'); type = 'string' },
+        [pscustomobject]@{ path = @('observed_seed'); type = 'string' },
+        [pscustomobject]@{ path = @('outcome_key'); type = 'string' },
+        [pscustomobject]@{ path = @('won'); type = 'bool' },
+        [pscustomobject]@{ path = @('public_fingerprint'); type = 'string' },
+        [pscustomobject]@{ path = @('checkpoint_fingerprint'); type = 'string' },
+        [pscustomobject]@{ path = @('bankroll'); type = 'int32' },
+        [pscustomobject]@{ path = @('chips'); type = 'int32' },
+        [pscustomobject]@{ path = @('heat'); type = 'int32' }
+    )) {
+        foreach ($source in @($Retained, $Published)) {
+            $value = Get-ExactValueNoEnumerate $source $spec.path $null
+            $valid = switch ($spec.type) {
+                'string' { $value -is [string] }
+                'bool' { $value -is [bool] }
+                'int32' { $value -is [int32] }
+                default { $false }
+            }
+            if (-not $valid) {
+                throw "$Label field '$($spec.path -join '.')' is not one exact $($spec.type) value."
+            }
+        }
+    }
+    foreach ($source in @($Retained, $Published)) {
+        $schemaVersion = Get-ExactValueNoEnumerate $source @('schema_version') $null
+        if ($schemaVersion -ne 1) {
+            throw "$Label schema_version must be exact integer 1."
+        }
+    }
+}
+
+
 function Assert-OneRunEvidence {
     param(
         [Parameter(Mandatory = $true)][int]$RunIndex,
@@ -855,83 +1611,141 @@ function Assert-OneRunEvidence {
     if (-not (Test-Path -LiteralPath $summaryPath -PathType Leaf)) {
         throw "Run $RunIndex did not write its invocation summary."
     }
-    $summary = Get-Content -Raw -LiteralPath $summaryPath -Encoding utf8 | ConvertFrom-Json
+    $summary = ConvertFrom-ExactJsonObjectText `
+        -Json (Get-Content -Raw -LiteralPath $summaryPath -Encoding utf8) `
+        -Label "Run $RunIndex invocation summary"
+    $summaryEvidenceRoot = Get-ExactValueNoEnumerate $summary @('evidence_root') $null
+    $summaryCheckId = Get-ExactValueNoEnumerate $summary @('check_id') $null
+    $summaryEvidenceRole = Get-ExactValueNoEnumerate $summary @('requested_evidence_role') $null
+    $summaryEnding = Get-ExactValueNoEnumerate $summary @('ending') $null
+    $summarySeed = Get-ExactValueNoEnumerate $summary @('seed') $null
+    $summaryRepeat = Get-ExactValueNoEnumerate $summary @('repeat') $null
+    $summaryDeterministic = Get-ExactValueNoEnumerate $summary @('deterministic') $null
+    $summaryReleaseQualifying = Get-ExactValueNoEnumerate $summary @('release_qualifying') $null
+    $summaryQualification = Get-ExactValueNoEnumerate $summary @('qualification') $null
     Assert-ExactPublishedPath `
-        -PublishedPath ([string](Get-ExactValue $summary @('evidence_root') '')) `
+        -PublishedPath $summaryEvidenceRoot `
         -ExpectedPath $invocations[0].FullName `
         -Label "Run $RunIndex invocation evidence root"
-    if ([string](Get-ExactValue $summary @('check_id') '') -cne 'rw06_2_ending_replay' -or
-        [string](Get-ExactValue $summary @('requested_evidence_role') '') -cne 'fixed-repeat' -or
-        [string](Get-ExactValue $summary @('ending') '') -cne $Ending -or
-        [string](Get-ExactValue $summary @('seed') '') -cne $Seed -or
-        [int](Get-ExactValue $summary @('repeat') 0) -ne 1 -or
-        (Get-ExactValue $summary @('deterministic') $null) -isnot [bool] -or [bool](Get-ExactValue $summary @('deterministic') $true) -or
-        (Get-ExactValue $summary @('release_qualifying') $null) -isnot [bool] -or [bool](Get-ExactValue $summary @('release_qualifying') $true) -or
-        [string](Get-ExactValue $summary @('qualification') '') -cne 'non_qualifying_development_run') {
+    if ($summaryCheckId -isnot [string] -or $summaryCheckId -cne 'rw06_2_ending_replay' -or
+        $summaryEvidenceRole -isnot [string] -or $summaryEvidenceRole -cne 'fixed-repeat' -or
+        $summaryEnding -isnot [string] -or $summaryEnding -cne $Ending -or
+        $summarySeed -isnot [string] -or $summarySeed -cne $Seed -or
+        $summaryRepeat -isnot [int32] -or [int]$summaryRepeat -ne 1 -or
+        $summaryDeterministic -isnot [bool] -or [bool]$summaryDeterministic -or
+        $summaryReleaseQualifying -isnot [bool] -or [bool]$summaryReleaseQualifying -or
+        $summaryQualification -isnot [string] -or $summaryQualification -cne 'non_qualifying_development_run') {
         throw "Run $RunIndex invocation summary did not match the exact one-run child contract."
     }
-    $summaryAdmission = Get-ExactValue $summary @('replay_admission') $null
+    $summaryAdmission = Get-ExactValueNoEnumerate $summary @('replay_admission') $null
     Assert-FixedReplayAdmission -Admission $summaryAdmission -Label "Run $RunIndex invocation summary"
-    $terminalSeeds = @(Get-ExactValue $summary @('observed_terminal_seeds') @() | ForEach-Object { [string]$_ })
-    if ($terminalSeeds.Count -ne 1 -or $terminalSeeds[0] -cne $Seed) {
+    $terminalSeedsRaw = Get-ExactValueNoEnumerate $summary @('observed_terminal_seeds') $null
+    if (-not (Test-ExactStringArray -Value $terminalSeedsRaw -Expected @($Seed))) {
         throw "Run $RunIndex did not report the exact fixed terminal seed."
     }
-    $runs = @(Get-ExactValue $summary @('runs') @())
+    $runsRaw = Get-ExactValueNoEnumerate $summary @('runs') $null
+    if ($null -eq $runsRaw -or $runsRaw -is [string] -or
+        $runsRaw -isnot [Collections.IEnumerable]) {
+        throw "Run $RunIndex invocation summary runs field is not an exact collection."
+    }
+    $runs = @($runsRaw)
     if ($runs.Count -ne 1) {
         throw "Run $RunIndex invocation summary contained $($runs.Count) run records instead of one."
     }
     $run = $runs[0]
-    $actionCount = [int](Get-ExactValue $run @('action_count') 0)
-    $outcome = [string](Get-ExactValue $run @('outcome') '')
-    if ([string](Get-ExactValue $run @('role') '') -cne 'child_development_iteration' -or
-        [string](Get-ExactValue $run @('requested_evidence_role') '') -cne 'fixed-repeat' -or
-        [string](Get-ExactValue $run @('repeat_profile_scope') '') -cne 'shared_caller_appdata' -or
-        [string](Get-ExactValue $run @('fixed_repeat_qualification_authority') '') -cne 'outer_independent_profile_aggregate_only' -or
-        (Get-ExactValue $run @('release_qualifying') $null) -isnot [bool] -or [bool](Get-ExactValue $run @('release_qualifying') $true) -or
-        [string](Get-ExactValue $run @('qualification') '') -cne 'non_qualifying_development_iteration' -or
-        (Get-ExactValue $run @('passed') $null) -isnot [bool] -or -not [bool](Get-ExactValue $run @('passed') $false) -or
-        [string](Get-ExactValue $run @('seed') '') -cne $Seed -or
-        [string](Get-ExactValue $run @('observed_terminal_seed') '') -cne $Seed -or
+    if (-not (Test-ExactPsCustomObject -Value $run)) {
+        throw "Run $RunIndex invocation summary run record is not one exact object."
+    }
+    Assert-OneRunJsonShapes -Summary $summary -Run $run -Label "Run $RunIndex"
+    $actionCount = Get-ExactValueNoEnumerate $run @('action_count') $null
+    $outcome = Get-ExactValueNoEnumerate $run @('outcome') $null
+    $runRole = Get-ExactValueNoEnumerate $run @('role') $null
+    $runEvidenceRole = Get-ExactValueNoEnumerate $run @('requested_evidence_role') $null
+    $runProfileScope = Get-ExactValueNoEnumerate $run @('repeat_profile_scope') $null
+    $runQualificationAuthority = Get-ExactValueNoEnumerate $run @('fixed_repeat_qualification_authority') $null
+    $runReleaseQualifying = Get-ExactValueNoEnumerate $run @('release_qualifying') $null
+    $runQualification = Get-ExactValueNoEnumerate $run @('qualification') $null
+    $runPassed = Get-ExactValueNoEnumerate $run @('passed') $null
+    $runSeed = Get-ExactValueNoEnumerate $run @('seed') $null
+    $runObservedSeed = Get-ExactValueNoEnumerate $run @('observed_terminal_seed') $null
+    $runMidpointPersistence = Get-ExactValueNoEnumerate $run @('midpoint_save_relaunch_continue') $null
+    $runFailure = Get-ExactValueNoEnumerate $run @('failure') $null
+    if ($actionCount -isnot [int32] -or
+        $outcome -isnot [string] -or
+        $runRole -isnot [string] -or $runRole -cne 'child_development_iteration' -or
+        $runEvidenceRole -isnot [string] -or $runEvidenceRole -cne 'fixed-repeat' -or
+        $runProfileScope -isnot [string] -or $runProfileScope -cne 'shared_caller_appdata' -or
+        $runQualificationAuthority -isnot [string] -or $runQualificationAuthority -cne 'outer_independent_profile_aggregate_only' -or
+        $runReleaseQualifying -isnot [bool] -or [bool]$runReleaseQualifying -or
+        $runQualification -isnot [string] -or $runQualification -cne 'non_qualifying_development_iteration' -or
+        $runPassed -isnot [bool] -or -not [bool]$runPassed -or
+        $runSeed -isnot [string] -or $runSeed -cne $Seed -or
+        $runObservedSeed -isnot [string] -or $runObservedSeed -cne $Seed -or
         $outcome -cnotin $ExpectedOutcomes[$Ending] -or
-        (Get-ExactValue $run @('midpoint_save_relaunch_continue') $null) -isnot [bool] -or -not [bool](Get-ExactValue $run @('midpoint_save_relaunch_continue') $false) -or
-        -not [string]::IsNullOrEmpty([string](Get-ExactValue $run @('failure') '')) -or
-        $actionCount -le 0 -or $actionCount -gt 350) {
+        $runMidpointPersistence -isnot [bool] -or -not [bool]$runMidpointPersistence -or
+        $runFailure -isnot [string] -or -not [string]::IsNullOrEmpty($runFailure) -or
+        [int]$actionCount -le 0 -or [int]$actionCount -gt 350) {
         throw "Run $RunIndex did not prove its terminal win, midpoint persistence, exact seed, and 1..350 action bound."
     }
-    $runAdmission = Get-ExactValue $run @('replay_admission') $null
+    $runAdmission = Get-ExactValueNoEnumerate $run @('replay_admission') $null
     Assert-FixedReplayAdmission -Admission $runAdmission -Label "Run $RunIndex iteration summary"
-    if (($runAdmission | ConvertTo-Json -Depth 20 -Compress) -cne
-        ($summaryAdmission | ConvertTo-Json -Depth 20 -Compress)) {
+    if ((ConvertTo-CanonicalExactObjectJson -InputObject $runAdmission -Label "Run $RunIndex iteration replay admission" -Depth 20) -cne
+        (ConvertTo-CanonicalExactObjectJson -InputObject $summaryAdmission -Label "Run $RunIndex invocation replay admission" -Depth 20)) {
         throw "Run $RunIndex iteration replay admission differs from its invocation admission."
     }
 
+    $heistSeedPreflightPath = $null
+    $heistSeedPreflightHash = $null
     if ($Ending -ceq 'heist') {
-        $preflight = Get-ExactValue $summary @('heist_seed_preflight') $null
-        if ((Get-ExactValue $preflight @('passed') $null) -isnot [bool] -or -not [bool](Get-ExactValue $preflight @('passed') $false) -or
-            [string](Get-ExactValue $preflight @('selection', 'seed_text') '') -cne 'RW06-HEIST-AUDIT-0002' -or
-            [string](Get-ExactValue $preflight @('selection', 'selected_scenario') '') -cne 'grand_casino_audit_night') {
+        $preflight = Get-ExactValueNoEnumerate $summary @('heist_seed_preflight') $null
+        $runPreflight = Get-ExactValueNoEnumerate $run @('heist_seed_preflight') $null
+        if (-not (Test-ExactPsCustomObject -Value $preflight) -or
+            -not (Test-ExactPsCustomObject -Value $runPreflight)) {
+            throw "Run $RunIndex did not retain exact-object Q-013 seed/Audit preflight embeddings."
+        }
+        $preflightPassed = Get-ExactValueNoEnumerate $preflight @('passed') $null
+        $preflightSeed = Get-ExactValueNoEnumerate $preflight @('selection', 'seed_text') $null
+        $preflightScenario = Get-ExactValueNoEnumerate $preflight @('selection', 'selected_scenario') $null
+        if ($preflightPassed -isnot [bool] -or -not [bool]$preflightPassed -or
+            $preflightSeed -isnot [string] -or $preflightSeed -cne 'RW06-HEIST-AUDIT-0002' -or
+            $preflightScenario -isnot [string] -or $preflightScenario -cne 'grand_casino_audit_night') {
             throw "Run $RunIndex did not retain the exact Q-013 seed/Audit preflight."
         }
         $expectedPreflightAdmission = Assert-Rw062HeistPreflightAdmission `
             -Admission $summaryAdmission `
             -Report $preflight
-        $publishedSummaryPreflightAdmission = Get-ExactValue $summary @('heist_preflight_admission') $null
-        $publishedRunPreflightAdmission = Get-ExactValue $run @('heist_preflight_admission') $null
-        $expectedPreflightJson = $expectedPreflightAdmission | ConvertTo-Json -Depth 20 -Compress
-        if (($publishedSummaryPreflightAdmission | ConvertTo-Json -Depth 20 -Compress) -cne $expectedPreflightJson -or
-            ($publishedRunPreflightAdmission | ConvertTo-Json -Depth 20 -Compress) -cne $expectedPreflightJson) {
+        $publishedSummaryPreflightAdmission = Get-ExactValueNoEnumerate $summary @('heist_preflight_admission') $null
+        $publishedRunPreflightAdmission = Get-ExactValueNoEnumerate $run @('heist_preflight_admission') $null
+        $expectedPreflightJson = ConvertTo-CanonicalExactObjectJson -InputObject $expectedPreflightAdmission -Label "Run $RunIndex expected Heist preflight admission" -Depth 20
+        if ((ConvertTo-CanonicalExactObjectJson -InputObject $publishedSummaryPreflightAdmission -Label "Run $RunIndex invocation Heist preflight admission" -Depth 20) -cne $expectedPreflightJson -or
+            (ConvertTo-CanonicalExactObjectJson -InputObject $publishedRunPreflightAdmission -Label "Run $RunIndex iteration Heist preflight admission" -Depth 20) -cne $expectedPreflightJson) {
             throw "Run $RunIndex did not retain its exact fixed-repeat Heist preflight admission receipt."
         }
-        $launchSetup = Get-ExactValue $run @('heist_launch_setup') $null
-        $contentGroups = @(Get-ExactValue $launchSetup @('selected_content_groups') @())
-        if ([string](Get-ExactValue $launchSetup @('selected_challenge_id') '<missing>') -cne '' -or
-            [string](Get-ExactValue $launchSetup @('selected_home_type_id') '') -cne 'random' -or
-            $contentGroups.Count -ne 14) {
+        $retainedPreflightProof = Assert-RetainedHeistPreflightArtifact `
+            -RunIndex $RunIndex `
+            -InvocationRoot $invocations[0].FullName `
+            -InvocationPreflight $preflight `
+            -RunPreflight $runPreflight
+        $heistSeedPreflightPath = $retainedPreflightProof.path
+        $heistSeedPreflightHash = $retainedPreflightProof.sha256
+        $launchSetup = Get-ExactValueNoEnumerate $run @('heist_launch_setup') $null
+        $launchChallenge = Get-ExactValueNoEnumerate $launchSetup @('selected_challenge_id') $null
+        $launchHome = Get-ExactValueNoEnumerate $launchSetup @('selected_home_type_id') $null
+        $contentGroupsRaw = Get-ExactValueNoEnumerate $launchSetup @('selected_content_groups') $null
+        $expectedContentGroups = @(
+            'universal_passive_items', 'universal_active_items', 'scratch_tickets_pack',
+            'pull_tabs_pack', 'slot_pack', 'coin_pusher_pack', 'bar_dice_pack',
+            'craps_pack', 'crew_poker_pack', 'blackjack_pack', 'baccarat_pack',
+            'roulette_pack', 'video_poker_pack', 'numbers_pack'
+        )
+        if ($launchChallenge -isnot [string] -or $launchChallenge -cne '' -or
+            $launchHome -isnot [string] -or $launchHome -cne 'random' -or
+            -not (Test-ExactStringArray -Value $contentGroupsRaw -Expected $expectedContentGroups)) {
             throw "Run $RunIndex did not retain the visible fresh Standard/Random/default-content Heist setup."
         }
     }
-    elseif ($null -ne (Get-ExactValue $summary @('heist_preflight_admission') $null) -or
-        $null -ne (Get-ExactValue $run @('heist_preflight_admission') $null)) {
+    elseif ($null -ne (Get-ExactValueNoEnumerate $summary @('heist_preflight_admission') $null) -or
+        $null -ne (Get-ExactValueNoEnumerate $run @('heist_preflight_admission') $null)) {
         throw "Run $RunIndex published a Heist admission receipt for a non-Heist fixed route."
     }
 
@@ -945,8 +1759,11 @@ function Assert-OneRunEvidence {
             throw "Run $RunIndex evidence is missing $leaf."
         }
     }
-    $retainedRunSummary = Get-Content -Raw -LiteralPath (Join-Path $runRoot 'summary.json') -Encoding utf8 | ConvertFrom-Json
-    if (($retainedRunSummary | ConvertTo-Json -Depth 30 -Compress) -cne ($run | ConvertTo-Json -Depth 30 -Compress)) {
+    $retainedRunSummary = ConvertFrom-ExactJsonObjectText `
+        -Json (Get-Content -Raw -LiteralPath (Join-Path $runRoot 'summary.json') -Encoding utf8) `
+        -Label "Run $RunIndex retained run summary"
+    if ((ConvertTo-CanonicalExactObjectJson -InputObject $retainedRunSummary -Label "Run $RunIndex retained run summary") -cne
+        (ConvertTo-CanonicalExactObjectJson -InputObject $run -Label "Run $RunIndex embedded run summary")) {
         throw "Run $RunIndex retained run summary differs from its invocation summary record."
     }
     $transcriptPath = Join-Path $runRoot 'public_trace.ndjson'
@@ -959,65 +1776,91 @@ function Assert-OneRunEvidence {
     $checkpointAfterHash = Get-Sha256 -Path $checkpointAfterPath
     $finalCheckpointPath = Join-Path $runRoot 'final_public_checkpoint.json'
     $finalCheckpointHash = Get-Sha256 -Path $finalCheckpointPath
+    $publishedTranscriptPath = Get-ExactValueNoEnumerate $run @('transcript') $null
+    $publishedMoneyPath = Get-ExactValueNoEnumerate $run @('money_curve') $null
+    $publishedCheckpointBeforePath = Get-ExactValueNoEnumerate $run @('persistence_checkpoint_before') $null
+    $publishedCheckpointAfterPath = Get-ExactValueNoEnumerate $run @('persistence_checkpoint_after') $null
     Assert-ExactPublishedPath `
-        -PublishedPath ([string](Get-ExactValue $run @('transcript') '')) `
+        -PublishedPath $publishedTranscriptPath `
         -ExpectedPath $transcriptPath `
         -Label "Run $RunIndex transcript"
     Assert-ExactPublishedPath `
-        -PublishedPath ([string](Get-ExactValue $run @('money_curve') '')) `
+        -PublishedPath $publishedMoneyPath `
         -ExpectedPath $moneyPath `
         -Label "Run $RunIndex money curve"
     Assert-ExactPublishedPath `
-        -PublishedPath ([string](Get-ExactValue $run @('persistence_checkpoint_before') '')) `
+        -PublishedPath $publishedCheckpointBeforePath `
         -ExpectedPath $checkpointBeforePath `
         -Label "Run $RunIndex checkpoint before"
     Assert-ExactPublishedPath `
-        -PublishedPath ([string](Get-ExactValue $run @('persistence_checkpoint_after') '')) `
+        -PublishedPath $publishedCheckpointAfterPath `
         -ExpectedPath $checkpointAfterPath `
         -Label "Run $RunIndex checkpoint after"
-    if ($transcriptHash -cne [string](Get-ExactValue $run @('transcript_sha256') '') -or
-        $moneyHash -cne [string](Get-ExactValue $run @('money_curve_sha256') '') -or
-        $checkpointBeforeHash -cne [string](Get-ExactValue $run @('persistence_checkpoint_before_sha256') '') -or
-        $checkpointAfterHash -cne [string](Get-ExactValue $run @('persistence_checkpoint_after_sha256') '') -or
-        (Get-ExactValue $run @('persistence_checkpoint_equal') $null) -isnot [bool] -or
-        -not [bool](Get-ExactValue $run @('persistence_checkpoint_equal') $false) -or
-        (Get-ExactValue $run @('persistence_checkpoint_complete') $null) -isnot [bool] -or
-        -not [bool](Get-ExactValue $run @('persistence_checkpoint_complete') $false)) {
+    $publishedTranscriptHash = Get-ExactValueNoEnumerate $run @('transcript_sha256') $null
+    $publishedMoneyHash = Get-ExactValueNoEnumerate $run @('money_curve_sha256') $null
+    $publishedCheckpointBeforeHash = Get-ExactValueNoEnumerate $run @('persistence_checkpoint_before_sha256') $null
+    $publishedCheckpointAfterHash = Get-ExactValueNoEnumerate $run @('persistence_checkpoint_after_sha256') $null
+    $publishedCheckpointEqual = Get-ExactValueNoEnumerate $run @('persistence_checkpoint_equal') $null
+    $publishedCheckpointComplete = Get-ExactValueNoEnumerate $run @('persistence_checkpoint_complete') $null
+    if ($publishedTranscriptHash -isnot [string] -or $transcriptHash -cne $publishedTranscriptHash -or
+        $publishedMoneyHash -isnot [string] -or $moneyHash -cne $publishedMoneyHash -or
+        $publishedCheckpointBeforeHash -isnot [string] -or $checkpointBeforeHash -cne $publishedCheckpointBeforeHash -or
+        $publishedCheckpointAfterHash -isnot [string] -or $checkpointAfterHash -cne $publishedCheckpointAfterHash -or
+        $publishedCheckpointEqual -isnot [bool] -or -not [bool]$publishedCheckpointEqual -or
+        $publishedCheckpointComplete -isnot [bool] -or -not [bool]$publishedCheckpointComplete) {
         throw "Run $RunIndex retained evidence hashes do not match its run summary."
     }
     if ($checkpointBeforeHash -cne $checkpointAfterHash) {
         throw "Run $RunIndex persistence checkpoint hashes differ across Save/relaunch/Continue."
     }
-    $checkpointBefore = Get-Content -Raw -LiteralPath $checkpointBeforePath -Encoding utf8 | ConvertFrom-Json
-    $checkpointAfter = Get-Content -Raw -LiteralPath $checkpointAfterPath -Encoding utf8 | ConvertFrom-Json
-    if (($checkpointBefore | ConvertTo-Json -Depth 30 -Compress) -cne ($checkpointAfter | ConvertTo-Json -Depth 30 -Compress)) {
+    $checkpointBefore = ConvertFrom-ExactJsonObjectText `
+        -Json (Get-Content -Raw -LiteralPath $checkpointBeforePath -Encoding utf8) `
+        -Label "Run $RunIndex persistence checkpoint before"
+    $checkpointAfter = ConvertFrom-ExactJsonObjectText `
+        -Json (Get-Content -Raw -LiteralPath $checkpointAfterPath -Encoding utf8) `
+        -Label "Run $RunIndex persistence checkpoint after"
+    if ((ConvertTo-CanonicalExactObjectJson -InputObject $checkpointBefore -Label "Run $RunIndex persistence checkpoint before") -cne
+        (ConvertTo-CanonicalExactObjectJson -InputObject $checkpointAfter -Label "Run $RunIndex persistence checkpoint after")) {
         throw "Run $RunIndex persistence checkpoint JSON differs across Save/relaunch/Continue."
     }
 
-    $finalCheckpoint = Get-Content -Raw -LiteralPath $finalCheckpointPath -Encoding utf8 | ConvertFrom-Json
-    $publishedFinalCheckpoint = Get-ExactValue $run @('final_public_checkpoint') $null
-    if (($finalCheckpoint | ConvertTo-Json -Depth 30 -Compress) -cne ($publishedFinalCheckpoint | ConvertTo-Json -Depth 30 -Compress)) {
+    $finalCheckpoint = ConvertFrom-ExactJsonObjectText `
+        -Json (Get-Content -Raw -LiteralPath $finalCheckpointPath -Encoding utf8) `
+        -Label "Run $RunIndex retained final public checkpoint"
+    $publishedFinalCheckpoint = Get-ExactValueNoEnumerate $run @('final_public_checkpoint') $null
+    Assert-FinalCheckpointJsonShapes `
+        -Retained $finalCheckpoint `
+        -Published $publishedFinalCheckpoint `
+        -Label "Run $RunIndex final public checkpoint"
+    if ((ConvertTo-CanonicalExactObjectJson -InputObject $finalCheckpoint -Label "Run $RunIndex retained final public checkpoint") -cne
+        (ConvertTo-CanonicalExactObjectJson -InputObject $publishedFinalCheckpoint -Label "Run $RunIndex published final public checkpoint")) {
         throw "Run $RunIndex final public checkpoint file differs from its published run summary object."
     }
-    if ([string](Get-ExactValue $finalCheckpoint @('record_kind') '') -cne 'final_public_checkpoint' -or
-        [string](Get-ExactValue $finalCheckpoint @('observed_seed') '') -cne $Seed -or
-        [string](Get-ExactValue $finalCheckpoint @('outcome_key') '') -cne $outcome -or
-        (Get-ExactValue $finalCheckpoint @('won') $null) -isnot [bool] -or -not [bool](Get-ExactValue $finalCheckpoint @('won') $false) -or
-        [string](Get-ExactValue $finalCheckpoint @('public_fingerprint') '') -notmatch '^[a-f0-9]{64}$' -or
-        [string](Get-ExactValue $finalCheckpoint @('checkpoint_fingerprint') '') -notmatch '^[a-f0-9]{64}$') {
+    $finalRecordKind = Get-ExactValueNoEnumerate $finalCheckpoint @('record_kind') $null
+    $finalObservedSeed = Get-ExactValueNoEnumerate $finalCheckpoint @('observed_seed') $null
+    $finalOutcome = Get-ExactValueNoEnumerate $finalCheckpoint @('outcome_key') $null
+    $finalWon = Get-ExactValueNoEnumerate $finalCheckpoint @('won') $null
+    $finalPublicFingerprint = Get-ExactValueNoEnumerate $finalCheckpoint @('public_fingerprint') $null
+    $finalCheckpointFingerprint = Get-ExactValueNoEnumerate $finalCheckpoint @('checkpoint_fingerprint') $null
+    if ($finalRecordKind -isnot [string] -or $finalRecordKind -cne 'final_public_checkpoint' -or
+        $finalObservedSeed -isnot [string] -or $finalObservedSeed -cne $Seed -or
+        $finalOutcome -isnot [string] -or $finalOutcome -cne $outcome -or
+        $finalWon -isnot [bool] -or -not [bool]$finalWon -or
+        $finalPublicFingerprint -isnot [string] -or $finalPublicFingerprint -notmatch '^[a-f0-9]{64}$' -or
+        $finalCheckpointFingerprint -isnot [string] -or $finalCheckpointFingerprint -notmatch '^[a-f0-9]{64}$') {
         throw "Run $RunIndex final public checkpoint is incomplete or does not prove the requested win."
     }
     foreach ($name in @('bankroll', 'chips', 'heat')) {
-        $value = Get-ExactValue $finalCheckpoint @($name) $null
-        if (($value -isnot [int32] -and $value -isnot [int64]) -or [long]$value -lt 0) {
+        $value = Get-ExactValueNoEnumerate $finalCheckpoint @($name) $null
+        if ($value -isnot [int32] -or [int]$value -lt 0) {
             throw "Run $RunIndex final public checkpoint has an invalid $name value."
         }
     }
 
-    $session = [string](Get-ExactValue $run @('session') '')
+    $session = Get-ExactValueNoEnumerate $run @('session') $null
     $expectedSessionPrefix = "rw062-$Ending-$([int]$Identity.pid)-1-"
     $expectedSessionPattern = '^' + [regex]::Escape($expectedSessionPrefix) + '[0-9a-f]{10}$'
-    if ($session -cnotmatch $expectedSessionPattern) {
+    if ($session -isnot [string] -or $session -cnotmatch $expectedSessionPattern) {
         throw "Run $RunIndex session '$session' is not owned by its exact replay child."
     }
     $sessionRoot = Resolve-ExactSessionRoot -Session $session
@@ -1046,10 +1889,9 @@ function Assert-OneRunEvidence {
             throw "Run $RunIndex did not write required nonempty isolated profile artifact: $profileArtifact"
         }
         try {
-            $profilePayload = Get-Content -Raw -LiteralPath $profileArtifact -Encoding utf8 | ConvertFrom-Json
-            if ($null -eq $profilePayload -or $profilePayload -isnot [pscustomobject]) {
-                throw 'Expected a non-null JSON object.'
-            }
+            $profilePayload = ConvertFrom-ExactJsonObjectText `
+                -Json (Get-Content -Raw -LiteralPath $profileArtifact -Encoding utf8) `
+                -Label "Run $RunIndex isolated profile artifact $profileArtifact"
         }
         catch {
             throw "Run $RunIndex isolated profile artifact is not valid JSON: $profileArtifact. $($_.Exception.Message)"
@@ -1061,7 +1903,7 @@ function Assert-OneRunEvidence {
     return [pscustomobject][ordered]@{
         run_index = $RunIndex
         role = 'fixed_route_repeat'
-        evidence_role = [string](Get-ExactValue $summary @('requested_evidence_role') '')
+        evidence_role = $summaryEvidenceRole
         ending = $Ending
         seed = $Seed
         replay_pid = [int]$Identity.pid
@@ -1085,6 +1927,10 @@ function Assert-OneRunEvidence {
         persistence_checkpoint_before_sha256 = $checkpointBeforeHash
         persistence_checkpoint_after_sha256 = $checkpointAfterHash
         final_public_checkpoint_sha256 = $finalCheckpointHash
+        heist_seed_preflight = $heistSeedPreflightPath
+        heist_seed_preflight_sha256 = $heistSeedPreflightHash
+        source_custody_pre = $SourceCustodyPrePath
+        source_custody_pre_sha256 = $script:SourceCustodyPreSha256
         godot_stdout_sha256 = [string]$logHashes.'godot.stdout.log'
         godot_stderr_sha256 = [string]$logHashes.'godot.stderr.log'
         godot_engine_sha256 = [string]$logHashes.'godot.engine.log'
@@ -1102,6 +1948,7 @@ function Invoke-OneFixedRun {
     $stdoutPath = Join-Path $runEvidenceRoot 'launcher.stdout.txt'
     $stderrPath = Join-Path $runEvidenceRoot 'launcher.stderr.txt'
     New-Item -ItemType Directory -Path $runEvidenceRoot,$replayEvidenceRoot,$profileRoaming,$profileLocal -Force | Out-Null
+    Assert-SourceCustody
 
     $originalAppData = [Environment]::GetEnvironmentVariable('APPDATA', 'Process')
     $originalLocalAppData = [Environment]::GetEnvironmentVariable('LOCALAPPDATA', 'Process')
@@ -1178,6 +2025,7 @@ function Invoke-OneFixedRun {
     if ((Get-Item -LiteralPath $stderrPath).Length -ne 0) {
         throw "Run $RunIndex replay launcher stderr is nonempty."
     }
+    Assert-SourceCustody
 
     $ownedDeadline = [DateTime]::UtcNow.AddSeconds(15)
     while ([DateTime]::UtcNow -lt $ownedDeadline -and @(Get-OwnedGodotProcesses).Count -gt 0) {
@@ -1206,45 +2054,147 @@ function Compare-FixedRunProofs {
     }
     $first = $Proofs[0]
     $second = $Proofs[1]
+    $expectedIdentity = [ordered]@{
+        role = 'fixed_route_repeat'
+        evidence_role = 'fixed-repeat'
+        ending = $Ending
+        seed = $Seed
+    }
+    $requiredHashFields = @(
+        'profile_inventory_sha256', 'autosave_sha256', 'replay_summary_sha256',
+        'transcript_sha256', 'money_curve_sha256',
+        'persistence_checkpoint_before_sha256', 'persistence_checkpoint_after_sha256',
+        'final_public_checkpoint_sha256', 'source_custody_pre_sha256', 'godot_stdout_sha256',
+        'godot_stderr_sha256', 'godot_engine_sha256'
+    )
+    $requiredPathFields = @(
+        'profile_roaming', 'profile_local', 'profile_session_root', 'profile_inventory',
+        'autosave', 'replay_invocation_root', 'replay_summary', 'run_root', 'session_root',
+        'source_custody_pre'
+    )
     foreach ($proof in $Proofs) {
-        if ([string]$proof.role -cne 'fixed_route_repeat' -or
-            [string]$proof.evidence_role -cne 'fixed-repeat' -or
-            [string]$proof.ending -cne $Ending -or [string]$proof.seed -cne $Seed -or
-            [string]$proof.persistence_checkpoint_before_sha256 -cne [string]$proof.persistence_checkpoint_after_sha256 -or
-            [string]$proof.profile_inventory_sha256 -notmatch '^[a-f0-9]{64}$' -or
-            [string]$proof.autosave_sha256 -notmatch '^[a-f0-9]{64}$') {
-            throw "Run $($proof.run_index) is not an exact successful fixed-route persistence proof."
+        foreach ($entry in $expectedIdentity.GetEnumerator()) {
+            $value = Get-ExactValueNoEnumerate $proof @([string]$entry.Key) $null
+            if ($value -isnot [string] -or $value -cne [string]$entry.Value) {
+                throw "A fixed-route proof has an invalid exact identity field '$($entry.Key)'."
+            }
+        }
+        foreach ($property in $requiredHashFields) {
+            $value = Get-ExactValueNoEnumerate $proof @($property) $null
+            if ($value -isnot [string] -or $value -notmatch '^[a-f0-9]{64}$') {
+                throw "A fixed-route proof has an invalid exact hash field '$property'."
+            }
+        }
+        foreach ($property in $requiredPathFields) {
+            $value = Get-ExactValueNoEnumerate $proof @($property) $null
+            if ($value -isnot [string] -or [string]::IsNullOrWhiteSpace($value)) {
+                throw "A fixed-route proof has an invalid exact path field '$property'."
+            }
+        }
+        $proofSession = Get-ExactValueNoEnumerate $proof @('session') $null
+        $proofPid = Get-ExactValueNoEnumerate $proof @('replay_pid') $null
+        if ($proofSession -isnot [string] -or [string]::IsNullOrWhiteSpace($proofSession) -or
+            $proofPid -isnot [int32] -or [int]$proofPid -le 0) {
+            throw 'A fixed-route proof has an invalid exact session or replay PID.'
+        }
+        $checkpointBefore = Get-ExactValueNoEnumerate $proof @('persistence_checkpoint_before_sha256') $null
+        $checkpointAfter = Get-ExactValueNoEnumerate $proof @('persistence_checkpoint_after_sha256') $null
+        if ($checkpointBefore -cne $checkpointAfter) {
+            throw 'A fixed-route proof did not retain equal persistence checkpoint hashes.'
+        }
+        $heistPreflightPath = Get-ExactValueNoEnumerate $proof @('heist_seed_preflight') $null
+        $heistPreflightHash = Get-ExactValueNoEnumerate $proof @('heist_seed_preflight_sha256') $null
+        if ($Ending -ceq 'heist') {
+            if ($heistPreflightPath -isnot [string] -or [string]::IsNullOrWhiteSpace($heistPreflightPath) -or
+                $heistPreflightHash -isnot [string] -or $heistPreflightHash -notmatch '^[a-f0-9]{64}$') {
+                throw 'A Heist fixed-route proof omitted its exact retained seed-preflight artifact.'
+            }
+        }
+        elseif ($null -ne $heistPreflightPath -or $null -ne $heistPreflightHash) {
+            throw 'A non-Heist fixed-route proof published a Heist seed-preflight artifact.'
         }
     }
-    foreach ($property in @(
+    $canonicalHashFields = @(
         'transcript_sha256', 'money_curve_sha256', 'final_public_checkpoint_sha256',
-        'persistence_checkpoint_before_sha256', 'persistence_checkpoint_after_sha256'
-    )) {
-        if ([string]$first.$property -notmatch '^[a-f0-9]{64}$' -or [string]$first.$property -cne [string]$second.$property) {
+        'persistence_checkpoint_before_sha256', 'persistence_checkpoint_after_sha256',
+        'source_custody_pre_sha256'
+    )
+    if ($Ending -ceq 'heist') { $canonicalHashFields += 'heist_seed_preflight_sha256' }
+    foreach ($property in $canonicalHashFields) {
+        $firstValue = Get-ExactValueNoEnumerate $first @($property) $null
+        $secondValue = Get-ExactValueNoEnumerate $second @($property) $null
+        if ($firstValue -isnot [string] -or $secondValue -isnot [string] -or
+            $firstValue -notmatch '^[a-f0-9]{64}$' -or $firstValue -cne $secondValue) {
             throw "Independent fixed-route profiles differ at canonical evidence field '$property'."
         }
     }
-    if ([string]$first.profile_roaming -ceq [string]$second.profile_roaming -or
-        [string]$first.profile_local -ceq [string]$second.profile_local -or
-        [string]$first.session -ceq [string]$second.session -or
-        [string]$first.session_root -ceq [string]$second.session_root -or
-        [string]$first.replay_invocation_root -ceq [string]$second.replay_invocation_root -or
-        [string]$first.run_root -ceq [string]$second.run_root -or
-        [string]$first.profile_session_root -ceq [string]$second.profile_session_root -or
-        [string]$first.profile_inventory -ceq [string]$second.profile_inventory -or
-        [string]$first.autosave -ceq [string]$second.autosave -or
-        [int]$first.replay_pid -eq [int]$second.replay_pid) {
-        throw 'Fixed-repeat runs did not use two distinct profiles, sessions, roots, and replay processes.'
+    foreach ($property in @(
+        'profile_roaming', 'profile_local', 'session', 'session_root',
+        'replay_invocation_root', 'run_root', 'profile_session_root',
+        'profile_inventory', 'autosave', 'heist_seed_preflight'
+    )) {
+        $firstValue = Get-ExactValueNoEnumerate $first @($property) $null
+        $secondValue = Get-ExactValueNoEnumerate $second @($property) $null
+        if ($Ending -cne 'heist' -and $property -ceq 'heist_seed_preflight') { continue }
+        if ($firstValue -isnot [string] -or $secondValue -isnot [string] -or $firstValue -ceq $secondValue) {
+            throw "Fixed-repeat runs did not use distinct exact values for '$property'."
+        }
+    }
+    $firstPid = Get-ExactValueNoEnumerate $first @('replay_pid') $null
+    $secondPid = Get-ExactValueNoEnumerate $second @('replay_pid') $null
+    if ($firstPid -isnot [int32] -or $secondPid -isnot [int32] -or [int]$firstPid -eq [int]$secondPid) {
+        throw 'Fixed-repeat runs did not use two distinct exact replay processes.'
     }
     return [pscustomobject][ordered]@{
         evidence_role = 'fixed-repeat'
         deterministic = $true
         isolated_profiles = $true
-        transcript_sha256 = [string]$first.transcript_sha256
-        money_curve_sha256 = [string]$first.money_curve_sha256
-        persistence_checkpoint_sha256 = [string]$first.persistence_checkpoint_before_sha256
-        final_public_checkpoint_sha256 = [string]$first.final_public_checkpoint_sha256
+        transcript_sha256 = $first.transcript_sha256
+        money_curve_sha256 = $first.money_curve_sha256
+        persistence_checkpoint_sha256 = $first.persistence_checkpoint_before_sha256
+        final_public_checkpoint_sha256 = $first.final_public_checkpoint_sha256
+        heist_seed_preflight_sha256 = if ($Ending -ceq 'heist') { $first.heist_seed_preflight_sha256 } else { $null }
     }
+}
+
+
+function Test-FixedRepeatQualification {
+    param(
+        [AllowNull()]$TerminalError,
+        [AllowNull()]$Outcome,
+        [AllowNull()]$RunProofs,
+        [AllowNull()]$CanonicalProof,
+        [bool]$LeaseOwned,
+        [AllowNull()]$FinalProcessCensus,
+        [AllowNull()]$FinalHead,
+        [AllowNull()]$FinalTree,
+        [bool]$SourceCustodyComplete
+    )
+    if ($null -ne $TerminalError -or
+        $Outcome -isnot [string] -or $Outcome -cne 'green' -or
+        $null -eq $RunProofs -or $RunProofs -is [string] -or
+        $RunProofs -isnot [Collections.IEnumerable] -or
+        @($RunProofs).Count -ne 2 -or
+        $null -eq $CanonicalProof -or
+        $FinalProcessCensus -is [string] -or
+        $FinalProcessCensus -isnot [Collections.IEnumerable] -or
+        @($FinalProcessCensus).Count -ne 0 -or
+        $FinalHead -isnot [string] -or $FinalHead -cne $ExpectedHead.ToLowerInvariant() -or
+        $FinalTree -isnot [string] -or $FinalTree -cne $ExpectedTree.ToLowerInvariant() -or
+        $LeaseOwned -or -not $SourceCustodyComplete) {
+        return $false
+    }
+    $canonicalRole = Get-ExactValueNoEnumerate $CanonicalProof @('evidence_role') $null
+    if ($canonicalRole -isnot [string] -or $canonicalRole -cne 'fixed-repeat') {
+        return $false
+    }
+    foreach ($proof in @($RunProofs)) {
+        $proofRole = Get-ExactValueNoEnumerate $proof @('evidence_role') $null
+        if ($proofRole -isnot [string] -or $proofRole -cne 'fixed-repeat') {
+            return $false
+        }
+    }
+    return $true
 }
 
 
@@ -1283,6 +2233,32 @@ function Get-ManifestArtifactPaths {
 }
 
 
+function Assert-ManifestArtifactHash {
+    param(
+        [Parameter(Mandatory = $true)][object[]]$ArtifactRows,
+        [Parameter(Mandatory = $true)][string]$Path,
+        [Parameter(Mandatory = $true)]$ExpectedSha256,
+        [Parameter(Mandatory = $true)][string]$Label
+    )
+    if ($ExpectedSha256 -isnot [string] -or $ExpectedSha256 -notmatch '^[a-f0-9]{64}$') {
+        throw "$Label expected SHA-256 is not one exact hash."
+    }
+    $expectedPath = [IO.Path]::GetFullPath($Path)
+    $matches = @($ArtifactRows | Where-Object {
+        $candidatePath = Get-ExactValueNoEnumerate $_ @('path') $null
+        $candidatePath -is [string] -and
+            ([IO.Path]::GetFullPath($candidatePath)).Equals($expectedPath, [StringComparison]::OrdinalIgnoreCase)
+    })
+    if ($matches.Count -ne 1) {
+        throw "$Label does not have one exact aggregate manifest row."
+    }
+    $manifestHash = Get-ExactValueNoEnumerate $matches[0] @('sha256') $null
+    if ($manifestHash -isnot [string] -or $manifestHash -cne $ExpectedSha256) {
+        throw "$Label aggregate manifest hash differs from its authenticated proof hash."
+    }
+}
+
+
 if ($Ending -ceq 'heist' -and $Seed -cne 'RW06-HEIST-AUDIT-0002') {
     throw 'Q-013 fixed-repeat evidence requires exact Heist seed RW06-HEIST-AUDIT-0002.'
 }
@@ -1292,9 +2268,11 @@ if (-not (Test-Path -LiteralPath $ReplayTool -PathType Leaf)) {
 if (-not (Test-Path -LiteralPath $EvidenceAdmissionTool -PathType Leaf)) {
     throw "Replay evidence admission helper is missing: $EvidenceAdmissionTool"
 }
-. $EvidenceAdmissionTool
 if (-not (Test-Path -LiteralPath $GodotBin -PathType Leaf)) {
     throw "Pinned Godot console is missing: $GodotBin"
+}
+if (-not (Test-Path -LiteralPath $GodotRuntimeBin -PathType Leaf)) {
+    throw "Pinned Godot runtime is missing: $GodotRuntimeBin"
 }
 
 Assert-RepositoryIdentity
@@ -1331,12 +2309,17 @@ try {
         Exit-LaunchLock -Stream $launchLock
     }
     Wait-ExclusiveDrain
+    Assert-RepositoryIdentity
+    New-SourceCustody
+    . $EvidenceAdmissionTool
+    Assert-SourceCustody
 
     foreach ($runIndex in 1..2) {
         $betweenLock = $null
         try {
             $betweenLock = Enter-LaunchLock
             Assert-RepositoryIdentity
+            Assert-SourceCustody
             Assert-ExclusiveAdmission -AllowOwnedLease
         }
         finally {
@@ -1383,6 +2366,12 @@ finally {
         }
         catch { Add-TerminalFailure -Failure $_ }
         try {
+            if ($script:SourceCustodyRows.Count -gt 0) {
+                Complete-SourceCustody
+            }
+        }
+        catch { Add-TerminalFailure -Failure $_ }
+        try {
             Clear-StaleGodotLeases
             if ($script:LeaseOwned -and -not (Test-OwnedExclusiveLease)) {
                 Add-TerminalFailure -Failure 'Owned aggregate EXCLUSIVE lease disappeared or changed owner before teardown.'
@@ -1415,16 +2404,16 @@ finally {
     finally { Exit-LaunchLock -Stream $teardownLock }
 }
 
-$fixedRepeatQualifying = $null -eq $script:TerminalError -and
-    $script:Outcome -ceq 'green' -and
-    $script:RunProofs.Count -eq 2 -and
-    $null -ne $script:CanonicalProof -and
-    [string]$script:CanonicalProof.evidence_role -ceq 'fixed-repeat' -and
-    @($script:RunProofs | Where-Object { [string]$_.evidence_role -cne 'fixed-repeat' }).Count -eq 0 -and
-    -not $script:LeaseOwned -and
-    $script:FinalProcessCensus.Count -eq 0 -and
-    $script:FinalHead -ceq $ExpectedHead.ToLowerInvariant() -and
-    $script:FinalTree -ceq $ExpectedTree.ToLowerInvariant()
+$fixedRepeatQualifying = Test-FixedRepeatQualification `
+    -TerminalError $script:TerminalError `
+    -Outcome $script:Outcome `
+    -RunProofs $script:RunProofs `
+    -CanonicalProof $script:CanonicalProof `
+    -LeaseOwned $script:LeaseOwned `
+    -FinalProcessCensus $script:FinalProcessCensus `
+    -FinalHead $script:FinalHead `
+    -FinalTree $script:FinalTree `
+    -SourceCustodyComplete $script:SourceCustodyComplete
 if (-not $fixedRepeatQualifying -and $null -eq $script:TerminalError) {
     Add-TerminalFailure -Failure 'Fixed-repeat evidence did not satisfy every aggregate qualification condition.'
 }
@@ -1448,6 +2437,9 @@ $aggregateSummary = [ordered]@{
     q017_status = if ($Ending -ceq 'heist') { 'ANSWERED_SEPARATE_FRESH_INTERACTIVE_SCOPE' } else { 'NOT_APPLICABLE' }
     deterministic = if ($null -ne $script:CanonicalProof) { [bool]$script:CanonicalProof.deterministic } else { $false }
     fixed_repeat_qualifying = [bool]$fixedRepeatQualifying
+    source_custody_complete = [bool]$script:SourceCustodyComplete
+    source_custody_pre_sha256 = $script:SourceCustodyPreSha256
+    source_custody_final_sha256 = $script:SourceCustodyFinalSha256
     canonical_proof = $script:CanonicalProof
     runs = @($script:RunProofs)
     evidence_root = $EvidenceRoot
@@ -1470,6 +2462,11 @@ $metadata = [ordered]@{
     launcher_snapshot = $LauncherSnapshotPath
     launcher_initial_sha256 = $script:LauncherInitialSha256
     launcher_current_sha256 = $script:LauncherCurrentSha256
+    source_custody_pre = $SourceCustodyPrePath
+    source_custody_pre_sha256 = $script:SourceCustodyPreSha256
+    source_custody_final = $SourceCustodyFinalPath
+    source_custody_final_sha256 = $script:SourceCustodyFinalSha256
+    source_custody_complete = [bool]$script:SourceCustodyComplete
     initial_process_census = $script:InitialProcessCensus
     final_process_census = $script:FinalProcessCensus
     owned_processes_remaining = @(Get-OwnedSurvivors)
@@ -1484,16 +2481,18 @@ $metadata | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $MetadataPath -E
 $artifactRows = @(Get-ManifestArtifactPaths | ForEach-Object {
     [ordered]@{ path = $_; sha256 = Get-Sha256 -Path $_ }
 })
-$launcherSnapshotRows = @($artifactRows | Where-Object {
-    ([IO.Path]::GetFullPath([string]$_.path)).Equals([IO.Path]::GetFullPath($LauncherSnapshotPath), [StringComparison]::OrdinalIgnoreCase)
-})
-if ($launcherSnapshotRows.Count -ne 1 -or
-    [string]$launcherSnapshotRows[0].sha256 -cne $script:LauncherInitialSha256) {
-    throw 'Aggregate manifest did not bind the exact immutable launcher snapshot hash.'
-}
+Assert-ManifestArtifactHash -ArtifactRows $artifactRows -Path $LauncherSnapshotPath `
+    -ExpectedSha256 $script:LauncherInitialSha256 -Label 'Immutable launcher snapshot'
+Assert-ManifestArtifactHash -ArtifactRows $artifactRows -Path $SourceCustodyPrePath `
+    -ExpectedSha256 $script:SourceCustodyPreSha256 -Label 'Source custody pre-execution receipt'
+Assert-ManifestArtifactHash -ArtifactRows $artifactRows -Path $SourceCustodyFinalPath `
+    -ExpectedSha256 $script:SourceCustodyFinalSha256 -Label 'Source custody final receipt'
 $manifestPathKeys = @($artifactRows | ForEach-Object { [IO.Path]::GetFullPath([string]$_.path).ToLowerInvariant() })
 $requiredManifestArtifacts = [Collections.Generic.List[string]]::new()
-foreach ($requiredArtifact in @($LauncherSnapshotPath, $AggregateSummaryPath, $MetadataPath)) {
+foreach ($requiredArtifact in @(
+    $LauncherSnapshotPath, $AggregateSummaryPath, $MetadataPath,
+    $SourceCustodyPrePath, $SourceCustodyFinalPath
+)) {
     $requiredManifestArtifacts.Add([IO.Path]::GetFullPath($requiredArtifact))
 }
 foreach ($proof in @($script:RunProofs)) {
@@ -1512,6 +2511,13 @@ foreach ($proof in @($script:RunProofs)) {
         (Join-Path ([string]$proof.session_root) 'godot.engine.log')
     )) {
         $requiredManifestArtifacts.Add([IO.Path]::GetFullPath($requiredArtifact))
+    }
+    if ($Ending -ceq 'heist') {
+        $requiredManifestArtifacts.Add([IO.Path]::GetFullPath([string]$proof.heist_seed_preflight))
+        Assert-ManifestArtifactHash -ArtifactRows $artifactRows `
+            -Path ([string]$proof.heist_seed_preflight) `
+            -ExpectedSha256 (Get-ExactValueNoEnumerate $proof @('heist_seed_preflight_sha256') $null) `
+            -Label "Run $($proof.run_index) retained Heist seed preflight"
     }
 }
 foreach ($requiredArtifact in $requiredManifestArtifacts) {
@@ -1537,6 +2543,12 @@ foreach ($artifact in $artifactRows) {
         throw "Evidence artifact changed during manifest finalization: $([string]$artifact.path)"
     }
 }
+Assert-SourceCustody
+if ((Get-HeldFileDigests -Stream $script:SourceCustodyPreStream).sha256 -cne $script:SourceCustodyPreSha256 -or
+    (Get-HeldFileDigests -Stream $script:SourceCustodyFinalStream).sha256 -cne $script:SourceCustodyFinalSha256) {
+    throw 'Retained source custody receipts changed during manifest finalization.'
+}
+Close-SourceCustody
 
 $result = [ordered]@{
     evidence_root = $EvidenceRoot
@@ -1547,6 +2559,8 @@ $result = [ordered]@{
     aggregate_summary_sha256 = Get-Sha256 -Path $AggregateSummaryPath
     metadata_sha256 = Get-Sha256 -Path $MetadataPath
     manifest_sha256 = Get-Sha256 -Path $ManifestPath
+    source_custody_pre_sha256 = $script:SourceCustodyPreSha256
+    source_custody_final_sha256 = $script:SourceCustodyFinalSha256
 }
 $result | ConvertTo-Json -Depth 8
 if ($null -ne $script:TerminalError) { throw $script:TerminalError }

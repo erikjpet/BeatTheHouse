@@ -76,7 +76,7 @@ function Get-ExactOuterAdmissionFunctionSource {
         return $node -is [Management.Automation.Language.FunctionDefinitionAst]
     }, $true))
     $definitions = [Collections.Generic.List[string]]::new()
-    foreach ($name in @('Get-ExactValue', 'Test-ExactStringArray', 'Assert-FixedReplayAdmission')) {
+    foreach ($name in @('Get-ExactValue', 'Get-ExactValueNoEnumerate', 'Test-ExactStringArray', 'Assert-FixedReplayAdmission')) {
         $matches = @($allFunctions | Where-Object { $_.Name -ceq $name })
         if ($matches.Count -ne 1) {
             throw "Fixed launcher must contain exactly one '$name' function; observed $($matches.Count)."
@@ -107,6 +107,18 @@ function Test-Q017SourceShape {
         "release_qualifying = `$false",
         'Assert-Rw062NoScenarioAuthorityFields -InputObject $Report',
         'Test-Rw062IntegralValue',
+        "`$role = Get-Rw062AdmissionValueNoEnumerate `$Admission @('evidence_role') `$null",
+        "`$ending = Get-Rw062AdmissionValueNoEnumerate `$Admission @('ending') `$null",
+        "`$seed = Get-Rw062AdmissionValueNoEnumerate `$Admission @('seed') `$null",
+        "`$repeat = Get-Rw062AdmissionValueNoEnumerate `$Admission @('repeat') `$null",
+        "`$routePlan = Get-Rw062AdmissionValueNoEnumerate `$Admission @('route_plan') `$null",
+        "`$expectedInitialScenario = Get-Rw062AdmissionValueNoEnumerate `$Admission @('expected_initial_scenario') `$null",
+        "`$scenarioAuthority = Get-Rw062AdmissionValueNoEnumerate `$Admission @('scenario_authority') `$null",
+        "`$scenarioInjectionAllowed = Get-Rw062AdmissionValueNoEnumerate `$Admission @('scenario_injection_allowed') `$null",
+        "`$planBAllowed = Get-Rw062AdmissionValueNoEnumerate `$Admission @('plan_b_allowed') `$null",
+        "`$requiresIsolatedProfile = Get-Rw062AdmissionValueNoEnumerate `$Admission @('requires_isolated_profile') `$null",
+        "`$releaseQualifying = Get-Rw062AdmissionValueNoEnumerate `$Admission @('release_qualifying') `$null",
+        "`$qualificationAuthority = Get-Rw062AdmissionValueNoEnumerate `$Admission @('qualification_authority') `$null",
         "@('Q-013A', 'Q-017A')"
     )) {
         if ($AdmissionSource.IndexOf($token, [StringComparison]::Ordinal) -lt 0) { return $false }
@@ -165,12 +177,14 @@ function Test-Q017SourceShape {
     }
     foreach ($token in @(
         "'-EvidenceRole', 'fixed-repeat'",
-        "requested_evidence_role') '') -cne 'fixed-repeat'",
+        '$summaryEvidenceRole -isnot [string]',
+        "`$summaryEvidenceRole -cne 'fixed-repeat'",
         'Assert-FixedReplayAdmission -Admission $summaryAdmission',
         'Assert-FixedReplayAdmission -Admission $runAdmission',
         'Assert-Rw062HeistPreflightAdmission',
         "evidence_role = 'fixed-repeat'",
-        "[string]`$proof.evidence_role -cne 'fixed-repeat'",
+        '$proofRole -isnot [string]',
+        "`$proofRole -cne 'fixed-repeat'",
         "fresh_interactive_authorized = `$false",
         "'ANSWERED_SEPARATE_FRESH_INTERACTIVE_SCOPE'"
     )) {
@@ -299,6 +313,18 @@ if ($failures.Count -eq 0) {
         [pscustomobject]@{ name = 'qualification authority'; mutate = { param($a) $a.qualification_authority = 'direct' } },
         [pscustomobject]@{ name = 'owner decision'; mutate = { param($a) $a.owner_decisions = @('Q-013A') } },
         [pscustomobject]@{ name = 'owner decision order'; mutate = { param($a) $a.owner_decisions = @('Q-017A', 'Q-013A') } },
+        [pscustomobject]@{ name = 'role one-element object array'; mutate = { param($a) $a.evidence_role = [object[]]@('fresh-interactive') } },
+        [pscustomobject]@{ name = 'ending one-element object array'; mutate = { param($a) $a.ending = [object[]]@('heist') } },
+        [pscustomobject]@{ name = 'seed one-element object array'; mutate = { param($a) $a.seed = [object[]]@('RW06-HEIST-AUDIT-0000') } },
+        [pscustomobject]@{ name = 'route plan one-element object array'; mutate = { param($a) $a.route_plan = [object[]]@('count') } },
+        [pscustomobject]@{ name = 'expected scenario one-element object array'; mutate = { param($a) $a.expected_initial_scenario = [object[]]@('grand_casino_audit_night') } },
+        [pscustomobject]@{ name = 'scenario authority one-element object array'; mutate = { param($a) $a.scenario_authority = [object[]]@('natural_fresh_profile_first_arrival_preflight') } },
+        [pscustomobject]@{ name = 'qualification authority one-element object array'; mutate = { param($a) $a.qualification_authority = [object[]]@('post_run_interactive_review_only') } },
+        [pscustomobject]@{ name = 'repeat one-element object array'; mutate = { param($a) $a.repeat = [object[]]@(1) } },
+        [pscustomobject]@{ name = 'scenario permission one-element object array'; mutate = { param($a) $a.scenario_injection_allowed = [object[]]@($false) } },
+        [pscustomobject]@{ name = 'Plan B permission one-element object array'; mutate = { param($a) $a.plan_b_allowed = [object[]]@($false) } },
+        [pscustomobject]@{ name = 'profile isolation one-element object array'; mutate = { param($a) $a.requires_isolated_profile = [object[]]@($true) } },
+        [pscustomobject]@{ name = 'release qualification one-element object array'; mutate = { param($a) $a.release_qualifying = [object[]]@($false) } },
         [pscustomobject]@{ name = 'extra scenario pin'; mutate = { param($a) $a | Add-Member -NotePropertyName scenario_pin -NotePropertyValue 'grand_casino_audit_night' } },
         [pscustomobject]@{ name = 'extra scenario injection used'; mutate = { param($a) $a | Add-Member -NotePropertyName scenario_injection_used -NotePropertyValue $false } },
         [pscustomobject]@{ name = 'extra Plan B used'; mutate = { param($a) $a | Add-Member -NotePropertyName plan_b_used -NotePropertyValue $false } },
@@ -314,6 +340,13 @@ if ($failures.Count -eq 0) {
         })) {
             Add-Failure "Hostile admission-object fixture '$($fixture.name)' did not fail closed."
         }
+    }
+    $admissionObjectHostileFixtures++
+    $admissionRootArray = [object[]]@($freshAdmission)
+    if (-not (Test-Throws {
+        $null = Assert-Rw062HeistPreflightAdmission -Admission $admissionRootArray -Report $freshReport
+    })) {
+        Add-Failure "Hostile admission-object fixture 'root one-element object array' did not fail closed."
     }
 
     $reportMutations = @(
@@ -381,7 +414,50 @@ if ($failures.Count -eq 0) {
         [pscustomobject]@{ name = 'missing launch arrival history'; mutate = { param($r) $r.launch_model.PSObject.Properties.Remove('first_arrival_recent_scenario_ids') } },
         [pscustomobject]@{ name = 'null launch arrival history'; mutate = { param($r) $r.launch_model.first_arrival_recent_scenario_ids = $null } },
         [pscustomobject]@{ name = 'missing failures'; mutate = { param($r) $r.PSObject.Properties.Remove('failures') } },
-        [pscustomobject]@{ name = 'null failures'; mutate = { param($r) $r.failures = $null } }
+        [pscustomobject]@{ name = 'null failures'; mutate = { param($r) $r.failures = $null } },
+        [pscustomobject]@{ name = 'owner decisions nested array'; mutate = { param($r) $r.owner_decisions = [object[]]@(,([object[]]@('Q-013A', 'Q-017A'))) } },
+        [pscustomobject]@{ name = 'selection arrival history nested array'; mutate = { param($r) $r.selection.recent_scenario_ids = [object[]]@(,([object[]]@())) } },
+        [pscustomobject]@{ name = 'weighted entries nested array'; mutate = { param($r) $r.selection.weighted_entries = [object[]]@(,([object[]]@($r.selection.weighted_entries))) } },
+        [pscustomobject]@{ name = 'weighted entry object array'; mutate = { param($r) $r.selection.weighted_entries[0] = [object[]]@($r.selection.weighted_entries[0]) } },
+        [pscustomobject]@{ name = 'failures nested array'; mutate = { param($r) $r.failures = [object[]]@(,([object[]]@())) } },
+        [pscustomobject]@{ name = 'content groups nested array'; mutate = { param($r) $r.launch_model.selected_content_groups = [object[]]@(,([object[]]@($r.launch_model.selected_content_groups))) } },
+        [pscustomobject]@{ name = 'launch arrival history nested array'; mutate = { param($r) $r.launch_model.first_arrival_recent_scenario_ids = [object[]]@(,([object[]]@())) } },
+        [pscustomobject]@{ name = 'fresh companion selection null array'; mutate = { param($r) $r.fresh_interactive_selection = [object[]]@($null) } },
+        [pscustomobject]@{ name = 'serialization calibration null array'; mutate = { param($r) $r.serialization_calibration = [object[]]@($null) } },
+        [pscustomobject]@{ name = 'arrival history hostile null array'; mutate = { param($r) $r.arrival_history_hostile = [object[]]@($null) } },
+        [pscustomobject]@{ name = 'selection one-element object array'; mutate = { param($r) $r.selection = [object[]]@($r.selection) } },
+        [pscustomobject]@{ name = 'launch model one-element object array'; mutate = { param($r) $r.launch_model = [object[]]@($r.launch_model) } },
+        [pscustomobject]@{ name = 'contract one-element object array'; mutate = { param($r) $r.contract = [object[]]@('rw06_2_heist_seed_preflight') } },
+        [pscustomobject]@{ name = 'expected scenario one-element object array'; mutate = { param($r) $r.expected_scenario = [object[]]@('grand_casino_audit_night') } },
+        [pscustomobject]@{ name = 'valid fixtures one-element object array'; mutate = { param($r) $r.valid_fixtures = [object[]]@(1) } },
+        [pscustomobject]@{ name = 'hostile fixtures one-element object array'; mutate = { param($r) $r.hostile_fixtures = [object[]]@(0) } },
+        [pscustomobject]@{ name = 'passed one-element object array'; mutate = { param($r) $r.passed = [object[]]@($true) } },
+        [pscustomobject]@{ name = 'selection seed one-element object array'; mutate = { param($r) $r.selection.seed_text = [object[]]@('RW06-HEIST-AUDIT-0000') } },
+        [pscustomobject]@{ name = 'challenge key one-element object array'; mutate = { param($r) $r.selection.challenge_key = [object[]]@($r.selection.challenge_key) } },
+        [pscustomobject]@{ name = 'selected scenario one-element object array'; mutate = { param($r) $r.selection.selected_scenario = [object[]]@('grand_casino_audit_night') } },
+        [pscustomobject]@{ name = 'cycle one-element object array'; mutate = { param($r) $r.selection.cycle_id = [object[]]@('day:0') } },
+        [pscustomobject]@{ name = 'stream key one-element object array'; mutate = { param($r) $r.selection.stream_key = [object[]]@('environment_situation:grand_casino:day:0') } },
+        [pscustomobject]@{ name = 'run seed one-element object array'; mutate = { param($r) $r.selection.run_seed = [object[]]@(1262406216) } },
+        [pscustomobject]@{ name = 'stream seed one-element object array'; mutate = { param($r) $r.selection.stream_seed = [object[]]@(501255064) } },
+        [pscustomobject]@{ name = 'none roll one-element object array'; mutate = { param($r) $r.selection.none_roll = [object[]]@(96) } },
+        [pscustomobject]@{ name = 'none percent one-element object array'; mutate = { param($r) $r.selection.none_percent = [object[]]@(25) } },
+        [pscustomobject]@{ name = 'absolute minutes one-element object array'; mutate = { param($r) $r.selection.absolute_minutes = [object[]]@(720) } },
+        [pscustomobject]@{ name = 'total weight one-element object array'; mutate = { param($r) $r.selection.total_weight = [object[]]@(26000) } },
+        [pscustomobject]@{ name = 'weighted roll one-element object array'; mutate = { param($r) $r.selection.weighted_roll = [object[]]@(22402) } },
+        [pscustomobject]@{ name = 'town multiplier one-element object array'; mutate = { param($r) $r.selection.town_multiplier = [object[]]@(1) } },
+        [pscustomobject]@{ name = 'entry id one-element object array'; mutate = { param($r) $r.selection.weighted_entries[0].id = [object[]]@('grand_casino_gala_night') } },
+        [pscustomobject]@{ name = 'entry repeat multiplier one-element object array'; mutate = { param($r) $r.selection.weighted_entries[0].repeat_multiplier = [object[]]@(1) } },
+        [pscustomobject]@{ name = 'entry town multiplier one-element object array'; mutate = { param($r) $r.selection.weighted_entries[0].town_multiplier = [object[]]@(1) } },
+        [pscustomobject]@{ name = 'entry scaled weight one-element object array'; mutate = { param($r) $r.selection.weighted_entries[0].scaled_weight = [object[]]@(8000) } },
+        [pscustomobject]@{ name = 'entry ceiling one-element object array'; mutate = { param($r) $r.selection.weighted_entries[0].ceiling = [object[]]@(8000) } },
+        [pscustomobject]@{ name = 'screen one-element object array'; mutate = { param($r) $r.launch_model.screen = [object[]]@('START') } },
+        [pscustomobject]@{ name = 'run config one-element object array'; mutate = { param($r) $r.launch_model.run_config = [object[]]@($true) } },
+        [pscustomobject]@{ name = 'selected challenge one-element object array'; mutate = { param($r) $r.launch_model.selected_challenge = [object[]]@('') } },
+        [pscustomobject]@{ name = 'selected home one-element object array'; mutate = { param($r) $r.launch_model.selected_home = [object[]]@('random') } },
+        [pscustomobject]@{ name = 'challenge mode one-element object array'; mutate = { param($r) $r.launch_model.challenge_mode = [object[]]@('standard') } },
+        [pscustomobject]@{ name = 'challenge id one-element object array'; mutate = { param($r) $r.launch_model.challenge_id = [object[]]@('standard') } },
+        [pscustomobject]@{ name = 'modifier text one-element object array'; mutate = { param($r) $r.launch_model.fresh_profile_modifier_text = [object[]]@($r.launch_model.fresh_profile_modifier_text) } },
+        [pscustomobject]@{ name = 'start minutes one-element object array'; mutate = { param($r) $r.launch_model.start_absolute_minutes = [object[]]@(720) } }
     )
     foreach ($fixture in $reportMutations) {
         $preflightHostileFixtures++
@@ -392,6 +468,13 @@ if ($failures.Count -eq 0) {
         })) {
             Add-Failure "Hostile preflight fixture '$($fixture.name)' did not fail closed."
         }
+    }
+    $preflightHostileFixtures++
+    $reportRootArray = [object[]]@($freshReport)
+    if (-not (Test-Throws {
+        $null = Assert-Rw062HeistPreflightAdmission -Admission $freshAdmission -Report $reportRootArray
+    })) {
+        Add-Failure "Hostile preflight report fixture 'root one-element object array' did not fail closed."
     }
 
     $admissionSource = Get-Content -Raw -LiteralPath $AdmissionPath
@@ -420,8 +503,8 @@ if ($failures.Count -eq 0) {
         [pscustomobject]@{ name = 'Heist route receipt branch'; target = 'runner'; from = 'function Invoke-HeistEndingRoute {'; to = "function Invoke-HeistEndingRoute {`r`n    if (`$script:HeistPreflightAdmissionReceipt.evidence_role -ceq 'fresh-interactive') { Invoke-HeistAlternateRoute; return }" },
         [pscustomobject]@{ name = 'Heist route preflight-report branch'; target = 'runner'; from = 'function Invoke-HeistEndingRoute {'; to = "function Invoke-HeistEndingRoute {`r`n    if (`$heistSeedPreflight.selection.seed_text -ceq 'RW06-HEIST-AUDIT-0000') { Invoke-HeistAlternateRoute; return }" },
         [pscustomobject]@{ name = 'fixed outer role argument'; target = 'outer'; from = "'-EvidenceRole', 'fixed-repeat'"; to = "'-EvidenceRole', 'fresh-interactive'" },
-        [pscustomobject]@{ name = 'fixed outer summary check'; target = 'outer'; from = "requested_evidence_role') '') -cne 'fixed-repeat'"; to = "requested_evidence_role') '') -cne 'fresh-interactive'" },
-        [pscustomobject]@{ name = 'fixed proof role'; target = 'outer'; from = "[string]`$proof.evidence_role -cne 'fixed-repeat'"; to = "[string]`$proof.evidence_role -cne 'fresh-interactive'" }
+        [pscustomobject]@{ name = 'fixed outer summary check'; target = 'outer'; from = '$summaryEvidenceRole -isnot [string]'; to = '$false' },
+        [pscustomobject]@{ name = 'fixed proof role'; target = 'outer'; from = '$proofRole -isnot [string]'; to = '$false' }
     )
     foreach ($fixture in $sourceMutations) {
         $sourceHostileFixtures++
@@ -515,6 +598,145 @@ if ($failures.Count -eq 0) {
                     $value = Resolve-Rw062ReplayAdmission -Ending clean -EvidenceRole fixed-repeat -Seed 'RW06-CLEAN-ROUTE-01' -Repeat 1
                     $value | Add-Member -NotePropertyName scenario_pin -NotePropertyValue 'grand_casino_audit_night'
                     return $value
+                }
+            },
+            [pscustomobject]@{
+                name = 'evidence role one-element object array'
+                ending = 'heist'
+                seed = 'RW06-HEIST-AUDIT-0002'
+                admission = {
+                    $value = Resolve-Rw062ReplayAdmission -Ending heist -EvidenceRole fixed-repeat -Seed 'RW06-HEIST-AUDIT-0002' -Repeat 1
+                    $value.evidence_role = [object[]]@('fixed-repeat')
+                    return $value
+                }
+            },
+            [pscustomobject]@{
+                name = 'ending one-element object array'
+                ending = 'heist'
+                seed = 'RW06-HEIST-AUDIT-0002'
+                admission = {
+                    $value = Resolve-Rw062ReplayAdmission -Ending heist -EvidenceRole fixed-repeat -Seed 'RW06-HEIST-AUDIT-0002' -Repeat 1
+                    $value.ending = [object[]]@('heist')
+                    return $value
+                }
+            },
+            [pscustomobject]@{
+                name = 'seed one-element object array'
+                ending = 'heist'
+                seed = 'RW06-HEIST-AUDIT-0002'
+                admission = {
+                    $value = Resolve-Rw062ReplayAdmission -Ending heist -EvidenceRole fixed-repeat -Seed 'RW06-HEIST-AUDIT-0002' -Repeat 1
+                    $value.seed = [object[]]@('RW06-HEIST-AUDIT-0002')
+                    return $value
+                }
+            },
+            [pscustomobject]@{
+                name = 'route plan one-element object array'
+                ending = 'heist'
+                seed = 'RW06-HEIST-AUDIT-0002'
+                admission = {
+                    $value = Resolve-Rw062ReplayAdmission -Ending heist -EvidenceRole fixed-repeat -Seed 'RW06-HEIST-AUDIT-0002' -Repeat 1
+                    $value.route_plan = [object[]]@('count')
+                    return $value
+                }
+            },
+            [pscustomobject]@{
+                name = 'expected scenario one-element object array'
+                ending = 'heist'
+                seed = 'RW06-HEIST-AUDIT-0002'
+                admission = {
+                    $value = Resolve-Rw062ReplayAdmission -Ending heist -EvidenceRole fixed-repeat -Seed 'RW06-HEIST-AUDIT-0002' -Repeat 1
+                    $value.expected_initial_scenario = [object[]]@('grand_casino_audit_night')
+                    return $value
+                }
+            },
+            [pscustomobject]@{
+                name = 'scenario authority one-element object array'
+                ending = 'heist'
+                seed = 'RW06-HEIST-AUDIT-0002'
+                admission = {
+                    $value = Resolve-Rw062ReplayAdmission -Ending heist -EvidenceRole fixed-repeat -Seed 'RW06-HEIST-AUDIT-0002' -Repeat 1
+                    $value.scenario_authority = [object[]]@('natural_fresh_profile_first_arrival_preflight')
+                    return $value
+                }
+            },
+            [pscustomobject]@{
+                name = 'qualification authority one-element object array'
+                ending = 'heist'
+                seed = 'RW06-HEIST-AUDIT-0002'
+                admission = {
+                    $value = Resolve-Rw062ReplayAdmission -Ending heist -EvidenceRole fixed-repeat -Seed 'RW06-HEIST-AUDIT-0002' -Repeat 1
+                    $value.qualification_authority = [object[]]@('outer_independent_profile_aggregate_only')
+                    return $value
+                }
+            },
+            [pscustomobject]@{
+                name = 'repeat one-element object array'
+                ending = 'heist'
+                seed = 'RW06-HEIST-AUDIT-0002'
+                admission = {
+                    $value = Resolve-Rw062ReplayAdmission -Ending heist -EvidenceRole fixed-repeat -Seed 'RW06-HEIST-AUDIT-0002' -Repeat 1
+                    $value.repeat = [object[]]@(1)
+                    return $value
+                }
+            },
+            [pscustomobject]@{
+                name = 'scenario permission one-element object array'
+                ending = 'heist'
+                seed = 'RW06-HEIST-AUDIT-0002'
+                admission = {
+                    $value = Resolve-Rw062ReplayAdmission -Ending heist -EvidenceRole fixed-repeat -Seed 'RW06-HEIST-AUDIT-0002' -Repeat 1
+                    $value.scenario_injection_allowed = [object[]]@($false)
+                    return $value
+                }
+            },
+            [pscustomobject]@{
+                name = 'Plan B permission one-element object array'
+                ending = 'heist'
+                seed = 'RW06-HEIST-AUDIT-0002'
+                admission = {
+                    $value = Resolve-Rw062ReplayAdmission -Ending heist -EvidenceRole fixed-repeat -Seed 'RW06-HEIST-AUDIT-0002' -Repeat 1
+                    $value.plan_b_allowed = [object[]]@($false)
+                    return $value
+                }
+            },
+            [pscustomobject]@{
+                name = 'profile isolation one-element object array'
+                ending = 'heist'
+                seed = 'RW06-HEIST-AUDIT-0002'
+                admission = {
+                    $value = Resolve-Rw062ReplayAdmission -Ending heist -EvidenceRole fixed-repeat -Seed 'RW06-HEIST-AUDIT-0002' -Repeat 1
+                    $value.requires_isolated_profile = [object[]]@($true)
+                    return $value
+                }
+            },
+            [pscustomobject]@{
+                name = 'release qualification one-element object array'
+                ending = 'heist'
+                seed = 'RW06-HEIST-AUDIT-0002'
+                admission = {
+                    $value = Resolve-Rw062ReplayAdmission -Ending heist -EvidenceRole fixed-repeat -Seed 'RW06-HEIST-AUDIT-0002' -Repeat 1
+                    $value.release_qualifying = [object[]]@($false)
+                    return $value
+                }
+            },
+            [pscustomobject]@{
+                name = 'clean null owner decisions'
+                ending = 'clean'
+                seed = 'RW06-CLEAN-ROUTE-01'
+                admission = {
+                    $value = ConvertTo-ContractClone (Resolve-Rw062ReplayAdmission -Ending clean -EvidenceRole fixed-repeat -Seed 'RW06-CLEAN-ROUTE-01' -Repeat 1)
+                    $value.owner_decisions = $null
+                    return $value
+                }
+            },
+            [pscustomobject]@{
+                name = 'admission root one-element object array'
+                ending = 'heist'
+                seed = 'RW06-HEIST-AUDIT-0002'
+                admission = {
+                    $value = Resolve-Rw062ReplayAdmission -Ending heist -EvidenceRole fixed-repeat -Seed 'RW06-HEIST-AUDIT-0002' -Repeat 1
+                    Write-Output -NoEnumerate ([object[]]@($value))
                 }
             }
         )
