@@ -255,9 +255,10 @@ Answer:
 A
 
 ### Q-017 · rw06_2 · Heist fresh-seed acceptance
-Status: OPEN
+Status: ANSWERED
 Asked: endings peer agent, 2026-09-24
 Question: rw06_2 requires two wins on the fixed route seed plus one interactive win on a fresh seed, while Q-013 binds the natural Audit/Count route to exact seed `RW06-HEIST-AUDIT-0002` and forbids Audit injection or Plan B. How should the separate Heist fresh-seed pass be admitted?
 Options: A) Keep `0002` for the fixed repeat and authorize one different, preflight-proven natural-Audit seed only for the interactive Plan A pass (recommended)  B) Count a third clean isolated-profile interactive `0002` run as the Heist fresh pass
 Resume: rw06_2 keeps every current `0002` fail-closed guard and continues Q-017-independent launcher work while OPEN. If A, add an explicit fresh-interactive role that accepts only a separately preflighted natural-Audit seed, with no scenario injection and no Plan B. If B, retain exact `0002` everywhere and record the owner's waiver of the distinct-seed acceptance wording. Do not launch the Heist fresh pass until answered.
 Answer:
+A
