@@ -666,23 +666,34 @@ static func travel_target_ids(map_data: Dictionary, node_id: String = "", max_ne
 		var target_id := str(candidate.get("id", ""))
 		if not target_id.is_empty() and not result.has(target_id):
 			result.append(target_id)
-	var priority_candidates := enabled_new_candidates + enabled_old_candidates
+	var enabled_priority_candidates := enabled_new_candidates + enabled_old_candidates
+	var all_priority_candidates := enabled_priority_candidates + fallback_new_candidates + fallback_old_candidates
 	if source_id == BEACH_ID:
 		result = _ensure_visible_neighbor_target(result, source_id, BEACH_GATEWAY_ID, total_limit, visible_lookup, edge_lookup, node_lookup)
 	# Once a Tier-2 casino has been revealed and passes its route gates, it must
 	# survive the small travel-card cap. Otherwise cheaper familiar stops can
 	# crowd the newly earned progression route out of the actual player UI.
-	var tier_two_priority_id := _first_priority_node_id(priority_candidates, node_lookup, TIER_TWO_CASINO_IDS)
+	var tier_two_priority_id := _first_priority_node_id(enabled_priority_candidates, node_lookup, TIER_TWO_CASINO_IDS)
 	# An explicit event lead is an equally strong player promise. In particular,
 	# Parking Lot Tip unlocks The Punchline from across town; if ordinary nearby
 	# stops and a newly revealed Tier-2 casino consume all three cards, the player
 	# is forced through hours of incidental travel and can reach the venue only
 	# after it closes. Keep one event-unlocked destination on the visible list.
-	var event_priority_id := _first_event_unlocked_priority_node_id(priority_candidates, node_lookup)
+	# An event promise remains useful when the route is temporarily disabled. In
+	# particular, accepting the Grand invitation below its fare must show the
+	# Grand card and its affordability reason instead of silently evicting it.
+	var event_priority_id := _first_event_unlocked_priority_node_id(all_priority_candidates, node_lookup)
+	var promised_disabled_priority_ids: Array = [event_priority_id]
+	var grand_priority_node: Dictionary = node_lookup.get(GRAND_CASINO_ID, {})
+	if bool(grand_priority_node.get("unlocked", false)) \
+			and str(grand_priority_node.get("discovery_source", "")) == DISCOVERY_SOURCE_EVENT \
+			and not promised_disabled_priority_ids.has(GRAND_CASINO_ID):
+		promised_disabled_priority_ids.append(GRAND_CASINO_ID)
 	# Preserve the invited Grand Casino at the same time when both progression
-	# targets are live; independently replacing the last card makes priority
-	# destinations evict one another under the three-card cap.
-	result = _ensure_priority_targets(result, priority_candidates, [GRAND_CASINO_ID, event_priority_id, tier_two_priority_id], total_limit)
+	# targets are live. Grand remains an explicit highest-priority promise even
+	# when another event-unlocked route scores first; only actually event-unlocked
+	# nodes may bypass a temporary route blocker such as insufficient fare.
+	result = _ensure_priority_targets(result, all_priority_candidates, [GRAND_CASINO_ID, event_priority_id, tier_two_priority_id], total_limit, promised_disabled_priority_ids)
 	# The physical dock-to-Beach exit is mandatory, but remains inside the normal
 	# travel-card cap. Apply it after generic priority promotion so a later
 	# replacement cannot evict it; when full, the last (lowest-ranked) ordinary
@@ -1750,11 +1761,11 @@ static func _filter_candidates_by_enabled(candidates: Array, enabled: bool) -> A
 	return result
 
 
-static func _ensure_priority_targets(result: Array, candidates: Array, target_ids: Array, total_limit: int) -> Array:
+static func _ensure_priority_targets(result: Array, candidates: Array, target_ids: Array, total_limit: int, allowed_disabled_target_ids: Array = []) -> Array:
 	var normalized_result := result.duplicate(true)
 	if total_limit <= 0:
 		return normalized_result
-	var eligible_ids: Array = []
+	var eligible_candidate_ids: Array = []
 	var visited_ids: Array = []
 	for candidate_value in candidates:
 		if typeof(candidate_value) != TYPE_DICTIONARY:
@@ -1763,22 +1774,48 @@ static func _ensure_priority_targets(result: Array, candidates: Array, target_id
 		var candidate_id := str(candidate.get("id", ""))
 		if bool(candidate.get("visited", false)) and not candidate_id.is_empty() and not visited_ids.has(candidate_id):
 			visited_ids.append(candidate_id)
-		if target_ids.has(candidate_id) and not candidate_id.is_empty() and bool(candidate.get("enabled_hint", true)) and not eligible_ids.has(candidate_id):
-			eligible_ids.append(candidate_id)
-	for target_id in eligible_ids:
+		var enabled_or_promised := bool(candidate.get("enabled_hint", true)) or allowed_disabled_target_ids.has(candidate_id)
+		if target_ids.has(candidate_id) and not candidate_id.is_empty() and enabled_or_promised and not eligible_candidate_ids.has(candidate_id):
+			eligible_candidate_ids.append(candidate_id)
+	# The caller's order is the progression contract. Candidate score order may
+	# put a lower-priority revealed casino ahead of an event-promised destination,
+	# especially when every other visible card is a protected revisit.
+	var eligible_ids: Array = []
+	for target_id_value in target_ids:
+		var target_id := str(target_id_value)
+		if eligible_candidate_ids.has(target_id) and not eligible_ids.has(target_id):
+			eligible_ids.append(target_id)
+	for priority_index in range(eligible_ids.size()):
+		var target_id := str(eligible_ids[priority_index])
 		if normalized_result.has(target_id):
 			continue
 		if normalized_result.size() < total_limit:
 			normalized_result.append(target_id)
 			continue
+		var replacement_index := -1
 		for index in range(normalized_result.size() - 1, -1, -1):
 			var existing_id := str(normalized_result[index])
 			# Revisit routes are intentionally additive to the new-destination cap.
 			# A progression priority must replace another new candidate, never erase
 			# a known way back to a previously visited stop.
-			if not eligible_ids.has(existing_id) and not visited_ids.has(existing_id):
-				normalized_result[index] = target_id
+			if visited_ids.has(existing_id):
+				continue
+			if not eligible_ids.has(existing_id):
+				replacement_index = index
 				break
+		# Keep every declared priority when a non-priority card can move. Only a
+		# lower-priority new card may yield when revisits consume every other slot.
+		if replacement_index < 0:
+			for index in range(normalized_result.size() - 1, -1, -1):
+				var existing_id := str(normalized_result[index])
+				if visited_ids.has(existing_id):
+					continue
+				var existing_priority_index := eligible_ids.find(existing_id)
+				if existing_priority_index > priority_index:
+					replacement_index = index
+					break
+		if replacement_index >= 0:
+			normalized_result[replacement_index] = target_id
 	return normalized_result
 
 
@@ -1803,8 +1840,6 @@ static func _first_event_unlocked_priority_node_id(candidates: Array, node_looku
 		if typeof(candidate_value) != TYPE_DICTIONARY:
 			continue
 		var candidate: Dictionary = candidate_value
-		if not bool(candidate.get("enabled_hint", true)):
-			continue
 		var candidate_id := str(candidate.get("id", ""))
 		var node: Dictionary = node_lookup.get(candidate_id, {})
 		if bool(node.get("unlocked", false)) and str(node.get("discovery_source", "")) == DISCOVERY_SOURCE_EVENT:

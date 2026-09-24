@@ -5,6 +5,7 @@ const CrewTurnModelScript := preload("res://scripts/core/crew_turn_model.gd")
 const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 const PlayerTextScript := preload("res://scripts/ui/player_text.gd")
+const COUNT_AUDIT_KNOWLEDGE_FLAG := "crew_heist_count_audit_roster_read"
 
 var trust_by_member: Dictionary = {}
 var grievance_ledger: Array = []
@@ -1468,6 +1469,13 @@ func _crew_heist_sync_live_table_event(state: Dictionary) -> void:
 func _crew_heist_world_has_hook(hook_id: String) -> bool:
 	if hook_id.is_empty():
 		return false
+	# The Count may use the Audit only while it is literally the current public
+	# situation, or after the player has read its visible roster. Do not infer
+	# this fact from an unvisited seed or a stale stored environment: both leak
+	# private/cycle-old scenario selection into the planning table.
+	if hook_id == "audit_night":
+		return JsonCoerceScript._copy_dict(_run.current_environment.get("scenario_hook_flags", {})).get(hook_id, false) == true \
+			or _run.story_flags.get(COUNT_AUDIT_KNOWLEDGE_FLAG, false) == true
 	if bool(JsonCoerceScript._copy_dict(_run.current_environment.get("scenario_hook_flags", {})).get(hook_id, false)):
 		return true
 	for node_value in JsonCoerceScript._copy_array(_run.world_map.get("nodes", [])):
@@ -1488,7 +1496,12 @@ func _crew_heist_begin_setup_delivery(step: String, hold: bool) -> Dictionary:
 	var setup := JsonCoerceScript._copy_dict(state.get("setup", {}))
 	if bool(setup.get(step, false)):
 		return {"ok": false, "message": "That setup is already complete."}
-	var target_id := _crew_heist_node_for_archetype(_run.GRAND_CASINO_CAGE_ARCHETYPE_ID if hold else _run.GRAND_CASINO_ARCHETYPE_ID)
+	# Every Grand Casino room is an interior of the one real town-map node. Keep
+	# the route on that canonical node and carry the exact room as an opt-in
+	# delivery constraint; map-hidden Cage/Main room ids must never masquerade as
+	# world destinations.
+	var target_room_archetype_id := str(_run.GRAND_CASINO_CAGE_ARCHETYPE_ID if hold else _run.GRAND_CASINO_ARCHETYPE_ID)
+	var target_id := _crew_heist_node_for_archetype(_run.GRAND_CASINO_ARCHETYPE_ID)
 	if target_id.is_empty():
 		return {"ok": false, "message": "The setup has no real venue tonight."}
 	var tuning := JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(_run.CrewHeistModelScript.plan(_run.CrewHeistModelScript.PLAN_COUNT).get("setup", {})).get(step, {}))
@@ -1499,6 +1512,7 @@ func _crew_heist_begin_setup_delivery(step: String, hold: bool) -> Dictionary:
 		"cargo_id": "heist_swap_cart" if not hold else "heist_schedule_watch",
 		"cargo_label": "Swap cart" if not hold else "Shift schedule",
 		"cargo_heat_per_travel": 0,
+		"consumer_payload": {"required_target_archetype_id": target_room_archetype_id},
 	}
 	if hold:
 		spec["hold_required_actions"] = int(tuning.get("hold_required_actions", 2))
@@ -1514,18 +1528,16 @@ func _crew_heist_node_for_archetype(archetype_id: String) -> String:
 	return ""
 
 
-func _crew_heist_getaway_target(plan_id: String, exit_choice: String = "") -> String:
+func _crew_heist_getaway_target(plan_id: String, _exit_choice: String = "") -> String:
 	var preferred_archetype := "small_underground_casino"
 	if plan_id == _run.CrewHeistModelScript.PLAN_COUNT:
-		preferred_archetype = _run.GRAND_CASINO_CAGE_ARCHETYPE_ID if exit_choice == "corridor" else "delta_queen"
+		# Dock and corridor are distinct cart exits inside the score, but both
+		# converge on Rook's real dock-side getaway node. Grand Casino rooms are
+		# interiors, never town-map destinations.
+		preferred_archetype = "delta_queen"
 	var preferred := _crew_heist_node_for_archetype(preferred_archetype)
 	if not preferred.is_empty() and preferred != _run.current_world_node_id():
 		return preferred
-	for node_value in JsonCoerceScript._copy_array(_run.world_map.get("nodes", [])):
-		var node := JsonCoerceScript._copy_dict(node_value)
-		var node_id := str(node.get("id", ""))
-		if not node_id.is_empty() and node_id != _run.current_world_node_id():
-			return node_id
 	return ""
 
 

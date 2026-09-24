@@ -97,7 +97,10 @@ static func build(lesson: Dictionary, context: Dictionary) -> Dictionary:
 	var available_width := maxf(1.0, viewport_rect.size.x - VIEWPORT_MARGIN * 2.0)
 	var preferred_width := 420.0 if small_screen else 384.0
 	var bubble_width := minf(available_width, preferred_width)
-	var bubble_height := 172.0 if completion_type == "explicit_ok" else 144.0
+	# Four rendered copy lines, container spacing, and the dismiss control need
+	# the same safe height for ambient advice as for explicit acknowledgements.
+	# The former 144 px ambient bubble clipped long normal-run Skip tip controls.
+	var bubble_height := 172.0
 	if small_screen:
 		bubble_height += 14.0
 	var bubble_size := Vector2(

@@ -2009,6 +2009,62 @@ if ($null -eq $grandRoute) {
 elseif ([int](Get-JsonProperty $grandRoute "cost") -lt 70) {
     $failures.Add("grand_casino travel route should keep the release-tuned meaningful buy-in.")
 }
+else {
+    $expectedGrandFreeOrigins = @("beach", "delta_queen", "kitty_cat_lounge")
+    $grandFreeOrigins = @(
+        ConvertTo-ValueArray (Get-JsonProperty $grandRoute "free_from_archetypes") |
+            ForEach-Object { [string]$_ }
+    )
+    $grandFreeOriginsMatch = $grandFreeOrigins.Count -eq $expectedGrandFreeOrigins.Count
+    foreach ($expectedOrigin in $expectedGrandFreeOrigins) {
+        if ($grandFreeOrigins -cnotcontains $expectedOrigin) {
+            $grandFreeOriginsMatch = $false
+        }
+    }
+    foreach ($actualOrigin in $grandFreeOrigins) {
+        if ($expectedGrandFreeOrigins -cnotcontains $actualOrigin) {
+            $grandFreeOriginsMatch = $false
+        }
+    }
+    if (-not $grandFreeOriginsMatch) {
+        $failures.Add("grand_casino free_from_archetypes must contain exactly kitty_cat_lounge, delta_queen, and beach.")
+    }
+}
+
+$grandInvite = $null
+foreach ($event in (Read-JsonArray "data/events/events.json")) {
+    if ([string](Get-JsonProperty $event "id") -eq "grand_casino_invite") {
+        $grandInvite = $event
+        break
+    }
+}
+if ($null -eq $grandInvite) {
+    $failures.Add("Demo objective requires the grand_casino_invite event.")
+}
+else {
+    $grandInvitePayload = Get-JsonProperty $grandInvite "payload"
+    $grandInviteChoices = @(ConvertTo-ValueArray (Get-JsonProperty $grandInvitePayload "choices"))
+    $acceptInviteChoices = @($grandInviteChoices | Where-Object { [string](Get-JsonProperty $_ "id") -eq "accept_invite" })
+    $declineInviteChoices = @($grandInviteChoices | Where-Object { [string](Get-JsonProperty $_ "id") -eq "not_yet" })
+    if ($acceptInviteChoices.Count -ne 1) {
+        $failures.Add("grand_casino_invite must define exactly one accept_invite choice.")
+    }
+    else {
+        $acceptInviteConsequences = Get-JsonProperty $acceptInviteChoices[0] "consequences"
+        if ([int](Get-JsonProperty $acceptInviteConsequences "bankroll_delta") -ne 50) {
+            $failures.Add("grand_casino_invite accept_invite must grant exactly +50 bankroll.")
+        }
+    }
+    if ($declineInviteChoices.Count -ne 1) {
+        $failures.Add("grand_casino_invite must define exactly one not_yet choice.")
+    }
+    else {
+        $declineInviteConsequences = Get-JsonProperty $declineInviteChoices[0] "consequences"
+        if ([int](Get-JsonProperty $declineInviteConsequences "bankroll_delta") -ne 0) {
+            $failures.Add("grand_casino_invite not_yet must not grant bankroll.")
+        }
+    }
+}
 
 foreach ($event in (Read-JsonArray "data/events/events.json")) {
     $eventId = [string](Get-JsonProperty $event "id")

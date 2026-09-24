@@ -4101,6 +4101,16 @@ func _selected_info_action_label(object_data: Dictionary) -> String:
 	return label.capitalize()
 
 
+func _selected_info_single_action_enabled(object_data: Dictionary) -> bool:
+	if object_data.is_empty() or bool(object_data.get("disabled", false)) or not bool(object_data.get("enabled", true)):
+		return false
+	var actions := _array_view(object_data.get("available_actions", []))
+	if not actions.is_empty() and typeof(actions[0]) == TYPE_DICTIONARY:
+		var action := actions[0] as Dictionary
+		return bool(action.get("enabled", true)) and not bool(action.get("disabled", false))
+	return not str(object_data.get("confirm_action_id", "")).strip_edges().is_empty()
+
+
 func _selected_info_action_button_rect() -> Rect2:
 	var info := _selected_object_info()
 	if info.is_empty():
@@ -4167,15 +4177,7 @@ func _selected_info_action_entries_for_rect(info: Dictionary, card: Rect2) -> Ar
 		return entries
 	if _selected_info_has_single_action_button(object_data):
 		var action_height := _selected_info_action_height()
-		var available_actions := _selected_info_available_actions(object_data)
-		var first_action: Dictionary = {}
-		if not available_actions.is_empty() and typeof(available_actions[0]) == TYPE_DICTIONARY:
-			first_action = available_actions[0]
-		var single_enabled := not bool(object_data.get("disabled", false)) \
-			and bool(object_data.get("enabled", true)) \
-			and not bool(first_action.get("disabled", false)) \
-			and bool(first_action.get("enabled", true)) \
-			and not str(object_data.get("confirm_action_id", "")).strip_edges().is_empty()
+		var single_enabled := _selected_info_single_action_enabled(object_data)
 		entries.append({
 			"inline": false,
 			"label": _selected_info_action_label(object_data),
