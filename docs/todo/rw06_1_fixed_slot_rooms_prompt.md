@@ -6,7 +6,8 @@ Depends on rw06_0 being DONE (finished fixes are on `main`).
 ## Goal
 
 Rooms stop overlapping, scattering and colliding because scenario objects no
-longer search for space at runtime. Each of the 18 room maps gets a fixed set of
+longer search for space at runtime. Each of the 21 production map records,
+covering 18 room archetypes including their subrooms, gets a fixed set of
 authored **stage slots**. Scenario objects bind to those slots in a
 deterministic order. An object that can't get a slot doesn't appear in the room,
 and its actions appear in a **room action list** instead. Adding a slot later
@@ -148,14 +149,15 @@ can't happen again.
 - `tools/validate_project.ps1` passes.
 - `tools/check_godot.ps1 -Suite Smoke -RequireGodot` passes.
 - `tools/check_godot.ps1 -Suite Contract -RequireGodot`: **zero failing shards**.
-- Static slot validator green on all 18 maps × both layouts, and on 55 scenarios ×
-  legal hosts.
+- Static slot validator green on all 21 production map records × both layouts,
+  with all 18 room archetypes represented, and on 55 scenarios × legal hosts.
 - Every historical UIENV exact seed from the ledger is a passing regression case.
 - `tools/environment_generation_audit.ps1 -Runs 100 -Visits 6 -RequireGodot`
   is green.
-- Contact sheet of all 18 rooms, busiest scenario each, normal and expanded
-  layouts, saved under `.tmp/rw06_1/contact_sheet/`. Link it on the scoreboard
-  for owner review.
+- Capture report enumerating all 21 production map records/subrooms, plus a
+  contact sheet of all 18 room archetypes (busiest scenario each, normal and
+  expanded layouts), saved under `.tmp/rw06_1/contact_sheet/`. Link it on the
+  scoreboard for owner review.
 - Idle-liveness and performance smoke unchanged or better. Never weaken a
   budget or liveness floor.
 
