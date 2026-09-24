@@ -1,7 +1,7 @@
 # rw06_4 — 0.6.0 release gate and artifact handoff
 
 Status: TODO. Self-contained. Launch with this file only.
-Depends on rw06_1, rw06_2, rw06_3 and rw06_5 being DONE. This replaces
+Depends on rw06_1, rw06_2, rw06_3, rw06_5 and rw06_6 being DONE. This replaces
 `release06_1_ship_prompt.md` (archived) with the owner-approved smaller gate.
 The larger gates are listed in `docs/plans/0.6.1_backlog.md`.
 
