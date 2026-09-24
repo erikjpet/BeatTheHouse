@@ -109,11 +109,9 @@ Once the merge lands, rebase your Phase 0 worktrees onto the new `main`.
      not edit game, Crew, ending or balance logic.
    - The peer does rw06_2's final three-ending pass on `main` **after** rw06_1
      lands.
-3. **Owner checkpoint.** Once rw06_1 and rw06_5 have landed **and** the peer has
-   produced the qualifying rw06_2 live route evidence, ask the owner in the
-   questions file. The peer continues its remaining non-blocking closure work
-   in parallel, but the playable ending routes must exist before this requested
-   playthrough:
+3. **Owner checkpoint.** Once rw06_1 and rw06_5 have landed, ask the owner in
+   the questions file. The peer continues rw06_2's 3/3 ending work in parallel
+   and does not delay this requested playthrough:
    - the build is ready for their start-to-finish run;
    - the rw06_1 contact sheet link, for their visual review of room placement.
 
