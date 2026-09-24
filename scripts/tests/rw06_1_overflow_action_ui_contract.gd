@@ -2613,6 +2613,11 @@ func _settle_frames(count: int) -> void:
 
 
 func _finish(app: Control) -> void:
+	var save_service: Variant = app.get("save_service")
+	if save_service != null and bool(save_service.call("async_save_in_flight")):
+		var save_error := int(save_service.call("wait_for_async_save"))
+		if save_error != OK or bool(save_service.call("async_save_in_flight")):
+			failures.append("RW06-1 teardown could not join its production autosave: %d." % save_error)
 	app.call("_drain_script_prewarm_requests_for_shutdown")
 	app.queue_free()
 	# Physical touch dispatch and deferred production selection retain native
