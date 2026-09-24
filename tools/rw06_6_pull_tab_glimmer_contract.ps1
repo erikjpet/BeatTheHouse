@@ -265,6 +265,20 @@ function Get-OwnedProcessStartProofFromException {
 }
 
 
+function Test-CimCreationMatchesProcessStartTicks {
+    param(
+        [long]$CreationTicks,
+        [long]$ProcessStartTicks
+    )
+    if ($CreationTicks -le 0 -or $ProcessStartTicks -le 0) { return $false }
+    # Win32_Process.CreationDate is microsecond-truncated, while
+    # Process.StartTime retains 100 ns ticks. Compare the exact representable
+    # CIM value instead of allowing a time window that PID reuse could cross.
+    $cimRepresentableStartTicks = $ProcessStartTicks - ($ProcessStartTicks % 10)
+    return $CreationTicks -eq $cimRepresentableStartTicks
+}
+
+
 function Resolve-VerifiedDescendantIdentityRecords {
     param(
         [object]$RootIdentity,
@@ -273,28 +287,46 @@ function Resolve-VerifiedDescendantIdentityRecords {
         [object[]]$Candidates
     )
     $rootPid = [int]$RootIdentity.pid
+    $rootKey = [string]$RootIdentity.key
     $rootStartTicks = [long]$RootIdentity.start_ticks
-    $verifiedStartByPid = @{}
-    $verifiedStartByPid[$rootPid] = $rootStartTicks
-    $verifiedPids = [System.Collections.Generic.HashSet[int]]::new()
-    [void]$verifiedPids.Add($rootPid)
+    if ($rootPid -le 0 -or [string]::IsNullOrWhiteSpace($rootKey) -or $rootStartTicks -le 0 -or $OwnershipEndTicks -lt $rootStartTicks) {
+        return @()
+    }
+    $verifiedIdentityByKey = @{}
+    $verifiedIdentityByKey[$rootKey] = $RootIdentity
     $records = [System.Collections.Generic.List[object]]::new()
     $changed = $true
     while ($changed) {
         $changed = $false
         foreach ($candidate in @($Candidates)) {
             $record = $candidate.identity
+            $recordKey = [string]$record.key
             $pidValue = [int]$record.pid
             $parentPid = [int]$candidate.parent_pid
-            if ($pidValue -le 0 -or $pidValue -eq $rootPid -or $verifiedPids.Contains($pidValue)) { continue }
-            if (-not $verifiedPids.Contains($parentPid)) { continue }
-            if ($BaselineIdentityKeys -contains [string]$record.key) { continue }
-            $parentStartTicks = [long]$verifiedStartByPid[$parentPid]
+            $parentIdentity = $candidate.parent_identity
+            if ($null -eq $parentIdentity) { continue }
+            $parentKey = [string]$parentIdentity.key
+            if (
+                $pidValue -le 0 `
+                -or $pidValue -eq $rootPid `
+                -or [string]::IsNullOrWhiteSpace($recordKey) `
+                -or $verifiedIdentityByKey.ContainsKey($recordKey) `
+                -or -not $verifiedIdentityByKey.ContainsKey($parentKey) `
+                -or $BaselineIdentityKeys -contains $recordKey
+            ) { continue }
+            $verifiedParent = $verifiedIdentityByKey[$parentKey]
+            if (
+                $parentPid -ne [int]$parentIdentity.pid `
+                -or $parentPid -ne [int]$verifiedParent.pid `
+                -or [string]$parentIdentity.key -cne [string]$verifiedParent.key `
+                -or [long]$parentIdentity.start_ticks -ne [long]$verifiedParent.start_ticks `
+                -or [string]$parentIdentity.name -cne [string]$verifiedParent.name
+            ) { continue }
+            $parentStartTicks = [long]$verifiedParent.start_ticks
             $recordStartTicks = [long]$record.start_ticks
             if ($recordStartTicks -lt $rootStartTicks -or $recordStartTicks -lt $parentStartTicks -or $recordStartTicks -gt $OwnershipEndTicks) { continue }
-            if ([Math]::Abs([long]$candidate.creation_ticks - $recordStartTicks) -gt [TimeSpan]::FromMilliseconds(10).Ticks) { continue }
-            [void]$verifiedPids.Add($pidValue)
-            $verifiedStartByPid[$pidValue] = $recordStartTicks
+            if (-not (Test-CimCreationMatchesProcessStartTicks -CreationTicks ([long]$candidate.creation_ticks) -ProcessStartTicks $recordStartTicks)) { continue }
+            $verifiedIdentityByKey[$recordKey] = $record
             [void]$records.Add($record)
             $changed = $true
         }
@@ -309,6 +341,7 @@ function Get-VerifiedDescendantProcessRecords {
         [string[]]$BaselineIdentityKeys,
         [AllowNull()][object]$RootExitTimeUtc = $null
     )
+    if (-not (Test-ProcessIdentityProofShape -Identity $RootIdentity)) { return @() }
     $rootLiveAtStart = Test-LiveProcessMatchesIdentity -ExpectedIdentity $RootIdentity
     if (-not $rootLiveAtStart -and $null -eq $RootExitTimeUtc) { return @() }
     $all = @(Get-CimInstance Win32_Process -ErrorAction SilentlyContinue)
@@ -316,14 +349,28 @@ function Get-VerifiedDescendantProcessRecords {
     $candidates = [System.Collections.Generic.List[object]]::new()
     foreach ($entry in $all) {
         $pidValue = [int]$entry.ProcessId
+        $parentPid = [int]$entry.ParentProcessId
         $live = Get-Process -Id $pidValue -ErrorAction SilentlyContinue
         if ($null -eq $live) { continue }
         try {
             $record = Get-ProcessIdentityRecord -Process $live
+            $parentIdentity = $null
+            if ($parentPid -eq [int]$RootIdentity.pid) {
+                # The exact root identity came from our owned process handle.
+                # Its observed exit bound disambiguates a later PID reuse.
+                $parentIdentity = $RootIdentity
+            }
+            else {
+                $liveParent = Get-Process -Id $parentPid -ErrorAction SilentlyContinue
+                if ($null -eq $liveParent) { continue }
+                $parentIdentity = Get-ProcessIdentityRecord -Process $liveParent
+                if (-not (Test-ProcessIdentityProofShape -Identity $parentIdentity)) { continue }
+            }
             $creationValue = $entry.CreationDate
             $creationUtc = ([datetime]$creationValue).ToUniversalTime()
             [void]$candidates.Add([ordered]@{
-                parent_pid = [int]$entry.ParentProcessId
+                parent_pid = $parentPid
+                parent_identity = $parentIdentity
                 creation_ticks = [long]$creationUtc.Ticks
                 identity = $record
             })
@@ -1361,21 +1408,33 @@ if ($ValidateOnly) {
     $malformedStartProof = Get-OwnedProcessStartProofFromException -Exception $malformedStartException
     Assert-LauncherContract (-not [bool]$malformedStartProof.started) 'Malformed identity metadata was accepted as exact process-start proof.'
 
+    Assert-LauncherContract (Test-CimCreationMatchesProcessStartTicks -CreationTicks 150 -ProcessStartTicks 159) 'CIM/process start comparison rejected exact microsecond truncation.'
+    Assert-LauncherContract (-not (Test-CimCreationMatchesProcessStartTicks -CreationTicks 140 -ProcessStartTicks 159)) 'CIM/process start comparison accepted a predecessor timestamp one microsecond away.'
+    Assert-LauncherContract (-not (Test-CimCreationMatchesProcessStartTicks -CreationTicks 1000000 -ProcessStartTicks 1099999)) 'CIM/process start comparison accepted a replacement 99,999 ticks inside the former 10 ms tolerance.'
+
     $syntheticRootIdentity = [ordered]@{ pid = 100; name = 'root'; start_utc = ''; start_ticks = [long]100; key = '100|100|root' }
+    $oldBridgeIdentity = [ordered]@{ pid = 200; name = 'old-bridge'; start_utc = ''; start_ticks = [long]50; key = '200|50|old-bridge' }
+    $goodChildIdentity = [ordered]@{ pid = 201; name = 'good-child'; start_utc = ''; start_ticks = [long]150; key = '201|150|good-child' }
+    $baselineChildIdentity = [ordered]@{ pid = 203; name = 'baseline-child'; start_utc = ''; start_ticks = [long]160; key = '203|160|baseline-child' }
+    $acceptedParentIdentity = [ordered]@{ pid = 205; name = 'accepted-parent'; start_utc = ''; start_ticks = [long]180; key = '205|180|accepted-parent' }
+    $reusedParentIdentity = [ordered]@{ pid = 205; name = 'reused-parent'; start_utc = ''; start_ticks = [long]240; key = '205|240|reused-parent' }
     $syntheticCandidates = @(
-        [ordered]@{ parent_pid = 100; creation_ticks = [long]50; identity = [ordered]@{ pid = 200; name = 'old-bridge'; start_utc = ''; start_ticks = [long]50; key = '200|50|old-bridge' } },
-        [ordered]@{ parent_pid = 200; creation_ticks = [long]200; identity = [ordered]@{ pid = 300; name = 'bridged-godot'; start_utc = ''; start_ticks = [long]200; key = '300|200|bridged-godot' } },
-        [ordered]@{ parent_pid = 100; creation_ticks = [long]150; identity = [ordered]@{ pid = 201; name = 'good-child'; start_utc = ''; start_ticks = [long]150; key = '201|150|good-child' } },
-        [ordered]@{ parent_pid = 201; creation_ticks = [long]220; identity = [ordered]@{ pid = 301; name = 'good-grandchild'; start_utc = ''; start_ticks = [long]220; key = '301|220|good-grandchild' } },
-        [ordered]@{ parent_pid = 100; creation_ticks = [long]501; identity = [ordered]@{ pid = 202; name = 'late-child'; start_utc = ''; start_ticks = [long]501; key = '202|501|late-child' } },
-        [ordered]@{ parent_pid = 100; creation_ticks = [long]160; identity = [ordered]@{ pid = 203; name = 'baseline-child'; start_utc = ''; start_ticks = [long]160; key = '203|160|baseline-child' } },
-        [ordered]@{ parent_pid = 203; creation_ticks = [long]230; identity = [ordered]@{ pid = 303; name = 'baseline-grandchild'; start_utc = ''; start_ticks = [long]230; key = '303|230|baseline-grandchild' } },
-        [ordered]@{ parent_pid = 100; creation_ticks = [long]500000; identity = [ordered]@{ pid = 204; name = 'creation-mismatch'; start_utc = ''; start_ticks = [long]170; key = '204|170|creation-mismatch' } }
+        [ordered]@{ parent_pid = 100; parent_identity = $syntheticRootIdentity; creation_ticks = [long]50; identity = $oldBridgeIdentity },
+        [ordered]@{ parent_pid = 200; parent_identity = $oldBridgeIdentity; creation_ticks = [long]200; identity = [ordered]@{ pid = 300; name = 'bridged-godot'; start_utc = ''; start_ticks = [long]200; key = '300|200|bridged-godot' } },
+        [ordered]@{ parent_pid = 100; parent_identity = $syntheticRootIdentity; creation_ticks = [long]150; identity = $goodChildIdentity },
+        [ordered]@{ parent_pid = 201; parent_identity = $goodChildIdentity; creation_ticks = [long]220; identity = [ordered]@{ pid = 301; name = 'good-grandchild'; start_utc = ''; start_ticks = [long]220; key = '301|220|good-grandchild' } },
+        [ordered]@{ parent_pid = 100; parent_identity = $syntheticRootIdentity; creation_ticks = [long]500; identity = [ordered]@{ pid = 202; name = 'late-child'; start_utc = ''; start_ticks = [long]501; key = '202|501|late-child' } },
+        [ordered]@{ parent_pid = 100; parent_identity = $syntheticRootIdentity; creation_ticks = [long]160; identity = $baselineChildIdentity },
+        [ordered]@{ parent_pid = 203; parent_identity = $baselineChildIdentity; creation_ticks = [long]230; identity = [ordered]@{ pid = 303; name = 'baseline-grandchild'; start_utc = ''; start_ticks = [long]230; key = '303|230|baseline-grandchild' } },
+        [ordered]@{ parent_pid = 100; parent_identity = $syntheticRootIdentity; creation_ticks = [long]500000; identity = [ordered]@{ pid = 204; name = 'creation-mismatch'; start_utc = ''; start_ticks = [long]170; key = '204|170|creation-mismatch' } },
+        [ordered]@{ parent_pid = 100; parent_identity = $syntheticRootIdentity; creation_ticks = [long]180; identity = $acceptedParentIdentity },
+        [ordered]@{ parent_pid = 205; parent_identity = $reusedParentIdentity; creation_ticks = [long]260; identity = [ordered]@{ pid = 305; name = 'reused-parent-child'; start_utc = ''; start_ticks = [long]260; key = '305|260|reused-parent-child' } },
+        [ordered]@{ parent_pid = 100; parent_identity = $syntheticRootIdentity; creation_ticks = [long]180; identity = [ordered]@{ pid = 206; name = 'near-tolerance-replacement'; start_utc = ''; start_ticks = [long]190; key = '206|190|near-tolerance-replacement' } }
     )
     $syntheticVerified = @(Resolve-VerifiedDescendantIdentityRecords -RootIdentity $syntheticRootIdentity -OwnershipEndTicks 500 -BaselineIdentityKeys @('203|160|baseline-child') -Candidates $syntheticCandidates)
     $syntheticVerifiedKeys = @($syntheticVerified | ForEach-Object { [string]$_.key })
-    Assert-LauncherContract ($syntheticVerifiedKeys.Count -eq 2 -and $syntheticVerifiedKeys -contains '201|150|good-child' -and $syntheticVerifiedKeys -contains '301|220|good-grandchild') 'Verified lineage resolver rejected a valid direct/deeper chain.'
-    Assert-LauncherContract ($syntheticVerifiedKeys -notcontains '300|200|bridged-godot' -and $syntheticVerifiedKeys -notcontains '303|230|baseline-grandchild' -and $syntheticVerifiedKeys -notcontains '202|501|late-child' -and $syntheticVerifiedKeys -notcontains '204|170|creation-mismatch') 'Verified lineage resolver admitted an unverified intermediate, baseline bridge, late child, or creation mismatch.'
+    Assert-LauncherContract ($syntheticVerifiedKeys.Count -eq 3 -and $syntheticVerifiedKeys -contains '201|150|good-child' -and $syntheticVerifiedKeys -contains '301|220|good-grandchild' -and $syntheticVerifiedKeys -contains '205|180|accepted-parent') 'Verified lineage resolver rejected a valid direct/deeper chain.'
+    Assert-LauncherContract ($syntheticVerifiedKeys -notcontains '300|200|bridged-godot' -and $syntheticVerifiedKeys -notcontains '303|230|baseline-grandchild' -and $syntheticVerifiedKeys -notcontains '202|501|late-child' -and $syntheticVerifiedKeys -notcontains '204|170|creation-mismatch' -and $syntheticVerifiedKeys -notcontains '305|260|reused-parent-child' -and $syntheticVerifiedKeys -notcontains '206|190|near-tolerance-replacement') 'Verified lineage resolver admitted an unverified intermediate, baseline bridge, late child, reused-parent child, or non-representable creation time.'
 
     Assert-LauncherContract ((Resolve-GuardDisposition -NativeExitCode 10 -NativeExitObserved $true -EffectiveExitCode 10 -TimedOut $false -RunnerError '' -ProductRedMarkerSeen $true -GuardPassMarkerSeen $false -InfraFailureMarkerSeen $false -FullPassMarkerSeen $false -UnexpectedDiagnosticCount 0) -eq 'valid_red') 'Guard classifier rejected a deliberate clean RED.'
     Assert-LauncherContract ((Resolve-GuardDisposition -NativeExitCode 0 -NativeExitObserved $true -EffectiveExitCode 0 -TimedOut $false -RunnerError '' -ProductRedMarkerSeen $false -GuardPassMarkerSeen $true -InfraFailureMarkerSeen $false -FullPassMarkerSeen $false -UnexpectedDiagnosticCount 0) -eq 'green_handoff') 'Guard classifier rejected a clean GREEN handoff.'
@@ -1468,7 +1527,9 @@ if ($ValidateOnly) {
         'ConvertTo-WindowsCommandLineArgument',
         'Get-StrictNativeExitCode',
         'Get-OwnedProcessStartProofFromException',
+        'Test-CimCreationMatchesProcessStartTicks',
         "owned_process_identity",
+        'parent_identity',
         'process_start_provenance',
         'registration_process_identity',
         '$process.Refresh()',
@@ -1556,13 +1617,17 @@ exit 0
         Assert-LauncherContract ($null -ne $lineageChildProcess) 'Retained-lineage hostile probe child did not survive its root.'
         $lineageChildIdentity = Get-ProcessIdentityRecord -Process $lineageChildProcess
         Assert-LauncherContract ([long]$lineageChildIdentity.start_ticks -ge [long]$retainedStarted.process_identity.start_ticks -and [long]$lineageChildIdentity.start_ticks -le [long]$lineageRootExitUtc.Ticks) 'Retained-lineage hostile probe child was outside its exact root lifetime.'
-        $exitedRootLineageIdentity = [ordered]@{
+        $invalidExitedRootLineageIdentity = [ordered]@{
             pid = [int]$retainedStarted.process_identity.pid
             name = [string]$retainedStarted.process_identity.name + '-confirmed-exited'
             start_utc = [string]$retainedStarted.process_identity.start_utc
             start_ticks = [long]$retainedStarted.process_identity.start_ticks
             key = [string]$retainedStarted.process_identity.key + '|confirmed-exited'
         }
+        $invalidRootDescendants = [System.Collections.Generic.List[object]]::new()
+        Add-RetainedDescendantProcessRecords -RootIdentity $invalidExitedRootLineageIdentity -BaselineIdentityKeys @() -RetainedRecords $invalidRootDescendants -RootExitTimeUtc $lineageRootExitUtc
+        Assert-LauncherContract ($invalidRootDescendants.Count -eq 0) 'Exit-bounded lineage accepted a malformed root identity proof.'
+        $exitedRootLineageIdentity = $retainedStarted.process_identity
 
         $capturedDescendants = [System.Collections.Generic.List[object]]::new()
         $captureDeadline = [DateTime]::UtcNow.AddSeconds(3)
