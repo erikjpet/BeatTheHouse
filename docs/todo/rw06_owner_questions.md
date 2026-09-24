@@ -134,9 +134,79 @@ Resume: rw06_1 must rework the slot layout under these rules before landing:
 Answer: A. Owner amendment to Q-006, 2026-09-23.
 
 ### Q-008 · rw06_1 · Fresh hand-authored three-room player view
-Status: OPEN
+Status: ANSWERED
 Asked: release orchestrator, 2026-09-23
 Question: Does the fresh player-view layout for Bar, Corner Store and Grand Casino match the hand-authored, art-aligned direction? Sheet from exact commit `8a7a1ae8`: `D:\Projects\Beat-The-House-worktrees\rw06_1-phase0\.tmp\rw06_1\contact_sheet\day2_8a7a1ae8_20260923-1854\day2_contact_sheet.png` (SHA-256 `40CF5E5B771C9A8BEF01562E486CAC5A6429434BA2DF2D3FF1C24C0C5500E6BF`).
 Options: A) Approve this direction (recommended)  B) Needs blocking changes; list the room and issue in Answer
 Resume: rw06_1 continues its remaining acceptance gates while OPEN. When ANSWERED, the release orchestrator applies any blocking feedback before landing, records non-blocking polish in `docs/plans/0.6.1_backlog.md`, and marks Q-008 RESOLVED; A clears the visual gate.
 Answer:
+
+B: REJECTED. This is worse than the layout before rw06_1 started. Things float, abstract boxes line the floor and top edge, and nothing lines up with the room art. rw06_1 does NOT land until a new sheet is approved. The PM compared this sheet against `.tmp/fix06_31/before/states/bar_dead_tuesday_arrival_clean.png` (9/10) and the slot data, and found four root causes. Fix all four for EVERY room:
+
+1. Abstract scenario objects do not get room slots. Tasks, zones, routes, barriers, ledgers, seals, "work zone", "Close Other Zones", "Route 1/2/3" and similar are not physical things. They render as generic cyan boxes and fill the floor row and top edge. Move them to the room action list ("More room actions"). The "zero overflow" goal is wrong: only physical things get room slots. That means people, games, shop items, and real props with real art (phone, drinks, dartboard, cash box). Anything without real art goes to the action list, not a placeholder silhouette or box.
+
+2. Behind-counter people must actually be behind the counter. `_draw_counter_person_occlusion` in `pixel_scene_canvas.gd` only draws an 8px strip, so the bartender looks like they're standing on the bar. Draw behind-counter people BEFORE the counter or fixture art, so the counter hides their lower body, and put their slot's feet line below the counter's top edge. Everyone else stands on the floor band: feet on the floor, nothing hovering.
+
+3. Place slots by looking at the rendered room, not by typing numbers. Build or extend a tool that renders each room's empty art with numbered slot markers (`tools/environment_layout_screenshots.gd`). Adjust coordinates against that image and re-render until each slot visibly sits where it belongs:
+   - games on the counter or machine rows;
+   - shop items in aligned shelf rows;
+   - the phone on the counter;
+   - drinks under the BEER sign;
+   - pool-table events at the pool table.
+
+   No slots at the very top edge of the board: wall-mounted slots go on actual wall art. Named slots stay fixed; only which instance fills a slot is random.
+
+4. Grand Casino: redo it completely against its art.
+   - Table games sit on the green felt tables drawn in the background; their card and chip sprites stay inside those tables.
+   - Slot machines form one aligned row.
+   - Staff stand at their stations: host desk, cage, pit.
+   - Remove the diagonal route lines from the player view.
+   - Each area (tables, machines, bar, cage, exits) is a clear, separate group.
+
+Per-room notes (from Q-006, still binding):
+- Bar: games on the counter; the bartender behind the bar; patrons on the floor; events by the pool table, bar or floor.
+- Corner Store: shelf items aligned and not overlapping; the shopkeeper behind the counter, with shopkeeper events spawning next to him; the phone always on the counter; drinks by the BEER sign.
+
+Proof before asking again:
+- Post a new sheet of Bar, Corner Store and Grand Casino: player view (no debug outlines), normal only, the busiest scenario in each, and one more with the room at its base state.
+- Save it at `D:\Projects\Beat-The-House\.tmp\owner_review\q008_rooms.png` in the PRIMARY checkout, and check the file opens.
+- Also run a visual pass on every other room with the same rules. List any room you couldn't make intuitive.
+- Log remaining polish in `docs/plans/0.6.1_backlog.md`.
+
+If the extra time threatens the schedule, raise a questions-file item. Don't ship this layout.
+
+### Q-009 · all rows · Owner amendment: parallel Godot runs and a second peer agent
+Status: RESOLVED by release orchestrator 2026-09-23
+Asked: PM (owner amendment), 2026-09-23
+Question: None; this is a binding owner amendment that replaces "serialize Godot runs" and splits the work so it goes faster.
+Options: A) Apply as described in Resume (the owner's decision)
+Resume: Orchestrator: apply now, update `README_0_6_release_week.md` and `rw06_execute_release_week_prompt.md` to match, commit `docs/todo/rw06_2p_endings_peer_agent_prompt.md` (untracked in the primary checkout), then mark this RESOLVED.
+
+1. Parallel Godot policy (replaces the one-at-a-time rule):
+   - Isolated runs may run concurrently, up to 4 Godot processes on the machine. A run is isolated when it has its own worktree, its own APPDATA/LOCALAPPDATA user folder, its own `--log-file`, and it only kills processes it started.
+   - Use `check_godot.ps1 -AllowConcurrentGodot` for isolated focused runs.
+   - EXCLUSIVE runs still run alone: the full `-Suite Smoke`/`Contract`/`Full`, any performance or timing measurement, the soak, and every rw06_4 release gate. Before one starts, no other Godot may be running, and nothing else starts until it ends.
+   - Coordination: a shared lease folder at `D:\Projects\Beat-The-House-worktrees\.godot_leases\`. Each run writes `<agent>-<pid>.lease` and deletes it on exit. Normal runs wait while an `EXCLUSIVE.lease` exists or 4 leases exist. An exclusive run creates `EXCLUSIVE.lease` first, then waits for the other leases to clear. Before counting, clear any lease whose PID is dead.
+2. Work split:
+   - The orchestrator (release orchestrator) keeps: rw06_1 rooms, the scoreboard, owner checkpoints, and rw06_4.
+   - For rw06_1, split after the rendering fixes from Q-008 (abstract items to the action list, true behind-counter drawing) land: Grand Casino; Bar and Corner Store; all other rooms. That is up to 3 sub-agents, each owning its own maps' entries in `placement_surfaces.json`.
+   - A second peer agent (prompt `docs/todo/rw06_2p_endings_peer_agent_prompt.md`) takes over rw06_2 (endings) and then rw06_3 (balance). The orchestrator stops its own rw06_2 work at a clean point, pushes `codex/rw06_2-prep`, and writes a one-paragraph handoff in `docs/todo/rw06_2p_status.md`, including branch, tip, what works, what's blocked and the next step. From then on it doesn't edit rw06_2/rw06_3 code or branches.
+   - The peer reports progress only in `docs/todo/rw06_2p_status.md`. The orchestrator copies it into the scoreboard.
+   - Both agents use this questions file for the owner.
+Answer: A. Owner amendment, 2026-09-23.
+
+### Q-010 · rw06_1 · Unleased Godot on primary checkout
+Status: OPEN
+Asked: release orchestrator, 2026-09-23
+Question: Godot 4.6 has been running against the primary checkout since 20:27 CT without a lease or live launcher. May I close it so the isolated focused rw06_1 contract can run safely?
+Options: A) Close it if still running (recommended)  B) Leave it; I will close it
+Resume: Verify the process still targets `D:\Projects\Beat-The-House`; if A, terminate only that exact console/child pair, then run the focused rw06_1 contract under Q-009 isolation. Continue engine-free rw06_1 work while OPEN.
+Answer:
+
+### Q-011 · rw06_1/rw06_2 · Beach always open from the boat
+Status: ANSWERED
+Asked: owner directive, 2026-09-23
+Question: None; this is a binding gameplay directive from the owner.
+Options: A) Apply the directive in Resume (the owner's decision)
+Resume: Make the Beach an unconditional, visible and enabled destination from the Delta Queen/boat whenever normal travel is available. It must not depend on seed, scenario, discovery or revisit state, and must remain true across save/Continue. rw06_1 must preserve a reachable boat-to-Beach travel control in the fixed-slot/action-list UI; the rw06_2 peer must update route assumptions and coverage. Add a regression through the production destination/UI path, then report the implementing commit and evidence before marking this entry RESOLVED.
+Answer: The beach needs to always be open from the boat. Ensure the agents know this and adjust gameplay accordingly.

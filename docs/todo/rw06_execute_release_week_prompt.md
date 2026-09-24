@@ -18,7 +18,9 @@ for verifying every row before it counts as DONE.
    - `rw06_3_balance_prompt.md`
    - `rw06_4_release_gate_ship_prompt.md`
    - `rw06_5_owner_gameplay_fixes_prompt.md`
-3. `docs/plans/0.6.1_backlog.md`: where everything out of scope goes.
+3. `docs/todo/rw06_2p_endings_peer_agent_prompt.md` and
+   `docs/todo/rw06_2p_status.md`: the Q-009 peer handoff for rw06_2/rw06_3.
+4. `docs/plans/0.6.1_backlog.md`: where everything out of scope goes.
 
 ## Owner questions file (you enforce it)
 
@@ -58,8 +60,8 @@ handoff:
 - Do all of your own work in worktrees under
   `D:\Projects\Beat-The-House-worktrees\`, created from `origin/main`. If you
   hit a git lock error, wait and retry. Never delete a lock file.
-- Before any heavy Godot run, check that no other Godot process is running.
-  If one is, wait for it.
+- During this historical handoff phase, run no Godot at all. After MERGED, use
+  the Q-009 lease policy under Standing duties.
 - Never touch the worker's branch `wip/postfix06_2-snapshot`. The worker merges and deletes it itself.
 
 **Phase 0: prep while you wait.** Everything here is read-only, or lives only in
@@ -94,25 +96,29 @@ Once the merge lands, rebase your Phase 0 worktrees onto the new `main`.
 
 1. **rw06_0.** Run it and verify it. Nothing else starts until `main` has the
    finished fixes and the todo folder is organized.
-2. **rw06_1, rw06_2 and rw06_5 in parallel**, each in its own worktree and
-   branch, following the file-ownership rules in their prompts. rw06_5 holds the
-   owner's requested fixes. They must land before the owner checkpoint, so the
-   owner's playthrough covers them.
-   - Watch for drift. rw06_2 must not edit placement files, and rw06_1 must not
-     edit game, Crew or ending logic.
-   - rw06_2 does its final three-ending pass on `main` **after** rw06_1 lands.
+2. **rw06_1 and rw06_5 are the release orchestrator's implementation rows.**
+   rw06_5 holds the owner's requested fixes. A separate Q-009 peer owns rw06_2
+   and then rw06_3 from the pushed handoff in `rw06_2p_status.md`.
+   - The release orchestrator stops editing rw06_2/rw06_3 code and branches
+     after that handoff. It reads the peer status and copies milestones into the
+     scoreboard.
+   - Watch for drift. The peer must not edit placement files, and rw06_1 must
+     not edit game, Crew, ending or balance logic.
+   - The peer does rw06_2's final three-ending pass on `main` **after** rw06_1
+     lands.
 3. **Owner checkpoint.** Once rw06_1 and rw06_5 have landed, ask the owner in
-   the questions file. rw06_2 continues its 3/3 ending work in parallel and does
-   not delay this requested playthrough:
+   the questions file. The peer continues rw06_2's 3/3 ending work in parallel
+   and does not delay this requested playthrough:
    - the build is ready for their start-to-finish run;
    - the rw06_1 contact sheet link, for their visual review of room placement.
 
    Ask for their notes in `rw06_owner_questions.md`, and keep working on
    anything that doesn't depend on them.
    Owner blockers become scoped fixes, assigned to rw06_1 for placement or
-   rw06_2 for everything else. Non-blockers go to the 0.6.1 backlog.
-4. **rw06_3** (balance) after the owner's notes are handled and rw06_2's route
-   evidence exists.
+   to the rw06_2/rw06_3 peer for everything else. Non-blockers go to the 0.6.1
+   backlog.
+4. **rw06_3** is owned by the peer and starts after the owner's notes are
+   handled and rw06_2's route evidence exists.
 5. **rw06_4** (gate and artifact handoff). It has three hard owner stops: source
    approval, artifact approval, and artifact handoff/upload confirmation. Each
    is asked in the questions file. Agents post the two zip paths and SHA-256
@@ -130,8 +136,17 @@ Once the merge lands, rebase your Phase 0 worktrees onto the new `main`.
 - **You are the only scoreboard editor.** Sub-agents report to you, and you
   commit the scoreboard updates to `main`. This avoids merge conflicts from
   parallel rows.
+- **Peer status.** Read `docs/todo/rw06_2p_status.md` on the same cadence as the
+  owner questions file. Copy real rw06_2/rw06_3 milestones into the scoreboard;
+  do not edit the peer's code or branch after handoff.
 - **Early placement look.** Relay rw06_1's day-2 three-room contact sheet to the
   owner right away, and route their answer back.
+- **Q-009 room split.** First land the shared Q-008 rendering fixes that move
+  nonphysical concepts to the action list and draw true behind-counter
+  occlusion. Then split `placement_surfaces.json` by map ownership across up to
+  three rw06_1 agents: Grand Casino maps; Bar plus Corner Store; all other
+  rooms. They may edit only their assigned map objects and report back for one
+  integration pass.
 
 - **Scoreboard content.** After every row completion or full test pass, update
   `README_0_6_release_week.md` with current values and a dated history line.
@@ -154,7 +169,20 @@ Once the merge lands, rebase your Phase 0 worktrees onto the new `main`.
   postfix06_2 branches. Never force-push, never rewrite history, never
   delete branches you didn't create, never stage `.tmp/`. Archive; never
   delete docs.
-- **Godot.** Serialize heavy Godot runs: one at a time per machine.
+- **Godot leases (Q-009).** Isolated focused runs may overlap, up to four Godot
+  processes machine-wide, only when each has its own worktree, isolated
+  `APPDATA`/`LOCALAPPDATA`, explicit `--log-file`, and own-process cleanup. Use
+  the canonical console at
+  `D:\Projects\Beat-The-House\.tools\godot-4.6-stable\Godot_v4.6-stable_win64_console.exe`
+  and repeat that exact path in every sub-agent brief. Worktrees must not
+  auto-detect another engine. Use
+  `check_godot.ps1 -AllowConcurrentGodot` for such focused runs. Coordinate in
+  `D:\Projects\Beat-The-House-worktrees\.godot_leases\`: clear only leases whose
+  filename PID is dead; a normal run waits while `EXCLUSIVE.lease` exists or
+  four live leases exist, writes `<agent>-<pid>.lease`, and deletes it on exit.
+  Full Smoke/Contract/Full, performance or timing measurements, soak, and every
+  rw06_4 gate are EXCLUSIVE: create `EXCLUSIVE.lease` first, wait for all other
+  leases and Godot processes to clear, run alone, then remove it.
 - **Blockers.** A genuine blocker goes into the questions file with what you
   tried, the exact evidence, and the smallest decision needed. Anything else is
   work.
