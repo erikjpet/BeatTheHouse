@@ -82,9 +82,10 @@ is the narrower candidate for a 150–350 action release replay.
     - round 0: `early` or `hold`;
     - round 1: `sit` or `dump`;
     - round 2: dock, or corridor only when the visible marker unlocked it.
-13. Keep heat controlled, then choose **Take the exit**. The dock getaway target
-    is Delta Queen; the corridor target is the Cage. Complete the real delivery/
-    travel handoff through visible controls. On the dock path, verify the real
+13. Keep heat controlled, then choose **Take the exit**. Both cart exits converge
+    on Rook at the Delta Queen for the real street getaway; the dock remains
+    fast/loud while the earned corridor remains slow/quiet. Complete the real
+    delivery/travel handoff through visible controls. On arrival, verify the real
     Delta Queen destination list exposes the Q-011 Beach route; do not inject or
     manually unlock it for the replay.
 14. Confirm an ended run and a visible Crew heist outcome (`clean_sweep`,
