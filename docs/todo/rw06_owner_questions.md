@@ -101,7 +101,7 @@ Resume: Ask Q-004 from an interim current-tip contact sheet now. Land rw06_1 on 
 Answer: A. Directive received from the owner on 2026-09-23 morning.
 
 ### Q-006 · rw06_1 · Reviewable three-room fixed-slot sample
-Status: ANSWERED
+Status: RESOLVED by release orchestrator 2026-09-23
 Asked: release orchestrator, 2026-09-23
 Question: Does this fixed-slot direction look right for Bar, Corner Store and Grand Casino in normal and expanded views? Sheet: `D:\Projects\Beat-The-House-worktrees\rw06_1-phase0\.tmp\rw06_1\contact_sheet\day2_4fd4c350_repair2_20260923-1312\day2_contact_sheet.png` (SHA-256 `8F37493B765573E4BDFE0C5F03A196B82F6E537A9600405EB0E6AC8E127D29C1`).
 Options: A) Direction approved; continue (recommended)  B) Needs changes; list the rooms or issues in Answer
@@ -113,7 +113,7 @@ BAR: all games should be on counter event objects should go in slots by pool tab
 STORE: good that items are on left shelf but they need to be alligned and not overlapping, also we need to ensure scenerio objects dont overlapp and are place in an intuitive close lcoation like below item shelf etc. ensure all people are on ground except shopkeeper who is lined up behind counter. we need to make sure all of the shopkeeper dialogue events span here by him, also make the counter phone on the counter consistently and drinks solf by the beer sign.
 grand casino: this is the worst one. objects ar eeverywhere we need clear defined areas for each so they are intuitive and in known groupings instead of random and no  associated with the background general layout and background image. re assess this rooms palcement completely and ensure slots are in known locations card tables coorelate with background locations and machines are alligned accordingly.
 ### Q-007 · rw06_1 · Owner amendment to Q-006: hand-authored, art-aligned slots
-Status: ANSWERED
+Status: RESOLVED by release orchestrator 2026-09-23
 Asked: PM (owner amendment), 2026-09-23
 Question: None; this is a binding owner amendment that clarifies how to apply Q-006.
 Options: A) Apply as described in Resume (the owner's decision)
@@ -132,3 +132,11 @@ Resume: rw06_1 must rework the slot layout under these rules before landing:
 5. Grand Casino: redo it completely. Card tables go where the art shows tables, machines line up in rows, and each area gets a clear grouping.
 6. Before landing, ask a new questions-file item with a fresh 3-room sheet (Bar, Corner Store, Grand Casino), shown without debug overlays so the owner sees what a player sees. Also apply these rules to all other rooms.
 Answer: A. Owner amendment to Q-006, 2026-09-23.
+
+### Q-008 · rw06_1 · Fresh hand-authored three-room player view
+Status: OPEN
+Asked: release orchestrator, 2026-09-23
+Question: Does the fresh player-view layout for Bar, Corner Store and Grand Casino match the hand-authored, art-aligned direction? Sheet from exact commit `8a7a1ae8`: `D:\Projects\Beat-The-House-worktrees\rw06_1-phase0\.tmp\rw06_1\contact_sheet\day2_8a7a1ae8_20260923-1854\day2_contact_sheet.png` (SHA-256 `40CF5E5B771C9A8BEF01562E486CAC5A6429434BA2DF2D3FF1C24C0C5500E6BF`).
+Options: A) Approve this direction (recommended)  B) Needs blocking changes; list the room and issue in Answer
+Resume: rw06_1 continues its remaining acceptance gates while OPEN. When ANSWERED, the release orchestrator applies any blocking feedback before landing, records non-blocking polish in `docs/plans/0.6.1_backlog.md`, and marks Q-008 RESOLVED; A clears the visual gate.
+Answer:
