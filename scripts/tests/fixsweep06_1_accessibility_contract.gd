@@ -25,6 +25,7 @@ func _run() -> void:
 	var isolated := UserSettingsScript.new()
 	isolated.reset()
 	isolated.save()
+	_check_script_prewarm_token_cleanup_contract()
 	_check_controller_actions()
 	await _check_world_map_keyboard_contract()
 	await _check_settings_cancel_contract()
@@ -46,6 +47,48 @@ func _run() -> void:
 	for failure in failures:
 		push_error(failure)
 	quit(1)
+
+
+func _check_script_prewarm_token_cleanup_contract() -> void:
+	var source := FileAccess.get_file_as_string("res://scripts/ui/foundation_main.gd")
+	var helper_body := _source_function_body(source, "_consume_script_prewarm_request")
+	if helper_body.is_empty():
+		failures.append("RW06-1-PREWARM-TOKEN: FoundationMain has no centralized threaded-prewarm request consumer.")
+		return
+	var status_guard := helper_body.find("status != ResourceLoader.THREAD_LOAD_INVALID_RESOURCE")
+	var consume_call := helper_body.find("ResourceLoader.load_threaded_get(script_path)")
+	var erase_call := helper_body.find("requests.erase(script_path)")
+	if status_guard < 0 or consume_call < 0 or erase_call < 0 or consume_call > erase_call:
+		failures.append("RW06-1-PREWARM-TOKEN: threaded prewarm cleanup does not consume every live LoadToken before erasing its request.")
+	for forbidden in [
+		"run_ui_script_prewarm_requests.clear()",
+		"game_module_script_prewarm_requests.clear()",
+		"run_ui_script_prewarm_requests.erase(",
+		"game_module_script_prewarm_requests.erase(",
+	]:
+		if source.contains(forbidden):
+			failures.append("RW06-1-PREWARM-TOKEN: threaded prewarm bookkeeping bypasses the centralized LoadToken consumer: %s." % forbidden)
+	var shutdown_body := _source_function_body(source, "_drain_script_prewarm_requests_for_shutdown")
+	if not shutdown_body.contains("_consume_script_prewarm_request(run_ui_script_prewarm_requests, str(path_value))") \
+			or not shutdown_body.contains("_consume_script_prewarm_request(game_module_script_prewarm_requests, str(path_value))"):
+		failures.append("RW06-1-PREWARM-TOKEN: shutdown does not consume both prewarm request queues.")
+	var poll_body := _source_function_body(source, "_poll_game_module_script_prewarm")
+	if not poll_body.contains("if status == ResourceLoader.THREAD_LOAD_LOADED:\n\t\t\tvar loaded_script := _consume_script_prewarm_request(game_module_script_prewarm_requests, module_path) as Script") \
+			or not poll_body.contains("elif status in [ResourceLoader.THREAD_LOAD_FAILED, ResourceLoader.THREAD_LOAD_INVALID_RESOURCE]:\n\t\t\t_consume_script_prewarm_request(game_module_script_prewarm_requests, module_path)"):
+		failures.append("RW06-1-PREWARM-TOKEN: the game-module poller bypasses token consumption for a terminal status.")
+	var immediate_play_body := _source_function_body(source, "_ensure_run_ui_stage_scripts")
+	if not immediate_play_body.contains("loaded_script = _consume_script_prewarm_request(run_ui_script_prewarm_requests, script_path)"):
+		failures.append("RW06-1-PREWARM-TOKEN: immediate Play bypasses the prewarm-token consumer.")
+
+
+func _source_function_body(source: String, function_name: String) -> String:
+	var start := source.find("func %s(" % function_name)
+	if start < 0:
+		return ""
+	var finish := source.find("\nfunc ", start + 1)
+	if finish < 0:
+		finish = source.length()
+	return source.substr(start, finish - start)
 
 
 func _check_controller_actions() -> void:

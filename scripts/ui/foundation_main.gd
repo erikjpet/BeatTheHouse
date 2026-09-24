@@ -854,17 +854,23 @@ func _drain_script_prewarm_requests_for_shutdown() -> void:
 	# host releases its caches so Godot does not retain scripts or worker-owned
 	# resources past SceneTree teardown.
 	for path_value in run_ui_script_prewarm_requests.keys():
-		var script_path := str(path_value)
-		var status := ResourceLoader.load_threaded_get_status(script_path)
-		if status in [ResourceLoader.THREAD_LOAD_IN_PROGRESS, ResourceLoader.THREAD_LOAD_LOADED]:
-			ResourceLoader.load_threaded_get(script_path)
-	run_ui_script_prewarm_requests.clear()
+		_consume_script_prewarm_request(run_ui_script_prewarm_requests, str(path_value))
 	for path_value in game_module_script_prewarm_requests.keys():
-		var module_path := str(path_value)
-		var status := ResourceLoader.load_threaded_get_status(module_path)
-		if status in [ResourceLoader.THREAD_LOAD_IN_PROGRESS, ResourceLoader.THREAD_LOAD_LOADED]:
-			ResourceLoader.load_threaded_get(module_path)
-	game_module_script_prewarm_requests.clear()
+		_consume_script_prewarm_request(game_module_script_prewarm_requests, str(path_value))
+
+
+func _consume_script_prewarm_request(requests: Dictionary, script_path: String) -> Variant:
+	if not requests.has(script_path):
+		return null
+	var status := ResourceLoader.load_threaded_get_status(script_path)
+	var loaded_resource: Variant
+	# FAILED still owns ResourceLoader's native LoadToken. Calling get returns
+	# null for that state while releasing the token. INVALID means no request is
+	# alive, so there is nothing for get to consume.
+	if status != ResourceLoader.THREAD_LOAD_INVALID_RESOURCE:
+		loaded_resource = ResourceLoader.load_threaded_get(script_path)
+	requests.erase(script_path)
+	return loaded_resource
 
 
 func _initialize_perf_telemetry() -> void:
@@ -8141,12 +8147,11 @@ func _poll_game_module_script_prewarm() -> void:
 		var module_path := str(module_path_value)
 		var status := ResourceLoader.load_threaded_get_status(module_path)
 		if status == ResourceLoader.THREAD_LOAD_LOADED:
-			var loaded_script := ResourceLoader.load_threaded_get(module_path) as Script
-			game_module_script_prewarm_requests.erase(module_path)
+			var loaded_script := _consume_script_prewarm_request(game_module_script_prewarm_requests, module_path) as Script
 			if loaded_script != null:
 				_cache_game_module_script(module_path, loaded_script)
 		elif status in [ResourceLoader.THREAD_LOAD_FAILED, ResourceLoader.THREAD_LOAD_INVALID_RESOURCE]:
-			game_module_script_prewarm_requests.erase(module_path)
+			_consume_script_prewarm_request(game_module_script_prewarm_requests, module_path)
 
 
 func _cache_game_module_script(module_path: String, module_script: Script) -> void:
@@ -8183,12 +8188,9 @@ func _ensure_run_ui_stage_scripts(stage_index: int) -> bool:
 			return false
 		var loaded_script: Variant
 		if run_ui_script_prewarm_requests.has(script_path):
-			var threaded_status := ResourceLoader.load_threaded_get_status(script_path)
-			if threaded_status in [ResourceLoader.THREAD_LOAD_IN_PROGRESS, ResourceLoader.THREAD_LOAD_LOADED]:
-				# This only blocks the explicit immediate-Play path. The menu prewarmer
-				# calls this function after its nonblocking status check succeeds.
-				loaded_script = ResourceLoader.load_threaded_get(script_path)
-			run_ui_script_prewarm_requests.erase(script_path)
+			# This only blocks the explicit immediate-Play path. The menu prewarmer
+			# calls this function after its nonblocking status check succeeds.
+			loaded_script = _consume_script_prewarm_request(run_ui_script_prewarm_requests, script_path)
 		if not (loaded_script is Script):
 			loaded_script = ResourceLoader.load(script_path)
 		if not (loaded_script is Script):

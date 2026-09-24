@@ -10,7 +10,6 @@ const EnvironmentSlotBinderScript := preload("res://scripts/core/environment_slo
 const EnvironmentSemanticInventoryScript := preload("res://scripts/core/environment_semantic_inventory.gd")
 const ArtContractsScript := preload("res://scripts/core/art_contracts.gd")
 const ScenarioLayoutResolverScript := preload("res://scripts/core/scenario_layout_resolver.gd")
-const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
 const ScenarioSemanticViewModelScript := preload("res://scripts/ui/scenario_semantic_view_model.gd")
 const EnvironmentInteractionControllerScript := preload("res://scripts/ui/environment_interaction_controller.gd")
 const ScenarioSequenceProbeSupportScript := preload("res://tools/scenario_sequence_probe_support.gd")
@@ -1196,7 +1195,10 @@ func _install_delivery_day(app: Control, action_list: Control) -> Dictionary:
 		return {"ok": false}
 	var data: Dictionary = environment.call("to_dict")
 	data["world_node_id"] = ScenarioSequenceProbeSupportScript.NODE_ID
-	var generator := RunGeneratorScript.new(library)
+	var generator: Variant = app.get("generator")
+	if generator == null:
+		failures.append("RW06-1 delivery-day fixture has no production host generator.")
+		return {"ok": false}
 	data["game_states"] = generator.call("_generated_game_states", run_state, data, rng)
 	data["layout"] = EnvironmentInstanceScript.ensure_generated_layout(data)
 	var proof_map: Dictionary = (run_state.get("world_map") as Dictionary).duplicate(true)
@@ -1268,7 +1270,10 @@ func _install_production_game_room(app: Control) -> bool:
 	# A dedicated unseeded node guarantees this is a plain production room, not a
 	# synthetic game record and not an unrelated world-map scenario fixture.
 	data["world_node_id"] = "rw06_1_overflow_bar"
-	var generator := RunGeneratorScript.new(library)
+	var generator: Variant = app.get("generator")
+	if generator == null:
+		failures.append("RW06-1 Bar fixture has no production host generator.")
+		return false
 	data["game_states"] = generator.call("_generated_game_states", run_state, data, rng)
 	data["layout"] = EnvironmentInstanceScript.ensure_generated_layout(data, library)
 	var installation: Dictionary = run_state.call("set_environment", data)
