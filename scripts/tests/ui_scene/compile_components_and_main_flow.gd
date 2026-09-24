@@ -3424,7 +3424,11 @@ func _check_beach_return_travel_choice(app: Control) -> bool:
 			or run_state.bankroll != cap_competitor_bankroll \
 			or continued_enabled_non_beach_competitors.size() <= WorldMapScript.TRAVEL_TOTAL_TARGET_LIMIT \
 			or continued_targets.count("beach") != 1 \
+			or continued_targets.size() != WorldMapScript.TRAVEL_TOTAL_TARGET_LIMIT \
+			or continued_targets.has(ordinary_yield_id) \
 			or not bool(continued_choice.get("enabled", false)) \
+			or int(continued_choice.get("cost", -1)) != 0 \
+			or str(continued_choice.get("travel_method", "")) != "Walk" \
 			or not bool(continued_beach_node.get("travel_enabled", false)):
 		save_service.clear_run(continue_slot)
 		app.set("autosave_slot_id", original_slot)
