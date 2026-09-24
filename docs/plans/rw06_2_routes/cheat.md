@@ -12,6 +12,12 @@ Save → process exit → relaunch → Continue before duel hand one and accepts
 the public `showdown_survived` win. The qualifying twice-identical run and
 fresh-seed experience pass remain open until the shared gameplay work lands.
 
+Q-011 route assumption: any Pit Boss scouting leg through Delta Queen must keep
+the Beach visible and free through the production destination list on arrival,
+revisit, and restored Continue. Only the exact transient boat travel lock may
+disable it; the replay treats any seed/scenario/discovery-dependent omission as
+a hard route failure.
+
 ## Player intent
 
 Enter the Grand Casino, make Rourke call the player into the back room, survive

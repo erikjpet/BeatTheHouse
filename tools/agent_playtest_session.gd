@@ -637,7 +637,7 @@ func _click_room_action(parts: PackedStringArray) -> Dictionary:
 		return {"ok": false, "reason": "room action is clipped or has no exact rendered hit rectangle"}
 	var live_rect := rect_value as Rect2
 	var local: Vector2 = room.call("local_position_for_selected_info_action_button", action_index)
-	var live_center := room.to_global(local)
+	var live_center: Vector2 = room.get_global_transform_with_canvas() * local
 	if not _inside_control(room, local) or live_center.distance_to(live_rect.get_center()) > 0.75:
 		return {"ok": false, "reason": "room action hit target changed before click"}
 	await _push_mouse_click(live_rect.get_center(), false)
@@ -1457,8 +1457,8 @@ func _room_selected_actions(canvas: Control) -> Array:
 		var board_rect := _snapshot_rect(action.get("button_rect", {}))
 		var local_center: Vector2 = canvas.call("local_position_for_selected_info_action_button", index)
 		var local_size := board_rect.size * board_scale
-		var global_start := canvas.to_global(local_center - local_size * 0.5)
-		var global_end := canvas.to_global(local_center + local_size * 0.5)
+		var global_start: Vector2 = canvas.get_global_transform_with_canvas() * (local_center - local_size * 0.5)
+		var global_end: Vector2 = canvas.get_global_transform_with_canvas() * (local_center + local_size * 0.5)
 		var global_rect := Rect2(
 			Vector2(minf(global_start.x, global_end.x), minf(global_start.y, global_end.y)),
 			Vector2(absf(global_end.x - global_start.x), absf(global_end.y - global_start.y))

@@ -1453,11 +1453,66 @@ function Wait-ForTravelToSettle {
 }
 
 
+function Reveal-WorldMapLeaveByPublicRefocus {
+    $objects = @(Get-Array (Get-Value $script:LastResult @('look', 'clickable', 'canvas_objects') @()))
+    $leaveMatches = @($objects | Where-Object {
+        $id = Get-Value $_ @('semantic_id') $null
+        $id -is [string] -and [string]$id -ceq 'travel:leave'
+    })
+    if ($leaveMatches.Count -cne 1) {
+        throw 'The room does not expose one exact public Leave object.'
+    }
+    $leaveEnabled = Get-Value $leaveMatches[0] @('enabled') $null
+    $leaveRendered = Get-Value $leaveMatches[0] @('rendered') $null
+    if ($leaveEnabled -isnot [bool] -or $leaveRendered -isnot [bool]) {
+        throw 'The public Leave object has no exact enabled/rendered witnesses.'
+    }
+    if (-not [bool]$leaveEnabled) {
+        throw 'The public Leave object is disabled.'
+    }
+    if ([bool]$leaveRendered) { return }
+
+    $selectedId = [string](Get-Value $script:LastObservation @('environment', 'selected_object_id') '')
+    $candidates = @($objects | Where-Object {
+        $semanticId = Get-Value $_ @('semantic_id') $null
+        $enabled = Get-Value $_ @('enabled') $null
+        $rendered = Get-Value $_ @('rendered') $null
+        $semanticId -is [string] -and [string]$semanticId -cmatch '^[a-z0-9_.:-]+$' -and
+            [string]$semanticId -cne 'travel:leave' -and [string]$semanticId -cne $selectedId -and
+            $enabled -is [bool] -and [bool]$enabled -and
+            $rendered -is [bool] -and [bool]$rendered
+    } | Sort-Object { [string](Get-Value $_ @('semantic_id') '') } -CaseSensitive | Select-Object -First 12)
+    foreach ($candidate in $candidates) {
+        $semanticId = [string](Get-Value $candidate @('semantic_id') '')
+        $null = Invoke-BridgeCommand -Command "click_object $semanticId" -Intent 'move the visible room focus so its card no longer covers Leave'
+        Wait-Frames -Frames 6
+        if ([bool](Get-Value $script:LastObservation @('event_popup', 'visible') $false) -or
+            [bool](Get-Value $script:LastObservation @('talk', 'visible') $false)) {
+            throw 'A single room-focus click unexpectedly opened a blocking modal while uncovering Leave.'
+        }
+        $liveLeave = @(Get-Array (Get-Value $script:LastResult @('look', 'clickable', 'canvas_objects') @()) | Where-Object {
+            [string](Get-Value $_ @('semantic_id') '') -ceq 'travel:leave'
+        })
+        if ($liveLeave.Count -cne 1) {
+            throw 'The public Leave object changed identity while uncovering it.'
+        }
+        $liveEnabled = Get-Value $liveLeave[0] @('enabled') $null
+        $liveRendered = Get-Value $liveLeave[0] @('rendered') $null
+        if ($liveEnabled -isnot [bool] -or $liveRendered -isnot [bool]) {
+            throw 'The public Leave object lost its exact witnesses while uncovering it.'
+        }
+        if ([bool]$liveEnabled -and [bool]$liveRendered) { return }
+    }
+    throw 'No bounded real room-focus click made the public Leave target fully visible.'
+}
+
+
 function Open-WorldMap {
     if ([bool](Get-Value $script:LastObservation @('screen', 'world_map_overlay_visible') $false)) {
         return
     }
     Clear-VisibleCoach
+    Reveal-WorldMapLeaveByPublicRefocus
     $null = Open-SemanticObject -SemanticId 'travel:leave' -PreferredActions @('Open Map') -Intent 'open the visible city map'
     Wait-Frames -Frames 8
     if (-not [bool](Get-Value $script:LastObservation @('screen', 'world_map_overlay_visible') $false)) {
@@ -1477,6 +1532,19 @@ function Find-MapNode {
         if ([string](Get-Value $node @('id') '') -ceq $NodeId) { return $node }
     }
     return $null
+}
+
+
+function Assert-DeltaQueenBeachRouteInvariant {
+    $archetypeId = [string](Get-Value $script:LastObservation @('environment', 'archetype_id') '')
+    if ($archetypeId -cne 'delta_queen') { return }
+    Open-WorldMap
+    try {
+        $null = Assert-DeltaQueenBeachPublicRoute -ArchetypeId $archetypeId -MapNodes @(Get-MapNodes)
+    }
+    finally {
+        Close-WorldMap
+    }
 }
 
 
@@ -1506,6 +1574,7 @@ function Travel-ToNode {
         throw "Travel to '$NodeId' resolved at '$arrived'."
     }
     Clear-VisibleCoach
+    Assert-DeltaQueenBeachRouteInvariant
 }
 
 
@@ -1990,20 +2059,23 @@ function Invoke-GrandFarePublicCashEvent {
         'event:back_alley_offer',
         'event:scenario_wedding_overflow_hallway'
     )
-    $matches = @((Get-Array (Get-Value $script:LastResult @('look', 'clickable', 'canvas_objects') @())) | Where-Object {
+    # Do not call this collection $matches: PowerShell variable names are
+    # case-insensitive, so the automatic regex variable $Matches would replace
+    # it when the public world-node id is validated below.
+    $eventObjects = @((Get-Array (Get-Value $script:LastResult @('look', 'clickable', 'canvas_objects') @())) | Where-Object {
         $semanticProperties = @(Get-Rw062ExactPublicPropertyMatches -InputObject $_ -Name 'semantic_id')
         $semanticProperties.Count -ceq 1 -and $semanticProperties[0].Value -is [string] -and
             [string]$semanticProperties[0].Value -cin $allowedSemanticIds
     })
-    if ($matches.Count -ceq 0) { return $false }
-    if ($matches.Count -cne 1) {
-        throw "Grand fare cash recovery found $($matches.Count) allowlisted public event objects instead of one."
+    if ($eventObjects.Count -ceq 0) { return $false }
+    if ($eventObjects.Count -cne 1) {
+        throw "Grand fare cash recovery found $($eventObjects.Count) allowlisted public event objects instead of one."
     }
-    $enabled = Get-Value $matches[0] @('enabled') $null
+    $enabled = Get-Value $eventObjects[0] @('enabled') $null
     if ($enabled -isnot [bool] -or -not [bool]$enabled) {
         throw 'The allowlisted Grand fare cash event is disabled or has no boolean public enabled state.'
     }
-    $semanticId = [string](Get-Value $matches[0] @('semantic_id') '')
+    $semanticId = [string](Get-Value $eventObjects[0] @('semantic_id') '')
     $eventId = $semanticId.Substring('event:'.Length)
     $worldNodeId = Get-Value $script:LastObservation @('environment', 'world_node_id') $null
     if ($worldNodeId -isnot [string] -or [string]$worldNodeId -cnotmatch '^[a-z0-9_]+$') {
@@ -2013,7 +2085,7 @@ function Invoke-GrandFarePublicCashEvent {
     $null = Invoke-BridgeCommand -Command "click_object $semanticId" -Intent "focus the visible $eventId cash recovery event"
     $event = Select-GrandFareCashEventChoice `
         -EventId $eventId `
-        -EventObject $matches[0] `
+        -EventObject $eventObjects[0] `
         -RoomActions @(Get-RoomActions) `
         -Talk (Get-Value $script:LastObservation @('talk') $null) `
         -WorldNodeId ([string]$worldNodeId) `
@@ -2050,11 +2122,15 @@ function Invoke-GrandFarePublicCashEvent {
 
 function Get-GrandFareRecoveryNodePreference {
     param([Parameter(Mandatory = $true)][string]$ArchetypeId)
-    if ($ArchetypeId -ceq 'delta_queen') { return 0 }
+    # Prefer venues whose authored public lender pool is distinct from the
+    # Crew-only invitation room. Returning to the Motel can expose a family or
+    # friend offer; visiting another Crew-only casino cannot add a second
+    # authenticated lender after the Kitty Cat Crew note was accepted.
+    if ($ArchetypeId -ceq 'motel') { return 0 }
     if ($ArchetypeId -ceq 'back_alley') { return 1 }
-    if ($ArchetypeId -ceq 'motel') { return 2 }
     if ($ArchetypeId -ceq 'corner_store') { return 3 }
-    if ($ArchetypeId -ceq 'small_underground_casino') { return 4 }
+    if ($ArchetypeId -ceq 'small_underground_casino') { return 2 }
+    if ($ArchetypeId -ceq 'delta_queen') { return 4 }
     if ($ArchetypeId -ceq 'bar') { return 5 }
     if ($ArchetypeId -ceq 'gas_station_casino') { return 6 }
     return 20
@@ -2709,6 +2785,7 @@ function Assert-SaveRelaunchContinue {
         $after | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath (Join-Path $script:RunRoot 'checkpoint_after.json') -Encoding utf8
         throw "Public persistence checkpoint changed across Save -> relaunch -> Continue at $Milestone."
     }
+    Assert-DeltaQueenBeachRouteInvariant
     $script:MidpointSaved = $true
 }
 

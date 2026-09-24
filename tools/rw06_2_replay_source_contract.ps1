@@ -27,6 +27,8 @@ $buttonViewportValidFixtures = 0
 $buttonViewportHostileFixtures = 0
 $machineJamValidFixtures = 0
 $machineJamHostileFixtures = 0
+$deltaQueenBeachValidFixtures = 0
+$deltaQueenBeachHostileFixtures = 0
 $grandFareFundingValidFixtures = 0
 $grandFareFundingHostileFixtures = 0
 $grandFareCashEventValidFixtures = 0
@@ -235,7 +237,7 @@ function New-GrandFareFundingPolicyFixture {
         default {
             [pscustomobject]@{
                 lender_id = 'the_crew'; lender_label = 'The Crew'; world_node_id = 'kitty_cat_lounge'
-                terms = 'No interest. Only favors. Borrow $45. Repay 2 favors (0% cash interest) in 2 turns.'
+                terms = "Switch: `"Quick deal: our cash, your legs, one future call. Yes or no?`"`nNo interest. Only favors. Borrow `$45. Repay 2 favors (0% cash interest) in 2 turns."
                 principal = 45; before_bankroll = 63; debt_kind = 'favor'
                 before_debt = [pscustomobject]@{ rendered = $true; present = $false }
                 after_debt = [pscustomobject]@{ rendered = $true; present = $true; tooltip = 'The Crew wants 2 favors' }
@@ -370,9 +372,44 @@ function New-GrandFareCashEventPolicyFixture {
             feedback = [pscustomobject]@{
                 visible = $true
                 title = 'Result'
-                text = '{0}  $+{1} / Heat +{2}' -f $message, $cashDelta, $heatDelta
+                text = '{0} Cash change: +{1}.  $+{1} / Heat +{2}' -f $message, $cashDelta, $heatDelta
             }
         }
+    }
+}
+
+
+function New-DeltaQueenBeachPolicyFixture {
+    param([switch]$Locked)
+    $lockReason = 'The River Queen is out on the river for 2 more actions.'
+    return [pscustomobject]@{
+        archetype_id = 'delta_queen'
+        nodes = @(
+            [pscustomobject]@{
+                id = 'beach_011'
+                archetype_id = 'beach'
+                state = 'revealed'
+                cost = 0
+                travel_enabled = (-not $Locked)
+                travel_disabled_reason = if ($Locked) { $lockReason } else { '' }
+            },
+            [pscustomobject]@{
+                id = 'motel_004'
+                archetype_id = 'motel'
+                state = 'visited'
+                cost = 6
+                travel_enabled = (-not $Locked)
+                travel_disabled_reason = if ($Locked) { $lockReason } else { '' }
+            },
+            [pscustomobject]@{
+                id = 'delta_queen_009'
+                archetype_id = 'delta_queen'
+                state = 'current'
+                cost = 0
+                travel_enabled = $false
+                travel_disabled_reason = 'Already here.'
+            }
+        )
     }
 }
 
@@ -409,6 +446,66 @@ if ($failures.Count -eq 0) {
     }
     catch {
         Add-Failure "Replay policy helper could not be loaded: $($_.Exception.Message)"
+    }
+
+    if ($null -ne (Get-Command 'Assert-DeltaQueenBeachPublicRoute' -ErrorAction SilentlyContinue)) {
+        $validBeachFixtures = @(
+            [pscustomobject]@{ label = 'normal-travel-enabled'; fixture = (New-DeltaQueenBeachPolicyFixture) },
+            [pscustomobject]@{ label = 'exact-transient-boat-lock'; fixture = (New-DeltaQueenBeachPolicyFixture -Locked) }
+        )
+        $deltaQueenBeachValidFixtures = $validBeachFixtures.Count
+        foreach ($case in $validBeachFixtures) {
+            try {
+                $actual = Assert-DeltaQueenBeachPublicRoute -ArchetypeId ([string]$case.fixture.archetype_id) -MapNodes @($case.fixture.nodes)
+                if ($actual -isnot [bool] -or -not [bool]$actual) {
+                    Add-Failure "Valid Delta Queen Beach fixture '$($case.label)' did not return exact true."
+                }
+            }
+            catch {
+                Add-Failure "Valid Delta Queen Beach fixture '$($case.label)' threw: $($_.Exception.Message)"
+            }
+        }
+
+        $hostileBeachFixtures = [Collections.Generic.List[object]]::new()
+        $fixture = New-DeltaQueenBeachPolicyFixture; $fixture.nodes = @($fixture.nodes | Where-Object { $_.archetype_id -cne 'beach' })
+        $hostileBeachFixtures.Add([pscustomobject]@{ label = 'beach-missing'; fixture = $fixture })
+        $fixture = New-DeltaQueenBeachPolicyFixture; $fixture.nodes += $fixture.nodes[0]
+        $hostileBeachFixtures.Add([pscustomobject]@{ label = 'beach-duplicate'; fixture = $fixture })
+        $fixture = New-DeltaQueenBeachPolicyFixture; $fixture.archetype_id = 'Delta_Queen'
+        $hostileBeachFixtures.Add([pscustomobject]@{ label = 'current-archetype-case'; fixture = $fixture })
+        $fixture = New-DeltaQueenBeachPolicyFixture; $fixture.nodes[0].cost = 1
+        $hostileBeachFixtures.Add([pscustomobject]@{ label = 'beach-not-free'; fixture = $fixture })
+        $fixture = New-DeltaQueenBeachPolicyFixture; $fixture.nodes[0].travel_enabled = 'true'
+        $hostileBeachFixtures.Add([pscustomobject]@{ label = 'beach-enabled-non-boolean'; fixture = $fixture })
+        $fixture = New-DeltaQueenBeachPolicyFixture; $fixture.nodes[0].state = 'hidden'
+        $hostileBeachFixtures.Add([pscustomobject]@{ label = 'beach-hidden-state'; fixture = $fixture })
+        $fixture = New-DeltaQueenBeachPolicyFixture; $fixture.nodes[0].id = 'Beach_011'
+        $hostileBeachFixtures.Add([pscustomobject]@{ label = 'beach-id-case'; fixture = $fixture })
+        $fixture = New-DeltaQueenBeachPolicyFixture -Locked; $fixture.nodes[0].travel_disabled_reason = 'Boat closed.'
+        $hostileBeachFixtures.Add([pscustomobject]@{ label = 'wrong-disabled-reason'; fixture = $fixture })
+        $fixture = New-DeltaQueenBeachPolicyFixture -Locked; $fixture.nodes[1].travel_enabled = $true
+        $hostileBeachFixtures.Add([pscustomobject]@{ label = 'another-route-enabled'; fixture = $fixture })
+        $fixture = New-DeltaQueenBeachPolicyFixture; $fixture.nodes[0] = [pscustomobject]@{ id = 'beach_011'; Archetype_Id = 'beach'; state = 'revealed'; cost = 0; travel_enabled = $true; travel_disabled_reason = '' }
+        $hostileBeachFixtures.Add([pscustomobject]@{ label = 'beach-archetype-property-case'; fixture = $fixture })
+        $fixture = New-DeltaQueenBeachPolicyFixture -Locked; $fixture.nodes[1].travel_enabled = 0
+        $hostileBeachFixtures.Add([pscustomobject]@{ label = 'comparison-enabled-non-boolean'; fixture = $fixture })
+
+        $deltaQueenBeachHostileFixtures = $hostileBeachFixtures.Count
+        foreach ($case in $hostileBeachFixtures) {
+            $threw = $false
+            try {
+                $null = Assert-DeltaQueenBeachPublicRoute -ArchetypeId ([string]$case.fixture.archetype_id) -MapNodes @($case.fixture.nodes)
+            }
+            catch {
+                $threw = $true
+            }
+            if (-not $threw) {
+                Add-Failure "Hostile Delta Queen Beach fixture '$($case.label)' did not fail closed."
+            }
+        }
+    }
+    else {
+        Add-Failure 'Replay policy helper did not export the Q-011 Delta Queen Beach invariant.'
     }
 
     if ($null -ne (Get-Command 'Select-GrandFareMachineJamChoice' -ErrorAction SilentlyContinue)) {
@@ -1109,6 +1206,7 @@ func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
         'function Resolve-VisibleBlockingPresentation',
         'function Get-PublicTalkChoices',
         'function Get-VisibleTutorialGuideAcknowledgment',
+        'function Assert-DeltaQueenBeachRouteInvariant',
         'function Write-FinalPublicCheckpoint',
         'function Get-ExactOwnedSessionProcess',
         'function Stop-ExactOwnedSessionProcess',
@@ -1280,6 +1378,7 @@ func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
     Assert-Contains $launcher 'if ((Get-ProcessStartUtcTicks -Process $process) -ne [long]$identity.start_utc_ticks)' 'Launcher must reject a reused PID before reporting a session as running.'
     Assert-Contains $launcher 'Set-AtomicJsonFile -Path $LogCursorPath -Value @{ stdout = 0; stderr = 0 }' 'Every same-session Start must atomically reset the cursor for newly truncated logs.'
     Assert-Match $launcher '(?s)if\s*\(\$Start\).*?Set-AtomicJsonFile\s+-Path\s+\$LogCursorPath\s+-Value\s+@\{\s*stdout\s*=\s*0;\s*stderr\s*=\s*0\s*\}.*?Start-Process' 'The zero log cursor must be published inside Start before the redirected Godot process begins.'
+    Assert-Match $launcher '(?s)\$EngineLogPath\s*=\s*Join-Path\s+\$SessionRoot\s+''godot\.engine\.log''.*?''--log-file'',\s*\$EngineLogPath' 'Every agent playtest session must use its own Godot --log-file inside the isolated session root.'
     Assert-Contains $bridge 'action_id == "blackjack_deal"' 'The bridge must recognize blackjack''s invisible compatibility Deal hit.'
     Assert-Contains $bridge 'not bool(public_game.get("can_deal", false))' 'The bridge must reject the invisible Deal hit unless the public DEAL control is available.'
     Assert-NotMatch $bridge 'set_application_pause_owner[^\r\n]+false' 'The bridge must retain its deterministic replay pause owner for the entire process lifetime.'
@@ -1287,12 +1386,16 @@ func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
     Assert-Contains $runner "@('look', 'clickable', 'talk_choices')" 'Replay routes must consume the rendered TalkDock enabled-state mapping.'
     Assert-Contains $runner "@('look', 'clickable', 'scroll_surfaces')" 'Replay routes must consume only the public rendered scroll-surface mapping.'
     Assert-Match $runner '(?s)function Get-VisibleTutorialGuideAcknowledgment.*?render_valid.*?tutorial_guide:.*?choiceIds\.Count\s+-cne\s+1.*?choiceIds\[0\].*?continue.*?Get-PublicTalkChoices.*?enabled\s+-is\s+\[bool\]' 'Coach recovery must accept only one fully rendered, exactly typed, enabled continue choice from the public tutorial-guide TalkDock.'
+    Assert-Match $replayPolicy '(?s)function Assert-DeltaQueenBeachPublicRoute.*?ArchetypeId\s+-cne\s+''delta_queen''.*?beachNodes\.Count\s+-cne\s+1.*?state.*?revealed.*?visited.*?beachCost.*?-cne\s+0.*?beachEnabled\s+-isnot\s+\[bool\].*?exact transient boat travel lock.*?another normal Delta Queen travel destination was enabled' 'Q-011 policy must require one visible zero-fare Beach route and allow it disabled only during the exact global boat travel lock.'
+    Assert-Match $runner '(?s)function Assert-DeltaQueenBeachRouteInvariant.*?Open-WorldMap.*?Assert-DeltaQueenBeachPublicRoute.*?finally.*?Close-WorldMap.*?function Travel-ToNode.*?Assert-DeltaQueenBeachRouteInvariant.*?function Assert-SaveRelaunchContinue.*?Public persistence checkpoint changed.*?Assert-DeltaQueenBeachRouteInvariant' 'Every real Delta Queen arrival and restored Continue checkpoint must verify the Q-011 Beach route through the public map.'
     Assert-Match $runner '(?s)function Clear-VisibleCoach.*?Get-VisibleTutorialGuideAcknowledgment.*?Choose-VisibleChoice\s+-ChoiceId\s+''continue''.*?Wait-Frames.*?continue.*?dismissLabel.*?Select-UniqueFullyVisibleButton\s+-Buttons\s+@\(Get-Buttons\)\s+-Text\s+\$dismissLabel.*?Select-UniqueFullyVisibleButton\s+-Buttons\s+@\(Get-Buttons\)\s+-Text\s+''Skip tip''.*?fully visible public dismiss control' 'Coach recovery must follow the narrow public tutorial-guide acknowledgement, then require a unique boolean-true fully-visible dismiss control before input.'
     Assert-Match $runner '(?s)function Accept-GrandCasinoInviteIfVisible\s*\{.*?Invoke-EventObjectChoice\s+-EventId\s+''grand_casino_invite''\s+-ChoiceId\s+''accept_invite''\s+-Intent\s+''accept the visible invitation to the Grand Casino''.*?return \$true\s*\}' 'The clean replay must choose the exact visible invitation action instead of asking a selected multi-action object for a generic open action.'
     Assert-NotMatch $runner 'Open-EventObject\s+-EventId\s+''grand_casino_invite''' 'The Grand Casino invitation must not use the generic event-open path when the selected object already exposes explicit actions.'
     Assert-Match $runner '(?s)function Reach-GrandCasino.*?\$grand\s*=\s*@\(\$nodes.*?archetype_id.*?grand_casino.*?\$grand\.Count\s+-gt\s+1.*?\$requiredCash.*?GrandCasinoChipReserve.*?Recover-GrandFareThroughPublicFunding\s+-RequiredCash\s+\$requiredCash.*?travel_enabled.*?Travel-ToNode' 'The clean replay must recompute the published Grand fare plus its documented chip reserve, recover that full amount, and only then take the visible route.'
     Assert-Match $runner '(?s)function Invoke-GrandFarePublicFundingOffer.*?Select-GrandFareFundingObject.*?Test-GrandFareFundingPreflight.*?click_object.*?Select-GrandFareFundingObjectAction.*?Invoke-RoomActionRow.*?Select-GrandFareFundingTalkOffer.*?click_choice accept.*?Assert-GrandFareFundingConfirmation.*?click_choice accept.*?Assert-GrandFareFundingResult.*?GrandFareAcceptedOfferKeys\.Add.*?GrandFareAcceptedLenderIds\.Add' 'Grand fare lender recovery must validate one public object and debt preflight before focus, validate its unique action and rendered terms, verify confirmation and the exact bankroll/debt result, then record both one-use keys.'
     Assert-Match $runner '(?s)function Invoke-GrandFarePublicCashEvent.*?Select-GrandFareCashEventChoice.*?Invoke-RoomActionRow.*?Assert-GrandFareCashEventResult.*?GrandFareResolvedCashEventKeys\.Add' 'Grand fare cash-event recovery must use the exact public allowlist, one direct-resolve rendered room action, a positive public HUD delta, and one-use bookkeeping.'
+    Assert-Match $runner '(?s)function Invoke-GrandFarePublicCashEvent.*?\$eventObjects\s*=\s*@\(.*?\$eventObjects\.Count.*?Get-Value\s+\$eventObjects\[0\].*?-cnotmatch.*?Select-GrandFareCashEventChoice.*?-EventObject\s+\$eventObjects\[0\]' 'Grand fare cash-event recovery must preserve its selected public event across regex validation instead of colliding with PowerShell automatic $Matches state.'
+    Assert-Match $runner '(?s)function Get-GrandFareRecoveryNodePreference.*?motel''\) \{ return 0 \}.*?back_alley''\) \{ return 1 \}.*?small_underground_casino''\) \{ return 2 \}.*?delta_queen''\) \{ return 4 \}' 'Grand fare recovery must prefer distinct public lender pools before revisiting another Crew-only casino.'
     Assert-Match $runner '(?s)function Recover-GrandFareThroughPublicFunding.*?MaximumFundingStops\s*=\s*6.*?GrandFareRecoveryActive.*?RequiredCash.*?GrandFareRecoveryVisitedNodes\.Add.*?Invoke-GrandFarePublicFundingOffer.*?Invoke-GrandFarePublicCashEvent.*?Get-MapNodes.*?Earn-GrandFareThroughVisibleSlot.*?finally.*?GrandFareRecoveryActive\s*=\s*\$false' 'The funding helper must be recovery-scoped, bounded, lender-first, public-map driven, and leave slot play as its final fallback.'
     Assert-Match $runner '(?s)function Earn-GrandFareThroughVisibleSlot.*?MaximumSpins\s*=\s*6.*?MaximumLosses\s*=\s*3.*?Enter-VisibleSlotForGrandFare.*?startingCash.*?losses.*?Wait-ForVisibleSlotActionBoundary.*?status_hud.*?bankroll.*?slot_spin.*?loss-stopped.*?Leave-GameSurface' 'Grand fare slot fallback must be capped at six spins, stop after three losses, and use only visible actions and public bankroll evidence.'
     Assert-Match $runner '(?s)function Resolve-GrandFareMachineJamIfVisible.*?Select-GrandFareMachineJamChoice.*?Choose-VisibleChoice.*?visible de-escalation choice.*?Wait-Frames.*?modal remained visible or chained into another modal' 'Grand fare recovery must route the exact rendered machine_jam policy through the confirmation-aware visible-choice path and fail closed if any modal remains.'
@@ -1300,11 +1403,13 @@ func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
     Assert-Match $replayPolicy '(?s)function Select-GrandFareMachineJamChoice.*?TalkDock state.*?rendered event-popup witness.*?machine_jam.*?Machine Jam.*?exactly ordered wait, push.*?Wait it out.*?Push through.*?return ''wait''' 'The shared replay policy must strictly validate the rendered machine_jam identity, copy, choice order, controls, and visible de-escalation response.'
     Assert-Match $replayPolicy '(?s)function Select-GrandFareFundingObject.*?lender:.*?rendered.*?AcceptedOfferKeys.*?AcceptedLenderIds.*?Sort-Object.*?-CaseSensitive.*?function Select-GrandFareFundingObjectAction.*?exact public Use action.*?function Select-GrandFareFundingTalkOffer' 'The shared funding policy must validate exact rendered lender identity, skip used or disabled offers, deterministically select among multiple lenders, and require the unique Use action.'
     Assert-Match $replayPolicy '(?s)function Select-GrandFareFundingTalkOffer.*?lender_conversation:borrow:.*?Borrow.*?Repay.*?Accept Offer.*?function Assert-GrandFareFundingConfirmation' 'The shared funding policy must validate the exact lender talk identity, rendered principal and obligation terms, and accept control.'
+    Assert-Match $replayPolicy '(?s)function Select-GrandFareFundingTalkOffer.*?RegexOptions\]::CultureInvariant\s+-bor\s+\[Text\.RegularExpressions\.RegexOptions\]::Singleline.*?\[regex\]::Match' 'Rendered lender narration may precede the exact disclosed terms on another line without weakening the anchored obligation parser.'
     Assert-Match $replayPolicy '(?s)function Assert-GrandFareFundingConfirmation.*?Confirm: Accept Offer.*?function Assert-GrandFareFundingResult' 'The shared funding policy must require the visibly armed lender confirmation.'
     Assert-Match $replayPolicy '(?s)function Assert-GrandFareFundingResult.*?bankroll_rendered.*?expectedBankrollLong.*?Get-GrandFarePublicDebtCount.*?afterDebtCount\s+-ne\s+\$beforeDebtCount\s+\+\s+1.*?exact disclosed terms.*?exact positive bankroll delta' 'The shared funding policy must verify exact rendered bankroll, one additional rendered debt indicator, and Result feedback bound to the disclosed terms and delta.'
     Assert-Match $replayPolicy '(?s)function Get-Rw062ExactPublicPropertyMatches.*?Name\s+-ceq.*?function Get-Rw062RequiredPublicProperty.*?properties\.Count\s+-ne\s+1' 'Critical replay-policy schema keys must be matched by exact property-name casing.'
     Assert-Match $replayPolicy '(?s)function Select-GrandFareFundingObject.*?-cnotmatch.*?StartsWith\(''lender:'', \[StringComparison\]::Ordinal\).*?-cnotin.*?function Select-GrandFareFundingObjectAction.*?-cne ''Use''.*?IsNullOrEmpty' 'Grand fare lender schema matching must remain case-sensitive for world ids, lender prefixes/suffixes, object types, the Use label, and blank compatibility identities.'
     Assert-Match $replayPolicy '(?s)function Select-GrandFareCashEventChoice.*?back_alley_offer.*?Back Alley Offer.*?Small cash.*?scenario_wedding_overflow_hallway.*?Hallway Table.*?pays out.*?function Assert-GrandFareCashEventResult.*?strictly positive public HUD bankroll delta' 'The shared cash-event policy must strictly allowlist exact rendered event objects/actions and require only the positive public HUD result promised by their visible copy.'
+    Assert-Match $replayPolicy '(?s)function Assert-GrandFareCashEventResult.*?Cash change: \+\{1\}\..*?\$\+\{1\} / Heat \+\{2\}.*?feedbackText -cne \$expectedFeedback' 'Cash-event result verification must bind Foundation''s exact cash settlement sentence and compact rendered cash/heat deltas.'
     Assert-NotMatch $replayPolicy '(?ms)^function (?:Select|Assert)-GrandFare(?:Funding|CashEvent).*?(?=^function |\z).*?impact_summary' 'New Grand-fare lender/cash policies must not consume undisplayed impact_summary metadata.'
     Assert-NotMatch $runner '(?ms)^function Invoke-GrandFarePublic(?:FundingOffer|CashEvent).*?(?=^function |\z).*?impact_summary' 'New Grand-fare runner paths must not consume undisplayed impact_summary metadata.'
     Assert-NotMatch $replayPolicy '(?:slot_nudge|slot_auto_toggle|autoplay|narrative_flags|run_state|local_narrative_flags|crew_heist_state|trigger_context|scenario_layout_audit)' 'Replay policy helpers must not use slot cheats, autoplay, or private state.'
@@ -1332,6 +1437,7 @@ func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
     Assert-Match $bridge '(?s)func _canvas_objects\(canvas: Control\).*?_control_is_fully_rendered\(canvas\).*?global_rect_for_object.*?_rect_encloses_with_tolerance.*?"rendered": rendered' 'Clickable room objects must carry an exact fully rendered geometry witness.'
     Assert-Match $bridge '(?s)func _room_selected_actions\(canvas: Control\).*?_control_is_fully_rendered\(canvas\).*?selected_object_id.*?button_rect.*?_room_action_label_is_fully_rendered.*?"rendered": rendered.*?"rect": global_rect if rendered else Rect2\(\)' 'Selected room actions must publish their exact selected-object identity, live row, fully rendered label/geometry witness, and hit rectangle.'
     Assert-Match $bridge '(?s)func _click_action\(argument: String\).*?parts\[0\].*?room.*?_click_room_action.*?func _click_room_action\(parts: PackedStringArray\).*?identity_matches\.size\(\) != 1.*?live_index_value.*?TYPE_BOOL.*?TYPE_RECT2.*?distance_to.*?_push_mouse_click\(live_rect\.get_center\(\), false\)' 'Room actions must revalidate one exact live object/identity/index, boolean enabled/rendered signals, unchanged hit geometry, and then use a physical click.'
+    Assert-Match $bridge '(?s)var\s+live_center:\s*Vector2\s*=\s*room\.get_global_transform_with_canvas\(\)\s*\*\s*local.*?var\s+global_start:\s*Vector2\s*=\s*canvas\.get_global_transform_with_canvas\(\)\s*\*.*?var\s+global_end:\s*Vector2\s*=\s*canvas\.get_global_transform_with_canvas\(\)\s*\*' 'Public room-action geometry must keep explicit Vector2 types and use the Control canvas transform that matches the physical input viewport.'
     Assert-NotMatch $sanitizer '"(?:demo_objective|objective_guidance|next_objective|run_status|run_text|debt_items)"' 'Public sanitization must omit raw objective, run-state, and debt-model fields.'
 
     Assert-Match $runner '(?s)function Get-Value\s*\{.*?IDictionary.*?Keys.*?-ceq\s+\$segment.*?PSObject\.Properties.*?Name\s+-ceq\s+\$segment.*?Ambiguous exact property' 'Runner property traversal must use exact dictionary/property names and reject ambiguity.'
@@ -1341,6 +1447,7 @@ func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
     }
     Assert-NotMatch $runner 'Get-Value[^\r\n]+(?:demo_objective|objective_guidance|next_objective|run_status|run_text)' 'Replay routes must not consume raw objective or run-status fields.'
     Assert-Match $runner '(?s)function Select-ExactRenderedCanvasObject.*?matches\.Count\s+-gt\s+1.*?rendered\s+-isnot\s+\[bool\].*?enabled\s+-isnot\s+\[bool\].*?function Select-FirstRenderedCanvasObjectByPrefix.*?duplicate semantic id.*?Sort-Object.*?-CaseSensitive' 'Canvas-object route decisions must require unique exact identities, true boolean rendered/enabled witnesses, and deterministic ordinal prefix selection.'
+    Assert-Match $runner '(?s)function Reveal-WorldMapLeaveByPublicRefocus.*?leaveMatches\.Count\s+-cne\s+1.*?leaveEnabled\s+-isnot\s+\[bool\].*?leaveRendered\s+-isnot\s+\[bool\].*?Select-Object\s+-First\s+12.*?click_object \$semanticId.*?blocking modal.*?liveLeave\.Count\s+-cne\s+1.*?liveEnabled\s+-isnot\s+\[bool\].*?liveRendered\s+-isnot\s+\[bool\].*?function Open-WorldMap.*?Clear-VisibleCoach\s*Reveal-WorldMapLeaveByPublicRefocus\s*\$null = Open-SemanticObject' 'World-map entry must use only bounded real focus clicks and exact public witnesses to uncover an occluded Leave target before its physical action.'
     Assert-Match $runner '(?s)function Assert-ExactRenderedRoomActionBinding.*?matches\.Count\s+-cne\s+1.*?changed row order.*?disabled, clipped.*?function Invoke-RoomActionRow.*?selected_object_id.*?ConvertTo-BridgeBase64Token.*?click_action room' 'Room-action commands must bind one exact selected object, identity, row index, rendered/enabled state, and encoded bridge command.'
     Assert-Match $runner '(?s)function Assert-ExplicitSaveAcknowledgmentObservation.*?hasSave\s+-isnot\s+\[bool\].*?saveTextVisible\s+-isnot\s+\[bool\].*?saveText\s+-isnot\s+\[string\].*?-cne\s+\$expectedVisibleText' 'Save acknowledgment must reject missing, non-boolean, and inexact public witnesses.'
     Assert-Match $runner '(?s)function Test-PublicTerminalSurface.*?screen\s+-cnotin\s+@\(''VICTORY'', ''FAILURE''\).*?visible\s+-isnot\s+\[bool\].*?function Assert-TerminalOutcome.*?screenName\s+-cne\s+''VICTORY''.*?won\s+-isnot\s+\[bool\].*?outcome\s+-cnotin\s+\$ExpectedOutcomes' 'Terminal routing must require exact terminal screen ids, exact boolean witnesses, and exact allowlisted outcome ids.'
@@ -1466,6 +1573,8 @@ $report = [ordered]@{
     button_viewport_hostile_fixtures = $buttonViewportHostileFixtures
     machine_jam_valid_fixtures = $machineJamValidFixtures
     machine_jam_hostile_fixtures = $machineJamHostileFixtures
+    delta_queen_beach_valid_fixtures = $deltaQueenBeachValidFixtures
+    delta_queen_beach_hostile_fixtures = $deltaQueenBeachHostileFixtures
     grand_fare_funding_valid_fixtures = $grandFareFundingValidFixtures
     grand_fare_funding_hostile_fixtures = $grandFareFundingHostileFixtures
     grand_fare_cash_event_valid_fixtures = $grandFareCashEventValidFixtures

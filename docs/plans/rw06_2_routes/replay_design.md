@@ -26,6 +26,21 @@ nonzero at the first route deviation. It is a player replay, not a state-builder
 - Treat any `SCRIPT ERROR`, error, warning, rejected command, ambiguity, missing
   semantic target, or unexpected modal as a hard failure.
 
+## Q-011 boat-to-Beach invariant
+
+Every route treats Delta Queen as having one unconditional public escape to the
+Beach. On a fresh boat arrival, on every revisit, and after Save -> relaunch ->
+Continue, the production destination list must contain exactly one visible,
+zero-fare Beach destination. It must be enabled whenever the ordinary boat
+travel lock is clear. During that transient lock it may be disabled only with
+the exact public River Queen lock reason, and no other normal destination may
+be enabled first.
+
+The replay checks the real public world-map result after each Delta Queen
+arrival and after Continue. Metadata-only checks do not qualify: regressions
+must not manually unlock Beach or pass an injected `['beach']` target list
+around production `_travel_target_ids` selection.
+
 ## Controller shape
 
 1. Resolve a per-ending route definition with its verified seed and expected

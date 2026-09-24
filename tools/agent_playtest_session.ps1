@@ -44,6 +44,7 @@ $ProcessIdentityPath = Join-Path $SessionRoot 'process.identity.json'
 $ReadyPath = Join-Path $SessionRoot 'ready.json'
 $StdoutPath = Join-Path $SessionRoot 'godot.stdout.log'
 $StderrPath = Join-Path $SessionRoot 'godot.stderr.log'
+$EngineLogPath = Join-Path $SessionRoot 'godot.engine.log'
 $LogCursorPath = Join-Path $SessionRoot 'log_cursor.json'
 
 
@@ -132,6 +133,7 @@ if ($Start) {
     $env:BTH_PROFILE_INVENTORY_PATH = "user://agent_playtest/$Session/profile_inventory.json"
     $env:BTH_META_COLLECTION_PATH = "user://agent_playtest/$Session/meta_collection.json"
     $arguments = @(
+        '--log-file', $EngineLogPath,
         '--path', $Worktree,
         '--script', 'res://tools/agent_playtest_session.gd',
         '--', "--session=$Session", "--session-dir=$($SessionRoot.Replace('\', '/'))"

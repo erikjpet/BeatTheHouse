@@ -27,6 +27,57 @@ function Get-Rw062RequiredPublicProperty {
 }
 
 
+function Assert-DeltaQueenBeachPublicRoute {
+    param(
+        [Parameter(Mandatory = $true)][string]$ArchetypeId,
+        [Parameter(Mandatory = $true)][AllowEmptyCollection()][object[]]$MapNodes
+    )
+
+    if ($ArchetypeId -cne 'delta_queen') {
+        throw "Boat-to-Beach policy received unexpected current archetype '$ArchetypeId'."
+    }
+    $beachNodes = @($MapNodes | Where-Object {
+        $archetypeProperties = @(Get-Rw062ExactPublicPropertyMatches -InputObject $_ -Name 'archetype_id')
+        $archetypeProperties.Count -eq 1 -and $archetypeProperties[0].Value -is [string] -and
+            [string]$archetypeProperties[0].Value -ceq 'beach'
+    })
+    if ($beachNodes.Count -cne 1) {
+        throw "Delta Queen must expose exactly one visible Beach destination; found $($beachNodes.Count)."
+    }
+
+    $beach = $beachNodes[0]
+    $beachId = Get-Rw062RequiredPublicProperty -InputObject $beach -Name 'id' -Context 'Delta Queen Beach destination'
+    $beachState = Get-Rw062RequiredPublicProperty -InputObject $beach -Name 'state' -Context 'Delta Queen Beach destination'
+    $beachCost = Get-Rw062RequiredPublicProperty -InputObject $beach -Name 'cost' -Context 'Delta Queen Beach destination'
+    $beachEnabled = Get-Rw062RequiredPublicProperty -InputObject $beach -Name 'travel_enabled' -Context 'Delta Queen Beach destination'
+    if ($beachId -isnot [string] -or [string]$beachId -cnotmatch '^[a-z0-9_]+$' -or
+        $beachState -isnot [string] -or [string]$beachState -cnotin @('revealed', 'visited') -or
+        ($beachCost -isnot [int32] -and $beachCost -isnot [int64]) -or [long]$beachCost -cne 0 -or
+        $beachEnabled -isnot [bool]) {
+        throw 'Delta Queen Beach destination changed its exact visible identity, state, zero fare, or boolean enabled witness.'
+    }
+    if ([bool]$beachEnabled) { return $true }
+
+    $disabledReason = Get-Rw062RequiredPublicProperty -InputObject $beach -Name 'travel_disabled_reason' -Context 'Disabled Delta Queen Beach destination'
+    if ($disabledReason -isnot [string] -or
+        [string]$disabledReason -cnotmatch '^The River Queen is out on the river for [1-9][0-9]* more actions?\.$') {
+        throw 'Beach may be disabled from Delta Queen only by the exact transient boat travel lock.'
+    }
+    foreach ($node in $MapNodes) {
+        if ($node -eq $beach) { continue }
+        $nodeId = Get-Rw062RequiredPublicProperty -InputObject $node -Name 'id' -Context 'Delta Queen comparison destination'
+        $nodeEnabled = Get-Rw062RequiredPublicProperty -InputObject $node -Name 'travel_enabled' -Context "Delta Queen comparison destination '$nodeId'"
+        if ($nodeEnabled -isnot [bool]) {
+            throw "Delta Queen comparison destination '$nodeId' has no exact boolean enabled witness."
+        }
+        if ([bool]$nodeEnabled) {
+            throw 'Beach remained disabled while another normal Delta Queen travel destination was enabled.'
+        }
+    }
+    return $true
+}
+
+
 function Select-GrandFareMachineJamChoice {
     param(
         [Parameter(Mandatory = $true)]$EventPopup,
@@ -335,7 +386,8 @@ function Select-GrandFareFundingTalkOffer {
         throw 'Funding TalkDock terms are not rendered as public text.'
     }
     $termsPattern = '^(?<description>.+) Borrow \$(?<principal>[1-9][0-9]*)\. (?:(?:Repay (?<favor>[1-9][0-9]*) (?<favor_word>favor|favors) \(0% cash interest\))|(?:Repay \$(?<cash>[1-9][0-9]*) \((?<interest>[0-9]+)% interest\))) in (?<turns>[1-9][0-9]*) (?<turn_word>turn|turns)\.$'
-    $terms = [regex]::Match([string]$summary, $termsPattern, [Text.RegularExpressions.RegexOptions]::CultureInvariant)
+    $termsOptions = [Text.RegularExpressions.RegexOptions]::CultureInvariant -bor [Text.RegularExpressions.RegexOptions]::Singleline
+    $terms = [regex]::Match([string]$summary, $termsPattern, $termsOptions)
     if (-not $terms.Success) {
         throw 'Funding TalkDock does not disclose one exact positive principal and repayment obligation.'
     }
@@ -707,7 +759,10 @@ function Assert-GrandFareCashEventResult {
     if ($expectedResultText -isnot [string] -or [string]::IsNullOrWhiteSpace([string]$expectedResultText)) {
         throw 'Cash-event selection has no exact allowlisted result message.'
     }
-    $expectedFeedback = '{0}  $+{1} / Heat +{2}' -f $expectedResultText, $bankrollDelta, $heatDelta
+    # Foundation routes every cash settlement through PlayerText before adding
+    # the compact HUD deltas. Bind all three public facts exactly: authored
+    # choice result, cash settlement sentence, and the rendered cash/heat tail.
+    $expectedFeedback = '{0} Cash change: +{1}.  $+{1} / Heat +{2}' -f $expectedResultText, $bankrollDelta, $heatDelta
     if ([string]$feedbackText -cne $expectedFeedback) {
         throw 'Cash event Result feedback does not exactly bind the allowlisted choice message to the rendered HUD cash and heat deltas.'
     }

@@ -13,6 +13,12 @@ relaunch → Continue after Silver, and accepts only the public `players_card`
 win. The qualifying twice-identical run and fresh-seed experience pass remain
 open until the shared gameplay work lands.
 
+Q-011 route assumption: if Clean scouting or fare recovery reaches Delta Queen,
+the real map must show one free Beach destination on fresh arrival and revisit,
+and again after any restored Continue. The replay fails closed if Beach is
+hidden, duplicated, charged, or remains disabled after the boat travel lock.
+Existing route metadata is not proof of this production destination behavior.
+
 ## 2026-09-23 current-main exploratory probe (non-qualifying)
 
 Product base `6a9201e3`; pushed replay tip `e67a316d`. Exactly one

@@ -15,6 +15,13 @@ process exit → relaunch → Continue checkpoint and accepts all three authored
 Crew win rungs. Natural reachability and the twice-identical/fresh-seed passes
 remain to be proved after the shared gameplay work lands.
 
+Q-011 is a required getaway invariant, not an optional recovery detour. The
+dock exit delivers the player to Delta Queen, whose production destination
+list must then expose one visible, free Beach route on the fresh arrival, every
+revisit, and after Save -> relaunch -> Continue. Only the exact transient boat
+travel lock may disable Beach; the replay fails closed if metadata exists but
+the real selectable destination does not.
+
 ## Player intent
 
 Earn a real Crew relationship, bring Bishop to Inner Circle, unlock The Count
@@ -77,7 +84,9 @@ is the narrower candidate for a 150–350 action release replay.
     - round 2: dock, or corridor only when the visible marker unlocked it.
 13. Keep heat controlled, then choose **Take the exit**. The dock getaway target
     is Delta Queen; the corridor target is the Cage. Complete the real delivery/
-    travel handoff through visible controls.
+    travel handoff through visible controls. On the dock path, verify the real
+    Delta Queen destination list exposes the Q-011 Beach route; do not inject or
+    manually unlock it for the replay.
 14. Confirm an ended run and a visible Crew heist outcome (`clean_sweep`,
     `out_hot`, or `somebody_got_pinched`). All three are canonical Crew wins;
     runtime route is `crew_heist`.
