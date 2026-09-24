@@ -41,8 +41,12 @@ $commandOpenValidFixtures = 0
 $commandOpenHostileFixtures = 0
 $cheatBlackjackValidFixtures = 0
 $cheatBlackjackHostileFixtures = 0
+$cheatPostPeekValidFixtures = 0
+$cheatPostPeekHostileFixtures = 0
 $cheatBossCalloutValidFixtures = 0
 $cheatBossCalloutHostileFixtures = 0
+$cheatInterrogationValidFixtures = 0
+$cheatInterrogationHostileFixtures = 0
 $cheatShowdownWalkValidFixtures = 0
 $cheatShowdownWalkHostileFixtures = 0
 $cheatDuelContinuationValidFixtures = 0
@@ -472,6 +476,26 @@ function New-CheatReplayBlackjackPolicyFixture {
 }
 
 
+function New-CheatReplayPostPeekPolicyFixture {
+    param([ValidateSet('continue_hand', 'leave_for_showdown')][string]$Stage = 'leave_for_showdown')
+
+    return [pscustomobject]@{
+        game = [pscustomobject]@{
+            phase = if ($Stage -ceq 'leave_for_showdown') { 'barred' } else { 'decision' }
+        }
+        status_hud = [pscustomobject]@{
+            heat_rendered = $true
+            heat_level = if ($Stage -ceq 'leave_for_showdown') { 90 } else { 66 }
+        }
+        surface_actions = @(
+            [pscustomobject]@{ action = 'surface_back'; index = -1; enabled = $true },
+            [pscustomobject]@{ action = 'blackjack_stand'; index = 0; enabled = ($Stage -ceq 'continue_hand') }
+        )
+        expected_stage = $Stage
+    }
+}
+
+
 function New-CheatReplayBossCalloutPolicyFixture {
     param(
         [ValidateSet('defer_until_dealt', 'call_stack', 'call_swap', 'none')][string]$Stage = 'call_stack'
@@ -499,6 +523,25 @@ function New-CheatReplayBossCalloutPolicyFixture {
         )
         expected_stage = if ($Stage -cin @('call_stack', 'call_swap')) { 'call' } else { $Stage }
         expected_index = if ($Stage -ceq 'call_stack') { 0 } elseif ($Stage -ceq 'call_swap') { 1 } elseif ($Stage -ceq 'defer_until_dealt') { 0 } else { -1 }
+    }
+}
+
+
+function New-CheatReplayInterrogationPolicyFixture {
+    $choiceIds = @('hold_steady', 'talk_down', 'take_the_edge')
+    return [pscustomobject]@{
+        popup = [pscustomobject]@{
+            visible = $true
+            render_valid = $true
+            event_id = 'the_house_calls'
+            choice_ids = $choiceIds
+            choices = @(
+                [pscustomobject]@{ id = 'hold_steady'; label = 'Hold Steady'; text = 'Let the run record answer.'; enabled = $true },
+                [pscustomobject]@{ id = 'talk_down'; label = 'Name Your People'; text = 'Put Linda and the Crew between the claims.'; enabled = $true },
+                [pscustomobject]@{ id = 'take_the_edge'; label = 'Take the Edge'; text = "Risk one fresh tell under Rourke's stare."; enabled = $true }
+            )
+        }
+        expected_choice = 'take_the_edge'
     }
 }
 
@@ -544,6 +587,18 @@ function Test-CheatReplayDuelContinuationOrder {
         $screenIndex -ge 0 -and $screenIndex -lt $navigationIndex -and
         $gameIndex -ge 0 -and $gameIndex -lt $navigationIndex -and
         $returnIndex -ge 0 -and $returnIndex -lt $navigationIndex
+}
+
+
+function Test-CheatReplayBarredPeekExitOrder {
+    param([Parameter(Mandatory = $true)][string]$Source)
+
+    $functionMatch = [regex]::Match($Source, '(?ms)^function Play-OneBlackjackRound\s*\{.*?(?=^function |\z)')
+    if (-not $functionMatch.Success) { return $false }
+    return [regex]::IsMatch(
+        $functionMatch.Value,
+        '(?s)\$peekApplied\s*=\s*Invoke-VisibleCheatIfAvailable.*?Select-CheatReplayPostPeekTransition.*?stage\s+-ceq\s+''leave_for_showdown''\)\s*\{\s*return\s*\}.*?Find-GameAction\s+-Action\s+''blackjack_settle''.*?Invoke-PublicBlackjackDecision'
+    )
 }
 
 foreach ($path in @(
@@ -631,6 +686,16 @@ if ($failures.Count -eq 0) {
             (@($contraband[0].item_ids) -join ',') -cne 'marked_cards,foil_sleeve,weighted_keyring' -or
             (@($surveillance[0].item_ids) -join ',') -cne 'xray_glasses,tab_detector,tarot_card') {
             throw 'Showdown classified-item catalog changed without an updated public walk policy.'
+        }
+        $interrogationChoices = @($showdownEvents[0].payload.interrogation.choices)
+        $takeEdgeChoices = @($interrogationChoices | Where-Object {
+            $_.id -is [string] -and [string]$_.id -ceq 'take_the_edge'
+        })
+        if ($interrogationChoices.Count -ne 3 -or
+            (@($interrogationChoices.id) -join ',') -cne 'hold_steady,talk_down,take_the_edge' -or
+            $takeEdgeChoices.Count -ne 1 -or
+            $takeEdgeChoices[0].label -isnot [string] -or [string]$takeEdgeChoices[0].label -cne 'Take the Edge') {
+            throw 'Showdown interrogation changed without an updated public take_the_edge replay policy.'
         }
     }
     catch {
@@ -777,6 +842,80 @@ if ($failures.Count -eq 0) {
         Add-Failure 'Replay policy helper did not export Select-CheatReplayBlackjackCheatAction.'
     }
 
+    $postPeekPolicyCommand = Get-Command 'Select-CheatReplayPostPeekTransition' -ErrorAction SilentlyContinue
+    if ($null -ne $postPeekPolicyCommand) {
+        $validPostPeekCases = @(
+            New-CheatReplayPostPeekPolicyFixture -Stage continue_hand
+            New-CheatReplayPostPeekPolicyFixture -Stage leave_for_showdown
+        )
+        $cheatPostPeekValidFixtures = $validPostPeekCases.Count
+        foreach ($fixture in $validPostPeekCases) {
+            try {
+                $selection = Select-CheatReplayPostPeekTransition `
+                    -Game $fixture.game `
+                    -StatusHud $fixture.status_hud `
+                    -SurfaceActions @($fixture.surface_actions)
+                if ([string]$selection.stage -cne [string]$fixture.expected_stage -or
+                    ([string]$fixture.expected_stage -ceq 'leave_for_showdown' -and
+                        ([string]$selection.action -cne 'surface_back' -or [int]$selection.index -ne -1))) {
+                    Add-Failure "Valid post-Peek fixture '$($fixture.expected_stage)' selected the wrong public transition."
+                }
+            }
+            catch {
+                Add-Failure "Valid post-Peek fixture '$($fixture.expected_stage)' threw: $($_.Exception.Message)"
+            }
+        }
+
+        $hostilePostPeekCases = [Collections.Generic.List[object]]::new()
+        $fixture = New-CheatReplayPostPeekPolicyFixture; $fixture.game.phase = 'Barred'
+        $hostilePostPeekCases.Add([pscustomobject]@{ label = 'phase-case'; fixture = $fixture })
+        $fixture = New-CheatReplayPostPeekPolicyFixture; $fixture.game.PSObject.Properties.Remove('phase')
+        $hostilePostPeekCases.Add([pscustomobject]@{ label = 'phase-missing'; fixture = $fixture })
+        $fixture = New-CheatReplayPostPeekPolicyFixture; $fixture.status_hud.heat_rendered = 'true'
+        $hostilePostPeekCases.Add([pscustomobject]@{ label = 'heat-rendered-non-boolean'; fixture = $fixture })
+        $fixture = New-CheatReplayPostPeekPolicyFixture; $fixture.status_hud.heat_rendered = $false
+        $hostilePostPeekCases.Add([pscustomobject]@{ label = 'heat-not-rendered'; fixture = $fixture })
+        $fixture = New-CheatReplayPostPeekPolicyFixture; $fixture.status_hud.heat_level = '90'
+        $hostilePostPeekCases.Add([pscustomobject]@{ label = 'heat-non-integral'; fixture = $fixture })
+        $fixture = New-CheatReplayPostPeekPolicyFixture; $fixture.status_hud.heat_level = 69
+        $hostilePostPeekCases.Add([pscustomobject]@{ label = 'heat-below-showdown'; fixture = $fixture })
+        $fixture = New-CheatReplayPostPeekPolicyFixture; $fixture.status_hud.heat_level = 101
+        $hostilePostPeekCases.Add([pscustomobject]@{ label = 'heat-above-public-range'; fixture = $fixture })
+        $fixture = New-CheatReplayPostPeekPolicyFixture; $fixture.surface_actions = @($fixture.surface_actions | Where-Object { $_.action -cne 'surface_back' })
+        $hostilePostPeekCases.Add([pscustomobject]@{ label = 'surface-back-missing'; fixture = $fixture })
+        $fixture = New-CheatReplayPostPeekPolicyFixture; $fixture.surface_actions += [pscustomobject]@{ action = 'surface_back'; index = -1; enabled = $true }
+        $hostilePostPeekCases.Add([pscustomobject]@{ label = 'surface-back-duplicate'; fixture = $fixture })
+        $fixture = New-CheatReplayPostPeekPolicyFixture; $fixture.surface_actions[0].enabled = $false
+        $hostilePostPeekCases.Add([pscustomobject]@{ label = 'surface-back-disabled'; fixture = $fixture })
+        $fixture = New-CheatReplayPostPeekPolicyFixture; $fixture.surface_actions[0].enabled = 1
+        $hostilePostPeekCases.Add([pscustomobject]@{ label = 'surface-back-enabled-non-boolean'; fixture = $fixture })
+        $fixture = New-CheatReplayPostPeekPolicyFixture; $fixture.surface_actions[0].index = 0
+        $hostilePostPeekCases.Add([pscustomobject]@{ label = 'surface-back-index-changed'; fixture = $fixture })
+        $fixture = New-CheatReplayPostPeekPolicyFixture; $fixture.surface_actions[0].index = '-1'
+        $hostilePostPeekCases.Add([pscustomobject]@{ label = 'surface-back-index-non-integral'; fixture = $fixture })
+
+        $cheatPostPeekHostileFixtures = $hostilePostPeekCases.Count
+        foreach ($case in $hostilePostPeekCases) {
+            $threw = $false
+            try {
+                $null = Select-CheatReplayPostPeekTransition `
+                    -Game $case.fixture.game `
+                    -StatusHud $case.fixture.status_hud `
+                    -SurfaceActions @($case.fixture.surface_actions)
+            }
+            catch { $threw = $true }
+            if (-not $threw) {
+                Add-Failure "Hostile post-Peek fixture '$($case.label)' did not fail closed."
+            }
+        }
+    }
+    else {
+        Add-Failure 'Replay policy helper did not export Select-CheatReplayPostPeekTransition.'
+    }
+    if (-not (Test-CheatReplayBarredPeekExitOrder -Source $runner)) {
+        Add-Failure 'Play-OneBlackjackRound must inspect the public post-Peek barred transition and return before settlement or Hit/Stand.'
+    }
+
     $bossCalloutPolicyCommand = Get-Command 'Select-CheatReplayBossCalloutAction' -ErrorAction SilentlyContinue
     if ($null -ne $bossCalloutPolicyCommand) {
         $validBossCases = @(
@@ -839,6 +978,62 @@ if ($failures.Count -eq 0) {
     }
     else {
         Add-Failure 'Replay policy helper did not export Select-CheatReplayBossCalloutAction.'
+    }
+
+    $interrogationPolicyCommand = Get-Command 'Select-CheatReplayShowdownInterrogationChoice' -ErrorAction SilentlyContinue
+    if ($null -ne $interrogationPolicyCommand) {
+        $validInterrogationCases = @(
+            New-CheatReplayInterrogationPolicyFixture
+        )
+        $cheatInterrogationValidFixtures = $validInterrogationCases.Count
+        foreach ($fixture in $validInterrogationCases) {
+            try {
+                $choice = Select-CheatReplayShowdownInterrogationChoice -EventPopup $fixture.popup
+                if ($choice -isnot [string] -or [string]$choice -cne [string]$fixture.expected_choice) {
+                    Add-Failure "Valid Cheat interrogation fixture selected '$choice' instead of take_the_edge."
+                }
+            }
+            catch {
+                Add-Failure "Valid Cheat interrogation fixture threw: $($_.Exception.Message)"
+            }
+        }
+
+        $hostileInterrogationCases = [Collections.Generic.List[object]]::new()
+        $fixture = New-CheatReplayInterrogationPolicyFixture; $fixture.popup.visible = $false
+        $hostileInterrogationCases.Add([pscustomobject]@{ label = 'popup-hidden'; fixture = $fixture })
+        $fixture = New-CheatReplayInterrogationPolicyFixture; $fixture.popup.visible = 'true'
+        $hostileInterrogationCases.Add([pscustomobject]@{ label = 'popup-visible-non-boolean'; fixture = $fixture })
+        $fixture = New-CheatReplayInterrogationPolicyFixture; $fixture.popup.render_valid = $false
+        $hostileInterrogationCases.Add([pscustomobject]@{ label = 'popup-clipped'; fixture = $fixture })
+        $fixture = New-CheatReplayInterrogationPolicyFixture; $fixture.popup.event_id = 'The_House_Calls'
+        $hostileInterrogationCases.Add([pscustomobject]@{ label = 'event-id-case'; fixture = $fixture })
+        $fixture = New-CheatReplayInterrogationPolicyFixture; $fixture.popup.choice_ids = @('hold_steady', 'talk_down')
+        $hostileInterrogationCases.Add([pscustomobject]@{ label = 'take-edge-id-missing'; fixture = $fixture })
+        $fixture = New-CheatReplayInterrogationPolicyFixture; $fixture.popup.choice_ids = @('hold_steady', 'take_the_edge', 'take_the_edge')
+        $hostileInterrogationCases.Add([pscustomobject]@{ label = 'take-edge-id-duplicate'; fixture = $fixture })
+        $fixture = New-CheatReplayInterrogationPolicyFixture; $fixture.popup.choices = @($fixture.popup.choices | Where-Object { $_.id -cne 'take_the_edge' })
+        $hostileInterrogationCases.Add([pscustomobject]@{ label = 'take-edge-control-missing'; fixture = $fixture })
+        $fixture = New-CheatReplayInterrogationPolicyFixture; $fixture.popup.choices[2].enabled = $false
+        $hostileInterrogationCases.Add([pscustomobject]@{ label = 'take-edge-disabled'; fixture = $fixture })
+        $fixture = New-CheatReplayInterrogationPolicyFixture; $fixture.popup.choices[2].enabled = 'true'
+        $hostileInterrogationCases.Add([pscustomobject]@{ label = 'take-edge-enabled-non-boolean'; fixture = $fixture })
+        $fixture = New-CheatReplayInterrogationPolicyFixture; $fixture.popup.choices[2].label = ''
+        $hostileInterrogationCases.Add([pscustomobject]@{ label = 'take-edge-label-blank'; fixture = $fixture })
+        $fixture = New-CheatReplayInterrogationPolicyFixture; $fixture.popup.choices[2] = [pscustomobject]@{ Id = 'take_the_edge'; label = 'Take the Edge'; text = 'Risk it.'; enabled = $true }
+        $hostileInterrogationCases.Add([pscustomobject]@{ label = 'take-edge-property-case'; fixture = $fixture })
+
+        $cheatInterrogationHostileFixtures = $hostileInterrogationCases.Count
+        foreach ($case in $hostileInterrogationCases) {
+            $threw = $false
+            try { $null = Select-CheatReplayShowdownInterrogationChoice -EventPopup $case.fixture.popup }
+            catch { $threw = $true }
+            if (-not $threw) {
+                Add-Failure "Hostile Cheat interrogation fixture '$($case.label)' did not fail closed."
+            }
+        }
+    }
+    else {
+        Add-Failure 'Replay policy helper did not export Select-CheatReplayShowdownInterrogationChoice.'
     }
 
     $walkPolicyCommand = Get-Command 'Select-CheatReplayShowdownWalkChoice' -ErrorAction SilentlyContinue
@@ -1599,7 +1794,9 @@ func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
         'function Invoke-CheatEndingRoute',
         'function Invoke-HeistEndingRoute',
         'Select-CheatReplayBlackjackCheatAction',
+        'Select-CheatReplayPostPeekTransition',
         'Select-CheatReplayBossCalloutAction',
+        'Select-CheatReplayShowdownInterrogationChoice',
         'Select-CheatReplayShowdownWalkChoice',
         'function Invoke-BridgeTransportRegression',
         'function Invoke-BridgeStatusRegression',
@@ -1920,7 +2117,16 @@ func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
     Assert-Match $runner '(?s)function Invoke-VisibleCheatIfAvailable.*?Select-CheatReplayBlackjackCheatAction.*?''open_window''.*?blackjack_distraction.*?peek_window_open.*?''peek''.*?blackjack_peek.*?dealer_hole_visible' 'Cheat replay must bind published peek_hole_card policy to the rendered Distraction -> open window -> Peek sequence and exact public completion witness.'
     Assert-NotMatch $runner '\$preferred\s*=\s*@\(''blackjack_distraction'',\s*''blackjack_peek''\)' 'Cheat replay must not return after the old control-id preference loop before performing Peek.'
     Assert-Match $replayPolicy '(?s)function Select-CheatReplayBlackjackCheatAction.*?''peek_hole_card''.*?''blackjack_distraction''.*?''blackjack_peek''' 'Cheat replay policy must distinguish the published semantic cheat id from the two rendered control ids.'
+    Assert-Match $replayPolicy '(?s)function Select-CheatReplayPostPeekTransition.*?phase.*?''barred''.*?heat_rendered.*?heat_level.*?-lt\s+70.*?surface_back.*?Count\s+-ne\s+1.*?enabled.*?index.*?-ne\s+-1.*?leave_for_showdown' 'Post-Peek policy must require exact public barred phase, rendered showdown Heat, and one enabled surface_back binding.'
+    Assert-Match $runner '(?s)\$peekApplied\s*=\s*Invoke-VisibleCheatIfAvailable.*?Select-CheatReplayPostPeekTransition.*?leave_for_showdown.*?return.*?blackjack_settle' 'A successfully applied Peek must inspect and escape a public barred showdown state before settlement.'
     Assert-Match $runner '(?s)function Invoke-PublicBossCalloutIfShown.*?Select-CheatReplayBossCalloutAction.*?stage\s+-cne\s+''call''.*?blackjack_boss_callout.*?boss_callout_used' 'Rourke replay must defer through the public policy and verify a post-deal rendered callout witness.'
+    Assert-Match $runner '(?s)function Resolve-ShowdownChoiceSurface.*?Select-CheatReplayShowdownInterrogationChoice.*?take the exact visible edge against Rourke' 'Rourke interrogation must select take_the_edge through its exact public policy.'
+    Assert-Match $replayPolicy '(?s)function Select-CheatReplayShowdownInterrogationChoice.*?hold_steady.*?talk_down.*?take_the_edge.*?return\s+''take_the_edge''' 'Cheat interrogation policy must validate the exact rendered choice set and return take_the_edge.'
+    $showdownChoiceFunction = [regex]::Match($runner, '(?ms)^function Resolve-ShowdownChoiceSurface\s*\{.*?(?=^function |\z)')
+    if (-not $showdownChoiceFunction.Success -or
+        [regex]::IsMatch($showdownChoiceFunction.Value, '(?:Choose-VisibleChoice\s+-ChoiceId\s+[''\"]hold_steady|hold_steady\s*=\s*)')) {
+        Add-Failure 'Cheat showdown routing must not directly select or intent-map hold_steady.'
+    }
     Assert-Match $runner '(?s)function Resolve-ShowdownChoiceSurface.*?Select-CheatReplayShowdownWalkChoice.*?keep_everything.*?hand_to_crew__.*?trash' 'Showdown walk must use the public classified-item policy instead of blindly keeping every inventory.'
     Assert-Match $replayPolicy '(?s)function Select-CheatReplayShowdownWalkChoice.*?marked_cards.*?foil_sleeve.*?weighted_keyring.*?xray_glasses.*?tab_detector.*?tarot_card.*?multiple classified items' 'Showdown walk policy must fail closed when its one pocket change cannot remove every classified item.'
     Assert-Contains $runner "Invoke-GameAction -Action 'blackjack_boss_callout' -Index `$index" 'Rourke callouts must click the matching rendered indexed control.'
@@ -2016,6 +2222,10 @@ $report = [ordered]@{
     command_open_hostile_fixtures = $commandOpenHostileFixtures
     cheat_blackjack_valid_fixtures = $cheatBlackjackValidFixtures
     cheat_blackjack_hostile_fixtures = $cheatBlackjackHostileFixtures
+    cheat_post_peek_valid_fixtures = $cheatPostPeekValidFixtures
+    cheat_post_peek_hostile_fixtures = $cheatPostPeekHostileFixtures
+    cheat_interrogation_valid_fixtures = $cheatInterrogationValidFixtures
+    cheat_interrogation_hostile_fixtures = $cheatInterrogationHostileFixtures
     cheat_boss_callout_valid_fixtures = $cheatBossCalloutValidFixtures
     cheat_boss_callout_hostile_fixtures = $cheatBossCalloutHostileFixtures
     cheat_showdown_walk_valid_fixtures = $cheatShowdownWalkValidFixtures
