@@ -1,6 +1,6 @@
 # rw06_2 clean ending route — first-pass replay
 
-Status: **FIXED-SEED GRAND DEFICIT IDENTIFIED; LIVE CONFIRMATION AND QUALIFYING RUNS PENDING**
+Status: **PROBE 29 CONFIRMED GRAND DEFICIT; DATA-ONLY INVITATION REPAIR PENDING REPLAY**
 Working base: current rw06_2 peer branch;
 qualifying evidence waits for rw06_1 to land.
 Canonical terminal route: `high_roller_cashout`
@@ -21,26 +21,31 @@ Existing route metadata is not proof of this production destination behavior.
 
 ## Latest reachability checkpoint
 
-Probe 28 proved that the physical Brother-in-Law `Use` click was accepted, but
-the live lender correctly rejected it because the phone prerequisite was absent.
-The rendered lender row came from stale sealed-room presentation; it was not a
-real source of route cash. That shared room-projection defect is owned by rw06_1
-and the replay now fails an advertised lender quickly if TalkDock never opens.
+Probe 29 ran once with no retry and confirmed the Clean economy blocker through
+public state. At action 63 its money curve was
+`$100 -> $108 -> $101 -> $95 -> $105 -> $97 -> $81 -> $126`; the current
+Grand fare was `$95`, the immediate playable-stake reserve was `$50`, and the
+exact `$145` requirement left a measured `$19` shortfall. This replaces the
+earlier engine-free `$33` prediction. The run is exploratory/non-qualifying
+because its worktree carried the acknowledged unstaged Pixel patch and Godot
+reported an ObjectDB leak warning. Transcript SHA-256 is
+`b4b1ff0a33c92fa0730aa9287db4a15801d80fbb98943e552b5460f4607ecb58`;
+money-curve SHA-256 is
+`43f0a6989c5070c724af673148c7693c032a2a8a468a085999f33d23ad6f13f0`.
 
-The fixed Clean route no longer depends on that lender or on the 75% family-call
-outcome. During its first required Motel scouting visit it takes the strictly
-verified positive Hallway event before incurring any extra fare. The measured
-pre-correction curve was `$100 -> $93 -> $87 -> $79 -> $63 -> $108` after the
-Crew loan, then `$86` after returning to Motel. Banking the Hallway cash on the
-first visit reduces the deficit without changing economy data, but it does not
-clear the fixed seed by itself. Engine-free reconstruction now predicts `$126`
-after the two verified cash events and Crew loan against `$159` for the observed
-storm fare plus the `$50` chip reserve: a `$33` shortfall. The replay now consumes
-only current-stop deterministic liquidity and reports the exact public deficit;
-it will not hide the wall by buying extra travel or gambling on Slot. One
-no-retry Probe 29 must confirm those live values after the orchestrator releases
-the engine lane. Any fare/threshold adjustment belongs to rw06_3 and still needs
-fresh-seed evidence; qualifying evidence waits for rw06_1.
+rw06_3 now applies one data-only invitation package: accepting the High Roller
+Invitation explicitly grants a `$50` first stake, and the Grand trip is free
+from Kitty Cat Lounge, Delta Queen, or the Q-011 Beach detour. Thus the same
+checkpoint becomes `$176` with a `$0` invitation fare, preserving `$126` above
+the immediate stake floor. Other origins keep the authored positive fare;
+global travel locks, zero-bankroll failure, game math, payouts and RTP remain
+unchanged. A production transaction audit also found that arrival recomputed a
+displayed fare after replacing the departure room; the narrow rw06_2 repair now
+seals the authoritative departure status through the arrival result. Its real
+travel regression requires Delta-to-Grand to preserve `$51` with a `$0` result
+and Bar-to-Grand to charge its positive fare exactly once. The next no-retry
+Clean replay must confirm that measured effect once the rw06_1 engine lanes
+clear. Qualifying evidence still waits for rw06_1.
 
 ## 2026-09-23 current-main exploratory probe (non-qualifying)
 
@@ -1112,9 +1117,10 @@ visible chip path needed to finish all nine qualifying games.
 2. Visit two distinct tier-1 casino nodes, or visit the Punchline, so tier-2
    casinos become discoverable.
 3. Reach Kitty Cat Lounge or Delta Queen. Accept the visible High Roller
-   Invitation event. Do not buy or carry cheat/surveillance items.
-4. Keep enough bankroll for the exact currently rendered Grand Casino fare;
-   travel there through the visible map.
+   Invitation and its disclosed `$50` first-stake comp. Do not buy or carry
+   cheat/surveillance items.
+4. Take the visible `$0` Grand route from Kitty, Delta, or the Q-011 Beach
+   detour. A Grand route from any other origin retains its rendered fare.
 5. Establish the entry bankroll and buy/use chips only through visible venue
    controls. Avoid ATM debt, cheat actions, and risky-evidence actions.
 6. Bronze segment: settle at least 1 game, finish the segment at least $5 net
@@ -1153,7 +1159,7 @@ Casino net winnings, not merely 5 games and +$30 overall.
 
 | Beat | Player-visible goal | Money/heat checkpoint | What could break the arc |
 |---|---|---|---|
-| Invitation | Find a way into the Grand | cash must cover the rendered fare | invite is too obscure; early purchases make fare impossible |
+| Invitation | Find a way into the Grand | disclosed +$50 stake and $0 comp route from Kitty/Delta/Beach | invite is too obscure or the comp is not visible |
 | Arrival | Understand the clean lane | entry bankroll, chips, heat 0-ish | visible route copy hides sequential tier rules |
 | Bronze | Win one meaningful game | segment >= +$5, heat <= 30 | player does not know to visit Linda |
 | Silver | Prove consistency | segment >= +$15 over 3 games | low bankroll, variance, or repetitive play |

@@ -168,8 +168,9 @@
         {
           "id": "accept_invite",
           "label": "Take the invite",
-          "text": "The Grand Casino opens.",
+          "text": "The Grand Casino opens, with a $50 first stake on the house.",
           "consequences": {
+            "bankroll_delta": 50,
             "add_next_archetypes": [
               "grand_casino"
             ],
@@ -178,7 +179,7 @@
             },
             "resolve_event": true,
             "messages": [
-              "The Grand Casino appears on your map, all gold and teeth."
+              "The Grand Casino appears on your map, all gold and teeth. The host comps your first $50 stake."
             ]
           }
         },

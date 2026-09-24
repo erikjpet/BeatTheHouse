@@ -1,6 +1,6 @@
 # rw06_2 economy handoff
 
-Status: **PROBES 19/28 RETAINED; FIXED-SEED DEFICIT IDENTIFIED; LIVE/QUALIFYING CURVES PENDING**
+Status: **PROBE 29 MEASURED; GRAND INVITATION REPAIR IMPLEMENTED; POST-CHANGE/QUALIFYING CURVES PENDING**
 Working base: current rw06_2 peer branch
 Owner: rw06_3 (data-only tuning after rw06_2 produces qualifying traces)
 
@@ -12,22 +12,23 @@ files or private run state.
 
 ## Current balance decision
 
-Do not tune yet. None of the three endings has a completed qualifying money
-curve, and the retained cross-economy diagnostic contains only censored active
-runs. Probe 28 is the best current Clean measurement:
+Probe 29 now supplies one exact public fixed-seed Clean measurement. It is
+exploratory rather than qualifying because the worktree carried the acknowledged
+unstaged Pixel dependency and the engine reported an ObjectDB leak warning, but
+the public economy failure itself is specific and reproducible:
 
-`$100 -> $93 -> $87 -> $79 -> $63 -> $108 (Crew loan) -> $86 (Motel)`.
+`$100 -> $108 -> $101 -> $95 -> $105 -> $97 -> $81 -> $126`.
 
-The contemporaneous storm target was `$109` displayed fare plus the replay's
-`$50` chip reserve. The rejected Brother-in-Law row was stale presentation, not
-available liquidity. The route correction therefore banks the strictly
-verified positive Hallway cash event during the first required Motel visit,
-before the later fare, rather than changing a game number or relying on the 75%
-family-call outcome. Engine-free reconstruction nevertheless leaves the fixed
-seed at `$126` against `$109` fare plus the `$50` reserve, a predicted `$33`
-deficit. Probe 29 must measure that correction live when the engine lane is
-free. The Clean replay now stops at the exact current-stop shortfall instead of
-roaming into a changed fare or treating Slot luck as qualifying recovery.
+The run stopped at action 63 with `$126`, a displayed current-stop Grand fare of
+`$95`, and the replay's immediate `$50` chip reserve: `$145` required and a
+measured `$19` shortfall. This replaces the earlier engine-free `$33` estimate.
+Because Probe 19 also recorded 24 straight `$2` Slot losses, a gambling win is
+not a deterministic recovery route. rw06_3 therefore implements one data-only
+Grand invitation package: accepting grants the explicitly disclosed `$50`
+first stake, and Grand travel is free from the two normal invitation venues
+(`kitty_cat_lounge`, `delta_queen`) plus the Q-011 `beach` detour. Other origins
+retain the positive base fare; game numbers and payout tables do not change.
+Exact before/after arithmetic is logged in `docs/plans/rw06_3_balance_changes.md`.
 
 If Clean later exceeds the 350-action release budget or repeatedly bankrolls
 out after reaching Grand, inspect the three Players Card segment thresholds
@@ -160,10 +161,11 @@ Copy the exact values from the qualifying route summaries into this table:
 
 | Ending | Seed | Start cash | Grand entry cash | Lowest cash | Chips bought | End cash | Peak heat | Counted actions | Friction / rw06_3 recommendation |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| Clean | `RW06-CLEAN-ROUTE-01` | pending | pending | pending | pending | pending | pending | pending | pending |
+| Clean | `RW06-CLEAN-ROUTE-01` | 100 | blocked before entry at 126 | 81 | 0 | 126 at stop | pending | 63 | Probe 29: $95 fare + $50 reserve left a measured $19 shortfall; invitation grant/comp repair pending replay. |
 | Cheat | `RW06-CHEAT-ROUTE-01` | pending | pending | pending | pending | pending | pending | pending | pending |
 | Crew | `PLAYTEST-CATALOG-01` | pending | pending | pending | pending | pending | pending | pending | pending |
 
-No rw06_3 data change is recommended until these public curves exist. If a
-route fails from variance or affordability, preserve the failing curve and name
-the smallest data-only lever; do not tune against a hypothetical number.
+The Grand invitation package is the sole current rw06_3 change. Do not tune
+another value until this package is replayed and the Cheat/Heist public curves
+exist. Preserve every failing curve and continue choosing the smallest
+data-only lever; never tune against a hypothetical number.
