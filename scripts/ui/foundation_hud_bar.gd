@@ -195,8 +195,6 @@ func current_snapshot() -> Dictionary:
 		snapshot["mode"] = mode
 		snapshot["meta_fields"] = _meta_field_snapshot()
 	return snapshot
-
-
 # Returns the rectangle of the control the player actually sees. Tutorial
 # focus must never target the hidden legacy status label that predates this HUD.
 func global_rect_for_element(element_id: String) -> Rect2:
@@ -485,6 +483,7 @@ func _render_status_icons(statuses_value: Variant) -> void:
 			continue
 		var status: Dictionary = status_value
 		var icon_rect := TextureRect.new()
+		icon_rect.set_meta("status_id", str(status.get("id", "")))
 		icon_rect.texture = UIArtScript.icon(str(status.get("icon", "alert")))
 		icon_rect.custom_minimum_size = VisualStyle.ICON_SMALL
 		icon_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE

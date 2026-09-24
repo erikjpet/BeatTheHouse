@@ -3984,7 +3984,9 @@ func _show_triggered_event_popup(entry: Dictionary) -> bool:
 			str(choice.get("consequence_summary", "")),
 			Callable(self, "resolve_event_choice").bind(event_id, str(choice.get("id", ""))),
 			false,
-			choice.get("attribute_badges", [])
+			choice.get("attribute_badges", []),
+			event_id,
+			str(choice.get("id", ""))
 		)
 	_present_event_choice_popup()
 	return true
@@ -12576,11 +12578,14 @@ func _show_wager_confirmation_popup(action_id: String, stake: int, wager_cost: i
 	_present_event_choice_popup()
 
 
-func _add_wager_confirmation_card(label: String, text: String, _impact: String, callback: Callable, primary: bool, badges_value: Variant = []) -> void:
+func _add_wager_confirmation_card(label: String, text: String, _impact: String, callback: Callable, primary: bool, badges_value: Variant = [], rendered_event_id: String = "", rendered_choice_id: String = "") -> void:
 	if event_choice_popup_choices_list == null:
 		return
 	var border := VisualStyle.YELLOW if primary else VisualStyle.CYAN_2
 	var card := _panel_container(VisualStyle.DARK_2, border)
+	if not rendered_event_id.is_empty() and not rendered_choice_id.is_empty():
+		card.set_meta("event_id", rendered_event_id)
+		card.set_meta("choice_id", rendered_choice_id)
 	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	event_choice_popup_choices_list.add_child(card)
 	var stack := VBoxContainer.new()
@@ -12603,6 +12608,9 @@ func _add_wager_confirmation_card(label: String, text: String, _impact: String, 
 	stack.add_child(body)
 	_add_attribute_badge_row(stack, badges_value, 16)
 	var button := _button(label, Callable(self, "_activate_event_choice_popup_callback").bind(callback))
+	if not rendered_event_id.is_empty() and not rendered_choice_id.is_empty():
+		button.set_meta("event_id", rendered_event_id)
+		button.set_meta("choice_id", rendered_choice_id)
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	button.clip_text = true
@@ -14363,7 +14371,10 @@ func _show_interactable_event_popup(event_id: String) -> bool:
 			str(choice.get("text", "")),
 			str(choice.get("consequence_summary", "")),
 			Callable(self, "resolve_event_choice").bind(event_id, str(choice.get("id", ""))),
-			false
+			false,
+			[],
+			event_id,
+			str(choice.get("id", ""))
 		)
 	if not has_explicit_dismissal and not showdown_sequence:
 		_add_wager_confirmation_card(
@@ -14371,7 +14382,10 @@ func _show_interactable_event_popup(event_id: String) -> bool:
 			"Walk away without changing the run.",
 			"No consequence.",
 			Callable(self, "_dismiss_interactable_event_popup"),
-			false
+			false,
+			[],
+			event_id,
+			"dismiss"
 		)
 	_present_event_choice_popup()
 	return true

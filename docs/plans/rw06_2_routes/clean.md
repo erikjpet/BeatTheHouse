@@ -1,7 +1,8 @@
 # rw06_2 clean ending route — first-pass replay
 
-Status: **IMPLEMENTED; EXPLORATORY LIVE RUN STARTED; QUALIFYING LIVE RUN PENDING rw06_1**
-Implementation base: `origin/main` at `7da3e5dab59b`
+Status: **EXPLORATORY POLICY ENGINE-FREE GREEN; NEXT LIVE PROBE AND QUALIFYING RUNS PENDING**
+Working base: pushed rw06_2 tip `f8c37e1079a84a2cfd4a849732c8a461025ebc68`;
+qualifying evidence waits for rw06_1 to land.
 Canonical terminal route: `high_roller_cashout`
 Fixed replay seed: `RW06-CLEAN-ROUTE-01`
 
@@ -930,12 +931,150 @@ the engine-free source contract; its report SHA-256 is
 The full static project validator also passes. A later serialized live probe
 must prove this transport correction; Probe18 was not retried.
 
+## 2026-09-23 probe 19: transport proof and omitted public liquidity
+
+Exactly one non-qualifying clean replay used exact pushed tip
+`f8c37e1079a84a2cfd4a849732c8a461025ebc68`, isolated `APPDATA`, and the
+fixed `RW06-CLEAN-ROUTE-01` seed. The transient-open correction worked in live
+play: session command 0068 was accepted, all 24 bounded $2 spins completed,
+and no empty command or ordinal gap recurred. The slot sequence lost every
+stake, including two visibly near outcomes, so bankroll moved from $63 to $15.
+The runner then left the surface and failed at its explicit action budget:
+`Bounded visible slot play did not earn the Grand fare: start=$63, end=$15,
+required=$109, spins=24.` This is not a qualifying route and was not retried.
+
+The first public map after accepting the invitation is command 0052. It shows
+Grand Casino as revealed, unlocked, open, and a travel target, disabled only by
+`Not enough bankroll for this route.` Storm raises the generated $95 edge
+(authored base $70) to a displayed $109 fare. The same snapshot exposes enabled
+Roulette, Slot, the Crew lender, room events/services, and enabled routes to
+Delta Queen, Bar, Gas Station, Alley, and Motel. Earlier public observations in
+the same run exposed the Crew at the opening Alley ($100) and the Brother-in-Law
+at the Motel ($87), plus visible positive-cash event opportunities at the
+Alley, Motel, and Bar. Their source-owned disclosed values are respectively a
+$45 Crew advance for two favors, a $30 family advance with $33 repayment, and
+$8/$10/$6 event gains. Ordinary outside debt does not close Linda's program;
+Players Card eligibility is closed only by cheat evidence, and only the Grand
+Casino ATM marker blocks a Linda claim.
+
+Therefore Probe19 does not establish a Clean progression economy wall. It
+establishes a recoverable public route omitted by the replay, compounded by a
+single-game strategy/action-budget limitation: the runner skipped disclosed
+liquidity while scouting and then treated 24 random slot spins as its sole fare
+plan. The proposed correction is replay-only and regression-first: use only
+unique visible/enabled cash opportunities and TalkDock lender terms, validate
+the displayed principal/obligation and confirmation, verify the public
+bankroll/debt change, recompute the displayed fare plus chip reserve, and fail
+closed on ambiguous or malformed terms. Slot play may remain only as a bounded
+loss-stopped fallback. No game math, RTP, economy data, limit, or gate changes
+are justified by this probe.
+
+Evidence root:
+`.tmp/rw06_2/exploratory/clean-tip-f8c37e10-probe19`. The plan SHA-256 is
+`F8D4D24EA3982AC8C4B3E5D7864ACF7C8240F146DA9746BD1B85A34CDDF52452`,
+launch metadata is
+`103FBAB00D6227B74A9237A5489883A8DE0785517F6E11D2C2E2F7B81669C1D8`,
+the run summary is
+`AF647469BC70A4CEB63F3F3287D32B96A8E796077CAC35E66DF774BE030DD824`,
+the public trace is
+`F72B12BA13A315E5FDD6D3F4B857B1FF2869ADC85FF8F2BD3756D810DC2A1D81`,
+and the money curve is
+`1BB9E5CC5033717D1BB9E1AB3DB8855BF540A1D672C560967B748BD09DFEB6EA`.
+The decisive public map result `0052.result.json` is
+`DB669FC76AE52DA0B37E20950365723A74DE4CAE391BC5BFC93A123794FD90AD`;
+the now-accepted transport boundary `0068.result.json` is
+`A68327226DBFB37BB7150BB857EB4999BAFB2C3CDD8B03A6AC86C9DAAB4C13ED`;
+and the last settled-slot result `0117.result.json` is
+`280A78E5DBAA10FB59AD0622BA0EFCA5BDE759A881D855BF140B057B44DE8FAA`.
+The invocation lasted 151,436 ms, used one engine process, exited without a
+forced stop, and left zero Godot processes.
+
+Post-exit stderr contains only the generic `ObjectDB instances leaked at exit`
+warning (SHA-256
+`7E8F5DEB3BF520C8ABB23951DEAFB0669C320CEBB4CEB6668C755C617C5FD7D3`);
+the copied Godot log is
+`9FDB33E0CC6D7315BDAA6F395A32E03513E5D7B3415F2ED15497C2C74E90BACB`.
+This warning is not allowlisted by the canonical `tools/check_godot.ps1`
+classifier because the non-verbose run emitted no `Leaked instance:` lines
+whose reference counts could all be proven zero. The rw06_2 runner also rejects
+all warning/error output after exit. Preserve it as an unclassified teardown
+alert; Probe19 cannot be promoted to qualifying evidence.
+
+## 2026-09-23 engine-free public-liquidity correction
+
+The replacement fare policy is implemented and engine-free green, but it has
+not yet been promoted by a live run. It recomputes the one rendered Grand route
+fare and requires that fare plus $50. The reserve is not a new balance number:
+the Clean route immediately calls `Ensure-GrandCasinoChips -Minimum 50` after
+`Reach-GrandCasino`, so arriving with less could satisfy travel and then fail
+the already-authored first chip purchase. The map fare remains whatever the
+current public card displays; no nominal $70 assumption drives the replay.
+
+Recovery is bounded to six visible stops and is lender-first. Every rendered,
+enabled `lender:*` object must carry an exact stable identity; when several are
+present, the replay chooses the first ordinal semantic id and never reuses a
+lender id. The selected object must expose exactly one enabled `Use` action.
+Its fully rendered TalkDock must disclose a positive `Borrow $N` principal,
+cash or favor repayment, and deadline. The runner visibly arms **Accept Offer**,
+requires the exact **Confirm: Accept Offer** state, and verifies the disclosed
+bankroll increase, exact Result feedback, and a rendered debt-indicator count
+increase of one.
+
+The public HUD exposes only whether debt exists, a single-debt tooltip, or
+`N active debts`; it does not authenticate debt identities or balances. The
+replay therefore does not normalize hidden debt lines or infer a Crew merge.
+Because RunState can merge Crew favor debt without increasing the visible count,
+Crew funding is attempted only when the rendered preflight count is zero.
+
+Two allowlisted inline cash choices are selected only from their exact rendered
+semantic id, object label/type, ordered action identities, and action labels:
+**Take the cash** at Back Alley and **Take the hallway seat** at the Motel
+wedding. Their copy does not render a dollar amount, so no hidden +8/+10 value
+influences the decision. Success requires the exact allowlisted Result message
+to bind the observed positive bankroll and heat deltas. Source proves each
+selected room button calls
+`activate_event_choice_action`, which performs selection and confirmation in
+that one public callback. The runner therefore issues exactly one room-action
+click and consumes neither `requires_confirm`, action detail text, nor an
+undisplayed `impact_summary`.
+
+The required `machine_jam` popup is authenticated by its exact rendered title,
+summary, ordered choices, labels, and text. The replay always selects **Wait it
+out**, the visible de-escalation choice. It does not branch on current heat and
+does not infer hidden cash, heat, or consequence values.
+
+The source topology offers useful liquidity but does not prove this seed can
+always preserve fare plus reserve after intervening travel. Kitty Cat Lounge
+and Delta Queen each author exactly one Crew hook ($45 for two favors); Back
+Alley authors one of Crew or Vic ($25); Motel authors one or two family/friend
+hooks ($20/$30). The $8 and $10 inline events exist only when their generated
+events are visibly present. Thus the next serialized verbose run must either
+reach the $159 Probe19 requirement through visible sources or retain and
+classify the exact public shortfall. No economy, RTP, game-math, or gate value
+will be changed in rw06_2.
+
+Outside cash/favor debt does not affect Clean eligibility:
+`grand_casino_run_facade.gd` closes the Players Card program only for its
+ineligible/cheat evidence flags; the separate Grand ATM debt marker is not used
+by this recovery. The engine-free replay source contract now passes 2 valid/20
+hostile machine-jam fixtures, 8 valid/59 hostile funding fixtures, and 2
+valid/39 hostile cash-event fixtures. Coverage includes exact property case,
+rendered/enabled witness types, the production-shaped Back Alley Crew/street
+pair and Motel brother/friend pair, multiple-lender ordering, repeat rejection,
+Crew debt preflight, term/confirmation/result binding, debt-count change, stale
+feedback, direct event causality, and malformed or ambiguous states. The current
+report is `.tmp/rw06_2/replay_source_contract.json`; a final hash will be
+recorded after the code is committed on its clean exact tip.
+The pre-implementation RED report is retained at
+`.tmp/rw06_2/funding_source_contract/red_before_implementation.json` (SHA-256
+`9CC5A11E7A17B2390C804FD4BC46A2169BF4A376530910BF227E71B12AD42FD5`).
+
 ## Player intent
 
 Reach the Grand Casino, earn Bronze, Silver, and Gold Players Card tiers without
 cheating or exceeding 30 heat, then claim the Gold review from Linda at the
-Cage. Preserve enough cash for the $70 Grand Casino trip and enough chips to
-finish all nine qualifying games.
+Cage. Preserve enough cash for the currently rendered Grand Casino fare and the
+visible chip path needed to finish all nine qualifying games.
 
 ## Source-derived route
 
@@ -945,8 +1084,8 @@ finish all nine qualifying games.
    casinos become discoverable.
 3. Reach Kitty Cat Lounge or Delta Queen. Accept the visible High Roller
    Invitation event. Do not buy or carry cheat/surveillance items.
-4. Keep at least $70 available for Grand Casino travel; travel there through the
-   visible map.
+4. Keep enough bankroll for the exact currently rendered Grand Casino fare;
+   travel there through the visible map.
 5. Establish the entry bankroll and buy/use chips only through visible venue
    controls. Avoid ATM debt, cheat actions, and risky-evidence actions.
 6. Bronze segment: settle at least 1 game, finish the segment at least $5 net
@@ -958,8 +1097,8 @@ finish all nine qualifying games.
    access.
 8. **Required persistence checkpoint:** after the visible Silver claim, open the
    run menu, Save, return to Main Menu, quit, relaunch the same isolated session,
-   and Continue. Confirm the room, card tier, bankroll/chips, heat, and next Gold
-   objective from public UI only.
+   and Continue. Confirm the room, card tier, rendered bankroll/chips/heat, and
+   exact visible Cage/Players Card state from public UI only.
 9. Gold segment: from the Silver reset point, settle at least 5 games, finish at
    least $30 net positive, and keep segment heat at or below 30. Return to the
    Cage and claim the Gold review.
@@ -976,8 +1115,8 @@ Casino net winnings, not merely 5 games and +$30 overall.
   seed makes profitable; do not encode state edits, debug actions, save edits,
   or a hidden-card oracle.
 - Claim each card tier immediately when the HUD/Cage visibly says it is ready.
-- Leave or rest only when the visible heat/objective state says it is safe and
-  doing so does not invalidate the segment.
+- Leave or rest only when the rendered heat and exact visible route controls say
+  it is safe and doing so does not invalidate the segment.
 - Treat any permanent Players Card ineligibility, heat over 30, unexpected ATM
   debt, or missing Linda claim as an immediate replay failure.
 
@@ -985,8 +1124,8 @@ Casino net winnings, not merely 5 games and +$30 overall.
 
 | Beat | Player-visible goal | Money/heat checkpoint | What could break the arc |
 |---|---|---|---|
-| Invitation | Find a way into the Grand | cash must still cover $70 | invite is too obscure; early purchases make fare impossible |
-| Arrival | Understand the clean lane | entry bankroll, chips, heat 0-ish | objective copy hides sequential tier rules |
+| Invitation | Find a way into the Grand | cash must cover the rendered fare | invite is too obscure; early purchases make fare impossible |
+| Arrival | Understand the clean lane | entry bankroll, chips, heat 0-ish | visible route copy hides sequential tier rules |
 | Bronze | Win one meaningful game | segment >= +$5, heat <= 30 | player does not know to visit Linda |
 | Silver | Prove consistency | segment >= +$15 over 3 games | low bankroll, variance, or repetitive play |
 | Save/Continue | Trust persistence | same public state after Continue | card tier or room state appears lost |

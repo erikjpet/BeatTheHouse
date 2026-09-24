@@ -59,14 +59,12 @@ static func canonical_checkpoint(observation_value: Variant) -> Dictionary:
 		"location_archetype": str(environment.get("archetype_id", "")),
 		"world_node_id": str(environment.get("world_node_id", "")),
 		"selected_object_id": str(spatial.get("selected_object_id", "")),
-		"run_status": str(hud.get("run_status", "")),
 		"bankroll": int(hud.get("bankroll", 0)),
+		"bankroll_rendered": bool(hud.get("bankroll_rendered", false)),
 		"chips": int(hud.get("chips", 0)),
+		"chips_rendered": bool(hud.get("chips_rendered", false)),
 		"heat": int(hud.get("heat_level", 0)),
-		"clock_minute": int(hud.get("clock_minute_of_day", 0)),
-		"objective_state": str(hud.get("objective_state", "")),
-		"objective_text": str(hud.get("objective_text", "")),
-		"next_text": str(hud.get("next_text", "")),
+		"heat_rendered": bool(hud.get("heat_rendered", false)),
 		"game_id": str(game.get("game_id", "")),
 		"game_phase": str(game.get("phase", "")),
 		"game_outcome": str(game.get("outcome_message", "")),
@@ -97,15 +95,11 @@ static func transition_summary(before_value: Variant, after_value: Variant, comm
 		"public_state_changed": before_fingerprint != after_fingerprint,
 		"screen_changed": str(before.get("screen", "")) != str(after.get("screen", "")),
 		"location_changed": str(before.get("location_id", "")) != str(after.get("location_id", "")),
-		"run_status_changed": str(before.get("run_status", "")) != str(after.get("run_status", "")),
 		"modal_changed": str(before.get("event_id", "")) != str(after.get("event_id", "")) \
 			or str(before.get("talk_event_id", "")) != str(after.get("talk_event_id", "")),
 		"economy_changed": int(before.get("bankroll", 0)) != int(after.get("bankroll", 0)) \
 			or int(before.get("chips", 0)) != int(after.get("chips", 0)),
 		"heat_changed": int(before.get("heat", 0)) != int(after.get("heat", 0)),
-		"clock_changed": int(before.get("clock_minute", 0)) != int(after.get("clock_minute", 0)),
-		"objective_changed": str(before.get("objective_state", "")) != str(after.get("objective_state", "")) \
-			or str(before.get("objective_text", "")) != str(after.get("objective_text", "")),
 	}
 
 
@@ -129,10 +123,10 @@ static func _screen(source: Dictionary) -> Dictionary:
 	# each overlay payload only when independent rendered-state witnesses agree.
 	var screen_id := str(source.get("screen", ""))
 	var start_menu_source := _dict(source.get("start_menu", {}))
-	var start_menu_rendered := screen_id == "START" and bool(start_menu_source.get("visible", false))
+	var start_menu_rendered := screen_id == "START" and _is_true_bool(start_menu_source.get("visible", false))
 	result["start_menu"] = _start_menu(start_menu_source) if start_menu_rendered else {}
-	var run_menu_rendered := bool(source.get("run_menu_visible", false)) \
-		and bool(overlay_state.get("run_menu_visible", false))
+	var run_menu_rendered := _is_true_bool(source.get("run_menu_visible", false)) \
+		and _is_true_bool(overlay_state.get("run_menu_visible", false))
 	result["run_menu_visible"] = run_menu_rendered
 	result["run_menu"] = _scalars(_dict(source.get("run_menu", {})), [
 		"visible", "screen", "slot_id", "has_save", "status_text", "resume_disabled",
@@ -142,8 +136,8 @@ static func _screen(source: Dictionary) -> Dictionary:
 	# FoundationMain keeps a populated map snapshot warm even while its overlay is
 	# closed. It is model/cache state until both rendered visibility witnesses say
 	# the player can actually see it, so fail closed instead of publishing markers.
-	var map_rendered := bool(source.get("world_map_overlay_visible", false)) \
-		and bool(overlay_state.get("world_map_visible", false))
+	var map_rendered := _is_true_bool(source.get("world_map_overlay_visible", false)) \
+		and _is_true_bool(overlay_state.get("world_map_visible", false))
 	result["world_map_overlay_visible"] = map_rendered
 	if map_rendered:
 		for key in [
@@ -154,7 +148,7 @@ static func _screen(source: Dictionary) -> Dictionary:
 				result[key] = source[key]
 	result["world_map"] = _world_map(_dict(source.get("world_map", {}))) if map_rendered else {}
 	var run_report_rendered := screen_id in ["VICTORY", "FAILURE"] \
-		and bool(source.get("run_report_visible", false))
+		and _is_true_bool(source.get("run_report_visible", false))
 	result["run_report_visible"] = run_report_rendered
 	result["run_report"] = _run_report(_dict(source.get("run_report", {}))) if run_report_rendered else {}
 	return result
@@ -165,16 +159,16 @@ static func _start_menu(source: Dictionary) -> Dictionary:
 		"visible", "content_group_config_visible", "challenge_config_visible", "run_config_visible",
 		"primary_action_visible", "release_version_visible", "seed_field_visible", "seed_text_committed",
 	])
-	if bool(source.get("primary_action_visible", false)):
+	if _is_true_bool(source.get("primary_action_visible", false)):
 		result["primary_action_text"] = str(source.get("primary_action_text", ""))
-	if bool(source.get("release_version_visible", false)):
+	if _is_true_bool(source.get("release_version_visible", false)):
 		result["release_version_text"] = str(source.get("release_version_text", ""))
-	if bool(source.get("seed_field_visible", false)) and bool(source.get("seed_text_committed", false)):
+	if _is_true_bool(source.get("seed_field_visible", false)) and _is_true_bool(source.get("seed_text_committed", false)):
 		result["seed_text"] = str(source.get("seed_text", ""))
-	if bool(source.get("content_group_config_visible", false)) or bool(source.get("run_config_visible", false)):
+	if _is_true_bool(source.get("content_group_config_visible", false)) or _is_true_bool(source.get("run_config_visible", false)):
 		result["selected_home_type_id"] = str(source.get("selected_home_type_id", ""))
 		result["selected_content_groups"] = _string_array(source.get("selected_content_groups", []))
-	if bool(source.get("challenge_config_visible", false)) or bool(source.get("run_config_visible", false)):
+	if _is_true_bool(source.get("challenge_config_visible", false)) or _is_true_bool(source.get("run_config_visible", false)):
 		result["selected_challenge_id"] = str(source.get("selected_challenge_id", ""))
 	return result
 
@@ -232,24 +226,6 @@ static func _environment(source: Dictionary) -> Dictionary:
 	])
 
 
-static func _demo_objective(source: Dictionary) -> Dictionary:
-	return _scalars(source, [
-		"id", "active", "complete", "title", "summary", "authored_summary", "goal_text",
-		"objective_state", "grand_casino_objective", "grand_casino_games_played",
-		"grand_casino_net_winnings", "grand_casino_max_heat", "high_roller_ready",
-		"high_roller_remaining_games", "high_roller_remaining_net_winnings",
-		"players_card_tier", "players_card_tier_label", "players_card_next_tier",
-		"players_card_next_tier_label", "players_card_next_min_games",
-		"players_card_next_net_winnings", "players_card_next_max_heat",
-		"players_card_segment_games", "players_card_segment_net_winnings",
-		"players_card_segment_max_heat", "players_card_next_remaining_games",
-		"players_card_next_remaining_net_winnings", "players_card_ready_to_claim",
-		"players_card_can_claim", "players_card_eligible", "players_card_ineligible_reason",
-		"players_card_claim_block_reason", "grand_casino_atm_debt", "showdown_pending",
-		"showdown_active", "finale_pending",
-	])
-
-
 static func _spatial(source: Dictionary) -> Dictionary:
 	var result := _scalars(source, [
 		"available", "loading", "hover_target_id", "focus_target_id", "selected_object_id",
@@ -285,7 +261,7 @@ static func _game(source: Dictionary) -> Dictionary:
 	else:
 		result["dealer_up_card"] = {}
 	var visible_dealer_cards: Array = []
-	if bool(source.get("dealer_hole_visible", false)):
+	if _is_true_bool(source.get("dealer_hole_visible", false)):
 		for card_value in dealer_cards:
 			visible_dealer_cards.append(_card(_dict(card_value)))
 	result["dealer_cards"] = visible_dealer_cards
@@ -318,69 +294,96 @@ static func _card(source: Dictionary) -> Dictionary:
 
 
 static func _consequence(source: Dictionary) -> Dictionary:
-	var result := _scalars(source, [
-		"bankroll", "suspicion_level", "run_status", "has_recent_consequence",
-		"recent_bankroll_delta", "recent_suspicion_delta", "recent_result_message",
-		"recent_result_text", "current_state_text", "inventory_summary", "debt_summary",
-		"story_text", "travel_available", "travel_count", "travel_summary", "pressure_text",
-		"suspicion_text", "alcohol_text",
-	])
-	result["story_messages"] = _string_array(source.get("story_messages", []))
-	return result
+	var rendered_value: Variant = source.get("rendered", false)
+	var rendered := typeof(rendered_value) == TYPE_BOOL and bool(rendered_value)
+	return {
+		"rendered": rendered,
+		"rendered_lines": _string_array(source.get("rendered_lines", [])) if rendered else [],
+	}
 
 
 static func _status_hud(source: Dictionary) -> Dictionary:
-	var result := _scalars(source, [
-		"bankroll", "bankroll_delta", "bankroll_text", "chips", "chips_delta", "show_chips",
-		"heat_level", "heat_delta", "heat_text", "clock_day", "clock_minute_of_day",
-		"clock_display", "clock_exact_display", "clock_text", "environment_text", "goal_text",
-		"objective_state", "objective_text", "next_text", "run_status", "run_text",
-		"status_text", "inventory_text", "debt_text", "town_status_text", "home_text",
-	])
-	result["save_text_visible"] = bool(source.get("save_text_visible", false))
+	var result := {}
+	for definition in [
+		["bankroll", "bankroll_rendered"],
+		["chips", "chips_rendered"],
+		["heat_level", "heat_rendered"],
+	]:
+		var value_key := str(definition[0])
+		var witness_key := str(definition[1])
+		var witness_value: Variant = source.get(witness_key, false)
+		var rendered := typeof(witness_value) == TYPE_BOOL and bool(witness_value)
+		result[witness_key] = rendered
+		var value: Variant = source.get(value_key, null)
+		if rendered and typeof(value) == TYPE_INT:
+			result[value_key] = value
+	var save_visible_value: Variant = source.get("save_text_visible", false)
+	result["save_text_visible"] = typeof(save_visible_value) == TYPE_BOOL and bool(save_visible_value)
 	if bool(result["save_text_visible"]):
 		result["save_text"] = str(source.get("save_text", ""))
-	result["demo_objective"] = _demo_objective(_dict(source.get("demo_objective", {})))
-	result["objective_guidance"] = _objective_guidance(_dict(source.get("objective_guidance", {})))
-	result["next_objective"] = _scalars(_dict(source.get("next_objective", {})), [
-		"enabled", "hint", "object_id", "object_type", "label",
-	])
+	result["debt_indicator"] = _debt_indicator(_dict(source.get("debt_indicator", {})))
 	return result
 
 
-static func _objective_guidance(source: Dictionary) -> Dictionary:
-	var result := _scalars(source, [
-		"state", "text", "route", "clean_progress_close", "heat_pressure_close", "staff_attention",
-	])
-	result["next"] = _scalars(_dict(source.get("next", {})), ["enabled", "hint", "object_id", "object_type", "label"])
+static func _debt_indicator(source: Dictionary) -> Dictionary:
+	var rendered_value: Variant = source.get("rendered", false)
+	var present_value: Variant = source.get("present", false)
+	var rendered := typeof(rendered_value) == TYPE_BOOL and bool(rendered_value)
+	var present := typeof(present_value) == TYPE_BOOL and bool(present_value)
+	var result := {"rendered": rendered, "present": present if rendered else false}
+	if rendered and present:
+		result["tooltip"] = str(source.get("tooltip", ""))
 	return result
 
 
 static func _feedback(source: Dictionary) -> Dictionary:
+	var visible_value: Variant = source.get("visible", false)
+	if typeof(visible_value) != TYPE_BOOL or not bool(visible_value):
+		return {"visible": false}
 	return _scalars(source, [
-		"visible", "title", "text", "message", "interaction_kind", "dismissible", "object_id",
-		"bankroll_delta", "suspicion_delta",
+		"visible", "title", "text",
 	])
 
 
 static func _event_popup(source: Dictionary) -> Dictionary:
-	var result := _scalars(source, [
-		"visible", "blocking", "popup_type", "interaction_kind", "dismissible", "event_id",
-		"summary", "title", "source_id", "venue_id", "book_open",
-	])
+	var visible_value: Variant = source.get("visible", false)
+	if typeof(visible_value) != TYPE_BOOL or not bool(visible_value):
+		return {"visible": false, "render_valid": false}
+	var render_valid_value: Variant = source.get("render_valid", false)
+	var render_valid := typeof(render_valid_value) == TYPE_BOOL and bool(render_valid_value)
+	var result := {"visible": true, "render_valid": render_valid}
+	if not render_valid:
+		return result
+	result["event_id"] = str(source.get("event_id", ""))
+	result["summary"] = str(source.get("summary", ""))
+	result["title"] = str(source.get("title", ""))
 	result["choices"] = _choices(source.get("choices", []))
 	result["choice_ids"] = _string_array(source.get("choice_ids", []))
 	return result
 
 
 static func _talk(source: Dictionary) -> Dictionary:
-	var result := _scalars(source, [
-		"visible", "expanded", "event_id", "speaker", "speaker_text", "summary", "topic",
-		"voice_line", "choice_count", "queue_count", "urgency_bar_visible",
-	])
+	var visible_value: Variant = source.get("visible", false)
+	if typeof(visible_value) != TYPE_BOOL or not bool(visible_value):
+		return {"visible": false, "expanded": false, "render_valid": false, "body_complete": false}
+	var expanded_value: Variant = source.get("expanded", false)
+	var render_valid_value: Variant = source.get("render_valid", false)
+	var expanded := typeof(expanded_value) == TYPE_BOOL and bool(expanded_value)
+	var render_valid := typeof(render_valid_value) == TYPE_BOOL and bool(render_valid_value)
+	var result := {"visible": true, "expanded": expanded, "render_valid": render_valid}
+	var complete_value: Variant = source.get("body_complete", false)
+	var typewriter_value: Variant = source.get("typewriter_active", true)
+	var typewriter_valid := typeof(typewriter_value) == TYPE_BOOL
+	var complete := render_valid and typeof(complete_value) == TYPE_BOOL and bool(complete_value) and typewriter_valid
+	var typewriter := bool(typewriter_value) if typewriter_valid else true
+	result["body_complete"] = complete
+	result["typewriter_active"] = typewriter
+	if not render_valid or not expanded:
+		return result
+	result["event_id"] = str(source.get("event_id", ""))
+	if complete and not typewriter:
+		result["summary"] = str(source.get("summary", ""))
 	result["choice_ids"] = _string_array(source.get("choice_ids", []))
-	var timing := _dict(source.get("timing", {}))
-	result["timing"] = _scalars(timing, ["expires", "remaining_actions", "duration_actions"])
 	return result
 
 
@@ -425,10 +428,7 @@ static func _choices(value: Variant) -> Array:
 		var choice := _dict(choice_value)
 		if choice.is_empty():
 			continue
-		result.append(_scalars(choice, [
-			"id", "label", "text", "summary", "consequence_summary", "impact_summary", "enabled",
-			"disabled", "disabled_reason", "selected", "dismissal", "requires_confirm",
-		]))
+		result.append(_scalars(choice, ["id", "label", "text", "enabled"]))
 	return result
 
 
@@ -454,7 +454,7 @@ static func _actions(value: Variant) -> Array:
 		if action.is_empty():
 			continue
 		var public_action := _scalars(action, [
-			"id", "action", "action_id", "emit_object_id", "label", "text", "summary", "kind",
+			"id", "action", "action_id", "emit_object_id", "label", "kind",
 			"enabled", "disabled", "disabled_reason", "selected", "index", "cost", "stake",
 		])
 		if action.has("rect"):
@@ -528,3 +528,7 @@ static func _array(value: Variant) -> Array:
 
 static func _dict(value: Variant) -> Dictionary:
 	return value as Dictionary if typeof(value) == TYPE_DICTIONARY else {}
+
+
+static func _is_true_bool(value: Variant) -> bool:
+	return typeof(value) == TYPE_BOOL and bool(value)

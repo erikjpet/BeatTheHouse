@@ -398,52 +398,91 @@ func _click_choice(choice_id: String) -> Dictionary:
 	var public_observation := _public_observation()
 	var event_popup := _dict(public_observation.get("event_popup", {}))
 	if bool(event_popup.get("visible", false)):
+		var render_valid_value: Variant = event_popup.get("render_valid", false)
+		if typeof(render_valid_value) != TYPE_BOOL or not bool(render_valid_value):
+			return {"ok": false, "reason": "visible event choices are not fully authenticated and rendered"}
 		var choices := _array(event_popup.get("choices", []))
-		var choice_index := -1
-		var choice: Dictionary = {}
+		var matches: Array[Dictionary] = []
 		for index in range(choices.size()):
 			var candidate := _dict(choices[index])
 			if str(candidate.get("id", "")) == cleaned:
-				choice_index = index
-				choice = candidate
-				break
-		if choice_index < 0:
+				matches.append(candidate)
+		if matches.size() != 1:
 			return {"ok": false, "reason": "visible event choice not found: %s" % cleaned}
-		if bool(choice.get("disabled", false)) or not bool(choice.get("enabled", true)):
+		var choice := matches[0]
+		var choice_enabled_value: Variant = choice.get("enabled", false)
+		if typeof(choice_enabled_value) != TYPE_BOOL or not bool(choice_enabled_value):
 			return {"ok": false, "reason": "visible event choice is disabled: %s" % cleaned}
-		var choice_list := app.get("event_choice_popup_choices_list") as Node
+		var live_popup := _public_rendered_event_popup({})
+		if not bool(live_popup.get("render_valid", false)) \
+				or str(live_popup.get("event_id", "")) != str(event_popup.get("event_id", "")) \
+				or str(live_popup.get("title", "")) != str(event_popup.get("title", "")) \
+				or str(live_popup.get("summary", "")) != str(event_popup.get("summary", "")) \
+				or JSON.stringify(live_popup.get("choices", [])) != JSON.stringify(choices):
+			return {"ok": false, "reason": "visible event choices changed before click"}
+		var choice_list := app.get("event_choice_popup_choices_list") as Control
+		var matched_cards: Array[Control] = []
+		for child in choice_list.get_children():
+			var card := child as Control
+			if card != null and str(card.get_meta("event_id", "")) == str(event_popup.get("event_id", "")) \
+					and str(card.get_meta("choice_id", "")) == cleaned:
+				matched_cards.append(card)
+		if matched_cards.size() != 1:
+			return {"ok": false, "reason": "event choice has no unique live semantic card: %s" % cleaned}
+		var live_choice := _rendered_event_choice_card_snapshot(matched_cards[0])
+		var live_choice_enabled_value: Variant = live_choice.get("enabled", false)
+		if live_choice.is_empty() or str(live_choice.get("label", "")) != str(choice.get("label", "")) \
+				or str(live_choice.get("text", "")) != str(choice.get("text", "")) \
+				or typeof(live_choice_enabled_value) != TYPE_BOOL or not bool(live_choice_enabled_value):
+			return {"ok": false, "reason": "event choice changed or clipped before click: %s" % cleaned}
 		var buttons: Array[Button] = []
-		_collect_descendant_buttons(choice_list, buttons)
-		if choice_index >= buttons.size():
-			return {"ok": false, "reason": "event choice has no corresponding visible button: %s" % cleaned}
-		var button := buttons[choice_index]
-		if button.disabled:
-			return {"ok": false, "reason": "event choice button is disabled: %s" % cleaned}
+		_collect_descendant_buttons(matched_cards[0], buttons)
+		if buttons.size() != 1 or buttons[0].disabled \
+				or str(buttons[0].get_meta("event_id", "")) != str(event_popup.get("event_id", "")) \
+				or str(buttons[0].get_meta("choice_id", "")) != cleaned \
+				or not _button_text_is_fully_rendered(buttons[0]):
+			return {"ok": false, "reason": "event choice button is no longer exact, visible, and enabled: %s" % cleaned}
+		var button := buttons[0]
 		var visible_rect := _clipped_control_rect(button)
 		if not visible_rect.has_area():
 			return {"ok": false, "reason": "event choice has no visible hit area: %s" % cleaned}
 		await _push_mouse_click(visible_rect.get_center(), false)
-		return {"ok": true, "choice_id": cleaned, "choice_index": choice_index, "surface": "event_popup"}
+		return {"ok": true, "choice_id": cleaned, "choice_index": _array(live_popup.get("choice_ids", [])).find(cleaned), "surface": "event_popup"}
 	var talk := _dict(public_observation.get("talk", {}))
 	if bool(talk.get("visible", false)):
-		var choice_ids := _array(talk.get("choice_ids", []))
-		var choice_index := choice_ids.find(cleaned)
-		if choice_index < 0:
-			return {"ok": false, "reason": "visible talk choice not found: %s" % cleaned}
 		var talk_dock := app.get("talk_dock") as Control
-		var choice_list := talk_dock.get("choice_list") as Node if talk_dock != null else null
+		var live_choices := _rendered_talk_choice_snapshots(talk_dock)
+		var matches: Array[Dictionary] = []
+		for choice_value in live_choices:
+			var candidate := choice_value as Dictionary
+			if str(candidate.get("event_id", "")) == str(talk.get("event_id", "")) \
+					and str(candidate.get("id", "")) == cleaned:
+				matches.append(candidate)
+		if matches.size() != 1:
+			return {"ok": false, "reason": "visible talk choice not found: %s" % cleaned}
+		var choice := matches[0]
+		var talk_choice_enabled_value: Variant = choice.get("enabled", false)
+		if typeof(talk_choice_enabled_value) != TYPE_BOOL or not bool(talk_choice_enabled_value):
+			return {"ok": false, "reason": "visible talk choice is disabled: %s" % cleaned}
+		var choice_list := talk_dock.get("choice_list") as Control if talk_dock != null else null
 		var buttons: Array[Button] = []
 		_collect_descendant_buttons(choice_list, buttons)
-		if choice_index >= buttons.size():
-			return {"ok": false, "reason": "talk choice has no corresponding visible button: %s" % cleaned}
-		var button := buttons[choice_index]
-		if button.disabled:
-			return {"ok": false, "reason": "visible talk choice is disabled: %s" % cleaned}
+		var matched_buttons: Array[Button] = []
+		for candidate in buttons:
+			if str(candidate.get_meta("event_id", "")) == str(talk.get("event_id", "")) \
+					and str(candidate.get_meta("choice_id", "")) == cleaned:
+				matched_buttons.append(candidate)
+		if matched_buttons.size() != 1:
+			return {"ok": false, "reason": "talk choice has no unique live semantic button: %s" % cleaned}
+		var button := matched_buttons[0]
+		if button.disabled or button.text.strip_edges() != str(choice.get("label", "")) \
+				or not _button_text_is_fully_rendered(button):
+			return {"ok": false, "reason": "visible talk choice changed, clipped, or disabled: %s" % cleaned}
 		var visible_rect := _clipped_control_rect(button)
 		if not visible_rect.has_area():
 			return {"ok": false, "reason": "talk choice has no visible hit area: %s" % cleaned}
 		await _push_mouse_click(visible_rect.get_center(), false)
-		return {"ok": true, "choice_id": cleaned, "choice_index": choice_index, "surface": "talk"}
+		return {"ok": true, "choice_id": cleaned, "choice_index": live_choices.find(choice), "surface": "talk"}
 	return {"ok": false, "reason": "no visible event or talk choice surface"}
 
 
@@ -529,6 +568,8 @@ func _click_action(argument: String) -> Dictionary:
 	var parts := argument.split(" ", false)
 	if parts.is_empty():
 		return {"ok": false, "reason": "game action is required"}
+	if str(parts[0]) == "room":
+		return await _click_room_action(parts)
 	var action := argument.strip_edges()
 	var index := 0
 	var has_index := parts.size() > 1 and str(parts[parts.size() - 1]).is_valid_int()
@@ -556,32 +597,58 @@ func _click_action(argument: String) -> Dictionary:
 			return {"ok": false, "reason": "game-surface action has no hittable visible position"}
 		await _push_mouse_click(surface.get_global_rect().position + local, false)
 		return {"ok": true, "action": action, "index": index, "surface": "game"}
-	var room := app.get("environment_canvas") as Control
-	if room != null and room.visible and room.has_method("local_position_for_selected_info_action_button"):
-		var actions := _room_selected_actions(room)
-		for action_index in range(actions.size()):
-			var data := actions[action_index] as Dictionary
-			if not _room_action_matches(data, action, index, action_index):
-				continue
-			if bool(data.get("disabled", false)) or not bool(data.get("enabled", true)):
-				return {"ok": false, "reason": "room action is disabled: %s" % action}
-			var local: Vector2 = room.call("local_position_for_selected_info_action_button", action_index)
-			if not _inside_control(room, local):
-				return {"ok": false, "reason": "room action has no hittable visible position"}
-			await _push_mouse_click(room.get_global_rect().position + local, false)
-			return {"ok": true, "action": action, "index": action_index, "surface": "room"}
 	return {"ok": false, "reason": "no visible game or selected-room action: %s %d" % [action, index]}
 
 
-func _room_action_matches(data: Dictionary, requested: String, requested_index: int, actual_index: int) -> bool:
-	if requested.is_valid_int() and int(requested) == actual_index:
-		return true
-	if requested_index != actual_index and requested == "index":
-		return false
-	for key in ["id", "action", "action_id", "emit_object_id", "label"]:
-		if str(data.get(key, "")) == requested:
-			return true
-	return false
+func _click_room_action(parts: PackedStringArray) -> Dictionary:
+	if parts.size() != 5 or not str(parts[1]).is_valid_int():
+		return {"ok": false, "reason": "usage: click_action room <index> <object-base64> <identity-key> <identity-base64>"}
+	var action_index := int(parts[1])
+	var selected_object_id := Marshalls.base64_to_raw(str(parts[2])).get_string_from_utf8().strip_edges()
+	var identity_key := str(parts[3])
+	var identity_value := Marshalls.base64_to_raw(str(parts[4])).get_string_from_utf8().strip_edges()
+	if action_index < 0 or selected_object_id.is_empty() or identity_value.is_empty() \
+			or identity_key not in ["id", "action", "action_id", "emit_object_id", "label"]:
+		return {"ok": false, "reason": "room action command identity is malformed"}
+	var room := app.get("environment_canvas") as Control
+	if room == null or not _control_is_fully_rendered(room) \
+			or not room.has_method("local_position_for_selected_info_action_button"):
+		return {"ok": false, "reason": "room action surface is not fully rendered"}
+	var actions := _room_selected_actions(room)
+	var identity_matches: Array[Dictionary] = []
+	for value in actions:
+		var data := value as Dictionary
+		if str(data.get("selected_object_id", "")) == selected_object_id \
+				and str(data.get(identity_key, "")) == identity_value:
+			identity_matches.append(data)
+	if identity_matches.size() != 1:
+		return {"ok": false, "reason": "room action identity is missing or ambiguous on the live selected object"}
+	var data := identity_matches[0]
+	var live_index_value: Variant = data.get("index", null)
+	var enabled_value: Variant = data.get("enabled", null)
+	var rendered_value: Variant = data.get("rendered", null)
+	var rect_value: Variant = data.get("rect", null)
+	if typeof(live_index_value) != TYPE_INT or int(live_index_value) != action_index:
+		return {"ok": false, "reason": "room action order changed before click"}
+	if typeof(enabled_value) != TYPE_BOOL or not bool(enabled_value):
+		return {"ok": false, "reason": "room action is disabled or has no exact enabled witness"}
+	if typeof(rendered_value) != TYPE_BOOL or not bool(rendered_value) \
+			or typeof(rect_value) != TYPE_RECT2 or not (rect_value as Rect2).has_area():
+		return {"ok": false, "reason": "room action is clipped or has no exact rendered hit rectangle"}
+	var live_rect := rect_value as Rect2
+	var local: Vector2 = room.call("local_position_for_selected_info_action_button", action_index)
+	var live_center := room.to_global(local)
+	if not _inside_control(room, local) or live_center.distance_to(live_rect.get_center()) > 0.75:
+		return {"ok": false, "reason": "room action hit target changed before click"}
+	await _push_mouse_click(live_rect.get_center(), false)
+	return {
+		"ok": true,
+		"action": identity_value,
+		"identity_key": identity_key,
+		"index": action_index,
+		"selected_object_id": selected_object_id,
+		"surface": "room",
+	}
 
 
 func _click_xy(argument: String) -> Dictionary:
@@ -752,9 +819,13 @@ func _public_observation() -> Dictionary:
 	screen["run_report_visible"] = screen_id in ["VICTORY", "FAILURE"] \
 		and _control_is_rendered(run_report)
 	snapshot["screen"] = screen
-	var status_hud := _dict(snapshot.get("status_hud", {})).duplicate(true)
-	status_hud["save_text_visible"] = _hud_status_tooltip_is_rendered(str(status_hud.get("save_text", "")))
+	snapshot["consequence"] = _public_rendered_consequence()
+	snapshot["event_popup"] = _public_rendered_event_popup(_dict(snapshot.get("event_popup", {})))
+	snapshot["talk"] = _public_rendered_talk(_dict(snapshot.get("talk", {})))
+	var status_hud := _public_rendered_status_hud(_dict(snapshot.get("status_hud", {})))
+	status_hud["debt_indicator"] = _public_debt_indicator()
 	snapshot["status_hud"] = status_hud
+	snapshot["feedback"] = _public_rendered_feedback()
 	return PublicObservation.sanitize(snapshot)
 
 
@@ -763,18 +834,313 @@ func _control_is_rendered(control: Control) -> bool:
 		and _clipped_control_rect(control).has_area()
 
 
-func _hud_status_tooltip_is_rendered(expected_text: String) -> bool:
-	if expected_text.is_empty():
+func _control_is_fully_rendered(control: Control) -> bool:
+	return _control_is_rendered(control) \
+		and _rect_encloses_with_tolerance(_clipped_control_rect(control), control.get_global_rect())
+
+
+func _label_text_is_fully_rendered(label: Label) -> bool:
+	if not _control_is_fully_rendered(label):
 		return false
+	if label.get_line_count() > label.get_visible_line_count():
+		return false
+	if label.autowrap_mode != TextServer.AUTOWRAP_OFF:
+		return true
+	var font := label.get_theme_font("font")
+	var font_size := label.get_theme_font_size("font_size")
+	if font == null or font_size <= 0:
+		return false
+	var text_size := font.get_multiline_string_size(
+		label.text,
+		HORIZONTAL_ALIGNMENT_LEFT,
+		-1.0,
+		font_size
+	)
+	return text_size.x <= label.size.x + 0.75 and text_size.y <= label.size.y + 0.75
+
+
+func _button_text_is_fully_rendered(button: Button) -> bool:
+	if not _control_is_fully_rendered(button):
+		return false
+	var font := button.get_theme_font("font")
+	var font_size := button.get_theme_font_size("font_size")
+	var style := button.get_theme_stylebox("normal")
+	if font == null or font_size <= 0 or style == null:
+		return false
+	var available := Vector2(
+		button.size.x - style.get_margin(SIDE_LEFT) - style.get_margin(SIDE_RIGHT),
+		button.size.y - style.get_margin(SIDE_TOP) - style.get_margin(SIDE_BOTTOM)
+	)
+	if available.x <= 0.0 or available.y <= 0.0:
+		return false
+	var wrap_width := available.x if button.autowrap_mode != TextServer.AUTOWRAP_OFF else -1.0
+	var text_size := font.get_multiline_string_size(
+		button.text,
+		HORIZONTAL_ALIGNMENT_LEFT,
+		wrap_width,
+		font_size
+	)
+	return text_size.x <= available.x + 0.75 and text_size.y <= available.y + 0.75
+
+
+func _public_rendered_consequence() -> Dictionary:
+	var panel := app.get("consequence_panel") as Control
+	return {"rendered": _control_is_fully_rendered(panel), "rendered_lines": []}
+
+
+func _public_status_indicator(status_id: String) -> Dictionary:
 	var structured_hud := app.get("structured_hud") as Control
-	var status_tray := structured_hud.get("status_tray") as Control if structured_hud != null else null
-	if not _control_is_rendered(status_tray):
-		return false
+	if not _control_is_fully_rendered(structured_hud):
+		return {"rendered": false, "present": false}
+	var status_tray := structured_hud.get("status_tray") as Control
+	if not _control_is_fully_rendered(status_tray):
+		return {"rendered": false, "present": false}
+	var matches: Array[Control] = []
 	for child in status_tray.get_children():
 		var control := child as Control
-		if _control_is_rendered(control) and control.tooltip_text == expected_text:
-			return true
-	return false
+		if control == null or not _control_is_fully_rendered(control):
+			return {"rendered": false, "present": false}
+		if str(control.get_meta("status_id", "")) == status_id:
+			matches.append(control)
+	if matches.is_empty():
+		return {"rendered": true, "present": false}
+	if matches.size() != 1:
+		return {"rendered": false, "present": false}
+	var tooltip := matches[0].tooltip_text.strip_edges()
+	if tooltip.is_empty():
+		return {"rendered": false, "present": false}
+	return {"rendered": true, "present": true, "tooltip": tooltip}
+
+
+func _public_debt_indicator() -> Dictionary:
+	return _public_status_indicator("debt")
+
+
+func _public_rendered_status_hud(_source: Dictionary) -> Dictionary:
+	var result := {
+		"bankroll_rendered": false,
+		"chips_rendered": false,
+		"heat_rendered": false,
+		"save_text_visible": false,
+	}
+	var structured_hud := app.get("structured_hud") as Control
+	if not _control_is_fully_rendered(structured_hud):
+		return result
+	var wallet_label := structured_hud.get("wallet_value") as Label
+	var chips_chip := structured_hud.get("chips_chip") as Control
+	var chips_label := structured_hud.get("chips_value") as Label
+	var heat_label := structured_hud.get("heat_value") as Label
+	if _label_text_is_fully_rendered(wallet_label):
+		var wallet_text := wallet_label.text.strip_edges()
+		var wallet_pattern := RegEx.new()
+		if wallet_pattern.compile("^\\$(0|[1-9][0-9]*)$") == OK:
+			var wallet_match := wallet_pattern.search(wallet_text)
+			var bankroll_digits := wallet_match.get_string(1) if wallet_match != null else ""
+			if not bankroll_digits.is_empty() and bankroll_digits.length() <= 10:
+				var bankroll_value := int(bankroll_digits)
+				if bankroll_value >= 0 and bankroll_value <= 2147483647:
+					result["bankroll"] = bankroll_value
+					result["bankroll_rendered"] = true
+	if _control_is_fully_rendered(chips_chip) and _label_text_is_fully_rendered(chips_label):
+		var chips_text := chips_label.text.strip_edges()
+		var chips_pattern := RegEx.new()
+		if chips_pattern.compile("^(0|[1-9][0-9]*)$") == OK:
+			var chips_match := chips_pattern.search(chips_text)
+			var chips_digits := chips_match.get_string(1) if chips_match != null else ""
+			if not chips_digits.is_empty() and chips_digits.length() <= 10:
+				var chips_value := int(chips_digits)
+				if chips_value >= 0 and chips_value <= 2147483647:
+					result["chips"] = chips_value
+					result["chips_rendered"] = true
+	if _label_text_is_fully_rendered(heat_label):
+		var heat_text := heat_label.text.strip_edges()
+		var heat_pattern := RegEx.new()
+		if heat_pattern.compile("^(0|[1-9][0-9]*)$") == OK:
+			var heat_match := heat_pattern.search(heat_text)
+			var heat_digits := heat_match.get_string(1) if heat_match != null else ""
+			if not heat_digits.is_empty() and heat_digits.length() <= 3:
+				var heat_value := int(heat_digits)
+				if heat_value >= 0 and heat_value <= 100:
+					result["heat_level"] = heat_value
+					result["heat_rendered"] = true
+	var save_indicator := _public_status_indicator("save")
+	if bool(save_indicator.get("rendered", false)) and bool(save_indicator.get("present", false)):
+		result["save_text"] = str(save_indicator.get("tooltip", ""))
+		result["save_text_visible"] = true
+	return result
+
+
+func _rendered_talk_choice_snapshots(talk_dock: Control) -> Array:
+	var choice_list := talk_dock.get("choice_list") as Control if talk_dock != null else null
+	if not _control_is_fully_rendered(choice_list):
+		return []
+	var result: Array = []
+	var seen_ids: Dictionary = {}
+	var event_id := ""
+	for response_value in choice_list.get_children():
+		var response := response_value as Control
+		if not _control_is_fully_rendered(response):
+			return []
+		var buttons: Array[Button] = []
+		_collect_descendant_buttons(response, buttons)
+		if buttons.size() != 1 or not _button_text_is_fully_rendered(buttons[0]):
+			return []
+		var button := buttons[0]
+		var button_event_id := str(button.get_meta("event_id", "")).strip_edges()
+		var choice_id := str(button.get_meta("choice_id", "")).strip_edges()
+		if button_event_id.is_empty() or choice_id.is_empty() or seen_ids.has(choice_id):
+			return []
+		if event_id.is_empty():
+			event_id = button_event_id
+		if button_event_id != event_id:
+			return []
+		seen_ids[choice_id] = true
+		result.append({
+			"event_id": button_event_id,
+			"id": choice_id,
+			"label": button.text.strip_edges(),
+			"enabled": not button.disabled,
+			"rect": _clipped_control_rect(button),
+		})
+	return result
+
+
+func _public_rendered_talk(source: Dictionary) -> Dictionary:
+	var talk_dock := app.get("talk_dock") as Control
+	var panel := talk_dock.get("panel") as Control if talk_dock != null else null
+	var body_label := talk_dock.get("body_label") as Label if talk_dock != null else null
+	var visible_value: Variant = source.get("visible", false)
+	if typeof(visible_value) != TYPE_BOOL or not bool(visible_value) or not _control_is_rendered(panel):
+		return {"visible": false, "expanded": false, "render_valid": false, "body_complete": false}
+	var expanded_value: Variant = source.get("expanded", false)
+	var expanded := typeof(expanded_value) == TYPE_BOOL and bool(expanded_value)
+	var result := {
+		"visible": true,
+		"expanded": expanded,
+		"render_valid": false,
+		"body_complete": false,
+		"typewriter_active": true,
+	}
+	if not expanded or not _control_is_fully_rendered(panel) or not _label_text_is_fully_rendered(body_label):
+		return result
+	var choices := _rendered_talk_choice_snapshots(talk_dock)
+	if choices.is_empty():
+		return result
+	var typewriter_value: Variant = source.get("typewriter_active", true)
+	var clipped_value: Variant = source.get("body_text_clipped", true)
+	if typeof(typewriter_value) != TYPE_BOOL or typeof(clipped_value) != TYPE_BOOL:
+		return result
+	var choice_ids: Array = []
+	for choice_value in choices:
+		choice_ids.append(str((choice_value as Dictionary).get("id", "")))
+	result["event_id"] = str((choices[0] as Dictionary).get("event_id", ""))
+	result["choice_ids"] = choice_ids
+	result["render_valid"] = true
+	var complete := not bool(typewriter_value) \
+		and body_label.visible_characters == -1 \
+		and not bool(clipped_value)
+	result["body_complete"] = complete
+	result["typewriter_active"] = not complete
+	if complete:
+		result["summary"] = body_label.text.strip_edges()
+	else:
+		result.erase("summary")
+	return result
+
+
+func _rendered_event_choice_card_snapshot(card: Control) -> Dictionary:
+	if not _control_is_fully_rendered(card):
+		return {}
+	var event_id := str(card.get_meta("event_id", "")).strip_edges()
+	var choice_id := str(card.get_meta("choice_id", "")).strip_edges()
+	if event_id.is_empty() or choice_id.is_empty() or card.get_child_count() != 1:
+		return {}
+	var stack := card.get_child(0) as VBoxContainer
+	if stack == null or stack.get_child_count() < 3:
+		return {}
+	var heading := stack.get_child(0) as Label
+	var body := stack.get_child(1) as Label
+	var buttons: Array[Button] = []
+	_collect_descendant_buttons(card, buttons)
+	if not _label_text_is_fully_rendered(heading) or not _label_text_is_fully_rendered(body) \
+			or buttons.size() != 1 or not _button_text_is_fully_rendered(buttons[0]):
+		return {}
+	var button := buttons[0]
+	if str(button.get_meta("event_id", "")).strip_edges() != event_id \
+			or str(button.get_meta("choice_id", "")).strip_edges() != choice_id \
+			or button.text.strip_edges() != heading.text.strip_edges():
+		return {}
+	return {
+		"event_id": event_id,
+		"id": choice_id,
+		"label": heading.text.strip_edges(),
+		"text": body.text.strip_edges(),
+		"enabled": not button.disabled,
+	}
+
+
+func _public_rendered_event_popup(_source: Dictionary) -> Dictionary:
+	var panel := app.get("event_choice_popup_panel") as Control
+	if not _control_is_rendered(panel):
+		return {"visible": false, "render_valid": false}
+	var result := {"visible": true, "render_valid": false, "choices": [], "choice_ids": []}
+	if not _control_is_fully_rendered(panel):
+		return result
+	var title_label := app.get("event_choice_popup_title_label") as Label
+	var summary_label := app.get("event_choice_popup_summary_label") as Label
+	var choices_list := app.get("event_choice_popup_choices_list") as Control
+	if not _label_text_is_fully_rendered(title_label) or not _label_text_is_fully_rendered(summary_label) \
+			or not _control_is_fully_rendered(choices_list):
+		return result
+	result["title"] = title_label.text.strip_edges()
+	result["summary"] = summary_label.text.strip_edges()
+	var cards: Array[Control] = []
+	for child in choices_list.get_children():
+		var card := child as Control
+		if card == null or not _control_is_fully_rendered(card):
+			return result
+		cards.append(card)
+	if cards.is_empty():
+		return result
+	var choices: Array = []
+	var choice_ids: Array = []
+	var popup_event_id := ""
+	for card in cards:
+		var choice := _rendered_event_choice_card_snapshot(card)
+		if choice.is_empty():
+			return result
+		var event_id := str(choice.get("event_id", ""))
+		var choice_id := str(choice.get("id", ""))
+		if popup_event_id.is_empty():
+			popup_event_id = event_id
+		if event_id != popup_event_id or choice_ids.has(choice_id):
+			return result
+		choice_ids.append(choice_id)
+		choices.append({
+			"id": choice_id,
+			"label": str(choice.get("label", "")),
+			"text": str(choice.get("text", "")),
+			"enabled": choice.get("enabled", false),
+		})
+	result["event_id"] = popup_event_id
+	result["choice_ids"] = choice_ids
+	result["choices"] = choices
+	result["render_valid"] = true
+	return result
+
+
+func _public_rendered_feedback() -> Dictionary:
+	var panel := app.get("environment_result_panel") as Control
+	var title_label := app.get("environment_result_title_label") as Label
+	var body_label := app.get("environment_result_body_label") as Label
+	if not _control_is_fully_rendered(panel) or not _label_text_is_fully_rendered(title_label) \
+			or not _label_text_is_fully_rendered(body_label):
+		return {"visible": false}
+	return {
+		"visible": true,
+		"title": title_label.text.strip_edges(),
+		"text": body_label.text.strip_edges(),
+	}
 
 
 func _replay_pause_snapshot() -> Dictionary:
@@ -957,24 +1323,10 @@ func _public_talk_choices(public_observation: Dictionary) -> Array:
 	var talk := _dict(public_observation.get("talk", {}))
 	if not bool(talk.get("visible", false)):
 		return []
-	var choice_ids := _array(talk.get("choice_ids", []))
 	var talk_dock := app.get("talk_dock") as Control
-	var choice_list := talk_dock.get("choice_list") as Node if talk_dock != null else null
-	var buttons: Array[Button] = []
-	_collect_descendant_buttons(choice_list, buttons)
-	var result: Array = []
-	for index in range(choice_ids.size()):
-		var choice_id := str(choice_ids[index]).strip_edges()
-		if choice_id.is_empty():
-			continue
-		var button: Button = buttons[index] if index < buttons.size() else null
-		var visible_rect := _clipped_control_rect(button) if button != null else Rect2()
-		result.append({
-			"id": choice_id,
-			"label": button.text.strip_edges() if button != null else "",
-			"enabled": button != null and not button.disabled and visible_rect.has_area(),
-			"rect": visible_rect,
-		})
+	var result := _rendered_talk_choice_snapshots(talk_dock)
+	if result.size() != _array(talk.get("choice_ids", [])).size():
+		return []
 	return result
 
 
@@ -1056,7 +1408,8 @@ func _rect_encloses_with_tolerance(outer: Rect2, inner: Rect2, tolerance: float 
 
 
 func _canvas_objects(canvas: Control) -> Array:
-	if canvas == null or not canvas.visible or not canvas.has_method("current_view_snapshot"):
+	if not _control_is_fully_rendered(canvas) or not canvas.has_method("current_view_snapshot") \
+			or not canvas.has_method("global_rect_for_object"):
 		return []
 	var snapshot: Dictionary = canvas.call("current_view_snapshot")
 	var result: Array = []
@@ -1064,39 +1417,100 @@ func _canvas_objects(canvas: Control) -> Array:
 		var data := value as Dictionary if typeof(value) == TYPE_DICTIONARY else {}
 		if data.is_empty() or not bool(data.get("visible", true)):
 			continue
+		var semantic_id := str(data.get("id", data.get("object_id", ""))).strip_edges()
+		var rendered_rect: Rect2 = canvas.call("global_rect_for_object", semantic_id)
+		var clipped_rect := rendered_rect.intersection(canvas.get_global_rect())
+		var rendered := not semantic_id.is_empty() and rendered_rect.has_area() \
+			and _rect_encloses_with_tolerance(clipped_rect, rendered_rect)
 		result.append({
-			"semantic_id": str(data.get("id", data.get("object_id", ""))),
+			"semantic_id": semantic_id,
 			"label": str(data.get("label", "")),
 			"object_type": str(data.get("object_type", data.get("type", ""))),
 			"enabled": bool(data.get("enabled", true)) and not bool(data.get("disabled", false)) and bool(data.get("interactive", true)),
+			"rendered": rendered,
 		})
 	return result
 
 
 func _room_selected_actions(canvas: Control) -> Array:
-	if canvas == null or not canvas.visible or not canvas.has_method("current_view_snapshot"):
+	if canvas == null or not _control_is_fully_rendered(canvas) \
+			or not canvas.has_method("current_view_snapshot") \
+			or not canvas.has_method("local_position_for_selected_info_action_button"):
 		return []
 	var snapshot: Dictionary = canvas.call("current_view_snapshot")
-	var selected := snapshot.get("selected_info", {}) as Dictionary if typeof(snapshot.get("selected_info", {})) == TYPE_DICTIONARY else {}
+	var selected := _dict(snapshot.get("selected_info", {}))
+	var selected_visible_value: Variant = selected.get("visible", false)
+	var selected_object_id := str(selected.get("object_id", "")).strip_edges()
+	if typeof(selected_visible_value) != TYPE_BOOL or not bool(selected_visible_value) or selected_object_id.is_empty():
+		return []
+	var board_scale_value: Variant = snapshot.get("board_scale", null)
+	if typeof(board_scale_value) not in [TYPE_INT, TYPE_FLOAT] or float(board_scale_value) <= 0.0:
+		return []
+	var board_scale := float(board_scale_value)
 	var result: Array = []
 	var actions := _array(selected.get("actions", []))
 	for index in range(actions.size()):
 		var action := actions[index] as Dictionary if typeof(actions[index]) == TYPE_DICTIONARY else {}
 		if action.is_empty():
 			continue
+		var enabled_value: Variant = action.get("enabled", false)
+		var board_rect := _snapshot_rect(action.get("button_rect", {}))
+		var local_center: Vector2 = canvas.call("local_position_for_selected_info_action_button", index)
+		var local_size := board_rect.size * board_scale
+		var global_start := canvas.to_global(local_center - local_size * 0.5)
+		var global_end := canvas.to_global(local_center + local_size * 0.5)
+		var global_rect := Rect2(
+			Vector2(minf(global_start.x, global_end.x), minf(global_start.y, global_end.y)),
+			Vector2(absf(global_end.x - global_start.x), absf(global_end.y - global_start.y))
+		)
+		var clipped_rect := global_rect.intersection(_clipped_control_rect(canvas))
+		var rendered := board_rect.has_area() and local_size.x > 0.0 and local_size.y > 0.0 \
+			and _inside_control(canvas, local_center) \
+			and _rect_encloses_with_tolerance(clipped_rect, global_rect) \
+			and _room_action_label_is_fully_rendered(action, board_rect)
 		result.append({
 			"id": str(action.get("id", "")),
 			"action": str(action.get("action", "")),
 			"action_id": str(action.get("action_id", "")),
 			"emit_object_id": str(action.get("emit_object_id", "")),
 			"label": str(action.get("label", "")),
-			"text": str(action.get("text", "")),
-			"summary": str(action.get("summary", "")),
 			"disabled_reason": str(action.get("disabled_reason", "")),
 			"index": index,
-			"enabled": bool(action.get("enabled", true)) and not bool(action.get("disabled", false)),
+			"enabled": typeof(enabled_value) == TYPE_BOOL and bool(enabled_value),
+			"selected_object_id": selected_object_id,
+			"rendered": rendered,
+			"rect": global_rect if rendered else Rect2(),
 		})
 	return result
+
+
+func _room_action_label_is_fully_rendered(action: Dictionary, board_rect: Rect2) -> bool:
+	var label := str(action.get("label", "")).strip_edges()
+	var inline_value: Variant = action.get("inline", null)
+	if label.is_empty() or not board_rect.has_area() or typeof(inline_value) != TYPE_BOOL:
+		return false
+	var font := ThemeDB.fallback_font
+	if font == null:
+		return false
+	var font_size := 11 if bool(inline_value) else 9
+	var text_size := font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size)
+	return text_size.x <= board_rect.size.x - 8.0 + 0.75 \
+		and text_size.y <= board_rect.size.y + 0.75
+
+
+func _snapshot_rect(value: Variant) -> Rect2:
+	if typeof(value) == TYPE_RECT2:
+		return value as Rect2
+	if typeof(value) != TYPE_DICTIONARY:
+		return Rect2()
+	var data := value as Dictionary
+	for key in ["x", "y", "w", "h"]:
+		if not data.has(key) or typeof(data.get(key)) not in [TYPE_INT, TYPE_FLOAT]:
+			return Rect2()
+	return Rect2(
+		Vector2(float(data.get("x")), float(data.get("y"))),
+		Vector2(float(data.get("w")), float(data.get("h")))
+	)
 
 
 func _game_surface_actions(canvas: Control, public_game: Dictionary = {}) -> Array:

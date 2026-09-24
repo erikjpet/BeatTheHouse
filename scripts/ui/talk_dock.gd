@@ -868,6 +868,8 @@ func _render_choices() -> void:
 			response.add_child(response_icon)
 			rendered_response_icon_kinds.append(icon_kind)
 		var button := FoundationWidgets.button(label, Callable(self, "_on_choice_pressed").bind(choice_id))
+		button.set_meta("event_id", str(entry.get("event_id", "")).strip_edges())
+		button.set_meta("choice_id", choice_id)
 		button.action_mode = BaseButton.ACTION_MODE_BUTTON_PRESS
 		button.custom_minimum_size = Vector2(
 			VisualStyle.FLEXIBLE_SIZE,

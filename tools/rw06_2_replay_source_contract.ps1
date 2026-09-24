@@ -11,6 +11,12 @@ $LauncherPath = Join-Path $PSScriptRoot 'agent_playtest_session.ps1'
 $BridgePath = Join-Path $PSScriptRoot 'agent_playtest_session.gd'
 $SanitizerPath = Join-Path $PSScriptRoot 'agent_playtest_public_observation.gd'
 $ObservationContractPath = Join-Path $PSScriptRoot 'rw06_2_public_observation_contract.gd'
+$FoundationMainPath = Join-Path $Worktree 'scripts\ui\foundation_main.gd'
+$FoundationHudBarPath = Join-Path $Worktree 'scripts\ui\foundation_hud_bar.gd'
+$FoundationScreenBuilderPath = Join-Path $Worktree 'scripts\ui\foundation_screen_builder.gd'
+$PixelSceneCanvasPath = Join-Path $Worktree 'scripts\ui\pixel_scene_canvas.gd'
+$TalkDockPath = Join-Path $Worktree 'scripts\ui\talk_dock.gd'
+$RunStatePath = Join-Path $Worktree 'scripts\core\run_state.gd'
 $ReportPath = Join-Path $Worktree '.tmp\rw06_2\replay_source_contract.json'
 $SemanticScrollReportPath = Join-Path $Worktree '.tmp\rw06_2\semantic_scroll_contract.json'
 
@@ -21,6 +27,10 @@ $buttonViewportValidFixtures = 0
 $buttonViewportHostileFixtures = 0
 $machineJamValidFixtures = 0
 $machineJamHostileFixtures = 0
+$grandFareFundingValidFixtures = 0
+$grandFareFundingHostileFixtures = 0
+$grandFareCashEventValidFixtures = 0
+$grandFareCashEventHostileFixtures = 0
 $commandOpenValidFixtures = 0
 $commandOpenHostileFixtures = 0
 
@@ -163,26 +173,214 @@ function Assert-ButtonInputRouteFixture {
 }
 
 function New-MachineJamPolicyFixture {
-    param([int]$HeatLevel = 1)
-    return [pscustomobject]@{
+    param([switch]$WithHiddenSentinels)
+    $fixture = [pscustomobject]@{
         event_popup = [pscustomobject]@{
             visible = $true
-            blocking = $true
-            dismissible = $false
-            popup_type = 'triggered_event'
+            render_valid = $true
             event_id = 'machine_jam'
+            title = 'Machine Jam'
+            summary = "The machine stops. The room doesn't."
             choice_ids = @('wait', 'push')
             choices = @(
-                [pscustomobject]@{ id = 'wait'; enabled = $true; requires_confirm = $true; consequence_summary = 'Bankroll -3; Heat -3'; impact_summary = 'Bankroll -3; Heat -3' },
-                [pscustomobject]@{ id = 'push'; enabled = $true; requires_confirm = $true; consequence_summary = 'Heat +6'; impact_summary = 'Heat +6' }
+                [pscustomobject]@{ id = 'wait'; label = 'Wait it out'; text = 'Play stops. Attention moves on.'; enabled = $true },
+                [pscustomobject]@{ id = 'push'; label = 'Push through'; text = 'You keep playing. The room turns your way.'; enabled = $true }
             )
         }
         talk = [pscustomobject]@{ visible = $false }
-        heat_level = $HeatLevel
+    }
+    if ($WithHiddenSentinels) {
+        $fixture.event_popup.choices[0] | Add-Member -NotePropertyName consequence_summary -NotePropertyValue 'HIDDEN SENTINEL'
+        $fixture.event_popup.choices[0] | Add-Member -NotePropertyName impact_summary -NotePropertyValue 'HIDDEN SENTINEL'
+        $fixture.event_popup.choices[0] | Add-Member -NotePropertyName requires_confirm -NotePropertyValue $true
+    }
+    return $fixture
+}
+
+
+function New-GrandFareFundingPolicyFixture {
+    param([ValidateSet('crew', 'family', 'street', 'motel_friend')][string]$Kind = 'crew')
+
+    $definition = switch ($Kind) {
+        'family' {
+            [pscustomobject]@{
+                lender_id = 'brother_in_law'; lender_label = 'Your Brother-in-Law'; world_node_id = 'motel'
+                terms = 'Family help. Family invoice. Borrow $30. Repay $33 (10% interest) in 6 turns.'
+                principal = 30; before_bankroll = 86; debt_kind = 'cash'
+                before_debt = [pscustomobject]@{ rendered = $true; present = $true; tooltip = 'Vic Mercer balance 30' }
+                after_debt = [pscustomobject]@{ rendered = $true; present = $true; tooltip = '2 active debts' }
+                message = 'Family money arrives with a sigh attached.'
+            }
+        }
+        'street' {
+            [pscustomobject]@{
+                lender_id = 'street_lender'; lender_label = 'Vic Mercer'; world_node_id = 'back_alley'
+                terms = 'Fast cash. A cold book. Borrow $25. Repay $30 (10% interest) in 3 turns.'
+                principal = 25; before_bankroll = 100; debt_kind = 'cash'
+                before_debt = [pscustomobject]@{ rendered = $true; present = $false }
+                after_debt = [pscustomobject]@{ rendered = $true; present = $true; tooltip = 'Vic Mercer balance 30' }
+                message = 'Fast cash. Your name in the book.'
+            }
+        }
+        'motel_friend' {
+            [pscustomobject]@{
+                lender_id = 'motel_friend'; lender_label = 'Motel Friend'; world_node_id = 'motel'
+                terms = 'A soft loan. Thin walls. Borrow $20. Repay $24 (10% interest) in 4 turns.'
+                principal = 20; before_bankroll = 86; debt_kind = 'cash'
+                before_debt = [pscustomobject]@{ rendered = $true; present = $false }
+                after_debt = [pscustomobject]@{ rendered = $true; present = $true; tooltip = 'Motel Friend balance 24' }
+                message = "Nico spots you cash and says it's nothing."
+            }
+        }
+        default {
+            [pscustomobject]@{
+                lender_id = 'the_crew'; lender_label = 'The Crew'; world_node_id = 'kitty_cat_lounge'
+                terms = 'No interest. Only favors. Borrow $45. Repay 2 favors (0% cash interest) in 2 turns.'
+                principal = 45; before_bankroll = 63; debt_kind = 'favor'
+                before_debt = [pscustomobject]@{ rendered = $true; present = $false }
+                after_debt = [pscustomobject]@{ rendered = $true; present = $true; tooltip = 'The Crew wants 2 favors' }
+                message = "The Crew hands it over like it was always yours. It wasn't."
+            }
+        }
+    }
+    $lenderId = [string]$definition.lender_id
+    $lenderLabel = [string]$definition.lender_label
+    $worldNodeId = [string]$definition.world_node_id
+    $terms = [string]$definition.terms
+    $principal = [int]$definition.principal
+    $beforeBankroll = [int]$definition.before_bankroll
+    $beforeDebtIndicator = $definition.before_debt
+    $afterDebtIndicator = $definition.after_debt
+    $authoredMessage = [string]$definition.message
+
+    return [pscustomobject]@{
+        world_node_id = $worldNodeId
+        expected_semantic_id = "lender:$lenderId"
+        canvas_objects = @([pscustomobject]@{
+            semantic_id = "lender:$lenderId"
+            label = $lenderLabel
+            object_type = 'character'
+            enabled = $true
+            rendered = $true
+        })
+        room_actions = @([pscustomobject]@{
+            id = ''
+            action = ''
+            action_id = ''
+            emit_object_id = ''
+            label = 'Use'
+            enabled = $true
+            index = 0
+        })
+        talk = [pscustomobject]@{
+            visible = $true
+            render_valid = $true
+            expanded = $true
+            body_complete = $true
+            typewriter_active = $false
+            event_id = "lender_conversation:borrow:$lenderId"
+            summary = $terms
+            choice_ids = @('accept', 'decline')
+        }
+        talk_choices = @(
+            [pscustomobject]@{ id = 'accept'; label = 'Accept Offer'; enabled = $true },
+            [pscustomobject]@{ id = 'decline'; label = 'Not Now'; enabled = $true }
+        )
+        confirmation_talk = [pscustomobject]@{
+            visible = $true
+            render_valid = $true
+            expanded = $true
+            body_complete = $true
+            typewriter_active = $false
+            event_id = "lender_conversation:borrow:$lenderId"
+            summary = $terms
+            choice_ids = @('accept', 'decline')
+        }
+        confirmation_choices = @(
+            [pscustomobject]@{ id = 'accept'; label = 'Confirm: Accept Offer'; enabled = $true },
+            [pscustomobject]@{ id = 'decline'; label = 'Not Now'; enabled = $true }
+        )
+        accepted_offer_keys = @()
+        accepted_lender_ids = @()
+        before_bankroll = $beforeBankroll
+        before_debt_indicator = $beforeDebtIndicator
+        expected_principal = $principal
+        expected_debt_kind = [string]$definition.debt_kind
+        after_observation = [pscustomobject]@{
+            status_hud = [pscustomobject]@{
+                bankroll_rendered = $true
+                bankroll = $beforeBankroll + $principal
+                debt_indicator = $afterDebtIndicator
+            }
+            talk = [pscustomobject]@{ visible = $false }
+            feedback = [pscustomobject]@{
+                visible = $true
+                title = 'Result'
+                text = '{0} {1}  $+{2}' -f $authoredMessage, $terms, $principal
+            }
+        }
     }
 }
 
-foreach ($path in @($RunnerPath, $ReplayPolicyPath, $LauncherPath, $BridgePath, $SanitizerPath, $ObservationContractPath)) {
+
+function New-GrandFareCashEventPolicyFixture {
+    param([ValidateSet('alley', 'wedding')][string]$Kind = 'alley')
+
+    $isWedding = $Kind -ceq 'wedding'
+    $eventId = if ($isWedding) { 'scenario_wedding_overflow_hallway' } else { 'back_alley_offer' }
+    $eventLabel = if ($isWedding) { 'Hallway Table' } else { 'Back Alley Offer' }
+    $choiceId = if ($isWedding) { 'take_the_hallway_seat' } else { 'take_cash' }
+    $choiceLabel = if ($isWedding) { 'Take the hallway seat' } else { 'Take the cash' }
+    $otherChoiceId = if ($isWedding) { 'step_over_the_coolers' } else { 'walk' }
+    $otherChoiceLabel = if ($isWedding) { 'Step over the coolers' } else { 'Keep walking' }
+    $message = if ($isWedding) { 'The wedding pays out to learn your face.' } else { 'Small cash. Small stain. Both travel light.' }
+    $cashDelta = if ($isWedding) { 10 } else { 8 }
+    $heatDelta = if ($isWedding) { 3 } else { 2 }
+    $beforeBankroll = if ($isWedding) { 116 } else { 171 }
+    $beforeHeat = 4
+
+    return [pscustomobject]@{
+        world_node_id = if ($isWedding) { 'motel' } else { 'back_alley' }
+        event_id = $eventId
+        event_object = [pscustomobject]@{
+            semantic_id = "event:$eventId"
+            label = $eventLabel
+            object_type = 'event'
+            enabled = $true
+            rendered = $true
+        }
+        room_actions = @(
+            [pscustomobject]@{ emit_object_id = ('event_response:{0}:{1}' -f $eventId, $choiceId); label = $choiceLabel; enabled = $true; index = 0 },
+            [pscustomobject]@{ emit_object_id = ('event_response:{0}:{1}' -f $eventId, $otherChoiceId); label = $otherChoiceLabel; enabled = $true; index = 1 }
+        )
+        talk = [pscustomobject]@{ visible = $false }
+        resolved_event_keys = @()
+        before_bankroll = $beforeBankroll
+        before_heat = $beforeHeat
+        before_feedback = [pscustomobject]@{ visible = $false }
+        after_observation = [pscustomobject]@{
+            status_hud = [pscustomobject]@{
+                bankroll_rendered = $true
+                bankroll = $beforeBankroll + $cashDelta
+                heat_rendered = $true
+                heat_level = $beforeHeat + $heatDelta
+            }
+            event_popup = [pscustomobject]@{ visible = $false }
+            talk = [pscustomobject]@{ visible = $false }
+            feedback = [pscustomobject]@{
+                visible = $true
+                title = 'Result'
+                text = '{0}  $+{1} / Heat +{2}' -f $message, $cashDelta, $heatDelta
+            }
+        }
+    }
+}
+
+foreach ($path in @(
+    $RunnerPath, $ReplayPolicyPath, $LauncherPath, $BridgePath, $SanitizerPath,
+    $ObservationContractPath, $FoundationMainPath, $FoundationHudBarPath,
+    $FoundationScreenBuilderPath, $PixelSceneCanvasPath, $TalkDockPath, $RunStatePath
+)) {
     if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
         Add-Failure "Required rw06_2 source is missing: $path"
     }
@@ -199,6 +397,12 @@ if ($failures.Count -eq 0) {
     $bridge = Get-Content -LiteralPath $BridgePath -Raw
     $sanitizer = Get-Content -LiteralPath $SanitizerPath -Raw
     $observationContract = Get-Content -LiteralPath $ObservationContractPath -Raw
+    $foundationMain = Get-Content -LiteralPath $FoundationMainPath -Raw
+    $foundationHudBar = Get-Content -LiteralPath $FoundationHudBarPath -Raw
+    $foundationScreenBuilder = Get-Content -LiteralPath $FoundationScreenBuilderPath -Raw
+    $pixelSceneCanvas = Get-Content -LiteralPath $PixelSceneCanvasPath -Raw
+    $talkDock = Get-Content -LiteralPath $TalkDockPath -Raw
+    $runState = Get-Content -LiteralPath $RunStatePath -Raw
 
     try {
         . $ReplayPolicyPath
@@ -209,15 +413,15 @@ if ($failures.Count -eq 0) {
 
     if ($null -ne (Get-Command 'Select-GrandFareMachineJamChoice' -ErrorAction SilentlyContinue)) {
         $validMachineJamFixtures = @(
-            [pscustomobject]@{ label = 'low-heat-preserves-fare'; fixture = (New-MachineJamPolicyFixture -HeatLevel 1); expected = 'push' },
-            [pscustomobject]@{ label = 'high-heat-protects-clean-cap'; fixture = (New-MachineJamPolicyFixture -HeatLevel 25); expected = 'wait' }
+            [pscustomobject]@{ label = 'exact-rendered-copy'; fixture = (New-MachineJamPolicyFixture) },
+            [pscustomobject]@{ label = 'hidden-private-sentinels-are-inert'; fixture = (New-MachineJamPolicyFixture -WithHiddenSentinels) }
         )
         $machineJamValidFixtures = $validMachineJamFixtures.Count
         foreach ($case in $validMachineJamFixtures) {
             try {
-                $actual = Select-GrandFareMachineJamChoice -EventPopup $case.fixture.event_popup -Talk $case.fixture.talk -HeatLevel $case.fixture.heat_level
-                if ([string]$actual -cne [string]$case.expected) {
-                    Add-Failure "Valid machine_jam fixture '$($case.label)' chose '$actual' instead of '$($case.expected)'."
+                $actual = Select-GrandFareMachineJamChoice -EventPopup $case.fixture.event_popup -Talk $case.fixture.talk
+                if ($actual -isnot [string] -or [string]$actual -cne 'wait') {
+                    Add-Failure "Valid machine_jam fixture '$($case.label)' did not choose the exact visible de-escalation response."
                 }
             }
             catch {
@@ -225,42 +429,53 @@ if ($failures.Count -eq 0) {
             }
         }
 
-        $wrongEvent = New-MachineJamPolicyFixture
-        $wrongEvent.event_popup.event_id = 'unlisted_event'
-        $missingChoice = New-MachineJamPolicyFixture
-        $missingChoice.event_popup.choice_ids = @('wait')
-        $missingChoice.event_popup.choices = @($missingChoice.event_popup.choices | Where-Object { $_.id -ceq 'wait' })
-        $duplicateChoice = New-MachineJamPolicyFixture
-        $duplicateChoice.event_popup.choices = @($duplicateChoice.event_popup.choices[0], $duplicateChoice.event_popup.choices[0])
-        $disabledChoice = New-MachineJamPolicyFixture
-        $disabledChoice.event_popup.choices[1].enabled = $false
-        $changedConsequence = New-MachineJamPolicyFixture
-        $changedConsequence.event_popup.choices[1].consequence_summary = 'Heat +5'
-        $nonBooleanEnabled = New-MachineJamPolicyFixture
-        $nonBooleanEnabled.event_popup.choices[1].enabled = 'true'
-        $caseMutatedChoiceIds = New-MachineJamPolicyFixture
-        $caseMutatedChoiceIds.event_popup.choice_ids = @('WAIT', 'PUSH')
-        $visibleTalk = New-MachineJamPolicyFixture
-        $visibleTalk.talk.visible = $true
-        $extraChoice = New-MachineJamPolicyFixture
-        $extraChoice.event_popup.choice_ids = @('wait', 'push', 'guess')
-        $extraChoice.event_popup.choices = @($extraChoice.event_popup.choices) + @([pscustomobject]@{ id = 'guess'; enabled = $true; requires_confirm = $true; consequence_summary = ''; impact_summary = '' })
-        $hostileMachineJamFixtures = @(
-            [pscustomobject]@{ label = 'wrong-event-id'; fixture = $wrongEvent },
-            [pscustomobject]@{ label = 'missing-choice'; fixture = $missingChoice },
-            [pscustomobject]@{ label = 'duplicate-choice'; fixture = $duplicateChoice },
-            [pscustomobject]@{ label = 'disabled-choice'; fixture = $disabledChoice },
-            [pscustomobject]@{ label = 'changed-consequence'; fixture = $changedConsequence },
-            [pscustomobject]@{ label = 'non-boolean-enabled'; fixture = $nonBooleanEnabled },
-            [pscustomobject]@{ label = 'case-mutated-choice-ids'; fixture = $caseMutatedChoiceIds },
-            [pscustomobject]@{ label = 'visible-talk'; fixture = $visibleTalk },
-            [pscustomobject]@{ label = 'extra-choice'; fixture = $extraChoice }
-        )
+        $hostileMachineJamFixtures = [Collections.Generic.List[object]]::new()
+        $fixture = New-MachineJamPolicyFixture; $fixture.event_popup.visible = $false
+        $hostileMachineJamFixtures.Add([pscustomobject]@{ label = 'popup-hidden'; fixture = $fixture })
+        $fixture = New-MachineJamPolicyFixture; $fixture.event_popup.visible = 'true'
+        $hostileMachineJamFixtures.Add([pscustomobject]@{ label = 'popup-visible-non-boolean'; fixture = $fixture })
+        $fixture = New-MachineJamPolicyFixture; $fixture.event_popup.render_valid = $false
+        $hostileMachineJamFixtures.Add([pscustomobject]@{ label = 'popup-clipped'; fixture = $fixture })
+        $fixture = New-MachineJamPolicyFixture; $fixture.event_popup.render_valid = 1
+        $hostileMachineJamFixtures.Add([pscustomobject]@{ label = 'popup-render-witness-non-boolean'; fixture = $fixture })
+        $fixture = New-MachineJamPolicyFixture; $fixture.event_popup.event_id = 'Machine_Jam'
+        $hostileMachineJamFixtures.Add([pscustomobject]@{ label = 'event-id-case'; fixture = $fixture })
+        $fixture = New-MachineJamPolicyFixture; $fixture.event_popup.event_id = 'unlisted_event'
+        $hostileMachineJamFixtures.Add([pscustomobject]@{ label = 'wrong-event-id'; fixture = $fixture })
+        $fixture = New-MachineJamPolicyFixture; $fixture.event_popup.title = 'Machine jam'
+        $hostileMachineJamFixtures.Add([pscustomobject]@{ label = 'title-copy'; fixture = $fixture })
+        $fixture = New-MachineJamPolicyFixture; $fixture.event_popup.summary = 'The machine stops.'
+        $hostileMachineJamFixtures.Add([pscustomobject]@{ label = 'summary-copy'; fixture = $fixture })
+        $fixture = New-MachineJamPolicyFixture; $fixture.event_popup.choice_ids = @('push', 'wait')
+        $hostileMachineJamFixtures.Add([pscustomobject]@{ label = 'choice-order'; fixture = $fixture })
+        $fixture = New-MachineJamPolicyFixture; $fixture.event_popup.choice_ids = @('WAIT', 'push')
+        $hostileMachineJamFixtures.Add([pscustomobject]@{ label = 'choice-id-case'; fixture = $fixture })
+        $fixture = New-MachineJamPolicyFixture; $fixture.event_popup.choice_ids = @('wait')
+        $hostileMachineJamFixtures.Add([pscustomobject]@{ label = 'choice-id-missing'; fixture = $fixture })
+        $fixture = New-MachineJamPolicyFixture; $fixture.event_popup.choice_ids = @('wait', 'push', 'guess')
+        $hostileMachineJamFixtures.Add([pscustomobject]@{ label = 'choice-id-extra'; fixture = $fixture })
+        $fixture = New-MachineJamPolicyFixture; $fixture.event_popup.choices = @($fixture.event_popup.choices[0], $fixture.event_popup.choices[0])
+        $hostileMachineJamFixtures.Add([pscustomobject]@{ label = 'choice-duplicate'; fixture = $fixture })
+        $fixture = New-MachineJamPolicyFixture; $fixture.event_popup.choices[0].enabled = $false
+        $hostileMachineJamFixtures.Add([pscustomobject]@{ label = 'choice-disabled'; fixture = $fixture })
+        $fixture = New-MachineJamPolicyFixture; $fixture.event_popup.choices[0].enabled = 'true'
+        $hostileMachineJamFixtures.Add([pscustomobject]@{ label = 'choice-enabled-non-boolean'; fixture = $fixture })
+        $fixture = New-MachineJamPolicyFixture; $fixture.event_popup.choices[0].label = 'wait it out'
+        $hostileMachineJamFixtures.Add([pscustomobject]@{ label = 'choice-label-case'; fixture = $fixture })
+        $fixture = New-MachineJamPolicyFixture; $fixture.event_popup.choices[1].text = 'The room turns.'
+        $hostileMachineJamFixtures.Add([pscustomobject]@{ label = 'choice-copy'; fixture = $fixture })
+        $fixture = New-MachineJamPolicyFixture; $fixture.talk.visible = $true
+        $hostileMachineJamFixtures.Add([pscustomobject]@{ label = 'talk-visible'; fixture = $fixture })
+        $fixture = New-MachineJamPolicyFixture; $fixture.talk.visible = 0
+        $hostileMachineJamFixtures.Add([pscustomobject]@{ label = 'talk-visible-non-boolean'; fixture = $fixture })
+        $fixture = New-MachineJamPolicyFixture; $fixture.talk = [pscustomobject]@{ Visible = $false }
+        $hostileMachineJamFixtures.Add([pscustomobject]@{ label = 'property-name-case'; fixture = $fixture })
+
         $machineJamHostileFixtures = $hostileMachineJamFixtures.Count
         foreach ($case in $hostileMachineJamFixtures) {
             $threw = $false
             try {
-                $null = Select-GrandFareMachineJamChoice -EventPopup $case.fixture.event_popup -Talk $case.fixture.talk -HeatLevel $case.fixture.heat_level
+                $null = Select-GrandFareMachineJamChoice -EventPopup $case.fixture.event_popup -Talk $case.fixture.talk
             }
             catch {
                 $threw = $true
@@ -272,6 +487,403 @@ if ($failures.Count -eq 0) {
     }
     else {
         Add-Failure 'Replay policy helper did not export Select-GrandFareMachineJamChoice.'
+    }
+
+    function Invoke-FundingPolicyFixture {
+        param(
+            [Parameter(Mandatory = $true)]$Fixture,
+            [ValidateSet('selection', 'action', 'preflight', 'talk', 'confirmation', 'result')]
+            [string]$Through = 'result'
+        )
+
+        $selection = Select-GrandFareFundingObject -CanvasObjects @($Fixture.canvas_objects) -WorldNodeId ([string]$Fixture.world_node_id) -AcceptedOfferKeys @($Fixture.accepted_offer_keys) -AcceptedLenderIds @($Fixture.accepted_lender_ids)
+        if ($Fixture.PSObject.Properties['expected_semantic_id'] -and
+            [string]$selection.semantic_id -cne [string]$Fixture.expected_semantic_id) {
+            throw "Funding selection did not use the deterministic expected semantic id."
+        }
+        if ($Through -ceq 'selection') { return $selection }
+
+        $actionSelection = Select-GrandFareFundingObjectAction -Selection $selection -RoomActions @($Fixture.room_actions)
+        if ($Through -ceq 'action') { return $actionSelection }
+
+        $preflightAccepted = @($Fixture.accepted_lender_ids)
+        if ($Fixture.PSObject.Properties['preflight_accepted_lender_ids']) {
+            $preflightAccepted = @($Fixture.preflight_accepted_lender_ids)
+        }
+        $preflight = Test-GrandFareFundingPreflight -Selection $actionSelection -DebtIndicator $Fixture.before_debt_indicator -AcceptedLenderIds $preflightAccepted
+        if ($preflight -isnot [bool] -or -not [bool]$preflight) {
+            throw 'Funding preflight refused the fixture.'
+        }
+        if ($Through -ceq 'preflight') { return $actionSelection }
+
+        $offer = Select-GrandFareFundingTalkOffer -Selection $actionSelection -Talk $Fixture.talk -TalkChoices @($Fixture.talk_choices)
+        if ($Through -ceq 'talk') { return $offer }
+
+        $null = Assert-GrandFareFundingConfirmation -Offer $offer -Talk $Fixture.confirmation_talk -TalkChoices @($Fixture.confirmation_choices)
+        if ($Through -ceq 'confirmation') { return $offer }
+
+        $null = Assert-GrandFareFundingResult -Offer $offer -BeforeBankroll ([int]$Fixture.before_bankroll) -BeforeDebtIndicator $Fixture.before_debt_indicator -AfterObservation $Fixture.after_observation
+        return $offer
+    }
+
+    $fundingCommandNames = @(
+        'Select-GrandFareFundingObject',
+        'Select-GrandFareFundingObjectAction',
+        'Get-GrandFarePublicDebtCount',
+        'Test-GrandFareFundingPreflight',
+        'Select-GrandFareFundingTalkOffer',
+        'Assert-GrandFareFundingConfirmation',
+        'Assert-GrandFareFundingResult'
+    )
+    $fundingCommands = @($fundingCommandNames | Where-Object {
+        $null -ne (Get-Command $_ -ErrorAction SilentlyContinue)
+    })
+    if ($fundingCommands.Count -ceq $fundingCommandNames.Count) {
+        $validFundingFixtures = [Collections.Generic.List[object]]::new()
+        $validFundingFixtures.Add([pscustomobject]@{ label = 'crew-debt-free'; fixture = (New-GrandFareFundingPolicyFixture -Kind crew) })
+        $validFundingFixtures.Add([pscustomobject]@{ label = 'family-adds-second-visible-debt'; fixture = (New-GrandFareFundingPolicyFixture -Kind family) })
+
+        $fixture = New-GrandFareFundingPolicyFixture -Kind crew
+        $fixture.canvas_objects += [pscustomobject]@{ semantic_id = 'lender:aaa_disabled'; label = 'Disabled Lender'; object_type = 'lender'; enabled = $false; rendered = $true }
+        $validFundingFixtures.Add([pscustomobject]@{ label = 'disabled-other-lender-is-skipped'; fixture = $fixture })
+
+        $fixture = New-GrandFareFundingPolicyFixture -Kind crew
+        $fixture.canvas_objects += [pscustomobject]@{ semantic_id = 'lender:aaa_accepted'; label = 'Accepted Lender'; object_type = 'lender'; enabled = $true; rendered = $true }
+        $fixture.accepted_lender_ids = @('aaa_accepted')
+        $validFundingFixtures.Add([pscustomobject]@{ label = 'accepted-other-lender-is-skipped'; fixture = $fixture })
+
+        $fixture = New-GrandFareFundingPolicyFixture -Kind crew
+        $fixture.canvas_objects += [pscustomobject]@{ semantic_id = 'lender:zeta'; label = 'Zeta'; object_type = 'lender'; enabled = $true; rendered = $true }
+        $validFundingFixtures.Add([pscustomobject]@{ label = 'multiple-enabled-lenders-use-ordinal-id'; fixture = $fixture })
+
+        $fixture = New-GrandFareFundingPolicyFixture -Kind street
+        $fixture.canvas_objects += [pscustomobject]@{ semantic_id = 'lender:the_crew'; label = 'The Crew'; object_type = 'character'; enabled = $true; rendered = $true }
+        $validFundingFixtures.Add([pscustomobject]@{ label = 'back-alley-production-pair-selects-street-lender'; fixture = $fixture })
+
+        $fixture = New-GrandFareFundingPolicyFixture -Kind motel_friend
+        $fixture.canvas_objects += [pscustomobject]@{ semantic_id = 'lender:brother_in_law'; label = 'Your Brother-in-Law'; object_type = 'character'; enabled = $false; rendered = $true }
+        $validFundingFixtures.Add([pscustomobject]@{ label = 'motel-disabled-brother-selects-motel-friend'; fixture = $fixture })
+
+        $fixture = New-GrandFareFundingPolicyFixture -Kind family
+        $fixture.canvas_objects += [pscustomobject]@{ semantic_id = 'lender:motel_friend'; label = 'Motel Friend'; object_type = 'character'; enabled = $true; rendered = $true }
+        $validFundingFixtures.Add([pscustomobject]@{ label = 'motel-enabled-brother-wins-ordinal-selection'; fixture = $fixture })
+
+        $grandFareFundingValidFixtures = $validFundingFixtures.Count
+        foreach ($case in $validFundingFixtures) {
+            try {
+                $offer = Invoke-FundingPolicyFixture -Fixture $case.fixture -Through result
+                if ([int]$offer.principal -cne [int]$case.fixture.expected_principal -or
+                    [string]$offer.debt_kind -cne [string]$case.fixture.expected_debt_kind) {
+                    Add-Failure "Valid Grand-fare funding fixture '$($case.label)' returned the wrong disclosed terms."
+                }
+            }
+            catch {
+                Add-Failure "Valid Grand-fare funding fixture '$($case.label)' threw: $($_.Exception.Message)"
+            }
+        }
+
+        $fundingHostileCases = [Collections.Generic.List[object]]::new()
+
+        $fixture = New-GrandFareFundingPolicyFixture; $fixture.canvas_objects[0].PSObject.Properties.Remove('rendered')
+        $fundingHostileCases.Add([pscustomobject]@{ label = 'object-rendered-missing'; stage = 'selection'; fixture = $fixture })
+        $fixture = New-GrandFareFundingPolicyFixture; $fixture.canvas_objects[0].rendered = $false
+        $fundingHostileCases.Add([pscustomobject]@{ label = 'object-clipped'; stage = 'selection'; fixture = $fixture })
+        $fixture = New-GrandFareFundingPolicyFixture; $fixture.canvas_objects[0].rendered = 1
+        $fundingHostileCases.Add([pscustomobject]@{ label = 'object-rendered-non-boolean'; stage = 'selection'; fixture = $fixture })
+        $fixture = New-GrandFareFundingPolicyFixture; $fixture.canvas_objects[0].enabled = $false
+        $fundingHostileCases.Add([pscustomobject]@{ label = 'object-disabled'; stage = 'selection'; fixture = $fixture })
+        $fixture = New-GrandFareFundingPolicyFixture; $fixture.canvas_objects[0].enabled = 'true'
+        $fundingHostileCases.Add([pscustomobject]@{ label = 'object-enabled-non-boolean'; stage = 'selection'; fixture = $fixture })
+        $fixture = New-GrandFareFundingPolicyFixture; $fixture.canvas_objects = @()
+        $fundingHostileCases.Add([pscustomobject]@{ label = 'object-hidden'; stage = 'selection'; fixture = $fixture })
+        $fixture = New-GrandFareFundingPolicyFixture; $fixture.canvas_objects += $fixture.canvas_objects[0]
+        $fundingHostileCases.Add([pscustomobject]@{ label = 'duplicate-semantic-id'; stage = 'selection'; fixture = $fixture })
+        $fixture = New-GrandFareFundingPolicyFixture; $fixture.world_node_id = 'Kitty_Cat_Lounge'
+        $fundingHostileCases.Add([pscustomobject]@{ label = 'world-node-case'; stage = 'selection'; fixture = $fixture })
+        $fixture = New-GrandFareFundingPolicyFixture; $fixture.canvas_objects[0].semantic_id = 'LENDER:the_crew'
+        $fundingHostileCases.Add([pscustomobject]@{ label = 'lender-prefix-case'; stage = 'selection'; fixture = $fixture })
+        $fixture = New-GrandFareFundingPolicyFixture; $fixture.canvas_objects[0].semantic_id = 'lender:The_Crew'
+        $fundingHostileCases.Add([pscustomobject]@{ label = 'lender-suffix-case'; stage = 'selection'; fixture = $fixture })
+        $fixture = New-GrandFareFundingPolicyFixture; $fixture.canvas_objects[0].object_type = 'Character'
+        $fundingHostileCases.Add([pscustomobject]@{ label = 'object-type-case'; stage = 'selection'; fixture = $fixture })
+        $fixture = New-GrandFareFundingPolicyFixture
+        $fixture.canvas_objects = @([pscustomobject]@{ semantic_id = 'lender:the_crew'; Label = 'The Crew'; object_type = 'character'; enabled = $true; rendered = $true })
+        $fundingHostileCases.Add([pscustomobject]@{ label = 'object-property-case'; stage = 'selection'; fixture = $fixture })
+        $fixture = New-GrandFareFundingPolicyFixture; $fixture.accepted_offer_keys = @('kitty_cat_lounge|lender:the_crew')
+        $fundingHostileCases.Add([pscustomobject]@{ label = 'accepted-offer-key'; stage = 'selection'; fixture = $fixture })
+        $fixture = New-GrandFareFundingPolicyFixture; $fixture.accepted_lender_ids = @('the_crew')
+        $fundingHostileCases.Add([pscustomobject]@{ label = 'accepted-lender-id'; stage = 'selection'; fixture = $fixture })
+
+        $fixture = New-GrandFareFundingPolicyFixture; $fixture.room_actions += $fixture.room_actions[0]
+        $fundingHostileCases.Add([pscustomobject]@{ label = 'action-duplicate'; stage = 'action'; fixture = $fixture })
+        $fixture = New-GrandFareFundingPolicyFixture; $fixture.room_actions[0].enabled = $false
+        $fundingHostileCases.Add([pscustomobject]@{ label = 'action-disabled'; stage = 'action'; fixture = $fixture })
+        $fixture = New-GrandFareFundingPolicyFixture; $fixture.room_actions[0].enabled = 'true'
+        $fundingHostileCases.Add([pscustomobject]@{ label = 'action-enabled-non-boolean'; stage = 'action'; fixture = $fixture })
+        $fixture = New-GrandFareFundingPolicyFixture; $fixture.room_actions[0].label = 'use'
+        $fundingHostileCases.Add([pscustomobject]@{ label = 'action-label-case'; stage = 'action'; fixture = $fixture })
+        $fixture = New-GrandFareFundingPolicyFixture; $fixture.room_actions[0].index = 1
+        $fundingHostileCases.Add([pscustomobject]@{ label = 'action-index'; stage = 'action'; fixture = $fixture })
+        $fixture = New-GrandFareFundingPolicyFixture; $fixture.room_actions[0].id = 'use_lender_hook'
+        $fundingHostileCases.Add([pscustomobject]@{ label = 'action-fabricated-id'; stage = 'action'; fixture = $fixture })
+        $fixture = New-GrandFareFundingPolicyFixture
+        $fixture.room_actions = @([pscustomobject]@{ id = ''; action = ''; action_id = ''; Emit_Object_Id = ''; label = 'Use'; enabled = $true; index = 0 })
+        $fundingHostileCases.Add([pscustomobject]@{ label = 'action-property-case'; stage = 'action'; fixture = $fixture })
+
+        $fixture = New-GrandFareFundingPolicyFixture
+        $fixture.before_debt_indicator = [pscustomobject]@{ rendered = $true; present = $true; tooltip = 'Existing lender balance 10' }
+        $fundingHostileCases.Add([pscustomobject]@{ label = 'crew-with-existing-debt'; stage = 'preflight'; fixture = $fixture })
+        $fixture = New-GrandFareFundingPolicyFixture
+        $fixture | Add-Member -NotePropertyName preflight_accepted_lender_ids -NotePropertyValue @('the_crew')
+        $fundingHostileCases.Add([pscustomobject]@{ label = 'preflight-repeat-lender'; stage = 'preflight'; fixture = $fixture })
+        foreach ($tooltipCase in @(
+            [pscustomobject]@{ label = 'debt-count-case'; text = '2 Active debts' },
+            [pscustomobject]@{ label = 'debt-count-leading-zero'; text = '01 active debts' },
+            [pscustomobject]@{ label = 'debt-count-impossible-one'; text = '1 active debts' }
+        )) {
+            $fixture = New-GrandFareFundingPolicyFixture
+            $fixture.before_debt_indicator = [pscustomobject]@{ rendered = $true; present = $true; tooltip = $tooltipCase.text }
+            $fundingHostileCases.Add([pscustomobject]@{ label = $tooltipCase.label; stage = 'preflight'; fixture = $fixture })
+        }
+        $fixture = New-GrandFareFundingPolicyFixture; $fixture.before_debt_indicator.rendered = $false
+        $fundingHostileCases.Add([pscustomobject]@{ label = 'debt-render-witness-false'; stage = 'preflight'; fixture = $fixture })
+        $fixture = New-GrandFareFundingPolicyFixture; $fixture.before_debt_indicator.present = 'false'
+        $fundingHostileCases.Add([pscustomobject]@{ label = 'debt-present-non-boolean'; stage = 'preflight'; fixture = $fixture })
+        $fixture = New-GrandFareFundingPolicyFixture; $fixture.before_debt_indicator | Add-Member -NotePropertyName tooltip -NotePropertyValue 'stale'
+        $fundingHostileCases.Add([pscustomobject]@{ label = 'absent-debt-with-tooltip'; stage = 'preflight'; fixture = $fixture })
+
+        $fixture = New-GrandFareFundingPolicyFixture; $fixture.talk.visible = $false
+        $fundingHostileCases.Add([pscustomobject]@{ label = 'talk-hidden'; stage = 'talk'; fixture = $fixture })
+        $fixture = New-GrandFareFundingPolicyFixture; $fixture.talk.visible = 'true'
+        $fundingHostileCases.Add([pscustomobject]@{ label = 'talk-visible-non-boolean'; stage = 'talk'; fixture = $fixture })
+        $fixture = New-GrandFareFundingPolicyFixture; $fixture.talk.render_valid = $false
+        $fundingHostileCases.Add([pscustomobject]@{ label = 'talk-clipped'; stage = 'talk'; fixture = $fixture })
+        $fixture = New-GrandFareFundingPolicyFixture; $fixture.talk.render_valid = 1
+        $fundingHostileCases.Add([pscustomobject]@{ label = 'talk-render-witness-non-boolean'; stage = 'talk'; fixture = $fixture })
+        $fixture = New-GrandFareFundingPolicyFixture; $fixture.talk.expanded = $false
+        $fundingHostileCases.Add([pscustomobject]@{ label = 'talk-collapsed'; stage = 'talk'; fixture = $fixture })
+        $fixture = New-GrandFareFundingPolicyFixture; $fixture.talk.body_complete = $false
+        $fundingHostileCases.Add([pscustomobject]@{ label = 'talk-body-incomplete'; stage = 'talk'; fixture = $fixture })
+        $fixture = New-GrandFareFundingPolicyFixture; $fixture.talk.typewriter_active = $true
+        $fundingHostileCases.Add([pscustomobject]@{ label = 'talk-typewriter-active'; stage = 'talk'; fixture = $fixture })
+        $fixture = New-GrandFareFundingPolicyFixture; $fixture.talk.event_id = 'lender_conversation:borrow:The_Crew'
+        $fundingHostileCases.Add([pscustomobject]@{ label = 'talk-event-case'; stage = 'talk'; fixture = $fixture })
+        $fixture = New-GrandFareFundingPolicyFixture; $fixture.talk.summary = 'No interest. Only favors. Borrow $45. Due later.'
+        $fundingHostileCases.Add([pscustomobject]@{ label = 'talk-terms-incomplete'; stage = 'talk'; fixture = $fixture })
+        $fixture = New-GrandFareFundingPolicyFixture; $fixture.talk.choice_ids = @('Accept', 'decline')
+        $fundingHostileCases.Add([pscustomobject]@{ label = 'talk-choice-id-case'; stage = 'talk'; fixture = $fixture })
+        $fixture = New-GrandFareFundingPolicyFixture; $fixture.talk_choices += $fixture.talk_choices[0]
+        $fundingHostileCases.Add([pscustomobject]@{ label = 'talk-choice-duplicate'; stage = 'talk'; fixture = $fixture })
+        $fixture = New-GrandFareFundingPolicyFixture; $fixture.talk_choices[0].enabled = $false
+        $fundingHostileCases.Add([pscustomobject]@{ label = 'talk-choice-disabled'; stage = 'talk'; fixture = $fixture })
+        $fixture = New-GrandFareFundingPolicyFixture; $fixture.talk_choices[0].enabled = 1
+        $fundingHostileCases.Add([pscustomobject]@{ label = 'talk-choice-enabled-non-boolean'; stage = 'talk'; fixture = $fixture })
+        $fixture = New-GrandFareFundingPolicyFixture; $fixture.talk_choices[0].label = 'accept offer'
+        $fundingHostileCases.Add([pscustomobject]@{ label = 'talk-choice-label-case'; stage = 'talk'; fixture = $fixture })
+
+        $fixture = New-GrandFareFundingPolicyFixture; $fixture.confirmation_talk.render_valid = $false
+        $fundingHostileCases.Add([pscustomobject]@{ label = 'confirmation-clipped'; stage = 'confirmation'; fixture = $fixture })
+        $fixture = New-GrandFareFundingPolicyFixture; $fixture.confirmation_talk.summary += ' changed'
+        $fundingHostileCases.Add([pscustomobject]@{ label = 'confirmation-summary-changed'; stage = 'confirmation'; fixture = $fixture })
+        $fixture = New-GrandFareFundingPolicyFixture; $fixture.confirmation_talk.choice_ids = @('decline', 'accept')
+        $fundingHostileCases.Add([pscustomobject]@{ label = 'confirmation-choice-order'; stage = 'confirmation'; fixture = $fixture })
+        $fixture = New-GrandFareFundingPolicyFixture; $fixture.confirmation_choices[0].label = 'Confirm: accept offer'
+        $fundingHostileCases.Add([pscustomobject]@{ label = 'confirmation-label-case'; stage = 'confirmation'; fixture = $fixture })
+        $fixture = New-GrandFareFundingPolicyFixture; $fixture.confirmation_choices[0].enabled = $false
+        $fundingHostileCases.Add([pscustomobject]@{ label = 'confirmation-disabled'; stage = 'confirmation'; fixture = $fixture })
+        $fixture = New-GrandFareFundingPolicyFixture; $fixture.confirmation_choices[0].enabled = 'true'
+        $fundingHostileCases.Add([pscustomobject]@{ label = 'confirmation-enabled-non-boolean'; stage = 'confirmation'; fixture = $fixture })
+
+        $fixture = New-GrandFareFundingPolicyFixture; $fixture.after_observation.status_hud.bankroll_rendered = $false
+        $fundingHostileCases.Add([pscustomobject]@{ label = 'result-bankroll-unrendered'; stage = 'result'; fixture = $fixture })
+        $fixture = New-GrandFareFundingPolicyFixture; $fixture.after_observation.status_hud.bankroll = 107
+        $fundingHostileCases.Add([pscustomobject]@{ label = 'result-bankroll-mismatch'; stage = 'result'; fixture = $fixture })
+        $fixture = New-GrandFareFundingPolicyFixture; $fixture.after_observation.status_hud.debt_indicator.rendered = $false
+        $fundingHostileCases.Add([pscustomobject]@{ label = 'result-debt-unrendered'; stage = 'result'; fixture = $fixture })
+        $fixture = New-GrandFareFundingPolicyFixture; $fixture.after_observation.status_hud.debt_indicator = [pscustomobject]@{ rendered = $true; present = $false }
+        $fundingHostileCases.Add([pscustomobject]@{ label = 'result-debt-unchanged'; stage = 'result'; fixture = $fixture })
+        $fixture = New-GrandFareFundingPolicyFixture; $fixture.after_observation.status_hud.debt_indicator.tooltip = '2 active debts'
+        $fundingHostileCases.Add([pscustomobject]@{ label = 'result-debt-jump'; stage = 'result'; fixture = $fixture })
+        $fixture = New-GrandFareFundingPolicyFixture; $fixture.after_observation.talk.visible = $true
+        $fundingHostileCases.Add([pscustomobject]@{ label = 'result-talk-visible'; stage = 'result'; fixture = $fixture })
+        $fixture = New-GrandFareFundingPolicyFixture; $fixture.after_observation.feedback.visible = $false
+        $fundingHostileCases.Add([pscustomobject]@{ label = 'result-feedback-hidden'; stage = 'result'; fixture = $fixture })
+        $fixture = New-GrandFareFundingPolicyFixture; $fixture.after_observation.feedback.title = 'result'
+        $fundingHostileCases.Add([pscustomobject]@{ label = 'result-title-case'; stage = 'result'; fixture = $fixture })
+        $fixture = New-GrandFareFundingPolicyFixture; $fixture.after_observation.feedback.text = $fixture.after_observation.feedback.text.Replace('Borrow $45', 'Borrow $44')
+        $fundingHostileCases.Add([pscustomobject]@{ label = 'result-terms-mismatch'; stage = 'result'; fixture = $fixture })
+        $fixture = New-GrandFareFundingPolicyFixture; $fixture.after_observation.feedback.text = $fixture.after_observation.feedback.text.Replace('$+45', '$+44')
+        $fundingHostileCases.Add([pscustomobject]@{ label = 'result-delta-mismatch'; stage = 'result'; fixture = $fixture })
+
+        $grandFareFundingHostileFixtures = $fundingHostileCases.Count
+        foreach ($case in $fundingHostileCases) {
+            $threw = $false
+            try {
+                $null = Invoke-FundingPolicyFixture -Fixture $case.fixture -Through ([string]$case.stage)
+            }
+            catch {
+                $threw = $true
+            }
+            if (-not $threw) {
+                Add-Failure "Hostile Grand-fare funding fixture '$($case.label)' did not fail closed."
+            }
+        }
+    }
+    else {
+        Add-Failure 'Replay policy helper did not export the complete Grand-fare public funding policy.'
+    }
+
+    function Invoke-CashEventPolicyFixture {
+        param(
+            [Parameter(Mandatory = $true)]$Fixture,
+            [ValidateSet('choice', 'result')][string]$Through = 'result',
+            [AllowNull()][scriptblock]$EventMutator = $null
+        )
+
+        $event = Select-GrandFareCashEventChoice -EventId ([string]$Fixture.event_id) -EventObject $Fixture.event_object -RoomActions @($Fixture.room_actions) -Talk $Fixture.talk -WorldNodeId ([string]$Fixture.world_node_id) -ResolvedEventKeys @($Fixture.resolved_event_keys)
+        if ($Through -ceq 'choice') { return $event }
+        if ($null -ne $EventMutator) {
+            $null = & $EventMutator $event
+        }
+        $null = Assert-GrandFareCashEventResult -Event $event -BeforeBankroll ([int]$Fixture.before_bankroll) -BeforeHeat ([int]$Fixture.before_heat) -BeforeFeedback $Fixture.before_feedback -AfterObservation $Fixture.after_observation
+        return $event
+    }
+
+    $cashEventCommands = @(
+        Get-Command 'Select-GrandFareCashEventChoice' -ErrorAction SilentlyContinue
+        Get-Command 'Assert-GrandFareCashEventResult' -ErrorAction SilentlyContinue
+    )
+    if (@($cashEventCommands | Where-Object { $null -ne $_ }).Count -ceq 2) {
+        $validCashEventFixtures = @(
+            [pscustomobject]@{ label = 'back-alley-public-cash'; fixture = (New-GrandFareCashEventPolicyFixture -Kind alley) },
+            [pscustomobject]@{ label = 'wedding-public-cash'; fixture = (New-GrandFareCashEventPolicyFixture -Kind wedding) }
+        )
+        $grandFareCashEventValidFixtures = $validCashEventFixtures.Count
+        foreach ($case in $validCashEventFixtures) {
+            try {
+                $null = Invoke-CashEventPolicyFixture -Fixture $case.fixture -Through result
+            }
+            catch {
+                Add-Failure "Valid Grand-fare cash event '$($case.label)' threw: $($_.Exception.Message)"
+            }
+        }
+
+        $cashEventHostileCases = [Collections.Generic.List[object]]::new()
+
+        $fixture = New-GrandFareCashEventPolicyFixture; $fixture.event_id = 'rowdy_regular'
+        $cashEventHostileCases.Add([pscustomobject]@{ label = 'event-unlisted'; stage = 'choice'; fixture = $fixture })
+        $fixture = New-GrandFareCashEventPolicyFixture; $fixture.event_id = 'Back_Alley_Offer'
+        $cashEventHostileCases.Add([pscustomobject]@{ label = 'event-id-case'; stage = 'choice'; fixture = $fixture })
+        $fixture = New-GrandFareCashEventPolicyFixture; $fixture.world_node_id = 'Back_Alley'
+        $cashEventHostileCases.Add([pscustomobject]@{ label = 'world-node-case'; stage = 'choice'; fixture = $fixture })
+        $fixture = New-GrandFareCashEventPolicyFixture; $fixture.talk.visible = $true
+        $cashEventHostileCases.Add([pscustomobject]@{ label = 'talk-visible'; stage = 'choice'; fixture = $fixture })
+        $fixture = New-GrandFareCashEventPolicyFixture; $fixture.talk.visible = 0
+        $cashEventHostileCases.Add([pscustomobject]@{ label = 'talk-visible-non-boolean'; stage = 'choice'; fixture = $fixture })
+        $fixture = New-GrandFareCashEventPolicyFixture; $fixture.resolved_event_keys = @('back_alley|event:back_alley_offer')
+        $cashEventHostileCases.Add([pscustomobject]@{ label = 'event-repeat'; stage = 'choice'; fixture = $fixture })
+
+        $fixture = New-GrandFareCashEventPolicyFixture; $fixture.event_object.PSObject.Properties.Remove('rendered')
+        $cashEventHostileCases.Add([pscustomobject]@{ label = 'object-rendered-missing'; stage = 'choice'; fixture = $fixture })
+        $fixture = New-GrandFareCashEventPolicyFixture; $fixture.event_object.rendered = $false
+        $cashEventHostileCases.Add([pscustomobject]@{ label = 'object-clipped'; stage = 'choice'; fixture = $fixture })
+        $fixture = New-GrandFareCashEventPolicyFixture; $fixture.event_object.rendered = 1
+        $cashEventHostileCases.Add([pscustomobject]@{ label = 'object-rendered-non-boolean'; stage = 'choice'; fixture = $fixture })
+        $fixture = New-GrandFareCashEventPolicyFixture; $fixture.event_object.semantic_id = 'event:Back_Alley_Offer'
+        $cashEventHostileCases.Add([pscustomobject]@{ label = 'object-semantic-id-case'; stage = 'choice'; fixture = $fixture })
+        $fixture = New-GrandFareCashEventPolicyFixture; $fixture.event_object.label = 'Back alley offer'
+        $cashEventHostileCases.Add([pscustomobject]@{ label = 'object-label-case'; stage = 'choice'; fixture = $fixture })
+        $fixture = New-GrandFareCashEventPolicyFixture; $fixture.event_object.object_type = 'Event'
+        $cashEventHostileCases.Add([pscustomobject]@{ label = 'object-type-case'; stage = 'choice'; fixture = $fixture })
+        $fixture = New-GrandFareCashEventPolicyFixture; $fixture.event_object.enabled = $false
+        $cashEventHostileCases.Add([pscustomobject]@{ label = 'object-disabled'; stage = 'choice'; fixture = $fixture })
+        $fixture = New-GrandFareCashEventPolicyFixture; $fixture.event_object.enabled = 'true'
+        $cashEventHostileCases.Add([pscustomobject]@{ label = 'object-enabled-non-boolean'; stage = 'choice'; fixture = $fixture })
+        $fixture = New-GrandFareCashEventPolicyFixture
+        $fixture.event_object = [pscustomobject]@{ semantic_id = 'event:back_alley_offer'; label = 'Back Alley Offer'; Object_Type = 'event'; enabled = $true; rendered = $true }
+        $cashEventHostileCases.Add([pscustomobject]@{ label = 'object-property-case'; stage = 'choice'; fixture = $fixture })
+
+        $fixture = New-GrandFareCashEventPolicyFixture; $fixture.room_actions += $fixture.room_actions[0]
+        $cashEventHostileCases.Add([pscustomobject]@{ label = 'action-duplicate'; stage = 'choice'; fixture = $fixture })
+        $fixture = New-GrandFareCashEventPolicyFixture; $fixture.room_actions[0].enabled = $false
+        $cashEventHostileCases.Add([pscustomobject]@{ label = 'action-disabled'; stage = 'choice'; fixture = $fixture })
+        $fixture = New-GrandFareCashEventPolicyFixture; $fixture.room_actions[0].enabled = 'true'
+        $cashEventHostileCases.Add([pscustomobject]@{ label = 'action-enabled-non-boolean'; stage = 'choice'; fixture = $fixture })
+        $fixture = New-GrandFareCashEventPolicyFixture; $fixture.room_actions[0].label = 'Take The Cash'
+        $cashEventHostileCases.Add([pscustomobject]@{ label = 'action-label-case'; stage = 'choice'; fixture = $fixture })
+        $fixture = New-GrandFareCashEventPolicyFixture; $fixture.room_actions[0].emit_object_id = 'event_response:back_alley_offer:TAKE_CASH'
+        $cashEventHostileCases.Add([pscustomobject]@{ label = 'action-id-case'; stage = 'choice'; fixture = $fixture })
+        $fixture = New-GrandFareCashEventPolicyFixture; $fixture.room_actions[0].emit_object_id = 'event_response:back_alley_offer:take_money'
+        $cashEventHostileCases.Add([pscustomobject]@{ label = 'action-id-fabricated'; stage = 'choice'; fixture = $fixture })
+
+        $fixture = New-GrandFareCashEventPolicyFixture; $fixture.after_observation.event_popup.visible = $true
+        $cashEventHostileCases.Add([pscustomobject]@{ label = 'result-popup-visible'; stage = 'result'; fixture = $fixture })
+        $fixture = New-GrandFareCashEventPolicyFixture; $fixture.after_observation.event_popup.visible = 0
+        $cashEventHostileCases.Add([pscustomobject]@{ label = 'result-popup-visible-non-boolean'; stage = 'result'; fixture = $fixture })
+        $fixture = New-GrandFareCashEventPolicyFixture; $fixture.after_observation.talk.visible = $true
+        $cashEventHostileCases.Add([pscustomobject]@{ label = 'result-talk-visible'; stage = 'result'; fixture = $fixture })
+        $fixture = New-GrandFareCashEventPolicyFixture; $fixture.after_observation.status_hud.bankroll_rendered = $false
+        $cashEventHostileCases.Add([pscustomobject]@{ label = 'result-bankroll-unrendered'; stage = 'result'; fixture = $fixture })
+        $fixture = New-GrandFareCashEventPolicyFixture; $fixture.after_observation.status_hud.bankroll_rendered = 1
+        $cashEventHostileCases.Add([pscustomobject]@{ label = 'result-bankroll-render-non-boolean'; stage = 'result'; fixture = $fixture })
+        $fixture = New-GrandFareCashEventPolicyFixture; $fixture.after_observation.status_hud.heat_rendered = $false
+        $cashEventHostileCases.Add([pscustomobject]@{ label = 'result-heat-unrendered'; stage = 'result'; fixture = $fixture })
+        $fixture = New-GrandFareCashEventPolicyFixture; $fixture.after_observation.status_hud.bankroll = $fixture.before_bankroll
+        $cashEventHostileCases.Add([pscustomobject]@{ label = 'result-bankroll-nonpositive'; stage = 'result'; fixture = $fixture })
+        $fixture = New-GrandFareCashEventPolicyFixture; $fixture.after_observation.status_hud.heat_level = $fixture.before_heat
+        $cashEventHostileCases.Add([pscustomobject]@{ label = 'result-heat-nonpositive'; stage = 'result'; fixture = $fixture })
+        $fixture = New-GrandFareCashEventPolicyFixture; $fixture.after_observation.status_hud.bankroll += 1
+        $cashEventHostileCases.Add([pscustomobject]@{ label = 'result-bankroll-feedback-mismatch'; stage = 'result'; fixture = $fixture })
+        $fixture = New-GrandFareCashEventPolicyFixture; $fixture.after_observation.status_hud.heat_level += 1
+        $cashEventHostileCases.Add([pscustomobject]@{ label = 'result-heat-feedback-mismatch'; stage = 'result'; fixture = $fixture })
+        $fixture = New-GrandFareCashEventPolicyFixture; $fixture.after_observation.feedback.visible = $false
+        $cashEventHostileCases.Add([pscustomobject]@{ label = 'result-feedback-hidden'; stage = 'result'; fixture = $fixture })
+        $fixture = New-GrandFareCashEventPolicyFixture; $fixture.after_observation.feedback.visible = 'true'
+        $cashEventHostileCases.Add([pscustomobject]@{ label = 'result-feedback-visible-non-boolean'; stage = 'result'; fixture = $fixture })
+        $fixture = New-GrandFareCashEventPolicyFixture; $fixture.after_observation.feedback.title = 'result'
+        $cashEventHostileCases.Add([pscustomobject]@{ label = 'result-title-case'; stage = 'result'; fixture = $fixture })
+        $fixture = New-GrandFareCashEventPolicyFixture; $fixture.after_observation.feedback.text = $fixture.after_observation.feedback.text.Replace('Small cash.', 'Cash.')
+        $cashEventHostileCases.Add([pscustomobject]@{ label = 'result-message-mismatch'; stage = 'result'; fixture = $fixture })
+        $fixture = New-GrandFareCashEventPolicyFixture
+        $fixture.before_feedback = [pscustomobject]@{ visible = $true; text = $fixture.after_observation.feedback.text }
+        $cashEventHostileCases.Add([pscustomobject]@{ label = 'result-feedback-stale'; stage = 'result'; fixture = $fixture })
+
+        $fixture = New-GrandFareCashEventPolicyFixture
+        $cashEventHostileCases.Add([pscustomobject]@{
+            label = 'result-event-id-case'; stage = 'result'; fixture = $fixture
+            event_mutator = { param($event) $event.event_id = 'Back_Alley_Offer' }
+        })
+        $fixture = New-GrandFareCashEventPolicyFixture
+        $cashEventHostileCases.Add([pscustomobject]@{
+            label = 'result-choice-id-case'; stage = 'result'; fixture = $fixture
+            event_mutator = { param($event) $event.choice_id = 'TAKE_CASH' }
+        })
+        $fixture = New-GrandFareCashEventPolicyFixture
+        $cashEventHostileCases.Add([pscustomobject]@{
+            label = 'result-allowlisted-message-tampered'; stage = 'result'; fixture = $fixture
+            event_mutator = { param($event) $event.expected_result_text = 'Small cash.' }
+        })
+
+        $grandFareCashEventHostileFixtures = $cashEventHostileCases.Count
+        foreach ($case in $cashEventHostileCases) {
+            $threw = $false
+            try {
+                $eventMutator = $null
+                if ($case.PSObject.Properties['event_mutator']) {
+                    $eventMutator = $case.event_mutator
+                }
+                $null = Invoke-CashEventPolicyFixture -Fixture $case.fixture -Through ([string]$case.stage) -EventMutator $eventMutator
+            }
+            catch {
+                $threw = $true
+            }
+            if (-not $threw) {
+                Add-Failure "Hostile Grand-fare cash event '$($case.label)' did not fail closed."
+            }
+        }
+    }
+    else {
+        Add-Failure 'Replay policy helper did not export the complete Grand-fare public cash-event policy.'
     }
 
     $validCommandOpenFixture = @'
@@ -491,6 +1103,9 @@ func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
         'function Enter-VisibleSlotForGrandFare',
         'function Wait-ForVisibleSlotActionBoundary',
         'function Earn-GrandFareThroughVisibleSlot',
+        'function Invoke-GrandFarePublicFundingOffer',
+        'function Invoke-GrandFarePublicCashEvent',
+        'function Recover-GrandFareThroughPublicFunding',
         'function Resolve-VisibleBlockingPresentation',
         'function Get-PublicTalkChoices',
         'function Get-VisibleTutorialGuideAcknowledgment',
@@ -522,7 +1137,7 @@ func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
         "Assert-ExplicitSaveAcknowledged -Milestone 'The Count completed setup'",
         '$maximumChipPurchases = 8',
         "[bool](Get-Value `$_ @('enabled') `$false)",
-        "'cage_buy_50' -in `$enabledChoices",
+        "'cage_buy_50' -cin `$enabledChoices",
         '$afterChips -le $beforeChips',
         'within $maximumChipPurchases bounded purchases',
         'Start-BridgeSession -SkipInitialLook',
@@ -534,12 +1149,12 @@ func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
         "@('look', 'replay_pause')",
         '$script:SessionRoot = New-AnchoredSessionRoot',
         "`$screenName -cne 'VICTORY'",
-        "@('screen', 'run_report_visible') `$false",
-        '$Repeat -eq 2',
+        "@('screen', 'run_report_visible') `$null",
+        '$Repeat -ceq 2',
         'release_qualifying = $releaseQualifying',
-        'PLAY did not visibly enter a live active first-night lesson',
+        'PLAY did not visibly enter a live first-night lesson',
         "StartsWith('tutorial_guide:', [StringComparison]::Ordinal)",
-        "`$choiceIds.Count -ne 1 -or [string]`$choiceIds[0] -cne 'continue'",
+        "`$choiceIds.Count -cne 1 -or [string]`$choiceIds[0] -cne 'continue'",
         "Choose-VisibleChoice -ChoiceId 'continue'",
         'follow Pal''s visible tutorial guidance: $label',
         'The live first-night lesson did not render its run menu.',
@@ -586,8 +1201,9 @@ func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
         'func _rect_encloses_with_tolerance(outer: Rect2, inner: Rect2, tolerance: float = 0.75) -> bool:',
         'start_menu["seed_text_committed"] = seed_field_visible',
         'screen["run_report_visible"] = screen_id in ["VICTORY", "FAILURE"]',
-        'status_hud["save_text_visible"] = _hud_status_tooltip_is_rendered',
-        'func _hud_status_tooltip_is_rendered(expected_text: String) -> bool:',
+        'var save_indicator := _public_status_indicator("save")',
+        'result["save_text_visible"] = true',
+        'func _public_status_indicator(status_id: String) -> Dictionary:',
         'if button.disabled:',
         'visible talk choice is disabled'
     )) {
@@ -603,19 +1219,21 @@ func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
         'var after_fingerprint := fingerprint(after_observation)',
         '"dealer_hole_visible"',
         '"dealer_up_card"',
-        'var map_rendered := bool(source.get("world_map_overlay_visible", false))',
-        'and bool(overlay_state.get("world_map_visible", false))',
+        'var map_rendered := _is_true_bool(source.get("world_map_overlay_visible", false))',
+        'and _is_true_bool(overlay_state.get("world_map_visible", false))',
         'if map_rendered else {}',
         'var start_menu_rendered := screen_id == "START"',
-        'var run_menu_rendered := bool(source.get("run_menu_visible", false))',
-        'and bool(overlay_state.get("run_menu_visible", false))',
+        'var run_menu_rendered := _is_true_bool(source.get("run_menu_visible", false))',
+        'and _is_true_bool(overlay_state.get("run_menu_visible", false))',
         'var run_report_rendered := screen_id in ["VICTORY", "FAILURE"]',
-        'and bool(source.get("run_report_visible", false))',
-        'if bool(source.get("seed_field_visible", false)) and bool(source.get("seed_text_committed", false))',
-        'result["save_text_visible"] = bool(source.get("save_text_visible", false))'
+        'and _is_true_bool(source.get("run_report_visible", false))',
+        'if _is_true_bool(source.get("seed_field_visible", false)) and _is_true_bool(source.get("seed_text_committed", false))',
+        'typeof(save_visible_value) == TYPE_BOOL and bool(save_visible_value)',
+        'result["debt_indicator"] = _debt_indicator(_dict(source.get("debt_indicator", {})))'
     )) {
         Assert-Contains $sanitizer $required "Public observation sanitizer is missing required source contract token: $required"
     }
+    Assert-NotMatch $sanitizer '(?ms)^static func _actions\(.*?(?=^static func |\z).*?"impact_summary"' 'Selected room/game actions must not expose undisplayed impact_summary metadata through the public observation sanitizer.'
 
     foreach ($required in @(
         'SECRET_HOLE_A',
@@ -624,8 +1242,16 @@ func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
         'SECRET_CLOSED_MAP_MARKER',
         'SECRET_CLOSED_MAP_DETAIL',
         'SECRET_CLOSED_MENU_ASYNC_A',
-        'Talk typewriter frame timing altered the canonical public trace.',
-        'Deterministic talk normalization removed rendered conversation choices.',
+        'A visible clipped TalkDock was incorrectly reported hidden.',
+        'Visible TalkDock typewriter completion did not alter the public trace.',
+        'A non-boolean typewriter witness did not fail closed.',
+        'A visible clipped event popup was incorrectly reported hidden.',
+        'A rendered event popup leaked hidden consequence or trigger metadata.',
+        'Raw HUD mutations with false rendered witnesses altered the public trace.',
+        'Malformed HUD type witnesses were coerced into public values.',
+        'Raw consequence debt escaped into public observation.',
+        'Feedback exposed fields beyond its visible title and text.',
+        'Rendered action identity leaked unaudited detail or consequence text.',
         'RUN-SECRET-WALL-CLOCK-A',
         'SECRET_OFFSCREEN_TERMINAL_OUTCOME',
         'A populated closed-overlay world map escaped into public observation.',
@@ -633,6 +1259,7 @@ func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
         'Uncommitted generated menu seeds made replay traces nondeterministic.',
         'Distinct explicitly entered visible seeds were incorrectly normalized away.',
         'An offscreen terminal report escaped into public observation.',
+        'A non-boolean terminal render witness was coerced to visible.',
         'Private blackjack/run-state changes altered the public observation.',
         'REPORT_PATH'
     )) {
@@ -656,24 +1283,75 @@ func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
     Assert-Contains $bridge 'action_id == "blackjack_deal"' 'The bridge must recognize blackjack''s invisible compatibility Deal hit.'
     Assert-Contains $bridge 'not bool(public_game.get("can_deal", false))' 'The bridge must reject the invisible Deal hit unless the public DEAL control is available.'
     Assert-NotMatch $bridge 'set_application_pause_owner[^\r\n]+false' 'The bridge must retain its deterministic replay pause owner for the entire process lifetime.'
-    Assert-Contains $bridge 'var choice_list := talk_dock.get("choice_list") as Node if talk_dock != null else null' 'Semantic TalkDock choices must bind to the actual rendered choice list.'
+    Assert-Contains $bridge 'var choice_list := talk_dock.get("choice_list") as Control if talk_dock != null else null' 'Semantic TalkDock choices must bind to the actual rendered choice list.'
     Assert-Contains $runner "@('look', 'clickable', 'talk_choices')" 'Replay routes must consume the rendered TalkDock enabled-state mapping.'
     Assert-Contains $runner "@('look', 'clickable', 'scroll_surfaces')" 'Replay routes must consume only the public rendered scroll-surface mapping.'
-    Assert-Match $runner '(?s)function Get-VisibleTutorialGuideAcknowledgment.*?tutorial_guide:.*?choiceIds\.Count\s+-ne\s+1.*?choiceIds\[0\].*?continue.*?Get-PublicTalkChoices.*?enabled' 'Coach recovery must accept only one rendered enabled continue choice from the public tutorial-guide TalkDock.'
+    Assert-Match $runner '(?s)function Get-VisibleTutorialGuideAcknowledgment.*?render_valid.*?tutorial_guide:.*?choiceIds\.Count\s+-cne\s+1.*?choiceIds\[0\].*?continue.*?Get-PublicTalkChoices.*?enabled\s+-is\s+\[bool\]' 'Coach recovery must accept only one fully rendered, exactly typed, enabled continue choice from the public tutorial-guide TalkDock.'
     Assert-Match $runner '(?s)function Clear-VisibleCoach.*?Get-VisibleTutorialGuideAcknowledgment.*?Choose-VisibleChoice\s+-ChoiceId\s+''continue''.*?Wait-Frames.*?continue.*?dismissLabel.*?Select-UniqueFullyVisibleButton\s+-Buttons\s+@\(Get-Buttons\)\s+-Text\s+\$dismissLabel.*?Select-UniqueFullyVisibleButton\s+-Buttons\s+@\(Get-Buttons\)\s+-Text\s+''Skip tip''.*?fully visible public dismiss control' 'Coach recovery must follow the narrow public tutorial-guide acknowledgement, then require a unique boolean-true fully-visible dismiss control before input.'
     Assert-Match $runner '(?s)function Accept-GrandCasinoInviteIfVisible\s*\{.*?Invoke-EventObjectChoice\s+-EventId\s+''grand_casino_invite''\s+-ChoiceId\s+''accept_invite''\s+-Intent\s+''accept the visible invitation to the Grand Casino''.*?return \$true\s*\}' 'The clean replay must choose the exact visible invitation action instead of asking a selected multi-action object for a generic open action.'
     Assert-NotMatch $runner 'Open-EventObject\s+-EventId\s+''grand_casino_invite''' 'The Grand Casino invitation must not use the generic event-open path when the selected object already exposes explicit actions.'
-    Assert-Match $runner '(?s)function Reach-GrandCasino.*?\$grand\s*=\s*@\(\$nodes.*?archetype_id.*?grand_casino.*?\$grand\.Count\s+-gt\s+1.*?travel_enabled.*?Travel-ToNode.*?travel_disabled_reason.*?Not enough bankroll.*?\$cost\s+-le\s+\$cash.*?claims insufficient bankroll.*?Earn-GrandFareThroughVisibleSlot\s+-RequiredCash\s+\$cost.*?continue' 'The clean replay must prefer the exact visible Grand route, validate its public affordability math, and recover the shortfall before spending more on unrelated travel.'
-    Assert-Match $runner '(?s)function Earn-GrandFareThroughVisibleSlot.*?MaximumSpins\s*=\s*24.*?Enter-VisibleSlotForGrandFare.*?Wait-ForVisibleSlotActionBoundary.*?status_hud.*?bankroll.*?slot_spin.*?Leave-GameSurface.*?Bounded visible slot play did not earn the Grand fare' 'Grand fare recovery must use bounded visible slot actions and public bankroll evidence, then leave through the rendered game control.'
-    Assert-Match $runner '(?s)function Resolve-GrandFareMachineJamIfVisible.*?status_hud.*?heat_level.*?Select-GrandFareMachineJamChoice.*?Choose-VisibleChoice.*?Wait-Frames.*?modal remained visible or chained into another modal' 'Grand fare recovery must route the exact public machine_jam policy through the confirmation-aware visible-choice path and fail closed if any modal remains.'
+    Assert-Match $runner '(?s)function Reach-GrandCasino.*?\$grand\s*=\s*@\(\$nodes.*?archetype_id.*?grand_casino.*?\$grand\.Count\s+-gt\s+1.*?\$requiredCash.*?GrandCasinoChipReserve.*?Recover-GrandFareThroughPublicFunding\s+-RequiredCash\s+\$requiredCash.*?travel_enabled.*?Travel-ToNode' 'The clean replay must recompute the published Grand fare plus its documented chip reserve, recover that full amount, and only then take the visible route.'
+    Assert-Match $runner '(?s)function Invoke-GrandFarePublicFundingOffer.*?Select-GrandFareFundingObject.*?Test-GrandFareFundingPreflight.*?click_object.*?Select-GrandFareFundingObjectAction.*?Invoke-RoomActionRow.*?Select-GrandFareFundingTalkOffer.*?click_choice accept.*?Assert-GrandFareFundingConfirmation.*?click_choice accept.*?Assert-GrandFareFundingResult.*?GrandFareAcceptedOfferKeys\.Add.*?GrandFareAcceptedLenderIds\.Add' 'Grand fare lender recovery must validate one public object and debt preflight before focus, validate its unique action and rendered terms, verify confirmation and the exact bankroll/debt result, then record both one-use keys.'
+    Assert-Match $runner '(?s)function Invoke-GrandFarePublicCashEvent.*?Select-GrandFareCashEventChoice.*?Invoke-RoomActionRow.*?Assert-GrandFareCashEventResult.*?GrandFareResolvedCashEventKeys\.Add' 'Grand fare cash-event recovery must use the exact public allowlist, one direct-resolve rendered room action, a positive public HUD delta, and one-use bookkeeping.'
+    Assert-Match $runner '(?s)function Recover-GrandFareThroughPublicFunding.*?MaximumFundingStops\s*=\s*6.*?GrandFareRecoveryActive.*?RequiredCash.*?GrandFareRecoveryVisitedNodes\.Add.*?Invoke-GrandFarePublicFundingOffer.*?Invoke-GrandFarePublicCashEvent.*?Get-MapNodes.*?Earn-GrandFareThroughVisibleSlot.*?finally.*?GrandFareRecoveryActive\s*=\s*\$false' 'The funding helper must be recovery-scoped, bounded, lender-first, public-map driven, and leave slot play as its final fallback.'
+    Assert-Match $runner '(?s)function Earn-GrandFareThroughVisibleSlot.*?MaximumSpins\s*=\s*6.*?MaximumLosses\s*=\s*3.*?Enter-VisibleSlotForGrandFare.*?startingCash.*?losses.*?Wait-ForVisibleSlotActionBoundary.*?status_hud.*?bankroll.*?slot_spin.*?loss-stopped.*?Leave-GameSurface' 'Grand fare slot fallback must be capped at six spins, stop after three losses, and use only visible actions and public bankroll evidence.'
+    Assert-Match $runner '(?s)function Resolve-GrandFareMachineJamIfVisible.*?Select-GrandFareMachineJamChoice.*?Choose-VisibleChoice.*?visible de-escalation choice.*?Wait-Frames.*?modal remained visible or chained into another modal' 'Grand fare recovery must route the exact rendered machine_jam policy through the confirmation-aware visible-choice path and fail closed if any modal remains.'
     Assert-Match $runner '(?s)function Wait-ForVisibleSlotActionBoundary.*?Resolve-GrandFareMachineJamIfVisible.*?continue.*?slot_handpay_acknowledge' 'Only the Grand fare slot boundary may resolve the allowlisted public machine_jam before normal slot actions resume.'
-    Assert-Match $replayPolicy '(?s)function Select-GrandFareMachineJamChoice.*?TalkDock state.*?machine_jam.*?triggered_event.*?exactly one wait and one push.*?Bankroll -3; Heat -3.*?Heat \+6.*?requires_confirm.*?HeatLevel\s+-le\s+24.*?return ''push''.*?return ''wait''' 'The shared replay policy must strictly validate the public machine_jam shape and choose push only through heat 24.'
-    Assert-NotMatch $replayPolicy '(?:slot_nudge|slot_auto_toggle|autoplay|narrative_flags|run_state|local_narrative_flags|crew_heist_state|trigger_context|scenario_layout_audit)' 'The machine_jam policy must not use slot cheats, autoplay, or private state.'
+    Assert-Match $replayPolicy '(?s)function Select-GrandFareMachineJamChoice.*?TalkDock state.*?rendered event-popup witness.*?machine_jam.*?Machine Jam.*?exactly ordered wait, push.*?Wait it out.*?Push through.*?return ''wait''' 'The shared replay policy must strictly validate the rendered machine_jam identity, copy, choice order, controls, and visible de-escalation response.'
+    Assert-Match $replayPolicy '(?s)function Select-GrandFareFundingObject.*?lender:.*?rendered.*?AcceptedOfferKeys.*?AcceptedLenderIds.*?Sort-Object.*?-CaseSensitive.*?function Select-GrandFareFundingObjectAction.*?exact public Use action.*?function Select-GrandFareFundingTalkOffer' 'The shared funding policy must validate exact rendered lender identity, skip used or disabled offers, deterministically select among multiple lenders, and require the unique Use action.'
+    Assert-Match $replayPolicy '(?s)function Select-GrandFareFundingTalkOffer.*?lender_conversation:borrow:.*?Borrow.*?Repay.*?Accept Offer.*?function Assert-GrandFareFundingConfirmation' 'The shared funding policy must validate the exact lender talk identity, rendered principal and obligation terms, and accept control.'
+    Assert-Match $replayPolicy '(?s)function Assert-GrandFareFundingConfirmation.*?Confirm: Accept Offer.*?function Assert-GrandFareFundingResult' 'The shared funding policy must require the visibly armed lender confirmation.'
+    Assert-Match $replayPolicy '(?s)function Assert-GrandFareFundingResult.*?bankroll_rendered.*?expectedBankrollLong.*?Get-GrandFarePublicDebtCount.*?afterDebtCount\s+-ne\s+\$beforeDebtCount\s+\+\s+1.*?exact disclosed terms.*?exact positive bankroll delta' 'The shared funding policy must verify exact rendered bankroll, one additional rendered debt indicator, and Result feedback bound to the disclosed terms and delta.'
+    Assert-Match $replayPolicy '(?s)function Get-Rw062ExactPublicPropertyMatches.*?Name\s+-ceq.*?function Get-Rw062RequiredPublicProperty.*?properties\.Count\s+-ne\s+1' 'Critical replay-policy schema keys must be matched by exact property-name casing.'
+    Assert-Match $replayPolicy '(?s)function Select-GrandFareFundingObject.*?-cnotmatch.*?StartsWith\(''lender:'', \[StringComparison\]::Ordinal\).*?-cnotin.*?function Select-GrandFareFundingObjectAction.*?-cne ''Use''.*?IsNullOrEmpty' 'Grand fare lender schema matching must remain case-sensitive for world ids, lender prefixes/suffixes, object types, the Use label, and blank compatibility identities.'
+    Assert-Match $replayPolicy '(?s)function Select-GrandFareCashEventChoice.*?back_alley_offer.*?Back Alley Offer.*?Small cash.*?scenario_wedding_overflow_hallway.*?Hallway Table.*?pays out.*?function Assert-GrandFareCashEventResult.*?strictly positive public HUD bankroll delta' 'The shared cash-event policy must strictly allowlist exact rendered event objects/actions and require only the positive public HUD result promised by their visible copy.'
+    Assert-NotMatch $replayPolicy '(?ms)^function (?:Select|Assert)-GrandFare(?:Funding|CashEvent).*?(?=^function |\z).*?impact_summary' 'New Grand-fare lender/cash policies must not consume undisplayed impact_summary metadata.'
+    Assert-NotMatch $runner '(?ms)^function Invoke-GrandFarePublic(?:FundingOffer|CashEvent).*?(?=^function |\z).*?impact_summary' 'New Grand-fare runner paths must not consume undisplayed impact_summary metadata.'
+    Assert-NotMatch $replayPolicy '(?:slot_nudge|slot_auto_toggle|autoplay|narrative_flags|run_state|local_narrative_flags|crew_heist_state|trigger_context|scenario_layout_audit)' 'Replay policy helpers must not use slot cheats, autoplay, or private state.'
     Assert-Match $runner '(?s)function Wait-ForVisibleSlotActionBoundary.*?slot_handpay_acknowledge.*?slot_bonus_.*?slot_spin.*?within twelve seconds' 'Grand fare recovery must finish visible slot presentation and deterministic bonus controls before the next Spin.'
     Assert-NotMatch $runner '(?ms)^function Enter-VisibleSlotForGrandFare(?:(?!^function Reach-GrandCasino).)*(?:slot_nudge|slot_auto_toggle|narrative_flags|run_state)' 'Grand fare recovery must not use a slot cheat, autoplay, or private state.'
-    Assert-Match $runner '(?s)function Select-UniquePublicVerticalScrollSurface.*?SurfaceId\s+-cne\s+''run_menu''.*?matches\.Count\s+-ne\s+1.*?axis.*?vertical.*?rendered.*?can_scroll_\$Direction' 'Run-menu scroll selection must reject unsupported, ambiguous, hidden, wrong-axis, and direction-blocked public surfaces.'
-    Assert-Match $runner '(?s)function Select-UniqueFullyVisibleButton.*?matches\.Count\s+-gt\s+1.*?Properties\[''fully_visible''\].*?-isnot\s+\[bool\].*?fully_visible signal.*?return \$null' 'Run-menu button selection must fail closed on ambiguous, absent, non-boolean, and false fully-visible signals.'
-    Assert-Match $runner '(?s)function Select-UniquePublicTutorialDialogButton.*?tutorial_skip_dialog:\$Role.*?surface_id.*?dialog_role.*?matches\.Count\s+-ne\s+1.*?enabled.*?fully_visible.*?dialog_rendered.*?-isnot\s+\[bool\].*?-not\s+\[bool\]' 'Tutorial confirmation selection must require one exact stable-id control with true boolean enabled, fully-visible, and rendered signals.'
+    Assert-Match $foundationMain '(?s)func activate_event_choice_action\(event_id: String, choice_id: String\).*?select_event_choice\(event_id, choice_id\).*?confirm_selected_event_choice\(\)' 'Inline room event actions must remain a single public callback that selects and confirms the rendered choice internally.'
+    Assert-Match $foundationMain '(?s)func _add_context_event_inline_actions\(.*?_add_card_button\(card, label, Callable\(self, "activate_event_choice_action"\)\.bind\(event_id, choice_id\)' 'Rendered inline event choice controls must remain directly bound to the select-and-confirm callback.'
+    Assert-Match $foundationMain '(?s)func _event_inline_response_actions\(event_id: String, choices: Array\).*?"event_response:%s:%s" % \[event_id, choice_id\].*?"emit_object_id": emit_object_id' 'Foundation event cards must publish exact event/choice semantic action tokens.'
+    Assert-Match $pixelSceneCanvas '(?s)func _selected_info_inline_actions\(.*?emit_object_id.*?func _selected_info_action_entries_from_info\(.*?"enabled": bool\(action_data\.get\("enabled".*?func _activate_selected_info_action_entry\(.*?not bool\(action_entry\.get\("enabled".*?object_activated\.emit\(emit_object_id if not emit_object_id\.is_empty\(\) else object_id\)' 'The room canvas must carry semantic inline-action identity into the selected snapshot, re-check enabled state, and emit the exact action token.'
+    Assert-Contains $foundationScreenBuilder 'host.environment_canvas.object_activated.connect(host._on_environment_object_activated)' 'The production room canvas activation signal must remain connected to FoundationMain.'
+    Assert-Match $foundationMain '(?s)func _on_environment_object_activated\(object_id: String\).*?activate_interactable_object\(object_id\)' 'Canvas activation must enter FoundationMain through the production interactable dispatcher.'
+    Assert-Match $foundationMain '(?s)func activate_interactable_object\(object_id: String\).*?event_response:.*?_activate_event_response_action\(object_id\)' 'FoundationMain must dispatch exact event-response tokens before generic interaction handling.'
+    Assert-Match $foundationMain '(?s)func _activate_event_response_action\(action_object_id: String\).*?call_deferred\("_finish_deferred_event_response_action", event_id, choice_id\).*?func _finish_deferred_event_response_action\(event_id: String, choice_id: String\).*?activate_event_choice_action\(event_id, choice_id\)' 'Event-response dispatch must defer the exact event/choice pair into the select-and-confirm callback.'
+    Assert-Match $foundationMain '(?s)func _add_wager_confirmation_card\(.*?card\.set_meta\("event_id", rendered_event_id\).*?card\.set_meta\("choice_id", rendered_choice_id\).*?button\.set_meta\("event_id", rendered_event_id\).*?button\.set_meta\("choice_id", rendered_choice_id\)' 'Event popup cards and buttons must retain exact event/choice metadata for live click revalidation.'
+    Assert-Match $foundationMain '(?s)"Leave It".*?Callable\(self, "_dismiss_interactable_event_popup"\).*?event_id,\s*"dismiss"' 'Synthetic event dismissal must carry an exact rendered event/choice identity.'
+    Assert-Match $talkDock '(?s)var button := FoundationWidgets\.button\(label, Callable\(self, "_on_choice_pressed"\)\.bind\(choice_id\)\).*?button\.set_meta\("event_id".*?button\.set_meta\("choice_id", choice_id\)' 'TalkDock buttons must carry exact event/choice metadata for live click revalidation.'
+    Assert-Contains $foundationHudBar 'icon_rect.set_meta("status_id", str(status.get("id", "")))' 'Structured HUD status icons must carry stable status ids for rendered indicator evidence.'
+    Assert-Match $runState '(?s)func _merge_stackable_debt\(debt_entry: Dictionary\).*?lender_id.*?CREW_LENDER_ID.*?debt_kind.*?favor.*?existing.*?CREW_LENDER_ID.*?existing.*?favor.*?debt\[index\] = existing.*?return true' 'RunState debt merging must remain limited to Crew favor obligations.'
+
+    Assert-Match $bridge '(?s)func _public_status_indicator\(status_id: String\).*?_control_is_fully_rendered\(structured_hud\).*?_control_is_fully_rendered\(status_tray\).*?for child in status_tray\.get_children\(\).*?not _control_is_fully_rendered\(control\).*?get_meta\("status_id".*?matches\.size\(\) != 1.*?tooltip.*?"rendered": true, "present": true' 'HUD status evidence must require the full structured HUD, tray, every child, one stable id, and rendered tooltip text.'
+    Assert-Match $bridge '(?s)func _public_rendered_status_hud\(_source: Dictionary\).*?wallet_label\.text.*?bankroll_rendered.*?chips_chip.*?chips_label\.text.*?chips_rendered.*?heat_label\.text.*?heat_rendered.*?_public_status_indicator\("save"\)' 'Bankroll, chips, heat, and save evidence must be derived from their actual fully rendered HUD controls.'
+    Assert-NotMatch $bridge '(?ms)^func _public_rendered_status_hud\(.*?(?=^func |\z).*?_source\.get' 'Rendered HUD construction must not copy raw host HUD values.'
+    Assert-Match $bridge '(?s)func _public_rendered_talk\(source: Dictionary\).*?_control_is_rendered\(panel\).*?"visible": true.*?"render_valid": false.*?_control_is_fully_rendered\(panel\).*?_label_text_is_fully_rendered\(body_label\).*?result\["render_valid"\] = true' 'A present but clipped TalkDock must stay visibly invalid until its complete rendered surface is authenticated.'
+    Assert-Match $bridge '(?s)func _public_rendered_event_popup\(_source: Dictionary\).*?_control_is_rendered\(panel\).*?"visible": true, "render_valid": false.*?_control_is_fully_rendered\(panel\).*?result\["render_valid"\] = true' 'A present but clipped event popup must stay visibly invalid until every rendered card is authenticated.'
+    Assert-Match $bridge '(?s)func _canvas_objects\(canvas: Control\).*?_control_is_fully_rendered\(canvas\).*?global_rect_for_object.*?_rect_encloses_with_tolerance.*?"rendered": rendered' 'Clickable room objects must carry an exact fully rendered geometry witness.'
+    Assert-Match $bridge '(?s)func _room_selected_actions\(canvas: Control\).*?_control_is_fully_rendered\(canvas\).*?selected_object_id.*?button_rect.*?_room_action_label_is_fully_rendered.*?"rendered": rendered.*?"rect": global_rect if rendered else Rect2\(\)' 'Selected room actions must publish their exact selected-object identity, live row, fully rendered label/geometry witness, and hit rectangle.'
+    Assert-Match $bridge '(?s)func _click_action\(argument: String\).*?parts\[0\].*?room.*?_click_room_action.*?func _click_room_action\(parts: PackedStringArray\).*?identity_matches\.size\(\) != 1.*?live_index_value.*?TYPE_BOOL.*?TYPE_RECT2.*?distance_to.*?_push_mouse_click\(live_rect\.get_center\(\), false\)' 'Room actions must revalidate one exact live object/identity/index, boolean enabled/rendered signals, unchanged hit geometry, and then use a physical click.'
+    Assert-NotMatch $sanitizer '"(?:demo_objective|objective_guidance|next_objective|run_status|run_text|debt_items)"' 'Public sanitization must omit raw objective, run-state, and debt-model fields.'
+
+    Assert-Match $runner '(?s)function Get-Value\s*\{.*?IDictionary.*?Keys.*?-ceq\s+\$segment.*?PSObject\.Properties.*?Name\s+-ceq\s+\$segment.*?Ambiguous exact property' 'Runner property traversal must use exact dictionary/property names and reject ambiguity.'
+    $getValueFunction = [regex]::Match($runner, '(?ms)^function Get-Value\s*\{.*?(?=^function |\z)')
+    if (-not $getValueFunction.Success -or $getValueFunction.Value.Contains('OrdinalIgnoreCase')) {
+        Add-Failure 'Runner Get-Value must not perform case-insensitive property lookup.'
+    }
+    Assert-NotMatch $runner 'Get-Value[^\r\n]+(?:demo_objective|objective_guidance|next_objective|run_status|run_text)' 'Replay routes must not consume raw objective or run-status fields.'
+    Assert-Match $runner '(?s)function Select-ExactRenderedCanvasObject.*?matches\.Count\s+-gt\s+1.*?rendered\s+-isnot\s+\[bool\].*?enabled\s+-isnot\s+\[bool\].*?function Select-FirstRenderedCanvasObjectByPrefix.*?duplicate semantic id.*?Sort-Object.*?-CaseSensitive' 'Canvas-object route decisions must require unique exact identities, true boolean rendered/enabled witnesses, and deterministic ordinal prefix selection.'
+    Assert-Match $runner '(?s)function Assert-ExactRenderedRoomActionBinding.*?matches\.Count\s+-cne\s+1.*?changed row order.*?disabled, clipped.*?function Invoke-RoomActionRow.*?selected_object_id.*?ConvertTo-BridgeBase64Token.*?click_action room' 'Room-action commands must bind one exact selected object, identity, row index, rendered/enabled state, and encoded bridge command.'
+    Assert-Match $runner '(?s)function Assert-ExplicitSaveAcknowledgmentObservation.*?hasSave\s+-isnot\s+\[bool\].*?saveTextVisible\s+-isnot\s+\[bool\].*?saveText\s+-isnot\s+\[string\].*?-cne\s+\$expectedVisibleText' 'Save acknowledgment must reject missing, non-boolean, and inexact public witnesses.'
+    Assert-Match $runner '(?s)function Test-PublicTerminalSurface.*?screen\s+-cnotin\s+@\(''VICTORY'', ''FAILURE''\).*?visible\s+-isnot\s+\[bool\].*?function Assert-TerminalOutcome.*?screenName\s+-cne\s+''VICTORY''.*?won\s+-isnot\s+\[bool\].*?outcome\s+-cnotin\s+\$ExpectedOutcomes' 'Terminal routing must require exact terminal screen ids, exact boolean witnesses, and exact allowlisted outcome ids.'
+    $cashRunnerFunction = [regex]::Match($runner, '(?ms)^function Invoke-GrandFarePublicCashEvent\s*\{.*?(?=^function |\z)')
+    if (-not $cashRunnerFunction.Success -or [regex]::Matches($cashRunnerFunction.Value, '\bInvoke-RoomActionRow\b').Count -ne 1 -or
+        [regex]::IsMatch($cashRunnerFunction.Value, '(?:requires_confirm|impact_summary|click_choice)', [Text.RegularExpressions.RegexOptions]::IgnoreCase)) {
+        Add-Failure 'Grand fare cash-event recovery must issue exactly one rendered room-action click and consume no hidden or second-click confirmation metadata.'
+    }
+    Assert-Match $runner '(?s)function Select-UniquePublicVerticalScrollSurface.*?SurfaceId\s+-cne\s+''run_menu''.*?matches\.Count\s+-cne\s+1.*?axis.*?vertical.*?rendered\s+-isnot\s+\[bool\].*?canScroll\s+-isnot\s+\[bool\]' 'Run-menu scroll selection must reject unsupported, ambiguous, hidden, wrong-axis, non-boolean, and direction-blocked public surfaces.'
+    Assert-Match $runner '(?s)function Select-UniqueFullyVisibleButton.*?matches\.Count\s+-gt\s+1.*?Get-Value\s+\$button\s+@\(''fully_visible''\)\s+\$null.*?-isnot\s+\[bool\].*?fully_visible signal.*?return \$null' 'Run-menu button selection must fail closed on ambiguous, absent, wrong-case, non-boolean, and false fully-visible signals.'
+    Assert-Match $runner '(?s)function Select-UniquePublicTutorialDialogButton.*?tutorial_skip_dialog:\$Role.*?surface_id.*?dialog_role.*?matches\.Count\s+-cne\s+1.*?enabled.*?fully_visible.*?dialog_rendered.*?Get-Value.*?-isnot\s+\[bool\].*?-not\s+\[bool\]' 'Tutorial confirmation selection must require one exact stable-id control with true boolean enabled, fully-visible, and rendered signals.'
     Assert-Match $runner '(?s)function Click-TutorialConfirmationButton.*?Select-UniquePublicTutorialDialogButton.*?tutorial_skip_dialog:\$Role.*?IsNullOrWhiteSpace.*?-cne\s+\$expectedId.*?click_button \$id' 'Tutorial confirmation clicks must use the exact validated stable public id.'
     Assert-Match $runner '(?s)function Reveal-ButtonByVerticalScroll.*?MaximumScrolls\s*=\s*12.*?Select-UniqueFullyVisibleButton.*?Get-PublicScrollSurfaces.*?scroll_surface \$surfaceId \$Direction.*?did not become visible within' 'Run-menu reveal must require a fully visible target, use bounded public semantic scroll inputs, and fail closed.'
     Assert-NotMatch $runner '\$null\s+-eq\s+\(Find-Button\s+-Text\s+''Skip Lessons''\)' 'The tutorial route must not demand an already visible Skip Lessons button before semantic scrolling can reveal it.'
@@ -690,9 +1368,9 @@ func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
     Assert-Match $bridge '(?s)func _clipped_control_rect\(control: Control\).*?control\.get_viewport\(\).*?viewport\s*==\s*null.*?control\.get_global_rect\(\)\.intersection\(viewport\.get_visible_rect\(\)\)' 'Control visibility and click coordinates must be clipped in the exact control viewport coordinate space.'
     Assert-NotMatch $bridge 'get_children\(true\)' 'The bridge must not broadly enumerate internal controls; only the tutorial confirmation whitelist is admissible.'
     Assert-NotMatch $bridge '\.scroll_vertical\s*=' 'The replay bridge must not inject scroll-container state directly.'
-    Assert-Contains $runner "@('players_card_eligible') `$false" 'Clean-ending eligibility must fail closed when its public field is absent.'
+    Assert-Match $runner '(?s)function Visit-CageAndClaimReadyPlayersCard.*?cage_claim_card.*?claimMatches\.Count\s+-cne\s+1.*?claimEnabled\s+-isnot\s+\[bool\].*?bronze.*?silver.*?gold' 'Clean-ending progress must use Linda''s unique rendered claim control and exact visible tier recognition sequence.'
     Assert-Contains $runner 'Stop-Process -Id $script:OwnedSessionPid -Force -ErrorAction Stop' 'Failure cleanup may force-stop only the exact recorded session-owned Godot PID.'
-    Assert-Contains $runner '$actualStartUtcTicks -ne $script:OwnedSessionStartUtcTicks' 'Failure cleanup must verify process start identity before force-stop.'
+    Assert-Contains $runner '$actualStartUtcTicks -cne $script:OwnedSessionStartUtcTicks' 'Failure cleanup must verify process start identity before force-stop.'
     Assert-Contains $runner '$actualExecutablePath.Equals($expectedExecutablePath' 'Failure cleanup must verify the owned executable path before force-stop.'
     Assert-Match $runner '(?s)Wait-ForSessionExit\s*\r?\n\s*Assert-NoPostExitLogAlerts\s*\r?\n\s*Remove-OwnedBridgeCaptureResidue\s*\r?\n\s*Start-BridgeSession' 'Every same-session relaunch must rescan complete logs after exit and before cleanup/restart.'
     Assert-Match $runner '(?s)function Stop-BridgeSessionSafely.*?Assert-NoPostExitLogAlerts.*?Remove-OwnedBridgeCaptureResidue' 'Final cleanup must rescan complete logs after exit and before residue cleanup/PASS.'
@@ -704,10 +1382,10 @@ func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
     Assert-NotMatch $runner "@\('environment',\s*'world_map'" 'Replay runner must not fall back to the raw environment world-map model.'
     Assert-NotMatch $runner '\.\s*(?:call|set)\s*\(' 'Replay runner must not call or mutate Godot objects directly.'
     Assert-NotMatch $sanitizer '"(?:turns|game_ids|event_ids|resolved_event_ids|service_ids|travel_hooks|event_options|travel_choices|item_offers|service_options|lender_options|interactable_objects)"' 'Public sanitizer must not admit raw environment model lists or option catalogs.'
-    Assert-NotMatch $sanitizer '"typewriter_active"' 'Frame-time-dependent TalkDock typewriter state must not contaminate deterministic public fingerprints.'
+    Assert-Match $sanitizer '(?s)static func _talk\(.*?typewriter_active.*?typeof\(typewriter_value\) == TYPE_BOOL' 'Public TalkDock observation must retain its exact visible typewriter-state witness while rejecting non-boolean values.'
     Assert-Contains $runner "Invoke-GameAction -Action 'blackjack_boss_callout' -Index `$index" 'Rourke callouts must click the matching rendered indexed control.'
-    Assert-Contains $runner "@('game', 'boss_hand_number') 0) -ne 1" 'Rourke persistence must recognize the publicly numbered first hand.'
-    Assert-Contains $runner ".StartsWith('Confirm:', [StringComparison]::OrdinalIgnoreCase)" 'Replay choices must complete visibly armed two-press confirmations.'
+    Assert-Contains $runner "@('game', 'boss_hand_number') 0) -cne 1" 'Rourke persistence must recognize the publicly numbered first hand.'
+    Assert-Match $runner '(?s)function Assert-VisibleTalkChoiceConfirmation.*?render_valid.*?eventId.*?-cne\s+\$ExpectedEventId.*?Confirm:\s+\$OriginalLabel.*?label.*?-cne\s+\$expectedConfirmLabel.*?function Choose-VisibleChoice.*?Assert-VisibleTalkChoiceConfirmation' 'Replay choices must bind the second press to the same fully rendered TalkDock event and exact Confirm label.'
     Assert-Contains $observationContract 'Public environment leaked raw model key' 'Hostile observation contract must reject raw environment model keys.'
     Assert-Contains $observationContract 'The rendered screen world map was removed with the raw environment map.' 'Hostile observation contract must preserve the rendered screen map.'
     Assert-Contains $observationContract 'closed_map_screen["world_map_overlay_visible"] = false' 'Hostile observation contract must exercise a populated map while its overlay is closed.'
@@ -744,14 +1422,29 @@ func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
     try {
         $scrollOutput = & $RunnerPath -Ending clean -SemanticScrollContract | Out-String
         $scrollReport = $scrollOutput | ConvertFrom-Json
-        if (-not [bool]$scrollReport.passed -or [int]$scrollReport.hostile_fixtures -ne 7) {
-            Add-Failure 'Semantic scroll hostile regression did not pass all seven fail-closed fixtures.'
+        if (-not [bool]$scrollReport.passed -or [int]$scrollReport.hostile_fixtures -cne 10) {
+            Add-Failure 'Semantic scroll hostile regression did not pass all ten fail-closed fixtures.'
         }
-        if ([int]$scrollReport.hostile_button_fixtures -ne 5) {
-            Add-Failure 'Semantic scroll hostile regression did not pass all five fully-visible button fixtures.'
+        if ([int]$scrollReport.hostile_button_fixtures -cne 6) {
+            Add-Failure 'Semantic scroll hostile regression did not pass all six fully-visible button fixtures.'
         }
-        if ([int]$scrollReport.valid_dialog_fixtures -ne 2 -or [int]$scrollReport.hostile_dialog_fixtures -ne 7) {
-            Add-Failure 'Tutorial confirmation regression did not pass both exact controls and all seven fail-closed fixtures.'
+        if ([int]$scrollReport.valid_dialog_fixtures -cne 2 -or [int]$scrollReport.hostile_dialog_fixtures -cne 8) {
+            Add-Failure 'Tutorial confirmation regression did not pass both exact controls and all eight fail-closed fixtures.'
+        }
+        if ([int]$scrollReport.valid_confirmation_fixtures -cne 1 -or [int]$scrollReport.hostile_confirmation_fixtures -cne 5) {
+            Add-Failure 'TalkDock confirmation regression did not pass its exact valid case and five cross-modal/schema hostiles.'
+        }
+        if ([int]$scrollReport.valid_canvas_object_fixtures -cne 2 -or [int]$scrollReport.hostile_canvas_object_fixtures -cne 6) {
+            Add-Failure 'Canvas-object regression did not pass both exact selection cases and six rendered/schema hostiles.'
+        }
+        if ([int]$scrollReport.valid_room_action_fixtures -cne 1 -or [int]$scrollReport.hostile_room_action_fixtures -cne 6) {
+            Add-Failure 'Room-action regression did not pass its exact binding and six duplicate/order/render/selection hostiles.'
+        }
+        if ([int]$scrollReport.valid_save_acknowledgment_fixtures -cne 1 -or [int]$scrollReport.hostile_save_acknowledgment_fixtures -cne 5) {
+            Add-Failure 'Save acknowledgment regression did not pass its exact witness and five type/case hostiles.'
+        }
+        if ([int]$scrollReport.valid_terminal_fixtures -cne 1 -or [int]$scrollReport.hostile_terminal_fixtures -cne 4) {
+            Add-Failure 'Terminal regression did not pass its exact valid case and four type/case hostiles.'
         }
         if (-not (Test-Path -LiteralPath $SemanticScrollReportPath -PathType Leaf)) {
             Add-Failure 'Semantic scroll hostile regression did not publish its deterministic report.'
@@ -773,6 +1466,10 @@ $report = [ordered]@{
     button_viewport_hostile_fixtures = $buttonViewportHostileFixtures
     machine_jam_valid_fixtures = $machineJamValidFixtures
     machine_jam_hostile_fixtures = $machineJamHostileFixtures
+    grand_fare_funding_valid_fixtures = $grandFareFundingValidFixtures
+    grand_fare_funding_hostile_fixtures = $grandFareFundingHostileFixtures
+    grand_fare_cash_event_valid_fixtures = $grandFareCashEventValidFixtures
+    grand_fare_cash_event_hostile_fixtures = $grandFareCashEventHostileFixtures
     command_open_valid_fixtures = $commandOpenValidFixtures
     command_open_hostile_fixtures = $commandOpenHostileFixtures
     failures = @($failures)

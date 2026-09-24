@@ -35,6 +35,7 @@ $ExpectedOutcomes = @{
     cheat = @('showdown_survived')
     heist = @('heist_clean_sweep', 'heist_out_hot', 'heist_somebody_got_pinched')
 }
+$GrandCasinoChipReserve = 50
 
 if (-not (Test-Path -LiteralPath $SessionTool)) {
     throw "Production-input launcher is missing: $SessionTool"
@@ -69,6 +70,11 @@ $script:OwnedSessionPid = 0
 $script:OwnedSessionStartUtcTicks = 0L
 $script:OwnedSessionExecutablePath = ''
 $script:SessionRoot = ''
+$script:GrandFareRecoveryActive = $false
+$script:GrandFareAcceptedOfferKeys = New-Object 'System.Collections.Generic.HashSet[string]'
+$script:GrandFareAcceptedLenderIds = New-Object 'System.Collections.Generic.HashSet[string]'
+$script:GrandFareResolvedCashEventKeys = New-Object 'System.Collections.Generic.HashSet[string]'
+$script:GrandFareRecoveryVisitedNodes = New-Object 'System.Collections.Generic.HashSet[string]'
 
 
 function Get-Value {
@@ -79,20 +85,66 @@ function Get-Value {
     )
     $current = $InputObject
     foreach ($segment in $Path) {
-        if ($null -eq $current) { return $Default }
-        $property = $current.PSObject.Properties[$segment]
-        if ($null -eq $property) { return $Default }
-        $current = $property.Value
+        if ($null -ceq $current) { return $Default }
+        if ($current -is [System.Collections.IDictionary]) {
+            $matchingKeys = @($current.Keys | Where-Object { [string]$_ -ceq $segment })
+            if ($matchingKeys.Count -ceq 0) { return $Default }
+            if ($matchingKeys.Count -cne 1) { throw "Ambiguous exact property '$segment'." }
+            $current = $current[$matchingKeys[0]]
+        }
+        else {
+            $properties = @($current.PSObject.Properties | Where-Object { $_.Name -ceq $segment })
+            if ($properties.Count -ceq 0) { return $Default }
+            if ($properties.Count -cne 1) { throw "Ambiguous exact property '$segment'." }
+            $current = $properties[0].Value
+        }
     }
-    if ($null -eq $current) { return $Default }
+    if ($null -ceq $current) { return $Default }
     return $current
 }
 
 
 function Get-Array {
     param([AllowNull()]$Value)
-    if ($null -eq $Value) { return @() }
+    if ($null -ceq $Value) { return @() }
     return @($Value)
+}
+
+
+function ConvertTo-BridgeBase64Token {
+    param([Parameter(Mandatory = $true)][string]$Value)
+    if ([string]::IsNullOrWhiteSpace($Value)) {
+        throw 'Bridge command tokens cannot encode blank public identities.'
+    }
+    return [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($Value))
+}
+
+
+function Get-RenderedHudInteger {
+    param(
+        [Parameter(Mandatory = $true)][ValidateSet('bankroll', 'chips', 'heat_level')][string]$Name,
+        [Parameter(Mandatory = $true)][string]$Context
+    )
+    $witnessName = if ($Name -ceq 'heat_level') { 'heat_rendered' } else { "${Name}_rendered" }
+    $witness = Get-Value $script:LastObservation @('status_hud', $witnessName) $null
+    $value = Get-Value $script:LastObservation @('status_hud', $Name) $null
+    if ($witness -isnot [bool] -or -not [bool]$witness -or
+        ($value -isnot [int32] -and $value -isnot [int64]) -or [long]$value -lt 0 -or
+        [long]$value -gt [int]::MaxValue) {
+        throw "$Context has no exact fully rendered HUD $Name integer."
+    }
+    return [int]$value
+}
+
+
+function Test-PublicTerminalSurface {
+    $screen = [string](Get-Value $script:LastObservation @('screen', 'screen') '')
+    if ($screen -cnotin @('VICTORY', 'FAILURE')) { return $false }
+    $visible = Get-Value $script:LastObservation @('screen', 'run_report_visible') $null
+    if ($visible -isnot [bool] -or -not [bool]$visible) {
+        throw "Terminal screen '$screen' has no exact rendered RunReport witness."
+    }
+    return $true
 }
 
 
@@ -102,7 +154,7 @@ function Assert-ReplayPauseOwnership {
         [Parameter(Mandatory = $true)][string]$Context
     )
     $owners = @(Get-Array (Get-Value $Snapshot @('pause_owners') @()))
-    if ('agent_replay' -notin $owners -or
+    if ('agent_replay' -cnotin $owners -or
         -not [bool](Get-Value $Snapshot @('application_paused') $false) -or
         -not [bool](Get-Value $Snapshot @('simulation_paused') $false) -or
         -not [bool](Get-Value $Snapshot @('environment_canvas_paused') $false) -or
@@ -207,14 +259,14 @@ foreach (`$property in `$parameterObject.PSObject.Properties) {
         $bridgeExitCode = $bridgeProcess.ExitCode
         $stdoutValue = if (Test-Path -LiteralPath $stdoutPath) { Get-Content -LiteralPath $stdoutPath -Raw -Encoding utf8 } else { '' }
         $stderrValue = if (Test-Path -LiteralPath $stderrPath) { Get-Content -LiteralPath $stderrPath -Raw -Encoding utf8 } else { '' }
-        $stdout = if ($null -eq $stdoutValue) { '' } else { [string]$stdoutValue }
-        $stderr = if ($null -eq $stderrValue) { '' } else { [string]$stderrValue }
+        $stdout = if ($null -ceq $stdoutValue) { '' } else { [string]$stdoutValue }
+        $stderr = if ($null -ceq $stderrValue) { '' } else { [string]$stderrValue }
         $mergedOutput = @($stdout.Trim(), $stderr.Trim()) | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
         $mergedOutput = $mergedOutput -join [Environment]::NewLine
         # Some Windows PowerShell/Start-Process builds leave ExitCode unset
         # when both native streams are redirected. In that case the strict
         # stderr/stdout/JSON checks below are the authoritative result.
-        if ($null -ne $bridgeExitCode -and [int]$bridgeExitCode -ne 0) {
+        if ($null -cne $bridgeExitCode -and [int]$bridgeExitCode -cne 0) {
             throw "agent_playtest_session failed with exit code $bridgeExitCode. $mergedOutput"
         }
         if (-not [string]::IsNullOrWhiteSpace($stderr)) {
@@ -226,7 +278,7 @@ foreach (`$property in `$parameterObject.PSObject.Properties) {
         return $stdout
     }
     finally {
-        if ($null -ne $bridgeProcess) {
+        if ($null -cne $bridgeProcess) {
             $bridgeProcess.Dispose()
         }
         Remove-Item -LiteralPath $stdoutPath -ErrorAction SilentlyContinue
@@ -249,11 +301,11 @@ function Remove-OwnedBridgeCaptureResidue {
     # exited, bounded retries must remove every capture owned by this runner.
     for ($attempt = 0; $attempt -lt 20; $attempt++) {
         $residue = @(Get-OwnedBridgeCaptureResidue)
-        if ($residue.Count -eq 0) { return }
+        if ($residue.Count -ceq 0) { return }
         foreach ($file in $residue) {
             Remove-Item -LiteralPath $file.FullName -Force -ErrorAction SilentlyContinue
         }
-        if (@(Get-OwnedBridgeCaptureResidue).Count -eq 0) { return }
+        if (@(Get-OwnedBridgeCaptureResidue).Count -ceq 0) { return }
         Start-Sleep -Milliseconds 50
     }
     $paths = @(Get-OwnedBridgeCaptureResidue | ForEach-Object { $_.FullName })
@@ -266,15 +318,18 @@ function Assert-NoForbiddenObservationKey {
         [AllowNull()]$Value,
         [string]$Path = 'observable'
     )
-    if ($null -eq $Value) { return }
+    if ($null -ceq $Value) { return }
     if ($Value -is [System.Management.Automation.PSCustomObject]) {
         foreach ($property in $Value.PSObject.Properties) {
             $name = [string]$property.Name
-            if ($name -in @(
+            if ($name -iin @(
                 'run_state', 'narrative_flags', 'shoe', 'shoe_order', 'shoe_cards',
                 'edge_schedule', 'trigger_context', 'scenario_layout_audit',
                 'crew_heist_state', 'crew_heist_private_capsule', 'private_capsule',
-                'rng_state', 'hidden_dealer_card', 'dealer_hole_card'
+                'rng_state', 'hidden_dealer_card', 'dealer_hole_card',
+                'debt_items', 'debt_text', 'impact_summary', 'consequence_summary',
+                'requires_confirm', 'loan_terms', 'demo_objective', 'objective_guidance',
+                'next_objective', 'run_status', 'run_text'
             )) {
                 throw "Private key escaped into the public observation at $Path.$name"
             }
@@ -318,18 +373,18 @@ function Assert-HealthyResult {
         throw "Screenshot capture failed after '$Command': $pngError"
     }
     $observation = Get-Value $Result @('look', 'observable') $null
-    if ($null -eq $observation) {
+    if ($null -ceq $observation) {
         throw "No public observation followed '$Command'."
     }
-    if ([string](Get-Value $observation @('schema') '') -ne $Schema -or
-        [int](Get-Value $observation @('schema_version') 0) -ne $SchemaVersion) {
+    if ([string](Get-Value $observation @('schema') '') -cne $Schema -or
+        [int](Get-Value $observation @('schema_version') 0) -cne $SchemaVersion) {
         throw "Unexpected public observation schema after '$Command'."
     }
-    if ([string](Get-Value $observation @('privacy', 'policy') '') -ne 'strict_allowlist') {
+    if ([string](Get-Value $observation @('privacy', 'policy') '') -cne 'strict_allowlist') {
         throw "The bridge did not declare the strict public allowlist after '$Command'."
     }
     $trace = Get-Value $Result @('trace') $null
-    if ($null -eq $trace -or [string](Get-Value $trace @('command') '') -cne $Command -or
+    if ($null -ceq $trace -or [string](Get-Value $trace @('command') '') -cne $Command -or
         -not [bool](Get-Value $trace @('input_emitted') $false)) {
         throw "The bridge did not return an authenticated public transition trace for '$Command'."
     }
@@ -337,7 +392,7 @@ function Assert-HealthyResult {
     $gameId = [string](Get-Value $observation @('game', 'game_id') '')
     $holeVisible = [bool](Get-Value $observation @('game', 'dealer_hole_visible') $false)
     $dealerCards = @(Get-Array (Get-Value $observation @('game', 'dealer_cards') @()))
-    if ($gameId -eq 'blackjack' -and -not $holeVisible -and $dealerCards.Count -ne 0) {
+    if ($gameId -ceq 'blackjack' -and -not $holeVisible -and $dealerCards.Count -cne 0) {
         throw "Blackjack dealer cards escaped before the public reveal after '$Command'."
     }
 }
@@ -367,11 +422,6 @@ function New-CanonicalRecord {
             bankroll = [int](Get-Value $checkpoint @('bankroll') 0)
             chips = [int](Get-Value $checkpoint @('chips') 0)
             heat = [int](Get-Value $checkpoint @('heat') 0)
-            clock_minute = [int](Get-Value $checkpoint @('clock_minute') 0)
-            objective_state = [string](Get-Value $checkpoint @('objective_state') '')
-            objective_text = [string](Get-Value $checkpoint @('objective_text') '')
-            next_text = [string](Get-Value $checkpoint @('next_text') '')
-            run_status = [string](Get-Value $checkpoint @('run_status') '')
         }
         game = [ordered]@{
             id = [string](Get-Value $game @('game_id') '')
@@ -430,16 +480,14 @@ function Write-ActionEvidence {
     Add-Content -LiteralPath $script:TranscriptPath -Value ($record | ConvertTo-Json -Depth 40 -Compress) -Encoding utf8
 
     $checkpoint = $record.checkpoint
-    $moneySignature = "$($checkpoint.bankroll)|$($checkpoint.chips)|$($checkpoint.heat)|$($checkpoint.clock_minute)"
-    if ($moneySignature -ne $script:LastMoneySignature) {
+    $moneySignature = "$($checkpoint.bankroll)|$($checkpoint.chips)|$($checkpoint.heat)"
+    if ($moneySignature -cne $script:LastMoneySignature) {
         $money = [ordered]@{
             action = $script:ActionCount
             intent = $Intent
             bankroll = $checkpoint.bankroll
             chips = $checkpoint.chips
             heat = $checkpoint.heat
-            clock_minute = $checkpoint.clock_minute
-            objective = $checkpoint.objective_text
         }
         Add-Content -LiteralPath $script:MoneyCurvePath -Value ($money | ConvertTo-Json -Compress) -Encoding utf8
         $script:LastMoneySignature = $moneySignature
@@ -531,7 +579,7 @@ function Get-ExactOwnedSessionProcess {
         $actualStartUtcTicks = [long]$process.StartTime.ToUniversalTime().Ticks
         $actualExecutablePath = [IO.Path]::GetFullPath([string]$process.Path)
         $expectedExecutablePath = [IO.Path]::GetFullPath($script:OwnedSessionExecutablePath)
-        if ($actualStartUtcTicks -ne $script:OwnedSessionStartUtcTicks -or
+        if ($actualStartUtcTicks -cne $script:OwnedSessionStartUtcTicks -or
             -not $actualExecutablePath.Equals($expectedExecutablePath, [StringComparison]::OrdinalIgnoreCase)) {
             return $null
         }
@@ -608,10 +656,10 @@ function Stop-BridgeSessionSafely {
     }
     Remove-OwnedBridgeCaptureResidue
 
-    if ($null -ne $gracefulFailure -or $null -ne $logFailure) {
+    if ($null -cne $gracefulFailure -or $null -cne $logFailure) {
         $details = @()
-        if ($null -ne $gracefulFailure) { $details += "graceful=$($gracefulFailure.Exception.Message)" }
-        if ($null -ne $logFailure) { $details += "post_exit_logs=$($logFailure.Exception.Message)" }
+        if ($null -cne $gracefulFailure) { $details += "graceful=$($gracefulFailure.Exception.Message)" }
+        if ($null -cne $logFailure) { $details += "post_exit_logs=$($logFailure.Exception.Message)" }
         $message = "Session '$($script:Session)' cleanup forced=$forced failed qualification: $($details -join '; ')"
         if ($BestEffort) {
             Write-Warning $message
@@ -662,7 +710,7 @@ function Find-Button {
     if ($matches.Count -gt 1) {
         throw "Visible button lookup is ambiguous for '$Text'."
     }
-    if ($matches.Count -eq 0) { return $null }
+    if ($matches.Count -ceq 0) { return $null }
     return $matches[0]
 }
 
@@ -678,13 +726,13 @@ function Select-UniqueFullyVisibleButton {
     if ($matches.Count -gt 1) {
         throw "Fully visible button lookup is ambiguous for '$Text'."
     }
-    if ($matches.Count -eq 0) { return $null }
+    if ($matches.Count -ceq 0) { return $null }
     $button = $matches[0]
-    $visibilityProperty = $button.PSObject.Properties['fully_visible']
-    if ($null -eq $visibilityProperty -or $visibilityProperty.Value -isnot [bool]) {
+    $fullyVisible = Get-Value $button @('fully_visible') $null
+    if ($fullyVisible -isnot [bool]) {
         throw "Public button '$Text' has no unambiguous fully_visible signal."
     }
-    if (-not [bool]$visibilityProperty.Value) { return $null }
+    if (-not [bool]$fullyVisible) { return $null }
     return $button
 }
 
@@ -700,16 +748,16 @@ function Select-UniquePublicTutorialDialogButton {
         [string](Get-Value $_ @('dialog_role') '') -ceq $Role -and
         [string](Get-Value $_ @('id') '') -ceq $expectedId
     })
-    if ($matches.Count -ne 1) {
+    if ($matches.Count -cne 1) {
         throw "Expected exactly one rendered tutorial confirmation '$Role' control at '$expectedId'; found $($matches.Count)."
     }
     $button = $matches[0]
     foreach ($signal in @('enabled', 'fully_visible', 'dialog_rendered')) {
-        $property = $button.PSObject.Properties[$signal]
-        if ($null -eq $property -or $property.Value -isnot [bool]) {
+        $value = Get-Value $button @($signal) $null
+        if ($value -isnot [bool]) {
             throw "Tutorial confirmation '$Role' control has no unambiguous $signal signal."
         }
-        if (-not [bool]$property.Value) {
+        if (-not [bool]$value) {
             throw "Tutorial confirmation '$Role' control is not publicly enabled, fully visible, and rendered."
         }
     }
@@ -734,16 +782,18 @@ function Select-UniquePublicVerticalScrollSurface {
     $matches = @($Surfaces | Where-Object {
         [string](Get-Value $_ @('id') '') -ceq $SurfaceId
     })
-    if ($matches.Count -ne 1) {
+    if ($matches.Count -cne 1) {
         throw "Expected exactly one public '$SurfaceId' scroll surface; found $($matches.Count)."
     }
     $surface = $matches[0]
+    $rendered = Get-Value $surface @('rendered') $null
     if ([string](Get-Value $surface @('axis') '') -cne 'vertical' -or
-        -not [bool](Get-Value $surface @('rendered') $false)) {
+        $rendered -isnot [bool] -or -not [bool]$rendered) {
         throw "Public '$SurfaceId' scroll surface is not a rendered vertical control."
     }
     $capability = "can_scroll_$Direction"
-    if (-not [bool](Get-Value $surface @($capability) $false)) {
+    $canScroll = Get-Value $surface @($capability) $null
+    if ($canScroll -isnot [bool] -or -not [bool]$canScroll) {
         throw "Public '$SurfaceId' scroll surface cannot scroll $Direction."
     }
     return $surface
@@ -758,8 +808,8 @@ function Reveal-ButtonByVerticalScroll {
     )
     for ($attempt = 0; $attempt -le $MaximumScrolls; $attempt++) {
         $button = Select-UniqueFullyVisibleButton -Buttons @(Get-Buttons) -Text $Text
-        if ($null -ne $button) { return $button }
-        if ($attempt -eq $MaximumScrolls) { break }
+        if ($null -cne $button) { return $button }
+        if ($attempt -ceq $MaximumScrolls) { break }
         $surface = Select-UniquePublicVerticalScrollSurface `
             -Surfaces @(Get-PublicScrollSurfaces) `
             -SurfaceId 'run_menu' `
@@ -795,7 +845,7 @@ function Click-Button {
         [switch]$Contains
     )
     $button = Find-Button -Text $Text -Contains:$Contains
-    if ($null -eq $button) {
+    if ($null -ceq $button) {
         throw "Required visible button was not found: $Text"
     }
     $id = [string](Get-Value $button @('id') '')
@@ -821,15 +871,34 @@ function Click-TutorialConfirmationButton {
 }
 
 
+function Select-ExactRenderedCanvasObject {
+    param(
+        [Parameter(Mandatory = $true)][AllowEmptyCollection()][object[]]$Objects,
+        [Parameter(Mandatory = $true)][string]$SemanticId
+    )
+    $matches = @($Objects | Where-Object {
+        $id = Get-Value $_ @('semantic_id') $null
+        $id -is [string] -and [string]$id -ceq $SemanticId
+    })
+    if ($matches.Count -gt 1) {
+        throw "Canvas object '$SemanticId' is ambiguous."
+    }
+    if ($matches.Count -ceq 0) { return $null }
+    $rendered = Get-Value $matches[0] @('rendered') $null
+    $enabled = Get-Value $matches[0] @('enabled') $null
+    if ($rendered -isnot [bool] -or $enabled -isnot [bool]) {
+        throw "Canvas object '$SemanticId' has no exact rendered/enabled witnesses."
+    }
+    if (-not [bool]$rendered -or -not [bool]$enabled) { return $null }
+    return $matches[0]
+}
+
+
 function Find-CanvasObject {
     param([Parameter(Mandatory = $true)][string]$SemanticId)
-    foreach ($object in @(Get-Array (Get-Value $script:LastResult @('look', 'clickable', 'canvas_objects') @()))) {
-        if ([string](Get-Value $object @('semantic_id') '') -eq $SemanticId -and
-            [bool](Get-Value $object @('enabled') $false)) {
-            return $object
-        }
-    }
-    return $null
+    return Select-ExactRenderedCanvasObject `
+        -Objects @(Get-Array (Get-Value $script:LastResult @('look', 'clickable', 'canvas_objects') @())) `
+        -SemanticId $SemanticId
 }
 
 
@@ -844,24 +913,31 @@ function Open-SemanticObject {
         [Parameter(Mandatory = $true)][string]$Intent,
         [string[]]$PreferredActions = @()
     )
-    if ($null -eq (Find-CanvasObject -SemanticId $SemanticId)) {
+    if ($null -ceq (Find-CanvasObject -SemanticId $SemanticId)) {
         throw "Required semantic object is not visible and enabled: $SemanticId"
     }
     $null = Invoke-BridgeCommand -Command "click_object $SemanticId" -Intent "focus $SemanticId"
-    $enabled = @(Get-RoomActions | Where-Object { [bool](Get-Value $_ @('enabled') $false) })
-    if ($enabled.Count -eq 0) {
+    $enabled = @(Get-RoomActions | Where-Object {
+        $enabledValue = Get-Value $_ @('enabled') $null
+        $renderedValue = Get-Value $_ @('rendered') $null
+        if ($enabledValue -isnot [bool] -or $renderedValue -isnot [bool]) {
+            throw "Semantic object '$SemanticId' exposed a room action without exact rendered/enabled witnesses."
+        }
+        [bool]$enabledValue -and [bool]$renderedValue
+    })
+    if ($enabled.Count -ceq 0) {
         throw "Semantic object '$SemanticId' exposed no enabled player action."
     }
     $selected = $null
     foreach ($preferred in $PreferredActions) {
         $matches = @($enabled | Where-Object {
-            ([string](Get-Value $_ @('id') '') -eq $preferred) -or
-            ([string](Get-Value $_ @('action') '') -eq $preferred) -or
-            ([string](Get-Value $_ @('action_id') '') -eq $preferred) -or
-            ([string](Get-Value $_ @('emit_object_id') '') -eq $preferred) -or
-            ([string](Get-Value $_ @('label') '') -eq $preferred)
+            ([string](Get-Value $_ @('id') '') -ceq $preferred) -or
+            ([string](Get-Value $_ @('action') '') -ceq $preferred) -or
+            ([string](Get-Value $_ @('action_id') '') -ceq $preferred) -or
+            ([string](Get-Value $_ @('emit_object_id') '') -ceq $preferred) -or
+            ([string](Get-Value $_ @('label') '') -ceq $preferred)
         })
-        if ($matches.Count -eq 1) {
+        if ($matches.Count -ceq 1) {
             $selected = $matches[0]
             break
         }
@@ -869,32 +945,50 @@ function Open-SemanticObject {
             throw "Action '$preferred' is ambiguous on '$SemanticId'."
         }
     }
-    if ($null -eq $selected -and $enabled.Count -eq 1) {
+    if ($null -ceq $selected -and $enabled.Count -ceq 1) {
         $selected = $enabled[0]
     }
-    if ($null -eq $selected) {
+    if ($null -ceq $selected) {
         $labels = @($enabled | ForEach-Object { [string](Get-Value $_ @('label') '') }) -join ', '
         throw "Semantic object '$SemanticId' needs an explicit action. Visible actions: $labels"
     }
-    $action = [string](Get-Value $selected @('id') '')
-    if ([string]::IsNullOrWhiteSpace($action)) { $action = [string](Get-Value $selected @('action') '') }
-    if ([string]::IsNullOrWhiteSpace($action)) { $action = [string](Get-Value $selected @('action_id') '') }
-    if ([string]::IsNullOrWhiteSpace($action)) { $action = [string](Get-Value $selected @('label') '') }
-    if ([string]::IsNullOrWhiteSpace($action)) {
-        $action = [string](Get-Value $selected @('index') '')
+    return Invoke-RoomActionRow -Row $selected -Intent $Intent
+}
+
+
+function Select-FirstRenderedCanvasObjectByPrefix {
+    param(
+        [Parameter(Mandatory = $true)][AllowEmptyCollection()][object[]]$Objects,
+        [Parameter(Mandatory = $true)][string]$Prefix
+    )
+    $eligible = @()
+    $seen = @{}
+    foreach ($object in $Objects) {
+        $semanticId = Get-Value $object @('semantic_id') $null
+        if ($semanticId -isnot [string] -or -not ([string]$semanticId).StartsWith($Prefix, [StringComparison]::Ordinal)) {
+            continue
+        }
+        if ($seen.ContainsKey([string]$semanticId)) {
+            throw "Canvas prefix '$Prefix' exposes duplicate semantic id '$semanticId'."
+        }
+        $seen[[string]$semanticId] = $true
+        $rendered = Get-Value $object @('rendered') $null
+        $enabled = Get-Value $object @('enabled') $null
+        if ($rendered -isnot [bool] -or $enabled -isnot [bool]) {
+            throw "Canvas object '$semanticId' has no exact rendered/enabled witnesses."
+        }
+        if ([bool]$rendered -and [bool]$enabled) { $eligible += $object }
     }
-    return Invoke-BridgeCommand -Command "click_action $action" -Intent $Intent
+    if ($eligible.Count -ceq 0) { return $null }
+    return $eligible | Sort-Object -Property @{ Expression = { [string](Get-Value $_ @('semantic_id') '') } } -CaseSensitive | Select-Object -First 1
 }
 
 
 function Find-CanvasObjectByPrefix {
     param([Parameter(Mandatory = $true)][string]$Prefix)
-    $matches = @(Get-Array (Get-Value $script:LastResult @('look', 'clickable', 'canvas_objects') @())) | Where-Object {
-        [string](Get-Value $_ @('semantic_id') '').StartsWith($Prefix, [StringComparison]::Ordinal) -and
-        [bool](Get-Value $_ @('enabled') $false)
-    }
-    if ($matches.Count -eq 0) { return $null }
-    return $matches | Sort-Object { [string](Get-Value $_ @('semantic_id') '') } | Select-Object -First 1
+    return Select-FirstRenderedCanvasObjectByPrefix `
+        -Objects @(Get-Array (Get-Value $script:LastResult @('look', 'clickable', 'canvas_objects') @())) `
+        -Prefix $Prefix
 }
 
 
@@ -905,15 +999,44 @@ function Get-EventChoiceRoomAction {
     )
     $expected = "event_response:$EventId`:$ChoiceId"
     $matches = @(Get-RoomActions | Where-Object {
-        ([string](Get-Value $_ @('emit_object_id') '') -eq $expected) -or
-        ([string](Get-Value $_ @('id') '') -eq $expected) -or
-        ([string](Get-Value $_ @('action') '') -eq $expected) -or
-        ([string](Get-Value $_ @('action_id') '') -eq $expected)
+        ([string](Get-Value $_ @('emit_object_id') '') -ceq $expected) -or
+        ([string](Get-Value $_ @('id') '') -ceq $expected) -or
+        ([string](Get-Value $_ @('action') '') -ceq $expected) -or
+        ([string](Get-Value $_ @('action_id') '') -ceq $expected)
     })
     if ($matches.Count -gt 1) {
         throw "Event choice '$EventId/$ChoiceId' exposed more than one room action."
     }
-    if ($matches.Count -eq 0) { return $null }
+    if ($matches.Count -ceq 0) { return $null }
+    return $matches[0]
+}
+
+
+function Assert-ExactRenderedRoomActionBinding {
+    param(
+        [Parameter(Mandatory = $true)][AllowEmptyCollection()][object[]]$Rows,
+        [Parameter(Mandatory = $true)][string]$SelectedObjectId,
+        [Parameter(Mandatory = $true)][int]$Index,
+        [Parameter(Mandatory = $true)][ValidateSet('id', 'action', 'action_id', 'emit_object_id', 'label')][string]$IdentityKey,
+        [Parameter(Mandatory = $true)][string]$IdentityValue
+    )
+    $matches = @($Rows | Where-Object {
+        [string](Get-Value $_ @('selected_object_id') '') -ceq $SelectedObjectId -and
+            [string](Get-Value $_ @($IdentityKey) '') -ceq $IdentityValue
+    })
+    if ($matches.Count -cne 1) {
+        throw "Room action '$SelectedObjectId/$IdentityValue' is missing or ambiguous."
+    }
+    $liveIndex = Get-Value $matches[0] @('index') $null
+    $liveEnabled = Get-Value $matches[0] @('enabled') $null
+    $liveRendered = Get-Value $matches[0] @('rendered') $null
+    if (($liveIndex -isnot [int32] -and $liveIndex -isnot [int64]) -or [long]$liveIndex -ne $Index) {
+        throw "Room action '$SelectedObjectId/$IdentityValue' changed row order."
+    }
+    if ($liveEnabled -isnot [bool] -or $liveRendered -isnot [bool] -or
+        -not [bool]$liveEnabled -or -not [bool]$liveRendered) {
+        throw "Room action '$SelectedObjectId/$IdentityValue' is disabled, clipped, or lacks exact witnesses."
+    }
     return $matches[0]
 }
 
@@ -923,27 +1046,56 @@ function Invoke-RoomActionRow {
         [Parameter(Mandatory = $true)]$Row,
         [Parameter(Mandatory = $true)][string]$Intent
     )
-    if (-not [bool](Get-Value $Row @('enabled') $false)) {
+    $enabled = Get-Value $Row @('enabled') $null
+    $rendered = Get-Value $Row @('rendered') $null
+    if ($enabled -isnot [bool] -or $rendered -isnot [bool]) {
+        throw 'Required room action has no exact rendered/enabled witnesses.'
+    }
+    if (-not [bool]$rendered) {
+        throw 'Required room action is clipped or not fully rendered.'
+    }
+    if (-not [bool]$enabled) {
         $reason = [string](Get-Value $Row @('disabled_reason') 'no public reason supplied')
         throw "Required room action is disabled: $reason"
     }
-    $action = [string](Get-Value $Row @('id') '')
-    if ([string]::IsNullOrWhiteSpace($action)) { $action = [string](Get-Value $Row @('action') '') }
-    if ([string]::IsNullOrWhiteSpace($action)) { $action = [string](Get-Value $Row @('action_id') '') }
-    if ([string]::IsNullOrWhiteSpace($action)) { $action = [string](Get-Value $Row @('emit_object_id') '') }
-    if ([string]::IsNullOrWhiteSpace($action)) { $action = [string](Get-Value $Row @('label') '') }
-    $index = [int](Get-Value $Row @('index') 0)
-    if ([string]::IsNullOrWhiteSpace($action)) {
+    $selectedObjectId = Get-Value $Row @('selected_object_id') $null
+    $indexValue = Get-Value $Row @('index') $null
+    if ($selectedObjectId -isnot [string] -or [string]::IsNullOrWhiteSpace([string]$selectedObjectId) -or
+        ($indexValue -isnot [int32] -and $indexValue -isnot [int64]) -or [long]$indexValue -lt 0 -or
+        [long]$indexValue -gt [int]::MaxValue) {
+        throw 'Visible room action has no stable selected-object identity and integral row index.'
+    }
+    $identityKey = ''
+    $identityValue = ''
+    foreach ($candidateKey in @('id', 'action', 'action_id', 'emit_object_id', 'label')) {
+        $candidateValue = Get-Value $Row @($candidateKey) $null
+        if ($candidateValue -is [string] -and -not [string]::IsNullOrWhiteSpace([string]$candidateValue)) {
+            $identityKey = $candidateKey
+            $identityValue = [string]$candidateValue
+            break
+        }
+    }
+    if ([string]::IsNullOrWhiteSpace($identityValue)) {
         throw 'Visible room action has no stable public action id or label.'
     }
-    return Invoke-BridgeCommand -Command "click_action $action $index" -Intent $Intent
+    $null = Assert-ExactRenderedRoomActionBinding `
+        -Rows @(Get-RoomActions) `
+        -SelectedObjectId ([string]$selectedObjectId) `
+        -Index ([int]$indexValue) `
+        -IdentityKey $identityKey `
+        -IdentityValue $identityValue
+    $objectToken = ConvertTo-BridgeBase64Token -Value ([string]$selectedObjectId)
+    $identityToken = ConvertTo-BridgeBase64Token -Value $identityValue
+    return Invoke-BridgeCommand `
+        -Command "click_action room $([int]$indexValue) $objectToken $identityKey $identityToken" `
+        -Intent $Intent
 }
 
 
 function Select-EventObject {
     param([Parameter(Mandatory = $true)][string]$EventId)
     $semanticId = "event:$EventId"
-    if ($null -eq (Find-CanvasObject -SemanticId $semanticId)) {
+    if ($null -ceq (Find-CanvasObject -SemanticId $semanticId)) {
         throw "Required player-facing event object is not visible: $EventId"
     }
     $null = Invoke-BridgeCommand -Command "click_object $semanticId" -Intent "focus the visible $EventId event"
@@ -957,16 +1109,16 @@ function Invoke-EventObjectChoice {
         [Parameter(Mandatory = $true)][string]$Intent
     )
     Select-EventObject -EventId $EventId
-    if ($ChoiceId -in @(Get-VisibleChoiceIds)) {
+    if ($ChoiceId -cin @(Get-VisibleChoiceIds)) {
         $null = Choose-VisibleChoice -ChoiceId $ChoiceId -Intent $Intent
         Wait-Frames -Frames 10
         return
     }
     $row = Get-EventChoiceRoomAction -EventId $EventId -ChoiceId $ChoiceId
-    if ($null -ne $row) {
+    if ($null -cne $row) {
         $null = Invoke-RoomActionRow -Row $row -Intent $Intent
         Wait-Frames -Frames 10
-        if ($ChoiceId -in @(Get-VisibleChoiceIds)) {
+        if ($ChoiceId -cin @(Get-VisibleChoiceIds)) {
             $null = Choose-VisibleChoice -ChoiceId $ChoiceId -Intent $Intent
             Wait-Frames -Frames 10
         }
@@ -974,12 +1126,12 @@ function Invoke-EventObjectChoice {
     }
     $opening = @(Get-RoomActions | Where-Object {
         [bool](Get-Value $_ @('enabled') $false) -and
-        [string](Get-Value $_ @('label') '') -in @('Open', 'Talk', 'Answer', 'Respond', 'Inspect', 'Approach')
+        [string](Get-Value $_ @('label') '') -cin @('Open', 'Talk', 'Answer', 'Respond', 'Inspect', 'Approach')
     })
-    if ($opening.Count -eq 0 -and @(Get-RoomActions).Count -eq 1) {
+    if ($opening.Count -ceq 0 -and @(Get-RoomActions).Count -ceq 1) {
         $opening = @(Get-RoomActions)
     }
-    if ($opening.Count -ne 1) {
+    if ($opening.Count -cne 1) {
         $labels = @(Get-RoomActions | ForEach-Object { [string](Get-Value $_ @('label') '') }) -join ', '
         throw "Event '$EventId' does not expose the requested '$ChoiceId' response or one opening action. Visible actions: $labels"
     }
@@ -997,12 +1149,12 @@ function Test-EventObjectChoiceEnabled {
     )
     Select-EventObject -EventId $EventId
     $row = Get-EventChoiceRoomAction -EventId $EventId -ChoiceId $ChoiceId
-    if ($null -ne $row) {
+    if ($null -cne $row) {
         return [bool](Get-Value $row @('enabled') $false)
     }
     $eventChoices = @(Get-Array (Get-Value $script:LastObservation @('event_popup', 'choices') @()))
     foreach ($choice in $eventChoices) {
-        if ([string](Get-Value $choice @('id') '') -eq $ChoiceId) {
+        if ([string](Get-Value $choice @('id') '') -ceq $ChoiceId) {
             return -not [bool](Get-Value $choice @('disabled') $false) -and [bool](Get-Value $choice @('enabled') $true)
         }
     }
@@ -1029,7 +1181,10 @@ function Get-PublicTalkChoices {
 
 
 function Get-VisibleTutorialGuideAcknowledgment {
-    if (-not [bool](Get-Value $script:LastObservation @('talk', 'visible') $false)) {
+    $talkVisible = Get-Value $script:LastObservation @('talk', 'visible') $null
+    $talkRenderValid = Get-Value $script:LastObservation @('talk', 'render_valid') $null
+    if ($talkVisible -isnot [bool] -or -not [bool]$talkVisible -or
+        $talkRenderValid -isnot [bool] -or -not [bool]$talkRenderValid) {
         return $null
     }
     $eventId = [string](Get-Value $script:LastObservation @('talk', 'event_id') '')
@@ -1037,17 +1192,53 @@ function Get-VisibleTutorialGuideAcknowledgment {
         return $null
     }
     $choiceIds = @(Get-VisibleChoiceIds)
-    if ($choiceIds.Count -ne 1 -or [string]$choiceIds[0] -cne 'continue') {
+    if ($choiceIds.Count -cne 1 -or [string]$choiceIds[0] -cne 'continue') {
         return $null
     }
     $rendered = @(Get-PublicTalkChoices | Where-Object {
+        $enabled = Get-Value $_ @('enabled') $null
         [string](Get-Value $_ @('id') '') -ceq 'continue' -and
-        [bool](Get-Value $_ @('enabled') $false)
+            $enabled -is [bool] -and [bool]$enabled
     })
-    if ($rendered.Count -ne 1) {
+    if ($rendered.Count -cne 1) {
         return $null
     }
     return $rendered[0]
+}
+
+
+function Assert-VisibleTalkChoiceConfirmation {
+    param(
+        [Parameter(Mandatory = $true)]$Observation,
+        [Parameter(Mandatory = $true)][AllowEmptyCollection()][object[]]$RenderedTalkChoices,
+        [Parameter(Mandatory = $true)][string]$ChoiceId,
+        [Parameter(Mandatory = $true)][string]$ExpectedEventId,
+        [Parameter(Mandatory = $true)][string]$OriginalLabel
+    )
+    $eventVisible = Get-Value $Observation @('event_popup', 'visible') $null
+    $talkVisible = Get-Value $Observation @('talk', 'visible') $null
+    $talkRenderValid = Get-Value $Observation @('talk', 'render_valid') $null
+    $eventId = Get-Value $Observation @('talk', 'event_id') $null
+    if ($eventVisible -isnot [bool] -or [bool]$eventVisible -or
+        $talkVisible -isnot [bool] -or -not [bool]$talkVisible -or
+        $talkRenderValid -isnot [bool] -or -not [bool]$talkRenderValid -or
+        $eventId -isnot [string] -or [string]$eventId -cne $ExpectedEventId) {
+        throw "Choice '$ChoiceId' crossed to another rendered modal instead of arming in place."
+    }
+    $matches = @($RenderedTalkChoices | Where-Object {
+        [string](Get-Value $_ @('id') '') -ceq $ChoiceId
+    })
+    if ($matches.Count -cne 1) {
+        throw "Choice '$ChoiceId' did not retain one exact rendered TalkDock binding while arming."
+    }
+    $enabled = Get-Value $matches[0] @('enabled') $null
+    $label = Get-Value $matches[0] @('label') $null
+    $expectedConfirmLabel = "Confirm: $OriginalLabel"
+    if ($enabled -isnot [bool] -or -not [bool]$enabled -or
+        $label -isnot [string] -or [string]$label -cne $expectedConfirmLabel) {
+        throw "Choice '$ChoiceId' remained visible without the exact confirmation label '$expectedConfirmLabel'."
+    }
+    return $true
 }
 
 
@@ -1057,36 +1248,49 @@ function Choose-VisibleChoice {
         [Parameter(Mandatory = $true)][string]$Intent
     )
     $choices = @(Get-VisibleChoiceIds)
-    if ($ChoiceId -notin $choices) {
+    if ($ChoiceId -cnotin $choices) {
         throw "Required player-facing choice '$ChoiceId' is not visible. Visible: $($choices -join ', ')"
     }
-    if ([bool](Get-Value $script:LastObservation @('talk', 'visible') $false)) {
-        $talkMatches = @(Get-PublicTalkChoices | Where-Object {
-            [string](Get-Value $_ @('id') '') -eq $ChoiceId
-        })
-        if ($talkMatches.Count -ne 1) {
-            throw "Visible TalkDock choice '$ChoiceId' has no unique rendered button binding."
-        }
-        if (-not [bool](Get-Value $talkMatches[0] @('enabled') $false)) {
-            throw "Visible TalkDock choice '$ChoiceId' is disabled or clipped."
-        }
+    $eventVisible = Get-Value $script:LastObservation @('event_popup', 'visible') $null
+    $talkVisible = Get-Value $script:LastObservation @('talk', 'visible') $null
+    if ($eventVisible -isnot [bool] -or $talkVisible -isnot [bool] -or ([bool]$eventVisible -ceq [bool]$talkVisible)) {
+        throw "Choice '$ChoiceId' does not belong to exactly one rendered choice surface."
     }
+    $surface = if ([bool]$eventVisible) { 'event_popup' } else { 'talk' }
+    $eventId = [string](Get-Value $script:LastObservation @($surface, 'event_id') '')
+    if ([string]::IsNullOrWhiteSpace($eventId)) {
+        throw "Choice '$ChoiceId' has no exact rendered event binding."
+    }
+    $renderedChoices = if ($surface -ceq 'talk') {
+        @(Get-PublicTalkChoices)
+    }
+    else {
+        @(Get-Array (Get-Value $script:LastObservation @('event_popup', 'choices') @()))
+    }
+    $matches = @($renderedChoices | Where-Object { [string](Get-Value $_ @('id') '') -ceq $ChoiceId })
+    if ($matches.Count -cne 1) {
+        throw "Visible $surface choice '$ChoiceId' has no unique rendered button binding."
+    }
+    $enabled = Get-Value $matches[0] @('enabled') $null
+    if ($enabled -isnot [bool] -or -not [bool]$enabled) {
+        throw "Visible $surface choice '$ChoiceId' is disabled or clipped."
+    }
+    $label = [string](Get-Value $matches[0] @('label') '')
+    if ([string]::IsNullOrWhiteSpace($label)) { throw "Choice '$ChoiceId' has no rendered label." }
     $result = Invoke-BridgeCommand -Command "click_choice $ChoiceId" -Intent $Intent
 
     # TalkDock visibly arms consequential choices on the first press by changing
     # the rendered label to "Confirm: ...". Follow that production two-press
     # interaction only when the same choice remains visible and exactly one
     # confirmation control is now on screen.
-    if ($ChoiceId -in @(Get-VisibleChoiceIds)) {
-        $confirmButtons = @(Get-Buttons | Where-Object {
-            [string](Get-Value $_ @('text') '').StartsWith('Confirm:', [StringComparison]::OrdinalIgnoreCase)
-        })
-        if ($confirmButtons.Count -gt 1) {
-            throw "Choice '$ChoiceId' armed more than one visible confirmation control."
-        }
-        if ($confirmButtons.Count -eq 1) {
-            $result = Invoke-BridgeCommand -Command "click_choice $ChoiceId" -Intent "$Intent (confirm the visibly armed choice)"
-        }
+    if ($surface -ceq 'talk' -and @(Get-VisibleChoiceIds) -ccontains $ChoiceId) {
+        $null = Assert-VisibleTalkChoiceConfirmation `
+            -Observation $script:LastObservation `
+            -RenderedTalkChoices @(Get-PublicTalkChoices) `
+            -ChoiceId $ChoiceId `
+            -ExpectedEventId $eventId `
+            -OriginalLabel $label
+        $result = Invoke-BridgeCommand -Command "click_choice $ChoiceId" -Intent "$Intent (confirm the visibly armed choice)"
     }
     return $result
 }
@@ -1103,12 +1307,12 @@ function Find-GameAction {
         [int]$Index = [int]::MinValue
     )
     $matches = @(Get-GameActions | Where-Object {
-        [string](Get-Value $_ @('action') '') -eq $Action -and
+        [string](Get-Value $_ @('action') '') -ceq $Action -and
         [bool](Get-Value $_ @('enabled') $false) -and
-        ($Index -eq [int]::MinValue -or [int](Get-Value $_ @('index') 0) -eq $Index)
+        ($Index -ceq [int]::MinValue -or [int](Get-Value $_ @('index') 0) -ceq $Index)
     })
-    if ($matches.Count -eq 0) { return $null }
-    if ($Index -eq [int]::MinValue -and $matches.Count -gt 1) {
+    if ($matches.Count -ceq 0) { return $null }
+    if ($Index -ceq [int]::MinValue -and $matches.Count -gt 1) {
         return $matches | Sort-Object { [int](Get-Value $_ @('index') 0) } | Select-Object -First 1
     }
     if ($matches.Count -gt 1) {
@@ -1125,7 +1329,7 @@ function Invoke-GameAction {
         [int]$Index = [int]::MinValue
     )
     $row = Find-GameAction -Action $Action -Index $Index
-    if ($null -eq $row) {
+    if ($null -ceq $row) {
         throw "Required enabled game action is not visible: $Action"
     }
     $resolvedIndex = [int](Get-Value $row @('index') 0)
@@ -1147,7 +1351,7 @@ function Clear-VisibleCoach {
         $coachVisible = [bool](Get-Value $script:LastResult @('look', 'coach', 'visible') $false)
         if (-not $coachVisible) { return }
         $tutorialAcknowledgment = Get-VisibleTutorialGuideAcknowledgment
-        if ($null -ne $tutorialAcknowledgment) {
+        if ($null -cne $tutorialAcknowledgment) {
             $label = [string](Get-Value $tutorialAcknowledgment @('label') 'Continue')
             $null = Choose-VisibleChoice -ChoiceId 'continue' -Intent "follow Pal's visible tutorial guidance: $label"
             Wait-Frames -Frames 8
@@ -1158,10 +1362,10 @@ function Clear-VisibleCoach {
         if (-not [string]::IsNullOrWhiteSpace($dismissLabel)) {
             $button = Select-UniqueFullyVisibleButton -Buttons @(Get-Buttons) -Text $dismissLabel
         }
-        if ($null -eq $button) {
+        if ($null -ceq $button) {
             $button = Select-UniqueFullyVisibleButton -Buttons @(Get-Buttons) -Text 'Skip tip'
         }
-        if ($null -eq $button) {
+        if ($null -ceq $button) {
             throw "A visible coach card blocks the route without a fully visible public dismiss control."
         }
         $id = [string](Get-Value $button @('id') '')
@@ -1176,25 +1380,25 @@ function Clear-VisibleCoach {
 
 function Start-NormalSeededRun {
     $screen = [string](Get-Value $script:LastObservation @('screen', 'screen') '')
-    if ($screen -ne 'START') {
+    if ($screen -cne 'START') {
         throw "A fresh isolated profile did not open on the start screen."
     }
 
     $primary = [string](Get-Value $script:LastObservation @('screen', 'start_menu', 'primary_action_text') '')
-    if ($primary -eq 'CONTINUE') {
+    if ($primary -ceq 'CONTINUE') {
         throw "The qualifying session is not fresh; CONTINUE was already present."
     }
-    if ($primary -ne 'PLAY') {
+    if ($primary -cne 'PLAY') {
         throw "The fresh start screen did not expose PLAY. Found '$primary'."
     }
 
     $null = Click-Button -Text 'PLAY' -Intent 'start the mandatory first-night lesson on the fresh profile'
     Wait-Frames -Frames 30
     $lessonScreen = [string](Get-Value $script:LastObservation @('screen', 'screen') '')
-    $lessonHasRun = [bool](Get-Value $script:LastObservation @('screen', 'has_run') $false)
-    $lessonStatus = [string](Get-Value $script:LastObservation @('status_hud', 'run_status') '')
-    if ($lessonScreen -ceq 'START' -or -not $lessonHasRun -or $lessonStatus -cne 'active') {
-        throw "PLAY did not visibly enter a live active first-night lesson (screen='$lessonScreen', has_run=$lessonHasRun, status='$lessonStatus')."
+    $lessonHasRun = Get-Value $script:LastObservation @('screen', 'has_run') $null
+    if ($lessonHasRun -isnot [bool] -or -not [bool]$lessonHasRun -or
+        $lessonScreen -cin @('START', 'VICTORY', 'FAILURE')) {
+        throw "PLAY did not visibly enter a live first-night lesson (screen='$lessonScreen', has_run=$lessonHasRun)."
     }
     Clear-VisibleCoach
 
@@ -1227,11 +1431,13 @@ function Start-NormalSeededRun {
     Wait-Frames -Frames 45
     Clear-VisibleCoach
 
-    if (-not [bool](Get-Value $script:LastObservation @('screen', 'has_run') $false)) {
+    $seededHasRun = Get-Value $script:LastObservation @('screen', 'has_run') $null
+    if ($seededHasRun -isnot [bool] -or -not [bool]$seededHasRun) {
         throw "START NEW RUN did not produce a live run."
     }
-    if ([string](Get-Value $script:LastObservation @('status_hud', 'run_status') '') -ne 'active') {
-        throw "The seeded run did not start active."
+    $seededScreen = [string](Get-Value $script:LastObservation @('screen', 'screen') '')
+    if ($seededScreen -cin @('START', 'VICTORY', 'FAILURE')) {
+        throw "The seeded run opened an invalid visible screen '$seededScreen'."
     }
 }
 
@@ -1268,7 +1474,7 @@ function Get-MapNodes {
 function Find-MapNode {
     param([Parameter(Mandatory = $true)][string]$NodeId)
     foreach ($node in Get-MapNodes) {
-        if ([string](Get-Value $node @('id') '') -eq $NodeId) { return $node }
+        if ([string](Get-Value $node @('id') '') -ceq $NodeId) { return $node }
     }
     return $null
 }
@@ -1281,7 +1487,7 @@ function Travel-ToNode {
     )
     Open-WorldMap
     $node = Find-MapNode -NodeId $NodeId
-    if ($null -eq $node) {
+    if ($null -ceq $node) {
         throw "World-map destination is not player-visible: $NodeId"
     }
     if (-not [bool](Get-Value $node @('travel_enabled') $false)) {
@@ -1296,7 +1502,7 @@ function Travel-ToNode {
     Wait-ForTravelToSettle
     Wait-Frames -Frames 12
     $arrived = [string](Get-Value $script:LastObservation @('environment', 'world_node_id') '')
-    if ($arrived -ne $NodeId) {
+    if ($arrived -cne $NodeId) {
         throw "Travel to '$NodeId' resolved at '$arrived'."
     }
     Clear-VisibleCoach
@@ -1323,7 +1529,7 @@ function Get-PublicGraphDistance {
         [Parameter(Mandatory = $true)][string]$From,
         [Parameter(Mandatory = $true)][string]$To
     )
-    if ($From -eq $To) { return 0 }
+    if ($From -ceq $To) { return 0 }
     $adjacency = @{}
     foreach ($edge in Get-MapEdges) {
         if (-not [bool](Get-Value $edge @('enabled') $true)) { continue }
@@ -1344,7 +1550,7 @@ function Get-PublicGraphDistance {
         $distance = [int]$entry[1]
         foreach ($neighborValue in @($adjacency[$node])) {
             $neighbor = [string]$neighborValue
-            if ($neighbor -eq $To) { return $distance + 1 }
+            if ($neighbor -ceq $To) { return $distance + 1 }
             if ($seen.ContainsKey($neighbor)) { continue }
             $seen[$neighbor] = $true
             $queue.Enqueue(@($neighbor, $distance + 1))
@@ -1362,10 +1568,10 @@ function Navigate-ToNode {
     )
     for ($leg = 0; $leg -lt $MaxLegs; $leg++) {
         $current = [string](Get-Value $script:LastObservation @('environment', 'world_node_id') '')
-        if ($current -eq $NodeId) { return }
+        if ($current -ceq $NodeId) { return }
         Open-WorldMap
         $target = Find-MapNode -NodeId $NodeId
-        if ($null -eq $target) {
+        if ($null -ceq $target) {
             throw "World-map destination is not player-visible: $NodeId"
         }
         if ([bool](Get-Value $target @('travel_enabled') $false)) {
@@ -1374,9 +1580,9 @@ function Navigate-ToNode {
         }
         $enabled = @(Get-MapNodes | Where-Object {
             [bool](Get-Value $_ @('travel_enabled') $false) -and
-            [string](Get-Value $_ @('id') '') -ne $current
+            [string](Get-Value $_ @('id') '') -cne $current
         })
-        if ($enabled.Count -eq 0) {
+        if ($enabled.Count -ceq 0) {
             $reason = [string](Get-Value $target @('travel_disabled_reason') 'no public route is enabled')
             throw "No visible next map leg can reach '$NodeId': $reason"
         }
@@ -1389,7 +1595,7 @@ function Navigate-ToNode {
                 id = $candidateId
             }
         } | Sort-Object distance, cost, id)
-        if ($ranked.Count -eq 0 -or [int]$ranked[0].distance -eq [int]::MaxValue) {
+        if ($ranked.Count -ceq 0 -or [int]$ranked[0].distance -ceq [int]::MaxValue) {
             throw "The public map graph has no visible path from '$current' to '$NodeId'."
         }
         $nextId = [string]$ranked[0].id
@@ -1403,14 +1609,14 @@ function Get-DeliveryTargetNodeId {
     Open-WorldMap
     $targets = @(Get-MapNodes | Where-Object {
         [bool](Get-Value $_ @('delivery_target') $false) -and
-        [string](Get-Value $_ @('delivery_target_status') 'pending') -ne 'delivered'
+        [string](Get-Value $_ @('delivery_target_status') 'pending') -cne 'delivered'
     })
     $targetId = ''
     if ($targets.Count -gt 1) {
         Close-WorldMap
         throw 'The public delivery overlay exposed more than one active target for a single-stop route.'
     }
-    if ($targets.Count -eq 1) {
+    if ($targets.Count -ceq 1) {
         $targetId = [string](Get-Value $targets[0] @('id') '')
     }
     Close-WorldMap
@@ -1427,15 +1633,15 @@ function Get-FirstEnabledVisibleChoiceId {
                 $id = [string](Get-Value $choice @('id') '')
                 $enabledProperty = $choice.PSObject.Properties['enabled']
                 $enabled = -not [bool](Get-Value $choice @('disabled') $false) -and
-                    ($null -eq $enabledProperty -or [bool]$enabledProperty.Value)
-                if ($enabled -and $id -eq $preferred) { return $id }
+                    ($null -ceq $enabledProperty -or [bool]$enabledProperty.Value)
+                if ($enabled -and $id -ceq $preferred) { return $id }
             }
         }
         foreach ($choice in $choices) {
             $id = [string](Get-Value $choice @('id') '')
             $enabledProperty = $choice.PSObject.Properties['enabled']
             $enabled = -not [bool](Get-Value $choice @('disabled') $false) -and
-                ($null -eq $enabledProperty -or [bool]$enabledProperty.Value)
+                ($null -ceq $enabledProperty -or [bool]$enabledProperty.Value)
             if ($enabled -and -not [string]::IsNullOrWhiteSpace($id)) { return $id }
         }
         return ''
@@ -1447,7 +1653,7 @@ function Get-FirstEnabledVisibleChoiceId {
             -not [string]::IsNullOrWhiteSpace([string](Get-Value $_ @('id') ''))
         })
         foreach ($preferred in @('continue', 'acknowledge', 'move_on', 'keep_moving', 'leave', 'done')) {
-            if (@($choices | Where-Object { [string](Get-Value $_ @('id') '') -eq $preferred }).Count -eq 1) {
+            if (@($choices | Where-Object { [string](Get-Value $_ @('id') '') -ceq $preferred }).Count -ceq 1) {
                 return $preferred
             }
         }
@@ -1482,7 +1688,7 @@ function Resolve-VisibleBlockingPresentation {
         # without publishing a choice. A player can only wait for that rendered
         # window or use its explicit close control.
         foreach ($label in @('Close', 'Back', 'OK')) {
-            if ($null -ne (Find-Button -Text $label)) {
+            if ($null -cne (Find-Button -Text $label)) {
                 $null = Click-Button -Text $label -Intent "$Context`: close the visible presentation card"
                 Wait-Frames -Frames 8
                 continue presentation
@@ -1507,7 +1713,7 @@ function Complete-PublicDelivery {
     Wait-Frames -Frames 8
     Resolve-VisibleBlockingPresentation -Context $Intent
     $pickup = Find-CanvasObjectByPrefix -Prefix 'delivery:pickup:'
-    if ($null -ne $pickup) {
+    if ($null -cne $pickup) {
         $pickupId = [string](Get-Value $pickup @('semantic_id') '')
         $null = Open-SemanticObject -SemanticId $pickupId -Intent "${Intent}: take the visible package"
         Wait-Frames -Frames 10
@@ -1515,7 +1721,7 @@ function Complete-PublicDelivery {
 
     $targetSeen = $false
     for ($step = 0; $step -lt 24; $step++) {
-        if ([string](Get-Value $script:LastObservation @('status_hud', 'run_status') '') -eq 'ended') { return }
+        if (Test-PublicTerminalSurface) { return }
         Resolve-VisibleBlockingPresentation -Context $Intent
         $targetId = Get-DeliveryTargetNodeId
         if ([string]::IsNullOrWhiteSpace($targetId)) {
@@ -1525,40 +1731,40 @@ function Complete-PublicDelivery {
         $targetSeen = $true
 
         $currentNodeId = [string](Get-Value $script:LastObservation @('environment', 'world_node_id') '')
-        if ($currentNodeId -ne $targetId) {
+        if ($currentNodeId -cne $targetId) {
             Navigate-ToNode -NodeId $targetId -Intent "${Intent}: follow the marked real-map route"
             Wait-Frames -Frames 10
             continue
         }
-        if (-not [string]::IsNullOrWhiteSpace($GrandRoom) -and $targetId -eq 'grand_casino') {
+        if (-not [string]::IsNullOrWhiteSpace($GrandRoom) -and $targetId -ceq 'grand_casino') {
             Enter-GrandRoom -Room $GrandRoom
             Resolve-VisibleBlockingPresentation -Context $Intent
         }
 
         $handoff = Find-CanvasObjectByPrefix -Prefix 'delivery:handoff:'
-        if ($null -eq $handoff) {
+        if ($null -ceq $handoff) {
             $handoff = Find-CanvasObject -SemanticId 'crew::package_handoff'
         }
-        if ($null -ne $handoff) {
+        if ($null -cne $handoff) {
             $handoffId = [string](Get-Value $handoff @('semantic_id') '')
             $null = Open-SemanticObject -SemanticId $handoffId -Intent "${Intent}: make the visible handoff"
             Wait-Frames -Frames 12
             Resolve-VisibleBlockingPresentation -Context $Intent
             $remainingTarget = Get-DeliveryTargetNodeId
             if ([string]::IsNullOrWhiteSpace($remainingTarget)) { return }
-            if ($remainingTarget -eq $targetId -and
-                ($null -ne (Find-CanvasObjectByPrefix -Prefix 'delivery:handoff:') -or
-                 $null -ne (Find-CanvasObject -SemanticId 'crew::package_handoff'))) {
+            if ($remainingTarget -ceq $targetId -and
+                ($null -cne (Find-CanvasObjectByPrefix -Prefix 'delivery:handoff:') -or
+                 $null -cne (Find-CanvasObject -SemanticId 'crew::package_handoff'))) {
                 throw "$Intent left the same visible handoff and map marker active after the handoff click."
             }
             continue
         }
-        if ($null -ne (Find-Button -Text 'Hold Sightline')) {
+        if ($null -cne (Find-Button -Text 'Hold Sightline')) {
             $null = Click-Button -Text 'Hold Sightline' -Intent "${Intent}: hold the marked sightline"
             Wait-Frames -Frames 8
             continue
         }
-        if ($null -ne (Find-Button -Text 'Send Signal')) {
+        if ($null -cne (Find-Button -Text 'Send Signal')) {
             $null = Click-Button -Text 'Send Signal' -Intent "${Intent}: send the visible route signal"
             Wait-Frames -Frames 8
             continue
@@ -1567,7 +1773,7 @@ function Complete-PublicDelivery {
         # The Punchline map node opens on its exterior. Its marked contact is a
         # real person inside the casino, so follow the visible room door before
         # declaring the handoff missing.
-        if ($null -ne (Find-CanvasObject -SemanticId 'environment_layer:casino')) {
+        if ($null -cne (Find-CanvasObject -SemanticId 'environment_layer:casino')) {
             $null = Open-SemanticObject -SemanticId 'environment_layer:casino' -PreferredActions @('Enter Casino', 'Enter Room', 'Enter', 'Open') -Intent "${Intent}: enter the marked contact's visible casino room"
             Wait-Frames -Frames 12
             continue
@@ -1593,26 +1799,389 @@ function Open-EventObject {
 
 
 function Accept-GrandCasinoInviteIfVisible {
-    if ($null -eq (Find-CanvasObject -SemanticId 'event:grand_casino_invite')) { return $false }
+    if ($null -ceq (Find-CanvasObject -SemanticId 'event:grand_casino_invite')) { return $false }
     Invoke-EventObjectChoice -EventId 'grand_casino_invite' -ChoiceId 'accept_invite' -Intent 'accept the visible invitation to the Grand Casino'
     Wait-Frames -Frames 15
     return $true
 }
 
 
+function Get-PublicGrandFareRequirement {
+    Open-WorldMap
+    $grand = @(Get-MapNodes | Where-Object {
+        [string](Get-Value $_ @('archetype_id') '') -ceq 'grand_casino'
+    })
+    if ($grand.Count -cne 1) {
+        throw "Grand fare recovery requires exactly one player-visible Grand Casino route; found $($grand.Count)."
+    }
+    $nodeId = Get-Value $grand[0] @('id') $null
+    $cost = Get-Value $grand[0] @('cost') $null
+    if ($nodeId -isnot [string] -or [string]$nodeId -cnotmatch '^[a-z0-9_]+$') {
+        throw 'The player-visible Grand Casino route has no stable public node id.'
+    }
+    if (($cost -isnot [int32] -and $cost -isnot [int64]) -or [long]$cost -lt 0) {
+        throw 'The player-visible Grand Casino route has no non-negative integral fare.'
+    }
+    $requiredCashLong = [long]$cost + [long]$GrandCasinoChipReserve
+    if ($requiredCashLong -gt [int]::MaxValue) {
+        throw 'The published Grand fare plus chip reserve exceeds the supported public integer range.'
+    }
+    return [pscustomobject][ordered]@{
+        node = $grand[0]
+        node_id = [string]$nodeId
+        fare = [int]$cost
+        required_cash = [int]$requiredCashLong
+    }
+}
+
+
+function Wait-ForFullyRenderedFundingTalk {
+    param(
+        [Parameter(Mandatory = $true)][string]$ExpectedEventId,
+        [ValidateRange(1, 64)][int]$MaximumPolls = 48
+    )
+
+    for ($poll = 0; $poll -lt $MaximumPolls; $poll++) {
+        $eventVisible = Get-Value $script:LastObservation @('event_popup', 'visible') $null
+        $talkVisible = Get-Value $script:LastObservation @('talk', 'visible') $null
+        if ($eventVisible -isnot [bool] -or $talkVisible -isnot [bool]) {
+            throw 'Funding wait lost its boolean public modal visibility signals.'
+        }
+        if ([bool]$eventVisible) {
+            throw 'Funding wait encountered an unrelated visible event popup.'
+        }
+        if ([bool]$talkVisible) {
+            $eventId = Get-Value $script:LastObservation @('talk', 'event_id') $null
+            if ($eventId -isnot [string] -or [string]$eventId -cne $ExpectedEventId) {
+                throw "Funding wait opened unexpected TalkDock '$eventId'."
+            }
+            $choiceIds = @(Get-Array (Get-Value $script:LastObservation @('talk', 'choice_ids') @()))
+            if ($choiceIds.Count -cne 2 -or $choiceIds[0] -isnot [string] -or [string]$choiceIds[0] -cne 'accept' -or
+                $choiceIds[1] -isnot [string] -or [string]$choiceIds[1] -cne 'decline') {
+                throw 'Funding wait observed a changed or unauthenticated TalkDock choice set.'
+            }
+            $expanded = Get-Value $script:LastObservation @('talk', 'expanded') $null
+            $renderValid = Get-Value $script:LastObservation @('talk', 'render_valid') $null
+            $bodyComplete = Get-Value $script:LastObservation @('talk', 'body_complete') $null
+            $typewriterActive = Get-Value $script:LastObservation @('talk', 'typewriter_active') $null
+            if ($renderValid -is [bool] -and [bool]$renderValid -and
+                $expanded -is [bool] -and [bool]$expanded -and
+                $bodyComplete -is [bool] -and [bool]$bodyComplete -and
+                $typewriterActive -is [bool] -and -not [bool]$typewriterActive) {
+                return
+            }
+        }
+        Wait-Frames -Frames 4 -Intent 'wait for the visible lender terms to finish rendering'
+    }
+    throw "Funding TalkDock '$ExpectedEventId' did not become fully rendered within the bounded wait."
+}
+
+
+function Invoke-GrandFarePublicFundingOffer {
+    if (-not $script:GrandFareRecoveryActive) {
+        throw 'Public lender funding is permitted only inside Grand fare recovery.'
+    }
+    Close-WorldMap
+    if ([bool](Get-Value $script:LastObservation @('event_popup', 'visible') $false) -or
+        [bool](Get-Value $script:LastObservation @('talk', 'visible') $false)) {
+        throw 'Grand fare funding refuses to act through another visible modal.'
+    }
+
+    $canvasObjects = @(Get-Array (Get-Value $script:LastResult @('look', 'clickable', 'canvas_objects') @()))
+    $lenders = @($canvasObjects | Where-Object {
+        $semanticProperties = @(Get-Rw062ExactPublicPropertyMatches -InputObject $_ -Name 'semantic_id')
+        $semanticProperties.Count -ceq 1 -and $semanticProperties[0].Value -is [string] -and
+            ([string]$semanticProperties[0].Value).StartsWith('lender:', [StringComparison]::Ordinal)
+    })
+    if ($lenders.Count -ceq 0) { return $false }
+
+    $worldNodeId = Get-Value $script:LastObservation @('environment', 'world_node_id') $null
+    if ($worldNodeId -isnot [string] -or [string]$worldNodeId -cnotmatch '^[a-z0-9_]+$') {
+        throw 'Grand fare funding cannot bind the visible offer to one public world node.'
+    }
+    foreach ($lender in $lenders) {
+        $semanticId = [string](Get-Value $lender @('semantic_id') '')
+        $rendered = Get-Value $lender @('rendered') $null
+        $enabled = Get-Value $lender @('enabled') $null
+        if ($rendered -isnot [bool] -or $enabled -isnot [bool]) {
+            throw "Funding lender object '$semanticId' lost its exact rendered/enabled witnesses."
+        }
+    }
+    $unusedEnabledLenders = @($lenders | Where-Object {
+        $semanticId = [string](Get-Value $_ @('semantic_id') '')
+        $lenderId = $semanticId.Substring('lender:'.Length)
+        $offerKey = "$worldNodeId|$semanticId"
+        $rendered = Get-Value $_ @('rendered') $null
+        $enabled = Get-Value $_ @('enabled') $null
+        $rendered -is [bool] -and [bool]$rendered -and
+            $enabled -is [bool] -and [bool]$enabled -and
+            -not $script:GrandFareAcceptedOfferKeys.Contains($offerKey) -and
+            -not $script:GrandFareAcceptedLenderIds.Contains($lenderId)
+    })
+    if ($unusedEnabledLenders.Count -ceq 0) {
+        return $false
+    }
+    $objectSelection = Select-GrandFareFundingObject `
+        -CanvasObjects $canvasObjects `
+        -WorldNodeId ([string]$worldNodeId) `
+        -AcceptedOfferKeys @($script:GrandFareAcceptedOfferKeys) `
+        -AcceptedLenderIds @($script:GrandFareAcceptedLenderIds)
+    $preflightDebtIndicator = Get-Value $script:LastObservation @('status_hud', 'debt_indicator') $null
+    if (-not (Test-GrandFareFundingPreflight `
+        -Selection $objectSelection `
+        -DebtIndicator $preflightDebtIndicator `
+        -AcceptedLenderIds @($script:GrandFareAcceptedLenderIds))) {
+        return $false
+    }
+    $semanticId = [string]$objectSelection.semantic_id
+    $null = Invoke-BridgeCommand -Command "click_object $semanticId" -Intent 'focus the one visible lender offering Grand fare recovery'
+
+    $selection = Select-GrandFareFundingObjectAction `
+        -Selection $objectSelection `
+        -RoomActions @(Get-RoomActions)
+    $null = Invoke-RoomActionRow `
+        -Row $selection.action `
+        -Intent "open $($selection.lender_label)'s exact public Grand fare terms"
+    $expectedTalkEventId = "lender_conversation:borrow:$($selection.lender_id)"
+    Wait-ForFullyRenderedFundingTalk -ExpectedEventId $expectedTalkEventId
+
+    $offer = Select-GrandFareFundingTalkOffer `
+        -Selection $selection `
+        -Talk (Get-Value $script:LastObservation @('talk') $null) `
+        -TalkChoices @(Get-PublicTalkChoices)
+    $beforeBankroll = Get-Value $script:LastObservation @('status_hud', 'bankroll') $null
+    $beforeBankrollRendered = Get-Value $script:LastObservation @('status_hud', 'bankroll_rendered') $null
+    if ($beforeBankrollRendered -isnot [bool] -or -not [bool]$beforeBankrollRendered -or
+        ($beforeBankroll -isnot [int32] -and $beforeBankroll -isnot [int64])) {
+        throw 'Grand fare funding cannot verify the pre-offer fully rendered HUD bankroll.'
+    }
+    $beforeDebtIndicator = Get-Value $script:LastObservation @('status_hud', 'debt_indicator') $null
+    $null = Get-GrandFarePublicDebtCount -DebtIndicator $beforeDebtIndicator -Context 'Pre-acceptance HUD'
+
+    $null = Invoke-BridgeCommand -Command 'click_choice accept' -Intent 'arm the visibly disclosed Grand fare funding offer'
+    $null = Assert-GrandFareFundingConfirmation `
+        -Offer $offer `
+        -Talk (Get-Value $script:LastObservation @('talk') $null) `
+        -TalkChoices @(Get-PublicTalkChoices)
+    $null = Invoke-BridgeCommand -Command 'click_choice accept' -Intent 'confirm the visibly armed Grand fare funding offer'
+    Wait-Frames -Frames 10
+    $null = Assert-GrandFareFundingResult `
+        -Offer $offer `
+        -BeforeBankroll ([int]$beforeBankroll) `
+        -BeforeDebtIndicator $beforeDebtIndicator `
+        -AfterObservation $script:LastObservation
+    $null = $script:GrandFareAcceptedOfferKeys.Add([string]$selection.offer_key)
+    $null = $script:GrandFareAcceptedLenderIds.Add([string]$selection.lender_id)
+    return $true
+}
+
+
+function Invoke-GrandFarePublicCashEvent {
+    if (-not $script:GrandFareRecoveryActive) {
+        throw 'Public cash events are permitted only inside Grand fare recovery.'
+    }
+    Close-WorldMap
+    if ([bool](Get-Value $script:LastObservation @('event_popup', 'visible') $false) -or
+        [bool](Get-Value $script:LastObservation @('talk', 'visible') $false)) {
+        throw 'Grand fare cash recovery refuses to act through another visible modal.'
+    }
+
+    $allowedSemanticIds = @(
+        'event:back_alley_offer',
+        'event:scenario_wedding_overflow_hallway'
+    )
+    $matches = @((Get-Array (Get-Value $script:LastResult @('look', 'clickable', 'canvas_objects') @())) | Where-Object {
+        $semanticProperties = @(Get-Rw062ExactPublicPropertyMatches -InputObject $_ -Name 'semantic_id')
+        $semanticProperties.Count -ceq 1 -and $semanticProperties[0].Value -is [string] -and
+            [string]$semanticProperties[0].Value -cin $allowedSemanticIds
+    })
+    if ($matches.Count -ceq 0) { return $false }
+    if ($matches.Count -cne 1) {
+        throw "Grand fare cash recovery found $($matches.Count) allowlisted public event objects instead of one."
+    }
+    $enabled = Get-Value $matches[0] @('enabled') $null
+    if ($enabled -isnot [bool] -or -not [bool]$enabled) {
+        throw 'The allowlisted Grand fare cash event is disabled or has no boolean public enabled state.'
+    }
+    $semanticId = [string](Get-Value $matches[0] @('semantic_id') '')
+    $eventId = $semanticId.Substring('event:'.Length)
+    $worldNodeId = Get-Value $script:LastObservation @('environment', 'world_node_id') $null
+    if ($worldNodeId -isnot [string] -or [string]$worldNodeId -cnotmatch '^[a-z0-9_]+$') {
+        throw 'Grand fare cash recovery cannot bind the visible event to one public world node.'
+    }
+
+    $null = Invoke-BridgeCommand -Command "click_object $semanticId" -Intent "focus the visible $eventId cash recovery event"
+    $event = Select-GrandFareCashEventChoice `
+        -EventId $eventId `
+        -EventObject $matches[0] `
+        -RoomActions @(Get-RoomActions) `
+        -Talk (Get-Value $script:LastObservation @('talk') $null) `
+        -WorldNodeId ([string]$worldNodeId) `
+        -ResolvedEventKeys @($script:GrandFareResolvedCashEventKeys)
+    $beforeBankroll = Get-Value $script:LastObservation @('status_hud', 'bankroll') $null
+    $beforeBankrollRendered = Get-Value $script:LastObservation @('status_hud', 'bankroll_rendered') $null
+    $beforeHeat = Get-Value $script:LastObservation @('status_hud', 'heat_level') $null
+    $beforeHeatRendered = Get-Value $script:LastObservation @('status_hud', 'heat_rendered') $null
+    if ($beforeBankrollRendered -isnot [bool] -or -not [bool]$beforeBankrollRendered -or
+        $beforeHeatRendered -isnot [bool] -or -not [bool]$beforeHeatRendered -or
+        ($beforeBankroll -isnot [int32] -and $beforeBankroll -isnot [int64]) -or
+        ($beforeHeat -isnot [int32] -and $beforeHeat -isnot [int64])) {
+        throw 'Grand fare cash recovery cannot verify the pre-event fully rendered HUD bankroll and heat.'
+    }
+    $beforeFeedback = Get-Value $script:LastObservation @('feedback') $null
+    if ($null -ceq $beforeFeedback) {
+        throw 'Grand fare cash recovery cannot verify the pre-event public feedback surface.'
+    }
+    # This one rendered room-action click is the complete public interaction:
+    # Foundation.activate_event_choice_action selects and confirms the inline
+    # choice in its callback. No hidden confirmation or impact metadata is read.
+    $null = Invoke-RoomActionRow -Row $event.action -Intent "take the exact visibly described $($event.choice_id) cash response"
+    Wait-Frames -Frames 10
+    $null = Assert-GrandFareCashEventResult `
+        -Event $event `
+        -BeforeBankroll ([int]$beforeBankroll) `
+        -BeforeHeat ([int]$beforeHeat) `
+        -BeforeFeedback $beforeFeedback `
+        -AfterObservation $script:LastObservation
+    $null = $script:GrandFareResolvedCashEventKeys.Add([string]$event.event_key)
+    return $true
+}
+
+
+function Get-GrandFareRecoveryNodePreference {
+    param([Parameter(Mandatory = $true)][string]$ArchetypeId)
+    if ($ArchetypeId -ceq 'delta_queen') { return 0 }
+    if ($ArchetypeId -ceq 'back_alley') { return 1 }
+    if ($ArchetypeId -ceq 'motel') { return 2 }
+    if ($ArchetypeId -ceq 'corner_store') { return 3 }
+    if ($ArchetypeId -ceq 'small_underground_casino') { return 4 }
+    if ($ArchetypeId -ceq 'bar') { return 5 }
+    if ($ArchetypeId -ceq 'gas_station_casino') { return 6 }
+    return 20
+}
+
+
+function Recover-GrandFareThroughPublicFunding {
+    param(
+        [ValidateRange(1, 1000)][int]$RequiredCash,
+        [ValidateRange(1, 12)][int]$MaximumFundingStops = 6
+    )
+    if ($script:GrandFareRecoveryActive) {
+        throw 'Grand fare recovery cannot be nested.'
+    }
+    $script:GrandFareRecoveryActive = $true
+    try {
+        $initialRequirement = Get-PublicGrandFareRequirement
+        if ([int]$initialRequirement.required_cash -cne $RequiredCash) {
+            throw "Grand fare recovery received stale public math: expected `$$RequiredCash, now `$$($initialRequirement.required_cash)."
+        }
+        Close-WorldMap
+
+        for ($stop = 0; $stop -lt $MaximumFundingStops; $stop++) {
+            $currentNodeId = Get-Value $script:LastObservation @('environment', 'world_node_id') $null
+            if ($currentNodeId -isnot [string] -or [string]$currentNodeId -cnotmatch '^[a-z0-9_]+$') {
+                throw 'Grand fare recovery lost its stable public world-node id.'
+            }
+            $null = $script:GrandFareRecoveryVisitedNodes.Add([string]$currentNodeId)
+
+            $null = Invoke-GrandFarePublicFundingOffer
+            $requirement = Get-PublicGrandFareRequirement
+            $cash = Get-Value $script:LastObservation @('status_hud', 'bankroll') $null
+            if ($cash -isnot [int32] -and $cash -isnot [int64]) {
+                throw 'Grand fare recovery lost its integral public bankroll signal.'
+            }
+            if ([int]$cash -ge [int]$requirement.required_cash) {
+                Close-WorldMap
+                return
+            }
+            Close-WorldMap
+
+            $null = Invoke-GrandFarePublicCashEvent
+            $requirement = Get-PublicGrandFareRequirement
+            $cash = Get-Value $script:LastObservation @('status_hud', 'bankroll') $null
+            if ($cash -isnot [int32] -and $cash -isnot [int64]) {
+                throw 'Grand fare recovery lost its integral public bankroll signal after a cash event.'
+            }
+            if ([int]$cash -ge [int]$requirement.required_cash) {
+                Close-WorldMap
+                return
+            }
+
+            $currentNodeId = [string](Get-Value $script:LastObservation @('environment', 'world_node_id') '')
+            $candidates = @(Get-MapNodes | Where-Object {
+                $id = [string](Get-Value $_ @('id') '')
+                $state = [string](Get-Value $_ @('state') '')
+                $archetype = [string](Get-Value $_ @('archetype_id') '')
+                $id -cmatch '^[a-z0-9_]+$' -and
+                    $id -cne $currentNodeId -and
+                    $archetype -cne 'grand_casino' -and
+                    $state -cin @('visited', 'revealed') -and
+                    [bool](Get-Value $_ @('travel_enabled') $false) -and
+                    (-not $script:GrandFareRecoveryVisitedNodes.Contains($id))
+            } | Sort-Object `
+                @{ Expression = { Get-GrandFareRecoveryNodePreference -ArchetypeId ([string](Get-Value $_ @('archetype_id') '')) } }, `
+                @{ Expression = { [int](Get-Value $_ @('cost') 0) } }, `
+                @{ Expression = { [string](Get-Value $_ @('id') '') } })
+            if ($candidates.Count -ceq 0) {
+                Close-WorldMap
+                break
+            }
+            $nextNodeId = [string](Get-Value $candidates[0] @('id') '')
+            Travel-ToNode -NodeId $nextNodeId -Intent "visit $nextNodeId for another bounded public Grand fare option"
+        }
+
+        $requirement = Get-PublicGrandFareRequirement
+        $cash = Get-Value $script:LastObservation @('status_hud', 'bankroll') $null
+        if ($cash -isnot [int32] -and $cash -isnot [int64]) {
+            throw 'Grand fare recovery lost its integral public bankroll before slot fallback.'
+        }
+        if ([int]$cash -ge [int]$requirement.required_cash) {
+            Close-WorldMap
+            return
+        }
+        Close-WorldMap
+
+        if ($null -ceq (Find-CanvasObject -SemanticId 'game:slot')) {
+            Open-WorldMap
+            $currentNodeId = [string](Get-Value $script:LastObservation @('environment', 'world_node_id') '')
+            $slotStops = @(Get-MapNodes | Where-Object {
+                $id = [string](Get-Value $_ @('id') '')
+                $archetype = [string](Get-Value $_ @('archetype_id') '')
+                [bool](Get-Value $_ @('travel_enabled') $false) -and
+                    [string](Get-Value $_ @('state') '') -ceq 'visited' -and
+                    $id -cne $currentNodeId -and
+                    $archetype -cin @('kitty_cat_lounge', 'bar', 'gas_station_casino')
+            } | Sort-Object @{ Expression = { [int](Get-Value $_ @('cost') 0) } }, @{ Expression = { [string](Get-Value $_ @('id') '') } })
+            if ($slotStops.Count -ceq 0) {
+                Close-WorldMap
+                throw 'Bounded Grand fare recovery exhausted public offers and exposes no visited slot room.'
+            }
+            $slotNodeId = [string](Get-Value $slotStops[0] @('id') '')
+            Travel-ToNode -NodeId $slotNodeId -Intent 'return to the nearest visited public slot for loss-stopped Grand fare fallback'
+        }
+        $requirement = Get-PublicGrandFareRequirement
+        Close-WorldMap
+        Earn-GrandFareThroughVisibleSlot -RequiredCash ([int]$requirement.required_cash)
+    }
+    finally {
+        $script:GrandFareRecoveryActive = $false
+    }
+}
+
+
 function Enter-VisibleSlotForGrandFare {
     Close-WorldMap
-    if ([string](Get-Value $script:LastObservation @('screen', 'screen') '') -eq 'GAME') {
-        if ([string](Get-Value $script:LastObservation @('game', 'game_id') '') -eq 'slot') { return }
+    if ([string](Get-Value $script:LastObservation @('screen', 'screen') '') -ceq 'GAME') {
+        if ([string](Get-Value $script:LastObservation @('game', 'game_id') '') -ceq 'slot') { return }
         Leave-GameSurface
     }
-    if ($null -eq (Find-CanvasObject -SemanticId 'game:slot')) {
+    if ($null -ceq (Find-CanvasObject -SemanticId 'game:slot')) {
         throw 'The invited Grand route is short of cash, but this room exposes no visible slot for bounded fare recovery.'
     }
     $null = Open-SemanticObject -SemanticId 'game:slot' -PreferredActions @('Enter', 'Play') -Intent 'use the visible slot to earn the displayed Grand Casino fare shortfall'
     Wait-Frames -Frames 12
-    if ([string](Get-Value $script:LastObservation @('screen', 'screen') '') -ne 'GAME' -or
-        [string](Get-Value $script:LastObservation @('game', 'game_id') '') -ne 'slot') {
+    if ([string](Get-Value $script:LastObservation @('screen', 'screen') '') -cne 'GAME' -or
+        [string](Get-Value $script:LastObservation @('game', 'game_id') '') -cne 'slot') {
         throw 'The visible slot did not open its public game surface for Grand fare recovery.'
     }
 }
@@ -1628,14 +2197,12 @@ function Resolve-GrandFareMachineJamIfVisible {
         return $false
     }
 
-    $heatLevel = Get-Value $script:LastObservation @('status_hud', 'heat_level') $null
     $choiceId = Select-GrandFareMachineJamChoice `
         -EventPopup (Get-Value $script:LastObservation @('event_popup') $null) `
-        -Talk (Get-Value $script:LastObservation @('talk') $null) `
-        -HeatLevel $heatLevel
+        -Talk (Get-Value $script:LastObservation @('talk') $null)
     $null = Choose-VisibleChoice `
         -ChoiceId $choiceId `
-        -Intent "resolve the exact visible machine_jam during Grand fare recovery using public heat $heatLevel"
+        -Intent 'resolve the exact fully rendered machine_jam with its visible de-escalation choice'
     Wait-Frames -Frames 10 -Intent 'wait for the confirmed public machine_jam choice to resolve'
 
     $postEventVisible = Get-Value $script:LastObservation @('event_popup', 'visible') $null
@@ -1652,15 +2219,15 @@ function Resolve-GrandFareMachineJamIfVisible {
 
 function Wait-ForVisibleSlotActionBoundary {
     for ($step = 0; $step -lt 24; $step++) {
-        if ([string](Get-Value $script:LastObservation @('screen', 'screen') '') -ne 'GAME' -or
-            [string](Get-Value $script:LastObservation @('game', 'game_id') '') -ne 'slot') {
+        if ([string](Get-Value $script:LastObservation @('screen', 'screen') '') -cne 'GAME' -or
+            [string](Get-Value $script:LastObservation @('game', 'game_id') '') -cne 'slot') {
             throw 'Grand fare recovery left the visible slot surface unexpectedly.'
         }
         if (Resolve-GrandFareMachineJamIfVisible) {
             continue
         }
 
-        if ($null -ne (Find-GameAction -Action 'slot_handpay_acknowledge')) {
+        if ($null -cne (Find-GameAction -Action 'slot_handpay_acknowledge')) {
             $null = Invoke-GameAction -Action 'slot_handpay_acknowledge' -Intent 'acknowledge the visible sealed slot payout'
             Wait-Frames -Frames 20
             continue
@@ -1676,7 +2243,7 @@ function Wait-ForVisibleSlotActionBoundary {
             Wait-Frames -Frames 20
             continue
         }
-        if ($null -ne (Find-GameAction -Action 'slot_spin')) { return }
+        if ($null -cne (Find-GameAction -Action 'slot_spin')) { return }
         Wait-Frames -Frames 30 -Intent 'wait for the visible slot result to finish presenting'
     }
     throw 'The visible slot did not return to a legal Spin boundary within twelve seconds.'
@@ -1686,31 +2253,39 @@ function Wait-ForVisibleSlotActionBoundary {
 function Earn-GrandFareThroughVisibleSlot {
     param(
         [ValidateRange(1, 1000)][int]$RequiredCash,
-        [ValidateRange(1, 40)][int]$MaximumSpins = 24
+        [ValidateRange(1, 12)][int]$MaximumSpins = 6,
+        [ValidateRange(1, 6)][int]$MaximumLosses = 3
     )
     Enter-VisibleSlotForGrandFare
     $startingCash = [int](Get-Value $script:LastObservation @('status_hud', 'bankroll') 0)
+    $losses = 0
     for ($spin = 0; $spin -lt $MaximumSpins; $spin++) {
         Wait-ForVisibleSlotActionBoundary
-        $cash = [int](Get-Value $script:LastObservation @('status_hud', 'bankroll') 0)
-        if ($cash -ge $RequiredCash) {
+        $beforeCash = [int](Get-Value $script:LastObservation @('status_hud', 'bankroll') 0)
+        if ($beforeCash -ge $RequiredCash) {
             Leave-GameSurface
             return
         }
-        if ($null -eq (Find-GameAction -Action 'slot_spin')) {
-            throw "The visible slot exposes no legal Spin while Grand fare recovery is short (`$$cash of `$$RequiredCash)."
+        if ($null -ceq (Find-GameAction -Action 'slot_spin')) {
+            throw "The visible slot exposes no legal Spin while Grand fare recovery is short (`$$beforeCash of `$$RequiredCash)."
         }
         $null = Invoke-GameAction -Action 'slot_spin' -Intent "spin the visible slot at its rendered stake for Grand fare recovery ($($spin + 1)/$MaximumSpins)"
         Wait-Frames -Frames 30 -Intent 'watch the visible slot result begin resolving'
+        Wait-ForVisibleSlotActionBoundary
+        $afterCash = [int](Get-Value $script:LastObservation @('status_hud', 'bankroll') 0)
+        if ($afterCash -lt $beforeCash) { $losses++ }
+        if ($afterCash -ge $RequiredCash) {
+            Leave-GameSurface
+            return
+        }
+        if ($losses -ge $MaximumLosses) {
+            Leave-GameSurface
+            throw "Grand fare slot fallback loss-stopped after $losses losing spins: start=`$$startingCash, end=`$$afterCash, required=`$$RequiredCash."
+        }
     }
-    Wait-ForVisibleSlotActionBoundary
     $endingCash = [int](Get-Value $script:LastObservation @('status_hud', 'bankroll') 0)
-    if ($endingCash -ge $RequiredCash) {
-        Leave-GameSurface
-        return
-    }
     Leave-GameSurface
-    throw "Bounded visible slot play did not earn the Grand fare: start=`$$startingCash, end=`$$endingCash, required=`$$RequiredCash, spins=$MaximumSpins."
+    throw "Grand fare slot fallback exhausted $MaximumSpins spins without reaching the public target: start=`$$startingCash, end=`$$endingCash, required=`$$RequiredCash, losses=$losses."
 }
 
 
@@ -1718,31 +2293,47 @@ function Reach-GrandCasino {
     $visitedByRunner = New-Object 'System.Collections.Generic.HashSet[string]'
     for ($step = 0; $step -lt 24; $step++) {
         $archetype = [string](Get-Value $script:LastObservation @('environment', 'archetype_id') '')
-        if ($archetype -in @('grand_casino', 'grand_casino_cage', 'grand_casino_high_limit')) { return }
+        if ($archetype -cin @('grand_casino', 'grand_casino_cage', 'grand_casino_high_limit')) { return }
 
         if (Accept-GrandCasinoInviteIfVisible) { continue }
         Open-WorldMap
         $nodes = @(Get-MapNodes)
         $grand = @($nodes | Where-Object {
-            [string](Get-Value $_ @('archetype_id') '') -eq 'grand_casino'
+            [string](Get-Value $_ @('archetype_id') '') -ceq 'grand_casino'
         })
         if ($grand.Count -gt 1) {
             throw "The visible city map exposes more than one Grand Casino route."
         }
-        if ($grand.Count -eq 1 -and [bool](Get-Value $grand[0] @('travel_enabled') $false)) {
-            Travel-ToNode -NodeId ([string](Get-Value $grand[0] @('id') '')) -Intent 'travel to the Grand Casino through the visible city map'
-            continue
-        }
-        if ($grand.Count -eq 1) {
+        if ($grand.Count -ceq 1) {
+            $costValue = Get-Value $grand[0] @('cost') $null
+            if (($costValue -isnot [int32] -and $costValue -isnot [int64]) -or [long]$costValue -lt 0) {
+                throw 'The visible Grand Casino card has no non-negative integral route fare.'
+            }
+            $cost = [int]$costValue
+            $requiredCashLong = [long]$cost + [long]$GrandCasinoChipReserve
+            if ($requiredCashLong -gt [int]::MaxValue) {
+                throw 'The visible Grand fare plus chip reserve exceeds the supported public integer range.'
+            }
+            $requiredCash = [int]$requiredCashLong
+            $cashValue = Get-Value $script:LastObservation @('status_hud', 'bankroll') $null
+            if ($cashValue -isnot [int32] -and $cashValue -isnot [int64]) {
+                throw 'The clean replay cannot verify its public bankroll before Grand travel.'
+            }
+            $cash = [int]$cashValue
+            if ($cash -lt $requiredCash) {
+                Close-WorldMap
+                Recover-GrandFareThroughPublicFunding -RequiredCash $requiredCash
+                continue
+            }
+            if ([bool](Get-Value $grand[0] @('travel_enabled') $false)) {
+                Travel-ToNode -NodeId ([string](Get-Value $grand[0] @('id') '')) -Intent 'travel to the Grand Casino through the visible city map with its chip reserve intact'
+                continue
+            }
             $reason = [string](Get-Value $grand[0] @('travel_disabled_reason') 'The route is unavailable.')
-            $cost = [int](Get-Value $grand[0] @('cost') 0)
-            $cash = [int](Get-Value $script:LastObservation @('status_hud', 'bankroll') 0)
-            if ($reason -match 'Not enough bankroll') {
+            if ($reason -cmatch 'Not enough bankroll') {
                 if ($cost -le $cash) {
                     throw "The Grand card claims insufficient bankroll but publishes cash=$cash and route_cost=$cost."
                 }
-                Earn-GrandFareThroughVisibleSlot -RequiredCash $cost
-                continue
             }
             throw "The invited Grand Casino route is visible but unavailable: $reason"
         }
@@ -1753,18 +2344,18 @@ function Reach-GrandCasino {
             $tier = [int](Get-Value $_ @('tier') 0)
             $state = [string](Get-Value $_ @('state') '')
             [bool](Get-Value $_ @('travel_enabled') $false) -and
-            $kind -eq 'casino' -and $id -ne '' -and
+            $kind -ceq 'casino' -and $id -cne '' -and
             (-not $visitedByRunner.Contains($id)) -and
-            ($tier -ge 2 -or $state -ne 'visited')
+            ($tier -ge 2 -or $state -cne 'visited')
         } | Sort-Object @{ Expression = { -[int](Get-Value $_ @('tier') 0) } }, @{ Expression = { [string](Get-Value $_ @('id') '') } })
-        if ($candidates.Count -eq 0) {
+        if ($candidates.Count -ceq 0) {
             $candidates = @($nodes | Where-Object {
                 $id = [string](Get-Value $_ @('id') '')
-                [bool](Get-Value $_ @('travel_enabled') $false) -and $id -ne '' -and
+                [bool](Get-Value $_ @('travel_enabled') $false) -and $id -cne '' -and
                 (-not $visitedByRunner.Contains($id))
             } | Sort-Object { [int](Get-Value $_ @('cost') 0) })
         }
-        if ($candidates.Count -eq 0) {
+        if ($candidates.Count -ceq 0) {
             throw "No visible unvisited route can advance the Grand Casino invitation."
         }
         $target = [string](Get-Value $candidates[0] @('id') '')
@@ -1780,14 +2371,14 @@ function Enter-GrandRoom {
         [Parameter(Mandatory = $true)][ValidateSet('main', 'cage')][string]$Room
     )
     $archetype = [string](Get-Value $script:LastObservation @('environment', 'archetype_id') '')
-    if ($Room -eq 'cage' -and $archetype -eq 'grand_casino_cage') { return }
-    if ($Room -eq 'main' -and $archetype -eq 'grand_casino') { return }
-    $semantic = if ($Room -eq 'cage') { 'travel:grand_casino_cage' } else { 'travel:grand_casino' }
+    if ($Room -ceq 'cage' -and $archetype -ceq 'grand_casino_cage') { return }
+    if ($Room -ceq 'main' -and $archetype -ceq 'grand_casino') { return }
+    $semantic = if ($Room -ceq 'cage') { 'travel:grand_casino_cage' } else { 'travel:grand_casino' }
     $null = Open-SemanticObject -SemanticId $semantic -PreferredActions @('Enter Room', 'Travel', 'Enter') -Intent "walk through the real Grand Casino door to $Room"
     Wait-ForTravelToSettle
     Wait-Frames -Frames 12
-    $expected = if ($Room -eq 'cage') { 'grand_casino_cage' } else { 'grand_casino' }
-    if ([string](Get-Value $script:LastObservation @('environment', 'archetype_id') '') -ne $expected) {
+    $expected = if ($Room -ceq 'cage') { 'grand_casino_cage' } else { 'grand_casino' }
+    if ([string](Get-Value $script:LastObservation @('environment', 'archetype_id') '') -cne $expected) {
         throw "The real Grand Casino door did not reach '$expected'."
     }
 }
@@ -1805,34 +2396,34 @@ function Open-CageCounter {
 
 function Ensure-GrandCasinoChips {
     param([ValidateRange(0, 200)][int]$Minimum = 50)
-    $chips = [int](Get-Value $script:LastObservation @('status_hud', 'chips') 0)
+    $chips = Get-RenderedHudInteger -Name chips -Context 'Grand Casino chip check'
     if ($chips -ge $Minimum) { return }
     Open-CageCounter
     $null = Choose-VisibleChoice -ChoiceId 'open_chips' -Intent 'open Linda''s visible chips and cashout menu'
     $maximumChipPurchases = 8 # 8 x the smallest $25 exchange covers the validated $200 ceiling.
     for ($purchase = 0; $purchase -lt $maximumChipPurchases; $purchase++) {
-        $beforeChips = [int](Get-Value $script:LastObservation @('status_hud', 'chips') 0)
+        $beforeChips = Get-RenderedHudInteger -Name chips -Context 'Pre-purchase Grand Casino chip check'
         if ($beforeChips -ge $Minimum) { break }
         $enabledChoices = @(Get-PublicTalkChoices | Where-Object {
             [bool](Get-Value $_ @('enabled') $false)
         } | ForEach-Object {
             [string](Get-Value $_ @('id') '')
         })
-        if ('cage_buy_50' -in $enabledChoices) {
+        if ('cage_buy_50' -cin $enabledChoices) {
             $null = Choose-VisibleChoice -ChoiceId 'cage_buy_50' -Intent 'exchange visible cash for 50 Grand Casino chips'
         }
-        elseif ('cage_buy_25' -in $enabledChoices) {
+        elseif ('cage_buy_25' -cin $enabledChoices) {
             $null = Choose-VisibleChoice -ChoiceId 'cage_buy_25' -Intent 'exchange visible cash for 25 Grand Casino chips'
         }
         else {
             throw "Linda exposes no affordable chip purchase while the route needs $Minimum chips."
         }
-        $afterChips = [int](Get-Value $script:LastObservation @('status_hud', 'chips') 0)
+        $afterChips = Get-RenderedHudInteger -Name chips -Context 'Post-purchase Grand Casino chip check'
         if ($afterChips -le $beforeChips) {
             throw "Linda's visible chip exchange made no public chip progress ($beforeChips -> $afterChips)."
         }
     }
-    $chips = [int](Get-Value $script:LastObservation @('status_hud', 'chips') 0)
+    $chips = Get-RenderedHudInteger -Name chips -Context 'Final Grand Casino chip check'
     if ($chips -lt $Minimum) {
         throw "Grand Casino chip exchange did not reach $Minimum within $maximumChipPurchases bounded purchases (found $chips)."
     }
@@ -1844,31 +2435,31 @@ function Ensure-GrandCasinoChips {
 
 function Enter-BlackjackTable {
     Enter-GrandRoom -Room main
-    if ([string](Get-Value $script:LastObservation @('screen', 'screen') '') -eq 'GAME' -and
-        [string](Get-Value $script:LastObservation @('game', 'game_id') '') -eq 'blackjack') {
+    if ([string](Get-Value $script:LastObservation @('screen', 'screen') '') -ceq 'GAME' -and
+        [string](Get-Value $script:LastObservation @('game', 'game_id') '') -ceq 'blackjack') {
         return
     }
     $null = Open-SemanticObject -SemanticId 'game:blackjack' -PreferredActions @('Enter', 'Play') -Intent 'sit at the visible blackjack table'
     Wait-Frames -Frames 12
-    if ([string](Get-Value $script:LastObservation @('screen', 'screen') '') -ne 'GAME' -or
-        [string](Get-Value $script:LastObservation @('game', 'game_id') '') -ne 'blackjack') {
+    if ([string](Get-Value $script:LastObservation @('screen', 'screen') '') -cne 'GAME' -or
+        [string](Get-Value $script:LastObservation @('game', 'game_id') '') -cne 'blackjack') {
         throw "The visible blackjack table did not open the blackjack surface."
     }
 }
 
 
 function Leave-GameSurface {
-    if ([string](Get-Value $script:LastObservation @('screen', 'screen') '') -ne 'GAME') { return }
+    if ([string](Get-Value $script:LastObservation @('screen', 'screen') '') -cne 'GAME') { return }
     $back = Find-GameAction -Action 'surface_back'
-    if ($null -eq $back) { $back = Find-GameAction -Action 'leave_game' }
-    if ($null -eq $back) {
+    if ($null -ceq $back) { $back = Find-GameAction -Action 'leave_game' }
+    if ($null -ceq $back) {
         throw "The active game surface exposes no visible leave action."
     }
     $action = [string](Get-Value $back @('action') '')
     $index = [int](Get-Value $back @('index') 0)
     $null = Invoke-BridgeCommand -Command "click_action $action $index" -Intent 'leave the game through its visible back control'
     Wait-Frames -Frames 10
-    if ([string](Get-Value $script:LastObservation @('screen', 'screen') '') -eq 'GAME') {
+    if ([string](Get-Value $script:LastObservation @('screen', 'screen') '') -ceq 'GAME') {
         throw "The visible game back control did not return to the room."
     }
 }
@@ -1878,7 +2469,7 @@ function Get-ActiveBlackjackTotal {
     $activeIndex = [int](Get-Value $script:LastObservation @('game', 'active_hand_index') 0)
     $hands = @(Get-Array (Get-Value $script:LastObservation @('game', 'player_hands') @()))
     if ($activeIndex -lt 0 -or $activeIndex -ge $hands.Count) {
-        if ($hands.Count -eq 1) { return [int](Get-Value $hands[0] @('total') 0) }
+        if ($hands.Count -ceq 1) { return [int](Get-Value $hands[0] @('total') 0) }
         throw "Blackjack decision has no public active player hand."
     }
     return [int](Get-Value $hands[$activeIndex] @('total') 0)
@@ -1889,15 +2480,15 @@ function Invoke-PublicBlackjackDecision {
     $total = Get-ActiveBlackjackTotal
     $canHit = [bool](Get-Value $script:LastObservation @('game', 'can_hit') $false)
     $canStand = [bool](Get-Value $script:LastObservation @('game', 'can_stand') $false)
-    if ($total -lt 17 -and $canHit -and $null -ne (Find-GameAction -Action 'blackjack_hit')) {
+    if ($total -lt 17 -and $canHit -and $null -cne (Find-GameAction -Action 'blackjack_hit')) {
         $null = Invoke-GameAction -Action 'blackjack_hit' -Intent "hit the public $total blackjack hand"
         return
     }
-    if ($canStand -and $null -ne (Find-GameAction -Action 'blackjack_stand')) {
+    if ($canStand -and $null -cne (Find-GameAction -Action 'blackjack_stand')) {
         $null = Invoke-GameAction -Action 'blackjack_stand' -Intent "stand on the public $total blackjack hand"
         return
     }
-    if ($canHit -and $null -ne (Find-GameAction -Action 'blackjack_hit')) {
+    if ($canHit -and $null -cne (Find-GameAction -Action 'blackjack_hit')) {
         $null = Invoke-GameAction -Action 'blackjack_hit' -Intent "take the only visible legal hit on the public $total hand"
         return
     }
@@ -1925,7 +2516,7 @@ function Invoke-PublicBossCalloutIfShown {
     for ($index = 0; $index -lt $callouts.Count; $index++) {
         $label = [string](Get-Value $callouts[$index] @('label') '')
         if ($label.IndexOf($expectedLabelFragment, [StringComparison]::OrdinalIgnoreCase) -lt 0) { continue }
-        if ($null -eq (Find-GameAction -Action 'blackjack_boss_callout' -Index $index)) {
+        if ($null -ceq (Find-GameAction -Action 'blackjack_boss_callout' -Index $index)) {
             throw "Rourke's matching public '$label' callout is not an enabled rendered action."
         }
         $null = Invoke-GameAction -Action 'blackjack_boss_callout' -Index $index -Intent "call Rourke's publicly rendered $tell tell with $label"
@@ -1939,13 +2530,13 @@ function Invoke-VisibleCheatIfAvailable {
     $cheats = @(Get-Array (Get-Value $script:LastObservation @('game', 'cheat_actions') @()))
     $preferred = @('blackjack_distraction', 'blackjack_peek')
     foreach ($actionName in $preferred) {
-        if ($null -eq (Find-GameAction -Action $actionName)) { continue }
+        if ($null -ceq (Find-GameAction -Action $actionName)) { continue }
         $published = @($cheats | Where-Object {
-            ([string](Get-Value $_ @('id') '') -eq $actionName) -or
-            ([string](Get-Value $_ @('action') '') -eq $actionName) -or
-            ([string](Get-Value $_ @('action_id') '') -eq $actionName)
+            ([string](Get-Value $_ @('id') '') -ceq $actionName) -or
+            ([string](Get-Value $_ @('action') '') -ceq $actionName) -or
+            ([string](Get-Value $_ @('action_id') '') -ceq $actionName)
         })
-        if ($published.Count -eq 0 -and $cheats.Count -gt 0) { continue }
+        if ($published.Count -ceq 0 -and $cheats.Count -gt 0) { continue }
         $null = Invoke-GameAction -Action $actionName -Intent 'use the visible blackjack edge to make Rourke notice'
         Wait-Frames -Frames 8
         return
@@ -1962,7 +2553,7 @@ function Ensure-BlackjackStakeRange {
     if ($stake -ge $Minimum -and $stake -le $Maximum) { return }
     if ($stake -gt $Maximum) {
         $clearAction = @('blackjack_clear_bet', 'surface_stake_down') | Where-Object {
-            $null -ne (Find-GameAction -Action $_)
+            $null -cne (Find-GameAction -Action $_)
         } | Select-Object -First 1
         if ([string]::IsNullOrWhiteSpace([string]$clearAction)) {
             throw "The visible blackjack stake is $stake, above the heist ceiling $Maximum, and exposes no clear control."
@@ -1977,7 +2568,7 @@ function Ensure-BlackjackStakeRange {
             throw "The visible blackjack wager jumped above the heist ceiling ($stake > $Maximum)."
         }
         $placeAction = @('blackjack_wager_place_gesture', 'blackjack_chip', 'surface_stake_up') | Where-Object {
-            $null -ne (Find-GameAction -Action $_)
+            $null -cne (Find-GameAction -Action $_)
         } | Select-Object -First 1
         if ([string]::IsNullOrWhiteSpace([string]$placeAction)) {
             throw "The blackjack surface exposes no production wager control below the heist minimum $Minimum."
@@ -1998,44 +2589,43 @@ function Play-OneBlackjackRound {
     if ($UseHeistStake) {
         Ensure-BlackjackStakeRange -Minimum 8 -Maximum 30
     }
-    $beforeGames = [int](Get-Value $script:LastObservation @('status_hud', 'demo_objective', 'grand_casino_games_played') 0)
     $beforeHand = [int](Get-Value $script:LastObservation @('game', 'boss_hand_number') 0)
-    $beforeOutcome = [string](Get-Value $script:LastObservation @('game', 'outcome_message') '')
+    $roundStarted = [string](Get-Value $script:LastObservation @('game', 'phase') '') -cne 'betting'
 
     for ($step = 0; $step -lt 36; $step++) {
-        if ([string](Get-Value $script:LastObservation @('status_hud', 'run_status') '') -ne 'active') { return }
+        if (Test-PublicTerminalSurface) { return }
         $eventVisible = [bool](Get-Value $script:LastObservation @('event_popup', 'visible') $false)
         $talkVisible = [bool](Get-Value $script:LastObservation @('talk', 'visible') $false)
         if ($eventVisible -or $talkVisible) {
             throw "A modal interrupted blackjack; the route must resolve it explicitly. Choices: $((Get-VisibleChoiceIds) -join ', ')"
         }
 
-        $gamesNow = [int](Get-Value $script:LastObservation @('status_hud', 'demo_objective', 'grand_casino_games_played') 0)
         $bossHandNow = [int](Get-Value $script:LastObservation @('game', 'boss_hand_number') 0)
         $outcomeNow = [string](Get-Value $script:LastObservation @('game', 'outcome_message') '')
-        if (($gamesNow -gt $beforeGames) -or ($bossHandNow -gt $beforeHand) -or
-            (-not [string]::IsNullOrWhiteSpace($outcomeNow) -and $outcomeNow -ne $beforeOutcome -and
-             [string](Get-Value $script:LastObservation @('game', 'phase') '') -eq 'betting')) {
+        $phaseNow = [string](Get-Value $script:LastObservation @('game', 'phase') '')
+        if (($bossHandNow -gt $beforeHand) -or
+            ($roundStarted -and -not [string]::IsNullOrWhiteSpace($outcomeNow) -and $phaseNow -ceq 'betting')) {
             return
         }
 
         Invoke-PublicBossCalloutIfShown
         $phase = [string](Get-Value $script:LastObservation @('game', 'phase') '')
         if ($UseVisibleCheat) { Invoke-VisibleCheatIfAvailable }
-        if ($null -ne (Find-GameAction -Action 'blackjack_settle')) {
+        if ($null -cne (Find-GameAction -Action 'blackjack_settle')) {
             $null = Invoke-GameAction -Action 'blackjack_settle' -Intent 'settle the publicly completed blackjack hand'
             Wait-Frames -Frames 12
-            continue
+            return
         }
-        if ($phase -eq 'decision' -or
+        if ($phase -ceq 'decision' -or
             [bool](Get-Value $script:LastObservation @('game', 'can_hit') $false) -or
             [bool](Get-Value $script:LastObservation @('game', 'can_stand') $false)) {
             Invoke-PublicBlackjackDecision
             Wait-Frames -Frames 24
             continue
         }
-        if ($null -ne (Find-GameAction -Action 'blackjack_deal')) {
+        if ($null -cne (Find-GameAction -Action 'blackjack_deal')) {
             $null = Invoke-GameAction -Action 'blackjack_deal' -Intent 'deal the next blackjack hand at the visible wager'
+			$roundStarted = $true
             Wait-Frames -Frames 30
             continue
         }
@@ -2047,25 +2637,14 @@ function Play-OneBlackjackRound {
 
 function Get-PersistenceCheckpoint {
     $hud = Get-Value $script:LastObservation @('status_hud') $null
-    $objective = Get-Value $hud @('demo_objective') $null
     $game = Get-Value $script:LastObservation @('game') $null
     return [ordered]@{
         location_id = [string](Get-Value $script:LastObservation @('environment', 'id') '')
         location_archetype = [string](Get-Value $script:LastObservation @('environment', 'archetype_id') '')
         world_node_id = [string](Get-Value $script:LastObservation @('environment', 'world_node_id') '')
-        bankroll = [int](Get-Value $hud @('bankroll') 0)
-        chips = [int](Get-Value $hud @('chips') 0)
-        heat = [int](Get-Value $hud @('heat_level') 0)
-        clock_minute = [int](Get-Value $hud @('clock_minute_of_day') 0)
-        objective_state = [string](Get-Value $hud @('objective_state') '')
-        goal_text = [string](Get-Value $hud @('goal_text') '')
-        next_text = [string](Get-Value $hud @('next_text') '')
-        players_card_tier = [string](Get-Value $objective @('players_card_tier') '')
-        players_card_next_tier = [string](Get-Value $objective @('players_card_next_tier') '')
-        players_card_segment_games = [int](Get-Value $objective @('players_card_segment_games') 0)
-        players_card_segment_net = [int](Get-Value $objective @('players_card_segment_net_winnings') 0)
-        showdown_pending = [bool](Get-Value $objective @('showdown_pending') $false)
-        showdown_active = [bool](Get-Value $objective @('showdown_active') $false)
+        bankroll = Get-RenderedHudInteger -Name bankroll -Context 'Persistence checkpoint'
+        chips = Get-RenderedHudInteger -Name chips -Context 'Persistence checkpoint'
+        heat = Get-RenderedHudInteger -Name heat_level -Context 'Persistence checkpoint'
         game_id = [string](Get-Value $game @('game_id') '')
         game_phase = [string](Get-Value $game @('phase') '')
         boss_hand_number = [int](Get-Value $game @('boss_hand_number') 0)
@@ -2075,17 +2654,29 @@ function Get-PersistenceCheckpoint {
 }
 
 
-function Assert-ExplicitSaveAcknowledged {
-    param([Parameter(Mandatory = $true)][string]$Milestone)
-    $hasSave = [bool](Get-Value $script:LastObservation @('screen', 'run_menu', 'has_save') $false)
-    $saveTextVisible = [bool](Get-Value $script:LastObservation @('status_hud', 'save_text_visible') $false)
-    $saveText = [string](Get-Value $script:LastObservation @('status_hud', 'save_text') '')
+function Assert-ExplicitSaveAcknowledgmentObservation {
+    param(
+        [Parameter(Mandatory = $true)]$Observation,
+        [Parameter(Mandatory = $true)][string]$Milestone
+    )
+    $hasSave = Get-Value $Observation @('screen', 'run_menu', 'has_save') $null
+    $saveTextVisible = Get-Value $Observation @('status_hud', 'save_text_visible') $null
+    $saveText = Get-Value $Observation @('status_hud', 'save_text') $null
     $separator = " $([char]0x00B7) "
     $acknowledgment = 'Saved to Resume Slot.'
     $expectedVisibleText = "Autosave On$separator$acknowledgment"
-    if (-not $hasSave -or -not $saveTextVisible -or $saveText -cne $expectedVisibleText) {
+    if ($hasSave -isnot [bool] -or -not [bool]$hasSave -or
+        $saveTextVisible -isnot [bool] -or -not [bool]$saveTextVisible -or
+        $saveText -isnot [string] -or [string]$saveText -cne $expectedVisibleText) {
         throw "The explicit Save at $Milestone did not render the exact success acknowledgment '$acknowledgment' (found '$saveText', visible=$saveTextVisible, has_save=$hasSave)."
     }
+    return $true
+}
+
+
+function Assert-ExplicitSaveAcknowledged {
+    param([Parameter(Mandatory = $true)][string]$Milestone)
+    return Assert-ExplicitSaveAcknowledgmentObservation -Observation $script:LastObservation -Milestone $Milestone
 }
 
 
@@ -2097,7 +2688,7 @@ function Assert-SaveRelaunchContinue {
     $null = Click-RunMenuButton -Text 'Save' -RevealDirection up -Intent "save the run through the visible run menu at $Milestone"
     Assert-ExplicitSaveAcknowledged -Milestone $Milestone
     $null = Click-RunMenuButton -Text 'Main Menu' -RevealDirection down -Intent 'return to the main menu after the explicit save'
-    if ([string](Get-Value $script:LastObservation @('screen', 'screen') '') -ne 'START') {
+    if ([string](Get-Value $script:LastObservation @('screen', 'screen') '') -cne 'START') {
         throw "Main Menu did not return to the start screen after saving."
     }
     $null = Invoke-BridgeCommand -Command 'quit' -Intent 'quit the saved production host before relaunch' -ObservationOnly
@@ -2105,7 +2696,7 @@ function Assert-SaveRelaunchContinue {
     Assert-NoPostExitLogAlerts
     Remove-OwnedBridgeCaptureResidue
     Start-BridgeSession
-    if ([string](Get-Value $script:LastObservation @('screen', 'start_menu', 'primary_action_text') '') -ne 'CONTINUE') {
+    if ([string](Get-Value $script:LastObservation @('screen', 'start_menu', 'primary_action_text') '') -cne 'CONTINUE') {
         throw "Relaunch after $Milestone did not expose CONTINUE."
     }
     $null = Click-Button -Text 'CONTINUE' -Intent "continue the saved $Milestone run after a full relaunch"
@@ -2124,17 +2715,13 @@ function Assert-SaveRelaunchContinue {
 
 function Assert-TerminalOutcome {
     $screenName = [string](Get-Value $script:LastObservation @('screen', 'screen') '')
-    $runReportVisible = [bool](Get-Value $script:LastObservation @('screen', 'run_report_visible') $false)
-    $runStatus = [string](Get-Value $script:LastObservation @('status_hud', 'run_status') '')
+    $runReportVisible = Get-Value $script:LastObservation @('screen', 'run_report_visible') $null
     $outcome = [string](Get-Value $script:LastObservation @('screen', 'run_report', 'outcome', 'key') '')
-    $won = [bool](Get-Value $script:LastObservation @('screen', 'run_report', 'outcome', 'won') $false)
-    if ($screenName -cne 'VICTORY' -or -not $runReportVisible) {
+    $won = Get-Value $script:LastObservation @('screen', 'run_report', 'outcome', 'won') $null
+    if ($screenName -cne 'VICTORY' -or $runReportVisible -isnot [bool] -or -not [bool]$runReportVisible) {
         throw "Ending '$Ending' did not render the public VICTORY RunReport surface (screen='$screenName', visible=$runReportVisible)."
     }
-    if ($runStatus -ne 'ended') {
-        throw "Ending '$Ending' did not reach the public ended run state (found '$runStatus')."
-    }
-    if (-not $won -or $outcome -notin $ExpectedOutcomes[$Ending]) {
+    if ($won -isnot [bool] -or -not [bool]$won -or $outcome -cnotin $ExpectedOutcomes[$Ending]) {
         throw "Ending '$Ending' produced unexpected public outcome '$outcome' (won=$won)."
     }
     if (-not $script:MidpointSaved) {
@@ -2168,13 +2755,12 @@ function Write-FinalPublicCheckpoint {
         record_kind = 'final_public_checkpoint'
         observed_seed = $observedSeed
         outcome_key = [string]$outcome
-        won = [bool](Get-Value $observation @('screen', 'run_report', 'outcome', 'won') $false)
+        won = $true
         public_fingerprint = $publicFingerprint
         checkpoint_fingerprint = $checkpointFingerprint
-        bankroll = [int](Get-Value $observation @('status_hud', 'bankroll') 0)
-        chips = [int](Get-Value $observation @('status_hud', 'chips') 0)
-        heat = [int](Get-Value $observation @('status_hud', 'heat_level') 0)
-        clock_minute = [int](Get-Value $observation @('status_hud', 'clock_minute_of_day') 0)
+        bankroll = Get-RenderedHudInteger -Name bankroll -Context 'Final terminal checkpoint'
+        chips = Get-RenderedHudInteger -Name chips -Context 'Final terminal checkpoint'
+        heat = Get-RenderedHudInteger -Name heat_level -Context 'Final terminal checkpoint'
     }
     $finalJson = $final | ConvertTo-Json -Compress
     Add-Content -LiteralPath $script:TranscriptPath -Value $finalJson -Encoding utf8
@@ -2185,45 +2771,55 @@ function Write-FinalPublicCheckpoint {
 }
 
 
-function Claim-ReadyPlayersCardTier {
-    $objective = Get-Value $script:LastObservation @('status_hud', 'demo_objective') $null
-    $nextTier = [string](Get-Value $objective @('players_card_next_tier') '')
-    if (-not [bool](Get-Value $objective @('players_card_ready_to_claim') $false) -or
-        -not [bool](Get-Value $objective @('players_card_can_claim') $false)) {
-        $reason = [string](Get-Value $objective @('players_card_claim_block_reason') 'qualification is not ready')
-        throw "Players Card claim was requested before it was visibly ready: $reason"
-    }
+function Visit-CageAndClaimReadyPlayersCard {
     Leave-GameSurface
     Open-CageCounter
-    $null = Choose-VisibleChoice -ChoiceId 'open_card' -Intent "open Linda's visible $nextTier Players Card review"
-    $null = Choose-VisibleChoice -ChoiceId 'cage_claim_card' -Intent "ask Linda to issue the visibly ready $nextTier Players Card tier"
+    $null = Choose-VisibleChoice -ChoiceId 'open_card' -Intent "open Linda's visible Players Card review"
+
+    $claimMatches = @(Get-PublicTalkChoices | Where-Object {
+        [string](Get-Value $_ @('id') '') -ceq 'cage_claim_card'
+    })
+    if ($claimMatches.Count -cne 1) {
+        throw "Linda's visible Players Card review has no unique claim control."
+    }
+    $claimEnabled = Get-Value $claimMatches[0] @('enabled') $null
+    if ($claimEnabled -isnot [bool]) {
+        throw "Linda's visible Players Card claim has no exact enabled witness."
+    }
+    if (-not [bool]$claimEnabled) {
+        $null = Choose-VisibleChoice -ChoiceId 'back_main' -Intent 'return from Linda''s visible card-progress review'
+        $null = Choose-VisibleChoice -ChoiceId 'leave_counter' -Intent 'step away from Linda until the visible card claim is ready'
+        Wait-Frames -Frames 8
+        return ''
+    }
+
+    $null = Choose-VisibleChoice -ChoiceId 'cage_claim_card' -Intent "ask Linda to issue the visibly enabled Players Card tier"
     Wait-Frames -Frames 12
 
     $choices = @(Get-VisibleChoiceIds)
-    if ($nextTier -eq 'bronze') {
-        if ('thank_linda' -notin $choices) {
-            throw "Bronze claim did not expose Linda's visible recognition choice."
-        }
+    $recognitionChoices = @($choices | Where-Object {
+        @('thank_linda', 'take_silver', 'accept_gold_card') -ccontains [string]$_
+    })
+    if ($recognitionChoices.Count -cne 1) {
+        throw "Players Card claim did not expose exactly one visible tier-recognition choice."
+    }
+    $recognitionChoice = [string]$recognitionChoices[0]
+    if ($recognitionChoice -ceq 'thank_linda') {
         $null = Choose-VisibleChoice -ChoiceId 'thank_linda' -Intent 'accept Linda''s Bronze recognition'
+        Wait-Frames -Frames 10
+        return 'bronze'
     }
-    elseif ($nextTier -eq 'silver') {
-        if ('take_silver' -notin $choices) {
-            throw "Silver claim did not expose Linda's visible recognition choice."
-        }
+    if ($recognitionChoice -ceq 'take_silver') {
         $null = Choose-VisibleChoice -ChoiceId 'take_silver' -Intent 'accept Linda''s Silver recognition and High Limit access'
+        Wait-Frames -Frames 10
+        return 'silver'
     }
-    elseif ($nextTier -eq 'gold') {
-        if ('accept_gold_card' -notin $choices) {
-            throw "Gold claim did not expose Linda's visible final review choice."
-        }
+    if ($recognitionChoice -ceq 'accept_gold_card') {
         $null = Choose-VisibleChoice -ChoiceId 'accept_gold_card' -Intent 'accept the Gold Players Card and clean Grand Casino ending'
         Wait-Frames -Frames 45
-        return
+        return 'gold'
     }
-    else {
-        throw "Linda offered an unknown Players Card tier '$nextTier'."
-    }
-    Wait-Frames -Frames 10
+    throw "Linda exposed unknown Players Card recognition '$recognitionChoice'."
 }
 
 
@@ -2231,30 +2827,26 @@ function Invoke-CleanEndingRoute {
     Reach-GrandCasino
     Ensure-GrandCasinoChips -Minimum 50
     Enter-GrandRoom -Room main
+    $claimedTiers = @()
 
     for ($round = 0; $round -lt 80; $round++) {
-        $objective = Get-Value $script:LastObservation @('status_hud', 'demo_objective') $null
-        if (-not [bool](Get-Value $objective @('players_card_eligible') $false)) {
-            throw "Clean route lost Players Card eligibility: $([string](Get-Value $objective @('players_card_ineligible_reason') 'unknown reason'))"
-        }
-        if ([bool](Get-Value $objective @('players_card_ready_to_claim') $false)) {
-            $tier = [string](Get-Value $objective @('players_card_next_tier') '')
-            Claim-ReadyPlayersCardTier
-            if ($tier -eq 'gold') {
+        Play-OneBlackjackRound
+        $tier = Visit-CageAndClaimReadyPlayersCard
+        if (-not [string]::IsNullOrEmpty($tier)) {
+            $expectedTier = @('bronze', 'silver', 'gold')[$claimedTiers.Count]
+            if ($tier -cne $expectedTier) {
+                throw "Visible Players Card recognition arrived out of order: expected '$expectedTier', found '$tier'."
+            }
+            $claimedTiers += $tier
+            if ($tier -ceq 'gold') {
                 $null = Assert-TerminalOutcome
                 return
             }
-            if ($tier -eq 'silver' -and -not $script:MidpointSaved) {
+            if ($tier -ceq 'silver' -and -not $script:MidpointSaved) {
                 Assert-SaveRelaunchContinue -Milestone 'Silver Players Card'
             }
-            Enter-GrandRoom -Room main
-            continue
         }
-        if ([bool](Get-Value $objective @('showdown_pending') $false) -or
-            [bool](Get-Value $objective @('showdown_active') $false)) {
-            throw "Clean route unexpectedly entered Rourke's showdown lane."
-        }
-        Play-OneBlackjackRound
+        Enter-GrandRoom -Room main
     }
     throw "Clean route did not finish all three Players Card tiers within 80 settled blackjack rounds."
 }
@@ -2269,7 +2861,7 @@ function Resolve-ShowdownChoiceSurface {
         hold_steady = 'answer Rourke from the visible run record'
     }
     foreach ($choice in @('enter_back_room', 'keep_everything', 'face_rourke', 'hold_steady')) {
-        if ($choice -in $choices) {
+        if ($choices -ccontains $choice) {
             $intent = $choiceIntents[$choice]
             $null = Choose-VisibleChoice -ChoiceId $choice -Intent $intent
             Wait-Frames -Frames 12
@@ -2285,23 +2877,21 @@ function Invoke-CheatEndingRoute {
     Ensure-GrandCasinoChips -Minimum 50
     Enter-GrandRoom -Room main
 
+    $showdownCallOpened = $false
     for ($round = 0; $round -lt 60; $round++) {
-        $objective = Get-Value $script:LastObservation @('status_hud', 'demo_objective') $null
-        if ([bool](Get-Value $objective @('showdown_pending') $false) -or
-            [bool](Get-Value $objective @('showdown_active') $false)) {
+        Play-OneBlackjackRound -UseVisibleCheat
+        if (Test-PublicTerminalSurface) {
+            throw 'Visible cheating ended the run before Rourke exposed the showdown route.'
+        }
+        Leave-GameSurface
+        if ($null -cne (Find-CanvasObject -SemanticId 'event:the_house_calls')) {
+            Open-EventObject -EventId 'the_house_calls' -Intent "answer Rourke's visible back-room call"
+            $showdownCallOpened = $true
             break
         }
-        Play-OneBlackjackRound -UseVisibleCheat
     }
-    $objective = Get-Value $script:LastObservation @('status_hud', 'demo_objective') $null
-    if (-not [bool](Get-Value $objective @('showdown_pending') $false) -and
-        -not [bool](Get-Value $objective @('showdown_active') $false)) {
+    if (-not $showdownCallOpened) {
         throw "Visible cheating did not naturally trigger Rourke's showdown within 60 settled hands."
-    }
-
-    Leave-GameSurface
-    if ($null -ne (Find-CanvasObject -SemanticId 'event:the_house_calls')) {
-        Open-EventObject -EventId 'the_house_calls' -Intent "answer Rourke's visible back-room call"
     }
     for ($beat = 0; $beat -lt 12; $beat++) {
         if ([bool](Get-Value $script:LastObservation @('game', 'boss_duel_active') $false)) { break }
@@ -2316,14 +2906,14 @@ function Invoke-CheatEndingRoute {
     if (-not [bool](Get-Value $script:LastObservation @('game', 'boss_duel_active') $false)) {
         throw "Rourke's five-hand duel never became publicly active."
     }
-    if ([int](Get-Value $script:LastObservation @('game', 'boss_hand_number') 0) -ne 1 -or
+    if ([int](Get-Value $script:LastObservation @('game', 'boss_hand_number') 0) -cne 1 -or
         -not [bool](Get-Value $script:LastObservation @('game', 'can_deal') $false)) {
         throw "Rourke's duel is not visibly waiting before hand one at the required persistence checkpoint."
     }
     Assert-SaveRelaunchContinue -Milestone 'Rourke duel before hand one'
 
     for ($hand = 0; $hand -lt 8; $hand++) {
-        if ([string](Get-Value $script:LastObservation @('status_hud', 'run_status') '') -ne 'active') { break }
+        if (Test-PublicTerminalSurface) { break }
         if ([bool](Get-Value $script:LastObservation @('event_popup', 'visible') $false) -or
             [bool](Get-Value $script:LastObservation @('talk', 'visible') $false)) {
             if (-not (Resolve-ShowdownChoiceSurface)) {
@@ -2333,9 +2923,9 @@ function Invoke-CheatEndingRoute {
         }
         Play-OneBlackjackRound
     }
-    for ($beat = 0; $beat -lt 12 -and [string](Get-Value $script:LastObservation @('status_hud', 'run_status') '') -eq 'active'; $beat++) {
+    for ($beat = 0; $beat -lt 12 -and -not (Test-PublicTerminalSurface); $beat++) {
         if (Resolve-ShowdownChoiceSurface) { continue }
-        $endingAction = @('ending.ack', 'showdown_exit', 'surface_back') | Where-Object { $null -ne (Find-GameAction -Action $_) } | Select-Object -First 1
+        $endingAction = @('ending.ack', 'showdown_exit', 'surface_back') | Where-Object { $null -cne (Find-GameAction -Action $_) } | Select-Object -First 1
         if (-not [string]::IsNullOrWhiteSpace([string]$endingAction)) {
             $null = Invoke-GameAction -Action ([string]$endingAction) -Intent 'acknowledge the visible Rourke duel outcome'
         }
@@ -2352,8 +2942,8 @@ function Find-WorldNodeIdByArchetype {
     param([Parameter(Mandatory = $true)][string]$ArchetypeId)
     Open-WorldMap
     $matches = @(Get-MapNodes | Where-Object {
-        [string](Get-Value $_ @('archetype_id') '') -eq $ArchetypeId
-    } | Sort-Object @{ Expression = { if ([string](Get-Value $_ @('id') '') -eq $ArchetypeId) { 0 } else { 1 } } }, @{ Expression = { [string](Get-Value $_ @('id') '') } })
+        [string](Get-Value $_ @('archetype_id') '') -ceq $ArchetypeId
+    } | Sort-Object @{ Expression = { if ([string](Get-Value $_ @('id') '') -ceq $ArchetypeId) { 0 } else { 1 } } }, @{ Expression = { [string](Get-Value $_ @('id') '') } })
     $nodeId = ''
     if ($matches.Count -gt 0) {
         $nodeId = [string](Get-Value $matches[0] @('id') '')
@@ -2368,7 +2958,7 @@ function Navigate-ToArchetype {
         [Parameter(Mandatory = $true)][string]$ArchetypeId,
         [Parameter(Mandatory = $true)][string]$Intent
     )
-    if ([string](Get-Value $script:LastObservation @('environment', 'archetype_id') '') -eq $ArchetypeId) { return }
+    if ([string](Get-Value $script:LastObservation @('environment', 'archetype_id') '') -ceq $ArchetypeId) { return }
     $nodeId = Find-WorldNodeIdByArchetype -ArchetypeId $ArchetypeId
     if ([string]::IsNullOrWhiteSpace($nodeId)) {
         throw "The public map contains no visible $ArchetypeId venue."
@@ -2384,7 +2974,7 @@ function Establish-CrewMarker {
         $nodeId = Find-WorldNodeIdByArchetype -ArchetypeId $archetype
         if ([string]::IsNullOrWhiteSpace($nodeId)) { continue }
         Navigate-ToNode -NodeId $nodeId -Intent "visit $archetype to find the Crew's visible lender"
-        if ($null -eq (Find-CanvasObject -SemanticId 'lender:the_crew')) { continue }
+        if ($null -ceq (Find-CanvasObject -SemanticId 'lender:the_crew')) { continue }
         $null = Open-SemanticObject -SemanticId 'lender:the_crew' -PreferredActions @('Borrow', 'Talk', 'Ask', 'Open') -Intent 'ask the visible Crew lender for terms'
         Wait-Frames -Frames 8
         $null = Choose-VisibleChoice -ChoiceId 'accept' -Intent 'accept the visible Crew favor terms and marker'
@@ -2403,8 +2993,8 @@ function Establish-CrewMarker {
     for ($boundary = 0; $boundary -lt 28; $boundary++) {
         $eventId = [string](Get-Value $script:LastObservation @('event_popup', 'event_id') '')
         $talkId = [string](Get-Value $script:LastObservation @('talk', 'event_id') '')
-        if (($eventId -eq 'crew_favor_delivery' -or $talkId -eq 'crew_favor_delivery') -and
-            'run_package' -in @(Get-VisibleChoiceIds)) {
+        if (($eventId -ceq 'crew_favor_delivery' -or $talkId -ceq 'crew_favor_delivery') -and
+            'run_package' -cin @(Get-VisibleChoiceIds)) {
             $null = Choose-VisibleChoice -ChoiceId 'run_package' -Intent "honor the Crew's visible favor $($favorsCompleted + 1) of 2"
             Wait-Frames -Frames 10
             Complete-PublicDelivery -Intent "complete Crew favor $($favorsCompleted + 1) of 2"
@@ -2412,14 +3002,14 @@ function Establish-CrewMarker {
             if ($favorsCompleted -ge 2) { return }
             continue
         }
-        if ($null -ne (Find-CanvasObject -SemanticId 'event:crew_favor_delivery')) {
+        if ($null -cne (Find-CanvasObject -SemanticId 'event:crew_favor_delivery')) {
             Invoke-EventObjectChoice -EventId 'crew_favor_delivery' -ChoiceId 'run_package' -Intent "honor the Crew's visible favor $($favorsCompleted + 1) of 2"
             Complete-PublicDelivery -Intent "complete Crew favor $($favorsCompleted + 1) of 2"
             $favorsCompleted++
             if ($favorsCompleted -ge 2) { return }
             continue
         }
-        if ($null -ne (Find-CanvasObject -SemanticId 'event:parking_lot_tip')) {
+        if ($null -cne (Find-CanvasObject -SemanticId 'event:parking_lot_tip')) {
             Invoke-EventObjectChoice -EventId 'parking_lot_tip' -ChoiceId 'follow_tip' -Intent 'follow the visible underground route tip while the Crew calls in its favor'
             continue
         }
@@ -2427,9 +3017,9 @@ function Establish-CrewMarker {
         $current = [string](Get-Value $script:LastObservation @('environment', 'world_node_id') '')
         $next = @(Get-MapNodes | Where-Object {
             [bool](Get-Value $_ @('travel_enabled') $false) -and
-            [string](Get-Value $_ @('id') '') -ne $current
+            [string](Get-Value $_ @('id') '') -cne $current
         } | Sort-Object @{ Expression = { [int](Get-Value $_ @('cost') 0) } }, @{ Expression = { [string](Get-Value $_ @('id') '') } } | Select-Object -First 1)
-        if ($next.Count -eq 0) {
+        if ($next.Count -ceq 0) {
             Close-WorldMap
             throw "The Crew favor did not surface and the public map exposed no ordinary action boundary."
         }
@@ -2449,7 +3039,7 @@ function Ensure-PunchlineCasinoDiscovered {
             $nodeId = Find-WorldNodeIdByArchetype -ArchetypeId $archetype
             if ([string]::IsNullOrWhiteSpace($nodeId)) { continue }
             Navigate-ToNode -NodeId $nodeId -Intent "look for the visible route into the Punchline from $archetype"
-            if ($null -eq (Find-CanvasObject -SemanticId 'event:parking_lot_tip')) { continue }
+            if ($null -ceq (Find-CanvasObject -SemanticId 'event:parking_lot_tip')) { continue }
             Invoke-EventObjectChoice -EventId 'parking_lot_tip' -ChoiceId 'follow_tip' -Intent 'follow the visible underground route tip'
             $tipFound = $true
             break
@@ -2463,11 +3053,11 @@ function Ensure-PunchlineCasinoDiscovered {
         throw 'Following the Parking Lot Tip did not expose the Punchline on the public map.'
     }
     Navigate-ToNode -NodeId $smallNode -Intent 'travel through the real map to the Punchline'
-    if ($null -ne (Find-CanvasObject -SemanticId 'event:side_door')) {
+    if ($null -cne (Find-CanvasObject -SemanticId 'event:side_door')) {
         Invoke-EventObjectChoice -EventId 'side_door' -ChoiceId 'punchline_password' -Intent 'use the visible password at the Punchline side door'
         Wait-Frames -Frames 12
     }
-    elseif ($null -ne (Find-CanvasObject -SemanticId 'environment_layer:casino')) {
+    elseif ($null -cne (Find-CanvasObject -SemanticId 'environment_layer:casino')) {
         $null = Open-SemanticObject -SemanticId 'environment_layer:casino' -PreferredActions @('Enter Casino', 'Enter Room', 'Enter', 'Open') -Intent 'return through the discovered Punchline casino door'
         Wait-Frames -Frames 12
     }
@@ -2478,10 +3068,10 @@ function Find-BishopSurfaceAtGrand {
     Reach-GrandCasino
     for ($attempt = 0; $attempt -lt 20; $attempt++) {
         foreach ($eventId in @('recruitment_bishop', 'crew_contact_bishop')) {
-            if ($null -ne (Find-CanvasObject -SemanticId "event:$eventId")) { return $eventId }
+            if ($null -cne (Find-CanvasObject -SemanticId "event:$eventId")) { return $eventId }
         }
         $archetype = [string](Get-Value $script:LastObservation @('environment', 'archetype_id') '')
-        if ($archetype -eq 'grand_casino') {
+        if ($archetype -ceq 'grand_casino') {
             Enter-GrandRoom -Room cage
         }
         else {
@@ -2494,15 +3084,15 @@ function Find-BishopSurfaceAtGrand {
 
 function Recruit-Bishop {
     $surface = Find-BishopSurfaceAtGrand
-    if ($surface -eq 'crew_contact_bishop') { return }
-    if ('wait_for_bishop' -in @(Get-VisibleChoiceIds)) {
+    if ($surface -ceq 'crew_contact_bishop') { return }
+    if ('wait_for_bishop' -cin @(Get-VisibleChoiceIds)) {
         $null = Choose-VisibleChoice -ChoiceId 'wait_for_bishop' -Intent "wait through Bishop's visible first appointment beat"
     }
     else {
         Invoke-EventObjectChoice -EventId 'recruitment_bishop' -ChoiceId 'wait_for_bishop' -Intent "wait through Bishop's visible first appointment beat"
     }
     Wait-Frames -Frames 10
-    if ('work_with_bishop' -in @(Get-VisibleChoiceIds)) {
+    if ('work_with_bishop' -cin @(Get-VisibleChoiceIds)) {
         $null = Choose-VisibleChoice -ChoiceId 'work_with_bishop' -Intent 'keep the visible appointment and recruit Bishop'
     }
     else {
@@ -2515,19 +3105,19 @@ function Recruit-Bishop {
 function Start-BishopContactJob {
     param([Parameter(Mandatory = $true)][string[]]$Preference)
     $surface = Find-BishopSurfaceAtGrand
-    if ($surface -eq 'recruitment_bishop') {
+    if ($surface -ceq 'recruitment_bishop') {
         Recruit-Bishop
         $surface = Find-BishopSurfaceAtGrand
     }
     Select-EventObject -EventId 'crew_contact_bishop'
     foreach ($choiceId in $Preference) {
-        if ($choiceId -in @(Get-VisibleChoiceIds)) {
+        if ($choiceId -cin @(Get-VisibleChoiceIds)) {
             $null = Choose-VisibleChoice -ChoiceId $choiceId -Intent "accept Bishop's visible $choiceId job"
             Wait-Frames -Frames 10
             return $choiceId
         }
         $row = Get-EventChoiceRoomAction -EventId 'crew_contact_bishop' -ChoiceId $choiceId
-        if ($null -ne $row -and [bool](Get-Value $row @('enabled') $false)) {
+        if ($null -cne $row -and [bool](Get-Value $row @('enabled') $false)) {
             $null = Invoke-RoomActionRow -Row $row -Intent "accept Bishop's visible $choiceId job"
             Wait-Frames -Frames 10
             return $choiceId
@@ -2541,20 +3131,20 @@ function Start-BishopContactJob {
 function Enter-PunchlineBackRoom {
     param([switch]$AllowUnavailable)
     Ensure-PunchlineCasinoDiscovered
-    if ($null -ne (Find-CanvasObject -SemanticId 'event:crew_planning_table')) { return $true }
+    if ($null -cne (Find-CanvasObject -SemanticId 'event:crew_planning_table')) { return $true }
     $layer = Find-CanvasObject -SemanticId 'environment_layer:back_room'
-    if ($null -eq $layer -and $null -ne (Find-CanvasObject -SemanticId 'environment_layer:casino')) {
+    if ($null -ceq $layer -and $null -cne (Find-CanvasObject -SemanticId 'environment_layer:casino')) {
         $null = Open-SemanticObject -SemanticId 'environment_layer:casino' -PreferredActions @('Enter Casino', 'Enter Room', 'Enter', 'Open') -Intent 'enter the discovered Punchline casino before the back-room door'
         Wait-Frames -Frames 12
         $layer = Find-CanvasObject -SemanticId 'environment_layer:back_room'
     }
-    if ($null -eq $layer) {
+    if ($null -ceq $layer) {
         if ($AllowUnavailable) { return $false }
         throw 'The visible Punchline route did not expose its Made-standing back room.'
     }
     $null = Open-SemanticObject -SemanticId 'environment_layer:back_room' -PreferredActions @('Enter Back Room', 'Enter Room', 'Enter', 'Open') -Intent 'enter the real Punchline back room'
     Wait-Frames -Frames 12
-    if ($null -eq (Find-CanvasObject -SemanticId 'event:crew_planning_table')) {
+    if ($null -ceq (Find-CanvasObject -SemanticId 'event:crew_planning_table')) {
         if ($AllowUnavailable) { return $false }
         throw 'The back-room door did not reach the visible Crew planning table.'
     }
@@ -2564,7 +3154,7 @@ function Enter-PunchlineBackRoom {
 
 function Close-VisibleChoiceSurface {
     foreach ($choiceId in @('leave', 'leave_counter', 'keep_moving')) {
-        if ($choiceId -in @(Get-VisibleChoiceIds)) {
+        if ($choiceId -cin @(Get-VisibleChoiceIds)) {
             $null = Choose-VisibleChoice -ChoiceId $choiceId -Intent 'leave the visible choice surface without changing the route'
             Wait-Frames -Frames 8
             return
@@ -2574,7 +3164,7 @@ function Close-VisibleChoiceSurface {
 
 
 function Test-CountPlanLive {
-    if ($null -eq (Find-CanvasObject -SemanticId 'event:crew_planning_table')) { return $false }
+    if ($null -ceq (Find-CanvasObject -SemanticId 'event:crew_planning_table')) { return $false }
     $live = Test-EventObjectChoiceEnabled -EventId 'crew_planning_table' -ChoiceId 'lock_the_count'
     Close-VisibleChoiceSurface
     return $live
@@ -2582,18 +3172,18 @@ function Test-CountPlanLive {
 
 
 function Start-BishopBoardJob {
-    if ($null -eq (Find-CanvasObject -SemanticId 'event:crew_job_board')) {
+    if ($null -ceq (Find-CanvasObject -SemanticId 'event:crew_job_board')) {
         throw 'The real Punchline back room exposes no visible Job Board.'
     }
     Select-EventObject -EventId 'crew_job_board'
     foreach ($choiceId in @('accept_bishop_cage_packet', 'accept_bishop_camera_window')) {
-        if ($choiceId -in @(Get-VisibleChoiceIds)) {
+        if ($choiceId -cin @(Get-VisibleChoiceIds)) {
             $null = Choose-VisibleChoice -ChoiceId $choiceId -Intent "take Bishop's visible Job Board work"
             Wait-Frames -Frames 10
             return $choiceId
         }
         $row = Get-EventChoiceRoomAction -EventId 'crew_job_board' -ChoiceId $choiceId
-        if ($null -ne $row -and [bool](Get-Value $row @('enabled') $false)) {
+        if ($null -cne $row -and [bool](Get-Value $row @('enabled') $false)) {
             $null = Invoke-RoomActionRow -Row $row -Intent "take Bishop's visible Job Board work"
             Wait-Frames -Frames 10
             return $choiceId
@@ -2617,7 +3207,7 @@ function Promote-BishopToInnerCircle {
     for ($job = 1; $job -le 7; $job++) {
         if (Test-CountPlanLive) { return }
         $accepted = Start-BishopBoardJob
-        $grandRoom = if ($accepted -eq 'accept_bishop_cage_packet') { 'cage' } else { '' }
+        $grandRoom = if ($accepted -ceq 'accept_bishop_cage_packet') { 'cage' } else { '' }
         Complete-PublicDelivery -Intent "complete Bishop back-room job $job ($accepted)" -GrandRoom $grandRoom
         $null = Enter-PunchlineBackRoom
     }
@@ -2629,14 +3219,14 @@ function Promote-BishopToInnerCircle {
 
 function Leave-GrandForDistinctVisit {
     Leave-GameSurface
-    if ([string](Get-Value $script:LastObservation @('environment', 'world_node_id') '') -ne 'grand_casino') { return }
+    if ([string](Get-Value $script:LastObservation @('environment', 'world_node_id') '') -cne 'grand_casino') { return }
     Open-WorldMap
     $candidate = @(Get-MapNodes | Where-Object {
         [bool](Get-Value $_ @('travel_enabled') $false) -and
-        [string](Get-Value $_ @('id') '') -ne 'grand_casino' -and
-        [string](Get-Value $_ @('archetype_id') '') -notin @('grand_casino', 'grand_casino_cage', 'grand_casino_high_limit')
+        [string](Get-Value $_ @('id') '') -cne 'grand_casino' -and
+        [string](Get-Value $_ @('archetype_id') '') -cnotin @('grand_casino', 'grand_casino_cage', 'grand_casino_high_limit')
     } | Sort-Object @{ Expression = { [int](Get-Value $_ @('cost') 0) } }, @{ Expression = { [string](Get-Value $_ @('id') '') } } | Select-Object -First 1)
-    if ($candidate.Count -eq 0) {
+    if ($candidate.Count -ceq 0) {
         Close-WorldMap
         throw 'The Grand Casino exposes no public map leg for a distinct identity visit.'
     }
@@ -2677,7 +3267,7 @@ function Get-PlanningTableProjection {
             disabled_reason = [string](Get-Value $row @('disabled_reason') '')
         }
     }
-    if ($rows.Count -eq 0) {
+    if ($rows.Count -ceq 0) {
         foreach ($choice in @(Get-Array (Get-Value $script:LastObservation @('event_popup', 'choices') @()))) {
             $rows += [pscustomobject][ordered]@{
                 choice_id = [string](Get-Value $choice @('id') '')
@@ -2711,13 +3301,13 @@ function Assert-HeistSaveRelaunchContinue {
     Assert-NoPostExitLogAlerts
     Remove-OwnedBridgeCaptureResidue
     Start-BridgeSession
-    if ([string](Get-Value $script:LastObservation @('screen', 'start_menu', 'primary_action_text') '') -ne 'CONTINUE') {
+    if ([string](Get-Value $script:LastObservation @('screen', 'start_menu', 'primary_action_text') '') -cne 'CONTINUE') {
         throw 'Relaunch after The Count setup did not expose CONTINUE.'
     }
     $null = Click-Button -Text 'CONTINUE' -Intent 'continue The Count from the full relaunch checkpoint'
     Wait-Frames -Frames 45
     Clear-VisibleCoach
-    if ($null -eq (Find-CanvasObject -SemanticId 'event:crew_planning_table')) {
+    if ($null -ceq (Find-CanvasObject -SemanticId 'event:crew_planning_table')) {
         throw 'Continue did not restore the real Punchline planning-table room.'
     }
     $afterProjection = @(Get-PlanningTableProjection)
@@ -2774,7 +3364,7 @@ function Invoke-HeistEndingRoute {
     $decisions = @('go_hold', 'distraction_sit', 'exit_dock')
     for ($round = 0; $round -lt $decisions.Count; $round++) {
         $choiceId = $decisions[$round]
-        if ($null -eq (Find-CanvasObject -SemanticId 'event:heist_live_table')) {
+        if ($null -ceq (Find-CanvasObject -SemanticId 'event:heist_live_table')) {
             throw "The Count live-table event is missing before round $($round + 1)."
         }
         Invoke-EventObjectChoice -EventId 'heist_live_table' -ChoiceId $choiceId -Intent "take the visible Count decision $choiceId before live round $($round + 1)"
@@ -2861,7 +3451,7 @@ function Invoke-BridgeTransportRegression {
         $secondOwnedPid = $script:OwnedSessionPid
         $secondOwnedStartUtcTicks = $script:OwnedSessionStartUtcTicks
         $resetCursor = Get-Content -Raw -LiteralPath $logCursorPath -Encoding utf8 | ConvertFrom-Json
-        if ([int]$resetCursor.stdout -ne 0 -or [int]$resetCursor.stderr -ne 0) {
+        if ([int]$resetCursor.stdout -cne 0 -or [int]$resetCursor.stderr -cne 0) {
             throw 'Same-session relaunch did not reset the new process log cursor before its first command.'
         }
         $relaunchLookResult = Invoke-BridgeCommand -Command 'look' -Intent 'exercise the same-session relaunch after atomic log-cursor reset' -ObservationOnly
@@ -2887,7 +3477,7 @@ function Invoke-BridgeTransportRegression {
         $failure = $_
     }
     finally {
-        if ($null -ne $failure) {
+        if ($null -cne $failure) {
             Stop-BridgeSessionSafely -BestEffort
         }
     }
@@ -2895,7 +3485,7 @@ function Invoke-BridgeTransportRegression {
     $summary = [ordered]@{
         schema_version = 1
         check_id = 'rw06_2_bridge_transport_contract'
-        passed = ($null -eq $failure)
+        passed = ($null -ceq $failure)
         session = $script:Session
         evidence_root = $script:RunRoot
         session_folder = [string](Get-Value $status @('folder') '')
@@ -2910,11 +3500,11 @@ function Invoke-BridgeTransportRegression {
             [ordered]@{ command = [string](Get-Value $relaunchLookResult @('command') ''); accepted = [bool](Get-Value $relaunchLookResult @('accepted') $false) }
             [ordered]@{ command = [string](Get-Value $relaunchQuitResult @('command') ''); accepted = [bool](Get-Value $relaunchQuitResult @('accepted') $false) }
         )
-        failure = if ($null -eq $failure) { '' } else { [string]$failure.Exception.Message }
+        failure = if ($null -ceq $failure) { '' } else { [string]$failure.Exception.Message }
     }
     $summaryPath = Join-Path $script:RunRoot 'summary.json'
     $summary | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $summaryPath -Encoding utf8
-    if ($null -ne $failure) {
+    if ($null -cne $failure) {
         throw $failure
     }
     return [pscustomobject]$summary
@@ -2985,6 +3575,7 @@ function Invoke-SemanticScrollRegression {
         [pscustomobject]@{ label = 'fully-visible-false'; buttons = @([pscustomobject]@{ id = '/root/partial'; text = 'Skip Lessons'; enabled = $true; fully_visible = $false }); expect_throw = $false },
         [pscustomobject]@{ label = 'fully-visible-absent'; buttons = @([pscustomobject]@{ id = '/root/absent'; text = 'Skip Lessons'; enabled = $true }); expect_throw = $true },
         [pscustomobject]@{ label = 'fully-visible-non-boolean'; buttons = @([pscustomobject]@{ id = '/root/nonbool'; text = 'Skip Lessons'; enabled = $true; fully_visible = 'true' }); expect_throw = $true },
+        [pscustomobject]@{ label = 'fully-visible-property-case'; buttons = @([pscustomobject]@{ id = '/root/case'; text = 'Skip Lessons'; enabled = $true; Fully_Visible = $true }); expect_throw = $true },
         [pscustomobject]@{ label = 'ambiguous-buttons'; buttons = @($validButton, $validButton); expect_throw = $true }
     )
     foreach ($fixture in $buttonHostileFixtures) {
@@ -2996,7 +3587,7 @@ function Invoke-SemanticScrollRegression {
         catch {
             $threw = $true
         }
-        if ([bool]$fixture.expect_throw -ne $threw -or (-not $threw -and $null -ne $selected)) {
+        if ([bool]$fixture.expect_throw -cne $threw -or (-not $threw -and $null -cne $selected)) {
             $failures.Add("Hostile fully-visible fixture '$($fixture.label)' did not fail closed.")
         }
     }
@@ -3043,7 +3634,8 @@ function Invoke-SemanticScrollRegression {
         [pscustomobject]@{ label = 'ambiguous-dialog'; role = 'ok'; buttons = @($validDialogOk, $validDialogOk) },
         [pscustomobject]@{ label = 'wrong-stable-id'; role = 'ok'; buttons = @([pscustomobject]@{ id = '/root/internal/ok'; text = 'OK'; enabled = $true; fully_visible = $true; surface_id = 'tutorial_skip_dialog'; dialog_role = 'ok'; dialog_rendered = $true }) },
         [pscustomobject]@{ label = 'missing-rendered-signal'; role = 'ok'; buttons = @([pscustomobject]@{ id = 'tutorial_skip_dialog:ok'; text = 'OK'; enabled = $true; fully_visible = $true; surface_id = 'tutorial_skip_dialog'; dialog_role = 'ok' }) },
-        [pscustomobject]@{ label = 'non-boolean-enabled-signal'; role = 'ok'; buttons = @([pscustomobject]@{ id = 'tutorial_skip_dialog:ok'; text = 'OK'; enabled = 'true'; fully_visible = $true; surface_id = 'tutorial_skip_dialog'; dialog_role = 'ok'; dialog_rendered = $true }) }
+        [pscustomobject]@{ label = 'non-boolean-enabled-signal'; role = 'ok'; buttons = @([pscustomobject]@{ id = 'tutorial_skip_dialog:ok'; text = 'OK'; enabled = 'true'; fully_visible = $true; surface_id = 'tutorial_skip_dialog'; dialog_role = 'ok'; dialog_rendered = $true }) },
+        [pscustomobject]@{ label = 'rendered-property-case'; role = 'ok'; buttons = @([pscustomobject]@{ id = 'tutorial_skip_dialog:ok'; text = 'OK'; enabled = $true; fully_visible = $true; surface_id = 'tutorial_skip_dialog'; dialog_role = 'ok'; Dialog_Rendered = $true }) }
     )
     foreach ($fixture in $dialogHostileFixtures) {
         $threw = $false
@@ -3093,8 +3685,11 @@ function Invoke-SemanticScrollRegression {
         [pscustomobject]@{ label = 'duplicate'; surfaces = @($validDown, $validDown); surface_id = 'run_menu'; direction = 'down' },
         [pscustomobject]@{ label = 'unsupported-id'; surfaces = @($validDown); surface_id = 'journal'; direction = 'down' },
         [pscustomobject]@{ label = 'not-rendered'; surfaces = @([pscustomobject]@{ id = 'run_menu'; axis = 'vertical'; rendered = $false; can_scroll_down = $true }); surface_id = 'run_menu'; direction = 'down' },
+        [pscustomobject]@{ label = 'rendered-non-boolean'; surfaces = @([pscustomobject]@{ id = 'run_menu'; axis = 'vertical'; rendered = 'true'; can_scroll_down = $true }); surface_id = 'run_menu'; direction = 'down' },
         [pscustomobject]@{ label = 'wrong-axis'; surfaces = @([pscustomobject]@{ id = 'run_menu'; axis = 'horizontal'; rendered = $true; can_scroll_down = $true }); surface_id = 'run_menu'; direction = 'down' },
         [pscustomobject]@{ label = 'blocked-direction'; surfaces = @($validUp); surface_id = 'run_menu'; direction = 'down' },
+        [pscustomobject]@{ label = 'direction-non-boolean'; surfaces = @([pscustomobject]@{ id = 'run_menu'; axis = 'vertical'; rendered = $true; can_scroll_down = 'true' }); surface_id = 'run_menu'; direction = 'down' },
+        [pscustomobject]@{ label = 'direction-property-case'; surfaces = @([pscustomobject]@{ id = 'run_menu'; axis = 'vertical'; rendered = $true; Can_Scroll_Down = $true }); surface_id = 'run_menu'; direction = 'down' },
         [pscustomobject]@{ label = 'blank-public-id'; surfaces = @([pscustomobject]@{ id = ''; axis = 'vertical'; rendered = $true; can_scroll_down = $true }); surface_id = 'run_menu'; direction = 'down' }
     )
     foreach ($fixture in $hostileFixtures) {
@@ -3113,18 +3708,274 @@ function Invoke-SemanticScrollRegression {
         }
     }
 
+    $validConfirmationObservation = [pscustomobject]@{
+        event_popup = [pscustomobject]@{ visible = $false }
+        talk = [pscustomobject]@{ visible = $true; render_valid = $true; event_id = 'lender_conversation:borrow:the_crew' }
+    }
+    $validConfirmationChoices = @(
+        [pscustomobject]@{ id = 'accept'; label = 'Confirm: Accept Offer'; enabled = $true },
+        [pscustomobject]@{ id = 'decline'; label = 'Not Now'; enabled = $true }
+    )
+    try {
+        $null = Assert-VisibleTalkChoiceConfirmation -Observation $validConfirmationObservation -RenderedTalkChoices $validConfirmationChoices -ChoiceId 'accept' -ExpectedEventId 'lender_conversation:borrow:the_crew' -OriginalLabel 'Accept Offer'
+    }
+    catch {
+        $failures.Add("Valid TalkDock confirmation fixture threw: $($_.Exception.Message)")
+    }
+    $confirmationHostileFixtures = @(
+        [pscustomobject]@{
+            label = 'same-choice-id-chained-event-modal'
+            observation = [pscustomobject]@{ event_popup = [pscustomobject]@{ visible = $true }; talk = [pscustomobject]@{ visible = $false; render_valid = $true; event_id = 'lender_conversation:borrow:the_crew' } }
+            choices = $validConfirmationChoices
+        },
+        [pscustomobject]@{
+            label = 'changed-talk-event-id'
+            observation = [pscustomobject]@{ event_popup = [pscustomobject]@{ visible = $false }; talk = [pscustomobject]@{ visible = $true; render_valid = $true; event_id = 'lender_conversation:borrow:brother_in_law' } }
+            choices = $validConfirmationChoices
+        },
+        [pscustomobject]@{
+            label = 'talk-visible-non-boolean'
+            observation = [pscustomobject]@{ event_popup = [pscustomobject]@{ visible = $false }; talk = [pscustomobject]@{ visible = 'true'; render_valid = $true; event_id = 'lender_conversation:borrow:the_crew' } }
+            choices = $validConfirmationChoices
+        },
+        [pscustomobject]@{
+            label = 'confirmation-label-case'
+            observation = $validConfirmationObservation
+            choices = @([pscustomobject]@{ id = 'accept'; label = 'Confirm: accept offer'; enabled = $true }, $validConfirmationChoices[1])
+        },
+        [pscustomobject]@{
+            label = 'confirmation-property-case'
+            observation = $validConfirmationObservation
+            choices = @([pscustomobject]@{ Id = 'accept'; label = 'Confirm: Accept Offer'; enabled = $true }, $validConfirmationChoices[1])
+        }
+    )
+    foreach ($fixture in $confirmationHostileFixtures) {
+        $threw = $false
+        try {
+            $null = Assert-VisibleTalkChoiceConfirmation -Observation $fixture.observation -RenderedTalkChoices @($fixture.choices) -ChoiceId 'accept' -ExpectedEventId 'lender_conversation:borrow:the_crew' -OriginalLabel 'Accept Offer'
+        }
+        catch {
+            $threw = $true
+        }
+        if (-not $threw) {
+            $failures.Add("Hostile TalkDock confirmation fixture '$($fixture.label)' did not fail closed.")
+        }
+    }
+
+    $validCanvasObject = [pscustomobject]@{
+        semantic_id = 'event:back_alley_offer'
+        enabled = $true
+        rendered = $true
+    }
+    try {
+        $selectedCanvasObject = Select-ExactRenderedCanvasObject -Objects @($validCanvasObject) -SemanticId 'event:back_alley_offer'
+        if ($null -ceq $selectedCanvasObject) {
+            $failures.Add('Valid exact rendered canvas object was rejected.')
+        }
+        $prefixObjects = @(
+            [pscustomobject]@{ semantic_id = 'lender:the_crew'; enabled = $true; rendered = $true },
+            [pscustomobject]@{ semantic_id = 'lender:street_lender'; enabled = $true; rendered = $true }
+        )
+        $selectedPrefixObject = Select-FirstRenderedCanvasObjectByPrefix -Objects $prefixObjects -Prefix 'lender:'
+        if ([string](Get-Value $selectedPrefixObject @('semantic_id') '') -cne 'lender:street_lender') {
+            $failures.Add('Valid rendered canvas prefix selection did not use exact ordinal identity.')
+        }
+    }
+    catch {
+        $failures.Add("Valid rendered canvas object fixture threw: $($_.Exception.Message)")
+    }
+    $canvasObjectHostileFixtures = @(
+        [pscustomobject]@{ label = 'exact-clipped'; mode = 'exact'; objects = @([pscustomobject]@{ semantic_id = 'event:back_alley_offer'; enabled = $true; rendered = $false }); expect_null = $true },
+        [pscustomobject]@{ label = 'exact-rendered-missing'; mode = 'exact'; objects = @([pscustomobject]@{ semantic_id = 'event:back_alley_offer'; enabled = $true }); expect_null = $false },
+        [pscustomobject]@{ label = 'exact-enabled-string'; mode = 'exact'; objects = @([pscustomobject]@{ semantic_id = 'event:back_alley_offer'; enabled = 'true'; rendered = $true }); expect_null = $false },
+        [pscustomobject]@{ label = 'exact-duplicate'; mode = 'exact'; objects = @($validCanvasObject, $validCanvasObject); expect_null = $false },
+        [pscustomobject]@{ label = 'prefix-rendered-string'; mode = 'prefix'; objects = @([pscustomobject]@{ semantic_id = 'lender:the_crew'; enabled = $true; rendered = 'true' }); expect_null = $false },
+        [pscustomobject]@{ label = 'prefix-duplicate'; mode = 'prefix'; objects = @([pscustomobject]@{ semantic_id = 'lender:the_crew'; enabled = $true; rendered = $true }, [pscustomobject]@{ semantic_id = 'lender:the_crew'; enabled = $true; rendered = $true }); expect_null = $false }
+    )
+    foreach ($fixture in $canvasObjectHostileFixtures) {
+        $threw = $false
+        $selected = $null
+        try {
+            $selected = if ([string]$fixture.mode -ceq 'exact') {
+                Select-ExactRenderedCanvasObject -Objects @($fixture.objects) -SemanticId 'event:back_alley_offer'
+            }
+            else {
+                Select-FirstRenderedCanvasObjectByPrefix -Objects @($fixture.objects) -Prefix 'lender:'
+            }
+        }
+        catch {
+            $threw = $true
+        }
+        $expectedNull = [bool]$fixture.expect_null
+        if (($expectedNull -and ($threw -or $null -cne $selected)) -or (-not $expectedNull -and -not $threw)) {
+            $failures.Add("Hostile canvas-object fixture '$($fixture.label)' did not fail closed.")
+        }
+    }
+
+    function New-RoomActionRegressionRow {
+        return [pscustomobject][ordered]@{
+            id = ''
+            action = ''
+            action_id = ''
+            emit_object_id = 'event_response:back_alley_offer:take_cash'
+            label = 'Take the cash'
+            selected_object_id = 'event:back_alley_offer'
+            index = 0
+            enabled = $true
+            rendered = $true
+        }
+    }
+    try {
+        $null = Assert-ExactRenderedRoomActionBinding `
+            -Rows @((New-RoomActionRegressionRow)) `
+            -SelectedObjectId 'event:back_alley_offer' `
+            -Index 0 `
+            -IdentityKey 'emit_object_id' `
+            -IdentityValue 'event_response:back_alley_offer:take_cash'
+    }
+    catch {
+        $failures.Add("Valid exact room-action binding threw: $($_.Exception.Message)")
+    }
+    $roomActionHostileFixtures = @(
+        [pscustomobject]@{ label = 'duplicate'; mutate = { param($row) @($row, (New-RoomActionRegressionRow)) } },
+        [pscustomobject]@{ label = 'reordered'; mutate = { param($row) $row.index = 1; @($row) } },
+        [pscustomobject]@{ label = 'clipped'; mutate = { param($row) $row.rendered = $false; @($row) } },
+        [pscustomobject]@{ label = 'stale-selection'; mutate = { param($row) $row.selected_object_id = 'event:other'; @($row) } },
+        [pscustomobject]@{ label = 'enabled-string'; mutate = { param($row) $row.enabled = 'true'; @($row) } },
+        [pscustomobject]@{ label = 'rendered-missing'; mutate = { param($row) $row.PSObject.Properties.Remove('rendered'); @($row) } }
+    )
+    foreach ($fixture in $roomActionHostileFixtures) {
+        $row = New-RoomActionRegressionRow
+        $mutator = $fixture.mutate
+        $rows = @(& $mutator $row)
+        $threw = $false
+        try {
+            $null = Assert-ExactRenderedRoomActionBinding `
+                -Rows $rows `
+                -SelectedObjectId 'event:back_alley_offer' `
+                -Index 0 `
+                -IdentityKey 'emit_object_id' `
+                -IdentityValue 'event_response:back_alley_offer:take_cash'
+        }
+        catch {
+            $threw = $true
+        }
+        if (-not $threw) {
+            $failures.Add("Hostile room-action fixture '$($fixture.label)' did not fail closed.")
+        }
+    }
+
+    function New-SaveAcknowledgmentRegressionObservation {
+        $separator = " $([char]0x00B7) "
+        return [pscustomobject]@{
+            screen = [pscustomobject]@{ run_menu = [pscustomobject]@{ has_save = $true } }
+            status_hud = [pscustomobject]@{
+                save_text_visible = $true
+                save_text = "Autosave On${separator}Saved to Resume Slot."
+            }
+        }
+    }
+    try {
+        $null = Assert-ExplicitSaveAcknowledgmentObservation -Observation (New-SaveAcknowledgmentRegressionObservation) -Milestone 'fixture'
+    }
+    catch {
+        $failures.Add("Valid exact save acknowledgment fixture threw: $($_.Exception.Message)")
+    }
+    $saveHostileFixtures = @(
+        [pscustomobject]@{ label = 'has-save-string'; mutate = { param($observation) $observation.screen.run_menu.has_save = 'true' } },
+        [pscustomobject]@{ label = 'has-save-number'; mutate = { param($observation) $observation.screen.run_menu.has_save = 1 } },
+        [pscustomobject]@{ label = 'visible-string'; mutate = { param($observation) $observation.status_hud.save_text_visible = 'true' } },
+        [pscustomobject]@{ label = 'visible-missing'; mutate = { param($observation) $observation.status_hud.PSObject.Properties.Remove('save_text_visible') } },
+        [pscustomobject]@{ label = 'text-case'; mutate = { param($observation) $observation.status_hud.save_text = $observation.status_hud.save_text.Replace('Saved', 'saved') } }
+    )
+    foreach ($fixture in $saveHostileFixtures) {
+        $observation = New-SaveAcknowledgmentRegressionObservation
+        $mutator = $fixture.mutate
+        $null = & $mutator $observation
+        $threw = $false
+        try {
+            $null = Assert-ExplicitSaveAcknowledgmentObservation -Observation $observation -Milestone 'fixture'
+        }
+        catch {
+            $threw = $true
+        }
+        if (-not $threw) {
+            $failures.Add("Hostile save-acknowledgment fixture '$($fixture.label)' did not fail closed.")
+        }
+    }
+
+    function New-TerminalRegressionObservation {
+        return [pscustomobject]@{
+            screen = [pscustomobject]@{
+                screen = 'VICTORY'
+                run_report_visible = $true
+                run_report = [pscustomobject]@{
+                    outcome = [pscustomobject]@{ key = 'players_card'; won = $true }
+                }
+            }
+        }
+    }
+    $priorObservation = $script:LastObservation
+    $priorMidpointSaved = $script:MidpointSaved
+    $priorActionCount = $script:ActionCount
+    try {
+        $script:LastObservation = New-TerminalRegressionObservation
+        $script:MidpointSaved = $true
+        $script:ActionCount = 0
+        if (-not (Test-PublicTerminalSurface) -or (Assert-TerminalOutcome) -cne 'players_card') {
+            $failures.Add('Valid exact terminal fixture was rejected.')
+        }
+    }
+    catch {
+        $failures.Add("Valid exact terminal fixture threw: $($_.Exception.Message)")
+    }
+    $terminalHostileFixtures = @(
+        [pscustomobject]@{ label = 'screen-case'; mutate = { param($observation) $observation.screen.screen = 'victory' } },
+        [pscustomobject]@{ label = 'visible-string'; mutate = { param($observation) $observation.screen.run_report_visible = 'true' } },
+        [pscustomobject]@{ label = 'won-number'; mutate = { param($observation) $observation.screen.run_report.outcome.won = 1 } },
+        [pscustomobject]@{ label = 'outcome-case'; mutate = { param($observation) $observation.screen.run_report.outcome.key = 'Players_Card' } }
+    )
+    foreach ($fixture in $terminalHostileFixtures) {
+        $script:LastObservation = New-TerminalRegressionObservation
+        $mutator = $fixture.mutate
+        $null = & $mutator $script:LastObservation
+        $threw = $false
+        try {
+            $null = Assert-TerminalOutcome
+        }
+        catch {
+            $threw = $true
+        }
+        if (-not $threw) {
+            $failures.Add("Hostile terminal fixture '$($fixture.label)' did not fail closed.")
+        }
+    }
+    $script:LastObservation = $priorObservation
+    $script:MidpointSaved = $priorMidpointSaved
+    $script:ActionCount = $priorActionCount
+
     $reportPath = Join-Path $Worktree '.tmp\rw06_2\semantic_scroll_contract.json'
     [void](New-Item -ItemType Directory -Path (Split-Path -Parent $reportPath) -Force)
     $summary = [ordered]@{
         schema_version = 1
         check_id = 'rw06_2_semantic_scroll_contract'
-        passed = ($failures.Count -eq 0)
+        passed = ($failures.Count -ceq 0)
         valid_button_fixtures = 1
         hostile_button_fixtures = $buttonHostileFixtures.Count
         valid_dialog_fixtures = 2
         hostile_dialog_fixtures = $dialogHostileFixtures.Count
         valid_fixtures = 2
         hostile_fixtures = $hostileFixtures.Count
+        valid_confirmation_fixtures = 1
+        hostile_confirmation_fixtures = $confirmationHostileFixtures.Count
+        valid_canvas_object_fixtures = 2
+        hostile_canvas_object_fixtures = $canvasObjectHostileFixtures.Count
+        valid_room_action_fixtures = 1
+        hostile_room_action_fixtures = $roomActionHostileFixtures.Count
+        valid_save_acknowledgment_fixtures = 1
+        hostile_save_acknowledgment_fixtures = $saveHostileFixtures.Count
+        valid_terminal_fixtures = 1
+        hostile_terminal_fixtures = $terminalHostileFixtures.Count
         failures = @($failures)
         report = $reportPath
     }
@@ -3179,6 +4030,11 @@ for ($iteration = 1; $iteration -le $Repeat; $iteration++) {
     $script:OwnedSessionPid = 0
     $script:OwnedSessionStartUtcTicks = 0L
     $script:OwnedSessionExecutablePath = ''
+    $script:GrandFareRecoveryActive = $false
+    $script:GrandFareAcceptedOfferKeys = New-Object 'System.Collections.Generic.HashSet[string]'
+    $script:GrandFareAcceptedLenderIds = New-Object 'System.Collections.Generic.HashSet[string]'
+    $script:GrandFareResolvedCashEventKeys = New-Object 'System.Collections.Generic.HashSet[string]'
+    $script:GrandFareRecoveryVisitedNodes = New-Object 'System.Collections.Generic.HashSet[string]'
     $passed = $false
     $failureMessage = ''
     $finalPublicCheckpoint = $null
@@ -3209,8 +4065,8 @@ for ($iteration = 1; $iteration -le $Repeat; $iteration++) {
             seed = $Seed
             session = $script:Session
             passed = $passed
-            outcome = if ($null -ne $finalPublicCheckpoint) { [string]$finalPublicCheckpoint.outcome_key } else { '' }
-            observed_terminal_seed = if ($null -ne $finalPublicCheckpoint) { [string]$finalPublicCheckpoint.observed_seed } else { '' }
+            outcome = if ($null -cne $finalPublicCheckpoint) { [string]$finalPublicCheckpoint.outcome_key } else { '' }
+            observed_terminal_seed = if ($null -cne $finalPublicCheckpoint) { [string]$finalPublicCheckpoint.observed_seed } else { '' }
             action_count = $script:ActionCount
             midpoint_save_relaunch_continue = $script:MidpointSaved
             transcript = $script:TranscriptPath
@@ -3227,7 +4083,7 @@ for ($iteration = 1; $iteration -le $Repeat; $iteration++) {
     $currentTranscriptHash = [string]$runSummaries[$runSummaries.Count - 1].transcript_sha256
     $currentMoneyHash = [string]$runSummaries[$runSummaries.Count - 1].money_curve_sha256
     $currentFinalCheckpointJson = $runSummaries[$runSummaries.Count - 1].final_public_checkpoint | ConvertTo-Json -Depth 10 -Compress
-    if ($iteration -eq 1) {
+    if ($iteration -ceq 1) {
         $referenceTranscriptHash = $currentTranscriptHash
         $referenceMoneyHash = $currentMoneyHash
         $referenceFinalCheckpointJson = $currentFinalCheckpointJson
@@ -3239,12 +4095,12 @@ for ($iteration = 1; $iteration -le $Repeat; $iteration++) {
     }
 }
 
-$deterministic = $Repeat -eq 2 -and
-    @($runSummaries | Select-Object -ExpandProperty transcript_sha256 -Unique).Count -eq 1 -and
-    @($runSummaries | Select-Object -ExpandProperty money_curve_sha256 -Unique).Count -eq 1 -and
-    @($runSummaries | ForEach-Object { $_.final_public_checkpoint | ConvertTo-Json -Depth 10 -Compress } | Select-Object -Unique).Count -eq 1
-$releaseQualifying = $Repeat -eq 2 -and $runSummaries.Count -eq 2 -and $deterministic -and
-    @($runSummaries | Where-Object { -not $_.passed }).Count -eq 0
+$deterministic = $Repeat -ceq 2 -and
+    @($runSummaries | Select-Object -ExpandProperty transcript_sha256 -Unique).Count -ceq 1 -and
+    @($runSummaries | Select-Object -ExpandProperty money_curve_sha256 -Unique).Count -ceq 1 -and
+    @($runSummaries | ForEach-Object { $_.final_public_checkpoint | ConvertTo-Json -Depth 10 -Compress } | Select-Object -Unique).Count -ceq 1
+$releaseQualifying = $Repeat -ceq 2 -and $runSummaries.Count -ceq 2 -and $deterministic -and
+    @($runSummaries | Where-Object { -not $_.passed }).Count -ceq 0
 $finalSummary = [ordered]@{
     schema_version = 1
     check_id = 'rw06_2_ending_replay'

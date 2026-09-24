@@ -1,7 +1,7 @@
 # rw06_2 economy handoff
 
-Status: **FIRST-PASS RULE AUDIT; LIVE ROUTE CURVES PENDING**
-Source base: `7da3e5dab59b`
+Status: **PROBE19 RETAINED; REPLACEMENT POLICY ENGINE-FREE GREEN; LIVE ROUTE CURVES PENDING**
+Working base: pushed rw06_2 tip `f8c37e1079a84a2cfd4a849732c8a461025ebc68`
 Owner: rw06_3 (data-only tuning after rw06_2 produces qualifying traces)
 
 Do not change game rules, RNG, odds, payout math, wager math, or RTP from this
@@ -14,9 +14,9 @@ files or private run state.
 
 | Route | Required visible economy | First-pass risk to measure |
 | --- | --- | --- |
-| Clean / Players Card | Preserve the $70 Grand Casino travel cost. Qualifying segments are Bronze: 1 settled game and +$5; Silver: 3 and +$15; Gold: 5 and +$30. Each segment must stay at or below 30 heat. This is at least 9 settled games and +$50 aggregate Grand net winnings. | Record entry cash/chips, hands required, deepest drawdown, refills at Linda, and whether a basic-strategy player can finish without an exploit or a long variance grind. |
-| Cheat / Pit Boss | Preserve the $70 Grand Casino travel cost and enough chips for the five-hand fixed-ante duel. The intended dirty-money trigger needs a visible cheat plus at least +$30 Grand net winnings; public heat alternatives are 70 for staff attention and 95 forced. A duel margin of at least -60 is a win. | Record cash/chips when Rourke triggers, the cost of provoking him, five-hand duel drawdown, and whether the successful `shown_the_door` rung reads as a win. |
-| Crew / The Count | Preserve the $70 Grand Casino travel cost. Identity setup requires one settled blackjack wager of $8-$30 on each of three distinct visits, with heat peak at or below 35. The first-pass route acquires 125 chips before setup/play and settles three additional live-play rounds at $8-$30. | Record income from the Crew favor/Bishop-job ladder, travel and package costs, chip purchases, total setup bankroll floor, heat peak, and getaway cash. Flag any >25-action stretch without new income or a new goal. |
+| Clean / Players Card | Preserve the currently rendered Grand Casino fare. Qualifying segments are Bronze: 1 settled game and +$5; Silver: 3 and +$15; Gold: 5 and +$30. Each segment must stay at or below 30 heat. This is at least 9 settled games and +$50 aggregate Grand net winnings. | Record entry cash/chips, hands required, deepest drawdown, refills at Linda, and whether a basic-strategy player can finish without an exploit or a long variance grind. |
+| Cheat / Pit Boss | Preserve the currently rendered Grand Casino fare and enough chips for the five-hand fixed-ante duel. The intended dirty-money trigger needs a visible cheat plus at least +$30 Grand net winnings; public heat alternatives are 70 for staff attention and 95 forced. A duel margin of at least -60 is a win. | Record cash/chips when Rourke triggers, the cost of provoking him, five-hand duel drawdown, and whether the successful `shown_the_door` rung reads as a win. |
+| Crew / The Count | Preserve the currently rendered Grand Casino fare. Identity setup requires one settled blackjack wager of $8-$30 on each of three distinct visits, with heat peak at or below 35. The first-pass route acquires 125 chips before setup/play and settles three additional live-play rounds at $8-$30. | Record income from the Crew favor/Bishop-job ladder, travel and package costs, chip purchases, total setup bankroll floor, heat peak, and getaway cash. Flag any >25-action stretch without new income or a new goal. |
 
 ## Live measurements still required
 
@@ -75,6 +75,60 @@ curve SHA-256 is
 The smallest data-only lever, if normal-play earning later proves impractical,
 would be a travel-cost or starting-cash adjustment in rw06_3. Do not apply it
 from this single seed before the replay measures the earning path.
+
+Probe19 then measured the attempted earning path without changing any game
+number. Storm made the visible Grand fare $109, not the nominal $70. Starting
+from $63, 24 lowest-stake $2 Slot spins all lost and ended at $15, so this exact
+slot-only policy spent $48 without progress. That is severe variance friction
+for rw06_3 to retain, but it is not yet a tuning recommendation or a product
+softlock: the replay had bypassed public deterministic liquidity. The same run
+had shown the Crew lender at the opening Alley, the Brother-in-Law lender at the
+Motel, and $8/$10/$6 positive-cash event options along its scouting route; the
+invitation room still showed the Crew, Roulette, Slot, and enabled travel.
+Source-owned public terms offer $45 for two Crew favors and $30 for $33 family
+repayment, while outside debt does not remove Players Card eligibility.
+
+Classify this sample as **public recovery omitted + replay action-budget
+limitation**, not as a confirmed Clean economy wall. rw06_2 should first replay
+a strict visible funding route and reserve the $50 needed by the current clean
+chip helper after the displayed fare. If that public route still cannot reach
+and sustain Grand across qualifying/fresh seeds, hand rw06_3 the smallest
+data-only adjustment with the failed curves. Probe19 summary/trace/curve hashes
+are `AF647469BC70A4CEB63F3F3287D32B96A8E796077CAC35E66DF774BE030DD824`,
+`F72B12BA13A315E5FDD6D3F4B857B1FF2869ADC85FF8F2BD3756D810DC2A1D81`,
+and `1BB9E5CC5033717D1BB9E1AB3DB8855BF540A1D672C560967B748BD09DFEB6EA`.
+
+The recovery implementation now treats the displayed fare plus $50 as its
+target. That reserve comes directly from the Clean route's immediate
+`Ensure-GrandCasinoChips -Minimum 50` call, not a tuning proposal. Lender
+principal and repayment are parsed from a fully rendered TalkDock and verified
+against the rendered bankroll, Result feedback, and debt-indicator count. The
+public HUD does not expose authenticated debt identities or balances, so the
+replay requires the count to increase by exactly one and attempts Crew funding
+only from a visibly debt-free state; it never infers a Crew-favor merge. Inline
+event copy identifies a positive-cash choice but does not display +8 or +10, so
+those source values never drive selection. The post-action check binds the exact
+allowlisted Result message to the observed positive bankroll and heat deltas.
+
+The replacement source matrix is green: machine jam 2 valid/20 hostile, funding
+8 valid/59 hostile, and cash events 2 valid/39 hostile. The valid funding cases
+include the production-shaped Back Alley Crew/street pair and Motel
+brother/friend pair, including the disabled-brother branch. `machine_jam` always
+chooses the exact visible de-escalation copy, **Wait it out**, with no hidden
+cash/heat inference. These are engine-free policy results. The expanded Godot
+public-observation contract passed under its serialized lease; the next live
+route remains pending a separate serialized engine lease.
+
+Source data alone cannot certify affordability after all travel. In Probe19's
+public state, $63 plus Kitty Crew ($45), minus the displayed $16 trip to Delta,
+plus Delta Crew ($45) yields $137 against a $159 fare-plus-reserve target before
+another stop. Back Alley then offers one generated $25/$45 lender and may show
+the +$8 event; Motel may offer $20/$30 and may show the +$10 wedding event, but
+their presence and intervening fares are generated. The next live route must
+measure the actual visible sequence. If it exhausts the bounded sources below
+the recomputed target, preserve that public curve as a classified exploratory
+finding for rw06_3; do not change economy data or gates in rw06_2.
+
 Copy the exact values from the qualifying route summaries into this table:
 
 | Ending | Seed | Start cash | Grand entry cash | Lowest cash | Chips bought | End cash | Peak heat | Counted actions | Friction / rw06_3 recommendation |

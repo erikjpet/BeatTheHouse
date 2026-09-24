@@ -1,7 +1,9 @@
-# rw06_2 ending replay design — first-pass implementation
+# rw06_2 ending replay design — exploratory implementation
 
-Status: **IMPLEMENTED; EXPLORATORY LIVE RUN STARTED; ACCEPTANCE PENDING rw06_1**
-Implementation base: `origin/main` at `7da3e5dab59b`
+Status: **ENGINE-FREE GREEN; LIVE CONTRACT AND QUALIFYING ROUTES PENDING**
+Working base: pushed rw06_2 tip `f8c37e1079a84a2cfd4a849732c8a461025ebc68`;
+latest fetched `origin/main` is `48b0895e`. Qualifying runs remain blocked until
+rw06_1 lands.
 
 The release deliverable is `tools/rw06_2_ending_replay.ps1 -Ending
 clean|cheat|heist`. It must drive the production `scenes/main.tscn` host through
@@ -17,9 +19,10 @@ nonzero at the first route deviation. It is a player replay, not a state-builder
 - Do not call product handlers directly, edit saves, inject flags/trust/money,
   teleport, use debug shortcuts, inspect hidden cards, or read the private Crew
   capsule.
-- Branch only on the bridge's player-observable JSON: screen/environment,
-  rendered controls, room/game actions, HUD/objective, feedback, dialogue,
-  inventory, and run report.
+- Branch only on the bridge's player-observable JSON: rendered screen and room
+  identity, controls, room/game actions, status HUD witnesses, feedback,
+  dialogue, inventory, and RunReport. Raw objective, run-status, debt-item,
+  consequence, or model-state fields are not replay authority.
 - Treat any `SCRIPT ERROR`, error, warning, rejected command, ambiguity, missing
   semantic target, or unexpected modal as a hard failure.
 
@@ -34,17 +37,19 @@ nonzero at the first route deviation. It is a player replay, not a state-builder
    - navigate the visible world graph toward a public destination;
    - settle a legal game using its published actions;
    - wait until a published modal/animation releases input;
-   - assert public money, heat, objective, route beat, and log health.
+   - assert fully rendered money/heat/chip values, exact visible route beats,
+     and log health.
 4. Write one compact transcript record per accepted player action: ordinal,
-   intent, command, screen/environment identity, bankroll/chips/heat, public
-   objective signature, event/game surface, and result/outcome copy.
+   intent, command, screen/environment identity, rendered bankroll/chips/heat,
+   event/game surface, and visible result/outcome copy.
 5. At the route's required midpoint, open the visible run menu, Save, Main Menu,
    quit the process, relaunch the same session, Continue, and compare a
    canonical public checkpoint signature.
 6. At the terminal beat, require:
-   - `status_hud.run_status == "ended"`;
-   - the public demo objective/report is complete;
-   - the run report's player-facing outcome matches the requested ending;
+   - the exact screen is `VICTORY`;
+   - the RunReport has an exact boolean-true rendered witness;
+   - its exact outcome key matches the requested ending and its `won` field is
+     the boolean value `true`;
    - no log alerts or unacknowledged route deviations;
    - the action count is reported against the 150–350 target.
 
@@ -52,7 +57,7 @@ nonzero at the first route deviation. It is a player replay, not a state-builder
 
 For each ending, run the same seed and intent policy twice in clean isolated
 profiles. Canonicalize only player-visible progression: accepted command intent,
-screen/environment, public money/heat/objective, dialogue choice IDs, game
+screen/environment, fully rendered money/heat/chips, dialogue choice IDs, game
 actions/results, persistence checkpoint signature, and final public outcome.
 Exclude process IDs, paths, screenshots, wall-clock timestamps, control rects,
 and animation-only timing. The two canonical traces must be identical.
@@ -99,16 +104,22 @@ checkpoint, screenshots, and final summary used for acceptance.
 
 ## Current verification status
 
-- `rw06_2_replay_source_contract.ps1` passes. It parses both PowerShell entry
-  points and enforces route, semantic-input, persistence, terminal-outcome,
-  privacy, and deterministic-hash source contracts.
-- `rw06_2_public_observation_contract.gd` passes against hostile twin fixtures.
-  Concealed hole cards, shoe/order, run/session state, narrative flags, trigger
-  context, Crew private capsule fields, and scenario audit fields do not alter
-  the public fingerprint or appear in serialized output. Revealing the dealer
-  hand through its public flag does alter the checkpoint as intended. Focused
-  evidence: `D:\Projects\Beat-The-House-worktrees\rw06_2-prep\.tmp\rw06_2\public_observation_contract.json`
-  (SHA-256 `F8F699846DB1CFD6C5659F7A9D10F42C77CAB4F8573C4C5EE19D28E683889195`).
+- `rw06_2_replay_source_contract.ps1` is engine-free green. It parses both
+  PowerShell entry points and enforces exact-case property reads, rendered-only
+  semantic input, persistence, visible-terminal outcome, privacy, and
+  deterministic trace contracts. Its focused policy matrix currently passes:
+  wheel 1 valid/5 hostile, button viewport 2/8, machine jam 2/20, funding 8/59,
+  cash event 2/39, and command-open 1/4, plus the runner's semantic regression.
+- `tools/validate_project.ps1` passed on the current dirty tree in 138 seconds.
+- `rw06_2_public_observation_contract.gd` has been expanded for clipped and
+  partial TalkDock/event surfaces, non-boolean witnesses, rendered status HUD
+  values, debt-indicator text, terminal visibility, action redaction, and hidden
+  twin-state invariance. Its one leased Godot 4.6 invocation passed on the dirty
+  tree identified before launch by binary diff SHA-256
+  `E7DEBAAAB2AC8B0E08F83949D7961D6746762B2D7F0ADF7B5FCA3D4DC39702D1`.
+  The report is `.tmp/rw06_2/public_observation_contract.json` (SHA-256
+  `F8F699846DB1CFD6C5659F7A9D10F42C77CAB4F8573C4C5EE19D28E683889195`);
+  exit was zero with no warning, error, leak, or surviving engine process.
 - The bridge itself compiled and reached `ready.json` in the first live probe.
   That probe exposed a Windows launcher-detach hang before command 0001; the
   launcher now explicitly exits its start-only helper process after publishing
@@ -308,15 +319,51 @@ checkpoint, screenshots, and final summary used for acceptance.
   24 spins, and retries the exact Grand card once the public bankroll covers
   its fare. It never selects Nudge, autoplay, a private state field, or an
   unrelated travel destination.
+- Probe19 at exact pushed tip `f8c37e10` live-proved the command-open correction:
+  command 0068 and every later bounded spin were accepted with no ordinal gap.
+  It also disproved slot-only fare recovery for this route seed. Twenty-four
+  public $2 spins reduced cash from $63 to $15 while the storm-adjusted Grand
+  fare remained $109. This is not yet a product economy wall: the public route
+  had skipped visible positive-cash events and disclosed Crew/family lenders,
+  and the invitation snapshot still exposed multiple enabled games and routes.
+  The next replay policy must prefer strict visible liquidity, verify displayed
+  terms and the resulting public cash/debt transition, and loss-stop any random
+  fallback. No RTP, economy data, limits, or gate changes belong in rw06_2.
+  Probe19's plan/summary/trace/curve SHA-256 values are respectively
+  `F8D4D24EA3982AC8C4B3E5D7864ACF7C8240F146DA9746BD1B85A34CDDF52452`,
+  `AF647469BC70A4CEB63F3F3287D32B96A8E796077CAC35E66DF774BE030DD824`,
+  `F72B12BA13A315E5FDD6D3F4B857B1FF2869ADC85FF8F2BD3756D810DC2A1D81`,
+  and `1BB9E5CC5033717D1BB9E1AB3DB8855BF540A1D672C560967B748BD09DFEB6EA`.
+  Its generic non-verbose ObjectDB warning is not canonically allowlisted: no
+  `Leaked instance:` rows prove zero reference counts. The run remains
+  non-qualifying on both the route failure and post-exit log gate.
+- The public-liquidity replacement is engine-free green and awaits one fresh
+  serialized verbose probe. It requires the rendered Grand fare plus the Clean
+  route's existing $50 chip minimum, accepts at most one exact visible offer per
+  lender id, and loss-stops the bounded slot fallback. Multiple rendered lenders
+  are ordered by exact ordinal semantic id. Lender terms are parsed only from a
+  fully rendered TalkDock; the replay verifies the exact armed confirmation,
+  disclosed principal, exact bankroll increase, exact Result feedback, and a
+  rendered debt-count increase of one. Because the public indicator exposes a
+  count rather than debt identities, Crew funding is attempted only from a
+  visibly debt-free HUD; no merge is inferred. Cash-event choices use exact
+  rendered object/action identities and require the exact causal Result copy plus
+  positive rendered bankroll and heat deltas. `machine_jam` always takes the
+  exact visible de-escalation choice, **Wait it out**; it never infers hidden
+  money or heat consequences. The source topology does not prove the fixed seed
+  can retain the dynamic fare plus reserve after travel, so an insufficient route
+  remains a classified exploratory finding, never an excuse to change economy,
+  RTP, game math, or a gate.
 - Final qualifying evidence intentionally waits for rw06_1 to land.
 
 ## Open route risks
 
 1. Exact visible labels and semantic targets still require live-route audit.
-2. The clean exploratory route reaches the invitation with $63 against a $70
-   fare. The $7 shortfall is measured. A bounded visible-slot recovery probe is
-   prepared, but its observed result and every ending wager policy remain
-   provisional.
+2. The clean exploratory route reaches the invitation with $63 against a
+   storm-adjusted $109 fare. Probe19's 24-spin slot-only policy lost $48. The
+   public route also skipped deterministic cash events and disclosed lenders,
+   so this is a replay-strategy defect and an rw06_3 friction measurement, not
+   yet a proven product wall.
 3. The clean lane is sequential: 1/+5, then 3/+15, then 5/+30. Its nine games
    and +$50 total may conflict with shorter player-facing summaries.
 4. The Grand Casino route costs $70 before gambling capital.
@@ -337,7 +384,9 @@ checkpoint, screenshots, and final summary used for acceptance.
       semantic decisions only after they work naturally.
 - [x] Implement strict route helpers and public terminal assertions.
 - [x] Add persistence checkpoints and canonical trace comparison.
-- [x] Add hostile redaction and semantic-command contracts.
+- [x] Add hostile source-level redaction and semantic-command contracts.
+- [x] Run the expanded Godot public-observation contract under a fresh serialized
+      lease and retain its current report.
 - [ ] Run each fixed seed twice and one fresh seed once.
 - [ ] Update the three route documents from observed evidence.
 - [ ] Run the slim rw06_2 gate, then the required post-rw06_1 acceptance pass.
