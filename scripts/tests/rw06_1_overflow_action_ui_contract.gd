@@ -2611,12 +2611,17 @@ func _settle_frames(count: int) -> void:
 
 
 func _finish(app: Control) -> void:
+	print("RW06_1_TEARDOWN before_quiesce tweens=%d app_inside=%s" % [get_processed_tweens().size(), app.is_inside_tree()])
 	root.gui_release_focus()
 	for tween in get_processed_tweens():
 		tween.kill()
 	await _settle_frames(2)
+	print("RW06_1_TEARDOWN after_quiesce tweens=%d app_inside=%s" % [get_processed_tweens().size(), app.is_inside_tree()])
 	app.queue_free()
-	await _settle_frames(5)
+	print("RW06_1_TEARDOWN queued app_valid=%s" % is_instance_valid(app))
+	for frame_index in range(5):
+		await process_frame
+		print("RW06_1_TEARDOWN frame=%d app_valid=%s" % [frame_index + 1, is_instance_valid(app)])
 	if failures.is_empty():
 		print("RW06_1_OVERFLOW_ACTION_UI PASS")
 		quit(0)
