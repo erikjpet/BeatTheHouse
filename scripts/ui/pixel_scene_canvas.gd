@@ -4055,6 +4055,16 @@ func _selected_info_action_label(object_data: Dictionary) -> String:
 	return label.capitalize()
 
 
+func _selected_info_single_action_enabled(object_data: Dictionary) -> bool:
+	if object_data.is_empty() or bool(object_data.get("disabled", false)):
+		return false
+	var actions := _array_view(object_data.get("available_actions", []))
+	if not actions.is_empty() and typeof(actions[0]) == TYPE_DICTIONARY:
+		var action := actions[0] as Dictionary
+		return bool(action.get("enabled", true)) and not bool(action.get("disabled", false))
+	return not str(object_data.get("confirm_action_id", "")).strip_edges().is_empty()
+
+
 func _selected_info_action_button_rect() -> Rect2:
 	var info := _selected_object_info()
 	if info.is_empty():
@@ -4129,6 +4139,7 @@ func _selected_info_action_entries_for_rect(info: Dictionary, card: Rect2) -> Ar
 			),
 			"detail_rect": Rect2(),
 			"selected": false,
+			"enabled": _selected_info_single_action_enabled(object_data),
 		})
 	return entries
 
@@ -4147,6 +4158,7 @@ func _selected_info_action_snapshot_list(entries: Array) -> Array:
 			"label": str(action_entry.get("label", "")),
 			"detail": str(action_entry.get("detail", "")),
 			"emit_object_id": str(action_entry.get("emit_object_id", "")),
+			"enabled": bool(action_entry.get("enabled", true)),
 			"button_rect": _rect_to_snapshot(action_entry.get("button_rect", Rect2())),
 			"detail_rect": _rect_to_snapshot(action_entry.get("detail_rect", Rect2())),
 			"inline": bool(action_entry.get("inline", false)),
@@ -4228,7 +4240,7 @@ func _selected_info_badge_tooltip_at_local_position(local_position: Vector2) -> 
 
 func _activate_selected_info_action_at_local_position(local_position: Vector2) -> bool:
 	var action_entry := _selected_info_action_entry_at_local_position(local_position)
-	if action_entry.is_empty():
+	if action_entry.is_empty() or not bool(action_entry.get("enabled", true)):
 		return false
 	var info := _selected_object_info()
 	var object_id := str(info.get("object_id", selected_object_id))
