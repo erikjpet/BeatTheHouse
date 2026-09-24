@@ -212,9 +212,9 @@ Resume: Make the Beach an unconditional, visible and enabled destination from th
 Answer: The beach needs to always be open from the boat. Ensure the agents know this and adjust gameplay accordingly.
 
 ### Q-012 · rw06_1 · Primary Godot reopened during isolated verification
-Status: OPEN
+Status: ANSWERED
 Asked: release orchestrator, 2026-09-23
 Question: Godot 4.6 reopened against the primary checkout at 21:18 CT without a lease while isolated release checks were running. May I close only that exact primary console/child pair and keep the primary editor closed through engine verification?
 Options: A) Close the exact pair if still running (recommended)  B) I will close it and keep it closed
 Resume: Verify the unleased processes still target `D:\Projects\Beat-The-House`; if A, terminate only that exact console/child pair. Do not start another engine run while the machine is at the four-process ceiling; continue engine-free work while OPEN.
-Answer:
+Answer: A. Owner authorized closing the exact pair and continuing verification, 2026-09-23. The pair had already exited when revalidated, so no process was terminated.
