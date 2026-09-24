@@ -1,14 +1,19 @@
-Status: PARKED COMPANION TEMPLATE - `release06_1` only; not independently claimable
-Board row: existing `release06_1` (no new row)
+Status: PARKED COMPANION TEMPLATE - populate only from `rw06_4`; not independently claimable
+Board row: existing `rw06_4` (no new row)
 Destination: `docs/plans/0.6_publish_copy.md`
+
+> This copy is approved before zip handoff but posted only by the owner. Public
+> URLs are post-upload reconciliation facts, not prerequisites for copy
+> approval. Trailer production is deferred to 0.6.1; include screenshots only
+> when exact final captures are approved.
 
 # Beat the House 0.6.0 Publish Copy - Template
 
 Status: **DRAFT - OWNER APPROVAL REQUIRED. DO NOT POST.**
 
 Required finished-build inputs: approved version and target platforms; verified
-feature roster and counts; truthful limitations; final screenshots/trailer;
-public URLs; safety wording; owner-approved positioning. A placeholder is not a
+feature roster and counts; truthful limitations; approved final captures if
+used; safety wording; owner-approved positioning. A placeholder is not a
 publishable fact.
 
 ## Release identity
@@ -54,8 +59,8 @@ Turn state or imply deliberately absent production music/content shipped.
 
 ### Suggested tags and media
 
-List verified tags and the final screenshot/trailer paths with one truthful
-caption each.
+List verified tags and any owner-approved final screenshot paths with one
+truthful caption each. Record the trailer as deferred to 0.6.1.
 
 ## GitHub release notes
 
@@ -68,6 +73,7 @@ caption each.
 ## Approval ledger
 
 - Copy/content approval:
-- Screenshot/trailer approval:
-- Publish authorization:
-- Actual publication URL/date:
+- Screenshot approval (if used):
+- Pre-upload release-copy approval:
+- Artifact handoff / owner-upload confirmation:
+- Post-owner-upload URL/date reconciliation:

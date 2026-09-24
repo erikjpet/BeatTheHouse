@@ -11,7 +11,8 @@ Destination: `docs/plans/0.6_final_rc_evidence.md`
 # Beat the House 0.6 Final RC Evidence - Template
 
 Required finished-build inputs: owner-approved source candidate; engine/tool
-versions; versioned artifacts built from that hash; complete fresh matrix;
+versions; versioned artifacts built from that hash; the complete fresh rw06_4
+slim matrix;
 manual route/platform results; SHA-256 hashes; final visual inventory; the
 completed owner playthrough and all four release owner decisions; tag/upload
 facts when they actually exist.

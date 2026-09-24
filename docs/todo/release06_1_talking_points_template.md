@@ -1,13 +1,17 @@
-Status: PARKED COMPANION TEMPLATE - `release06_1` only; not independently claimable
-Board row: existing `release06_1` (no new row)
+Status: PARKED COMPANION TEMPLATE - populate only from `rw06_4`; not independently claimable
+Board row: existing `rw06_4` (no new row)
 Destination: `docs/plans/0.6_talking_points.md`
+
+> Prepare for release-copy approval before zip handoff; do not post. Final
+> images are optional and require owner-approved exact captures. Trailer work
+> is deferred to 0.6.1. Public links are added only after the owner uploads.
 
 # Beat the House 0.6 - Devlog and Social Talking Points Template
 
 Status: **PREP ONLY - DO NOT POST.**
 
 Required finished-build inputs: verified headline features/counts; exact
-included and excluded scope; final images; worthwhile technical evidence;
+included and excluded scope; approved final images if used; worthwhile technical evidence;
 safety wording; owner-approved positioning.
 
 ## One-line pitch

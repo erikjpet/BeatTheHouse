@@ -44,8 +44,8 @@ meta/teaching/audio work and post-playtest changes that actually shipped.
 | Triage and owner dispositions | | |
 | Blocking `fix06_*` rows | | |
 | `balance06_2` before/after | DEFERRED TO 0.6.1 | |
-| `cleanup06_1` | | |
-| `voice06_1` | | |
+| `cleanup06_1` | DEFERRED TO 0.6.1 | |
+| `voice06_1` | DEFERRED TO 0.6.1 | |
 
 ## Exact-source gate matrix
 
