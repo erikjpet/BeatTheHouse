@@ -395,14 +395,20 @@ checkpoint, screenshots, and final summary used for acceptance.
    `scenario_audit_roster/read_the_shift` choice; current Audit also qualifies,
    while unvisited seed data, stored prior-cycle hooks, narrative-only claims,
    and non-boolean save values fail closed. The runner does not inject Audit or
-   choose Plan B. The rendered hook, Bishop Inner Circle route, and terminal win
-   still need live proof, and the relationship/job cadence may exceed the target
-   run length.
+   choose Plan B, and rejects any Heist seed override other than exact `0002`.
+   Before plan lock, the runner now requires the later visible
+   Convention Crowd badge with no Audit Roster, returns to an enabled Count row,
+   and preserves that exact public planning projection across a full
+   Save/process-exit/Continue. The fresh hook, hostile revisit, Bishop Inner
+   Circle route, restored authorization, and terminal win still need live proof,
+   and the relationship/job cadence may exceed the target run length.
 7. Plan B is materially longer, more expensive, and has no qualifying replay.
    It is not a fallback: the fixed route fails closed when Plan A is unavailable.
 8. Save/quit/Continue must reuse isolated persistence without confusing a stale
-   session process for a successful relaunch; the replay compares only a
-   canonical public checkpoint.
+   session process for a successful relaunch. Heist now compares the canonical
+   public checkpoint plus the full visible planning projection and requires one
+   fully rendered and enabled Count lock both before and after restoration,
+   before lock mutation.
 
 ## Acceptance checklist
 

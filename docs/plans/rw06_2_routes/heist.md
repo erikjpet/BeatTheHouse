@@ -18,14 +18,19 @@ fresh-profile meta modifier serialization, shipped challenge seed, RNG stream,
 operating cycle, recent-scenario suppression, and weighted scenario-selection
 algorithms against current data. That exact launch path rejects pinned seed
 `0013`: it selects Convention, not Audit. Q-013A adopts seed `0002`, whose exact
-day-zero witness selects Audit. The route learns lasting Count eligibility only
+day-zero witness selects Audit, and the Heist runner rejects every caller seed
+override other than that exact value. The route learns lasting Count eligibility only
 by resolving the rendered **The Audit Roster** choice **Read the shift**; an
 unvisited seed, stored prior-cycle environment, or narrative-only claim does not
 qualify. The guaranteed Corner Store Crew marker supplies the initial Grand fare.
 After the Audit choice, the route uses the repeatable visible $4 Cashier Tip only
 for any remaining favor action boundaries; ordinary travel is not treated as an
-action boundary. It performs a specialized public planning-table Save → process exit →
-relaunch → Continue checkpoint and accepts all three authored Crew win rungs.
+action boundary. After Bishop reaches Inner Circle, the route must revisit a
+visibly non-Audit Convention Crowd, return to a still-enabled Count plan, then
+perform its public planning-table Save → process exit → relaunch → Continue
+checkpoint before locking the plan. This binds lasting knowledge to the natural
+Audit read instead of an already locked heist. The route accepts all three
+authored Crew win rungs.
 Natural reachability and the twice-identical/fresh-seed passes remain to be
 proved after the shared gameplay work lands.
 
@@ -86,24 +91,29 @@ action release replay.
    none roll `44`, weighted roll `12067/26000`). `RW06-HEIST-AUDIT-0002` is the
    Q-013A canonical seed (run seed `919325714`, none roll `59`, weighted roll
    `24088/26000`). Only the authored `read_the_shift` fact outlives Audit's cycle.
-8. At the Punchline Planning Table, verify The Count is visibly live because
-   Bishop is Inner Circle and the Audit roster was read. Lock **The Count**. Do not
-   confront a member or change seats when the route has no grievance evidence.
-9. Complete identity setup: on three distinct Grand Casino visit sessions,
+8. After Bishop reaches Inner Circle, revisit Grand Casino Main and require the
+   exact rendered **Borrowed Badge** event for Convention Crowd while requiring
+   the Audit Roster to be absent. Return to the Punchline Planning Table and
+   verify The Count remains visibly live because the earlier Audit roster was
+   read. No current Audit hook may supply this proof.
+9. **Required Q-013 persistence checkpoint:** with exactly one fully rendered
+   and enabled
+   **Lock The Count** row visible but before selecting it, Save, return to Main
+   Menu, quit, relaunch the same isolated session, and Continue. Require the
+   same public planning projection and fully rendered, enabled Count row after restoration.
+   Then lock **The Count**. Do not confront a member or change seats when the
+   route has no grievance evidence.
+10. Complete identity setup: on three distinct Grand Casino visit sessions,
    settle one blackjack wager of $8–30 and keep the heat peak <= 35.
-10. From the Planning Table, start **Watch the schedule**. Reach the Cage and hold
+11. From the Planning Table, start **Watch the schedule**. Reach the Cage and hold
    for two visible actions before its deadline/attention cap.
-11. Return to the Planning Table, start **Move the swap cart**, carry the package
+12. Return to the Planning Table, start **Move the swap cart**, carry the package
     to Grand Casino Main, and complete the visible handoff.
-12. Optional corridor exit: complete the Debt Court/Knuckles Associate marker if
+13. Optional corridor exit: complete the Debt Court/Knuckles Associate marker if
     it occurs naturally. The replay may instead use the always-available dock
     exit; do not add this detour only to improve the outcome rung.
-13. **Required persistence checkpoint:** after all setup chairs are visibly
-    filled but before **Begin the Play**, Save, return to Main Menu, quit,
-    relaunch the same isolated session, and Continue. Confirm the locked plan,
-    Bishop relationship, completed setup, current room, bankroll, and heat from
-    public UI only.
-14. Choose **Begin the Play** and go to the designated Grand blackjack table.
+14. Choose **Begin the Play** only after the two setup chairs are visibly filled,
+    then go to the designated Grand blackjack table.
     Settle three $8–30 rounds, interleaving the visible decisions:
     - round 0: `early` or `hold`;
     - round 1: `sit` or `dump`;
@@ -144,7 +154,7 @@ action release replay.
 | Bishop | Recruit the required specialist | trust 30 -> 90 | member presence/jobs are too rare or opaque |
 | Hook | Recognize Audit Night as an opportunity | retain Grand travel/wager funds | hook is seed-rare or not surfaced as plan progress |
 | Setup | Fill three concrete chairs | three bets $8–30; heat <= 35 | visit-session rule or deadlines are unclear |
-| Save/Continue | Trust the long route persists | same plan/setup state | package/task state disappears or duplicates |
+| Save/Continue | Trust learned Audit knowledge survives | hostile Convention still leaves Count enabled before and after Continue | knowledge disappears, current scenario leaks, or plan is pre-locked |
 | Play | Execute the plan under pressure | three table rounds, bounded heat | decision beat fails to appear between settlements |
 | Getaway | Read and finish the route | target shown on map | package target/travel lock is ambiguous |
 | Outcome | Understand the outcome rung | terminal report visible | success rung looks like ordinary job completion |

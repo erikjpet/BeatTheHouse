@@ -103,6 +103,54 @@ function Select-HeistAuditNightPublicHook {
 }
 
 
+function Select-HeistConventionCrowdPublicHook {
+    param(
+        [Parameter(Mandatory = $true)]$Observation,
+        [Parameter(Mandatory = $true)][AllowEmptyCollection()][object[]]$CanvasObjects
+    )
+
+    $screen = Get-Rw062RequiredPublicProperty -InputObject $Observation -Name 'screen' -Context 'Heist Convention revisit observation'
+    $screenName = Get-Rw062RequiredPublicProperty -InputObject $screen -Name 'screen' -Context 'Heist Convention revisit screen'
+    $environment = Get-Rw062RequiredPublicProperty -InputObject $Observation -Name 'environment' -Context 'Heist Convention revisit observation'
+    $archetypeId = Get-Rw062RequiredPublicProperty -InputObject $environment -Name 'archetype_id' -Context 'Heist Convention revisit environment'
+    if ($screenName -isnot [string] -or [string]$screenName -cne 'ENVIRONMENT' -or
+        $archetypeId -isnot [string] -or [string]$archetypeId -cne 'grand_casino') {
+        throw 'The Count route must verify the hostile revisit on the rendered Grand Casino Main environment screen.'
+    }
+
+    $auditMatches = @($CanvasObjects | Where-Object {
+        $semanticProperties = @(Get-Rw062ExactPublicPropertyMatches -InputObject $_ -Name 'semantic_id')
+        $semanticProperties.Count -eq 1 -and $semanticProperties[0].Value -is [string] -and
+            [string]$semanticProperties[0].Value -ceq 'event:scenario_audit_roster'
+    })
+    if ($auditMatches.Count -ne 0) {
+        throw 'The hostile Convention revisit still rendered an Audit Roster and cannot prove lasting route knowledge.'
+    }
+
+    $matches = @($CanvasObjects | Where-Object {
+        $semanticProperties = @(Get-Rw062ExactPublicPropertyMatches -InputObject $_ -Name 'semantic_id')
+        $semanticProperties.Count -eq 1 -and $semanticProperties[0].Value -is [string] -and
+            [string]$semanticProperties[0].Value -ceq 'event:scenario_convention_badge'
+    })
+    if ($matches.Count -ne 1) {
+        throw "The rendered Grand Casino revisit must expose exactly one Convention Crowd badge hook; found $($matches.Count)."
+    }
+
+    $hook = $matches[0]
+    $label = Get-Rw062RequiredPublicProperty -InputObject $hook -Name 'label' -Context 'Rendered Convention Crowd hook'
+    $objectType = Get-Rw062RequiredPublicProperty -InputObject $hook -Name 'object_type' -Context 'Rendered Convention Crowd hook'
+    $rendered = Get-Rw062RequiredPublicProperty -InputObject $hook -Name 'rendered' -Context 'Rendered Convention Crowd hook'
+    $enabled = Get-Rw062RequiredPublicProperty -InputObject $hook -Name 'enabled' -Context 'Rendered Convention Crowd hook'
+    if ($label -isnot [string] -or [string]$label -cne 'Borrowed Badge' -or
+        $objectType -isnot [string] -or [string]$objectType -cne 'event' -or
+        $rendered -isnot [bool] -or -not [bool]$rendered -or
+        $enabled -isnot [bool] -or -not [bool]$enabled) {
+        throw 'Convention Crowd is not present as the exact rendered and enabled public Borrowed Badge event.'
+    }
+    return $hook
+}
+
+
 function Assert-DeltaQueenBeachPublicRoute {
     param(
         [Parameter(Mandatory = $true)][string]$ArchetypeId,

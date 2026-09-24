@@ -54,6 +54,9 @@ if (-not (Test-Path -LiteralPath $GodotBin)) {
 if ([string]::IsNullOrWhiteSpace($Seed)) {
     $Seed = $FixedSeeds[$Ending]
 }
+if ($Ending -ceq 'heist' -and $Seed -cne [string]$FixedSeeds.heist) {
+    throw "Q-013 requires exact Heist seed '$($FixedSeeds.heist)'; override '$Seed' is not allowed."
+}
 if ([string]::IsNullOrWhiteSpace($EvidenceRoot)) {
     $EvidenceRoot = Join-Path $Worktree ".tmp\rw06_2\$Ending"
 }
@@ -2805,6 +2808,7 @@ function Invoke-PublicBossCalloutIfShown {
     $label = [string](Get-Value (Get-Array (Get-Value $script:LastObservation @('game', 'boss_callouts') @()))[$index] @('label') '')
     $null = Invoke-GameAction -Action 'blackjack_boss_callout' -Index $index -Intent "call Rourke's publicly rendered $tell tell with $label"
     Wait-Frames -Frames 4
+    if (Test-PublicTerminalSurface) { return }
     $used = Get-Value $script:LastObservation @('game', 'boss_callout_used') $null
     if ($used -isnot [bool] -or -not [bool]$used) {
         throw "Rourke's rendered callout did not produce an exact public used witness."
@@ -3328,6 +3332,18 @@ function Observe-RenderedAuditNightHook {
 }
 
 
+function Assert-RenderedConventionCrowdHook {
+    $canvasObjects = @(Get-Array (Get-Value $script:LastResult @('look', 'clickable', 'canvas_objects') @()))
+    $hook = Select-HeistConventionCrowdPublicHook `
+        -Observation $script:LastObservation `
+        -CanvasObjects $canvasObjects
+    if ($null -eq $hook) {
+        throw 'The public Convention Crowd hook selector returned no rendered hook.'
+    }
+    return $hook
+}
+
+
 function Navigate-ToArchetype {
     param(
         [Parameter(Mandatory = $true)][string]$ArchetypeId,
@@ -3604,9 +3620,30 @@ function Close-VisibleChoiceSurface {
 
 function Test-CountPlanLive {
     if ($null -ceq (Find-CanvasObject -SemanticId 'event:crew_planning_table')) { return $false }
-    $live = Test-EventObjectChoiceEnabled -EventId 'crew_planning_table' -ChoiceId 'lock_the_count'
+    Select-EventObject -EventId 'crew_planning_table'
+    $row = Get-EventChoiceRoomAction -EventId 'crew_planning_table' -ChoiceId 'lock_the_count'
+    $live = $false
+    if ($null -cne $row) {
+        $enabled = Get-Value $row @('enabled') $null
+        $rendered = Get-Value $row @('rendered') $null
+        if ($enabled -isnot [bool] -or $rendered -isnot [bool]) {
+            throw 'The Count planning row has no exact rendered/enabled public witnesses.'
+        }
+        $live = [bool]$enabled -and [bool]$rendered
+    }
     Close-VisibleChoiceSurface
     return $live
+}
+
+
+function Assert-HeistAuditKnowledgeUnderHostileRevisit {
+    Reach-GrandCasino
+    Restore-EnvironmentSurfaceAfterTravelResult
+    $null = Assert-RenderedConventionCrowdHook
+    $null = Enter-PunchlineBackRoom
+    if (-not (Test-CountPlanLive)) {
+        throw 'The Count did not remain visibly live after the learned Audit rolled over to the hostile Convention revisit.'
+    }
 }
 
 
@@ -3699,57 +3736,68 @@ function Get-PlanningTableProjection {
     foreach ($row in Get-RoomActions) {
         $emitId = [string](Get-Value $row @('emit_object_id') '')
         if (-not $emitId.StartsWith('event_response:crew_planning_table:', [StringComparison]::Ordinal)) { continue }
+        $enabled = Get-Value $row @('enabled') $null
+        $rendered = Get-Value $row @('rendered') $null
+        if ($enabled -isnot [bool] -or $rendered -isnot [bool]) {
+            throw "Planning row '$emitId' has no exact rendered/enabled public witnesses."
+        }
         $rows += [pscustomobject][ordered]@{
             choice_id = $emitId.Substring('event_response:crew_planning_table:'.Length)
             label = [string](Get-Value $row @('label') '')
-            enabled = [bool](Get-Value $row @('enabled') $false)
+            enabled = [bool]$enabled
+            rendered = [bool]$rendered
             disabled_reason = [string](Get-Value $row @('disabled_reason') '')
         }
     }
     if ($rows.Count -ceq 0) {
-        foreach ($choice in @(Get-Array (Get-Value $script:LastObservation @('event_popup', 'choices') @()))) {
-            $rows += [pscustomobject][ordered]@{
-                choice_id = [string](Get-Value $choice @('id') '')
-                label = [string](Get-Value $choice @('label') '')
-                enabled = -not [bool](Get-Value $choice @('disabled') $false) -and [bool](Get-Value $choice @('enabled') $true)
-                disabled_reason = [string](Get-Value $choice @('disabled_reason') '')
-            }
-        }
+        throw 'The planning table exposes no public room-action rows with rendered witnesses.'
     }
     return @($rows | Sort-Object choice_id)
 }
 
 
-function Assert-HeistSaveRelaunchContinue {
+function Assert-HeistAuditKnowledgeSaveRelaunchContinue {
     $beforeProjection = @(Get-PlanningTableProjection)
+    $beforeLockRows = @($beforeProjection | Where-Object { [string]$_.choice_id -ceq 'lock_the_count' })
+    if ($beforeLockRows.Count -cne 1 -or
+        $beforeLockRows[0].enabled -isnot [bool] -or -not [bool]$beforeLockRows[0].enabled -or
+        $beforeLockRows[0].rendered -isnot [bool] -or -not [bool]$beforeLockRows[0].rendered) {
+        throw 'The pre-save planning table did not expose exactly one rendered and enabled Count lock under learned Audit knowledge.'
+    }
     $before = [ordered]@{
         checkpoint = Get-PersistenceCheckpoint
         planning_choices = $beforeProjection
     }
     $beforeJson = $before | ConvertTo-Json -Depth 20 -Compress
     Close-VisibleChoiceSurface
-    $null = Click-Button -Text 'Menu' -Intent 'open the run menu at the completed heist setup checkpoint'
-    $null = Click-RunMenuButton -Text 'Save' -RevealDirection up -Intent 'save The Count after all visible setup chairs are filled'
-    Assert-ExplicitSaveAcknowledged -Milestone 'The Count completed setup'
-    $null = Click-RunMenuButton -Text 'Main Menu' -RevealDirection down -Intent 'return to the main menu after saving The Count setup'
+    $null = Click-Button -Text 'Menu' -Intent 'open the run menu after proving learned Audit knowledge on the hostile revisit'
+    $null = Click-RunMenuButton -Text 'Save' -RevealDirection up -Intent 'save the naturally learned Count route before locking the plan'
+    Assert-ExplicitSaveAcknowledged -Milestone 'The Count learned Audit route before plan lock'
+    $null = Click-RunMenuButton -Text 'Main Menu' -RevealDirection down -Intent 'return to the main menu after saving the learned Count route'
     if ([string](Get-Value $script:LastObservation @('screen', 'screen') '') -cne 'START') {
-        throw 'Main Menu did not visibly return The Count checkpoint to START before relaunch.'
+        throw 'Main Menu did not visibly return the learned Count checkpoint to START before relaunch.'
     }
-    $null = Invoke-BridgeCommand -Command 'quit' -Intent 'quit the saved heist host before relaunch' -ObservationOnly
+    $null = Invoke-BridgeCommand -Command 'quit' -Intent 'quit the saved learned-Audit host before relaunch' -ObservationOnly
     Wait-ForSessionExit
     Assert-NoPostExitLogAlerts
     Remove-OwnedBridgeCaptureResidue
     Start-BridgeSession
     if ([string](Get-Value $script:LastObservation @('screen', 'start_menu', 'primary_action_text') '') -cne 'CONTINUE') {
-        throw 'Relaunch after The Count setup did not expose CONTINUE.'
+        throw 'Relaunch after the learned Count checkpoint did not expose CONTINUE.'
     }
-    $null = Click-Button -Text 'CONTINUE' -Intent 'continue The Count from the full relaunch checkpoint'
+    $null = Click-Button -Text 'CONTINUE' -Intent 'continue the naturally learned Count route from the full relaunch checkpoint'
     Wait-Frames -Frames 45
     Clear-VisibleCoach
     if ($null -ceq (Find-CanvasObject -SemanticId 'event:crew_planning_table')) {
         throw 'Continue did not restore the real Punchline planning-table room.'
     }
     $afterProjection = @(Get-PlanningTableProjection)
+    $afterLockRows = @($afterProjection | Where-Object { [string]$_.choice_id -ceq 'lock_the_count' })
+    if ($afterLockRows.Count -cne 1 -or
+        $afterLockRows[0].enabled -isnot [bool] -or -not [bool]$afterLockRows[0].enabled -or
+        $afterLockRows[0].rendered -isnot [bool] -or -not [bool]$afterLockRows[0].rendered) {
+        throw 'Continue did not preserve exactly one rendered and enabled Count lock under learned Audit knowledge.'
+    }
     $after = [ordered]@{
         checkpoint = Get-PersistenceCheckpoint
         planning_choices = $afterProjection
@@ -3758,7 +3806,7 @@ function Assert-HeistSaveRelaunchContinue {
     if ($afterJson -cne $beforeJson) {
         $before | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath (Join-Path $script:RunRoot 'checkpoint_before.json') -Encoding utf8
         $after | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath (Join-Path $script:RunRoot 'checkpoint_after.json') -Encoding utf8
-        throw 'Public heist plan/setup state changed across Save -> relaunch -> Continue.'
+        throw 'Public learned-Audit planning state changed across Save -> relaunch -> Continue.'
     }
     Close-VisibleChoiceSurface
     $script:MidpointSaved = $true
@@ -3774,9 +3822,11 @@ function Invoke-HeistEndingRoute {
     Ensure-PunchlineCasinoDiscovered
     Recruit-Bishop
     Promote-BishopToInnerCircle
+    Assert-HeistAuditKnowledgeUnderHostileRevisit
+    Assert-HeistAuditKnowledgeSaveRelaunchContinue
 
     if (-not (Test-CountPlanLive)) {
-        throw 'The Count is not visibly live after Bishop reaches Inner Circle and Audit Night is on the public route.'
+        throw 'The Count is not visibly live after Bishop reaches Inner Circle and naturally learned Audit knowledge survives the hostile restored route.'
     }
     Invoke-EventObjectChoice -EventId 'crew_planning_table' -ChoiceId 'lock_the_count' -Intent 'lock Bishop''s visible Count plan at the real planning table'
     Close-VisibleChoiceSurface
@@ -3797,7 +3847,6 @@ function Invoke-HeistEndingRoute {
         throw 'All public Count setup beats completed, but Begin the Play remains disabled.'
     }
     Close-VisibleChoiceSurface
-    Assert-HeistSaveRelaunchContinue
     Invoke-EventObjectChoice -EventId 'crew_planning_table' -ChoiceId 'begin_play' -Intent 'begin The Count from the visible completed setup'
     Close-VisibleChoiceSurface
 

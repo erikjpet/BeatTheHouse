@@ -65,6 +65,8 @@ $heistLaunchSetupValidFixtures = 0
 $heistLaunchSetupHostileFixtures = 0
 $heistAuditHookValidFixtures = 0
 $heistAuditHookHostileFixtures = 0
+$heistConventionHookValidFixtures = 0
+$heistConventionHookHostileFixtures = 0
 
 function Add-Failure {
     param([Parameter(Mandatory = $true)][string]$Message)
@@ -507,6 +509,32 @@ function New-HeistAuditHookPolicyFixture {
             [pscustomobject]@{
                 semantic_id = 'event:scenario_audit_roster'
                 label = 'The Audit Roster'
+                object_type = 'event'
+                rendered = $true
+                enabled = $true
+            },
+            [pscustomobject]@{
+                semantic_id = 'game:blackjack'
+                label = 'Blackjack'
+                object_type = 'game'
+                rendered = $true
+                enabled = $true
+            }
+        )
+    }
+}
+
+
+function New-HeistConventionHookPolicyFixture {
+    return [pscustomobject]@{
+        observation = [pscustomobject]@{
+            screen = [pscustomobject]@{ screen = 'ENVIRONMENT' }
+            environment = [pscustomobject]@{ archetype_id = 'grand_casino' }
+        }
+        canvas_objects = @(
+            [pscustomobject]@{
+                semantic_id = 'event:scenario_convention_badge'
+                label = 'Borrowed Badge'
                 object_type = 'event'
                 rendered = $true
                 enabled = $true
@@ -1078,6 +1106,71 @@ if ($failures.Count -eq 0) {
     }
     else {
         Add-Failure 'Replay policy helper did not export the rendered Audit Night hook selector.'
+    }
+
+    if ($null -ne (Get-Command 'Select-HeistConventionCrowdPublicHook' -ErrorAction SilentlyContinue)) {
+        $validConventionFixture = New-HeistConventionHookPolicyFixture
+        try {
+            $selectedConventionHook = Select-HeistConventionCrowdPublicHook `
+                -Observation $validConventionFixture.observation `
+                -CanvasObjects @($validConventionFixture.canvas_objects)
+            if ([string]$selectedConventionHook.semantic_id -cne 'event:scenario_convention_badge') {
+                Add-Failure 'Valid rendered Convention Crowd hook did not return the exact public event.'
+            }
+            else {
+                $heistConventionHookValidFixtures = 1
+            }
+        }
+        catch {
+            Add-Failure "Valid rendered Convention Crowd hook threw: $($_.Exception.Message)"
+        }
+
+        $hostileConventionFixtures = [Collections.Generic.List[object]]::new()
+        $fixture = New-HeistConventionHookPolicyFixture; $fixture.observation.screen.screen = 'RESULT'
+        $hostileConventionFixtures.Add([pscustomobject]@{ label = 'wrong-screen'; fixture = $fixture })
+        $fixture = New-HeistConventionHookPolicyFixture; $fixture.observation.environment.archetype_id = 'grand_casino_cage'
+        $hostileConventionFixtures.Add([pscustomobject]@{ label = 'wrong-room'; fixture = $fixture })
+        $fixture = New-HeistConventionHookPolicyFixture; $fixture.canvas_objects = @($fixture.canvas_objects | Where-Object { $_.semantic_id -cne 'event:scenario_convention_badge' })
+        $hostileConventionFixtures.Add([pscustomobject]@{ label = 'hook-missing'; fixture = $fixture })
+        $fixture = New-HeistConventionHookPolicyFixture; $fixture.canvas_objects += [pscustomobject]@{ semantic_id = 'event:scenario_convention_badge'; label = 'Borrowed Badge'; object_type = 'event'; rendered = $true; enabled = $true }
+        $hostileConventionFixtures.Add([pscustomobject]@{ label = 'hook-duplicate'; fixture = $fixture })
+        $fixture = New-HeistConventionHookPolicyFixture; $fixture.canvas_objects += [pscustomobject]@{ semantic_id = 'event:scenario_audit_roster'; label = 'The Audit Roster'; object_type = 'event'; rendered = $true; enabled = $true }
+        $hostileConventionFixtures.Add([pscustomobject]@{ label = 'audit-still-rendered'; fixture = $fixture })
+        $fixture = New-HeistConventionHookPolicyFixture; $fixture.canvas_objects[0].semantic_id = 'event:Scenario_Convention_Badge'
+        $hostileConventionFixtures.Add([pscustomobject]@{ label = 'semantic-id-case'; fixture = $fixture })
+        $fixture = New-HeistConventionHookPolicyFixture; $fixture.canvas_objects[0].label = 'Convention Badge'
+        $hostileConventionFixtures.Add([pscustomobject]@{ label = 'wrong-label'; fixture = $fixture })
+        $fixture = New-HeistConventionHookPolicyFixture; $fixture.canvas_objects[0].object_type = 'security'
+        $hostileConventionFixtures.Add([pscustomobject]@{ label = 'wrong-object-type'; fixture = $fixture })
+        $fixture = New-HeistConventionHookPolicyFixture; $fixture.canvas_objects[0].rendered = $false
+        $hostileConventionFixtures.Add([pscustomobject]@{ label = 'not-rendered'; fixture = $fixture })
+        $fixture = New-HeistConventionHookPolicyFixture; $fixture.canvas_objects[0].rendered = 'true'
+        $hostileConventionFixtures.Add([pscustomobject]@{ label = 'rendered-non-boolean'; fixture = $fixture })
+        $fixture = New-HeistConventionHookPolicyFixture; $fixture.canvas_objects[0].enabled = $false
+        $hostileConventionFixtures.Add([pscustomobject]@{ label = 'disabled'; fixture = $fixture })
+        $fixture = New-HeistConventionHookPolicyFixture; $fixture.canvas_objects[0].enabled = 1
+        $hostileConventionFixtures.Add([pscustomobject]@{ label = 'enabled-non-boolean'; fixture = $fixture })
+        $fixture = New-HeistConventionHookPolicyFixture; $fixture.canvas_objects[0].PSObject.Properties.Remove('rendered')
+        $hostileConventionFixtures.Add([pscustomobject]@{ label = 'rendered-missing'; fixture = $fixture })
+
+        $heistConventionHookHostileFixtures = $hostileConventionFixtures.Count
+        foreach ($case in $hostileConventionFixtures) {
+            $threw = $false
+            try {
+                $null = Select-HeistConventionCrowdPublicHook `
+                    -Observation $case.fixture.observation `
+                    -CanvasObjects @($case.fixture.canvas_objects)
+            }
+            catch {
+                $threw = $true
+            }
+            if (-not $threw) {
+                Add-Failure "Hostile rendered Convention Crowd fixture '$($case.label)' did not fail closed."
+            }
+        }
+    }
+    else {
+        Add-Failure 'Replay policy helper did not export the rendered Convention Crowd hook selector.'
     }
 
     if ($null -ne (Get-Command 'Assert-DeltaQueenBeachPublicRoute' -ErrorAction SilentlyContinue)) {
@@ -2264,6 +2357,9 @@ func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
         'function Clear-CrewMarkerFavors',
         'function Assert-RenderedAuditNightHook',
         'function Observe-RenderedAuditNightHook',
+        'function Assert-RenderedConventionCrowdHook',
+        'function Assert-HeistAuditKnowledgeUnderHostileRevisit',
+        'function Assert-HeistAuditKnowledgeSaveRelaunchContinue',
         'Select-CheatReplayBlackjackCheatAction',
         'Select-CheatReplayPostPeekTransition',
         'Select-CheatReplayBossCalloutAction',
@@ -2326,7 +2422,7 @@ func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
         '$saveText -cne $expectedVisibleText',
         "`$acknowledgment = 'Saved to Resume Slot.'",
         'Assert-ExplicitSaveAcknowledged -Milestone $Milestone',
-        "Assert-ExplicitSaveAcknowledged -Milestone 'The Count completed setup'",
+        "Assert-ExplicitSaveAcknowledged -Milestone 'The Count learned Audit route before plan lock'",
         '$maximumChipPurchases = 8',
         "[bool](Get-Value `$_ @('enabled') `$false)",
         "'cage_buy_50' -cin `$enabledChoices",
@@ -2353,7 +2449,7 @@ func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
         'follow Pal''s visible tutorial guidance: $label',
         'The live first-night lesson did not render its run menu.',
         'The semantic seed entry was not preserved as exact visible public evidence',
-        'Main Menu did not visibly return The Count checkpoint to START before relaunch.'
+        'Main Menu did not visibly return the learned Count checkpoint to START before relaunch.'
     )) {
         Assert-Contains $runner $required "Replay runner is missing required source contract token: $required"
     }
@@ -2521,13 +2617,28 @@ func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
     Assert-Contains $runner "`$HeistSeedPreflightTool = Join-Path `$PSScriptRoot 'rw06_2_heist_seed_preflight.ps1'" 'Heist replay must bind its engine-free preflight from the checked-in tool path.'
     Assert-Match $runner '(?s)heist\s*=\s*''RW06-HEIST-AUDIT-0002''.*?function Invoke-HeistSeedPreflight.*?& \$HeistSeedPreflightTool.*?grand_casino_audit_night.*?selected_scenario.*?function ConvertTo-BridgeBase64Token' 'Q-013A Heist replay must use exact seed 0002 and fail it through the strict production-tree preflight before engine launch.'
     Assert-NotMatch $runner 'heist\s*=\s*''RW06-HEIST-AUDIT-0013''' 'The rejected Convention seed must not remain the live Heist runner default.'
+    Assert-Match $runner '(?s)if\s*\(\[string\]::IsNullOrWhiteSpace\(\$Seed\)\).*?\$Seed\s*=\s*\$FixedSeeds\[\$Ending\].*?if\s*\(\$Ending\s+-ceq\s+''heist''\s+-and\s+\$Seed\s+-cne\s+\[string\]\$FixedSeeds\.heist\).*?Q-013 requires exact Heist seed' 'Q-013A live replay must reject every caller-supplied Heist seed except exact 0002 before engine launch.'
     Assert-Match $runner '(?s)\$invocationRoot\s*=.*?Invoke-HeistSeedPreflight.*?for \(\$iteration.*?Start-BridgeSession' 'Heist seed preflight must finish before any live replay iteration can start an engine session.'
     Assert-Match $runner '(?ms)^function Start-NormalSeededRun\s*\{.*?Click-Button\s+-Text\s+''RUN SETUP''.*?run_config_visible.*?\$Ending\s+-ceq\s+''heist''.*?Assert-HeistFreshStandardRunSetup\s+-Observation\s+\$script:LastObservation.*?set_field seed \$Seed.*?(?=^function |\z)' 'The live Heist route must authenticate exact visible fresh Standard/Random/default-content setup before typing its seed.'
     Assert-Match $replayPolicy '(?ms)^function Assert-HeistFreshStandardRunSetup.*?screen.*?START.*?run_config_visible.*?selected_challenge_id.*?selected_home_type_id.*?selected_content_groups.*?universal_passive_items.*?numbers_pack.*?challengeId\s+-isnot\s+\[string\].*?challengeId\s+-cne\s+''''.*?homeTypeId\s+-cne\s+''random''.*?contentGroups\s+-isnot\s+\[array\].*?non-default visible content group index.*?(?=^function |\z)' 'Fresh Heist launch policy must fail closed on screen, type, challenge, home, content-group membership, case, or order drift.'
     Assert-Match $runner '(?ms)^function Assert-RenderedAuditNightHook\s*\{.*?canvas_objects.*?Select-HeistAuditNightPublicHook.*?-Observation \$script:LastObservation.*?-CanvasObjects \$canvasObjects.*?(?=^function |\z)' 'The live route must bind its Audit assertion only to the public observation and rendered canvas-object list.'
     Assert-Match $runner '(?ms)^function Observe-RenderedAuditNightHook\s*\{.*?Assert-RenderedAuditNightHook.*?Invoke-EventObjectChoice\s*`?\s*-EventId\s+''scenario_audit_roster''\s*`?\s*-ChoiceId\s+''read_the_shift''.*?Restore-EnvironmentSurfaceAfterTravelResult.*?(?=^function |\z)' 'The live route must resolve the exact visible Audit roster/read_the_shift choice and restore the ordinary public room surface.'
-    Assert-Match $runner '(?ms)^function Invoke-HeistEndingRoute\s*\{\s*Establish-CrewMarker\s*\r?\n\s*Reach-GrandCasino\s*\r?\n\s*Restore-EnvironmentSurfaceAfterTravelResult\s*\r?\n\s*Observe-RenderedAuditNightHook\s*\r?\n\s*Clear-CrewMarkerFavors\s*\r?\n\s*Ensure-PunchlineCasinoDiscovered\s*\r?\n\s*Recruit-Bishop\s*\r?\n\s*Promote-BishopToInnerCircle.*?(?=^function |\z)' 'The Count route must take only its funding marker before Grand, naturally read Audit on the first arrival, clear the marker, then begin the Punchline/Bishop grind.'
+    Assert-Match $runner '(?ms)^function Assert-RenderedConventionCrowdHook\s*\{.*?canvas_objects.*?Select-HeistConventionCrowdPublicHook.*?-Observation \$script:LastObservation.*?-CanvasObjects \$canvasObjects.*?(?=^function |\z)' 'The live route must bind its hostile Convention revisit only to the public observation and rendered canvas-object list.'
+    Assert-Match $runner '(?ms)^function Assert-HeistAuditKnowledgeUnderHostileRevisit\s*\{.*?Reach-GrandCasino.*?Restore-EnvironmentSurfaceAfterTravelResult.*?Assert-RenderedConventionCrowdHook.*?Enter-PunchlineBackRoom.*?Test-CountPlanLive.*?(?=^function |\z)' 'The learned Audit route must revisit the real Grand, prove the visible non-Audit Convention hook, return to the planning table, and keep Count live.'
+    Assert-Match $runner '(?ms)^function Test-CountPlanLive\s*\{.*?Get-EventChoiceRoomAction.*?lock_the_count.*?enabled.*?-isnot\s+\[bool\].*?rendered.*?-isnot\s+\[bool\].*?\[bool\]\$enabled\s+-and\s+\[bool\]\$rendered.*?(?=^function |\z)' 'Every Count-live decision must require exact boolean enabled and rendered witnesses from the public planning-table row.'
+    $planningProjectionSource = [regex]::Match($runner, '(?ms)^function Get-PlanningTableProjection\s*\{.*?(?=^function |\z)').Value
+    Assert-Match $planningProjectionSource '(?s)enabled.*?-isnot\s+\[bool\].*?rendered.*?-isnot\s+\[bool\].*?rendered\s*=\s*\[bool\]\$rendered.*?no public room-action rows with rendered witnesses' 'The persisted planning projection must retain exact boolean enabled/rendered room-action witnesses and reject an unrendered fallback.'
+    Assert-NotMatch $planningProjectionSource 'event_popup|Get-VisibleChoiceIds|Get-PublicTalkChoices' 'The Q-013 persistence projection must not replace rendered room-action proof with modal choice metadata.'
+    Assert-Match $runner '(?ms)^function Assert-HeistAuditKnowledgeSaveRelaunchContinue\s*\{.*?Get-PlanningTableProjection.*?choice_id\s+-ceq\s+''lock_the_count''.*?Count\s+-cne\s+1.*?enabled\s+-isnot\s+\[bool\].*?rendered\s+-isnot\s+\[bool\].*?Click-RunMenuButton\s+-Text\s+''Save''.*?The Count learned Audit route before plan lock.*?Start-BridgeSession.*?CONTINUE.*?Get-PlanningTableProjection.*?choice_id\s+-ceq\s+''lock_the_count''.*?enabled\s+-isnot\s+\[bool\].*?rendered\s+-isnot\s+\[bool\].*?Public learned-Audit planning state changed.*?(?=^function |\z)' 'Q-013 persistence must require one exactly rendered and enabled Count lock before Save and after a full process relaunch/Continue, before the plan itself is locked.'
+    Assert-Match $runner '(?ms)^function Invoke-HeistEndingRoute\s*\{\s*Establish-CrewMarker\s*\r?\n\s*Reach-GrandCasino\s*\r?\n\s*Restore-EnvironmentSurfaceAfterTravelResult\s*\r?\n\s*Observe-RenderedAuditNightHook\s*\r?\n\s*Clear-CrewMarkerFavors\s*\r?\n\s*Ensure-PunchlineCasinoDiscovered\s*\r?\n\s*Recruit-Bishop\s*\r?\n\s*Promote-BishopToInnerCircle\s*\r?\n\s*Assert-HeistAuditKnowledgeUnderHostileRevisit\s*\r?\n\s*Assert-HeistAuditKnowledgeSaveRelaunchContinue.*?(?=^function |\z)' 'The Count route must naturally read fresh Audit, prove a hostile revisit, and prove restored learned knowledge before it locks Plan A.'
     $heistRouteSource = [regex]::Match($runner, '(?ms)^function Invoke-HeistEndingRoute\s*\{.*?(?=^function |\z)').Value
+    $heistSaveCount = [regex]::Matches($heistRouteSource, '\bAssert-HeistAuditKnowledgeSaveRelaunchContinue\b').Count
+    $heistSaveIndex = $heistRouteSource.IndexOf('Assert-HeistAuditKnowledgeSaveRelaunchContinue', [StringComparison]::Ordinal)
+    $heistLockIndex = $heistRouteSource.IndexOf("-ChoiceId 'lock_the_count'", [StringComparison]::Ordinal)
+    $heistSetupIndex = $heistRouteSource.IndexOf('Complete-CountIdentitySessions', [StringComparison]::Ordinal)
+    if ($heistSaveCount -cne 1 -or $heistSaveIndex -lt 0 -or $heistLockIndex -le $heistSaveIndex -or $heistSetupIndex -le $heistLockIndex) {
+        Add-Failure 'The live Heist route must perform its sole Save/Continue proof after hostile learned-Audit verification but before Count lock and setup.'
+    }
     Assert-NotMatch $heistRouteSource 'whale|the_whale_game|Plan B' 'The fixed Heist replay must not claim or silently select an unproved Plan B fallback.'
     $crewBoundarySource = [regex]::Match($runner, '(?ms)^function Invoke-CrewFavorCashierTipBoundary\s*\{.*?(?=^function |\z)').Value
     $crewMarkerSource = [regex]::Match($runner, '(?ms)^function Establish-CrewMarker\s*\{.*?(?=^function |\z)').Value
@@ -2541,6 +2652,9 @@ func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
     Assert-Match $replayPolicy '(?ms)^function Select-HeistAuditNightPublicHook.*?screen.*?ENVIRONMENT.*?archetype_id.*?grand_casino.*?semantic_id.*?event:scenario_audit_roster.*?matches\.Count\s+-ne\s+1.*?The Audit Roster.*?object_type.*?rendered\s+-isnot\s+\[bool\].*?enabled\s+-isnot\s+\[bool\].*?(?=^function |\z)' 'Audit route policy must require exactly one enabled and rendered public Audit Roster event on Grand Main.'
     $auditPolicySource = [regex]::Match($replayPolicy, '(?ms)^function Select-HeistAuditNightPublicHook.*?(?=^function |\z)').Value
     Assert-NotMatch $auditPolicySource 'scenario_hook_flags|narrative_flags|run_state|crew_heist_state' 'Audit route policy must not infer the hook from private model state.'
+    Assert-Match $replayPolicy '(?ms)^function Select-HeistConventionCrowdPublicHook.*?screen.*?ENVIRONMENT.*?archetype_id.*?grand_casino.*?event:scenario_audit_roster.*?Count\s+-ne\s+0.*?event:scenario_convention_badge.*?matches\.Count\s+-ne\s+1.*?Borrowed Badge.*?object_type.*?rendered\s+-isnot\s+\[bool\].*?enabled\s+-isnot\s+\[bool\].*?(?=^function |\z)' 'Hostile revisit policy must reject any rendered Audit hook and require exactly one enabled public Convention badge on Grand Main.'
+    $conventionPolicySource = [regex]::Match($replayPolicy, '(?ms)^function Select-HeistConventionCrowdPublicHook.*?(?=^function |\z)').Value
+    Assert-NotMatch $conventionPolicySource 'scenario_hook_flags|narrative_flags|run_state|crew_heist_state' 'Convention revisit policy must not infer hostile or learned state from private model data.'
     Assert-Match $heistSeedPreflight '(?s)function Get-Rw062ProductionScenarioContract.*?\$TownStatePath.*?\$PoliceSweepPath.*?\$CharacterChainPath.*?\$townState\s*=\s*Get-Content.*?\$policeSweep\s*=\s*Get-Content.*?\$characterChain\s*=\s*Get-Content' 'Engine-free Heist preflight must load the complete production multiplier chain.'
     foreach ($requiredPreflightToken in @(
         '_on_start_pressed', 'normal_run_start_modifiers', 'carried_container_rows',
@@ -2686,7 +2800,7 @@ func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
     Assert-Match $replayPolicy '(?s)function Select-CheatReplayBlackjackCheatAction.*?''peek_hole_card''.*?''blackjack_distraction''.*?''blackjack_peek''' 'Cheat replay policy must distinguish the published semantic cheat id from the two rendered control ids.'
     Assert-Match $replayPolicy '(?s)function Select-CheatReplayPostPeekTransition.*?phase.*?''barred''.*?heat_rendered.*?heat_level.*?-lt\s+70.*?surface_back.*?Count\s+-ne\s+1.*?enabled.*?index.*?-ne\s+-1.*?leave_for_showdown' 'Post-Peek policy must require exact public barred phase, rendered showdown Heat, and one enabled surface_back binding.'
     Assert-Match $runner '(?s)\$peekApplied\s*=\s*Invoke-VisibleCheatIfAvailable.*?Select-CheatReplayPostPeekTransition.*?leave_for_showdown.*?return.*?blackjack_settle' 'A successfully applied Peek must inspect and escape a public barred showdown state before settlement.'
-    Assert-Match $runner '(?s)function Invoke-PublicBossCalloutIfShown.*?Select-CheatReplayBossCalloutAction.*?stage\s+-cne\s+''call''.*?blackjack_boss_callout.*?boss_callout_used' 'Rourke replay must defer through the public policy and verify a post-deal rendered callout witness.'
+    Assert-Match $runner '(?s)function Invoke-PublicBossCalloutIfShown.*?Select-CheatReplayBossCalloutAction.*?stage\s+-cne\s+''call''.*?blackjack_boss_callout.*?Wait-Frames.*?if\s*\(Test-PublicTerminalSurface\)\s*\{\s*return\s*\}.*?boss_callout_used' 'Rourke replay must accept an immediate exact terminal surface after the physical callout, otherwise require the post-deal rendered used witness.'
     Assert-Match $runner '(?s)function Resolve-ShowdownChoiceSurface.*?Select-CheatReplayShowdownInterrogationChoice.*?take the exact visible edge against Rourke' 'Rourke interrogation must select take_the_edge through its exact public policy.'
     Assert-Match $replayPolicy '(?s)function Select-CheatReplayShowdownInterrogationChoice.*?hold_steady.*?talk_down.*?take_the_edge.*?return\s+''take_the_edge''' 'Cheat interrogation policy must validate the exact rendered choice set and return take_the_edge.'
     $showdownChoiceFunction = [regex]::Match($runner, '(?ms)^function Resolve-ShowdownChoiceSurface\s*\{.*?(?=^function |\z)')
@@ -2807,6 +2921,8 @@ $report = [ordered]@{
     heist_launch_setup_hostile_fixtures = $heistLaunchSetupHostileFixtures
     heist_audit_hook_valid_fixtures = $heistAuditHookValidFixtures
     heist_audit_hook_hostile_fixtures = $heistAuditHookHostileFixtures
+    heist_convention_hook_valid_fixtures = $heistConventionHookValidFixtures
+    heist_convention_hook_hostile_fixtures = $heistConventionHookHostileFixtures
     failures = @($failures)
 }
 $report | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $ReportPath -Encoding utf8
