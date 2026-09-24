@@ -235,7 +235,7 @@ func _run() -> void:
 	_check_source_aggregation_and_dedupe(multi_record, mirrored_record)
 	_check_action_key_authority_seal()
 	await _check_record_scenario_authority_staleness(app, action_list, records, activations)
-	_check_canvas_exclusion(records)
+	await _check_canvas_exclusion(records)
 	await _check_cancel_and_focus_recovery(action_list)
 	await _check_responsive_panel_width(action_list)
 	await _check_refresh_focus_recovery(app, action_list, records)
@@ -897,11 +897,13 @@ func _check_canvas_exclusion(records: Array) -> void:
 		"archetype_id": "bar",
 		"interactable_objects": records,
 	})
+	await process_frame
 	for object_value in canvas.current_view_snapshot().get("objects", []):
 		if str((object_value as Dictionary).get("presentation_mode", "room")) == "overflow":
 			failures.append("RW06-1 PixelSceneCanvas rendered an overflow-only action record.")
 			break
 	canvas.queue_free()
+	await process_frame
 
 
 func _check_cancel_and_focus_recovery(action_list: Control) -> void:
