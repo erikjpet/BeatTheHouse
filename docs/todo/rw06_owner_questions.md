@@ -288,9 +288,10 @@ Answer:
 A
 
 ### Q-020 · rw06_6 · Live archive mutation boundary
-Status: OPEN
+Status: ANSWERED
 Asked: release orchestrator, 2026-09-24
 Question: Windows can atomically rename the 79 approved roots, but it cannot continuously freeze every child, data stream and permission change during a live rename; strict exclusion requires offline maintenance. Which boundary should we use?
 Options: A) Use sealed no-overwrite live renames with exact before/after detection and stop while preserving every object if anything drifts (recommended)  B) Require strict exclusion and pause rw06_6 until the owner can schedule offline archival
 Resume: Keep all 79 roots untouched while OPEN. If A, implement crash-safe per-root intent/result receipts, held source/destination ancestry, exact pre/post native-ID/content/stream/security manifests and hard detect-and-hold on any drift; never delete, overwrite, copy, adopt or roll back. If B, prepare an owner-run WinRE/WinPE maintenance procedure and do not move any root live. Continue rw06_1 and engine-free rw06_6 product work either way.
 Answer:
+A
