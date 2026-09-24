@@ -260,7 +260,9 @@ func _run() -> void:
 	for mode in ["mouse", "touch", "keyboard", "controller"]:
 		if mode == "touch":
 			await _isolate_touch_from_prior_mouse()
+		print("RW06_1_PRODUCTION_MODE before=%s" % mode)
 		await _check_production_mutation_for_mode(app, action_list, production_record, activations, str(mode))
+		print("RW06_1_PRODUCTION_MODE after=%s" % mode)
 	await _finish(app)
 
 
@@ -1991,6 +1993,7 @@ func _restore_run(app: Control, action_list: Control, snapshot: Dictionary) -> v
 	app.call("_clear_selected_game_action")
 	app.call("_refresh")
 	await _settle_frames(5)
+	print("RW06_1_PRODUCTION_MODE activated=%s" % mode)
 
 
 func _check_background_pointer_shield(app: Control, action_list: Control, arrival_snapshot: Dictionary, mode: String) -> void:
@@ -2264,8 +2267,10 @@ func _check_production_mutation_for_mode(app: Control, action_list: Control, pro
 	if str(app.get("current_screen")) != "GAME" or app.get("current_game") == null or _mutation_snapshot(app) == before:
 		failures.append("RW06-1 %s overflow action did not reach a real production game-entry mutation: %s." % [mode, JSON.stringify(touch_diagnostics)])
 	if app.get("current_game") != null:
+		print("RW06_1_PRODUCTION_MODE leaving_game=%s" % mode)
 		app.call("_complete_back_to_environment")
 		await _settle_frames(4)
+		print("RW06_1_PRODUCTION_MODE left_game=%s" % mode)
 	if str(app.get("current_screen")) != "ENVIRONMENT" or app.get("current_game") != null:
 		failures.append("RW06-1 %s production fixture could not return to the room for the next modality." % mode)
 
@@ -2611,17 +2616,8 @@ func _settle_frames(count: int) -> void:
 
 
 func _finish(app: Control) -> void:
-	print("RW06_1_TEARDOWN before_quiesce tweens=%d app_inside=%s" % [get_processed_tweens().size(), app.is_inside_tree()])
-	root.gui_release_focus()
-	for tween in get_processed_tweens():
-		tween.kill()
-	await _settle_frames(2)
-	print("RW06_1_TEARDOWN after_quiesce tweens=%d app_inside=%s" % [get_processed_tweens().size(), app.is_inside_tree()])
 	app.queue_free()
-	print("RW06_1_TEARDOWN queued app_valid=%s" % is_instance_valid(app))
-	for frame_index in range(5):
-		await process_frame
-		print("RW06_1_TEARDOWN frame=%d app_valid=%s" % [frame_index + 1, is_instance_valid(app)])
+	await _settle_frames(5)
 	if failures.is_empty():
 		print("RW06_1_OVERFLOW_ACTION_UI PASS")
 		quit(0)
