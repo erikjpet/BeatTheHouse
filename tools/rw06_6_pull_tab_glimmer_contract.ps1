@@ -10,8 +10,8 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $projectRoot = [System.IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))
-$worktreesRoot = [System.IO.Path]::GetFullPath((Split-Path -Parent $projectRoot))
-$leaseRoot = Join-Path $worktreesRoot '.godot_leases'
+$canonicalLeaseRoot = 'D:\Projects\Beat-The-House-worktrees\.godot_leases'
+$leaseRoot = [System.IO.Path]::GetFullPath($canonicalLeaseRoot)
 $exclusiveLeasePath = Join-Path $leaseRoot 'EXCLUSIVE.lease'
 $launchMutexName = 'Global\BeatTheHouse-Q009-GodotLaunch'
 
@@ -27,6 +27,15 @@ function Test-FocusedLaunchCapacity {
         [int]$LiveGodotProcessCount
     )
     return (-not $ExclusivePresent) -and $LiveFocusedLeaseCount -lt 2 -and ($LiveGodotProcessCount + 2) -le 4
+}
+
+function Test-ReservedLaunchCapacity {
+    param(
+        [bool]$ExclusivePresent,
+        [int]$LiveFocusedLeaseCount,
+        [int]$LiveGodotProcessCount
+    )
+    return (-not $ExclusivePresent) -and $LiveFocusedLeaseCount -le 2 -and ($LiveGodotProcessCount + 2) -le 4
 }
 
 function Assert-ExactCandidateIdentity {
@@ -45,6 +54,33 @@ function Assert-ExactCandidateIdentity {
     if ($ActualTree -ne $RequiredTree.Trim()) {
         throw "Candidate tree mismatch: expected $RequiredTree, found $ActualTree."
     }
+}
+
+function Assert-CleanExactCandidate {
+    param(
+        [string]$Root,
+        [string]$RequiredCommit,
+        [string]$RequiredTree
+    )
+    $dirty = @(& git -C $Root status --porcelain)
+    $statusExitCode = $LASTEXITCODE
+    if ($statusExitCode -ne 0 -or $dirty.Count -ne 0) {
+        throw 'RW06_6 qualifying/red evidence requires a clean committed candidate tree.'
+    }
+    $actualCommit = (& git -C $Root rev-parse HEAD).Trim()
+    $commitExitCode = $LASTEXITCODE
+    $actualTree = (& git -C $Root rev-parse 'HEAD^{tree}').Trim()
+    $treeExitCode = $LASTEXITCODE
+    if (
+        $commitExitCode -ne 0 `
+        -or $treeExitCode -ne 0 `
+        -or [string]::IsNullOrWhiteSpace($actualCommit) `
+        -or [string]::IsNullOrWhiteSpace($actualTree)
+    ) {
+        throw 'Could not resolve the exact candidate commit/tree.'
+    }
+    Assert-ExactCandidateIdentity $RequiredCommit $RequiredTree $actualCommit $actualTree
+    return [ordered]@{ commit = $actualCommit; tree = $actualTree }
 }
 
 function Get-LiveGodotProcesses {
@@ -132,16 +168,37 @@ function Get-DiagnosticLines {
     return @($lines)
 }
 
+function Resolve-ContractExitCode {
+    param(
+        [int]$NativeExitCode,
+        [bool]$TimedOut,
+        [int]$DiagnosticCount,
+        [bool]$PassMarkerSeen,
+        [bool]$ProductRedMarkerSeen
+    )
+    if ($TimedOut -or $DiagnosticCount -gt 0 -or -not $PassMarkerSeen -or $ProductRedMarkerSeen) {
+        if ($NativeExitCode -eq 0) { return 1 }
+    }
+    return $NativeExitCode
+}
+
 if ($ValidateOnly) {
+    Assert-LauncherContract ($leaseRoot -ceq $canonicalLeaseRoot) 'Q-009 launcher did not resolve the exact canonical lease root.'
     Assert-LauncherContract (Test-FocusedLaunchCapacity $false 0 0) 'Q-009 capacity rejected an empty machine.'
     Assert-LauncherContract (Test-FocusedLaunchCapacity $false 1 2) 'Q-009 capacity rejected the second focused console/child pair.'
     Assert-LauncherContract (-not (Test-FocusedLaunchCapacity $true 0 0)) 'Q-009 capacity ignored EXCLUSIVE.lease.'
     Assert-LauncherContract (-not (Test-FocusedLaunchCapacity $false 2 0)) 'Q-009 capacity allowed a third focused pair.'
     Assert-LauncherContract (-not (Test-FocusedLaunchCapacity $false 1 3)) 'Q-009 capacity allowed current processes plus two to exceed four.'
+    Assert-LauncherContract (Test-ReservedLaunchCapacity $false 2 2) 'Q-009 reserved capacity rejected two focused leases and four projected processes.'
+    Assert-LauncherContract (-not (Test-ReservedLaunchCapacity $true 1 0)) 'Q-009 reserved capacity ignored EXCLUSIVE.lease.'
+    Assert-LauncherContract (-not (Test-ReservedLaunchCapacity $false 3 0)) 'Q-009 reserved capacity allowed more than two live focused reservations.'
+    Assert-LauncherContract (-not (Test-ReservedLaunchCapacity $false 2 3)) 'Q-009 reserved capacity allowed current processes plus two to exceed four.'
     Assert-LauncherContract (@(Get-DiagnosticLines -Text "SCRIPT ERROR: hostile`n").Count -gt 0) 'Diagnostics gate missed SCRIPT ERROR.'
     Assert-LauncherContract (@(Get-DiagnosticLines -Text "WARNING: hostile`n").Count -gt 0) 'Diagnostics gate missed WARNING.'
     Assert-LauncherContract (@(Get-DiagnosticLines -Text "ObjectDB instances still alive at exit`n").Count -gt 0) 'Diagnostics gate missed ObjectDB leakage.'
     Assert-LauncherContract (@(Get-DiagnosticLines -Text "RW06_6_PULL_TAB_GLIMMER PASS`n").Count -eq 0) 'Diagnostics gate rejected a clean pass marker.'
+    Assert-LauncherContract ((Resolve-ContractExitCode 0 $false 0 $true $false) -eq 0) 'Exit gate rejected a clean native-zero PASS.'
+    Assert-LauncherContract ((Resolve-ContractExitCode 0 $false 0 $true $true) -ne 0) 'GREEN exit gate accepted RW06_6_PRODUCT_RED with native zero and PASS.'
     $missingIdentityRejected = $false
     try { Assert-ExactCandidateIdentity '' '' 'actual-commit' 'actual-tree' } catch { $missingIdentityRejected = $true }
     Assert-LauncherContract $missingIdentityRejected 'Identity gate accepted omitted expected commit/tree.'
@@ -152,7 +209,9 @@ if ($ValidateOnly) {
     $source = [System.IO.File]::ReadAllText($PSCommandPath)
     foreach ($required in @(
         'Get-LiveGodotProcesses',
+        'Test-ReservedLaunchCapacity',
         'Assert-ExactCandidateIdentity',
+        'Assert-CleanExactCandidate',
         'Get-VerifiedDescendantProcessIds',
         'Stop-ExactStartedProcessTree',
         'WaitForExit($ProcessTimeoutSec * 1000)',
@@ -162,7 +221,9 @@ if ($ValidateOnly) {
         "'--verbose'",
         'SCRIPT ERROR',
         'ObjectDB',
-        'EXCLUSIVE.lease'
+        'EXCLUSIVE.lease',
+        'D:\Projects\Beat-The-House-worktrees\.godot_leases',
+        'RW06_6_PRODUCT_RED'
     )) {
         Assert-LauncherContract ($source.Contains($required)) "Launcher source contract is missing: $required"
     }
@@ -176,17 +237,11 @@ if (-not (Test-Path -LiteralPath $GodotPath -PathType Leaf)) {
 if ($ProcessTimeoutSec -lt 1) {
     throw 'ProcessTimeoutSec must be positive.'
 }
+Assert-LauncherContract ($leaseRoot -ceq $canonicalLeaseRoot) 'Q-009 launcher did not resolve the exact canonical lease root.'
 
-$dirty = @(& git -C $projectRoot status --porcelain)
-if ($LASTEXITCODE -ne 0 -or $dirty.Count -ne 0) {
-    throw 'RW06_6 qualifying/red evidence requires a clean committed candidate tree.'
-}
-$candidateCommit = (& git -C $projectRoot rev-parse HEAD).Trim()
-$candidateTree = (& git -C $projectRoot rev-parse 'HEAD^{tree}').Trim()
-if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($candidateCommit) -or [string]::IsNullOrWhiteSpace($candidateTree)) {
-    throw 'Could not resolve the exact candidate commit/tree.'
-}
-Assert-ExactCandidateIdentity $ExpectedCommit $ExpectedTree $candidateCommit $candidateTree
+$candidateIdentity = Assert-CleanExactCandidate $projectRoot $ExpectedCommit $ExpectedTree
+$candidateCommit = [string]$candidateIdentity.commit
+$candidateTree = [string]$candidateIdentity.tree
 
 New-Item -ItemType Directory -Force -Path $leaseRoot | Out-Null
 $leasePath = Join-Path $leaseRoot ("rw06_6-pull-tab-glimmer-{0}.lease" -f $PID)
@@ -225,59 +280,95 @@ while (-not $leaseOwned) {
     if (-not $leaseOwned) { Start-Sleep -Seconds 2 }
 }
 
-$stamp = [DateTime]::UtcNow.ToString('yyyyMMddTHHmmssfffZ')
-if ([string]::IsNullOrWhiteSpace($EvidenceRoot)) {
-    $EvidenceRoot = Join-Path $projectRoot ".tmp\rw06_6\contract-$stamp-$PID"
-}
-$EvidenceRoot = [System.IO.Path]::GetFullPath($EvidenceRoot)
-New-Item -ItemType Directory -Force -Path $EvidenceRoot | Out-Null
-
-$profileRoot = Join-Path $EvidenceRoot 'profile'
-$appData = Join-Path $profileRoot 'AppData\Roaming'
-$localAppData = Join-Path $profileRoot 'AppData\Local'
-$xdgData = Join-Path $profileRoot 'xdg\data'
-$xdgCache = Join-Path $profileRoot 'xdg\cache'
-$xdgConfig = Join-Path $profileRoot 'xdg\config'
-@($appData, $localAppData, $xdgData, $xdgCache, $xdgConfig) | ForEach-Object {
-    New-Item -ItemType Directory -Force -Path $_ | Out-Null
-}
-$env:APPDATA = $appData
-$env:LOCALAPPDATA = $localAppData
-$env:XDG_DATA_HOME = $xdgData
-$env:XDG_CACHE_HOME = $xdgCache
-$env:XDG_CONFIG_HOME = $xdgConfig
-
-$stdoutPath = Join-Path $EvidenceRoot 'stdout.log'
-$stderrPath = Join-Path $EvidenceRoot 'stderr.log'
-$godotLogPath = Join-Path $EvidenceRoot 'godot.log'
-$summaryPath = Join-Path $EvidenceRoot 'summary.json'
-$arguments = @(
-    '--headless',
-    '--verbose',
-    '--disable-crash-handler',
-    '--audio-driver', 'Dummy',
-    '--log-file', $godotLogPath,
-    '--path', $projectRoot,
-    '--script', 'res://scripts/tests/rw06_6_pull_tab_glimmer_contract.gd'
-)
-
 $process = $null
 $consoleStartTime = [datetime]::MinValue
-$baselineGodotPids = @((Get-LiveGodotProcesses) | ForEach-Object { $_.Id })
-$stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+$baselineGodotPids = @()
+$stopwatch = [System.Diagnostics.Stopwatch]::new()
 $nativeExitCode = 1
 $timedOut = $false
 try {
-    # Re-census immediately before launch after reserving our focused-pair lease.
-    if (Test-Path -LiteralPath $exclusiveLeasePath) {
-        throw 'EXCLUSIVE.lease appeared after focused reservation; refusing launch.'
+    # A slot may have required a wait. Rebind the exact clean identity immediately
+    # after reservation so worktree changes during that wait cannot reach launch.
+    $candidateIdentity = Assert-CleanExactCandidate $projectRoot $ExpectedCommit $ExpectedTree
+    $candidateCommit = [string]$candidateIdentity.commit
+    $candidateTree = [string]$candidateIdentity.tree
+
+    $stamp = [DateTime]::UtcNow.ToString('yyyyMMddTHHmmssfffZ')
+    if ([string]::IsNullOrWhiteSpace($EvidenceRoot)) {
+        $EvidenceRoot = Join-Path $projectRoot ".tmp\rw06_6\contract-$stamp-$PID"
     }
-    $preLaunchGodotCount = @(Get-LiveGodotProcesses).Count
-    if (($preLaunchGodotCount + 2) -gt 4) {
-        throw "Q-009 process ceiling changed before launch: $preLaunchGodotCount + 2 > 4."
+    $EvidenceRoot = [System.IO.Path]::GetFullPath($EvidenceRoot)
+    New-Item -ItemType Directory -Force -Path $EvidenceRoot | Out-Null
+
+    $profileRoot = Join-Path $EvidenceRoot 'profile'
+    $appData = Join-Path $profileRoot 'AppData\Roaming'
+    $localAppData = Join-Path $profileRoot 'AppData\Local'
+    $xdgData = Join-Path $profileRoot 'xdg\data'
+    $xdgCache = Join-Path $profileRoot 'xdg\cache'
+    $xdgConfig = Join-Path $profileRoot 'xdg\config'
+    @($appData, $localAppData, $xdgData, $xdgCache, $xdgConfig) | ForEach-Object {
+        New-Item -ItemType Directory -Force -Path $_ | Out-Null
     }
-    $process = Start-Process -FilePath $GodotPath -ArgumentList $arguments -RedirectStandardOutput $stdoutPath -RedirectStandardError $stderrPath -PassThru -WindowStyle Hidden
-    $consoleStartTime = $process.StartTime
+    $env:APPDATA = $appData
+    $env:LOCALAPPDATA = $localAppData
+    $env:XDG_DATA_HOME = $xdgData
+    $env:XDG_CACHE_HOME = $xdgCache
+    $env:XDG_CONFIG_HOME = $xdgConfig
+
+    $stdoutPath = Join-Path $EvidenceRoot 'stdout.log'
+    $stderrPath = Join-Path $EvidenceRoot 'stderr.log'
+    $godotLogPath = Join-Path $EvidenceRoot 'godot.log'
+    $summaryPath = Join-Path $EvidenceRoot 'summary.json'
+    $arguments = @(
+        '--headless',
+        '--verbose',
+        '--disable-crash-handler',
+        '--audio-driver', 'Dummy',
+        '--log-file', $godotLogPath,
+        '--path', $projectRoot,
+        '--script', 'res://scripts/tests/rw06_6_pull_tab_glimmer_contract.gd'
+    )
+
+    $stopwatch.Start()
+    $launchMutex = [System.Threading.Mutex]::new($false, $launchMutexName)
+    $launchMutexOwned = $false
+    try {
+        $launchMutexOwned = $launchMutex.WaitOne(5000)
+        if (-not $launchMutexOwned) {
+            throw 'Could not acquire the Q-009 launch lock for final identity and capacity checks.'
+        }
+        # This must be the first candidate operation after acquiring the launch
+        # lock: no waited-on or dirty tree is allowed to reach Start-Process.
+        $launchIdentity = Assert-CleanExactCandidate $projectRoot $ExpectedCommit $ExpectedTree
+        $candidateCommit = [string]$launchIdentity.commit
+        $candidateTree = [string]$launchIdentity.tree
+        Clear-StaleGodotLeases
+        $exclusivePresent = Test-Path -LiteralPath $exclusiveLeasePath
+        $focusedReservations = @(Get-ChildItem -LiteralPath $leaseRoot -Filter '*.lease' -File -ErrorAction SilentlyContinue | Where-Object { $_.Name -ne 'EXCLUSIVE.lease' })
+        $preLaunchGodotProcesses = @(Get-LiveGodotProcesses)
+        if ($exclusivePresent) {
+            throw 'EXCLUSIVE.lease appeared after focused reservation; refusing launch.'
+        }
+        if (-not (Test-Path -LiteralPath $leasePath)) {
+            throw 'The owned Q-009 focused reservation disappeared before launch.'
+        }
+        if ($focusedReservations.Count -gt 2) {
+            throw "Q-009 focused reservation ceiling changed before launch: $($focusedReservations.Count) > 2."
+        }
+        if (($preLaunchGodotProcesses.Count + 2) -gt 4) {
+            throw "Q-009 process ceiling changed before launch: $($preLaunchGodotProcesses.Count) + 2 > 4."
+        }
+        if (-not (Test-ReservedLaunchCapacity $exclusivePresent $focusedReservations.Count $preLaunchGodotProcesses.Count)) {
+            throw 'Q-009 final reserved launch capacity check failed closed.'
+        }
+        $baselineGodotPids = @($preLaunchGodotProcesses | ForEach-Object { $_.Id })
+        $process = Start-Process -FilePath $GodotPath -ArgumentList $arguments -RedirectStandardOutput $stdoutPath -RedirectStandardError $stderrPath -PassThru -WindowStyle Hidden
+        $consoleStartTime = $process.StartTime
+    }
+    finally {
+        if ($launchMutexOwned) { $launchMutex.ReleaseMutex() }
+        $launchMutex.Dispose()
+    }
     if (-not $process.WaitForExit($ProcessTimeoutSec * 1000)) {
         $timedOut = $true
         $nativeExitCode = 124
@@ -287,7 +378,7 @@ try {
     }
 }
 finally {
-    $stopwatch.Stop()
+    if ($stopwatch.IsRunning) { $stopwatch.Stop() }
     Stop-ExactStartedProcessTree -ConsoleProcess $process -ConsoleStartTime $consoleStartTime -BaselinePids $baselineGodotPids
     if ($leaseOwned -and (Test-Path -LiteralPath $leasePath)) {
         Remove-Item -LiteralPath $leasePath -Force
@@ -304,10 +395,7 @@ foreach ($path in @($stdoutPath, $stderrPath, $godotLogPath)) {
 $diagnostics = @(Get-DiagnosticLines -Text $combinedText)
 $passMarkerSeen = $combinedText.Contains('RW06_6_PULL_TAB_GLIMMER PASS')
 $productRedMarkerSeen = $combinedText.Contains('RW06_6_PRODUCT_RED')
-$effectiveExitCode = $nativeExitCode
-if ($timedOut -or $diagnostics.Count -gt 0 -or ($nativeExitCode -eq 0 -and -not $passMarkerSeen)) {
-    if ($effectiveExitCode -eq 0) { $effectiveExitCode = 1 }
-}
+$effectiveExitCode = Resolve-ContractExitCode $nativeExitCode $timedOut $diagnostics.Count $passMarkerSeen $productRedMarkerSeen
 $hashes = [ordered]@{}
 foreach ($path in @($stdoutPath, $stderrPath, $godotLogPath)) {
     if (Test-Path -LiteralPath $path) {
