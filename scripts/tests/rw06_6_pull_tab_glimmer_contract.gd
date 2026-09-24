@@ -1,10 +1,20 @@
 extends SceneTree
 
-const PullTabsScript := preload("res://scripts/games/pull_tabs.gd")
+# These ordered preloads intentionally register the global classes required by
+# GameModule before the guarded runtime load of pull_tabs.gd in a clean worktree.
+const RngStreamFixtureScript := preload("res://scripts/core/rng_stream.gd")
+const ContentLibraryFixtureScript := preload("res://scripts/core/content_library.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
+const GameModuleFixtureScript := preload("res://scripts/core/game_module.gd")
 const FoundationMainScript := preload("res://scripts/ui/foundation_main.gd")
 const FoundationActionViewModelFixtureScript := preload("res://scripts/ui/foundation_action_view_model.gd")
 
+const PULL_TABS_SCRIPT_PATH := "res://scripts/games/pull_tabs.gd"
+const REQUIRED_GLIMMER_SOURCE_SIGNATURES := [
+	"func _pull_tab_glimmer_auto_command(",
+	"func _pull_tab_glimmer_candidate_pool(machine: Dictionary) -> Array:",
+	"func _pull_tab_glimmer_public_projection(",
+]
 const MIN_INTERVAL_MSEC := 25000
 const MAX_INTERVAL_MSEC := 35000
 const VISIBLE_MSEC := 1100
@@ -93,6 +103,7 @@ class DrawHarness:
 
 var failures: Array[String] = []
 var pull_tabs_definition: Dictionary = {}
+var pull_tabs_script: Script
 
 
 func _init() -> void:
@@ -100,12 +111,41 @@ func _init() -> void:
 
 
 func _run() -> void:
+	if not FileAccess.file_exists(PULL_TABS_SCRIPT_PATH):
+		failures.append("RW06_6 fixture could not find the pull-tabs production source.")
+		_finish()
+		return
+	var pull_tabs_source := FileAccess.get_file_as_string(PULL_TABS_SCRIPT_PATH)
+	if pull_tabs_source.is_empty():
+		failures.append("RW06_6 fixture could not read the pull-tabs production source.")
+		_finish()
+		return
+	var missing_signatures: Array[String] = []
+	for signature_value in REQUIRED_GLIMMER_SOURCE_SIGNATURES:
+		var signature := str(signature_value)
+		if not pull_tabs_source.contains(signature):
+			missing_signatures.append(signature)
+	if not missing_signatures.is_empty():
+		failures.append("RW06_6_PRODUCT_RED: pull-tabs source lacks required production glimmer signatures: %s." % JSON.stringify(missing_signatures))
+		_finish()
+		return
+	for dependency_script in [RngStreamFixtureScript, ContentLibraryFixtureScript, RunStateScript, GameModuleFixtureScript]:
+		if dependency_script == null:
+			failures.append("RW06_6 fixture could not register the base scripts required for a clean-worktree pull-tabs load.")
+			_finish()
+			return
+	var loaded_pull_tabs: Script = load(PULL_TABS_SCRIPT_PATH) as Script
+	if loaded_pull_tabs == null:
+		failures.append("RW06_6 fixture could not dynamically load pull-tabs after the source-level product guard.")
+		_finish()
+		return
+	pull_tabs_script = loaded_pull_tabs
 	pull_tabs_definition = _load_pull_tabs_definition()
 	if pull_tabs_definition.is_empty():
 		failures.append("RW06_6 fixture could not load the shipped pull-tabs definition.")
 		_finish()
 		return
-	var guard_game = PullTabsScript.new()
+	var guard_game = pull_tabs_script.new()
 	guard_game.setup(pull_tabs_definition)
 	if not guard_game.has_method("_pull_tab_glimmer_candidate_pool"):
 		failures.append("RW06_6_PRODUCT_RED: pull-tabs has no production glimmer candidate/scheduler path.")
@@ -349,7 +389,7 @@ func _check_private_identity_revalidation() -> void:
 	if not bool(_projection(game.surface_state(run, environment, ui_state)).get("visible", false)):
 		failures.append("RW06_6 stale-machine probe damaged the valid current-machine target.")
 
-	var other_run = RunStateScript.new()
+	var other_run: Variant = RunStateScript.new()
 	other_run.start_new("RW06_6-OTHER-MACHINE")
 	other_run.bankroll = 1000000
 	var other_environment := _environment("rw06_6_other_machine")
@@ -379,8 +419,8 @@ func _check_private_identity_revalidation() -> void:
 		failures.append("RW06_6 kept a removed/consumed target visible or silently retargeted its old offset.")
 	if _production_pool_contains_key(game, _machine(environment), target_key):
 		failures.append("RW06_6 production candidate pool retained the exact target after its real sleeve purchase/removal.")
-	var collect := game.surface_action_command("pull_tab_collect_tray", 0, false, ui_state, run, environment)
-	var reveal := game.surface_action_command("pull_tab_reveal_next", 0, false, _dict(collect.get("ui_state", {})), run, environment)
+	var collect: Dictionary = game.surface_action_command("pull_tab_collect_tray", 0, false, ui_state, run, environment)
+	var reveal: Dictionary = game.surface_action_command("pull_tab_reveal_next", 0, false, _dict(collect.get("ui_state", {})), run, environment)
 	var reveal_state := _dict(reveal.get("ui_state", {}))
 	game.checkpoint_surface_ui_state(reveal_state, run, environment)
 	var revealed_ticket := _find_ticket_in_collection(_array(_machine(environment).get("ticket_stack", [])), target_deal_id, target_serial, target_number)
@@ -390,7 +430,7 @@ func _check_private_identity_revalidation() -> void:
 		failures.append("RW06_6 production candidate pool accepted the exact target after its real reveal completion.")
 	if bool(_projection(game.surface_state(run, environment, reveal_state)).get("visible", true)):
 		failures.append("RW06_6 accepted the purchased target after its real reveal path.")
-	var file_command := game.surface_action_command("pull_tab_file_ticket", 0, false, reveal_state, run, environment)
+	var file_command: Dictionary = game.surface_action_command("pull_tab_file_ticket", 0, false, reveal_state, run, environment)
 	var file_result: Dictionary = game.resolve_with_context("sort_tab_ticket", 0, run, environment, run.create_rng("glimmer_consume_target"), _dict(file_command.get("ui_state", {})))
 	var filed_machine := _machine(environment)
 	var filed_ticket := _find_ticket_in_collection(_array(filed_machine.get("winner_pile", [])), target_deal_id, target_serial, target_number)
@@ -449,9 +489,9 @@ func _check_close_reopen_and_save_continue() -> void:
 	if reopened_due < 90000 + MIN_INTERVAL_MSEC or reopened_due > 90000 + MAX_INTERVAL_MSEC:
 		failures.append("RW06_6 reopen did not start a fresh interval from the new surface clock.")
 
-	var restored_run = RunStateScript.new()
+	var restored_run: Variant = RunStateScript.new()
 	restored_run.from_dict(saved_dict)
-	var restored_game = PullTabsScript.new()
+	var restored_game = pull_tabs_script.new()
 	restored_game.setup(pull_tabs_definition)
 	restored_game.enter(restored_run, restored_run.current_environment)
 	if bool(_projection(restored_game.surface_state(restored_run, restored_run.current_environment, {})).get("visible", true)):
@@ -786,9 +826,9 @@ func _consume_all_sleeves(machine: Dictionary) -> void:
 
 
 func _new_fixture(label: String) -> Dictionary:
-	var game = PullTabsScript.new()
+	var game = pull_tabs_script.new()
 	game.setup(pull_tabs_definition)
-	var run = RunStateScript.new()
+	var run: Variant = RunStateScript.new()
 	run.start_new("RW06_6-%s" % label)
 	run.bankroll = 1000000
 	var environment := _environment("rw06_6_%s" % label.to_lower())

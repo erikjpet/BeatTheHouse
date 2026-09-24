@@ -215,6 +215,10 @@ if ($ValidateOnly) {
         'Get-VerifiedDescendantProcessIds',
         'Stop-ExactStartedProcessTree',
         'WaitForExit($ProcessTimeoutSec * 1000)',
+        '$process.WaitForExit()',
+        '$process.Refresh()',
+        '$process.HasExited',
+        '[int]$process.ExitCode',
         'git status --porcelain',
         'ExpectedCommit',
         'ExpectedTree',
@@ -227,6 +231,8 @@ if ($ValidateOnly) {
     )) {
         Assert-LauncherContract ($source.Contains($required)) "Launcher source contract is missing: $required"
     }
+    $exitCapturePattern = '(?s)if \(-not \$process\.WaitForExit\(\$ProcessTimeoutSec \* 1000\)\).*?else\s*\{.*?\$process\.WaitForExit\(\).*?\$process\.Refresh\(\).*?\$process\.HasExited.*?\$nativeExitCode\s*=\s*\[int\]\$process\.ExitCode'
+    Assert-LauncherContract ([regex]::IsMatch($source, $exitCapturePattern)) 'Launcher native-exit path does not flush, refresh, assert exit, and capture an integer in order.'
     Write-Host 'rw06_6 Q-009 launcher static/hostile contract passed.'
     exit 0
 }
@@ -374,7 +380,14 @@ try {
         $nativeExitCode = 124
     }
     else {
-        $nativeExitCode = $process.ExitCode
+        # Flush redirected async streams and refresh the Process snapshot before
+        # reading ExitCode; otherwise PowerShell can serialize a native null.
+        $process.WaitForExit()
+        $process.Refresh()
+        if (-not $process.HasExited) {
+            throw 'Godot bounded wait returned without a completed process.'
+        }
+        $nativeExitCode = [int]$process.ExitCode
     }
 }
 finally {
