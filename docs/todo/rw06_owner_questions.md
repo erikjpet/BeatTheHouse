@@ -204,7 +204,7 @@ Resume: Verify the process still targets `D:\Projects\Beat-The-House`; if A, ter
 Answer: B. Owner confirmed the Godot session was closed, 2026-09-23.
 
 ### Q-011 · rw06_1/rw06_2 · Beach always open from the boat
-Status: ANSWERED
+Status: RESOLVED by release orchestrator 2026-09-23
 Asked: owner directive, 2026-09-23
 Question: None; this is a binding gameplay directive from the owner.
 Options: A) Apply the directive in Resume (the owner's decision)
