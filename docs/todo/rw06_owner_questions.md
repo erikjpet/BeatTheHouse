@@ -218,3 +218,11 @@ Question: Godot 4.6 reopened against the primary checkout at 21:18 CT without a 
 Options: A) Close the exact pair if still running (recommended)  B) I will close it and keep it closed
 Resume: Verify the unleased processes still target `D:\Projects\Beat-The-House`; if A, terminate only that exact console/child pair. Do not start another engine run while the machine is at the four-process ceiling; continue engine-free work while OPEN.
 Answer: A. Owner authorized closing the exact pair and continuing verification, 2026-09-23. The pair had already exited when revalidated, so no process was terminated.
+
+### Q-013 · rw06_2 · Heist Audit seed and lasting route knowledge
+Status: OPEN
+Asked: endings peer agent, 2026-09-23
+Question: The real fresh-profile launch makes the proposed `RW06-HEIST-AUDIT-0013` select Convention, while `RW06-HEIST-AUDIT-0002` selects Audit Night. Audit also stops qualifying The Count after the Grand Casino changes cycles, although Bishop promotion repeatedly revisits Grand before the plan can be locked.
+Options: A) Use `0002` and let a naturally encountered Audit remain known for later Count eligibility (recommended)  B) Keep Audit cycle-local and require Bishop promotion plus plan lock in that same cycle
+Resume: rw06_2 replaces the seed only after exact fresh-profile preflight. If A, persist only the naturally observed Audit-plan fact through Save/Continue and cover fresh, revisit, hostile non-Audit and restored runs; if B, keep the fail-fast route blocked until a same-cycle public win is proved. Never inject the scenario or fall back to Plan B.
+Answer:
