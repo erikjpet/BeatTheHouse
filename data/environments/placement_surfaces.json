@@ -19566,12 +19566,12 @@
           "kind": "base",
           "pos": [
             450.0,
-            248.0
+            252.0
           ],
           "footprint_class": "behind_counter_person",
           "hit_rect": [
             414.0,
-            176.0,
+            180.0,
             72.0,
             72.0
           ],

@@ -109,7 +109,7 @@ HAND_SLOTS: dict[str, dict[str, list[SlotSpec]]] = {
             ("base.game_machine_5", "wall_mounted", (720.0, 80.0), (709.0, 68.0), "wall"),
             ("base.game_table_left", "surface_item", (210.0, 184.0), (210.0, 144.0), "left_table_felt"),
             ("base.game_table_right", "surface_item", (690.0, 184.0), (696.0, 144.0), "right_table_felt"),
-            ("base.staff_host", "behind_counter_person", (450.0, 248.0), (450.0, 172.0), "mid_game_rail"),
+            ("base.staff_host", "behind_counter_person", (450.0, 252.0), (450.0, 172.0), "mid_game_rail"),
             ("base.fixed_drink", "surface_item", (824.0, 100.0), (824.0, 42.0), "base_drink_shelf"),
             ("base.fixed_ticket_redeemer", "wall_mounted", (60.0, 24.0), (60.0, 72.0), "wall"),
             ("base.event_wall_1", "wall_mounted", (330.0, 170.0), (330.0, 214.0), "wall"),
