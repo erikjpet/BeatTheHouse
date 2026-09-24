@@ -1,7 +1,7 @@
 # rw06_2 clean ending route — first-pass replay
 
-Status: **EXPLORATORY POLICY ENGINE-FREE GREEN; NEXT LIVE PROBE AND QUALIFYING RUNS PENDING**
-Working base: pushed rw06_2 tip `f8c37e1079a84a2cfd4a849732c8a461025ebc68`;
+Status: **SCOUTING-CASH CORRECTION ENGINE-FREE GREEN; NEXT LIVE PROBE AND QUALIFYING RUNS PENDING**
+Working base: pushed rw06_2 tip `7485405d`;
 qualifying evidence waits for rw06_1 to land.
 Canonical terminal route: `high_roller_cashout`
 Fixed replay seed: `RW06-CLEAN-ROUTE-01`
@@ -18,6 +18,23 @@ the real map must show one free Beach destination on fresh arrival and revisit,
 and again after any restored Continue. The replay fails closed if Beach is
 hidden, duplicated, charged, or remains disabled after the boat travel lock.
 Existing route metadata is not proof of this production destination behavior.
+
+## Latest reachability checkpoint
+
+Probe 28 proved that the physical Brother-in-Law `Use` click was accepted, but
+the live lender correctly rejected it because the phone prerequisite was absent.
+The rendered lender row came from stale sealed-room presentation; it was not a
+real source of route cash. That shared room-projection defect is owned by rw06_1
+and the replay now fails an advertised lender quickly if TalkDock never opens.
+
+The fixed Clean route no longer depends on that lender or on the 75% family-call
+outcome. During its first required Motel scouting visit it takes the strictly
+verified positive Hallway event before incurring any extra fare. The measured
+pre-correction curve was `$100 -> $93 -> $87 -> $79 -> $63 -> $108` after the
+Crew loan, then `$86` after returning to Motel. Banking the Hallway cash on the
+first visit supplies the missing deterministic margin without changing economy
+data. One no-retry Probe 29 must now prove that path live after the orchestrator
+releases the serialized engine lane; qualifying evidence still waits for rw06_1.
 
 ## 2026-09-23 current-main exploratory probe (non-qualifying)
 

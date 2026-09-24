@@ -1,7 +1,7 @@
 # rw06_2 economy handoff
 
-Status: **PROBE19 RETAINED; REPLACEMENT POLICY ENGINE-FREE GREEN; LIVE ROUTE CURVES PENDING**
-Working base: pushed rw06_2 tip `f8c37e1079a84a2cfd4a849732c8a461025ebc68`
+Status: **PROBES 19/28 RETAINED; SCOUTING-CASH CORRECTION ENGINE-FREE GREEN; QUALIFYING CURVES PENDING**
+Working base: pushed rw06_2 tip `7485405d`
 Owner: rw06_3 (data-only tuning after rw06_2 produces qualifying traces)
 
 Do not change game rules, RNG, odds, payout math, wager math, or RTP from this
@@ -9,6 +9,30 @@ document. These are route constraints and measurements for the rw06_3 balance
 pass. The committed replay writes every visible bankroll/chip/heat/clock change
 to `money_curve.ndjson` so the live handoff can be updated without reading save
 files or private run state.
+
+## Current balance decision
+
+Do not tune yet. None of the three endings has a completed qualifying money
+curve, and the retained cross-economy diagnostic contains only censored active
+runs. Probe 28 is the best current Clean measurement:
+
+`$100 -> $93 -> $87 -> $79 -> $63 -> $108 (Crew loan) -> $86 (Motel)`.
+
+The contemporaneous storm target was `$109` displayed fare plus the replay's
+`$50` chip reserve. The rejected Brother-in-Law row was stale presentation, not
+available liquidity. The route correction therefore banks the strictly
+verified positive Hallway cash event during the first required Motel visit,
+before the later fare, rather than changing a game number or relying on the 75%
+family-call outcome. Probe 29 must measure that correction live when the engine
+lane is free.
+
+If Clean later exceeds the 350-action release budget or repeatedly bankrolls
+out after reaching Grand, inspect the three Players Card segment thresholds
+before touching game odds or payouts. If The Count exceeds the same budget,
+inspect Bishop's route-local job trust rewards before global rank thresholds.
+These are ordered diagnostic levers, not approved changes. Preserve Probe 19's
+24 consecutive `$2` Slot losses (`$63 -> $15`) as evidence that gambling is not
+a deterministic recovery policy.
 
 ## Known numeric pressure
 
