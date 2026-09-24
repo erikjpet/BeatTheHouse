@@ -4177,7 +4177,16 @@ func _selected_info_action_entries_for_rect(info: Dictionary, card: Rect2) -> Ar
 		return entries
 	if _selected_info_has_single_action_button(object_data):
 		var action_height := _selected_info_action_height()
-		var single_enabled := _selected_info_single_action_enabled(object_data)
+		var available_actions := _selected_info_available_actions(object_data)
+		var first_action: Dictionary = {}
+		if not available_actions.is_empty() and typeof(available_actions[0]) == TYPE_DICTIONARY:
+			first_action = available_actions[0]
+		var single_enabled := _selected_info_single_action_enabled(object_data) \
+			and not bool(object_data.get("disabled", false)) \
+			and bool(object_data.get("enabled", true)) \
+			and not bool(first_action.get("disabled", false)) \
+			and bool(first_action.get("enabled", true)) \
+			and not str(object_data.get("confirm_action_id", "")).strip_edges().is_empty()
 		entries.append({
 			"inline": false,
 			"label": _selected_info_action_label(object_data),
