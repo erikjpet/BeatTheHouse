@@ -63,6 +63,8 @@ class RunDriver:
 
 	func _ready() -> void:
 		await harness._run()
+		harness = null
+		queue_free()
 
 
 func _init() -> void:
