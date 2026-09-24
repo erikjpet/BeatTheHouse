@@ -1546,12 +1546,12 @@
           "kind": "base",
           "pos": [
             810.0,
-            168.0
+            172.0
           ],
           "footprint_class": "behind_counter_person",
           "hit_rect": [
             774.0,
-            96.0,
+            100.0,
             72.0,
             72.0
           ],
@@ -2081,7 +2081,8 @@
         "event:call_brother_in_law": "surface_item",
         "event:town_rumor_staff": "behind_counter_person",
         "event:scenario_wedding_overflow_hallway": "floor_fixture",
-        "event:chain06_nico_weekly_door": "doorway"
+        "event:chain06_nico_weekly_door": "doorway",
+        "motel_conventioneers_aftermath_actor_crowd_jammed": "standing_person"
       },
       "object_slot_positions": {
         "item:split_reel_note": [
@@ -3107,12 +3108,12 @@
           "kind": "base",
           "pos": [
             824.0,
-            246.0
+            250.0
           ],
           "footprint_class": "behind_counter_person",
           "hit_rect": [
             788.0,
-            174.0,
+            178.0,
             72.0,
             72.0
           ],
@@ -3357,12 +3358,12 @@
           "kind": "stage",
           "pos": [
             558.0,
-            176.0
+            180.0
           ],
           "footprint_class": "behind_counter_person",
           "hit_rect": [
             522.0,
-            104.0,
+            108.0,
             72.0,
             72.0
           ],
@@ -3859,7 +3860,8 @@
         "motel_weekly_rates_station|env06_8_weekly_station|foreground|": "stage.event_bed_rail",
         "motel_weekly_rates_weekly_bed||background|": "stage.event_floor_right",
         "motel_weekly_rates_weekly_lamp||left|": "stage.event_bedspread",
-        "motel_weekly_rates_weekly_sink||right|": "stage.event_wall_left"
+        "motel_weekly_rates_weekly_sink||right|": "stage.event_wall_left",
+        "motel_conventioneers_aftermath_actor_crowd_jammed": "stage.patron_floor_left"
       },
       "scenario_position_route_ids": {},
       "scenario_overflow_ids": [],
@@ -6464,12 +6466,12 @@
           "kind": "stage",
           "pos": [
             600.0,
-            80.0
+            84.0
           ],
           "footprint_class": "behind_counter_person",
           "hit_rect": [
             564.0,
-            8.0,
+            12.0,
             72.0,
             72.0
           ],
@@ -8441,7 +8443,8 @@
         "punchline_high_stakes_night_task_0": "wall_mounted",
         "punchline_new_muscle_task_0": "wall_mounted",
         "punchline_open_mic_night_task_0": "wall_mounted",
-        "punchline_raid_jitters_task_0": "wall_mounted"
+        "punchline_raid_jitters_task_0": "wall_mounted",
+        "punchline_bringer_show_aftermath_show_seated_actor": "standing_person"
       },
       "object_slot_positions": {
         "service:punchline_two_drink_minimum": [
@@ -10017,7 +10020,8 @@
         "punchline_raid_jitters_task_1|punchline_raid_hide_cart|background|": "stage.event_wall_left",
         "punchline_raid_jitters_task_2|punchline_raid_hide_cart|left|": "stage.event_wall_left",
         "punchline_raid_jitters_task_3|punchline_raid_hide_cart|right|": "stage.event_wall_left",
-        "punchline_raid_jitters_task_4|punchline_raid_hide_cart|center|": "stage.event_wall_left"
+        "punchline_raid_jitters_task_4|punchline_raid_hide_cart|center|": "stage.event_wall_left",
+        "punchline_bringer_show_aftermath_show_seated_actor": "stage.patron_floor_center"
       },
       "scenario_position_route_ids": {},
       "scenario_overflow_ids": [],
@@ -10484,12 +10488,12 @@
           "kind": "base",
           "pos": [
             634.0,
-            142.0
+            146.0
           ],
           "footprint_class": "behind_counter_person",
           "hit_rect": [
             598.0,
-            70.0,
+            74.0,
             72.0,
             72.0
           ],
@@ -12150,12 +12154,12 @@
           "kind": "base",
           "pos": [
             742.0,
-            188.0
+            192.0
           ],
           "footprint_class": "behind_counter_person",
           "hit_rect": [
             706.0,
-            116.0,
+            120.0,
             72.0,
             72.0
           ],
@@ -13738,18 +13742,18 @@
           "id": "base.staff_bar",
           "kind": "base",
           "pos": [
-            724.0,
-            190.0
+            720.0,
+            194.0
           ],
           "footprint_class": "behind_counter_person",
           "hit_rect": [
-            688.0,
-            118.0,
+            684.0,
+            122.0,
             72.0,
             72.0
           ],
           "label_anchor": [
-            724.0,
+            720.0,
             136.0
           ],
           "facing": "left",
@@ -15884,12 +15888,12 @@
           "kind": "base",
           "pos": [
             390.0,
-            170.0
+            174.0
           ],
           "footprint_class": "behind_counter_person",
           "hit_rect": [
             354.0,
-            98.0,
+            102.0,
             72.0,
             72.0
           ],
@@ -16106,12 +16110,12 @@
           "kind": "stage",
           "pos": [
             494.0,
-            170.0
+            174.0
           ],
           "footprint_class": "behind_counter_person",
           "hit_rect": [
             458.0,
-            98.0,
+            102.0,
             72.0,
             72.0
           ],
@@ -17139,12 +17143,12 @@
           "kind": "stage",
           "pos": [
             112.0,
-            198.0
+            202.0
           ],
           "footprint_class": "behind_counter_person",
           "hit_rect": [
             76.0,
-            126.0,
+            130.0,
             72.0,
             72.0
           ],
@@ -18077,12 +18081,12 @@
           "kind": "base",
           "pos": [
             352.0,
-            262.0
+            266.0
           ],
           "footprint_class": "behind_counter_person",
           "hit_rect": [
             316.0,
-            190.0,
+            194.0,
             72.0,
             72.0
           ],
@@ -18103,12 +18107,12 @@
           "kind": "base",
           "pos": [
             772.0,
-            184.0
+            188.0
           ],
           "footprint_class": "behind_counter_person",
           "hit_rect": [
             736.0,
-            112.0,
+            116.0,
             72.0,
             72.0
           ],
