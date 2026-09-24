@@ -1931,9 +1931,11 @@ function Restore-EnvironmentSurfaceAfterTravelResult {
 function Wait-ForFullyRenderedFundingTalk {
     param(
         [Parameter(Mandatory = $true)][string]$ExpectedEventId,
-        [ValidateRange(1, 64)][int]$MaximumPolls = 48
+        [ValidateRange(1, 64)][int]$MaximumPolls = 48,
+        [ValidateRange(1, 16)][int]$MaximumOpenPolls = 6
     )
 
+    $talkOpened = $false
     for ($poll = 0; $poll -lt $MaximumPolls; $poll++) {
         $eventVisible = Get-Value $script:LastObservation @('event_popup', 'visible') $null
         $talkVisible = Get-Value $script:LastObservation @('talk', 'visible') $null
@@ -1944,6 +1946,7 @@ function Wait-ForFullyRenderedFundingTalk {
             throw 'Funding wait encountered an unrelated visible event popup.'
         }
         if ([bool]$talkVisible) {
+            $talkOpened = $true
             $eventId = Get-Value $script:LastObservation @('talk', 'event_id') $null
             if ($eventId -isnot [string] -or [string]$eventId -cne $ExpectedEventId) {
                 throw "Funding wait opened unexpected TalkDock '$eventId'."
@@ -1964,9 +1967,32 @@ function Wait-ForFullyRenderedFundingTalk {
                 return
             }
         }
+        elseif (-not $talkOpened -and $poll + 1 -ge $MaximumOpenPolls) {
+            throw "The advertised lender action did not open TalkDock '$ExpectedEventId' within $MaximumOpenPolls bounded public observations."
+        }
         Wait-Frames -Frames 4 -Intent 'wait for the visible lender terms to finish rendering'
     }
     throw "Funding TalkDock '$ExpectedEventId' did not become fully rendered within the bounded wait."
+}
+
+
+function Invoke-CleanScoutingCashOpportunity {
+    if ($Ending -cne 'clean') { return $false }
+    if ($script:GrandFareRecoveryActive) {
+        throw 'Clean scouting cash collection cannot overlap Grand fare recovery.'
+    }
+
+    # The fixed route naturally passes the Motel before its invitation. Taking
+    # a visibly positive cash event while already there avoids paying a second
+    # round-trip fare later and keeps the route independent of the 75% family
+    # phone event. Reuse the same strict public-result policy as fare recovery.
+    $script:GrandFareRecoveryActive = $true
+    try {
+        return Invoke-GrandFarePublicCashEvent
+    }
+    finally {
+        $script:GrandFareRecoveryActive = $false
+    }
 }
 
 
@@ -2397,6 +2423,7 @@ function Reach-GrandCasino {
         $archetype = [string](Get-Value $script:LastObservation @('environment', 'archetype_id') '')
         if ($archetype -cin @('grand_casino', 'grand_casino_cage', 'grand_casino_high_limit')) { return }
 
+        $null = Invoke-CleanScoutingCashOpportunity
         if (Accept-GrandCasinoInviteIfVisible) { continue }
         Open-WorldMap
         $nodes = @(Get-MapNodes)
