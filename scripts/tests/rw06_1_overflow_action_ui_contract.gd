@@ -1993,7 +1993,6 @@ func _restore_run(app: Control, action_list: Control, snapshot: Dictionary) -> v
 	app.call("_clear_selected_game_action")
 	app.call("_refresh")
 	await _settle_frames(5)
-	print("RW06_1_PRODUCTION_MODE activated=%s" % mode)
 
 
 func _check_background_pointer_shield(app: Control, action_list: Control, arrival_snapshot: Dictionary, mode: String) -> void:
@@ -2262,6 +2261,7 @@ func _check_production_mutation_for_mode(app: Control, action_list: Control, pro
 			button.grab_focus()
 			_send_joy_button(JOY_BUTTON_A)
 	await _settle_frames(5)
+	print("RW06_1_PRODUCTION_MODE activated=%s" % mode)
 	if activations.count(expected_key) != prior_count + 1:
 		failures.append("RW06-1 %s did not activate the production overflow action exactly once: %s." % [mode, JSON.stringify(touch_diagnostics)])
 	if str(app.get("current_screen")) != "GAME" or app.get("current_game") == null or _mutation_snapshot(app) == before:
