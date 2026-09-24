@@ -425,7 +425,7 @@ func _defer_select_action(object_id: String, action_key: String) -> void:
 	if _selection_dispatch_pending:
 		return
 	_selection_dispatch_pending = true
-	_select_action.call_deferred(object_id, action_key)
+	call_deferred("_select_action", object_id, action_key)
 
 
 func _select_action(object_id: String, action_key: String) -> void:
