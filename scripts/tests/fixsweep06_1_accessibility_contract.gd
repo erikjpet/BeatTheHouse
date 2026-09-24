@@ -12,9 +12,9 @@ const TEST_SETTINGS_PATH := "user://fixsweep06_1_accessibility_settings.json"
 const POSTFIX_MODAL_SCOPE_PATH := "res://scripts/ui/modal_focus_scope.gd"
 const POSTFIX_SAFE_MARGIN := 12.0
 const POSTFIX_MIN_TARGET_HEIGHT := 52.0
-const PREWARM_POLL_PROBE_PATH := "res://scripts/tests/fixsweep06_1_audio_recovery_contract.gd"
-const PREWARM_DRAIN_PROBE_PATH := "res://scripts/tests/fixsweep06_1_lifecycle_contract.gd"
-const PREWARM_TERMINAL_WAIT_FRAMES := 240
+const PREWARM_DRAIN_PROBE_PATH := "res://scripts/tests/fixtures/rw06_1_prewarm_drain_probe.gd"
+const PREWARM_POLL_MAX_ATTEMPTS := 240
+const PREWARM_POLL_WAIT_SECONDS := 0.01
 
 var failures: Array[String] = []
 
@@ -59,17 +59,12 @@ func _check_script_prewarm_token_cleanup_contract() -> void:
 	if helper_body.is_empty():
 		failures.append("RW06-1-PREWARM-TOKEN: FoundationMain has no centralized threaded-prewarm request consumer.")
 		return
-	var status_guard := helper_body.find("_script_prewarm_status_has_live_request(status)")
 	var consume_call := helper_body.find("ResourceLoader.load_threaded_get(script_path)")
 	var erase_call := helper_body.find("requests.erase(script_path)")
-	if status_guard < 0 or consume_call < 0 or erase_call < 0 or consume_call > erase_call:
+	if consume_call < 0 or erase_call < 0 or consume_call > erase_call:
 		failures.append("RW06-1-PREWARM-TOKEN: threaded prewarm cleanup does not consume every live LoadToken before erasing its request.")
-	var status_body := _source_function_body(source, "_script_prewarm_status_has_live_request")
-	for live_status in ["THREAD_LOAD_IN_PROGRESS", "THREAD_LOAD_LOADED", "THREAD_LOAD_FAILED"]:
-		if not status_body.contains(live_status):
-			failures.append("RW06-1-PREWARM-TOKEN: live status predicate omits %s." % live_status)
-	if status_body.contains("THREAD_LOAD_INVALID_RESOURCE"):
-		failures.append("RW06-1-PREWARM-TOKEN: live status predicate treats INVALID as an owned request.")
+	if helper_body.contains("load_threaded_get_status"):
+		failures.append("RW06-1-PREWARM-TOKEN: token consumer reclassifies an owned request instead of getting it exactly once before erase.")
 	for forbidden in [
 		"run_ui_script_prewarm_requests.clear()",
 		"game_module_script_prewarm_requests.clear()",
@@ -83,9 +78,15 @@ func _check_script_prewarm_token_cleanup_contract() -> void:
 			or not shutdown_body.contains("_consume_script_prewarm_request(game_module_script_prewarm_requests, str(path_value))"):
 		failures.append("RW06-1-PREWARM-TOKEN: shutdown does not consume both prewarm request queues.")
 	var poll_body := _source_function_body(source, "_poll_game_module_script_prewarm")
-	if not poll_body.contains("if status == ResourceLoader.THREAD_LOAD_LOADED:\n\t\t\tvar loaded_script := _consume_script_prewarm_request(game_module_script_prewarm_requests, module_path) as Script") \
-			or not poll_body.contains("elif status in [ResourceLoader.THREAD_LOAD_FAILED, ResourceLoader.THREAD_LOAD_INVALID_RESOURCE]:\n\t\t\t_consume_script_prewarm_request(game_module_script_prewarm_requests, module_path)"):
-		failures.append("RW06-1-PREWARM-TOKEN: the game-module poller bypasses token consumption for a terminal status.")
+	if not poll_body.contains("ResourceLoader.load_threaded_get_status(module_path)") \
+			or not poll_body.contains("if status == ResourceLoader.THREAD_LOAD_INVALID_RESOURCE:\n\t\t\t_discard_invalid_script_prewarm_request(game_module_script_prewarm_requests, module_path)") \
+			or not poll_body.contains("elif status == ResourceLoader.THREAD_LOAD_LOADED:\n\t\t\tvar loaded_script := _consume_script_prewarm_request(game_module_script_prewarm_requests, module_path) as Script") \
+			or not poll_body.contains("elif status == ResourceLoader.THREAD_LOAD_FAILED:\n\t\t\t_consume_script_prewarm_request(game_module_script_prewarm_requests, module_path)"):
+		failures.append("RW06-1-PREWARM-TOKEN: the game-module poller bypasses owned-request consumption.")
+	var readiness_body := _source_function_body(source, "_run_ui_stage_scripts_ready")
+	if not readiness_body.contains("ResourceLoader.load_threaded_get_status(script_path)") \
+			or not readiness_body.contains("_discard_invalid_script_prewarm_request(run_ui_script_prewarm_requests, script_path)"):
+		failures.append("RW06-1-PREWARM-TOKEN: deferred run-UI prewarm does not distinguish live and stale requests.")
 	var immediate_play_body := _source_function_body(source, "_ensure_run_ui_stage_scripts")
 	if not immediate_play_body.contains("loaded_script = _consume_script_prewarm_request(run_ui_script_prewarm_requests, script_path)"):
 		failures.append("RW06-1-PREWARM-TOKEN: immediate Play bypasses the prewarm-token consumer.")
@@ -97,16 +98,9 @@ func _check_script_prewarm_behavior_contract() -> void:
 	root.add_child(app)
 	# Keep the automatic poller from racing the controlled terminal-state probes.
 	app.set_process(false)
-
-	for live_status in [
-		ResourceLoader.THREAD_LOAD_IN_PROGRESS,
-		ResourceLoader.THREAD_LOAD_LOADED,
-		ResourceLoader.THREAD_LOAD_FAILED,
-	]:
-		if not bool(app.call("_script_prewarm_status_has_live_request", live_status)):
-			failures.append("RW06-1-PREWARM-TOKEN: status %d was not classified as a live request." % live_status)
-	if bool(app.call("_script_prewarm_status_has_live_request", ResourceLoader.THREAD_LOAD_INVALID_RESOURCE)):
-		failures.append("RW06-1-PREWARM-TOKEN: INVALID was classified as a live request.")
+	# Headless startup intentionally loads only menu content. Enter the same full
+	# content state as Play so production establishes its real game-module queue.
+	app.call("_ensure_full_content_library_loaded")
 
 	var immediate_requests: Dictionary = app.get("run_ui_script_prewarm_requests")
 	var immediate_paths: Array[String] = []
@@ -122,26 +116,29 @@ func _check_script_prewarm_behavior_contract() -> void:
 	_assert_threaded_requests_consumed(immediate_paths, "immediate Play")
 
 	var game_requests: Dictionary = app.get("game_module_script_prewarm_requests")
-	if ResourceLoader.has_cached(PREWARM_POLL_PROBE_PATH):
-		failures.append("RW06-1-PREWARM-TOKEN: poll probe path was already cached; no real request could be established.")
+	var production_game_paths: Array[String] = []
+	for path_value in game_requests.keys():
+		var game_path := str(path_value)
+		if game_path.begins_with("res://scripts/games/") and game_path.ends_with(".gd"):
+			production_game_paths.append(game_path)
+	production_game_paths.sort()
+	if production_game_paths.is_empty():
+		failures.append("RW06-1-PREWARM-TOKEN: fresh production app established no real game-module threaded requests.")
 	else:
-		var poll_error := ResourceLoader.load_threaded_request(PREWARM_POLL_PROBE_PATH)
-		if poll_error != OK:
-			failures.append("RW06-1-PREWARM-TOKEN: poll probe request failed to start with error %d." % poll_error)
+		var production_poll_path := production_game_paths[0]
+		for _attempt in range(PREWARM_POLL_MAX_ATTEMPTS):
+			app.call("_poll_game_module_script_prewarm")
+			if not (app.get("game_module_script_prewarm_requests") as Dictionary).has(production_poll_path):
+				break
+			await create_timer(PREWARM_POLL_WAIT_SECONDS).timeout
+		if (app.get("game_module_script_prewarm_requests") as Dictionary).has(production_poll_path):
+			failures.append("RW06-1-PREWARM-TOKEN: production poller left %s queued." % production_poll_path)
 		else:
-			game_requests[PREWARM_POLL_PROBE_PATH] = true
-			app.set("game_module_script_prewarm_requests", game_requests)
-			var poll_status := await _wait_for_threaded_terminal_status(PREWARM_POLL_PROBE_PATH)
-			if poll_status != ResourceLoader.THREAD_LOAD_LOADED:
-				failures.append("RW06-1-PREWARM-TOKEN: poll probe did not reach LOADED; status=%d." % poll_status)
-			else:
-				app.call("_poll_game_module_script_prewarm")
-				if (app.get("game_module_script_prewarm_requests") as Dictionary).has(PREWARM_POLL_PROBE_PATH):
-					failures.append("RW06-1-PREWARM-TOKEN: poller left its LOADED request queued.")
-				if not ((app.get("game_module_script_cache") as Dictionary).get(PREWARM_POLL_PROBE_PATH) is Script):
-					failures.append("RW06-1-PREWARM-TOKEN: poller did not publish the consumed Script.")
-				var consumed_poll_paths: Array[String] = [PREWARM_POLL_PROBE_PATH]
-				_assert_threaded_requests_consumed(consumed_poll_paths, "LOADED poll")
+			if not ((app.get("game_module_script_cache") as Dictionary).get(production_poll_path) is Script):
+				failures.append("RW06-1-PREWARM-TOKEN: production poller did not publish %s into the game-module cache." % production_poll_path)
+			var consumed_poll_paths: Array[String] = [production_poll_path]
+			_assert_threaded_requests_consumed(consumed_poll_paths, "production game-module poll")
+	_drain_app_script_prewarm_and_assert(app, "remaining production requests after poll proof")
 
 	var stale_invalid_path := "res://scripts/tests/fixtures/rw06_1_missing_prewarm_probe.gd"
 	if ResourceLoader.load_threaded_get_status(stale_invalid_path) != ResourceLoader.THREAD_LOAD_INVALID_RESOURCE:
@@ -168,15 +165,6 @@ func _check_script_prewarm_behavior_contract() -> void:
 
 	app.queue_free()
 	await _settle_frames(4)
-
-
-func _wait_for_threaded_terminal_status(script_path: String) -> int:
-	for _frame in range(PREWARM_TERMINAL_WAIT_FRAMES):
-		var status := ResourceLoader.load_threaded_get_status(script_path)
-		if status != ResourceLoader.THREAD_LOAD_IN_PROGRESS:
-			return status
-		await process_frame
-	return ResourceLoader.load_threaded_get_status(script_path)
 
 
 func _assert_threaded_requests_consumed(script_paths: Array[String], label: String) -> void:
