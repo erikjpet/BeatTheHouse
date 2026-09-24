@@ -309,6 +309,15 @@ var game_surface_ui_state: Dictionary = {}
 var game_module_cache: Dictionary = {}
 var game_module_script_cache: Dictionary = {}
 var game_module_script_prewarm_requests: Dictionary = {}
+var run_ui_script_prewarm_results: Dictionary = {}
+# Bounded by the finite run-UI/game catalogs. A Script lets an owner discovered
+# after light-menu boot reuse the exact successful load; a null value makes a
+# failed path terminal for this host instead of requeueing it before gameplay.
+var script_prewarm_terminal_results: Dictionary = {}
+var script_prewarm_thread: Thread
+var script_prewarm_active_path := ""
+var script_prewarm_stopping := false
+var script_prewarm_force_start_error_for_test := false
 var triggered_event_module_cache: Dictionary = {}
 var triggered_event_module_cache_library: ContentLibrary = null
 var triggered_event_module_cache_generation := -1
@@ -725,7 +734,7 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	_poll_game_module_script_prewarm()
+	_poll_script_prewarm_worker()
 	_advance_game_coach_refresh_after_draw()
 	_sync_simulation_pause_owners()
 	_foundation_perf_sink.call("begin_foundation_frame")
@@ -816,7 +825,9 @@ func _input(event: InputEvent) -> void:
 
 
 func _notification(what: int) -> void:
-	if what == NOTIFICATION_APPLICATION_FOCUS_OUT or what == NOTIFICATION_WM_WINDOW_FOCUS_OUT:
+	if what == NOTIFICATION_PREDELETE:
+		_drain_script_prewarm_requests_for_shutdown()
+	elif what == NOTIFICATION_APPLICATION_FOCUS_OUT or what == NOTIFICATION_WM_WINDOW_FOCUS_OUT:
 		set_application_pause_owner("focus_out", true)
 	elif what == NOTIFICATION_APPLICATION_FOCUS_IN or what == NOTIFICATION_WM_WINDOW_FOCUS_IN:
 		set_application_pause_owner("focus_out", false)
@@ -849,29 +860,198 @@ func _exit_tree() -> void:
 
 
 func _drain_script_prewarm_requests_for_shutdown() -> void:
-	# A player can close the app while native ResourceLoader workers are still
-	# compiling optional run/game scripts. Consume those requests before this
-	# host releases its caches so Godot does not retain scripts or worker-owned
-	# resources past SceneTree teardown.
-	for path_value in run_ui_script_prewarm_requests.keys():
-		_consume_script_prewarm_request(run_ui_script_prewarm_requests, str(path_value))
-	for path_value in game_module_script_prewarm_requests.keys():
-		_consume_script_prewarm_request(game_module_script_prewarm_requests, str(path_value))
+	# Godot requires every started Thread to be joined before its last reference
+	# is released. Discard work that has not started, then join the one immutable
+	# path already owned by the worker without publishing into a tearing-down UI.
+	script_prewarm_stopping = true
+	if script_prewarm_thread != null:
+		if script_prewarm_thread.is_started():
+			script_prewarm_thread.wait_to_finish()
+		script_prewarm_thread = null
+	script_prewarm_active_path = ""
+	run_ui_script_prewarm_requests.clear()
+	game_module_script_prewarm_requests.clear()
+	run_ui_script_prewarm_results.clear()
+	script_prewarm_terminal_results.clear()
 
 
-func _consume_script_prewarm_request(requests: Dictionary, script_path: String) -> Variant:
-	if not requests.has(script_path):
+func _queue_script_prewarm_request(requests: Dictionary, script_path: String) -> void:
+	if script_prewarm_stopping or script_path.is_empty() or script_prewarm_terminal_results.has(script_path):
+		return
+	requests[script_path] = true
+
+
+func _next_script_prewarm_path() -> String:
+	# Dictionary insertion order preserves the canonical UI order requested by
+	# _request_run_ui_script_prewarm(). UI always wins over game-only work, with
+	# Coin Pusher deliberately last among the run-interface scripts.
+	if not run_ui_script_prewarm_requests.is_empty():
+		return str(run_ui_script_prewarm_requests.keys()[0])
+	if not game_module_script_prewarm_requests.is_empty():
+		return str(game_module_script_prewarm_requests.keys()[0])
+	return ""
+
+
+func _start_next_script_prewarm_worker() -> void:
+	if script_prewarm_stopping or script_prewarm_thread != null:
+		return
+	var script_path := _next_script_prewarm_path()
+	if script_path.is_empty():
+		return
+	script_prewarm_active_path = script_path
+	script_prewarm_thread = Thread.new()
+	var start_error: Error = ERR_CANT_CREATE
+	if not script_prewarm_force_start_error_for_test:
+		start_error = script_prewarm_thread.start(
+			Callable(self, "_load_script_prewarm_path_on_worker").bind(script_path),
+			Thread.PRIORITY_LOW
+		)
+	if start_error == OK:
+		return
+	script_prewarm_thread = null
+	script_prewarm_active_path = ""
+	_load_and_publish_script_prewarm_path(script_path)
+
+
+func _load_script_prewarm_path_on_worker(script_path: String) -> Variant:
+	# The worker receives one immutable value, touches no SceneTree or shared
+	# container, and returns its strong resource reference to the main thread.
+	return ResourceLoader.load(script_path)
+
+
+func _poll_script_prewarm_worker() -> void:
+	if script_prewarm_stopping:
+		return
+	if script_prewarm_thread == null:
+		_start_next_script_prewarm_worker()
+		return
+	if script_prewarm_thread.is_alive():
+		return
+	_join_active_script_prewarm_worker()
+	_start_next_script_prewarm_worker()
+
+
+func _join_active_script_prewarm_worker() -> void:
+	if script_prewarm_thread == null:
+		return
+	var script_path := script_prewarm_active_path
+	var loaded_resource: Variant = null
+	if script_prewarm_thread.is_started():
+		loaded_resource = script_prewarm_thread.wait_to_finish()
+	script_prewarm_thread = null
+	script_prewarm_active_path = ""
+	_publish_script_prewarm_result(script_path, loaded_resource)
+
+
+func _publish_script_prewarm_result(script_path: String, loaded_resource: Variant) -> void:
+	var publish_run_ui := run_ui_script_prewarm_requests.has(script_path)
+	var publish_game_module := game_module_script_prewarm_requests.has(script_path)
+	var loaded_script := loaded_resource as Script
+	script_prewarm_terminal_results[script_path] = loaded_script
+	# One completed load satisfies every owner of a shared path before either
+	# request record is erased.
+	run_ui_script_prewarm_requests.erase(script_path)
+	game_module_script_prewarm_requests.erase(script_path)
+	if publish_run_ui:
+		run_ui_script_prewarm_results[script_path] = loaded_script
+	if publish_game_module and loaded_script != null:
+		_cache_game_module_script(script_path, loaded_script)
+
+
+func _load_and_publish_script_prewarm_path(
+	script_path: String,
+	require_run_ui_result: bool = false,
+	require_game_module_result: bool = false
+) -> Script:
+	var publish_run_ui := require_run_ui_result or run_ui_script_prewarm_requests.has(script_path)
+	var publish_game_module := require_game_module_result or game_module_script_prewarm_requests.has(script_path)
+	# Join the one active load before any main-thread fallback. This guarantees
+	# the exact path is never duplicated and also avoids dependency overlap when
+	# the active worker owns a different script from the same resource graph.
+	if script_prewarm_thread != null:
+		_join_active_script_prewarm_worker()
+	var loaded_script: Script = run_ui_script_prewarm_results.get(script_path) as Script
+	if loaded_script == null:
+		loaded_script = game_module_script_cache.get(script_path) as Script
+	if loaded_script == null:
+		loaded_script = script_prewarm_terminal_results.get(script_path) as Script
+	if loaded_script == null:
+		loaded_script = _installed_run_ui_script_for_path(script_path)
+	if loaded_script == null and script_prewarm_terminal_results.has(script_path):
+		run_ui_script_prewarm_requests.erase(script_path)
+		game_module_script_prewarm_requests.erase(script_path)
 		return null
-	# Callers discard INVALID bookkeeping before entry. Every remaining
-	# dictionary-owned request is consumed exactly once before erase, including
-	# IN_PROGRESS (get joins it), LOADED and FAILED; do not reclassify it here.
-	var loaded_resource: Variant = ResourceLoader.load_threaded_get(script_path)
-	requests.erase(script_path)
+	if loaded_script == null:
+		loaded_script = ResourceLoader.load(script_path) as Script
+	script_prewarm_terminal_results[script_path] = loaded_script
+	# One load satisfies every owner of a shared path. Erase both pending entries
+	# atomically so an immediate UI or runtime-game path cannot load it again.
+	run_ui_script_prewarm_requests.erase(script_path)
+	game_module_script_prewarm_requests.erase(script_path)
+	if publish_run_ui:
+		run_ui_script_prewarm_results[script_path] = loaded_script
+	if publish_game_module and loaded_script != null:
+		_cache_game_module_script(script_path, loaded_script)
+	return loaded_script
+
+
+func _installed_run_ui_script_for_path(script_path: String) -> Script:
+	for field_name_value in RUN_UI_SCRIPT_PATHS.keys():
+		var field_name := str(field_name_value)
+		if str(RUN_UI_SCRIPT_PATHS.get(field_name, "")) != script_path:
+			continue
+		var installed_script := get(field_name) as Script
+		if installed_script != null:
+			return installed_script
+	return null
+
+
+func _finish_all_script_prewarm_work() -> void:
+	# Generation and save reconstruction can ask GameModuleRegistry for any
+	# authored module. Finish the finite menu queue before those broad consumers
+	# run so no gameplay-time lookup can race the worker's exact path.
+	while script_prewarm_thread != null \
+			or not run_ui_script_prewarm_requests.is_empty() \
+			or not game_module_script_prewarm_requests.is_empty():
+		if script_prewarm_thread == null:
+			var pending_before := run_ui_script_prewarm_requests.size() + game_module_script_prewarm_requests.size()
+			_start_next_script_prewarm_worker()
+			if script_prewarm_thread == null:
+				var pending_after := run_ui_script_prewarm_requests.size() + game_module_script_prewarm_requests.size()
+				if pending_after >= pending_before:
+					break
+				continue
+		_join_active_script_prewarm_worker()
+
+
+func _settle_script_prewarm_before_runtime() -> void:
+	# UI construction is complete before every runtime entry. Join the one game
+	# script that may already be compiling, then discard unstarted speculative
+	# work. Runtime module creation stays synchronous and centralized, so no
+	# generator/travel lookup can overlap a menu-owned loader Thread.
+	if script_prewarm_thread != null:
+		_join_active_script_prewarm_worker()
+	game_module_script_prewarm_requests.clear()
+
+
+func _publish_cached_game_module_scripts_to_generator() -> void:
+	# A fresh generator must inherit only work this host has already completed.
+	# This cache-only handoff deliberately cannot queue or load a resource.
+	if generator == null:
+		return
+	for module_path_value in game_module_script_cache.keys():
+		var module_path := str(module_path_value)
+		var module_script := game_module_script_cache.get(module_path) as Script
+		if not module_path.is_empty() and module_script != null:
+			generator.cache_game_module_script(module_path, module_script)
+
+
+func _consume_run_ui_script_prewarm_result(script_path: String) -> Variant:
+	if not run_ui_script_prewarm_results.has(script_path):
+		_load_and_publish_script_prewarm_path(script_path, true)
+	var loaded_resource: Variant = run_ui_script_prewarm_results.get(script_path)
+	run_ui_script_prewarm_results.erase(script_path)
 	return loaded_resource
-
-
-func _discard_invalid_script_prewarm_request(requests: Dictionary, script_path: String) -> void:
-	requests.erase(script_path)
 
 
 func _initialize_perf_telemetry() -> void:
@@ -896,6 +1076,7 @@ func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Di
 	if library == null:
 		_initialize_foundation()
 	_ensure_full_content_library_loaded()
+	_settle_script_prewarm_before_runtime()
 	_finish_conclusion_animation()
 	if structured_hud != null:
 		structured_hud.reset_wallet_delta()
@@ -938,6 +1119,7 @@ func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Di
 	# A generator may retain failed-install diagnostics from a previous run. New
 	# run generation owns a fresh generator just as it owns a fresh RunState.
 	generator = RunGenerator.new(library)
+	_publish_cached_game_module_scripts_to_generator()
 	_bind_run_state_presentation_signals()
 	_configure_coach_for_run()
 	_sync_scratch_ticket_discovery_to_run()
@@ -1250,12 +1432,14 @@ func _recover_unplayable_environment() -> bool:
 	var failed_target_id := str(failure.get("target_id", "")).strip_edges()
 	if run_state.current_environment.is_empty() and not failed_scenario_id.is_empty() and not failed_target_id.is_empty() and _suppress_failed_standard_scenario(failure):
 		generator = RunGenerator.new(library)
+		_publish_cached_game_module_scripts_to_generator()
 		generator.next_environment(run_state)
 		if _environment_is_playable(run_state):
 			return true
 	if not run_state.has_world_map():
 		return false
 	generator = RunGenerator.new(library)
+	_publish_cached_game_module_scripts_to_generator()
 	var target_node_id := run_state.current_world_node_id()
 	generator.next_environment(run_state, target_node_id, true)
 	return _environment_is_playable(run_state)
@@ -6133,6 +6317,7 @@ func _load_foundation_run_from_slot(return_to_start_on_missing: bool) -> bool:
 		_refresh_run_menu()
 		return false
 	_ensure_full_content_library_loaded()
+	_settle_script_prewarm_before_runtime()
 	var loaded: Variant = save_service.load_run(autosave_slot_id)
 	var load_result := save_service.last_load_result()
 	if loaded == null:
@@ -7428,6 +7613,7 @@ func _retry_travel_without_invalid_scenario(target_id: String, target_label: Str
 	if not _suppress_failed_standard_scenario(failure, target_id):
 		return {}
 	generator = RunGenerator.new(library)
+	_publish_cached_game_module_scripts_to_generator()
 	return _travel_to(target_id, target_label, choice_data, require_immediate_result)
 
 
@@ -7760,6 +7946,7 @@ func _initialize_foundation() -> void:
 	_mark_boot_event("content_library_load_complete", library.load_timing_snapshot())
 	game_module_cache = {}
 	generator = RunGenerator.new(library)
+	_publish_cached_game_module_scripts_to_generator()
 	_request_game_module_script_prewarm()
 	save_service = SaveService.new()
 	autosave_loadable_available = save_service.has_run(autosave_slot_id)
@@ -7781,6 +7968,7 @@ func _ensure_full_content_library_loaded() -> void:
 	_surface_content_validation_errors(library, true)
 	game_module_cache = {}
 	generator = RunGenerator.new(library)
+	_publish_cached_game_module_scripts_to_generator()
 	_request_game_module_script_prewarm()
 	_refresh_run_action_service()
 
@@ -8040,10 +8228,9 @@ func _build_ui() -> void:
 	# the menu. An immediate New Run still completes any remaining stages
 	# synchronously, so staging cannot expose a partially usable game screen.
 	if OS.has_feature("web") or _defer_start_menu_secondary_panels():
-		# The production Web export is intentionally single-threaded. Godot's
-		# threaded ResourceLoader has no worker there and makes its compilation
-		# backlog part of first paint, so Web retains the bounded stage-per-frame
-		# loader. Native builds can compile the same scripts off the menu thread.
+		# Web retains its bounded stage-per-frame loader. Native builds additionally
+		# compile one queued script at a time on one owned background Thread before
+		# each bounded node stage, keeping first paint independent from the run shell.
 		if not OS.has_feature("web"):
 			_request_run_ui_script_prewarm()
 		call_deferred("_prewarm_run_ui_after_web_start")
@@ -8073,9 +8260,9 @@ func _prewarm_run_ui_after_web_start() -> void:
 	run_ui_build_in_progress = true
 	await get_tree().process_frame
 	while not run_ui_built:
-		# Script compilation is the expensive part of the run shell. Let the
-		# ResourceLoader worker finish it without freezing the already-interactive
-		# menu, then keep the existing bounded node-build stages on the main thread.
+		# Script compilation is the expensive part of the run shell. The native
+		# serial worker resolves one queued script at a time; this coroutine adds a
+		# bounded node-build stage only after that stage's results are ready.
 		if not _run_ui_stage_scripts_ready(run_ui_build_stage):
 			await get_tree().process_frame
 			continue
@@ -8092,9 +8279,9 @@ func _prewarm_run_ui_after_web_start() -> void:
 func _request_run_ui_script_prewarm() -> void:
 	if OS.has_feature("web"):
 		return
-	# ResourceLoader serves these requests in queue order. Prioritize the scripts
-	# needed by the first playable room; optional overlays and game modules may
-	# continue warming after an immediate Play click instead of blocking it.
+	# Dictionary insertion order is the queue order. Prioritize scripts needed by
+	# the first playable room; optional overlays and game modules may continue
+	# warming after an immediate Play click instead of blocking it.
 	var ordered_fields: Array = []
 	for stage_index in range(15):
 		for field_name_value in RUN_UI_STAGE_SCRIPT_FIELDS.get(stage_index, []):
@@ -8106,15 +8293,18 @@ func _request_run_ui_script_prewarm() -> void:
 		if not ordered_fields.has(field_name_value):
 			ordered_fields.append(field_name_value)
 	# The large optional game is still warmed while the menu is idle, but only
-	# after every first-room and overlay script has entered the worker queue.
+	# after every first-room and overlay script has entered the queue.
 	ordered_fields.append("CoinPusherGameScript")
 	for field_name_value in ordered_fields:
-		var script_path := str(RUN_UI_SCRIPT_PATHS.get(str(field_name_value), ""))
-		if script_path.is_empty() or run_ui_script_prewarm_requests.has(script_path) or ResourceLoader.has_cached(script_path):
+		var field_name := str(field_name_value)
+		var script_path := str(RUN_UI_SCRIPT_PATHS.get(field_name, ""))
+		if script_path.is_empty() \
+				or get(field_name) is Script \
+				or run_ui_script_prewarm_results.has(script_path) \
+				or script_prewarm_terminal_results.has(script_path) \
+				or run_ui_script_prewarm_requests.has(script_path):
 			continue
-		var request_error := ResourceLoader.load_threaded_request(script_path)
-		if request_error == OK:
-			run_ui_script_prewarm_requests[script_path] = true
+		_queue_script_prewarm_request(run_ui_script_prewarm_requests, script_path)
 
 
 func _request_game_module_script_prewarm() -> void:
@@ -8130,31 +8320,23 @@ func _request_game_module_script_prewarm() -> void:
 			if generator != null:
 				generator.cache_game_module_script(module_path, game_module_script_cache.get(module_path) as Script)
 			continue
+		var resolved_ui_script := script_prewarm_terminal_results.get(module_path) as Script
+		if resolved_ui_script == null:
+			resolved_ui_script = run_ui_script_prewarm_results.get(module_path) as Script
+		if resolved_ui_script == null:
+			resolved_ui_script = _installed_run_ui_script_for_path(module_path)
+		if resolved_ui_script != null:
+			_cache_game_module_script(module_path, resolved_ui_script)
+			continue
+		if script_prewarm_terminal_results.has(module_path):
+			continue
 		if game_module_script_prewarm_requests.has(module_path):
 			continue
-		if ResourceLoader.has_cached(module_path):
-			var cached_script := ResourceLoader.load(module_path) as Script
-			if cached_script != null:
-				_cache_game_module_script(module_path, cached_script)
-			continue
-		if ResourceLoader.load_threaded_request(module_path) == OK:
-			game_module_script_prewarm_requests[module_path] = true
+		_queue_script_prewarm_request(game_module_script_prewarm_requests, module_path)
 
 
 func _poll_game_module_script_prewarm() -> void:
-	if game_module_script_prewarm_requests.is_empty():
-		return
-	for module_path_value in game_module_script_prewarm_requests.keys():
-		var module_path := str(module_path_value)
-		var status := ResourceLoader.load_threaded_get_status(module_path)
-		if status == ResourceLoader.THREAD_LOAD_INVALID_RESOURCE:
-			_discard_invalid_script_prewarm_request(game_module_script_prewarm_requests, module_path)
-		elif status == ResourceLoader.THREAD_LOAD_LOADED:
-			var loaded_script := _consume_script_prewarm_request(game_module_script_prewarm_requests, module_path) as Script
-			if loaded_script != null:
-				_cache_game_module_script(module_path, loaded_script)
-		elif status == ResourceLoader.THREAD_LOAD_FAILED:
-			_consume_script_prewarm_request(game_module_script_prewarm_requests, module_path)
+	_poll_script_prewarm_worker()
 
 
 func _cache_game_module_script(module_path: String, module_script: Script) -> void:
@@ -8163,6 +8345,7 @@ func _cache_game_module_script(module_path: String, module_script: Script) -> vo
 		generator.cache_game_module_script(module_path, module_script)
 
 func _run_ui_stage_scripts_ready(stage_index: int) -> bool:
+	_poll_script_prewarm_worker()
 	var stage_fields: Array = RUN_UI_STAGE_SCRIPT_FIELDS.get(stage_index, [])
 	for field_name_value in stage_fields:
 		var field_name := str(field_name_value)
@@ -8171,11 +8354,7 @@ func _run_ui_stage_scripts_ready(stage_index: int) -> bool:
 		var script_path := str(RUN_UI_SCRIPT_PATHS.get(field_name, ""))
 		if not run_ui_script_prewarm_requests.has(script_path):
 			continue
-		var status := ResourceLoader.load_threaded_get_status(script_path)
-		if status == ResourceLoader.THREAD_LOAD_INVALID_RESOURCE:
-			_discard_invalid_script_prewarm_request(run_ui_script_prewarm_requests, script_path)
-			continue
-		if status == ResourceLoader.THREAD_LOAD_IN_PROGRESS:
+		if not run_ui_script_prewarm_results.has(script_path):
 			return false
 	return true
 
@@ -8193,13 +8372,9 @@ func _ensure_run_ui_stage_scripts(stage_index: int) -> bool:
 		if script_path.is_empty():
 			_fail_run_ui_build(field_name, "an unregistered script path")
 			return false
-		var loaded_script: Variant
-		if run_ui_script_prewarm_requests.has(script_path):
-			# This only blocks the explicit immediate-Play path. The menu prewarmer
-			# calls this function after its nonblocking status check succeeds.
-			loaded_script = _consume_script_prewarm_request(run_ui_script_prewarm_requests, script_path)
-		if not (loaded_script is Script):
-			loaded_script = ResourceLoader.load(script_path)
+		# This is a cheap result lookup after idle-menu prewarm, or the one
+		# centralized synchronous load/cancel path after an immediate Play click.
+		var loaded_script: Variant = _consume_run_ui_script_prewarm_result(script_path)
 		if not (loaded_script is Script):
 			_fail_run_ui_build(field_name, script_path)
 			return false
@@ -15122,7 +15297,9 @@ func _game_view_snapshot(read_only_render_result: bool = false) -> Dictionary:
 
 func _current_game_surface_ui_state() -> Dictionary:
 	if FoundationActionViewModelScript == null:
-		FoundationActionViewModelScript = load(str(RUN_UI_SCRIPT_PATHS.get("FoundationActionViewModelScript", ""))) as Script
+		FoundationActionViewModelScript = _consume_run_ui_script_prewarm_result(
+			str(RUN_UI_SCRIPT_PATHS.get("FoundationActionViewModelScript", ""))
+		) as Script
 	if FoundationActionViewModelScript == null:
 		return {}
 	return FoundationActionViewModelScript.current_game_surface_ui_state(self)
@@ -16926,6 +17103,7 @@ func start_game_test_session(game_id: String) -> Dictionary:
 	if library == null:
 		_initialize_foundation()
 	_ensure_full_content_library_loaded()
+	_settle_script_prewarm_before_runtime()
 	var game := _game_module_for_id(game_id)
 	if game == null:
 		if game_test_status_label != null:
@@ -17291,7 +17469,9 @@ func _run_status_hud_model() -> Dictionary:
 	if run_state == null:
 		return {}
 	if FoundationHudViewModelScript == null:
-		FoundationHudViewModelScript = load(str(RUN_UI_SCRIPT_PATHS.get("FoundationHudViewModelScript", ""))) as Script
+		FoundationHudViewModelScript = _consume_run_ui_script_prewarm_result(
+			str(RUN_UI_SCRIPT_PATHS.get("FoundationHudViewModelScript", ""))
+		) as Script
 	if FoundationHudViewModelScript == null:
 		return {}
 	var pressure := _run_pressure_view()
@@ -18019,11 +18199,9 @@ func _create_game_module(definition: Dictionary) -> GameModule:
 	var module_path := str(definition.get("module_path", ""))
 	if module_path.is_empty() or module_path.ends_with("_ui.gd") or module_path.begins_with("res://data/runtime/"):
 		return null
-	var module_script: Script = game_module_script_cache.get(module_path) as Script
-	if module_script == null:
-		module_script = load(module_path)
-		if module_script != null:
-			_cache_game_module_script(module_path, module_script)
+	# Runtime-first creation uses the same atomic load/cancel path as idle-menu
+	# prewarming, so a pending shared owner cannot load this script again later.
+	var module_script := _load_and_publish_script_prewarm_path(module_path, false, true)
 	if module_script == null:
 		return null
 	var module_instance: Variant = module_script.new()
