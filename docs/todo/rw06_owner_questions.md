@@ -174,3 +174,23 @@ Proof before asking again:
 - Log remaining polish in `docs/plans/0.6.1_backlog.md`.
 
 If the extra time threatens the schedule, raise a questions-file item. Don't ship this layout.
+
+### Q-009 · all rows · Owner amendment: parallel Godot runs and a second peer agent
+Status: RESOLVED by release orchestrator 2026-09-23
+Asked: PM (owner amendment), 2026-09-23
+Question: None; this is a binding owner amendment that replaces "serialize Godot runs" and splits the work so it goes faster.
+Options: A) Apply as described in Resume (the owner's decision)
+Resume: Orchestrator: apply now, update `README_0_6_release_week.md` and `rw06_execute_release_week_prompt.md` to match, commit `docs/todo/rw06_2p_endings_peer_agent_prompt.md` (untracked in the primary checkout), then mark this RESOLVED.
+
+1. Parallel Godot policy (replaces the one-at-a-time rule):
+   - Isolated runs may run concurrently, up to 4 Godot processes on the machine. A run is isolated when it has its own worktree, its own APPDATA/LOCALAPPDATA user folder, its own `--log-file`, and it only kills processes it started.
+   - Use `check_godot.ps1 -AllowConcurrentGodot` for isolated focused runs.
+   - EXCLUSIVE runs still run alone: the full `-Suite Smoke`/`Contract`/`Full`, any performance or timing measurement, the soak, and every rw06_4 release gate. Before one starts, no other Godot may be running, and nothing else starts until it ends.
+   - Coordination: a shared lease folder at `D:\Projects\Beat-The-House-worktrees\.godot_leases\`. Each run writes `<agent>-<pid>.lease` and deletes it on exit. Normal runs wait while an `EXCLUSIVE.lease` exists or 4 leases exist. An exclusive run creates `EXCLUSIVE.lease` first, then waits for the other leases to clear. Before counting, clear any lease whose PID is dead.
+2. Work split:
+   - The orchestrator (release orchestrator) keeps: rw06_1 rooms, the scoreboard, owner checkpoints, and rw06_4.
+   - For rw06_1, split after the rendering fixes from Q-008 (abstract items to the action list, true behind-counter drawing) land: Grand Casino; Bar and Corner Store; all other rooms. That is up to 3 sub-agents, each owning its own maps' entries in `placement_surfaces.json`.
+   - A second peer agent (prompt `docs/todo/rw06_2p_endings_peer_agent_prompt.md`) takes over rw06_2 (endings) and then rw06_3 (balance). The orchestrator stops its own rw06_2 work at a clean point, pushes `codex/rw06_2-prep`, and writes a one-paragraph handoff in `docs/todo/rw06_2p_status.md`, including branch, tip, what works, what's blocked and the next step. From then on it doesn't edit rw06_2/rw06_3 code or branches.
+   - The peer reports progress only in `docs/todo/rw06_2p_status.md`. The orchestrator copies it into the scoreboard.
+   - Both agents use this questions file for the owner.
+Answer: A. Owner amendment, 2026-09-23.
