@@ -161,11 +161,13 @@ static func from_archetype(archetype: Dictionary, p_depth: int, rng: RngStream, 
 	environment.travel_hooks = JsonCoerceScript._copy_array(archetype.get("travel_hooks", []))
 	environment.next_archetypes = JsonCoerceScript._copy_array(archetype.get("next_archetypes", []))
 	environment.object_fixtures = JsonCoerceScript._copy_array(archetype.get("object_fixtures", []))
-	# The expanded semantic catalog belongs to an installed dynamic sequence.
-	# Keep legacy no-sequence room snapshots compact and byte-compatible.
+	# Semantic zones are authored base-room authority. Keep them on every room so
+	# a world sequence mounted after generation can prove its physical zone.
+	environment.semantic_zones = JsonCoerceScript._copy_dict(archetype.get("semantic_zones", {}))
+	# Expanded anchors and actors belong to an installed room sequence. Keep
+	# legacy no-sequence room snapshots compact unless that catalog is active.
 	if not selected_state.is_empty():
 		environment.semantic_anchors = JsonCoerceScript._copy_dict(archetype.get("semantic_anchors", {}))
-		environment.semantic_zones = JsonCoerceScript._copy_dict(archetype.get("semantic_zones", {}))
 		environment.semantic_actors = JsonCoerceScript._copy_array(archetype.get("semantic_actors", []))
 	var rare_route_rng := rng.fork("rare_next:%s" % environment.id)
 	_append_rare_archetypes(environment.next_archetypes, archetype, rare_route_rng)
