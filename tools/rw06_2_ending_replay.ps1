@@ -3803,6 +3803,80 @@ function Ensure-BlackjackStakeRange {
 }
 
 
+function Get-CleanPublicCasinoTotal {
+    $bankroll = Get-RenderedHudInteger -Name bankroll -Context 'Clean Players Card bankroll'
+    $chips = Get-RenderedHudInteger -Name chips -Context 'Clean Players Card chips'
+    return $bankroll + $chips
+}
+
+
+function Set-CleanBlackjackStake {
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateSet('minimum', 'maximum', 'followup')]
+        [string]$Mode
+    )
+
+    $phase = Get-ExactReplayString -InputObject $script:LastObservation -Path @('game', 'phase') -Context 'Clean blackjack wager phase'
+    if ($phase -cne 'betting') {
+        throw "Clean blackjack wager selection requires the visible betting phase, found '$phase'."
+    }
+    $minimum = Get-ExactReplayInt32 -InputObject $script:LastObservation -Path @('game', 'stake_min') -Context 'Clean blackjack table minimum'
+    $maximum = Get-ExactReplayInt32 -InputObject $script:LastObservation -Path @('game', 'stake_max') -Context 'Clean blackjack table maximum'
+    $selected = Get-ExactReplayInt32 -InputObject $script:LastObservation -Path @('game', 'selected_stake') -Context 'Clean blackjack selected stake'
+    if ($minimum -le 0 -or $maximum -lt $minimum -or $selected -lt $minimum -or $selected -gt $maximum) {
+        throw "Clean blackjack exposed an invalid public stake range ($minimum <= $selected <= $maximum)."
+    }
+
+    if ($Mode -ceq 'maximum') {
+        if ($selected -ne $maximum) {
+            if ($null -ceq (Find-GameAction -Action 'blackjack_max_bet')) {
+                throw 'Clean blackjack exposes no visible MAX control during its public betting phase.'
+            }
+            $null = Invoke-GameAction -Action 'blackjack_max_bet' -Intent 'press the visible clean-route blackjack wager to the table maximum'
+            Wait-Frames -Frames 4
+        }
+        $afterMaximum = Get-ExactReplayInt32 -InputObject $script:LastObservation -Path @('game', 'selected_stake') -Context 'Clean blackjack maximum stake result'
+        if ($afterMaximum -cne $maximum) {
+            throw "The visible blackjack MAX control did not select the published table maximum ($afterMaximum != $maximum)."
+        }
+        return
+    }
+
+    if ($selected -ne $minimum) {
+        if ($null -ceq (Find-GameAction -Action 'blackjack_clear_bet')) {
+            throw 'Clean blackjack exposes no visible CLR control while returning to the table minimum.'
+        }
+        $null = Invoke-GameAction -Action 'blackjack_clear_bet' -Intent 'return the visible clean-route blackjack wager to the table minimum'
+        Wait-Frames -Frames 4
+    }
+    $afterClear = Get-ExactReplayInt32 -InputObject $script:LastObservation -Path @('game', 'selected_stake') -Context 'Clean blackjack minimum stake result'
+    if ($afterClear -cne $minimum) {
+        throw "The visible blackjack CLR control did not restore the published table minimum ($afterClear != $minimum)."
+    }
+    if ($Mode -ceq 'minimum') { return }
+
+    # After a profitable hand leaves the Gold segment just short, one visible
+    # $10 rail chip builds enough cushion for the required fifth hand without
+    # pushing the whole bankroll back onto the felt.
+    $followupTarget = [Math]::Min($maximum, $minimum + 10)
+    $tenChip = @(Get-GameActions | Where-Object {
+        [string](Get-Value $_ @('action') '') -ceq 'blackjack_wager_place_gesture' -and
+            [int](Get-Value $_ @('index') -1) -ceq 2 -and
+            [bool](Get-Value $_ @('enabled') $false)
+    })
+    if ($tenChip.Count -cne 1) {
+        throw "Clean blackjack requires one visible enabled `$10 rail chip for its follow-up wager; found $($tenChip.Count)."
+    }
+    $null = Invoke-GameAction -Action 'blackjack_wager_place_gesture' -Index 2 -Intent 'add the visible ten chip to the clean-route follow-up wager'
+    Wait-Frames -Frames 4
+    $afterFollowup = Get-ExactReplayInt32 -InputObject $script:LastObservation -Path @('game', 'selected_stake') -Context 'Clean blackjack follow-up stake result'
+    if ($afterFollowup -cne $followupTarget) {
+        throw "The visible ten-chip follow-up did not select the expected public stake ($afterFollowup != $followupTarget)."
+    }
+}
+
+
 function Resolve-BlackjackRouteEventPopup {
     if (@('clean', 'cheat') -cnotcontains $Ending) { return $false }
 
@@ -3855,11 +3929,19 @@ function Resolve-BlackjackRouteEventPopup {
 function Play-OneBlackjackRound {
     param(
         [switch]$UseVisibleCheat,
-        [switch]$UseHeistStake
+        [switch]$UseHeistStake,
+        [ValidateSet('unchanged', 'minimum', 'maximum', 'followup')]
+        [string]$CleanStakeMode = 'unchanged'
     )
     Enter-BlackjackTable
     if ($UseHeistStake) {
         Ensure-BlackjackStakeRange -Minimum 8 -Maximum 30
+    }
+    if ($CleanStakeMode -cne 'unchanged') {
+        if ($Ending -cne 'clean') {
+            throw "Clean blackjack stake mode '$CleanStakeMode' was requested for ending '$Ending'."
+        }
+        Set-CleanBlackjackStake -Mode $CleanStakeMode
     }
     $beforeHand = [int](Get-Value $script:LastObservation @('game', 'boss_hand_number') 0)
     $roundStarted = [string](Get-Value $script:LastObservation @('game', 'phase') '') -cne 'betting'
@@ -4357,15 +4439,72 @@ function Invoke-CleanEndingRoute {
     Enter-GrandRoom -Room main
     $claimedTiers = @()
 
-    for ($round = 0; $round -lt 80; $round++) {
-        Play-OneBlackjackRound
-        $tier = Visit-CageAndClaimReadyPlayersCard
-        if (-not [string]::IsNullOrEmpty($tier)) {
-            $expectedTier = @('bronze', 'silver', 'gold')[$claimedTiers.Count]
+    # Each tier's ledger is segment-based. Track only rendered bankroll + chips
+    # while playing, then visit Linda once the public money change and settled
+    # hand count satisfy the rules she presents. Qualification is sticky, so a
+    # Cage round trip after every hand only obscures the otherwise normal route.
+    $segments = @(
+        [pscustomobject]@{ tier = 'bronze'; minimum_games = 1; target_net = 5 },
+        [pscustomobject]@{ tier = 'silver'; minimum_games = 3; target_net = 15 },
+        [pscustomobject]@{ tier = 'gold'; minimum_games = 5; target_net = 30 }
+    )
+    $totalRounds = 0
+    foreach ($segment in $segments) {
+        $expectedTier = [string]$segment.tier
+        $segmentBaseline = Get-CleanPublicCasinoTotal
+        $segmentRounds = 0
+        $consecutiveLosses = 0
+        $lastRoundDelta = 0
+        $qualified = $false
+
+        while ($totalRounds -lt 80) {
+            $segmentNetBefore = (Get-CleanPublicCasinoTotal) - $segmentBaseline
+            $stakeMode = 'minimum'
+            if ($expectedTier -ceq 'silver' -and $segmentRounds -ceq 0) {
+                # Bronze's chip award visibly bankrolls one confident opening
+                # Silver hand; the following hands return to the minimum.
+                $stakeMode = 'maximum'
+            }
+            elseif ($consecutiveLosses -ge 2) {
+                $stakeMode = 'maximum'
+            }
+            elseif ($lastRoundDelta -gt 0 -and $segmentNetBefore -gt 0 -and
+                $segmentNetBefore -lt [int]$segment.target_net -and
+                ([int]$segment.target_net - $segmentNetBefore) -le 12) {
+                $stakeMode = 'followup'
+            }
+
+            $beforeRound = Get-CleanPublicCasinoTotal
+            Play-OneBlackjackRound -CleanStakeMode $stakeMode
+            $afterRound = Get-CleanPublicCasinoTotal
+            $lastRoundDelta = $afterRound - $beforeRound
+            if ($lastRoundDelta -lt 0) {
+                $consecutiveLosses++
+            }
+            else {
+                $consecutiveLosses = 0
+            }
+            $segmentRounds++
+            $totalRounds++
+
+            $segmentNet = $afterRound - $segmentBaseline
+            $publicHeat = Get-RenderedHudInteger -Name heat_level -Context "Clean $expectedTier segment heat"
+            if ($publicHeat -gt 30) {
+                throw "Clean $expectedTier segment exceeded the visible Players Card heat ceiling ($publicHeat > 30)."
+            }
+            if ($segmentRounds -lt [int]$segment.minimum_games -or $segmentNet -lt [int]$segment.target_net) {
+                continue
+            }
+
+            $tier = Visit-CageAndClaimReadyPlayersCard
+            if ([string]::IsNullOrEmpty($tier)) {
+                throw "Linda did not enable the visible $expectedTier claim after $segmentRounds hands and a public net change of $segmentNet."
+            }
             if ($tier -cne $expectedTier) {
                 throw "Visible Players Card recognition arrived out of order: expected '$expectedTier', found '$tier'."
             }
             $claimedTiers += $tier
+            $qualified = $true
             if ($tier -ceq 'gold') {
                 $null = Assert-TerminalOutcome
                 return
@@ -4373,10 +4512,14 @@ function Invoke-CleanEndingRoute {
             if (-not $ConfirmationOnly -and $tier -ceq 'silver' -and -not $script:MidpointSaved) {
                 Assert-SaveRelaunchContinue -Milestone 'Silver Players Card'
             }
+            Enter-GrandRoom -Room main
+            break
         }
-        Enter-GrandRoom -Room main
+        if (-not $qualified) {
+            throw "Clean route did not claim the $expectedTier Players Card tier within 80 settled blackjack rounds."
+        }
     }
-    throw "Clean route did not finish all three Players Card tiers within 80 settled blackjack rounds."
+    throw 'Clean route left the Players Card ladder without reaching the Gold terminal review.'
 }
 
 
