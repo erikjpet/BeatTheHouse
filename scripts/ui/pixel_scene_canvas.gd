@@ -96,6 +96,10 @@ const OBJECT_LABEL_MAX_WIDTH := 126.0
 const OBJECT_LABEL_HEIGHT := 15.0
 const OBJECT_LABEL_TWO_LINE_HEIGHT := 26.0
 const OBJECT_LABEL_GAP := 4.0
+const OBJECT_LABEL_FONT_SIZE := 10
+const OBJECT_LABEL_TEXT_PADDING_X := 3.0
+const OBJECT_LABEL_BASELINE_Y := 11.0
+const OBJECT_LABEL_LINE_HEIGHT := 11.0
 # Godot can deliver touch plus emulated mouse after a stalled frame.
 const EMULATED_TOUCH_SUPPRESS_MS := 750
 const EMULATED_TOUCH_SUPPRESS_DISTANCE := 18.0
@@ -2763,7 +2767,7 @@ func _draw_scenario_prop(rect: Rect2, object_data: Dictionary, active: bool) -> 
 		_neon_text(mark, rect.position + Vector2(5.0, 14.0), 12, C_WHITE)
 	if not str(object_data.get("state", "")).is_empty():
 		draw_line(rect.position + Vector2(8.0, rect.size.y - 9.0), rect.end - Vector2(8.0, 9.0), accent, 3.0)
-		_draw_public_prop_state_marker(rect, object_data, accent)
+		_draw_public_prop_state_marker(rect, object_data)
 
 
 func _draw_scenario_actor(rect: Rect2, object_data: Dictionary, active: bool) -> void:
@@ -5419,7 +5423,7 @@ func _object_label_lines(text: String, font: Font, font_size: int, max_width: fl
 
 func object_label_accessibility_snapshot(full_label: String) -> Dictionary:
 	var full := full_label.strip_edges()
-	var lines := _object_label_lines(full, ThemeDB.fallback_font, 8, OBJECT_LABEL_MAX_WIDTH - 6.0)
+	var lines := _object_label_lines(full, ThemeDB.fallback_font, OBJECT_LABEL_FONT_SIZE, OBJECT_LABEL_MAX_WIDTH - OBJECT_LABEL_TEXT_PADDING_X * 2.0)
 	return {
 		"tooltip": full,
 		"accessibility_name": full,
@@ -5791,20 +5795,21 @@ func _draw_object_label(rect: Rect2, label: String, object_type: String, disable
 	if label_rect.size.x <= 0.0 or label_rect.size.y <= 0.0:
 		return
 	var color := _color_for_object_type(object_type)
-	var alpha := 1.0 if active else 0.86
+	var alpha := 1.0 if active else 0.96
 	if disabled:
 		color = C_SOFT
-		alpha = 0.68
+		alpha = 0.76
 	var font := get_theme_default_font()
-	var lines := _object_label_lines(text, font, 8, label_rect.size.x - 6.0)
+	var text_width := label_rect.size.x - OBJECT_LABEL_TEXT_PADDING_X * 2.0
+	var lines := _object_label_lines(text, font, OBJECT_LABEL_FONT_SIZE, text_width)
 	for index in range(mini(2, lines.size())):
-		var text_pos := label_rect.position + Vector2(3.0, 10.0 + float(index) * 11.0)
-		draw_string(font, text_pos + Vector2(1.0, 1.0), lines[index], HORIZONTAL_ALIGNMENT_CENTER, label_rect.size.x - 6.0, 8, Color(0.0, 0.0, 0.0, 0.78))
-		draw_string(font, text_pos, lines[index], HORIZONTAL_ALIGNMENT_CENTER, label_rect.size.x - 6.0, 8, Color(color.r, color.g, color.b, alpha))
+		var text_pos := label_rect.position + Vector2(OBJECT_LABEL_TEXT_PADDING_X, OBJECT_LABEL_BASELINE_Y + float(index) * OBJECT_LABEL_LINE_HEIGHT)
+		draw_string(font, text_pos + Vector2(1.0, 1.0), lines[index], HORIZONTAL_ALIGNMENT_CENTER, text_width, OBJECT_LABEL_FONT_SIZE, Color(0.0, 0.0, 0.0, 0.92))
+		draw_string(font, text_pos, lines[index], HORIZONTAL_ALIGNMENT_CENTER, text_width, OBJECT_LABEL_FONT_SIZE, Color(color.r, color.g, color.b, alpha))
 	draw_line(
 		Vector2(label_rect.position.x + 8.0, label_rect.end.y - 1.0),
 		Vector2(label_rect.end.x - 8.0, label_rect.end.y - 1.0),
-		Color(color.r, color.g, color.b, alpha * 0.32),
+		Color(color.r, color.g, color.b, alpha * (0.32 if active else 0.16)),
 		1
 	)
 
@@ -6437,7 +6442,7 @@ func _public_prop_state_label(public_state: String) -> String:
 	return "CHANGED"
 
 
-func _draw_public_prop_state_marker(rect: Rect2, object_data: Dictionary, accent: Color) -> void:
+func _draw_public_prop_state_marker(rect: Rect2, object_data: Dictionary) -> void:
 	var variant := str(object_data.get("prop_state_variant", ""))
 	if variant.is_empty():
 		return
@@ -6447,8 +6452,8 @@ func _draw_public_prop_state_marker(rect: Rect2, object_data: Dictionary, accent
 		1: marker_color = C_YELLOW
 		2: marker_color = C_PINK
 		3: marker_color = C_TEAL
-	# Keep the state cue inside the object's lower edge. The previous boxed badge
-	# covered nearby machines and read like a second generic icon in dense rooms.
+	# Keep the state cue inside the object's lower edge. A perimeter around the
+	# complete model reads like a leftover placeholder in dense floor layouts.
 	var rail := Rect2(rect.position + Vector2(5.0, rect.size.y - 7.0), Vector2(maxf(1.0, rect.size.x - 10.0), 3.0))
 	draw_rect(rail, Color(0.02, 0.02, 0.05, 0.72))
 	# Ten hexadecimal cells expose forty deterministic non-color bits. Actual
@@ -6464,7 +6469,6 @@ func _draw_public_prop_state_marker(rect: Rect2, object_data: Dictionary, accent
 				draw_rect(bit_rect, Color(marker_color.r, marker_color.g, marker_color.b, 0.18), false, 1.0)
 	draw_line(rect.position + Vector2(3.0, rect.size.y - 10.0), rect.position + Vector2(3.0, rect.size.y - 2.0), marker_color, 2.0)
 	draw_line(rect.end - Vector2(3.0, 10.0), rect.end - Vector2(3.0, 2.0), marker_color, 2.0)
-	draw_rect(rect.grow(1.0), Color(accent.r, accent.g, accent.b, 0.58), false, 1.0)
 
 
 func _fallback_scenario_semantic_prop(value: String) -> String:
