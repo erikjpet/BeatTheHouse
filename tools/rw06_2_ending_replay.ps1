@@ -5080,33 +5080,35 @@ function Ensure-PunchlineCasinoDiscovered {
 }
 
 
-function Invoke-BishopPresenceCashierTipBoundary {
+function Invoke-BishopPresenceHouseDrinkBoundary {
     param(
         [Parameter(Mandatory = $true)][ValidateRange(1, 12)][int]$BoundaryNumber
     )
-    Navigate-ToArchetype `
-        -ArchetypeId 'corner_store' `
-        -Intent "return to the Corner Store for Bishop presence action boundary $BoundaryNumber"
+    # Bishop rotates through the Grand Casino. Keep his action boundary in that
+    # same venue instead of forcing a detour to a disconnected Corner Store node.
+    # The main-floor drink is an ordinary rendered, priced player action.
+    Reach-GrandCasino
+    Enter-GrandRoom -Room main
     Restore-EnvironmentSurfaceAfterTravelResult
 
-    $service = Find-CanvasObject -SemanticId 'service:cashier_tip'
+    $service = Find-CanvasObject -SemanticId 'service:house_drink'
     if ($null -ceq $service -or
-        [string](Get-Value $service @('label') '') -cne 'Cashier Tip' -or
-        [string](Get-Value $service @('object_type') '') -cne 'service') {
-        throw 'The Corner Store does not expose the rendered, enabled Cashier Tip used to advance Bishop presence.'
+        [string](Get-Value $service @('label') '') -cne 'Buy a Drink' -or
+        [string](Get-Value $service @('object_type') '') -cne 'drink') {
+        throw 'Grand Casino Main does not expose the rendered, enabled house drink used to advance Bishop presence.'
     }
-    $beforeCash = Get-RenderedHudInteger -Name bankroll -Context "Bishop presence boundary $BoundaryNumber bankroll before the visible Cashier Tip"
-    if ($beforeCash -lt 4) {
-        throw "The visible Cashier Tip costs `$4, but only `$$beforeCash remains before Bishop presence boundary $BoundaryNumber."
+    $beforeCash = Get-RenderedHudInteger -Name bankroll -Context "Bishop presence boundary $BoundaryNumber bankroll before the visible house drink"
+    if ($beforeCash -lt 8) {
+        throw "The visible house drink costs `$8, but only `$$beforeCash remains before Bishop presence boundary $BoundaryNumber."
     }
     $null = Open-SemanticObject `
-        -SemanticId 'service:cashier_tip' `
+        -SemanticId 'service:house_drink' `
         -PreferredActions @('Use') `
-        -Intent "pay the visible `$4 Cashier Tip to advance Bishop presence boundary $BoundaryNumber"
+        -Intent "buy the visible `$8 house drink to advance Bishop presence boundary $BoundaryNumber"
     Wait-Frames -Frames 10
-    $afterCash = Get-RenderedHudInteger -Name bankroll -Context "Bishop presence boundary $BoundaryNumber bankroll after the visible Cashier Tip"
-    if ($afterCash -ne $beforeCash - 4) {
-        throw "The visible Cashier Tip did not charge its exact `$4 price at Bishop presence boundary $BoundaryNumber (`$$beforeCash -> `$$afterCash)."
+    $afterCash = Get-RenderedHudInteger -Name bankroll -Context "Bishop presence boundary $BoundaryNumber bankroll after the visible house drink"
+    if ($afterCash -ne $beforeCash - 8) {
+        throw "The visible house drink did not charge its exact `$8 price at Bishop presence boundary $BoundaryNumber (`$$beforeCash -> `$$afterCash)."
     }
     if (Test-CrewFavorPublicSurface) {
         throw 'A Crew favor resurfaced after the two-favor marker was visibly cleared.'
@@ -5125,7 +5127,7 @@ function Find-BishopSurfaceAtGrand {
             }
         }
         if ($boundary -lt 12) {
-            Invoke-BishopPresenceCashierTipBoundary -BoundaryNumber ($boundary + 1)
+            Invoke-BishopPresenceHouseDrinkBoundary -BoundaryNumber ($boundary + 1)
         }
     }
     throw "Bishop did not rotate onto either player-accessible Grand Casino room within twelve visible action boundaries."
