@@ -18766,6 +18766,7 @@
         "event:chain06_cass_first_contact": "behind_counter_person",
         "event:chain06_rourke_noticed": "wall_mounted",
         "event:comped_suite_offer": "behind_counter_person",
+        "event:recruitment_bishop": "standing_person",
         "event:scenario_audit_roster": "wall_mounted",
         "event:scenario_convention_badge": "wall_mounted",
         "event:scenario_gala_cover": "floor_fixture",
@@ -20934,6 +20935,7 @@
       "scenario_slot_ids": {},
       "scenario_position_route_ids": {},
       "class_overrides": {
+        "event:recruitment_bishop": "standing_person",
         "game:baccarat": "surface_item",
         "game:blackjack": "surface_item",
         "game:craps": "surface_item",
@@ -21814,7 +21816,8 @@
       "scenario_position_route_ids": {},
       "class_overrides": {
         "casino_fixture:cage_atm": "wall_mounted",
-        "casino_fixture:cage_counter": "surface_item"
+        "casino_fixture:cage_counter": "surface_item",
+        "event:recruitment_bishop": "standing_person"
       },
       "scenario_overflow_ids": [],
       "scenario_art_keys": {}
