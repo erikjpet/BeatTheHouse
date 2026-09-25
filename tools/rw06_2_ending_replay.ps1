@@ -5840,10 +5840,33 @@ function Invoke-BishopGrandDrinkSobrietyDetour {
             -InputObject $script:LastObservation `
             -Path @('status_hud', 'drunk_text') `
             -Context "Bishop presence boundary $BoundaryNumber rendered Drunk projection after declining the Comped Suite Offer"
+        $feedbackVisible = Get-ExactReplayBoolean `
+            -InputObject $script:LastObservation `
+            -Path @('feedback', 'visible') `
+            -Context "Bishop presence boundary $BoundaryNumber Comped Suite decline feedback visibility"
+        $feedbackTitle = Get-ExactReplayString `
+            -InputObject $script:LastObservation `
+            -Path @('feedback', 'title') `
+            -Context "Bishop presence boundary $BoundaryNumber Comped Suite decline feedback title"
+        $feedbackText = Get-ExactReplayString `
+            -InputObject $script:LastObservation `
+            -Path @('feedback', 'text') `
+            -Context "Bishop presence boundary $BoundaryNumber Comped Suite decline feedback text"
+        $messageVisible = Get-ExactReplayBoolean `
+            -InputObject $script:LastObservation `
+            -Path @('message', 'visible') `
+            -Context "Bishop presence boundary $BoundaryNumber Comped Suite decline message visibility"
+        $messageText = Get-ExactReplayString `
+            -InputObject $script:LastObservation `
+            -Path @('message', 'text') `
+            -Context "Bishop presence boundary $BoundaryNumber Comped Suite decline message"
         if ($afterCompCash -cne $beforeCompCash -or
-            $afterCompHeat -cne ($beforeCompHeat - 2) -or
+            $afterCompHeat -cne ($beforeCompHeat - 3) -or
             -not $drunkRendered -or $drunkText -cne '100' -or
-            [string](Get-Value $script:LastObservation @('screen', 'screen') '') -cne 'ENVIRONMENT' -or
+            -not $feedbackVisible -or $feedbackTitle -cne 'Result' -or
+            $feedbackText -cne 'You keep your distance from the kindness.  Heat -2' -or
+            $messageVisible -or $messageText -cne 'You keep your distance from the kindness.' -or
+            [string](Get-Value $script:LastObservation @('screen', 'screen') '') -cne 'RESULT' -or
             [string](Get-Value $script:LastObservation @('environment', 'world_node_id') '') -cne [string]$currentNodeId -or
             [string](Get-Value $script:LastObservation @('environment', 'archetype_id') '') -cne 'grand_casino' -or
             [bool](Get-Value $script:LastObservation @('event_popup', 'visible') $true) -or
@@ -5851,6 +5874,29 @@ function Invoke-BishopGrandDrinkSobrietyDetour {
             (Get-Value $script:LastObservation @('screen', 'travel_transition_active') $null) -isnot [bool] -or
             [bool](Get-Value $script:LastObservation @('screen', 'travel_transition_active') $true)) {
             throw "Bishop presence boundary $BoundaryNumber Comped Suite decline did not settle the exact public economy, Drunk projection, and modal-free Grand state."
+        }
+        Restore-EnvironmentSurfaceAfterTravelResult
+        $restoredCompCash = Get-RenderedHudInteger -Name bankroll -Context "Bishop presence boundary $BoundaryNumber bankroll after restoring the Comped Suite decline"
+        $restoredCompHeat = Get-RenderedHudInteger -Name heat_level -Context "Bishop presence boundary $BoundaryNumber heat after restoring the Comped Suite decline"
+        $restoredDrunkRendered = Get-ExactReplayBoolean `
+            -InputObject $script:LastObservation `
+            -Path @('status_hud', 'drunk_rendered') `
+            -Context "Bishop presence boundary $BoundaryNumber restored rendered Drunk witness after declining the Comped Suite Offer"
+        $restoredDrunkText = Get-ExactReplayString `
+            -InputObject $script:LastObservation `
+            -Path @('status_hud', 'drunk_text') `
+            -Context "Bishop presence boundary $BoundaryNumber restored rendered Drunk projection after declining the Comped Suite Offer"
+        if ($restoredCompCash -cne $afterCompCash -or
+            $restoredCompHeat -cne $afterCompHeat -or
+            -not $restoredDrunkRendered -or $restoredDrunkText -cne '100' -or
+            [string](Get-Value $script:LastObservation @('screen', 'screen') '') -cne 'ENVIRONMENT' -or
+            [string](Get-Value $script:LastObservation @('environment', 'world_node_id') '') -cne [string]$currentNodeId -or
+            [string](Get-Value $script:LastObservation @('environment', 'archetype_id') '') -cne 'grand_casino' -or
+            [bool](Get-Value $script:LastObservation @('event_popup', 'visible') $true) -or
+            [bool](Get-Value $script:LastObservation @('talk', 'visible') $true) -or
+            (Get-Value $script:LastObservation @('screen', 'travel_transition_active') $null) -isnot [bool] -or
+            [bool](Get-Value $script:LastObservation @('screen', 'travel_transition_active') $true)) {
+            throw "Bishop presence boundary $BoundaryNumber Comped Suite decline did not restore the exact modal-free Grand environment before the final sobriety loop."
         }
 
         Open-WorldMap
