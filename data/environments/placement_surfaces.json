@@ -1238,6 +1238,7 @@
       "art_key": "shop",
       "repack_scenario_conflicts": true,
       "class_overrides": {
+        "event:recruitment_switch": "standing_person",
         "shopkeeper:merchant": "behind_counter_person",
         "stacked_cover": "floor_fixture",
         "back_alley_cruiser_parked_exit": "doorway",
