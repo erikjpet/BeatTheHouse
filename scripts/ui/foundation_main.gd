@@ -13721,6 +13721,11 @@ func _activate_interactable_object_with_lifecycle_snapshot(object_id: String, ca
 		_show_message(disabled_reason)
 		_refresh()
 		return false
+	if bool(object_data.get("delivery_handoff_direct", false)):
+		var handoff_node_id := str(object_data.get("delivery_handoff_node_id", "")).strip_edges()
+		if handoff_node_id.is_empty():
+			return false
+		return _complete_delivery_handoff(handoff_node_id)
 	var object_type := str(object_data.get("object_type", CONTEXT_MODE_ROOM))
 	var source_id := str(object_data.get("source_id", ""))
 	match object_type:

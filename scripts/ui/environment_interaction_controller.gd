@@ -1260,6 +1260,13 @@ static func _attach_delivery_handoff_to_contact(host: Variant, records: Array) -
 		contact["delivery_contact_label"] = contact_label
 		contact["delivery_handoff_direct"] = true
 		contact["delivery_handoff_node_id"] = node_id
+		# This contact temporarily borrows an ordinary room person. Its authored
+		# event responses do not belong to the active delivery, so expose only the
+		# authenticated handoff while the delivery owns the contact.
+		contact["available_actions"] = [{"id": "delivery_handoff_direct", "label": "Hand Over The Package"}]
+		contact["inline_actions"] = []
+		contact["scenario_sequence_actions"] = []
+		contact["confirm_action_id"] = "delivery_handoff_direct"
 		contact["interactive"] = true
 		contact["enabled"] = true
 		contact["disabled_reason"] = ""
@@ -1314,6 +1321,8 @@ static func _attach_delivery_handoff_to_contact(host: Variant, records: Array) -
 		"delivery_contact_label": contact_label,
 		"delivery_handoff_direct": true,
 		"delivery_handoff_node_id": node_id,
+		"available_actions": [{"id": "delivery_handoff_direct", "label": "Hand Over The Package"}],
+		"confirm_action_id": "delivery_handoff_direct",
 		"focus_rect": contact_rect,
 		"placement_class": "standing_person",
 	}))
