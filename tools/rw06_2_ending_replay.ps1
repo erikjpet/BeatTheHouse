@@ -2056,31 +2056,40 @@ function Start-NormalSeededRun {
         throw "The fresh start screen did not expose PLAY. Found '$primary'."
     }
 
-    $null = Click-Button -Text 'PLAY' -Intent 'start the mandatory first-night lesson on the fresh profile'
-    Wait-Frames -Frames 30
-    $lessonScreen = [string](Get-Value $script:LastObservation @('screen', 'screen') '')
-    $lessonHasRun = Get-Value $script:LastObservation @('screen', 'has_run') $null
-    if ($lessonHasRun -isnot [bool] -or -not [bool]$lessonHasRun -or
-        $lessonScreen -cin @('START', 'VICTORY', 'FAILURE')) {
-        throw "PLAY did not visibly enter a live first-night lesson (screen='$lessonScreen', has_run=$lessonHasRun)."
-    }
-    Clear-VisibleCoach
+    $replayLessonsButton = Select-UniqueFullyVisibleButton -Buttons @(Get-Buttons) -Text 'REPLAY LESSONS'
+    if ($null -eq $replayLessonsButton) {
+        $null = Click-Button -Text 'PLAY' -Intent 'start the mandatory first-night lesson on the fresh profile'
+        Wait-Frames -Frames 30
+        $lessonScreen = [string](Get-Value $script:LastObservation @('screen', 'screen') '')
+        $lessonHasRun = Get-Value $script:LastObservation @('screen', 'has_run') $null
+        if ($lessonHasRun -isnot [bool] -or -not [bool]$lessonHasRun -or
+            $lessonScreen -cin @('START', 'VICTORY', 'FAILURE')) {
+            throw "PLAY did not visibly enter a live first-night lesson (screen='$lessonScreen', has_run=$lessonHasRun)."
+        }
+        Clear-VisibleCoach
 
-    $null = Click-Button -Text 'Menu' -Intent 'open the run menu to use the player-facing lesson skip'
-    if (-not [bool](Get-Value $script:LastObservation @('screen', 'run_menu_visible') $false)) {
-        throw 'The live first-night lesson did not render its run menu.'
-    }
-    $null = Click-RunMenuButton -Text 'Skip Lessons' -RevealDirection down -Intent 'request the player-facing lesson skip'
-    $null = Click-TutorialConfirmationButton -Role ok -Intent 'confirm the lesson skip and return to the main menu'
-    Wait-Frames -Frames 30
+        $null = Click-Button -Text 'Menu' -Intent 'open the run menu to use the player-facing lesson skip'
+        if (-not [bool](Get-Value $script:LastObservation @('screen', 'run_menu_visible') $false)) {
+            throw 'The live first-night lesson did not render its run menu.'
+        }
+        $null = Click-RunMenuButton -Text 'Skip Lessons' -RevealDirection down -Intent 'request the player-facing lesson skip'
+        $null = Click-TutorialConfirmationButton -Role ok -Intent 'confirm the lesson skip and return to the main menu'
+        Wait-Frames -Frames 30
 
-    if ([string](Get-Value $script:LastObservation @('screen', 'screen') '') -cne 'START' -or
-        [bool](Get-Value $script:LastObservation @('screen', 'has_run') $true)) {
-        throw "Skipping the mandatory lesson did not return to the start screen."
+        if ([string](Get-Value $script:LastObservation @('screen', 'screen') '') -cne 'START' -or
+            [bool](Get-Value $script:LastObservation @('screen', 'has_run') $true)) {
+            throw "Skipping the mandatory lesson did not return to the start screen."
+        }
+        $postSkipPrimary = [string](Get-Value $script:LastObservation @('screen', 'start_menu', 'primary_action_text') '')
+        if ($postSkipPrimary -ceq 'CONTINUE' -or $postSkipPrimary -cne 'PLAY') {
+            throw "Lesson skip returned an unsafe start-menu primary action '$postSkipPrimary'."
+        }
     }
-    $postSkipPrimary = [string](Get-Value $script:LastObservation @('screen', 'start_menu', 'primary_action_text') '')
-    if ($postSkipPrimary -ceq 'CONTINUE' -or $postSkipPrimary -cne 'PLAY') {
-        throw "Lesson skip returned an unsafe start-menu primary action '$postSkipPrimary'."
+    else {
+        $replayLessonsEnabled = Get-Value $replayLessonsButton @('enabled') $null
+        if ($replayLessonsEnabled -isnot [bool] -or -not [bool]$replayLessonsEnabled) {
+            throw 'The rendered REPLAY LESSONS main-menu state is not unambiguously enabled.'
+        }
     }
     $null = Click-Button -Text 'RUN SETUP' -Intent 'open the visible seeded-run setup' -Contains
     if ($Ending -ceq 'clean' -and
