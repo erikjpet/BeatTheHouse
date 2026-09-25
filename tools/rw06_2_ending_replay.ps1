@@ -2083,6 +2083,13 @@ function Start-NormalSeededRun {
         throw "Lesson skip returned an unsafe start-menu primary action '$postSkipPrimary'."
     }
     $null = Click-Button -Text 'RUN SETUP' -Intent 'open the visible seeded-run setup' -Contains
+    if ($Ending -ceq 'clean' -and
+        -not [bool](Get-Value $script:LastObservation @('screen', 'start_menu', 'run_config_visible') $false)) {
+        Wait-Frames -Frames 1 -Intent 'allow the visible Clean run setup action to settle'
+        if (-not [bool](Get-Value $script:LastObservation @('screen', 'start_menu', 'run_config_visible') $false)) {
+            $null = Click-Button -Text 'RUN SETUP' -Intent 'retry the still-visible Clean seeded-run setup' -Contains
+        }
+    }
     if (-not [bool](Get-Value $script:LastObservation @('screen', 'start_menu', 'run_config_visible') $false)) {
         throw 'RUN SETUP did not render the seeded-run configuration panel.'
     }
@@ -3892,6 +3899,18 @@ function Play-OneBlackjackRound {
                     -ChoiceId 'play_dumb' `
                     -Intent 'count badly for Mina and cool the normal blackjack table without taking an edge'
                 Wait-Frames -Frames 10 -Intent 'let the visible counter-probe response settle'
+                continue
+            }
+            if ($Ending -ceq 'cheat' -and $talkEventId -ceq 'floor_staff_heat_warning') {
+                $choiceIds = @(Get-VisibleChoiceIds)
+                $expectedChoiceIds = @('play_cool', 'buy_round', 'talk_back')
+                if (($choiceIds -join ',') -cne ($expectedChoiceIds -join ',')) {
+                    throw "The visible floor-staff warning exposed unexpected choices: $($choiceIds -join ', ')."
+                }
+                $null = Choose-VisibleChoice `
+                    -ChoiceId 'talk_back' `
+                    -Intent 'talk back through the visible floor-staff warning and draw Rourke''s attention'
+                Wait-Frames -Frames 10 -Intent 'let the visible floor-staff response settle'
                 continue
             }
         }
