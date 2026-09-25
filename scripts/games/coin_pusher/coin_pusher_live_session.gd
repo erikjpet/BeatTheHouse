@@ -11,8 +11,8 @@ const MAX_SETTLE_TICKS := 1200
 # The renderer's packed native batch keeps a published frame bounded. The old
 # 1.1-second Web throttle predated that path and made the cabinet visibly update
 # at less than one frame per second even when the solver itself stayed healthy.
-const WEB_PRESENTATION_INTERVAL_MSEC := 34
-const WEB_INPUT_PRESENTATION_DELAY_MSEC := 34
+const WEB_PRESENTATION_INTERVAL_MSEC := 33
+const WEB_INPUT_PRESENTATION_DELAY_MSEC := 33
 
 static var _native_cache_generation := 0
 
