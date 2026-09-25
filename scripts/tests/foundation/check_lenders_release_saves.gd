@@ -2,6 +2,7 @@ extends "res://scripts/tests/foundation/check_items_events_world.gd"
 
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 const EnvironmentPlacementScript := preload("res://scripts/core/environment_placement.gd")
+const EnvironmentSlotBinderScript := preload("res://scripts/core/environment_slot_binder.gd")
 
 const RunReportViewModelScript := preload("res://scripts/ui/run_report_view_model.gd")
 const RunReportTimelineCanvasScript := preload("res://scripts/ui/run_report_timeline_canvas.gd")
@@ -4397,7 +4398,11 @@ func _check_environment_instance_shape(environment: EnvironmentInstance, require
 	else:
 		var object_rects: Variant = (layout as Dictionary).get("object_rects", {})
 		var slot_bindings: Variant = (layout as Dictionary).get("slot_bindings", {})
-		if typeof(object_rects) != TYPE_DICTIONARY or typeof(slot_bindings) != TYPE_DICTIONARY:
+		var slot_overflow_ids: Variant = (layout as Dictionary).get("slot_overflow_ids", [])
+		var slot_authority := EnvironmentSlotBinderScript.validate_base_layout_authority(data)
+		if not bool(slot_authority.get("ok", false)):
+			failures.append("EnvironmentInstance layout failed sealed base-slot validation: %s." % JSON.stringify(slot_authority.get("errors", [])))
+		elif typeof(object_rects) != TYPE_DICTIONARY or typeof(slot_bindings) != TYPE_DICTIONARY or typeof(slot_overflow_ids) != TYPE_ARRAY:
 			failures.append("EnvironmentInstance layout should include stable slot authority and object_rects.")
 		else:
 			for event_id in environment.event_ids:
@@ -4414,10 +4419,10 @@ func _check_environment_instance_shape(environment: EnvironmentInstance, require
 						or mode not in ["room", "overflow"]:
 					failures.append("EnvironmentInstance layout is missing sealed event presentation authority.")
 					break
-				if mode == "room" and (slot_id.is_empty() or slot.is_empty() or not (object_rects as Dictionary).has(object_id)):
+				if mode == "room" and (slot_id.is_empty() or slot.is_empty() or not (object_rects as Dictionary).has(object_id) or (slot_overflow_ids as Array).has(object_id)):
 					failures.append("EnvironmentInstance room event binding is missing authored geometry.")
 					break
-				if mode == "overflow" and (not slot_id.is_empty() or not slot.is_empty() or (object_rects as Dictionary).has(object_id)):
+				if mode == "overflow" and (not slot_id.is_empty() or not slot.is_empty() or (object_rects as Dictionary).has(object_id) or not (slot_overflow_ids as Array).has(object_id)):
 					failures.append("EnvironmentInstance overflow event binding retained room geometry.")
 					break
 			for offer in environment.item_offers:

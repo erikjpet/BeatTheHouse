@@ -2622,7 +2622,6 @@ func _check_s0_2_kitty_lounge_mixed_hook_layout(library: ContentLibrary, failure
 	run_state.start_new("S02-KITTY-LAYOUT")
 	var environment: Dictionary = EnvironmentInstance.from_archetype(archetype, 3, run_state.create_rng("s02_kitty_layout"), library).to_dict()
 	environment["service_ids"] = ["kitty_champagne", "kitty_burlesque_show", "house_drink"]
-	environment["lender_hooks"] = ["the_crew"]
 	environment["travel_hooks"] = ["bar", "jazz_club", "corner_store"]
 	environment["next_archetypes"] = ["bar", "jazz_club", "corner_store"]
 	environment["world_map_travel"] = true
@@ -2640,8 +2639,9 @@ func _check_s0_2_kitty_lounge_mixed_hook_layout(library: ContentLibrary, failure
 			failures.append("S0.2 Kitty Cat Lounge room binding is missing geometry for %s." % object_id)
 		elif mode == "overflow" and (object_rects.has(object_id) or not overflow_ids.has(object_id)):
 			failures.append("S0.2 Kitty Cat Lounge overflow binding retained geometry for %s." % object_id)
-	if JsonCoerceScript._raw_string_array(environment.get("lender_hooks", [])).has("sals_pawn_counter"):
-		failures.append("S0.2 Kitty Cat Lounge fixture admitted Sal's pawn counter outside the pawn shop.")
+	var generated_lender_hooks := JsonCoerceScript._raw_string_array(environment.get("lender_hooks", []))
+	if generated_lender_hooks != ["the_crew"]:
+		failures.append("S0.2 Kitty Cat Lounge generated the wrong production lender hooks: %s." % str(generated_lender_hooks))
 	var keys: Array = object_rects.keys()
 	for index in range(keys.size()):
 		var key := str(keys[index])
