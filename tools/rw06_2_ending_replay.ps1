@@ -966,14 +966,16 @@ function Assert-HealthyResult {
     }
     Assert-NoForbiddenObservationKey -Value $observation
     $gameId = Get-ExactReplayString -InputObject $observation -Path @('game', 'game_id') -Context "Public game id after '$Command'" -AllowMissing
-    $holeVisible = if ($gameId -ceq 'blackjack') {
+    $terminalOutcomeKey = Get-ExactReplayString -InputObject $observation -Path @('checkpoint', 'terminal_outcome_key') -Context "Terminal outcome after '$Command'" -AllowMissing
+    $isTerminalObservation = -not [string]::IsNullOrWhiteSpace($terminalOutcomeKey)
+    $holeVisible = if ($gameId -ceq 'blackjack' -and -not $isTerminalObservation) {
         Get-ExactReplayBoolean -InputObject $observation -Path @('game', 'dealer_hole_visible') -Context "Blackjack dealer-hole witness after '$Command'"
     }
     else {
         Get-ExactReplayBoolean -InputObject $observation -Path @('game', 'dealer_hole_visible') -Context "Dealer-hole witness after '$Command'" -AllowMissing
     }
     $dealerCards = Get-ExactReplayObjectArray -InputObject $observation -Path @('game', 'dealer_cards') -ElementType PSCustomObject -Context "Public dealer cards after '$Command'"
-    if ($gameId -ceq 'blackjack' -and -not $holeVisible -and $dealerCards.Count -cne 0) {
+    if ($gameId -ceq 'blackjack' -and -not $isTerminalObservation -and -not $holeVisible -and $dealerCards.Count -cne 0) {
         throw "Blackjack dealer cards escaped before the public reveal after '$Command'."
     }
 }
