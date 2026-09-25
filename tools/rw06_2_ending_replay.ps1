@@ -6047,10 +6047,10 @@ function Assert-HeistAuditKnowledgeSaveRelaunchContinue {
 
 function Invoke-HeistEndingRoute {
     Establish-CrewMarker
-    Clear-CrewMarkerFavors
     Reach-GrandCasino
     Restore-EnvironmentSurfaceAfterTravelResult
     Observe-RenderedAuditNightHook
+    Clear-CrewMarkerFavors
     Ensure-PunchlineCasinoDiscovered
     Recruit-Bishop
     Promote-BishopToInnerCircle
