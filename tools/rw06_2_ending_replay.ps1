@@ -5227,6 +5227,119 @@ function Ensure-PunchlineCasinoDiscovered {
 }
 
 
+function Invoke-BishopGrandDrinkSobrietyDetour {
+    param(
+        [Parameter(Mandatory = $true)][ValidateRange(1, 12)][int]$BoundaryNumber
+    )
+    $archetype = Get-Value $script:LastObservation @('environment', 'archetype_id') $null
+    $screen = Get-Value $script:LastObservation @('screen', 'screen') $null
+    $eventVisible = Get-Value $script:LastObservation @('event_popup', 'visible') $null
+    $talkVisible = Get-Value $script:LastObservation @('talk', 'visible') $null
+    if ($archetype -isnot [string] -or [string]$archetype -cne 'grand_casino' -or
+        $screen -isnot [string] -or [string]$screen -cne 'ENVIRONMENT' -or
+        $eventVisible -isnot [bool] -or [bool]$eventVisible -or
+        $talkVisible -isnot [bool] -or [bool]$talkVisible) {
+        return $false
+    }
+
+    $canvasDrinks = @(Get-Array (Get-Value $script:LastResult @('look', 'clickable', 'canvas_objects') @()) | Where-Object {
+        [string](Get-Value $_ @('semantic_id') '') -ceq 'service:house_drink'
+    })
+    $roomDrinks = @(Get-Array (Get-Value $script:LastObservation @('room_canvas', 'objects') @()) | Where-Object {
+        [string](Get-Value $_ @('id') '') -ceq 'service:house_drink'
+    })
+    if ($canvasDrinks.Count -cne 1 -or $roomDrinks.Count -cne 1) { return $false }
+    $rendered = Get-Value $canvasDrinks[0] @('rendered') $null
+    $enabled = Get-Value $canvasDrinks[0] @('enabled') $null
+    $disabled = Get-Value $roomDrinks[0] @('disabled') $null
+    $reason = Get-Value $roomDrinks[0] @('disabled_reason') $null
+    if ($rendered -isnot [bool] -or -not [bool]$rendered -or
+        $enabled -isnot [bool] -or [bool]$enabled -or
+        $disabled -isnot [bool] -or -not [bool]$disabled -or
+        $reason -isnot [string] -or [string]$reason -cne 'Too drunk to make another drink help.') {
+        return $false
+    }
+
+    $currentNodeId = Get-Value $script:LastObservation @('environment', 'world_node_id') $null
+    if ($currentNodeId -isnot [string] -or [string]$currentNodeId -cnotmatch '^[a-z0-9_]+$') {
+        throw "Bishop presence boundary $BoundaryNumber cannot identify the current Grand Casino map node for its sobriety detour."
+    }
+    Open-WorldMap
+    $candidates = @()
+    foreach ($node in @(Get-MapNodes)) {
+        $nodeId = Get-Value $node @('id') $null
+        $travelEnabled = Get-Value $node @('travel_enabled') $null
+        if ($nodeId -isnot [string] -or [string]$nodeId -cnotmatch '^[a-z0-9_]+$' -or
+            $travelEnabled -isnot [bool]) {
+            throw "Bishop presence boundary $BoundaryNumber found a malformed rendered public travel card."
+        }
+        if (-not [bool]$travelEnabled -or [string]$nodeId -ceq [string]$currentNodeId) { continue }
+        $cost = Get-Value $node @('cost') $null
+        if (($cost -isnot [int32] -and $cost -isnot [int64]) -or [long]$cost -lt 0) {
+            throw "Bishop presence boundary $BoundaryNumber found an enabled public travel card without an exact non-negative fare."
+        }
+        $candidates += [pscustomobject]@{
+            id = [string]$nodeId
+            cost = [int]$cost
+        }
+    }
+    $candidates = @($candidates | Sort-Object cost, id)
+    if ($candidates.Count -ceq 0) {
+        throw "Bishop presence boundary $BoundaryNumber has no rendered, enabled public destination for one sobriety detour."
+    }
+    $detourNodeId = [string]$candidates[0].id
+    Travel-ToNode `
+        -NodeId $detourNodeId `
+        -Intent "take one visible sobriety detour from Grand Casino Main at Bishop presence boundary $BoundaryNumber"
+    $outboundScreen = Get-Value $script:LastObservation @('screen', 'screen') $null
+    $outboundEvent = Get-Value $script:LastObservation @('event_popup', 'visible') $null
+    $outboundTalk = Get-Value $script:LastObservation @('talk', 'visible') $null
+    if ($outboundScreen -isnot [string] -or [string]$outboundScreen -cnotin @('RESULT', 'ENVIRONMENT') -or
+        $outboundEvent -isnot [bool] -or [bool]$outboundEvent -or
+        $outboundTalk -isnot [bool] -or [bool]$outboundTalk) {
+        throw "Bishop presence boundary $BoundaryNumber sobriety detour was interrupted on its outbound leg."
+    }
+    Restore-EnvironmentSurfaceAfterTravelResult
+
+    Open-WorldMap
+    $grandCards = @(Get-MapNodes | Where-Object {
+        [string](Get-Value $_ @('archetype_id') '') -ceq 'grand_casino'
+    })
+    if ($grandCards.Count -cne 1) {
+        throw "Bishop presence boundary $BoundaryNumber sobriety detour exposes $($grandCards.Count) exact Grand Casino Main return cards."
+    }
+    $grandId = Get-Value $grandCards[0] @('id') $null
+    $grandEnabled = Get-Value $grandCards[0] @('travel_enabled') $null
+    if ($grandId -isnot [string] -or [string]$grandId -cnotmatch '^[a-z0-9_]+$' -or
+        $grandEnabled -isnot [bool] -or -not [bool]$grandEnabled) {
+        $returnReason = [string](Get-Value $grandCards[0] @('travel_disabled_reason') 'return unavailable')
+        throw "Bishop presence boundary $BoundaryNumber sobriety detour cannot use the rendered Grand Casino Main return card: $returnReason"
+    }
+    Travel-ToNode `
+        -NodeId ([string]$grandId) `
+        -Intent "return through the visible Grand Casino Main card after Bishop presence boundary $BoundaryNumber sobriety detour"
+    $returnArchetype = Get-Value $script:LastObservation @('environment', 'archetype_id') $null
+    $returnScreen = Get-Value $script:LastObservation @('screen', 'screen') $null
+    $returnEvent = Get-Value $script:LastObservation @('event_popup', 'visible') $null
+    $returnTalk = Get-Value $script:LastObservation @('talk', 'visible') $null
+    if ($returnArchetype -isnot [string] -or [string]$returnArchetype -cne 'grand_casino' -or
+        $returnScreen -isnot [string] -or [string]$returnScreen -cnotin @('RESULT', 'ENVIRONMENT') -or
+        $returnEvent -isnot [bool] -or [bool]$returnEvent -or
+        $returnTalk -isnot [bool] -or [bool]$returnTalk) {
+        throw "Bishop presence boundary $BoundaryNumber sobriety detour was interrupted on its Grand Casino Main return leg."
+    }
+    Restore-GrandCasinoEnvironmentSurface
+
+    $restoredDrink = Find-CanvasObject -SemanticId 'service:house_drink'
+    if ($null -ceq $restoredDrink -or
+        [string](Get-Value $restoredDrink @('label') '') -cne 'Buy a Drink' -or
+        [string](Get-Value $restoredDrink @('object_type') '') -cne 'drink') {
+        throw "Grand Casino Main did not restore the rendered, enabled house drink after Bishop presence boundary $BoundaryNumber sobriety detour."
+    }
+    return $true
+}
+
+
 function Invoke-BishopPresenceHouseDrinkBoundary {
     param(
         [Parameter(Mandatory = $true)][ValidateRange(1, 12)][int]$BoundaryNumber
@@ -5239,6 +5352,9 @@ function Invoke-BishopPresenceHouseDrinkBoundary {
     Restore-EnvironmentSurfaceAfterTravelResult
 
     $service = Find-CanvasObject -SemanticId 'service:house_drink'
+    if ($null -ceq $service -and (Invoke-BishopGrandDrinkSobrietyDetour -BoundaryNumber $BoundaryNumber)) {
+        $service = Find-CanvasObject -SemanticId 'service:house_drink'
+    }
     if ($null -ceq $service -or
         [string](Get-Value $service @('label') '') -cne 'Buy a Drink' -or
         [string](Get-Value $service @('object_type') '') -cne 'drink') {
