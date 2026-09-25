@@ -6724,6 +6724,30 @@
           "walk_lane_ids": []
         },
         {
+          "id": "stage.event_boarding_counter",
+          "kind": "stage",
+          "pos": [
+            760.0,
+            224.0
+          ],
+          "footprint_class": "surface_item",
+          "hit_rect": [
+            724.0,
+            176.0,
+            72.0,
+            48.0
+          ],
+          "label_anchor": [
+            760.0,
+            170.0
+          ],
+          "facing": "none",
+          "priority": 15,
+          "zone_id": "service_lane",
+          "support_id": "cage",
+          "walk_lane_ids": []
+        },
+        {
           "id": "stage.event_machine_bank",
           "kind": "stage",
           "pos": [
@@ -7018,7 +7042,7 @@
         "gas_station_storm_shelter_safe_zone_tape|env06_8_storm_tape|foreground|": "stage.event_foreground_marker",
         "gas_station_storm_shelter_station|package_b_gas_top_right|left|": "stage.event_wall_far_left",
         "gas_station_storm_shelter_supply_shelves|package_b_gas_top_left|right|": "stage.event_service_wall",
-        "gas_station_tour_bus_stop_boarding_counter||service_lane|": "stage.event_refreshment_shelf",
+        "gas_station_tour_bus_stop_boarding_counter||service_lane|": "stage.event_boarding_counter",
         "gas_station_tour_bus_stop_bus_driver|package_b_gas_top_mid|background|": "stage.patron_floor_left",
         "gas_station_tour_bus_stop_queue_marshal|env06_8_bus_marshal|foreground|": "stage.patron_floor_middle",
         "gas_station_tour_bus_stop_restroom_queue||right|": "stage.event_foreground_marker",
