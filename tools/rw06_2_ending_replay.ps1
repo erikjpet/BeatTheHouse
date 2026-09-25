@@ -4065,7 +4065,7 @@ function Set-CleanBlackjackStake {
 
 
 function Resolve-BlackjackRouteEventPopup {
-    if (@('clean', 'cheat') -cnotcontains $Ending) { return $false }
+    if (@('clean', 'cheat', 'heist') -cnotcontains $Ending) { return $false }
 
     $eventVisible = Get-Value $script:LastObservation @('event_popup', 'visible') $null
     if ($eventVisible -isnot [bool]) {
@@ -6119,7 +6119,6 @@ function Invoke-BishopPresenceHouseDrinkBoundary {
 
 
 function Find-BishopSurfaceAtGrand {
-    $script:BishopSurfaceUsesOverflow = $false
     for ($boundary = 0; $boundary -le 12; $boundary++) {
         Reach-GrandCasino
         foreach ($room in @('main', 'cage')) {
@@ -6142,7 +6141,6 @@ function Find-BishopSurfaceAtGrand {
                         [string](Get-Value $spatial[0] @('object_type') '') -cne 'event') {
                         throw "The public Bishop $eventId spatial record is not exactly visible, enabled, interactive, and event-backed."
                     }
-                    $script:BishopSurfaceUsesOverflow = $true
                     return $eventId
                 }
             }
@@ -6155,35 +6153,68 @@ function Find-BishopSurfaceAtGrand {
 }
 
 
+function Open-BishopConversationSurface {
+    param(
+        [Parameter(Mandatory = $true)][string]$EventId,
+        [Parameter(Mandatory = $true)][string]$Intent
+    )
+    $semanticId = "event:$EventId"
+    if ($null -cne (Find-CanvasObject -SemanticId $semanticId)) {
+        $null = Open-SemanticObject `
+            -SemanticId $semanticId `
+            -PreferredActions @('Talk', 'inspect_event_choices', 'Open', 'Approach') `
+            -Intent $Intent
+    }
+    else {
+        $spatial = @(Get-Array (Get-Value $script:LastObservation @('spatial', 'objects') @()) | Where-Object {
+            [string](Get-Value $_ @('object_id') '') -ceq $semanticId
+        })
+        if ($spatial.Count -cne 1 -or
+            [string](Get-Value $spatial[0] @('label') '') -cne 'Bishop' -or
+            [string](Get-Value $spatial[0] @('object_type') '') -cne 'event' -or
+            (Get-Value $spatial[0] @('visible') $null) -isnot [bool] -or -not [bool](Get-Value $spatial[0] @('visible') $false) -or
+            (Get-Value $spatial[0] @('enabled') $null) -isnot [bool] -or -not [bool](Get-Value $spatial[0] @('enabled') $false) -or
+            (Get-Value $spatial[0] @('interactive') $null) -isnot [bool] -or -not [bool](Get-Value $spatial[0] @('interactive') $false)) {
+            throw "The public Bishop $EventId surface is neither a canvas object nor one exact visible, enabled, interactive spatial event."
+        }
+        $null = Invoke-OverflowRoomActionButton `
+            -ButtonText 'Bishop: Talk' `
+            -Intent $Intent
+    }
+    Wait-ForFullyRenderedTalkSurface -Intent $Intent
+}
+
+
 function Recruit-Bishop {
     $surface = Find-BishopSurfaceAtGrand
     if ($surface -ceq 'crew_contact_bishop') { return }
-    if ([bool]$script:BishopSurfaceUsesOverflow) {
-        $null = Invoke-OverflowRoomActionButton `
-            -ButtonText 'Bishop: Talk' `
-            -Intent 'open the exact visible overflow Bishop appointment'
-        Wait-ForFullyRenderedTalkSurface -Intent 'Bishop appointment'
-    }
+    Open-BishopConversationSurface -EventId $surface -Intent 'open Bishop''s exact visible appointment'
     if ('wait_for_bishop' -cin @(Get-VisibleChoiceIds)) {
         $null = Choose-VisibleChoice -ChoiceId 'wait_for_bishop' -Intent "wait through Bishop's visible first appointment beat"
     }
     else {
-        Invoke-EventObjectChoice -EventId 'recruitment_bishop' -ChoiceId 'wait_for_bishop' -Intent "wait through Bishop's visible first appointment beat"
+        throw "Bishop's authenticated appointment exposed no visible wait_for_bishop choice."
     }
     Wait-Frames -Frames 10
-    if ([bool]$script:BishopSurfaceUsesOverflow -and 'work_with_bishop' -cnotin @(Get-VisibleChoiceIds)) {
-        $null = Invoke-OverflowRoomActionButton `
-            -ButtonText 'Bishop: Talk' `
-            -Intent 'reopen the exact visible overflow Bishop appointment after waiting'
-        Wait-ForFullyRenderedTalkSurface -Intent 'Bishop appointment after waiting'
+    if ('work_with_bishop' -cnotin @(Get-VisibleChoiceIds)) {
+        Open-BishopConversationSurface `
+            -EventId 'recruitment_bishop' `
+            -Intent 'reopen Bishop''s exact visible appointment after waiting'
     }
     if ('work_with_bishop' -cin @(Get-VisibleChoiceIds)) {
         $null = Choose-VisibleChoice -ChoiceId 'work_with_bishop' -Intent 'keep the visible appointment and recruit Bishop'
     }
     else {
-        Invoke-EventObjectChoice -EventId 'recruitment_bishop' -ChoiceId 'work_with_bishop' -Intent 'keep the visible appointment and recruit Bishop'
+        throw "Bishop's authenticated appointment exposed no visible work_with_bishop choice."
     }
     Wait-Frames -Frames 12
+    $eventVisible = Get-Value $script:LastObservation @('event_popup', 'visible') $null
+    if ($eventVisible -isnot [bool]) {
+        throw "Bishop's completed appointment lost its exact public event-popup visibility witness."
+    }
+    if ([bool]$eventVisible -and -not (Resolve-BlackjackRouteEventPopup)) {
+        throw "Bishop's completed appointment exposed an unsupported visible route event."
+    }
 }
 
 
@@ -6194,7 +6225,9 @@ function Start-BishopContactJob {
         Recruit-Bishop
         $surface = Find-BishopSurfaceAtGrand
     }
-    Select-EventObject -EventId 'crew_contact_bishop'
+    Open-BishopConversationSurface `
+        -EventId 'crew_contact_bishop' `
+        -Intent 'open Bishop''s exact visible Crew contact'
     foreach ($choiceId in $Preference) {
         if ($choiceId -cin @(Get-VisibleChoiceIds)) {
             $null = Choose-VisibleChoice -ChoiceId $choiceId -Intent "accept Bishop's visible $choiceId job"
