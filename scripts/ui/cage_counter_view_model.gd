@@ -157,7 +157,7 @@ static func _linda_line(objective: Dictionary, state: String) -> String:
 	if state == "ineligible":
 		return "I cannot put a card on an account with evidence."
 	if state == "ready":
-		return "Your next tier is ready. Settle the marker, then I can print it."
+		return "Your next tier is ready. I can print it now."
 	if state == "blocked":
 		return "Rourke put a hold on this review. The floor will come for you."
 	return "%s is on the account. Keep the count clean." % str(objective.get("players_card_tier_label", "Unranked"))
