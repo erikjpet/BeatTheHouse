@@ -3971,23 +3971,66 @@ function Set-CleanBlackjackStake {
     }
     if ($Mode -ceq 'minimum') { return }
 
-    # After a profitable hand leaves the Gold segment just short, one visible
-    # $10 rail chip builds enough cushion for the required fifth hand without
-    # pushing the whole bankroll back onto the felt.
+    # After a profitable hand leaves the Gold segment just short, build the
+    # moderate follow-up wager entirely through ordinary rendered buttons. A
+    # rail-chip tap is a captured pointer gesture whose release is intentionally
+    # cancelled while this confirmation bridge owns the application pause.
+    # MAX, REMOVE, and UNDO expose the same public wager authority without
+    # depending on a gesture that cannot complete across that pause boundary.
     $followupTarget = [Math]::Min($maximum, $minimum + 10)
-    $tenChip = @(Get-GameActions | Where-Object {
-        [string](Get-Value $_ @('action') '') -ceq 'blackjack_wager_place_gesture' -and
-            [int](Get-Value $_ @('index') -1) -ceq 2 -and
-            [bool](Get-Value $_ @('enabled') $false)
-    })
-    if ($tenChip.Count -cne 1) {
-        throw "Clean blackjack requires one visible enabled `$10 rail chip for its follow-up wager; found $($tenChip.Count)."
+    if ($followupTarget -le $minimum) {
+        return
     }
-    $null = Invoke-GameAction -Action 'blackjack_wager_place_gesture' -Index 2 -Intent 'add the visible ten chip to the clean-route follow-up wager'
+    if ($null -ceq (Find-GameAction -Action 'blackjack_max_bet')) {
+        throw 'Clean blackjack exposes no visible MAX control for its moderate follow-up wager.'
+    }
+    $null = Invoke-GameAction -Action 'blackjack_max_bet' -Intent 'stage the visible maximum before trimming the clean-route follow-up wager'
     Wait-Frames -Frames 4
-    $afterFollowup = Get-ExactReplayInt32 -InputObject $script:LastObservation -Path @('game', 'selected_stake') -Context 'Clean blackjack follow-up stake result'
-    if ($afterFollowup -cne $followupTarget) {
-        throw "The visible ten-chip follow-up did not select the expected public stake ($afterFollowup != $followupTarget)."
+    $currentStake = Get-ExactReplayInt32 -InputObject $script:LastObservation -Path @('game', 'selected_stake') -Context 'Clean blackjack follow-up maximum result'
+    if ($currentStake -cne $maximum) {
+        throw "The visible MAX control did not stage the published follow-up ceiling ($currentStake != $maximum)."
+    }
+
+    $removeIndices = @(Get-GameActions | Where-Object {
+        [string](Get-Value $_ @('action') '') -ceq 'blackjack_remove_chip' -and
+            [bool](Get-Value $_ @('enabled') $false)
+    } | ForEach-Object {
+        [int](Get-Value $_ @('index') -1)
+    } | Sort-Object -Descending -Unique)
+    if ($removeIndices.Count -lt 1) {
+        throw 'Clean blackjack exposes no visible chip-removal controls for its moderate follow-up wager.'
+    }
+
+    foreach ($removeIndex in $removeIndices) {
+        while ($currentStake -gt $followupTarget) {
+            $beforeRemove = $currentStake
+            $null = Invoke-GameAction `
+                -Action 'blackjack_remove_chip' `
+                -Index ([int]$removeIndex) `
+                -Intent 'trim the visible clean-route blackjack wager toward its moderate follow-up stake'
+            Wait-Frames -Frames 4
+            $currentStake = Get-ExactReplayInt32 -InputObject $script:LastObservation -Path @('game', 'selected_stake') -Context 'Clean blackjack trimmed follow-up stake'
+            if ($currentStake -ge $followupTarget -and $currentStake -lt $beforeRemove) {
+                continue
+            }
+            if ($currentStake -lt $followupTarget) {
+                if ($null -ceq (Find-GameAction -Action 'blackjack_undo_bet')) {
+                    throw 'Clean blackjack overshot its follow-up stake without a visible UNDO control.'
+                }
+                $null = Invoke-GameAction -Action 'blackjack_undo_bet' -Intent 'undo the visible chip removal that crossed the clean-route follow-up stake'
+                Wait-Frames -Frames 4
+                $currentStake = Get-ExactReplayInt32 -InputObject $script:LastObservation -Path @('game', 'selected_stake') -Context 'Clean blackjack restored follow-up stake'
+                if ($currentStake -cne $beforeRemove) {
+                    throw "The visible UNDO control restored an unexpected follow-up stake ($currentStake != $beforeRemove)."
+                }
+                break
+            }
+            throw "The visible chip-removal control did not reduce the follow-up stake ($beforeRemove -> $currentStake)."
+        }
+        if ($currentStake -ceq $followupTarget) { break }
+    }
+    if ($currentStake -cne $followupTarget) {
+        throw "The visible wager controls did not reach the expected public follow-up stake ($currentStake != $followupTarget)."
     }
 }
 
