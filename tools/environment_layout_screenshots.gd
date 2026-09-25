@@ -47,6 +47,21 @@ const RW06_1_ROOM_REVIEW_SELECTIONS := [
 		"command_path": ["claim_coat_token", "verify_charity_badge"],
 	},
 ]
+const RW06_1_ALL_ROOM_REVIEW_SELECTIONS := [
+	{"map_id": "back_alley", "archetype_id": "back_alley", "scenario_id": "back_alley_cruiser_parked", "phase_id": "work", "command_path": ["map_sightline"]},
+	{"map_id": "bar", "archetype_id": "bar", "scenario_id": "bar_fight_night", "phase_id": "work_3", "command_path": ["brace_exit", "warn_brawlers", "separate_sides"]},
+	{"map_id": "beach", "archetype_id": "beach", "scenario_id": "beach_festival_weekend", "phase_id": "safe_exit", "command_path": ["beach_festival_weekend_leave_safe"]},
+	{"map_id": "corner_store", "archetype_id": "corner_store", "scenario_id": "corner_store_delivery_day", "phase_id": "verification", "command_path": ["inspect_manifest", "shift_cartons"]},
+	{"map_id": "delta_queen", "archetype_id": "delta_queen", "scenario_id": "delta_queen_fog_delay", "phase_id": "work_1", "command_path": ["read_fog_signal"]},
+	{"map_id": "gas_station_casino", "archetype_id": "gas_station_casino", "scenario_id": "gas_station_tour_bus_stop", "phase_id": "safe_exit", "command_path": ["gas_station_tour_bus_stop_leave_safe"]},
+	{"map_id": "grand_casino", "archetype_id": "grand_casino", "scenario_id": "grand_casino_gala_night", "phase_id": "work_2", "command_path": ["claim_coat_token", "verify_charity_badge"]},
+	{"map_id": "jazz_club", "archetype_id": "jazz_club", "scenario_id": "jazz_club_guest_legend", "phase_id": "work_3", "command_path": ["find_instrument_case", "open_backstage_lane", "inspect_missing_piece"]},
+	{"map_id": "kitty_cat_lounge", "archetype_id": "kitty_cat_lounge", "scenario_id": "kitty_cat_lounge_amateur_night", "phase_id": "work_3", "command_path": ["register_amateur_act", "carry_costume_to_dressing", "set_stage_mark"]},
+	{"map_id": "motel", "archetype_id": "motel", "scenario_id": "motel_stakeout", "phase_id": "safe_exit", "command_path": ["motel_stakeout_leave_safe"]},
+	{"map_id": "pawn_shop", "archetype_id": "pawn_shop", "scenario_id": "pawn_shop_estate_lot_day", "phase_id": "work", "command_path": ["stage_lot"]},
+	{"map_id": "small_underground_casino:casino", "archetype_id": "small_underground_casino", "scenario_id": "punchline_high_stakes_night", "phase_id": "work_3", "command_path": ["clear_ordinary_chairs", "mark_guard_sightline", "open_observer_rail"]},
+	{"map_id": "small_underground_casino:club", "archetype_id": "small_underground_casino", "scenario_id": "punchline_bringer_show", "phase_id": "work_3", "command_path": ["open_first_crowd_rope", "usher_supporters_to_block", "count_minimum_seats"]},
+]
 const RW06_1_DAY2_ARCHETYPE_IDS := ["bar", "corner_store", "grand_casino"]
 const RW06_1_PHYSICAL_COUNT_KEYS := ["physical_room_count", "room_physical_count"]
 const RW06_1_CONTACT_ROOM_COUNT := 18
@@ -123,6 +138,7 @@ var rw06_1_slot_markers := false
 var rw06_1_slot_marker_maps := ""
 var rw06_1_q008 := false
 var rw06_1_room_review := false
+var rw06_1_all_room_review := false
 var rw06_1_capture_root_absolute := ""
 var rw06_1_capture_owner_token := ""
 var rw06_1_capture_owner_path := ""
@@ -163,6 +179,8 @@ func _init() -> void:
 			rw06_1_q008 = true
 		elif argument == "--rw06-1-room-review":
 			rw06_1_room_review = true
+		elif argument == "--rw06-1-all-room-review":
+			rw06_1_all_room_review = true
 	call_deferred("_run")
 
 
@@ -181,7 +199,7 @@ func _run() -> void:
 			quit(1)
 			return
 	app = MainScene.instantiate()
-	if rw06_1_room_review:
+	if rw06_1_room_review or rw06_1_all_room_review:
 		# This one-shot authoring capture loads its required game scripts on the
 		# main thread. Do not let the start-menu prewarm worker race those same
 		# ResourceLoader requests while the first base room is being composed.
@@ -211,6 +229,9 @@ func _run() -> void:
 		return
 	if rw06_1_room_review:
 		await _run_rw06_1_room_review(library)
+		return
+	if rw06_1_all_room_review:
+		await _run_rw06_1_all_room_review(library)
 		return
 	if rw06_1_q008:
 		await _run_rw06_1_q008(library)
@@ -1009,22 +1030,16 @@ func _rw06_1_contact_selections(static_report: Dictionary, archetypes: Dictionar
 	}
 
 
-func _run_rw06_1_room_review(library: Variant) -> void:
-	# Owner review is an authoring capture, not a test or evidence bundle. It
-	# writes only six normal-view PNG sources and the two-row player-view sheet.
-	var source_dir := "%s/q008_sources" % out_dir
-	var directory_error := DirAccess.make_dir_recursive_absolute(source_dir)
-	if directory_error != OK and not DirAccess.dir_exists_absolute(source_dir):
-		push_error("Room review could not create %s (%s)." % [source_dir, error_string(directory_error)])
-		quit(1)
-		return
+func _rw06_1_review_definitions(library: Variant, selections: Array) -> Dictionary:
 	var requested_scenarios: Dictionary = {}
-	for selection_value in RW06_1_ROOM_REVIEW_SELECTIONS:
-		requested_scenarios[str(_dict(selection_value).get("scenario_id", ""))] = true
+	for selection_value in selections:
+		var scenario_id := str(_dict(selection_value).get("scenario_id", ""))
+		if not scenario_id.is_empty():
+			requested_scenarios[scenario_id] = true
 	var definitions: Dictionary = {}
-	# Resolve only the three owner-review scenarios. The legacy proof helper
+	# Resolve only the requested owner-review scenarios. The legacy proof helper
 	# resolves every scenario and repeatedly copies the complete overlay catalog,
-	# which is unnecessary for this PNG-only authoring capture.
+	# which is unnecessary for these PNG-only authoring captures.
 	for pool_value in library.environment_scenarios.values():
 		for raw_definition_value in _array(pool_value):
 			var raw_definition := _dict(raw_definition_value)
@@ -1037,6 +1052,19 @@ func _run_rw06_1_room_review(library: Variant) -> void:
 			)
 			if not _dict(definition.get("sequence", {})).is_empty():
 				definitions[scenario_id] = definition
+	return definitions
+
+
+func _run_rw06_1_room_review(library: Variant) -> void:
+	# Owner review is an authoring capture, not a test or evidence bundle. It
+	# writes only six normal-view PNG sources and the two-row player-view sheet.
+	var source_dir := "%s/q008_sources" % out_dir
+	var directory_error := DirAccess.make_dir_recursive_absolute(source_dir)
+	if directory_error != OK and not DirAccess.dir_exists_absolute(source_dir):
+		push_error("Room review could not create %s (%s)." % [source_dir, error_string(directory_error)])
+		quit(1)
+		return
+	var definitions := _rw06_1_review_definitions(library, RW06_1_ROOM_REVIEW_SELECTIONS)
 	var archetypes: Dictionary = {}
 	for archetype_value in library.environment_archetypes:
 		var archetype := _dict(archetype_value)
@@ -1093,6 +1121,100 @@ func _run_rw06_1_room_review(library: Variant) -> void:
 	quit(0)
 
 
+func _run_rw06_1_all_room_review(library: Variant) -> void:
+	# Every-room authoring review stays PNG-only: normal production player views,
+	# no marker overlay, manifest, hash, audit, or test-harness state injection.
+	var source_dir := "%s/all_room_sources" % out_dir
+	var directory_error := DirAccess.make_dir_recursive_absolute(source_dir)
+	if directory_error != OK and not DirAccess.dir_exists_absolute(source_dir):
+		push_error("All-room review could not create %s (%s)." % [source_dir, error_string(directory_error)])
+		quit(1)
+		return
+	var surface_data := _rw06_1_read_json("res://data/environments/placement_surfaces.json")
+	var surface_maps := _array(surface_data.get("maps", [])).duplicate(true)
+	surface_maps.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
+		return str(_dict(left_value).get("id", "")) < str(_dict(right_value).get("id", ""))
+	)
+	var archetypes: Dictionary = {}
+	for archetype_value in library.environment_archetypes:
+		var archetype := _dict(archetype_value)
+		archetypes[str(archetype.get("id", ""))] = archetype
+	var selections_by_map: Dictionary = {}
+	for selection_value in RW06_1_ALL_ROOM_REVIEW_SELECTIONS:
+		var selection := _dict(selection_value)
+		selections_by_map[str(selection.get("map_id", ""))] = selection
+	var definitions := _rw06_1_review_definitions(library, RW06_1_ALL_ROOM_REVIEW_SELECTIONS)
+	var captures: Array = []
+	for map_value in surface_maps:
+		var surface_map := _dict(map_value)
+		var map_id := str(surface_map.get("id", ""))
+		var archetype_id := str(surface_map.get("archetype_id", map_id))
+		var archetype := _dict(archetypes.get(archetype_id, {}))
+		if map_id.is_empty() or archetype.is_empty():
+			continue
+		print("ALL_ROOM_REVIEW_BASE_BEGIN map=%s" % map_id)
+		var base_preparation := await _rw06_1_prepare_base_map(surface_map, archetype, library)
+		if not bool(base_preparation.get("ok", false)):
+			for error_value in _array(base_preparation.get("errors", [])):
+				push_error(str(error_value))
+			quit(1)
+			return
+		var file_id := _rw06_1_slot_marker_file_id(map_id)
+		var base_path := "%s/%s_base.png" % [source_dir, file_id]
+		var base_saved := await _rw06_1_save_review_png(base_path)
+		if not base_saved:
+			quit(1)
+			return
+		var scenario_path := base_path
+		if selections_by_map.has(map_id):
+			var selection := _dict(selections_by_map.get(map_id, {})).duplicate(true)
+			var scenario_id := str(selection.get("scenario_id", ""))
+			print("ALL_ROOM_REVIEW_SCENARIO_BEGIN map=%s scenario=%s" % [map_id, scenario_id])
+			var scenario_preparation := await _rw06_1_prepare_scenario_review(
+				archetype,
+				_dict(definitions.get(scenario_id, {})),
+				selection,
+				library
+			)
+			if not bool(scenario_preparation.get("ok", false)):
+				for error_value in _array(scenario_preparation.get("errors", [])):
+					push_error(str(error_value))
+				quit(1)
+				return
+			scenario_path = "%s/%s_busiest_physical.png" % [source_dir, file_id]
+			var scenario_saved := await _rw06_1_save_review_png(scenario_path)
+			if not scenario_saved:
+				quit(1)
+				return
+		captures.append({"map_id": map_id, "base_path": base_path, "scenario_path": scenario_path})
+		print("ALL_ROOM_REVIEW_SAVED map=%s" % map_id)
+	var priority_captures: Array = []
+	for capture_value in captures:
+		var capture := _dict(capture_value)
+		var captured_map_id := str(capture.get("map_id", ""))
+		if captured_map_id in RW06_1_Q008_ARCHETYPE_IDS:
+			priority_captures.append({
+				"archetype_id": captured_map_id,
+				"base_path": str(capture.get("base_path", "")),
+				"scenario_path": str(capture.get("scenario_path", "")),
+			})
+	if not _rw06_1_save_review_sheet(priority_captures, "%s/q008_rooms.png" % out_dir):
+		quit(1)
+		return
+	if not _rw06_1_save_review_sheet(priority_captures, "%s/rooms_A.png" % out_dir):
+		quit(1)
+		return
+	var sheet_path := "%s/rooms_all.png" % out_dir
+	if not _rw06_1_save_all_room_sheet(captures, sheet_path):
+		quit(1)
+		return
+	print("RW06_1_ALL_ROOM_REVIEW rooms=%d out=%s" % [captures.size(), sheet_path])
+	app.free()
+	app = null
+	await _settle(4)
+	quit(0)
+
+
 func _rw06_1_save_review_png(path: String) -> bool:
 	var canvas: Variant = app.get("environment_canvas")
 	if canvas == null:
@@ -1136,6 +1258,36 @@ func _rw06_1_save_review_sheet(captures: Array, path: String) -> bool:
 	var save_error := sheet.save_png(path)
 	if save_error != OK:
 		push_error("Room review sheet could not be written to %s (%s)." % [path, error_string(save_error)])
+		return false
+	return true
+
+
+func _rw06_1_save_all_room_sheet(captures: Array, path: String) -> bool:
+	if captures.is_empty():
+		push_error("All-room review has no player-view captures.")
+		return false
+	var view_size := Vector2i(320, 180)
+	var card_size := Vector2i(view_size.x, view_size.y * 2)
+	var columns := 4
+	var rows := ceili(float(captures.size()) / float(columns))
+	var sheet := Image.create(card_size.x * columns, card_size.y * rows, false, Image.FORMAT_RGBA8)
+	sheet.fill(Color("#10151f"))
+	for index in range(captures.size()):
+		var room := _dict(captures[index])
+		var card_origin := Vector2i((index % columns) * card_size.x, int(index / columns) * card_size.y)
+		for row in range(2):
+			var source_path := str(room.get("base_path" if row == 0 else "scenario_path", ""))
+			var source := Image.load_from_file(source_path)
+			if source == null or source.is_empty():
+				push_error("All-room review source is missing: %s." % source_path)
+				return false
+			source.resize(view_size.x, view_size.y, Image.INTERPOLATE_LANCZOS)
+			var destination := card_origin + Vector2i(0, row * view_size.y)
+			sheet.blit_rect(source, Rect2i(Vector2i.ZERO, view_size), destination)
+			_rw06_1_image_border(sheet, Rect2i(destination, view_size), Color("#58c7ff") if row == 0 else Color("#f5c451"), 3)
+	var save_error := sheet.save_png(path)
+	if save_error != OK:
+		push_error("All-room review sheet could not be written to %s (%s)." % [path, error_string(save_error)])
 		return false
 	return true
 

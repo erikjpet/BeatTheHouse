@@ -5596,6 +5596,12 @@ func _draw_counter_foreground_art(counter: Dictionary) -> bool:
 			draw_rect(front, Color("#123f30"))
 			draw_line(front.position, Vector2(front.end.x, front.position.y), C_AMBER.darkened(0.10), 4.0)
 			draw_line(front.position + Vector2(20, front.size.y - 8), front.end - Vector2(20, 8), Color("#08231c"), 3.0)
+		"grand_cage_teller_counter":
+			draw_rect(front, Color("#2b1a25"))
+			draw_line(front.position, Vector2(front.end.x, front.position.y), C_CYAN.darkened(0.24), 4.0)
+			for tray_x in range(int(front.position.x) + 44, int(front.end.x) - 72, 112):
+				draw_rect(Rect2(tray_x, front.position.y + 20, 72, 15), Color("#11131d"))
+				draw_rect(Rect2(tray_x + 8, front.position.y + 23, 56, 5), C_AMBER.darkened(0.30))
 		_:
 			return false
 	return true
