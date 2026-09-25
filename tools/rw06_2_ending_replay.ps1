@@ -3647,6 +3647,10 @@ function Enter-BlackjackTable {
 
 function Leave-GameSurface {
     if ([string](Get-Value $script:LastObservation @('screen', 'screen') '') -cne 'GAME') { return }
+    if ([bool](Get-Value $script:LastObservation @('event_popup', 'visible') $false) -or
+        [bool](Get-Value $script:LastObservation @('talk', 'visible') $false)) {
+        throw 'The game surface cannot be left while a visible decision is unresolved.'
+    }
     $back = Find-GameAction -Action 'surface_back'
     if ($null -ceq $back) { $back = Find-GameAction -Action 'leave_game' }
     if ($null -ceq $back) {
@@ -3792,6 +3796,55 @@ function Ensure-BlackjackStakeRange {
 }
 
 
+function Resolve-BlackjackRouteEventPopup {
+    if (@('clean', 'cheat') -cnotcontains $Ending) { return $false }
+
+    $eventVisible = Get-Value $script:LastObservation @('event_popup', 'visible') $null
+    if ($eventVisible -isnot [bool]) {
+        throw 'The public event-popup visibility witness is missing during Blackjack.'
+    }
+    if (-not [bool]$eventVisible) { return $false }
+
+    for ($poll = 0; $poll -lt 16; $poll++) {
+        $renderValid = Get-Value $script:LastObservation @('event_popup', 'render_valid') $null
+        if ($renderValid -is [bool] -and [bool]$renderValid) { break }
+        Wait-Frames -Frames 4 -Intent 'let the visible Blackjack interruption finish rendering'
+        $eventVisible = Get-Value $script:LastObservation @('event_popup', 'visible') $null
+        if ($eventVisible -isnot [bool] -or -not [bool]$eventVisible) {
+            throw 'The Blackjack interruption disappeared before its visible choices became actionable.'
+        }
+    }
+
+    $renderValid = Get-Value $script:LastObservation @('event_popup', 'render_valid') $null
+    if ($renderValid -isnot [bool] -or -not [bool]$renderValid) {
+        throw 'The visible Blackjack interruption did not finish rendering within 64 public frames.'
+    }
+    $eventId = [string](Get-Value $script:LastObservation @('event_popup', 'event_id') '')
+    if ($eventId -cne 'eye_in_the_sky') {
+        throw "Unexpected visible event interrupted the $Ending Blackjack route: '$eventId'."
+    }
+    $choiceIds = @(Get-VisibleChoiceIds)
+    $expectedChoiceIds = @('change_table', 'press_anyway')
+    if (($choiceIds -join ',') -cne ($expectedChoiceIds -join ',')) {
+        throw "Eye in the Sky exposed unexpected choices: $($choiceIds -join ', ')."
+    }
+
+    $choiceId = if ($Ending -ceq 'clean') { 'change_table' } else { 'press_anyway' }
+    $intent = if ($Ending -ceq 'clean') {
+        'change tables through the visible Eye in the Sky response and cool the clean route'
+    }
+    else {
+        'press on through the visible Eye in the Sky response and keep drawing Rourke''s attention'
+    }
+    $null = Choose-VisibleChoice -ChoiceId $choiceId -Intent $intent
+    Wait-Frames -Frames 12 -Intent 'let the visible Eye in the Sky response settle'
+    if ([bool](Get-Value $script:LastObservation @('event_popup', 'visible') $false)) {
+        throw "The visible Eye in the Sky response '$choiceId' did not close its decision surface."
+    }
+    return $true
+}
+
+
 function Play-OneBlackjackRound {
     param(
         [switch]$UseVisibleCheat,
@@ -3808,6 +3861,10 @@ function Play-OneBlackjackRound {
         if (Test-PublicTerminalSurface) { return }
         $eventVisible = [bool](Get-Value $script:LastObservation @('event_popup', 'visible') $false)
         $talkVisible = [bool](Get-Value $script:LastObservation @('talk', 'visible') $false)
+        if ($eventVisible -and (@('clean', 'cheat') -ccontains $Ending)) {
+            $null = Resolve-BlackjackRouteEventPopup
+            continue
+        }
         if ($talkVisible -and -not $eventVisible -and @('clean', 'cheat') -ccontains $Ending) {
             $talkEventId = [string](Get-Value $script:LastObservation @('talk', 'event_id') '')
             if ($talkEventId -ceq 'blackjack_counter_probe') {
@@ -3860,7 +3917,7 @@ function Play-OneBlackjackRound {
         if ($null -cne (Find-GameAction -Action 'blackjack_settle')) {
             $null = Invoke-GameAction -Action 'blackjack_settle' -Intent 'settle the publicly completed blackjack hand'
             Wait-Frames -Frames 12
-            return
+            continue
         }
         $hitAction = Find-GameAction -Action 'blackjack_hit'
         $standAction = Find-GameAction -Action 'blackjack_stand'

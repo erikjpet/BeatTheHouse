@@ -115,6 +115,8 @@ const MIN_NATIVE_TOUCH_TARGET_HEIGHT := 40.0
 const EVENT_CHOICE_POPUP_BASE_SIZE := Vector2(460, 320)
 const EVENT_CHOICE_TEXT_MAX_LINES := 2
 const EVENT_CHOICE_SUMMARY_MAX_LINES := 3
+const EVENT_CHOICE_TEXT_MIN_HEIGHT := 34.0
+const EVENT_CHOICE_SUMMARY_MIN_HEIGHT := 48.0
 const RUN_INVENTORY_POPUP_SIZE := Vector2(1120, 620)
 const RUN_INVENTORY_POPUP_MARGIN := 12.0
 const WORLD_MAP_NODE_BUTTON_POOL_SIZE := 12
@@ -9186,6 +9188,10 @@ func _build_event_choice_popup_overlay() -> void:
 	event_choice_popup_summary_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	event_choice_popup_summary_label.max_lines_visible = EVENT_CHOICE_SUMMARY_MAX_LINES
 	event_choice_popup_summary_label.clip_text = true
+	# Wrapped Labels report no useful vertical minimum before their width settles.
+	# Reserve their authored line budget so the adaptive popup measures visible
+	# copy instead of collapsing it out of the card.
+	event_choice_popup_summary_label.custom_minimum_size.y = EVENT_CHOICE_SUMMARY_MIN_HEIGHT
 	event_choice_popup_content_stack.add_child(event_choice_popup_summary_label)
 
 	var separator := HSeparator.new()
@@ -12806,6 +12812,7 @@ func _add_wager_confirmation_card(label: String, text: String, _impact: String, 
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	body.max_lines_visible = EVENT_CHOICE_TEXT_MAX_LINES
 	body.clip_text = true
+	body.custom_minimum_size.y = EVENT_CHOICE_TEXT_MIN_HEIGHT
 	stack.add_child(body)
 	_add_attribute_badge_row(stack, badges_value, 16)
 	var button := _button(label, Callable(self, "_activate_event_choice_popup_callback").bind(callback))
