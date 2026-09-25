@@ -5784,6 +5784,91 @@ function Invoke-BishopGrandDrinkSobrietyDetour {
     Restore-GrandCasinoEnvironmentSurface
 
     $restoredDrink = Find-CanvasObject -SemanticId 'service:house_drink'
+    if ($null -eq $restoredDrink) {
+        $disabledDrinks = @(Get-Array (Get-Value $script:LastObservation @('spatial', 'objects') @()) | Where-Object {
+            [string](Get-Value $_ @('object_id') '') -ceq 'service:house_drink'
+        })
+        if ($disabledDrinks.Count -cne 1 -or
+            [string](Get-Value $disabledDrinks[0] @('label') '') -cne 'Buy a Drink' -or
+            [string](Get-Value $disabledDrinks[0] @('object_type') '') -cne 'service' -or
+            (Get-Value $disabledDrinks[0] @('visible') $null) -isnot [bool] -or -not [bool](Get-Value $disabledDrinks[0] @('visible') $false) -or
+            (Get-Value $disabledDrinks[0] @('interactive') $null) -isnot [bool] -or -not [bool](Get-Value $disabledDrinks[0] @('interactive') $false) -or
+            (Get-Value $disabledDrinks[0] @('enabled') $null) -isnot [bool] -or [bool](Get-Value $disabledDrinks[0] @('enabled') $true) -or
+            [string](Get-Value $disabledDrinks[0] @('disabled_reason') '') -cne 'Too drunk to make another drink help.' -or
+            [string](Get-Value $script:LastObservation @('screen', 'screen') '') -cne 'ENVIRONMENT' -or
+            [string](Get-Value $script:LastObservation @('environment', 'world_node_id') '') -cne [string]$currentNodeId -or
+            [string](Get-Value $script:LastObservation @('environment', 'archetype_id') '') -cne 'grand_casino' -or
+            [bool](Get-Value $script:LastObservation @('event_popup', 'visible') $true) -or
+            [bool](Get-Value $script:LastObservation @('talk', 'visible') $true) -or
+            (Get-Value $script:LastObservation @('screen', 'travel_transition_active') $null) -isnot [bool] -or
+            [bool](Get-Value $script:LastObservation @('screen', 'travel_transition_active') $true)) {
+            throw "Grand Casino Main did not restore either the enabled house drink or its exact sobriety-only disabled public state after Bishop presence boundary $BoundaryNumber."
+        }
+
+        Open-WorldMap
+        $loungeCards = @(Get-MapNodes | Where-Object {
+            [string](Get-Value $_ @('archetype_id') '') -ceq 'kitty_cat_lounge'
+        })
+        if ($loungeCards.Count -cne 1) {
+            throw "Bishop presence boundary $BoundaryNumber final sobriety loop exposes $($loungeCards.Count) exact Kitty Cat Lounge cards."
+        }
+        $loungeId = Get-Value $loungeCards[0] @('id') $null
+        $loungeEnabled = Get-Value $loungeCards[0] @('travel_enabled') $null
+        $loungeCost = Get-Value $loungeCards[0] @('cost') $null
+        $loungeDistance = Get-Value $loungeCards[0] @('distance') $null
+        if ($loungeId -isnot [string] -or [string]$loungeId -cnotmatch '^[a-z0-9_]+$' -or
+            $loungeEnabled -isnot [bool] -or -not [bool]$loungeEnabled -or
+            ($loungeCost -isnot [int32] -and $loungeCost -isnot [int64]) -or [long]$loungeCost -cne 0 -or
+            $loungeDistance -isnot [string] -or [string]$loungeDistance -cne 'near') {
+            $loungeReason = [string](Get-Value $loungeCards[0] @('travel_disabled_reason') 'Lounge unavailable')
+            throw "Bishop presence boundary $BoundaryNumber final sobriety loop rejected the exact zero-fare near Lounge card: $loungeReason"
+        }
+        Travel-ToNode `
+            -NodeId ([string]$loungeId) `
+            -Intent "take the one final visible zero-fare near Lounge sobriety leg at Bishop presence boundary $BoundaryNumber"
+        $loungeScreen = Get-Value $script:LastObservation @('screen', 'screen') $null
+        if ($loungeScreen -isnot [string] -or [string]$loungeScreen -cnotin @('RESULT', 'ENVIRONMENT') -or
+            [string](Get-Value $script:LastObservation @('environment', 'world_node_id') '') -cne [string]$loungeId -or
+            [string](Get-Value $script:LastObservation @('environment', 'archetype_id') '') -cne 'kitty_cat_lounge' -or
+            [bool](Get-Value $script:LastObservation @('event_popup', 'visible') $true) -or
+            [bool](Get-Value $script:LastObservation @('talk', 'visible') $true) -or
+            [bool](Get-Value $script:LastObservation @('screen', 'travel_transition_active') $true)) {
+            throw "Bishop presence boundary $BoundaryNumber final sobriety loop was interrupted on its zero-fare Lounge leg."
+        }
+        Restore-EnvironmentSurfaceAfterTravelResult
+
+        Open-WorldMap
+        $finalGrandCards = @(Get-MapNodes | Where-Object {
+            [string](Get-Value $_ @('id') '') -ceq [string]$currentNodeId -and
+                [string](Get-Value $_ @('archetype_id') '') -ceq 'grand_casino'
+        })
+        if ($finalGrandCards.Count -cne 1) {
+            throw "Bishop presence boundary $BoundaryNumber final sobriety loop exposes $($finalGrandCards.Count) exact Grand Casino Main return cards."
+        }
+        $finalGrandEnabled = Get-Value $finalGrandCards[0] @('travel_enabled') $null
+        $finalGrandCost = Get-Value $finalGrandCards[0] @('cost') $null
+        $finalGrandDistance = Get-Value $finalGrandCards[0] @('distance') $null
+        if ($finalGrandEnabled -isnot [bool] -or -not [bool]$finalGrandEnabled -or
+            ($finalGrandCost -isnot [int32] -and $finalGrandCost -isnot [int64]) -or [long]$finalGrandCost -cne 0 -or
+            $finalGrandDistance -isnot [string] -or [string]$finalGrandDistance -cne 'near') {
+            $finalGrandReason = [string](Get-Value $finalGrandCards[0] @('travel_disabled_reason') 'Grand return unavailable')
+            throw "Bishop presence boundary $BoundaryNumber final sobriety loop rejected the exact zero-fare near Grand return card: $finalGrandReason"
+        }
+        Travel-ToNode `
+            -NodeId ([string]$currentNodeId) `
+            -Intent "return through the one final visible zero-fare near Grand card at Bishop presence boundary $BoundaryNumber"
+        $finalReturnScreen = Get-Value $script:LastObservation @('screen', 'screen') $null
+        if ($finalReturnScreen -isnot [string] -or [string]$finalReturnScreen -cnotin @('RESULT', 'ENVIRONMENT') -or
+            [string](Get-Value $script:LastObservation @('environment', 'world_node_id') '') -cne [string]$currentNodeId -or
+            [string](Get-Value $script:LastObservation @('environment', 'archetype_id') '') -cne 'grand_casino' -or
+            [bool](Get-Value $script:LastObservation @('event_popup', 'visible') $true) -or
+            [bool](Get-Value $script:LastObservation @('talk', 'visible') $true) -or
+            [bool](Get-Value $script:LastObservation @('screen', 'travel_transition_active') $true)) {
+            throw "Bishop presence boundary $BoundaryNumber final sobriety loop was interrupted on its zero-fare Grand return leg."
+        }
+        Restore-GrandCasinoEnvironmentSurface
+        $restoredDrink = Find-CanvasObject -SemanticId 'service:house_drink'
+    }
     if ($null -ceq $restoredDrink -or
         [string](Get-Value $restoredDrink @('label') '') -cne 'Buy a Drink' -or
         [string](Get-Value $restoredDrink @('object_type') '') -cne 'drink') {
