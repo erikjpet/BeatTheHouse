@@ -237,7 +237,10 @@ func _execute_command(raw: String, command_number: int) -> Dictionary:
 			_:
 				reason = "unknown command: %s" % verb
 	await _wait_frames(4)
-	var look := await _capture_look(command_number)
+	# Quit still publishes its final authenticated public observation, but it does
+	# not need another framebuffer copy. Skipping that redundant PNG prevents a
+	# long replay's save/relaunch boundary from exhausting image-encode memory.
+	var look := await _capture_look(command_number, not should_quit)
 	var transition := PublicObservation.transition_summary(
 		before_observable,
 		_dict(look.get("observable", {})),
@@ -849,11 +852,14 @@ func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
 	await process_frame
 
 
-func _capture_look(command_number: int) -> Dictionary:
-	await RenderingServer.frame_post_draw
-	var image_path := _path("%04d.png" % command_number)
-	var image := root.get_texture().get_image()
-	var image_error := image.save_png(image_path)
+func _capture_look(command_number: int, capture_png: bool = true) -> Dictionary:
+	var image_path := ""
+	var image_error := OK
+	if capture_png:
+		await RenderingServer.frame_post_draw
+		image_path = _path("%04d.png" % command_number)
+		var image := root.get_texture().get_image()
+		image_error = image.save_png(image_path)
 	var observable := _public_observation()
 	var room_canvas := app.get("environment_canvas") as Control
 	var game_canvas := app.get("game_surface_canvas") as Control
