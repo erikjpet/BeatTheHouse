@@ -4056,6 +4056,14 @@ function Play-OneBlackjackRound {
             }
             return
         }
+        if ([bool](Get-Value $script:LastObservation @('game', 'boss_duel_active') $false) -and
+            $null -cne (Find-GameAction -Action 'blackjack_retry_pending')) {
+            $null = Invoke-GameAction `
+                -Action 'blackjack_retry_pending' `
+                -Intent 'retry the visible sealed duel action before Rourke deals the next hand'
+            Wait-Frames -Frames 12 -Intent 'let the visible sealed duel action finish delivery'
+            continue
+        }
 
         Invoke-PublicBossCalloutIfShown
         $phase = [string](Get-Value $script:LastObservation @('game', 'phase') '')
