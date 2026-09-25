@@ -2675,7 +2675,22 @@ func _scenario_authoritative_environment_for_finalization(definition: Dictionary
 		result[target] = value.duplicate(true) if typeof(value) in [TYPE_ARRAY, TYPE_DICTIONARY] else value
 	if current_environment.has("scenario_sequence_base_layout_object_rects"):
 		var layout := JsonCoerceScript._copy_dict(result.get("layout", {}))
-		layout["object_rects"] = JsonCoerceScript._copy_dict(current_environment.get("scenario_sequence_base_layout_object_rects", {}))
+		# The captured rectangle keys are immutable baseline membership, but a
+		# later deterministic slot refresh may legitimately move one member to
+		# geometry-free overflow as live actors consume the room. Never combine
+		# those old rectangles with the refreshed binding envelope. Retain only
+		# baseline members that still own an authenticated live room rectangle;
+		# the unchanged strict binder below validates every surviving coordinate.
+		var baseline_rects := JsonCoerceScript._copy_dict(current_environment.get("scenario_sequence_base_layout_object_rects", {}))
+		var live_rects := JsonCoerceScript._copy_dict(layout.get("object_rects", {}))
+		var bindings := JsonCoerceScript._copy_dict(layout.get("slot_bindings", {}))
+		var reconciled_rects: Dictionary = {}
+		for object_id_value in baseline_rects.keys():
+			var object_id := str(object_id_value)
+			var binding := JsonCoerceScript._copy_dict(bindings.get(object_id, {}))
+			if str(binding.get("presentation_mode", "")) == "room" and live_rects.has(object_id):
+				reconciled_rects[object_id] = JsonCoerceScript._copy_dict(live_rects.get(object_id, {}))
+		layout["object_rects"] = reconciled_rects
 		result["layout"] = layout
 	# Generated layouts originate in Vector2/Rect2 float32 components, while a
 	# JSON save restores scalar floats. Canonicalize through the actual persistent
