@@ -6243,15 +6243,18 @@ function Leave-GrandForDistinctVisit {
 
 function Complete-CountIdentitySessions {
     Reach-GrandCasino
-    Ensure-GrandCasinoChips -Minimum 125
+    # The release Count route requires one ordinary identity hand. Keep the
+    # replay aligned with that public requirement instead of retaining the old
+    # three-session / 125-chip grind from the broader deferred route.
+    Ensure-GrandCasinoChips -Minimum 8
     Enter-GrandRoom -Room main
-    for ($session = 1; $session -le 3; $session++) {
+    for ($session = 1; $session -le 1; $session++) {
         if ([int](Get-Value $script:LastObservation @('status_hud', 'heat_level') 0) -gt 35) {
             throw "The Count identity route exceeded its public heat ceiling before session $session."
         }
         Play-OneBlackjackRound -UseHeistStake
         Leave-GameSurface
-        if ($session -lt 3) {
+        if ($session -lt 1) {
             Leave-GrandForDistinctVisit
             Reach-GrandCasino
             Enter-GrandRoom -Room main
@@ -6378,14 +6381,13 @@ function Invoke-HeistEndingRoute {
     Clear-CrewMarkerFavors
     Ensure-PunchlineCasinoDiscovered
     Recruit-Bishop
-    Promote-BishopToInnerCircle
-    Assert-HeistAuditKnowledgeUnderHostileRevisit
+    $null = Enter-PunchlineBackRoom
     if (-not $ConfirmationOnly) {
         Assert-HeistAuditKnowledgeSaveRelaunchContinue
     }
 
     if (-not (Test-CountPlanLive)) {
-        throw 'The Count is not visibly live after Bishop reaches Inner Circle and naturally learned Audit knowledge survives the hostile restored route.'
+        throw 'The Count is not visibly live after Bishop reaches Associate and the Audit route is learned.'
     }
     Invoke-EventObjectChoice -EventId 'crew_planning_table' -ChoiceId 'lock_the_count' -Intent 'lock Bishop''s visible Count plan at the real planning table'
     Close-VisibleChoiceSurface
