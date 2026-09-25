@@ -45,6 +45,15 @@ static func plan(plan_id: String) -> Dictionary:
 	return {}
 
 
+static func release_plan_ids() -> Array:
+	var result: Array = []
+	for plan_id_value in JsonCoerceScript._copy_array(config().get("release_plan_ids", [])):
+		var plan_id := str(plan_id_value)
+		if PLAN_IDS.has(plan_id) and not result.has(plan_id):
+			result.append(plan_id)
+	return result
+
+
 static func empty_state() -> Dictionary:
 	return {}
 
@@ -361,6 +370,8 @@ static func validate_content() -> Array:
 	var source := config()
 	if int(source.get("schema_version", 0)) != SCHEMA_VERSION or int(source.get("state_schema_version", 0)) != STATE_SCHEMA_VERSION:
 		failures.append("heist.json schema versions must match CrewHeistModel.")
+	if release_plan_ids() != [PLAN_COUNT]:
+		failures.append("The 0.6.0 release must expose only The Count heist plan.")
 	var ids: Array = []
 	for value in source.get("plans", []):
 		if typeof(value) != TYPE_DICTIONARY:

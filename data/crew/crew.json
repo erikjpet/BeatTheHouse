@@ -27,7 +27,7 @@
       "crew_mags": {"associate": ["member_jobs"], "made": ["heist_logistics"], "inner_circle": ["plan_b_architect"]},
       "crew_knuckles": {"associate": ["member_jobs", "contraband_stash"]},
       "crew_velvet": {"associate": ["member_jobs"], "made": ["coordinated_plays"], "inner_circle": ["plan_b_architect"]},
-      "crew_bishop": {"associate": ["member_jobs"], "made": ["house_intel"], "inner_circle": ["plan_a_architect"]},
+      "crew_bishop": {"associate": ["member_jobs", "plan_a_architect"], "made": ["house_intel"], "inner_circle": []},
       "crew_lucky": {"associate": ["member_jobs", "numbers_runner"], "made": ["coordinated_plays"], "inner_circle": ["heist_runner"]}
     },
     "member_services": {
