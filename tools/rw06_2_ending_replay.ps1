@@ -3894,6 +3894,18 @@ function Play-OneBlackjackRound {
                 Wait-Frames -Frames 10 -Intent 'let the visible counter-probe response settle'
                 continue
             }
+            if ($Ending -ceq 'cheat' -and $talkEventId -ceq 'floor_staff_heat_warning') {
+                $choiceIds = @(Get-VisibleChoiceIds)
+                $expectedChoiceIds = @('play_cool', 'buy_round', 'talk_back')
+                if (($choiceIds -join ',') -cne ($expectedChoiceIds -join ',')) {
+                    throw "The visible floor-staff warning exposed unexpected choices: $($choiceIds -join ', ')."
+                }
+                $null = Choose-VisibleChoice `
+                    -ChoiceId 'talk_back' `
+                    -Intent 'talk back through the visible floor-staff warning and draw Rourke''s attention'
+                Wait-Frames -Frames 10 -Intent 'let the visible floor-staff response settle'
+                continue
+            }
         }
         if ($eventVisible -or $talkVisible) {
             throw "A modal interrupted blackjack; the route must resolve it explicitly. Choices: $((Get-VisibleChoiceIds) -join ', ')"
