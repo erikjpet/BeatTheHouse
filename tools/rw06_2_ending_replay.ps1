@@ -2832,6 +2832,35 @@ function Complete-PublicDelivery {
             Wait-Frames -Frames 8
             continue
         }
+        $overflowDeliveryActions = @(
+            @{ Verb = 'wait'; Label = 'Hold Sightline'; Intent = "${Intent}: hold the marked sightline through the visible room-action list" },
+            @{ Verb = 'signal'; Label = 'Send Signal'; Intent = "${Intent}: send the route signal through the visible room-action list" }
+        )
+        $overflowDeliveryHandled = $false
+        foreach ($deliveryAction in $overflowDeliveryActions) {
+            $objectId = "delivery:$([string]$deliveryAction.Verb):$currentNodeId"
+            $spatialActions = @(Get-Array (Get-Value $script:LastObservation @('spatial', 'objects') @()) | Where-Object {
+                [string](Get-Value $_ @('object_id') '') -ceq $objectId
+            })
+            if ($spatialActions.Count -gt 1) {
+                throw "$Intent exposed duplicate public $([string]$deliveryAction.Label) delivery controls."
+            }
+            if ($spatialActions.Count -ceq 0) { continue }
+            if ([string](Get-Value $spatialActions[0] @('label') '') -cne [string]$deliveryAction.Label -or
+                [string](Get-Value $spatialActions[0] @('object_type') '') -cne 'delivery' -or
+                (Get-Value $spatialActions[0] @('visible') $null) -isnot [bool] -or -not [bool](Get-Value $spatialActions[0] @('visible') $false) -or
+                (Get-Value $spatialActions[0] @('interactive') $null) -isnot [bool] -or -not [bool](Get-Value $spatialActions[0] @('interactive') $false) -or
+                (Get-Value $spatialActions[0] @('enabled') $null) -isnot [bool] -or -not [bool](Get-Value $spatialActions[0] @('enabled') $false)) {
+                throw "$Intent exposed a malformed overflow $([string]$deliveryAction.Label) delivery control."
+            }
+            $null = Invoke-OverflowRoomActionButton `
+                -ButtonText "$([string]$deliveryAction.Label): $([string]$deliveryAction.Label)" `
+                -Intent ([string]$deliveryAction.Intent)
+            Wait-Frames -Frames 8
+            $overflowDeliveryHandled = $true
+            break
+        }
+        if ($overflowDeliveryHandled) { continue }
 
         # The Punchline map node opens on its exterior. Its marked contact is a
         # real person inside the casino, so follow the visible room door before
