@@ -1457,11 +1457,31 @@
       },
       "counters": [
         {
+          "id": "left_crate_upper",
+          "x0": 54,
+          "x1": 262,
+          "top_y": 88,
+          "front_y": 112,
+          "classes": [
+            "surface_item"
+          ]
+        },
+        {
           "id": "left_crate_display",
-          "x0": 114,
-          "x1": 164,
-          "top_y": 238,
-          "front_y": 302
+          "x0": 54,
+          "x1": 262,
+          "top_y": 168,
+          "front_y": 218
+        },
+        {
+          "id": "folding_table_upper",
+          "x0": 282,
+          "x1": 618,
+          "top_y": 112,
+          "front_y": 136,
+          "classes": [
+            "surface_item"
+          ]
         },
         {
           "id": "folding_table",
@@ -1471,11 +1491,21 @@
           "front_y": 216
         },
         {
+          "id": "right_crate_upper",
+          "x0": 638,
+          "x1": 846,
+          "top_y": 88,
+          "front_y": 112,
+          "classes": [
+            "surface_item"
+          ]
+        },
+        {
           "id": "right_crate_display",
-          "x0": 738,
-          "x1": 788,
-          "top_y": 238,
-          "front_y": 302,
+          "x0": 638,
+          "x1": 846,
+          "top_y": 168,
+          "front_y": 218,
           "foreground_art_id": "back_alley_crate_display"
         }
       ],
@@ -1524,19 +1554,19 @@
           "id": "base.staff_merchant",
           "kind": "base",
           "pos": [
-            763.0,
-            242.0
+            810.0,
+            172.0
           ],
           "footprint_class": "behind_counter_person",
           "hit_rect": [
-            727.0,
-            170.0,
+            774.0,
+            100.0,
             72.0,
             72.0
           ],
           "label_anchor": [
-            763.0,
-            164.0
+            810.0,
+            90.0
           ],
           "facing": "left",
           "priority": 10,
@@ -1676,19 +1706,19 @@
           "id": "base.shop_item_1",
           "kind": "base",
           "pos": [
-            139.0,
-            238.0
+            90.0,
+            168.0
           ],
           "footprint_class": "surface_item",
           "hit_rect": [
-            103.0,
-            190.0,
+            54.0,
+            120.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            139.0,
-            184.0
+            90.0,
+            114.0
           ],
           "facing": "none",
           "priority": 20,
@@ -1700,43 +1730,43 @@
           "id": "base.shop_item_2",
           "kind": "base",
           "pos": [
-            418.0,
-            192.0
+            462.0,
+            112.0
           ],
           "footprint_class": "surface_item",
           "hit_rect": [
-            382.0,
-            144.0,
+            426.0,
+            64.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            418.0,
-            138.0
+            462.0,
+            58.0
           ],
           "facing": "none",
           "priority": 10,
           "zone_id": "background",
-          "support_id": "folding_table",
+          "support_id": "folding_table_upper",
           "walk_lane_ids": []
         },
         {
           "id": "base.event_wall_notice",
           "kind": "base",
           "pos": [
-            216.0,
-            150.0
+            352.0,
+            192.0
           ],
           "footprint_class": "wall_mounted",
           "hit_rect": [
-            176.0,
-            126.0,
+            312.0,
+            168.0,
             80.0,
             48.0
           ],
           "label_anchor": [
-            216.0,
-            120.0
+            352.0,
+            162.0
           ],
           "facing": "none",
           "priority": 10,
@@ -1851,47 +1881,47 @@
           "kind": "stage",
           "pos": [
             334.0,
-            192.0
+            112.0
           ],
           "footprint_class": "surface_item",
           "hit_rect": [
             298.0,
-            144.0,
+            64.0,
             72.0,
             48.0
           ],
           "label_anchor": [
             334.0,
-            138.0
+            58.0
           ],
           "facing": "none",
           "priority": 10,
           "zone_id": "background",
-          "support_id": "folding_table",
+          "support_id": "folding_table_upper",
           "walk_lane_ids": []
         },
         {
           "id": "stage.event_goods_lot",
           "kind": "stage",
           "pos": [
-            502.0,
-            192.0
+            690.0,
+            88.0
           ],
           "footprint_class": "surface_item",
           "hit_rect": [
-            466.0,
-            144.0,
+            654.0,
+            40.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            502.0,
-            138.0
+            690.0,
+            34.0
           ],
           "facing": "none",
           "priority": 20,
           "zone_id": "background",
-          "support_id": "folding_table",
+          "support_id": "right_crate_upper",
           "walk_lane_ids": []
         }
       ],
@@ -12059,17 +12089,6 @@
           "foreground_art_id": "jazz_bar"
         },
         {
-          "id": "pull_tab_cabinet",
-          "x0": 696,
-          "x1": 788,
-          "top_y": 176,
-          "front_y": 240,
-          "classes": [
-            "floor_fixture",
-            "wall_mounted"
-          ]
-        },
-        {
           "id": "table_left",
           "x0": 60,
           "x1": 164,
@@ -12260,24 +12279,24 @@
           "id": "base.game_1",
           "kind": "base",
           "pos": [
-            742.0,
-            240.0
+            174.0,
+            414.0
           ],
           "footprint_class": "floor_fixture",
           "hit_rect": [
-            696.0,
-            176.0,
+            128.0,
+            350.0,
             92.0,
             64.0
           ],
           "label_anchor": [
-            742.0,
-            170.0
+            174.0,
+            354.0
           ],
           "facing": "none",
           "priority": 10,
-          "zone_id": "right",
-          "support_id": "pull_tab_cabinet",
+          "zone_id": "room",
+          "support_id": "floor",
           "walk_lane_ids": []
         },
         {
@@ -12406,24 +12425,24 @@
           "id": "base.event_pull_tabs_sign",
           "kind": "base",
           "pos": [
-            742.0,
-            176.0
+            688.0,
+            24.0
           ],
           "footprint_class": "wall_mounted",
           "hit_rect": [
-            702.0,
-            152.0,
+            648.0,
+            0.0,
             80.0,
             48.0
           ],
           "label_anchor": [
-            742.0,
-            146.0
+            688.0,
+            26.0
           ],
           "facing": "none",
           "priority": 10,
           "zone_id": "room",
-          "support_id": "pull_tab_cabinet",
+          "support_id": "wall",
           "walk_lane_ids": []
         }
       ],
@@ -12555,18 +12574,18 @@
           "kind": "stage",
           "pos": [
             732.0,
-            358.0
+            326.0
           ],
           "footprint_class": "standing_person",
           "hit_rect": [
             696.0,
-            278.0,
+            246.0,
             72.0,
             80.0
           ],
           "label_anchor": [
             732.0,
-            272.0
+            240.0
           ],
           "facing": "left",
           "priority": 10,
@@ -12631,18 +12650,18 @@
           "kind": "stage",
           "pos": [
             480.0,
-            116.0
+            32.0
           ],
           "footprint_class": "wall_mounted",
           "hit_rect": [
             440.0,
-            92.0,
+            8.0,
             80.0,
             48.0
           ],
           "label_anchor": [
             480.0,
-            86.0
+            8.0
           ],
           "facing": "none",
           "priority": 10,
@@ -12655,18 +12674,18 @@
           "kind": "stage",
           "pos": [
             216.0,
-            116.0
+            24.0
           ],
           "footprint_class": "wall_mounted",
           "hit_rect": [
             176.0,
-            92.0,
+            0.0,
             80.0,
             48.0
           ],
           "label_anchor": [
             216.0,
-            86.0
+            8.0
           ],
           "facing": "none",
           "priority": 20,
@@ -18052,8 +18071,18 @@
       "counters": [
         {
           "id": "estate_top_shelf",
-          "x0": 56,
-          "x1": 274,
+          "x0": 54,
+          "x1": 846,
+          "top_y": 70,
+          "front_y": 88,
+          "classes": [
+            "surface_item"
+          ]
+        },
+        {
+          "id": "scenario_estate_rail",
+          "x0": 326,
+          "x1": 846,
           "top_y": 70,
           "front_y": 88,
           "classes": [
@@ -18081,6 +18110,26 @@
           ]
         },
         {
+          "id": "scenario_serial_rail",
+          "x0": 54,
+          "x1": 174,
+          "top_y": 184,
+          "front_y": 212,
+          "classes": [
+            "surface_item"
+          ]
+        },
+        {
+          "id": "scenario_records_rail",
+          "x0": 174,
+          "x1": 300,
+          "top_y": 184,
+          "front_y": 232,
+          "classes": [
+            "behind_counter_person"
+          ]
+        },
+        {
           "id": "estate_center_upper_shelf",
           "x0": 326,
           "x1": 574,
@@ -18104,8 +18153,8 @@
           "id": "pawn_counter",
           "x0": 316,
           "x1": 584,
-          "top_y": 224,
-          "front_y": 278,
+          "top_y": 262,
+          "front_y": 304,
           "classes": [
             "surface_item",
             "behind_counter_person"
@@ -18133,6 +18182,16 @@
             "behind_counter_person"
           ],
           "foreground_art_id": "pawn_estate_shelf"
+        },
+        {
+          "id": "scenario_hold_rail",
+          "x0": 600,
+          "x1": 720,
+          "top_y": 184,
+          "front_y": 212,
+          "classes": [
+            "surface_item"
+          ]
         }
       ],
       "seats": [],
@@ -18209,18 +18268,18 @@
           "kind": "base",
           "pos": [
             352.0,
-            228.0
+            266.0
           ],
           "footprint_class": "behind_counter_person",
           "hit_rect": [
             316.0,
-            156.0,
+            194.0,
             72.0,
             72.0
           ],
           "label_anchor": [
-            352.0,
-            150.0
+            343.0,
+            184.0
           ],
           "facing": "right",
           "priority": 20,
@@ -18410,24 +18469,24 @@
           "id": "base.shop_item_4",
           "kind": "base",
           "pos": [
-            370.0,
-            132.0
+            314.0,
+            70.0
           ],
           "footprint_class": "surface_item",
           "hit_rect": [
-            334.0,
-            84.0,
+            278.0,
+            22.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            370.0,
-            78.0
+            317.0,
+            16.0
           ],
           "facing": "none",
           "priority": 40,
           "zone_id": "room",
-          "support_id": "estate_center_upper_shelf",
+          "support_id": "estate_top_shelf",
           "walk_lane_ids": []
         },
         {
@@ -18582,43 +18641,43 @@
           "id": "stage.event_serial_station",
           "kind": "stage",
           "pos": [
-            506.0,
-            132.0
+            458.0,
+            70.0
           ],
           "footprint_class": "surface_item",
           "hit_rect": [
-            470.0,
-            84.0,
+            422.0,
+            22.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            506.0,
-            78.0
+            458.0,
+            16.0
           ],
           "facing": "none",
           "priority": 20,
           "zone_id": "room",
-          "support_id": "estate_center_upper_shelf",
+          "support_id": "estate_top_shelf",
           "walk_lane_ids": []
         },
         {
           "id": "stage.event_wall_notice",
           "kind": "stage",
           "pos": [
-            650.0,
-            90.0
+            768.0,
+            48.0
           ],
           "footprint_class": "wall_mounted",
           "hit_rect": [
-            610.0,
-            66.0,
+            728.0,
+            24.0,
             80.0,
             48.0
           ],
           "label_anchor": [
-            650.0,
-            58.0
+            768.0,
+            18.0
           ],
           "facing": "none",
           "priority": 10,
@@ -21965,18 +22024,18 @@
           "id": "base.home_container_1",
           "kind": "base",
           "pos": [
-            542.0,
+            700.0,
             358.0
           ],
           "footprint_class": "floor_fixture",
           "hit_rect": [
-            496.0,
+            654.0,
             294.0,
             92.0,
             64.0
           ],
           "label_anchor": [
-            542.0,
+            700.0,
             288.0
           ],
           "facing": "none",
@@ -22001,7 +22060,7 @@
           ],
           "label_anchor": [
             540.0,
-            240.0
+            330.0
           ],
           "facing": "none",
           "priority": 30,
@@ -22024,8 +22083,8 @@
             48.0
           ],
           "label_anchor": [
-            780.0,
-            134.0
+            710.0,
+            242.0
           ],
           "facing": "none",
           "priority": 20,
@@ -22048,8 +22107,8 @@
             104.0
           ],
           "label_anchor": [
-            495.0,
-            108.0
+            400.0,
+            218.0
           ],
           "facing": "none",
           "priority": 10,
@@ -22522,8 +22581,8 @@
             104.0
           ],
           "label_anchor": [
-            430.0,
-            112.0
+            630.0,
+            248.0
           ],
           "facing": "none",
           "priority": 30,
@@ -22535,18 +22594,18 @@
           "id": "base.home_container_1",
           "kind": "base",
           "pos": [
-            422.0,
+            700.0,
             358.0
           ],
           "footprint_class": "floor_fixture",
           "hit_rect": [
-            376.0,
+            654.0,
             294.0,
             92.0,
             64.0
           ],
           "label_anchor": [
-            422.0,
+            700.0,
             288.0
           ],
           "facing": "none",
@@ -22559,18 +22618,18 @@
           "id": "base.home_upgrade",
           "kind": "base",
           "pos": [
-            314.0,
-            90.0
+            570.0,
+            24.0
           ],
           "footprint_class": "wall_mounted",
           "hit_rect": [
-            274.0,
-            66.0,
+            530.0,
+            0.0,
             80.0,
             48.0
           ],
           "label_anchor": [
-            314.0,
+            570.0,
             60.0
           ],
           "facing": "none",
@@ -22609,18 +22668,18 @@
           "id": "stage.event_rug",
           "kind": "stage",
           "pos": [
-            380.0,
+            394.0,
             304.0
           ],
           "footprint_class": "surface_item",
           "hit_rect": [
-            344.0,
+            358.0,
             256.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            380.0,
+            394.0,
             250.0
           ],
           "facing": "none",
@@ -22633,18 +22692,18 @@
           "id": "stage.event_floor_center",
           "kind": "stage",
           "pos": [
-            302.0,
+            290.0,
             358.0
           ],
           "footprint_class": "floor_fixture",
           "hit_rect": [
-            256.0,
+            244.0,
             294.0,
             92.0,
             64.0
           ],
           "label_anchor": [
-            302.0,
+            290.0,
             288.0
           ],
           "facing": "none",
@@ -23018,19 +23077,19 @@
           "id": "base.home_sleep",
           "kind": "base",
           "pos": [
-            244.0,
+            196.0,
             224.0
           ],
           "footprint_class": "surface_item",
           "hit_rect": [
-            146.0,
-            150.0,
-            196.0,
-            74.0
+            160.0,
+            176.0,
+            72.0,
+            48.0
           ],
           "label_anchor": [
-            244.0,
-            144.0
+            196.0,
+            170.0
           ],
           "facing": "none",
           "priority": 10,
@@ -23042,19 +23101,19 @@
           "id": "base.home_tenure",
           "kind": "base",
           "pos": [
-            690.0,
+            652.0,
             160.0
           ],
           "footprint_class": "surface_item",
           "hit_rect": [
-            642.0,
-            132.0,
-            96.0,
-            28.0
+            616.0,
+            112.0,
+            72.0,
+            48.0
           ],
           "label_anchor": [
-            690.0,
-            126.0
+            640.0,
+            106.0
           ],
           "facing": "none",
           "priority": 20,
@@ -23066,19 +23125,19 @@
           "id": "base.home_trade_up",
           "kind": "base",
           "pos": [
-            408.0,
+            426.0,
             222.0
           ],
           "footprint_class": "surface_item",
           "hit_rect": [
-            354.0,
-            166.0,
-            108.0,
-            56.0
+            390.0,
+            174.0,
+            72.0,
+            48.0
           ],
           "label_anchor": [
-            408.0,
-            160.0
+            426.0,
+            254.0
           ],
           "facing": "none",
           "priority": 30,
