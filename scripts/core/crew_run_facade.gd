@@ -701,7 +701,8 @@ func crew_heist_table_choices() -> Array:
 			active_choices.append({"id": "begin_play", "label": "Begin the Play", "text": "All chairs are filled." if setup_ready else "The setup still has an empty chair.", "disabled": not setup_ready, "consequences": {"event_hooks": [{"type": "crew_heist", "action": "begin_play"}]}})
 			active_choices.append({"id": "abort", "label": "Fold the score", "text": "Pay for the preparation already burned. The run continues.", "consequences": {"event_hooks": [{"type": "crew_heist", "action": "abort"}]}})
 		elif phase == _run.CrewHeistModelScript.STATUS_PLAY:
-			active_choices.append({"id": "live_table_direction", "label": "Return to the live table", "text": "The decisions happen inside the session, not over the planning map.", "disabled": true, "consequences": {}})
+			var live_step := _crew_heist_count_next_step(crew_heist_state) if plan_id == _run.CrewHeistModelScript.PLAN_COUNT else {}
+			active_choices.append({"id": "live_table_direction", "label": str(live_step.get("label", "Return to the live table")), "text": str(live_step.get("text", "The decisions happen inside the session, not over the planning map.")), "disabled": true, "consequences": {}})
 		active_choices.append({"id": "leave", "label": "Leave the table", "text": "The map stays where it is.", "dismissal": true, "consequences": {}})
 		return active_choices
 	if not bool(status.get("visible", false)):
@@ -734,7 +735,13 @@ func crew_heist_live_table_choices() -> Array:
 		return [{"id": "leave", "label": "Leave the quiet table", "text": "No crew beat is live here.", "dismissal": true, "consequences": {}}]
 	var play := JsonCoerceScript._copy_dict(state.get("play", {}))
 	var plan_id := str(state.get("plan_id", ""))
-	var result: Array = [{"id": "inspect", "label": "Read the live session", "text": "Round %d is settled." % int(play.get("round", 0)), "consequences": {}}]
+	var count_step := _crew_heist_count_next_step(state) if plan_id == _run.CrewHeistModelScript.PLAN_COUNT else {}
+	var result: Array = [{
+		"id": "inspect",
+		"label": str(count_step.get("label", "Read the live session")),
+		"text": str(count_step.get("text", "Round %d is settled." % int(play.get("round", 0)))),
+		"consequences": {},
+	}]
 	if plan_id == _run.CrewHeistModelScript.PLAN_COUNT:
 		var decision_id := _crew_heist_count_decision_due(state)
 		if decision_id == "go":
@@ -751,16 +758,70 @@ func crew_heist_live_table_choices() -> Array:
 			result.append({"id": "begin_interview", "label": "Take the pot to the cage", "text": "The borrowed name still has to survive the interview.", "consequences": {"event_hooks": [{"type": "crew_heist", "action": "begin_interview"}]}})
 		else:
 			result.append({"id": "begin_getaway", "label": "Take the exit", "text": "Leave the live table for the marked route.", "consequences": {"event_hooks": [{"type": "crew_heist", "action": "begin_getaway"}]}})
-	result.append({"id": "leave", "label": "Stay in the session", "text": "The table keeps moving only when you play.", "dismissal": true, "consequences": {}})
+	var leave_label := "Go play one blackjack hand" if str(count_step.get("kind", "")) == "hand" else "Stay in the session"
+	var leave_text := str(count_step.get("text", "The table keeps moving only when you play."))
+	result.append({"id": "leave", "label": leave_label, "text": leave_text, "dismissal": true, "consequences": {}})
 	return result
 
 
 func _crew_heist_decision_choices(decision_id: String, values: Array) -> Array:
 	var result: Array = []
+	var next_hand := {
+		"go": "Set the opening first, then play exactly one $8–$30 blackjack hand. Hands played before this choice do not count.",
+		"distraction": "Set the distraction, then play exactly one more $8–$30 blackjack hand before returning here.",
+		"exit": "Set the exit, then play the third $8–$30 blackjack hand. Return here afterward to Take the exit.",
+	}
 	for value in values:
 		var choice := str(value)
-		result.append({"id": "%s_%s" % [decision_id, choice], "label": choice.replace("_", " ").capitalize(), "text": "Bishop records the choice, not an excuse.", "consequences": {"event_hooks": [{"type": "crew_heist", "action": "decide", "decision": decision_id, "choice": choice}]}})
+		result.append({"id": "%s_%s" % [decision_id, choice], "label": choice.replace("_", " ").capitalize(), "text": str(next_hand.get(decision_id, "Bishop records the choice, not an excuse.")), "consequences": {"event_hooks": [{"type": "crew_heist", "action": "decide", "decision": decision_id, "choice": choice}]}})
 	return result
+
+
+func _crew_heist_count_next_step(state_value: Dictionary = {}) -> Dictionary:
+	var state = _run.CrewHeistModelScript.normalize_state(state_value if not state_value.is_empty() else crew_heist_state)
+	if str(state.get("plan_id", "")) != _run.CrewHeistModelScript.PLAN_COUNT or str(state.get("status", "")) != _run.CrewHeistModelScript.STATUS_PLAY:
+		return {}
+	var play := JsonCoerceScript._copy_dict(state.get("play", {}))
+	var tuning := JsonCoerceScript._copy_dict(_run.CrewHeistModelScript.plan(_run.CrewHeistModelScript.PLAN_COUNT).get("play", {}))
+	var round_index := int(play.get("round", 0))
+	var required_rounds := maxi(1, int(tuning.get("required_rounds", 1)))
+	var decision_id := _crew_heist_count_decision_due(state)
+	var decision_labels := {
+		"go": "Hold or Early",
+		"distraction": "Sit or Dump",
+		"exit": "Dock" if not bool(JsonCoerceScript._copy_dict(state.get("setup", {})).get("guard_marker", false)) else "Dock or Corridor",
+	}
+	if not decision_id.is_empty():
+		var decision_label := str(decision_labels.get(decision_id, "Bishop's decision"))
+		return {
+			"kind": "decision",
+			"decision_id": decision_id,
+			"label": "Next: choose %s" % decision_label,
+			"text": "Count %d/%d hands. Choose %s now. Blackjack hands do not count while this Bishop decision is waiting." % [round_index, required_rounds, decision_label],
+		}
+	if round_index < required_rounds:
+		var after_hand := "Take the exit" if round_index + 1 >= required_rounds else "choose %s" % str(decision_labels.get("distraction" if round_index == 0 else "exit", "Bishop's next decision"))
+		return {
+			"kind": "hand",
+			"label": "Next: play blackjack hand %d of %d" % [round_index + 1, required_rounds],
+			"text": "Count %d/%d hands. Play one $8–$30 blackjack hand at the Grand, then return to The Live Table to %s." % [round_index, required_rounds, after_hand],
+		}
+	return {
+		"kind": "exit",
+		"label": "Next: Take the exit",
+		"text": "Count %d/%d hands. The three Bishop decisions are set; choose Take the exit now." % [round_index, required_rounds],
+	}
+
+
+func _crew_heist_append_count_prompt(result: Dictionary, prompt: String) -> void:
+	var clean_prompt := prompt.strip_edges()
+	if clean_prompt.is_empty():
+		return
+	for key in ["message", "result_message", "table_notice"]:
+		var existing := str(result.get(key, "")).strip_edges()
+		if existing.is_empty() or existing.contains(clean_prompt):
+			continue
+		result[key] = "%s  COUNT — %s" % [existing, clean_prompt]
 
 
 func crew_record_heist_event_result(result: Dictionary) -> Dictionary:
@@ -1188,7 +1249,7 @@ func crew_heist_begin_play(host_capability: Variant = null) -> Dictionary:
 			_run.change_grand_casino_chips(starting_float, true)
 			play["table_float_granted"] = true
 			play["table_float_chips"] = starting_float
-			begin_message = "The Crew stakes %d table chips for the Count. The Play begins at the real table." % starting_float
+			begin_message = "The Crew stakes %d table chips for the Count. First open The Live Table and choose Hold or Early. Then alternate one $8–$30 blackjack hand with each next Bishop decision." % starting_float
 	else:
 		_run.change_grand_casino_chips(int(JsonCoerceScript._copy_dict(_run.CrewHeistModelScript.plan(_run.CrewHeistModelScript.PLAN_WHALE).get("play", {})).get("starting_pot", 0)), true)
 		play["pot"] = _run.grand_casino_chips
@@ -1226,7 +1287,8 @@ func crew_heist_decide(decision_id: String, choice: String, host_capability: Var
 		_run.add_suspicion("heist_count_distraction", 6, "crew_heist", true)
 	state["play"] = play
 	crew_heist_state = state
-	return {"ok": true, "decision": decision_id, "choice": choice}
+	var next_step := _crew_heist_count_next_step(state)
+	return {"ok": true, "decision": decision_id, "choice": choice, "message": "Bishop sets %s. %s" % [choice.replace("_", " ").capitalize(), str(next_step.get("text", "Play the next hand."))]}
 
 
 func crew_heist_play_round(round_data: Dictionary, host_capability: Variant = null) -> Dictionary:
@@ -1903,7 +1965,13 @@ func _crew_heist_record_settled_game(game_id: String, venue_id: String, result: 
 	if phase != _run.CrewHeistModelScript.STATUS_PLAY:
 		return
 	if plan_id == _run.CrewHeistModelScript.PLAN_COUNT and venue_id in _run.GRAND_CASINO_ARCHETYPE_IDS:
-		crew_heist_play_round({"game_id": game_id, "bet": int(result.get("bet", result.get("wager", result.get("stake", 0)))), "heat_delta": int(result.get("heat_delta", deltas.get("suspicion_delta", 0)))}, _crew_heist_host_capability)
+		var round_result := crew_heist_play_round({"game_id": game_id, "bet": int(result.get("bet", result.get("wager", result.get("stake", 0)))), "heat_delta": int(result.get("heat_delta", deltas.get("suspicion_delta", 0)))}, _crew_heist_host_capability)
+		if bool(round_result.get("ok", false)):
+			_crew_heist_append_count_prompt(result, str(_crew_heist_count_next_step().get("text", "Return to The Live Table.")))
+		else:
+			var blocked_message := str(round_result.get("message", "That hand did not advance the Count.")).strip_edges()
+			var blocked_step := str(_crew_heist_count_next_step().get("text", "Return to The Live Table before playing another hand."))
+			_crew_heist_append_count_prompt(result, "%s %s" % [blocked_message, blocked_step])
 	elif plan_id == _run.CrewHeistModelScript.PLAN_WHALE and venue_id == str(JsonCoerceScript._copy_dict(_run.CrewHeistModelScript.plan(_run.CrewHeistModelScript.PLAN_WHALE).get("play", {})).get("venue_archetype", _run.GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID)) and game_id in ["craps", "blackjack", "baccarat", "poker", "video_poker"]:
 		var whale_facts := _crew_heist_whale_result_facts(game_id, result)
 		state = _run.CrewHeistModelScript.normalize_state(crew_heist_state)
