@@ -183,6 +183,11 @@ therefore reopened and the prior in-range conclusion withdrawn.
   `$25` covers the normal `$70` pre-plan Grand fare deterministically, removing
   slot or event-income grinding before Bishop; eliminating the second favor
   removes one complete timed delivery loop.
+- Bishop availability gate: the pre-Count presence pool changed from Grand
+  Main / Cage / locked High Limit to Grand Main / Cage. The seeded rotation and
+  global six-action cadence are unchanged, but the normal route no longer
+  spends repeated drink and travel cycles waiting for Bishop to leave a room
+  the player cannot yet enter.
 - Unchanged boundaries: Count-only required travel remains `$0` after the plan
   locks; the one-time live-table float remains 24 chips; global travel prices,
   blackjack minimum stakes and rules, odds, RTP, and the `$720/$900/$1,150`
