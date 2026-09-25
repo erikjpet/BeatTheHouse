@@ -2547,7 +2547,14 @@ func world_sequence_finalize_base_semantics(interactable_records: Array, library
 	var stamped := EnvironmentBaseSemanticRecordsScript.stamp_interactable_records(interactable_records, current_environment, library, producer_context)
 	if not bool(stamped.get("ok", false)): return {"ok": false, "errors": JsonCoerceScript._copy_array(stamped.get("errors", []))}
 	var stamped_records := JsonCoerceScript._copy_array(stamped.get("records", []))
-	var produced := EnvironmentBaseSemanticRecordsScript.from_interactable_records(stamped_records)
+	# Non-interactive live room details deliberately remain outside semantic
+	# authority. Keep them out of the sealed world-sequence record set; the UI
+	# restores those exact live records after authenticated composition.
+	var sealed_records: Array = []
+	for record_value in stamped_records:
+		if typeof(record_value) == TYPE_DICTIONARY and bool((record_value as Dictionary).get("interactive", true)):
+			sealed_records.append((record_value as Dictionary).duplicate(true))
+	var produced := EnvironmentBaseSemanticRecordsScript.from_interactable_records(sealed_records)
 	if not bool(produced.get("ok", false)): return {"ok": false, "errors": JsonCoerceScript._copy_array(produced.get("errors", []))}
 	var interactions := JsonCoerceScript._copy_array(produced.get("interactions", []))
 	var dynamic_actors := EnvironmentBaseSemanticRecordsScript.authorized_dynamic_actor_records(current_environment, library)
@@ -2569,15 +2576,15 @@ func world_sequence_finalize_base_semantics(interactable_records: Array, library
 	candidate["scenario_semantic_digest"] = str(sealed.get("digest", ""))
 	candidate["scenario_semantic_ready"] = true
 	candidate["scenario_event_choices"] = EnvironmentSemanticInventoryScript.event_choice_index(JsonCoerceScript._copy_array(candidate.get("event_ids", [])), library)
-	candidate["scenario_layout_base_records"] = stamped_records.duplicate(true)
+	candidate["scenario_layout_base_records"] = sealed_records.duplicate(true)
 	candidate["scenario_layout_context"] = layout_context.duplicate(true)
 	current_environment = candidate
 	var activation := world_sequence_activate_current_mounts()
 	if not bool(activation.get("ok", false)): return {"ok": false, "errors": JsonCoerceScript._copy_array(activation.get("errors", []))}
-	var composed := _resolve_world_sequence_composed_layout(stamped_records, layout_context)
+	var composed := _resolve_world_sequence_composed_layout(sealed_records, layout_context)
 	if not bool(composed.get("ok", false)): return composed
 	composed["world_sequences"] = activation
-	composed["records"] = stamped_records
+	composed["records"] = sealed_records
 	composed["state"] = {}
 	return composed
 
