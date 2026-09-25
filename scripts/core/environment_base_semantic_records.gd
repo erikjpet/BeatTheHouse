@@ -419,6 +419,19 @@ static func _identity_for_record(source: Dictionary, environment: Dictionary, li
 		"item":
 			source_field = "item_offers"
 			if str(source.get("object_type", "")) != "item" or not _offer_present(environment.get(source_field, []), source_id, presentation_id) or not _library_has(library, "item", source_id): return {}
+		"cage_gift_item":
+			source_field = "cage_gift_shop_state.stock"
+			if str(environment.get("archetype_id", "")) != "grand_casino_cage" \
+					or str(source.get("object_type", "")) != "item" \
+					or parts.size() != 2 or not str(parts[1]).is_valid_int(): return {}
+			var stock_index := int(parts[1])
+			if str(stock_index) != str(parts[1]): return {}
+			var stock_rows := _array(_dict(environment.get("cage_gift_shop_state", {})).get("stock", []))
+			if stock_index < 0 or stock_index >= stock_rows.size() or typeof(stock_rows[stock_index]) != TYPE_DICTIONARY: return {}
+			var stock := _dict(stock_rows[stock_index])
+			var stock_item_id := str(stock.get("item_id", stock.get("id", ""))).strip_edges()
+			if source_id != stock_item_id or not _library_has(library, "item", stock_item_id): return {}
+			source_record_id = "%d:%s" % [stock_index, stock_item_id]
 		"crew_presence":
 			source_field = "crew_presence"
 			if str(source.get("object_type", "")) != "dialogue" or not _record_present(environment.get(source_field, []), "member_id", source_id): return {}
