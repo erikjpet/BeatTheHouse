@@ -383,7 +383,10 @@ static func _build_redesigned_start_screen(host: Variant) -> void:
 	host._set_control_font_color(host.release_framing_label, VisualStyle.CYAN_2)
 	footer.add_child(host.release_framing_label)
 	host.release_version_label = host._label(host._release_version_text(), 10)
-	host.release_version_label.custom_minimum_size = Vector2(86, 18)
+	# Development trial identities include the commit suffix. Keep the footer
+	# wide enough to show the full player-visible version instead of clipping
+	# everything before the hash.
+	host.release_version_label.custom_minimum_size = Vector2(220, 18)
 	host.release_version_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	host.release_version_label.autowrap_mode = TextServer.AUTOWRAP_OFF
 	host.release_version_label.clip_text = true
