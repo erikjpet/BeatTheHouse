@@ -3392,6 +3392,41 @@ function Earn-GrandFareThroughVisibleSlot {
 }
 
 
+function Advance-RiverboatTravelLockThroughVisibleAction {
+    param([Parameter(Mandatory = $true)][string]$DisabledReason)
+
+    $archetype = [string](Get-Value $script:LastObservation @('environment', 'archetype_id') '')
+    if ($archetype -cne 'delta_queen' -or
+        $DisabledReason -cnotmatch '^The River Queen is out on the river for [1-9][0-9]* more actions?\.$') {
+        return $false
+    }
+    Close-WorldMap
+    Restore-EnvironmentSurfaceAfterTravelResult
+
+    $service = Find-CanvasObject -SemanticId 'service:riverboat_deck_walk'
+    if ($null -ceq $service -or
+        [string](Get-Value $service @('label') '') -cne 'Walk the Deck' -or
+        [string](Get-Value $service @('object_type') '') -cne 'service') {
+        throw 'The River Queen travel lock exposes no rendered, enabled Walk the Deck action.'
+    }
+    $beforeCash = Get-RenderedHudInteger -Name bankroll -Context 'River Queen travel-lock bankroll before Walk the Deck'
+    if ($beforeCash -lt 10) {
+        throw "Walk the Deck costs `$10, but only `$$beforeCash remains while the River Queen travel lock is active."
+    }
+    $null = Open-SemanticObject `
+        -SemanticId 'service:riverboat_deck_walk' `
+        -PreferredActions @('Use') `
+        -Intent 'take one visible deck walk while the River Queen is away from the dock'
+    Wait-Frames -Frames 10
+    $afterCash = Get-RenderedHudInteger -Name bankroll -Context 'River Queen travel-lock bankroll after Walk the Deck'
+    if ($afterCash -ne $beforeCash - 10) {
+        throw "Walk the Deck did not charge its exact visible `$10 price (`$$beforeCash -> `$$afterCash)."
+    }
+    Restore-EnvironmentSurfaceAfterTravelResult
+    return $true
+}
+
+
 function Reach-GrandCasino {
     $visitedByRunner = New-Object 'System.Collections.Generic.HashSet[string]'
     for ($step = 0; $step -lt 24; $step++) {
@@ -3447,6 +3482,9 @@ function Reach-GrandCasino {
                 continue
             }
             $reason = [string](Get-Value $grand[0] @('travel_disabled_reason') 'The route is unavailable.')
+            if (Advance-RiverboatTravelLockThroughVisibleAction -DisabledReason $reason) {
+                continue
+            }
             if ($reason -cmatch 'Not enough bankroll') {
                 if ($cost -le $cash) {
                     throw "The Grand card claims insufficient bankroll but publishes cash=$cash and route_cost=$cost."
