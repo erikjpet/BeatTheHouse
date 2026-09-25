@@ -2591,7 +2591,7 @@ function Get-PublicGraphDistance {
             if ($neighbor -ceq $To) { return $distance + 1 }
             if ($seen.ContainsKey($neighbor)) { continue }
             $seen[$neighbor] = $true
-            $queue.Enqueue(@($neighbor, $distance + 1))
+            $queue.Enqueue(@($neighbor, ($distance + 1)))
         }
     }
     return [int]::MaxValue
