@@ -5534,6 +5534,22 @@ function Ensure-PunchlineCasinoDiscovered {
                         $afterTalkVisible = Get-Value $script:LastObservation @('talk', 'visible') $null
                         $afterTransitionActive = Get-Value $script:LastObservation @('screen', 'travel_transition_active') $null
                     }
+                    if ([string]$afterScreen -ceq 'RESULT') {
+                        $afterFeedbackTitle = Get-Value $script:LastObservation @('feedback', 'title') $null
+                        $afterFeedbackText = Get-Value $script:LastObservation @('feedback', 'text') $null
+                        if ($afterEventVisible -isnot [bool] -or [bool]$afterEventVisible -or
+                            $afterTalkVisible -isnot [bool] -or [bool]$afterTalkVisible -or
+                            $afterTransitionActive -isnot [bool] -or [bool]$afterTransitionActive -or
+                            $afterFeedbackTitle -isnot [string] -or [string]$afterFeedbackTitle -cne 'Result' -or
+                            $afterFeedbackText -isnot [string] -or [string]$afterFeedbackText -cne 'The package changes hands. Nothing else does.') {
+                            throw 'The overflow Parking Lot Tip did not settle to its authenticated public Result surface.'
+                        }
+                        Restore-EnvironmentSurfaceAfterTravelResult
+                        $afterScreen = Get-Value $script:LastObservation @('screen', 'screen') $null
+                        $afterEventVisible = Get-Value $script:LastObservation @('event_popup', 'visible') $null
+                        $afterTalkVisible = Get-Value $script:LastObservation @('talk', 'visible') $null
+                        $afterTransitionActive = Get-Value $script:LastObservation @('screen', 'travel_transition_active') $null
+                    }
                     if ($afterScreen -isnot [string] -or [string]$afterScreen -cne 'ENVIRONMENT' -or
                         $afterEventVisible -isnot [bool] -or [bool]$afterEventVisible -or
                         $afterTalkVisible -isnot [bool] -or [bool]$afterTalkVisible -or
