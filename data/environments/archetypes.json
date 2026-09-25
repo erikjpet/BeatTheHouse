@@ -3748,7 +3748,11 @@
       "lay_low_booth",
       "door_bribe",
       "lucky_streak_temptation",
-      "crew_favor_delivery"
+      "crew_favor_delivery",
+      "scenario_audit_roster"
+    ],
+    "required_event_ids": [
+      "scenario_audit_roster"
     ],
     "event_scopes": [
       "boss"
