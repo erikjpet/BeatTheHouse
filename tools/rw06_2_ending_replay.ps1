@@ -5362,8 +5362,8 @@ function Establish-CrewMarker {
         -Selection $selection `
         -Talk (Get-Value $script:LastObservation @('talk') $null) `
         -TalkChoices @(Get-PublicTalkChoices)
-    if ([int]$offer.principal -ne 45) {
-        throw "The visible Crew marker principal changed from `$45 to `$$($offer.principal)."
+    if ([int]$offer.principal -ne 70) {
+        throw "The visible Crew marker principal changed from `$70 to `$$($offer.principal)."
     }
     $null = Invoke-BridgeCommand -Command 'click_choice accept' -Intent 'arm the visibly disclosed Crew marker offer'
     $null = Assert-GrandFareFundingConfirmation `
@@ -5385,12 +5385,12 @@ function Establish-CrewMarker {
 
 function Clear-CrewMarkerFavors {
 
-    # The public lender terms create a two-favor marker. Clear both favors now
-    # so the long heist route cannot be interrupted later by a second overdue
-    # Crew call. Normal travel advances only the clock, not RunState's action
+    # The release lender terms create one favor marker. Clear that favor now so
+    # the heist route cannot be interrupted later by an overdue Crew call.
+    # Normal travel advances only the clock, not RunState's action
     # index. Audit/invitation choices may already have consumed a boundary; use
     # an exact rendered, priced room service for the remaining boundaries.
-    for ($favor = 1; $favor -le 2; $favor++) {
+    for ($favor = 1; $favor -le 1; $favor++) {
         for ($boundary = 1; $boundary -le 3 -and -not (Test-CrewFavorPublicSurface); $boundary++) {
             Invoke-CrewFavorActionBoundary -FavorNumber $favor -BoundaryNumber $boundary
         }
@@ -5401,24 +5401,24 @@ function Clear-CrewMarkerFavors {
         $talkId = [string](Get-Value $script:LastObservation @('talk', 'event_id') '')
         if (($eventId -ceq 'crew_favor_delivery' -or $talkId -ceq 'crew_favor_delivery') -and
             'run_package' -cin @(Get-VisibleChoiceIds)) {
-            $null = Choose-VisibleChoice -ChoiceId 'run_package' -Intent "honor the Crew's visible favor $favor of 2"
+            $null = Choose-VisibleChoice -ChoiceId 'run_package' -Intent "honor the Crew's visible favor $favor of 1"
             Wait-Frames -Frames 10
-            Complete-PublicDelivery -Intent "complete Crew favor $favor of 2"
+            Complete-PublicDelivery -Intent "complete Crew favor $favor of 1"
             $debtCount = Get-GrandFarePublicDebtCount `
                 -DebtIndicator (Get-Value $script:LastObservation @('status_hud', 'debt_indicator') $null) `
-                -Context "HUD after Crew favor $favor of 2"
-            if ($debtCount -ne (2 - $favor)) {
+                -Context "HUD after Crew favor $favor of 1"
+            if ($debtCount -ne (1 - $favor)) {
                 throw "Crew favor $favor did not remove exactly one visible marker balance."
             }
             continue
         }
         if ($null -cne (Find-CanvasObject -SemanticId 'event:crew_favor_delivery')) {
-            Invoke-EventObjectChoice -EventId 'crew_favor_delivery' -ChoiceId 'run_package' -Intent "honor the Crew's visible favor $favor of 2"
-            Complete-PublicDelivery -Intent "complete Crew favor $favor of 2"
+            Invoke-EventObjectChoice -EventId 'crew_favor_delivery' -ChoiceId 'run_package' -Intent "honor the Crew's visible favor $favor of 1"
+            Complete-PublicDelivery -Intent "complete Crew favor $favor of 1"
             $debtCount = Get-GrandFarePublicDebtCount `
                 -DebtIndicator (Get-Value $script:LastObservation @('status_hud', 'debt_indicator') $null) `
-                -Context "HUD after Crew favor $favor of 2"
-            if ($debtCount -ne (2 - $favor)) {
+                -Context "HUD after Crew favor $favor of 1"
+            if ($debtCount -ne (1 - $favor)) {
                 throw "Crew favor $favor did not remove exactly one visible marker balance."
             }
             continue
@@ -6044,7 +6044,7 @@ function Invoke-BishopPresenceHouseDrinkBoundary {
     }
 
     if (Test-CrewFavorPublicSurface) {
-        throw 'A Crew favor resurfaced after the two-favor marker was visibly cleared.'
+        throw 'A Crew favor resurfaced after the one-favor marker was visibly cleared.'
     }
     Restore-EnvironmentSurfaceAfterTravelResult
 }
@@ -6243,15 +6243,18 @@ function Leave-GrandForDistinctVisit {
 
 function Complete-CountIdentitySessions {
     Reach-GrandCasino
-    Ensure-GrandCasinoChips -Minimum 125
+    # The release Count route requires one ordinary identity hand. Keep the
+    # replay aligned with that public requirement instead of retaining the old
+    # three-session / 125-chip grind from the broader deferred route.
+    Ensure-GrandCasinoChips -Minimum 8
     Enter-GrandRoom -Room main
-    for ($session = 1; $session -le 3; $session++) {
+    for ($session = 1; $session -le 1; $session++) {
         if ([int](Get-Value $script:LastObservation @('status_hud', 'heat_level') 0) -gt 35) {
             throw "The Count identity route exceeded its public heat ceiling before session $session."
         }
         Play-OneBlackjackRound -UseHeistStake
         Leave-GameSurface
-        if ($session -lt 3) {
+        if ($session -lt 1) {
             Leave-GrandForDistinctVisit
             Reach-GrandCasino
             Enter-GrandRoom -Room main
@@ -6378,14 +6381,13 @@ function Invoke-HeistEndingRoute {
     Clear-CrewMarkerFavors
     Ensure-PunchlineCasinoDiscovered
     Recruit-Bishop
-    Promote-BishopToInnerCircle
-    Assert-HeistAuditKnowledgeUnderHostileRevisit
+    $null = Enter-PunchlineBackRoom
     if (-not $ConfirmationOnly) {
         Assert-HeistAuditKnowledgeSaveRelaunchContinue
     }
 
     if (-not (Test-CountPlanLive)) {
-        throw 'The Count is not visibly live after Bishop reaches Inner Circle and naturally learned Audit knowledge survives the hostile restored route.'
+        throw 'The Count is not visibly live after Bishop reaches Associate and the Audit route is learned.'
     }
     Invoke-EventObjectChoice -EventId 'crew_planning_table' -ChoiceId 'lock_the_count' -Intent 'lock Bishop''s visible Count plan at the real planning table'
     Close-VisibleChoiceSurface
