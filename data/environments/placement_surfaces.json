@@ -15781,6 +15781,32 @@
           ]
         },
         {
+          "id": "base.patron_front_left",
+          "kind": "base",
+          "pos": [
+            142.0,
+            350.0
+          ],
+          "footprint_class": "seated_person",
+          "hit_rect": [
+            108.0,
+            286.0,
+            68.0,
+            64.0
+          ],
+          "label_anchor": [
+            142.0,
+            280.0
+          ],
+          "facing": "front",
+          "priority": 20,
+          "zone_id": "room",
+          "support_id": "front_left",
+          "walk_lane_ids": [
+            "lane.public"
+          ]
+        },
+        {
           "id": "base.door_left_middle",
           "kind": "base",
           "pos": [
@@ -16000,6 +16026,30 @@
           ],
           "facing": "none",
           "priority": 20,
+          "zone_id": "room",
+          "support_id": "scoreboard_ledge",
+          "walk_lane_ids": []
+        },
+        {
+          "id": "base.event_fog_pool",
+          "kind": "base",
+          "pos": [
+            650.0,
+            150.0
+          ],
+          "footprint_class": "surface_item",
+          "hit_rect": [
+            614.0,
+            102.0,
+            72.0,
+            48.0
+          ],
+          "label_anchor": [
+            650.0,
+            96.0
+          ],
+          "facing": "none",
+          "priority": 25,
           "zone_id": "room",
           "support_id": "scoreboard_ledge",
           "walk_lane_ids": []
@@ -16554,7 +16604,7 @@
         "event:town_rumor_staff": "base.staff_right_table",
         "shopkeeper:merchant": "base.staff_right_table",
         "event:rowdy_regular": "base.patron_left_table",
-        "lender:the_crew": "base.patron_left_table",
+        "lender:the_crew": "base.patron_front_left",
         "game:blackjack": "base.game_1",
         "game:video_poker": "base.game_2",
         "service:house_drink": "base.game_1",
@@ -16562,7 +16612,7 @@
         "service:riverboat_deck_walk": "base.event_deck_walk",
         "event:chain06_dave_same_bus": "base.game_3",
         "event:scenario_captains_invitational_card": "base.event_table_1",
-        "event:scenario_fog_delay_pool": "base.event_table_2",
+        "event:scenario_fog_delay_pool": "base.event_fog_pool",
         "game:roulette": "base.game_3",
         "item:bag": "base.event_table_2",
         "item:basic_strategy_card": "base.game_3",
