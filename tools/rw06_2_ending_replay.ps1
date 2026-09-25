@@ -5136,13 +5136,30 @@ function Invoke-CrewFavorActionBoundary {
             }
         }
         else {
-            if ($null -ceq (Find-CanvasObject -SemanticId 'event:recruitment_switch')) {
-                throw "Crew favor 2 boundary $BoundaryNumber requires one exact rendered and enabled Switch contact."
+            $switchCanvas = Find-CanvasObject -SemanticId 'event:recruitment_switch'
+            if ($null -eq $switchCanvas) {
+                $switchSpatial = @(Get-Array (Get-Value $script:LastObservation @('spatial', 'objects') @()) | Where-Object {
+                    [string](Get-Value $_ @('object_id') '') -ceq 'event:recruitment_switch'
+                })
+                if ($switchSpatial.Count -cne 1 -or
+                    [string](Get-Value $switchSpatial[0] @('object_id') '') -cne 'event:recruitment_switch' -or
+                    [string](Get-Value $switchSpatial[0] @('label') '') -cne 'Switch' -or
+                    [string](Get-Value $switchSpatial[0] @('object_type') '') -cne 'event' -or
+                    (Get-Value $switchSpatial[0] @('visible') $null) -isnot [bool] -or -not [bool](Get-Value $switchSpatial[0] @('visible') $false) -or
+                    (Get-Value $switchSpatial[0] @('enabled') $null) -isnot [bool] -or -not [bool](Get-Value $switchSpatial[0] @('enabled') $false) -or
+                    (Get-Value $switchSpatial[0] @('interactive') $null) -isnot [bool] -or -not [bool](Get-Value $switchSpatial[0] @('interactive') $false)) {
+                    throw "Crew favor 2 boundary $BoundaryNumber requires one exact visible, enabled, interactive Switch spatial record."
+                }
+                $null = Invoke-OverflowRoomActionButton `
+                    -ButtonText 'Switch: Talk' `
+                    -Intent "open the exact public Switch talk overflow row for Crew favor 2 boundary $BoundaryNumber"
             }
-            $null = Open-SemanticObject `
-                -SemanticId 'event:recruitment_switch' `
-                -PreferredActions @('Talk', 'inspect_event_choices', 'Open', 'Approach') `
-                -Intent "open the exact Switch contact for Crew favor 2 boundary $BoundaryNumber"
+            else {
+                $null = Open-SemanticObject `
+                    -SemanticId 'event:recruitment_switch' `
+                    -PreferredActions @('Talk', 'inspect_event_choices', 'Open', 'Approach') `
+                    -Intent "open the exact Switch contact for Crew favor 2 boundary $BoundaryNumber"
+            }
             Wait-ForFullyRenderedTalkSurface -Intent "Crew favor 2 boundary $BoundaryNumber Switch contact"
             $talk = Get-Value $script:LastObservation @('talk') $null
             $talkChoices = @(Get-PublicTalkChoices)
