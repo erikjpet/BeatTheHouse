@@ -43,6 +43,20 @@ const ABSTRACT_SCENARIO_ID_TOKENS := [
 	"trace", "work_zone", "zone",
 ]
 
+# Base inventory uses the same physical-only presentation rule as scenario
+# inventory. These are closed renderer contracts, not guesses from labels,
+# roles, ids, placement classes, or general icon names.
+const BASE_ALWAYS_PHYSICAL_TYPES := ["game", "item", "shopkeeper", "numbers_silas"]
+const BASE_PERSON_VISUAL_TYPES := ["actor", "character", "npc"]
+const BASE_EVENT_ART_PROPS := [
+	"casino_host", "clerk_counter", "clerk_talk", "counter_phone",
+	"jammed_machine", "motel_door", "paper_note", "payphone", "pit_boss",
+	"room_display", "room_hazard", "room_refreshment",
+	"room_seating", "room_signal", "room_storage", "room_surface",
+	"room_vehicle", "rowdy_patron", "security_camera", "security_exit",
+	"side_door", "trunk_offer",
+]
+
 
 # Binds the complete generated base inventory to immutable authored slots.
 # No coordinate search, displacement, repack, fallback grid, or RNG is used.
@@ -72,6 +86,10 @@ static func bind_base_layout(environment: Dictionary, active_entries: Array) -> 
 			object_id,
 			str(entry.get("visual_prop", entry.get("prop", "")))
 		)
+		if not base_record_requires_room_slot(entry):
+			bindings[object_id] = _overflow_binding(object_id, placement_class, "base")
+			overflow_ids.append(object_id)
+			continue
 		var preference := str(object_preferences.get(object_id, "")).strip_edges()
 		if preference.is_empty():
 			var category_key := "%s:%d" % [str(entry.get("spot_field", "")), int(entry.get("index", 0))]
@@ -336,35 +354,140 @@ static func _closed_semantic_placement_class(surface_map: Dictionary, record: Di
 	return EnvironmentPlacementScript.classify({}, object_type, object_id)
 
 
+# Positive base-room authority is deliberately structural. Games and shop
+# items are owner-approved categories; people require explicit person
+# provenance; every other object requires an authored asset or an exact
+# procedural renderer contract. Semantic nouns never mint physical geometry.
+static func base_record_requires_room_slot(record: Dictionary) -> bool:
+	var object_type := str(record.get("object_type", "")).strip_edges()
+	var visual_type := str(record.get("visual_type", "")).strip_edges()
+	if object_type in BASE_ALWAYS_PHYSICAL_TYPES:
+		return true
+	if bool(record.get("physical_person", false)) \
+			or visual_type in BASE_PERSON_VISUAL_TYPES \
+			or not _dict(record.get("character_actor", {})).is_empty():
+		return true
+	var asset_path := str(record.get("asset_path", "")).strip_edges()
+	if asset_path.begins_with("res://assets/art/"):
+		return true
+	if object_type == "travel" or visual_type == "travel" or visual_type == "drink":
+		return true
+	var prop := str(record.get("visual_prop", record.get("prop", ""))).strip_edges()
+	if (object_type == "home_sleep" or visual_type == "home_sleep") and prop in ["", "bed"]:
+		return true
+	if (object_type == "service" or visual_type == "service") and prop == "sand_pile":
+		return true
+	return (object_type == "event" or visual_type == "event") and prop in BASE_EVENT_ART_PROPS
+
+
+static func _base_layout_policy_entry(environment: Dictionary, object_id: String) -> Dictionary:
+	var parts := object_id.split(":", false)
+	if parts.is_empty():
+		return {}
+	var object_type := str(parts[0])
+	if object_type == "cage_gift_item":
+		object_type = "item"
+	elif object_id == "numbers:silas":
+		object_type = "numbers_silas"
+	var entry := {"object_id": object_id, "object_type": object_type}
+	var layout := _dict(environment.get("layout", {}))
+	var hints := _dict(_dict(layout.get("object_placement_hints", {})).get(object_id, {}))
+	for key_value in hints.keys():
+		entry[key_value] = hints.get(key_value)
+	return entry
+
+
 # Applies the same authority to the complete interaction inventory. Some live
 # records (deliveries, transient contacts, and meta controls) are assembled
-# after EnvironmentInstance generated its serialized layout. They consume only
-# still-free authored base slots; excess records remain fully actionable in the
-# room action list.
+# after EnvironmentInstance generated its serialized layout. Only records that
+# pass the same physical gate consume still-free authored base slots; every
+# other record remains fully actionable in the room action list.
 static func bind_base_records(environment: Dictionary, records: Array, existing_bindings: Dictionary = {}) -> Dictionary:
 	var surface_map := EnvironmentPlacementScript.surface_map(environment)
 	var slots := _ordered_slots(_array(surface_map.get("base_slots", [])))
 	var object_preferences := _dict(surface_map.get("object_slot_ids", {}))
 	var category_preferences := _dict(surface_map.get("category_slot_ids", {}))
 	var layout := _dict(environment.get("layout", {}))
+	# bind_base_records consumes the complete current interaction refresh. Build
+	# its identity set before authenticating persisted geometry so a rectangle for
+	# an already-resolved object can be distinguished from a live unbound object.
+	var current_record_ids: Dictionary = {}
+	var current_records_by_id: Dictionary = {}
+	for record_value in records:
+		var current_record := _dict(record_value)
+		var current_id := str(current_record.get("object_id", "")).strip_edges()
+		if not current_id.is_empty():
+			current_record_ids[current_id] = true
+			current_records_by_id[current_id] = current_record
 	var bindings: Dictionary = {}
 	var object_rects: Dictionary = {}
 	var has_persisted_authority := _has_any_base_layout_authority(layout)
 	if has_persisted_authority or not existing_bindings.is_empty():
-		var prior_authority := validate_base_layout_authority(environment, records, true)
+		# object_rects is live render membership, unlike dormant authored room
+		# reservations. A resolved object can therefore leave behind neither an
+		# orphan rectangle nor geometry attached to an overflow row. Remove only
+		# that provably dormant geometry before applying the unchanged strict
+		# authority validator; live or room-bound inconsistencies still fail closed.
+		layout = _without_dormant_orphan_object_rects(layout, current_record_ids)
+		var authenticated_environment := environment.duplicate(true)
+		authenticated_environment["layout"] = layout.duplicate(true)
+		var prior_authority := validate_base_layout_authority(authenticated_environment, records, true)
 		if not bool(prior_authority.get("ok", false)):
 			return {"ok": false, "records": records.duplicate(true), "slot_bindings": {}, "overflow_ids": [], "object_rects": {}, "errors": _array(prior_authority.get("errors", []))}
 		bindings = _dict(prior_authority.get("slot_bindings", {}))
 		object_rects = _dict(prior_authority.get("object_rects", {}))
 		if not existing_bindings.is_empty() and JSON.stringify(existing_bindings) != JSON.stringify(bindings):
 			return {"ok": false, "records": records.duplicate(true), "slot_bindings": {}, "overflow_ids": [], "object_rects": {}, "errors": ["Caller base bindings do not match the authenticated persisted authority."]}
-	# bind_base_records consumes the complete current interaction refresh. A prior
+	# A prior
 	# room reservation may remain intentionally dormant, but geometry-free overflow
 	# has no physical reservation and must retain live membership to persist.
-	var current_record_ids: Dictionary = {}
-	for record_value in records:
-		var current_id := str(_dict(record_value).get("object_id", "")).strip_edges()
-		if not current_id.is_empty(): current_record_ids[current_id] = true
+	# Reconcile legacy/generated authority before calculating occupancy. Live UI
+	# records carry visual_type; the deliberately stripped catalog records used by
+	# semantic sealing do not, and must consume the already-authenticated result
+	# rather than accidentally reclassify it from incomplete presentation data.
+	for binding_id_value in bindings.keys():
+		var binding_id := str(binding_id_value)
+		var current_record := _dict(current_records_by_id.get(binding_id, {}))
+		# A live alias is another action surface for its authenticated source
+		# object, not an independent claim that a semantic control is physical.
+		# Synchronize aliases after their source bindings have been reconciled.
+		if not current_record.is_empty() \
+				and not str(current_record.get("slot_binding_source_id", "")).strip_edges().is_empty():
+			continue
+		var policy_record: Dictionary = {}
+		if not current_record.is_empty() and current_record.has("visual_type"):
+			policy_record = current_record
+		elif current_record.is_empty():
+			policy_record = _base_layout_policy_entry(environment, binding_id)
+		if policy_record.is_empty():
+			continue
+		var existing_binding := _dict(bindings.get(binding_id_value, {}))
+		var existing_mode := str(existing_binding.get("presentation_mode", ""))
+		var requires_room := base_record_requires_room_slot(policy_record)
+		if not requires_room and existing_mode == PRESENTATION_ROOM:
+			bindings[binding_id_value] = _overflow_binding(
+				binding_id,
+				str(existing_binding.get("placement_class", "floor_fixture")),
+				str(existing_binding.get("kind", "base"))
+			)
+			object_rects.erase(binding_id)
+		elif requires_room and existing_mode == PRESENTATION_OVERFLOW and not current_record.is_empty():
+			# A newly visible person or newly authored asset may promote an old
+			# overflow row. Remove it so the normal deterministic slot pass below
+			# can claim only a still-free authored slot.
+			bindings.erase(binding_id_value)
+			object_rects.erase(binding_id)
+	for current_id_value in current_records_by_id.keys():
+		var current_id := str(current_id_value)
+		var alias_record := _dict(current_records_by_id.get(current_id_value, {}))
+		var source_id := str(alias_record.get("slot_binding_source_id", "")).strip_edges()
+		if source_id.is_empty() or not bindings.has(current_id) or not bindings.has(source_id):
+			continue
+		var source_binding := _dict(bindings.get(source_id, {}))
+		source_binding["identity"] = current_id
+		bindings[current_id] = source_binding
+		if str(source_binding.get("presentation_mode", "")) == PRESENTATION_OVERFLOW:
+			object_rects.erase(current_id)
 	for binding_id_value in bindings.keys():
 		var binding_id := str(binding_id_value)
 		if current_record_ids.has(binding_id):
@@ -413,6 +536,9 @@ static func bind_base_records(environment: Dictionary, records: Array, existing_
 				and str(shared_binding.get("placement_class", "")) == placement_class:
 			shared_binding["identity"] = object_id
 			bindings[object_id] = shared_binding
+			continue
+		if not base_record_requires_room_slot(record):
+			bindings[object_id] = _overflow_binding(object_id, placement_class, "base")
 			continue
 		var preference := str(object_preferences.get(object_id, "")).strip_edges()
 		if preference.is_empty():
@@ -501,6 +627,7 @@ static func bind_base_records(environment: Dictionary, records: Array, existing_
 		"slot_schema_version": SLOT_SCHEMA_VERSION,
 		"slot_map_digest": slot_map_digest(surface_map),
 		"binding_digest": binding_digest_value,
+		"authenticated_prior_layout": layout.duplicate(true),
 		"errors": [],
 	}
 
@@ -1137,6 +1264,24 @@ static func _clamp_inside_board(rect: Rect2) -> Rect2:
 		Vector2(clampf(rect.position.x, 0.0, BOARD_SIZE.x - size.x), clampf(rect.position.y, 0.0, BOARD_SIZE.y - size.y)),
 		size
 	)
+
+
+static func _without_dormant_orphan_object_rects(layout_value: Dictionary, current_record_ids: Dictionary) -> Dictionary:
+	var layout := layout_value.duplicate(true)
+	var bindings := _dict(layout.get("slot_bindings", {}))
+	var object_rects := _dict(layout.get("object_rects", {}))
+	for object_id_value in object_rects.keys():
+		# Malformed keys remain intact so the strict validator reports them.
+		if typeof(object_id_value) != TYPE_STRING:
+			continue
+		var object_id := str(object_id_value)
+		if object_id.is_empty() or object_id != object_id.strip_edges() or current_record_ids.has(object_id):
+			continue
+		var binding := _dict(bindings.get(object_id, {}))
+		if str(binding.get("presentation_mode", "")) != PRESENTATION_ROOM:
+			object_rects.erase(object_id_value)
+	layout["object_rects"] = object_rects
+	return layout
 
 
 static func _has_any_base_layout_authority(layout: Dictionary) -> bool:
