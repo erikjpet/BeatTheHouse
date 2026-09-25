@@ -6257,11 +6257,27 @@ function Enter-PunchlineBackRoom {
         $layer = Find-CanvasObject -SemanticId 'environment_layer:back_room'
     }
     if ($null -ceq $layer) {
-        if ($AllowUnavailable) { return $false }
-        throw 'The visible Punchline route did not expose its Made-standing back room.'
+        $spatial = @(Get-Array (Get-Value $script:LastObservation @('spatial', 'objects') @()) | Where-Object {
+            [string](Get-Value $_ @('object_id') '') -ceq 'environment_layer:back_room'
+        })
+        if ($spatial.Count -ceq 1 -and
+            [string](Get-Value $spatial[0] @('label') '') -ceq 'Crew Back Room' -and
+            [string](Get-Value $spatial[0] @('object_type') '') -ceq 'environment_layer' -and
+            (Get-Value $spatial[0] @('visible') $null) -is [bool] -and [bool](Get-Value $spatial[0] @('visible') $false) -and
+            (Get-Value $spatial[0] @('enabled') $null) -is [bool] -and [bool](Get-Value $spatial[0] @('enabled') $false) -and
+            (Get-Value $spatial[0] @('interactive') $null) -is [bool] -and [bool](Get-Value $spatial[0] @('interactive') $false)) {
+            $null = Invoke-OverflowRoomActionButton `
+                -ButtonText 'Crew Back Room: Enter Room' `
+                -Intent 'enter the exact visible Associate Crew back-room door'
+            Wait-Frames -Frames 12
+        }
+        elseif ($AllowUnavailable) { return $false }
+        else { throw 'The visible Punchline route did not expose its Associate Crew back room.' }
     }
-    $null = Open-SemanticObject -SemanticId 'environment_layer:back_room' -PreferredActions @('Enter Back Room', 'Enter Room', 'Enter', 'Open') -Intent 'enter the real Punchline back room'
-    Wait-Frames -Frames 12
+    else {
+        $null = Open-SemanticObject -SemanticId 'environment_layer:back_room' -PreferredActions @('Enter Back Room', 'Enter Room', 'Enter', 'Open') -Intent 'enter the real Punchline back room'
+        Wait-Frames -Frames 12
+    }
     if ($null -ceq (Find-CanvasObject -SemanticId 'event:crew_planning_table')) {
         if ($AllowUnavailable) { return $false }
         throw 'The back-room door did not reach the visible Crew planning table.'
