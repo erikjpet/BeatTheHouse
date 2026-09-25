@@ -2158,7 +2158,15 @@ func _run_rw06_1_slot_markers(library: Variant) -> void:
 func _rw06_1_prepare_base_map(surface_map: Dictionary, archetype: Dictionary, library: Variant) -> Dictionary:
 	var layer_id := str(surface_map.get("layer_id", ""))
 	if layer_id.is_empty():
-		return await _rw06_1_prepare_base_room(archetype, library)
+		var base_archetype := archetype
+		# Layered rooms retain an unqualified placement map for legacy saves that
+		# predate current_layer_id. Render that compatibility surface from the
+		# archetype's flat fields instead of silently selecting its default layer.
+		if not _dict(archetype.get("layers", {})).is_empty():
+			base_archetype = archetype.duplicate(true)
+			for metadata_key in ["layers", "default_layer_id", "layer_discovery_defaults", "compatibility_primary_layer_id", "environment_layer_schema_version"]:
+				base_archetype.erase(metadata_key)
+		return await _rw06_1_prepare_base_room(base_archetype, library)
 	var archetype_id := str(surface_map.get("archetype_id", archetype.get("id", "")))
 	var run_state: Variant = app.get("run_state")
 	var rng: Variant = run_state.create_rng("rw06_1_slot_markers:%s:%s" % [archetype_id, layer_id])
