@@ -12842,6 +12842,7 @@
         "game:roulette": "surface_item",
         "item:split_reel_note": "wall_mounted",
         "kitty_cat_lounge_amateur_night_amateur_signup": "surface_item",
+        "kitty_cat_lounge_amateur_night_judging_desk": "floor_fixture",
         "kitty_cat_lounge_amateur_night_task_0": "wall_mounted",
         "kitty_cat_lounge_bachelorette_storm_task_0": "wall_mounted",
         "kitty_cat_lounge_bachelorette_storm_missing_guest_marker": "ground_marker",
