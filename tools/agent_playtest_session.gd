@@ -152,6 +152,11 @@ func _execute_command(raw: String, command_number: int) -> Dictionary:
 				accepted = bool(clicked.get("ok", false))
 				reason = str(clicked.get("reason", ""))
 				detail = clicked
+			"click_blank_room":
+				var clicked := await _click_blank_room()
+				accepted = bool(clicked.get("ok", false))
+				reason = str(clicked.get("reason", ""))
+				detail = clicked
 			"click_action":
 				var clicked := await _click_action(argument)
 				accepted = bool(clicked.get("ok", false))
@@ -573,6 +578,52 @@ func _click_object(semantic_id: String, double_click: bool) -> Dictionary:
 		"double": double_click,
 		"global_hit_position": routed.get("global_hit_position", Vector2.ZERO),
 	}
+
+
+func _click_blank_room() -> Dictionary:
+	var canvas := app.get("environment_canvas") as Control
+	if canvas == null or not _control_is_fully_rendered(canvas) \
+			or not canvas.has_method("object_id_at_local_position"):
+		return {"ok": false, "reason": "room canvas does not expose a fully rendered blank-click surface"}
+	var local_position := _blank_room_position(canvas)
+	if not _inside_control(canvas, local_position):
+		return {"ok": false, "reason": "room canvas contains no public blank click position"}
+	var global_position := canvas.get_global_transform_with_canvas() * local_position
+	await _push_mouse_click(global_position, false)
+	return {
+		"ok": true,
+		"local_position": local_position,
+		"global_position": global_position,
+	}
+
+
+func _blank_room_position(canvas: Control) -> Vector2:
+	var candidates := [
+		Vector2(8.0, 8.0),
+		Vector2(canvas.size.x - 8.0, 8.0),
+		Vector2(8.0, canvas.size.y - 8.0),
+		Vector2(canvas.size.x - 8.0, canvas.size.y - 8.0),
+		Vector2(canvas.size.x * 0.5, 8.0),
+		Vector2(canvas.size.x * 0.5, canvas.size.y - 8.0),
+	]
+	for candidate_value in candidates:
+		var candidate: Vector2 = candidate_value
+		if _room_position_is_blank(canvas, candidate):
+			return candidate
+	for row in range(1, 6):
+		for column in range(1, 8):
+			var candidate := Vector2(
+				canvas.size.x * float(column) / 8.0,
+				canvas.size.y * float(row) / 6.0
+			)
+			if _room_position_is_blank(canvas, candidate):
+				return candidate
+	return Vector2(-1.0, -1.0)
+
+
+func _room_position_is_blank(canvas: Control, local_position: Vector2) -> bool:
+	return _inside_control(canvas, local_position) \
+		and str(canvas.call("object_id_at_local_position", local_position)).is_empty()
 
 
 func _click_action(argument: String) -> Dictionary:

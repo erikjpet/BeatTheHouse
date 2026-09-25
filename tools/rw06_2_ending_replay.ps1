@@ -2120,57 +2120,91 @@ function Wait-ForTravelToSettle {
 }
 
 
-function Reveal-WorldMapLeaveByPublicRefocus {
+function Reveal-SemanticObjectByPublicRefocus {
+    param([Parameter(Mandatory = $true)][string]$TargetSemanticId)
     $objects = @(Get-Array (Get-Value $script:LastResult @('look', 'clickable', 'canvas_objects') @()))
-    $leaveMatches = @($objects | Where-Object {
+    $targetMatches = @($objects | Where-Object {
         $id = Get-Value $_ @('semantic_id') $null
-        $id -is [string] -and [string]$id -ceq 'travel:leave'
+        $id -is [string] -and [string]$id -ceq $TargetSemanticId
     })
-    if ($leaveMatches.Count -cne 1) {
-        throw 'The room does not expose one exact public Leave object.'
+    if ($targetMatches.Count -cne 1) {
+        throw "The room does not expose one exact public '$TargetSemanticId' object."
     }
-    $leaveEnabled = Get-Value $leaveMatches[0] @('enabled') $null
-    $leaveRendered = Get-Value $leaveMatches[0] @('rendered') $null
-    if ($leaveEnabled -isnot [bool] -or $leaveRendered -isnot [bool]) {
-        throw 'The public Leave object has no exact enabled/rendered witnesses.'
+    $targetEnabled = Get-Value $targetMatches[0] @('enabled') $null
+    $targetRendered = Get-Value $targetMatches[0] @('rendered') $null
+    if ($targetEnabled -isnot [bool] -or $targetRendered -isnot [bool]) {
+        throw "The public '$TargetSemanticId' object has no exact enabled/rendered witnesses."
     }
-    if (-not [bool]$leaveEnabled) {
-        throw 'The public Leave object is disabled.'
+    if (-not [bool]$targetEnabled) {
+        throw "The public '$TargetSemanticId' object is disabled."
     }
-    if ([bool]$leaveRendered) { return }
+    if ([bool]$targetRendered) { return $true }
 
-    $selectedId = [string](Get-Value $script:LastObservation @('environment', 'selected_object_id') '')
+    $selectedId = [string](Get-Value $script:LastObservation @('room_canvas', 'selected_object_id') '')
+    if (-not [string]::IsNullOrWhiteSpace($selectedId)) {
+        $null = Invoke-BridgeCommand `
+            -Command 'click_blank_room' `
+            -Intent "click a blank part of the visible room to dismiss the $selectedId info card"
+        Wait-Frames -Frames 6
+        $roomSelectedId = [string](Get-Value $script:LastObservation @('room_canvas', 'selected_object_id') '')
+        $spatialSelectedId = [string](Get-Value $script:LastObservation @('spatial', 'selected_object_id') '')
+        if (-not [string]::IsNullOrWhiteSpace($roomSelectedId) -or
+            -not [string]::IsNullOrWhiteSpace($spatialSelectedId)) {
+            throw "The public blank-room click did not dismiss the selected '$selectedId' info card."
+        }
+        $liveTarget = @(Get-Array (Get-Value $script:LastResult @('look', 'clickable', 'canvas_objects') @()) | Where-Object {
+            [string](Get-Value $_ @('semantic_id') '') -ceq $TargetSemanticId
+        })
+        if ($liveTarget.Count -cne 1) {
+            throw "The public '$TargetSemanticId' object changed identity after dismissing the room info card."
+        }
+        $liveEnabled = Get-Value $liveTarget[0] @('enabled') $null
+        $liveRendered = Get-Value $liveTarget[0] @('rendered') $null
+        if ($liveEnabled -isnot [bool] -or $liveRendered -isnot [bool]) {
+            throw "The public '$TargetSemanticId' object lost its exact witnesses after dismissing the room info card."
+        }
+        if ([bool]$liveEnabled -and [bool]$liveRendered) { return $true }
+        $objects = @(Get-Array (Get-Value $script:LastResult @('look', 'clickable', 'canvas_objects') @()))
+        $selectedId = ''
+    }
     $candidates = @($objects | Where-Object {
         $semanticId = Get-Value $_ @('semantic_id') $null
         $enabled = Get-Value $_ @('enabled') $null
         $rendered = Get-Value $_ @('rendered') $null
         $semanticId -is [string] -and [string]$semanticId -cmatch '^[a-z0-9_.:-]+$' -and
-            [string]$semanticId -cne 'travel:leave' -and [string]$semanticId -cne $selectedId -and
+            [string]$semanticId -cne $TargetSemanticId -and [string]$semanticId -cne $selectedId -and
             $enabled -is [bool] -and [bool]$enabled -and
             $rendered -is [bool] -and [bool]$rendered
     } | Sort-Object { [string](Get-Value $_ @('semantic_id') '') } -CaseSensitive | Select-Object -First 12)
     foreach ($candidate in $candidates) {
         $semanticId = [string](Get-Value $candidate @('semantic_id') '')
-        $null = Invoke-BridgeCommand -Command "click_object $semanticId" -Intent 'move the visible room focus so its card no longer covers Leave'
+        $null = Invoke-BridgeCommand -Command "click_object $semanticId" -Intent "move the visible room focus so its card no longer covers $TargetSemanticId"
         Wait-Frames -Frames 6
         if ([bool](Get-Value $script:LastObservation @('event_popup', 'visible') $false) -or
             [bool](Get-Value $script:LastObservation @('talk', 'visible') $false)) {
-            throw 'A single room-focus click unexpectedly opened a blocking modal while uncovering Leave.'
+            throw "A single room-focus click unexpectedly opened a blocking modal while uncovering '$TargetSemanticId'."
         }
-        $liveLeave = @(Get-Array (Get-Value $script:LastResult @('look', 'clickable', 'canvas_objects') @()) | Where-Object {
-            [string](Get-Value $_ @('semantic_id') '') -ceq 'travel:leave'
+        $liveTarget = @(Get-Array (Get-Value $script:LastResult @('look', 'clickable', 'canvas_objects') @()) | Where-Object {
+            [string](Get-Value $_ @('semantic_id') '') -ceq $TargetSemanticId
         })
-        if ($liveLeave.Count -cne 1) {
-            throw 'The public Leave object changed identity while uncovering it.'
+        if ($liveTarget.Count -cne 1) {
+            throw "The public '$TargetSemanticId' object changed identity while uncovering it."
         }
-        $liveEnabled = Get-Value $liveLeave[0] @('enabled') $null
-        $liveRendered = Get-Value $liveLeave[0] @('rendered') $null
+        $liveEnabled = Get-Value $liveTarget[0] @('enabled') $null
+        $liveRendered = Get-Value $liveTarget[0] @('rendered') $null
         if ($liveEnabled -isnot [bool] -or $liveRendered -isnot [bool]) {
-            throw 'The public Leave object lost its exact witnesses while uncovering it.'
+            throw "The public '$TargetSemanticId' object lost its exact witnesses while uncovering it."
         }
-        if ([bool]$liveEnabled -and [bool]$liveRendered) { return }
+        if ([bool]$liveEnabled -and [bool]$liveRendered) { return $true }
     }
-    throw 'No bounded real room-focus click made the public Leave target fully visible.'
+    return $false
+}
+
+
+function Reveal-WorldMapLeaveByPublicRefocus {
+    if (-not (Reveal-SemanticObjectByPublicRefocus -TargetSemanticId 'travel:leave')) {
+        throw 'No bounded real room-focus click made the public Leave target fully visible.'
+    }
 }
 
 
@@ -2251,6 +2285,87 @@ function Open-OverflowWorldMapIfVisible {
     $null = Invoke-BridgeCommand -Command "click_button $mapButtonId" -Intent 'open the city map from the visible room action list'
     Wait-Frames -Frames 8
     return $true
+}
+
+
+function Invoke-OverflowRoomActionButton {
+    param(
+        [Parameter(Mandatory = $true)][string]$ButtonText,
+        [Parameter(Mandatory = $true)][string]$Intent
+    )
+    $launcher = Find-Button -Text 'More room actions' -Contains
+    if ($null -ceq $launcher) {
+        throw "The room does not expose More room actions while '$ButtonText' is needed."
+    }
+    $launcherId = [string](Get-Value $launcher @('id') '')
+    if ([string]::IsNullOrWhiteSpace($launcherId)) {
+        throw 'The visible More room actions launcher has no public button id.'
+    }
+    $null = Invoke-BridgeCommand -Command "click_button $launcherId" -Intent 'open the visible list of room actions'
+    Wait-Frames -Frames 2
+
+    # The overlay normally opens at its top, but it may retain a prior scroll
+    # offset. Search to the bottom first, then reverse once if necessary.
+    $direction = 'down'
+    for ($attempt = 0; $attempt -le 32; $attempt++) {
+        $matches = @(Get-Buttons | Where-Object {
+            [string](Get-Value $_ @('text') '') -ceq $ButtonText
+        })
+        if ($matches.Count -gt 1) {
+            throw "The room action list exposes more than one '$ButtonText' action."
+        }
+        if ($matches.Count -ceq 1 -and
+            (Get-Value $matches[0] @('fully_visible') $null) -is [bool] -and
+            [bool](Get-Value $matches[0] @('fully_visible') $false)) {
+            Wait-Frames -Frames 12 -Intent "let the visible room-action scroll settle before selecting $ButtonText"
+            $settled = @(Get-Buttons | Where-Object {
+                [string](Get-Value $_ @('text') '') -ceq $ButtonText
+            })
+            if ($settled.Count -ceq 1 -and
+                (Get-Value $settled[0] @('fully_visible') $null) -is [bool] -and
+                [bool](Get-Value $settled[0] @('fully_visible') $false)) {
+                $enabled = Get-Value $settled[0] @('enabled') $null
+                if ($enabled -isnot [bool] -or -not [bool]$enabled) {
+                    throw "The fully visible room action '$ButtonText' is not enabled."
+                }
+                $buttonId = [string](Get-Value $settled[0] @('id') '')
+                if ([string]::IsNullOrWhiteSpace($buttonId)) {
+                    throw "The fully visible room action '$ButtonText' has no public button id."
+                }
+                return Invoke-BridgeCommand -Command "click_button $buttonId" -Intent $Intent
+            }
+        }
+        if ($attempt -ceq 32) { break }
+
+        $surfaces = @(Get-PublicScrollSurfaces)
+        $roomSurface = @($surfaces | Where-Object {
+            [string](Get-Value $_ @('id') '') -ceq 'room_actions'
+        })
+        if ($roomSurface.Count -cne 1) {
+            throw "Expected exactly one visible room-actions scroll surface; found $($roomSurface.Count)."
+        }
+        $canDown = Get-Value $roomSurface[0] @('can_scroll_down') $null
+        $canUp = Get-Value $roomSurface[0] @('can_scroll_up') $null
+        if ($canDown -isnot [bool] -or $canUp -isnot [bool]) {
+            throw 'The visible room-actions scroll surface lost its directional signals.'
+        }
+        if ($direction -ceq 'down' -and -not [bool]$canDown) {
+            if (-not [bool]$canUp) { break }
+            $direction = 'up'
+        }
+        elseif ($direction -ceq 'up' -and -not [bool]$canUp) {
+            break
+        }
+        $null = Select-UniquePublicVerticalScrollSurface `
+            -Surfaces $surfaces `
+            -SurfaceId 'room_actions' `
+            -Direction $direction
+        $null = Invoke-BridgeCommand `
+            -Command "scroll_surface room_actions $direction" `
+            -Intent "scroll the visible room action list $direction toward $ButtonText"
+        Wait-Frames -Frames 12 -Intent 'let the visible room-action scroll settle'
+    }
+    throw "The visible room action list did not expose a stable, fully visible '$ButtonText' control."
 }
 
 
@@ -3384,7 +3499,32 @@ function Enter-GrandRoom {
         return
     }
     $semantic = if ($Room -ceq 'cage') { 'travel:grand_casino_cage' } else { 'travel:grand_casino' }
-    $null = Open-SemanticObject -SemanticId $semantic -PreferredActions @('Enter Room', 'Travel', 'Enter') -Intent "walk through the real Grand Casino door to $Room"
+    $canvasMatches = @(Get-Array (Get-Value $script:LastResult @('look', 'clickable', 'canvas_objects') @()) | Where-Object {
+        [string](Get-Value $_ @('semantic_id') '') -ceq $semantic
+    })
+    if ($canvasMatches.Count -cne 1) {
+        throw "The Grand Casino exposes $($canvasMatches.Count) exact '$semantic' door records."
+    }
+    $doorRendered = Get-Value $canvasMatches[0] @('rendered') $null
+    $doorEnabled = Get-Value $canvasMatches[0] @('enabled') $null
+    if ($doorRendered -isnot [bool] -or $doorEnabled -isnot [bool] -or -not [bool]$doorEnabled) {
+        throw "The Grand Casino door '$semantic' has no exact enabled public state."
+    }
+    if (-not [bool]$doorRendered) {
+        $doorRendered = Reveal-SemanticObjectByPublicRefocus -TargetSemanticId $semantic
+    }
+    if ([bool]$doorRendered) {
+        $null = Open-SemanticObject -SemanticId $semantic -PreferredActions @('Enter Room', 'Travel', 'Enter') -Intent "walk through the real Grand Casino door to $Room"
+    }
+    else {
+        $doorLabel = [string](Get-Value $canvasMatches[0] @('label') '')
+        if ([string]::IsNullOrWhiteSpace($doorLabel)) {
+            throw "The overflow Grand Casino door '$semantic' has no public label."
+        }
+        $null = Invoke-OverflowRoomActionButton `
+            -ButtonText "${doorLabel}: Enter Room" `
+            -Intent "walk through the visible Grand Casino room action to $Room"
+    }
     Wait-ForTravelToSettle
     Wait-Frames -Frames 12
     if ([string](Get-Value $script:LastObservation @('environment', 'archetype_id') '') -cne $expected) {
@@ -3661,9 +3801,9 @@ function Play-OneBlackjackRound {
             Wait-Frames -Frames 12
             return
         }
-        if ($phase -ceq 'decision' -or
-            [bool](Get-Value $script:LastObservation @('game', 'can_hit') $false) -or
-            [bool](Get-Value $script:LastObservation @('game', 'can_stand') $false)) {
+        $hitAction = Find-GameAction -Action 'blackjack_hit'
+        $standAction = Find-GameAction -Action 'blackjack_stand'
+        if ($null -ne $hitAction -or $null -ne $standAction) {
             Invoke-PublicBlackjackDecision
             Wait-Frames -Frames 24
             continue
@@ -4120,6 +4260,7 @@ function Invoke-CheatEndingRoute {
             }
         }
     }
+    Assert-CheatRourkeDuelBeforeHandOne -Context 'after showdown choices'
     if (-not $ConfirmationOnly) {
         Assert-SaveRelaunchContinue -Milestone 'Rourke duel before hand one'
     }
@@ -4204,12 +4345,85 @@ function Navigate-ToArchetype {
         [Parameter(Mandatory = $true)][string]$ArchetypeId,
         [Parameter(Mandatory = $true)][string]$Intent
     )
-    if ([string](Get-Value $script:LastObservation @('environment', 'archetype_id') '') -ceq $ArchetypeId) { return }
-    $nodeId = Find-WorldNodeIdByArchetype -ArchetypeId $ArchetypeId
-    if ([string]::IsNullOrWhiteSpace($nodeId)) {
-        throw "The public map contains no visible $ArchetypeId venue."
+    if ([string](Get-Value $script:LastObservation @('environment', 'archetype_id') '') -ceq $ArchetypeId) {
+        if ([string](Get-Value $script:LastObservation @('screen', 'screen') '') -ceq 'RESULT') {
+            Restore-EnvironmentSurfaceAfterTravelResult
+        }
+        return
     }
-    Navigate-ToNode -NodeId $nodeId -Intent $Intent
+
+    # The map intentionally caps the number of destination cards. A guaranteed
+    # venue can therefore begin just beyond the currently rendered choices and
+    # becomes public only as the player visits ordinary revealed stops. Follow
+    # those real cards until the requested archetype enters the visible list.
+    $scoutedNodeIds = New-Object 'System.Collections.Generic.HashSet[string]'
+    for ($scout = 0; $scout -lt 24; $scout++) {
+        Open-WorldMap
+        $nodes = @(Get-MapNodes)
+        $archetypeMatches = @($nodes | Where-Object {
+            [string](Get-Value $_ @('archetype_id') '') -ceq $ArchetypeId
+        } | Sort-Object @{ Expression = { if ([string](Get-Value $_ @('id') '') -ceq $ArchetypeId) { 0 } else { 1 } } }, @{ Expression = { [string](Get-Value $_ @('id') '') } })
+        if ($archetypeMatches.Count -gt 1) {
+            Close-WorldMap
+            throw "The public map exposes more than one $ArchetypeId venue."
+        }
+        if ($archetypeMatches.Count -ceq 1) {
+            $nodeId = [string](Get-Value $archetypeMatches[0] @('id') '')
+            if ($nodeId -cnotmatch '^[a-z0-9_]+$') {
+                Close-WorldMap
+                throw "The public $ArchetypeId card has no stable node identity."
+            }
+            $cost = Get-Value $archetypeMatches[0] @('cost') $null
+            if (($cost -isnot [int32] -and $cost -isnot [int64]) -or [long]$cost -lt 0) {
+                Close-WorldMap
+                throw "The public $ArchetypeId card has no non-negative integral fare."
+            }
+            if (-not [bool](Get-Value $archetypeMatches[0] @('travel_enabled') $false)) {
+                $reason = [string](Get-Value $archetypeMatches[0] @('travel_disabled_reason') 'route unavailable')
+                Close-WorldMap
+                throw "The public $ArchetypeId card is not travel-enabled: $reason"
+            }
+            $cash = Get-RenderedHudInteger -Name bankroll -Context "$ArchetypeId travel fare"
+            if ([long]$cost -gt [long]$cash) {
+                Close-WorldMap
+                throw "The public $ArchetypeId fare is `$${cost}, but only `$${cash} is rendered."
+            }
+            Travel-ToNode -NodeId $nodeId -Intent $Intent
+            Restore-EnvironmentSurfaceAfterTravelResult
+            return
+        }
+
+        $currentNodeId = [string](Get-Value $script:LastObservation @('environment', 'world_node_id') '')
+        $candidates = @($nodes | Where-Object {
+            $candidateId = [string](Get-Value $_ @('id') '')
+            $candidateId -cmatch '^[a-z0-9_]+$' -and
+                $candidateId -cne $currentNodeId -and
+                [bool](Get-Value $_ @('travel_enabled') $false) -and
+                (-not $scoutedNodeIds.Contains($candidateId))
+        } | Sort-Object `
+            @{ Expression = { if ([string](Get-Value $_ @('state') '') -ceq 'visited') { 1 } else { 0 } } }, `
+            @{ Expression = { [int](Get-Value $_ @('cost') 0) } }, `
+            @{ Expression = { [string](Get-Value $_ @('id') '') } })
+        if ($candidates.Count -ceq 0) {
+            Close-WorldMap
+            throw "The public map exposed no untried travel card while scouting for $ArchetypeId."
+        }
+        $nextNodeId = [string](Get-Value $candidates[0] @('id') '')
+        $nextCost = Get-Value $candidates[0] @('cost') $null
+        if (($nextCost -isnot [int32] -and $nextCost -isnot [int64]) -or [long]$nextCost -lt 0) {
+            Close-WorldMap
+            throw "The visible scouting card '$nextNodeId' has no non-negative integral fare."
+        }
+        $cash = Get-RenderedHudInteger -Name bankroll -Context "$ArchetypeId scouting fare"
+        if ([long]$nextCost -gt [long]$cash) {
+            Close-WorldMap
+            throw "The next visible scouting card costs `$${nextCost}, but only `$${cash} is rendered."
+        }
+        $null = $scoutedNodeIds.Add($nextNodeId)
+        Travel-ToNode -NodeId $nextNodeId -Intent "$Intent (visible scouting stop $($scout + 1) via $nextNodeId)"
+        Restore-EnvironmentSurfaceAfterTravelResult
+    }
+    throw "The public route did not reveal a $ArchetypeId venue within 24 normal travel decisions."
 }
 
 
@@ -4374,21 +4588,55 @@ function Ensure-PunchlineCasinoDiscovered {
 }
 
 
+function Invoke-BishopPresenceCashierTipBoundary {
+    param(
+        [Parameter(Mandatory = $true)][ValidateRange(1, 12)][int]$BoundaryNumber
+    )
+    Navigate-ToArchetype `
+        -ArchetypeId 'corner_store' `
+        -Intent "return to the Corner Store for Bishop presence action boundary $BoundaryNumber"
+    Restore-EnvironmentSurfaceAfterTravelResult
+
+    $service = Find-CanvasObject -SemanticId 'service:cashier_tip'
+    if ($null -ceq $service -or
+        [string](Get-Value $service @('label') '') -cne 'Cashier Tip' -or
+        [string](Get-Value $service @('object_type') '') -cne 'service') {
+        throw 'The Corner Store does not expose the rendered, enabled Cashier Tip used to advance Bishop presence.'
+    }
+    $beforeCash = Get-RenderedHudInteger -Name bankroll -Context "Bishop presence boundary $BoundaryNumber bankroll before the visible Cashier Tip"
+    if ($beforeCash -lt 4) {
+        throw "The visible Cashier Tip costs `$4, but only `$$beforeCash remains before Bishop presence boundary $BoundaryNumber."
+    }
+    $null = Open-SemanticObject `
+        -SemanticId 'service:cashier_tip' `
+        -PreferredActions @('Use') `
+        -Intent "pay the visible `$4 Cashier Tip to advance Bishop presence boundary $BoundaryNumber"
+    Wait-Frames -Frames 10
+    $afterCash = Get-RenderedHudInteger -Name bankroll -Context "Bishop presence boundary $BoundaryNumber bankroll after the visible Cashier Tip"
+    if ($afterCash -ne $beforeCash - 4) {
+        throw "The visible Cashier Tip did not charge its exact `$4 price at Bishop presence boundary $BoundaryNumber (`$$beforeCash -> `$$afterCash)."
+    }
+    if (Test-CrewFavorPublicSurface) {
+        throw 'A Crew favor resurfaced after the two-favor marker was visibly cleared.'
+    }
+    Restore-EnvironmentSurfaceAfterTravelResult
+}
+
+
 function Find-BishopSurfaceAtGrand {
-    Reach-GrandCasino
-    for ($attempt = 0; $attempt -lt 20; $attempt++) {
-        foreach ($eventId in @('recruitment_bishop', 'crew_contact_bishop')) {
-            if ($null -cne (Find-CanvasObject -SemanticId "event:$eventId")) { return $eventId }
+    for ($boundary = 0; $boundary -le 12; $boundary++) {
+        Reach-GrandCasino
+        foreach ($room in @('main', 'cage')) {
+            Enter-GrandRoom -Room $room
+            foreach ($eventId in @('recruitment_bishop', 'crew_contact_bishop')) {
+                if ($null -cne (Find-CanvasObject -SemanticId "event:$eventId")) { return $eventId }
+            }
         }
-        $archetype = [string](Get-Value $script:LastObservation @('environment', 'archetype_id') '')
-        if ($archetype -ceq 'grand_casino') {
-            Enter-GrandRoom -Room cage
-        }
-        else {
-            Enter-GrandRoom -Room main
+        if ($boundary -lt 12) {
+            Invoke-BishopPresenceCashierTipBoundary -BoundaryNumber ($boundary + 1)
         }
     }
-    throw "Bishop did not rotate onto either player-accessible Grand Casino room within twenty real door transitions."
+    throw "Bishop did not rotate onto either player-accessible Grand Casino room within twelve visible action boundaries."
 }
 
 
