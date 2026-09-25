@@ -982,22 +982,25 @@ static func _merge_routed_settlement_messages(result: Dictionary, deltas: Dictio
 
 
 static func _replace_cash_amounts_with_chips(message: String) -> String:
-	var cash_amount := RegEx.new()
-	if cash_amount.compile("\\$([+-]?[0-9][0-9,]*)") != OK:
-		return message
-	var matches := cash_amount.search_all(message)
-	var result := message
-	for index in range(matches.size() - 1, -1, -1):
-		var amount_match: RegExMatch = matches[index]
-		var amount_text := amount_match.get_string(1)
-		var amount := int(amount_text.replace(",", ""))
-		var noun := "chip" if absi(amount) == 1 else "chips"
-		var replacement := "%s %s" % [amount_text, noun]
-		result = "%s%s%s" % [
-			result.substr(0, amount_match.get_start()),
-			replacement,
-			result.substr(amount_match.get_end()),
-		]
+	# Hand-rolled scan for "$[+-]digits[,digits]": the Web release template is built without the RegEx module.
+	var result := ""
+	var index := 0
+	while index < message.length():
+		var start := index + 1
+		if message[index] == "$" and start < message.length() and "+-".contains(message[start]):
+			start += 1
+		var end := start
+		if message[index] == "$" and end < message.length() and message[end].is_valid_int():
+			while end < message.length() and (message[end].is_valid_int() or message[end] == ","):
+				end += 1
+			var amount_text := message.substr(index + 1, end - index - 1)
+			var amount := int(amount_text.replace(",", ""))
+			var noun := "chip" if absi(amount) == 1 else "chips"
+			result += "%s %s" % [amount_text, noun]
+			index = end
+			continue
+		result += message[index]
+		index += 1
 	return result
 
 
