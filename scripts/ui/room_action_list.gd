@@ -5,7 +5,10 @@ signal action_selected(record: Dictionary, action: Dictionary)
 
 const MIN_TARGET := Vector2(44.0, 44.0)
 const PREFERRED_PANEL_WIDTH := 520.0
+const PREFERRED_COLUMN_WIDTH := 360.0
 const PANEL_EDGE_MARGIN := 16.0
+const PANEL_CHROME_HEIGHT := 96.0
+const GRID_GAP := 4.0
 const SOURCE_INLINE := "inline_actions"
 const SOURCE_SEQUENCE := "scenario_sequence_actions"
 const SOURCE_AVAILABLE := "available_actions"
@@ -16,7 +19,7 @@ var _launcher: Button
 var _modal_layer: CanvasLayer
 var _overlay: Control
 var _panel: PanelContainer
-var _list: VBoxContainer
+var _list: GridContainer
 var _close: Button
 var _records: Array = []
 var _render_signature := ""
@@ -82,17 +85,13 @@ func _ready() -> void:
 	heading.clip_text = true
 	heading.tooltip_text = "These objects remain available here without being drawn on the room canvas."
 	stack.add_child(heading)
-	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(0.0, 132.0)
-	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.follow_focus = true
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-	stack.add_child(scroll)
-	_list = VBoxContainer.new()
-	_list.add_theme_constant_override("separation", 4)
+	_list = GridContainer.new()
+	_list.columns = 1
+	_list.add_theme_constant_override("h_separation", int(GRID_GAP))
+	_list.add_theme_constant_override("v_separation", int(GRID_GAP))
 	_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.add_child(_list)
+	_list.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	stack.add_child(_list)
 	_close = Button.new()
 	_close.text = "Close"
 	_close.custom_minimum_size = MIN_TARGET
@@ -141,6 +140,7 @@ func render(records: Array) -> void:
 	if next_signature != _render_signature:
 		_render_signature = next_signature
 		_rebuild_rows()
+	_sync_panel_width()
 	visible = not _records.is_empty()
 	_launcher.visible = visible
 	_launcher.text = "More room actions (%d)" % _records.size()
@@ -503,20 +503,35 @@ func is_open() -> bool:
 
 
 func _sync_panel_width() -> void:
-	if _panel == null or get_viewport() == null:
+	if _panel == null or _list == null or get_viewport() == null:
 		return
-	var layout_width := get_viewport_rect().size.x
+	var layout_size := get_viewport_rect().size
 	var window := get_window()
 	# The project stretches its logical 1280px canvas into the real Window. On a
-	# compact native window the viewport therefore remains 1280px wide; cap against
-	# both authorities so the modal itself still observes the physical safe width.
-	if window != null and window.size.x > 0:
-		layout_width = minf(layout_width, float(window.size.x))
-	var available_width := maxf(MIN_TARGET.x, layout_width - PANEL_EDGE_MARGIN * 2.0)
-	_panel.custom_minimum_size.x = minf(PREFERRED_PANEL_WIDTH, available_width)
+	# compact native window the viewport therefore remains 1280x720; cap against
+	# both authorities so the modal still observes the physical safe rectangle.
+	if window != null:
+		if window.size.x > 0:
+			layout_size.x = minf(layout_size.x, float(window.size.x))
+		if window.size.y > 0:
+			layout_size.y = minf(layout_size.y, float(window.size.y))
+	var available_width := maxf(MIN_TARGET.x, layout_size.x - PANEL_EDGE_MARGIN * 2.0)
+	var available_height := maxf(MIN_TARGET.y, layout_size.y - PANEL_EDGE_MARGIN * 2.0)
+	var row_stride := MIN_TARGET.y + GRID_GAP
+	var available_grid_height := maxf(MIN_TARGET.y, available_height - PANEL_CHROME_HEIGHT)
+	var maximum_rows := maxi(1, int(floor((available_grid_height + GRID_GAP) / row_stride)))
+	var action_count := _list.get_child_count()
+	var column_count := maxi(1, ceili(float(action_count) / float(maximum_rows)))
+	_list.columns = column_count
+	var preferred_width := PREFERRED_PANEL_WIDTH if column_count == 1 else (
+		PREFERRED_COLUMN_WIDTH * float(column_count)
+		+ GRID_GAP * float(column_count - 1)
+		+ PANEL_EDGE_MARGIN
+	)
+	_panel.custom_minimum_size.x = minf(preferred_width, available_width)
 	# CenterContainer can retain the former preferred allocation for one layout
 	# pass after a viewport shrink. Reset against the new combined minimum now so
-	# a 320px surface never spends a frame wider than its 16px edge margins.
+	# a compact surface never spends a frame outside its safe margins.
 	_panel.reset_size()
 	var parent_container := _panel.get_parent() as Container
 	if parent_container != null:
