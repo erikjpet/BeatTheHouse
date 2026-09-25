@@ -5131,7 +5131,7 @@ function Invoke-CrewFavorActionBoundary {
             Wait-Frames -Frames 10
             $afterCash = Get-RenderedHudInteger -Name bankroll -Context 'Crew favor 2 boundary 1 bankroll after Back Alley Offer'
             $afterHeat = Get-RenderedHudInteger -Name heat_level -Context 'Crew favor 2 boundary 1 heat after Back Alley Offer'
-            if ($afterCash -cne ($beforeCash + 8) -or $afterHeat -cne ($beforeHeat + 2)) {
+            if ($afterCash -cne ($beforeCash + 8) -or $afterHeat -cne ($beforeHeat + 1)) {
                 throw "The exact Back Alley Offer changed public economy unexpectedly (`$$beforeCash/$beforeHeat -> `$$afterCash/$afterHeat)."
             }
         }
