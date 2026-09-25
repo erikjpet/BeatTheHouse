@@ -13610,7 +13610,12 @@ func _activate_overflow_room_action(record_snapshot: Dictionary, action_snapshot
 	if route_as_scenario and scenario_command_id.is_empty():
 		scenario_command_id = str(live_action.get("id", "")).strip_edges()
 	var activated := false
-	if source == RoomActionListScript.SOURCE_SEQUENCE \
+	var direct_handoff_action := bool(object_data.get("delivery_handoff_direct", false)) \
+			and str(live_action.get("id", "")).strip_edges() == "delivery_handoff_direct"
+	if direct_handoff_action:
+		var handoff_node_id := str(object_data.get("delivery_handoff_node_id", "")).strip_edges()
+		activated = not handoff_node_id.is_empty() and _complete_delivery_handoff(handoff_node_id)
+	elif source == RoomActionListScript.SOURCE_SEQUENCE \
 			or object_type in [CONTEXT_MODE_SCENARIO_SEQUENCE, "scenario_scene_object", "scenario_actor", "character"]:
 		activated = _activate_scenario_sequence_action(object_data, live_action)
 	elif route_as_scenario:
