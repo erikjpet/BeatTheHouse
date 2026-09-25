@@ -14991,7 +14991,7 @@
           "class_overrides": {
             "game:blackjack": "floor_fixture",
             "game:video_poker": "floor_fixture",
-            "lender:the_crew": "standing_person"
+            "lender:the_crew": "seated_person"
           },
           "scenario_object_slot_positions": {
             "delta_queen_fog_delay_deck_officer": [
@@ -15070,7 +15070,7 @@
         },
         "delta_queen_engine_trouble": {
           "class_overrides": {
-            "lender:the_crew": "standing_person"
+            "lender:the_crew": "seated_person"
           },
           "scenario_object_slot_positions": {
             "delta_queen_engine_trouble_deck_guard": [
@@ -15161,7 +15161,7 @@
             "delta_queen_wedding_charter_safe_exit": "doorway",
             "event:rowdy_regular": "standing_person",
             "game:blackjack": "floor_fixture",
-            "lender:the_crew": "standing_person",
+            "lender:the_crew": "seated_person",
             "service:house_drink": "surface_item",
             "service:scenario_open_bar": "floor_fixture"
           },
@@ -15357,7 +15357,7 @@
             "delta_queen_captains_invitational_eliminated_players": "standing_person",
             "delta_queen_captains_invitational_entry_cards": "doorway",
             "game:blackjack": "floor_fixture",
-            "lender:the_crew": "standing_person"
+            "lender:the_crew": "seated_person"
           },
           "scenario_object_slot_positions": {
             "delta_queen_captains_invitational_bracket_tables": [
@@ -15443,7 +15443,7 @@
             "delta_queen_whale_aboard_aftermath_shadowed_entourage_prop": "wall_mounted",
             "delta_queen_whale_aboard_work_2_choice_2": "wall_mounted",
             "game:video_poker": "floor_fixture",
-            "lender:the_crew": "standing_person"
+            "lender:the_crew": "seated_person"
           },
           "scenario_object_slot_positions": {
             "delta_queen_whale_aboard_entourage_runner": [
@@ -16647,8 +16647,8 @@
         "travel_spots:4": "base.door_right_middle",
         "service_spots:0": "base.game_3",
         "service_spots:1": "base.event_table_2",
-        "lender_spots:0": "base.staff_floor",
-        "lender_spots:1": "base.staff_floor"
+        "lender_spots:0": "base.patron_front_left",
+        "lender_spots:1": "base.patron_front_left"
       },
       "scenario_slot_ids": {
         "delta_queen_captains_invitational_bracket_tables|delta_noninteractive_right|center|": "stage.event_floor_1",
