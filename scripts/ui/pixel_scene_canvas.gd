@@ -2704,7 +2704,7 @@ func _draw_scene_objects() -> void:
 
 
 func _draw_scene_object_body(object_data: Dictionary) -> void:
-	var rect := _board_rect_for_object(object_data)
+	var rect := _natural_model_rect_for_object(object_data)
 	var object_id := str(object_data.get("id", ""))
 	var object_type := str(object_data.get("type", "item"))
 	var active := object_id == selected_object_id or object_id == hovered_object_id
@@ -5079,6 +5079,114 @@ func _update_drunk_distortion_protected_rects() -> void:
 		if label_rect.size.x > 0.0 and label_rect.size.y > 0.0:
 			protected_rects.append(_board_rect_to_local_rect(label_rect.grow(3.0)))
 	drunk_distortion_overlay.set_ui_protected_rects(protected_rects)
+
+
+# Authored object rectangles are placement, interaction, and label authority.
+# Room models keep the stable dimensions they used before slot binding and are
+# anchored to the slot's physical contact instead of being resized into it.
+func _natural_model_rect_for_object(object_data: Dictionary) -> Rect2:
+	var slot_rect := _board_rect_for_object(object_data)
+	var model_size := _natural_model_size_for_object(object_data)
+	var placement_class := str(object_data.get("placement_class", "")).strip_edges()
+	if placement_class.is_empty():
+		placement_class = EnvironmentPlacementScript.classify(
+			object_data,
+			str(object_data.get("interaction_type", object_data.get("type", ""))),
+			str(object_data.get("id", "")),
+			str(object_data.get("prop", object_data.get("icon_key", "")))
+		)
+	var center := slot_rect.get_center()
+	if placement_class not in ["wall_mounted", "hanging", "doorway"]:
+		center.y = slot_rect.end.y - model_size.y * 0.5
+	return Rect2(center - model_size * 0.5, model_size)
+
+
+func _natural_model_size_for_object(object_data: Dictionary) -> Vector2:
+	var interaction_type := str(object_data.get("interaction_type", "")).strip_edges().to_lower()
+	var size := _natural_model_size_for_type(interaction_type)
+	if size.x > 0.0 and size.y > 0.0:
+		return size
+	var visual_type := str(object_data.get("type", "")).strip_edges().to_lower()
+	size = _natural_model_size_for_type(visual_type)
+	if size.x > 0.0 and size.y > 0.0:
+		return size
+	var prop := str(object_data.get("prop", object_data.get("icon_key", ""))).strip_edges().to_lower()
+	match prop:
+		"bed":
+			return Vector2(150.0, 74.0)
+		"door", "motel_door", "side_door":
+			return Vector2(104.0, 64.0)
+		"machine", "slot_machine", "video_poker_machine", "coin_pusher_room":
+			return Vector2(110.0, 72.0)
+	var placement_class := str(object_data.get("placement_class", "")).strip_edges()
+	if placement_class.is_empty():
+		placement_class = EnvironmentPlacementScript.classify(
+			object_data,
+			visual_type,
+			str(object_data.get("id", "")),
+			prop
+		)
+	match placement_class:
+		"standing_person":
+			return Vector2(102.0, 64.0)
+		"behind_counter_person":
+			return Vector2(108.0, 70.0)
+		"seated_person":
+			return Vector2(100.0, 64.0)
+		"group":
+			return Vector2(118.0, 72.0)
+		"floor_fixture":
+			return Vector2(110.0, 72.0)
+		"ground_marker":
+			return Vector2(104.0, 58.0)
+		"surface_item":
+			return Vector2(90.0, 54.0)
+		"wall_mounted":
+			return Vector2(96.0, 54.0)
+		"hanging":
+			return Vector2(104.0, 58.0)
+		"doorway":
+			return Vector2(104.0, 64.0)
+	return DEFAULT_OBJECT_VISUAL_MIN_SIZE
+
+
+# Canonical pre-slot canvas footprints. These are model dimensions, not source
+# texture dimensions and not lower bounds to be reconciled with a slot.
+func _natural_model_size_for_type(object_type: String) -> Vector2:
+	match object_type:
+		"game":
+			return Vector2(110.0, 72.0)
+		"event":
+			return Vector2(100.0, 64.0)
+		"item":
+			return Vector2(90.0, 54.0)
+		"shopkeeper":
+			return Vector2(108.0, 70.0)
+		"game_hook":
+			return Vector2(104.0, 58.0)
+		"travel":
+			return Vector2(104.0, 64.0)
+		"service":
+			return Vector2(96.0, 54.0)
+		"lender":
+			return Vector2(102.0, 58.0)
+		"numbers", "numbers_silas":
+			return Vector2(106.0, 62.0)
+		"environment_layer":
+			return Vector2(118.0, 72.0)
+		"home_tenure":
+			return Vector2(116.0, 58.0)
+		"home_sleep":
+			return Vector2(150.0, 74.0)
+		"home_storage":
+			return Vector2(108.0, 58.0)
+		"home_container":
+			return Vector2(104.0, 58.0)
+		"drink":
+			return Vector2(90.0, 54.0)
+		"meta_sal_shelf":
+			return SAL_SHELF_VISUAL_MIN_SIZE
+	return Vector2.ZERO
 
 
 func _board_rect_for_object(object_data: Dictionary) -> Rect2:
