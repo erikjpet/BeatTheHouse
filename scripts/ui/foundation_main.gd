@@ -14550,11 +14550,15 @@ func _activate_event_response_action(action_object_id: String) -> bool:
 	var event_option := _eligible_event_option(event_id)
 	var live_choice := _event_choice(event_option, choice_id)
 	if bool(live_choice.get("dismissal", false)):
-		if not _event_choice_popup_is_visible() \
-				or not _event_choice_popup_allows_event_resolution(event_id) \
-				or str(pending_event_choice_popup_snapshot.get("popup_type", "")) != "interactable_event":
+		if _event_choice_popup_is_visible():
+			if not _event_choice_popup_allows_event_resolution(event_id) \
+					or str(pending_event_choice_popup_snapshot.get("popup_type", "")) != "interactable_event":
+				return false
+			_dismiss_interactable_event_popup()
+			return true
+		if selected_object_id != "event:%s" % event_id:
 			return false
-		_dismiss_interactable_event_popup()
+		_dismiss_interactable_event_selection()
 		return true
 	if _event_is_person_conversation(event_id, true):
 		return _start_person_event_conversation(event_id)
@@ -14702,6 +14706,10 @@ func _dismiss_interactable_event_popup() -> void:
 	if str(pending_event_choice_popup_snapshot.get("popup_type", "")) != "interactable_event":
 		return
 	_hide_event_choice_popup()
+	_dismiss_interactable_event_selection()
+
+
+func _dismiss_interactable_event_selection() -> void:
 	_clear_selected_event_choice()
 	_set_current_screen(SCREEN_GAME if current_game != null else SCREEN_ENVIRONMENT)
 	clear_interaction_focus(false, false)
