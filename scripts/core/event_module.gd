@@ -530,7 +530,7 @@ func apply_event_result(run_state: RunState, result: Dictionary) -> void:
 	# window. Accepting the Grand invitation is a concrete departure handoff:
 	# the host's launch is waiting at the dock. Release only that venue-authored
 	# lock; a police-sweep lock remains authoritative and must still be served.
-	if get_id() == "grand_casino_invite" and choice_key == "accept_invite" \
+	if get_id() == "grand_casino_invite" and str(result.get("choice_id", "")) == "accept_invite" \
 			and str(run_state.current_environment.get("archetype_id", "")) == "delta_queen" \
 			and str(run_state.current_environment.get("travel_lock_source", "")) != "police_sweep":
 		run_state.current_environment["travel_lock_remaining"] = 0
