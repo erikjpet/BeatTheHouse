@@ -2220,7 +2220,7 @@ function Open-OverflowWorldMapIfVisible {
     $null = Invoke-BridgeCommand -Command "click_button $launcherId" -Intent 'open the visible list of room actions'
     Wait-Frames -Frames 2
     $mapButton = $null
-    for ($attempt = 0; $attempt -le 16; $attempt++) {
+    for ($attempt = 0; $attempt -le 48; $attempt++) {
         $mapButtons = @(Get-Buttons | Where-Object {
             $text = [string](Get-Value $_ @('text') '')
             $text -ceq 'Open Map' -or $text.EndsWith(': Open Map', [StringComparison]::Ordinal)
@@ -2243,7 +2243,7 @@ function Open-OverflowWorldMapIfVisible {
                 break
             }
         }
-        if ($attempt -ceq 16) { break }
+        if ($attempt -ceq 48) { break }
         $surfaces = @(Get-PublicScrollSurfaces)
         $roomSurface = @($surfaces | Where-Object {
             [string](Get-Value $_ @('id') '') -ceq 'room_actions'
@@ -2270,7 +2270,7 @@ function Open-OverflowWorldMapIfVisible {
         Wait-Frames -Frames 12 -Intent 'let the visible room-action scroll settle'
     }
     if ($null -ceq $mapButton) {
-        throw 'The visible room action list did not expose a stable, fully visible Open Map control within sixteen scroll inputs.'
+        throw 'The visible room action list did not expose a stable, fully visible Open Map control within forty-eight scroll inputs.'
     }
     $fullyVisible = Get-Value $mapButton @('fully_visible') $null
     $enabled = Get-Value $mapButton @('enabled') $null
