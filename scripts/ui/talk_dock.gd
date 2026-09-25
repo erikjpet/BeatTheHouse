@@ -955,6 +955,10 @@ func _estimated_choice_grid_height(panel_width: float, columns: int, reserve_max
 				continue
 			var choice_data: Dictionary = choice_value
 			var label := _choice_display_label(choice_data)
+			var enabled := bool(choice_data.get("enabled", true))
+			var disabled_reason := str(choice_data.get("disabled_reason", "")).strip_edges()
+			if not enabled and not disabled_reason.is_empty():
+				label = "%s\n%s" % [label, disabled_reason]
 			if _choice_requires_confirm(choice_data) and armed_choice_id == str(choice_data.get("id", "")):
 				label = "Confirm: %s" % label
 			row_height = maxf(row_height, _choice_button_minimum_height(label, _response_icon_kinds(choice_data).size(), panel_width, clean_columns))
