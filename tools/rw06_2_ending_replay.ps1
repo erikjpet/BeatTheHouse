@@ -5433,6 +5433,9 @@ function Invoke-BishopGrandDrinkSobrietyDetour {
         if ([long]$cost -gt [long]$outboundCash) {
             throw "Bishop presence boundary $BoundaryNumber found an enabled public travel card whose fare exceeds the rendered bankroll."
         }
+        if ([long]$cost -eq [long]$outboundCash) {
+            continue
+        }
         $distance = Get-Value $node @('distance') $null
         if ($distance -isnot [string] -or [string]$distance -cnotin @('remote', 'far', 'local', 'near', 'same')) {
             throw "Bishop presence boundary $BoundaryNumber found an enabled public travel card with an unknown sobriety-decay distance."
