@@ -239,12 +239,17 @@ static func commit_base_record_binding(run_state: Variant, layout_value: Diction
 		return layout_value
 	var records := _array(record_binding.get("records", []))
 	var environment := _dict(run_state.get("current_environment"))
+	# The binder may remove only dormant orphan render rectangles before it
+	# authenticates the prior envelope. Revalidate that exact reconciled input so
+	# commit preserves the fail-closed boundary while allowing resolved events to
+	# shed obsolete live geometry atomically.
+	var authenticated_prior_layout := _dict(record_binding.get("authenticated_prior_layout", layout_value))
 	var prior_environment := environment.duplicate(true)
-	prior_environment["layout"] = layout_value.duplicate(true)
+	prior_environment["layout"] = authenticated_prior_layout.duplicate(true)
 	var prior_authority := EnvironmentSlotBinderScript.validate_base_layout_authority(prior_environment, records, true)
 	if not bool(prior_authority.get("ok", false)):
 		return layout_value
-	var layout := layout_value.duplicate(true)
+	var layout := authenticated_prior_layout.duplicate(true)
 	layout["slot_schema_version"] = int(record_binding.get("slot_schema_version", 0))
 	layout["slot_map_digest"] = str(record_binding.get("slot_map_digest", ""))
 	layout["slot_bindings"] = _dict(record_binding.get("slot_bindings", {}))

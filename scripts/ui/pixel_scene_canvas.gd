@@ -1278,14 +1278,17 @@ func _draw() -> void:
 				_draw_grand_casino_cage()
 			_:
 				_draw_corner_store()
+	# Ambient counter staff occupy the same authored slots as live staff. Paint
+	# them before the exact fixture faces; live staff use the same ordering in
+	# _draw_scene_objects().
+	_draw_familiar_counter_characters()
 	# These closed, authored fixture faces are part of the room art. The exact
-	# same routine is replayed after behind-counter bodies, so occlusion cannot
-	# recolor or approximate the original counter.
+	# same routine is replayed after live behind-counter bodies, so occlusion
+	# cannot recolor or approximate the original counter.
 	_draw_authored_counter_foregrounds()
 	_draw_scenario_palette()
-	_draw_scenario_crowd()
 	_draw_scene_life()
-	_draw_familiar_characters()
+	_draw_familiar_floor_characters()
 	_draw_focus_dim_overlay()
 	_draw_scene_objects()
 	_draw_scene_outcome_highlight()
@@ -1314,16 +1317,6 @@ func _draw_scenario_palette() -> void:
 	if scenario_palette_overlay.a <= 0.0:
 		return
 	draw_rect(Rect2(Vector2.ZERO, Vector2(BOARD_SIZE)), scenario_palette_overlay)
-
-
-func _draw_scenario_crowd() -> void:
-	for index in range(scenario_crowd_count):
-		var point: Vector2 = SCENARIO_CROWD_POINTS[index]
-		if environment_id == "delta_queen":
-			point.y = 246.0
-		var scale := 0.72 + float(index % 3) * 0.08
-		draw_circle(Vector2(point.x, point.y - 12.0 * scale), 6.0 * scale, SCENARIO_CROWD_COLOR)
-		draw_rect(Rect2(point.x - 7.0 * scale, point.y - 6.0 * scale, 14.0 * scale, 24.0 * scale), SCENARIO_CROWD_COLOR)
 
 
 func _cache_scenario_presentation() -> void:
@@ -1417,6 +1410,14 @@ func _draw_corner_store() -> void:
 	for i in range(4):
 		draw_rect(Rect2(642 + i * 48, 220 - i * 9, 42, 32), Color("#513315"))
 		draw_rect(Rect2(648 + i * 48, 228 - i * 9, 16, 4), C_AMBER)
+	# A dedicated service ledge keeps the payphone physically supported instead
+	# of floating over the aisle floor.
+	draw_rect(Rect2(170, 270, 100, 16), Color("#2b2036"))
+	draw_line(Vector2(174, 270), Vector2(266, 270), C_CYAN_2.darkened(0.20), 3)
+	draw_rect(Rect2(180, 286, 10, 58), Color("#151522"))
+	draw_rect(Rect2(250, 286, 10, 58), Color("#151522"))
+	draw_rect(Rect2(194, 292, 52, 24), Color("#11111d"))
+	draw_line(Vector2(202, 304), Vector2(238, 304), C_AMBER.darkened(0.35), 2)
 	_floor_reflections()
 
 
@@ -1638,6 +1639,11 @@ func _draw_bar() -> void:
 		draw_rect(Rect2(x + 3, 74, 8, 10), C_AMBER)
 	_neon_text("DIVE", Vector2(620, 58), 28, C_PINK)
 	_neon_text("COLD BEER", Vector2(604, 104), 22, C_CYAN)
+	# The dartboard gives league-night display props a real wall fixture.
+	draw_circle(Vector2(824, 92), 24, Color("#1a1422"))
+	draw_circle(Vector2(824, 92), 19, C_AMBER.darkened(0.25))
+	draw_circle(Vector2(824, 92), 13, Color("#4b1730"))
+	draw_circle(Vector2(824, 92), 5, C_CYAN_2)
 	draw_rect(Rect2(38, 178, 548, 56), Color("#3a1c16"))
 	for x in [106, 186, 266, 346, 426, 506]:
 		draw_rect(Rect2(x, 230, 42, 12), C_SHADOW)
@@ -1651,6 +1657,12 @@ func _draw_bar() -> void:
 	draw_rect(Rect2(768, 144, 86, 112), Color("#111120"))
 	draw_rect(Rect2(782, 158, 58, 48), C_PURPLE)
 	draw_rect(Rect2(792, 170, 38, 18), C_CYAN)
+	# A low wall booth supports the one seated aftermath patron.
+	draw_rect(Rect2(654, 302, 142, 42), Color("#23172b"))
+	draw_rect(Rect2(662, 310, 126, 22), Color("#42213a"))
+	draw_rect(Rect2(670, 332, 110, 14), C_PINK_2.darkened(0.38))
+	draw_rect(Rect2(672, 346, 10, 38), Color("#16101c"))
+	draw_rect(Rect2(768, 346, 10, 38), Color("#16101c"))
 	_floor_reflections()
 
 
@@ -2003,58 +2015,57 @@ func _draw_punchline_back_room() -> void:
 
 
 func _draw_grand_casino() -> void:
-	# Boss-floor casino: broad pit, velvet ropes, watched tables, slot wall, cameras, and pit boss.
-	draw_rect(Rect2(0, 0, 900, 246), Color("#090914"))
+	# Boss-floor casino arranged as a legible working room: one machine bank,
+	# two staffed felt tables, and a central host station. The room art supplies
+	# physical supports; live game objects and people occupy the authored slots.
+	draw_rect(Rect2(0, 0, 900, 430), Color("#090914"))
 	for x in range(0, 900, 90):
 		draw_rect(Rect2(x, 0, 48, 246), Color("#11112a"))
 		draw_rect(Rect2(x + 48, 0, 42, 246), Color("#0d0d1a"))
-	draw_rect(Rect2(0, 0, 900, 34), Color("#1b1034"))
-	draw_rect(Rect2(0, 34, 900, 6), C_PINK)
-	_neon_text("GRAND", Vector2(340, 62), 42, C_YELLOW)
-	_neon_text("NO CUTE MOVES", Vector2(300, 104), 20, C_CYAN)
-	draw_rect(Rect2(170, 88, 560, 8), Color("#34234b"))
-	draw_line(Vector2(180, 96), Vector2(720, 96), Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.24), 2)
-	draw_rect(Rect2(740, 96, 120, 8), Color("#34234b"))
-	draw_line(Vector2(748, 104), Vector2(852, 104), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.22), 2)
-	draw_rect(Rect2(170, 160, 560, 8), Color("#291b35"))
-	draw_line(Vector2(180, 168), Vector2(720, 168), Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.18), 2)
-	for x in [96, 208, 692, 804]:
-		draw_rect(Rect2(x, 46, 64, 118), Color("#120b24"))
-		draw_rect(Rect2(x + 8, 56, 48, 74), Color("#251044"))
-		draw_rect(Rect2(x + 18, 132, 28, 10), C_AMBER)
-	var slot_positions := [40, 190, 340] if environment_id == "grand_casino" else [238, 348, 552, 662]
-	for x in slot_positions:
-		_slot_machine(Rect2(x, 124, 70, 116), _cycle_color(x))
-	draw_rect(Rect2(82, 184, 258, 82), Color("#123f30"))
-	draw_rect(Rect2(104, 198, 214, 46), Color("#1a7755"))
-	draw_rect(Rect2(562, 184, 258, 82), Color("#123f30"))
-	draw_rect(Rect2(584, 198, 214, 46), Color("#1a7755"))
-	for x in [146, 196, 246, 626, 676, 726]:
-		_card_back(Rect2(x, 166 + (x % 3) * 5, 26, 36))
-	for x in [82, 340, 560, 820]:
-		draw_line(Vector2(x, 246), Vector2(x, 294), C_AMBER, 4)
-	for x in [82, 340, 560]:
-		draw_line(Vector2(x, 254), Vector2(x + 220, 254), C_PINK_2, 3)
-	draw_rect(Rect2(392, 132, 116, 152), Color("#090914"))
-	draw_rect(Rect2(410, 154, 80, 8), Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.25))
-	draw_rect(Rect2(420, 170, 60, 6), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.20))
-	for x in [252, 450, 648]:
-		draw_line(Vector2(x, 40), Vector2(x, 74), C_SOFT.darkened(0.2), 2)
-		draw_rect(Rect2(x - 16, 74, 32, 18), C_SHADOW)
-		draw_line(Vector2(x, 92), Vector2(x + 56, 132), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.28), 3)
-	for x in range(36, 864, 72):
-		draw_rect(Rect2(x, 286 + int(sin(flicker * 2.2 + x) * 3.0), 42, 4), Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.32))
-		draw_rect(Rect2(x + 10, 302, 76, 2), Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.22))
-	if environment_id == "grand_casino":
-		draw_rect(Rect2(344, 300, 212, 10), C_AMBER.darkened(0.25))
-		draw_rect(Rect2(356, 310, 188, 34), Color("#171225"))
-		draw_line(Vector2(370, 344), Vector2(364, 356), C_SOFT.darkened(0.45), 3)
-		draw_line(Vector2(530, 344), Vector2(536, 356), C_SOFT.darkened(0.45), 3)
-		draw_rect(Rect2(452, 340, 96, 8), C_AMBER.darkened(0.32))
-		draw_rect(Rect2(40, 326, 820, 8), Color("#2d2037"))
-		draw_line(Vector2(50, 334), Vector2(850, 334), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.18), 2)
-		draw_rect(Rect2(100, 346, 700, 8), C_AMBER.darkened(0.35))
-		draw_line(Vector2(110, 354), Vector2(790, 354), Color(C_AMBER.r, C_AMBER.g, C_AMBER.b, 0.32), 2)
+	draw_rect(Rect2(0, 0, 900, 32), Color("#1b1034"))
+	draw_rect(Rect2(0, 32, 900, 5), C_PINK)
+	_neon_text("GRAND CASINO", Vector2(330, 48), 24, C_YELLOW)
+	draw_line(Vector2(282, 72), Vector2(618, 72), Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.32), 2)
+
+	# Five equal machine bays form a single uninterrupted row.
+	for machine_x in [90, 246, 402, 558, 714]:
+		draw_rect(Rect2(machine_x - 6, 78, 108, 120), Color("#160f27"))
+		draw_rect(Rect2(machine_x, 84, 96, 108), Color("#21113a"), false, 2)
+		draw_rect(Rect2(machine_x + 10, 94, 76, 48), Color("#080914"))
+		draw_rect(Rect2(machine_x + 14, 150, 68, 28), Color("#100d1c"))
+		draw_line(Vector2(machine_x + 12, 186), Vector2(machine_x + 84, 186), C_AMBER.darkened(0.20), 4)
+
+	# A distinct ticket kiosk and cocktail shelf bookend the machine bank.
+	draw_rect(Rect2(8, 84, 72, 112), Color("#161226"))
+	draw_rect(Rect2(14, 96, 60, 52), Color("#080914"))
+	_neon_text("CAGE", Vector2(16, 88), 10, C_CYAN)
+	draw_rect(Rect2(16, 156, 56, 30), Color("#21182b"))
+	draw_rect(Rect2(816, 112, 76, 72), Color("#151326"))
+	_neon_text("BAR", Vector2(830, 122), 12, C_PINK)
+	draw_rect(Rect2(816, 170, 76, 14), C_AMBER.darkened(0.24))
+
+	# Tabletop art extends above the authored contact edge at y=258; the darker
+	# apron below it is replayed after any behind-table staff are drawn.
+	for table_x in [82, 546]:
+		draw_rect(Rect2(table_x, 206, 272, 88), Color("#0c2e25"))
+		draw_rect(Rect2(table_x + 12, 214, 248, 44), Color("#1a7755"))
+		draw_rect(Rect2(table_x + 22, 222, 228, 28), Color("#145b43"), false, 2)
+		draw_rect(Rect2(table_x, 258, 272, 36), Color("#123f30"))
+		draw_line(Vector2(table_x, 258), Vector2(table_x + 272, 258), C_AMBER.darkened(0.10), 4)
+		draw_line(Vector2(table_x + 20, 286), Vector2(table_x + 252, 286), Color("#08231c"), 3)
+
+	# The central host desk has a clear work position and a solid foreground.
+	draw_rect(Rect2(344, 318, 212, 48), Color("#171225"))
+	draw_line(Vector2(344, 318), Vector2(556, 318), C_AMBER, 4)
+	draw_rect(Rect2(364, 330, 172, 20), Color("#0e0b18"))
+	_neon_text("HOST", Vector2(418, 334), 14, C_CYAN)
+	draw_line(Vector2(370, 366), Vector2(364, 394), C_SOFT.darkened(0.45), 4)
+	draw_line(Vector2(530, 366), Vector2(536, 394), C_SOFT.darkened(0.45), 4)
+
+	# Low floor bands define the public circulation area without implying routes.
+	draw_rect(Rect2(72, 302, 756, 6), Color("#2d2037"))
+	draw_rect(Rect2(96, 398, 708, 6), C_AMBER.darkened(0.35))
+	_floor_reflections()
 
 
 func _draw_grand_casino_cage() -> void:
@@ -2239,14 +2250,7 @@ func _draw_scene_life() -> void:
 				var x := 300 + i * 150 if low_detail else 250 + i * 100
 				draw_rect(Rect2(x, 124, 52, 8), Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.12 + abs(sin(flicker * 3.2 + i)) * (0.12 if low_detail else 0.20)))
 			var watch_status := _pit_boss_watch_snapshot()
-			var sweep := 250 + int(abs(sin(flicker * 1.35)) * 400.0)
 			var watched := bool(watch_status.get("watched", false))
-			var beam := C_PINK if watched else C_CYAN
-			var primary_alpha := 0.42 if watched else 0.20
-			_draw_camera_sweep(Vector2(450, 92), Vector2(sweep, 226), beam, primary_alpha)
-			if not low_detail:
-				_draw_camera_sweep(Vector2(252, 92), Vector2(170 + int(abs(sin(flicker * 1.0)) * 210.0), 220), C_CYAN, 0.18)
-				_draw_camera_sweep(Vector2(648, 92), Vector2(520 + int(abs(cos(flicker * 1.1)) * 210.0), 220), C_CYAN, 0.18)
 			var badge_color := C_POLICE_RED if watched else C_CYAN
 			draw_rect(Rect2(386, 150, 128, 18), Color(0.0, 0.0, 0.0, 0.50))
 			draw_rect(Rect2(392, 154, 116, 5), Color(badge_color.r, badge_color.g, badge_color.b, 0.34 + abs(sin(flicker * 2.4)) * 0.28))
@@ -2263,59 +2267,99 @@ func _draw_scene_life() -> void:
 				draw_rect(Rect2(bar_x, 124, 3, 112), Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.12 + abs(sin(flicker * 1.8 + bar_x)) * 0.08))
 
 
-func _draw_familiar_characters() -> void:
-	# Recurring venue characters provide social pressure and make rooms readable.
+func _draw_familiar_counter_characters() -> void:
+	# Recurring staff fill authored people slots only while no live object owns
+	# that slot. Their feet use the slot contact line and the fixture face is
+	# painted immediately after this pass.
 	match environment_id:
 		"corner_store":
-			_draw_named_character("mara", Vector2(465, 206), 0.78, "clerk")
-		"back_alley":
-			_draw_named_character("vince", Vector2(110, 254), 0.88, "watcher")
-			_draw_named_character("lena", Vector2(780, 254), 0.82, "dealer")
+			_draw_familiar_character_in_slot("mara", "base.staff_shopkeeper", Vector2(374, 238), 0.78, "clerk")
 		"motel":
-			_draw_named_character("june", Vector2(610, 176), 0.82, "dealer")
-			_draw_named_character("marco", Vector2(748, 270), 0.72, "fixer")
+			_draw_familiar_character_in_slot("june", "stage.staff_lobby_table", Vector2(558, 180), 0.82, "dealer")
 		"bar":
-			_draw_named_character("rafi", Vector2(188, 178), 0.76, "bartender")
-			_draw_named_character("dot", Vector2(500, 178), 0.70, "regular")
+			_draw_familiar_character_in_slot("rafi", "base.staff_bartender", Vector2(430, 218), 0.76, "bartender")
 		"jazz_club":
-			_draw_named_character("rafi", Vector2(824, 188), 0.66, "bartender")
-			_draw_named_character("dot", Vector2(614, 270), 0.52, "regular")
+			_draw_familiar_character_in_slot("rafi", "base.staff_bar", Vector2(742, 192), 0.66, "bartender")
 		"kitty_cat_lounge":
-			_draw_named_character("iris", Vector2(618, 190), 0.70, "host")
-			_draw_named_character("dot", Vector2(304, 234), 0.58, "regular")
+			_draw_familiar_character_in_slot("iris", "base.staff_bar", Vector2(720, 194), 0.70, "host")
 		"delta_queen":
-			_draw_named_character("sable", Vector2(436, 170), 0.70, "dealer")
-			_draw_named_character("ox", Vector2(790, 268), 0.86, "deck_boss")
+			_draw_familiar_character_in_slot("sable", "base.staff_right_table", Vector2(390, 174), 0.70, "dealer")
 		"gas_station_casino":
-			_draw_named_character("nell", Vector2(746, 104), 0.76, "attendant")
+			_draw_familiar_character_in_slot("nell", "stage.staff_window", Vector2(600, 84), 0.76, "attendant")
+		"small_underground_casino":
+			if str(foundation_snapshot.get("current_layer_id", "")) == "casino":
+				_draw_familiar_character_in_slot("sable", "base.staff_dealer", Vector2(634, 146), 0.72, "dealer")
+		"pawn_shop":
+			_draw_familiar_character_in_slot("sal", "base.staff_pawn_counter", Vector2(352, 266), 0.74, "clerk")
+		"grand_casino":
+			_draw_familiar_character_in_slot("iris", "base.staff_host", Vector2(450, 350), 0.76, "host")
+		"grand_casino_high_limit":
+			pass
+
+
+func _draw_familiar_floor_characters() -> void:
+	# Floor people are painted after fixture faces and use authored floor or seat
+	# contacts. This pass never paints counter staff.
+	match environment_id:
+		"back_alley":
+			_draw_familiar_character_in_slot("vince", "stage.patron_left", Vector2(388, 358), 0.88, "watcher")
+			_draw_familiar_character_in_slot("lena", "stage.patron_center", Vector2(500, 358), 0.82, "dealer")
+		"motel":
+			_draw_familiar_character_in_slot("marco", "base.patron_floor_right", Vector2(716, 326), 0.72, "fixer")
+		"bar":
+			_draw_familiar_character_in_slot("dot", "base.patron_floor_1", Vector2(508, 376), 0.70, "regular")
+		"jazz_club":
+			_draw_familiar_character_in_slot("dot", "stage.patron_floor_center", Vector2(364, 326), 0.52, "regular")
+		"kitty_cat_lounge":
+			_draw_familiar_character_in_slot("dot", "base.patron_stage_mid", Vector2(250, 234), 0.58, "regular")
+		"delta_queen":
+			_draw_familiar_character_in_slot("ox", "base.staff_floor", Vector2(496, 326), 0.86, "deck_boss")
+		"gas_station_casino":
 			_draw_watch_camera(Vector2(744, 72), C_PINK)
 		"small_underground_casino":
-			_draw_named_character("sable", Vector2(505, 155), 0.72, "dealer")
-			_draw_named_character("ox", Vector2(794, 266), 1.02, "bouncer")
-		"pawn_shop":
-			_draw_named_character("sal", Vector2(450, 224), 0.74, "clerk")
-		"grand_casino":
-			_draw_named_character("iris", Vector2(632, 180), 0.76, "host")
-			var bartender := _grand_casino_staff_member("bartender")
-			if not bartender.is_empty():
-				_draw_named_character(str(bartender.get("style_id", "rafi")), Vector2(188, 184), 0.72, "bartender")
-			_draw_grand_casino_living_characters()
-		"grand_casino_high_limit":
-			var dealer_spots := {
-				"blackjack": Vector2(246, 188),
-				"baccarat": Vector2(450, 170),
-				"roulette": Vector2(654, 188),
-			}
-			for role_value in ["blackjack", "baccarat", "roulette"]:
-				var role_id := str(role_value)
-				var dealer := _grand_casino_staff_member(role_id)
-				if not dealer.is_empty():
-					_draw_named_character(str(dealer.get("style_id", "mara")), dealer_spots[role_id], 0.70, "dealer")
-			_draw_grand_casino_living_characters()
-		"grand_casino_back_room":
+			var layer_id := str(foundation_snapshot.get("current_layer_id", ""))
+			if layer_id == "casino":
+				_draw_familiar_character_in_slot("ox", "stage.patron_floor_right", Vector2(628, 358), 1.02, "bouncer")
+			elif layer_id == "club":
+				_draw_familiar_character_in_slot("ox", "base.staff_floor_right", Vector2(628, 358), 1.02, "bouncer")
+		"grand_casino", "grand_casino_high_limit", "grand_casino_back_room":
 			_draw_grand_casino_living_characters()
 		"grand_casino_cage":
 			_draw_linda_cage_silhouette()
+
+
+func _draw_familiar_character_in_slot(id: String, slot_id: String, fallback: Vector2, scale_value: float, role: String, facing: String = "right") -> void:
+	if _scene_slot_is_occupied(slot_id):
+		return
+	_draw_named_character(id, _authored_slot_position(slot_id, fallback), scale_value, role, facing)
+
+
+func _scene_slot_is_occupied(slot_id: String) -> bool:
+	for object_value in foundation_scene_objects:
+		if typeof(object_value) == TYPE_DICTIONARY \
+				and str((object_value as Dictionary).get("presentation_mode", "room")) == "room" \
+				and str((object_value as Dictionary).get("slot_id", "")) == slot_id:
+			return true
+	return false
+
+
+func _authored_slot_position(slot_id: String, fallback: Vector2) -> Vector2:
+	var environment := {
+		"archetype_id": str(foundation_snapshot.get("archetype_id", foundation_snapshot.get("id", environment_id))),
+		"current_layer_id": str(foundation_snapshot.get("current_layer_id", foundation_snapshot.get("layer_id", ""))),
+	}
+	var surface_map := EnvironmentPlacementScript.surface_map(environment)
+	for field in ["base_slots", "stage_slots", "exit_slots"]:
+		for slot_value in _array_view(surface_map.get(field, [])):
+			if typeof(slot_value) != TYPE_DICTIONARY:
+				continue
+			var slot := slot_value as Dictionary
+			if str(slot.get("id", "")) != slot_id:
+				continue
+			var position := _array_view(slot.get("pos", []))
+			if position.size() >= 2:
+				return Vector2(float(position[0]), float(position[1]))
+	return fallback
 
 
 func _draw_linda_cage_silhouette() -> void:
@@ -2378,8 +2422,9 @@ func _draw_grand_casino_living_characters() -> void:
 	if not escort.is_empty():
 		var progress := clampf(float(escort.get("progress", 0.0)), 0.0, 1.0)
 		var escort_x := lerpf(170.0, 760.0, progress)
-		_draw_named_character("rourke", Vector2(escort_x, 274), 1.04, "pit_boss", "right")
-		_draw_rival_cheater_tell(str(escort.get("tell", "heel_tap")), 0, Vector2(escort_x - 54.0, 274))
+		var escort_y := 398.0 if environment_id == "grand_casino" else 358.0
+		_draw_named_character("rourke", Vector2(escort_x, escort_y), 1.04, "pit_boss", "right")
+		_draw_rival_cheater_tell(str(escort.get("tell", "heel_tap")), 0, Vector2(escort_x - 54.0, escort_y))
 		_neon_text("TO THE BACK ROOM", Vector2(330, 326), 14, C_PINK)
 		return
 	var rourke: Dictionary = living_floor.get("rourke", {}) if typeof(living_floor.get("rourke", {})) == TYPE_DICTIONARY else {}
@@ -2435,29 +2480,45 @@ func _draw_rival_cheater_tell(tell: String, idle_phase: int, foot: Vector2) -> v
 func _rourke_scene_foot(spot: String) -> Vector2:
 	match spot:
 		"main_left":
-			return Vector2(210, 274)
+			return _authored_slot_position("stage.patron_floor_1", Vector2(306, 398))
 		"main_cage":
-			return Vector2(700, 274)
+			return _authored_slot_position("stage.patron_floor_2", Vector2(594, 398))
 		"high_rail":
-			return Vector2(220, 274)
+			return _authored_slot_position("base.patron_floor_1", Vector2(498, 358))
 		"high_door":
-			return Vector2(730, 274)
+			return _authored_slot_position("stage.patron_floor_1", Vector2(726, 358))
 		"back_table":
-			return Vector2(390, 274)
+			return _authored_slot_position("base.patron_floor_1", Vector2(450, 358))
 		"back_door":
-			return Vector2(700, 274)
+			return _authored_slot_position("stage.patron_floor_1", Vector2(570, 358))
 		_:
-			return Vector2(450, 274)
+			return _authored_slot_position("base.patron_floor_1", Vector2(450, 398 if environment_id == "grand_casino" else 358))
 
 
 func _rival_scene_foot(spot_index: int) -> Vector2:
+	if environment_id == "grand_casino_high_limit":
+		match spot_index:
+			0:
+				return Vector2(384, 358)
+			1:
+				return _authored_slot_position("base.patron_floor_1", Vector2(498, 358))
+			_:
+				return _authored_slot_position("stage.patron_floor_1", Vector2(726, 358))
+	if environment_id == "grand_casino_back_room":
+		match spot_index:
+			0:
+				return Vector2(330, 358)
+			1:
+				return _authored_slot_position("base.patron_floor_1", Vector2(450, 358))
+			_:
+				return _authored_slot_position("stage.patron_floor_1", Vector2(570, 358))
 	match spot_index:
 		0:
-			return Vector2(250, 274)
+			return Vector2(156, 414)
 		1:
-			return Vector2(510, 274)
+			return _authored_slot_position("stage.patron_floor_1", Vector2(306, 398))
 		_:
-			return Vector2(752, 274)
+			return _authored_slot_position("stage.patron_floor_2", Vector2(594, 398))
 
 
 func _character_style(id: String) -> Dictionary:
@@ -3008,20 +3069,9 @@ func _objects_from_foundation_snapshot(snapshot: Dictionary) -> Array:
 	if not bool(render_snapshot.get("ok", false)):
 		objects.sort_custom(Callable(PixelSceneCanvas, "_sort_composed_scene_objects"))
 		return objects
-	for stage_index in range(JsonCoerceScript._copy_array(render_snapshot.get("active_stages", [])).size()):
-		var stage := _copy_dictionary(JsonCoerceScript._copy_array(render_snapshot.get("active_stages", []))[stage_index])
-		var stage_id := str(stage.get("stage_id", "stage_%d" % stage_index))
-		var stage_object_id := "scenario:stage:%s" % stage_id
-		if ids.has(stage_object_id): continue
-		objects.append_array(_objects_from_interactable_records([{
-			"object_id": stage_object_id, "object_type": "scenario", "visual_type": "scenario_object",
-			"source_id": stage_id, "label": str(stage.get("message", "Room state")),
-			"short_description": str(stage.get("message", "")), "presence": "scenario_stage",
-			"interactive": false, "decorative": true, "enabled": true,
-			"normalized_rect": {"x": 0.34, "y": 0.06 + float(stage_index) * 0.09, "w": 0.32, "h": 0.08},
-			"non_color_state": "stage", "z_order": 10000 + stage_index,
-		}]))
-		ids[stage_object_id] = true
+	# Active-stage text is public room status, not a physical prop. Its actions
+	# remain available in the room action list; the canvas only renders authored
+	# physical visual_objects, so no generic status boxes float along the wall.
 	for visual_value in JsonCoerceScript._copy_array(render_snapshot.get("visual_objects", [])):
 		var visual := _copy_dictionary(visual_value)
 		var object_id := str(visual.get("object_id", ""))
@@ -5501,6 +5551,10 @@ func _draw_counter_foreground_art(counter: Dictionary) -> bool:
 			draw_rect(front, Color("#171225"))
 			draw_line(front.position, Vector2(front.end.x, front.position.y), C_AMBER.darkened(0.18), 3.0)
 			draw_line(front.position + Vector2(8, front.size.y - 5), front.end - Vector2(8, 5), Color("#090914"), 2.0)
+		"grand_table_left", "grand_table_right":
+			draw_rect(front, Color("#123f30"))
+			draw_line(front.position, Vector2(front.end.x, front.position.y), C_AMBER.darkened(0.10), 4.0)
+			draw_line(front.position + Vector2(20, front.size.y - 8), front.end - Vector2(20, 8), Color("#08231c"), 3.0)
 		_:
 			return false
 	return true

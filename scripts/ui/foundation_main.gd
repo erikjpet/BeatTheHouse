@@ -13537,7 +13537,10 @@ func _activate_overflow_room_action(record_snapshot: Dictionary, action_snapshot
 	if object_id.is_empty():
 		return false
 	var object_data := _interactable_object(object_id)
-	if object_data.is_empty() or not RoomActionListScript.is_visible_overflow_record(object_data):
+	# Re-resolve both true overflow records and the authenticated travel fallback.
+	# The latter mirrors a physical door only so camera/result/detail occlusion can
+	# never remove the room's final egress path.
+	if object_data.is_empty() or not RoomActionListScript.is_visible_action_list_record(object_data):
 		return false
 	var wanted_key := str(action_snapshot.get("_overflow_action_key", ""))
 	if wanted_key.is_empty():

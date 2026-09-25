@@ -32,7 +32,7 @@ func _ready() -> void:
 	size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_launcher = Button.new()
 	_launcher.text = "More room actions"
-	_launcher.tooltip_text = "Open actions that do not have a free authored room slot."
+	_launcher.tooltip_text = "Open overflow actions and a reachable fallback for every room exit."
 	_launcher.custom_minimum_size = MIN_TARGET
 	_launcher.clip_text = true
 	_launcher.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -126,7 +126,7 @@ func render(records: Array) -> void:
 		if typeof(value) != TYPE_DICTIONARY:
 			continue
 		var record := (value as Dictionary).duplicate(true)
-		if not is_visible_overflow_record(record):
+		if not is_visible_action_list_record(record):
 			continue
 		filtered.append(record)
 	filtered.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
@@ -185,6 +185,20 @@ func close() -> void:
 
 static func is_visible_overflow_record(record: Dictionary) -> bool:
 	return str(record.get("presentation_mode", "room")) == "overflow" \
+		and bool(record.get("visible", true)) \
+		and bool(record.get("presentation_required", true)) \
+		and not str(record.get("object_id", "")).strip_edges().is_empty()
+
+
+static func is_visible_action_list_record(record: Dictionary) -> bool:
+	if is_visible_overflow_record(record):
+		return true
+	# A physical door stays rendered in its authored room slot, but camera focus,
+	# result cards, and object detail cards can temporarily put that slot outside
+	# the usable canvas. Mirror every live travel control here as a safety route so
+	# entering a room or inspecting another object can never strand the player.
+	return str(record.get("presentation_mode", "room")) == "room" \
+		and str(record.get("object_type", "")).strip_edges() == "travel" \
 		and bool(record.get("visible", true)) \
 		and bool(record.get("presentation_required", true)) \
 		and not str(record.get("object_id", "")).strip_edges().is_empty()

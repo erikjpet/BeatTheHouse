@@ -135,9 +135,6 @@ static func from_archetype(archetype: Dictionary, p_depth: int, rng: RngStream, 
 	environment.game_ids = _pick_ids_with_required(game_pool, archetype.get("game_count", 1), required_games, rng)
 	environment.game_states = {}
 	environment.event_ids = _pick_events(archetype, rng.fork("events:%s" % environment.id), library)
-	var event_placement_hints := _event_placement_hints(environment.event_ids, library, environment.to_dict())
-	if not event_placement_hints.is_empty():
-		environment.layout["object_placement_hints"] = event_placement_hints
 	if not selected_state.is_empty() and ScenarioEngineScript.SequenceSchemaScript.is_sequence(selected_scenario):
 		environment.scenario_event_choices = EnvironmentSemanticInventoryScript.event_choice_index(environment.event_ids, library)
 	environment.item_offers = _build_offers(archetype, rng, library, challenge_config)
@@ -157,6 +154,9 @@ static func from_archetype(archetype: Dictionary, p_depth: int, rng: RngStream, 
 	environment.parent_archetype = str(archetype.get("parent_archetype", ""))
 	environment.service_ids = JsonCoerceScript._copy_array(archetype.get("service_pool", []))
 	environment.lender_hooks = _pick_lenders(archetype, rng.fork("lenders:%s" % environment.id))
+	var base_placement_hints := _base_placement_hints(environment.to_dict(), library)
+	if not base_placement_hints.is_empty():
+		environment.layout["object_placement_hints"] = base_placement_hints
 	environment.suspicion_cues = JsonCoerceScript._copy_array(archetype.get("suspicion_cues", environment.security_profile.get("visible_cues", [])))
 	environment.travel_hooks = JsonCoerceScript._copy_array(archetype.get("travel_hooks", []))
 	environment.next_archetypes = JsonCoerceScript._copy_array(archetype.get("next_archetypes", []))
@@ -601,11 +601,11 @@ static func _is_layered_archetype(archetype: Dictionary) -> bool:
 static func ensure_generated_layout(environment_data: Dictionary, library: ContentLibrary = null) -> Dictionary:
 	var layout := JsonCoerceScript._copy_dict(environment_data.get("layout", {}))
 	if library != null:
-		var refreshed_hints := _event_placement_hints(JsonCoerceScript._copy_array(environment_data.get("event_ids", [])), library, environment_data)
+		var refreshed_hints := _base_placement_hints(environment_data, library)
 		if not refreshed_hints.is_empty():
 			layout["object_placement_hints"] = refreshed_hints
-	# Town/scenario modifiers can add events after the EnvironmentInstance was
-	# first built. Classify those late additions from the refreshed hints above,
+	# Town/scenario modifiers can add catalog objects after the EnvironmentInstance
+	# was first built. Classify those late additions from the refreshed hints above,
 	# rather than the stale hints still held by the serialized input dictionary.
 	var placement_environment := environment_data.duplicate(true)
 	placement_environment["layout"] = layout
@@ -645,7 +645,7 @@ static func _grounding_signature(environment_data: Dictionary, layout: Dictionar
 		layout_source.erase(generated_key)
 	var signature_source := {
 		"version": GENERATED_LAYOUT_VERSION,
-		"placement_authority_version": 2,
+		"placement_authority_version": 3,
 		"archetype_id": str(environment_data.get("archetype_id", environment_data.get("id", ""))),
 		"layer_id": str(environment_data.get("current_layer_id", environment_data.get("layer_id", ""))),
 		"surface_map": EnvironmentPlacementScript.surface_map(environment_data),
@@ -836,6 +836,39 @@ static func _pick_events(archetype: Dictionary, rng: RngStream, library: Content
 	return EnvironmentEventResolverScript.select_ids(archetype, definitions, rng)
 
 
+static func _base_placement_hints(environment_data: Dictionary, library: ContentLibrary) -> Dictionary:
+	var result := _event_placement_hints(
+		JsonCoerceScript._copy_array(environment_data.get("event_ids", [])),
+		library,
+		environment_data
+	)
+	if library == null:
+		return result
+	for service_id in JsonCoerceScript._string_array(environment_data.get("service_ids", [])):
+		var definition := library.service(service_id)
+		if definition.is_empty():
+			continue
+		result["service:%s" % service_id] = {
+			"visual_type": "drink" if str(definition.get("category", "")) == "alcohol" else "service",
+			"visual_prop": str(definition.get("environment_prop", "")),
+			"asset_path": str(definition.get("asset_path", "")),
+		}
+	for lender_id in JsonCoerceScript._string_array(environment_data.get("lender_hooks", [])):
+		var definition := library.lender(lender_id)
+		if definition.is_empty():
+			continue
+		var speaker := JsonCoerceScript._copy_dict(definition.get("speaker", {}))
+		var physical_person := str(definition.get("lender_type", "")) != "family_phone" \
+				and not speaker.is_empty() and bool(speaker.get("environment_actor", true))
+		var hint := {
+			"visual_type": "character" if physical_person else "lender",
+			"asset_path": str(definition.get("asset_path", "")),
+			"physical_person": physical_person,
+		}
+		result["lender:%s" % lender_id] = hint
+	return result
+
+
 static func _event_placement_hints(event_ids: Array, library: ContentLibrary, environment_data: Dictionary = {}) -> Dictionary:
 	var result: Dictionary = {}
 	if library == null:
@@ -853,6 +886,8 @@ static func _event_placement_hints(event_ids: Array, library: ContentLibrary, en
 		var hint := {
 			"visual_prop": visual_prop,
 			"icon_key": str(definition.get("icon_key", "")),
+			"asset_path": str(definition.get("asset_path", "")),
+			"physical_person": not speaker.is_empty() and bool(speaker.get("environment_actor", true)),
 			"role": speaker_role,
 		}
 		var counter_staff: bool = visual_prop in ["clerk_counter", "host_station"] \
@@ -1001,9 +1036,9 @@ static func _environment_layer_layout_entries(environment_data: Dictionary) -> A
 	return entries
 
 
-# Numbers fixtures are runtime-backed, but they are still physical room objects.
-# Reserve their stable authored positions in the same generated layout as games,
-# events, services, and doors so the UI never composes a second placement layer.
+# Numbers identities are runtime-backed, so keep them in the same generated
+# authority as the rest of the room. The book remains geometry-free until it
+# owns concrete art; the exact Silas identity may reserve a person slot.
 static func _numbers_layout_entries(environment_data: Dictionary) -> Array:
 	var layout := JsonCoerceScript._copy_dict(environment_data.get("layout", {}))
 	var numbers_count := _layout_spot_count(layout, "numbers_spots")
