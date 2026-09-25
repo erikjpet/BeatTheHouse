@@ -5805,6 +5805,29 @@ function Invoke-BishopGrandDrinkSobrietyDetour {
             throw "Grand Casino Main did not restore either the enabled house drink or its exact sobriety-only disabled public state after Bishop presence boundary $BoundaryNumber."
         }
 
+        Wait-Frames `
+            -Frames 720 `
+            -Intent "let the exact public delayed drink absorption settle before the final Bishop presence boundary $BoundaryNumber sobriety loop"
+        $settledDisabledDrinks = @(Get-Array (Get-Value $script:LastObservation @('spatial', 'objects') @()) | Where-Object {
+            [string](Get-Value $_ @('object_id') '') -ceq 'service:house_drink'
+        })
+        if ($settledDisabledDrinks.Count -cne 1 -or
+            [string](Get-Value $settledDisabledDrinks[0] @('label') '') -cne 'Buy a Drink' -or
+            [string](Get-Value $settledDisabledDrinks[0] @('object_type') '') -cne 'service' -or
+            (Get-Value $settledDisabledDrinks[0] @('visible') $null) -isnot [bool] -or -not [bool](Get-Value $settledDisabledDrinks[0] @('visible') $false) -or
+            (Get-Value $settledDisabledDrinks[0] @('interactive') $null) -isnot [bool] -or -not [bool](Get-Value $settledDisabledDrinks[0] @('interactive') $false) -or
+            (Get-Value $settledDisabledDrinks[0] @('enabled') $null) -isnot [bool] -or [bool](Get-Value $settledDisabledDrinks[0] @('enabled') $true) -or
+            [string](Get-Value $settledDisabledDrinks[0] @('disabled_reason') '') -cne 'Too drunk to make another drink help.' -or
+            [string](Get-Value $script:LastObservation @('screen', 'screen') '') -cne 'ENVIRONMENT' -or
+            [string](Get-Value $script:LastObservation @('environment', 'world_node_id') '') -cne [string]$currentNodeId -or
+            [string](Get-Value $script:LastObservation @('environment', 'archetype_id') '') -cne 'grand_casino' -or
+            [bool](Get-Value $script:LastObservation @('event_popup', 'visible') $true) -or
+            [bool](Get-Value $script:LastObservation @('talk', 'visible') $true) -or
+            (Get-Value $script:LastObservation @('screen', 'travel_transition_active') $null) -isnot [bool] -or
+            [bool](Get-Value $script:LastObservation @('screen', 'travel_transition_active') $true)) {
+            throw "Bishop presence boundary $BoundaryNumber delayed absorption wait drifted from the exact modal-free Grand sobriety-disabled state."
+        }
+
         Open-WorldMap
         $loungeCards = @(Get-MapNodes | Where-Object {
             [string](Get-Value $_ @('archetype_id') '') -ceq 'kitty_cat_lounge'
