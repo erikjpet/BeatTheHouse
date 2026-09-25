@@ -4594,8 +4594,24 @@ function Invoke-CheatEndingRoute {
             throw 'Visible cheating ended the run before Rourke exposed the showdown route.'
         }
         Leave-GameSurface
+        $renderedHeat = Get-RenderedHudInteger -Name heat_level -Context 'Cheat showdown pressure after leaving Blackjack'
+        if ($renderedHeat -ge 70 -and
+            $null -eq (Find-CanvasObject -SemanticId 'event:the_house_calls') -and
+            $null -ne (Find-CanvasObject -SemanticId 'event:comped_suite_offer')) {
+            Invoke-EventObjectChoice `
+                -EventId 'comped_suite_offer' `
+                -ChoiceId 'take_comp' `
+                -Intent 'accept the visibly watched suite offer and force Rourke to answer the pressure'
+            Wait-Frames -Frames 10 -Intent 'let the visible suite-offer pressure settle'
+        }
         if ($null -cne (Find-CanvasObject -SemanticId 'event:the_house_calls')) {
             Open-EventObject -EventId 'the_house_calls' -Intent "answer Rourke's visible back-room call"
+            $showdownCallOpened = $true
+            break
+        }
+        $activeEventId = [string](Get-Value $script:LastObservation @('event_popup', 'event_id') '')
+        $activeTalkId = [string](Get-Value $script:LastObservation @('talk', 'event_id') '')
+        if ($activeEventId -ceq 'the_house_calls' -or $activeTalkId -ceq 'the_house_calls') {
             $showdownCallOpened = $true
             break
         }
