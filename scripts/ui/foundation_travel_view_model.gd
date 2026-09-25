@@ -87,7 +87,7 @@ static func enriched_world_map_snapshot(host: Variant, snapshot: Dictionary) -> 
 			open_status_text = host.TutorialFlowScript.environment_status_text(host.run_state, node_archetype, arrival_minute)
 			open_now = bool(open_status.get("open", true))
 			closing_soon = bool(open_status.get("closing_soon", false))
-			if not open_now:
+			if not open_now and not bool(status.get("venue_hours_override", false)):
 				enabled = false
 		if not host._world_map_node_should_render(node, is_current, visible_travel_target and not route_locked) and node_id != sweep_marker_node_id and not courier_targets_by_id.has(node_id):
 			continue
@@ -371,7 +371,7 @@ static func travel_choice(host: Variant, target_id: String, known_target_ids: Ar
 	choice["preview_lines"] = JsonCoerceScript._copy_array(preview.get("lines", []))
 	var enabled = bool(status.get("available", true))
 	var disabled_reason = str(status.get("disabled_reason", ""))
-	if not bool(open_status.get("open", true)):
+	if not bool(open_status.get("open", true)) and not bool(status.get("venue_hours_override", false)):
 		enabled = false
 		disabled_reason = str(open_status.get("disabled_reason", "Closed."))
 	if forced_walk:

@@ -9721,6 +9721,7 @@ func travel_route_status(route_data: Dictionary) -> Dictionary:
 	)).strip_edges()
 	_crew_run_facade.bind(self)
 	var active_count_getaway_route: bool = _crew_run_facade.crew_heist_getaway_route_open(current_world_node_id(), route_target_id)
+	status["venue_hours_override"] = active_count_getaway_route
 	if not bool(route_window.get("available", true)) and not active_count_getaway_route:
 		status["available"] = false
 		status["disabled_reason"] = str(route_window.get("disabled_reason", "This route is closed right now."))
