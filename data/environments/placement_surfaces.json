@@ -7113,6 +7113,7 @@
       "repack_scenario_conflicts": true,
       "class_overrides": {
         "environment_layer:casino": "doorway",
+        "event:recruitment_rook_leads": "standing_person",
         "event:town_rumor_staff": "standing_person",
         "punchline_bringer_show_task_0": "wall_mounted",
         "punchline_debt_court_task_0": "wall_mounted",
@@ -8478,6 +8479,7 @@
       "repack_scenario_conflicts": true,
       "class_overrides": {
         "environment_layer:casino": "doorway",
+        "event:recruitment_rook_leads": "standing_person",
         "event:town_rumor_staff": "standing_person",
         "punchline_bringer_show_task_0": "wall_mounted",
         "punchline_debt_court_task_0": "wall_mounted",
@@ -10088,6 +10090,7 @@
       "class_overrides": {
         "environment_layer:back_room": "doorway",
         "environment_layer:club": "doorway",
+        "event:recruitment_rook_leads": "standing_person",
         "event:rowdy_regular": "seated_person",
         "event:scenario_greased_week_window": "wall_mounted",
         "numbers:book": "surface_item",
@@ -11672,6 +11675,7 @@
         "event:crew_mags_bench": "surface_item",
         "event:crew_practice_rig": "floor_fixture",
         "event:crew_rook_ride": "doorway",
+        "event:recruitment_rook_leads": "standing_person",
         "game:crew_draw_poker": "surface_item"
       },
       "scenario_overflow_ids": [],
