@@ -162,6 +162,35 @@ eligible-origin travel comp is repeatable under the current data model.
   dead ends without slowing jackpots or changing any game payout, RTP, or
   global lender term; no further Heist economy change is needed.
 
+### Owner-directed Heist pacing correction (2026-09-25)
+
+The owner clarified that the normal Count route's authoritative length is the
+998 normal-play bridge actions, not the 184 simulation-action counter. T4 was
+therefore reopened and the prior in-range conclusion withdrawn.
+
+- Count replay gate alignment: the release route's required Bishop standing is
+  Associate rather than Inner Circle, so the normal replay no longer performs
+  the obsolete twelve-job promotion grind. The deferred Made/Inner Circle arc
+  remains in `docs/plans/0.6.1_backlog.md`.
+- Count identity setup: three Grand visits / `$125` staged chips / a variable
+  `$8-$30` qualifying hand -> one Grand visit / `$8` staged chips / exactly one
+  ordinary `$8` qualifying hand. The one-session gate had already landed for
+  the release route; this pass caps its authored stake at the minimum and
+  brings the replay and economy audit into agreement with it.
+- Crew marker terms: fixed `$45` principal with two favors -> fixed `$70`
+  principal with one favor. Refusing the remaining favor converts it to the
+  same `$70` principal before the unchanged 35% conversion interest. The extra
+  `$25` covers the normal `$70` pre-plan Grand fare deterministically, removing
+  slot or event-income grinding before Bishop; eliminating the second favor
+  removes one complete timed delivery loop.
+- Unchanged boundaries: Count-only required travel remains `$0` after the plan
+  locks; the one-time live-table float remains 24 chips; global travel prices,
+  blackjack minimum stakes and rules, odds, RTP, and the `$720/$900/$1,150`
+  Count payout ladder are unchanged. Jackpot and unusually profitable routes
+  can still finish sooner.
+
+One fresh normal replay is required below before T4 closes.
+
 ## Departure-price integrity repair (rw06_2 blocker fix)
 
 The balance data exposed an existing travel transaction defect: the map priced
