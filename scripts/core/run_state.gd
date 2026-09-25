@@ -9715,7 +9715,13 @@ func travel_route_status(route_data: Dictionary) -> Dictionary:
 			_apply_locked_route_hint(status)
 		return _finalize_travel_route_status(status, route_data)
 	var route_window := _route_availability_status(route_data)
-	if not bool(route_window.get("available", true)):
+	var route_target_id := str(route_data.get(
+		"target_node_id",
+		route_data.get("destination_archetype", route_data.get("id", ""))
+	)).strip_edges()
+	_crew_run_facade.bind(self)
+	var active_count_getaway_route := _crew_run_facade.crew_heist_getaway_route_open(current_world_node_id(), route_target_id)
+	if not bool(route_window.get("available", true)) and not active_count_getaway_route:
 		status["available"] = false
 		status["disabled_reason"] = str(route_window.get("disabled_reason", "This route is closed right now."))
 		status["availability_window"] = JsonCoerceScript._copy_dict(route_window.get("availability_window", {}))

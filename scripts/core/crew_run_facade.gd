@@ -428,6 +428,19 @@ func crew_heist_travel_comped(source_node_id: String, target_node_id: String) ->
 	return false
 
 
+func crew_heist_getaway_route_open(source_node_id: String, target_node_id: String) -> bool:
+	var state = _run.CrewHeistModelScript.normalize_state(crew_heist_state)
+	if str(state.get("plan_id", "")) != _run.CrewHeistModelScript.PLAN_COUNT \
+			or str(state.get("status", "")) != _run.CrewHeistModelScript.STATUS_GETAWAY:
+		return false
+	var source_id := source_node_id.strip_edges()
+	if _run.GRAND_CASINO_ARCHETYPE_IDS.has(source_id):
+		source_id = _run.GRAND_CASINO_ARCHETYPE_ID
+	var getaway := JsonCoerceScript._copy_dict(state.get("getaway", {}))
+	return source_id == _run.GRAND_CASINO_ARCHETYPE_ID \
+		and target_node_id.strip_edges() == str(getaway.get("target_node_id", "")).strip_edges()
+
+
 func crew_heist_consume_free_play() -> bool:
 	if not crew_heist_free_play_available():
 		return false
