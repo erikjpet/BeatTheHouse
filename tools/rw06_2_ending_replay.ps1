@@ -5381,12 +5381,83 @@ function Invoke-BishopGrandDrinkSobrietyDetour {
     $grandCost = Get-Value $grandCards[0] @('cost') $null
     $grandDistance = Get-Value $grandCards[0] @('distance') $null
     if ($grandId -isnot [string] -or [string]$grandId -cnotmatch '^[a-z0-9_]+$' -or
+        $grandEnabled -isnot [bool] -or
+        ($grandCost -isnot [int32] -and $grandCost -isnot [int64]) -or [long]$grandCost -lt 0 -or
+        $grandDistance -isnot [string] -or [string]$grandDistance -cnotin @('remote', 'far', 'local', 'near', 'same')) {
+        $returnReason = [string](Get-Value $grandCards[0] @('travel_disabled_reason') 'return unavailable')
+        throw "Bishop presence boundary $BoundaryNumber sobriety detour found a malformed Grand Casino Main return card: $returnReason"
+    }
+
+    if (-not [bool]$grandEnabled) {
+        $returnReason = Get-Value $grandCards[0] @('travel_disabled_reason') $null
+        if ($returnReason -isnot [string] -or [string]$returnReason -cne 'Not enough bankroll for this route.' -or
+            [long]$grandCost -le [long]$returnCash) {
+            throw "Bishop presence boundary $BoundaryNumber sobriety detour cannot use the rendered Grand Casino Main return card: $returnReason"
+        }
+
+        $intermediateCandidates = @()
+        foreach ($node in @(Get-MapNodes)) {
+            $nodeId = Get-Value $node @('id') $null
+            $travelEnabled = Get-Value $node @('travel_enabled') $null
+            if ($nodeId -isnot [string] -or [string]$nodeId -cnotmatch '^[a-z0-9_]+$' -or
+                $travelEnabled -isnot [bool]) {
+                throw "Bishop presence boundary $BoundaryNumber found a malformed rendered public intermediate-return card."
+            }
+            if (-not [bool]$travelEnabled -or [string]$nodeId -ceq [string]$grandId) { continue }
+            $cost = Get-Value $node @('cost') $null
+            $distance = Get-Value $node @('distance') $null
+            if (($cost -isnot [int32] -and $cost -isnot [int64]) -or [long]$cost -lt 0 -or
+                [long]$cost -gt [long]$returnCash -or
+                $distance -isnot [string] -or [string]$distance -cnotin @('remote', 'far', 'local', 'near', 'same')) {
+                throw "Bishop presence boundary $BoundaryNumber found an enabled public intermediate-return card with invalid travel authority."
+            }
+            $graphDistance = Get-PublicGraphDistance -From ([string]$nodeId) -To ([string]$grandId)
+            if ($graphDistance -ceq [int]::MaxValue) { continue }
+            $intermediateCandidates += [pscustomobject]@{
+                id = [string]$nodeId
+                graph_distance = [int]$graphDistance
+                cost = [int]$cost
+            }
+        }
+        $intermediateCandidates = @($intermediateCandidates | Sort-Object graph_distance, cost, id)
+        if ($intermediateCandidates.Count -ceq 0) {
+            throw "Bishop presence boundary $BoundaryNumber has no rendered, enabled, affordable public intermediate return toward Grand Casino Main."
+        }
+        $intermediateNodeId = [string]$intermediateCandidates[0].id
+        Travel-ToNode `
+            -NodeId $intermediateNodeId `
+            -Intent "take one visible intermediate return leg toward Grand Casino Main after Bishop presence boundary $BoundaryNumber sobriety detour"
+        $intermediateScreen = Get-Value $script:LastObservation @('screen', 'screen') $null
+        $intermediateEvent = Get-Value $script:LastObservation @('event_popup', 'visible') $null
+        $intermediateTalk = Get-Value $script:LastObservation @('talk', 'visible') $null
+        if ($intermediateScreen -isnot [string] -or [string]$intermediateScreen -cnotin @('RESULT', 'ENVIRONMENT') -or
+            $intermediateEvent -isnot [bool] -or [bool]$intermediateEvent -or
+            $intermediateTalk -isnot [bool] -or [bool]$intermediateTalk) {
+            throw "Bishop presence boundary $BoundaryNumber sobriety detour was interrupted on its intermediate return leg."
+        }
+        Restore-EnvironmentSurfaceAfterTravelResult
+
+        $returnCash = Get-RenderedHudInteger -Name bankroll -Context "Bishop presence boundary $BoundaryNumber post-intermediate Grand return fare check"
+        Open-WorldMap
+        $grandCards = @(Get-MapNodes | Where-Object {
+            [string](Get-Value $_ @('archetype_id') '') -ceq 'grand_casino'
+        })
+        if ($grandCards.Count -cne 1) {
+            throw "Bishop presence boundary $BoundaryNumber intermediate return exposes $($grandCards.Count) exact Grand Casino Main cards."
+        }
+        $grandId = Get-Value $grandCards[0] @('id') $null
+        $grandEnabled = Get-Value $grandCards[0] @('travel_enabled') $null
+        $grandCost = Get-Value $grandCards[0] @('cost') $null
+        $grandDistance = Get-Value $grandCards[0] @('distance') $null
+    }
+
+    if ($grandId -isnot [string] -or [string]$grandId -cnotmatch '^[a-z0-9_]+$' -or
         $grandEnabled -isnot [bool] -or -not [bool]$grandEnabled -or
         ($grandCost -isnot [int32] -and $grandCost -isnot [int64]) -or [long]$grandCost -lt 0 -or
         [long]$grandCost -gt [long]$returnCash -or
         $grandDistance -isnot [string] -or [string]$grandDistance -cnotin @('remote', 'far', 'local', 'near', 'same')) {
         $returnReason = [string](Get-Value $grandCards[0] @('travel_disabled_reason') 'return unavailable')
-        throw "Bishop presence boundary $BoundaryNumber sobriety detour cannot use the rendered Grand Casino Main return card: $returnReason"
+        throw "Bishop presence boundary $BoundaryNumber sobriety detour did not restore an exact rendered, enabled, affordable Grand Casino Main return card: $returnReason"
     }
     Travel-ToNode `
         -NodeId ([string]$grandId) `
