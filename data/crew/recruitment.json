@@ -103,7 +103,7 @@
         "job_offer_line": "Bishop has an appointment the floor must never notice.",
         "primary": {"archetype_ids": ["grand_casino"], "semantics": {"place_role": "grand_casino_periphery", "actor_role": "crew_bishop", "object_role": "cage_window", "public_verbs": ["approach", "observe", "wait", "speak", "refuse", "defer", "accept"], "aftermath": ["refused", "deferred", "accepted"]}},
         "fallback": {"archetype_ids": ["grand_casino_cage"], "available_with_primary": true, "semantics": {"place_role": "grand_casino_cage_window", "actor_role": "crew_bishop", "object_role": "cage_window", "public_verbs": ["approach", "observe", "wait", "speak", "refuse", "defer", "accept"], "aftermath": ["refused", "deferred", "accepted"]}},
-        "presence": ["grand_casino", "grand_casino_cage"],
+        "presence": ["grand_casino"],
         "presence_lines": {
           "marker": "Bishop stands where the ceiling expects him.",
           "associate": "Bishop checks the shift without looking up.",
