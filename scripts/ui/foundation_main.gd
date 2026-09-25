@@ -852,7 +852,11 @@ func _notification(what: int) -> void:
 		# Window-manager exits are durability boundaries just like the in-game
 		# Exit action. A worker generation is joined and the newest state is
 		# written atomically before Godot accepts the close request.
-		_autosave_foundation_run("Saved before exit.", true)
+		if run_state.is_tutorial_run():
+			_complete_tutorial_profile()
+			_clear_tutorial_resume_slot()
+		else:
+			_autosave_foundation_run("Saved before exit.", true)
 
 
 func _exit_tree() -> void:
@@ -15895,7 +15899,13 @@ func start_tutorial_run() -> bool:
 		_show_message("The First Night lesson is unavailable.")
 		return false
 	selected_challenge_id = ""
-	return start_foundation_run(str(config.get("seed_text", "FIRST-NIGHT-ACE-17")), config, false)
+	if not start_foundation_run(str(config.get("seed_text", "FIRST-NIGHT-ACE-17")), config, false):
+		return false
+	# Beginning the automatic lesson is the one-time profile boundary. Replay
+	# Lessons calls this same entry point, but remains available regardless of the
+	# persisted flag because only automatic selection consults should_auto_start().
+	_complete_tutorial_profile()
+	return true
 
 
 func _fresh_profile_needs_tutorial() -> bool:
@@ -15915,20 +15925,10 @@ func request_skip_tutorial() -> void:
 func _confirm_skip_tutorial() -> void:
 	if run_state == null or not run_state.is_tutorial_run():
 		return
-	if profile_inventory == null:
-		_initialize_profile_inventory()
-	profile_inventory.tutorial_completed = true
-	var profile_save_error := profile_inventory.save()
-	if profile_save_error != OK:
-		profile_inventory.tutorial_completed = false
-		_show_message("Could not save lesson completion.")
+	if not _complete_tutorial_profile():
 		return
-	if save_service != null:
-		var clear_error := save_service.clear_run(autosave_slot_id)
-		if clear_error != OK:
-			_show_message("Could not clear the tutorial Resume Slot.")
-			return
-		autosave_loadable_available = false
+	if not _clear_tutorial_resume_slot():
+		return
 	if coach_overlay != null:
 		coach_overlay.suspend()
 	run_state = null
@@ -15965,8 +15965,7 @@ func _on_run_report_new_run_requested() -> void:
 	if _terminal_reward_selection_pending():
 		_show_message("Choose and store each earned reward before leaving the run report.")
 		return
-	if run_state != null and run_state.is_tutorial_run() and run_state.run_status == RunState.RUN_STATUS_FAILED:
-		start_tutorial_run()
+	if run_state != null and run_state.is_tutorial_run() and not _complete_tutorial_profile():
 		return
 	start_generated_foundation_run()
 
@@ -15996,6 +15995,18 @@ func _complete_tutorial_profile() -> bool:
 	profile_inventory.tutorial_completed = false
 	_show_message("Could not save lesson completion.")
 	return false
+
+
+func _clear_tutorial_resume_slot() -> bool:
+	if save_service == null:
+		return true
+	var clear_error := save_service.clear_run(autosave_slot_id)
+	if clear_error != OK:
+		_show_message("Could not clear the tutorial Resume Slot.")
+		return false
+	autosave_loadable_available = false
+	pending_autosave = false
+	return true
 
 
 func _on_run_report_copy_seed_requested(seed: String) -> void:
@@ -16045,7 +16056,15 @@ func return_to_main_menu() -> void:
 		return
 	if _all_in_result_terminal_check_is_pending():
 		_evaluate_run_terminal_state(true)
-	if run_state != null and not dev_game_test_mode:
+	var leaving_tutorial := run_state != null and run_state.is_tutorial_run() and not dev_game_test_mode
+	if leaving_tutorial:
+		if not _complete_tutorial_profile():
+			return
+		# A tutorial Resume Slot would make the main Play action continue the old
+		# lesson instead of beginning the player's first normal generated run.
+		if not _clear_tutorial_resume_slot():
+			return
+	elif run_state != null and not dev_game_test_mode:
 		_autosave_foundation_run("Autosaved before main menu.", true)
 	_clear_run_audio_caches()
 	pending_all_in_result_terminal_check = false
@@ -16130,7 +16149,11 @@ func exit_game() -> void:
 	_reset_game_surface_runtime_state()
 	_set_active_game_binding()
 	if run_state != null:
-		_autosave_foundation_run("Autosaved before exit.", true)
+		if run_state.is_tutorial_run():
+			if not _complete_tutorial_profile() or not _clear_tutorial_resume_slot():
+				return
+		else:
+			_autosave_foundation_run("Autosaved before exit.", true)
 	get_tree().quit()
 
 
@@ -17921,8 +17944,12 @@ func _clear_terminal_interaction_state() -> void:
 func _route_ended_run_if_needed(terminal_result: Dictionary = {}) -> bool:
 	if run_state == null or run_state.run_status != RunState.RUN_STATUS_ENDED:
 		return false
+	var tutorial_exit := run_state.is_tutorial_run()
+	var tutorial_exit_saved := not tutorial_exit or _complete_tutorial_profile()
 	_process_terminal_meta_bag_drops()
 	_record_profile_run_result_once(terminal_result)
+	if tutorial_exit and tutorial_exit_saved:
+		tutorial_exit_saved = _clear_tutorial_resume_slot()
 	_clear_terminal_interaction_state()
 	_set_current_screen(SCREEN_VICTORY)
 	_present_terminal_run_screen()
@@ -17930,7 +17957,7 @@ func _route_ended_run_if_needed(terminal_result: Dictionary = {}) -> bool:
 	var message := str(terminal_result.get("message", "")).strip_edges()
 	if message.is_empty():
 		message = str(_run_report_outcome_snapshot().get("how", "The run is complete."))
-	_show_message(message)
+	_show_message(message if tutorial_exit_saved else "The lesson ended, but its profile completion could not be saved.")
 	if _tutorial_bronze_home_handoff_ready() and not tutorial_meta_home_handoff_scheduled:
 		tutorial_meta_home_handoff_scheduled = true
 		call_deferred("_enter_tutorial_meta_home_handoff")
@@ -17966,15 +17993,19 @@ func _enter_tutorial_meta_home_handoff() -> void:
 func _route_failed_run_if_needed(terminal_result: Dictionary = {}) -> bool:
 	if run_state == null or run_state.run_status != RunState.RUN_STATUS_FAILED:
 		return false
+	var tutorial_exit := run_state.is_tutorial_run()
+	var tutorial_exit_saved := not tutorial_exit or _complete_tutorial_profile()
 	_process_terminal_meta_bag_drops()
 	_record_profile_run_result_once(terminal_result)
+	if tutorial_exit and tutorial_exit_saved:
+		tutorial_exit_saved = _clear_tutorial_resume_slot()
 	_clear_terminal_interaction_state()
 	_set_current_screen(SCREEN_FAILURE)
 	_present_terminal_run_screen()
 	var message := run_state.run_failure_message
 	if message.strip_edges().is_empty():
 		message = str(terminal_result.get("message", "The run is over."))
-	_show_message(message)
+	_show_message(message if tutorial_exit_saved else "The lesson ended, but its profile completion could not be saved.")
 	return true
 
 
