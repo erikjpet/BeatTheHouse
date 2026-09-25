@@ -9732,6 +9732,13 @@ func _travel_route_cost(route_data: Dictionary) -> int:
 	var current_archetype_id := str(current_environment.get("archetype_id", current_environment.get("id", ""))).strip_edges()
 	if current_archetype_id.is_empty():
 		return base_cost
+	var target_node_id := str(route_data.get(
+		"target_node_id",
+		route_data.get("destination_archetype", route_data.get("id", ""))
+	)).strip_edges()
+	_crew_run_facade.bind(self)
+	if _crew_run_facade.crew_heist_travel_comped(current_world_node_id(), target_node_id):
+		return 0
 	var free_from_archetypes := JsonCoerceScript._string_array(JsonCoerceScript._copy_array(route_data.get("free_from_archetypes", [])))
 	if free_from_archetypes.has(current_archetype_id):
 		return 0

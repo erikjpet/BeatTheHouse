@@ -404,6 +404,30 @@ func crew_heist_free_play_available() -> bool:
 	return str(state.get("status", "")) == _run.CrewHeistModelScript.STATUS_PLAY and int(JsonCoerceScript._copy_dict(state.get("play", {})).get("free_play", 0)) > 0
 
 
+func crew_heist_travel_comped(source_node_id: String, target_node_id: String) -> bool:
+	var state = _run.CrewHeistModelScript.normalize_state(crew_heist_state)
+	if str(state.get("plan_id", "")) != _run.CrewHeistModelScript.PLAN_COUNT:
+		return false
+	var source_id := source_node_id.strip_edges()
+	var target_id := target_node_id.strip_edges()
+	if _run.GRAND_CASINO_ARCHETYPE_IDS.has(source_id):
+		source_id = _run.GRAND_CASINO_ARCHETYPE_ID
+	if _run.GRAND_CASINO_ARCHETYPE_IDS.has(target_id):
+		target_id = _run.GRAND_CASINO_ARCHETYPE_ID
+	if source_id.is_empty() or target_id.is_empty() or source_id == target_id:
+		return false
+	var phase := str(state.get("status", ""))
+	if phase == _run.CrewHeistModelScript.STATUS_SETUP:
+		var planning_and_score := ["small_underground_casino", _run.GRAND_CASINO_ARCHETYPE_ID]
+		return planning_and_score.has(source_id) and planning_and_score.has(target_id)
+	if phase == _run.CrewHeistModelScript.STATUS_PLAY:
+		return source_id == "small_underground_casino" and target_id == _run.GRAND_CASINO_ARCHETYPE_ID
+	if phase == _run.CrewHeistModelScript.STATUS_GETAWAY:
+		var getaway := JsonCoerceScript._copy_dict(state.get("getaway", {}))
+		return source_id == _run.GRAND_CASINO_ARCHETYPE_ID and target_id == str(getaway.get("target_node_id", ""))
+	return false
+
+
 func crew_heist_consume_free_play() -> bool:
 	if not crew_heist_free_play_available():
 		return false
@@ -659,9 +683,9 @@ func crew_heist_table_choices() -> Array:
 			active_choices.append_array(_crew_heist_private_choices())
 			if plan_id == _run.CrewHeistModelScript.PLAN_COUNT:
 				if not bool(setup.get("schedule", false)):
-					active_choices.append({"id": "count_schedule", "label": "Watch the schedule", "text": "Hold the cage through shift change.", "consequences": {"event_hooks": [{"type": "crew_heist", "action": "count_schedule"}]}})
+					active_choices.append({"id": "count_schedule", "label": "Watch the schedule", "text": "Hold the Grand cage through shift change at Heat 40 or lower. The crew covers direct transport while The Count is live.", "consequences": {"event_hooks": [{"type": "crew_heist", "action": "count_schedule"}]}})
 				if not bool(setup.get("swap_cart", false)):
-					active_choices.append({"id": "count_cart", "label": "Move the swap cart", "text": "Take the hard package route to the service perimeter.", "consequences": {"event_hooks": [{"type": "crew_heist", "action": "count_cart"}]}})
+					active_choices.append({"id": "count_cart", "label": "Move the swap cart", "text": "Take the hard package route to the service perimeter. The crew covers the direct Grand route.", "consequences": {"event_hooks": [{"type": "crew_heist", "action": "count_cart"}]}})
 			else:
 				_crew_heist_sync_whale_setup()
 				setup = JsonCoerceScript._copy_dict(crew_heist_state.get("setup", {}))
