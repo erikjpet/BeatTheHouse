@@ -1091,13 +1091,7 @@ func crew_heist_record_count_session(bet: int, heat_start: int, heat_peak: int, 
 
 func crew_heist_begin_count_schedule(host_capability: Variant = null) -> Dictionary:
 	if host_capability == null or host_capability != _crew_heist_host_capability: return {"ok": false}
-	var started := _crew_heist_begin_setup_delivery("schedule", true)
-	if not bool(started.get("ok", false)):
-		return started
-	var cooling := _crew_heist_apply_count_schedule_cooling()
-	if int(cooling.get("amount", 0)) > 0:
-		started["message"] = "The Crew lets the Grand floor cool from Heat %d to %d before marking the shift. %s" % [int(cooling.get("before", 0)), int(cooling.get("after", 0)), str(started.get("message", "The route is marked."))]
-	return started
+	return _crew_heist_begin_setup_delivery("schedule", true)
 
 
 func crew_heist_begin_count_swap_cart(host_capability: Variant = null) -> Dictionary:
@@ -1624,33 +1618,6 @@ func _crew_heist_begin_setup_delivery(step: String, hold: bool) -> Dictionary:
 		spec["hold_required_actions"] = int(tuning.get("hold_required_actions", 2))
 		spec["hold_attention_limit"] = int(tuning.get("attention_limit", 40))
 	return _run.delivery_begin_hold(spec) if hold else _run.delivery_begin_package(spec)
-
-
-func _crew_heist_apply_count_schedule_cooling() -> Dictionary:
-	var state = _run.CrewHeistModelScript.normalize_state(crew_heist_state)
-	if str(state.get("plan_id", "")) != _run.CrewHeistModelScript.PLAN_COUNT or str(state.get("status", "")) != _run.CrewHeistModelScript.STATUS_SETUP:
-		return {}
-	var setup := JsonCoerceScript._copy_dict(state.get("setup", {}))
-	if bool(setup.get("schedule_cooling_used", false)):
-		return {}
-	var schedule := JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(_run.CrewHeistModelScript.plan(_run.CrewHeistModelScript.PLAN_COUNT).get("setup", {})).get("schedule", {}))
-	var attention_limit := clampi(int(schedule.get("attention_limit", 55)), 0, 100)
-	var cooling_target := clampi(int(schedule.get("crew_cooling_target", attention_limit)), 0, attention_limit)
-	var heat_before := _run.suspicion_level_for_environment_id(_run.GRAND_CASINO_ARCHETYPE_ID)
-	if heat_before <= cooling_target:
-		return {}
-	var requested_reduction := heat_before - cooling_target
-	if int(_run.drunk_level) >= 70:
-		requested_reduction = int(ceil(float(requested_reduction) / 0.8))
-	_run.add_suspicion("heist_count_schedule_cooling", -requested_reduction, "crew_setup", true, {"environment_archetype_id": _run.GRAND_CASINO_ARCHETYPE_ID}, true)
-	var heat_after := _run.suspicion_level_for_environment_id(_run.GRAND_CASINO_ARCHETYPE_ID)
-	if heat_after >= heat_before:
-		return {}
-	setup["schedule_cooling_used"] = true
-	setup["schedule_cooling_amount"] = heat_before - heat_after
-	state["setup"] = setup
-	crew_heist_state = state
-	return {"before": heat_before, "after": heat_after, "amount": heat_before - heat_after}
 
 
 func _crew_heist_setup_delivery_active(step: String) -> bool:
