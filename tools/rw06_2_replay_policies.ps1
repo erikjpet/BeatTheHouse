@@ -266,7 +266,8 @@ function Select-CheatReplayDuelCheckpointAction {
         $index = (Get-Rw062RequiredPublicPropertyDescriptor -InputObject $row -Name 'index' -Context 'Rourke checkpoint action').Value
         $enabled = (Get-Rw062RequiredPublicPropertyDescriptor -InputObject $row -Name 'enabled' -Context 'Rourke checkpoint action').Value
         if ($action -isnot [string] -or [string]::IsNullOrWhiteSpace($action) -or
-            $index -isnot [int32] -or $index -lt 0 -or
+            ($index -isnot [int32] -and $index -isnot [int64]) -or
+            [long]$index -lt -1 -or [long]$index -gt [int]::MaxValue -or
             $enabled -isnot [bool]) {
             throw 'Rourke checkpoint action has a non-exact action, index, or enabled scalar.'
         }
