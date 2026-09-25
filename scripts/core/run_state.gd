@@ -2099,7 +2099,7 @@ func world_sequence_schedule_heist_mount(action: String, host_capability: Varian
 	var plan_id := str(state.get("plan_id", ""))
 	var status := str(state.get("status", ""))
 	var package_id := ""
-	if action == "observe_table": package_id = "world06_6_quiet_clue"
+	if action == "observe_table": package_id = "world06_6_quiet_read"
 	elif action in ["confront", "hedge"]: package_id = "world06_6_closed_door"
 	elif plan_id == CrewHeistModelScript.PLAN_COUNT:
 		package_id = {CrewHeistModelScript.STATUS_SETUP: "world06_6_count_setup", CrewHeistModelScript.STATUS_PLAY: "world06_6_count_play", CrewHeistModelScript.STATUS_GETAWAY: "world06_6_count_getaway"}.get(status, "")
@@ -2496,6 +2496,10 @@ static func _normalize_world_sequence_registrations(value: Variant) -> Dictionar
 		var source := JsonCoerceScript._copy_dict(registration.get("source", {}))
 		var definition := JsonCoerceScript._copy_dict(registration.get("definition", {}))
 		var public_instance_token := str(registration.get("public_instance_token", ""))
+		# This retired definition used a hidden semantic term in public identifiers.
+		# Drop only its persisted registrations so older saves can present the room
+		# again; a future observation mounts the renamed public-safe definition.
+		if str(source.get("definition_id", "")) == "heist_quiet_clue": continue
 		if CrewWorldSequenceAdapterScript.owner_token(source, public_instance_token) != token: continue
 		if not ScenarioSequenceSchemaScript.is_sequence(definition): continue
 		if str(registration.get("definition_fingerprint", "")) != ScenarioSequenceRuntimeScript.content_fingerprint(definition): continue

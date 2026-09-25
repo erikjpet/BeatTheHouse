@@ -3277,40 +3277,40 @@
   },
   {
     "schema_version": 1.0,
-    "package_id": "world06_6_quiet_clue",
+    "package_id": "world06_6_quiet_read",
     "definitions": [
       {
         "source": {
           "domain": "crew",
           "owner_id": "crew",
-          "definition_id": "heist_quiet_clue"
+          "definition_id": "heist_quiet_read"
         },
         "mount": {
           "zone_id": "center"
         },
         "ownership_claims": [
           {
-            "target": "crew::heist_quiet_clue",
+            "target": "crew::heist_quiet_read",
             "property": "scene_ops",
             "mode": "exclusive"
           },
           {
-            "target": "crew::heist_quiet_clue",
+            "target": "crew::heist_quiet_read",
             "property": "interaction_ops",
             "mode": "exclusive"
           },
           {
-            "target": "crew::heist_quiet_clue_closed",
+            "target": "crew::heist_quiet_read_closed",
             "property": "scene_ops",
             "mode": "exclusive"
           },
           {
-            "target": "crew::heist_quiet_clue_aborted",
+            "target": "crew::heist_quiet_read_aborted",
             "property": "scene_ops",
             "mode": "exclusive"
           },
           {
-            "target": "crew::heist_quiet_clue_expired",
+            "target": "crew::heist_quiet_read_expired",
             "property": "interaction_ops",
             "mode": "exclusive"
           }
@@ -3322,7 +3322,7 @@
         },
         "private_capabilities": [],
         "definition": {
-          "id": "heist_quiet_clue",
+          "id": "heist_quiet_read",
           "sequence": {
             "schema_version": 2.0,
             "local_state_schema": {
@@ -3349,9 +3349,9 @@
                     {
                       "family": "scene_ops",
                       "op": "spawn",
-                      "receipt_id": "mount_heist_quiet_clue",
+                      "receipt_id": "mount_heist_quiet_read",
                       "owner_namespace": "crew",
-                      "stable_object_id": "heist_quiet_clue",
+                      "stable_object_id": "heist_quiet_read",
                       "object": {
                         "label": "Quiet-table clue",
                         "role": "heist_evidence",
@@ -3363,7 +3363,7 @@
                         "visible": true,
                         "enabled": true,
                         "state": "staged",
-                        "appearance": "quiet_clue"
+                        "appearance": "quiet_read"
                       }
                     }
                   ],
@@ -3371,12 +3371,12 @@
                     {
                       "family": "interaction_ops",
                       "op": "add",
-                      "receipt_id": "mount_heist_quiet_clue_status",
+                      "receipt_id": "mount_heist_quiet_read_status",
                       "owner_namespace": "crew",
-                      "stable_object_id": "heist_quiet_clue",
+                      "stable_object_id": "heist_quiet_read",
                       "interaction": {
                         "owner_namespace": "crew",
-                        "stable_object_id": "heist_quiet_clue",
+                        "stable_object_id": "heist_quiet_read",
                         "label": "Read the public clue",
                         "state_label": "Host staged",
                         "prompt": "A neutral Crew voice leaves one public, checkable contradiction without naming its source.",
@@ -3384,7 +3384,7 @@
                         "disabled_reason": "Use the live planning table, game table, cage, or getaway controls.",
                         "available_actions": [],
                         "input_actions": [],
-                        "non_color_state": "quiet_clue",
+                        "non_color_state": "quiet_read",
                         "focus_order": 20.0,
                         "hit_bounds": {
                           "w": 88.0,
@@ -3401,12 +3401,12 @@
                     {
                       "family": "transition_ops",
                       "op": "stage",
-                      "receipt_id": "mount_heist_quiet_clue_feedback",
+                      "receipt_id": "mount_heist_quiet_read_feedback",
                       "owner_namespace": "crew",
-                      "stable_object_id": "heist_quiet_clue_arrival",
+                      "stable_object_id": "heist_quiet_read_arrival",
                       "channel": "room",
                       "message": "A neutral Crew voice leaves one public, checkable contradiction without naming its source.",
-                      "stage_id": "heist_quiet_clue_arrival",
+                      "stage_id": "heist_quiet_read_arrival",
                       "duration_boundaries": 1.0,
                       "reduced_motion_message": "A neutral Crew voice leaves one public, checkable contradiction without naming its source."
                     }
@@ -3557,16 +3557,16 @@
                 {
                   "family": "scene_ops",
                   "op": "remove",
-                  "receipt_id": "cleanup_heist_quiet_clue",
+                  "receipt_id": "cleanup_heist_quiet_read",
                   "owner_namespace": "crew",
-                  "stable_object_id": "heist_quiet_clue"
+                  "stable_object_id": "heist_quiet_read"
                 },
                 {
                   "family": "interaction_ops",
                   "op": "remove",
-                  "receipt_id": "cleanup_heist_quiet_clue_status",
+                  "receipt_id": "cleanup_heist_quiet_read_status",
                   "owner_namespace": "crew",
-                  "stable_object_id": "heist_quiet_clue"
+                  "stable_object_id": "heist_quiet_read"
                 }
               ]
             },
@@ -3578,9 +3578,9 @@
                   {
                     "family": "scene_ops",
                     "op": "spawn",
-                    "receipt_id": "aftermath_heist_quiet_clue",
+                    "receipt_id": "aftermath_heist_quiet_read",
                     "owner_namespace": "crew",
-                    "stable_object_id": "heist_quiet_clue_closed",
+                    "stable_object_id": "heist_quiet_read_closed",
                     "object": {
                       "label": "Quiet-table clue closed",
                       "role": "aftermath",
@@ -3592,7 +3592,7 @@
                       "visible": true,
                       "enabled": false,
                       "state": "closed",
-                      "appearance": "quiet_clue_closed"
+                      "appearance": "quiet_read_closed"
                     }
                   }
                 ]
@@ -3604,9 +3604,9 @@
                   {
                     "family": "scene_ops",
                     "op": "spawn",
-                    "receipt_id": "aftermath_heist_quiet_clue_aborted",
+                    "receipt_id": "aftermath_heist_quiet_read_aborted",
                     "owner_namespace": "crew",
-                    "stable_object_id": "heist_quiet_clue_aborted",
+                    "stable_object_id": "heist_quiet_read_aborted",
                     "object": {
                       "label": "Quiet-table clue aborted",
                       "role": "aftermath",
@@ -3618,7 +3618,7 @@
                       "visible": true,
                       "enabled": false,
                       "state": "aborted",
-                      "appearance": "quiet_clue_aborted"
+                      "appearance": "quiet_read_aborted"
                     }
                   }
                 ]
@@ -3630,12 +3630,12 @@
                   {
                     "family": "interaction_ops",
                     "op": "add",
-                    "receipt_id": "aftermath_heist_quiet_clue_expired",
+                    "receipt_id": "aftermath_heist_quiet_read_expired",
                     "owner_namespace": "crew",
-                    "stable_object_id": "heist_quiet_clue_expired",
+                    "stable_object_id": "heist_quiet_read_expired",
                     "interaction": {
                       "owner_namespace": "crew",
-                      "stable_object_id": "heist_quiet_clue_expired",
+                      "stable_object_id": "heist_quiet_read_expired",
                       "label": "Quiet-table clue expired",
                       "state_label": "Expired",
                       "prompt": "The live window has closed.",

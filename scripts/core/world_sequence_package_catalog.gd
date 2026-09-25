@@ -16,7 +16,7 @@ const PACKAGE_PATHS := {
 	"world06_6_whale_play": "res://data/crew/world06_6_heist_sequences.json",
 	"world06_6_whale_interview": "res://data/crew/world06_6_heist_sequences.json",
 	"world06_6_whale_getaway": "res://data/crew/world06_6_heist_sequences.json",
-	"world06_6_quiet_clue": "res://data/crew/world06_6_heist_sequences.json",
+	"world06_6_quiet_read": "res://data/crew/world06_6_heist_sequences.json",
 	"world06_6_closed_door": "res://data/crew/world06_6_heist_sequences.json",
 }
 const MAX_PACKAGES_PER_FILE := 64

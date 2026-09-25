@@ -683,11 +683,17 @@ func crew_heist_table_choices() -> Array:
 			active_choices.append_array(_crew_heist_private_choices())
 			if plan_id == _run.CrewHeistModelScript.PLAN_COUNT:
 				if not bool(setup.get("schedule", false)):
-					var count_setup := JsonCoerceScript._copy_dict(_run.CrewHeistModelScript.plan(_run.CrewHeistModelScript.PLAN_COUNT).get("setup", {}))
-					var schedule := JsonCoerceScript._copy_dict(count_setup.get("schedule", {}))
-					active_choices.append({"id": "count_schedule", "label": "Watch the schedule", "text": "Hold the Grand cage through shift change at Heat %d or lower. The crew covers direct transport while The Count is live." % int(schedule.get("attention_limit", 55)), "consequences": {"event_hooks": [{"type": "crew_heist", "action": "count_schedule"}]}})
+					if _crew_heist_setup_delivery_active("schedule"):
+						active_choices.append({"id": "count_schedule_active", "label": "Finish the schedule watch", "text": "The shift route is already marked. Return to the Grand cage and use Hold Sightline before the window closes.", "disabled": true, "consequences": {}})
+					else:
+						var count_setup := JsonCoerceScript._copy_dict(_run.CrewHeistModelScript.plan(_run.CrewHeistModelScript.PLAN_COUNT).get("setup", {}))
+						var schedule := JsonCoerceScript._copy_dict(count_setup.get("schedule", {}))
+						active_choices.append({"id": "count_schedule", "label": "Watch the schedule", "text": "Hold the Grand cage through shift change at Heat %d or lower. The crew covers direct transport while The Count is live." % int(schedule.get("attention_limit", 55)), "consequences": {"event_hooks": [{"type": "crew_heist", "action": "count_schedule"}]}})
 				if not bool(setup.get("swap_cart", false)):
-					active_choices.append({"id": "count_cart", "label": "Move the swap cart", "text": "Take the hard package route to the service perimeter. The crew covers the direct Grand route.", "consequences": {"event_hooks": [{"type": "crew_heist", "action": "count_cart"}]}})
+					if _crew_heist_setup_delivery_active("swap_cart"):
+						active_choices.append({"id": "count_cart_active", "label": "Finish the swap route", "text": "The cart route is already marked at the Grand. Finish its handoff before changing the map.", "disabled": true, "consequences": {}})
+					else:
+						active_choices.append({"id": "count_cart", "label": "Move the swap cart", "text": "Take the hard package route to the service perimeter. The crew covers the direct Grand route.", "consequences": {"event_hooks": [{"type": "crew_heist", "action": "count_cart"}]}})
 			else:
 				_crew_heist_sync_whale_setup()
 				setup = JsonCoerceScript._copy_dict(crew_heist_state.get("setup", {}))
@@ -1602,6 +1608,12 @@ func _crew_heist_begin_setup_delivery(step: String, hold: bool) -> Dictionary:
 		spec["hold_required_actions"] = int(tuning.get("hold_required_actions", 2))
 		spec["hold_attention_limit"] = int(tuning.get("attention_limit", 40))
 	return _run.delivery_begin_hold(spec) if hold else _run.delivery_begin_package(spec)
+
+
+func _crew_heist_setup_delivery_active(step: String) -> bool:
+	if not _run.delivery_has_active_run():
+		return false
+	return str(_run.active_delivery_run.get("run_id", "")) == "heist:%s:%s" % [_run.CrewHeistModelScript.PLAN_COUNT, step]
 
 
 func _crew_heist_node_for_archetype(archetype_id: String) -> String:
