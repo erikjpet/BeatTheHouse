@@ -2104,6 +2104,41 @@ function Start-NormalSeededRun {
     if (-not [bool](Get-Value $script:LastObservation @('screen', 'start_menu', 'run_config_visible') $false)) {
         throw 'RUN SETUP did not render the seeded-run configuration panel.'
     }
+    for ($poll = 0; $poll -lt 4 -and
+        -not [bool](Get-Value $script:LastObservation @('screen', 'start_menu', 'seed_field_visible') $false); $poll++) {
+        Wait-Frames -Frames 2 -Intent 'allow the visible seed field to finish rendering'
+    }
+    if (-not [bool](Get-Value $script:LastObservation @('screen', 'start_menu', 'seed_field_visible') $false)) {
+        $null = Click-Button -Text 'Done' -Intent 'close the fixed first-night run setup'
+        $null = Click-Button -Text 'PLAY' -Intent 'start the mandatory fixed-seed first-night lesson'
+        Wait-Frames -Frames 30
+        $lessonScreen = [string](Get-Value $script:LastObservation @('screen', 'screen') '')
+        $lessonHasRun = Get-Value $script:LastObservation @('screen', 'has_run') $null
+        if ($lessonHasRun -isnot [bool] -or -not [bool]$lessonHasRun -or
+            $lessonScreen -cin @('START', 'VICTORY', 'FAILURE')) {
+            throw "The fixed first-night setup did not visibly enter a live lesson (screen='$lessonScreen', has_run=$lessonHasRun)."
+        }
+        Clear-VisibleCoach
+        $null = Click-Button -Text 'Menu' -Intent 'open the run menu to skip the fixed first-night lesson'
+        if (-not [bool](Get-Value $script:LastObservation @('screen', 'run_menu_visible') $false)) {
+            throw 'The fixed first-night lesson did not render its run menu.'
+        }
+        $null = Click-RunMenuButton -Text 'Skip Lessons' -RevealDirection down -Intent 'request the player-facing fixed first-night lesson skip'
+        $null = Click-TutorialConfirmationButton -Role ok -Intent 'confirm the fixed first-night lesson skip and return to the main menu'
+        Wait-Frames -Frames 30
+        if ([string](Get-Value $script:LastObservation @('screen', 'screen') '') -cne 'START' -or
+            [bool](Get-Value $script:LastObservation @('screen', 'has_run') $true)) {
+            throw 'Skipping the fixed first-night lesson did not return to the start screen.'
+        }
+        $null = Click-Button -Text 'RUN SETUP' -Intent 'reopen the seeded-run setup after the fixed first-night lesson' -Contains
+        for ($poll = 0; $poll -lt 4 -and
+            -not [bool](Get-Value $script:LastObservation @('screen', 'start_menu', 'seed_field_visible') $false); $poll++) {
+            Wait-Frames -Frames 2 -Intent 'allow the post-lesson seed field to finish rendering'
+        }
+    }
+    if (-not [bool](Get-Value $script:LastObservation @('screen', 'start_menu', 'seed_field_visible') $false)) {
+        throw 'RUN SETUP did not expose its visible editable seed field.'
+    }
     if ($Ending -ceq 'heist') {
         $script:HeistLaunchSetup = Assert-HeistFreshStandardRunSetup -Observation $script:LastObservation
     }
