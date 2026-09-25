@@ -3865,10 +3865,43 @@ function Play-OneBlackjackRound {
 }
 
 
+function Wait-ForFullyRenderedTalkSurface {
+    param(
+        [Parameter(Mandatory = $true)][string]$Intent,
+        [ValidateRange(1, 64)][int]$MaximumPolls = 48
+    )
+    for ($poll = 0; $poll -lt $MaximumPolls; $poll++) {
+        $eventVisible = Get-Value $script:LastObservation @('event_popup', 'visible') $null
+        $talkVisible = Get-Value $script:LastObservation @('talk', 'visible') $null
+        if ($eventVisible -isnot [bool] -or $talkVisible -isnot [bool]) {
+            throw "$Intent lost its exact boolean modal visibility signals."
+        }
+        if ([bool]$eventVisible) {
+            throw "$Intent encountered an unrelated visible event popup."
+        }
+        if ([bool]$talkVisible) {
+            $expanded = Get-Value $script:LastObservation @('talk', 'expanded') $null
+            $renderValid = Get-Value $script:LastObservation @('talk', 'render_valid') $null
+            $bodyComplete = Get-Value $script:LastObservation @('talk', 'body_complete') $null
+            $typewriterActive = Get-Value $script:LastObservation @('talk', 'typewriter_active') $null
+            if ($expanded -is [bool] -and [bool]$expanded -and
+                $renderValid -is [bool] -and [bool]$renderValid -and
+                $bodyComplete -is [bool] -and [bool]$bodyComplete -and
+                $typewriterActive -is [bool] -and -not [bool]$typewriterActive -and
+                @(Get-PublicTalkChoices).Count -gt 0) {
+                return
+            }
+        }
+        Wait-Frames -Frames 4 -Intent "wait for $Intent to finish rendering"
+    }
+    throw "$Intent did not become fully rendered within the bounded public wait."
+}
+
+
 function Get-CleanSilverPlayersCardProjection {
     Open-CageCounter
     $null = Choose-VisibleChoice -ChoiceId 'open_card' -Intent "open Linda's rendered Silver Players Card ledger for persistence evidence"
-    Wait-Frames -Frames 8
+    Wait-ForFullyRenderedTalkSurface -Intent "Linda's Silver Players Card ledger"
 
     $talk = Get-ExactReplayPsCustomObject -InputObject $script:LastObservation -Path @('talk') -Context "Clean Players Card talk projection"
     $talkVisible = Get-ExactReplayBoolean -InputObject $talk -Path @('visible') -Context 'Clean Players Card talk visibility'
@@ -4150,6 +4183,7 @@ function Visit-CageAndClaimReadyPlayersCard {
     Leave-GameSurface
     Open-CageCounter
     $null = Choose-VisibleChoice -ChoiceId 'open_card' -Intent "open Linda's visible Players Card review"
+    Wait-ForFullyRenderedTalkSurface -Intent "Linda's Players Card review"
 
     $claimMatches = @(Get-PublicTalkChoices | Where-Object {
         [string](Get-Value $_ @('id') '') -ceq 'cage_claim_card'
@@ -4169,7 +4203,7 @@ function Visit-CageAndClaimReadyPlayersCard {
     }
 
     $null = Choose-VisibleChoice -ChoiceId 'cage_claim_card' -Intent "ask Linda to issue the visibly enabled Players Card tier"
-    Wait-Frames -Frames 12
+    Wait-ForFullyRenderedTalkSurface -Intent "Linda's Players Card recognition"
 
     $choices = @(Get-VisibleChoiceIds)
     $recognitionChoices = @($choices | Where-Object {
