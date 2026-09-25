@@ -14342,6 +14342,7 @@
         "kitty_cat_lounge_amateur_night_aftermath_final_lineup_rotated_prop||center|": "stage.event_stage_center",
         "kitty_cat_lounge_amateur_night_aftermath_show_interrupted_prop||background|": "stage.event_floor_marker_left",
         "kitty_cat_lounge_amateur_night_amateur_contestant|kitty_amateur_contestant_arrival|right|": "stage.patron_floor_center",
+        "kitty_cat_lounge_amateur_night_amateur_judge": "stage.patron_amateur_judge",
         "kitty_cat_lounge_amateur_night_amateur_judge|kitty_amateur_judge_arrival|background|": "stage.patron_amateur_judge",
         "kitty_cat_lounge_amateur_night_amateur_judge|kitty_amateur_judge|right|kitty_cat_lounge_amateur_night_costume_move_position": "stage.patron_amateur_judge",
         "kitty_cat_lounge_amateur_night_amateur_signup|kitty_amateur_signup|background|": "stage.event_stage_center",
