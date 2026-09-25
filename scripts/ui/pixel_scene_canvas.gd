@@ -1272,8 +1272,12 @@ func _draw() -> void:
 				_draw_punchline_club()
 			"punchline_back_room":
 				_draw_punchline_back_room()
-			"grand_casino", "grand_casino_high_limit", "grand_casino_back_room":
+			"grand_casino":
 				_draw_grand_casino()
+			"grand_casino_high_limit":
+				_draw_grand_casino_private_room("HIGH LIMIT", "PRIVATE TABLES", C_CYAN)
+			"grand_casino_back_room":
+				_draw_grand_casino_private_room("BACK ROOM", "ROURKE'S TABLES", C_PINK)
 			"grand_casino_cage":
 				_draw_grand_casino_cage()
 			_:
@@ -2068,6 +2072,46 @@ func _draw_grand_casino() -> void:
 	_floor_reflections()
 
 
+func _draw_grand_casino_private_room(title: String, subtitle: String, accent: Color) -> void:
+	# High Limit and the Back Room share the main floor's exact felt geometry so
+	# their fixed game slots remain truthful, but they do not inherit the public
+	# machine bank, cocktail shelf, or host signage.
+	draw_rect(Rect2(0, 0, 900, 430), Color("#080812"))
+	for x in range(0, 900, 112):
+		draw_rect(Rect2(x, 0, 56, 246), Color("#111126"))
+		draw_rect(Rect2(x + 56, 0, 56, 246), Color("#0c0c18"))
+	draw_rect(Rect2(0, 0, 900, 32), Color("#1b1034"))
+	draw_rect(Rect2(0, 32, 900, 5), accent)
+	_neon_text(title, Vector2(450.0 - float(title.length()) * 8.0, 48), 24, C_YELLOW)
+	_neon_text(subtitle, Vector2(450.0 - float(subtitle.length()) * 5.0, 78), 12, accent)
+	# Two quiet felt pits replace the public machine row. Their apron edges match
+	# the authored counter contacts used by both private-room maps.
+	for table_x in [82, 546]:
+		draw_rect(Rect2(table_x, 206, 272, 88), Color("#0c2e25"))
+		draw_rect(Rect2(table_x + 12, 214, 248, 44), Color("#1a7755"))
+		draw_rect(Rect2(table_x + 22, 222, 228, 28), Color("#145b43"), false, 2)
+		draw_rect(Rect2(table_x, 258, 272, 36), Color("#123f30"))
+		draw_line(Vector2(table_x, 258), Vector2(table_x + 272, 258), C_AMBER.darkened(0.10), 4)
+		draw_line(Vector2(table_x + 20, 286), Vector2(table_x + 252, 286), Color("#08231c"), 3)
+	# A private central desk supports the room's stationary contact without
+	# presenting the public-floor HOST identity.
+	draw_rect(Rect2(344, 318, 212, 48), Color("#171225"))
+	draw_line(Vector2(344, 318), Vector2(556, 318), accent, 4)
+	draw_rect(Rect2(364, 330, 172, 20), Color("#0e0b18"))
+	_neon_text("VIP" if environment_id == "grand_casino_high_limit" else "OFFICE", Vector2(420, 334), 14, accent)
+	draw_line(Vector2(370, 366), Vector2(364, 394), C_SOFT.darkened(0.45), 4)
+	draw_line(Vector2(530, 366), Vector2(536, 394), C_SOFT.darkened(0.45), 4)
+	# Real framed notices occupy the wall areas; no route or status graphics are
+	# painted into the player view.
+	draw_rect(Rect2(8, 36, 72, 48), Color("#171326"))
+	draw_rect(Rect2(16, 44, 56, 32), Color(accent.r, accent.g, accent.b, 0.16), false, 2)
+	draw_rect(Rect2(820, 36, 72, 48), Color("#171326"))
+	draw_rect(Rect2(828, 44, 56, 32), Color(accent.r, accent.g, accent.b, 0.16), false, 2)
+	draw_rect(Rect2(72, 302, 756, 6), Color("#2d2037"))
+	draw_rect(Rect2(96, 398, 708, 6), C_AMBER.darkened(0.35))
+	_floor_reflections()
+
+
 func _draw_grand_casino_cage() -> void:
 	# A room-native Cage: teller bars dominate the center while ATM, gift case,
 	# and return door remain visually and spatially separate.
@@ -2249,13 +2293,6 @@ func _draw_scene_life() -> void:
 			for i in range(light_count):
 				var x := 300 + i * 150 if low_detail else 250 + i * 100
 				draw_rect(Rect2(x, 124, 52, 8), Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.12 + abs(sin(flicker * 3.2 + i)) * (0.12 if low_detail else 0.20)))
-			var watch_status := _pit_boss_watch_snapshot()
-			var watched := bool(watch_status.get("watched", false))
-			var badge_color := C_POLICE_RED if watched else C_CYAN
-			draw_rect(Rect2(386, 150, 128, 18), Color(0.0, 0.0, 0.0, 0.50))
-			draw_rect(Rect2(392, 154, 116, 5), Color(badge_color.r, badge_color.g, badge_color.b, 0.34 + abs(sin(flicker * 2.4)) * 0.28))
-			var watch_active := bool(watch_status.get("active", false))
-			_neon_text("WATCHED" if watched else "ROURKE HERE" if watch_active else "ROURKE AWAY", Vector2(398 if watch_active else 396, 164), 10, badge_color)
 			_draw_sign_pulse(Rect2(336, 58, 226, 54), C_YELLOW, 0.14, 3.8)
 			if not low_detail:
 				_draw_sparkles(SCENE_SPARKLES_GRAND_CASINO, C_YELLOW, 0.18)
@@ -2295,6 +2332,8 @@ func _draw_familiar_counter_characters() -> void:
 			_draw_familiar_character_in_slot("iris", "base.staff_host", Vector2(450, 350), 0.76, "host")
 		"grand_casino_high_limit":
 			pass
+		"grand_casino_cage":
+			_draw_linda_cage_silhouette()
 
 
 func _draw_familiar_floor_characters() -> void:
@@ -2325,7 +2364,7 @@ func _draw_familiar_floor_characters() -> void:
 		"grand_casino", "grand_casino_high_limit", "grand_casino_back_room":
 			_draw_grand_casino_living_characters()
 		"grand_casino_cage":
-			_draw_linda_cage_silhouette()
+			pass
 
 
 func _draw_familiar_character_in_slot(id: String, slot_id: String, fallback: Vector2, scale_value: float, role: String, facing: String = "right") -> void:
@@ -2425,13 +2464,15 @@ func _draw_grand_casino_living_characters() -> void:
 		var escort_y := 398.0 if environment_id == "grand_casino" else 358.0
 		_draw_named_character("rourke", Vector2(escort_x, escort_y), 1.04, "pit_boss", "right")
 		_draw_rival_cheater_tell(str(escort.get("tell", "heel_tap")), 0, Vector2(escort_x - 54.0, escort_y))
-		_neon_text("TO THE BACK ROOM", Vector2(330, 326), 14, C_PINK)
 		return
 	var rourke: Dictionary = living_floor.get("rourke", {}) if typeof(living_floor.get("rourke", {})) == TYPE_DICTIONARY else {}
 	if bool(rourke.get("present", false)):
 		_draw_named_character("rourke", _rourke_scene_foot(str(rourke.get("spot", ""))), 1.04, "pit_boss", str(rourke.get("facing", "right")))
+	if environment_id == "grand_casino_back_room":
+		return
 	var rivals: Array = living_floor.get("rivals", []) if typeof(living_floor.get("rivals", [])) == TYPE_ARRAY else []
-	for index in range(rivals.size()):
+	var rival_count := mini(rivals.size(), 2) if environment_id == "grand_casino_high_limit" else rivals.size()
+	for index in range(rival_count):
 		if typeof(rivals[index]) != TYPE_DICTIONARY:
 			continue
 		var rival := rivals[index] as Dictionary
@@ -2499,11 +2540,11 @@ func _rival_scene_foot(spot_index: int) -> Vector2:
 	if environment_id == "grand_casino_high_limit":
 		match spot_index:
 			0:
-				return Vector2(384, 358)
+				return _authored_slot_position("base.patron_floor_1", Vector2(306, 398))
 			1:
-				return _authored_slot_position("base.patron_floor_1", Vector2(498, 358))
+				return _authored_slot_position("stage.patron_floor_1", Vector2(594, 398))
 			_:
-				return _authored_slot_position("stage.patron_floor_1", Vector2(726, 358))
+				return _authored_slot_position("base.patron_floor_1", Vector2(306, 398))
 	if environment_id == "grand_casino_back_room":
 		match spot_index:
 			0:
