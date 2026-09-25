@@ -11134,9 +11134,6 @@
       "archetype_id": "small_underground_casino",
       "layer_id": "back_room",
       "art_key": "crew_back_room",
-      "class_overrides": {
-        "environment_layer:casino": "doorway"
-      },
       "floor": {
         "bands": [
           [
@@ -11670,6 +11667,7 @@
       "scenario_slot_ids": {},
       "scenario_position_route_ids": {},
       "class_overrides": {
+        "environment_layer:casino": "doorway",
         "event:crew_job_board": "surface_item",
         "event:crew_mags_bench": "surface_item",
         "event:crew_practice_rig": "floor_fixture",
