@@ -5078,7 +5078,7 @@ function Ensure-PunchlineCasinoDiscovered {
     $smallNode = Find-WorldNodeIdByArchetype -ArchetypeId 'small_underground_casino'
     if ([string]::IsNullOrWhiteSpace($smallNode)) {
         $tipFound = $false
-        $searchArchetypes = @('back_alley', 'corner_store', 'gas_station_casino', 'motel', 'bar')
+        $searchArchetypes = @('back_alley', 'gas_station_casino', 'motel', 'bar')
         foreach ($archetype in $searchArchetypes) {
             $nodeId = Find-WorldNodeIdByArchetype -ArchetypeId $archetype
             if ([string]::IsNullOrWhiteSpace($nodeId)) { continue }
