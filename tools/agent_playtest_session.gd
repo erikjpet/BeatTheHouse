@@ -202,9 +202,16 @@ func _execute_command(raw: String, command_number: int) -> Dictionary:
 				if frames < 0 or frames > 3600:
 					reason = "frames must be between 0 and 3600"
 				else:
+					app.call("set_application_pause_owner", REPLAY_PAUSE_OWNER, false)
+					await process_frame
 					await _wait_frames(frames)
-					accepted = true
-					detail = {"frames": frames}
+					app.call("set_application_pause_owner", REPLAY_PAUSE_OWNER, true)
+					await process_frame
+					var pause_after_wait := _replay_pause_snapshot()
+					accepted = _replay_pause_is_valid(pause_after_wait)
+					if not accepted:
+						reason = "deterministic replay pause ownership was not restored after wait"
+					detail = {"frames": frames, "pause_restored": accepted}
 			"quit":
 				accepted = true
 				should_quit = true
