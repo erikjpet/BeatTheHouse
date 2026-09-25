@@ -123,6 +123,45 @@ eligible-origin travel comp is repeatable under the current data model.
   player's route is too short. RTP, odds, wager rules, and payout tables remain
   unchanged.
 
+### Heist / The Count (final-push T4, 2026-09-25)
+
+- Count-only Crew transport: the required Punchline-to-Grand setup/play leg
+  changed from the `$70` base fare to `$0` (the preserved run's one-use Rook
+  display was `$35 -> $0`); Grand-to-Punchline setup travel changed
+  `$5 -> $0`; and the marked Grand-to-Delta getaway changed `$12 -> $0`.
+  Combining identity with setup makes the minimum required Count path
+  `$232 -> $0` across three outbound trips, two returns, and the getaway. A
+  dedicated identity round trip followed by setup would be `$307 -> $0`.
+  Only the Count's authenticated setup, play, and marked-getaway legs are
+  covered. Global fares, Rook's one-use ride, travel heat/risk, and non-Count
+  routes are unchanged.
+- Count live-table liquidity: no Crew stake / `0` chips -> one-time `24` chips
+  at authenticated play start, persisted in the play state. This is exactly
+  three `$8` minimum blackjack hands. The completed run reached valid Count
+  play with `$5` cash and no chips before this change, so the authored
+  three-hand requirement otherwise had a deterministic liquidity dead end.
+  Blackjack stakes, odds, RTP, and payouts are unchanged.
+- Count schedule gate: Grand Heat cap `40 -> 55`, aligned with the existing
+  Crew lookout band; the nine-action live-table window now includes its ninth
+  action. The observed normal return reached Grand at Heat 53, and the third
+  required minimum hand occupied the final authored boundary. Global heat
+  rules, travel risk, wagers, odds, and payouts are unchanged.
+- No automatic heat cooldown remains. The completed run recovered normally by
+  taking the public Cage ATM draw and buying cheap Pull Tabs, moving from `$3`
+  cash / Grand Heat 62 to `$39` cash / Grand Heat 47 before the retry. The
+  unchanged Grand trip then arrived within the Heat 55 schedule cap.
+- Final confirmation: the same normal-play Count run completed at gameplay
+  action 184 (bridge command 998) with Bishop as its sole required specialist
+  and reached `heist_somebody_got_pinched`. Its late curve entered final play
+  at `$13` cash, used the one-time `24`-chip table float for the three required
+  hands, and finished with `$733` cash, `46` Grand chips, and `$149` of Grand
+  Casino ATM marker debt after the `$720` Heist payout. The public result also
+  records `$366` put to work and a `$45` Crew settlement.
+- Tuning decision: 184 gameplay actions is inside the 150-350 normal-player
+  target. The scoped transport and table-float changes remove deterministic
+  dead ends without slowing jackpots or changing any game payout, RTP, or
+  global lender term; no further Heist economy change is needed.
+
 ## Departure-price integrity repair (rw06_2 blocker fix)
 
 The balance data exposed an existing travel transaction defect: the map priced
