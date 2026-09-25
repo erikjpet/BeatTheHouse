@@ -1194,14 +1194,26 @@ static func _attach_delivery_handoff_to_contact(host: Variant, records: Array) -
 	var contact_label := str(target.get("contact_label", "the marked contact"))
 	var result := records.duplicate(true)
 	var contact_index := -1
+	var contact_score := -1
 	for index in range(result.size()):
 		if index == handoff_index:
 			continue
 		var record := _dict(result[index])
 		var object_type := str(record.get("object_type", ""))
 		if str(record.get("visual_type", "")) == "character" or object_type in [host.CONTEXT_MODE_DIALOGUE, host.CONTEXT_MODE_SHOPKEEPER, "character", "scenario_actor"]:
-			contact_index = index
-			break
+			# Prefer an actual person in a room slot. Event portraits and overflow-only
+			# people remain valid fallbacks, but a handoff must not disappear behind
+			# the room-action drawer when a visible contact is already present.
+			var score := 0
+			if str(record.get("presentation_mode", "room")) == "room":
+				score += 4
+			if object_type in [host.CONTEXT_MODE_DIALOGUE, host.CONTEXT_MODE_SHOPKEEPER, "character", "scenario_actor"]:
+				score += 2
+			if bool(record.get("visible", true)):
+				score += 1
+			if score > contact_score:
+				contact_score = score
+				contact_index = index
 	if handoff_index >= 0 and contact_index >= 0:
 		var authority_record := _dict(result[handoff_index])
 		var contact := _dict(result[contact_index])
@@ -1215,6 +1227,12 @@ static func _attach_delivery_handoff_to_contact(host: Variant, records: Array) -
 		contact["owner_namespace"] = str(authority_record.get("owner_namespace", ""))
 		contact["stable_object_id"] = str(authority_record.get("stable_object_id", ""))
 		contact["world_sequence_owner_token"] = str(authority_record.get("world_sequence_owner_token", ""))
+		contact["object_id"] = str(authority_record.get("object_id", "crew::package_handoff"))
+		contact["object_type"] = "character"
+		contact["visual_type"] = "character"
+		contact["source_id"] = str(target.get("contact_id", "delivery_contact_%s" % node_id))
+		contact["label"] = contact_label.capitalize()
+		contact["short_description"] = "%s waits for The Package." % contact_label.capitalize()
 		contact["delivery_contact"] = true
 		contact["delivery_contact_label"] = contact_label
 		# The delivery owner is the live authority at this destination. A room NPC
@@ -1232,6 +1250,12 @@ static func _attach_delivery_handoff_to_contact(host: Variant, records: Array) -
 		# Legacy and non-world-sequence package jobs use the same NPC-facing flow,
 		# but their completion is owned directly by DeliveryRunModel.
 		var contact := _dict(result[contact_index])
+		contact["object_id"] = str(handoff.get("object_id", "delivery:handoff:%s" % node_id))
+		contact["object_type"] = "character"
+		contact["visual_type"] = "character"
+		contact["source_id"] = str(target.get("contact_id", "delivery_contact_%s" % node_id))
+		contact["label"] = contact_label.capitalize()
+		contact["short_description"] = "%s waits for the delivery." % contact_label.capitalize()
 		contact["delivery_contact"] = true
 		contact["delivery_contact_label"] = contact_label
 		contact["delivery_handoff_direct"] = true
@@ -1247,7 +1271,7 @@ static func _attach_delivery_handoff_to_contact(host: Variant, records: Array) -
 		# Some generated rooms contain no ordinary character. Re-present the sealed
 		# authority as the named contact, never as a parcel or handoff marker.
 		var contact := _dict(result[handoff_index])
-		contact["object_id"] = "delivery_contact:%s" % node_id
+		contact["object_id"] = str(handoff.get("object_id", "delivery:handoff:%s" % node_id))
 		contact["object_type"] = "character"
 		contact["visual_type"] = "character"
 		contact["label"] = contact_label.capitalize()
@@ -1272,7 +1296,7 @@ static func _attach_delivery_handoff_to_contact(host: Variant, records: Array) -
 	# named contact as a person, never as a parcel, action marker, or handoff prop.
 	var contact_rect := _delivery_available_rect(host, _delivery_occupied_rects(host, result), 0, "standing_person")
 	result.append(host._make_interactable_object({
-		"object_id": "delivery_contact:%s" % node_id,
+		"object_id": str(handoff.get("object_id", "delivery:handoff:%s" % node_id)),
 		"object_type": "character",
 		"visual_type": "character",
 		"source_id": str(target.get("contact_id", "delivery_contact_%s" % node_id)),
