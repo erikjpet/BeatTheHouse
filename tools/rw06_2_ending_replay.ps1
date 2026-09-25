@@ -3392,6 +3392,41 @@ function Earn-GrandFareThroughVisibleSlot {
 }
 
 
+function Advance-RiverboatTravelLockThroughVisibleAction {
+    param([Parameter(Mandatory = $true)][string]$DisabledReason)
+
+    $archetype = [string](Get-Value $script:LastObservation @('environment', 'archetype_id') '')
+    if ($archetype -cne 'delta_queen' -or
+        $DisabledReason -cnotmatch '^The River Queen is out on the river for [1-9][0-9]* more actions?\.$') {
+        return $false
+    }
+    Close-WorldMap
+    Restore-EnvironmentSurfaceAfterTravelResult
+
+    $service = Find-CanvasObject -SemanticId 'service:riverboat_deck_walk'
+    if ($null -ceq $service -or
+        [string](Get-Value $service @('label') '') -cne 'Walk the Deck' -or
+        [string](Get-Value $service @('object_type') '') -cne 'service') {
+        throw 'The River Queen travel lock exposes no rendered, enabled Walk the Deck action.'
+    }
+    $beforeCash = Get-RenderedHudInteger -Name bankroll -Context 'River Queen travel-lock bankroll before Walk the Deck'
+    if ($beforeCash -lt 10) {
+        throw "Walk the Deck costs `$10, but only `$$beforeCash remains while the River Queen travel lock is active."
+    }
+    $null = Open-SemanticObject `
+        -SemanticId 'service:riverboat_deck_walk' `
+        -PreferredActions @('Use') `
+        -Intent 'take one visible deck walk while the River Queen is away from the dock'
+    Wait-Frames -Frames 10
+    $afterCash = Get-RenderedHudInteger -Name bankroll -Context 'River Queen travel-lock bankroll after Walk the Deck'
+    if ($afterCash -ne $beforeCash - 10) {
+        throw "Walk the Deck did not charge its exact visible `$10 price (`$$beforeCash -> `$$afterCash)."
+    }
+    Restore-EnvironmentSurfaceAfterTravelResult
+    return $true
+}
+
+
 function Reach-GrandCasino {
     $visitedByRunner = New-Object 'System.Collections.Generic.HashSet[string]'
     for ($step = 0; $step -lt 24; $step++) {
@@ -3447,6 +3482,9 @@ function Reach-GrandCasino {
                 continue
             }
             $reason = [string](Get-Value $grand[0] @('travel_disabled_reason') 'The route is unavailable.')
+            if (Advance-RiverboatTravelLockThroughVisibleAction -DisabledReason $reason) {
+                continue
+            }
             if ($reason -cmatch 'Not enough bankroll') {
                 if ($cost -le $cash) {
                     throw "The Grand card claims insufficient bankroll but publishes cash=$cash and route_cost=$cost."
@@ -4373,15 +4411,23 @@ function Navigate-ToArchetype {
                 Close-WorldMap
                 throw "The public $ArchetypeId card has no stable node identity."
             }
+            $travelEnabled = [bool](Get-Value $archetypeMatches[0] @('travel_enabled') $false)
+            $state = [string](Get-Value $archetypeMatches[0] @('state') '')
+            if (-not $travelEnabled -and $state -ceq 'visited') {
+                Close-WorldMap
+                Navigate-ToNode -NodeId $nodeId -Intent $Intent
+                Restore-EnvironmentSurfaceAfterTravelResult
+                return
+            }
+            if (-not $travelEnabled) {
+                $reason = [string](Get-Value $archetypeMatches[0] @('travel_disabled_reason') 'route unavailable')
+                Close-WorldMap
+                throw "The public $ArchetypeId card is not travel-enabled: $reason"
+            }
             $cost = Get-Value $archetypeMatches[0] @('cost') $null
             if (($cost -isnot [int32] -and $cost -isnot [int64]) -or [long]$cost -lt 0) {
                 Close-WorldMap
                 throw "The public $ArchetypeId card has no non-negative integral fare."
-            }
-            if (-not [bool](Get-Value $archetypeMatches[0] @('travel_enabled') $false)) {
-                $reason = [string](Get-Value $archetypeMatches[0] @('travel_disabled_reason') 'route unavailable')
-                Close-WorldMap
-                throw "The public $ArchetypeId card is not travel-enabled: $reason"
             }
             $cash = Get-RenderedHudInteger -Name bankroll -Context "$ArchetypeId travel fare"
             if ([long]$cost -gt [long]$cash) {
@@ -4542,11 +4588,23 @@ function Clear-CrewMarkerFavors {
             $null = Choose-VisibleChoice -ChoiceId 'run_package' -Intent "honor the Crew's visible favor $favor of 2"
             Wait-Frames -Frames 10
             Complete-PublicDelivery -Intent "complete Crew favor $favor of 2"
+            $debtCount = Get-GrandFarePublicDebtCount `
+                -DebtIndicator (Get-Value $script:LastObservation @('status_hud', 'debt_indicator') $null) `
+                -Context "HUD after Crew favor $favor of 2"
+            if ($debtCount -ne (2 - $favor)) {
+                throw "Crew favor $favor did not remove exactly one visible marker balance."
+            }
             continue
         }
         if ($null -cne (Find-CanvasObject -SemanticId 'event:crew_favor_delivery')) {
             Invoke-EventObjectChoice -EventId 'crew_favor_delivery' -ChoiceId 'run_package' -Intent "honor the Crew's visible favor $favor of 2"
             Complete-PublicDelivery -Intent "complete Crew favor $favor of 2"
+            $debtCount = Get-GrandFarePublicDebtCount `
+                -DebtIndicator (Get-Value $script:LastObservation @('status_hud', 'debt_indicator') $null) `
+                -Context "HUD after Crew favor $favor of 2"
+            if ($debtCount -ne (2 - $favor)) {
+                throw "Crew favor $favor did not remove exactly one visible marker balance."
+            }
             continue
         }
         throw "Crew favor $favor surfaced without an enabled public Run the package response."
