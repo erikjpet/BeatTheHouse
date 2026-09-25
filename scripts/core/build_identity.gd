@@ -2,7 +2,7 @@ class_name BuildIdentity
 extends RefCounted
 
 const MANIFEST_PATH := "res://build_manifest.json"
-const DEVELOPMENT_VERSION := "0.6.0-dev+source"
+const DEVELOPMENT_VERSION := "0.6.0"
 const REQUIRED_FIELDS := [
 	"build_version",
 	"source_commit",

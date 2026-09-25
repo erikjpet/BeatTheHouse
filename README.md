@@ -10,21 +10,20 @@ run state forward.
 
 Versions 0.2.0 through 0.3.3 are historical source releases; 0.4.0 was an Act 1
 candidate tag that was not published before development continued. Version
-0.5.1 is the latest published release. Current `main` is the active, unreleased
-0.6 development line. It keeps the Act 1 foundation and adds the Living Town,
+0.5.1 is the latest owner-published release. Current `main` is the stamped 0.6.0
+release-preparation line. It keeps the Act 1 foundation and adds the Living Town,
 55 persistent room scenarios, the Crew campaign, eleven depth-complete game
 modules, expanded tutorial and audio coverage, and a reworked four-room Grand
 Casino endgame with a living Rourke, chips and Cage economy, Linda's
 Bronze/Silver/Gold Players Card ladder, four-phase showdown, heads-up Blackjack
 duel, and persistent card/chip meta rewards.
 
-The 0.6 source is playable and its Smoke, game, audio, performance-smoke, and
-native Coin Pusher gates pass. It is not release-cleared: the broad Contract
-suite still exposes room/scenario composition failures involving label and hit
-region overlap, route endpoints, generated inventory, and placement-dependent
-expectations. Release qualification, final balance, voice, version stamping,
-packaging, and publication remain parked behind an accepted room-construction
-update. The `v0.5.1` tag and GitHub Release identify the final corrected 0.5
+The 0.6.0 source is playable and now uses fixed, art-aligned room slots across
+its physical spaces. Release qualification is still in progress: the room set
+awaits final owner review, the three ending routes are completing their normal-
+play confirmations, and the final package follows those closures. Project and
+export metadata are stamped `0.6.0`; trial Windows and Web packaging precedes
+the final owner handoff. The `v0.5.1` tag and GitHub Release identify the final corrected 0.5
 playtest baseline; `v0.5.0` remains the immutable original release boundary.
 Beat the House is not a real-money gambling product. It has no real-money
 wagering, cash prizes, gambling monetization, or store credentials checked into
@@ -38,15 +37,15 @@ the repository.
 | Main scene | `res://scenes/main.tscn` |
 | Main UI shell | `res://scripts/ui/foundation_main.gd` |
 | Published release line | 0.5.1; 0.5.0 is the original release boundary and 0.4.0 is an unpublished Act 1 candidate |
-| Development version | Unreleased 0.6 source; project/export metadata intentionally remains 0.5.1 until the release task authorizes a version change |
-| Active planning target | Replace the rejected reusable-slot experiment with an accepted room-construction/placement design, then resume the parked 0.6 qualification sequence |
-| Current release readiness | Playable and Smoke-green; not release-ready because the broad Contract suite remains red at room/scenario composition and binding performance/playtest/release gates have not run on a final candidate |
+| Release-prep version | 0.6.0 in project and platform export metadata; 0.5.1 remains the latest owner-published release until upload |
+| Active planning target | Finish owner room review and normal-play ending confirmations, then cut the final Windows/Web handoff artifacts |
+| Current release readiness | Playable and version-stamped; trial packaging is in progress, while final qualification and owner upload remain pending |
 | Viewport | 1280x720, non-resizable, canvas stretch with kept aspect |
 | Renderer | Godot mobile renderer by default; Windows uses Godot compatibility/OpenGL to avoid the native Vulkan/OBS crash path seen in local WER reports |
 | Input model | Single pointer interaction with mouse/touch parity |
 | Target exports | Web/itch.io and Windows desktop; Android/iOS presets remain credential-blocked |
 | Run model | Seeded deterministic run state with forked RNG streams |
-| Current win target | Reach the Grand Casino, then earn Gold clean (five settled games, net +$30, heat at most 30) or survive Pit Boss Rourke's four-phase back-room showdown |
+| Current win target | Reach the Grand Casino, then earn Gold through Linda, survive Rourke's back-room showdown, or finish the Crew's Grand Casino heist |
 | Prestige content | A clean Gold win mints a fragile Players Card; carrying it grants recognition, tightens the clean heat ceiling, improves collection drops, and risks permanent loss on failure |
 
 The player starts in a generated low-stakes environment, buys or uses items,
@@ -172,11 +171,11 @@ Hold'em table supports five production nights and seven persistent opponents;
 Crew decisions and grievances carry through later jobs and endings. Ignoring
 the Crew remains a supported no-op route.
 
-Room construction uses authored environment surface maps, class-aware
-placement, scenario-specific coordinates, and deterministic bounded fallbacks.
-The grounding audit is green, but the larger composition problem is not closed:
-expanded inventories and small-screen layouts can still produce conflicting
-labels, hit authority, routes, or required objects in the broad Contract suite.
+Room construction uses fixed, named slots by physical type across authored
+environment surfaces. Games, items, people, and illustrated props occupy
+art-aligned places; abstract scenario actions stay in the room action list.
+Behind-counter staff are occluded by the counter art, while floor actors and
+fixtures use grounded, scenario-specific coordinates with bounded fallbacks.
 
 ## Games
 
@@ -309,9 +308,10 @@ Master/Music/SFX bus gains. The native authored masters remain unchanged.
 - Terminal failure reasons are defined in `RunState`: `bankroll_zero`,
   `stranded`, `police_capture`, `casino_taken_out_back` (losing the Grand Casino
   back-room showdown), and `abandoned` (the player walks away).
-- Demo victory is driven by environment `demo_objective` data and has two Grand
-  Casino routes: the clean `high_roller_cashout` Players Card route and the
-  `pit_boss_showdown` (`the_house_calls`) back-room route. The duel records
+- Demo victory is driven by environment and Crew objective data and has three
+  Grand Casino routes: the clean `high_roller_cashout` Players Card route, the
+  `pit_boss_showdown` (`the_house_calls`) back-room route, and `crew_heist`.
+  The duel records
   `walk_out_clean`, `shown_the_door`, or `taken_out_back`; the middle outcome
   is a successful exit that converts the uncashed rack into a Sal-pawnable
   meta item. See
@@ -523,22 +523,19 @@ historical release evidence.
 | Android | Android | `builds/android/BeatTheHouse.aab` |
 | iOS | iOS | `builds/ios/BeatTheHouse.zip` |
 
-`tools/export_itch.ps1` packages the Web and Windows presets for itch.io upload
-after Godot export templates are installed. Project and export preset versions
-remain stamped `0.5.1` while 0.6 is unreleased; only `release06_1` may change
-release identity. The tool supports `-Push -DryRun` for butler command
-verification and non-dry-run publishing after the user has installed butler
-and run `butler login` once. No final 0.6 package or hashes exist. Android
+`tools/export_itch.ps1` packages the Web and Windows presets into upload-ready
+zips after Godot export templates are installed. Project and export preset
+versions are stamped `0.6.0`. Agents produce local artifacts without `-Push`;
+the owner performs every upload personally. Trial packages are not final
+release artifacts. Android
 signing and iOS team/signature values still require real project credentials
 before store submission.
 
 ## Known Release Limitations
 
-- Current 0.6 `main` is not release-ready. The broad Contract suite still finds
-  scenario/room composition failures when expanded object inventories and
-  small-screen geometry combine. The rejected reusable-slot placement
-  experiment was assessed and deleted during the two-branch custody cleanup;
-  it was never merged into `main`.
+- Current 0.6.0 `main` is in release preparation, not yet owner-cleared. Final
+  room approval, all three normal-play ending confirmations, the separate final
+  qualification pass, and final artifact handoff still remain.
 - Tutorial pointer overlays can partially cover the center of the action they
   describe. The merged player path remains operable through the exposed part of
   the target, but the composition should be corrected during the room/UI
@@ -553,9 +550,8 @@ before store submission.
 - The local collection schema still carries `draft: true`. Its browser groups
   entries and exposes tier/float detail, but dedicated sort/filter controls,
   Steam Inventory, and community-market integration remain deferred.
-- itch.io publishing remains a user action: install/login with butler and push
-  the Web and Windows packages from `tools/export_itch.ps1`, or upload through
-  the itch.io dashboard.
+- itch.io publishing remains an owner-only action using the upload-ready Web
+  and Windows zips produced locally by `tools/export_itch.ps1`.
 - itch.io package publishing remains separate from the GitHub source release.
 - Android and iOS store submission require real signing/team credentials.
 

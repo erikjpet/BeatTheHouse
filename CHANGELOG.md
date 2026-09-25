@@ -2,11 +2,12 @@
 
 All notable public release changes for Beat the House are recorded here.
 
-## 0.6.0 - Unreleased development
+## 0.6.0 - Release preparation
 
-Status: **active development on `main`; playable, not release-cleared.** Project
-and export metadata intentionally remains `0.5.1` until the dedicated release
-task owns the version and package boundary.
+Status: **version-stamped on `main`; final qualification and owner upload are
+still pending.** Project and platform export metadata now read `0.6.0`. Trial
+Windows and Web artifacts precede the final post-endings, post-room-review
+package handoff.
 
 ### Added
 
@@ -15,7 +16,7 @@ task owns the version and package boundary.
   boundaries across five authored environment packages.
 - Adds the connected Crew campaign: trust and grievances, deliveries, Numbers,
   recruitment and jobs, five coordinated table plays, Police Sweep responses,
-  two heist plans, and the Turn confrontation.
+  a Grand Casino heist route, and a confrontation that can reshape the Crew.
 - Expands the catalog to eleven full games with physical casino/street Craps,
   deterministic three-cabinet Coin Pusher V3, and six-handed back-room no-limit
   Hold'em alongside the existing Act 1 games.
@@ -28,11 +29,17 @@ task owns the version and package boundary.
   Crew, Craps, Coin Pusher, poker, and Police Sweep systems.
 - Adds a Scratch Ticket scalper trade, deterministic mid-visit people, career
   and run-report surfacing, and expanded room/game prop identities.
+- Adds a rare yellow glimmer that can briefly pick out an eligible unrevealed
+  high-tier Pull Tab while preserving the machine's fixed outcomes and odds.
 
 ### Changed
 
-- Reworks room grounding around 21 authored surface maps, ten placement
-  classes, authored scenario coordinates, and deterministic bounded fallbacks.
+- Reworks rooms around fixed, named physical slots on authored surfaces. Games,
+  shop items, people, and illustrated props occupy art-aligned places, abstract
+  scenario work stays in the action list, and counter art properly occludes
+  staff stationed behind it.
+- Adds three Grand Casino ending routes: Linda's Bronze-to-Gold Players Card
+  climb, Rourke's walk/pat-down/interrogation/duel sequence, and a Crew heist.
 - Deepens every game without changing established economic authority: Baccarat
   and Roulette table rituals, Blackjack surveillance and sealed settlement,
   Bar Dice patrons/pots, Video Poker machine rhythm, Scratch and Pull Tab
@@ -52,16 +59,16 @@ task owns the version and package boundary.
   identity checks after fresh builds/worktrees.
 - Fixes numerous environment grounding, object classification, route,
   interaction, and visual-feedback defects found by production-host playtests.
+- Makes person events open as conversations before choices resolve, gives live
+  town rumors a concrete player-facing cue, and shows only the player's recorded
+  Blackjack count while count-dependent Cass choices wait for a current shoe.
 
-### Known development blockers
+### Release-preparation notes
 
-- The broad Contract suite remains red at room/scenario composition. Expanded
-  inventories and small-screen layouts can still produce label/hit overlap,
-  colliding route endpoints, missing generated room objects, and
-  placement-dependent fixture failures.
-- Binding performance/platform qualification, the refreshed owner playtest,
-  final balance/voice/polish, version stamping, packaging, and publishing remain
-  parked until an accepted room-construction update closes that boundary.
+- Final owner room approval and normal-play confirmations for the clean, cheat,
+  and Crew/heist win screens remain outside this release-prep entry.
+- The final qualification pass and final Windows/Web archives happen after
+  those closures. Upload and publication remain owner-only actions.
 
 ## 0.5.1 - Released (2026-08-13)
 
