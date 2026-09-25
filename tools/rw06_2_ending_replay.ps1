@@ -4015,8 +4015,10 @@ function Play-OneBlackjackRound {
         $bossHandNow = [int](Get-Value $script:LastObservation @('game', 'boss_hand_number') 0)
         $outcomeNow = [string](Get-Value $script:LastObservation @('game', 'outcome_message') '')
         $phaseNow = [string](Get-Value $script:LastObservation @('game', 'phase') '')
+        $cleanWagerControlsReady = $Ending -cne 'clean' -or $null -ne (Find-GameAction -Action 'blackjack_deal')
         if (($bossHandNow -gt $beforeHand) -or
-            ($roundStarted -and -not [string]::IsNullOrWhiteSpace($outcomeNow) -and $phaseNow -ceq 'betting')) {
+            ($roundStarted -and -not [string]::IsNullOrWhiteSpace($outcomeNow) -and
+                $phaseNow -ceq 'betting' -and $cleanWagerControlsReady)) {
             return
         }
 
