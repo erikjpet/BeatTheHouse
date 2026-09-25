@@ -7531,6 +7531,12 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 		environment_canvas.set_selected_object("", true)
 	var destination_name := str(run_state.current_environment.get("display_name", target_label))
 	var travel_result := _travel_result(target_id, destination_name, route, previous_environment, run_state.current_environment, travel_decay, route_risk, departure_route_status)
+	var delivery_resolution_message := str(delivery_arrival.get("message", "")).strip_edges()
+	if bool(delivery_arrival.get("resolved", false)) and not delivery_resolution_message.is_empty():
+		travel_result["message"] = "%s %s" % [str(travel_result.get("message", "")), delivery_resolution_message]
+		var delivery_resolution_deltas: Dictionary = travel_result.get("deltas", {}) if typeof(travel_result.get("deltas", {})) == TYPE_DICTIONARY else {}
+		delivery_resolution_deltas["messages"] = [str(travel_result.get("message", ""))]
+		travel_result["deltas"] = delivery_resolution_deltas
 	if not local_casino_room_move:
 		# Rook's service discounts exactly one successful ordinary route. Interior
 		# room doors do not consume the promised ride.

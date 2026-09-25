@@ -392,7 +392,20 @@ func delivery_resolve_travel_arrival(route: Dictionary = {}, route_risk: Diction
 		_run.grand_casino_room_states = rollback_room_states
 		return {"ok": false, "resolved": false, "snapshot": delivery_snapshot(), "errors": JsonCoerceScript._copy_array(advance_result.get("errors", []))}
 	if not delivery_has_active_run():
-		return {"ok": false, "resolved": true, "snapshot": delivery_snapshot()}
+		# Expiry, capture, and other modeled terminal outcomes are successful
+		# gameplay commits, not failed travel transactions. Returning `ok=false`
+		# made Foundation restore the pre-travel lifecycle snapshot, which revived
+		# the same one-action delivery and trapped the player on an enabled route
+		# that could only fail again.
+		var resolution := JsonCoerceScript._copy_dict(active_delivery_run.get("resolution", {}))
+		var reason := str(resolution.get("reason", "failed"))
+		return {
+			"ok": true,
+			"resolved": true,
+			"handoff_ready": false,
+			"message": "The delivery window closed before the handoff." if reason == "deadline" else "The delivery route closed before the handoff.",
+			"snapshot": delivery_snapshot(),
+		}
 	var move_receipt := "travel:%s:%s:%d" % [source_node_id, node_id, maxi(0, _run._crew_action_index())]
 	var move_context := _delivery_host_context(source_node_id, node_id, "", "", "", "", str(route.get("id", route.get("target_node_id", node_id))))
 	var before_move := JSON.stringify(active_delivery_run)
