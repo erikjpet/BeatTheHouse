@@ -6727,18 +6727,18 @@
           "id": "stage.event_boarding_counter",
           "kind": "stage",
           "pos": [
-            760.0,
+            680.0,
             224.0
           ],
           "footprint_class": "surface_item",
           "hit_rect": [
-            724.0,
+            644.0,
             176.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            760.0,
+            680.0,
             170.0
           ],
           "facing": "none",
