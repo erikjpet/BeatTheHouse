@@ -1245,7 +1245,7 @@ static func _attach_delivery_handoff_to_contact(host: Variant, records: Array) -
 		contact["status_summary"] = "Delivery contact"
 		result[contact_index] = contact
 		result.remove_at(handoff_index)
-		return result
+		return _promote_delivery_contact_to_room_slot(result, str(contact.get("object_id", "")))
 	if handoff_index < 0 and contact_index >= 0:
 		# Legacy and non-world-sequence package jobs use the same NPC-facing flow,
 		# but their completion is owned directly by DeliveryRunModel.
@@ -1266,7 +1266,7 @@ static func _attach_delivery_handoff_to_contact(host: Variant, records: Array) -
 		contact["action_summary"] = "%s is expecting the delivery." % contact_label.capitalize()
 		contact["status_summary"] = "Delivery contact"
 		result[contact_index] = contact
-		return result
+		return _promote_delivery_contact_to_room_slot(result, str(contact.get("object_id", "")))
 	if handoff_index >= 0:
 		# Some generated rooms contain no ordinary character. Re-present the sealed
 		# authority as the named contact, never as a parcel or handoff marker.
@@ -1291,11 +1291,11 @@ static func _attach_delivery_handoff_to_contact(host: Variant, records: Array) -
 				(action_value as Dictionary)["label"] = "Hand Over The Package"
 		contact["scenario_sequence_actions"] = handoff_actions
 		result[handoff_index] = contact
-		return result
+		return _promote_delivery_contact_to_room_slot(result, str(contact.get("object_id", "")))
 	# A sparse generated venue may genuinely contain no ordinary person. Add the
 	# named contact as a person, never as a parcel, action marker, or handoff prop.
 	var contact_rect := _delivery_available_rect(host, _delivery_occupied_rects(host, result), 0, "standing_person")
-	result.append(host._make_interactable_object({
+	var generated_contact := host._make_interactable_object({
 		"object_id": str(handoff.get("object_id", "delivery:handoff:%s" % node_id)),
 		"object_type": "character",
 		"visual_type": "character",
@@ -1316,7 +1316,53 @@ static func _attach_delivery_handoff_to_contact(host: Variant, records: Array) -
 		"delivery_handoff_node_id": node_id,
 		"focus_rect": contact_rect,
 		"placement_class": "standing_person",
-	}))
+	})
+	result.append(generated_contact)
+	return _promote_delivery_contact_to_room_slot(result, str(generated_contact.get("object_id", "")))
+
+
+static func _promote_delivery_contact_to_room_slot(records: Array, contact_id: String) -> Array:
+	var result := records.duplicate(true)
+	var contact_index := -1
+	for index in range(result.size()):
+		if str(_dict(result[index]).get("object_id", "")) == contact_id:
+			contact_index = index
+			break
+	if contact_index < 0:
+		return result
+	var contact := _dict(result[contact_index])
+	if str(contact.get("presentation_mode", "room")) == "room" and not _dict(contact.get("focus_rect", {})).is_empty():
+		return result
+	# Fixed room capacity must not make an authenticated delivery impossible. A
+	# temporary contact can occupy a visible service/event slot; the ordinary
+	# record is rebuilt on the next frame after the handoff resolves.
+	var donor_index := -1
+	var donor_score := -1
+	for index in range(result.size()):
+		if index == contact_index:
+			continue
+		var candidate := _dict(result[index])
+		if str(candidate.get("presentation_mode", "room")) != "room" or _dict(candidate.get("focus_rect", {})).is_empty():
+			continue
+		var object_type := str(candidate.get("object_type", ""))
+		if object_type in ["travel", "scenario_sequence", "scenario_scene_object", "scenario_actor"]:
+			continue
+		var score := 1
+		if object_type == "event":
+			score = 2
+		elif object_type == "service":
+			score = 3
+		if score > donor_score:
+			donor_score = score
+			donor_index = index
+	if donor_index < 0:
+		return result
+	var donor := _dict(result[donor_index])
+	for field in ["presentation_mode", "slot_id", "normalized_rect", "focus_rect", "small_screen_rect", "label_rect", "small_screen_label_rect", "focus_point", "fixed_slot_geometry"]:
+		contact[field] = donor.get(field)
+	contact["placement_class"] = "standing_person"
+	result[contact_index] = contact
+	result.remove_at(donor_index)
 	return result
 
 
