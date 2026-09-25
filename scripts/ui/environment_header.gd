@@ -3,6 +3,7 @@ extends PanelContainer
 
 const CONFIG_PATH := "res://data/ui/environment_ui.json"
 const UIArtScript := preload("res://scripts/ui/ui_art.gd")
+const MIN_TEXT_TITLE_SIZE := 14
 
 static var _config_cache: Dictionary = {}
 
@@ -37,6 +38,7 @@ func render(environment: Dictionary, goal_text: String, situation_text: String =
 	accessible_title.text = display_name
 	accessible_title.visible = text_title
 	accessible_title.tooltip_text = "%s title plate" % display_name
+	_fit_text_title(display_name)
 	blurb_label.text = str(layer_blurbs.get(layer_id, config.get("blurb", display_name)))
 	var rendered_situation := situation_text.strip_edges()
 	situation_label.text = rendered_situation
@@ -56,6 +58,16 @@ func render(environment: Dictionary, goal_text: String, situation_text: String =
 	)
 	interaction_hint.autowrap_mode = TextServer.AUTOWRAP_OFF
 	options_row.add_child(interaction_hint)
+
+
+func _fit_text_title(display_name: String) -> void:
+	var font_size := VisualStyle.TYPE_TITLE
+	var maximum_width := VisualStyle.ENVIRONMENT_TITLE_COMPACT_SIZE.x - float(VisualStyle.SPACE_2 * 2)
+	var font := accessible_title.get_theme_font("font")
+	while font_size > MIN_TEXT_TITLE_SIZE \
+			and font.get_string_size(display_name, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size).x > maximum_width:
+		font_size -= 1
+	FoundationWidgets.set_control_font_size(accessible_title, font_size)
 
 
 func current_snapshot() -> Dictionary:
