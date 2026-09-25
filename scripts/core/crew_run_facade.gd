@@ -583,12 +583,13 @@ func crew_standing() -> Dictionary:
 		if rank_id == "inner_circle":
 			inner_circle_members.append(member_id)
 	var heist_eligibility := {}
-	var requirements: Dictionary = CrewStateModelScript.config().get("heist_requirements", {})
-	for plan_id_value in requirements.keys():
+	for plan_id_value in _run.CrewHeistModelScript.release_plan_ids():
 		var plan_id := str(plan_id_value)
 		var eligible := true
-		for member_value in JsonCoerceScript._copy_array(requirements.get(plan_id_value, [])):
-			if crew_rank(str(member_value)) != "inner_circle":
+		for criterion_value in JsonCoerceScript._copy_array(_run.CrewHeistModelScript.plan(plan_id).get("crew_criteria", [])):
+			var criterion := JsonCoerceScript._copy_dict(criterion_value)
+			var required_rank := str(criterion.get("rank", "inner_circle"))
+			if CrewStateModelScript.RANK_IDS.find(crew_rank(str(criterion.get("member_id", "")))) < CrewStateModelScript.RANK_IDS.find(required_rank):
 				eligible = false
 				break
 		heist_eligibility[plan_id] = eligible
@@ -606,15 +607,18 @@ func crew_standing() -> Dictionary:
 
 func crew_heist_planning_status() -> Dictionary:
 	var rows: Array = []
-	var any_inner_circle := not JsonCoerceScript._copy_array(crew_standing().get("inner_circle_members", [])).is_empty()
-	for plan_id in _run.CrewHeistModelScript.PLAN_IDS:
+	var architect_ready := false
+	for plan_id in _run.CrewHeistModelScript.release_plan_ids():
 		var definition = _run.CrewHeistModelScript.plan(plan_id)
 		var missing: Array = []
+		var crew_ready := true
 		for criterion_value in JsonCoerceScript._copy_array(definition.get("crew_criteria", [])):
 			var criterion := JsonCoerceScript._copy_dict(criterion_value)
 			var required_rank := str(criterion.get("rank", "inner_circle"))
 			if CrewStateModelScript.RANK_IDS.find(crew_rank(str(criterion.get("member_id", "")))) < CrewStateModelScript.RANK_IDS.find(required_rank):
+				crew_ready = false
 				missing.append(str(criterion.get("label", "The crew is not ready.")))
+		architect_ready = architect_ready or crew_ready
 		for criterion_value in JsonCoerceScript._copy_array(definition.get("world_criteria", [])):
 			var criterion := JsonCoerceScript._copy_dict(criterion_value)
 			var found := false
@@ -630,14 +634,14 @@ func crew_heist_planning_status() -> Dictionary:
 		rows.append({
 			"id": plan_id,
 			"label": str(definition.get("label", plan_id)),
-			"live": any_inner_circle and missing.is_empty() and crew_heist_state.is_empty(),
+			"live": crew_ready and missing.is_empty() and crew_heist_state.is_empty(),
 			"missing_stars": missing,
 		})
 	return {
-		"visible": any_inner_circle,
+		"visible": architect_ready,
 		"locked_plan_id": str(crew_heist_state.get("plan_id", "")),
 		"phase": str(crew_heist_state.get("status", "")),
-		"plans": rows if any_inner_circle else [],
+		"plans": rows if architect_ready else [],
 	}
 
 

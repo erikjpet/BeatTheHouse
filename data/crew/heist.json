@@ -1,6 +1,7 @@
 [{ 
   "schema_version": 1,
   "state_schema_version": 2,
+  "release_plan_ids": ["the_count"],
   "hidden_resolution": {
     "chance_percent_per_weight": 12,
     "chance_percent_cap": 72,
@@ -16,10 +17,10 @@
       "label": "The Count",
       "architects": ["crew_bishop"],
       "world_criteria": [{"kind": "scenario_hook", "key": "audit_night", "label": "No audit on the books this season."}],
-      "crew_criteria": [{"member_id": "crew_bishop", "rank": "inner_circle", "label": "Bishop is not inside the circle yet."}],
+      "crew_criteria": [{"member_id": "crew_bishop", "rank": "associate", "label": "Bishop has not joined the crew yet."}],
       "setup": {
-        "identity": {"required_sessions": 3, "bet_min": 8, "bet_max": 30, "heat_ceiling": 35},
-        "schedule": {"hold_required_actions": 2, "deadline_actions": 12, "attention_limit": 40},
+        "identity": {"required_sessions": 1, "bet_min": 8, "bet_max": 30, "heat_ceiling": 35},
+        "schedule": {"hold_required_actions": 1, "deadline_actions": 12, "attention_limit": 40},
         "swap_cart": {"deadline_actions": 14},
         "guard_marker": {"optional": true, "flag": "debt_court_settlement", "member_id": "crew_knuckles", "min_rank": "associate"}
       },
