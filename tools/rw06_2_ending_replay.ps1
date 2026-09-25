@@ -5062,6 +5062,73 @@ function Invoke-CrewFavorActionBoundary {
         [Parameter(Mandatory = $true)][ValidateRange(1, 2)][int]$FavorNumber,
         [Parameter(Mandatory = $true)][ValidateRange(1, 3)][int]$BoundaryNumber
     )
+    $currentArchetype = Get-Value $script:LastObservation @('environment', 'archetype_id') $null
+    if ($FavorNumber -ceq 2 -and $BoundaryNumber -ceq 1 -and
+        $currentArchetype -is [string] -and [string]$currentArchetype -ceq 'back_alley') {
+        if (Test-CrewFavorPublicSurface) {
+            throw 'Crew favor 2 boundary 1 reached Back Alley after its exact delivery surface was already visible.'
+        }
+        $screen = Get-Value $script:LastObservation @('screen', 'screen') $null
+        $eventVisible = Get-Value $script:LastObservation @('event_popup', 'visible') $null
+        $talkVisible = Get-Value $script:LastObservation @('talk', 'visible') $null
+        $transitionActive = Get-Value $script:LastObservation @('screen', 'travel_transition_active') $null
+        if ($screen -isnot [string] -or [string]$screen -cne 'ENVIRONMENT' -or
+            $eventVisible -isnot [bool] -or [bool]$eventVisible -or
+            $talkVisible -isnot [bool] -or [bool]$talkVisible -or
+            $transitionActive -isnot [bool] -or [bool]$transitionActive) {
+            throw 'Crew favor 2 boundary 1 cannot leave Back Alley through a malformed or interrupted public room.'
+        }
+
+        Open-WorldMap
+        $cornerCards = @(Get-MapNodes | Where-Object {
+            [string](Get-Value $_ @('id') '') -ceq 'corner_store' -or
+                [string](Get-Value $_ @('archetype_id') '') -ceq 'corner_store'
+        })
+        if ($cornerCards.Count -cne 1) {
+            Close-WorldMap
+            throw "Crew favor 2 boundary 1 exposes $($cornerCards.Count) public Corner Store travel cards."
+        }
+        $cornerId = Get-Value $cornerCards[0] @('id') $null
+        $cornerArchetype = Get-Value $cornerCards[0] @('archetype_id') $null
+        $cornerEnabled = Get-Value $cornerCards[0] @('travel_enabled') $null
+        $cornerCost = Get-Value $cornerCards[0] @('cost') $null
+        if ($cornerId -isnot [string] -or [string]$cornerId -cne 'corner_store' -or
+            $cornerArchetype -isnot [string] -or [string]$cornerArchetype -cne 'corner_store' -or
+            $cornerEnabled -isnot [bool] -or -not [bool]$cornerEnabled -or
+            ($cornerCost -isnot [int32] -and $cornerCost -isnot [int64]) -or [long]$cornerCost -ne 0) {
+            Close-WorldMap
+            throw 'Crew favor 2 boundary 1 requires one exact rendered, enabled, zero-fare Corner Store card.'
+        }
+        Travel-ToNode `
+            -NodeId ([string]$cornerId) `
+            -Intent 'take the visible zero-fare Corner Store route for Crew favor 2 boundary 1'
+        if (Test-CrewFavorPublicSurface) { return }
+
+        $arrivalNode = Get-Value $script:LastObservation @('environment', 'world_node_id') $null
+        $arrivalArchetype = Get-Value $script:LastObservation @('environment', 'archetype_id') $null
+        $arrivalScreen = Get-Value $script:LastObservation @('screen', 'screen') $null
+        $arrivalEvent = Get-Value $script:LastObservation @('event_popup', 'visible') $null
+        $arrivalTalk = Get-Value $script:LastObservation @('talk', 'visible') $null
+        $arrivalTransition = Get-Value $script:LastObservation @('screen', 'travel_transition_active') $null
+        if ($arrivalNode -isnot [string] -or [string]$arrivalNode -cne 'corner_store' -or
+            $arrivalArchetype -isnot [string] -or [string]$arrivalArchetype -cne 'corner_store' -or
+            $arrivalScreen -isnot [string] -or [string]$arrivalScreen -cnotin @('RESULT', 'ENVIRONMENT') -or
+            $arrivalEvent -isnot [bool] -or [bool]$arrivalEvent -or
+            $arrivalTalk -isnot [bool] -or [bool]$arrivalTalk -or
+            $arrivalTransition -isnot [bool] -or [bool]$arrivalTransition) {
+            throw 'Crew favor 2 boundary 1 did not settle at an uninterrupted public Corner Store room.'
+        }
+        Restore-EnvironmentSurfaceAfterTravelResult
+        if ([string](Get-Value $script:LastObservation @('environment', 'world_node_id') '') -cne 'corner_store' -or
+            [string](Get-Value $script:LastObservation @('screen', 'screen') '') -cne 'ENVIRONMENT' -or
+            [bool](Get-Value $script:LastObservation @('event_popup', 'visible') $true) -or
+            [bool](Get-Value $script:LastObservation @('talk', 'visible') $true) -or
+            [bool](Get-Value $script:LastObservation @('screen', 'travel_transition_active') $true)) {
+            throw 'Crew favor 2 boundary 1 did not restore a modal-free public Corner Store room.'
+        }
+        return
+    }
+
     $serviceId = ''
     $serviceLabel = ''
     $serviceType = 'service'
