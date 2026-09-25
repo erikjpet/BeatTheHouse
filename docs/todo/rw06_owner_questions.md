@@ -303,3 +303,11 @@ Question: Do the rebuilt Bar, Corner Store and Grand Casino now match the hand-a
 Options: A) Approve this direction (recommended)  B) Needs blocking changes; list the room and issue in Answer
 Resume: Lane A continues every remaining room while OPEN. When ANSWERED, apply any blocking feedback across the room set, then change only this Status line to RESOLVED; final Lane A completion still requires `rooms_all.png` and owner approval.
 Answer:
+
+### Q-022 · rw06 release prep · 0.6.0 copy and trial builds ready
+Status: OPEN
+Asked: reset Lane D, 2026-09-24
+Question: The 0.6.0 player-facing copy and both trial builds are ready for owner review. The copy is at `D:\Projects\Beat-The-House\docs\plans\release_0_6_0_copy.md`. The Windows trial build is `D:\Projects\Beat-The-House\.tmp\trial_builds\BeatTheHouse-0.6.0-dev+94d1af9c85f5-windows-94d1af9c85f5-84b99da8d810.zip`; the Web trial build is `D:\Projects\Beat-The-House\.tmp\trial_builds\BeatTheHouse-0.6.0-dev+94d1af9c85f5-web-94d1af9c85f5-84b99da8d810.zip`. These are trial builds for review, not final uploads, and nothing was uploaded or published.
+Options: A) Approve the copy and trial-build direction (recommended)  B) Request changes before the later final release build
+Resume: Review the copy and both trial packages. Final release packages and any upload/publishing remain a separate owner-directed step after rooms and endings are complete.
+Answer:
