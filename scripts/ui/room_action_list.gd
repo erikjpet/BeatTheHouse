@@ -5,7 +5,7 @@ signal action_selected(record: Dictionary, action: Dictionary)
 
 const MIN_TARGET := Vector2(44.0, 44.0)
 const PREFERRED_PANEL_WIDTH := 520.0
-const PREFERRED_COLUMN_WIDTH := 360.0
+const PREFERRED_COLUMN_WIDTH := 480.0
 const PANEL_EDGE_MARGIN := 16.0
 const PANEL_CHROME_HEIGHT := 96.0
 const GRID_GAP := 4.0
