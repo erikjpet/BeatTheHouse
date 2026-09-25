@@ -1152,6 +1152,13 @@ func _run_rw06_1_all_room_review(library: Variant) -> void:
 		var archetype := _dict(archetypes.get(archetype_id, {}))
 		if map_id.is_empty() or archetype.is_empty():
 			continue
+		# Old unlayered Punchline saves normalize onto their compatibility floor
+		# before production rendering. Review the three reachable named floors below,
+		# not the pre-migration placement alias that normal play cannot display.
+		if str(surface_map.get("layer_id", "")).is_empty() \
+				and not _dict(archetype.get("layers", {})).is_empty():
+			print("ALL_ROOM_REVIEW_SKIP_MIGRATED_ALIAS map=%s" % map_id)
+			continue
 		print("ALL_ROOM_REVIEW_BASE_BEGIN map=%s" % map_id)
 		var base_preparation := await _rw06_1_prepare_base_map(surface_map, archetype, library)
 		if not bool(base_preparation.get("ok", false)):
