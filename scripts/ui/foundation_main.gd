@@ -17603,7 +17603,7 @@ func _refresh_delivery_action_strip() -> void:
 	if delivery_action_strip == null:
 		return
 	var actions: Array = []
-	if run_state != null and not _is_meta_session() and current_screen == SCREEN_ENVIRONMENT and current_game == null \
+	if run_state != null and not _is_meta_session() and current_screen in [SCREEN_ENVIRONMENT, SCREEN_RESULT] and current_game == null \
 			and run_state.has_method("delivery_top_actions"):
 		actions = JsonCoerceScript._copy_array(run_state.delivery_top_actions())
 	var signature := JSON.stringify(actions)
