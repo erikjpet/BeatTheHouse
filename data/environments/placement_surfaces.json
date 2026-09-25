@@ -15936,19 +15936,19 @@
           "id": "base.staff_floor",
           "kind": "base",
           "pos": [
-            52.0,
-            414.0
+            120.0,
+            326.0
           ],
           "footprint_class": "standing_person",
           "hit_rect": [
-            16.0,
-            334.0,
+            84.0,
+            246.0,
             72.0,
             80.0
           ],
           "label_anchor": [
-            52.0,
-            328.0
+            120.0,
+            238.0
           ],
           "facing": "right",
           "priority": 10,
@@ -16161,18 +16161,18 @@
           "kind": "stage",
           "pos": [
             572.0,
-            414.0
+            326.0
           ],
           "footprint_class": "standing_person",
           "hit_rect": [
             536.0,
-            334.0,
+            246.0,
             72.0,
             80.0
           ],
           "label_anchor": [
-            571.6,
-            430.0
+            572.0,
+            238.0
           ],
           "facing": "left",
           "priority": 10,
