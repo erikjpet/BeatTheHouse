@@ -24,7 +24,7 @@ Status: COMPLETE on 2026-09-24.
 
 - Rooms — Works now: deterministic named/fixed slots, hand-authored room data, semantic overflow/action-list presentation, and bounded prewarm implementation are on `main`. Unfinished: apply the reset-lane visual/draw-order requirements, redo Bar/Corner Store/Grand Casino against their art, finish every room, and obtain owner screenshot approval.
 - Endings — Lane B 2026-09-24 19:03 CT. Works now: the allowed normal-play confirmation path launches in an isolated profile, follows visible overflow room actions, reaches the Grand Casino Cage, and buys 50 chips through Linda's immediate service action. Lane A room blocker: in the Cage, `travel:grand_casino` and `travel:leave` are enabled but not rendered, and no accessible More room actions control appears, so the player cannot return to the Main Floor. Next: consume the accessible-door fix, finish the Clean win, then complete Cheat and Crew/Heist to their win screens.
-- Pull-tab glimmer — Works now: the yellow location glimmer is on `main` and was observed once through the normal Pull Tabs surface; the visible frame is saved at `D:\Projects\Beat-The-House\.tmp\owner_review\pulltab_glimmer.png` (2026-09-24 19:05 CT). Next: claim and place one room at a time after Lane A lists rooms as "open for Lane C"; none are currently listed.
+- Lane C — DONE 2026-09-24 19:10 CT. The yellow location glimmer is on `main`, was observed once through the normal Pull Tabs surface, and its visible frame is saved at `D:\Projects\Beat-The-House\.tmp\owner_review\pulltab_glimmer.png`. Lane A listed no rooms as "open for Lane C", so no room was claimed or edited.
 
 ## Confirmation and cleanup
 
