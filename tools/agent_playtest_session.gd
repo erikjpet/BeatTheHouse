@@ -344,7 +344,7 @@ func _scroll_surface(argument: String) -> Dictionary:
 		return {"ok": false, "reason": "scroll_surface requires one public surface id and up/down direction"}
 	var surface_id := str(parts[0]).strip_edges()
 	var direction := str(parts[1]).strip_edges().to_lower()
-	if surface_id != "run_menu":
+	if surface_id not in ["run_menu", "room_actions"]:
 		return {"ok": false, "reason": "unsupported public scroll surface: %s" % surface_id}
 	if direction not in ["up", "down"]:
 		return {"ok": false, "reason": "scroll_surface direction must be up or down"}
@@ -1282,6 +1282,12 @@ func _visible_vertical_scroll_surface(surface_id: String) -> Dictionary:
 	var container: ScrollContainer = null
 	if surface_id == "run_menu":
 		container = app.get("run_menu_scroll") as ScrollContainer
+	elif surface_id == "room_actions":
+		var action_list := app.get("room_action_list") as Control
+		var candidates: Array[ScrollContainer] = []
+		_collect_scroll_containers(action_list, candidates)
+		if candidates.size() == 1:
+			container = candidates[0]
 	if not _control_is_rendered(container):
 		return {}
 	var bar := container.get_v_scroll_bar()
@@ -1299,21 +1305,33 @@ func _visible_vertical_scroll_surface(surface_id: String) -> Dictionary:
 		"rect": _clipped_control_rect(container),
 		"can_scroll_up": current > 0,
 		"can_scroll_down": current < maximum,
-	}
+}
+
+
+func _collect_scroll_containers(node: Node, result: Array[ScrollContainer]) -> void:
+	if node == null or (node is CanvasItem and not (node as CanvasItem).visible):
+		return
+	if node is ScrollContainer and _control_is_rendered(node as ScrollContainer):
+		result.append(node as ScrollContainer)
+	for child in node.get_children():
+		_collect_scroll_containers(child, result)
 
 
 func _public_scroll_surfaces() -> Array:
-	var surface := _visible_vertical_scroll_surface("run_menu")
-	if surface.is_empty():
-		return []
-	return [{
-		"id": str(surface.get("id", "")),
-		"axis": str(surface.get("axis", "")),
-		"rendered": bool(surface.get("rendered", false)),
-		"rect": surface.get("rect", Rect2()),
-		"can_scroll_up": bool(surface.get("can_scroll_up", false)),
-		"can_scroll_down": bool(surface.get("can_scroll_down", false)),
-	}]
+	var result: Array = []
+	for surface_id in ["run_menu", "room_actions"]:
+		var surface := _visible_vertical_scroll_surface(surface_id)
+		if surface.is_empty():
+			continue
+		result.append({
+			"id": str(surface.get("id", "")),
+			"axis": str(surface.get("axis", "")),
+			"rendered": bool(surface.get("rendered", false)),
+			"rect": surface.get("rect", Rect2()),
+			"can_scroll_up": bool(surface.get("can_scroll_up", false)),
+			"can_scroll_down": bool(surface.get("can_scroll_down", false)),
+		})
+	return result
 
 
 func _visible_text_fields() -> Array:

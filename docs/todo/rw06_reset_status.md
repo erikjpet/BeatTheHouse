@@ -23,7 +23,7 @@ Status: COMPLETE on 2026-09-24.
 ## State of each lane
 
 - Rooms — Works now: deterministic named/fixed slots, hand-authored room data, semantic overflow/action-list presentation, and bounded prewarm implementation are on `main`. Unfinished: apply the reset-lane visual/draw-order requirements, redo Bar/Corner Store/Grand Casino against their art, finish every room, and obtain owner screenshot approval.
-- Endings — Works now: the accumulated Clean, Cheat, and Crew/Heist route and product hardening is on `main`, including Grand access/economy, Delta/Beach/corridor routing, Audit/Count handling, and selected-action availability. Unfinished: play each ending on current `main`, fix any live dead end or economy wall, and reach/save each win screen once.
+- Endings — Lane B 2026-09-24 19:03 CT. Works now: the allowed normal-play confirmation path launches in an isolated profile, follows visible overflow room actions, reaches the Grand Casino Cage, and buys 50 chips through Linda's immediate service action. Lane A room blocker: in the Cage, `travel:grand_casino` and `travel:leave` are enabled but not rendered, and no accessible More room actions control appears, so the player cannot return to the Main Floor. Next: consume the accessible-door fix, finish the Clean win, then complete Cheat and Crew/Heist to their win screens.
 - Pull-tab glimmer — Works now: the yellow location-glimmer implementation and later process-safe support are on `main`. Unfinished: observe the glimmer once in normal play, save the owner-review screenshot, then help Rooms with explicitly claimed rooms.
 
 ## Confirmation and cleanup
