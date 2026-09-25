@@ -19820,18 +19820,18 @@
           "id": "base.fixture_host_desk",
           "kind": "base",
           "pos": [
-            450.0,
-            382.0
+            366.0,
+            366.0
           ],
           "footprint_class": "floor_fixture",
           "hit_rect": [
-            404.0,
-            318.0,
-            92.0,
-            64.0
+            344.0,
+            322.0,
+            44.0,
+            44.0
           ],
           "label_anchor": [
-            450.0,
+            366.0,
             310.0
           ],
           "facing": "none",
