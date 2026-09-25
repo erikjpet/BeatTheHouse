@@ -38,6 +38,12 @@ static func snapshot_signature(run_state: RunState) -> String:
 		str(environment.get("home_containers", [])),
 		str(environment.get("cage_gift_shop_state", {})),
 		str(environment.get("layout", {})),
+		# Delivery arrival state changes the physical room catalog without changing
+		# the environment envelope. Keep the rendered canvas on the same revision as
+		# the interaction catalog so a newly active handoff cannot remain hidden
+		# behind the previous room snapshot.
+		str(run_state.delivery_physical_interactions()),
+		str(run_state.delivery_arrival_interaction()),
 		str(run_state.rourke_current_room),
 		str(run_state.rourke_current_spot),
 		str(run_state.rourke_facing),
