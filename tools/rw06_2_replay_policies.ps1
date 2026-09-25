@@ -310,7 +310,11 @@ function Select-CheatReplayBlackjackCheatAction {
     if ([bool]$dealerHoleVisible -and [bool]$peekAvailable) {
         throw 'Blackjack publicly exposes an impossible visible-hole-card Peek state.'
     }
-    if ([bool]$peekWindowOpen -and -not [bool]$peekAvailable -and -not [bool]$dealerHoleVisible) {
+    # Dealer focus can visibly present an ordinary look-away/read window while
+    # the table is still in betting. No hole card exists until Deal, so that
+    # public cue is not yet an actionable Peek window.
+    if ([bool]$peekWindowOpen -and -not [bool]$peekAvailable -and
+        -not [bool]$dealerHoleVisible -and -not [bool]$canDeal) {
         throw 'Blackjack exposes a Peek window without an active Peek or visible hole card.'
     }
 
