@@ -3857,7 +3857,10 @@ function Play-OneBlackjackRound {
     $beforeHand = [int](Get-Value $script:LastObservation @('game', 'boss_hand_number') 0)
     $roundStarted = [string](Get-Value $script:LastObservation @('game', 'phase') '') -cne 'betting'
 
-    for ($step = 0; $step -lt 36; $step++) {
+    # A full hand can cross several intentionally paced presentation windows
+    # (deal, each decision, dealer reveal, and settle). Keep the route bounded,
+    # but do not spend the entire allowance merely waiting for controls to light.
+    for ($step = 0; $step -lt 120; $step++) {
         if (Test-PublicTerminalSurface) { return }
         $eventVisible = [bool](Get-Value $script:LastObservation @('event_popup', 'visible') $false)
         $talkVisible = [bool](Get-Value $script:LastObservation @('talk', 'visible') $false)
@@ -3934,7 +3937,7 @@ function Play-OneBlackjackRound {
         }
         Wait-Frames -Frames 20
     }
-    throw "Blackjack did not visibly settle within 36 public decision steps."
+    throw "Blackjack did not visibly settle within 120 public presentation or decision steps."
 }
 
 
