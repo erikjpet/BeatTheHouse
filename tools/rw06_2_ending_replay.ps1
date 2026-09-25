@@ -2044,6 +2044,36 @@ function Clear-VisibleCoach {
 }
 
 
+function Normalize-HeistRunSetupControls {
+    $startMenu = Get-Value $script:LastObservation @('screen', 'start_menu') $null
+    $challengeId = Get-Value $startMenu @('selected_challenge_id') $null
+    if ($challengeId -isnot [string]) {
+        throw 'The visible Heist Run Setup has no exact selected challenge id.'
+    }
+    if (-not [string]::IsNullOrWhiteSpace([string]$challengeId)) {
+        $null = Click-Button -Text 'Challenges' -Intent 'open the visible challenge selector for a Standard run'
+        Wait-Frames -Frames 4 -Intent 'let the visible challenge selector settle'
+        $null = Click-Button -Text 'Standard Run' -Intent 'select the visible Standard run option'
+        Wait-Frames -Frames 4 -Intent 'let the visible Standard run selection settle'
+    }
+
+    # Run Content is built lazily. Opening this player-facing drawer makes the
+    # production menu populate its own default groups when no prior selection
+    # exists, while preserving the strict launch assertion as the authority.
+    $null = Click-Button -Text 'RUN CONTENT' -Intent 'open the visible Run Content defaults'
+    Wait-Frames -Frames 4 -Intent 'let the visible Run Content controls settle'
+    if (-not [bool](Get-Value $script:LastObservation @('screen', 'start_menu', 'content_group_config_visible') $false)) {
+        throw 'RUN CONTENT did not expose its visible default-content controls.'
+    }
+    $homeTypeId = Get-Value $script:LastObservation @('screen', 'start_menu', 'selected_home_type_id') $null
+    if ($homeTypeId -isnot [string] -or [string]$homeTypeId -cne 'random') {
+        throw 'The visible Heist Run Content controls did not retain the Random home selection.'
+    }
+    $null = Click-Button -Text 'Done' -Intent 'accept the visible default Run Content selection'
+    Wait-Frames -Frames 4 -Intent 'return to the visible seeded Run Setup'
+}
+
+
 function Start-NormalSeededRun {
     $screen = [string](Get-Value $script:LastObservation @('screen', 'screen') '')
     if ($screen -cne 'START') {
@@ -2146,6 +2176,7 @@ function Start-NormalSeededRun {
         throw 'RUN SETUP did not expose its visible editable seed field.'
     }
     if ($Ending -ceq 'heist') {
+        Normalize-HeistRunSetupControls
         $script:HeistLaunchSetup = Assert-HeistFreshStandardRunSetup -Observation $script:LastObservation
     }
     $null = Invoke-BridgeCommand -Command "set_field seed $Seed" -Intent "type route seed $Seed into the visible seed field"
