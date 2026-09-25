@@ -4411,15 +4411,23 @@ function Navigate-ToArchetype {
                 Close-WorldMap
                 throw "The public $ArchetypeId card has no stable node identity."
             }
+            $travelEnabled = [bool](Get-Value $archetypeMatches[0] @('travel_enabled') $false)
+            $state = [string](Get-Value $archetypeMatches[0] @('state') '')
+            if (-not $travelEnabled -and $state -ceq 'visited') {
+                Close-WorldMap
+                Navigate-ToNode -NodeId $nodeId -Intent $Intent
+                Restore-EnvironmentSurfaceAfterTravelResult
+                return
+            }
+            if (-not $travelEnabled) {
+                $reason = [string](Get-Value $archetypeMatches[0] @('travel_disabled_reason') 'route unavailable')
+                Close-WorldMap
+                throw "The public $ArchetypeId card is not travel-enabled: $reason"
+            }
             $cost = Get-Value $archetypeMatches[0] @('cost') $null
             if (($cost -isnot [int32] -and $cost -isnot [int64]) -or [long]$cost -lt 0) {
                 Close-WorldMap
                 throw "The public $ArchetypeId card has no non-negative integral fare."
-            }
-            if (-not [bool](Get-Value $archetypeMatches[0] @('travel_enabled') $false)) {
-                $reason = [string](Get-Value $archetypeMatches[0] @('travel_disabled_reason') 'route unavailable')
-                Close-WorldMap
-                throw "The public $ArchetypeId card is not travel-enabled: $reason"
             }
             $cash = Get-RenderedHudInteger -Name bankroll -Context "$ArchetypeId travel fare"
             if ([long]$cost -gt [long]$cash) {
@@ -4580,11 +4588,23 @@ function Clear-CrewMarkerFavors {
             $null = Choose-VisibleChoice -ChoiceId 'run_package' -Intent "honor the Crew's visible favor $favor of 2"
             Wait-Frames -Frames 10
             Complete-PublicDelivery -Intent "complete Crew favor $favor of 2"
+            $debtCount = Get-GrandFarePublicDebtCount `
+                -DebtIndicator (Get-Value $script:LastObservation @('status_hud', 'debt_indicator') $null) `
+                -Context "HUD after Crew favor $favor of 2"
+            if ($debtCount -ne (2 - $favor)) {
+                throw "Crew favor $favor did not remove exactly one visible marker balance."
+            }
             continue
         }
         if ($null -cne (Find-CanvasObject -SemanticId 'event:crew_favor_delivery')) {
             Invoke-EventObjectChoice -EventId 'crew_favor_delivery' -ChoiceId 'run_package' -Intent "honor the Crew's visible favor $favor of 2"
             Complete-PublicDelivery -Intent "complete Crew favor $favor of 2"
+            $debtCount = Get-GrandFarePublicDebtCount `
+                -DebtIndicator (Get-Value $script:LastObservation @('status_hud', 'debt_indicator') $null) `
+                -Context "HUD after Crew favor $favor of 2"
+            if ($debtCount -ne (2 - $favor)) {
+                throw "Crew favor $favor did not remove exactly one visible marker balance."
+            }
             continue
         }
         throw "Crew favor $favor surfaced without an enabled public Run the package response."

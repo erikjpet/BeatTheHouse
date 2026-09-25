@@ -9533,6 +9533,23 @@ func _apply_delivery_resolution(expected_receipt: Dictionary = {}, materialize_a
 				grievance_add({"member_id": "crew_lucky", "kind": "job_abandoned", "weight": 1, "source_ref": str(active_delivery_run.get("job_id", run_id))})
 		elif run_id.begins_with("numbers_fix_bribe:"):
 			numbers_state.fix_record_bribe(succeeded, resolution)
+	if succeeded and run_id == "crew_favor_delivery":
+		var favor_debt_id := ""
+		for debt_value in debt:
+			var debt_data := JsonCoerceScript._copy_dict(debt_value)
+			if str(debt_data.get("lender_id", "")) != CREW_LENDER_ID \
+					or str(debt_data.get("debt_kind", "")) != "favor" \
+					or str(debt_data.get("status", "active")) not in ["active", "overdue", "favor_due"]:
+				continue
+			favor_debt_id = str(debt_data.get("id", "")).strip_edges()
+			break
+		var favor_result := complete_debt_favor(favor_debt_id)
+		if favor_debt_id.is_empty() or not bool(favor_result.get("ok", false)):
+			from_dict(rollback_run)
+			current_environment = rollback_environment
+			world_map = rollback_world_map
+			grand_casino_room_states = rollback_room_states
+			return {"ok": false, "errors": ["successful Crew favor delivery could not clear one active favor"]}
 	# Reporting-only counters share this existing, idempotent resolution boundary.
 	# Lookout holds and heist getaways are not package-delivery ledger entries.
 	var reporting_mode := str(active_delivery_run.get("mode", ""))
