@@ -4065,6 +4065,8 @@ function Set-CleanBlackjackStake {
 
 
 function Resolve-BlackjackRouteEventPopup {
+    param([switch]$PreferCooling)
+
     if (@('clean', 'cheat', 'heist') -cnotcontains $Ending) { return $false }
 
     $eventVisible = Get-Value $script:LastObservation @('event_popup', 'visible') $null
@@ -4097,9 +4099,9 @@ function Resolve-BlackjackRouteEventPopup {
         throw "Eye in the Sky exposed unexpected choices: $($choiceIds -join ', ')."
     }
 
-    $choiceId = if ($Ending -ceq 'clean') { 'change_table' } else { 'press_anyway' }
-    $intent = if ($Ending -ceq 'clean') {
-        'change tables through the visible Eye in the Sky response and cool the clean route'
+    $choiceId = if ($Ending -ceq 'clean' -or $PreferCooling) { 'change_table' } else { 'press_anyway' }
+    $intent = if ($Ending -ceq 'clean' -or $PreferCooling) {
+        'change tables through the visible Eye in the Sky response and cool before continuing the route'
     }
     else {
         'press on through the visible Eye in the Sky response and keep drawing Rourke''s attention'
@@ -6390,6 +6392,58 @@ function Leave-GrandForDistinctVisit {
 }
 
 
+function Cool-CountIdentityHeatAtGrand {
+    [int]$heatCeiling = 35
+    $heat = Get-RenderedHudInteger -Name heat_level -Context 'Count identity heat before the public cooling path'
+    if ($heat -le $heatCeiling) { return }
+
+    Enter-GrandRoom -Room main
+    if ($null -ceq (Find-CanvasObject -SemanticId 'game:pull_tabs')) {
+        throw "The Count identity route is above Heat $heatCeiling, but Grand Main exposes no visible Pull Tabs cooling path."
+    }
+    $null = Open-SemanticObject `
+        -SemanticId 'game:pull_tabs' `
+        -PreferredActions @('Play', 'Enter') `
+        -Intent 'open the visible Pull Tabs machine to cool before The Count identity hand'
+    Wait-Frames -Frames 12
+    if ([string](Get-Value $script:LastObservation @('screen', 'screen') '') -cne 'GAME' -or
+        [string](Get-Value $script:LastObservation @('game', 'game_id') '') -cne 'pull_tabs') {
+        throw 'The visible Grand Pull Tabs machine did not open its public game surface.'
+    }
+
+    for ($purchase = 1; $purchase -le 8 -and $heat -gt $heatCeiling; $purchase++) {
+        if ([bool](Get-Value $script:LastObservation @('event_popup', 'visible') $false)) {
+            $null = Resolve-BlackjackRouteEventPopup -PreferCooling
+            $heat = Get-RenderedHudInteger -Name heat_level -Context 'Count identity heat after the visible Eye in the Sky cooling response'
+            if ($heat -le $heatCeiling) { break }
+        }
+        if ([string](Get-Value $script:LastObservation @('screen', 'screen') '') -cne 'GAME' -or
+            [string](Get-Value $script:LastObservation @('game', 'game_id') '') -cne 'pull_tabs') {
+            throw 'The Count cooling route left the visible Pull Tabs surface before reaching the identity heat ceiling.'
+        }
+        if ($null -ceq (Find-GameAction -Action 'pull_tab_buy' -Index 0)) {
+            throw 'The visible Grand Pull Tabs machine exposes no enabled first-column ticket.'
+        }
+        $null = Invoke-GameAction `
+            -Action 'pull_tab_buy' `
+            -Index 0 `
+            -Intent "buy cheap visible Pull Tab $purchase to cool before The Count identity hand"
+        Wait-Frames -Frames 4
+        $heat = Get-RenderedHudInteger -Name heat_level -Context "Count identity heat after visible Pull Tab $purchase"
+    }
+
+    if ([bool](Get-Value $script:LastObservation @('event_popup', 'visible') $false)) {
+        $null = Resolve-BlackjackRouteEventPopup -PreferCooling
+        $heat = Get-RenderedHudInteger -Name heat_level -Context 'Count identity heat after the final visible Eye in the Sky cooling response'
+    }
+    if ($heat -gt $heatCeiling) {
+        throw "The normal Grand cooling path stopped at Heat $heat, above The Count identity ceiling $heatCeiling."
+    }
+    Leave-GameSurface
+    Enter-GrandRoom -Room main
+}
+
+
 function Complete-CountIdentitySessions {
     Reach-GrandCasino
     # The release Count route requires one ordinary identity hand. Keep the
@@ -6397,6 +6451,7 @@ function Complete-CountIdentitySessions {
     # three-session / 125-chip grind from the broader deferred route.
     Ensure-GrandCasinoChips -Minimum 8
     Enter-GrandRoom -Room main
+    Cool-CountIdentityHeatAtGrand
     for ($session = 1; $session -le 1; $session++) {
         if ([int](Get-Value $script:LastObservation @('status_hud', 'heat_level') 0) -gt 35) {
             throw "The Count identity route exceeded its public heat ceiling before session $session."
