@@ -4643,6 +4643,23 @@ function Invoke-CheatEndingRoute {
             $showdownCallOpened = $true
             break
         }
+        $spatialHouseCalls = @(Get-Array (Get-Value $script:LastObservation @('spatial', 'objects') @()) | Where-Object {
+            [string](Get-Value $_ @('object_id') '') -ceq 'event:the_house_calls' -and
+            [bool](Get-Value $_ @('visible') $false) -and
+            [bool](Get-Value $_ @('enabled') $false) -and
+            [bool](Get-Value $_ @('interactive') $false)
+        })
+        if ($spatialHouseCalls.Count -gt 1) {
+            throw "The public room model exposes duplicate House Calls objects."
+        }
+        if ($spatialHouseCalls.Count -ceq 1) {
+            $null = Invoke-OverflowRoomActionButton `
+                -ButtonText 'The House Calls: Follow Rourke' `
+                -Intent "follow Rourke through the visible room-action list"
+            Wait-Frames -Frames 10 -Intent 'let the visible House Calls response settle'
+            $showdownCallOpened = $true
+            break
+        }
         $activeEventId = [string](Get-Value $script:LastObservation @('event_popup', 'event_id') '')
         $activeTalkId = [string](Get-Value $script:LastObservation @('talk', 'event_id') '')
         if ($activeEventId -ceq 'the_house_calls' -or $activeTalkId -ceq 'the_house_calls') {
