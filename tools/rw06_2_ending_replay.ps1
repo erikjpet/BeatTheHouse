@@ -5300,6 +5300,26 @@ function Ensure-PunchlineCasinoDiscovered {
                         $afterEventVisible = Get-Value $script:LastObservation @('event_popup', 'visible') $null
                         $afterTalkVisible = Get-Value $script:LastObservation @('talk', 'visible') $null
                         $afterTransitionActive = Get-Value $script:LastObservation @('screen', 'travel_transition_active') $null
+                        $afterNodeId = Get-Value $script:LastObservation @('environment', 'world_node_id') $null
+                        $afterArchetype = Get-Value $script:LastObservation @('environment', 'archetype_id') $null
+                        $afterFeedbackTitle = Get-Value $script:LastObservation @('feedback', 'title') $null
+                        $afterFeedbackText = Get-Value $script:LastObservation @('feedback', 'text') $null
+                        if ([string]$archetype -cne 'gas_station_casino' -or
+                            $afterScreen -isnot [string] -or [string]$afterScreen -cne 'RESULT' -or
+                            $afterEventVisible -isnot [bool] -or [bool]$afterEventVisible -or
+                            $afterTalkVisible -isnot [bool] -or [bool]$afterTalkVisible -or
+                            $afterTransitionActive -isnot [bool] -or [bool]$afterTransitionActive -or
+                            $afterNodeId -isnot [string] -or [string]$afterNodeId -cne $nodeId -or
+                            $afterArchetype -isnot [string] -or [string]$afterArchetype -cne 'gas_station_casino' -or
+                            $afterFeedbackTitle -isnot [string] -or [string]$afterFeedbackTitle -cne 'Result' -or
+                            $afterFeedbackText -isnot [string] -or [string]$afterFeedbackText -cne 'The package changes hands. Nothing else does.') {
+                            throw 'The exact post-tip machine_jam response did not settle to its authenticated public Result surface.'
+                        }
+                        Restore-EnvironmentSurfaceAfterTravelResult
+                        $afterScreen = Get-Value $script:LastObservation @('screen', 'screen') $null
+                        $afterEventVisible = Get-Value $script:LastObservation @('event_popup', 'visible') $null
+                        $afterTalkVisible = Get-Value $script:LastObservation @('talk', 'visible') $null
+                        $afterTransitionActive = Get-Value $script:LastObservation @('screen', 'travel_transition_active') $null
                     }
                     if ($afterScreen -isnot [string] -or [string]$afterScreen -cne 'ENVIRONMENT' -or
                         $afterEventVisible -isnot [bool] -or [bool]$afterEventVisible -or
