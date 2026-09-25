@@ -455,6 +455,7 @@ func _enter_grand_casino_room(run_state: RunState, target_archetype_id: String, 
 	# rooms so itinerary rotation happens at the same revisit boundary as town.
 	CrewRecruitmentModelScript.apply_to_environment(run_state, environment_data)
 	environment_data["layout"] = EnvironmentInstance.ensure_generated_layout(environment_data, library)
+	_align_world_map_scenario_layout_baseline(environment_data)
 	var installed := _install_environment_with_rollback(run_state, environment_data, rollback, false)
 	if not bool(installed.get("ok", false)):
 		if restore_on_failure:
