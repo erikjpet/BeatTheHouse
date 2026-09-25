@@ -11479,7 +11479,10 @@ func _add_context_event_inline_actions(card: VBoxContainer, event_id: String, in
 			continue
 		var label := str(action_data.get("label", choice_id))
 		var selected := bool(action_data.get("selected", false))
-		var button := _add_card_button(card, label, Callable(self, "activate_event_choice_action").bind(event_id, choice_id), false, selected)
+		# Inline event rows share the sealed response token used by the room canvas.
+		# Dispatch through that handler so dismissal rows close the event surface
+		# instead of entering EventModule as a consequence-bearing choice.
+		var button := _add_card_button(card, label, Callable(self, "_activate_event_response_action").bind(emit_id), false, selected)
 		button.custom_minimum_size = Vector2(0, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
 		_set_control_font_size(button, 16)
 		var detail := str(action_data.get("text", "")).strip_edges()
