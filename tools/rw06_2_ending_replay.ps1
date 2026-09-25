@@ -5060,7 +5060,7 @@ function Test-CrewFavorPublicSurface {
 function Invoke-CrewFavorActionBoundary {
     param(
         [Parameter(Mandatory = $true)][ValidateRange(1, 2)][int]$FavorNumber,
-        [Parameter(Mandatory = $true)][ValidateRange(1, 2)][int]$BoundaryNumber
+        [Parameter(Mandatory = $true)][ValidateRange(1, 3)][int]$BoundaryNumber
     )
     $serviceId = ''
     $serviceLabel = ''
