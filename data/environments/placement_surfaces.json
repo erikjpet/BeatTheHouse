@@ -11108,22 +11108,7 @@
         "punchline_new_muscle_safe_exit|punchline_headliner_door_guard|exit_lane|": "exit.left_upper"
       },
       "scenario_position_route_ids": {},
-      "scenario_overflow_ids": [
-        "punchline_greased_week_task_0",
-        "punchline_greased_week_task_1",
-        "punchline_greased_week_task_2",
-        "punchline_greased_week_task_3",
-        "punchline_greased_week_task_4",
-        "punchline_high_stakes_night_task_0",
-        "punchline_high_stakes_night_task_1",
-        "punchline_high_stakes_night_task_2",
-        "punchline_high_stakes_night_task_3",
-        "punchline_new_muscle_task_0",
-        "punchline_new_muscle_task_1",
-        "punchline_new_muscle_task_2",
-        "punchline_new_muscle_task_3",
-        "punchline_new_muscle_task_4"
-      ],
+      "scenario_overflow_ids": [],
       "scenario_art_keys": {
         "punchline_high_stakes_night_chair_stack": "room_seating",
         "punchline_high_stakes_night_protected_table": "room_surface"
