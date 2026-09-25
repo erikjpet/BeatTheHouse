@@ -16,7 +16,7 @@ const SOURCE_AVAILABLE := "available_actions"
 var _modal_focus_scope: RefCounted
 var _action_dispatcher: Callable
 var _launcher: Button
-var _modal_layer: CanvasLayer
+var _modal_layer: Control
 var _overlay: Control
 var _panel: PanelContainer
 var _list: GridContainer
@@ -43,9 +43,15 @@ func _ready() -> void:
 	_launcher.pressed.connect(open)
 	add_child(_launcher)
 
-	_modal_layer = CanvasLayer.new()
-	_modal_layer.layer = 50
+	# The Web release template strips CanvasLayer, so the modal is a top-level Control
+	# sized to the viewport and drawn above the room instead of a separate layer.
+	_modal_layer = Control.new()
+	_modal_layer.name = "RoomActionModalLayer"
+	_modal_layer.top_level = true
+	_modal_layer.z_index = RenderingServer.CANVAS_ITEM_Z_MAX
+	_modal_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_modal_layer)
+	_modal_layer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_overlay = Control.new()
 	_overlay.name = "RoomActionOverlay"
 	_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
