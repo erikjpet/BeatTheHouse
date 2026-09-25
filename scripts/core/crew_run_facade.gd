@@ -821,6 +821,13 @@ func crew_heist_event_action(hook: Dictionary, host_capability: Variant = null) 
 	if not bool(sequence_result.get("ok", false)):
 		_run._apply_environment_turn_snapshot(rollback, false)
 		return {"ok": false, "message": "The heist scene could not be staged atomically.", "errors": JsonCoerceScript._copy_array(sequence_result.get("errors", []))}
+	# A player-authenticated planning-table fold pays its authored preparation
+	# cost and tears down the live scene, but it is not a terminal ending. Keep
+	# the aborted state only long enough to authenticate, receipt, and unmount the
+	# action atomically; the clear table must be able to accept another plan.
+	if action == "abort":
+		crew_heist_state = {}
+		result["relockable"] = true
 	result["world_sequence_scheduled"] = not bool(sequence_result.get("inactive", false))
 	# Quiet-table actions schedule their scene internally, but the package/owner
 	# token names the private observation channel. It is never needed as a player
@@ -1000,10 +1007,36 @@ func crew_heist_abort(reason: String = "retreated", host_capability: Variant = n
 	var requested_cost := 15 + setup_count * 10
 	var paid := mini(requested_cost, maxi(0, _run.bankroll - 1))
 	_run.bankroll -= paid
+	if reason == "planning_table":
+		_crew_heist_clear_setup_delivery(str(state.get("plan_id", "")))
 	state["status"] = _run.CrewHeistModelScript.STATUS_ABORTED
 	state["abort"] = {"reason": reason.strip_edges(), "cost": paid, "action": _crew_action_index()}
 	crew_heist_state = state
 	return {"ok": true, "cost": paid, "run_ended": false, "message": "The crew folds the map. Preparation costs $%d; the run stays yours." % paid}
+
+
+# Fold is a voluntary setup teardown, distinct from a forced identity failure.
+# Clear only delivery machinery owned by this exact plan; unrelated jobs and
+# completed delivery receipts remain untouched.
+func _crew_heist_clear_setup_delivery(plan_id: String) -> void:
+	var run_id := str(_run.active_delivery_run.get("run_id", "")).strip_edges()
+	if run_id not in ["heist:%s:schedule" % plan_id, "heist:%s:swap_cart" % plan_id]:
+		return
+	_run._delivery_remove_inventory_cargo()
+	_run.active_delivery_run = {}
+
+
+# Saves made while the old Fold behavior was live contain an authenticated
+# planning-table abort plus its orphaned setup route. Migrate only that exact
+# public reason after private authority and delivery state have both restored.
+func reconcile_planning_table_fold() -> bool:
+	var state = _run.CrewHeistModelScript.normalize_state(crew_heist_state)
+	if str(state.get("status", "")) != _run.CrewHeistModelScript.STATUS_ABORTED \
+			or str(JsonCoerceScript._copy_dict(state.get("abort", {})).get("reason", "")) != "planning_table":
+		return false
+	_crew_heist_clear_setup_delivery(str(state.get("plan_id", "")))
+	crew_heist_state = {}
+	return true
 
 
 func crew_heist_record_count_session(bet: int, heat_start: int, heat_peak: int, settled: bool = true, session_id: String = "", host_capability: Variant = null) -> Dictionary:

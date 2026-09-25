@@ -13425,6 +13425,8 @@ func _run_state_schema_restore(data: Dictionary) -> void:
 		DeliveryRunModelScript.normalize_state(data.get("active_delivery_run", {})),
 		current_world_node_id()
 	)
+	_crew_run_facade.bind(self)
+	_crew_run_facade.reconcile_planning_table_fold()
 	_numbers_host_capability = RefCounted.new()
 	numbers_state = _new_numbers_model()
 	var saved_numbers_value: Variant = data.get("numbers_state", {})
