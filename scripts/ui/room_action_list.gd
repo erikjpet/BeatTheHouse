@@ -199,6 +199,14 @@ static func is_visible_overflow_record(record: Dictionary) -> bool:
 static func is_visible_action_list_record(record: Dictionary) -> bool:
 	if is_visible_overflow_record(record):
 		return true
+	# A delivery contact is deadline-bound and may be temporarily unhittable while
+	# its person arrival or another room sequence owns the canvas hit plane. Keep
+	# its authenticated handoff action in the reachable drawer as a parallel path.
+	if bool(record.get("delivery_contact", false)):
+		return str(record.get("presentation_mode", "room")) == "room" \
+			and bool(record.get("visible", true)) \
+			and bool(record.get("presentation_required", true)) \
+			and not str(record.get("object_id", "")).strip_edges().is_empty()
 	# A physical door stays rendered in its authored room slot, but camera focus,
 	# result cards, and object detail cards can temporarily put that slot outside
 	# the usable canvas. Mirror every live travel control here as a safety route so
