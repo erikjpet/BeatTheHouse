@@ -6119,12 +6119,32 @@ function Invoke-BishopPresenceHouseDrinkBoundary {
 
 
 function Find-BishopSurfaceAtGrand {
+    $script:BishopSurfaceUsesOverflow = $false
     for ($boundary = 0; $boundary -le 12; $boundary++) {
         Reach-GrandCasino
         foreach ($room in @('main', 'cage')) {
             Enter-GrandRoom -Room $room
             foreach ($eventId in @('recruitment_bishop', 'crew_contact_bishop')) {
                 if ($null -cne (Find-CanvasObject -SemanticId "event:$eventId")) { return $eventId }
+                $spatial = @(Get-Array (Get-Value $script:LastObservation @('spatial', 'objects') @()) | Where-Object {
+                    [string](Get-Value $_ @('object_id') '') -ceq "event:$eventId"
+                })
+                if ($spatial.Count -gt 1) {
+                    throw "The public room model exposes duplicate Bishop $eventId objects."
+                }
+                if ($spatial.Count -ceq 1) {
+                    $visible = Get-Value $spatial[0] @('visible') $null
+                    $enabled = Get-Value $spatial[0] @('enabled') $null
+                    $interactive = Get-Value $spatial[0] @('interactive') $null
+                    if ($visible -isnot [bool] -or $enabled -isnot [bool] -or $interactive -isnot [bool] -or
+                        -not [bool]$visible -or -not [bool]$enabled -or -not [bool]$interactive -or
+                        [string](Get-Value $spatial[0] @('label') '') -cne 'Bishop' -or
+                        [string](Get-Value $spatial[0] @('object_type') '') -cne 'event') {
+                        throw "The public Bishop $eventId spatial record is not exactly visible, enabled, interactive, and event-backed."
+                    }
+                    $script:BishopSurfaceUsesOverflow = $true
+                    return $eventId
+                }
             }
         }
         if ($boundary -lt 12) {
@@ -6138,6 +6158,12 @@ function Find-BishopSurfaceAtGrand {
 function Recruit-Bishop {
     $surface = Find-BishopSurfaceAtGrand
     if ($surface -ceq 'crew_contact_bishop') { return }
+    if ([bool]$script:BishopSurfaceUsesOverflow) {
+        $null = Invoke-OverflowRoomActionButton `
+            -ButtonText 'Bishop: Talk' `
+            -Intent 'open the exact visible overflow Bishop appointment'
+        Wait-ForFullyRenderedTalkSurface -Intent 'Bishop appointment'
+    }
     if ('wait_for_bishop' -cin @(Get-VisibleChoiceIds)) {
         $null = Choose-VisibleChoice -ChoiceId 'wait_for_bishop' -Intent "wait through Bishop's visible first appointment beat"
     }
