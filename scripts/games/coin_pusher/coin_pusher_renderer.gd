@@ -249,6 +249,9 @@ func release_surface_host(surface) -> void:
 		_static_cache_pending = true
 		_static_cache_pending_layers = [true, true, true, true]
 		_static_cache_fallback_reason = "host_released"
+		if is_instance_valid(_static_cache_font) and _static_cache_font.changed.is_connected(_on_static_cache_font_changed):
+			_static_cache_font.changed.disconnect(_on_static_cache_font_changed)
+		_static_cache_font = null
 	_clear_prepared_batch()
 
 
