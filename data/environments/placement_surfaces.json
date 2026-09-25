@@ -3277,6 +3277,30 @@
           "walk_lane_ids": []
         },
         {
+          "id": "base.item_counter_phone",
+          "kind": "base",
+          "pos": [
+            306.0,
+            176.0
+          ],
+          "footprint_class": "surface_item",
+          "hit_rect": [
+            270.0,
+            128.0,
+            72.0,
+            48.0
+          ],
+          "label_anchor": [
+            306.0,
+            122.0
+          ],
+          "facing": "none",
+          "priority": 15,
+          "zone_id": "left",
+          "support_id": "lobby_side_ledge",
+          "walk_lane_ids": []
+        },
+        {
           "id": "base.event_wall_calendar",
           "kind": "base",
           "pos": [
@@ -3729,7 +3753,7 @@
       ],
       "actor_routes": [],
       "object_slot_ids": {
-        "event:call_brother_in_law": "base.item_key_ledge",
+        "event:call_brother_in_law": "base.item_counter_phone",
         "event:chain06_dave_last_stop": "base.item_bed_left",
         "event:chain06_dave_same_bus": "base.item_front_desk",
         "event:parking_lot_tip": "base.event_parking_marker",
