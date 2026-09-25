@@ -5253,6 +5253,10 @@ function Invoke-BishopPresenceHouseDrinkBoundary {
         -PreferredActions @('Use') `
         -Intent "buy the visible `$8 house drink to advance Bishop presence boundary $BoundaryNumber"
     Wait-Frames -Frames 10
+    $afterCash = Get-RenderedHudInteger -Name bankroll -Context "Bishop presence boundary $BoundaryNumber bankroll after the visible house drink"
+    if ($afterCash -ne $beforeCash - 8) {
+        throw "The visible house drink did not charge its exact `$8 price at Bishop presence boundary $BoundaryNumber (`$$beforeCash -> `$$afterCash)."
+    }
 
     $eventVisible = Get-Value $script:LastObservation @('event_popup', 'visible') $null
     $talkVisible = Get-Value $script:LastObservation @('talk', 'visible') $null
@@ -5291,10 +5295,6 @@ function Invoke-BishopPresenceHouseDrinkBoundary {
         }
     }
 
-    $afterCash = Get-RenderedHudInteger -Name bankroll -Context "Bishop presence boundary $BoundaryNumber bankroll after the visible house drink"
-    if ($afterCash -ne $beforeCash - 8) {
-        throw "The visible house drink did not charge its exact `$8 price at Bishop presence boundary $BoundaryNumber (`$$beforeCash -> `$$afterCash)."
-    }
     if (Test-CrewFavorPublicSurface) {
         throw 'A Crew favor resurfaced after the two-favor marker was visibly cleared.'
     }
