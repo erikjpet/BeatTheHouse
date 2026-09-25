@@ -15867,28 +15867,28 @@
             "lane.public"
           ]
         },
-        {
-          "id": "base.patron_front_left",
+      {
+        "id": "base.patron_front_left",
           "kind": "base",
-          "pos": [
-            142.0,
-            350.0
+        "pos": [
+          466.0,
+          270.0
           ],
           "footprint_class": "seated_person",
-          "hit_rect": [
-            108.0,
-            286.0,
+        "hit_rect": [
+          432.0,
+          206.0,
             68.0,
             64.0
           ],
-          "label_anchor": [
-            142.0,
-            292.0
+        "label_anchor": [
+          466.0,
+          250.0
           ],
           "facing": "front",
           "priority": 20,
           "zone_id": "room",
-          "support_id": "front_left",
+        "support_id": "right_table",
           "walk_lane_ids": [
             "lane.public"
           ]
@@ -15945,8 +15945,8 @@
             "lane.public"
           ]
         },
-        {
-          "id": "base.staff_right_table",
+      {
+        "id": "base.staff_right_table",
           "kind": "base",
           "pos": [
             390.0,
@@ -15959,9 +15959,9 @@
             72.0,
             72.0
           ],
-          "label_anchor": [
-            390.0,
-            190.0
+        "label_anchor": [
+          340.0,
+          228.0
           ],
           "facing": "left",
           "priority": 10,
@@ -15971,71 +15971,71 @@
             "lane.public"
           ]
         },
-        {
-          "id": "base.game_1",
+      {
+        "id": "base.game_1",
           "kind": "base",
-          "pos": [
-            288.0,
-            262.0
-          ],
+        "pos": [
+          156.0,
+          346.0
+        ],
           "footprint_class": "floor_fixture",
-          "hit_rect": [
-            242.0,
-            198.0,
-            92.0,
-            64.0
-          ],
-          "label_anchor": [
-            288.0,
-            192.0
+        "hit_rect": [
+          110.0,
+          282.0,
+          92.0,
+          64.0
+        ],
+        "label_anchor": [
+          168.0,
+          302.0
           ],
           "facing": "none",
           "priority": 10,
           "zone_id": "room",
-          "support_id": "left_table",
+        "support_id": "floor",
           "walk_lane_ids": []
         },
-        {
-          "id": "base.game_2",
+      {
+        "id": "base.game_2",
           "kind": "base",
-          "pos": [
-            664.0,
-            256.0
-          ],
+        "pos": [
+          392.0,
+          346.0
+        ],
           "footprint_class": "floor_fixture",
-          "hit_rect": [
-            618.0,
-            192.0,
-            92.0,
-            64.0
-          ],
-          "label_anchor": [
-            664.0,
-            186.0
+        "hit_rect": [
+          346.0,
+          282.0,
+          92.0,
+          64.0
+        ],
+        "label_anchor": [
+          378.0,
+          350.0
           ],
           "facing": "none",
           "priority": 20,
           "zone_id": "room",
-          "support_id": "slot_console",
+        "support_id": "floor",
           "walk_lane_ids": []
         },
-        {
-          "id": "base.staff_floor",
+      {
+        "id": "base.staff_floor",
           "kind": "base",
-          "pos": [
-            120.0,
-            326.0
+        "pos": [
+          600.0,
+          326.0
           ],
           "footprint_class": "standing_person",
-          "hit_rect": [
-            84.0,
-            246.0,
+        "hit_rect": [
+          564.0,
+          246.0,
             72.0,
             80.0
           ],
-          "label_anchor": [
-            120.0,
-            238.0
+        "label_anchor": [
+          600.0,
+          214.0
           ],
           "facing": "right",
           "priority": 10,
@@ -16045,28 +16045,28 @@
             "lane.public"
           ]
         },
-        {
-          "id": "base.event_deck_walk",
+      {
+        "id": "base.event_deck_walk",
           "kind": "base",
-          "pos": [
-            728.0,
-            342.0
+        "pos": [
+          392.0,
+          414.0
           ],
           "footprint_class": "ground_marker",
-          "hit_rect": [
-            692.0,
-            294.0,
+        "hit_rect": [
+          356.0,
+          366.0,
             72.0,
             48.0
           ],
-          "label_anchor": [
-            728.0,
-            288.0
+        "label_anchor": [
+          378.0,
+          378.0
           ],
           "facing": "none",
           "priority": 10,
           "zone_id": "room",
-          "support_id": "deck_floor",
+        "support_id": "floor",
           "walk_lane_ids": []
         },
         {
@@ -16093,8 +16093,8 @@
           "support_id": "scoreboard_ledge",
           "walk_lane_ids": []
         },
-        {
-          "id": "base.event_table_2",
+      {
+        "id": "base.event_table_2",
           "kind": "base",
           "pos": [
             182.0,
@@ -16107,9 +16107,9 @@
             72.0,
             48.0
           ],
-          "label_anchor": [
-            171.0,
-            88.0
+        "label_anchor": [
+          189.0,
+          190.0
           ],
           "facing": "none",
           "priority": 20,
@@ -16117,71 +16117,71 @@
           "support_id": "scoreboard_ledge",
           "walk_lane_ids": []
         },
-        {
-          "id": "base.event_fog_pool",
+      {
+        "id": "base.event_fog_pool",
           "kind": "base",
-          "pos": [
-            650.0,
-            150.0
+        "pos": [
+          182.0,
+          50.0
           ],
           "footprint_class": "surface_item",
-          "hit_rect": [
-            614.0,
-            102.0,
+        "hit_rect": [
+          146.0,
+          2.0,
             72.0,
             48.0
           ],
-          "label_anchor": [
-            650.0,
-            96.0
+        "label_anchor": [
+          171.0,
+          76.0
           ],
           "facing": "none",
           "priority": 25,
           "zone_id": "room",
-          "support_id": "scoreboard_ledge",
+        "support_id": "scenario_notice_rail",
           "walk_lane_ids": []
         },
-        {
-          "id": "base.game_3",
+      {
+        "id": "base.game_3",
           "kind": "base",
-          "pos": [
-            510.0,
-            170.0
+        "pos": [
+          286.0,
+          150.0
           ],
           "footprint_class": "surface_item",
-          "hit_rect": [
-            474.0,
-            122.0,
+        "hit_rect": [
+          250.0,
+          102.0,
             72.0,
             48.0
           ],
-          "label_anchor": [
-            510.0,
-            116.0
+        "label_anchor": [
+          315.0,
+          202.0
           ],
           "facing": "none",
           "priority": 30,
           "zone_id": "room",
-          "support_id": "right_table",
+        "support_id": "scoreboard_ledge",
           "walk_lane_ids": []
         },
-        {
-          "id": "base.event_wall_1",
+      {
+        "id": "base.event_wall_1",
           "kind": "base",
-          "pos": [
-            112.0,
-            106.0
+        "pos": [
+          52.0,
+          24.0
           ],
           "footprint_class": "wall_mounted",
-          "hit_rect": [
-            72.0,
-            82.0,
+        "hit_rect": [
+          12.0,
+          0.0,
             80.0,
             48.0
           ],
-          "label_anchor": [
-            112.0,
-            76.0
+        "label_anchor": [
+          52.0,
+          8.0
           ],
           "facing": "none",
           "priority": 10,
@@ -16191,8 +16191,8 @@
         }
       ],
       "stage_slots": [
-        {
-          "id": "stage.staff_right_table",
+      {
+        "id": "stage.staff_right_table",
           "kind": "stage",
           "pos": [
             494.0,
@@ -16205,9 +16205,9 @@
             72.0,
             72.0
           ],
-          "label_anchor": [
-            494.0,
-            198.0
+        "label_anchor": [
+          505.0,
+          102.0
           ],
           "facing": "right",
           "priority": 10,
@@ -16217,23 +16217,23 @@
             "lane.public"
           ]
         },
-        {
-          "id": "stage.patron_group",
+      {
+        "id": "stage.patron_group",
           "kind": "stage",
-          "pos": [
-            520.0,
-            326.0
+        "pos": [
+          288.0,
+          324.0
           ],
           "footprint_class": "group",
-          "hit_rect": [
-            468.0,
-            248.0,
+        "hit_rect": [
+          236.0,
+          246.0,
             104.0,
             78.0
           ],
-          "label_anchor": [
-            520.0,
-            240.0
+        "label_anchor": [
+          299.0,
+          254.0
           ],
           "facing": "left",
           "priority": 10,
@@ -16243,23 +16243,23 @@
             "lane.public"
           ]
         },
-        {
-          "id": "stage.patron_fog_officer",
+      {
+        "id": "stage.patron_fog_officer",
           "kind": "stage",
-          "pos": [
-            400.0,
-            326.0
+        "pos": [
+          260.0,
+          414.0
           ],
           "footprint_class": "standing_person",
-          "hit_rect": [
-            364.0,
-            246.0,
+        "hit_rect": [
+          224.0,
+          334.0,
             72.0,
             80.0
           ],
-          "label_anchor": [
-            400.0,
-            238.0
+        "label_anchor": [
+          260.0,
+          390.0
           ],
           "facing": "right",
           "priority": 15,
@@ -16269,23 +16269,23 @@
             "lane.public"
           ]
         },
-        {
-          "id": "stage.patron_floor",
+      {
+        "id": "stage.patron_floor",
           "kind": "stage",
-          "pos": [
-            572.0,
-            326.0
+        "pos": [
+          600.0,
+          414.0
           ],
           "footprint_class": "standing_person",
-          "hit_rect": [
-            536.0,
-            246.0,
+        "hit_rect": [
+          564.0,
+          334.0,
             72.0,
             80.0
           ],
-          "label_anchor": [
-            572.0,
-            238.0
+        "label_anchor": [
+          600.0,
+          390.0
           ],
           "facing": "left",
           "priority": 10,
@@ -16321,23 +16321,23 @@
             "lane.public"
           ]
         },
-        {
-          "id": "stage.event_floor_1",
+      {
+        "id": "stage.event_floor_1",
           "kind": "stage",
-          "pos": [
-            160.0,
-            326.0
+        "pos": [
+          496.0,
+          346.0
           ],
           "footprint_class": "floor_fixture",
-          "hit_rect": [
-            114.0,
-            262.0,
+        "hit_rect": [
+          450.0,
+          282.0,
             92.0,
             64.0
           ],
-          "label_anchor": [
-            160.0,
-            254.0
+        "label_anchor": [
+          592.0,
+          246.0
           ],
           "facing": "none",
           "priority": 10,
@@ -16345,23 +16345,23 @@
           "support_id": "floor",
           "walk_lane_ids": []
         },
-        {
-          "id": "stage.event_floor_2",
+      {
+        "id": "stage.event_floor_2",
           "kind": "stage",
-          "pos": [
-            280.0,
-            326.0
+        "pos": [
+          704.0,
+          414.0
           ],
           "footprint_class": "floor_fixture",
-          "hit_rect": [
-            234.0,
-            262.0,
+        "hit_rect": [
+          658.0,
+          350.0,
             92.0,
             64.0
           ],
-          "label_anchor": [
-            280.0,
-            254.0
+        "label_anchor": [
+          704.0,
+          400.0
           ],
           "facing": "none",
           "priority": 20,
@@ -16369,23 +16369,23 @@
           "support_id": "floor",
           "walk_lane_ids": []
         },
-        {
-          "id": "stage.event_floor_3",
+      {
+        "id": "stage.event_floor_3",
           "kind": "stage",
-          "pos": [
-            400.0,
-            326.0
+        "pos": [
+          808.0,
+          414.0
           ],
           "footprint_class": "floor_fixture",
-          "hit_rect": [
-            354.0,
-            262.0,
+        "hit_rect": [
+          762.0,
+          350.0,
             92.0,
             64.0
           ],
-          "label_anchor": [
-            400.0,
-            254.0
+        "label_anchor": [
+          808.0,
+          400.0
           ],
           "facing": "none",
           "priority": 30,
@@ -16393,23 +16393,23 @@
           "support_id": "floor",
           "walk_lane_ids": []
         },
-        {
-          "id": "stage.event_marker_1",
+      {
+        "id": "stage.event_marker_1",
           "kind": "stage",
-          "pos": [
-            680.0,
-            326.0
+        "pos": [
+          156.0,
+          414.0
           ],
           "footprint_class": "ground_marker",
-          "hit_rect": [
-            644.0,
-            278.0,
+        "hit_rect": [
+          120.0,
+          366.0,
             72.0,
             48.0
           ],
-          "label_anchor": [
-            680.0,
-            270.0
+        "label_anchor": [
+          156.0,
+          400.0
           ],
           "facing": "none",
           "priority": 10,
@@ -16417,23 +16417,23 @@
           "support_id": "floor",
           "walk_lane_ids": []
         },
-        {
-          "id": "stage.event_marker_2",
+      {
+        "id": "stage.event_marker_2",
           "kind": "stage",
-          "pos": [
-            800.0,
-            326.0
+        "pos": [
+          496.0,
+          414.0
           ],
           "footprint_class": "ground_marker",
-          "hit_rect": [
-            764.0,
-            278.0,
+        "hit_rect": [
+          460.0,
+          366.0,
             72.0,
             48.0
           ],
-          "label_anchor": [
-            800.0,
-            270.0
+        "label_anchor": [
+          496.0,
+          400.0
           ],
           "facing": "none",
           "priority": 20,
@@ -16441,23 +16441,23 @@
           "support_id": "floor",
           "walk_lane_ids": []
         },
-        {
-          "id": "stage.event_surface_1",
+      {
+        "id": "stage.event_surface_1",
           "kind": "stage",
-          "pos": [
-            618.0,
-            150.0
+        "pos": [
+          618.0,
+          150.0
           ],
           "footprint_class": "surface_item",
-          "hit_rect": [
-            582.0,
-            102.0,
+        "hit_rect": [
+          582.0,
+          102.0,
             72.0,
             48.0
           ],
-          "label_anchor": [
-            618.0,
-            164.0
+        "label_anchor": [
+          618.0,
+          164.0
           ],
           "facing": "none",
           "priority": 10,
@@ -16465,23 +16465,23 @@
           "support_id": "scoreboard_ledge",
           "walk_lane_ids": []
         },
-        {
-          "id": "stage.event_surface_2",
+      {
+        "id": "stage.event_surface_2",
           "kind": "stage",
-          "pos": [
-            744.0,
-            150.0
+        "pos": [
+          744.0,
+          150.0
           ],
           "footprint_class": "surface_item",
-          "hit_rect": [
-            708.0,
-            102.0,
+        "hit_rect": [
+          708.0,
+          102.0,
             72.0,
             48.0
           ],
-          "label_anchor": [
-            744.0,
-            190.0
+        "label_anchor": [
+          744.0,
+          190.0
           ],
           "facing": "none",
           "priority": 20,
@@ -16489,23 +16489,23 @@
           "support_id": "scoreboard_ledge",
           "walk_lane_ids": []
         },
-        {
-          "id": "stage.event_wall_1",
+      {
+        "id": "stage.event_wall_1",
           "kind": "stage",
-          "pos": [
-            252.0,
-            106.0
+        "pos": [
+          286.0,
+          24.0
           ],
           "footprint_class": "wall_mounted",
-          "hit_rect": [
-            212.0,
-            82.0,
+        "hit_rect": [
+          246.0,
+          0.0,
             80.0,
             48.0
           ],
-          "label_anchor": [
-            252.0,
-            76.0
+        "label_anchor": [
+          310.0,
+          0.0
           ],
           "facing": "none",
           "priority": 10,
@@ -16513,23 +16513,23 @@
           "support_id": "wall",
           "walk_lane_ids": []
         },
-        {
-          "id": "stage.event_wall_2",
+      {
+        "id": "stage.event_wall_2",
           "kind": "stage",
-          "pos": [
-            392.0,
-            106.0
+        "pos": [
+          426.0,
+          24.0
           ],
           "footprint_class": "wall_mounted",
-          "hit_rect": [
-            352.0,
-            82.0,
+        "hit_rect": [
+          386.0,
+          0.0,
             80.0,
             48.0
           ],
-          "label_anchor": [
-            392.0,
-            76.0
+        "label_anchor": [
+          426.0,
+          26.0
           ],
           "facing": "none",
           "priority": 20,
@@ -16537,23 +16537,23 @@
           "support_id": "wall",
           "walk_lane_ids": []
         },
-        {
-          "id": "stage.event_wall_3",
+      {
+        "id": "stage.event_wall_3",
           "kind": "stage",
-          "pos": [
-            532.0,
-            106.0
+        "pos": [
+          566.0,
+          24.0
           ],
           "footprint_class": "wall_mounted",
-          "hit_rect": [
-            492.0,
-            82.0,
+        "hit_rect": [
+          526.0,
+          0.0,
             80.0,
             48.0
           ],
-          "label_anchor": [
-            532.0,
-            76.0
+        "label_anchor": [
+          566.0,
+          26.0
           ],
           "facing": "none",
           "priority": 30,
@@ -16561,23 +16561,23 @@
           "support_id": "wall",
           "walk_lane_ids": []
         },
-        {
-          "id": "stage.event_wall_4",
+      {
+        "id": "stage.event_wall_4",
           "kind": "stage",
-          "pos": [
-            672.0,
-            106.0
+        "pos": [
+          706.0,
+          24.0
           ],
           "footprint_class": "wall_mounted",
-          "hit_rect": [
-            632.0,
-            82.0,
+        "hit_rect": [
+          666.0,
+          0.0,
             80.0,
             48.0
           ],
-          "label_anchor": [
-            672.0,
-            76.0
+        "label_anchor": [
+          706.0,
+          26.0
           ],
           "facing": "none",
           "priority": 40,
