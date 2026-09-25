@@ -3808,6 +3808,21 @@ function Play-OneBlackjackRound {
         if (Test-PublicTerminalSurface) { return }
         $eventVisible = [bool](Get-Value $script:LastObservation @('event_popup', 'visible') $false)
         $talkVisible = [bool](Get-Value $script:LastObservation @('talk', 'visible') $false)
+        if ($talkVisible -and -not $eventVisible -and @('clean', 'cheat') -ccontains $Ending) {
+            $talkEventId = [string](Get-Value $script:LastObservation @('talk', 'event_id') '')
+            if ($talkEventId -ceq 'blackjack_counter_probe') {
+                $choiceIds = @(Get-VisibleChoiceIds)
+                $expectedChoiceIds = @('play_dumb', 'trade_count', 'ignore')
+                if (($choiceIds -join ',') -cne ($expectedChoiceIds -join ',')) {
+                    throw "The visible blackjack counter probe exposed unexpected choices: $($choiceIds -join ', ')."
+                }
+                $null = Choose-VisibleChoice `
+                    -ChoiceId 'play_dumb' `
+                    -Intent 'count badly for Mina and cool the normal blackjack table without taking an edge'
+                Wait-Frames -Frames 10 -Intent 'let the visible counter-probe response settle'
+                continue
+            }
+        }
         if ($eventVisible -or $talkVisible) {
             throw "A modal interrupted blackjack; the route must resolve it explicitly. Choices: $((Get-VisibleChoiceIds) -join ', ')"
         }
