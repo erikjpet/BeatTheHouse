@@ -697,7 +697,7 @@ func crew_heist_table_choices() -> Array:
 			else:
 				_crew_heist_sync_whale_setup()
 				setup = JsonCoerceScript._copy_dict(crew_heist_state.get("setup", {}))
-			var setup_ready := _run.CrewHeistModelScript.setup_complete(crew_heist_state)
+			var setup_ready: bool = bool(_run.CrewHeistModelScript.setup_complete(crew_heist_state))
 			active_choices.append({"id": "begin_play", "label": "Begin the Play", "text": "All chairs are filled." if setup_ready else "The setup still has an empty chair.", "disabled": not setup_ready, "consequences": {"event_hooks": [{"type": "crew_heist", "action": "begin_play"}]}})
 			active_choices.append({"id": "abort", "label": "Fold the score", "text": "Pay for the preparation already burned. The run continues.", "consequences": {"event_hooks": [{"type": "crew_heist", "action": "abort"}]}})
 		elif phase == _run.CrewHeistModelScript.STATUS_PLAY:
