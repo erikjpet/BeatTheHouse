@@ -4940,11 +4940,16 @@ function Invoke-CrewFavorActionBoundary {
         $serviceCost = 8
     }
     else {
-        Navigate-ToArchetype -ArchetypeId 'corner_store' -Intent "return to the Corner Store for Crew favor $FavorNumber boundary $BoundaryNumber"
+        # A completed favor can leave the player at its delivery room, while the
+        # visited Corner Store is no longer on the capped route list. Return to
+        # the already-unlocked Grand main floor and use its ordinary room action.
+        Reach-GrandCasino
+        Enter-GrandRoom -Room main
         Restore-EnvironmentSurfaceAfterTravelResult
-        $serviceId = 'service:cashier_tip'
-        $serviceLabel = 'Cashier Tip'
-        $serviceCost = 4
+        $serviceId = 'service:house_drink'
+        $serviceLabel = 'Buy a Drink'
+        $serviceType = 'drink'
+        $serviceCost = 8
     }
 
     $service = Find-CanvasObject -SemanticId $serviceId
