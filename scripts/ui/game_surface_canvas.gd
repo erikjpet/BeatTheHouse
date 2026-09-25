@@ -125,6 +125,8 @@ func bind_surface_audio_authority(authority: RefCounted) -> void:
 func set_game_module(game_module: GameModule) -> void:
 	if surface_game_module == game_module:
 		return
+	if surface_game_module != null and surface_game_module.has_method("release_surface_host"):
+		surface_game_module.call("release_surface_host", self)
 	surface_game_module = game_module
 	surface_render_state_dirty = true
 	queue_redraw()
@@ -159,7 +161,7 @@ func handle_application_lifecycle(active: bool) -> void:
 func clear_runtime_state() -> void:
 	_cancel_captured_surface_pointer()
 	stop_surface_audio()
-	surface_game_module = null
+	set_game_module(null)
 	game_id = ""
 	state = {}
 	view_data = {}

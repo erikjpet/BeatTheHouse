@@ -34,6 +34,7 @@ const VaultDropScript := preload("res://scripts/games/coin_pusher/vault_drop.gd"
 const CoinPusherSolverScript := preload("res://scripts/games/coin_pusher/coin_pusher_solver_api.gd")
 const CoinPusherLiveSessionScript := preload("res://scripts/games/coin_pusher/coin_pusher_live_session.gd")
 const V3_HEADLESS_MESSAGE := "Aim for bonus-token cups, use the stop to build pressure, and push the machine's heavy feature pieces into the win tray."
+const WEB_SURFACE_ANIMATION_FPS := 30.0
 
 var _live_machines: Dictionary = {}
 var _live_machine_generations: Dictionary = {}
@@ -639,6 +640,11 @@ func surface_motion_signature(_surface, surface_state: Dictionary) -> Dictionary
 
 func draw_surface(surface, state: Dictionary, _render_context: Dictionary = {}) -> bool:
 	return _coin_pusher_renderer().draw(surface, state)
+
+
+func release_surface_host(surface) -> void:
+	if _renderer != null:
+		_renderer.release_surface_host(surface)
 
 
 func renderer_signature(state: Dictionary) -> Dictionary:
@@ -1382,6 +1388,7 @@ func _v3_headless_surface_state(machine: Dictionary, run_state: RunState = null,
 		"surface_fixed_price_actions": true,
 		"surface_stake_controls_required": false,
 		"surface_animates_idle": true,
+		"surface_web_idle_animation_fps": WEB_SURFACE_ANIMATION_FPS,
 		"surface_realtime_state_refresh": true,
 		"surface_pointer_coalesce_moves": true,
 		"surface_embeds_outcomes": true,

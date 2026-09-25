@@ -223,6 +223,35 @@ func _clear_prepared_batch() -> void:
 	_prepared_batch_uploaded = false
 
 
+func release_surface_host(surface) -> void:
+	# Web caches are children of the shared game surface, while this renderer is
+	# retained by the game module. Tear them down when the host switches modules
+	# so neither the cabinet controls nor their backing viewports can leak into a
+	# room or another game.
+	if _hardware_cache_host == surface:
+		if is_instance_valid(_hardware_cache_canvas):
+			_hardware_cache_canvas.visible = false
+			_hardware_cache_canvas.queue_free()
+		_hardware_cache_canvas = null
+		_hardware_cache_host = null
+		_hardware_cache_key = ""
+		_hardware_cache_prepared_for_next_draw = false
+	if _static_cache_host == surface:
+		for viewport in _static_cache_viewports:
+			if is_instance_valid(viewport):
+				viewport.queue_free()
+		_static_cache_viewports.clear()
+		_static_cache_canvases.clear()
+		_static_cache_host = null
+		_static_cache_key = ""
+		_static_cache_state_key = ""
+		_static_cache_backglass_key = ""
+		_static_cache_pending = true
+		_static_cache_pending_layers = [true, true, true, true]
+		_static_cache_fallback_reason = "host_released"
+	_clear_prepared_batch()
+
+
 func _upload_prepared_batch() -> void:
 	if _prepared_batch.is_empty() or typeof(_prepared_batch.get("buffer", null)) != TYPE_PACKED_FLOAT32_ARRAY:
 		_prepared_batch_uploaded = false
