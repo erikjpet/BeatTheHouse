@@ -16139,6 +16139,32 @@
           ]
         },
         {
+          "id": "stage.patron_fog_officer",
+          "kind": "stage",
+          "pos": [
+            388.0,
+            326.0
+          ],
+          "footprint_class": "standing_person",
+          "hit_rect": [
+            352.0,
+            246.0,
+            72.0,
+            80.0
+          ],
+          "label_anchor": [
+            388.0,
+            238.0
+          ],
+          "facing": "right",
+          "priority": 15,
+          "zone_id": "room",
+          "support_id": "floor",
+          "walk_lane_ids": [
+            "lane.public"
+          ]
+        },
+        {
           "id": "stage.patron_floor",
           "kind": "stage",
           "pos": [
@@ -16664,7 +16690,7 @@
         "delta_queen_engine_trouble_work_3_choice_0|delta_decision_left|left|": "stage.event_wall_3",
         "delta_queen_engine_trouble_work_3_choice_1|delta_decision_middle|right|": "stage.event_wall_4",
         "delta_queen_engine_trouble_work_3_choice_2|delta_decision_right|foreground|": "stage.event_wall_5",
-        "delta_queen_fog_delay_deck_officer|delta_fog_officer|background|": "stage.patron_floor",
+        "delta_queen_fog_delay_deck_officer|delta_fog_officer|background|": "stage.patron_fog_officer",
         "delta_queen_fog_delay_drift_board|delta_scenario_spare|background|": "stage.event_wall_1",
         "delta_queen_fog_delay_fog_signal|delta_secondary_top|foreground|": "stage.event_wall_2",
         "delta_queen_fog_delay_gangway_shutter|delta_noninteractive_right|exit_lane|": "stage.event_wall_3",
