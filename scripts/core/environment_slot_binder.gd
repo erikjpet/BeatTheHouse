@@ -46,7 +46,9 @@ const ABSTRACT_SCENARIO_ID_TOKENS := [
 # Base inventory uses the same physical-only presentation rule as scenario
 # inventory. These are closed renderer contracts, not guesses from labels,
 # roles, ids, placement classes, or general icon names.
-const BASE_ALWAYS_PHYSICAL_TYPES := ["game", "item", "shopkeeper", "numbers_silas"]
+# Casino fixtures bind interaction targets to room-native desks, counters, and
+# machines that the environment canvas already renders as permanent scenery.
+const BASE_ALWAYS_PHYSICAL_TYPES := ["casino_fixture", "game", "item", "shopkeeper", "numbers_silas"]
 const BASE_PERSON_VISUAL_TYPES := ["actor", "character", "npc"]
 const BASE_EVENT_ART_PROPS := [
 	"casino_host", "clerk_counter", "clerk_talk", "counter_phone",

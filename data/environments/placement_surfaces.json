@@ -21331,7 +21331,7 @@
           "id": "gift_case_upper",
           "x0": 54,
           "x1": 244,
-          "top_y": 170,
+          "top_y": 178,
           "front_y": 214,
           "classes": [
             "surface_item"
@@ -21341,7 +21341,7 @@
           "id": "gift_case_lower",
           "x0": 54,
           "x1": 244,
-          "top_y": 214,
+          "top_y": 238,
           "front_y": 274,
           "classes": [
             "surface_item"
@@ -21450,19 +21450,19 @@
           "id": "base.shop_item_1",
           "kind": "base",
           "pos": [
-            110.0,
-            170.0
+            99.0,
+            178.0
           ],
           "footprint_class": "surface_item",
           "hit_rect": [
-            74.0,
-            122.0,
+            63.0,
+            130.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            110.0,
-            116.0
+            99.0,
+            124.0
           ],
           "facing": "none",
           "priority": 10,
@@ -21474,72 +21474,72 @@
           "id": "base.shop_item_2",
           "kind": "base",
           "pos": [
-            190.0,
-            214.0
+            199.0,
+            178.0
           ],
           "footprint_class": "surface_item",
           "hit_rect": [
-            154.0,
-            166.0,
+            163.0,
+            130.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            190.0,
-            160.0
+            199.0,
+            124.0
           ],
           "facing": "none",
           "priority": 20,
           "zone_id": "room",
-          "support_id": "gift_case_lower",
+          "support_id": "gift_case_upper",
           "walk_lane_ids": []
         },
         {
           "id": "base.shop_item_3",
           "kind": "base",
           "pos": [
-            340.0,
-            260.0
+            99.0,
+            238.0
           ],
           "footprint_class": "surface_item",
           "hit_rect": [
-            304.0,
-            212.0,
+            63.0,
+            190.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            340.0,
-            206.0
+            99.0,
+            184.0
           ],
           "facing": "none",
           "priority": 30,
           "zone_id": "room",
-          "support_id": "teller_counter",
+          "support_id": "gift_case_lower",
           "walk_lane_ids": []
         },
         {
           "id": "base.shop_item_4",
           "kind": "base",
           "pos": [
-            564.0,
-            260.0
+            199.0,
+            238.0
           ],
           "footprint_class": "surface_item",
           "hit_rect": [
-            528.0,
-            212.0,
+            163.0,
+            190.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            564.0,
-            206.0
+            199.0,
+            184.0
           ],
           "facing": "none",
           "priority": 40,
           "zone_id": "room",
-          "support_id": "teller_counter",
+          "support_id": "gift_case_lower",
           "walk_lane_ids": []
         },
         {
@@ -21796,7 +21796,10 @@
         }
       ],
       "actor_routes": [],
-      "object_slot_ids": {},
+      "object_slot_ids": {
+        "casino_fixture:cage_atm": "base.fixture_cage_2",
+        "casino_fixture:cage_counter": "base.fixture_cage_1"
+      },
       "category_slot_ids": {
         "casino_door_spots:0": "base.casino_floor_door",
         "casino_fixture_spots:0": "base.fixture_cage_1",
@@ -21809,7 +21812,10 @@
       },
       "scenario_slot_ids": {},
       "scenario_position_route_ids": {},
-      "class_overrides": {},
+      "class_overrides": {
+        "casino_fixture:cage_atm": "wall_mounted",
+        "casino_fixture:cage_counter": "surface_item"
+      },
       "scenario_overflow_ids": [],
       "scenario_art_keys": {}
     },

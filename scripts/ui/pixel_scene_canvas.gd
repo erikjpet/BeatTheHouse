@@ -2125,7 +2125,7 @@ func _draw_grand_casino_cage() -> void:
 	# Gift case at left.
 	draw_rect(Rect2(54, 124, 190, 150), Color("#090b16"))
 	draw_rect(Rect2(62, 132, 174, 112), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.13))
-	for shelf_y in [170, 214]:
+	for shelf_y in [178, 238]:
 		draw_line(Vector2(66, shelf_y), Vector2(232, shelf_y), C_SOFT.darkened(0.35), 3)
 	var shop_state: Dictionary = foundation_snapshot.get("cage_gift_shop_state", {}) if typeof(foundation_snapshot.get("cage_gift_shop_state", {})) == TYPE_DICTIONARY else {}
 	var available_stock: Array = []
