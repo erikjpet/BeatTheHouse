@@ -6171,6 +6171,12 @@ function Recruit-Bishop {
         Invoke-EventObjectChoice -EventId 'recruitment_bishop' -ChoiceId 'wait_for_bishop' -Intent "wait through Bishop's visible first appointment beat"
     }
     Wait-Frames -Frames 10
+    if ([bool]$script:BishopSurfaceUsesOverflow -and 'work_with_bishop' -cnotin @(Get-VisibleChoiceIds)) {
+        $null = Invoke-OverflowRoomActionButton `
+            -ButtonText 'Bishop: Talk' `
+            -Intent 'reopen the exact visible overflow Bishop appointment after waiting'
+        Wait-ForFullyRenderedTalkSurface -Intent 'Bishop appointment after waiting'
+    }
     if ('work_with_bishop' -cin @(Get-VisibleChoiceIds)) {
         $null = Choose-VisibleChoice -ChoiceId 'work_with_bishop' -Intent 'keep the visible appointment and recruit Bishop'
     }
