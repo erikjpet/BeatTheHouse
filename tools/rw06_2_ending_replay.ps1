@@ -4404,6 +4404,50 @@ function Observe-RenderedAuditNightHook {
         -EventId 'scenario_audit_roster' `
         -ChoiceId 'read_the_shift' `
         -Intent 'read the visible Audit roster and learn The Count route'
+
+    $eventVisible = Get-Value $script:LastObservation @('event_popup', 'visible') $null
+    $talkVisible = Get-Value $script:LastObservation @('talk', 'visible') $null
+    if ($eventVisible -isnot [bool] -or $talkVisible -isnot [bool] -or
+        ([bool]$eventVisible -and [bool]$talkVisible)) {
+        throw 'The post-Audit route lost its exact public modal state.'
+    }
+    if ([bool]$eventVisible) {
+        $eventId = Get-Value $script:LastObservation @('event_popup', 'event_id') $null
+        if ($eventId -is [string] -and [string]$eventId -ceq 'crew_favor_delivery') {
+            return
+        }
+        throw "Audit Night chained into unexpected event popup '$eventId'."
+    }
+    if ([bool]$talkVisible) {
+        $talkId = Get-Value $script:LastObservation @('talk', 'event_id') $null
+        if ($talkId -is [string] -and [string]$talkId -ceq 'crew_favor_delivery') {
+            return
+        }
+        if ($talkId -isnot [string] -or [string]$talkId -cne 'the_collector') {
+            throw "Audit Night chained into unexpected TalkDock '$talkId'."
+        }
+        $choiceIds = @(Get-VisibleChoiceIds)
+        if ($choiceIds.Count -cne 3 -or
+            $choiceIds[0] -isnot [string] -or [string]$choiceIds[0] -cne 'pay_now' -or
+            $choiceIds[1] -isnot [string] -or [string]$choiceIds[1] -cne 'promise' -or
+            $choiceIds[2] -isnot [string] -or [string]$choiceIds[2] -cne 'stand_ground') {
+            throw "The post-Audit Collector exposed unexpected choices: $($choiceIds -join ', ')."
+        }
+        $null = Choose-VisibleChoice `
+            -ChoiceId 'promise' `
+            -Intent 'stall the visible Collector without spending the fixed heist route bankroll'
+        Wait-Frames -Frames 10 -Intent 'let the visible Collector response settle'
+    }
+
+    if (Test-CrewFavorPublicSurface) {
+        return
+    }
+    $eventVisible = Get-Value $script:LastObservation @('event_popup', 'visible') $null
+    $talkVisible = Get-Value $script:LastObservation @('talk', 'visible') $null
+    if ($eventVisible -isnot [bool] -or $talkVisible -isnot [bool] -or
+        [bool]$eventVisible -or [bool]$talkVisible) {
+        throw 'The post-Audit Collector response did not settle to the Crew favor or a modal-free room.'
+    }
     Restore-EnvironmentSurfaceAfterTravelResult
 }
 
