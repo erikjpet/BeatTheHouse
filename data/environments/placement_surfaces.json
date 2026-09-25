@@ -7112,6 +7112,7 @@
       "art_key": "comedy_club",
       "repack_scenario_conflicts": true,
       "class_overrides": {
+        "environment_layer:casino": "doorway",
         "event:town_rumor_staff": "standing_person",
         "punchline_bringer_show_task_0": "wall_mounted",
         "punchline_debt_court_task_0": "wall_mounted",
@@ -8444,6 +8445,7 @@
       ],
       "actor_routes": [],
       "object_slot_ids": {
+        "environment_layer:casino": "base.door_right_upper",
         "event:chain06_cass_first_contact": "base.staff_floor_left",
         "event:scenario_headliner_cover": "base.door_right_upper",
         "event:side_door": "base.door_right_lower",
@@ -8475,6 +8477,7 @@
       "art_key": "comedy_club",
       "repack_scenario_conflicts": true,
       "class_overrides": {
+        "environment_layer:casino": "doorway",
         "event:town_rumor_staff": "standing_person",
         "punchline_bringer_show_task_0": "wall_mounted",
         "punchline_debt_court_task_0": "wall_mounted",
@@ -9982,6 +9985,7 @@
       ],
       "actor_routes": [],
       "object_slot_ids": {
+        "environment_layer:casino": "base.door_side",
         "event:chain06_cass_first_contact": "base.staff_floor_right",
         "event:scenario_headliner_cover": "base.door_side",
         "event:side_door": "base.door_right_lower",
@@ -10082,6 +10086,8 @@
       "art_key": "underground",
       "repack_scenario_conflicts": true,
       "class_overrides": {
+        "environment_layer:back_room": "doorway",
+        "environment_layer:club": "doorway",
         "event:rowdy_regular": "seated_person",
         "event:scenario_greased_week_window": "wall_mounted",
         "numbers:book": "surface_item",
@@ -11073,8 +11079,8 @@
       ],
       "actor_routes": [],
       "object_slot_ids": {
-        "environment_layer:back_room": "base.game_1",
-        "environment_layer:club": "base.game_1",
+        "environment_layer:back_room": "base.door_guarded_lower",
+        "environment_layer:club": "base.door_left_lower",
         "event:scenario_greased_week_window": "base.event_greased_notice",
         "event:town_rumor_staff": "base.staff_dealer",
         "game:slot": "base.game_1",
@@ -11128,6 +11134,9 @@
       "archetype_id": "small_underground_casino",
       "layer_id": "back_room",
       "art_key": "crew_back_room",
+      "class_overrides": {
+        "environment_layer:casino": "doorway"
+      },
       "floor": {
         "bands": [
           [
@@ -11634,6 +11643,7 @@
       ],
       "actor_routes": [],
       "object_slot_ids": {
+        "environment_layer:casino": "base.layer_door",
         "event:crew_job_board": "base.event_job_board",
         "event:crew_mags_bench": "base.event_mags_bench",
         "event:crew_planning_table": "base.event_planning_table",
