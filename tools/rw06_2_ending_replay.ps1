@@ -12,6 +12,7 @@ param(
     [ValidateRange(30, 300)]
     [int]$TimeoutSeconds = 120,
     [string]$EvidenceRoot = '',
+    [switch]$ConfirmationOnly,
     [switch]$BridgeTransportContract,
     [switch]$BridgeStatusContract,
     [switch]$SemanticScrollContract
@@ -44,27 +45,41 @@ if (-not (Test-Path -LiteralPath $SessionTool)) {
 if (-not (Test-Path -LiteralPath $ReplayPolicyTool)) {
     throw "Replay policy helper is missing: $ReplayPolicyTool"
 }
-if (-not (Test-Path -LiteralPath $EvidenceAdmissionTool)) {
+if (-not $ConfirmationOnly -and -not (Test-Path -LiteralPath $EvidenceAdmissionTool)) {
     throw "Replay evidence admission helper is missing: $EvidenceAdmissionTool"
 }
-if (-not (Test-Path -LiteralPath $HeistSeedPreflightTool)) {
+if (-not $ConfirmationOnly -and -not (Test-Path -LiteralPath $HeistSeedPreflightTool)) {
     throw "Heist seed preflight is missing: $HeistSeedPreflightTool"
 }
 . $ReplayPolicyTool
-. $EvidenceAdmissionTool
 if (-not (Test-Path -LiteralPath $GodotBin)) {
     throw "Pinned Godot binary is missing: $GodotBin"
 }
-$script:ReplayAdmission = Resolve-Rw062ReplayAdmission `
-    -Ending $Ending `
-    -EvidenceRole $EvidenceRole `
-    -Seed $Seed `
-    -Repeat $Repeat
-$EvidenceRole = [string]$script:ReplayAdmission.evidence_role
-$Seed = [string]$script:ReplayAdmission.seed
-if ([string]::IsNullOrWhiteSpace($EvidenceRoot)) {
-    $evidenceScope = if ($EvidenceRole -ceq 'fresh-interactive') { 'fresh_interactive' } else { $Ending }
-    $EvidenceRoot = Join-Path $Worktree ".tmp\rw06_2\$evidenceScope"
+if ($ConfirmationOnly) {
+    $confirmationSeeds = @{
+        clean = 'RW06-CLEAN-ROUTE-01'
+        cheat = 'RW06-CHEAT-ROUTE-01'
+        heist = 'RW06-HEIST-AUDIT-0002'
+    }
+    if ([string]::IsNullOrWhiteSpace($Seed)) {
+        $Seed = [string]$confirmationSeeds[$Ending]
+    }
+    $Repeat = 1
+    $script:ReplayAdmission = $null
+}
+else {
+    . $EvidenceAdmissionTool
+    $script:ReplayAdmission = Resolve-Rw062ReplayAdmission `
+        -Ending $Ending `
+        -EvidenceRole $EvidenceRole `
+        -Seed $Seed `
+        -Repeat $Repeat
+    $EvidenceRole = [string]$script:ReplayAdmission.evidence_role
+    $Seed = [string]$script:ReplayAdmission.seed
+    if ([string]::IsNullOrWhiteSpace($EvidenceRoot)) {
+        $evidenceScope = if ($EvidenceRole -ceq 'fresh-interactive') { 'fresh_interactive' } else { $Ending }
+        $EvidenceRoot = Join-Path $Worktree ".tmp\rw06_2\$evidenceScope"
+    }
 }
 
 $env:GODOT_BIN = $GodotBin
@@ -1113,6 +1128,9 @@ function Write-ActionEvidence {
     )
     $script:TraceOrdinal++
     $script:ActionCount++
+    if ($ConfirmationOnly) {
+        return
+    }
     $record = New-CanonicalRecord -Result $Result -Intent $Intent
     Add-Content -LiteralPath $script:TranscriptPath -Value ($record | ConvertTo-Json -Depth 40 -Compress) -Encoding utf8
 
@@ -1413,7 +1431,7 @@ function Select-UniquePublicVerticalScrollSurface {
         [Parameter(Mandatory = $true)][string]$SurfaceId,
         [Parameter(Mandatory = $true)][ValidateSet('up', 'down')][string]$Direction
     )
-    if ($SurfaceId -cne 'run_menu') {
+    if ($SurfaceId -cnotin @('run_menu', 'room_actions')) {
         throw "Unsupported public scroll surface '$SurfaceId'."
     }
     $matches = @($Surfaces | Where-Object {
@@ -1917,17 +1935,26 @@ function Choose-VisibleChoice {
     $result = Invoke-BridgeCommand -Command "click_choice $ChoiceId" -Intent $Intent
 
     # TalkDock visibly arms consequential choices on the first press by changing
-    # the rendered label to "Confirm: ...". Follow that production two-press
-    # interaction only when the same choice remains visible and exactly one
-    # confirmation control is now on screen.
+    # the rendered label to "Confirm: ...". Some immediate service actions keep
+    # the same dialogue node open after they resolve, so the choice remaining
+    # visible is not by itself evidence that a second press is required.
     if ($surface -ceq 'talk' -and @(Get-VisibleChoiceIds) -ccontains $ChoiceId) {
-        $null = Assert-VisibleTalkChoiceConfirmation `
-            -Observation $script:LastObservation `
-            -RenderedTalkChoices @(Get-PublicTalkChoices) `
-            -ChoiceId $ChoiceId `
-            -ExpectedEventId $eventId `
-            -OriginalLabel $label
-        $result = Invoke-BridgeCommand -Command "click_choice $ChoiceId" -Intent "$Intent (confirm the visibly armed choice)"
+        $remainingMatches = @(Get-PublicTalkChoices | Where-Object {
+            [string](Get-Value $_ @('id') '') -ceq $ChoiceId
+        })
+        if ($remainingMatches.Count -cne 1) {
+            throw "Choice '$ChoiceId' did not retain one exact rendered TalkDock binding after selection."
+        }
+        $remainingLabel = [string](Get-Value $remainingMatches[0] @('label') '')
+        if ($remainingLabel -ceq "Confirm: $label") {
+            $null = Assert-VisibleTalkChoiceConfirmation `
+                -Observation $script:LastObservation `
+                -RenderedTalkChoices @(Get-PublicTalkChoices) `
+                -ChoiceId $ChoiceId `
+                -ExpectedEventId $eventId `
+                -OriginalLabel $label
+            $result = Invoke-BridgeCommand -Command "click_choice $ChoiceId" -Intent "$Intent (confirm the visibly armed choice)"
+        }
     }
     return $result
 }
@@ -2147,14 +2174,104 @@ function Reveal-WorldMapLeaveByPublicRefocus {
 }
 
 
+function Open-OverflowWorldMapIfVisible {
+    $launcher = Find-Button -Text 'More room actions' -Contains
+    if ($null -ceq $launcher) {
+        return $false
+    }
+    $launcherId = [string](Get-Value $launcher @('id') '')
+    if ([string]::IsNullOrWhiteSpace($launcherId)) {
+        throw 'The visible More room actions launcher has no public button id.'
+    }
+    $null = Invoke-BridgeCommand -Command "click_button $launcherId" -Intent 'open the visible list of room actions'
+    Wait-Frames -Frames 2
+    $mapButton = $null
+    for ($attempt = 0; $attempt -le 16; $attempt++) {
+        $mapButtons = @(Get-Buttons | Where-Object {
+            $text = [string](Get-Value $_ @('text') '')
+            $text -ceq 'Open Map' -or $text.EndsWith(': Open Map', [StringComparison]::Ordinal)
+        })
+        if ($mapButtons.Count -gt 1) {
+            throw "The room action list exposes more than one visible Open Map action."
+        }
+        if ($mapButtons.Count -ceq 1 -and
+            (Get-Value $mapButtons[0] @('fully_visible') $null) -is [bool] -and
+            [bool](Get-Value $mapButtons[0] @('fully_visible') $false)) {
+            Wait-Frames -Frames 12 -Intent 'let the visible room-action scroll settle before selecting Open Map'
+            $settledMapButtons = @(Get-Buttons | Where-Object {
+                $text = [string](Get-Value $_ @('text') '')
+                $text -ceq 'Open Map' -or $text.EndsWith(': Open Map', [StringComparison]::Ordinal)
+            })
+            if ($settledMapButtons.Count -ceq 1 -and
+                (Get-Value $settledMapButtons[0] @('fully_visible') $null) -is [bool] -and
+                [bool](Get-Value $settledMapButtons[0] @('fully_visible') $false)) {
+                $mapButton = $settledMapButtons[0]
+                break
+            }
+        }
+        if ($attempt -ceq 16) { break }
+        $surfaces = @(Get-PublicScrollSurfaces)
+        $roomSurface = @($surfaces | Where-Object {
+            [string](Get-Value $_ @('id') '') -ceq 'room_actions'
+        })
+        if ($roomSurface.Count -cne 1) {
+            throw "Expected exactly one visible room-actions scroll surface; found $($roomSurface.Count)."
+        }
+        $canDown = Get-Value $roomSurface[0] @('can_scroll_down') $null
+        $canUp = Get-Value $roomSurface[0] @('can_scroll_up') $null
+        if ($canDown -isnot [bool] -or $canUp -isnot [bool]) {
+            throw 'The visible room-actions scroll surface lost its directional signals.'
+        }
+        $direction = if ([bool]$canDown) { 'down' } elseif ($mapButtons.Count -ceq 1 -and [bool]$canUp) { 'up' } else { '' }
+        if ([string]::IsNullOrWhiteSpace($direction)) {
+            break
+        }
+        $surface = Select-UniquePublicVerticalScrollSurface `
+            -Surfaces $surfaces `
+            -SurfaceId 'room_actions' `
+            -Direction $direction
+        $null = Invoke-BridgeCommand `
+            -Command "scroll_surface room_actions $direction" `
+            -Intent "scroll the visible room action list $direction toward Open Map"
+        Wait-Frames -Frames 12 -Intent 'let the visible room-action scroll settle'
+    }
+    if ($null -ceq $mapButton) {
+        throw 'The visible room action list did not expose a stable, fully visible Open Map control within sixteen scroll inputs.'
+    }
+    $fullyVisible = Get-Value $mapButton @('fully_visible') $null
+    $enabled = Get-Value $mapButton @('enabled') $null
+    if ($fullyVisible -isnot [bool] -or -not [bool]$fullyVisible -or
+        $enabled -isnot [bool] -or -not [bool]$enabled) {
+        throw 'The room action list Open Map control is not fully visible and enabled.'
+    }
+    $mapButtonId = [string](Get-Value $mapButton @('id') '')
+    if ([string]::IsNullOrWhiteSpace($mapButtonId)) {
+        throw 'The room action list Open Map control has no public button id.'
+    }
+    $null = Invoke-BridgeCommand -Command "click_button $mapButtonId" -Intent 'open the city map from the visible room action list'
+    Wait-Frames -Frames 8
+    return $true
+}
+
+
 function Open-WorldMap {
     if ([bool](Get-Value $script:LastObservation @('screen', 'world_map_overlay_visible') $false)) {
         return
     }
     Clear-VisibleCoach
-    Reveal-WorldMapLeaveByPublicRefocus
-    $null = Open-SemanticObject -SemanticId 'travel:leave' -PreferredActions @('Open Map') -Intent 'open the visible city map'
-    Wait-Frames -Frames 8
+    $leaveObjects = @(Get-Array (Get-Value $script:LastResult @('look', 'clickable', 'canvas_objects') @()) | Where-Object {
+        [string](Get-Value $_ @('semantic_id') '') -ceq 'travel:leave'
+    })
+    if ($leaveObjects.Count -ceq 0) {
+        if (-not (Open-OverflowWorldMapIfVisible)) {
+            throw 'The room exposes neither a canvas Leave object nor a visible room-list Open Map action.'
+        }
+    }
+    else {
+        Reveal-WorldMapLeaveByPublicRefocus
+        $null = Open-SemanticObject -SemanticId 'travel:leave' -PreferredActions @('Open Map') -Intent 'open the visible city map'
+        Wait-Frames -Frames 8
+    }
     if (-not [bool](Get-Value $script:LastObservation @('screen', 'world_map_overlay_visible') $false)) {
         throw "The world map did not become visible."
     }
@@ -3795,7 +3912,7 @@ function Assert-TerminalOutcome {
     if (-not $won -or $outcome -cnotin $ExpectedOutcomes[$Ending]) {
         throw "Ending '$Ending' produced unexpected public outcome '$outcome' (won=$won)."
     }
-    if (-not $script:MidpointSaved) {
+    if (-not $ConfirmationOnly -and -not $script:MidpointSaved) {
         throw "Ending '$Ending' reached terminal state without the required Save -> relaunch -> Continue checkpoint."
     }
     if ($script:ActionCount -gt 350) {
@@ -3915,7 +4032,7 @@ function Invoke-CleanEndingRoute {
                 $null = Assert-TerminalOutcome
                 return
             }
-            if ($tier -ceq 'silver' -and -not $script:MidpointSaved) {
+            if (-not $ConfirmationOnly -and $tier -ceq 'silver' -and -not $script:MidpointSaved) {
                 Assert-SaveRelaunchContinue -Milestone 'Silver Players Card'
             }
         }
@@ -4003,7 +4120,9 @@ function Invoke-CheatEndingRoute {
             }
         }
     }
-    Assert-SaveRelaunchContinue -Milestone 'Rourke duel before hand one'
+    if (-not $ConfirmationOnly) {
+        Assert-SaveRelaunchContinue -Milestone 'Rourke duel before hand one'
+    }
 
     for ($hand = 0; $hand -lt 8; $hand++) {
         if (Test-PublicTerminalSurface) { break }
@@ -4586,7 +4705,9 @@ function Invoke-HeistEndingRoute {
     Recruit-Bishop
     Promote-BishopToInnerCircle
     Assert-HeistAuditKnowledgeUnderHostileRevisit
-    Assert-HeistAuditKnowledgeSaveRelaunchContinue
+    if (-not $ConfirmationOnly) {
+        Assert-HeistAuditKnowledgeSaveRelaunchContinue
+    }
 
     if (-not (Test-CountPlanLive)) {
         throw 'The Count is not visibly live after Bishop reaches Inner Circle and naturally learned Audit knowledge survives the hostile restored route.'
@@ -5238,6 +5359,173 @@ function Invoke-SemanticScrollRegression {
         throw "RW06_2_SEMANTIC_SCROLL_CONTRACT FAIL ($($failures.Count) failure(s)); report: $reportPath"
     }
     return [pscustomobject]$summary
+}
+
+
+function Enter-ConfirmationLease {
+    $leaseRoot = 'D:\Projects\Beat-The-House-worktrees\.godot_leases'
+    [void](New-Item -ItemType Directory -Path $leaseRoot -Force)
+    $leasePath = Join-Path $leaseRoot "reset-b-$PID.lease"
+    $deadline = (Get-Date).AddMinutes(10)
+    while ((Get-Date) -lt $deadline) {
+        $exclusivePresent = Test-Path -LiteralPath (Join-Path $leaseRoot 'EXCLUSIVE.lease')
+        $focusedLeases = @(Get-ChildItem -LiteralPath $leaseRoot -Filter '*.lease' -File -Force -ErrorAction Stop | Where-Object {
+            $_.Name -cne 'EXCLUSIVE.lease'
+        })
+        if (-not $exclusivePresent -and $focusedLeases.Count -lt 4) {
+            try {
+                $stream = [IO.File]::Open($leasePath, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::None)
+                try {
+                    $bytes = [Text.Encoding]::UTF8.GetBytes([string]$PID)
+                    $stream.Write($bytes, 0, $bytes.Length)
+                    $stream.Flush($true)
+                }
+                finally {
+                    $stream.Dispose()
+                }
+                return $leasePath
+            }
+            catch [IO.IOException] {
+                if (Test-Path -LiteralPath $leasePath -PathType Leaf) {
+                    throw "Lane B already owns or retained its confirmation lease: $leasePath"
+                }
+            }
+        }
+        Start-Sleep -Milliseconds 500
+    }
+    throw 'Timed out waiting for an ordinary Q-009 Godot confirmation slot.'
+}
+
+
+function Wait-ForConfirmationGodotCapacity {
+    $deadline = (Get-Date).AddMinutes(10)
+    while ((Get-Date) -lt $deadline) {
+        $godotProcesses = @(Get-CimInstance Win32_Process -ErrorAction Stop | Where-Object {
+            $_.Name -like 'Godot*'
+        })
+        if ($godotProcesses.Count -le 2) {
+            return
+        }
+        Start-Sleep -Milliseconds 500
+    }
+    throw 'Timed out waiting for two free Godot process slots for the Lane B confirmation.'
+}
+
+
+function Initialize-ConfirmationClassRegistry {
+    $classCache = Join-Path $Worktree '.godot\global_script_class_cache.cfg'
+    if (Test-Path -LiteralPath $classCache -PathType Leaf) {
+        return
+    }
+    Wait-ForConfirmationGodotCapacity
+    $stdoutPath = Join-Path $script:RunRoot 'bootstrap.stdout.log'
+    $stderrPath = Join-Path $script:RunRoot 'bootstrap.stderr.log'
+    $engineLogPath = Join-Path $script:RunRoot 'bootstrap.engine.log'
+    $arguments = @(
+        '--headless', '--editor', '--path', $Worktree, '--import', '--quit',
+        '--log-file', $engineLogPath
+    )
+    $process = Start-Process -FilePath $GodotBin -ArgumentList $arguments `
+        -RedirectStandardOutput $stdoutPath -RedirectStandardError $stderrPath `
+        -WindowStyle Hidden -PassThru
+    $deadline = (Get-Date).AddMinutes(5)
+    while (-not $process.HasExited -and (Get-Date) -lt $deadline) {
+        Start-Sleep -Milliseconds 100
+        $process.Refresh()
+    }
+    if (-not $process.HasExited) {
+        throw "Lane B's owned class-registry bootstrap exceeded five minutes (PID $($process.Id))."
+    }
+    $process.WaitForExit()
+    $process.Refresh()
+    if (($null -ne $process.ExitCode -and $process.ExitCode -ne 0) -or
+        -not (Test-Path -LiteralPath $classCache -PathType Leaf)) {
+        $stderr = if (Test-Path -LiteralPath $stderrPath -PathType Leaf) { Get-Content -Raw -LiteralPath $stderrPath } else { '' }
+        throw "Lane B's isolated class-registry bootstrap failed (exit $($process.ExitCode)). $stderr"
+    }
+}
+
+
+function Invoke-ConfirmationPlaythrough {
+    $leasePath = Enter-ConfirmationLease
+    $priorAppData = $env:APPDATA
+    $priorLocalAppData = $env:LOCALAPPDATA
+    $stamp = Get-Date -Format 'yyyyMMdd-HHmmss-fff'
+    $nonce = [Guid]::NewGuid().ToString('N').Substring(0, 10)
+    $script:Session = "resetb-$Ending-$PID-$nonce"
+    $script:SessionRoot = New-AnchoredSessionRoot -Session $script:Session
+    $script:RunRoot = Join-Path $Worktree ".tmp\rw06_2\confirmation\$Ending-$stamp"
+    $profileRoot = Join-Path $Worktree ".tmp\rw06_2\confirmation_profiles\$Ending-$stamp-$PID"
+    $roamingProfile = Join-Path $profileRoot 'Roaming'
+    $localProfile = Join-Path $profileRoot 'Local'
+    [void](New-Item -ItemType Directory -Path $script:RunRoot, $roamingProfile, $localProfile -Force)
+    $env:APPDATA = $roamingProfile
+    $env:LOCALAPPDATA = $localProfile
+    $script:TranscriptPath = Join-Path $script:RunRoot 'unused_trace.ndjson'
+    $script:MoneyCurvePath = Join-Path $script:RunRoot 'unused_money.ndjson'
+    $script:LastResult = $null
+    $script:LastObservation = $null
+    $script:ActionCount = 0
+    $script:TraceOrdinal = 0
+    $script:LastMoneySignature = ''
+    $script:MidpointSaved = $false
+    $script:OwnedSessionPid = 0
+    $script:OwnedSessionStartUtcTicks = 0L
+    $script:OwnedSessionExecutablePath = ''
+    $script:GrandFareRecoveryActive = $false
+    $script:GrandFareAcceptedOfferKeys = New-Object 'System.Collections.Generic.HashSet[string]'
+    $script:GrandFareAcceptedLenderIds = New-Object 'System.Collections.Generic.HashSet[string]'
+    $script:GrandFareResolvedCashEventKeys = New-Object 'System.Collections.Generic.HashSet[string]'
+    $script:GrandFareRecoveryVisitedNodes = New-Object 'System.Collections.Generic.HashSet[string]'
+    $script:HeistLaunchSetup = $null
+    $screenshotPath = ''
+    $outcome = ''
+    $completed = $false
+    try {
+        Initialize-ConfirmationClassRegistry
+        Wait-ForConfirmationGodotCapacity
+        Start-BridgeSession
+        Start-NormalSeededRun
+        Invoke-SelectedEndingRoute
+        $result = Invoke-BridgeCommand -Command 'look' -Intent 'save the requested win-screen confirmation' -ObservationOnly
+        $outcome = Assert-TerminalOutcome
+        $sourcePng = Get-ExactReplayString -InputObject $result -Path @('look', 'png') -Context "Win screenshot for '$Ending'"
+        if (-not (Test-Path -LiteralPath $sourcePng -PathType Leaf)) {
+            throw "The normal playthrough did not produce its final win screenshot: $sourcePng"
+        }
+        $ownerReviewRoot = 'D:\Projects\Beat-The-House\.tmp\owner_review'
+        [void](New-Item -ItemType Directory -Path $ownerReviewRoot -Force)
+        $screenshotPath = Join-Path $ownerReviewRoot "ending_$Ending.png"
+        Copy-Item -LiteralPath $sourcePng -Destination $screenshotPath -Force
+        $completed = $true
+        return [pscustomobject][ordered]@{
+            ending = $Ending
+            outcome = $outcome
+            seed = $Seed
+            actions = $script:ActionCount
+            screenshot = $screenshotPath
+            session_log = Join-Path $script:SessionRoot 'godot.engine.log'
+        }
+    }
+    finally {
+        if ($script:OwnedSessionPid -gt 0) {
+            Stop-BridgeSessionSafely -BestEffort
+        }
+        $env:APPDATA = $priorAppData
+        $env:LOCALAPPDATA = $priorLocalAppData
+        if (Test-Path -LiteralPath $leasePath -PathType Leaf) {
+            Remove-Item -LiteralPath $leasePath -Force
+        }
+        if (-not $completed -and -not [string]::IsNullOrWhiteSpace($screenshotPath) -and (Test-Path -LiteralPath $screenshotPath -PathType Leaf)) {
+            Remove-Item -LiteralPath $screenshotPath -Force
+        }
+    }
+}
+
+
+if ($ConfirmationOnly) {
+    Invoke-ConfirmationPlaythrough | ConvertTo-Json -Depth 8
+    exit 0
 }
 
 
