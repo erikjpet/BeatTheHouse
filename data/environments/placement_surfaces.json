@@ -19722,18 +19722,18 @@
           "id": "base.staff_host",
           "kind": "base",
           "pos": [
-            420.0,
+            528.0,
             354.0
           ],
           "footprint_class": "behind_counter_person",
           "hit_rect": [
-            384.0,
+            500.0,
             282.0,
-            72.0,
+            56.0,
             72.0
           ],
           "label_anchor": [
-            420.0,
+            528.0,
             274.0
           ],
           "facing": "front",
