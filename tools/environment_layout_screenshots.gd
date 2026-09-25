@@ -2472,14 +2472,27 @@ func _rw06_1_prepare_scenario_review(archetype: Dictionary, definition: Dictiona
 	run_state.start_new("RW06-1-ROOM-REVIEW:%s" % scenario_id)
 	var generator := RunGeneratorScript.new(library)
 	var rng: Variant = run_state.create_rng("rw06_1_room_review:%s" % scenario_id)
-	var environment: Variant = EnvironmentInstance.from_archetype(
-		archetype,
-		1,
-		rng,
-		library,
-		run_state.challenge_config,
-		definition
-	)
+	var scenario_layer_id := str(definition.get("layer_id", "")).strip_edges()
+	var environment: Variant
+	if scenario_layer_id.is_empty():
+		environment = EnvironmentInstance.from_archetype(
+			archetype,
+			1,
+			rng,
+			library,
+			run_state.challenge_config,
+			definition
+		)
+	else:
+		environment = EnvironmentInstance.from_archetype_layer(
+			archetype,
+			scenario_layer_id,
+			1,
+			rng,
+			library,
+			run_state.challenge_config,
+			definition
+		)
 	var data: Dictionary = environment.to_dict()
 	data["world_node_id"] = archetype_id
 	data["game_states"] = generator.call("_generated_game_states", run_state, data, rng)
