@@ -6475,7 +6475,7 @@
           ],
           "facing": "none",
           "priority": 15,
-          "zone_id": "room",
+          "zone_id": "background",
           "support_id": "refreshment_shelf",
           "walk_lane_ids": []
         },
@@ -21473,6 +21473,15 @@
               112,
               356,
               168
+            ]
+          },
+          {
+            "id": "atm",
+            "bounds": [
+              668,
+              116,
+              104,
+              174
             ]
           }
         ],
