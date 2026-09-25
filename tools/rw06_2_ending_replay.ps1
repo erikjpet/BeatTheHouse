@@ -9,7 +9,7 @@ param(
     [string]$Seed = '',
     [ValidateRange(1, 2)]
     [int]$Repeat = 2,
-    [ValidateRange(30, 300)]
+    [ValidateRange(30, 1800)]
     [int]$TimeoutSeconds = 120,
     [string]$EvidenceRoot = '',
     [switch]$ConfirmationOnly,
