@@ -339,10 +339,7 @@
     "game_pool": [
       "coin_pusher"
     ],
-    "game_count": [
-      0,
-      1
-    ],
+    "game_count": 1,
     "item_pool": [
       "creased_luck_card",
       "instant_coffee",

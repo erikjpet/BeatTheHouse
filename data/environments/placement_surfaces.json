@@ -12,6 +12,10 @@
       "pack_surface_items": true,
       "pack_doorways": true,
       "object_slot_positions": {
+        "game:coin_pusher": [
+          147,
+          358
+        ],
         "item:bag": [
           190,
           54
@@ -80,6 +84,7 @@
         "event:late_shift_discount": "behind_counter_person",
         "event:scenario_delivery_day_stock": "behind_counter_person",
         "event:town_rumor_staff": "behind_counter_person",
+        "game:coin_pusher": "floor_fixture",
         "inventory_clerk": "standing_person",
         "lotto_regular": "standing_person",
         "night_clerk": "standing_person",
@@ -802,19 +807,19 @@
           "id": "base.game_1",
           "kind": "base",
           "pos": [
-            270.0,
+            147.0,
             358.0
           ],
           "footprint_class": "floor_fixture",
           "hit_rect": [
-            224.0,
-            294.0,
-            92.0,
-            64.0
+            88.0,
+            286.0,
+            118.0,
+            72.0
           ],
           "label_anchor": [
-            310.0,
-            416.0
+            147.0,
+            390.0
           ],
           "facing": "none",
           "priority": 110,
@@ -1160,6 +1165,7 @@
         "event:late_shift_discount": "base.staff_dialogue",
         "event:scenario_delivery_day_stock": "base.staff_dialogue_2",
         "event:town_rumor_staff": "base.staff_dialogue",
+        "game:coin_pusher": "base.game_1",
         "item:bag": "base.shop_item_5",
         "lender:the_crew": "base.event_group_1",
         "service:house_drink": "base.fixed_drink",
@@ -1238,6 +1244,8 @@
       "art_key": "shop",
       "repack_scenario_conflicts": true,
       "class_overrides": {
+        "event:recruitment_mags": "standing_person",
+        "event:recruitment_rook_leads": "standing_person",
         "event:recruitment_switch": "standing_person",
         "shopkeeper:merchant": "behind_counter_person",
         "stacked_cover": "floor_fixture",
