@@ -3870,6 +3870,18 @@ function Play-OneBlackjackRound {
         }
         if ($talkVisible -and -not $eventVisible -and @('clean', 'cheat') -ccontains $Ending) {
             $talkEventId = [string](Get-Value $script:LastObservation @('talk', 'event_id') '')
+            if ($Ending -ceq 'clean' -and $talkEventId -ceq 'shift_change') {
+                $choiceIds = @(Get-VisibleChoiceIds)
+                $expectedChoiceIds = @('position', 'ignore')
+                if (($choiceIds -join ',') -cne ($expectedChoiceIds -join ',')) {
+                    throw "The visible Clean shift change exposed unexpected choices: $($choiceIds -join ', ')."
+                }
+                $null = Choose-VisibleChoice `
+                    -ChoiceId 'ignore' `
+                    -Intent 'let the visible shift change pass without using it for an advantage'
+                Wait-Frames -Frames 10 -Intent 'let the visible Clean shift-change response settle'
+                continue
+            }
             if ($talkEventId -ceq 'blackjack_counter_probe') {
                 $choiceIds = @(Get-VisibleChoiceIds)
                 $expectedChoiceIds = @('play_dumb', 'trade_count', 'ignore')
