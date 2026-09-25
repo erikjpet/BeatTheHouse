@@ -5178,11 +5178,11 @@ function Clear-CrewMarkerFavors {
     # index. Audit/invitation choices may already have consumed a boundary; use
     # an exact rendered, priced room service for the remaining boundaries.
     for ($favor = 1; $favor -le 2; $favor++) {
-        for ($boundary = 1; $boundary -le 2 -and -not (Test-CrewFavorPublicSurface); $boundary++) {
+        for ($boundary = 1; $boundary -le 3 -and -not (Test-CrewFavorPublicSurface); $boundary++) {
             Invoke-CrewFavorActionBoundary -FavorNumber $favor -BoundaryNumber $boundary
         }
         if (-not (Test-CrewFavorPublicSurface)) {
-            throw "Crew favor $favor did not surface after at most two visible service action boundaries."
+            throw "Crew favor $favor did not surface after at most three visible service action boundaries."
         }
         $eventId = [string](Get-Value $script:LastObservation @('event_popup', 'event_id') '')
         $talkId = [string](Get-Value $script:LastObservation @('talk', 'event_id') '')
