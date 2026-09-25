@@ -2083,6 +2083,13 @@ function Start-NormalSeededRun {
         throw "Lesson skip returned an unsafe start-menu primary action '$postSkipPrimary'."
     }
     $null = Click-Button -Text 'RUN SETUP' -Intent 'open the visible seeded-run setup' -Contains
+    if ($Ending -ceq 'clean' -and
+        -not [bool](Get-Value $script:LastObservation @('screen', 'start_menu', 'run_config_visible') $false)) {
+        Wait-Frames -Frames 1 -Intent 'allow the visible Clean run setup action to settle'
+        if (-not [bool](Get-Value $script:LastObservation @('screen', 'start_menu', 'run_config_visible') $false)) {
+            $null = Click-Button -Text 'RUN SETUP' -Intent 'retry the still-visible Clean seeded-run setup' -Contains
+        }
+    }
     if (-not [bool](Get-Value $script:LastObservation @('screen', 'start_menu', 'run_config_visible') $false)) {
         throw 'RUN SETUP did not render the seeded-run configuration panel.'
     }
