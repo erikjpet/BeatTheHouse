@@ -3663,13 +3663,14 @@ function Leave-GameSurface {
 
 
 function Get-ActiveBlackjackTotal {
-    $activeIndex = [int](Get-Value $script:LastObservation @('game', 'active_hand_index') 0)
-    $hands = @(Get-Array (Get-Value $script:LastObservation @('game', 'player_hands') @()))
-    if ($activeIndex -lt 0 -or $activeIndex -ge $hands.Count) {
-        if ($hands.Count -ceq 1) { return [int](Get-Value $hands[0] @('total') 0) }
-        throw "Blackjack decision has no public active player hand."
-    }
-    return [int](Get-Value $hands[$activeIndex] @('total') 0)
+    # The rendered game projection publishes the active hand's total at the
+    # surface level. Public player-hand rows intentionally expose cards and
+    # status only, so reading a nonexistent per-row `total` silently produced
+    # zero and made the normal policy hit even on completed 17+ hands.
+    return Get-ExactReplayInt32 `
+        -InputObject $script:LastObservation `
+        -Path @('game', 'blackjack_total') `
+        -Context 'Public active blackjack total'
 }
 
 
