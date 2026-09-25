@@ -3574,7 +3574,14 @@ function Enter-GrandRoom {
 
 function Open-CageCounter {
     Enter-GrandRoom -Room cage
-    $null = Open-SemanticObject -SemanticId 'casino_fixture:cage_counter' -PreferredActions @('Talk', 'Open', 'Inspect') -Intent 'speak with Linda at the real Cage counter'
+    if ($null -ne (Find-CanvasObject -SemanticId 'casino_fixture:cage_counter')) {
+        $null = Open-SemanticObject -SemanticId 'casino_fixture:cage_counter' -PreferredActions @('Talk', 'Open', 'Inspect') -Intent 'speak with Linda at the real Cage counter'
+    }
+    else {
+        $null = Invoke-OverflowRoomActionButton `
+            -ButtonText 'Cashout Counter: Inspect' `
+            -Intent 'speak with Linda through the visible Cage room action'
+    }
     Wait-Frames -Frames 8
     if (-not [bool](Get-Value $script:LastObservation @('talk', 'visible') $false)) {
         throw "Linda's Cage counter did not expose its visible dialogue choices."
