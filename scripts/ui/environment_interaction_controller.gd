@@ -1331,10 +1331,10 @@ static func _promote_delivery_contact_to_room_slot(records: Array, contact_id: S
 	if contact_index < 0:
 		return result
 	var contact := _dict(result[contact_index])
-	if str(contact.get("presentation_mode", "room")) == "room" and not _dict(contact.get("focus_rect", {})).is_empty():
-		return result
-	# Fixed room capacity must not make an authenticated delivery impossible. A
-	# temporary contact can occupy a visible service/event slot; the ordinary
+	# Fixed room capacity must not make an authenticated delivery impossible.
+	# Even a person carrying room geometry can be absent from the public canvas
+	# when that geometry belongs to a renderer-managed or collapsed character.
+	# Put every active contact in a known visible service/event slot; the ordinary
 	# record is rebuilt on the next frame after the handoff resolves.
 	var donor_index := -1
 	var donor_score := -1
