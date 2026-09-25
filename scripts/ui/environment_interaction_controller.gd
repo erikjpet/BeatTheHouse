@@ -216,7 +216,8 @@ static func interactable_object_view_list(host: Variant) -> Array:
 			var world_finalization_failure := projection_failure_result(result, _array(world_finalized.get("errors", [])), _dict(world_finalized.get("layout_audit", {})))
 			var committed_world_finalization_failure := committed_projection_status_result(host.run_state, world_finalization_failure, trusted_base_result)
 			return _array(committed_world_finalization_failure.get("records", trusted_base_result))
-		result = JsonCoerceScript._copy_array(world_finalized.get("records", []))
+		var sealed_world_base_records := JsonCoerceScript._copy_array(world_finalized.get("records", []))
+		result = sealed_world_base_records.duplicate(true)
 		var world_projection_result := project_finalized_sequence_interaction_result(result, world_finalized)
 		var committed_world_result := committed_projection_status_result(host.run_state, world_projection_result, trusted_base_result)
 		result = _array(committed_world_result.get("records", trusted_base_result))
@@ -226,6 +227,7 @@ static func interactable_object_view_list(host: Variant) -> Array:
 				trusted_base_result,
 				JsonCoerceScript._copy_array(host.run_state.current_environment.get("resolved_event_ids", []))
 			)
+			result = append_unsealed_live_records(result, trusted_base_result, sealed_world_base_records)
 	else:
 		host.run_state.current_environment.erase("scenario_sequence_lifecycle_errors")
 		host.run_state.current_environment.erase("scenario_layout_audit")
