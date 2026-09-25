@@ -186,29 +186,6 @@ def slot_has_physical_support(
     expected_contact = SlotAuthoring.contact_for_rect(bounds, placement_class)
     if math.dist(expected_contact, position) > EPSILON:
         return False
-    # A closed counter may explicitly name additional fixture classes.  These
-    # are authored prop envelopes (currently the Back Room practice rig and
-    # Jazz pull-tab cabinet), not generic counter fallbacks: the class must be
-    # listed on that exact support and its hit must remain inside the support.
-    explicit_counter = next((
-        counter
-        for counter in values(map_data.get("counters"))
-        if isinstance(counter, dict)
-        and str(counter.get("id", "")) == support_id
-        and placement_class in [str(item) for item in values(counter.get("classes"))]
-        and placement_class not in {"behind_counter_person", "surface_item"}
-    ), None)
-    if explicit_counter is not None:
-        top_y = float(explicit_counter.get("top_y", 0.0))
-        front_y = float(explicit_counter.get("front_y", top_y))
-        contact_is_supported = (
-            abs(position[1] - front_y) <= EPSILON
-            if placement_class in SlotAuthoring.GROUNDED_CLASSES
-            else abs(position[1] - top_y) <= EPSILON
-        )
-        return float(explicit_counter.get("x0", 0.0)) - EPSILON <= bounds[0] \
-            and bounds[0] + bounds[2] <= float(explicit_counter.get("x1", 0.0)) + EPSILON \
-            and contact_is_supported
     if placement_class in SlotAuthoring.GROUNDED_CLASSES:
         floor = map_data.get("floor", {}) if isinstance(map_data.get("floor"), dict) else {}
         band_field = "stage_bands" if support_id == "stage" else "bands" if support_id == "floor" else ""
@@ -998,13 +975,7 @@ def validate_map(check: Check, map_data: dict[str, Any], archetype: dict[str, An
                     check.require(zone_bounds is not None and encloses(zone_bounds, hit), f"{map_id}.{slot_id}: not enclosed by semantic zone {zone_id}")
             support_kind = expected_support_kind(placement_class)
             support_id = str(slot.get("support_id", ""))
-            support_counter = counters_by_id.get(support_id, {})
-            explicitly_supported_counter_class = isinstance(support_counter, dict) \
-                and placement_class in [str(item) for item in values(support_counter.get("classes"))] \
-                and placement_class not in {"behind_counter_person", "surface_item"}
-            if explicitly_supported_counter_class:
-                check.require(bool(support_id), f"{map_id}.{slot_id}: explicit counter support is unnamed")
-            elif support_kind == "floor":
+            if support_kind == "floor":
                 check.require(support_id in {"floor", "stage"}, f"{map_id}.{slot_id}: invalid floor support {support_id}")
             elif support_kind in {"wall", "ceiling"}:
                 check.require(support_id == support_kind or bool(support_id), f"{map_id}.{slot_id}: invalid {support_kind} support")
