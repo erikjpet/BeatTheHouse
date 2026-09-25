@@ -519,7 +519,12 @@ static func bind_base_records(environment: Dictionary, records: Array, existing_
 		var object_id := str(record.get("object_id", "")).strip_edges()
 		if bindings.has(object_id):
 			continue
-		var placement_class := EnvironmentPlacementScript.classify(
+		# Late live records cross this binder after EnvironmentInstance generated its
+		# initial object inventory. Apply the same authored room/scenario override
+		# that generation and authority validation use, so the new binding cannot be
+		# minted from a generic record class and then fail its own sealed replay.
+		var class_override := str(_dict(surface_map.get("class_overrides", {})).get(object_id, ""))
+		var placement_class := class_override if class_override in EnvironmentPlacementScript.CLASSES else EnvironmentPlacementScript.classify(
 			record,
 			str(record.get("object_type", "")),
 			object_id,
