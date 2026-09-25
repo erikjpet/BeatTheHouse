@@ -16142,18 +16142,18 @@
           "id": "stage.patron_fog_officer",
           "kind": "stage",
           "pos": [
-            388.0,
+            400.0,
             326.0
           ],
           "footprint_class": "standing_person",
           "hit_rect": [
-            352.0,
+            364.0,
             246.0,
             72.0,
             80.0
           ],
           "label_anchor": [
-            388.0,
+            400.0,
             238.0
           ],
           "facing": "right",
