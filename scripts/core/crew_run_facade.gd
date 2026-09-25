@@ -697,7 +697,8 @@ func crew_heist_table_choices() -> Array:
 			else:
 				_crew_heist_sync_whale_setup()
 				setup = JsonCoerceScript._copy_dict(crew_heist_state.get("setup", {}))
-			active_choices.append({"id": "begin_play", "label": "Begin the Play", "text": "All chairs are filled." if _run.CrewHeistModelScript.setup_complete(crew_heist_state) else "The setup still has an empty chair.", "consequences": {"event_hooks": [{"type": "crew_heist", "action": "begin_play"}]}})
+			var setup_ready := _run.CrewHeistModelScript.setup_complete(crew_heist_state)
+			active_choices.append({"id": "begin_play", "label": "Begin the Play", "text": "All chairs are filled." if setup_ready else "The setup still has an empty chair.", "disabled": not setup_ready, "consequences": {"event_hooks": [{"type": "crew_heist", "action": "begin_play"}]}})
 			active_choices.append({"id": "abort", "label": "Fold the score", "text": "Pay for the preparation already burned. The run continues.", "consequences": {"event_hooks": [{"type": "crew_heist", "action": "abort"}]}})
 		elif phase == _run.CrewHeistModelScript.STATUS_PLAY:
 			active_choices.append({"id": "live_table_direction", "label": "Return to the live table", "text": "The decisions happen inside the session, not over the planning map.", "disabled": true, "consequences": {}})
@@ -1179,14 +1180,23 @@ func crew_heist_begin_play(host_capability: Variant = null) -> Dictionary:
 	state["status"] = _run.CrewHeistModelScript.STATUS_PLAY
 	_run.narrative_flags["heist_live_table_active"] = true
 	var play := JsonCoerceScript._copy_dict(state.get("play", {}))
-	if str(state.get("plan_id", "")) == _run.CrewHeistModelScript.PLAN_WHALE:
+	var begin_message := "The Play begins at the real table."
+	if str(state.get("plan_id", "")) == _run.CrewHeistModelScript.PLAN_COUNT:
+		var count_play := JsonCoerceScript._copy_dict(_run.CrewHeistModelScript.plan(_run.CrewHeistModelScript.PLAN_COUNT).get("play", {}))
+		var starting_float := maxi(0, int(count_play.get("starting_float", 0)))
+		if not bool(play.get("table_float_granted", false)) and starting_float > 0:
+			_run.change_grand_casino_chips(starting_float, true)
+			play["table_float_granted"] = true
+			play["table_float_chips"] = starting_float
+			begin_message = "The Crew stakes %d table chips for the Count. The Play begins at the real table." % starting_float
+	else:
 		_run.change_grand_casino_chips(int(JsonCoerceScript._copy_dict(_run.CrewHeistModelScript.plan(_run.CrewHeistModelScript.PLAN_WHALE).get("play", {})).get("starting_pot", 0)), true)
 		play["pot"] = _run.grand_casino_chips
 	state["play"] = play
 	crew_heist_state = state
 	state = _crew_heist_sync_count_window(state)
 	_crew_heist_sync_live_table_event(state)
-	return {"ok": true, "message": "The Play begins at the real table."}
+	return {"ok": true, "message": begin_message}
 
 
 func crew_heist_decide(decision_id: String, choice: String, host_capability: Variant = null) -> Dictionary:
