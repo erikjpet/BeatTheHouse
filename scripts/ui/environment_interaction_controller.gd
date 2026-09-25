@@ -1295,7 +1295,7 @@ static func _attach_delivery_handoff_to_contact(host: Variant, records: Array) -
 	# A sparse generated venue may genuinely contain no ordinary person. Add the
 	# named contact as a person, never as a parcel, action marker, or handoff prop.
 	var contact_rect := _delivery_available_rect(host, _delivery_occupied_rects(host, result), 0, "standing_person")
-	var generated_contact := host._make_interactable_object({
+	var generated_contact: Dictionary = _dict(host._make_interactable_object({
 		"object_id": str(handoff.get("object_id", "delivery:handoff:%s" % node_id)),
 		"object_type": "character",
 		"visual_type": "character",
@@ -1316,7 +1316,7 @@ static func _attach_delivery_handoff_to_contact(host: Variant, records: Array) -
 		"delivery_handoff_node_id": node_id,
 		"focus_rect": contact_rect,
 		"placement_class": "standing_person",
-	})
+	}))
 	result.append(generated_contact)
 	return _promote_delivery_contact_to_room_slot(result, str(generated_contact.get("object_id", "")))
 
