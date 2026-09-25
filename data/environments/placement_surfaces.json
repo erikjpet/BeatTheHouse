@@ -13,8 +13,8 @@
       "pack_doorways": true,
       "object_slot_positions": {
         "game:coin_pusher": [
-          147,
-          358
+          270,
+          366
         ],
         "item:bag": [
           190,
@@ -807,19 +807,19 @@
           "id": "base.game_1",
           "kind": "base",
           "pos": [
-            147.0,
-            358.0
+            270.0,
+            366.0
           ],
           "footprint_class": "floor_fixture",
           "hit_rect": [
-            88.0,
-            286.0,
+            211.0,
+            294.0,
             118.0,
             72.0
           ],
           "label_anchor": [
-            147.0,
-            390.0
+            270.0,
+            404.0
           ],
           "facing": "none",
           "priority": 110,
