@@ -2461,6 +2461,13 @@ function Close-WorldMap {
     if (-not [bool](Get-Value $script:LastObservation @('screen', 'world_map_overlay_visible') $false)) { return }
     $null = Click-Button -Text 'Close' -Intent 'close the visible city map'
     Wait-Frames -Frames 6
+    if ($Ending -ceq 'clean' -and [bool](Get-Value $script:LastObservation @('screen', 'world_map_overlay_visible') $false)) {
+        # The Clean route can reopen the map immediately after travel. If the
+        # first accepted press lands while that surface is settling, retry the
+        # still-visible public control once before treating it as a dead end.
+        $null = Click-Button -Text 'Close' -Intent 'close the still-visible city map'
+        Wait-Frames -Frames 6
+    }
     if ([bool](Get-Value $script:LastObservation @('screen', 'world_map_overlay_visible') $false)) {
         throw 'The visible city map did not close.'
     }
