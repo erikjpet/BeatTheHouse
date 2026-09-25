@@ -17114,6 +17114,30 @@
           ]
         },
         {
+          "id": "stage.event_towel_schedule",
+          "kind": "stage",
+          "pos": [
+            224.0,
+            198.0
+          ],
+          "footprint_class": "surface_item",
+          "hit_rect": [
+            202.0,
+            150.0,
+            44.0,
+            48.0
+          ],
+          "label_anchor": [
+            236.0,
+            147.0
+          ],
+          "facing": "none",
+          "priority": 15,
+          "zone_id": "left",
+          "support_id": "towel",
+          "walk_lane_ids": []
+        },
+        {
           "id": "stage.event_stage_right",
           "kind": "stage",
           "pos": [
@@ -17157,6 +17181,30 @@
           ],
           "facing": "none",
           "priority": 20,
+          "zone_id": "center",
+          "support_id": "floor",
+          "walk_lane_ids": []
+        },
+        {
+          "id": "stage.event_food_stall_right",
+          "kind": "stage",
+          "pos": [
+            520.0,
+            292.0
+          ],
+          "footprint_class": "floor_fixture",
+          "hit_rect": [
+            474.0,
+            228.0,
+            92.0,
+            64.0
+          ],
+          "label_anchor": [
+            520.0,
+            222.0
+          ],
+          "facing": "none",
+          "priority": 25,
           "zone_id": "center",
           "support_id": "floor",
           "walk_lane_ids": []
@@ -17278,6 +17326,32 @@
           "facing": "right",
           "priority": 10,
           "zone_id": "left",
+          "support_id": "floor",
+          "walk_lane_ids": [
+            "lane.public"
+          ]
+        },
+        {
+          "id": "stage.patron_sand_center",
+          "kind": "stage",
+          "pos": [
+            390.0,
+            292.0
+          ],
+          "footprint_class": "standing_person",
+          "hit_rect": [
+            354.0,
+            212.0,
+            72.0,
+            80.0
+          ],
+          "label_anchor": [
+            390.0,
+            206.0
+          ],
+          "facing": "right",
+          "priority": 15,
+          "zone_id": "center",
           "support_id": "floor",
           "walk_lane_ids": [
             "lane.public"
@@ -17518,11 +17592,11 @@
         "beach_festival_weekend_craft_stall|package_b_beach_top_left|service_lane|": "stage.event_stage_right",
         "beach_festival_weekend_crowd_rope||background|": "stage.event_sand_center",
         "beach_festival_weekend_festival_stage||service_lane|": "stage.event_stage_left",
-        "beach_festival_weekend_food_stall||service_lane|": "stage.event_foreground_center",
+        "beach_festival_weekend_food_stall||service_lane|": "stage.event_food_stall_right",
         "beach_festival_weekend_lost_child_marker||center|": "stage.event_wall_center",
-        "beach_festival_weekend_lost_child|package_b_beach_top_mid|right|": "stage.patron_sand_left",
+        "beach_festival_weekend_lost_child|package_b_beach_top_mid|right|": "stage.patron_sand_center",
         "beach_festival_weekend_safe_exit|package_b_beach_safe_exit_low_left|exit_lane|": "exit.left_upper",
-        "beach_festival_weekend_schedule_board|env06_8_festival_board|left|": "stage.event_wall_left",
+        "beach_festival_weekend_schedule_board|env06_8_festival_board|left|": "stage.event_towel_schedule",
         "beach_festival_weekend_stall_vendor|package_b_beach_top_left|background|": "stage.staff_towel_stall",
         "beach_festival_weekend_station|env06_8_festival_station|right|": "stage.event_wall_right",
         "beach_storm_coming_aftermath_actor_evacuation_interrupted||left|": "stage.patron_sand_left",
@@ -17544,7 +17618,9 @@
         "beach_storm_coming_warning_flag||foreground|": "stage.event_wall_left"
       },
       "scenario_position_route_ids": {},
-      "class_overrides": {},
+      "class_overrides": {
+        "beach_festival_weekend_schedule_board": "surface_item"
+      },
       "scenario_overflow_ids": [],
       "scenario_art_keys": {
         "beach_bonfire_night_beach_seats": "room_seating",
