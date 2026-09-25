@@ -5085,39 +5085,49 @@ function Invoke-CrewFavorActionBoundary {
             if ($null -ceq (Find-CanvasObject -SemanticId 'event:back_alley_offer')) {
                 throw 'Crew favor 2 boundary 1 requires one exact rendered and enabled Back Alley Offer.'
             }
-            $null = Open-SemanticObject `
-                -SemanticId 'event:back_alley_offer' `
-                -PreferredActions @('inspect_event_choices', 'Review responses', 'Open', 'Inspect') `
-                -Intent 'open the exact Back Alley Offer for Crew favor 2 boundary 1'
-            for ($poll = 0; $poll -lt 16; $poll++) {
-                $renderValid = Get-Value $script:LastObservation @('event_popup', 'render_valid') $null
-                if ($renderValid -is [bool] -and [bool]$renderValid) { break }
-                Wait-Frames -Frames 4 -Intent 'let the exact Back Alley Offer finish rendering'
-                if (-not [bool](Get-Value $script:LastObservation @('event_popup', 'visible') $false)) {
-                    throw 'The Back Alley Offer disappeared before its exact choices finished rendering.'
-                }
-            }
-            $event = Get-Value $script:LastObservation @('event_popup') $null
-            $choices = @(Get-Array (Get-Value $event @('choices') @()))
-            if ((Get-Value $event @('visible') $null) -isnot [bool] -or -not [bool](Get-Value $event @('visible') $false) -or
-                (Get-Value $event @('render_valid') $null) -isnot [bool] -or -not [bool](Get-Value $event @('render_valid') $false) -or
-                [string](Get-Value $event @('event_id') '') -cne 'back_alley_offer' -or
-                [string](Get-Value $event @('title') '') -cne 'Back Alley Offer' -or
-                [string](Get-Value $event @('summary') '') -cne 'A trunk opens on a bad bargain.' -or
-                (@(Get-Array (Get-Value $event @('choice_ids') @())) -join ',') -cne 'take_cash,walk' -or
-                $choices.Count -cne 2 -or
-                [string](Get-Value $choices[0] @('id') '') -cne 'take_cash' -or
-                [string](Get-Value $choices[0] @('label') '') -cne 'Take the cash' -or
-                [string](Get-Value $choices[0] @('text') '') -cne 'Small cash. Small stain. Both travel light.' -or
-                (Get-Value $choices[0] @('enabled') $null) -isnot [bool] -or -not [bool](Get-Value $choices[0] @('enabled') $false) -or
-                [string](Get-Value $choices[1] @('id') '') -cne 'walk' -or
-                [string](Get-Value $choices[1] @('label') '') -cne 'Keep walking' -or
-                [string](Get-Value $choices[1] @('text') '') -cne 'Your hands come away clean enough.' -or
-                (Get-Value $choices[1] @('enabled') $null) -isnot [bool] -or -not [bool](Get-Value $choices[1] @('enabled') $false) -or
+            Select-EventObject -EventId 'back_alley_offer'
+            $roomCanvas = Get-Value $script:LastObservation @('room_canvas') $null
+            $objects = @(Get-Array (Get-Value $roomCanvas @('objects') @()) | Where-Object {
+                [string](Get-Value $_ @('id') '') -ceq 'event:back_alley_offer'
+            })
+            $selectedInfo = Get-Value $roomCanvas @('selected_info') $null
+            $selectedActions = @(Get-Array (Get-Value $selectedInfo @('actions') @()))
+            $roomActions = @(Get-RoomActions)
+            if ($objects.Count -cne 1 -or
+                [string](Get-Value $objects[0] @('id') '') -cne 'event:back_alley_offer' -or
+                [string](Get-Value $objects[0] @('type') '') -cne 'event' -or
+                [string](Get-Value $objects[0] @('label') '') -cne 'Back Alley Offer' -or
+                [string](Get-Value $objects[0] @('description') '') -cne 'A trunk opens on a bad bargain.' -or
+                (Get-Value $objects[0] @('interactive') $null) -isnot [bool] -or -not [bool](Get-Value $objects[0] @('interactive') $false) -or
+                (Get-Value $objects[0] @('disabled') $null) -isnot [bool] -or [bool](Get-Value $objects[0] @('disabled') $true) -or
+                [string](Get-Value $roomCanvas @('selected_object_id') '') -cne 'event:back_alley_offer' -or
+                [string](Get-Value $selectedInfo @('object_id') '') -cne 'event:back_alley_offer' -or
+                [string](Get-Value $selectedInfo @('title') '') -cne 'Back Alley Offer' -or
+                $selectedActions.Count -cne 2 -or
+                [string](Get-Value $selectedActions[0] @('emit_object_id') '') -cne 'event_response:back_alley_offer:take_cash' -or
+                [string](Get-Value $selectedActions[0] @('label') '') -cne 'Take the cash' -or
+                (Get-Value $selectedActions[0] @('enabled') $null) -isnot [bool] -or -not [bool](Get-Value $selectedActions[0] @('enabled') $false) -or
+                [string](Get-Value $selectedActions[1] @('emit_object_id') '') -cne 'event_response:back_alley_offer:walk' -or
+                [string](Get-Value $selectedActions[1] @('label') '') -cne 'Keep walking' -or
+                (Get-Value $selectedActions[1] @('enabled') $null) -isnot [bool] -or -not [bool](Get-Value $selectedActions[1] @('enabled') $false) -or
+                $roomActions.Count -cne 2 -or
+                [string](Get-Value $roomActions[0] @('selected_object_id') '') -cne 'event:back_alley_offer' -or
+                [string](Get-Value $roomActions[0] @('emit_object_id') '') -cne 'event_response:back_alley_offer:take_cash' -or
+                [string](Get-Value $roomActions[0] @('label') '') -cne 'Take the cash' -or
+                (Get-Value $roomActions[0] @('enabled') $null) -isnot [bool] -or -not [bool](Get-Value $roomActions[0] @('enabled') $false) -or
+                (Get-Value $roomActions[0] @('rendered') $null) -isnot [bool] -or -not [bool](Get-Value $roomActions[0] @('rendered') $false) -or
+                [string](Get-Value $roomActions[1] @('selected_object_id') '') -cne 'event:back_alley_offer' -or
+                [string](Get-Value $roomActions[1] @('emit_object_id') '') -cne 'event_response:back_alley_offer:walk' -or
+                [string](Get-Value $roomActions[1] @('label') '') -cne 'Keep walking' -or
+                (Get-Value $roomActions[1] @('enabled') $null) -isnot [bool] -or -not [bool](Get-Value $roomActions[1] @('enabled') $false) -or
+                (Get-Value $roomActions[1] @('rendered') $null) -isnot [bool] -or -not [bool](Get-Value $roomActions[1] @('rendered') $false) -or
+                [bool](Get-Value $script:LastObservation @('event_popup', 'visible') $true) -or
                 [bool](Get-Value $script:LastObservation @('talk', 'visible') $true)) {
-                throw 'Crew favor 2 boundary 1 rejected a malformed or drifted Back Alley Offer surface.'
+                throw 'Crew favor 2 boundary 1 rejected a malformed or drifted inline Back Alley Offer surface.'
             }
-            $null = Choose-VisibleChoice -ChoiceId 'take_cash' -Intent 'take the exact visible Back Alley cash offer for Crew favor 2 boundary 1'
+            $null = Invoke-RoomActionRow `
+                -Row $roomActions[0] `
+                -Intent 'take the exact visible Back Alley cash offer for Crew favor 2 boundary 1'
             Wait-Frames -Frames 10
             $afterCash = Get-RenderedHudInteger -Name bankroll -Context 'Crew favor 2 boundary 1 bankroll after Back Alley Offer'
             $afterHeat = Get-RenderedHudInteger -Name heat_level -Context 'Crew favor 2 boundary 1 heat after Back Alley Offer'
