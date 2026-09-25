@@ -683,7 +683,9 @@ func crew_heist_table_choices() -> Array:
 			active_choices.append_array(_crew_heist_private_choices())
 			if plan_id == _run.CrewHeistModelScript.PLAN_COUNT:
 				if not bool(setup.get("schedule", false)):
-					active_choices.append({"id": "count_schedule", "label": "Watch the schedule", "text": "Hold the Grand cage through shift change at Heat 40 or lower. The crew covers direct transport while The Count is live.", "consequences": {"event_hooks": [{"type": "crew_heist", "action": "count_schedule"}]}})
+					var count_setup := JsonCoerceScript._copy_dict(_run.CrewHeistModelScript.plan(_run.CrewHeistModelScript.PLAN_COUNT).get("setup", {}))
+					var schedule := JsonCoerceScript._copy_dict(count_setup.get("schedule", {}))
+					active_choices.append({"id": "count_schedule", "label": "Watch the schedule", "text": "Hold the Grand cage through shift change at Heat %d or lower. The crew covers direct transport while The Count is live." % int(schedule.get("attention_limit", 55)), "consequences": {"event_hooks": [{"type": "crew_heist", "action": "count_schedule"}]}})
 				if not bool(setup.get("swap_cart", false)):
 					active_choices.append({"id": "count_cart", "label": "Move the swap cart", "text": "Take the hard package route to the service perimeter. The crew covers the direct Grand route.", "consequences": {"event_hooks": [{"type": "crew_heist", "action": "count_cart"}]}})
 			else:
@@ -822,11 +824,12 @@ func crew_heist_event_action(hook: Dictionary, host_capability: Variant = null) 
 		_run._apply_environment_turn_snapshot(rollback, false)
 		return {"ok": false, "message": "The heist scene could not be staged atomically.", "errors": JsonCoerceScript._copy_array(sequence_result.get("errors", []))}
 	# A player-authenticated planning-table fold pays its authored preparation
-	# cost and tears down the live scene, but it is not a terminal ending. Keep
+	# cost and tears down the live route, but it is not a terminal ending. Keep
 	# the aborted state only long enough to authenticate, receipt, and unmount the
-	# action atomically; the clear table must be able to accept another plan.
+	# action atomically, then retain the already-authenticated plan lock. Crew
+	# standing may legitimately change after lock and cannot brick that score.
 	if action == "abort":
-		crew_heist_state = {}
+		crew_heist_state = _crew_heist_reopen_folded_plan(crew_heist_state)
 		result["relockable"] = true
 	result["world_sequence_scheduled"] = not bool(sequence_result.get("inactive", false))
 	# Quiet-table actions schedule their scene internally, but the package/owner
@@ -1026,6 +1029,21 @@ func _crew_heist_clear_setup_delivery(plan_id: String) -> void:
 	_run.active_delivery_run = {}
 
 
+# Preserve the authenticated lock and completed setup facts while returning the
+# plan to SETUP. The live schedule/cart route is separate authority and has
+# already been removed above; forced abort reasons never cross this helper.
+func _crew_heist_reopen_folded_plan(state_value: Variant) -> Dictionary:
+	var state = _run.CrewHeistModelScript.normalize_state(state_value)
+	if state.is_empty():
+		return {}
+	state["status"] = _run.CrewHeistModelScript.STATUS_SETUP
+	state.erase("abort")
+	state["getaway"] = {}
+	state["outcome"] = ""
+	state["payout"] = 0
+	return state
+
+
 # Saves made while the old Fold behavior was live contain an authenticated
 # planning-table abort plus its orphaned setup route. Migrate only that exact
 # public reason after private authority and delivery state have both restored.
@@ -1035,7 +1053,7 @@ func reconcile_planning_table_fold() -> bool:
 			or str(JsonCoerceScript._copy_dict(state.get("abort", {})).get("reason", "")) != "planning_table":
 		return false
 	_crew_heist_clear_setup_delivery(str(state.get("plan_id", "")))
-	crew_heist_state = {}
+	crew_heist_state = _crew_heist_reopen_folded_plan(state)
 	return true
 
 
@@ -1470,7 +1488,10 @@ func _crew_heist_sync_count_window(state: Dictionary) -> Dictionary:
 		play["left_table"] = true
 		play["corridor_blown"] = true
 		play["score"] = maxi(0, int(play.get("score", 100)) - 15)
-	if action_index >= int(play.get("window_deadline_action", action_index + 1)) and not bool(play.get("late", false)):
+	# The deadline is the final allowed boundary. Three minimum blackjack hands
+	# consume the Count's authored nine actions exactly; lateness begins only
+	# after that inclusive budget, matching delivery-window settlement.
+	if action_index > int(play.get("window_deadline_action", action_index + 1)) and not bool(play.get("late", false)):
 		play["late"] = true
 		play["heat_degraded"] = true
 		play["corridor_blown"] = true
