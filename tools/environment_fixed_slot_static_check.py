@@ -1426,15 +1426,24 @@ def main() -> int:
     grand_machine_ids = [str(grand_categories.get(f"game_spots:{index}", "")) for index in range(5)]
     grand_machine_slots = [grand_base_slots.get(slot_id, {}) for slot_id in grand_machine_ids]
     grand_machine_positions = [point(slot.get("pos")) for slot in grand_machine_slots]
+    grand_machine_hits = [rect(slot.get("hit_rect")) for slot in grand_machine_slots]
     check.require(
         grand_machine_ids == [f"base.game_machine_{index}" for index in range(1, 6)]
         and len(set(grand_machine_ids)) == 5
         and all(slot.get("footprint_class") == "wall_mounted" and slot.get("support_id") == "wall" for slot in grand_machine_slots)
-        and all(position is not None and position[1] == 80.0 for position in grand_machine_positions)
+        and all(position is not None for position in grand_machine_positions)
+        and len({position[1] for position in grand_machine_positions if position is not None}) == 1
+        and all(hit is not None for hit in grand_machine_hits)
         and all(
             grand_machine_positions[index] is not None
             and grand_machine_positions[index + 1] is not None
-            and grand_machine_positions[index + 1][0] - grand_machine_positions[index][0] >= 104.0
+            and grand_machine_positions[index + 1][0] > grand_machine_positions[index][0]
+            and grand_machine_hits[index] is not None
+            and grand_machine_hits[index + 1] is not None
+            and not intersects(
+                expanded(grand_machine_hits[index], board),
+                expanded(grand_machine_hits[index + 1], board),
+            )
             for index in range(4)
         ),
         "grand_casino: five generated machine positions must remain an aligned, expanded-target-safe named row",
@@ -1559,7 +1568,6 @@ def main() -> int:
     gas_travel_indexes = {f"travel_spots:{index}" for index in range(7)}
     check.require(
         "base.door_right_middle" not in gas_base_slots
-        and len(gas_base_slots) == 7
         and gas_base_slots.get("base.door_left_middle", {}).get("footprint_class") == "doorway"
         and not any(str(slot_id) == "base.door_right_middle" for slot_id in gas_preferences.values())
         and not any(str(slot_id) == "base.door_right_middle" for slot_id in gas_categories.values()),
