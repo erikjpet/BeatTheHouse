@@ -20,7 +20,7 @@
       "crew_criteria": [{"member_id": "crew_bishop", "rank": "associate", "label": "Bishop has not joined the crew yet."}],
       "setup": {
         "identity": {"required_sessions": 1, "bet_min": 8, "bet_max": 30, "heat_ceiling": 35},
-        "schedule": {"hold_required_actions": 1, "deadline_actions": 12, "attention_limit": 55},
+        "schedule": {"hold_required_actions": 1, "deadline_actions": 12, "attention_limit": 55, "crew_cooling_target": 47},
         "swap_cart": {"deadline_actions": 14},
         "guard_marker": {"optional": true, "flag": "debt_court_settlement", "member_id": "crew_knuckles", "min_rank": "associate"}
       },
