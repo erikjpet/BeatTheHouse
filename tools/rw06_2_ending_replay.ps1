@@ -2707,6 +2707,31 @@ function Complete-PublicDelivery {
             }
             continue
         }
+        $spatialHandoffs = @(Get-Array (Get-Value $script:LastObservation @('spatial', 'objects') @()) | Where-Object {
+            [string](Get-Value $_ @('object_id') '') -ceq 'crew::package_handoff' -and
+            [bool](Get-Value $_ @('visible') $false) -and
+            [bool](Get-Value $_ @('enabled') $false)
+        })
+        if ($spatialHandoffs.Count -gt 1) {
+            throw "$Intent exposed more than one public Crew handoff contact."
+        }
+        if ($spatialHandoffs.Count -ceq 1) {
+            # A full room can present the authenticated person through the visible
+            # room-actions grid instead of the canvas. This is the same normal-use
+            # interaction surface, and the no-scroll layout exposes the complete
+            # labeled action without hidden state or a debug shortcut.
+            $null = Invoke-OverflowRoomActionButton `
+                -ButtonText 'The Floor Contact: Hand Over The Package' `
+                -Intent "${Intent}: hand the package to the visible room contact"
+            Wait-Frames -Frames 12
+            Resolve-VisibleBlockingPresentation -Context $Intent
+            $remainingTarget = Get-DeliveryTargetNodeId
+            if ([string]::IsNullOrWhiteSpace($remainingTarget)) { return }
+            if ($remainingTarget -ceq $targetId) {
+                throw "$Intent left the same visible room-action handoff and map marker active after selection."
+            }
+            continue
+        }
         if ($null -cne (Find-Button -Text 'Hold Sightline')) {
             $null = Click-Button -Text 'Hold Sightline' -Intent "${Intent}: hold the marked sightline"
             Wait-Frames -Frames 8
