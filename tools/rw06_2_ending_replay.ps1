@@ -5232,8 +5232,56 @@ function Ensure-PunchlineCasinoDiscovered {
                 $searchPriority.ContainsKey($archetype) -and
                 $searchedNodeIds.Add($nodeId)) {
                 Restore-EnvironmentSurfaceAfterTravelResult
-                if ($null -cne (Find-CanvasObject -SemanticId 'event:parking_lot_tip')) {
+                $canvasTip = Find-CanvasObject -SemanticId 'event:parking_lot_tip'
+                $spatialTips = @(Get-Array (Get-Value $script:LastObservation @('spatial', 'objects') @()) | Where-Object {
+                    [string](Get-Value $_ @('object_id') '') -ceq 'event:parking_lot_tip'
+                })
+                if ($spatialTips.Count -gt 1) {
+                    throw 'The public room model exposes duplicate Parking Lot Tip objects.'
+                }
+                $spatialTipReady = $false
+                if ($spatialTips.Count -ceq 1) {
+                    $tipVisible = Get-Value $spatialTips[0] @('visible') $null
+                    $tipEnabled = Get-Value $spatialTips[0] @('enabled') $null
+                    $tipInteractive = Get-Value $spatialTips[0] @('interactive') $null
+                    if ($tipVisible -isnot [bool] -or $tipEnabled -isnot [bool] -or $tipInteractive -isnot [bool]) {
+                        throw 'The public Parking Lot Tip spatial record has malformed visibility, enabled, or interactive state.'
+                    }
+                    if (-not [bool]$tipVisible -or -not [bool]$tipEnabled -or -not [bool]$tipInteractive) {
+                        throw 'The public Parking Lot Tip spatial record is not exactly visible, enabled, and interactive.'
+                    }
+                    $spatialTipReady = $true
+                }
+                if ($null -cne $canvasTip) {
                     Invoke-EventObjectChoice -EventId 'parking_lot_tip' -ChoiceId 'follow_tip' -Intent 'follow the visible underground route tip'
+                    $tipFound = $true
+                    break
+                }
+                if ($spatialTipReady) {
+                    $screen = Get-Value $script:LastObservation @('screen', 'screen') $null
+                    $eventVisible = Get-Value $script:LastObservation @('event_popup', 'visible') $null
+                    $talkVisible = Get-Value $script:LastObservation @('talk', 'visible') $null
+                    $transitionActive = Get-Value $script:LastObservation @('screen', 'travel_transition_active') $null
+                    if ($screen -isnot [string] -or [string]$screen -cne 'ENVIRONMENT' -or
+                        $eventVisible -isnot [bool] -or [bool]$eventVisible -or
+                        $talkVisible -isnot [bool] -or [bool]$talkVisible -or
+                        $transitionActive -isnot [bool] -or [bool]$transitionActive) {
+                        throw 'The overflow Parking Lot Tip is blocked by a malformed or conflicting public room state.'
+                    }
+                    $null = Invoke-OverflowRoomActionButton `
+                        -ButtonText 'Parking Lot Tip: Follow the tip' `
+                        -Intent 'follow the visible overflow underground route tip'
+                    Wait-Frames -Frames 10 -Intent 'let the visible Parking Lot Tip response settle'
+                    $afterScreen = Get-Value $script:LastObservation @('screen', 'screen') $null
+                    $afterEventVisible = Get-Value $script:LastObservation @('event_popup', 'visible') $null
+                    $afterTalkVisible = Get-Value $script:LastObservation @('talk', 'visible') $null
+                    $afterTransitionActive = Get-Value $script:LastObservation @('screen', 'travel_transition_active') $null
+                    if ($afterScreen -isnot [string] -or [string]$afterScreen -cne 'ENVIRONMENT' -or
+                        $afterEventVisible -isnot [bool] -or [bool]$afterEventVisible -or
+                        $afterTalkVisible -isnot [bool] -or [bool]$afterTalkVisible -or
+                        $afterTransitionActive -isnot [bool] -or [bool]$afterTransitionActive) {
+                        throw 'The overflow Parking Lot Tip response did not settle to an uninterrupted public room.'
+                    }
                     $tipFound = $true
                     break
                 }
