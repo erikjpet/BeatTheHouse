@@ -127,23 +127,20 @@ func delivery_physical_interactions() -> Array:
 	if node_id.is_empty() or node_id != str(physical.get("position_node_id", "")):
 		return []
 	var result: Array = []
-	var target_room_blocked := _delivery_target_room_blocked()
-	var labels := {
-		"pickup": "Take the package", "wait": "Hold Sightline", "duck": "Duck Cover",
-		"stash": "Stash Package", "retrieve": "Retrieve the package", "ditch": "Ditch Package",
-		"signal": "Send Signal", "break_hold": "Break Hold",
-	}
 	for verb_value in JsonCoerceScript._copy_array(physical.get("available_verbs", [])):
 		var verb := str(verb_value)
-		# Street movement stays on the public map and handoff stays on the target
-		# person. Every physical action at the player's current position also gets
-		# a normal room-surface fallback. This keeps a live route operable when a
-		# crowded HUD cannot expose its secondary delivery row.
-		if verb == "move" or not labels.has(verb):
+		# Only a package physically present in the room is a room object. Route
+		# choices live in the authenticated delivery strip; handoff lives on the
+		# target person. Projecting route controls into the sealed base inventory
+		# makes them look like unauthenticated environment sources and can suppress
+		# the real handoff contact at the destination.
+		if verb not in ["pickup", "retrieve"]:
 			continue
-		if target_room_blocked and verb in ["wait", "signal"]:
-			continue
-		var label := str(labels.get(verb, verb.replace("_", " ").capitalize()))
+		var label := str({
+			"pickup": "Take the package", "wait": "Hold your sightline", "duck": "Duck into cover",
+			"stash": "Stash the package", "retrieve": "Retrieve the package", "ditch": "Ditch the package",
+			"signal": "Send the signal", "break_hold": "Break the hold",
+		}.get(verb, verb.replace("_", " ").capitalize()))
 		if verb == "retrieve":
 			label = "The Package"
 		result.append({
