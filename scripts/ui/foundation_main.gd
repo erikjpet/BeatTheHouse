@@ -17619,7 +17619,10 @@ func _refresh_delivery_action_strip() -> void:
 		actions = JsonCoerceScript._copy_array(run_state.delivery_top_actions())
 	var signature := JSON.stringify(actions)
 	if str(delivery_action_strip.get_meta("action_signature", "")) == signature:
-		delivery_action_strip.visible = not actions.is_empty()
+		var next_visible := not actions.is_empty()
+		if delivery_action_strip.visible != next_visible:
+			delivery_action_strip.visible = next_visible
+			_invalidate_run_screen_layout()
 		return
 	delivery_action_strip.set_meta("action_signature", signature)
 	for child in delivery_action_strip.get_children():
@@ -17628,6 +17631,10 @@ func _refresh_delivery_action_strip() -> void:
 	delivery_action_buttons.clear()
 	if actions.is_empty():
 		delivery_action_strip.visible = false
+		# This strip is a second row inside the clipped HUD. Recompute the info
+		# band whenever its contents disappear so the room canvas can reclaim the
+		# released height instead of retaining the previous delivery footprint.
+		_invalidate_run_screen_layout()
 		return
 	var heading := _muted_label("PACKAGE", 12)
 	heading.tooltip_text = "Actions for the delivery currently in your possession."
@@ -17643,6 +17650,11 @@ func _refresh_delivery_action_strip() -> void:
 		delivery_action_strip.add_child(button)
 		delivery_action_buttons[verb] = button
 	delivery_action_strip.visible = delivery_action_strip.get_child_count() > 1
+	# The HUD height is cached by viewport size, but delivery actions can appear
+	# without a resize (for example, after entering the Count's Cage room). Mark
+	# the layout dirty after rebuilding this second row so clip_contents cannot
+	# leave an authenticated action rendered below the old one-row HUD boundary.
+	_invalidate_run_screen_layout()
 
 
 func _objective_goal_text(pressure: Dictionary, demo_objective: Dictionary = {}) -> String:
