@@ -317,6 +317,11 @@ static func _status_hud(source: Dictionary) -> Dictionary:
 		var value: Variant = source.get(value_key, null)
 		if rendered and typeof(value) == TYPE_INT:
 			result[value_key] = value
+	var drunk_rendered_value: Variant = source.get("drunk_rendered", false)
+	var drunk_rendered := typeof(drunk_rendered_value) == TYPE_BOOL and bool(drunk_rendered_value)
+	result["drunk_rendered"] = drunk_rendered
+	if drunk_rendered:
+		result["drunk_text"] = str(source.get("drunk_text", ""))
 	var save_visible_value: Variant = source.get("save_text_visible", false)
 	result["save_text_visible"] = typeof(save_visible_value) == TYPE_BOOL and bool(save_visible_value)
 	if bool(result["save_text_visible"]):

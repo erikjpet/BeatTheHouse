@@ -1024,6 +1024,7 @@ func _public_rendered_status_hud(_source: Dictionary) -> Dictionary:
 	var chips_chip := structured_hud.get("chips_chip") as Control
 	var chips_label := structured_hud.get("chips_value") as Label
 	var heat_label := structured_hud.get("heat_value") as Label
+	var drunk_label := structured_hud.get("drunk_value") as Label
 	if _label_text_is_fully_rendered(wallet_label):
 		var wallet_text := wallet_label.text.strip_edges()
 		var wallet_pattern := RegEx.new()
@@ -1057,6 +1058,12 @@ func _public_rendered_status_hud(_source: Dictionary) -> Dictionary:
 				if heat_value >= 0 and heat_value <= 100:
 					result["heat_level"] = heat_value
 					result["heat_rendered"] = true
+	if _label_text_is_fully_rendered(drunk_label):
+		var drunk_text := drunk_label.text.strip_edges()
+		var drunk_pattern := RegEx.new()
+		if drunk_pattern.compile("^(?:0|[1-9][0-9]?|100)(?: \\+(?:[1-9][0-9]?|100))?$") == OK and drunk_pattern.search(drunk_text) != null:
+			result["drunk_text"] = drunk_text
+			result["drunk_rendered"] = true
 	var save_indicator := _public_status_indicator("save")
 	if bool(save_indicator.get("rendered", false)) and bool(save_indicator.get("present", false)):
 		result["save_text"] = str(save_indicator.get("tooltip", ""))

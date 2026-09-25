@@ -5805,19 +5805,44 @@ function Invoke-BishopGrandDrinkSobrietyDetour {
             throw "Grand Casino Main did not restore either the enabled house drink or its exact sobriety-only disabled public state after Bishop presence boundary $BoundaryNumber."
         }
 
-        Wait-Frames `
-            -Frames 720 `
-            -Intent "let the exact public delayed drink absorption settle before the final Bishop presence boundary $BoundaryNumber sobriety loop"
-        $settledDisabledDrinks = @(Get-Array (Get-Value $script:LastObservation @('spatial', 'objects') @()) | Where-Object {
-            [string](Get-Value $_ @('object_id') '') -ceq 'service:house_drink'
+        $compedObjects = @(Get-Array (Get-Value $script:LastResult @('look', 'clickable', 'canvas_objects') @()) | Where-Object {
+            [string](Get-Value $_ @('semantic_id') '') -ceq 'event:comped_suite_offer'
         })
-        if ($settledDisabledDrinks.Count -cne 1 -or
-            [string](Get-Value $settledDisabledDrinks[0] @('label') '') -cne 'Buy a Drink' -or
-            [string](Get-Value $settledDisabledDrinks[0] @('object_type') '') -cne 'service' -or
-            (Get-Value $settledDisabledDrinks[0] @('visible') $null) -isnot [bool] -or -not [bool](Get-Value $settledDisabledDrinks[0] @('visible') $false) -or
-            (Get-Value $settledDisabledDrinks[0] @('interactive') $null) -isnot [bool] -or -not [bool](Get-Value $settledDisabledDrinks[0] @('interactive') $false) -or
-            (Get-Value $settledDisabledDrinks[0] @('enabled') $null) -isnot [bool] -or [bool](Get-Value $settledDisabledDrinks[0] @('enabled') $true) -or
-            [string](Get-Value $settledDisabledDrinks[0] @('disabled_reason') '') -cne 'Too drunk to make another drink help.' -or
+        if ($compedObjects.Count -cne 1 -or
+            [string](Get-Value $compedObjects[0] @('label') '') -cne 'Comped Suite Offer' -or
+            [string](Get-Value $compedObjects[0] @('object_type') '') -cne 'event' -or
+            (Get-Value $compedObjects[0] @('rendered') $null) -isnot [bool] -or -not [bool](Get-Value $compedObjects[0] @('rendered') $false) -or
+            (Get-Value $compedObjects[0] @('enabled') $null) -isnot [bool] -or -not [bool](Get-Value $compedObjects[0] @('enabled') $false)) {
+            throw "Bishop presence boundary $BoundaryNumber cannot authenticate the exact rendered Comped Suite Offer before the final sobriety loop."
+        }
+        $beforeCompCash = Get-RenderedHudInteger -Name bankroll -Context "Bishop presence boundary $BoundaryNumber bankroll before declining the Comped Suite Offer"
+        $beforeCompHeat = Get-RenderedHudInteger -Name heat_level -Context "Bishop presence boundary $BoundaryNumber heat before declining the Comped Suite Offer"
+        Select-EventObject -EventId 'comped_suite_offer'
+        Wait-Frames -Frames 2 -Intent "render the exact Comped Suite Offer choices at Bishop presence boundary $BoundaryNumber"
+        $declineRow = Get-EventChoiceRoomAction -EventId 'comped_suite_offer' -ChoiceId 'decline'
+        if ($null -eq $declineRow -or
+            [string](Get-Value $declineRow @('label') '') -cne 'Decline' -or
+            (Get-Value $declineRow @('rendered') $null) -isnot [bool] -or -not [bool](Get-Value $declineRow @('rendered') $false) -or
+            (Get-Value $declineRow @('enabled') $null) -isnot [bool] -or -not [bool](Get-Value $declineRow @('enabled') $false)) {
+            throw "Bishop presence boundary $BoundaryNumber cannot authenticate the exact rendered Decline choice on the Comped Suite Offer."
+        }
+        Invoke-EventObjectChoice `
+            -EventId 'comped_suite_offer' `
+            -ChoiceId 'decline' `
+            -Intent "decline the exact visible Comped Suite Offer before the final Bishop presence boundary $BoundaryNumber sobriety loop"
+        $afterCompCash = Get-RenderedHudInteger -Name bankroll -Context "Bishop presence boundary $BoundaryNumber bankroll after declining the Comped Suite Offer"
+        $afterCompHeat = Get-RenderedHudInteger -Name heat_level -Context "Bishop presence boundary $BoundaryNumber heat after declining the Comped Suite Offer"
+        $drunkRendered = Get-ExactReplayBoolean `
+            -InputObject $script:LastObservation `
+            -Path @('status_hud', 'drunk_rendered') `
+            -Context "Bishop presence boundary $BoundaryNumber rendered Drunk witness after declining the Comped Suite Offer"
+        $drunkText = Get-ExactReplayString `
+            -InputObject $script:LastObservation `
+            -Path @('status_hud', 'drunk_text') `
+            -Context "Bishop presence boundary $BoundaryNumber rendered Drunk projection after declining the Comped Suite Offer"
+        if ($afterCompCash -cne $beforeCompCash -or
+            $afterCompHeat -cne ($beforeCompHeat - 2) -or
+            -not $drunkRendered -or $drunkText -cne '100' -or
             [string](Get-Value $script:LastObservation @('screen', 'screen') '') -cne 'ENVIRONMENT' -or
             [string](Get-Value $script:LastObservation @('environment', 'world_node_id') '') -cne [string]$currentNodeId -or
             [string](Get-Value $script:LastObservation @('environment', 'archetype_id') '') -cne 'grand_casino' -or
@@ -5825,7 +5850,7 @@ function Invoke-BishopGrandDrinkSobrietyDetour {
             [bool](Get-Value $script:LastObservation @('talk', 'visible') $true) -or
             (Get-Value $script:LastObservation @('screen', 'travel_transition_active') $null) -isnot [bool] -or
             [bool](Get-Value $script:LastObservation @('screen', 'travel_transition_active') $true)) {
-            throw "Bishop presence boundary $BoundaryNumber delayed absorption wait drifted from the exact modal-free Grand sobriety-disabled state."
+            throw "Bishop presence boundary $BoundaryNumber Comped Suite decline did not settle the exact public economy, Drunk projection, and modal-free Grand state."
         }
 
         Open-WorldMap
