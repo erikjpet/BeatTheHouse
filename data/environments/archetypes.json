@@ -1905,10 +1905,10 @@
             "description": "A private door behind the tables.",
             "requires_discovered": true,
             "access_paths": [
-              {"method": "crew_rank", "min_crew_rank": "made"},
+              {"method": "crew_rank", "min_crew_rank": "associate"},
               {"method": "rook_escort", "flags_any": ["rook_escort_punchline_back_room"]}
             ],
-            "locked_reason": "Rook keeps this door for made company."
+            "locked_reason": "Rook keeps this door for associates."
           }
         ]
       },

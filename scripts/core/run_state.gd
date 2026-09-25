@@ -14882,7 +14882,7 @@ static func _normalize_environment_layers(environment: Dictionary) -> void:
 		environment["layer_discovery"] = {"club": true, "casino": true, "back_room": false}
 		environment["layer_transitions"] = [
 			{"target_layer_id": "club", "label": "Comedy Club", "description": "Take the stairs back to the public room."},
-			{"target_layer_id": "back_room", "label": "Crew Back Room", "description": "A private door behind the tables.", "requires_discovered": true, "access_paths": [{"method": "crew_rank", "min_crew_rank": "made"}, {"method": "rook_escort", "flags_any": ["rook_escort_punchline_back_room"]}], "locked_reason": "Rook keeps this door for made company."},
+			{"target_layer_id": "back_room", "label": "Crew Back Room", "description": "A private door behind the tables.", "requires_discovered": true, "access_paths": [{"method": "crew_rank", "min_crew_rank": "associate"}, {"method": "rook_escort", "flags_any": ["rook_escort_punchline_back_room"]}], "locked_reason": "Rook keeps this door for associates."},
 		]
 		environment["layer_ambient_lines"] = []
 		environment["layer_ambient_label"] = ""
