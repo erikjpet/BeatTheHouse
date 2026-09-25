@@ -5253,6 +5253,44 @@ function Invoke-BishopPresenceHouseDrinkBoundary {
         -PreferredActions @('Use') `
         -Intent "buy the visible `$8 house drink to advance Bishop presence boundary $BoundaryNumber"
     Wait-Frames -Frames 10
+
+    $eventVisible = Get-Value $script:LastObservation @('event_popup', 'visible') $null
+    $talkVisible = Get-Value $script:LastObservation @('talk', 'visible') $null
+    if ($eventVisible -isnot [bool] -or $talkVisible -isnot [bool]) {
+        throw "Bishop presence boundary $BoundaryNumber lost its exact boolean modal visibility signals."
+    }
+    if ([bool]$talkVisible) {
+        throw "Bishop presence boundary $BoundaryNumber encountered an unexpected visible TalkDock."
+    }
+    if ([bool]$eventVisible) {
+        $renderValid = Get-Value $script:LastObservation @('event_popup', 'render_valid') $null
+        $eventId = Get-Value $script:LastObservation @('event_popup', 'event_id') $null
+        $choiceIds = @(Get-VisibleChoiceIds)
+        if ($renderValid -isnot [bool] -or -not [bool]$renderValid -or
+            $eventId -isnot [string] -or [string]$eventId -cne 'eye_in_the_sky' -or
+            ($choiceIds -join ',') -cne 'change_table,press_anyway') {
+            throw "Bishop presence boundary $BoundaryNumber encountered an unexpected or incomplete visible event."
+        }
+        $pressAnyway = @(Get-Array (Get-Value $script:LastObservation @('event_popup', 'choices') @()) | Where-Object {
+            [string](Get-Value $_ @('id') '') -ceq 'press_anyway'
+        })
+        if ($pressAnyway.Count -cne 1 -or
+            (Get-Value $pressAnyway[0] @('enabled') $null) -isnot [bool] -or
+            -not [bool](Get-Value $pressAnyway[0] @('enabled') $false)) {
+            throw "Bishop presence boundary $BoundaryNumber did not expose one exact rendered, enabled press_anyway choice."
+        }
+        $null = Choose-VisibleChoice `
+            -ChoiceId 'press_anyway' `
+            -Intent "press on through the visible Eye in the Sky response at Bishop presence boundary $BoundaryNumber"
+        Wait-Frames -Frames 12 -Intent 'let the visible Eye in the Sky response close before returning to room actions'
+        $afterEventVisible = Get-Value $script:LastObservation @('event_popup', 'visible') $null
+        $afterTalkVisible = Get-Value $script:LastObservation @('talk', 'visible') $null
+        if ($afterEventVisible -isnot [bool] -or $afterTalkVisible -isnot [bool] -or
+            [bool]$afterEventVisible -or [bool]$afterTalkVisible) {
+            throw "Bishop presence boundary $BoundaryNumber did not return to a modal-free public room after press_anyway."
+        }
+    }
+
     $afterCash = Get-RenderedHudInteger -Name bankroll -Context "Bishop presence boundary $BoundaryNumber bankroll after the visible house drink"
     if ($afterCash -ne $beforeCash - 8) {
         throw "The visible house drink did not charge its exact `$8 price at Bishop presence boundary $BoundaryNumber (`$$beforeCash -> `$$afterCash)."
