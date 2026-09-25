@@ -5276,11 +5276,36 @@ function Ensure-PunchlineCasinoDiscovered {
                     $afterEventVisible = Get-Value $script:LastObservation @('event_popup', 'visible') $null
                     $afterTalkVisible = Get-Value $script:LastObservation @('talk', 'visible') $null
                     $afterTransitionActive = Get-Value $script:LastObservation @('screen', 'travel_transition_active') $null
+                    if ($afterScreen -isnot [string] -or
+                        $afterEventVisible -isnot [bool] -or
+                        $afterTalkVisible -isnot [bool] -or [bool]$afterTalkVisible -or
+                        $afterTransitionActive -isnot [bool] -or [bool]$afterTransitionActive) {
+                        throw 'The overflow Parking Lot Tip response did not settle to an uninterrupted public room.'
+                    }
+                    if ([bool]$afterEventVisible) {
+                        if ([string]$afterScreen -cne 'EVENT') {
+                            throw 'The overflow Parking Lot Tip exposed an event outside the exact public event surface.'
+                        }
+                        $choiceId = Select-GrandFareMachineJamChoice `
+                            -EventPopup (Get-Value $script:LastObservation @('event_popup') $null) `
+                            -Talk (Get-Value $script:LastObservation @('talk') $null)
+                        if ($choiceId -cne 'wait') {
+                            throw 'The exact Parking Lot Tip machine_jam policy did not select its visible de-escalation choice.'
+                        }
+                        $null = Choose-VisibleChoice `
+                            -ChoiceId $choiceId `
+                            -Intent 'resolve the exact rendered post-tip machine_jam with its visible de-escalation choice'
+                        Wait-Frames -Frames 10 -Intent 'wait for the exact post-tip machine_jam response to settle'
+                        $afterScreen = Get-Value $script:LastObservation @('screen', 'screen') $null
+                        $afterEventVisible = Get-Value $script:LastObservation @('event_popup', 'visible') $null
+                        $afterTalkVisible = Get-Value $script:LastObservation @('talk', 'visible') $null
+                        $afterTransitionActive = Get-Value $script:LastObservation @('screen', 'travel_transition_active') $null
+                    }
                     if ($afterScreen -isnot [string] -or [string]$afterScreen -cne 'ENVIRONMENT' -or
                         $afterEventVisible -isnot [bool] -or [bool]$afterEventVisible -or
                         $afterTalkVisible -isnot [bool] -or [bool]$afterTalkVisible -or
                         $afterTransitionActive -isnot [bool] -or [bool]$afterTransitionActive) {
-                        throw 'The overflow Parking Lot Tip response did not settle to an uninterrupted public room.'
+                        throw 'The overflow Parking Lot Tip response left a malformed, interrupted, lingering, or chained public surface.'
                     }
                     $tipFound = $true
                     break
