@@ -5079,18 +5079,45 @@ function Ensure-PunchlineCasinoDiscovered {
     if ([string]::IsNullOrWhiteSpace($smallNode)) {
         $tipFound = $false
         $searchArchetypes = @('back_alley', 'gas_station_casino', 'motel', 'bar')
-        foreach ($archetype in $searchArchetypes) {
-            $nodeId = Find-WorldNodeIdByArchetype -ArchetypeId $archetype
-            if ([string]::IsNullOrWhiteSpace($nodeId)) { continue }
-            Navigate-ToNode -NodeId $nodeId -Intent "look for the visible route into the Punchline from $archetype"
-            Restore-EnvironmentSurfaceAfterTravelResult
-            if ($null -ceq (Find-CanvasObject -SemanticId 'event:parking_lot_tip')) { continue }
-            Invoke-EventObjectChoice -EventId 'parking_lot_tip' -ChoiceId 'follow_tip' -Intent 'follow the visible underground route tip'
-            $tipFound = $true
-            break
+        $searchPriority = @{}
+        for ($priority = 0; $priority -lt $searchArchetypes.Count; $priority++) {
+            $searchPriority[$searchArchetypes[$priority]] = $priority
         }
-        if (-not $tipFound) {
-            throw 'No ordinary public venue exposed the Parking Lot Tip needed to discover the Punchline.'
+        $searchedNodeIds = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+        while (-not $tipFound) {
+            $nodeId = [string](Get-Value $script:LastObservation @('environment', 'world_node_id') '')
+            $archetype = [string](Get-Value $script:LastObservation @('environment', 'archetype_id') '')
+            if ($nodeId -cmatch '^[a-z0-9_]+$' -and
+                $searchPriority.ContainsKey($archetype) -and
+                $searchedNodeIds.Add($nodeId)) {
+                Restore-EnvironmentSurfaceAfterTravelResult
+                if ($null -cne (Find-CanvasObject -SemanticId 'event:parking_lot_tip')) {
+                    Invoke-EventObjectChoice -EventId 'parking_lot_tip' -ChoiceId 'follow_tip' -Intent 'follow the visible underground route tip'
+                    $tipFound = $true
+                    break
+                }
+            }
+
+            Open-WorldMap
+            $eligibleCards = @(Get-MapNodes | Where-Object {
+                $candidateId = [string](Get-Value $_ @('id') '')
+                $candidateArchetype = [string](Get-Value $_ @('archetype_id') '')
+                $travelEnabled = Get-Value $_ @('travel_enabled') $null
+                $candidateId -cmatch '^[a-z0-9_]+$' -and
+                    $searchPriority.ContainsKey($candidateArchetype) -and
+                    $travelEnabled -is [bool] -and [bool]$travelEnabled -and
+                    (-not $searchedNodeIds.Contains($candidateId))
+            } | Sort-Object `
+                @{ Expression = { [int]$searchPriority[[string](Get-Value $_ @('archetype_id') '')] } }, `
+                @{ Expression = { [string](Get-Value $_ @('id') '') } })
+            Close-WorldMap
+            if ($eligibleCards.Count -ceq 0) {
+                throw 'No eligible Punchline search candidate remains among the current room and rendered, enabled public travel cards.'
+            }
+            $nextNodeId = [string](Get-Value $eligibleCards[0] @('id') '')
+            $nextArchetype = [string](Get-Value $eligibleCards[0] @('archetype_id') '')
+            Travel-ToNode -NodeId $nextNodeId -Intent "look for the visible route into the Punchline from $nextArchetype"
+            Restore-EnvironmentSurfaceAfterTravelResult
         }
         $smallNode = Find-WorldNodeIdByArchetype -ArchetypeId 'small_underground_casino'
     }
