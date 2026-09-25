@@ -96,6 +96,33 @@ eligible-origin travel comp is repeatable under the current data model.
   an observed route-length problem. Heist-related prices, Crew rewards, lender
   terms, and gates remain untouched until Lane C finishes its route.
 
+### Final-push T2 confirmation (2026-09-25)
+
+- Clean reached `players_card` in 197 player actions on current `main`. Its
+  rendered money curve was `$80 -> $100 -> $108`, then travel and the hallway
+  event moved it through `$101 -> $95 -> $105 -> $97 -> $81`; the invitation
+  raised it to `$131`, the comped Grand trip preserved `$131`, and the `$50`
+  cage exchange left `$81` cash / `$50` chips. The table route peaked at
+  `$193` chips and ended debt-free with `$68` cash. This stays inside the
+  150-350 normal-player target, so no Clean data changed.
+- Cheat reached `showdown_survived` in 117 player actions. Its rendered money
+  curve was `$80 -> $100`, then travel moved it through
+  `$94 -> $89 -> $82 -> $54`; the invitation raised it to `$104`, the comped
+  Grand trip preserved `$104`, and the cage exchange left `$54` cash / `$50`
+  chips. The route then moved through `$41 -> $39` chips while pressure rose,
+  collected the authored `$10` comp and `$15` Rourke event rewards, and ended
+  debt-free with `$79` cash / `$39` chips at 89 heat.
+- The one-action difference from the earlier 118-action Cheat confirmation is
+  route-driver timing, not a new economy change. This remains an explicitly
+  allowed optimized fast route. The ordinary showdown threshold stays at 85,
+  the forced ceiling stays at 95, and the profitable dirty-money trigger
+  remains available.
+- Final T2 tuning decision: no further prices, rewards, lender terms, or gates
+  changed. The Clean route is in range; slowing the intentional Cheat fast
+  route would undercut legitimate fast finishes without evidence that a normal
+  player's route is too short. RTP, odds, wager rules, and payout tables remain
+  unchanged.
+
 ## Departure-price integrity repair (rw06_2 blocker fix)
 
 The balance data exposed an existing travel transaction defect: the map priced
