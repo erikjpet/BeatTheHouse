@@ -669,10 +669,10 @@ func crew_heist_table_choices() -> Array:
 			active_choices.append({"id": "abort", "label": "Fold the score", "text": "Pay for the preparation already burned. The run continues.", "consequences": {"event_hooks": [{"type": "crew_heist", "action": "abort"}]}})
 		elif phase == _run.CrewHeistModelScript.STATUS_PLAY:
 			active_choices.append({"id": "live_table_direction", "label": "Return to the live table", "text": "The decisions happen inside the session, not over the planning map.", "disabled": true, "consequences": {}})
-		active_choices.append({"id": "leave", "label": "Leave the table", "text": "The map stays where it is.", "consequences": {}})
+		active_choices.append({"id": "leave", "label": "Leave the table", "text": "The map stays where it is.", "dismissal": true, "consequences": {}})
 		return active_choices
 	if not bool(status.get("visible", false)):
-		return [{"id": "leave", "label": "Leave the table clear", "text": "The center waits for somebody inside the circle.", "consequences": {}}]
+		return [{"id": "leave", "label": "Leave the table clear", "text": "The center waits for somebody inside the circle.", "dismissal": true, "consequences": {}}]
 	var choices: Array = []
 	for row_value in JsonCoerceScript._copy_array(status.get("plans", [])):
 		var row := JsonCoerceScript._copy_dict(row_value)
@@ -684,7 +684,7 @@ func crew_heist_table_choices() -> Array:
 			"disabled": not bool(row.get("live", false)),
 			"consequences": {"event_hooks": [{"type": "crew_heist", "action": "lock", "plan_id": str(row.get("id", ""))}]},
 		})
-	choices.append({"id": "leave", "label": "Leave the table clear", "text": "No score is forced tonight.", "consequences": {}})
+	choices.append({"id": "leave", "label": "Leave the table clear", "text": "No score is forced tonight.", "dismissal": true, "consequences": {}})
 	return choices
 
 
@@ -698,7 +698,7 @@ func crew_heist_live_table_choices() -> Array:
 			{"id": "interview_cut_short", "label": "Cut it short", "text": "Call Rook before the borrowed name cracks in the light.", "consequences": {"event_hooks": [{"type": "crew_heist", "action": "resolve_interview", "choice": "cut_short"}]}},
 		]
 	if phase != _run.CrewHeistModelScript.STATUS_PLAY or not _crew_heist_at_designated_table(state):
-		return [{"id": "leave", "label": "Leave the quiet table", "text": "No crew beat is live here.", "consequences": {}}]
+		return [{"id": "leave", "label": "Leave the quiet table", "text": "No crew beat is live here.", "dismissal": true, "consequences": {}}]
 	var play := JsonCoerceScript._copy_dict(state.get("play", {}))
 	var plan_id := str(state.get("plan_id", ""))
 	var result: Array = [{"id": "inspect", "label": "Read the live session", "text": "Round %d is settled." % int(play.get("round", 0)), "consequences": {}}]
@@ -718,7 +718,7 @@ func crew_heist_live_table_choices() -> Array:
 			result.append({"id": "begin_interview", "label": "Take the pot to the cage", "text": "The borrowed name still has to survive the interview.", "consequences": {"event_hooks": [{"type": "crew_heist", "action": "begin_interview"}]}})
 		else:
 			result.append({"id": "begin_getaway", "label": "Take the exit", "text": "Leave the live table for the marked route.", "consequences": {"event_hooks": [{"type": "crew_heist", "action": "begin_getaway"}]}})
-	result.append({"id": "leave", "label": "Stay in the session", "text": "The table keeps moving only when you play.", "consequences": {}})
+	result.append({"id": "leave", "label": "Stay in the session", "text": "The table keeps moving only when you play.", "dismissal": true, "consequences": {}})
 	return result
 
 

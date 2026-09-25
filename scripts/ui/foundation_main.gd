@@ -14538,6 +14538,15 @@ func _activate_event_response_action(action_object_id: String) -> bool:
 		return false
 	var event_id := payload.substr(0, separator)
 	var choice_id := payload.substr(separator + 1)
+	var event_option := _eligible_event_option(event_id)
+	var live_choice := _event_choice(event_option, choice_id)
+	if bool(live_choice.get("dismissal", false)):
+		if not _event_choice_popup_is_visible() \
+				or not _event_choice_popup_allows_event_resolution(event_id) \
+				or str(pending_event_choice_popup_snapshot.get("popup_type", "")) != "interactable_event":
+			return false
+		_dismiss_interactable_event_popup()
+		return true
 	if _event_is_person_conversation(event_id, true):
 		return _start_person_event_conversation(event_id)
 	event_choice_resolution_pending = true
@@ -14654,11 +14663,12 @@ func _show_interactable_event_popup(event_id: String) -> bool:
 			continue
 		var choice: Dictionary = choice_value
 		has_explicit_dismissal = has_explicit_dismissal or bool(choice.get("dismissal", false))
+		var choice_callback := Callable(self, "_dismiss_interactable_event_popup") if bool(choice.get("dismissal", false)) else Callable(self, "resolve_event_choice").bind(event_id, str(choice.get("id", "")))
 		_add_wager_confirmation_card(
 			str(choice.get("label", choice.get("id", ""))),
 			str(choice.get("text", "")),
 			str(choice.get("consequence_summary", "")),
-			Callable(self, "resolve_event_choice").bind(event_id, str(choice.get("id", ""))),
+			choice_callback,
 			false,
 			[],
 			event_id,
@@ -14684,6 +14694,8 @@ func _dismiss_interactable_event_popup() -> void:
 		return
 	_hide_event_choice_popup()
 	_clear_selected_event_choice()
+	_set_current_screen(SCREEN_GAME if current_game != null else SCREEN_ENVIRONMENT)
+	clear_interaction_focus(false, false)
 	_show_message("You leave it alone.")
 	_refresh()
 
