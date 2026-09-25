@@ -297,12 +297,21 @@ Answer:
 A
 
 ### Q-021 · rw06_1 · Reset three-room player view
-Status: OPEN
+Status: RESOLVED by reset Lane A 2026-09-24
 Asked: reset Lane A, 2026-09-24
 Question: Do the rebuilt Bar, Corner Store and Grand Casino now match the hand-authored, art-aligned direction? The normal player-view sheet shows each base room on top and busiest physical scenario below: `D:\Projects\Beat-The-House\.tmp\owner_review\q008_rooms.png`.
 Options: A) Approve this direction (recommended)  B) Needs blocking changes; list the room and issue in Answer
 Resume: Lane A continues every remaining room while OPEN. When ANSWERED, apply any blocking feedback across the room set, then change only this Status line to RESOLVED; final Lane A completion still requires `rooms_all.png` and owner approval.
 Answer:
+
+A: APPROVED, with two required fixes before Lane A is marked done:
+
+1. Coin pusher in the Corner Store. The Corner Store must always have its coin pusher: set `corner_store` `game_count` to exactly 1 in `data/environments/archetypes.json` (it is currently `[0, 1]`, so it often doesn't appear). It sits in `base.game_1` as a full-size machine standing on the floor, clearly visible, not squeezed in.
+2. Scale. Draw every room model (games and machines, people, props, shop items) at its original, natural sprite size, the way they looked before the slot rework. Don't shrink art to fit slot boxes. Where full-size art doesn't fit, move or resize the slot to fit the art, or send an optional object to the room action list. Apply this to every room.
+
+Non-blocking polish for `docs/plans/0.6.1_backlog.md`: a few outlined items still near the Bar floor in busy scenarios; some labels are very small.
+
+Confirmation: re-save `.tmp/owner_review/q008_rooms.png` and `rooms_all.png` with these fixes, and note in your status line that they're done. There's no need to ask again unless something can't be fixed. Then mark Lane A done and clean up the branch and worktree.
 
 ### Q-022 · rw06 release prep · 0.6.0 copy and trial builds ready
 Status: OPEN
