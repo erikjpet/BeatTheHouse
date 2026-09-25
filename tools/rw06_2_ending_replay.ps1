@@ -4021,6 +4021,16 @@ function Play-OneBlackjackRound {
                 $phaseNow -ceq 'betting' -and $cleanWagerControlsReady)) {
             return
         }
+        if ($UseVisibleCheat -and $phaseNow -ceq 'barred') {
+            $barredTransition = Select-CheatReplayPostPeekTransition `
+                -Game (Get-Value $script:LastObservation @('game') $null) `
+                -StatusHud (Get-Value $script:LastObservation @('status_hud') $null) `
+                -SurfaceActions @(Get-GameActions)
+            if ([string]$barredTransition.stage -cne 'leave_for_showdown') {
+                throw "Unknown public barred-table transition '$($barredTransition.stage)'."
+            }
+            return
+        }
 
         Invoke-PublicBossCalloutIfShown
         $phase = [string](Get-Value $script:LastObservation @('game', 'phase') '')
