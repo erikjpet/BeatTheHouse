@@ -6372,6 +6372,30 @@
           "walk_lane_ids": []
         },
         {
+          "id": "base.service_refreshment_shelf",
+          "kind": "base",
+          "pos": [
+            828.0,
+            80.0
+          ],
+          "footprint_class": "surface_item",
+          "hit_rect": [
+            792.0,
+            32.0,
+            72.0,
+            48.0
+          ],
+          "label_anchor": [
+            828.0,
+            26.0
+          ],
+          "facing": "none",
+          "priority": 15,
+          "zone_id": "right",
+          "support_id": "refreshment_shelf",
+          "walk_lane_ids": []
+        },
+        {
           "id": "base.event_wall_route",
           "kind": "base",
           "pos": [
@@ -6933,7 +6957,7 @@
         "game:scratch_tickets": "base.game_2",
         "game_hook:pull_tabs:ticket_redeemer": "base.service_lottery_desk",
         "numbers:book": "base.service_lottery_desk",
-        "service:house_drink": "base.service_lottery_desk",
+        "service:house_drink": "base.service_refreshment_shelf",
         "travel:back_alley": "base.door_left_middle",
         "travel:corner_store": "base.door_left_middle",
         "travel:delta_queen": "base.door_left_middle",
