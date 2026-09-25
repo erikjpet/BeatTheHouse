@@ -4604,6 +4604,15 @@ function Invoke-CheatEndingRoute {
                 -Intent 'accept the visibly watched suite offer and force Rourke to answer the pressure'
             Wait-Frames -Frames 10 -Intent 'let the visible suite-offer pressure settle'
         }
+        if ($renderedHeat -ge 70 -and
+            $null -eq (Find-CanvasObject -SemanticId 'event:the_house_calls') -and
+            $null -ne (Find-CanvasObject -SemanticId 'event:chain06_rourke_noticed')) {
+            Invoke-EventObjectChoice `
+                -EventId 'chain06_rourke_noticed' `
+                -ChoiceId 'let_the_check_pass' `
+                -Intent 'let the visible floor check pass and advance Rourke''s watched pressure'
+            Wait-Frames -Frames 10 -Intent 'let the visible Rourke notice settle into the house call'
+        }
         if ($null -cne (Find-CanvasObject -SemanticId 'event:the_house_calls')) {
             Open-EventObject -EventId 'the_house_calls' -Intent "answer Rourke's visible back-room call"
             $showdownCallOpened = $true
