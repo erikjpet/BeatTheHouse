@@ -4189,6 +4189,9 @@
         ]
       ]
     },
+    "semantic_zones": {
+      "center": {"bounds": [280, 90, 340, 280]}
+    },
     "security_profile": {
       "strictness": "boss",
       "visible_cues": [
