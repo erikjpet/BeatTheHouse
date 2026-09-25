@@ -1486,6 +1486,12 @@ func _draw_motel() -> void:
 	draw_rect(Rect2(742, 58, 54, 146), Color("#13283a"))
 	for y in range(78, 172, 22):
 		draw_rect(Rect2(752, y, 34, 12), _cycle_color(y))
+	# The low phone desk is an authored interaction support on the room floor.
+	# Keep its top/front aligned with placement_surfaces.json (286 / 324).
+	draw_rect(Rect2(450, 286, 224, 38), Color("#241a2d"))
+	draw_line(Vector2(454, 286), Vector2(670, 286), C_CYAN_2.darkened(0.28), 3)
+	draw_rect(Rect2(466, 324, 12, 48), Color("#11111d"))
+	draw_rect(Rect2(646, 324, 12, 48), Color("#11111d"))
 	_floor_reflections()
 
 
