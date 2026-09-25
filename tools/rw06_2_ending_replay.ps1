@@ -4146,8 +4146,16 @@ function Play-OneBlackjackRound {
             }
             return
         }
+        $retryPendingAction = Find-GameAction -Action 'blackjack_retry_pending'
+        if ($Ending -ceq 'clean' -and $null -cne $retryPendingAction) {
+            $null = Invoke-GameAction `
+                -Action 'blackjack_retry_pending' `
+                -Intent 'retry the visible sealed blackjack action before continuing the Clean card ladder'
+            Wait-Frames -Frames 12 -Intent 'let the visible sealed Clean blackjack action finish delivery'
+            continue
+        }
         if ([bool](Get-Value $script:LastObservation @('game', 'boss_duel_active') $false) -and
-            $null -cne (Find-GameAction -Action 'blackjack_retry_pending')) {
+            $null -cne $retryPendingAction) {
             $null = Invoke-GameAction `
                 -Action 'blackjack_retry_pending' `
                 -Intent 'retry the visible sealed duel action before Rourke deals the next hand'
