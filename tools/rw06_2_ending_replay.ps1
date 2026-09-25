@@ -4621,6 +4621,7 @@ function Ensure-PunchlineCasinoDiscovered {
             $nodeId = Find-WorldNodeIdByArchetype -ArchetypeId $archetype
             if ([string]::IsNullOrWhiteSpace($nodeId)) { continue }
             Navigate-ToNode -NodeId $nodeId -Intent "look for the visible route into the Punchline from $archetype"
+            Restore-EnvironmentSurfaceAfterTravelResult
             if ($null -ceq (Find-CanvasObject -SemanticId 'event:parking_lot_tip')) { continue }
             Invoke-EventObjectChoice -EventId 'parking_lot_tip' -ChoiceId 'follow_tip' -Intent 'follow the visible underground route tip'
             $tipFound = $true
@@ -4635,6 +4636,7 @@ function Ensure-PunchlineCasinoDiscovered {
         throw 'Following the Parking Lot Tip did not expose the Punchline on the public map.'
     }
     Navigate-ToNode -NodeId $smallNode -Intent 'travel through the real map to the Punchline'
+    Restore-EnvironmentSurfaceAfterTravelResult
     if ($null -cne (Find-CanvasObject -SemanticId 'event:side_door')) {
         Invoke-EventObjectChoice -EventId 'side_door' -ChoiceId 'punchline_password' -Intent 'use the visible password at the Punchline side door'
         Wait-Frames -Frames 12
