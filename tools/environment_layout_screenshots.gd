@@ -1193,6 +1193,11 @@ func _run_rw06_1_all_room_review(library: Variant) -> void:
 			if not scenario_saved:
 				quit(1)
 				return
+			if map_id == "kitty_cat_lounge":
+				var dense_actions_saved := await _rw06_1_save_dense_room_actions_png("%s/room_actions_dense.png" % out_dir)
+				if not dense_actions_saved:
+					quit(1)
+					return
 		captures.append({"map_id": map_id, "base_path": base_path, "scenario_path": scenario_path})
 		print("ALL_ROOM_REVIEW_SAVED map=%s" % map_id)
 	var priority_captures: Array = []
@@ -1240,6 +1245,28 @@ func _rw06_1_save_review_png(path: String) -> bool:
 	if save_error != OK:
 		push_error("Room review could not write %s (%s)." % [path, error_string(save_error)])
 		return false
+	return true
+
+
+func _rw06_1_save_dense_room_actions_png(path: String) -> bool:
+	var action_list: Variant = app.get("room_action_list")
+	if action_list == null or not action_list.has_method("open") or not action_list.has_method("is_open"):
+		push_error("Dense room-action review has no production RoomActionList.")
+		return false
+	action_list.call("open")
+	await _settle(3)
+	if not bool(action_list.call("is_open")):
+		push_error("Dense room-action review could not open the production action view.")
+		return false
+	await RenderingServer.frame_post_draw
+	var image := root.get_viewport().get_texture().get_image()
+	var save_error := image.save_png(path)
+	action_list.call("close")
+	await _settle(1)
+	if save_error != OK:
+		push_error("Dense room-action review could not write %s (%s)." % [path, error_string(save_error)])
+		return false
+	print("ROOM_ACTION_REVIEW_SAVED out=%s" % path)
 	return true
 
 
