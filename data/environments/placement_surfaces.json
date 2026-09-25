@@ -13183,7 +13183,7 @@
         "kitty_cat_lounge_amateur_night": {
           "class_overrides": {
             "event:scenario_amateur_night_applause": "wall_mounted",
-            "kitty_cat_lounge_amateur_night_amateur_signup": "wall_mounted",
+            "kitty_cat_lounge_amateur_night_amateur_signup": "surface_item",
             "kitty_cat_lounge_amateur_night_aftermath_final_lineup_rotated_prop": "wall_mounted"
           },
           "object_slot_positions": {
@@ -14121,6 +14121,32 @@
           ]
         },
         {
+          "id": "stage.patron_amateur_judge",
+          "kind": "stage",
+          "pos": [
+            636.0,
+            414.0
+          ],
+          "footprint_class": "standing_person",
+          "hit_rect": [
+            600.0,
+            334.0,
+            72.0,
+            80.0
+          ],
+          "label_anchor": [
+            636.0,
+            328.0
+          ],
+          "facing": "left",
+          "priority": 25,
+          "zone_id": "room",
+          "support_id": "floor",
+          "walk_lane_ids": [
+            "lane.public"
+          ]
+        },
+        {
           "id": "stage.event_stage_center",
           "kind": "stage",
           "pos": [
@@ -14315,8 +14341,8 @@
         "kitty_cat_lounge_amateur_night_aftermath_final_lineup_rotated_prop||center|": "stage.event_stage_center",
         "kitty_cat_lounge_amateur_night_aftermath_show_interrupted_prop||background|": "stage.event_floor_marker_left",
         "kitty_cat_lounge_amateur_night_amateur_contestant|kitty_amateur_contestant_arrival|right|": "stage.patron_floor_center",
-        "kitty_cat_lounge_amateur_night_amateur_judge|kitty_amateur_judge_arrival|background|": "stage.patron_floor_right",
-        "kitty_cat_lounge_amateur_night_amateur_judge|kitty_amateur_judge|right|kitty_cat_lounge_amateur_night_costume_move_position": "stage.patron_floor_right",
+        "kitty_cat_lounge_amateur_night_amateur_judge|kitty_amateur_judge_arrival|background|": "stage.patron_amateur_judge",
+        "kitty_cat_lounge_amateur_night_amateur_judge|kitty_amateur_judge|right|kitty_cat_lounge_amateur_night_costume_move_position": "stage.patron_amateur_judge",
         "kitty_cat_lounge_amateur_night_amateur_signup|kitty_amateur_signup|background|": "stage.event_stage_center",
         "kitty_cat_lounge_amateur_night_amateur_signup|kitty_amateur_signup|center|": "stage.event_stage_center",
         "kitty_cat_lounge_amateur_night_dressing_rack|env06_8_amateur_rack|left|": "stage.event_floor_left",
