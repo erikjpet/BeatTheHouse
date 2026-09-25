@@ -5136,6 +5136,29 @@ function Invoke-CrewFavorActionBoundary {
             }
         }
         else {
+            $beforeClockText = Get-Value $script:LastObservation @('environment', 'clock_text') $null
+            if ($beforeClockText -isnot [string]) {
+                throw "Crew favor 2 boundary $BoundaryNumber requires an exact rendered public clock before Switch."
+            }
+            $beforeClockMatch = [regex]::Match(
+                [string]$beforeClockText,
+                '^Day ([1-9][0-9]*) ([1-9]|1[0-2]):([0-5][0-9]) (AM|PM)$',
+                [System.Text.RegularExpressions.RegexOptions]::CultureInvariant
+            )
+            if (-not $beforeClockMatch.Success) {
+                throw "Crew favor 2 boundary $BoundaryNumber rejected malformed public clock '$beforeClockText' before Switch."
+            }
+            $beforeClockDay = [int]$beforeClockMatch.Groups[1].Value
+            $beforeClockHour = [int]$beforeClockMatch.Groups[2].Value
+            $beforeClockMinute = [int]$beforeClockMatch.Groups[3].Value
+            if ($beforeClockMatch.Groups[4].Value -ceq 'PM' -and $beforeClockHour -lt 12) {
+                $beforeClockHour += 12
+            }
+            elseif ($beforeClockMatch.Groups[4].Value -ceq 'AM' -and $beforeClockHour -ceq 12) {
+                $beforeClockHour = 0
+            }
+            $beforeClockOrdinal = (($beforeClockDay - 1) * 1440) + ($beforeClockHour * 60) + $beforeClockMinute
+
             $switchCanvas = Find-CanvasObject -SemanticId 'event:recruitment_switch'
             if ($null -eq $switchCanvas) {
                 $switchSpatial = @(Get-Array (Get-Value $script:LastObservation @('spatial', 'objects') @()) | Where-Object {
@@ -5187,7 +5210,44 @@ function Invoke-CrewFavorActionBoundary {
             Wait-Frames -Frames 10
             $afterCash = Get-RenderedHudInteger -Name bankroll -Context "Crew favor 2 boundary $BoundaryNumber bankroll after Switch"
             $afterHeat = Get-RenderedHudInteger -Name heat_level -Context "Crew favor 2 boundary $BoundaryNumber heat after Switch"
-            if ($afterCash -cne $beforeCash -or $afterHeat -cne $beforeHeat) {
+            $afterClockText = Get-Value $script:LastObservation @('environment', 'clock_text') $null
+            if ($afterClockText -isnot [string]) {
+                throw "Crew favor 2 boundary $BoundaryNumber requires an exact rendered public clock after Switch."
+            }
+            $afterClockMatch = [regex]::Match(
+                [string]$afterClockText,
+                '^Day ([1-9][0-9]*) ([1-9]|1[0-2]):([0-5][0-9]) (AM|PM)$',
+                [System.Text.RegularExpressions.RegexOptions]::CultureInvariant
+            )
+            if (-not $afterClockMatch.Success) {
+                throw "Crew favor 2 boundary $BoundaryNumber rejected malformed public clock '$afterClockText' after Switch."
+            }
+            $afterClockDay = [int]$afterClockMatch.Groups[1].Value
+            $afterClockHour = [int]$afterClockMatch.Groups[2].Value
+            $afterClockMinute = [int]$afterClockMatch.Groups[3].Value
+            if ($afterClockMatch.Groups[4].Value -ceq 'PM' -and $afterClockHour -lt 12) {
+                $afterClockHour += 12
+            }
+            elseif ($afterClockMatch.Groups[4].Value -ceq 'AM' -and $afterClockHour -ceq 12) {
+                $afterClockHour = 0
+            }
+            $afterClockOrdinal = (($afterClockDay - 1) * 1440) + ($afterClockHour * 60) + $afterClockMinute
+            $clockDelta = $afterClockOrdinal - $beforeClockOrdinal
+            if ($afterClockDay -cne $beforeClockDay -or $clockDelta -lt 0) {
+                throw "Crew favor 2 boundary $BoundaryNumber rejected nonmonotonic public clock chronology '$beforeClockText' -> '$afterClockText'."
+            }
+            $favorSurfaced = Test-CrewFavorPublicSurface
+            $acceptedTimedHeatDecay = $afterHeat -ceq ($beforeHeat - 1) -and
+                $favorSurfaced -and
+                $clockDelta -ceq 1 -and
+                [string](Get-Value $script:LastObservation @('screen', 'screen') '') -ceq 'ENVIRONMENT' -and
+                [string](Get-Value $script:LastObservation @('environment', 'world_node_id') '') -ceq 'back_alley' -and
+                [string](Get-Value $script:LastObservation @('environment', 'archetype_id') '') -ceq 'back_alley' -and
+                (Get-Value $script:LastObservation @('screen', 'travel_transition_active') $null) -is [bool] -and
+                -not [bool](Get-Value $script:LastObservation @('screen', 'travel_transition_active') $true) -and
+                -not [bool](Get-Value $script:LastObservation @('event_popup', 'visible') $true)
+            if ($afterCash -cne $beforeCash -or
+                ($afterHeat -cne $beforeHeat -and -not $acceptedTimedHeatDecay)) {
                 throw "The exact Switch refusal changed public economy at Crew favor 2 boundary $BoundaryNumber (`$$beforeCash/$beforeHeat -> `$$afterCash/$afterHeat)."
             }
         }
