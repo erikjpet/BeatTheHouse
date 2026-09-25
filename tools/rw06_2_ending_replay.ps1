@@ -2104,11 +2104,14 @@ function Start-NormalSeededRun {
     if (-not [bool](Get-Value $script:LastObservation @('screen', 'start_menu', 'run_config_visible') $false)) {
         throw 'RUN SETUP did not render the seeded-run configuration panel.'
     }
-    for ($poll = 0; $poll -lt 4 -and
-        -not [bool](Get-Value $script:LastObservation @('screen', 'start_menu', 'seed_field_visible') $false); $poll++) {
+    $seedFieldReady = [bool](Get-Value $script:LastObservation @('screen', 'start_menu', 'seed_field_visible') $false) -and
+        @(Get-Array (Get-Value $script:LastResult @('look', 'clickable', 'text_fields') @())).Count -gt 0
+    for ($poll = 0; $poll -lt 4 -and -not $seedFieldReady; $poll++) {
         Wait-Frames -Frames 2 -Intent 'allow the visible seed field to finish rendering'
+        $seedFieldReady = [bool](Get-Value $script:LastObservation @('screen', 'start_menu', 'seed_field_visible') $false) -and
+            @(Get-Array (Get-Value $script:LastResult @('look', 'clickable', 'text_fields') @())).Count -gt 0
     }
-    if (-not [bool](Get-Value $script:LastObservation @('screen', 'start_menu', 'seed_field_visible') $false)) {
+    if (-not $seedFieldReady) {
         $null = Click-Button -Text 'Done' -Intent 'close the fixed first-night run setup'
         $null = Click-Button -Text 'PLAY' -Intent 'start the mandatory fixed-seed first-night lesson'
         Wait-Frames -Frames 30
@@ -2131,12 +2134,15 @@ function Start-NormalSeededRun {
             throw 'Skipping the fixed first-night lesson did not return to the start screen.'
         }
         $null = Click-Button -Text 'RUN SETUP' -Intent 'reopen the seeded-run setup after the fixed first-night lesson' -Contains
-        for ($poll = 0; $poll -lt 4 -and
-            -not [bool](Get-Value $script:LastObservation @('screen', 'start_menu', 'seed_field_visible') $false); $poll++) {
+        $seedFieldReady = [bool](Get-Value $script:LastObservation @('screen', 'start_menu', 'seed_field_visible') $false) -and
+            @(Get-Array (Get-Value $script:LastResult @('look', 'clickable', 'text_fields') @())).Count -gt 0
+        for ($poll = 0; $poll -lt 4 -and -not $seedFieldReady; $poll++) {
             Wait-Frames -Frames 2 -Intent 'allow the post-lesson seed field to finish rendering'
+            $seedFieldReady = [bool](Get-Value $script:LastObservation @('screen', 'start_menu', 'seed_field_visible') $false) -and
+                @(Get-Array (Get-Value $script:LastResult @('look', 'clickable', 'text_fields') @())).Count -gt 0
         }
     }
-    if (-not [bool](Get-Value $script:LastObservation @('screen', 'start_menu', 'seed_field_visible') $false)) {
+    if (-not $seedFieldReady) {
         throw 'RUN SETUP did not expose its visible editable seed field.'
     }
     if ($Ending -ceq 'heist') {
