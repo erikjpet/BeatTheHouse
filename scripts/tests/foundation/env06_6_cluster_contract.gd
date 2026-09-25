@@ -37,9 +37,9 @@ func _run() -> void:
 		"layout":
 			ScenarioSemanticPresentationContractScript.check(library, failures)
 		"single_plane":
-			ScenarioSemanticPresentationContractScript._check_single_environment_plane(failures)
+			ScenarioSemanticPresentationContractScript._check_single_environment_plane(library, failures)
 		"projection_failures":
-			ScenarioSemanticPresentationContractScript._check_atomic_projection_failures(failures)
+			ScenarioSemanticPresentationContractScript._check_atomic_projection_failures(library, failures)
 		"layout_atomic_diag":
 			var definition = ScenarioSequenceContractScript.finalization_fixture_definition()
 			var command_visual = ScenarioSemanticPresentationContractScript._command_visual(definition)
@@ -48,10 +48,11 @@ func _run() -> void:
 			command_visual["object"] = command_object
 			ScenarioSemanticPresentationContractScript._reseal_definition(definition)
 			var run_state = preload("res://scripts/core/run_state.gd").new()
-			run_state.current_environment = ScenarioSemanticPresentationContractScript._finalization_environment(definition)
+			run_state.current_environment = ScenarioSemanticPresentationContractScript._finalization_environment(definition, library)
+			var trusted_base = ScenarioSemanticPresentationContractScript._production_presentations(run_state.current_environment, library)
 			run_state.scenario_prepare_semantic_finalization()
 			var before := JSON.stringify(run_state.current_environment)
-			var rejected = run_state.scenario_finalize_base_semantics([ScenarioSemanticPresentationContractScript._production_presentation()], library, ScenarioSemanticPresentationContractScript._production_layout_context())
+			var rejected = run_state.scenario_finalize_base_semantics(trusted_base, library, ScenarioSemanticPresentationContractScript._production_layout_context())
 			print("ATOMIC_REJECTED=" + JSON.stringify(rejected))
 			print("ATOMIC_CHANGED=" + str(JSON.stringify(run_state.current_environment) != before))
 			print("ATOMIC_BEFORE=" + before)
@@ -60,9 +61,10 @@ func _run() -> void:
 			var definition = ScenarioSequenceContractScript.finalization_fixture_definition()
 			var run_state = preload("res://scripts/core/run_state.gd").new()
 			run_state.bankroll = 41
-			run_state.current_environment = ScenarioSemanticPresentationContractScript._finalization_environment(definition)
+			run_state.current_environment = ScenarioSemanticPresentationContractScript._finalization_environment(definition, library)
+			var trusted_base = ScenarioSemanticPresentationContractScript._production_presentations(run_state.current_environment, library)
 			run_state.scenario_prepare_semantic_finalization()
-			var finalized = run_state.scenario_finalize_base_semantics([ScenarioSemanticPresentationContractScript._production_presentation()], library, ScenarioSemanticPresentationContractScript._production_layout_context())
+			var finalized = run_state.scenario_finalize_base_semantics(trusted_base, library, ScenarioSemanticPresentationContractScript._production_layout_context())
 			var hostile_anchors: Dictionary = run_state.current_environment.get("semantic_anchors", {}).duplicate(true)
 			hostile_anchors.erase("bar_floor_104")
 			run_state.current_environment["semantic_anchors"] = hostile_anchors
@@ -81,9 +83,10 @@ func _run() -> void:
 			definition["sequence"]["expiry"] = {"boundary": "night_end", "after": 1, "policy": "cleanup"}
 			ScenarioSemanticPresentationContractScript._reseal_definition(definition)
 			var run_state = preload("res://scripts/core/run_state.gd").new()
-			run_state.current_environment = ScenarioSemanticPresentationContractScript._finalization_environment(definition)
+			run_state.current_environment = ScenarioSemanticPresentationContractScript._finalization_environment(definition, library)
+			var trusted_base = ScenarioSemanticPresentationContractScript._production_presentations(run_state.current_environment, library)
 			run_state.scenario_prepare_semantic_finalization()
-			var finalized = run_state.scenario_finalize_base_semantics([ScenarioSemanticPresentationContractScript._production_presentation()], library, ScenarioSemanticPresentationContractScript._production_layout_context())
+			var finalized = run_state.scenario_finalize_base_semantics(trusted_base, library, ScenarioSemanticPresentationContractScript._production_layout_context())
 			var result = run_state.scenario_sequence_apply_expiry_boundary("night_end", 1)
 			var environment: Dictionary = run_state.current_environment
 			print("PASSIVE_FINALIZED=" + JSON.stringify(finalized))

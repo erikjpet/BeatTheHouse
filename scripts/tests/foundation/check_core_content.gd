@@ -2622,16 +2622,26 @@ func _check_s0_2_kitty_lounge_mixed_hook_layout(library: ContentLibrary, failure
 	run_state.start_new("S02-KITTY-LAYOUT")
 	var environment: Dictionary = EnvironmentInstance.from_archetype(archetype, 3, run_state.create_rng("s02_kitty_layout"), library).to_dict()
 	environment["service_ids"] = ["kitty_champagne", "kitty_burlesque_show", "house_drink"]
-	environment["lender_hooks"] = ["the_crew", "sals_pawn_counter"]
+	environment["lender_hooks"] = ["the_crew"]
 	environment["travel_hooks"] = ["bar", "jazz_club", "corner_store"]
 	environment["next_archetypes"] = ["bar", "jazz_club", "corner_store"]
 	environment["world_map_travel"] = true
-	environment["layout"] = EnvironmentInstance.ensure_generated_layout(environment)
+	environment["layout"] = EnvironmentInstance.ensure_generated_layout(environment, library)
 	var layout: Dictionary = environment.get("layout", {}) if typeof(environment.get("layout", {})) == TYPE_DICTIONARY else {}
 	var object_rects: Dictionary = layout.get("object_rects", {}) if typeof(layout.get("object_rects", {})) == TYPE_DICTIONARY else {}
-	for object_id in ["service:kitty_champagne", "lender:sals_pawn_counter"]:
-		if not object_rects.has(object_id):
-			failures.append("S0.2 Kitty Cat Lounge layout fixture is missing %s." % object_id)
+	var slot_bindings := JsonCoerceScript._copy_dict(layout.get("slot_bindings", {}))
+	var overflow_ids := JsonCoerceScript._copy_array(layout.get("slot_overflow_ids", []))
+	for object_id in ["service:kitty_champagne", "lender:the_crew"]:
+		var binding := JsonCoerceScript._copy_dict(slot_bindings.get(object_id, {}))
+		var mode := str(binding.get("presentation_mode", ""))
+		if binding.is_empty() or mode not in ["room", "overflow"]:
+			failures.append("S0.2 Kitty Cat Lounge layout fixture is missing sealed authority for %s." % object_id)
+		elif mode == "room" and (not object_rects.has(object_id) or overflow_ids.has(object_id)):
+			failures.append("S0.2 Kitty Cat Lounge room binding is missing geometry for %s." % object_id)
+		elif mode == "overflow" and (object_rects.has(object_id) or not overflow_ids.has(object_id)):
+			failures.append("S0.2 Kitty Cat Lounge overflow binding retained geometry for %s." % object_id)
+	if JsonCoerceScript._raw_string_array(environment.get("lender_hooks", [])).has("sals_pawn_counter"):
+		failures.append("S0.2 Kitty Cat Lounge fixture admitted Sal's pawn counter outside the pawn shop.")
 	var keys: Array = object_rects.keys()
 	for index in range(keys.size()):
 		var key := str(keys[index])
@@ -3069,10 +3079,18 @@ func _check_grand_casino_game_fixture_capacity(library: ContentLibrary, failures
 	main_environment["game_states"] = game_states
 	main_environment["world_map_travel"] = true
 	main_environment["layout"] = EnvironmentInstance.ensure_generated_layout(main_environment)
-	var object_rects := JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(main_environment.get("layout", {})).get("object_rects", {}))
-	for required_id in ["game:craps", "game_hook:pull_tabs:ticket_redeemer", "casino_fixture:host_desk"]:
+	var main_layout := JsonCoerceScript._copy_dict(main_environment.get("layout", {}))
+	var object_rects := JsonCoerceScript._copy_dict(main_layout.get("object_rects", {}))
+	for required_id in ["game:craps", "casino_fixture:host_desk"]:
 		if not object_rects.has(required_id):
 			failures.append("Grand Casino production-order layout regression is missing %s." % required_id)
+	var redeemer_id := "game_hook:pull_tabs:ticket_redeemer"
+	var redeemer_binding := JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(main_layout.get("slot_bindings", {})).get(redeemer_id, {}))
+	var overflow_ids := JsonCoerceScript._copy_array(main_layout.get("slot_overflow_ids", []))
+	if str(redeemer_binding.get("presentation_mode", "")) != "overflow" \
+			or not overflow_ids.has(redeemer_id) \
+			or object_rects.has(redeemer_id):
+		failures.append("Grand Casino ticket redeemer lost its authenticated geometry-free overflow binding.")
 	var object_ids := object_rects.keys()
 	for index in range(object_ids.size()):
 		var object_id := str(object_ids[index])

@@ -24,7 +24,6 @@ func _without_coin_pusher_game_states(value: Variant, parent_key: String = "") -
 # longer production playtest starts driving gameplay.
 
 const MainScene := preload("res://scenes/main.tscn")
-const EnvironmentPlacementScript := preload("res://scripts/core/environment_placement.gd")
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const PixelSceneCanvasScript := preload("res://scripts/ui/pixel_scene_canvas.gd")
 const GameSurfaceCanvasScript := preload("res://scripts/ui/game_surface_canvas.gd")
@@ -7345,32 +7344,31 @@ func _run_main_flow(app: Control) -> void:
 	var item_environment: Dictionary = app.call("serialized_run_state").get("current_environment", {})
 	var generated_item_layout: Dictionary = item_environment.get("layout", {})
 	var generated_object_rects: Dictionary = generated_item_layout.get("object_rects", {})
-	if not generated_object_rects.has("item:%s" % item_id):
+	var item_object_id := "item:%s" % item_id
+	if not generated_object_rects.has(item_object_id):
 		push_error("Generated environment layout did not persist item object placement by item id.")
 		quit(1)
 		return
-	var item_archetype := _archetype_by_id(app.get("library"), str(item_environment.get("archetype_id", "")))
-	var item_layout: Dictionary = item_archetype.get("layout", {})
-	var item_spots: Array = item_layout.get("item_spots", [])
-	if item_spots.is_empty():
-		push_error("Foundation item-offer map does not define item_spots for authored placement.")
-		quit(1)
-		return
-	var item_spot_values: Array = item_spots[0] if typeof(item_spots[0]) == TYPE_ARRAY else []
+	var item_binding := JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(generated_item_layout.get("slot_bindings", {})).get(item_object_id, {}))
+	var item_rect := _snapshot_rect(generated_object_rects.get(item_object_id, {}))
 	var item_board_size := Vector2(VisualStyleScript.ENVIRONMENT_BOARD_SIZE)
-	var expected_item_position := Vector2(-1.0, -1.0)
-	if item_spot_values.size() >= 2:
-		expected_item_position = Vector2(float(item_spot_values[0]) / item_board_size.x, float(item_spot_values[1]) / item_board_size.y)
+	var expected_item_position := item_rect.get_center()
+	var expected_item_size := item_rect.size * item_board_size
 	var actual_item_position: Variant = item_canvas_object.get("position", Vector2(-1.0, -1.0))
-	var item_placement_surfaces: Dictionary = generated_item_layout.get("placement_surfaces", {})
-	var item_local_snap_distance := INF
-	if typeof(actual_item_position) == TYPE_VECTOR2:
-		var item_position_delta: Vector2 = ((actual_item_position as Vector2) - expected_item_position) * item_board_size
-		item_local_snap_distance = item_position_delta.length()
-	if expected_item_position.x < 0.0 or typeof(actual_item_position) != TYPE_VECTOR2 \
-			or item_local_snap_distance > EnvironmentPlacement.LOCAL_SNAP_RADIUS \
-			or str(item_placement_surfaces.get("item:%s" % item_id, "")).is_empty():
-		push_error("Environment item holder did not keep the archetype item_spot within collision-safe local grounding.")
+	var actual_item_size: Variant = item_canvas_object.get("size", Vector2(-1.0, -1.0))
+	if str(item_binding.get("identity", "")) != item_object_id \
+			or str(item_binding.get("kind", "")) != "base" \
+			or str(item_binding.get("presentation_mode", "")) != "room" \
+			or str(item_binding.get("slot_id", "")).is_empty() \
+			or JsonCoerceScript._copy_dict(item_binding.get("slot", {})).is_empty() \
+			or str(item_canvas_object.get("slot_id", "")) != str(item_binding.get("slot_id", "")) \
+			or str(item_canvas_object.get("presentation_mode", "")) != "room" \
+			or not bool(item_canvas_object.get("fixed_slot_geometry", false)) \
+			or typeof(actual_item_position) != TYPE_VECTOR2 \
+			or not (actual_item_position as Vector2).is_equal_approx(expected_item_position) \
+			or typeof(actual_item_size) != TYPE_VECTOR2 \
+			or not (actual_item_size as Vector2).is_equal_approx(expected_item_size):
+		push_error("Environment item holder did not preserve its authenticated fixed-slot geometry.")
 		quit(1)
 		return
 	var serialized_before_item_category := JSON.stringify(app.call("serialized_run_state"))

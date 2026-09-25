@@ -1,6 +1,7 @@
 extends "res://scripts/tests/foundation/check_items_events_world.gd"
 
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+const EnvironmentPlacementScript := preload("res://scripts/core/environment_placement.gd")
 
 const RunReportViewModelScript := preload("res://scripts/ui/run_report_view_model.gd")
 const RunReportTimelineCanvasScript := preload("res://scripts/ui/run_report_timeline_canvas.gd")
@@ -4395,12 +4396,29 @@ func _check_environment_instance_shape(environment: EnvironmentInstance, require
 		failures.append("EnvironmentInstance layout should serialize generated object placement data.")
 	else:
 		var object_rects: Variant = (layout as Dictionary).get("object_rects", {})
-		if typeof(object_rects) != TYPE_DICTIONARY:
-			failures.append("EnvironmentInstance layout should include stable object_rects.")
+		var slot_bindings: Variant = (layout as Dictionary).get("slot_bindings", {})
+		if typeof(object_rects) != TYPE_DICTIONARY or typeof(slot_bindings) != TYPE_DICTIONARY:
+			failures.append("EnvironmentInstance layout should include stable slot authority and object_rects.")
 		else:
 			for event_id in environment.event_ids:
-				if not (object_rects as Dictionary).has("event:%s" % str(event_id)):
-					failures.append("EnvironmentInstance layout is missing event object placement.")
+				var object_id := "event:%s" % str(event_id)
+				var binding := JsonCoerceScript._copy_dict((slot_bindings as Dictionary).get(object_id, {}))
+				var mode := str(binding.get("presentation_mode", ""))
+				var slot := JsonCoerceScript._copy_dict(binding.get("slot", {}))
+				var slot_id := str(binding.get("slot_id", ""))
+				var placement_class := str(binding.get("placement_class", ""))
+				if binding.is_empty() \
+						or str(binding.get("identity", "")) != object_id \
+						or str(binding.get("kind", "")) != "base" \
+						or placement_class not in EnvironmentPlacementScript.CLASSES \
+						or mode not in ["room", "overflow"]:
+					failures.append("EnvironmentInstance layout is missing sealed event presentation authority.")
+					break
+				if mode == "room" and (slot_id.is_empty() or slot.is_empty() or not (object_rects as Dictionary).has(object_id)):
+					failures.append("EnvironmentInstance room event binding is missing authored geometry.")
+					break
+				if mode == "overflow" and (not slot_id.is_empty() or not slot.is_empty() or (object_rects as Dictionary).has(object_id)):
+					failures.append("EnvironmentInstance overflow event binding retained room geometry.")
 					break
 			for offer in environment.item_offers:
 				if typeof(offer) == TYPE_DICTIONARY and not (object_rects as Dictionary).has("item:%s" % str((offer as Dictionary).get("id", ""))):

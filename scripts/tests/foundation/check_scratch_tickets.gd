@@ -1416,9 +1416,19 @@ func _check_scratch_scalper_restock_arrival(game: GameModule, failures: Array) -
 
 func _check_environment_person_transits(failures: Array) -> void:
 	var canvas: Control = ScratchPixelSceneCanvasScript.new()
-	var settled_person := _person_transit_record("dialogue:scratch_ticket_scalper", 0.46)
+	var settled_person := _person_transit_record(
+		"dialogue:scratch_ticket_scalper",
+		"stage.patron_floor_middle",
+		"standing_person",
+		Rect2(120.0, 334.0, 72.0, 80.0)
+	)
 	var settled_package := _non_person_transit_record("delivery:pickup:gas_station_casino", 0.62)
-	var room := _person_transit_room("person-transit-visit", [_person_transit_record("shopkeeper:clerk", 0.30)])
+	var room := _person_transit_room("person-transit-visit", [_person_transit_record(
+		"shopkeeper:clerk",
+		"stage.staff_window",
+		"behind_counter_person",
+		Rect2(564.0, 12.0, 72.0, 72.0)
+	)])
 	canvas.call("render_environment_snapshot", room)
 	var changed_room := room.duplicate(true)
 	changed_room["interactable_objects"] = [room["interactable_objects"][0], settled_person, settled_package]
@@ -1436,12 +1446,13 @@ func _check_environment_person_transits(failures: Array) -> void:
 		failures.append("An arriving person remained a moving click target.")
 	else:
 		var points: Array = arrival.get("actor_route_points", [])
-		if points.size() != 3:
+		if points.size() < 2:
 			failures.append("Person arrival did not use the bounded doorway/floor/settled route.")
 		else:
 			var doorway_point := Vector2(float((points[0] as Dictionary).get("x", -1.0)), float((points[0] as Dictionary).get("y", -1.0))) * Vector2(900, 430)
-			if doorway_point.x > 90.0:
-				failures.append("Person arrival did not choose the nearest authored gas-station doorway.")
+			var settled_point := Vector2(float((points.back() as Dictionary).get("x", -1.0)), float((points.back() as Dictionary).get("y", -1.0))) * Vector2(900, 430)
+			if not doorway_point.is_equal_approx(Vector2(859.0, 362.0)) or not settled_point.is_equal_approx(Vector2(156.0, 374.0)):
+				failures.append("Person arrival did not follow the authored-priority exit and fixed person slot.")
 	canvas.set("actor_route_time", 20.0)
 	canvas.call("_advance_person_transits")
 	var arrived := _canvas_object(canvas, "dialogue:scratch_ticket_scalper")
@@ -1453,6 +1464,15 @@ func _check_environment_person_transits(failures: Array) -> void:
 		failures.append("A removed non-person package walked away instead of disappearing in place.")
 	if not bool(departure.get("person_transit_active", false)) or str(departure.get("person_transit_kind", "")) != "departure" or bool(departure.get("interactive", true)):
 		failures.append("A person removed mid-visit did not walk out as a non-interactive departure.")
+	else:
+		var departure_points: Array = departure.get("actor_route_points", [])
+		if departure_points.size() < 2:
+			failures.append("Person departure did not preserve the authored fixed-slot route.")
+		else:
+			var departure_start := Vector2(float((departure_points[0] as Dictionary).get("x", -1.0)), float((departure_points[0] as Dictionary).get("y", -1.0))) * Vector2(900, 430)
+			var departure_exit := Vector2(float((departure_points.back() as Dictionary).get("x", -1.0)), float((departure_points.back() as Dictionary).get("y", -1.0))) * Vector2(900, 430)
+			if not departure_start.is_equal_approx(Vector2(156.0, 374.0)) or not departure_exit.is_equal_approx(Vector2(859.0, 362.0)):
+				failures.append("Person departure did not reverse the authored-priority fixed-slot route.")
 	canvas.set("actor_route_time", 40.0)
 	canvas.call("_advance_person_transits")
 	if not _canvas_object(canvas, "dialogue:scratch_ticket_scalper").is_empty():
@@ -1469,28 +1489,57 @@ func _check_environment_person_transits(failures: Array) -> void:
 	entry_canvas.call("render_environment_snapshot", _person_transit_room("entry-after", [settled_person]))
 	if int(entry_canvas.get("person_transit_ids").size()) != 0:
 		failures.append("People already present paraded in when the player entered a room.")
+	var lane_crowd: Array = [
+		_person_transit_record("person:cap_00", "base.patron_left_table", "seated_person", Rect2(150.0, 206.0, 68.0, 64.0)),
+		_person_transit_record("person:cap_01", "base.patron_front_left", "seated_person", Rect2(108.0, 286.0, 68.0, 64.0)),
+		_person_transit_record("person:cap_02", "base.staff_right_table", "behind_counter_person", Rect2(354.0, 102.0, 72.0, 72.0)),
+		_person_transit_record("person:cap_03", "base.staff_floor", "standing_person", Rect2(84.0, 246.0, 72.0, 80.0)),
+		_person_transit_record("person:cap_04", "stage.staff_right_table", "behind_counter_person", Rect2(458.0, 102.0, 72.0, 72.0)),
+		_person_transit_record("person:cap_05", "stage.patron_group", "group", Rect2(468.0, 248.0, 104.0, 78.0)),
+		_person_transit_record("person:cap_06", "stage.patron_fog_officer", "standing_person", Rect2(364.0, 246.0, 72.0, 80.0)),
+		_person_transit_record("person:cap_07", "stage.patron_floor", "standing_person", Rect2(536.0, 246.0, 72.0, 80.0)),
+		_person_transit_record("person:cap_08", "", "standing_person", Rect2(), "overflow"),
+		_person_transit_record("person:cap_09", "", "standing_person", Rect2(), "overflow"),
+	]
+	var overflow_canvas: Control = ScratchPixelSceneCanvasScript.new()
+	overflow_canvas.call("render_environment_snapshot", _person_transit_room("overflow-visit", [], "delta_queen"))
+	overflow_canvas.call("render_environment_snapshot", _person_transit_room("overflow-visit", lane_crowd, "delta_queen"))
+	if (overflow_canvas.get("foundation_scene_objects") as Array).size() != 8:
+		failures.append("Geometry-free overflow people leaked into the fixed-slot room canvas.")
+	# Sealed authority normally limits this room to the eight unique person
+	# slots above. Duplicate the first two slots only in this hostile boundary
+	# fixture so the canvas's independent deterministic transit cap is exercised.
+	var cap_crowd: Array = lane_crowd.slice(0, 8)
+	cap_crowd.append(_person_transit_record("person:cap_08", "base.patron_left_table", "seated_person", Rect2(150.0, 206.0, 68.0, 64.0)))
+	cap_crowd.append(_person_transit_record("person:cap_09", "base.patron_front_left", "seated_person", Rect2(108.0, 286.0, 68.0, 64.0)))
 	var cap_canvas: Control = ScratchPixelSceneCanvasScript.new()
-	cap_canvas.call("render_environment_snapshot", _person_transit_room("cap-visit", []))
-	var crowd: Array = []
-	for index in range(10):
-		crowd.append(_person_transit_record("person:cap_%02d" % index, 0.12 + float(index) * 0.075))
-	cap_canvas.call("render_environment_snapshot", _person_transit_room("cap-visit", crowd))
-	if int(cap_canvas.get("person_transit_ids").size()) != 8 or (cap_canvas.get("foundation_scene_objects") as Array).size() != 10:
-		failures.append("Person transit cap did not animate the deterministic first eight and settle overflow immediately.")
+	cap_canvas.call("render_environment_snapshot", _person_transit_room("cap-visit", [], "delta_queen"))
+	cap_canvas.call("render_environment_snapshot", _person_transit_room("cap-visit", cap_crowd, "delta_queen"))
+	var cap_snapshot: Dictionary = cap_canvas.call("debug_soak_snapshot")
+	var expected_transit_ids := [
+		"person:cap_00", "person:cap_01", "person:cap_02", "person:cap_03",
+		"person:cap_04", "person:cap_05", "person:cap_06", "person:cap_07",
+	]
+	if int(cap_canvas.get("person_transit_ids").size()) != 8 \
+			or (cap_canvas.get("foundation_scene_objects") as Array).size() != 10 \
+			or int(cap_snapshot.get("person_transit_cap", -1)) != 8 \
+			or JsonCoerceScript._raw_string_array(cap_canvas.get("person_transit_ids")) != expected_transit_ids:
+		failures.append("Person transit cap did not animate the deterministic first eight arrivals under hostile excess input.")
 	cap_canvas.call("settle_person_transits")
 	if int(cap_canvas.get("person_transit_ids").size()) != 0:
 		failures.append("Save/reload transit settlement left presentation motion alive.")
 	canvas.queue_free()
 	reduced_canvas.queue_free()
 	entry_canvas.queue_free()
+	overflow_canvas.queue_free()
 	cap_canvas.queue_free()
 
 
-func _person_transit_room(visit_id: String, objects: Array) -> Dictionary:
+func _person_transit_room(visit_id: String, objects: Array, archetype_id: String = "gas_station_casino") -> Dictionary:
 	return {
 		"id": "scratch_person_transit_room",
-		"world_node_id": "gas_station_casino",
-		"archetype_id": "gas_station_casino",
+		"world_node_id": archetype_id,
+		"archetype_id": archetype_id,
 		"environment_visit_id": visit_id,
 		"entered_game_clock_minutes": 720,
 		"interactable_objects": objects,
@@ -1498,7 +1547,15 @@ func _person_transit_room(visit_id: String, objects: Array) -> Dictionary:
 	}
 
 
-func _person_transit_record(object_id: String, center_x: float) -> Dictionary:
+func _person_transit_record(object_id: String, slot_id: String, placement_class: String, rect: Rect2, presentation_mode: String = "room") -> Dictionary:
+	var normalized_rect := {}
+	if rect.has_area():
+		normalized_rect = {
+			"x": rect.position.x / 900.0,
+			"y": rect.position.y / 430.0,
+			"w": rect.size.x / 900.0,
+			"h": rect.size.y / 430.0,
+		}
 	return {
 		"object_id": object_id,
 		"object_type": "dialogue",
@@ -1508,10 +1565,12 @@ func _person_transit_record(object_id: String, center_x: float) -> Dictionary:
 		"visible": true,
 		"interactive": true,
 		"enabled": true,
-		"placement_class": "standing_person",
-		"scenario_layout_resolved": true,
-		"normalized_rect": {"x": center_x - 0.04, "y": 0.55, "w": 0.08, "h": 0.20},
-		"small_screen_rect": {"x": center_x - 0.05, "y": 0.53, "w": 0.10, "h": 0.24},
+		"placement_class": placement_class,
+		"slot_id": slot_id,
+		"presentation_mode": presentation_mode,
+		"fixed_slot_geometry": presentation_mode == "room",
+		"normalized_rect": normalized_rect,
+		"small_screen_rect": normalized_rect.duplicate(true),
 	}
 
 
