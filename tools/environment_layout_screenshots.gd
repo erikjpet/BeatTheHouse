@@ -181,6 +181,11 @@ func _run() -> void:
 			quit(1)
 			return
 	app = MainScene.instantiate()
+	if rw06_1_room_review:
+		# This one-shot authoring capture loads its required game scripts on the
+		# main thread. Do not let the start-menu prewarm worker race those same
+		# ResourceLoader requests while the first base room is being composed.
+		app.set("script_prewarm_stopping", true)
 	root.add_child(app)
 	await _settle(4)
 	if meta_home_review:
