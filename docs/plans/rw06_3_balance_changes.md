@@ -61,6 +61,9 @@ eligible-origin travel comp is repeatable under the current data model.
 - Measured effect of the existing invitation package: the route reached the
   Gold Players Card without a loan or a lucky recovery requirement. The `$50`
   invitation stake and eligible-origin `$0` Grand trip remain unchanged.
+- Final confirmation: the single permitted post-tuning replay again reached
+  `players_card` in exactly 197 player actions. No Clean price, reward, lender,
+  or Players Card gate change was needed.
 
 ### Cheat / Rourke
 
@@ -74,7 +77,14 @@ eligible-origin travel comp is repeatable under the current data model.
   65-heat Floor Staff warning. The separate `$30` dirty-money trigger remains
   available to a profitable cheater, and the 95-heat forced call remains the
   hard ceiling, so legitimate fast finishes are preserved.
-- Measured effect: pending the single allowed post-change Cheat replay.
+- Measured effect: the single permitted post-change replay reached
+  `showdown_survived` in 118 player actions, up from 101 (`+17`). The fixed
+  replay is an optimized legitimate fast route: it deliberately uses public
+  watched-cheat pressure and ordinary visible decisions to reach Rourke, so it
+  remains allowed to finish below the 150-action normal-player guideline. The
+  ordinary heat path now waits through the 85-heat Pit Boss warning, while the
+  `$30` dirty-money route and 95-heat forced ceiling still preserve faster
+  skilled or profitable finishes.
 
 ### Prices, rewards, and lender terms
 
