@@ -202,16 +202,35 @@ func _execute_command(raw: String, command_number: int) -> Dictionary:
 				if frames < 0 or frames > 3600:
 					reason = "frames must be between 0 and 3600"
 				else:
-					app.call("set_application_pause_owner", REPLAY_PAUSE_OWNER, false)
+					# This isolated process can retain the production focus-out owner
+					# because its window is intentionally unattended. Suspend the exact
+					# application-lifecycle owners seen at the command boundary so a
+					# normal wait advances presentation clocks, then restore all of them.
+					# Modal pause owners remain inside FoundationMain and are untouched.
+					var suspended_pause_owners: Array[String] = []
+					for owner_value in _array(pause_before.get("pause_owners", [])):
+						var owner := str(owner_value).strip_edges()
+						if owner.is_empty() or suspended_pause_owners.has(owner):
+							continue
+						suspended_pause_owners.append(owner)
+						app.call("set_application_pause_owner", owner, false)
 					await process_frame
 					await _wait_frames(frames)
-					app.call("set_application_pause_owner", REPLAY_PAUSE_OWNER, true)
+					for owner in suspended_pause_owners:
+						app.call("set_application_pause_owner", owner, true)
 					await process_frame
 					var pause_after_wait := _replay_pause_snapshot()
 					accepted = _replay_pause_is_valid(pause_after_wait)
+					var restored_pause_owners := _array(pause_after_wait.get("pause_owners", []))
+					for owner in suspended_pause_owners:
+						accepted = accepted and restored_pause_owners.has(owner)
 					if not accepted:
 						reason = "deterministic replay pause ownership was not restored after wait"
-					detail = {"frames": frames, "pause_restored": accepted}
+					detail = {
+						"frames": frames,
+						"pause_restored": accepted,
+						"suspended_pause_owners": suspended_pause_owners,
+					}
 			"quit":
 				accepted = true
 				should_quit = true
