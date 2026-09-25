@@ -5063,10 +5063,10 @@ function Invoke-CrewFavorActionBoundary {
         [Parameter(Mandatory = $true)][ValidateRange(1, 3)][int]$BoundaryNumber
     )
     $currentArchetype = Get-Value $script:LastObservation @('environment', 'archetype_id') $null
-    if ($FavorNumber -ceq 2 -and $BoundaryNumber -ceq 1 -and
+    if ($FavorNumber -ceq 2 -and
         $currentArchetype -is [string] -and [string]$currentArchetype -ceq 'back_alley') {
         if (Test-CrewFavorPublicSurface) {
-            throw 'Crew favor 2 boundary 1 reached Back Alley after its exact delivery surface was already visible.'
+            throw "Crew favor 2 boundary $BoundaryNumber reached Back Alley after its exact delivery surface was already visible."
         }
         $screen = Get-Value $script:LastObservation @('screen', 'screen') $null
         $eventVisible = Get-Value $script:LastObservation @('event_popup', 'visible') $null
@@ -5076,55 +5076,114 @@ function Invoke-CrewFavorActionBoundary {
             $eventVisible -isnot [bool] -or [bool]$eventVisible -or
             $talkVisible -isnot [bool] -or [bool]$talkVisible -or
             $transitionActive -isnot [bool] -or [bool]$transitionActive) {
-            throw 'Crew favor 2 boundary 1 cannot leave Back Alley through a malformed or interrupted public room.'
+            throw "Crew favor 2 boundary $BoundaryNumber cannot use its public Back Alley event through a malformed or interrupted room."
         }
 
-        Open-WorldMap
-        $cornerCards = @(Get-MapNodes | Where-Object {
-            [string](Get-Value $_ @('id') '') -ceq 'corner_store' -or
-                [string](Get-Value $_ @('archetype_id') '') -ceq 'corner_store'
-        })
-        if ($cornerCards.Count -cne 1) {
-            Close-WorldMap
-            throw "Crew favor 2 boundary 1 exposes $($cornerCards.Count) public Corner Store travel cards."
+        $beforeCash = Get-RenderedHudInteger -Name bankroll -Context "Crew favor 2 boundary $BoundaryNumber Back Alley bankroll"
+        $beforeHeat = Get-RenderedHudInteger -Name heat_level -Context "Crew favor 2 boundary $BoundaryNumber Back Alley heat"
+        if ($BoundaryNumber -ceq 1) {
+            if ($null -ceq (Find-CanvasObject -SemanticId 'event:back_alley_offer')) {
+                throw 'Crew favor 2 boundary 1 requires one exact rendered and enabled Back Alley Offer.'
+            }
+            $null = Open-SemanticObject `
+                -SemanticId 'event:back_alley_offer' `
+                -PreferredActions @('inspect_event_choices', 'Review responses', 'Open', 'Inspect') `
+                -Intent 'open the exact Back Alley Offer for Crew favor 2 boundary 1'
+            for ($poll = 0; $poll -lt 16; $poll++) {
+                $renderValid = Get-Value $script:LastObservation @('event_popup', 'render_valid') $null
+                if ($renderValid -is [bool] -and [bool]$renderValid) { break }
+                Wait-Frames -Frames 4 -Intent 'let the exact Back Alley Offer finish rendering'
+                if (-not [bool](Get-Value $script:LastObservation @('event_popup', 'visible') $false)) {
+                    throw 'The Back Alley Offer disappeared before its exact choices finished rendering.'
+                }
+            }
+            $event = Get-Value $script:LastObservation @('event_popup') $null
+            $choices = @(Get-Array (Get-Value $event @('choices') @()))
+            if ((Get-Value $event @('visible') $null) -isnot [bool] -or -not [bool](Get-Value $event @('visible') $false) -or
+                (Get-Value $event @('render_valid') $null) -isnot [bool] -or -not [bool](Get-Value $event @('render_valid') $false) -or
+                [string](Get-Value $event @('event_id') '') -cne 'back_alley_offer' -or
+                [string](Get-Value $event @('title') '') -cne 'Back Alley Offer' -or
+                [string](Get-Value $event @('summary') '') -cne 'A trunk opens on a bad bargain.' -or
+                (@(Get-Array (Get-Value $event @('choice_ids') @())) -join ',') -cne 'take_cash,walk' -or
+                $choices.Count -cne 2 -or
+                [string](Get-Value $choices[0] @('id') '') -cne 'take_cash' -or
+                [string](Get-Value $choices[0] @('label') '') -cne 'Take the cash' -or
+                [string](Get-Value $choices[0] @('text') '') -cne 'Small cash. Small stain. Both travel light.' -or
+                (Get-Value $choices[0] @('enabled') $null) -isnot [bool] -or -not [bool](Get-Value $choices[0] @('enabled') $false) -or
+                [string](Get-Value $choices[1] @('id') '') -cne 'walk' -or
+                [string](Get-Value $choices[1] @('label') '') -cne 'Keep walking' -or
+                [string](Get-Value $choices[1] @('text') '') -cne 'Your hands come away clean enough.' -or
+                (Get-Value $choices[1] @('enabled') $null) -isnot [bool] -or -not [bool](Get-Value $choices[1] @('enabled') $false) -or
+                [bool](Get-Value $script:LastObservation @('talk', 'visible') $true)) {
+                throw 'Crew favor 2 boundary 1 rejected a malformed or drifted Back Alley Offer surface.'
+            }
+            $null = Choose-VisibleChoice -ChoiceId 'take_cash' -Intent 'take the exact visible Back Alley cash offer for Crew favor 2 boundary 1'
+            Wait-Frames -Frames 10
+            $afterCash = Get-RenderedHudInteger -Name bankroll -Context 'Crew favor 2 boundary 1 bankroll after Back Alley Offer'
+            $afterHeat = Get-RenderedHudInteger -Name heat_level -Context 'Crew favor 2 boundary 1 heat after Back Alley Offer'
+            if ($afterCash -cne ($beforeCash + 8) -or $afterHeat -cne ($beforeHeat + 2)) {
+                throw "The exact Back Alley Offer changed public economy unexpectedly (`$$beforeCash/$beforeHeat -> `$$afterCash/$afterHeat)."
+            }
         }
-        $cornerId = Get-Value $cornerCards[0] @('id') $null
-        $cornerArchetype = Get-Value $cornerCards[0] @('archetype_id') $null
-        $cornerEnabled = Get-Value $cornerCards[0] @('travel_enabled') $null
-        $cornerCost = Get-Value $cornerCards[0] @('cost') $null
-        if ($cornerId -isnot [string] -or [string]$cornerId -cne 'corner_store' -or
-            $cornerArchetype -isnot [string] -or [string]$cornerArchetype -cne 'corner_store' -or
-            $cornerEnabled -isnot [bool] -or -not [bool]$cornerEnabled -or
-            ($cornerCost -isnot [int32] -and $cornerCost -isnot [int64]) -or [long]$cornerCost -ne 0) {
-            Close-WorldMap
-            throw 'Crew favor 2 boundary 1 requires one exact rendered, enabled, zero-fare Corner Store card.'
+        else {
+            if ($null -ceq (Find-CanvasObject -SemanticId 'event:recruitment_switch')) {
+                throw "Crew favor 2 boundary $BoundaryNumber requires one exact rendered and enabled Switch contact."
+            }
+            $null = Open-SemanticObject `
+                -SemanticId 'event:recruitment_switch' `
+                -PreferredActions @('Talk', 'inspect_event_choices', 'Open', 'Approach') `
+                -Intent "open the exact Switch contact for Crew favor 2 boundary $BoundaryNumber"
+            Wait-ForFullyRenderedTalkSurface -Intent "Crew favor 2 boundary $BoundaryNumber Switch contact"
+            $talk = Get-Value $script:LastObservation @('talk') $null
+            $talkChoices = @(Get-PublicTalkChoices)
+            if ((Get-Value $talk @('visible') $null) -isnot [bool] -or -not [bool](Get-Value $talk @('visible') $false) -or
+                (Get-Value $talk @('render_valid') $null) -isnot [bool] -or -not [bool](Get-Value $talk @('render_valid') $false) -or
+                (Get-Value $talk @('body_complete') $null) -isnot [bool] -or -not [bool](Get-Value $talk @('body_complete') $false) -or
+                [string](Get-Value $talk @('event_id') '') -cne 'recruitment_switch' -or
+                [string](Get-Value $talk @('summary') '') -cne 'Switch taps two routes, then waits.' -or
+                (@(Get-Array (Get-Value $talk @('choice_ids') @())) -join ',') -cne 'work_with_switch,leave_switch_waiting' -or
+                $talkChoices.Count -cne 2 -or
+                [string](Get-Value $talkChoices[0] @('event_id') '') -cne 'recruitment_switch' -or
+                [string](Get-Value $talkChoices[0] @('id') '') -cne 'work_with_switch' -or
+                [string](Get-Value $talkChoices[0] @('label') '') -cne 'Take the route' -or
+                (Get-Value $talkChoices[0] @('enabled') $null) -isnot [bool] -or -not [bool](Get-Value $talkChoices[0] @('enabled') $false) -or
+                [string](Get-Value $talkChoices[1] @('event_id') '') -cne 'recruitment_switch' -or
+                [string](Get-Value $talkChoices[1] @('id') '') -cne 'leave_switch_waiting' -or
+                [string](Get-Value $talkChoices[1] @('label') '') -cne 'Keep circling' -or
+                (Get-Value $talkChoices[1] @('enabled') $null) -isnot [bool] -or -not [bool](Get-Value $talkChoices[1] @('enabled') $false) -or
+                [bool](Get-Value $script:LastObservation @('event_popup', 'visible') $true)) {
+                throw "Crew favor 2 boundary $BoundaryNumber rejected a malformed or drifted Switch talk surface."
+            }
+            $null = Choose-VisibleChoice `
+                -ChoiceId 'leave_switch_waiting' `
+                -Intent "keep circling through the exact visible Switch response at Crew favor 2 boundary $BoundaryNumber"
+            Wait-Frames -Frames 10
+            $afterCash = Get-RenderedHudInteger -Name bankroll -Context "Crew favor 2 boundary $BoundaryNumber bankroll after Switch"
+            $afterHeat = Get-RenderedHudInteger -Name heat_level -Context "Crew favor 2 boundary $BoundaryNumber heat after Switch"
+            if ($afterCash -cne $beforeCash -or $afterHeat -cne $beforeHeat) {
+                throw "The exact Switch refusal changed public economy at Crew favor 2 boundary $BoundaryNumber (`$$beforeCash/$beforeHeat -> `$$afterCash/$afterHeat)."
+            }
         }
-        Travel-ToNode `
-            -NodeId ([string]$cornerId) `
-            -Intent 'take the visible zero-fare Corner Store route for Crew favor 2 boundary 1'
+
         if (Test-CrewFavorPublicSurface) { return }
-
-        $arrivalNode = Get-Value $script:LastObservation @('environment', 'world_node_id') $null
-        $arrivalArchetype = Get-Value $script:LastObservation @('environment', 'archetype_id') $null
-        $arrivalScreen = Get-Value $script:LastObservation @('screen', 'screen') $null
-        $arrivalEvent = Get-Value $script:LastObservation @('event_popup', 'visible') $null
-        $arrivalTalk = Get-Value $script:LastObservation @('talk', 'visible') $null
-        $arrivalTransition = Get-Value $script:LastObservation @('screen', 'travel_transition_active') $null
-        if ($arrivalNode -isnot [string] -or [string]$arrivalNode -cne 'corner_store' -or
-            $arrivalArchetype -isnot [string] -or [string]$arrivalArchetype -cne 'corner_store' -or
-            $arrivalScreen -isnot [string] -or [string]$arrivalScreen -cnotin @('RESULT', 'ENVIRONMENT') -or
-            $arrivalEvent -isnot [bool] -or [bool]$arrivalEvent -or
-            $arrivalTalk -isnot [bool] -or [bool]$arrivalTalk -or
-            $arrivalTransition -isnot [bool] -or [bool]$arrivalTransition) {
-            throw 'Crew favor 2 boundary 1 did not settle at an uninterrupted public Corner Store room.'
+        $settledScreen = Get-Value $script:LastObservation @('screen', 'screen') $null
+        if ($settledScreen -isnot [string] -or [string]$settledScreen -cnotin @('RESULT', 'ENVIRONMENT') -or
+            [string](Get-Value $script:LastObservation @('environment', 'world_node_id') '') -cne 'back_alley' -or
+            [string](Get-Value $script:LastObservation @('environment', 'archetype_id') '') -cne 'back_alley' -or
+            [bool](Get-Value $script:LastObservation @('event_popup', 'visible') $true) -or
+            [bool](Get-Value $script:LastObservation @('talk', 'visible') $true) -or
+            [bool](Get-Value $script:LastObservation @('screen', 'travel_transition_active') $true)) {
+            throw "Crew favor 2 boundary $BoundaryNumber did not settle at an uninterrupted Back Alley room."
         }
         Restore-EnvironmentSurfaceAfterTravelResult
-        if ([string](Get-Value $script:LastObservation @('environment', 'world_node_id') '') -cne 'corner_store' -or
+        if (Test-CrewFavorPublicSurface) { return }
+        if ([string](Get-Value $script:LastObservation @('environment', 'world_node_id') '') -cne 'back_alley' -or
+            [string](Get-Value $script:LastObservation @('environment', 'archetype_id') '') -cne 'back_alley' -or
             [string](Get-Value $script:LastObservation @('screen', 'screen') '') -cne 'ENVIRONMENT' -or
             [bool](Get-Value $script:LastObservation @('event_popup', 'visible') $true) -or
             [bool](Get-Value $script:LastObservation @('talk', 'visible') $true) -or
             [bool](Get-Value $script:LastObservation @('screen', 'travel_transition_active') $true)) {
-            throw 'Crew favor 2 boundary 1 did not restore a modal-free public Corner Store room.'
+            throw "Crew favor 2 boundary $BoundaryNumber did not restore a modal-free Back Alley room."
         }
         return
     }
