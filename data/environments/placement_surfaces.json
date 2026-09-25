@@ -11390,18 +11390,18 @@
           "id": "base.event_practice_rig",
           "kind": "base",
           "pos": [
-            760.0,
+            720.0,
             224.0
           ],
           "footprint_class": "floor_fixture",
           "hit_rect": [
-            714.0,
+            674.0,
             160.0,
             92.0,
             64.0
           ],
           "label_anchor": [
-            760.0,
+            719.0,
             154.0
           ],
           "facing": "none",
