@@ -4643,32 +4643,55 @@ function Test-CrewFavorPublicSurface {
 }
 
 
-function Invoke-CrewFavorCashierTipBoundary {
+function Invoke-CrewFavorActionBoundary {
     param(
         [Parameter(Mandatory = $true)][ValidateRange(1, 2)][int]$FavorNumber,
         [Parameter(Mandatory = $true)][ValidateRange(1, 2)][int]$BoundaryNumber
     )
-    Navigate-ToArchetype -ArchetypeId 'corner_store' -Intent "return to the Corner Store for Crew favor $FavorNumber boundary $BoundaryNumber"
-    Restore-EnvironmentSurfaceAfterTravelResult
-
-    $service = Find-CanvasObject -SemanticId 'service:cashier_tip'
-    if ($null -ceq $service -or
-        [string](Get-Value $service @('label') '') -cne 'Cashier Tip' -or
-        [string](Get-Value $service @('object_type') '') -cne 'service') {
-        throw 'The Corner Store does not expose exactly the rendered, enabled Cashier Tip service required for Crew-marker timing.'
+    $serviceId = ''
+    $serviceLabel = ''
+    $serviceType = 'service'
+    $serviceCost = 0
+    if ($null -cne (Find-CanvasObject -SemanticId 'service:cashier_tip')) {
+        $serviceId = 'service:cashier_tip'
+        $serviceLabel = 'Cashier Tip'
+        $serviceCost = 4
     }
-    $beforeCash = Get-RenderedHudInteger -Name bankroll -Context "Crew favor $FavorNumber boundary $BoundaryNumber bankroll before the visible Cashier Tip"
-    if ($beforeCash -lt 4) {
-        throw "The visible Cashier Tip costs `$4, but only `$$beforeCash remains before Crew favor $FavorNumber boundary $BoundaryNumber."
+    elseif ($null -cne (Find-CanvasObject -SemanticId 'service:house_drink')) {
+        # After a completed delivery, take the ordinary priced room action already
+        # in front of the player. Forcing a map detour can cycle through the capped
+        # revisit cards even though the marker accepts any normal action boundary.
+        $serviceId = 'service:house_drink'
+        $serviceLabel = 'Buy a Drink'
+        $serviceType = 'drink'
+        $serviceCost = 8
+    }
+    else {
+        Navigate-ToArchetype -ArchetypeId 'corner_store' -Intent "return to the Corner Store for Crew favor $FavorNumber boundary $BoundaryNumber"
+        Restore-EnvironmentSurfaceAfterTravelResult
+        $serviceId = 'service:cashier_tip'
+        $serviceLabel = 'Cashier Tip'
+        $serviceCost = 4
+    }
+
+    $service = Find-CanvasObject -SemanticId $serviceId
+    if ($null -ceq $service -or
+        [string](Get-Value $service @('label') '') -cne $serviceLabel -or
+        [string](Get-Value $service @('object_type') '') -cne $serviceType) {
+        throw "Crew-marker timing does not expose the expected rendered, enabled $serviceLabel service."
+    }
+    $beforeCash = Get-RenderedHudInteger -Name bankroll -Context "Crew favor $FavorNumber boundary $BoundaryNumber bankroll before the visible $serviceLabel"
+    if ($beforeCash -lt $serviceCost) {
+        throw "The visible $serviceLabel costs `$$serviceCost, but only `$$beforeCash remains before Crew favor $FavorNumber boundary $BoundaryNumber."
     }
     $null = Open-SemanticObject `
-        -SemanticId 'service:cashier_tip' `
+        -SemanticId $serviceId `
         -PreferredActions @('Use') `
-        -Intent "pay the visible `$4 Cashier Tip for Crew favor $FavorNumber boundary $BoundaryNumber"
+        -Intent "use the visible $serviceLabel for Crew favor $FavorNumber boundary $BoundaryNumber"
     Wait-Frames -Frames 10
-    $afterCash = Get-RenderedHudInteger -Name bankroll -Context "Crew favor $FavorNumber boundary $BoundaryNumber bankroll after the visible Cashier Tip"
-    if ($afterCash -ne $beforeCash - 4) {
-        throw "The visible Cashier Tip did not charge its exact `$4 price at Crew favor $FavorNumber boundary $BoundaryNumber (`$$beforeCash -> `$$afterCash)."
+    $afterCash = Get-RenderedHudInteger -Name bankroll -Context "Crew favor $FavorNumber boundary $BoundaryNumber bankroll after the visible $serviceLabel"
+    if ($afterCash -ne $beforeCash - $serviceCost) {
+        throw "The visible $serviceLabel did not charge its exact `$$serviceCost price at Crew favor $FavorNumber boundary $BoundaryNumber (`$$beforeCash -> `$$afterCash)."
     }
     if (-not (Test-CrewFavorPublicSurface)) {
         Restore-EnvironmentSurfaceAfterTravelResult
@@ -4734,13 +4757,13 @@ function Clear-CrewMarkerFavors {
     # so the long heist route cannot be interrupted later by a second overdue
     # Crew call. Normal travel advances only the clock, not RunState's action
     # index. Audit/invitation choices may already have consumed a boundary; use
-    # the repeatable rendered $4 Cashier Tip only for the remaining boundaries.
+    # an exact rendered, priced room service for the remaining boundaries.
     for ($favor = 1; $favor -le 2; $favor++) {
         for ($boundary = 1; $boundary -le 2 -and -not (Test-CrewFavorPublicSurface); $boundary++) {
-            Invoke-CrewFavorCashierTipBoundary -FavorNumber $favor -BoundaryNumber $boundary
+            Invoke-CrewFavorActionBoundary -FavorNumber $favor -BoundaryNumber $boundary
         }
         if (-not (Test-CrewFavorPublicSurface)) {
-            throw "Crew favor $favor did not surface after at most two visible Cashier Tip action boundaries."
+            throw "Crew favor $favor did not surface after at most two visible service action boundaries."
         }
         $eventId = [string](Get-Value $script:LastObservation @('event_popup', 'event_id') '')
         $talkId = [string](Get-Value $script:LastObservation @('talk', 'event_id') '')
