@@ -1041,6 +1041,7 @@ func _run_rw06_1_room_review(library: Variant) -> void:
 		var selection := _dict(selection_value).duplicate(true)
 		var archetype_id := str(selection.get("archetype_id", ""))
 		var scenario_id := str(selection.get("scenario_id", ""))
+		print("ROOM_REVIEW_BASE_BEGIN room=%s" % archetype_id)
 		var base_preparation := await _rw06_1_prepare_base_room(_dict(archetypes.get(archetype_id, {})), library)
 		if not bool(base_preparation.get("ok", false)):
 			for error_value in _array(base_preparation.get("errors", [])):
@@ -1052,6 +1053,8 @@ func _run_rw06_1_room_review(library: Variant) -> void:
 		if not base_saved:
 			quit(1)
 			return
+		print("ROOM_REVIEW_BASE_SAVED room=%s" % archetype_id)
+		print("ROOM_REVIEW_SCENARIO_BEGIN room=%s scenario=%s" % [archetype_id, scenario_id])
 		var scenario_preparation := await _rw06_1_prepare_scenario_review(
 			_dict(archetypes.get(archetype_id, {})),
 			_dict(definitions.get(scenario_id, {})),
@@ -1068,6 +1071,7 @@ func _run_rw06_1_room_review(library: Variant) -> void:
 		if not scenario_saved:
 			quit(1)
 			return
+		print("ROOM_REVIEW_SCENARIO_SAVED room=%s scenario=%s" % [archetype_id, scenario_id])
 		captures.append({
 			"archetype_id": archetype_id,
 			"base_path": base_path,
@@ -2312,10 +2316,12 @@ func _rw06_1_prepare_scenario_review(archetype: Dictionary, definition: Dictiona
 	var installed := _dict(generator.call("_install_environment", run_state, data))
 	if not bool(installed.get("ok", false)):
 		return {"ok": false, "errors": _array(installed.get("errors", ["Room review could not install the scenario room."]))}
+	print("ROOM_REVIEW_SCENARIO_INSTALLED scenario=%s" % scenario_id)
 	run_state.bankroll = maxi(run_state.bankroll, 100000)
 	var command_index := 0
 	for command_id_value in _array(selection.get("command_path", [])):
 		var command_id := str(command_id_value)
+		print("ROOM_REVIEW_COMMAND_BEGIN scenario=%s command=%s" % [scenario_id, command_id])
 		var applied := _rw06_1_apply_review_command(
 			run_state,
 			definition,
@@ -2324,6 +2330,7 @@ func _rw06_1_prepare_scenario_review(archetype: Dictionary, definition: Dictiona
 		)
 		if not bool(applied.get("ok", false)):
 			return {"ok": false, "errors": _array(applied.get("errors", ["Room review could not perform %s." % command_id]))}
+		print("ROOM_REVIEW_COMMAND_DONE scenario=%s command=%s" % [scenario_id, command_id])
 		command_index += 1
 	var projection := _dict(run_state.current_environment.get("scenario_sequence_projection", {}))
 	var target_phase := str(selection.get("phase_id", ""))
@@ -2335,6 +2342,7 @@ func _rw06_1_prepare_scenario_review(archetype: Dictionary, definition: Dictiona
 	app.call("_set_current_screen", "ENVIRONMENT")
 	app.call("_render_environment_screen")
 	await _settle(3)
+	print("ROOM_REVIEW_SCENARIO_RENDERED scenario=%s phase=%s" % [scenario_id, target_phase])
 	return {"ok": true, "errors": []}
 
 
