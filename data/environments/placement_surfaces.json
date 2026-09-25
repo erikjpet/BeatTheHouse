@@ -21121,25 +21121,42 @@
       },
       "counters": [
         {
-          "id": "gift_case",
+          "id": "gift_case_upper",
           "x0": 54,
           "x1": 244,
-          "top_y": 124,
-          "front_y": 274
+          "top_y": 170,
+          "front_y": 214,
+          "classes": [
+            "surface_item"
+          ]
+        },
+        {
+          "id": "gift_case_lower",
+          "x0": 54,
+          "x1": 244,
+          "top_y": 214,
+          "front_y": 274,
+          "classes": [
+            "surface_item"
+          ]
         },
         {
           "id": "teller_counter",
           "x0": 260,
           "x1": 648,
           "top_y": 260,
-          "front_y": 316
+          "front_y": 316,
+          "foreground_art_id": "grand_cage_teller_counter"
         },
         {
-          "id": "atm",
+          "id": "atm_display",
           "x0": 668,
           "x1": 772,
-          "top_y": 116,
-          "front_y": 290
+          "top_y": 186,
+          "front_y": 290,
+          "classes": [
+            "surface_item"
+          ]
         }
       ],
       "seats": [],
@@ -21169,6 +21186,17 @@
               168
             ]
           },
+          {
+            "id": "atm",
+            "bounds": [
+              668,
+              116,
+              104,
+              174
+            ]
+          }
+        ],
+        "mounts": [
           {
             "id": "atm",
             "bounds": [
@@ -21215,66 +21243,66 @@
           "id": "base.shop_item_1",
           "kind": "base",
           "pos": [
-            96.0,
-            124.0
+            110.0,
+            170.0
           ],
           "footprint_class": "surface_item",
           "hit_rect": [
-            60.0,
-            76.0,
+            74.0,
+            122.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            74.0,
-            70.0
+            110.0,
+            116.0
           ],
           "facing": "none",
           "priority": 10,
           "zone_id": "room",
-          "support_id": "gift_case",
+          "support_id": "gift_case_upper",
           "walk_lane_ids": []
         },
         {
           "id": "base.shop_item_2",
           "kind": "base",
           "pos": [
-            200.0,
-            124.0
+            190.0,
+            214.0
           ],
           "footprint_class": "surface_item",
           "hit_rect": [
-            164.0,
-            76.0,
+            154.0,
+            166.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            200.0,
-            62.0
+            190.0,
+            160.0
           ],
           "facing": "none",
           "priority": 20,
           "zone_id": "room",
-          "support_id": "gift_case",
+          "support_id": "gift_case_lower",
           "walk_lane_ids": []
         },
         {
           "id": "base.shop_item_3",
           "kind": "base",
           "pos": [
-            320.0,
+            340.0,
             260.0
           ],
           "footprint_class": "surface_item",
           "hit_rect": [
-            284.0,
+            304.0,
             212.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            320.0,
+            340.0,
             206.0
           ],
           "facing": "none",
@@ -21287,18 +21315,18 @@
           "id": "base.shop_item_4",
           "kind": "base",
           "pos": [
-            440.0,
+            564.0,
             260.0
           ],
           "footprint_class": "surface_item",
           "hit_rect": [
-            404.0,
+            528.0,
             212.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            446.0,
+            564.0,
             206.0
           ],
           "facing": "none",
@@ -21311,48 +21339,48 @@
           "id": "base.fixture_cage_1",
           "kind": "base",
           "pos": [
-            330.0,
-            358.0
+            454.0,
+            260.0
           ],
-          "footprint_class": "floor_fixture",
+          "footprint_class": "surface_item",
           "hit_rect": [
-            284.0,
-            294.0,
-            92.0,
-            64.0
+            392.0,
+            212.0,
+            124.0,
+            48.0
           ],
           "label_anchor": [
-            326.0,
-            300.0
+            454.0,
+            206.0
           ],
           "facing": "none",
           "priority": 50,
           "zone_id": "room",
-          "support_id": "floor",
+          "support_id": "teller_counter",
           "walk_lane_ids": []
         },
         {
           "id": "base.fixture_cage_2",
           "kind": "base",
           "pos": [
-            450.0,
-            358.0
+            720.0,
+            203.0
           ],
-          "footprint_class": "floor_fixture",
+          "footprint_class": "wall_mounted",
           "hit_rect": [
-            404.0,
-            294.0,
-            92.0,
-            64.0
+            668.0,
+            116.0,
+            104.0,
+            174.0
           ],
           "label_anchor": [
-            452.0,
-            300.0
+            720.0,
+            110.0
           ],
           "facing": "none",
           "priority": 60,
           "zone_id": "room",
-          "support_id": "floor",
+          "support_id": "atm",
           "walk_lane_ids": []
         },
         {
@@ -21414,23 +21442,23 @@
           "kind": "stage",
           "pos": [
             720.0,
-            116.0
+            159.0
           ],
           "footprint_class": "surface_item",
           "hit_rect": [
-            684.0,
-            68.0,
-            72.0,
-            48.0
+            680.0,
+            132.0,
+            80.0,
+            54.0
           ],
           "label_anchor": [
             720.0,
-            62.0
+            126.0
           ],
           "facing": "none",
           "priority": 10,
           "zone_id": "room",
-          "support_id": "atm",
+          "support_id": "atm_display",
           "walk_lane_ids": []
         },
         {
@@ -21601,7 +21629,7 @@
           "id": "bedspread",
           "x0": 352,
           "x1": 638,
-          "top_y": 114,
+          "top_y": 218,
           "front_y": 218
         },
         {
@@ -21615,7 +21643,7 @@
           "id": "rug",
           "x0": 204,
           "x1": 718,
-          "top_y": 236,
+          "top_y": 294,
           "front_y": 294
         }
       ],
@@ -21734,18 +21762,18 @@
           "kind": "base",
           "pos": [
             540.0,
-            236.0
+            294.0
           ],
           "footprint_class": "surface_item",
           "hit_rect": [
             504.0,
-            188.0,
+            246.0,
             72.0,
             48.0
           ],
           "label_anchor": [
             540.0,
-            182.0
+            240.0
           ],
           "facing": "none",
           "priority": 30,
@@ -21781,19 +21809,19 @@
           "id": "base.home_sleep",
           "kind": "base",
           "pos": [
-            400.0,
-            114.0
+            495.0,
+            218.0
           ],
           "footprint_class": "surface_item",
           "hit_rect": [
-            364.0,
-            66.0,
-            72.0,
-            48.0
+            352.0,
+            114.0,
+            286.0,
+            104.0
           ],
           "label_anchor": [
-            400.0,
-            60.0
+            495.0,
+            108.0
           ],
           "facing": "none",
           "priority": 10,
@@ -21806,18 +21834,18 @@
           "kind": "base",
           "pos": [
             820.0,
-            24.0
+            72.0
           ],
           "footprint_class": "wall_mounted",
           "hit_rect": [
             780.0,
-            0.0,
+            48.0,
             80.0,
             48.0
           ],
           "label_anchor": [
             820.0,
-            8.0
+            42.0
           ],
           "facing": "none",
           "priority": 20,
@@ -21830,18 +21858,18 @@
           "kind": "base",
           "pos": [
             600.0,
-            24.0
+            72.0
           ],
           "footprint_class": "wall_mounted",
           "hit_rect": [
             560.0,
-            0.0,
+            48.0,
             80.0,
             48.0
           ],
           "label_anchor": [
             600.0,
-            8.0
+            42.0
           ],
           "facing": "none",
           "priority": 10,
@@ -21906,18 +21934,18 @@
           "kind": "stage",
           "pos": [
             420.0,
-            236.0
+            294.0
           ],
           "footprint_class": "surface_item",
           "hit_rect": [
             384.0,
-            188.0,
+            246.0,
             72.0,
             48.0
           ],
           "label_anchor": [
             420.0,
-            182.0
+            240.0
           ],
           "facing": "none",
           "priority": 10,
@@ -22064,21 +22092,21 @@
           "id": "sofa",
           "x0": 296,
           "x1": 564,
-          "top_y": 118,
+          "top_y": 222,
           "front_y": 222
         },
         {
           "id": "kitchen_counter",
           "x0": 632,
           "x1": 774,
-          "top_y": 132,
+          "top_y": 146,
           "front_y": 214
         },
         {
           "id": "rug",
           "x0": 260,
           "x1": 634,
-          "top_y": 246,
+          "top_y": 304,
           "front_y": 304
         }
       ],
@@ -22131,6 +22159,17 @@
               48,
               224,
               178
+            ]
+          }
+        ],
+        "mounts": [
+          {
+            "id": "framed_print",
+            "bounds": [
+              354,
+              48,
+              146,
+              64
             ]
           }
         ]
@@ -22197,18 +22236,18 @@
           "kind": "base",
           "pos": [
             500.0,
-            246.0
+            304.0
           ],
           "footprint_class": "surface_item",
           "hit_rect": [
             464.0,
-            198.0,
+            256.0,
             72.0,
             48.0
           ],
           "label_anchor": [
             500.0,
-            192.0
+            250.0
           ],
           "facing": "none",
           "priority": 10,
@@ -22221,18 +22260,18 @@
           "kind": "base",
           "pos": [
             700.0,
-            132.0
+            146.0
           ],
           "footprint_class": "surface_item",
           "hit_rect": [
             664.0,
-            84.0,
+            98.0,
             72.0,
             48.0
           ],
           "label_anchor": [
             700.0,
-            78.0
+            92.0
           ],
           "facing": "none",
           "priority": 20,
@@ -22244,19 +22283,19 @@
           "id": "base.home_sleep",
           "kind": "base",
           "pos": [
-            360.0,
-            118.0
+            430.0,
+            222.0
           ],
           "footprint_class": "surface_item",
           "hit_rect": [
-            324.0,
-            70.0,
-            72.0,
-            48.0
+            296.0,
+            118.0,
+            268.0,
+            104.0
           ],
           "label_anchor": [
-            360.0,
-            64.0
+            430.0,
+            112.0
           ],
           "facing": "none",
           "priority": 30,
@@ -22292,19 +22331,19 @@
           "id": "base.home_upgrade",
           "kind": "base",
           "pos": [
-            850.0,
-            24.0
+            314.0,
+            90.0
           ],
           "footprint_class": "wall_mounted",
           "hit_rect": [
-            810.0,
-            0.0,
+            274.0,
+            66.0,
             80.0,
             48.0
           ],
           "label_anchor": [
-            850.0,
-            8.0
+            314.0,
+            60.0
           ],
           "facing": "none",
           "priority": 10,
@@ -22316,24 +22355,24 @@
           "id": "base.home_notice",
           "kind": "base",
           "pos": [
-            560.0,
-            24.0
+            427.0,
+            80.0
           ],
           "footprint_class": "wall_mounted",
           "hit_rect": [
-            520.0,
-            0.0,
-            80.0,
-            48.0
+            354.0,
+            48.0,
+            146.0,
+            64.0
           ],
           "label_anchor": [
-            560.0,
-            8.0
+            427.0,
+            42.0
           ],
           "facing": "none",
           "priority": 20,
           "zone_id": "room",
-          "support_id": "wall",
+          "support_id": "framed_print",
           "walk_lane_ids": []
         }
       ],
@@ -22343,18 +22382,18 @@
           "kind": "stage",
           "pos": [
             380.0,
-            246.0
+            304.0
           ],
           "footprint_class": "surface_item",
           "hit_rect": [
             344.0,
-            198.0,
+            256.0,
             72.0,
             48.0
           ],
           "label_anchor": [
             380.0,
-            192.0
+            250.0
           ],
           "facing": "none",
           "priority": 10,
@@ -22554,28 +22593,28 @@
           "id": "sofa",
           "x0": 122,
           "x1": 366,
-          "top_y": 150,
+          "top_y": 224,
           "front_y": 224
         },
         {
           "id": "coffee_table",
           "x0": 354,
           "x1": 462,
-          "top_y": 166,
+          "top_y": 222,
           "front_y": 222
         },
         {
           "id": "dining_table",
           "x0": 616,
           "x1": 766,
-          "top_y": 132,
+          "top_y": 160,
           "front_y": 238
         },
         {
           "id": "rug",
           "x0": 218,
           "x1": 828,
-          "top_y": 234,
+          "top_y": 296,
           "front_y": 296
         }
       ],
@@ -22642,6 +22681,26 @@
               46,
               298,
               190
+            ]
+          }
+        ],
+        "mounts": [
+          {
+            "id": "television_screen",
+            "bounds": [
+              264,
+              96,
+              142,
+              48
+            ]
+          },
+          {
+            "id": "kitchen_cabinet",
+            "bounds": [
+              716,
+              70,
+              84,
+              54
             ]
           }
         ]
@@ -22731,19 +22790,19 @@
           "id": "base.home_sleep",
           "kind": "base",
           "pos": [
-            180.0,
-            150.0
+            244.0,
+            224.0
           ],
           "footprint_class": "surface_item",
           "hit_rect": [
-            144.0,
-            102.0,
-            72.0,
-            48.0
+            146.0,
+            150.0,
+            196.0,
+            74.0
           ],
           "label_anchor": [
-            180.0,
-            96.0
+            244.0,
+            144.0
           ],
           "facing": "none",
           "priority": 10,
@@ -22755,19 +22814,19 @@
           "id": "base.home_tenure",
           "kind": "base",
           "pos": [
-            700.0,
-            132.0
+            690.0,
+            160.0
           ],
           "footprint_class": "surface_item",
           "hit_rect": [
-            664.0,
-            84.0,
-            72.0,
-            48.0
+            642.0,
+            132.0,
+            96.0,
+            28.0
           ],
           "label_anchor": [
-            700.0,
-            78.0
+            690.0,
+            126.0
           ],
           "facing": "none",
           "priority": 20,
@@ -22779,72 +22838,72 @@
           "id": "base.home_trade_up",
           "kind": "base",
           "pos": [
-            300.0,
-            150.0
+            408.0,
+            222.0
           ],
           "footprint_class": "surface_item",
           "hit_rect": [
-            264.0,
-            102.0,
-            72.0,
-            48.0
+            354.0,
+            166.0,
+            108.0,
+            56.0
           ],
           "label_anchor": [
-            300.0,
-            130.0
+            408.0,
+            160.0
           ],
           "facing": "none",
           "priority": 30,
           "zone_id": "room",
-          "support_id": "sofa",
+          "support_id": "coffee_table",
           "walk_lane_ids": []
         },
         {
           "id": "base.home_upgrade",
           "kind": "base",
           "pos": [
-            500.0,
-            150.0
+            335.0,
+            120.0
           ],
           "footprint_class": "wall_mounted",
           "hit_rect": [
-            460.0,
-            126.0,
-            80.0,
+            264.0,
+            96.0,
+            142.0,
             48.0
           ],
           "label_anchor": [
-            500.0,
-            120.0
+            335.0,
+            90.0
           ],
           "facing": "none",
           "priority": 10,
           "zone_id": "room",
-          "support_id": "wall",
+          "support_id": "television_screen",
           "walk_lane_ids": []
         },
         {
           "id": "base.home_notice",
           "kind": "base",
           "pos": [
-            500.0,
-            24.0
+            758.0,
+            97.0
           ],
           "footprint_class": "wall_mounted",
           "hit_rect": [
-            460.0,
-            0.0,
-            80.0,
-            48.0
+            716.0,
+            70.0,
+            84.0,
+            54.0
           ],
           "label_anchor": [
-            500.0,
-            8.0
+            758.0,
+            64.0
           ],
           "facing": "none",
           "priority": 20,
           "zone_id": "room",
-          "support_id": "wall",
+          "support_id": "kitchen_cabinet",
           "walk_lane_ids": []
         }
       ],
@@ -22904,18 +22963,18 @@
           "kind": "stage",
           "pos": [
             660.0,
-            234.0
+            296.0
           ],
           "footprint_class": "surface_item",
           "hit_rect": [
             624.0,
-            186.0,
+            248.0,
             72.0,
             48.0
           ],
           "label_anchor": [
             660.0,
-            180.0
+            242.0
           ],
           "facing": "none",
           "priority": 10,
