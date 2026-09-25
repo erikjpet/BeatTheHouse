@@ -140,7 +140,7 @@ Resume: rw06_1 must rework the slot layout under these rules before landing:
 Answer: A. Owner amendment to Q-006, 2026-09-23.
 
 ### Q-008 · rw06_1 · Fresh hand-authored three-room player view
-Status: ANSWERED
+Status: RESOLVED by reset Lane A 2026-09-24
 Asked: release orchestrator, 2026-09-23
 Question: Does the fresh player-view layout for Bar, Corner Store and Grand Casino match the hand-authored, art-aligned direction? Sheet from exact commit `8a7a1ae8`: `D:\Projects\Beat-The-House-worktrees\rw06_1-phase0\.tmp\rw06_1\contact_sheet\day2_8a7a1ae8_20260923-1854\day2_contact_sheet.png` (SHA-256 `40CF5E5B771C9A8BEF01562E486CAC5A6429434BA2DF2D3FF1C24C0C5500E6BF`).
 Options: A) Approve this direction (recommended)  B) Needs blocking changes; list the room and issue in Answer
@@ -295,3 +295,11 @@ Options: A) Use sealed no-overwrite live renames with exact before/after detecti
 Resume: Keep all 79 roots untouched while OPEN. If A, implement crash-safe per-root intent/result receipts, held source/destination ancestry, exact pre/post native-ID/content/stream/security manifests and hard detect-and-hold on any drift; never delete, overwrite, copy, adopt or roll back. If B, prepare an owner-run WinRE/WinPE maintenance procedure and do not move any root live. Continue rw06_1 and engine-free rw06_6 product work either way.
 Answer:
 A
+
+### Q-021 · rw06_1 · Reset three-room player view
+Status: OPEN
+Asked: reset Lane A, 2026-09-24
+Question: Do the rebuilt Bar, Corner Store and Grand Casino now match the hand-authored, art-aligned direction? The normal player-view sheet shows each base room on top and busiest physical scenario below: `D:\Projects\Beat-The-House\.tmp\owner_review\q008_rooms.png`.
+Options: A) Approve this direction (recommended)  B) Needs blocking changes; list the room and issue in Answer
+Resume: Lane A continues every remaining room while OPEN. When ANSWERED, apply any blocking feedback across the room set, then change only this Status line to RESOLVED; final Lane A completion still requires `rooms_all.png` and owner approval.
+Answer:
