@@ -12477,18 +12477,18 @@
           "kind": "stage",
           "pos": [
             732.0,
-            326.0
+            358.0
           ],
           "footprint_class": "standing_person",
           "hit_rect": [
             696.0,
-            246.0,
+            278.0,
             72.0,
             80.0
           ],
           "label_anchor": [
             732.0,
-            240.0
+            272.0
           ],
           "facing": "left",
           "priority": 10,
@@ -12768,7 +12768,25 @@
         "jazz_club_union_trouble_union_delegate|env06_8_union_delegate|background|": "stage.patron_floor_right"
       },
       "scenario_position_route_ids": {},
-      "scenario_overflow_ids": [],
+      "scenario_overflow_ids": [
+        "jazz_club_guest_legend_task_0",
+        "jazz_club_guest_legend_task_1",
+        "jazz_club_guest_legend_task_2",
+        "jazz_club_guest_legend_task_3",
+        "jazz_club_guest_legend_task_4",
+        "jazz_club_guest_legend_task_5",
+        "jazz_club_recording_night_task_0",
+        "jazz_club_recording_night_task_1",
+        "jazz_club_recording_night_task_2",
+        "jazz_club_rent_party_task_0",
+        "jazz_club_rent_party_task_1",
+        "jazz_club_rent_party_task_2",
+        "jazz_club_rent_party_task_3",
+        "jazz_club_union_trouble_task_0",
+        "jazz_club_union_trouble_task_1",
+        "jazz_club_union_trouble_task_2",
+        "jazz_club_union_trouble_task_3"
+      ],
       "scenario_art_keys": {
         "jazz_club_guest_legend_guest_table": "room_surface",
         "jazz_club_recording_night_recording_desk": "room_surface",
