@@ -674,6 +674,7 @@ var room_action_list
 var game_surface_canvas
 var run_layout_dirty := true
 var run_layout_last_screen_size := Vector2(-1.0, -1.0)
+var delivery_action_layout_refresh_deferred := false
 var accessibility_tree_transform_active := false
 var web_audio_unlock_refresh_scheduled := false
 var web_audio_unlock_refresh_count := 0
@@ -11159,6 +11160,22 @@ func _invalidate_run_screen_layout() -> void:
 	run_layout_dirty = true
 
 
+func _schedule_delivery_action_layout_refresh() -> void:
+	_invalidate_run_screen_layout()
+	if delivery_action_layout_refresh_deferred:
+		return
+	delivery_action_layout_refresh_deferred = true
+	call_deferred("_settle_delivery_action_layout")
+
+
+func _settle_delivery_action_layout() -> void:
+	delivery_action_layout_refresh_deferred = false
+	# Container minimum-size propagation is deferred too. Re-arm and apply the
+	# layout after the strip's children have received their real dimensions.
+	_invalidate_run_screen_layout()
+	_apply_run_screen_layout()
+
+
 func _render_run_report() -> void:
 	if run_report_screen == null:
 		return
@@ -17622,7 +17639,7 @@ func _refresh_delivery_action_strip() -> void:
 		var next_visible := not actions.is_empty()
 		if delivery_action_strip.visible != next_visible:
 			delivery_action_strip.visible = next_visible
-			_invalidate_run_screen_layout()
+			_schedule_delivery_action_layout_refresh()
 		return
 	delivery_action_strip.set_meta("action_signature", signature)
 	for child in delivery_action_strip.get_children():
@@ -17634,7 +17651,7 @@ func _refresh_delivery_action_strip() -> void:
 		# This strip is a second row inside the clipped HUD. Recompute the info
 		# band whenever its contents disappear so the room canvas can reclaim the
 		# released height instead of retaining the previous delivery footprint.
-		_invalidate_run_screen_layout()
+		_schedule_delivery_action_layout_refresh()
 		return
 	var heading := _muted_label("PACKAGE", 12)
 	heading.tooltip_text = "Actions for the delivery currently in your possession."
@@ -17654,7 +17671,7 @@ func _refresh_delivery_action_strip() -> void:
 	# without a resize (for example, after entering the Count's Cage room). Mark
 	# the layout dirty after rebuilding this second row so clip_contents cannot
 	# leave an authenticated action rendered below the old one-row HUD boundary.
-	_invalidate_run_screen_layout()
+	_schedule_delivery_action_layout_refresh()
 
 
 func _objective_goal_text(pressure: Dictionary, demo_objective: Dictionary = {}) -> String:
