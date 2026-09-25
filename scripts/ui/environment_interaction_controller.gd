@@ -1215,6 +1215,12 @@ static func _attach_delivery_handoff_to_contact(host: Variant, records: Array) -
 		contact["world_sequence_owner_token"] = str(authority_record.get("world_sequence_owner_token", ""))
 		contact["delivery_contact"] = true
 		contact["delivery_contact_label"] = contact_label
+		# The delivery owner is the live authority at this destination. A room NPC
+		# may be unavailable for ordinary dialogue, but it must not swallow the
+		# authenticated package handoff attached to that contact.
+		contact["interactive"] = true
+		contact["enabled"] = true
+		contact["disabled_reason"] = ""
 		contact["action_summary"] = "%s is expecting The Package." % contact_label.capitalize()
 		contact["status_summary"] = "Delivery contact"
 		result[contact_index] = contact
@@ -1228,6 +1234,9 @@ static func _attach_delivery_handoff_to_contact(host: Variant, records: Array) -
 		contact["delivery_contact_label"] = contact_label
 		contact["delivery_handoff_direct"] = true
 		contact["delivery_handoff_node_id"] = node_id
+		contact["interactive"] = true
+		contact["enabled"] = true
+		contact["disabled_reason"] = ""
 		contact["action_summary"] = "%s is expecting the delivery." % contact_label.capitalize()
 		contact["status_summary"] = "Delivery contact"
 		result[contact_index] = contact
@@ -1247,6 +1256,9 @@ static func _attach_delivery_handoff_to_contact(host: Variant, records: Array) -
 		contact["icon_key"] = "dialogue"
 		contact["placement_class"] = "standing_person"
 		contact["delivery_contact"] = true
+		contact["interactive"] = true
+		contact["enabled"] = true
+		contact["disabled_reason"] = ""
 		var handoff_actions := _array(contact.get("scenario_sequence_actions", [])).duplicate(true)
 		for action_value in handoff_actions:
 			if typeof(action_value) == TYPE_DICTIONARY:
