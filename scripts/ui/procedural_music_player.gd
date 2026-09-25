@@ -2639,6 +2639,13 @@ func _stop_music_send_players(players: Dictionary, clear_streams: bool) -> void:
 
 func _play_audio_player(player: AudioStreamPlayer, source_position_seconds: float = 0.0, phase_group: String = "") -> void:
 	_float_pcm_player_states.erase(player.get_instance_id())
+	# Web music is delivered exclusively by WebAudioBridge. Keep a final guard
+	# here so no future caller can route a long stream into Godot 4.6's
+	# no-threads AudioWorklet path, whose MessagePort can grow until OOM.
+	if WebAudioBridgeScript.available():
+		player.stop()
+		player.stream = null
+		return
 	player.pitch_scale = _live_playback_pitch_scale()
 	if not (player.stream is MusicFloatPcmStream):
 		player.play(maxf(0.0, source_position_seconds))

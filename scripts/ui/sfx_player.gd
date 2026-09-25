@@ -1153,7 +1153,9 @@ func stop_all() -> void:
 	_played_markers.clear()
 	for player in _players:
 		if player is AudioStreamPlayer:
-			(player as AudioStreamPlayer).stop()
+			var audio_player := player as AudioStreamPlayer
+			audio_player.stop()
+			audio_player.stream = null
 
 
 func preview_event_stream(event_id: String) -> AudioStreamWAV:
@@ -1290,6 +1292,7 @@ func audio_fidelity_contract_snapshot() -> Dictionary:
 		"web_delivery_event_count": WEB_DELIVERY_EVENT_IDS.size(),
 		"web_delivery_uses_preencoded_pcm": true,
 		"web_incremental_prewarm": true,
+		"web_native_audio_fallback": false,
 		"native_slot_delivery_event_count": NATIVE_SLOT_DELIVERY_EVENTS.size(),
 		"native_slot_events_avoid_runtime_synthesis": true,
 	}
@@ -1620,6 +1623,11 @@ func _start_reel_loop(event_id: String = "reel_loop", volume_db: float = -13.0, 
 		_web_loop_retry_count = 0
 		if is_inside_tree() and not _debug_web_delivery_active:
 			call_deferred("_retry_pending_web_surface_loop")
+		# Godot 4.6's no-threads Web audio worklet can retain streamed native
+		# playback until its MessagePort exhausts memory. The bridge is the sole
+		# Web transport; a miss is retried and then reported, never handed to a
+		# second native AudioStreamPlayer transport.
+		return
 	if _loop_player == null:
 		if not _pending_web_loop_retry.is_empty():
 			_web_dropped_cue_count += 1
@@ -1640,8 +1648,10 @@ func _stop_reel_loop() -> void:
 	if WebAudioBridgeScript.available() and _web_surface_loop_active:
 		WebAudioBridgeScript.stop_loop(WEB_SURFACE_LOOP_ID)
 	_web_surface_loop_active = false
-	if _loop_player != null and _loop_player.playing:
-		_loop_player.stop()
+	if _loop_player != null:
+		if _loop_player.playing:
+			_loop_player.stop()
+		_loop_player.stream = null
 	_surface_loop_event_id = ""
 	_pending_web_loop_retry = {}
 	_web_loop_retry_count = 0
@@ -1667,6 +1677,8 @@ func _play(event_id: String, volume_db: float = 0.0, pitch: float = 1.0, profile
 		if _deliver_web_stream(stream, "sfx:%s" % _normalized_event_id(event_id), volume_db, pitch, "", false, profile_id, max_voices):
 			return
 		_record_web_delivery_failure()
+		_web_dropped_cue_count += 1
+		return
 	var player := _next_player(profile_id, max_voices)
 	if player == null:
 		_web_dropped_cue_count += 1
@@ -1706,6 +1718,8 @@ func _retry_pending_web_surface_loop() -> void:
 		_pending_web_loop_retry = {}
 		if _loop_player != null and _loop_player.playing:
 			_loop_player.stop()
+		if _loop_player != null:
+			_loop_player.stream = null
 		return
 	_record_web_delivery_failure()
 	if _web_loop_retry_count < WEB_LOOP_RETRY_LIMIT:

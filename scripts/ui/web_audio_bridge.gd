@@ -17,7 +17,7 @@ static var _shared_pcm_owner_bytes := 0
 static var _shared_pcm_budget_bytes := 64 * 1024 * 1024
 static var _bridge_pcm_budget_bytes := 64 * 1024 * 1024
 
-const WEB_AUDIO_VERSION := 11
+const WEB_AUDIO_VERSION := 12
 const WEB_PCM_CACHE_BUDGET_BYTES := 64 * 1024 * 1024
 const WEB_AUDIO_MIN_BUFFER_SAMPLE_RATE := 3000
 const PCM_BASE64_META: StringName = &"_bth_web_pcm_base64"
@@ -33,7 +33,7 @@ const WEB_MUSIC_STEM_ROLES := ["pad", "bass", "bass_dark", "lead", "drums_low", 
 
 const WEB_AUDIO_SCRIPT := """
 (function () {
-	var BRIDGE_VERSION = 11;
+	var BRIDGE_VERSION = 12;
 	var PCM_BUDGET_BYTES = 67108864;
 	if (window.BTHWebAudio && window.BTHWebAudio.version === BRIDGE_VERSION) {
 		return true;
@@ -161,13 +161,27 @@ const WEB_AUDIO_SCRIPT := """
 		if (!entry) {
 			return;
 		}
-		stopNode(entry.source);
+		entry.ended = true;
+		var source = entry.source;
+		var gain = entry.gain;
+		if (source) {
+			// Break the AudioBufferSourceNode -> onended -> entry -> source
+			// cycle before releasing a stopped node. Chromium can otherwise keep
+			// the source and its AudioBuffer alive well past a room transition.
+			try {
+				source.onended = null;
+			} catch (_error) {
+			}
+		}
+		stopNode(source);
 		try {
-			if (entry.gain) {
-				entry.gain.disconnect();
+			if (gain) {
+				gain.disconnect();
 			}
 		} catch (_error) {
 		}
+		entry.source = null;
+		entry.gain = null;
 	}
 	window.BTHWebAudio = {
 		version: BRIDGE_VERSION,
@@ -186,6 +200,18 @@ const WEB_AUDIO_SCRIPT := """
 		sfxOneShots: [],
 		musicGroups: {},
 		unlocked: false,
+		pruneEndedOneShots: function () {
+			var retained = [];
+			for (var index = 0; index < this.sfxOneShots.length; index += 1) {
+				var entry = this.sfxOneShots[index];
+				if (!entry || entry.ended) {
+					stopEntry(entry);
+					continue;
+				}
+				retained.push(entry);
+			}
+			this.sfxOneShots = retained;
+		},
 		ensure: function () {
 			var AudioCtor = window.AudioContext || window.webkitAudioContext;
 			if (!AudioCtor) {
@@ -232,6 +258,7 @@ const WEB_AUDIO_SCRIPT := """
 			return true;
 		},
 		activePcmKeys: function () {
+			this.pruneEndedOneShots();
 			var active = {};
 			for (var loopId in this.sfxLoops) {
 				if (Object.prototype.hasOwnProperty.call(this.sfxLoops, loopId) && this.sfxLoops[loopId] && !this.sfxLoops[loopId].ended) active[this.sfxLoops[loopId].key] = true;
@@ -357,9 +384,7 @@ const WEB_AUDIO_SCRIPT := """
 			var profileId = String(payload.profile_id || "");
 			var maxVoices = Math.max(1, Math.min(10, Number(payload.max_voices || 10) | 0));
 			var globalMaxVoices = 10;
-			this.sfxOneShots = this.sfxOneShots.filter(function (candidate) {
-				return candidate && !candidate.ended;
-			});
+			this.pruneEndedOneShots();
 			if (!isLoop && profileId) {
 				var sameProfile = this.sfxOneShots.filter(function (candidate) {
 					return candidate.profileId === profileId;
@@ -402,12 +427,19 @@ const WEB_AUDIO_SCRIPT := """
 			source.onended = function () {
 				entry.ended = true;
 				try {
+					source.disconnect();
+				} catch (_error) {
+				}
+				try {
 					gain.disconnect();
 				} catch (_error) {
 				}
 				if (loopId && window.BTHWebAudio && window.BTHWebAudio.sfxLoops[loopId] === entry) {
 					delete window.BTHWebAudio.sfxLoops[loopId];
 				}
+				source.onended = null;
+				entry.source = null;
+				entry.gain = null;
 			};
 			if (loopId) {
 				this.sfxLoops[loopId] = entry;
@@ -926,6 +958,9 @@ static func mix_contract_snapshot() -> Dictionary:
 		"script_has_loop_pause_resume": WEB_AUDIO_SCRIPT.find("setLoopPaused") >= 0 and WEB_AUDIO_SCRIPT.find("playbackRate.setValueAtTime(paused ? 0") >= 0,
 		"script_has_pcm_byte_lru": WEB_AUDIO_SCRIPT.find("pcmBudgetBytes") >= 0 and WEB_AUDIO_SCRIPT.find("evictPcm") >= 0 and WEB_AUDIO_SCRIPT.find("lastUsed") >= 0,
 		"script_has_pcm_disposal": WEB_AUDIO_SCRIPT.find("disposePcm") >= 0 and WEB_AUDIO_SCRIPT.find("clearInactivePcm") >= 0,
+		"script_releases_stopped_nodes": WEB_AUDIO_SCRIPT.find("source.onended = null") >= 0 \
+			and WEB_AUDIO_SCRIPT.find("entry.source = null") >= 0 \
+			and WEB_AUDIO_SCRIPT.find("pruneEndedOneShots") >= 0,
 		"diagnostics_report_actual_pcm": WEB_AUDIO_SCRIPT.find("pcmStats") >= 0 and WEB_AUDIO_SCRIPT.find("decoded.length * decoded.numberOfChannels * 4") >= 0,
 		"pcm_budget_bytes": WEB_PCM_CACHE_BUDGET_BYTES,
 		"script_has_global_sfx_cap": WEB_AUDIO_SCRIPT.find("var globalMaxVoices = 10") >= 0 \
