@@ -4259,8 +4259,13 @@ function Play-OneBlackjackRound {
         if (Test-PublicTerminalSurface) { return }
         $eventVisible = [bool](Get-Value $script:LastObservation @('event_popup', 'visible') $false)
         $talkVisible = [bool](Get-Value $script:LastObservation @('talk', 'visible') $false)
-        if ($eventVisible -and (@('clean', 'cheat') -ccontains $Ending)) {
-            $null = Resolve-BlackjackRouteEventPopup
+        if ($eventVisible -and (@('clean', 'cheat', 'heist') -ccontains $Ending)) {
+            if ($Ending -ceq 'heist') {
+                $null = Resolve-BlackjackRouteEventPopup -PreferCooling
+            }
+            else {
+                $null = Resolve-BlackjackRouteEventPopup
+            }
             continue
         }
         if ($talkVisible -and -not $eventVisible -and @('clean', 'cheat', 'heist') -ccontains $Ending) {
