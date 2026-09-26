@@ -2462,6 +2462,22 @@ func _check_crew_favor_conversation(app: Control) -> bool:
 		return false
 	run_state.world_map = WorldMapScript.enter_node(run_state.world_map, visited_delivery_target_id)
 	run_state.world_map = WorldMapScript.enter_node(run_state.world_map, delivery_origin_id, run_state.current_environment)
+	# The shipped favor can only be offered against an active Crew marker. Keep
+	# this focused UI fixture at the due-favor seam, but retain the production
+	# debt authority that the handoff must clear atomically with its rewards.
+	run_state.add_debt({
+		"id": "the_crew_marker",
+		"lender_id": RunState.CREW_LENDER_ID,
+		"lender_name": "The Crew",
+		"balance": 1,
+		"debt_kind": "favor",
+		"status": "favor_due",
+		"deadline_turns": 2,
+		"turns_remaining": 0,
+		"default_consequence": "crew_favor_due",
+		"cash_conversion_balance_per_favor": 45,
+		"cash_conversion_interest_rate": 0.35,
+	})
 	run_state.narrative_flags["crew_favor_pending"] = true
 	var overrides: Dictionary = app.call("_triggered_entry_overrides", event_definition)
 	if not run_state.enqueue_triggered_event("crew_favor_delivery", "ui_fixture", {"trigger": "action", "type": "action", "turns": 1}, overrides):
@@ -2574,9 +2590,10 @@ func _check_crew_favor_conversation(app: Control) -> bool:
 	var bankroll_before_handoff := run_state.bankroll
 	var heat_before_handoff := run_state.suspicion_level()
 	if not bool(app.call("_complete_delivery_handoff", target_id)) or run_state.delivery_has_active_run() \
-		or not bool(run_state.narrative_flags.get("crew_favor_completed", false)) \
-		or run_state.bankroll != bankroll_before_handoff + 22 or run_state.suspicion_level() != heat_before_handoff + 4:
-		push_error("Physical handoff did not resolve the Crew favor with exact shipped rewards.")
+			or not bool(run_state.narrative_flags.get("crew_favor_completed", false)) \
+			or not run_state.debt.is_empty() or not bool(run_state.narrative_flags.get("crew_marker_clear", false)) \
+			or run_state.bankroll != bankroll_before_handoff + 22 or run_state.suspicion_level() != heat_before_handoff + 4:
+		push_error("Physical handoff did not atomically clear its authentic Crew marker with the exact shipped rewards: bankroll=%d/%d heat=%d/%d debt=%s flags=%s." % [run_state.bankroll, bankroll_before_handoff, run_state.suspicion_level(), heat_before_handoff, JSON.stringify(run_state.debt), JSON.stringify(run_state.narrative_flags)])
 		return false
 	var inactive_snapshot: Dictionary = app.call("_world_map_snapshot")
 	if inactive_snapshot.has("courier_layer"):
