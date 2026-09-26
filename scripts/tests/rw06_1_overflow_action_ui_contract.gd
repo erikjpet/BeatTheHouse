@@ -28,6 +28,7 @@ class OverflowFoundationHost:
 	var delivery_exit_activation_routes := 0
 	var overflow_dialogue_routes: Array[String] = []
 	var overflow_game_hook_routes: Array[String] = []
+	var force_empty_travel_targets := false
 
 	func _interactable_object_view_list() -> Array:
 		if use_overflow_fixture:
@@ -56,6 +57,11 @@ class OverflowFoundationHost:
 			return true
 		return super.use_game_environment_hook(game_id, hook_id, action_id)
 
+	func _travel_target_ids() -> Array:
+		if force_empty_travel_targets:
+			return []
+		return super._travel_target_ids()
+
 
 class CleanupQuitter:
 	extends Node
@@ -76,12 +82,14 @@ func _init() -> void:
 func _run() -> void:
 	_check_host_generator_ownership_contract()
 	_check_semantic_scenario_presentation_policy()
+	_check_projection_failure_action_overflow()
 	await _check_selected_info_action_enabled_gate()
 	var app := OverflowFoundationHost.new()
 	app.size = Vector2(1280.0, 720.0)
 	app.set("continuous_environment_clock_enabled", false)
 	root.add_child(app)
 	await _settle_frames(3)
+	await _check_motel_parent_door_ignores_map_cap(app)
 	if not app.start_foundation_run("RW06-1-OVERFLOW-ACTIONS", {}, false):
 		failures.append("RW06-1 overflow contract could not start its production Foundation run.")
 		_finish(app)
@@ -850,6 +858,119 @@ func _check_semantic_scenario_presentation_policy() -> void:
 		EnvironmentSlotBinderScript._validate_scenario_art_policy(candidate, candidate_art, art_errors)
 		if art_errors.is_empty():
 			failures.append("RW06-1 scenario-art policy accepted hostile %s authority." % str(hostile_art.get("name", "unknown")))
+
+
+func _check_projection_failure_action_overflow() -> void:
+	var base_records := [{
+		"object_id": "travel:leave",
+		"object_type": "travel",
+		"label": "Leave",
+		"presentation_mode": "room",
+		"presentation_required": true,
+		"visible": true,
+		"interactive": true,
+		"enabled": true,
+		"available_actions": [{"id": "open_map", "label": "Open Map"}],
+	}, {
+		"object_id": "game:slot",
+		"object_type": "game",
+		"label": "House game",
+		"presentation_mode": "room",
+		"presentation_required": true,
+		"visible": true,
+		"interactive": true,
+		"enabled": true,
+		"available_actions": [{"id": "enter_game", "label": "Play"}],
+	}]
+	var base_before := JSON.stringify(base_records)
+	var projection := {
+		"boundary_serial": 7,
+		"semantic_state": {"interactions": {
+			"travel::travel:leave": {
+				"owner_namespace": "travel", "stable_object_id": "travel:leave",
+				"present": true, "visible": true, "enabled": true, "label": "Leave",
+				"available_actions": [{"id": "open_map", "label": "Open Map"}],
+			},
+			"game::game:slot": {
+				"owner_namespace": "game", "stable_object_id": "game:slot",
+				"present": true, "visible": true, "enabled": true, "label": "House game",
+				"available_actions": [{"id": "enter_game", "label": "Play"}, {
+					"id": "inspect_marker", "label": "Inspect marker",
+					"action_origin_receipt_key": "phase:inspect_marker",
+					"action_origin_owner_namespace": "scenario",
+					"action_origin_stable_object_id": "marker",
+				}],
+			},
+			"scenario::command_console": {
+				"owner_namespace": "scenario", "stable_object_id": "command_console",
+				"present": true, "visible": true, "enabled": true,
+				"label": "Command console", "prompt": "Choose a command.",
+				"available_actions": [{
+					"id": "prepare", "label": "Prepare",
+					"action_origin_receipt_key": "phase:command_console",
+					"action_origin_owner_namespace": "scenario",
+					"action_origin_stable_object_id": "command_console",
+				}],
+			},
+		}},
+	}
+	var failed := EnvironmentInteractionControllerScript.projection_failure_result(
+		base_records, ["fixture layout has no compatible slot"], {}, {}, projection
+	)
+	var records := failed.get("records", []) as Array
+	var overflow_records: Array = []
+	for record_value in records:
+		var record := record_value as Dictionary
+		if str(record.get("presentation_mode", "")) == "overflow":
+			overflow_records.append(record)
+	var overflow_actions: Array[String] = []
+	for record_value in overflow_records:
+		var record := record_value as Dictionary
+		if record.has("normalized_rect") or record.has("focus_rect"):
+			failures.append("RW06-1 projection failure fallback gave a Room action forged room geometry.")
+		for action_value in RoomActionListScript.action_entries_for_record(record):
+			var action := action_value as Dictionary
+			overflow_actions.append(str(action.get("id", "")))
+	overflow_actions.sort()
+	if bool(failed.get("ok", true)) \
+			or JSON.stringify(base_records) != base_before \
+			or records.size() != base_records.size() + 2 \
+			or JSON.stringify(records.slice(0, base_records.size())) != base_before \
+			or overflow_actions != ["inspect_marker", "prepare"] \
+			or str((failed.get("layout_audit", {}) as Dictionary).get("fallback_visible", "")) != "false":
+		failures.append("RW06-1 projection failure did not preserve base travel/actions and move only trusted scenario actions into Room actions: %s." % JSON.stringify(failed))
+	for record_value in records:
+		if str((record_value as Dictionary).get("object_id", "")) == "scenario::presentation_failure" \
+				or str((record_value as Dictionary).get("label", "")) == "Scenario unavailable":
+			failures.append("RW06-1 projection failure still exposed the blocking Scenario unavailable placeholder.")
+	var controller_source := FileAccess.get_file_as_string("res://scripts/ui/environment_interaction_controller.gd")
+	var commit_body := _source_function_body(controller_source, "committed_projection_status_result")
+	if commit_body.contains("scenario_reject_layout_projection"):
+		failures.append("RW06-1 committed presentation failure still invalidates playable scenario command authority.")
+
+
+func _check_motel_parent_door_ignores_map_cap(app: OverflowFoundationHost) -> void:
+	var challenge := {
+		"id": "rw06_round4_motel_exit",
+		"mode": "custom",
+		"seed_text": "RW06-ROUND4-MOTEL-EXIT",
+		"modifiers": {"home_archetype_id": "motel_room"},
+	}
+	if not app.start_foundation_run("RW06-ROUND4-MOTEL-EXIT", challenge, false):
+		failures.append("RW06 Round 4 could not start the Motel Room reproduction run.")
+		return
+	await _settle_frames(3)
+	app.force_empty_travel_targets = true
+	var parent_id := str(app.call("_parent_home_parent_target_id"))
+	var choice := app.call("_local_parent_home_door_travel_choice", parent_id) as Dictionary
+	var leave := app.call("_travel_leave_interactable_object") as Dictionary
+	app.force_empty_travel_targets = false
+	if parent_id != "motel" \
+			or choice.is_empty() \
+			or str(choice.get("id", "")) != "motel" \
+			or not bool(choice.get("local_door", false)) \
+			or str(leave.get("confirm_action_id", "")) != "enter_lobby":
+		failures.append("RW06 Round 4 Motel Room exit still depends on the capped map list: parent=%s choice=%s leave=%s." % [parent_id, JSON.stringify(choice), JSON.stringify(leave)])
 
 
 func _check_selected_info_action_enabled_gate() -> void:

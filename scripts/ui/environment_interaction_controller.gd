@@ -565,10 +565,11 @@ static func project_sequence_interaction_result(base_records: Array, projection:
 	}
 
 
-static func projection_failure_result(base_records: Array, errors: Array, layout_audit: Dictionary = {}, _fallback_authority: Dictionary = {}) -> Dictionary:
-	# Recompute the trusted fallback against the exact ordinary controls so the
-	# readable failure surface cannot eclipse the interactions it preserves.
-	var authority := ScenarioSemanticViewModelScript.failure_authority(base_records)
+static func projection_failure_result(base_records: Array, errors: Array, layout_audit: Dictionary = {}, _fallback_authority: Dictionary = {}, trusted_projection: Dictionary = {}) -> Dictionary:
+	# Layout is presentation only. Preserve every ordinary control exactly and
+	# expose actions from the already-committed semantic projection through the
+	# geometry-free Room actions surface. Never turn a drawing failure into a
+	# disabled room object or an input blocker.
 	var clean_errors: Array = []
 	for value in errors:
 		var message := str(value).strip_edges()
@@ -576,23 +577,92 @@ static func projection_failure_result(base_records: Array, errors: Array, layout
 			clean_errors.append(message)
 	if clean_errors.is_empty():
 		clean_errors.append("Scenario presentation validation failed.")
-	var records := base_records.duplicate(true)
-	records.append(_projection_failure_record(authority, clean_errors))
+	var records := _projection_action_overflow_records(base_records, trusted_projection)
 	var audit := layout_audit.duplicate(true)
 	audit["active"] = true
 	audit["valid"] = false
 	audit["error_count"] = clean_errors.size()
-	audit["fallback_visible"] = true
+	audit["fallback_visible"] = false
+	audit["action_overflow_count"] = maxi(0, records.size() - base_records.size())
 	return {
 		"ok": false,
 		"records": records,
-		"projection": {},
+		"projection": trusted_projection.duplicate(true),
 		"errors": clean_errors,
 		"warnings": [],
-		"layout_authority": {str(authority.get("identity", "system::scenario_presentation_failure")): authority},
-		"layout_authority_digest": JSON.stringify(authority).sha256_text(),
+		"layout_authority": {},
+		"layout_authority_digest": "",
 		"layout_audit": audit,
 	}
+
+
+static func _projection_action_overflow_records(base_records: Array, projection: Dictionary) -> Array:
+	var records := base_records.duplicate(true)
+	var interactions := _dict(_dict(projection.get("semantic_state", {})).get("interactions", {}))
+	var identities := interactions.keys()
+	identities.sort()
+	var focus_order := records.size()
+	for identity_value in identities:
+		var interaction := _dict(interactions.get(identity_value, {}))
+		if interaction.is_empty() or not bool(interaction.get("present", true)) or not bool(interaction.get("visible", true)):
+			continue
+		var owner := str(interaction.get("owner_namespace", "")).strip_edges()
+		var stable_id := str(interaction.get("stable_object_id", "")).strip_edges()
+		if owner.is_empty() or stable_id.is_empty():
+			continue
+		var world_owner_token := str(interaction.get("world_sequence_owner_token", "")).strip_edges()
+		var actions: Array = []
+		for action_value in _array(interaction.get("available_actions", [])):
+			var action := _dict(action_value)
+			if action.is_empty():
+				continue
+			# Scenario-owned identities own all of their actions. An augmented base
+			# identity contributes only actions stamped by a scenario/world receipt;
+			# its ordinary action remains on the untouched base record.
+			if owner == "scenario" \
+					or not world_owner_token.is_empty() \
+					or not str(action.get("world_sequence_owner_token", "")).strip_edges().is_empty() \
+					or not str(action.get("action_origin_receipt_key", "")).strip_edges().is_empty():
+				actions.append(action.duplicate(true))
+		if actions.is_empty():
+			continue
+		var object_id := "scenario_overflow:%s:%s" % [owner, stable_id]
+		var enabled := bool(interaction.get("enabled", true))
+		var record := {
+			"object_id": object_id,
+			"object_type": "scenario_sequence",
+			"visual_type": "scenario_object",
+			"source_id": str(interaction.get("source_id", stable_id)),
+			"owner_namespace": owner,
+			"stable_object_id": stable_id,
+			"label": str(interaction.get("label", stable_id.replace("_", " ").capitalize())),
+			"short_description": str(interaction.get("prompt", "Choose an action.")),
+			"action_summary": str(interaction.get("prompt", "Choose an action.")),
+			"state_label": str(interaction.get("state_label", "Available" if enabled else "Unavailable")),
+			"state_badge": str(interaction.get("non_color_state", "available" if enabled else "unavailable")),
+			"non_color_state": str(interaction.get("non_color_state", "available" if enabled else "unavailable")),
+			"presentation_mode": "overflow",
+			"presentation_required": true,
+			"scenario_layout_resolved": false,
+			"scenario_projection_overflow": true,
+			"visible": true,
+			"interactive": true,
+			"decorative": false,
+			"enabled": enabled,
+			"disabled_reason": str(interaction.get("disabled_reason", "")) if not enabled else "",
+			"focus_order": maxi(0, int(interaction.get("focus_order", focus_order))),
+			"safe_exit": bool(interaction.get("safe_exit", false)),
+			"alternate_exit": bool(interaction.get("alternate_exit", false)),
+			"available_actions": actions.duplicate(true),
+			"inline_actions": [],
+			"scenario_sequence_actions": actions.duplicate(true),
+			"confirm_action_id": str(_dict(actions[0]).get("id", "")),
+		}
+		if not world_owner_token.is_empty():
+			record["world_sequence_owner_token"] = world_owner_token
+		records.append(record)
+		focus_order += 1
+	return records
 
 
 static func _compose_projected_records(base_records: Array, resolved_projection: Dictionary, authority: Dictionary, authority_digest: String) -> Dictionary:
@@ -866,36 +936,12 @@ static func _apply_layout_authority(record: Dictionary, authority: Dictionary, a
 	return result
 
 
-static func _projection_failure_record(authority: Dictionary, errors: Array) -> Dictionary:
-	var message := "Scenario presentation is unavailable. %s" % str(errors[0])
-	return _apply_layout_authority({
-		"object_id": "scenario::presentation_failure",
-		"object_type": "scenario_presentation_failure",
-		"visual_type": "fixture",
-		"source_id": "scenario_presentation_failure",
-		"owner_namespace": "system",
-		"stable_object_id": "scenario_presentation_failure",
-		"label": "Scenario unavailable",
-		"short_description": message,
-		"action_summary": message,
-		"state_label": "Unavailable",
-		"state_badge": "Unavailable",
-		"enabled": false,
-		"interactive": true,
-		"visible": true,
-		"disabled_reason": message,
-		"non_color_state": "blocked",
-		"available_actions": [],
-		"inline_actions": [],
-		"confirm_action_id": "",
-		"scenario_sequence_actions": [],
-		"scenario_projection_failure": true,
-		"scenario_projection_errors": errors.duplicate(true),
-	}, authority, JSON.stringify(authority).sha256_text())
-
-
 static func committed_projection_status_result(run_state: Variant, projection_result: Dictionary, trusted_base_records: Array) -> Dictionary:
 	var audit := _dict(projection_result.get("layout_audit", {}))
+	# Pull fallback behavior only from the committed runtime. A rejected or forged
+	# projection can never mint an action, while a real presentation failure keeps
+	# the exact semantic command authority that was already playable.
+	var trusted_projection: Dictionary = _dict(run_state.scenario_sequence_projection()) if run_state != null and run_state.has_method("scenario_sequence_projection") else {}
 	if bool(projection_result.get("ok", false)):
 		var committed_digest := str(run_state.current_environment.get("scenario_layout_authority_digest", ""))
 		var projected_digest := str(projection_result.get("layout_authority_digest", ""))
@@ -924,13 +970,13 @@ static func committed_projection_status_result(run_state: Variant, projection_re
 		var mismatch_errors := integrity_errors
 		if mismatch_errors.is_empty():
 			mismatch_errors.append("Committed scenario layout authority diverged from the finalized production projection.")
-		run_state.scenario_reject_layout_projection(mismatch_errors, audit)
-		return projection_failure_result(trusted_base_records, mismatch_errors, audit)
+		run_state.current_environment["scenario_sequence_lifecycle_errors"] = mismatch_errors.duplicate(true)
+		return projection_failure_result(trusted_base_records, mismatch_errors, audit, {}, trusted_projection)
 	var projection_errors := _array(projection_result.get("errors", []))
 	if projection_errors.is_empty():
 		projection_errors.append("Scenario production projection was rejected without diagnostics.")
-	run_state.scenario_reject_layout_projection(projection_errors, audit)
-	return projection_failure_result(trusted_base_records, projection_errors, audit)
+	run_state.current_environment["scenario_sequence_lifecycle_errors"] = projection_errors.duplicate(true)
+	return projection_failure_result(trusted_base_records, projection_errors, audit, {}, trusted_projection)
 
 
 static func _projected_record_authority_errors(records: Array, authority: Dictionary, authority_digest: String, projection: Dictionary) -> Array:
@@ -2038,8 +2084,11 @@ static func local_parent_home_door_travel_choice(host: Variant, target_id: Strin
 	var door_kind = host._local_parent_home_door_kind(target_id)
 	if door_kind.is_empty():
 		return {}
-	if not host._travel_target_ids().has(target_id):
-		return {}
+	# A parent-home door is a physical adjacency, not one of the capped map
+	# suggestions.  The map list may legitimately omit an undiscovered lobby;
+	# requiring it here turned the room's only exit into Open Map and stranded the
+	# player.  The authored parent relationship above is the authority for this
+	# local move, while the ordinary route status below still preserves real locks.
 	var route = host._world_route_for_target(target_id)
 	if route.is_empty():
 		route = host.library.route(target_id) if host.library != null else {}
