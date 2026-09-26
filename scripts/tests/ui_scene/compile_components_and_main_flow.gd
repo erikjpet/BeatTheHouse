@@ -2677,10 +2677,14 @@ func _check_delivery_ordinary_travel_baseline(app: Control, phase: String) -> bo
 	# pick_many removal loops with deterministic Fisher-Yates shuffles. That
 	# deliberately refreshes the three order/layout-bearing hashes below while
 	# route identity, RNG end state, story, and economy remain byte-identical.
+	# Release-week authored placement and sealed-slot repairs likewise change only
+	# the generated Bar record and the world map that embeds it. The focused T6
+	# replay retained the exact fare, clock, Heat, RNG, route choice, travel story,
+	# action index, and travel-count contract while refreshing these two hashes.
 	const EXPECTED := {
 		"bankroll_delta": -4,
 		"clock_delta": 42,
-		"current_environment_sha256": "a3c72dca6bd1f5a379816b791c551624c3d94685a27900b5f5bc88de22b8599a",
+		"current_environment_sha256": "893a5d429b627b6dfaf5b35a13abc992c690ecd874eae76dd90eb88896425fdc",
 		"current_world_node_id": "bar",
 		"heat_delta": 0,
 		"provenance_commit": "7ddb7685efb21e45979ea10ab89e660d99c6e891",
@@ -2691,7 +2695,7 @@ func _check_delivery_ordinary_travel_baseline(app: Control, phase: String) -> bo
 		"town_action_index": 0,
 		"travel_count_delta": 1,
 		"travel_story_sha256": "0257877551b37226fd62316ee2af5e047a27387fbb87d5acfa0273d1366a0e81",
-		"world_map_sha256": "bdd23471756818d2e71456bb1afb5dd47f51db81cc061bfd378532670323d04b",
+		"world_map_sha256": "640d6582840d9e62b732a56e3dd385d9f68e17be725b90642b2f15d975c8c9e7",
 	}
 	app.call("start_foundation_run", "DELIVERY-ORDINARY-BASELINE", {}, false)
 	for _start_frame in range(3):
