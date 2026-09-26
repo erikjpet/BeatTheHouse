@@ -2917,12 +2917,19 @@ function Complete-PublicDelivery {
                 -Intent ([string]$deliveryAction.Intent)
             Wait-Frames -Frames 8
             if ($StopAfterResolution -and [string]$deliveryAction.Verb -ceq 'wait') {
-                $remainingHold = @(Get-Array (Get-Value $script:LastObservation @('spatial', 'objects') @()) | Where-Object {
-                    [string](Get-Value $_ @('object_id') '') -ceq $objectId -and
-                    [bool](Get-Value $_ @('visible') $false) -and
-                    [bool](Get-Value $_ @('enabled') $false)
-                })
-                if ($remainingHold.Count -ceq 0) { return }
+                for ($holdStep = 0; $holdStep -lt 12; $holdStep++) {
+                    $remainingHold = @(Get-Array (Get-Value $script:LastObservation @('spatial', 'objects') @()) | Where-Object {
+                        [string](Get-Value $_ @('object_id') '') -ceq $objectId -and
+                        [bool](Get-Value $_ @('visible') $false) -and
+                        [bool](Get-Value $_ @('enabled') $false)
+                    })
+                    if ($remainingHold.Count -ceq 0) { return }
+                    $null = Invoke-OverflowRoomActionButton `
+                        -ButtonText "$([string]$deliveryAction.Label): $([string]$deliveryAction.Label)" `
+                        -Intent ([string]$deliveryAction.Intent)
+                    Wait-Frames -Frames 8
+                }
+                throw "$Intent did not close its visible sightline hold within twelve public actions."
             }
             elseif ($StopAfterResolution) { return }
             $overflowDeliveryHandled = $true
