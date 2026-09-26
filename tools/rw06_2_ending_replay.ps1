@@ -5631,7 +5631,7 @@ function Ensure-PunchlineCasinoDiscovered {
                             $afterTalkVisible -isnot [bool] -or [bool]$afterTalkVisible -or
                             $afterTransitionActive -isnot [bool] -or [bool]$afterTransitionActive -or
                             $afterFeedbackTitle -isnot [string] -or [string]$afterFeedbackTitle -cne 'Result' -or
-                            $afterFeedbackText -isnot [string] -or [string]$afterFeedbackText -cne 'The package changes hands. Nothing else does.') {
+                            $afterFeedbackText -isnot [string] -or [string]$afterFeedbackText -cne 'The way underground opens.') {
                             throw 'The overflow Parking Lot Tip did not settle to its authenticated public Result surface.'
                         }
                         Restore-EnvironmentSurfaceAfterTravelResult
