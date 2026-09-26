@@ -425,7 +425,10 @@ $FoundationSuiteStageBaselinesSec = @{
     # Postfix06_2 live-tree qualification measurements. These stages previously
     # bypassed Get-StageTimeout with literal ceilings below their observed wall
     # times, so Full could false-fail before reporting the underlying result.
-    "validate_project" = 162.100
+    # The Q-009 exact-seed preflight now includes the 40-case process/file
+    # custody suite plus its independent hostile runner. The clean current-tip
+    # measurement is 268.012s; retain the common 1.5x overrun guard.
+    "validate_project" = 268.012
     "standalone_contract" = 221.000
     "foundation_all" = 153.768
     "foundation_systems" = 29.141
