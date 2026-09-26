@@ -1602,7 +1602,7 @@ function Test-Q009RunContextShape {
     }catch{return $false}
     $payload=[ordered]@{}
     foreach($key in $keys|Where-Object{$_-cne'context_sha256'}){$payload[$key]=$Context.$key}
-    return [string]$Context.context_sha256-ceq(Get-StringSha256 (($payload|ConvertTo-Json -Depth 12 -Compress))-and
+    return [string]$Context.context_sha256-ceq(Get-StringSha256 (($payload|ConvertTo-Json -Depth 12 -Compress)))-and
         [string]$Context.canonical_lease_root-ceq$lease-and
         [string]$Context.canonical_lease_root_identity.path-ceq$lease-and
         [string]$Context.project_root-ceq$project-and[string]$Context.project_cache_root-ceq$cache-and
