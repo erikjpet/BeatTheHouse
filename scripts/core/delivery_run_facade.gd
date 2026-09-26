@@ -376,6 +376,20 @@ func delivery_resolve_travel_arrival(route: Dictionary = {}, route_risk: Diction
 			and bool(route.get("local_casino_room", false)) \
 			and str(route.get("target_node_id", "")).strip_edges() == node_id \
 			and str(route.get("destination_archetype", "")).strip_edges() == current_archetype_id:
+		var allows_origin_room_target: bool = bool(JsonCoerceScript._copy_dict(active_delivery_run.get("consumer_payload", {})).get("allow_origin_room_target", false))
+		if allows_origin_room_target:
+			var room_receipt := "room_travel:%s:%s:%d" % [node_id, current_archetype_id, maxi(0, _run._crew_action_index())]
+			var room_context := _delivery_host_context(node_id, node_id, "", "", "", "", str(route.get("id", current_archetype_id)))
+			var before_room_move := JSON.stringify(active_delivery_run)
+			active_delivery_run = DeliveryRunModelScript.apply_host_action(
+				active_delivery_run,
+				"move",
+				room_receipt,
+				room_context,
+				current_archetype_id
+			)
+			if JSON.stringify(active_delivery_run) == before_room_move:
+				return {"ok": false, "resolved": false, "snapshot": delivery_snapshot(), "errors": ["delivery model rejected the authenticated local-room arrival"]}
 		return {
 			"ok": true,
 			"resolved": false,
@@ -539,8 +553,9 @@ func _delivery_resolve_targets(spec: Dictionary) -> Dictionary:
 		break
 	var count := maxi(1, int(spec.get("target_count", requested.size() if not requested.is_empty() else 1)))
 	var origin_id = _run.current_world_node_id()
-	var required_target_room := str(JsonCoerceScript._copy_dict(spec.get("consumer_payload", {})).get("required_target_archetype_id", "")).strip_edges()
-	var allows_origin_room_target := bool(spec.get("allow_origin_room_target", false)) \
+	var consumer_payload: Dictionary = JsonCoerceScript._copy_dict(spec.get("consumer_payload", {}))
+	var required_target_room: String = str(consumer_payload.get("required_target_archetype_id", "")).strip_edges()
+	var allows_origin_room_target: bool = bool(consumer_payload.get("allow_origin_room_target", false)) \
 		and not required_target_room.is_empty() \
 		and requested.has(origin_id)
 	var offer_path_query := WorldMap.prepare_path_query(_run.world_map, origin_id, false)

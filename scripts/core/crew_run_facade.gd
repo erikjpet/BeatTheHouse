@@ -1687,13 +1687,15 @@ func _crew_heist_begin_setup_delivery(step: String, hold: bool) -> Dictionary:
 		"cargo_id": "heist_swap_cart" if not hold else "heist_schedule_watch",
 		"cargo_label": "Swap cart" if not hold else "Shift schedule",
 		"cargo_heat_per_travel": 0,
-		"consumer_payload": {"required_target_archetype_id": target_room_archetype_id},
+		"consumer_payload": {
+			"required_target_archetype_id": target_room_archetype_id,
+			"allow_origin_room_target": not hold,
+		},
 	}
 	if not hold:
 		# The cart moves between authenticated rooms inside the current Grand
 		# Casino world node. This opt-in keeps ordinary package jobs from ever
 		# selecting their origin while allowing that exact interior handoff.
-		spec["allow_origin_room_target"] = true
 		spec["initial_cargo_state"] = str(tuning.get("initial_cargo_state", "pickup_pending"))
 	if hold:
 		spec["hold_required_actions"] = int(tuning.get("hold_required_actions", 2))

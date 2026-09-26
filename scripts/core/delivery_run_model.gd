@@ -530,7 +530,11 @@ static func apply_host_action(state_value: Variant, verb: String, receipt_key: S
 			depth["cargo"] = _physical_cargo(CARGO_CARRIED, node_id, "player", "player")
 			state["depth_state"] = depth
 		"move":
-			if node_id.is_empty() or destination_node_id.is_empty() or node_id != str(position.get("node_id", "")) or node_id == destination_node_id:
+			var allows_local_room_move: bool = node_id == destination_node_id \
+				and bool(JsonCoerceScript._copy_dict(state.get("consumer_payload", {})).get("allow_origin_room_target", false)) \
+				and _required_target_room_matches(state, clean_archetype_id)
+			if node_id.is_empty() or destination_node_id.is_empty() or node_id != str(position.get("node_id", "")) \
+					or (node_id == destination_node_id and not allows_local_room_move):
 				return state
 			state = _record_physical_position(state, destination_node_id, action)
 			state = _note_arrival_state(state, destination_node_id)
