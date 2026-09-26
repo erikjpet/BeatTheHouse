@@ -15158,11 +15158,14 @@ func _interactable_object_view_list() -> Array:
 func _interactable_object_cache_key() -> String:
 	if run_state == null:
 		return "no-run"
-	return "%d|%s|%s|%s|%s|%s|%s|%s" % [
+	# Screen routing is presentation state. None of the catalog projection paths
+	# consume current_screen, and including it here made an ordinary category
+	# click rebuild and recommit sealed room-layout authority. Selection ids still
+	# invalidate the catalog wherever the available room actions can really change.
+	return "%d|%s|%s|%s|%s|%s|%s" % [
 		run_state.get_instance_id(),
 		_interactable_environment_cache_token(run_state.current_environment),
 		JSON.stringify([run_state.delivery_physical_interactions(), run_state.delivery_arrival_interaction()]),
-		current_screen,
 		selected_event_id,
 		selected_event_choice_id,
 		selected_item_offer_id,
