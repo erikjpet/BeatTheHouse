@@ -2698,10 +2698,12 @@ func _check_delivery_ordinary_travel_baseline(app: Control, phase: String) -> bo
 	# the generated Bar record and the world map that embeds it. The focused T6
 	# replay retained the exact fare, clock, Heat, RNG, route choice, travel story,
 	# action index, and travel-count contract while refreshing these two hashes.
+	# Round 3 restores Leave to a dedicated authored exit in every generated room;
+	# that intentional geometry-only change refreshes the same two layout hashes.
 	const EXPECTED := {
 		"bankroll_delta": -4,
 		"clock_delta": 42,
-		"current_environment_sha256": "893a5d429b627b6dfaf5b35a13abc992c690ecd874eae76dd90eb88896425fdc",
+		"current_environment_sha256": "306ec29a013b0ada4025ba62e75d0160211bea0b7d8a3e7a292d4e5395f9c032",
 		"current_world_node_id": "bar",
 		"heat_delta": 0,
 		"provenance_commit": "7ddb7685efb21e45979ea10ab89e660d99c6e891",
@@ -2712,7 +2714,7 @@ func _check_delivery_ordinary_travel_baseline(app: Control, phase: String) -> bo
 		"town_action_index": 0,
 		"travel_count_delta": 1,
 		"travel_story_sha256": "0257877551b37226fd62316ee2af5e047a27387fbb87d5acfa0273d1366a0e81",
-		"world_map_sha256": "640d6582840d9e62b732a56e3dd385d9f68e17be725b90642b2f15d975c8c9e7",
+		"world_map_sha256": "fd73af7368f209741c9ae48a5ef019dec0151eb69026fe505c1859c9ab1aefca",
 	}
 	app.call("start_foundation_run", "DELIVERY-ORDINARY-BASELINE", {}, false)
 	for _start_frame in range(3):
