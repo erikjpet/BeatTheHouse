@@ -393,10 +393,16 @@ func _check_private_identity_revalidation() -> void:
 	var file_command: Dictionary = game.surface_action_command("pull_tab_file_ticket", 0, false, reveal_state, run, environment)
 	var file_result: Dictionary = game.resolve_with_context("sort_tab_ticket", 0, run, environment, run.create_rng("glimmer_consume_target"), _dict(file_command.get("ui_state", {})))
 	var filed_machine := _machine(environment)
-	var filed_ticket := _find_ticket_in_collection(_array(filed_machine.get("winner_pile", [])), target_deal_id, target_serial, target_number)
-	if filed_ticket.is_empty():
-		filed_ticket = _find_ticket_in_collection(_array(filed_machine.get("loser_pile", [])), target_deal_id, target_serial, target_number)
-	if not bool(file_result.get("ok", false)) or filed_ticket.is_empty() or not bool(filed_ticket.get("sorted", false)) or not bool(filed_ticket.get("fully_revealed", false)):
+	var target_payout := int(_dict(_array(deal.get("prizes", []))[target_prize_index]).get("payout", 0))
+	var expected_pile_name := "winner_pile" if target_payout > 0 else "loser_pile"
+	var other_pile_name := "loser_pile" if target_payout > 0 else "winner_pile"
+	var filed_ticket := _find_ticket_in_collection(_array(filed_machine.get(expected_pile_name, [])), target_deal_id, target_serial, target_number)
+	var wrongly_filed_ticket := _find_ticket_in_collection(_array(filed_machine.get(other_pile_name, [])), target_deal_id, target_serial, target_number)
+	var still_live_ticket := _find_ticket_in_collection(_array(filed_machine.get("ticket_stack", [])), target_deal_id, target_serial, target_number)
+	# Terminal piles intentionally store compact receipts rather than the opened
+	# rows and reveal flags. Preserve the lifecycle guarantee by checking the
+	# exact identity, payout-selected pile, and removal from the live stack.
+	if not bool(file_result.get("ok", false)) or filed_ticket.is_empty() or not wrongly_filed_ticket.is_empty() or not still_live_ticket.is_empty():
 		failures.append("RW06_6 real file/consume lifecycle did not resolve the exact revealed target into a terminal ticket pile.")
 	if _production_pool_contains_key(game, filed_machine, target_key):
 		failures.append("RW06_6 production candidate pool accepted the exact target after terminal file/consume.")

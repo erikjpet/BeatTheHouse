@@ -788,7 +788,10 @@ func draw_hardware_cache_layer(surface, state: Dictionary) -> void:
 
 
 func _prepare_hardware_cache(surface, state: Dictionary, consume_prepared: bool = true) -> bool:
-	if not _retained_layer_cache_enabled(state):
+	# Retained layers need a live Control host for child canvases and viewport
+	# textures. Protocol-only draw harnesses still exercise the same immediate
+	# production commands, but cannot own retained scene resources.
+	if not surface is Control or not _retained_layer_cache_enabled(state):
 		if is_instance_valid(_hardware_cache_canvas):
 			_hardware_cache_canvas.visible = false
 		return false
@@ -885,6 +888,9 @@ func _prepare_static_cache(surface, state: Dictionary) -> bool:
 	# The cache contains only design-space commands whose complete dependencies
 	# are listed here. Moving platform/bodies, glass, hardware, hover/hit/control
 	# state and overlays remain on the live surface every draw.
+	if not surface is Control:
+		_static_cache_fallback_reason = "unsupported_surface_host"
+		return false
 	if not _retained_layer_cache_enabled(state):
 		_static_cache_fallback_reason = "non_web_runtime"
 		return false
