@@ -228,8 +228,6 @@ therefore reopened and the prior in-range conclusion withdrawn.
   Count payout ladder are unchanged. Jackpot and unusually profitable routes
   can still finish sooner.
 
-One fresh normal replay is required below before T4 closes.
-
 The first replay of this final curve reached the Count play boundary at bridge
 command `321`, with `$90` cash, `24` chips, no debt, and Heat `29`. The Live
 Table was present as an exact visible, enabled, interactive room-list event but
@@ -242,9 +240,10 @@ not on the room canvas, so the replay helper now uses that same public
 - Audit route: Audit Night now exposes the already-learned Punchline as a
   direct travel hook. Reading the roster remains mandatory, but the player no
   longer has to scout Bar -> Back Alley -> Parking Lot Tip before following
-  the route the roster just disclosed. Scenario-authored travel hooks are
-  applied after the destination room is installed, so world-map generation
-  cannot overwrite that exact Audit-only reveal.
+  the route the roster just disclosed. The Audit roster's visible response now
+  opens both the Punchline node and the existing `underground_tip` route gate
+  in the same event result; the ordinary route gate had previously hidden the
+  correctly revealed node from the public map.
 - Count setup chain: after the visible Cage hold succeeds, the carried swap
   cart becomes the active route immediately; after its visible Grand handoff,
   live play begins immediately. The schedule hold and cart handoff remain
@@ -254,6 +253,21 @@ not on the room canvas, so the replay helper now uses that same public
   Delivery chaining is evaluated only after the completed route's durable
   checkpoint replaces its active delivery authority, so the next route cannot
   collide with or overwrite the route that just resolved.
+- Replay-surface alignment: the normal public Counter Probe response and the
+  two-choice Eye in the Sky table warning are now handled through their visible
+  choices. This changes no product rule or economy value; it lets the replay
+  follow the same normal surface a player sees.
+- Final owner-timeboxed replay: the route reached `heist_out_hot` at bridge
+  command **389** (**164** gameplay actions), down from 998 while retaining
+  Audit Roster, the schedule hold, cart handoff, three normal blackjack hands,
+  Hold -> Sit -> Dock, and the marked getaway. It entered live play at `$107`
+  cash / `24` chips / Heat `17` / no debt, reached the third hand at `$102`
+  cash / `0` chips / Heat `11`, and finished at `$1,002` bankroll / no debt.
+  The review image is
+  `D:\Projects\Beat-The-House\.tmp\owner_review\ending_heist.png`. The owner
+  accepted this under the revised sub-400 timebox; global prices, blackjack
+  rules, odds, RTP, and the `$720/$900/$1,150` Count payout ladder remain
+  unchanged.
 
 ## Departure-price integrity repair (rw06_2 blocker fix)
 
