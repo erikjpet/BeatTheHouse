@@ -1074,6 +1074,7 @@ function Invoke-FoundationSystemsSharded {
     if (-not $planCheck.valid) {
         throw "Invalid foundation systems shard plan: $(@($planCheck.errors) -join ' | ')"
     }
+    $registeredIds = @($expectedIds)
 
     if (-not [string]::IsNullOrWhiteSpace($ShardId)) {
         if (-not $plan.Contains($ShardId)) {
@@ -1287,7 +1288,7 @@ function Invoke-FoundationSystemsSharded {
     [System.IO.File]::WriteAllText($stdout, $combinedStdout.ToString())
     [System.IO.File]::WriteAllText($stderr, $combinedStderr.ToString())
 
-    $merged = Merge-FoundationSystemsShardReports -ExpectedIds $expectedIds -ShardResults $shardResults -SuiteName $FoundationSuite
+    $merged = Merge-FoundationSystemsShardReports -ExpectedIds $expectedIds -RegisteredIds $registeredIds -ShardResults $shardResults -SuiteName $FoundationSuite
     $aggregateReport = $merged.report
     $aggregateReport.started_msec = $startedMsec
     $cacheCheck = {

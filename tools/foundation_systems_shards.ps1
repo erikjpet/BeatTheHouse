@@ -756,8 +756,12 @@ function Merge-FoundationSystemsShardReports {
     param(
         [string[]]$ExpectedIds,
         [object[]]$ShardResults,
-        [string]$SuiteName = "systems"
+        [string]$SuiteName = "systems",
+        [string[]]$RegisteredIds = @()
     )
+    if ($RegisteredIds.Count -eq 0) {
+        $RegisteredIds = @($ExpectedIds)
+    }
     $harnessFailures = New-Object System.Collections.Generic.List[string]
     $checksById = @{}
     $executedByShard = [ordered]@{}
@@ -774,7 +778,7 @@ function Merge-FoundationSystemsShardReports {
                 $harnessFailures.Add("Systems shard '$shardId' produced a report with the wrong tool or suite.")
             }
             $registeredIds = @($report.registered_check_ids)
-            if (($registeredIds -join "|") -ne ($ExpectedIds -join "|")) {
+            if (($registeredIds -join "|") -ne ($RegisteredIds -join "|")) {
                 $harnessFailures.Add("Systems shard '$shardId' did not observe the canonical systems registration in its original order.")
             }
             foreach ($check in @($report.checks)) {
@@ -888,7 +892,7 @@ function Merge-FoundationSystemsShardReports {
         checks = $orderedChecks
         skipped = @()
         last_started_check = $lastStarted
-        registered_check_ids = @($ExpectedIds)
+        registered_check_ids = @($RegisteredIds)
         requested_check_ids = @($ExpectedIds)
         executed_check_ids = @($orderedChecks | ForEach-Object { [string]$_.id })
         shards = $shardSummaries

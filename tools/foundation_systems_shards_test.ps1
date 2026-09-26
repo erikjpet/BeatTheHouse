@@ -91,7 +91,7 @@ $passedReport = [pscustomobject]@{
     passed = $true
     failure_count = 0
     failures = @()
-    checks = @([pscustomobject]@{ id = "beta"; duration_msec = 1; failure_count = 0; failures = @() })
+    checks = @([pscustomobject]@{ id = "beta"; duration_msec = 1; failure_count = 0; failures = @(); passed = $true })
     last_started_check = "beta"
     registered_check_ids = @("alpha", "beta")
     requested_check_ids = @("beta")
@@ -105,6 +105,13 @@ Assert-True (-not $aggregate.passed) "Aggregate accepted a failing shard report.
 Assert-True ($aggregate.exit_code -ne 0) "Aggregate failure did not propagate a nonzero exit code."
 Assert-True ((@($aggregate.report.failures) -join " | ").Contains("hostile shard assertion")) "Aggregate dropped the shard assertion failure."
 Assert-True ($aggregate.report.checks.Count -eq 2) "Aggregate dropped executed check evidence while propagating failure."
+
+$selectedAggregate = Merge-FoundationSystemsShardReports -ExpectedIds @("beta") -RegisteredIds @("alpha", "beta") -ShardResults @(
+    [pscustomobject]@{ shard_id = "selected"; expected_check_ids = @("beta"); exit_code = 0; raw_exit_code = 0; timed_out = $false; duration_msec = 2; report = $passedReport; report_path = "selected.json"; stdout_path = "selected.out"; stderr_path = "selected.err"; stderr_issues = @(); last_started_check = "beta" }
+)
+Assert-True $selectedAggregate.passed "Selected-shard aggregate rejected the runner's full canonical registration."
+Assert-True (($selectedAggregate.report.registered_check_ids -join "|") -eq "alpha|beta") "Selected-shard aggregate dropped the full canonical registration evidence."
+Assert-True (($selectedAggregate.report.requested_check_ids -join "|") -eq "beta") "Selected-shard aggregate widened its requested coverage."
 
 $unknownPlan = [ordered]@{ first = @("alpha", "intruder"); second = @("beta") }
 $unknownResult = Test-FoundationSystemsShardPlan -ExpectedIds @("alpha", "beta") -Shards $unknownPlan
