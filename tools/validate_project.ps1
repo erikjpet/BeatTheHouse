@@ -3022,6 +3022,14 @@ Write-Output "RW06_1_INDEPENDENT_ADMISSION_PASS report=$ReportPath cases=$($case
     }
     $exactSeedPostProcessCensus=@(Get-Rw061ValidatorProcessCensus);$preProcessKeys=@($exactSeedPreProcessCensus|ForEach-Object{[string]$_.key});$newProcesses=@($exactSeedPostProcessCensus|Where-Object{$preProcessKeys-notcontains[string]$_.key})
     if($newProcesses.Count-ne0){
+        # A host telemetry shell can exit immediately after the first census.
+        # Re-observe the complete exact identity set after a short settle window:
+        # persistent residue and any newly arrived process still fail closed.
+        Start-Sleep -Milliseconds 250
+        $exactSeedPostProcessCensus=@(Get-Rw061ValidatorProcessCensus)
+        $newProcesses=@($exactSeedPostProcessCensus|Where-Object{$preProcessKeys-notcontains[string]$_.key})
+    }
+    if($newProcesses.Count-ne0){
         $newProcessDetails=@($newProcesses|ForEach-Object{
             $record=$_
             $native=Get-CimInstance Win32_Process -Filter ("ProcessId={0}" -f [int]$record.pid) -ErrorAction SilentlyContinue
