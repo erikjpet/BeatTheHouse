@@ -2705,7 +2705,7 @@ try {
             $exactSeedLauncherStarted = Start-RedirectedProcess -FilePath $canonicalWindowsPowerShell -Arguments @('-NoProfile','-ExecutionPolicy','Bypass','-File',$exactSeedLauncher,'-ProjectRoot',$root,'-ValidateOnly','-SelfTestReport',$exactSeedSelfTestReport) -StdoutPath $exactSeedLauncherStdout -StderrPath $exactSeedLauncherStderr -ProcessKind Exact -BaselineGodotIdentityKeys @() -TimeoutSec 300 -ExpectedExecutableIdentity $exactSeedPowerShellExpectedIdentity -RunContext $exactSeedValidatorRunContext
             $exactSeedLauncherCompletion = Complete-RedirectedProcess -Started $exactSeedLauncherStarted -TimeoutSec 300 -ProcessKind Exact -BaselineGodotIdentityKeys @() -OwnedArtifactRoots @([ordered]@{role='validator_shadow';path=[IO.Path]::GetFullPath($exactSeedShadowRoot).TrimEnd('\','/');root_identity=$exactSeedShadowRootReceipt.identity}) -RunContext $exactSeedValidatorRunContext
             if (-not (Test-Q009CompletionResultShape $exactSeedLauncherCompletion) -or -not [bool]$exactSeedLauncherCompletion.native_exit_observed -or [bool]$exactSeedLauncherCompletion.timed_out -or -not [bool]$exactSeedLauncherCompletion.job_cleanup_succeeded -or -not [bool]$exactSeedLauncherCompletion.job_final_membership_empty -or [int]$exactSeedLauncherCompletion.job_final_active_process_count -ne 0 -or -not [bool]$exactSeedLauncherCompletion.executable_pin_clean -or -not [string]::IsNullOrWhiteSpace([string]$exactSeedLauncherCompletion.error)) {
-                throw 'validator-owned hostile launcher process did not complete with exact empty-job/executable/channel custody'
+                throw ('validator-owned hostile launcher process did not complete with exact empty-job/executable/channel custody: '+[string]$exactSeedLauncherCompletion.error)
             }
             $exactSeedLauncherExitCode = [int]$exactSeedLauncherCompletion.native_exit_code
         }
@@ -3030,24 +3030,48 @@ Write-Output "RW06_1_INDEPENDENT_ADMISSION_PASS report=$ReportPath cases=$($case
         $newProcesses=@($exactSeedPostProcessCensus|Where-Object{$preProcessKeys-notcontains[string]$_.key})
     }
     if($newProcesses.Count-ne0){
-        $newProcessDetails=@($newProcesses|ForEach-Object{
-            $record=$_
-            $native=Get-CimInstance Win32_Process -Filter ("ProcessId={0}" -f [int]$record.pid) -ErrorAction SilentlyContinue
-            $parent=if($null-ne$native){Get-CimInstance Win32_Process -Filter ("ProcessId={0}" -f [int]$native.ParentProcessId) -ErrorAction SilentlyContinue}else{$null}
-            [ordered]@{
-                key=[string]$record.key
-                command_line=if($null-ne$native){[string]$native.CommandLine}else{'<exited-before-diagnostic>'}
-                parent_pid=if($null-ne$native){[int]$native.ParentProcessId}else{0}
-                parent_name=if($null-ne$parent){[string]$parent.Name}else{''}
-                parent_path=if($null-ne$parent){[string]$parent.ExecutablePath}else{''}
+        # Bind the final failure evidence to a process that is still the exact
+        # PID/name/start-time identity admitted by the settled census. A short-
+        # lived host shell may exit (or its PID may be reused) between census
+        # and diagnostics; neither is persistent validator residue.
+        $confirmedNewProcesses=[Collections.Generic.List[object]]::new()
+        $newProcessDetails=[Collections.Generic.List[object]]::new()
+        foreach($record in @($newProcesses)){
+            try { $live=[Diagnostics.Process]::GetProcessById([int]$record.pid) }
+            catch [ArgumentException] { continue }
+            try{
+                if($live.HasExited){continue}
+                $liveStart=$live.StartTime.ToUniversalTime()
+                if($live.HasExited){continue}
+                $liveKey=('{0}|{1}|{2}'-f[int]$live.Id,[long]$liveStart.Ticks,[string]$live.ProcessName)
+                if($liveKey-cne[string]$record.key-or(Test-Rw061CodexHostTelemetryProcess $live)-or$live.HasExited){continue}
+                $native=Get-CimInstance Win32_Process -Filter ("ProcessId={0}" -f [int]$record.pid) -ErrorAction SilentlyContinue
+                if($null-eq$native){if($live.HasExited){continue};throw "Could not capture diagnostics for live validator residue $liveKey"}
+                $parent=Get-CimInstance Win32_Process -Filter ("ProcessId={0}" -f [int]$native.ParentProcessId) -ErrorAction SilentlyContinue
+                [void]$confirmedNewProcesses.Add($record)
+                [void]$newProcessDetails.Add([ordered]@{
+                    key=[string]$record.key
+                    command_line=[string]$native.CommandLine
+                    parent_pid=[int]$native.ParentProcessId
+                    parent_name=if($null-ne$parent){[string]$parent.Name}else{''}
+                    parent_path=if($null-ne$parent){[string]$parent.ExecutablePath}else{''}
+                })
             }
-        })
+            finally { $live.Dispose() }
+        }
+        $newProcesses=@($confirmedNewProcesses)
+    }
+    if($newProcesses.Count-ne0){
         throw "rw06_1 validator left or observed new relevant process identities: $($newProcessDetails|ConvertTo-Json -Compress -Depth 4)"
     }
     $exactSeedPostLeaseCensus=@(Get-Rw061ValidatorLeaseCensus $exactSeedLeaseRoot)
     if((@($exactSeedPreLeaseCensus)|ConvertTo-Json -Compress -Depth 5)-cne(@($exactSeedPostLeaseCensus)|ConvertTo-Json -Compress -Depth 5)){throw 'rw06_1 engine-free validator changed the canonical Q-009 lease census'}
     $exactSeedPostResidueCensus=@(Get-Rw061ValidatorSelfTestResidueCensus)
-    if((@($exactSeedPreResidueCensus)|ConvertTo-Json -Compress -Depth 5)-cne(@($exactSeedPostResidueCensus)|ConvertTo-Json -Compress -Depth 5)){throw 'rw06_1 launcher self-test created or changed a residual rw06-q009-selftest root'}
+    if((@($exactSeedPreResidueCensus)|ConvertTo-Json -Compress -Depth 5)-cne(@($exactSeedPostResidueCensus)|ConvertTo-Json -Compress -Depth 5)){
+        $residueMessage='rw06_1 launcher self-test created or changed a residual rw06-q009-selftest root'
+        if($null-ne$exactSeedInnerFailure){$residueMessage+='; inner failure: '+$exactSeedInnerFailure.Message}
+        throw $residueMessage
+    }
     $exactSeedPostCacheCensus=Get-Rw061ValidatorTreeCensus $exactSeedProjectCache
     if(($exactSeedPreCacheCensus|ConvertTo-Json -Compress -Depth 8)-cne($exactSeedPostCacheCensus|ConvertTo-Json -Compress -Depth 8)){throw 'rw06_1 launcher self-test changed the candidate project cache tree'}
     $exactSeedPostEnvironmentCensus=Get-Rw061ValidatorEnvironmentCensus
