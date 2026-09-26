@@ -4314,8 +4314,8 @@ func _check_crew_lender_lifecycle(library: ContentLibrary, failures: Array) -> v
 		failures.append("The Crew did not stack location markers into one debt entry.")
 	else:
 		var multi_debt: Dictionary = multi_state.debt[0] as Dictionary
-		if int(multi_debt.get("balance", 0)) != 6:
-			failures.append("The Crew stacked marker balance was not six favors after three locations.")
+		if int(multi_debt.get("balance", 0)) != 3:
+			failures.append("The Crew stacked marker balance was not three favors after three locations.")
 		if JsonCoerceScript._copy_array(multi_debt.get("source_location_ids", [])).size() != 3:
 			failures.append("The Crew did not preserve all three source locations.")
 	multi_state.current_environment["id"] = "lender_crew_fourth_room"
@@ -4333,11 +4333,11 @@ func _check_crew_lender_lifecycle(library: ContentLibrary, failures: Array) -> v
 	var borrow_result: Dictionary = borrow.get("result", {}) if typeof(borrow.get("result", {})) == TYPE_DICTIONARY else {}
 	if str(borrow_result.get("conclusion_animation", "")) != "bankroll_transfer":
 		failures.append("The Crew direct lender did not request the bankroll transfer animation.")
-	if run_state.bankroll != before_bankroll + 45:
+	if run_state.bankroll != before_bankroll + 70:
 		failures.append("The Crew did not lend its configured cash amount.")
 	var debt_data: Dictionary = run_state.debt[0] as Dictionary
-	if str(debt_data.get("debt_kind", "")) != "favor" or int(debt_data.get("balance", 0)) != 2:
-		failures.append("The Crew debt was not denominated as two favors.")
+	if str(debt_data.get("debt_kind", "")) != "favor" or int(debt_data.get("balance", 0)) != 1:
+		failures.append("The Crew debt was not denominated as one favor.")
 	var marked_members := 0
 	for member_id in CrewStateModelScript.MEMBER_IDS:
 		if run_state.crew_rank(str(member_id)) == "marker":
@@ -4357,22 +4357,26 @@ func _check_crew_lender_lifecycle(library: ContentLibrary, failures: Array) -> v
 	var favor := run_state.complete_debt_favor("the_crew_marker")
 	if not bool(favor.get("ok", false)):
 		failures.append("The Crew favor completion did not resolve.")
-	elif str(favor.get("message", "")) != "You do the Crew's favor and knock one marker off the slate.":
+	elif str(favor.get("message", "")) != "You finish the Crew's last favor and clear the marker.":
 		failures.append("The Crew favor completion changed its shipped message.")
-	debt_data = run_state.debt[0] as Dictionary
-	if int(debt_data.get("balance", 0)) != 1 or str(debt_data.get("status", "")) != "active":
-		failures.append("The Crew favor completion did not reduce and reset the marker.")
-	var refusal := run_state.refuse_debt_favor("the_crew_marker")
+	if not run_state.debt.is_empty() or not bool(run_state.narrative_flags.get("crew_marker_clear", false)):
+		failures.append("The Crew's sole favor did not clear the marker.")
+	var refusal_fixture := _lender_fixture(library, "LENDER-CREW-REFUSAL", ["the_crew"], [], [])
+	var refusal_state: RunState = refusal_fixture.get("run_state", null)
+	var refusal_resolver: RunActionService = refusal_fixture.get("resolver", null)
+	refusal_resolver.use_hook("lender", "the_crew")
+	refusal_state.advance_environment_turns(2)
+	var refusal := refusal_state.refuse_debt_favor("the_crew_marker")
 	if not bool(refusal.get("ok", false)):
 		failures.append("The Crew favor refusal did not resolve.")
 	elif str(refusal.get("message", "")) != "You refuse the Crew's favor; the marker becomes cash at brutal rates.":
 		failures.append("The Crew favor refusal changed its shipped message.")
-	debt_data = run_state.debt[0] as Dictionary
-	if str(debt_data.get("debt_kind", "")) != "cash" or int(debt_data.get("balance", 0)) != 45:
+	debt_data = refusal_state.debt[0] as Dictionary
+	if str(debt_data.get("debt_kind", "")) != "cash" or int(debt_data.get("balance", 0)) != 70:
 		failures.append("The Crew refusal did not convert the remaining favor to cash at the configured rate.")
-	if bool(run_state.narrative_flags.get("crew_favor_pending", true)) or not bool(run_state.narrative_flags.get("crew_marker_converted_to_cash", false)):
+	if bool(refusal_state.narrative_flags.get("crew_favor_pending", true)) or not bool(refusal_state.narrative_flags.get("crew_marker_converted_to_cash", false)):
 		failures.append("The Crew conversion changed its shipped pending/conversion flags.")
-	var conversion_grievances := run_state.crew_grievances()
+	var conversion_grievances := refusal_state.crew_grievances()
 	if conversion_grievances.size() != 1 or str((conversion_grievances[0] as Dictionary).get("kind", "")) != "favor_converted_unpaid":
 		failures.append("The Crew cash conversion did not write exactly one hidden favor_converted_unpaid grievance.")
 
@@ -4420,8 +4424,8 @@ func _check_crew_trust_core(library: ContentLibrary, failures: Array) -> void:
 		failures.append("Crew standing did not derive plan-specific Inner Circle eligibility.")
 	ladder.crew_trust_by_member["crew_velvet"] = CrewStateModelScript.rank_threshold("inner_circle")
 	heist_eligibility = ladder.crew_standing().get("heist_eligibility", {})
-	if not bool(heist_eligibility.get("the_whale_game", false)) or ladder.crew_rank("crew_mags") != "stranger":
-		failures.append("The Whale Game did not gate on Velvet alone as required by the roadmap.")
+	if heist_eligibility.has("the_whale_game") or not bool(heist_eligibility.get("the_count", false)) or ladder.crew_rank("crew_mags") != "stranger":
+		failures.append("Crew standing exposed the deferred Whale Game outside the Count-only release scope.")
 
 	var fulfilled_fixture := _lender_fixture(library, "CREW-FAVOR-FULFILLED", ["the_crew"], [], [])
 	var fulfilled_state: RunState = fulfilled_fixture.get("run_state", null)
