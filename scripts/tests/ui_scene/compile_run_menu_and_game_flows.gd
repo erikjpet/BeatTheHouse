@@ -1594,14 +1594,14 @@ func _check_onboarding_tutorial_ui_flow(app: Control) -> bool:
 	app.call("_refresh")
 	await process_frame
 	var report_screen: RunReportScreen = app.get("run_report_screen")
-	if profile.tutorial_completed or report_screen == null or report_screen.new_run_button.text != "Restart Tutorial" or report_screen.home_button.text != "Start Normal Run" or not str(report_screen.outcome_how.text).contains("Restart the tutorial"):
-		push_error("Tutorial failure did not preserve incomplete state and offer an explicit tutorial restart or normal-start choice.")
+	if not profile.tutorial_completed or report_screen == null or report_screen.new_run_button.text != "Restart Tutorial" or report_screen.home_button.text != "Start Normal Run" or not str(report_screen.outcome_how.text).contains("Restart the tutorial"):
+		push_error("Tutorial failure did not preserve the one-time offer state and expose an explicit tutorial restart or normal-start choice.")
 		return false
 	app.call("_on_run_report_new_run_requested")
 	await process_frame
 	run_state = app.get("run_state")
-	if run_state == null or not run_state.is_tutorial_run() or profile.tutorial_completed:
-		push_error("Tutorial failure replay did not restart First Night without completing onboarding.")
+	if run_state == null or not run_state.is_tutorial_run() or not profile.tutorial_completed:
+		push_error("Tutorial failure replay did not restart First Night while retaining the one-time offer state.")
 		return false
 	run_state.fail_run(RunState.FAILURE_BANKROLL_ZERO, "The tutorial bankroll ran out again.")
 	app.call("_route_failed_run_if_needed")

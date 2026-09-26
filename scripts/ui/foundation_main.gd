@@ -16021,6 +16021,9 @@ func _on_run_report_new_run_requested() -> void:
 	if _terminal_reward_selection_pending():
 		_show_message("Choose and store each earned reward before leaving the run report.")
 		return
+	if run_state != null and run_state.is_tutorial_run() and run_state.run_status == RunState.RUN_STATUS_FAILED:
+		start_tutorial_run()
+		return
 	if run_state != null and run_state.is_tutorial_run() and not _complete_tutorial_profile():
 		return
 	start_generated_foundation_run()
