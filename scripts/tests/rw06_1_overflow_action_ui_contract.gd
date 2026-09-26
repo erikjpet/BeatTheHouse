@@ -26,6 +26,8 @@ class OverflowFoundationHost:
 	var use_overflow_fixture := false
 	var delivery_exit_focus_routes := 0
 	var delivery_exit_activation_routes := 0
+	var overflow_dialogue_routes: Array[String] = []
+	var overflow_game_hook_routes: Array[String] = []
 
 	func _interactable_object_view_list() -> Array:
 		if use_overflow_fixture:
@@ -41,6 +43,18 @@ class OverflowFoundationHost:
 		if object_id == "scenario::delivery_exit":
 			delivery_exit_activation_routes += 1
 		super._on_environment_object_activated(object_id)
+
+	func start_dialogue(dialogue_id: String, source_data: Dictionary = {}) -> bool:
+		if use_overflow_fixture and dialogue_id == "pull_tab_clerk":
+			overflow_dialogue_routes.append(dialogue_id)
+			return true
+		return super.start_dialogue(dialogue_id, source_data)
+
+	func use_game_environment_hook(game_id: String, hook_id: String, action_id: String = "") -> bool:
+		if use_overflow_fixture and game_id == "pull_tabs" and hook_id == "ticket_redeemer":
+			overflow_game_hook_routes.append("%s:%s:%s" % [game_id, hook_id, action_id])
+			return true
+		return super.use_game_environment_hook(game_id, hook_id, action_id)
 
 
 class CleanupQuitter:
@@ -249,14 +263,16 @@ func _run() -> void:
 	_check_action_key_authority_seal()
 	await _check_record_scenario_authority_staleness(app, action_list, records, activations)
 	await _check_canvas_exclusion(records)
+	await _check_launcher_reveal_clickthrough_guard(action_list, records)
 	await _check_cancel_and_focus_recovery(action_list)
 	await _check_responsive_panel_width(action_list)
 	await _check_refresh_focus_recovery(app, action_list, records)
+	await _check_merged_action_type_dispatch(app, action_list, records)
 	for mode in ["mouse", "touch", "keyboard", "controller"]:
 		if mode == "touch":
 			await _isolate_touch_from_prior_mouse()
 		await _check_rejected_actions_for_mode(app, action_list, disabled_record, hidden_record, activations, str(mode))
-	await _check_downstream_rejection_reopens(app, action_list, activations)
+	await _check_downstream_rejection_stays_closed(app, action_list, activations)
 
 	var baseline_run_snapshot: Dictionary = app.get("run_state").to_dict()
 	var delivery_setup := await _install_delivery_day(app, action_list)
@@ -367,13 +383,21 @@ func _check_dispatch_source_placement() -> void:
 	var id_fallback_index := dispatch_body.find("scenario_command_id = str(live_action.get(\"id\", \"\"))")
 	var scenario_index := dispatch_body.find("elif route_as_scenario")
 	var game_hook_index := dispatch_body.find("elif object_type == CONTEXT_MODE_GAME_HOOK")
+	var dialogue_index := dispatch_body.find("elif object_type == CONTEXT_MODE_DIALOGUE")
 	var emit_index := dispatch_body.find("var emit_object_id")
 	if sequence_index < 0 or explicit_index < 0 or route_index < 0 or id_fallback_index < 0 \
-			or scenario_index < 0 or game_hook_index < 0 or emit_index < 0 \
+			or scenario_index < 0 or dialogue_index < 0 or game_hook_index < 0 or emit_index < 0 \
 			or explicit_index > route_index or route_index > id_fallback_index \
-			or sequence_index > scenario_index or scenario_index > game_hook_index or game_hook_index > emit_index \
+			or sequence_index > scenario_index or scenario_index > dialogue_index or dialogue_index > game_hook_index or game_hook_index > emit_index \
 			or dispatch_body.contains("live_action.get(\"id\", object_data.get(\"scenario_command_id\""):
 		failures.append("RW06-1 overflow dispatch no longer prioritizes sequence/scenario authority over generic emit tokens.")
+	if not dispatch_body.contains("live_action.get(\"object_type\", object_data.get(\"object_type\""):
+		failures.append("RW06-1 overflow dispatch no longer honors action-local producer types for merged room objects.")
+	for boundary_name in ["start_foundation_run", "_load_foundation_run_from_slot", "save_run_from_menu", "_travel_to", "_complete_back_to_environment", "return_to_main_menu"]:
+		if not _source_function_body(source, boundary_name).contains("_clear_input_guard_modal_state()"):
+			failures.append("RW06-1 lifecycle boundary %s does not clear modal guard ownership." % boundary_name)
+	if not _source_function_body(action_list_source, "close").contains("_cancel_pending_selection()"):
+		failures.append("RW06-1 closing Room actions does not cancel its deferred selection.")
 	var effective_sequence_index := effective_body.find("_uses_scenario_sequence_dispatch")
 	var effective_action_index := effective_body.find("action.get(\"scenario_command_id\"")
 	var effective_record_index := effective_body.find("record.get(\"scenario_command_id\"")
@@ -1124,6 +1148,29 @@ func _check_cancel_and_focus_recovery(action_list: Control) -> void:
 		failures.append("RW06-1 ui_cancel did not close the overflow modal.")
 	if launcher == null or root.gui_get_focus_owner() != launcher:
 		failures.append("RW06-1 overflow cancel did not restore focus to its launcher.")
+
+
+func _check_launcher_reveal_clickthrough_guard(action_list: Control, records: Array) -> void:
+	action_list.close()
+	action_list.render([])
+	action_list.render(records)
+	var launcher := _launcher_button(action_list)
+	if launcher == null:
+		failures.append("RW06-1 click-through guard could not find the Room actions launcher.")
+		return
+	launcher.emit_signal("pressed")
+	if bool(action_list.call("is_open")):
+		failures.append("RW06-1 a same-frame game-exit release opened Room actions by itself.")
+	action_list.call("quarantine_launcher_input")
+	launcher.emit_signal("pressed")
+	if bool(action_list.call("is_open")):
+		failures.append("RW06-1 lifecycle cleanup did not quarantine an already-visible launcher.")
+	await create_timer(1.1).timeout
+	launcher.emit_signal("pressed")
+	await process_frame
+	if not bool(action_list.call("is_open")):
+		failures.append("RW06-1 click-through guard blocked the player's next explicit launcher press.")
+	action_list.close()
 
 
 func _check_responsive_panel_width(action_list: Control) -> void:
@@ -2540,7 +2587,94 @@ func _check_rejected_actions_for_mode(app: Control, action_list: Control, disabl
 	await process_frame
 
 
-func _check_downstream_rejection_reopens(app: Control, action_list: Control, activations: Array[String]) -> void:
+func _check_merged_action_type_dispatch(app: Control, action_list: Control, restore_records: Array) -> void:
+	var clerk := {
+		"object_id": "game_hook:pull_tabs:ticket_redeemer",
+		"object_type": "game_hook",
+		"parent_id": "pull_tabs",
+		"source_id": "ticket_redeemer",
+		"label": "Lottery Clerk",
+		"presentation_mode": "overflow",
+		"presentation_required": true,
+		"visible": true,
+		"interactive": true,
+		"enabled": true,
+		"available_actions": [{
+			"id": "redeem_pull_tab_winners",
+			"label": "Cash In",
+			"object_type": "game_hook",
+			"parent_id": "pull_tabs",
+			"source_id": "ticket_redeemer",
+			"hook_id": "ticket_redeemer",
+		}, {
+			"id": "start_dialogue",
+			"label": "Talk",
+			"object_type": "dialogue",
+			"parent_id": "pull_tabs",
+			"source_id": "pull_tab_clerk",
+			"hook_id": "pull_tab_clerk_dialogue",
+		}],
+	}
+	_install_fixture_records(app, action_list, [clerk])
+	await _settle_frames(2)
+	var dialogue_before := (app.get("overflow_dialogue_routes") as Array).size()
+	var hook_before := (app.get("overflow_game_hook_routes") as Array).size()
+	action_list.open()
+	await process_frame
+	var talk_button := _action_button(action_list, "start_dialogue")
+	if talk_button == null:
+		failures.append("RW06-1 merged Lottery Clerk did not render Talk.")
+	else:
+		_send_mouse(talk_button.get_global_rect().get_center())
+		await _settle_frames(3)
+		if (app.get("overflow_dialogue_routes") as Array).size() != dialogue_before + 1 \
+				or (app.get("overflow_game_hook_routes") as Array).size() != hook_before \
+				or bool(action_list.call("is_open")):
+			failures.append("RW06-1 merged Lottery Clerk Talk did not dispatch through its action-local dialogue route and close.")
+	action_list.open()
+	await process_frame
+	var cash_button := _action_button(action_list, "redeem_pull_tab_winners")
+	if cash_button == null:
+		failures.append("RW06-1 merged Lottery Clerk did not render Cash In.")
+	else:
+		_send_mouse(cash_button.get_global_rect().get_center())
+		await _settle_frames(3)
+		if (app.get("overflow_game_hook_routes") as Array).size() != hook_before + 1 \
+				or (app.get("overflow_dialogue_routes") as Array).size() != dialogue_before + 1 \
+				or bool(action_list.call("is_open")):
+			failures.append("RW06-1 merged Lottery Clerk Cash In did not dispatch through its action-local game-hook route and close.")
+
+	# Closing in the frame between a press and deferred dispatch must revoke the
+	# queued authority rather than execute it against the next lifecycle screen.
+	action_list.open()
+	await process_frame
+	talk_button = _action_button(action_list, "start_dialogue")
+	if talk_button != null:
+		talk_button.emit_signal("pressed")
+		action_list.close()
+		await _settle_frames(2)
+		if (app.get("overflow_dialogue_routes") as Array).size() != dialogue_before + 1 \
+				or bool(action_list.get("_selection_dispatch_pending")):
+			failures.append("RW06-1 closed Room actions executed or retained a deferred selection.")
+
+	# Exercise the repair path with conflicting stale owners; it must leave no
+	# silent blocker behind and must not reopen Room actions.
+	action_list.open()
+	app.set("travel_transition_active", true)
+	var run_menu := app.get("run_menu_overlay") as Control
+	if run_menu != null:
+		run_menu.visible = true
+	app.call("_clear_input_guard_modal_state")
+	if bool(action_list.call("is_open")) \
+			or bool(app.get("travel_transition_active")) \
+			or (run_menu != null and run_menu.visible) \
+			or not str(app.call("_blocking_modal_message")).is_empty():
+		failures.append("RW06-1 modal guard repair left an invisible or visible blocker active.")
+	_install_fixture_records(app, action_list, restore_records)
+	await _settle_frames(2)
+
+
+func _check_downstream_rejection_stays_closed(app: Control, action_list: Control, activations: Array[String]) -> void:
 	var rejected_record := {
 		"object_id": "overflow_fixture:missing_scenario_authority",
 		"object_type": "scenario",
@@ -2577,15 +2711,10 @@ func _check_downstream_rejection_reopens(app: Control, action_list: Control, act
 	var activation_count := activations.size()
 	_send_mouse(button.get_global_rect().get_center())
 	await _settle_frames(4)
-	var overlay := action_list.get("_overlay") as Control
-	var focus_owner := root.gui_get_focus_owner()
 	if activations.size() != activation_count \
 			or _mutation_snapshot(app) != before \
-			or not bool(action_list.call("is_open")) \
-			or overlay == null \
-			or focus_owner == null \
-			or not overlay.is_ancestor_of(focus_owner):
-		failures.append("RW06-1 downstream production refusal did not reopen the modal fail-closed.")
+			or bool(action_list.call("is_open")):
+		failures.append("RW06-1 downstream production refusal reopened Room actions without player input.")
 	action_list.close()
 
 

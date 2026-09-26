@@ -1111,11 +1111,7 @@ func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Di
 	run_item_icon_texture_cache.clear()
 	close_content_group_config()
 	close_challenge_selection()
-	_hide_run_menu()
-	_hide_world_map_overlay()
-	close_meta_item_interaction()
-	_hide_run_journal_popup()
-	_hide_travel_transition()
+	_clear_input_guard_modal_state()
 	_reset_game_surface_runtime_state()
 	var resolved_seed := seed_text.strip_edges()
 	if resolved_seed.is_empty():
@@ -1151,11 +1147,7 @@ func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Di
 	save_status_message = "Run not saved yet."
 	selected_action_category = ACTION_CATEGORY_GAMES
 	_set_current_screen(SCREEN_ENVIRONMENT)
-	_hide_event_choice_popup()
-	_hide_run_inventory_popup()
-	_hide_run_journal_popup()
-	_hide_world_map_overlay()
-	_hide_travel_transition()
+	_clear_input_guard_modal_state()
 	if talk_dock != null:
 		talk_dock.clear_entry()
 	if item_found_popup != null:
@@ -1398,11 +1390,7 @@ func _complete_back_to_environment() -> void:
 	_invalidate_environment_runtime_schedule(run_state.current_environment if run_state != null else {})
 	_clear_recent_result_feedback()
 	_set_current_screen(SCREEN_ENVIRONMENT)
-	_hide_event_choice_popup()
-	_hide_run_inventory_popup()
-	_hide_run_journal_popup()
-	_hide_world_map_overlay()
-	_hide_travel_transition()
+	_clear_input_guard_modal_state()
 	_clear_selected_game_action()
 	_clear_selected_stake()
 	clear_interaction_focus()
@@ -6373,11 +6361,7 @@ func _load_foundation_run_from_slot(return_to_start_on_missing: bool) -> bool:
 	pending_post_purchase_affinity_result = {}
 	if item_found_popup != null:
 		item_found_popup.clear_all()
-	_hide_event_choice_popup()
-	_hide_run_inventory_popup()
-	_hide_run_journal_popup()
-	_hide_world_map_overlay()
-	_hide_travel_transition()
+	_clear_input_guard_modal_state()
 	_clear_selected_game_action()
 	_clear_selected_stake()
 	_clear_selected_travel()
@@ -6400,7 +6384,6 @@ func _load_foundation_run_from_slot(return_to_start_on_missing: bool) -> bool:
 		_show_message("Recovered an incomplete saved room: %s." % str(run_state.current_environment.get("display_name", "Environment")) if recovered_broken_environment else "%s: %s." % ["Recovered run from backup" if loaded_from_backup else "Run loaded", str(run_state.current_environment.get("display_name", "Environment"))])
 	if recovered_broken_environment and not broken_environment_requires_map:
 		_autosave_foundation_run("Recovered room autosaved.")
-	_hide_run_menu()
 	if broken_environment_requires_map:
 		open_world_map(true)
 		return true
@@ -6455,7 +6438,7 @@ func save_run_from_menu() -> void:
 		_refresh_run_menu()
 		return
 	_autosave_foundation_run("Saved to Resume Slot.", true)
-	_refresh_run_menu()
+	_clear_input_guard_modal_state()
 	_refresh()
 
 
@@ -7307,6 +7290,8 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 	if run_state == null:
 		return {"ok": false, "errors": ["Travel requires an active run."]}
 	if travel_transition_active:
+		_show_message("Travel is already in progress.")
+		_refresh_modal_contract_owner()
 		return {"ok": false, "errors": ["Travel is already in progress."]}
 	# This stage clock exists only for an explicitly enabled performance probe.
 	# Normal travel skips timestamp reads and publishes no diagnostics.
@@ -7368,6 +7353,7 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 		_show_message(departure_error)
 		_refresh_after_foundation_lifecycle_rollback(lifecycle_rollback)
 		return {"ok": false, "errors": [departure_error]}
+	_clear_input_guard_modal_state()
 	# Preserve the source surface before generation/storage without clearing the
 	# live UI until every authoritative travel mutation has committed.
 	_checkpoint_current_game_surface_ui_state()
@@ -12505,6 +12491,23 @@ func _talk_dock_input_is_blocked() -> bool:
 		or (room_action_list != null and room_action_list.has_method("is_open") and bool(room_action_list.is_open()))
 
 
+func _clear_input_guard_modal_state() -> void:
+	# Lifecycle boundaries must never inherit a modal owner or a deferred Room
+	# actions selection from the screen they replace. Each close helper is
+	# idempotent, so this also repairs a partially torn-down modal stack.
+	if room_action_list != null and room_action_list.has_method("close"):
+		room_action_list.close()
+	if room_action_list != null and room_action_list.has_method("quarantine_launcher_input"):
+		room_action_list.quarantine_launcher_input()
+	_hide_event_choice_popup()
+	_hide_run_menu()
+	_hide_world_map_overlay()
+	close_meta_item_interaction()
+	_hide_run_inventory_popup()
+	_hide_run_journal_popup()
+	_hide_travel_transition()
+
+
 func _blocking_modal_message() -> String:
 	if travel_transition_active:
 		return "Travel is already in progress."
@@ -13600,7 +13603,10 @@ func _activate_overflow_room_action(record_snapshot: Dictionary, action_snapshot
 	if overflow_was_open and room_action_list.has_method("close"):
 		room_action_list.close()
 	var source := str(live_action.get("_overflow_source", ""))
-	var object_type := str(object_data.get("object_type", CONTEXT_MODE_ROOM))
+	# Unique room objects can merge actions from different producers (for
+	# example, Lottery Clerk combines a game hook and a dialogue). The selected
+	# action retains its producer type and therefore owns dispatch precedence.
+	var object_type := str(live_action.get("object_type", object_data.get("object_type", CONTEXT_MODE_ROOM))).strip_edges()
 	var explicit_scenario_command_id := str(live_action.get("scenario_command_id", "")).strip_edges()
 	if explicit_scenario_command_id.is_empty():
 		explicit_scenario_command_id = str(object_data.get("scenario_command_id", "")).strip_edges()
@@ -13636,6 +13642,11 @@ func _activate_overflow_room_action(record_snapshot: Dictionary, action_snapshot
 			str(live_action.get("action_origin_boundary_id", "")),
 			str(live_action.get("action_origin_fingerprint", ""))
 		)
+	elif object_type == CONTEXT_MODE_DIALOGUE:
+		activated = start_dialogue(
+			str(live_action.get("source_id", object_data.get("source_id", ""))),
+			object_data
+		)
 	elif object_type == CONTEXT_MODE_GAME_HOOK:
 		activated = use_game_environment_hook(
 			str(live_action.get("parent_id", object_data.get("parent_id", ""))),
@@ -13645,8 +13656,6 @@ func _activate_overflow_room_action(record_snapshot: Dictionary, action_snapshot
 	else:
 		var emit_object_id := str(live_action.get("emit_object_id", "")).strip_edges()
 		activated = activate_interactable_object(emit_object_id) if not emit_object_id.is_empty() else activate_interactable_object(object_id)
-	if not activated and overflow_was_open and room_action_list != null and room_action_list.has_method("open"):
-		room_action_list.open()
 	return activated
 
 
@@ -16145,12 +16154,7 @@ func return_to_main_menu() -> void:
 	dev_game_test_mode = false
 	_refresh_run_action_service()
 	close_run_configuration()
-	_hide_run_menu()
-	_hide_event_choice_popup()
-	_hide_run_inventory_popup()
-	_hide_run_journal_popup()
-	_hide_world_map_overlay()
-	_hide_travel_transition()
+	_clear_input_guard_modal_state()
 	if item_found_popup != null:
 		item_found_popup.clear_all()
 	_clear_selected_game_action()
@@ -17992,11 +17996,7 @@ func _clear_terminal_interaction_state() -> void:
 	_set_active_game_binding()
 	current_game = null
 	game_surface_ui_state = {}
-	_hide_run_menu()
-	_hide_event_choice_popup()
-	_hide_run_inventory_popup()
-	_hide_run_journal_popup()
-	_hide_travel_transition()
+	_clear_input_guard_modal_state()
 	_clear_selected_game_action()
 	_clear_selected_stake()
 	_clear_selected_travel()
