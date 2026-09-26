@@ -3094,10 +3094,11 @@ func _check_grand_casino_game_fixture_capacity(library: ContentLibrary, failures
 	var redeemer_id := "game_hook:pull_tabs:ticket_redeemer"
 	var redeemer_binding := JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(main_layout.get("slot_bindings", {})).get(redeemer_id, {}))
 	var overflow_ids := JsonCoerceScript._copy_array(main_layout.get("slot_overflow_ids", []))
-	if str(redeemer_binding.get("presentation_mode", "")) != "overflow" \
-			or not overflow_ids.has(redeemer_id) \
-			or object_rects.has(redeemer_id):
-		failures.append("Grand Casino ticket redeemer lost its authenticated geometry-free overflow binding.")
+	if str(redeemer_binding.get("presentation_mode", "")) != "room" \
+			or str(redeemer_binding.get("slot_id", "")) != "base.fixed_ticket_redeemer" \
+			or overflow_ids.has(redeemer_id) \
+			or not object_rects.has(redeemer_id):
+		failures.append("Grand Casino ticket redeemer lost its authenticated fixed-counter room binding.")
 	var object_ids := object_rects.keys()
 	for index in range(object_ids.size()):
 		var object_id := str(object_ids[index])

@@ -1493,7 +1493,7 @@ func _check_environment_person_transits(failures: Array) -> void:
 		_person_transit_record("person:cap_00", "base.patron_left_table", "seated_person", Rect2(150.0, 206.0, 68.0, 64.0)),
 		_person_transit_record("person:cap_01", "base.patron_front_left", "seated_person", Rect2(108.0, 286.0, 68.0, 64.0)),
 		_person_transit_record("person:cap_02", "base.staff_right_table", "behind_counter_person", Rect2(354.0, 102.0, 72.0, 72.0)),
-		_person_transit_record("person:cap_03", "base.staff_floor", "standing_person", Rect2(84.0, 246.0, 72.0, 80.0)),
+		_person_transit_record("person:cap_03", "base.patron_left_table", "seated_person", Rect2(150.0, 206.0, 68.0, 64.0)),
 		_person_transit_record("person:cap_04", "stage.staff_right_table", "behind_counter_person", Rect2(458.0, 102.0, 72.0, 72.0)),
 		_person_transit_record("person:cap_05", "stage.patron_group", "group", Rect2(468.0, 248.0, 104.0, 78.0)),
 		_person_transit_record("person:cap_06", "stage.patron_fog_officer", "standing_person", Rect2(364.0, 246.0, 72.0, 80.0)),
@@ -1506,9 +1506,9 @@ func _check_environment_person_transits(failures: Array) -> void:
 	overflow_canvas.call("render_environment_snapshot", _person_transit_room("overflow-visit", lane_crowd, "delta_queen"))
 	if (overflow_canvas.get("foundation_scene_objects") as Array).size() != 8:
 		failures.append("Geometry-free overflow people leaked into the fixed-slot room canvas.")
-	# Sealed authority normally limits this room to the eight unique person
-	# slots above. Duplicate the first two slots only in this hostile boundary
-	# fixture so the canvas's independent deterministic transit cap is exercised.
+	# Round 3 reserves Delta Queen's old base.staff_floor person slot for the
+	# illustrated payment calendar. Reuse routed person slots deliberately so
+	# this hostile fixture still exercises the canvas's independent transit cap.
 	var cap_crowd: Array = lane_crowd.slice(0, 8)
 	cap_crowd.append(_person_transit_record("person:cap_08", "base.patron_left_table", "seated_person", Rect2(150.0, 206.0, 68.0, 64.0)))
 	cap_crowd.append(_person_transit_record("person:cap_09", "base.patron_front_left", "seated_person", Rect2(108.0, 286.0, 68.0, 64.0)))

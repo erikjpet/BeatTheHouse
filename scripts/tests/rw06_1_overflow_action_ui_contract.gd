@@ -1584,10 +1584,12 @@ func _check_capacity_simplification_action_reachability() -> void:
 			var binding := gas_bindings.get(object_id, {}) as Dictionary
 			if str(binding.get("presentation_mode", "")) == "room":
 				gas_room_ids.append(object_id)
-		if gas_room_ids != ["event:scenario_graveyard_maintenance"] \
-				or str((gas_bindings.get("event:scenario_graveyard_maintenance", {}) as Dictionary).get("slot_id", "")) != "base.door_left_middle" \
-				or gas_overflow.size() != gas_ids.size() - 1:
-			failures.append("RW06-1 Gas Station must bind one retained doorway and route every remaining travel record to authenticated overflow: rooms=%s overflow=%s." % [JSON.stringify(gas_room_ids), JSON.stringify(gas_overflow)])
+		if gas_room_ids != ["event:scenario_graveyard_maintenance", "event:side_door", "travel:leave"] \
+				or str((gas_bindings.get("event:scenario_graveyard_maintenance", {}) as Dictionary).get("slot_id", "")) != "base.service_highway_sill" \
+				or str((gas_bindings.get("event:side_door", {}) as Dictionary).get("slot_id", "")) != "base.door_left_middle" \
+				or str((gas_bindings.get("travel:leave", {}) as Dictionary).get("slot_id", "")) != "exit.left_upper" \
+				or gas_overflow.size() != gas_ids.size() - 3:
+			failures.append("RW06-1 Gas Station must keep both illustrated doorways and Leave in-room while routing the five abstract destinations to authenticated overflow: rooms=%s overflow=%s." % [JSON.stringify(gas_room_ids), JSON.stringify(gas_overflow)])
 		_check_capacity_action_records("Gas Station", gas_first.get("records", []) as Array, gas_ids)
 
 	var jazz_records: Array = [_capacity_action_record("travel:leave", "travel", "doorway")]
@@ -1615,8 +1617,8 @@ func _check_capacity_simplification_action_reachability() -> void:
 			var binding := jazz_bindings.get(object_id, {}) as Dictionary
 			if str(binding.get("presentation_mode", "")) == "room":
 				jazz_room_ids.append(object_id)
-				if str(binding.get("slot_id", "")) != "base.door_right_upper":
-					failures.append("RW06-1 Jazz Club travel record escaped the retained upper doorway: %s." % JSON.stringify(binding))
+				if object_id != "travel:leave" or str(binding.get("slot_id", "")) != "exit.left_middle":
+					failures.append("RW06-1 Jazz Club non-Leave travel record escaped overflow or Leave escaped its reserved exit: %s." % JSON.stringify(binding))
 		if jazz_room_ids.size() != 1 or jazz_overflow.size() != jazz_ids.size() - 1:
 			failures.append("RW06-1 Jazz Club must bind one retained doorway and route every remaining travel record to authenticated overflow: rooms=%s overflow=%s." % [JSON.stringify(jazz_room_ids), JSON.stringify(jazz_overflow)])
 		_check_capacity_action_records("Jazz Club", jazz_first.get("records", []) as Array, jazz_ids)
@@ -1628,6 +1630,13 @@ func _check_capacity_simplification_action_reachability() -> void:
 		_capacity_action_record("event:scenario_whale_aboard_vouch", "event", "wall_mounted"),
 		_capacity_action_record("item:payment_calendar", "item", "wall_mounted"),
 	]
+	# These two mutually-exclusive notices are abstract actions, not illustrated
+	# wall props. Keep their actions authenticated in overflow so the invite and
+	# payment calendar retain their authored physical slots.
+	for delta_record_value in delta_records:
+		var delta_record := delta_record_value as Dictionary
+		if str(delta_record.get("object_id", "")) in ["event:scenario_engine_trouble_repairs", "event:scenario_whale_aboard_vouch"]:
+			delta_record.erase("asset_path")
 	var delta_ids: Array[String] = []
 	for record_value in delta_records:
 		delta_ids.append(str((record_value as Dictionary).get("object_id", "")))
@@ -1648,11 +1657,14 @@ func _check_capacity_simplification_action_reachability() -> void:
 		if str(binding.get("slot_id", "")) == "base.event_wall_1":
 			wall_room_ids.append(object_id)
 	var table_binding := delta_bindings.get("event:scenario_captains_invitational_card", {}) as Dictionary
+	var calendar_binding := delta_bindings.get("item:payment_calendar", {}) as Dictionary
 	if wall_room_ids != ["event:grand_casino_invite"] \
 			or str(table_binding.get("presentation_mode", "")) != "room" \
 			or str(table_binding.get("slot_id", "")) != "base.event_table_1" \
-			or delta_overflow.size() != 3:
-		failures.append("RW06-1 Delta Queen must preserve event_table_1 independently while one wall record stays in-room and three retain overflow actions: wall=%s table=%s overflow=%s." % [JSON.stringify(wall_room_ids), JSON.stringify(table_binding), JSON.stringify(delta_overflow)])
+			or str(calendar_binding.get("presentation_mode", "")) != "room" \
+			or str(calendar_binding.get("slot_id", "")) != "base.staff_floor" \
+			or delta_overflow.size() != 2:
+		failures.append("RW06-1 Delta Queen must preserve its invite, captain card, and illustrated payment calendar in-room while two synthetic notices retain overflow actions: wall=%s table=%s calendar=%s overflow=%s." % [JSON.stringify(wall_room_ids), JSON.stringify(table_binding), JSON.stringify(calendar_binding), JSON.stringify(delta_overflow)])
 	_check_capacity_action_records("Delta Queen", delta_first.get("records", []) as Array, delta_ids)
 
 
@@ -1983,6 +1995,26 @@ func _check_terminal_service_refresh(app: Control, baseline_snapshot: Dictionary
 		failures.append("RW06-1 terminal-service refresh regression lacks production state/library authority.")
 		return
 	run_state.from_dict(baseline_snapshot.duplicate(true))
+	# Round 3 correctly keeps abstract service verbs in the action list. Exercise
+	# dormant room reservation with the real illustrated Beach sand pile instead
+	# of manufacturing room geometry for the abstract Bar drink action.
+	var beach_archetype: Dictionary = library.call("environment_archetype", "beach")
+	if beach_archetype.is_empty():
+		failures.append("RW06-1 terminal-service refresh could not load the Beach archetype.")
+		return
+	var beach_environment := EnvironmentInstance.from_archetype(
+		beach_archetype,
+		2,
+		run_state.create_rng("rw06_1_terminal_service_beach"),
+		library
+	).to_dict()
+	beach_environment["service_ids"] = ["beach_sand_pile"]
+	beach_environment["layout"] = EnvironmentInstance.ensure_generated_layout(beach_environment, library)
+	var beach_installation: Dictionary = run_state.call("set_environment", beach_environment)
+	if not bool(beach_installation.get("ok", false)):
+		failures.append("RW06-1 terminal-service refresh could not install the physical Beach service fixture: %s." % JSON.stringify(beach_installation.get("errors", [])))
+		run_state.from_dict(baseline_snapshot.duplicate(true))
+		return
 	_invalidate_interactable_caches(app)
 	app.call("_interactable_object_view_list")
 	var environment := run_state.get("current_environment") as Dictionary

@@ -57,6 +57,7 @@ const BASE_ALWAYS_PHYSICAL_OBJECT_IDS := [
 	"game_hook:scratch_tickets:scratch_ticket_clerk",
 	"dialogue:scratch_ticket_scalper",
 	"travel:grand_casino_high_limit",
+	"travel:leave",
 ]
 const BASE_EVENT_ART_PROPS := [
 	"casino_host", "clerk_counter", "clerk_talk", "counter_phone",
@@ -73,6 +74,7 @@ const BASE_EVENT_ART_PROPS := [
 static func bind_base_layout(environment: Dictionary, active_entries: Array) -> Dictionary:
 	var surface_map := EnvironmentPlacementScript.surface_map(environment)
 	var slots := _ordered_slots(_array(surface_map.get("base_slots", [])))
+	var exit_slots := _base_leave_slots(surface_map)
 	var object_preferences := _dict(surface_map.get("object_slot_ids", {}))
 	var category_preferences := _dict(surface_map.get("category_slot_ids", {}))
 	var occupied: Dictionary = {}
@@ -106,7 +108,8 @@ static func bind_base_layout(environment: Dictionary, active_entries: Array) -> 
 			preference = str(category_preferences.get(category_key, "")).strip_edges()
 		# Generated base records are actionable by default. Decorative-only late
 		# records bypass this inventory; never serialize an undersized room target.
-		var slot := _select_slot(slots, occupied, placement_class, preference, false, MIN_INTERACTIVE_TARGET)
+		var candidate_slots := exit_slots if object_id == "travel:leave" else slots
+		var slot := _select_slot(candidate_slots, occupied, placement_class, preference, false, MIN_INTERACTIVE_TARGET)
 		if slot.is_empty():
 			bindings[object_id] = _overflow_binding(object_id, placement_class, "base")
 			overflow_ids.append(object_id)
@@ -171,7 +174,9 @@ static func validate_base_layout_authority(environment: Dictionary, current_reco
 	var stored_digest := str(layout.get("slot_binding_digest", ""))
 	if stored_digest.is_empty() or stored_digest != binding_digest(bindings):
 		errors.append("Persisted base slot authority binding digest is missing or stale.")
-	var authored_slots := _slots_by_id(_array(surface_map.get("base_slots", [])))
+	var authored_slots := _slots_by_id(
+		_array(surface_map.get("base_slots", [])) + _array(surface_map.get("exit_slots", []))
+	)
 	var overflow_ids: Array = []
 	var room_ids_by_slot: Dictionary = {}
 	var binding_ids := bindings.keys()
@@ -410,6 +415,20 @@ static func _base_layout_policy_entry(environment: Dictionary, object_id: String
 	return entry
 
 
+static func _base_leave_slots(surface_map: Dictionary) -> Array:
+	var exit_slots := _ordered_slots(_array(surface_map.get("exit_slots", [])))
+	var scenario_slot_ids := _dict(surface_map.get("scenario_slot_ids", {}))
+	var scenario_reserved: Dictionary = {}
+	for slot_id_value in scenario_slot_ids.values():
+		scenario_reserved[str(slot_id_value)] = true
+	var unreserved: Array = []
+	for slot_value in exit_slots:
+		var slot := _dict(slot_value)
+		if not scenario_reserved.has(str(slot.get("id", ""))):
+			unreserved.append(slot)
+	return unreserved if not unreserved.is_empty() else exit_slots
+
+
 # Applies the same authority to the complete interaction inventory. Some live
 # records (deliveries, transient contacts, and meta controls) are assembled
 # after EnvironmentInstance generated its serialized layout. Only records that
@@ -418,6 +437,7 @@ static func _base_layout_policy_entry(environment: Dictionary, object_id: String
 static func bind_base_records(environment: Dictionary, records: Array, existing_bindings: Dictionary = {}) -> Dictionary:
 	var surface_map := EnvironmentPlacementScript.surface_map(environment)
 	var slots := _ordered_slots(_array(surface_map.get("base_slots", [])))
+	var exit_slots := _base_leave_slots(surface_map)
 	var object_preferences := _dict(surface_map.get("object_slot_ids", {}))
 	var category_preferences := _dict(surface_map.get("category_slot_ids", {}))
 	var layout := _dict(environment.get("layout", {}))
@@ -564,7 +584,8 @@ static func bind_base_records(environment: Dictionary, records: Array, existing_
 			var category_key := "%s:%d" % [spot_field, int(record.get("layout_index", 0))]
 			preference = str(category_preferences.get(category_key, "")).strip_edges()
 		var minimum_size := MIN_INTERACTIVE_TARGET if bool(record.get("interactive", true)) else Vector2.ZERO
-		var slot := _select_slot(slots, occupied, placement_class, preference, false, minimum_size)
+		var candidate_slots := exit_slots if object_id == "travel:leave" else slots
+		var slot := _select_slot(candidate_slots, occupied, placement_class, preference, false, minimum_size)
 		if slot.is_empty():
 			bindings[object_id] = _overflow_binding(object_id, placement_class, "base")
 			continue

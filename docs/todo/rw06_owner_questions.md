@@ -321,3 +321,21 @@ Options: A) Approve the copy and trial-build direction (recommended)  B) Request
 Resume: Review the copy and both trial packages. Final release packages and any upload/publishing remain a separate owner-directed step after rooms and endings are complete.
 Answer:
 A
+
+### Q-023 · Round 3 · Lane A closed with stale capacity contract
+Status: ANSWERED
+Asked: Lane B, 2026-09-26
+Question: Lane A marked DONE without answering the ownership request to update its room-action capacity test; main now correctly keeps both Gas Station doors and Delta Queen's illustrated payment calendar in-room, while that A-owned test still requires them to overflow.
+Options: A) Have the release orchestrator update only those outdated expectations while preserving deterministic overflow/action reachability (recommended)  B) Leave the known Contract red for owner review
+Resume: Update `scripts/tests/rw06_1_overflow_action_ui_contract.gd::_check_capacity_simplification_action_reachability` to the exact Round 3 Gas/Delta bindings recorded in `OWNERSHIP.md`, rerun that standalone contract with `-AllowConcurrentGodot`, and do not change the merged Lane B placement behavior.
+Answer:
+A
+
+### Q-024 · Round 3 · Lane B closed with C1 Smoke regressions
+Status: ANSWERED
+Asked: Lane C, 2026-09-26
+Question: Round 3 C1 Smoke on `53bdf3ae` found four placement regressions after Lane B closed: generated rooms no longer render `travel:leave` (breaking two runtime checks and the tutorial highlight), the Grand Casino test still requires the now-physical ticket redeemer to overflow, and the transit-cap fixture still uses Delta Queen's `base.staff_floor` after that slot became the payment calendar. Lane B still owns the affected binder and room-placement tests. May Lane C make the minimal product/test corrections and continue C1?
+Options: A) Authorize Lane C to restore only `travel:leave` as a required physical object and update the two superseded Round 3 assertions/fixture, preserving all real-art slot work and liveness caps (recommended)  B) Leave C1 blocked for Lane B follow-up
+Resume: If A, add `travel:leave` to the binder's closed physical-object list; require the Grand Casino ticket redeemer to bind `base.fixed_ticket_redeemer` in-room; use a current routed Delta Queen person slot for `person:cap_03`; rerun full Smoke, then full Contract alone. This does not lift the C3/site HOLD or answer Q-023.
+Answer:
+A
