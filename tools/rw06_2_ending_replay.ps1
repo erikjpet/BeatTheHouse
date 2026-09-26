@@ -2529,6 +2529,23 @@ function Travel-ToNode {
         throw "Selecting '$NodeId' did not enable the visible Travel control."
     }
     $null = Click-Button -Text 'Travel' -Intent $Intent
+    Wait-Frames -Frames 4 -Intent 'let the visible travel control start its route'
+    for ($press = 0; $press -lt 2; $press++) {
+        $currentNode = [string](Get-Value $script:LastObservation @('environment', 'world_node_id') '')
+        $mapVisible = [bool](Get-Value $script:LastObservation @('screen', 'world_map_overlay_visible') $false)
+        $transitionActive = [bool](Get-Value $script:LastObservation @('screen', 'travel_transition_active') $false)
+        if ($currentNode -ceq $NodeId -or -not $mapVisible -or $transitionActive) { break }
+
+        # The animated detail card can finish a layout step under the first
+        # accepted press. If the same selected route and public Travel control
+        # remain visible, press that stable control once more.
+        $selectedNode = [string](Get-Value $script:LastObservation @('screen', 'world_map', 'selected_node_id') '')
+        if ($selectedNode -cne $NodeId -or $null -ceq (Find-Button -Text 'Travel')) {
+            break
+        }
+        $null = Click-Button -Text 'Travel' -Intent $Intent
+        Wait-Frames -Frames 4 -Intent 'let the stable visible travel control start its route'
+    }
     Wait-ForTravelToSettle
     Wait-Frames -Frames 12
     $arrived = [string](Get-Value $script:LastObservation @('environment', 'world_node_id') '')
