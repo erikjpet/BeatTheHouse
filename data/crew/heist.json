@@ -17,14 +17,14 @@
       "label": "The Count",
       "architects": ["crew_bishop"],
       "world_criteria": [{"kind": "scenario_hook", "key": "audit_night", "label": "No audit on the books this season."}],
-      "crew_criteria": [{"member_id": "crew_bishop", "rank": "associate", "label": "Bishop has not joined the crew yet."}],
+      "crew_criteria": [{"member_id": "crew_bishop", "rank": "stranger", "label": "Bishop has not surfaced on the Audit route yet."}],
       "setup": {
-        "identity": {"required_sessions": 1, "bet_min": 8, "bet_max": 8, "heat_ceiling": 35},
+        "identity": {"required_sessions": 0, "bet_min": 8, "bet_max": 8, "heat_ceiling": 35},
         "schedule": {"hold_required_actions": 1, "deadline_actions": 12, "attention_limit": 55},
-        "swap_cart": {"deadline_actions": 14},
+        "swap_cart": {"deadline_actions": 14, "initial_cargo_state": "carried"},
         "guard_marker": {"optional": true, "flag": "debt_court_settlement", "member_id": "crew_knuckles", "min_rank": "associate"}
       },
-      "play": {"required_rounds": 3, "window_actions": 9, "table_game": "blackjack", "decision_rounds": {"go": 0, "distraction": 1, "exit": 2}, "boring_bet_min": 8, "boring_bet_max": 30, "starting_float": 24, "heat_spike": 15},
+      "play": {"required_rounds": 1, "window_actions": 9, "table_game": "blackjack", "decision_rounds": {"exit": 0}, "boring_bet_min": 8, "boring_bet_max": 30, "starting_float": 8, "heat_spike": 15},
       "getaway": {"default_exit": "dock", "routes": {"dock": {"deadline_actions": 7, "pursuit_pressure": 4, "pursuit_limit": 11}, "corridor": {"deadline_actions": 12, "pursuit_pressure": 1, "pursuit_limit": 11}}},
       "payout": {"base": 900, "clean_bonus": 250, "hot_penalty": 180},
       "semantics": {

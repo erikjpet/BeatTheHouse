@@ -204,8 +204,26 @@ therefore reopened and the prior in-range conclusion withdrawn.
   38 clearing its required favor, and about 13 revisiting Grand for Bishop;
   folding recruitment into the already-required Audit visit removes about 84
   actions without changing any lender term, game rule, odds, RTP, or payout.
+- Failed full-curve checkpoint after those cuts: bridge command `391`, at Grand
+  Main before the swap-cart handoff, with `$40` cash, `42` chips, no debt, and
+  Heat `27`. Because live play and getaway had not begun, this confirmed the
+  remaining route could not meet the owner's `150-350` ceiling.
+- Count access gate: Bishop Associate -> Stranger, and Punchline Crew Back Room
+  Associate -> Stranger. The Audit Roster's existing `Read the shift` response
+  now also reveals the Punchline instead of requiring a separate Parking Lot
+  Tip search. Bishop recruitment and that discovery loop remain available as
+  normal Crew content, but neither is mandatory for the release Count route.
+- Count identity gate: one `$8` identity session -> zero separate identity
+  sessions. The live Count hand remains ordinary blackjack, so the ending still
+  uses the normal table rules while removing a redundant pre-score casino hand.
+- Count live gate: three required hands / `24`-chip float -> one required hand /
+  `8`-chip float. This changes only the Count route's repetition and liquidity;
+  blackjack stakes, rules, odds, RTP, and outcome payouts are unchanged.
+- Count swap-cart pickup: separate pickup-pending state -> carried when the
+  planning-table route begins. The normal Grand handoff and getaway remain
+  required; this removes an extra setup interaction at the route's origin.
 - Unchanged boundaries: Count-only required travel remains `$0` after the plan
-  locks; the one-time live-table float remains 24 chips; global travel prices,
+  locks; global travel prices,
   blackjack minimum stakes and rules, odds, RTP, and the `$720/$900/$1,150`
   Count payout ladder are unchanged. Jackpot and unusually profitable routes
   can still finish sooner.

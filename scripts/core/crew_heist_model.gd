@@ -61,12 +61,16 @@ static func empty_state() -> Dictionary:
 static func begin(plan_id: String, action_index: int) -> Dictionary:
 	if not PLAN_IDS.has(plan_id) or plan(plan_id).is_empty():
 		return {}
+	var initial_setup := {}
+	if plan_id == PLAN_COUNT:
+		var identity := JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(plan(plan_id).get("setup", {})).get("identity", {}))
+		initial_setup["identity"] = int(identity.get("required_sessions", 1)) <= 0
 	return normalize_state({
 		"schema_version": STATE_SCHEMA_VERSION,
 		"plan_id": plan_id,
 		"status": STATUS_SETUP,
 		"locked_action": maxi(0, action_index),
-		"setup": {},
+		"setup": initial_setup,
 		"play": {"round": 0, "score": 100, "decisions": {}, "hazards": [], "lifelines_used": []},
 		"getaway": {},
 		"outcome": "",

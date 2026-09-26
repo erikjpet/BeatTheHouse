@@ -1689,6 +1689,8 @@ func _crew_heist_begin_setup_delivery(step: String, hold: bool) -> Dictionary:
 		"cargo_heat_per_travel": 0,
 		"consumer_payload": {"required_target_archetype_id": target_room_archetype_id},
 	}
+	if not hold:
+		spec["initial_cargo_state"] = str(tuning.get("initial_cargo_state", "pickup_pending"))
 	if hold:
 		spec["hold_required_actions"] = int(tuning.get("hold_required_actions", 2))
 		spec["hold_attention_limit"] = int(tuning.get("attention_limit", 40))

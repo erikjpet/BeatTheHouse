@@ -6652,11 +6652,9 @@ function Invoke-HeistEndingRoute {
     Reach-GrandCasino
     Restore-EnvironmentSurfaceAfterTravelResult
     Observe-RenderedAuditNightHook
-    # Bishop's release encounter is the one Crew introduction that does not
-    # require a marker first. Recruit him during this already-required Grand
-    # visit; his visible two-beat appointment grants the Associate standing
-    # used by both the Back Room and The Count.
-    Recruit-Bishop
+    # The release Count gate now opens from the learned Audit route itself.
+    # Recruitment remains available for the broader Crew game, but it is no
+    # longer mandatory setup for this ending.
     Ensure-PunchlineCasinoDiscovered
     $null = Enter-PunchlineBackRoom
     if (-not $ConfirmationOnly) {
@@ -6669,7 +6667,8 @@ function Invoke-HeistEndingRoute {
     Invoke-EventObjectChoice -EventId 'crew_planning_table' -ChoiceId 'lock_the_count' -Intent 'lock Bishop''s visible Count plan at the real planning table'
     Close-VisibleChoiceSurface
 
-    Complete-CountIdentitySessions
+    # The separate identity hand is no longer a release gate. Live Count play
+    # still settles through the ordinary public blackjack surface below.
     $null = Enter-PunchlineBackRoom
     Invoke-EventObjectChoice -EventId 'crew_planning_table' -ChoiceId 'count_schedule' -Intent 'start the visible Cage schedule watch'
     Close-VisibleChoiceSurface
@@ -6690,7 +6689,7 @@ function Invoke-HeistEndingRoute {
 
     Reach-GrandCasino
     Enter-GrandRoom -Room main
-    $decisions = @('go_hold', 'distraction_sit', 'exit_dock')
+    $decisions = @('exit_dock')
     for ($round = 0; $round -lt $decisions.Count; $round++) {
         $choiceId = $decisions[$round]
         if ($null -ceq (Find-CanvasObject -SemanticId 'event:heist_live_table')) {
@@ -6701,7 +6700,7 @@ function Invoke-HeistEndingRoute {
         Play-OneBlackjackRound -UseHeistStake
         Leave-GameSurface
     }
-    Invoke-EventObjectChoice -EventId 'heist_live_table' -ChoiceId 'begin_getaway' -Intent 'take the visible dock exit after all three Count rounds'
+    Invoke-EventObjectChoice -EventId 'heist_live_table' -ChoiceId 'begin_getaway' -Intent 'take the visible dock exit after the Count hand'
     Close-VisibleChoiceSurface
     Complete-PublicDelivery -Intent 'complete The Count dock getaway to its marked destination'
     Wait-Frames -Frames 30
