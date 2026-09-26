@@ -2905,6 +2905,20 @@ func _check_dialogue_dock_main_flow(app: Control) -> bool:
 	environment["next_archetypes"] = ["bar"]
 	environment["scenario_id"] = str(scenario_definition.get("id", ""))
 	environment["scenario_state"] = ScenarioEngine.initial_state(scenario_definition)
+	# This fixture swaps the generated room to Pull Tabs; regenerate its sealed
+	# layout so the illustrated ticket redeemer exists before dialogue opens.
+	var pull_tabs_module: GameModule = app.call("_create_game_module", library.game("pull_tabs"))
+	if pull_tabs_module == null:
+		push_error("Dialogue dock fixture could not create its Pull Tabs module.")
+		return false
+	environment["game_states"] = {
+		"pull_tabs": pull_tabs_module.generate_environment_state(
+			run_state,
+			environment,
+			run_state.create_rng("ui_dialogue_pull_tabs_machine")
+		),
+	}
+	environment["layout"] = EnvironmentInstance.ensure_generated_layout(environment, library)
 	var dialogue_environment_install := run_state.set_environment(environment)
 	if not bool(dialogue_environment_install.get("ok", false)):
 		push_error("Dialogue dock fixture could not install through the scenario host: %s." % JSON.stringify(dialogue_environment_install))
@@ -3250,7 +3264,9 @@ func _check_beach_return_travel_choice(app: Control) -> bool:
 	var map_data := WorldMapScript.enter_node(run_state.world_map, "delta_queen", delta_environment)
 	run_state.set_environment(delta_environment)
 	run_state.set_world_map(map_data)
-	run_state.bankroll = 0
+	# Keep the run above the terminal floor while proving the route's exact zero
+	# fare and the $17/$23 alternatives remain unaffordable and disabled.
+	run_state.bankroll = 10
 	run_state.game_clock_minutes = 12 * 60
 	app.call("_invalidate_travel_view_cache")
 	var access_targets: Array = app.call("_travel_target_ids")
@@ -3323,7 +3339,7 @@ func _check_beach_return_travel_choice(app: Control) -> bool:
 	map_data = WorldMapScript.enter_node(map_data, "beach", beach_environment)
 	run_state.set_environment(beach_environment)
 	run_state.set_world_map(map_data)
-	run_state.bankroll = 0
+	run_state.bankroll = 10
 	run_state.game_clock_minutes = 12 * 60
 	app.call("_invalidate_travel_view_cache")
 	var beach_targets: Array = app.call("_travel_target_ids")
