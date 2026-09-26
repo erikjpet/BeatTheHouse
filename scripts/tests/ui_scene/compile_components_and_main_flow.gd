@@ -2475,7 +2475,7 @@ func _check_crew_favor_conversation(app: Control) -> bool:
 		"deadline_turns": 2,
 		"turns_remaining": 0,
 		"default_consequence": "crew_favor_due",
-		"cash_conversion_balance_per_favor": 45,
+		"cash_conversion_balance_per_favor": 70,
 		"cash_conversion_interest_rate": 0.35,
 	})
 	run_state.narrative_flags["crew_favor_pending"] = true
