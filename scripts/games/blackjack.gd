@@ -773,10 +773,13 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_stake_controls_required": true,
 		"surface_embeds_outcomes": true,
 		"surface_animates_idle": true,
-		# Eight frames per second keeps the intentionally stepped pixel animation
-		# visible while the Web build is idle. Live deal channels still redraw at
-		# the active surface rate, using the lightweight Web cast below.
-		"surface_web_idle_animation_fps": 8.0,
+		# The deliberately stepped low-detail cast keeps the dealer and patrons
+		# visibly alive without rebuilding the full table 60 times per second.
+		# Any active deal, attention, count, or payout channel leaves this mode and
+		# returns to the full 60 FPS surface cadence.
+		"surface_native_low_detail_idle": true,
+		"surface_native_idle_animation_fps": 15.0,
+		"surface_web_idle_animation_fps": 12.0,
 		"surface_dynamic_overlay_channels": [DEAL_ANIMATION_CHANNEL, ATTENTION_ANIMATION_CHANNEL, COUNT_ANIMATION_CHANNEL, PAYOUT_ANIMATION_CHANNEL],
 		"surface_realtime_state_refresh": false,
 		"surface_ui_protected_regions": _blackjack_ui_protected_regions(count_challenge),
