@@ -1752,10 +1752,28 @@ function Invoke-RoomActionRow {
 function Select-EventObject {
     param([Parameter(Mandatory = $true)][string]$EventId)
     $semanticId = "event:$EventId"
-    if ($null -ceq (Find-CanvasObject -SemanticId $semanticId)) {
-        throw "Required player-facing event object is not visible: $EventId"
+    if ($null -cne (Find-CanvasObject -SemanticId $semanticId)) {
+        $null = Invoke-BridgeCommand -Command "click_object $semanticId" -Intent "focus the visible $EventId event"
+        return
     }
-    $null = Invoke-BridgeCommand -Command "click_object $semanticId" -Intent "focus the visible $EventId event"
+    $spatial = @(Get-Array (Get-Value $script:LastObservation @('spatial', 'objects') @()) | Where-Object {
+        [string](Get-Value $_ @('object_id') '') -ceq $semanticId
+    })
+    if ($spatial.Count -cne 1 -or
+        [string](Get-Value $spatial[0] @('object_type') '') -cne 'event' -or
+        (Get-Value $spatial[0] @('visible') $null) -isnot [bool] -or -not [bool](Get-Value $spatial[0] @('visible') $false) -or
+        (Get-Value $spatial[0] @('enabled') $null) -isnot [bool] -or -not [bool](Get-Value $spatial[0] @('enabled') $false) -or
+        (Get-Value $spatial[0] @('interactive') $null) -isnot [bool] -or -not [bool](Get-Value $spatial[0] @('interactive') $false)) {
+        throw "Required player-facing event object is neither on the canvas nor one exact visible, enabled, interactive spatial event: $EventId"
+    }
+    $label = [string](Get-Value $spatial[0] @('label') '')
+    if ([string]::IsNullOrWhiteSpace($label)) {
+        throw "Required player-facing event object has no exact public label: $EventId"
+    }
+    $null = Invoke-OverflowRoomActionButton `
+        -ButtonText "$label`: Talk" `
+        -Intent "open the visible $label event from More room actions"
+    Wait-Frames -Frames 8
 }
 
 
@@ -6692,9 +6710,6 @@ function Invoke-HeistEndingRoute {
     $decisions = @('go_hold', 'distraction_sit', 'exit_dock')
     for ($round = 0; $round -lt $decisions.Count; $round++) {
         $choiceId = $decisions[$round]
-        if ($null -ceq (Find-CanvasObject -SemanticId 'event:heist_live_table')) {
-            throw "The Count live-table event is missing before round $($round + 1)."
-        }
         Invoke-EventObjectChoice -EventId 'heist_live_table' -ChoiceId $choiceId -Intent "take the visible Count decision $choiceId before live round $($round + 1)"
         Close-VisibleChoiceSurface
         Play-OneBlackjackRound -UseHeistStake

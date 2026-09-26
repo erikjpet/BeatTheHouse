@@ -230,6 +230,12 @@ therefore reopened and the prior in-range conclusion withdrawn.
 
 One fresh normal replay is required below before T4 closes.
 
+The first replay of this final curve reached the Count play boundary at bridge
+command `321`, with `$90` cash, `24` chips, no debt, and Heat `29`. The Live
+Table was present as an exact visible, enabled, interactive room-list event but
+not on the room canvas, so the replay helper now uses that same public
+`The Live Table: Talk` fallback instead of rejecting the normal overflow UI.
+
 ## Departure-price integrity repair (rw06_2 blocker fix)
 
 The balance data exposed an existing travel transaction defect: the map priced
