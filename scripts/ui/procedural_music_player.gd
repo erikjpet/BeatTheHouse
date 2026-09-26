@@ -4653,26 +4653,35 @@ func _load_pcm_delivery_stream(path: String, loop_enabled: bool) -> AudioStreamW
 func _load_feature_stem_pack(path: String) -> Dictionary:
 	if not FileAccess.file_exists(path):
 		return {}
-	var bytes := FileAccess.get_file_as_bytes(path)
-	if bytes.size() < 18 or bytes.slice(0, 4).get_string_from_ascii() != "BTHM" or int(bytes[4]) != 1 or int(bytes[5]) != 1:
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
 		return {}
-	var role_count := int(bytes[6])
-	var sample_rate := bytes.decode_u32(8)
-	var frames := bytes.decode_u32(12)
+	var header := file.get_buffer(16)
+	if header.size() != 16 or header.slice(0, 4).get_string_from_ascii() != "BTHM" or int(header[4]) != 1 or int(header[5]) != 1:
+		file.close()
+		return {}
+	var role_count := int(header[6])
+	var sample_rate := header.decode_u32(8)
+	var frames := header.decode_u32(12)
 	var role_bytes := frames * PCM_BYTES_PER_FRAME
-	if role_count != MUSIC_STEM_ROLES.size() or sample_rate <= 0 or frames <= 0 or bytes.size() != 16 + role_bytes * role_count:
+	if role_count != MUSIC_STEM_ROLES.size() or sample_rate <= 0 or frames <= 0 or file.get_length() != 16 + role_bytes * role_count:
+		file.close()
 		return {}
 	var stems := {}
 	for role_index in range(role_count):
+		var pcm := file.get_buffer(role_bytes)
+		if pcm.size() != role_bytes:
+			file.close()
+			return {}
 		var stream := AudioStreamWAV.new()
 		stream.format = AudioStreamWAV.FORMAT_16_BITS
 		stream.mix_rate = sample_rate
-		var start := 16 + role_index * role_bytes
-		stream.data = bytes.slice(start, start + role_bytes)
+		stream.data = pcm
 		stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
 		stream.loop_begin = 0
 		stream.loop_end = frames
 		stems[str(MUSIC_STEM_ROLES[role_index])] = stream
+	file.close()
 	return stems
 
 
