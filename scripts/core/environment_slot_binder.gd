@@ -49,7 +49,7 @@ const ABSTRACT_SCENARIO_ID_TOKENS := [
 # Casino fixtures bind interaction targets to room-native desks, counters, and
 # machines that the environment canvas already renders as permanent scenery.
 const BASE_ALWAYS_PHYSICAL_TYPES := [
-	"casino_fixture", "game", "home_storage", "home_tenure", "item", "meta_pawn_counter", "shopkeeper", "numbers_silas",
+	"casino_fixture", "environment_layer", "game", "home_storage", "home_tenure", "item", "meta_pawn_counter", "shopkeeper", "numbers_silas",
 ]
 const BASE_PERSON_VISUAL_TYPES := ["actor", "character", "npc"]
 const BASE_EVENT_ART_PROPS := [

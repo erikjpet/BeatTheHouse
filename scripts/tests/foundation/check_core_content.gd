@@ -2858,13 +2858,20 @@ func _check_start_home_environment(run_state: RunState, environment: Environment
 	var layout_rects: Dictionary = {}
 	if typeof(layout_rects_value) == TYPE_DICTIONARY:
 		layout_rects = layout_rects_value
+	var layout_bindings := JsonCoerceScript._copy_dict(environment.layout.get("slot_bindings", {}))
+	var layout_overflow := JsonCoerceScript._copy_array(environment.layout.get("slot_overflow_ids", []))
 	for offer_value in environment.item_offers:
 		if typeof(offer_value) != TYPE_DICTIONARY:
 			continue
 		var offer: Dictionary = offer_value
 		var item_id := str(offer.get("id", ""))
-		if not item_id.is_empty() and not layout_rects.has("item:%s" % item_id):
-			failures.append("The first generated home should place starter item %s in the room layout." % item_id)
+		var object_id := "item:%s" % item_id
+		var binding := JsonCoerceScript._copy_dict(layout_bindings.get(object_id, {}))
+		var mode := str(binding.get("presentation_mode", ""))
+		if not item_id.is_empty() and (mode not in ["room", "overflow"] \
+				or (mode == "room" and not layout_rects.has(object_id)) \
+				or (mode == "overflow" and not layout_overflow.has(object_id))):
+			failures.append("The first generated home should retain sealed placement authority for starter item %s." % item_id)
 			break
 	if not layout_rects.has("home_tenure:status"):
 		failures.append("The first generated home should expose the tenure object.")

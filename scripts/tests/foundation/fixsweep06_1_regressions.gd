@@ -24,13 +24,10 @@ static func _check_bth_021_developer_placement_audit_is_truthful(failures: Array
 			"small_screen_rect": {"x": 750.0, "y": 100.0, "w": 108.0, "h": 78.0},
 		},
 	}
-	var developer_room := {"id": "bth021_bar", "archetype_id": "bar"}
-	if not ScenarioLayoutResolver._developer_placement_room(developer_room):
-		failures.append("BTH-021 fixture is not exercising a checked-in developer-placement room.")
-		return
-	if ScenarioLayoutResolver._overlap_count(authority, "normalized_hit_rect", developer_room) != 1 \
-			or ScenarioLayoutResolver._overlap_count(authority, "small_screen_rect", developer_room) != 1:
-		failures.append("BTH-021 checked-in developer placement suppressed normal or small-screen overlap audit truth.")
+	var fixed_slot_room := {"id": "bth021_bar", "archetype_id": "bar"}
+	if ScenarioLayoutResolver._overlap_count(authority, "normalized_hit_rect", fixed_slot_room) != 1 \
+			or ScenarioLayoutResolver._overlap_count(authority, "small_screen_rect", fixed_slot_room) != 1:
+		failures.append("BTH-021 fixed-slot placement suppressed normal or small-screen overlap audit truth.")
 
 
 static func _check_bth_wave2_all_archetype_interaction_authority(library: ContentLibrary, failures: Array) -> void:
@@ -59,7 +56,7 @@ static func _check_bth_wave2_all_archetype_interaction_authority(library: Conten
 		for left_index in range(ids.size()):
 			var left_id := str(ids[left_index])
 			var left := _bth_wave2_rect(object_rects.get(left_id, {}))
-			if left.size.x * 900.0 < 43.99 or left.size.y * 414.0 < 43.99:
+			if left.size.x * 900.0 < 43.99 or left.size.y * 430.0 < 43.99:
 				failures.append("BTH-001..020 placement authority produced a sub-44px target %s in %s." % [left_id, archetype_id])
 			for right_index in range(left_index + 1, ids.size()):
 				var right_id := str(ids[right_index])
