@@ -134,12 +134,21 @@ func delivery_physical_interactions() -> Array:
 		# target person. Projecting route controls into the sealed base inventory
 		# makes them look like unauthenticated environment sources and can suppress
 		# the real handoff contact at the destination.
-		if verb not in ["pickup", "retrieve"]:
+		# Hold routes have no package contact to carry their completion action. Give
+		# their authenticated verbs a room-surface fallback only after the player is
+		# inside the exact authored target room; this keeps Count's Cage sightline
+		# operable if the secondary HUD row is clipped without reopening the package
+		# handoff collision this filter prevents.
+		var target_hold_action := str(delivery_snapshot().get("mode", "")) == DeliveryRunModelScript.MODE_HOLD \
+			and not _delivery_target_room_blocked() \
+			and _delivery_pending_target_at(node_id).size() > 0 \
+			and verb in ["wait", "signal", "break_hold"]
+		if verb not in ["pickup", "retrieve"] and not target_hold_action:
 			continue
 		var label := str({
-			"pickup": "Take the package", "wait": "Hold your sightline", "duck": "Duck into cover",
+			"pickup": "Take the package", "wait": "Hold Sightline", "duck": "Duck into cover",
 			"stash": "Stash the package", "retrieve": "Retrieve the package", "ditch": "Ditch the package",
-			"signal": "Send the signal", "break_hold": "Break the hold",
+			"signal": "Send Signal", "break_hold": "Break Hold",
 		}.get(verb, verb.replace("_", " ").capitalize()))
 		if verb == "retrieve":
 			label = "The Package"
