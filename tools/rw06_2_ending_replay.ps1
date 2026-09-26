@@ -6689,7 +6689,7 @@ function Invoke-HeistEndingRoute {
 
     Reach-GrandCasino
     Enter-GrandRoom -Room main
-    $decisions = @('exit_dock')
+    $decisions = @('go_hold', 'distraction_sit', 'exit_dock')
     for ($round = 0; $round -lt $decisions.Count; $round++) {
         $choiceId = $decisions[$round]
         if ($null -ceq (Find-CanvasObject -SemanticId 'event:heist_live_table')) {
@@ -6700,7 +6700,7 @@ function Invoke-HeistEndingRoute {
         Play-OneBlackjackRound -UseHeistStake
         Leave-GameSurface
     }
-    Invoke-EventObjectChoice -EventId 'heist_live_table' -ChoiceId 'begin_getaway' -Intent 'take the visible dock exit after the Count hand'
+    Invoke-EventObjectChoice -EventId 'heist_live_table' -ChoiceId 'begin_getaway' -Intent 'take the visible dock exit after all three Count rounds'
     Close-VisibleChoiceSurface
     Complete-PublicDelivery -Intent 'complete The Count dock getaway to its marked destination'
     Wait-Frames -Frames 30

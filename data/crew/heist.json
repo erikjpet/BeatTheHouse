@@ -24,7 +24,7 @@
         "swap_cart": {"deadline_actions": 14, "initial_cargo_state": "carried"},
         "guard_marker": {"optional": true, "flag": "debt_court_settlement", "member_id": "crew_knuckles", "min_rank": "associate"}
       },
-      "play": {"required_rounds": 1, "window_actions": 9, "table_game": "blackjack", "decision_rounds": {"exit": 0}, "boring_bet_min": 8, "boring_bet_max": 30, "starting_float": 8, "heat_spike": 15},
+      "play": {"required_rounds": 3, "window_actions": 9, "table_game": "blackjack", "decision_rounds": {"go": 0, "distraction": 1, "exit": 2}, "boring_bet_min": 8, "boring_bet_max": 30, "starting_float": 24, "heat_spike": 15},
       "getaway": {"default_exit": "dock", "routes": {"dock": {"deadline_actions": 7, "pursuit_pressure": 4, "pursuit_limit": 11}, "corridor": {"deadline_actions": 12, "pursuit_pressure": 1, "pursuit_limit": 11}}},
       "payout": {"base": 900, "clean_bonus": 250, "hot_penalty": 180},
       "semantics": {

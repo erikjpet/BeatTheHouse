@@ -216,14 +216,14 @@ therefore reopened and the prior in-range conclusion withdrawn.
 - Count identity gate: one `$8` identity session -> zero separate identity
   sessions. The live Count hand remains ordinary blackjack, so the ending still
   uses the normal table rules while removing a redundant pre-score casino hand.
-- Count live gate: three required hands / `24`-chip float -> one required hand /
-  `8`-chip float. This changes only the Count route's repetition and liquidity;
-  blackjack stakes, rules, odds, RTP, and outcome payouts are unchanged.
+- Count live gate remains three required hands with its `24`-chip float and the
+  visible Hold -> Sit -> Dock decisions. The route keeps the product Count
+  cadence; the pacing reduction comes from setup and access cuts instead.
 - Count swap-cart pickup: separate pickup-pending state -> carried when the
   planning-table route begins. The normal Grand handoff and getaway remain
   required; this removes an extra setup interaction at the route's origin.
 - Unchanged boundaries: Count-only required travel remains `$0` after the plan
-  locks; global travel prices,
+  locks; the live-table float remains `24` chips; global travel prices,
   blackjack minimum stakes and rules, odds, RTP, and the `$720/$900/$1,150`
   Count payout ladder are unchanged. Jackpot and unusually profitable routes
   can still finish sooner.
