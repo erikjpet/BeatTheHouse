@@ -242,7 +242,9 @@ not on the room canvas, so the replay helper now uses that same public
 - Audit route: Audit Night now exposes the already-learned Punchline as a
   direct travel hook. Reading the roster remains mandatory, but the player no
   longer has to scout Bar -> Back Alley -> Parking Lot Tip before following
-  the route the roster just disclosed.
+  the route the roster just disclosed. Scenario-authored travel hooks are
+  applied after the destination room is installed, so world-map generation
+  cannot overwrite that exact Audit-only reveal.
 - Count setup chain: after the visible Cage hold succeeds, the carried swap
   cart becomes the active route immediately; after its visible Grand handoff,
   live play begins immediately. The schedule hold and cart handoff remain
