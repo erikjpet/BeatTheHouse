@@ -799,7 +799,7 @@ public static class Q009ExactFileSystemNative {
         try {
             const uint READ_ATTRIBUTES=0x80u,LIST_DIRECTORY=0x1u,DELETE=0x00010000u,SYNCHRONIZE=0x00100000u,SHARE_READ_WRITE=0x1u|0x2u,OPEN_EXISTING=3u,BACKUP=0x02000000u,OPEN_REPARSE=0x00200000u;
             raw=CreateFileWRaw(full,READ_ATTRIBUTES|LIST_DIRECTORY|DELETE|SYNCHRONIZE,SHARE_READ_WRITE,IntPtr.Zero,OPEN_EXISTING,BACKUP|OPEN_REPARSE,IntPtr.Zero);
-            if(raw==IntPtr.Zero||raw==new IntPtr(-1)){int error=Marshal.GetLastWin32Error();cell.CancelReservation(slot);throw new Win32Exception(error,"Could not open exact final cache root.");}
+            if(raw==IntPtr.Zero||raw==new IntPtr(-1)){int error=Marshal.GetLastWin32Error();cell.CancelReservation(slot);throw new Win32Exception(error,"Could not open exact final cache root "+full+"; native error "+error+".");}
             cell.AdoptRaw(slot,raw);raw=IntPtr.Zero;
             if(String.Equals(hostileMode,"after_acquire",StringComparison.Ordinal))throw new IOException("Forced final-root post-acquire proof failure.");
             BY_HANDLE_FILE_INFORMATION info;using(SafeFileHandle borrowed=Borrow(cell,slot,"Final cache root proof")){if(!GetFileInformationByHandle(borrowed,out info))throw new Win32Exception(Marshal.GetLastWin32Error(),"Could not inspect final cache root handle.");}
@@ -809,7 +809,7 @@ public static class Q009ExactFileSystemNative {
             return Describe(info);
         } catch(Exception failure) {
             if(raw!=IntPtr.Zero&&raw!=new IntPtr(-1)){cell.AdoptRaw(slot,raw);raw=IntPtr.Zero;}
-            IOException wrapped=new IOException("Final cache-root acquisition/proof failed; custody state="+cell.StateOf(slot),failure);wrapped.Data["retained_handle_slot"]=slot;wrapped.Data["retained_handle_state"]=cell.StateOf(slot);throw wrapped;
+            IOException wrapped=new IOException("Final cache-root acquisition/proof failed; custody state="+cell.StateOf(slot)+"; cause="+failure.Message,failure);wrapped.Data["retained_handle_slot"]=slot;wrapped.Data["retained_handle_state"]=cell.StateOf(slot);throw wrapped;
         }
     }
     public static string[] OpenDirectoryReadHeldExact(CacheCustodyCell cell,string slot,string path,string expectedKey,long expectedCreationTicks,string hostileMode) {
@@ -1054,17 +1054,27 @@ public static class Q009ExactFileSystemNative {
         RequireExactRoleParent(path,destinationPath,parentPath,parentKey,parentCreationTicks,"Owned cleanup quarantine");
         RenameEntryExactNoReplaceCore(path,destinationPath,expectedKey,expectedCreationTicks,true);
     }
-    private static void RequireHeldCapabilityRoot(CacheCustodyCell cell,string slot,string expectedKey,long expectedCreationTicks,string context){BY_HANDLE_FILE_INFORMATION info;using(SafeFileHandle borrowed=Borrow(cell,slot,context)){if(!GetFileInformationByHandle(borrowed,out info))throw new Win32Exception(Marshal.GetLastWin32Error(),context+" could not inspect held root");}if(NativeKey(info)!=expectedKey||CreationTicks(info)!=expectedCreationTicks)throw new IOException(context+" held root identity changed");}
+    private static void RequireHeldCapabilityRoot(CacheCustodyCell cell,string slot,string rootPath,string expectedKey,long expectedCreationTicks,string context){
+        string rootFull=Path.GetFullPath(rootPath).TrimEnd(Path.DirectorySeparatorChar,Path.AltDirectorySeparatorChar);
+        BY_HANDLE_FILE_INFORMATION pinInfo;string pinPath;
+        using(SafeFileHandle borrowed=Borrow(cell,slot,context)){
+            if(!GetFileInformationByHandle(borrowed,out pinInfo))throw new Win32Exception(Marshal.GetLastWin32Error(),context+" could not inspect held sentinel");
+            pinPath=GetFinalPathFromSafeHandle(borrowed);
+        }
+        if((pinInfo.FileAttributes&0x10u)!=0u||(pinInfo.FileAttributes&0x400u)!=0u||!String.Equals(Path.GetDirectoryName(pinPath),rootFull,StringComparison.OrdinalIgnoreCase))throw new IOException(context+" held sentinel escaped the exact capability root");
+        string[] rootIdentity=GetIdentity(rootFull,true);
+        if(rootIdentity[0]!=expectedKey||Int64.Parse(rootIdentity[1],System.Globalization.CultureInfo.InvariantCulture)!=expectedCreationTicks)throw new IOException(context+" root identity changed");
+    }
     public static void AttemptPinnedCapabilityRootRenameNoReplace(CacheCustodyCell cell,string slot,string path,string destinationPath,string expectedKey,long expectedCreationTicks) {
         RequireRoleLeaf(path,".rw06-q009-sentinel-capability-","Pinned capability source");
         if(!Path.GetFileName(Path.GetFullPath(destinationPath)).EndsWith(".native-move",StringComparison.Ordinal))throw new ArgumentException("Pinned capability destination lacks its role suffix.");
-        RequireHeldCapabilityRoot(cell,slot,expectedKey,expectedCreationTicks,"Pinned capability rename");
+        RequireHeldCapabilityRoot(cell,slot,path,expectedKey,expectedCreationTicks,"Pinned capability rename");
         RenameEntryExactNoReplaceCore(path,destinationPath,expectedKey,expectedCreationTicks,true);
     }
     public static void AttemptPinnedCapabilityRootPosixRenameNoReplace(CacheCustodyCell cell,string slot,string path,string destinationPath,string expectedKey,long expectedCreationTicks) {
         RequireRoleLeaf(path,".rw06-q009-sentinel-capability-","Pinned POSIX capability source");
         if(!Path.GetFileName(Path.GetFullPath(destinationPath)).EndsWith(".posix-move",StringComparison.Ordinal))throw new ArgumentException("Pinned POSIX capability destination lacks its role suffix.");
-        RequireHeldCapabilityRoot(cell,slot,expectedKey,expectedCreationTicks,"Pinned POSIX capability rename");
+        RequireHeldCapabilityRoot(cell,slot,path,expectedKey,expectedCreationTicks,"Pinned POSIX capability rename");
         RenameEntryExactNoReplacePosixCore(path,destinationPath,expectedKey,expectedCreationTicks,true);
     }
     public static void DeleteTreeExact(string rootPath, string expectedRootKey, long expectedRootCreationTicks, string[] relativePaths, string[] keys, long[] creationTicks, bool[] directories,long[] lengths,string[] hashes) {
@@ -1534,7 +1544,7 @@ function Remove-Q009ManifestChildrenExceptSentinel {
     $relative=$sentinelPath.Substring($root.Length).TrimStart('\','/').Replace('\','/')
     if(-not(Test-Q009OwnedChildManifestChainHeadShape $AuthorizedChainHead $RootIdentity $ExpectedAttemptId)){throw 'Sentinel cleanup requires a sealed authorized child-manifest chain head'}
     $Manifest=$AuthorizedChainHead.manifest
-    $current=Get-Q009ExactOwnedTreeManifest $root
+    $current=Get-Q009ExactOwnedTreeManifest $root $CustodyCell 'sentinel' $SentinelIdentity
     if(-not(Test-Q009ExactOwnedTreeManifestShape $current $RootIdentity)-or[string]$current.sha256-cne[string]$Manifest.sha256-or(($current|ConvertTo-Json -Depth 8 -Compress)-cne($Manifest|ConvertTo-Json -Depth 8 -Compress))){throw 'Sentinel cleanup rejected an added, removed, replaced, reordered, or content-mutated child after the terminal owned manifest'}
     Initialize-Q009ExactFileSystemType
     $native=[Q009ExactFileSystemNative]::DeleteManifestChildrenExcept($CustodyCell,$root,[string]$RootIdentity.native_key,[long]$RootIdentity.creation_ticks,$relative,[string]$SentinelIdentity.native_key,[long]$SentinelIdentity.creation_ticks,[string[]]@($Manifest.entries|ForEach-Object{[string]$_.path}),[string[]]@($Manifest.entries|ForEach-Object{[string]$_.native_key}),[long[]]@($Manifest.entries|ForEach-Object{[long]$_.creation_ticks}),[bool[]]@($Manifest.entries|ForEach-Object{[bool]$_.is_directory}),[long[]]@($Manifest.entries|ForEach-Object{[long]$_.length}),[string[]]@($Manifest.entries|ForEach-Object{[string]$_.sha256}))
@@ -1737,11 +1747,47 @@ function Invoke-Q009PinnedCapabilityRootRenameHostile {
 }
 
 function Get-Q009ExactOwnedTreeManifest {
-    param([string]$RootPath)
+    param(
+        [string]$RootPath,
+        [AllowNull()][object]$HeldFileCustodyCell=$null,
+        [string]$HeldFileSlot='',
+        [AllowNull()][object]$HeldFileIdentity=$null
+    )
     $root=[IO.Path]::GetFullPath($RootPath).TrimEnd('\','/');$rootIdentity=Get-Q009FileSystemEntryIdentity $root
     if(-not[bool]$rootIdentity.is_directory){throw 'Exact owned tree root is not a directory'}
+    $hasHeldFile=$null-ne$HeldFileCustodyCell-or-not[string]::IsNullOrWhiteSpace($HeldFileSlot)-or$null-ne$HeldFileIdentity
+    if($hasHeldFile-and($null-eq$HeldFileCustodyCell-or[string]::IsNullOrWhiteSpace($HeldFileSlot)-or-not(Test-Q009FileSystemIdentityShape $HeldFileIdentity)-or[bool]$HeldFileIdentity.is_directory-or[IO.Path]::GetDirectoryName([string]$HeldFileIdentity.path)-cne$root)){throw 'Exact owned tree held-file authority was incomplete or outside the root'}
+    $heldFileObserved=$false
     $entries=[Collections.Generic.List[object]]::new();$pending=[Collections.Generic.Stack[string]]::new();$pending.Push($root)
-    while($pending.Count-gt0){$directory=$pending.Pop();foreach($item in @(Get-ChildItem -LiteralPath $directory -Force -ErrorAction Stop|Sort-Object FullName)){if(($item.Attributes-band[IO.FileAttributes]::ReparsePoint)-ne0){throw "Exact owned tree contains a reparse point: $($item.FullName)"};$relative=$item.FullName.Substring($root.Length).TrimStart('\','/').Replace('\','/');if($item.PSIsContainer){$identity=Get-Q009FileSystemEntryIdentity $item.FullName;[void]$entries.Add([ordered]@{path=$relative;native_key=[string]$identity.native_key;creation_ticks=[long]$identity.creation_ticks;is_directory=[bool]$true;length=[long]-1;sha256=[string]''});$pending.Push($item.FullName)}else{$stream=$null;$hasher=$null;try{$stream=[IO.File]::Open($item.FullName,[IO.FileMode]::Open,[IO.FileAccess]::Read,[IO.FileShare]::Read);$identity=Get-Q009FileSystemHandleIdentity -Handle $stream.SafeFileHandle -Path $item.FullName -IsDirectory $false;$hasher=[Security.Cryptography.SHA256]::Create();$hash=([BitConverter]::ToString($hasher.ComputeHash($stream))).Replace('-','').ToUpperInvariant();[void]$entries.Add([ordered]@{path=$relative;native_key=[string]$identity.native_key;creation_ticks=[long]$identity.creation_ticks;is_directory=[bool]$false;length=[long]$stream.Length;sha256=[string]$hash})}finally{if($null-ne$hasher){$hasher.Dispose()};if($null-ne$stream){$stream.Dispose()}}}}}
+    while($pending.Count-gt0){
+        $directory=$pending.Pop()
+        foreach($item in @(Get-ChildItem -LiteralPath $directory -Force -ErrorAction Stop|Sort-Object FullName)){
+            if(($item.Attributes-band[IO.FileAttributes]::ReparsePoint)-ne0){throw "Exact owned tree contains a reparse point: $($item.FullName)"}
+            $relative=$item.FullName.Substring($root.Length).TrimStart('\','/').Replace('\','/')
+            if($item.PSIsContainer){
+                $identity=Get-Q009FileSystemEntryIdentity $item.FullName
+                [void]$entries.Add([ordered]@{path=$relative;native_key=[string]$identity.native_key;creation_ticks=[long]$identity.creation_ticks;is_directory=[bool]$true;length=[long]-1;sha256=[string]''})
+                $pending.Push($item.FullName)
+            }
+            elseif($hasHeldFile-and[IO.Path]::GetFullPath($item.FullName)-ceq[string]$HeldFileIdentity.path){
+                $description=Get-Q009HeldFileDescription $HeldFileCustodyCell $HeldFileSlot $item.FullName
+                if([string]$description.native_key-cne[string]$HeldFileIdentity.native_key-or[long]$description.creation_ticks-ne[long]$HeldFileIdentity.creation_ticks){throw 'Exact owned tree held-file identity changed during manifest capture'}
+                [void]$entries.Add([ordered]@{path=$relative;native_key=[string]$description.native_key;creation_ticks=[long]$description.creation_ticks;is_directory=[bool]$false;length=[long]$description.length;sha256=[string]$description.sha256})
+                $heldFileObserved=$true
+            }
+            else{
+                $stream=$null;$hasher=$null
+                try{
+                    $stream=[IO.File]::Open($item.FullName,[IO.FileMode]::Open,[IO.FileAccess]::Read,[IO.FileShare]::Read)
+                    $identity=Get-Q009FileSystemHandleIdentity -Handle $stream.SafeFileHandle -Path $item.FullName -IsDirectory $false
+                    $hasher=[Security.Cryptography.SHA256]::Create();$hash=([BitConverter]::ToString($hasher.ComputeHash($stream))).Replace('-','').ToUpperInvariant()
+                    [void]$entries.Add([ordered]@{path=$relative;native_key=[string]$identity.native_key;creation_ticks=[long]$identity.creation_ticks;is_directory=[bool]$false;length=[long]$stream.Length;sha256=[string]$hash})
+                }
+                finally{if($null-ne$hasher){$hasher.Dispose()};if($null-ne$stream){$stream.Dispose()}}
+            }
+        }
+    }
+    if($hasHeldFile-and-not$heldFileObserved){throw 'Exact owned tree did not contain its authorized held file'}
     $ordered=@($entries|Sort-Object path);$payload=[ordered]@{root_native_key=[string]$rootIdentity.native_key;root_creation_ticks=[long]$rootIdentity.creation_ticks;entries=$ordered};return [ordered]@{root_identity=$rootIdentity;entries=$ordered;sha256=Get-StringSha256 (($payload|ConvertTo-Json -Depth 6 -Compress))}
 }
 
@@ -1760,12 +1806,19 @@ function Test-Q009ExactOwnedTreeManifestShape {
 
 function Test-Q009OwnedArtifactRootRequestShape {
     param([AllowNull()][object]$Request)
-    if(-not(Test-Q009ExactPublicReceiptKeys $Request @('role','path','root_identity'))){return $false}
+    $baseKeys=@('role','path','root_identity');$heldKeys=@('role','path','root_identity','held_file_custody','held_file_slot','held_file_identity')
+    $hasHeldAuthority=Test-Q009ExactPublicReceiptKeys $Request $heldKeys
+    if(-not$hasHeldAuthority-and-not(Test-Q009ExactPublicReceiptKeys $Request $baseKeys)){return $false}
     if($Request.role-isnot[string]-or[string]::IsNullOrWhiteSpace([string]$Request.role)-or
         $Request.path-isnot[string]-or[string]::IsNullOrWhiteSpace([string]$Request.path)-or
         -not(Test-Q009FileSystemIdentityShape $Request.root_identity)-or-not[bool]$Request.root_identity.is_directory){return $false}
     try{$resolved=[IO.Path]::GetFullPath([string]$Request.path).TrimEnd('\','/')}catch{return $false}
-    return [string]$Request.path-ceq$resolved-and[string]$Request.root_identity.path-ceq$resolved
+    if([string]$Request.path-cne$resolved-or[string]$Request.root_identity.path-cne$resolved){return $false}
+    if($hasHeldAuthority){
+        if($null-eq$Request.held_file_custody-or$Request.held_file_slot-isnot[string]-or[string]::IsNullOrWhiteSpace([string]$Request.held_file_slot)-or-not(Test-Q009FileSystemIdentityShape $Request.held_file_identity)-or[bool]$Request.held_file_identity.is_directory-or[IO.Path]::GetDirectoryName([string]$Request.held_file_identity.path)-cne$resolved){return $false}
+        try{if([string]$Request.held_file_custody.StateOf([string]$Request.held_file_slot)-cne'OPEN'){return $false}}catch{return $false}
+    }
+    return $true
 }
 
 function Test-Q009ClosedArtifactManifestReceiptShape {
@@ -1795,7 +1848,9 @@ function New-Q009ClosedArtifactManifestReceipt {
     if(-not(Test-Q009RunContextShape $RunContext)){throw 'Closed-process artifact capture requires one exact run context'}
     if(-not(Test-ProcessIdentityProofShape $ProcessIdentity)){throw 'Closed-process artifact capture requires the exact owned process identity'}
     if(-not(Test-Q009FileSystemIdentityMatch $Request.root_identity)){throw "Closed-process artifact root was missing or replaced: $($Request.path)"}
-    $manifest=Get-Q009ExactOwnedTreeManifest ([string]$Request.path)
+    $manifest=if($Request.PSObject.Properties.Name-contains'held_file_custody'){
+        Get-Q009ExactOwnedTreeManifest ([string]$Request.path) $Request.held_file_custody ([string]$Request.held_file_slot) $Request.held_file_identity
+    }else{Get-Q009ExactOwnedTreeManifest ([string]$Request.path)}
     if(-not(Test-Q009ExactOwnedTreeManifestShape $manifest $Request.root_identity)){throw "Closed-process artifact manifest was malformed: $($Request.path)"}
     $receipt=[ordered]@{
         role=[string]$Request.role;path=[string]$Request.path;root_identity=$Request.root_identity;manifest=$manifest;
@@ -1833,7 +1888,10 @@ function New-Q009OwnedChildManifestChainHead {
         [string]$Boundary,
         [ValidateSet('launcher_fixture','evidence_owner','closed_process_phase','cache_creator','profile_creator','validator_shadow')][string]$OwnerKind,
         [object]$OwnerReceipt,
-        [AllowNull()][object]$PreviousHead=$null
+        [AllowNull()][object]$PreviousHead=$null,
+        [AllowNull()][object]$HeldFileCustodyCell=$null,
+        [string]$HeldFileSlot='',
+        [AllowNull()][object]$HeldFileIdentity=$null
     )
     if(-not(Test-Q009FileSystemIdentityShape $RootIdentity)-or-not[bool]$RootIdentity.is_directory-or[string]$RootIdentity.path-cne[IO.Path]::GetFullPath($RootPath).TrimEnd('\','/')){throw 'Owned-child manifest chain requires the exact root identity'}
     if($AttemptId-isnot[string]-or[string]::IsNullOrWhiteSpace($AttemptId)-or$Boundary-isnot[string]-or[string]::IsNullOrWhiteSpace($Boundary)){throw 'Owned-child manifest chain requires exact nonempty attempt and boundary strings'}
@@ -1842,7 +1900,7 @@ function New-Q009OwnedChildManifestChainHead {
     if($null-ne$PreviousHead){if(-not(Test-Q009OwnedChildManifestChainHeadShape $PreviousHead $RootIdentity $AttemptId)){throw 'Owned-child manifest chain predecessor was malformed or belonged to another root/attempt'};$previousSha=[string]$PreviousHead.head_sha256;$sequence=[int]$PreviousHead.sequence+1}
     $ownerJson=$OwnerReceipt|ConvertTo-Json -Depth 30 -Compress
     if([string]::IsNullOrWhiteSpace($ownerJson)){throw 'Owned-child manifest owner receipt could not be serialized'}
-    $manifest=Get-Q009ExactOwnedTreeManifest $RootPath
+    $manifest=Get-Q009ExactOwnedTreeManifest $RootPath $HeldFileCustodyCell $HeldFileSlot $HeldFileIdentity
     $payload=[ordered]@{schema_version=[int]1;attempt_id=[string]$AttemptId;sequence=[int]$sequence;boundary=[string]$Boundary;owner_kind=[string]$OwnerKind;owner_receipt_sha256=Get-StringSha256 $ownerJson;previous_head_sha256=[string]$previousSha;captured_utc=[DateTime]::UtcNow.ToString('o');root_identity=$RootIdentity;manifest=$manifest}
     $receipt=[ordered]@{};foreach($key in $payload.Keys){$receipt[$key]=$payload[$key]};$receipt.head_sha256=Get-StringSha256 (($payload|ConvertTo-Json -Depth 12 -Compress))
     if(-not(Test-Q009OwnedChildManifestChainHeadShape $receipt $RootIdentity $AttemptId $Boundary)){throw 'Owned-child manifest chain head failed its closed schema'}
@@ -2150,7 +2208,13 @@ function Test-Q009StartProofShape {
     if(-not[bool]$Proof.receipt_valid){return $AllowInvalid-and-not[string]::IsNullOrWhiteSpace([string]$Proof.validation_error)-and$emptyStart}
     if(-not[string]::IsNullOrEmpty([string]$Proof.validation_error)){return $false}
     if(-not[bool]$Proof.started){return $emptyStart}
-    if(-not[bool]$Proof.start_observed-or[int]$Proof.process_id-le0-or[string]$Proof.process_kind-notin@('Godot','Python','Exact')-or[string]$Proof.provenance-notin@('start_setup_exception','start_before_identity_exception')-or-not(Test-Q009ObservedStartReceiptShape $Proof.observed_start)){return $false}
+    if(-not[bool]$Proof.start_observed-or[string]$Proof.process_kind-notin@('Godot','Python','Exact')-or[string]$Proof.provenance-notin@('start_setup_exception','start_before_identity_exception')-or-not(Test-Q009ObservedStartReceiptShape $Proof.observed_start)){return $false}
+    if([bool]$Proof.process_id_observed){if([int]$Proof.process_id-le0){return $false}}
+    elseif([int]$Proof.process_id-lt0-or[bool]$Proof.process_start_time_observed-or[bool]$Proof.process_name_observed-or[bool]$Proof.identity_capture_complete-or$null-ne$Proof.process_identity){return $false}
+    if(-not[bool]$Proof.process_id_observed-and[int]$Proof.process_id-gt0-and(-not[bool]$Proof.job_assignment_succeeded-or-not[bool]$Proof.job_cleanup_succeeded-or-not[bool]$Proof.job_final_membership_empty)){return $false}
+    if([bool]$Proof.process_start_time_observed-and-not[bool]$Proof.process_id_observed){return $false}
+    if([bool]$Proof.process_name_observed-and-not[bool]$Proof.process_start_time_observed){return $false}
+    if([int]$Proof.observed_start.process_id-ne[int]$Proof.process_id){return $false}
     if($null-eq$Proof.executable_pin_receipt-or$null-eq$Proof.executable_pin_release-or-not[string]::Equals([string]$Proof.launched_image_path,[string]$Proof.executable_pin_receipt.final_path,[StringComparison]::OrdinalIgnoreCase)){return $false}
     if([bool]$Proof.identity_capture_complete){if(-not(Test-ProcessIdentityProofShape $Proof.process_identity)-or[int]$Proof.process_id-ne[int]$Proof.process_identity.pid-or[string]$Proof.provenance-cne'start_setup_exception'){return $false}}
     elseif($null-ne$Proof.process_identity-and-not(Test-ProcessIdentityProofShape $Proof.process_identity)){return $false}
@@ -3474,7 +3538,11 @@ function New-OwnedLeaseFile {
     $parentPath=[System.IO.Path]::GetDirectoryName($resolved)
     $parentIdentity=Get-Q009FileSystemEntryIdentity $parentPath
     try {
-        $parentReceipt=Open-Q009ExactDirectoryHeld -Path $parentPath -ExpectedIdentity $parentIdentity -CustodyCell $cell -Slot lease_parent
+        # Publishing a child needs held parent identity/list authority, not
+        # parent DELETE access. The read-only handle still denies delete
+        # sharing (blocking parent rename/replacement) while remaining
+        # compatible with legitimate read pins on existing sibling files.
+        $parentReceipt=Open-Q009ExactReadDirectoryHeld -Path $parentPath -ExpectedIdentity $parentIdentity -CustodyCell $cell -Slot lease_parent
         $bytes=[System.Text.Encoding]::UTF8.GetBytes($Text)
         $fileReceipt=New-Q009ExactOwnedFileHeld -Path $resolved -Payload $bytes -CustodyCell $cell -ParentSlot lease_parent -Slot lease_file -ExpectedParentIdentity $parentIdentity
         $created = $true
