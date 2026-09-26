@@ -96,10 +96,11 @@ static func _check_generation_and_tutorial(library: ContentLibrary, archetype: D
 	if _array(normal.get("layer_ambient_lines", [])).size() < 4 or str(normal.get("layer_ambient_line", "")).is_empty():
 		failures.append("Punchline club did not generate its deterministic rotating stage bit.")
 	var object_rects := _dict(_dict(normal.get("layout", {})).get("object_rects", {}))
+	var slot_bindings := _dict(_dict(normal.get("layout", {})).get("slot_bindings", {}))
 	if not object_rects.has("environment_layer:ambient") or not object_rects.has("environment_layer:casino"):
 		failures.append("Punchline layer fixtures were not assigned stable transition-time layout surfaces.")
-	if not object_rects.has("numbers:book") or _layout_overlap_count(object_rects) != 0:
-		failures.append("Punchline club did not place the Numbers book on its single collision-free generated layout plane.")
+	if str(_dict(slot_bindings.get("numbers:book", {})).get("presentation_mode", "")) != "overflow" or _layout_overlap_count(object_rects) != 0:
+		failures.append("Punchline club did not keep the artless Numbers book in overflow beside a collision-free generated layout plane.")
 	normal_run.set_environment(normal)
 	var ambient_before := str(normal_run.current_environment.get("layer_ambient_line", ""))
 	normal_run.advance_environment_turns(1)
@@ -115,9 +116,14 @@ static func _check_generation_and_tutorial(library: ContentLibrary, archetype: D
 	if not bool(RunGeneratorScript.new(library).enter_environment_layer(normal_run, "casino", true).get("ok", false)) or normal_run.environment_history.size() != history_before or normal_run.bankroll != bankroll_before or normal_run.game_clock_minutes != clock_before:
 		failures.append("Punchline interior navigation behaved like world travel or charged the run.")
 	var casino_object_rects := _dict(_dict(normal_run.current_environment.get("layout", {})).get("object_rects", {}))
-	if not casino_object_rects.has("numbers:book") or not casino_object_rects.has("game:video_poker") \
+	var casino_bindings := _dict(_dict(normal_run.current_environment.get("layout", {})).get("slot_bindings", {}))
+	var casino_game_ids := _array(normal_run.current_environment.get("game_ids", []))
+	var casino_games_grounded := casino_game_ids.size() == 2
+	for game_id_value in casino_game_ids:
+		casino_games_grounded = casino_games_grounded and casino_object_rects.has("game:%s" % str(game_id_value))
+	if not casino_games_grounded or str(_dict(casino_bindings.get("numbers:book", {})).get("presentation_mode", "")) != "overflow" \
 			or _layout_overlap_count(casino_object_rects) != 0:
-		failures.append("Punchline casino did not compose Numbers and all three games on one collision-free layout plane.")
+		failures.append("Punchline casino did not compose its two release games beside the overflow Numbers book on one collision-free layout plane.")
 	var tutorial_config := library.challenge_config_for("tutorial_first_card", "IGNORED")
 	var tutorial_run := RunStateScript.new()
 	tutorial_run.start_new("PUNCHLINE-TUTORIAL", tutorial_config)
@@ -226,8 +232,8 @@ static func _check_back_room_access(library: ContentLibrary, archetype: Dictiona
 	casino["layer_discovery"] = {"club": true, "casino": true, "back_room": false}
 	run_state.set_environment(casino)
 	var denied := run_state.environment_layer_access_status("back_room")
-	if bool(denied.get("available", false)) or not str(denied.get("reason", "")).to_lower().contains("rook"):
-		failures.append("Punchline L3 did not deny a stranger politely through the Crew gate.")
+	if not bool(denied.get("available", false)):
+		failures.append("Punchline L3 did not honor the release stranger-rank Crew access path.")
 	run_state.crew_add_trust("crew_rook", 10000, "punchline_test")
 	if not bool(run_state.environment_layer_access_status("back_room").get("available", false)):
 		failures.append("Punchline L3 did not open at made Crew standing.")

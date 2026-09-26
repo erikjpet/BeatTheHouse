@@ -1,5 +1,5 @@
 {
-  "baseline_sha256": "411a9b59089104975d1e45b7477b2ce103aeb4ce9bf617e5c73fe6f9be028624",
+  "baseline_sha256": "e1126644451b2e9dd864fc86011c8ac2ed321159702a7aabeff6672523571447",
   "canonical_fields": {
     "visual_context": {
       "perspective": "first_person",
@@ -13,6 +13,7 @@
       "event_spots": [[84, 86], [410, 96], [220, 300], [410, 300], [620, 300]],
       "service_spots": [[78, 220]],
       "lender_spots": [[790, 300], [84, 300]],
+      "layer_spots": [[410, 380], [710, 380]],
       "travel_spots": [[820, 86], [820, 380], [676, 82], [520, 380], [250, 380], [84, 380]]
     },
     "security_profile": {
@@ -39,12 +40,12 @@
       "cashout_tone": "private"
     },
     "game_pool": ["slot", "blackjack", "video_poker"],
-    "game_count": [3, 3],
+    "game_count": [2, 2],
     "item_pool": [],
     "item_count": [0, 0],
     "event_pool": ["rowdy_regular", "machine_jam", "side_door", "heat_at_exit", "suspicious_patron", "rival_counter", "counter_payoff", "snitch_reputation", "the_collector", "lay_low_booth", "door_bribe", "lucky_streak_temptation", "crew_favor_delivery"],
     "event_scopes": ["casino"],
-    "event_count": [2, 4],
+    "event_count": [1, 1],
     "service_pool": ["house_drink"],
     "lender_hooks": ["the_crew", "street_lender"],
     "lender_count": [1, 2],
