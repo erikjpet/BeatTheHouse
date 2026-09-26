@@ -12432,11 +12432,6 @@ func set_story_flag(flag_id: String, value: Variant = true) -> void:
 		return
 	story_flags[clean_id] = value
 	narrative_flags[clean_id] = value
-	# Reading the exact Audit roster is both the Count's learned-world fact and
-	# its authored Punchline lead. Keep the public route promise attached to that
-	# durable fact even after the live scenario room is resealed.
-	if clean_id == "crew_heist_count_audit_roster_read" and typeof(value) == TYPE_BOOL and bool(value):
-		add_next_archetypes(["small_underground_casino"])
 
 
 # Enqueues a world-acting event for modal resolution.
