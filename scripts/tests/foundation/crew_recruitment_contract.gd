@@ -15,7 +15,7 @@ const RunStateScript := preload("res://scripts/core/run_state.gd")
 const WorldMapScript := preload("res://scripts/core/world_map.gd")
 const HarnessProductionFidelityScript := preload("res://scripts/tests/foundation/harness_production_fidelity.gd")
 const IGNORED_BASELINE_PATH := "res://scripts/tests/fixtures/crew06_5_ignored_run_baseline.json"
-const IGNORED_BASELINE_CHANGE_COMMIT := "4384378a00d2e81e259aa28ae01ffbbc7cf21fd5"
+const IGNORED_BASELINE_CHANGE_COMMIT := "d7a1b1c7f90d789372f68875f3ce1bec3fa5e634"
 const JSON_EXACT_INTEGER_LIMIT := 9007199254740991.0
 
 
@@ -236,63 +236,34 @@ static func _check_rook_paths(library: ContentLibrary, failures: Array) -> void:
 
 
 static func _check_bishop_grand_casino_presence(library: ContentLibrary, failures: Array) -> void:
-	var selected_seed := ""
-	for seed_index in range(128):
-		var candidate := _marked_run("CREW-BISHOP-CAGE-PRESENCE-%03d" % seed_index)
-		_recruit_for_fixture(candidate, "crew_bishop")
-		_set_fixture_world(candidate, [RunState.GRAND_CASINO_ARCHETYPE_ID])
-		var cage_probe := {
-			"id": "bishop_cage_seed_probe",
-			"archetype_id": RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID,
-			"world_node_id": RunState.GRAND_CASINO_ARCHETYPE_ID,
-			"kind": "casino",
-			"event_ids": [],
-			"resolved_event_ids": [],
-			"scenario_patron_ids": [],
-		}
-		CrewRecruitmentModelScript.apply_to_environment(candidate, cage_probe)
-		if _presence_has_member(cage_probe, "crew_bishop"):
-			selected_seed = candidate.seed_text
-			break
-	if selected_seed.is_empty():
-		failures.append("No deterministic Bishop itinerary seed selected the Grand Casino cage window.")
-		return
-	var run_state := _marked_run(selected_seed)
+	var run_state := _marked_run("CREW-BISHOP-GRAND-PRESENCE")
 	_recruit_for_fixture(run_state, "crew_bishop")
 	_set_fixture_world(run_state, [RunState.GRAND_CASINO_ARCHETYPE_ID])
 	run_state.narrative_flags["grand_casino_high_limit_access"] = true
 	var generator := RunGeneratorScript.new(library)
 	generator.next_environment(run_state, RunState.GRAND_CASINO_ARCHETYPE_ID, true)
-	var selected_rooms: Array = []
-	if _presence_has_member(run_state.current_environment, "crew_bishop"):
-		selected_rooms.append(RunState.GRAND_CASINO_ARCHETYPE_ID)
+	if not _presence_has_member(run_state.current_environment, "crew_bishop") or not _presence_has_contact(run_state.current_environment, "crew_bishop"):
+		failures.append("Bishop's authored Grand Main presence did not retain its contextual contact seam.")
 	if not generator.enter_grand_casino_room(run_state, RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID):
 		failures.append("Bishop cage presence fixture could not enter the production cage room.")
 		return
-	if _presence_has_member(run_state.current_environment, "crew_bishop"):
-		selected_rooms.append(RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID)
-	if not _presence_has_contact(run_state.current_environment, "crew_bishop"):
-		failures.append("Bishop's selected cage presence did not retain its contextual contact seam.")
+	if _presence_has_member(run_state.current_environment, "crew_bishop") or _presence_has_contact(run_state.current_environment, "crew_bishop"):
+		failures.append("Bishop's Grand Main presence leaked into the Cage room.")
 	if not generator.enter_grand_casino_room(run_state, RunState.GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID):
 		failures.append("Bishop cage presence fixture could not enter the production high-limit room.")
 		return
-	if _presence_has_member(run_state.current_environment, "crew_bishop"):
-		selected_rooms.append(RunState.GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID)
-	if selected_rooms != [RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID]:
-		failures.append("Bishop itinerary must select exactly one physical Grand Casino room; got %s." % JSON.stringify(selected_rooms))
+	if _presence_has_member(run_state.current_environment, "crew_bishop") or _presence_has_contact(run_state.current_environment, "crew_bishop"):
+		failures.append("Bishop's Grand Main presence leaked into High-Limit.")
 	# Re-entry must recompute from canonical world-node identity rather than
 	# trusting a stale serialized room actor snapshot.
-	if not generator.enter_grand_casino_room(run_state, RunState.GRAND_CASINO_ARCHETYPE_ID):
-		failures.append("Bishop cage presence fixture could not return to the main floor.")
-		return
-	var stored_cage := run_state.peek_grand_casino_room_environment(RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID)
-	stored_cage["crew_presence"] = [{"member_id": "crew_rook", "rank": "marker", "line": "stale"}]
-	stored_cage["scenario_patron_ids"] = ["crew_rook"]
-	if not generator.enter_grand_casino_room(run_state, RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID) \
+	var stored_main := run_state.peek_grand_casino_room_environment(RunState.GRAND_CASINO_ARCHETYPE_ID)
+	stored_main["crew_presence"] = [{"member_id": "crew_rook", "rank": "marker", "line": "stale"}]
+	stored_main["scenario_patron_ids"] = ["crew_rook"]
+	if not generator.enter_grand_casino_room(run_state, RunState.GRAND_CASINO_ARCHETYPE_ID) \
 		or not _presence_has_member(run_state.current_environment, "crew_bishop") \
 		or not _presence_has_contact(run_state.current_environment, "crew_bishop") \
 		or _presence_has_member(run_state.current_environment, "crew_rook"):
-		failures.append("Restored Grand Casino cage did not refresh Bishop's seeded presence on revisit.")
+		failures.append("Restored Grand Main did not refresh Bishop's authored presence on revisit.")
 
 
 static func _check_rook_signposts(library: ContentLibrary, failures: Array) -> void:

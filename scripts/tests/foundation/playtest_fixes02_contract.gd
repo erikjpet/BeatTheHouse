@@ -211,7 +211,7 @@ static func _check_bug31_lender_term_disclosure(library, failures: Array) -> voi
 	var expected := {
 		"street_lender": [25, 28, 10, 3],
 		"motel_friend": [20, 22, 10, 4],
-		"the_crew": [45, 2, 0, 2],
+		"the_crew": [70, 1, 0, 2],
 		"brother_in_law": [30, 33, 10, 6],
 	}
 	for lender_id in expected.keys():
