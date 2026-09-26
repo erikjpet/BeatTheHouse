@@ -2238,7 +2238,10 @@ func _blackjack_compatibility_simulation(action_id: String, stake: int, run_stat
 	var resolution_ui_state := ui_state.duplicate(true)
 	if not resolution_ui_state.has("surface_time_msec"):
 		resolution_ui_state["surface_time_msec"] = GameModule.deterministic_time_msec(simulation_run_state, {})
-	var result := _resolve_blackjack_proposal_core(action_id, stake, simulation_run_state, simulation_environment, simulation_rng, resolution_ui_state, read_only_core)
+	# The compatibility environment above already owns its detached table. Let
+	# normalization update that private graph in place instead of cloning the
+	# complete shoe and table payload a second time before every ordinary hand.
+	var result := _resolve_blackjack_proposal_core(action_id, stake, simulation_run_state, simulation_environment, simulation_rng, resolution_ui_state, read_only_core, read_only_core)
 	result.erase("blackjack_proposal_requires_apply")
 	result.erase("blackjack_host_apply_receipt")
 	result.erase("blackjack_host_content_fingerprint")

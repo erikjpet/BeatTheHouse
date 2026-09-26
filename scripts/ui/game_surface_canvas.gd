@@ -933,8 +933,12 @@ func surface_native_action_selected(action: String) -> bool:
 
 func surface_label(text: String, pos: Vector2, font_size: int, color: Color) -> void:
 	_register_surface_text_rect(text, pos, font_size)
-	draw_string(get_theme_default_font(), pos + Vector2(1, 1), text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, Color(0.0, 0.0, 0.0, 0.62))
-	draw_string(get_theme_default_font(), pos, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color)
+	# Animated tables redraw dozens of labels at production cadence. Resolve the
+	# themed font once per label instead of repeating the theme lookup for its
+	# shadow and foreground command.
+	var font := get_theme_default_font()
+	draw_string(font, pos + Vector2(1, 1), text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, Color(0.0, 0.0, 0.0, 0.62))
+	draw_string(font, pos, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color)
 
 
 func surface_label_plain(text: String, pos: Vector2, font_size: int, color: Color) -> void:
