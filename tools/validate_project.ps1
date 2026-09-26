@@ -3021,7 +3021,21 @@ Write-Output "RW06_1_INDEPENDENT_ADMISSION_PASS report=$ReportPath cases=$($case
         if($null-eq$after-or($before|ConvertTo-Json -Compress)-cne($after|ConvertTo-Json -Compress)){throw "rw06_1 validator-bound source identity drifted: $path"}
     }
     $exactSeedPostProcessCensus=@(Get-Rw061ValidatorProcessCensus);$preProcessKeys=@($exactSeedPreProcessCensus|ForEach-Object{[string]$_.key});$newProcesses=@($exactSeedPostProcessCensus|Where-Object{$preProcessKeys-notcontains[string]$_.key})
-    if($newProcesses.Count-ne0){throw "rw06_1 validator left or observed new relevant process identities: $(@($newProcesses|ForEach-Object{[string]$_.key})-join', ')"}
+    if($newProcesses.Count-ne0){
+        $newProcessDetails=@($newProcesses|ForEach-Object{
+            $record=$_
+            $native=Get-CimInstance Win32_Process -Filter ("ProcessId={0}" -f [int]$record.pid) -ErrorAction SilentlyContinue
+            $parent=if($null-ne$native){Get-CimInstance Win32_Process -Filter ("ProcessId={0}" -f [int]$native.ParentProcessId) -ErrorAction SilentlyContinue}else{$null}
+            [ordered]@{
+                key=[string]$record.key
+                command_line=if($null-ne$native){[string]$native.CommandLine}else{'<exited-before-diagnostic>'}
+                parent_pid=if($null-ne$native){[int]$native.ParentProcessId}else{0}
+                parent_name=if($null-ne$parent){[string]$parent.Name}else{''}
+                parent_path=if($null-ne$parent){[string]$parent.ExecutablePath}else{''}
+            }
+        })
+        throw "rw06_1 validator left or observed new relevant process identities: $($newProcessDetails|ConvertTo-Json -Compress -Depth 4)"
+    }
     $exactSeedPostLeaseCensus=@(Get-Rw061ValidatorLeaseCensus $exactSeedLeaseRoot)
     if((@($exactSeedPreLeaseCensus)|ConvertTo-Json -Compress -Depth 5)-cne(@($exactSeedPostLeaseCensus)|ConvertTo-Json -Compress -Depth 5)){throw 'rw06_1 engine-free validator changed the canonical Q-009 lease census'}
     $exactSeedPostResidueCensus=@(Get-Rw061ValidatorSelfTestResidueCensus)
