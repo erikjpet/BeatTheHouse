@@ -4263,7 +4263,7 @@ function Play-OneBlackjackRound {
             $null = Resolve-BlackjackRouteEventPopup
             continue
         }
-        if ($talkVisible -and -not $eventVisible -and @('clean', 'cheat') -ccontains $Ending) {
+        if ($talkVisible -and -not $eventVisible -and @('clean', 'cheat', 'heist') -ccontains $Ending) {
             $talkEventId = [string](Get-Value $script:LastObservation @('talk', 'event_id') '')
             if ($Ending -ceq 'clean' -and $talkEventId -ceq 'shift_change') {
                 $choiceIds = @(Get-VisibleChoiceIds)

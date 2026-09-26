@@ -732,10 +732,16 @@ func _next_world_environment(run_state: RunState, target_archetype_id: String, r
 func _apply_scenario_authored_travel_targets(run_state: RunState, node_id: String) -> void:
 	if run_state == null or node_id.is_empty():
 		return
+	var scenario_id := str(run_state.current_environment.get("scenario_id", "")).strip_edges()
+	var installed_definition: Dictionary = {}
+	if not scenario_id.is_empty() and library != null:
+		installed_definition = library.scenario(scenario_id)
+		if str(installed_definition.get("archetype_id", "")).strip_edges() != node_id:
+			installed_definition = {}
 	var definition := _apply_scenario_pin_suppression(
 		run_state,
 		node_id,
-		run_state._seeded_scenario_definition_for_node_readonly(node_id)
+		installed_definition if not installed_definition.is_empty() else run_state._seeded_scenario_definition_for_node_readonly(node_id)
 	)
 	if definition.is_empty():
 		return
