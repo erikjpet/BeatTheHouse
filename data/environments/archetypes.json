@@ -3749,9 +3749,11 @@
       "door_bribe",
       "lucky_streak_temptation",
       "crew_favor_delivery",
+      "recruitment_bishop",
       "scenario_audit_roster"
     ],
     "required_event_ids": [
+      "recruitment_bishop",
       "scenario_audit_roster"
     ],
     "event_scopes": [

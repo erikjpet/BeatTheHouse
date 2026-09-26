@@ -192,11 +192,14 @@ therefore reopened and the prior in-range conclusion withdrawn.
   with the intermediate Main / Cage pool, so the narrower gate replaces that
   insufficient checkpoint.
 - Bishop introduction gate: Crew-wide Marker standing -> Stranger, for Bishop's
-  recruitment event only. His visible two-beat appointment still raises Bishop
-  to Associate, and The Count still requires that Associate architect. This
-  removes the unrelated Crew-loan and timed-favor detour from the release Count
-  route while preserving Audit knowledge, Punchline discovery, the identity
-  hand, schedule watch, swap cart, three live-table decisions, and getaway.
+  recruitment event only. Grand Main now carries that eligible introduction in
+  its required event inventory, rather than waiting for the Marker-only Crew
+  placement adapter to begin. His visible two-beat appointment still raises
+  Bishop to Associate, and The Count still requires that Associate architect.
+  This removes the unrelated Crew-loan and timed-favor detour from the release
+  Count route while preserving Audit knowledge, Punchline discovery, the
+  identity hand, schedule watch, swap cart, three live-table decisions, and
+  getaway.
   The measured failed confirmation spent 33 bridge actions taking the marker,
   38 clearing its required favor, and about 13 revisiting Grand for Bishop;
   folding recruitment into the already-required Audit visit removes about 84
