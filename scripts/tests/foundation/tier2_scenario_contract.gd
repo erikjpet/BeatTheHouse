@@ -253,7 +253,11 @@ static func _check_grand_casino_routes(library: ContentLibrary, failures: Array)
 		var definition := library._scenario_readonly(scenario_id)
 		var mutations := _dict(definition.get("mutations", {}))
 		for mutation_key_value in mutations.keys():
-			if not ALLOWED_GRAND_MUTATION_KEYS.has(str(mutation_key_value)):
+			var mutation_key := str(mutation_key_value)
+			var exact_audit_route := scenario_id == "grand_casino_audit_night" \
+				and mutation_key == "travel_hooks_add" \
+				and _json_equal(_array(mutations.get("travel_hooks_add", [])), ["small_underground_casino"])
+			if not ALLOWED_GRAND_MUTATION_KEYS.has(mutation_key) and not exact_audit_route:
 				failures.append("Grand scenario %s exceeded texture/crowd/comps/heat scope with %s." % [scenario_id, str(mutation_key_value)])
 		for modifier_key_value in _dict(mutations.get("game_modifier_hooks", {})).keys():
 			if not ["comp_texture", "floor_heat"].has(str(modifier_key_value)):
@@ -280,7 +284,20 @@ static func _check_grand_casino_routes(library: ContentLibrary, failures: Array)
 					and choice_id == "read_the_shift" \
 					and consequence_key == "story_flags_set" \
 					and _json_equal(_dict(consequences.get("story_flags_set", {})), {"crew_heist_count_audit_roster_read": true})
-				if not ["suspicion_delta", "resolve_event"].has(consequence_key) and not exact_audit_fact:
+				var exact_audit_travel := scenario_id == "grand_casino_audit_night" \
+					and event_id == "scenario_audit_roster" \
+					and choice_id == "read_the_shift" \
+					and consequence_key == "travel_hooks_add" \
+					and _json_equal(_array(consequences.get("travel_hooks_add", [])), ["small_underground_casino"])
+				var exact_audit_flag := scenario_id == "grand_casino_audit_night" \
+					and event_id == "scenario_audit_roster" \
+					and choice_id == "read_the_shift" \
+					and consequence_key == "flags" \
+					and _json_equal(_dict(consequences.get("flags", {})), {"underground_tip": true})
+				if not ["suspicion_delta", "resolve_event"].has(consequence_key) \
+					and not exact_audit_fact \
+					and not exact_audit_travel \
+					and not exact_audit_flag:
 					failures.append("Grand scenario %s exclusive restored non-heat consequence %s." % [scenario_id, str(consequence_key_value)])
 		var baseline_run := RunStateScript.new()
 		baseline_run.start_new("GRAND-%s" % scenario_id)
@@ -373,6 +390,10 @@ static func _check_showdown_route(library: ContentLibrary, scenario_id: String, 
 		return
 	run_state.narrative_flags["grand_casino_showdown_pending"] = true
 	run_state.narrative_flags["the_house_calls_pending"] = true
+	var event_ids := _array(run_state.current_environment.get("event_ids", []))
+	if not event_ids.has(RunStateScript.GRAND_CASINO_SHOWDOWN_EVENT_ID):
+		event_ids.append(RunStateScript.GRAND_CASINO_SHOWDOWN_EVENT_ID)
+	run_state.current_environment["event_ids"] = event_ids
 	var module := EventModuleScript.new()
 	module.setup(library.event(RunStateScript.GRAND_CASINO_SHOWDOWN_EVENT_ID), library)
 	if not bool(module.resolve(run_state, run_state.current_environment, "enter_back_room").get("ok", false)):
