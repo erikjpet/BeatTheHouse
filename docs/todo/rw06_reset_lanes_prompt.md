@@ -115,6 +115,57 @@ and crew/heist (a heist plan executed at the Grand Casino). Read
    lane's line in the status file. Only edit your claimed rooms' entries in
    `placement_surfaces.json`, following Lane A's rules above.
 
+## Lane D — Release prep (added 2026-09-24)
+
+This doesn't depend on final game code. Don't edit game logic, rooms or endings.
+
+1. Set the version to `0.6.0` everywhere the release reads it:
+   - `project.godot` `config/version`;
+   - the export presets;
+   - README and CHANGELOG;
+   - `scripts/core/build_identity.gd`, if it stores a version.
+2. Draft player-facing copy from the templates in `docs/todo/`:
+   - `release06_1_devlog_post_template.md`;
+   - `release06_1_publish_copy_template.md` (the itch page);
+   - `release06_1_talking_points_template.md`;
+   - a CHANGELOG entry.
+
+   Base the copy on what's actually on `main`: rooms, endings, the Crew path,
+   new games, and the owner-requested fixes in
+   `docs/plans/rw06_5_owner_gameplay_fixes_report.md`. Save the drafts in
+   `docs/plans/release_0_6_0_copy.md` for owner review.
+3. Build trial Windows and Web zips from the current `main` with
+   `tools/export_itch.ps1`, **without** `-Push`. Never upload, never run
+   butler. Confirmation:
+   - the Windows `.exe` launches, shows 0.6.0, and starts a run;
+   - the Web build loads in a browser and starts a run.
+
+   Fix any export or packaging problem you hit; that's the point of the trial.
+   Put the zips in `D:\Projects\Beat-The-House\.tmp\trial_builds\` and note
+   their paths in your status line. These are trial builds only; the final
+   zips come after the rooms and endings land.
+4. Tell the owner in the questions file that the copy draft and trial builds
+   are ready. Then mark your line DONE.
+
+## Lane C part 3 — Heist ending (added 2026-09-24; takes heist from Lane B)
+
+Lane C owns the **crew/heist ending**. Lane B keeps **clean** and **cheat**.
+
+1. Record the handoff on your Lane C status line (reopen it from DONE). If Lane B has uncommitted heist
+   work, coordinate through the status file before touching it.
+2. Make the heist ending winnable, following Lane B's rules above:
+   - build Crew trust, run a heist plan at the Grand Casino, and reach the heist
+     win screen;
+   - you may narrow to one heist plan if the other is broken; log the cut in
+     `docs/plans/0.6.1_backlog.md`;
+   - read `docs/plans/rw06_2_routes/heist.md` and the Crew/heist sections of
+     `docs/plans/0.6_living_world_roadmap.md`.
+3. Don't edit room placement files. Heist and Crew files are yours; clean and
+   cheat ending files are Lane B's. For shared files (`foundation_main.gd`,
+   `run_state.gd`, `game_module.gd`), make small edits and merge often.
+4. Confirmation: reach the heist win screen once. Save
+   `.tmp\owner_review\ending_heist.png`.
+
 ## Done
 
 - Lane A: the owner approves the rooms in the questions file, and all rooms

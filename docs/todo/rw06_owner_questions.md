@@ -314,9 +314,10 @@ Non-blocking polish for `docs/plans/0.6.1_backlog.md`: a few outlined items stil
 Confirmation: re-save `.tmp/owner_review/q008_rooms.png` and `rooms_all.png` with these fixes, and note in your status line that they're done. There's no need to ask again unless something can't be fixed. Then mark Lane A done and clean up the branch and worktree.
 
 ### Q-022 · rw06 release prep · 0.6.0 copy and trial builds ready
-Status: OPEN
+Status: ANSWERED
 Asked: reset Lane D, 2026-09-24
 Question: The 0.6.0 player-facing copy and both trial builds are ready for owner review. The copy is at `D:\Projects\Beat-The-House\docs\plans\release_0_6_0_copy.md`. The Windows trial build is `D:\Projects\Beat-The-House\.tmp\trial_builds\BeatTheHouse-0.6.0-dev+94d1af9c85f5-windows-94d1af9c85f5-84b99da8d810.zip`; the Web trial build is `D:\Projects\Beat-The-House\.tmp\trial_builds\BeatTheHouse-0.6.0-dev+94d1af9c85f5-web-94d1af9c85f5-84b99da8d810.zip`. These are trial builds for review, not final uploads, and nothing was uploaded or published.
 Options: A) Approve the copy and trial-build direction (recommended)  B) Request changes before the later final release build
 Resume: Review the copy and both trial packages. Final release packages and any upload/publishing remain a separate owner-directed step after rooms and endings are complete.
 Answer:
+A
