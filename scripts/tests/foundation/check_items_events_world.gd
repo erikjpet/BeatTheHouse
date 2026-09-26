@@ -4387,6 +4387,26 @@ func _crew_favor_event_fixture(library: ContentLibrary, seed: String, rook_trust
 	RunGeneratorScript.new(library).next_environment(run_state)
 	if run_state.current_environment.is_empty() or not run_state.has_world_map():
 		failures.append("Crew favor fixture did not generate a production room and world map for %s." % seed)
+	# The shipped $70 marker is a one-favor debt. A delivery offer without that
+	# debt is no longer a legal production state because success clears it
+	# atomically with the cash, Heat, and trust rewards.
+	run_state.add_debt({
+		"id": "the_crew_marker",
+		"lender_id": RunState.CREW_LENDER_ID,
+		"lender_name": "The Crew",
+		"balance": 1,
+		"principal": 70,
+		"debt_kind": "favor",
+		"status": "favor_due",
+		"deadline_turns": 2,
+		"turns_remaining": 0,
+		"interest_rate": 0.0,
+		"loan_count": 1,
+		"default_consequence": "crew_favor_due",
+		"refuse_consequence": "crew_convert_to_cash",
+		"cash_conversion_balance_per_favor": 70,
+		"cash_conversion_interest_rate": 0.35,
+	})
 	run_state.narrative_flags["crew_favor_pending"] = true
 	if rook_trust != 0:
 		run_state.crew_add_trust("crew_rook", rook_trust, "fixture")

@@ -247,11 +247,14 @@ static func _check_plan_a(library: ContentLibrary, failures: Array) -> void:
 		failures.append("Plan A did not mount its production crew event at the designated table.")
 	var live_table := EventModuleScript.new()
 	live_table.setup(library.event("heist_live_table"), library)
-	run.advance_environment_turns(1)
+	# The release route mounts the Live Table directly on its first decision.
+	# Settled hands advance the later beats; an extra fixture turn here expires
+	# go_hold before the player can make the opening choice.
 	var mid_window := RunStateScript.new()
 	mid_window.from_dict(run.to_dict())
 	if JSON.stringify(mid_window.crew_heist_snapshot()) != JSON.stringify(run.crew_heist_snapshot()):
 		failures.append("Plan A save/load changed the live action-boundary window.")
+	HarnessProductionFidelityScript.finalize_arrival(mid_window, library, failures, "Plan A restored live-table window")
 	if _choice_ids(live_table.choices(run, run.current_environment)).has("distraction_sit"):
 		failures.append("Plan A allowed its second decision before the first live-table round boundary.")
 	var expected_choices := [["go_hold", "distraction_sit"], ["distraction_sit", "exit_dock"], ["exit_dock", "begin_getaway"]]
@@ -262,14 +265,17 @@ static func _check_plan_a(library: ContentLibrary, failures: Array) -> void:
 		var decision_choice := str(expected_choices[round_index][0])
 		if not bool(live_table.resolve(run, run.current_environment, decision_choice).get("ok", false)):
 			failures.append("Plan A production crew event rejected %s." % decision_choice)
+		HarnessProductionFidelityScript.finalize_arrival(run, library, failures, "Plan A live-table beat %d" % round_index)
 		_apply_authoritative_blackjack(run, library, 12)
 	if int(_dict(run.crew_heist_snapshot().get("play", {})).get("round", 0)) != 3:
 		failures.append("Plan A real settled hands did not interleave all three crew beats.")
 	var corridor := RunStateScript.new()
 	corridor.from_dict(run.to_dict())
+	HarnessProductionFidelityScript.finalize_arrival(corridor, library, failures, "Plan A restored corridor route")
 	corridor.crew_heist_state["play"]["decisions"]["exit"] = "corridor"
 	var missing_delta := RunStateScript.new()
 	missing_delta.from_dict(corridor.to_dict())
+	HarnessProductionFidelityScript.finalize_arrival(missing_delta, library, failures, "Plan A missing-Delta route")
 	var missing_delta_map := missing_delta.world_map.duplicate(true)
 	var remaining_nodes: Array = []
 	for node_value in _array(missing_delta_map.get("nodes", [])):
@@ -324,6 +330,7 @@ static func _check_plan_a(library: ContentLibrary, failures: Array) -> void:
 		failures.append("Plan A exit availability did not derive from the optional Debt Court guard setup.")
 	var late := RunStateScript.new()
 	late.from_dict(mid_window.to_dict())
+	HarnessProductionFidelityScript.finalize_arrival(late, library, failures, "Plan A restored late window")
 	late.advance_environment_turns(10)
 	var late_play := _dict(late.crew_heist_snapshot().get("play", {}))
 	if not bool(late_play.get("late", false)) or not bool(late_play.get("corridor_blown", false)) or int(late_play.get("score", 100)) >= 100:
@@ -336,12 +343,14 @@ static func _check_plan_a(library: ContentLibrary, failures: Array) -> void:
 		failures.append("Leaving Plan A's live session did not record its boundary-driven consequence.")
 	var blown := RunStateScript.new()
 	blown.from_dict(mid_window.to_dict())
+	HarnessProductionFidelityScript.finalize_arrival(blown, library, failures, "Plan A restored heat-spike window")
 	blown.crew_heist_state["play"]["round"] = 2
 	blown.crew_heist_state["play"]["decisions"] = {"go": "hold", "distraction": "sit", "exit": "corridor"}
 	# Authoritative game settlement is covered above; isolate the host-owned
 	# heist reducer here to prove the documented heat-spike branch.
 	blown.crew_heist_play_round({"game_id": "blackjack", "bet": 12, "heat_delta": 15}, blown.get("_crew_heist_host_capability"))
-	if not bool(_event_choice(blown, library, "heist_live_table", "begin_getaway").get("ok", false)) or str(_dict(blown.crew_heist_snapshot().get("getaway", {})).get("exit", "")) != "dock":
+	var blown_started := _event_choice(blown, library, "heist_live_table", "begin_getaway")
+	if not bool(blown_started.get("ok", false)) or str(_dict(blown.crew_heist_snapshot().get("getaway", {})).get("exit", "")) != "dock":
 		failures.append("A Plan A heat spike did not blow the corridor and force the dock.")
 	if CrewHeistModelScript.ladder(65, true) != "out_hot" or CrewHeistModelScript.ladder(90, false) != "out_hot" or CrewHeistModelScript.ladder(50, false) != "somebody_got_pinched":
 		failures.append("Plan A ladder fixtures lost their clean/hot/pinched bands.")
