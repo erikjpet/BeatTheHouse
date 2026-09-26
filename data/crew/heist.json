@@ -19,7 +19,7 @@
       "world_criteria": [{"kind": "scenario_hook", "key": "audit_night", "label": "No audit on the books this season."}],
       "crew_criteria": [{"member_id": "crew_bishop", "rank": "associate", "label": "Bishop has not joined the crew yet."}],
       "setup": {
-        "identity": {"required_sessions": 1, "bet_min": 8, "bet_max": 8, "heat_ceiling": 35},
+        "identity": {"required_sessions": 1, "bet_min": 8, "bet_max": 8, "heat_ceiling": 55},
         "schedule": {"hold_required_actions": 1, "deadline_actions": 12, "attention_limit": 55},
         "swap_cart": {"deadline_actions": 14},
         "guard_marker": {"optional": true, "flag": "debt_court_settlement", "member_id": "crew_knuckles", "min_rank": "associate"}
