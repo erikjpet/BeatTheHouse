@@ -1332,7 +1332,9 @@ static func _check_exclusive_offer_key_rejection(library: ContentLibrary, failur
 
 
 static func _check_legacy_round_trip(library: ContentLibrary, failures: Array) -> void:
-	var plain := _generated_environment(library, "bar", {}, 7401)
+	# Bar now owns authored semantic room geometry. Keep the absence contract on
+	# an archetype that intentionally has no semantic seams.
+	var plain := _generated_environment(library, "apartment", {}, 7401)
 	var restored_plain := EnvironmentInstanceScript.from_dict(plain).to_dict()
 	if not _json_equal(plain, restored_plain):
 		failures.append("Legacy no-sequence EnvironmentInstance did not round-trip canonically.")
