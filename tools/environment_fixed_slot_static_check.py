@@ -1503,10 +1503,9 @@ def main() -> int:
         "pawn_shop: generated Sal and the sell counter must prefer distinct fixed behind-counter slots",
     )
 
-    # The conservative maximum-label proof leaves one authenticated doorway in
-    # the Gas Station base plane. All generated travel choices remain distinct
-    # semantic records; deterministic binding places the first compatible
-    # record in-room and sends the rest to the geometry-free action list.
+    # Round 3 reuses the highway-sill authority for the second concrete doorway.
+    # The graveyard door and ordinary side door can therefore coexist while
+    # abstract travel verbs continue to share the retained left-door route.
     gas_map = maps_by_id.get("gas_station_casino", {})
     gas_base_slots = {
         str(slot.get("id", "")): slot
@@ -1526,9 +1525,7 @@ def main() -> int:
     gas_preferences = gas_map.get("object_slot_ids", {}) if isinstance(gas_map.get("object_slot_ids"), dict) else {}
     gas_categories = gas_map.get("category_slot_ids", {}) if isinstance(gas_map.get("category_slot_ids"), dict) else {}
     gas_scenario_preferences = gas_map.get("scenario_slot_ids", {}) if isinstance(gas_map.get("scenario_slot_ids"), dict) else {}
-    gas_doorway_occupants = {
-        "event:scenario_graveyard_maintenance",
-        "event:side_door",
+    gas_travel_occupants = {
         "travel:back_alley",
         "travel:corner_store",
         "travel:delta_queen",
@@ -1540,14 +1537,17 @@ def main() -> int:
     check.require(
         "base.door_right_middle" not in gas_base_slots
         and gas_base_slots.get("base.door_left_middle", {}).get("footprint_class") == "doorway"
+        and gas_base_slots.get("base.service_highway_sill", {}).get("footprint_class") == "doorway"
         and not any(str(slot_id) == "base.door_right_middle" for slot_id in gas_preferences.values())
         and not any(str(slot_id) == "base.door_right_middle" for slot_id in gas_categories.values()),
-        "gas_station_casino: removed right base doorway must stay absent and unreferenced",
+        "gas_station_casino: Round 3 sill doorway and retained left doorway must remain distinct",
     )
     check.require(
-        all(str(gas_preferences.get(identity, "")) == "base.door_left_middle" for identity in gas_doorway_occupants)
+        str(gas_preferences.get("event:scenario_graveyard_maintenance", "")) == "base.service_highway_sill"
+        and str(gas_preferences.get("event:side_door", "")) == "base.door_left_middle"
+        and all(str(gas_preferences.get(identity, "")) == "base.door_left_middle" for identity in gas_travel_occupants)
         and all(str(gas_categories.get(key, "")) == "base.door_left_middle" for key in gas_travel_indexes),
-        "gas_station_casino: every base-doorway identity and travel index must use the retained left doorway",
+        "gas_station_casino: physical doors must be distinct while abstract travel retains its shared route",
     )
     check.require(
         gas_stage_slots.get("stage.event_right_door", {}).get("footprint_class") == "doorway"
@@ -1565,10 +1565,9 @@ def main() -> int:
         "seed 063 regression: apartment-to-Gas tour-bus restroom queue must clear the mandatory lane in normal and expanded layouts",
     )
 
-    # Delta Queen's second base wall slot has no locally-associated 126x26
-    # label domain beside wall_1 and event_table_1. Keep the complete displaced
-    # occupant set closed here so a future catalog addition cannot silently
-    # depend on the removed geometry.
+    # Round 3 reuses the former floor-staff authority as the second physical
+    # wall target. The calendar gets that dedicated mount; mutually exclusive
+    # scenario notices retain wall_1 and the captain's card stays on its table.
     delta_map = maps_by_id.get("delta_queen", {})
     delta_base_slots = {
         str(slot.get("id", "")): slot
@@ -1586,21 +1585,22 @@ def main() -> int:
         "event:grand_casino_invite",
         "event:scenario_engine_trouble_repairs",
         "event:scenario_whale_aboard_vouch",
-        "item:payment_calendar",
     }
     check.require(
         "base.event_wall_2" not in delta_base_slots
         and delta_base_slots.get("base.event_wall_1", {}).get("footprint_class") == "wall_mounted"
+        and delta_base_slots.get("base.staff_floor", {}).get("footprint_class") == "wall_mounted"
         and delta_base_slots.get("base.event_table_1", {}).get("footprint_class") == "surface_item"
         and not any(str(slot_id) == "base.event_wall_2" for slot_id in delta_preferences.values())
         and not any(str(slot_id) == "base.event_wall_2" for slot_id in delta_categories.values()),
-        "delta_queen: removed second wall slot must stay absent and unreferenced",
+        "delta_queen: Round 3 second wall target must reuse the collision-proven staff-floor authority",
     )
     check.require(
         all(str(delta_preferences.get(identity, "")) == "base.event_wall_1" for identity in delta_wall_occupants)
+        and str(delta_preferences.get("item:payment_calendar", "")) == "base.staff_floor"
         and str(delta_preferences.get("event:scenario_captains_invitational_card", "")) == "base.event_table_1"
         and str(delta_categories.get("item_spots:2", "")) == "base.event_table_1",
-        "delta_queen: wall occupants and event_table_1 identity/index remaps must remain exact",
+        "delta_queen: physical calendar, scenario notices, and captain-card routes must remain exact",
     )
     check.require(
         set(delta_exit_slots) == {"exit.left_lower", "exit.right_upper"},

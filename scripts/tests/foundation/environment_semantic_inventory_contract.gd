@@ -831,9 +831,18 @@ static func _check_casino_room_route_overflow_authority(environment: Dictionary,
 	if not bool(slot_authority.get("ok", false)):
 		failures.append("Production Grand Casino generation did not retain valid fixed-slot authority: %s" % JSON.stringify(slot_authority.get("errors", [])))
 		return
-	var expected_overflow_id := "travel:grand_casino_high_limit"
-	if not (overflow_layout.get("slot_overflow_ids", []) as Array).has(expected_overflow_id):
-		failures.append("Production Grand Casino generation did not overflow the expected third doorway control.")
+	# Round 3 deliberately restores the illustrated High Limit doorway to the
+	# room. Keep the geometry-free overflow guarantee on whichever remaining
+	# abstract casino route is displaced by the single authored exit.
+	var expected_overflow_id := ""
+	var overflow_ids := overflow_layout.get("slot_overflow_ids", []) as Array
+	for room_id_value in room_ids:
+		var candidate_id := "travel:%s" % str(room_id_value)
+		if overflow_ids.has(candidate_id):
+			expected_overflow_id = candidate_id
+			break
+	if expected_overflow_id.is_empty():
+		failures.append("Production Grand Casino generation exposed no abstract room-route overflow control.")
 		return
 	var authoritative := EnvironmentBaseSemanticRecordsScript.authoritative_interactable_records(overflow_environment, library)
 	var stamped := EnvironmentBaseSemanticRecordsScript.stamp_interactable_records(_array(authoritative.get("records", [])), overflow_environment, library)

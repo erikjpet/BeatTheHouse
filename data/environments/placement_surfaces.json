@@ -82,10 +82,12 @@
         "event:call_brother_in_law": "surface_item",
         "event:chatty_clerk": "behind_counter_person",
         "event:late_shift_discount": "behind_counter_person",
+        "event:parking_lot_tip": "ground_marker",
         "event:scenario_delivery_day_stock": "behind_counter_person",
         "event:town_rumor_staff": "behind_counter_person",
         "game:coin_pusher": "floor_fixture",
         "inventory_clerk": "standing_person",
+        "item:payment_calendar": "wall_mounted",
         "lotto_regular": "standing_person",
         "night_clerk": "standing_person",
         "plainclothes_officer": "standing_person",
@@ -337,6 +339,14 @@
         "contact_y": [
           254,
           366
+        ],
+        "stage_bands": [
+          [
+            9.0,
+            334.0,
+            64.0,
+            72.0
+          ]
         ]
       },
       "counters": [
@@ -522,6 +532,17 @@
               92,
               246,
               114
+            ]
+          }
+        ],
+        "mounts": [
+          {
+            "id": "round3_calendar_mount",
+            "bounds": [
+              827.0,
+              334.0,
+              64.0,
+              72.0
             ]
           }
         ]
@@ -884,9 +905,9 @@
           "kind": "base",
           "pos": [
             41.0,
-            370.0
+            406.0
           ],
-          "footprint_class": "doorway",
+          "footprint_class": "ground_marker",
           "hit_rect": [
             9.0,
             334.0,
@@ -897,13 +918,11 @@
             41.0,
             430.0
           ],
-          "facing": "front",
+          "facing": "none",
           "priority": 140,
           "zone_id": "room",
-          "support_id": "left_exit",
-          "walk_lane_ids": [
-            "lane.public"
-          ]
+          "support_id": "stage",
+          "walk_lane_ids": []
         },
         {
           "id": "base.travel_right",
@@ -912,7 +931,7 @@
             859.0,
             370.0
           ],
-          "footprint_class": "doorway",
+          "footprint_class": "wall_mounted",
           "hit_rect": [
             827.0,
             334.0,
@@ -923,13 +942,11 @@
             859.0,
             406.0
           ],
-          "facing": "front",
+          "facing": "none",
           "priority": 150,
           "zone_id": "room",
-          "support_id": "right_exit",
-          "walk_lane_ids": [
-            "lane.public"
-          ]
+          "support_id": "round3_calendar_mount",
+          "walk_lane_ids": []
         }
       ],
       "stage_slots": [
@@ -1163,10 +1180,12 @@
         "event:call_brother_in_law": "base.fixed_phone",
         "event:chatty_clerk": "base.staff_dialogue",
         "event:late_shift_discount": "base.staff_dialogue",
+        "event:parking_lot_tip": "base.travel_left",
         "event:scenario_delivery_day_stock": "base.staff_dialogue_2",
         "event:town_rumor_staff": "base.staff_dialogue",
         "game:coin_pusher": "base.game_1",
         "item:bag": "base.shop_item_5",
+        "item:payment_calendar": "base.travel_right",
         "lender:the_crew": "base.event_group_1",
         "service:house_drink": "base.fixed_drink",
         "shopkeeper:merchant": "base.staff_shopkeeper",
@@ -1255,7 +1274,9 @@
         "back_alley_street_craps_exit": "doorway",
         "cruiser_beam": "ground_marker",
         "three_traces": "ground_marker",
-        "goods_lot": "surface_item"
+        "goods_lot": "surface_item",
+        "event:parking_lot_tip": "ground_marker",
+        "lender:street_lender": "standing_person"
       },
       "object_slot_positions": {
         "service:house_drink": [
@@ -1453,6 +1474,20 @@
         "contact_y": [
           246,
           358
+        ],
+        "stage_bands": [
+          [
+            12.0,
+            220.0,
+            64.0,
+            72.0
+          ],
+          [
+            12.0,
+            340.0,
+            64.0,
+            72.0
+          ]
         ]
       },
       "counters": [
@@ -1517,7 +1552,8 @@
           900,
           236
         ],
-        "exclusions": []
+        "exclusions": [],
+        "mounts": []
       },
       "ceiling": {
         "bounds": [
@@ -1581,9 +1617,9 @@
           "kind": "base",
           "pos": [
             44.0,
-            256.0
+            292.0
           ],
-          "footprint_class": "doorway",
+          "footprint_class": "standing_person",
           "hit_rect": [
             12.0,
             220.0,
@@ -1597,7 +1633,7 @@
           "facing": "right",
           "priority": 20,
           "zone_id": "room",
-          "support_id": "left_alley",
+          "support_id": "stage",
           "walk_lane_ids": [
             "lane.public"
           ]
@@ -1607,9 +1643,9 @@
           "kind": "base",
           "pos": [
             44.0,
-            376.0
+            412.0
           ],
-          "footprint_class": "doorway",
+          "footprint_class": "ground_marker",
           "hit_rect": [
             12.0,
             340.0,
@@ -1620,13 +1656,11 @@
             44.0,
             334.0
           ],
-          "facing": "right",
+          "facing": "none",
           "priority": 10,
           "zone_id": "room",
-          "support_id": "left_alley",
-          "walk_lane_ids": [
-            "lane.public"
-          ]
+          "support_id": "stage",
+          "walk_lane_ids": []
         },
         {
           "id": "base.game_1",
@@ -1772,6 +1806,30 @@
           "priority": 10,
           "zone_id": "room",
           "support_id": "wall",
+          "walk_lane_ids": []
+        },
+        {
+          "id": "base.shop_item_4",
+          "kind": "base",
+          "pos": [
+            706.0,
+            168.0
+          ],
+          "footprint_class": "surface_item",
+          "hit_rect": [
+            670.0,
+            120.0,
+            72.0,
+            48.0
+          ],
+          "label_anchor": [
+            599.0,
+            90.0
+          ],
+          "facing": "none",
+          "priority": 110,
+          "zone_id": "room",
+          "support_id": "right_crate_display",
           "walk_lane_ids": []
         }
       ],
@@ -2020,7 +2078,9 @@
         "lender:the_crew": "base.patron_crew",
         "service:house_drink": "base.shop_item_1",
         "shopkeeper:merchant": "base.staff_merchant",
-        "travel:leave": "base.door_left_upper"
+        "travel:leave": "base.door_left_upper",
+        "event:parking_lot_tip": "base.door_left_lower",
+        "lender:street_lender": "base.door_left_upper"
       },
       "category_slot_ids": {
         "event_spots:0": "base.game_1",
@@ -2039,7 +2099,7 @@
         "item_spots:0": "base.shop_item_2",
         "item_spots:1": "base.shop_item_3",
         "item_spots:2": "base.shop_item_1",
-        "item_spots:3": "base.shop_item_2",
+        "item_spots:3": "base.shop_item_4",
         "item_spots:4": "base.shop_item_3",
         "service_spots:0": "base.shop_item_3",
         "shopkeeper_spots:0": "base.staff_merchant",
@@ -2091,7 +2151,8 @@
         "event:town_rumor_staff": "behind_counter_person",
         "event:scenario_wedding_overflow_hallway": "floor_fixture",
         "event:chain06_nico_weekly_door": "doorway",
-        "motel_conventioneers_aftermath_actor_crowd_jammed": "standing_person"
+        "motel_conventioneers_aftermath_actor_crowd_jammed": "standing_person",
+        "numbers:silas": "standing_person"
       },
       "object_slot_positions": {
         "item:split_reel_note": [
@@ -2873,6 +2934,14 @@
         "contact_y": [
           246,
           414
+        ],
+        "stage_bands": [
+          [
+            9.0,
+            228.0,
+            64.0,
+            72.0
+          ]
         ]
       },
       "counters": [
@@ -3010,6 +3079,26 @@
             "surface_item",
             "behind_counter_person"
           ]
+        },
+        {
+          "id": "round3_curtain_ledge",
+          "x0": 418.0,
+          "x1": 482.0,
+          "top_y": 132.0,
+          "front_y": 140.0,
+          "classes": [
+            "surface_item"
+          ]
+        },
+        {
+          "id": "round3_luggage_shelf",
+          "x0": 544.0,
+          "x1": 636.0,
+          "top_y": 414.0,
+          "front_y": 422.0,
+          "classes": [
+            "surface_item"
+          ]
         }
       ],
       "seats": [
@@ -3061,7 +3150,8 @@
               192
             ]
           }
-        ]
+        ],
+        "mounts": []
       },
       "ceiling": {
         "bounds": [
@@ -3143,9 +3233,9 @@
           "kind": "base",
           "pos": [
             450.0,
-            96.0
+            132.0
           ],
-          "footprint_class": "doorway",
+          "footprint_class": "surface_item",
           "hit_rect": [
             418.0,
             60.0,
@@ -3153,25 +3243,23 @@
             72.0
           ],
           "label_anchor": [
-            450.0,
-            54.0
+            439.0,
+            42.0
           ],
-          "facing": "front",
+          "facing": "none",
           "priority": 20,
           "zone_id": "background",
-          "support_id": "curtain_passage",
-          "walk_lane_ids": [
-            "lane.public"
-          ]
+          "support_id": "round3_curtain_ledge",
+          "walk_lane_ids": []
         },
         {
           "id": "base.door_left_middle",
           "kind": "base",
           "pos": [
             41.0,
-            264.0
+            300.0
           ],
-          "footprint_class": "doorway",
+          "footprint_class": "standing_person",
           "hit_rect": [
             9.0,
             228.0,
@@ -3185,7 +3273,7 @@
           "facing": "right",
           "priority": 10,
           "zone_id": "room",
-          "support_id": "left_door",
+          "support_id": "stage",
           "walk_lane_ids": [
             "lane.public"
           ]
@@ -3197,7 +3285,7 @@
             590.0,
             414.0
           ],
-          "footprint_class": "floor_fixture",
+          "footprint_class": "surface_item",
           "hit_rect": [
             544.0,
             350.0,
@@ -3211,7 +3299,7 @@
           "facing": "none",
           "priority": 10,
           "zone_id": "room",
-          "support_id": "floor",
+          "support_id": "round3_luggage_shelf",
           "walk_lane_ids": []
         },
         {
@@ -3826,10 +3914,11 @@
         "item:split_reel_note": "base.item_front_desk",
         "item:tarot_card": "base.item_key_ledge",
         "lender:brother_in_law": "base.patron_floor_right",
-        "numbers:book": "base.item_front_desk",
+        "numbers:book": "base.door_curtain",
         "service:house_drink": "base.item_key_ledge",
         "shopkeeper:merchant": "base.staff_front_desk",
-        "travel:leave": "base.door_curtain"
+        "travel:leave": "base.door_curtain",
+        "numbers:silas": "base.door_left_middle"
       },
       "category_slot_ids": {
         "event_spots:0": "base.event_hallway_fixture",
@@ -3839,13 +3928,13 @@
         "item_spots:0": "base.item_bed_left",
         "item_spots:1": "base.item_key_ledge",
         "item_spots:2": "base.item_front_desk",
-        "item_spots:3": "base.item_front_desk",
-        "item_spots:4": "base.item_front_desk",
+        "item_spots:3": "base.door_curtain",
+        "item_spots:4": "base.event_hallway_fixture",
         "lender_spots:0": "base.patron_floor_right",
         "lender_spots:1": "base.patron_floor_right",
         "lender_spots:2": "base.patron_floor_right",
-        "numbers_silas_spots:0": "base.patron_floor_right",
-        "numbers_spots:0": "base.item_front_desk",
+        "numbers_silas_spots:0": "base.door_left_middle",
+        "numbers_spots:0": "base.door_curtain",
         "service_spots:0": "base.item_front_desk",
         "shopkeeper_spots:0": "base.staff_front_desk",
         "travel_spots:0": "base.door_curtain",
@@ -3934,7 +4023,8 @@
         "game:coin_pusher": "surface_item",
         "game:pull_tabs": "surface_item",
         "game:slot": "surface_item",
-        "game_hook:pull_tabs:ticket_redeemer": "surface_item"
+        "game_hook:pull_tabs:ticket_redeemer": "surface_item",
+        "numbers:silas": "standing_person"
       },
       "class_default_contacts": {
         "standing_person": [
@@ -4515,6 +4605,12 @@
             226.0,
             820.0,
             64.0
+          ],
+          [
+            830.0,
+            334.0,
+            64.0,
+            72.0
           ]
         ],
         "contact_y": [
@@ -4660,7 +4756,8 @@
               112
             ]
           }
-        ]
+        ],
+        "mounts": []
       },
       "ceiling": {
         "bounds": [
@@ -4953,9 +5050,9 @@
           "kind": "base",
           "pos": [
             862.0,
-            370.0
+            406.0
           ],
-          "footprint_class": "doorway",
+          "footprint_class": "standing_person",
           "hit_rect": [
             830.0,
             334.0,
@@ -4969,7 +5066,7 @@
           "facing": "front",
           "priority": 110,
           "zone_id": "room",
-          "support_id": "right_exit",
+          "support_id": "stage",
           "walk_lane_ids": [
             "lane.public"
           ]
@@ -5431,6 +5528,7 @@
         "event:town_rumor_staff": "base.staff_bartender",
         "game_hook:pull_tabs:ticket_redeemer": "base.fixed_ticket_redeemer",
         "numbers:book": "base.fixed_ticket_redeemer",
+        "numbers:silas": "base.travel_right",
         "service:house_drink": "base.fixed_drink",
         "travel:leave": "base.travel_right"
       },
@@ -5444,7 +5542,7 @@
         "game_spots:0": "base.game_1",
         "game_spots:1": "base.game_2",
         "game_spots:2": "base.game_3",
-        "numbers_silas_spots:0": "base.patron_floor_1",
+        "numbers_silas_spots:0": "base.travel_right",
         "numbers_spots:0": "base.fixed_ticket_redeemer",
         "service_spots:0": "base.fixed_drink",
         "travel_spots:0": "base.travel_right",
@@ -5562,7 +5660,7 @@
       "class_overrides": {
         "event:town_rumor_staff": "behind_counter_person",
         "event:scenario_trucker_convoy_route": "wall_mounted",
-        "game_hook:scratch_tickets:scratch_ticket_clerk": "behind_counter_person",
+        "game_hook:scratch_tickets:scratch_ticket_clerk": "standing_person",
         "dialogue:scratch_ticket_scalper": "standing_person",
         "game_hook:pull_tabs:ticket_redeemer": "surface_item",
         "dialogue:pull_tab_clerk": "behind_counter_person",
@@ -5586,7 +5684,8 @@
         "gas_station_trucker_convoy_tail_rig": "ground_marker",
         "game:scratch_tickets": "floor_fixture",
         "game:pull_tabs": "floor_fixture",
-        "game:coin_pusher": "floor_fixture"
+        "game:coin_pusher": "floor_fixture",
+        "event:parking_lot_tip": "ground_marker"
       },
       "object_slot_positions": {
         "game:scratch_tickets": [
@@ -6129,6 +6228,30 @@
             170,
             868,
             70
+          ],
+          [
+            792.0,
+            32.0,
+            72.0,
+            48.0
+          ],
+          [
+            116.0,
+            200.0,
+            80.0,
+            48.0
+          ],
+          [
+            356.0,
+            268.0,
+            80.0,
+            48.0
+          ],
+          [
+            336.0,
+            350.0,
+            72.0,
+            80.0
           ]
         ],
         "contact_y": [
@@ -6318,6 +6441,15 @@
             82,
             344
           ]
+        },
+        {
+          "id": "round3_sill_door",
+          "bounds": [
+            226.0,
+            144.0,
+            72.0,
+            48.0
+          ]
         }
       ],
       "void": [],
@@ -6426,9 +6558,9 @@
           "kind": "base",
           "pos": [
             262.0,
-            192.0
+            168.0
           ],
-          "footprint_class": "surface_item",
+          "footprint_class": "doorway",
           "hit_rect": [
             226.0,
             144.0,
@@ -6439,11 +6571,13 @@
             262.0,
             138.0
           ],
-          "facing": "none",
+          "facing": "right",
           "priority": 10,
           "zone_id": "left",
-          "support_id": "highway_window_sill",
-          "walk_lane_ids": []
+          "support_id": "round3_sill_door",
+          "walk_lane_ids": [
+            "lane.public"
+          ]
         },
         {
           "id": "base.service_refreshment_shelf",
@@ -6452,7 +6586,7 @@
             828.0,
             80.0
           ],
-          "footprint_class": "surface_item",
+          "footprint_class": "standing_person",
           "hit_rect": [
             792.0,
             32.0,
@@ -6463,20 +6597,22 @@
             828.0,
             26.0
           ],
-          "facing": "none",
+          "facing": "left",
           "priority": 15,
           "zone_id": "background",
-          "support_id": "refreshment_shelf",
-          "walk_lane_ids": []
+          "support_id": "stage",
+          "walk_lane_ids": [
+            "lane.public"
+          ]
         },
         {
           "id": "base.event_wall_route",
           "kind": "base",
           "pos": [
             156.0,
-            224.0
+            248.0
           ],
-          "footprint_class": "wall_mounted",
+          "footprint_class": "ground_marker",
           "hit_rect": [
             116.0,
             200.0,
@@ -6490,7 +6626,7 @@
           "facing": "none",
           "priority": 20,
           "zone_id": "room",
-          "support_id": "wall",
+          "support_id": "stage",
           "walk_lane_ids": []
         },
         {
@@ -6498,9 +6634,9 @@
           "kind": "base",
           "pos": [
             396.0,
-            292.0
+            316.0
           ],
-          "footprint_class": "wall_mounted",
+          "footprint_class": "floor_fixture",
           "hit_rect": [
             356.0,
             268.0,
@@ -6514,8 +6650,34 @@
           "facing": "none",
           "priority": 10,
           "zone_id": "center",
-          "support_id": "graveyard_control_rail",
+          "support_id": "stage",
           "walk_lane_ids": []
+        },
+        {
+          "id": "base.patron_scalper",
+          "kind": "base",
+          "pos": [
+            372.0,
+            430.0
+          ],
+          "footprint_class": "standing_person",
+          "hit_rect": [
+            336.0,
+            350.0,
+            72.0,
+            80.0
+          ],
+          "label_anchor": [
+            271.0,
+            354.0
+          ],
+          "facing": "front",
+          "priority": 120,
+          "zone_id": "room",
+          "support_id": "stage",
+          "walk_lane_ids": [
+            "lane.public"
+          ]
         }
       ],
       "stage_slots": [
@@ -7046,7 +7208,7 @@
       "object_slot_ids": {
         "event:chain06_dave_last_stop": "base.service_highway_sill",
         "event:chain06_dave_same_bus": "base.service_lottery_desk",
-        "event:scenario_graveyard_maintenance": "base.door_left_middle",
+        "event:scenario_graveyard_maintenance": "base.service_highway_sill",
         "event:scenario_tour_bus_ticket_rush": "base.event_control_rail",
         "event:scenario_trucker_convoy_route": "base.event_wall_route",
         "event:side_door": "base.door_left_middle",
@@ -7061,18 +7223,23 @@
         "travel:delta_queen": "base.door_left_middle",
         "travel:grand_casino": "base.door_left_middle",
         "travel:kitty_cat_lounge": "base.door_left_middle",
-        "travel:leave": "base.door_left_middle"
+        "travel:leave": "base.door_left_middle",
+        "event:parking_lot_tip": "base.event_wall_route",
+        "game:video_poker": "base.event_control_rail",
+        "game:slot": "base.event_control_rail",
+        "game_hook:scratch_tickets:scratch_ticket_clerk": "base.service_refreshment_shelf",
+        "dialogue:scratch_ticket_scalper": "base.patron_scalper"
       },
       "category_slot_ids": {
         "event_spots:0": "base.game_2",
         "event_spots:1": "base.game_2",
         "event_spots:2": "base.game_1",
         "event_spots:3": "base.game_2",
-        "game_hook_spots:0": "base.service_lottery_desk",
-        "game_hook_spots:1": "base.service_highway_sill",
+        "game_hook_spots:0": "base.service_refreshment_shelf",
+        "game_hook_spots:1": "base.service_lottery_desk",
         "game_spots:0": "base.game_2",
         "game_spots:1": "base.game_1",
-        "game_spots:2": "base.game_1",
+        "game_spots:2": "base.event_control_rail",
         "numbers_spots:0": "base.service_lottery_desk",
         "service_spots:0": "base.service_lottery_desk",
         "travel_spots:0": "base.door_left_middle",
@@ -8116,7 +8283,8 @@
               192
             ]
           }
-        ]
+        ],
+        "mounts": []
       },
       "ceiling": {
         "bounds": [
@@ -9483,7 +9651,8 @@
               192
             ]
           }
-        ]
+        ],
+        "mounts": []
       },
       "ceiling": {
         "bounds": [
@@ -10143,7 +10312,10 @@
         "punchline_high_stakes_night_aftermath_floor_remains_protected_prop": "floor_fixture",
         "punchline_new_muscle_safe_exit": "ground_marker",
         "punchline_new_muscle_aftermath_posts_reassigned_prop": "floor_fixture",
-        "game:slot": "floor_fixture"
+        "game:slot": "floor_fixture",
+        "event:side_door": "doorway",
+        "lender:the_crew": "group",
+        "numbers:silas": "standing_person"
       },
       "object_slot_positions": {
         "environment_layer:back_room": [
@@ -10480,6 +10652,26 @@
         "contact_y": [
           252,
           358
+        ],
+        "stage_bands": [
+          [
+            548.0,
+            74.0,
+            72.0,
+            72.0
+          ],
+          [
+            220.0,
+            106.0,
+            72.0,
+            48.0
+          ],
+          [
+            422.0,
+            6.0,
+            92.0,
+            64.0
+          ]
         ]
       },
       "counters": [
@@ -10539,7 +10731,8 @@
               178
             ]
           }
-        ]
+        ],
+        "mounts": []
       },
       "ceiling": {
         "bounds": [
@@ -10567,6 +10760,15 @@
             72,
             186
           ]
+        },
+        {
+          "id": "round3_side_door",
+          "bounds": [
+            712.0,
+            0.0,
+            80.0,
+            48.0
+          ]
         }
       ],
       "void": [],
@@ -10579,7 +10781,7 @@
             584.0,
             146.0
           ],
-          "footprint_class": "behind_counter_person",
+          "footprint_class": "standing_person",
           "hit_rect": [
             548.0,
             74.0,
@@ -10593,7 +10795,7 @@
           "facing": "left",
           "priority": 10,
           "zone_id": "room",
-          "support_id": "right_table",
+          "support_id": "stage",
           "walk_lane_ids": [
             "lane.public"
           ]
@@ -10731,7 +10933,7 @@
             256.0,
             154.0
           ],
-          "footprint_class": "surface_item",
+          "footprint_class": "group",
           "hit_rect": [
             220.0,
             106.0,
@@ -10742,11 +10944,13 @@
             255.0,
             102.0
           ],
-          "facing": "none",
+          "facing": "front",
           "priority": 10,
           "zone_id": "left",
-          "support_id": "left_table",
-          "walk_lane_ids": []
+          "support_id": "stage",
+          "walk_lane_ids": [
+            "lane.public"
+          ]
         },
         {
           "id": "base.numbers_right_table",
@@ -10779,7 +10983,7 @@
             752.0,
             24.0
           ],
-          "footprint_class": "wall_mounted",
+          "footprint_class": "doorway",
           "hit_rect": [
             712.0,
             0.0,
@@ -10790,10 +10994,36 @@
             751.0,
             26.0
           ],
-          "facing": "none",
+          "facing": "left",
           "priority": 10,
           "zone_id": "room",
-          "support_id": "wall",
+          "support_id": "round3_side_door",
+          "walk_lane_ids": [
+            "lane.public"
+          ]
+        },
+        {
+          "id": "base.game_3",
+          "kind": "base",
+          "pos": [
+            468.0,
+            70.0
+          ],
+          "footprint_class": "floor_fixture",
+          "hit_rect": [
+            422.0,
+            6.0,
+            92.0,
+            64.0
+          ],
+          "label_anchor": [
+            407.0,
+            26.0
+          ],
+          "facing": "none",
+          "priority": 130,
+          "zone_id": "room",
+          "support_id": "stage",
           "walk_lane_ids": []
         }
       ],
@@ -11129,18 +11359,24 @@
         "event:town_rumor_staff": "base.staff_dealer",
         "game:slot": "base.game_1",
         "numbers:book": "base.numbers_right_table",
-        "numbers:silas": "base.staff_silas",
+        "numbers:silas": "base.staff_dealer",
         "service:house_drink": "base.service_left_table",
-        "service:punchline_private_table": "base.game_2"
+        "service:punchline_private_table": "base.game_2",
+        "event:side_door": "base.event_greased_notice",
+        "game:video_poker": "base.game_3",
+        "lender:the_crew": "base.service_left_table"
       },
       "category_slot_ids": {
         "event_spots:0": "base.game_1",
         "layer_spots:0": "base.door_left_lower",
         "layer_spots:1": "base.door_guarded_lower",
-        "numbers_silas_spots:0": "base.staff_silas",
+        "numbers_silas_spots:0": "base.staff_dealer",
         "numbers_spots:0": "base.service_left_table",
         "service_spots:0": "base.game_2",
-        "travel_spots:0": "base.door_guarded_lower"
+        "travel_spots:0": "base.door_guarded_lower",
+        "game_spots:1": "base.game_3",
+        "lender_spots:0": "base.service_left_table",
+        "lender_spots:1": "base.service_left_table"
       },
       "scenario_slot_ids": {
         "punchline_greased_week_inspection_seals|punchline_greased_seals_work_1|center|": "stage.event_wall_center",
@@ -11190,6 +11426,14 @@
         "contact_y": [
           252,
           358
+        ],
+        "stage_bands": [
+          [
+            414.0,
+            278.0,
+            72.0,
+            80.0
+          ]
         ]
       },
       "counters": [
@@ -11264,7 +11508,8 @@
               174
             ]
           }
-        ]
+        ],
+        "mounts": []
       },
       "ceiling": {
         "bounds": [
@@ -11448,7 +11693,7 @@
             450.0,
             358.0
           ],
-          "footprint_class": "standing_person",
+          "footprint_class": "floor_fixture",
           "hit_rect": [
             414.0,
             278.0,
@@ -11459,13 +11704,11 @@
             450.0,
             272.0
           ],
-          "facing": "front",
+          "facing": "none",
           "priority": 70,
           "zone_id": "room",
-          "support_id": "floor",
-          "walk_lane_ids": [
-            "lane.public"
-          ]
+          "support_id": "stage",
+          "walk_lane_ids": []
         },
         {
           "id": "base.event_rook_ride",
@@ -11678,7 +11921,7 @@
         "event:crew_job_board": "base.event_job_board",
         "event:crew_mags_bench": "base.event_mags_bench",
         "event:crew_planning_table": "base.event_planning_table",
-        "event:crew_practice_rig": "base.event_practice_rig",
+        "event:crew_practice_rig": "base.staff_numbers",
         "event:crew_rook_ride": "base.event_rook_ride",
         "event:numbers_desk": "base.event_numbers_desk",
         "game:crew_draw_poker": "base.game_1",
@@ -11688,7 +11931,7 @@
         "event_spots:0": "base.event_numbers_desk",
         "event_spots:1": "base.event_job_board",
         "event_spots:2": "base.event_planning_table",
-        "event_spots:3": "base.event_practice_rig",
+        "event_spots:3": "base.staff_numbers",
         "event_spots:4": "base.event_rook_ride",
         "event_spots:5": "base.event_mags_bench",
         "game_spots:0": "base.game_1",
@@ -12191,7 +12434,8 @@
               122
             ]
           }
-        ]
+        ],
+        "mounts": []
       },
       "ceiling": {
         "bounds": [
@@ -12904,7 +13148,8 @@
         "kitty_cat_lounge_buyout_task_0": "wall_mounted",
         "kitty_cat_lounge_buyout_guest_desk": "floor_fixture",
         "kitty_cat_lounge_slow_night_task_0": "surface_item",
-        "game:slot": "floor_fixture"
+        "game:slot": "floor_fixture",
+        "numbers:silas": "standing_person"
       },
       "object_slot_positions": {
         "item:foil_sleeve": [
@@ -13572,6 +13817,12 @@
             196,
             406,
             38
+          ],
+          [
+            827.0,
+            240.0,
+            64.0,
+            72.0
           ]
         ]
       },
@@ -13667,6 +13918,46 @@
           "classes": [
             "surface_item"
           ]
+        },
+        {
+          "id": "round3_floor_table",
+          "x0": 708.0,
+          "x1": 780.0,
+          "top_y": 354.0,
+          "front_y": 362.0,
+          "classes": [
+            "surface_item"
+          ]
+        },
+        {
+          "id": "round3_stage_shelf",
+          "x0": 276.0,
+          "x1": 348.0,
+          "top_y": 122.0,
+          "front_y": 130.0,
+          "classes": [
+            "surface_item"
+          ]
+        },
+        {
+          "id": "round3_left_display",
+          "x0": 44.0,
+          "x1": 116.0,
+          "top_y": 98.0,
+          "front_y": 106.0,
+          "classes": [
+            "surface_item"
+          ]
+        },
+        {
+          "id": "round3_right_display",
+          "x0": 708.0,
+          "x1": 780.0,
+          "top_y": 94.0,
+          "front_y": 102.0,
+          "classes": [
+            "surface_item"
+          ]
         }
       ],
       "seats": [
@@ -13758,7 +14049,8 @@
               124
             ]
           }
-        ]
+        ],
+        "mounts": []
       },
       "ceiling": {
         "bounds": [
@@ -13822,9 +14114,9 @@
           "kind": "base",
           "pos": [
             859.0,
-            276.0
+            312.0
           ],
-          "footprint_class": "doorway",
+          "footprint_class": "standing_person",
           "hit_rect": [
             827.0,
             240.0,
@@ -13838,7 +14130,7 @@
           "facing": "left",
           "priority": 20,
           "zone_id": "room",
-          "support_id": "right_exit",
+          "support_id": "stage",
           "walk_lane_ids": [
             "lane.public"
           ]
@@ -13991,6 +14283,78 @@
           "priority": 10,
           "zone_id": "left",
           "support_id": "stage",
+          "walk_lane_ids": []
+        },
+        {
+          "id": "base.game_table_left",
+          "kind": "base",
+          "pos": [
+            312.0,
+            122.0
+          ],
+          "footprint_class": "surface_item",
+          "hit_rect": [
+            276.0,
+            74.0,
+            72.0,
+            48.0
+          ],
+          "label_anchor": [
+            215.0,
+            42.0
+          ],
+          "facing": "none",
+          "priority": 90,
+          "zone_id": "room",
+          "support_id": "round3_stage_shelf",
+          "walk_lane_ids": []
+        },
+        {
+          "id": "base.shop_item_left",
+          "kind": "base",
+          "pos": [
+            80.0,
+            98.0
+          ],
+          "footprint_class": "surface_item",
+          "hit_rect": [
+            44.0,
+            50.0,
+            72.0,
+            48.0
+          ],
+          "label_anchor": [
+            63.0,
+            26.0
+          ],
+          "facing": "none",
+          "priority": 100,
+          "zone_id": "room",
+          "support_id": "round3_left_display",
+          "walk_lane_ids": []
+        },
+        {
+          "id": "base.shop_item_right",
+          "kind": "base",
+          "pos": [
+            744.0,
+            94.0
+          ],
+          "footprint_class": "surface_item",
+          "hit_rect": [
+            708.0,
+            46.0,
+            72.0,
+            48.0
+          ],
+          "label_anchor": [
+            747.0,
+            26.0
+          ],
+          "facing": "none",
+          "priority": 110,
+          "zone_id": "room",
+          "support_id": "round3_right_display",
           "walk_lane_ids": []
         }
       ],
@@ -14353,7 +14717,7 @@
         "event:scenario_bachelorette_storm_table": "base.game_2",
         "event:scenario_buyout_rope": "base.door_right_upper",
         "game:bar_dice": "base.game_2",
-        "game:roulette": "base.game_2",
+        "game:roulette": "base.game_table_left",
         "game:slot": "base.game_3",
         "item:foil_sleeve": "base.game_1",
         "item:xray_glasses": "base.game_1",
@@ -14361,7 +14725,8 @@
         "service:house_drink": "base.game_1",
         "service:kitty_champagne": "base.game_1",
         "shopkeeper:merchant": "base.staff_bar",
-        "travel:leave": "base.door_right_middle"
+        "travel:leave": "base.door_right_middle",
+        "numbers:silas": "base.door_right_middle"
       },
       "category_slot_ids": {
         "event_spots:0": "base.game_3",
@@ -14370,10 +14735,10 @@
         "event_spots:3": "base.game_3",
         "game_hook_spots:0": "base.game_2",
         "game_spots:0": "base.game_3",
-        "game_spots:1": "base.game_3",
+        "game_spots:1": "base.game_table_left",
         "game_spots:2": "base.game_3",
-        "item_spots:0": "base.game_2",
-        "item_spots:1": "base.game_1",
+        "item_spots:0": "base.shop_item_left",
+        "item_spots:1": "base.shop_item_right",
         "item_spots:2": "base.game_2",
         "service_spots:0": "base.game_2",
         "service_spots:1": "base.game_1",
@@ -14383,7 +14748,8 @@
         "travel_spots:1": "base.door_right_upper",
         "travel_spots:2": "base.door_right_middle",
         "travel_spots:3": "base.door_right_middle",
-        "travel_spots:4": "base.door_right_upper"
+        "travel_spots:4": "base.door_right_upper",
+        "numbers_silas_spots:0": "base.door_right_middle"
       },
       "scenario_slot_ids": {
         "kitty_cat_lounge_amateur_night_aftermath_act_refused_actor||background|": "stage.patron_floor_center",
@@ -14516,7 +14882,8 @@
         "delta_queen_fog_delay_gangway_shutter": "wall_mounted",
         "delta_queen_fog_delay_work_1_choice_0": "wall_mounted",
         "delta_queen_fog_delay_work_1_choice_1": "wall_mounted",
-        "delta_queen_fog_delay_work_1_choice_2": "wall_mounted"
+        "delta_queen_fog_delay_work_1_choice_2": "wall_mounted",
+        "item:payment_calendar": "wall_mounted"
       },
       "class_default_contacts": {
         "standing_person": [
@@ -15797,6 +16164,15 @@
               500,
               48
             ]
+          },
+          {
+            "id": "round3_calendar_mount",
+            "bounds": [
+              564.0,
+              246.0,
+              72.0,
+              80.0
+            ]
           }
         ]
       },
@@ -16024,9 +16400,9 @@
           "kind": "base",
           "pos": [
             600.0,
-            326.0
+            286.0
           ],
-          "footprint_class": "standing_person",
+          "footprint_class": "wall_mounted",
           "hit_rect": [
             564.0,
             246.0,
@@ -16037,13 +16413,11 @@
             600.0,
             214.0
           ],
-          "facing": "right",
+          "facing": "none",
           "priority": 10,
           "zone_id": "room",
-          "support_id": "floor",
-          "walk_lane_ids": [
-            "lane.public"
-          ]
+          "support_id": "round3_calendar_mount",
+          "walk_lane_ids": []
         },
         {
           "id": "base.event_deck_walk",
@@ -16736,7 +17110,7 @@
         "event:grand_casino_invite": "base.event_wall_1",
         "event:scenario_engine_trouble_repairs": "base.event_wall_1",
         "event:scenario_whale_aboard_vouch": "base.event_wall_1",
-        "item:payment_calendar": "base.event_wall_1",
+        "item:payment_calendar": "base.staff_floor",
         "event:side_door": "base.door_left_middle",
         "travel:leave": "base.door_right_middle"
       },
@@ -17092,6 +17466,12 @@
             116,
             500,
             64
+          ],
+          [
+            832.0,
+            334.0,
+            64.0,
+            72.0
           ]
         ]
       },
@@ -17120,7 +17500,8 @@
           900,
           78
         ],
-        "exclusions": []
+        "exclusions": [],
+        "mounts": []
       },
       "ceiling": {
         "bounds": [
@@ -17203,9 +17584,9 @@
           "kind": "base",
           "pos": [
             864.0,
-            370.0
+            406.0
           ],
-          "footprint_class": "doorway",
+          "footprint_class": "floor_fixture",
           "hit_rect": [
             832.0,
             334.0,
@@ -17216,13 +17597,11 @@
             864.0,
             328.0
           ],
-          "facing": "left",
+          "facing": "none",
           "priority": 10,
           "zone_id": "room",
-          "support_id": "boardwalk_right",
-          "walk_lane_ids": [
-            "lane.public"
-          ]
+          "support_id": "stage",
+          "walk_lane_ids": []
         },
         {
           "id": "base.game_1",
@@ -17721,11 +18100,13 @@
       ],
       "actor_routes": [],
       "object_slot_ids": {
-        "travel:leave": "base.door_right_lower"
+        "travel:leave": "base.door_right_lower",
+        "service:beach_sand_pile": "base.door_right_lower"
       },
       "category_slot_ids": {
         "game_spots:0": "base.game_1",
-        "travel_spots:0": "base.door_right_lower"
+        "travel_spots:0": "base.door_right_lower",
+        "service_spots:0": "base.door_right_lower"
       },
       "scenario_slot_ids": {
         "beach_bonfire_night_aftermath_actor_communal_fire||left|": "stage.patron_sand_left",
@@ -17782,7 +18163,8 @@
       },
       "scenario_position_route_ids": {},
       "class_overrides": {
-        "beach_festival_weekend_schedule_board": "surface_item"
+        "beach_festival_weekend_schedule_board": "surface_item",
+        "service:beach_sand_pile": "floor_fixture"
       },
       "scenario_overflow_ids": [],
       "scenario_art_keys": {
@@ -17982,7 +18364,8 @@
         "event:chatty_clerk": "standing_person",
         "event:town_rumor_staff": "standing_person",
         "item:payment_calendar": "surface_item",
-        "game:slot": "floor_fixture"
+        "game:slot": "floor_fixture",
+        "lender:sals_pawn_counter": "standing_person"
       },
       "scenario_reserved_surfaces": [
         "scenario_serial_rail",
@@ -18067,6 +18450,14 @@
         "contact_y": [
           254,
           358
+        ],
+        "stage_bands": [
+          [
+            4.0,
+            326.0,
+            64.0,
+            72.0
+          ]
         ]
       },
       "counters": [
@@ -18231,7 +18622,8 @@
               150
             ]
           }
-        ]
+        ],
+        "mounts": []
       },
       "ceiling": {
         "bounds": [
@@ -18347,9 +18739,9 @@
           "kind": "base",
           "pos": [
             36.0,
-            362.0
+            398.0
           ],
-          "footprint_class": "doorway",
+          "footprint_class": "standing_person",
           "hit_rect": [
             4.0,
             326.0,
@@ -18363,7 +18755,7 @@
           "facing": "right",
           "priority": 10,
           "zone_id": "room",
-          "support_id": "left_exit",
+          "support_id": "stage",
           "walk_lane_ids": [
             "lane.public"
           ]
@@ -18778,7 +19170,7 @@
         "item:sal_shelf_4": "base.shop_item_5",
         "item:sal_shelf_5": "base.shop_item_6",
         "item:xray_glasses": "base.shop_item_5",
-        "lender:sals_pawn_counter": "base.staff_floor_right",
+        "lender:sals_pawn_counter": "base.door_left_lower",
         "meta_pawn_counter:sell": "base.staff_pawn_counter",
         "meta_sal_shelf:0": "base.shop_item_1",
         "meta_sal_shelf:1": "base.shop_item_2",
@@ -18799,7 +19191,7 @@
         "item_spots:3": "base.shop_item_4",
         "item_spots:4": "base.shop_item_1",
         "item_spots:5": "base.shop_item_3",
-        "lender_spots:0": "base.staff_floor_right",
+        "lender_spots:0": "base.door_left_lower",
         "pawn_counter_spots:0": "base.staff_pawn_counter",
         "service_spots:0": "base.shop_item_5",
         "travel_spots:0": "base.door_right_lower"
@@ -19374,6 +19766,12 @@
             80,
             868,
             268
+          ],
+          [
+            4.0,
+            354.0,
+            64.0,
+            72.0
           ]
         ],
         "contact_y": [
@@ -19589,7 +19987,8 @@
           900,
           222
         ],
-        "exclusions": []
+        "exclusions": [],
+        "mounts": []
       },
       "ceiling": {
         "bounds": [
@@ -19941,9 +20340,9 @@
           "kind": "base",
           "pos": [
             36.0,
-            390.0
+            426.0
           ],
-          "footprint_class": "doorway",
+          "footprint_class": "standing_person",
           "hit_rect": [
             4.0,
             354.0,
@@ -19954,10 +20353,10 @@
             36.0,
             352.0
           ],
-          "facing": "front",
+          "facing": "right",
           "priority": 140,
           "zone_id": "room",
-          "support_id": "left_exit",
+          "support_id": "stage",
           "walk_lane_ids": [
             "lane.public"
           ]
@@ -20391,6 +20790,7 @@
         "event:chain06_cass_first_contact": "base.staff_host",
         "event:chain06_rourke_noticed": "base.event_wall_1",
         "event:comped_suite_offer": "base.staff_host",
+        "event:recruitment_bishop": "base.travel_left",
         "event:scenario_audit_roster": "base.event_wall_1",
         "event:scenario_convention_badge": "base.event_wall_1",
         "event:scenario_gala_cover": "base.event_floor_1",
@@ -20400,7 +20800,7 @@
         "service:house_drink": "base.fixed_drink",
         "travel:grand_casino_back_room": "base.travel_left",
         "travel:grand_casino_cage": "base.travel_right",
-        "travel:grand_casino_high_limit": "base.travel_left",
+        "travel:grand_casino_high_limit": "base.travel_right",
         "travel:leave": "base.travel_right",
         "travel:motel": "base.travel_left",
         "travel:small_underground_casino": "base.travel_right"
@@ -21094,7 +21494,8 @@
               152
             ]
           }
-        ]
+        ],
+        "mounts": []
       },
       "ceiling": {
         "bounds": [
@@ -21962,7 +22363,8 @@
               148
             ]
           }
-        ]
+        ],
+        "mounts": []
       },
       "ceiling": {
         "bounds": [

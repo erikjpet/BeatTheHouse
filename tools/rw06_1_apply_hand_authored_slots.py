@@ -447,6 +447,83 @@ HAND_SLOTS.update({
 })
 
 
+# Round 3 gives concrete inventory the existing, collision-proven positions
+# previously reserved for abstract travel/service verbs. Only five genuinely
+# new targets are needed across the 21-room set.
+ROUND3_SLOT_REPLACEMENTS: dict[str, dict[str, SlotSpec]] = {
+    "corner_store": {
+        "base.travel_left": ("base.travel_left", "ground_marker", (41.0, 406.0), (41.0, 430.0), "stage", "none", 140, "room", (9.0, 334.0, 64.0, 72.0)),
+        "base.travel_right": ("base.travel_right", "wall_mounted", (859.0, 370.0), (859.0, 406.0), "round3_calendar_mount", "none", 150, "room", (827.0, 334.0, 64.0, 72.0)),
+    },
+    "back_alley": {
+        "base.door_left_upper": ("base.door_left_upper", "standing_person", (44.0, 292.0), (44.0, 214.0), "stage", "right", 20, "room", (12.0, 220.0, 64.0, 72.0)),
+        "base.door_left_lower": ("base.door_left_lower", "ground_marker", (44.0, 412.0), (44.0, 334.0), "stage", "none", 10, "room", (12.0, 340.0, 64.0, 72.0)),
+    },
+    "motel": {
+        "base.door_curtain": ("base.door_curtain", "surface_item", (450.0, 132.0), (439.0, 42.0), "round3_curtain_ledge", "none", 20, "background", (418.0, 60.0, 64.0, 72.0)),
+        "base.door_left_middle": ("base.door_left_middle", "standing_person", (41.0, 300.0), (41.0, 222.0), "stage", "right", 10, "room", (9.0, 228.0, 64.0, 72.0)),
+        "base.event_hallway_fixture": ("base.event_hallway_fixture", "surface_item", (590.0, 414.0), (580.0, 430.0), "round3_luggage_shelf", "none", 10, "room", (544.0, 350.0, 92.0, 64.0)),
+    },
+    "bar": {
+        "base.travel_right": ("base.travel_right", "standing_person", (862.0, 406.0), (862.0, 406.0), "stage", "front", 110, "room", (830.0, 334.0, 64.0, 72.0)),
+    },
+    "gas_station_casino": {
+        "base.service_highway_sill": ("base.service_highway_sill", "doorway", (262.0, 168.0), (262.0, 138.0), "round3_sill_door", "right", 10, "left", (226.0, 144.0, 72.0, 48.0)),
+        "base.service_refreshment_shelf": ("base.service_refreshment_shelf", "standing_person", (828.0, 80.0), (828.0, 26.0), "stage", "left", 15, "background", (792.0, 32.0, 72.0, 48.0)),
+        "base.event_wall_route": ("base.event_wall_route", "ground_marker", (156.0, 248.0), (167.0, 248.0), "stage", "none", 20, "room", (116.0, 200.0, 80.0, 48.0)),
+        "base.event_control_rail": ("base.event_control_rail", "floor_fixture", (396.0, 316.0), (408.0, 300.0), "stage", "none", 10, "center", (356.0, 268.0, 80.0, 48.0)),
+    },
+    "small_underground_casino:casino": {
+        "base.staff_dealer": ("base.staff_dealer", "standing_person", (584.0, 146.0), (584.0, 48.0), "stage", "left", 10, "room", (548.0, 74.0, 72.0, 72.0)),
+        "base.service_left_table": ("base.service_left_table", "group", (256.0, 154.0), (255.0, 102.0), "stage", "front", 10, "left", (220.0, 106.0, 72.0, 48.0)),
+        "base.event_greased_notice": ("base.event_greased_notice", "doorway", (752.0, 24.0), (751.0, 26.0), "round3_side_door", "left", 10, "room", (712.0, 0.0, 80.0, 48.0)),
+    },
+    "small_underground_casino:back_room": {
+        "base.staff_numbers": ("base.staff_numbers", "floor_fixture", (450.0, 358.0), (450.0, 272.0), "stage", "none", 70, "room", (414.0, 278.0, 72.0, 80.0)),
+    },
+    "kitty_cat_lounge": {
+        "base.door_right_middle": ("base.door_right_middle", "standing_person", (859.0, 312.0), (837.0, 244.0), "stage", "left", 20, "room", (827.0, 240.0, 64.0, 72.0)),
+    },
+    "delta_queen": {
+        "base.staff_floor": ("base.staff_floor", "wall_mounted", (600.0, 286.0), (600.0, 214.0), "round3_calendar_mount", "none", 10, "room", (564.0, 246.0, 72.0, 80.0)),
+    },
+    "beach": {
+        "base.door_right_lower": ("base.door_right_lower", "floor_fixture", (864.0, 406.0), (864.0, 328.0), "stage", "none", 10, "room", (832.0, 334.0, 64.0, 72.0)),
+    },
+    "pawn_shop": {
+        "base.door_left_lower": ("base.door_left_lower", "standing_person", (36.0, 398.0), (36.0, 390.0), "stage", "right", 10, "room", (4.0, 326.0, 64.0, 72.0)),
+    },
+    "grand_casino": {
+        "base.travel_left": ("base.travel_left", "standing_person", (36.0, 426.0), (36.0, 352.0), "stage", "right", 140, "room", (4.0, 354.0, 64.0, 72.0)),
+    },
+}
+
+for _map_id, _replacements in ROUND3_SLOT_REPLACEMENTS.items():
+    for _index, _spec in enumerate(HAND_SLOTS[_map_id]["base"]):
+        if _spec[0] in _replacements:
+            HAND_SLOTS[_map_id]["base"][_index] = _replacements[_spec[0]]
+
+ROUND3_BASE_SLOT_ADDITIONS: dict[str, list[SlotSpec]] = {
+    "back_alley": [
+        ("base.shop_item_4", "surface_item", (706.0, 168.0), (599.0, 90.0), "right_crate_display", "none", 110, "room", (670.0, 120.0, 72.0, 48.0)),
+    ],
+    "small_underground_casino:casino": [
+        ("base.game_3", "floor_fixture", (468.0, 70.0), (407.0, 26.0), "stage", "none", 130, "room", (422.0, 6.0, 92.0, 64.0)),
+    ],
+    "kitty_cat_lounge": [
+        ("base.game_table_left", "surface_item", (312.0, 122.0), (215.0, 42.0), "round3_stage_shelf", "none", 90, "room", (276.0, 74.0, 72.0, 48.0)),
+        ("base.shop_item_left", "surface_item", (80.0, 98.0), (63.0, 26.0), "round3_left_display", "none", 100, "room", (44.0, 50.0, 72.0, 48.0)),
+        ("base.shop_item_right", "surface_item", (744.0, 94.0), (747.0, 26.0), "round3_right_display", "none", 110, "room", (708.0, 46.0, 72.0, 48.0)),
+    ],
+    "gas_station_casino": [
+        ("base.patron_scalper", "standing_person", (372.0, 430.0), (271.0, 354.0), "stage", "front", 120, "room", (336.0, 350.0, 72.0, 80.0)),
+    ],
+}
+
+for _map_id, _specs in ROUND3_BASE_SLOT_ADDITIONS.items():
+    HAND_SLOTS[_map_id]["base"].extend(_specs)
+
+
 SCENARIO_SLOT_RENAMES = {
     "bar": {
         "stage.behind_counter_person.01": "stage.staff_bar_1",
@@ -1159,6 +1236,91 @@ CATEGORY_SLOT_IDS.update({
 })
 
 
+# Round 3 exact preferences keep known physical inventory on the restored
+# slots before generic category fallback is considered.
+ROUND3_OBJECT_SLOT_IDS = {
+    "corner_store": {
+        "event:parking_lot_tip": "base.travel_left",
+        "item:payment_calendar": "base.travel_right",
+    },
+    "back_alley": {
+        "event:parking_lot_tip": "base.door_left_lower",
+        "lender:street_lender": "base.door_left_upper",
+    },
+    "motel": {
+        "numbers:book": "base.door_curtain",
+        "numbers:silas": "base.door_left_middle",
+    },
+    "bar": {"numbers:silas": "base.travel_right"},
+    "gas_station_casino": {
+        "event:scenario_graveyard_maintenance": "base.service_highway_sill",
+        "event:parking_lot_tip": "base.event_wall_route",
+        "game:video_poker": "base.event_control_rail",
+        "game:slot": "base.event_control_rail",
+        "game_hook:scratch_tickets:scratch_ticket_clerk": "base.service_refreshment_shelf",
+        "game_hook:pull_tabs:ticket_redeemer": "base.service_lottery_desk",
+        "numbers:book": "base.service_lottery_desk",
+        "dialogue:scratch_ticket_scalper": "base.patron_scalper",
+    },
+    "small_underground_casino:casino": {
+        "event:side_door": "base.event_greased_notice",
+        "game:video_poker": "base.game_3",
+        "lender:the_crew": "base.service_left_table",
+        "numbers:silas": "base.staff_dealer",
+    },
+    "small_underground_casino:back_room": {
+        "event:crew_practice_rig": "base.staff_numbers",
+    },
+    "kitty_cat_lounge": {
+        "game:roulette": "base.game_table_left",
+        "numbers:silas": "base.door_right_middle",
+    },
+    "delta_queen": {"item:payment_calendar": "base.staff_floor"},
+    "beach": {"service:beach_sand_pile": "base.door_right_lower"},
+    "pawn_shop": {"lender:sals_pawn_counter": "base.door_left_lower"},
+    "grand_casino": {
+        "event:recruitment_bishop": "base.travel_left",
+        "travel:grand_casino_high_limit": "base.travel_right",
+    },
+}
+for _map_id, _preferences in ROUND3_OBJECT_SLOT_IDS.items():
+    OBJECT_SLOT_IDS[_map_id].update(_preferences)
+
+ROUND3_CATEGORY_SLOT_IDS = {
+    "back_alley": {"item_spots:3": "base.shop_item_4"},
+    "motel": {
+        "item_spots:3": "base.door_curtain",
+        "item_spots:4": "base.event_hallway_fixture",
+        "numbers_spots:0": "base.door_curtain",
+        "numbers_silas_spots:0": "base.door_left_middle",
+    },
+    "bar": {"numbers_silas_spots:0": "base.travel_right"},
+    "gas_station_casino": {
+        "game_spots:2": "base.event_control_rail",
+        "game_hook_spots:0": "base.service_refreshment_shelf",
+        "game_hook_spots:1": "base.service_lottery_desk",
+        "numbers_spots:0": "base.service_lottery_desk",
+    },
+    "small_underground_casino:casino": {
+        "game_spots:1": "base.game_3",
+        "lender_spots:0": "base.service_left_table",
+        "lender_spots:1": "base.service_left_table",
+        "numbers_silas_spots:0": "base.staff_dealer",
+    },
+    "small_underground_casino:back_room": {"event_spots:3": "base.staff_numbers"},
+    "kitty_cat_lounge": {
+        "game_spots:1": "base.game_table_left",
+        "item_spots:0": "base.shop_item_left",
+        "item_spots:1": "base.shop_item_right",
+        "numbers_silas_spots:0": "base.door_right_middle",
+    },
+    "beach": {"service_spots:0": "base.door_right_lower"},
+    "pawn_shop": {"lender_spots:0": "base.door_left_lower"},
+}
+for _map_id, _preferences in ROUND3_CATEGORY_SLOT_IDS.items():
+    CATEGORY_SLOT_IDS[_map_id].update(_preferences)
+
+
 CLASS_OVERRIDES = {
     "bar": {
         "game:slot": "surface_item",
@@ -1262,6 +1424,38 @@ CLASS_OVERRIDES.update({
     "house": {},
 })
 
+ROUND3_CLASS_OVERRIDES = {
+    "corner_store": {
+        "event:parking_lot_tip": "ground_marker",
+        "item:payment_calendar": "wall_mounted",
+    },
+    "back_alley": {
+        "event:parking_lot_tip": "ground_marker",
+        "lender:street_lender": "standing_person",
+    },
+    "motel": {"numbers:silas": "standing_person"},
+    "bar": {"numbers:silas": "standing_person"},
+    "gas_station_casino": {
+        "event:parking_lot_tip": "ground_marker",
+        "game_hook:scratch_tickets:scratch_ticket_clerk": "standing_person",
+        "dialogue:scratch_ticket_scalper": "standing_person",
+    },
+    "small_underground_casino:casino": {
+        "event:side_door": "doorway",
+        "lender:the_crew": "group",
+        "numbers:silas": "standing_person",
+    },
+    "kitty_cat_lounge": {
+        "game:roulette": "surface_item",
+        "numbers:silas": "standing_person",
+    },
+    "delta_queen": {"item:payment_calendar": "wall_mounted"},
+    "beach": {"service:beach_sand_pile": "floor_fixture"},
+    "pawn_shop": {"lender:sals_pawn_counter": "standing_person"},
+}
+for _map_id, _overrides in ROUND3_CLASS_OVERRIDES.items():
+    CLASS_OVERRIDES[_map_id].update(_overrides)
+
 
 CLASS_OVERRIDE_DROPS = {
     "delta_queen": {"delta_queen_wedding_charter_ceremony_rope"},
@@ -1351,6 +1545,29 @@ COUNTER_ADDITIONS = {
             "classes": ["surface_item"],
         },
     ],
+    "motel": [
+        {
+            "id": "round3_curtain_ledge",
+            "x0": 418.0,
+            "x1": 482.0,
+            "top_y": 132.0,
+            "front_y": 140.0,
+            "classes": ["surface_item"],
+        },
+        {
+            "id": "round3_luggage_shelf",
+            "x0": 544.0,
+            "x1": 636.0,
+            "top_y": 414.0,
+            "front_y": 422.0,
+            "classes": ["surface_item"],
+        },
+    ],
+    "kitty_cat_lounge": [
+        {"id": "round3_stage_shelf", "x0": 276.0, "x1": 348.0, "top_y": 122.0, "front_y": 130.0, "classes": ["surface_item"]},
+        {"id": "round3_left_display", "x0": 44.0, "x1": 116.0, "top_y": 98.0, "front_y": 106.0, "classes": ["surface_item"]},
+        {"id": "round3_right_display", "x0": 708.0, "x1": 780.0, "top_y": 94.0, "front_y": 102.0, "classes": ["surface_item"]},
+    ],
 }
 
 
@@ -1369,6 +1586,33 @@ FLOOR_UPDATES = {
         "stage_bands": [[40.0, 226.0, 820.0, 64.0]],
         "contact_y": [244.0, 376.0],
     },
+}
+
+
+ROUND3_STAGE_BANDS = {
+    "corner_store": [[9.0, 334.0, 64.0, 72.0]],
+    "back_alley": [[12.0, 220.0, 64.0, 72.0], [12.0, 340.0, 64.0, 72.0]],
+    "motel": [[9.0, 228.0, 64.0, 72.0]],
+    "bar": [[830.0, 334.0, 64.0, 72.0]],
+    "gas_station_casino": [[792.0, 32.0, 72.0, 48.0], [116.0, 200.0, 80.0, 48.0], [356.0, 268.0, 80.0, 48.0], [336.0, 350.0, 72.0, 80.0]],
+    "small_underground_casino:casino": [[548.0, 74.0, 72.0, 72.0], [220.0, 106.0, 72.0, 48.0], [422.0, 6.0, 92.0, 64.0]],
+    "small_underground_casino:back_room": [[414.0, 278.0, 72.0, 80.0]],
+    "kitty_cat_lounge": [[827.0, 240.0, 64.0, 72.0]],
+    "beach": [[832.0, 334.0, 64.0, 72.0]],
+    "pawn_shop": [[4.0, 326.0, 64.0, 72.0]],
+    "grand_casino": [[4.0, 354.0, 64.0, 72.0]],
+}
+
+
+ROUND3_WALL_MOUNTS = {
+    "corner_store": [{"id": "round3_calendar_mount", "bounds": [827.0, 334.0, 64.0, 72.0]}],
+    "delta_queen": [{"id": "round3_calendar_mount", "bounds": [564.0, 246.0, 72.0, 80.0]}],
+}
+
+
+ROUND3_DOORWAYS = {
+    "gas_station_casino": [{"id": "round3_sill_door", "bounds": [226.0, 144.0, 72.0, 48.0]}],
+    "small_underground_casino:casino": [{"id": "round3_side_door", "bounds": [712.0, 0.0, 80.0, 48.0]}],
 }
 
 
@@ -1494,6 +1738,22 @@ def apply_layout(map_data: dict[str, Any]) -> None:
     floor = map_data.get("floor", {})
     if isinstance(floor, dict):
         floor.update(FLOOR_UPDATES.get(map_id, {}))
+        stage_bands = [list(band) for band in floor.get("stage_bands", []) if isinstance(band, list)]
+        for band in ROUND3_STAGE_BANDS.get(map_id, []):
+            if band not in stage_bands:
+                stage_bands.append(list(band))
+        if stage_bands:
+            floor["stage_bands"] = stage_bands
+    wall = map_data.get("wall", {})
+    if isinstance(wall, dict):
+        mounts = [mount for mount in wall.get("mounts", []) if isinstance(mount, dict)]
+        additions = {str(mount["id"]): mount for mount in ROUND3_WALL_MOUNTS.get(map_id, [])}
+        wall["mounts"] = [mount for mount in mounts if str(mount.get("id", "")) not in additions]
+        wall["mounts"].extend(additions.values())
+    doorways = [doorway for doorway in map_data.get("doorways", []) if isinstance(doorway, dict)]
+    doorway_additions = {str(doorway["id"]): doorway for doorway in ROUND3_DOORWAYS.get(map_id, [])}
+    map_data["doorways"] = [doorway for doorway in doorways if str(doorway.get("id", "")) not in doorway_additions]
+    map_data["doorways"].extend(doorway_additions.values())
 
 
 def main() -> int:

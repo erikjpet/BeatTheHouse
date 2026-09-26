@@ -1073,7 +1073,7 @@ static func _check_single_environment_plane(library: Variant, failures: Array) -
 			or machine.is_empty() or merchandise.is_empty() or runtime_control.is_empty() \
 			or str(machine.get("presentation_mode", "")) != "room" \
 			or str(merchandise.get("presentation_mode", "")) != "room" \
-			or str(runtime_control.get("presentation_mode", "")) != "overflow":
+			or str(runtime_control.get("presentation_mode", "")) != "room":
 		failures.append("Single-plane fixture could not bind its complete generated base inventory to authored base slots: %s" % JSON.stringify(_array(bound_base.get("errors", [])) + _array(stamped_base.get("errors", []))))
 		return
 	var projection := {

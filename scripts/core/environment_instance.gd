@@ -1170,6 +1170,19 @@ static func _game_hook_layout_entries(environment_data: Dictionary) -> Array:
 			var hook_id := str(hook_data.get("id", ""))
 			if hook_id.is_empty():
 				continue
+			# Scratch Tickets and Pull Tabs expose two action providers for the
+			# same in-room Lottery Clerk. Normalize them before the unique-object
+			# filter so the late hook consumes one authored person slot. The
+			# scalper is a separate person and exists only while its state says so.
+			var unique_object_class := str(hook_data.get("unique_object_class", "")).strip_edges()
+			var physical_person := false
+			if unique_object_class in ["scratch_ticket_clerk", "pull_tab_clerk", "lottery_redemption_clerk"]:
+				unique_object_class = "lottery_redemption_clerk"
+				physical_person = true
+			elif hook_id == "scratch_ticket_scalper":
+				if not bool((machine as Dictionary).get("scalper_present", false)):
+					continue
+				physical_person = true
 			var object_id := str(hook_data.get("object_id", "")).strip_edges()
 			if object_id.is_empty():
 				var dialogue_id := str(hook_data.get("dialogue_id", "")).strip_edges()
@@ -1179,9 +1192,10 @@ static func _game_hook_layout_entries(environment_data: Dictionary) -> Array:
 				"object_type": "game_hook",
 				"index": result.size(),
 				"spot_field": "game_hook_spots",
-				"unique_object_class": str(hook_data.get("unique_object_class", "")).strip_edges(),
-				"unique_object_priority": int(hook_data.get("unique_object_priority", 0)),
+				"unique_object_class": unique_object_class,
+				"unique_object_priority": 120 if hook_id == "scratch_ticket_clerk" else int(hook_data.get("unique_object_priority", 0)),
 				"allow_duplicate_unique_class": bool(hook_data.get("allow_duplicate_unique_class", false)),
+				"physical_person": physical_person,
 			})
 	return result
 

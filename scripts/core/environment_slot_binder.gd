@@ -49,9 +49,15 @@ const ABSTRACT_SCENARIO_ID_TOKENS := [
 # Casino fixtures bind interaction targets to room-native desks, counters, and
 # machines that the environment canvas already renders as permanent scenery.
 const BASE_ALWAYS_PHYSICAL_TYPES := [
-	"casino_fixture", "environment_layer", "game", "home_storage", "home_tenure", "item", "meta_pawn_counter", "shopkeeper", "numbers_silas",
+	"casino_fixture", "environment_layer", "game", "home_storage", "home_tenure", "item", "meta_pawn_counter", "numbers", "shopkeeper", "numbers_silas",
 ]
 const BASE_PERSON_VISUAL_TYPES := ["actor", "character", "npc"]
+const BASE_ALWAYS_PHYSICAL_OBJECT_IDS := [
+	"game_hook:pull_tabs:ticket_redeemer",
+	"game_hook:scratch_tickets:scratch_ticket_clerk",
+	"dialogue:scratch_ticket_scalper",
+	"travel:grand_casino_high_limit",
+]
 const BASE_EVENT_ART_PROPS := [
 	"casino_host", "clerk_counter", "clerk_talk", "counter_phone",
 	"jammed_machine", "motel_door", "paper_note", "payphone", "pit_boss",
@@ -367,6 +373,8 @@ static func base_record_requires_room_slot(record: Dictionary) -> bool:
 	var visual_type := str(record.get("visual_type", "")).strip_edges()
 	if object_type in BASE_ALWAYS_PHYSICAL_TYPES:
 		return true
+	if str(record.get("object_id", "")).strip_edges() in BASE_ALWAYS_PHYSICAL_OBJECT_IDS:
+		return true
 	if bool(record.get("physical_person", false)) \
 			or visual_type in BASE_PERSON_VISUAL_TYPES \
 			or not _dict(record.get("character_actor", {})).is_empty():
@@ -374,8 +382,9 @@ static func base_record_requires_room_slot(record: Dictionary) -> bool:
 	var asset_path := str(record.get("asset_path", "")).strip_edges()
 	if asset_path.begins_with("res://assets/art/"):
 		return true
-	if object_type == "travel" or visual_type == "travel" or visual_type == "drink":
-		return true
+	# Destination rows and service verbs are abstract unless their record carries
+	# concrete art provenance. Concrete props still qualify through asset_path or
+	# the closed renderer contracts below.
 	var prop := str(record.get("visual_prop", record.get("prop", ""))).strip_edges()
 	if (object_type == "home_sleep" or visual_type == "home_sleep") and prop in ["", "bed"]:
 		return true
