@@ -933,10 +933,7 @@ func _resolve_purchase(_stake: int, run_state: RunState, environment: Dictionary
 	for purchased_value in purchased_tickets:
 		if typeof(purchased_value) != TYPE_DICTIONARY:
 			continue
-		var receipt := (purchased_value as Dictionary).duplicate(false)
-		for runtime_field in ["latex_mask", "scratch_regions", "sections"]:
-			receipt.erase(runtime_field)
-		purchase_receipts.append(receipt)
+		purchase_receipts.append(_compact_purchase_receipt(purchased_value as Dictionary))
 	result["scratch_ticket"] = purchase_receipts[0] if not purchase_receipts.is_empty() else {}
 	result["scratch_purchased_tickets"] = purchase_receipts
 	result["scratch_buy_quantity"] = quantity
@@ -950,6 +947,22 @@ func _resolve_purchase(_stake: int, run_state: RunState, environment: Dictionary
 	result["defer_bankroll_zero_failure"] = true
 	GameModule.apply_result(run_state, result, rng)
 	return result
+
+
+func _compact_purchase_receipt(ticket: Dictionary) -> Dictionary:
+	# The machine owns the complete fixed outcome. The action result only needs
+	# the durable public identity used by profile/report consumers; carrying the
+	# full mechanic grid made result routing deep-copy large Bingo/Crossword
+	# payloads a second time at the purchase boundary.
+	var receipt: Dictionary = {}
+	for field_value in RunState.PORTABLE_SCRATCH_RECEIPT_FIELDS:
+		var field := str(field_value)
+		if ticket.has(field):
+			receipt[field] = ticket[field]
+	receipt["outcome_fixed_at_purchase"] = bool(ticket.get("outcome_fixed_at_purchase", true))
+	receipt["luck_modifier"] = int(ticket.get("luck_modifier", 0))
+	receipt["mask_compacted"] = true
+	return receipt
 
 
 func _resolve_reveal(run_state: RunState, environment: Dictionary, rng: RngStream, settle: bool, discard_unfinished: bool = false) -> Dictionary:

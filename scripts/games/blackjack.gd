@@ -2226,7 +2226,7 @@ func _blackjack_compatibility_simulation(action_id: String, stake: int, run_stat
 	# live RunState and a detached environment graph. Crew and Rourke paths can
 	# author run-owned state, so they retain the full detached restore fallback.
 	var simulation_run_state := run_state
-	var simulation_environment := run_state.current_environment.duplicate(true)
+	var simulation_environment := _blackjack_compatibility_environment_snapshot(run_state.current_environment)
 	var read_only_core := _blackjack_compatibility_read_only_core_allowed(action_id, run_state)
 	if not read_only_core:
 		var candidate := RunState.new()
@@ -2245,6 +2245,23 @@ func _blackjack_compatibility_simulation(action_id: String, stake: int, run_stat
 	result["blackjack_compatibility_simulation"] = true
 	result["blackjack_authoritative"] = false
 	return result
+
+
+func _blackjack_compatibility_environment_snapshot(environment: Dictionary) -> Dictionary:
+	# Ordinary compatibility simulations are read-only, but they still need a
+	# detached Blackjack table because normalization and dealing mutate that
+	# table. Copying the complete environment also cloned every unrelated game,
+	# ticket mask, room payload, and event record before each hand. Detach only
+	# the game-state map and this table; every other environment value is merely
+	# observed by the proposal core.
+	var snapshot := environment.duplicate(false)
+	var source_states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+	var detached_states := source_states.duplicate(false)
+	var table_value: Variant = source_states.get(get_id(), {})
+	if typeof(table_value) == TYPE_DICTIONARY:
+		detached_states[get_id()] = _duplicate_table_with_immutable_authority(table_value as Dictionary)
+	snapshot["game_states"] = detached_states
+	return snapshot
 
 
 func _blackjack_compatibility_read_only_core_allowed(action_id: String, run_state: RunState) -> bool:
