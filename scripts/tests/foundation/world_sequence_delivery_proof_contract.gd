@@ -856,6 +856,27 @@ func _production_run(library: ContentLibrary, seed: String) -> RunState:
 		"turns": 0,
 		"resolved_event_ids": [],
 	}
+	# The release offer is backed by the shipped $70 one-favor Crew marker.
+	# Preserve that debt authority so the success checkpoint can prove it clears
+	# the favor atomically with the delivery rewards.
+	run_state.add_debt({
+		"id": "the_crew_marker",
+		"lender_id": RunState.CREW_LENDER_ID,
+		"lender_name": "The Crew",
+		"balance": 1,
+		"principal": 70,
+		"debt_kind": "favor",
+		"status": "favor_due",
+		"deadline_turns": 2,
+		"turns_remaining": 0,
+		"interest_rate": 0.0,
+		"loan_count": 1,
+		"default_consequence": "crew_favor_due",
+		"refuse_consequence": "crew_convert_to_cash",
+		"cash_conversion_balance_per_favor": 70,
+		"cash_conversion_interest_rate": 0.35,
+	})
+	run_state.narrative_flags["crew_favor_pending"] = true
 	# `crew_favor_delivery` is a triggered event in production. Exercise the
 	# real host queue instead of relying on the pre-authority fixture shortcut
 	# where the narrative flag alone made a copied EventModule resolvable.

@@ -11,10 +11,10 @@ func _init() -> void:
 
 
 func _run() -> void:
-	if str(ProjectSettings.get_setting("application/config/version", "")) != "0.5.1":
-		failures.append("D3: project release stamp changed before the release row.")
-	if BuildIdentityScript.display_version() != "0.6.0-dev+source":
-		failures.append("BTH-033: unpacked development runtime has no distinct development identity.")
+	if str(ProjectSettings.get_setting("application/config/version", "")) != "0.6.0":
+		failures.append("D3: project release stamp is not 0.6.0.")
+	if BuildIdentityScript.display_version() != "0.6.0":
+		failures.append("BTH-033: unpacked release source runtime has the wrong release identity.")
 	var source_identity := BuildIdentityScript.telemetry_identity({"bth_perf_source_commit": "fixture", "bth_perf_export_sha256": "fixture-export"})
 	if str(source_identity.get("identity_source", "")) != "source_harness" or str(source_identity.get("source_commit", "")) != "fixture":
 		failures.append("BTH-033: source-tree telemetry compatibility boundary changed unexpectedly.")

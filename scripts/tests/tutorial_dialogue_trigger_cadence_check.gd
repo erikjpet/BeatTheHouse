@@ -20,8 +20,8 @@ const BLACKJACK_FIXTURE_CHALLENGE := {
 		"starting_bankroll": 80,
 	},
 }
-const BLACKJACK_FIXTURE_BASELINE_SHA256 := "ae9fb49137ed076c44fac4b7cc7f627be86c19e2058c93dd883b4567b98c37b3"
-const BLACKJACK_GAMES_SOURCE_SHA256 := "c859ddff29ce77b5e409aede5f97e7b148e5036587c09c64ac77f0072086c6a8"
+const BLACKJACK_FIXTURE_BASELINE_SHA256 := "57c75caf0d096ccd0a6b74cf65fac17a66ff391f1207a7c3a02f185d42388c58"
+const BLACKJACK_DEFINITION_SHA256 := "4a684c890b00bf03082af3f95a37369336302d1a51e668d9f325a158ca47dfa3"
 const NORMALIZED_CREW_AUTHORITY_ID := "0000000000000000000000000000000000000000000000000000000000000000"
 
 
@@ -469,8 +469,6 @@ func _fixture_top_level_diff(before_value: Variant, after_value: Variant) -> Dic
 
 func _blackjack_fixture_library() -> ContentLibrary:
 	var source_text := FileAccess.get_file_as_string(ContentLibrary.GAMES_PATH)
-	if source_text.sha256_text() != BLACKJACK_GAMES_SOURCE_SHA256:
-		return null
 	var source_value: Variant = JSON.parse_string(source_text)
 	if typeof(source_value) != TYPE_ARRAY:
 		return null
@@ -480,6 +478,11 @@ func _blackjack_fixture_library() -> ContentLibrary:
 			source_definition = (definition_value as Dictionary).duplicate(true)
 			break
 	if source_definition.is_empty():
+		return null
+	# Unrelated games may evolve without invalidating this historical Blackjack
+	# fixture. Pin the exact canonical Blackjack definition, not games.json as a
+	# whole, so a real Blackjack change still fails closed.
+	if GameRitualRuntime.canonical_fingerprint(source_definition) != BLACKJACK_DEFINITION_SHA256:
 		return null
 	var library := ContentLibrary.new()
 	library.load(false)

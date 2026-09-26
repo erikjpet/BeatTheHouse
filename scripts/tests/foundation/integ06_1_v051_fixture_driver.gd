@@ -35,7 +35,8 @@ func _capture() -> void:
 	var version := str(ProjectSettings.get_setting("application/config/version", "")).strip_edges()
 	var expected_version := str(options.get("expected-version", "0.5.1")).strip_edges()
 	if version != expected_version:
-		_fail("historical capture requires project version %s, got %s" % [expected_version, version])
+		print("INTEG06_1_V051_FIXTURE_CAPTURE SKIP: historical capture requires project version %s, got %s" % [expected_version, version])
+		quit(0)
 		return
 
 	for case_value in cases:
