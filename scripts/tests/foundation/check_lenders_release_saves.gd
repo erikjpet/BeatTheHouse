@@ -3391,14 +3391,15 @@ func _check_grand_casino_spatial_split(library: ContentLibrary, main_archetype: 
 			continue
 		slot_centers[fixture_id] = Vector2(float(rect.get("x", 0.0)) + float(rect.get("w", 0.0)) * 0.5, float(rect.get("y", 0.0)) + float(rect.get("h", 0.0)) * 0.5)
 	if slot_centers.size() == 4:
-		var left_gap := absf((slot_centers["game:slot:2"] as Vector2).x - (slot_centers["game:slot"] as Vector2).x)
-		var right_gap := absf((slot_centers["game:video_poker"] as Vector2).x - (slot_centers["game:slot:3"] as Vector2).x)
+		var first_gap := absf((slot_centers["game:slot:2"] as Vector2).x - (slot_centers["game:slot"] as Vector2).x)
+		var second_gap := absf((slot_centers["game:slot:3"] as Vector2).x - (slot_centers["game:slot:2"] as Vector2).x)
+		var third_gap := absf((slot_centers["game:video_poker"] as Vector2).x - (slot_centers["game:slot:3"] as Vector2).x)
 		var row_y := (slot_centers["game:slot"] as Vector2).y
-		if left_gap > 0.16 or right_gap > 0.16 or absf(left_gap - right_gap) > 0.02 \
+		if first_gap <= 0.0 or absf(first_gap - second_gap) > 0.02 or absf(second_gap - third_gap) > 0.02 \
 				or absf(row_y - (slot_centers["game:slot:2"] as Vector2).y) > 0.01 \
 				or absf(row_y - (slot_centers["game:slot:3"] as Vector2).y) > 0.01 \
 				or absf(row_y - (slot_centers["game:video_poker"] as Vector2).y) > 0.01:
-			failures.append("Grand Casino Main Floor wall machines are not placed as two balanced banks (centers=%s gaps=%.3f/%.3f)." % [str(slot_centers), left_gap, right_gap])
+			failures.append("Grand Casino Main Floor wall machines are not placed as one evenly aligned row (centers=%s gaps=%.3f/%.3f/%.3f)." % [str(slot_centers), first_gap, second_gap, third_gap])
 	var slot_variant_run := _grand_casino_spatial_fixture_run(library, "GC-MAIN-SLOT-VARIANTS", failures)
 	var slot_game_states := JsonCoerceScript._copy_dict(slot_variant_run.current_environment.get("game_states", {})) if slot_variant_run != null else {}
 	var slot_machine_keys: Dictionary = {}
@@ -3475,9 +3476,12 @@ func _check_grand_casino_spatial_split(library: ContentLibrary, main_archetype: 
 	var generator: RunGenerator = RunGeneratorScript.new(library)
 	var layout := JsonCoerceScript._copy_dict(run_state.current_environment.get("layout", {}))
 	var object_rects := JsonCoerceScript._copy_dict(layout.get("object_rects", {}))
+	var slot_bindings := JsonCoerceScript._copy_dict(layout.get("slot_bindings", {}))
 	for object_id in ["casino_fixture:host_desk", "travel:grand_casino_high_limit", "travel:grand_casino_back_room", "travel:grand_casino_cage"]:
-		if not object_rects.has(object_id):
-			failures.append("Grand Casino Main Floor layout is missing authored object placement: %s." % object_id)
+		var binding := JsonCoerceScript._copy_dict(slot_bindings.get(object_id, {}))
+		var mode := str(binding.get("presentation_mode", ""))
+		if mode not in ["room", "overflow"] or (mode == "room" and not object_rects.has(object_id)):
+			failures.append("Grand Casino Main Floor layout is missing authored object placement authority: %s." % object_id)
 	var buy_in := int(JsonCoerceScript._copy_dict(run_state.current_environment.get("local_narrative_flags", {})).get("casino_high_limit_buy_in", 60))
 	run_state.bankroll = maxi(0, buy_in - 1)
 	if bool(run_state.grand_casino_room_access_status(RunState.GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID, buy_in).get("available", true)):
@@ -4426,8 +4430,15 @@ func _check_environment_instance_shape(environment: EnvironmentInstance, require
 					failures.append("EnvironmentInstance overflow event binding retained room geometry.")
 					break
 			for offer in environment.item_offers:
-				if typeof(offer) == TYPE_DICTIONARY and not (object_rects as Dictionary).has("item:%s" % str((offer as Dictionary).get("id", ""))):
-					failures.append("EnvironmentInstance layout is missing item offer placement.")
+				if typeof(offer) != TYPE_DICTIONARY:
+					continue
+				var item_object_id := "item:%s" % str((offer as Dictionary).get("id", ""))
+				var item_binding := JsonCoerceScript._copy_dict((slot_bindings as Dictionary).get(item_object_id, {}))
+				var item_mode := str(item_binding.get("presentation_mode", ""))
+				if item_mode not in ["room", "overflow"] \
+						or (item_mode == "room" and not (object_rects as Dictionary).has(item_object_id)) \
+						or (item_mode == "overflow" and not (slot_overflow_ids as Array).has(item_object_id)):
+					failures.append("EnvironmentInstance layout is missing sealed item offer placement authority.")
 					break
 			if not _unique_strings(environment.next_archetypes, environment.travel_hooks).is_empty() and not (object_rects as Dictionary).has("travel:leave"):
 				failures.append("EnvironmentInstance layout is missing the world-map Leave travel object placement.")

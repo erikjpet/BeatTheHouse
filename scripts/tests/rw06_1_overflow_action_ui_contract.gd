@@ -1611,7 +1611,7 @@ func _check_capacity_simplification_action_reachability() -> void:
 
 func _capacity_action_record(object_id: String, object_type: String, placement_class: String) -> Dictionary:
 	var action_suffix := object_id.replace(":", "_")
-	return {
+	var record := {
 		"object_id": object_id,
 		"object_type": object_type,
 		"placement_class": placement_class,
@@ -1634,6 +1634,11 @@ func _capacity_action_record(object_id: String, object_type: String, placement_c
 			},
 		],
 	}
+	# Fixed-slot authority requires concrete presentation provenance. Placement
+	# class names alone deliberately do not create room geometry.
+	if object_type == "event":
+		record["asset_path"] = "res://assets/art/events/side_door.png"
+	return record
 
 
 func _check_capacity_action_records(label: String, records: Array, expected_ids: Array[String]) -> void:
