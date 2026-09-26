@@ -2076,17 +2076,32 @@ function Get-CimProcessSnapshotStrict {
 
 function Get-ProcessIdentityOrNullIfExited {
     param([int]$ProcessId)
-    $live = Get-ProcessByIdStrict -ProcessId $ProcessId
-    if ($null -eq $live) { return $null }
-    try {
-        return Get-ProcessIdentityRecord -Process $live
+    for ($attempt = 0; $attempt -lt 2; $attempt += 1) {
+        $live = Get-ProcessByIdStrict -ProcessId $ProcessId
+        if ($null -eq $live) { return $null }
+        try {
+            $record = Get-ProcessIdentityRecord -Process $live
+            if (Test-ProcessIdentityProofShape -Identity $record) { return $record }
+        }
+        catch {
+            # A process may exit between the strict lookup and property reads.
+            # The bounded retry below is the only path that can classify it as
+            # gone; every still-live unprovable identity remains fail-closed.
+            $stillLive = Get-ProcessByIdStrict -ProcessId $ProcessId
+            if ($null -eq $stillLive) { return $null }
+            $stillLive.Dispose()
+            if ($attempt -ge 1) {
+                throw "Could not bind exact identity for live PID $ProcessId`: $($_.Exception.Message)"
+            }
+        }
+        finally {
+            $live.Dispose()
+        }
+        if ($attempt -ge 1) {
+            throw "Could not bind a schema-valid exact identity for live PID $ProcessId after a bounded retry."
+        }
     }
-    catch {
-        # A process may exit between the strict lookup and property reads.  It
-        # is clean only if a second strict lookup proves that exact PID absent.
-        if ($null -eq (Get-ProcessByIdStrict -ProcessId $ProcessId)) { return $null }
-        throw "Could not bind exact identity for live PID $ProcessId`: $($_.Exception.Message)"
-    }
+    return $null
 }
 
 function Get-LiveGodotProcesses {
