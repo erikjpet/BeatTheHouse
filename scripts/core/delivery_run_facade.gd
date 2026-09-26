@@ -539,6 +539,10 @@ func _delivery_resolve_targets(spec: Dictionary) -> Dictionary:
 		break
 	var count := maxi(1, int(spec.get("target_count", requested.size() if not requested.is_empty() else 1)))
 	var origin_id = _run.current_world_node_id()
+	var required_target_room := str(JsonCoerceScript._copy_dict(spec.get("consumer_payload", {})).get("required_target_archetype_id", "")).strip_edges()
+	var allows_origin_room_target := bool(spec.get("allow_origin_room_target", false)) \
+		and not required_target_room.is_empty() \
+		and requested.has(origin_id)
 	var offer_path_query := WorldMap.prepare_path_query(_run.world_map, origin_id, false)
 	var buckets := [[], [], []]
 	var nodes_value: Variant = _run.world_map.get("nodes", [])
@@ -548,7 +552,9 @@ func _delivery_resolve_targets(spec: Dictionary) -> Dictionary:
 				continue
 			var node: Dictionary = node_value
 			var node_id := str(node.get("id", "")).strip_edges()
-			if node_id.is_empty() or (node_id == origin_id and str(spec.get("mode", "")) != DeliveryRunModelScript.MODE_HOLD):
+			if node_id.is_empty() or (node_id == origin_id \
+				and str(spec.get("mode", "")) != DeliveryRunModelScript.MODE_HOLD \
+				and not allows_origin_room_target):
 				continue
 			if str(node.get("archetype_id", "")).strip_edges().is_empty() or str(node.get("kind", "")).strip_edges().is_empty():
 				continue
@@ -573,11 +579,12 @@ func _delivery_resolve_targets(spec: Dictionary) -> Dictionary:
 		return {"ok": false, "message": "The job has no complete real route tonight."}
 	var allows_origin_return = str(spec.get("mode", "")) == DeliveryRunModelScript.MODE_MULTI_STOP \
 		and chosen_ids.size() > 1 and str(chosen_ids[chosen_ids.size() - 1]) == origin_id
+	var allows_origin_target := allows_origin_return or allows_origin_room_target
 	var reveal_ids: Array = []
 	var targets: Array = []
 	for node_id_value in chosen_ids:
 		var node_id := str(node_id_value)
-		if not candidates.has(node_id) and not (allows_origin_return and node_id == origin_id):
+		if not candidates.has(node_id) and not (allows_origin_target and node_id == origin_id):
 			return {"ok": false, "message": "%s is not a reachable venue tonight." % node_id.replace("_", " ").capitalize()}
 		var path := WorldMap.prepared_path(offer_path_query, node_id) if node_id != origin_id else [origin_id]
 		if path.is_empty() or not WorldMap.prepared_path_uses_real_edges(offer_path_query, path):
