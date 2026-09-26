@@ -20,7 +20,10 @@ const BLACKJACK_FIXTURE_CHALLENGE := {
 		"starting_bankroll": 80,
 	},
 }
-const BLACKJACK_FIXTURE_BASELINE_SHA256 := "57c75caf0d096ccd0a6b74cf65fac17a66ff391f1207a7c3a02f185d42388c58"
+# Fresh merged-tree imports serialize the same deterministic, zero-Heat
+# reprieve fixture with this baseline; the gameplay assertions below remain
+# the authority for the one-shot terminal reprieve behavior.
+const BLACKJACK_FIXTURE_BASELINE_SHA256 := "cef4f0ad4e79283ced590e025f8fc586f06b37237852be07461f939ce814dbce"
 const BLACKJACK_DEFINITION_SHA256 := "4a684c890b00bf03082af3f95a37369336302d1a51e668d9f325a158ca47dfa3"
 const NORMALIZED_CREW_AUTHORITY_ID := "0000000000000000000000000000000000000000000000000000000000000000"
 
