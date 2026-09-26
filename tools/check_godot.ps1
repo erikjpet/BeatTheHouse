@@ -9,6 +9,7 @@ param(
     [switch]$VerboseStages,
     [switch]$ExhaustiveParse,
     [string]$FoundationSuite = "",
+    [string]$FoundationShard = "",
     [switch]$AllowConcurrentGodot,
     [switch]$PostLand,
     [string]$ExpectedMain = "",
@@ -22,6 +23,7 @@ $root = Split-Path -Parent $PSScriptRoot
 . (Join-Path $PSScriptRoot "split_test_runner_helpers.ps1")
 $suiteKey = $Suite.ToLowerInvariant()
 $foundationSuiteKey = $FoundationSuite.Trim().ToLowerInvariant()
+$foundationShardKey = $FoundationShard.Trim()
 $script:StrictObjectDbLeakStageNames = @(
     "standalone_contract_fixsweep06_1_accessibility_contract",
     "standalone_contract_rw06_1_overflow_action_ui_contract"
@@ -77,8 +79,12 @@ if ($validFoundationSuites -notcontains $foundationSuiteKey) {
 if ($foundationSuiteKey -eq "contract") {
     $foundationSuiteKey = "contracts"
 }
+
 elseif ($foundationSuiteKey -eq "full") {
     $foundationSuiteKey = "all"
+}
+if (-not [string]::IsNullOrWhiteSpace($foundationShardKey) -and $foundationSuiteKey -notin @("systems", "contracts")) {
+    throw "FoundationShard requires FoundationSuite systems or contracts."
 }
 
 function Get-ProjectRelativePath {
@@ -1021,7 +1027,8 @@ function Invoke-FoundationSystemsSharded {
     param(
         [int]$StageTimeoutSec = 0,
         [ValidateSet("systems", "games", "contracts")]
-        [string]$FoundationSuite = "systems"
+        [string]$FoundationSuite = "systems",
+        [string]$ShardId = ""
     )
     $name = "foundation_$FoundationSuite"
     $timeout = if ($StageTimeoutSec -gt 0) { $StageTimeoutSec } else { Get-StageTimeout $name }
@@ -1043,6 +1050,17 @@ function Invoke-FoundationSystemsSharded {
     $planCheck = Test-FoundationSystemsShardPlan -ExpectedIds $expectedIds -Shards $plan
     if (-not $planCheck.valid) {
         throw "Invalid foundation systems shard plan: $(@($planCheck.errors) -join ' | ')"
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($ShardId)) {
+        if (-not $plan.Contains($ShardId)) {
+            throw "Unknown $FoundationSuite foundation shard '$ShardId'. Valid shards: $(@($plan.Keys) -join ', ')."
+        }
+        $selectedPlan = [ordered]@{}
+        $selectedPlan[$ShardId] = @($plan[$ShardId])
+        $plan = $selectedPlan
+        $expectedIds = @($plan[$ShardId])
+        $name = "foundation_{0}_{1}" -f $FoundationSuite, ($ShardId -replace "[^A-Za-z0-9_.-]", "_")
     }
 
     $shardLaunchOrder = @($plan.Keys)
@@ -1459,10 +1477,10 @@ if (-not [string]::IsNullOrWhiteSpace($foundationSuiteKey)) {
         Invoke-GodotScript -Name "ui05_design_system" -ScriptPath "res://scripts/tests/ui05_design_system_check.gd" -StageTimeoutSec 120
     }
     elseif ($foundationSuiteKey -eq "systems" -or $foundationSuiteKey -eq "contracts") {
-        if ($foundationSuiteKey -eq "contracts") {
+        if ($foundationSuiteKey -eq "contracts" -and [string]::IsNullOrWhiteSpace($foundationShardKey)) {
             Invoke-StandaloneContracts
         }
-        Invoke-FoundationSystemsSharded -FoundationSuite $foundationSuiteKey -StageTimeoutSec (Get-StageTimeout ("foundation_{0}" -f $foundationSuiteKey)) | Out-Null
+        Invoke-FoundationSystemsSharded -FoundationSuite $foundationSuiteKey -ShardId $foundationShardKey -StageTimeoutSec (Get-StageTimeout ("foundation_{0}" -f $foundationSuiteKey)) | Out-Null
     }
     else {
         Invoke-FoundationSuite -FoundationSuite $foundationSuiteKey -StageTimeoutSec (Get-StageTimeout ("foundation_{0}" -f $foundationSuiteKey))
