@@ -2338,6 +2338,25 @@ function Open-OverflowWorldMapIfVisible {
         $roomSurface = @($surfaces | Where-Object {
             [string](Get-Value $_ @('id') '') -ceq 'room_actions'
         })
+        if ($roomSurface.Count -ceq 0 -and $matches.Count -ceq 1) {
+            # A short modal grid has no scroll container. Its first row can sit
+            # against the overlay header and report partially clipped even
+            # though the exact enabled button and a positive on-screen hit box
+            # are public. Use that authenticated row directly.
+            $enabled = Get-Value $matches[0] @('enabled') $null
+            $rect = Get-Value $matches[0] @('rect') $null
+            $rectWidth = [double](Get-Value $rect @('w') 0)
+            $rectHeight = [double](Get-Value $rect @('h') 0)
+            $rectX = [double](Get-Value $rect @('x') -1)
+            $rectY = [double](Get-Value $rect @('y') -1)
+            $buttonId = [string](Get-Value $matches[0] @('id') '')
+            if ($enabled -is [bool] -and [bool]$enabled -and
+                $rectWidth -gt 0 -and $rectHeight -gt 0 -and
+                $rectX -ge 0 -and $rectY -ge 0 -and
+                -not [string]::IsNullOrWhiteSpace($buttonId)) {
+                return Invoke-BridgeCommand -Command "click_button $buttonId" -Intent $Intent
+            }
+        }
         if ($roomSurface.Count -cne 1) {
             throw "Expected exactly one visible room-actions scroll surface; found $($roomSurface.Count)."
         }
