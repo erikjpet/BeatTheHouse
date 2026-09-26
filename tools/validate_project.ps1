@@ -254,9 +254,10 @@ function New-Rw061ValidatorShadowFile {
         [string]$Path,
         [string]$Slot,
         [byte[]]$Bytes,
-        [System.Collections.Generic.List[object]]$ReadPins
+        [System.Collections.Generic.List[object]]$ReadPins,
+        [string]$ParentSlot = 'root_creation'
     )
-    $receipt = New-Q009ExactOwnedFileHeld -Path $Path -Payload $Bytes -CustodyCell $CustodyCell -ParentSlot 'root_creation' -Slot $Slot -ExpectedParentIdentity $RootReceipt.identity
+    $receipt = New-Q009ExactOwnedFileHeld -Path $Path -Payload $Bytes -CustodyCell $CustodyCell -ParentSlot $ParentSlot -Slot $Slot -ExpectedParentIdentity $RootReceipt.identity
     if ($receipt.path -cne [IO.Path]::GetFullPath($Path) -or $receipt.handle_state -cne 'OPEN') {
         throw "Validator shadow file did not return exact held custody: $Path"
     }
@@ -2678,7 +2679,11 @@ try {
             shadow_launcher = $shadowLauncherReceipt
             ambient_shadow = $ambientShadowReceipt
         }
-        $exactSeedShadowChain = New-Q009OwnedChildManifestChainHead -RootPath $exactSeedShadowRoot -RootIdentity $exactSeedShadowRootReceipt.identity -AttemptId $exactSeedAttemptId -Boundary 'held-shadow-sources' -OwnerKind validator_shadow -OwnerReceipt $exactSeedShadowOwnerReceipt -PreviousHead $exactSeedShadowChain
+    $exactSeedShadowChain = New-Q009OwnedChildManifestChainHead -RootPath $exactSeedShadowRoot -RootIdentity $exactSeedShadowRootReceipt.identity -AttemptId $exactSeedAttemptId -Boundary 'held-shadow-sources' -OwnerKind validator_shadow -OwnerReceipt $exactSeedShadowOwnerReceipt -PreviousHead $exactSeedShadowChain
+        $exactSeedShadowRootReadReceipt = Convert-Q009HeldDirectoryToReadOnly -CustodyCell $exactSeedShadowCell -SourceSlot 'root_creation' -TargetSlot 'root_runtime_read' -ExpectedIdentity $exactSeedShadowRootReceipt.identity -Context 'Validator shadow root creation-to-runtime transition'
+        if(-not[bool]$exactSeedShadowRootReadReceipt.continuous_custody-or[string]$exactSeedShadowRootReadReceipt.handle_state-cne'OPEN'){
+            throw 'validator shadow root did not retain continuous read-only runtime custody'
+        }
         $priorValidatorPath = [Environment]::GetEnvironmentVariable("PATH", "Process")
         try {
             [Environment]::SetEnvironmentVariable("PATH", ($exactSeedShadowRoot + [System.IO.Path]::PathSeparator + $priorValidatorPath), "Process")
@@ -2909,7 +2914,7 @@ $report=[ordered]@{tool='rw06_1_validator_independent_admission_hostiles';schema
 Write-Output "RW06_1_INDEPENDENT_ADMISSION_PASS report=$ReportPath cases=$($cases.Count)"
 '@
         $independentDriverBytes = [Text.UTF8Encoding]::new($false).GetBytes($independentDriverSource)
-        $exactSeedIndependentDriverReceipt = New-Rw061ValidatorShadowFile $exactSeedShadowCell $exactSeedShadowRootReceipt $exactSeedIndependentDriver 'independent_driver' $independentDriverBytes $exactSeedShadowReadPins
+        $exactSeedIndependentDriverReceipt = New-Rw061ValidatorShadowFile $exactSeedShadowCell $exactSeedShadowRootReceipt $exactSeedIndependentDriver 'independent_driver' $independentDriverBytes $exactSeedShadowReadPins -ParentSlot 'root_runtime_read'
         [void]$exactSeedShadowMembers.Add([IO.Path]::GetFileName($exactSeedIndependentDriver))
         Assert-Rw061ValidatorShadowMembers $exactSeedShadowRoot @($exactSeedShadowMembers)
         $exactSeedShadowChain = New-Q009OwnedChildManifestChainHead -RootPath $exactSeedShadowRoot -RootIdentity $exactSeedShadowRootReceipt.identity -AttemptId $exactSeedAttemptId -Boundary 'independent-driver-held' -OwnerKind validator_shadow -OwnerReceipt $exactSeedIndependentDriverReceipt -PreviousHead $exactSeedShadowChain

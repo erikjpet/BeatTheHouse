@@ -822,7 +822,7 @@ public static class Q009ExactFileSystemNative {
             // omits FILE_SHARE_DELETE so rename/replacement remains blocked.
             const uint READ_ATTRIBUTES=0x80u,LIST_DIRECTORY=0x1u,SYNCHRONIZE=0x00100000u,SHARE_READ_WRITE=0x1u|0x2u,OPEN_EXISTING=3u,BACKUP=0x02000000u,OPEN_REPARSE=0x00200000u;
             raw=CreateFileWRaw(full,READ_ATTRIBUTES|LIST_DIRECTORY|SYNCHRONIZE,SHARE_READ_WRITE,IntPtr.Zero,OPEN_EXISTING,BACKUP|OPEN_REPARSE,IntPtr.Zero);
-            if(raw==IntPtr.Zero||raw==new IntPtr(-1)){int error=Marshal.GetLastWin32Error();cell.CancelReservation(slot);throw new Win32Exception(error,"Could not open exact read-only directory authority.");}
+            if(raw==IntPtr.Zero||raw==new IntPtr(-1)){int error=Marshal.GetLastWin32Error();cell.CancelReservation(slot);throw new Win32Exception(error,"Could not open exact read-only directory authority "+full+"; native error "+error+".");}
             cell.AdoptRaw(slot,raw);raw=IntPtr.Zero;
             if(String.Equals(hostileMode,"after_acquire",StringComparison.Ordinal))throw new IOException("Forced read-only directory post-acquire proof failure.");
             BY_HANDLE_FILE_INFORMATION info;using(SafeFileHandle borrowed=Borrow(cell,slot,"Read-only directory authority proof")){if(!GetFileInformationByHandle(borrowed,out info))throw new Win32Exception(Marshal.GetLastWin32Error(),"Could not inspect read-only directory authority handle.");}
@@ -832,7 +832,7 @@ public static class Q009ExactFileSystemNative {
             return Describe(info);
         } catch(Exception failure) {
             if(raw!=IntPtr.Zero&&raw!=new IntPtr(-1)){cell.AdoptRaw(slot,raw);raw=IntPtr.Zero;}
-            IOException wrapped=new IOException("Read-only directory authority acquisition/proof failed; custody state="+cell.StateOf(slot),failure);wrapped.Data["retained_handle_slot"]=slot;wrapped.Data["retained_handle_state"]=cell.StateOf(slot);throw wrapped;
+            IOException wrapped=new IOException("Read-only directory authority acquisition/proof failed; custody state="+cell.StateOf(slot)+"; cause="+failure.Message,failure);wrapped.Data["retained_handle_slot"]=slot;wrapped.Data["retained_handle_state"]=cell.StateOf(slot);throw wrapped;
         }
     }
     public static string[] OpenFileHeldExact(CacheCustodyCell cell,string slot,string path,string expectedKey,long expectedCreationTicks,string hostileMode) {
@@ -1064,6 +1064,26 @@ public static class Q009ExactFileSystemNative {
         if((pinInfo.FileAttributes&0x10u)!=0u||(pinInfo.FileAttributes&0x400u)!=0u||!String.Equals(Path.GetDirectoryName(pinPath),rootFull,StringComparison.OrdinalIgnoreCase))throw new IOException(context+" held sentinel escaped the exact capability root");
         string[] rootIdentity=GetIdentity(rootFull,true);
         if(rootIdentity[0]!=expectedKey||Int64.Parse(rootIdentity[1],System.Globalization.CultureInfo.InvariantCulture)!=expectedCreationTicks)throw new IOException(context+" root identity changed");
+    }
+    public static string[] OpenDirectoryBridgeHeldExact(CacheCustodyCell cell,string slot,string path,string expectedKey,long expectedCreationTicks) {
+        if(cell==null)throw new ArgumentNullException("cell");
+        string candidate=Path.GetFullPath(path);string pathRoot=Path.GetPathRoot(candidate);string full=String.Equals(candidate,pathRoot,StringComparison.OrdinalIgnoreCase)?pathRoot:candidate.TrimEnd(Path.DirectorySeparatorChar,Path.AltDirectorySeparatorChar);if(String.IsNullOrWhiteSpace(slot))throw new ArgumentException("Directory bridge custody slot is required.");
+        cell.Reserve(slot);IntPtr raw=IntPtr.Zero;
+        try {
+            // This identity-only bridge shares delete so it can overlap the
+            // creator's DELETE access. It is closed only after the terminal
+            // read-only/no-delete authority has been acquired.
+            const uint READ_ATTRIBUTES=0x80u,SYNCHRONIZE=0x00100000u,SHARE_READ_WRITE_DELETE=0x1u|0x2u|0x4u,OPEN_EXISTING=3u,BACKUP=0x02000000u,OPEN_REPARSE=0x00200000u;
+            raw=CreateFileWRaw(full,READ_ATTRIBUTES|SYNCHRONIZE,SHARE_READ_WRITE_DELETE,IntPtr.Zero,OPEN_EXISTING,BACKUP|OPEN_REPARSE,IntPtr.Zero);
+            if(raw==IntPtr.Zero||raw==new IntPtr(-1)){int error=Marshal.GetLastWin32Error();cell.CancelReservation(slot);throw new Win32Exception(error,"Could not open exact directory custody bridge "+full+"; native error "+error+".");}
+            cell.AdoptRaw(slot,raw);raw=IntPtr.Zero;
+            BY_HANDLE_FILE_INFORMATION info;using(SafeFileHandle bridge=Borrow(cell,slot,"Directory custody bridge proof")){if(!GetFileInformationByHandle(bridge,out info))throw new Win32Exception(Marshal.GetLastWin32Error(),"Could not inspect exact directory custody bridge.");}
+            if((info.FileAttributes&0x10u)==0u||(info.FileAttributes&0x400u)!=0u||NativeKey(info)!=expectedKey||CreationTicks(info)!=expectedCreationTicks)throw new IOException("Directory custody bridge identity/type changed.");
+            return Describe(info);
+        } catch(Exception failure) {
+            if(raw!=IntPtr.Zero&&raw!=new IntPtr(-1)){cell.AdoptRaw(slot,raw);raw=IntPtr.Zero;}
+            IOException wrapped=new IOException("Directory custody bridge acquisition/proof failed; custody state="+cell.StateOf(slot)+"; cause="+failure.Message,failure);wrapped.Data["retained_handle_slot"]=slot;wrapped.Data["retained_handle_state"]=cell.StateOf(slot);throw wrapped;
+        }
     }
     public static void AttemptPinnedCapabilityRootRenameNoReplace(CacheCustodyCell cell,string slot,string path,string destinationPath,string expectedKey,long expectedCreationTicks) {
         RequireRoleLeaf(path,".rw06-q009-sentinel-capability-","Pinned capability source");
@@ -1819,6 +1839,20 @@ function Test-Q009OwnedArtifactRootRequestShape {
         try{if([string]$Request.held_file_custody.StateOf([string]$Request.held_file_slot)-cne'OPEN'){return $false}}catch{return $false}
     }
     return $true
+}
+
+function Convert-Q009HeldDirectoryToReadOnly {
+    param([object]$CustodyCell,[string]$SourceSlot,[string]$TargetSlot,[object]$ExpectedIdentity,[string]$Context)
+    if(-not(Test-Q009FileSystemIdentityShape $ExpectedIdentity)-or-not[bool]$ExpectedIdentity.is_directory){throw 'Directory read-only custody transition requires an exact directory identity'}
+    Initialize-Q009ExactFileSystemType
+    $bridgeSlot=$TargetSlot+':bridge'
+    [void][Q009ExactFileSystemNative]::OpenDirectoryBridgeHeldExact($CustodyCell,$bridgeSlot,[string]$ExpectedIdentity.path,[string]$ExpectedIdentity.native_key,[long]$ExpectedIdentity.creation_ticks)
+    $sourceClose=Close-Q009CheckedNativeHandle $CustodyCell $SourceSlot ($Context+' source release')
+    if(-not(Test-Q009CheckedCloseReceipt $sourceClose)){throw 'Directory read-only custody transition did not close its source authority'}
+    $terminal=Open-Q009ExactReadDirectoryHeld -Path ([string]$ExpectedIdentity.path) -ExpectedIdentity $ExpectedIdentity -CustodyCell $CustodyCell -Slot $TargetSlot
+    $bridgeClose=Close-Q009CheckedNativeHandle $CustodyCell $bridgeSlot ($Context+' bridge release')
+    if(-not(Test-Q009CheckedCloseReceipt $bridgeClose)-or[string]$CustodyCell.StateOf($TargetSlot)-cne'OPEN'){throw 'Directory read-only custody transition did not retain only its terminal authority'}
+    return [ordered]@{path=[string]$ExpectedIdentity.path;identity=$terminal.identity;source_slot=[string]$SourceSlot;source_close=$sourceClose;bridge_slot=[string]$bridgeSlot;bridge_close=$bridgeClose;handle_slot=[string]$TargetSlot;handle_state='OPEN';share_delete=$false;delete_access=$false;read_list_only=$true;continuous_custody=$true}
 }
 
 function Test-Q009ClosedArtifactManifestReceiptShape {
