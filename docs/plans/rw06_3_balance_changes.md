@@ -249,6 +249,9 @@ not on the room canvas, so the replay helper now uses that same public
   required and visible, while two Punchline return commutes and their repeated
   setup-table reopenings are removed. The three-hand Hold -> Sit -> Dock table
   cadence, blackjack rules, odds, RTP, and payouts remain unchanged.
+  Delivery chaining is evaluated only after the completed route's durable
+  checkpoint replaces its active delivery authority, so the next route cannot
+  collide with or overwrite the route that just resolved.
 
 ## Departure-price integrity repair (rw06_2 blocker fix)
 

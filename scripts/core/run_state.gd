@@ -9611,6 +9611,12 @@ func _apply_delivery_resolution(expected_receipt: Dictionary = {}, materialize_a
 		active_delivery_run["world_sequence_lifecycle_retry"] = {"owner_token": owner_token, "outcome": lifecycle_reason}
 		var lifecycle := _retry_delivery_world_sequence_lifecycle()
 		if not bool(lifecycle.get("ok", false)): return lifecycle
+	# Chained Count setup is evaluated only after the closed delivery checkpoint
+	# replaces the active route. The earlier model callback records the completed
+	# setup fact, but cannot safely open the next route while the old one still
+	# owns delivery authority.
+	if run_id.begins_with("heist:"):
+		_crew_heist_boundary_sync()
 	return {"ok": true, "public_result": public_result, "errors": []}
 
 
