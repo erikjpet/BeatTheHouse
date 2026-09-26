@@ -17,6 +17,24 @@ Assert-True $gamesPlan.valid ("Production games shard plan is invalid: " + (@($g
 $contractsPlan = Test-FoundationSystemsShardPlan -ExpectedIds (Get-FoundationContractsCheckIds) -Shards (Get-FoundationContractsShardPlan)
 Assert-True $contractsPlan.valid ("Production contracts shard plan is invalid: " + (@($contractsPlan.errors) -join " | "))
 
+$preferredContractOrder = @(
+    "contracts_content_scenarios",
+    "contracts_games",
+    "contracts_coin_pusher",
+    "contracts_crew"
+)
+$selectedContractPlan = [ordered]@{ contracts_content_core = @("content_contracts") }
+$selectedContractOrder = @(Get-FoundationShardLaunchOrder -Plan $selectedContractPlan -PreferredOrder $preferredContractOrder)
+Assert-True ($selectedContractOrder.Count -eq 1) "A selected Contract shard launch order added unselected preferred shards."
+Assert-True ($selectedContractOrder[0] -eq "contracts_content_core") "A selected Contract shard lost its canonical launch identity."
+$orderedContractPlan = [ordered]@{
+    contracts_content_core = @("content_contracts")
+    contracts_games = @("game_contracts")
+    contracts_content_scenarios = @("scenario_contracts")
+}
+$orderedContractOrder = @(Get-FoundationShardLaunchOrder -Plan $orderedContractPlan -PreferredOrder $preferredContractOrder)
+Assert-True (($orderedContractOrder -join "|") -eq "contracts_content_scenarios|contracts_games|contracts_content_core") "Contract launch ordering did not intersect preferences with the selected plan."
+
 $runnerSource = Get-Content -LiteralPath (Join-Path (Split-Path -Parent $PSScriptRoot) "scripts/tests/foundation/check_core_content.gd") -Raw
 $systemsMatch = [regex]::Match($runnerSource, '(?s)func _foundation_run_system_suite\(.*?(?=\nfunc _foundation_run_all_suite\()')
 Assert-True $systemsMatch.Success "Could not locate the systems registration in the foundation runner source."

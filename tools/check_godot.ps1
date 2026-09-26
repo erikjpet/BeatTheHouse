@@ -1103,7 +1103,7 @@ function Invoke-FoundationSystemsSharded {
             "contracts_content_hidden_2",
             "contracts_content_hidden_3"
         )
-        $shardLaunchOrder = @($preferredOrder) + @($plan.Keys | Where-Object { $_ -notin $preferredOrder })
+        $shardLaunchOrder = @(Get-FoundationShardLaunchOrder -Plan $plan -PreferredOrder $preferredOrder)
     }
 
     # Generate the composite source once, then copy it into each private

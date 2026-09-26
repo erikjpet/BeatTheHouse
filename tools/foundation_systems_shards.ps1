@@ -364,6 +364,29 @@ function Get-FoundationContractsShardPlan {
     return $script:FoundationContractsShardPlan
 }
 
+function Get-FoundationShardLaunchOrder {
+    param(
+        [Parameter(Mandatory = $true)]
+        [System.Collections.IDictionary]$Plan,
+        [string[]]$PreferredOrder = @()
+    )
+
+    $orderedShardIds = New-Object System.Collections.Generic.List[string]
+    foreach ($preferredShardIdValue in @($PreferredOrder)) {
+        $preferredShardId = [string]$preferredShardIdValue
+        if ($Plan.Contains($preferredShardId) -and -not $orderedShardIds.Contains($preferredShardId)) {
+            $orderedShardIds.Add($preferredShardId)
+        }
+    }
+    foreach ($shardIdValue in @($Plan.Keys)) {
+        $shardId = [string]$shardIdValue
+        if (-not $orderedShardIds.Contains($shardId)) {
+            $orderedShardIds.Add($shardId)
+        }
+    }
+    return @($orderedShardIds)
+}
+
 function Get-FoundationSystemsUserPathOwners {
     return $script:FoundationSystemsUserPathOwners
 }
