@@ -6330,6 +6330,23 @@ function Enter-PunchlineBackRoom {
         $layer = Find-CanvasObject -SemanticId 'environment_layer:back_room'
     }
     if ($null -ceq $layer) {
+        $clubSpatial = @(Get-Array (Get-Value $script:LastObservation @('spatial', 'objects') @()) | Where-Object {
+            [string](Get-Value $_ @('object_id') '') -ceq 'environment_layer:club'
+        })
+        if ($clubSpatial.Count -ceq 1 -and
+            [string](Get-Value $clubSpatial[0] @('label') '') -ceq 'Comedy Club' -and
+            [string](Get-Value $clubSpatial[0] @('object_type') '') -ceq 'environment_layer' -and
+            (Get-Value $clubSpatial[0] @('visible') $null) -is [bool] -and [bool](Get-Value $clubSpatial[0] @('visible') $false) -and
+            (Get-Value $clubSpatial[0] @('enabled') $null) -is [bool] -and [bool](Get-Value $clubSpatial[0] @('enabled') $false) -and
+            (Get-Value $clubSpatial[0] @('interactive') $null) -is [bool] -and [bool](Get-Value $clubSpatial[0] @('interactive') $false)) {
+            $null = Invoke-OverflowRoomActionButton `
+                -ButtonText 'Comedy Club: Enter Room' `
+                -Intent 'enter the exact visible Punchline club before its Associate Crew back room'
+            Wait-Frames -Frames 12
+            $layer = Find-CanvasObject -SemanticId 'environment_layer:back_room'
+        }
+    }
+    if ($null -ceq $layer) {
         $spatial = @(Get-Array (Get-Value $script:LastObservation @('spatial', 'objects') @()) | Where-Object {
             [string](Get-Value $_ @('object_id') '') -ceq 'environment_layer:back_room'
         })
