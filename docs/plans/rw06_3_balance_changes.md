@@ -191,12 +191,6 @@ therefore reopened and the prior in-range conclusion withdrawn.
   bridge command 519 and exhausted its safe return cash at Bishop boundary 9
   with the intermediate Main / Cage pool, so the narrower gate replaces that
   insufficient checkpoint.
-- Count identity Heat gate: `35 -> 55`, matching the already-authored schedule
-  attention cap. With the shortened pre-Count route, the one required `$8`
-  identity hand reached Grand Main at Heat 37 after the mandatory Main -> Cage
-  -> Main chip exchange; the old cap rejected that otherwise valid normal
-  setup before the hand. Global Heat gain/decay, travel risk, blackjack rules,
-  wagers, RTP, and payouts are unchanged.
 - Unchanged boundaries: Count-only required travel remains `$0` after the plan
   locks; the one-time live-table float remains 24 chips; global travel prices,
   blackjack minimum stakes and rules, odds, RTP, and the `$720/$900/$1,150`

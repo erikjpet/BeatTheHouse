@@ -6453,7 +6453,7 @@ function Complete-CountIdentitySessions {
     Enter-GrandRoom -Room main
     Cool-CountIdentityHeatAtGrand
     for ($session = 1; $session -le 1; $session++) {
-        if ([int](Get-Value $script:LastObservation @('status_hud', 'heat_level') 0) -gt 55) {
+        if ([int](Get-Value $script:LastObservation @('status_hud', 'heat_level') 0) -gt 35) {
             throw "The Count identity route exceeded its public heat ceiling before session $session."
         }
         Play-OneBlackjackRound -UseHeistStake
