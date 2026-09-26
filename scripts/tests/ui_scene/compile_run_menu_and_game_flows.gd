@@ -4025,10 +4025,14 @@ func _check_lender_acceptance_does_not_open_motel_popup(app: Control) -> bool:
 	var run_state: RunState = app.get("run_state")
 	run_state.bankroll = 1
 	run_state.economic_state = "volatile"
+	# Keep the unrelated motel event injected so this remains a popup-isolation
+	# regression, but host The Crew in a room with their current authenticated
+	# three-person slot. The strict placement contract no longer permits a test to
+	# synthesize a canvas actor in Motel, where no Crew slot is authored.
 	var environment := {
 		"id": "ui_crew_lender_interrupt_fixture",
-		"archetype_id": "motel",
-		"display_name": "Motel Lender Fixture",
+		"archetype_id": "corner_store",
+		"display_name": "Corner Store Lender Fixture",
 		"kind": "shop",
 		"tier": 1,
 		"turns": 1,
