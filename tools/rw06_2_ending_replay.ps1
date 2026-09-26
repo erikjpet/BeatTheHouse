@@ -3928,22 +3928,64 @@ function Ensure-BlackjackStakeRange {
         $null = Invoke-GameAction -Action ([string]$clearAction) -Intent 'clear the visible blackjack wager before setting a boring heist stake'
         Wait-Frames -Frames 6
     }
-    for ($chip = 0; $chip -lt 40; $chip++) {
-        $stake = [int](Get-Value $script:LastObservation @('game', 'selected_stake') 0)
-        if ($stake -ge $Minimum -and $stake -le $Maximum) { return }
-        if ($stake -gt $Maximum) {
-            throw "The visible blackjack wager jumped above the heist ceiling ($stake > $Maximum)."
-        }
-        $placeAction = @('blackjack_wager_place_gesture', 'blackjack_chip', 'surface_stake_up') | Where-Object {
-            $null -cne (Find-GameAction -Action $_)
-        } | Select-Object -First 1
-        if ([string]::IsNullOrWhiteSpace([string]$placeAction)) {
-            throw "The blackjack surface exposes no production wager control below the heist minimum $Minimum."
-        }
-        $null = Invoke-GameAction -Action ([string]$placeAction) -Intent 'place one visible blackjack chip for a boring heist stake'
-        Wait-Frames -Frames 4
+    $stake = [int](Get-Value $script:LastObservation @('game', 'selected_stake') 0)
+    if ($stake -ge $Minimum -and $stake -le $Maximum) { return }
+    if ($null -ceq (Find-GameAction -Action 'blackjack_max_bet')) {
+        throw "The blackjack surface exposes no visible MAX control below the heist minimum $Minimum."
     }
-    throw "The visible blackjack wager could not be set inside $Minimum-$Maximum within 40 chip placements."
+    # Rail-chip placement is a captured pointer gesture. The deterministic
+    # confirmation bridge pauses the tree between its press and release, so the
+    # public surface correctly cancels that gesture. Build the same ordinary
+    # wager through MAX, REMOVE, and UNDO buttons, which remain fully visible
+    # and player-authenticated at the table.
+    $null = Invoke-GameAction -Action 'blackjack_max_bet' -Intent 'stage the visible maximum before trimming to a boring heist stake'
+    Wait-Frames -Frames 4
+    $stake = Get-ExactReplayInt32 -InputObject $script:LastObservation -Path @('game', 'selected_stake') -Context 'Heist blackjack maximum stake result'
+    if ($stake -ge $Minimum -and $stake -le $Maximum) { return }
+    if ($stake -lt $Minimum) {
+        throw "The visible blackjack MAX control remained below the heist minimum ($stake < $Minimum)."
+    }
+
+    $removeIndices = @(Get-GameActions | Where-Object {
+        [string](Get-Value $_ @('action') '') -ceq 'blackjack_remove_chip' -and
+            [bool](Get-Value $_ @('enabled') $false)
+    } | ForEach-Object {
+        [int](Get-Value $_ @('index') -1)
+    } | Sort-Object -Descending -Unique)
+    if ($removeIndices.Count -lt 1) {
+        throw 'The blackjack surface exposes no visible chip-removal controls for its heist wager.'
+    }
+    foreach ($removeIndex in $removeIndices) {
+        while ($stake -gt $Minimum) {
+            $beforeRemove = $stake
+            $null = Invoke-GameAction `
+                -Action 'blackjack_remove_chip' `
+                -Index ([int]$removeIndex) `
+                -Intent 'trim the visible blackjack wager toward the boring heist minimum'
+            Wait-Frames -Frames 4
+            $stake = Get-ExactReplayInt32 -InputObject $script:LastObservation -Path @('game', 'selected_stake') -Context 'Heist blackjack trimmed stake'
+            if ($stake -ge $Minimum -and $stake -lt $beforeRemove) {
+                continue
+            }
+            if ($stake -lt $Minimum) {
+                if ($null -ceq (Find-GameAction -Action 'blackjack_undo_bet')) {
+                    throw 'The blackjack wager crossed its heist minimum without a visible UNDO control.'
+                }
+                $null = Invoke-GameAction -Action 'blackjack_undo_bet' -Intent 'undo the visible chip removal that crossed the heist minimum'
+                Wait-Frames -Frames 4
+                $stake = Get-ExactReplayInt32 -InputObject $script:LastObservation -Path @('game', 'selected_stake') -Context 'Heist blackjack restored stake'
+                if ($stake -cne $beforeRemove) {
+                    throw "The visible UNDO control restored an unexpected heist stake ($stake != $beforeRemove)."
+                }
+                break
+            }
+            throw "The visible chip-removal control did not reduce the heist stake ($beforeRemove -> $stake)."
+        }
+        if ($stake -eq $Minimum) { break }
+    }
+    if ($stake -lt $Minimum -or $stake -gt $Maximum) {
+        throw "The visible blackjack controls could not set a heist wager inside $Minimum-$Maximum (stopped at $stake)."
+    }
 }
 
 
@@ -6578,13 +6620,15 @@ function Assert-HeistAuditKnowledgeSaveRelaunchContinue {
 
 
 function Invoke-HeistEndingRoute {
-    Establish-CrewMarker
     Reach-GrandCasino
     Restore-EnvironmentSurfaceAfterTravelResult
     Observe-RenderedAuditNightHook
-    Clear-CrewMarkerFavors
-    Ensure-PunchlineCasinoDiscovered
+    # Bishop's release encounter is the one Crew introduction that does not
+    # require a marker first. Recruit him during this already-required Grand
+    # visit; his visible two-beat appointment grants the Associate standing
+    # used by both the Back Room and The Count.
     Recruit-Bishop
+    Ensure-PunchlineCasinoDiscovered
     $null = Enter-PunchlineBackRoom
     if (-not $ConfirmationOnly) {
         Assert-HeistAuditKnowledgeSaveRelaunchContinue

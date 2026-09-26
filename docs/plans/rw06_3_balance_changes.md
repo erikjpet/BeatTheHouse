@@ -191,6 +191,16 @@ therefore reopened and the prior in-range conclusion withdrawn.
   bridge command 519 and exhausted its safe return cash at Bishop boundary 9
   with the intermediate Main / Cage pool, so the narrower gate replaces that
   insufficient checkpoint.
+- Bishop introduction gate: Crew-wide Marker standing -> Stranger, for Bishop's
+  recruitment event only. His visible two-beat appointment still raises Bishop
+  to Associate, and The Count still requires that Associate architect. This
+  removes the unrelated Crew-loan and timed-favor detour from the release Count
+  route while preserving Audit knowledge, Punchline discovery, the identity
+  hand, schedule watch, swap cart, three live-table decisions, and getaway.
+  The measured failed confirmation spent 33 bridge actions taking the marker,
+  38 clearing its required favor, and about 13 revisiting Grand for Bishop;
+  folding recruitment into the already-required Audit visit removes about 84
+  actions without changing any lender term, game rule, odds, RTP, or payout.
 - Unchanged boundaries: Count-only required travel remains `$0` after the plan
   locks; the one-time live-table float remains 24 chips; global travel prices,
   blackjack minimum stakes and rules, odds, RTP, and the `$720/$900/$1,150`
