@@ -706,7 +706,7 @@ func _next_world_environment(run_state: RunState, target_archetype_id: String, r
 		perf_stages["environment_install"] = Time.get_ticks_usec() - perf_stage_started_usec
 		perf_stage_started_usec = Time.get_ticks_usec()
 	run_state.enter_world_node(target_id, run_state.current_environment)
-	_apply_scenario_authored_travel_targets(run_state, scenario)
+	_apply_scenario_authored_travel_targets(run_state, target_id)
 	if not current_node_id.is_empty() and current_node_id != target_id:
 		run_state.scenario_publish_travel("travel_arrived", current_node_id, target_id, "world")
 	_apply_tutorial_authored_travel_targets(run_state, target_id)
@@ -729,8 +729,15 @@ func _next_world_environment(run_state: RunState, target_archetype_id: String, r
 	return result
 
 
-func _apply_scenario_authored_travel_targets(run_state: RunState, definition: Dictionary) -> void:
-	if run_state == null or definition.is_empty():
+func _apply_scenario_authored_travel_targets(run_state: RunState, node_id: String) -> void:
+	if run_state == null or node_id.is_empty():
+		return
+	var definition := _apply_scenario_pin_suppression(
+		run_state,
+		node_id,
+		run_state._seeded_scenario_definition_for_node_readonly(node_id)
+	)
+	if definition.is_empty():
 		return
 	var mutations := JsonCoerceScript._copy_dict(definition.get("mutations", {}))
 	var target_ids := JsonCoerceScript._raw_string_array(mutations.get("travel_hooks_add", []))
