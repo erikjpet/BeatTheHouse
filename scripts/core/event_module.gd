@@ -569,6 +569,12 @@ func apply_event_result(run_state: RunState, result: Dictionary) -> void:
 	# Consume its correlated scenario fact on that same boundary so an accepted
 	# choice cannot leave sequence aftermath pending until another player action.
 	run_state.scenario_flush_facts()
+	# The Audit roster's public promise is a direct Punchline lead. Apply it after
+	# scenario aftermath has flushed so the room reseal cannot discard the newly
+	# revealed map node before the player opens the travel surface.
+	if get_id() == "scenario_audit_roster" and str(result.get("choice_id", "")) == "read_the_shift":
+		run_state.add_next_archetypes(["small_underground_casino"])
+		run_state.store_current_world_node_environment()
 
 
 # Returns a no-op event result for invalid choices.
