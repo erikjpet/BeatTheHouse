@@ -1389,6 +1389,11 @@ func _v3_headless_surface_state(machine: Dictionary, run_state: RunState = null,
 		"surface_stake_controls_required": false,
 		"surface_animates_idle": true,
 		"surface_web_idle_animation_fps": WEB_SURFACE_ANIMATION_FPS,
+		# The renderer's retained layers are pixel-equivalent to the immediate
+		# painter and leave the moving platform/body batch live. Native builds
+		# use them too so an idle cabinet does not redraw its unchanged shell,
+		# backglass, playfield dressing, and controls every animation tick.
+		"coin_pusher_native_retained_layers": true,
 		"surface_realtime_state_refresh": true,
 		"surface_pointer_coalesce_moves": true,
 		"surface_embeds_outcomes": true,

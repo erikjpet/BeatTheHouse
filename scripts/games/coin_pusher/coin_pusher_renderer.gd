@@ -788,7 +788,7 @@ func draw_hardware_cache_layer(surface, state: Dictionary) -> void:
 
 
 func _prepare_hardware_cache(surface, state: Dictionary, consume_prepared: bool = true) -> bool:
-	if not OS.has_feature("web") and not bool(state.get("coin_pusher_static_cache_test", false)):
+	if not _retained_layer_cache_enabled(state):
 		if is_instance_valid(_hardware_cache_canvas):
 			_hardware_cache_canvas.visible = false
 		return false
@@ -885,7 +885,7 @@ func _prepare_static_cache(surface, state: Dictionary) -> bool:
 	# The cache contains only design-space commands whose complete dependencies
 	# are listed here. Moving platform/bodies, glass, hardware, hover/hit/control
 	# state and overlays remain on the live surface every draw.
-	if not OS.has_feature("web") and not bool(state.get("coin_pusher_static_cache_test", false)):
+	if not _retained_layer_cache_enabled(state):
 		_static_cache_fallback_reason = "non_web_runtime"
 		return false
 	var state_key := str(state.get("coin_pusher_static_content_key", "missing"))
@@ -982,6 +982,17 @@ func _prepare_static_cache(surface, state: Dictionary) -> bool:
 		return false
 	_static_cache_fallback_reason = ""
 	return true
+
+
+func _retained_layer_cache_enabled(state: Dictionary) -> bool:
+	if OS.has_feature("web"):
+		return true
+	# The cache contract explicitly supplies this override to compare the exact
+	# immediate and retained command streams. Keep that authority ahead of the
+	# production default so both paths remain independently provable.
+	if state.has("coin_pusher_static_cache_test"):
+		return bool(state.get("coin_pusher_static_cache_test", false))
+	return bool(state.get("coin_pusher_native_retained_layers", false))
 
 
 func _draw_static_cache_texture(surface, layer_index: int) -> void:
