@@ -2308,7 +2308,7 @@ function Open-OverflowWorldMapIfVisible {
         throw 'The visible More room actions launcher has no public button id.'
     }
     $null = Invoke-BridgeCommand -Command "click_button $launcherId" -Intent 'open the visible list of room actions'
-    Wait-Frames -Frames 2
+    Wait-Frames -Frames 12 -Intent 'let the visible room-action modal finish laying out'
     $mapButton = $null
     for ($attempt = 0; $attempt -le 48; $attempt++) {
         $mapButtons = @(Get-Buttons | Where-Object {
