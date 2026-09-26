@@ -9615,8 +9615,19 @@ func _apply_delivery_resolution(expected_receipt: Dictionary = {}, materialize_a
 	# replaces the active route. The earlier model callback records the completed
 	# setup fact, but cannot safely open the next route while the old one still
 	# owns delivery authority.
-	if run_id.begins_with("heist:"):
-		_crew_heist_boundary_sync()
+	var count_setup_tuning := JsonCoerceScript._copy_dict(CrewHeistModelScript.plan(CrewHeistModelScript.PLAN_COUNT).get("setup", {}))
+	if succeeded and bool(count_setup_tuning.get("chain_setup", false)):
+		var chained_result := {}
+		if run_id == "heist:%s:schedule" % CrewHeistModelScript.PLAN_COUNT:
+			chained_result = crew_heist_begin_count_swap_cart(_crew_heist_host_capability)
+		elif run_id == "heist:%s:swap_cart" % CrewHeistModelScript.PLAN_COUNT:
+			chained_result = crew_heist_begin_play(_crew_heist_host_capability)
+		if not chained_result.is_empty() and not bool(chained_result.get("ok", false)):
+			from_dict(rollback_run)
+			current_environment = rollback_environment
+			world_map = rollback_world_map
+			grand_casino_room_states = rollback_room_states
+			return {"ok": false, "errors": ["completed Count setup could not advance its chained next stage"]}
 	return {"ok": true, "public_result": public_result, "errors": []}
 
 
