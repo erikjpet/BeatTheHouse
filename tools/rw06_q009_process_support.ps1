@@ -543,8 +543,8 @@ public static class Q009ExactFileSystemNative {
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
     private static extern uint GetFinalPathNameByHandle(SafeFileHandle handle, System.Text.StringBuilder path, uint length, uint flags);
 
-    private enum NativeHandleState { OPEN, CLOSE_IN_PROGRESS, CLOSED_NATIVE_SUCCESS, CLOSE_FAILED_HANDLE_RETAINED, UNKNOWN }
-    private sealed class CheckedNativeHandle {
+    internal enum NativeHandleState { OPEN, CLOSE_IN_PROGRESS, CLOSED_NATIVE_SUCCESS, CLOSE_FAILED_HANDLE_RETAINED, UNKNOWN }
+    internal sealed class CheckedNativeHandle {
         internal IntPtr Raw;
         internal bool Acquired;
         internal NativeHandleState State;
