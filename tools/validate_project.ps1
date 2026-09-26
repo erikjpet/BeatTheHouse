@@ -2998,7 +2998,10 @@ Write-Output "RW06_1_INDEPENDENT_ADMISSION_PASS report=$ReportPath cases=$($case
         if (-not [string]::IsNullOrWhiteSpace($shadowCleanupError)) {
             $cleanupFailure = [InvalidOperationException]::new('rw06_1 validator exact shadow cleanup failed: ' + $shadowCleanupError)
             if ($null -eq $exactSeedInnerFailure) { $exactSeedInnerFailure = $cleanupFailure }
-            else { $exactSeedInnerFailure = [AggregateException]::new('rw06_1 validator inner failure plus exact shadow cleanup failure', @($exactSeedInnerFailure,$cleanupFailure)) }
+            else {
+                $aggregateMessage = 'rw06_1 validator inner failure: ' + $exactSeedInnerFailure.Message + ' | exact shadow cleanup failure: ' + $cleanupFailure.Message
+                $exactSeedInnerFailure = [AggregateException]::new($aggregateMessage, @($exactSeedInnerFailure,$cleanupFailure))
+            }
         }
     }
     $exactSeedPostFileCensus = Get-Rw061ValidatorFileIdentityCensus $exactSeedBoundPaths
