@@ -2554,19 +2554,19 @@ func _check_crew_favor_conversation(app: Control) -> bool:
 		push_error("Crew favor did not use normal travel and RunGenerator for its marked destination: %s" % JSON.stringify(generated_environment))
 		return false
 	var mounted_handoff_owner := run_state.world_sequence_mounted_owner_for_channel("delivery_handoff", target_id)
-	var handoff_marker_visible := false
+	var abstract_handoff_marker_visible := false
 	var delivery_contact: Dictionary = {}
 	for object_value in app.call("_interactable_object_view_list"):
 		if typeof(object_value) != TYPE_DICTIONARY:
 			continue
 		var object_data := object_value as Dictionary
-		if str(object_data.get("object_id", "")) == "crew::package_handoff":
-			handoff_marker_visible = true
+		if str(object_data.get("object_id", "")) == "crew::package_handoff" and not bool(object_data.get("delivery_contact", false)):
+			abstract_handoff_marker_visible = true
 		if bool(object_data.get("delivery_contact", false)) and str(object_data.get("world_sequence_owner_token", "")) == mounted_handoff_owner:
 			delivery_contact = object_data
 	var arrival_interaction := run_state.delivery_arrival_interaction()
 	var contact_actions: Array = delivery_contact.get("scenario_sequence_actions", []) if typeof(delivery_contact.get("scenario_sequence_actions", [])) == TYPE_ARRAY else []
-	if mounted_handoff_owner.is_empty() or str(arrival_interaction.get("node_id", "")) != target_id or handoff_marker_visible \
+	if mounted_handoff_owner.is_empty() or str(arrival_interaction.get("node_id", "")) != target_id or abstract_handoff_marker_visible \
 			or delivery_contact.is_empty() or contact_actions.is_empty() \
 			or str((contact_actions[0] as Dictionary).get("label", "")) != "Hand Over The Package":
 		push_error("Delivery arrival did not attach its owner-scoped handoff dialogue option to a destination person: active=%s delivery=%s owner=%s interaction=%s contact=%s objects=%s" % [str(run_state.delivery_has_active_run()), JSON.stringify(run_state.delivery_snapshot()), mounted_handoff_owner, JSON.stringify(arrival_interaction), JSON.stringify(delivery_contact), JSON.stringify(app.call("_interactable_object_view_list"))])
