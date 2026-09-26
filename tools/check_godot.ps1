@@ -10,6 +10,7 @@ param(
     [switch]$ExhaustiveParse,
     [string]$FoundationSuite = "",
     [string]$FoundationShard = "",
+    [string]$StandaloneContract = "",
     [switch]$AllowConcurrentGodot,
     [switch]$PostLand,
     [string]$ExpectedMain = "",
@@ -24,6 +25,7 @@ $root = Split-Path -Parent $PSScriptRoot
 $suiteKey = $Suite.ToLowerInvariant()
 $foundationSuiteKey = $FoundationSuite.Trim().ToLowerInvariant()
 $foundationShardKey = $FoundationShard.Trim()
+$standaloneContractKey = $StandaloneContract.Trim()
 $script:StrictObjectDbLeakStageNames = @(
     "standalone_contract_fixsweep06_1_accessibility_contract",
     "standalone_contract_rw06_1_overflow_action_ui_contract"
@@ -85,6 +87,14 @@ elseif ($foundationSuiteKey -eq "full") {
 }
 if (-not [string]::IsNullOrWhiteSpace($foundationShardKey) -and $foundationSuiteKey -notin @("systems", "contracts")) {
     throw "FoundationShard requires FoundationSuite systems or contracts."
+}
+if (-not [string]::IsNullOrWhiteSpace($standaloneContractKey)) {
+    if ($foundationSuiteKey -ne "contracts") {
+        throw "StandaloneContract requires FoundationSuite contracts."
+    }
+    if (-not [string]::IsNullOrWhiteSpace($foundationShardKey)) {
+        throw "StandaloneContract and FoundationShard select different isolated Contract stages and cannot be combined."
+    }
 }
 
 function Get-ProjectRelativePath {
@@ -903,6 +913,7 @@ function Get-StandaloneContractScripts {
 }
 
 function Invoke-StandaloneContracts {
+    param([string]$ContractName = "")
     $oldDistributionBuild = $env:BTH_DISTRIBUTION_BUILD
     $oldDistributionRoot = $env:BTH_DISTRIBUTION_DATA_ROOT
     $oldProfilePath = $env:BTH_PROFILE_INVENTORY_PATH
@@ -910,7 +921,16 @@ function Invoke-StandaloneContracts {
     $oldSettingsPath = $env:BTH_USER_SETTINGS_PATH
     $oldDeveloperPlacementPath = $env:BTH_DEVELOPER_PLACEMENT_PATH
     try {
-        foreach ($resourcePath in @(Get-StandaloneContractScripts)) {
+        $resourcePaths = @(Get-StandaloneContractScripts)
+        if (-not [string]::IsNullOrWhiteSpace($ContractName)) {
+            $resourcePaths = @($resourcePaths | Where-Object {
+                [System.IO.Path]::GetFileNameWithoutExtension($_) -eq $ContractName
+            })
+            if ($resourcePaths.Count -ne 1) {
+                throw "Unknown or ambiguous standalone Contract '$ContractName'. Valid contracts: $(@(Get-StandaloneContractScripts | ForEach-Object { [System.IO.Path]::GetFileNameWithoutExtension($_) }) -join ', ')."
+            }
+        }
+        foreach ($resourcePath in $resourcePaths) {
             $contractName = [System.IO.Path]::GetFileNameWithoutExtension($resourcePath)
             $stageName = "standalone_contract_" + $contractName
             $stageUserRoot = Join-Path $script:ReportRoot ("standalone_user_data\" + $contractName)
@@ -1477,10 +1497,15 @@ if (-not [string]::IsNullOrWhiteSpace($foundationSuiteKey)) {
         Invoke-GodotScript -Name "ui05_design_system" -ScriptPath "res://scripts/tests/ui05_design_system_check.gd" -StageTimeoutSec 120
     }
     elseif ($foundationSuiteKey -eq "systems" -or $foundationSuiteKey -eq "contracts") {
-        if ($foundationSuiteKey -eq "contracts" -and [string]::IsNullOrWhiteSpace($foundationShardKey)) {
-            Invoke-StandaloneContracts
+        if (-not [string]::IsNullOrWhiteSpace($standaloneContractKey)) {
+            Invoke-StandaloneContracts -ContractName $standaloneContractKey
         }
-        Invoke-FoundationSystemsSharded -FoundationSuite $foundationSuiteKey -ShardId $foundationShardKey -StageTimeoutSec (Get-StageTimeout ("foundation_{0}" -f $foundationSuiteKey)) | Out-Null
+        else {
+            if ($foundationSuiteKey -eq "contracts" -and [string]::IsNullOrWhiteSpace($foundationShardKey)) {
+                Invoke-StandaloneContracts
+            }
+            Invoke-FoundationSystemsSharded -FoundationSuite $foundationSuiteKey -ShardId $foundationShardKey -StageTimeoutSec (Get-StageTimeout ("foundation_{0}" -f $foundationSuiteKey)) | Out-Null
+        }
     }
     else {
         Invoke-FoundationSuite -FoundationSuite $foundationSuiteKey -StageTimeoutSec (Get-StageTimeout ("foundation_{0}" -f $foundationSuiteKey))
