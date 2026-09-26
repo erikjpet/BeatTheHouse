@@ -137,7 +137,7 @@ namespace BeatTheHouse.Rw061 {
     }
     [DllImport("kernel32.dll", SetLastError=true)] private static extern bool GetFileInformationByHandle(SafeFileHandle handle,out BY_HANDLE_FILE_INFORMATION info);
     [DllImport("kernel32.dll", CharSet=CharSet.Unicode, SetLastError=true)] private static extern uint GetFinalPathNameByHandle(SafeFileHandle handle,StringBuilder path,uint length,uint flags);
-    private static long Ticks(FILETIME value){return unchecked((long)(((ulong)value.High<<32)|value.Low));}
+    private static long Ticks(FILETIME value){long raw=unchecked((long)(((ulong)value.High<<32)|value.Low));return DateTime.FromFileTimeUtc(raw).Ticks;}
     private static string FinalPath(SafeFileHandle handle){var path=new StringBuilder(32768);uint n=GetFinalPathNameByHandle(handle,path,(uint)path.Capacity,0u);if(n==0||n>=(uint)path.Capacity)throw new Win32Exception(Marshal.GetLastWin32Error(),"validator pin final-path proof failed");string value=path.ToString();if(value.StartsWith(@"\\?\UNC\",StringComparison.OrdinalIgnoreCase))return @"\\"+value.Substring(8);if(value.StartsWith(@"\\?\",StringComparison.OrdinalIgnoreCase))return value.Substring(4);return value;}
     public static string[] Describe(SafeFileHandle handle){if(handle==null||handle.IsInvalid||handle.IsClosed)throw new ArgumentException("validator pin handle is not live");BY_HANDLE_FILE_INFORMATION info;if(!GetFileInformationByHandle(handle,out info))throw new Win32Exception(Marshal.GetLastWin32Error(),"validator pin native identity proof failed");long length=unchecked((long)(((ulong)info.FileSizeHigh<<32)|info.FileSizeLow));return new[]{FinalPath(handle),info.VolumeSerialNumber.ToString("X8")+":"+(((ulong)info.FileIndexHigh<<32)|info.FileIndexLow).ToString("X16"),Ticks(info.CreationTime).ToString(),info.FileAttributes.ToString(),length.ToString()};}
   }
@@ -198,6 +198,30 @@ function Close-Rw061ValidatorReadPin {
     $Pin.stream.Dispose()
 }
 
+function Close-Rw061ValidatorShadowReadPins {
+    param([AllowNull()][System.Collections.Generic.List[object]]$ReadPins)
+    if ($null -eq $ReadPins) { return }
+    $closeErrors = [System.Collections.Generic.List[string]]::new()
+    for ($index = $ReadPins.Count - 1; $index -ge 0; $index -= 1) {
+        $pin = $ReadPins[$index]
+        try {
+            [void](Get-Rw061ValidatorReadPinReceipt $pin)
+            $safeHandle = $pin.stream.SafeFileHandle
+            Close-Rw061ValidatorReadPin $pin
+            if (-not $safeHandle.IsClosed) {
+                throw "Validator shadow read pin remained open after disposal: $($pin.path)"
+            }
+            $ReadPins.RemoveAt($index)
+        }
+        catch {
+            [void]$closeErrors.Add($_.Exception.Message)
+        }
+    }
+    if ($closeErrors.Count -ne 0) {
+        throw "Validator shadow read-pin release failed: $($closeErrors -join ' | ')"
+    }
+}
+
 function Get-Rw061ValidatorReadPinReceipt {
     param([object]$Pin)
     if ($null -eq $Pin -or $null -eq $Pin.stream -or $Pin.stream.SafeFileHandle.IsClosed -or $Pin.stream.SafeFileHandle.IsInvalid) {
@@ -229,13 +253,49 @@ function New-Rw061ValidatorShadowFile {
         [object]$RootReceipt,
         [string]$Path,
         [string]$Slot,
-        [byte[]]$Bytes
+        [byte[]]$Bytes,
+        [System.Collections.Generic.List[object]]$ReadPins
     )
     $receipt = New-Q009ExactOwnedFileHeld -Path $Path -Payload $Bytes -CustodyCell $CustodyCell -ParentSlot 'root_creation' -Slot $Slot -ExpectedParentIdentity $RootReceipt.identity
     if ($receipt.path -cne [IO.Path]::GetFullPath($Path) -or $receipt.handle_state -cne 'OPEN') {
         throw "Validator shadow file did not return exact held custody: $Path"
     }
-    return $receipt
+    # The native creation handle necessarily has write access. Keeping it live
+    # makes a child read pin fail Windows' symmetric share check even though
+    # the creation handle grants FILE_SHARE_READ. Transition immediately to a
+    # read-only FileShare.Read pin, rechecking the same native identity, length,
+    # and bytes before the shadow is exposed to any child. The bounded
+    # close/reopen boundary fails closed on replacement or a competing writer.
+    [void](Close-Q009CheckedNativeHandle $CustodyCell $Slot "Validator shadow creation handoff $Slot")
+    $readPin = $null
+    try {
+        $readPin = Open-Rw061ValidatorReadPin $Path
+        $pinReceipt = Get-Rw061ValidatorReadPinReceipt $readPin
+        if ([string]$pinReceipt.identity.key -cne [string]$receipt.identity.key -or
+                [long]$pinReceipt.length -ne [long]$receipt.payload_length -or
+                [string]$pinReceipt.sha256 -cne [string]$receipt.payload_sha256) {
+            throw "Validator shadow read-only handoff changed identity or bytes: $Path"
+        }
+        [void]$ReadPins.Add($readPin)
+        $readPin = $null
+        return [ordered]@{
+            path = [string]$receipt.path
+            identity = $pinReceipt.identity
+            creation_method = [string]$receipt.creation_method
+            payload_sha256 = [string]$receipt.payload_sha256
+            payload_length = [int]$receipt.payload_length
+            creation_handle_slot = [string]$Slot
+            creation_handle_state = 'CLOSED'
+            authority_kind = 'VALIDATOR_READ_PIN'
+            read_pin_held = [bool]$true
+            share_read = [bool]$true
+            share_write = [bool]$false
+            share_delete = [bool]$false
+        }
+    }
+    finally {
+        if ($null -ne $readPin) { Close-Rw061ValidatorReadPin $readPin }
+    }
 }
 
 function Open-Rw061ValidatorShadowArtifact {
@@ -306,11 +366,37 @@ function Assert-Rw061ValidatorShadowMembers {
     }
 }
 
+function Test-Rw061CodexHostTelemetryProcess {
+    param([Diagnostics.Process]$Process)
+    if ($null -eq $Process -or $Process.ProcessName -cne 'powershell') { return $false }
+    $native = Get-CimInstance Win32_Process -Filter ("ProcessId={0}" -f [int]$Process.Id) -ErrorAction SilentlyContinue
+    if ($null -eq $native -or [string]$native.Name -cne 'powershell.exe') { return $false }
+    $command = [string]$native.CommandLine
+    if (-not $command.Contains('powershell.exe -NoProfile -NonInteractive -Command') -or
+            -not $command.Contains('Get-CimInstance Win32_PerfFormattedData_PerfProc_Process') -or
+            -not $command.Contains('Get-CimInstance Win32_Process -Filter') -or
+            -not $command.Contains("Name='CpuPercent'") -or
+            -not $command.Contains("Name='AgeSeconds'") -or
+            -not $command.Contains('ConvertTo-Json -Depth 2')) {
+        return $false
+    }
+    $parent = Get-CimInstance Win32_Process -Filter ("ProcessId={0}" -f [int]$native.ParentProcessId) -ErrorAction SilentlyContinue
+    if ($null -eq $parent -or [string]$parent.Name -cne 'ChatGPT (Beta).exe') { return $false }
+    $parentPath = [string]$parent.ExecutablePath
+    return $parentPath.Contains('\WindowsApps\OpenAI.CodexBeta_') -and
+        $parentPath.EndsWith('\app\ChatGPT (Beta).exe', [StringComparison]::OrdinalIgnoreCase)
+}
+
 function Get-Rw061ValidatorProcessCensus {
     $names = @('powershell','pwsh','python','python3','Godot_v4.6-stable_win64_console','Godot_v4.6-stable_win64')
     $records = [System.Collections.Generic.List[object]]::new()
     foreach ($process in @(Get-Process -ErrorAction Stop | Where-Object { $names -contains $_.ProcessName })) {
         try {
+            # Codex desktop samples machine resource usage in a short-lived,
+            # non-project PowerShell child during long tool calls. Authenticate
+            # that exact host-owned command and parent before excluding it; all
+            # validator/project shells remain part of the unchanged census.
+            if (Test-Rw061CodexHostTelemetryProcess $process) { continue }
             $start = $process.StartTime.ToUniversalTime()
             [void]$records.Add([ordered]@{
                 pid = [int]$process.Id
@@ -2297,6 +2383,7 @@ try {
     $exactSeedPowerShellPin = $null
     $exactSeedDependencyPins = [ordered]@{}
     $exactSeedDependencyPinReceipts = [ordered]@{}
+    $exactSeedShadowReadPins = [System.Collections.Generic.List[object]]::new()
     $exactSeedHeldGitBlobs = [ordered]@{}
     $exactSeedShadowCell = $null
     $exactSeedShadowRootReceipt = $null
@@ -2490,14 +2577,14 @@ try {
     }
     Assert-Rw061ValidatorShadowMembers $exactSeedShadowRoot @()
     $exactSeedShadowChain = New-Q009OwnedChildManifestChainHead -RootPath $exactSeedShadowRoot -RootIdentity $exactSeedShadowRootReceipt.identity -AttemptId $exactSeedAttemptId -Boundary 'held-shadow-root-empty' -OwnerKind validator_shadow -OwnerReceipt $exactSeedShadowRootReceipt
-    $shadowSupportReceipt = New-Rw061ValidatorShadowFile $exactSeedShadowCell $exactSeedShadowRootReceipt $exactSeedSupport 'shadow_support' ([byte[]]$exactSeedSupportPin.bytes)
+    $shadowSupportReceipt = New-Rw061ValidatorShadowFile $exactSeedShadowCell $exactSeedShadowRootReceipt $exactSeedSupport 'shadow_support' ([byte[]]$exactSeedSupportPin.bytes) $exactSeedShadowReadPins
     if ([string]$shadowSupportReceipt.payload_sha256 -cne [string]$exactSeedSupportPinReceipt.sha256 -or [int]$shadowSupportReceipt.payload_length -ne [long]$exactSeedSupportPinReceipt.length) {
         throw 'held support shadow did not remain byte-identical to its no-write/no-delete source pin'
     }
     [void]$exactSeedShadowMembers.Add([IO.Path]::GetFileName($exactSeedSupport))
     Assert-Rw061ValidatorShadowMembers $exactSeedShadowRoot @($exactSeedShadowMembers)
     $exactSeedShadowChain = New-Q009OwnedChildManifestChainHead -RootPath $exactSeedShadowRoot -RootIdentity $exactSeedShadowRootReceipt.identity -AttemptId $exactSeedAttemptId -Boundary 'held-shadow-support' -OwnerKind validator_shadow -OwnerReceipt $shadowSupportReceipt -PreviousHead $exactSeedShadowChain
-    $shadowLauncherReceipt = New-Rw061ValidatorShadowFile $exactSeedShadowCell $exactSeedShadowRootReceipt $exactSeedLauncher 'shadow_launcher' ([byte[]]$exactSeedLauncherPin.bytes)
+    $shadowLauncherReceipt = New-Rw061ValidatorShadowFile $exactSeedShadowCell $exactSeedShadowRootReceipt $exactSeedLauncher 'shadow_launcher' ([byte[]]$exactSeedLauncherPin.bytes) $exactSeedShadowReadPins
     if ([string]$shadowLauncherReceipt.payload_sha256 -cne [string]$exactSeedLauncherPinReceipt.sha256 -or [int]$shadowLauncherReceipt.payload_length -ne [long]$exactSeedLauncherPinReceipt.length) {
         throw 'held launcher shadow did not remain byte-identical to its no-write/no-delete source pin'
     }
@@ -2578,7 +2665,7 @@ try {
         }
         $ambientShadowPath = Join-Path $exactSeedShadowRoot "powershell.cmd"
         $ambientShadowBytes = [Text.ASCIIEncoding]::new().GetBytes("@echo AMBIENT_POWERSHELL_SHADOW_INVOKED`r`n@exit /b 97`r`n")
-        $ambientShadowReceipt = New-Rw061ValidatorShadowFile $exactSeedShadowCell $exactSeedShadowRootReceipt $ambientShadowPath 'ambient_powershell_shadow' $ambientShadowBytes
+        $ambientShadowReceipt = New-Rw061ValidatorShadowFile $exactSeedShadowCell $exactSeedShadowRootReceipt $ambientShadowPath 'ambient_powershell_shadow' $ambientShadowBytes $exactSeedShadowReadPins
         [void]$exactSeedShadowMembers.Add([IO.Path]::GetFileName($ambientShadowPath))
         Assert-Rw061ValidatorShadowMembers $exactSeedShadowRoot @($exactSeedShadowMembers)
         $exactSeedShadowOwnerReceipt = [ordered]@{
@@ -2822,7 +2909,7 @@ $report=[ordered]@{tool='rw06_1_validator_independent_admission_hostiles';schema
 Write-Output "RW06_1_INDEPENDENT_ADMISSION_PASS report=$ReportPath cases=$($cases.Count)"
 '@
         $independentDriverBytes = [Text.UTF8Encoding]::new($false).GetBytes($independentDriverSource)
-        $exactSeedIndependentDriverReceipt = New-Rw061ValidatorShadowFile $exactSeedShadowCell $exactSeedShadowRootReceipt $exactSeedIndependentDriver 'independent_driver' $independentDriverBytes
+        $exactSeedIndependentDriverReceipt = New-Rw061ValidatorShadowFile $exactSeedShadowCell $exactSeedShadowRootReceipt $exactSeedIndependentDriver 'independent_driver' $independentDriverBytes $exactSeedShadowReadPins
         [void]$exactSeedShadowMembers.Add([IO.Path]::GetFileName($exactSeedIndependentDriver))
         Assert-Rw061ValidatorShadowMembers $exactSeedShadowRoot @($exactSeedShadowMembers)
         $exactSeedShadowChain = New-Q009OwnedChildManifestChainHead -RootPath $exactSeedShadowRoot -RootIdentity $exactSeedShadowRootReceipt.identity -AttemptId $exactSeedAttemptId -Boundary 'independent-driver-held' -OwnerKind validator_shadow -OwnerReceipt $exactSeedIndependentDriverReceipt -PreviousHead $exactSeedShadowChain
@@ -2883,6 +2970,7 @@ Write-Output "RW06_1_INDEPENDENT_ADMISSION_PASS report=$ReportPath cases=$($case
         $shadowCleanupError = ''
         if ($null -ne $exactSeedShadowCell) {
             try {
+                Close-Rw061ValidatorShadowReadPins $exactSeedShadowReadPins
                 $shadowRelease = Close-Q009AllOpenNativeHandles $exactSeedShadowCell 'rw06_1 validator shadow terminal handle release'
                 if (-not [bool]$shadowRelease.all_terminal -or @($shadowRelease.errors).Count -ne 0 -or @($shadowRelease.nonterminal_slots).Count -ne 0) {
                     throw 'validator shadow handles did not all close with checked native success'
@@ -2934,6 +3022,7 @@ finally {
     # retained and reported instead of being adopted or removed by pathname.
     if ($null -ne $exactSeedShadowCell -and $null -ne $exactSeedShadowRootReceipt -and (Test-Path -LiteralPath $exactSeedShadowRoot)) {
         try {
+            Close-Rw061ValidatorShadowReadPins $exactSeedShadowReadPins
             $fallbackRelease = Close-Q009AllOpenNativeHandles $exactSeedShadowCell 'rw06_1 validator outer fallback handle release'
             if (-not [bool]$fallbackRelease.all_terminal -or @($fallbackRelease.errors).Count -ne 0 -or @($fallbackRelease.nonterminal_slots).Count -ne 0) {
                 throw 'outer fallback did not close every exact shadow handle'
