@@ -4088,7 +4088,7 @@ func _run_main_flow(app: Control) -> void:
 		return
 	var project_version := str(ProjectSettings.get_setting("application/config/version", "")).strip_edges()
 	var rendered_version := str(first_menu_snapshot.get("release_version_text", "")).strip_edges()
-	if project_version != "0.5.1" or rendered_version != "Version %s" % BuildIdentityScript.display_version():
+	if project_version != BuildIdentityScript.DEVELOPMENT_VERSION or rendered_version != "Version %s" % BuildIdentityScript.display_version():
 		push_error("Development identity boundary diverged: rendered=%s identity=%s retained_project=%s." % [rendered_version, BuildIdentityScript.display_version(), project_version])
 		quit(1)
 		return

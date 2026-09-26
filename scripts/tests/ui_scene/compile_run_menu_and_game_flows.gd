@@ -1398,12 +1398,12 @@ func _check_onboarding_tutorial_ui_flow(app: Control) -> bool:
 	var underground_choice: Dictionary = app.call("_travel_choice", "small_underground_casino")
 	var apartment_choice: Dictionary = app.call("_travel_choice", "apartment")
 	var corner_store_choice: Dictionary = app.call("_travel_choice", "corner_store")
-	if gas_departure_targets.size() != 3 \
-			or not gas_departure_targets.has("small_underground_casino") or not gas_departure_targets.has("apartment") or not gas_departure_targets.has("corner_store") \
+	if gas_departure_targets.size() != 2 \
+			or not gas_departure_targets.has("small_underground_casino") or not gas_departure_targets.has("corner_store") \
+			or not apartment_choice.is_empty() \
 			or underground_choice.is_empty() or not bool(underground_choice.get("enabled", false)) \
-			or apartment_choice.is_empty() or not bool(apartment_choice.get("enabled", false)) \
 			or corner_store_choice.is_empty() or not bool(corner_store_choice.get("enabled", false)):
-		push_error("The Path A departure map did not expose Underground plus both visited return routes: targets=%s underground=%s apartment=%s corner=%s." % [str(gas_departure_targets), str(underground_choice), str(apartment_choice), str(corner_store_choice)])
+		push_error("The Path A departure map did not expose Underground plus its reachable visited Corner Store return inside the capped route list: targets=%s underground=%s apartment=%s corner=%s." % [str(gas_departure_targets), str(underground_choice), str(apartment_choice), str(corner_store_choice)])
 		return false
 	app.call("open_world_map")
 	for _frame in range(24):
