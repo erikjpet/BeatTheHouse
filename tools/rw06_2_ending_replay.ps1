@@ -2308,7 +2308,7 @@ function Open-OverflowWorldMapIfVisible {
         throw 'The visible More room actions launcher has no public button id.'
     }
     $null = Invoke-BridgeCommand -Command "click_button $launcherId" -Intent 'open the visible list of room actions'
-    Wait-Frames -Frames 12 -Intent 'let the visible room-action modal finish laying out'
+    Wait-Frames -Frames 2
     $mapButton = $null
     for ($attempt = 0; $attempt -le 48; $attempt++) {
         $mapButtons = @(Get-Buttons | Where-Object {
@@ -2338,18 +2338,6 @@ function Open-OverflowWorldMapIfVisible {
         $roomSurface = @($surfaces | Where-Object {
             [string](Get-Value $_ @('id') '') -ceq 'room_actions'
         })
-        if ($roomSurface.Count -ceq 0 -and $matches.Count -ceq 1) {
-            # A fixed modal grid has no scroll container. Its first row can sit
-            # against the overlay header and report partially clipped even
-            # though the exact enabled button remains public. Use that
-            # authenticated row directly.
-            $enabled = Get-Value $matches[0] @('enabled') $null
-            $buttonId = [string](Get-Value $matches[0] @('id') '')
-            if ($enabled -is [bool] -and [bool]$enabled -and
-                -not [string]::IsNullOrWhiteSpace($buttonId)) {
-                return Invoke-BridgeCommand -Command "click_button $buttonId" -Intent $Intent
-            }
-        }
         if ($roomSurface.Count -cne 1) {
             throw "Expected exactly one visible room-actions scroll surface; found $($roomSurface.Count)."
         }
@@ -2404,7 +2392,7 @@ function Invoke-OverflowRoomActionButton {
         throw 'The visible More room actions launcher has no public button id.'
     }
     $null = Invoke-BridgeCommand -Command "click_button $launcherId" -Intent 'open the visible list of room actions'
-    Wait-Frames -Frames 2
+    Wait-Frames -Frames 12 -Intent 'let the visible room-action modal finish laying out'
 
     # The overlay normally opens at its top, but it may retain a prior scroll
     # offset. Search to the bottom first, then reverse once if necessary.
@@ -2443,6 +2431,18 @@ function Invoke-OverflowRoomActionButton {
         $roomSurface = @($surfaces | Where-Object {
             [string](Get-Value $_ @('id') '') -ceq 'room_actions'
         })
+        if ($roomSurface.Count -ceq 0 -and $matches.Count -ceq 1) {
+            # A fixed modal grid has no scroll container. Its first row can sit
+            # against the overlay header and report partially clipped even
+            # though the exact enabled button remains public. Use that
+            # authenticated row directly.
+            $enabled = Get-Value $matches[0] @('enabled') $null
+            $buttonId = [string](Get-Value $matches[0] @('id') '')
+            if ($enabled -is [bool] -and [bool]$enabled -and
+                -not [string]::IsNullOrWhiteSpace($buttonId)) {
+                return Invoke-BridgeCommand -Command "click_button $buttonId" -Intent $Intent
+            }
+        }
         if ($roomSurface.Count -cne 1) {
             throw "Expected exactly one visible room-actions scroll surface; found $($roomSurface.Count)."
         }
