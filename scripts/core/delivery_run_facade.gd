@@ -579,7 +579,7 @@ func _delivery_resolve_targets(spec: Dictionary) -> Dictionary:
 		return {"ok": false, "message": "The job has no complete real route tonight."}
 	var allows_origin_return = str(spec.get("mode", "")) == DeliveryRunModelScript.MODE_MULTI_STOP \
 		and chosen_ids.size() > 1 and str(chosen_ids[chosen_ids.size() - 1]) == origin_id
-	var allows_origin_target := allows_origin_return or allows_origin_room_target
+	var allows_origin_target: bool = allows_origin_return or allows_origin_room_target
 	var reveal_ids: Array = []
 	var targets: Array = []
 	for node_id_value in chosen_ids:
