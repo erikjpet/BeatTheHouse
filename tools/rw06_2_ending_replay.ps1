@@ -2876,7 +2876,14 @@ function Complete-PublicDelivery {
         if ($null -cne (Find-Button -Text 'Hold Sightline')) {
             $null = Click-Button -Text 'Hold Sightline' -Intent "${Intent}: hold the marked sightline"
             Wait-Frames -Frames 8
-            if ($StopAfterResolution) { return }
+            if ($StopAfterResolution) {
+                $remainingHold = @(Get-Array (Get-Value $script:LastObservation @('spatial', 'objects') @()) | Where-Object {
+                    [string](Get-Value $_ @('object_id') '') -ceq "delivery:wait:$currentNodeId" -and
+                    [bool](Get-Value $_ @('visible') $false) -and
+                    [bool](Get-Value $_ @('enabled') $false)
+                })
+                if ($null -ceq (Find-Button -Text 'Hold Sightline') -and $remainingHold.Count -ceq 0) { return }
+            }
             continue
         }
         if ($null -cne (Find-Button -Text 'Send Signal')) {
@@ -2909,7 +2916,15 @@ function Complete-PublicDelivery {
                 -ButtonText "$([string]$deliveryAction.Label): $([string]$deliveryAction.Label)" `
                 -Intent ([string]$deliveryAction.Intent)
             Wait-Frames -Frames 8
-            if ($StopAfterResolution) { return }
+            if ($StopAfterResolution -and [string]$deliveryAction.Verb -ceq 'wait') {
+                $remainingHold = @(Get-Array (Get-Value $script:LastObservation @('spatial', 'objects') @()) | Where-Object {
+                    [string](Get-Value $_ @('object_id') '') -ceq $objectId -and
+                    [bool](Get-Value $_ @('visible') $false) -and
+                    [bool](Get-Value $_ @('enabled') $false)
+                })
+                if ($remainingHold.Count -ceq 0) { return }
+            }
+            elseif ($StopAfterResolution) { return }
             $overflowDeliveryHandled = $true
             break
         }
