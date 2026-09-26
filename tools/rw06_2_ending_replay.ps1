@@ -2582,6 +2582,7 @@ function Travel-ToNode {
     if ($arrived -cne $NodeId) {
         throw "Travel to '$NodeId' resolved at '$arrived'."
     }
+    if (Test-PublicTerminalSurface) { return }
     Clear-VisibleCoach
     Assert-DeltaQueenBeachRouteInvariant
 }
@@ -2793,7 +2794,8 @@ function Resolve-VisibleBlockingPresentation {
 function Complete-PublicDelivery {
     param(
         [Parameter(Mandatory = $true)][string]$Intent,
-        [ValidateSet('', 'main', 'cage')][string]$GrandRoom = ''
+        [ValidateSet('', 'main', 'cage')][string]$GrandRoom = '',
+        [switch]$StopAfterResolution
     )
     Wait-Frames -Frames 8
     Resolve-VisibleBlockingPresentation -Context $Intent
@@ -2835,6 +2837,7 @@ function Complete-PublicDelivery {
             $null = Open-SemanticObject -SemanticId $handoffId -Intent "${Intent}: make the visible handoff"
             Wait-Frames -Frames 12
             Resolve-VisibleBlockingPresentation -Context $Intent
+            if ($StopAfterResolution) { return }
             $remainingTarget = Get-DeliveryTargetNodeId
             if ([string]::IsNullOrWhiteSpace($remainingTarget)) { return }
             if ($remainingTarget -ceq $targetId -and
@@ -2862,6 +2865,7 @@ function Complete-PublicDelivery {
                 -Intent "${Intent}: hand the package to the visible room contact"
             Wait-Frames -Frames 12
             Resolve-VisibleBlockingPresentation -Context $Intent
+            if ($StopAfterResolution) { return }
             $remainingTarget = Get-DeliveryTargetNodeId
             if ([string]::IsNullOrWhiteSpace($remainingTarget)) { return }
             if ($remainingTarget -ceq $targetId) {
@@ -2872,6 +2876,7 @@ function Complete-PublicDelivery {
         if ($null -cne (Find-Button -Text 'Hold Sightline')) {
             $null = Click-Button -Text 'Hold Sightline' -Intent "${Intent}: hold the marked sightline"
             Wait-Frames -Frames 8
+            if ($StopAfterResolution) { return }
             continue
         }
         if ($null -cne (Find-Button -Text 'Send Signal')) {
@@ -2904,6 +2909,7 @@ function Complete-PublicDelivery {
                 -ButtonText "$([string]$deliveryAction.Label): $([string]$deliveryAction.Label)" `
                 -Intent ([string]$deliveryAction.Intent)
             Wait-Frames -Frames 8
+            if ($StopAfterResolution) { return }
             $overflowDeliveryHandled = $true
             break
         }
@@ -6690,20 +6696,8 @@ function Invoke-HeistEndingRoute {
     $null = Enter-PunchlineBackRoom
     Invoke-EventObjectChoice -EventId 'crew_planning_table' -ChoiceId 'count_schedule' -Intent 'start the visible Cage schedule watch'
     Close-VisibleChoiceSurface
-    Complete-PublicDelivery -Intent 'complete The Count schedule hold at the Cage' -GrandRoom cage
-
-    $null = Enter-PunchlineBackRoom
-    Invoke-EventObjectChoice -EventId 'crew_planning_table' -ChoiceId 'count_cart' -Intent 'start the visible swap-cart route'
-    Close-VisibleChoiceSurface
-    Complete-PublicDelivery -Intent 'move The Count swap cart to Grand Casino Main' -GrandRoom main
-
-    $null = Enter-PunchlineBackRoom
-    if (-not (Test-EventObjectChoiceEnabled -EventId 'crew_planning_table' -ChoiceId 'begin_play')) {
-        throw 'All public Count setup beats completed, but Begin the Play remains disabled.'
-    }
-    Close-VisibleChoiceSurface
-    Invoke-EventObjectChoice -EventId 'crew_planning_table' -ChoiceId 'begin_play' -Intent 'begin The Count from the visible completed setup'
-    Close-VisibleChoiceSurface
+    Complete-PublicDelivery -Intent 'complete The Count schedule hold at the Cage' -GrandRoom cage -StopAfterResolution
+    Complete-PublicDelivery -Intent 'move The Count chained swap cart to Grand Casino Main' -GrandRoom main -StopAfterResolution
 
     Reach-GrandCasino
     Enter-GrandRoom -Room main

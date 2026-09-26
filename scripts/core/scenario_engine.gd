@@ -26,6 +26,7 @@ const ALLOWED_MUTATION_KEYS := [
 	"staff_set",
 	"event_pool_add",
 	"event_pool_remove",
+	"travel_hooks_add",
 	"item_offer_add",
 	"item_offer_remove",
 	"economic_profile_overrides",
@@ -1713,6 +1714,7 @@ static func _apply_mutations(target: Dictionary, mutations: Dictionary, generati
 	if mutations.has("staff_set"):
 		target["scenario_staff_ids"] = JsonCoerceScript._unique_string_array(mutations.get("staff_set", []))
 	_apply_id_delta(target, "event_pool" if generation else "event_ids", mutations.get("event_pool_add", []), mutations.get("event_pool_remove", []))
+	_apply_id_delta(target, "travel_hooks", mutations.get("travel_hooks_add", []), [])
 	_apply_id_delta(target, "service_pool" if generation else "service_ids", mutations.get("service_add", []), mutations.get("service_remove", []))
 	_apply_item_offer_delta(target, "scenario_item_offers" if generation else "item_offers", mutations.get("item_offer_add", []), mutations.get("item_offer_remove", []))
 	if mutations.has("economic_profile_overrides"):

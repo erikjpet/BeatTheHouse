@@ -236,6 +236,20 @@ Table was present as an exact visible, enabled, interactive room-list event but
 not on the room canvas, so the replay helper now uses that same public
 `The Live Table: Talk` fallback instead of rejecting the normal overflow UI.
 
+- Preserved-cadence diagnostic: all three Count hands and Hold -> Sit -> Dock
+  reached `heist_clean_sweep` at bridge command `523`. This was still outside
+  the owner ceiling, so it is a measurement rather than the final replay.
+- Audit route: Audit Night now exposes the already-learned Punchline as a
+  direct travel hook. Reading the roster remains mandatory, but the player no
+  longer has to scout Bar -> Back Alley -> Parking Lot Tip before following
+  the route the roster just disclosed.
+- Count setup chain: after the visible Cage hold succeeds, the carried swap
+  cart becomes the active route immediately; after its visible Grand handoff,
+  live play begins immediately. The schedule hold and cart handoff remain
+  required and visible, while two Punchline return commutes and their repeated
+  setup-table reopenings are removed. The three-hand Hold -> Sit -> Dock table
+  cadence, blackjack rules, odds, RTP, and payouts remain unchanged.
+
 ## Departure-price integrity repair (rw06_2 blocker fix)
 
 The balance data exposed an existing travel transaction defect: the map priced

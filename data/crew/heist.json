@@ -22,6 +22,7 @@
         "identity": {"required_sessions": 0, "bet_min": 8, "bet_max": 8, "heat_ceiling": 35},
         "schedule": {"hold_required_actions": 1, "deadline_actions": 12, "attention_limit": 55},
         "swap_cart": {"deadline_actions": 14, "initial_cargo_state": "carried"},
+        "chain_setup": true,
         "guard_marker": {"optional": true, "flag": "debt_court_settlement", "member_id": "crew_knuckles", "min_rank": "associate"}
       },
       "play": {"required_rounds": 3, "window_actions": 9, "table_game": "blackjack", "decision_rounds": {"go": 0, "distraction": 1, "exit": 2}, "boring_bet_min": 8, "boring_bet_max": 30, "starting_float": 24, "heat_spike": 15},

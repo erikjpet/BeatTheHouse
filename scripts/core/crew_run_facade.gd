@@ -1214,6 +1214,17 @@ func _crew_heist_sync_whale_setup() -> void:
 
 func _crew_heist_boundary_sync() -> void:
 	var state = _run.CrewHeistModelScript.normalize_state(crew_heist_state)
+	if str(state.get("plan_id", "")) == _run.CrewHeistModelScript.PLAN_COUNT \
+			and str(state.get("status", "")) == _run.CrewHeistModelScript.STATUS_SETUP:
+		var count_setup_tuning := JsonCoerceScript._copy_dict(_run.CrewHeistModelScript.plan(_run.CrewHeistModelScript.PLAN_COUNT).get("setup", {}))
+		var setup := JsonCoerceScript._copy_dict(state.get("setup", {}))
+		if bool(count_setup_tuning.get("chain_setup", false)) and not _run.delivery_has_active_run():
+			if bool(setup.get("schedule", false)) and not bool(setup.get("swap_cart", false)):
+				_crew_heist_begin_setup_delivery("swap_cart", false)
+				state = _run.CrewHeistModelScript.normalize_state(crew_heist_state)
+			elif bool(setup.get("schedule", false)) and bool(setup.get("swap_cart", false)):
+				crew_heist_begin_play(_crew_heist_host_capability)
+				state = _run.CrewHeistModelScript.normalize_state(crew_heist_state)
 	state = _crew_heist_sync_count_window(state)
 	_crew_heist_sync_live_table_event(state)
 	if str(state.get("plan_id", "")) != _run.CrewHeistModelScript.PLAN_WHALE or str(state.get("status", "")) != _run.CrewHeistModelScript.STATUS_SETUP:
