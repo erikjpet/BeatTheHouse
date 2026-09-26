@@ -397,12 +397,19 @@ function Get-Rw061ValidatorProcessCensus {
     $records = [System.Collections.Generic.List[object]]::new()
     foreach ($process in @(Get-Process -ErrorAction Stop | Where-Object { $names -contains $_.ProcessName })) {
         try {
+            if ($process.HasExited) { continue }
             # Codex desktop samples machine resource usage in a short-lived,
             # non-project PowerShell child during long tool calls. Authenticate
             # that exact host-owned command and parent before excluding it; all
             # validator/project shells remain part of the unchanged census.
             if (Test-Rw061CodexHostTelemetryProcess $process) { continue }
+            # The sampler can exit between Get-Process and its CIM/parent
+            # classification. A cached Process object can still expose its
+            # former StartTime, so explicitly reject an exited identity before
+            # it is admitted as terminal residue evidence.
+            if ($process.HasExited) { continue }
             $start = $process.StartTime.ToUniversalTime()
+            if ($process.HasExited) { continue }
             [void]$records.Add([ordered]@{
                 pid = [int]$process.Id
                 name = [string]$process.ProcessName
