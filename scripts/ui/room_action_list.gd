@@ -27,6 +27,7 @@ var _last_focus_key := ""
 var _selection_dispatch_pending := false
 var _pending_selection_object_id := ""
 var _pending_selection_action_key := ""
+var _launcher_open_block_until_msec := 0
 
 
 func _ready() -> void:
@@ -40,7 +41,7 @@ func _ready() -> void:
 	_launcher.clip_text = true
 	_launcher.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_launcher.focus_mode = Control.FOCUS_ALL
-	_launcher.pressed.connect(open)
+	_launcher.pressed.connect(_on_launcher_pressed)
 	add_child(_launcher)
 
 	# The Web release template strips CanvasLayer, so the modal is a top-level Control
@@ -126,6 +127,7 @@ func action_dispatcher_matches(expected: Callable) -> bool:
 
 func render(records: Array) -> void:
 	_enforce_persistent_target_sizes()
+	var launcher_was_visible := _launcher != null and _launcher.visible
 	var filtered: Array = []
 	for value in records:
 		if typeof(value) != TYPE_DICTIONARY:
@@ -149,9 +151,27 @@ func render(records: Array) -> void:
 	_sync_panel_width()
 	visible = not _records.is_empty()
 	_launcher.visible = visible
+	if _launcher.visible and not launcher_was_visible:
+		# A game Leave button occupies the same screen band as this launcher. Its
+		# release can finish after the environment is rebuilt and otherwise land
+		# on the newly revealed launcher in the same frame.
+		quarantine_launcher_input()
 	_launcher.text = "More room actions (%d)" % _records.size()
 	if _records.is_empty():
 		close()
+
+
+func _on_launcher_pressed() -> void:
+	if Time.get_ticks_msec() <= _launcher_open_block_until_msec:
+		return
+	open()
+
+
+func quarantine_launcher_input() -> void:
+	# Web can deliver the release that activated a departing game surface after
+	# several expensive room-render frames. Keep the newly exposed launcher
+	# inert through that transition, then restore normal explicit input.
+	_launcher_open_block_until_msec = Time.get_ticks_msec() + 1000
 
 
 func open() -> void:
@@ -174,6 +194,7 @@ func open() -> void:
 
 
 func close() -> void:
+	_cancel_pending_selection()
 	if _overlay == null or not _overlay.visible:
 		return
 	var scope_was_top := true
@@ -187,6 +208,13 @@ func close() -> void:
 	if (_modal_focus_scope == null or not _modal_focus_scope.has_method("pop_scope")) \
 			and scope_was_top and is_instance_valid(_launcher) and _launcher.visible:
 		_launcher.grab_focus()
+
+
+func _cancel_pending_selection() -> void:
+	_selection_dispatch_pending = false
+	_pending_selection_object_id = ""
+	_pending_selection_action_key = ""
+	set_process(false)
 
 
 static func is_visible_overflow_record(record: Dictionary) -> bool:
