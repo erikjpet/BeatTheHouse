@@ -13273,8 +13273,8 @@
       },
       "scenario_object_slot_positions": {
         "kitty_cat_lounge_amateur_night_judging_desk": [
-          302,
-          358
+          590,
+          196
         ],
         "kitty_cat_lounge_amateur_night_dressing_rack": [
           180,
@@ -13544,8 +13544,8 @@
           },
           "scenario_object_slot_positions": {
             "kitty_cat_lounge_amateur_night_judging_desk": [
-              302,
-              358
+              590,
+              196
             ],
             "kitty_cat_lounge_amateur_night_dressing_rack": [
               300,
@@ -14295,25 +14295,27 @@
           "id": "base.game_2",
           "kind": "base",
           "pos": [
-            620.0,
-            96.0
+            638.0,
+            378.0
           ],
           "footprint_class": "surface_item",
           "hit_rect": [
-            584.0,
-            48.0,
+            602.0,
+            330.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            620.0,
-            42.0
+            638.0,
+            318.0
           ],
           "facing": "none",
           "priority": 20,
-          "zone_id": "background",
-          "support_id": "champagne_shelf",
-          "walk_lane_ids": []
+          "zone_id": "right",
+          "support_id": "floor",
+          "walk_lane_ids": [
+            "lane.public"
+          ]
         },
         {
           "id": "base.game_1",
@@ -14343,25 +14345,27 @@
           "id": "base.game_table_left",
           "kind": "base",
           "pos": [
-            312.0,
-            122.0
+            280.0,
+            378.0
           ],
           "footprint_class": "surface_item",
           "hit_rect": [
-            276.0,
-            74.0,
+            244.0,
+            330.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            215.0,
-            42.0
+            280.0,
+            318.0
           ],
           "facing": "none",
           "priority": 90,
-          "zone_id": "room",
-          "support_id": "round3_stage_shelf",
-          "walk_lane_ids": []
+          "zone_id": "left",
+          "support_id": "floor",
+          "walk_lane_ids": [
+            "lane.public"
+          ]
         },
         {
           "id": "base.shop_item_left",
@@ -14509,6 +14513,30 @@
           "priority": 10,
           "zone_id": "room",
           "support_id": "floor",
+          "walk_lane_ids": []
+        },
+        {
+          "id": "stage.amateur_judging_desk",
+          "kind": "stage",
+          "pos": [
+            590.0,
+            196.0
+          ],
+          "footprint_class": "floor_fixture",
+          "hit_rect": [
+            544.0,
+            132.0,
+            92.0,
+            64.0
+          ],
+          "label_anchor": [
+            590.0,
+            126.0
+          ],
+          "facing": "none",
+          "priority": 15,
+          "zone_id": "left",
+          "support_id": "booth_front",
           "walk_lane_ids": []
         },
         {
@@ -14818,7 +14846,7 @@
         "kitty_cat_lounge_amateur_night_amateur_signup|kitty_amateur_signup|background|": "stage.event_stage_center",
         "kitty_cat_lounge_amateur_night_amateur_signup|kitty_amateur_signup|center|": "stage.event_stage_center",
         "kitty_cat_lounge_amateur_night_dressing_rack|env06_8_amateur_rack|left|": "stage.event_floor_left",
-        "kitty_cat_lounge_amateur_night_judging_desk|kitty_amateur_judge|left|": "stage.event_floor_middle",
+        "kitty_cat_lounge_amateur_night_judging_desk|kitty_amateur_judge|left|": "stage.amateur_judging_desk",
         "kitty_cat_lounge_amateur_night_safe_exit||exit_lane|": "exit.right_lower",
         "kitty_cat_lounge_bachelorette_storm_aftermath_orderly_finale_actor||background|": "stage.patron_floor_center",
         "kitty_cat_lounge_bachelorette_storm_aftermath_orderly_finale_prop||left|": "stage.event_floor_left",
