@@ -1546,8 +1546,10 @@ static func _check_lifecycle_finalization(library: ContentLibrary, failures: Arr
 		failures.append("Final semantic projection did not materialize scenario scene objects alongside interactions.")
 	var missing_layout_projection := EnvironmentInteractionControllerScript.project_sequence_interaction_result(_array(finalized.get("records", [])), run_state.scenario_sequence_projection())
 	var missing_layout_records := _array(missing_layout_projection.get("records", []))
-	if bool(missing_layout_projection.get("ok", true)) or _record_by_object_id(missing_layout_records, "game:slot").is_empty() or _record_by_object_id(missing_layout_records, "scenario::presentation_failure").is_empty() or not _array(_record_by_object_id(missing_layout_records, "scenario::presentation_failure").get("scenario_sequence_actions", [])).is_empty():
-		failures.append("Validated/sealed production finalization bypassed its mandatory active room layout or did not fail visibly without scenario authority.")
+	if bool(missing_layout_projection.get("ok", true)) or _record_by_object_id(missing_layout_records, "game:slot").is_empty() \
+			or not _record_by_object_id(missing_layout_records, "scenario::presentation_failure").is_empty() \
+			or _records_have_scenario_actions(missing_layout_records):
+		failures.append("Validated production finalization bypassed mandatory layout rejection or minted scenario commands without committed authority.")
 	var forged_projection := run_state.scenario_sequence_projection()
 	var forged_semantic := _dict(forged_projection.get("semantic_state", {}))
 	var forged_interactions := _dict(forged_semantic.get("interactions", {}))
@@ -1555,7 +1557,11 @@ static func _check_lifecycle_finalization(library: ContentLibrary, failures: Arr
 	forged_semantic["interactions"] = forged_interactions
 	forged_projection["semantic_state"] = forged_semantic
 	var forged_projection_result := EnvironmentInteractionControllerScript.project_sequence_interaction_result(_array(finalized.get("records", [])), forged_projection, run_state.current_environment)
-	if bool(forged_projection_result.get("ok", true)) or not _record_by_object_id(_array(forged_projection_result.get("records", [])), "scenario::orphan_after_seal").is_empty() or _record_by_object_id(_array(forged_projection_result.get("records", [])), "scenario::presentation_failure").is_empty():
+	var forged_projection_records := _array(forged_projection_result.get("records", []))
+	if bool(forged_projection_result.get("ok", true)) \
+			or not _record_by_object_id(forged_projection_records, "scenario::orphan_after_seal").is_empty() \
+			or not _record_by_object_id(forged_projection_records, "scenario::presentation_failure").is_empty() \
+			or _records_have_scenario_actions(forged_projection_records):
 		failures.append("A post-finalization orphan rectangle escaped sealed production projection authority.")
 	var collision_record := _presentation_record("scenario::command_console", "info", "spoof", Rect2(0.84, 0.84, 0.04, 0.04))
 	collision_record["owner_namespace"] = "base"
@@ -1576,7 +1582,10 @@ static func _check_lifecycle_finalization(library: ContentLibrary, failures: Arr
 	for collision_error_value in _array(collision_result.get("errors", [])):
 		if "cannot alias a different owned identity" in str(collision_error_value):
 			collision_identity_reason = true
-	if bool(collision_result.get("ok", true)) or not collision_identity_reason or collision_count != 1 or collision_owner != "base" or not collision_preserved or _record_by_object_id(collision_projection, "scenario::presentation_failure").is_empty():
+	if bool(collision_result.get("ok", true)) or not collision_identity_reason or collision_count != 1 \
+			or collision_owner != "base" or not collision_preserved \
+			or not _record_by_object_id(collision_projection, "scenario::presentation_failure").is_empty() \
+			or _records_have_scenario_actions(collision_projection):
 		failures.append("Scenario full-owned presentation identity collided with or duplicated a base presentation alias.")
 	var transplant := RunStateScript.new()
 	transplant.current_environment = run_state.current_environment.duplicate(true)
@@ -5886,6 +5895,13 @@ static func _record_by_object_id(records: Array, object_id: String) -> Dictionar
 		if str(record.get("object_id", "")) == object_id:
 			return record
 	return {}
+
+
+static func _records_have_scenario_actions(records: Array) -> bool:
+	for value in records:
+		if not _array(_dict(value).get("scenario_sequence_actions", [])).is_empty():
+			return true
+	return false
 
 
 static func _contains_text(values: Array, needle: String) -> bool:
