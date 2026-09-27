@@ -2680,6 +2680,9 @@ func _draw_scene_objects() -> void:
 	# Interactable props are rendered here; transparent buttons only provide hit testing.
 	var low_detail := _grand_casino_web_low_detail()
 	var objects := _active_scene_objects()
+	# Route animation can move actors between snapshots, so derive labels from the
+	# live drawn rectangles on every room frame rather than authored slot anchors.
+	_rebuild_object_label_rect_cache(objects)
 	var behind_counter: Array = []
 	var room_front: Array = []
 	for object_value in objects:
@@ -2728,7 +2731,7 @@ func _draw_scene_object_body(object_data: Dictionary) -> void:
 
 
 func _draw_scene_object_adornments(object_data: Dictionary, low_detail: bool) -> void:
-	var rect := _board_rect_for_object(object_data)
+	var rect := _natural_model_rect_for_object(object_data)
 	var object_id := str(object_data.get("id", ""))
 	var object_type := str(object_data.get("type", "item"))
 	var selected := object_id == selected_object_id
@@ -2955,7 +2958,7 @@ func _draw_focus_dim_overlay() -> void:
 	var selected_object := _scene_object(selected_object_id)
 	if selected_object.is_empty():
 		return
-	var rect := _board_rect_for_object(selected_object)
+	var rect := _natural_model_rect_for_object(selected_object)
 	var glow_alpha := 0.18 + absf(sin(flicker * 4.2)) * 0.10
 	var glow_color := _color_for_object_type(str(selected_object.get("type", "item")))
 	_draw_prop_underlight(rect, glow_color, glow_alpha * 1.6)
@@ -2970,7 +2973,7 @@ func _draw_scene_outcome_highlight() -> void:
 	var object_data := _scene_object(outcome_object_id)
 	if object_data.is_empty():
 		return
-	var object_rect := _board_rect_for_object(object_data)
+	var object_rect := _natural_model_rect_for_object(object_data)
 	var accent := _color_for_object_type(str(object_data.get("type", "item")))
 	var pulse := 0.34 + absf(sin(flicker * 5.6)) * 0.22
 	_draw_prop_underlight(object_rect, accent, pulse)
@@ -3516,7 +3519,7 @@ func _scene_object_layout_snapshot(objects: Array) -> Dictionary:
 		if typeof(objects[index]) != TYPE_DICTIONARY:
 			continue
 		var object_data: Dictionary = objects[index]
-		var object_rect := _board_rect_for_object(object_data)
+		var object_rect := _natural_model_rect_for_object(object_data)
 		var footprint := _object_layout_footprint(object_data, object_data.get("position", Vector2(0.5, 0.5)))
 		var entry := {
 			"id": str(object_data.get("id", "")),
@@ -3745,7 +3748,7 @@ func _warm_object_info_layout_cache(object_data: Dictionary) -> void:
 	var lines := _object_info_lines(object_data)
 	if title.is_empty() and lines.is_empty():
 		return
-	var object_rect := _board_rect_for_object(object_data)
+	var object_rect := _natural_model_rect_for_object(object_data)
 	if object_rect.size.x <= 0.0 or object_rect.size.y <= 0.0:
 		return
 	_object_info_rect(object_rect, title, lines, str(object_data.get("type", "item")), object_data)
@@ -3829,7 +3832,7 @@ func _selected_object_info() -> Dictionary:
 	var lines := _object_info_lines(object_data) if expanded else _hover_object_info_lines(object_data)
 	if title.is_empty() and lines.is_empty():
 		return {}
-	var object_rect := _board_rect_for_object(object_data)
+	var object_rect := _natural_model_rect_for_object(object_data)
 	return {
 		"object": object_data,
 		"object_id": object_id,
@@ -4723,7 +4726,7 @@ func _update_camera_target() -> void:
 		target_camera_zoom = 1.0
 		target_camera_offset = Vector2.ZERO
 		return
-	var object_rect := _board_rect_for_object(object_data)
+	var object_rect := _natural_model_rect_for_object(object_data)
 	var board_size := Vector2(BOARD_SIZE)
 	camera_focus_point = Vector2(
 		clampf((object_rect.position.x + object_rect.size.x * 0.5) / board_size.x, 0.0, 1.0),
@@ -5035,7 +5038,7 @@ func global_rect_for_selected_composition() -> Rect2:
 	var object_data := _scene_object(selected_object_id)
 	if object_data.is_empty():
 		return Rect2()
-	var composition := _board_rect_to_local_rect(_board_rect_for_object(object_data))
+	var composition := _board_rect_to_local_rect(_natural_model_rect_for_object(object_data))
 	var info := _selected_object_info()
 	if not info.is_empty():
 		var info_rect: Variant = info.get("rect", Rect2())
@@ -5073,7 +5076,7 @@ func _update_drunk_distortion_protected_rects() -> void:
 	for object_data in _active_scene_objects():
 		if typeof(object_data) != TYPE_DICTIONARY:
 			continue
-		var object_rect := _board_rect_for_object(object_data)
+		var object_rect := _natural_model_rect_for_object(object_data)
 		var label_rect := _resolved_label_rect_for_object(object_data, object_rect)
 		if label_rect.size.x > 0.0 and label_rect.size.y > 0.0:
 			protected_rects.append(_board_rect_to_local_rect(label_rect.grow(3.0)))
@@ -5211,18 +5214,7 @@ func _board_rect_for_object(object_data: Dictionary) -> Rect2:
 func _interaction_rect_for_object(object_data: Dictionary) -> Rect2:
 	if bool(object_data.get("person_transit_active", false)):
 		return Rect2()
-	var rect := _board_rect_for_object(object_data)
-	if not small_screen_mode or bool(object_data.get("scenario_layout_resolved", false)) or bool(object_data.get("fixed_slot_geometry", false)):
-		return rect
-	var minimum_size := SmallScreenPolicyScript.ENVIRONMENT_OBJECT_HIT_SIZE
-	var next_size := Vector2(maxf(rect.size.x, minimum_size.x), maxf(rect.size.y, minimum_size.y))
-	var board_size := Vector2(BOARD_SIZE)
-	next_size.x = minf(next_size.x, board_size.x)
-	next_size.y = minf(next_size.y, board_size.y)
-	var next_position := rect.get_center() - next_size * 0.5
-	next_position.x = clampf(next_position.x, 0.0, maxf(0.0, board_size.x - next_size.x))
-	next_position.y = clampf(next_position.y, 0.0, maxf(0.0, board_size.y - next_size.y))
-	return Rect2(next_position, next_size)
+	return _natural_model_rect_for_object(object_data)
 
 
 func _actor_route_position(object_data: Dictionary) -> Vector2:
@@ -5354,7 +5346,7 @@ func _scenario_layout_evidence(objects: Array) -> Dictionary:
 			digests[digest] = true
 		entries.append({
 			"identity": identity,
-			"draw_rect": _rect_to_snapshot(_board_rect_for_object(object_data)),
+			"draw_rect": _rect_to_snapshot(_natural_model_rect_for_object(object_data)),
 			"hit_rect": _rect_to_snapshot(_interaction_rect_for_object(object_data)),
 			"z_order": int(object_data.get("scenario_z_order", 0)),
 			"route_stage": _copy_dictionary(object_data.get("actor_route_stage", {})),
@@ -5437,50 +5429,75 @@ func _update_object_label_accessibility() -> void:
 
 func _resolved_label_rect_for_object(object_data: Dictionary, object_rect: Rect2) -> Rect2:
 	var object_id := str(object_data.get("id", ""))
-	if not _object_label_moves_with_route(object_data) and object_label_rect_cache.has(object_id):
+	if object_label_rect_cache.has(object_id):
 		return object_label_rect_cache[object_id] as Rect2
-	var authority_key := "small_screen_label_rect" if small_screen_mode else "label_rect"
-	var authored := _rect_from_dict(object_data.get(authority_key, {}))
-	if authored.has_area():
-		authored = Rect2(authored.position * Vector2(BOARD_SIZE), authored.size * Vector2(BOARD_SIZE))
-		if _object_label_moves_with_route(object_data):
-			var hit_key := "small_screen_rect" if small_screen_mode else "normalized_rect"
-			var settled_hit := _rect_from_dict(object_data.get(hit_key, {}))
-			if settled_hit.has_area():
-				settled_hit = Rect2(settled_hit.position * Vector2(BOARD_SIZE), settled_hit.size * Vector2(BOARD_SIZE))
-				authored.position += object_rect.get_center() - settled_hit.get_center()
-		return _clamp_board_rect(authored)
 	return _label_rect_for_object(object_rect, str(object_data.get("label", "")))
-
-
-func _object_label_moves_with_route(object_data: Dictionary) -> bool:
-	return typeof(object_data.get("actor_route_stage", {})) == TYPE_DICTIONARY \
-		and not (object_data.get("actor_route_stage", {}) as Dictionary).is_empty() \
-		and typeof(object_data.get("actor_route_points", [])) == TYPE_ARRAY \
-		and (object_data.get("actor_route_points", []) as Array).size() >= 2
 
 
 func _rebuild_object_label_rect_cache(objects: Array) -> void:
 	object_label_rect_cache = {}
 	var object_rects: Array[Rect2] = []
+	var default_label_rects: Array[Rect2] = []
 	var resolved_label_rects: Array[Rect2] = []
+	var moved_count := 0
 	for value in objects:
 		var object_data: Dictionary = value if typeof(value) == TYPE_DICTIONARY else {}
-		var object_rect := _board_rect_for_object(object_data)
+		var object_rect := _natural_model_rect_for_object(object_data)
 		object_rects.append(object_rect)
-		var resolved := _resolved_label_rect_for_object(object_data, object_rect)
+		var default_rect := _label_rect_for_object(object_rect, str(object_data.get("label", "")))
+		default_label_rects.append(default_rect)
+		var resolved := _resolve_object_label_overlap(default_rect, object_rect, resolved_label_rects)
 		var object_id := str(object_data.get("id", ""))
-		if not object_id.is_empty() and resolved.has_area() and not _object_label_moves_with_route(object_data):
+		if not object_id.is_empty() and resolved.has_area():
 			object_label_rect_cache[object_id] = resolved
+		if resolved.position != default_rect.position:
+			moved_count += 1
 		resolved_label_rects.append(resolved)
 	object_label_layout_stats = {
 		"label_count": object_label_rect_cache.size(),
-		"moved_count": 0,
-		"default_label_overlap_count": _rect_pair_overlap_count(resolved_label_rects),
+		"moved_count": moved_count,
+		"default_label_overlap_count": _rect_pair_overlap_count(default_label_rects),
 		"resolved_label_overlap_count": _rect_pair_overlap_count(resolved_label_rects),
-		"default_object_overlap_count": _label_object_overlap_count(resolved_label_rects, object_rects),
+		"default_object_overlap_count": _label_object_overlap_count(default_label_rects, object_rects),
 		"resolved_object_overlap_count": _label_object_overlap_count(resolved_label_rects, object_rects),
 	}
+
+
+func _resolve_object_label_overlap(label_rect: Rect2, object_rect: Rect2, occupied: Array[Rect2]) -> Rect2:
+	if not label_rect.has_area() or not _rect_overlaps_any(label_rect, occupied):
+		return label_rect
+	var board_height := float(BOARD_SIZE.y)
+	var step := OBJECT_LABEL_LINE_HEIGHT + 2.0
+	var above := label_rect.get_center().y < object_rect.get_center().y
+	var directions := [-1.0, 1.0] if above else [1.0, -1.0]
+	var best := label_rect
+	var best_overlap := INF
+	for direction_value in directions:
+		var direction := float(direction_value)
+		var side_start_y := object_rect.position.y - label_rect.size.y - OBJECT_LABEL_GAP if direction < 0.0 else object_rect.end.y + OBJECT_LABEL_GAP
+		for offset_index in range(0, 16):
+			var y := side_start_y + direction * step * float(offset_index)
+			if y < OBJECT_LAYOUT_MARGIN or y + label_rect.size.y > board_height - OBJECT_LAYOUT_MARGIN:
+				break
+			var candidate := Rect2(Vector2(label_rect.position.x, y), label_rect.size)
+			var overlap := _label_overlap_area(candidate, occupied)
+			if overlap <= 0.01:
+				return candidate
+			if overlap < best_overlap:
+				best = candidate
+				best_overlap = overlap
+	return best
+
+
+func _rect_overlaps_any(rect: Rect2, others: Array[Rect2]) -> bool:
+	return _label_overlap_area(rect, others) > 0.01
+
+
+func _label_overlap_area(rect: Rect2, others: Array[Rect2]) -> float:
+	var total := 0.0
+	for other in others:
+		total += _rect_overlap_area(rect, other)
+	return total
 
 
 func _rect_pair_overlap_count(rects: Array[Rect2]) -> int:

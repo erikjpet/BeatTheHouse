@@ -650,17 +650,8 @@ static func _slot_by_id(environment: Dictionary, slot_id: String) -> Dictionary:
 
 
 static func _validate_visual_access(scenes: Dictionary, actors: Dictionary, obstacles: Array, interactions: Dictionary, base_records: Array, environment: Dictionary, errors: Array) -> void:
-	var normal_labels: Array = []
-	var small_labels: Array = []
-	for base_value in base_records:
-		var base_record := _dict(base_value)
-		var base_identity := _record_identity(base_record)
-		if not bool(base_record.get("visible", true)) or str(base_record.get("presentation_mode", "room")) == "overflow" or scenes.has(base_identity) or actors.has(base_identity):
-			continue
-		var base_rect := _record_pixel_rect(base_record)
-		var base_small := _record_small_rect(base_record)
-		normal_labels.append({"identity": base_identity, "rect": _record_label_rect(base_record), "target_rect": base_rect})
-		small_labels.append({"identity": base_identity, "rect": _record_label_rect(base_record, true), "target_rect": base_small})
+	# Labels are presentation geometry: the room canvas derives them from each
+	# live natural-size model and resolves overlap after route motion is applied.
 	for collection in [scenes, actors]:
 		var identities := (collection as Dictionary).keys()
 		identities.sort()
@@ -671,15 +662,9 @@ static func _validate_visual_access(scenes: Dictionary, actors: Dictionary, obst
 				continue
 			var rect := _pixel_rect(_dict(semantic.get("normalized_hit_rect", {})))
 			var small_rect := _pixel_rect(_dict(semantic.get("small_screen_rect", {})))
-			var label_rect := _pixel_rect(_dict(semantic.get("label_rect", {})))
-			var small_label_rect := _pixel_rect(_dict(semantic.get("small_screen_label_rect", {})))
-			normal_labels.append({"identity": identity, "rect": label_rect, "target_rect": rect})
-			small_labels.append({"identity": identity, "rect": small_label_rect, "target_rect": small_rect})
 			var role := str(semantic.get("role", "")).to_lower()
 			if role in ["obstacle", "barrier", "blockade"] and (rect.intersects(WALK_LANE) or small_rect.intersects(WALK_LANE)):
 				errors.append("Scenario obstacle %s blocks the mandatory player access lane in normal or expanded small-screen layout." % identity)
-	_validate_label_entries(normal_labels, "normal", errors)
-	_validate_label_entries(small_labels, "expanded small-screen", errors)
 	if not obstacles.is_empty() and not _room_path_reachable(obstacles):
 		errors.append("Scenario obstruction leaves no reachable route from the player access lane into the room.")
 	if not obstacles.is_empty() and not _room_path_reachable(obstacles, "small_rect"):
@@ -699,33 +684,6 @@ static func _room_path_reachable(obstacles: Array, rect_key: String = "rect") ->
 		if _path_reachable(WALK_LANE.get_center(), goal, obstacles, "", rect_key):
 			return true
 	return false
-
-
-static func _validate_label_entries(entries: Array, layout_label: String, errors: Array) -> void:
-	for left_index in range(entries.size()):
-		var left := _dict(entries[left_index])
-		var left_label: Rect2 = left.get("rect", Rect2())
-		if not left_label.has_area():
-			errors.append("Layout label %s has no authored %s rectangle." % [str(left.get("identity", "")), layout_label])
-			continue
-		for right_index in range(left_index + 1, entries.size()):
-			var right := _dict(entries[right_index])
-			var right_label: Rect2 = right.get("rect", Rect2())
-			var left_target: Rect2 = left.get("target_rect", Rect2())
-			var right_target: Rect2 = right.get("target_rect", Rect2())
-			if left_label.intersects(right_label) and left_label.intersection(right_label).get_area() > 0.01:
-				errors.append("Layout labels %s and %s overlap in %s layout." % [str(left.get("identity", "")), str(right.get("identity", "")), layout_label])
-			if left_label.intersects(right_target) and left_label.intersection(right_target).get_area() > 0.01 \
-					or right_label.intersects(left_target) and right_label.intersection(left_target).get_area() > 0.01:
-				errors.append("Layout label and hit authority for %s / %s overlap in %s layout (left_label=%s left_target=%s right_label=%s right_target=%s)." % [
-					str(left.get("identity", "")),
-					str(right.get("identity", "")),
-					layout_label,
-					str(left_label),
-					str(left_target),
-					str(right_label),
-					str(right_target),
-				])
 
 
 static func _validate_actor_routes(actors: Dictionary, obstacles: Array, occupied: Array, environment: Dictionary, errors: Array) -> void:
@@ -836,16 +794,12 @@ static func _validate_interactions(interactions: Dictionary, authority: Dictiona
 				continue
 			# The 44px target expansion is allowed to share spacing (D2). Only the
 			# actual normal interaction rectangles own exclusive click authority.
+			# Live labels are aligned and deconflicted by the room canvas.
 			for rect_key in ["rect"]:
 				var left_rect: Rect2 = left.get(rect_key, Rect2())
 				var right_rect: Rect2 = right.get(rect_key, Rect2())
 				if left_rect.intersects(right_rect) and left_rect.intersection(right_rect).get_area() > 0.01:
 					errors.append("Scenario interactions %s and %s have ambiguous %s hit authority (%s vs %s)." % [str(left.get("identity", "")), str(right.get("identity", "")), "expanded small-screen" if rect_key == "small_rect" else "normal", str(left_rect), str(right_rect)])
-			for label_key in ["label_rect", "small_label_rect"]:
-				var left_label: Rect2 = left.get(label_key, Rect2())
-				var right_label: Rect2 = right.get(label_key, Rect2())
-				if left_label.intersects(right_label) and left_label.intersection(right_label).get_area() > 0.01:
-					errors.append("Scenario interaction labels %s and %s overlap in %s layout." % [str(left.get("identity", "")), str(right.get("identity", "")), "expanded small-screen" if label_key == "small_label_rect" else "normal"])
 	for target_value in active_targets:
 		var target := _dict(target_value)
 		if not bool(target.get("scenario_owned", false)):
@@ -863,14 +817,6 @@ static func _validate_interactions(interactions: Dictionary, authority: Dictiona
 				var other_rect: Rect2 = (pair as Array)[1]
 				if target_rect.intersects(other_rect) and target_rect.intersection(other_rect).get_area() > 0.01:
 					errors.append("Scenario interaction %s has ambiguous %s hit authority with unrelated room control %s (%s vs %s)." % [target_identity, str((pair as Array)[2]), base_identity, str(target_rect), str(other_rect)])
-			for label_pair in [
-				[target.get("label_rect", Rect2()), _record_label_rect(base_record), "normal"],
-				[target.get("small_label_rect", Rect2()), _record_label_rect(base_record, true), "expanded small-screen"],
-			]:
-				var target_label: Rect2 = (label_pair as Array)[0]
-				var base_label: Rect2 = (label_pair as Array)[1]
-				if target_label.intersects(base_label) and target_label.intersection(base_label).get_area() > 0.01:
-					errors.append("Scenario interaction %s label overlaps unrelated room control %s in %s layout (%s vs %s)." % [target_identity, base_identity, str((label_pair as Array)[2]), str(target_label), str(base_label)])
 	if blocked_exit_count > 0 and safe_exit_ids.is_empty() and alternate_exit_ids.is_empty():
 		errors.append("A blocked scenario exit has no readable, reachable alternate objective or exit action.")
 	return {

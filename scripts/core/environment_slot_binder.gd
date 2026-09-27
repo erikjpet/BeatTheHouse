@@ -11,6 +11,8 @@ const LABEL_MIN_WIDTH := 48.0
 const LABEL_MAX_WIDTH := 126.0
 const LABEL_HEIGHT := 15.0
 const LABEL_TWO_LINE_HEIGHT := 26.0
+const LABEL_GAP := 4.0
+const LABEL_MARGIN := 16.0
 const SLOT_SCHEMA_VERSION := 1
 const PRESENTATION_ROOM := "room"
 const PRESENTATION_OVERFLOW := "overflow"
@@ -1153,9 +1155,8 @@ static func normalized_rect(rect: Rect2) -> Dictionary:
 	return _normalized_rect(rect)
 
 
-# The slot's authored label anchor is the bottom-center of the exact renderer
-# rectangle. Text determines only its bounded size; runtime never searches an
-# alternate position.
+# Persisted label geometry follows the bound object rectangle. The room canvas
+# refines this against the final natural-size model and resolves live overlap.
 static func label_rect_from_binding(binding: Dictionary, label: String) -> Rect2:
 	return label_rect_from_slot(_dict(binding.get("slot", {})), label)
 
@@ -1163,16 +1164,20 @@ static func label_rect_from_binding(binding: Dictionary, label: String) -> Rect2
 static func label_rect_from_slot(slot: Dictionary, label: String) -> Rect2:
 	if label.strip_edges().is_empty():
 		return Rect2()
-	var anchor_values := _array(slot.get("label_anchor", []))
-	if anchor_values.size() < 2:
+	var object_rect := _slot_rect(slot)
+	if not object_rect.has_area():
 		return Rect2()
-	var anchor := Vector2(float(anchor_values[0]), float(anchor_values[1]))
 	var raw_width := float(label.strip_edges().length()) * 5.8 + 12.0
 	var size := Vector2(
 		minf(maxf(LABEL_MIN_WIDTH, raw_width), LABEL_MAX_WIDTH),
 		LABEL_TWO_LINE_HEIGHT if raw_width > LABEL_MAX_WIDTH else LABEL_HEIGHT
 	)
-	return _clamp_inside_board(Rect2(anchor - Vector2(size.x * 0.5, size.y), size))
+	var position := Vector2(object_rect.get_center().x - size.x * 0.5, object_rect.position.y - size.y - LABEL_GAP)
+	if position.y < LABEL_MARGIN:
+		position.y = object_rect.end.y + LABEL_GAP
+	position.x = clampf(position.x, LABEL_MARGIN, BOARD_SIZE.x - LABEL_MARGIN - size.x)
+	position.y = clampf(position.y, LABEL_MARGIN, BOARD_SIZE.y - LABEL_MARGIN - size.y)
+	return Rect2(position, size)
 
 
 # Returns actor-center points along only the portion of the ordered authored
