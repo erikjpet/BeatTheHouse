@@ -58,6 +58,12 @@ static func authoritative_interactable_records(environment: Dictionary, library:
 					definition = _dict(library.call("environment_archetype", source_id))
 				else:
 					definition = _dict(library.call("route", source_id)) if library.has_method("route") else {}
+				# A parent-home door (for example the Motel lobby's door back to a
+				# Motel Room home) targets a home archetype, not a catalog route.
+				if definition.is_empty() and library.has_method("environment_archetype"):
+					var home_target := _dict(library.call("environment_archetype", source_id))
+					if str(home_target.get("kind", "")) == "home":
+						definition = home_target
 		if definition.is_empty():
 			errors.append("authoritative base semantic source %s is not catalog-backed." % object_id)
 			continue
