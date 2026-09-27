@@ -655,12 +655,20 @@ static func _check_finalized_actor_route(library: Variant, failures: Array) -> v
 				_mutate_projected_route_actor(forged_projected_actor, projected_mutation)
 		var committed_forgery := EnvironmentInteractionControllerScript.committed_projection_status_result(run_state, forged_record_projection, trusted_base)
 		var forged_records := _array(committed_forgery.get("records", []))
-		if bool(committed_forgery.get("ok", true)) or not _record(forged_records, "scenario::route_guard").is_empty() or not _record(forged_records, "scenario::command_console").is_empty() or _record(forged_records, "game:slot").is_empty() or _record(forged_records, "scenario::presentation_failure").is_empty() or _records_have_scenario_actions(forged_records):
-			failures.append("Projected actor mutation %s reached presentation instead of trusted base plus disabled fallback." % projected_mutation)
+		if bool(committed_forgery.get("ok", true)) or not _record(forged_records, "scenario::route_guard").is_empty() \
+				or not _record(forged_records, "scenario::command_console").is_empty() or _record(forged_records, "game:slot").is_empty() \
+				or not _record(forged_records, "scenario::presentation_failure").is_empty() \
+				or not _trusted_overflow_action(forged_records, "route_guard") \
+				or not _trusted_overflow_action(forged_records, "command_console"):
+			failures.append("Projected actor mutation %s escaped trusted-base plus committed-action overflow fallback." % projected_mutation)
 		forged_canvas.render_environment_snapshot({"id": "forged_finalized_route_%s" % projected_mutation, "archetype_id": "bar", "reduce_motion": true, "interactable_objects": forged_records})
-		var failure_rect := _canvas_object_rect(forged_canvas, "scenario::presentation_failure")
-		if not _object(_array(forged_canvas.current_view_snapshot().get("objects", [])), "scenario::route_guard").is_empty() or forged_canvas.object_id_at_local_position(failure_rect.get_center()) != "scenario::presentation_failure":
-			failures.append("Public canvas draw/hit routing exposed projected actor mutation %s before consuming the explicit failure result." % projected_mutation)
+		var fallback_objects := _array(forged_canvas.current_view_snapshot().get("objects", []))
+		if not _object(fallback_objects, "scenario::route_guard").is_empty() \
+				or not _object(fallback_objects, "scenario::command_console").is_empty() \
+				or not _object(fallback_objects, "scenario_overflow:scenario:route_guard").is_empty() \
+				or not _object(fallback_objects, "scenario_overflow:scenario:command_console").is_empty() \
+				or not _object(fallback_objects, "scenario::presentation_failure").is_empty():
+			failures.append("Public canvas exposed room geometry for fail-open scenario actions after projected actor mutation %s." % projected_mutation)
 	forged_canvas.free()
 	run_state.current_environment = committed_environment
 
@@ -751,15 +759,21 @@ static func _check_committed_projection_mismatch(library: Variant, failures: Arr
 	run_state.current_environment["scenario_layout_authority_digest"] = "0".repeat(64)
 	var rejected := EnvironmentInteractionControllerScript.committed_projection_status_result(run_state, first_projection, trusted_base)
 	var records := _array(rejected.get("records", []))
-	if not bool(finalized.get("ok", false)) or not bool(first_projection.get("ok", false)) or not bool(replayed.get("ok", false)) or not bool(replayed.get("replayed", false)) or bool(rejected.get("ok", true)) or not _record(records, "scenario::command_console").is_empty() or _record(records, "game:slot").is_empty() or _record(records, "scenario::presentation_failure").is_empty() or _records_have_scenario_actions(records):
-		failures.append("Committed-digest replay mismatch returned stale projected scenario records instead of trusted base plus disabled fallback.")
+	if not bool(finalized.get("ok", false)) or not bool(first_projection.get("ok", false)) or not bool(replayed.get("ok", false)) \
+			or not bool(replayed.get("replayed", false)) or bool(rejected.get("ok", true)) \
+			or not _record(records, "scenario::command_console").is_empty() or _record(records, "game:slot").is_empty() \
+			or not _record(records, "scenario::presentation_failure").is_empty() \
+			or _records_have_scenario_actions(records):
+		failures.append("Committed-digest replay mismatch did not preserve trusted base while refusing untrusted scenario commands.")
 	var canvas = PixelSceneCanvasScript.new()
 	canvas.size = BOARD_SIZE
 	canvas.render_environment_snapshot({"id": "stale_replay_projection", "archetype_id": "bar", "interactable_objects": records})
 	var view := _dict(canvas.current_view_snapshot())
-	var failure_rect := _snapshot_rect(_layout_entry(_dict(view.get("object_layout", {})), "scenario::presentation_failure").get("rect", {}))
-	if not _object(_array(view.get("objects", [])), "scenario::command_console").is_empty() or canvas.object_id_at_local_position(failure_rect.get_center()) != "scenario::presentation_failure":
-		failures.append("Public canvas consumed stale replay projection records during committed-digest rejection.")
+	var replay_objects := _array(view.get("objects", []))
+	if not _object(replay_objects, "scenario::command_console").is_empty() \
+			or not _object(replay_objects, "scenario_overflow:scenario:command_console").is_empty() \
+			or not _object(replay_objects, "scenario::presentation_failure").is_empty():
+		failures.append("Public canvas drew geometry for stale replay actions during committed-digest rejection.")
 	canvas.free()
 
 
@@ -801,7 +815,12 @@ static func _check_sealed_semantic_collection_membership(library: Variant, failu
 		var causal_before := JSON.stringify(run_state.current_environment.get("scenario_sequence_state", {}))
 		var rejected := EnvironmentInteractionControllerScript.committed_projection_status_result(run_state, forged, trusted_base)
 		var rejected_records := _array(rejected.get("records", []))
-		if bool(rejected.get("ok", true)) or _record(rejected_records, "game:slot").is_empty() or not _record(rejected_records, "scenario::command_console").is_empty() or _record(rejected_records, "scenario::presentation_failure").is_empty() or _records_have_scenario_actions(rejected_records) or JSON.stringify(forged) != forged_before or JSON.stringify(run_state.current_environment.get("scenario_sequence_state", {})) != causal_before:
+		if bool(rejected.get("ok", true)) or _record(rejected_records, "game:slot").is_empty() \
+				or not _record(rejected_records, "scenario::command_console").is_empty() \
+				or not _record(rejected_records, "scenario::presentation_failure").is_empty() \
+				or not _trusted_overflow_action(rejected_records, "command_console") \
+				or JSON.stringify(forged) != forged_before \
+				or JSON.stringify(run_state.current_environment.get("scenario_sequence_state", {})) != causal_before:
 			failures.append("Erasing a finalized %s base tombstone escaped sealed membership or mutated the hostile pre-canvas input." % collection_key)
 		run_state.current_environment = committed_environment
 
@@ -834,7 +853,12 @@ static func _check_sealed_semantic_collection_membership(library: Variant, failu
 		var causal_before := JSON.stringify(live_run_state.current_environment.get("scenario_sequence_state", {}))
 		var rejected := EnvironmentInteractionControllerScript.committed_projection_status_result(live_run_state, forged, live_trusted_base)
 		var rejected_records := _array(rejected.get("records", []))
-		if bool(rejected.get("ok", true)) or _record(rejected_records, "game:slot").is_empty() or not _record(rejected_records, "scenario::command_console").is_empty() or _record(rejected_records, "scenario::presentation_failure").is_empty() or _records_have_scenario_actions(rejected_records) or JSON.stringify(forged) != forged_before or JSON.stringify(live_run_state.current_environment.get("scenario_sequence_state", {})) != causal_before:
+		if bool(rejected.get("ok", true)) or _record(rejected_records, "game:slot").is_empty() \
+				or not _record(rejected_records, "scenario::command_console").is_empty() \
+				or not _record(rejected_records, "scenario::presentation_failure").is_empty() \
+				or not _trusted_overflow_action(rejected_records, "command_console") \
+				or JSON.stringify(forged) != forged_before \
+				or JSON.stringify(live_run_state.current_environment.get("scenario_sequence_state", {})) != causal_before:
 			failures.append("Inserting a matching live base %s entry escaped sealed membership or mutated the hostile pre-canvas input." % insertion_collection)
 	live_run_state.current_environment = live_committed_environment
 
@@ -1254,15 +1278,14 @@ static func _check_atomic_projection_failures(library: Variant, failures: Array)
 	missing_authority_base.erase("small_screen_label_rect")
 	missing_authority_base.erase("slot_id")
 	var missing_layout := EnvironmentInteractionControllerScript.project_sequence_interaction_result([missing_authority_base], targeted_projection)
-	var preserved := _record(_array(missing_layout.get("records", [])), "travel:leave")
-	var missing_failure := _record(_array(missing_layout.get("records", [])), "scenario::presentation_failure")
+	var missing_records := _array(missing_layout.get("records", []))
+	var preserved := _record(missing_records, "travel:leave")
 	if bool(missing_layout.get("ok", true)) or preserved.is_empty() \
 			or not _snapshot_rect(preserved.get("focus_rect", {})).is_equal_approx(_snapshot_rect(base.get("focus_rect", {}))) \
 			or str(preserved.get("confirm_action_id", "")) != str(base.get("confirm_action_id", "")) \
-			or missing_failure.is_empty() or bool(missing_failure.get("enabled", true)) \
-			or not _array(missing_failure.get("available_actions", [])).is_empty() \
-			or (missing_failure.get("focus_rect", Rect2()) as Rect2).intersects(_snapshot_rect(base.get("focus_rect", {}))):
-		failures.append("An empty mandatory layout bypassed atomic projection failure or did not preserve ordinary controls with a visible disabled fallback.")
+			or not _record(missing_records, "scenario::presentation_failure").is_empty() \
+			or _records_have_scenario_actions(missing_records) or missing_records.size() != 1:
+		failures.append("An uncommitted empty mandatory layout minted actions or failed to preserve its ordinary control exactly.")
 
 	var stale_projection := targeted_projection.duplicate(true)
 	stale_projection["semantic_state"]["interactions"]["base::travel:leave"]["anchor_id"] = "missing_anchor"
@@ -1288,7 +1311,8 @@ static func _check_atomic_projection_failures(library: Variant, failures: Array)
 	orphan_projection["semantic_state"]["interactions"]["scenario::orphan"]["normalized_hit_rect"] = {"x": 0.2, "y": 0.2, "w": 0.2, "h": 0.2}
 	var orphan_result := EnvironmentInteractionControllerScript.project_sequence_interaction_result([], orphan_projection, {"id": "orphan_fixture"})
 	var orphan_wrapper := EnvironmentInteractionControllerScript.project_sequence_interactions([], orphan_projection, {"id": "orphan_fixture"})
-	if bool(orphan_result.get("ok", true)) or not _record(_array(orphan_result.get("records", [])), "scenario::orphan").is_empty() or _record(orphan_wrapper, "scenario::presentation_failure").is_empty() or not _contains_text(_array(orphan_result.get("errors", [])), "raw hit rectangles"):
+	if bool(orphan_result.get("ok", true)) or not _record(_array(orphan_result.get("records", [])), "scenario::orphan").is_empty() \
+			or not orphan_wrapper.is_empty() or not _contains_text(_array(orphan_result.get("errors", [])), "raw hit rectangles"):
 		failures.append("An orphan semantic rectangle became hit authority or the compatibility caller ignored structured projection errors.")
 
 	var left := _record(production_records, "game:slot")
@@ -1611,6 +1635,15 @@ static func _records_have_scenario_actions(records: Array) -> bool:
 		if not _array(_dict(value).get("scenario_sequence_actions", [])).is_empty():
 			return true
 	return false
+
+
+static func _trusted_overflow_action(records: Array, stable_id: String) -> bool:
+	var record := _record(records, "scenario_overflow:scenario:%s" % stable_id)
+	return not record.is_empty() \
+			and str(record.get("presentation_mode", "")) == "overflow" \
+			and bool(record.get("scenario_projection_overflow", false)) \
+			and bool(record.get("interactive", false)) \
+			and not _array(record.get("scenario_sequence_actions", [])).is_empty()
 
 
 static func _canvas_point(value: Variant) -> Vector2:
