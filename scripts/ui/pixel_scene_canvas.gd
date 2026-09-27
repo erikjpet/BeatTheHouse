@@ -109,6 +109,7 @@ const SCENE_IDLE_ANIMATION_INTERVAL_SEC := 1.0 / SCENE_IDLE_ANIMATION_FPS
 const WEB_SCENE_IDLE_ANIMATION_FPS := 30.0
 const WEB_GRAND_CASINO_IDLE_ANIMATION_FPS := 15.0
 const ITEM_ICON_TEXTURE_CACHE_LIMIT := 32
+const SLOT_PROP_STATIC_LAYER_CACHE_LIMIT := 64
 const MAX_CONCURRENT_PERSON_TRANSITS := 8
 const PERSON_TRANSIT_SPEED_PIXELS_PER_SEC := 82.0
 const PERSON_TRANSIT_MIN_DURATION_SEC := 0.75
@@ -161,6 +162,7 @@ var object_label_layout_stats: Dictionary = {}
 var draw_text_width_cache: Dictionary = {}
 var fit_draw_text_cache: Dictionary = {}
 var object_animation_phase_cache: Dictionary = {}
+var slot_prop_static_layer_cache: Dictionary = {}
 var actor_route_started_at_cache: Dictionary = {}
 var actor_position_receipt_cache: Dictionary = {}
 var actor_position_route_room_key := ""
@@ -452,6 +454,9 @@ func _render_owned_environment_snapshot(snapshot: Dictionary) -> void:
 	_clear_draw_text_caches()
 	_rebuild_scene_object_cache()
 	_prune_object_animation_phase_cache()
+	# A fresh snapshot owns any profile changes. Between snapshots, reuse the
+	# generated cabinet's geometry and palette while only animation values move.
+	slot_prop_static_layer_cache.clear()
 	icon_sprite_texture_cache = {}
 	if not selected_object_id.is_empty() and _scene_object(selected_object_id).is_empty():
 		selected_object_id = ""
@@ -550,6 +555,7 @@ func debug_soak_snapshot() -> Dictionary:
 		"draw_text_width_cache_size": draw_text_width_cache.size(),
 		"fit_draw_text_cache_size": fit_draw_text_cache.size(),
 		"object_animation_phase_cache_size": object_animation_phase_cache.size(),
+		"slot_prop_static_layer_cache_size": slot_prop_static_layer_cache.size(),
 		"actor_route_started_at_cache_size": actor_route_started_at_cache.size(),
 		"actor_route_time": actor_route_time,
 		"background_texture_loaded": background_texture != null,
@@ -1824,8 +1830,6 @@ func _draw_delta_queen() -> void:
 	draw_rect(Rect2(378, 188, 176, 48), Color("#1b7555"))
 	for x in [122, 172, 222, 410, 460, 510]:
 		_card_back(Rect2(x, 154 + (x % 3) * 4, 26, 36))
-	_slot_machine(Rect2(626, 132, 76, 124), C_CYAN)
-	_slot_machine(Rect2(724, 132, 76, 124), C_PINK)
 	draw_rect(Rect2(0, 292, 900, 16), Color("#493116"))
 	for x in range(0, 900, 60):
 		draw_line(Vector2(x, 278), Vector2(x + 28, 328), C_AMBER, 3)
@@ -1869,17 +1873,6 @@ func _draw_beach() -> void:
 	draw_line(Vector2(270, 238), Vector2(330, 238), C_CYAN, 4)
 	draw_rect(Rect2(616, 192, 130, 42), Color("#080d16"))
 	_neon_text("BEACH", Vector2(634, 220), 21, C_YELLOW)
-	# A patched-in boardwalk arcade kiosk keeps the lone machine above the tide.
-	draw_rect(Rect2(676, 96, 128, 142), Color("#10131d"))
-	draw_rect(Rect2(668, 92, 144, 10), Color("#493116"))
-	draw_line(Vector2(676, 96), Vector2(676, 238), C_AMBER.darkened(0.28), 4)
-	draw_line(Vector2(804, 96), Vector2(804, 238), C_AMBER.darkened(0.28), 4)
-	draw_rect(Rect2(650, 66, 132, 44), Color("#101a25"))
-	draw_rect(Rect2(662, 76, 108, 16), C_AMBER.darkened(0.10))
-	_neon_text("TIDE SLOT", Vector2(668, 92), 12, C_CYAN)
-	_slot_machine(Rect2(704, 112, 72, 118), C_CYAN)
-	draw_line(Vector2(776, 218), Vector2(824, 232), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.45), 2)
-	draw_rect(Rect2(690, 230, 100, 8), Color("#6b4624"))
 	_floor_reflections()
 
 
@@ -1900,8 +1893,6 @@ func _draw_gas_station() -> void:
 	draw_line(Vector2(64, 154), Vector2(294, 132), C_PINK, 2)
 	draw_line(Vector2(64, 170), Vector2(294, 160), C_PURPLE_2, 2)
 	_neon_text("HIGHWAY", Vector2(82, 116), 18, C_CYAN)
-	for x in [348, 444, 540]:
-		_slot_machine(Rect2(x, 122, 74, 120), _cycle_color(x))
 	# Authored counter contacts for the drink, ticket, and staff stations.
 	for shelf in [Rect2(320, 76, 104, 8), Rect2(532, 76, 104, 8), Rect2(660, 76, 104, 8), Rect2(788, 76, 96, 8)]:
 		draw_rect(shelf, Color("#493116"))
@@ -2285,8 +2276,6 @@ func _draw_scene_life() -> void:
 			var laser_color := C_PINK if hot else C_CYAN
 			_draw_camera_sweep(Vector2(739, 94), Vector2(sweep, 190), laser_color, 0.42)
 			draw_rect(Rect2(sweep - 10, 190, 20, 5), Color(laser_color.r, laser_color.g, laser_color.b, 0.36))
-			for x in [348, 444, 540]:
-				draw_rect(Rect2(x + 12, 132, 50, 8), Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.18 + abs(sin(flicker * 5.0 + x)) * 0.22))
 			_draw_headlights()
 			_draw_scan_bands(0, 900, 42, 76, C_SOFT, 0.08, 2.4)
 		"small_underground_casino":
@@ -6174,19 +6163,25 @@ func _draw_game_prop(rect: Rect2, object_data: Dictionary, selected: bool) -> vo
 	var accent := C_PINK if selected else C_CYAN
 	if disabled:
 		accent = C_SOFT
+	var prop := str(object_data.get("prop", "card_table"))
+	var game_key := str(object_data.get("source_id", object_data.get("icon_key", "")))
+	# Generated machines keep their own cabinet identity on every platform. The
+	# Grand Casino's Web simplification remains available to other game props,
+	# but may never replace a live machine with placeholder art.
+	if prop == "machine":
+		_draw_interactable_light(rect, accent, selected)
+		if game_key == "pull_tabs":
+			_draw_pull_tab_machine_prop(rect, object_data, accent, selected, disabled)
+		else:
+			_draw_slot_cabinet_prop(rect, object_data, accent, selected, disabled)
+		_draw_game_runtime_badge(rect, object_data, accent)
+		return
 	if _grand_casino_web_low_detail() and not selected:
 		_draw_low_detail_game_prop(rect, object_data, accent, disabled)
 		_draw_game_runtime_badge(rect, object_data, accent)
 		return
 	_draw_interactable_light(rect, accent, selected)
-	var prop := str(object_data.get("prop", "card_table"))
-	if prop == "machine":
-		var game_key := str(object_data.get("source_id", object_data.get("icon_key", "")))
-		if game_key == "pull_tabs":
-			_draw_pull_tab_machine_prop(rect, object_data, accent, selected, disabled)
-		else:
-			_draw_slot_cabinet_prop(rect, object_data, accent, selected, disabled)
-	elif prop == "coin_pusher_room":
+	if prop == "coin_pusher_room":
 		CoinPusherRoomPropScript.draw(self, rect, object_data, accent, selected, disabled, flicker)
 	elif prop == "scratch_ticket_room":
 		ScratchTicketRoomPropScript.draw(self, rect, object_data, accent, selected, disabled, flicker)
@@ -6214,7 +6209,6 @@ func _draw_game_prop(rect: Rect2, object_data: Dictionary, selected: bool) -> vo
 
 func _draw_low_detail_game_prop(rect: Rect2, object_data: Dictionary, accent: Color, disabled: bool = false) -> void:
 	var prop := str(object_data.get("prop", "card_table"))
-	var source_id := str(object_data.get("source_id", object_data.get("icon_key", "")))
 	var base_alpha := 0.18 if disabled else 0.30
 	draw_rect(Rect2(rect.position + Vector2(rect.size.x * 0.12, rect.size.y * 0.82), Vector2(rect.size.x * 0.76, 4)), Color(accent.r, accent.g, accent.b, base_alpha))
 	if prop == "coin_pusher_room":
@@ -6229,20 +6223,18 @@ func _draw_low_detail_game_prop(rect: Rect2, object_data: Dictionary, accent: Co
 	if prop == "bar_dice_room":
 		BarDiceRoomPropScript.draw_low_detail(self, rect, object_data, accent, disabled, flicker)
 		return
-	if prop in ["machine", "video_poker_machine"]:
+	if prop == "video_poker_machine":
 		var cabinet := Rect2(rect.position + Vector2(rect.size.x * 0.24, rect.size.y * 0.18), Vector2(rect.size.x * 0.52, rect.size.y * 0.58))
 		draw_rect(cabinet, Color("#090a14"))
 		draw_rect(cabinet, Color(accent.r, accent.g, accent.b, 0.18), false, 1)
 		var screen := Rect2(cabinet.position + Vector2(cabinet.size.x * 0.18, cabinet.size.y * 0.26), Vector2(cabinet.size.x * 0.64, cabinet.size.y * 0.26))
-		var screen_color := Color("#f0ead7") if prop == "machine" else Color("#07131b")
-		draw_rect(screen, screen_color)
+		draw_rect(screen, Color("#07131b"))
 		draw_rect(screen, Color(accent.r, accent.g, accent.b, 0.28), false, 1)
 		for i in range(3):
 			var reel := Rect2(screen.position + Vector2(3.0 + float(i) * screen.size.x * 0.30, 3.0), Vector2(screen.size.x * 0.18, maxf(5.0, screen.size.y - 6.0)))
 			draw_rect(reel, _cycle_color(i * 23 + int(rect.position.x)).darkened(0.10))
-		var label := "SLOT" if source_id == "slot" else "TIX" if source_id == "pull_tabs" else "POKER"
 		var font := get_theme_default_font()
-		draw_string(font, cabinet.position + Vector2(2.0, cabinet.size.y * 0.82), _fit_draw_text(label, font, 7, cabinet.size.x - 4.0), HORIZONTAL_ALIGNMENT_CENTER, cabinet.size.x - 4.0, 7, C_YELLOW)
+		draw_string(font, cabinet.position + Vector2(2.0, cabinet.size.y * 0.82), _fit_draw_text("POKER", font, 7, cabinet.size.x - 4.0), HORIZONTAL_ALIGNMENT_CENTER, cabinet.size.x - 4.0, 7, C_YELLOW)
 	else:
 		var table := Rect2(rect.position + Vector2(rect.size.x * 0.08, rect.size.y * 0.44), Vector2(rect.size.x * 0.84, rect.size.y * 0.30))
 		draw_rect(table, Color("#123f30"))
@@ -6763,7 +6755,14 @@ func _draw_event_door_prop(rect: Rect2, accent: Color, motel: bool) -> void:
 
 func _draw_event_machine_prop(rect: Rect2, accent: Color) -> void:
 	var machine := Rect2(rect.position + Vector2(rect.size.x * 0.26, 6), Vector2(rect.size.x * 0.48, rect.size.y * 0.74))
-	_slot_machine(machine, accent)
+	# This is damaged event equipment, not a playable generated slot cabinet.
+	# Keep it visibly inert instead of borrowing any slot-machine renderer.
+	draw_rect(machine, Color("#0b0c13"))
+	draw_rect(machine, Color(accent.r, accent.g, accent.b, 0.24), false, 2)
+	var service_panel := Rect2(machine.position + Vector2(machine.size.x * 0.16, machine.size.y * 0.18), Vector2(machine.size.x * 0.68, machine.size.y * 0.42))
+	draw_rect(service_panel, Color("#171421"))
+	draw_line(service_panel.position + Vector2(2, service_panel.size.y * 0.72), service_panel.end - Vector2(2, service_panel.size.y * 0.72), accent.darkened(0.18), 2)
+	draw_line(service_panel.position + Vector2(service_panel.size.x * 0.30, 3), service_panel.position + Vector2(service_panel.size.x * 0.54, service_panel.size.y - 3), C_PINK, 2)
 	draw_line(machine.position + Vector2(machine.size.x * 0.18, machine.size.y * 0.24), machine.position + Vector2(machine.size.x * 0.82, machine.size.y * 0.45), C_PINK, 3)
 	var badge := Rect2(rect.position + Vector2(rect.size.x * 0.66, rect.size.y * 0.18), Vector2(rect.size.x * 0.18, rect.size.y * 0.22))
 	draw_rect(badge, Color(0.05, 0.04, 0.08, 0.86))
@@ -6878,10 +6877,6 @@ func _silhouette(pos: Vector2, scale_value: float, color: Color) -> void:
 	draw_rect(Rect2(pos.x + 18 * scale_value, pos.y - 14 * scale_value, 12 * scale_value, 48 * scale_value), color)
 
 
-func _slot_machine(rect: Rect2, accent: Color) -> void:
-	_draw_slot_cabinet_prop(rect, {"label": "SLOT", "source_id": "ambient_slot"}, accent, false, false)
-
-
 func _draw_roulette_room_prop(rect: Rect2, object_data: Dictionary, accent: Color, selected: bool, disabled: bool = false) -> void:
 	var table := Rect2(rect.position + Vector2(rect.size.x * 0.06, rect.size.y * 0.48), Vector2(rect.size.x * 0.88, rect.size.y * 0.30))
 	draw_rect(table, Color("#14503c"))
@@ -6957,40 +6952,32 @@ func _draw_pull_tab_machine_prop(rect: Rect2, object_data: Dictionary, accent: C
 
 
 func _draw_slot_cabinet_prop(rect: Rect2, object_data: Dictionary, accent: Color, selected: bool, disabled: bool = false) -> void:
-	var phase := float(abs(hash(str(object_data.get("id", object_data.get("label", "slot"))))) % 1000) / 1000.0
-	var profile := _slot_prop_profile(object_data, accent)
+	var static_layer := _slot_prop_static_layer(rect, object_data, accent)
+	var phase := float(static_layer.get("phase", 0.0))
+	var profile: Dictionary = static_layer.get("profile", {})
 	var runtime := _slot_prop_runtime_state(object_data)
 	var preview := _slot_prop_preview_state(object_data)
 	var preview_phase := str(preview.get("phase", "idle"))
 	var live_preview := bool(preview.get("active", false)) or ["spinning", "win", "near_miss", "bonus", "nudge_chain"].has(preview_phase)
 	var pulse_speed := 4.8 if preview_phase == "spinning" else 4.1 if live_preview else 3.5 if selected else 2.1
 	var pulse := 0.38 + absf(sin(flicker * pulse_speed + phase * TAU)) * (0.34 if live_preview else 0.30 if selected else 0.14)
-	var safe := Rect2(
-		rect.position + Vector2(rect.size.x * 0.14, rect.size.y * 0.03),
-		Vector2(rect.size.x * 0.72, rect.size.y * 0.92)
-	)
-	if safe.size.x < 28.0 or safe.size.y < 42.0:
-		draw_rect(rect.grow(-2.0), Color("#111120"))
-		return
-	var format_id := str(profile.get("format_id", "classic_3_reel"))
-	var reel_count := maxi(3, int(profile.get("reel_count", 3)))
-	var row_count := maxi(1, int(profile.get("row_count", 1)))
-	var video_feature := format_id == "video_feature"
-	var classic := format_id == "classic_3_reel" or row_count <= 1
+	var safe: Rect2 = static_layer.get("safe", rect)
+	var reel_count := int(static_layer.get("reel_count", 3))
+	var row_count := int(static_layer.get("row_count", 1))
+	var video_feature := bool(static_layer.get("video_feature", false))
+	var classic := bool(static_layer.get("classic", true))
 	var slot_accent: Color = profile.get("accent", accent)
 	var slot_light: Color = profile.get("light", C_CYAN)
 	var slot_trim: Color = profile.get("trim", C_YELLOW)
 	var primary: Color = profile.get("primary", Color("#0b0d18"))
 	var secondary: Color = profile.get("secondary", Color("#07070c"))
 	var glass: Color = profile.get("glass", Color("#f2efe2"))
-	var base := Rect2(safe.position + Vector2(safe.size.x * (0.10 if classic else 0.08), safe.size.y * 0.86), Vector2(safe.size.x * (0.80 if classic else 0.84), safe.size.y * 0.10))
-	var body := Rect2(safe.position + Vector2(safe.size.x * (0.15 if classic else 0.08), safe.size.y * (0.20 if classic else 0.15)), Vector2(safe.size.x * (0.70 if classic else 0.84), safe.size.y * (0.68 if classic else 0.73)))
-	var topper := Rect2(safe.position + Vector2(safe.size.x * (0.10 if classic else 0.04), safe.size.y * 0.04), Vector2(safe.size.x * (0.80 if classic else 0.92), safe.size.y * (0.17 if classic else 0.15)))
-	var screen := Rect2(body.position + Vector2(body.size.x * (0.18 if classic else 0.10), body.size.y * (0.30 if classic else 0.22)), Vector2(body.size.x * (0.64 if classic else 0.80), body.size.y * (0.26 if classic else 0.42)))
-	if video_feature:
-		screen = Rect2(body.position + Vector2(body.size.x * 0.09, body.size.y * 0.20), Vector2(body.size.x * 0.58, body.size.y * 0.48))
-	var feature_panel := Rect2(body.position + Vector2(body.size.x * 0.72, body.size.y * 0.19), Vector2(body.size.x * 0.18, body.size.y * 0.48))
-	var deck := Rect2(body.position + Vector2(body.size.x * 0.10, body.size.y * (0.70 if classic else 0.72)), Vector2(body.size.x * 0.80, body.size.y * (0.13 if classic else 0.12)))
+	var base: Rect2 = static_layer.get("base", Rect2())
+	var body: Rect2 = static_layer.get("body", Rect2())
+	var topper: Rect2 = static_layer.get("topper", Rect2())
+	var screen: Rect2 = static_layer.get("screen", Rect2())
+	var feature_panel: Rect2 = static_layer.get("feature_panel", Rect2())
+	var deck: Rect2 = static_layer.get("deck", Rect2())
 	var rail_alpha := 0.34 + pulse * 0.24
 	draw_rect(Rect2(safe.position + Vector2(safe.size.x * 0.16, safe.size.y * 0.94), Vector2(safe.size.x * 0.68, safe.size.y * 0.035)), Color(slot_accent.r, slot_accent.g, slot_accent.b, 0.22))
 	draw_rect(base, Color("#06060b"))
@@ -7011,7 +6998,7 @@ func _draw_slot_cabinet_prop(rect: Rect2, object_data: Dictionary, accent: Color
 	if video_feature:
 		_draw_slot_prop_feature_panel(feature_panel, profile, pulse, phase, preview)
 	else:
-		var feature_strip := Rect2(body.position + Vector2(body.size.x * 0.18, body.size.y * (0.60 if classic else 0.66)), Vector2(body.size.x * 0.64, body.size.y * (0.08 if classic else 0.05)))
+		var feature_strip: Rect2 = static_layer.get("feature_strip", Rect2())
 		_draw_slot_prop_feature_strip(feature_strip, profile, pulse, phase, preview)
 	draw_rect(deck, Color("#12080f"))
 	draw_rect(deck, Color(slot_trim.r, slot_trim.g, slot_trim.b, 0.18 + pulse * 0.08), false, 1)
@@ -7028,7 +7015,7 @@ func _draw_slot_cabinet_prop(rect: Rect2, object_data: Dictionary, accent: Color
 		var lever_x := body.position.x + body.size.x * 0.93
 		draw_line(Vector2(lever_x, body.position.y + body.size.y * 0.28), Vector2(lever_x, body.position.y + body.size.y * 0.55), slot_trim, 2)
 		draw_circle(Vector2(lever_x, body.position.y + body.size.y * 0.25), maxf(2.0, safe.size.x * 0.035), C_YELLOW)
-	var light_count := maxi(3, int(safe.size.x / 16.0))
+	var light_count := int(static_layer.get("light_count", 3))
 	for i in range(light_count):
 		var t := 0.0 if light_count <= 1 else float(i) / float(light_count - 1)
 		var pos := topper.position + Vector2(topper.size.x * t, -1.0)
@@ -7039,6 +7026,58 @@ func _draw_slot_cabinet_prop(rect: Rect2, object_data: Dictionary, accent: Color
 	if disabled:
 		draw_rect(safe, Color(0.0, 0.0, 0.0, 0.48))
 		draw_line(safe.position + Vector2(safe.size.x * 0.12, safe.size.y * 0.20), safe.position + Vector2(safe.size.x * 0.88, safe.size.y * 0.78), C_SOFT, 3)
+
+
+func _slot_prop_static_layer(rect: Rect2, object_data: Dictionary, fallback_accent: Color) -> Dictionary:
+	var object_id := str(object_data.get("id", object_data.get("label", "generated_machine")))
+	var signature := hash([rect, fallback_accent])
+	var cached_value: Variant = slot_prop_static_layer_cache.get(object_id, {})
+	if typeof(cached_value) == TYPE_DICTIONARY:
+		var cached := cached_value as Dictionary
+		if int(cached.get("signature", -1)) == signature:
+			return cached
+	var profile := _slot_prop_profile(object_data, fallback_accent)
+	var phase := float(abs(hash(object_id)) % 1000) / 1000.0
+	var safe := Rect2(
+		rect.position + Vector2(rect.size.x * 0.14, rect.size.y * 0.03),
+		Vector2(rect.size.x * 0.72, rect.size.y * 0.92)
+	)
+	var format_id := str(profile.get("format_id", "classic_3_reel"))
+	var reel_count := maxi(3, int(profile.get("reel_count", 3)))
+	var row_count := maxi(1, int(profile.get("row_count", 1)))
+	var video_feature := format_id == "video_feature"
+	var classic := format_id == "classic_3_reel" or row_count <= 1
+	var base := Rect2(safe.position + Vector2(safe.size.x * (0.10 if classic else 0.08), safe.size.y * 0.86), Vector2(safe.size.x * (0.80 if classic else 0.84), safe.size.y * 0.10))
+	var body := Rect2(safe.position + Vector2(safe.size.x * (0.15 if classic else 0.08), safe.size.y * (0.20 if classic else 0.15)), Vector2(safe.size.x * (0.70 if classic else 0.84), safe.size.y * (0.68 if classic else 0.73)))
+	var topper := Rect2(safe.position + Vector2(safe.size.x * (0.10 if classic else 0.04), safe.size.y * 0.04), Vector2(safe.size.x * (0.80 if classic else 0.92), safe.size.y * (0.17 if classic else 0.15)))
+	var screen := Rect2(body.position + Vector2(body.size.x * (0.18 if classic else 0.10), body.size.y * (0.30 if classic else 0.22)), Vector2(body.size.x * (0.64 if classic else 0.80), body.size.y * (0.26 if classic else 0.42)))
+	if video_feature:
+		screen = Rect2(body.position + Vector2(body.size.x * 0.09, body.size.y * 0.20), Vector2(body.size.x * 0.58, body.size.y * 0.48))
+	var feature_panel := Rect2(body.position + Vector2(body.size.x * 0.72, body.size.y * 0.19), Vector2(body.size.x * 0.18, body.size.y * 0.48))
+	var deck := Rect2(body.position + Vector2(body.size.x * 0.10, body.size.y * (0.70 if classic else 0.72)), Vector2(body.size.x * 0.80, body.size.y * (0.13 if classic else 0.12)))
+	var feature_strip := Rect2(body.position + Vector2(body.size.x * 0.18, body.size.y * (0.60 if classic else 0.66)), Vector2(body.size.x * 0.64, body.size.y * (0.08 if classic else 0.05)))
+	var layer := {
+		"signature": signature,
+		"phase": phase,
+		"profile": profile,
+		"safe": safe,
+		"reel_count": reel_count,
+		"row_count": row_count,
+		"video_feature": video_feature,
+		"classic": classic,
+		"base": base,
+		"body": body,
+		"topper": topper,
+		"screen": screen,
+		"feature_panel": feature_panel,
+		"deck": deck,
+		"feature_strip": feature_strip,
+		"light_count": maxi(3, int(safe.size.x / 16.0)),
+	}
+	if slot_prop_static_layer_cache.size() >= SLOT_PROP_STATIC_LAYER_CACHE_LIMIT and not slot_prop_static_layer_cache.has(object_id):
+		slot_prop_static_layer_cache.erase(slot_prop_static_layer_cache.keys()[0])
+	slot_prop_static_layer_cache[object_id] = layer
+	return layer
 
 
 func _slot_prop_visual_state(object_data: Dictionary) -> Dictionary:
@@ -7070,9 +7109,7 @@ func _slot_prop_profile(object_data: Dictionary, fallback_accent: Color) -> Dict
 	var identity := str(visual.get("cabinet_identity", "")).to_lower()
 	if format_id.is_empty():
 		format_id = "classic_3_reel"
-	var title := str(visual.get("cabinet_title", object_data.get("label", "SLOT"))).strip_edges().to_upper()
-	if title.is_empty():
-		title = "SLOT"
+	var title := str(visual.get("cabinet_title", "")).strip_edges().to_upper()
 	var reel_count := int(visual.get("reel_count", 5 if format_id != "classic_3_reel" else 3))
 	var row_count := int(visual.get("row_count", 3 if format_id != "classic_3_reel" else 1))
 	var profile := {
@@ -7178,6 +7215,11 @@ func _slot_prop_profile(object_data: Dictionary, fallback_accent: Color) -> Dict
 					"glass": Color("#dffbff"),
 					"marker": "table",
 				}, true)
+	var palette := _copy_dictionary(visual.get("cabinet_palette", {}))
+	for key in ["primary", "secondary", "accent", "light", "trim", "glass"]:
+		var color_text := str(palette.get(key, "")).strip_edges()
+		if not color_text.is_empty():
+			profile[key] = Color(color_text)
 	return profile
 
 
@@ -7219,11 +7261,12 @@ func _draw_slot_prop_topper(topper: Rect2, profile: Dictionary, pulse: float, ph
 				draw_rect(score, Color(trim_color.r, trim_color.g, trim_color.b, 0.22 + pulse * 0.10), false, 1)
 	var font := get_theme_default_font()
 	var title_size := clampi(int(topper.size.y * 0.34), 7, 13)
-	var title := str(profile.get("title", "SLOT")).left(10)
+	var title := str(profile.get("title", "")).left(10)
 	var status := str(preview.get("status_label", "")).strip_edges()
 	if not status.is_empty() and preview_phase != "idle":
 		title = status.left(10)
-	draw_string(font, topper.position + Vector2(4.0, topper.size.y * 0.66), _fit_draw_text(title, font, title_size, topper.size.x - 8.0), HORIZONTAL_ALIGNMENT_CENTER, topper.size.x - 8.0, title_size, C_YELLOW)
+	if not title.is_empty():
+		draw_string(font, topper.position + Vector2(4.0, topper.size.y * 0.66), _fit_draw_text(title, font, title_size, topper.size.x - 8.0), HORIZONTAL_ALIGNMENT_CENTER, topper.size.x - 8.0, title_size, C_YELLOW)
 
 
 func _draw_slot_prop_reels(screen: Rect2, reel_count: int, row_count: int, profile: Dictionary, glass: Color, phase: float, preview: Dictionary = {}) -> void:

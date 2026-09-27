@@ -1383,6 +1383,7 @@ func _slot_environment_visual_state(machine: Dictionary, preview: Dictionary = {
 		"cabinet_topper_style": str(skin.get("topper_style", "")),
 		"cabinet_motion_style": str(skin.get("motion_style", "")),
 		"cabinet_background_path": str(skin.get("background_path", "")),
+		"cabinet_palette": _slot_copy_dict(skin.get("palette", {})),
 		"feature_name": str(skin.get("feature_name", "")),
 		"pay_model": str(skin.get("pay_model", "")),
 		"reel_count": int(skin.get("reel_count", machine.get("reel_count", 3))),
