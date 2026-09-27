@@ -194,7 +194,7 @@ static func _check_partial_scenario_save_restore(library: Variant, definitions: 
 	var travel := generator.travel_environment_result(run_state, target_node, true)
 	if not bool(travel.get("ok", false)) or str(run_state.current_environment.get("scenario_id", "")) != str(definition.get("id", "")):
 		library.environment_scenarios[archetype_id] = original_pool
-		failures.append("env06_8 partial-scenario restore fixture could not enter its production room.")
+		failures.append("env06_8 partial-scenario restore fixture could not enter its production room: %s" % JSON.stringify(travel))
 		return
 	var initial_finalization := run_state.scenario_finalize_installed_environment(library, _dict(run_state.current_environment.get("scenario_layout_context", {})))
 	if not bool(initial_finalization.get("ok", false)) or bool(initial_finalization.get("inactive", false)):

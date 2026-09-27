@@ -99,8 +99,9 @@ static func _check_generation_and_tutorial(library: ContentLibrary, archetype: D
 	var slot_bindings := _dict(_dict(normal.get("layout", {})).get("slot_bindings", {}))
 	if not object_rects.has("environment_layer:ambient") or not object_rects.has("environment_layer:casino"):
 		failures.append("Punchline layer fixtures were not assigned stable transition-time layout surfaces.")
-	if str(_dict(slot_bindings.get("numbers:book", {})).get("presentation_mode", "")) != "overflow" or _layout_overlap_count(object_rects) != 0:
-		failures.append("Punchline club did not keep the artless Numbers book in overflow beside a collision-free generated layout plane.")
+	if str(_dict(slot_bindings.get("numbers:book", {})).get("presentation_mode", "")) != "room" \
+			or not object_rects.has("numbers:book") or _layout_overlap_count(object_rects) != 0:
+		failures.append("Punchline club did not keep the physical Numbers book on a collision-free generated layout plane.")
 	normal_run.set_environment(normal)
 	var ambient_before := str(normal_run.current_environment.get("layer_ambient_line", ""))
 	normal_run.advance_environment_turns(1)
@@ -121,9 +122,9 @@ static func _check_generation_and_tutorial(library: ContentLibrary, archetype: D
 	var casino_games_grounded := casino_game_ids.size() == 2
 	for game_id_value in casino_game_ids:
 		casino_games_grounded = casino_games_grounded and casino_object_rects.has("game:%s" % str(game_id_value))
-	if not casino_games_grounded or str(_dict(casino_bindings.get("numbers:book", {})).get("presentation_mode", "")) != "overflow" \
-			or _layout_overlap_count(casino_object_rects) != 0:
-		failures.append("Punchline casino did not compose its two release games beside the overflow Numbers book on one collision-free layout plane.")
+	if not casino_games_grounded or str(_dict(casino_bindings.get("numbers:book", {})).get("presentation_mode", "")) != "room" \
+			or not casino_object_rects.has("numbers:book") or _layout_overlap_count(casino_object_rects) != 0:
+		failures.append("Punchline casino did not compose its two release games and physical Numbers book on one collision-free layout plane.")
 	var tutorial_config := library.challenge_config_for("tutorial_first_card", "IGNORED")
 	var tutorial_run := RunStateScript.new()
 	tutorial_run.start_new("PUNCHLINE-TUTORIAL", tutorial_config)
@@ -172,7 +173,10 @@ static func _check_layer_scoped_sequence_projection(library: ContentLibrary, arc
 	run_state.discover_environment_layer("casino", "password")
 	var generator := RunGeneratorScript.new(library)
 	var entered := generator.enter_environment_layer(run_state, "casino", false)
-	if not bool(installed.get("ok", false)) or not bool(finalized.get("ok", false)) or not bool(entered.get("ok", false)):
+	# Round 4 makes a layout projection failure non-blocking. This fixture still
+	# seeds stale L1 projection fields when finalization succeeds, but crossing
+	# the Side Door must remain possible in either case.
+	if not bool(installed.get("ok", false)) or not bool(entered.get("ok", false)):
 		failures.append("Club-scoped Open Mic scenario blocked the Side Door layer boundary: %s." % JSON.stringify(entered))
 		return
 	if str(run_state.current_environment.get("current_layer_id", "")) != "casino" \
@@ -181,8 +185,10 @@ static func _check_layer_scoped_sequence_projection(library: ContentLibrary, arc
 			or bool(run_state.current_environment.get("scenario_semantic_ready", false)):
 		failures.append("Punchline L2 did not preserve the venue scenario cursor while suppressing the L1-only projection.")
 	var returned := generator.enter_environment_layer(run_state, "club", false)
-	if not bool(returned.get("ok", false)) or not run_state.current_environment.has("scenario_sequence_state") or not bool(run_state.current_environment.get("scenario_semantic_ready", false)):
-		failures.append("Returning to Punchline L1 did not restore its scoped Open Mic sequence projection.")
+	if not bool(returned.get("ok", false)) \
+			or (bool(finalized.get("ok", false)) and (not run_state.current_environment.has("scenario_sequence_state") \
+			or not bool(run_state.current_environment.get("scenario_semantic_ready", false)))):
+		failures.append("Returning to Punchline L1 did not restore its scoped Open Mic sequence projection: %s." % JSON.stringify({"returned": returned, "initial_finalization_ok": finalized.get("ok", false), "has_state": run_state.current_environment.has("scenario_sequence_state"), "semantic_ready": run_state.current_environment.get("scenario_semantic_ready", false)}))
 
 
 static func _check_discovery_and_save(library: ContentLibrary, archetype: Dictionary, failures: Array) -> void:
