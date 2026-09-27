@@ -1164,7 +1164,7 @@ static func _placement_contact(placement_class: String) -> String:
 		return "feet"
 	if placement_class in ["floor_fixture", "ground_marker"]:
 		return "base"
-	if placement_class == "surface_item":
+	if placement_class in ["surface_item", "shop_item"]:
 		return "surface"
 	if placement_class in ["wall_mounted", "hanging"]:
 		return "mount"
@@ -1511,6 +1511,7 @@ static func _placement_class_priority(placement_class: String) -> int:
 		"doorway", "wall_mounted", "hanging": return 1
 		"floor_fixture": return 2
 		"surface_item": return 3
+		"shop_item": return 3
 		"ground_marker", "standing_person", "group": return 4
 		_: return 5
 

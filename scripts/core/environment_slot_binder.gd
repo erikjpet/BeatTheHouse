@@ -93,6 +93,10 @@ static func bind_base_layout(environment: Dictionary, active_entries: Array, sha
 	entries.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
 		var left := _dict(left_value)
 		var right := _dict(right_value)
+		var left_shop_order := _shop_item_order(environment, str(left.get("object_id", "")))
+		var right_shop_order := _shop_item_order(environment, str(right.get("object_id", "")))
+		if left_shop_order >= 0 and right_shop_order >= 0 and left_shop_order != right_shop_order:
+			return left_shop_order < right_shop_order
 		return str(left.get("object_id", "")) < str(right.get("object_id", ""))
 	)
 	for entry_value in entries:
@@ -116,8 +120,8 @@ static func bind_base_layout(environment: Dictionary, active_entries: Array, sha
 			# Action-only records are attached to a visible room object by the
 			# interaction composer and never enter the physical slot inventory.
 			continue
-		var preference := str(object_preferences.get(object_id, "")).strip_edges()
-		if preference.is_empty():
+		var preference := "" if placement_class == "shop_item" else str(object_preferences.get(object_id, "")).strip_edges()
+		if preference.is_empty() and placement_class != "shop_item":
 			var category_key := "%s:%d" % [str(entry.get("spot_field", "")), int(entry.get("index", 0))]
 			preference = str(category_preferences.get(category_key, "")).strip_edges()
 		# Generated base records are actionable by default. Decorative-only late
@@ -598,7 +602,13 @@ static func bind_base_records(environment: Dictionary, records: Array, existing_
 		if not object_id.is_empty():
 			ordered.append(record)
 	ordered.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
-		return str(_dict(left_value).get("object_id", "")) < str(_dict(right_value).get("object_id", ""))
+		var left_id := str(_dict(left_value).get("object_id", ""))
+		var right_id := str(_dict(right_value).get("object_id", ""))
+		var left_shop_order := _shop_item_order(environment, left_id)
+		var right_shop_order := _shop_item_order(environment, right_id)
+		if left_shop_order >= 0 and right_shop_order >= 0 and left_shop_order != right_shop_order:
+			return left_shop_order < right_shop_order
+		return left_id < right_id
 	)
 	for record_value in ordered:
 		var record := _dict(record_value)
@@ -622,8 +632,8 @@ static func bind_base_records(environment: Dictionary, records: Array, existing_
 			warnings.append(warning)
 			errors.append(warning)
 			continue
-		var preference := str(object_preferences.get(object_id, "")).strip_edges()
-		if preference.is_empty():
+		var preference := "" if placement_class == "shop_item" else str(object_preferences.get(object_id, "")).strip_edges()
+		if preference.is_empty() and placement_class != "shop_item":
 			var spot_field := str(record.get("layout_spot_field", "")).strip_edges()
 			var category_key := "%s:%d" % [spot_field, int(record.get("layout_index", 0))]
 			preference = str(category_preferences.get(category_key, "")).strip_edges()
@@ -1227,6 +1237,22 @@ static func _select_slot(slots: Array, occupied: Dictionary, placement_class: St
 				and _slot_meets_minimum(slot, minimum_size):
 			return slot
 	return {}
+
+
+# Returns the player-visible stock order for merchandise. The binder uses this
+# order with the priority-sorted shop slots, producing a gap-free row regardless
+# of item ids or the order in which other physical object families are emitted.
+static func _shop_item_order(environment: Dictionary, object_id: String) -> int:
+	if object_id.begins_with("cage_gift_item:"):
+		return int(object_id.get_slice(":", 1))
+	if not object_id.begins_with("item:"):
+		return -1
+	var item_id := object_id.trim_prefix("item:")
+	var offers := _array(environment.get("item_offers", []))
+	for index in range(offers.size()):
+		if str(_dict(offers[index]).get("id", "")) == item_id:
+			return index
+	return -1
 
 
 static func _slot_meets_minimum(slot: Dictionary, minimum_size: Vector2) -> bool:

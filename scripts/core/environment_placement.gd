@@ -5,7 +5,7 @@ const SURFACE_MAP_PATH := "res://data/environments/placement_surfaces.json"
 const DeveloperPlacementStoreScript := preload("res://scripts/core/developer_placement_store.gd")
 const CLASSES := [
 	"standing_person", "behind_counter_person", "seated_person", "group",
-	"floor_fixture", "ground_marker", "surface_item", "wall_mounted",
+	"floor_fixture", "ground_marker", "surface_item", "shop_item", "wall_mounted",
 	"hanging", "doorway",
 ]
 const PERSON_CLASSES := ["standing_person", "behind_counter_person", "seated_person", "group"]
@@ -38,10 +38,15 @@ static var _surface_maps_loaded := false
 
 
 static func classify(object_data: Dictionary, object_type: String = "", object_id: String = "", visual_prop: String = "") -> String:
+	var clean_type := object_type.strip_edges().to_lower()
+	# Merchandise owns a closed placement class so props and scenario visuals can
+	# never consume its authored shelf row. Cage stock uses the same base item
+	# record contract under a stable, index-addressed presentation identity.
+	if clean_type == "item" or object_id.begins_with("cage_gift_item:"):
+		return "shop_item"
 	var explicit := str(object_data.get("placement_class", "")).strip_edges()
 	if explicit in CLASSES:
 		return explicit
-	var clean_type := object_type.strip_edges().to_lower()
 	var clean_prop := visual_prop.strip_edges().to_lower()
 	if clean_prop.is_empty():
 		clean_prop = str(object_data.get("visual_prop", object_data.get("environment_prop", ""))).strip_edges().to_lower()
@@ -246,11 +251,12 @@ static func support_for_rect_on_surfaces(surfaces: Dictionary, placement_class: 
 				var band := _rect_array(band_value)
 				if band.has_point(contact) and contact.y >= contact_range.x - 0.5 and contact.y <= contact_range.y + 0.5:
 					return {"surface_id": "stage" if str(band_key) == "stage_bands" else "floor"}
-	elif placement_class in ["behind_counter_person", "surface_item"]:
+	elif placement_class in ["behind_counter_person", "surface_item", "shop_item"]:
 		for counter_value in _array(surfaces.get("counters", [])):
 			var counter := _dict(counter_value)
 			var allowed_classes := _array(counter.get("classes", []))
-			if not allowed_classes.is_empty() and placement_class not in allowed_classes:
+			var support_class := "surface_item" if placement_class == "shop_item" else placement_class
+			if not allowed_classes.is_empty() and support_class not in allowed_classes:
 				continue
 			var top_y := float(counter.get("top_y", -1000.0))
 			var front_y := float(counter.get("front_y", top_y))
@@ -297,7 +303,7 @@ static func is_person_class(placement_class: String) -> bool:
 static func shadow_kind(placement_class: String) -> String:
 	if placement_class in ["wall_mounted", "hanging", "doorway"]:
 		return "none"
-	if placement_class == "surface_item":
+	if placement_class in ["surface_item", "shop_item"]:
 		return "contact"
 	return "feet" if placement_class in PERSON_CLASSES else "base"
 

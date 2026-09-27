@@ -586,7 +586,7 @@
             100.0,
             108.0
           ],
-          "footprint_class": "surface_item",
+          "footprint_class": "shop_item",
           "hit_rect": [
             64.0,
             60.0,
@@ -607,18 +607,18 @@
           "id": "base.shop_item_2",
           "kind": "base",
           "pos": [
-            230.0,
+            178.0,
             108.0
           ],
-          "footprint_class": "surface_item",
+          "footprint_class": "shop_item",
           "hit_rect": [
-            194.0,
+            142.0,
             60.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            230.0,
+            178.0,
             54.0
           ],
           "facing": "none",
@@ -631,72 +631,72 @@
           "id": "base.shop_item_3",
           "kind": "base",
           "pos": [
-            100.0,
-            192.0
+            256.0,
+            108.0
           ],
-          "footprint_class": "surface_item",
+          "footprint_class": "shop_item",
           "hit_rect": [
-            64.0,
-            144.0,
+            220.0,
+            60.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            100.0,
-            180.0
+            256.0,
+            54.0
           ],
           "facing": "none",
           "priority": 30,
           "zone_id": "room",
-          "support_id": "shelf_row_4",
+          "support_id": "shelf_row_1",
           "walk_lane_ids": []
         },
         {
           "id": "base.shop_item_4",
           "kind": "base",
           "pos": [
-            230.0,
-            192.0
+            100.0,
+            164.0
           ],
-          "footprint_class": "surface_item",
+          "footprint_class": "shop_item",
           "hit_rect": [
-            194.0,
-            144.0,
+            64.0,
+            116.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            230.0,
-            180.0
+            100.0,
+            110.0
           ],
           "facing": "none",
           "priority": 40,
           "zone_id": "room",
-          "support_id": "shelf_row_4",
+          "support_id": "shelf_row_3",
           "walk_lane_ids": []
         },
         {
           "id": "base.shop_item_5",
           "kind": "base",
           "pos": [
-            692.0,
-            136.0
+            178.0,
+            164.0
           ],
-          "footprint_class": "surface_item",
+          "footprint_class": "shop_item",
           "hit_rect": [
-            656.0,
-            88.0,
+            142.0,
+            116.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            676.0,
-            82.0
+            178.0,
+            110.0
           ],
           "facing": "none",
           "priority": 50,
           "zone_id": "room",
-          "support_id": "cooler_upper",
+          "support_id": "shelf_row_3",
           "walk_lane_ids": []
         },
         {
@@ -1718,70 +1718,70 @@
           "id": "base.shop_item_3",
           "kind": "base",
           "pos": [
-            582.0,
-            192.0
+            478.0,
+            112.0
           ],
-          "footprint_class": "surface_item",
+          "footprint_class": "shop_item",
           "hit_rect": [
-            546.0,
-            144.0,
+            442.0,
+            64.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            582.0,
-            138.0
+            478.0,
+            58.0
           ],
           "facing": "none",
           "priority": 30,
-          "zone_id": "service_lane",
-          "support_id": "folding_table",
+          "zone_id": "background",
+          "support_id": "folding_table_upper",
           "walk_lane_ids": []
         },
         {
           "id": "base.shop_item_1",
           "kind": "base",
           "pos": [
-            90.0,
-            168.0
+            318.0,
+            112.0
           ],
-          "footprint_class": "surface_item",
+          "footprint_class": "shop_item",
           "hit_rect": [
-            54.0,
-            120.0,
+            282.0,
+            64.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            90.0,
-            114.0
+            318.0,
+            58.0
           ],
           "facing": "none",
-          "priority": 20,
-          "zone_id": "left",
-          "support_id": "left_crate_display",
+          "priority": 10,
+          "zone_id": "background",
+          "support_id": "folding_table_upper",
           "walk_lane_ids": []
         },
         {
           "id": "base.shop_item_2",
           "kind": "base",
           "pos": [
-            462.0,
+            398.0,
             112.0
           ],
-          "footprint_class": "surface_item",
+          "footprint_class": "shop_item",
           "hit_rect": [
-            426.0,
+            362.0,
             64.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            462.0,
+            398.0,
             58.0
           ],
           "facing": "none",
-          "priority": 10,
+          "priority": 20,
           "zone_id": "background",
           "support_id": "folding_table_upper",
           "walk_lane_ids": []
@@ -1814,24 +1814,24 @@
           "id": "base.shop_item_4",
           "kind": "base",
           "pos": [
-            706.0,
-            168.0
+            558.0,
+            112.0
           ],
-          "footprint_class": "surface_item",
+          "footprint_class": "shop_item",
           "hit_rect": [
-            670.0,
-            120.0,
+            522.0,
+            64.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            599.0,
-            90.0
+            558.0,
+            58.0
           ],
           "facing": "none",
-          "priority": 110,
-          "zone_id": "room",
-          "support_id": "right_crate_display",
+          "priority": 40,
+          "zone_id": "background",
+          "support_id": "folding_table_upper",
           "walk_lane_ids": []
         }
       ],
@@ -3204,6 +3204,102 @@
       "void": [],
       "slot_schema_version": 1,
       "base_slots": [
+        {
+          "id": "base.shop_item_1",
+          "kind": "base",
+          "pos": [
+            414.0,
+            100.0
+          ],
+          "footprint_class": "shop_item",
+          "hit_rect": [
+            378.0,
+            52.0,
+            72.0,
+            48.0
+          ],
+          "label_anchor": [
+            414.0,
+            46.0
+          ],
+          "facing": "none",
+          "priority": 10,
+          "zone_id": "background",
+          "support_id": "room_key_rack",
+          "walk_lane_ids": []
+        },
+        {
+          "id": "base.shop_item_2",
+          "kind": "base",
+          "pos": [
+            506.0,
+            100.0
+          ],
+          "footprint_class": "shop_item",
+          "hit_rect": [
+            470.0,
+            52.0,
+            72.0,
+            48.0
+          ],
+          "label_anchor": [
+            506.0,
+            46.0
+          ],
+          "facing": "none",
+          "priority": 20,
+          "zone_id": "background",
+          "support_id": "room_key_rack",
+          "walk_lane_ids": []
+        },
+        {
+          "id": "base.shop_item_3",
+          "kind": "base",
+          "pos": [
+            414.0,
+            176.0
+          ],
+          "footprint_class": "shop_item",
+          "hit_rect": [
+            378.0,
+            128.0,
+            72.0,
+            48.0
+          ],
+          "label_anchor": [
+            414.0,
+            122.0
+          ],
+          "facing": "none",
+          "priority": 30,
+          "zone_id": "center",
+          "support_id": "lobby_table",
+          "walk_lane_ids": []
+        },
+        {
+          "id": "base.shop_item_4",
+          "kind": "base",
+          "pos": [
+            506.0,
+            176.0
+          ],
+          "footprint_class": "shop_item",
+          "hit_rect": [
+            470.0,
+            128.0,
+            72.0,
+            48.0
+          ],
+          "label_anchor": [
+            506.0,
+            122.0
+          ],
+          "facing": "none",
+          "priority": 40,
+          "zone_id": "center",
+          "support_id": "lobby_table",
+          "walk_lane_ids": []
+        },
         {
           "id": "base.staff_front_desk",
           "kind": "base",
@@ -12602,21 +12698,69 @@
       "slot_schema_version": 1,
       "base_slots": [
         {
+          "id": "base.shop_item_1",
+          "kind": "base",
+          "pos": [
+            646.0,
+            188.0
+          ],
+          "footprint_class": "shop_item",
+          "hit_rect": [
+            610.0,
+            140.0,
+            72.0,
+            48.0
+          ],
+          "label_anchor": [
+            646.0,
+            134.0
+          ],
+          "facing": "none",
+          "priority": 10,
+          "zone_id": "right",
+          "support_id": "bar",
+          "walk_lane_ids": []
+        },
+        {
+          "id": "base.shop_item_2",
+          "kind": "base",
+          "pos": [
+            736.0,
+            188.0
+          ],
+          "footprint_class": "shop_item",
+          "hit_rect": [
+            700.0,
+            140.0,
+            72.0,
+            48.0
+          ],
+          "label_anchor": [
+            736.0,
+            134.0
+          ],
+          "facing": "none",
+          "priority": 10,
+          "zone_id": "right",
+          "support_id": "bar",
+          "walk_lane_ids": []
+        },
+        {
           "id": "base.staff_bar",
           "kind": "base",
           "pos": [
-            742.0,
+            838.0,
             192.0
           ],
           "footprint_class": "behind_counter_person",
           "hit_rect": [
-            706.0,
+            802.0,
             120.0,
             72.0,
             72.0
           ],
           "label_anchor": [
-            733.0,
+            829.0,
             110.0
           ],
           "facing": "right",
@@ -14447,51 +14591,51 @@
           ]
         },
         {
-          "id": "base.shop_item_left",
+          "id": "base.shop_item_1",
           "kind": "base",
           "pos": [
-            80.0,
-            98.0
+            640.0,
+            96.0
           ],
-          "footprint_class": "surface_item",
+          "footprint_class": "shop_item",
           "hit_rect": [
-            44.0,
-            50.0,
+            604.0,
+            48.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            63.0,
-            26.0
+            640.0,
+            42.0
           ],
           "facing": "none",
-          "priority": 100,
-          "zone_id": "room",
-          "support_id": "round3_left_display",
+          "priority": 10,
+          "zone_id": "right",
+          "support_id": "champagne_shelf",
           "walk_lane_ids": []
         },
         {
-          "id": "base.shop_item_right",
+          "id": "base.shop_item_2",
           "kind": "base",
           "pos": [
-            744.0,
-            94.0
+            740.0,
+            96.0
           ],
-          "footprint_class": "surface_item",
+          "footprint_class": "shop_item",
           "hit_rect": [
-            708.0,
-            46.0,
+            704.0,
+            48.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            747.0,
-            26.0
+            740.0,
+            42.0
           ],
           "facing": "none",
-          "priority": 110,
-          "zone_id": "room",
-          "support_id": "round3_right_display",
+          "priority": 20,
+          "zone_id": "right",
+          "support_id": "champagne_shelf",
           "walk_lane_ids": []
         }
       ],
@@ -14898,8 +15042,8 @@
         "game_spots:0": "base.game_3",
         "game_spots:1": "base.game_table_left",
         "game_spots:2": "base.game_3",
-        "item_spots:0": "base.shop_item_left",
-        "item_spots:1": "base.shop_item_right",
+        "item_spots:0": "base.shop_item_1",
+        "item_spots:1": "base.shop_item_2",
         "item_spots:2": "base.game_2",
         "service_spots:0": "base.game_2",
         "service_spots:1": "base.game_1",
@@ -16378,6 +16522,54 @@
       ],
       "slot_schema_version": 1,
       "base_slots": [
+        {
+          "id": "base.shop_item_1",
+          "kind": "base",
+          "pos": [
+            666.0,
+            132.0
+          ],
+          "footprint_class": "shop_item",
+          "hit_rect": [
+            630.0,
+            84.0,
+            72.0,
+            48.0
+          ],
+          "label_anchor": [
+            666.0,
+            78.0
+          ],
+          "facing": "none",
+          "priority": 10,
+          "zone_id": "right",
+          "support_id": "slot_console",
+          "walk_lane_ids": []
+        },
+        {
+          "id": "base.shop_item_2",
+          "kind": "base",
+          "pos": [
+            754.0,
+            132.0
+          ],
+          "footprint_class": "shop_item",
+          "hit_rect": [
+            718.0,
+            84.0,
+            72.0,
+            48.0
+          ],
+          "label_anchor": [
+            754.0,
+            78.0
+          ],
+          "facing": "none",
+          "priority": 20,
+          "zone_id": "right",
+          "support_id": "slot_console",
+          "walk_lane_ids": []
+        },
         {
           "id": "base.patron_left_table",
           "kind": "base",
@@ -19001,66 +19193,66 @@
           "id": "base.shop_item_6",
           "kind": "base",
           "pos": [
-            202.0,
-            184.0
+            490.0,
+            70.0
           ],
-          "footprint_class": "surface_item",
+          "footprint_class": "shop_item",
           "hit_rect": [
-            166.0,
-            136.0,
+            454.0,
+            22.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            205.0,
-            176.0
+            490.0,
+            16.0
           ],
           "facing": "none",
           "priority": 60,
-          "zone_id": "left",
-          "support_id": "estate_left_lower_shelf",
+          "zone_id": "background",
+          "support_id": "estate_top_shelf",
           "walk_lane_ids": []
         },
         {
           "id": "base.shop_item_5",
           "kind": "base",
           "pos": [
-            458.0,
-            176.0
+            410.0,
+            70.0
           ],
-          "footprint_class": "surface_item",
+          "footprint_class": "shop_item",
           "hit_rect": [
-            422.0,
-            128.0,
+            374.0,
+            22.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            458.0,
-            122.0
+            410.0,
+            16.0
           ],
           "facing": "none",
           "priority": 50,
-          "zone_id": "service_lane",
-          "support_id": "estate_center_lower_shelf",
+          "zone_id": "background",
+          "support_id": "estate_top_shelf",
           "walk_lane_ids": []
         },
         {
           "id": "base.shop_item_4",
           "kind": "base",
           "pos": [
-            314.0,
+            330.0,
             70.0
           ],
-          "footprint_class": "surface_item",
+          "footprint_class": "shop_item",
           "hit_rect": [
-            278.0,
+            294.0,
             22.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            317.0,
+            330.0,
             16.0
           ],
           "facing": "none",
@@ -19073,19 +19265,19 @@
           "id": "base.shop_item_3",
           "kind": "base",
           "pos": [
-            202.0,
+            250.0,
             70.0
           ],
-          "footprint_class": "surface_item",
+          "footprint_class": "shop_item",
           "hit_rect": [
-            166.0,
+            214.0,
             22.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            202.0,
-            110.0
+            250.0,
+            16.0
           ],
           "facing": "none",
           "priority": 30,
@@ -19097,24 +19289,24 @@
           "id": "base.shop_item_2",
           "kind": "base",
           "pos": [
-            90.0,
-            184.0
+            170.0,
+            70.0
           ],
-          "footprint_class": "surface_item",
+          "footprint_class": "shop_item",
           "hit_rect": [
-            54.0,
-            136.0,
+            134.0,
+            22.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            76.0,
-            130.0
+            170.0,
+            16.0
           ],
           "facing": "none",
           "priority": 20,
-          "zone_id": "left",
-          "support_id": "estate_left_lower_shelf",
+          "zone_id": "background",
+          "support_id": "estate_top_shelf",
           "walk_lane_ids": []
         },
         {
@@ -19124,7 +19316,7 @@
             90.0,
             70.0
           ],
-          "footprint_class": "surface_item",
+          "footprint_class": "shop_item",
           "hit_rect": [
             54.0,
             22.0,
@@ -19132,12 +19324,60 @@
             48.0
           ],
           "label_anchor": [
-            87.0,
+            90.0,
             16.0
           ],
           "facing": "none",
           "priority": 10,
-          "zone_id": "room",
+          "zone_id": "background",
+          "support_id": "estate_top_shelf",
+          "walk_lane_ids": []
+        },
+        {
+          "id": "base.shop_item_7",
+          "kind": "base",
+          "pos": [
+            570.0,
+            70.0
+          ],
+          "footprint_class": "shop_item",
+          "hit_rect": [
+            534.0,
+            22.0,
+            72.0,
+            48.0
+          ],
+          "label_anchor": [
+            570.0,
+            16.0
+          ],
+          "facing": "none",
+          "priority": 70,
+          "zone_id": "background",
+          "support_id": "estate_top_shelf",
+          "walk_lane_ids": []
+        },
+        {
+          "id": "base.shop_item_8",
+          "kind": "base",
+          "pos": [
+            650.0,
+            70.0
+          ],
+          "footprint_class": "shop_item",
+          "hit_rect": [
+            614.0,
+            22.0,
+            72.0,
+            48.0
+          ],
+          "label_anchor": [
+            650.0,
+            16.0
+          ],
+          "facing": "none",
+          "priority": 80,
+          "zone_id": "background",
           "support_id": "estate_top_shelf",
           "walk_lane_ids": []
         }
@@ -22242,18 +22482,18 @@
           "id": "base.shop_item_1",
           "kind": "base",
           "pos": [
-            76.0,
+            92.0,
             178.0
           ],
-          "footprint_class": "surface_item",
+          "footprint_class": "shop_item",
           "hit_rect": [
-            54.0,
+            70.0,
             134.0,
             44.0,
             44.0
           ],
           "label_anchor": [
-            76.0,
+            92.0,
             112.0
           ],
           "facing": "none",
@@ -22266,18 +22506,18 @@
           "id": "base.shop_item_2",
           "kind": "base",
           "pos": [
-            222.0,
+            158.0,
             178.0
           ],
-          "footprint_class": "surface_item",
+          "footprint_class": "shop_item",
           "hit_rect": [
-            200.0,
+            136.0,
             134.0,
             44.0,
             44.0
           ],
           "label_anchor": [
-            222.0,
+            158.0,
             112.0
           ],
           "facing": "none",
@@ -22290,48 +22530,48 @@
           "id": "base.shop_item_3",
           "kind": "base",
           "pos": [
-            282.0,
-            260.0
+            92.0,
+            238.0
           ],
-          "footprint_class": "surface_item",
+          "footprint_class": "shop_item",
           "hit_rect": [
-            260.0,
-            216.0,
+            70.0,
+            194.0,
             44.0,
             44.0
           ],
           "label_anchor": [
-            337.0,
-            194.0
+            92.0,
+            188.0
           ],
           "facing": "none",
           "priority": 30,
           "zone_id": "room",
-          "support_id": "teller_counter",
+          "support_id": "gift_case_lower",
           "walk_lane_ids": []
         },
         {
           "id": "base.shop_item_4",
           "kind": "base",
           "pos": [
-            614.0,
-            260.0
+            158.0,
+            238.0
           ],
-          "footprint_class": "surface_item",
+          "footprint_class": "shop_item",
           "hit_rect": [
-            592.0,
-            216.0,
+            136.0,
+            194.0,
             44.0,
             44.0
           ],
           "label_anchor": [
-            605.0,
-            194.0
+            158.0,
+            188.0
           ],
           "facing": "none",
           "priority": 40,
           "zone_id": "room",
-          "support_id": "teller_counter",
+          "support_id": "gift_case_lower",
           "walk_lane_ids": []
         },
         {
