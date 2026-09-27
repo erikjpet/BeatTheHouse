@@ -106,9 +106,15 @@ static func bind_base_layout(environment: Dictionary, active_entries: Array, sha
 			object_id,
 			str(entry.get("visual_prop", entry.get("prop", "")))
 		)
+		var binding_source_id := str(entry.get("slot_binding_source_id", "")).strip_edges()
+		if object_id == "shopkeeper:merchant" \
+				or not binding_source_id.is_empty() and binding_source_id != object_id:
+			# This record contributes actions to an already physical room object;
+			# it is not a second person or fixture and therefore owns no slot.
+			continue
 		if not base_record_requires_room_slot(entry):
-			bindings[object_id] = _overflow_binding(object_id, placement_class, "base")
-			overflow_ids.append(object_id)
+			# Action-only records are attached to a visible room object by the
+			# interaction composer and never enter the physical slot inventory.
 			continue
 		var preference := str(object_preferences.get(object_id, "")).strip_edges()
 		if preference.is_empty():
@@ -518,7 +524,7 @@ static func _base_leave_preference(exit_slots: Array, authored_preference: Strin
 # records (deliveries, transient contacts, and meta controls) are assembled
 # after EnvironmentInstance generated its serialized layout. Only records that
 # pass the same physical gate consume still-free authored base slots; every
-# other record remains fully actionable in the room action list.
+# other record is attached to a visible room object by the interaction composer.
 static func bind_base_records(environment: Dictionary, records: Array, existing_bindings: Dictionary = {}, shared_occupancy: Dictionary = {}) -> Dictionary:
 	var surface_map := EnvironmentPlacementScript.surface_map(environment)
 	var slots := _ordered_slots(_array(surface_map.get("base_slots", [])))
@@ -574,21 +580,12 @@ static func bind_base_records(environment: Dictionary, records: Array, existing_
 		var existing_binding := _dict(bindings.get(binding_id_value, {}))
 		var requires_room := base_record_requires_room_slot(current_record) if current_record.has("visual_type") else base_record_requires_room_slot(_base_layout_policy_entry(environment, binding_id))
 		var existing_mode := str(existing_binding.get("presentation_mode", ""))
-		if not requires_room and existing_mode == PRESENTATION_ROOM:
-			bindings[binding_id_value] = _overflow_binding(binding_id, str(existing_binding.get("placement_class", "floor_fixture")), str(existing_binding.get("kind", "base")))
+		if not requires_room:
+			bindings.erase(binding_id_value)
 			object_rects.erase(binding_id)
 		elif requires_room and existing_mode == PRESENTATION_OVERFLOW:
 			bindings.erase(binding_id_value)
 			object_rects.erase(binding_id)
-	for current_id_value in current_records_by_id.keys():
-		var current_id := str(current_id_value)
-		var alias_record := _dict(current_records_by_id.get(current_id_value, {}))
-		var source_id := str(alias_record.get("slot_binding_source_id", "")).strip_edges()
-		if source_id.is_empty() or not bindings.has(current_id) or not bindings.has(source_id):
-			continue
-		var source_binding := _dict(bindings.get(source_id, {}))
-		bindings[current_id] = _overflow_binding(current_id, str(source_binding.get("placement_class", "floor_fixture")), "base")
-		object_rects.erase(current_id)
 	var guarded_existing := guard_unique_slot_bindings(bindings, current_record_ids, initial_occupancy, room_slots, "persisted base layout")
 	bindings = _dict(guarded_existing.get("slot_bindings", bindings))
 	var occupied := _dict(guarded_existing.get("occupied_slots", initial_occupancy))
@@ -619,14 +616,11 @@ static func bind_base_records(environment: Dictionary, records: Array, existing_
 			object_id,
 			str(record.get("visual_prop", record.get("prop", record.get("icon_key", ""))))
 		)
-		var binding_source_id := str(record.get("slot_binding_source_id", "")).strip_edges()
-		var shared_binding := _dict(bindings.get(binding_source_id, {}))
-		if not binding_source_id.is_empty() and binding_source_id != object_id \
-				and not shared_binding.is_empty() and str(shared_binding.get("placement_class", "")) == placement_class:
-			bindings[object_id] = _overflow_binding(object_id, placement_class, "base")
-			continue
 		if not base_record_requires_room_slot(record):
-			bindings[object_id] = _overflow_binding(object_id, placement_class, "base")
+			var warning := "base record binding received unattached action-only record %s; attach it to a visible room object before binding." % object_id
+			push_warning(warning)
+			warnings.append(warning)
+			errors.append(warning)
 			continue
 		var preference := str(object_preferences.get(object_id, "")).strip_edges()
 		if preference.is_empty():
@@ -753,6 +747,8 @@ static func bind_scenario_visuals(environment: Dictionary, visual_entries: Array
 	var warnings: Array = []
 	_validate_scenario_art_policy(surface_map, art_keys, errors)
 	var authored_overflow_ids := _scenario_overflow_policy(surface_map, errors)
+	if not authored_overflow_ids.is_empty():
+		errors.append("Scenario physical spill is no longer supported; add compatible hand-placed stage slots instead.")
 	if not errors.is_empty():
 		return {
 			"ok": false,
@@ -796,8 +792,8 @@ static func bind_scenario_visuals(environment: Dictionary, visual_entries: Array
 		var position_key := scenario_position_key(stable_id, semantic)
 		var art_key := scenario_visual_art_key(surface_map, entry)
 		if not scenario_visual_requires_room_slot(surface_map, entry):
-			bindings[identity] = _overflow_binding(identity, "", "exit" if bool(entry.get("safe_exit", false)) else "stage", "action_list_authored")
-			overflow_ids.append(identity)
+			# The layout resolver attaches abstract actions to a real actor or
+			# fixture before this physical binding pass.
 			continue
 		if not art_key.is_empty():
 			semantic["icon_key"] = art_key
@@ -812,13 +808,6 @@ static func bind_scenario_visuals(environment: Dictionary, visual_entries: Array
 		var route_id := str(semantic.get("route_id", "")).strip_edges()
 		if route_id.is_empty():
 			route_id = str(position_routes.get(position_key, "")).strip_edges()
-		if authored_overflow_ids.has(stable_id):
-			if not identity.begins_with("scenario::") or bool(entry.get("safe_exit", false)) or not route_id.is_empty():
-				errors.append("Authored scenario overflow %s must be a non-routed, non-exit scenario-owned visual." % identity)
-				continue
-			bindings[identity] = _overflow_binding(identity, placement_class, "stage", "physical_spill")
-			overflow_ids.append(identity)
-			continue
 		var route := _dict(routes_by_id.get(route_id, {}))
 		var slot: Dictionary = {}
 		if not route_id.is_empty():
@@ -850,7 +839,7 @@ static func bind_scenario_visuals(environment: Dictionary, visual_entries: Array
 			var preference := str(preferences.get(position_key, preferences.get(stable_id, preferences.get(identity, "")))).strip_edges()
 			# Ordinary stage preferences are hints, never hard authority. A stale,
 			# occupied, or class-incompatible preferred id falls through to the
-			# deterministic (priority, id) order before overflow.
+			# deterministic (priority, id) order.
 			slot = _select_slot(stage_slots, occupied, placement_class, preference, false, MIN_INTERACTIVE_TARGET)
 		if slot.is_empty():
 			_warn_missing_slot("scenario binding", identity, placement_class, warnings, errors)
@@ -886,8 +875,8 @@ static func bind_scenario_visuals(environment: Dictionary, visual_entries: Array
 
 
 # True means the entry has closed physical authority and may own an authored
-# room slot. False means it remains reachable through the geometry-free More
-# room actions presentation. Positive authority never comes from role/label
+# room slot. False means its actions must attach to a visible room object.
+# Positive authority never comes from role/label
 # inference.
 static func scenario_visual_requires_room_slot(surface_map: Dictionary, entry: Dictionary) -> bool:
 	if bool(entry.get("actor", false)):
@@ -1065,7 +1054,8 @@ static func guard_unique_slot_bindings(
 			continue
 		var binding := _dict(bindings.get(identity_value, {}))
 		if str(binding.get("presentation_mode", "")) == PRESENTATION_OVERFLOW:
-			overflow_ids.append(identity)
+			_warn_missing_slot(warning_scope, identity, str(binding.get("placement_class", "")), warnings, errors)
+			bindings.erase(identity_value)
 			continue
 		if str(binding.get("presentation_mode", "")) != PRESENTATION_ROOM:
 			continue
@@ -1287,20 +1277,6 @@ static func _room_binding(identity: String, placement_class: String, kind: Strin
 		"placement_class": placement_class,
 		"slot": slot.duplicate(true),
 	}
-
-
-static func _overflow_binding(identity: String, placement_class: String, kind: String, overflow_reason: String = "") -> Dictionary:
-	var binding := {
-		"identity": identity,
-		"kind": kind,
-		"presentation_mode": PRESENTATION_OVERFLOW,
-		"slot_id": "",
-		"placement_class": placement_class,
-		"slot": {},
-	}
-	if not overflow_reason.is_empty():
-		binding["overflow_reason"] = overflow_reason
-	return binding
 
 
 static func _slot_rect(slot: Dictionary) -> Rect2:

@@ -165,7 +165,8 @@ static func stamp_interactable_records(records_value: Array, environment: Dictio
 				continue
 			for geometry_key in geometry.keys(): record[geometry_key] = geometry.get(geometry_key)
 		else:
-			# Overflow actions live in RoomActionList, outside the environment board.
+			# Legacy geometry-free records are accepted only while old saves are
+			# migrated; the live composer attaches their actions to room objects.
 			# Keep their semantic identity/action authority without inventing a room
 			# hit rectangle that could bypass slot capacity or overlap validation.
 			if not _authorized_overflow_binding(record, slot_authority):
@@ -516,7 +517,8 @@ static func _identity_for_record(source: Dictionary, environment: Dictionary, li
 static func _bounds(record: Dictionary) -> Dictionary:
 	if str(record.get("presentation_mode", "room")) == "overflow":
 		# OperationRegistry models the actionable list control's accessible extent,
-		# not a room-space rectangle. RoomActionList owns the actual responsive row.
+		# not a room-space rectangle. The live composer attaches the action to a
+		# visible room object before it reaches the player.
 		return {"pixel_hit_bounds": {"w": OperationRegistryScript.MIN_TARGET_SIZE, "h": OperationRegistryScript.MIN_TARGET_SIZE}}
 	if str(record.get("coordinate_space", "")) != "normalized_environment_board": return {}
 	var board := _dict(record.get("coordinate_board_size", {}))

@@ -151,6 +151,10 @@ static func interactable_object_view_list(host: Variant) -> Array:
 		"closing_time_locked": host._closing_time_blocks_environment_actions(),
 		"closing_time_reason": host._closing_time_disabled_reason(),
 	}))
+	# Action-only records used to consume a second, geometry-free UI plane. Fold
+	# them into a visible person or fixture before the slot binder sees the live
+	# inventory, so every record that survives this point owns room geometry.
+	result = _attach_action_only_records(result)
 	# Seal the complete live base inventory against authored slots before scenario
 	# composition. Runtime-only physical objects consume remaining compatible room
 	# capacity; abstract controls retain their existing action-list presentation.
@@ -169,7 +173,7 @@ static func interactable_object_view_list(host: Variant) -> Array:
 		# read-only failure surface, but do not let scenario rejection mutate or heal
 		# the exact hostile/current environment being diagnosed.
 		host.run_state.set("current_environment", entry_environment)
-		return _array(binding_failure.get("records", result))
+		return _attach_action_only_records(_array(binding_failure.get("records", result)))
 	result = _array(record_binding.get("records", result))
 	# The exact fixed-slot result is semantic authority, not an ephemeral view
 	# detail. Commit it atomically before any sequence stamps records so a real
@@ -190,17 +194,17 @@ static func interactable_object_view_list(host: Variant) -> Array:
 	if not bool(preparation.get("ok", false)):
 		var preparation_failure := projection_failure_result(result, _array(preparation.get("errors", [])))
 		var committed_preparation_failure := committed_projection_status_result(host.run_state, preparation_failure, trusted_base_result)
-		return _array(committed_preparation_failure.get("records", trusted_base_result))
+		return _attach_action_only_records(_array(committed_preparation_failure.get("records", trusted_base_result)))
 	if not bool(world_preparation.get("ok", false)):
 		var world_preparation_failure := projection_failure_result(result, _array(world_preparation.get("errors", [])))
 		var committed_world_preparation_failure := committed_projection_status_result(host.run_state, world_preparation_failure, trusted_base_result)
-		return _array(committed_world_preparation_failure.get("records", trusted_base_result))
+		return _attach_action_only_records(_array(committed_world_preparation_failure.get("records", trusted_base_result)))
 	if ScenarioSequenceSchemaScript.is_sequence(definition):
 		var finalized: Dictionary = _dict(host.run_state.scenario_finalize_installed_environment(host.library, layout_context))
 		if not bool(finalized.get("ok", false)):
 			var finalization_failure := projection_failure_result(result, _array(finalized.get("errors", [])), _dict(finalized.get("layout_audit", {})))
 			var committed_finalization_failure := committed_projection_status_result(host.run_state, finalization_failure, trusted_base_result)
-			return _array(committed_finalization_failure.get("records", trusted_base_result))
+			return _attach_action_only_records(_array(committed_finalization_failure.get("records", trusted_base_result)))
 		var sealed_base_records: Array = JsonCoerceScript._copy_array(finalized.get("records", []))
 		result = sealed_base_records.duplicate(true)
 		var projection_result := project_finalized_sequence_interaction_result(result, finalized)
@@ -218,7 +222,7 @@ static func interactable_object_view_list(host: Variant) -> Array:
 		if not bool(world_finalized.get("ok", false)):
 			var world_finalization_failure := projection_failure_result(result, _array(world_finalized.get("errors", [])), _dict(world_finalized.get("layout_audit", {})))
 			var committed_world_finalization_failure := committed_projection_status_result(host.run_state, world_finalization_failure, trusted_base_result)
-			return _array(committed_world_finalization_failure.get("records", trusted_base_result))
+			return _attach_action_only_records(_array(committed_world_finalization_failure.get("records", trusted_base_result)))
 		var sealed_world_base_records := JsonCoerceScript._copy_array(world_finalized.get("records", []))
 		result = sealed_world_base_records.duplicate(true)
 		var world_projection_result := project_finalized_sequence_interaction_result(result, world_finalized)
@@ -235,8 +239,145 @@ static func interactable_object_view_list(host: Variant) -> Array:
 		host.run_state.current_environment.erase("scenario_sequence_lifecycle_errors")
 		host.run_state.current_environment.erase("scenario_layout_audit")
 		host.run_state.current_environment.erase("scenario_layout_authority_digest")
+	result = _attach_action_only_records(result)
 	result = _attach_delivery_handoff_to_contact(host, result)
 	return result
+
+
+static func _attach_action_only_records(records: Array) -> Array:
+	var room_records: Array = []
+	var action_only: Array = []
+	for value in records:
+		var record := _dict(value)
+		if record.is_empty():
+			continue
+		var binding_source_id := str(record.get("slot_binding_source_id", "")).strip_edges()
+		if str(record.get("presentation_mode", "room")) == "overflow" \
+				or str(record.get("object_id", "")) == "shopkeeper:merchant" \
+				or not binding_source_id.is_empty() and binding_source_id != str(record.get("object_id", "")) \
+				or not EnvironmentSlotBinderScript.base_record_requires_room_slot(record):
+			action_only.append(record)
+		else:
+			room_records.append(record)
+	for source_value in action_only:
+		var source := _dict(source_value)
+		var actions := action_entries_for_record(source)
+		if actions.is_empty():
+			continue
+		var target_index := _attached_action_target_index(room_records, source)
+		if target_index < 0:
+			push_warning("Room action %s has no visible room object to attach to." % str(source.get("object_id", "unknown")))
+			continue
+		var target := _dict(room_records[target_index])
+		var attached := _array(target.get("attached_room_actions", []))
+		for action_value in actions:
+			var action := _dict(action_value)
+			var key := str(action.get("_attached_action_key", ""))
+			var duplicate := false
+			for existing_value in attached:
+				if str(_dict(existing_value).get("key", "")) == key:
+					duplicate = true
+					break
+			if duplicate:
+				continue
+			attached.append({
+				"key": key,
+				"label": str(action.get("label", action.get("id", "Use"))).strip_edges(),
+				"enabled": action_is_enabled(source, action),
+				"disabled_reason": str(action.get("disabled_reason", source.get("disabled_reason", "Unavailable."))),
+				"record": source.duplicate(true),
+				"action": action.duplicate(true),
+			})
+		target["attached_room_actions"] = attached
+		room_records[target_index] = target
+	return room_records
+
+
+static func _attached_action_target_index(records: Array, source: Dictionary) -> int:
+	var best_index := -1
+	var best_score := -100000
+	var source_tokens := _identity_tokens(source)
+	for index in range(records.size()):
+		var candidate := _dict(records[index])
+		if not bool(candidate.get("visible", true)) or str(candidate.get("presentation_mode", "room")) != "room":
+			continue
+		var score := 0
+		if str(candidate.get("object_id", "")) == str(source.get("slot_binding_source_id", "")):
+			score += 1000
+		var object_type := str(candidate.get("object_type", ""))
+		var visual_type := str(candidate.get("visual_type", ""))
+		if visual_type == "character" or object_type in ["dialogue", "shopkeeper", "character", "scenario_actor"]:
+			score += 80
+		elif object_type == "travel":
+			score -= 60
+		elif bool(candidate.get("interactive", true)):
+			score += 20
+		var candidate_tokens := _identity_tokens(candidate)
+		for token_value in source_tokens:
+			var token := str(token_value)
+			if token.length() >= 4 and candidate_tokens.has(token):
+				score += 25
+		for relation_key in ["anchor_id", "zone_id", "source_id", "parent_id"]:
+			var relation := str(source.get(relation_key, "")).strip_edges()
+			if not relation.is_empty() and relation in [
+				str(candidate.get("anchor_id", "")), str(candidate.get("zone_id", "")),
+				str(candidate.get("source_id", "")), str(candidate.get("stable_object_id", "")),
+			]:
+				score += 120
+		if score > best_score:
+			best_score = score
+			best_index = index
+	return best_index
+
+
+static func _identity_tokens(record: Dictionary) -> Array:
+	var seen: Dictionary = {}
+	for key in ["object_id", "stable_object_id", "source_id", "label", "anchor_id", "zone_id"]:
+		var text := str(record.get(key, "")).to_lower()
+		for token in text.replace("::", "_").replace(":", "_").replace("-", "_").replace(" ", "_").split("_", false):
+			if token.length() >= 3:
+				seen[token] = true
+	return seen.keys()
+
+
+static func action_entries_for_record(record: Dictionary) -> Array:
+	var entries: Array = []
+	var seen: Dictionary = {}
+	for source_value in ["inline_actions", "scenario_sequence_actions", "available_actions"]:
+		var source := str(source_value)
+		var actions := _array(record.get(source, []))
+		for index in range(actions.size()):
+			var action := _dict(actions[index])
+			if action.is_empty() or not bool(action.get("visible", true)) \
+					or not bool(action.get("presentation_visible", true)) \
+					or bool(action.get("hidden", false)) or bool(action.get("hidden_only", false)):
+				continue
+			var action_id := str(action.get("emit_object_id", action.get("id", ""))).strip_edges()
+			if action_id.is_empty():
+				continue
+			var dispatch_identity := "%s:%s:%s:%s" % [
+				str(record.get("object_id", "")),
+				str(record.get("owner_namespace", record.get("scenario_owner_namespace", ""))),
+				str(record.get("stable_object_id", record.get("scenario_stable_object_id", ""))),
+				action_id,
+			]
+			if seen.has(dispatch_identity):
+				continue
+			seen[dispatch_identity] = true
+			action = action.duplicate(true)
+			action["_attached_source"] = source
+			action["_attached_action_key"] = "%s:%s:%d:%s" % [
+				str(record.get("object_id", "")), source, index,
+				JSON.stringify([dispatch_identity, action]).sha256_text(),
+			]
+			entries.append(action)
+	return entries
+
+
+static func action_is_enabled(record: Dictionary, action: Dictionary) -> bool:
+	return bool(record.get("enabled", true)) \
+		and bool(record.get("interactive", record.get("enabled", true))) \
+		and bool(action.get("enabled", true))
 
 
 static func commit_base_record_binding(run_state: Variant, layout_value: Dictionary, record_binding: Dictionary) -> Dictionary:

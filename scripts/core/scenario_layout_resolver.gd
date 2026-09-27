@@ -334,9 +334,10 @@ static func resolve(base_records: Array, projection: Dictionary, environment: Di
 	var visual_count := 0
 	var resolved_scenes: Dictionary = {}
 	var resolved_actors: Dictionary = {}
+	var surface_map := EnvironmentPlacementScript.surface_map(environment)
+	semantic_state = _attach_abstract_actions_to_room_objects(semantic_state, surface_map, base_records, warnings, errors)
 	var interactions := _dict(semantic_state.get("interactions", {}))
 	var placement_queue: Array = []
-	var surface_map := EnvironmentPlacementScript.surface_map(environment)
 	for collection_entry in [[semantic_state.get("scene_objects", {}), false], [semantic_state.get("actors", {}), true]]:
 		var collection := _dict((collection_entry as Array)[0])
 		var actor := bool((collection_entry as Array)[1])
@@ -446,6 +447,184 @@ static func resolve(base_records: Array, projection: Dictionary, environment: Di
 	}
 
 
+# Scenario tasks, zones, ledgers, routes, and similar concepts are commands,
+# not drawable room objects. Preserve their exact command authority while
+# placing the choices on the most closely related visible actor or fixture.
+static func _attach_abstract_actions_to_room_objects(
+	semantic_state: Dictionary,
+	surface_map: Dictionary,
+	base_records: Array,
+	warnings: Array,
+	errors: Array
+) -> Dictionary:
+	var result := semantic_state.duplicate(true)
+	var scenes := _dict(result.get("scene_objects", {}))
+	var actors := _dict(result.get("actors", {}))
+	var interactions := _dict(result.get("interactions", {}))
+	var abstract_ids: Array = []
+	for identity_value in scenes.keys():
+		var identity := str(identity_value)
+		var semantic := _dict(scenes.get(identity_value, {}))
+		if semantic.is_empty() or not bool(semantic.get("present", true)):
+			continue
+		var interaction := _dict(interactions.get(identity, {}))
+		var entry := {
+			"identity": identity,
+			"semantic": semantic,
+			"actor": false,
+			"safe_exit": bool(interaction.get("safe_exit", false)),
+		}
+		if not EnvironmentSlotBinderScript.scenario_visual_requires_room_slot(surface_map, entry):
+			abstract_ids.append(identity)
+	abstract_ids.sort()
+	for identity_value in abstract_ids:
+		var identity := str(identity_value)
+		var semantic := _dict(scenes.get(identity, {}))
+		var source := _dict(interactions.get(identity, {}))
+		scenes.erase(identity)
+		interactions.erase(identity)
+		var actions := _array(source.get("available_actions", []))
+		if actions.is_empty():
+			continue
+		var target_identity := _abstract_action_target(identity, semantic, scenes, actors, base_records, surface_map)
+		if target_identity.is_empty():
+			var warning := "Scenario action %s has no visible actor or fixture to attach to." % identity
+			push_warning(warning)
+			warnings.append(warning)
+			errors.append(warning)
+			continue
+		var target := _dict(interactions.get(target_identity, {}))
+		if target.is_empty():
+			target = _interaction_shell_for_target(target_identity, scenes, actors, base_records)
+		var target_actions := _array(target.get("available_actions", []))
+		var parsed_source := OperationRegistryScript.parse_owned_identity(identity)
+		for action_value in actions:
+			var action := _dict(action_value)
+			if action.is_empty():
+				continue
+			action = action.duplicate(true)
+			action["attached_owner_namespace"] = str(parsed_source.get("owner_namespace", source.get("owner_namespace", "")))
+			action["attached_stable_object_id"] = str(parsed_source.get("stable_object_id", source.get("stable_object_id", "")))
+			action["attached_action_label"] = str(source.get("label", semantic.get("label", "Room action")))
+			if not target_actions.has(action):
+				target_actions.append(action)
+		target["available_actions"] = target_actions
+		target["enabled"] = bool(target.get("enabled", true)) or bool(source.get("enabled", false))
+		target["present"] = true
+		target["visible"] = true
+		interactions[target_identity] = target
+	result["scene_objects"] = scenes
+	result["actors"] = actors
+	result["interactions"] = interactions
+	return result
+
+
+static func _abstract_action_target(
+	identity: String,
+	semantic: Dictionary,
+	scenes: Dictionary,
+	actors: Dictionary,
+	base_records: Array,
+	surface_map: Dictionary
+) -> String:
+	var best_identity := ""
+	var best_score := -100000
+	var source_tokens := _attachment_tokens(identity, semantic)
+	for family_value in [[actors, true], [scenes, false]]:
+		var family := _dict((family_value as Array)[0])
+		var actor := bool((family_value as Array)[1])
+		for candidate_identity_value in family.keys():
+			var candidate_identity := str(candidate_identity_value)
+			var candidate := _dict(family.get(candidate_identity_value, {}))
+			if candidate.is_empty() or not bool(candidate.get("present", true)) or not bool(candidate.get("visible", true)):
+				continue
+			var entry := {"identity": candidate_identity, "semantic": candidate, "actor": actor, "safe_exit": false}
+			if not EnvironmentSlotBinderScript.scenario_visual_requires_room_slot(surface_map, entry):
+				continue
+			var score := 100 if actor else 40
+			score += _attachment_match_score(source_tokens, semantic, candidate_identity, candidate)
+			if score > best_score:
+				best_score = score
+				best_identity = candidate_identity
+	if not best_identity.is_empty():
+		return best_identity
+	for record_value in base_records:
+		var record := _dict(record_value)
+		if not bool(record.get("visible", true)) or str(record.get("presentation_mode", "room")) != "room":
+			continue
+		var candidate_identity := _record_identity(record)
+		if candidate_identity == "::":
+			continue
+		var object_type := str(record.get("object_type", ""))
+		var visual_type := str(record.get("visual_type", ""))
+		var score := 80 if visual_type == "character" or object_type in ["dialogue", "shopkeeper", "character"] else 20
+		if object_type == "travel":
+			score -= 60
+		score += _attachment_match_score(source_tokens, semantic, candidate_identity, record)
+		if score > best_score:
+			best_score = score
+			best_identity = candidate_identity
+	return best_identity
+
+
+static func _attachment_match_score(source_tokens: Array, source: Dictionary, candidate_identity: String, candidate: Dictionary) -> int:
+	var score := 0
+	var candidate_tokens := _attachment_tokens(candidate_identity, candidate)
+	for token_value in source_tokens:
+		var token := str(token_value)
+		if token.length() >= 4 and candidate_tokens.has(token):
+			score += 25
+	for key in ["anchor_id", "zone_id"]:
+		var relation := str(source.get(key, "")).strip_edges()
+		if not relation.is_empty() and relation in [
+			str(candidate.get("anchor_id", "")), str(candidate.get("zone_id", "")),
+			str(candidate.get("stable_object_id", "")), str(candidate.get("actor_id", "")),
+		]:
+			score += 120
+	return score
+
+
+static func _attachment_tokens(identity: String, semantic: Dictionary) -> Array:
+	var seen: Dictionary = {}
+	for text_value in [identity, semantic.get("stable_object_id", ""), semantic.get("label", ""), semantic.get("anchor_id", ""), semantic.get("zone_id", "")]:
+		var text := str(text_value).to_lower().replace("::", "_").replace(":", "_").replace("-", "_").replace(" ", "_")
+		for token in text.split("_", false):
+			if token.length() >= 3:
+				seen[token] = true
+	return seen.keys()
+
+
+static func _interaction_shell_for_target(identity: String, scenes: Dictionary, actors: Dictionary, base_records: Array) -> Dictionary:
+	var semantic := _dict(actors.get(identity, scenes.get(identity, {})))
+	if not semantic.is_empty():
+		return {
+			"owner_namespace": str(semantic.get("owner_namespace", "")),
+			"stable_object_id": str(semantic.get("stable_object_id", "")),
+			"label": str(semantic.get("label", "Room contact")),
+			"prompt": str(semantic.get("description", "Choose an action.")),
+			"enabled": bool(semantic.get("enabled", true)),
+			"present": true,
+			"visible": true,
+			"available_actions": [],
+		}
+	for record_value in base_records:
+		var record := _dict(record_value)
+		if _record_identity(record) != identity:
+			continue
+		return {
+			"owner_namespace": str(record.get("owner_namespace", "")),
+			"stable_object_id": str(record.get("stable_object_id", "")),
+			"presentation_object_id": str(record.get("object_id", "")),
+			"label": str(record.get("label", "Room fixture")),
+			"prompt": str(record.get("short_description", "Choose an action.")),
+			"enabled": bool(record.get("enabled", true)),
+			"present": true,
+			"visible": true,
+			"available_actions": [],
+		}
+	return {}
+
+
 static func failure_authority(_base_records: Array = []) -> Dictionary:
 	var authored := Rect2(300.0, 24.0, 300.0, 76.0)
 	var rect := authored
@@ -553,10 +732,10 @@ static func _resolve_fixed_visual(
 	var pixel_rect := _record_pixel_rect(base_record)
 	var label_rect := _pixel_rect(_dict(base_record.get("label_rect", {})))
 	var small_label_rect := _pixel_rect(_dict(base_record.get("small_screen_label_rect", {})))
-	var presentation_mode := str(base_record.get("presentation_mode", "room")) if not base_record.is_empty() else str(binding.get("presentation_mode", "overflow"))
+	var presentation_mode := str(base_record.get("presentation_mode", "room")) if not base_record.is_empty() else str(binding.get("presentation_mode", "room"))
 	var slot_id := str(base_record.get("slot_id", "")) if not base_record.is_empty() else str(binding.get("slot_id", ""))
 	if not binding.is_empty() and (not str(semantic.get("route_id", "")).is_empty() or not pixel_rect.has_area()):
-		presentation_mode = str(binding.get("presentation_mode", "overflow"))
+		presentation_mode = str(binding.get("presentation_mode", "room"))
 		slot_id = str(binding.get("slot_id", ""))
 		pixel_rect = EnvironmentSlotBinderScript.rect_from_binding(binding)
 		label_rect = EnvironmentSlotBinderScript.label_rect_from_binding(binding, label)
@@ -1534,9 +1713,9 @@ static func _context_base_occupied_records(context: Dictionary, base_records: Ar
 			errors.append("Scenario production base occupancy record %d has an empty or duplicate identity." % index)
 			continue
 		seen[object_id] = true
-		# Overflow objects live only in the action list and intentionally carry no
-		# room geometry. Likewise, an exact sealed presentation record supersedes
-		# the duplicate runtime reservation. Filter both before validating geometry.
+		# Legacy geometry-free actions are attached to a visible object before this
+		# boundary. An exact sealed presentation record also supersedes the duplicate
+		# runtime reservation. Filter both before validating geometry.
 		if presentation_mode == "overflow" or sealed_presentation_ids.has(object_id):
 			continue
 		var rect := _normalized_or_pixel_rect(source.get("focus_rect", {}))

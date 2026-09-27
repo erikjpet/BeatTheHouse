@@ -7324,7 +7324,7 @@
       "class_overrides": {
         "environment_layer:casino": "doorway",
         "event:recruitment_rook_leads": "standing_person",
-        "event:town_rumor_staff": "standing_person",
+        "event:town_rumor_staff": "behind_counter_person",
         "punchline_bringer_show_task_0": "wall_mounted",
         "punchline_debt_court_task_0": "wall_mounted",
         "punchline_greased_week_task_0": "wall_mounted",
@@ -7353,7 +7353,11 @@
           278
         ],
         "event:town_rumor_staff": [
-          80,
+          520,
+          126
+        ],
+        "numbers:silas": [
+          384,
           278
         ],
         "event:scenario_headliner_cover": [
@@ -9849,6 +9853,80 @@
           ]
         },
         {
+          "id": "base.staff_floor_left",
+          "kind": "base",
+          "pos": [
+            420.0,
+            358.0
+          ],
+          "footprint_class": "standing_person",
+          "hit_rect": [
+            384.0,
+            278.0,
+            72.0,
+            80.0
+          ],
+          "label_anchor": [
+            420.0,
+            252.0
+          ],
+          "facing": "right",
+          "priority": 11,
+          "zone_id": "room",
+          "support_id": "floor",
+          "walk_lane_ids": [
+            "lane.public"
+          ]
+        },
+        {
+          "id": "base.staff_counter",
+          "kind": "base",
+          "pos": [
+            556.0,
+            198.0
+          ],
+          "footprint_class": "behind_counter_person",
+          "hit_rect": [
+            520.0,
+            126.0,
+            72.0,
+            72.0
+          ],
+          "label_anchor": [
+            556.0,
+            100.0
+          ],
+          "facing": "front",
+          "priority": 12,
+          "zone_id": "room",
+          "support_id": "stage",
+          "walk_lane_ids": []
+        },
+        {
+          "id": "base.staff_counter_left",
+          "kind": "base",
+          "pos": [
+            444.0,
+            198.0
+          ],
+          "footprint_class": "behind_counter_person",
+          "hit_rect": [
+            408.0,
+            126.0,
+            72.0,
+            72.0
+          ],
+          "label_anchor": [
+            444.0,
+            100.0
+          ],
+          "facing": "front",
+          "priority": 13,
+          "zone_id": "room",
+          "support_id": "stage",
+          "walk_lane_ids": []
+        },
+        {
           "id": "base.service_stage",
           "kind": "base",
           "pos": [
@@ -10253,8 +10331,9 @@
         "event:chain06_cass_first_contact": "base.staff_floor_right",
         "event:scenario_headliner_cover": "base.door_side",
         "event:side_door": "base.door_right_lower",
-        "event:town_rumor_staff": "base.staff_floor_right",
+        "event:town_rumor_staff": "base.staff_counter",
         "numbers:book": "base.numbers_right_table",
+        "numbers:silas": "base.staff_floor_left",
         "service:house_drink": "base.service_left_table",
         "service:punchline_cover_charge": "base.service_stage",
         "service:punchline_two_drink_minimum": "base.service_stage",
@@ -10264,7 +10343,7 @@
         "event_spots:0": "base.event_floor_right",
         "layer_spots:0": "base.door_side",
         "layer_spots:1": "base.door_right_lower",
-        "numbers_silas_spots:0": "base.staff_floor_right",
+        "numbers_silas_spots:0": "base.staff_floor_left",
         "numbers_spots:0": "base.numbers_right_table",
         "service_spots:0": "base.service_left_table",
         "travel_spots:0": "base.door_right_lower"
@@ -16674,6 +16753,32 @@
           ]
         },
         {
+          "id": "stage.staff_right_table_2",
+          "kind": "stage",
+          "pos": [
+            598.0,
+            174.0
+          ],
+          "footprint_class": "behind_counter_person",
+          "hit_rect": [
+            562.0,
+            102.0,
+            72.0,
+            72.0
+          ],
+          "label_anchor": [
+            598.0,
+            102.0
+          ],
+          "facing": "right",
+          "priority": 10,
+          "zone_id": "room",
+          "support_id": "right_table",
+          "walk_lane_ids": [
+            "lane.public"
+          ]
+        },
+        {
           "id": "stage.patron_group",
           "kind": "stage",
           "pos": [
@@ -17222,8 +17327,8 @@
       "scenario_slot_ids": {
         "delta_queen_captains_invitational_bracket_tables|delta_noninteractive_right|center|": "stage.event_floor_1",
         "delta_queen_captains_invitational_bracket_tables|delta_noninteractive_right|right|": "stage.event_floor_1",
-        "delta_queen_captains_invitational_captain_scorer|delta_bottom_left|background|": "stage.staff_right_table",
-        "delta_queen_captains_invitational_captain_scorer|delta_captain_scorer_phase|foreground|delta_queen_captains_invitational_work_2_relocate_captain_scorer": "stage.staff_right_table",
+        "delta_queen_captains_invitational_captain_scorer|delta_bottom_left|background|": "stage.staff_right_table_2",
+        "delta_queen_captains_invitational_captain_scorer|delta_captain_scorer_phase|foreground|delta_queen_captains_invitational_work_2_relocate_captain_scorer": "stage.staff_right_table_2",
         "delta_queen_captains_invitational_eliminated_players|delta_noninteractive_right|left|": "stage.patron_group",
         "delta_queen_captains_invitational_eliminated_players|delta_noninteractive_right|left|delta_queen_captains_invitational_bracket_move_position": "stage.patron_group",
         "delta_queen_captains_invitational_eliminated_players|delta_secondary_top|foreground|delta_queen_captains_invitational_work_2_relocate_eliminated_players": "stage.patron_group",
@@ -20298,6 +20403,110 @@
           ]
         },
         {
+          "id": "base.staff_host_left",
+          "kind": "base",
+          "pos": [
+            404.0,
+            354.0
+          ],
+          "footprint_class": "behind_counter_person",
+          "hit_rect": [
+            382.0,
+            282.0,
+            44.0,
+            72.0
+          ],
+          "label_anchor": [
+            404.0,
+            284.0
+          ],
+          "facing": "front",
+          "priority": 81,
+          "zone_id": "room",
+          "support_id": "cocktail_service",
+          "walk_lane_ids": [
+            "lane.public"
+          ]
+        },
+        {
+          "id": "base.staff_host_right",
+          "kind": "base",
+          "pos": [
+            596.0,
+            354.0
+          ],
+          "footprint_class": "behind_counter_person",
+          "hit_rect": [
+            574.0,
+            282.0,
+            44.0,
+            72.0
+          ],
+          "label_anchor": [
+            596.0,
+            284.0
+          ],
+          "facing": "front",
+          "priority": 82,
+          "zone_id": "room",
+          "support_id": "cocktail_service",
+          "walk_lane_ids": [
+            "lane.public"
+          ]
+        },
+        {
+          "id": "base.staff_host_outer_left",
+          "kind": "base",
+          "pos": [
+            308.0,
+            354.0
+          ],
+          "footprint_class": "behind_counter_person",
+          "hit_rect": [
+            286.0,
+            282.0,
+            44.0,
+            72.0
+          ],
+          "label_anchor": [
+            308.0,
+            284.0
+          ],
+          "facing": "front",
+          "priority": 83,
+          "zone_id": "room",
+          "support_id": "cocktail_service",
+          "walk_lane_ids": [
+            "lane.public"
+          ]
+        },
+        {
+          "id": "base.staff_host_outer_right",
+          "kind": "base",
+          "pos": [
+            692.0,
+            354.0
+          ],
+          "footprint_class": "behind_counter_person",
+          "hit_rect": [
+            670.0,
+            282.0,
+            44.0,
+            72.0
+          ],
+          "label_anchor": [
+            692.0,
+            284.0
+          ],
+          "facing": "front",
+          "priority": 84,
+          "zone_id": "room",
+          "support_id": "cocktail_service",
+          "walk_lane_ids": [
+            "lane.public"
+          ]
+        },
+        {
           "id": "base.fixed_drink",
           "kind": "base",
           "pos": [
@@ -20897,13 +21106,13 @@
         "casino_fixture:host_desk": "base.fixture_host_desk",
         "event:chain06_cass_first_contact": "base.staff_host",
         "event:chain06_rourke_noticed": "base.event_wall_1",
-        "event:comped_suite_offer": "base.staff_host",
+        "event:comped_suite_offer": "base.staff_host_left",
         "event:recruitment_bishop": "base.patron_bishop",
         "event:scenario_audit_roster": "base.event_wall_1",
         "event:scenario_convention_badge": "base.event_wall_1",
         "event:scenario_gala_cover": "base.event_floor_1",
         "event:the_house_calls": "base.staff_host",
-        "event:town_rumor_staff": "base.staff_host",
+        "event:town_rumor_staff": "base.staff_host_right",
         "game_hook:pull_tabs:ticket_redeemer": "base.fixed_ticket_redeemer",
         "service:house_drink": "base.fixed_drink",
         "travel:grand_casino_back_room": "base.travel_left",

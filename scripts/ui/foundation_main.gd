@@ -6,7 +6,6 @@ const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 const ScenarioSemanticViewModelScript := preload("res://scripts/ui/scenario_semantic_view_model.gd")
 const PlayerTextScript := preload("res://scripts/ui/player_text.gd")
 const BuildIdentityScript := preload("res://scripts/core/build_identity.gd")
-const RoomActionListScript := preload("res://scripts/ui/room_action_list.gd")
 
 # Thin UI shell for the README foundation runtime.
 
@@ -670,7 +669,6 @@ var action_hint_label: Label
 var stake_input: SpinBox
 var actions_list: VBoxContainer
 var environment_canvas: PixelSceneCanvas
-var room_action_list
 var game_surface_canvas
 var run_layout_dirty := true
 var run_layout_last_screen_size := Vector2(-1.0, -1.0)
@@ -11317,6 +11315,7 @@ func _add_attribute_badge_row(parent: BoxContainer, badges_value: Variant, glyph
 
 
 func _add_context_object_actions(card: VBoxContainer, object_data: Dictionary) -> void:
+	_add_context_attached_room_actions(card, object_data)
 	if not bool(object_data.get("enabled", true)):
 		return
 	var object_type := str(object_data.get("object_type", "info"))
@@ -11388,6 +11387,23 @@ func _add_context_object_actions(card: VBoxContainer, object_data: Dictionary) -
 		_add_card_button(card, "Hand Over The Package", Callable(self, "_complete_delivery_handoff").bind(str(object_data.get("delivery_handoff_node_id", ""))), false, true)
 	if not JsonCoerceScript._copy_array(object_data.get("scenario_augmented_inline_actions", [])).is_empty():
 		_add_context_scenario_actions(card, {"inline_actions": object_data.get("scenario_augmented_inline_actions", [])})
+
+
+func _add_context_attached_room_actions(card: VBoxContainer, object_data: Dictionary) -> void:
+	var object_id := str(object_data.get("object_id", ""))
+	for value in JsonCoerceScript._copy_array(object_data.get("attached_room_actions", [])):
+		var descriptor := JsonCoerceScript._copy_dict(value)
+		var key := str(descriptor.get("key", "")).strip_edges()
+		if key.is_empty():
+			continue
+		var label := str(descriptor.get("label", "Room action")).strip_edges()
+		var disabled := not bool(descriptor.get("enabled", false))
+		if disabled:
+			var reason := str(descriptor.get("disabled_reason", "Unavailable.")).strip_edges()
+			if not reason.is_empty():
+				label = "%s - %s" % [label, reason]
+		var button := _add_card_button(card, label, Callable(self, "_activate_attached_room_action").bind(object_id, key), disabled, false)
+		button.custom_minimum_size = Vector2(0, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
 
 
 func _add_context_scenario_actions(card: VBoxContainer, object_data: Dictionary) -> void:
@@ -12487,18 +12503,12 @@ func _pal_tutorial_time_freeze_active() -> bool:
 func _talk_dock_input_is_blocked() -> bool:
 	# A map can intentionally host a tutorial conversation. It remains modal to
 	# the room behind it, but must not make its own TalkDock unresponsive.
-	return travel_transition_active or _event_choice_popup_is_visible() or _meta_item_interaction_is_visible() or _run_inventory_popup_is_visible() or _run_journal_popup_is_visible() or _run_menu_is_visible() \
-		or (room_action_list != null and room_action_list.has_method("is_open") and bool(room_action_list.is_open()))
+	return travel_transition_active or _event_choice_popup_is_visible() or _meta_item_interaction_is_visible() or _run_inventory_popup_is_visible() or _run_journal_popup_is_visible() or _run_menu_is_visible()
 
 
 func _clear_input_guard_modal_state() -> void:
-	# Lifecycle boundaries must never inherit a modal owner or a deferred Room
-	# actions selection from the screen they replace. Each close helper is
-	# idempotent, so this also repairs a partially torn-down modal stack.
-	if room_action_list != null and room_action_list.has_method("close"):
-		room_action_list.close()
-	if room_action_list != null and room_action_list.has_method("quarantine_launcher_input"):
-		room_action_list.quarantine_launcher_input()
+	# Each close helper is idempotent, so this also repairs a partially torn-down
+	# modal stack at lifecycle boundaries.
 	_hide_event_choice_popup()
 	_hide_run_menu()
 	_hide_world_map_overlay()
@@ -12523,8 +12533,6 @@ func _blocking_modal_message() -> String:
 		return "Close the journal before doing anything else."
 	if _run_menu_is_visible():
 		return "Close the menu before doing anything else."
-	if room_action_list != null and room_action_list.has_method("is_open") and bool(room_action_list.is_open()):
-		return "Close Room actions before doing anything else."
 	return ""
 
 
@@ -13572,91 +13580,61 @@ func activate_interactable_object(object_id: String) -> bool:
 	return action_ok
 
 
-func _activate_overflow_room_action(record_snapshot: Dictionary, action_snapshot: Dictionary) -> bool:
-	var object_id := str(record_snapshot.get("object_id", "")).strip_edges()
-	if object_id.is_empty():
+func _activate_attached_room_action(target_object_id: String, action_key: String) -> bool:
+	var target := _interactable_object(target_object_id)
+	if target.is_empty() or action_key.is_empty():
 		return false
-	var object_data := _interactable_object(object_id)
-	# Re-resolve both true overflow records and the authenticated travel fallback.
-	# The latter mirrors a physical door only so camera/result/detail occlusion can
-	# never remove the room's final egress path.
-	if object_data.is_empty() or not RoomActionListScript.is_visible_action_list_record(object_data):
-		return false
-	var wanted_key := str(action_snapshot.get("_overflow_action_key", ""))
-	if wanted_key.is_empty():
-		return false
-	var live_action: Dictionary = {}
-	for action_value in RoomActionListScript.action_entries_for_record(object_data):
-		var candidate := action_value as Dictionary
-		if str(candidate.get("_overflow_action_key", "")) == wanted_key:
-			live_action = candidate
+	var descriptor: Dictionary = {}
+	for value in JsonCoerceScript._copy_array(target.get("attached_room_actions", [])):
+		var candidate := JsonCoerceScript._copy_dict(value)
+		if str(candidate.get("key", "")) == action_key:
+			descriptor = candidate
 			break
-	if live_action.is_empty() or not RoomActionListScript.action_is_enabled(object_data, live_action):
+	if descriptor.is_empty() or not bool(descriptor.get("enabled", false)):
 		return false
-	# This surface owns the modal guard while open. Release it only after the
-	# selected record/action has been re-resolved against the live room and just
-	# before entering an existing production action path. Rejected stale, hidden,
-	# and disabled actions intentionally leave the surface open.
-	var overflow_was_open: bool = room_action_list != null \
-			and room_action_list.has_method("is_open") \
-			and bool(room_action_list.is_open())
-	if overflow_was_open and room_action_list.has_method("close"):
-		room_action_list.close()
-	var source := str(live_action.get("_overflow_source", ""))
-	# Unique room objects can merge actions from different producers (for
-	# example, Lottery Clerk combines a game hook and a dialogue). The selected
-	# action retains its producer type and therefore owns dispatch precedence.
-	var object_type := str(live_action.get("object_type", object_data.get("object_type", CONTEXT_MODE_ROOM))).strip_edges()
-	var explicit_scenario_command_id := str(live_action.get("scenario_command_id", "")).strip_edges()
-	if explicit_scenario_command_id.is_empty():
-		explicit_scenario_command_id = str(object_data.get("scenario_command_id", "")).strip_edges()
-	var route_as_scenario := object_type == CONTEXT_MODE_SCENARIO \
-			or not explicit_scenario_command_id.is_empty()
-	var scenario_command_id := explicit_scenario_command_id
-	if route_as_scenario and scenario_command_id.is_empty():
-		scenario_command_id = str(live_action.get("id", "")).strip_edges()
-	var activated := false
-	var direct_handoff_action := bool(object_data.get("delivery_handoff_direct", false)) \
-			and str(live_action.get("id", "")).strip_edges() == "delivery_handoff_direct"
-	if direct_handoff_action:
-		var handoff_node_id := str(object_data.get("delivery_handoff_node_id", "")).strip_edges()
-		activated = not handoff_node_id.is_empty() and _complete_delivery_handoff(handoff_node_id)
-	elif source == RoomActionListScript.SOURCE_SEQUENCE \
+	var record := JsonCoerceScript._copy_dict(descriptor.get("record", {}))
+	var action := JsonCoerceScript._copy_dict(descriptor.get("action", {}))
+	var object_type := str(record.get("object_type", CONTEXT_MODE_ROOM)).strip_edges()
+	var source_id := str(action.get("source_id", action.get("hook_id", record.get("source_id", "")))).strip_edges()
+	var source := str(action.get("_attached_source", ""))
+	if source == "scenario_sequence_actions" \
 			or object_type in [CONTEXT_MODE_SCENARIO_SEQUENCE, "scenario_scene_object", "scenario_actor", "character"]:
-		activated = _activate_scenario_sequence_action(object_data, live_action)
-	elif route_as_scenario:
-		var scenario_owner_namespace := str(live_action.get("scenario_owner_namespace", "")).strip_edges()
-		if scenario_owner_namespace.is_empty():
-			scenario_owner_namespace = str(object_data.get("scenario_owner_namespace", object_data.get("owner_namespace", "scenario"))).strip_edges()
-		var scenario_stable_object_id := str(live_action.get("scenario_stable_object_id", "")).strip_edges()
-		if scenario_stable_object_id.is_empty():
-			scenario_stable_object_id = str(object_data.get("scenario_stable_object_id", object_data.get("stable_object_id", ""))).strip_edges()
-		activated = _activate_scenario_action(
-			scenario_owner_namespace,
-			scenario_stable_object_id,
+		return _activate_scenario_sequence_action(record, action)
+	var scenario_command_id := str(action.get("scenario_command_id", record.get("scenario_command_id", ""))).strip_edges()
+	if object_type == CONTEXT_MODE_SCENARIO or not scenario_command_id.is_empty():
+		if scenario_command_id.is_empty():
+			scenario_command_id = str(action.get("id", ""))
+		return _activate_scenario_action(
+			str(action.get("scenario_owner_namespace", record.get("scenario_owner_namespace", record.get("owner_namespace", "scenario")))),
+			str(action.get("scenario_stable_object_id", record.get("scenario_stable_object_id", record.get("stable_object_id", "")))),
 			scenario_command_id,
-			str(live_action.get("scenario_idempotency_key", "")),
-			str(live_action.get("action_origin_owner_namespace", object_data.get("scenario_owner_namespace", ""))),
-			str(live_action.get("action_origin_stable_object_id", object_data.get("scenario_stable_object_id", ""))),
-			str(live_action.get("action_origin_receipt_key", "")),
-			str(live_action.get("action_origin_boundary_id", "")),
-			str(live_action.get("action_origin_fingerprint", ""))
+			str(action.get("scenario_idempotency_key", "")),
+			str(action.get("action_origin_owner_namespace", record.get("scenario_owner_namespace", ""))),
+			str(action.get("action_origin_stable_object_id", record.get("scenario_stable_object_id", ""))),
+			str(action.get("action_origin_receipt_key", "")),
+			str(action.get("action_origin_boundary_id", "")),
+			str(action.get("action_origin_fingerprint", ""))
 		)
-	elif object_type == CONTEXT_MODE_DIALOGUE:
-		activated = start_dialogue(
-			str(live_action.get("source_id", object_data.get("source_id", ""))),
-			object_data
-		)
-	elif object_type == CONTEXT_MODE_GAME_HOOK:
-		activated = use_game_environment_hook(
-			str(live_action.get("parent_id", object_data.get("parent_id", ""))),
-			str(live_action.get("source_id", live_action.get("hook_id", object_data.get("source_id", "")))),
-			str(live_action.get("id", object_data.get("confirm_action_id", "")))
-		)
-	else:
-		var emit_object_id := str(live_action.get("emit_object_id", "")).strip_edges()
-		activated = activate_interactable_object(emit_object_id) if not emit_object_id.is_empty() else activate_interactable_object(object_id)
-	return activated
+	match object_type:
+		CONTEXT_MODE_DIALOGUE:
+			return start_dialogue(source_id, record)
+		CONTEXT_MODE_GAME_HOOK:
+			return use_game_environment_hook(str(action.get("parent_id", record.get("parent_id", ""))), source_id, str(action.get("id", record.get("confirm_action_id", ""))))
+		CONTEXT_MODE_EVENT:
+			return _activate_event_object(source_id)
+		CONTEXT_MODE_ITEM:
+			return _select_item_offer_after_input_guard(source_id) and _apply_item_offer_after_input_guard(source_id)
+		CONTEXT_MODE_SERVICE:
+			return select_service_hook(source_id) and confirm_selected_service_hook()
+		CONTEXT_MODE_LENDER:
+			if _lender_is_pawn_counter(source_id):
+				select_lender_hook(source_id)
+				return open_pawn_counter(source_id)
+			return select_lender_hook(source_id) and confirm_selected_lender_hook()
+		CONTEXT_MODE_TRAVEL:
+			return select_travel_option(source_id) and confirm_selected_travel()
+	var emit_object_id := str(action.get("emit_object_id", "")).strip_edges()
+	return activate_interactable_object(emit_object_id) if not emit_object_id.is_empty() else false
 
 
 func _activate_interactable_object_with_lifecycle_snapshot(object_id: String, caller_rollback: Dictionary) -> bool:
@@ -13933,8 +13911,8 @@ func _execute_scenario_sequence_action(object_data: Dictionary, action: Dictiona
 		action_id,
 		receipt_id,
 		{},
-		str(object_data.get("owner_namespace", "")),
-		str(object_data.get("stable_object_id", "")),
+		str(action.get("attached_owner_namespace", object_data.get("owner_namespace", ""))),
+		str(action.get("attached_stable_object_id", object_data.get("stable_object_id", ""))),
 		host_availability,
 		str(action.get("action_origin_owner_namespace", object_data.get("owner_namespace", ""))),
 		str(action.get("action_origin_stable_object_id", object_data.get("stable_object_id", ""))),
@@ -13981,11 +13959,12 @@ func _activate_world_sequence_action(owner_token: String, object_data: Dictionar
 	var action_id := str(action.get("id", "")).strip_edges()
 	var projection := run_state.world_sequence_projection(owner_token)
 	if action_id.is_empty() or projection.is_empty(): return false
-	var idempotency_key := "ui:%d:%s:%s:%s" % [maxi(0, int(projection.get("boundary_serial", 0))), owner_token, str(object_data.get("stable_object_id", "")), action_id]
+	var command_stable_id := str(action.get("attached_stable_object_id", object_data.get("stable_object_id", "")))
+	var idempotency_key := "ui:%d:%s:%s:%s" % [maxi(0, int(projection.get("boundary_serial", 0))), owner_token, command_stable_id, action_id]
 	var result := run_state.world_sequence_command(FunctionOptions.world_sequence_command(owner_token, action_id, idempotency_key, {
 		"payload": {},
-		"owner_namespace": str(object_data.get("owner_namespace", "")),
-		"stable_object_id": str(object_data.get("stable_object_id", "")),
+		"owner_namespace": str(action.get("attached_owner_namespace", object_data.get("owner_namespace", ""))),
+		"stable_object_id": command_stable_id,
 		"host_interaction_availability": _scenario_host_interaction_availability(),
 		"action_origin_owner_namespace": str(action.get("action_origin_owner_namespace", object_data.get("owner_namespace", ""))),
 		"action_origin_stable_object_id": str(action.get("action_origin_stable_object_id", object_data.get("stable_object_id", ""))),
@@ -14059,6 +14038,12 @@ func _scenario_host_interaction_availability() -> Dictionary:
 		if owner.is_empty() or stable_id.is_empty():
 			continue
 		availability["%s::%s" % [owner, stable_id]] = bool(record.get("enabled", true)) and bool(record.get("interactive", true))
+		for action_value in JsonCoerceScript._copy_array(record.get("scenario_sequence_actions", [])):
+			var action := JsonCoerceScript._copy_dict(action_value)
+			var attached_owner := str(action.get("attached_owner_namespace", "")).strip_edges()
+			var attached_stable_id := str(action.get("attached_stable_object_id", "")).strip_edges()
+			if not attached_owner.is_empty() and not attached_stable_id.is_empty():
+				availability["%s::%s" % [attached_owner, attached_stable_id]] = bool(action.get("enabled", true))
 	return availability
 
 
@@ -14971,8 +14956,6 @@ func _render_foundation_snapshots() -> void:
 	var game_snapshot: Dictionary = _game_view_snapshot(true) if game_visible else {}
 	if environment_canvas != null and environment_visible:
 		_render_environment_canvas_snapshot()
-	if room_action_list != null:
-		room_action_list.render(_interactable_object_view_list() if environment_visible else [])
 	if game_surface_canvas != null:
 		game_surface_canvas.set_game_module(current_game)
 		if game_visible:
