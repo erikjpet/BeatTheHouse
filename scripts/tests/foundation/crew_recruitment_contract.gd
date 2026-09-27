@@ -15,7 +15,7 @@ const RunStateScript := preload("res://scripts/core/run_state.gd")
 const WorldMapScript := preload("res://scripts/core/world_map.gd")
 const HarnessProductionFidelityScript := preload("res://scripts/tests/foundation/harness_production_fidelity.gd")
 const IGNORED_BASELINE_PATH := "res://scripts/tests/fixtures/crew06_5_ignored_run_baseline.json"
-const IGNORED_BASELINE_CHANGE_COMMIT := "d7a1b1c7f90d789372f68875f3ce1bec3fa5e634"
+const IGNORED_BASELINE_CHANGE_COMMIT := "a11ed9d7e8e69508e517fbd477da03183eb7dae7"
 const JSON_EXACT_INTEGER_LIMIT := 9007199254740991.0
 
 
