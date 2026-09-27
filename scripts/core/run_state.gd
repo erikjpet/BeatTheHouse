@@ -16,6 +16,7 @@ const DeliveryRunFacadeScript := preload("res://scripts/core/delivery_run_facade
 # while only this RunState's non-serialized capability can advance or settle it.
 
 signal heat_changed(applied_amount: int, level: int, cue_id: String, context: Dictionary)
+signal money_changed(revision: int)
 
 const GrandCasinoShowdownModelScript := preload("res://scripts/core/grand_casino_showdown_model.gd")
 const GrandCasinoDuelModelScript := preload("res://scripts/core/grand_casino_duel_model.gd")
@@ -311,13 +312,25 @@ var seed_value: int = 1
 var rng_seed: int = 1
 var rng_state: int = 1
 var challenge_config: Dictionary = {}
-var bankroll: int = DEFAULT_BANKROLL
+var _money_revision := 0
+var _bankroll: int = DEFAULT_BANKROLL
+var bankroll: int:
+	get: return _bankroll
+	set(value):
+		if _bankroll == value:
+			return
+		_bankroll = value
+		_mark_money_changed()
 var _crew_run_facade: RefCounted = CrewRunFacadeScript.new()
 var _grand_casino_run_facade: RefCounted = GrandCasinoRunFacadeScript.new()
 var _delivery_run_facade: RefCounted = DeliveryRunFacadeScript.new()
 var grand_casino_chips: int:
 	get: return _grand_casino_run_facade.chips
-	set(value): _grand_casino_run_facade.chips = value
+	set(value):
+		if _grand_casino_run_facade.chips == value:
+			return
+		_grand_casino_run_facade.chips = value
+		_mark_money_changed()
 var economic_state: String = "stable"
 var inventory: Array = []
 var portable_ticket_piles: Dictionary = {}
@@ -4421,6 +4434,15 @@ func change_bankroll(delta: int, defer_bankroll_zero: bool = false) -> void:
 	_refresh_economy(defer_bankroll_zero)
 
 
+func money_revision() -> int:
+	return _money_revision
+
+
+func _mark_money_changed() -> void:
+	_money_revision += 1
+	money_changed.emit(_money_revision)
+
+
 func grand_casino_table_uses_chips(game_id: String, environment: Dictionary = {}) -> bool:
 	_grand_casino_run_facade.bind(self)
 	return _grand_casino_run_facade.grand_casino_table_uses_chips(game_id, environment)
@@ -4691,6 +4713,7 @@ func _set_grand_casino_atm_debt(balance: int) -> void:
 	if normalized_balance <= 0:
 		if index >= 0:
 			debt.remove_at(index)
+			_mark_money_changed()
 		return
 	var entry := {
 		"id": CageEconomyModelScript.ATM_DEBT_ID,
@@ -4712,6 +4735,7 @@ func _set_grand_casino_atm_debt(balance: int) -> void:
 		debt[index] = entry
 	else:
 		debt.append(entry)
+	_mark_money_changed()
 
 
 func _process_grand_casino_atm_interest_boundaries(previous_minutes: int, current_minutes: int) -> void:
@@ -12103,6 +12127,7 @@ func _advance_narrative_action_timers(amount: int) -> void:
 func _advance_debt_clocks(amount: int) -> void:
 	if amount <= 0 or debt.is_empty():
 		return
+	var debt_clock_changed := false
 	for index in range(debt.size() - 1, -1, -1):
 		if index >= debt.size() or typeof(debt[index]) != TYPE_DICTIONARY:
 			continue
@@ -12114,14 +12139,19 @@ func _advance_debt_clocks(amount: int) -> void:
 			var remaining := int(debt_data.get("turns_remaining", debt_data.get("deadline_turns", 0)))
 			if remaining <= 0:
 				_apply_debt_default(index, false)
+				debt_clock_changed = true
 				continue
 			remaining = maxi(0, remaining - amount)
 			debt_data["turns_remaining"] = remaining
 			debt[index] = debt_data
+			debt_clock_changed = true
 			if remaining <= 0:
 				_apply_debt_default(index, false)
 		elif status == "overdue" or status == "favor_due":
 			_tick_recurring_debt_pressure(index, debt_data, amount)
+			debt_clock_changed = true
+	if debt_clock_changed:
+		_mark_money_changed()
 
 
 func _tick_recurring_debt_pressure(index: int, debt_data: Dictionary, amount: int) -> void:
@@ -15326,6 +15356,9 @@ func _fractional_bankroll_limit(divisor: int) -> int:
 
 # Updates economy and failure labels from bankroll and debt.
 func _refresh_economy(defer_bankroll_zero: bool = false) -> void:
+	# Debt entries are intentionally mutated in place throughout RunState, so this
+	# shared economy boundary also invalidates the financial HUD for debt changes.
+	_mark_money_changed()
 	if run_status == RUN_STATUS_ENDED or run_status == RUN_STATUS_FAILED:
 		return
 	var economy_balance := bankroll + grand_casino_chips if _is_grand_casino_environment(current_environment) else bankroll

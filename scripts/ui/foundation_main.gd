@@ -375,6 +375,7 @@ var presented_bankroll_game_id := ""
 var presented_bankroll_action_id := ""
 var presented_bankroll_release_screen := ""
 var presented_bankroll_started_msec := 0
+var financial_hud_dirty := false
 var pending_active_item_id: String = ""
 var run_inventory_popup_mode: String = ""
 var run_inventory_context_container_id: String = ""
@@ -744,6 +745,8 @@ func _process(delta: float) -> void:
 	_timed("environment_runtime", Callable(self, "_advance_run_game_clock").bind(delta)) # SA2_PER_FRAME_OK: scoped timer removes a duplicated hot path and is performance-gated.
 	if current_screen == SCREEN_GAME:
 		_timed("snapshot_builds", Callable(self, "_advance_game_surface_frame")) # SA2_PER_FRAME_OK: scoped timer removes a duplicated hot path and is performance-gated.
+	if financial_hud_dirty:
+		_timed("snapshot_builds", Callable(self, "_refresh_financial_hud_if_dirty"))
 	if presented_bankroll_hold_active:
 		_timed("snapshot_builds", Callable(self, "_advance_presented_bankroll")) # SA2_PER_FRAME_OK: scoped timer removes a duplicated hot path and is performance-gated.
 	if (current_screen == SCREEN_ENVIRONMENT or current_screen == SCREEN_GAME) and not meta_session_active:
@@ -2145,34 +2148,17 @@ func _advance_presented_bankroll() -> void:
 func _presented_bankroll() -> int:
 	if run_state == null:
 		return 0
-	if presented_bankroll_hold_active:
-		return presented_bankroll_value
 	return run_state.bankroll
 
 
 func _visible_recent_bankroll_delta(bankroll_delta: int) -> int:
-	return 0 if presented_bankroll_hold_active else bankroll_delta
+	return bankroll_delta
 
 
-func _begin_presented_bankroll_hold(result: Dictionary, before_bankroll: int, wager_cost: int) -> void:
+func _begin_presented_bankroll_hold(_result: Dictionary, _before_bankroll: int, _wager_cost: int) -> void:
+	# Money is authoritative as soon as the deterministic action settles. Result
+	# animations may continue, but they must never hold the visible wallet back.
 	_clear_presented_bankroll_hold()
-	if run_state == null or current_game == null:
-		return
-	if not bool(result.get("ok", false)):
-		return
-	var deltas: Dictionary = result.get("deltas", {}) if typeof(result.get("deltas", {})) == TYPE_DICTIONARY else {}
-	var bankroll_delta := int(result.get("bankroll_delta", deltas.get("bankroll_delta", 0)))
-	if bankroll_delta == 0:
-		return
-	if not _result_uses_game_bankroll_presentation(result):
-		return
-	var stake_cost := maxi(wager_cost, int(result.get("stake", 0)))
-	presented_bankroll_hold_active = true
-	presented_bankroll_value = maxi(0, before_bankroll - maxi(0, stake_cost))
-	presented_bankroll_game_id = current_game.get_id()
-	presented_bankroll_action_id = str(result.get("action_id", ""))
-	presented_bankroll_release_screen = SCREEN_GAME
-	presented_bankroll_started_msec = Time.get_ticks_msec()
 
 
 func _result_uses_game_bankroll_presentation(result: Dictionary) -> bool:
@@ -9957,6 +9943,10 @@ func _bind_run_state_presentation_signals() -> void:
 	var heat_callback := Callable(self, "_on_run_state_heat_changed")
 	if not run_state.heat_changed.is_connected(heat_callback):
 		run_state.heat_changed.connect(heat_callback)
+	var money_callback := Callable(self, "_on_run_state_money_changed")
+	if not run_state.money_changed.is_connected(money_callback):
+		run_state.money_changed.connect(money_callback)
+	financial_hud_dirty = true
 	if heat_gain_feedback_overlay != null:
 		heat_gain_feedback_overlay.cancel()
 	if structured_hud != null:
@@ -9964,6 +9954,7 @@ func _bind_run_state_presentation_signals() -> void:
 
 
 func _on_run_state_heat_changed(applied_amount: int, _level: int, _cue_id: String, _context: Dictionary) -> void:
+	financial_hud_dirty = true
 	if applied_amount <= 0 or current_screen == SCREEN_START or meta_session_active:
 		return
 	if heat_gain_feedback_overlay != null:
@@ -9973,6 +9964,28 @@ func _on_run_state_heat_changed(applied_amount: int, _level: int, _cue_id: Strin
 	_ensure_environment_sfx_player()
 	if environment_sfx_player != null and environment_sfx_player.has_method("play_heat_gain"):
 		environment_sfx_player.call("play_heat_gain", applied_amount)
+
+
+func _on_run_state_money_changed(_revision: int) -> void:
+	financial_hud_dirty = true
+
+
+func _refresh_financial_hud_if_dirty() -> void:
+	financial_hud_dirty = false
+	if run_state == null or current_screen == SCREEN_START or meta_session_active:
+		return
+	var hud_model := _run_status_hud_model()
+	if status_label != null:
+		var next_status_text := str(hud_model.get("status_text", ""))
+		if status_label.text != next_status_text:
+			status_label.text = next_status_text
+	if structured_hud != null:
+		structured_hud.render(hud_model)
+	if current_screen == SCREEN_GAME and game_surface_canvas != null and current_game != null:
+		game_surface_canvas.apply_surface_state_patch({
+			"bankroll": run_state.wager_capacity_for_game(current_game.get_id(), run_state.current_environment),
+			"money_revision": run_state.money_revision(),
+		})
 
 
 func _build_run_menu_overlay() -> void:

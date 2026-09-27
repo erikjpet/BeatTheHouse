@@ -105,14 +105,7 @@ func render(model: Dictionary) -> void:
 	var bankroll_delta := int(model.get("bankroll_delta", observed_delta))
 	if bankroll_delta == 0:
 		bankroll_delta = observed_delta
-	render_bankroll(bankroll, bankroll_delta)
-
-	var show_chips := bool(model.get("show_chips", false))
-	if chips_chip.visible != show_chips:
-		chips_chip.visible = show_chips
-	var chips_text := "%d" % int(model.get("chips", 0))
-	if chips_value.text != chips_text:
-		chips_value.text = chips_text
+	render_money(bankroll, int(model.get("chips", 0)), bool(model.get("show_chips", false)), bankroll_delta)
 
 	var heat := float(model.get("heat_level", 0.0))
 	heat_meter.configure("heat", heat)
@@ -128,6 +121,20 @@ func render(model: Dictionary) -> void:
 
 	render_clock(model)
 	_render_status_icons(model.get("status_icons", []))
+
+
+func render_money(bankroll: int, chips: int, show_chips: bool, bankroll_delta: int = 0) -> void:
+	if wallet_value == null:
+		return
+	var observed_delta := bankroll - _last_bankroll if _has_rendered else 0
+	if bankroll_delta == 0:
+		bankroll_delta = observed_delta
+	render_bankroll(bankroll, bankroll_delta)
+	if chips_chip.visible != show_chips:
+		chips_chip.visible = show_chips
+	var chips_text := "%d" % chips
+	if chips_value.text != chips_text:
+		chips_value.text = chips_text
 
 
 func render_bankroll(bankroll: int, bankroll_delta: int = 0) -> void:

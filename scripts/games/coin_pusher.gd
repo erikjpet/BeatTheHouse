@@ -795,8 +795,7 @@ func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, 
 	var advanced := CoinPusherLiveSessionScript.advance(machine, now_msec, publish_presentation)
 	var advanced_events: Variant = advanced.get("events")
 	var physics_events: Array = advanced_events if typeof(advanced_events) == TYPE_ARRAY else []
-	if not physics_events.is_empty():
-		_consume_live_physics_events(run_state, machine, physics_events)
+	_consume_live_physics_events(run_state, environment, machine, physics_events)
 	var terminal_event_seen := false
 	for event_value in physics_events:
 		if typeof(event_value) == TYPE_DICTIONARY and str((event_value as Dictionary).get("kind", "")) in ["tray", "gutter"]:
@@ -946,7 +945,7 @@ func begin_chunked_exit_settle(run_state: RunState, environment: Dictionary) -> 
 	_exit_settle_active = true
 	var machine: Dictionary = _live_machines[key]
 	var result := CoinPusherLiveSessionScript.begin_chunked_settle(machine)
-	_consume_live_physics_events(run_state, machine, result.get("events", []))
+	_consume_live_physics_events(run_state, environment, machine, result.get("events", []))
 	_register_pile_rumor(run_state, environment, machine)
 	return result
 
@@ -957,7 +956,7 @@ func advance_chunked_exit_settle(run_state: RunState, environment: Dictionary, t
 		return {"done": true, "ticks": 0}
 	var machine: Dictionary = _live_machines[key]
 	var result := CoinPusherLiveSessionScript.advance_chunked_settle(machine, tick_budget)
-	var consumed := _consume_live_physics_events(run_state, machine, result.get("events", []))
+	var consumed := _consume_live_physics_events(run_state, environment, machine, result.get("events", []))
 	if int(result.get("ticks", 0)) > 0:
 		_register_pile_rumor(run_state, environment, machine)
 	_advance_tell_decay(machine, int(result.get("ticks", 0)))
@@ -1901,6 +1900,43 @@ func _ledger_value(ledger: Array) -> int:
 	return total
 
 
+func _settle_tray_coins(run_state: RunState, environment: Dictionary, machine: Dictionary) -> Dictionary:
+	var simulation := _simulation(machine)
+	var tray: Array = simulation.get("tray_ledger", []) if typeof(simulation.get("tray_ledger", [])) == TYPE_ARRAY else []
+	if tray.is_empty():
+		return {"cash": 0, "count": 0}
+	var remaining: Array = []
+	var settled_count := 0
+	var settled_raw_value := 0
+	var settled_cash := 0
+	for entry_value in tray:
+		if typeof(entry_value) != TYPE_DICTIONARY:
+			remaining.append(entry_value)
+			continue
+		var entry: Dictionary = entry_value
+		if str(entry.get("kind", "")) != "coin" or not str(entry.get("item_id", "")).is_empty():
+			remaining.append(entry)
+			continue
+		var raw_value := maxi(0, int(entry.get("value", 0)))
+		var provenance: Dictionary = entry.get("provenance", {}) if typeof(entry.get("provenance", {})) == TYPE_DICTIONARY else {}
+		settled_count += 1
+		settled_raw_value += raw_value
+		settled_cash += raw_value * maxi(1, int(provenance.get("ridge_multiplier", 1)))
+	if settled_count <= 0:
+		return {"cash": 0, "count": 0}
+	simulation["tray_ledger"] = remaining
+	simulation["collected_count"] = int(simulation.get("collected_count", 0)) + settled_count
+	simulation["collected_value"] = int(simulation.get("collected_value", 0)) + settled_raw_value
+	if settled_cash > 0 and run_state != null:
+		run_state.change_bankroll(settled_cash)
+		run_state.log_story(_story_entry("coin_pusher_tray_payout", "free", environment, settled_cash, 0, {
+			"tray_count": settled_count,
+			"automatic": true,
+		}))
+		machine["last_message"] = "$%d lands in the tray and credits immediately." % settled_cash
+	return {"cash": settled_cash, "count": settled_count}
+
+
 func _collect_surface_command(run_state: RunState, environment: Dictionary, machine: Dictionary, debug_action_timing: bool = false, debug_action_started_usec: int = 0) -> Dictionary:
 	var debug_stage_started_usec := Time.get_ticks_usec() if debug_action_timing else 0
 	var simulation := _simulation(machine)
@@ -2127,17 +2163,20 @@ func _enqueue_feature_bonus(machine: Dictionary, count: int, origin: String) -> 
 	}, count)
 
 
-func _consume_live_physics_events(run_state: RunState, machine: Dictionary, events_value: Variant) -> Dictionary:
+func _consume_live_physics_events(run_state: RunState, environment: Dictionary, machine: Dictionary, events_value: Variant) -> Dictionary:
+	var result := {"payout": 0, "prizes": [], "gutter_count": 0, "shim_recovered": false}
 	if typeof(events_value) != TYPE_ARRAY or (events_value as Array).is_empty():
-		return {"payout": 0, "prizes": [], "gutter_count": 0, "shim_recovered": false}
+		result.merge(_settle_tray_coins(run_state, environment, machine), true)
+		return result
 	var session: Dictionary = machine.get("live_session", {}) if typeof(machine.get("live_session", {})) == TYPE_DICTIONARY else {}
 	var rng := RngStream.new()
 	if typeof(session.get("rng", {})) == TYPE_DICTIONARY:
 		rng.restore(session.get("rng", {}))
 	else:
 		rng.configure(1)
-	var result := _consume_physics_events(run_state, machine, events_value as Array, rng)
+	result = _consume_physics_events(run_state, machine, events_value as Array, rng)
 	session["rng"] = rng.snapshot()
+	result.merge(_settle_tray_coins(run_state, environment, machine), true)
 	return result
 
 
