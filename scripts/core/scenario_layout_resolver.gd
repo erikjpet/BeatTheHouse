@@ -318,6 +318,10 @@ static func resolve(base_records: Array, projection: Dictionary, environment: Di
 	var errors: Array = []
 	var warnings: Array = []
 	var context := _layout_context(environment)
+	var guarded_base := _guard_unique_base_record_slots(base_records, environment, context, errors)
+	base_records = _array(guarded_base.get("records", base_records))
+	warnings.append_array(_array(guarded_base.get("warnings", [])))
+	var slot_occupancy := _dict(guarded_base.get("occupied_slots", {}))
 	var occupied := _base_occupied_records(base_records)
 	var context_base_occupied := _context_base_occupied_records(context, base_records, errors)
 	occupied.append_array(context_base_occupied)
@@ -379,13 +383,14 @@ static func resolve(base_records: Array, projection: Dictionary, environment: Di
 		var right_area := _semantic_visual_area(_dict(right.get("semantic", {})), bool(right.get("actor", false)))
 		return str(left.get("identity", "")) < str(right.get("identity", "")) if is_equal_approx(left_area, right_area) else left_area > right_area
 	)
-	var placement_result := _resolve_visual_queue(placement_queue, environment, semantic_state, base_by_identity, occupied, interactions)
+	var placement_result := _resolve_visual_queue(placement_queue, environment, semantic_state, base_by_identity, occupied, interactions, slot_occupancy)
 	resolved_scenes = _dict(placement_result.get("scenes", {}))
 	resolved_actors = _dict(placement_result.get("actors", {}))
 	occupied = _array(placement_result.get("occupied", occupied))
 	collision_adjustments = int(placement_result.get("collision_adjustments", 0))
 	visual_count = int(placement_result.get("visual_count", 0))
 	errors.append_array(_array(placement_result.get("errors", [])))
+	warnings.append_array(_array(placement_result.get("warnings", [])))
 
 	semantic_state["scene_objects"] = resolved_scenes
 	semantic_state["actors"] = resolved_actors
@@ -457,8 +462,9 @@ static func failure_authority(_base_records: Array = []) -> Dictionary:
 	}))
 
 
-static func _resolve_visual_queue(queue: Array, environment: Dictionary, semantic_state: Dictionary, base_by_identity: Dictionary, initial_occupied: Array, interactions: Dictionary) -> Dictionary:
+static func _resolve_visual_queue(queue: Array, environment: Dictionary, semantic_state: Dictionary, base_by_identity: Dictionary, initial_occupied: Array, interactions: Dictionary, slot_occupancy: Dictionary) -> Dictionary:
 	var queue_errors: Array = []
+	var queue_warnings: Array = []
 	var occupied := initial_occupied.duplicate(true)
 	var scenes: Dictionary = {}
 	var actors: Dictionary = {}
@@ -473,9 +479,10 @@ static func _resolve_visual_queue(queue: Array, environment: Dictionary, semanti
 		var semantic := _dict(queue_entry.get("semantic", {}))
 		if not _record_pixel_rect(base_record).has_area() or not str(semantic.get("route_id", "")).is_empty():
 			bind_entries.append(queue_entry)
-	var binding_result := EnvironmentSlotBinderScript.bind_scenario_visuals(environment, bind_entries)
+	var binding_result := EnvironmentSlotBinderScript.bind_scenario_visuals(environment, bind_entries, slot_occupancy)
 	if not bool(binding_result.get("ok", false)):
 		queue_errors.append_array(_array(binding_result.get("errors", ["Scenario fixed-slot binding failed closed."])))
+	queue_warnings.append_array(_array(binding_result.get("warnings", [])))
 	var bindings := _dict(binding_result.get("slot_bindings", {}))
 	for queue_value in queue:
 		var queue_entry := _dict(queue_value)
@@ -523,6 +530,7 @@ static func _resolve_visual_queue(queue: Array, environment: Dictionary, semanti
 		"occupied": occupied,
 		"collision_adjustments": 0,
 		"visual_count": visual_count,
+		"warnings": queue_warnings,
 		"errors": queue_errors,
 	}
 
@@ -1465,6 +1473,81 @@ static func _actor_route_count(actors: Dictionary) -> int:
 
 static func _layout_context(environment: Dictionary) -> Dictionary:
 	return _dict(environment.get("_scenario_layout_context", environment.get("scenario_layout_context", {})))
+
+
+static func _guard_unique_base_record_slots(base_records: Array, environment: Dictionary, context: Dictionary, errors: Array) -> Dictionary:
+	var records := base_records.duplicate(true)
+	var occupied: Dictionary = {}
+	var warnings: Array = []
+	var surface_map := EnvironmentPlacementScript.surface_map(environment)
+	var available_slots := _array(surface_map.get("base_slots", [])) + _array(surface_map.get("stage_slots", [])) + _array(surface_map.get("exit_slots", []))
+	var slots_by_id: Dictionary = {}
+	for slot_value in available_slots:
+		var authored_slot := _dict(slot_value)
+		slots_by_id[str(authored_slot.get("id", ""))] = authored_slot
+	var context_occupancy_value: Variant = context.get("slot_occupancy", {})
+	if typeof(context_occupancy_value) != TYPE_DICTIONARY:
+		errors.append("Scenario production slot occupancy must be a dictionary.")
+	else:
+		for slot_id_value in (context_occupancy_value as Dictionary).keys():
+			var identity_value: Variant = (context_occupancy_value as Dictionary).get(slot_id_value)
+			if typeof(slot_id_value) != TYPE_STRING or str(slot_id_value).strip_edges().is_empty() \
+					or typeof(identity_value) != TYPE_STRING or str(identity_value).strip_edges().is_empty():
+				errors.append("Scenario production slot occupancy contains a malformed claim.")
+				continue
+			occupied[str(slot_id_value)] = str(identity_value)
+	for index in range(records.size()):
+		var record := _dict(records[index])
+		if str(record.get("presentation_mode", "room")) != "room" or not bool(record.get("visible", true)):
+			continue
+		var slot_id := str(record.get("slot_id", "")).strip_edges()
+		if slot_id.is_empty():
+			continue
+		var identity := str(record.get("object_id", "")).strip_edges()
+		if identity.is_empty():
+			identity = _record_identity(record)
+		var holder := str(occupied.get(slot_id, "")).strip_edges()
+		if holder.is_empty() or holder == identity:
+			occupied[slot_id] = identity
+			continue
+		var placement_class := str(record.get("placement_class", "")).strip_edges()
+		if placement_class.is_empty():
+			placement_class = EnvironmentPlacementScript.classify(record, str(record.get("visual_type", record.get("object_type", ""))), identity)
+		var binding := {
+			"identity": identity,
+			"kind": "base",
+			"presentation_mode": "room",
+			"slot_id": slot_id,
+			"placement_class": placement_class,
+			"slot": _dict(slots_by_id.get(slot_id, {})),
+		}
+		var candidate_bindings := {identity: binding}
+		var live_identity := {identity: true}
+		var guarded := EnvironmentSlotBinderScript.guard_unique_slot_bindings(
+			candidate_bindings,
+			live_identity,
+			occupied,
+			available_slots,
+			"scenario layout finalization"
+		)
+		warnings.append_array(_array(guarded.get("warnings", [])))
+		errors.append_array(_array(guarded.get("errors", [])))
+		var rebound := _dict(_dict(guarded.get("slot_bindings", {})).get(identity, {}))
+		if rebound.is_empty():
+			continue
+		occupied = _dict(guarded.get("occupied_slots", occupied))
+		record["presentation_mode"] = "room"
+		record["slot_id"] = str(rebound.get("slot_id", ""))
+		record["placement_class"] = placement_class
+		var normalized := EnvironmentSlotBinderScript.normalized_rect(EnvironmentSlotBinderScript.rect_from_binding(rebound))
+		var label_rect := EnvironmentSlotBinderScript.label_rect_from_binding(rebound, str(record.get("label", "")))
+		record["normalized_rect"] = normalized
+		record["focus_rect"] = normalized.duplicate(true)
+		record["small_screen_rect"] = EnvironmentSlotBinderScript.normalized_rect(EnvironmentSlotBinderScript.expanded_rect(EnvironmentSlotBinderScript.rect_from_binding(rebound)))
+		record["label_rect"] = EnvironmentSlotBinderScript.normalized_rect(label_rect)
+		record["small_screen_label_rect"] = EnvironmentSlotBinderScript.normalized_rect(label_rect)
+		records[index] = record
+	return {"records": records, "occupied_slots": occupied, "warnings": warnings}
 
 
 static func _validate_layout_context(context: Dictionary, errors: Array) -> void:

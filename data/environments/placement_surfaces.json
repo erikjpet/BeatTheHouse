@@ -8577,6 +8577,56 @@
           "zone_id": "left",
           "support_id": "left_table",
           "walk_lane_ids": []
+        },
+        {
+          "id": "stage.crew_board_wall_center",
+          "kind": "stage",
+          "pos": [
+            520.0,
+            100.0
+          ],
+          "footprint_class": "wall_mounted",
+          "hit_rect": [
+            484.0,
+            52.0,
+            72.0,
+            48.0
+          ],
+          "label_anchor": [
+            520.0,
+            46.0
+          ],
+          "facing": "none",
+          "priority": 10,
+          "zone_id": "background",
+          "support_id": "back_wall",
+          "walk_lane_ids": []
+        },
+        {
+          "id": "stage.crew_group_floor_right",
+          "kind": "stage",
+          "pos": [
+            668.0,
+            358.0
+          ],
+          "footprint_class": "group",
+          "hit_rect": [
+            616.0,
+            280.0,
+            104.0,
+            78.0
+          ],
+          "label_anchor": [
+            668.0,
+            274.0
+          ],
+          "facing": "left",
+          "priority": 10,
+          "zone_id": "right",
+          "support_id": "floor",
+          "walk_lane_ids": [
+            "lane.public"
+          ]
         }
       ],
       "exit_slots": [

@@ -623,7 +623,8 @@ static func ensure_generated_layout(environment_data: Dictionary, library: Conte
 			and str(layout.get("slot_map_digest", "")) == current_slot_map_digest \
 			and bool(persisted_slot_authority.get("ok", false)):
 		return layout
-	var binding_result := EnvironmentSlotBinderScript.bind_base_layout(placement_environment, active_entries)
+	var room_slot_occupancy: Dictionary = {}
+	var binding_result := EnvironmentSlotBinderScript.bind_base_layout(placement_environment, active_entries, room_slot_occupancy)
 	layout["object_rects"] = JsonCoerceScript._copy_dict(binding_result.get("object_rects", {}))
 	layout["slot_bindings"] = JsonCoerceScript._copy_dict(binding_result.get("slot_bindings", {}))
 	layout["slot_overflow_ids"] = JsonCoerceScript._copy_array(binding_result.get("overflow_ids", []))

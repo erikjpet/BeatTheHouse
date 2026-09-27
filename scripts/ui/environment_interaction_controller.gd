@@ -152,14 +152,16 @@ static func interactable_object_view_list(host: Variant) -> Array:
 		"closing_time_reason": host._closing_time_disabled_reason(),
 	}))
 	# Seal the complete live base inventory against authored slots before scenario
-	# composition. Runtime-only controls consume remaining base capacity and use
-	# the action-list overflow mode when capacity is exhausted.
+	# composition. Runtime-only physical objects consume remaining compatible room
+	# capacity; abstract controls retain their existing action-list presentation.
 	var binding_environment := JsonCoerceScript._copy_dict(host.run_state.current_environment)
 	binding_environment["layout"] = layout
+	var room_slot_occupancy: Dictionary = {}
 	var record_binding := EnvironmentSlotBinderScript.bind_base_records(
 		binding_environment,
 		result,
-		_dict(layout.get("slot_bindings", {}))
+		_dict(layout.get("slot_bindings", {})),
+		room_slot_occupancy
 	)
 	if not bool(record_binding.get("ok", false)):
 		var binding_failure := projection_failure_result(result, _array(record_binding.get("errors", [])))
@@ -184,6 +186,7 @@ static func interactable_object_view_list(host: Variant) -> Array:
 	# validation so the base/stage disjointness invariant is checked against the
 	# complete production plane; these records authorize no scenario behavior.
 	layout_context["base_occupied_records"] = _base_layout_reservations(trusted_base_result, layout)
+	layout_context["slot_occupancy"] = room_slot_occupancy.duplicate(true)
 	if not bool(preparation.get("ok", false)):
 		var preparation_failure := projection_failure_result(result, _array(preparation.get("errors", [])))
 		var committed_preparation_failure := committed_projection_status_result(host.run_state, preparation_failure, trusted_base_result)

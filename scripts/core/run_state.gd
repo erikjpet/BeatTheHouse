@@ -2605,14 +2605,18 @@ func scenario_finalize_installed_environment(library: ContentLibrary, layout_con
 	# In particular, slot overflow remains actionable authority even though it has
 	# no environment-board rectangle.
 	var authoritative_layout := JsonCoerceScript._copy_dict(authoritative_environment.get("layout", {}))
+	var finalization_occupancy := JsonCoerceScript._copy_dict(layout_context.get("slot_occupancy", {}))
 	var bound := EnvironmentSlotBinderScript.bind_base_records(
 		authoritative_environment,
 		JsonCoerceScript._copy_array(authoritative.get("records", [])),
-		JsonCoerceScript._copy_dict(authoritative_layout.get("slot_bindings", {}))
+		JsonCoerceScript._copy_dict(authoritative_layout.get("slot_bindings", {})),
+		finalization_occupancy
 	)
 	if not bool(bound.get("ok", false)):
 		return _scenario_semantic_finalization_failure(JsonCoerceScript._copy_array(bound.get("errors", [])), bool(current_environment.get("scenario_semantic_ready", false)))
-	return _scenario_finalize_trusted_base_semantics(JsonCoerceScript._copy_array(bound.get("records", [])), library, layout_context)
+	var finalization_context := layout_context.duplicate(true)
+	finalization_context["slot_occupancy"] = finalization_occupancy
+	return _scenario_finalize_trusted_base_semantics(JsonCoerceScript._copy_array(bound.get("records", [])), library, finalization_context)
 
 
 func _scenario_event_choice_authority(definition: Dictionary, library: ContentLibrary, environment_override: Dictionary = {}) -> Dictionary:
