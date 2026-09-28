@@ -2186,6 +2186,29 @@ static func environment_layer_interactable_objects(host: Variant) -> Array:
 static func travel_leave_interactable_object(host: Variant) -> Dictionary:
 	if host.run_state == null:
 		return {}
+	if host.has_method("_is_environment_test_session") and bool(host.call("_is_environment_test_session")):
+		return host._make_interactable_object({
+			"object_id": "travel:leave",
+			"object_type": host.CONTEXT_MODE_TRAVEL,
+			"source_id": "environment_library",
+			"label": "Environments",
+			"short_description": "Choose another environment practice room.",
+			"enabled": true,
+			"disabled_reason": "",
+			"action_summary": "Open Environment Library.",
+			"risk_summary": "No travel risk.",
+			"impact_summary": "Player attributes carry forward.",
+			"cost_summary": "Cost: 0",
+			"attribute_badges": [],
+			"preview_lines": ["No time or travel progression.", "Money, items, heat, and player state are preserved."],
+			"unlock_conditions": [],
+			"visual_key": "travel",
+			"prop": "door",
+			"icon_key": "travel",
+			"available_actions": [{"id": "open_environment_library", "label": "Choose Environment"}],
+			"confirm_action_id": "open_environment_library",
+			"focus_rect": host._interaction_rect_for_object("travel:leave", host.CONTEXT_MODE_TRAVEL, 0),
+		})
 	var travel_choices = host._travel_choice_view_list()
 	if travel_choices.is_empty():
 		return {}

@@ -8,6 +8,7 @@ signal cancel_requested
 signal settings_applied
 signal reset_tips_requested
 signal game_library_requested
+signal environment_library_requested
 
 const UserSettingsScript := preload("res://scripts/core/user_settings.gd")
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
@@ -46,6 +47,7 @@ var coach_tips: CheckBox
 var reset_tips: Button
 var haptics_note: Label
 var game_library: Button
+var environment_library: Button
 var developer_placement_mode: CheckBox
 var body_scroll: ScrollContainer
 var back_button: Button
@@ -158,6 +160,10 @@ func _build() -> void:
 	game_library.tooltip_text = "Open the internal table-game practice library."
 	game_library.pressed.connect(game_library_requested.emit)
 	box.add_child(game_library)
+	environment_library = _button("Environment Library (Debug)")
+	environment_library.tooltip_text = "Spawn any environment, scenario, and town-condition combination."
+	environment_library.pressed.connect(environment_library_requested.emit)
+	box.add_child(environment_library)
 
 	status = Label.new()
 	status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER

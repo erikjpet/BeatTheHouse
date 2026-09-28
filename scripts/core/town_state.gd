@@ -81,6 +81,58 @@ func generate(p_seed_value: int, source_conditions: Dictionary = {}) -> void:
 	_refresh_current_profiles()
 
 
+# Replaces only the requested generation-time town conditions. Environment
+# practice uses this after the ordinary seeded schedule has been generated, so
+# "default" remains byte-for-byte normal generation while exact selections use
+# the same authored condition definitions and modifier pipeline.
+func apply_generation_overrides(overrides: Dictionary) -> Dictionary:
+	var errors: Array = []
+	var weather_id := str(overrides.get("weather", "")).strip_edges()
+	if not weather_id.is_empty():
+		if not WEATHER_IDS.has(weather_id) or not _weather_definition_by_id.has(weather_id):
+			errors.append("Unknown weather condition: %s" % weather_id)
+		else:
+			var weather_definition := _dictionary(_weather_definition_by_id.get(weather_id, {}))
+			weather_schedule = [{
+				"id": weather_id,
+				"start_action": 0,
+				"end_action": turn_horizon,
+				"modifiers": _dictionary(weather_definition.get("modifiers", {})).duplicate(true),
+			}]
+			_rebuild_weather_index()
+	var day_type_id := str(overrides.get("day_type", "")).strip_edges()
+	if not day_type_id.is_empty():
+		var selected_day: Dictionary = {}
+		for definition in JsonCoerceScript._dictionary_array(_dictionary(_conditions.get("calendar", {})).get("cycle", [])):
+			if str(definition.get("id", "")) == day_type_id:
+				selected_day = definition.duplicate(true)
+				break
+		if selected_day.is_empty() or not DAY_TYPE_IDS.has(day_type_id):
+			errors.append("Unknown calendar condition: %s" % day_type_id)
+		else:
+			selected_day["duration_actions"] = turn_horizon
+			calendar_cycle = [selected_day]
+			calendar_offset_actions = 0
+	if overrides.has("happenings"):
+		var requested := JsonCoerceScript._raw_string_array(overrides.get("happenings", []))
+		var exact_happenings: Array = []
+		for happening_id in requested:
+			if not HAPPENING_IDS.has(happening_id) or not _happening_definition_by_id.has(happening_id):
+				errors.append("Unknown town happening: %s" % happening_id)
+				continue
+			var happening_definition := _dictionary(_happening_definition_by_id.get(happening_id, {}))
+			exact_happenings.append({
+				"id": happening_id,
+				"display_name": str(happening_definition.get("display_name", _display_name(happening_id))),
+				"start_action": 0,
+				"end_action": turn_horizon,
+				"modifiers": _dictionary(happening_definition.get("modifiers", {})).duplicate(true),
+			})
+		happenings = exact_happenings
+	_refresh_current_profiles()
+	return {"ok": errors.is_empty(), "errors": errors}
+
+
 func restore(source: Dictionary, p_seed_value: int, source_conditions: Dictionary = {}) -> bool:
 	var source_schema := int(source.get("schema_version", 0))
 	if source_schema < 1 or source_schema > SCHEMA_VERSION:

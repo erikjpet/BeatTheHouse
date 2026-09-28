@@ -150,6 +150,8 @@ static func build_start_screen(host: Variant) -> void:
 	if host.show_game_library_launcher:
 		host.game_library_button = host._main_menu_button("Games", "Practice any table", Callable(host, "open_game_test_menu"))
 		utility_row.add_child(host.game_library_button)
+		host.environment_library_button = host._main_menu_button("Environments", "Test any room and situation", Callable(host, "open_environment_test_menu"))
+		utility_row.add_child(host.environment_library_button)
 
 	host.exit_game_button = host._main_menu_button("Exit Game", "Close the game window", Callable(host, "exit_game"))
 	host.start_menu_controls.add_child(host.exit_game_button)
@@ -158,6 +160,7 @@ static func build_start_screen(host: Variant) -> void:
 		host._build_inventory_page(stack)
 		if host.show_game_library_launcher:
 			host._build_game_test_menu(stack)
+			host._build_environment_test_menu(stack)
 
 
 static func _build_redesigned_start_screen(host: Variant) -> void:
@@ -202,6 +205,10 @@ static func _build_redesigned_start_screen(host: Variant) -> void:
 	top_spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top_bar.add_child(top_spacer)
 	if host.show_game_library_launcher:
+		host.environment_library_button = host._main_menu_button("ENVIRONMENTS", "Test any room and situation", Callable(host, "open_environment_test_menu"))
+		host.environment_library_button.custom_minimum_size = Vector2(174, 48)
+		host._set_control_font_size(host.environment_library_button, 14)
+		top_bar.add_child(host.environment_library_button)
 		host.game_library_button = host._main_menu_button("GAMES", "Practice any available table", Callable(host, "open_game_test_menu"))
 		host.game_library_button.custom_minimum_size = Vector2(132, 48)
 		host._set_control_font_size(host.game_library_button, 15)
@@ -403,6 +410,7 @@ static func _build_redesigned_start_screen(host: Variant) -> void:
 		host._ensure_start_menu_config_panels_built()
 		if host.show_game_library_launcher:
 			host._build_game_test_menu(stack)
+			host._build_environment_test_menu(stack)
 
 
 static func build_run_screen(host: Variant) -> void:

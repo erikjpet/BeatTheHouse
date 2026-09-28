@@ -61,6 +61,63 @@ func _install_environment(run_state: RunState, environment_data: Dictionary) -> 
 	return _install_environment_with_rollback(run_state, environment_data, _travel_rollback_snapshot(run_state))
 
 
+# Generates an environment-practice room through the production world-room
+# pipeline. The caller owns the practice RunState, allowing UI code to replace
+# sessions without touching a real run, save slot, or world map.
+func environment_test_result(run_state: RunState, request: Dictionary) -> Dictionary:
+	if run_state == null or library == null:
+		return {"ok": false, "errors": ["Environment practice requires a run state and content library."]}
+	var archetype_id := str(request.get("archetype_id", "")).strip_edges()
+	var archetype := _archetype_by_id(archetype_id)
+	if archetype.is_empty():
+		return {"ok": false, "errors": ["Unknown environment: %s" % archetype_id]}
+	var scenario_id := str(request.get("scenario_id", "__default")).strip_edges()
+	if not scenario_id in ["__default", "__none"]:
+		var definition := library._scenario_readonly(scenario_id)
+		if definition.is_empty() or str(definition.get("archetype_id", "")) != archetype_id:
+			return {"ok": false, "errors": ["Scenario %s does not belong to %s." % [scenario_id, archetype_id]]}
+	var rng := run_state.create_rng("environment_practice:%s" % str(request.get("generation_key", archetype_id)))
+	var options := request.duplicate(true)
+	options["environment_test"] = true
+	var environment_data := _world_environment_data_for_node(run_state, {}, {"id": archetype_id}, rng, options)
+	if environment_data.is_empty():
+		return {"ok": false, "errors": ["The selected environment could not be generated."]}
+	var installed := _install_environment_with_rollback(run_state, environment_data, _travel_rollback_snapshot(run_state))
+	if not bool(installed.get("ok", false)):
+		return installed
+	var layer_id := str(request.get("layer_id", "")).strip_edges()
+	if not layer_id.is_empty() and run_state.is_layered_environment() and layer_id != str(run_state.current_environment.get("current_layer_id", "")):
+		var layer_result := _install_environment_test_layer(run_state, layer_id)
+		if not bool(layer_result.get("ok", false)):
+			return {"ok": false, "errors": [str(layer_result.get("message", "The selected starting area could not be entered."))]}
+	return {"ok": true, "errors": [], "environment": run_state.current_environment.duplicate(true)}
+
+
+func _install_environment_test_layer(run_state: RunState, layer_id: String) -> Dictionary:
+	var target_id := layer_id.strip_edges()
+	var layer_state := run_state.environment_layer_state(target_id)
+	if layer_state.is_empty():
+		return {"ok": false, "message": "Unknown starting area: %s" % target_id}
+	run_state.discover_environment_layer(target_id, "environment_practice")
+	run_state.apply_town_generation_modifiers(layer_state)
+	var game_rng := run_state.create_rng("environment_practice_layer_games:%s" % target_id)
+	layer_state["game_states"] = _generated_game_states(run_state, layer_state, game_rng)
+	var archetype_id := str(layer_state.get("archetype_id", run_state.current_environment.get("archetype_id", "")))
+	layer_state["next_archetypes"] = [archetype_id]
+	layer_state["travel_hooks"] = [archetype_id]
+	layer_state["world_map_travel"] = false
+	_stamp_environment_test_exit(layer_state)
+	layer_state["layout"] = EnvironmentInstance.ensure_generated_layout(layer_state, library)
+	if not run_state.install_environment_layer_state(target_id, layer_state):
+		return {"ok": false, "message": "The selected starting area could not be installed."}
+	CrewRecruitmentModelScript.apply_to_environment(run_state, run_state.current_environment)
+	var finalized := run_state.scenario_finalize_installed_environment(library)
+	if not bool(finalized.get("ok", false)):
+		var errors := JsonCoerceScript._copy_array(finalized.get("errors", []))
+		return {"ok": false, "message": str(errors[0]) if not errors.is_empty() else "The selected starting area could not be finalized."}
+	return {"ok": true, "layer_id": target_id}
+
+
 # Travel callers already hold the exact atomic rollback snapshot. Reuse it so
 # large visited-room machines are not copied a second time at every transition.
 func _install_environment_with_rollback(run_state: RunState, environment_data: Dictionary, rollback: Dictionary, restore_on_failure: bool = true) -> Dictionary:
@@ -848,12 +905,12 @@ func _legacy_next_environment(run_state: RunState, target_archetype_id: String, 
 	return EnvironmentInstance.from_dict(run_state.current_environment)
 
 
-func _world_environment_data_for_node(run_state: RunState, map_data: Dictionary, node: Dictionary, rng: RngStream) -> Dictionary:
+func _world_environment_data_for_node(run_state: RunState, map_data: Dictionary, node: Dictionary, rng: RngStream, generation_options: Dictionary = {}) -> Dictionary:
 	var perf_stage_started_usec := Time.get_ticks_usec() if _world_environment_timing_enabled else 0
 	_world_environment_build_stages_usec = {}
 	var node_id := str(node.get("id", "")).strip_edges()
 	var stored_environment: Dictionary = node.get("environment", {}) if typeof(node.get("environment", {})) == TYPE_DICTIONARY else {}
-	var restore_stored := not stored_environment.is_empty() \
+	var restore_stored := generation_options.is_empty() and not stored_environment.is_empty() \
 		and str(node.get("state", "")) == WorldMap.STATE_VISITED \
 		and _stored_environment_matches_situation_cycle(run_state, node_id, stored_environment)
 	if restore_stored:
@@ -870,13 +927,21 @@ func _world_environment_data_for_node(run_state: RunState, map_data: Dictionary,
 		restored["layout"] = EnvironmentInstance.ensure_generated_layout(restored, library)
 		_align_world_map_scenario_layout_baseline(restored)
 		return restored
-	var depth := run_state.environment_travel_count()
-	if not run_state.current_environment.is_empty():
+	var depth := maxi(0, int(generation_options.get("depth", run_state.environment_travel_count())))
+	if generation_options.is_empty() and not run_state.current_environment.is_empty():
 		depth += 1
 	var archetype := _archetype_by_id(node_id)
 	if archetype.is_empty():
 		archetype = _pick_archetype(run_state, depth, rng, node_id)
-	var scenario := _select_scenario(run_state, str(archetype.get("id", node_id)), rng)
+	var condition_overrides := JsonCoerceScript._copy_dict(generation_options.get("condition_overrides", {}))
+	if not condition_overrides.is_empty() and run_state.town_state != null:
+		run_state.town_state.apply_generation_overrides(condition_overrides)
+	var scenario: Dictionary = {}
+	var requested_scenario_id := str(generation_options.get("scenario_id", "__default")).strip_edges()
+	if requested_scenario_id == "__default":
+		scenario = _select_scenario(run_state, str(archetype.get("id", node_id)), rng)
+	elif requested_scenario_id != "__none":
+		scenario = library._runtime_validated_scenario_definition(library._scenario_readonly(requested_scenario_id))
 	if not scenario.is_empty():
 		run_state.seed_scenario_for_node(node_id, scenario)
 	if _world_environment_timing_enabled:
@@ -912,13 +977,39 @@ func _world_environment_data_for_node(run_state: RunState, map_data: Dictionary,
 		perf_stage_started_usec = Time.get_ticks_usec()
 	if str(archetype.get("kind", "")) == "home":
 		_apply_home_profile(run_state, environment_data, archetype, node_id, rng.fork("home_profile:%s" % node_id))
-	_apply_world_travel_targets(environment_data, run_state, map_data, node_id)
+	if bool(generation_options.get("environment_test", false)):
+		var practice_exit_target := str(environment_data.get("archetype_id", node_id))
+		environment_data["next_archetypes"] = [practice_exit_target]
+		environment_data["travel_hooks"] = [practice_exit_target]
+		environment_data["world_map_travel"] = false
+		_stamp_environment_test_exit(environment_data)
+	else:
+		_apply_world_travel_targets(environment_data, run_state, map_data, node_id)
 	_apply_scenario_sequence_travel_targets(environment_data, scenario)
 	environment_data["layout"] = EnvironmentInstance.ensure_generated_layout(environment_data, library)
 	_align_world_map_scenario_layout_baseline(environment_data)
 	if _world_environment_timing_enabled:
 		_world_environment_build_stages_usec["targets_and_layout"] = Time.get_ticks_usec() - perf_stage_started_usec
 	return environment_data
+
+
+func _stamp_environment_test_exit(environment_data: Dictionary) -> void:
+	var flags := JsonCoerceScript._copy_dict(environment_data.get("local_narrative_flags", {}))
+	flags["environment_test_session"] = true
+	environment_data["local_narrative_flags"] = flags
+	var layer_states := JsonCoerceScript._copy_dict(environment_data.get("layer_states", {}))
+	for layer_id_value in layer_states.keys():
+		var layer_state := JsonCoerceScript._copy_dict(layer_states.get(layer_id_value, {}))
+		var layer_flags := JsonCoerceScript._copy_dict(layer_state.get("local_narrative_flags", {}))
+		layer_flags["environment_test_session"] = true
+		layer_state["local_narrative_flags"] = layer_flags
+		var practice_exit_target := str(layer_state.get("archetype_id", environment_data.get("archetype_id", "")))
+		layer_state["next_archetypes"] = [practice_exit_target]
+		layer_state["travel_hooks"] = [practice_exit_target]
+		layer_state["world_map_travel"] = false
+		layer_states[layer_id_value] = layer_state
+	if not layer_states.is_empty():
+		environment_data["layer_states"] = layer_states
 
 
 func _environment_situation_cycle_id(run_state: RunState, archetype_id: String) -> String:

@@ -988,7 +988,8 @@ static func _active_object_layout_entries(environment_data: Dictionary) -> Array
 	entries.append_array(_cage_gift_layout_entries(environment_data))
 	if _shopkeeper_should_exist(environment_data):
 		entries.append({"object_id": "shopkeeper:merchant", "object_type": "shopkeeper", "index": 0, "spot_field": "shopkeeper_spots"})
-	if not _travel_target_ids(environment_data).is_empty():
+	var local_flags := JsonCoerceScript._copy_dict(environment_data.get("local_narrative_flags", {}))
+	if not _travel_target_ids(environment_data).is_empty() or bool(local_flags.get("environment_test_session", false)):
 		entries.append({"object_id": "travel:leave", "object_type": "travel", "index": 0, "spot_field": "travel_spots"})
 	_append_string_layout_entries(entries, "travel", _grand_casino_local_target_ids(environment_data), "casino_door_spots")
 	_append_string_layout_entries(entries, "casino_fixture", _casino_fixture_ids(environment_data), "casino_fixture_spots")

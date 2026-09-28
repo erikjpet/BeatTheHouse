@@ -552,6 +552,15 @@ var world_sequence_registrations: Dictionary = {}
 var _world_sequence_definition_cache: Dictionary = {}
 
 const WORLD_SEQUENCE_OUTCOME_CHANNELS := ["delivery_handoff", "heist_scene"]
+const ENVIRONMENT_TEST_PLAYER_STATE_FIELDS := [
+	"bankroll", "grand_casino_chips", "economic_state", "inventory", "portable_ticket_piles",
+	"active_item_id", "debt", "sals_forfeited_item_ids", "suspicion", "baseline_luck",
+	"drunk_level", "alcoholic_level", "pending_drunk_absorption", "drunk_distortion_suppression_turns",
+	"pending_bags", "narrative_flags", "story_flags", "crew_trust_by_member",
+	"crew_grievance_ledger", "crew_jobs", "crew_grievance_sequence", "crew_job_sequence",
+	"active_delivery_run", "crew_pattern_memory", "crew_match_marks", "crew_contraband_stash",
+	"crew_recruitment_encounters", "crew_play_state", "crew_heist_state", "run_spending_score",
+]
 
 
 # Resets the run from a seed and optional challenge.
@@ -661,6 +670,26 @@ func start_new(p_seed_text: String = "FOUNDATION-SEED", p_challenge_config: Dict
 		narrative_flags["tutorial_active"] = true
 		narrative_flags["tutorial_beat"] = 1
 	_record_heat_history(false)
+
+
+# Captures only player-owned practice state. World, room, scenario, clock, RNG,
+# and progression histories are deliberately excluded so every requested room
+# can be regenerated from its own seed without carrying hidden generator state.
+func environment_test_player_state() -> Dictionary:
+	var snapshot: Dictionary = {}
+	for field_name in ENVIRONMENT_TEST_PLAYER_STATE_FIELDS:
+		var value: Variant = get(field_name)
+		snapshot[field_name] = value.duplicate(true) if typeof(value) in [TYPE_ARRAY, TYPE_DICTIONARY] else value
+	return snapshot
+
+
+func restore_environment_test_player_state(snapshot: Dictionary) -> void:
+	for field_name in ENVIRONMENT_TEST_PLAYER_STATE_FIELDS:
+		if not snapshot.has(field_name):
+			continue
+		var value: Variant = snapshot[field_name]
+		set(field_name, value.duplicate(true) if typeof(value) in [TYPE_ARRAY, TYPE_DICTIONARY] else value)
+	invalidate_inventory_effect_cache()
 
 
 # Creates an RNG stream from the saved run RNG state.

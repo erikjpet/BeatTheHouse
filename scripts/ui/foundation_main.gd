@@ -409,6 +409,7 @@ var application_pause_owners: Dictionary = {}
 var environment_clock_fractional_minutes := 0.0
 var stored_grand_casino_runtime_last_msec := -100000
 var dev_game_test_mode := false
+var dev_environment_test_mode := false
 var meta_session_active := false
 var meta_session_location_id: String = ""
 var meta_last_panel_message: String = ""
@@ -469,6 +470,21 @@ var game_test_stake_floor_input: SpinBox
 var game_test_stake_ceiling_input: SpinBox
 var game_test_security_option: OptionButton
 var game_test_generation_overrides_text: TextEdit
+var environment_test_menu: VBoxContainer
+var environment_library_button: Button
+var environment_test_status_label: Label
+var environment_test_seed_input: LineEdit
+var environment_test_archetype_option: OptionButton
+var environment_test_scenario_option: OptionButton
+var environment_test_layer_option: OptionButton
+var environment_test_weather_option: OptionButton
+var environment_test_day_option: OptionButton
+var environment_test_happening_mode_option: OptionButton
+var environment_test_happening_checks: Dictionary = {}
+var environment_test_back_button: Button
+var environment_test_overlay: Control
+var environment_test_overlay_panel: PanelContainer
+var environment_test_overlay_content: VBoxContainer
 var acquire_chip_button: Button
 var career_button: Button
 var inventory_button: Button
@@ -1131,6 +1147,7 @@ func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Di
 	_apply_meta_collection_loadout_to_run()
 	run_state.begin_act(1)
 	dev_game_test_mode = false
+	dev_environment_test_mode = false
 	generator.next_environment(run_state)
 	if not _environment_is_playable(run_state) and not _recover_unplayable_environment():
 		var failed_seed := resolved_seed
@@ -2988,6 +3005,9 @@ func wait_out_police_sweep() -> bool:
 func open_world_map(force_closing_allowed: bool = false) -> bool:
 	if run_state == null:
 		return false
+	if _is_environment_test_session():
+		open_environment_test_menu()
+		return true
 	if _guard_player_input_route(force_closing_allowed, "map"):
 		return false
 	world_map_previous_focus_owner = get_viewport().gui_get_focus_owner() if modal_focus_scope == null else null
@@ -6337,6 +6357,7 @@ func _load_foundation_run_from_slot(return_to_start_on_missing: bool) -> bool:
 	_configure_coach_for_run()
 	_sync_presented_bankroll_to_actual()
 	dev_game_test_mode = false
+	dev_environment_test_mode = false
 	_refresh_run_action_service()
 	current_game = null
 	last_game_result = _game_result_from_story_log(run_state.story_log)
@@ -6460,7 +6481,7 @@ func _foundation_lifecycle_snapshot() -> Dictionary:
 	}
 	var fields: Dictionary = snapshot["fields"]
 	for field_name in [
-		"meta_session_active", "meta_session_location_id", "meta_last_panel_message", "dev_game_test_mode",
+		"meta_session_active", "meta_session_location_id", "meta_last_panel_message", "dev_game_test_mode", "dev_environment_test_mode",
 		"environment_pause_started_msec", "environment_paused_total_msec", "talk_dock_avoid_sync_active", "item_found_talk_dock_suspended",
 		"current_game", "current_game_state_key", "game_exit_settle_active", "last_game_exit_final_projection_rendered",
 		"last_game_result", "last_environment_runtime_result", "last_item_result", "last_hook_result", "game_surface_ui_state",
@@ -6484,7 +6505,7 @@ func _foundation_lifecycle_snapshot() -> Dictionary:
 		fields[field_name] = value.duplicate(true) if typeof(value) == TYPE_DICTIONARY or typeof(value) == TYPE_ARRAY else value
 	var visibility: Dictionary = snapshot["visibility"]
 	for control_name in [
-		"run_screen", "start_screen", "start_menu_controls", "start_menu_intro", "inventory_page", "game_test_menu",
+		"run_screen", "start_screen", "start_menu_controls", "start_menu_intro", "inventory_page", "game_test_menu", "environment_test_menu", "environment_test_overlay",
 		"event_choice_popup_overlay", "run_inventory_overlay", "run_journal_overlay", "run_menu_overlay", "world_map_overlay", "travel_transition_overlay",
 	]:
 		var control: Variant = get(control_name)
@@ -9114,6 +9135,7 @@ func _build_settings_overlay() -> void:
 	settings_menu.settings_applied.connect(_on_settings_applied)
 	settings_menu.reset_tips_requested.connect(_on_reset_coach_tips_requested)
 	settings_menu.game_library_requested.connect(_on_settings_game_library_requested)
+	settings_menu.environment_library_requested.connect(_on_settings_environment_library_requested)
 	settings_panel.add_child(settings_menu)
 	_layout_settings_overlay()
 
@@ -9861,6 +9883,194 @@ func _build_game_test_menu(parent: Node) -> void:
 		list.add_child(button)
 
 
+func _build_environment_test_menu(parent: Node) -> void:
+	environment_test_menu = VBoxContainer.new()
+	environment_test_menu.visible = false
+	environment_test_menu.add_theme_constant_override("separation", 7)
+	environment_test_menu.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	environment_test_menu.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	parent.add_child(environment_test_menu)
+
+	var header := HBoxContainer.new()
+	header.add_theme_constant_override("separation", 8)
+	environment_test_menu.add_child(header)
+	var heading := _label("Environment Library", 20)
+	_set_control_font_color(heading, VisualStyle.YELLOW)
+	heading.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	header.add_child(heading)
+	environment_test_back_button = _button("Back", Callable(self, "close_environment_test_menu"))
+	environment_test_back_button.custom_minimum_size = Vector2(96, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
+	header.add_child(environment_test_back_button)
+
+	var description := _label("Spawn a real generated room without starting a run. Player state carries between practice rooms.", 12)
+	_set_control_font_color(description, VisualStyle.CYAN)
+	description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	environment_test_menu.add_child(description)
+
+	var panel := _panel_container(Color("#050611", 0.82), VisualStyle.CYAN_2)
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	environment_test_menu.add_child(panel)
+	var controls := VBoxContainer.new()
+	controls.add_theme_constant_override("separation", 7)
+	controls.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.add_child(controls)
+
+	var seed_row := HBoxContainer.new()
+	seed_row.add_theme_constant_override("separation", 8)
+	controls.add_child(seed_row)
+	seed_row.add_child(_label("Seed", 12))
+	environment_test_seed_input = LineEdit.new()
+	environment_test_seed_input.text = "ENVIRONMENT-TEST"
+	environment_test_seed_input.placeholder_text = "Repeatable practice seed"
+	environment_test_seed_input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	environment_test_seed_input.custom_minimum_size = Vector2(0, 34)
+	seed_row.add_child(environment_test_seed_input)
+
+	var identity_row := HBoxContainer.new()
+	identity_row.add_theme_constant_override("separation", 8)
+	controls.add_child(identity_row)
+	environment_test_archetype_option = _environment_test_option_group(identity_row, "Environment")
+	environment_test_scenario_option = _environment_test_option_group(identity_row, "Scenario")
+	environment_test_layer_option = _environment_test_option_group(identity_row, "Starting Area")
+	environment_test_archetype_option.item_selected.connect(_on_environment_test_archetype_selected)
+
+	var condition_row := HBoxContainer.new()
+	condition_row.add_theme_constant_override("separation", 8)
+	controls.add_child(condition_row)
+	environment_test_weather_option = _environment_test_option_group(condition_row, "Weather")
+	_environment_test_add_option(environment_test_weather_option, "Default", "default")
+	_environment_test_add_option(environment_test_weather_option, "Random", "random")
+	for weather_id in TownState.WEATHER_IDS:
+		_environment_test_add_option(environment_test_weather_option, str(weather_id).replace("_", " ").capitalize(), str(weather_id))
+	environment_test_day_option = _environment_test_option_group(condition_row, "Calendar")
+	_environment_test_add_option(environment_test_day_option, "Default", "default")
+	_environment_test_add_option(environment_test_day_option, "Random", "random")
+	for day_id in TownState.DAY_TYPE_IDS:
+		_environment_test_add_option(environment_test_day_option, str(day_id).replace("_", " ").capitalize(), str(day_id))
+	environment_test_happening_mode_option = _environment_test_option_group(condition_row, "Town Events")
+	_environment_test_add_option(environment_test_happening_mode_option, "Default", "default")
+	_environment_test_add_option(environment_test_happening_mode_option, "Random", "random")
+	_environment_test_add_option(environment_test_happening_mode_option, "None", "none")
+	_environment_test_add_option(environment_test_happening_mode_option, "Choose", "custom")
+	environment_test_happening_mode_option.item_selected.connect(_on_environment_test_happening_mode_selected)
+
+	var happening_row := HFlowContainer.new()
+	happening_row.add_theme_constant_override("h_separation", 12)
+	happening_row.add_theme_constant_override("v_separation", 4)
+	controls.add_child(happening_row)
+	for happening_id in TownState.HAPPENING_IDS:
+		var check := CheckBox.new()
+		check.text = str(happening_id).replace("_", " ").capitalize()
+		check.disabled = true
+		check.set_meta("environment_test_happening_id", happening_id)
+		happening_row.add_child(check)
+		environment_test_happening_checks[happening_id] = check
+
+	var action_row := HBoxContainer.new()
+	action_row.add_theme_constant_override("separation", 8)
+	controls.add_child(action_row)
+	environment_test_status_label = _label("Choose a room and scenario.", 12)
+	_set_control_font_color(environment_test_status_label, VisualStyle.CYAN_2)
+	environment_test_status_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	environment_test_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	action_row.add_child(environment_test_status_label)
+	var spawn_button := _button("Spawn Environment", Callable(self, "start_environment_test_session"))
+	spawn_button.custom_minimum_size = Vector2(190, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
+	action_row.add_child(spawn_button)
+
+	_populate_environment_test_archetypes()
+
+
+func _environment_test_option_group(parent: Node, label_text: String) -> OptionButton:
+	var group := VBoxContainer.new()
+	group.add_theme_constant_override("separation", 3)
+	group.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	parent.add_child(group)
+	var label := _label(label_text, 11)
+	_set_control_font_color(label, VisualStyle.CYAN_2)
+	group.add_child(label)
+	var option := OptionButton.new()
+	option.custom_minimum_size = Vector2(0, 34)
+	option.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	group.add_child(option)
+	return option
+
+
+func _environment_test_add_option(option: OptionButton, label_text: String, id: String) -> void:
+	var index := option.item_count
+	option.add_item(label_text)
+	option.set_item_metadata(index, id)
+
+
+func _environment_test_selected_id(option: OptionButton, fallback: String = "") -> String:
+	if option == null or option.item_count <= 0 or option.selected < 0:
+		return fallback
+	return str(option.get_item_metadata(option.selected)).strip_edges()
+
+
+func _populate_environment_test_archetypes() -> void:
+	if environment_test_archetype_option == null or library == null:
+		return
+	environment_test_archetype_option.clear()
+	for definition_value in library.environment_archetypes:
+		if typeof(definition_value) != TYPE_DICTIONARY:
+			continue
+		var definition: Dictionary = definition_value
+		var archetype_id := str(definition.get("id", "")).strip_edges()
+		if archetype_id.is_empty():
+			continue
+		var display_name := str(definition.get("display_name", "")).strip_edges()
+		if display_name.is_empty():
+			display_name = archetype_id.replace("_", " ").capitalize()
+		_environment_test_add_option(environment_test_archetype_option, display_name, archetype_id)
+	if environment_test_archetype_option.item_count > 0:
+		environment_test_archetype_option.select(0)
+		_refresh_environment_test_identity_options()
+
+
+func _on_environment_test_archetype_selected(_index: int) -> void:
+	_refresh_environment_test_identity_options()
+
+
+func _refresh_environment_test_identity_options() -> void:
+	if library == null or environment_test_scenario_option == null or environment_test_layer_option == null:
+		return
+	var archetype_id := _environment_test_selected_id(environment_test_archetype_option)
+	environment_test_scenario_option.clear()
+	_environment_test_add_option(environment_test_scenario_option, "Normal Run Selection", "__default")
+	_environment_test_add_option(environment_test_scenario_option, "Base / No Scenario", "__none")
+	for scenario_value in library.scenarios_for_archetype(archetype_id):
+		if typeof(scenario_value) != TYPE_DICTIONARY:
+			continue
+		var scenario: Dictionary = scenario_value
+		var scenario_id := str(scenario.get("id", "")).strip_edges()
+		if scenario_id.is_empty():
+			continue
+		var scenario_name := str(scenario.get("display_name", scenario.get("name", ""))).strip_edges()
+		if scenario_name.is_empty():
+			scenario_name = scenario_id.replace("_", " ").capitalize()
+		_environment_test_add_option(environment_test_scenario_option, scenario_name, scenario_id)
+	environment_test_layer_option.clear()
+	_environment_test_add_option(environment_test_layer_option, "Scenario / Normal Entrance", "")
+	var archetype := library.environment_archetype(archetype_id)
+	var layers := JsonCoerceScript._copy_dict(archetype.get("layers", {}))
+	for layer_id_value in layers.keys():
+		var layer_id := str(layer_id_value)
+		var layer := JsonCoerceScript._copy_dict(layers.get(layer_id_value, {}))
+		var layer_name := str(layer.get("layer_display_name", layer_id.replace("_", " ").capitalize()))
+		_environment_test_add_option(environment_test_layer_option, layer_name, layer_id)
+	environment_test_layer_option.disabled = layers.is_empty()
+	if environment_test_status_label != null:
+		environment_test_status_label.text = "%d scenario choice(s) available for %s." % [environment_test_scenario_option.item_count, archetype_id.replace("_", " ").capitalize()]
+
+
+func _on_environment_test_happening_mode_selected(_index: int) -> void:
+	var custom := _environment_test_selected_id(environment_test_happening_mode_option) == "custom"
+	for check_value in environment_test_happening_checks.values():
+		if check_value is CheckBox:
+			(check_value as CheckBox).disabled = not custom
+
+
 func _ensure_inventory_page_built() -> void:
 	if inventory_page != null:
 		return
@@ -9892,6 +10102,215 @@ func _ensure_game_test_menu_built() -> void:
 	_ensure_full_content_library_loaded()
 	_build_game_test_menu(start_menu_stack)
 	_apply_accessibility_settings()
+
+
+func _ensure_environment_test_menu_built() -> void:
+	if environment_test_menu != null or not show_game_library_launcher:
+		return
+	if start_menu_stack == null:
+		return
+	_ensure_full_content_library_loaded()
+	_build_environment_test_menu(start_menu_stack)
+	_apply_accessibility_settings()
+
+
+func _ensure_environment_test_overlay_built() -> void:
+	if environment_test_overlay != null:
+		return
+	environment_test_overlay = PanelContainer.new()
+	environment_test_overlay.visible = false
+	environment_test_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	environment_test_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	environment_test_overlay.add_theme_stylebox_override("panel", VisualStyle.pixel_box(Color("#03030a", 0.94), VisualStyle.CYAN, 1))
+	add_child(environment_test_overlay)
+	var margin := MarginContainer.new()
+	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	margin.add_theme_constant_override("margin_left", 72)
+	margin.add_theme_constant_override("margin_right", 72)
+	margin.add_theme_constant_override("margin_top", 42)
+	margin.add_theme_constant_override("margin_bottom", 42)
+	environment_test_overlay.add_child(margin)
+	environment_test_overlay_panel = _panel_container(Color("#080817", 0.99), VisualStyle.PINK)
+	environment_test_overlay_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	environment_test_overlay_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	margin.add_child(environment_test_overlay_panel)
+	environment_test_overlay_content = VBoxContainer.new()
+	environment_test_overlay_content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	environment_test_overlay_content.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	environment_test_overlay_panel.add_child(environment_test_overlay_content)
+
+
+func open_environment_test_menu() -> void:
+	if not show_game_library_launcher:
+		return
+	_ensure_environment_test_menu_built()
+	if environment_test_menu == null:
+		return
+	close_content_group_config()
+	close_challenge_selection()
+	var in_run := current_screen != SCREEN_START and run_state != null
+	if in_run:
+		_ensure_environment_test_overlay_built()
+		if environment_test_menu.get_parent() != environment_test_overlay_content:
+			environment_test_menu.reparent(environment_test_overlay_content)
+		environment_test_overlay.visible = true
+		environment_test_overlay.move_to_front()
+		environment_test_back_button.text = "Resume"
+	else:
+		if environment_test_menu.get_parent() != start_menu_stack:
+			environment_test_menu.reparent(start_menu_stack)
+		if settings_menu != null:
+			settings_menu.visible = false
+		if inventory_page != null:
+			inventory_page.visible = false
+		if career_stats_screen != null:
+			career_stats_screen.visible = false
+		if game_test_menu != null:
+			game_test_menu.visible = false
+		if start_menu_controls != null:
+			start_menu_controls.visible = false
+		if start_menu_intro != null:
+			start_menu_intro.visible = false
+		environment_test_back_button.text = "Back"
+	environment_test_menu.visible = true
+	_refresh_environment_test_identity_options()
+
+
+func close_environment_test_menu() -> void:
+	if environment_test_menu != null:
+		environment_test_menu.visible = false
+	if environment_test_overlay != null and environment_test_overlay.visible:
+		environment_test_overlay.visible = false
+		_refresh()
+		return
+	if start_menu_intro != null:
+		start_menu_intro.visible = true
+	if start_menu_controls != null:
+		start_menu_controls.visible = true
+	_refresh_start_screen()
+
+
+func _environment_test_condition_overrides(candidate: RunState, generation_key: String) -> Dictionary:
+	var result: Dictionary = {}
+	var rng := candidate.create_rng("environment_practice_conditions:%s" % generation_key)
+	var weather_mode := _environment_test_selected_id(environment_test_weather_option, "default")
+	if weather_mode == "random":
+		result["weather"] = str(rng.pick(TownState.WEATHER_IDS, "clear"))
+	elif weather_mode != "default":
+		result["weather"] = weather_mode
+	var day_mode := _environment_test_selected_id(environment_test_day_option, "default")
+	if day_mode == "random":
+		result["day_type"] = str(rng.pick(TownState.DAY_TYPE_IDS, "midweek"))
+	elif day_mode != "default":
+		result["day_type"] = day_mode
+	var happening_mode := _environment_test_selected_id(environment_test_happening_mode_option, "default")
+	if happening_mode == "random":
+		result["happenings"] = rng.pick_many(TownState.HAPPENING_IDS, rng.randi_range(0, mini(2, TownState.HAPPENING_IDS.size())))
+	elif happening_mode == "none":
+		result["happenings"] = []
+	elif happening_mode == "custom":
+		var selected_happenings: Array = []
+		for happening_id in TownState.HAPPENING_IDS:
+			var check: CheckBox = environment_test_happening_checks.get(happening_id, null)
+			if check != null and check.button_pressed:
+				selected_happenings.append(happening_id)
+		result["happenings"] = selected_happenings
+	return result
+
+
+func start_environment_test_session() -> Dictionary:
+	if not show_game_library_launcher:
+		return {"ok": false, "errors": ["The environment test launcher is disabled."]}
+	if not _ensure_run_ui_built():
+		return {"ok": false, "errors": [RUN_UI_UNAVAILABLE_MESSAGE]}
+	_ensure_full_content_library_loaded()
+	_settle_script_prewarm_before_runtime()
+	var archetype_id := _environment_test_selected_id(environment_test_archetype_option)
+	if archetype_id.is_empty():
+		return {"ok": false, "errors": ["Choose an environment first."]}
+	var visible_seed := environment_test_seed_input.text.strip_edges() if environment_test_seed_input != null else ""
+	if visible_seed.is_empty():
+		visible_seed = "ENVIRONMENT-TEST"
+	var scenario_id := _environment_test_selected_id(environment_test_scenario_option, "__default")
+	var layer_id := _environment_test_selected_id(environment_test_layer_option)
+	var generation_key := "%s|%s|%s|%s|%s|%s" % [
+		visible_seed, archetype_id, scenario_id, layer_id,
+		_environment_test_selected_id(environment_test_weather_option, "default"),
+		"%s:%s" % [_environment_test_selected_id(environment_test_day_option, "default"), _environment_test_selected_id(environment_test_happening_mode_option, "default")],
+	]
+	var carried_player_state := run_state.environment_test_player_state() if _is_environment_test_session() and run_state != null else {}
+	var candidate := RunState.new()
+	var domain_seed := "ENVIRONMENT-PRACTICE-v1:%s" % visible_seed
+	var modifiers := {"environment_practice": true}
+	if scenario_id not in ["__default", "__none"]:
+		modifiers["scenario_pins"] = {archetype_id: scenario_id}
+	candidate.start_new(domain_seed, RunState.custom_challenge("environment_practice", domain_seed, modifiers))
+	candidate.bankroll = 100000
+	if not carried_player_state.is_empty():
+		candidate.restore_environment_test_player_state(carried_player_state)
+	var condition_overrides := _environment_test_condition_overrides(candidate, generation_key)
+	var request := {
+		"archetype_id": archetype_id,
+		"scenario_id": scenario_id,
+		"layer_id": layer_id,
+		"condition_overrides": condition_overrides,
+		"generation_key": generation_key,
+		"depth": 0,
+	}
+	var rollback := _foundation_lifecycle_snapshot()
+	_protect_foundation_coach_attention(rollback)
+	var candidate_generator := RunGenerator.new(library)
+	for module_path_value in game_module_script_cache.keys():
+		var module_script: Variant = game_module_script_cache.get(module_path_value)
+		if module_script is Script:
+			candidate_generator.cache_game_module_script(str(module_path_value), module_script as Script)
+	var result := candidate_generator.environment_test_result(candidate, request)
+	if not bool(result.get("ok", false)):
+		_restore_foundation_lifecycle_snapshot(rollback)
+		var errors := JsonCoerceScript._copy_array(result.get("errors", []))
+		var message := str(errors[0]) if not errors.is_empty() else "The environment could not be generated."
+		if environment_test_status_label != null:
+			environment_test_status_label.text = message
+		return {"ok": false, "errors": [message]}
+	run_state = candidate
+	generator = candidate_generator
+	dev_game_test_mode = true
+	dev_environment_test_mode = true
+	_bind_run_state_presentation_signals()
+	_reset_game_surface_runtime_state()
+	_set_active_game_binding()
+	current_game = null
+	last_game_result = {}
+	last_environment_runtime_result = {}
+	last_item_result = {}
+	last_hook_result = {}
+	selected_action_category = ACTION_CATEGORY_GAMES
+	_hide_event_choice_popup()
+	_hide_run_inventory_popup()
+	_hide_run_journal_popup()
+	_hide_run_menu()
+	_hide_travel_transition()
+	_clear_selected_game_action()
+	_clear_selected_stake()
+	_clear_selected_travel()
+	_clear_selected_event_choice()
+	_clear_selected_item_offer()
+	_clear_selected_service_hook()
+	_clear_selected_lender_hook()
+	clear_interaction_focus()
+	if environment_test_menu != null:
+		environment_test_menu.visible = false
+	if environment_test_overlay != null:
+		environment_test_overlay.visible = false
+	_set_current_screen(SCREEN_ENVIRONMENT)
+	if start_screen != null:
+		start_screen.visible = false
+	if run_screen != null:
+		run_screen.visible = true
+	_commit_foundation_coach_attention(rollback)
+	_refresh()
+	_show_message("Environment practice: %s" % str(run_state.current_environment.get("display_name", archetype_id.replace("_", " ").capitalize())))
+	return {"ok": true, "errors": [], "environment": run_state.current_environment.duplicate(true)}
 
 
 func _game_test_spin_group(label_text: String, target_id: String) -> VBoxContainer:
@@ -13657,6 +14076,10 @@ func _activate_interactable_object_with_lifecycle_snapshot(object_id: String, ca
 	var visible_event_response := object_id.begins_with("event_response:") and _event_choice_popup_is_visible()
 	if not visible_event_response and _guard_player_input_route(false, object_id):
 		return false
+	if object_id == "travel:leave" and _is_environment_test_session():
+		focus_interactable_object(object_id)
+		open_environment_test_menu()
+		return true
 	if _is_meta_session():
 		var meta_action_ok := _activate_meta_interactable_object(object_id)
 		if not meta_action_ok and object_id == "travel:leave":
@@ -16148,6 +16571,7 @@ func return_to_main_menu() -> void:
 	meta_session_location_id = ""
 	meta_last_panel_message = ""
 	dev_game_test_mode = false
+	dev_environment_test_mode = false
 	_refresh_run_action_service()
 	close_run_configuration()
 	_clear_input_guard_modal_state()
@@ -16283,6 +16707,15 @@ func _on_settings_applied() -> void:
 func _on_settings_game_library_requested() -> void:
 	close_settings_menu()
 	open_game_test_menu()
+
+
+func _on_settings_environment_library_requested() -> void:
+	close_settings_menu()
+	open_environment_test_menu()
+
+
+func _is_environment_test_session() -> bool:
+	return dev_environment_test_mode and run_state != null
 
 
 func _on_developer_placement_lock_requested(request: Dictionary) -> void:
