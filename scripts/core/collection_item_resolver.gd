@@ -293,6 +293,13 @@ func apply_usage_decay(instance: Dictionary, rng_seed: String) -> Dictionary:
 	return next
 
 
+func resolved_effect(definition: Dictionary, instance: Dictionary) -> Dictionary:
+	_ensure_loaded()
+	if definition.is_empty():
+		return {}
+	return _scaled_effect(definition, instance)
+
+
 func resolve_run_item(instance: Dictionary) -> Dictionary:
 	_ensure_loaded()
 	var normalized := normalize_instance_for_definition(instance)

@@ -782,7 +782,10 @@ func _layout_grouped_card_slots() -> void:
 	var gap := float(VisualStyle.SPACE_4)
 	var columns := _grouped_card_columns()
 	var card_width := floorf((_stage.size.x - gap * float(columns - 1)) / float(columns))
-	var card_height := maxf(VisualStyle.TOUCH_TARGET * 3.1, minf(VisualStyle.TOUCH_TARGET * 3.5, (_stage.size.y - gap * float(maxi(1, int(ceil(float(_slot_models.size()) / float(columns)))) - 1)) / float(maxi(1, int(ceil(float(_slot_models.size()) / float(columns)))))))
+	var minimum_card_height := VisualStyle.TOUCH_TARGET * (1.75 if _small_screen_mode else 2.25)
+	var maximum_card_height := VisualStyle.TOUCH_TARGET * (2.05 if _small_screen_mode else 2.6)
+	var row_count := maxi(1, int(ceil(float(_slot_models.size()) / float(columns))))
+	var card_height := maxf(minimum_card_height, minf(maximum_card_height, (_stage.size.y - gap * float(row_count - 1)) / float(row_count)))
 	for index in range(_slot_models.size()):
 		var row := index / columns
 		var column := index % columns
@@ -804,7 +807,7 @@ func _layout_grouped_card_slots() -> void:
 		badge_host.position = Vector2(pad, pad + VisualStyle.TYPE_CAPTION + VisualStyle.SPACE_2)
 		badge_host.size = Vector2(maxf(1.0, button.size.x - pad * 2.0), 18.0)
 		var icon := _slot_icons[index] as TextureRect
-		var icon_side := minf(46.0, button.size.y * 0.34)
+		var icon_side := minf(38.0, button.size.y * 0.30)
 		icon.size = Vector2(icon_side, icon_side)
 		icon.position = Vector2(pad, badge_host.position.y + badge_host.size.y + VisualStyle.SPACE_2)
 		var name_label := _slot_name_labels[index] as Label
@@ -813,7 +816,7 @@ func _layout_grouped_card_slots() -> void:
 		name_label.size = Vector2(maxf(1.0, button.size.x - name_label.position.x - pad), 24.0)
 		var description_label := _slot_description_labels[index] as Label
 		description_label.position = Vector2(name_label.position.x, name_label.position.y + name_label.size.y)
-		description_label.size = Vector2(name_label.size.x, maxf(24.0, button.size.y - description_label.position.y - pad * 2.0))
+		description_label.size = Vector2(name_label.size.x, maxf(1.0, button.size.y - description_label.position.y - pad * 2.0))
 		var underline := _slot_underlines[index] as ColorRect
 		underline.size = Vector2(maxf(VisualStyle.TOUCH_TARGET, button.size.x - pad * 2.0), VisualStyle.BORDER_STANDARD)
 		underline.position = Vector2(pad, button.size.y - pad - underline.size.y)
@@ -1156,7 +1159,7 @@ func _grouped_card_columns(area_size: Vector2 = Vector2.ZERO) -> int:
 		area_size = _stage.size
 	if area_size.x <= 0.0:
 		return 1
-	var minimum_width := VisualStyle.TOUCH_TARGET * (4.0 if _small_screen_mode else 4.2)
+	var minimum_width := VisualStyle.TOUCH_TARGET * (2.7 if _small_screen_mode else 3.2)
 	return maxi(1, int(floor((area_size.x + float(VisualStyle.SPACE_4)) / (minimum_width + float(VisualStyle.SPACE_4)))))
 
 
@@ -1165,7 +1168,7 @@ func _grouped_card_page_size() -> int:
 	if area_size.y <= 0.0:
 		return 8 if _small_screen_mode else 12
 	var columns := _grouped_card_columns(area_size)
-	var minimum_height := VisualStyle.TOUCH_TARGET * (3.1 if _small_screen_mode else 3.25)
+	var minimum_height := VisualStyle.TOUCH_TARGET * (1.75 if _small_screen_mode else 2.25)
 	var rows := maxi(1, int(floor((area_size.y + float(VisualStyle.SPACE_4)) / (minimum_height + float(VisualStyle.SPACE_4)))))
 	return maxi(1, columns * rows)
 

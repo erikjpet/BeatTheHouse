@@ -518,6 +518,10 @@ func _inventory_item_detail(item_id: String, selected_id_override: String, runti
 	var item_context := definition.duplicate(false)
 	item_context["item_class"] = item_class
 	item_context["sale_price"] = sale_price
+	var inventory_effect_lines := _inventory_effect_lines(effect)
+	var inventory_effect_summary := str(definition.get("effect_description", "")).strip_edges()
+	if inventory_effect_summary.is_empty():
+		inventory_effect_summary = ". ".join(inventory_effect_lines)
 	var detail := {
 		"id": item_id,
 		"display_name": str(definition.get("display_name", item_id.capitalize())),
@@ -528,7 +532,11 @@ func _inventory_item_detail(item_id: String, selected_id_override: String, runti
 		"sellable": sellable,
 		"sale_price": sale_price,
 		"sale_breakdown": sale_breakdown,
-		"effect_summary": str(definition.get("effect_description", effect_summary(effect))),
+		"effect_summary": inventory_effect_summary,
+		"effect_lines": inventory_effect_lines,
+		"use_instructions": _inventory_use_instructions(item_class, effect),
+		"synergy_lines": _inventory_synergy_lines(effect),
+		"effect": effect.duplicate(true),
 		"behavior_summary": _inventory_behavior_summary(item_class, is_active, item_id == selected_id),
 		"attribute_badges": AttributeBadgesScript.for_item(item_context),
 		"asset_path": str(definition.get("asset_path", "")),
@@ -570,6 +578,73 @@ func _inventory_item_detail(item_id: String, selected_id_override: String, runti
 		detail["ticket_face_value"] = face_value
 		detail["sal_cash_value"] = maxi(0, int(summary.get("sal_cash_value", 0)))
 	return detail
+
+
+func _inventory_effect_lines(effect: Dictionary) -> Array:
+	var lines: Array = []
+	for key_value in effect.keys():
+		var key := str(key_value)
+		if key in ["active_item", "active_mode", "active_target", "asset_path", "inventory_add", "inventory_remove", "messages", "repair_cost", "repair_to_item", "synergies"]:
+			continue
+		var value: Variant = effect.get(key)
+		if key == "families" and typeof(value) == TYPE_DICTIONARY:
+			for family_value in (value as Dictionary).keys():
+				var family_effect: Variant = (value as Dictionary).get(family_value)
+				if typeof(family_effect) != TYPE_DICTIONARY:
+					continue
+				var family_text := effect_summary(family_effect as Dictionary)
+				if not family_text.is_empty():
+					lines.append("%s games: %s" % [label_from_id(str(family_value)), family_text])
+			continue
+		if typeof(value) == TYPE_DICTIONARY:
+			var nested := effect_summary(value as Dictionary)
+			if not nested.is_empty():
+				lines.append("%s: %s" % [effect_summary_label(key).capitalize(), nested])
+			continue
+		lines.append("%s %s" % [effect_summary_label(key).capitalize(), effect_summary_value(value)])
+	return lines
+
+
+func _inventory_use_instructions(item_class: String, effect: Dictionary) -> String:
+	var active := bool(effect.get("active_item", false)) or not str(effect.get("active_mode", "")).strip_edges().is_empty()
+	var active_mode := str(effect.get("active_mode", "")).strip_edges().to_lower()
+	var clean_class := item_class.strip_edges().to_lower()
+	if clean_class == "container":
+		return "Carry it home, open Home Storage, and choose Place at Home. It then becomes storage space instead of a carried effect."
+	if active:
+		if active_mode == "consumable" or clean_class == "consumable":
+			var replacement_names: Array[String] = []
+			for replacement_value in JsonCoerceScript._string_array(effect.get("inventory_add", [])):
+				var replacement_id := str(replacement_value)
+				var replacement := library.item(replacement_id) if library != null else {}
+				replacement_names.append(str(replacement.get("display_name", label_from_id(replacement_id))))
+			var result := "Choose Set Active, then press Use Item in the top bar. The effect happens immediately and this item is consumed."
+			if not replacement_names.is_empty():
+				result += " It becomes %s afterward." % ", ".join(replacement_names)
+			return result
+		return "Choose Set Active to equip it in the single active-item slot. Its effect applies while equipped; use the top-bar item control when prompted."
+	if clean_class == "ticket pile":
+		return "Return to the machine where the tickets were bought to keep revealing them. Take revealed winners to Sal's Pawn Shop to cash them."
+	return "No activation is needed. Its effect applies automatically while the item is in carried inventory; storing or pawning it turns the effect off."
+
+
+func _inventory_synergy_lines(effect: Dictionary) -> Array:
+	var lines: Array = []
+	for synergy_value in JsonCoerceScript._dictionary_array(effect.get("synergies", [])):
+		var synergy: Dictionary = synergy_value
+		var required_ids := JsonCoerceScript._string_array(synergy.get("requires_all", synergy.get("requires_any", [])))
+		var required_names: Array[String] = []
+		for required_id_value in required_ids:
+			var required_id := str(required_id_value)
+			var definition := library.item(required_id) if library != null else {}
+			required_names.append(str(definition.get("display_name", label_from_id(required_id))))
+		var synergy_effect: Dictionary = synergy.get("effects", {}) if typeof(synergy.get("effects", {})) == TYPE_DICTIONARY else {}
+		var synergy_summary := effect_summary(synergy_effect)
+		if required_names.is_empty() or synergy_summary.is_empty():
+			continue
+		var requirement := " + ".join(required_names) if synergy.has("requires_all") else " or ".join(required_names)
+		lines.append("With %s: %s" % [requirement, synergy_summary])
+	return lines
 
 
 func _inventory_behavior_summary(item_class: String, is_active: bool, selected: bool) -> String:

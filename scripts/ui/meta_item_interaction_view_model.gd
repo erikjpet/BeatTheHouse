@@ -188,6 +188,10 @@ static func _owned_item_models(meta_service: Variant, resolver: Variant, owned: 
 				"disabled_reason": trade_reason if not trade_compatible else "Five items are already selected." if trade_selected_ids.size() >= 5 and selected_index < 0 else "",
 			})
 		var band: Dictionary = resolver.condition_band(definition, instance)
+		# Use the cached definition already in hand; resolving a complete run-item
+		# projection for every collection instance is unnecessary work in large vaults.
+		var exact_effect: Dictionary = resolver.resolved_effect(definition, instance)
+		var exact_effect_lines := _meta_effect_lines(exact_effect)
 		var item_disabled_reason := trade_reason
 		if mode == MODE_CONTAINER and not packable:
 			item_disabled_reason = "This meta-only item stays in home storage."
@@ -198,6 +202,10 @@ static func _owned_item_models(meta_service: Variant, resolver: Variant, owned: 
 			"selection_key": selection_key,
 			"display_name": str(definition.get("display_name", "Collection Item")),
 			"description": presentation_description,
+			"effect_summary": ". ".join(exact_effect_lines),
+			"effect_lines": exact_effect_lines,
+			"use_instructions": _meta_use_instructions(packable, exact_effect_lines.is_empty()),
+			"effect": exact_effect.duplicate(true),
 			"collection_display_name": str(collection.get("display_name", "Grand Casino Rewards" if item_class != CollectionItemResolverScript.ITEM_CLASS_COLLECTION else "Collection")),
 			"collection_id": str(definition.get("collection_id", "")),
 			"tier": presentation_tier,
@@ -234,6 +242,54 @@ static func _owned_item_models(meta_service: Variant, resolver: Variant, owned: 
 	return result
 
 
+static func _meta_effect_lines(effect: Dictionary) -> Array:
+	var lines: Array = []
+	for key_value in effect.keys():
+		var key := str(key_value)
+		var value: Variant = effect.get(key)
+		if typeof(value) == TYPE_DICTIONARY:
+			var nested_parts: Array[String] = []
+			for nested_key_value in (value as Dictionary).keys():
+				var nested_key := str(nested_key_value)
+				nested_parts.append("%s %s" % [_meta_effect_label(nested_key), _meta_effect_value((value as Dictionary).get(nested_key))])
+			if not nested_parts.is_empty():
+				lines.append("%s: %s" % [_meta_effect_label(key), "; ".join(nested_parts)])
+			continue
+		lines.append("%s %s" % [_meta_effect_label(key), _meta_effect_value(value)])
+	return lines
+
+
+static func _meta_effect_label(key: String) -> String:
+	match key:
+		"win_chance": return "Better odds"
+		"legal_win_chance": return "Clean-play odds"
+		"loss_reduction": return "Loss cushion"
+		"win_bonus": return "Win payout"
+		"baseline_luck_delta": return "Baseline luck"
+		"travel_scouting_level": return "Route scouting"
+		"debt_grace_turns": return "Debt grace"
+		"debt_default_heat_delta": return "Default heat"
+		_:
+			var clean := key.trim_suffix("_delta").replace("_", " ")
+			return clean.capitalize()
+
+
+static func _meta_effect_value(value: Variant) -> String:
+	if typeof(value) == TYPE_INT or typeof(value) == TYPE_FLOAT:
+		var amount := float(value)
+		var value_text := str(int(amount)) if is_equal_approx(amount, float(int(amount))) else str(amount)
+		return "+%s" % value_text if amount > 0.0 else value_text
+	return str(value)
+
+
+static func _meta_use_instructions(packable: bool, no_run_effect: bool) -> String:
+	if not packable:
+		return "This stays in home storage as a collection item and cannot be equipped for a run."
+	if no_run_effect:
+		return "Pack it into your carried collection from this screen. It has no direct run modifier, but remains available for its collection and trade actions."
+	return "Choose Pack to add it to your carried collection. Its listed effect then applies automatically during a run; condition and remaining usage determine the exact strength shown here."
+
+
 static func _bag_models(meta_service: Variant, resolver: Variant, bags: Array, mode: String) -> Array:
 	var result: Array = []
 	for bag_value in bags:
@@ -254,6 +310,9 @@ static func _bag_models(meta_service: Variant, resolver: Variant, bags: Array, m
 			"selection_key": "meta:bag:%d" % instance_id,
 			"display_name": str(definition.get("display_name", bag.get("display_name", "Collection Bag"))),
 			"description": str(definition.get("flavor", "An unopened collection bag.")),
+			"effect_summary": "Contains a random collection item from this bag's named collection and tier.",
+			"effect_lines": ["Contains one random collection item from this collection and tier"],
+			"use_instructions": "Choose Open on this screen to reveal the exact item. You can then inspect, pack, trade, or sell that item.",
 			"collection_display_name": str(collection.get("display_name", "Collection")),
 			"collection_id": str(definition.get("collection_id", bag.get("collection_id", ""))),
 			"tier": str(definition.get("tier", bag.get("tier", ""))),

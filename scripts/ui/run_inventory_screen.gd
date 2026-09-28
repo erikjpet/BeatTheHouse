@@ -15,8 +15,12 @@ signal store_item_requested(container_id: String, item_id: String)
 signal take_item_requested(container_id: String, item_id: String)
 signal transfer_item_requested(from_container_id: String, to_container_id: String, item_id: String)
 
-const RUN_INVENTORY_POPUP_SIZE := Vector2(1120, 620)
+const RUN_INVENTORY_POPUP_SIZE := Vector2(1180, 660)
 const RUN_INVENTORY_POPUP_MARGIN := 12.0
+const INVENTORY_FILTER_IDS := ["all", "active", "passive", "consumable", "game", "contraband", "storage", "ticket"]
+const INVENTORY_FILTER_LABELS := ["All items", "Active", "Passive", "Consumables", "Game gear", "Contraband", "Storage", "Tickets"]
+const INVENTORY_SORT_IDS := ["name", "type", "location"]
+const INVENTORY_SORT_LABELS := ["Name", "Type", "Location"]
 const RUN_INVENTORY_TICKET_PILE_IDS := {
 	"pile_of_pull_tabs": true,
 	"pile_of_scratch_tickets": true,
@@ -38,6 +42,11 @@ var _body: BoxContainer
 var _inventory_panel: PanelContainer
 var _inventory_header_label: Label
 var _inventory_hint_label: Label
+var _browse_toolbar: BoxContainer
+var _search_input: LineEdit
+var _filter_option: OptionButton
+var _sort_option: OptionButton
+var _filter_status_label: Label
 var _items_scroll: Control
 var _container_surface: InventoryContainerSurface
 var _detail_panel: PanelContainer
@@ -52,6 +61,10 @@ var _small_screen_mode := false
 var _reduced_motion := false
 var _focus_return_target: Control
 var modal_focus_scope: RefCounted
+var _search_query := ""
+var _filter_mode := "all"
+var _sort_mode := "name"
+var _display_model: Dictionary = {}
 
 
 func _init() -> void:
@@ -134,6 +147,18 @@ func close() -> void:
 	_selected_item_source = ""
 	_selected_item_selection_key = ""
 	_model = {}
+	_display_model = {}
+	_search_query = ""
+	_filter_mode = "all"
+	_sort_mode = "name"
+	if _search_input != null:
+		_search_input.set_block_signals(true)
+		_search_input.text = ""
+		_search_input.set_block_signals(false)
+	if _filter_option != null:
+		_filter_option.select(0)
+	if _sort_option != null:
+		_sort_option.select(0)
 	if was_visible and modal_focus_scope == null:
 		call_deferred("_restore_previous_focus")
 
@@ -245,7 +270,7 @@ func _build() -> void:
 	_inventory_panel.clip_contents = true
 	_inventory_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_inventory_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_inventory_panel.size_flags_stretch_ratio = 0.95
+	_inventory_panel.size_flags_stretch_ratio = 1.05
 	_body.add_child(_inventory_panel)
 
 	var inventory_stack := VBoxContainer.new()
@@ -262,23 +287,61 @@ func _build() -> void:
 	_inventory_hint_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	inventory_stack.add_child(_inventory_hint_label)
 
+	_browse_toolbar = HBoxContainer.new()
+	_browse_toolbar.add_theme_constant_override("separation", 6)
+	_browse_toolbar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	inventory_stack.add_child(_browse_toolbar)
+
+	_search_input = LineEdit.new()
+	_search_input.placeholder_text = "Search names, effects, or game..."
+	_search_input.tooltip_text = "Search item names, mechanics, game affinity, type, and location."
+	_search_input.clear_button_enabled = true
+	_search_input.custom_minimum_size = Vector2(180, FoundationWidgets.MIN_NATIVE_TOUCH_TARGET_HEIGHT)
+	_search_input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	FoundationWidgets.set_control_font_color(_search_input, VisualStyle.WHITE)
+	_search_input.add_theme_stylebox_override("normal", VisualStyle.pixel_box(Color(VisualStyle.role("surface_raised"), 0.98), VisualStyle.TEAL, VisualStyle.BORDER_STANDARD))
+	_search_input.add_theme_stylebox_override("focus", VisualStyle.pixel_box(Color(VisualStyle.role("surface_overlay"), 0.98), VisualStyle.CYAN, VisualStyle.BORDER_STANDARD))
+	_search_input.text_changed.connect(_on_search_changed)
+	_browse_toolbar.add_child(_search_input)
+
+	_filter_option = OptionButton.new()
+	_filter_option.tooltip_text = "Show only one kind of item."
+	_filter_option.custom_minimum_size = Vector2(118, FoundationWidgets.MIN_NATIVE_TOUCH_TARGET_HEIGHT)
+	for label in INVENTORY_FILTER_LABELS:
+		_filter_option.add_item(str(label))
+	_filter_option.item_selected.connect(_on_filter_selected)
+	_browse_toolbar.add_child(_filter_option)
+
+	_sort_option = OptionButton.new()
+	_sort_option.tooltip_text = "Sort the visible items."
+	_sort_option.custom_minimum_size = Vector2(104, FoundationWidgets.MIN_NATIVE_TOUCH_TARGET_HEIGHT)
+	for label in INVENTORY_SORT_LABELS:
+		_sort_option.add_item(str(label))
+	_sort_option.item_selected.connect(_on_sort_selected)
+	_browse_toolbar.add_child(_sort_option)
+
+	_filter_status_label = FoundationWidgets.muted_label("", 11)
+	_filter_status_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	_filter_status_label.clip_text = true
+	inventory_stack.add_child(_filter_status_label)
+
 	_items_scroll = InventoryContainerSurfaceScript.new()
 	_container_surface = _items_scroll as InventoryContainerSurface
 	_container_surface.configure(_texture_provider, InventoryContainerCatalogScript.load_catalog())
 	_container_surface.slot_selected.connect(_on_surface_slot_selected)
 	_container_surface.slot_confirmed.connect(_on_surface_slot_confirmed)
-	_items_scroll.custom_minimum_size = Vector2(640, 0)
+	_items_scroll.custom_minimum_size = Vector2(520, 0)
 	_items_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_items_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_items_scroll.size_flags_stretch_ratio = 1.45
 	inventory_stack.add_child(_items_scroll)
 
 	_detail_panel = FoundationWidgets.panel_container(VisualStyle.DARK_2, VisualStyle.CYAN_2)
-	_detail_panel.custom_minimum_size = Vector2(520, 260)
+	_detail_panel.custom_minimum_size = Vector2(590, 260)
 	_detail_panel.clip_contents = true
 	_detail_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_detail_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_detail_panel.size_flags_stretch_ratio = 1.25
+	_detail_panel.size_flags_stretch_ratio = 1.35
 	_body.add_child(_detail_panel)
 	_detail_scroll = ScrollContainer.new()
 	_detail_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -306,9 +369,11 @@ func _render() -> void:
 		_title_label.text = str(_model.get("title", "Inventory"))
 	if _summary_label != null:
 		_summary_label.text = str(_model.get("summary", ""))
-	var items := _item_array(_model.get("items", []))
-	_container_surface.update_model(_model)
-	_update_inventory_header(items)
+	var all_items := _item_array(_model.get("items", []))
+	_display_model = _filtered_display_model()
+	var items := _item_array(_display_model.get("items", []))
+	_container_surface.update_model(_display_model)
+	_update_inventory_header(items, all_items.size())
 	if items.is_empty():
 		_render_detail({})
 		return
@@ -321,16 +386,18 @@ func _render_selected_detail() -> void:
 	if _detail_box == null:
 		return
 	FoundationWidgets.clear(_detail_box)
-	var items := _item_array(_model.get("items", []))
+	var items := _item_array(_display_model.get("items", _model.get("items", [])))
 	var merchant_mode := _mode() == "merchant_sale" or _mode() == "pawn_counter"
 	_render_detail(_selected_item(items), merchant_mode)
 
 
-func _update_inventory_header(items: Array) -> void:
+func _update_inventory_header(items: Array, total_count: int = -1) -> void:
 	if _inventory_header_label == null or _inventory_hint_label == null:
 		return
 	var containers := JsonCoerceScript._copy_array(_model.get("containers", []))
 	var occupied := items.size()
+	if total_count < 0:
+		total_count = occupied
 	var capacity := 0
 	for container_value in containers:
 		if typeof(container_value) != TYPE_DICTIONARY:
@@ -348,8 +415,128 @@ func _update_inventory_header(items: Array) -> void:
 		_inventory_header_label.text = "Pawn Counter  -  inventory and tickets"
 		_inventory_hint_label.text = "Choose an item or ticket, then use the action panel to pawn, cash, or redeem it."
 	else:
-		_inventory_header_label.text = "Full Inventory  -  %d item%s%s" % [occupied, "" if occupied == 1 else "s", " / %d slots" % capacity if capacity > 0 else ""]
-		_inventory_hint_label.text = "Choose an item to read what it does and see whether it can be made active, repaired, sold, or stored."
+		_inventory_header_label.text = "Full Inventory  -  %d item%s%s" % [total_count, "" if total_count == 1 else "s", " / %d slots" % capacity if capacity > 0 else ""]
+		_inventory_hint_label.text = "Search or filter the list, then choose an item for its exact effect, usage instructions, and current actions."
+	if _filter_status_label != null:
+		var filtered := not _search_query.is_empty() or _filter_mode != "all"
+		_filter_status_label.text = "Showing %d of %d items%s" % [occupied, total_count, " · sorted by %s" % _sort_mode.capitalize() if total_count > 1 else ""] if filtered or total_count > 1 else "All items shown"
+
+
+func _filtered_display_model() -> Dictionary:
+	var result := _model.duplicate(true)
+	var filtered_items: Array = []
+	var filtered_containers: Array = []
+	var containers := JsonCoerceScript._dictionary_array(_model.get("containers", []))
+	if containers.is_empty():
+		for item_value in _item_array(_model.get("items", [])):
+			var item: Dictionary = item_value
+			if _item_matches_browser(item):
+				filtered_items.append(item.duplicate(true))
+		filtered_items.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
+			return _item_sort_key(left_value as Dictionary) < _item_sort_key(right_value as Dictionary)
+		)
+		result["items"] = filtered_items
+		return result
+	for container_value in containers:
+		var container: Dictionary = container_value.duplicate(true)
+		var slots: Array = []
+		for slot_value in JsonCoerceScript._dictionary_array(container.get("slots", [])):
+			var slot: Dictionary = slot_value.duplicate(true)
+			var item: Dictionary = slot.get("item", {}) if typeof(slot.get("item", {})) == TYPE_DICTIONARY else {}
+			if item.is_empty() or not _item_matches_browser(item):
+				continue
+			slot["item"] = item.duplicate(true)
+			slots.append(slot)
+		slots.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
+			var left_item: Dictionary = (left_value as Dictionary).get("item", {}) if typeof((left_value as Dictionary).get("item", {})) == TYPE_DICTIONARY else {}
+			var right_item: Dictionary = (right_value as Dictionary).get("item", {}) if typeof((right_value as Dictionary).get("item", {})) == TYPE_DICTIONARY else {}
+			return _item_sort_key(left_item) < _item_sort_key(right_item)
+		)
+		for slot_index in range(slots.size()):
+			(slots[slot_index] as Dictionary)["slot_index"] = slot_index
+			filtered_items.append(((slots[slot_index] as Dictionary).get("item", {}) as Dictionary).duplicate(true))
+		container["slots"] = slots
+		filtered_containers.append(container)
+	result["containers"] = filtered_containers
+	result["items"] = filtered_items
+	return result
+
+
+func _item_matches_browser(item: Dictionary) -> bool:
+	var item_class := str(item.get("item_class", item.get("item_type", "item"))).strip_edges().to_lower()
+	var domain := str(item.get("domain", "global")).strip_edges().to_lower()
+	var active := bool(item.get("active_item", false))
+	match _filter_mode:
+		"active":
+			if not active:
+				return false
+		"passive":
+			if active or item_class in ["container", "ticket pile"] or str(item.get("storage_source", "")) == "pawn_ticket":
+				return false
+		"consumable":
+			if item_class != "consumable":
+				return false
+		"game":
+			var affinity := str(ItemCardViewModelScript.build(item).get("affinity_label", "All")).strip_edges().to_lower()
+			if domain != "games" and affinity in ["", "all", "general"]:
+				return false
+		"contraband":
+			if item_class != "contraband":
+				return false
+		"storage":
+			if item_class != "container" and str(item.get("storage_source", "carried")) not in ["container", "loadout"]:
+				return false
+		"ticket":
+			if item_class != "ticket pile" and str(item.get("storage_source", "")) != "pawn_ticket":
+				return false
+	var query := _search_query.strip_edges().to_lower()
+	if query.is_empty():
+		return true
+	var search_parts: Array[String] = [
+		str(item.get("display_name", "")),
+		str(item.get("description", "")),
+		str(item.get("effect_summary", "")),
+		str(item.get("use_instructions", item.get("behavior_summary", ""))),
+		item_class,
+		domain,
+		_item_location_label(item),
+		str(ItemCardViewModelScript.build(item).get("affinity_label", "")),
+	]
+	for effect_line in JsonCoerceScript._copy_array(item.get("effect_lines", [])):
+		search_parts.append(str(effect_line))
+	for synergy_line in JsonCoerceScript._copy_array(item.get("synergy_lines", [])):
+		search_parts.append(str(synergy_line))
+	return " ".join(search_parts).to_lower().contains(query)
+
+
+func _item_sort_key(item: Dictionary) -> String:
+	var display_name := str(item.get("display_name", item.get("id", ""))).strip_edges().to_lower()
+	match _sort_mode:
+		"type":
+			return "%s|%s" % [str(item.get("item_class", item.get("item_type", "item"))).to_lower(), display_name]
+		"location":
+			return "%s|%s" % [_item_location_label(item).to_lower(), display_name]
+		_:
+			return display_name
+
+
+func _on_search_changed(value: String) -> void:
+	_search_query = value
+	_render()
+
+
+func _on_filter_selected(index: int) -> void:
+	_filter_mode = str(INVENTORY_FILTER_IDS[clampi(index, 0, INVENTORY_FILTER_IDS.size() - 1)])
+	_render()
+
+
+func _on_sort_selected(index: int) -> void:
+	_sort_mode = str(INVENTORY_SORT_IDS[clampi(index, 0, INVENTORY_SORT_IDS.size() - 1)])
+	_render()
+
+
+func visible_item_count() -> int:
+	return _item_array(_display_model.get("items", [])).size()
 
 
 func _sync_selection_from_surface() -> void:
@@ -381,45 +568,108 @@ func _render_detail(item: Dictionary, merchant_mode: bool = false) -> void:
 		return
 	FoundationWidgets.clear(_detail_box)
 	if item.is_empty():
-		_add_section_header("Selected Item")
-		_detail_box.add_child(FoundationWidgets.muted_label("Select an icon from Bag Space to inspect it. Actions and transfer destinations will appear here.", 13))
+		_add_section_header("No Item Selected")
+		var empty_message := "No items match the current search or filter." if not _search_query.is_empty() or _filter_mode != "all" else "Select an item to see exactly what it changes, when it works, and how to use it."
+		_detail_box.add_child(FoundationWidgets.muted_label(empty_message, 13))
 		return
-	_add_section_header("Selected Item", "What you picked and where it currently lives.")
 	_add_selected_item_header(item)
 	var card := ItemCardViewModelScript.build(item)
-	FoundationWidgets.add_detail_row(_detail_box, "Stack", str(card.get("stack_text", "+1")))
-	FoundationWidgets.add_detail_row(_detail_box, "Affinity", str(card.get("affinity_label", "General")))
-	FoundationWidgets.add_detail_row(_detail_box, "Where", _item_location_label(item))
-	FoundationWidgets.add_detail_row(_detail_box, "Type", "%s / %s" % [str(item.get("item_class", "unknown")).capitalize(), str(item.get("domain", "global")).capitalize()])
-	if item.has("capacity") and int(item.get("capacity", 0)) > 0:
-		FoundationWidgets.add_detail_row(_detail_box, "Stores", "%d items" % int(item.get("capacity", 0)))
+	_add_item_quick_facts(item, card)
 	if _mode() == "place_container":
 		_add_open_container_preview(item)
-	_add_section_header("What It Does", "Read before you move or equip it.")
-	_add_attribute_badges(item)
-	_add_collection_float_rows(item)
-	var behavior_summary := str(item.get("behavior_summary", "")).strip_edges()
-	if not behavior_summary.is_empty():
-		FoundationWidgets.add_detail_row(_detail_box, "Behavior", behavior_summary)
-	var description := str(item.get("description", "")).strip_edges()
-	_detail_box.add_child(FoundationWidgets.label(description if not description.is_empty() else "No description is available yet.", 12))
+	_add_section_header("Effect", "The mechanic this item changes.")
+	_add_item_effect_copy(item)
+	_add_section_header("How to Use", "When the effect is active and what you need to do.")
+	var use_copy := str(item.get("use_instructions", item.get("behavior_summary", ""))).strip_edges()
+	var use_label := FoundationWidgets.label(use_copy if not use_copy.is_empty() else _action_summary_for_item(item), 13)
+	use_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	FoundationWidgets.set_control_font_color(use_label, VisualStyle.YELLOW)
+	_detail_box.add_child(use_label)
 	if _item_is_portable_ticket_pile(item):
 		_render_ticket_pile_summary(item)
+		if _mode() == "pawn_counter":
+			_render_pawn_actions(item)
+		_add_item_reference_details(item)
+		call_deferred("_reset_detail_scroll")
 		return
 	if _mode() == "pawn_counter":
 		_render_pawn_actions(item)
-		return
-	if merchant_mode:
+	elif merchant_mode:
 		_render_merchant_actions(item)
-		return
-	match _mode():
-		"place_container":
-			_add_section_header("Action", "Place this carried container into your home.")
-			FoundationWidgets.add_card_button(_detail_box, "Place at Home", Callable(self, "_emit_place_container_requested").bind(str(item.get("id", ""))), false, true)
-		"home_container":
-			_render_home_storage_actions(item)
-		_:
-			_render_inventory_actions(item)
+	else:
+		match _mode():
+			"place_container":
+				_add_section_header("Action", "Place this carried container into your home.")
+				FoundationWidgets.add_card_button(_detail_box, "Place at Home", Callable(self, "_emit_place_container_requested").bind(str(item.get("id", ""))), false, true)
+			"home_container":
+				_render_home_storage_actions(item)
+			_:
+				_render_inventory_actions(item)
+	_add_item_reference_details(item)
+	call_deferred("_reset_detail_scroll")
+
+
+func _add_item_quick_facts(item: Dictionary, card: Dictionary) -> void:
+	var facts := HBoxContainer.new()
+	facts.add_theme_constant_override("separation", 12)
+	facts.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_detail_box.add_child(facts)
+	var type_text := str(item.get("item_class", item.get("item_type", "item"))).replace("_", " ").capitalize()
+	var affinity := str(card.get("affinity_label", "All"))
+	var stack_text := str(card.get("stack_text", "+1")).trim_prefix("+")
+	for fact_text in [type_text, _item_location_label(item), "%s owned" % stack_text, affinity if affinity not in ["", "All", "General"] else "All games"]:
+		var fact := FoundationWidgets.muted_label(str(fact_text), 11)
+		fact.autowrap_mode = TextServer.AUTOWRAP_OFF
+		fact.clip_text = true
+		fact.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		facts.add_child(fact)
+	if item.has("capacity") and int(item.get("capacity", 0)) > 0:
+		FoundationWidgets.add_detail_row(_detail_box, "Storage capacity", "%d items" % int(item.get("capacity", 0)))
+
+
+func _add_item_effect_copy(item: Dictionary) -> void:
+	var effect_lines := JsonCoerceScript._copy_array(item.get("effect_lines", []))
+	if effect_lines.is_empty():
+		var summary := str(item.get("effect_summary", "")).strip_edges()
+		if not summary.is_empty():
+			effect_lines.append(summary)
+	if effect_lines.is_empty():
+		effect_lines.append("This item carries state or enables an action; it has no automatic numeric modifier.")
+	for line_value in effect_lines:
+		var line := FoundationWidgets.label("• %s" % str(line_value), 13)
+		line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		FoundationWidgets.set_control_font_color(line, VisualStyle.WHITE)
+		_detail_box.add_child(line)
+
+
+func _add_item_reference_details(item: Dictionary) -> void:
+	var synergy_lines := JsonCoerceScript._copy_array(item.get("synergy_lines", []))
+	var badges := ItemCardViewModelScript.detail_badges(item)
+	if not badges.is_empty() or not synergy_lines.is_empty() or not _collection_float_rows_empty(item):
+		_add_section_header("Mechanics", "Exact modifiers and combinations.")
+		_add_attribute_badges(item)
+		_add_collection_float_rows(item)
+		for synergy_value in synergy_lines:
+			var synergy := FoundationWidgets.label("• %s" % str(synergy_value), 12)
+			synergy.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			_detail_box.add_child(synergy)
+	var description := str(item.get("description", "")).strip_edges()
+	if not description.is_empty():
+		_add_section_header("About")
+		var flavor := FoundationWidgets.muted_label(description, 12)
+		flavor.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		_detail_box.add_child(flavor)
+
+
+func _collection_float_rows_empty(item: Dictionary) -> bool:
+	var meta_collection: Dictionary = item.get("meta_collection", {}) if typeof(item.get("meta_collection", {})) == TYPE_DICTIONARY else {}
+	var floats: Dictionary = meta_collection.get("floats", {}) if typeof(meta_collection.get("floats", {})) == TYPE_DICTIONARY else {}
+	return floats.is_empty()
+
+
+func _reset_detail_scroll() -> void:
+	if _detail_scroll != null:
+		_detail_scroll.scroll_vertical = 0
 
 
 func _add_open_container_preview(item: Dictionary) -> void:
@@ -469,7 +719,8 @@ func _add_selected_item_header(item: Dictionary) -> void:
 	var title := FoundationWidgets.label(display_name, 17)
 	FoundationWidgets.set_control_font_color(title, VisualStyle.YELLOW)
 	title_stack.add_child(title)
-	var subtitle := FoundationWidgets.muted_label(_action_summary_for_item(item), 12)
+	var behavior := str(item.get("behavior_summary", "")).strip_edges()
+	var subtitle := FoundationWidgets.muted_label(behavior if not behavior.is_empty() else _action_summary_for_item(item), 12)
 	subtitle.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	title_stack.add_child(subtitle)
 
@@ -629,7 +880,14 @@ func _position_popup() -> void:
 		minf(preferred_size.y, available_size.y)
 	)
 	var stacked_layout := popup_size.x < 820.0
-	var estimated_chrome_height := 92.0 if not stacked_layout else 108.0
+	# On short phone-sized viewports the title and browser controls already convey
+	# this context. Hiding the two explanatory lines keeps the modal inside the
+	# viewport while leaving the item list and full detail pane scrollable.
+	if _summary_label != null:
+		_summary_label.visible = not stacked_layout
+	if _inventory_hint_label != null:
+		_inventory_hint_label.visible = not stacked_layout
+	var estimated_chrome_height := 120.0 if not stacked_layout else 152.0
 	var body_budget := maxf(120.0, popup_size.y - estimated_chrome_height)
 	if _items_scroll != null:
 		var inventory_surface_minimum := Vector2(0.0, minf(maxf(56.0, body_budget * 0.30), body_budget * 0.40)) if stacked_layout else Vector2(minf(420.0, maxf(260.0, popup_size.x * 0.34)), minf(360.0, maxf(150.0, body_budget)))
