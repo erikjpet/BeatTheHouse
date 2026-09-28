@@ -72,8 +72,26 @@ func _run() -> void:
 	var carried := player.environment_test_player_state()
 	var replacement := RunStateScript.new()
 	replacement.start_new("replacement")
-	replacement.restore_environment_test_player_state(carried)
+	_check(replacement.restore_environment_test_player_state(carried), "The versioned player-state carry snapshot must restore successfully.")
 	_check(replacement.bankroll == 731 and replacement.inventory == player.inventory and int(replacement.suspicion.get("level", 0)) == 42 and replacement.drunk_level == 3, "Money, items, heat, and player attributes must carry between practice rooms.")
+	player.story_flags["room_specific_fixture"] = true
+	carried = player.environment_test_player_state()
+	_check(not carried.has("story_flags") and not carried.has("narrative_flags") and not carried.has("active_delivery_run"), "Room, story, and quest state must not leak through the player-only carry snapshot.")
+
+	var layered_scenarios := library.scenarios_for_archetype("small_underground_casino")
+	var casino_scenario_id := ""
+	for layered_scenario_value in layered_scenarios:
+		var layered_scenario: Dictionary = layered_scenario_value
+		if str(layered_scenario.get("layer_id", "")) == "casino":
+			casino_scenario_id = str(layered_scenario.get("id", ""))
+			break
+	var scenario_layer_request := request.duplicate(true)
+	scenario_layer_request["archetype_id"] = "small_underground_casino"
+	scenario_layer_request["scenario_id"] = casino_scenario_id
+	scenario_layer_request["layer_id"] = ""
+	scenario_layer_request["generation_key"] = "layered-scenario-location"
+	var scenario_layer := _generate(library, "scenario-layer", scenario_layer_request)
+	_check(bool(scenario_layer.get("ok", false)) and str((scenario_layer.get("environment", {}) as Dictionary).get("current_layer_id", "")) == "casino", "Scenario / Normal Entrance must open a layered scenario in its authored room.")
 
 	var layered_request := request.duplicate(true)
 	layered_request["archetype_id"] = "small_underground_casino"

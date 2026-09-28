@@ -1,6 +1,6 @@
 # Environment Library debug mode
 
-Status: IMPLEMENTED — focused validation passed
+Status: IMPLEMENTED - focused validation passed
 Branch: `codex/environment-library-debug-mode`
 
 ## Goal
@@ -63,7 +63,19 @@ without creating or saving a normal run.
 - `check_environment_library_launcher.gd`: PASS (main-menu launch, exact
   conditions, Leave loop, second-room replacement, return to main menu).
 - Existing `check_game_library_launchers.gd`: PASS (all 11 launchers).
+- `fixsweep06_1_lifecycle_contract.gd`: PASS.
 - Headless project/editor load: PASS.
-- Repository Smoke wrapper reached a pre-existing environment placement static
-  check failure for Delta Queen and timed out its validation stage; it reported
-  no error in files changed by this feature.
+- Self-review confirmed Scenario / Normal Entrance opens an authored layered
+  scenario in its authored room, practice rooms receive the same living-town
+  setup as normal generation, and only player-owned state crosses rooms.
+- `developer_placement_mode_check.gd` retains 11 failures that reproduce
+  identically on untouched `main`; they are unrelated to this feature.
+- Repository Smoke twice reached its process-isolation guard because another
+  Codex task started Godot tests concurrently; neither attempt reported a
+  project or feature assertion failure.
+- The same full `validate_project.ps1 -Quiet` release gate was then run with a
+  clean process census and passed (324 seconds).
+- After rebasing onto the concurrent inventory UI update, all focused checks
+  passed again (including its inventory test). The combined full-audit rerun
+  reached only the process-custody guard when an unrelated YouTube downloader
+  server started under the site repository during the audit.

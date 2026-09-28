@@ -79,6 +79,18 @@ func environment_test_result(run_state: RunState, request: Dictionary) -> Dictio
 	var rng := run_state.create_rng("environment_practice:%s" % str(request.get("generation_key", archetype_id)))
 	var options := request.duplicate(true)
 	options["environment_test"] = true
+	var condition_overrides := JsonCoerceScript._copy_dict(options.get("condition_overrides", {}))
+	if not condition_overrides.is_empty() and run_state.town_state != null:
+		var override_result := run_state.town_state.apply_generation_overrides(condition_overrides)
+		if not bool(override_result.get("ok", false)):
+			return {"ok": false, "errors": JsonCoerceScript._copy_array(override_result.get("errors", []))}
+		options["conditions_prepared"] = true
+	# Normal generation configures the living town from a deterministic world
+	# graph before selecting/building a room. Practice keeps that exact model
+	# setup, but deliberately does not install the graph as a travel map.
+	var practice_map := WorldMap.new(library).build(run_state, rng.fork("world_map"))
+	if not practice_map.is_empty():
+		run_state.configure_town_world(practice_map, false)
 	var environment_data := _world_environment_data_for_node(run_state, {}, {"id": archetype_id}, rng, options)
 	if environment_data.is_empty():
 		return {"ok": false, "errors": ["The selected environment could not be generated."]}
@@ -86,6 +98,10 @@ func environment_test_result(run_state: RunState, request: Dictionary) -> Dictio
 	if not bool(installed.get("ok", false)):
 		return installed
 	var layer_id := str(request.get("layer_id", "")).strip_edges()
+	if layer_id.is_empty():
+		var installed_scenario_id := str(run_state.current_environment.get("scenario_id", "")).strip_edges()
+		var installed_scenario := library._scenario_readonly(installed_scenario_id)
+		layer_id = str(installed_scenario.get("layer_id", "")).strip_edges()
 	if not layer_id.is_empty() and run_state.is_layered_environment() and layer_id != str(run_state.current_environment.get("current_layer_id", "")):
 		var layer_result := _install_environment_test_layer(run_state, layer_id)
 		if not bool(layer_result.get("ok", false)):
@@ -934,7 +950,7 @@ func _world_environment_data_for_node(run_state: RunState, map_data: Dictionary,
 	if archetype.is_empty():
 		archetype = _pick_archetype(run_state, depth, rng, node_id)
 	var condition_overrides := JsonCoerceScript._copy_dict(generation_options.get("condition_overrides", {}))
-	if not condition_overrides.is_empty() and run_state.town_state != null:
+	if not bool(generation_options.get("conditions_prepared", false)) and not condition_overrides.is_empty() and run_state.town_state != null:
 		run_state.town_state.apply_generation_overrides(condition_overrides)
 	var scenario: Dictionary = {}
 	var requested_scenario_id := str(generation_options.get("scenario_id", "__default")).strip_edges()
