@@ -185,6 +185,8 @@ func _check_canvas_contract() -> void:
 	var snapshot: Dictionary = canvas.developer_slot_placement_snapshot()
 	_check(bool(snapshot.get("enabled", false)) and int(snapshot.get("visible_slot_count", 0)) > 0, "Slot mode must expose every authored slot even when the room has no occupying objects.")
 	_check(not bool(canvas.developer_placement_snapshot().get("enabled", true)), "Enabling slot mode must disable spawned-object placement mode.")
+	var wrapped_label: Array = canvas.call("_wrap_developer_slot_label", "stage.event_wall_1", ThemeDB.fallback_font, 8, 42.0)
+	_check(wrapped_label.size() > 1 and "".join(wrapped_label) == "stage.event_wall_1", "Slot overlay labels must wrap onto multiple rows without truncating their stable IDs.")
 
 	var slot: Dictionary = canvas.call("_developer_slot", "stage.event_wall_1")
 	_check(not slot.is_empty(), "The overlay must include empty stage slots by stable ID.")

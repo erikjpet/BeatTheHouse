@@ -1816,21 +1816,54 @@ func _draw_developer_slot_overlay() -> void:
 		draw_line(center - Vector2(0.0, 5.0), center + Vector2(0.0, 5.0), color, 1.0)
 		if occupied:
 			draw_circle(center, 3.0, color)
-		var label_width := maxf(48.0, minf(180.0, rect.size.x))
+		var label_width := maxf(96.0, minf(180.0, rect.size.x))
+		var label_lines := _wrap_developer_slot_label(slot_id, font, 8, label_width - 6.0)
+		var label_line_height := 9.0
+		var label_height := maxf(11.0, float(label_lines.size()) * label_line_height + 3.0)
+		var label_y := rect.position.y - label_height
+		if label_y < 1.0:
+			label_y = minf(BOARD_SIZE.y - label_height - 1.0, rect.end.y + 1.0)
 		var label_rect := Rect2(
-			Vector2(clampf(rect.position.x, 0.0, BOARD_SIZE.x - label_width), maxf(1.0, rect.position.y - 12.0)),
-			Vector2(label_width, 11.0)
+			Vector2(clampf(rect.position.x, 0.0, BOARD_SIZE.x - label_width), label_y),
+			Vector2(label_width, label_height)
 		)
 		draw_rect(label_rect, Color(C_DARK.r, C_DARK.g, C_DARK.b, 0.88), true)
-		draw_string(
-			font,
-			label_rect.position + Vector2(3.0, 9.0),
-			_fit_draw_text(slot_id, font, 8, label_rect.size.x - 6.0),
-			HORIZONTAL_ALIGNMENT_LEFT,
-			label_rect.size.x - 6.0,
-			8,
-			color
-		)
+		for line_index in range(label_lines.size()):
+			draw_string(
+				font,
+				label_rect.position + Vector2(3.0, 9.0 + float(line_index) * label_line_height),
+				label_lines[line_index],
+				HORIZONTAL_ALIGNMENT_LEFT,
+				label_rect.size.x - 6.0,
+				8,
+				color
+			)
+
+
+# Wraps stable slot IDs without deleting or replacing any character. Semantic
+# separators are preferred as line endings so IDs remain easy to scan.
+func _wrap_developer_slot_label(text: String, font: Font, font_size: int, max_width: float) -> Array[String]:
+	var lines: Array[String] = []
+	var remaining := text
+	var safe_width := maxf(8.0, max_width)
+	while not remaining.is_empty():
+		if font == null or _draw_text_width(remaining, font, font_size) <= safe_width:
+			lines.append(remaining)
+			break
+		var fit_chars := 0
+		for length in range(1, remaining.length() + 1):
+			if _draw_text_width(remaining.left(length), font, font_size) > safe_width:
+				break
+			fit_chars = length
+		fit_chars = maxi(1, fit_chars)
+		var break_chars := fit_chars
+		for index in range(fit_chars - 1, 0, -1):
+			if "._:-/".contains(remaining.substr(index, 1)):
+				break_chars = index + 1
+				break
+		lines.append(remaining.left(break_chars))
+		remaining = remaining.substr(break_chars)
+	return lines
 
 
 func _draw_scenario_palette() -> void:
