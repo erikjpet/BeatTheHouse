@@ -589,6 +589,7 @@ $requiredFiles = @(
     "scripts/tests/fixtures/crew06_5_ignored_run_baseline.json",
     "scripts/tests/foundation/check_scratch_tickets.gd",
     "scripts/tests/developer_placement_mode_check.gd",
+    "scripts/tests/environment_slot_placement_mode_check.gd",
     "scripts/tests/ui_scene/compile_run_menu_and_game_flows.gd",
     "tools/check_godot.ps1",
     "tools/split_test_runner_helpers.ps1",

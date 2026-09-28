@@ -16756,7 +16756,14 @@ func _on_developer_placement_reset_requested(request: Dictionary) -> void:
 
 func _on_developer_placement_promote_requested() -> void:
 	var result := DeveloperPlacementStoreScript.promote_user_overrides()
-	_show_message("Locked placements saved to %s." % str(result.get("path", "project data")) if bool(result.get("ok", false)) else str(result.get("error", "Could not save placements to the project.")))
+	if not bool(result.get("ok", false)):
+		_show_message(str(result.get("error", "Could not save placements to the project.")))
+		return
+	var refresh_result := _refresh_developer_authored_environment()
+	if not bool(refresh_result.get("ok", false)):
+		_show_message(str(refresh_result.get("error", "The placements were saved, but this room could not refresh them yet.")))
+		return
+	_show_message("Locked placements saved to %s." % str(result.get("path", "project data")))
 
 
 func _refresh_developer_authored_environment() -> Dictionary:
@@ -21162,6 +21169,7 @@ func _apply_accessibility_settings() -> void:
 	if environment_canvas != null:
 		environment_canvas.set_small_screen_mode(small_screen_enabled)
 		environment_canvas.set_developer_placement_mode(bool(user_settings.developer_placement_mode) if user_settings != null else false)
+		environment_canvas.set_developer_slot_placement_mode(bool(user_settings.developer_slot_placement_mode) if user_settings != null else false)
 	if game_surface_canvas != null:
 		game_surface_canvas.set_small_screen_mode(small_screen_enabled)
 	if run_inventory_screen != null:

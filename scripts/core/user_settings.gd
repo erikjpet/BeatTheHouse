@@ -30,7 +30,7 @@ const STORAGE_KEYS := [
 	"music_volume", "sfx_volume", "audio_calm", "ui_scale", "text_size",
 	"reduce_motion", "drunk_effect_mode", "high_contrast",
 	"play_on_small_screen", "coach_tips_enabled", "selected_home_type_id",
-	"developer_placement_mode",
+	"developer_placement_mode", "developer_slot_placement_mode",
 ]
 
 var resolution: Vector2i = Vector2i(1280, 720)
@@ -49,6 +49,7 @@ var play_on_small_screen: bool = false
 var coach_tips_enabled: bool = true
 var selected_home_type_id: String = "random"
 var developer_placement_mode: bool = false
+var developer_slot_placement_mode: bool = false
 var last_load_outcome: Dictionary = {"ok": false, "outcome": DurableStoreScript.OUTCOME_NONE}
 
 
@@ -70,6 +71,7 @@ func reset() -> void:
 	coach_tips_enabled = true
 	selected_home_type_id = "random"
 	developer_placement_mode = false
+	developer_slot_placement_mode = false
 
 
 # Loads preferences from disk or defaults and reports recoverable failures.
@@ -163,6 +165,7 @@ func to_dict() -> Dictionary:
 		"coach_tips_enabled": coach_tips_enabled,
 		"selected_home_type_id": selected_home_type_id,
 		"developer_placement_mode": developer_placement_mode,
+		"developer_slot_placement_mode": developer_slot_placement_mode,
 	}
 
 
@@ -204,7 +207,7 @@ func _settings_value_shape_valid(key: String, value: Variant) -> bool:
 			return _settings_number(size.get("width", null)) and _settings_number(size.get("height", null))
 		"master_volume", "music_volume", "sfx_volume", "ui_scale":
 			return _settings_number(value)
-		"vsync_enabled", "audio_calm", "reduce_motion", "high_contrast", "play_on_small_screen", "coach_tips_enabled", "developer_placement_mode":
+		"vsync_enabled", "audio_calm", "reduce_motion", "high_contrast", "play_on_small_screen", "coach_tips_enabled", "developer_placement_mode", "developer_slot_placement_mode":
 			return typeof(value) == TYPE_BOOL
 		"window_mode", "text_size", "drunk_effect_mode", "selected_home_type_id":
 			return typeof(value) == TYPE_STRING
@@ -240,6 +243,9 @@ func from_dict(data: Dictionary) -> void:
 	coach_tips_enabled = bool(data.get("coach_tips_enabled", coach_tips_enabled))
 	selected_home_type_id = str(data.get("selected_home_type_id", selected_home_type_id)).strip_edges()
 	developer_placement_mode = bool(data.get("developer_placement_mode", developer_placement_mode))
+	developer_slot_placement_mode = bool(data.get("developer_slot_placement_mode", developer_slot_placement_mode))
+	if developer_slot_placement_mode:
+		developer_placement_mode = false
 	if selected_home_type_id.is_empty():
 		selected_home_type_id = "random"
 

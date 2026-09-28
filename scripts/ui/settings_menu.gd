@@ -49,6 +49,7 @@ var haptics_note: Label
 var game_library: Button
 var environment_library: Button
 var developer_placement_mode: CheckBox
+var developer_slot_placement_mode: CheckBox
 var body_scroll: ScrollContainer
 var back_button: Button
 var defaults_button: Button
@@ -154,8 +155,11 @@ func _build() -> void:
 
 	_section(box, "Developer")
 	developer_placement_mode = _check(box, "Environment placement mode")
-	developer_placement_mode.tooltip_text = "Select, drag, and lock stable room-object positions while playing."
+	developer_placement_mode.tooltip_text = "Select and move particular spawned room objects."
 	developer_placement_mode.toggled.connect(_on_developer_placement_mode)
+	developer_slot_placement_mode = _check(box, "Environment slot placement mode")
+	developer_slot_placement_mode.tooltip_text = "Show and move reusable base, stage, and exit slots, including empty slots."
+	developer_slot_placement_mode.toggled.connect(_on_developer_slot_placement_mode)
 	game_library = _button("Game Library (Debug)")
 	game_library.tooltip_text = "Open the internal table-game practice library."
 	game_library.pressed.connect(game_library_requested.emit)
@@ -367,6 +371,7 @@ func _sync() -> void:
 	drunk_effect.select(draft.drunk_effect_index())
 	reduce_motion.button_pressed = draft.reduce_motion
 	developer_placement_mode.button_pressed = draft.developer_placement_mode
+	developer_slot_placement_mode.button_pressed = draft.developer_slot_placement_mode
 	_labels()
 	_apply_accessibility_settings()
 
@@ -487,6 +492,18 @@ func _on_reduce_motion(enabled: bool) -> void:
 
 func _on_developer_placement_mode(enabled: bool) -> void:
 	draft.developer_placement_mode = enabled
+	if enabled:
+		draft.developer_slot_placement_mode = false
+		if developer_slot_placement_mode != null:
+			developer_slot_placement_mode.set_pressed_no_signal(false)
+
+
+func _on_developer_slot_placement_mode(enabled: bool) -> void:
+	draft.developer_slot_placement_mode = enabled
+	if enabled:
+		draft.developer_placement_mode = false
+		if developer_placement_mode != null:
+			developer_placement_mode.set_pressed_no_signal(false)
 
 
 func current_settings_snapshot() -> Dictionary:
@@ -506,6 +523,7 @@ func current_settings_snapshot() -> Dictionary:
 		"play_on_small_screen": bool(active_settings.play_on_small_screen),
 		"coach_tips_enabled": bool(active_settings.coach_tips_enabled),
 		"developer_placement_mode": bool(active_settings.developer_placement_mode),
+		"developer_slot_placement_mode": bool(active_settings.developer_slot_placement_mode),
 		"reset_tips_available": reset_tips != null and not reset_tips.disabled,
 		"haptics_supported": false,
 		"haptics_cut_reason": UserSettingsScript.HAPTICS_CUT_REASON,

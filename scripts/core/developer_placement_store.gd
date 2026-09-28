@@ -16,6 +16,7 @@ const POSITION_FIELDS := [
 	"object_slot_positions",
 	"scenario_object_slot_positions",
 	"category_slot_positions",
+	"slot_positions",
 ]
 
 static var _loaded := false
@@ -37,6 +38,16 @@ static func slot_overrides(environment: Dictionary, field: String) -> Dictionary
 	var result := _dict(_dict(_project_rooms.get(key, {})).get(field, {})).duplicate(true)
 	result.merge(_dict(_dict(_user_rooms.get(key, {})).get(field, {})), true)
 	return result
+
+
+static func project_slot_overrides(environment: Dictionary, field: String) -> Dictionary:
+	_ensure_loaded()
+	return _dict(_dict(_project_rooms.get(room_key(environment), {})).get(field, {})).duplicate(true)
+
+
+static func user_slot_overrides(environment: Dictionary, field: String) -> Dictionary:
+	_ensure_loaded()
+	return _dict(_dict(_user_rooms.get(room_key(environment), {})).get(field, {})).duplicate(true)
 
 
 static func save_position(environment: Dictionary, field: String, object_id: String, position: Vector2) -> Dictionary:

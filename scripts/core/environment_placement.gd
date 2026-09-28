@@ -159,6 +159,10 @@ static func classify(object_data: Dictionary, object_type: String = "", object_i
 
 
 static func surface_map(environment: Dictionary) -> Dictionary:
+	return _with_project_slot_geometry(environment, _shipping_surface_map(environment))
+
+
+static func _shipping_surface_map(environment: Dictionary) -> Dictionary:
 	_ensure_surface_maps()
 	var archetype_id := str(environment.get("archetype_id", environment.get("id", ""))).strip_edges()
 	var layer_id := str(environment.get("current_layer_id", environment.get("layer_id", ""))).strip_edges()
@@ -209,9 +213,10 @@ static func _with_developer_slots(environment: Dictionary, surface_data: Diction
 	var base_overrides := DeveloperPlacementStoreScript.slot_overrides(environment, "object_slot_positions")
 	var scenario_overrides := DeveloperPlacementStoreScript.slot_overrides(environment, "scenario_object_slot_positions")
 	var category_overrides := DeveloperPlacementStoreScript.slot_overrides(environment, "category_slot_positions")
-	if base_overrides.is_empty() and scenario_overrides.is_empty() and category_overrides.is_empty():
+	var slot_overrides := DeveloperPlacementStoreScript.slot_overrides(environment, "slot_positions")
+	if base_overrides.is_empty() and scenario_overrides.is_empty() and category_overrides.is_empty() and slot_overrides.is_empty():
 		return surface_data
-	var result := surface_data.duplicate(true)
+	var result := _with_slot_geometry(surface_data, slot_overrides)
 	for field in ["object_slot_positions", "scenario_object_slot_positions"]:
 		var overrides := base_overrides if field == "object_slot_positions" else scenario_overrides
 		if overrides.is_empty():
@@ -225,6 +230,54 @@ static func _with_developer_slots(environment: Dictionary, surface_data: Diction
 	result["developer_object_slot_positions"] = base_overrides.duplicate(true)
 	result["developer_scenario_object_slot_positions"] = scenario_overrides.duplicate(true)
 	result["developer_category_slot_positions"] = category_overrides.duplicate(true)
+	result["developer_slot_positions"] = slot_overrides.duplicate(true)
+	return result
+
+
+# Project slot positions are committed authoring data. They are the only
+# developer-placement values admitted to the shipping slot map; machine-local
+# authoring values remain isolated behind authoring_surface_map().
+static func _with_project_slot_geometry(environment: Dictionary, surface_data: Dictionary) -> Dictionary:
+	return _with_slot_geometry(
+		surface_data,
+		DeveloperPlacementStoreScript.project_slot_overrides(environment, "slot_positions")
+	)
+
+
+# A slot move is a rigid translation. Its stable id, class, size, support and
+# priority remain authored authority while its contact point, hit rectangle and
+# label anchor move together.
+static func _with_slot_geometry(surface_data: Dictionary, overrides: Dictionary) -> Dictionary:
+	if overrides.is_empty():
+		return surface_data
+	var result := surface_data.duplicate(true)
+	for field in ["base_slots", "stage_slots", "exit_slots"]:
+		var translated: Array = []
+		for slot_value in _array(result.get(field, [])):
+			var slot := _dict(slot_value).duplicate(true)
+			var slot_id := str(slot.get("id", "")).strip_edges()
+			if slot_id.is_empty() or not overrides.has(slot_id):
+				translated.append(slot)
+				continue
+			var original := _number_pair(slot.get("pos", []))
+			var target := _vector(overrides.get(slot_id, []))
+			if not is_finite(target.x) or not is_finite(target.y):
+				translated.append(slot)
+				continue
+			var delta := target - original
+			slot["pos"] = [target.x, target.y]
+			var hit_values := _array(slot.get("hit_rect", [])).duplicate()
+			if hit_values.size() >= 4:
+				hit_values[0] = float(hit_values[0]) + delta.x
+				hit_values[1] = float(hit_values[1]) + delta.y
+				slot["hit_rect"] = hit_values
+			var label_values := _array(slot.get("label_anchor", [])).duplicate()
+			if label_values.size() >= 2:
+				label_values[0] = float(label_values[0]) + delta.x
+				label_values[1] = float(label_values[1]) + delta.y
+				slot["label_anchor"] = label_values
+			translated.append(slot)
+		result[field] = translated
 	return result
 
 

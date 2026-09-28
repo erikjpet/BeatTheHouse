@@ -213,6 +213,17 @@ var developer_placement_panel: PanelContainer
 var developer_placement_label: Label
 var developer_placement_lock_button: Button
 var developer_placement_reset_button: Button
+var developer_slot_placement_mode := false
+var developer_slot_selected_id := ""
+var developer_slot_dragging := false
+var developer_slot_drag_offset := Vector2.ZERO
+var developer_slot_original_rect := Rect2()
+var developer_slot_pending_rect := Rect2()
+var developer_slot_pending_position := Vector2.ZERO
+var developer_slot_valid := false
+var developer_slot_overlap_ids: Array[String] = []
+var developer_slot_scene_object_baseline: Array = []
+var developer_slot_scene_object_baseline_valid := false
 
 
 func _ready() -> void:
@@ -226,12 +237,42 @@ func _ready() -> void:
 func set_developer_placement_mode(enabled: bool) -> void:
 	if developer_placement_mode == enabled:
 		return
+	if enabled and developer_slot_placement_mode:
+		clear_developer_slot_placement_preview()
+		developer_slot_placement_mode = false
+		developer_slot_selected_id = ""
+		_restore_developer_slot_scene_objects()
 	if not enabled:
 		_finish_developer_placement_edit()
 	developer_placement_mode = enabled
 	_ensure_developer_placement_panel()
-	developer_placement_panel.visible = enabled
+	developer_placement_panel.visible = enabled or developer_slot_placement_mode
 	_update_developer_placement_panel()
+	_invalidate_camera_target()
+	_update_camera_target_if_needed()
+	queue_redraw()
+
+
+func set_developer_slot_placement_mode(enabled: bool) -> void:
+	if developer_slot_placement_mode == enabled:
+		return
+	if enabled and developer_placement_mode:
+		clear_developer_placement_preview()
+		developer_placement_mode = false
+	if not enabled:
+		_finish_developer_slot_placement_edit()
+		developer_slot_selected_id = ""
+	developer_slot_placement_mode = enabled
+	if enabled:
+		_capture_developer_slot_scene_object_baseline()
+	else:
+		_restore_developer_slot_scene_objects()
+	_ensure_developer_placement_panel()
+	developer_placement_panel.visible = enabled or developer_placement_mode
+	_apply_authoring_slot_positions_to_scene_objects()
+	_update_developer_placement_panel()
+	_invalidate_camera_target()
+	_update_camera_target_if_needed()
 	queue_redraw()
 
 
@@ -248,6 +289,19 @@ func developer_placement_snapshot() -> Dictionary:
 	}
 
 
+func developer_slot_placement_snapshot() -> Dictionary:
+	return {
+		"enabled": developer_slot_placement_mode,
+		"selected_slot_id": developer_slot_selected_id,
+		"dragging": developer_slot_dragging,
+		"pending": developer_slot_pending_rect.has_area(),
+		"valid": developer_slot_valid,
+		"overlap_ids": developer_slot_overlap_ids.duplicate(),
+		"visible_slot_count": _developer_slots().size(),
+		"request": _developer_slot_placement_request(),
+	}
+
+
 func clear_developer_placement_preview() -> void:
 	developer_placement_dragging = false
 	developer_placement_original_rect = Rect2()
@@ -255,6 +309,18 @@ func clear_developer_placement_preview() -> void:
 	developer_placement_valid = false
 	developer_placement_surface_id = ""
 	developer_placement_overlap_ids.clear()
+	_update_developer_placement_panel()
+	queue_redraw()
+
+
+func clear_developer_slot_placement_preview() -> void:
+	developer_slot_dragging = false
+	developer_slot_drag_offset = Vector2.ZERO
+	developer_slot_original_rect = Rect2()
+	developer_slot_pending_rect = Rect2()
+	developer_slot_pending_position = Vector2.ZERO
+	developer_slot_valid = false
+	developer_slot_overlap_ids.clear()
 	_update_developer_placement_panel()
 	queue_redraw()
 
@@ -267,7 +333,7 @@ func _ensure_developer_placement_panel() -> void:
 	developer_placement_panel.position = Vector2(8.0, 8.0)
 	developer_placement_panel.custom_minimum_size = Vector2(320.0, 0.0)
 	developer_placement_panel.mouse_filter = Control.MOUSE_FILTER_PASS
-	developer_placement_panel.visible = developer_placement_mode
+	developer_placement_panel.visible = developer_placement_mode or developer_slot_placement_mode
 	add_child(developer_placement_panel)
 
 	var stack := VBoxContainer.new()
@@ -286,16 +352,16 @@ func _ensure_developer_placement_panel() -> void:
 	developer_placement_lock_button = Button.new()
 	developer_placement_lock_button.text = "Lock"
 	developer_placement_lock_button.tooltip_text = "Save this room position. Items and events author reusable category slots."
-	developer_placement_lock_button.pressed.connect(_lock_developer_placement)
+	developer_placement_lock_button.pressed.connect(_lock_active_developer_placement)
 	actions.add_child(developer_placement_lock_button)
 	var cancel_button := Button.new()
 	cancel_button.text = "Cancel"
-	cancel_button.pressed.connect(_cancel_developer_placement_preview)
+	cancel_button.pressed.connect(_cancel_active_developer_placement_preview)
 	actions.add_child(cancel_button)
 	developer_placement_reset_button = Button.new()
 	developer_placement_reset_button.text = "Reset"
 	developer_placement_reset_button.tooltip_text = "Remove the local override for this room/object pair."
-	developer_placement_reset_button.pressed.connect(_reset_developer_placement)
+	developer_placement_reset_button.pressed.connect(_reset_active_developer_placement)
 	actions.add_child(developer_placement_reset_button)
 	var project_actions := HBoxContainer.new()
 	project_actions.mouse_filter = Control.MOUSE_FILTER_PASS
@@ -304,13 +370,16 @@ func _ensure_developer_placement_panel() -> void:
 	promote_button.text = "Save to Project"
 	promote_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	promote_button.tooltip_text = "Lock the pending position and promote all locked positions into future builds."
-	promote_button.pressed.connect(_save_developer_placement_to_project)
+	promote_button.pressed.connect(_save_active_developer_placement_to_project)
 	project_actions.add_child(promote_button)
 	_update_developer_placement_panel()
 
 
 func _update_developer_placement_panel() -> void:
 	if developer_placement_panel == null or developer_placement_label == null:
+		return
+	if developer_slot_placement_mode:
+		_update_developer_slot_placement_panel()
 		return
 	var object_data := _scene_object(selected_object_id)
 	if object_data.is_empty():
@@ -338,6 +407,66 @@ func _update_developer_placement_panel() -> void:
 	]
 	developer_placement_lock_button.disabled = not developer_placement_pending_rect.has_area() or not developer_placement_valid
 	developer_placement_reset_button.disabled = false
+
+
+func _update_developer_slot_placement_panel() -> void:
+	var slot := _developer_slot(developer_slot_selected_id)
+	if slot.is_empty():
+		developer_placement_label.text = "Slot placement: drag any outlined base, stage, or exit slot. Empty slots are editable. Right-click or Escape cancels."
+		developer_placement_lock_button.disabled = true
+		developer_placement_reset_button.disabled = true
+		return
+	var slot_id := str(slot.get("id", developer_slot_selected_id))
+	var kind := str(slot.get("kind", "slot"))
+	var placement_class := str(slot.get("footprint_class", "unknown"))
+	var support := str(slot.get("support_id", "free"))
+	var occupants := _developer_slot_occupants(slot_id)
+	var occupancy := "empty" if occupants.is_empty() else ", ".join(occupants)
+	var status_text := "unchanged"
+	if developer_slot_pending_rect.has_area():
+		status_text = "position %.0f, %.0f" % [developer_slot_pending_position.x, developer_slot_pending_position.y]
+		if not developer_slot_overlap_ids.is_empty():
+			status_text += "; overlaps %s" % ", ".join(developer_slot_overlap_ids.slice(0, mini(3, developer_slot_overlap_ids.size())))
+	developer_placement_label.text = "%s | %s\n%s (%s / %s)\n%s | %s | %s" % [
+		str(foundation_snapshot.get("archetype_id", environment_id)),
+		str(foundation_snapshot.get("current_layer_id", foundation_snapshot.get("layer_id", "main"))),
+		slot_id,
+		kind,
+		placement_class,
+		occupancy,
+		support,
+		status_text,
+	]
+	developer_placement_lock_button.disabled = not developer_slot_pending_rect.has_area() or not developer_slot_valid
+	developer_placement_reset_button.disabled = false
+
+
+func _lock_active_developer_placement() -> void:
+	if developer_slot_placement_mode:
+		_lock_developer_slot_placement()
+	else:
+		_lock_developer_placement()
+
+
+func _cancel_active_developer_placement_preview() -> void:
+	if developer_slot_placement_mode:
+		_cancel_developer_slot_placement_preview()
+	else:
+		_cancel_developer_placement_preview()
+
+
+func _reset_active_developer_placement() -> void:
+	if developer_slot_placement_mode:
+		_reset_developer_slot_placement()
+	else:
+		_reset_developer_placement()
+
+
+func _save_active_developer_placement_to_project() -> void:
+	if developer_slot_placement_mode:
+		_save_developer_slot_placement_to_project()
+	else:
+		_save_developer_placement_to_project()
 
 
 func _developer_placement_identity(object_data: Dictionary) -> Dictionary:
@@ -448,6 +577,9 @@ func _render_owned_environment_snapshot(snapshot: Dictionary) -> void:
 	drunk_effect_mode = _normalized_drunk_effect_mode(str(foundation_snapshot.get("drunk_effect_mode", drunk_effect_mode)))
 	_update_drunk_distortion_overlay()
 	foundation_scene_objects = _objects_from_foundation_snapshot(foundation_snapshot)
+	if developer_slot_placement_mode:
+		_capture_developer_slot_scene_object_baseline()
+	_apply_authoring_slot_positions_to_scene_objects()
 	_sync_person_transits()
 	_sync_actor_route_starts()
 	overlay_repositioned_object_ids.clear()
@@ -462,9 +594,12 @@ func _render_owned_environment_snapshot(snapshot: Dictionary) -> void:
 		selected_object_id = ""
 	if not hovered_object_id.is_empty() and _scene_object(hovered_object_id).is_empty():
 		hovered_object_id = ""
+	if not developer_slot_selected_id.is_empty() and _developer_slot(developer_slot_selected_id).is_empty():
+		developer_slot_selected_id = ""
 	# A normal view refresh must not commit or reinterpret an in-progress authoring
 	# gesture. The last locked data will already be present in this fresh snapshot.
 	clear_developer_placement_preview()
+	clear_developer_slot_placement_preview()
 	_update_developer_placement_panel()
 	_invalidate_camera_target()
 	_update_camera_target_if_needed()
@@ -788,6 +923,7 @@ func current_view_snapshot() -> Dictionary:
 		"grand_casino_entry_cue": foundation_snapshot.get("grand_casino_entry_cue", {}) if uses_foundation_snapshot else {},
 		"reduce_motion": reduce_motion,
 		"developer_placement": developer_placement_snapshot(),
+		"developer_slot_placement": developer_slot_placement_snapshot(),
 	}
 
 
@@ -818,6 +954,9 @@ func local_position_for_selected_info_action_button(action_index: int = 0) -> Ve
 
 
 func _gui_input(event: InputEvent) -> void:
+	if developer_slot_placement_mode and _handle_developer_slot_placement_input(event):
+		accept_event()
+		return
 	if developer_placement_mode and _handle_developer_placement_input(event):
 		accept_event()
 		return
@@ -1134,6 +1273,325 @@ func _reset_developer_placement() -> void:
 	developer_placement_reset_requested.emit(request)
 
 
+func _developer_slot_environment() -> Dictionary:
+	return {
+		"archetype_id": str(foundation_snapshot.get("archetype_id", foundation_snapshot.get("id", environment_id))),
+		"current_layer_id": str(foundation_snapshot.get("current_layer_id", foundation_snapshot.get("layer_id", ""))),
+		"scenario_id": str(foundation_snapshot.get("scenario_id", "")),
+		"scenario_state": _copy_dictionary(foundation_snapshot.get("scenario_state", {})),
+		"scenario_sequence_state": _copy_dictionary(foundation_snapshot.get("scenario_sequence_state", {})),
+	}
+
+
+func _developer_slots() -> Array:
+	if foundation_snapshot.is_empty() and environment_id.is_empty():
+		return []
+	var surface_map := EnvironmentPlacementScript.authoring_surface_map(_developer_slot_environment())
+	var slots: Array = []
+	for field in ["base_slots", "stage_slots", "exit_slots"]:
+		for slot_value in _array_view(surface_map.get(field, [])):
+			if typeof(slot_value) != TYPE_DICTIONARY:
+				continue
+			var slot := (slot_value as Dictionary).duplicate(true)
+			if str(slot.get("id", "")).strip_edges().is_empty():
+				continue
+			slots.append(slot)
+	slots.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
+		var left := left_value as Dictionary
+		var right := right_value as Dictionary
+		var left_kind := str(left.get("kind", ""))
+		var right_kind := str(right.get("kind", ""))
+		return str(left.get("id", "")) < str(right.get("id", "")) if left_kind == right_kind else left_kind < right_kind
+	)
+	return slots
+
+
+func _developer_slot(slot_id: String) -> Dictionary:
+	var clean_id := slot_id.strip_edges()
+	if clean_id.is_empty():
+		return {}
+	for slot_value in _developer_slots():
+		var slot := slot_value as Dictionary
+		if str(slot.get("id", "")) == clean_id:
+			return slot
+	return {}
+
+
+func _developer_slot_rect(slot: Dictionary) -> Rect2:
+	var values := _array_view(slot.get("hit_rect", []))
+	if values.size() >= 4:
+		return Rect2(float(values[0]), float(values[1]), float(values[2]), float(values[3]))
+	var position := _developer_slot_position(slot)
+	return Rect2(position - Vector2(22.0, 22.0), Vector2(44.0, 44.0))
+
+
+func _developer_slot_position(slot: Dictionary) -> Vector2:
+	var values := _array_view(slot.get("pos", []))
+	if values.size() < 2:
+		return Vector2.ZERO
+	return Vector2(float(values[0]), float(values[1]))
+
+
+func _developer_slot_occupants(slot_id: String) -> Array[String]:
+	var occupants: Array[String] = []
+	for object_value in foundation_scene_objects:
+		if typeof(object_value) != TYPE_DICTIONARY:
+			continue
+		var object_data := object_value as Dictionary
+		if str(object_data.get("slot_id", "")) == slot_id:
+			occupants.append(str(object_data.get("label", object_data.get("id", "object"))))
+	occupants.sort()
+	return occupants
+
+
+func _developer_slot_id_at_local_position(local_position: Vector2) -> String:
+	var board_position := _local_to_board_position(local_position)
+	var selected := _developer_slot(developer_slot_selected_id)
+	if not selected.is_empty():
+		var selected_rect := developer_slot_pending_rect if developer_slot_pending_rect.has_area() else _developer_slot_rect(selected)
+		if selected_rect.has_point(board_position):
+			return developer_slot_selected_id
+	var slots := _developer_slots()
+	for index in range(slots.size() - 1, -1, -1):
+		var slot := slots[index] as Dictionary
+		if _developer_slot_rect(slot).has_point(board_position):
+			return str(slot.get("id", ""))
+	return ""
+
+
+func _handle_developer_slot_placement_input(event: InputEvent) -> bool:
+	if event is InputEventKey and (event as InputEventKey).pressed and not (event as InputEventKey).echo and (event as InputEventKey).keycode == KEY_F2:
+		developer_placement_panel.visible = not developer_placement_panel.visible
+		return true
+	if event is InputEventMouseMotion:
+		if developer_slot_dragging:
+			var motion := event as InputEventMouseMotion
+			_update_developer_slot_placement_preview(_local_to_board_position(motion.position) - developer_slot_drag_offset)
+		return true
+	if event is InputEventMouseButton:
+		var mouse_event := event as InputEventMouseButton
+		if mouse_event.button_index == MOUSE_BUTTON_LEFT:
+			if mouse_event.pressed:
+				_begin_developer_slot_placement_drag(mouse_event.position)
+			else:
+				_finish_developer_slot_placement_edit()
+			return true
+		if mouse_event.button_index == MOUSE_BUTTON_RIGHT and mouse_event.pressed:
+			_cancel_developer_slot_placement_preview()
+			return true
+	if event is InputEventScreenTouch:
+		var touch := event as InputEventScreenTouch
+		if touch.pressed:
+			_begin_developer_slot_placement_drag(touch.position)
+		else:
+			_finish_developer_slot_placement_edit()
+		return true
+	if event is InputEventScreenDrag:
+		if developer_slot_dragging:
+			var drag := event as InputEventScreenDrag
+			_update_developer_slot_placement_preview(_local_to_board_position(drag.position) - developer_slot_drag_offset)
+		return true
+	if event.is_action_pressed("ui_cancel"):
+		_cancel_developer_slot_placement_preview()
+		return true
+	if event.is_action_pressed("ui_accept") and developer_slot_pending_rect.has_area():
+		_lock_developer_slot_placement()
+		return true
+	var nudge := Vector2.ZERO
+	if event.is_action_pressed("ui_left"):
+		nudge.x = -1.0
+	elif event.is_action_pressed("ui_right"):
+		nudge.x = 1.0
+	elif event.is_action_pressed("ui_up"):
+		nudge.y = -1.0
+	elif event.is_action_pressed("ui_down"):
+		nudge.y = 1.0
+	if not nudge.is_zero_approx() and not developer_slot_selected_id.is_empty():
+		if event is InputEventKey and (event as InputEventKey).shift_pressed:
+			nudge *= 10.0
+		var slot := _developer_slot(developer_slot_selected_id)
+		if not slot.is_empty():
+			if not developer_slot_original_rect.has_area():
+				developer_slot_original_rect = _developer_slot_rect(slot)
+			var current_rect := developer_slot_pending_rect if developer_slot_pending_rect.has_area() else developer_slot_original_rect
+			_update_developer_slot_placement_preview(current_rect.position + nudge)
+		return true
+	return false
+
+
+func _begin_developer_slot_placement_drag(local_position: Vector2) -> void:
+	var slot_id := _developer_slot_id_at_local_position(local_position)
+	if slot_id.is_empty():
+		_cancel_developer_slot_placement_preview()
+		developer_slot_selected_id = ""
+		_update_developer_placement_panel()
+		queue_redraw()
+		return
+	if slot_id != developer_slot_selected_id:
+		_cancel_developer_slot_placement_preview()
+		developer_slot_selected_id = slot_id
+	var slot := _developer_slot(slot_id)
+	if slot.is_empty():
+		return
+	developer_slot_original_rect = _developer_slot_rect(slot)
+	developer_slot_pending_rect = developer_slot_original_rect
+	developer_slot_pending_position = _developer_slot_position(slot)
+	developer_slot_drag_offset = _local_to_board_position(local_position) - developer_slot_original_rect.position
+	developer_slot_dragging = true
+	_validate_developer_slot_placement_preview()
+	queue_redraw()
+
+
+func _update_developer_slot_placement_preview(top_left: Vector2) -> void:
+	var slot := _developer_slot(developer_slot_selected_id)
+	if slot.is_empty():
+		return
+	if not developer_slot_original_rect.has_area():
+		developer_slot_original_rect = _developer_slot_rect(slot)
+	var size_value := developer_slot_original_rect.size
+	var bounded := Vector2(
+		clampf(top_left.x, 0.0, maxf(0.0, BOARD_SIZE.x - size_value.x)),
+		clampf(top_left.y, 0.0, maxf(0.0, BOARD_SIZE.y - size_value.y))
+	).round()
+	developer_slot_pending_rect = Rect2(bounded, size_value)
+	developer_slot_pending_position = _developer_slot_position(slot) + bounded - developer_slot_original_rect.position
+	_set_scene_objects_for_slot_rect(developer_slot_selected_id, developer_slot_pending_rect)
+	_validate_developer_slot_placement_preview()
+	queue_redraw()
+
+
+func _validate_developer_slot_placement_preview() -> void:
+	developer_slot_valid = developer_slot_pending_rect.has_area() and Rect2(Vector2.ZERO, Vector2(BOARD_SIZE)).encloses(developer_slot_pending_rect)
+	developer_slot_overlap_ids.clear()
+	if not developer_slot_valid:
+		_update_developer_placement_panel()
+		return
+	for slot_value in _developer_slots():
+		var slot := slot_value as Dictionary
+		var slot_id := str(slot.get("id", ""))
+		if slot_id != developer_slot_selected_id and developer_slot_pending_rect.intersects(_developer_slot_rect(slot)):
+			developer_slot_overlap_ids.append(slot_id)
+	_update_developer_placement_panel()
+
+
+func _developer_slot_placement_request() -> Dictionary:
+	var slot := _developer_slot(developer_slot_selected_id)
+	if slot.is_empty():
+		return {}
+	return {
+		"environment": _developer_slot_environment(),
+		"field": "slot_positions",
+		"slot_id": developer_slot_selected_id,
+		"position": developer_slot_pending_position if developer_slot_pending_rect.has_area() else _developer_slot_position(slot),
+		"size": _developer_slot_rect(slot).size,
+		"slot_kind": str(slot.get("kind", "")),
+		"placement_class": str(slot.get("footprint_class", "")),
+		"support_id": str(slot.get("support_id", "")),
+	}
+
+
+func _cancel_developer_slot_placement_preview() -> void:
+	clear_developer_slot_placement_preview()
+	_apply_authoring_slot_positions_to_scene_objects()
+
+
+func _finish_developer_slot_placement_edit() -> void:
+	developer_slot_dragging = false
+	if not developer_slot_pending_rect.has_area():
+		_update_developer_placement_panel()
+		return
+	var changed := not developer_slot_pending_rect.position.is_equal_approx(developer_slot_original_rect.position)
+	if changed and developer_slot_valid:
+		_lock_developer_slot_placement()
+		return
+	clear_developer_slot_placement_preview()
+
+
+func _lock_developer_slot_placement() -> void:
+	if not developer_slot_valid or not developer_slot_pending_rect.has_area():
+		return
+	var request := _developer_slot_placement_request()
+	clear_developer_slot_placement_preview()
+	developer_placement_lock_requested.emit(request)
+	_apply_authoring_slot_positions_to_scene_objects()
+
+
+func _save_developer_slot_placement_to_project() -> void:
+	if developer_slot_pending_rect.has_area():
+		if not developer_slot_valid:
+			return
+		var request := _developer_slot_placement_request()
+		clear_developer_slot_placement_preview()
+		developer_placement_lock_requested.emit(request)
+	developer_placement_promote_requested.emit()
+	_apply_authoring_slot_positions_to_scene_objects()
+
+
+func _reset_developer_slot_placement() -> void:
+	var request := _developer_slot_placement_request()
+	if request.is_empty():
+		return
+	clear_developer_slot_placement_preview()
+	developer_placement_reset_requested.emit(request)
+	_apply_authoring_slot_positions_to_scene_objects()
+
+
+func _set_scene_objects_for_slot_rect(slot_id: String, rect: Rect2) -> void:
+	for index in range(foundation_scene_objects.size()):
+		if typeof(foundation_scene_objects[index]) != TYPE_DICTIONARY:
+			continue
+		var object_data := _copy_dictionary(foundation_scene_objects[index])
+		if str(object_data.get("slot_id", "")) != slot_id:
+			continue
+		object_data["position"] = rect.get_center() / Vector2(BOARD_SIZE)
+		object_data["size"] = rect.size
+		object_data.erase("actor_route_stage")
+		foundation_scene_objects[index] = object_data
+	_rebuild_scene_object_cache()
+	_invalidate_camera_target()
+	_update_camera_target_if_needed()
+
+
+func _capture_developer_slot_scene_object_baseline() -> void:
+	developer_slot_scene_object_baseline = foundation_scene_objects.duplicate(true)
+	developer_slot_scene_object_baseline_valid = true
+
+
+func _restore_developer_slot_scene_objects() -> void:
+	if not developer_slot_scene_object_baseline_valid:
+		return
+	foundation_scene_objects = developer_slot_scene_object_baseline.duplicate(true)
+	developer_slot_scene_object_baseline.clear()
+	developer_slot_scene_object_baseline_valid = false
+	_rebuild_scene_object_cache()
+	_invalidate_camera_target()
+	_update_camera_target_if_needed()
+
+
+func _apply_authoring_slot_positions_to_scene_objects() -> void:
+	if not developer_slot_placement_mode or foundation_scene_objects.is_empty():
+		return
+	var slots_by_id: Dictionary = {}
+	for slot_value in _developer_slots():
+		var slot := slot_value as Dictionary
+		slots_by_id[str(slot.get("id", ""))] = slot
+	for index in range(foundation_scene_objects.size()):
+		if typeof(foundation_scene_objects[index]) != TYPE_DICTIONARY:
+			continue
+		var object_data := _copy_dictionary(foundation_scene_objects[index])
+		var slot_id := str(object_data.get("slot_id", ""))
+		if not slots_by_id.has(slot_id):
+			continue
+		var rect := _developer_slot_rect(slots_by_id.get(slot_id, {}) as Dictionary)
+		object_data["position"] = rect.get_center() / Vector2(BOARD_SIZE)
+		object_data["size"] = rect.size
+		object_data.erase("actor_route_stage")
+		foundation_scene_objects[index] = object_data
+	_rebuild_scene_object_cache()
+	_invalidate_camera_target()
+	_update_camera_target_if_needed()
+
+
 func _remember_mouse_press(position: Vector2) -> void:
 	last_mouse_press_msec = Time.get_ticks_msec()
 	last_mouse_press_position = position
@@ -1308,6 +1766,7 @@ func _draw() -> void:
 	_draw_scene_outcome_highlight()
 	_draw_pressure_overlay()
 	_draw_drunk_overlay()
+	_draw_developer_slot_overlay()
 	_draw_developer_placement_outline()
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	_update_drunk_distortion_protected_rects()
@@ -1325,6 +1784,53 @@ func _draw_developer_placement_outline() -> void:
 		color = C_TEAL if developer_placement_valid else C_HOT
 	draw_rect(rect.grow(3.0), color, false, 3.0)
 	draw_circle(rect.position, 4.0, color)
+
+
+func _draw_developer_slot_overlay() -> void:
+	if not developer_slot_placement_mode:
+		return
+	var font := ThemeDB.fallback_font
+	for slot_value in _developer_slots():
+		var slot := slot_value as Dictionary
+		var slot_id := str(slot.get("id", ""))
+		var rect := _developer_slot_rect(slot)
+		if slot_id == developer_slot_selected_id and developer_slot_pending_rect.has_area():
+			rect = developer_slot_pending_rect
+		var kind := str(slot.get("kind", "base")).strip_edges().to_lower()
+		var color := C_CYAN
+		if kind == "stage":
+			color = C_AMBER
+		elif kind == "exit":
+			color = C_PINK
+		var selected := slot_id == developer_slot_selected_id
+		if selected:
+			color = C_TEAL if developer_slot_valid or not developer_slot_pending_rect.has_area() else C_HOT
+		var occupied := not _developer_slot_occupants(slot_id).is_empty()
+		var fill_alpha := 0.19 if occupied else 0.10
+		if selected:
+			fill_alpha = 0.30
+		draw_rect(rect, Color(color.r, color.g, color.b, fill_alpha), true)
+		draw_rect(rect, Color(color.r, color.g, color.b, 0.96), false, 3.0 if selected else 1.5)
+		var center := rect.get_center()
+		draw_line(center - Vector2(5.0, 0.0), center + Vector2(5.0, 0.0), color, 1.0)
+		draw_line(center - Vector2(0.0, 5.0), center + Vector2(0.0, 5.0), color, 1.0)
+		if occupied:
+			draw_circle(center, 3.0, color)
+		var label_width := maxf(48.0, minf(180.0, rect.size.x))
+		var label_rect := Rect2(
+			Vector2(clampf(rect.position.x, 0.0, BOARD_SIZE.x - label_width), maxf(1.0, rect.position.y - 12.0)),
+			Vector2(label_width, 11.0)
+		)
+		draw_rect(label_rect, Color(C_DARK.r, C_DARK.g, C_DARK.b, 0.88), true)
+		draw_string(
+			font,
+			label_rect.position + Vector2(3.0, 9.0),
+			_fit_draw_text(slot_id, font, 8, label_rect.size.x - 6.0),
+			HORIZONTAL_ALIGNMENT_LEFT,
+			label_rect.size.x - 6.0,
+			8,
+			color
+		)
 
 
 func _draw_scenario_palette() -> void:
@@ -2701,7 +3207,7 @@ func _draw_scene_objects() -> void:
 	# Labels and focus affordances stay above fixtures and remain fully usable.
 	for object_value in objects:
 		_draw_scene_object_adornments(object_value as Dictionary, low_detail)
-	if not developer_placement_mode:
+	if not developer_placement_mode and not developer_slot_placement_mode:
 		_draw_selected_object_info()
 
 
@@ -4726,7 +5232,7 @@ func _camera_lerp_weight(delta: float, speed: float) -> float:
 func _update_camera_target() -> void:
 	camera_target_dirty = false
 	camera_target_refresh_count += 1
-	if developer_placement_mode:
+	if developer_placement_mode or developer_slot_placement_mode:
 		camera_focus_active = false
 		camera_focus_point = Vector2(0.5, 0.5)
 		target_camera_zoom = 1.0
