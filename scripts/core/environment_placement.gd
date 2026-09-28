@@ -159,7 +159,7 @@ static func classify(object_data: Dictionary, object_type: String = "", object_i
 
 
 static func surface_map(environment: Dictionary) -> Dictionary:
-	return _with_project_slot_geometry(environment, _shipping_surface_map(environment))
+	return _with_runtime_slot_geometry(environment, _shipping_surface_map(environment))
 
 
 static func _shipping_surface_map(environment: Dictionary) -> Dictionary:
@@ -201,8 +201,9 @@ static func surface_map_by_id(archetype_id: String, layer_id: String = "") -> Di
 	return surface_map({"archetype_id": archetype_id, "current_layer_id": layer_id})
 
 
-# Developer placement is a preview/export concern only. Shipping placement
-# always reads surface_map(), so a local authoring override cannot change a run.
+# Object-placement authoring adds its legacy object/category overrides here.
+# Reusable slot geometry is already live through surface_map(), so locked slot
+# moves persist when the overlay is disabled and in newly generated rooms.
 static func authoring_surface_map(environment: Dictionary) -> Dictionary:
 	return _with_developer_slots(environment, surface_map(environment))
 
@@ -216,7 +217,9 @@ static func _with_developer_slots(environment: Dictionary, surface_data: Diction
 	var slot_overrides := DeveloperPlacementStoreScript.slot_overrides(environment, "slot_positions")
 	if base_overrides.is_empty() and scenario_overrides.is_empty() and category_overrides.is_empty() and slot_overrides.is_empty():
 		return surface_data
-	var result := _with_slot_geometry(surface_data, slot_overrides)
+	# Never modify the cached authored surface map. A local override must remain
+	# scoped to its room and must disappear immediately when Reset clears it.
+	var result := _with_slot_geometry(surface_data.duplicate(true), slot_overrides)
 	for field in ["object_slot_positions", "scenario_object_slot_positions"]:
 		var overrides := base_overrides if field == "object_slot_positions" else scenario_overrides
 		if overrides.is_empty():
@@ -234,13 +237,13 @@ static func _with_developer_slots(environment: Dictionary, surface_data: Diction
 	return result
 
 
-# Project slot positions are committed authoring data. They are the only
-# developer-placement values admitted to the shipping slot map; machine-local
-# authoring values remain isolated behind authoring_surface_map().
-static func _with_project_slot_geometry(environment: Dictionary, surface_data: Dictionary) -> Dictionary:
+# A locked reusable-slot edit is runtime authority on this machine immediately.
+# Save to Project controls whether that same authority ships in future builds;
+# it is not an activation step for the local authoring session.
+static func _with_runtime_slot_geometry(environment: Dictionary, surface_data: Dictionary) -> Dictionary:
 	return _with_slot_geometry(
 		surface_data,
-		DeveloperPlacementStoreScript.project_slot_overrides(environment, "slot_positions")
+		DeveloperPlacementStoreScript.slot_overrides(environment, "slot_positions")
 	)
 
 

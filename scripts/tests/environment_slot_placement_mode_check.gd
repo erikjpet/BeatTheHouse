@@ -106,16 +106,39 @@ func _check_slot_geometry_and_promotion(user_path: String, project_path: String)
 
 	var normal_local := EnvironmentPlacementScript.surface_map(environment)
 	var authoring_local := EnvironmentPlacementScript.authoring_surface_map(environment)
-	_check(_slot_position(_slot(normal_local, "base.shop_item_1")).is_equal_approx(_slot_position(base_before)), "Machine-local slot edits must not alter normal-run generation before promotion.")
+	_check(_slot_position(_slot(normal_local, "base.shop_item_1")).is_equal_approx(base_target), "A locked machine-local slot edit must remain active after placement mode is disabled.")
+	_check(_slot_position(_slot(normal_local, "stage.staff_floor_1")).is_equal_approx(stage_target), "Normal rendering must consume the locked stage-slot edit before project promotion.")
+	_check(_slot_position(_slot(normal_local, "exit.safe_left")).is_equal_approx(exit_target), "Normal rendering must consume the locked exit-slot edit before project promotion.")
 	_check(_slot_position(_slot(authoring_local, "base.shop_item_1")).is_equal_approx(base_target), "Authoring view must load the local base-slot edit.")
 	_check(_slot_position(_slot(authoring_local, "stage.staff_floor_1")).is_equal_approx(stage_target), "Authoring view must load the local stage-slot edit.")
 	_check(_slot_position(_slot(authoring_local, "exit.safe_left")).is_equal_approx(exit_target), "Authoring view must load the local exit-slot edit.")
 	_check(_translated_geometry(base_before, _slot(authoring_local, "base.shop_item_1"), base_target - _slot_position(base_before)), "Moving a slot must rigidly translate pos, hit_rect, and label_anchor without resizing it.")
 
 	DeveloperPlacementStoreScript.reload()
-	_check(_slot_position(_slot(EnvironmentPlacementScript.authoring_surface_map(environment), "base.shop_item_1")).is_equal_approx(base_target), "Locked slot edits must survive a durable reload.")
+	_check(_slot_position(_slot(EnvironmentPlacementScript.surface_map(environment), "base.shop_item_1")).is_equal_approx(base_target), "Locked slot edits must survive a durable reload in normal rendering.")
 	var other_environment := {"archetype_id": "bar"}
 	_check(_slot(EnvironmentPlacementScript.authoring_surface_map(other_environment), "base.shop_item_1").is_empty(), "A slot edit must not leak into another environment.")
+
+	var local_binding := EnvironmentSlotBinderScript.bind_base_layout(
+		{
+			"archetype_id": "corner_store",
+			"item_offers": [{"id": "local_future_stock"}],
+		},
+		[{
+			"object_id": "item:local_future_stock",
+			"object_type": "item",
+			"label": "Local Future Stock",
+		}]
+	)
+	var local_future_binding: Dictionary = (local_binding.get("slot_bindings", {}) as Dictionary).get("item:local_future_stock", {})
+	var local_future_rect: Dictionary = (local_binding.get("object_rects", {}) as Dictionary).get("item:local_future_stock", {})
+	var local_target_rect := _slot_rect(_slot(normal_local, "base.shop_item_1"))
+	_check(str(local_future_binding.get("slot_id", "")) == "base.shop_item_1", "A newly generated environment must bind future objects to a locally moved slot.")
+	_check(
+		is_equal_approx(float(local_future_rect.get("x", -1.0)), local_target_rect.position.x / 900.0)
+			and is_equal_approx(float(local_future_rect.get("y", -1.0)), local_target_rect.position.y / 430.0),
+		"A newly generated environment must keep the locally moved slot position after authoring mode exits."
+	)
 	var club_layer := {"archetype_id": "small_underground_casino", "current_layer_id": "club"}
 	var casino_layer := {"archetype_id": "small_underground_casino", "current_layer_id": "casino"}
 	var club_slot := _slot(EnvironmentPlacementScript.surface_map(club_layer), "base.door_right_lower")
@@ -211,10 +234,46 @@ func _check_canvas_contract() -> void:
 	canvas.call("_update_developer_slot_placement_preview", occupied_rect.position + Vector2(16.0, 8.0))
 	var preview_object_rect: Rect2 = canvas.call("_board_rect_for_object", canvas.call("_scene_object", "item:fixture"))
 	_check(not preview_object_rect.position.is_equal_approx(baseline_object_rect.position), "An occupied slot preview must move its current object with the slot.")
+	canvas.call("_lock_developer_slot_placement")
+	var persisted := DeveloperPlacementStoreScript.save_position(
+		locked_request.get("environment", {}) as Dictionary,
+		str(locked_request.get("field", "")),
+		str(locked_request.get("slot_id", "")),
+		locked_request.get("position", Vector2.ZERO) as Vector2
+	)
+	_check(bool(persisted.get("ok", false)), "A released slot move must persist through the production placement store.")
+	var moved_slot := _slot(EnvironmentPlacementScript.surface_map({"archetype_id": "corner_store"}), "base.shop_item_1")
+	var moved_rect := _slot_rect(moved_slot)
+	canvas.render_environment_snapshot({
+		"archetype_id": "corner_store",
+		"display_name": "Corner Store",
+		"interactable_objects": [{
+			"object_id": "item:fixture",
+			"object_type": "item",
+			"label": "Fixture",
+			"slot_id": "base.shop_item_1",
+			"fixed_slot_geometry": true,
+			"normalized_rect": {
+				"x": moved_rect.position.x / 900.0,
+				"y": moved_rect.position.y / 430.0,
+				"w": moved_rect.size.x / 900.0,
+				"h": moved_rect.size.y / 430.0,
+			},
+		}],
+	})
+	canvas.set_developer_slot_placement_mode(false)
+	var persisted_object_rect: Rect2 = canvas.call("_board_rect_for_object", canvas.call("_scene_object", "item:fixture"))
+	_check(persisted_object_rect.position.is_equal_approx(moved_rect.position), "Leaving slot mode must retain the locked slot position in normal rendering.")
+
+	canvas.set_developer_slot_placement_mode(true)
+	occupied_slot = canvas.call("_developer_slot", "base.shop_item_1")
+	occupied_rect = canvas.call("_developer_slot_rect", occupied_slot)
+	canvas.call("_begin_developer_slot_placement_drag", occupied_rect.get_center())
+	canvas.call("_update_developer_slot_placement_preview", occupied_rect.position + Vector2(16.0, 8.0))
 	canvas.set_developer_placement_mode(true)
 	_check(not bool(canvas.developer_slot_placement_snapshot().get("enabled", true)) and bool(canvas.developer_placement_snapshot().get("enabled", false)), "Switching to object placement must disable slot placement.")
 	var restored_object_rect: Rect2 = canvas.call("_board_rect_for_object", canvas.call("_scene_object", "item:fixture"))
-	_check(restored_object_rect.position.is_equal_approx(baseline_object_rect.position), "Leaving slot mode must restore normal-run object geometry instead of leaking the authoring preview.")
+	_check(restored_object_rect.position.is_equal_approx(moved_rect.position), "Leaving slot mode must discard only an unlocked preview while preserving the last locked slot position.")
 	canvas.queue_free()
 	await process_frame
 
