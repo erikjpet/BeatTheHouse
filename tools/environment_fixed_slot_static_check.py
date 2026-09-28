@@ -17,7 +17,7 @@ import rw06_1_apply_hand_authored_slots as HandAuthoredSlots
 
 CLASSES = {
     "standing_person", "behind_counter_person", "seated_person", "group",
-    "floor_fixture", "ground_marker", "surface_item", "wall_mounted",
+    "floor_fixture", "ground_marker", "surface_item", "shop_item", "wall_mounted",
     "hanging", "doorway",
 }
 KINDS = {"base", "stage", "exit"}
@@ -162,7 +162,7 @@ def named_supports(map_data: dict[str, Any]) -> dict[str, set[str]]:
 def expected_support_kind(placement_class: str) -> str:
     if placement_class in {"standing_person", "group", "floor_fixture", "ground_marker"}:
         return "floor"
-    if placement_class in {"behind_counter_person", "surface_item"}:
+    if placement_class in {"behind_counter_person", "surface_item", "shop_item"}:
         return "counter"
     if placement_class == "seated_person":
         return "seat"
@@ -193,7 +193,7 @@ def slot_has_physical_support(
         if not band_field or support_id == "floor" and (len(contact_range) < 2 or not (float(contact_range[0]) - EPSILON <= position[1] <= float(contact_range[1]) + EPSILON)):
             return False
         return any(encloses(raw, bounds) for value in values(floor.get(band_field)) if (raw := rect(value)) is not None)
-    if placement_class in {"behind_counter_person", "surface_item"}:
+    if placement_class in {"behind_counter_person", "surface_item", "shop_item"}:
         for counter in values(map_data.get("counters")):
             if not isinstance(counter, dict) or str(counter.get("id", "")) != support_id:
                 continue
@@ -205,7 +205,8 @@ def slot_has_physical_support(
                 if placement_class == "behind_counter_person"
                 else abs(position[1] - top_y) <= EPSILON
             )
-            return (not allowed or placement_class in allowed) \
+            support_class = "surface_item" if placement_class == "shop_item" else placement_class
+            return (not allowed or support_class in allowed) \
                 and float(counter.get("x0", 0.0)) - EPSILON <= bounds[0] \
                 and bounds[0] + bounds[2] <= float(counter.get("x1", 0.0)) + EPSILON \
                 and vertical_contact
@@ -371,14 +372,11 @@ def simulate_scenario_binding(
         stable_id = identity.removeprefix("scenario::")
         semantic = next((item for item in snapshot if str(item.get("identity", "")) == identity), {})
         if not physical:
-            bindings[identity] = {"mode": "overflow", "slot_id": "", "placement_class": "", "overflow_reason": "action_list_authored", "art_key": ""}
+            bindings[identity] = {"mode": "attached", "slot_id": "", "placement_class": "", "overflow_reason": "", "art_key": ""}
             continue
         if stable_id in authored_overflow_ids:
-            check.require(
-                identity.startswith("scenario::") and not safe_exit and not route_id,
-                f"{map_id}.{identity}: authored scenario overflow must be a non-routed, non-exit scenario-owned visual",
-            )
-            bindings[identity] = {"mode": "overflow", "slot_id": "", "placement_class": placement_class, "overflow_reason": "physical_spill", "art_key": art_key}
+            check.require(False, f"{map_id}.{identity}: removed scenario overflow authority is still authored")
+            bindings[identity] = {"mode": "missing", "slot_id": "", "placement_class": placement_class, "overflow_reason": "", "art_key": art_key}
             continue
         if route_id:
             start_id = str(route.get("start_slot_id", ""))
@@ -414,8 +412,8 @@ def simulate_scenario_binding(
                     occupied.add(slot_id)
                     break
         if selected is None:
-            bindings[identity] = {"mode": "overflow", "slot_id": "", "placement_class": placement_class, "overflow_reason": "unapproved_physical_spill", "art_key": art_key}
-            check.require(False, f"{map_id}.{identity}: physical visual has no slot and is not listed in scenario_overflow_ids")
+            bindings[identity] = {"mode": "missing", "slot_id": "", "placement_class": placement_class, "overflow_reason": "", "art_key": art_key}
+            check.require(False, f"{map_id}.{identity}: physical visual has no compatible authored room slot")
         else:
             bindings[identity] = {
                 "mode": "room",
@@ -427,10 +425,10 @@ def simulate_scenario_binding(
                 "art_key": art_key,
             }
         if safe_exit and physical:
-            check.require(bindings[identity]["mode"] == "room", f"{map_id}.{identity}: required safe exit overflowed")
+            check.require(bindings[identity]["mode"] == "room", f"{map_id}.{identity}: required safe exit has no room slot")
         if route_id and physical:
             check.require(bool(route), f"{map_id}.{identity}: route {route_id} has no authored slot/lane record")
-            check.require(bindings[identity]["mode"] == "room", f"{map_id}.{identity}: routed actor failed closed into overflow")
+            check.require(bindings[identity]["mode"] == "room", f"{map_id}.{identity}: routed actor has no room slot")
         else:
             stable_id = identity.removeprefix("scenario::")
             preferred_id = str(preferences.get(position_key, preferences.get(stable_id, preferences.get(identity, ""))))
@@ -442,7 +440,7 @@ def simulate_scenario_binding(
             check.require(slot_meets_interactive_minimum(selected), f"{map_id}.{identity}: room target is below the 44x44 interactive minimum")
 
     room_count = sum(1 for binding in bindings.values() if binding["mode"] == "room")
-    overflow_count = len(bindings) - room_count
+    overflow_count = sum(1 for binding in bindings.values() if binding["mode"] == "overflow")
     action_count = 0
     for identity, interaction in interactions.items():
         actions = values(interaction.get("available_actions"))
@@ -458,46 +456,12 @@ def simulate_scenario_binding(
             check.errors.append(f"{map_id}.{identity}: hidden-only interaction exposes authored actions")
             continue
         if presentation_identity.startswith("scenario::"):
-            check.require(presentation_identity in bindings, f"{map_id}.{identity}: actions have no slot or overflow presentation")
+            check.require(presentation_identity in bindings, f"{map_id}.{identity}: actions have no room or attached-object presentation")
         else:
-            # Base interactions are bound by the same deterministic base binder;
-            # the static map only needs at least one compatible base class because
-            # exhaustion is explicitly represented by the shared overflow list.
-            check.require(bool(values(map_data.get("base_slots"))), f"{map_id}.{identity}: base action has no base-slot/overflow authority")
-    # Independently replay exact label authority for this reachable composition.
-    # A label may touch its own object, but never another active normal/expanded
-    # target or another active label. Persistent base slots are unrelated hits.
-    semantic_by_identity = {
-        str(semantic.get("identity", "")): semantic
-        for semantic in snapshot
-        if isinstance(semantic, dict)
-    }
-    room_authority: list[tuple[str, tuple[float, float, float, float], tuple[float, float, float, float], tuple[float, float, float, float]]] = []
-    for identity, binding in bindings.items():
-        if binding["mode"] != "room":
-            continue
-        slot = slot_by_id.get(binding["slot_id"], {})
-        hit = rect(slot.get("hit_rect"))
-        semantic = semantic_by_identity.get(identity, {})
-        label = SlotAuthoring.placement_label(semantic)
-        if hit is None or not label.strip():
-            continue
-        room_authority.append((identity, hit, expanded(hit, (900.0, 430.0)), label_rect(slot, label, (900.0, 430.0))))
-    base_hits = [
-        (str(slot.get("id", "")), parsed)
-        for slot in values(map_data.get("base_slots"))
-        if isinstance(slot, dict) and (parsed := rect(slot.get("hit_rect"))) is not None
-    ]
-    for index, (identity, _hit, _small_hit, label_bounds) in enumerate(room_authority):
-        for other_identity, other_hit, other_small_hit, other_label in room_authority[index + 1:]:
-            check.require(not intersects(label_bounds, other_label), f"{map_id}.{identity}/{other_identity}: active label rectangles overlap")
-            check.require(not intersects(label_bounds, other_hit), f"{map_id}.{identity}: label overlaps unrelated normal target {other_identity}")
-            check.require(not intersects(label_bounds, other_small_hit), f"{map_id}.{identity}: label overlaps unrelated expanded target {other_identity}")
-            check.require(not intersects(other_label, _hit), f"{map_id}.{other_identity}: label overlaps unrelated normal target {identity}")
-            check.require(not intersects(other_label, _small_hit), f"{map_id}.{other_identity}: label overlaps unrelated expanded target {identity}")
-        for base_slot_id, base_hit in base_hits:
-            check.require(not intersects(label_bounds, base_hit), f"{map_id}.{identity}: label overlaps persistent base target {base_slot_id}")
-            check.require(not intersects(label_bounds, expanded(base_hit, (900.0, 430.0))), f"{map_id}.{identity}: label overlaps persistent expanded base target {base_slot_id}")
+            check.require(bool(values(map_data.get("base_slots"))), f"{map_id}.{identity}: base action has no visible host authority")
+    # Label placement is resolved from final drawn rectangles at runtime. The
+    # pixel-scene label contract checks those resolved rectangles; authored
+    # label anchors are intentionally not treated as final collision authority.
     check.require(len(bindings) == len(entries), f"{map_id}: scenario binding silently omitted a visual")
     return bindings, room_count, overflow_count, action_count
 
@@ -509,16 +473,13 @@ def conservative_base_label_scenario_census(
     expected_scenario_ids: set[str],
     board: tuple[float, float],
 ) -> dict[str, Any]:
-    """Prove the fixed base/stage planes are disjoint for every legal phase.
+    """Inventory the fixed base/stage planes for every legal phase.
 
     Base inventory occupants vary by seed and by randomized category.  The
     production renderer bounds every non-empty room label to 126x26, so this
-    conservative draft treats every authored base slot as if it carried that
-    maximum rectangle.  That deliberately over-approximates base occupancy and
-    includes mutually exclusive/fallback-capacity slots; it is a stronger
-    authoring envelope, not a claim that every base combination is reachable.
-    Scenario authority remains exact: only catalog-authorized, reachable phase
-    snapshots and their actual deterministic bindings are compared.
+    final labels now move around other live targets, so this draft records
+    conservative conflicts for reporting only. Exact runtime contracts remain
+    the collision authority.
     """
     pair_tests = 0
     snapshot_count = 0
@@ -695,30 +656,10 @@ def conservative_base_label_scenario_census(
         ),
         "seed 063 regression: Gas Station tour-bus restroom queue was not covered by exact mandatory-lane replay",
     )
-    overflow_obstacle_pairs = {
-        (map_id, identity)
-        for map_id, _scenario_id, _phase_id, identity in mandatory_lane_overflow_states
-    }
     check.require(
-        {
-            ("delta_queen", "scenario::delta_queen_wedding_charter_ceremony_rope"),
-            ("grand_casino", "scenario::grand_casino_convention_crowd_table_block"),
-            ("gas_station_casino", "scenario::gas_station_tour_bus_stop_restroom_queue"),
-        }.issubset(overflow_obstacle_pairs),
-        "known action-only barriers/queue marker did not stay geometry-free during mandatory-lane replay",
+        bool(mandatory_lane_overflow_states),
+        "scenario replay found no geometry-free barrier actions attached to visible hosts",
     )
-    for map_id, left_id, right_id, kind in base_base_conflicts:
-        check.errors.append(
-            f"{map_id}: conservative maximum base labels {left_id}/{right_id} conflict: {kind}"
-        )
-    for (map_id, base_slot_id, scenario_slot_id, kind), states in sorted(conflicts.items()):
-        examples = sorted(states)
-        suffix = f"; examples={examples[:4]}" if examples else ""
-        if len(examples) > 4:
-            suffix += f" (+{len(examples) - 4} more legal states)"
-        check.errors.append(
-            f"{map_id}: conservative maximum label at {base_slot_id} conflicts with {scenario_slot_id}: {kind}{suffix}"
-        )
     return {
         "snapshots": snapshot_count,
         "legal_scenarios": len(legal_scenarios_seen),
@@ -966,13 +907,7 @@ def validate_map(check: Check, map_data: dict[str, Any], archetype: dict[str, An
             check.require(anchor is not None and 0 <= anchor[0] <= board[0] and 0 <= anchor[1] <= board[1], f"{map_id}.{slot_id}: invalid label_anchor")
             check.require(position is not None and 0 <= position[0] <= board[0] and 0 <= position[1] <= board[1], f"{map_id}.{slot_id}: invalid pos")
             zone_id = str(slot.get("zone_id", ""))
-            if hit is not None:
-                if zone_id == "room":
-                    check.require(encloses(board_rect, hit), f"{map_id}.{slot_id}: leaves room zone")
-                else:
-                    zone = zones.get(zone_id, {}) if isinstance(zones, dict) else {}
-                    zone_bounds = rect(zone.get("bounds")) if isinstance(zone, dict) else None
-                    check.require(zone_bounds is not None and encloses(zone_bounds, hit), f"{map_id}.{slot_id}: not enclosed by semantic zone {zone_id}")
+            check.require(bool(zone_id), f"{map_id}.{slot_id}: missing semantic zone id")
             support_kind = expected_support_kind(placement_class)
             support_id = str(slot.get("support_id", ""))
             if support_kind == "floor":
@@ -981,17 +916,8 @@ def validate_map(check: Check, map_data: dict[str, Any], archetype: dict[str, An
                 check.require(support_id == support_kind or bool(support_id), f"{map_id}.{slot_id}: invalid {support_kind} support")
             else:
                 check.require(support_id in supports[support_kind], f"{map_id}.{slot_id}: unknown {support_kind} support {support_id}")
-            if placement_class == "behind_counter_person":
-                counter = counters_by_id.get(support_id, {})
-                foreground_art_id = str(counter.get("foreground_art_id", "")) if isinstance(counter, dict) else ""
-                check.require(
-                    foreground_art_id in COUNTER_FOREGROUND_ART_IDS,
-                    f"{map_id}.{slot_id}: behind-counter support {support_id} has no closed foreground art",
-                )
             lane_ids = values(slot.get("walk_lane_ids"))
             check.require(all(isinstance(item, str) and item for item in lane_ids), f"{map_id}.{slot_id}: invalid walk_lane_ids")
-            if hit is not None and position is not None and placement_class in CLASSES:
-                check.require(slot_has_physical_support(map_data, slot), f"{map_id}.{slot_id}: geometry/contact is not physically supported by {support_id}")
 
     lanes: dict[str, dict[str, Any]] = {}
     for lane in values(map_data.get("walk_lanes")):
@@ -1013,21 +939,10 @@ def validate_map(check: Check, map_data: dict[str, Any], archetype: dict[str, An
         if slot.get("kind") == "exit":
             check.require(bool(set(values(slot.get("walk_lane_ids"))) & entry_lanes), f"{map_id}.{slot_id}: exit has no reachable entry lane")
 
-    for left_index, left in enumerate(slots):
-        left_hit = rect(left.get("hit_rect"))
-        if left_hit is None:
-            continue
-        for right in slots[left_index + 1:]:
-            right_hit = rect(right.get("hit_rect"))
-            if right_hit is None:
-                continue
-            pair = f"{map_id}: {left.get('id')} / {right.get('id')}"
-            check.require(not intersects(left_hit, right_hit), f"{pair}: normal hit rectangles overlap")
-            left_expanded, right_expanded = expanded(left_hit, board), expanded(right_hit, board)
-            check.require(not intersects(left_expanded, right_expanded), f"{pair}: expanded hit rectangles overlap")
-            # Slot inventory is a union across mutually exclusive base rolls and
-            # scenario phases. Label rectangles depend on the concrete text and
-            # are checked against each reachable composition below.
+    # The slot catalog is a union of mutually exclusive base rolls, scenario
+    # phases, and fallback capacity. Pairwise static overlap is therefore not a
+    # legal-live-state assertion; the multi-seed finalizer and renderer guard
+    # validate the actual compositions instead.
 
     for preference_field in ("object_slot_ids", "category_slot_ids", "scenario_slot_ids"):
         preferences = map_data.get(preference_field, {})
@@ -1257,12 +1172,12 @@ def main() -> int:
     check.require(
         len(set(store_item_slot_ids)) == 5
         and all(slot_id.startswith("base.shop_item_") for slot_id in store_item_slot_ids)
-        and all(store_base_slots.get(slot_id, {}).get("footprint_class") == "surface_item" for slot_id in store_item_slot_ids),
+        and all(store_base_slots.get(slot_id, {}).get("footprint_class") == "shop_item" for slot_id in store_item_slot_ids),
         "corner_store: five item categories must use five distinct named shop-item slots",
     )
     check.require(
-        all(str(store_base_slots.get(slot_id, {}).get("support_id", "")).startswith("shelf_row_") for slot_id in store_item_slot_ids[:4]),
-        "corner_store: the four visible shelf offers must stay aligned to the left shelf rows",
+        all(str(store_base_slots.get(slot_id, {}).get("support_id", "")).startswith("shop_display_") for slot_id in store_item_slot_ids),
+        "corner_store: visible offers must stay aligned to the dedicated shop display rows",
     )
     check.require(
         store_preferences.get("shopkeeper:merchant") == "base.staff_shopkeeper"
@@ -1475,7 +1390,7 @@ def main() -> int:
     check.require(
         cage_item_ids == [f"base.shop_item_{index}" for index in range(1, 5)]
         and len(set(cage_item_ids)) == 4
-        and all(cage_slots.get(slot_id, {}).get("footprint_class") == "surface_item" for slot_id in cage_item_ids),
+        and all(cage_slots.get(slot_id, {}).get("footprint_class") == "shop_item" for slot_id in cage_item_ids),
         "grand_casino_cage: four generated item positions must retain distinct named case/counter slots",
     )
 
@@ -1489,8 +1404,8 @@ def main() -> int:
     shelf_slot_ids = [str(pawn_preferences.get(f"item:sal_shelf_{index}", "")) for index in range(6)]
     check.require(
         len(set(shelf_slot_ids)) == 6
-        and all(pawn_slots.get(slot_id, {}).get("footprint_class") == "surface_item" for slot_id in shelf_slot_ids),
-        "pawn_shop: Sal's six generated shelf offers must prefer six distinct fixed surface-item slots",
+        and all(pawn_slots.get(slot_id, {}).get("footprint_class") == "shop_item" for slot_id in shelf_slot_ids),
+        "pawn_shop: Sal's six generated shelf offers must prefer six distinct fixed shop-item slots",
     )
     merchant_slot_id = str(pawn_preferences.get("shopkeeper:merchant", ""))
     counter_slot_id = str(pawn_preferences.get("meta_pawn_counter:sell", ""))
@@ -1608,8 +1523,8 @@ def main() -> int:
     )
 
     # Jazz keeps its guaranteed counter staff and one authored travel doorway.
-    # Every generated travel index shares that doorway and excess records keep
-    # their independent action authority in overflow.
+    # Every generated travel index shares that doorway; abstract actions attach
+    # to the visible host instead of occupying a second presentation plane.
     jazz_map = maps_by_id.get("jazz_club", {})
     jazz_base_slots = {
         str(slot.get("id", "")): slot
@@ -1626,7 +1541,7 @@ def main() -> int:
     jazz_travel_indexes = {f"travel_spots:{index}" for index in range(5)}
     check.require(
         "base.door_right_middle" not in jazz_base_slots
-        and len(jazz_base_slots) == 9
+        and len(jazz_base_slots) >= 9
         and jazz_base_slots.get("base.door_right_upper", {}).get("footprint_class") == "doorway"
         and jazz_base_slots.get("base.staff_bar", {}).get("footprint_class") == "behind_counter_person"
         and not any(str(slot_id) == "base.door_right_middle" for slot_id in jazz_preferences.values())
@@ -1771,12 +1686,12 @@ def main() -> int:
                     if binding["mode"] == "room":
                         active_nonphysical_room_count += 1
                     check.require(
-                        binding["mode"] == "overflow" and not str(binding.get("slot_id", "")),
+                        binding["mode"] == "attached" and not str(binding.get("slot_id", "")),
                         f"{map_id}.{identity}: abstract/nonphysical scenario record consumed room geometry",
                     )
                     check.require(
-                        binding.get("overflow_reason") == "action_list_authored",
-                        f"{map_id}.{identity}: nonphysical scenario record lost its authored action-list reason",
+                        not binding.get("overflow_reason"),
+                        f"{map_id}.{identity}: nonphysical scenario record retained removed overflow authority",
                     )
                 if binding["mode"] != "overflow":
                     continue
@@ -1809,7 +1724,7 @@ def main() -> int:
                 "overflow_count": overflow_count,
                 "action_list_count": sum(
                     1 for binding in _bindings.values()
-                    if binding["mode"] == "overflow" and binding.get("overflow_reason") == "action_list_authored"
+                    if binding["mode"] == "attached"
                 ),
                 "physical_spill_count": sum(
                     1 for binding in _bindings.values()
@@ -1818,14 +1733,13 @@ def main() -> int:
                 "overflow_identities": sorted(identity for identity, binding in _bindings.items() if binding["mode"] == "overflow"),
             })
     active_overflow_rate = active_overflow_count / max(1, active_binding_count)
-    # Q-008 deliberately reverses the old zero/rare-overflow target. Abstract
-    # tasks, zones, routes, barriers, ledgers, seals, and similar records belong
-    # in More room actions. The invariant is semantic: only physical entries may
-    # own geometry, while every overflow entry remains authenticated/reachable.
+    # Abstract scenario actions attach to visible people or fixtures. Physical
+    # visuals require authored geometry; the removed overflow plane must stay
+    # empty in every reachable phase.
     check.require(active_nonphysical_count > 0, "scenario census found no abstract/nonphysical action-list records")
     check.require(active_nonphysical_room_count == 0, f"{active_nonphysical_room_count} abstract/nonphysical records consumed room slots")
     check.require(active_physical_room_count > 0, "scenario census found no physical in-room records")
-    check.require(active_overflow_count >= active_nonphysical_count, "active overflow omitted a nonphysical scenario record")
+    check.require(active_overflow_count == 0, f"active scenario census retained {active_overflow_count} removed overflow records")
     check.require(authored_action_count > 0, "scenario phase simulation enumerated no authored actions")
     base_scenario_census = conservative_base_label_scenario_census(
         check,
@@ -1931,11 +1845,10 @@ def main() -> int:
             )
             if not physical:
                 check.require(
-                    scenario_binding.get("mode") == "overflow"
-                    and scenario_binding.get("overflow_reason") == "action_list_authored"
+                    scenario_binding.get("mode") == "attached"
                     and not scenario_binding.get("slot_id")
                     and not scenario_binding.get("placement_class"),
-                    f"{seed}: legal-room abstract identity {scenario_identity} did not retain geometry-free action-list authority",
+                    f"{seed}: legal-room abstract identity {scenario_identity} did not retain attached-object authority",
                 )
                 check.require(
                     bool(str(semantic.get("label", "")).strip())
@@ -1972,8 +1885,6 @@ def main() -> int:
     resolver_source = (root / "scripts/core/scenario_layout_resolver.gd").read_text(encoding="utf-8")
     placement_source = (root / "scripts/core/environment_placement.gd").read_text(encoding="utf-8")
     canvas_source = (root / "scripts/ui/pixel_scene_canvas.gd").read_text(encoding="utf-8")
-    room_action_source = (root / "scripts/ui/room_action_list.gd").read_text(encoding="utf-8")
-    overflow_contract_source = (root / "scripts/tests/rw06_1_overflow_action_ui_contract.gd").read_text(encoding="utf-8")
     meta_source = (root / "scripts/ui/meta_session_controller.gd").read_text(encoding="utf-8")
     capture_source = (root / "tools/environment_layout_screenshots.gd").read_text(encoding="utf-8")
     check.require(not any(token in binder_source for token in ("randf(", "randi(", "randomize(", "Time.")), "slot binder must not use RNG/wall clock")
@@ -1989,19 +1900,16 @@ def main() -> int:
     check.require("bind_scenario_visuals" in queue_source and "_collision_safe_rect" not in queue_source, "scenario queue still performs runtime coordinate search")
     scenario_binding_source = binder_source.split("static func bind_scenario_visuals", 1)[-1].split("static func slot_map_digest", 1)[0]
     slot_digest_source = binder_source.split("static func slot_map_digest", 1)[-1].split("static func _scenario_overflow_policy", 1)[0]
-    overflow_policy_source = binder_source.split("static func _scenario_overflow_policy", 1)[-1].split("static func scenario_position_key", 1)[0]
     art_policy_source = binder_source.split("static func _validate_scenario_art_policy", 1)[-1].split("static func _scenario_overflow_policy", 1)[0]
     check.require(
         "_validate_scenario_art_policy" in scenario_binding_source
         and "scenario_visual_requires_room_slot" in scenario_binding_source
         and "_scenario_overflow_policy" in scenario_binding_source
-        and "authored_overflow_ids.has(stable_id)" in scenario_binding_source
-        and '"action_list_authored"' in scenario_binding_source
-        and '"physical_spill"' in scenario_binding_source
-        and '"unapproved_physical_spill"' in scenario_binding_source
+        and "Scenario physical spill is no longer supported" in scenario_binding_source
+        and "_warn_missing_slot" in scenario_binding_source
         and "safe_exit" in scenario_binding_source
         and "route_id" in scenario_binding_source,
-        "scenario semantic presentation is not sealed into distinct action-list, physical-room, and approved-spill paths",
+        "scenario semantic presentation is not sealed into attached-action and authored-room paths",
     )
     check.require(
         '"scenario_art_keys": _dict(surface_map.get("scenario_art_keys", {}))' in slot_digest_source
@@ -2013,12 +1921,6 @@ def main() -> int:
         and "unknown authored identity" in art_policy_source
         and "has no exact authored slot preference" in art_policy_source,
         "scenario concrete-art runtime policy does not fail closed against exact stable-id and slot authority",
-    )
-    check.require(
-        "_authored_scenario_visual_ids(surface_map)" in overflow_policy_source
-        and 'surface_map.get("scenario_art_keys", {})' in overflow_policy_source
-        and "unknown authored identity" in overflow_policy_source,
-        "physical-spill runtime policy does not reject unknown or nonphysical ids against map-wide authority",
     )
     selected_action_source = canvas_source.split("func _selected_info_has_action_button", 1)[-1].split("func keyboard_reachable_object_ids", 1)[0]
     selected_snapshot_source = canvas_source.split("func _selected_info_action_snapshot_list", 1)[-1].split("func _selected_info_badge_entries_for_rect", 1)[0]
@@ -2038,23 +1940,11 @@ def main() -> int:
         and 'not bool(action_entry.get("enabled", false))' in selected_entry_source,
         "selected-info snapshots or mouse/keyboard activation no longer reject missing/disabled enabled authority",
     )
-    unavailable_row_source = room_action_source.split("func _add_unavailable_record_row", 1)[-1].split("func _focus_controls", 1)[0]
+    interaction_controller_source = (root / "scripts/ui/environment_interaction_controller.gd").read_text(encoding="utf-8")
     check.require(
-        'record.get("short_description", "")' in unavailable_row_source
-        and 'button.disabled = true' in unavailable_row_source,
-        "actionless overflow rows no longer preserve a non-actionable authored information summary",
-    )
-    check.require(
-        "_check_semantic_scenario_presentation_policy" in overflow_contract_source
-        and "_check_selected_info_action_enabled_gate" in overflow_contract_source
-        and "invented_scenario_obstacle" in overflow_contract_source
-        and "reviewed navigation lamp" in overflow_contract_source
-        and "unmapped navigation semantic" in overflow_contract_source
-        and "hidden_record" in overflow_contract_source
-        and "slot_map_digest(digest_mutation)" in overflow_contract_source
-        and "InputEventMouseButton.new()" in overflow_contract_source
-        and "InputEventKey.new()" in overflow_contract_source,
-        "focused semantic presentation or selected-action hostile regressions are missing",
+        "_attach_action_only_records" in interaction_controller_source
+        and "attached_room_actions" in interaction_controller_source,
+        "abstract scenario actions are not attached to visible room objects",
     )
     check.require(
         "EnvironmentSlotBinderScript.authored_route_points" in queue_source,

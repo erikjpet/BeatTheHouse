@@ -14,7 +14,10 @@ const CONTEXT_MODE_META_TRADE_UP := "meta_trade_up"
 const CONTEXT_MODE_META_PAWN_COUNTER := "meta_pawn_counter"
 const CONTEXT_MODE_META_SAL_SHELF := "meta_sal_shelf"
 const CONTEXT_MODE_META_SAL_TALK := "meta_sal_talk"
-const MAX_VISIBLE_HOME_BAG_OBJECTS := 8
+# Three authored bag positions fit every housing tier without sharing furniture.
+# Larger collections remain reachable through one Bag Shelf object in the third
+# position instead of drawing multiple bags on top of the same room surface.
+const MAX_VISIBLE_HOME_BAG_OBJECTS := 3
 const META_LOCATION_HOME := "home"
 const META_LOCATION_START_RUN := "start_run"
 
@@ -493,6 +496,15 @@ func _container_rows() -> Array:
 			continue
 		container["display_name"] = _container_label(item_id)
 		rows.append(container)
+	# Home storage is a permanent walkable fixture. A fresh profile and the
+	# tutorial Players Card handoff may have no purchased container yet, but the
+	# room still needs a visible object and a stable coach anchor.
+	if rows.is_empty():
+		rows.append({
+			"id": "home_storage",
+			"item_id": "bag",
+			"display_name": "Home Storage",
+		})
 	return rows
 
 
@@ -556,6 +568,9 @@ func _home_interactable_objects(run_state: RunState, hover_target_id: String, fo
 			"object_id": "meta_bag:%d" % bag_id,
 			"object_type": CONTEXT_MODE_META_BAG,
 			"visual_type": CONTEXT_MODE_META_BAG,
+			"placement_class": "surface_item",
+			"layout_spot_field": "home_bag_spots",
+			"layout_index": index,
 			"source_id": str(bag_id),
 			"label": str(bag.get("display_name", "Collection Bag")),
 			"short_description": str(bag.get("collection_display_name", "Unopened collection bag")),
@@ -578,6 +593,9 @@ func _home_interactable_objects(run_state: RunState, hover_target_id: String, fo
 			"object_id": "meta_bags:all",
 			"object_type": CONTEXT_MODE_META_BAG,
 			"visual_type": CONTEXT_MODE_META_BAG,
+			"placement_class": "surface_item",
+			"layout_spot_field": "home_bag_spots",
+			"layout_index": bags.size(),
 			"source_id": "0",
 			"label": "Bag Shelf",
 			"short_description": "%d unopened bags are stored here." % bag_count,
@@ -672,7 +690,7 @@ func _pawn_interactable_objects(run_state: RunState, hover_target_id: String, fo
 			"object_type": CONTEXT_MODE_META_SAL_SHELF,
 			"visual_type": CONTEXT_MODE_META_SAL_SHELF,
 			"slot_binding_source_id": "item:sal_shelf_%d" % index,
-			"placement_class": "surface_item",
+			"placement_class": "shop_item",
 			"source_id": str(index),
 			"label": str(slot.get("display_name", "Empty Shelf")),
 			"short_description": "%s, %s." % [str(slot.get("collection_display_name", "Collection")), str(slot.get("tier", "")).capitalize()] if occupied else "An empty spot behind Sal's locked glass.",

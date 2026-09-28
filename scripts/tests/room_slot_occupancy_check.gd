@@ -4,6 +4,7 @@ const ContentLibraryScript := preload("res://scripts/core/content_library.gd")
 const EnvironmentInstanceScript := preload("res://scripts/core/environment_instance.gd")
 const EnvironmentPlacementScript := preload("res://scripts/core/environment_placement.gd")
 const EnvironmentSlotBinderScript := preload("res://scripts/core/environment_slot_binder.gd")
+const EnvironmentInteractionControllerScript := preload("res://scripts/ui/environment_interaction_controller.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 const ScenarioSequenceRuntimeScript := preload("res://scripts/core/scenario_sequence_runtime.gd")
 const ScenarioSequenceSchemaScript := preload("res://scripts/core/scenario_sequence_schema.gd")
@@ -94,6 +95,11 @@ func _check_room_pass(archetype: Dictionary, layer_id: String, definition: Dicti
 		"visible": true,
 		"interactive": true,
 	})
+	# Production removes geometry-free Room Actions by attaching their actions to
+	# a visible person or fixture before the physical slot binder runs. Exercise
+	# that same composition boundary instead of asking the binder to place an
+	# intentionally abstract service/route row as a second room object.
+	records = EnvironmentInteractionControllerScript._attach_action_only_records(records)
 	var room_occupancy: Dictionary = {}
 	var live := EnvironmentSlotBinderScript.bind_base_records(environment, records, _dict(layout.get("slot_bindings", {})), room_occupancy)
 	if not bool(live.get("ok", false)):

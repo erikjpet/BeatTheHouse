@@ -20618,6 +20618,27 @@ func _coach_anchor_rects(game_coach_state: Dictionary = {}) -> Dictionary:
 			if not rendered_rect.has_area():
 				rendered_rect = environment_canvas.global_rect_for_object(object_id)
 			if not rendered_rect.has_area():
+				# Meta Home can schedule its first coach frame in the same refresh
+				# that installs the custom object catalog. The sealed focus rect is
+				# already the final click geometry, so it is a safe anchor while the
+				# canvas object cache catches up.
+				rendered_rect = environment_canvas.global_rect_for_normalized_board_rect(
+					object_data.get("focus_rect", object_data.get("normalized_rect", {}))
+				)
+			if not rendered_rect.has_area():
+				var normalized_rect := _rect_from_dict(object_data.get("focus_rect", object_data.get("normalized_rect", {})))
+				var anchor_surface := environment_canvas.get_global_rect()
+				if not anchor_surface.has_area():
+					anchor_surface = get_viewport().get_visible_rect()
+				if normalized_rect.has_area() and anchor_surface.has_area():
+					rendered_rect = Rect2(
+						anchor_surface.position + normalized_rect.position * anchor_surface.size,
+						normalized_rect.size * anchor_surface.size
+					)
+				elif normalized_rect.has_area():
+					var logical_size := Vector2(VisualStyle.ENVIRONMENT_BOARD_SIZE)
+					rendered_rect = Rect2(normalized_rect.position * logical_size, normalized_rect.size * logical_size)
+			if not rendered_rect.has_area():
 				continue
 			objects[object_id] = rendered_rect
 			if tutorial_meta_container_rect == Rect2() and object_id.begins_with("meta_container:"):

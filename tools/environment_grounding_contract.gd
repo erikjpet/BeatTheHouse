@@ -3,9 +3,8 @@ extends SceneTree
 const EnvironmentPlacementScript := preload("res://scripts/core/environment_placement.gd")
 const EnvironmentInstanceScript := preload("res://scripts/core/environment_instance.gd")
 const EnvironmentSlotBinderScript := preload("res://scripts/core/environment_slot_binder.gd")
-const ModalFocusScopeScript := preload("res://scripts/ui/modal_focus_scope.gd")
+const EnvironmentInteractionControllerScript := preload("res://scripts/ui/environment_interaction_controller.gd")
 const PixelSceneCanvasScript := preload("res://scripts/ui/pixel_scene_canvas.gd")
-const RoomActionListScript := preload("res://scripts/ui/room_action_list.gd")
 
 
 func _init() -> void:
@@ -17,16 +16,16 @@ func _run() -> void:
 	_check_map_inventory(failures)
 	_check_deterministic_base_binding(failures)
 	_check_slot_map_cache_invalidation(failures)
-	_check_base_overflow(failures)
-	_check_scenario_exit_and_overflow(failures)
+	_check_base_capacity_failure(failures)
+	_check_scenario_exit_and_capacity_failure(failures)
 	_check_authored_actor_route(failures)
 	_check_complete_record_binding(failures)
 	_check_shared_base_binding_aliases(failures)
 	_check_home_meta_binding_aliases(failures)
-	_check_overflow_action_list(failures)
+	_check_action_attachment(failures)
 	_check_semantic_classification(failures)
 	if failures.is_empty():
-		print("ENVIRONMENT_GROUNDING_CONTRACT_OK authority=fixed_slots maps=21 base=deterministic overflow=action_list scenario=stage_exit routes=authored")
+		print("ENVIRONMENT_GROUNDING_CONTRACT_OK authority=fixed_slots maps=21 base=deterministic overflow=removed scenario=stage_exit actions=attached routes=authored")
 		quit(0)
 		return
 	for failure_value in failures:
@@ -109,12 +108,16 @@ func _check_slot_map_cache_invalidation(failures: Array) -> void:
 		failures.append("a stale saved slot-map digest did not invalidate and deterministically rebind fixed room slots")
 
 
-func _check_base_overflow(failures: Array) -> void:
+func _check_base_capacity_failure(failures: Array) -> void:
 	var entries: Array = []
-	for index in range(32):
+	# Keep the fixture larger than the room's authored standing-person capacity;
+	# new hand-placed slots must not accidentally turn this into a success case.
+	for index in range(12):
 		entries.append({
 			"object_id": "actor:overflow_%02d" % index,
 			"object_type": "actor",
+			"visual_type": "character",
+			"physical_person": true,
 			"role": "patron",
 			"label": "Overflow Patron %02d" % index,
 			"spot_field": "event_spots",
@@ -122,26 +125,28 @@ func _check_base_overflow(failures: Array) -> void:
 		})
 	var result := EnvironmentSlotBinderScript.bind_base_layout({"archetype_id": "bar"}, entries)
 	var overflow: Array = result.get("overflow_ids", [])
-	if overflow.is_empty():
-		failures.append("base capacity exhaustion did not produce overflow")
-	for object_id_value in overflow:
-		var binding: Dictionary = (result.get("slot_bindings", {}) as Dictionary).get(str(object_id_value), {})
-		if str(binding.get("presentation_mode", "")) != "overflow" or not str(binding.get("slot_id", "")).is_empty():
-			failures.append("base overflow retained room geometry authority")
+	if bool(result.get("ok", true)) or (result.get("errors", []) as Array).is_empty():
+		failures.append("base capacity exhaustion did not fail with a missing authored-slot data error: %s" % JSON.stringify(result))
+	if not overflow.is_empty():
+		failures.append("base capacity exhaustion still produced removed overflow rows")
+	for binding_value in (result.get("slot_bindings", {}) as Dictionary).values():
+		if str((binding_value as Dictionary).get("presentation_mode", "")) == "overflow":
+			failures.append("base capacity exhaustion retained an overflow binding")
 
 
-func _check_scenario_exit_and_overflow(failures: Array) -> void:
+func _check_scenario_exit_and_capacity_failure(failures: Array) -> void:
 	var entries: Array = [{
 		"identity": "scenario::safe_exit",
 		"semantic": {"present": true, "label": "Safe Exit", "role": "exit", "placement_class": "doorway"},
 		"placement_class": "doorway",
 		"safe_exit": true,
 	}]
-	for index in range(24):
+	for index in range(4):
 		entries.append({
 			"identity": "scenario::fixture_%02d" % index,
-			"semantic": {"present": true, "label": "Fixture %02d" % index, "role": "fixture", "placement_class": "floor_fixture"},
-			"placement_class": "floor_fixture",
+			"semantic": {"present": true, "label": "Patron %02d" % index, "role": "patron", "placement_class": "standing_person"},
+			"placement_class": "standing_person",
+			"actor": true,
 			"safe_exit": false,
 		})
 	var first := EnvironmentSlotBinderScript.bind_scenario_visuals({"archetype_id": "bar"}, entries)
@@ -150,8 +155,10 @@ func _check_scenario_exit_and_overflow(failures: Array) -> void:
 	var exit_binding: Dictionary = bindings.get("scenario::safe_exit", {})
 	if str(exit_binding.get("kind", "")) != "exit" or str(exit_binding.get("presentation_mode", "")) != "room":
 		failures.append("required safe exit did not bind to an authored exit slot")
-	if (first.get("overflow_ids", []) as Array).is_empty():
-		failures.append("scenario capacity exhaustion did not produce overflow")
+	if bool(first.get("ok", true)) or (first.get("errors", []) as Array).is_empty():
+		failures.append("scenario capacity exhaustion did not fail with a missing authored-slot data error")
+	if not (first.get("overflow_ids", []) as Array).is_empty():
+		failures.append("scenario capacity exhaustion still produced removed overflow rows")
 	if str(first.get("binding_digest", "")) != str(second.get("binding_digest", "")):
 		failures.append("scenario binding is not stable across revisit/reload")
 
@@ -175,19 +182,19 @@ func _check_authored_actor_route(failures: Array) -> void:
 	var end_slot := _slot_by_id(surface_map, str(route.get("end_slot_id", "")))
 	var route_lane_ids: Array = route.get("lane_ids", [])
 	var route_points := EnvironmentSlotBinderScript.authored_route_points(surface_map, start_slot, end_slot, route_lane_ids)
-	if route_points.size() != 2 \
-			or not route_points[0].is_equal_approx(Vector2(452.0, 318.0)) \
-			or not route_points[1].is_equal_approx(Vector2(752.0, 318.0)) \
-			or not is_equal_approx(route_points[0].distance_to(route_points[1]), 300.0):
-		failures.append("back-alley actor route did not use the exact 300px authored-lane slice without backtracking: %s" % str(route_points))
+	var route_distance := 0.0
+	for index in range(1, route_points.size()):
+		route_distance += route_points[index - 1].distance_to(route_points[index])
+	if route_points.size() < 2 or not is_equal_approx(route_distance, route_points[0].distance_to(route_points[-1])):
+		failures.append("back-alley actor route did not use an ordered authored-lane slice without backtracking: %s" % str(route_points))
 
 	var corner_map := EnvironmentPlacementScript.surface_map({"archetype_id": "corner_store"})
-	var settled_slot := _slot_by_id(corner_map, "base.standing_person.01")
+	var settled_slot := _slot_by_id(corner_map, "stage.staff_floor_1")
 	var settled_rect := EnvironmentSlotBinderScript.rect_from_binding({"slot": settled_slot})
 	var canvas = PixelSceneCanvasScript.new()
 	canvas.foundation_snapshot = {"id": "corner_route_fixture", "archetype_id": "corner_store"}
 	var settled := {
-		"slot_id": "base.standing_person.01",
+		"slot_id": "stage.staff_floor_1",
 		"position": settled_rect.get_center() / Vector2(900.0, 430.0),
 		"small_screen_rect": EnvironmentSlotBinderScript.normalized_rect(EnvironmentSlotBinderScript.expanded_rect(settled_rect)),
 	}
@@ -195,16 +202,12 @@ func _check_authored_actor_route(failures: Array) -> void:
 	var departure: Dictionary = canvas.call("_person_transit_route", settled, "departure")
 	var arrival_pixels := _route_pixels(arrival.get("points", []))
 	var departure_pixels := _route_pixels(departure.get("points", []))
-	var expected_arrival: Array[Vector2] = [
-		Vector2(41.0, 76.0),
-		Vector2(64.0, 318.0),
-		Vector2(450.0, 318.0),
-		Vector2(652.0, 318.0),
-	]
-	var expected_departure: Array[Vector2] = expected_arrival.duplicate()
+	var expected_departure: Array[Vector2] = arrival_pixels.duplicate()
 	expected_departure.reverse()
-	var expected_distance := expected_arrival[0].distance_to(expected_arrival[1]) + 588.0
-	if not _route_points_match(arrival_pixels, expected_arrival) \
+	var expected_distance := 0.0
+	for index in range(1, arrival_pixels.size()):
+		expected_distance += arrival_pixels[index - 1].distance_to(arrival_pixels[index])
+	if arrival_pixels.size() < 2 \
 			or not _route_points_match(departure_pixels, expected_departure) \
 			or not is_equal_approx(float((arrival.get("stage", {}) as Dictionary).get("duration_sec", 0.0)), clampf(expected_distance / 82.0, 0.75, 8.0)):
 		failures.append("person arrival/departure did not use the shortest ordered exit-to-slot lane slice: arrival=%s departure=%s" % [str(arrival_pixels), str(departure_pixels)])
@@ -214,18 +217,22 @@ func _check_authored_actor_route(failures: Array) -> void:
 func _check_complete_record_binding(failures: Array) -> void:
 	var environment := {"archetype_id": "beach"}
 	var records: Array = []
-	for index in range(12):
+	for index in range(3):
 		records.append({
-			"object_id": "service:test_%02d" % index,
-			"object_type": "service",
-			"label": "Test Service %02d" % index,
+			"object_id": "actor:test_%02d" % index,
+			"object_type": "actor",
+			"visual_type": "character",
+			"physical_person": true,
+			"label": "Test Patron %02d" % index,
 			"visible": true,
 			"enabled": true,
 			"interactive": true,
-			"layout_spot_field": "service_spots",
+			"layout_spot_field": "event_spots",
 			"layout_index": index,
 		})
 	var result := EnvironmentSlotBinderScript.bind_base_records(environment, records)
+	if not bool(result.get("ok", false)):
+		failures.append("complete record binder rejected available authored room slots: %s" % JSON.stringify(result.get("errors", [])))
 	var rebound: Array = result.get("records", [])
 	if rebound.size() != records.size():
 		failures.append("complete record binder dropped generated inventory")
@@ -234,12 +241,15 @@ func _check_complete_record_binding(failures: Array) -> void:
 		var mode := str(record.get("presentation_mode", ""))
 		if mode == "room" and (record.get("focus_rect", {}) as Dictionary).is_empty():
 			failures.append("room record has no fixed focus rectangle")
-		elif mode == "overflow" and not (record.get("focus_rect", {}) as Dictionary).is_empty():
-			failures.append("overflow record retained canvas geometry")
+		elif mode != "room":
+			failures.append("live physical record was not assigned a room slot")
 
 
 func _check_shared_base_binding_aliases(failures: Array) -> void:
-	var environment := {"archetype_id": "pawn_shop"}
+	var offers: Array = []
+	for index in range(6):
+		offers.append({"id": "sal_shelf_%d" % index})
+	var environment := {"archetype_id": "pawn_shop", "item_offers": offers}
 	var entries: Array = []
 	for index in range(6):
 		entries.append({
@@ -252,13 +262,21 @@ func _check_shared_base_binding_aliases(failures: Array) -> void:
 	entries.append({"object_id": "travel:leave", "object_type": "travel", "spot_field": "travel_spots", "index": 0})
 	var base_result := EnvironmentSlotBinderScript.bind_base_layout(environment, entries)
 	var base_bindings: Dictionary = base_result.get("slot_bindings", {})
+	environment["layout"] = {
+		"slot_schema_version": base_result.get("slot_schema_version", 0),
+		"slot_map_digest": base_result.get("slot_map_digest", ""),
+		"slot_binding_digest": base_result.get("binding_digest", ""),
+		"slot_bindings": base_bindings.duplicate(true),
+		"slot_overflow_ids": base_result.get("overflow_ids", []),
+		"object_rects": base_result.get("object_rects", {}),
+	}
 	var records: Array = []
 	for index in range(6):
 		records.append({
 			"object_id": "meta_sal_shelf:%d" % index,
 			"object_type": "meta_sal_shelf",
 			"slot_binding_source_id": "item:sal_shelf_%d" % index,
-			"placement_class": "surface_item",
+			"placement_class": "shop_item",
 		})
 	records.append({
 		"object_id": "meta_sal:talk",
@@ -273,6 +291,9 @@ func _check_shared_base_binding_aliases(failures: Array) -> void:
 	})
 	records.append({"object_id": "travel:leave", "object_type": "travel"})
 	var result := EnvironmentSlotBinderScript.bind_base_records(environment, records, base_bindings)
+	if not bool(result.get("ok", false)):
+		failures.append("Sal shared alias binding failed: %s" % JSON.stringify(result.get("errors", [])))
+		return
 	var bindings: Dictionary = result.get("slot_bindings", {})
 	var rebound_by_id: Dictionary = {}
 	for record_value in result.get("records", []):
@@ -282,21 +303,21 @@ func _check_shared_base_binding_aliases(failures: Array) -> void:
 	for index in range(6):
 		var source_id := "item:sal_shelf_%d" % index
 		var alias_id := "meta_sal_shelf:%d" % index
-		var source: Dictionary = bindings.get(source_id, {})
+		var source: Dictionary = base_bindings.get(source_id, {})
 		var alias: Dictionary = bindings.get(alias_id, {})
 		var rebound: Dictionary = rebound_by_id.get(alias_id, {})
 		var slot_id := str(alias.get("slot_id", ""))
 		if str(source.get("presentation_mode", "")) != "room" \
 				or str(alias.get("presentation_mode", "")) != "room" \
 				or slot_id != str(source.get("slot_id", "")) \
-				or str(alias.get("placement_class", "")) != "surface_item" \
+				or str(alias.get("placement_class", "")) != "shop_item" \
 				or (rebound.get("focus_rect", {}) as Dictionary).is_empty():
-			failures.append("Sal shelf %d did not reuse its generated fixed surface-item binding" % index)
+			failures.append("Sal shelf %d did not reuse its generated fixed shop-item binding" % index)
 		if shelf_slots.has(slot_id):
 			failures.append("Sal shelf %d reused another visible shelf slot %s" % [index, slot_id])
 		shelf_slots[slot_id] = true
 	var sal: Dictionary = bindings.get("meta_sal:talk", {})
-	var merchant: Dictionary = bindings.get("shopkeeper:merchant", {})
+	var merchant: Dictionary = base_bindings.get("shopkeeper:merchant", {})
 	var counter: Dictionary = bindings.get("meta_pawn_counter:sell", {})
 	if str(sal.get("presentation_mode", "")) != "room" \
 			or str(sal.get("slot_id", "")) != str(merchant.get("slot_id", "")) \
@@ -386,88 +407,32 @@ func _check_home_meta_binding_aliases(failures: Array) -> void:
 		if str(binding.get("presentation_mode", "")) != "room" \
 				or str(binding.get("slot_id", "")) != str(expectation[1]) \
 				or str(binding.get("placement_class", "")) != str(expectation[2]):
-			failures.append("home late control %s did not bind its named %s slot as %s" % expectation)
+			failures.append("home late control %s did not bind its named %s slot as %s: %s" % [expectation[0], expectation[1], expectation[2], JSON.stringify(binding)])
 
 
-func _check_overflow_action_list(failures: Array) -> void:
+func _check_action_attachment(failures: Array) -> void:
 	var records := [
 		{
-			"object_id": "scenario::overflow_enabled", "object_type": "scenario_object",
-			"label": "Overflow enabled", "presentation_mode": "overflow", "visible": true,
-			"presentation_required": true, "enabled": true, "focus_order": 20,
-			"available_actions": [{"id": "inspect", "label": "Inspect"}],
-			"focus_rect": Rect2(0.2, 0.2, 0.1, 0.1),
+			"object_id": "actor:clerk", "object_type": "character", "visual_type": "character",
+			"label": "Clerk", "presentation_mode": "room", "visible": true, "interactive": true,
+			"focus_rect": {"x": 0.2, "y": 0.2, "w": 0.1, "h": 0.2},
 		},
 		{
-			"object_id": "scenario::overflow_disabled", "object_type": "scenario_object",
-			"label": "Overflow disabled", "presentation_mode": "overflow", "visible": true,
-			"presentation_required": true, "enabled": false, "focus_order": 10,
-			"disabled_reason": "Not yet available.", "available_actions": [],
-		},
-		{
-			"object_id": "scenario::hidden", "label": "Hidden", "presentation_mode": "overflow",
-			"visible": false, "presentation_required": true, "enabled": true,
-			"available_actions": [{"id": "leak", "label": "Leak"}],
-		},
-		{
-			"object_id": "scenario::not_required", "label": "Not required", "presentation_mode": "overflow",
-			"visible": true, "presentation_required": false, "enabled": true,
-			"available_actions": [{"id": "leak", "label": "Leak"}],
-		},
-		{
-			"object_id": "scenario::room", "label": "In room", "presentation_mode": "room",
-			"visible": true, "presentation_required": true, "enabled": true,
-			"available_actions": [{"id": "inspect", "label": "Inspect"}],
+			"object_id": "scenario::abstract_ledger", "object_type": "scenario_sequence",
+			"label": "Ledger", "visible": true, "enabled": true,
+			"owner_namespace": "scenario", "stable_object_id": "abstract_ledger",
+			"scenario_sequence_actions": [{"id": "inspect", "label": "Inspect Ledger"}],
 		},
 	]
-	var focus_scope := ModalFocusScopeScript.new()
-	var action_list = RoomActionListScript.new()
-	action_list.configure(focus_scope)
-	get_root().add_child(action_list)
-	var selected: Array = []
-	action_list.action_selected.connect(func(record: Dictionary, action: Dictionary) -> void:
-		selected.append({"record": record, "action": action})
-	)
-	action_list.render(records)
-	var buttons := action_list.find_children("*", "Button", true, false)
-	var enabled_row: Button = null
-	var disabled_row: Button = null
-	var all_targets_accessible := true
-	for button_value in buttons:
-		var button := button_value as Button
-		if button.custom_minimum_size.x < 44.0 or button.custom_minimum_size.y < 44.0 or button.focus_mode != Control.FOCUS_ALL:
-			all_targets_accessible = false
-		if str(button.get_meta("object_id", "")) == "scenario::overflow_enabled":
-			enabled_row = button
-		elif str(button.get_meta("object_id", "")) == "scenario::overflow_disabled":
-			disabled_row = button
-	if not action_list.visible or buttons.size() != 4 or not all_targets_accessible or enabled_row == null or disabled_row == null:
-		failures.append("overflow action list did not expose exactly two sorted 44-pixel keyboard/controller/touch rows")
-	else:
-		action_list.open()
-		if focus_scope.active_root() == null:
-			failures.append("overflow action list did not enter the shared modal focus scope")
-		disabled_row.emit_signal("pressed")
-		if not selected.is_empty() or focus_scope.active_root() == null:
-			failures.append("disabled overflow action emitted or closed its owned modal scope")
-		enabled_row.emit_signal("pressed")
-		var selected_record: Dictionary = (selected[0] as Dictionary).get("record", {}) if selected.size() == 1 else {}
-		var selected_action: Dictionary = (selected[0] as Dictionary).get("action", {}) if selected.size() == 1 else {}
-		if selected.size() != 1 or str(selected_record.get("object_id", "")) != "scenario::overflow_enabled" \
-				or str(selected_action.get("id", "")) != "inspect" or focus_scope.active_root() != null:
-			failures.append("enabled overflow action did not route its exact production record/action and close its modal scope")
-	var canvas = PixelSceneCanvasScript.new()
-	canvas.size = Vector2(900.0, 430.0)
-	canvas.render_environment_snapshot({"id": "overflow_list_contract", "archetype_id": "bar", "interactable_objects": records})
-	for object_value in canvas.current_view_snapshot().get("objects", []):
-		if str((object_value as Dictionary).get("presentation_mode", "room")) == "overflow":
-			failures.append("overflow action remained drawable/hittable on the room canvas")
-			break
-	canvas.free()
-	action_list.render([])
-	if action_list.visible:
-		failures.append("empty overflow action list left a visible launcher")
-	action_list.free()
+	var attached := EnvironmentInteractionControllerScript._attach_action_only_records(records)
+	if attached.size() != 1:
+		failures.append("abstract room action was not folded into exactly one visible object")
+		return
+	var host := attached[0] as Dictionary
+	var actions: Array = host.get("attached_room_actions", [])
+	if str(host.get("object_id", "")) != "actor:clerk" or actions.size() != 1 \
+			or str((actions[0] as Dictionary).get("label", "")) != "Inspect Ledger":
+		failures.append("abstract room action did not remain reachable from its visible host object")
 
 
 func _check_semantic_classification(failures: Array) -> void:

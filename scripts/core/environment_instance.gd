@@ -1236,21 +1236,32 @@ static func _home_container_ids(environment_data: Dictionary) -> Array:
 
 
 static func _home_tenure_should_exist(environment_data: Dictionary) -> bool:
-	return str(environment_data.get("kind", "")) == "home" and not bool(environment_data.get("home_lost", false))
+	return str(environment_data.get("kind", "")) == "home" \
+		and not bool(environment_data.get("meta_session", false)) \
+		and not bool(environment_data.get("home_lost", false))
 
 
 static func _home_sleep_should_exist(environment_data: Dictionary) -> bool:
-	return str(environment_data.get("kind", "")) == "home" and not bool(environment_data.get("home_lost", false))
+	return str(environment_data.get("kind", "")) == "home" \
+		and not bool(environment_data.get("meta_session", false)) \
+		and not bool(environment_data.get("home_lost", false))
 
 
 static func _home_storage_should_exist(environment_data: Dictionary) -> bool:
-	return str(environment_data.get("kind", "")) == "home" and not bool(environment_data.get("home_lost", false))
+	return str(environment_data.get("kind", "")) == "home" \
+		and not bool(environment_data.get("meta_session", false)) \
+		and not bool(environment_data.get("home_lost", false))
 
 
 # Returns whether this environment should expose a merchant prop.
 static func _shopkeeper_should_exist(environment_data: Dictionary) -> bool:
 	if _object_fixture_declared(environment_data, "shopkeeper:merchant"):
 		return true
+	# Starting possessions are represented as zero-price pickup offers so they
+	# can use the ordinary item interaction path. They do not turn a home into a
+	# shop and must not synthesize a merchant object there.
+	if str(environment_data.get("kind", "")) == "home":
+		return false
 	if not JsonCoerceScript._copy_array(environment_data.get("item_offers", [])).is_empty():
 		return true
 	return str(environment_data.get("kind", "")) == "shop"

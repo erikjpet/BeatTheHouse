@@ -313,6 +313,8 @@ var rng_seed: int = 1
 var rng_state: int = 1
 var challenge_config: Dictionary = {}
 var _money_revision := 0
+var _money_change_batch_depth := 0
+var _money_change_batch_dirty := false
 var _bankroll: int = DEFAULT_BANKROLL
 var bankroll: int:
 	get: return _bankroll
@@ -4430,8 +4432,10 @@ func story_log_entry_count() -> int:
 
 # Changes bankroll and refreshes economy state.
 func change_bankroll(delta: int, defer_bankroll_zero: bool = false) -> void:
+	_begin_money_change_batch()
 	bankroll += delta
 	_refresh_economy(defer_bankroll_zero)
+	_end_money_change_batch()
 
 
 func money_revision() -> int:
@@ -4439,8 +4443,23 @@ func money_revision() -> int:
 
 
 func _mark_money_changed() -> void:
+	if _money_change_batch_depth > 0:
+		_money_change_batch_dirty = true
+		return
 	_money_revision += 1
 	money_changed.emit(_money_revision)
+
+
+func _begin_money_change_batch() -> void:
+	_money_change_batch_depth += 1
+
+
+func _end_money_change_batch() -> void:
+	_money_change_batch_depth = maxi(0, _money_change_batch_depth - 1)
+	if _money_change_batch_depth == 0 and _money_change_batch_dirty:
+		_money_change_batch_dirty = false
+		_money_revision += 1
+		money_changed.emit(_money_revision)
 
 
 func grand_casino_table_uses_chips(game_id: String, environment: Dictionary = {}) -> bool:

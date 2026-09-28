@@ -154,6 +154,10 @@ static func interactable_object_view_list(host: Variant) -> Array:
 	# Action-only records used to consume a second, geometry-free UI plane. Fold
 	# them into a visible person or fixture before the slot binder sees the live
 	# inventory, so every record that survives this point owns room geometry.
+	# Delivery handoffs must claim their destination person first so their
+	# owner-scoped world-sequence token is not flattened into a generic attached
+	# action by this pass.
+	result = _attach_delivery_handoff_to_contact(host, result)
 	result = _attach_action_only_records(result)
 	# Seal the complete live base inventory against authored slots before scenario
 	# composition. Runtime-only physical objects consume remaining compatible room
@@ -239,8 +243,8 @@ static func interactable_object_view_list(host: Variant) -> Array:
 		host.run_state.current_environment.erase("scenario_sequence_lifecycle_errors")
 		host.run_state.current_environment.erase("scenario_layout_audit")
 		host.run_state.current_environment.erase("scenario_layout_authority_digest")
-	result = _attach_action_only_records(result)
 	result = _attach_delivery_handoff_to_contact(host, result)
+	result = _attach_action_only_records(result)
 	return result
 
 
@@ -253,7 +257,6 @@ static func _attach_action_only_records(records: Array) -> Array:
 			continue
 		var binding_source_id := str(record.get("slot_binding_source_id", "")).strip_edges()
 		if str(record.get("presentation_mode", "room")) == "overflow" \
-				or str(record.get("object_id", "")) == "shopkeeper:merchant" \
 				or not binding_source_id.is_empty() and binding_source_id != str(record.get("object_id", "")) \
 				or not EnvironmentSlotBinderScript.base_record_requires_room_slot(record):
 			action_only.append(record)
@@ -1368,6 +1371,11 @@ static func _attach_delivery_handoff_to_contact(host: Variant, records: Array) -
 	var handoff := _dict(host.run_state.delivery_arrival_interaction())
 	if handoff.is_empty():
 		return records
+	for record_value in records:
+		var existing_contact := _dict(record_value)
+		if bool(existing_contact.get("delivery_contact", false)) \
+				and not str(existing_contact.get("world_sequence_owner_token", "")).strip_edges().is_empty():
+			return records
 	var handoff_index := -1
 	for index in range(records.size()):
 		var record := _dict(records[index])

@@ -430,7 +430,12 @@ $FoundationSuiteStageBaselinesSec = @{
     # measurement is 268.012s; retain the common 1.5x overrun guard.
     "validate_project" = 268.012
     "standalone_contract" = 221.000
-    "foundation_all" = 153.768
+    # The aggregate now includes the expanded environment/scenario contracts.
+    # Its former 300s floor expired before it could publish the actionable
+    # standalone results. The direct aggregate is longer than ten minutes and
+    # the current sharded contract baseline is about 22.6 minutes, so retain the
+    # standard 1.5x guard around a conservative 20-minute serial envelope.
+    "foundation_all" = 1200.000
     "foundation_systems" = 29.141
     # Expanded GC05.2 coverage and same-host Stage 1 control: .tmp/gc05_2_ui_baseline_evidence.md
     "ui_scene_compile" = 83.234

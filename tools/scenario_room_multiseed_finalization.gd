@@ -398,12 +398,17 @@ func _check_barrier_placements(library: Variant, definitions: Array, failures: A
 		for entry_value in bind_entries:
 			var entry := _dict(entry_value)
 			var identity := str(entry.get("identity", ""))
+			var role := str(_dict(entry.get("semantic", {})).get("role", "")).to_lower()
 			var binding := _dict(bindings.get(identity, {}))
 			var mode := str(binding.get("presentation_mode", ""))
-			if binding.is_empty() or mode not in ["room", "overflow"]:
-				failures.append("Barrier %s/%s has neither an authored stage slot nor an explicit overflow binding." % [str(definition.get("id", "")), identity])
+			# Barriers are abstract scenario actions and attach to a visible owner;
+			# obstacles remain concrete room props. Neither may use removed overflow UI.
+			if role == "barrier":
+				if not binding.is_empty():
+					failures.append("Abstract barrier %s/%s incorrectly consumed room geometry." % [str(definition.get("id", "")), identity])
 				continue
-			if mode == "overflow":
+			if binding.is_empty() or mode != "room":
+				failures.append("Obstacle %s/%s has no authored room slot." % [str(definition.get("id", "")), identity])
 				continue
 			var slot := _dict(binding.get("slot", {}))
 			var rect := EnvironmentSlotBinderScript.rect_from_binding(binding)

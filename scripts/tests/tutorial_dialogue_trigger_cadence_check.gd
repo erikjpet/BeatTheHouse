@@ -20,10 +20,10 @@ const BLACKJACK_FIXTURE_CHALLENGE := {
 		"starting_bankroll": 80,
 	},
 }
-# Round 4's authored exit/scenario-slot repairs change the serialized room
-# authority but preserve the deterministic zero-Heat reprieve behavior; the
-# gameplay assertions below remain the one-shot terminal authority.
-const BLACKJACK_FIXTURE_BASELINE_SHA256 := "d79d0d2e0d9dd216fcf43273b68d846669451c5622a0b78990caf47ff74a5ae5"
+# The shared placement authority and batched money revision change the
+# serialized fixture while preserving the deterministic zero-Heat reprieve
+# behavior; the gameplay assertions below remain the one-shot authority.
+const BLACKJACK_FIXTURE_BASELINE_SHA256 := "f7e7397289df07151427da1a8bf2ca07eae1ecc62f7779577610c360019c493c"
 const BLACKJACK_DEFINITION_SHA256 := "4a684c890b00bf03082af3f95a37369336302d1a51e668d9f325a158ca47dfa3"
 const NORMALIZED_CREW_AUTHORITY_ID := "0000000000000000000000000000000000000000000000000000000000000000"
 

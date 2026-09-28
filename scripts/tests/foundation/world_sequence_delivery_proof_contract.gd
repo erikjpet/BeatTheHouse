@@ -404,6 +404,23 @@ func _check_target_handoff(run_state: RunState, library: ContentLibrary, token: 
 	var semantic := _dict(projection.get("semantic_state", {}))
 	var interactions := _dict(semantic.get("interactions", {}))
 	var handoff := _dict(interactions.get("crew::package_handoff", {}))
+	# Room-actions removal attaches an abstract handoff command to its visible
+	# destination contact. Accept only that exact attached owner/stable-id pair,
+	# and retain the owner token from the authenticated action itself.
+	if handoff.is_empty():
+		for interaction_value in interactions.values():
+			var candidate := _dict(interaction_value)
+			for action_value in _array(candidate.get("available_actions", [])):
+				var action := _dict(action_value)
+				if str(action.get("attached_owner_namespace", "")) != "crew" \
+						or str(action.get("attached_stable_object_id", "")) != "package_handoff":
+					continue
+				handoff = candidate.duplicate(true)
+				handoff["available_actions"] = [action.duplicate(true)]
+				handoff["world_sequence_owner_token"] = str(action.get("world_sequence_owner_token", ""))
+				break
+			if not handoff.is_empty():
+				break
 	if str(handoff.get("world_sequence_owner_token", "")) != token:
 		failures.append("Composed target-room handoff is not routed by its exact owner-scoped sequence token: %s." % JSON.stringify(handoff))
 	if run_state.world_sequence_mounted_owner_for_channel("delivery_handoff", target_node_id) != token:

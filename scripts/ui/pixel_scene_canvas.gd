@@ -3126,6 +3126,8 @@ func _objects_from_foundation_snapshot(snapshot: Dictionary) -> Array:
 	return objects
 func _objects_from_interactable_records(records: Array) -> Array:
 	var objects: Array = []
+	var rendered_slot_holders: Dictionary = {}
+	var rendered_object_ids: Dictionary = {}
 	for index in range(records.size()):
 		if typeof(records[index]) != TYPE_DICTIONARY:
 			continue
@@ -3135,6 +3137,17 @@ func _objects_from_interactable_records(records: Array) -> Array:
 		var object_id := str(record.get("object_id", ""))
 		if object_id.is_empty():
 			continue
+		if rendered_object_ids.has(object_id):
+			push_warning("Environment object %s was emitted more than once; suppressed the later duplicate." % object_id)
+			continue
+		var slot_id := str(record.get("slot_id", "")).strip_edges()
+		var slot_holder := str(rendered_slot_holders.get(slot_id, "")) if not slot_id.is_empty() else ""
+		if not slot_holder.is_empty():
+			push_warning("Environment slot %s is already rendered by %s; suppressed duplicate %s." % [slot_id, slot_holder, object_id])
+			continue
+		rendered_object_ids[object_id] = true
+		if not slot_id.is_empty():
+			rendered_slot_holders[slot_id] = object_id
 		var interaction_type := str(record.get("object_type", "info"))
 		var object_type := str(record.get("visual_type", interaction_type))
 		var normalized_rect := _normalized_rect_from_record(record)
@@ -3221,7 +3234,7 @@ func _objects_from_interactable_records(records: Array) -> Array:
 			"layout_index": maxi(0, int(record.get("layout_index", 0))),
 			"layout_spot_field": str(record.get("layout_spot_field", "")),
 			"placement_class": str(record.get("placement_class", "")),
-			"slot_id": str(record.get("slot_id", "")),
+			"slot_id": slot_id,
 			"presentation_mode": str(record.get("presentation_mode", "room")),
 			"contact": str(record.get("contact", "")),
 		}
@@ -5089,6 +5102,9 @@ func _update_drunk_distortion_protected_rects() -> void:
 func _natural_model_rect_for_object(object_data: Dictionary) -> Rect2:
 	var slot_rect := _board_rect_for_object(object_data)
 	var model_size := _natural_model_size_for_object(object_data)
+	if small_screen_mode and bool(object_data.get("interactive", true)):
+		model_size.x = maxf(model_size.x, SmallScreenPolicyScript.ENVIRONMENT_OBJECT_HIT_SIZE.x)
+		model_size.y = maxf(model_size.y, SmallScreenPolicyScript.ENVIRONMENT_OBJECT_HIT_SIZE.y)
 	var placement_class := str(object_data.get("placement_class", "")).strip_edges()
 	if placement_class.is_empty():
 		placement_class = EnvironmentPlacementScript.classify(
@@ -5141,7 +5157,7 @@ func _natural_model_size_for_object(object_data: Dictionary) -> Vector2:
 			return Vector2(110.0, 72.0)
 		"ground_marker":
 			return Vector2(104.0, 58.0)
-		"surface_item":
+		"surface_item", "shop_item":
 			return Vector2(90.0, 54.0)
 		"wall_mounted":
 			return Vector2(96.0, 54.0)
@@ -5436,17 +5452,25 @@ func _resolved_label_rect_for_object(object_data: Dictionary, object_rect: Rect2
 
 func _rebuild_object_label_rect_cache(objects: Array) -> void:
 	object_label_rect_cache = {}
+	var live_objects: Array[Dictionary] = []
 	var object_rects: Array[Rect2] = []
 	var default_label_rects: Array[Rect2] = []
 	var resolved_label_rects: Array[Rect2] = []
 	var moved_count := 0
 	for value in objects:
 		var object_data: Dictionary = value if typeof(value) == TYPE_DICTIONARY else {}
-		var object_rect := _natural_model_rect_for_object(object_data)
-		object_rects.append(object_rect)
+		live_objects.append(object_data)
+		object_rects.append(_natural_model_rect_for_object(object_data))
+	for index in range(live_objects.size()):
+		var object_data := live_objects[index]
+		var object_rect := object_rects[index]
 		var default_rect := _label_rect_for_object(object_rect, str(object_data.get("label", "")))
 		default_label_rects.append(default_rect)
-		var resolved := _resolve_object_label_overlap(default_rect, object_rect, resolved_label_rects)
+		var occupied := resolved_label_rects.duplicate()
+		for other_index in range(object_rects.size()):
+			if other_index != index:
+				occupied.append(object_rects[other_index])
+		var resolved := _resolve_object_label_overlap(default_rect, object_rect, occupied)
 		var object_id := str(object_data.get("id", ""))
 		if not object_id.is_empty() and resolved.has_area():
 			object_label_rect_cache[object_id] = resolved

@@ -249,8 +249,16 @@ static func support_for_rect_on_surfaces(surfaces: Dictionary, placement_class: 
 		for band_key in ["bands", "stage_bands"]:
 			for band_value in _array(floor_data.get(str(band_key), [])):
 				var band := _rect_array(band_value)
-				if band.has_point(contact) and contact.y >= contact_range.x - 0.5 and contact.y <= contact_range.y + 0.5:
-					return {"surface_id": "stage" if str(band_key) == "stage_bands" else "floor"}
+				if not _rect_has_point_inclusive(band, contact):
+					continue
+				# Raised and recessed stage bands are explicit grounded supports and
+				# intentionally sit outside the main floor's contact range. The range
+				# only constrains the broad floor bands. Accept authored feet on a
+				# band's lower edge as well; Rect2.has_point excludes that edge.
+				if str(band_key) == "stage_bands":
+					return {"surface_id": "stage"}
+				if contact.y >= contact_range.x - 0.5 and contact.y <= contact_range.y + 0.5:
+					return {"surface_id": "floor"}
 	elif placement_class in ["behind_counter_person", "surface_item", "shop_item"]:
 		for counter_value in _array(surfaces.get("counters", [])):
 			var counter := _dict(counter_value)
@@ -331,6 +339,11 @@ static func _contact_point(rect: Rect2, placement_class: String) -> Vector2:
 	if placement_class in ["wall_mounted", "hanging", "doorway"]:
 		return rect.get_center()
 	return Vector2(rect.get_center().x, rect.end.y)
+
+
+static func _rect_has_point_inclusive(rect: Rect2, point: Vector2) -> bool:
+	return point.x >= rect.position.x - 0.5 and point.x <= rect.end.x + 0.5 \
+		and point.y >= rect.position.y - 0.5 and point.y <= rect.end.y + 0.5
 
 
 static func _intersects_named_rects(rect: Rect2, entries: Array) -> bool:

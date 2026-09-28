@@ -51,7 +51,8 @@ const ABSTRACT_SCENARIO_ID_TOKENS := [
 # Casino fixtures bind interaction targets to room-native desks, counters, and
 # machines that the environment canvas already renders as permanent scenery.
 const BASE_ALWAYS_PHYSICAL_TYPES := [
-	"casino_fixture", "environment_layer", "game", "home_storage", "home_tenure", "item", "meta_pawn_counter", "numbers", "shopkeeper", "numbers_silas",
+	"casino_fixture", "environment_layer", "game", "home_container", "home_storage", "home_tenure", "item",
+	"meta_bag", "meta_pawn_counter", "meta_trade_up", "meta_upgrade", "numbers", "shopkeeper", "numbers_silas",
 ]
 const BASE_PERSON_VISUAL_TYPES := ["actor", "character", "npc"]
 const BASE_ALWAYS_PHYSICAL_OBJECT_IDS := [
@@ -59,8 +60,15 @@ const BASE_ALWAYS_PHYSICAL_OBJECT_IDS := [
 	"game_hook:scratch_tickets:scratch_ticket_clerk",
 	"dialogue:scratch_ticket_scalper",
 	"travel:grand_casino",
+	"travel:grand_casino_back_room",
+	"travel:grand_casino_cage",
 	"travel:grand_casino_high_limit",
 	"travel:leave",
+]
+const BASE_ACTION_ONLY_EVENT_IDS := [
+	"event:scenario_bringer_show_favor",
+	"event:scenario_punchline_high_stakes_table",
+	"event:scenario_slow_night_intel",
 ]
 const BASE_EVENT_ART_PROPS := [
 	"casino_host", "clerk_counter", "clerk_talk", "counter_phone",
@@ -89,30 +97,46 @@ static func bind_base_layout(environment: Dictionary, active_entries: Array, sha
 	var overflow_ids: Array = []
 	var warnings: Array = []
 	var errors: Array = []
+	var warning_scope := "base layout %s" % str(surface_map.get("id", environment.get("archetype_id", "unknown")))
+	var scenario_state := _dict(environment.get("scenario_sequence_state", environment.get("scenario_state", {})))
+	var scenario_id := str(scenario_state.get("scenario_id", scenario_state.get("id", ""))).strip_edges()
+	if not scenario_id.is_empty():
+		warning_scope += "/%s" % scenario_id
 	var entries := active_entries.duplicate(true)
 	entries.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
 		var left := _dict(left_value)
 		var right := _dict(right_value)
-		var left_shop_order := _shop_item_order(environment, str(left.get("object_id", "")))
-		var right_shop_order := _shop_item_order(environment, str(right.get("object_id", "")))
+		var left_id := str(left.get("object_id", ""))
+		var right_id := str(right.get("object_id", ""))
+		var left_shop_order := _shop_item_order(environment, left_id)
+		var right_shop_order := _shop_item_order(environment, right_id)
+		var left_exact := left_shop_order < 0 and not str(object_preferences.get(left_id, "")).strip_edges().is_empty()
+		var right_exact := right_shop_order < 0 and not str(object_preferences.get(right_id, "")).strip_edges().is_empty()
+		if left_exact != right_exact:
+			return left_exact
 		if left_shop_order >= 0 and right_shop_order >= 0 and left_shop_order != right_shop_order:
 			return left_shop_order < right_shop_order
-		return str(left.get("object_id", "")) < str(right.get("object_id", ""))
+		return left_id < right_id
 	)
 	for entry_value in entries:
 		var entry := _dict(entry_value)
 		var object_id := str(entry.get("object_id", "")).strip_edges()
 		if object_id.is_empty() or bindings.has(object_id):
 			continue
-		var placement_class := EnvironmentPlacementScript.classify(
+		var class_override := str(_dict(surface_map.get("class_overrides", {})).get(object_id, ""))
+		var placement_class := class_override if class_override in EnvironmentPlacementScript.CLASSES else EnvironmentPlacementScript.classify(
 			entry,
 			str(entry.get("object_type", "")),
 			object_id,
 			str(entry.get("visual_prop", entry.get("prop", "")))
 		)
+		# Inventory items placed in a home are physical belongings, not shop
+		# offers. Only records present in this environment's offer list (or with
+		# an explicit authored override) may consume the dedicated shop row.
+		if placement_class == "shop_item" and class_override != "shop_item" and _shop_item_order(environment, object_id) < 0:
+			placement_class = "surface_item"
 		var binding_source_id := str(entry.get("slot_binding_source_id", "")).strip_edges()
-		if object_id == "shopkeeper:merchant" \
-				or not binding_source_id.is_empty() and binding_source_id != object_id:
+		if not binding_source_id.is_empty() and binding_source_id != object_id:
 			# This record contributes actions to an already physical room object;
 			# it is not a second person or fixture and therefore owns no slot.
 			continue
@@ -126,12 +150,12 @@ static func bind_base_layout(environment: Dictionary, active_entries: Array, sha
 			preference = str(category_preferences.get(category_key, "")).strip_edges()
 		# Generated base records are actionable by default. Decorative-only late
 		# records bypass this inventory; never serialize an undersized room target.
-		var candidate_slots := exit_slots if object_id == "travel:leave" else slots + stage_slots
+		var candidate_slots := slots + exit_slots if object_id == "travel:leave" else slots + stage_slots
 		if object_id == "travel:leave":
 			preference = _base_leave_preference(candidate_slots, preference)
 		var slot := _select_slot(candidate_slots, occupied, placement_class, preference, false, MIN_INTERACTIVE_TARGET)
 		if slot.is_empty():
-			_warn_missing_slot("base layout", object_id, placement_class, warnings, errors)
+			_warn_missing_slot(warning_scope, object_id, placement_class, warnings, errors)
 			continue
 		var slot_id := str(slot.get("id", ""))
 		occupied[slot_id] = object_id
@@ -296,11 +320,9 @@ static func validate_base_layout_authority(environment: Dictionary, current_reco
 	sorted_stored.sort()
 	if not stored_overflow_valid or stored_overflow != sorted_stored or stored_overflow != overflow_ids:
 		errors.append("Persisted base slot authority overflow ids are not the exact sorted unique overflow binding set.")
-	var aliases: Dictionary = {}
 	for record_value in current_records:
 		var record := _dict(record_value)
 		var object_id := str(record.get("object_id", record.get("presentation_object_id", ""))).strip_edges()
-		var source_id := str(record.get("slot_binding_source_id", "")).strip_edges()
 		if object_id.is_empty():
 			continue
 		var record_binding := _dict(bindings.get(object_id, {}))
@@ -351,27 +373,12 @@ static func validate_base_layout_authority(environment: Dictionary, current_reco
 				str(record.get("prop", "")),
 				str(record.get("icon_key", "")),
 			])
-		if source_id.is_empty():
-			continue
-		if aliases.has(object_id) and str(aliases.get(object_id, "")) != source_id:
-			errors.append("Current base record %s declares conflicting slot-binding aliases." % object_id)
-		else:
-			aliases[object_id] = source_id
 	for slot_id_value in room_ids_by_slot.keys():
 		var identities := _array(room_ids_by_slot.get(slot_id_value, []))
 		if identities.size() <= 1:
 			continue
 		identities.sort()
-		var roots: Array = []
-		for identity_value in identities:
-			var identity := str(identity_value)
-			var source_id := str(aliases.get(identity, ""))
-			if source_id.is_empty():
-				roots.append(identity)
-			elif source_id == identity or not identities.has(source_id):
-				errors.append("Persisted base room binding %s duplicates slot %s without an explicit current source alias." % [identity, str(slot_id_value)])
-		if roots.size() != 1:
-			errors.append("Persisted base room slot %s has duplicate bindings without exactly one unaliased source." % str(slot_id_value))
+		errors.append("Persisted base room slot %s is claimed by multiple live identities: %s." % [str(slot_id_value), JSON.stringify(identities)])
 	return {
 		"ok": errors.is_empty(),
 		"slot_bindings": bindings if errors.is_empty() else {},
@@ -408,9 +415,12 @@ static func _closed_semantic_placement_class(surface_map: Dictionary, record: Di
 static func base_record_requires_room_slot(record: Dictionary) -> bool:
 	var object_type := str(record.get("object_type", "")).strip_edges()
 	var visual_type := str(record.get("visual_type", "")).strip_edges()
+	var object_id := str(record.get("object_id", "")).strip_edges()
+	if object_id in BASE_ACTION_ONLY_EVENT_IDS:
+		return false
 	if object_type in BASE_ALWAYS_PHYSICAL_TYPES:
 		return true
-	if str(record.get("object_id", "")).strip_edges() in BASE_ALWAYS_PHYSICAL_OBJECT_IDS:
+	if object_id in BASE_ALWAYS_PHYSICAL_OBJECT_IDS:
 		return true
 	if bool(record.get("physical_person", false)) \
 			or visual_type in BASE_PERSON_VISUAL_TYPES \
@@ -570,6 +580,36 @@ static func bind_base_records(environment: Dictionary, records: Array, existing_
 		object_rects = _dict(prior_authority.get("object_rects", {}))
 		if not existing_bindings.is_empty() and JSON.stringify(existing_bindings) != JSON.stringify(bindings):
 			return {"ok": false, "records": records.duplicate(true), "slot_bindings": {}, "overflow_ids": [], "object_rects": {}, "errors": ["Caller base bindings do not match the authenticated persisted authority."]}
+	# A presentation alias replaces its physical source; it never becomes a second
+	# occupant of the source slot. This is used by meta-home containers and Sal's
+	# shelf rows, whose click identity differs from the generated room identity.
+	var aliases_by_source: Dictionary = {}
+	for record_value in records:
+		var alias_record := _dict(record_value)
+		var alias_id := str(alias_record.get("object_id", "")).strip_edges()
+		var source_id := str(alias_record.get("slot_binding_source_id", "")).strip_edges()
+		if alias_id.is_empty() or source_id.is_empty() or alias_id == source_id:
+			continue
+		if aliases_by_source.has(source_id) and str(aliases_by_source.get(source_id, "")) != alias_id:
+			var alias_warning := "base record binding source %s is claimed by multiple live aliases; each physical source may have only one room identity." % source_id
+			push_warning(alias_warning)
+			warnings.append(alias_warning)
+			continue
+		aliases_by_source[source_id] = alias_id
+	var alias_sources := aliases_by_source.keys()
+	alias_sources.sort_custom(func(left: Variant, right: Variant) -> bool: return str(left) < str(right))
+	for source_value in alias_sources:
+		var source_id := str(source_value)
+		var alias_id := str(aliases_by_source.get(source_value, ""))
+		if current_record_ids.has(source_id) or bindings.has(alias_id) or not bindings.has(source_id):
+			continue
+		var alias_binding := _dict(bindings.get(source_id, {}))
+		alias_binding["identity"] = alias_id
+		bindings.erase(source_id)
+		bindings[alias_id] = alias_binding
+		if object_rects.has(source_id):
+			object_rects[alias_id] = _dict(object_rects.get(source_id, {}))
+			object_rects.erase(source_id)
 	# This refresh is the complete live inventory. Drop resolved identities so their
 	# slots become available, while preserving existing abstract action rows.
 	for binding_id_value in bindings.keys():
@@ -606,6 +646,10 @@ static func bind_base_records(environment: Dictionary, records: Array, existing_
 		var right_id := str(_dict(right_value).get("object_id", ""))
 		var left_shop_order := _shop_item_order(environment, left_id)
 		var right_shop_order := _shop_item_order(environment, right_id)
+		var left_exact := left_shop_order < 0 and not str(object_preferences.get(left_id, "")).strip_edges().is_empty()
+		var right_exact := right_shop_order < 0 and not str(object_preferences.get(right_id, "")).strip_edges().is_empty()
+		if left_exact != right_exact:
+			return left_exact
 		if left_shop_order >= 0 and right_shop_order >= 0 and left_shop_order != right_shop_order:
 			return left_shop_order < right_shop_order
 		return left_id < right_id
@@ -626,6 +670,8 @@ static func bind_base_records(environment: Dictionary, records: Array, existing_
 			object_id,
 			str(record.get("visual_prop", record.get("prop", record.get("icon_key", ""))))
 		)
+		if placement_class == "shop_item" and class_override != "shop_item" and _shop_item_order(environment, object_id) < 0:
+			placement_class = "surface_item"
 		if not base_record_requires_room_slot(record):
 			var warning := "base record binding received unattached action-only record %s; attach it to a visible room object before binding." % object_id
 			push_warning(warning)
@@ -638,7 +684,7 @@ static func bind_base_records(environment: Dictionary, records: Array, existing_
 			var category_key := "%s:%d" % [spot_field, int(record.get("layout_index", 0))]
 			preference = str(category_preferences.get(category_key, "")).strip_edges()
 		var minimum_size := MIN_INTERACTIVE_TARGET if bool(record.get("interactive", true)) else Vector2.ZERO
-		var candidate_slots := exit_slots if object_id == "travel:leave" else slots + stage_slots
+		var candidate_slots := slots + exit_slots if object_id == "travel:leave" else slots + stage_slots
 		if object_id == "travel:leave":
 			preference = _base_leave_preference(candidate_slots, preference)
 		var slot := _select_slot(candidate_slots, occupied, placement_class, preference, false, minimum_size)
@@ -1243,6 +1289,8 @@ static func _select_slot(slots: Array, occupied: Dictionary, placement_class: St
 # order with the priority-sorted shop slots, producing a gap-free row regardless
 # of item ids or the order in which other physical object families are emitted.
 static func _shop_item_order(environment: Dictionary, object_id: String) -> int:
+	if str(environment.get("kind", "")) == "home":
+		return -1
 	if object_id.begins_with("cage_gift_item:"):
 		return int(object_id.get_slice(":", 1))
 	if not object_id.begins_with("item:"):
