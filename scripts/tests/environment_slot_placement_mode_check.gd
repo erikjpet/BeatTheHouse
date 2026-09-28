@@ -67,6 +67,9 @@ func _check_settings_contract() -> void:
 	menu.setup(restored)
 	menu.open()
 	_check(menu.developer_slot_placement_mode != null, "Settings > Developer must expose Environment slot placement mode.")
+	_check(menu.developer_slot_placement_mode.text.begins_with("[ ]"), "The slot-placement toggle must render an explicit unchecked indicator.")
+	menu.developer_slot_placement_mode.toggled.emit(true)
+	_check(menu.developer_slot_placement_mode.text.begins_with("[X]"), "The slot-placement toggle must render an explicit checked indicator.")
 	menu.call("_on_developer_placement_mode", true)
 	menu.call("_on_developer_slot_placement_mode", true)
 	_check(

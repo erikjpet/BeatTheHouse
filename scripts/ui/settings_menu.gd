@@ -20,6 +20,7 @@ const DRUNK_EFFECT_LABELS := ["Wavy Distortion", "Classic Overlay"]
 const ACCESSIBILITY_BASE_FONT_META := "accessibility_base_font_size"
 const ACCESSIBILITY_BASE_MIN_SIZE_META := "accessibility_base_min_size"
 const ACCESSIBILITY_BASE_COLOR_META := "accessibility_base_font_color"
+const CHECK_LABEL_META := &"settings_check_label"
 const DEFAULT_SETTINGS_FONT_SIZE := 13
 
 var settings: UserSettings
@@ -291,11 +292,26 @@ func _option(parent: Control, label_text: String, items: Array) -> OptionButton:
 # Adds a checkbox row.
 func _check(parent: Control, text: String) -> CheckBox:
 	var check := CheckBox.new()
-	check.text = text
+	check.set_meta(CHECK_LABEL_META, text)
+	check.text = "[ ] %s" % text
 	check.custom_minimum_size = Vector2(0, 44)
 	check.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	check.toggled.connect(_on_check_visual_toggled.bind(check))
 	parent.add_child(check)
 	return check
+
+
+# The locked Web theme does not provide visible CheckBox icons. Keep an
+# explicit text indicator so every toggle has an obvious hit target and state.
+func _on_check_visual_toggled(enabled: bool, check: CheckBox) -> void:
+	_update_check_label(check, enabled)
+
+
+func _update_check_label(check: CheckBox, enabled: bool) -> void:
+	if check == null:
+		return
+	var label := str(check.get_meta(CHECK_LABEL_META, check.text))
+	check.text = "%s %s" % ["[X]" if enabled else "[ ]", label]
 
 
 # Adds a non-interactive release note for intentionally unsupported settings.
@@ -372,6 +388,8 @@ func _sync() -> void:
 	reduce_motion.button_pressed = draft.reduce_motion
 	developer_placement_mode.button_pressed = draft.developer_placement_mode
 	developer_slot_placement_mode.button_pressed = draft.developer_slot_placement_mode
+	for check in [vsync, audio_calm, play_on_small_screen, coach_tips, high_contrast, reduce_motion, developer_placement_mode, developer_slot_placement_mode]:
+		_update_check_label(check, check.button_pressed)
 	_labels()
 	_apply_accessibility_settings()
 
@@ -496,6 +514,7 @@ func _on_developer_placement_mode(enabled: bool) -> void:
 		draft.developer_slot_placement_mode = false
 		if developer_slot_placement_mode != null:
 			developer_slot_placement_mode.set_pressed_no_signal(false)
+			_update_check_label(developer_slot_placement_mode, false)
 
 
 func _on_developer_slot_placement_mode(enabled: bool) -> void:
@@ -504,6 +523,7 @@ func _on_developer_slot_placement_mode(enabled: bool) -> void:
 		draft.developer_placement_mode = false
 		if developer_placement_mode != null:
 			developer_placement_mode.set_pressed_no_signal(false)
+			_update_check_label(developer_placement_mode, false)
 
 
 func current_settings_snapshot() -> Dictionary:
