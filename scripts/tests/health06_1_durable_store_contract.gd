@@ -221,6 +221,8 @@ func _check_placement_failure_reporting() -> void:
 	DurableStoreScript.reset_debug_faults()
 	_expect(not bool(failed.get("ok", true)), "CH-05: failed developer placement write reported success.")
 	_expect(FileAccess.get_file_as_bytes(PLACEMENT_PATH) == prior_bytes, "CH-05: failed developer placement write changed the prior generation.")
+	var still_active: Dictionary = DeveloperPlacementStoreScript.slot_overrides(environment, "slot_positions")
+	_expect(still_active.get("fixed.fixture", []) == [24.0, 36.0], "CH-05: failed developer placement write leaked into active in-memory overrides.")
 	DeveloperPlacementStoreScript.reload()
 	var loaded: Dictionary = DeveloperPlacementStoreScript.slot_overrides(environment, "slot_positions")
 	_expect(loaded.get("fixed.fixture", []) == [24.0, 36.0], "CH-05: developer placement was not re-readable after failure.")

@@ -55,6 +55,25 @@ mode contract.
 - Do not mutate manifest identities, gameplay selection, scenario state, RNG,
   save economy, or specific spawned objects.
 
+## Exporting placement changes from an EXE
+
+Packaged builds cannot write changes back into their embedded `res://` project
+data. After moving and locking slots in either placement mode, use **Export
+Placement Report** in the placement overlay. If a move is still pending, the
+button locks that move first and then exports all machine-local slot changes.
+
+The game writes `BeatTheHouse_environment_slot_placement_changes.json` to its
+writable per-user data directory, opens the file location, and copies the full
+path to the clipboard. The report contains only local changes, keyed by stable
+environment/layer and `fixed.*`, `event.*`, `scenario.*`, or `exit.*` slot ID.
+It uses the same schema-v2 `rooms` structure as the committed developer
+placement override file, so the report can be provided directly for merging
+back into the source layout. Re-exporting replaces the report with the current
+set of local changes; it does not clear or modify those active changes.
+
+**Save to Project** remains available for a writable source checkout. Use the
+export action when running a packaged `.exe`.
+
 ## `rw06_10` extension and owner handoff
 
 `rw06_10` extended the existing movement tool across all four families rather

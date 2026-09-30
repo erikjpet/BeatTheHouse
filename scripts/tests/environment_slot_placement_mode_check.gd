@@ -3,12 +3,15 @@ extends SceneTree
 const DeveloperPlacementStoreScript := preload("res://scripts/core/developer_placement_store.gd")
 const EnvironmentPlacementScript := preload("res://scripts/core/environment_placement.gd")
 const EnvironmentSlotBinderScript := preload("res://scripts/core/environment_slot_binder.gd")
+const PersistencePathsScript := preload("res://scripts/core/persistence_paths.gd")
 const PixelSceneCanvasScript := preload("res://scripts/ui/pixel_scene_canvas.gd")
 const SettingsMenuScript := preload("res://scripts/ui/settings_menu.gd")
 const UserSettingsScript := preload("res://scripts/core/user_settings.gd")
 
 var failures: Array[String] = []
 var locked_request: Dictionary = {}
+var export_request_count := 0
+var exported_pending_request: Dictionary = {}
 
 
 func _init() -> void:
@@ -20,26 +23,51 @@ func _run() -> void:
 	DirAccess.make_dir_recursive_absolute(temp_root)
 	var user_path := temp_root.path_join("user.json")
 	var project_path := temp_root.path_join("project.json")
+	var report_path := temp_root.path_join("placement_report.json")
+	var distribution_root := temp_root.path_join("distribution_data")
 	var settings_path := temp_root.path_join("settings.json")
-	for path in [user_path, project_path, settings_path]:
+	for path in [user_path, project_path, report_path, settings_path]:
 		if FileAccess.file_exists(path):
 			DirAccess.remove_absolute(path)
+	var project_file := FileAccess.open(project_path, FileAccess.WRITE)
+	project_file.store_string(JSON.stringify({
+		"schema_version": DeveloperPlacementStoreScript.SCHEMA_VERSION,
+		"rooms": {
+			"committed_only": {
+				"slot_positions": {"fixed.fixture": [12.0, 34.0]},
+			},
+		},
+	}, "\t"))
+	project_file.close()
 	OS.set_environment(DeveloperPlacementStoreScript.USER_PATH_ENV, user_path)
 	OS.set_environment(DeveloperPlacementStoreScript.PROJECT_PATH_ENV, project_path)
+	OS.set_environment(DeveloperPlacementStoreScript.REPORT_PATH_ENV, report_path)
 	OS.set_environment(UserSettingsScript.SETTINGS_PATH_ENV, settings_path)
 	DeveloperPlacementStoreScript.reload()
 
 	await _check_settings_contract()
-	_check_slot_geometry_and_promotion(user_path, project_path)
+	_check_slot_geometry_export_and_promotion(user_path, project_path, report_path)
 	await _check_canvas_contract()
+	_check_distribution_report_path(distribution_root)
 
 	OS.set_environment(DeveloperPlacementStoreScript.USER_PATH_ENV, "")
 	OS.set_environment(DeveloperPlacementStoreScript.PROJECT_PATH_ENV, "")
+	OS.set_environment(DeveloperPlacementStoreScript.REPORT_PATH_ENV, "")
+	OS.set_environment(PersistencePathsScript.DISTRIBUTION_ROOT_ENV, "")
+	OS.set_environment(PersistencePathsScript.DISTRIBUTION_FEATURE_ENV, "")
 	OS.set_environment(UserSettingsScript.SETTINGS_PATH_ENV, "")
 	DeveloperPlacementStoreScript.reload()
-	for path in [user_path, "%s.bak" % user_path, project_path, "%s.bak" % project_path, settings_path, "%s.bak" % settings_path]:
+	for path in [user_path, "%s.bak" % user_path, project_path, "%s.bak" % project_path, report_path, "%s.bak" % report_path, settings_path, "%s.bak" % settings_path]:
 		if FileAccess.file_exists(path):
 			DirAccess.remove_absolute(path)
+	for path in [
+		distribution_root.path_join("BeatTheHouse_environment_slot_placement_changes.json"),
+		distribution_root.path_join("BeatTheHouse_environment_slot_placement_changes.json.bak"),
+	]:
+		if FileAccess.file_exists(path):
+			DirAccess.remove_absolute(path)
+	if DirAccess.dir_exists_absolute(distribution_root):
+		DirAccess.remove_absolute(distribution_root)
 	DirAccess.remove_absolute(temp_root)
 
 	if failures.is_empty():
@@ -82,8 +110,16 @@ func _check_settings_contract() -> void:
 	await process_frame
 
 
-func _check_slot_geometry_and_promotion(user_path: String, project_path: String) -> void:
+func _check_slot_geometry_export_and_promotion(user_path: String, project_path: String, report_path: String) -> void:
 	var environment := {"archetype_id": "corner_store"}
+	var empty_export := DeveloperPlacementStoreScript.export_user_overrides()
+	var empty_report: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(report_path))
+	_check(
+		bool(empty_export.get("ok", false))
+			and int(empty_export.get("slot_count", -1)) == 0
+			and (empty_report.get("rooms", {}) as Dictionary).is_empty(),
+		"A project-only placement must produce a current empty report instead of being misreported as a local EXE change."
+	)
 	var normal_before := EnvironmentPlacementScript.surface_map(environment)
 	var fixed_before := _slot(normal_before, "fixed.item_shop_1")
 	var event_before := _slot(normal_before, "event.floor_patron_1")
@@ -159,6 +195,34 @@ func _check_slot_geometry_and_promotion(user_path: String, project_path: String)
 			and not DeveloperPlacementStoreScript.user_slot_overrides(casino_layer, "slot_positions").has("fixed.door_right_lower"),
 		"Slot edits must be scoped to the exact environment layer."
 	)
+	var user_bytes_before_export := FileAccess.get_file_as_bytes(user_path)
+	var exported := DeveloperPlacementStoreScript.export_user_overrides()
+	_check(
+		bool(exported.get("ok", false))
+			and str(exported.get("path", "")) == report_path
+			and str(exported.get("absolute_path", "")) == ProjectSettings.globalize_path(report_path)
+			and int(exported.get("room_count", 0)) == 2
+			and int(exported.get("slot_count", 0)) == 5
+			and FileAccess.file_exists(report_path),
+		"Export Placement Report must create a shareable five-change snapshot at the requested writable path."
+	)
+	var report_data: Variant = JSON.parse_string(FileAccess.get_file_as_string(report_path))
+	var report_rooms: Dictionary = (report_data as Dictionary).get("rooms", {}) if typeof(report_data) == TYPE_DICTIONARY else {}
+	var corner_report: Dictionary = report_rooms.get("corner_store", {})
+	var corner_slots: Dictionary = corner_report.get("slot_positions", {})
+	var club_report: Dictionary = report_rooms.get("small_underground_casino:club", {})
+	var club_slots: Dictionary = club_report.get("slot_positions", {})
+	_check(
+		int((report_data as Dictionary).get("schema_version", 0)) == DeveloperPlacementStoreScript.SCHEMA_VERSION
+			and not report_rooms.has("committed_only")
+			and _reported_position(corner_slots, "fixed.item_shop_1").is_equal_approx(fixed_target)
+			and _reported_position(corner_slots, "event.floor_patron_1").is_equal_approx(event_target)
+			and _reported_position(corner_slots, "scenario.floor_patron_1").is_equal_approx(scenario_target)
+			and _reported_position(corner_slots, "exit.safe_left").is_equal_approx(exit_target)
+			and _reported_position(club_slots, "fixed.door_right_lower").is_equal_approx(club_target),
+		"The placement report must contain only exact local fixed/event/scenario/exit changes and preserve layered room keys."
+	)
+	_check(FileAccess.get_file_as_bytes(user_path) == user_bytes_before_export, "Exporting must not mutate or clear the active machine-local placement data.")
 
 	var promoted := DeveloperPlacementStoreScript.promote_user_overrides()
 	_check(bool(promoted.get("ok", false)) and FileAccess.file_exists(project_path), "Save to Project must promote locked slot edits.")
@@ -194,6 +258,29 @@ func _check_slot_geometry_and_promotion(user_path: String, project_path: String)
 
 	var cleared := DeveloperPlacementStoreScript.clear_position(environment, "slot_positions", "fixed.item_shop_1")
 	_check(bool(cleared.get("ok", false)), "Reset must clear the local edit without deleting promoted project geometry.")
+	var reexported := DeveloperPlacementStoreScript.export_user_overrides()
+	var refreshed_report: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(report_path))
+	var refreshed_rooms: Dictionary = refreshed_report.get("rooms", {})
+	var refreshed_corner: Dictionary = refreshed_rooms.get("corner_store", {})
+	_check(
+		bool(reexported.get("ok", false))
+			and not (refreshed_corner.get("slot_positions", {}) as Dictionary).has("fixed.item_shop_1")
+			and int(reexported.get("slot_count", 0)) == 4,
+		"Re-exporting must replace stale report contents with the current set of local changes."
+	)
+	for slot_id in ["event.floor_patron_1", "scenario.floor_patron_1", "exit.safe_left"]:
+		DeveloperPlacementStoreScript.clear_position(environment, "slot_positions", slot_id)
+	DeveloperPlacementStoreScript.clear_position(club_layer, "slot_positions", "fixed.door_right_lower")
+	var cleared_export := DeveloperPlacementStoreScript.export_user_overrides()
+	var cleared_report: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(report_path))
+	_check(
+		bool(cleared_export.get("ok", false))
+			and int(cleared_export.get("room_count", -1)) == 0
+			and int(cleared_export.get("slot_count", -1)) == 0
+			and (cleared_report.get("rooms", {}) as Dictionary).is_empty()
+			and not FileAccess.file_exists("%s.bak" % report_path),
+		"Exporting after the last local reset must replace the old report with an empty current snapshot and remove its stale backup."
+	)
 	DeveloperPlacementStoreScript.reload()
 	_check(_slot_position(_slot(EnvironmentPlacementScript.surface_map(environment), "fixed.item_shop_1")).is_equal_approx(fixed_target), "A promoted slot must survive local reset and reload.")
 
@@ -204,6 +291,7 @@ func _check_canvas_contract() -> void:
 	root.add_child(canvas)
 	await process_frame
 	canvas.developer_placement_lock_requested.connect(_capture_lock_request)
+	canvas.developer_placement_export_requested.connect(_capture_export_request)
 	canvas.render_environment_snapshot({
 		"archetype_id": "corner_store",
 		"display_name": "Corner Store",
@@ -219,6 +307,9 @@ func _check_canvas_contract() -> void:
 	})
 	canvas.set_developer_slot_placement_mode(true)
 	await process_frame
+	_check(canvas.developer_placement_export_button != null and canvas.developer_placement_export_button.text == "Export Placement Report", "The placement overlay must expose an explicit EXE-safe report action.")
+	canvas.developer_placement_export_button.pressed.emit()
+	_check(export_request_count == 1, "Export Placement Report must work without requiring a selected slot or pending move.")
 	var snapshot: Dictionary = canvas.developer_slot_placement_snapshot()
 	_check(bool(snapshot.get("enabled", false)) and int(snapshot.get("visible_slot_count", 0)) > 0, "Slot mode must expose every authored slot even when the room has no occupying objects.")
 	var filters: Dictionary = snapshot.get("family_filters", {})
@@ -245,8 +336,9 @@ func _check_canvas_contract() -> void:
 		var request: Dictionary = snapshot.get("request", {})
 		_check(bool(snapshot.get("pending", false)) and bool(snapshot.get("valid", false)), "Dragging a slot must expose a valid live preview.")
 		_check(str(request.get("field", "")) == "slot_positions" and str(request.get("slot_id", "")) == "scenario.wall_item_1", "A slot edit request must retain reusable slot identity.")
-		canvas.call("_lock_developer_slot_placement")
-		_check(str(locked_request.get("slot_id", "")) == "scenario.wall_item_1", "Lock must emit the selected reusable slot edit.")
+		canvas.developer_placement_export_button.pressed.emit()
+		_check(str(exported_pending_request.get("slot_id", "")) == "scenario.wall_item_1", "Export must carry the selected reusable slot edit to the host before writing the report.")
+		_check(export_request_count == 2 and not bool(canvas.developer_slot_placement_snapshot().get("pending", true)), "Export must request the report only after retaining the current pending slot move.")
 
 	var occupied_slot: Dictionary = canvas.call("_developer_slot", "fixed.item_shop_1")
 	var occupied_rect: Rect2 = canvas.call("_developer_slot_rect", occupied_slot)
@@ -300,8 +392,27 @@ func _check_canvas_contract() -> void:
 	await process_frame
 
 
+func _check_distribution_report_path(distribution_root: String) -> void:
+	OS.set_environment(DeveloperPlacementStoreScript.REPORT_PATH_ENV, "")
+	OS.set_environment(PersistencePathsScript.DISTRIBUTION_ROOT_ENV, distribution_root)
+	OS.set_environment(PersistencePathsScript.DISTRIBUTION_FEATURE_ENV, "1")
+	var exported := DeveloperPlacementStoreScript.export_user_overrides()
+	var expected_path := distribution_root.path_join("BeatTheHouse_environment_slot_placement_changes.json")
+	_check(
+		bool(exported.get("ok", false))
+			and str(exported.get("path", "")).replace("\\", "/") == expected_path.replace("\\", "/")
+			and FileAccess.file_exists(expected_path),
+		"An EXE distribution must export the report through its writable per-user data root instead of res:// or the executable directory."
+	)
+
+
 func _capture_lock_request(request: Dictionary) -> void:
 	locked_request = request.duplicate(true)
+
+
+func _capture_export_request(request: Dictionary) -> void:
+	export_request_count += 1
+	exported_pending_request = request.duplicate(true)
 
 
 func _slot(surface_map: Dictionary, slot_id: String) -> Dictionary:
@@ -315,6 +426,11 @@ func _slot(surface_map: Dictionary, slot_id: String) -> Dictionary:
 func _slot_position(slot: Dictionary) -> Vector2:
 	var values: Array = slot.get("pos", [])
 	return Vector2(float(values[0]), float(values[1])) if values.size() >= 2 else Vector2.ZERO
+
+
+func _reported_position(slots: Dictionary, slot_id: String) -> Vector2:
+	var values: Array = slots.get(slot_id, [])
+	return Vector2(float(values[0]), float(values[1])) if values.size() >= 2 else Vector2(-99999.0, -99999.0)
 
 
 func _slot_rect(slot: Dictionary) -> Rect2:

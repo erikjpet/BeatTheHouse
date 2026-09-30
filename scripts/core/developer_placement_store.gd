@@ -12,8 +12,10 @@ extends RefCounted
 const SCHEMA_VERSION := 2
 const PROJECT_PATH := "res://data/environments/developer_placement_overrides.json"
 const USER_PATH := "user://developer_environment_placements.json"
+const REPORT_PATH := "user://BeatTheHouse_environment_slot_placement_changes.json"
 const USER_PATH_ENV := "BTH_DEVELOPER_PLACEMENT_PATH"
 const PROJECT_PATH_ENV := "BTH_PROJECT_PLACEMENT_PATH"
+const REPORT_PATH_ENV := "BTH_DEVELOPER_PLACEMENT_REPORT_PATH"
 const PersistencePathsScript := preload("res://scripts/core/persistence_paths.gd")
 const DurableStoreScript := preload("res://scripts/core/durable_store.gd")
 const POSITION_FIELDS := ["slot_positions"]
@@ -57,12 +59,15 @@ static func save_position(environment: Dictionary, field: String, object_id: Str
 	if key.is_empty() or clean_id.is_empty() or not is_finite(position.x) or not is_finite(position.y):
 		return {"ok": false, "error": "Placement identity and position must be valid."}
 	_ensure_loaded()
+	var previous_user_rooms := _user_rooms.duplicate(true)
 	var room := _dict(_user_rooms.get(key, {})).duplicate(true)
 	var slots := _dict(room.get(field, {})).duplicate(true)
 	slots[clean_id] = [snappedf(position.x, 1.0), snappedf(position.y, 1.0)]
 	room[field] = slots
 	_user_rooms[key] = room
 	var save_error := _write_payload(user_path(), _user_rooms)
+	if save_error != OK:
+		_user_rooms = previous_user_rooms
 	return {
 		"ok": save_error == OK,
 		"error": "" if save_error == OK else "Could not save developer placement overrides.",
@@ -77,6 +82,7 @@ static func save_position(environment: Dictionary, field: String, object_id: Str
 static func clear_position(environment: Dictionary, field: String, object_id: String) -> Dictionary:
 	var key := room_key(environment)
 	_ensure_loaded()
+	var previous_user_rooms := _user_rooms.duplicate(true)
 	var room := _dict(_user_rooms.get(key, {})).duplicate(true)
 	var slots := _dict(room.get(field, {})).duplicate(true)
 	slots.erase(object_id.strip_edges())
@@ -89,6 +95,8 @@ static func clear_position(environment: Dictionary, field: String, object_id: St
 	else:
 		_user_rooms[key] = room
 	var save_error := _write_payload(user_path(), _user_rooms)
+	if save_error != OK:
+		_user_rooms = previous_user_rooms
 	return {"ok": save_error == OK, "error": "" if save_error == OK else "Could not reset the developer placement.", "path": user_path()}
 
 
@@ -117,6 +125,31 @@ static func promote_user_overrides() -> Dictionary:
 	}
 
 
+static func export_user_overrides() -> Dictionary:
+	_ensure_loaded()
+	var exported_rooms := _exportable_user_rooms()
+	var output_path := report_path()
+	var absolute_path := ProjectSettings.globalize_path(output_path)
+	var slot_count := _slot_count(exported_rooms)
+	var save_error := _write_payload(output_path, exported_rooms)
+	var warning := ""
+	if save_error == OK:
+		var backup_absolute := ProjectSettings.globalize_path(DurableStoreScript.backup_path(output_path))
+		if FileAccess.file_exists(backup_absolute):
+			var backup_error := DirAccess.remove_absolute(backup_absolute)
+			if backup_error != OK:
+				warning = "The current report was exported, but its older backup could not be removed."
+	return {
+		"ok": save_error == OK,
+		"error": "" if save_error == OK else "Could not export the environment slot placement report.",
+		"warning": warning,
+		"path": output_path,
+		"absolute_path": absolute_path,
+		"room_count": exported_rooms.size(),
+		"slot_count": slot_count,
+	}
+
+
 static func reload() -> void:
 	_loaded = false
 	_project_rooms = {}
@@ -134,6 +167,16 @@ static func user_path() -> String:
 static func project_path() -> String:
 	var override := OS.get_environment(PROJECT_PATH_ENV).strip_edges()
 	return PROJECT_PATH if override.is_empty() else override
+
+
+static func report_path() -> String:
+	var override := OS.get_environment(REPORT_PATH_ENV).strip_edges()
+	if not override.is_empty():
+		return override
+	return PersistencePathsScript.file_path(
+		REPORT_PATH,
+		"BeatTheHouse_environment_slot_placement_changes.json"
+	)
 
 
 static func _ensure_loaded() -> void:
@@ -166,6 +209,44 @@ static func _write_payload(path: String, rooms: Dictionary) -> Error:
 
 static func _placement_payload_valid(payload: Dictionary) -> bool:
 	return int(payload.get("schema_version", 0)) == SCHEMA_VERSION and typeof(payload.get("rooms", {})) == TYPE_DICTIONARY
+
+
+static func _exportable_user_rooms() -> Dictionary:
+	var result: Dictionary = {}
+	var room_keys := _user_rooms.keys()
+	room_keys.sort()
+	for key_value in room_keys:
+		var key := str(key_value).strip_edges()
+		if key.is_empty():
+			continue
+		var source_room := _dict(_user_rooms.get(key, {}))
+		var source_slots := _dict(source_room.get("slot_positions", {}))
+		var slot_ids := source_slots.keys()
+		slot_ids.sort()
+		var slots: Dictionary = {}
+		for slot_value in slot_ids:
+			var slot_id := str(slot_value).strip_edges()
+			var position_value: Variant = source_slots.get(slot_value, [])
+			if slot_id.is_empty() or typeof(position_value) != TYPE_ARRAY:
+				continue
+			var position := position_value as Array
+			if position.size() < 2:
+				continue
+			var x := float(position[0])
+			var y := float(position[1])
+			if not is_finite(x) or not is_finite(y):
+				continue
+			slots[slot_id] = [snappedf(x, 1.0), snappedf(y, 1.0)]
+		if not slots.is_empty():
+			result[key] = {"slot_positions": slots}
+	return result
+
+
+static func _slot_count(rooms: Dictionary) -> int:
+	var result := 0
+	for room_value in rooms.values():
+		result += _dict(room_value).get("slot_positions", {}).size()
+	return result
 
 
 static func _dict(value: Variant) -> Dictionary:

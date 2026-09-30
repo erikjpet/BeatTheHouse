@@ -9,6 +9,7 @@ const UserSettingsScript := preload("res://scripts/core/user_settings.gd")
 
 var failures: Array[String] = []
 var locked_request: Dictionary = {}
+var exported_pending_request: Dictionary = {}
 var persist_canvas_locks := false
 
 
@@ -134,6 +135,7 @@ func _check_canvas_authoring_contract() -> void:
 	canvas.developer_placement_lock_requested.connect(_persist_canvas_lock_request)
 	canvas.developer_placement_lock_requested.connect(_simulate_stale_placement_refresh.bind(canvas))
 	canvas.developer_placement_promote_requested.connect(_promote_canvas_locks)
+	canvas.developer_placement_export_requested.connect(_capture_export_request)
 	canvas.render_environment_snapshot({
 		"archetype_id": "bar",
 		"display_name": "Bar",
@@ -202,6 +204,14 @@ func _check_canvas_authoring_contract() -> void:
 	var saved_live_rect: Rect2 = canvas.call("_developer_edit_rect_for_object", canvas.call("_scene_object", "game:slot"))
 	_check(saved_live_rect.position.is_equal_approx(Vector2(420.0, 294.0)), "Save to Project must leave the object at its newly saved position without a game reset (got %s)." % saved_live_rect.position)
 	persist_canvas_locks = false
+	canvas.call("_update_developer_placement_preview", Vector2(430.0, 294.0))
+	canvas.developer_placement_export_button.pressed.emit()
+	_check(
+		str(exported_pending_request.get("slot_id", "")) == "fixed.random_game_1"
+			and (exported_pending_request.get("position", Vector2.ZERO) as Vector2).is_equal_approx(Vector2(430.0, 294.0))
+			and not bool(canvas.developer_placement_snapshot().get("pending", true)),
+		"Object placement export must carry and clear the newest pending reusable-slot position before report generation."
+	)
 	canvas.set_developer_placement_mode(false)
 	_check(not bool(canvas.developer_placement_snapshot().get("enabled", true)), "Disabling developer mode must restore normal input mode.")
 	await _check_overlapping_play_selection(canvas)
@@ -260,6 +270,10 @@ func _check_overlapping_play_selection(canvas: PixelSceneCanvas) -> void:
 
 func _capture_lock_request(request: Dictionary) -> void:
 	locked_request = request.duplicate(true)
+
+
+func _capture_export_request(request: Dictionary) -> void:
+	exported_pending_request = request.duplicate(true)
 
 
 func _persist_canvas_lock_request(request: Dictionary) -> void:

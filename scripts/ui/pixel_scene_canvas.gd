@@ -12,6 +12,7 @@ signal view_geometry_changed
 signal developer_placement_lock_requested(request: Dictionary)
 signal developer_placement_reset_requested(request: Dictionary)
 signal developer_placement_promote_requested
+signal developer_placement_export_requested(request: Dictionary)
 
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const SmallScreenPolicyScript := preload("res://scripts/ui/small_screen_policy.gd")
@@ -213,6 +214,7 @@ var developer_placement_panel: PanelContainer
 var developer_placement_label: Label
 var developer_placement_lock_button: Button
 var developer_placement_reset_button: Button
+var developer_placement_export_button: Button
 var developer_slot_placement_mode := false
 var developer_slot_selected_id := ""
 var developer_slot_dragging := false
@@ -413,13 +415,21 @@ func _ensure_developer_placement_panel() -> void:
 	actions.add_child(developer_placement_reset_button)
 	var project_actions := HBoxContainer.new()
 	project_actions.mouse_filter = Control.MOUSE_FILTER_PASS
+	project_actions.add_theme_constant_override("separation", 5)
 	stack.add_child(project_actions)
 	var promote_button := Button.new()
 	promote_button.text = "Save to Project"
 	promote_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	promote_button.tooltip_text = "Lock the pending position and promote all locked positions into future builds."
+	promote_button.tooltip_text = "Lock the pending position and promote all locked positions into a writable source checkout."
 	promote_button.pressed.connect(_save_active_developer_placement_to_project)
 	project_actions.add_child(promote_button)
+	developer_placement_export_button = Button.new()
+	developer_placement_export_button.name = "ExportPlacementReport"
+	developer_placement_export_button.text = "Export Placement Report"
+	developer_placement_export_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	developer_placement_export_button.tooltip_text = "Lock the pending position and export every local slot change to a shareable JSON report. Works from an EXE build."
+	developer_placement_export_button.pressed.connect(_export_active_developer_placement_report)
+	stack.add_child(developer_placement_export_button)
 	_update_developer_placement_panel()
 
 
@@ -530,6 +540,23 @@ func _save_active_developer_placement_to_project() -> void:
 		_save_developer_slot_placement_to_project()
 	else:
 		_save_developer_placement_to_project()
+
+
+func _export_active_developer_placement_report() -> void:
+	var request: Dictionary = {}
+	if developer_slot_placement_mode:
+		if developer_slot_pending_rect.has_area():
+			if not developer_slot_valid:
+				return
+			request = _developer_slot_placement_request()
+			clear_developer_slot_placement_preview()
+	else:
+		if developer_placement_pending_rect.has_area():
+			if not developer_placement_valid:
+				return
+			request = _developer_placement_request()
+			clear_developer_placement_preview()
+	developer_placement_export_requested.emit(request)
 
 
 func _developer_placement_identity(object_data: Dictionary) -> Dictionary:

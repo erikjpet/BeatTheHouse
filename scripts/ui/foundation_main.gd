@@ -16784,6 +16784,52 @@ func _on_developer_placement_promote_requested() -> void:
 	_show_message("Locked placements saved to %s." % str(result.get("path", "project data")))
 
 
+func _on_developer_placement_export_requested(pending_request: Dictionary) -> void:
+	var refresh_warning := ""
+	if not pending_request.is_empty():
+		var environment := JsonCoerceScript._copy_dict(pending_request.get("environment", {}))
+		var save_result := DeveloperPlacementStoreScript.save_position(
+			environment,
+			str(pending_request.get("field", "slot_positions")),
+			str(pending_request.get("slot_id", "")),
+			pending_request.get("position", Vector2.ZERO)
+		)
+		if not bool(save_result.get("ok", false)):
+			_show_message(str(save_result.get("error", "Could not lock the pending placement, so no report was exported.")))
+			_render_foundation_snapshots()
+			return
+		var refresh_result := _refresh_developer_authored_environment()
+		if not bool(refresh_result.get("ok", false)):
+			refresh_warning = str(refresh_result.get("error", "The placement was saved, but this room could not refresh it yet."))
+		elif environment_canvas != null:
+			if str(pending_request.get("object_id", "")).strip_edges().is_empty():
+				environment_canvas.call("_apply_authoring_slot_positions_to_scene_objects")
+			else:
+				environment_canvas.call("_apply_saved_developer_placement", pending_request)
+	var result := DeveloperPlacementStoreScript.export_user_overrides()
+	if not bool(result.get("ok", false)):
+		_show_message(str(result.get("error", "Could not export the placement report.")))
+		return
+	var absolute_path := str(result.get("absolute_path", result.get("path", ""))).strip_edges()
+	if not absolute_path.is_empty():
+		DisplayServer.clipboard_set(absolute_path)
+		OS.shell_show_in_file_manager(absolute_path, true)
+	var message := "Exported %d slot changes across %d rooms. The report path is copied: %s" % [
+		int(result.get("slot_count", 0)),
+		int(result.get("room_count", 0)),
+		absolute_path,
+	]
+	var warnings: Array[String] = []
+	if not refresh_warning.is_empty():
+		warnings.append(refresh_warning)
+	var export_warning := str(result.get("warning", "")).strip_edges()
+	if not export_warning.is_empty():
+		warnings.append(export_warning)
+	if not warnings.is_empty():
+		message += " Warning: %s" % " ".join(warnings)
+	_show_message(message)
+
+
 func _refresh_developer_authored_environment() -> Dictionary:
 	# Placement is interaction geometry. Discard the projection cached for the
 	# pre-save layout before rebuilding or the canvas receives its old rect until
