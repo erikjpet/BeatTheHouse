@@ -1,23 +1,22 @@
 class_name DeveloperPlacementStore
 extends RefCounted
 
-# Durable, non-simulation authoring overrides for environment object placement.
+# Durable, non-simulation authoring overrides for environment object and slot placement.
 # Project overrides ship with builds; user overrides let an owner author from an
 # exported developer build and remain reproducible on that machine.
 
-const SCHEMA_VERSION := 1
+# Slot-family v2 intentionally invalidates schema-v1 local/project overrides.
+# The old files address base/stage identities that no longer exist and silently
+# applying those positions to a regenerated room would be more dangerous than
+# starting the owner's placement pass from the migrated project geometry.
+const SCHEMA_VERSION := 2
 const PROJECT_PATH := "res://data/environments/developer_placement_overrides.json"
 const USER_PATH := "user://developer_environment_placements.json"
 const USER_PATH_ENV := "BTH_DEVELOPER_PLACEMENT_PATH"
 const PROJECT_PATH_ENV := "BTH_PROJECT_PLACEMENT_PATH"
 const PersistencePathsScript := preload("res://scripts/core/persistence_paths.gd")
 const DurableStoreScript := preload("res://scripts/core/durable_store.gd")
-const POSITION_FIELDS := [
-	"object_slot_positions",
-	"scenario_object_slot_positions",
-	"category_slot_positions",
-	"slot_positions",
-]
+const POSITION_FIELDS := ["slot_positions"]
 
 static var _loaded := false
 static var _project_rooms: Dictionary = {}

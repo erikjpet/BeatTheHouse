@@ -437,8 +437,11 @@ $FoundationSuiteStageBaselinesSec = @{
     # standard 1.5x guard around a conservative 20-minute serial envelope.
     "foundation_all" = 1200.000
     "foundation_systems" = 29.141
-    # Expanded GC05.2 coverage and same-host Stage 1 control: .tmp/gc05_2_ui_baseline_evidence.md
-    "ui_scene_compile" = 83.234
+    # Expanded GC05.2 coverage and same-host Stage 1 control originated at
+    # 83.234s. The all-environment four-family manifest now seals and verifies
+    # physical inventory throughout this matrix; repeated final-tree runs were
+    # 124.4-125.5s, so retain the standard 1.5x guard around that measured work.
+    "ui_scene_compile" = 125.500
     # Serial baseline is the sum of all 18 per-shard durations captured by the
     # section 5 baseline (the former wall time overlapped multiple Godot jobs).
     "foundation_contracts" = 1349.566
@@ -864,6 +867,18 @@ function Invoke-GameReworkVerificationGates {
     Invoke-GodotScript -Name "slot_foreground_autoplay_performance_probe" -ScriptPath "res://tools/slot_foreground_autoplay_performance_probe.gd" -StageTimeoutSec 180
     Invoke-GodotScript -Name "blackjack_counter_surveillance_probe" -ScriptPath "res://tools/blackjack_counter_surveillance_probe.gd" -StageTimeoutSec 120
     Invoke-GodotScript -Name "craps_rtp_audit" -ScriptPath "res://tools/craps_rtp_audit.gd" -StageTimeoutSec 600
+}
+
+function Invoke-EnvironmentSlotVerificationGates {
+    # Keep the four-family object inventory, save/reload behavior, strict
+    # binding, and both placement editors on one explicit validation path.
+    Invoke-GodotScript -Name "environment_object_manifest" -ScriptPath "res://scripts/tests/environment_object_manifest_check.gd" -StageTimeoutSec 180
+    Invoke-GodotScript -Name "environment_runtime_manifest_retention" -ScriptPath "res://scripts/tests/environment_runtime_manifest_retention_check.gd" -StageTimeoutSec 120
+    Invoke-GodotScript -Name "room_slot_occupancy" -ScriptPath "res://scripts/tests/room_slot_occupancy_check.gd" -StageTimeoutSec 600
+    Invoke-GodotScript -Name "environment_slot_stacking" -ScriptPath "res://scripts/tests/environment_slot_stacking_regression_check.gd" -StageTimeoutSec 120
+    Invoke-GodotScript -Name "environment_slot_placement_mode" -ScriptPath "res://scripts/tests/environment_slot_placement_mode_check.gd" -StageTimeoutSec 180
+    Invoke-GodotScript -Name "developer_placement_mode" -ScriptPath "res://scripts/tests/developer_placement_mode_check.gd" -StageTimeoutSec 180
+    Invoke-GodotScript -Name "shop_item_row" -ScriptPath "res://tools/shop_item_row_check.gd" -StageTimeoutSec 120
 }
 
 function Invoke-GodotImport {
@@ -1551,13 +1566,20 @@ switch ($suiteKey) {
     "contract" {
         Invoke-StandaloneContracts
         Invoke-FoundationSystemsSharded -FoundationSuite "contracts" -StageTimeoutSec (Get-StageTimeout "foundation_contracts") | Out-Null
+        Invoke-EnvironmentSlotVerificationGates
         Invoke-GodotScript -Name "ui_scene_compile" -ScriptPath (Get-UiSceneSplitRunnerPath) -StageTimeoutSec 240
         Invoke-GodotScript -Name "game_library_launchers" -ScriptPath "res://scripts/tests/ui_scene/check_game_library_launchers.gd" -StageTimeoutSec 180
-        Invoke-GodotScript -Name "tutorial_guardrail_stress" -ScriptPath "res://scripts/tests/tutorial_guardrail_recovery_stress_check.gd" -StageTimeoutSec 180
-        Invoke-GodotScript -Name "tutorial_guided_run_audit" -ScriptPath "res://tools/tutorial_seed_audit.gd" -StageTimeoutSec 180
+        # The full 1,622-boundary recovery sweep completes in roughly 185s on
+        # the reference Windows runner, so retain headroom for normal variance.
+        Invoke-GodotScript -Name "tutorial_guardrail_stress" -ScriptPath "res://scripts/tests/tutorial_guardrail_recovery_stress_check.gd" -StageTimeoutSec 300
+        # The four-family manifest is generated for every environment in the
+        # 100-seed stuck-state sweep. Preserve the full census and give the
+        # authenticated audit enough time to finish on the reference machine.
+        Invoke-GodotScript -Name "tutorial_guided_run_audit" -ScriptPath "res://tools/tutorial_seed_audit.gd" -StageTimeoutSec 300
         Invoke-GodotScript -Name "roulette_audio_audit" -ScriptPath "res://tools/roulette_audio_audit.gd" -StageTimeoutSec 120
     }
     "audit" {
+        Invoke-EnvironmentSlotVerificationGates
         Invoke-GameReworkVerificationGates
         Invoke-GodotScript -Name "environment_grounding_contract" -ScriptPath "res://tools/environment_grounding_contract.gd" -StageTimeoutSec 120
         Invoke-Perf06ContractChecks -SuiteLabel "audit"
@@ -1571,11 +1593,12 @@ switch ($suiteKey) {
         Invoke-StandaloneContracts
         Invoke-Perf06ContractChecks -SuiteLabel "full"
         Invoke-FoundationSuite -FoundationSuite "all" -StageTimeoutSec (Get-StageTimeout "foundation_all")
+        Invoke-EnvironmentSlotVerificationGates
         Invoke-GodotScript -Name "ui_scene_compile" -ScriptPath (Get-UiSceneSplitRunnerPath) -StageTimeoutSec 300
         Invoke-GodotScript -Name "game_library_launchers" -ScriptPath "res://scripts/tests/ui_scene/check_game_library_launchers.gd" -StageTimeoutSec 180
         Invoke-GodotScript -Name "dave_bus_encounter" -ScriptPath "res://scripts/tests/ui_scene/check_dave_bus_encounter.gd" -StageTimeoutSec 120
-        Invoke-GodotScript -Name "tutorial_guardrail_stress" -ScriptPath "res://scripts/tests/tutorial_guardrail_recovery_stress_check.gd" -StageTimeoutSec 180
-        Invoke-GodotScript -Name "tutorial_guided_run_audit" -ScriptPath "res://tools/tutorial_seed_audit.gd" -StageTimeoutSec 180
+        Invoke-GodotScript -Name "tutorial_guardrail_stress" -ScriptPath "res://scripts/tests/tutorial_guardrail_recovery_stress_check.gd" -StageTimeoutSec 300
+        Invoke-GodotScript -Name "tutorial_guided_run_audit" -ScriptPath "res://tools/tutorial_seed_audit.gd" -StageTimeoutSec 300
         Invoke-FoundationPerfSmoke
 		Invoke-GameReworkVerificationGates
 		Invoke-GodotScript -Name "environment_grounding_contract" -ScriptPath "res://tools/environment_grounding_contract.gd" -StageTimeoutSec 120

@@ -12,14 +12,16 @@ const SlotState := preload("res://scripts/games/slots/slot_machine_state.gd")
 const ActionAuthority := preload("res://scripts/core/blackjack_action_authority.gd")
 const SAVE_SLOT := "slot_foreground_autoplay_performance_probe"
 const SAMPLE_COUNT := 16
-const WARMUP_COUNT := 2
+const MAX_CACHED_RESPONSES := 2
+# Fill the bounded replay cache and exercise its first eviction/rehash before
+# timing. Two warmups only filled the cache, leaving that cold path in sample 1.
+const WARMUP_COUNT := MAX_CACHED_RESPONSES + 1
 const MAX_ACTION_P95_MS := 22.0
 const MAX_ACTION_MS := 30.0
 const MAX_NEXT_FRAME_P95_MS := 20.0
 const MAX_DRAW_P95_MS := 4.0
 const MAX_BACKGROUND_DRAIN_P95_MS := 8.0
 const MAX_TAIL_TO_HEAD_RATIO := 1.5
-const MAX_CACHED_RESPONSES := 2
 const FIXTURE_COUNT := 6
 const FOREGROUND_STATE_KEY := "slot:6"
 

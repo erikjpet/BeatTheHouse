@@ -6,6 +6,7 @@ const CrewHeistModelScript := preload("res://scripts/core/crew_heist_model.gd")
 const CrewTurnModelScript := preload("res://scripts/core/crew_turn_model.gd")
 const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
 const DeliveryRunModelScript := preload("res://scripts/core/delivery_run_model.gd")
+const EnvironmentInstanceScript := preload("res://scripts/core/environment_instance.gd")
 const RngStreamScript := preload("res://scripts/core/rng_stream.gd")
 const RunReportViewModelScript := preload("res://scripts/ui/run_report_view_model.gd")
 const RunSaveCodecScript := preload("res://scripts/core/run_save_codec.gd")
@@ -18,7 +19,7 @@ static func check(_library: ContentLibrary, failures: Array) -> void:
 	failures.append_array(CrewTurnModelScript.validate_tuning(_tuning()))
 	_check_eligibility_and_clean_hands(failures)
 	_check_weighting(failures)
-	_check_emissions(failures)
+	_check_emissions(_library, failures)
 	_check_choices_and_save(failures)
 	_check_plan_beats(_library, failures)
 
@@ -67,7 +68,7 @@ static func _check_weighting(failures: Array) -> void:
 		failures.append("Wrong-name escalation did not raise the real member's deterministic resolution curve: %d <= %d." % [escalated_hits, base_hits])
 
 
-static func _check_emissions(failures: Array) -> void:
+static func _check_emissions(library: ContentLibrary, failures: Array) -> void:
 	var unlearned := _run("TURN-SKILL-OFF")
 	_prepare(unlearned, "crew_switch", [CrewTurnModelScript.SIGNAL_PATTERN])
 	var off := _heist_choice(unlearned, "crew_planning_table", "table_talk")
@@ -105,6 +106,18 @@ static func _check_emissions(failures: Array) -> void:
 
 	var payment := _run("TURN-PAYMENT")
 	_prepare(payment, "crew_switch", [CrewTurnModelScript.SIGNAL_PAYMENT])
+	# The handoff now publishes a physical manifest mutation transactionally. Use
+	# a generated destination room so this contract exercises the production slot
+	# envelope instead of relying on an identity-only synthetic dictionary.
+	var motel_environment := EnvironmentInstanceScript.from_archetype(
+		library.environment_archetype("motel"),
+		1,
+		payment.create_rng("crew_turn_contract:payment_motel"),
+		library,
+		payment.challenge_config
+	).to_dict()
+	motel_environment["world_node_id"] = "motel"
+	payment.set_environment(motel_environment)
 	var job_id := "fixture_job:0001"
 	var job := {"id": job_id, "definition_id": "fixture_job", "label": "Fixture job", "member_id": "crew_switch", "kind": "package_run", "min_rank": "associate", "status": "active", "outcome": "", "payload": {}, "expiry_in_actions": 8, "offered_action": 0, "accepted_action": 0, "active_action": 0, "expires_at_action": 8, "rewards": {"cash": 40, "trust": 1}, "failure": {"trust": -1, "grievance_kind": "job_abandoned", "grievance_weight": 1}}
 	payment.crew_jobs[job_id] = job
@@ -117,8 +130,6 @@ static func _check_emissions(failures: Array) -> void:
 		"schema_version": 1, "node_id": "bar", "destination_node_id": "motel", "target_id": "", "place_id": "",
 		"cover_id": "", "signal_id": "", "reason": "fixture_route", "attention": 0, "action_index": 1,
 	})
-	payment.current_environment["world_node_id"] = "motel"
-	payment.world_map["current_node_id"] = "motel"
 	var paid := payment.delivery_complete_handoff("motel")
 	var receipt := _dict(_dict(paid.get("snapshot", {})).get("receipt", {}))
 	if int(receipt.get("posted_cash", 0)) != 40 or int(receipt.get("paid_cash", 40)) >= 40 or not str(paid.get("message", "")).contains("board says $40"):

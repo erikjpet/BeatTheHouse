@@ -17,6 +17,14 @@ static func authoritative_interactable_records(environment: Dictionary, library:
 	var layout := _dict(environment.get("layout", {}))
 	var object_rects := _dict(layout.get("object_rects", {}))
 	var slot_bindings := _dict(layout.get("slot_bindings", {}))
+	var manifest_rows: Dictionary = {}
+	for row_value in _array(_dict(environment.get("object_manifest", {})).get("rows", [])):
+		var manifest_row := _dict(row_value)
+		if not bool(manifest_row.get("active", false)) or not bool(manifest_row.get("physical", false)):
+			continue
+		var presentation_id := str(manifest_row.get("presentation_object_id", manifest_row.get("object_id", ""))).strip_edges()
+		if not presentation_id.is_empty():
+			manifest_rows[presentation_id] = manifest_row
 	var records: Array = []
 	var errors: Array = []
 	var slot_authority: Dictionary = {}
@@ -68,6 +76,13 @@ static func authoritative_interactable_records(environment: Dictionary, library:
 			errors.append("authoritative base semantic source %s is not catalog-backed." % object_id)
 			continue
 		var binding := _dict(slot_bindings.get(object_id, {}))
+		var manifest_row := _dict(manifest_rows.get(object_id, {}))
+		if not manifest_rows.is_empty() and manifest_row.is_empty():
+			errors.append("authoritative base semantic source %s is absent from the environment object manifest." % object_id)
+			continue
+		if not manifest_row.is_empty() and str(manifest_row.get("family", "")) != str(binding.get("slot_family", binding.get("kind", ""))):
+			errors.append("authoritative base semantic source %s crosses manifest and slot families." % object_id)
+			continue
 		var presentation_mode := str(binding.get("presentation_mode", "room" if object_rects.has(object_id) else ""))
 		if presentation_mode not in ["room", "overflow"]:
 			errors.append("authoritative base semantic source %s has no closed room/overflow presentation authority." % object_id)
@@ -117,6 +132,11 @@ static func authoritative_interactable_records(environment: Dictionary, library:
 		}
 		if not binding.is_empty():
 			record["placement_class"] = str(binding.get("placement_class", ""))
+			record["slot_family"] = str(binding.get("slot_family", binding.get("kind", "")))
+		if not manifest_row.is_empty():
+			record["manifest_object_id"] = str(manifest_row.get("instance_object_id", ""))
+			record["manifest_family"] = str(manifest_row.get("family", ""))
+			record["manifest_action_ids"] = _array(manifest_row.get("action_ids", []))
 		if presentation_mode == "room":
 			record["normalized_rect"] = rect.duplicate(true)
 			record["focus_rect"] = rect.duplicate(true)
@@ -406,6 +426,13 @@ static func _identity_for_record(source: Dictionary, environment: Dictionary, li
 	var domain := str(parts[0]) if not parts.is_empty() else ""
 	var source_id := str(source.get("source_id", "")).strip_edges()
 	if source_id.is_empty() and parts.size() > 1: source_id = str(parts[1])
+	# Named guaranteed hosts/fixtures may exist only as exact fixed declarations,
+	# rather than as a catalog game/event/service. Authenticate their synthesized
+	# presentation against the room's sealed manifest row before normal domains are
+	# considered. Catalog-backed rows use their catalog source id, so they continue
+	# through the stricter domain-specific branches below.
+	var fixed_declaration_identity := _fixed_declaration_identity(source, environment, presentation_id, source_id)
+	if not fixed_declaration_identity.is_empty(): return fixed_declaration_identity
 	var owner := str({"game": "game", "game_hook": "game", "dialogue": "game", "service": "service", "lender": "service", "event": "event", "crew_presence": "crew", "delivery": "traveler"}.get(domain, "base"))
 	var source_field := ""
 	var source_record_id := source_id
@@ -511,6 +538,42 @@ static func _identity_for_record(source: Dictionary, environment: Dictionary, li
 		"source_kind": "environment_instance_ui",
 		"source_field": source_field,
 		"source_record_id": source_record_id if not source_record_id.is_empty() else presentation_id,
+	}
+
+
+static func _fixed_declaration_identity(source: Dictionary, environment: Dictionary, presentation_id: String, source_id: String) -> Dictionary:
+	if presentation_id.is_empty() or source_id.is_empty(): return {}
+	var matched_row: Dictionary = {}
+	for row_value in _array(_dict(environment.get("object_manifest", {})).get("rows", [])):
+		var row := _dict(row_value)
+		if str(row.get("presentation_object_id", "")) != presentation_id: continue
+		if str(row.get("family", "")) != "fixed" \
+				or str(row.get("source_kind", "")) != "environment_declaration" \
+				or str(row.get("source_field", "")) != "fixed_objects" \
+				or str(row.get("source_collection", "")) != "fixed_objects": return {}
+		if not bool(row.get("active", false)) or not bool(row.get("physical", false)): return {}
+		var row_source_id := str(row.get("source_id", "")).strip_edges()
+		var instance_id := str(row.get("instance_object_id", "")).strip_edges()
+		if row_source_id.is_empty() or instance_id.is_empty() or source_id != row_source_id: return {}
+		if str(source.get("object_type", "")).strip_edges() != str(row.get("object_type", "")).strip_edges(): return {}
+		if source.has("manifest_object_id") and str(source.get("manifest_object_id", "")) != instance_id: return {}
+		if source.has("manifest_presentation_id") and str(source.get("manifest_presentation_id", "")) != presentation_id: return {}
+		if source.has("manifest_family") and str(source.get("manifest_family", "")) != "fixed": return {}
+		if source.has("manifest_source_kind") and str(source.get("manifest_source_kind", "")) != "environment_declaration": return {}
+		if source.has("manifest_source_id") and str(source.get("manifest_source_id", "")) != row_source_id: return {}
+		if source.has("slot_family") and str(source.get("slot_family", "")) != "fixed": return {}
+		if source.has("exact_slot_id") and str(source.get("exact_slot_id", "")) != str(row.get("exact_slot_id", "")): return {}
+		matched_row = row
+		break
+	if matched_row.is_empty(): return {}
+	var parsed := OperationRegistryScript.parse_owned_identity(OperationRegistryScript.identity("base", presentation_id))
+	if parsed.is_empty(): return {}
+	return {
+		"owner_namespace": str(parsed.get("owner_namespace", "")),
+		"stable_object_id": str(parsed.get("stable_object_id", "")),
+		"source_kind": "environment_declaration",
+		"source_field": "fixed_objects",
+		"source_record_id": str(matched_row.get("instance_object_id", "")),
 	}
 
 
@@ -725,6 +788,16 @@ static func _layout_present(environment: Dictionary, presentation_id: String) ->
 
 
 static func _base_identity_is_live(environment: Dictionary, presentation_id: String) -> bool:
+	var manifest_rows := _array(_dict(environment.get("object_manifest", {})).get("rows", []))
+	if not manifest_rows.is_empty():
+		for row_value in manifest_rows:
+			var row := _dict(row_value)
+			if not bool(row.get("active", false)) or not bool(row.get("physical", false)):
+				continue
+			if str(row.get("presentation_object_id", row.get("object_id", ""))) == presentation_id \
+					or _array(row.get("action_ids", [])).has(presentation_id):
+				return true
+		return false
 	var parts := presentation_id.split(":", false)
 	if parts.size() < 2: return false
 	var domain := str(parts[0])

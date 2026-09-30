@@ -376,6 +376,7 @@ var presented_bankroll_action_id := ""
 var presented_bankroll_release_screen := ""
 var presented_bankroll_started_msec := 0
 var financial_hud_dirty := false
+var financial_hud_refresh_callable: Callable
 var pending_active_item_id: String = ""
 var run_inventory_popup_mode: String = ""
 var run_inventory_context_container_id: String = ""
@@ -719,6 +720,7 @@ const WEB_AUDIO_UNLOCK_REFRESH_DELAY_SECONDS := 0.20
 
 func _init() -> void:
 	_sealed_action_host = SealedActionHostScript.new(self)
+	financial_hud_refresh_callable = Callable(self, "_refresh_financial_hud_if_dirty")
 
 
 func _ready() -> void:
@@ -762,7 +764,7 @@ func _process(delta: float) -> void:
 	if current_screen == SCREEN_GAME:
 		_timed("snapshot_builds", Callable(self, "_advance_game_surface_frame")) # SA2_PER_FRAME_OK: scoped timer removes a duplicated hot path and is performance-gated.
 	if financial_hud_dirty:
-		_timed("snapshot_builds", Callable(self, "_refresh_financial_hud_if_dirty"))
+		_timed("snapshot_builds", financial_hud_refresh_callable)
 	if presented_bankroll_hold_active:
 		_timed("snapshot_builds", Callable(self, "_advance_presented_bankroll")) # SA2_PER_FRAME_OK: scoped timer removes a duplicated hot path and is performance-gated.
 	if (current_screen == SCREEN_ENVIRONMENT or current_screen == SCREEN_GAME) and not meta_session_active:
@@ -11771,7 +11773,16 @@ func _add_context_object_actions(card: VBoxContainer, object_data: Dictionary) -
 		CONTEXT_MODE_NUMBERS:
 			_add_card_button(card, "Talk Business" if source_id == "silas" else "Work the Desk" if source_id == "desk" else "Open Book", Callable(self, "_open_numbers_surface").bind(source_id), false, true)
 		CONTEXT_MODE_DELIVERY:
-			_add_card_button(card, "Retrieve The Package" if source_id == "retrieve" else "Take The Package", Callable(self, "_activate_delivery_physical_action").bind(source_id), false, true)
+			var delivery_actions := JsonCoerceScript._copy_array(object_data.get("delivery_actions", []))
+			if delivery_actions.is_empty():
+				_add_card_button(card, "Retrieve The Package" if source_id == "retrieve" else "Take The Package", Callable(self, "_activate_delivery_physical_action").bind(source_id), false, true)
+			else:
+				for delivery_action_value in delivery_actions:
+					var delivery_action := JsonCoerceScript._copy_dict(delivery_action_value)
+					var delivery_verb := str(delivery_action.get("verb", "")).strip_edges()
+					if delivery_verb.is_empty():
+						continue
+					_add_card_button(card, str(delivery_action.get("label", delivery_verb.replace("_", " ").capitalize())), Callable(self, "_activate_delivery_physical_action").bind(delivery_verb), false, true)
 		CONTEXT_MODE_HOME_TENURE:
 			_add_card_button(card, str(object_data.get("label", "Pay")), Callable(self, "confirm_home_tenure_action"), false, true)
 		CONTEXT_MODE_HOME_SLEEP:
@@ -13954,9 +13965,13 @@ func focus_interactable_object(object_id: String) -> bool:
 		clear_interaction_focus(true)
 		return true
 	var object_data := _interactable_object(object_id)
+	var focus_object_id := object_id
+	if object_data.is_empty():
+		object_data = EnvironmentInteractionControllerScript.interactable_object_hosting_action(self, object_id)
+		focus_object_id = str(object_data.get("object_id", ""))
 	if object_data.is_empty():
 		return false
-	return _focus_interactable_object_with_data(object_id, object_data)
+	return _focus_interactable_object_with_data(focus_object_id, object_data)
 
 
 func focus_interactable_object_from_view(object_data: Dictionary) -> bool:
@@ -15617,6 +15632,9 @@ func _interactable_environment_cache_token(environment: Dictionary) -> String:
 		int(environment.get("environment_runtime_revision", 0)),
 		str(environment.get("scenario_semantic_digest", "")),
 		str(environment.get("scenario_layout_authority_digest", "")),
+		int(environment.get("object_manifest_revision", JsonCoerceScript._copy_dict(environment.get("object_manifest", {})).get("revision", 0))),
+		str(environment.get("object_manifest_digest", JsonCoerceScript._copy_dict(environment.get("object_manifest", {})).get("digest", ""))),
+		environment.get("runtime_object_manifest_entries", []),
 		bool(environment.get("scenario_semantic_ready", false)),
 		bool(environment.get("scenario_restore_pending_trusted_rebuild", false)),
 		str(environment.get("scenario_sequence_pending_visit_id", "")),
@@ -16722,7 +16740,7 @@ func _on_developer_placement_lock_requested(request: Dictionary) -> void:
 	var environment := JsonCoerceScript._copy_dict(request.get("environment", {}))
 	var result := DeveloperPlacementStoreScript.save_position(
 		environment,
-		str(request.get("field", "object_slot_positions")),
+		str(request.get("field", "slot_positions")),
 		str(request.get("slot_id", "")),
 		request.get("position", Vector2.ZERO)
 	)
@@ -16741,7 +16759,7 @@ func _on_developer_placement_reset_requested(request: Dictionary) -> void:
 	var environment := JsonCoerceScript._copy_dict(request.get("environment", {}))
 	var result := DeveloperPlacementStoreScript.clear_position(
 		environment,
-		str(request.get("field", "object_slot_positions")),
+		str(request.get("field", "slot_positions")),
 		str(request.get("slot_id", ""))
 	)
 	if not bool(result.get("ok", false)):

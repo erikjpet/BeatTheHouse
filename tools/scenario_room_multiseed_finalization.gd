@@ -93,6 +93,7 @@ func _run() -> void:
 		_finish(failures, 0)
 		return
 	_check_exact_object_helper(failures)
+	_check_navigation_family_signature_fixture(failures)
 	_check_barrier_placements(library, definitions, failures)
 	if not _requested_scenario.is_empty():
 		definitions = definitions.filter(func(definition: Variant) -> bool: return str(_dict(definition).get("id", "")) == _requested_scenario)
@@ -240,18 +241,32 @@ func _check_reachable_grounding_states(run_state: Variant, fallback_definition: 
 			failures.append("%s/%s/%s layout audit is invalid." % [seed_family, scenario_id, path])
 			continue
 		var semantic := _dict(_dict(resolved.get("projection", {})).get("semantic_state", {}))
+		var interactions := _dict(semantic.get("interactions", {}))
+		var surface_map := EnvironmentPlacementScript.surface_map(environment)
 		for collection_key in ["scene_objects", "actors"]:
-			for visual_value in _dict(semantic.get(collection_key, {})).values():
-				var visual := _dict(visual_value)
+			var visuals := _dict(semantic.get(collection_key, {}))
+			for identity_value in visuals.keys():
+				var identity := str(identity_value)
+				var visual := _dict(visuals.get(identity_value, {}))
 				if not bool(visual.get("present", true)):
 					continue
 				var placement_class := str(visual.get("placement_class", ""))
-				var identity := "%s::%s" % [str(visual.get("owner_namespace", "scenario")), str(visual.get("stable_object_id", ""))]
 				var rect := _normalized_pixel_rect(visual.get("normalized_hit_rect", {}))
-				var developer_placed := _developer_placement_room(environment)
-				if placement_class not in EnvironmentPlacementScript.CLASSES or not developer_placed and not EnvironmentPlacementScript.valid_rect(environment, placement_class, rect):
-					failures.append("%s/%s/%s %s has class-invalid grounded geometry (%s)." % [seed_family, scenario_id, path, identity, placement_class])
-				_check_route_grounding(environment, visual, placement_class, rect.size, "%s/%s/%s %s" % [seed_family, scenario_id, path, identity], failures, developer_placed)
+				var slot_id := str(visual.get("slot_id", ""))
+				var slot_family := str(visual.get("slot_family", ""))
+				var expected_slot_family := _expected_visual_slot_family(identity, visual, interactions)
+				var slot := _slot_by_id(surface_map, slot_id)
+				var slot_rect := EnvironmentSlotBinderScript.rect_from_binding({"slot": slot})
+				if placement_class not in EnvironmentPlacementScript.CLASSES \
+						or slot.is_empty() \
+						or slot_family != expected_slot_family \
+						or str(slot.get("kind", "")) != slot_family \
+						or not slot_id.begins_with("%s." % slot_family) \
+						or str(slot.get("footprint_class", "")) != placement_class \
+						or str(slot.get("support_id", "")).is_empty() \
+						or not rect.is_equal_approx(slot_rect):
+					failures.append("%s/%s/%s %s diverges from its lifecycle- and class-compatible authored slot: class=%s family=%s expected_family=%s slot=%s rect=%s authored=%s." % [seed_family, scenario_id, path, identity, placement_class, slot_family, expected_slot_family, slot_id, str(rect), str(slot_rect)])
+				_check_route_grounding(visual, placement_class, rect.size, "%s/%s/%s %s" % [seed_family, scenario_id, path, identity], failures)
 		checked += 1
 	return checked
 
@@ -304,17 +319,106 @@ func _interaction_grounding_signature(interactions: Dictionary) -> Dictionary:
 		var identity := str(identity_value)
 		var interaction := _dict(interactions.get(identity_value, {}))
 		var relevant: Dictionary = {}
-		for key in ["present", "enabled", "label", "prompt", "disabled_reason", "safe_exit", "alternate_exit", "owner_namespace", "presentation_object_id"]:
+		for key in [
+			"present", "enabled", "label", "prompt", "disabled_reason",
+			"safe_exit", "alternate_exit", "owner_namespace", "presentation_object_id",
+			"navigation_exit", "navigates_environment", "travel_exit",
+			"destination_archetype", "destination_environment_id", "destination_layer_id",
+			"target_environment_id", "target_layer_id",
+		]:
 			if interaction.has(key):
 				relevant[key] = interaction.get(key)
-		relevant["has_actions"] = not _array(interaction.get("available_actions", [])).is_empty()
+		var available_actions := _array(interaction.get("available_actions", []))
+		relevant["has_actions"] = not available_actions.is_empty()
+		# Handler and input changes can alter routing without changing action count.
+		# Keep the complete action contracts in this audit-only signature so every
+		# reachable routing state is finalized independently.
+		relevant["available_actions"] = available_actions.duplicate(true)
+		# Slot-family choice depends on the production navigation predicate, not
+		# merely on whether an interaction has an action. Preserve that derived
+		# distinction so an ordinary and a travel state cannot share one audit key.
+		relevant["navigates_environment"] = ScenarioLayoutResolverScript._interaction_navigates_environment(interaction)
 		result[identity] = relevant
 	return result
 
 
-func _check_route_grounding(environment: Dictionary, visual: Dictionary, placement_class: String, size: Vector2, label: String, failures: Array, developer_placed: bool = false) -> void:
+func _expected_visual_slot_family(identity: String, visual: Dictionary, interactions: Dictionary) -> String:
+	var interaction := _dict(interactions.get(identity, {}))
+	if ScenarioLayoutResolverScript._interaction_navigates_environment(interaction):
+		return "exit"
+	# Resolved projections normally key the interaction by its visual identity.
+	# Keep the explicit presentation link as a fail-closed compatibility path for
+	# composed projections that retain a separate interaction identity.
+	var presentation_ids := {
+		identity: true,
+		str(visual.get("presentation_object_id", "")).strip_edges(): true,
+	}
+	presentation_ids.erase("")
+	for interaction_value in interactions.values():
+		var candidate := _dict(interaction_value)
+		var presentation_id := str(candidate.get("presentation_object_id", "")).strip_edges()
+		if presentation_ids.has(presentation_id) \
+				and ScenarioLayoutResolverScript._interaction_navigates_environment(candidate):
+			return "exit"
+	return "scenario"
+
+
+func _check_navigation_family_signature_fixture(failures: Array) -> void:
+	var identity := "scenario::navigation_family_fixture"
+	var visual := {
+		"owner_namespace": "scenario",
+		"stable_object_id": "navigation_family_fixture",
+		"presentation_object_id": identity,
+		"present": true,
+		"label": "Fixture doorway",
+		"placement_class": "doorway",
+	}
+	var ordinary_interaction := {
+		"owner_namespace": "scenario",
+		"stable_object_id": "navigation_family_fixture",
+		"presentation_object_id": identity,
+		"present": true,
+		"enabled": true,
+		"label": "Continue the scenario",
+		"safe_exit": true,
+		"available_actions": [{
+			"id": "continue_fixture",
+			"handler": "change_scene_object",
+			"inputs": {"state": "continued"},
+		}],
+	}
+	var navigation_interaction := ordinary_interaction.duplicate(true)
+	navigation_interaction["available_actions"] = [{
+		"id": "continue_fixture",
+		"handler": "change_layer",
+		"inputs": {"target_layer_id": "back_room"},
+	}]
+	var ordinary_interactions := {identity: ordinary_interaction}
+	var navigation_interactions := {identity: navigation_interaction}
+	if _expected_visual_slot_family(identity, visual, ordinary_interactions) != "scenario":
+		failures.append("A safe-exit-only scenario visual incorrectly acquired exit-family authority.")
+	if _expected_visual_slot_family(identity, visual, navigation_interactions) != "exit":
+		failures.append("An explicitly navigational scenario visual did not acquire exit-family authority.")
+	var ordinary_projection := {
+		"status": "active",
+		"semantic_state": {
+			"scene_objects": {identity: visual},
+			"actors": {},
+			"interactions": ordinary_interactions,
+			"services": {},
+			"games": {},
+			"routes": {},
+		},
+	}
+	var navigation_projection := ordinary_projection.duplicate(true)
+	navigation_projection["semantic_state"]["interactions"] = navigation_interactions
+	if _grounding_projection_signature(ordinary_projection) == _grounding_projection_signature(navigation_projection):
+		failures.append("Grounding-state de-duplication collapsed ordinary and navigational interaction families.")
+
+
+func _check_route_grounding(visual: Dictionary, placement_class: String, size: Vector2, label: String, failures: Array) -> void:
 	var route_stage := _dict(visual.get("route_stage", {}))
-	if route_stage.is_empty() or developer_placed:
+	if route_stage.is_empty():
 		return
 	for point_key in ["start", "endpoint", "reduced_motion_endpoint"]:
 		var point_data := _dict(route_stage.get(point_key, {}))
@@ -322,16 +426,18 @@ func _check_route_grounding(environment: Dictionary, visual: Dictionary, placeme
 			continue
 		var center := Vector2(float(point_data.get("x", 0.0)) * 900.0, float(point_data.get("y", 0.0)) * 430.0)
 		var route_rect := Rect2(center - size * 0.5, size)
-		if not EnvironmentPlacementScript.valid_rect(environment, placement_class, route_rect):
-			failures.append("%s route %s leaves its %s surface." % [label, point_key, placement_class])
+		if not Rect2(Vector2.ZERO, Vector2(900.0, 430.0)).encloses(route_rect):
+			failures.append("%s route %s leaves the authored room canvas for %s." % [label, point_key, placement_class])
 
-
-func _developer_placement_room(environment: Dictionary) -> bool:
-	var placement_map := EnvironmentPlacementScript.surface_map(environment)
-	for field in ["developer_object_slot_positions", "developer_scenario_object_slot_positions", "developer_category_slot_positions"]:
-		if not _dict(placement_map.get(field, {})).is_empty():
-			return true
-	return false
+func _slot_by_id(surface_map: Dictionary, slot_id: String) -> Dictionary:
+	if slot_id.is_empty():
+		return {}
+	for family in EnvironmentPlacementScript.SLOT_FAMILIES:
+		for slot_value in EnvironmentPlacementScript.slots_for_family(surface_map, str(family)):
+			var slot := _dict(slot_value)
+			if str(slot.get("id", "")) == slot_id:
+				return slot
+	return {}
 
 
 func _normalized_pixel_rect(value: Variant) -> Rect2:
@@ -413,9 +519,9 @@ func _check_barrier_placements(library: Variant, definitions: Array, failures: A
 			var slot := _dict(binding.get("slot", {}))
 			var rect := EnvironmentSlotBinderScript.rect_from_binding(binding)
 			var small_rect := EnvironmentSlotBinderScript.expanded_rect(rect)
-			if not str(binding.get("slot_id", "")).begins_with("stage.") or not rect.has_area() or not small_rect.has_area() \
+			if not str(binding.get("slot_id", "")).begins_with("scenario.") or not rect.has_area() or not small_rect.has_area() \
 					or str(slot.get("footprint_class", "")) != str(entry.get("placement_class", "")):
-				failures.append("Barrier %s/%s did not preserve class-compatible fixed-slot authority in normal and expanded layouts." % [str(definition.get("id", "")), identity])
+				failures.append("Barrier %s/%s did not preserve class-compatible scenario-slot authority in normal and expanded layouts." % [str(definition.get("id", "")), identity])
 	if object_count != EXPECTED_BARRIER_OBJECTS or placement_count != EXPECTED_BARRIER_PLACEMENTS or role_counts != {"obstacle": 7, "barrier": 18, "blockade": 0}:
 		failures.append("Barrier sweep census changed: objects=%d placements=%d roles=%s." % [object_count, placement_count, JSON.stringify(role_counts)])
 

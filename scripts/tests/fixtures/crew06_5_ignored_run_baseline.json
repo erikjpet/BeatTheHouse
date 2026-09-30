@@ -1,53 +1,53 @@
 {
-    "baseline_commit": "a11ed9d7-round4-runtime-binding-baseline",
+    "baseline_commit": "environment-slot-family-manifest-v2",
     "capture": {
         "runs": [
             {
                 "checkpoints": [
                     {
-                        "current_environment_bytes": 153770,
-                        "current_environment_sha256": "80af64e4594491261ac5a19ae5d52ea07ed55835b5a89dc54c0a6bfa1feab13a",
+                        "current_environment_bytes": 169820,
+                        "current_environment_sha256": "a729c00146891c126743406670cb16390273b503188ca5815e5188eb31e6507e",
                         "label": "initial_bar",
-                        "run_state_bytes": 362110,
-                        "run_state_sha256": "983f3773ce2f69254ab3b72148c028e1b109c442809bdfc642e427aa310eeb76",
-                        "world_environments_bytes": 108391,
-                        "world_environments_sha256": "b253e8cc6fc2924a13264f3a4df3d4930eaf1d6f04ee9892a771fd9de2557170"
+                        "run_state_bytes": 409897,
+                        "run_state_sha256": "05a88a9fc9defa1fcb7f04501f12ce6bd0c4e7690a2c8da673f83d382399102c",
+                        "world_environments_bytes": 130667,
+                        "world_environments_sha256": "50c9908d81e15e84658ed58b18a2e5894d2e6d7c4694a35c1341c666b6cc5f48"
                     },
                     {
-                        "current_environment_bytes": 154722,
-                        "current_environment_sha256": "1dcbe5063e90b93d9b4595101ee5740adefa2d9705d583b0ceb7aee79a42a17b",
+                        "current_environment_bytes": 170772,
+                        "current_environment_sha256": "76254056d2fea92c85b068b7a2d6f5e727b23fb63bee7eb0228979bf481d5261",
                         "label": "bar_action_boundary",
-                        "run_state_bytes": 363065,
-                        "run_state_sha256": "51838f2d48e57a554359bc36ee1ee1102aa95959d9c2b756228367ed7ef3cc08",
-                        "world_environments_bytes": 108391,
-                        "world_environments_sha256": "b253e8cc6fc2924a13264f3a4df3d4930eaf1d6f04ee9892a771fd9de2557170"
+                        "run_state_bytes": 410852,
+                        "run_state_sha256": "1c7aa9d441bfefe26a54b0fa1d368c3640cafc791468c819323ac2f5ce0b0f93",
+                        "world_environments_bytes": 130667,
+                        "world_environments_sha256": "50c9908d81e15e84658ed58b18a2e5894d2e6d7c4694a35c1341c666b6cc5f48"
                     },
                     {
-                        "current_environment_bytes": 27366,
-                        "current_environment_sha256": "728c2f85909302a4e0057f07974f44dfc84c33f0609c6a06f221f75459eb91d3",
+                        "current_environment_bytes": 37034,
+                        "current_environment_sha256": "7a7a3cc946d4aed92d2383ad954e45763eaa20aa332a74f4aff5d8947e2b368d",
                         "label": "ordinary_travel",
-                        "run_state_bytes": 309601,
-                        "run_state_sha256": "da39c65d84421cf2a1e8400be55d30c9068436bd634be90fa0e2ea92e45e001c",
-                        "world_environments_bytes": 136317,
-                        "world_environments_sha256": "303cdd1bd3c4d5b279aa1fed46aeefbbd4c627b226d53378e4f90257ff1f0aec"
+                        "run_state_bytes": 349576,
+                        "run_state_sha256": "a15d7680304bc494f9220736d2bf99a76dcf596ec9f7df6604ab791ab41a8ac4",
+                        "world_environments_bytes": 166624,
+                        "world_environments_sha256": "248a1f4f38b987786149ca19128c680ce3d56a26e3f28d97a5dfa15f0f04d2ab"
                     },
                     {
-                        "current_environment_bytes": 154421,
-                        "current_environment_sha256": "6fabdfd7aa41fc654a7fbfb73981861c522e0d1982b2f4e0e58873f4797132dd",
+                        "current_environment_bytes": 170470,
+                        "current_environment_sha256": "5e1158abdaebc3e10b78a318e2664d1dff37279ac1e43708e2540f365bf5373d",
                         "label": "bar_revisit",
-                        "run_state_bytes": 391613,
-                        "run_state_sha256": "4eb18bf7f59e0a27cd56491a9b6e38952399cc74ac4cd7f2cb2d4c450ff521e7",
-                        "world_environments_bytes": 135876,
-                        "world_environments_sha256": "a19d7bf9db71763ba47fb855d13d657b93c6cbd699a4df9c1bfe0f6c45ee8501"
+                        "run_state_bytes": 447431,
+                        "run_state_sha256": "4dc39def5eca3b3bc38323ef93236a687d8cb150385ae3b504730c543f92dc39",
+                        "world_environments_bytes": 166183,
+                        "world_environments_sha256": "77b602bf04a602852c661fcc0bf405397547406329adc8ef460955fadd7c5b53"
                     },
                     {
-                        "current_environment_bytes": 109109,
-                        "current_environment_sha256": "723ab6e95be8fb892b7e380fcde611ceded4e3fbe8d65f8a3a5609d76e4f5f46",
+                        "current_environment_bytes": 134620,
+                        "current_environment_sha256": "33cb81c453b04f8657eaeb53900e631a5bd27499e6e42ef063cc1b6a112b44cf",
                         "label": "save_load_round_trip",
-                        "run_state_bytes": 391613,
-                        "run_state_sha256": "4eb18bf7f59e0a27cd56491a9b6e38952399cc74ac4cd7f2cb2d4c450ff521e7",
-                        "world_environments_bytes": 135876,
-                        "world_environments_sha256": "a19d7bf9db71763ba47fb855d13d657b93c6cbd699a4df9c1bfe0f6c45ee8501"
+                        "run_state_bytes": 447431,
+                        "run_state_sha256": "4dc39def5eca3b3bc38323ef93236a687d8cb150385ae3b504730c543f92dc39",
+                        "world_environments_bytes": 166183,
+                        "world_environments_sha256": "77b602bf04a602852c661fcc0bf405397547406329adc8ef460955fadd7c5b53"
                     }
                 ],
                 "seed": "CREW-IGNORED-GOLDEN-A"
@@ -55,49 +55,49 @@
             {
                 "checkpoints": [
                     {
-                        "current_environment_bytes": 153816,
-                        "current_environment_sha256": "a088a59be11c7aaa5ad6e17c6562ddd1e196dfdf4a1cf3dcd4f50d3b7f8f51e0",
+                        "current_environment_bytes": 169866,
+                        "current_environment_sha256": "79a604c0a101f9deca22f945ed8ca2db3b92fbf02c16b1758cb9423d9122fdd1",
                         "label": "initial_bar",
-                        "run_state_bytes": 436089,
-                        "run_state_sha256": "dc10b236509172838163cf50b24d5ca1b87c2af4b3430f26ed4b58e7ff808472",
-                        "world_environments_bytes": 108437,
-                        "world_environments_sha256": "6b938600ea2bc34a692b28702ce29c7c28abb1cf53d92bc495e10810c468be18"
+                        "run_state_bytes": 483876,
+                        "run_state_sha256": "c80af96b639b1137b477f2d8b0d0fbcb5dbd51c12c9061ab3ced2e9bba245ed0",
+                        "world_environments_bytes": 130713,
+                        "world_environments_sha256": "9fa3f3a459fe518be337be366c63fd3847c1c94f364af4dfcf1ca22b4fb87692"
                     },
                     {
-                        "current_environment_bytes": 155425,
-                        "current_environment_sha256": "c412445f84e871a31a82de1688679dcd929cd8124eea71acac321033d5c907ea",
+                        "current_environment_bytes": 171475,
+                        "current_environment_sha256": "6984f1a0d05003d49cbf278d9f659b33d4a399e198192137b908998e81ac387e",
                         "label": "bar_action_boundary",
-                        "run_state_bytes": 437701,
-                        "run_state_sha256": "65f0dd63f865fcec3a7af8af386a9bd0117c6a96b9fcc06448085fde2312bac7",
-                        "world_environments_bytes": 108437,
-                        "world_environments_sha256": "6b938600ea2bc34a692b28702ce29c7c28abb1cf53d92bc495e10810c468be18"
+                        "run_state_bytes": 485488,
+                        "run_state_sha256": "c66a02e576d55de335ad0e1eb317eae4bc0bdabee6d3f8144b27ae01720a855d",
+                        "world_environments_bytes": 130713,
+                        "world_environments_sha256": "9fa3f3a459fe518be337be366c63fd3847c1c94f364af4dfcf1ca22b4fb87692"
                     },
                     {
-                        "current_environment_bytes": 143923,
-                        "current_environment_sha256": "fceb740a0390ae1e8a144e7f04d92728150adb01a727418b22cc6e930df62fa5",
+                        "current_environment_bytes": 152360,
+                        "current_environment_sha256": "4de01ff5b02beab01872e752e9c4c6466a200b17988bf558536821b56bfa450b",
                         "label": "ordinary_travel",
-                        "run_state_bytes": 520668,
-                        "run_state_sha256": "bd2c7f8846dfb158addedd251384434b7c4e73baa2a8c5a367b9f61d2acb6523",
-                        "world_environments_bytes": 205335,
-                        "world_environments_sha256": "09b1dbc8b5870944a051cf9598b11337b3d620ce6775f963d965b2a51728dee7"
+                        "run_state_bytes": 588099,
+                        "run_state_sha256": "6af46c826db1d7c8c4a5333dbf9771c75d63185a360a7f7396a175d60329cdfd",
+                        "world_environments_bytes": 249370,
+                        "world_environments_sha256": "68a95a980f9878ddb292dec25e5a409cb436d87e00d07f30b117c2014f1f2811"
                     },
                     {
-                        "current_environment_bytes": 155124,
-                        "current_environment_sha256": "bd7c668704f840c4600398929c795ab1255891158895b8d46a6418ee77822366",
+                        "current_environment_bytes": 171173,
+                        "current_environment_sha256": "e1e3335a1630a6b25b1aa51df8206753d5a372f7c861ca0f02ee649716f61578",
                         "label": "bar_revisit",
-                        "run_state_bytes": 535067,
-                        "run_state_sha256": "2898068f8cd3c64824666ff8ff6d4ca95fef87f9cb95d8689420c5c7987af02f",
-                        "world_environments_bytes": 205174,
-                        "world_environments_sha256": "8d541d05681a824035fc0fa376ba9d466453c1cc468e720ca676f0315f5b55ba"
+                        "run_state_bytes": 604613,
+                        "run_state_sha256": "652872fe160671554198b15c12482284339beeb09705d2ad3ae30e2a71996aba",
+                        "world_environments_bytes": 249209,
+                        "world_environments_sha256": "90acd76c0929155bc9f126f8aa73dbdf7ac0cc6176958e23c9ce0ba2ba318cf4"
                     },
                     {
-                        "current_environment_bytes": 109812,
-                        "current_environment_sha256": "9e14d3c1ce3a8c02d6be33751e61b96280fc92f35d321009bb07dec4e712eaa1",
+                        "current_environment_bytes": 135323,
+                        "current_environment_sha256": "f2817d936d1292cb13fc59abe622c60aa203b264c0d8abab70ecc27d9cc37414",
                         "label": "save_load_round_trip",
-                        "run_state_bytes": 535067,
-                        "run_state_sha256": "2898068f8cd3c64824666ff8ff6d4ca95fef87f9cb95d8689420c5c7987af02f",
-                        "world_environments_bytes": 205174,
-                        "world_environments_sha256": "8d541d05681a824035fc0fa376ba9d466453c1cc468e720ca676f0315f5b55ba"
+                        "run_state_bytes": 604613,
+                        "run_state_sha256": "652872fe160671554198b15c12482284339beeb09705d2ad3ae30e2a71996aba",
+                        "world_environments_bytes": 249209,
+                        "world_environments_sha256": "90acd76c0929155bc9f126f8aa73dbdf7ac0cc6176958e23c9ce0ba2ba318cf4"
                     }
                 ],
                 "seed": "CREW-IGNORED-GOLDEN-B"
@@ -106,9 +106,9 @@
         "schema_version": 1
     },
     "provenance": {
-        "change_commit": "a11ed9d7e8e69508e517fbd477da03183eb7dae7",
-        "proof": "Both fixed Crew-ignored seeds were recaptured through all five production checkpoints after the Round 4 runtime binding sweep passed 465 cases with zero failures; the contract still requires exact normalized bytes and hashes, inactive world-sequence no-ops, and zero Crew trust.",
-        "reason": "Round 4 repaired authored exit and scenario-slot authority across every runtime binding path; the accepted Crew-ignored bytes must reflect those shipped non-Crew room records."
+        "change_commit": "environment-slot-family-manifest-v2",
+        "proof": "Both fixed Crew-ignored seeds were recaptured through all five production checkpoints after the final slot-family manifest and capacity corrections; the contract still requires exact normalized bytes and hashes, inactive world-sequence no-ops, and zero Crew trust.",
+        "reason": "The completed fixed, event, scenario, and exit migration intentionally adds durable object-manifest ownership and independent coexistence capacity to generated and persisted rooms without changing Crew state."
     },
     "schema_version": 1.0
 }

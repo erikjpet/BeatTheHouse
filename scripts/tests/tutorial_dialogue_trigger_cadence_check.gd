@@ -20,10 +20,11 @@ const BLACKJACK_FIXTURE_CHALLENGE := {
 		"starting_bankroll": 80,
 	},
 }
-# The shared placement authority and batched money revision change the
-# serialized fixture while preserving the deterministic zero-Heat reprieve
-# behavior; the gameplay assertions below remain the one-shot authority.
-const BLACKJACK_FIXTURE_BASELINE_SHA256 := "f7e7397289df07151427da1a8bf2ca07eae1ecc62f7779577610c360019c493c"
+# Shared placement, batched money, and the four-family object-manifest
+# authorities change the serialized fixture while preserving the deterministic
+# zero-Heat reprieve behavior; the gameplay assertions below remain the
+# one-shot authority.
+const BLACKJACK_FIXTURE_BASELINE_SHA256 := "0b90fcb4096e291fcb5474b232e1cc78b35375e94c93ed8c85a7f97c2c4009d2"
 const BLACKJACK_DEFINITION_SHA256 := "4a684c890b00bf03082af3f95a37369336302d1a51e668d9f325a158ca47dfa3"
 const NORMALIZED_CREW_AUTHORITY_ID := "0000000000000000000000000000000000000000000000000000000000000000"
 

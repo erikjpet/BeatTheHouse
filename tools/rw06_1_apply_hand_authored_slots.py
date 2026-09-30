@@ -1927,6 +1927,17 @@ def main() -> int:
     selected = set(args.maps or HAND_SLOTS)
     path = args.root.resolve() / "data/environments/placement_surfaces.json"
     source = json.loads(path.read_text(encoding="utf-8"))
+    if int(source.get("slot_schema_version", 0)) >= 2:
+        if args.check:
+            from migrate_environment_slots_v2 import validate as validate_v2
+
+            validate_v2(source)
+            print("RW06_1_HAND_AUTHORED_SLOT_CHECK RETIRED slot_schema=v2")
+            return 0
+        raise SystemExit(
+            "rw06_1_apply_hand_authored_slots.py is retired for slot schema v2; "
+            "edit the four-family placement authority or use the developer movement tool"
+        )
     generated = json.loads(json.dumps(source))
     found: set[str] = set()
     for map_data in generated.get("maps", []):

@@ -71,12 +71,13 @@ func _check_room_pass(archetype: Dictionary, layer_id: String, definition: Dicti
 	var instance = EnvironmentInstanceScript.from_archetype(archetype, 1, rng, library, {}, definition) \
 			if layer_id.is_empty() else EnvironmentInstanceScript.from_archetype_layer(archetype, layer_id, 1, rng, library, {}, definition)
 	var environment := instance.to_dict()
-	var entries: Array = EnvironmentInstanceScript._active_object_layout_entries(environment)
+	var entries: Array = EnvironmentInstanceScript.active_object_manifest_rows(environment)
 	var generation_occupancy: Dictionary = {}
 	var generated := EnvironmentSlotBinderScript.bind_base_layout(environment, entries, generation_occupancy)
 	if not bool(generated.get("ok", false)):
 		_fail(salt, "base generation failed: %s" % JSON.stringify(generated.get("errors", [])))
 		return
+	_assert_manifest_bijection(salt, entries, _dict(generated.get("slot_bindings", {})))
 	var layout := _dict(environment.get("layout", {}))
 	layout["slot_schema_version"] = int(generated.get("slot_schema_version", 0))
 	layout["slot_map_digest"] = str(generated.get("slot_map_digest", ""))
@@ -86,19 +87,10 @@ func _check_room_pass(archetype: Dictionary, layer_id: String, definition: Dicti
 	layout["object_rects"] = _dict(generated.get("object_rects", {}))
 	environment["layout"] = layout
 	var records := _base_records(entries)
-	records.append({
-		"object_id": "slot_check_late_actor",
-		"object_type": "actor",
-		"visual_type": "actor",
-		"physical_person": true,
-		"label": "Late room action",
-		"visible": true,
-		"interactive": true,
-	})
 	# Production removes geometry-free Room Actions by attaching their actions to
 	# a visible person or fixture before the physical slot binder runs. Exercise
-	# that same composition boundary instead of asking the binder to place an
-	# intentionally abstract service/route row as a second room object.
+	# that same composition boundary on the real generated inventory; this sweep
+	# must not invent an extra physical actor that production never creates.
 	records = EnvironmentInteractionControllerScript._attach_action_only_records(records)
 	var room_occupancy: Dictionary = {}
 	var live := EnvironmentSlotBinderScript.bind_base_records(environment, records, _dict(layout.get("slot_bindings", {})), room_occupancy)
@@ -202,6 +194,29 @@ func _assert_every_object_bound(label: String, objects: Array, bindings: Diction
 			_fail(label, "%s has a room binding without a slot" % identity)
 		totals["objects"] = int(totals.get("objects", 0)) + 1
 		totals["slotted"] = int(totals.get("slotted", 0)) + 1
+
+
+func _assert_manifest_bijection(label: String, rows: Array, bindings: Dictionary) -> void:
+	var expected: Dictionary = {}
+	for row_value in rows:
+		var row := _dict(row_value)
+		if not bool(row.get("active", false)) or not bool(row.get("physical", false)):
+			continue
+		var object_id := str(row.get("object_id", row.get("presentation_object_id", ""))).strip_edges()
+		if object_id.is_empty():
+			_fail(label, "manifest contains an active physical row without presentation identity")
+			continue
+		expected[object_id] = str(row.get("family", ""))
+	for object_id_value in expected.keys():
+		var object_id := str(object_id_value)
+		var binding := _dict(bindings.get(object_id, {}))
+		if binding.is_empty():
+			_fail(label, "manifest physical object %s has no slot binding" % object_id)
+		elif str(binding.get("slot_family", "")) != str(expected.get(object_id, "")):
+			_fail(label, "manifest physical object %s crossed from %s to %s" % [object_id, str(expected.get(object_id, "")), str(binding.get("slot_family", ""))])
+	for object_id_value in bindings.keys():
+		if not expected.has(str(object_id_value)):
+			_fail(label, "slot binding %s has no active physical manifest row" % str(object_id_value))
 
 
 func _assert_unique_slots(label: String, base_bindings: Dictionary, scenario_bindings: Dictionary, _totals: Dictionary) -> void:

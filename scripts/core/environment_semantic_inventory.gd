@@ -11,22 +11,24 @@ const EnvironmentEventResolverScript := preload("res://scripts/core/environment_
 # archetypes or a finalized EnvironmentInstance. Presentation IDs are retained
 # as metadata; operation identities are domain-qualified and collision-safe.
 
-const SCHEMA_VERSION := 1
+const SCHEMA_VERSION := 2
 const COLLECTION_KEYS := ["scene_objects", "interactions", "actors", "services", "games", "routes", "anchors", "zones"]
 const RECORD_KEYS := ["collection", "owner_namespace", "stable_object_id", "owned_identity", "presentation_object_id", "availability", "source_kind", "source_field", "source_record_id", "record"]
 const INVENTORY_KEYS := ["schema_version", "kind", "environment_id", "layer_id", "guaranteed", "possible", "records", "presentation_ids", "provenance", "errors", "digest"]
 const INSTANCE_INVENTORY_KEYS := ["schema_version", "kind", "environment_id", "layer_id", "guaranteed", "possible", "records", "presentation_ids", "provenance", "errors", "digest", "source_provenance"]
 const PROVENANCE_RECORD_KEYS := ["source_kind", "source_field", "source_record_id", "record"]
-const SOURCE_PROVENANCE_KEYS := ["world_node_id", "archetype_id", "layout_object_rects", "game_ids", "event_ids", "item_offer_authority", "shopkeeper_offer_source_present", "service_ids", "lender_ids", "layer_ids", "route_ids", "layer_transition_ids", "casino_room_target_ids", "casino_fixture_ids", "crew_presence_ids", "home_profile", "home_container_ids", "semantic_zones", "semantic_anchors", "semantic_actors", "base_interaction_authority", "base_actor_authority"]
+const SOURCE_PROVENANCE_KEYS := ["world_node_id", "archetype_id", "layout_object_rects", "object_manifest_authority", "game_ids", "event_ids", "item_offer_authority", "shopkeeper_offer_source_present", "service_ids", "lender_ids", "layer_ids", "route_ids", "layer_transition_ids", "casino_room_target_ids", "casino_fixture_ids", "crew_presence_ids", "home_profile", "home_container_ids", "semantic_zones", "semantic_anchors", "semantic_actors", "base_interaction_authority", "base_actor_authority"]
 const ITEM_OFFER_AUTHORITY_KEYS := ["id", "object_id"]
 const BASE_INTERACTION_AUTHORITY_KEYS := ["owner_namespace", "stable_object_id", "presentation_object_id", "normalized_hit_rect", "hit_bounds", "source_kind", "source_field", "source_record_id"]
 const BASE_INTERACTION_AUTHORITY_OPTIONAL_KEYS := ["presentation_mode"]
 const BASE_ACTOR_AUTHORITY_KEYS := ["owner_namespace", "stable_object_id", "actor_id", "anchor_id", "zone_id", "behavior", "source_kind", "source_field", "source_record_id"]
+const OBJECT_MANIFEST_AUTHORITY_KEYS := ["schema_version", "environment_id", "archetype_id", "layer_id", "rows", "digest"]
+const OBJECT_MANIFEST_ROW_KEYS := ["instance_object_id", "presentation_object_id", "family", "source_kind", "source_field", "source_id", "placement_class", "required", "active", "physical", "render_key", "exact_slot_id", "action_ids"]
 const NORMALIZED_RECT_KEYS := ["x", "y", "w", "h"]
 const HIT_BOUNDS_KEYS := ["w", "h"]
 const HOME_PROFILE_AUTHORITY_KEYS := ["status", "bed", "place"]
 const DIAGNOSTIC_CODES := ["possible_only", "wrong_collection", "wrong_owner", "layer_mismatch", "unknown_target"]
-const SOURCE_KINDS := ["environment_archetype", "scenario_selection", "environment_instance", "environment_instance_ui", "environment_event"]
+const SOURCE_KINDS := ["environment_archetype", "scenario_selection", "environment_instance", "environment_instance_ui", "environment_event", "environment_declaration"]
 
 
 static func event_choice_index(event_ids: Array, library: Variant) -> Dictionary:
@@ -257,7 +259,25 @@ static func for_instance(environment: Dictionary, library: Variant = null, base_
 	var provenance: Dictionary = {}
 	var errors: Array = []
 	var layout := _dict(environment.get("layout", {}))
-	var layout_rects := _dict(layout.get("object_rects", {}))
+	# The live layout also carries phase-owned scenario geometry. Exact base
+	# inventory must never reinterpret an already-owned `scenario::...` id as a
+	# base id or seal a scenario-family event into immutable room authority.
+	var layout_rects := _base_layout_object_rects(environment)
+	var manifest_presentations: Dictionary = {}
+	for row_value in _array(_dict(environment.get("object_manifest", {})).get("rows", [])):
+		var row := _dict(row_value)
+		var family := str(row.get("family", "")).strip_edges()
+		if not bool(row.get("active", false)) or not bool(row.get("physical", false)) or family == "scenario":
+			continue
+		var presentation_id := str(row.get("presentation_object_id", row.get("object_id", ""))).strip_edges()
+		var instance_object_id := str(row.get("instance_object_id", "")).strip_edges()
+		if presentation_id.is_empty() or instance_object_id.is_empty() or family not in ["fixed", "event", "exit"]:
+			errors.append("environment object manifest contains a malformed durable physical row.")
+			continue
+		if manifest_presentations.has(presentation_id):
+			errors.append("environment object manifest repeats durable presentation identity %s." % presentation_id)
+			continue
+		manifest_presentations[presentation_id] = row.duplicate(true)
 	var slot_authority: Dictionary = {}
 	if _layout_has_slot_authority(layout):
 		slot_authority = EnvironmentSlotBinderScript.validate_base_layout_authority(environment, base_interactions)
@@ -272,10 +292,24 @@ static func for_instance(environment: Dictionary, library: Variant = null, base_
 	var scene_object_ids: Array = layout_rects.keys()
 	for object_id_value in authenticated_overflow_ids:
 		if not scene_object_ids.has(object_id_value): scene_object_ids.append(object_id_value)
+	for presentation_id_value in manifest_presentations.keys():
+		if not scene_object_ids.has(presentation_id_value):
+			scene_object_ids.append(presentation_id_value)
 	for object_id_value in scene_object_ids:
-		var scene_identity := _add_presentation_identity(exact, presentation_ids, "scene_objects", str(object_id_value))
+		var presentation_id := str(object_id_value)
+		var manifest_row := _dict(manifest_presentations.get(presentation_id, {}))
+		if not manifest_row.is_empty() and not layout_rects.has(presentation_id) and not authenticated_overflow_ids.has(presentation_id):
+			errors.append("manifest physical object %s has no authenticated slot binding." % presentation_id)
+		var scene_identity := _add_presentation_identity(exact, presentation_ids, "scene_objects", presentation_id)
 		if scene_identity.is_empty(): errors.append("environment layout object %s cannot form a canonical owned identity." % str(object_id_value))
-		else: _set_provenance(provenance, "scene_objects", scene_identity, "environment_instance", "layout.slot_overflow_ids" if authenticated_overflow_ids.has(object_id_value) else "layout.object_rects", str(object_id_value))
+		elif not manifest_row.is_empty():
+			# The closed object_manifest_authority in source_provenance seals the
+			# canonical row body. Per-target provenance only identifies that exact
+			# row; nested payloads are intentionally reserved for zones, anchors,
+			# and actors and would otherwise broaden the semantic record contract.
+			_set_provenance(provenance, "scene_objects", scene_identity, "environment_instance", "object_manifest.rows", str(manifest_row.get("instance_object_id", "")))
+		else:
+			_set_provenance(provenance, "scene_objects", scene_identity, "environment_instance", "layout.slot_overflow_ids" if authenticated_overflow_ids.has(object_id_value) else "layout.object_rects", presentation_id)
 	var interaction_identities: Dictionary = {}
 	var interaction_presentations: Dictionary = {}
 	for record_value in base_interactions:
@@ -619,7 +653,11 @@ static func validate(inventory: Dictionary) -> Array:
 			if typeof(record.get(provenance_key)) != TYPE_STRING or str(record.get(provenance_key, "")).is_empty() or str(record.get(provenance_key, "")) != str(source.get(provenance_key, "")):
 				errors.append("semantic inventory record %s lacks exact provenance." % composite_key)
 			if typeof(source.get(provenance_key)) != TYPE_STRING or str(source.get(provenance_key, "")).is_empty(): errors.append("semantic inventory provenance record %s has malformed %s." % [composite_key, provenance_key])
-		if not SOURCE_KINDS.has(str(record.get("source_kind", ""))): errors.append("semantic inventory record %s has an unauthorized provenance source." % composite_key)
+		var record_source_kind := str(record.get("source_kind", ""))
+		var record_source_field := str(record.get("source_field", ""))
+		if not SOURCE_KINDS.has(record_source_kind): errors.append("semantic inventory record %s has an unauthorized provenance source." % composite_key)
+		if record_source_kind == "environment_declaration" and (collection_key != "interactions" or record_source_field != "fixed_objects"):
+			errors.append("semantic inventory record %s uses fixed-declaration provenance outside its exact interaction authority." % composite_key)
 		if typeof(source.get("record")) != TYPE_DICTIONARY or typeof(record.get("record")) != TYPE_DICTIONARY or _canonical(record.get("record")) != _canonical(source.get("record", {})):
 			errors.append("semantic inventory record %s payload does not match provenance." % composite_key)
 		_validate_provenance_payload(collection_key, str(record.get("source_field", "")), source.get("record"), composite_key, errors)
@@ -649,9 +687,10 @@ static func _validate_source_provenance(value: Variant, errors: Array) -> void:
 	if not _closed_dictionary(source, SOURCE_PROVENANCE_KEYS, []): errors.append("instance semantic inventory source_provenance is not closed.")
 	for key in ["world_node_id", "archetype_id"]:
 		if typeof(source.get(key)) != TYPE_STRING or str(source.get(key, "")) != str(source.get(key, "")).strip_edges(): errors.append("instance semantic inventory source_provenance.%s must be a trimmed string." % key)
-	for key in ["layout_object_rects", "home_profile", "semantic_zones", "semantic_anchors"]:
+	for key in ["layout_object_rects", "object_manifest_authority", "home_profile", "semantic_zones", "semantic_anchors"]:
 		if typeof(source.get(key)) != TYPE_DICTIONARY: errors.append("instance semantic inventory source_provenance.%s must be a dictionary." % key)
 	_validate_layout_rects(source.get("layout_object_rects"), errors)
+	_validate_object_manifest_authority(source.get("object_manifest_authority"), errors)
 	_validate_home_profile_authority(source.get("home_profile"), errors)
 	if typeof(source.get("shopkeeper_offer_source_present")) != TYPE_BOOL: errors.append("instance semantic inventory shopkeeper offer authority must be boolean.")
 	for key in ["game_ids", "event_ids", "service_ids", "lender_ids", "layer_ids", "route_ids", "layer_transition_ids", "casino_room_target_ids", "casino_fixture_ids", "crew_presence_ids", "home_container_ids"]:
@@ -666,6 +705,100 @@ static func _validate_source_provenance(value: Variant, errors: Array) -> void:
 	_validate_authority_records(source.get("item_offer_authority"), ITEM_OFFER_AUTHORITY_KEYS, [], "item_offer_authority", errors)
 	_validate_authority_records(source.get("base_interaction_authority"), BASE_INTERACTION_AUTHORITY_KEYS, ["normalized_hit_rect", "hit_bounds"], "base_interaction_authority", errors, BASE_INTERACTION_AUTHORITY_OPTIONAL_KEYS)
 	_validate_authority_records(source.get("base_actor_authority"), BASE_ACTOR_AUTHORITY_KEYS, [], "base_actor_authority", errors)
+	_validate_fixed_declaration_interaction_authority(
+		source.get("object_manifest_authority"),
+		source.get("base_interaction_authority"),
+		errors
+	)
+
+
+static func _validate_fixed_declaration_interaction_authority(manifest_value: Variant, interactions_value: Variant, errors: Array) -> void:
+	if typeof(manifest_value) != TYPE_DICTIONARY or typeof(interactions_value) != TYPE_ARRAY:
+		return
+	var declarations_by_presentation: Dictionary = {}
+	for row_value in _array(_dict(manifest_value).get("rows", [])):
+		var row := _dict(row_value)
+		if str(row.get("family", "")) != "fixed" \
+				or str(row.get("source_kind", "")) != "environment_declaration" \
+				or str(row.get("source_field", "")) != "fixed_objects" \
+				or not bool(row.get("active", false)) \
+				or not bool(row.get("physical", false)):
+			continue
+		var presentation_id := str(row.get("presentation_object_id", "")).strip_edges()
+		if not presentation_id.is_empty():
+			declarations_by_presentation[presentation_id] = row
+	for authority_value in interactions_value as Array:
+		var authority := _dict(authority_value)
+		var presentation_id := str(authority.get("presentation_object_id", "")).strip_edges()
+		var source_kind := str(authority.get("source_kind", ""))
+		var source_field := str(authority.get("source_field", ""))
+		var declaration := _dict(declarations_by_presentation.get(presentation_id, {}))
+		var claims_declaration := source_kind == "environment_declaration" or source_field == "fixed_objects"
+		# A base-owned interaction attached to a declared permanent host must retain
+		# that host's exact declaration provenance. Catalog-owned interactions (for
+		# example the pull-tab game) may share a declared presentation while keeping
+		# their game/event/service ownership.
+		var declared_base_host := not declaration.is_empty() \
+				and str(authority.get("owner_namespace", "")) == "base" \
+				and str(authority.get("stable_object_id", "")) == presentation_id
+		if not claims_declaration and not declared_base_host:
+			continue
+		if declaration.is_empty() \
+				or str(authority.get("owner_namespace", "")) != "base" \
+				or str(authority.get("stable_object_id", "")) != presentation_id \
+				or source_kind != "environment_declaration" \
+				or source_field != "fixed_objects" \
+				or str(authority.get("source_record_id", "")) != str(declaration.get("instance_object_id", "")):
+			errors.append("instance semantic inventory fixed declaration interaction does not match its exact object manifest row: %s." % presentation_id)
+
+
+static func _validate_object_manifest_authority(value: Variant, errors: Array) -> void:
+	if typeof(value) != TYPE_DICTIONARY:
+		errors.append("instance semantic inventory object_manifest_authority must be a dictionary.")
+		return
+	var authority := value as Dictionary
+	if not _closed_dictionary(authority, OBJECT_MANIFEST_AUTHORITY_KEYS, []):
+		errors.append("instance semantic inventory object_manifest_authority is not closed.")
+		return
+	if typeof(authority.get("schema_version")) != TYPE_INT or int(authority.get("schema_version", 0)) < 0:
+		errors.append("instance semantic inventory object manifest schema version is invalid.")
+	for key in ["environment_id", "archetype_id", "layer_id", "digest"]:
+		if typeof(authority.get(key)) != TYPE_STRING or str(authority.get(key, "")) != str(authority.get(key, "")).strip_edges():
+			errors.append("instance semantic inventory object_manifest_authority.%s must be a trimmed string." % key)
+	if typeof(authority.get("rows")) != TYPE_ARRAY:
+		errors.append("instance semantic inventory object manifest rows must be an array.")
+		return
+	var seen_instances: Dictionary = {}
+	var seen_presentations: Dictionary = {}
+	for row_value in authority.get("rows", []) as Array:
+		if typeof(row_value) != TYPE_DICTIONARY or not _closed_dictionary(row_value as Dictionary, OBJECT_MANIFEST_ROW_KEYS, []):
+			errors.append("instance semantic inventory object manifest row is not closed.")
+			continue
+		var row := row_value as Dictionary
+		var instance_id := str(row.get("instance_object_id", ""))
+		var presentation_id := str(row.get("presentation_object_id", ""))
+		if instance_id.is_empty() or instance_id != instance_id.strip_edges() or seen_instances.has(instance_id):
+			errors.append("instance semantic inventory object manifest instance identity is invalid or duplicated.")
+		else:
+			seen_instances[instance_id] = true
+		if presentation_id.is_empty() or presentation_id != presentation_id.strip_edges() or seen_presentations.has(presentation_id):
+			errors.append("instance semantic inventory object manifest presentation identity is invalid or duplicated.")
+		else:
+			seen_presentations[presentation_id] = true
+		if str(row.get("family", "")) not in ["fixed", "event", "exit"]:
+			errors.append("instance semantic inventory durable object manifest row has an invalid family.")
+		for key in ["source_kind", "source_field", "source_id", "placement_class", "render_key", "exact_slot_id"]:
+			if typeof(row.get(key)) != TYPE_STRING or str(row.get(key, "")) != str(row.get(key, "")).strip_edges():
+				errors.append("instance semantic inventory object manifest row.%s must be a trimmed string." % key)
+		for key in ["required", "active", "physical"]:
+			if typeof(row.get(key)) != TYPE_BOOL:
+				errors.append("instance semantic inventory object manifest row.%s must be boolean." % key)
+		if not _closed_id_array(row.get("action_ids")):
+			errors.append("instance semantic inventory object manifest action_ids must be unique strings.")
+	var unsigned := authority.duplicate(true)
+	unsigned.erase("digest")
+	if str(authority.get("digest", "")) != JSON.stringify(_canonical(unsigned)).sha256_text():
+		errors.append("instance semantic inventory object manifest authority digest is stale.")
 
 
 static func _validate_authority_records(value: Variant, keys: Array, dictionary_keys: Array, label: String, errors: Array, optional_keys: Array = []) -> void:
@@ -707,7 +840,7 @@ static func _validate_authority_records(value: Variant, keys: Array, dictionary_
 				if typeof(record.get(key)) != TYPE_STRING or str(record.get(key, "")) != str(record.get(key, "")).strip_edges(): errors.append("instance semantic inventory base_actor_authority.%s must be a trimmed string." % key)
 			if str(record.get("owner_namespace", "")).is_empty() or str(record.get("stable_object_id", "")).is_empty() or str(record.get("actor_id", "")).is_empty() or str(record.get("source_kind", "")).is_empty() or str(record.get("source_field", "")).is_empty() or str(record.get("source_record_id", "")).is_empty() or str(record.get("anchor_id", "")).is_empty() and str(record.get("zone_id", "")).is_empty():
 				errors.append("instance semantic inventory base_actor_authority lacks exact identity, placement, or provenance.")
-			if not _valid_identity(OperationRegistryScript.identity(str(record.get("owner_namespace", "")), str(record.get("stable_object_id", "")))) or not _canonical_semantic_id(str(record.get("actor_id", ""))) or not str(record.get("anchor_id", "")).is_empty() and not _canonical_semantic_id(str(record.get("anchor_id", ""))) or not str(record.get("zone_id", "")).is_empty() and not _canonical_semantic_id(str(record.get("zone_id", ""))) or not str(record.get("behavior", "")).is_empty() and not _canonical_semantic_id(str(record.get("behavior", ""))) or not SOURCE_KINDS.has(str(record.get("source_kind", ""))):
+			if not _valid_identity(OperationRegistryScript.identity(str(record.get("owner_namespace", "")), str(record.get("stable_object_id", "")))) or not _canonical_semantic_id(str(record.get("actor_id", ""))) or not str(record.get("anchor_id", "")).is_empty() and not _canonical_semantic_id(str(record.get("anchor_id", ""))) or not str(record.get("zone_id", "")).is_empty() and not _canonical_semantic_id(str(record.get("zone_id", ""))) or not str(record.get("behavior", "")).is_empty() and not _canonical_semantic_id(str(record.get("behavior", ""))) or not SOURCE_KINDS.has(str(record.get("source_kind", ""))) or str(record.get("source_kind", "")) == "environment_declaration":
 				errors.append("instance semantic inventory base_actor_authority has invalid semantic identity or provenance.")
 
 
@@ -1195,6 +1328,47 @@ static func _record_has_id(value: Variant, source_id: String) -> bool:
 	return false
 
 
+static func _manifest_semantic_row(row: Dictionary) -> Dictionary:
+	var action_ids := _ids(row.get("action_ids", []))
+	return {
+		"instance_object_id": str(row.get("instance_object_id", "")),
+		"presentation_object_id": str(row.get("presentation_object_id", row.get("object_id", ""))),
+		"family": str(row.get("family", "")),
+		"source_kind": str(row.get("source_kind", "")),
+		"source_field": str(row.get("source_field", row.get("source_collection", ""))),
+		"source_id": str(row.get("source_id", "")),
+		"placement_class": str(row.get("placement_class", "")),
+		"required": bool(row.get("required", false)),
+		"active": bool(row.get("active", false)),
+		"physical": bool(row.get("physical", false)),
+		"render_key": str(row.get("render_key", "")),
+		"exact_slot_id": str(row.get("exact_slot_id", "")),
+		"action_ids": action_ids,
+	}
+
+
+static func _object_manifest_authority(environment: Dictionary) -> Dictionary:
+	var manifest := _dict(environment.get("object_manifest", {}))
+	var rows: Array = []
+	for row_value in _array(manifest.get("rows", [])):
+		var row := _dict(row_value)
+		if not bool(row.get("active", false)) or not bool(row.get("physical", false)) or str(row.get("family", "")) == "scenario":
+			continue
+		rows.append(_manifest_semantic_row(row))
+	rows.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
+		return str(_dict(left_value).get("instance_object_id", "")) < str(_dict(right_value).get("instance_object_id", ""))
+	)
+	var authority := {
+		"schema_version": int(manifest.get("schema_version", 0)),
+		"environment_id": str(manifest.get("environment_id", "")),
+		"archetype_id": str(manifest.get("archetype_id", "")),
+		"layer_id": str(manifest.get("layer_id", "")),
+		"rows": rows,
+	}
+	authority["digest"] = JSON.stringify(_canonical(authority)).sha256_text()
+	return authority
+
+
 static func _instance_source_provenance(environment: Dictionary, base_interactions_value: Variant = null, base_actors_value: Variant = null) -> Dictionary:
 	var base_interactions := _array(environment.get("scenario_base_interactions", [])) if typeof(base_interactions_value) != TYPE_ARRAY else _array(base_interactions_value)
 	var base_actors := _array(environment.get("scenario_base_actors", [])) if typeof(base_actors_value) != TYPE_ARRAY else _array(base_actors_value)
@@ -1210,7 +1384,8 @@ static func _instance_source_provenance(environment: Dictionary, base_interactio
 	return {
 		"world_node_id": str(environment.get("world_node_id", "")),
 		"archetype_id": str(environment.get("archetype_id", "")),
-		"layout_object_rects": _dict(environment.get("scenario_sequence_base_layout_object_rects", _dict(environment.get("layout", {})).get("object_rects", {}))),
+		"layout_object_rects": _base_layout_object_rects(environment),
+		"object_manifest_authority": _object_manifest_authority(environment),
 		"game_ids": _ids(source_game_ids),
 		"event_ids": _ids(source_event_ids),
 		"item_offer_authority": _consumed_item_offer_authority(environment.get("item_offers", []), base_interactions),
@@ -1231,6 +1406,34 @@ static func _instance_source_provenance(environment: Dictionary, base_interactio
 		"base_interaction_authority": _base_interaction_authority(base_interactions),
 		"base_actor_authority": _base_actor_authority(base_actors),
 	}
+
+
+static func _base_layout_object_rects(environment: Dictionary) -> Dictionary:
+	var layout := _dict(environment.get("layout", {}))
+	var source: Variant = environment.get("scenario_sequence_base_layout_object_rects", layout.get("object_rects", {}))
+	var result := _dict(source).duplicate(true)
+	var scenario_presentations: Dictionary = {}
+	for row_value in _array(_dict(environment.get("object_manifest", {})).get("rows", [])):
+		var row := _dict(row_value)
+		var presentation_id := str(row.get("presentation_object_id", row.get("object_id", ""))).strip_edges()
+		# Gameplay-backed objects introduced by a scenario (for example an
+		# `event:*` delivery stock interaction) still participate in the sealed
+		# interaction inventory even though their physical slot family is scenario.
+		# Only true owned projection visuals are outside immutable base inventory.
+		if str(row.get("family", "")) == "scenario" \
+				and (str(row.get("source_kind", "")) == "scenario_projection" or presentation_id.contains("::")):
+			if not presentation_id.is_empty():
+				scenario_presentations[presentation_id] = true
+	for presentation_id_value in _dict(layout.get("slot_bindings", {})).keys():
+		var presentation_id := str(presentation_id_value)
+		var binding := _dict(_dict(layout.get("slot_bindings", {})).get(presentation_id_value, {}))
+		if str(binding.get("slot_family", binding.get("kind", ""))) == "scenario" and presentation_id.contains("::"):
+			scenario_presentations[presentation_id] = true
+	for presentation_id_value in scenario_presentations.keys():
+		result.erase(presentation_id_value)
+	return result
+
+
 static func _layer_transition_ids(value: Variant) -> Array:
 	var result: Array = []
 	for transition_value in _array(value):

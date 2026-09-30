@@ -2,6 +2,7 @@ class_name EnvironmentSlotBinder
 extends RefCounted
 
 const EnvironmentPlacementScript := preload("res://scripts/core/environment_placement.gd")
+const EnvironmentObjectManifestScript := preload("res://scripts/core/environment_object_manifest.gd")
 const ArtContractsScript := preload("res://scripts/core/art_contracts.gd")
 
 const BOARD_SIZE := Vector2(900.0, 430.0)
@@ -13,16 +14,17 @@ const LABEL_HEIGHT := 15.0
 const LABEL_TWO_LINE_HEIGHT := 26.0
 const LABEL_GAP := 4.0
 const LABEL_MARGIN := 16.0
-const SLOT_SCHEMA_VERSION := 1
+const SLOT_SCHEMA_VERSION := 2
+const SLOT_FAMILIES := ["fixed", "event", "scenario", "exit"]
 const PRESENTATION_ROOM := "room"
 const PRESENTATION_OVERFLOW := "overflow"
-const BASE_BINDING_KEYS := ["identity", "kind", "presentation_mode", "slot_id", "placement_class", "slot"]
+const BASE_BINDING_KEYS := ["identity", "kind", "slot_family", "presentation_mode", "slot_id", "placement_class", "slot"]
 const BASE_LAYOUT_AUTHORITY_KEYS := ["slot_schema_version", "slot_map_digest", "slot_binding_digest", "slot_bindings", "slot_overflow_ids", "object_rects"]
 
-# Scenario scene objects may consume geometry only when two independent,
-# reviewed authorities agree: scenario_slot_ids names the exact stable object
-# and scenario_art_keys names a renderer that draws a concrete prop. Labels,
-# roles, and keyword classification are never positive physical authority.
+# Scenario scene objects may consume generic scenario geometry only when either
+# their stable identity or their closed semantic payload names a reviewed
+# concrete renderer. Location still comes from a compatible shared scenario
+# slot; labels and keyword classification never mint physical authority.
 const CONCRETE_SCENARIO_ART_KEYS := [
 	"counter_phone", "jammed_machine", "motel_door", "paper_note", "payphone",
 	"room_display", "room_hazard", "room_refreshment",
@@ -84,20 +86,15 @@ const BASE_EVENT_ART_PROPS := [
 # No coordinate search, displacement, repack, fallback grid, or RNG is used.
 static func bind_base_layout(environment: Dictionary, active_entries: Array, shared_occupancy: Dictionary = {}) -> Dictionary:
 	var surface_map := EnvironmentPlacementScript.surface_map(environment)
-	var slots := _ordered_slots(_array(surface_map.get("base_slots", [])))
-	var stage_slots := _ordered_slots(_array(surface_map.get("stage_slots", [])))
-	var exit_slots := _base_leave_slots(surface_map, environment)
-	var room_slots := slots + stage_slots + exit_slots
-	var object_preferences := _dict(surface_map.get("object_slot_ids", {}))
-	var category_preferences := _dict(surface_map.get("category_slot_ids", {}))
+	var room_slots := _all_family_slots(surface_map)
 	var initial_occupancy := shared_occupancy.duplicate(true)
 	var occupied := initial_occupancy.duplicate(true)
 	var object_rects: Dictionary = {}
 	var bindings: Dictionary = {}
 	var overflow_ids: Array = []
 	var warnings: Array = []
-	var errors: Array = []
-	var warning_scope := "base layout %s" % str(surface_map.get("id", environment.get("archetype_id", "unknown")))
+	var errors := _surface_map_errors(surface_map)
+	var warning_scope := "environment layout %s" % str(surface_map.get("id", environment.get("archetype_id", "unknown")))
 	var scenario_state := _dict(environment.get("scenario_sequence_state", environment.get("scenario_state", {})))
 	var scenario_id := str(scenario_state.get("scenario_id", scenario_state.get("id", ""))).strip_edges()
 	if not scenario_id.is_empty():
@@ -110,8 +107,8 @@ static func bind_base_layout(environment: Dictionary, active_entries: Array, sha
 		var right_id := str(right.get("object_id", ""))
 		var left_shop_order := _shop_item_order(environment, left_id)
 		var right_shop_order := _shop_item_order(environment, right_id)
-		var left_exact := left_shop_order < 0 and not str(object_preferences.get(left_id, "")).strip_edges().is_empty()
-		var right_exact := right_shop_order < 0 and not str(object_preferences.get(right_id, "")).strip_edges().is_empty()
+		var left_exact := bool(_slot_preference(surface_map, left, left_id).get("exact", false))
+		var right_exact := bool(_slot_preference(surface_map, right, right_id).get("exact", false))
 		if left_exact != right_exact:
 			return left_exact
 		if left_shop_order >= 0 and right_shop_order >= 0 and left_shop_order != right_shop_order:
@@ -124,17 +121,14 @@ static func bind_base_layout(environment: Dictionary, active_entries: Array, sha
 		if object_id.is_empty() or bindings.has(object_id):
 			continue
 		var class_override := str(_dict(surface_map.get("class_overrides", {})).get(object_id, ""))
-		var placement_class := class_override if class_override in EnvironmentPlacementScript.CLASSES else EnvironmentPlacementScript.classify(
+		var manifest_class := str(entry.get("placement_class", "")).strip_edges()
+		var placement_class := class_override if class_override in EnvironmentPlacementScript.CLASSES else manifest_class if manifest_class in EnvironmentPlacementScript.CLASSES else EnvironmentPlacementScript.classify(
 			entry,
 			str(entry.get("object_type", "")),
 			object_id,
 			str(entry.get("visual_prop", entry.get("prop", "")))
 		)
-		# Inventory items placed in a home are physical belongings, not shop
-		# offers. Only records present in this environment's offer list (or with
-		# an explicit authored override) may consume the dedicated shop row.
-		if placement_class == "shop_item" and class_override != "shop_item" and _shop_item_order(environment, object_id) < 0:
-			placement_class = "surface_item"
+		placement_class = _normalize_base_placement_class(environment, entry, object_id, class_override, placement_class)
 		var binding_source_id := str(entry.get("slot_binding_source_id", "")).strip_edges()
 		if not binding_source_id.is_empty() and binding_source_id != object_id:
 			# This record contributes actions to an already physical room object;
@@ -144,25 +138,26 @@ static func bind_base_layout(environment: Dictionary, active_entries: Array, sha
 			# Action-only records are attached to a visible room object by the
 			# interaction composer and never enter the physical slot inventory.
 			continue
-		var preference := "" if placement_class == "shop_item" else str(object_preferences.get(object_id, "")).strip_edges()
-		if preference.is_empty() and placement_class != "shop_item":
-			var category_key := "%s:%d" % [str(entry.get("spot_field", "")), int(entry.get("index", 0))]
-			preference = str(category_preferences.get(category_key, "")).strip_edges()
+		var slot_family := authored_entry_slot_family(surface_map, entry, object_id)
+		if slot_family.is_empty():
+			errors.append("%s physical object %s is missing a valid four-family slot assignment." % [warning_scope, object_id])
+			continue
+		var preference_data := _slot_preference(surface_map, entry, object_id)
+		var preference := str(preference_data.get("slot_id", "")).strip_edges()
 		# Generated base records are actionable by default. Decorative-only late
 		# records bypass this inventory; never serialize an undersized room target.
-		var candidate_slots := slots + exit_slots if object_id == "travel:leave" else slots + stage_slots
-		if object_id == "travel:leave":
-			preference = _base_leave_preference(candidate_slots, preference)
-		var slot := _select_slot(candidate_slots, occupied, placement_class, preference, false, MIN_INTERACTIVE_TARGET)
+		var candidate_slots := _family_slots(surface_map, slot_family)
+		placement_class = _exit_preference_class(candidate_slots, slot_family, preference, placement_class)
+		var slot := _select_slot(candidate_slots, occupied, placement_class, preference, bool(preference_data.get("exact", false)), MIN_INTERACTIVE_TARGET)
 		if slot.is_empty():
-			_warn_missing_slot(warning_scope, object_id, placement_class, warnings, errors)
+			_warn_missing_family_slot(warning_scope, object_id, slot_family, placement_class, warnings, errors)
 			continue
 		var slot_id := str(slot.get("id", ""))
 		occupied[slot_id] = object_id
-		var binding := _room_binding(object_id, placement_class, "base", slot)
+		var binding := _room_binding(object_id, placement_class, slot_family, slot)
 		bindings[object_id] = binding
 		object_rects[object_id] = _normalized_rect(_slot_rect(slot))
-	var guarded := guard_unique_slot_bindings(bindings, {}, initial_occupancy, room_slots, "base layout")
+	var guarded := guard_unique_slot_bindings(bindings, {}, initial_occupancy, room_slots, "environment layout")
 	bindings = _dict(guarded.get("slot_bindings", bindings))
 	occupied = _dict(guarded.get("occupied_slots", occupied))
 	for overflow_id_value in _array(guarded.get("overflow_ids", [])):
@@ -206,6 +201,7 @@ static func validate_base_layout_authority(environment: Dictionary, current_reco
 	if typeof(layout.get("slot_schema_version")) != TYPE_INT or int(layout.get("slot_schema_version", 0)) != SLOT_SCHEMA_VERSION:
 		errors.append("Persisted base slot authority has an invalid schema version.")
 	var surface_map := EnvironmentPlacementScript.surface_map(environment)
+	errors.append_array(_surface_map_errors(surface_map))
 	var expected_map_digest := slot_map_digest(surface_map)
 	if typeof(layout.get("slot_map_digest")) != TYPE_STRING or str(layout.get("slot_map_digest", "")) != expected_map_digest:
 		errors.append("Persisted base slot authority does not match the authored slot map digest.")
@@ -221,6 +217,7 @@ static func validate_base_layout_authority(environment: Dictionary, current_reco
 		return {"ok": false, "errors": errors}
 	var bindings := _dict(layout.get("slot_bindings", {}))
 	var object_rects := _dict(layout.get("object_rects", {}))
+	var manifest_rows := _validated_manifest_rows_by_presentation(environment, errors)
 	var current_records_by_id: Dictionary = {}
 	for record_value in current_records:
 		var record := _dict(record_value)
@@ -230,9 +227,7 @@ static func validate_base_layout_authority(environment: Dictionary, current_reco
 	var stored_digest := str(layout.get("slot_binding_digest", ""))
 	if stored_digest.is_empty() or stored_digest != binding_digest(bindings):
 		errors.append("Persisted base slot authority binding digest is missing or stale.")
-	var authored_slots := _slots_by_id(
-		_array(surface_map.get("base_slots", [])) + _array(surface_map.get("stage_slots", [])) + _array(surface_map.get("exit_slots", []))
-	)
+	var authored_slots := _slots_by_id(_all_family_slots(surface_map))
 	var overflow_ids: Array = []
 	var room_ids_by_slot: Dictionary = {}
 	var binding_ids := bindings.keys()
@@ -254,7 +249,7 @@ static func validate_base_layout_authority(environment: Dictionary, current_reco
 			errors.append("Persisted base slot binding %s is not closed." % identity)
 			continue
 		var field_types_valid := true
-		for string_key in ["identity", "kind", "presentation_mode", "slot_id", "placement_class"]:
+		for string_key in ["identity", "kind", "slot_family", "presentation_mode", "slot_id", "placement_class"]:
 			if typeof(binding.get(string_key)) != TYPE_STRING:
 				errors.append("Persisted base slot binding %s field %s must be a string." % [identity, string_key])
 				field_types_valid = false
@@ -265,8 +260,9 @@ static func validate_base_layout_authority(environment: Dictionary, current_reco
 			continue
 		if str(binding.get("identity", "")) != identity:
 			errors.append("Persisted base slot binding %s does not match its dictionary key." % identity)
-		if str(binding.get("kind", "")) != "base":
-			errors.append("Persisted base slot binding %s does not have base kind." % identity)
+		var slot_family := str(binding.get("slot_family", ""))
+		if slot_family not in SLOT_FAMILIES or str(binding.get("kind", "")) != slot_family:
+			errors.append("Persisted environment slot binding %s has an invalid or inconsistent slot family." % identity)
 		var placement_class := str(binding.get("placement_class", ""))
 		if placement_class not in EnvironmentPlacementScript.CLASSES:
 			errors.append("Persisted base slot binding %s has an invalid placement class." % identity)
@@ -284,6 +280,8 @@ static func validate_base_layout_authority(environment: Dictionary, current_reco
 				minimum_required = bool(_dict(current_records_by_id.get(identity, {})).get("interactive", true))
 			if slot_id.is_empty() or authored_slot.is_empty() or JSON.stringify(binding_slot) != JSON.stringify(authored_slot):
 				errors.append("Persisted base room binding %s does not match its exact authored slot." % identity)
+			elif _slot_family(authored_slot) != slot_family or not slot_id.begins_with("%s." % slot_family):
+				errors.append("Persisted base room binding %s crosses slot families." % identity)
 			elif str(authored_slot.get("footprint_class", "")) != placement_class or minimum_required and not _slot_meets_minimum(authored_slot, MIN_INTERACTIVE_TARGET):
 				errors.append("Persisted base room binding %s has an incompatible or undersized authored slot." % identity)
 			else:
@@ -335,9 +333,30 @@ static func validate_base_layout_authority(environment: Dictionary, current_reco
 		# type/id classification used by EnvironmentInstance for its base domains.
 		# This keeps placement_class out of semantic authority without letting a
 		# re-digested wrong-class binding authenticate itself.
+		var closed_manifest_row: Dictionary = {}
+		if not record.has("placement_class") and not record.has("object_type"):
+			closed_manifest_row = _dict(manifest_rows.get(object_id, {}))
+		var replay_entry := _base_layout_policy_entry(environment, object_id)
+		for replay_key in record.keys():
+			replay_entry[replay_key] = record.get(replay_key)
+		var expected_family := str(closed_manifest_row.get("family", "")) if not closed_manifest_row.is_empty() else authored_entry_slot_family(surface_map, replay_entry, object_id)
 		var expected_class := ""
 		var class_override := str(_dict(surface_map.get("class_overrides", {})).get(object_id, ""))
-		if class_override in EnvironmentPlacementScript.CLASSES:
+		var exact_exit_class := _exact_authored_exit_class(record_binding, object_id)
+		if not closed_manifest_row.is_empty():
+			# Closed semantic interactions intentionally omit presentation heuristics.
+			# Their canonical manifest row was produced while those inputs were still
+			# available, and is independent of the persisted binding being checked.
+			expected_class = str(closed_manifest_row.get("placement_class", ""))
+		elif not exact_exit_class.is_empty():
+			# Exact exit slots describe the room-native navigation affordance (door,
+			# ground marker, attendant, and so on), so their authored footprint is
+			# canonical even after semantic closure removes presentation-only family
+			# and placement fields from the interaction record.
+			expected_class = exact_exit_class
+		elif expected_family == "exit":
+			expected_class = str(record_binding.get("placement_class", ""))
+		elif class_override in EnvironmentPlacementScript.CLASSES:
 			# Generated layout inputs apply the room's exact class override before
 			# binding. Raw live records may retain their generic inferred class, so
 			# the authored room override has the same first priority during replay.
@@ -358,6 +377,8 @@ static func validate_base_layout_authority(environment: Dictionary, current_reco
 			)
 		else:
 			expected_class = _closed_semantic_placement_class(surface_map, record, object_id)
+		if closed_manifest_row.is_empty() and exact_exit_class.is_empty() and expected_family != "exit":
+			expected_class = _normalize_base_placement_class(environment, record, object_id, class_override, expected_class)
 		if not expected_class.is_empty() and str(record_binding.get("placement_class", "")) != expected_class:
 			errors.append("Current base record %s placement class does not match production classification (binding=%s expected=%s record=%s type=%s presentation=%s source=%s/%s/%s visual=%s prop=%s icon=%s)." % [
 				object_id,
@@ -373,6 +394,10 @@ static func validate_base_layout_authority(environment: Dictionary, current_reco
 				str(record.get("prop", "")),
 				str(record.get("icon_key", "")),
 			])
+		if expected_family.is_empty() and base_record_requires_room_slot(record):
+			errors.append("Current physical record %s is missing four-family slot authority." % object_id)
+		elif not expected_family.is_empty() and str(record_binding.get("slot_family", "")) != expected_family:
+			errors.append("Current record %s slot family does not match its authenticated binding." % object_id)
 	for slot_id_value in room_ids_by_slot.keys():
 		var identities := _array(room_ids_by_slot.get(slot_id_value, []))
 		if identities.size() <= 1:
@@ -388,6 +413,22 @@ static func validate_base_layout_authority(environment: Dictionary, current_reco
 		"binding_digest": stored_digest,
 		"errors": errors,
 	}
+
+
+static func _exact_authored_exit_class(binding: Dictionary, object_id: String) -> String:
+	if str(binding.get("slot_family", "")) != "exit" \
+			or not (object_id.begins_with("travel:") \
+			or object_id.begins_with("environment_layer:") \
+			or object_id.begins_with("casino_door:")):
+		return ""
+	var slot_id := str(binding.get("slot_id", "")).strip_edges()
+	var slot := _dict(binding.get("slot", {}))
+	if slot_id.is_empty() or not slot_id.begins_with("exit.") \
+			or str(slot.get("id", "")) != slot_id \
+			or str(slot.get("kind", "")) != "exit":
+		return ""
+	var footprint_class := str(slot.get("footprint_class", "")).strip_edges()
+	return footprint_class if footprint_class in EnvironmentPlacementScript.CLASSES else ""
 
 
 static func _closed_semantic_placement_class(surface_map: Dictionary, record: Dictionary, object_id: String) -> String:
@@ -413,6 +454,12 @@ static func _closed_semantic_placement_class(surface_map: Dictionary, record: Di
 # provenance; every other object requires an authored asset or an exact
 # procedural renderer contract. Semantic nouns never mint physical geometry.
 static func base_record_requires_room_slot(record: Dictionary) -> bool:
+	# The generated object manifest is the primary physical authority in slot
+	# schema v2. Renderer heuristics remain only for non-manifest action records.
+	if record.has("physical") and typeof(record.get("physical")) == TYPE_BOOL:
+		return bool(record.get("physical", false))
+	if not _entry_slot_family(record).is_empty():
+		return true
 	var object_type := str(record.get("object_type", "")).strip_edges()
 	var visual_type := str(record.get("visual_type", "")).strip_edges()
 	var object_id := str(record.get("object_id", "")).strip_edges()
@@ -454,84 +501,49 @@ static func _base_layout_policy_entry(environment: Dictionary, object_id: String
 	var hints := _dict(_dict(layout.get("object_placement_hints", {})).get(object_id, {}))
 	for key_value in hints.keys():
 		entry[key_value] = hints.get(key_value)
+	var source_id := object_id.trim_prefix("%s:" % str(parts[0]))
+	var address := _base_layout_category_address(environment, object_type, source_id)
+	for key_value in address.keys():
+		entry[key_value] = address.get(key_value)
 	return entry
 
 
-static func _base_leave_slots(surface_map: Dictionary, environment: Dictionary) -> Array:
-	var exit_slots := _ordered_slots(_array(surface_map.get("exit_slots", [])))
-	var definition := _dict(environment.get("scenario_sequence_definition", {}))
-	var scenario_slot_ids := _dict(surface_map.get("scenario_slot_ids", {}))
-	var scenario_reserved: Dictionary = {}
-	if definition.is_empty():
-		# Arrival generation binds the base room before the selected scenario is
-		# installed. Keep every catalogued scenario exit available at that boundary.
-		for slot_id_value in scenario_slot_ids.values():
-			scenario_reserved[str(slot_id_value)] = true
-	else:
-		# Rebinding an installed (or contract-fixture) scenario only needs to
-		# reserve exits that its own stable identities can claim.
-		var active_stable_ids: Dictionary = {}
-		var scenario_id := str(definition.get("id", "")).strip_edges()
-		if not scenario_id.is_empty():
-			active_stable_ids[scenario_id] = true
-		_collect_scenario_stable_ids(definition, active_stable_ids)
-		for identity_value in scenario_slot_ids.keys():
-			var identity := str(identity_value)
-			var active := not scenario_id.is_empty() and identity.begins_with("%s_" % scenario_id)
-			if not active:
-				for stable_id_value in active_stable_ids.keys():
-					var stable_id := str(stable_id_value)
-					if identity == stable_id or identity.begins_with("%s|" % stable_id):
-						active = true
-						break
-			if active:
-				scenario_reserved[str(scenario_slot_ids.get(identity_value, ""))] = true
-	var unreserved: Array = []
-	for slot_value in exit_slots:
-		var slot := _dict(slot_value)
-		if not scenario_reserved.has(str(slot.get("id", ""))):
-			unreserved.append(slot)
-	return unreserved if not unreserved.is_empty() else exit_slots
-
-
-static func _collect_scenario_stable_ids(value: Variant, result: Dictionary) -> void:
-	if typeof(value) == TYPE_DICTIONARY:
-		var record := value as Dictionary
-		var stable_id := str(record.get("stable_object_id", "")).strip_edges()
-		if not stable_id.is_empty():
-			result[stable_id] = true
-		var presentation_id := str(record.get("presentation_object_id", "")).strip_edges()
-		if presentation_id.begins_with("scenario::"):
-			result[presentation_id.trim_prefix("scenario::")] = true
-		for nested_value in record.values():
-			_collect_scenario_stable_ids(nested_value, result)
-	elif typeof(value) == TYPE_ARRAY:
-		for nested_value in value as Array:
-			_collect_scenario_stable_ids(nested_value, result)
-
-
-static func _base_leave_preference(exit_slots: Array, authored_preference: String) -> String:
-	for slot_value in exit_slots:
-		var slot := _dict(slot_value)
-		if str(slot.get("id", "")) == authored_preference:
-			return authored_preference
-	var best_id := ""
-	var best_score := 0
-	for slot_value in exit_slots:
-		var slot := _dict(slot_value)
-		var slot_id := str(slot.get("id", ""))
-		var support_id := str(slot.get("support_id", ""))
-		var score := 0
-		for side in ["right", "left"]:
-			if authored_preference.contains(side) and (slot_id.contains(side) or support_id.contains(side)):
-				score += 2
-		for level in ["upper", "middle", "lower"]:
-			if authored_preference.contains(level) and slot_id.contains(level):
-				score += 1
-		if score > best_score:
-			best_score = score
-			best_id = slot_id
-	return best_id
+static func _base_layout_category_address(environment: Dictionary, object_type: String, source_id: String) -> Dictionary:
+	var collection_key := ""
+	var spot_field := ""
+	match object_type:
+		"game":
+			collection_key = "game_ids"
+			spot_field = "game_spots"
+		"event":
+			collection_key = "event_ids"
+			spot_field = "event_spots"
+		"service":
+			collection_key = "service_ids"
+			spot_field = "service_spots"
+		"lender":
+			collection_key = "lender_hooks"
+			spot_field = "lender_spots"
+		"item":
+			collection_key = "item_offers"
+			spot_field = "item_spots"
+		"shopkeeper":
+			return {"spot_field": "shopkeeper_spots", "index": 0}
+		"home_tenure":
+			return {"spot_field": "home_tenure_spots", "index": 0}
+		"home_sleep":
+			return {"spot_field": "home_sleep_spots", "index": 0}
+		"home_storage":
+			return {"spot_field": "home_storage_spots", "index": 0}
+		_:
+			return {}
+	var index := 0
+	for value in _array(environment.get(collection_key, [])):
+		var candidate_id := str(_dict(value).get("id", "")) if typeof(value) == TYPE_DICTIONARY else str(value)
+		if candidate_id == source_id:
+			return {"spot_field": spot_field, "index": index}
+		index += 1
+	return {}
 
 
 # Applies the same authority to the complete interaction inventory. Some live
@@ -541,12 +553,7 @@ static func _base_leave_preference(exit_slots: Array, authored_preference: Strin
 # other record is attached to a visible room object by the interaction composer.
 static func bind_base_records(environment: Dictionary, records: Array, existing_bindings: Dictionary = {}, shared_occupancy: Dictionary = {}) -> Dictionary:
 	var surface_map := EnvironmentPlacementScript.surface_map(environment)
-	var slots := _ordered_slots(_array(surface_map.get("base_slots", [])))
-	var stage_slots := _ordered_slots(_array(surface_map.get("stage_slots", [])))
-	var exit_slots := _base_leave_slots(surface_map, environment)
-	var room_slots := slots + stage_slots + exit_slots
-	var object_preferences := _dict(surface_map.get("object_slot_ids", {}))
-	var category_preferences := _dict(surface_map.get("category_slot_ids", {}))
+	var room_slots := _all_family_slots(surface_map)
 	var layout := _dict(environment.get("layout", {}))
 	# bind_base_records consumes the complete current interaction refresh. Build
 	# its identity set before authenticating persisted geometry so a rectangle for
@@ -555,6 +562,9 @@ static func bind_base_records(environment: Dictionary, records: Array, existing_
 	var current_records_by_id: Dictionary = {}
 	var initial_occupancy := shared_occupancy.duplicate(true)
 	var warnings: Array = []
+	var schema_errors := _surface_map_errors(surface_map)
+	if not schema_errors.is_empty():
+		return {"ok": false, "records": records.duplicate(true), "slot_bindings": {}, "overflow_ids": [], "object_rects": {}, "warnings": warnings, "errors": schema_errors}
 	for record_value in records:
 		var current_record := _dict(record_value)
 		var current_id := str(current_record.get("object_id", "")).strip_edges()
@@ -592,7 +602,6 @@ static func bind_base_records(environment: Dictionary, records: Array, existing_
 			continue
 		if aliases_by_source.has(source_id) and str(aliases_by_source.get(source_id, "")) != alias_id:
 			var alias_warning := "base record binding source %s is claimed by multiple live aliases; each physical source may have only one room identity." % source_id
-			push_warning(alias_warning)
 			warnings.append(alias_warning)
 			continue
 		aliases_by_source[source_id] = alias_id
@@ -622,7 +631,17 @@ static func bind_base_records(environment: Dictionary, records: Array, existing_
 		if not str(current_record.get("slot_binding_source_id", "")).strip_edges().is_empty():
 			continue
 		var existing_binding := _dict(bindings.get(binding_id_value, {}))
-		var requires_room := base_record_requires_room_slot(current_record) if current_record.has("visual_type") else base_record_requires_room_slot(_base_layout_policy_entry(environment, binding_id))
+		var policy_entry := _base_layout_policy_entry(environment, binding_id)
+		var policy_family := authored_entry_slot_family(surface_map, policy_entry, binding_id)
+		if not policy_family.is_empty():
+			# Closed semantic records omit renderer fields and must not authenticate
+			# their own copied slot_family. Rebuild physical membership from the
+			# authored object/category policy before deciding whether an existing
+			# binding is dormant. Otherwise a category-authorized service/lender is
+			# dropped here, while its own shared-occupancy claim remains reserved,
+			# and the deterministic replay falsely reports that its exact slot is full.
+			policy_entry["slot_family"] = policy_family
+		var requires_room := base_record_requires_room_slot(current_record) if current_record.has("visual_type") else base_record_requires_room_slot(policy_entry)
 		var existing_mode := str(existing_binding.get("presentation_mode", ""))
 		if not requires_room:
 			bindings.erase(binding_id_value)
@@ -642,12 +661,14 @@ static func bind_base_records(environment: Dictionary, records: Array, existing_
 		if not object_id.is_empty():
 			ordered.append(record)
 	ordered.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
-		var left_id := str(_dict(left_value).get("object_id", ""))
-		var right_id := str(_dict(right_value).get("object_id", ""))
+		var left := _dict(left_value)
+		var right := _dict(right_value)
+		var left_id := str(left.get("object_id", ""))
+		var right_id := str(right.get("object_id", ""))
 		var left_shop_order := _shop_item_order(environment, left_id)
 		var right_shop_order := _shop_item_order(environment, right_id)
-		var left_exact := left_shop_order < 0 and not str(object_preferences.get(left_id, "")).strip_edges().is_empty()
-		var right_exact := right_shop_order < 0 and not str(object_preferences.get(right_id, "")).strip_edges().is_empty()
+		var left_exact := bool(_slot_preference(surface_map, left, left_id).get("exact", false))
+		var right_exact := bool(_slot_preference(surface_map, right, right_id).get("exact", false))
 		if left_exact != right_exact:
 			return left_exact
 		if left_shop_order >= 0 and right_shop_order >= 0 and left_shop_order != right_shop_order:
@@ -664,36 +685,38 @@ static func bind_base_records(environment: Dictionary, records: Array, existing_
 		# that generation and authority validation use, so the new binding cannot be
 		# minted from a generic record class and then fail its own sealed replay.
 		var class_override := str(_dict(surface_map.get("class_overrides", {})).get(object_id, ""))
-		var placement_class := class_override if class_override in EnvironmentPlacementScript.CLASSES else EnvironmentPlacementScript.classify(
+		var record_class := str(record.get("placement_class", "")).strip_edges()
+		var placement_class := class_override if class_override in EnvironmentPlacementScript.CLASSES else record_class if record_class in EnvironmentPlacementScript.CLASSES else EnvironmentPlacementScript.classify(
 			record,
 			str(record.get("object_type", "")),
 			object_id,
 			str(record.get("visual_prop", record.get("prop", record.get("icon_key", ""))))
 		)
-		if placement_class == "shop_item" and class_override != "shop_item" and _shop_item_order(environment, object_id) < 0:
-			placement_class = "surface_item"
+		placement_class = _normalize_base_placement_class(environment, record, object_id, class_override, placement_class)
 		if not base_record_requires_room_slot(record):
 			var warning := "base record binding received unattached action-only record %s; attach it to a visible room object before binding." % object_id
-			push_warning(warning)
 			warnings.append(warning)
 			errors.append(warning)
 			continue
-		var preference := "" if placement_class == "shop_item" else str(object_preferences.get(object_id, "")).strip_edges()
-		if preference.is_empty() and placement_class != "shop_item":
-			var spot_field := str(record.get("layout_spot_field", "")).strip_edges()
-			var category_key := "%s:%d" % [spot_field, int(record.get("layout_index", 0))]
-			preference = str(category_preferences.get(category_key, "")).strip_edges()
+		var binding_entry := _base_layout_policy_entry(environment, object_id)
+		for binding_key in record.keys():
+			binding_entry[binding_key] = record.get(binding_key)
+		var slot_family := authored_entry_slot_family(surface_map, binding_entry, object_id)
+		if slot_family.is_empty():
+			errors.append("base record binding physical object %s is missing a valid four-family slot assignment." % object_id)
+			continue
+		var preference_data := _slot_preference(surface_map, binding_entry, object_id)
+		var preference := str(preference_data.get("slot_id", "")).strip_edges()
 		var minimum_size := MIN_INTERACTIVE_TARGET if bool(record.get("interactive", true)) else Vector2.ZERO
-		var candidate_slots := slots + exit_slots if object_id == "travel:leave" else slots + stage_slots
-		if object_id == "travel:leave":
-			preference = _base_leave_preference(candidate_slots, preference)
-		var slot := _select_slot(candidate_slots, occupied, placement_class, preference, false, minimum_size)
+		var candidate_slots := _family_slots(surface_map, slot_family)
+		placement_class = _exit_preference_class(candidate_slots, slot_family, preference, placement_class)
+		var slot := _select_slot(candidate_slots, occupied, placement_class, preference, bool(preference_data.get("exact", false)), minimum_size)
 		if slot.is_empty():
-			_warn_missing_slot("base record binding", object_id, placement_class, warnings, errors)
+			_warn_missing_family_slot("base record binding", object_id, slot_family, placement_class, warnings, errors)
 			continue
 		var slot_id := str(slot.get("id", ""))
 		occupied[slot_id] = object_id
-		bindings[object_id] = _room_binding(object_id, placement_class, "base", slot)
+		bindings[object_id] = _room_binding(object_id, placement_class, slot_family, slot)
 	var guarded_final := guard_unique_slot_bindings(bindings, current_record_ids, initial_occupancy, room_slots, "base layout finalization")
 	bindings = _dict(guarded_final.get("slot_bindings", bindings))
 	occupied = _dict(guarded_final.get("occupied_slots", occupied))
@@ -712,6 +735,7 @@ static func bind_base_records(environment: Dictionary, records: Array, existing_
 		var mode := str(binding.get("presentation_mode", PRESENTATION_OVERFLOW))
 		record["presentation_mode"] = mode
 		record["slot_id"] = str(binding.get("slot_id", ""))
+		record["slot_family"] = str(binding.get("slot_family", ""))
 		record["placement_class"] = str(binding.get("placement_class", ""))
 		record["fixed_slot_geometry"] = true
 		if mode == PRESENTATION_ROOM:
@@ -767,6 +791,7 @@ static func bind_base_records(environment: Dictionary, records: Array, existing_
 	var candidate_authority := validate_base_layout_authority(candidate_environment, result_records)
 	if not bool(candidate_authority.get("ok", false)):
 		return {"ok": false, "records": records.duplicate(true), "slot_bindings": {}, "overflow_ids": [], "object_rects": {}, "errors": _array(candidate_authority.get("errors", []))}
+	var candidate_commit_proof := base_layout_commit_proof(candidate_environment)
 	return {
 		"ok": true,
 		"records": result_records,
@@ -777,19 +802,22 @@ static func bind_base_records(environment: Dictionary, records: Array, existing_
 		"slot_map_digest": slot_map_digest(surface_map),
 		"binding_digest": binding_digest_value,
 		"authenticated_prior_layout": layout.duplicate(true),
+		"validated_candidate_layout": candidate_layout.duplicate(true),
+		"validated_candidate_commit_proof": candidate_commit_proof,
 		"occupied_slots": occupied,
 		"warnings": warnings,
 		"errors": [],
 	}
 
 
-# Binds scenario-owned visuals. Required safe exits use exit slots; all other
-# visuals use stage slots. Route actors reserve both authored endpoints.
+# Binds scenario-owned visuals. Scenario-local safe exits remain scenario
+# doorways; only entries explicitly classified as navigation may use exit slots.
+# Route actors reserve two scenario-family endpoints.
 static func bind_scenario_visuals(environment: Dictionary, visual_entries: Array, shared_occupancy: Dictionary = {}) -> Dictionary:
 	var surface_map := EnvironmentPlacementScript.surface_map(environment)
-	var stage_slots := _ordered_slots(_array(surface_map.get("stage_slots", [])))
-	var exit_slots := _ordered_slots(_array(surface_map.get("exit_slots", [])))
-	var all_slots := stage_slots + exit_slots
+	var scenario_slots := _family_slots(surface_map, "scenario")
+	var exit_slots := _family_slots(surface_map, "exit")
+	var all_slots := scenario_slots + exit_slots
 	var slots_by_id := _slots_by_id(all_slots)
 	var preferences := _dict(surface_map.get("scenario_slot_ids", {}))
 	var art_keys := _dict(surface_map.get("scenario_art_keys", {}))
@@ -799,12 +827,12 @@ static func bind_scenario_visuals(environment: Dictionary, visual_entries: Array
 	var occupied := initial_occupancy.duplicate(true)
 	var bindings: Dictionary = {}
 	var overflow_ids: Array = []
-	var errors: Array = []
+	var errors := _surface_map_errors(surface_map)
 	var warnings: Array = []
 	_validate_scenario_art_policy(surface_map, art_keys, errors)
 	var authored_overflow_ids := _scenario_overflow_policy(surface_map, errors)
 	if not authored_overflow_ids.is_empty():
-		errors.append("Scenario physical spill is no longer supported; add compatible hand-placed stage slots instead.")
+		errors.append("Scenario physical spill is no longer supported; add compatible hand-placed scenario slots instead.")
 	if not errors.is_empty():
 		return {
 			"ok": false,
@@ -820,7 +848,7 @@ static func bind_scenario_visuals(environment: Dictionary, visual_entries: Array
 	entries.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
 		return str(_dict(left_value).get("identity", "")) < str(_dict(right_value).get("identity", ""))
 	)
-	# Physical exits and moving actors reserve first.
+	# True navigation exits and moving actors reserve first.
 	entries.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
 		var left := _dict(left_value)
 		var right := _dict(right_value)
@@ -834,8 +862,8 @@ static func bind_scenario_visuals(environment: Dictionary, visual_entries: Array
 			left_route = str(position_routes.get(scenario_position_key(left_stable, left_semantic), "")).strip_edges()
 		if right_route.is_empty():
 			right_route = str(position_routes.get(scenario_position_key(right_stable, right_semantic), "")).strip_edges()
-		var left_rank := 0 if bool(left.get("safe_exit", false)) else 1 if not left_route.is_empty() else 2
-		var right_rank := 0 if bool(right.get("safe_exit", false)) else 1 if not right_route.is_empty() else 2
+		var left_rank := 0 if _entry_slot_family(left, "scenario") == "exit" else 1 if not left_route.is_empty() else 2
+		var right_rank := 0 if _entry_slot_family(right, "scenario") == "exit" else 1 if not right_route.is_empty() else 2
 		return str(left.get("identity", "")) < str(right.get("identity", "")) if left_rank == right_rank else left_rank < right_rank
 	)
 	for entry_value in entries:
@@ -853,6 +881,10 @@ static func bind_scenario_visuals(environment: Dictionary, visual_entries: Array
 			continue
 		if not art_key.is_empty():
 			semantic["icon_key"] = art_key
+		var slot_family := _entry_slot_family(entry, "scenario")
+		if slot_family not in ["scenario", "exit"]:
+			errors.append("Scenario visual %s declares forbidden slot family %s." % [identity, slot_family])
+			continue
 		var placement_class := str(entry.get("placement_class", ""))
 		if placement_class not in EnvironmentPlacementScript.CLASSES:
 			placement_class = EnvironmentPlacementScript.classify(
@@ -867,6 +899,9 @@ static func bind_scenario_visuals(environment: Dictionary, visual_entries: Array
 		var route := _dict(routes_by_id.get(route_id, {}))
 		var slot: Dictionary = {}
 		if not route_id.is_empty():
+			if slot_family != "scenario":
+				errors.append("Scenario route visual %s cannot reserve non-scenario slots." % identity)
+				continue
 			if route.is_empty():
 				errors.append("Scenario visual %s route %s has no authored route authority." % [identity, route_id])
 				continue
@@ -888,22 +923,22 @@ static func bind_scenario_visuals(environment: Dictionary, visual_entries: Array
 				occupied[end_id] = "route_endpoint::%s" % identity
 			elif not route_geometry_valid:
 				errors.append("Scenario visual %s route %s has invalid, incompatible, or disconnected authored endpoints." % [identity, route_id])
-		elif bool(entry.get("safe_exit", false)):
-			var preference := str(preferences.get(position_key, preferences.get(stable_id, preferences.get(identity, "")))).strip_edges()
-			slot = _select_slot(exit_slots, occupied, placement_class, preference, not preference.is_empty(), MIN_INTERACTIVE_TARGET)
 		else:
-			var preference := str(preferences.get(position_key, preferences.get(stable_id, preferences.get(identity, "")))).strip_edges()
-			# Ordinary stage preferences are hints, never hard authority. A stale,
+			var preference_data := _slot_preference(surface_map, entry, identity, position_key, stable_id)
+			var preference := str(preference_data.get("slot_id", "")).strip_edges()
+			var candidate_slots := exit_slots if slot_family == "exit" else scenario_slots
+			placement_class = _exit_preference_class(candidate_slots, slot_family, preference, placement_class)
+			# Event/scenario preferences are hints, never hard authority. A stale,
 			# occupied, or class-incompatible preferred id falls through to the
 			# deterministic (priority, id) order.
-			slot = _select_slot(stage_slots, occupied, placement_class, preference, false, MIN_INTERACTIVE_TARGET)
+			slot = _select_slot(candidate_slots, occupied, placement_class, preference, bool(preference_data.get("exact", false)), MIN_INTERACTIVE_TARGET)
 		if slot.is_empty():
-			_warn_missing_slot("scenario binding", identity, placement_class, warnings, errors)
+			_warn_missing_family_slot("scenario binding", identity, slot_family, placement_class, warnings, errors)
 			continue
 		var slot_id := str(slot.get("id", ""))
 		if not occupied.has(slot_id):
 			occupied[slot_id] = identity
-		var binding := _room_binding(identity, placement_class, "exit" if bool(entry.get("safe_exit", false)) else "stage", slot)
+		var binding := _room_binding(identity, placement_class, slot_family, slot)
 		if not art_key.is_empty():
 			binding["scenario_art_key"] = art_key
 		if not route.is_empty():
@@ -937,6 +972,8 @@ static func bind_scenario_visuals(environment: Dictionary, visual_entries: Array
 static func scenario_visual_requires_room_slot(surface_map: Dictionary, entry: Dictionary) -> bool:
 	if bool(entry.get("actor", false)):
 		return true
+	if bool(entry.get("navigation_exit", false)) or _entry_slot_family(entry) == "exit":
+		return true
 	if bool(entry.get("safe_exit", false)):
 		return true
 	return not scenario_visual_art_key(surface_map, entry).is_empty()
@@ -945,6 +982,8 @@ static func scenario_visual_requires_room_slot(surface_map: Dictionary, entry: D
 static func scenario_visual_art_key(surface_map: Dictionary, entry: Dictionary) -> String:
 	if bool(entry.get("actor", false)):
 		return ""
+	if bool(entry.get("navigation_exit", false)) or _entry_slot_family(entry) == "exit":
+		return "side_door"
 	if bool(entry.get("safe_exit", false)):
 		return "side_door"
 	var identity := str(entry.get("identity", "")).strip_edges()
@@ -952,23 +991,9 @@ static func scenario_visual_art_key(surface_map: Dictionary, entry: Dictionary) 
 	var stable_id := str(semantic.get("stable_object_id", identity.trim_prefix("scenario::"))).strip_edges()
 	if _scenario_semantic_is_abstract(stable_id, semantic):
 		return ""
-	var position_key := scenario_position_key(stable_id, semantic)
-	var preferences := _dict(surface_map.get("scenario_slot_ids", {}))
-	var has_slot_preference := preferences.has(position_key) or preferences.has(stable_id) or preferences.has(identity)
-	if not has_slot_preference:
-		# A stable object can have several reviewed, position-specific bindings.
-		# The concrete-art authority is object-wide, so any exact stable-id
-		# composite proves the independent slot half of that authority even when
-		# the caller is inspecting the semantic before a position is selected.
-		for preference_key_value in preferences.keys():
-			if typeof(preference_key_value) == TYPE_STRING \
-					and str(preference_key_value).begins_with("%s|" % stable_id):
-				has_slot_preference = true
-				break
-	if not has_slot_preference:
-		return ""
 	var art_keys := _dict(surface_map.get("scenario_art_keys", {}))
-	var art_key := str(art_keys.get(stable_id, art_keys.get(identity, ""))).strip_edges()
+	var authored_payload_key := str(semantic.get("icon_key", "")).strip_edges()
+	var art_key := str(art_keys.get(stable_id, art_keys.get(identity, authored_payload_key))).strip_edges()
 	return art_key if art_key in CONCRETE_SCENARIO_ART_KEYS else ""
 
 
@@ -988,13 +1013,23 @@ static func slot_map_digest(surface_map: Dictionary) -> String:
 	return JSON.stringify({
 		"schema_version": int(surface_map.get("slot_schema_version", 0)),
 		"map_id": str(surface_map.get("id", "")),
-		"base_slots": _array(surface_map.get("base_slots", [])),
-		"stage_slots": _array(surface_map.get("stage_slots", [])),
+		"fixed_slots": _array(surface_map.get("fixed_slots", [])),
+		"event_slots": _array(surface_map.get("event_slots", [])),
+		"scenario_slots": _array(surface_map.get("scenario_slots", [])),
 		"exit_slots": _array(surface_map.get("exit_slots", [])),
 		"walk_lanes": _array(surface_map.get("walk_lanes", [])),
 		"actor_routes": _array(surface_map.get("actor_routes", [])),
-		"object_slot_ids": _dict(surface_map.get("object_slot_ids", {})),
-		"category_slot_ids": _dict(surface_map.get("category_slot_ids", {})),
+		"fixed_object_slot_ids": _dict(surface_map.get("fixed_object_slot_ids", {})),
+		"event_object_slot_ids": _dict(surface_map.get("event_object_slot_ids", {})),
+		"scenario_object_slot_ids": _dict(surface_map.get("scenario_object_slot_ids", {})),
+		"exit_object_slot_ids": _dict(surface_map.get("exit_object_slot_ids", {})),
+		"fixed_category_slot_ids": _dict(surface_map.get("fixed_category_slot_ids", {})),
+		"event_category_slot_ids": _dict(surface_map.get("event_category_slot_ids", {})),
+		"scenario_category_slot_ids": _dict(surface_map.get("scenario_category_slot_ids", {})),
+		"exit_category_slot_ids": _dict(surface_map.get("exit_category_slot_ids", {})),
+		"object_family_ids": _dict(surface_map.get("object_family_ids", {})),
+		"fixed_objects": surface_map.get("fixed_objects", []),
+		"class_overrides": _dict(surface_map.get("class_overrides", {})),
 		"scenario_slot_ids": _dict(surface_map.get("scenario_slot_ids", {})),
 		"scenario_art_keys": _dict(surface_map.get("scenario_art_keys", {})),
 		"scenario_overflow_ids": _array(surface_map.get("scenario_overflow_ids", [])),
@@ -1002,13 +1037,16 @@ static func slot_map_digest(surface_map: Dictionary) -> String:
 	}).sha256_text()
 
 
+static func validate_slot_map(surface_map: Dictionary) -> Dictionary:
+	var errors := _surface_map_errors(surface_map)
+	return {"ok": errors.is_empty(), "errors": errors, "digest": slot_map_digest(surface_map)}
+
+
 static func _validate_scenario_art_policy(surface_map: Dictionary, art_keys: Dictionary, errors: Array) -> void:
 	var value: Variant = surface_map.get("scenario_art_keys")
 	if typeof(value) != TYPE_DICTIONARY:
 		errors.append("Scenario art authority must be an object.")
 		return
-	var authored_visual_ids := _authored_scenario_visual_ids(surface_map)
-	var preferences := _dict(surface_map.get("scenario_slot_ids", {}))
 	for stable_id_value in art_keys.keys():
 		var stable_id := str(stable_id_value)
 		var art_key_value: Variant = art_keys.get(stable_id_value)
@@ -1018,16 +1056,6 @@ static func _validate_scenario_art_policy(surface_map: Dictionary, art_keys: Dic
 			continue
 		if typeof(art_key_value) != TYPE_STRING or str(art_key_value) not in CONCRETE_SCENARIO_ART_KEYS:
 			errors.append("Scenario art authority %s names an unsupported concrete renderer." % stable_id)
-		if not authored_visual_ids.has(stable_id):
-			errors.append("Scenario art authority contains unknown authored identity %s." % stable_id)
-		var has_slot_preference := preferences.has(stable_id) or preferences.has("scenario::%s" % stable_id)
-		if not has_slot_preference:
-			for preference_key_value in preferences.keys():
-				if str(preference_key_value).begins_with("%s|" % stable_id):
-					has_slot_preference = true
-					break
-		if not has_slot_preference:
-			errors.append("Scenario art authority %s has no exact authored slot preference." % stable_id)
 
 
 static func _scenario_overflow_policy(surface_map: Dictionary, errors: Array) -> Dictionary:
@@ -1099,6 +1127,7 @@ static func guard_unique_slot_bindings(
 ) -> Dictionary:
 	var bindings := bindings_value.duplicate(true)
 	var occupied := occupied_slots.duplicate(true)
+	var available_by_id := _slots_by_id(available_slots)
 	var overflow_ids: Array = []
 	var warnings: Array = []
 	var errors: Array = []
@@ -1115,14 +1144,30 @@ static func guard_unique_slot_bindings(
 			continue
 		if str(binding.get("presentation_mode", "")) != PRESENTATION_ROOM:
 			continue
+		var slot_family := str(binding.get("slot_family", binding.get("kind", ""))).strip_edges()
+		if slot_family not in SLOT_FAMILIES or str(binding.get("kind", "")) != slot_family:
+			errors.append("%s binding %s has an invalid or inconsistent slot family." % [warning_scope, identity])
+			bindings.erase(identity_value)
+			continue
 		var claim_ids: Array = []
 		var slot_id := str(binding.get("slot_id", "")).strip_edges()
-		if not slot_id.is_empty():
-			claim_ids.append(slot_id)
+		var bound_slot := _dict(available_by_id.get(slot_id, {}))
+		if slot_id.is_empty() or bound_slot.is_empty() or _slot_family(bound_slot) != slot_family \
+				or not slot_id.begins_with("%s." % slot_family):
+			errors.append("%s binding %s references a missing or cross-family slot %s." % [warning_scope, identity, slot_id])
+			bindings.erase(identity_value)
+			continue
+		claim_ids.append(slot_id)
 		var route := _dict(binding.get("route", {}))
 		var route_end_id := str(route.get("end_slot_id", "")).strip_edges()
-		if not route_end_id.is_empty() and not claim_ids.has(route_end_id):
-			claim_ids.append(route_end_id)
+		if not route_end_id.is_empty():
+			var route_end_slot := _dict(available_by_id.get(route_end_id, {}))
+			if route_end_slot.is_empty() or _slot_family(route_end_slot) != slot_family:
+				errors.append("%s routed binding %s crosses slot families." % [warning_scope, identity])
+				bindings.erase(identity_value)
+				continue
+			if not claim_ids.has(route_end_id):
+				claim_ids.append(route_end_id)
 		var conflict_slot := ""
 		var conflict_holder := ""
 		for claim_id_value in claim_ids:
@@ -1133,15 +1178,23 @@ static func guard_unique_slot_bindings(
 				conflict_holder = holder
 				break
 		if not conflict_slot.is_empty():
-			var replacement := _select_slot(available_slots, occupied, str(binding.get("placement_class", "")), "", false, MIN_INTERACTIVE_TARGET)
+			if slot_family in ["fixed", "exit"] or not route.is_empty():
+				var exact_warning := "%s exact %s slot %s for %s is already held by %s." % [warning_scope, slot_family, conflict_slot, identity, conflict_holder]
+				warnings.append(exact_warning)
+				errors.append(exact_warning)
+				bindings.erase(identity_value)
+				continue
+			var replacement := _select_slot(_slots_from_family(available_slots, slot_family), occupied, str(binding.get("placement_class", "")), "", false, MIN_INTERACTIVE_TARGET)
 			if replacement.is_empty():
-				_warn_missing_slot(warning_scope, identity, str(binding.get("placement_class", "")), warnings, errors)
+				_warn_missing_family_slot(warning_scope, identity, slot_family, str(binding.get("placement_class", "")), warnings, errors)
 				bindings.erase(identity_value)
 				continue
 			var warning := "%s slot %s is already held by %s; reassigned %s to authored slot %s." % [warning_scope, conflict_slot, conflict_holder, identity, str(replacement.get("id", ""))]
-			push_warning(warning)
 			warnings.append(warning)
-			binding = _room_binding(identity, str(binding.get("placement_class", "")), str(binding.get("kind", "base")), replacement)
+			binding["kind"] = slot_family
+			binding["slot_family"] = slot_family
+			binding["slot_id"] = str(replacement.get("id", ""))
+			binding["slot"] = replacement.duplicate(true)
 			bindings[identity_value] = binding
 			claim_ids = [str(replacement.get("id", ""))]
 		for claim_id_value in claim_ids:
@@ -1157,7 +1210,16 @@ static func guard_unique_slot_bindings(
 
 static func _warn_missing_slot(scope: String, identity: String, placement_class: String, warnings: Array, errors: Array) -> void:
 	var warning := "%s has no free compatible authored %s slot for %s; add a hand-placed slot in placement_surfaces.json." % [scope, placement_class, identity]
-	push_warning(warning)
+	# Binding is a pure, frequently repeated projection (travel previews and
+	# parity checks may invoke it hundreds of times). Keep diagnostics in the
+	# returned/layout envelope so callers can surface them once without flooding
+	# stderr for the same malformed synthetic or authored room.
+	warnings.append(warning)
+	errors.append(warning)
+
+
+static func _warn_missing_family_slot(scope: String, identity: String, slot_family: String, placement_class: String, warnings: Array, errors: Array) -> void:
+	var warning := "%s has no free compatible authored %s.%s slot for %s; add a hand-placed %s slot in placement_surfaces.json." % [scope, slot_family, placement_class, identity, slot_family]
 	warnings.append(warning)
 	errors.append(warning)
 
@@ -1169,6 +1231,36 @@ static func binding_digest(bindings: Dictionary) -> String:
 	for identity_value in identities:
 		canonical.append(_dict(bindings.get(identity_value, {})))
 	return JSON.stringify(canonical).sha256_text()
+
+
+# Compact handoff proof for a layout that has already passed the full authority
+# validator. It lets a synchronous caller commit that exact candidate without
+# repeating the expensive map/manifest/geometry validation a second time.
+static func base_layout_commit_proof(environment: Dictionary) -> String:
+	var layout := _dict(environment.get("layout", {}))
+	var bindings := _dict(layout.get("slot_bindings", {}))
+	var rects := _dict(layout.get("object_rects", {}))
+	var rect_rows: Array = []
+	var rect_ids := rects.keys()
+	rect_ids.sort_custom(func(left: Variant, right: Variant) -> bool: return str(left) < str(right))
+	for rect_id_value in rect_ids:
+		var rect_id := str(rect_id_value)
+		rect_rows.append([rect_id, _dict(rects.get(rect_id_value, {}))])
+	var overflow_ids := _array(layout.get("slot_overflow_ids", [])).duplicate()
+	overflow_ids.sort_custom(func(left: Variant, right: Variant) -> bool: return str(left) < str(right))
+	return JSON.stringify({
+		"environment_id": str(environment.get("id", environment.get("world_node_id", environment.get("archetype_id", "")))),
+		"archetype_id": str(environment.get("archetype_id", "")),
+		"layer_id": str(environment.get("current_layer_id", environment.get("layer_id", ""))),
+		"manifest_digest": str(environment.get("object_manifest_digest", _dict(environment.get("object_manifest", {})).get("digest", ""))),
+		"manifest_revision": int(environment.get("object_manifest_revision", _dict(environment.get("object_manifest", {})).get("revision", 0))),
+		"slot_schema_version": int(layout.get("slot_schema_version", 0)),
+		"slot_map_digest": str(layout.get("slot_map_digest", "")),
+		"slot_binding_digest": str(layout.get("slot_binding_digest", "")),
+		"recomputed_binding_digest": binding_digest(bindings),
+		"overflow_ids": overflow_ids,
+		"object_rects": rect_rows,
+	}).sha256_text()
 
 
 static func _object_rects_from_bindings(bindings: Dictionary) -> Dictionary:
@@ -1264,6 +1356,348 @@ static func authored_route_points(surface_map: Dictionary, start_slot: Dictionar
 	return result if result.size() >= 2 else []
 
 
+static func _entry_slot_family(entry: Dictionary, default_family: String = "") -> String:
+	for key in ["slot_family", "family"]:
+		if not entry.has(key):
+			continue
+		var family := str(entry.get(key, "")).strip_edges()
+		return family if family in SLOT_FAMILIES else ""
+	return default_family if default_family in SLOT_FAMILIES else ""
+
+
+static func authored_entry_slot_family(
+	surface_map: Dictionary,
+	entry: Dictionary,
+	object_id: String,
+	default_family: String = "",
+	allow_category: bool = true
+) -> String:
+	var explicit := _entry_slot_family(entry)
+	if not explicit.is_empty():
+		return explicit
+	var family_value: Variant = _dict(surface_map.get("object_family_ids", {})).get(object_id, "")
+	var object_family := str(_dict(family_value).get("family", "")) if typeof(family_value) == TYPE_DICTIONARY else str(family_value)
+	if object_family in SLOT_FAMILIES:
+		return object_family
+	var preference_keys: Array = [object_id]
+	var source_id := str(entry.get("source_id", "")).strip_edges()
+	if not source_id.is_empty() and not preference_keys.has(source_id):
+		preference_keys.append(source_id)
+	var object_candidates: Dictionary = {}
+	for family in SLOT_FAMILIES:
+		var object_preferences := _dict(surface_map.get("%s_object_slot_ids" % family, {}))
+		for preference_key_value in preference_keys:
+			if object_preferences.has(str(preference_key_value)):
+				object_candidates[family] = true
+	if object_candidates.size() == 1:
+		return str(object_candidates.keys()[0])
+	if object_candidates.size() > 1:
+		return ""
+	# Category mappings describe capacity for a record that is already known to
+	# be physical. They do not make every member of a gameplay list into a new
+	# room object (for example, several service verbs may share one bartender).
+	if not allow_category:
+		return default_family if default_family in SLOT_FAMILIES else ""
+	var category_keys: Array = []
+	var explicit_category := str(entry.get("slot_category_key", "")).strip_edges()
+	if not explicit_category.is_empty():
+		category_keys.append(explicit_category)
+	var spot_field := str(entry.get("spot_field", entry.get("layout_spot_field", ""))).strip_edges()
+	if not spot_field.is_empty():
+		category_keys.append("%s:%d" % [spot_field, int(entry.get("index", entry.get("layout_index", 0)))])
+	var category_candidates: Dictionary = {}
+	for family in SLOT_FAMILIES:
+		var category_preferences := _dict(surface_map.get("%s_category_slot_ids" % family, {}))
+		for category_key_value in category_keys:
+			if category_preferences.has(str(category_key_value)):
+				category_candidates[family] = true
+	if category_candidates.size() == 1:
+		return str(category_candidates.keys()[0])
+	return default_family if category_candidates.is_empty() and default_family in SLOT_FAMILIES else ""
+
+
+static func _family_slots(surface_map: Dictionary, family: String) -> Array:
+	return _ordered_slots(EnvironmentPlacementScript.slots_for_family(surface_map, family))
+
+
+static func _all_family_slots(surface_map: Dictionary) -> Array:
+	var result: Array = []
+	for family in SLOT_FAMILIES:
+		result.append_array(_family_slots(surface_map, str(family)))
+	return result
+
+
+static func _slots_from_family(slots: Array, family: String) -> Array:
+	var result: Array = []
+	for slot_value in slots:
+		var slot := _dict(slot_value)
+		if _slot_family(slot) == family:
+			result.append(slot)
+	return _ordered_slots(result)
+
+
+static func _slot_family(slot: Dictionary) -> String:
+	var family := str(slot.get("kind", "")).strip_edges()
+	var slot_id := str(slot.get("id", "")).strip_edges()
+	if family not in SLOT_FAMILIES or not slot_id.begins_with("%s." % family):
+		return ""
+	return family
+
+
+static func _slot_preference(
+	surface_map: Dictionary,
+	entry: Dictionary,
+	object_id: String,
+	position_key: String = "",
+	stable_id: String = ""
+) -> Dictionary:
+	var family := authored_entry_slot_family(surface_map, entry, object_id)
+	if family.is_empty() and object_id.begins_with("scenario::"):
+		family = "scenario"
+	var explicit := str(entry.get("exact_slot_id", "")).strip_edges()
+	if not explicit.is_empty():
+		return {"slot_id": explicit, "exact": family in ["fixed", "exit"], "source": "entry.exact_slot_id"}
+	var carried := str(entry.get("slot_id", "")).strip_edges()
+	if not carried.is_empty():
+		return {"slot_id": carried, "exact": family in ["fixed", "exit"], "source": "entry.slot_id"}
+	var object_preferences: Dictionary
+	if family == "scenario":
+		object_preferences = _dict(surface_map.get("scenario_object_slot_ids", {}))
+		var semantic_preferences := _dict(surface_map.get("scenario_slot_ids", {}))
+		for semantic_key in [position_key, stable_id, object_id]:
+			var clean_semantic_key := str(semantic_key).strip_edges()
+			if not clean_semantic_key.is_empty() and semantic_preferences.has(clean_semantic_key):
+				return {"slot_id": str(semantic_preferences.get(clean_semantic_key, "")).strip_edges(), "exact": false, "source": "scenario_slot_ids"}
+	else:
+		object_preferences = _dict(surface_map.get("%s_object_slot_ids" % family, {}))
+	for preference_key in [position_key, stable_id, object_id]:
+		var clean_key := str(preference_key).strip_edges()
+		if clean_key.is_empty() or not object_preferences.has(clean_key):
+			continue
+		return {
+			"slot_id": str(object_preferences.get(clean_key, "")).strip_edges(),
+			"exact": family in ["fixed", "exit"],
+			"source": "%s_object_slot_ids" % family,
+		}
+	var category_preferences := _dict(surface_map.get("%s_category_slot_ids" % family, {}))
+	var category_keys: Array = []
+	var explicit_category := str(entry.get("slot_category_key", "")).strip_edges()
+	if not explicit_category.is_empty():
+		category_keys.append(explicit_category)
+	var spot_field := str(entry.get("spot_field", entry.get("layout_spot_field", ""))).strip_edges()
+	var spot_index := int(entry.get("index", entry.get("layout_index", 0)))
+	if not spot_field.is_empty():
+		category_keys.append("%s:%d" % [spot_field, spot_index])
+	for category_key_value in category_keys:
+		var category_key := str(category_key_value)
+		if category_preferences.has(category_key):
+			return {"slot_id": str(category_preferences.get(category_key, "")).strip_edges(), "exact": false, "source": "%s_category_slot_ids" % family}
+	return {"slot_id": "", "exact": false, "source": "deterministic_family_order"}
+
+
+static func _surface_map_errors(surface_map: Dictionary) -> Array:
+	var errors: Array = []
+	var map_id := str(surface_map.get("id", "<unknown>"))
+	if int(surface_map.get("slot_schema_version", 0)) != SLOT_SCHEMA_VERSION:
+		errors.append("Environment placement map %s must use slot schema version %d." % [map_id, SLOT_SCHEMA_VERSION])
+	for legacy_field in ["base_slots", "stage_slots", "object_slot_ids", "category_slot_ids"]:
+		if surface_map.has(legacy_field):
+			errors.append("Environment placement map %s still contains legacy slot field %s." % [map_id, legacy_field])
+	var seen: Dictionary = {}
+	var authored_slots: Dictionary = {}
+	for family_value in SLOT_FAMILIES:
+		var family := str(family_value)
+		var collection := "%s_slots" % family
+		if typeof(surface_map.get(collection)) != TYPE_ARRAY:
+			errors.append("Environment placement map %s must declare %s as an array." % [map_id, collection])
+			continue
+		for slot_value in _array(surface_map.get(collection, [])):
+			var slot := _dict(slot_value)
+			var slot_id := str(slot.get("id", "")).strip_edges()
+			if slot_id.is_empty() or not slot_id.begins_with("%s." % family) or str(slot.get("kind", "")) != family:
+				errors.append("Environment placement map %s contains a malformed %s slot id/kind." % [map_id, family])
+				continue
+			if seen.has(slot_id):
+				errors.append("Environment placement map %s contains duplicate slot id %s." % [map_id, slot_id])
+			seen[slot_id] = true
+			authored_slots[slot_id] = slot
+			if str(slot.get("footprint_class", "")) not in EnvironmentPlacementScript.CLASSES:
+				errors.append("Environment placement slot %s has an invalid footprint class." % slot_id)
+			if typeof(slot.get("occupancy_required")) != TYPE_BOOL:
+				errors.append("Environment placement slot %s must declare boolean occupancy_required." % slot_id)
+		for mapping_field in ["%s_object_slot_ids" % family, "%s_category_slot_ids" % family]:
+			var mapping_value: Variant = surface_map.get(mapping_field, {})
+			if typeof(mapping_value) != TYPE_DICTIONARY:
+				errors.append("Environment placement map %s field %s must be an object." % [map_id, mapping_field])
+				continue
+			for mapped_slot_value in (mapping_value as Dictionary).values():
+				if typeof(mapped_slot_value) != TYPE_STRING or not str(mapped_slot_value).begins_with("%s." % family) or not seen.has(str(mapped_slot_value)):
+					errors.append("Environment placement map %s field %s references a missing or cross-family slot." % [map_id, mapping_field])
+	var scenario_preferences_value: Variant = surface_map.get("scenario_slot_ids", {})
+	if typeof(scenario_preferences_value) != TYPE_DICTIONARY:
+		errors.append("Environment placement map %s scenario_slot_ids must be an object." % map_id)
+	else:
+		for mapped_slot_value in (scenario_preferences_value as Dictionary).values():
+			if typeof(mapped_slot_value) != TYPE_STRING or not str(mapped_slot_value).begins_with("scenario.") or not seen.has(str(mapped_slot_value)):
+				errors.append("Environment placement map %s scenario_slot_ids references a missing or non-scenario slot." % map_id)
+	# An identity may have one lifecycle owner.  A family override takes
+	# precedence during binding, so stale exact mappings in another family would
+	# otherwise be silently ignored and hide authoring drift until capacity fails.
+	var object_mapping_families: Dictionary = {}
+	for mapping_family_value in SLOT_FAMILIES:
+		var mapping_family := str(mapping_family_value)
+		for object_id_value in _dict(surface_map.get("%s_object_slot_ids" % mapping_family, {})).keys():
+			var object_id := str(object_id_value).strip_edges()
+			if typeof(object_id_value) != TYPE_STRING or object_id.is_empty():
+				errors.append("Environment placement map %s contains a malformed object-slot identity." % map_id)
+				continue
+			if object_mapping_families.has(object_id) and str(object_mapping_families.get(object_id, "")) != mapping_family:
+				errors.append("Environment placement object %s claims exact slots in multiple families." % object_id)
+			else:
+				object_mapping_families[object_id] = mapping_family
+	var family_overrides_value: Variant = surface_map.get("object_family_ids")
+	if typeof(family_overrides_value) != TYPE_DICTIONARY:
+		errors.append("Environment placement map %s object_family_ids must be an object." % map_id)
+	else:
+		for object_id_value in (family_overrides_value as Dictionary).keys():
+			var override_value: Variant = (family_overrides_value as Dictionary).get(object_id_value)
+			var family := str(_dict(override_value).get("family", "")) if typeof(override_value) == TYPE_DICTIONARY else str(override_value)
+			if typeof(object_id_value) != TYPE_STRING or str(object_id_value).strip_edges().is_empty() or family not in SLOT_FAMILIES:
+				errors.append("Environment placement map %s object_family_ids contains a malformed assignment." % map_id)
+			elif object_mapping_families.has(str(object_id_value)) and str(object_mapping_families.get(str(object_id_value), "")) != family:
+				errors.append("Environment placement object %s declares %s-family ownership but maps an exact %s-family slot." % [str(object_id_value), family, str(object_mapping_families.get(str(object_id_value), ""))])
+	var fixed_objects_value: Variant = surface_map.get("fixed_objects")
+	if typeof(fixed_objects_value) != TYPE_ARRAY:
+		errors.append("Environment placement map %s fixed_objects must be an array." % map_id)
+	else:
+		var fixed_instance_ids: Dictionary = {}
+		var fixed_presentation_ids: Dictionary = {}
+		var fixed_action_owners: Dictionary = {}
+		var required_fixed_slots: Dictionary = {}
+		for declaration_value in fixed_objects_value as Array:
+			var declaration := _dict(declaration_value)
+			var instance_id := str(declaration.get("instance_object_id", declaration.get("object_id", declaration.get("id", "")))).strip_edges()
+			var presentation_id := str(declaration.get("presentation_object_id", declaration.get("presentation_id", instance_id))).strip_edges()
+			var exact_slot_id := str(declaration.get("exact_slot_id", declaration.get("slot_id", ""))).strip_edges()
+			var placement_class := str(declaration.get("placement_class", "")).strip_edges()
+			var exact_slot := _dict(authored_slots.get(exact_slot_id, {}))
+			if declaration.is_empty() or instance_id.is_empty() or presentation_id.is_empty() \
+					or fixed_instance_ids.has(instance_id) or fixed_presentation_ids.has(presentation_id):
+				errors.append("Environment placement map %s fixed_objects contains a malformed or duplicate identity." % map_id)
+				continue
+			fixed_instance_ids[instance_id] = true
+			fixed_presentation_ids[presentation_id] = true
+			if exact_slot_id.is_empty() or _slot_family(exact_slot) != "fixed":
+				errors.append("Environment placement fixed object %s must name an exact fixed-family slot." % instance_id)
+			elif placement_class not in EnvironmentPlacementScript.CLASSES or str(exact_slot.get("footprint_class", "")) != placement_class:
+				errors.append("Environment placement fixed object %s has an incompatible placement class." % instance_id)
+			if typeof(declaration.get("required")) != TYPE_BOOL:
+				errors.append("Environment placement fixed object %s must declare boolean required." % instance_id)
+			elif bool(declaration.get("required", false)) and not exact_slot_id.is_empty():
+				required_fixed_slots[exact_slot_id] = true
+			var action_ids_value: Variant = declaration.get("action_ids", [])
+			if typeof(action_ids_value) != TYPE_ARRAY:
+				errors.append("Environment placement fixed object %s action_ids must be an array." % instance_id)
+			else:
+				for action_id_value in action_ids_value as Array:
+					var action_id := str(action_id_value).strip_edges()
+					if typeof(action_id_value) != TYPE_STRING or action_id.is_empty():
+						errors.append("Environment placement fixed object %s contains a malformed action id." % instance_id)
+						continue
+					if fixed_action_owners.has(action_id) and str(fixed_action_owners.get(action_id, "")) != instance_id:
+						errors.append("Environment placement action %s is attached to multiple fixed hosts." % action_id)
+					else:
+						fixed_action_owners[action_id] = instance_id
+		for action_id_value in fixed_action_owners.keys():
+			var action_id := str(action_id_value)
+			var override_value: Variant = _dict(surface_map.get("object_family_ids", {})).get(action_id, "")
+			var override_family := str(_dict(override_value).get("family", "")) if typeof(override_value) == TYPE_DICTIONARY else str(override_value)
+			if not override_family.is_empty() and override_family != "fixed":
+				errors.append("Environment placement action %s is attached to a fixed host but declares %s-family ownership." % [action_id, override_family])
+			for family in SLOT_FAMILIES:
+				if family != "fixed" and _dict(surface_map.get("%s_object_slot_ids" % family, {})).has(action_id):
+					errors.append("Environment placement action %s is attached to a fixed host but claims an independent %s-family slot." % [action_id, family])
+		for slot_id_value in authored_slots.keys():
+			var slot_id := str(slot_id_value)
+			var slot := _dict(authored_slots.get(slot_id, {}))
+			if typeof(slot.get("occupancy_required")) == TYPE_BOOL \
+					and bool(slot.get("occupancy_required", false)) != required_fixed_slots.has(slot_id):
+				errors.append("Environment placement slot %s occupancy_required does not match required fixed-object ownership." % slot_id)
+	var class_overrides_value: Variant = surface_map.get("class_overrides")
+	if typeof(class_overrides_value) != TYPE_DICTIONARY:
+		errors.append("Environment placement map %s class_overrides must be an object." % map_id)
+	else:
+		for object_id_value in (class_overrides_value as Dictionary).keys():
+			if typeof(object_id_value) != TYPE_STRING or str(object_id_value).strip_edges().is_empty() \
+					or str((class_overrides_value as Dictionary).get(object_id_value, "")) not in EnvironmentPlacementScript.CLASSES:
+				errors.append("Environment placement map %s class_overrides contains a malformed assignment." % map_id)
+	var lane_ids: Dictionary = {}
+	var lanes_value: Variant = surface_map.get("walk_lanes")
+	if typeof(lanes_value) != TYPE_ARRAY:
+		errors.append("Environment placement map %s walk_lanes must be an array." % map_id)
+	else:
+		for lane_value in lanes_value as Array:
+			var lane := _dict(lane_value)
+			var lane_id := str(lane.get("id", "")).strip_edges()
+			if lane_id.is_empty() or lane_ids.has(lane_id) or typeof(lane.get("points")) != TYPE_ARRAY or _array(lane.get("points", [])).size() < 2:
+				errors.append("Environment placement map %s contains a malformed or duplicate walk lane." % map_id)
+				continue
+			lane_ids[lane_id] = true
+	var routes_by_id: Dictionary = {}
+	var routes_value: Variant = surface_map.get("actor_routes")
+	if typeof(routes_value) != TYPE_ARRAY:
+		errors.append("Environment placement map %s actor_routes must be an array." % map_id)
+	else:
+		for route_value in routes_value as Array:
+			var route := _dict(route_value)
+			var route_id := str(route.get("id", "")).strip_edges()
+			if route_id.is_empty() or routes_by_id.has(route_id):
+				errors.append("Environment placement map %s contains a malformed or duplicate actor route." % map_id)
+				continue
+			routes_by_id[route_id] = route
+			var start_id := str(route.get("start_slot_id", "")).strip_edges()
+			var end_id := str(route.get("end_slot_id", "")).strip_edges()
+			var start_slot := _dict(authored_slots.get(start_id, {}))
+			var end_slot := _dict(authored_slots.get(end_id, {}))
+			var footprint_class := str(route.get("footprint_class", "")).strip_edges()
+			if start_id == end_id or _slot_family(start_slot) != "scenario" or _slot_family(end_slot) != "scenario":
+				errors.append("Environment placement actor route %s must use two distinct scenario-family endpoints." % route_id)
+			elif footprint_class not in EnvironmentPlacementScript.CLASSES \
+					or str(start_slot.get("footprint_class", "")) != footprint_class \
+					or str(end_slot.get("footprint_class", "")) != footprint_class:
+				errors.append("Environment placement actor route %s has incompatible endpoint footprints." % route_id)
+			var route_lane_ids_value: Variant = route.get("lane_ids")
+			if typeof(route_lane_ids_value) != TYPE_ARRAY or (route_lane_ids_value as Array).is_empty():
+				errors.append("Environment placement actor route %s must declare at least one walk lane." % route_id)
+			else:
+				for lane_id_value in route_lane_ids_value as Array:
+					if typeof(lane_id_value) != TYPE_STRING or not lane_ids.has(str(lane_id_value)):
+						errors.append("Environment placement actor route %s references a missing walk lane." % route_id)
+			var reduced_motion_id := str(route.get("reduced_motion_slot_id", "")).strip_edges()
+			if not reduced_motion_id.is_empty() and _slot_family(_dict(authored_slots.get(reduced_motion_id, {}))) != "scenario":
+				errors.append("Environment placement actor route %s has a missing or non-scenario reduced-motion slot." % route_id)
+	var position_routes_value: Variant = surface_map.get("scenario_position_route_ids")
+	if typeof(position_routes_value) != TYPE_DICTIONARY:
+		errors.append("Environment placement map %s scenario_position_route_ids must be an object." % map_id)
+	else:
+		for route_id_value in (position_routes_value as Dictionary).values():
+			if typeof(route_id_value) != TYPE_STRING or not routes_by_id.has(str(route_id_value)):
+				errors.append("Environment placement map %s scenario_position_route_ids references a missing actor route." % map_id)
+	return errors
+
+
+static func _exit_preference_class(slots: Array, family: String, preferred_slot_id: String, fallback: String) -> String:
+	if family != "exit" or preferred_slot_id.is_empty():
+		return fallback
+	for slot_value in slots:
+		var slot := _dict(slot_value)
+		if str(slot.get("id", "")) != preferred_slot_id:
+			continue
+		var authored_class := str(slot.get("footprint_class", "")).strip_edges()
+		return authored_class if authored_class in EnvironmentPlacementScript.CLASSES else fallback
+	return fallback
+
+
 static func _select_slot(slots: Array, occupied: Dictionary, placement_class: String, preferred_slot_id: String, require_preferred: bool = false, minimum_size: Vector2 = Vector2.ZERO) -> Dictionary:
 	if not preferred_slot_id.is_empty():
 		for slot_value in slots:
@@ -1301,6 +1735,19 @@ static func _shop_item_order(environment: Dictionary, object_id: String) -> int:
 		if str(_dict(offers[index]).get("id", "")) == item_id:
 			return index
 	return -1
+
+
+# Inventory items placed in a home are physical belongings, not merchandise.
+# Only records in an environment's offer list (or with an explicit authored
+# shop override) may consume the dedicated shop row. Creation, late binding,
+# and persisted-authority replay must all apply this exact normalization.
+static func _normalize_base_placement_class(environment: Dictionary, entry: Dictionary, object_id: String, class_override: String, placement_class: String) -> String:
+	var shop_identity := str(entry.get("slot_binding_source_id", object_id)).strip_edges()
+	if shop_identity.is_empty():
+		shop_identity = object_id
+	if placement_class == "shop_item" and class_override != "shop_item" and _shop_item_order(environment, shop_identity) < 0:
+		return "surface_item"
+	return placement_class
 
 
 static func _slot_meets_minimum(slot: Dictionary, minimum_size: Vector2) -> bool:
@@ -1342,15 +1789,49 @@ static func _routes_by_id(routes: Array) -> Dictionary:
 	return result
 
 
-static func _room_binding(identity: String, placement_class: String, kind: String, slot: Dictionary) -> Dictionary:
+static func _room_binding(identity: String, placement_class: String, slot_family: String, slot: Dictionary) -> Dictionary:
 	return {
 		"identity": identity,
-		"kind": kind,
+		"kind": slot_family,
+		"slot_family": slot_family,
 		"presentation_mode": PRESENTATION_ROOM,
 		"slot_id": str(slot.get("id", "")),
 		"placement_class": placement_class,
 		"slot": slot.duplicate(true),
 	}
+
+
+static func _validated_manifest_rows_by_presentation(environment: Dictionary, errors: Array) -> Dictionary:
+	var manifest_value: Variant = environment.get("object_manifest")
+	if typeof(manifest_value) != TYPE_DICTIONARY or (manifest_value as Dictionary).is_empty():
+		return {}
+	var manifest := manifest_value as Dictionary
+	var manifest_errors := EnvironmentObjectManifestScript.validate(manifest)
+	if not manifest_errors.is_empty():
+		for error_value in manifest_errors:
+			errors.append("Persisted base slot authority has an invalid object manifest: %s" % str(error_value))
+		return {}
+	var expected_environment_id := str(environment.get("id", environment.get("world_node_id", environment.get("archetype_id", "")))).strip_edges()
+	var expected_archetype_id := str(environment.get("archetype_id", "")).strip_edges()
+	var expected_layer_id := str(environment.get("current_layer_id", environment.get("layer_id", ""))).strip_edges()
+	if str(manifest.get("environment_id", "")) != expected_environment_id \
+			or str(manifest.get("archetype_id", "")) != expected_archetype_id \
+			or str(manifest.get("layer_id", "")) != expected_layer_id:
+		errors.append("Persisted base slot authority object manifest belongs to a different environment or layer.")
+		return {}
+	var result: Dictionary = {}
+	for row_value in _array(manifest.get("rows", [])):
+		var row := _dict(row_value)
+		if not bool(row.get("active", false)) or not bool(row.get("physical", false)):
+			continue
+		var presentation_id := str(row.get("presentation_object_id", "")).strip_edges()
+		var family := str(row.get("family", ""))
+		var placement_class := str(row.get("placement_class", ""))
+		if presentation_id.is_empty() or family not in SLOT_FAMILIES or placement_class not in EnvironmentPlacementScript.CLASSES:
+			errors.append("Persisted base slot authority object manifest contains malformed physical placement authority.")
+			continue
+		result[presentation_id] = row
+	return result
 
 
 static func _slot_rect(slot: Dictionary) -> Rect2:

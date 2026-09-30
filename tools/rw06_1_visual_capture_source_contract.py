@@ -93,8 +93,8 @@ def _strict_static_report(report: object) -> bool:
         "scenarios": 55,
         "legal_hosts": 55,
         "historical_exact_seeds": 22,
-        "base_scenario_conflicts": 0,
-        "base_base_conflicts": 0,
+        "fixed_scenario_conflicts": 0,
+        "fixed_fixed_conflicts": 0,
     }
     if any(type(counts.get(key)) is not int or counts[key] != value for key, value in exact.items()):
         return False
@@ -148,8 +148,8 @@ def _hostile_fixture_checks() -> list[str]:
         "active_bindings": 20,
         "complete_snapshots": 12,
         "historical_exact_seeds": 22,
-        "base_scenario_conflicts": 0,
-        "base_base_conflicts": 0,
+        "fixed_scenario_conflicts": 0,
+        "fixed_fixed_conflicts": 0,
     }
     valid = {
         "tool": "environment_fixed_slot_static_check",

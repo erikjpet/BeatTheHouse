@@ -396,6 +396,19 @@ func _check_target_handoff(run_state: RunState, library: ContentLibrary, token: 
 	if not bool(arrival.get("ok", false)) or not bool(arrival.get("handoff_ready", false)):
 		failures.append("Production delivery did not reach its real public handoff boundary: %s." % JSON.stringify(arrival))
 		return
+	var pre_mount_owner := run_state.delivery_world_sequence_owner_for_presentation(target_node_id)
+	var direct_manifest_contact := false
+	for entry_value in _array(run_state.current_environment.get("runtime_object_manifest_entries", [])):
+		var entry := _dict(entry_value)
+		if str(entry.get("runtime_owner", "")) == "delivery_contact" \
+				or str(entry.get("object_id", "")).begins_with("delivery:handoff:"):
+			direct_manifest_contact = true
+			break
+	var pre_mount_producer := run_state._scenario_base_producer_context()
+	if pre_mount_owner != token or direct_manifest_contact \
+			or not str(pre_mount_producer.get("delivery_handoff_node_id", "")).is_empty():
+		failures.append("Eligible Crew handoff owner did not suppress the direct-contact fallback before mount: owner=%s manifest=%s producer=%s." % [pre_mount_owner, JSON.stringify(run_state.current_environment.get("runtime_object_manifest_entries", [])), JSON.stringify(pre_mount_producer)])
+		return
 	var finalized := _finalize_delivery_target(run_state, library)
 	if not bool(finalized.get("ok", false)):
 		failures.append("Crew favor sequence did not mount after exact-target semantic finalization: %s." % JSON.stringify(finalized))

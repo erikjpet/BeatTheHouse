@@ -892,6 +892,7 @@ func initialize_home_from_profile(home_archetype: Dictionary, node_id: String, p
 		"act_index": maxi(1, act_index),
 		"home_archetype_id": home_id,
 		"home_node_id": home_node_id,
+		"parent_archetype_id": str(home_archetype.get("parent_archetype", "")).strip_edges(),
 		"display_name": home_display_name,
 		"started_day": current_day,
 		"lost_day": 0,
@@ -918,11 +919,12 @@ func advance_game_clock_minutes(amount: int) -> Dictionary:
 	var previous_minutes := game_clock_minutes
 	var previous_day := game_day()
 	var next_minutes := maxi(0, game_clock_minutes + amount)
+	var next_day := maxi(1, int(floor(float(next_minutes) / 1440.0)) + 1)
 	var clock_delivery_will_resolve := delivery_has_active_run() \
 		and str(active_delivery_run.get("deadline_kind", DeliveryRunModelScript.DEADLINE_ACTIONS)) == DeliveryRunModelScript.DEADLINE_CLOCK \
 		and int(active_delivery_run.get("deadline_game_clock_minutes", 0)) <= next_minutes
-	var rollback_run := to_dict() if clock_delivery_will_resolve else {}
-	var next_day := maxi(1, int(floor(float(next_minutes) / 1440.0)) + 1)
+	var clock_membership_will_change := clock_delivery_will_resolve or next_day > previous_day
+	var rollback_run := to_dict() if clock_membership_will_change else {}
 	game_clock_minutes = next_minutes
 	var delivery_resolved := false
 	if delivery_has_active_run() and str(active_delivery_run.get("deadline_kind", DeliveryRunModelScript.DEADLINE_ACTIONS)) == DeliveryRunModelScript.DEADLINE_CLOCK:
@@ -937,6 +939,11 @@ func advance_game_clock_minutes(amount: int) -> Dictionary:
 	if next_day > previous_day:
 		_advance_grand_casino_staff_day_rollovers(previous_day, next_day)
 		_advance_home_day_rollovers(previous_day, next_day)
+	if clock_membership_will_change and not current_environment.is_empty():
+		var membership := prepare_current_environment_object_membership_for_publication()
+		if not bool(membership.get("ok", false)):
+			from_dict(rollback_run)
+			return {"ok": false, "applied": false, "errors": JsonCoerceScript._copy_array(membership.get("errors", []))}
 	return {"ok": true, "applied": true, "delivery_resolved": delivery_resolved, "errors": []}
 
 
@@ -966,10 +973,13 @@ func advance_numbers_past_post_travel_actions(travel_minutes: int, local_casino_
 	if travel_minutes <= 0 or local_casino_room_move or is_terminal() or not _numbers_past_post_race_active():
 		return 0
 	var actions := maxi(1, int(ceil(float(travel_minutes) / float(ACTION_CLOCK_MINUTES))))
+	var rollback_run := to_dict()
 	_advance_global_boundary_start(actions)
 	_advance_global_boundary_after_encounter(actions)
 	_advance_global_boundary_before_local_cooldown(actions)
-	_advance_global_boundary_finish(actions)
+	if not _advance_global_boundary_finish(actions):
+		from_dict(rollback_run)
+		return 0
 	return actions
 
 
@@ -1484,6 +1494,404 @@ func _set_current_home_containers(containers: Array) -> void:
 	store_current_world_node_environment()
 
 
+# Single runtime seam for mutations that affect physical room membership but do
+# not otherwise rebuild layout. Selection arrays stay authoritative; the
+# manifest is a deterministic projection and consumes no RNG.
+func reconcile_current_environment_object_manifest(refresh_layout: bool = false) -> Dictionary:
+	if current_environment.is_empty():
+		return {}
+	_sync_all_runtime_object_manifest_entries(current_environment)
+	if refresh_layout:
+		current_environment["layout"] = EnvironmentInstance.ensure_generated_layout(current_environment)
+	else:
+		EnvironmentInstance.reconcile_object_manifest(current_environment)
+	return JsonCoerceScript._copy_dict(current_environment.get("object_manifest", {}))
+
+
+# Rebuilds the complete physical-membership envelope for an owned environment.
+# Runtime removals/additions must cross this seam before a detached candidate is
+# published or a room snapshot is persisted; a manifest without the matching
+# slot bindings is not a complete room state.
+func reconcile_environment_object_membership(environment: Dictionary) -> Dictionary:
+	if environment.is_empty():
+		return {"ok": false, "errors": ["Environment membership reconciliation requires an environment."], "manifest": {}}
+	_sync_all_runtime_object_manifest_entries(environment)
+	environment["layout"] = EnvironmentInstance.ensure_generated_layout(environment)
+	var errors := JsonCoerceScript._copy_array(EnvironmentInstance.object_manifest_errors(environment))
+	var layout := JsonCoerceScript._copy_dict(environment.get("layout", {}))
+	for error_value in JsonCoerceScript._copy_array(layout.get("placement_errors", [])):
+		var message := str(error_value).strip_edges()
+		if not message.is_empty() and not errors.has(message):
+			errors.append(message)
+	return {
+		"ok": errors.is_empty(),
+		"errors": errors,
+		"manifest": JsonCoerceScript._copy_dict(environment.get("object_manifest", {})),
+	}
+
+
+# ScenarioEngine atomically seals its causal state, renderer snapshot, and
+# materialized service/game/route arrays on a detached environment. Publish
+# that candidate only after its physical object manifest and generated slot
+# bindings have been rebuilt from the same state.
+func _publish_scenario_membership_candidate(candidate: Dictionary, result_value: Dictionary, operation_label: String) -> Dictionary:
+	var result := result_value.duplicate(false)
+	if not bool(result.get("ok", false)):
+		return result
+	# Do not run the live runtime-owner projector on this detached candidate:
+	# contextual projectors intentionally distinguish the current environment by
+	# identity and would remove valid delivery/crew rows before publication.
+	candidate["layout"] = EnvironmentInstance.ensure_generated_layout(candidate)
+	var membership_errors := JsonCoerceScript._copy_array(EnvironmentInstance.object_manifest_errors(candidate))
+	for error_value in JsonCoerceScript._copy_array(JsonCoerceScript._copy_dict(candidate.get("layout", {})).get("placement_errors", [])):
+		var placement_error := str(error_value).strip_edges()
+		if not placement_error.is_empty() and not membership_errors.has(placement_error):
+			membership_errors.append(placement_error)
+	if not membership_errors.is_empty():
+		var errors: Array = ["Scenario %s physical membership reconciliation failed closed." % operation_label]
+		for error_value in membership_errors:
+			var message := str(error_value).strip_edges()
+			if not message.is_empty() and not errors.has(message):
+				errors.append(message)
+		var failure := {
+			"ok": false,
+			"errors": errors,
+			"state": JsonCoerceScript._copy_dict(current_environment.get("scenario_sequence_state", {})),
+			"physical_membership_rejected": true,
+		}
+		for collection_key in ["processed", "transitions", "requests"]:
+			if result.has(collection_key):
+				failure[collection_key] = []
+		return failure
+	# Grand Casino room storage deliberately retains this Dictionary by identity.
+	# Publish the complete detached candidate without leaving that durable alias
+	# pointed at the pre-operation room.
+	current_environment.clear()
+	current_environment.merge(candidate, true)
+	return result
+
+
+# Seals the current room and every durable alias that can restore it. Call this
+# on detached action candidates after changing manifest-backed source state and
+# before publication. The live RunState remains untouched if validation fails.
+func prepare_current_environment_object_membership_for_publication() -> Dictionary:
+	var reconciled := reconcile_environment_object_membership(current_environment)
+	if not bool(reconciled.get("ok", false)):
+		return reconciled
+	if is_layered_environment():
+		_store_current_environment_layer_state_reconciled()
+	if _is_grand_casino_environment(current_environment):
+		_store_grand_casino_room_environment_reconciled(current_environment)
+	if world_map.is_empty():
+		return reconciled
+	var node_id := str(current_environment.get("world_node_id", current_world_node_id())).strip_edges()
+	if node_id.is_empty():
+		node_id = str(current_environment.get("archetype_id", "")).strip_edges()
+	if node_id.is_empty():
+		return reconciled
+	var stored_environment := current_environment
+	if _is_grand_casino_environment(current_environment):
+		var main_floor := grand_casino_room_environment(GRAND_CASINO_ARCHETYPE_ID)
+		if not main_floor.is_empty():
+			var main_reconciled := reconcile_environment_object_membership(main_floor)
+			if not bool(main_reconciled.get("ok", false)):
+				var main_errors := JsonCoerceScript._copy_array(main_reconciled.get("errors", []))
+				return {"ok": false, "errors": main_errors, "manifest": reconciled.get("manifest", {})}
+			stored_environment = main_floor
+	world_map = WorldMap.store_environment(world_map, node_id, _environment_for_persistent_storage(stored_environment))
+	reconciled["stored_world_node_id"] = node_id
+	return reconciled
+
+
+# Rebuild every runtime-owned physical row from its authoritative live source.
+# Owner-specific projectors replace only their own rows so independent systems
+# can share one deterministic manifest input without erasing each other.
+func _sync_all_runtime_object_manifest_entries(environment: Dictionary) -> bool:
+	var changed := _sync_contextual_runtime_object_manifest_entries(environment)
+	changed = _sync_numbers_runtime_object_manifest_entries(environment) or changed
+	changed = _sync_crew_heist_runtime_object_manifest_entries(environment) or changed
+	changed = _sync_grand_casino_runtime_object_manifest_entries(environment) or changed
+	return changed
+
+
+func _sync_contextual_runtime_object_manifest_entries(environment: Dictionary) -> bool:
+	var owned_sources := ["crew_presence", "delivery_physical", "delivery_contact", "home_return_exit"]
+	var prior_entries := JsonCoerceScript._copy_array(environment.get("runtime_object_manifest_entries", []))
+	var next_entries: Array = []
+	for entry_value in prior_entries:
+		if typeof(entry_value) != TYPE_DICTIONARY:
+			continue
+		var entry := entry_value as Dictionary
+		if not owned_sources.has(str(entry.get("runtime_owner", ""))):
+			next_entries.append(entry.duplicate(true))
+
+	var crew_index := 0
+	for presence_value in JsonCoerceScript._copy_array(environment.get("crew_presence", [])):
+		if typeof(presence_value) != TYPE_DICTIONARY:
+			continue
+		var presence := presence_value as Dictionary
+		var member_id := str(presence.get("member_id", "")).strip_edges()
+		var line := str(presence.get("line", "")).strip_edges()
+		var contact_event_id := str(presence.get("contact_event_id", "")).strip_edges()
+		var event_ids := JsonCoerceScript._copy_array(environment.get("event_ids", []))
+		var resolved_event_ids := JsonCoerceScript._copy_array(environment.get("resolved_event_ids", []))
+		var contact_event_active := not contact_event_id.is_empty() and event_ids.has(contact_event_id) and not resolved_event_ids.has(contact_event_id)
+		# An active contact event already owns the same visible person through its
+		# event-family manifest row. Add only the ambient crew identity used by the
+		# UI when no playable contact event is present.
+		if member_id.is_empty() or line.is_empty() or contact_event_active:
+			continue
+		next_entries.append({
+			"object_id": "crew_presence:%s" % member_id,
+			"runtime_owner": "crew_presence",
+			"object_type": "dialogue",
+			"visual_type": "character",
+			"source_id": member_id,
+			"slot_family": "event",
+			"placement_class": "standing_person",
+			"render_key": "crew_presence",
+			"label": member_id.trim_prefix("crew_").capitalize(),
+			"visual_prop": "patron",
+			"spot_field": "runtime_object_manifest_entries",
+			"index": crew_index,
+			"required": true,
+			"active": true,
+			"physical": true,
+			"action_ids": [],
+			"metadata": {"rank": str(presence.get("rank", "marker")), "line": line},
+		})
+		crew_index += 1
+
+	# Delivery state is global, but its physical prop belongs only to the exact
+	# currently installed room. Durable aliases receive this reconciled room after
+	# validation; unrelated stored nodes must not sprout the same package.
+	if is_same(environment, current_environment):
+		var delivery_index := 0
+		for interaction_value in delivery_physical_interactions():
+			if typeof(interaction_value) != TYPE_DICTIONARY:
+				continue
+			var interaction := interaction_value as Dictionary
+			var object_id := str(interaction.get("object_id", "")).strip_edges()
+			var host_kind := str(interaction.get("host_kind", "")).strip_edges()
+			var verbs := JsonCoerceScript._string_array(JsonCoerceScript._copy_array(interaction.get("verbs", [])))
+			if object_id.is_empty() or host_kind.is_empty() or verbs.is_empty():
+				continue
+			var package_host := host_kind == "package"
+			next_entries.append({
+				"object_id": object_id,
+				"runtime_owner": "delivery_physical",
+				"object_type": "delivery",
+				"source_id": host_kind,
+				"slot_family": "scenario",
+				"placement_class": "floor_fixture" if package_host else "wall_mounted",
+				"render_key": "crate" if package_host else "street_sign",
+				"label": str(interaction.get("label", host_kind.replace("_", " ").capitalize())),
+				"visual_prop": "crate" if package_host else "street_sign",
+				"spot_field": "runtime_object_manifest_entries",
+				"index": delivery_index,
+				"required": true,
+				"active": true,
+				"physical": true,
+				"action_ids": ["delivery_physical_action"],
+				"metadata": {"host_kind": host_kind, "verbs": verbs, "node_id": str(interaction.get("node_id", ""))},
+			})
+			delivery_index += 1
+
+		# A direct/legacy package handoff is a real scenario character, not a UI
+		# fallback. Give that contact one stable manifest identity and one sealed
+		# standing-person slot. Owner-scoped world sequences already project their
+		# own `crew::package_handoff` actor and must never receive this second row.
+		var handoff := JsonCoerceScript._copy_dict(delivery_arrival_interaction())
+		var handoff_node_id := str(handoff.get("node_id", "")).strip_edges()
+		if not handoff.is_empty() and not handoff_node_id.is_empty() \
+				and delivery_world_sequence_owner_for_presentation(handoff_node_id).is_empty():
+			var handoff_target: Dictionary = {}
+			for target_value in JsonCoerceScript._copy_array(delivery_snapshot().get("targets", [])):
+				if typeof(target_value) != TYPE_DICTIONARY:
+					continue
+				var candidate_target := target_value as Dictionary
+				if str(candidate_target.get("node_id", "")).strip_edges() == handoff_node_id \
+						and str(candidate_target.get("status", "pending")) == "pending":
+					handoff_target = candidate_target
+					break
+			var contact_id := str(handoff_target.get("contact_id", "delivery_contact_%s" % handoff_node_id)).strip_edges()
+			var contact_label := str(handoff_target.get("contact_label", "the marked contact")).strip_edges()
+			next_entries.append({
+				"object_id": str(handoff.get("object_id", "delivery:handoff:%s" % handoff_node_id)),
+				"runtime_owner": "delivery_contact",
+				"object_type": "delivery",
+				"visual_type": "character",
+				"source_id": handoff_node_id,
+				"slot_family": "scenario",
+				"placement_class": "standing_person",
+				"render_key": "delivery_contact",
+				"label": contact_label.capitalize(),
+				"visual_prop": "patron_talk",
+				"icon_key": "dialogue",
+				"spot_field": "runtime_object_manifest_entries",
+				"index": 0,
+				"required": true,
+				"active": true,
+				"physical": true,
+				"action_ids": ["delivery_handoff_direct"],
+				"metadata": {"contact_id": contact_id, "node_id": handoff_node_id},
+			})
+
+	var parent_archetype_id := str(home_state.get("parent_archetype_id", "")).strip_edges()
+	var home_node_id := str(home_state.get("home_node_id", "")).strip_edges()
+	if home_is_active() and not parent_archetype_id.is_empty() and not home_node_id.is_empty() \
+			and str(environment.get("archetype_id", "")).strip_edges() == parent_archetype_id:
+		next_entries.append({
+			"object_id": "travel:%s" % home_node_id,
+			"runtime_owner": "home_return_exit",
+			"object_type": "travel",
+			"source_id": home_node_id,
+			"slot_family": "exit",
+			"placement_class": "doorway",
+			"render_key": "door",
+			"label": "Room Door",
+			"visual_prop": "door",
+			"spot_field": "runtime_object_manifest_entries",
+			"index": 0,
+			"required": true,
+			"active": true,
+			"physical": true,
+			"action_ids": ["enter_room"],
+		})
+
+	if prior_entries == next_entries:
+		return false
+	if next_entries.is_empty():
+		environment.erase("runtime_object_manifest_entries")
+	else:
+		environment["runtime_object_manifest_entries"] = next_entries
+	return true
+
+
+# Numbers capacity is authored, but live model/town state is the sole presence
+# authority.  Project both conditional room objects without consuming RNG and
+# replace only this owner's rows so Crew, delivery, and living-floor rows remain.
+func _sync_numbers_runtime_object_manifest_entries(environment: Dictionary) -> bool:
+	var prior_entries := JsonCoerceScript._copy_array(environment.get("runtime_object_manifest_entries", []))
+	var next_entries: Array = []
+	for entry_value in prior_entries:
+		if typeof(entry_value) != TYPE_DICTIONARY:
+			continue
+		var entry := entry_value as Dictionary
+		if str(entry.get("runtime_owner", "")) != "numbers_runtime":
+			next_entries.append(entry.duplicate(true))
+
+	var venue_id := str(environment.get("archetype_id", environment.get("world_node_id", ""))).strip_edges()
+	var current_layer := str(environment.get("current_layer_id", environment.get("layer_id", ""))).strip_edges()
+	var at_punchline_desk := venue_id == "small_underground_casino" and current_layer == "back_room"
+	var venue_row: Dictionary = {}
+	for venue_value in JsonCoerceScript._copy_array(numbers_status().get("venue_status", [])):
+		if typeof(venue_value) != TYPE_DICTIONARY:
+			continue
+		var candidate := venue_value as Dictionary
+		if str(candidate.get("id", "")).strip_edges() == venue_id:
+			venue_row = candidate
+			break
+	if not venue_row.is_empty() and not at_punchline_desk:
+		next_entries.append({
+			"object_id": "numbers:book",
+			"runtime_owner": "numbers_runtime",
+			"object_type": "numbers",
+			"visual_type": "fixture",
+			"source_id": "book",
+			"slot_family": "fixed",
+			"placement_class": "surface_item",
+			"render_key": "paper_note",
+			"label": "%s Numbers Book" % str(venue_row.get("label", "Local")),
+			"visual_prop": "paper_note",
+			"spot_field": "runtime_object_manifest_entries",
+			"index": 0,
+			"required": true,
+			"active": true,
+			"physical": true,
+			"action_ids": [],
+		})
+	if _numbers_silas_is_here_in_environment(environment):
+		next_entries.append({
+			"object_id": "numbers:silas",
+			"runtime_owner": "numbers_runtime",
+			"object_type": "dialogue",
+			"visual_type": "character",
+			"source_id": "silas_crow_numbers",
+			"slot_family": "event",
+			"placement_class": "standing_person",
+			"render_key": "numbers_silas",
+			"label": "Silas Crow",
+			"visual_prop": "patron_talk",
+			"spot_field": "runtime_object_manifest_entries",
+			"index": 0,
+			"required": true,
+			"active": true,
+			"physical": true,
+			"action_ids": [],
+		})
+
+	if prior_entries == next_entries:
+		return false
+	if next_entries.is_empty():
+		environment.erase("runtime_object_manifest_entries")
+	else:
+		environment["runtime_object_manifest_entries"] = next_entries
+	return true
+
+
+# The Live Table is selected by Crew state after a Grand Casino room already
+# owns a sealed manifest.  Project that runtime mutation explicitly instead of
+# asking the rendererless saved-scenario retention path to trust a newly added
+# ordinary event row.  Event membership remains the gameplay authority; this
+# owner contributes only the concrete, deterministic physical presentation.
+func _sync_crew_heist_runtime_object_manifest_entries(environment: Dictionary) -> bool:
+	const RUNTIME_OWNER := "crew_heist_live_table"
+	const EVENT_ID := "heist_live_table"
+	const OBJECT_ID := "event:heist_live_table"
+	var prior_entries := JsonCoerceScript._copy_array(environment.get("runtime_object_manifest_entries", []))
+	var next_entries: Array = []
+	for entry_value in prior_entries:
+		if typeof(entry_value) != TYPE_DICTIONARY:
+			continue
+		var entry := entry_value as Dictionary
+		if str(entry.get("runtime_owner", "")) != RUNTIME_OWNER:
+			next_entries.append(entry.duplicate(true))
+
+	var archetype_id := str(environment.get("archetype_id", environment.get("world_node_id", ""))).strip_edges()
+	var event_ids := JsonCoerceScript._copy_array(environment.get("event_ids", []))
+	var resolved_event_ids := JsonCoerceScript._copy_array(environment.get("resolved_event_ids", []))
+	if archetype_id in GRAND_CASINO_ARCHETYPE_IDS and event_ids.has(EVENT_ID) and not resolved_event_ids.has(EVENT_ID):
+		next_entries.append({
+			"object_id": OBJECT_ID,
+			"runtime_owner": RUNTIME_OWNER,
+			"object_type": "event",
+			"visual_type": "event",
+			"source_id": EVENT_ID,
+			"slot_family": "scenario",
+			"placement_class": "floor_fixture",
+			"render_key": "card_table",
+			"label": "The Live Table",
+			"visual_prop": "card_table",
+			"icon_key": "crew",
+			"spot_field": "runtime_object_manifest_entries",
+			"index": 0,
+			"required": true,
+			"active": true,
+			"physical": true,
+			"action_ids": [OBJECT_ID],
+			"metadata": {"role": "staff", "runtime_event_id": EVENT_ID},
+		})
+
+	if prior_entries == next_entries:
+		return false
+	if next_entries.is_empty():
+		environment.erase("runtime_object_manifest_entries")
+	else:
+		environment["runtime_object_manifest_entries"] = next_entries
+	return true
+
+
 func _next_home_container_id(containers: Array, item_id: String) -> String:
 	var next_index := maxi(1, int(current_environment.get("home_container_index", 0)) + 1)
 	var existing: Dictionary = {}
@@ -1825,7 +2233,12 @@ func set_environment(environment_data: Dictionary, debug_timing: Dictionary = {}
 	# installation time. Waiting for the next action boundary left the first frame
 	# at the designated table without its live event and made immediate selection
 	# fail even though the heist state was already in PLAY.
-	_crew_heist_sync_live_table_event(CrewHeistModelScript.normalize_state(crew_heist_state))
+	if not _crew_heist_sync_live_table_event(CrewHeistModelScript.normalize_state(crew_heist_state)):
+		return {
+			"ok": false,
+			"applied": false,
+			"errors": ["Crew heist live-table membership could not be reconciled in the destination."],
+		}
 	# The Punchline's posted board is a physical source. Arriving after the post
 	# reveals only the current published handle; it does not grant solo-route lore.
 	if numbers_state != null and str(current_environment.get("archetype_id", "")) == "small_underground_casino":
@@ -1873,6 +2286,7 @@ func set_environment(environment_data: Dictionary, debug_timing: Dictionary = {}
 	_initialize_grand_casino_living_floor()
 	_queue_grand_casino_entry_cue(previous_was_grand_casino)
 	_evaluate_immediate_terminal_state()
+	reconcile_current_environment_object_manifest(true)
 	if perf_timing_enabled:
 		debug_timing["destination_models"] = Time.get_ticks_usec() - perf_stage_started_usec
 	return {"ok": true, "applied": true, "errors": []}
@@ -2294,6 +2708,43 @@ func world_sequence_mounted_owner_for_channel(channel_id: String, node_id: Strin
 	return ""
 
 
+# Presentation reconciliation runs before an eligible owner has necessarily
+# mounted its adapter container. This query proves that the exact public owner is
+# scheduled for one node/channel/instance without granting mounted command or
+# completion authority. Multiple matches fail closed instead of selecting one.
+func world_sequence_scheduled_owner_for_channel(channel_id: String, node_id: String, public_instance_token: String) -> String:
+	if world_sequence_registrations.is_empty(): return ""
+	var exact_channel := channel_id.strip_edges()
+	var exact_node := node_id.strip_edges()
+	var exact_instance := public_instance_token.strip_edges()
+	if exact_channel.is_empty() or exact_node.is_empty() or exact_instance.is_empty(): return ""
+	var matched_token := ""
+	var tokens := world_sequence_registrations.keys()
+	tokens.sort()
+	for token_value in tokens:
+		var token := str(token_value)
+		var registration := JsonCoerceScript._copy_dict(world_sequence_registrations.get(token, {}))
+		if str(registration.get("node_id", "")) != exact_node: continue
+		if str(registration.get("public_instance_token", "")) != exact_instance: continue
+		if str(registration.get("lifecycle", "")) not in ["eligible", "mounted", "cleanup_pending"]: continue
+		if not JsonCoerceScript._copy_dict(registration.get("outcome_channels", {})).values().has(exact_channel): continue
+		if not matched_token.is_empty() and matched_token != token: return ""
+		matched_token = token
+	return matched_token
+
+
+# The pre-mount UI/manifest seam may suppress a legacy direct handoff only when
+# the live delivery's exact public instance owns a matching scheduled sequence.
+# Callers must still use world_sequence_mounted_owner_for_channel() before any
+# command, outcome, or completion operation.
+func delivery_world_sequence_owner_for_presentation(node_id: String) -> String:
+	if not delivery_has_active_run(): return ""
+	var delivery := delivery_snapshot()
+	var public_instance_token := str(delivery.get("job_id", "")).strip_edges()
+	if public_instance_token.is_empty(): public_instance_token = str(delivery.get("run_id", "")).strip_edges()
+	return world_sequence_scheduled_owner_for_channel("delivery_handoff", node_id, public_instance_token)
+
+
 func world_sequence_owner_for_public_instance(channel_id: String, public_instance_token: String) -> String:
 	if world_sequence_registrations.is_empty(): return ""
 	var exact_instance := public_instance_token.strip_edges()
@@ -2578,7 +3029,10 @@ func scenario_prepare_semantic_finalization() -> Dictionary:
 
 func world_sequence_prepare_semantic_finalization() -> Dictionary:
 	if world_sequence_registrations.is_empty(): return {"ok": true, "inactive": true, "errors": []}
-	var node_id := current_world_node_id()
+	# Environment installation seals the destination before the world-map cursor
+	# commits. Resolve against the installed room, matching activation, so the
+	# first destination catalog cannot cache an eligible owner as inactive.
+	var node_id := str(current_environment.get("world_node_id", current_environment.get("archetype_id", current_environment.get("id", "")))).strip_edges()
 	for registration_value in world_sequence_registrations.values():
 		var registration := JsonCoerceScript._copy_dict(registration_value)
 		if str(registration.get("node_id", "")) == node_id and str(registration.get("lifecycle", "")) in ["eligible", "mounted"]:
@@ -2645,6 +3099,19 @@ func scenario_finalize_installed_environment(library: ContentLibrary, layout_con
 	if not ScenarioSequenceSchemaScript.is_sequence(definition):
 		return {"ok": true, "inactive": true, "errors": []}
 	var authoritative_environment := _scenario_authoritative_environment_for_finalization(definition)
+	# Runtime membership (for example the Crew heist Live Table) may change after
+	# the prior scenario seal. Rebuild the detached baseline's manifest and slot
+	# envelope before asking the semantic producer to authenticate it; otherwise
+	# the producer rejects an internally stale binding digest before the trusted
+	# finalizer gets its own reconciliation opportunity below.
+	authoritative_environment["layout"] = EnvironmentInstance.ensure_generated_layout(authoritative_environment, library)
+	var authoritative_physical_errors := JsonCoerceScript._copy_array(EnvironmentInstance.object_manifest_errors(authoritative_environment))
+	for error_value in JsonCoerceScript._copy_array(JsonCoerceScript._copy_dict(authoritative_environment.get("layout", {})).get("placement_errors", [])):
+		var message := str(error_value).strip_edges()
+		if not message.is_empty() and not authoritative_physical_errors.has(message):
+			authoritative_physical_errors.append(message)
+	if not authoritative_physical_errors.is_empty():
+		return _scenario_semantic_finalization_failure(authoritative_physical_errors, bool(current_environment.get("scenario_semantic_ready", false)))
 	var authoritative := EnvironmentBaseSemanticRecordsScript.authoritative_interactable_records(authoritative_environment, library)
 	if not bool(authoritative.get("ok", false)):
 		return _scenario_semantic_finalization_failure(JsonCoerceScript._copy_array(authoritative.get("errors", [])), bool(current_environment.get("scenario_semantic_ready", false)))
@@ -2728,6 +3195,12 @@ func _scenario_authoritative_environment_for_finalization(definition: Dictionary
 		var target := str(baseline_fields.get(source, ""))
 		var value: Variant = current_environment.get(source)
 		result[target] = value.duplicate(true) if typeof(value) in [TYPE_ARRAY, TYPE_DICTIONARY] else value
+	# The Crew Live Table is projected from event membership after a Grand Casino
+	# room may already own an immutable scenario seal. Reproject only that owner
+	# after restoring baseline event ids so the post-seal table cannot leak into
+	# base semantics. Other runtime owners depend on live RunState authorities and
+	# must remain untouched on this detached semantic envelope.
+	_sync_crew_heist_runtime_object_manifest_entries(result)
 	if current_environment.has("scenario_sequence_base_layout_object_rects"):
 		var layout := JsonCoerceScript._copy_dict(result.get("layout", {}))
 		# The captured rectangle keys are immutable baseline membership, but a
@@ -2844,7 +3317,24 @@ func _scenario_finalize_trusted_base_semantics(trusted_records: Array, library: 
 	# live event list instead made an otherwise valid departure fail closed.
 	var semantic_environment := _scenario_authoritative_environment_for_finalization(definition)
 	semantic_environment["scenario_base_producer_context"] = producer_context.duplicate(true)
-	var stamping_environment := semantic_environment if refresh_attempt else current_environment
+	# Rebuild the detached authority envelope before deriving its immutable
+	# inventory. A refresh may arrive with a missing or stale manifest even when
+	# its source selections are valid; hashing that incomplete envelope first
+	# would manufacture a different proof and only reconcile it afterward.
+	semantic_environment["layout"] = EnvironmentInstance.ensure_generated_layout(semantic_environment, library)
+	var semantic_physical_errors := JsonCoerceScript._copy_array(EnvironmentInstance.object_manifest_errors(semantic_environment))
+	for error_value in JsonCoerceScript._copy_array(JsonCoerceScript._copy_dict(semantic_environment.get("layout", {})).get("placement_errors", [])):
+		var message := str(error_value).strip_edges()
+		if not message.is_empty() and not semantic_physical_errors.has(message):
+			semantic_physical_errors.append(message)
+	if not semantic_physical_errors.is_empty():
+		return _scenario_semantic_finalization_failure(semantic_physical_errors, refresh_attempt)
+	# `trusted_records` were produced from this detached pre-sequence baseline just
+	# above. Use that same authenticated slot envelope on the initial seal too: a
+	# layer-opening event can already be resolved before the destination layer gets
+	# its first semantic finalization, so the live room legitimately omits that
+	# event-family binding while the immutable baseline still contains it.
+	var stamping_environment := semantic_environment
 	var stamped := EnvironmentBaseSemanticRecordsScript.stamp_interactable_records(trusted_records, stamping_environment, library, producer_context)
 	if not bool(stamped.get("ok", false)): return _scenario_semantic_finalization_failure(JsonCoerceScript._copy_array(stamped.get("errors", [])), refresh_attempt)
 	var stamped_records := JsonCoerceScript._copy_array(stamped.get("records", []))
@@ -2929,7 +3419,21 @@ func _scenario_finalize_trusted_base_semantics(trusted_records: Array, library: 
 		var refresh_layout := _resolve_scenario_layout_candidate(refresh_candidate, stamped_records, definition, layout_context)
 		if not bool(refresh_layout.get("ok", false)):
 			return refresh_layout
+		# Reconcile physical inventory on the detached candidate as part of the same
+		# transaction. A capacity/schema failure must not publish a new semantic
+		# snapshot beside the prior phase's manifest or generated slot authority.
+		refresh_candidate["layout"] = EnvironmentInstance.ensure_generated_layout(refresh_candidate)
+		var physical_inventory_errors := EnvironmentInstance.object_manifest_errors(refresh_candidate)
+		physical_inventory_errors.append_array(JsonCoerceScript._copy_array(JsonCoerceScript._copy_dict(refresh_candidate.get("layout", {})).get("placement_errors", [])))
+		if not physical_inventory_errors.is_empty():
+			return {
+				"ok": false,
+				"errors": physical_inventory_errors,
+				"layout_audit": JsonCoerceScript._copy_dict(refresh_layout.get("layout_audit", {})),
+			}
 		for key in ["scenario_id", "scenario_base_interactions", "scenario_base_actors", "scenario_base_producer_context", "scenario_sealed_producer_context", "scenario_live_producer_projection", "scenario_semantic_action_digest", "scenario_semantic_inventory", "scenario_semantic_inventory_version", "scenario_semantic_digest", "scenario_semantic_ready", "scenario_restore_contract", "scenario_event_choices", "scenario_sequence_state", ScenarioEngineScript.TRUSTED_STATE_REFERENCE_KEY, ScenarioEngineScript.TRUSTED_LAYOUT_INPUT_DIGEST_KEY, "scenario_sequence_projection", "scenario_layout_base_records", "scenario_layout_context", "scenario_layout_authority", "scenario_layout_audit", "scenario_layout_authority_digest", "scenario_render_snapshot", "game_ids", "service_ids", "travel_hooks", "scenario_game_modifiers", "scenario_sequence_base_game_ids", "scenario_sequence_base_service_ids", "scenario_sequence_base_travel_hooks", "scenario_sequence_base_game_modifiers", "scenario_sequence_base_layout_object_rects"]:
+			current_environment[key] = refresh_candidate.get(key).duplicate(true) if typeof(refresh_candidate.get(key)) in [TYPE_DICTIONARY, TYPE_ARRAY] else refresh_candidate.get(key)
+		for key in ["layout", "object_manifest", "object_manifest_digest", "object_manifest_revision"]:
 			current_environment[key] = refresh_candidate.get(key).duplicate(true) if typeof(refresh_candidate.get(key)) in [TYPE_DICTIONARY, TYPE_ARRAY] else refresh_candidate.get(key)
 		current_environment.erase("scenario_sequence_lifecycle_errors")
 		current_environment.erase("scenario_restore_pending_trusted_rebuild")
@@ -2990,6 +3494,7 @@ func _scenario_finalize_trusted_base_semantics(trusted_records: Array, library: 
 	current_environment.erase("scenario_sequence_lifecycle_errors")
 	current_environment.erase("scenario_restore_pending_trusted_rebuild")
 	if not definition_id.is_empty(): _scenario_sequence_definition_cache[definition_id] = definition.duplicate(true)
+	reconcile_current_environment_object_manifest(true)
 	return _finalized_scenario_layout_result(false, next_digest, JsonCoerceScript._copy_dict(reentry.get("state", {})), stamped_records, candidate_layout)
 
 
@@ -3151,6 +3656,7 @@ func _resolve_world_sequence_composed_layout(stamped_records: Array, layout_cont
 	current_environment["scenario_layout_audit"] = JsonCoerceScript._copy_dict(layout_result.get("layout_audit", {}))
 	current_environment["scenario_layout_authority_digest"] = str(layout_result.get("layout_authority_digest", ""))
 	current_environment["scenario_render_snapshot"] = renderer_snapshot.duplicate(true)
+	reconcile_current_environment_object_manifest()
 	return {
 		"ok": true,
 		"projection": JsonCoerceScript._copy_dict(layout_result.get("projection", projection)),
@@ -3373,10 +3879,17 @@ func _scenario_base_producer_context() -> Dictionary:
 		if venue_id == venue_id.strip_edges() and not venue_id.is_empty() and not venue_ids.has(venue_id): venue_ids.append(venue_id)
 	venue_ids.sort()
 	var handoff := delivery_arrival_interaction()
+	var handoff_node_id := str(handoff.get("node_id", "")).strip_edges()
+	# An owner-scoped world sequence supplies `crew::package_handoff` itself.
+	# Excluding the legacy producer here prevents a second direct-contact record
+	# from entering the semantic inventory for the same physical handoff.
+	if not handoff_node_id.is_empty() \
+			and not delivery_world_sequence_owner_for_presentation(handoff_node_id).is_empty():
+		handoff_node_id = ""
 	return {
 		"numbers_venue_ids": venue_ids,
 		"numbers_silas_present": numbers_silas_is_here(),
-		"delivery_handoff_node_id": str(handoff.get("node_id", "")),
+		"delivery_handoff_node_id": handoff_node_id,
 	}
 
 
@@ -3388,6 +3901,7 @@ func _invalidate_scenario_semantic_proof(message: String) -> Dictionary:
 	# runtime through an authenticated command/fact/expiry receipt.
 	current_environment["scenario_sequence_lifecycle_errors"] = [message]
 	current_environment["scenario_sequence_projection"] = {}
+	reconcile_current_environment_object_manifest()
 	return {"ok": false, "errors": [message]}
 
 
@@ -3477,7 +3991,12 @@ func scenario_sequence_apply_reentry(visit_id: String = "") -> Dictionary:
 	_ensure_scenario_host_public_context()
 	var stable_visit_id := visit_id.strip_edges()
 	if stable_visit_id.is_empty(): stable_visit_id = str(current_environment.get("environment_visit_id", ""))
-	var result := ScenarioEngineScript.sequence_apply_reentry(current_environment, definition, stable_visit_id)
+	var candidate := current_environment.duplicate(false)
+	var result := ScenarioEngineScript.sequence_apply_reentry(candidate, definition, stable_visit_id)
+	if not bool(result.get("ok", false)):
+		current_environment = environment_before
+		return result
+	result = _publish_scenario_membership_candidate(candidate, result, "reentry")
 	if not bool(result.get("ok", false)):
 		current_environment = environment_before
 	return result
@@ -3492,11 +4011,9 @@ func scenario_sequence_apply_expiry_boundary(boundary: String, amount: int = 1) 
 	if authored_boundary == "none" or authored_boundary != boundary:
 		return {"ok": true, "inactive": true, "errors": []}
 	if not _scenario_semantic_ready(): return {"ok": false, "errors": ["Dynamic room sequence semantic records are not finalized."]}
-	var environment_before := current_environment.duplicate(true)
-	var result := ScenarioEngineScript.sequence_apply_expiry_boundary(current_environment, definition, boundary, amount)
-	if not bool(result.get("ok", false)):
-		current_environment = environment_before
-	return result
+	var candidate := current_environment.duplicate(false)
+	var result := ScenarioEngineScript.sequence_apply_expiry_boundary(candidate, definition, boundary, amount)
+	return _publish_scenario_membership_candidate(candidate, result, "expiry")
 
 
 # Public cross-consumer table-game transaction context. The returned state is an
@@ -3744,8 +4261,13 @@ func scenario_sequence_command(command_id: String, idempotency_key: String, payl
 	var cost := 0 if bool(result.get("replayed", false)) else maxi(0, int(result.get("cost", 0)))
 	if cost > bankroll:
 		return {"ok": false, "errors": ["scenario command cost is not payable"], "state": JsonCoerceScript._copy_dict(current_environment.get("scenario_sequence_state", {})), "cost": 0}
+	result = _publish_scenario_membership_candidate(candidate_environment, result, "command")
+	if not bool(result.get("ok", false)):
+		result["cost"] = 0
+		result["bankroll_delta"] = 0
+		result["bankroll_after"] = bankroll
+		return result
 	bankroll -= cost
-	current_environment = candidate_environment
 	result["cost"] = cost
 	result["bankroll_delta"] = -cost
 	result["bankroll_after"] = bankroll
@@ -3784,7 +4306,9 @@ func scenario_reenter_current(visit_id: String = "") -> Dictionary:
 	var stable_visit := visit_id.strip_edges()
 	if stable_visit.is_empty():
 		stable_visit = "%s:%d" % [current_world_node_id(), _crew_action_index()]
-	return ScenarioEngineScript.sequence_reentry(current_environment, definition, stable_visit)
+	var candidate := current_environment.duplicate(false)
+	var result := ScenarioEngineScript.sequence_reentry(candidate, definition, stable_visit)
+	return _publish_scenario_membership_candidate(candidate, result, "reentry")
 
 
 func scenario_apply_expiry(boundary: String, boundary_serial: int = -1) -> Dictionary:
@@ -3792,7 +4316,9 @@ func scenario_apply_expiry(boundary: String, boundary_serial: int = -1) -> Dicti
 	if definition.is_empty():
 		return {"ok": false, "inactive": true, "errors": []}
 	var serial := _crew_action_index() if boundary_serial < 0 else boundary_serial
-	return ScenarioEngineScript.sequence_expiry(current_environment, definition, boundary, serial)
+	var candidate := current_environment.duplicate(false)
+	var result := ScenarioEngineScript.sequence_expiry(candidate, definition, boundary, serial)
+	return _publish_scenario_membership_candidate(candidate, result, "expiry")
 
 
 func scenario_drain_transitions(reduced_motion: bool = false) -> Dictionary:
@@ -3987,7 +4513,9 @@ func scenario_flush_facts(boundary_serial: int = -1) -> Dictionary:
 	if not _scenario_semantic_ready():
 		return {"ok": false, "processed": [], "errors": ["Dynamic room sequence semantic records are not finalized."]}
 	var target := _crew_action_index() if boundary_serial < 0 else boundary_serial
-	return ScenarioEngineScript.flush_sequence_facts(current_environment, definition, target)
+	var candidate := current_environment.duplicate(false)
+	var result := ScenarioEngineScript.flush_sequence_facts(candidate, definition, target)
+	return _publish_scenario_membership_candidate(candidate, result, "fact flush")
 
 
 func scenario_publish_game_result(result: Dictionary, deltas: Dictionary) -> void:
@@ -4259,6 +4787,13 @@ func discover_environment_layer(layer_id: String, method: String = "discovery") 
 func store_current_environment_layer_state() -> void:
 	if not is_layered_environment():
 		return
+	var reconciled := reconcile_environment_object_membership(current_environment)
+	if not bool(reconciled.get("ok", false)):
+		return
+	_store_current_environment_layer_state_reconciled()
+
+
+func _store_current_environment_layer_state_reconciled() -> void:
 	var current_id := str(current_environment.get("current_layer_id", "")).strip_edges()
 	var states := JsonCoerceScript._copy_dict(current_environment.get("layer_states", {}))
 	var body := current_environment.duplicate(true)
@@ -4317,6 +4852,7 @@ func install_environment_layer_state(layer_id: String, layer_state: Dictionary) 
 			_ensure_scenario_host_public_context()
 			current_environment["scenario_sequence_pending_visit_id"] = str(current_environment.get("environment_visit_id", ""))
 	CharacterChainModelScript.apply_to_environment(self, current_environment)
+	reconcile_current_environment_object_manifest(true)
 	return true
 
 
@@ -4349,25 +4885,19 @@ func _environment_layer_flag_truthy(flag_id: String) -> bool:
 
 
 func store_current_world_node_environment() -> void:
-	if world_map.is_empty() or current_environment.is_empty():
-		return
-	var node_id := str(current_environment.get("world_node_id", current_world_node_id())).strip_edges()
-	if node_id.is_empty():
-		node_id = str(current_environment.get("archetype_id", "")).strip_edges()
-	if node_id.is_empty():
-		return
-	var stored_environment := current_environment
-	if _is_grand_casino_environment(current_environment):
-		store_grand_casino_room_environment(current_environment)
-		var main_floor := grand_casino_room_environment(GRAND_CASINO_ARCHETYPE_ID)
-		if not main_floor.is_empty():
-			stored_environment = main_floor
-	world_map = WorldMap.store_environment(world_map, node_id, _environment_for_persistent_storage(stored_environment))
+	prepare_current_environment_object_membership_for_publication()
 
 
 func store_grand_casino_room_environment(environment: Dictionary) -> void:
 	if not _is_grand_casino_environment(environment):
 		return
+	var reconciled := reconcile_environment_object_membership(environment)
+	if not bool(reconciled.get("ok", false)):
+		return
+	_store_grand_casino_room_environment_reconciled(environment)
+
+
+func _store_grand_casino_room_environment_reconciled(environment: Dictionary) -> void:
 	var archetype_id := str(environment.get("archetype_id", GRAND_CASINO_ARCHETYPE_ID)).strip_edges()
 	if not GRAND_CASINO_ARCHETYPE_IDS.has(archetype_id):
 		return
@@ -7135,6 +7665,142 @@ func grand_casino_living_floor_snapshot(environment: Dictionary = {}) -> Diction
 	return _grand_casino_run_facade.grand_casino_living_floor_snapshot(environment)
 
 
+# Projects the already-selected living-floor state into stable physical rows.
+# This reads no RNG and makes no selection; it only translates Rourke, visible
+# rivals, and an active escort into the shared event-family placement contract.
+func _grand_casino_runtime_object_manifest_entries(environment: Dictionary) -> Array:
+	if not _is_grand_casino_environment(environment):
+		return []
+	var snapshot := grand_casino_living_floor_snapshot(environment)
+	if snapshot.is_empty():
+		return []
+	var entries: Array = []
+	var escort := JsonCoerceScript._copy_dict(snapshot.get("escort", {}))
+	var rourke := JsonCoerceScript._copy_dict(snapshot.get("rourke", {}))
+	if not escort.is_empty():
+		entries.append({
+			"object_id": "grand_living:rourke",
+			"runtime_owner": "grand_casino_living_floor",
+			"object_type": "character",
+			"visual_type": "character",
+			"slot_family": "event",
+			"placement_class": "standing_person",
+			"render_key": "grand_rourke",
+			"label": "Rourke",
+			"spot_field": "runtime_object_manifest_entries",
+			"index": 0,
+			"required": true,
+			"active": true,
+			"physical": true,
+			"action_ids": [],
+			"metadata": {
+				"role": "escort",
+				"facing": "right",
+			},
+		})
+		var escorted_id := str(escort.get("cheater_id", "escorted_rival")).strip_edges()
+		if escorted_id.is_empty():
+			escorted_id = "escorted_rival"
+		entries.append({
+			"object_id": "grand_living:rival:%s" % escorted_id,
+			"runtime_owner": "grand_casino_living_floor",
+			"object_type": "character",
+			"visual_type": "character",
+			"slot_family": "event",
+			"placement_class": "standing_person",
+			"render_key": "grand_rival",
+			"label": str(escort.get("cheater_name", "Rival Counter")),
+			"spot_field": "runtime_object_manifest_entries",
+			"index": 1,
+			"required": true,
+			"active": true,
+			"physical": true,
+			"action_ids": [],
+			"metadata": {
+				"role": "escort",
+				"tell": str(escort.get("tell", "heel_tap")),
+				"idle_phase": 0,
+			},
+		})
+		return entries
+
+	if bool(rourke.get("present", false)):
+		entries.append({
+			"object_id": "grand_living:rourke",
+			"runtime_owner": "grand_casino_living_floor",
+			"object_type": "character",
+			"visual_type": "character",
+			"slot_family": "event",
+			"placement_class": "standing_person",
+			"render_key": "grand_rourke",
+			"label": "Rourke",
+			"spot_field": "runtime_object_manifest_entries",
+			"index": entries.size(),
+			"required": true,
+			"active": true,
+			"physical": true,
+			"action_ids": [],
+			"metadata": {
+				"role": "pit_boss",
+				"spot": str(rourke.get("spot", "")),
+				"facing": str(rourke.get("facing", "right")),
+			},
+		})
+	var rivals := JsonCoerceScript._copy_array(snapshot.get("rivals", []))
+	rivals.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
+		return str(JsonCoerceScript._copy_dict(left_value).get("id", "")) < str(JsonCoerceScript._copy_dict(right_value).get("id", ""))
+	)
+	for rival_value in rivals:
+		if typeof(rival_value) != TYPE_DICTIONARY:
+			continue
+		var rival := rival_value as Dictionary
+		var rival_id := str(rival.get("id", "")).strip_edges()
+		if rival_id.is_empty():
+			continue
+		entries.append({
+			"object_id": "grand_living:rival:%s" % rival_id,
+			"runtime_owner": "grand_casino_living_floor",
+			"object_type": "character",
+			"visual_type": "character",
+			"slot_family": "event",
+			"placement_class": "standing_person",
+			"render_key": "grand_rival",
+			"label": str(rival.get("display_name", "Rival Counter")),
+			"spot_field": "runtime_object_manifest_entries",
+			"index": entries.size(),
+			"required": true,
+			"active": true,
+			"physical": true,
+			"action_ids": [],
+			"metadata": {
+				"role": "rival",
+				"spot": int(rival.get("spot", 0)),
+				"tell": str(rival.get("tell", "chip_riffle")),
+				"idle_phase": int(rival.get("idle_phase", 0)),
+			},
+		})
+	return entries
+
+
+func _sync_grand_casino_runtime_object_manifest_entries(environment: Dictionary) -> bool:
+	var prior_entries := JsonCoerceScript._copy_array(environment.get("runtime_object_manifest_entries", []))
+	var next_entries: Array = []
+	for entry_value in prior_entries:
+		if typeof(entry_value) != TYPE_DICTIONARY:
+			continue
+		var entry := entry_value as Dictionary
+		if str(entry.get("runtime_owner", "")) != "grand_casino_living_floor":
+			next_entries.append(entry.duplicate(true))
+	next_entries.append_array(_grand_casino_runtime_object_manifest_entries(environment))
+	if prior_entries == next_entries:
+		return false
+	if next_entries.is_empty():
+		environment.erase("runtime_object_manifest_entries")
+	else:
+		environment["runtime_object_manifest_entries"] = next_entries
+	return true
+
+
 func grand_casino_staffing_snapshot(environment: Dictionary = {}) -> Dictionary:
 	_grand_casino_run_facade.bind(self)
 	return _grand_casino_run_facade.grand_casino_staffing_snapshot(environment)
@@ -7313,6 +7979,8 @@ func _advance_grand_casino_living_floor(amount: int) -> void:
 			_evaluate_rourke_movement()
 			rourke_actions_until_move = ROURKE_MOVE_EVALUATION_ACTIONS
 		_evaluate_rourke_escort()
+	if _sync_grand_casino_runtime_object_manifest_entries(current_environment):
+		reconcile_current_environment_object_manifest(true)
 
 
 func linda_cage_snapshot() -> Dictionary:
@@ -8091,8 +8759,7 @@ func remove_item_offer(item_id: String) -> void:
 	current_environment["item_offers"] = offers
 	if removed_forfeited:
 		remove_sals_forfeited_item(item_id)
-	if current_environment.has("layout"):
-		current_environment["layout"] = EnvironmentInstance.ensure_generated_layout(current_environment)
+	reconcile_environment_object_membership(current_environment)
 
 
 # Adds a debt entry and refreshes economy state.
@@ -8643,9 +9310,9 @@ func _crew_heist_sync_whale_setup() -> void:
 	_crew_run_facade._crew_heist_sync_whale_setup()
 
 
-func _crew_heist_boundary_sync() -> void:
+func _crew_heist_boundary_sync() -> bool:
 	_crew_run_facade.bind(self)
-	_crew_run_facade._crew_heist_boundary_sync()
+	return _crew_run_facade._crew_heist_boundary_sync()
 
 
 func crew_heist_begin_play(host_capability: Variant = null) -> Dictionary:
@@ -8726,20 +9393,23 @@ func _crew_heist_at_designated_table(state: Dictionary) -> bool:
 	return _crew_run_facade._crew_heist_at_designated_table(state)
 
 
-func _crew_heist_sync_live_table_event(state: Dictionary) -> void:
+func _crew_heist_sync_live_table_event(state: Dictionary) -> bool:
 	_crew_run_facade.bind(self)
-	_crew_run_facade._crew_heist_sync_live_table_event(state)
+	return _crew_run_facade._crew_heist_sync_live_table_event(state)
 
 
-func _remove_heist_live_table_event(environment: Dictionary) -> void:
+func _remove_heist_live_table_event(environment: Dictionary) -> bool:
 	if environment.is_empty():
-		return
+		return false
 	var event_ids := JsonCoerceScript._copy_array(environment.get("event_ids", []))
+	var changed := event_ids.has("heist_live_table")
 	event_ids.erase("heist_live_table")
 	environment["event_ids"] = event_ids
 	var resolved := JsonCoerceScript._copy_array(environment.get("resolved_event_ids", []))
+	changed = changed or resolved.has("heist_live_table")
 	resolved.erase("heist_live_table")
 	environment["resolved_event_ids"] = resolved
+	return changed
 
 
 func _crew_heist_world_has_hook(hook_id: String) -> bool:
@@ -8762,9 +9432,9 @@ func _crew_heist_getaway_target(plan_id: String, exit_choice: String = "") -> St
 	return _crew_run_facade._crew_heist_getaway_target(plan_id, exit_choice)
 
 
-func _crew_heist_apply_delivery_resolution(run_id: String, succeeded: bool, resolution: Dictionary) -> void:
+func _crew_heist_apply_delivery_resolution(run_id: String, succeeded: bool, resolution: Dictionary) -> bool:
 	_crew_run_facade.bind(self)
-	_crew_run_facade._crew_heist_apply_delivery_resolution(run_id, succeeded, resolution)
+	return _crew_run_facade._crew_heist_apply_delivery_resolution(run_id, succeeded, resolution)
 
 
 # Adds one typed hidden grievance and returns its normalized stored shape.
@@ -9136,11 +9806,17 @@ func numbers_silas_status() -> Dictionary:
 # Silas is physically present in the rendered room. The environment is the
 # authority during room restore/installation; the map cursor is its fallback.
 func numbers_silas_is_here() -> bool:
+	return _numbers_silas_is_here_in_environment(current_environment)
+
+
+func _numbers_silas_is_here_in_environment(environment: Dictionary) -> bool:
 	if town_state == null:
 		return false
-	var physical_node_id: String = str(current_environment.get("world_node_id", "")).strip_edges()
-	if physical_node_id.is_empty():
+	var physical_node_id: String = str(environment.get("world_node_id", "")).strip_edges()
+	if physical_node_id.is_empty() and is_same(environment, current_environment):
 		physical_node_id = current_world_node_id()
+	if physical_node_id.is_empty():
+		return false
 	return town_state.traveler_node("silas_snitch") == physical_node_id
 
 
@@ -9618,7 +10294,12 @@ func _apply_delivery_resolution(expected_receipt: Dictionary = {}, materialize_a
 				"payment_note": payment_note,
 			}
 	if run_id.begins_with("heist:"):
-		_crew_heist_apply_delivery_resolution(run_id, succeeded, resolution)
+		if not _crew_heist_apply_delivery_resolution(run_id, succeeded, resolution):
+			from_dict(rollback_run)
+			current_environment = rollback_environment
+			world_map = rollback_world_map
+			grand_casino_room_states = rollback_room_states
+			return {"ok": false, "errors": ["crew heist live-table membership reconciliation failed during delivery resolution"]}
 	if run_id.begins_with("crew_collection:"):
 		var collection_job_id := run_id.trim_prefix("crew_collection:")
 		var collection_job := _crew_job(collection_job_id)
@@ -11315,7 +11996,8 @@ func _advance_environment_turns_candidate(amount: int) -> Dictionary:
 	var next_decay_step := int(floor(float(next_turns) / float(decay_interval)))
 	_decrease_current_suspicion(next_decay_step - previous_decay_step)
 	_advance_heat_cooldown(safe_amount)
-	_advance_global_boundary_finish(safe_amount)
+	if not _advance_global_boundary_finish(safe_amount):
+		return {"ok": false, "applied": false, "errors": ["crew heist live-table membership reconciliation failed at the action boundary"]}
 	forced_failure = _environment_turn_test_failure("crew_and_world_models")
 	if not forced_failure.is_empty(): return forced_failure
 	if town_state != null:
@@ -11362,6 +12044,11 @@ func _advance_environment_turns_candidate(amount: int) -> Dictionary:
 	# expiry facade here can only perform an expensive no-op reconstruction.
 	forced_failure = _environment_turn_test_failure("legacy_expiry")
 	if not forced_failure.is_empty(): return forced_failure
+	# Town movement, Crew residency, delivery state, and casino floor simulation
+	# can all change physical membership during the boundary. Rebind only when an
+	# owner projection changed so ordinary turns keep the cheap no-op path.
+	if _sync_all_runtime_object_manifest_entries(current_environment):
+		reconcile_current_environment_object_manifest(true)
 	return {"ok": true, "applied": safe_amount > 0, "errors": []}
 
 
@@ -11771,13 +12458,15 @@ func _advance_global_boundary_before_local_cooldown(safe_amount: int) -> void:
 	drunk_distortion_suppression_turns = maxi(0, drunk_distortion_suppression_turns - safe_amount)
 
 
-func _advance_global_boundary_finish(safe_amount: int) -> void:
+func _advance_global_boundary_finish(safe_amount: int) -> bool:
 	_advance_debt_clocks(safe_amount)
 	_advance_crew_jobs()
 	if safe_amount > 0:
 		CrewPlayModelScript.advance_boundary(self, current_environment, _world1_host_capability)
-		_crew_heist_boundary_sync()
+		if not _crew_heist_boundary_sync():
+			return false
 	CharacterChainModelScript.advance(self, safe_amount)
+	return true
 
 
 func _advance_environment_layer_ambient(total_turns: int) -> void:
@@ -12509,6 +13198,12 @@ func resolve_event(event_id: String) -> void:
 			layer_state["resolved_event_ids"] = layer_resolved
 			layer_states[layer_id_value] = layer_state
 		current_environment["layer_states"] = layer_states
+	# event_ids is durable generated history, so resolution changes physical
+	# membership through the resolved journal rather than deleting selection data.
+	# Seal the matching layout and durable room aliases at this same boundary. A
+	# consumed event-family object releases its rectangle; an event-shaped fixed
+	# fixture keeps its guaranteed room presence while losing only its live action.
+	prepare_current_environment_object_membership_for_publication()
 
 
 func set_story_flag(flag_id: String, value: Variant = true) -> void:
@@ -13220,7 +13915,7 @@ func _run_state_schema_values() -> Dictionary:
 		"drunk_distortion_suppression_turns": drunk_distortion_suppression_turns,
 		# Player-owned ticket state is serialized once in portable_ticket_piles.
 		# The current/world-node machine copies retain only location-owned stock.
-		"current_environment": _environment_for_persistent_storage(current_environment),
+		"current_environment": _environment_for_persistent_storage(current_environment, true, true),
 		"world_map": _compact_world_map_ticket_storage(WorldMap.normalize(world_map)),
 		"scenario_state_schema_version": ScenarioEngineScript.STATE_SCHEMA_VERSION,
 		"scenario_recent_by_archetype": scenario_recent_by_archetype.duplicate(true),
@@ -13394,7 +14089,7 @@ func _save_snapshot(deep_copy_seeded_scenario_definitions: bool, travel_preview:
 		"alcoholic_level": alcoholic_level,
 		"pending_drunk_absorption": pending_drunk_absorption.duplicate(false),
 		"drunk_distortion_suppression_turns": drunk_distortion_suppression_turns,
-		"current_environment": environment_context_snapshot(current_environment) if travel_preview else _environment_for_persistent_storage(current_environment, false),
+		"current_environment": environment_context_snapshot(current_environment) if travel_preview else _environment_for_persistent_storage(current_environment, false, true),
 		"world_map": WorldMap.normalize_topology(world_map) if travel_preview else _world_map_for_save_snapshot(world_map),
 		"scenario_state_schema_version": ScenarioEngineScript.STATE_SCHEMA_VERSION,
 		"scenario_recent_by_archetype": scenario_recent_by_archetype.duplicate(false),
@@ -13616,6 +14311,9 @@ func _run_state_schema_restore(data: Dictionary) -> void:
 	_initialize_grand_casino_objective_runtime()
 	_initialize_grand_casino_staffing()
 	_initialize_grand_casino_living_floor()
+	# Runtime physical rows are derived from the restored living-floor state,
+	# never trusted from serialized placement output.
+	reconcile_current_environment_object_manifest(true)
 	if saved_run_status != RUN_STATUS_ENDED and saved_run_status != RUN_STATUS_FAILED:
 		_evaluate_immediate_terminal_state(blackjack_unsettled_wager)
 	if saved_run_status == RUN_STATUS_ENDED:
@@ -13854,7 +14552,7 @@ func _sync_portable_ticket_inventory_markers() -> void:
 	invalidate_inventory_effect_cache()
 
 
-static func _environment_for_persistent_storage(environment: Dictionary, deep_copy: bool = true) -> Dictionary:
+static func _environment_for_persistent_storage(environment: Dictionary, deep_copy: bool = true, preserve_runtime_projection: bool = false) -> Dictionary:
 	if environment.is_empty():
 		return {}
 	var stored: Dictionary = {}
@@ -13865,8 +14563,10 @@ static func _environment_for_persistent_storage(environment: Dictionary, deep_co
 		stored[key] = _persistent_copy_value(environment.get(key_value)) if deep_copy else environment.get(key_value)
 	var states_value: Variant = environment.get("game_states", {})
 	if typeof(states_value) != TYPE_DICTIONARY:
+		_refresh_scenario_object_manifest_for_storage(stored)
 		_strip_scenario_semantic_ephemera(stored)
 		_strip_persistent_active_game_bindings(stored)
+		_canonicalize_runtime_projection_for_storage(stored, preserve_runtime_projection)
 		return stored
 	var stored_states: Dictionary = {}
 	for game_key_value in (states_value as Dictionary).keys():
@@ -13885,9 +14585,60 @@ static func _environment_for_persistent_storage(environment: Dictionary, deep_co
 		else:
 			stored_states[game_key] = _persistent_copy_value(state_value) if deep_copy else state_value
 	stored["game_states"] = stored_states
+	_refresh_scenario_object_manifest_for_storage(stored)
 	_strip_scenario_semantic_ephemera(stored)
 	_strip_persistent_active_game_bindings(stored)
+	_canonicalize_runtime_projection_for_storage(stored, preserve_runtime_projection)
 	return stored
+
+
+# Scenario renderer snapshots are intentionally omitted from persistent storage,
+# but they are the trusted source for the current phase's scenario manifest rows.
+# Refresh the copied manifest while that snapshot is still present so rendererless
+# restore can retain the exact validated rows under its unchanged source digest.
+# Nested layer snapshots own independent manifests and receive the same treatment.
+static func _refresh_scenario_object_manifest_for_storage(environment: Dictionary) -> void:
+	if environment.is_empty():
+		return
+	var snapshot_value: Variant = environment.get("scenario_render_snapshot", {})
+	if typeof(snapshot_value) == TYPE_DICTIONARY:
+		var snapshot := snapshot_value as Dictionary
+		if bool(snapshot.get("ok", false)) and typeof(snapshot.get("visual_objects")) == TYPE_ARRAY:
+			EnvironmentInstance.reconcile_object_manifest(environment)
+	var layer_states := JsonCoerceScript._copy_dict(environment.get("layer_states", {}))
+	for layer_id_value in layer_states.keys():
+		var layer_body := JsonCoerceScript._copy_dict(layer_states.get(layer_id_value, {}))
+		if layer_body.is_empty():
+			continue
+		layer_body.erase("layer_states")
+		_refresh_scenario_object_manifest_for_storage(layer_body)
+		layer_states[layer_id_value] = layer_body
+	if not layer_states.is_empty():
+		environment["layer_states"] = layer_states
+
+
+# Runtime-owned physical rows (Crew presence, delivery props/contacts, Numbers
+# travelers, and Grand Casino living-floor actors) are projections of RunState,
+# not durable room facts. Preserve the active room exactly for current-save
+# round trips, but remove those rows from every inactive room/layer so a later
+# restore cannot resurrect stale occupants. The manifest source digest excludes
+# runtime entries, allowing trusted scenario rows to survive this rebuild.
+static func _canonicalize_runtime_projection_for_storage(environment: Dictionary, preserve_current: bool) -> void:
+	if environment.is_empty():
+		return
+	if not preserve_current:
+		environment.erase("runtime_object_manifest_entries")
+		environment["layout"] = EnvironmentInstance.ensure_generated_layout(environment)
+	var layer_states := JsonCoerceScript._copy_dict(environment.get("layer_states", {}))
+	for layer_id_value in layer_states.keys():
+		var layer_body := JsonCoerceScript._copy_dict(layer_states.get(layer_id_value, {}))
+		if layer_body.is_empty():
+			continue
+		layer_body.erase("layer_states")
+		_canonicalize_runtime_projection_for_storage(layer_body, false)
+		layer_states[layer_id_value] = layer_body
+	if not layer_states.is_empty():
+		environment["layer_states"] = layer_states
 
 
 static func _strip_persistent_active_game_bindings(environment: Dictionary) -> void:
@@ -13996,6 +14747,7 @@ func restore_trusted_scenario_semantics(trusted_environment: Dictionary) -> bool
 		else:
 			current_environment.erase(field)
 	current_environment.erase("scenario_restore_pending_trusted_rebuild")
+	reconcile_current_environment_object_manifest()
 	return _scenario_semantic_ready()
 
 
@@ -15000,6 +15752,10 @@ static func _normalize_environment(data: Dictionary) -> Dictionary:
 		if world_instances.is_empty(): environment.erase(CrewWorldSequenceAdapterScript.CONTAINER_KEY)
 		else: environment[CrewWorldSequenceAdapterScript.CONTAINER_KEY] = world_instances
 	_normalize_environment_layers(environment)
+	# Scenario normalization may replace or reject its durable state after the
+	# first layout pass. Seal the completed current-version payload once more so
+	# its manifest digest always matches the normalized source collections.
+	EnvironmentInstance.reconcile_object_manifest(environment)
 	# Semantic authorization is a render-time proof. Saved or layer-stored copies
 	# can retain only the expected schema/digest and must be rebuilt before ingress.
 	_strip_scenario_semantic_ephemera(environment)
@@ -15060,6 +15816,7 @@ static func _normalize_environment_layers(environment: Dictionary) -> void:
 			if not layer_sequence_valid:
 				body.erase("scenario_sequence_state")
 				body["scenario_sequence_migration_error"] = "Persisted dynamic room sequence state is malformed, unsupported, or overbound; explicit migration is required."
+		body["layout"] = EnvironmentInstance.ensure_generated_layout(body)
 		states[str(state_id_value)] = body
 	environment["layer_states"] = states
 	environment["layer_ambient_lines"] = JsonCoerceScript._string_array(JsonCoerceScript._copy_array(environment.get("layer_ambient_lines", [])))
@@ -15312,6 +16069,7 @@ static func _normalize_home_state(data: Dictionary) -> Dictionary:
 	normalized["act_index"] = maxi(0, int(normalized.get("act_index", 0)))
 	normalized["home_archetype_id"] = str(normalized.get("home_archetype_id", "")).strip_edges()
 	normalized["home_node_id"] = str(normalized.get("home_node_id", normalized.get("home_archetype_id", ""))).strip_edges()
+	normalized["parent_archetype_id"] = str(normalized.get("parent_archetype_id", "")).strip_edges()
 	normalized["display_name"] = str(normalized.get("display_name", normalized.get("home_archetype_id", "Home"))).strip_edges()
 	if normalized["display_name"].is_empty():
 		normalized["display_name"] = "Home"

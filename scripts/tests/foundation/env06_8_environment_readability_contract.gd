@@ -355,11 +355,14 @@ static func _check_layout_validation_scope(failures: Array) -> void:
 	var interactions := {"base::one": base_interaction.duplicate(true), "base::two": base_interaction.duplicate(true)}
 	var authority := {"base::one": authority_record.duplicate(true), "base::two": authority_record.duplicate(true)}
 	var base_only_errors: Array = []
-	ScenarioLayoutResolverScript._validate_interactions(interactions, authority, [], [], {}, base_only_errors)
+	var base_only_warnings: Array = []
+	ScenarioLayoutResolverScript._validate_interactions(interactions, authority, [], [], {}, base_only_errors, base_only_warnings)
 	for error_value in base_only_errors:
 		if str(error_value).contains("ambiguous") or str(error_value).contains("overlap"):
 			failures.append("env06_8 scenario layout validator still attributes a base-only collision to the active scenario.")
 			break
+	if not base_only_warnings.is_empty():
+		failures.append("env06_8 scenario layout validator warns about base-only collisions outside its scope.")
 	var scenario_interaction := base_interaction.duplicate(true)
 	scenario_interaction["owner_namespace"] = "scenario"
 	scenario_interaction["label"] = "Scenario control"
@@ -367,13 +370,23 @@ static func _check_layout_validation_scope(failures: Array) -> void:
 	interactions["scenario::three"] = scenario_interaction
 	authority["scenario::three"] = authority_record.duplicate(true)
 	var composed_errors: Array = []
-	ScenarioLayoutResolverScript._validate_interactions(interactions, authority, [], [], {}, composed_errors)
+	var composed_warnings: Array = []
+	ScenarioLayoutResolverScript._validate_interactions(interactions, authority, [], [], {}, composed_errors, composed_warnings)
 	var caught_scenario_collision := false
-	for error_value in composed_errors:
-		if str(error_value).contains("scenario::three") and (str(error_value).contains("ambiguous") or str(error_value).contains("overlap")):
+	for warning_value in composed_warnings:
+		if str(warning_value).contains("scenario::three") and str(warning_value).contains("overlap"):
 			caught_scenario_collision = true
 	if not caught_scenario_collision:
-		failures.append("env06_8 scenario layout validator no longer catches scenario-to-base collisions.")
+		failures.append("env06_8 scenario layout validator no longer reports scenario-to-base overlap warnings.")
+	for error_value in composed_errors:
+		if str(error_value).contains("scenario::three") and (str(error_value).contains("ambiguous") or str(error_value).contains("overlap")):
+			failures.append("env06_8 provisional slot overlap still prevents scenario composition.")
+			break
+	var missing_errors: Array = []
+	var missing_warnings: Array = []
+	ScenarioLayoutResolverScript._validate_interactions({"scenario::missing": scenario_interaction}, {}, [], [], {}, missing_errors, missing_warnings)
+	if missing_errors.is_empty() or not missing_warnings.is_empty():
+		failures.append("env06_8 missing exact layout authority no longer fails closed as an error.")
 
 
 static func _check_icon_vocabulary(failures: Array) -> void:

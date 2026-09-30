@@ -710,7 +710,8 @@ func _assert_zero_service_and_lender_manifests() -> void:
 
 # Builds the accepted state independently from the pre-action snapshot: reserve
 # the quote once, advance the authored boundary once, apply the rebuilt result
-# once, publish one service fact, and then compare the complete save payload.
+# once, publish one service fact, seal physical-room membership and its durable
+# aliases, and then compare the complete save payload.
 # This catches duplicate or omitted effects even when the API still says success.
 func _assert_hook_committed_exactly_once(response: Dictionary, run: RunState, exact_once_oracle: RunState, kind: String, hook_id: String, quoted_price: int, label: String) -> void:
 	if exact_once_oracle == null:
@@ -779,6 +780,10 @@ func _assert_hook_committed_exactly_once(response: Dictionary, run: RunState, ex
 	if kind == "lender" and hook_id == "the_crew":
 		oracle_action.call("_apply_crew_loan_trust", definition)
 	exact_once_oracle.scenario_publish_service_result(kind, hook_id, applied_result)
+	var membership := exact_once_oracle.prepare_current_environment_object_membership_for_publication()
+	if not bool(membership.get("ok", false)):
+		failures.append("%s exact-once oracle could not reconcile room membership: %s" % [label, JSON.stringify(membership.get("errors", []))])
+		return
 
 	var expected_snapshot := _exact_once_snapshot(exact_once_oracle)
 	var actual_snapshot := _exact_once_snapshot(run)
@@ -985,6 +990,11 @@ func _assert_nonhook_committed_exactly_once(response: Dictionary, run: RunState,
 		var definition := library.item(action_id)
 		if candidate_service._definition_is_active_item(definition):
 			candidate_service._auto_select_active_item_after_gain(action_id)
+	if action_type in ["cage", "cash_item"]:
+		var membership := exact_once_oracle.prepare_current_environment_object_membership_for_publication()
+		if not bool(membership.get("ok", false)):
+			failures.append("%s oracle could not reconcile room membership: %s" % [label, JSON.stringify(membership.get("errors", []))])
+			return
 
 	var expected_snapshot := _exact_once_snapshot(exact_once_oracle)
 	var actual_snapshot := _exact_once_snapshot(run)
@@ -1257,7 +1267,7 @@ func _free_service_run(seed_suffix: String, service_id: String, archetype: Strin
 
 
 func _lender_run(seed_suffix: String, lender_id: String) -> RunState:
-	var archetype := "motel" if lender_id in ["motel_friend", "brother_in_law"] else "bar"
+	var archetype := "motel" if lender_id in ["motel_friend", "brother_in_law"] else "back_alley"
 	var run := _base_run(seed_suffix, 60, archetype, [], [lender_id])
 	_set_local_heat(run, 10)
 	if lender_id == "brother_in_law":
@@ -1301,11 +1311,17 @@ func _base_run(seed_suffix: String, bankroll: int, archetype_id: String, service
 	var run := FactRunStateScript.new()
 	run.start_new("POSTFIX-TXN-%s" % seed_suffix)
 	run.bankroll = bankroll
+	var archetype := library.environment_archetype(archetype_id)
+	var environment_kind := str(archetype.get("kind", "casino")).strip_edges()
+	if environment_kind.is_empty():
+		environment_kind = "casino"
+	var object_fixtures: Array = archetype.get("object_fixtures", []).duplicate(true) if typeof(archetype.get("object_fixtures", [])) == TYPE_ARRAY else []
 	run.set_environment({
 		"id": "postfix_%s_room" % seed_suffix.to_lower(),
 		"world_node_id": "postfix_%s_node" % archetype_id,
 		"archetype_id": archetype_id,
-		"kind": "shop",
+		"kind": environment_kind,
+		"object_fixtures": object_fixtures,
 		"turns": 0,
 		"item_offers": [],
 		"service_ids": service_ids.duplicate(true),

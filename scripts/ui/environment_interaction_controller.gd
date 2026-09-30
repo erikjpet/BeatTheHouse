@@ -7,6 +7,7 @@ const ScenarioSequenceSchemaScript := preload("res://scripts/core/scenario_seque
 const ScenarioSemanticViewModelScript := preload("res://scripts/ui/scenario_semantic_view_model.gd")
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const EnvironmentPlacementScript := preload("res://scripts/core/environment_placement.gd")
+const EnvironmentInstanceScript := preload("res://scripts/core/environment_instance.gd")
 const EnvironmentSlotBinderScript := preload("res://scripts/core/environment_slot_binder.gd")
 
 const LIVE_MEMBERSHIP_OBJECT_TYPES := ["service", "lender"]
@@ -151,6 +152,15 @@ static func interactable_object_view_list(host: Variant) -> Array:
 		"closing_time_locked": host._closing_time_blocks_environment_actions(),
 		"closing_time_reason": host._closing_time_disabled_reason(),
 	}))
+	var initial_authority_proof := _object_manifest_join_proof(host.run_state.current_environment)
+	var initial_authority_errors := _array(initial_authority_proof.get("errors", []))
+	if not initial_authority_errors.is_empty():
+		# Preparing semantic projections is allowed to populate transient context,
+		# but an unauthenticated object/slot envelope must never reach the binder.
+		# Restore the exact entry state and expose only a non-spatial failure surface.
+		host.run_state.set("current_environment", entry_environment)
+		return _fail_closed_room_records(result, "object authority preflight failed")
+	result = _join_object_manifest(result, host.run_state.current_environment, true, initial_authority_proof)
 	# Action-only records used to consume a second, geometry-free UI plane. Fold
 	# them into a visible person or fixture before the slot binder sees the live
 	# inventory, so every record that survives this point owns room geometry.
@@ -177,7 +187,10 @@ static func interactable_object_view_list(host: Variant) -> Array:
 		# read-only failure surface, but do not let scenario rejection mutate or heal
 		# the exact hostile/current environment being diagnosed.
 		host.run_state.set("current_environment", entry_environment)
-		return _attach_action_only_records(_array(binding_failure.get("records", result)))
+		return _fail_closed_room_records(
+			_array(binding_failure.get("records", result)),
+			"base slot binding failed: %s" % JSON.stringify(record_binding.get("errors", []))
+		)
 	result = _array(record_binding.get("records", result))
 	# The exact fixed-slot result is semantic authority, not an ephemeral view
 	# detail. Commit it atomically before any sequence stamps records so a real
@@ -191,8 +204,8 @@ static func interactable_object_view_list(host: Variant) -> Array:
 	# The sealed scenario inventory deliberately excludes runtime-only controls
 	# such as Numbers, Crew arrivals, and live game clerks. They are already bound
 	# to authored base slots above. Feed those immutable rectangles into scenario
-	# validation so the base/stage disjointness invariant is checked against the
-	# complete production plane; these records authorize no scenario behavior.
+	# validation so fixed/event/exit occupancy remains disjoint from the scenario
+	# family; these records authorize no scenario behavior.
 	layout_context["base_occupied_records"] = _base_layout_reservations(trusted_base_result, layout)
 	layout_context["slot_occupancy"] = room_slot_occupancy.duplicate(true)
 	if not bool(preparation.get("ok", false)):
@@ -243,9 +256,378 @@ static func interactable_object_view_list(host: Variant) -> Array:
 		host.run_state.current_environment.erase("scenario_sequence_lifecycle_errors")
 		host.run_state.current_environment.erase("scenario_layout_audit")
 		host.run_state.current_environment.erase("scenario_layout_authority_digest")
+	var final_authority_proof := _object_manifest_join_proof(host.run_state.current_environment)
+	var final_authority_errors := _array(final_authority_proof.get("errors", []))
+	if not final_authority_errors.is_empty():
+		host.run_state.set("current_environment", entry_environment)
+		return _fail_closed_room_records(result, "final object authority preflight failed")
+	result = _join_object_manifest(result, host.run_state.current_environment, false, final_authority_proof)
 	result = _attach_delivery_handoff_to_contact(host, result)
 	result = _attach_action_only_records(result)
 	return result
+
+
+static func _join_object_manifest(records: Array, environment: Dictionary, synthesize_missing_hosts: bool, validated_proof: Dictionary = {}) -> Array:
+	var manifest := _dict(environment.get("object_manifest", {}))
+	var manifest_rows := _array(manifest.get("rows", []))
+	var proof := validated_proof if not validated_proof.is_empty() else _object_manifest_join_proof(environment)
+	if not bool(proof.get("ok", false)) or not _array(proof.get("errors", [])).is_empty():
+		return _fail_closed_room_records(records, "object manifest or slot authority is invalid")
+	var resolved_event_ids: Dictionary = {}
+	for event_id_value in _array(environment.get("resolved_event_ids", [])):
+		var event_id := str(event_id_value).strip_edges()
+		if not event_id.is_empty():
+			resolved_event_ids[event_id] = true
+	# The manifest seals membership, while the persisted binder envelope seals the
+	# actual family-local slot chosen for dynamic rows. Reuse that authority only
+	# after authenticating its map and binding digests; runtime scenario contacts
+	# usually have no authored exact-slot preference in the manifest itself.
+	var layout_authority := _dict(proof.get("layout_authority", {}))
+	var trusted_bindings := _dict(layout_authority.get("slot_bindings", {}))
+	var trusted_rects := _dict(layout_authority.get("object_rects", {}))
+	var scenario_snapshot_present := typeof(environment.get("scenario_render_snapshot")) == TYPE_DICTIONARY \
+			and bool(_dict(environment.get("scenario_render_snapshot", {})).get("ok", false)) \
+			and typeof(_dict(environment.get("scenario_render_snapshot", {})).get("visual_objects")) == TYPE_ARRAY
+	var result := records.duplicate(true)
+	var record_indices: Dictionary = {}
+	for index in range(result.size()):
+		var record := _dict(result[index])
+		var record_id := str(record.get("object_id", "")).strip_edges()
+		if not record_id.is_empty() and not record_indices.has(record_id):
+			record_indices[record_id] = index
+	for row_value in manifest_rows:
+		var row := _dict(row_value)
+		if row.is_empty() or not bool(row.get("active", true)) or not bool(row.get("physical", true)):
+			continue
+		var family := str(row.get("family", row.get("slot_family", ""))).strip_edges().to_lower()
+		if family not in ["fixed", "event", "scenario", "exit"]:
+			continue
+		if _manifest_row_is_resolved_event(row, family, resolved_event_ids):
+			continue
+		var manifest_object_id := str(row.get("instance_object_id", row.get("object_id", row.get("stable_object_id", "")))).strip_edges()
+		var presentation_id := str(row.get("presentation_id", row.get("presentation_object_id", manifest_object_id))).strip_edges()
+		if manifest_object_id.is_empty():
+			manifest_object_id = presentation_id
+		if presentation_id.is_empty():
+			presentation_id = manifest_object_id
+		if manifest_object_id.is_empty() or presentation_id.is_empty():
+			continue
+		var host_index := int(record_indices.get(presentation_id, record_indices.get(manifest_object_id, -1)))
+		var direct_delivery_contact := family == "scenario" \
+				and str(row.get("spot_field", "")) == "runtime_object_manifest_entries" \
+				and _array(row.get("action_ids", [])).has("delivery_handoff_direct")
+		if host_index < 0 and synthesize_missing_hosts and (family != "scenario" or direct_delivery_contact):
+			var host := _manifest_host_record(row, manifest_object_id, presentation_id, family)
+			result.append(host)
+			host_index = result.size() - 1
+			record_indices[presentation_id] = host_index
+	if not synthesize_missing_hosts:
+		# A finalized scenario projection may introduce the matching presentation
+		# record after the first manifest pass. Refresh the index before annotating.
+		record_indices.clear()
+		for index in range(result.size()):
+			var record := _dict(result[index])
+			var record_id := str(record.get("object_id", "")).strip_edges()
+			if not record_id.is_empty() and not record_indices.has(record_id):
+				record_indices[record_id] = index
+	for row_value in manifest_rows:
+		var row := _dict(row_value)
+		if row.is_empty() or not bool(row.get("active", true)) or not bool(row.get("physical", true)):
+			continue
+		var family := str(row.get("family", row.get("slot_family", ""))).strip_edges().to_lower()
+		if family not in ["fixed", "event", "scenario", "exit"]:
+			continue
+		if _manifest_row_is_resolved_event(row, family, resolved_event_ids):
+			continue
+		var manifest_object_id := str(row.get("instance_object_id", row.get("object_id", row.get("stable_object_id", "")))).strip_edges()
+		var presentation_id := str(row.get("presentation_id", row.get("presentation_object_id", manifest_object_id))).strip_edges()
+		if manifest_object_id.is_empty():
+			manifest_object_id = presentation_id
+		if presentation_id.is_empty():
+			presentation_id = manifest_object_id
+		var host_index := int(record_indices.get(presentation_id, record_indices.get(manifest_object_id, -1)))
+		if host_index < 0:
+			continue
+		var trusted_row := row
+		if family == "scenario" and str(row.get("spot_field", "")) != "runtime_object_manifest_entries" and not scenario_snapshot_present:
+			trusted_row = row.duplicate(true)
+			trusted_row["action_ids"] = []
+		var host := _manifest_annotated_record(_dict(result[host_index]), trusted_row, manifest_object_id, presentation_id, family)
+		host = _manifest_layout_annotated_record(host, trusted_bindings, trusted_rects, manifest_object_id, presentation_id, family)
+		result[host_index] = host
+		var action_ids := _array(trusted_row.get("action_ids", []))
+		if action_ids.is_empty():
+			continue
+		for index in range(result.size()):
+			if index == host_index:
+				continue
+			var source := _dict(result[index])
+			if not _record_matches_manifest_action(source, action_ids):
+				continue
+			source["slot_binding_source_id"] = presentation_id
+			source["manifest_action_host_id"] = manifest_object_id
+			result[index] = source
+	return result
+
+
+static func _object_manifest_join_errors(environment: Dictionary) -> Array:
+	return _array(_object_manifest_join_proof(environment).get("errors", []))
+
+
+static func _object_manifest_join_proof(environment: Dictionary) -> Dictionary:
+	var errors: Array = []
+	var manifest := _dict(environment.get("object_manifest", {}))
+	var manifest_rows := _array(manifest.get("rows", []))
+	if manifest_rows.is_empty():
+		errors.append("Object manifest is missing.")
+	errors.append_array(EnvironmentInstanceScript.object_manifest_errors(environment))
+	var layout_authority := EnvironmentSlotBinderScript.validate_base_layout_authority(environment)
+	if not bool(layout_authority.get("ok", false)):
+		errors.append_array(_array(layout_authority.get("errors", [])))
+		if _array(layout_authority.get("errors", [])).is_empty():
+			errors.append("Object slot authority is invalid.")
+		return {"ok": false, "layout_authority": {}, "errors": errors}
+	var base_rows: Array = []
+	var scenario_rows: Array = []
+	for row_value in manifest_rows:
+		var row := _dict(row_value)
+		if str(row.get("source_kind", "")) == "scenario_projection":
+			scenario_rows.append(row)
+		else:
+			base_rows.append(row)
+	errors.append_array(_manifest_layout_correlation_errors(
+		base_rows,
+		_dict(layout_authority.get("slot_bindings", {}))
+	))
+	if not scenario_rows.is_empty():
+		var scenario_authority_result := _validated_manifest_scenario_authority(environment)
+		errors.append_array(_array(scenario_authority_result.get("errors", [])))
+		if bool(scenario_authority_result.get("ok", false)):
+			errors.append_array(_manifest_layout_correlation_errors(
+				scenario_rows,
+				_dict(scenario_authority_result.get("authority", {}))
+			))
+	return {
+		"ok": errors.is_empty(),
+		"layout_authority": layout_authority if errors.is_empty() else {},
+		"errors": errors,
+	}
+
+
+static func _validated_manifest_scenario_authority(environment: Dictionary) -> Dictionary:
+	var errors: Array = []
+	var authority := _dict(environment.get("scenario_layout_authority", {}))
+	var digest := str(environment.get("scenario_layout_authority_digest", ""))
+	var audit := _dict(environment.get("scenario_layout_audit", {}))
+	var snapshot := _dict(environment.get("scenario_render_snapshot", {}))
+	var projection_semantic := _dict(_dict(environment.get("scenario_sequence_projection", {})).get("semantic_state", {}))
+	if authority.is_empty():
+		errors.append("Scenario manifest rows have no sealed scenario layout authority.")
+	elif digest.length() != 64 or _layout_authority_digest(authority) != digest:
+		errors.append("Scenario manifest layout authority digest is invalid.")
+	if not bool(audit.get("valid", false)) or str(audit.get("authority_digest", "")) != digest:
+		errors.append("Scenario manifest layout audit does not match its sealed authority.")
+	if not bool(snapshot.get("ok", false)) or str(snapshot.get("layout_authority_digest", "")) != digest:
+		errors.append("Scenario manifest renderer snapshot does not match its sealed authority.")
+	if str(projection_semantic.get("layout_authority_digest", "")) != digest:
+		errors.append("Scenario manifest semantic projection does not match its sealed authority.")
+	return {
+		"ok": errors.is_empty(),
+		"authority": authority,
+		"errors": errors,
+	}
+
+
+static func _manifest_layout_correlation_errors(manifest_rows: Array, bindings: Dictionary) -> Array:
+	var errors: Array = []
+	for row_value in manifest_rows:
+		var row := _dict(row_value)
+		if row.is_empty() or not bool(row.get("active", true)) or not bool(row.get("physical", true)):
+			continue
+		var instance_id := str(row.get("instance_object_id", "")).strip_edges()
+		var presentation_id := str(row.get("presentation_object_id", row.get("object_id", instance_id))).strip_edges()
+		var binding_id := presentation_id if bindings.has(presentation_id) else instance_id if bindings.has(instance_id) else ""
+		var binding := _dict(bindings.get(binding_id, {}))
+		if binding.is_empty():
+			errors.append("Manifest object %s has no authenticated slot binding." % presentation_id)
+			continue
+		var family := str(row.get("family", ""))
+		if str(binding.get("slot_family", "")) != family:
+			errors.append("Manifest object %s crosses slot families." % presentation_id)
+		# Exact exit slots describe the room-native affordance (doorway, floor mark,
+		# attendant) and may intentionally refine the generic travel-row class.
+		if family != "exit" and str(binding.get("placement_class", "")) != str(row.get("placement_class", "")):
+			errors.append("Manifest object %s changes placement class in its slot binding." % presentation_id)
+		var exact_slot_id := str(row.get("exact_slot_id", "")).strip_edges()
+		if family in ["fixed", "exit"] and not exact_slot_id.is_empty() \
+				and str(binding.get("slot_id", "")) != exact_slot_id:
+			errors.append("Manifest object %s is not bound to its exact authored slot." % presentation_id)
+	return errors
+
+
+static func _manifest_layout_annotated_record(record: Dictionary, bindings: Dictionary, object_rects: Dictionary, manifest_object_id: String, presentation_id: String, family: String) -> Dictionary:
+	var binding_id := presentation_id if bindings.has(presentation_id) else manifest_object_id if bindings.has(manifest_object_id) else ""
+	if binding_id.is_empty():
+		return record
+	var binding := _dict(bindings.get(binding_id, {}))
+	var manifest_exact_slot_id := str(record.get("manifest_exact_slot_id", "")).strip_edges()
+	if str(binding.get("slot_family", "")) != family \
+			or family != "exit" and str(binding.get("placement_class", "")) != str(record.get("placement_class", "")) \
+			or family in ["fixed", "exit"] and not manifest_exact_slot_id.is_empty() \
+					and str(binding.get("slot_id", "")) != manifest_exact_slot_id:
+		return record
+	var result := record.duplicate(true)
+	if str(result.get("slot_id", "")).strip_edges().is_empty():
+		result["slot_id"] = str(binding.get("slot_id", ""))
+	if str(result.get("slot_family", "")).strip_edges().is_empty():
+		result["slot_family"] = family
+	if not result.has("presentation_mode"):
+		result["presentation_mode"] = str(binding.get("presentation_mode", "overflow"))
+	if not result.has("fixed_slot_geometry"):
+		result["fixed_slot_geometry"] = true
+	var rect := _dict(object_rects.get(binding_id, {}))
+	if not rect.is_empty() and str(result.get("presentation_mode", "")) == "room" and not result.has("focus_rect"):
+		if not result.has("normalized_rect"):
+			result["normalized_rect"] = rect.duplicate(true)
+		result["focus_rect"] = rect.duplicate(true)
+		if not result.has("focus_point"):
+			result["focus_point"] = {
+			"x": float(rect.get("x", 0.0)) + float(rect.get("w", 0.0)) * 0.5,
+			"y": float(rect.get("y", 0.0)) + float(rect.get("h", 0.0)) * 0.5,
+			}
+	return result
+
+
+# A record without manifest/binder authority may remain actionable in the Room
+# actions surface, but it may not claim physical room presentation. Clearing all
+# geometry fields prevents downstream renderers from fabricating a rectangle.
+static func _fail_closed_room_records(records: Array, reason: String) -> Array:
+	var result: Array = []
+	for record_value in records:
+		var record := _dict(record_value)
+		if record.is_empty():
+			continue
+		if str(record.get("presentation_mode", "room")) == "room" \
+				or bool(record.get("manifest_physical", false)) \
+				or EnvironmentSlotBinderScript.base_record_requires_room_slot(record):
+			record["presentation_mode"] = "overflow"
+			record["room_geometry_rejected"] = true
+			record["room_geometry_rejection_reason"] = reason
+			for field in [
+				"slot_id", "slot_family", "exact_slot_id", "normalized_rect",
+				"normalized_hit_rect", "focus_rect", "pixel_hit_bounds", "hit_bounds",
+				"small_screen_rect", "label_rect", "small_screen_label_rect",
+				"focus_point", "fixed_slot_geometry", "scenario_layout_resolved",
+				"scenario_layout_authority_identity", "scenario_layout_authority_digest",
+			]:
+				record.erase(field)
+		result.append(record)
+	return result
+
+
+static func _manifest_row_is_resolved_event(row: Dictionary, family: String, resolved_event_ids: Dictionary) -> bool:
+	if family != "event" or resolved_event_ids.is_empty():
+		return false
+	var source_id := str(row.get("source_id", "")).strip_edges()
+	if source_id.is_empty():
+		var presentation_id := str(row.get("presentation_object_id", row.get("object_id", ""))).strip_edges()
+		if presentation_id.begins_with("event:"):
+			source_id = presentation_id.trim_prefix("event:")
+	return not source_id.is_empty() and resolved_event_ids.has(source_id)
+
+
+static func _manifest_host_record(row: Dictionary, manifest_object_id: String, presentation_id: String, family: String) -> Dictionary:
+	var metadata := _dict(row.get("metadata", {}))
+	var placement_class := str(row.get("placement_class", "")).strip_edges()
+	var render_key := str(row.get("render_key", metadata.get("render_key", ""))).strip_edges()
+	var person := EnvironmentPlacementScript.is_person_class(placement_class)
+	var object_type := str(row.get("object_type", metadata.get("object_type", "character" if person else "fixture"))).strip_edges()
+	var visual_type := str(row.get("visual_type", metadata.get("visual_type", "character" if person else "prop"))).strip_edges()
+	var label := str(row.get("label", metadata.get("label", metadata.get("display_name", metadata.get("name", ""))))).strip_edges()
+	if label.is_empty():
+		label = _manifest_label(render_key if not render_key.is_empty() else presentation_id)
+	var action_ids := _array(row.get("action_ids", []))
+	return _manifest_annotated_record({
+		"object_id": presentation_id,
+		"object_type": object_type,
+		"visual_type": visual_type,
+		"source_id": str(row.get("source_id", manifest_object_id)),
+		"label": label,
+		"short_description": str(metadata.get("description", metadata.get("short_description", label))),
+		"presence": "fixed" if family == "fixed" else family,
+		"interactive": not action_ids.is_empty(),
+		"decorative": action_ids.is_empty(),
+		"enabled": true,
+		"visible": true,
+		"presentation_mode": "room",
+		"slot_id": str(row.get("exact_slot_id", "")),
+		"slot_family": family,
+		"placement_class": placement_class,
+		"visual_key": render_key,
+		"prop": str(metadata.get("prop", render_key)),
+		"icon_key": str(metadata.get("icon_key", render_key)),
+		"asset_path": str(metadata.get("asset_path", "")),
+		"available_actions": [],
+		"inline_actions": [],
+		"confirm_action_id": "",
+	}, row, manifest_object_id, presentation_id, family)
+
+
+static func _manifest_annotated_record(record: Dictionary, row: Dictionary, manifest_object_id: String, presentation_id: String, family: String) -> Dictionary:
+	var result := record.duplicate(true)
+	var metadata := _dict(row.get("metadata", {}))
+	var render_key := str(row.get("render_key", metadata.get("render_key", ""))).strip_edges()
+	result["manifest_object_id"] = manifest_object_id
+	result["manifest_presentation_id"] = presentation_id
+	result["manifest_family"] = family
+	result["manifest_source_kind"] = str(row.get("source_kind", row.get("source_field", "")))
+	result["manifest_source_id"] = str(row.get("source_id", ""))
+	result["manifest_exact_slot_id"] = str(row.get("exact_slot_id", ""))
+	result["manifest_required"] = bool(row.get("required", false))
+	result["manifest_physical"] = true
+	result["manifest_render_key"] = render_key
+	result["manifest_action_ids"] = _array(row.get("action_ids", []))
+	result["manifest_metadata"] = metadata.duplicate(true)
+	result["physical"] = true
+	result["exact_slot_id"] = str(row.get("exact_slot_id", ""))
+	result["action_ids"] = _array(row.get("action_ids", []))
+	result["render_key"] = render_key
+	result["slot_family"] = family
+	if str(result.get("slot_id", "")).strip_edges().is_empty():
+		result["slot_id"] = str(row.get("exact_slot_id", ""))
+	if str(result.get("placement_class", "")).strip_edges().is_empty():
+		result["placement_class"] = str(row.get("placement_class", ""))
+	if str(result.get("visual_key", "")).strip_edges().is_empty() and not render_key.is_empty():
+		result["visual_key"] = render_key
+	if str(result.get("prop", "")).strip_edges().is_empty() and not render_key.is_empty():
+		result["prop"] = str(metadata.get("prop", render_key))
+	return result
+
+
+static func _record_matches_manifest_action(record: Dictionary, action_ids: Array) -> bool:
+	var identities: Dictionary = {}
+	for value in [record.get("object_id", ""), record.get("source_id", ""), record.get("confirm_action_id", "")]:
+		var identity := str(value).strip_edges()
+		if not identity.is_empty():
+			identities[identity] = true
+	for action_value in action_entries_for_record(record):
+		var action := _dict(action_value)
+		for value in [action.get("id", ""), action.get("emit_object_id", ""), action.get("source_id", "")]:
+			var identity := str(value).strip_edges()
+			if not identity.is_empty():
+				identities[identity] = true
+	for action_id_value in action_ids:
+		if identities.has(str(action_id_value).strip_edges()):
+			return true
+	return false
+
+
+static func _manifest_label(value: String) -> String:
+	var clean := value.strip_edges()
+	for separator in ["::", ":", "."]:
+		if clean.contains(separator):
+			clean = clean.get_slice(separator, clean.get_slice_count(separator) - 1)
+	return clean.replace("_", " ").capitalize()
 
 
 static func _attach_action_only_records(records: Array) -> Array:
@@ -258,7 +640,7 @@ static func _attach_action_only_records(records: Array) -> Array:
 		var binding_source_id := str(record.get("slot_binding_source_id", "")).strip_edges()
 		if str(record.get("presentation_mode", "room")) == "overflow" \
 				or not binding_source_id.is_empty() and binding_source_id != str(record.get("object_id", "")) \
-				or not EnvironmentSlotBinderScript.base_record_requires_room_slot(record):
+				or not bool(record.get("manifest_physical", false)) and not EnvironmentSlotBinderScript.base_record_requires_room_slot(record):
 			action_only.append(record)
 		else:
 			room_records.append(record)
@@ -386,29 +768,17 @@ static func action_is_enabled(record: Dictionary, action: Dictionary) -> bool:
 static func commit_base_record_binding(run_state: Variant, layout_value: Dictionary, record_binding: Dictionary) -> Dictionary:
 	if run_state == null or not bool(record_binding.get("ok", false)):
 		return layout_value
-	var records := _array(record_binding.get("records", []))
 	var environment := _dict(run_state.get("current_environment"))
-	# The binder may remove only dormant orphan render rectangles before it
-	# authenticates the prior envelope. Revalidate that exact reconciled input so
-	# commit preserves the fail-closed boundary while allowing resolved events to
-	# shed obsolete live geometry atomically.
-	var authenticated_prior_layout := _dict(record_binding.get("authenticated_prior_layout", layout_value))
-	var prior_environment := environment.duplicate(true)
-	prior_environment["layout"] = authenticated_prior_layout.duplicate(true)
-	var prior_authority := EnvironmentSlotBinderScript.validate_base_layout_authority(prior_environment, records, true)
-	if not bool(prior_authority.get("ok", false)):
+	# bind_base_records has already authenticated both the reconciled prior layout
+	# and this exact candidate. Verify its compact synchronous handoff proof instead
+	# of repeating both complete map/manifest/geometry validation passes here.
+	var layout := _dict(record_binding.get("validated_candidate_layout", {}))
+	var expected_proof := str(record_binding.get("validated_candidate_commit_proof", ""))
+	if layout.is_empty() or expected_proof.length() != 64:
 		return layout_value
-	var layout := authenticated_prior_layout.duplicate(true)
-	layout["slot_schema_version"] = int(record_binding.get("slot_schema_version", 0))
-	layout["slot_map_digest"] = str(record_binding.get("slot_map_digest", ""))
-	layout["slot_bindings"] = _dict(record_binding.get("slot_bindings", {}))
-	layout["slot_overflow_ids"] = _array(record_binding.get("overflow_ids", []))
-	layout["slot_binding_digest"] = str(record_binding.get("binding_digest", ""))
-	layout["object_rects"] = _dict(record_binding.get("object_rects", {}))
 	var candidate_environment := environment.duplicate(true)
 	candidate_environment["layout"] = layout
-	var candidate_authority := EnvironmentSlotBinderScript.validate_base_layout_authority(candidate_environment, records)
-	if not bool(candidate_authority.get("ok", false)):
+	if EnvironmentSlotBinderScript.base_layout_commit_proof(candidate_environment) != expected_proof:
 		return layout_value
 	environment["layout"] = layout.duplicate(true)
 	run_state.set("current_environment", environment)
@@ -1077,6 +1447,7 @@ static func _apply_layout_authority(record: Dictionary, authority: Dictionary, a
 	result["contact"] = str(authority.get("contact", result.get("contact", "")))
 	result["presentation_mode"] = str(authority.get("presentation_mode", result.get("presentation_mode", "room")))
 	result["slot_id"] = str(authority.get("slot_id", result.get("slot_id", "")))
+	result["slot_family"] = str(authority.get("slot_family", result.get("slot_family", "")))
 	result["scenario_layout_resolved"] = true
 	result["scenario_layout_authority_identity"] = str(authority.get("identity", ""))
 	result["scenario_layout_authority_digest"] = authority_digest
@@ -1328,22 +1699,24 @@ static func crew_presence_interactable_objects(host: Variant, event_options: Arr
 	return result
 
 
-static func delivery_interactable_objects(host: Variant, occupied_objects: Array = []) -> Array:
+static func delivery_interactable_objects(host: Variant, _occupied_objects: Array = []) -> Array:
 	if host.run_state == null:
 		return []
 	var result: Array = []
-	var occupied_rects := _delivery_occupied_rects(host, occupied_objects)
 	var physical_interactions: Array = host.run_state.delivery_physical_interactions() if host.run_state.has_method("delivery_physical_interactions") else []
 	for physical_index in range(physical_interactions.size()):
 		var interaction: Dictionary = physical_interactions[physical_index]
 		var verb := str(interaction.get("verb", ""))
-		var package_action := verb in ["pickup", "stash", "retrieve", "ditch"]
+		var package_action := str(interaction.get("host_kind", "")) == "package"
 		var delivery_prop := "crate" if package_action else "street_sign"
-		var delivery_class := EnvironmentPlacementScript.classify(interaction, "scene_object", str(interaction.get("object_id", "delivery:%s" % verb)), delivery_prop)
-		var focus_rect := _delivery_available_rect(host, occupied_rects, physical_index, delivery_class)
-		occupied_rects.append(focus_rect)
+		var object_id := str(interaction.get("object_id", "delivery:%s" % verb))
+		var delivery_class := EnvironmentPlacementScript.classify(interaction, "scene_object", object_id, delivery_prop)
+		# Runtime delivery membership is reconciled into a scenario-family binding
+		# before this read. Consume that exact authority instead of calculating a
+		# second rectangle from whatever happens to be occupied on this frame.
+		var focus_rect: Rect2 = host._interaction_rect_for_object(object_id, host.CONTEXT_MODE_DELIVERY, physical_index)
 		result.append(host._make_interactable_object({
-			"object_id": str(interaction.get("object_id", "delivery:%s" % verb)),
+			"object_id": object_id,
 			"object_type": host.CONTEXT_MODE_DELIVERY,
 			"visual_type": "prop",
 			"source_id": verb,
@@ -1357,7 +1730,8 @@ static func delivery_interactable_objects(host: Variant, occupied_objects: Array
 			"visual_key": "item" if package_action else "travel",
 			"prop": delivery_prop,
 			"icon_key": "item" if package_action else "travel",
-			"available_actions": [{"id": "delivery_physical_action", "label": str(interaction.get("label", "Act"))}],
+			"available_actions": JsonCoerceScript._copy_array(interaction.get("actions", [])),
+			"delivery_actions": JsonCoerceScript._copy_array(interaction.get("actions", [])),
 			"confirm_action_id": "delivery_physical_action",
 			"focus_rect": focus_rect,
 			"placement_class": delivery_class,
@@ -1383,6 +1757,14 @@ static func _attach_delivery_handoff_to_contact(host: Variant, records: Array) -
 			handoff_index = index
 			break
 	var node_id := str(handoff.get("node_id", "")).strip_edges()
+	var presentation_owner := ""
+	if host.run_state.has_method("delivery_world_sequence_owner_for_presentation"):
+		presentation_owner = str(host.run_state.delivery_world_sequence_owner_for_presentation(node_id)).strip_edges()
+	# The first manifest pass occurs before a world sequence's scenario actor is
+	# finalized. Do not borrow an ordinary NPC during that gap; the second pass
+	# will transform the sole `crew::package_handoff` actor once it exists.
+	if handoff_index < 0 and not presentation_owner.is_empty():
+		return records
 	var target := {}
 	for target_value in _array(host.run_state.delivery_snapshot().get("targets", [])):
 		var candidate_target := _dict(target_value)
@@ -1393,6 +1775,16 @@ static func _attach_delivery_handoff_to_contact(host: Variant, records: Array) -
 	var result := records.duplicate(true)
 	var contact_index := -1
 	var contact_score := -1
+	var direct_handoff_id := str(handoff.get("object_id", "delivery:handoff:%s" % node_id)).strip_edges()
+	# Direct jobs now own a reconciled runtime-manifest actor. Prefer that exact
+	# host before considering ordinary NPCs so a delivery never steals another
+	# object's identity, slot, or rectangle.
+	if handoff_index < 0 and not direct_handoff_id.is_empty():
+		for index in range(result.size()):
+			if str(_dict(result[index]).get("object_id", "")) == direct_handoff_id:
+				contact_index = index
+				contact_score = 1000
+				break
 	for index in range(result.size()):
 		if index == handoff_index:
 			continue
@@ -1412,25 +1804,24 @@ static func _attach_delivery_handoff_to_contact(host: Variant, records: Array) -
 			if score > contact_score:
 				contact_score = score
 				contact_index = index
-	if handoff_index >= 0 and contact_index >= 0:
-		var authority_record := _dict(result[handoff_index])
-		var contact := _dict(result[contact_index])
-		var handoff_actions := _array(authority_record.get("scenario_sequence_actions", [])).duplicate(true)
+	if handoff_index >= 0:
+		# The mounted world sequence already owns a reconciled scenario slot. Render
+		# that authority as the contact itself; an ordinary bartender, clerk, or
+		# patron remains a separate manifest-backed object in its original slot.
+		var contact := _dict(result[handoff_index])
+		var handoff_actions := _array(contact.get("scenario_sequence_actions", [])).duplicate(true)
 		for action_value in handoff_actions:
 			if typeof(action_value) == TYPE_DICTIONARY:
 				(action_value as Dictionary)["label"] = "Hand Over The Package"
 		contact["scenario_sequence_actions"] = handoff_actions
-		contact["delivery_contact_original_owner_namespace"] = str(contact.get("owner_namespace", ""))
-		contact["delivery_contact_original_stable_object_id"] = str(contact.get("stable_object_id", ""))
-		contact["owner_namespace"] = str(authority_record.get("owner_namespace", ""))
-		contact["stable_object_id"] = str(authority_record.get("stable_object_id", ""))
-		contact["world_sequence_owner_token"] = str(authority_record.get("world_sequence_owner_token", ""))
-		contact["object_id"] = str(authority_record.get("object_id", "crew::package_handoff"))
 		contact["object_type"] = "character"
 		contact["visual_type"] = "character"
 		contact["source_id"] = str(target.get("contact_id", "delivery_contact_%s" % node_id))
 		contact["label"] = contact_label.capitalize()
 		contact["short_description"] = "%s waits for The Package." % contact_label.capitalize()
+		contact["visual_key"] = "character"
+		contact["prop"] = "patron_talk"
+		contact["icon_key"] = "dialogue"
 		contact["delivery_contact"] = true
 		contact["delivery_contact_label"] = contact_label
 		# The delivery owner is the live authority at this destination. A room NPC
@@ -1441,17 +1832,21 @@ static func _attach_delivery_handoff_to_contact(host: Variant, records: Array) -
 		contact["disabled_reason"] = ""
 		contact["action_summary"] = "%s is expecting The Package." % contact_label.capitalize()
 		contact["status_summary"] = "Delivery contact"
-		result[contact_index] = contact
-		result.remove_at(handoff_index)
+		result[handoff_index] = contact
+		# Older semantic snapshots may still contain the former direct producer.
+		# The owner-scoped actor is the sole handoff contact while mounted.
+		for index in range(result.size() - 1, -1, -1):
+			if index != handoff_index and str(_dict(result[index]).get("object_id", "")) == direct_handoff_id:
+				result.remove_at(index)
 		return _promote_delivery_contact_to_room_slot(result, str(contact.get("object_id", "")))
 	if handoff_index < 0 and contact_index >= 0:
 		# Legacy and non-world-sequence package jobs use the same NPC-facing flow,
 		# but their completion is owned directly by DeliveryRunModel.
 		var contact := _dict(result[contact_index])
-		contact["object_id"] = str(handoff.get("object_id", "delivery:handoff:%s" % node_id))
+		contact["delivery_handoff_object_id"] = str(handoff.get("object_id", "delivery:handoff:%s" % node_id))
 		contact["object_type"] = "character"
 		contact["visual_type"] = "character"
-		contact["source_id"] = str(target.get("contact_id", "delivery_contact_%s" % node_id))
+		contact["delivery_contact_id"] = str(target.get("contact_id", "delivery_contact_%s" % node_id))
 		contact["label"] = contact_label.capitalize()
 		contact["short_description"] = "%s waits for the delivery." % contact_label.capitalize()
 		contact["delivery_contact"] = true
@@ -1472,34 +1867,9 @@ static func _attach_delivery_handoff_to_contact(host: Variant, records: Array) -
 		contact["status_summary"] = "Delivery contact"
 		result[contact_index] = contact
 		return _promote_delivery_contact_to_room_slot(result, str(contact.get("object_id", "")))
-	if handoff_index >= 0:
-		# Some generated rooms contain no ordinary character. Re-present the sealed
-		# authority as the named contact, never as a parcel or handoff marker.
-		var contact := _dict(result[handoff_index])
-		contact["object_id"] = str(handoff.get("object_id", "delivery:handoff:%s" % node_id))
-		contact["object_type"] = "character"
-		contact["visual_type"] = "character"
-		contact["label"] = contact_label.capitalize()
-		contact["short_description"] = "%s waits for The Package." % contact_label.capitalize()
-		contact["action_summary"] = "Speak to the contact and make the handoff."
-		contact["status_summary"] = "Delivery contact"
-		contact["prop"] = "patron_talk"
-		contact["icon_key"] = "dialogue"
-		contact["placement_class"] = "standing_person"
-		contact["delivery_contact"] = true
-		contact["interactive"] = true
-		contact["enabled"] = true
-		contact["disabled_reason"] = ""
-		var handoff_actions := _array(contact.get("scenario_sequence_actions", [])).duplicate(true)
-		for action_value in handoff_actions:
-			if typeof(action_value) == TYPE_DICTIONARY:
-				(action_value as Dictionary)["label"] = "Hand Over The Package"
-		contact["scenario_sequence_actions"] = handoff_actions
-		result[handoff_index] = contact
-		return _promote_delivery_contact_to_room_slot(result, str(contact.get("object_id", "")))
 	# A sparse generated venue may genuinely contain no ordinary person. Add the
-	# named contact as a person, never as a parcel, action marker, or handoff prop.
-	var contact_rect := _delivery_available_rect(host, _delivery_occupied_rects(host, result), 0, "standing_person")
+	# named contact to the action drawer. Legacy jobs have no sealed scenario
+	# owner, so they must not invent room geometry or borrow another object's slot.
 	var generated_contact: Dictionary = _dict(host._make_interactable_object({
 		"object_id": str(handoff.get("object_id", "delivery:handoff:%s" % node_id)),
 		"object_type": "character",
@@ -1521,7 +1891,7 @@ static func _attach_delivery_handoff_to_contact(host: Variant, records: Array) -
 		"delivery_handoff_node_id": node_id,
 		"available_actions": [{"id": "delivery_handoff_direct", "label": "Hand Over The Package"}],
 		"confirm_action_id": "delivery_handoff_direct",
-		"focus_rect": contact_rect,
+		"presentation_mode": "overflow",
 		"placement_class": "standing_person",
 	}))
 	result.append(generated_contact)
@@ -1538,38 +1908,25 @@ static func _promote_delivery_contact_to_room_slot(records: Array, contact_id: S
 	if contact_index < 0:
 		return result
 	var contact := _dict(result[contact_index])
-	# Fixed room capacity must not make an authenticated delivery impossible.
-	# Even a person carrying room geometry can be absent from the public canvas
-	# when that geometry belongs to a renderer-managed or collapsed character.
-	# Put every active contact in a known visible service/event slot; the ordinary
-	# record is rebuilt on the next frame after the handoff resolves.
-	var donor_index := -1
-	var donor_score := -1
-	for index in range(result.size()):
-		if index == contact_index:
-			continue
-		var candidate := _dict(result[index])
-		if str(candidate.get("presentation_mode", "room")) != "room" or _dict(candidate.get("focus_rect", {})).is_empty():
-			continue
-		var object_type := str(candidate.get("object_type", ""))
-		if object_type in ["travel", "scenario_sequence", "scenario_scene_object", "scenario_actor"]:
-			continue
-		var score := 1
-		if object_type == "event":
-			score = 2
-		elif object_type == "service":
-			score = 3
-		if score > donor_score:
-			donor_score = score
-			donor_index = index
-	if donor_index < 0:
+	var slot_family := str(contact.get("slot_family", "")).strip_edges()
+	var slot_id := str(contact.get("slot_id", "")).strip_edges()
+	var focus_value: Variant = contact.get("focus_rect", {})
+	var has_room_geometry := typeof(focus_value) == TYPE_RECT2 and (focus_value as Rect2).size.x > 0.0 and (focus_value as Rect2).size.y > 0.0
+	if typeof(focus_value) == TYPE_DICTIONARY:
+		var focus_dictionary := focus_value as Dictionary
+		has_room_geometry = float(focus_dictionary.get("w", 0.0)) > 0.0 and float(focus_dictionary.get("h", 0.0)) > 0.0
+	var owns_room_slot := str(contact.get("presentation_mode", "room")) == "room" \
+			and slot_family in ["fixed", "event", "scenario", "exit"] \
+			and slot_id.begins_with("%s." % slot_family) \
+			and has_room_geometry
+	if owns_room_slot:
 		return result
-	var donor := _dict(result[donor_index])
-	for field in ["presentation_mode", "slot_id", "normalized_rect", "focus_rect", "small_screen_rect", "label_rect", "small_screen_label_rect", "focus_point", "fixed_slot_geometry"]:
-		contact[field] = donor.get(field)
-	contact["placement_class"] = "standing_person"
+	# A contact without sealed authority remains playable in overflow. It never
+	# acquires another object's identity, slot, rectangle, or manifest annotation.
+	contact["presentation_mode"] = "overflow"
+	for field in ["slot_id", "slot_family", "normalized_rect", "focus_rect", "small_screen_rect", "label_rect", "small_screen_label_rect", "focus_point", "fixed_slot_geometry", "scenario_layout_resolved", "scenario_layout_authority_identity", "scenario_layout_authority_digest"]:
+		contact.erase(field)
 	result[contact_index] = contact
-	result.remove_at(donor_index)
 	return result
 
 
@@ -1664,20 +2021,16 @@ static func numbers_interactable_objects(host: Variant) -> Array:
 		var venue_label := str(venue_row.get("label", host._label_from_id(venue_id)))
 		var book_source := "desk" if at_desk else "book"
 		var object_id := "event:numbers_desk" if at_desk else "numbers:book"
-		# The production desk replaces the event card but owns its dedicated
-		# Numbers fixture spot, which must not drift with encounter-card layout.
-		# numbers_desk also exists in event_ids so generated object_rects carries an
-		# event-card position under the same presentation id. The production desk
-		# owns the layer's dedicated numbers_spots geometry and must win that alias.
-		# Only the Crew back-room desk needs to defeat the generic event alias with
-		# its dedicated Numbers spot. Ordinary books use the generated object rect,
-		# so placement grounding and the scenario canvas share one physical object.
-		var focus_rect: Rect2 = host.EnvironmentInteractionViewModelScript.authored_interaction_rect(host.CONTEXT_MODE_NUMBERS, 0, host._current_environment_layout()) if at_desk else host._interaction_rect_for_object(object_id, host.CONTEXT_MODE_NUMBERS, 0)
-		if focus_rect.size.x <= 0.0 or focus_rect.size.y <= 0.0:
-			focus_rect = host._interaction_rect_for_object(object_id, host.CONTEXT_MODE_NUMBERS, 0)
+		# The generated manifest and authenticated slot binding own both the Crew
+		# desk and ordinary Numbers-book geometry. This keeps developer slot moves
+		# authoritative and prevents the legacy category spot from overriding the
+		# fixed.event_numbers_desk binding.
+		var focus_rect: Rect2 = host._interaction_rect_for_object(object_id, host.CONTEXT_MODE_NUMBERS, 0)
 		objects.append(host._make_interactable_object({
 			"object_id": object_id,
 			"object_type": host.CONTEXT_MODE_NUMBERS,
+			"slot_family": "fixed",
+			"placement_class": "surface_item",
 			"source_id": book_source,
 			"label": "The Numbers Desk" if at_desk else "%s Numbers Book" % venue_label,
 			"short_description": "Five books, runner work, and crew paper." if at_desk else "A local book taking three-digit slips.",
@@ -1706,6 +2059,8 @@ static func numbers_interactable_objects(host: Variant) -> Array:
 			"object_id": "numbers:silas",
 			"object_type": host.CONTEXT_MODE_DIALOGUE,
 			"visual_type": "character",
+			"slot_family": "event",
+			"placement_class": "standing_person",
 			"source_id": silas_dialogue_id,
 			"label": "Silas Crow",
 			"short_description": "A sharp-eyed floor informant selling routes, numbers, and expensive discretion.",
@@ -1781,6 +2136,16 @@ static func game_hook_interactable_objects(host: Variant, apply_failure_lock: bo
 			var object_id := str(hook.get("object_id", ""))
 			if object_id.is_empty():
 				object_id = "dialogue:%s" % dialogue_id if not dialogue_id.is_empty() else "game_hook:%s:%s" % [game_id, hook_id]
+			var unique_object_class := str(hook.get("unique_object_class", "")).strip_edges()
+			if unique_object_class in ["scratch_ticket_clerk", "pull_tab_clerk", "lottery_redemption_clerk"]:
+				unique_object_class = "lottery_redemption_clerk"
+			# The manifest deliberately uses the Scratch Tickets clerk as the
+			# canonical physical lottery host.  Keep that identity stable even
+			# when a pending pull-tab payout raises the other action provider's
+			# runtime display priority to 120.
+			var unique_object_priority := int(hook.get("unique_object_priority", 0))
+			if hook_id == "scratch_ticket_clerk":
+				unique_object_priority = maxi(unique_object_priority, 121)
 			var base_enabled := bool(hook.get("enabled", true))
 			var enabled = base_enabled and not run_failed_without_recovery
 			var disabled_reason := str(hook.get("disabled_reason", ""))
@@ -1818,8 +2183,8 @@ static func game_hook_interactable_objects(host: Variant, apply_failure_lock: bo
 				"visual_key": str(hook.get("visual_key", "")),
 				"icon_key": str(hook.get("icon_key", "service")),
 				"character_actor": character_actor,
-				"unique_object_class": str(hook.get("unique_object_class", "")).strip_edges(),
-				"unique_object_priority": int(hook.get("unique_object_priority", 0)),
+				"unique_object_class": unique_object_class,
+				"unique_object_priority": unique_object_priority,
 				"allow_duplicate_unique_class": bool(hook.get("allow_duplicate_unique_class", false)),
 				"available_actions": enriched_actions,
 				"confirm_action_id": confirm_action,
@@ -2011,6 +2376,23 @@ static func interactable_object(host: Variant, object_id: String) -> Dictionary:
 			return (object_data as Dictionary).duplicate(true)
 	if object_id == "travel:leave":
 		return host._travel_leave_interactable_object()
+	return {}
+
+
+# Programmatic category selection still names the gameplay action (for example
+# service:cashier_tip), even when that action now lives on one named physical
+# host. Resolve only focus to that host; action dispatch continues to use the
+# attached descriptor and therefore cannot impersonate the host's own action.
+static func interactable_object_hosting_action(host: Variant, action_object_id: String) -> Dictionary:
+	if action_object_id.is_empty():
+		return {}
+	for object_value in host._interactable_object_view_list():
+		var object_data := _dict(object_value)
+		for descriptor_value in _array(object_data.get("attached_room_actions", [])):
+			var descriptor := _dict(descriptor_value)
+			var source_record := _dict(descriptor.get("record", {}))
+			if str(source_record.get("object_id", "")) == action_object_id:
+				return object_data.duplicate(true)
 	return {}
 
 

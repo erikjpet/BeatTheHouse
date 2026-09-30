@@ -21,6 +21,26 @@ CLASSES = {
     "hanging", "doorway",
 }
 KINDS = {"base", "stage", "exit"}
+V2_FAMILIES = ("fixed", "event", "scenario", "exit")
+HOUSE_DRINK_FIXED_MAPS = (
+    "corner_store",
+    "back_alley",
+    "motel",
+    "bar",
+    "gas_station_casino",
+    "small_underground_casino:casino",
+    "kitty_cat_lounge",
+    "delta_queen",
+    "grand_casino",
+)
+CREW_BACK_ROOM_FIXED_SLOTS = {
+    "event:crew_job_board": ("fixed.event_job_board", "surface_item"),
+    "event:crew_mags_bench": ("fixed.event_mags_bench", "surface_item"),
+    "event:crew_planning_table": ("fixed.event_planning_table", "surface_item"),
+    "event:crew_practice_rig": ("fixed.event_practice_rig", "floor_fixture"),
+    "event:crew_rook_ride": ("fixed.event_rook_ride", "doorway"),
+    "event:numbers_desk": ("fixed.event_numbers_desk", "surface_item"),
+}
 FACINGS = {"left", "right", "front", "back", "none"}
 SLOT_FIELDS = {
     "id", "kind", "pos", "footprint_class", "hit_rect", "label_anchor",
@@ -1069,6 +1089,854 @@ def scenario_visual_ids(scenario: dict[str, Any]) -> set[str]:
     return identities
 
 
+def validate_map_v2(
+    check: Check,
+    map_data: dict[str, Any],
+    archetype: dict[str, Any],
+    board: tuple[float, float],
+) -> None:
+    """Validate the four-family placement authority without a Godot launch."""
+    map_id = str(map_data.get("id", "")).strip()
+    check.require(bool(map_id), "placement map id is empty")
+    check.require(int(map_data.get("slot_schema_version", 0)) == 2, f"{map_id}: slot_schema_version must be 2")
+    check.require(bool(archetype), f"{map_id}: archetype declaration is missing")
+
+    slots_by_id: dict[str, dict[str, Any]] = {}
+    slots_by_family: dict[str, dict[str, dict[str, Any]]] = {}
+    for family in V2_FAMILIES:
+        field = f"{family}_slots"
+        raw_slots = map_data.get(field)
+        check.require(isinstance(raw_slots, list), f"{map_id}: {field} must be an array")
+        family_slots: dict[str, dict[str, Any]] = {}
+        for index, value in enumerate(values(raw_slots)):
+            check.require(isinstance(value, dict), f"{map_id}.{field}[{index}] must be an object")
+            if not isinstance(value, dict):
+                continue
+            slot_id = str(value.get("id", "")).strip()
+            prefix = slot_id.split(".", 1)[0] if "." in slot_id else ""
+            check.require(bool(slot_id), f"{map_id}.{field}[{index}] has no id")
+            check.require(prefix == family, f"{map_id}.{slot_id}: id prefix must be {family}.")
+            check.require(str(value.get("kind", "")) == family, f"{map_id}.{slot_id}: kind must be {family}")
+            check.require(slot_id not in slots_by_id, f"{map_id}: duplicate slot id {slot_id}")
+            placement_class = str(value.get("footprint_class", ""))
+            check.require(placement_class in CLASSES, f"{map_id}.{slot_id}: invalid footprint_class {placement_class}")
+            check.require(str(value.get("facing", "")) in FACINGS, f"{map_id}.{slot_id}: invalid facing")
+            check.require(
+                isinstance(value.get("priority"), int) and not isinstance(value.get("priority"), bool),
+                f"{map_id}.{slot_id}: priority must be an integer",
+            )
+            position = point(value.get("pos"))
+            bounds = rect(value.get("hit_rect"))
+            label = point(value.get("label_anchor"))
+            check.require(position is not None, f"{map_id}.{slot_id}: invalid pos")
+            check.require(bounds is not None, f"{map_id}.{slot_id}: invalid hit_rect")
+            check.require(label is not None, f"{map_id}.{slot_id}: invalid label_anchor")
+            if position is not None:
+                check.require(
+                    0.0 <= position[0] <= board[0] and 0.0 <= position[1] <= board[1],
+                    f"{map_id}.{slot_id}: pos leaves board",
+                )
+            if bounds is not None:
+                check.require(bounds[2] > 0.0 and bounds[3] > 0.0, f"{map_id}.{slot_id}: hit_rect must have positive size")
+                check.require(encloses((0.0, 0.0, board[0], board[1]), bounds), f"{map_id}.{slot_id}: hit_rect leaves board")
+            # Labels may intentionally sit just outside the board edge so the
+            # developer overlay does not cover the target it annotates.
+            check.require(isinstance(value.get("walk_lane_ids", []), list), f"{map_id}.{slot_id}: walk_lane_ids must be an array")
+            check.require(
+                isinstance(value.get("occupancy_required"), bool),
+                f"{map_id}.{slot_id}: occupancy_required must be an explicit boolean",
+            )
+            family_slots[slot_id] = value
+            slots_by_id[slot_id] = value
+        slots_by_family[family] = family_slots
+
+    for legacy_field in ("base_slots", "stage_slots", "object_slot_ids", "category_slot_ids"):
+        check.require(legacy_field not in map_data, f"{map_id}: legacy field {legacy_field} is forbidden in slot schema v2")
+
+    for family in V2_FAMILIES:
+        for suffix in ("object_slot_ids", "category_slot_ids"):
+            field = f"{family}_{suffix}"
+            preferences = map_data.get(field)
+            check.require(isinstance(preferences, dict), f"{map_id}: {field} must be an object")
+            if not isinstance(preferences, dict):
+                continue
+            for claimant, preferred_slot_value in preferences.items():
+                preferred_slot = str(preferred_slot_value)
+                check.require(bool(str(claimant).strip()), f"{map_id}.{field}: empty claimant")
+                check.require(
+                    preferred_slot in slots_by_family[family],
+                    f"{map_id}.{field}.{claimant}: {preferred_slot} is not a {family} slot",
+                )
+
+    scenario_preferences = map_data.get("scenario_slot_ids")
+    check.require(isinstance(scenario_preferences, dict), f"{map_id}: scenario_slot_ids must be an object")
+    if isinstance(scenario_preferences, dict):
+        for claimant, preferred_slot_value in scenario_preferences.items():
+            preferred_slot = str(preferred_slot_value)
+            check.require(
+                preferred_slot in slots_by_family["scenario"],
+                f"{map_id}.scenario_slot_ids.{claimant}: {preferred_slot} is not a scenario slot",
+            )
+
+    family_declarations = map_data.get("object_family_ids")
+    check.require(isinstance(family_declarations, dict), f"{map_id}: object_family_ids must be an object")
+    if isinstance(family_declarations, dict):
+        for object_id, family_value in family_declarations.items():
+            check.require(bool(str(object_id).strip()), f"{map_id}.object_family_ids contains an empty object id")
+            check.require(
+                str(family_value) in V2_FAMILIES,
+                f"{map_id}.object_family_ids.{object_id}: invalid family {family_value}",
+            )
+
+    fixed_objects = map_data.get("fixed_objects")
+    check.require(isinstance(fixed_objects, list), f"{map_id}: fixed_objects must be an array")
+    fixed_object_ids: set[str] = set()
+    required_fixed_slots: set[str] = set()
+    if isinstance(fixed_objects, list):
+        for index, value in enumerate(fixed_objects):
+            check.require(isinstance(value, dict), f"{map_id}.fixed_objects[{index}] must be an object")
+            if not isinstance(value, dict):
+                continue
+            object_id = str(value.get("object_id", "")).strip()
+            presentation_id = str(value.get("presentation_id", "")).strip()
+            exact_slot = str(value.get("exact_slot_id", value.get("slot_id", ""))).strip()
+            placement_class = str(value.get("placement_class", "")).strip()
+            check.require(bool(object_id), f"{map_id}.fixed_objects[{index}] has no object_id")
+            check.require(object_id not in fixed_object_ids, f"{map_id}: duplicate fixed object {object_id}")
+            check.require(bool(presentation_id), f"{map_id}.{object_id}: presentation_id is empty")
+            check.require(str(value.get("family", "fixed")) == "fixed", f"{map_id}.{object_id}: fixed declaration has non-fixed family")
+            check.require(isinstance(value.get("required"), bool), f"{map_id}.{object_id}: required must be boolean")
+            check.require(exact_slot in slots_by_family["fixed"], f"{map_id}.{object_id}: exact fixed slot {exact_slot} is missing")
+            if exact_slot in slots_by_family["fixed"]:
+                check.require(
+                    placement_class == str(slots_by_family["fixed"][exact_slot].get("footprint_class", "")),
+                    f"{map_id}.{object_id}: placement class does not match {exact_slot}",
+                )
+            action_ids = value.get("action_ids")
+            check.require(isinstance(action_ids, list), f"{map_id}.{object_id}: action_ids must be an array")
+            if isinstance(action_ids, list):
+                check.require(
+                    all(isinstance(action_id, str) and action_id.strip() for action_id in action_ids),
+                    f"{map_id}.{object_id}: action_ids contain an invalid value",
+                )
+                check.require(len(action_ids) == len(set(action_ids)), f"{map_id}.{object_id}: action_ids must be unique")
+            fixed_object_ids.add(object_id)
+            if bool(value.get("required", False)) and exact_slot:
+                required_fixed_slots.add(exact_slot)
+
+    for slot_id, slot in slots_by_id.items():
+        check.require(
+            bool(slot.get("occupancy_required", False)) == (slot_id in required_fixed_slots),
+            f"{map_id}.{slot_id}: occupancy_required must match an exact required fixed declaration",
+        )
+
+
+def _v2_interaction_navigates_environment(interaction: dict[str, Any]) -> bool:
+    for flag in ("navigation_exit", "navigates_environment", "travel_exit"):
+        if interaction.get(flag) is True:
+            return True
+    destination_keys = (
+        "destination_archetype", "destination_environment_id", "destination_layer_id",
+        "target_environment_id", "target_layer_id",
+    )
+    if any(str(interaction.get(key, "")).strip() for key in destination_keys):
+        return True
+    navigation_handlers = {
+        "travel", "travel_to_environment", "change_environment", "change_layer",
+        "enter_layer", "leave_environment",
+    }
+    for action in values(interaction.get("available_actions")):
+        if not isinstance(action, dict):
+            continue
+        if str(action.get("handler", "")).strip() in navigation_handlers:
+            return True
+        inputs = action.get("inputs", {}) if isinstance(action.get("inputs"), dict) else {}
+        if any(str(inputs.get(key, "")).strip() for key in destination_keys):
+            return True
+    return False
+
+
+def _v2_scenario_art_key(
+    map_data: dict[str, Any],
+    semantic: dict[str, Any],
+    actor: bool,
+    safe_exit: bool,
+    navigation_exit: bool,
+) -> str:
+    if actor:
+        return ""
+    if safe_exit or navigation_exit:
+        return "side_door"
+    identity = str(semantic.get("identity", "")).strip()
+    stable_id = str(semantic.get("stable_object_id", identity.removeprefix("scenario::"))).strip()
+    if scenario_semantic_is_abstract(stable_id, semantic):
+        return ""
+    art_keys = map_data.get("scenario_art_keys", {}) if isinstance(map_data.get("scenario_art_keys"), dict) else {}
+    authored_payload_key = str(semantic.get("icon_key", "")).strip()
+    art_key = str(art_keys.get(stable_id, art_keys.get(identity, authored_payload_key))).strip()
+    return art_key if art_key in CONCRETE_SCENARIO_ART_KEYS else ""
+
+
+def _v2_scenario_preference(
+    map_data: dict[str, Any],
+    family: str,
+    identity: str,
+    stable_id: str,
+    position_key: str,
+) -> tuple[str, bool]:
+    if family == "scenario":
+        semantic_preferences = map_data.get("scenario_slot_ids", {}) \
+            if isinstance(map_data.get("scenario_slot_ids"), dict) else {}
+        for key in (position_key, stable_id, identity):
+            if key and key in semantic_preferences:
+                return str(semantic_preferences.get(key, "")).strip(), False
+    object_preferences = map_data.get(f"{family}_object_slot_ids", {}) \
+        if isinstance(map_data.get(f"{family}_object_slot_ids"), dict) else {}
+    for key in (position_key, stable_id, identity):
+        if key and key in object_preferences:
+            return str(object_preferences.get(key, "")).strip(), family == "exit"
+    return "", False
+
+
+def _v2_route_has_authored_geometry(
+    map_data: dict[str, Any],
+    start_slot: dict[str, Any],
+    lane_ids: list[str],
+) -> bool:
+    """Mirror the binder's closed, connected authored-lane requirement."""
+    if not lane_ids:
+        return False
+    lanes = {
+        str(lane.get("id", "")): lane
+        for lane in values(map_data.get("walk_lanes"))
+        if isinstance(lane, dict) and str(lane.get("id", ""))
+    }
+    start_rect = rect(start_slot.get("hit_rect"))
+    if start_rect is None:
+        return False
+    approach = point(start_slot.get("pos")) or (
+        start_rect[0] + start_rect[2] / 2.0,
+        start_rect[1] + start_rect[3] / 2.0,
+    )
+    polyline: list[tuple[float, float]] = []
+    for lane_id in lane_ids:
+        lane = lanes.get(lane_id, {})
+        lane_points = [parsed for raw in values(lane.get("points")) if (parsed := point(raw)) is not None]
+        if len(lane_points) < 2 or len(lane_points) != len(values(lane.get("points"))):
+            return False
+        direction = str(lane.get("direction", "both"))
+        if direction == "reverse":
+            lane_points.reverse()
+        elif direction == "both":
+            prior = approach if not polyline else polyline[-1]
+            if math.dist(prior, lane_points[-1]) < math.dist(prior, lane_points[0]):
+                lane_points.reverse()
+        if polyline and math.dist(polyline[-1], lane_points[0]) > EPSILON:
+            return False
+        for lane_point in lane_points:
+            if not polyline or math.dist(polyline[-1], lane_point) > EPSILON:
+                polyline.append(lane_point)
+    return len(polyline) >= 2
+
+
+def _v2_bind_scenario_snapshot(
+    map_data: dict[str, Any],
+    snapshot: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Engine-free replay of the production v2 scenario-slot decisions."""
+    map_id = str(map_data.get("id", "<missing>"))
+    family_slots = {
+        family: ordered_slots(map_data, f"{family}_slots")
+        for family in ("scenario", "exit")
+    }
+    slot_by_id = {
+        str(slot.get("id", "")): slot
+        for slots in family_slots.values()
+        for slot in slots
+    }
+    routes = {
+        str(route.get("id", "")): route
+        for route in values(map_data.get("actor_routes"))
+        if isinstance(route, dict) and str(route.get("id", ""))
+    }
+    position_routes = map_data.get("scenario_position_route_ids", {}) \
+        if isinstance(map_data.get("scenario_position_route_ids"), dict) else {}
+    class_overrides = map_data.get("class_overrides", {}) \
+        if isinstance(map_data.get("class_overrides"), dict) else {}
+    errors: list[str] = []
+    entries: list[dict[str, Any]] = []
+    bindings: dict[str, dict[str, Any]] = {}
+    seen_visual_ids: set[str] = set()
+    authored_action_count = 0
+    for semantic in snapshot:
+        if not isinstance(semantic, dict):
+            errors.append(f"{map_id}: scenario snapshot contains a non-object record")
+            continue
+        interaction = semantic.get("_slot_interaction", {}) \
+            if isinstance(semantic.get("_slot_interaction"), dict) else {}
+        if not bool(semantic.get("_slot_nonvisual", False)):
+            authored_action_count += sum(
+                1 for action in values(interaction.get("available_actions"))
+                if isinstance(action, dict) and str(action.get("id", "")).strip()
+            )
+        if bool(semantic.get("_slot_interaction_only", False)) \
+                or bool(semantic.get("_slot_nonvisual", False)):
+            continue
+        identity = str(semantic.get("identity", "")).strip()
+        if not identity.startswith("scenario::") or not bool(semantic.get("present", True)):
+            continue
+        if identity in seen_visual_ids:
+            errors.append(f"{map_id}.{identity}: duplicate scenario visual identity")
+            continue
+        seen_visual_ids.add(identity)
+        stable_id = identity.removeprefix("scenario::")
+        actor = bool(semantic.get("_slot_actor", False))
+        safe_exit = bool(interaction.get("safe_exit", semantic.get("safe_exit", False)))
+        navigation_exit = _v2_interaction_navigates_environment(interaction)
+        slot_family = "exit" if navigation_exit else "scenario"
+        art_key = _v2_scenario_art_key(map_data, semantic, actor, safe_exit, navigation_exit)
+        if not (actor or safe_exit or navigation_exit or art_key):
+            bindings[identity] = {
+                "mode": "attached", "slot_id": "", "slot_family": "",
+                "placement_class": "", "art_key": "", "reserved_slot_ids": [],
+            }
+            continue
+        classified = copy.deepcopy(semantic)
+        if art_key:
+            classified["icon_key"] = art_key
+        placement_class = SlotAuthoring.classify_with_override(
+            classified,
+            "actor" if actor else "scene_object",
+            identity,
+            str(class_overrides.get(identity, class_overrides.get(stable_id, ""))),
+        )
+        if safe_exit:
+            placement_class = "doorway"
+        position_key = SlotAuthoring.scenario_position_key(stable_id, semantic)
+        route_id = str(semantic.get("route_id", "")).strip() \
+            or str(position_routes.get(position_key, "")).strip()
+        entries.append({
+            "identity": identity,
+            "stable_id": stable_id,
+            "semantic": semantic,
+            "position_key": position_key,
+            "slot_family": slot_family,
+            "placement_class": placement_class,
+            "route_id": route_id,
+            "art_key": art_key,
+            "rank": 0 if slot_family == "exit" else 1 if route_id else 2,
+        })
+    entries.sort(key=lambda entry: (int(entry["rank"]), str(entry["identity"])))
+
+    occupied: dict[str, str] = {}
+    reservation_claims: list[tuple[str, str]] = []
+    for entry in entries:
+        identity = str(entry["identity"])
+        family = str(entry["slot_family"])
+        placement_class = str(entry["placement_class"])
+        route_id = str(entry["route_id"])
+        selected: dict[str, Any] | None = None
+        reserved_slot_ids: list[str] = []
+        if route_id:
+            route = routes.get(route_id, {})
+            start_id = str(route.get("start_slot_id", ""))
+            end_id = str(route.get("end_slot_id", ""))
+            start_slot = slot_by_id.get(start_id, {})
+            end_slot = slot_by_id.get(end_id, {})
+            lane_ids = [str(value) for value in values(route.get("lane_ids"))]
+            route_geometry_valid = bool(route) and family == "scenario" \
+                and start_id != end_id \
+                and str(start_slot.get("kind", "")) == "scenario" \
+                and str(end_slot.get("kind", "")) == "scenario" \
+                and str(start_slot.get("footprint_class", "")) == placement_class \
+                and str(end_slot.get("footprint_class", "")) == placement_class \
+                and slot_meets_interactive_minimum(start_slot) \
+                and slot_meets_interactive_minimum(end_slot) \
+                and _v2_route_has_authored_geometry(map_data, start_slot, lane_ids)
+            if not route_geometry_valid:
+                errors.append(
+                    f"{map_id}.{identity}: route {route_id} has invalid, incompatible, "
+                    "or disconnected authored scenario endpoints"
+                )
+            elif start_id not in occupied and end_id not in occupied:
+                selected = start_slot
+                reserved_slot_ids = [start_id, end_id]
+        else:
+            preference, exact = _v2_scenario_preference(
+                map_data,
+                family,
+                identity,
+                str(entry["stable_id"]),
+                str(entry["position_key"]),
+            )
+            candidate_slots = family_slots.get(family, [])
+            if family == "exit" and preference:
+                preferred_slot = slot_by_id.get(preference, {})
+                preferred_class = str(preferred_slot.get("footprint_class", ""))
+                if preferred_class in CLASSES:
+                    placement_class = preferred_class
+                    entry["placement_class"] = placement_class
+            preferred = next((
+                slot for slot in candidate_slots
+                if str(slot.get("id", "")) == preference
+                and str(slot.get("footprint_class", "")) == placement_class
+                and str(slot.get("id", "")) not in occupied
+                and slot_meets_interactive_minimum(slot)
+            ), None)
+            if preferred is not None:
+                selected = preferred
+            elif not exact:
+                selected = next((
+                    slot for slot in candidate_slots
+                    if str(slot.get("footprint_class", "")) == placement_class
+                    and str(slot.get("id", "")) not in occupied
+                    and slot_meets_interactive_minimum(slot)
+                ), None)
+            if selected is not None:
+                reserved_slot_ids = [str(selected.get("id", ""))]
+        if selected is None:
+            bindings[identity] = {
+                "mode": "missing", "slot_id": "", "slot_family": family,
+                "placement_class": placement_class, "art_key": str(entry["art_key"]),
+                "route_id": route_id, "reserved_slot_ids": [],
+            }
+            errors.append(
+                f"{map_id}.{identity}: no free compatible authored "
+                f"{family}.{placement_class} slot"
+            )
+            continue
+        for slot_id in reserved_slot_ids:
+            reservation_claims.append((slot_id, identity))
+            occupied[slot_id] = identity
+        bindings[identity] = {
+            "mode": "room",
+            "slot_id": str(selected.get("id", "")),
+            "slot_family": family,
+            "placement_class": placement_class,
+            "art_key": str(entry["art_key"]),
+            "route_id": route_id,
+            "reserved_slot_ids": reserved_slot_ids,
+        }
+
+    claims_by_slot: dict[str, set[str]] = {}
+    for slot_id, identity in reservation_claims:
+        claims_by_slot.setdefault(slot_id, set()).add(identity)
+    conflicting_slots = {
+        slot_id: sorted(identities)
+        for slot_id, identities in claims_by_slot.items()
+        if len(identities) > 1
+    }
+    for slot_id, identities in sorted(conflicting_slots.items()):
+        errors.append(f"{map_id}.{slot_id}: conflicting scenario reservations {identities}")
+    room_count = sum(1 for binding in bindings.values() if binding["mode"] == "room")
+    missing_count = sum(1 for binding in bindings.values() if binding["mode"] == "missing")
+    attached_count = sum(1 for binding in bindings.values() if binding["mode"] == "attached")
+    return {
+        "bindings": bindings,
+        "room_count": room_count,
+        "missing_count": missing_count,
+        "attached_count": attached_count,
+        "authored_action_count": authored_action_count,
+        "reservation_count": len(reservation_claims),
+        "conflict_count": len(conflicting_slots),
+        "errors": errors,
+    }
+
+
+def _v2_snapshot_rows(
+    check: Check,
+    maps_by_id: dict[str, dict[str, Any]],
+    snapshot_maps: dict[str, list[list[dict[str, Any]]]],
+) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for map_id, snapshots in sorted(snapshot_maps.items()):
+        map_data = maps_by_id.get(map_id, {})
+        check.require(bool(map_data), f"scenario phase inventory references missing v2 map {map_id}")
+        for snapshot in snapshots:
+            scenario_id, phase_id = snapshot_tags(snapshot)
+            first = _v2_bind_scenario_snapshot(map_data, snapshot)
+            repeated = _v2_bind_scenario_snapshot(map_data, snapshot)
+            check.require(
+                first == repeated,
+                f"{map_id}.{scenario_id}/{phase_id}: v2 scenario binding is not deterministic",
+            )
+            for error in first["errors"]:
+                check.require(False, f"{scenario_id}/{phase_id}: {error}")
+            check.require(
+                int(first["missing_count"]) == 0,
+                f"{map_id}.{scenario_id}/{phase_id}: v2 scenario capacity is short by "
+                f"{first['missing_count']} physical slot(s)",
+            )
+            check.require(
+                int(first["conflict_count"]) == 0,
+                f"{map_id}.{scenario_id}/{phase_id}: v2 scenario binding retained "
+                f"{first['conflict_count']} slot conflict(s)",
+            )
+            missing_identities = sorted(
+                identity for identity, binding in first["bindings"].items()
+                if str(binding.get("mode", "")) == "missing"
+            )
+            rows.append({
+                "map_id": map_id,
+                "scenario_id": scenario_id,
+                "phase_id": phase_id,
+                "binding_count": int(first["room_count"]) + int(first["missing_count"]),
+                "room_count": int(first["room_count"]),
+                "physical_room_count": int(first["room_count"]),
+                # The report retains its historical overflow field name. Under
+                # v2, any value here is a fail-closed missing-capacity result;
+                # there is no overflow presentation plane.
+                "overflow_count": int(first["missing_count"]),
+                "action_list_count": int(first["attached_count"]),
+                "physical_spill_count": int(first["missing_count"]),
+                "overflow_identities": missing_identities,
+                "authored_action_count": int(first["authored_action_count"]),
+                "reservation_count": int(first["reservation_count"]),
+                "conflict_count": int(first["conflict_count"]),
+            })
+    return rows
+
+
+def main_v2(
+    root: Path,
+    report_path: Path,
+    placement: dict[str, Any],
+    archetypes_list: list[Any],
+    scenario_catalog: dict[str, Any],
+) -> int:
+    """Run the v2 authority check while preserving the established report API."""
+    check = Check()
+    board_raw = point(placement.get("board_size"))
+    check.require(placement.get("schema_version") == 3, "placement_surfaces.json schema_version must be 3")
+    check.require(placement.get("slot_schema_version") == 2, "placement_surfaces.json slot_schema_version must be 2")
+    check.require(board_raw is not None and board_raw[0] > 0 and board_raw[1] > 0, "invalid placement board_size")
+    board = board_raw or (900.0, 430.0)
+    archetypes = {str(item.get("id", "")): item for item in archetypes_list if isinstance(item, dict)}
+    maps = values(placement.get("maps"))
+    maps_by_id = {str(item.get("id", "")): item for item in maps if isinstance(item, dict)}
+    check.require(len(archetypes) == 18, f"expected 18 room archetypes, found {len(archetypes)}")
+    check.require(len(maps_by_id) == 21, f"expected 21 physical placement maps, found {len(maps_by_id)}")
+    check.require(len(maps_by_id) == len(maps), "placement map ids must be unique/non-empty")
+    for archetype_id in archetypes:
+        check.require(archetype_id in maps_by_id, f"archetype {archetype_id} has no placement map")
+    expected_layers = {"small_underground_casino:club", "small_underground_casino:casino", "small_underground_casino:back_room"}
+    check.require(expected_layers.issubset(maps_by_id), "Small Underground Casino layer maps are incomplete")
+    for map_id, map_data in maps_by_id.items():
+        archetype_id = str(map_data.get("archetype_id", map_id.split(":", 1)[0]))
+        validate_map_v2(check, map_data, archetypes.get(archetype_id, {}), board)
+
+    jazz = maps_by_id.get("jazz_club", {})
+    jazz_fixed = {
+        str(item.get("object_id", "")): item
+        for item in values(jazz.get("fixed_objects"))
+        if isinstance(item, dict)
+    }
+    required_jazz_slots = {
+        "jazz_club:bartender": "fixed.staff_bartender",
+        "jazz_club:musician_sax": "fixed.musician_sax",
+        "jazz_club:musician_cello": "fixed.musician_cello",
+        "jazz_club:musician_drummer": "fixed.musician_drummer",
+        "jazz_club:band_tip_jar": "fixed.tip_jar_band",
+        "jazz_club:band_stage": "fixed.band_stage",
+    }
+    for object_id, slot_id in required_jazz_slots.items():
+        declaration = jazz_fixed.get(object_id, {})
+        check.require(bool(declaration), f"jazz_club: missing required fixed declaration {object_id}")
+        check.require(bool(declaration.get("required", False)), f"jazz_club: {object_id} must be required")
+        check.require(str(declaration.get("exact_slot_id", "")) == slot_id, f"jazz_club: {object_id} must use {slot_id}")
+    jazz_action_ids = {
+        str(action_id)
+        for declaration in jazz_fixed.values()
+        for action_id in values(declaration.get("action_ids"))
+    }
+    for action_id in {
+        "service:house_drink", "service:jazz_sax_round", "service:jazz_cello_round",
+        "service:jazz_drummer_round", "service:jazz_band_tip_jar", "service:listen_to_jazz",
+    }:
+        check.require(action_id in jazz_action_ids, f"jazz_club: fixed hosts do not attach {action_id}")
+
+    required_host_slots = {
+        "corner_store": {"corner_store:shopkeeper": "fixed.staff_shopkeeper"},
+        "back_alley": {"back_alley:merchant": "fixed.staff_merchant"},
+        "motel": {"motel:front_desk_clerk": "fixed.staff_front_desk"},
+        "bar": {"bar:bartender": "fixed.staff_bartender"},
+        "kitty_cat_lounge": {"kitty_cat_lounge:bar_host": "fixed.staff_bar"},
+        "gas_station_casino": {"gas_station_casino:nell": "fixed.staff_nell"},
+        "delta_queen": {
+            "delta_queen:right_table_dealer": "fixed.staff_right_table",
+            "delta_queen:deck_boss": "fixed.staff_floor",
+        },
+        "small_underground_casino:club": {"punchline:club_bouncer": "fixed.staff_floor_right"},
+        "small_underground_casino:casino": {"punchline:casino_dealer": "fixed.staff_dealer"},
+        "pawn_shop": {"pawn_shop:sal": "fixed.staff_pawn_counter"},
+        "grand_casino": {"grand_casino:floor_host": "fixed.staff_host"},
+        "grand_casino_cage": {"grand_casino_cage:linda": "fixed.staff_linda"},
+    }
+    for map_id, expectations in required_host_slots.items():
+        declarations = {
+            str(item.get("object_id", "")): item
+            for item in values(maps_by_id.get(map_id, {}).get("fixed_objects"))
+            if isinstance(item, dict)
+        }
+        for object_id, slot_id in expectations.items():
+            declaration = declarations.get(object_id, {})
+            check.require(bool(declaration), f"{map_id}: missing guaranteed host declaration {object_id}")
+            check.require(str(declaration.get("exact_slot_id", "")) == slot_id, f"{map_id}: {object_id} must use {slot_id}")
+            check.require(bool(declaration.get("required", False)), f"{map_id}: {object_id} must be required")
+
+    silas_slots = {
+        "motel": "event.floor_patron_1",
+        "bar": "event.floor_patron_2",
+        "small_underground_casino": "event.floor_patron_2",
+        "small_underground_casino:club": "event.floor_patron_1",
+        "small_underground_casino:casino": "event.floor_patron_1",
+        "small_underground_casino:back_room": "event.floor_patron_1",
+        "jazz_club": "event.floor_patron_1",
+        "kitty_cat_lounge": "event.floor_patron_1",
+    }
+    for map_id, slot_id in silas_slots.items():
+        map_data = maps_by_id.get(map_id, {})
+        check.require(map_data.get("object_family_ids", {}).get("numbers:silas") == "event", f"{map_id}: Silas must be event-owned")
+        check.require(map_data.get("event_object_slot_ids", {}).get("numbers:silas") == slot_id, f"{map_id}: Silas must use {slot_id}")
+
+    gas = maps_by_id.get("gas_station_casino", {})
+    gas_nell = next(
+        (
+            declaration
+            for declaration in values(gas.get("fixed_objects"))
+            if isinstance(declaration, dict) and declaration.get("object_id") == "gas_station_casino:nell"
+        ),
+        {},
+    )
+    check.require(
+        "event:town_rumor_staff" in values(gas_nell.get("action_ids")),
+        "gas_station_casino: Nell must host the town-rumor action",
+    )
+    check.require(
+        gas.get("object_family_ids", {}).get("dialogue:scratch_ticket_scalper") == "event"
+        and gas.get("event_object_slot_ids", {}).get("dialogue:scratch_ticket_scalper") == "event.floor_patron_1",
+        "gas_station_casino: scratch-ticket scalper must use optional event.floor_patron_1",
+    )
+    for home_id in ("motel_room", "apartment", "house"):
+        home = maps_by_id.get(home_id, {})
+        check.require(
+            home.get("fixed_object_slot_ids", {}).get("home_storage:place") == "fixed.home_storage"
+            and home.get("fixed_category_slot_ids", {}).get("home_storage_spots:0") == "fixed.home_storage"
+            and home.get("fixed_category_slot_ids", {}).get("home_container_spots:0") != "fixed.home_storage",
+            f"{home_id}: home storage must not alias the first container",
+        )
+    grand = maps_by_id.get("grand_casino", {})
+    check.require(
+        grand.get("object_family_ids", {}).get("event:scenario_audit_roster") == "fixed"
+        and grand.get("fixed_object_slot_ids", {}).get("event:scenario_audit_roster") == "fixed.event_audit_roster",
+        "grand_casino: required audit roster must be fixed-owned",
+    )
+    for map_id, count in {"grand_casino": 7, "grand_casino_high_limit": 6, "grand_casino_back_room": 5}.items():
+        event_slots = {
+            str(slot.get("id", "")): slot
+            for slot in values(maps_by_id.get(map_id, {}).get("event_slots"))
+            if isinstance(slot, dict)
+        }
+        for ordinal in range(1, count + 1):
+            slot_id = f"event.floor_patron_{ordinal}"
+            check.require(
+                event_slots.get(slot_id, {}).get("footprint_class") == "standing_person"
+                and event_slots.get(slot_id, {}).get("occupancy_required") is False,
+                f"{map_id}: missing optional Grand living-floor capacity {slot_id}",
+            )
+
+    for map_id in HOUSE_DRINK_FIXED_MAPS:
+        map_data = maps_by_id.get(map_id, {})
+        fixed_slots = {
+            str(slot.get("id", "")): slot
+            for slot in values(map_data.get("fixed_slots"))
+            if isinstance(slot, dict)
+        }
+        drink_slot = fixed_slots.get("fixed.service_house_drink", {})
+        check.require(
+            map_data.get("object_family_ids", {}).get("service:house_drink") == "fixed"
+            and map_data.get("fixed_object_slot_ids", {}).get("service:house_drink") == "fixed.service_house_drink"
+            and drink_slot.get("footprint_class") == "surface_item",
+            f"{map_id}: house drink must retain fixed surface-item capacity",
+        )
+        check.require(
+            map_data.get("class_overrides", {}).get("service:house_drink") == "surface_item",
+            f"{map_id}: house drink must be classified as a surface_item",
+        )
+
+    corner_store = maps_by_id.get("corner_store", {})
+    corner_event_slots = {
+        str(slot.get("id", "")): slot
+        for slot in values(corner_store.get("event_slots"))
+        if isinstance(slot, dict)
+    }
+    late_shift_slot = corner_event_slots.get("event.counter_patron_1", {})
+    town_rumor_slot = corner_event_slots.get("event.counter_patron_2", {})
+    late_shift_rect = rect(late_shift_slot.get("hit_rect"))
+    town_rumor_rect = rect(town_rumor_slot.get("hit_rect"))
+    check.require(
+        corner_store.get("object_family_ids", {}).get("event:late_shift_discount") == "event"
+        and corner_store.get("object_family_ids", {}).get("event:town_rumor_staff") == "event"
+        and corner_store.get("event_object_slot_ids", {}).get("event:late_shift_discount") == "event.counter_patron_1"
+        and corner_store.get("event_object_slot_ids", {}).get("event:town_rumor_staff") == "event.counter_patron_2"
+        and late_shift_slot.get("footprint_class") == "behind_counter_person"
+        and town_rumor_slot.get("footprint_class") == "behind_counter_person"
+        and late_shift_rect is not None
+        and town_rumor_rect is not None
+        and not intersects(late_shift_rect, town_rumor_rect),
+        "corner_store: late-shift discount and town-rumor staff require distinct non-overlapping behind-counter event capacity",
+    )
+
+    back_room = maps_by_id.get("small_underground_casino:back_room", {})
+    back_room_fixed_slots = {
+        str(slot.get("id", "")): slot
+        for slot in values(back_room.get("fixed_slots"))
+        if isinstance(slot, dict)
+    }
+    for object_id, (slot_id, placement_class) in CREW_BACK_ROOM_FIXED_SLOTS.items():
+        slot = back_room_fixed_slots.get(slot_id, {})
+        check.require(
+            back_room.get("object_family_ids", {}).get(object_id) == "fixed"
+            and back_room.get("fixed_object_slot_ids", {}).get(object_id) == slot_id
+            and slot.get("footprint_class") == placement_class,
+            f"small_underground_casino:back_room: required fixture {object_id} must use {slot_id}",
+        )
+
+    casino = maps_by_id.get("small_underground_casino:casino", {})
+    casino_event_slots = {
+        str(slot.get("id", "")): slot
+        for slot in values(casino.get("event_slots"))
+        if isinstance(slot, dict)
+    }
+    rowdy_slot = casino_event_slots.get("event.seated_patron_1", {})
+    casino_seats = {
+        str(seat.get("id", "")): point(seat.get("point"))
+        for seat in values(casino.get("seats"))
+        if isinstance(seat, dict)
+    }
+    check.require(
+        casino.get("object_family_ids", {}).get("event:rowdy_regular") == "event"
+        and casino.get("event_object_slot_ids", {}).get("event:rowdy_regular") == "event.seated_patron_1"
+        and rowdy_slot.get("footprint_class") == "seated_person"
+        and rowdy_slot.get("support_id") == "left_card_seat"
+        and point(rowdy_slot.get("pos")) == casino_seats.get("left_card_seat"),
+        "small_underground_casino:casino: rowdy regular must have authored seated event capacity",
+    )
+
+    active_snapshots = SlotAuthoring.collect_active_phase_snapshots(root)
+    complete_snapshots = SlotAuthoring.collect_active_phase_snapshots(root, include_aftermath=True)
+    active_rows = _v2_snapshot_rows(check, maps_by_id, active_snapshots)
+    complete_rows = _v2_snapshot_rows(check, maps_by_id, complete_snapshots)
+    active_summaries = summarize_scenarios(active_rows)
+    complete_summaries = summarize_scenarios(complete_rows)
+    check.require(len(active_summaries) == 55, f"active scenario inventory must cover 55 map/scenario pairs, found {len(active_summaries)}")
+    check.require(len(complete_summaries) == 55, f"complete scenario inventory must cover 55 map/scenario pairs, found {len(complete_summaries)}")
+
+    exact_seed_manifest = json.loads((root / "tools/fixtures/rw06_1_environment_exact_seed_manifest.json").read_text(encoding="utf-8"))
+    historical_seeds = values(exact_seed_manifest.get("expectations"))
+    legal_combinations = values(exact_seed_manifest.get("legal_room_combinations"))
+    scenario_count = sum(len(values(room_scenarios)) for room_scenarios in scenario_catalog.values())
+    fixed_slot_count = sum(len(values(map_data.get("fixed_slots"))) for map_data in maps_by_id.values())
+    active_bindings = sum(int(row["binding_count"]) for row in active_rows)
+    complete_bindings = sum(int(row["binding_count"]) for row in complete_rows)
+    active_overflow = sum(int(row["overflow_count"]) for row in active_rows)
+    complete_overflow = sum(int(row["overflow_count"]) for row in complete_rows)
+    active_conflicts = sum(int(row["conflict_count"]) for row in active_rows)
+    complete_conflicts = sum(int(row["conflict_count"]) for row in complete_rows)
+    active_nonphysical = sum(int(row["action_list_count"]) for row in active_rows)
+    active_physical_room = sum(int(row["physical_room_count"]) for row in active_rows)
+    authored_actions = sum(int(row["authored_action_count"]) for row in complete_rows)
+    active_reservations = sum(int(row["reservation_count"]) for row in active_rows)
+    fixed_scenario_observations = sum(
+        len(values(maps_by_id.get(str(row["map_id"]), {}).get("fixed_slots")))
+        for row in active_rows
+    )
+    fixed_scenario_pair_tests = sum(
+        len(values(maps_by_id.get(str(row["map_id"]), {}).get("fixed_slots")))
+        * int(row["physical_room_count"])
+        for row in active_rows
+    )
+    fixed_declaration_conflicts = 0
+    fixed_pair_tests = 0
+    for map_data in maps_by_id.values():
+        fixed_slots = values(map_data.get("fixed_slots"))
+        fixed_pair_tests += len(fixed_slots) * max(0, len(fixed_slots) - 1) // 2
+        declaration_counts: dict[str, int] = {}
+        for declaration in values(map_data.get("fixed_objects")):
+            if not isinstance(declaration, dict):
+                continue
+            slot_id = str(declaration.get("exact_slot_id", declaration.get("slot_id", ""))).strip()
+            if slot_id:
+                declaration_counts[slot_id] = declaration_counts.get(slot_id, 0) + 1
+        fixed_declaration_conflicts += sum(
+            count * (count - 1) // 2
+            for count in declaration_counts.values()
+            if count > 1
+        )
+    check.require(active_overflow == 0, f"active v2 scenario replay found {active_overflow} missing physical slot binding(s)")
+    check.require(complete_overflow == 0, f"complete v2 scenario replay found {complete_overflow} missing physical slot binding(s)")
+    check.require(active_conflicts == 0, f"active v2 scenario replay found {active_conflicts} conflicting slot reservation(s)")
+    check.require(complete_conflicts == 0, f"complete v2 scenario replay found {complete_conflicts} conflicting slot reservation(s)")
+    check.require(fixed_declaration_conflicts == 0, f"fixed declarations contain {fixed_declaration_conflicts} duplicate exact-slot claim(s)")
+    counts = {
+        "maps": len(maps_by_id),
+        "archetypes": len(archetypes),
+        "scenarios": scenario_count,
+        "legal_hosts": len(active_summaries),
+        "authored_visuals": active_bindings,
+        "active_snapshots": len(active_rows),
+        "active_bindings": active_bindings,
+        "active_overflow": active_overflow,
+        "active_overflow_rate": active_overflow / max(1, active_bindings),
+        "active_nonphysical": active_nonphysical,
+        "active_nonphysical_room": 0,
+        "active_physical_room": active_physical_room,
+        "complete_snapshots": len(complete_rows),
+        "complete_bindings": complete_bindings,
+        "complete_overflow": complete_overflow,
+        "authored_actions": authored_actions,
+        "historical_exact_seeds": len(historical_seeds),
+        "historical_legal_room_combinations": len(legal_combinations),
+        "fixed_scenario_snapshots": len(active_rows),
+        "fixed_scenario_legal_scenarios": len(active_summaries),
+        "fixed_scenario_fixed_slot_observations": fixed_scenario_observations,
+        "fixed_scenario_authorities": active_reservations,
+        "fixed_scenario_pair_tests": fixed_scenario_pair_tests,
+        "fixed_scenario_conflicts": active_conflicts,
+        "fixed_label_slots": fixed_slot_count,
+        "fixed_fixed_pair_tests": fixed_pair_tests,
+        "fixed_fixed_conflicts": fixed_declaration_conflicts,
+        "mandatory_lane_obstacle_checks": len(active_rows),
+        "mandatory_lane_obstacle_states": len(active_rows),
+        "mandatory_lane_overflow_states": 0,
+    }
+    report = {
+        "tool": "environment_fixed_slot_static_check",
+        "passed": not check.errors,
+        "error_count": len(check.errors),
+        "counts": counts,
+        "day2_samples": day2_sample_report(active_summaries),
+        "contact_sheet": contact_sheet_report(active_summaries, archetypes),
+        "active_scenarios": active_summaries,
+        "complete_scenarios": complete_summaries,
+        "errors": check.errors,
+    }
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+    report_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    if check.errors:
+        print("ENVIRONMENT_FIXED_SLOT_STATIC_CHECK FAIL", file=sys.stderr)
+        for error in check.errors:
+            print(f" - {error}", file=sys.stderr)
+        return 1
+    print(
+        "ENVIRONMENT_FIXED_SLOT_STATIC_CHECK PASS "
+        f"schema=v2 maps={len(maps_by_id)} archetypes={len(archetypes)} "
+        f"scenarios={scenario_count} families={len(V2_FAMILIES)} "
+        f"active_snapshots={len(active_rows)} report={report_path}"
+    )
+    return 0
+
+
 def main() -> int:
     root = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else Path(__file__).resolve().parents[1]
     report_path = Path(sys.argv[2]).resolve() if len(sys.argv) > 2 else root / ".tmp/rw06_1/static/slot_report.json"
@@ -1079,6 +1947,8 @@ def main() -> int:
     placement = json.loads(placement_path.read_text(encoding="utf-8"))
     archetypes_list = json.loads(archetype_path.read_text(encoding="utf-8"))
     scenario_catalog = json.loads(scenario_catalog_path.read_text(encoding="utf-8"))
+    if int(placement.get("slot_schema_version", 0)) == 2:
+        return main_v2(root, report_path, placement, archetypes_list, scenario_catalog)
     exact_seed_manifest = json.loads((root / "tools/fixtures/rw06_1_environment_exact_seed_manifest.json").read_text(encoding="utf-8"))
     event_catalog = json.loads((root / "data/events/events.json").read_text(encoding="utf-8"))
     scenario_resolver_source = (root / "scripts/core/scenario_layout_resolver.gd").read_text(encoding="utf-8")

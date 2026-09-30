@@ -159,7 +159,7 @@ func _build() -> void:
 	developer_placement_mode.tooltip_text = "Select and move particular spawned room objects."
 	developer_placement_mode.toggled.connect(_on_developer_placement_mode)
 	developer_slot_placement_mode = _check(box, "Environment slot placement mode")
-	developer_slot_placement_mode.tooltip_text = "Show and move reusable base, stage, and exit slots, including empty slots."
+	developer_slot_placement_mode.tooltip_text = "Show, filter, and move fixed, event, scenario, and exit slots, including empty slots."
 	developer_slot_placement_mode.toggled.connect(_on_developer_slot_placement_mode)
 	game_library = _button("Game Library (Debug)")
 	game_library.tooltip_text = "Open the internal table-game practice library."

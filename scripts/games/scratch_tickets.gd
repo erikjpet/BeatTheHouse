@@ -595,7 +595,10 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 
 
 func environment_interactable_objects(run_state: RunState, environment: Dictionary) -> Array:
-	var machine := _ensure_machine_state(run_state, environment, false)
+	# The visit/restock projection controls whether a physical person exists. Seal
+	# that lifecycle state before exposing hooks so the record, manifest, layout,
+	# and persisted room aliases all describe the same frame.
+	var machine := _ensure_machine_state(run_state, environment, true)
 	var payout := _pending_payout(machine)
 	var winners := _dictionary_array(machine.get("winner_pile", [])).size()
 	var label := _redeemer_label(environment)
@@ -2275,6 +2278,7 @@ static func _next_restock_after(absolute_minute: int, phase_minute: int) -> int:
 func _advance_restock_schedule(run_state: RunState, environment: Dictionary, machine: Dictionary) -> bool:
 	if run_state == null:
 		return false
+	var scalper_was_present_at_entry := bool(machine.get("scalper_present", false))
 	var now := maxi(0, run_state.game_clock_minutes)
 	var phase := clampi(int(machine.get("restock_phase_minute", 0)), 0, RESTOCK_INTERVAL_MINUTES - 1)
 	var cursor := maxi(0, int(machine.get("restock_cursor_absolute_minute", now)))
@@ -2306,6 +2310,7 @@ func _advance_restock_schedule(run_state: RunState, environment: Dictionary, mac
 		changed = true
 	machine["restock_cursor_absolute_minute"] = cursor
 	machine["next_restock_absolute_minute"] = next_boundary
+	_reconcile_persisted_scalper_transition(environment, machine, run_state, scalper_was_present_at_entry)
 	return changed
 
 
@@ -2346,18 +2351,21 @@ func _add_restock_tickets(machine: Dictionary, count: int, rng: RngStream) -> in
 func _refresh_scalper_for_visit(run_state: RunState, environment: Dictionary, machine: Dictionary) -> bool:
 	if run_state == null:
 		return false
+	var scalper_was_present := bool(machine.get("scalper_present", false))
 	var visit_token := _scratch_visit_token(run_state, environment)
 	if _is_practice_environment(environment):
 		var practice_changed := bool(machine.get("scalper_present", false)) or bool(machine.get("scalper_knows_schedule", false))
 		machine["scalper_present"] = false
 		machine["scalper_knows_schedule"] = false
 		machine["scalper_visit_token"] = visit_token
+		_reconcile_persisted_scalper_transition(environment, machine, run_state, scalper_was_present)
 		return practice_changed
 	if run_state.is_tutorial_run():
 		var tutorial_changed := bool(machine.get("scalper_present", false)) or bool(machine.get("scalper_knows_schedule", false))
 		machine["scalper_present"] = false
 		machine["scalper_knows_schedule"] = false
 		machine["scalper_visit_token"] = visit_token
+		_reconcile_persisted_scalper_transition(environment, machine, run_state, scalper_was_present)
 		return tutorial_changed
 	var same_visit := visit_token == str(machine.get("scalper_visit_token", ""))
 	if same_visit and (bool(machine.get("scalper_present", false)) or _stock_total(machine) > 0):
@@ -2371,6 +2379,7 @@ func _refresh_scalper_for_visit(run_state: RunState, environment: Dictionary, ma
 	machine["scalper_present"] = present
 	machine["scalper_knows_schedule"] = knows_schedule
 	machine["scalper_cleared_count"] = _clear_machine_stock(machine) if present else 0
+	_reconcile_persisted_scalper_transition(environment, machine, run_state, scalper_was_present)
 	return true
 
 
@@ -2651,6 +2660,7 @@ func _ensure_machine_state(run_state: RunState, environment: Dictionary, persist
 		var writable_states := states.duplicate(false)
 		writable_states[get_id()] = generated
 		environment["game_states"] = writable_states
+		_reconcile_scalper_membership(environment, run_state)
 	return generated
 
 
@@ -2678,6 +2688,12 @@ func _read_machine_state(run_state: RunState, environment: Dictionary) -> Dictio
 
 
 func _write_machine_state(environment: Dictionary, machine: Dictionary, run_state: RunState = null, normalize_before_write: bool = true) -> void:
+	var prior_scalper_present := false
+	var prior_states_value: Variant = environment.get("game_states", {})
+	if typeof(prior_states_value) == TYPE_DICTIONARY:
+		var prior_machine_value: Variant = (prior_states_value as Dictionary).get(get_id(), {})
+		if typeof(prior_machine_value) == TYPE_DICTIONARY:
+			prior_scalper_present = bool((prior_machine_value as Dictionary).get("scalper_present", false))
 	if normalize_before_write:
 		_normalize_machine_state(machine, run_state)
 	var portable := RunState.compact_portable_ticket_state(get_id(), _portable_ticket_player_state(machine), false)
@@ -2689,6 +2705,31 @@ func _write_machine_state(environment: Dictionary, machine: Dictionary, run_stat
 	environment["game_states"] = states
 	if run_state != null:
 		run_state.remember_portable_ticket_state(get_id(), environment, portable)
+	_reconcile_persisted_scalper_transition(environment, machine, run_state, prior_scalper_present)
+
+
+func _reconcile_persisted_scalper_transition(environment: Dictionary, machine: Dictionary, run_state: RunState, prior_present: bool) -> void:
+	if run_state == null or prior_present == bool(machine.get("scalper_present", false)):
+		return
+	var states_value: Variant = environment.get("game_states", {})
+	if typeof(states_value) != TYPE_DICTIONARY:
+		return
+	var persisted_value: Variant = (states_value as Dictionary).get(get_id(), {})
+	# Read-only projections intentionally exercise the same deterministic visit and
+	# restock logic on a detached copy. Only an owned machine can change physical
+	# room membership or any persisted alias.
+	if typeof(persisted_value) != TYPE_DICTIONARY or not is_same(persisted_value, machine):
+		return
+	_reconcile_scalper_membership(environment, run_state)
+
+
+func _reconcile_scalper_membership(environment: Dictionary, run_state: RunState) -> void:
+	if run_state == null or environment.is_empty():
+		return
+	if is_same(environment, run_state.current_environment):
+		run_state.prepare_current_environment_object_membership_for_publication()
+	else:
+		run_state.reconcile_environment_object_membership(environment)
 
 
 func _sync_portable_ticket_state(run_state: RunState, environment: Dictionary, machine: Dictionary) -> void:

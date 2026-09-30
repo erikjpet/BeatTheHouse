@@ -69,6 +69,9 @@ const RW06_1_SOURCE_CAPTURE_SIZE := Vector2i(1280, 720)
 const RW06_1_Q008_SHEET_SIZE := Vector2i(960, 360)
 const RW06_1_CAPTURE_BASE_PATH := "res://.tmp/rw06_1/visual_evidence"
 const RW06_1_CAPTURE_OWNER_FILE := ".rw06_1_capture_owner"
+const RW06_1_SLOT_MARKER_MAP_COUNT := 21
+const RW06_1_SLOT_MARKER_SHEET_COLUMNS := 4
+const RW06_1_SLOT_MARKER_CELL_SIZE := Vector2i(320, 180)
 const RW06_1_MIN_OPAQUE_SAMPLE_RATIO := 0.08
 const RW06_1_MIN_OCCUPIED_GRID_CELLS := 8
 const RW06_1_MIN_VARIANT_GRID_CELLS := 8
@@ -77,8 +80,9 @@ const RW06_1_MIN_LUMA_SPAN := 32
 const RW06_1_OPAQUE_ALPHA_MIN := 192
 const RW06_1_IMAGE_SAMPLE_STRIDE := 4
 const RW06_1_SLOT_MARKER_COLORS := {
-	"base": Color("#58c7ff"),
-	"stage": Color("#f5c451"),
+	"fixed": Color("#58c7ff"),
+	"event": Color("#c58cff"),
+	"scenario": Color("#f5c451"),
 	"exit": Color("#ff6fae"),
 }
 
@@ -108,17 +112,13 @@ class SlotMarkerOverlay:
 			var number_text := str(marker.get("number", "?"))
 			draw_string(ThemeDB.fallback_font, viewport_position + Vector2(-12.0, 4.0), number_text, HORIZONTAL_ALIGNMENT_CENTER, 24.0, 12, Color.WHITE)
 		var legend_x := legend_origin.x
-		for kind_value in ["base", "stage", "exit"]:
+		for kind_value in ["fixed", "event", "scenario", "exit"]:
 			var kind := str(kind_value)
-			var color := Color("#58c7ff")
-			if kind == "stage":
-				color = Color("#f5c451")
-			elif kind == "exit":
-				color = Color("#ff6fae")
+			var color: Color = RW06_1_SLOT_MARKER_COLORS.get(kind, Color.WHITE)
 			draw_rect(Rect2(legend_x, legend_origin.y - 12.0, 14.0, 14.0), Color("#080b12"), true)
 			draw_rect(Rect2(legend_x, legend_origin.y - 12.0, 14.0, 14.0), color, false, 2.0)
 			draw_string(ThemeDB.fallback_font, Vector2(legend_x + 19.0, legend_origin.y), kind.capitalize(), HORIZONTAL_ALIGNMENT_LEFT, 58.0, 11, Color.WHITE)
-			legend_x += 82.0
+			legend_x += 96.0
 
 var app: Control
 var out_dir := "user://layout_survey"
@@ -225,7 +225,27 @@ func _run() -> void:
 		await _run_fix06_31_audit(library)
 		return
 	if rw06_1_slot_markers:
-		await _run_rw06_1_slot_markers(library)
+		var marker_success := await _run_rw06_1_slot_markers(library)
+		if marker_success and rw06_1_contact_sheet:
+			# Both review bundles may share one fresh owned root. Marker capture keeps
+			# the app alive, then the ordinary contact-sheet path performs the single
+			# owner release and process exit after its own fail-closed cleanup.
+			await _run_rw06_1_contact_sheet(library)
+			return
+		var final_marker_success := marker_success
+		if rw06_1_contact_sheet:
+			# Marker failure occurs before the contact-sheet runner can release the
+			# ownership marker claimed at startup. Release it here so a combined run
+			# can never strand a stale capture lock.
+			var owner_release := _rw06_1_release_capture_owner()
+			if not bool(owner_release.get("ok", false)) or not bool(owner_release.get("absent", false)):
+				final_marker_success = false
+				for error_value in _array(owner_release.get("errors", [])):
+					push_error(str(error_value))
+		app.free()
+		app = null
+		await _settle(4)
+		quit(0 if final_marker_success else 1)
 		return
 	if rw06_1_room_review:
 		await _run_rw06_1_room_review(library)
@@ -518,7 +538,11 @@ func _direct_interaction_overlaps(layout: Dictionary) -> Array:
 
 
 func _rw06_1_normalize_absolute_path(path: String) -> String:
-	var absolute_path := path if path.is_absolute_path() else ProjectSettings.globalize_path(path)
+	# Godot treats res:// and user:// as absolute virtual paths, but containment
+	# checks must compare them to the same native path form used by launcher-owned
+	# Windows evidence roots.
+	var virtual_path := path.begins_with("res://") or path.begins_with("user://")
+	var absolute_path := ProjectSettings.globalize_path(path) if virtual_path or not path.is_absolute_path() else path
 	return absolute_path.replace("\\", "/").simplify_path().trim_suffix("/")
 
 
@@ -727,8 +751,8 @@ func _rw06_1_validate_static_report(report: Dictionary) -> Dictionary:
 			"scenarios": 55,
 			"legal_hosts": 55,
 			"historical_exact_seeds": 22,
-			"base_scenario_conflicts": 0,
-			"base_base_conflicts": 0,
+			"fixed_scenario_conflicts": 0,
+			"fixed_fixed_conflicts": 0,
 		}
 		for key_value in exact_counts.keys():
 			var key := str(key_value)
@@ -2092,7 +2116,7 @@ func _rw06_1_remove_q008_source_images() -> Dictionary:
 	return _rw06_1_cleanup_paths(paths)
 
 
-func _run_rw06_1_slot_markers(library: Variant) -> void:
+func _run_rw06_1_slot_markers(library: Variant) -> bool:
 	var failures: Array = []
 	var surface_data := _rw06_1_read_json("res://data/environments/placement_surfaces.json")
 	var surface_maps := _array(surface_data.get("maps", []))
@@ -2111,6 +2135,8 @@ func _run_rw06_1_slot_markers(library: Variant) -> void:
 		surface_maps = selected_maps
 	if surface_maps.is_empty():
 		failures.append("Slot-marker capture could not load any physical placement maps.")
+	if not draft_mode and surface_maps.size() != RW06_1_SLOT_MARKER_MAP_COUNT:
+		failures.append("Slot-marker capture requires all %d physical placement maps; found %d." % [RW06_1_SLOT_MARKER_MAP_COUNT, surface_maps.size()])
 	surface_maps.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
 		return str(_dict(left_value).get("id", "")) < str(_dict(right_value).get("id", ""))
 	)
@@ -2156,8 +2182,20 @@ func _run_rw06_1_slot_markers(library: Variant) -> void:
 				continue
 			captures.append(captured)
 	var complete_set := failures.is_empty() and captures.size() == surface_maps.size()
+	var marker_sheet_path := "%s/slot_markers/all_maps_contact_sheet.png" % out_dir
+	var marker_sheet: Dictionary = {
+		"ok": false,
+		"path": marker_sheet_path,
+		"errors": ["Slot-marker source set is incomplete; contact sheet was not created."],
+	}
+	if complete_set and not draft_mode:
+		marker_sheet = _rw06_1_build_slot_marker_contact_sheet(captures, marker_sheet_path)
+		if not bool(marker_sheet.get("ok", false)):
+			failures.append_array(_array(marker_sheet.get("errors", [])))
+			complete_set = false
 	if not complete_set:
 		_rw06_1_remove_slot_marker_source_images(surface_maps)
+		_rw06_1_remove_slot_marker_file(marker_sheet_path)
 		captures.clear()
 	if draft_mode:
 		# The selected-map authoring loop is deliberately PNG-only. It is a visual
@@ -2170,41 +2208,41 @@ func _run_rw06_1_slot_markers(library: Variant) -> void:
 			"project_version": str(ProjectSettings.get_setting("application/config/version", "")),
 			"source_surface_data": "res://data/environments/placement_surfaces.json",
 			"source_surface_data_sha256": FileAccess.get_sha256("res://data/environments/placement_surfaces.json"),
-			"expected_map_count": surface_maps.size(),
+			"expected_map_count": RW06_1_SLOT_MARKER_MAP_COUNT,
 			"captured_map_count": captures.size(),
 			"capture_source": "production_root_viewport_texture_plus_capture_only_slot_overlay",
 			"post_processed": false,
 			"empty_room_interactable_count": 0,
 			"captures": captures,
 			"capture_attempts": capture_attempts,
+			"all_maps_contact_sheet": marker_sheet,
 			"passed": complete_set,
 			"fail_closed_zero_maps": not complete_set and captures.is_empty(),
 			"failures": failures,
 		}
 		_write_fix06_31_json("%s/slot_markers/slot_marker_manifest.json" % out_dir, report_payload)
 		print("RW06_1_SLOT_MARKERS maps=%d failures=%d out=%s" % [captures.size(), failures.size(), out_dir])
-	app.free()
-	app = null
-	await _settle(4)
-	quit(0 if complete_set else 1)
+	return complete_set
 
 
 func _rw06_1_prepare_base_map(surface_map: Dictionary, archetype: Dictionary, library: Variant) -> Dictionary:
 	var layer_id := str(surface_map.get("layer_id", ""))
-	if layer_id.is_empty():
-		var base_archetype := archetype
-		# Layered rooms retain an unqualified placement map for legacy saves that
-		# predate current_layer_id. Render that compatibility surface from the
-		# archetype's flat fields instead of silently selecting its default layer.
-		if not _dict(archetype.get("layers", {})).is_empty():
-			base_archetype = archetype.duplicate(true)
-			for metadata_key in ["layers", "default_layer_id", "layer_discovery_defaults", "compatibility_primary_layer_id", "environment_layer_schema_version"]:
-				base_archetype.erase(metadata_key)
-		return await _rw06_1_prepare_base_room(base_archetype, library)
+	var layers := _dict(archetype.get("layers", {}))
+	if layer_id.is_empty() and layers.is_empty():
+		return await _rw06_1_prepare_base_room(archetype, library)
+	# A layered archetype retains one unqualified compatibility map. Runtime
+	# intentionally resolves that old identity to compatibility_primary_layer_id;
+	# capture the same production background while overlaying the unqualified
+	# map's own slot geometry and keeping its map id in the marker manifest.
+	var capture_layer_id := layer_id
+	if capture_layer_id.is_empty():
+		capture_layer_id = str(archetype.get("compatibility_primary_layer_id", archetype.get("default_layer_id", ""))).strip_edges()
+	if capture_layer_id.is_empty() or not layers.has(capture_layer_id):
+		return {"ok": false, "errors": ["%s has no valid compatibility layer for its unqualified placement map." % str(archetype.get("id", ""))]}
 	var archetype_id := str(surface_map.get("archetype_id", archetype.get("id", "")))
 	var run_state: Variant = app.get("run_state")
-	var rng: Variant = run_state.create_rng("rw06_1_slot_markers:%s:%s" % [archetype_id, layer_id])
-	var environment: Variant = EnvironmentInstance.from_archetype_layer(archetype, layer_id, 1, rng, library, run_state.challenge_config)
+	var rng: Variant = run_state.create_rng("rw06_1_slot_markers:%s:%s" % [archetype_id, capture_layer_id])
+	var environment: Variant = EnvironmentInstance.from_archetype_layer(archetype, capture_layer_id, 1, rng, library, run_state.challenge_config)
 	var data: Dictionary = environment.to_dict()
 	data["world_node_id"] = archetype_id
 	data["layer_discovery"] = {"club": true, "casino": true, "back_room": true}
@@ -2217,8 +2255,8 @@ func _rw06_1_prepare_base_map(surface_map: Dictionary, archetype: Dictionary, li
 	app.call("_set_current_screen", "ENVIRONMENT")
 	app.call("_render_environment_screen")
 	await _settle(3)
-	if str(run_state.current_environment.get("current_layer_id", "")) != layer_id:
-		return {"ok": false, "errors": ["%s prepared layer %s but runtime rendered %s." % [archetype_id, layer_id, str(run_state.current_environment.get("current_layer_id", ""))]]}
+	if str(run_state.current_environment.get("current_layer_id", "")) != capture_layer_id:
+		return {"ok": false, "errors": ["%s prepared layer %s but runtime rendered %s." % [archetype_id, capture_layer_id, str(run_state.current_environment.get("current_layer_id", ""))]]}
 	return {"ok": true, "errors": []}
 
 
@@ -2310,6 +2348,102 @@ func _rw06_1_capture_slot_markers(surface_map: Dictionary, draft_mode: bool = fa
 	}
 
 
+func _rw06_1_build_slot_marker_contact_sheet(captures: Array, path: String) -> Dictionary:
+	var failures: Array = []
+	var cleanup := _rw06_1_remove_slot_marker_file(path)
+	failures.append_array(_array(cleanup.get("errors", [])))
+	if captures.size() != RW06_1_SLOT_MARKER_MAP_COUNT:
+		failures.append("Slot-marker contact sheet requires %d source maps; found %d." % [RW06_1_SLOT_MARKER_MAP_COUNT, captures.size()])
+	var column_count := mini(RW06_1_SLOT_MARKER_SHEET_COLUMNS, maxi(1, captures.size()))
+	var row_count := ceili(float(captures.size()) / float(column_count)) if not captures.is_empty() else 0
+	var expected_size := Vector2i(
+		RW06_1_SLOT_MARKER_CELL_SIZE.x * column_count,
+		RW06_1_SLOT_MARKER_CELL_SIZE.y * row_count
+	)
+	if not failures.is_empty() or expected_size.x <= 0 or expected_size.y <= 0:
+		return {
+			"ok": false,
+			"path": path,
+			"expected_size": _rw06_1_size_snapshot(expected_size),
+			"cells": [],
+			"errors": failures,
+		}
+	var sheet := Image.create(expected_size.x, expected_size.y, false, Image.FORMAT_RGBA8)
+	sheet.fill(Color("#10151f"))
+	var cells: Array = []
+	for index in range(captures.size()):
+		var capture := _dict(captures[index])
+		var source_path := str(capture.get("path", ""))
+		if source_path.is_empty() or not FileAccess.file_exists(source_path):
+			failures.append("Slot-marker contact source is missing for %s: %s." % [str(capture.get("map_id", "<unknown>")), source_path])
+			continue
+		var source := Image.load_from_file(source_path)
+		if source == null or source.is_empty():
+			failures.append("Slot-marker contact source could not be decoded: %s." % source_path)
+			continue
+		var source_size := Vector2i(source.get_width(), source.get_height())
+		source.resize(RW06_1_SLOT_MARKER_CELL_SIZE.x, RW06_1_SLOT_MARKER_CELL_SIZE.y, Image.INTERPOLATE_LANCZOS)
+		var column := index % column_count
+		var row := floori(float(index) / float(column_count))
+		var destination := Vector2i(
+			column * RW06_1_SLOT_MARKER_CELL_SIZE.x,
+			row * RW06_1_SLOT_MARKER_CELL_SIZE.y
+		)
+		sheet.blit_rect(source, Rect2i(Vector2i.ZERO, RW06_1_SLOT_MARKER_CELL_SIZE), destination)
+		_rw06_1_image_border(sheet, Rect2i(destination, RW06_1_SLOT_MARKER_CELL_SIZE), Color("#f5c451"), 3)
+		cells.append({
+			"map_id": str(capture.get("map_id", "")),
+			"archetype_id": str(capture.get("archetype_id", "")),
+			"layer_id": str(capture.get("layer_id", "")),
+			"source_path": source_path,
+			"source_sha256": str(capture.get("sha256", "")),
+			"source_size": _rw06_1_size_snapshot(source_size),
+			"rect": {
+				"x": destination.x,
+				"y": destination.y,
+				"w": RW06_1_SLOT_MARKER_CELL_SIZE.x,
+				"h": RW06_1_SLOT_MARKER_CELL_SIZE.y,
+			},
+		})
+	if not failures.is_empty() or cells.size() != captures.size():
+		var failed_cleanup := _rw06_1_remove_slot_marker_file(path)
+		failures.append_array(_array(failed_cleanup.get("errors", [])))
+		return {
+			"ok": false,
+			"path": path,
+			"expected_size": _rw06_1_size_snapshot(expected_size),
+			"cells": cells,
+			"errors": failures,
+		}
+	var save_error := sheet.save_png(path)
+	if save_error != OK:
+		failures.append("Slot-marker contact sheet could not be written to %s (%s)." % [path, error_string(save_error)])
+	var validation := _rw06_1_validate_png(path, expected_size) if save_error == OK else {
+		"ok": false,
+		"path": path,
+		"expected_size": _rw06_1_size_snapshot(expected_size),
+		"errors": ["Slot-marker contact sheet save failed before validation."],
+	}
+	if not bool(validation.get("ok", false)):
+		failures.append_array(_array(validation.get("errors", [])))
+	if not failures.is_empty():
+		var invalid_cleanup := _rw06_1_remove_slot_marker_file(path)
+		failures.append_array(_array(invalid_cleanup.get("errors", [])))
+	return {
+		"ok": failures.is_empty(),
+		"path": path,
+		"sha256": FileAccess.get_sha256(path) if failures.is_empty() else "",
+		"map_count": cells.size() if failures.is_empty() else 0,
+		"columns": column_count,
+		"rows": row_count,
+		"size": _rw06_1_size_snapshot(expected_size),
+		"expected_size": _rw06_1_size_snapshot(expected_size),
+		"image_validation": validation,
+		"cells": cells if failures.is_empty() else [],
+		"errors": failures,
+	}
+
+
 func _rw06_1_empty_room_snapshot(source: Dictionary) -> Dictionary:
 	var result := source.duplicate(true)
 	# A hidden overflow sentinel makes the composed interaction catalog authoritative
@@ -2348,7 +2482,7 @@ func _rw06_1_slot_marker_rows(surface_map: Dictionary, canvas: Variant) -> Dicti
 	var overlay_rows: Array = []
 	var seen_slot_ids: Dictionary = {}
 	var number := 1
-	for field_value in ["base_slots", "stage_slots", "exit_slots"]:
+	for field_value in ["fixed_slots", "event_slots", "scenario_slots", "exit_slots"]:
 		var field := str(field_value)
 		var slots := _array(surface_map.get(field, [])).duplicate(true)
 		slots.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
@@ -2396,7 +2530,7 @@ func _rw06_1_slot_marker_rows(surface_map: Dictionary, canvas: Variant) -> Dicti
 			})
 			number += 1
 	if manifest_rows.is_empty():
-		failures.append("%s has no base/stage/exit slots to mark." % str(surface_map.get("id", "")))
+		failures.append("%s has no fixed/event/scenario/exit slots to mark." % str(surface_map.get("id", "")))
 	return {"ok": failures.is_empty(), "manifest": manifest_rows, "overlay": overlay_rows, "errors": failures}
 
 
@@ -2439,6 +2573,7 @@ func _rw06_1_remove_slot_marker_file(path: String) -> Dictionary:
 
 func _rw06_1_remove_slot_marker_artifacts(surface_maps: Array) -> void:
 	_rw06_1_remove_slot_marker_source_images(surface_maps)
+	_rw06_1_remove_slot_marker_file("%s/slot_markers/all_maps_contact_sheet.png" % out_dir)
 	_rw06_1_remove_slot_marker_file("%s/slot_markers/slot_marker_manifest.json" % out_dir)
 
 

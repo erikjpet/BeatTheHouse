@@ -1,6 +1,6 @@
 {
-  "schema_version": 1,
-  "source": "postfix06_2 exact historical UIENV contract",
+  "schema_version": 2,
+  "source": "rw06_10 four-family exact historical UIENV contract",
   "legal_room_combinations": [
     {
       "seed": "POSTFIX-UIENV-009-4151570434",
@@ -8,7 +8,7 @@
       "scenario_id": "corner_store_delivery_day",
       "phase_id": "arrival",
       "base_event_id": "town_rumor_staff",
-      "base_slot_id": "base.staff_shopkeeper",
+      "event_slot_id": "event.counter_patron_2",
       "scenario_identity": "scenario::delivery_event_gate"
     }
   ],

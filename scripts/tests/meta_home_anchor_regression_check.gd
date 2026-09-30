@@ -1,6 +1,7 @@
 extends SceneTree
 
 const MetaServiceScript := preload("res://scripts/core/meta_collection_service.gd")
+const EnvironmentSlotBinderScript := preload("res://scripts/core/environment_slot_binder.gd")
 const TEST_STORE_PATH := "user://meta_home_anchor_regression.json"
 const TUTORIAL_ANCHOR_ID := "tutorial:meta_home_card_container"
 
@@ -35,6 +36,13 @@ func _run() -> void:
 	var run: Variant = app.get("run_state")
 	var placement_errors: Array = run.current_environment.get("layout", {}).get("placement_errors", []) if run != null else ["missing run"]
 	var ok := has_container and has_exit and anchor_valid and placement_errors.is_empty()
+	var binding_errors: Array = []
+	if not ok and run != null:
+		var controller: Variant = app.get("meta_session_controller")
+		var raw_objects: Array = controller.call("_home_interactable_objects", run, "", "", "") if controller != null else []
+		var layout: Dictionary = run.current_environment.get("layout", {})
+		var binding: Dictionary = EnvironmentSlotBinderScript.bind_base_records(run.current_environment, raw_objects, layout.get("slot_bindings", {}), {})
+		binding_errors = binding.get("errors", [])
 	app.queue_free()
 	await process_frame
 	_remove_test_store()
@@ -43,8 +51,8 @@ func _run() -> void:
 		print("META HOME CHECK container=true map_door=true tutorial_anchor=true placement_errors=0 ok=true")
 		quit(0)
 		return
-	printerr("META HOME CHECK container=%s map_door=%s tutorial_anchor=%s placement_errors=%s ok=false" % [
-		str(has_container), str(has_exit), str(anchor_valid), JSON.stringify(placement_errors),
+	printerr("META HOME CHECK container=%s map_door=%s tutorial_anchor=%s placement_errors=%s binding_errors=%s ok=false" % [
+		str(has_container), str(has_exit), str(anchor_valid), JSON.stringify(placement_errors), JSON.stringify(binding_errors),
 	])
 	quit(1)
 

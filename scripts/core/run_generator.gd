@@ -1002,6 +1002,14 @@ func _world_environment_data_for_node(run_state: RunState, map_data: Dictionary,
 	else:
 		_apply_world_travel_targets(environment_data, run_state, map_data, node_id)
 	_apply_scenario_sequence_travel_targets(environment_data, scenario)
+	# from_archetype seals a provisional manifest before town modifiers, generated
+	# machine state, and world routes are installed. This branch owns a freshly
+	# generated candidate, so that preliminary source digest is not persistence
+	# authority: rebuild it once from the complete trusted destination. Restored
+	# rooms take the branch above and retain their fail-closed manifest validation.
+	environment_data.erase("object_manifest")
+	environment_data.erase("object_manifest_digest")
+	environment_data.erase("object_manifest_revision")
 	environment_data["layout"] = EnvironmentInstance.ensure_generated_layout(environment_data, library)
 	_align_world_map_scenario_layout_baseline(environment_data)
 	if _world_environment_timing_enabled:

@@ -3010,23 +3010,40 @@ func _check_run_action_service_boundary(library: ContentLibrary, failures: Array
 	if item_definition.is_empty() or service_definition.is_empty() or lender_definition.is_empty():
 		failures.append("RunActionService boundary check needs item, service, and lender definitions.")
 		return
+	var fixture_archetype := _archetype_by_id(library, "corner_store")
+	if fixture_archetype.is_empty():
+		failures.append("RunActionService boundary check needs the Corner Store production archetype.")
+		return
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("RUN-ACTION-SERVICE")
 	run_state.bankroll = 200
-	run_state.current_environment = {
-		"id": "run_action_service_room",
-		"display_name": "Run Action Service Room",
-		"kind": "shop",
-		"archetype_id": "run_action_service_fixture",
-		"item_offers": [{
-			"id": str(item_definition.get("id", "")),
-			"display_name": str(item_definition.get("display_name", "")),
-			"price": 1,
-		}],
-		"service_ids": [str(service_definition.get("id", ""))],
-		"lender_hooks": [str(lender_definition.get("id", ""))],
-		"layout": {},
+	var item_id := str(item_definition.get("id", ""))
+	var service_id := str(service_definition.get("id", ""))
+	var lender_id := str(lender_definition.get("id", ""))
+	var fixture_offer := {
+		"id": item_id,
+		"display_name": str(item_definition.get("display_name", "")),
+		"price": 1,
 	}
+	var fixture_environment := EnvironmentInstance.from_archetype(
+		fixture_archetype,
+		1,
+		run_state.create_rng("run_action_service_room"),
+		library
+	).to_dict()
+	fixture_environment["id"] = "run_action_service_room"
+	fixture_environment["display_name"] = "Run Action Service Room"
+	fixture_environment["item_offers"] = [fixture_offer.duplicate(true)]
+	fixture_environment["service_ids"] = [service_id]
+	fixture_environment["lender_hooks"] = [lender_id]
+	fixture_environment["event_ids"] = []
+	# Test-specific membership changes cross the same manifest/layout seam used
+	# by production mutations before the room is installed.
+	fixture_environment["layout"] = EnvironmentInstance.ensure_generated_layout(fixture_environment, library)
+	var installation := run_state.set_environment(fixture_environment)
+	if not bool(installation.get("ok", false)):
+		failures.append("RunActionService boundary fixture could not install its generated room: %s" % JSON.stringify(installation.get("errors", [])))
+		return
 	run_state.environment_history = [{
 		"id": "run_action_service_previous_room",
 		"display_name": "Previous Room",
@@ -3037,26 +3054,24 @@ func _check_run_action_service_boundary(library: ContentLibrary, failures: Array
 	var resolver: RunActionService = RunActionServiceScript.new()
 	resolver.setup(library, run_state)
 
-	var item_id := str(item_definition.get("id", ""))
 	var purchase := resolver.buy_item_offer(item_id)
 	if not bool(purchase.get("ok", false)):
 		failures.append("RunActionService did not buy an item offer: %s" % str(purchase.get("message", "")))
 	elif not run_state.inventory.has(item_id) or not (run_state.current_environment.get("item_offers", []) as Array).is_empty():
 		failures.append("RunActionService item purchase did not add inventory and remove the offer.")
 
-	run_state.current_environment["item_offers"] = [{"id": item_id, "price": 1}]
+	run_state.current_environment["item_offers"] = [fixture_offer.duplicate(true)]
+	run_state.reconcile_current_environment_object_manifest(true)
 	var sale := resolver.sell_inventory_item(item_id)
 	if not bool(sale.get("ok", false)):
 		failures.append("RunActionService did not sell a sellable inventory item: %s" % str(sale.get("message", "")))
 	elif run_state.inventory.has(item_id):
 		failures.append("RunActionService item sale did not remove the sold item from inventory.")
 
-	var service_id := str(service_definition.get("id", ""))
 	var service_result := resolver.use_hook("service", service_id)
 	if bool(resolver.hook_option("service", service_id).get("mutation_supported", false)) and not bool(service_result.get("ok", false)):
 		failures.append("RunActionService did not resolve a supported service hook: %s" % str(service_result.get("message", "")))
 
-	var lender_id := str(lender_definition.get("id", ""))
 	var lender_result := resolver.use_hook("lender", lender_id)
 	if bool(resolver.hook_option("lender", lender_id).get("mutation_supported", false)) and not bool(lender_result.get("ok", false)):
 		failures.append("RunActionService did not resolve a supported lender hook: %s" % str(lender_result.get("message", "")))

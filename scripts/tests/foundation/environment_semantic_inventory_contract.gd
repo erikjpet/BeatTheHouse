@@ -4,6 +4,7 @@ const EnvironmentInstanceScript := preload("res://scripts/core/environment_insta
 const EnvironmentEventResolverScript := preload("res://scripts/core/environment_event_resolver.gd")
 const EnvironmentSemanticInventoryScript := preload("res://scripts/core/environment_semantic_inventory.gd")
 const EnvironmentBaseSemanticRecordsScript := preload("res://scripts/core/environment_base_semantic_records.gd")
+const EnvironmentObjectManifestScript := preload("res://scripts/core/environment_object_manifest.gd")
 const EnvironmentSlotBinderScript := preload("res://scripts/core/environment_slot_binder.gd")
 const OperationRegistryScript := preload("res://scripts/core/scenario_operation_registry.gd")
 
@@ -77,6 +78,7 @@ static func check(library: ContentLibrary, failures: Array) -> void:
 	_check_dynamic_actor_rejections(failures)
 	_check_noninteractive_actor_independence(failures)
 	_check_game_interactable_authority(library, failures)
+	_check_fixed_declaration_source_binding(failures)
 	_check_dynamic_interaction_revalidation(library, failures)
 	_check_casino_room_route_authority(library, failures)
 	_check_instance_source_binding(failures)
@@ -87,6 +89,7 @@ static func check(library: ContentLibrary, failures: Array) -> void:
 	_check_diagnostic_codes(library, failures)
 	_check_diagnostic_messages(library, failures)
 	_check_static_golden_examples(library, failures)
+	_check_manifest_scene_provenance(library, failures)
 	_check_exact_optional_absence(library, failures)
 	_check_exact_fixture_distinctions(library, failures)
 	_check_exact_collision_and_geometry(library, failures)
@@ -577,6 +580,86 @@ static func _check_dynamic_interaction_revalidation(library: ContentLibrary, fai
 			failures.append("Direct forged allowlisted dynamic interaction survived exact producer revalidation: %s." % JSON.stringify(hostile))
 
 
+static func _check_fixed_declaration_source_binding(failures: Array) -> void:
+	var environment := {
+		"id": "fixed_declaration_fixture_001",
+		"archetype_id": "fixed_declaration_fixture",
+		"world_node_id": "fixed_declaration_fixture",
+		"current_layer_id": "",
+		"layout": {"object_rects": {"character:nell": {"x": 0.1, "y": 0.1, "w": 0.1, "h": 0.2}}},
+		"game_ids": [],
+		"event_ids": [],
+		"item_offers": [],
+		"service_ids": [],
+		"lender_hooks": [],
+		"travel_hooks": [],
+		"next_archetypes": [],
+		"layer_ids": [],
+		"layer_transitions": [],
+		"semantic_zones": {},
+		"semantic_anchors": {},
+		"semantic_actors": [],
+	}
+	var surface_map := {
+		"fixed_objects": [{
+			"object_id": "fixed_declaration_fixture:nell",
+			"presentation_id": "character:nell",
+			"object_type": "character",
+			"placement_class": "behind_counter_person",
+			"exact_slot_id": "fixed.staff_nell",
+			"required": true,
+			"action_ids": ["event:town_rumor_staff"],
+		}],
+		"fixed_object_slot_ids": {"character:nell": "fixed.staff_nell"},
+		"object_family_ids": {"character:nell": "fixed"},
+	}
+	environment["object_manifest"] = EnvironmentObjectManifestScript.reconcile(environment, [], surface_map)
+	var record := _producer_presentation_record("character:nell", "character", "fixed_declaration_fixture:nell", "")
+	record["slot_family"] = "fixed"
+	record["exact_slot_id"] = "fixed.staff_nell"
+	record["manifest_object_id"] = "fixed_declaration_fixture:nell"
+	record["manifest_presentation_id"] = "character:nell"
+	record["manifest_family"] = "fixed"
+	record["manifest_source_kind"] = "environment_declaration"
+	record["manifest_source_id"] = "fixed_declaration_fixture:nell"
+	var stamped := EnvironmentBaseSemanticRecordsScript.stamp_interactable_records([record], environment, _semantic_library())
+	var stamped_record := _dict(_array(stamped.get("records", []))[0]) if _array(stamped.get("records", [])).size() == 1 else {}
+	if not bool(stamped.get("ok", false)) or str(stamped_record.get("owner_namespace", "")) != "base" \
+			or str(stamped_record.get("source_kind", "")) != "environment_declaration" \
+			or str(stamped_record.get("source_field", "")) != "fixed_objects" \
+			or str(stamped_record.get("source_record_id", "")) != "fixed_declaration_fixture:nell":
+		failures.append("Exact fixed declaration did not survive semantic source stamping: %s." % JSON.stringify(stamped))
+	var produced := EnvironmentBaseSemanticRecordsScript.from_interactable_records(_array(stamped.get("records", [])))
+	var interactions := _array(produced.get("interactions", []))
+	environment["scenario_base_interactions"] = interactions.duplicate(true)
+	var inventory := EnvironmentSemanticInventoryScript.for_instance(environment, _semantic_library(), interactions)
+	var inventory_errors := EnvironmentSemanticInventoryScript.validate(inventory)
+	var binding_errors := EnvironmentSemanticInventoryScript.validate_instance_binding(inventory, environment)
+	var fixed_record := _record_for(inventory, "interactions", "base::character:nell")
+	if not bool(produced.get("ok", false)) or interactions.size() != 1 \
+			or not inventory_errors.is_empty() or not binding_errors.is_empty() \
+			or str(fixed_record.get("source_kind", "")) != "environment_declaration" \
+			or str(fixed_record.get("source_field", "")) != "fixed_objects" \
+			or str(fixed_record.get("source_record_id", "")) != "fixed_declaration_fixture:nell":
+		failures.append("Exact fixed declaration did not survive the full semantic inventory pipeline: produced=%s inventory_errors=%s binding_errors=%s record=%s." % [JSON.stringify(produced), JSON.stringify(inventory_errors), JSON.stringify(binding_errors), JSON.stringify(fixed_record)])
+	if interactions.size() == 1:
+		for hostile_patch in [
+			{"source_kind": "environment_declaration", "source_field": "fixed_objects", "source_record_id": "fixed_declaration_fixture:forged"},
+			{"source_kind": "environment_declaration", "source_field": "forged_objects", "source_record_id": "fixed_declaration_fixture:nell"},
+			{"source_kind": "environment_instance_ui", "source_field": "layout.object_rects", "source_record_id": "character:nell"},
+		]:
+			var hostile_interaction := _dict(interactions[0]).duplicate(true)
+			for hostile_key in _dict(hostile_patch).keys():
+				hostile_interaction[hostile_key] = _dict(hostile_patch).get(hostile_key)
+			var hostile_inventory := EnvironmentSemanticInventoryScript.for_instance(environment, _semantic_library(), [hostile_interaction])
+			if EnvironmentSemanticInventoryScript.validate(hostile_inventory).is_empty():
+				failures.append("Fixed declaration semantic inventory accepted forged provenance: %s." % JSON.stringify(hostile_patch))
+	var forged := record.duplicate(true)
+	forged["manifest_source_id"] = "fixed_declaration_fixture:forged"
+	if bool(EnvironmentBaseSemanticRecordsScript.stamp_interactable_records([forged], environment, _semantic_library()).get("ok", true)):
+		failures.append("Fixed declaration semantic stamping accepted a forged manifest source identity.")
+
+
 static func _game_interactable_pipeline(presentation_record: Dictionary, environment_value: Dictionary, library: Variant) -> Dictionary:
 	var stamped := EnvironmentBaseSemanticRecordsScript.stamp_interactable_records([presentation_record], environment_value, library)
 	if not bool(stamped.get("ok", false)) or _array(stamped.get("records", [])).size() != 1:
@@ -739,7 +822,7 @@ static func _check_casino_room_route_authority(library: ContentLibrary, failures
 		var rendered_provenance := _dict(_dict(inventory.get("provenance", {})).get("interactions|%s" % rendered_identity, {}))
 		if str(route_provenance.get("source_field", "")) != "local_narrative_flags.casino_room_targets" or str(route_provenance.get("source_record_id", "")) != room_id or str(rendered_provenance.get("source_kind", "")) != "environment_instance_ui" or str(rendered_provenance.get("source_record_id", "")) != room_id:
 			failures.append("Grand Casino room %s lost exact room-target provenance." % room_id)
-	_check_casino_room_route_overflow_authority(environment, library, room_ids, failures)
+	_check_casino_room_route_slot_authority(environment, library, room_ids, failures)
 	var missing_interaction := interactions.duplicate(true)
 	for index in range(missing_interaction.size() - 1, -1, -1):
 		if str(_dict(missing_interaction[index]).get("presentation_object_id", "")) == str(expected_room_interaction_ids[0]):
@@ -824,87 +907,76 @@ static func _check_casino_room_route_authority(library: ContentLibrary, failures
 		failures.append("Post-seal casino room layout mutation retained stale semantic authority.")
 
 
-static func _check_casino_room_route_overflow_authority(environment: Dictionary, library: Variant, room_ids: Array, failures: Array) -> void:
-	var overflow_environment := environment.duplicate(true)
-	var overflow_layout := (overflow_environment.get("layout", {}) as Dictionary).duplicate(true)
-	var slot_authority := EnvironmentSlotBinderScript.validate_base_layout_authority(overflow_environment)
+static func _check_casino_room_route_slot_authority(environment: Dictionary, library: Variant, room_ids: Array, failures: Array) -> void:
+	var slot_environment := environment.duplicate(true)
+	var slot_layout := _dict(slot_environment.get("layout", {}))
+	var slot_authority := EnvironmentSlotBinderScript.validate_base_layout_authority(slot_environment)
 	if not bool(slot_authority.get("ok", false)):
-		failures.append("Production Grand Casino generation did not retain valid fixed-slot authority: %s" % JSON.stringify(slot_authority.get("errors", [])))
+		failures.append("Production Grand Casino generation did not retain valid four-family slot authority: %s" % JSON.stringify(slot_authority.get("errors", [])))
 		return
-	# Round 3 deliberately restores the illustrated High Limit doorway to the
-	# room. Keep the geometry-free overflow guarantee on whichever remaining
-	# abstract casino route is displaced by the single authored exit.
-	var expected_overflow_id := ""
-	var overflow_ids := overflow_layout.get("slot_overflow_ids", []) as Array
+	if not _array(slot_layout.get("slot_overflow_ids", [])).is_empty():
+		failures.append("Production Grand Casino retained removed overflow membership instead of authored exit slots.")
+		return
+	var bindings := _dict(slot_layout.get("slot_bindings", {}))
+	var rects := _dict(slot_layout.get("object_rects", {}))
 	for room_id_value in room_ids:
-		var candidate_id := "travel:%s" % str(room_id_value)
-		if overflow_ids.has(candidate_id):
-			expected_overflow_id = candidate_id
-			break
-	if expected_overflow_id.is_empty():
-		failures.append("Production Grand Casino generation exposed no abstract room-route overflow control.")
-		return
-	var authoritative := EnvironmentBaseSemanticRecordsScript.authoritative_interactable_records(overflow_environment, library)
-	var stamped := EnvironmentBaseSemanticRecordsScript.stamp_interactable_records(_array(authoritative.get("records", [])), overflow_environment, library)
+		var presentation_id := "travel:%s" % str(room_id_value)
+		var binding := _dict(bindings.get(presentation_id, {}))
+		if str(binding.get("presentation_mode", "")) != "room" \
+				or str(binding.get("slot_family", "")) != "exit" \
+				or not str(binding.get("slot_id", "")).begins_with("exit.") \
+				or not rects.has(presentation_id):
+			failures.append("Grand Casino room route %s did not receive exact exit-family room geometry." % presentation_id)
+	var authoritative := EnvironmentBaseSemanticRecordsScript.authoritative_interactable_records(slot_environment, library)
+	var stamped := EnvironmentBaseSemanticRecordsScript.stamp_interactable_records(_array(authoritative.get("records", [])), slot_environment, library)
 	var produced := EnvironmentBaseSemanticRecordsScript.from_interactable_records(_array(stamped.get("records", [])))
 	var interactions := _array(produced.get("interactions", []))
-	var inventory := EnvironmentSemanticInventoryScript.for_instance(overflow_environment, library, interactions)
-	var overflow_interaction: Dictionary = {}
-	for interaction_value in interactions:
-		var interaction := _dict(interaction_value)
-		if str(interaction.get("presentation_object_id", "")) == expected_overflow_id:
-			overflow_interaction = interaction
-			break
-	var bounds := _dict(overflow_interaction.get("hit_bounds", {}))
+	var inventory := EnvironmentSemanticInventoryScript.for_instance(slot_environment, library, interactions)
 	if not bool(authoritative.get("ok", false)) or not bool(stamped.get("ok", false)) or not bool(produced.get("ok", false)) \
-			or not EnvironmentSemanticInventoryScript.validate(inventory).is_empty() \
-			or str(overflow_interaction.get("presentation_mode", "")) != "overflow" \
-			or overflow_interaction.has("normalized_hit_rect") \
-			or float(bounds.get("w", 0.0)) < OperationRegistryScript.MIN_TARGET_SIZE \
-			or float(bounds.get("h", 0.0)) < OperationRegistryScript.MIN_TARGET_SIZE:
-		failures.append("Authenticated Grand Casino room-route overflow did not remain geometry-free and accessible: %s" % JSON.stringify(_array(authoritative.get("errors", [])) + _array(stamped.get("errors", [])) + _array(produced.get("errors", [])) + _array(inventory.get("errors", []))))
+			or not EnvironmentSemanticInventoryScript.validate(inventory).is_empty():
+		failures.append("Authenticated Grand Casino exit-family routes did not seal into exact inventory: %s" % JSON.stringify(_array(authoritative.get("errors", [])) + _array(stamped.get("errors", [])) + _array(produced.get("errors", [])) + _array(inventory.get("errors", []))))
 		return
+	for room_id_value in room_ids:
+		var presentation_id := "travel:%s" % str(room_id_value)
+		var interaction: Dictionary = {}
+		for interaction_value in interactions:
+			if str(_dict(interaction_value).get("presentation_object_id", "")) == presentation_id:
+				interaction = _dict(interaction_value)
+				break
+		var bounds := _dict(interaction.get("hit_bounds", {}))
+		if interaction.is_empty() or str(interaction.get("presentation_mode", "room")) != "room" \
+				or not _json_equal(interaction.get("normalized_hit_rect", {}), rects.get(presentation_id, {})) \
+				or float(bounds.get("w", 0.0)) < OperationRegistryScript.MIN_TARGET_SIZE \
+				or float(bounds.get("h", 0.0)) < OperationRegistryScript.MIN_TARGET_SIZE:
+			failures.append("Grand Casino room route %s lost accessible exact slot geometry." % presentation_id)
 	var resolved := OperationRegistryScript.resolve_interactions(interactions, [])
 	if not bool(resolved.get("ok", false)):
-		failures.append("Closed interaction resolver rejected authenticated overflow presentation_mode: %s" % JSON.stringify(resolved.get("errors", [])))
-	var unknown_mode := interactions.duplicate(true)
-	for index in range(unknown_mode.size()):
-		if str(_dict(unknown_mode[index]).get("presentation_object_id", "")) == expected_overflow_id:
-			var hostile := _dict(unknown_mode[index])
-			hostile["presentation_mode"] = "floating"
-			unknown_mode[index] = hostile
-	if bool(OperationRegistryScript.resolve_interactions(unknown_mode, []).get("ok", true)):
-		failures.append("Closed interaction resolver accepted an unknown presentation_mode.")
+		failures.append("Closed interaction resolver rejected authenticated room presentation_mode: %s" % JSON.stringify(resolved.get("errors", [])))
+	var target_id := "travel:%s" % str(room_ids[0])
 	var forged_mode := interactions.duplicate(true)
 	for index in range(forged_mode.size()):
-		if str(_dict(forged_mode[index]).get("presentation_object_id", "")) == expected_overflow_id:
+		if str(_dict(forged_mode[index]).get("presentation_object_id", "")) == target_id:
 			var hostile := _dict(forged_mode[index])
-			hostile["presentation_mode"] = "room"
+			hostile["presentation_mode"] = "overflow"
+			hostile.erase("normalized_hit_rect")
 			forged_mode[index] = hostile
-	if bool(OperationRegistryScript.resolve_interactions(forged_mode, []).get("ok", true)) \
-			or EnvironmentSemanticInventoryScript.validate(EnvironmentSemanticInventoryScript.for_instance(overflow_environment, library, forged_mode)).is_empty():
-		failures.append("Grand Casino overflow route accepted a forged room presentation mode.")
-	var forged_membership := overflow_environment.duplicate(true)
+	if EnvironmentSemanticInventoryScript.validate(EnvironmentSemanticInventoryScript.for_instance(slot_environment, library, forged_mode)).is_empty():
+		failures.append("Grand Casino room route accepted a forged overflow presentation mode.")
+	var forged_membership := slot_environment.duplicate(true)
 	var forged_layout := (forged_membership.get("layout", {}) as Dictionary).duplicate(true)
 	var forged_ids := (forged_layout.get("slot_overflow_ids", []) as Array).duplicate(true)
-	var room_presentation_id := ""
-	for room_id_value in room_ids:
-		var candidate_id := "travel:%s" % str(room_id_value)
-		if candidate_id != expected_overflow_id:
-			room_presentation_id = candidate_id
-			break
-	forged_ids.append(room_presentation_id)
+	forged_ids.append(target_id)
 	forged_ids.sort()
 	forged_layout["slot_overflow_ids"] = forged_ids
 	forged_membership["layout"] = forged_layout
 	if EnvironmentSemanticInventoryScript.validate(EnvironmentSemanticInventoryScript.for_instance(forged_membership, library, interactions)).is_empty():
-		failures.append("Grand Casino room-route sealing accepted forged overflow membership.")
+		failures.append("Grand Casino exit-family route sealing accepted forged overflow membership.")
 	var missing_interaction := interactions.duplicate(true)
 	for index in range(missing_interaction.size() - 1, -1, -1):
-		if str(_dict(missing_interaction[index]).get("presentation_object_id", "")) == expected_overflow_id:
+		if str(_dict(missing_interaction[index]).get("presentation_object_id", "")) == target_id:
 			missing_interaction.remove_at(index)
-	if EnvironmentSemanticInventoryScript.validate(EnvironmentSemanticInventoryScript.for_instance(overflow_environment, library, missing_interaction)).is_empty():
-		failures.append("Grand Casino overflow route survived without its matching rendered interaction.")
+	if EnvironmentSemanticInventoryScript.validate(EnvironmentSemanticInventoryScript.for_instance(slot_environment, library, missing_interaction)).is_empty():
+		failures.append("Grand Casino exit-family route survived without its matching rendered interaction.")
 
 
 static func _check_consumed_dynamic_source_binding(failures: Array) -> void:
@@ -1225,6 +1297,63 @@ static func _check_exact_optional_absence(library: ContentLibrary, failures: Arr
 		failures.append("Exact inventory retained every optional bar game instead of reflecting selected instance state.")
 	if not _array(exact.get("interactions", [])).is_empty():
 		failures.append("Saved game ids alone incorrectly proved final rendered interaction geometry.")
+
+
+static func _check_manifest_scene_provenance(library: ContentLibrary, failures: Array) -> void:
+	var environment := _generated_environment(library, "bar", {}, 7299)
+	var inventory := EnvironmentSemanticInventoryScript.for_instance(environment, library)
+	var validation := EnvironmentSemanticInventoryScript.validate(inventory)
+	if not validation.is_empty():
+		failures.append("Manifest-backed scene-object inventory was invalid: %s" % JSON.stringify(validation))
+		return
+	var durable_rows: Array = []
+	for row_value in _array(_dict(environment.get("object_manifest", {})).get("rows", [])):
+		var row := _dict(row_value)
+		if bool(row.get("active", false)) and bool(row.get("physical", false)) and str(row.get("family", "")) != "scenario":
+			durable_rows.append(row)
+	if durable_rows.is_empty():
+		failures.append("Generated manifest provenance fixture had no durable physical rows.")
+		return
+	var records := _array(inventory.get("records", []))
+	var provenance := _dict(inventory.get("provenance", {}))
+	var first_scene_key := ""
+	for row_value in durable_rows:
+		var row := _dict(row_value)
+		var presentation_id := str(row.get("presentation_object_id", ""))
+		var scene_record: Dictionary = {}
+		for record_value in records:
+			var record := _dict(record_value)
+			if str(record.get("collection", "")) == "scene_objects" and str(record.get("presentation_object_id", "")) == presentation_id:
+				scene_record = record
+				break
+		if scene_record.is_empty():
+			failures.append("Exact semantic inventory omitted manifest scene object %s." % presentation_id)
+			continue
+		var scene_key := "scene_objects|%s" % str(scene_record.get("owned_identity", ""))
+		var source := _dict(provenance.get(scene_key, {}))
+		if str(source.get("source_field", "")) != "object_manifest.rows" \
+				or str(source.get("source_record_id", "")) != str(row.get("instance_object_id", "")) \
+				or not _dict(source.get("record", {})).is_empty() \
+				or not _dict(scene_record.get("record", {})).is_empty():
+			failures.append("Manifest scene object %s lost its exact closed row provenance." % presentation_id)
+		if first_scene_key.is_empty():
+			first_scene_key = scene_key
+	if first_scene_key.is_empty():
+		return
+	# The row body is sealed once in source_provenance.object_manifest_authority;
+	# per-target provenance must remain payload-free even after an attacker
+	# correctly rehashes the outer inventory envelope.
+	var forged := inventory.duplicate(true)
+	forged["provenance"][first_scene_key]["record"] = {"forged": true}
+	for record_index in range(_array(forged.get("records", [])).size()):
+		var record := _dict(forged["records"][record_index])
+		if "scene_objects|%s" % str(record.get("owned_identity", "")) == first_scene_key:
+			record["record"] = {"forged": true}
+			forged["records"][record_index] = record
+			break
+	forged["digest"] = EnvironmentSemanticInventoryScript._digest(forged)
+	if EnvironmentSemanticInventoryScript.validate(forged).is_empty():
+		failures.append("A correctly rehashed manifest scene object admitted an unauthorized nested provenance payload.")
 
 
 static func _check_exact_fixture_distinctions(library: ContentLibrary, failures: Array) -> void:

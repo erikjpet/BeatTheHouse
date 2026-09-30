@@ -1108,6 +1108,7 @@ static func _check_lifecycle_finalization(library: ContentLibrary, failures: Arr
 	definition["sequence"]["expiry"] = {"boundary": "night_end", "after": 1, "policy": "cleanup"}
 	definition["sequence"]["sequence_signature"] = SequenceSchemaScript.calculated_signature_hash(definition)
 	var run_state := RunStateScript.new()
+	run_state.start_new("ENV06_6-LIFECYCLE-FINALIZATION")
 	run_state.current_environment = {
 		"id": "bar_001", "archetype_id": "bar", "world_node_id": "bar_node", "environment_visit_id": "visit_1",
 		"scenario_sequence_definition": definition,
@@ -1121,6 +1122,7 @@ static func _check_lifecycle_finalization(library: ContentLibrary, failures: Arr
 	# Lifecycle finalization consumes the same immutable slot/label authority as
 	# the production room UI. A hand-written object_rect alone is no longer a
 	# complete base presentation contract.
+	run_state.reconcile_current_environment_object_manifest()
 	run_state.current_environment["layout"] = EnvironmentInstanceScript.ensure_generated_layout(run_state.current_environment, library)
 	var production_records := EnvironmentBaseSemanticRecordsScript.authoritative_interactable_records(run_state.current_environment, library)
 	if not bool(production_records.get("ok", false)):
@@ -1148,10 +1150,12 @@ static func _check_lifecycle_finalization(library: ContentLibrary, failures: Arr
 	# reentry policy; it is not a failed initialization merely because its status
 	# is already cleaned.
 	var expiring_source := RunStateScript.new()
+	expiring_source.start_new("ENV06_6-LIFECYCLE-FINALIZATION")
 	expiring_source.current_environment = run_state.current_environment.duplicate(true)
 	var expiry := expiring_source.scenario_sequence_apply_expiry_boundary("night_end", 1)
 	var cleaned_state := _dict(expiring_source.current_environment.get("scenario_sequence_state", {}))
 	var revisit_host := RunStateScript.new()
+	revisit_host.start_new("ENV06_6-LIFECYCLE-FINALIZATION")
 	var installed_revisit := revisit_host.set_environment(expiring_source.current_environment.duplicate(true))
 	revisit_host.current_environment["scenario_sequence_pending_visit_id"] = "visit_2"
 	var revisit_finalized := revisit_host.scenario_finalize_base_semantics([presentation], library)
@@ -1213,6 +1217,7 @@ static func _check_lifecycle_finalization(library: ContentLibrary, failures: Arr
 		var valid_overlay_state := _dict(valid_overlay_environment.get("scenario_sequence_state", {}))
 		var valid_overlay_descriptor := SequenceRuntimeScript._command_descriptor(valid_overlay_state, definition, "scenario", "command_console", "prepare")
 		var valid_overlay_run := RunStateScript.new()
+		valid_overlay_run.start_new("ENV06_6-LIFECYCLE-FINALIZATION")
 		valid_overlay_run.current_environment = valid_overlay_environment
 		valid_overlay_run.bankroll = 10
 		var valid_overlay_result := valid_overlay_run.scenario_sequence_command(
@@ -1240,6 +1245,7 @@ static func _check_lifecycle_finalization(library: ContentLibrary, failures: Arr
 			if str(_dict(complication_scene.get("scenario::fixture_100", {})).get("state", "")) != "blocked" or float(normal_rect.get("w", 0.0)) <= 0.0 or float(normal_rect.get("h", 0.0)) <= 0.0 or float(small_rect.get("w", 0.0)) <= 0.0 or float(small_rect.get("h", 0.0)) <= 0.0:
 				failures.append("Authenticated lifecycle command did not apply the complication fixture state with sealed normal and expanded small-screen authority.")
 	var cost_run := RunStateScript.new()
+	cost_run.start_new("ENV06_6-LIFECYCLE-FINALIZATION")
 	cost_run.current_environment = valid_authority_environment.duplicate(true)
 	cost_run.bankroll = 10
 	var cost_state := _dict(cost_run.current_environment.get("scenario_sequence_state", {}))
@@ -1293,16 +1299,19 @@ static func _check_lifecycle_finalization(library: ContentLibrary, failures: Arr
 		str(cost_descriptor.get("action_origin_fingerprint", ""))
 	)
 	var phase_conflict_run := RunStateScript.new()
+	phase_conflict_run.start_new("ENV06_6-LIFECYCLE-FINALIZATION")
 	phase_conflict_run.from_dict(cost_run.to_dict())
 	phase_conflict_run.scenario_finalize_base_semantics([disabled_presentation], library)
 	phase_conflict_run.current_environment["scenario_sequence_state"]["command_receipt_records"][0]["envelope"]["expected_phase"] = "forged_phase"
 	var phase_conflict := phase_conflict_run.scenario_sequence_command("prepare", "run_state:cost:once", {}, "scenario", "command_console", cost_host_availability, str(cost_descriptor.get("action_origin_owner_namespace", "")), str(cost_descriptor.get("action_origin_stable_object_id", "")), str(cost_descriptor.get("action_origin_receipt_key", "")), str(cost_descriptor.get("action_origin_boundary_id", "")), str(cost_descriptor.get("action_origin_fingerprint", "")))
 	var cost_conflict_run := RunStateScript.new()
+	cost_conflict_run.start_new("ENV06_6-LIFECYCLE-FINALIZATION")
 	cost_conflict_run.from_dict(cost_run.to_dict())
 	cost_conflict_run.scenario_finalize_base_semantics([disabled_presentation], library)
 	cost_conflict_run.current_environment["scenario_sequence_state"]["command_receipt_records"][0]["causal_action_descriptor"]["action"]["cost"] = 3
 	var cost_conflict := cost_conflict_run.scenario_sequence_command("prepare", "run_state:cost:once", {}, "scenario", "command_console", cost_host_availability, str(cost_descriptor.get("action_origin_owner_namespace", "")), str(cost_descriptor.get("action_origin_stable_object_id", "")), str(cost_descriptor.get("action_origin_receipt_key", "")), str(cost_descriptor.get("action_origin_boundary_id", "")), str(cost_descriptor.get("action_origin_fingerprint", "")))
 	var handler_conflict_run := RunStateScript.new()
+	handler_conflict_run.start_new("ENV06_6-LIFECYCLE-FINALIZATION")
 	handler_conflict_run.from_dict(cost_run.to_dict())
 	handler_conflict_run.scenario_finalize_base_semantics([disabled_presentation], library)
 	handler_conflict_run.current_environment["scenario_sequence_state"]["command_receipt_records"][0]["causal_action_descriptor"]["action"]["inputs"]["amount"] = 2
@@ -1314,6 +1323,7 @@ static func _check_lifecycle_finalization(library: ContentLibrary, failures: Arr
 	downstream_definition["sequence"]["phase_graph"]["phases"][1]["entry_conditions"] = [{"type": "local_min", "key": "pressure", "value": 5}]
 	downstream_definition["sequence"]["sequence_signature"] = SequenceSchemaScript.calculated_signature_hash(downstream_definition)
 	var downstream_run := RunStateScript.new()
+	downstream_run.start_new("ENV06_6-LIFECYCLE-FINALIZATION")
 	downstream_run.current_environment = valid_authority_environment.duplicate(true)
 	downstream_run.current_environment["scenario_sequence_definition"] = downstream_definition
 	downstream_run.bankroll = 10
@@ -1331,12 +1341,14 @@ static func _check_lifecycle_finalization(library: ContentLibrary, failures: Arr
 	if bool(downstream_failure.get("ok", true)) or downstream_run.bankroll != 10:
 		failures.append("A command rejected by a downstream phase boundary still charged its authored action cost.")
 	var refresh_failure_run := RunStateScript.new()
+	refresh_failure_run.start_new("ENV06_6-LIFECYCLE-FINALIZATION")
 	refresh_failure_run.current_environment = valid_authority_environment.duplicate(true)
 	var refresh_journal_before := SequenceRuntimeScript.content_fingerprint(refresh_failure_run.current_environment.get("scenario_sequence_state", {}))
 	var failed_refresh := refresh_failure_run.scenario_finalize_base_semantics([presentation, presentation], library)
 	if bool(failed_refresh.get("ok", true)) or refresh_failure_run.current_environment.has("scenario_semantic_ready") or SequenceRuntimeScript.content_fingerprint(refresh_failure_run.current_environment.get("scenario_sequence_state", {})) != refresh_journal_before:
 		failures.append("Failed live semantic refresh did not invalidate readiness while preserving the durable journal byte-for-byte.")
 	var invalidation_run := RunStateScript.new()
+	invalidation_run.start_new("ENV06_6-LIFECYCLE-FINALIZATION")
 	invalidation_run.current_environment = run_state.current_environment.duplicate(true)
 	var durable_before_invalidation := SequenceRuntimeScript.content_fingerprint(invalidation_run.current_environment.get("scenario_sequence_state", {}))
 	var invalidation_result := invalidation_run._invalidate_scenario_semantic_proof("fixture source changed")
@@ -1347,6 +1359,7 @@ static func _check_lifecycle_finalization(library: ContentLibrary, failures: Arr
 	night_definition["sequence"]["expiry"] = {"boundary": "night_end", "after": 3, "policy": "resume"}
 	night_definition["sequence"]["sequence_signature"] = SequenceSchemaScript.calculated_signature_hash(night_definition)
 	var night_run := RunStateScript.new()
+	night_run.start_new("ENV06_6-LIFECYCLE-FINALIZATION")
 	night_run.current_environment = run_state.current_environment.duplicate(true)
 	for ephemeral_key in ["scenario_sequence_state", "scenario_sequence_projection", "scenario_semantic_ready", "scenario_semantic_inventory", "scenario_semantic_inventory_version", "scenario_semantic_digest", "scenario_semantic_action_digest", "scenario_base_interactions", "scenario_base_actors", "scenario_base_producer_context"]: night_run.current_environment.erase(ephemeral_key)
 	night_run.current_environment["scenario_sequence_definition"] = night_definition
@@ -1363,6 +1376,7 @@ static func _check_lifecycle_finalization(library: ContentLibrary, failures: Arr
 	if not bool(night_finalized.get("ok", false)) or not bool(first_midnight.get("ok", false)) or first_expiry_progress != 0 or not bool(no_midnight.get("ok", false)) or before_no_midnight != after_no_midnight or not bool(multi_midnight.get("ok", false)) or int(night_state.get("expiry_progress", -1)) != 0 or bool(night_state.get("expired", false)):
 		failures.append("Midnight changed situation progress before the venue completed a close/reopen cycle.")
 	var failing_clock := RunStateScript.new()
+	failing_clock.start_new("ENV06_6-LIFECYCLE-FINALIZATION")
 	failing_clock.current_environment = run_state.current_environment.duplicate(true)
 	var failing_clock_definition := definition.duplicate(true)
 	failing_clock_definition["sequence"]["expiry"] = {"boundary": "night_end", "after": 1, "policy": "cleanup"}
@@ -1375,6 +1389,7 @@ static func _check_lifecycle_finalization(library: ContentLibrary, failures: Arr
 	if not bool(failed_clock.get("ok", false)) or failing_clock.game_clock_minutes != 1440 or JSON.stringify(failing_clock.current_environment) != failing_clock_environment_before:
 		failures.append("Midnight invoked obsolete situation cleanup instead of preserving the live venue state.")
 	var failing_travel := RunStateScript.new()
+	failing_travel.start_new("ENV06_6-LIFECYCLE-FINALIZATION")
 	failing_travel.current_environment = run_state.current_environment.duplicate(true)
 	var failing_travel_definition := failing_clock_definition.duplicate(true)
 	failing_travel_definition["sequence"]["expiry"]["boundary"] = "leave"
@@ -1388,6 +1403,7 @@ static func _check_lifecycle_finalization(library: ContentLibrary, failures: Arr
 	capacity_definition["sequence"]["expiry"] = {"boundary": "leave", "after": 2, "policy": "resume"}
 	capacity_definition["sequence"]["sequence_signature"] = SequenceSchemaScript.calculated_signature_hash(capacity_definition)
 	var capacity_run := RunStateScript.new()
+	capacity_run.start_new("ENV06_6-LIFECYCLE-FINALIZATION")
 	capacity_run.current_environment = valid_authority_environment.duplicate(true)
 	capacity_run.current_environment["scenario_sequence_definition"] = capacity_definition
 	capacity_run.world_map = {
@@ -1543,7 +1559,19 @@ static func _check_lifecycle_finalization(library: ContentLibrary, failures: Arr
 	if not bool(production_projection.get("ok", false)) or projected_console.is_empty() or str(projected_console.get("object_type", "")) != "scenario_sequence" or typeof(projected_console.get("focus_rect")) != TYPE_RECT2 or projected_console.get("focus_rect", Rect2()) == Rect2(0.1, 0.1, 0.12, 0.18) or _array(projected_console.get("scenario_sequence_actions", [])).size() != 2 or str(projected_console.get("scenario_layout_authority_identity", "")) != "scenario::command_console" or str(production_projection.get("layout_authority_digest", "")).length() != 64:
 		failures.append("Final semantic interaction projection did not materialize the scenario command surface in the room UI.")
 	if projected_scene.is_empty() or str(projected_scene.get("object_type", "")) != "scenario_scene_object" or not bool(projected_scene.get("interactive", false)) or not _array(projected_scene.get("scenario_sequence_actions", [])).is_empty():
-		failures.append("Final semantic projection did not materialize scenario scene objects alongside interactions.")
+		var projected_ids: Array = []
+		for projected_value in projected_records:
+			if typeof(projected_value) == TYPE_DICTIONARY:
+				projected_ids.append(str((projected_value as Dictionary).get("object_id", "")))
+		failures.append("Final semantic projection did not materialize scenario scene objects alongside interactions: scene=%s ids=%s projection_errors=%s" % [
+			JSON.stringify(projected_scene),
+			JSON.stringify(projected_ids),
+			JSON.stringify({
+				"errors": _array(production_projection.get("errors", [])),
+				"scene_keys": _dict(_dict(_dict(production_projection.get("projection", {})).get("semantic_state", {})).get("scene_objects", {})).keys(),
+				"authority_keys": _dict(production_projection.get("layout_authority", {})).keys(),
+			}),
+		])
 	var missing_layout_projection := EnvironmentInteractionControllerScript.project_sequence_interaction_result(_array(finalized.get("records", [])), run_state.scenario_sequence_projection())
 	var missing_layout_records := _array(missing_layout_projection.get("records", []))
 	if bool(missing_layout_projection.get("ok", true)) or _record_by_object_id(missing_layout_records, "game:slot").is_empty() \
@@ -1592,14 +1620,16 @@ static func _check_lifecycle_finalization(library: ContentLibrary, failures: Arr
 	var donor_environment := run_state.current_environment.duplicate(true)
 	donor_environment["id"] = "bar_donor"
 	donor_environment["world_node_id"] = "donor_node"
+	donor_environment["layout"] = EnvironmentInstanceScript.ensure_generated_layout(donor_environment, library)
 	var donor_inventory := EnvironmentSemanticInventoryScript.for_instance(
 		donor_environment,
 		library,
-		_array(run_state.current_environment.get("scenario_base_interactions", [])),
-		_array(run_state.current_environment.get("scenario_base_actors", []))
+		_array(donor_environment.get("scenario_base_interactions", [])),
+		_array(donor_environment.get("scenario_base_actors", []))
 	)
-	if not EnvironmentSemanticInventoryScript.validate(donor_inventory).is_empty():
-		failures.append("Valid sealed-inventory transplant fixture could not build its donor proof.")
+	var donor_inventory_errors := EnvironmentSemanticInventoryScript.validate(donor_inventory)
+	if not donor_inventory_errors.is_empty():
+		failures.append("Valid sealed-inventory transplant fixture could not build its donor proof: %s" % JSON.stringify(donor_inventory_errors))
 	else:
 		transplant.current_environment["scenario_semantic_inventory"] = donor_inventory
 		transplant.current_environment["scenario_semantic_inventory_version"] = int(donor_inventory.get("schema_version", 0))
@@ -5380,6 +5410,13 @@ static func finalization_fixture_definition() -> Dictionary:
 		"enabled": true,
 	}
 	var arrival_scene_ops := _array(arrival.get("scene_ops", []))
+	for operation_index in range(arrival_scene_ops.size()):
+		var operation := _dict(arrival_scene_ops[operation_index])
+		if str(operation.get("stable_object_id", "")) == "fixture_100":
+			var fixture_object := _dict(operation.get("object", {}))
+			fixture_object["icon_key"] = "room_hazard"
+			operation["object"] = fixture_object
+			arrival_scene_ops[operation_index] = operation
 	arrival_scene_ops.append(command_visual)
 	arrival["scene_ops"] = arrival_scene_ops
 	phases[0] = arrival

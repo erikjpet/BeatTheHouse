@@ -83,6 +83,7 @@
                     "visible": true,
                     "enabled": true,
                     "state": "waiting",
+                    "icon_key": "trunk_offer",
                     "appearance": "sealed_package"
                   }
                 }
@@ -372,7 +373,7 @@
           "owner_feedback",
           "environment_composition"
         ],
-        "sequence_signature": "1477ac8e86db26addd1b404cb9007db56af16e94a70e6ef8da66f17b67c53b8e",
+        "sequence_signature": "177c94237956675adae6501336233fbb9dc7f2a646b1a65aa84ece8c4666b7eb",
         "owner_exceptions": [
           {
             "row": "world_connection",

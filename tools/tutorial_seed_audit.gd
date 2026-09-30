@@ -12,7 +12,10 @@ const PullTabsScript := preload("res://scripts/games/pull_tabs.gd")
 const BlackjackAuthorityTestDriverScript := preload("res://scripts/tests/foundation/blackjack_authority_test_driver.gd")
 
 const DEFAULT_OUTPUT_DIR := "res://.tmp/tutorial_rework"
-const AUDIT_DURATION_BUDGET_MSEC := 180000.0
+# The 100-seed sweep now builds and validates the complete four-family object
+# manifest for every generated environment. Keep the full census while
+# rebaselining its audit-only wall budget on the reference machine.
+const AUDIT_DURATION_BUDGET_MSEC := 300000.0
 
 var library
 var failures: Array = []

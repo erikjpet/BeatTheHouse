@@ -3,6 +3,14 @@ extends RefCounted
 
 const SURFACE_MAP_PATH := "res://data/environments/placement_surfaces.json"
 const DeveloperPlacementStoreScript := preload("res://scripts/core/developer_placement_store.gd")
+const SLOT_SCHEMA_VERSION := 2
+const SLOT_FAMILIES := ["fixed", "event", "scenario", "exit"]
+const SLOT_COLLECTIONS := {
+	"fixed": "fixed_slots",
+	"event": "event_slots",
+	"scenario": "scenario_slots",
+	"exit": "exit_slots",
+}
 const CLASSES := [
 	"standing_person", "behind_counter_person", "seated_person", "group",
 	"floor_fixture", "ground_marker", "surface_item", "shop_item", "wall_mounted",
@@ -19,7 +27,7 @@ const HANGING_TOKENS := ["banner", "hanging", "speaker rig", "string light"]
 const DOOR_TOKENS := ["door", "exit", "gangway", "leave"]
 const GROUND_TOKENS := ["chalk", "lane", "mark", "spill", "tape"]
 const SURFACE_TOKENS := ["basket", "card", "case", "desk", "drink", "glass", "item", "ledger", "manifest", "note", "provenance", "table", "ticket", "tray", "watch"]
-const PERSON_EVENT_PROPS := ["bar_patron", "casino_host", "clerk_counter", "clerk_talk", "host_station", "patron", "pit_boss", "rowdy_patron", "staff"]
+const PERSON_EVENT_PROPS := ["bar_patron", "casino_host", "clerk_counter", "clerk_talk", "host_station", "patron", "patron_talk", "pit_boss", "rowdy_patron", "staff"]
 const WALL_EVENT_PROPS := ["security_camera"]
 const DOOR_EVENT_PROPS := ["motel_door", "side_door"]
 const SURFACE_EVENT_PROPS := ["card_table", "paper_note", "room_refreshment", "table"]
@@ -50,6 +58,13 @@ static func classify(object_data: Dictionary, object_type: String = "", object_i
 	var clean_prop := visual_prop.strip_edges().to_lower()
 	if clean_prop.is_empty():
 		clean_prop = str(object_data.get("visual_prop", object_data.get("environment_prop", ""))).strip_edges().to_lower()
+	# Event speakers describe who narrates or owns an interaction, not always the
+	# physical object that receives it.  Concrete table props remain furniture
+	# even when a staff/crew speaker supplies the dialogue (The Live Table is the
+	# canonical case); otherwise the speaker role incorrectly wins below and
+	# consumes behind-counter person capacity.
+	if clean_type == "event" and clean_prop in ["card_table", "table"]:
+		return "floor_fixture"
 	var person_semantics := "%s %s %s %s %s %s" % [
 		object_id, clean_type, clean_prop, str(object_data.get("role", "")),
 		str(object_data.get("pose", "")), str(object_data.get("appearance", "")),
@@ -201,7 +216,24 @@ static func surface_map_by_id(archetype_id: String, layer_id: String = "") -> Di
 	return surface_map({"archetype_id": archetype_id, "current_layer_id": layer_id})
 
 
-# Object-placement authoring adds its legacy object/category overrides here.
+static func slots_for_family(surface_data: Dictionary, family: String) -> Array:
+	var collection := str(SLOT_COLLECTIONS.get(family, ""))
+	return _array(surface_data.get(collection, [])).duplicate(true) if not collection.is_empty() else []
+
+
+static func all_slots(surface_data: Dictionary) -> Array:
+	var result: Array = []
+	for family in SLOT_FAMILIES:
+		result.append_array(slots_for_family(surface_data, str(family)))
+	return result
+
+
+static func slot_family(slot: Dictionary) -> String:
+	var family := str(slot.get("kind", "")).strip_edges()
+	var slot_id := str(slot.get("id", "")).strip_edges()
+	return family if family in SLOT_FAMILIES and slot_id.begins_with("%s." % family) else ""
+
+
 # Reusable slot geometry is already live through surface_map(), so locked slot
 # moves persist when the overlay is disabled and in newly generated rooms.
 static func authoring_surface_map(environment: Dictionary) -> Dictionary:
@@ -211,28 +243,12 @@ static func authoring_surface_map(environment: Dictionary) -> Dictionary:
 # Applies developer-authored positions as the final authored slot layer. This
 # changes placement inputs only; it never touches run state, visibility, or RNG.
 static func _with_developer_slots(environment: Dictionary, surface_data: Dictionary) -> Dictionary:
-	var base_overrides := DeveloperPlacementStoreScript.slot_overrides(environment, "object_slot_positions")
-	var scenario_overrides := DeveloperPlacementStoreScript.slot_overrides(environment, "scenario_object_slot_positions")
-	var category_overrides := DeveloperPlacementStoreScript.slot_overrides(environment, "category_slot_positions")
 	var slot_overrides := DeveloperPlacementStoreScript.slot_overrides(environment, "slot_positions")
-	if base_overrides.is_empty() and scenario_overrides.is_empty() and category_overrides.is_empty() and slot_overrides.is_empty():
+	if slot_overrides.is_empty():
 		return surface_data
 	# Never modify the cached authored surface map. A local override must remain
 	# scoped to its room and must disappear immediately when Reset clears it.
 	var result := _with_slot_geometry(surface_data.duplicate(true), slot_overrides)
-	for field in ["object_slot_positions", "scenario_object_slot_positions"]:
-		var overrides := base_overrides if field == "object_slot_positions" else scenario_overrides
-		if overrides.is_empty():
-			continue
-		var slots := _dict(result.get(field, {})).duplicate(true)
-		slots.merge(overrides, true)
-		result[field] = slots
-	# These parallel maps retain provenance. The generated-layout pass uses them
-	# to distinguish deliberate free placement from legacy authored coordinates
-	# that still need physical-surface recovery.
-	result["developer_object_slot_positions"] = base_overrides.duplicate(true)
-	result["developer_scenario_object_slot_positions"] = scenario_overrides.duplicate(true)
-	result["developer_category_slot_positions"] = category_overrides.duplicate(true)
 	result["developer_slot_positions"] = slot_overrides.duplicate(true)
 	return result
 
@@ -241,10 +257,12 @@ static func _with_developer_slots(environment: Dictionary, surface_data: Diction
 # Save to Project controls whether that same authority ships in future builds;
 # it is not an activation step for the local authoring session.
 static func _with_runtime_slot_geometry(environment: Dictionary, surface_data: Dictionary) -> Dictionary:
-	return _with_slot_geometry(
-		surface_data,
-		DeveloperPlacementStoreScript.slot_overrides(environment, "slot_positions")
-	)
+	var overrides := DeveloperPlacementStoreScript.slot_overrides(environment, "slot_positions")
+	if overrides.is_empty():
+		return surface_data
+	var result := _with_slot_geometry(surface_data, overrides)
+	result["developer_slot_positions"] = overrides.duplicate(true)
+	return result
 
 
 # A slot move is a rigid translation. Its stable id, class, size, support and
@@ -254,7 +272,7 @@ static func _with_slot_geometry(surface_data: Dictionary, overrides: Dictionary)
 	if overrides.is_empty():
 		return surface_data
 	var result := surface_data.duplicate(true)
-	for field in ["base_slots", "stage_slots", "exit_slots"]:
+	for field in SLOT_COLLECTIONS.values():
 		var translated: Array = []
 		for slot_value in _array(result.get(field, [])):
 			var slot := _dict(slot_value).duplicate(true)
@@ -384,11 +402,57 @@ static func _ensure_surface_maps() -> void:
 	file.close()
 	if typeof(parsed) != TYPE_DICTIONARY:
 		return
-	for map_value in _array(_dict(parsed).get("maps", [])):
+	var root := _dict(parsed)
+	if int(root.get("schema_version", 0)) != 3 or int(root.get("slot_schema_version", 0)) != SLOT_SCHEMA_VERSION:
+		return
+	for map_value in _array(root.get("maps", [])):
 		var map_data := _dict(map_value)
 		var map_id := str(map_data.get("id", ""))
-		if not map_id.is_empty():
+		if not map_id.is_empty() and _surface_map_v2_valid(map_data):
 			_surface_maps[map_id] = map_data
+
+
+static func _surface_map_v2_valid(map_data: Dictionary) -> bool:
+	if int(map_data.get("slot_schema_version", 0)) != SLOT_SCHEMA_VERSION:
+		return false
+	var seen: Dictionary = {}
+	var fixed_slot_ids: Dictionary = {}
+	for family in SLOT_FAMILIES:
+		var collection := str(SLOT_COLLECTIONS.get(family, ""))
+		if typeof(map_data.get(collection)) != TYPE_ARRAY:
+			return false
+		for slot_value in _array(map_data.get(collection, [])):
+			var slot := _dict(slot_value)
+			var slot_id := str(slot.get("id", "")).strip_edges()
+			if slot_id.is_empty() or seen.has(slot_id) or not slot_id.begins_with("%s." % family) \
+					or str(slot.get("kind", "")) != family or str(slot.get("footprint_class", "")) not in CLASSES:
+				return false
+			seen[slot_id] = family
+			if family == "fixed":
+				fixed_slot_ids[slot_id] = true
+	for family in SLOT_FAMILIES:
+		for suffix in ["object_slot_ids", "category_slot_ids"]:
+			var field := "%s_%s" % [family, suffix]
+			if typeof(map_data.get(field)) != TYPE_DICTIONARY:
+				return false
+			for slot_id_value in _dict(map_data.get(field, {})).values():
+				if str(seen.get(str(slot_id_value), "")) != family:
+					return false
+	if typeof(map_data.get("object_family_ids")) != TYPE_DICTIONARY or typeof(map_data.get("fixed_objects")) != TYPE_ARRAY:
+		return false
+	for family_value in _dict(map_data.get("object_family_ids", {})).values():
+		if str(family_value) not in SLOT_FAMILIES:
+			return false
+	var fixed_object_ids: Dictionary = {}
+	for declaration_value in _array(map_data.get("fixed_objects", [])):
+		var declaration := _dict(declaration_value)
+		var object_id := str(declaration.get("object_id", declaration.get("instance_object_id", ""))).strip_edges()
+		var exact_slot_id := str(declaration.get("exact_slot_id", "")).strip_edges()
+		if object_id.is_empty() or fixed_object_ids.has(object_id) or not fixed_slot_ids.has(exact_slot_id) \
+				or typeof(declaration.get("required")) != TYPE_BOOL or typeof(declaration.get("action_ids")) != TYPE_ARRAY:
+			return false
+		fixed_object_ids[object_id] = true
+	return true
 
 
 static func _contact_point(rect: Rect2, placement_class: String) -> Vector2:

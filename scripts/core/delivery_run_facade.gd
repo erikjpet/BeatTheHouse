@@ -85,6 +85,7 @@ func _delivery_begin(spec: Dictionary) -> Dictionary:
 		return {"ok": false, "message": "Finish the route already under your coat."}
 	if not _run.has_world_map():
 		return {"ok": false, "message": "There is no real town route for that job."}
+	var rollback_run: Dictionary = _run.to_dict()
 	var resolved_targets := _delivery_resolve_targets(spec)
 	if not bool(resolved_targets.get("ok", false)):
 		return {"ok": false, "message": str(resolved_targets.get("message", "That route cannot be offered tonight."))}
@@ -104,6 +105,10 @@ func _delivery_begin(spec: Dictionary) -> Dictionary:
 	active_delivery_run = state
 	if str(JsonCoerceScript._copy_dict(delivery_snapshot().get("physical", {})).get("cargo_state", "")) == DeliveryRunModelScript.CARGO_CARRIED:
 		_delivery_add_inventory_cargo()
+	var membership: Dictionary = _run.prepare_current_environment_object_membership_for_publication()
+	if not bool(membership.get("ok", false)):
+		_run.from_dict(rollback_run)
+		return {"ok": false, "message": _membership_error(membership, "That route cannot be placed in this room safely."), "errors": JsonCoerceScript._copy_array(membership.get("errors", []))}
 	var target := JsonCoerceScript._copy_dict(JsonCoerceScript._copy_array(delivery_snapshot().get("targets", []))[0])
 	var message := "The route is marked. Find %s at %s." % [str(target.get("contact_label", "the marked contact")), str(target.get("label", "the destination"))]
 	if str(active_delivery_run.get("deadline_kind", DeliveryRunModelScript.DEADLINE_ACTIONS)) == DeliveryRunModelScript.DEADLINE_CLOCK:
@@ -126,7 +131,8 @@ func delivery_physical_interactions() -> Array:
 	var node_id = _run.current_world_node_id()
 	if node_id.is_empty() or node_id != str(physical.get("position_node_id", "")):
 		return []
-	var result: Array = []
+	var package_verbs: Array = []
+	var hold_verbs: Array = []
 	for verb_value in JsonCoerceScript._copy_array(physical.get("available_verbs", [])):
 		var verb := str(verb_value)
 		# Only a package physically present in the room is a room object. Route
@@ -143,24 +149,50 @@ func delivery_physical_interactions() -> Array:
 			and not _delivery_target_room_blocked() \
 			and _delivery_pending_target_at(node_id).size() > 0 \
 			and verb in ["wait", "signal", "break_hold"]
-		if verb not in ["pickup", "retrieve"] and not target_hold_action:
-			continue
-		var label := str({
-			"pickup": "Take the package", "wait": "Hold Sightline", "duck": "Duck into cover",
-			"stash": "Stash the package", "retrieve": "Retrieve the package", "ditch": "Ditch the package",
-			"signal": "Send Signal", "break_hold": "Break Hold",
-		}.get(verb, verb.replace("_", " ").capitalize()))
-		if verb == "retrieve":
-			label = "The Package"
-		result.append({
-			"object_id": "delivery:%s:%s" % [verb, node_id],
-			"node_id": node_id,
-			"verb": verb,
-			"label": label,
-			"cargo_label": str(active_delivery_run.get("cargo_label", "Crew package")),
-			"message": "This acts on the route here, at %s." % node_id.replace("_", " ").capitalize(),
-		})
+		if verb in ["pickup", "retrieve"]:
+			package_verbs.append(verb)
+		elif target_hold_action:
+			hold_verbs.append(verb)
+	var result: Array = []
+	if not package_verbs.is_empty():
+		result.append(_delivery_physical_host(node_id, "package", package_verbs))
+	if not hold_verbs.is_empty():
+		result.append(_delivery_physical_host(node_id, "hold", hold_verbs))
 	return result
+
+
+func _delivery_physical_host(node_id: String, host_kind: String, verbs: Array) -> Dictionary:
+	var labels := {
+		"pickup": "Take the package", "wait": "Hold Sightline", "duck": "Duck into cover",
+		"stash": "Stash the package", "retrieve": "Retrieve the package", "ditch": "Ditch the package",
+		"signal": "Send Signal", "break_hold": "Break Hold",
+	}
+	var actions: Array = []
+	for verb_value in verbs:
+		var verb := str(verb_value).strip_edges()
+		if verb.is_empty():
+			continue
+		actions.append({
+			"id": "delivery_physical_action",
+			"verb": verb,
+			"label": str(labels.get(verb, verb.replace("_", " ").capitalize())),
+			"message": _delivery_physical_action_message(verb),
+		})
+	var primary_verb := "wait" if verbs.has("wait") else str(verbs[0])
+	var primary_label := str(labels.get(primary_verb, primary_verb.replace("_", " ").capitalize()))
+	if primary_verb == "retrieve":
+		primary_label = "The Package"
+	return {
+		"object_id": "delivery:%s:%s" % [host_kind, node_id],
+		"host_kind": host_kind,
+		"node_id": node_id,
+		"verb": primary_verb,
+		"verbs": verbs.duplicate(),
+		"actions": actions,
+		"label": primary_label,
+		"cargo_label": str(active_delivery_run.get("cargo_label", "Crew package")),
+		"message": "This route has a physical anchor here, at %s." % node_id.replace("_", " ").capitalize(),
+	}
 
 
 func delivery_top_actions() -> Array:
@@ -234,6 +266,10 @@ func delivery_apply_physical_action(verb: String, idempotency_key: String) -> Di
 	if not bool(applied.get("ok", false)):
 		_run.from_dict(rollback_run)
 		return {"ok": false, "message": "The street consequence could not be committed.", "errors": JsonCoerceScript._copy_array(applied.get("errors", []))}
+	var membership: Dictionary = _run.prepare_current_environment_object_membership_for_publication()
+	if not bool(membership.get("ok", false)):
+		_run.from_dict(rollback_run)
+		return {"ok": false, "message": _membership_error(membership, "The street object could not be updated safely."), "errors": JsonCoerceScript._copy_array(membership.get("errors", []))}
 	return {"ok": true, "resolved": not delivery_has_active_run(), "snapshot": delivery_snapshot(), "message": str(_delivery_physical_action_message(action))}
 
 
@@ -310,6 +346,10 @@ func delivery_complete_handoff(node_id: String = "") -> Dictionary:
 		_run.from_dict(rollback_run)
 		var apply_errors := JsonCoerceScript._copy_array(applied.get("errors", []))
 		return {"ok": false, "message": str(apply_errors[0]) if not apply_errors.is_empty() else "The delivery consequence could not be committed.", "errors": apply_errors}
+	var membership: Dictionary = _run.prepare_current_environment_object_membership_for_publication()
+	if not bool(membership.get("ok", false)):
+		_run.from_dict(rollback_run)
+		return {"ok": false, "message": _membership_error(membership, "The handoff could not update the room safely."), "errors": JsonCoerceScript._copy_array(membership.get("errors", []))}
 	var receipt := JsonCoerceScript._copy_dict(active_delivery_run.get("receipt", {}))
 	var handoff_message := str(receipt.get("payment_note", "The package changes hands. Nothing else does."))
 	return {"ok": true, "resolved": not delivery_has_active_run(), "snapshot": delivery_snapshot(), "message": handoff_message}
@@ -351,6 +391,10 @@ func delivery_abandon(_reason: String = "abandoned") -> Dictionary:
 	if not bool(applied.get("ok", false)):
 		_run.from_dict(rollback_run)
 		return {"ok": false, "message": "The route could not be closed safely.", "errors": JsonCoerceScript._copy_array(applied.get("errors", []))}
+	var membership: Dictionary = _run.prepare_current_environment_object_membership_for_publication()
+	if not bool(membership.get("ok", false)):
+		_run.from_dict(rollback_run)
+		return {"ok": false, "message": _membership_error(membership, "The route could not clear its room objects safely."), "errors": JsonCoerceScript._copy_array(membership.get("errors", []))}
 	return {"ok": true, "resolved": true, "snapshot": delivery_snapshot(), "message": "The route closes without you."}
 
 
@@ -390,6 +434,13 @@ func delivery_resolve_travel_arrival(route: Dictionary = {}, route_risk: Diction
 			)
 			if JSON.stringify(active_delivery_run) == before_room_move:
 				return {"ok": false, "resolved": false, "snapshot": delivery_snapshot(), "errors": ["delivery model rejected the authenticated local-room arrival"]}
+			var room_membership: Dictionary = _run.prepare_current_environment_object_membership_for_publication()
+			if not bool(room_membership.get("ok", false)):
+				_run.from_dict(rollback_run)
+				_run.current_environment = rollback_environment
+				_run.world_map = rollback_world_map
+				_run.grand_casino_room_states = rollback_room_states
+				return {"ok": false, "resolved": false, "snapshot": delivery_snapshot(), "errors": JsonCoerceScript._copy_array(room_membership.get("errors", []))}
 		return {
 			"ok": true,
 			"resolved": false,
@@ -425,6 +476,13 @@ func delivery_resolve_travel_arrival(route: Dictionary = {}, route_risk: Diction
 		# that could only fail again.
 		var resolution := JsonCoerceScript._copy_dict(active_delivery_run.get("resolution", {}))
 		var reason := str(resolution.get("reason", "failed"))
+		var resolved_membership: Dictionary = _run.prepare_current_environment_object_membership_for_publication()
+		if not bool(resolved_membership.get("ok", false)):
+			_run.from_dict(rollback_run)
+			_run.current_environment = rollback_environment
+			_run.world_map = rollback_world_map
+			_run.grand_casino_room_states = rollback_room_states
+			return {"ok": false, "resolved": false, "snapshot": delivery_snapshot(), "errors": JsonCoerceScript._copy_array(resolved_membership.get("errors", []))}
 		return {
 			"ok": true,
 			"resolved": true,
@@ -442,7 +500,20 @@ func delivery_resolve_travel_arrival(route: Dictionary = {}, route_risk: Diction
 		_run.world_map = rollback_world_map
 		_run.grand_casino_room_states = rollback_room_states
 		return {"ok": false, "resolved": false, "snapshot": delivery_snapshot(), "errors": ["delivery model rejected the authoritative travel arrival"]}
-	_run._apply_delivery_resolution()
+	var applied: Dictionary = _run._apply_delivery_resolution()
+	if not bool(applied.get("ok", false)):
+		_run.from_dict(rollback_run)
+		_run.current_environment = rollback_environment
+		_run.world_map = rollback_world_map
+		_run.grand_casino_room_states = rollback_room_states
+		return {"ok": false, "resolved": false, "snapshot": delivery_snapshot(), "errors": JsonCoerceScript._copy_array(applied.get("errors", []))}
+	var membership: Dictionary = _run.prepare_current_environment_object_membership_for_publication()
+	if not bool(membership.get("ok", false)):
+		_run.from_dict(rollback_run)
+		_run.current_environment = rollback_environment
+		_run.world_map = rollback_world_map
+		_run.grand_casino_room_states = rollback_room_states
+		return {"ok": false, "resolved": false, "snapshot": delivery_snapshot(), "errors": JsonCoerceScript._copy_array(membership.get("errors", []))}
 	return {
 		"ok": true,
 		"resolved": not delivery_has_active_run(),
@@ -450,6 +521,11 @@ func delivery_resolve_travel_arrival(route: Dictionary = {}, route_risk: Diction
 		"route_id": str(route.get("id", route.get("target_node_id", node_id))),
 		"snapshot": delivery_snapshot(),
 	}
+
+
+func _membership_error(result: Dictionary, fallback: String) -> String:
+	var errors := JsonCoerceScript._copy_array(result.get("errors", []))
+	return str(errors[0]) if not errors.is_empty() else fallback
 
 
 func _delivery_required_target_archetype_id() -> String:

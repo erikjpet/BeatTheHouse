@@ -245,6 +245,14 @@ static func _check_plan_a(library: ContentLibrary, failures: Array) -> void:
 	_move(run, "grand_casino", library, failures)
 	if not _array(run.current_environment.get("event_ids", [])).has("heist_live_table"):
 		failures.append("Plan A did not mount its production crew event at the designated table.")
+	var live_table_row := _manifest_row(run.current_environment, "event:heist_live_table")
+	var live_table_binding := _dict(_dict(_dict(run.current_environment.get("layout", {})).get("slot_bindings", {})).get("event:heist_live_table", {}))
+	if str(live_table_row.get("family", "")) != "scenario" \
+			or str(live_table_row.get("placement_class", "")) != "floor_fixture" \
+			or str(live_table_row.get("spot_field", "")) != "runtime_object_manifest_entries" \
+			or str(live_table_binding.get("slot_family", "")) != "scenario" \
+			or not str(live_table_binding.get("slot_id", "")).begins_with("scenario.floor_item_"):
+		failures.append("Plan A's production Live Table did not mount through its trusted scenario-family floor-fixture projection.")
 	var live_table := EventModuleScript.new()
 	live_table.setup(library.event("heist_live_table"), library)
 	# The release route mounts the Live Table directly on its first decision.
@@ -254,6 +262,12 @@ static func _check_plan_a(library: ContentLibrary, failures: Array) -> void:
 	mid_window.from_dict(run.to_dict())
 	if JSON.stringify(mid_window.crew_heist_snapshot()) != JSON.stringify(run.crew_heist_snapshot()):
 		failures.append("Plan A save/load changed the live action-boundary window.")
+	var restored_live_table_row := _manifest_row(mid_window.current_environment, "event:heist_live_table")
+	var restored_live_table_binding := _dict(_dict(_dict(mid_window.current_environment.get("layout", {})).get("slot_bindings", {})).get("event:heist_live_table", {}))
+	if str(restored_live_table_row.get("family", "")) != "scenario" \
+			or str(restored_live_table_row.get("spot_field", "")) != "runtime_object_manifest_entries" \
+			or str(restored_live_table_binding.get("slot_family", "")) != "scenario":
+		failures.append("Plan A save/load did not rebuild the trusted Live Table physical projection.")
 	HarnessProductionFidelityScript.finalize_arrival(mid_window, library, failures, "Plan A restored live-table window")
 	if _choice_ids(live_table.choices(run, run.current_environment)).has("distraction_sit"):
 		failures.append("Plan A allowed its second decision before the first live-table round boundary.")
@@ -813,6 +827,15 @@ static func _choice_ids(choices: Array) -> Array:
 	for value in choices:
 		result.append(str(_dict(value).get("id", "")))
 	return result
+
+
+static func _manifest_row(environment: Dictionary, object_id: String) -> Dictionary:
+	for row_value in _array(_dict(environment.get("object_manifest", {})).get("rows", [])):
+		var row := _dict(row_value)
+		if bool(row.get("active", false)) and bool(row.get("physical", false)) \
+				and str(row.get("presentation_object_id", row.get("object_id", ""))) == object_id:
+			return row
+	return {}
 
 
 static func _terminal_route(route: String) -> RunState:

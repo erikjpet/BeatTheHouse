@@ -26,6 +26,8 @@ static func snapshot_signature(run_state: RunState) -> String:
 		str(environment.get("next_archetypes", [])),
 		str(environment.get("travel_hooks", [])),
 		str(environment.get("object_fixtures", [])),
+		str(environment.get("object_manifest_revision", JsonCoerceScript._copy_dict(environment.get("object_manifest", {})).get("revision", 0))),
+		str(environment.get("object_manifest_digest", JsonCoerceScript._copy_dict(environment.get("object_manifest", {})).get("digest", ""))),
 		str(environment.get("current_layer_id", "")),
 		str(environment.get("layer_discovery", {})),
 		str(environment.get("layer_ambient_line", "")),
@@ -65,6 +67,9 @@ static func environment_snapshot(run_state: RunState, data: Dictionary) -> Dicti
 	# The room canvas is a read-only presentation surface. Machine state can
 	# contain large masks/decks and is neither rendered nor mutated here.
 	var snapshot := RunState.environment_context_snapshot(run_state.current_environment)
+	snapshot["object_manifest"] = JsonCoerceScript._copy_dict(run_state.current_environment.get("object_manifest", {}))
+	snapshot["object_manifest_revision"] = int(run_state.current_environment.get("object_manifest_revision", JsonCoerceScript._copy_dict(snapshot.get("object_manifest", {})).get("revision", 0)))
+	snapshot["object_manifest_digest"] = str(run_state.current_environment.get("object_manifest_digest", JsonCoerceScript._copy_dict(snapshot.get("object_manifest", {})).get("digest", "")))
 	var recent_result: Dictionary = data.get("recent_result", {})
 	var recent_deltas: Dictionary = recent_result.get("deltas", {})
 	snapshot["suspicion_level"] = run_state.suspicion_level()
@@ -543,6 +548,7 @@ static func make_interactable_object(source: Dictionary, selection: Dictionary) 
 		"route_points": JsonCoerceScript._copy_array(source.get("route_points", [])),
 		"presentation_mode": str(source.get("presentation_mode", "room")),
 		"slot_id": str(source.get("slot_id", "")),
+		"slot_family": str(source.get("slot_family", source.get("manifest_family", ""))),
 		"placement_class": str(source.get("placement_class", "")),
 		"small_screen_rect": JsonCoerceScript._copy_dict(source.get("small_screen_rect", {})),
 		"label_rect": JsonCoerceScript._copy_dict(source.get("label_rect", {})),
@@ -556,6 +562,18 @@ static func make_interactable_object(source: Dictionary, selection: Dictionary) 
 		"surface": str(source.get("surface", "")),
 		"icon_key": str(source.get("icon_key", "")),
 		"asset_path": str(source.get("asset_path", "")),
+		"manifest_object_id": str(source.get("manifest_object_id", source.get("object_manifest_id", ""))),
+		"manifest_presentation_id": str(source.get("manifest_presentation_id", "")),
+		"manifest_family": str(source.get("manifest_family", source.get("slot_family", ""))),
+		"manifest_source_kind": str(source.get("manifest_source_kind", "")),
+		"manifest_source_id": str(source.get("manifest_source_id", "")),
+		"manifest_exact_slot_id": str(source.get("manifest_exact_slot_id", "")),
+		"manifest_required": bool(source.get("manifest_required", false)),
+		"manifest_physical": bool(source.get("manifest_physical", false)),
+		"manifest_render_key": str(source.get("manifest_render_key", "")),
+		"manifest_action_ids": JsonCoerceScript._copy_array(source.get("manifest_action_ids", [])),
+		"manifest_metadata": JsonCoerceScript._copy_dict(source.get("manifest_metadata", {})),
+		"slot_binding_source_id": str(source.get("slot_binding_source_id", "")),
 		"unique_object_class": str(source.get("unique_object_class", "")).strip_edges(),
 		"unique_object_priority": int(source.get("unique_object_priority", 0)),
 		"allow_duplicate_unique_class": bool(source.get("allow_duplicate_unique_class", false)),
@@ -637,20 +655,6 @@ static func interaction_rect_for_object(object_id: String, object_type: String, 
 	# A missing fixed binding is overflow, never permission to synthesize a
 	# coordinate from a legacy category array or fallback grid.
 	return Rect2()
-
-
-static func authored_interaction_rect(object_type: String, index: int, layout: Dictionary) -> Rect2:
-	var field_name := layout_spot_field_name(object_type)
-	var spots: Variant = layout.get(field_name, [])
-	if field_name.is_empty() or typeof(spots) != TYPE_ARRAY or index < 0 or index >= (spots as Array).size():
-		return Rect2()
-	var spot := layout_spot_to_board_position((spots as Array)[index])
-	if spot.x < 0.0 or spot.y < 0.0:
-		return Rect2()
-	var fallback_rect := normalized_interaction_rect(object_type, index)
-	var board_size := Vector2(VisualStyleScript.ENVIRONMENT_BOARD_SIZE)
-	var center := Vector2(clampf(spot.x / board_size.x, 0.0, 1.0), clampf(spot.y / board_size.y, 0.0, 1.0))
-	return Rect2(center - fallback_rect.size * 0.5, fallback_rect.size)
 
 
 static func layout_spot_field_name(object_type: String) -> String:
@@ -848,10 +852,14 @@ static func _object_with_rect(source: Dictionary, selection: Dictionary, layout:
 		index,
 		layout
 	)
-	var binding := JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(layout.get("slot_bindings", {})).get(str(object_data.get("object_id", "")), {}))
+	var slot_bindings := JsonCoerceScript._copy_dict(layout.get("slot_bindings", {}))
+	var binding := JsonCoerceScript._copy_dict(slot_bindings.get(str(object_data.get("object_id", "")), {}))
+	if binding.is_empty():
+		binding = JsonCoerceScript._copy_dict(slot_bindings.get(str(object_data.get("manifest_object_id", "")), {}))
 	if not binding.is_empty():
 		object_data["presentation_mode"] = str(binding.get("presentation_mode", "overflow"))
 		object_data["slot_id"] = str(binding.get("slot_id", ""))
+		object_data["slot_family"] = str(binding.get("slot_family", binding.get("kind", object_data.get("slot_family", ""))))
 		object_data["placement_class"] = str(binding.get("placement_class", ""))
 	return make_interactable_object(object_data, selection)
 

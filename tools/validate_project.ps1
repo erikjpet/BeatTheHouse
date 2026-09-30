@@ -551,6 +551,7 @@ $requiredFiles = @(
     "scenes/main.tscn",
     "scripts/core/run_state.gd",
     "scripts/core/environment_instance.gd",
+    "scripts/core/environment_object_manifest.gd",
     "scripts/core/environment_placement.gd",
     "scripts/core/developer_placement_store.gd",
     "scripts/core/game_module.gd",
@@ -590,6 +591,8 @@ $requiredFiles = @(
     "scripts/tests/foundation/check_scratch_tickets.gd",
     "scripts/tests/developer_placement_mode_check.gd",
     "scripts/tests/environment_slot_placement_mode_check.gd",
+    "scripts/tests/environment_object_manifest_check.gd",
+    "scripts/tests/environment_runtime_manifest_retention_check.gd",
     "scripts/tests/ui_scene/compile_run_menu_and_game_flows.gd",
     "tools/check_godot.ps1",
     "tools/split_test_runner_helpers.ps1",
@@ -602,6 +605,9 @@ $requiredFiles = @(
     "tools/environment_grounding_static_check.ps1",
     "tools/environment_grounding_contract.gd",
     "tools/environment_fixed_slot_static_check.py",
+    "tools/test_environment_fixed_slot_static_check_v2.py",
+    "tools/test_environment_slot_migration_v2.py",
+    "tools/migrate_environment_slots_v2.py",
     "tools/environment_generation_audit.gd",
     "tools/rw06_q009_process_support.ps1",
     "tools/rw06_1_environment_exact_seed_contract_test.ps1",
@@ -1044,11 +1050,11 @@ foreach ($jsonFile in $jsonFiles) {
 $placementOverridePath = Join-Path $root "data/environments/developer_placement_overrides.json"
 try {
     $placementOverrides = Get-Content -LiteralPath $placementOverridePath -Raw | ConvertFrom-Json
-    if (-not (Test-JsonObjectRoot $placementOverrides) -or [int]$placementOverrides.schema_version -ne 1 -or -not (Test-JsonObjectRoot $placementOverrides.rooms)) {
-        $failures.Add("Developer placement overrides require schema_version 1 and an object-valued rooms collection.")
+    if (-not (Test-JsonObjectRoot $placementOverrides) -or [int]$placementOverrides.schema_version -ne 2 -or -not (Test-JsonObjectRoot $placementOverrides.rooms)) {
+        $failures.Add("Developer placement overrides require schema_version 2 and an object-valued rooms collection.")
     }
     else {
-        $allowedPlacementFields = @("object_slot_positions", "scenario_object_slot_positions", "category_slot_positions")
+        $allowedPlacementFields = @("slot_positions")
         foreach ($roomProperty in $placementOverrides.rooms.PSObject.Properties) {
             if (-not (Test-JsonObjectRoot $roomProperty.Value)) {
                 $failures.Add("Developer placement room must be an object: $($roomProperty.Name)")
@@ -1095,6 +1101,7 @@ foreach ($marker in $mojibakeMarkers) {
 $expectedClasses = @{
     "scripts/core/run_state.gd" = "class_name RunState"
     "scripts/core/environment_instance.gd" = "class_name EnvironmentInstance"
+    "scripts/core/environment_object_manifest.gd" = "class_name EnvironmentObjectManifest"
     "scripts/core/game_module.gd" = "class_name GameModule"
     "scripts/core/item_effect.gd" = "class_name ItemEffect"
     "scripts/core/event_module.gd" = "class_name EventModule"
@@ -1641,6 +1648,8 @@ Require-Text "tools/check_godot.ps1" 'Post-land verification cannot skip the req
 Require-Text "tools/check_godot.ps1" 'native_coin_pusher_smoke.gd' "Post-land verification must prove the supplied Windows plugin executes as native_v3."
 Require-Text "tools/check_godot.ps1" 'scenario_room_multiseed_finalization.gd' "Godot audit/full suites must include the permanent 8x55 scenario room finalization gate."
 Require-Text "tools/check_godot.ps1" 'environment_grounding_contract.gd' "Godot audit/full suites must include the focused environment grounding mechanism contract."
+Require-Text "tools/check_godot.ps1" 'environment_object_manifest_check.gd' "Godot contract/audit/full suites must include the environment object manifest and save/reload contract."
+Require-Text "tools/check_godot.ps1" 'environment_runtime_manifest_retention_check.gd' "Godot contract/audit/full suites must prove offscreen runtime projections cannot replace durable scenario inventory."
 Require-Text "tools/check_godot.ps1" 'Invoke-GameReworkVerificationGates' "Godot audit/full suites must retain the game rework verification gate group."
 Require-Text "tools/check_godot.ps1" 'craps_extensive_playtest.gd' "Game rework verification must retain the extensive Craps settlement gate."
 Require-Text "tools/check_godot.ps1" 'craps_rtp_audit.gd' "Game rework verification must retain the million-roll Craps RTP gate."
@@ -2376,6 +2385,30 @@ try {
 }
 catch {
     $failures.Add("Environment grounding static check failed: $($_.Exception.Message)")
+}
+
+try {
+    & python (Join-Path $root "tools/test_environment_fixed_slot_static_check_v2.py") | Out-Null
+    if ($LASTEXITCODE -ne 0) {
+        throw "Python test process exited with code $LASTEXITCODE."
+    }
+}
+catch {
+    $failures.Add("Environment slot schema v2 static-check tests failed: $($_.Exception.Message)")
+}
+
+try {
+    & python (Join-Path $root "tools/test_environment_slot_migration_v2.py") | Out-Null
+    if ($LASTEXITCODE -ne 0) {
+        throw "Python test process exited with code $LASTEXITCODE."
+    }
+    & python (Join-Path $root "tools/migrate_environment_slots_v2.py") --legacy-ledger check | Out-Null
+    if ($LASTEXITCODE -ne 0) {
+        throw "Legacy slot-ledger check exited with code $LASTEXITCODE."
+    }
+}
+catch {
+    $failures.Add("Environment slot migration/legacy-ledger tests failed: $($_.Exception.Message)")
 }
 
 try {

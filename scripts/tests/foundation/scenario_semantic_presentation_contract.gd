@@ -50,6 +50,7 @@ static func check(library: Variant, failures: Array) -> void:
 	_check_atomic_finalization_layout(library, failures)
 	_check_mutable_event_and_route_source_authority(library, failures)
 	_check_immutable_producer_context_refresh(library, failures)
+	_check_scenario_refresh_manifest_lifecycle(library, failures)
 	_check_persisted_inventory_dynamic_refresh_guard(failures)
 	_check_atomic_post_operation_layout(library, failures)
 	_check_passive_atomic_commits(library, failures)
@@ -74,6 +75,7 @@ static func check_static_and_geometry(library: Variant, failures: Array) -> void
 	_check_atomic_finalization_layout(library, failures)
 	_check_mutable_event_and_route_source_authority(library, failures)
 	_check_immutable_producer_context_refresh(library, failures)
+	_check_scenario_refresh_manifest_lifecycle(library, failures)
 	_check_persisted_inventory_dynamic_refresh_guard(failures)
 	_check_atomic_post_operation_layout(library, failures)
 	_check_passive_atomic_commits(library, failures)
@@ -270,6 +272,85 @@ static func _check_immutable_producer_context_refresh(library: Variant, failures
 			failures.append("Mutable live producer field %s changed or destroyed the immutable scenario proof during refresh." % field)
 
 
+static func _check_scenario_refresh_manifest_lifecycle(library: Variant, failures: Array) -> void:
+	var run_state := RunStateScript.new()
+	run_state.current_environment = _finalization_environment(ScenarioSequenceContractScript.finalization_fixture_definition(), library)
+	run_state.scenario_prepare_semantic_finalization()
+	var presentations := _production_presentations(run_state.current_environment, library)
+	var first := run_state.scenario_finalize_base_semantics(presentations, library, _production_layout_context())
+	if not bool(first.get("ok", false)):
+		failures.append("Scenario manifest refresh fixture could not seal its initial room: %s" % JSON.stringify(first.get("errors", [])))
+		return
+	var expected_ids := _active_snapshot_visual_ids(_dict(run_state.current_environment.get("scenario_render_snapshot", {})))
+	if expected_ids.is_empty():
+		failures.append("Scenario manifest refresh fixture produced no active scenario visuals.")
+		return
+
+	# Persistent restore and migration paths may legitimately arrive without this
+	# derived envelope. A proof-ready semantic refresh must republish the manifest
+	# and its generated family bindings in the same successful commit.
+	run_state.current_environment.erase("object_manifest")
+	run_state.current_environment.erase("object_manifest_digest")
+	run_state.current_environment.erase("object_manifest_revision")
+	var refreshed := run_state.scenario_finalize_base_semantics(presentations, library, _production_layout_context())
+	if not bool(refreshed.get("ok", false)):
+		failures.append("Proof-ready scenario refresh failed while rebuilding derived object inventory: %s" % JSON.stringify(refreshed.get("errors", [])))
+		return
+	var environment := run_state.current_environment
+	var manifest := _dict(environment.get("object_manifest", {}))
+	var manifest_ids := _active_scenario_manifest_ids(manifest)
+	var layout := _dict(environment.get("layout", {}))
+	var bindings := _dict(layout.get("slot_bindings", {}))
+	var object_rects := _dict(layout.get("object_rects", {}))
+	if not EnvironmentInstanceScript.object_manifest_errors(environment).is_empty() \
+			or str(environment.get("object_manifest_digest", "")) != str(manifest.get("digest", "")) \
+			or int(environment.get("object_manifest_revision", 0)) != int(manifest.get("revision", -1)) \
+			or manifest_ids != expected_ids:
+		failures.append("Proof-ready scenario refresh did not publish the exact active renderer inventory and valid manifest mirrors: %s" % JSON.stringify({"expected": expected_ids, "manifest": manifest_ids, "errors": EnvironmentInstanceScript.object_manifest_errors(environment)}))
+	for object_id_value in expected_ids:
+		var object_id := str(object_id_value)
+		var binding := _dict(bindings.get(object_id, {}))
+		if str(binding.get("presentation_mode", "")) != "room" \
+				or str(binding.get("slot_family", "")) != "scenario" \
+				or not str(binding.get("slot_id", "")).begins_with("scenario.") \
+				or not object_rects.has(object_id):
+			failures.append("Proof-ready scenario refresh left %s without immediate scenario-family room geometry." % object_id)
+
+	var stable_manifest := JSON.stringify(manifest)
+	var stable_layout := JSON.stringify(layout)
+	var repeated := run_state.scenario_finalize_base_semantics(presentations, library, _production_layout_context())
+	if not bool(repeated.get("ok", false)) \
+			or JSON.stringify(run_state.current_environment.get("object_manifest", {})) != stable_manifest \
+			or JSON.stringify(run_state.current_environment.get("layout", {})) != stable_layout:
+		failures.append("An unchanged proof-ready scenario refresh rewrote its reconciled manifest or generated layout.")
+
+
+static func _active_snapshot_visual_ids(snapshot: Dictionary) -> Array:
+	var result: Array = []
+	for visual_value in _array(snapshot.get("visual_objects", [])):
+		var visual := _dict(visual_value)
+		if not bool(visual.get("present", true)) or not bool(visual.get("visible", true)):
+			continue
+		var object_id := str(visual.get("object_id", visual.get("presentation_object_id", ""))).strip_edges()
+		if not object_id.is_empty() and not result.has(object_id):
+			result.append(object_id)
+	result.sort()
+	return result
+
+
+static func _active_scenario_manifest_ids(manifest: Dictionary) -> Array:
+	var result: Array = []
+	for row_value in _array(manifest.get("rows", [])):
+		var row := _dict(row_value)
+		if str(row.get("family", "")) != "scenario" or not bool(row.get("active", false)) or not bool(row.get("physical", false)):
+			continue
+		var object_id := str(row.get("presentation_object_id", row.get("object_id", ""))).strip_edges()
+		if not object_id.is_empty() and not result.has(object_id):
+			result.append(object_id)
+	result.sort()
+	return result
+
+
 static func _check_atomic_post_operation_layout(library: Variant, failures: Array) -> void:
 	var definition := ScenarioSequenceContractScript.finalization_fixture_definition()
 	# Keep the fixture's presentation active across its expiry boundary so the
@@ -305,11 +386,17 @@ static func _check_atomic_post_operation_layout(library: Variant, failures: Arra
 	var fact_result := run_state.scenario_enqueue_fact("heat_changed", "heat", {"previous": 1, "current": 2, "applied_delta": 1, "source": "fixture"}, "hostile_layout_fact")
 	if not bool(fact_result.get("ok", false)) or not bool(_dict(fact_result.get("layout_audit", {})).get("valid", false)):
 		failures.append("Fact ingress treated transient TalkDock coverage as fixed-slot invalidity: %s" % JSON.stringify(fact_result))
+	var flush_result := run_state.scenario_flush_facts()
+	var flush_manifest_errors := EnvironmentInstanceScript.object_manifest_errors(run_state.current_environment)
+	if not bool(flush_result.get("ok", false)) or _array(flush_result.get("processed", [])).is_empty() or not flush_manifest_errors.is_empty():
+		failures.append("Fact flush did not atomically publish valid physical membership: %s" % JSON.stringify({"result": flush_result, "manifest_errors": flush_manifest_errors}))
 	var expiry_result := run_state.scenario_sequence_apply_expiry_boundary("night_end", 1)
-	if not bool(expiry_result.get("ok", false)) or not bool(_dict(expiry_result.get("layout_audit", {})).get("valid", false)):
+	var expiry_manifest_errors := EnvironmentInstanceScript.object_manifest_errors(run_state.current_environment)
+	if not bool(expiry_result.get("ok", false)) or not bool(_dict(expiry_result.get("layout_audit", {})).get("valid", false)) or not expiry_manifest_errors.is_empty():
 		failures.append("Expiry treated transient TalkDock coverage as fixed-slot invalidity: %s" % JSON.stringify(expiry_result))
 	var reentry_result := run_state.scenario_sequence_apply_reentry("visit_hostile_layout")
-	if not bool(reentry_result.get("ok", false)) or not bool(_dict(reentry_result.get("layout_audit", {})).get("valid", false)):
+	var reentry_manifest_errors := EnvironmentInstanceScript.object_manifest_errors(run_state.current_environment)
+	if not bool(reentry_result.get("ok", false)) or not bool(_dict(reentry_result.get("layout_audit", {})).get("valid", false)) or not reentry_manifest_errors.is_empty():
 		failures.append("Reentry treated transient TalkDock coverage as fixed-slot invalidity: %s" % JSON.stringify(reentry_result))
 
 
@@ -330,9 +417,10 @@ static func _check_passive_atomic_commits(library: Variant, failures: Array) -> 
 	var expiry_snapshot := _dict(expiry_environment.get("scenario_render_snapshot", {}))
 	var expiry_audit := _dict(expiry_environment.get("scenario_layout_audit", {}))
 	var expiry_digest := str(expiry_environment.get("scenario_layout_authority_digest", ""))
+	var expiry_manifest_errors := EnvironmentInstanceScript.object_manifest_errors(expiry_environment)
 	var expiry_public := EnvironmentInteractionControllerScript.project_finalized_sequence_interaction_result(expiry_base, expiry_result)
 	var expiry_committed := EnvironmentInteractionControllerScript.committed_projection_status_result(expiry_run, expiry_public, expiry_base)
-	if not bool(expiry_finalized.get("ok", false)) or not bool(expiry_result.get("ok", false)) or JSON.stringify(expiry_environment) == expiry_before \
+	if not bool(expiry_finalized.get("ok", false)) or not bool(expiry_result.get("ok", false)) or not expiry_manifest_errors.is_empty() or JSON.stringify(expiry_environment) == expiry_before \
 		or str(_dict(expiry_environment.get("scenario_sequence_state", {})).get("status", "")) != ScenarioSequenceRuntimeScript.STATUS_CLEANED \
 		or not _presentation_collections_empty(expiry_semantic) or not _dict(expiry_environment.get("scenario_layout_authority", {})).is_empty() \
 		or bool(expiry_audit.get("active", true)) or not bool(expiry_audit.get("valid", false)) or not bool(expiry_audit.get("sealed_passive", false)) \
@@ -405,8 +493,10 @@ static func _check_passive_atomic_commits(library: Variant, failures: Array) -> 
 	var aftermath_projection := _dict(aftermath_environment.get("scenario_sequence_projection", {}))
 	var aftermath_semantic := _dict(aftermath_projection.get("semantic_state", {}))
 	var aftermath_snapshot := _dict(aftermath_environment.get("scenario_render_snapshot", {}))
+	var aftermath_manifest_errors := EnvironmentInstanceScript.object_manifest_errors(aftermath_environment)
 	if not bool(aftermath_finalized.get("ok", false)) or not bool(aftermath_result.get("ok", false)) \
-		or not _presentation_collections_empty(aftermath_semantic) or _dict(aftermath_semantic.get("services", {})).is_empty() \
+			or not aftermath_manifest_errors.is_empty() \
+			or not _presentation_collections_empty(aftermath_semantic) or _dict(aftermath_semantic.get("services", {})).is_empty() \
 		or _dict(aftermath_semantic.get("games", {})).is_empty() or _dict(aftermath_semantic.get("routes", {})).is_empty() \
 		or not bool(aftermath_snapshot.get("sealed_passive", false)) or not _array(aftermath_snapshot.get("visual_objects", [])).is_empty() \
 		or not _array(aftermath_snapshot.get("interaction_overlays", [])).is_empty() or _array(aftermath_snapshot.get("services", [])).is_empty() \
@@ -415,7 +505,7 @@ static func _check_passive_atomic_commits(library: Variant, failures: Array) -> 
 		or _array(aftermath_environment.get("travel_hooks", [])).has("bar") or aftermath_run.bankroll != 37 \
 		or JSON.stringify(aftermath_environment.get("scenario_sequence_state", {})) != JSON.stringify(aftermath_result.get("state", {})) \
 		or JSON.stringify(aftermath_projection) != JSON.stringify(aftermath_result.get("projection", {})):
-		failures.append("Integrated RunState service/game/route-only aftermath did not commit materialized hooks and passive rendering as one candidate.")
+		failures.append("Integrated RunState service/game/route-only aftermath did not commit materialized hooks, physical membership, and passive rendering as one candidate: %s" % JSON.stringify(aftermath_manifest_errors))
 
 
 static func _check_fixed_slot_renderer_authority(failures: Array) -> void:
@@ -510,7 +600,6 @@ static func _check_finalized_actor_route(library: Variant, failures: Array) -> v
 	_reseal_definition(definition)
 	var run_state := RunStateScript.new()
 	run_state.current_environment = _finalization_environment(definition, library, "back_alley")
-	run_state.current_environment["id"] = "back_alley_route_fixture"
 	var trusted_base := _production_presentations(run_state.current_environment, library)
 	run_state.scenario_prepare_semantic_finalization()
 	var finalized := run_state.scenario_finalize_base_semantics(trusted_base, library, _production_layout_context())
@@ -686,6 +775,13 @@ static func _check_route_endpoint_alias_contract(failures: Array) -> void:
 	var original_inventory := _dict(environment.get("scenario_semantic_inventory", {}))
 	var restored_inventory := _dict(restored_environment.get("scenario_semantic_inventory", {}))
 	restored_inventory["schema_version"] = int(restored_inventory.get("schema_version", 0))
+	# JSON restoration also widens the nested manifest schema scalar. Restore its
+	# exact integer type before validating the immutable inventory digest.
+	var restored_source_provenance := _dict(restored_inventory.get("source_provenance", {}))
+	var restored_manifest_authority := _dict(restored_source_provenance.get("object_manifest_authority", {}))
+	restored_manifest_authority["schema_version"] = int(restored_manifest_authority.get("schema_version", 0))
+	restored_source_provenance["object_manifest_authority"] = restored_manifest_authority
+	restored_inventory["source_provenance"] = restored_source_provenance
 	restored_environment["scenario_semantic_inventory"] = restored_inventory
 	var restored_before := JSON.stringify(restored_environment)
 	var restored_valid := EnvironmentSemanticInventoryScript.validate(restored_inventory).is_empty() \
@@ -1070,18 +1166,17 @@ static func _check_ordinary_interaction_coexistence(library: Variant, failures: 
 
 
 static func _check_single_environment_plane(library: Variant, failures: Array) -> void:
-	var environment := _finalization_environment({}, library)
-	var archetype := _dict(library.call("environment_archetype", "bar")) if library != null and library.has_method("environment_archetype") else {}
-	environment["scenario_sequence_definition"] = {}
-	environment["event_ids"] = []
-	environment["service_ids"] = []
-	environment["travel_hooks"] = []
-	environment["item_offers"] = [{"id": "marked_cards", "object_id": "item:marked_cards"}]
-	environment["layout"] = _dict(archetype.get("layout", {}))
-	environment["layout"] = EnvironmentInstanceScript.ensure_generated_layout(environment, library)
+	# Build this through a real initialized host so the Numbers runtime object and
+	# every static bar fixture enter one reconciled manifest before binding.
+	var fixture_run := RunStateScript.new()
+	fixture_run.start_new("ENV06_6-SINGLE-ENVIRONMENT-PLANE")
+	fixture_run.current_environment = _finalization_environment({}, library)
+	fixture_run.current_environment["scenario_sequence_definition"] = {}
+	var membership := fixture_run.reconcile_environment_object_membership(fixture_run.current_environment)
+	var environment := fixture_run.current_environment.duplicate(true)
 	var source_records := _production_presentations(environment, library)
-	source_records.append(_layout_presentation(environment, "item:marked_cards", "item", "marked_cards", "Marked cards"))
-	source_records.append(_layout_presentation(environment, "numbers:book", "numbers", "book", "Numbers Book"))
+	if _record(source_records, "numbers:book").is_empty():
+		source_records.append(_layout_presentation(environment, "numbers:book", "numbers", "book", "Numbers Book"))
 	var bound_base := EnvironmentSlotBinderScript.bind_base_records(environment, source_records, _dict(environment["layout"]).get("slot_bindings", {}))
 	var stamped_base := EnvironmentBaseSemanticRecordsScript.stamp_interactable_records(
 		_array(bound_base.get("records", [])), environment, library,
@@ -1090,15 +1185,15 @@ static func _check_single_environment_plane(library: Variant, failures: Array) -
 	var bound_records := _array(stamped_base.get("records", []))
 	var machine := _record(bound_records, "game:slot")
 	machine["scenario_z_order"] = 41
-	var merchandise := _record(bound_records, "item:marked_cards")
+	var merchandise := _record(bound_records, "service:house_drink")
 	merchandise["scenario_z_order"] = 52
 	var runtime_control := _record(bound_records, "numbers:book")
-	if not bool(bound_base.get("ok", false)) or not bool(stamped_base.get("ok", false)) \
+	if not bool(membership.get("ok", false)) or not bool(bound_base.get("ok", false)) or not bool(stamped_base.get("ok", false)) \
 			or machine.is_empty() or merchandise.is_empty() or runtime_control.is_empty() \
 			or str(machine.get("presentation_mode", "")) != "room" \
 			or str(merchandise.get("presentation_mode", "")) != "room" \
 			or str(runtime_control.get("presentation_mode", "")) != "room":
-		failures.append("Single-plane fixture could not bind its complete generated base inventory to authored base slots: %s" % JSON.stringify(_array(bound_base.get("errors", [])) + _array(stamped_base.get("errors", []))))
+		failures.append("Single-plane fixture could not bind its complete generated fixed inventory to authored fixed slots: %s" % JSON.stringify(_array(membership.get("errors", [])) + _array(bound_base.get("errors", [])) + _array(stamped_base.get("errors", []))))
 		return
 	var projection := {
 		"scenario_id": "single_plane_fixture",
@@ -1114,21 +1209,20 @@ static func _check_single_environment_plane(library: Variant, failures: Array) -
 					"bounds": {"w": 240.0, "h": 180.0}, "visible": true, "enabled": true,
 					"prompt": "Inspect the scenario-labelled slot.", "available_actions": [{"id": "enter_game", "label": "Enter"}],
 				},
-				"base::item:marked_cards": {
-					"owner_namespace": "base", "stable_object_id": "item:marked_cards", "present": true,
-					"label": "Scenario-labelled cards", "role": "merchandise", "anchor_id": "scenario_corner",
+				"service::service:house_drink": {
+					"owner_namespace": "service", "stable_object_id": "service:house_drink", "present": true,
+					"label": "Scenario-labelled drink", "role": "merchandise", "anchor_id": "scenario_corner",
 					"bounds": {"w": 200.0, "h": 160.0}, "visible": true, "enabled": true,
-					"prompt": "Inspect the scenario-labelled cards.", "available_actions": [{"id": "activate", "label": "Activate"}],
+					"prompt": "Inspect the scenario-labelled drink.", "available_actions": [{"id": "activate", "label": "Activate"}],
 				},
 			},
 		},
 	}
-	environment["id"] = "single_plane_fixture"
 	environment["semantic_anchors"]["scenario_corner"] = {"position": [820.0, 80.0]}
 	var resolved := ScenarioLayoutResolverScript.resolve([machine, merchandise], projection, environment)
 	var authority := _dict(resolved.get("layout_authority", {}))
 	var machine_authority := _dict(authority.get("game::game:slot", {}))
-	var merchandise_authority := _dict(authority.get("base::item:marked_cards", {}))
+	var merchandise_authority := _dict(authority.get("service::service:house_drink", {}))
 	if not bool(resolved.get("ok", false)) \
 			or not _snapshot_rect(machine_authority.get("normalized_hit_rect", {})).is_equal_approx(_snapshot_rect(machine.get("focus_rect", {}))) \
 			or not _snapshot_rect(merchandise_authority.get("normalized_hit_rect", {})).is_equal_approx(_snapshot_rect(merchandise.get("focus_rect", {}))) \
@@ -1167,7 +1261,7 @@ static func _check_single_environment_plane(library: Variant, failures: Array) -
 	var view := _dict(canvas.current_view_snapshot())
 	var objects := _array(view.get("objects", []))
 	var canvas_machine := _canvas_object_rect(canvas, "game:slot")
-	var canvas_merchandise := _canvas_object_rect(canvas, "item:marked_cards")
+	var canvas_merchandise := _canvas_object_rect(canvas, "service:house_drink")
 	var machine_rect := _snapshot_rect(machine.get("focus_rect", {}))
 	var merchandise_rect := _snapshot_rect(merchandise.get("focus_rect", {}))
 	if not canvas_machine.is_equal_approx(Rect2(machine_rect.position * BOARD_SIZE, machine_rect.size * BOARD_SIZE)) \
@@ -1178,23 +1272,23 @@ static func _check_single_environment_plane(library: Variant, failures: Array) -
 	if not _object(objects, "scenario::renderer_only").is_empty() or not _object(objects, "scenario:stage:floating_banner").is_empty():
 		failures.append("Canvas appended a second scenario-renderer layer after receiving the unified environment catalog.")
 	# Runtime-only controls are intentionally outside scenario mutation authority,
-	# but they consume authored base slots before scenario composition. Prove a
-	# scenario stage slot is disjoint by construction without moving either object
+	# but they consume authored fixed slots before scenario composition. Prove a
+	# scenario slot is disjoint by construction without moving either object
 	# or admitting the runtime control into semantic authority.
 	var runtime_projection := projection.duplicate(true)
-	runtime_projection["semantic_state"]["interactions"].erase("base::item:marked_cards")
+	runtime_projection["semantic_state"]["interactions"].erase("service::service:house_drink")
 	runtime_projection["semantic_state"]["scene_objects"]["scenario::bar_darts_league_night_bracket_easel"] = {
 		"owner_namespace": "scenario", "stable_object_id": "bar_darts_league_night_bracket_easel", "present": true,
 		"label": "League bracket easel", "role": "scoreboard", "zone_id": "foreground",
 		"bounds": {"w": 72.0, "h": 56.0}, "visible": true, "enabled": true,
 	}
-	var runtime_rect := _snapshot_rect(merchandise.get("focus_rect", {}))
+	var runtime_rect := _snapshot_rect(runtime_control.get("focus_rect", {}))
 	var runtime_environment := environment.duplicate(true)
 	runtime_environment["_scenario_layout_context"] = {
 		"base_occupied_records": [{
-			"object_id": "item:marked_cards",
+			"object_id": "numbers:book",
 			"focus_rect": runtime_rect,
-			"label": "Marked Cards",
+			"label": "Numbers Book",
 		}],
 	}
 	var runtime_resolved := ScenarioLayoutResolverScript.resolve([machine], runtime_projection, runtime_environment)
@@ -1203,22 +1297,22 @@ static func _check_single_environment_plane(library: Variant, failures: Array) -
 	var runtime_audit := _dict(runtime_resolved.get("layout_audit", {}))
 	if not bool(runtime_resolved.get("ok", false)) \
 			or int(runtime_audit.get("context_base_occupied_count", 0)) != 1 \
-			or runtime_authority.has("runtime_base::item:marked_cards") \
+		or runtime_authority.has("runtime_base::numbers:book") \
 			or str(_dict(runtime_authority.get("scenario::bar_darts_league_night_bracket_easel", {})).get("slot_id", "")).is_empty() \
 			or int(runtime_audit.get("collision_adjustment_count", -1)) != 0 \
 			or (Rect2(neighbor_rect.position * BOARD_SIZE, neighbor_rect.size * BOARD_SIZE)).intersects(Rect2(runtime_rect.position * BOARD_SIZE, runtime_rect.size * BOARD_SIZE)):
-		failures.append("Authored base and stage slots did not keep runtime-only controls collision-free on the unified environment plane: %s" % JSON.stringify({"ok": runtime_resolved.get("ok"), "errors": runtime_resolved.get("errors"), "audit": runtime_audit, "neighbor": str(neighbor_rect), "runtime": str(runtime_rect), "slot": _dict(runtime_authority.get("scenario::bar_darts_league_night_bracket_easel", {})).get("slot_id")}))
+		failures.append("Authored fixed and scenario slots did not keep runtime-only controls collision-free on the unified environment plane: %s" % JSON.stringify({"ok": runtime_resolved.get("ok"), "errors": runtime_resolved.get("errors"), "audit": runtime_audit, "neighbor": str(neighbor_rect), "runtime": str(runtime_rect), "slot": _dict(runtime_authority.get("scenario::bar_darts_league_night_bracket_easel", {})).get("slot_id")}))
 	var controller_reservations := EnvironmentInteractionControllerScript._base_layout_reservations([
 		{"object_id": "game:slot", "visible": true, "focus_rect": Rect2(0.1, 0.1, 0.1, 0.1)},
 		{"object_id": "event:chain06_cass_first_contact", "visible": true, "focus_rect": Rect2(0.2, 0.1, 0.1, 0.1)},
-		{"object_id": "item:marked_cards", "visible": true, "focus_rect": runtime_rect},
-	], {"object_rects": {"item:marked_cards": {
+		{"object_id": "numbers:book", "visible": true, "focus_rect": runtime_rect},
+	], {"object_rects": {"numbers:book": {
 		"x": runtime_rect.position.x,
 		"y": runtime_rect.position.y,
 		"w": runtime_rect.size.x,
 		"h": runtime_rect.size.y,
 	}}})
-	if controller_reservations.size() != 1 or str(_dict(controller_reservations[0]).get("object_id", "")) != "item:marked_cards":
+	if controller_reservations.size() != 1 or str(_dict(controller_reservations[0]).get("object_id", "")) != "numbers:book":
 		failures.append("Runtime occupancy filtering double-counted sealed game/event geometry during scenario refresh.")
 	else:
 		var reserved_rect := _snapshot_rect(_dict(controller_reservations[0]).get("focus_rect", {}))
@@ -1315,27 +1409,42 @@ static func _check_atomic_projection_failures(library: Variant, failures: Array)
 			or not orphan_wrapper.is_empty() or not _contains_text(_array(orphan_result.get("errors", [])), "raw hit rectangles"):
 		failures.append("An orphan semantic rectangle became hit authority or the compatibility caller ignored structured projection errors.")
 
-	var left := _record(production_records, "game:slot")
-	left["focus_rect"] = Rect2(0.20, 0.30, 44.0 / BOARD_SIZE.x, 44.0 / BOARD_SIZE.y)
-	var right := _record(production_records, "event:late_shift_discount")
-	right["focus_rect"] = Rect2(0.29, 0.30, 44.0 / BOARD_SIZE.x, 44.0 / BOARD_SIZE.y)
-	var scenario_left := _interaction_payload("game", "game:slot", "Left control", true)
-	# Base-only overlap belongs to the base layout contracts. Mark one side as
-	# scenario-owned so this hostile fixture continues exercising the scenario
-	# composition guard after that authority boundary was made explicit.
-	scenario_left["owner_namespace"] = "scenario"
-	var ambiguous_projection := {
-		"semantic_state": {
-			"scene_objects": {}, "actors": {},
-			"interactions": {
-				"game::game:slot": scenario_left,
-				"event::event:late_shift_discount": _interaction_payload("event", "event:late_shift_discount", "Right control", true),
-			},
+	var scenario_identity := "scenario::overlap_left"
+	var base_identity := "event::overlap_right"
+	var overlap_authority := {
+		scenario_identity: {
+			"normalized_hit_rect": ScenarioLayoutResolverScript._normalized_rect(Rect2(180.0, 129.0, 60.0, 52.0)),
+			"small_screen_rect": ScenarioLayoutResolverScript._normalized_rect(Rect2(158.0, 117.0, 104.0, 76.0)),
+			"label_rect": ScenarioLayoutResolverScript._normalized_rect(Rect2(180.0, 108.0, 60.0, 15.0)),
+			"small_screen_label_rect": ScenarioLayoutResolverScript._normalized_rect(Rect2(180.0, 108.0, 60.0, 15.0)),
+		},
+		base_identity: {
+			"normalized_hit_rect": ScenarioLayoutResolverScript._normalized_rect(Rect2(220.0, 129.0, 60.0, 52.0)),
+			"small_screen_rect": ScenarioLayoutResolverScript._normalized_rect(Rect2(198.0, 117.0, 104.0, 76.0)),
+			"label_rect": ScenarioLayoutResolverScript._normalized_rect(Rect2(220.0, 108.0, 60.0, 15.0)),
+			"small_screen_label_rect": ScenarioLayoutResolverScript._normalized_rect(Rect2(220.0, 108.0, 60.0, 15.0)),
 		},
 	}
-	var ambiguous := EnvironmentInteractionControllerScript.project_sequence_interaction_result([left, right], ambiguous_projection, {"id": "expanded_fixture", "archetype_id": "bar"})
-	if bool(ambiguous.get("ok", true)) or int(_dict(ambiguous.get("layout_audit", {})).get("small_screen_overlap_count", 0)) < 1:
-		failures.append("Expanded small-screen hit ambiguity was accepted and left reverse draw order as interaction authority: %s" % JSON.stringify(ambiguous))
+	var overlap_interactions := {
+		scenario_identity: _interaction_payload("scenario", "overlap_left", "Left control", true),
+		base_identity: _interaction_payload("event", "overlap_right", "Right control", true),
+	}
+	var overlap_errors: Array = []
+	var overlap_warnings: Array = []
+	var overlap_audit := ScenarioLayoutResolverScript._validate_interactions(overlap_interactions, overlap_authority, [], [], {}, overlap_errors, overlap_warnings)
+	overlap_audit["normal_overlap_count"] = ScenarioLayoutResolverScript._overlap_count(overlap_authority, "normalized_hit_rect")
+	var ambiguous := {
+		"ok": overlap_errors.is_empty(),
+		"errors": overlap_errors,
+		"warnings": overlap_warnings,
+		"layout_audit": overlap_audit,
+	}
+	var ambiguous_audit := _dict(ambiguous.get("layout_audit", {}))
+	var ambiguous_warnings := _array(ambiguous.get("warnings", []))
+	if not bool(ambiguous.get("ok", false)) \
+			or int(ambiguous_audit.get("normal_overlap_count", 0)) < 1 \
+			or not _contains_text(ambiguous_warnings, "overlap"):
+		failures.append("Provisional scenario overlap did not remain playable with visible placement-mode audit guidance: %s" % JSON.stringify(ambiguous))
 	var invalid_settings_environment := environment.duplicate(true)
 	invalid_settings_environment["id"] = "production_settings_fixture"
 	invalid_settings_environment["_scenario_layout_context"] = {
@@ -1355,13 +1464,15 @@ static func _check_atomic_projection_failures(library: Variant, failures: Array)
 					"owner_namespace": "scenario", "stable_object_id": "disabled_visual", "present": true,
 					"label": "Disabled visual", "role": "control", "anchor_id": "control",
 					"bounds": {"w": 72.0, "h": 52.0}, "visible": true, "enabled": false,
+					"icon_key": "room_surface", "placement_class": "surface_item",
 				},
 			},
 			"actors": {},
 			"interactions": {"scenario::disabled_visual": divergent_interaction},
 		},
 	}
-	var divergent := EnvironmentInteractionControllerScript.project_sequence_interaction_result([], divergent_projection, {"id": "divergence_fixture", "semantic_anchors": {"control": {"position": [450.0, 180.0]}}})
+	var divergent_base := _production_presentations(environment, library)
+	var divergent := EnvironmentInteractionControllerScript.project_sequence_interaction_result(divergent_base, divergent_projection, environment)
 	if bool(divergent.get("ok", true)) or not _contains_text(_array(divergent.get("errors", [])), "remains actionable") or not _record(_array(divergent.get("records", [])), "scenario::disabled_visual").is_empty():
 		failures.append("Actionable scenario semantics diverged from a disabled visual instead of failing atomically.")
 
@@ -1410,11 +1521,18 @@ static func _production_presentations(environment: Dictionary, library: Variant,
 
 
 static func _layout_presentation(environment: Dictionary, object_id: String, object_type: String, source_id: String, label: String) -> Dictionary:
-	var rect := _dict(_dict(_dict(environment.get("layout", {})).get("object_rects", {})).get(object_id, {}))
+	var layout := _dict(environment.get("layout", {}))
+	var rect := _dict(_dict(layout.get("object_rects", {})).get(object_id, {}))
+	var binding := _dict(_dict(layout.get("slot_bindings", {})).get(object_id, {}))
 	return EnvironmentInteractionViewModelScript.make_interactable_object({
 		"object_id": object_id,
 		"object_type": object_type,
 		"source_id": source_id,
+		"family": str(binding.get("slot_family", "fixed")),
+		"slot_family": str(binding.get("slot_family", "fixed")),
+		"exact_slot_id": str(binding.get("slot_id", "")),
+		"placement_class": str(binding.get("placement_class", "")),
+		"active": true,
 		"interactive": true,
 		"label": label,
 		"action_summary": "Choose an action.",
@@ -1575,7 +1693,7 @@ static func _surface_route(surface_map: Dictionary, route_id: String) -> Diction
 
 
 static func _surface_slot(surface_map: Dictionary, slot_id: String) -> Dictionary:
-	for collection_key in ["base_slots", "stage_slots", "exit_slots"]:
+	for collection_key in ["fixed_slots", "event_slots", "scenario_slots", "exit_slots"]:
 		for slot_value in _array(surface_map.get(collection_key, [])):
 			var slot := _dict(slot_value)
 			if str(slot.get("id", "")) == slot_id:

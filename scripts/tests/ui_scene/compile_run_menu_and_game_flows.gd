@@ -994,7 +994,8 @@ func _check_onboarding_tutorial_ui_flow(app: Control) -> bool:
 		return false
 	var talk_snapshot: Dictionary = app.call("current_talk_dock_snapshot")
 	if not bool(talk_snapshot.get("visible", false)) or str(talk_snapshot.get("speaker", "")) != "Pal":
-		push_error("Tutorial first beat did not speak through the real Pal TalkDock conversation.")
+		var tutorial_layout := JsonCoerceScript._copy_dict(run_state.current_environment.get("layout", {}))
+		push_error("Tutorial first beat did not speak through the real Pal TalkDock conversation: talk=%s coach=%s xray=%s manifest=%s bindings=%s placement_errors=%s" % [JSON.stringify(talk_snapshot), JSON.stringify(coach_snapshot), JSON.stringify(app.call("_interactable_object", "item:xray_glasses")), JSON.stringify(run_state.current_environment.get("object_manifest", {})), JSON.stringify(tutorial_layout.get("slot_bindings", {})), JSON.stringify(tutorial_layout.get("placement_errors", []))])
 		return false
 	var tutorial_environment_canvas: Control = app.get("environment_canvas")
 	var tutorial_game_canvas: Control = app.get("game_surface_canvas")
@@ -2512,7 +2513,7 @@ func _check_confirmed_all_in_wager_result_then_failure(app: Control) -> bool:
 	return true
 
 
-func _check_presented_bankroll_waits_for_result_reveal(app: Control) -> bool:
+func _check_settled_bankroll_visible_during_result_reveal(app: Control) -> bool:
 	var original_run_state: Variant = app.get("run_state")
 	var original_dev_game_test_mode := bool(app.get("dev_game_test_mode"))
 	app.call("start_foundation_run", "UI-BANKROLL-PRESENTATION", {}, false)
@@ -2557,7 +2558,7 @@ func _check_presented_bankroll_waits_for_result_reveal(app: Control) -> bool:
 	app.call("_resolve_game_action", "bankroll_fixture_win", false, false, false)
 	await process_frame
 	var settled_bankroll := int((app.call("serialized_run_state") as Dictionary).get("bankroll", -1))
-	var expected_presented := 90
+	var expected_presented := 140
 	if settled_bankroll != 140:
 		var debug_game_value: Variant = app.get("current_game")
 		var debug_popup: Dictionary = app.call("current_event_choice_popup_snapshot")
@@ -2578,7 +2579,7 @@ func _check_presented_bankroll_waits_for_result_reveal(app: Control) -> bool:
 	if int(mid_hud.get("bankroll", -1)) != expected_presented:
 		var debug_canvas := app.get("game_surface_canvas") as Control
 		var debug_surface: Dictionary = debug_canvas.call("surface_runtime_status") if debug_canvas != null else {}
-		push_error("Top HUD spoiled the settled bankroll during result animation: hud=%d hold=%s presented=%d surface=%s." % [
+		push_error("Top HUD lagged behind the settled bankroll during result animation: hud=%d hold=%s presented=%d surface=%s." % [
 			int(mid_hud.get("bankroll", -1)),
 			str(app.get("presented_bankroll_hold_active")),
 			int(app.get("presented_bankroll_value")),
@@ -2586,16 +2587,16 @@ func _check_presented_bankroll_waits_for_result_reveal(app: Control) -> bool:
 		])
 		return false
 	if int(mid_game.get("bankroll", -1)) != expected_presented:
-		push_error("Game snapshot spoiled the settled bankroll during result animation.")
+		push_error("Game snapshot lagged behind the settled bankroll during result animation.")
 		return false
 	if int(mid_save.get("visible_bankroll", -1)) != expected_presented:
-		push_error("Save/status side channel spoiled the settled bankroll during result animation.")
+		push_error("Save/status side channel lagged behind the settled bankroll during result animation.")
 		return false
-	if int(mid_consequence.get("bankroll", -1)) != expected_presented or int(mid_consequence.get("recent_bankroll_delta", 999)) != 0:
-		push_error("Consequence side channel exposed result money before the reveal boundary.")
+	if int(mid_consequence.get("bankroll", -1)) != expected_presented or int(mid_consequence.get("recent_bankroll_delta", 999)) != 40:
+		push_error("Consequence side channel did not expose settled result money during the reveal animation.")
 		return false
 	if int(mid_game.get("stake_max", 999)) > expected_presented:
-		push_error("Stake availability used settled bankroll while result presentation was still active.")
+		push_error("Stake availability exceeded the settled bankroll while result presentation was active.")
 		return false
 	var game_surface_canvas := app.get("game_surface_canvas") as Control
 	if game_surface_canvas == null:

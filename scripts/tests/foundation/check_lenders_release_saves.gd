@@ -4409,24 +4409,49 @@ func _check_environment_instance_shape(environment: EnvironmentInstance, require
 		elif typeof(object_rects) != TYPE_DICTIONARY or typeof(slot_bindings) != TYPE_DICTIONARY or typeof(slot_overflow_ids) != TYPE_ARRAY:
 			failures.append("EnvironmentInstance layout should include stable slot authority and object_rects.")
 		else:
+			var manifest_families := {}
+			var manifest_action_owners := {}
+			var object_manifest := JsonCoerceScript._copy_dict(data.get("object_manifest", {}))
+			for row_value in JsonCoerceScript._copy_array(object_manifest.get("rows", [])):
+				var row := JsonCoerceScript._copy_dict(row_value)
+				var presentation_object_id := str(row.get("presentation_object_id", row.get("object_id", "")))
+				if not presentation_object_id.is_empty():
+					manifest_families[presentation_object_id] = str(row.get("family", ""))
+					for action_id_value in JsonCoerceScript._copy_array(row.get("action_ids", [])):
+						var action_id := str(action_id_value).strip_edges()
+						if action_id.is_empty():
+							continue
+						if manifest_action_owners.has(action_id) and str(manifest_action_owners.get(action_id, "")) != presentation_object_id:
+							failures.append("EnvironmentInstance manifest assigns one event action to multiple presentation hosts.")
+						manifest_action_owners[action_id] = presentation_object_id
 			for event_id in environment.event_ids:
 				var object_id := "event:%s" % str(event_id)
-				var binding := JsonCoerceScript._copy_dict((slot_bindings as Dictionary).get(object_id, {}))
+				# An event may either own a presentation row or be an action exposed by
+				# another sealed host (for example, Nell owns the Gas Station rumor).
+				# In both cases the host itself must retain complete slot authority.
+				var presentation_object_id := object_id
+				if not (slot_bindings as Dictionary).has(presentation_object_id):
+					presentation_object_id = str(manifest_action_owners.get(object_id, ""))
+				var binding := JsonCoerceScript._copy_dict((slot_bindings as Dictionary).get(presentation_object_id, {}))
+				var expected_family := str(manifest_families.get(presentation_object_id, ""))
 				var mode := str(binding.get("presentation_mode", ""))
 				var slot := JsonCoerceScript._copy_dict(binding.get("slot", {}))
 				var slot_id := str(binding.get("slot_id", ""))
 				var placement_class := str(binding.get("placement_class", ""))
 				if binding.is_empty() \
-						or str(binding.get("identity", "")) != object_id \
-						or str(binding.get("kind", "")) != "base" \
+						or presentation_object_id.is_empty() \
+						or str(binding.get("identity", "")) != presentation_object_id \
+						or expected_family not in ["fixed", "event", "scenario"] \
+						or str(binding.get("kind", "")) != expected_family \
+						or str(binding.get("slot_family", "")) != expected_family \
 						or placement_class not in EnvironmentPlacementScript.CLASSES \
 						or mode not in ["room", "overflow"]:
 					failures.append("EnvironmentInstance layout is missing sealed event presentation authority.")
 					break
-				if mode == "room" and (slot_id.is_empty() or slot.is_empty() or not (object_rects as Dictionary).has(object_id) or (slot_overflow_ids as Array).has(object_id)):
+				if mode == "room" and (slot_id.is_empty() or slot.is_empty() or not (object_rects as Dictionary).has(presentation_object_id) or (slot_overflow_ids as Array).has(presentation_object_id)):
 					failures.append("EnvironmentInstance room event binding is missing authored geometry.")
 					break
-				if mode == "overflow" and (not slot_id.is_empty() or not slot.is_empty() or (object_rects as Dictionary).has(object_id) or not (slot_overflow_ids as Array).has(object_id)):
+				if mode == "overflow" and (not slot_id.is_empty() or not slot.is_empty() or (object_rects as Dictionary).has(presentation_object_id) or not (slot_overflow_ids as Array).has(presentation_object_id)):
 					failures.append("EnvironmentInstance overflow event binding retained room geometry.")
 					break
 			for offer in environment.item_offers:

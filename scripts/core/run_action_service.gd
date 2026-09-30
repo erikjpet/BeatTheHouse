@@ -400,6 +400,9 @@ func _commit_cage_gift_transaction(item_id: String, quoted_price: int) -> Dictio
 	if candidate_service._definition_is_active_item(item_definition):
 		candidate_service._auto_select_active_item_after_gain(item_id)
 	candidate_service._mark_cage_gift_shop_offer_sold(item_id)
+	var membership := candidate.prepare_current_environment_object_membership_for_publication()
+	if not bool(membership.get("ok", false)):
+		return _service_error(_membership_reconciliation_error(membership, "The gift-case purchase could not update the room safely."))
 	if not run_state.publish_host_action_candidate(candidate):
 		return _service_error("The gift-case purchase could not publish its completed state.")
 	return _service_success(result)
@@ -1182,6 +1185,9 @@ func _commit_money_transaction(price: int, transaction_kind: String, source_id: 
 	candidate.remove_item_offer(source_id)
 	if candidate_service._definition_is_active_item(item_definition):
 		candidate_service._auto_select_active_item_after_gain(source_id)
+	var membership := candidate.prepare_current_environment_object_membership_for_publication()
+	if not bool(membership.get("ok", false)):
+		return _service_error(_membership_reconciliation_error(membership, "The transaction could not update the room safely."))
 	if not run_state.publish_host_action_candidate(candidate):
 		return _service_error("The transaction could not publish its completed state.")
 	return _service_success(result)
@@ -1235,6 +1241,9 @@ func _commit_hook_transaction(price: int, transaction_kind: String, source_id: S
 	if transaction_kind == "lender" and source_id == "the_crew":
 		candidate_service._apply_crew_loan_trust(definition)
 	candidate.scenario_publish_service_result(transaction_kind, source_id, applied_result)
+	var membership := candidate.prepare_current_environment_object_membership_for_publication()
+	if not bool(membership.get("ok", false)):
+		return _service_error(_membership_reconciliation_error(membership, "The service could not update the room safely."))
 	if not run_state.publish_host_action_candidate(candidate):
 		return _service_error("The transaction could not publish its completed state.")
 	return _service_success(result)
@@ -1252,6 +1261,11 @@ func _money_transaction_cancelled(boundary_result: Dictionary, fallback: String)
 	var response := _service_error(str(errors[0]) if not errors.is_empty() else fallback)
 	response["error_code"] = "transaction_boundary_rejected"
 	return response
+
+
+func _membership_reconciliation_error(result: Dictionary, fallback: String) -> String:
+	var errors := JsonCoerceScript._copy_array(result.get("errors", []))
+	return str(errors[0]) if not errors.is_empty() else fallback
 
 
 # Converts an ItemEffect result plus offer data into a purchase result.

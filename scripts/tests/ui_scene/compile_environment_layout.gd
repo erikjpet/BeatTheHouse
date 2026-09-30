@@ -1,5 +1,7 @@
 extends "res://scripts/tests/ui_scene/compile_components_and_main_flow.gd"
 
+const EnvironmentSlotBinderScript := preload("res://scripts/core/environment_slot_binder.gd")
+
 func _check_meta_home_launcher_opens_room(app: Control) -> bool:
 	var collections_button := app.get("collections_button") as Button
 	if collections_button == null:
@@ -183,7 +185,11 @@ func _check_meta_home_launcher_opens_room(app: Control) -> bool:
 	var sal_object := _object_by_id(pawn_objects, "meta_sal:talk")
 	var pawn_door_object := _object_by_id(pawn_objects, "travel:leave")
 	if pawn_counter_object.is_empty() or sal_object.is_empty() or pawn_door_object.is_empty():
-		push_error("Custom pawn-shop room did not expose separate Sal, sell-counter, and map-door interactions.")
+		var meta_controller: Variant = app.get("meta_session_controller")
+		var raw_pawn_objects: Array = meta_controller.call("_pawn_interactable_objects", run_state, "", "", "") if meta_controller != null else []
+		var pawn_layout: Dictionary = pawn_environment.get("layout", {})
+		var pawn_binding := EnvironmentSlotBinderScript.bind_base_records(pawn_environment, raw_pawn_objects, pawn_layout.get("slot_bindings", {}), {})
+		push_error("Custom pawn-shop room did not expose separate Sal, sell-counter, and map-door interactions: %s." % JSON.stringify(pawn_binding.get("errors", [])))
 		return false
 	var shelf_offer_ids: Array = []
 	for offer_value in JsonCoerceScript._copy_array(pawn_environment.get("item_offers", [])):
@@ -200,12 +206,12 @@ func _check_meta_home_launcher_opens_room(app: Control) -> bool:
 		var shelf_slot_id := str(shelf_object.get("slot_id", ""))
 		var shelf_focus_rect := JsonCoerceScript._copy_dict(shelf_object.get("focus_rect", {}))
 		if str(shelf_object.get("presentation_mode", "")) != "room" \
-				or str(shelf_object.get("placement_class", "")) != "surface_item" \
+				or str(shelf_object.get("placement_class", "")) != "shop_item" \
 				or shelf_slot_id.is_empty() \
 				or shelf_slot_id != str(source_binding.get("slot_id", "")) \
 				or float(shelf_focus_rect.get("w", 0.0)) <= 0.0 \
 				or float(shelf_focus_rect.get("h", 0.0)) <= 0.0:
-			push_error("Sal shelf slot %d did not reuse its generated authored surface slot: %s / %s." % [slot_index, str(shelf_object), str(source_binding)])
+			push_error("Sal shelf slot %d did not reuse its generated authored shop-item slot: %s / %s." % [slot_index, str(shelf_object), str(source_binding)])
 			return false
 		if visible_shelf_slot_ids.has(shelf_slot_id):
 			push_error("Sal shelf slot %d duplicated visible authored slot %s." % [slot_index, shelf_slot_id])
@@ -223,10 +229,13 @@ func _check_meta_home_launcher_opens_room(app: Control) -> bool:
 			or str(pawn_counter_object.get("slot_id", "")) == str(sal_object.get("slot_id", "")):
 		push_error("Sal and the sell counter did not receive distinct fixed behind-counter slots: %s / %s." % [str(sal_object), str(pawn_counter_object)])
 		return false
+	var pawn_door_binding := JsonCoerceScript._copy_dict(pawn_layout_bindings.get("travel:leave", {}))
 	if str(pawn_door_object.get("presentation_mode", "")) != "room" \
-			or str(pawn_door_object.get("placement_class", "")) != "doorway" \
-			or str(pawn_door_object.get("slot_id", "")).is_empty():
-		push_error("Pawn-shop Street Door did not retain its fixed doorway slot: %s." % str(pawn_door_object))
+			or str(pawn_door_object.get("slot_family", "")) != "exit" \
+			or str(pawn_door_object.get("placement_class", "")) != str(pawn_door_binding.get("placement_class", "")) \
+			or str(pawn_door_object.get("slot_id", "")).is_empty() \
+			or str(pawn_door_object.get("slot_id", "")) != str(pawn_door_binding.get("slot_id", "")):
+		push_error("Pawn-shop Street Door did not retain its authored exit slot: %s / %s." % [str(pawn_door_object), str(pawn_door_binding)])
 		return false
 	var pawn_canvas := app.get("environment_canvas") as Control
 	var pawn_canvas_view: Dictionary = pawn_canvas.call("current_view_snapshot")

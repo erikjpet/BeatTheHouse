@@ -350,8 +350,8 @@ func _check_confirmed_all_in_wager_result_then_failure(_app: Control) -> bool:
 	return false
 
 
-func _check_presented_bankroll_waits_for_result_reveal(_app: Control) -> bool:
-	_missing_descendant_fixture("_check_presented_bankroll_waits_for_result_reveal")
+func _check_settled_bankroll_visible_during_result_reveal(_app: Control) -> bool:
+	_missing_descendant_fixture("_check_settled_bankroll_visible_during_result_reveal")
 	return false
 
 
@@ -1018,9 +1018,9 @@ func _check_run_inventory_screen_component() -> bool:
 		return false
 	screen.update_model(_run_inventory_component_model("inspect", "", {"id": "missing", "source": "carried"}))
 	selected_key = screen.selected_item_key()
-	if str(selected_key.get("id", "")) != "odds_notebook" or str(selected_key.get("source", "")) != "carried":
+	if str(selected_key.get("id", "")) != "lucky_coin" or str(selected_key.get("source", "")) != "carried":
 		parent.queue_free()
-		push_error("Standalone run inventory did not auto-select the first item when selection was absent.")
+		push_error("Standalone run inventory did not auto-select the first visible item under the default name sort when selection was absent.")
 		return false
 	screen.set_small_screen_mode(true)
 	await process_frame
@@ -2571,21 +2571,48 @@ func _check_crew_favor_conversation(app: Control) -> bool:
 		return false
 	var mounted_handoff_owner := run_state.world_sequence_mounted_owner_for_channel("delivery_handoff", target_id)
 	var abstract_handoff_marker_visible := false
+	var direct_handoff_visible := false
+	var delivery_contact_count := 0
 	var delivery_contact: Dictionary = {}
+	var room_slot_counts: Dictionary = {}
 	for object_value in app.call("_interactable_object_view_list"):
 		if typeof(object_value) != TYPE_DICTIONARY:
 			continue
 		var object_data := object_value as Dictionary
-		if str(object_data.get("object_id", "")) == "crew::package_handoff" and not bool(object_data.get("delivery_contact", false)):
+		var object_id := str(object_data.get("object_id", ""))
+		var slot_id := str(object_data.get("slot_id", "")).strip_edges()
+		if str(object_data.get("presentation_mode", "room")) == "room" and not slot_id.is_empty():
+			room_slot_counts[slot_id] = int(room_slot_counts.get(slot_id, 0)) + 1
+		if object_id == "crew::package_handoff" and not bool(object_data.get("delivery_contact", false)):
 			abstract_handoff_marker_visible = true
+		if object_id.begins_with("delivery:handoff:") or bool(object_data.get("delivery_handoff_direct", false)):
+			direct_handoff_visible = true
+		if bool(object_data.get("delivery_contact", false)):
+			delivery_contact_count += 1
 		if bool(object_data.get("delivery_contact", false)) and str(object_data.get("world_sequence_owner_token", "")) == mounted_handoff_owner:
 			delivery_contact = object_data
 	var arrival_interaction := run_state.delivery_arrival_interaction()
 	var contact_actions: Array = delivery_contact.get("scenario_sequence_actions", []) if typeof(delivery_contact.get("scenario_sequence_actions", [])) == TYPE_ARRAY else []
-	if mounted_handoff_owner.is_empty() or str(arrival_interaction.get("node_id", "")) != target_id or abstract_handoff_marker_visible \
+	var contact_slot_id := str(delivery_contact.get("slot_id", "")).strip_edges()
+	var delivery_object_summary: Array = []
+	for object_value in app.call("_interactable_object_view_list"):
+		if typeof(object_value) != TYPE_DICTIONARY:
+			continue
+		var object_data := object_value as Dictionary
+		delivery_object_summary.append({
+			"object_id": str(object_data.get("object_id", "")),
+			"slot_id": str(object_data.get("slot_id", "")),
+			"slot_family": str(object_data.get("slot_family", "")),
+			"presentation_mode": str(object_data.get("presentation_mode", "")),
+			"delivery_contact": bool(object_data.get("delivery_contact", false)),
+		})
+	if mounted_handoff_owner.is_empty() or str(arrival_interaction.get("node_id", "")) != target_id or abstract_handoff_marker_visible or direct_handoff_visible \
 			or delivery_contact.is_empty() or contact_actions.is_empty() \
+			or delivery_contact_count != 1 or str(delivery_contact.get("object_id", "")) != "crew::package_handoff" \
+			or str(delivery_contact.get("slot_family", "")) != "scenario" or not contact_slot_id.begins_with("scenario.") \
+			or not bool(delivery_contact.get("scenario_layout_resolved", false)) or int(room_slot_counts.get(contact_slot_id, 0)) != 1 \
 			or str((contact_actions[0] as Dictionary).get("label", "")) != "Hand Over The Package":
-		push_error("Delivery arrival did not attach its owner-scoped handoff dialogue option to a destination person: active=%s delivery=%s owner=%s interaction=%s contact=%s objects=%s" % [str(run_state.delivery_has_active_run()), JSON.stringify(run_state.delivery_snapshot()), mounted_handoff_owner, JSON.stringify(arrival_interaction), JSON.stringify(delivery_contact), JSON.stringify(app.call("_interactable_object_view_list"))])
+		push_error("Delivery arrival did not attach its owner-scoped handoff dialogue option to a destination person: active=%s delivery=%s owner=%s interaction=%s contact=%s registrations=%s lifecycle_errors=%s layout_audit=%s manifest_errors=%s objects=%s" % [str(run_state.delivery_has_active_run()), JSON.stringify(run_state.delivery_snapshot()), mounted_handoff_owner, JSON.stringify(arrival_interaction), JSON.stringify(delivery_contact), JSON.stringify(run_state.world_sequence_registrations), JSON.stringify(run_state.current_environment.get("scenario_sequence_lifecycle_errors", [])), JSON.stringify(run_state.current_environment.get("scenario_layout_audit", {})), JSON.stringify(run_state.current_environment.get("object_manifest_errors", [])), JSON.stringify(delivery_object_summary)])
 		return false
 	var bankroll_before_handoff := run_state.bankroll
 	var heat_before_handoff := run_state.suspicion_level()
@@ -2700,10 +2727,18 @@ func _check_delivery_ordinary_travel_baseline(app: Control, phase: String) -> bo
 	# action index, and travel-count contract while refreshing these two hashes.
 	# Round 3 restores Leave to a dedicated authored exit in every generated room;
 	# that intentional geometry-only change refreshes the same two layout hashes.
+	# The four-family environment-slot migration seals the deterministic object
+	# manifest and gives simultaneous fixed/scenario objects distinct authored
+	# capacity.  Its provisional placement pass changes only those same generated
+	# environment and embedded world-map records. Closed semantic replay now also
+	# preserves category-authorized physical bindings against their identical
+	# prefilled occupancy claim; this refreshes the generated Bar record while all
+	# route, RNG, story, economy, clock, and world-map routing values remain
+	# unchanged. The embedded Bar record still refreshes the world-map digest.
 	const EXPECTED := {
 		"bankroll_delta": -4,
 		"clock_delta": 42,
-		"current_environment_sha256": "306ec29a013b0ada4025ba62e75d0160211bea0b7d8a3e7a292d4e5395f9c032",
+		"current_environment_sha256": "580cee268e6590d6232233573cd603fbe34e034874c2954d0a580952ec4bf15b",
 		"current_world_node_id": "bar",
 		"heat_delta": 0,
 		"provenance_commit": "7ddb7685efb21e45979ea10ab89e660d99c6e891",
@@ -2714,7 +2749,7 @@ func _check_delivery_ordinary_travel_baseline(app: Control, phase: String) -> bo
 		"town_action_index": 0,
 		"travel_count_delta": 1,
 		"travel_story_sha256": "0257877551b37226fd62316ee2af5e047a27387fbb87d5acfa0273d1366a0e81",
-		"world_map_sha256": "fd73af7368f209741c9ae48a5ef019dec0151eb69026fe505c1859c9ab1aefca",
+		"world_map_sha256": "2a5f70933fa21aef90f561e821a46b6c94cc954378148112f5a34990177aeee2",
 	}
 	app.call("start_foundation_run", "DELIVERY-ORDINARY-BASELINE", {}, false)
 	for _start_frame in range(3):
@@ -4432,7 +4467,7 @@ func _run_main_flow(app: Control) -> void:
 	if not await _check_confirmed_all_in_wager_result_then_failure(app):
 		quit(1)
 		return
-	if not await _check_presented_bankroll_waits_for_result_reveal(app):
+	if not await _check_settled_bankroll_visible_during_result_reveal(app):
 		quit(1)
 		return
 	if not await _check_background_slot_autoplay_isolated_from_active_game(app):
@@ -5351,7 +5386,19 @@ func _run_main_flow(app: Control) -> void:
 	var canvas_snapshot: Dictionary = live_environment_canvas.call("current_view_snapshot")
 	var object_layout: Dictionary = canvas_snapshot.get("object_layout", {})
 	if int(object_layout.get("overlap_count", -1)) != 0:
-		push_error("Environment object layout allowed overlapping room props: %s." % str(object_layout.get("overlaps", [])))
+		var overlap_ids: Dictionary = {}
+		for overlap_value in object_layout.get("overlaps", []):
+			var overlap: Dictionary = overlap_value if typeof(overlap_value) == TYPE_DICTIONARY else {}
+			overlap_ids[str(overlap.get("a", ""))] = true
+			overlap_ids[str(overlap.get("b", ""))] = true
+		var overlap_objects: Array = []
+		for object_value in object_layout.get("objects", []):
+			var object_data: Dictionary = object_value if typeof(object_value) == TYPE_DICTIONARY else {}
+			var object_id := str(object_data.get("id", ""))
+			if overlap_ids.has(object_id):
+				overlap_objects.append(object_data)
+		var overlap_environment: Dictionary = (app.get("run_state") as RunState).current_environment
+		push_error("Environment object layout allowed overlapping room props: archetype=%s scenario=%s overlaps=%s objects=%s." % [str(overlap_environment.get("archetype_id", "")), str(overlap_environment.get("scenario_id", "")), JSON.stringify(object_layout.get("overlaps", [])), JSON.stringify(overlap_objects)])
 		quit(1)
 		return
 	var canvas_object := _canvas_object_by_id(canvas_snapshot.get("objects", []), focus_object_id)
@@ -7010,14 +7057,28 @@ func _run_main_flow(app: Control) -> void:
 	var event_options: Array = event_snapshot.get("event_options", [])
 	if event_options.is_empty():
 		var event_fixture_run_state: RunState = app.get("run_state")
-		event_fixture_run_state.current_environment["kind"] = "shop"
-		event_fixture_run_state.current_environment["display_name"] = "Fixture Shop"
-		event_fixture_run_state.current_environment["event_ids"] = ["late_shift_discount"]
-		event_fixture_run_state.current_environment["resolved_event_ids"] = []
-		event_fixture_run_state.current_environment["item_offers"] = []
-		event_fixture_run_state.current_environment["service_ids"] = []
-		event_fixture_run_state.current_environment["lender_hooks"] = []
-		event_fixture_run_state.current_environment["layout"] = EnvironmentInstance.ensure_generated_layout(event_fixture_run_state.current_environment)
+		var event_fixture_archetype := _archetype_by_id(app.get("library"), "corner_store")
+		# Install a clean room instead of carrying scenario/layout authority from the
+		# preceding Grand Casino practice fixture across archetypes. The strict slot
+		# contract intentionally refuses to render a Corner Store event in that map.
+		var event_fixture_environment := EnvironmentInstance.from_archetype(
+			event_fixture_archetype,
+			int(event_fixture_run_state.current_environment.get("depth", 0)),
+			event_fixture_run_state.create_rng("ui_event_slot_fixture"),
+			app.get("library")
+		).to_dict()
+		event_fixture_environment["id"] = "ui_event_slot_fixture"
+		event_fixture_environment["world_node_id"] = "corner_store"
+		event_fixture_environment["display_name"] = "Fixture Corner Store"
+		event_fixture_environment["game_ids"] = []
+		event_fixture_environment["game_states"] = {}
+		event_fixture_environment["event_ids"] = ["late_shift_discount"]
+		event_fixture_environment["resolved_event_ids"] = []
+		event_fixture_environment["item_offers"] = []
+		event_fixture_environment["service_ids"] = []
+		event_fixture_environment["lender_hooks"] = []
+		event_fixture_environment["layout"] = EnvironmentInstance.ensure_generated_layout(event_fixture_environment, app.get("library"))
+		event_fixture_run_state.current_environment = event_fixture_environment
 		app.call("clear_interaction_focus")
 		await process_frame
 		event_snapshot = app.call("current_environment_view_snapshot")
@@ -7389,6 +7450,13 @@ func _run_main_flow(app: Control) -> void:
 		quit(1)
 		return
 	var item_binding := JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(generated_item_layout.get("slot_bindings", {})).get(item_object_id, {}))
+	var item_manifest_family := ""
+	var item_manifest := JsonCoerceScript._copy_dict(item_environment.get("object_manifest", {}))
+	for row_value in JsonCoerceScript._copy_array(item_manifest.get("rows", [])):
+		var row := JsonCoerceScript._copy_dict(row_value)
+		if str(row.get("presentation_object_id", row.get("object_id", ""))) == item_object_id:
+			item_manifest_family = str(row.get("family", ""))
+			break
 	var item_rect := _snapshot_rect(generated_object_rects.get(item_object_id, {}))
 	var item_board_size := Vector2(VisualStyleScript.ENVIRONMENT_BOARD_SIZE)
 	var expected_item_position := item_rect.get_center()
@@ -7396,7 +7464,9 @@ func _run_main_flow(app: Control) -> void:
 	var actual_item_position: Variant = item_canvas_object.get("position", Vector2(-1.0, -1.0))
 	var actual_item_size: Variant = item_canvas_object.get("size", Vector2(-1.0, -1.0))
 	if str(item_binding.get("identity", "")) != item_object_id \
-			or str(item_binding.get("kind", "")) != "base" \
+			or item_manifest_family not in ["fixed", "event", "scenario"] \
+			or str(item_binding.get("kind", "")) != item_manifest_family \
+			or str(item_binding.get("slot_family", "")) != item_manifest_family \
 			or str(item_binding.get("presentation_mode", "")) != "room" \
 			or str(item_binding.get("slot_id", "")).is_empty() \
 			or JsonCoerceScript._copy_dict(item_binding.get("slot", {})).is_empty() \
@@ -7699,22 +7769,24 @@ func _run_main_flow(app: Control) -> void:
 	var original_hook_lenders: Array = hook_library.lenders.duplicate(true)
 	hook_run_state.game_clock_minutes = 20 * 60
 	hook_run_state.clear_closing_time_state()
-	hook_library.services = [{
-		"id": "fixture_ui_service",
-		"display_name": "Fixture Service",
-		"description": "A contract fixture service resolved through result deltas.",
-		"cost": 8,
-		"deltas": {
-			"bankroll_delta": 3,
-			"flags_set": {"fixture_ui_service_used": true},
-		},
-	}]
+	# Exercise result-delta behavior through a genuinely authored physical object.
+	# An invented service id has no identity-local fixed.* authority and correctly
+	# becomes an attached action under the four-family room contract.
+	var fixture_service := JsonCoerceScript._copy_dict(hook_library.service("house_drink"))
+	fixture_service["display_name"] = "Fixture Service"
+	fixture_service["description"] = "A contract fixture service resolved through result deltas."
+	fixture_service["cost"] = 8
+	fixture_service["deltas"] = {
+		"bankroll_delta": 3,
+		"flags_set": {"fixture_ui_service_used": true},
+	}
+	hook_library.services = [fixture_service]
 	hook_run_state.current_environment["kind"] = "fixture_room"
 	hook_run_state.current_environment["object_fixtures"] = ["shopkeeper:merchant"]
-	hook_run_state.current_environment["service_ids"] = ["fixture_ui_service"]
+	hook_run_state.current_environment["service_ids"] = ["house_drink"]
 	hook_run_state.current_environment["lender_hooks"] = ["fixture_missing_lender"]
 	hook_run_state.current_environment["item_offers"] = []
-	hook_run_state.current_environment["layout"] = EnvironmentInstance.ensure_generated_layout(hook_run_state.current_environment)
+	hook_run_state.current_environment["layout"] = EnvironmentInstance.ensure_generated_layout(hook_run_state.current_environment, hook_library)
 	var hook_spatial_snapshot: Dictionary = app.call("current_spatial_interaction_snapshot")
 	var service_interactable := _interactable_by_type(hook_spatial_snapshot.get("objects", []), "service")
 	var lender_interactable := _interactable_by_type(hook_spatial_snapshot.get("objects", []), "lender")
@@ -7807,16 +7879,16 @@ func _run_main_flow(app: Control) -> void:
 	hook_run_state.game_clock_minutes = 20 * 60
 	hook_run_state.clear_closing_time_state()
 
-	hook_library.lenders = [{
-		"id": "fixture_ui_lender",
-		"display_name": "Fixture Lender",
-		"description": "A contract fixture lender resolved through debt_changes.",
-		"deltas": {
-			"debt_changes": [{"id": "fixture_ui_debt", "lender_id": "fixture_ui_lender", "balance": 12, "status": "active"}],
-		},
-	}]
-	hook_run_state.current_environment["lender_hooks"] = ["fixture_ui_lender"]
-	hook_run_state.current_environment["layout"] = EnvironmentInstance.ensure_generated_layout(hook_run_state.current_environment)
+	var fixture_lender := JsonCoerceScript._copy_dict(hook_library.lender("street_lender"))
+	fixture_lender["display_name"] = "Fixture Lender"
+	fixture_lender["description"] = "A contract fixture lender resolved through debt_changes."
+	fixture_lender.erase("debt_profile")
+	fixture_lender["deltas"] = {
+		"debt_changes": [{"id": "fixture_ui_debt", "lender_id": "street_lender", "balance": 12, "status": "active"}],
+	}
+	hook_library.lenders = [fixture_lender]
+	hook_run_state.current_environment["lender_hooks"] = ["street_lender"]
+	hook_run_state.current_environment["layout"] = EnvironmentInstance.ensure_generated_layout(hook_run_state.current_environment, hook_library)
 	var supported_lender_snapshot: Dictionary = app.call("current_environment_view_snapshot")
 	var supported_lenders: Array = supported_lender_snapshot.get("lender_options", [])
 	if supported_lenders.is_empty() or not bool((supported_lenders[0] as Dictionary).get("mutation_supported", false)):
@@ -7844,7 +7916,7 @@ func _run_main_flow(app: Control) -> void:
 		return
 	await process_frame
 	var lender_talk: Dictionary = app.call("current_talk_dock_snapshot")
-	if not bool(lender_talk.get("visible", false)) or str(lender_talk.get("speaker_text", "")) != "Fixture Lender" or not bool(lender_talk.get("topic_visible", false)) or str(lender_talk.get("topic", "")) != "Loan Offer":
+	if not bool(lender_talk.get("visible", false)) or str(lender_talk.get("speaker_text", "")).find("Vic Mercer") == -1 or not bool(lender_talk.get("topic_visible", false)) or str(lender_talk.get("topic", "")) != "Loan Offer":
 		push_error("Supported lender hook did not use the standard title/topic/options conversation: %s." % JSON.stringify(lender_talk))
 		quit(1)
 		return

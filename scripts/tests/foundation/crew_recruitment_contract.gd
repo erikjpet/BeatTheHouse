@@ -15,7 +15,7 @@ const RunStateScript := preload("res://scripts/core/run_state.gd")
 const WorldMapScript := preload("res://scripts/core/world_map.gd")
 const HarnessProductionFidelityScript := preload("res://scripts/tests/foundation/harness_production_fidelity.gd")
 const IGNORED_BASELINE_PATH := "res://scripts/tests/fixtures/crew06_5_ignored_run_baseline.json"
-const IGNORED_BASELINE_CHANGE_COMMIT := "a11ed9d7e8e69508e517fbd477da03183eb7dae7"
+const IGNORED_BASELINE_CHANGE_COMMIT := "environment-slot-family-manifest-v2"
 const JSON_EXACT_INTEGER_LIMIT := 9007199254740991.0
 
 
@@ -662,7 +662,8 @@ static func _generated_path(library: ContentLibrary, member_id: String, path_kin
 		if not scenario.is_empty():
 			run_state.seed_scenario_for_node(archetype_id, scenario)
 	generator.next_environment(run_state, archetype_id, true)
-	var entered := str(run_state.current_environment.get("archetype_id", "")) == archetype_id and generator._last_environment_install_errors.is_empty()
+	var generation_errors := generator._last_environment_install_errors.duplicate(true)
+	var entered := str(run_state.current_environment.get("archetype_id", "")) == archetype_id and generation_errors.is_empty()
 	var layers := JsonCoerceScript._string_array(location.get("layer_ids", []))
 	var layer_result: Dictionary = {}
 	var base_arrival_failures: Array = []
@@ -672,14 +673,19 @@ static func _generated_path(library: ContentLibrary, member_id: String, path_kin
 	if entered and not layers.is_empty() and str(run_state.current_environment.get("current_layer_id", "")) != str(layers[0]):
 		layer_result = generator.enter_environment_layer(run_state, str(layers[0]), false)
 		entered = bool(layer_result.get("ok", false))
+	var world_finalization_errors: Array = []
 	if entered:
 		var world_finalized := run_state.world_sequence_finalize_base_semantics([], library, {"viewport_size": {"x": 1280, "y": 720}})
 		entered = bool(world_finalized.get("ok", false)) or bool(world_finalized.get("inactive", false))
+		if not entered:
+			world_finalization_errors = _array(world_finalized.get("errors", [])).duplicate(true)
 	var path_errors: Array = []
+	path_errors.append_array(generation_errors)
 	if not base_arrival_failures.is_empty():
 		path_errors.append_array(base_arrival_failures)
 	if not layer_result.is_empty() and not bool(layer_result.get("ok", false)):
 		path_errors.append(str(layer_result.get("message", layer_result.get("errors", []))))
+	path_errors.append_array(world_finalization_errors)
 	return {"run_state": run_state, "entered": entered, "errors": path_errors}
 
 

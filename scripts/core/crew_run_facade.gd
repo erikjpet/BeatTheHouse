@@ -1212,12 +1212,13 @@ func _crew_heist_sync_whale_setup() -> void:
 	crew_heist_state = state
 
 
-func _crew_heist_boundary_sync() -> void:
+func _crew_heist_boundary_sync() -> bool:
 	var state = _run.CrewHeistModelScript.normalize_state(crew_heist_state)
 	state = _crew_heist_sync_count_window(state)
-	_crew_heist_sync_live_table_event(state)
+	if not _crew_heist_sync_live_table_event(state):
+		return false
 	if str(state.get("plan_id", "")) != _run.CrewHeistModelScript.PLAN_WHALE or str(state.get("status", "")) != _run.CrewHeistModelScript.STATUS_SETUP:
-		return
+		return true
 	var hooks := JsonCoerceScript._copy_dict(_run.current_environment.get("scenario_hook_flags", {}))
 	if bool(hooks.get("heist_plan_b_criteria", false)) or bool(hooks.get("gala_night", false)):
 		var setup := JsonCoerceScript._copy_dict(state.get("setup", {}))
@@ -1229,6 +1230,7 @@ func _crew_heist_boundary_sync() -> void:
 			state["setup"] = setup
 			crew_heist_state = state
 	_crew_heist_sync_whale_setup()
+	return true
 
 
 func crew_heist_begin_play(host_capability: Variant = null) -> Dictionary:
@@ -1251,6 +1253,7 @@ func crew_heist_begin_play(host_capability: Variant = null) -> Dictionary:
 	if not _run.CrewHeistModelScript.setup_complete(state):
 		crew_heist_state = state
 		return {"ok": false, "message": "The setup still has an empty chair."}
+	var rollback_run: Dictionary = _run.to_dict()
 	state["status"] = _run.CrewHeistModelScript.STATUS_PLAY
 	_run.narrative_flags["heist_live_table_active"] = true
 	var play := JsonCoerceScript._copy_dict(state.get("play", {}))
@@ -1269,7 +1272,9 @@ func crew_heist_begin_play(host_capability: Variant = null) -> Dictionary:
 	state["play"] = play
 	crew_heist_state = state
 	state = _crew_heist_sync_count_window(state)
-	_crew_heist_sync_live_table_event(state)
+	if not _crew_heist_sync_live_table_event(state):
+		_run.from_dict(rollback_run)
+		return {"ok": false, "message": "The Live Table could not claim a valid event slot.", "errors": ["crew heist live-table membership reconciliation failed"]}
 	return {"ok": true, "message": begin_message}
 
 
@@ -1373,6 +1378,7 @@ func crew_heist_play_round(round_data: Dictionary, host_capability: Variant = nu
 
 
 func _crew_heist_finish_whale_exposure(state_value: Dictionary, round_index: int, hidden: Dictionary) -> Dictionary:
+	var rollback_run: Dictionary = _run.to_dict()
 	var state = _run.CrewHeistModelScript.normalize_state(state_value)
 	var play := JsonCoerceScript._copy_dict(state.get("play", {}))
 	play["round"] = round_index
@@ -1399,7 +1405,9 @@ func _crew_heist_finish_whale_exposure(state_value: Dictionary, round_index: int
 		_run.story_flags["heist_scar_%s" % scar_id] = true
 	crew_heist_state = state
 	_run.narrative_flags["heist_live_table_active"] = false
-	_crew_heist_sync_live_table_event(state)
+	if not _crew_heist_sync_live_table_event(state):
+		_run.from_dict(rollback_run)
+		return {"ok": false, "message": "The exposed table could not be removed safely.", "errors": ["crew heist live-table membership reconciliation failed"]}
 	var message = _run.CrewHeistModelScript.ending_line(_run.CrewHeistModelScript.PLAN_WHALE, outcome)
 	_run.narrative_flags["crew_heist_outcome"] = outcome
 	_run.narrative_flags["crew_heist_plan_id"] = _run.CrewHeistModelScript.PLAN_WHALE
@@ -1479,6 +1487,7 @@ func crew_heist_begin_getaway(host_capability: Variant = null) -> Dictionary:
 		pursuit_pressure = int(tuning.get("pursuit_pressure", 0)) + (10 if bool(play.get("heat_degraded", false)) else 0)
 	elif hot_whale_exit:
 		pursuit_pressure = int(tuning.get("hot_pursuit_pressure", 0)) + (10 if bool(play.get("made", false)) or bool(play.get("bust", false)) else 0)
+	var rollback_run: Dictionary = _run.to_dict()
 	var started = _run.delivery_begin_getaway({
 		"enabled": true,
 		"run_id": "heist:%s:getaway" % str(state.get("plan_id", "")),
@@ -1500,7 +1509,9 @@ func crew_heist_begin_getaway(host_capability: Variant = null) -> Dictionary:
 	state["getaway"] = {"target_node_id": target_id, "exit": exit_choice, "status": "active", "chase": plan_id == _run.CrewHeistModelScript.PLAN_COUNT or hot_whale_exit}
 	crew_heist_state = state
 	_run.narrative_flags["heist_live_table_active"] = false
-	_crew_heist_sync_live_table_event(state)
+	if not _crew_heist_sync_live_table_event(state):
+		_run.from_dict(rollback_run)
+		return {"ok": false, "message": "The getaway could not remove The Live Table safely.", "errors": ["crew heist live-table membership reconciliation failed"]}
 	return started
 
 
@@ -1599,7 +1610,7 @@ func _crew_heist_at_designated_table(state: Dictionary) -> bool:
 	return archetype_id == str(JsonCoerceScript._copy_dict(_run.CrewHeistModelScript.plan(_run.CrewHeistModelScript.PLAN_WHALE).get("play", {})).get("venue_archetype", _run.GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID))
 
 
-func _crew_heist_sync_live_table_event(state: Dictionary) -> void:
+func _crew_heist_sync_live_table_event(state: Dictionary) -> bool:
 	var phase := str(state.get("status", ""))
 	var should_register := phase in [_run.CrewHeistModelScript.STATUS_PLAY, _run.CrewHeistModelScript.STATUS_INTERVIEW] and _crew_heist_at_designated_table(state)
 	var was_registered := bool(_run.narrative_flags.get("heist_live_table_registered", false))
@@ -1607,15 +1618,35 @@ func _crew_heist_sync_live_table_event(state: Dictionary) -> void:
 	# expensive world scan is cleanup for an event we actually registered, not
 	# a speculative repair pass for every run in the game.
 	if not was_registered and not should_register:
-		return
+		return true
+	var candidate: Variant = _run.detached_host_action_candidate()
+	if candidate == null:
+		return false
+	var candidate_facade := get_script().new() as CrewRunFacade
+	candidate_facade.bind(candidate)
+	var staged := candidate_facade._crew_heist_apply_live_table_event(state)
+	if not bool(staged.get("ok", false)):
+		return false
+	return _run.publish_host_action_candidate(candidate)
+
+
+func _crew_heist_apply_live_table_event(state: Dictionary) -> Dictionary:
+	var phase := str(state.get("status", ""))
+	var should_register := phase in [_run.CrewHeistModelScript.STATUS_PLAY, _run.CrewHeistModelScript.STATUS_INTERVIEW] and _crew_heist_at_designated_table(state)
+	var was_registered := bool(_run.narrative_flags.get("heist_live_table_registered", false))
+	var errors: Array = []
 	if was_registered:
 		_run._remove_heist_live_table_event(_run.current_environment)
+		errors.append_array(_crew_heist_membership_errors(_run.current_environment, "current environment"))
 		var nodes := JsonCoerceScript._copy_array(_run.world_map.get("nodes", []))
 		for index in range(nodes.size()):
 			if typeof(nodes[index]) == TYPE_DICTIONARY:
 				var node := JsonCoerceScript._copy_dict(nodes[index])
 				var environment := JsonCoerceScript._copy_dict(node.get("environment", {}))
+				if environment.is_empty():
+					continue
 				_run._remove_heist_live_table_event(environment)
+				errors.append_array(_crew_heist_membership_errors(environment, "world node %s" % str(node.get("id", index))))
 				node["environment"] = environment
 				nodes[index] = node
 		_run.world_map["nodes"] = nodes
@@ -1623,20 +1654,35 @@ func _crew_heist_sync_live_table_event(state: Dictionary) -> void:
 			var room: Variant = _run.grand_casino_room_states.get(room_id_value, {})
 			if typeof(room) == TYPE_DICTIONARY:
 				var clean_room := JsonCoerceScript._copy_dict(room)
+				if clean_room.is_empty():
+					continue
 				_run._remove_heist_live_table_event(clean_room)
+				errors.append_array(_crew_heist_membership_errors(clean_room, "Grand Casino room %s" % str(room_id_value)))
 				_run.grand_casino_room_states[room_id_value] = clean_room
 		_run.narrative_flags.erase("heist_live_table_registered")
+	if not errors.is_empty():
+		return {"ok": false, "errors": errors}
 	if not should_register:
-		return
+		var removal_prepared: Dictionary = _run.prepare_current_environment_object_membership_for_publication()
+		return removal_prepared
 	var event_ids := JsonCoerceScript._copy_array(_run.current_environment.get("event_ids", []))
 	if not event_ids.has("heist_live_table"):
 		event_ids.append("heist_live_table")
 		_run.current_environment["event_ids"] = event_ids
-		# This event is a real object on the current environment plane. Give the
-		# newly appended object the same generated layout authority as every other
-		# environment event before semantic presentation is sealed.
-		_run.current_environment["layout"] = EnvironmentInstance.ensure_generated_layout(_run.current_environment)
+	var resolved_ids := JsonCoerceScript._copy_array(_run.current_environment.get("resolved_event_ids", []))
+	if resolved_ids.has("heist_live_table"):
+		resolved_ids.erase("heist_live_table")
+		_run.current_environment["resolved_event_ids"] = resolved_ids
 	_run.narrative_flags["heist_live_table_registered"] = true
+	return _run.prepare_current_environment_object_membership_for_publication()
+
+
+func _crew_heist_membership_errors(environment: Dictionary, label: String) -> Array:
+	var result: Dictionary = _run.reconcile_environment_object_membership(environment)
+	var errors: Array = []
+	for error_value in JsonCoerceScript._copy_array(result.get("errors", [])):
+		errors.append("%s: %s" % [label, str(error_value)])
+	return errors
 
 
 func _crew_heist_world_has_hook(hook_id: String) -> bool:
@@ -1730,20 +1776,20 @@ func _crew_heist_getaway_target(plan_id: String, _exit_choice: String = "") -> S
 	return ""
 
 
-func _crew_heist_apply_delivery_resolution(run_id: String, succeeded: bool, resolution: Dictionary) -> void:
+func _crew_heist_apply_delivery_resolution(run_id: String, succeeded: bool, resolution: Dictionary) -> bool:
 	var state = _run.CrewHeistModelScript.normalize_state(crew_heist_state)
 	if state.is_empty() or not run_id.begins_with("heist:%s:" % str(state.get("plan_id", ""))):
-		return
+		return true
 	var part := run_id.get_slice(":", 2)
 	if part in ["schedule", "swap_cart"]:
 		if succeeded:
 			var setup := JsonCoerceScript._copy_dict(state.get("setup", {}))
 			setup[part] = true
 			state["setup"] = setup
-		crew_heist_state = state
-		return
+			crew_heist_state = state
+		return true
 	if part != "getaway" or str(state.get("status", "")) != _run.CrewHeistModelScript.STATUS_GETAWAY:
-		return
+		return true
 	var play := JsonCoerceScript._copy_dict(state.get("play", {}))
 	var hidden := CrewTurnModelScript.normalize_state(state.get("x", {}), CrewStateModelScript.MEMBER_IDS)
 	var active_member := CrewTurnModelScript.active_member(hidden, CrewStateModelScript.MEMBER_IDS)
@@ -1776,12 +1822,14 @@ func _crew_heist_apply_delivery_resolution(run_id: String, succeeded: bool, reso
 	state["getaway"] = getaway
 	crew_heist_state = state
 	_run.narrative_flags["heist_live_table_active"] = false
-	_crew_heist_sync_live_table_event(state)
+	if not _crew_heist_sync_live_table_event(state):
+		return false
 	var message = _run.CrewHeistModelScript.ending_line(str(state.get("plan_id", "")), outcome)
 	_run.narrative_flags["crew_heist_outcome"] = outcome
 	_run.narrative_flags["crew_heist_plan_id"] = str(state.get("plan_id", ""))
 	_run._complete_demo_objective({"id": _run.CREW_HEIST_ROUTE, "target_bankroll": _run.bankroll, "victory_message": message}, message, {"finale_event_id": "heist_finale", "finale_branch": outcome, "demo_victory_route": _run.CREW_HEIST_ROUTE})
 	_run.narrative_flags["act_two_seam_ready"] = true
+	return true
 
 
 func crew_grievances(member_id: String = "") -> Array:

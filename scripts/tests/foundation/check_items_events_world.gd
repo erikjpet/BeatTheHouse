@@ -405,22 +405,30 @@ func _check_item_affinity_purchase_nudge(library: ContentLibrary, failures: Arra
 		return
 	if AttributeBadgesScript.item_game_affinity_id(item_def) != "blackjack":
 		failures.append("Marked Cards should infer blackjack game affinity from data-authored effect keys.")
+	var fixture_archetype := _archetype_by_id(library, "delta_queen")
+	if fixture_archetype.is_empty():
+		failures.append("Marked Cards affinity check needs the Delta Queen production archetype.")
+		return
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("ITEM-AFFINITY-PURCHASE")
 	run_state.bankroll = 1000
-	run_state.set_environment({
-		"id": "item_affinity_shop",
-		"archetype_id": "item_affinity_shop",
-		"kind": "shop",
-		"tier": 1,
-		"game_ids": ["blackjack"],
-		"item_offers": [{"id": "marked_cards", "price": 12}],
-		"service_ids": [],
-		"event_ids": [],
-		"lender_hooks": [],
-		"next_archetypes": [],
-		"travel_hooks": [],
-	})
+	# Delta Queen is a production v2 room with both blackjack and merchandise
+	# capacity, so the affinity assertion and committed purchase share the same
+	# physical membership contract as normal gameplay.
+	var fixture_environment := EnvironmentInstance.from_archetype(
+		fixture_archetype,
+		2,
+		run_state.create_rng("item_affinity_shop"),
+		library
+	).to_dict()
+	fixture_environment["id"] = "item_affinity_shop"
+	fixture_environment["item_offers"] = [{"id": "marked_cards", "price": 12}]
+	fixture_environment["event_ids"] = []
+	fixture_environment["layout"] = EnvironmentInstance.ensure_generated_layout(fixture_environment, library)
+	var installation := run_state.set_environment(fixture_environment)
+	if not bool(installation.get("ok", false)):
+		failures.append("Marked Cards affinity fixture could not install its generated room: %s" % JSON.stringify(installation.get("errors", [])))
+		return
 	var resolver: RunActionService = RunActionServiceScript.new()
 	resolver.setup(library, run_state)
 	var offer := resolver.item_offer("marked_cards")
@@ -4260,7 +4268,7 @@ func _check_cash_lender_lifecycle(library: ContentLibrary, lender_id: String, de
 		failures.append("Cash lender %s repayment did not cool heat." % lender_id)
 	if bool(repay_resolver.hook_option("lender", lender_id).get("enabled", true)):
 		failures.append("Cash lender %s offered a larger loan in the same room after repayment." % lender_id)
-	repay_state.current_environment["id"] = "lender_cash_return_%s" % lender_id
+	_reidentify_lender_fixture_room(repay_state, "lender_cash_return_%s" % lender_id)
 	var next_option := repay_resolver.hook_option("lender", lender_id)
 	if not bool(next_option.get("enabled", false)):
 		failures.append("Cash lender %s did not return after leaving the room: %s" % [lender_id, str(next_option.get("disabled_reason", ""))])
@@ -4302,11 +4310,11 @@ func _check_crew_lender_lifecycle(library: ContentLibrary, failures: Array) -> v
 		failures.append("The Crew lender did not request the bankroll transfer animation.")
 	if bool(multi_resolver.hook_option("lender", "the_crew").get("enabled", true)):
 		failures.append("The Crew allowed a second marker from the same location.")
-	multi_state.current_environment["id"] = "lender_crew_second_room"
+	_reidentify_lender_fixture_room(multi_state, "lender_crew_second_room")
 	var second_marker := multi_resolver.use_hook("lender", "the_crew")
 	if not bool(second_marker.get("ok", false)):
 		failures.append("The Crew second location loan did not resolve.")
-	multi_state.current_environment["id"] = "lender_crew_third_room"
+	_reidentify_lender_fixture_room(multi_state, "lender_crew_third_room")
 	var third_marker := multi_resolver.use_hook("lender", "the_crew")
 	if not bool(third_marker.get("ok", false)):
 		failures.append("The Crew third location loan did not resolve.")
@@ -4318,7 +4326,7 @@ func _check_crew_lender_lifecycle(library: ContentLibrary, failures: Array) -> v
 			failures.append("The Crew stacked marker balance was not three favors after three locations.")
 		if JsonCoerceScript._copy_array(multi_debt.get("source_location_ids", [])).size() != 3:
 			failures.append("The Crew did not preserve all three source locations.")
-	multi_state.current_environment["id"] = "lender_crew_fourth_room"
+	_reidentify_lender_fixture_room(multi_state, "lender_crew_fourth_room")
 	if bool(multi_resolver.hook_option("lender", "the_crew").get("enabled", true)):
 		failures.append("The Crew allowed more than three active loan locations.")
 
@@ -4607,7 +4615,7 @@ func _check_family_lender_lifecycle(library: ContentLibrary, failures: Array) ->
 		failures.append("Brother-in-law early repayment did not record goodwill.")
 	if bool(resolver.hook_option("lender", "brother_in_law").get("enabled", true)):
 		failures.append("Brother-in-law offered a same-room repeat loan after repayment.")
-	run_state.current_environment["id"] = "lender_family_return_room"
+	_reidentify_lender_fixture_room(run_state, "lender_family_return_room")
 	run_state.narrative_flags["brother_in_law_phone_ready"] = true
 	var repeat_option := resolver.hook_option("lender", "brother_in_law")
 	if not bool(repeat_option.get("enabled", false)):
@@ -4862,16 +4870,25 @@ func _lender_fixture(library: ContentLibrary, seed: String, lender_ids: Array, s
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new(seed)
 	run_state.bankroll = 100
-	run_state.current_environment = {
-		"id": "%s_room" % seed.to_lower(),
-		"display_name": "Lender Fixture Room",
-		"kind": "shop",
-		"tier": 1,
-		"archetype_id": "lender_fixture",
-		"service_ids": service_ids.duplicate(true),
-		"lender_hooks": lender_ids.duplicate(true),
-		"layout": {},
-	}
+	# Exercise lender behavior in a real slot-schema-v2 room. Synthetic empty
+	# layouts are no longer legal environment state and hid placement failures.
+	var motel_lender := lender_ids.has("motel_friend") or lender_ids.has("brother_in_law") \
+			or service_ids.has("call_brother_in_law")
+	var archetype_id := "motel" if motel_lender else "back_alley"
+	var fixture_archetype := _archetype_by_id(library, archetype_id).duplicate(true)
+	fixture_archetype["lender_hooks"] = lender_ids.duplicate(true)
+	fixture_archetype["required_lender_hooks"] = lender_ids.duplicate(true)
+	fixture_archetype["lender_count"] = [lender_ids.size(), lender_ids.size()]
+	fixture_archetype["service_pool"] = service_ids.duplicate(true)
+	fixture_archetype["event_pool"] = []
+	fixture_archetype["event_count"] = [0, 0]
+	var fixture_environment := EnvironmentInstance.from_archetype(
+		fixture_archetype,
+		1,
+		run_state.create_rng("%s_lender_room" % seed.to_lower()),
+		library
+	).to_dict()
+	run_state.set_environment(fixture_environment)
 	for item_id in JsonCoerceScript._string_array(inventory_ids):
 		run_state.add_item(item_id)
 	var resolver: RunActionService = RunActionServiceScript.new()
@@ -4880,6 +4897,13 @@ func _lender_fixture(library: ContentLibrary, seed: String, lender_ids: Array, s
 		"run_state": run_state,
 		"resolver": resolver,
 	}
+
+
+func _reidentify_lender_fixture_room(run_state: RunState, room_id: String) -> void:
+	# Repeat-loan behavior keys on the generated room instance id. Keep the
+	# durable manifest/layout seal synchronized when a fixture simulates travel.
+	run_state.current_environment["id"] = room_id
+	run_state.reconcile_current_environment_object_manifest(true)
 
 
 func _fixture_lender_result(run_state: RunState, lender: Dictionary, lender_id: String) -> Dictionary:

@@ -85,19 +85,22 @@ func _check_settings_contract() -> void:
 func _check_slot_geometry_and_promotion(user_path: String, project_path: String) -> void:
 	var environment := {"archetype_id": "corner_store"}
 	var normal_before := EnvironmentPlacementScript.surface_map(environment)
-	var base_before := _slot(normal_before, "base.shop_item_1")
-	var stage_before := _slot(normal_before, "stage.staff_floor_1")
+	var fixed_before := _slot(normal_before, "fixed.item_shop_1")
+	var event_before := _slot(normal_before, "event.floor_patron_1")
+	var scenario_before := _slot(normal_before, "scenario.floor_patron_1")
 	var exit_before := _slot(normal_before, "exit.safe_left")
-	_check(not base_before.is_empty() and not stage_before.is_empty() and not exit_before.is_empty(), "Fixture must expose base, stage, and exit slots.")
-	if base_before.is_empty() or stage_before.is_empty() or exit_before.is_empty():
+	_check(not fixed_before.is_empty() and not event_before.is_empty() and not scenario_before.is_empty() and not exit_before.is_empty(), "Fixture must expose fixed, event, scenario, and exit slots.")
+	if fixed_before.is_empty() or event_before.is_empty() or scenario_before.is_empty() or exit_before.is_empty():
 		return
 
-	var base_target := _slot_position(base_before) + Vector2(40.0, 20.0)
-	var stage_target := _slot_position(stage_before) + Vector2(-24.0, -16.0)
+	var fixed_target := _slot_position(fixed_before) + Vector2(40.0, 20.0)
+	var event_target := _slot_position(event_before) + Vector2(8.0, -12.0)
+	var scenario_target := _slot_position(scenario_before) + Vector2(-24.0, -16.0)
 	var exit_target := _slot_position(exit_before) + Vector2(18.0, 12.0)
 	for edit in [
-		["base.shop_item_1", base_target],
-		["stage.staff_floor_1", stage_target],
+		["fixed.item_shop_1", fixed_target],
+		["event.floor_patron_1", event_target],
+		["scenario.floor_patron_1", scenario_target],
 		["exit.safe_left", exit_target],
 	]:
 		var saved := DeveloperPlacementStoreScript.save_position(environment, "slot_positions", str(edit[0]), edit[1] as Vector2)
@@ -106,18 +109,20 @@ func _check_slot_geometry_and_promotion(user_path: String, project_path: String)
 
 	var normal_local := EnvironmentPlacementScript.surface_map(environment)
 	var authoring_local := EnvironmentPlacementScript.authoring_surface_map(environment)
-	_check(_slot_position(_slot(normal_local, "base.shop_item_1")).is_equal_approx(base_target), "A locked machine-local slot edit must remain active after placement mode is disabled.")
-	_check(_slot_position(_slot(normal_local, "stage.staff_floor_1")).is_equal_approx(stage_target), "Normal rendering must consume the locked stage-slot edit before project promotion.")
+	_check(_slot_position(_slot(normal_local, "fixed.item_shop_1")).is_equal_approx(fixed_target), "A locked fixed-slot edit must remain active after placement mode is disabled.")
+	_check(_slot_position(_slot(normal_local, "event.floor_patron_1")).is_equal_approx(event_target), "Normal rendering must consume the locked event-slot edit before project promotion.")
+	_check(_slot_position(_slot(normal_local, "scenario.floor_patron_1")).is_equal_approx(scenario_target), "Normal rendering must consume the locked scenario-slot edit before project promotion.")
 	_check(_slot_position(_slot(normal_local, "exit.safe_left")).is_equal_approx(exit_target), "Normal rendering must consume the locked exit-slot edit before project promotion.")
-	_check(_slot_position(_slot(authoring_local, "base.shop_item_1")).is_equal_approx(base_target), "Authoring view must load the local base-slot edit.")
-	_check(_slot_position(_slot(authoring_local, "stage.staff_floor_1")).is_equal_approx(stage_target), "Authoring view must load the local stage-slot edit.")
+	_check(_slot_position(_slot(authoring_local, "fixed.item_shop_1")).is_equal_approx(fixed_target), "Authoring view must load the local fixed-slot edit.")
+	_check(_slot_position(_slot(authoring_local, "event.floor_patron_1")).is_equal_approx(event_target), "Authoring view must load the local event-slot edit.")
+	_check(_slot_position(_slot(authoring_local, "scenario.floor_patron_1")).is_equal_approx(scenario_target), "Authoring view must load the local scenario-slot edit.")
 	_check(_slot_position(_slot(authoring_local, "exit.safe_left")).is_equal_approx(exit_target), "Authoring view must load the local exit-slot edit.")
-	_check(_translated_geometry(base_before, _slot(authoring_local, "base.shop_item_1"), base_target - _slot_position(base_before)), "Moving a slot must rigidly translate pos, hit_rect, and label_anchor without resizing it.")
+	_check(_translated_geometry(fixed_before, _slot(authoring_local, "fixed.item_shop_1"), fixed_target - _slot_position(fixed_before)), "Moving a slot must rigidly translate pos, hit_rect, and label_anchor without resizing it.")
 
 	DeveloperPlacementStoreScript.reload()
-	_check(_slot_position(_slot(EnvironmentPlacementScript.surface_map(environment), "base.shop_item_1")).is_equal_approx(base_target), "Locked slot edits must survive a durable reload in normal rendering.")
+	_check(_slot_position(_slot(EnvironmentPlacementScript.surface_map(environment), "fixed.item_shop_1")).is_equal_approx(fixed_target), "Locked slot edits must survive a durable reload in normal rendering.")
 	var other_environment := {"archetype_id": "bar"}
-	_check(_slot(EnvironmentPlacementScript.authoring_surface_map(other_environment), "base.shop_item_1").is_empty(), "A slot edit must not leak into another environment.")
+	_check(_slot(EnvironmentPlacementScript.authoring_surface_map(other_environment), "fixed.item_shop_1").is_empty(), "A slot edit must not leak into another environment.")
 
 	var local_binding := EnvironmentSlotBinderScript.bind_base_layout(
 		{
@@ -128,12 +133,16 @@ func _check_slot_geometry_and_promotion(user_path: String, project_path: String)
 			"object_id": "item:local_future_stock",
 			"object_type": "item",
 			"label": "Local Future Stock",
+			"family": "fixed",
+			"placement_class": "shop_item",
+			"exact_slot_id": "fixed.item_shop_1",
+			"active": true,
 		}]
 	)
 	var local_future_binding: Dictionary = (local_binding.get("slot_bindings", {}) as Dictionary).get("item:local_future_stock", {})
 	var local_future_rect: Dictionary = (local_binding.get("object_rects", {}) as Dictionary).get("item:local_future_stock", {})
-	var local_target_rect := _slot_rect(_slot(normal_local, "base.shop_item_1"))
-	_check(str(local_future_binding.get("slot_id", "")) == "base.shop_item_1", "A newly generated environment must bind future objects to a locally moved slot.")
+	var local_target_rect := _slot_rect(_slot(normal_local, "fixed.item_shop_1"))
+	_check(str(local_future_binding.get("slot_id", "")) == "fixed.item_shop_1", "A newly generated environment must bind future objects to a locally moved slot.")
 	_check(
 		is_equal_approx(float(local_future_rect.get("x", -1.0)), local_target_rect.position.x / 900.0)
 			and is_equal_approx(float(local_future_rect.get("y", -1.0)), local_target_rect.position.y / 430.0),
@@ -141,13 +150,13 @@ func _check_slot_geometry_and_promotion(user_path: String, project_path: String)
 	)
 	var club_layer := {"archetype_id": "small_underground_casino", "current_layer_id": "club"}
 	var casino_layer := {"archetype_id": "small_underground_casino", "current_layer_id": "casino"}
-	var club_slot := _slot(EnvironmentPlacementScript.surface_map(club_layer), "base.door_right_lower")
+	var club_slot := _slot(EnvironmentPlacementScript.surface_map(club_layer), "fixed.door_right_lower")
 	var club_target := _slot_position(club_slot) + Vector2(-10.0, -6.0)
-	var layer_saved := DeveloperPlacementStoreScript.save_position(club_layer, "slot_positions", "base.door_right_lower", club_target)
+	var layer_saved := DeveloperPlacementStoreScript.save_position(club_layer, "slot_positions", "fixed.door_right_lower", club_target)
 	_check(bool(layer_saved.get("ok", false)), "A layered-environment slot edit must save.")
 	_check(
-		DeveloperPlacementStoreScript.user_slot_overrides(club_layer, "slot_positions").has("base.door_right_lower")
-			and not DeveloperPlacementStoreScript.user_slot_overrides(casino_layer, "slot_positions").has("base.door_right_lower"),
+		DeveloperPlacementStoreScript.user_slot_overrides(club_layer, "slot_positions").has("fixed.door_right_lower")
+			and not DeveloperPlacementStoreScript.user_slot_overrides(casino_layer, "slot_positions").has("fixed.door_right_lower"),
 		"Slot edits must be scoped to the exact environment layer."
 	)
 
@@ -155,8 +164,8 @@ func _check_slot_geometry_and_promotion(user_path: String, project_path: String)
 	_check(bool(promoted.get("ok", false)) and FileAccess.file_exists(project_path), "Save to Project must promote locked slot edits.")
 	DeveloperPlacementStoreScript.reload()
 	var normal_promoted := EnvironmentPlacementScript.surface_map(environment)
-	var promoted_base := _slot(normal_promoted, "base.shop_item_1")
-	_check(_slot_position(promoted_base).is_equal_approx(base_target), "Promoted slot geometry must become normal generation authority.")
+	var promoted_base := _slot(normal_promoted, "fixed.item_shop_1")
+	_check(_slot_position(promoted_base).is_equal_approx(fixed_target), "Promoted slot geometry must become normal generation authority.")
 
 	var binding := EnvironmentSlotBinderScript.bind_base_layout(
 		{
@@ -167,22 +176,26 @@ func _check_slot_geometry_and_promotion(user_path: String, project_path: String)
 			"object_id": "item:future_stock",
 			"object_type": "item",
 			"label": "Future Stock",
+			"family": "fixed",
+			"placement_class": "shop_item",
+			"exact_slot_id": "fixed.item_shop_1",
+			"active": true,
 		}]
 	)
 	var future_binding: Dictionary = (binding.get("slot_bindings", {}) as Dictionary).get("item:future_stock", {})
 	var future_rect: Dictionary = (binding.get("object_rects", {}) as Dictionary).get("item:future_stock", {})
 	var promoted_rect := _slot_rect(promoted_base)
-	_check(str(future_binding.get("slot_id", "")) == "base.shop_item_1", "A future object must bind to the edited reusable slot, not an instance override.")
+	_check(str(future_binding.get("slot_id", "")) == "fixed.item_shop_1", "A future object must bind to the edited reusable slot, not an instance override.")
 	_check(
 		is_equal_approx(float(future_rect.get("x", -1.0)), promoted_rect.position.x / 900.0)
 			and is_equal_approx(float(future_rect.get("y", -1.0)), promoted_rect.position.y / 430.0),
 		"Normal binding must consume the promoted slot hit rectangle."
 	)
 
-	var cleared := DeveloperPlacementStoreScript.clear_position(environment, "slot_positions", "base.shop_item_1")
+	var cleared := DeveloperPlacementStoreScript.clear_position(environment, "slot_positions", "fixed.item_shop_1")
 	_check(bool(cleared.get("ok", false)), "Reset must clear the local edit without deleting promoted project geometry.")
 	DeveloperPlacementStoreScript.reload()
-	_check(_slot_position(_slot(EnvironmentPlacementScript.surface_map(environment), "base.shop_item_1")).is_equal_approx(base_target), "A promoted slot must survive local reset and reload.")
+	_check(_slot_position(_slot(EnvironmentPlacementScript.surface_map(environment), "fixed.item_shop_1")).is_equal_approx(fixed_target), "A promoted slot must survive local reset and reload.")
 
 
 func _check_canvas_contract() -> void:
@@ -198,7 +211,8 @@ func _check_canvas_contract() -> void:
 			"object_id": "item:fixture",
 			"object_type": "item",
 			"label": "Fixture",
-			"slot_id": "base.shop_item_1",
+			"slot_id": "fixed.item_shop_1",
+			"slot_family": "fixed",
 			"fixed_slot_geometry": true,
 			"normalized_rect": {"x": 130.0 / 900.0, "y": 80.0 / 430.0, "w": 44.0 / 900.0, "h": 48.0 / 430.0},
 		}],
@@ -207,27 +221,34 @@ func _check_canvas_contract() -> void:
 	await process_frame
 	var snapshot: Dictionary = canvas.developer_slot_placement_snapshot()
 	_check(bool(snapshot.get("enabled", false)) and int(snapshot.get("visible_slot_count", 0)) > 0, "Slot mode must expose every authored slot even when the room has no occupying objects.")
+	var filters: Dictionary = snapshot.get("family_filters", {})
+	_check(filters.keys().size() == 4 and filters.has("fixed") and filters.has("event") and filters.has("scenario") and filters.has("exit"), "Slot mode must expose independent filters for all four slot families.")
+	var all_family_count := int(snapshot.get("visible_slot_count", 0))
+	canvas.set_developer_slot_family_visible("event", false)
+	var filtered_snapshot := canvas.developer_slot_placement_snapshot()
+	_check(int(filtered_snapshot.get("visible_slot_count", 0)) < all_family_count, "Hiding the event family must remove event slots from the authoring overlay.")
+	canvas.set_developer_slot_family_visible("event", true)
 	_check(not bool(canvas.developer_placement_snapshot().get("enabled", true)), "Enabling slot mode must disable spawned-object placement mode.")
-	var wrapped_label: Array = canvas.call("_wrap_developer_slot_label", "stage.event_wall_1", ThemeDB.fallback_font, 8, 42.0)
-	_check(wrapped_label.size() > 1 and "".join(wrapped_label) == "stage.event_wall_1", "Slot overlay labels must wrap onto multiple rows without truncating their stable IDs.")
+	var wrapped_label: Array = canvas.call("_wrap_developer_slot_label", "scenario.wall_item_1", ThemeDB.fallback_font, 8, 42.0)
+	_check(wrapped_label.size() > 1 and "".join(wrapped_label) == "scenario.wall_item_1", "Slot overlay labels must wrap onto multiple rows without truncating their stable IDs.")
 
-	var slot: Dictionary = canvas.call("_developer_slot", "stage.event_wall_1")
-	_check(not slot.is_empty(), "The overlay must include empty stage slots by stable ID.")
+	var slot: Dictionary = canvas.call("_developer_slot", "scenario.wall_item_1")
+	_check(not slot.is_empty(), "The overlay must include empty scenario slots by stable ID.")
 	if not slot.is_empty():
 		var rect: Rect2 = canvas.call("_developer_slot_rect", slot)
 		var selected_id := str(canvas.call("_developer_slot_id_at_local_position", rect.get_center()))
-		_check(selected_id == "stage.event_wall_1", "An empty overlay slot must be directly selectable.")
+		_check(selected_id == "scenario.wall_item_1", "An empty overlay slot must be directly selectable.")
 		canvas.call("_begin_developer_slot_placement_drag", rect.get_center())
 		var target_top_left := rect.position + Vector2(12.0, 8.0)
 		canvas.call("_update_developer_slot_placement_preview", target_top_left)
 		snapshot = canvas.developer_slot_placement_snapshot()
 		var request: Dictionary = snapshot.get("request", {})
 		_check(bool(snapshot.get("pending", false)) and bool(snapshot.get("valid", false)), "Dragging a slot must expose a valid live preview.")
-		_check(str(request.get("field", "")) == "slot_positions" and str(request.get("slot_id", "")) == "stage.event_wall_1", "A slot edit request must retain reusable slot identity.")
+		_check(str(request.get("field", "")) == "slot_positions" and str(request.get("slot_id", "")) == "scenario.wall_item_1", "A slot edit request must retain reusable slot identity.")
 		canvas.call("_lock_developer_slot_placement")
-		_check(str(locked_request.get("slot_id", "")) == "stage.event_wall_1", "Lock must emit the selected reusable slot edit.")
+		_check(str(locked_request.get("slot_id", "")) == "scenario.wall_item_1", "Lock must emit the selected reusable slot edit.")
 
-	var occupied_slot: Dictionary = canvas.call("_developer_slot", "base.shop_item_1")
+	var occupied_slot: Dictionary = canvas.call("_developer_slot", "fixed.item_shop_1")
 	var occupied_rect: Rect2 = canvas.call("_developer_slot_rect", occupied_slot)
 	var baseline_object_rect: Rect2 = canvas.call("_board_rect_for_object", canvas.call("_scene_object", "item:fixture"))
 	canvas.call("_begin_developer_slot_placement_drag", occupied_rect.get_center())
@@ -242,7 +263,7 @@ func _check_canvas_contract() -> void:
 		locked_request.get("position", Vector2.ZERO) as Vector2
 	)
 	_check(bool(persisted.get("ok", false)), "A released slot move must persist through the production placement store.")
-	var moved_slot := _slot(EnvironmentPlacementScript.surface_map({"archetype_id": "corner_store"}), "base.shop_item_1")
+	var moved_slot := _slot(EnvironmentPlacementScript.surface_map({"archetype_id": "corner_store"}), "fixed.item_shop_1")
 	var moved_rect := _slot_rect(moved_slot)
 	canvas.render_environment_snapshot({
 		"archetype_id": "corner_store",
@@ -251,7 +272,8 @@ func _check_canvas_contract() -> void:
 			"object_id": "item:fixture",
 			"object_type": "item",
 			"label": "Fixture",
-			"slot_id": "base.shop_item_1",
+			"slot_id": "fixed.item_shop_1",
+			"slot_family": "fixed",
 			"fixed_slot_geometry": true,
 			"normalized_rect": {
 				"x": moved_rect.position.x / 900.0,
@@ -266,7 +288,7 @@ func _check_canvas_contract() -> void:
 	_check(persisted_object_rect.position.is_equal_approx(moved_rect.position), "Leaving slot mode must retain the locked slot position in normal rendering.")
 
 	canvas.set_developer_slot_placement_mode(true)
-	occupied_slot = canvas.call("_developer_slot", "base.shop_item_1")
+	occupied_slot = canvas.call("_developer_slot", "fixed.item_shop_1")
 	occupied_rect = canvas.call("_developer_slot_rect", occupied_slot)
 	canvas.call("_begin_developer_slot_placement_drag", occupied_rect.get_center())
 	canvas.call("_update_developer_slot_placement_preview", occupied_rect.position + Vector2(16.0, 8.0))
@@ -283,7 +305,7 @@ func _capture_lock_request(request: Dictionary) -> void:
 
 
 func _slot(surface_map: Dictionary, slot_id: String) -> Dictionary:
-	for field in ["base_slots", "stage_slots", "exit_slots"]:
+	for field in ["fixed_slots", "event_slots", "scenario_slots", "exit_slots"]:
 		for slot_value in surface_map.get(field, []):
 			if typeof(slot_value) == TYPE_DICTIONARY and str((slot_value as Dictionary).get("id", "")) == slot_id:
 				return (slot_value as Dictionary).duplicate(true)

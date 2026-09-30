@@ -99,10 +99,17 @@ static func _check_generation_and_tutorial(library: ContentLibrary, archetype: D
 	var slot_bindings := _dict(_dict(normal.get("layout", {})).get("slot_bindings", {}))
 	if not object_rects.has("environment_layer:ambient") or not object_rects.has("environment_layer:casino"):
 		failures.append("Punchline layer fixtures were not assigned stable transition-time layout surfaces.")
-	if str(_dict(slot_bindings.get("numbers:book", {})).get("presentation_mode", "")) != "room" \
-			or not object_rects.has("numbers:book") or _layout_overlap_count(object_rects) != 0:
-		failures.append("Punchline club did not keep the physical Numbers book on a collision-free generated layout plane.")
-	normal_run.set_environment(normal)
+	# EnvironmentInstance owns capacity only. Numbers presence is conditional and
+	# must not appear until the room is installed into its authoritative RunState.
+	if object_rects.has("numbers:book") or slot_bindings.has("numbers:book"):
+		failures.append("Raw Punchline generation projected a Numbers book before RunState supplied live venue presence.")
+	var installed := normal_run.set_environment(normal)
+	var installed_rects := _dict(_dict(normal_run.current_environment.get("layout", {})).get("object_rects", {}))
+	var installed_bindings := _dict(_dict(normal_run.current_environment.get("layout", {})).get("slot_bindings", {}))
+	if not bool(installed.get("ok", false)) \
+			or str(_dict(installed_bindings.get("numbers:book", {})).get("presentation_mode", "")) != "room" \
+			or not installed_rects.has("numbers:book") or _layout_overlap_count(installed_rects) != 0:
+		failures.append("Punchline club did not project the live Numbers book onto a collision-free layout after RunState installation.")
 	var ambient_before := str(normal_run.current_environment.get("layer_ambient_line", ""))
 	normal_run.advance_environment_turns(1)
 	if str(normal_run.current_environment.get("layer_ambient_line", "")) != ambient_before:

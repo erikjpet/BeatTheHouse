@@ -50,15 +50,26 @@ func _run() -> void:
 			environment["layout"] = EnvironmentInstanceScript.ensure_generated_layout(environment, library)
 			var live_ids := _live_offer_ids(environment)
 			var bindings := _dict(_dict(environment.get("layout", {})).get("slot_bindings", {}))
+			var manifest_families: Dictionary = {}
+			for row_value in EnvironmentInstanceScript.active_object_manifest_rows(environment):
+				var row := _dict(row_value)
+				manifest_families[str(row.get("presentation_object_id", row.get("object_id", "")))] = str(row.get("family", ""))
 			var occupied: Dictionary = {}
+			var family_ordinals := {"fixed": 0, "scenario": 0}
 			for offer_index in range(live_ids.size()):
 				var object_id := str(live_ids[offer_index])
 				var binding := _dict(bindings.get(object_id, {}))
 				var slot_id := str(binding.get("slot_id", ""))
-				var expected_slot := "base.shop_item_%d" % (offer_index + 1)
+				var family := str(manifest_families.get(object_id, ""))
+				if family not in family_ordinals:
+					room_failures.append("%s %s has invalid merchandise family %s" % [str(variant.get("label", "base")), object_id, family])
+					continue
+				family_ordinals[family] = int(family_ordinals.get(family, 0)) + 1
+				var expected_slot := "%s.item_shop_%d" % [family, int(family_ordinals.get(family, 0))]
 				listed["%s=%s" % [object_id, slot_id if not slot_id.is_empty() else "MISSING"]] = true
 				offer_count += 1
 				if str(binding.get("presentation_mode", "")) != "room" \
+						or str(binding.get("slot_family", "")) != family \
 						or str(binding.get("placement_class", "")) != "shop_item" \
 						or slot_id != expected_slot:
 					room_failures.append("%s %s expected %s, got %s" % [str(variant.get("label", "base")), object_id, expected_slot, slot_id])
@@ -69,7 +80,7 @@ func _run() -> void:
 			for binding_id_value in bindings.keys():
 				var binding_id := str(binding_id_value)
 				var bound_slot := str(_dict(bindings.get(binding_id_value, {})).get("slot_id", ""))
-				if bound_slot.begins_with("base.shop_item_") and not live_ids.has(binding_id):
+				if bound_slot.begins_with("fixed.item_shop_") and not live_ids.has(binding_id):
 					room_failures.append("%s non-offer %s occupies %s" % [str(variant.get("label", "base")), binding_id, bound_slot])
 			variant_count += 1
 		var entries := listed.keys()

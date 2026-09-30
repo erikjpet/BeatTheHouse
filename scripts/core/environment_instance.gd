@@ -13,9 +13,11 @@ const EnvironmentSemanticInventoryScript := preload("res://scripts/core/environm
 const EnvironmentEventResolverScript := preload("res://scripts/core/environment_event_resolver.gd")
 const EnvironmentPlacementScript := preload("res://scripts/core/environment_placement.gd")
 const EnvironmentSlotBinderScript := preload("res://scripts/core/environment_slot_binder.gd")
+const EnvironmentObjectManifestScript := preload("res://scripts/core/environment_object_manifest.gd")
 
-const GENERATED_LAYOUT_VERSION := 13
+const GENERATED_LAYOUT_VERSION := 14
 const ENVIRONMENT_LAYER_SCHEMA_VERSION := 1
+const OBJECT_MANIFEST_SCHEMA_VERSION := EnvironmentObjectManifestScript.SCHEMA_VERSION
 const EMPTY_MUSIC_NOTE := -999
 const SALS_PAWN_COUNTER_ID := "sals_pawn_counter"
 const PAWN_SHOP_ARCHETYPE_ID := "pawn_shop"
@@ -34,6 +36,14 @@ var depth: int = 0
 var art_key: String = ""
 var visual_context: Dictionary = {}
 var layout: Dictionary = {}
+var object_manifest: Dictionary = {}
+var object_manifest_digest: String = ""
+var object_manifest_revision: int = 0
+# Selected runtime-owned room objects are part of the active environment's
+# saveable projection. They are removed from inactive rooms by RunState, but an
+# EnvironmentInstance round trip must retain them so its sealed manifest and
+# layout can be validated without silently dropping live occupants.
+var runtime_object_manifest_entries: Array = []
 var security_profile: Dictionary = {}
 var music_profile: Dictionary = {}
 var economic_profile: Dictionary = {}
@@ -181,6 +191,7 @@ static func from_archetype(archetype: Dictionary, p_depth: int, rng: RngStream, 
 	environment.scenario_presentation = JsonCoerceScript._copy_dict(archetype.get("scenario_presentation", {}))
 	environment.scenario_exclusive_opportunity = JsonCoerceScript._copy_dict(archetype.get("scenario_exclusive_opportunity", {}))
 	environment.scenario_hook_flags = JsonCoerceScript._copy_dict(archetype.get("scenario_hook_flags", {}))
+	var construction_render_snapshot: Dictionary = {}
 	if not selected_state.is_empty():
 		environment.scenario_state = selected_state
 		var scenario_environment := environment.to_dict()
@@ -190,8 +201,26 @@ static func from_archetype(archetype: Dictionary, p_depth: int, rng: RngStream, 
 		if archetype.has("current_layer_id"):
 			scenario_environment["current_layer_id"] = str(archetype.get("current_layer_id", "")).strip_edges()
 		ScenarioEngineScript.attach_to_environment(scenario_environment, selected_state, selected_scenario)
+		construction_render_snapshot = JsonCoerceScript._copy_dict(scenario_environment.get("scenario_render_snapshot", {}))
 		environment = from_dict(scenario_environment)
-	environment.layout = ensure_generated_layout(environment.to_dict())
+	var finalized_environment_data := environment.to_dict()
+	# Renderer snapshots are deliberately non-durable, so from_dict strips the
+	# fresh attachment snapshot. Reinsert that trusted construction-only authority
+	# for the final library-backed manifest/layout pass. The manifest produced by
+	# that internal from_dict pass is likewise only a libraryless provisional
+	# projection; remove it so refreshed catalog hints and the trusted snapshot are
+	# sealed together as one fresh authority. Neither transient input is copied
+	# back onto the saveable EnvironmentInstance below.
+	if not selected_state.is_empty():
+		finalized_environment_data.erase("object_manifest")
+		finalized_environment_data.erase("object_manifest_digest")
+		finalized_environment_data.erase("object_manifest_revision")
+	if not construction_render_snapshot.is_empty():
+		finalized_environment_data["scenario_render_snapshot"] = construction_render_snapshot
+	environment.layout = ensure_generated_layout(finalized_environment_data, library)
+	environment.object_manifest = JsonCoerceScript._copy_dict(finalized_environment_data.get("object_manifest", {}))
+	environment.object_manifest_digest = str(environment.object_manifest.get("digest", ""))
+	environment.object_manifest_revision = maxi(0, int(environment.object_manifest.get("revision", 0)))
 	return environment
 
 
@@ -284,6 +313,7 @@ static func from_dict(data: Dictionary) -> EnvironmentInstance:
 	environment.art_key = str(data.get("art_key", JsonCoerceScript._copy_dict(data.get("visual_context", {})).get("art_key", "")))
 	environment.visual_context = _strip_presentation_paths(JsonCoerceScript._copy_dict(data.get("visual_context", {})), environment.art_key)
 	environment.layout = ensure_generated_layout(data)
+	environment.runtime_object_manifest_entries = JsonCoerceScript._copy_array(data.get("runtime_object_manifest_entries", []))
 	environment.security_profile = JsonCoerceScript._copy_dict(data.get("security_profile", {}))
 	environment.music_profile = JsonCoerceScript._copy_dict(data.get("music_profile", {}))
 	environment.economic_profile = JsonCoerceScript._copy_dict(data.get("economic_profile", {}))
@@ -353,6 +383,11 @@ static func from_dict(data: Dictionary) -> EnvironmentInstance:
 	environment.layer_ambient_rotate_actions = maxi(1, int(data.get("layer_ambient_rotate_actions", 1)))
 	environment.layer_ambient_index = maxi(0, int(data.get("layer_ambient_index", 0)))
 	environment.layer_ambient_line = str(data.get("layer_ambient_line", "")).strip_edges()
+	var manifest := JsonCoerceScript._copy_dict(data.get("object_manifest", {}))
+	if EnvironmentObjectManifestScript.validate(manifest).is_empty():
+		environment.object_manifest = manifest
+		environment.object_manifest_digest = str(manifest.get("digest", ""))
+		environment.object_manifest_revision = maxi(0, int(manifest.get("revision", 0)))
 	return environment
 
 
@@ -397,6 +432,12 @@ func to_dict() -> Dictionary:
 		"travel_locked_actions": travel_locked_actions,
 		"travel_lock_remaining": travel_lock_remaining,
 	}
+	if not object_manifest.is_empty():
+		result["object_manifest"] = object_manifest.duplicate(true)
+		result["object_manifest_digest"] = object_manifest_digest
+		result["object_manifest_revision"] = object_manifest_revision
+	if not runtime_object_manifest_entries.is_empty():
+		result["runtime_object_manifest_entries"] = runtime_object_manifest_entries.duplicate(true)
 	if not scenario_state.is_empty():
 		result["scenario_state"] = scenario_state.duplicate(true)
 		result["scenario_id"] = str(scenario_state.get("id", ""))
@@ -601,6 +642,10 @@ static func _is_layered_archetype(archetype: Dictionary) -> bool:
 
 # Ensures a generated environment owns stable object placement keyed by object id.
 static func ensure_generated_layout(environment_data: Dictionary, library: ContentLibrary = null) -> Dictionary:
+	# The physical inventory is sealed before geometry so every binder and caller
+	# sees the same zero-RNG source of truth. Dictionary arguments are shared in
+	# GDScript, so this also refreshes the caller's durable manifest envelope.
+	reconcile_object_manifest(environment_data, library)
 	var layout := JsonCoerceScript._copy_dict(environment_data.get("layout", {}))
 	if library != null:
 		var refreshed_hints := _base_placement_hints(environment_data, library)
@@ -611,7 +656,7 @@ static func ensure_generated_layout(environment_data: Dictionary, library: Conte
 	# rather than the stale hints still held by the serialized input dictionary.
 	var placement_environment := environment_data.duplicate(true)
 	placement_environment["layout"] = layout
-	var active_entries := _active_object_layout_entries(placement_environment)
+	var active_entries := active_object_manifest_rows(placement_environment)
 	var grounding_signature := _grounding_signature(environment_data, layout, active_entries)
 	var current_slot_map_digest := EnvironmentSlotBinderScript.slot_map_digest(
 		EnvironmentPlacementScript.surface_map(placement_environment)
@@ -625,6 +670,21 @@ static func ensure_generated_layout(environment_data: Dictionary, library: Conte
 		return layout
 	var room_slot_occupancy: Dictionary = {}
 	var binding_result := EnvironmentSlotBinderScript.bind_base_layout(placement_environment, active_entries, room_slot_occupancy)
+	if not bool(binding_result.get("ok", false)):
+		# Family/schema/capacity failures are not valid partial rooms. Preserve the
+		# diagnostics, but clear every derived binding and leave the version unset
+		# so a corrected authority is rebuilt on the next reconciliation.
+		layout["object_rects"] = {}
+		layout["slot_bindings"] = {}
+		layout["slot_overflow_ids"] = []
+		layout["slot_schema_version"] = int(binding_result.get("slot_schema_version", 0))
+		layout["slot_map_digest"] = str(binding_result.get("slot_map_digest", ""))
+		layout["slot_binding_digest"] = ""
+		layout["placement_errors"] = JsonCoerceScript._copy_array(binding_result.get("errors", []))
+		layout["placement_warnings"] = JsonCoerceScript._copy_array(binding_result.get("warnings", []))
+		layout["generated_object_rect_version"] = 0
+		layout["grounding_signature"] = grounding_signature
+		return layout
 	layout["object_rects"] = JsonCoerceScript._copy_dict(binding_result.get("object_rects", {}))
 	layout["slot_bindings"] = JsonCoerceScript._copy_dict(binding_result.get("slot_bindings", {}))
 	layout["slot_overflow_ids"] = JsonCoerceScript._copy_array(binding_result.get("overflow_ids", []))
@@ -636,19 +696,145 @@ static func ensure_generated_layout(environment_data: Dictionary, library: Conte
 	layout.erase("placement_classes")
 	layout.erase("placement_surfaces")
 	layout.erase("placement_errors")
+	var placement_warnings := JsonCoerceScript._copy_array(binding_result.get("warnings", []))
+	if placement_warnings.is_empty():
+		layout.erase("placement_warnings")
+	else:
+		layout["placement_warnings"] = placement_warnings
 	layout.erase("placement_fallback_ids")
 	layout["generated_object_rect_version"] = GENERATED_LAYOUT_VERSION
 	layout["grounding_signature"] = grounding_signature
 	return layout
 
 
+# Reconciles the versioned physical-object manifest in place and returns it.
+# Selection has already happened by this boundary; this projection consumes no
+# RNG and leaves gameplay arrays untouched.
+static func reconcile_object_manifest(environment_data: Dictionary, library: ContentLibrary = null) -> Dictionary:
+	var working := environment_data.duplicate(false)
+	var layout := JsonCoerceScript._copy_dict(environment_data.get("layout", {}))
+	if library != null:
+		var refreshed_hints := _base_placement_hints(environment_data, library)
+		if not refreshed_hints.is_empty():
+			layout["object_placement_hints"] = refreshed_hints
+			# The manifest source seal below includes the placement class derived
+			# from these hints. Keep that exact input on the durable environment so
+			# later libraryless validation cannot recompute against stale hints.
+			environment_data["layout"] = layout.duplicate(true)
+	working["layout"] = layout
+	var surface_map := EnvironmentPlacementScript.surface_map(working)
+	var entries := _physical_manifest_layout_entries(working, surface_map)
+	var manifest := EnvironmentObjectManifestScript.reconcile(
+		working,
+		entries,
+		surface_map,
+		JsonCoerceScript._copy_dict(environment_data.get("object_manifest", {}))
+	)
+	environment_data["object_manifest"] = manifest.duplicate(true)
+	environment_data["object_manifest_digest"] = str(manifest.get("digest", ""))
+	environment_data["object_manifest_revision"] = maxi(0, int(manifest.get("revision", 0)))
+	return manifest
+
+
+static func object_manifest_errors(environment_data: Dictionary) -> Array:
+	var surface_map := EnvironmentPlacementScript.surface_map(environment_data)
+	var entries := _physical_manifest_layout_entries(environment_data, surface_map)
+	var errors := EnvironmentObjectManifestScript.validate_for_environment(
+		environment_data.get("object_manifest", {}),
+		environment_data,
+		entries,
+		surface_map
+	)
+	var manifest := JsonCoerceScript._copy_dict(environment_data.get("object_manifest", {}))
+	if str(environment_data.get("object_manifest_digest", "")) != str(manifest.get("digest", "")):
+		errors.append("Environment object manifest digest mirror is stale.")
+	if int(environment_data.get("object_manifest_revision", 0)) != int(manifest.get("revision", 0)):
+		errors.append("Environment object manifest revision mirror is stale.")
+	return errors
+
+
+static func active_object_manifest_rows(environment_data: Dictionary, family: String = "") -> Array:
+	return EnvironmentObjectManifestScript.active_rows(environment_data.get("object_manifest", {}), family)
+
+
+static func _physical_manifest_layout_entries(environment_data: Dictionary, surface_map: Dictionary) -> Array:
+	var result: Array = []
+	var class_overrides := JsonCoerceScript._copy_dict(surface_map.get("class_overrides", {}))
+	for entry_value in _active_object_layout_entries(environment_data, surface_map):
+		if typeof(entry_value) != TYPE_DICTIONARY:
+			continue
+		var entry := (entry_value as Dictionary).duplicate(true)
+		var object_id := str(entry.get("object_id", "")).strip_edges()
+		if object_id.is_empty():
+			continue
+		var object_type := str(entry.get("object_type", ""))
+		var actual_exit := object_type == "travel" or object_id.begins_with("travel:") \
+				or object_type == "environment_layer" and object_id != "environment_layer:ambient"
+		var requires_room_slot := EnvironmentSlotBinderScript.base_record_requires_room_slot(entry)
+		# Identity-local family declarations are themselves physical-presence
+		# authority. Category mappings describe capacity only: leave category-only
+		# physical rows unstamped so manifest provenance can still distinguish a
+		# scenario mutation from an ordinary fixed/event object before binding.
+		var explicit_family := EnvironmentSlotBinderScript.authored_entry_slot_family(
+			surface_map,
+			entry,
+			object_id,
+			"",
+			false
+		)
+		if explicit_family.is_empty() and not actual_exit and not requires_room_slot:
+			continue
+		if explicit_family in EnvironmentSlotBinderScript.SLOT_FAMILIES:
+			entry["slot_family"] = explicit_family
+		var class_override := str(class_overrides.get(object_id, "")).strip_edges()
+		var placement_class := class_override if class_override in EnvironmentPlacementScript.CLASSES else EnvironmentPlacementScript.classify(
+			entry,
+			object_type,
+			object_id,
+			str(entry.get("visual_prop", entry.get("prop", "")))
+		)
+		if placement_class == "shop_item" and class_override != "shop_item" and _manifest_shop_item_order(environment_data, object_id) < 0:
+			placement_class = "surface_item"
+		entry["placement_class"] = placement_class
+		entry["physical"] = true
+		entry["active"] = true
+		entry["required"] = true
+		result.append(entry)
+	return result
+
+
+static func _manifest_shop_item_order(environment_data: Dictionary, object_id: String) -> int:
+	# Home item offers represent belongings/pickups placed on ordinary household
+	# surfaces. Keep manifest classification identical to the slot binder: a home
+	# never turns those rows into shop merchandise merely because they share the
+	# durable item_offers collection.
+	if str(environment_data.get("kind", "")) == "home":
+		return -1
+	if object_id.begins_with("item:"):
+		var item_id := object_id.trim_prefix("item:")
+		var order := 0
+		for offer_value in JsonCoerceScript._copy_array(environment_data.get("item_offers", [])):
+			if typeof(offer_value) != TYPE_DICTIONARY:
+				continue
+			if str((offer_value as Dictionary).get("id", "")) == item_id:
+				return order
+			order += 1
+	if object_id.begins_with("cage_gift_item:"):
+		var stock_index := object_id.trim_prefix("cage_gift_item:").to_int()
+		var stock := JsonCoerceScript._copy_array(JsonCoerceScript._copy_dict(environment_data.get("cage_gift_shop_state", {})).get("stock", []))
+		if stock_index >= 0 and stock_index < stock.size() and typeof(stock[stock_index]) == TYPE_DICTIONARY \
+				and not bool((stock[stock_index] as Dictionary).get("sold", false)):
+			return stock_index
+	return -1
+
+
 static func _grounding_signature(environment_data: Dictionary, layout: Dictionary, active_entries: Array) -> String:
 	var layout_source := layout.duplicate(true)
-	for generated_key in ["object_rects", "slot_bindings", "slot_overflow_ids", "slot_schema_version", "slot_map_digest", "slot_binding_digest", "placement_classes", "placement_surfaces", "placement_errors", "placement_fallback_ids", "grounding_signature", "generated_object_rect_version"]:
+	for generated_key in ["object_rects", "slot_bindings", "slot_overflow_ids", "slot_schema_version", "slot_map_digest", "slot_binding_digest", "placement_classes", "placement_surfaces", "placement_errors", "placement_warnings", "placement_fallback_ids", "grounding_signature", "generated_object_rect_version"]:
 		layout_source.erase(generated_key)
 	var signature_source := {
 		"version": GENERATED_LAYOUT_VERSION,
-		"placement_authority_version": 3,
+		"placement_authority_version": 4,
 		"archetype_id": str(environment_data.get("archetype_id", environment_data.get("id", ""))),
 		"layer_id": str(environment_data.get("current_layer_id", environment_data.get("layer_id", ""))),
 		"surface_map": EnvironmentPlacementScript.surface_map(environment_data),
@@ -976,10 +1162,39 @@ static func _layout_spot_count(layout: Dictionary, spot_field: String) -> int:
 	return (spots as Array).size()
 
 
-static func _active_object_layout_entries(environment_data: Dictionary) -> Array:
+static func _active_object_layout_entries(environment_data: Dictionary, surface_map: Dictionary) -> Array:
 	var entries: Array = []
 	entries.append_array(_game_layout_entries(environment_data))
-	_append_string_layout_entries(entries, "event", JsonCoerceScript._copy_array(environment_data.get("event_ids", [])), "event_spots")
+	# Resolved event-family interactions remain in event_ids as durable
+	# selection/history authority, but no longer own a physical object in the live
+	# room. An event-shaped action may instead be authored as a fixed fixture (the
+	# Punchline Side Door, for example); fixed-family presence survives resolution
+	# even though that fixture's event action has been consumed.
+	var resolved_event_ids: Dictionary = {}
+	for event_id_value in JsonCoerceScript._copy_array(environment_data.get("resolved_event_ids", [])):
+		var resolved_event_id := str(event_id_value).strip_edges()
+		if not resolved_event_id.is_empty():
+			resolved_event_ids[resolved_event_id] = true
+	var active_event_ids: Array = []
+	for event_id_value in JsonCoerceScript._copy_array(environment_data.get("event_ids", [])):
+		var event_id := str(event_id_value).strip_edges()
+		if event_id.is_empty():
+			continue
+		var presentation_id := "event:%s" % event_id
+		var authored_family := EnvironmentSlotBinderScript.authored_entry_slot_family(
+			surface_map,
+			{
+				"object_id": presentation_id,
+				"object_type": "event",
+				"source_id": event_id,
+			},
+			presentation_id,
+			"event",
+			false
+		)
+		if not resolved_event_ids.has(event_id) or authored_family == "fixed":
+			active_event_ids.append(event_id)
+	_append_string_layout_entries(entries, "event", active_event_ids, "event_spots")
 	entries.append_array(_environment_layer_layout_entries(environment_data))
 	var layout := JsonCoerceScript._copy_dict(environment_data.get("layout", {}))
 	var prioritize_services := bool(layout.get("prioritize_service_spots", false))
@@ -1004,6 +1219,16 @@ static func _active_object_layout_entries(environment_data: Dictionary) -> Array
 	if _home_storage_should_exist(environment_data):
 		entries.append({"object_id": "home_storage:place", "object_type": "home_storage", "index": 0, "spot_field": "home_storage_spots"})
 	_append_string_layout_entries(entries, "home_container", _home_container_ids(environment_data), "home_container_spots")
+	# Run-state projections (currently Grand Casino living-floor people) are
+	# already-selected, zero-RNG physical inventory. They join the same manifest
+	# and binder as catalog objects instead of bypassing placement in the canvas.
+	for runtime_value in JsonCoerceScript._copy_array(environment_data.get("runtime_object_manifest_entries", [])):
+		if typeof(runtime_value) != TYPE_DICTIONARY:
+			continue
+		var runtime_entry := (runtime_value as Dictionary).duplicate(true)
+		if str(runtime_entry.get("object_id", "")).strip_edges().is_empty():
+			continue
+		entries.append(runtime_entry)
 	if prioritize_services:
 		_append_item_offer_layout_entries(entries, JsonCoerceScript._copy_array(environment_data.get("item_offers", [])))
 	var filtered := _filter_unique_object_layout_entries(entries)
@@ -1027,7 +1252,14 @@ static func _environment_layer_layout_entries(environment_data: Dictionary) -> A
 	var entries: Array = []
 	var index := 0
 	if not str(environment_data.get("layer_ambient_line", "")).strip_edges().is_empty():
-		entries.append({"object_id": "environment_layer:ambient", "object_type": "environment_layer", "index": index, "spot_field": "layer_spots"})
+		entries.append({
+			"object_id": "environment_layer:ambient",
+			"object_type": "environment_layer",
+			"visual_prop": str(environment_data.get("layer_ambient_prop", "")).strip_edges(),
+			"label": str(environment_data.get("layer_ambient_label", "")).strip_edges(),
+			"index": index,
+			"spot_field": "layer_spots",
+		})
 		index += 1
 	for transition_value in JsonCoerceScript._copy_array(environment_data.get("layer_transitions", [])):
 		if typeof(transition_value) != TYPE_DICTIONARY:
@@ -1040,39 +1272,14 @@ static func _environment_layer_layout_entries(environment_data: Dictionary) -> A
 	return entries
 
 
-# Numbers identities are runtime-backed, so keep them in the same generated
-# authority as the rest of the room. The book remains geometry-free until it
-# owns concrete art; the exact Silas identity may reserve a person slot.
+# Numbers capacity is authored, but both the book and Silas are conditional
+# run-state presence. RunState projects them only after the room is installed;
+# reserving either here would turn empty capacity into unconditional content.
 static func _numbers_layout_entries(environment_data: Dictionary) -> Array:
-	var layout := JsonCoerceScript._copy_dict(environment_data.get("layout", {}))
-	var numbers_count := _layout_spot_count(layout, "numbers_spots")
-	var silas_count := _layout_spot_count(layout, "numbers_silas_spots")
-	if numbers_count <= 0 and silas_count <= 0:
-		return []
-	# The Crew back-room desk is already the authored event:numbers_desk fixture.
-	# All other Numbers venues expose the shared book plus an optional Silas spot.
-	if str(environment_data.get("archetype_id", "")) == "small_underground_casino" \
-			and str(environment_data.get("current_layer_id", "")) == "back_room":
-		return []
-	var entries: Array = []
-	if numbers_count > 0:
-		entries.append({
-			"object_id": "numbers:book",
-			"object_type": "numbers",
-			"index": 0,
-			"spot_field": "numbers_spots",
-		})
-	# Silas can rotate into any active Numbers venue. Reserve his physical rect
-	# even while he is absent so the interaction layer never invents a second,
-	# ungrounded fallback position when town state brings him in later.
-	if silas_count > 0:
-		entries.append({
-			"object_id": "numbers:silas",
-			"object_type": "numbers_silas",
-			"index": 0,
-			"spot_field": "numbers_silas_spots",
-		})
-	return entries
+	# Capacity is not presence authority. RunState projects the current
+	# numbers_state.venue_status (and Town-owned Silas location) into
+	# runtime_object_manifest_entries after the environment is installed.
+	return []
 
 
 static func _append_string_layout_entries(entries: Array, object_type: String, ids: Array, spot_field: String) -> void:
@@ -1195,7 +1402,7 @@ static func _game_hook_layout_entries(environment_data: Dictionary) -> Array:
 				"index": result.size(),
 				"spot_field": "game_hook_spots",
 				"unique_object_class": unique_object_class,
-				"unique_object_priority": 120 if hook_id == "scratch_ticket_clerk" else int(hook_data.get("unique_object_priority", 0)),
+				"unique_object_priority": 121 if hook_id == "scratch_ticket_clerk" else int(hook_data.get("unique_object_priority", 0)),
 				"allow_duplicate_unique_class": bool(hook_data.get("allow_duplicate_unique_class", false)),
 				"physical_person": physical_person,
 			})

@@ -877,10 +877,19 @@ func _make_interactable_object(source: Dictionary, hover_target_id: String, focu
 	var enabled := bool(source.get("enabled", true))
 	var interactive := bool(source.get("interactive", true))
 	var object_id := str(source.get("object_id", ""))
+	# Meta-room records are assembled after environment generation, before the
+	# general manifest join can annotate them. They still belong to the same
+	# four-family contract: navigation is exit; every other home/pawn fixture or
+	# inventory presentation consumes fixed capacity.
+	var object_type := str(source.get("object_type", "info"))
+	var slot_family := str(source.get("slot_family", "")).strip_edges()
+	if slot_family not in EnvironmentSlotBinderScript.SLOT_FAMILIES:
+		slot_family = "exit" if object_type == CONTEXT_MODE_TRAVEL else "fixed"
 	return {
 		"object_id": object_id,
-		"object_type": str(source.get("object_type", "info")),
-		"visual_type": str(source.get("visual_type", source.get("object_type", "info"))),
+		"object_type": object_type,
+		"visual_type": str(source.get("visual_type", object_type)),
+		"slot_family": slot_family,
 		"slot_binding_source_id": str(source.get("slot_binding_source_id", "")),
 		"presence": str(source.get("presence", "dynamic")),
 		"interactive": interactive,

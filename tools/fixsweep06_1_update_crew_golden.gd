@@ -19,11 +19,11 @@ func _run() -> void:
 		return
 	var document: Dictionary = existing_value
 	document["capture"] = CrewIgnoredGoldenProbeScript.capture(library)
-	document["baseline_commit"] = "d7a1b1c7-fixed-slot-release-baseline"
+	document["baseline_commit"] = "environment-slot-family-manifest-v2"
 	var provenance: Dictionary = document.get("provenance", {}) if typeof(document.get("provenance", {})) == TYPE_DICTIONARY else {}
-	provenance["change_commit"] = "d7a1b1c7f90d789372f68875f3ce1bec3fa5e634"
-	provenance["reason"] = "rw06_1 replaced solver-derived room placement with the finalized authored fixed-slot authority and the release Count route; the accepted Crew-ignored bytes must reflect those shipped non-Crew environment records."
-	provenance["proof"] = "Both fixed Crew-ignored seeds were recaptured through all five production checkpoints after authored-slot validation stabilized; the contract still requires exact normalized bytes and hashes, inactive world-sequence no-ops, and zero Crew trust."
+	provenance["change_commit"] = "environment-slot-family-manifest-v2"
+	provenance["reason"] = "The completed fixed, event, scenario, and exit migration intentionally adds durable object-manifest ownership and independent coexistence capacity to generated and persisted rooms without changing Crew state."
+	provenance["proof"] = "Both fixed Crew-ignored seeds were recaptured through all five production checkpoints after the final slot-family manifest and capacity corrections; the contract still requires exact normalized bytes and hashes, inactive world-sequence no-ops, and zero Crew trust."
 	document["provenance"] = provenance
 	var file := FileAccess.open(TARGET, FileAccess.WRITE)
 	if file == null:

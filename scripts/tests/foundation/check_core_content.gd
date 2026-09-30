@@ -950,6 +950,14 @@ func _check_playtest_fixes01_regressions(library: ContentLibrary, failures: Arra
 		failures.append("BUG-08 regression: Numbers purchases bypass the canonical recent-result pipeline.")
 	var numbers_run: RunState = RunStateScript.new()
 	numbers_run.start_new("PLAYTEST-FIXES01-NUMBERS")
+	# Traveler schedules are derived from the production world graph, not from a
+	# bare RunState. Mirror the generator's first-run world setup before moving the
+	# fixture to Silas's current room; otherwise traveler_node() is intentionally
+	# empty and the test mistakes an absent encounter for a repeat-charge bug.
+	var numbers_rng := numbers_run.create_rng()
+	var numbers_world := WorldMapScript.new(library).build(numbers_run, numbers_rng.fork("world_map"))
+	numbers_run.set_world_map(numbers_world)
+	numbers_run.configure_town_world(numbers_world)
 	var silas_node := numbers_run.traveler_node("silas_snitch")
 	numbers_run.current_environment = {"id": silas_node, "archetype_id": silas_node, "world_node_id": silas_node, "turns": 0}
 	var first_tip: Dictionary = numbers_run.numbers_buy_silas_tip(false)
@@ -1322,9 +1330,13 @@ func _check_scenario_engine_foundation(library: ContentLibrary, failures: Array)
 	var legacy_dynamic_probe := phase_run.scenario_enqueue_fact("world_boundary", "scenario", {"amount": 1, "action_index": 1}, "legacy:inactive")
 	if not bool(legacy_dynamic_probe.get("inactive", false)) or bool(legacy_dynamic_probe.get("ok", true)) or not JsonCoerceScript._copy_array(legacy_dynamic_probe.get("errors", [])).is_empty() or JSON.stringify(phase_run.current_environment) != legacy_before_dynamic_probe:
 		failures.append("A nonempty legacy scenario definition did not bypass dynamic fact ingress byte-identically.")
+	var between_phase_manifest_before := JSON.stringify(phase_run.current_environment.get("object_manifest", {}))
 	phase_run.advance_environment_turns(1)
 	if int(phase_run.current_environment.get("scenario_phase_index", -1)) != 0 or int(phase_run.current_environment.get("scenario_phase_action_counter", -1)) != 1:
 		failures.append("Scenario phase advanced before its authored action boundary.")
+	var between_phase_manifest_errors := EnvironmentInstance.object_manifest_errors(phase_run.current_environment)
+	if not between_phase_manifest_errors.is_empty() or JSON.stringify(phase_run.current_environment.get("object_manifest", {})) != between_phase_manifest_before:
+		failures.append("A presentation-neutral scenario action counter invalidated physical room membership: %s" % JSON.stringify(between_phase_manifest_errors))
 	phase_run.advance_environment_turns(2)
 	if int(phase_run.current_environment.get("scenario_phase_index", -1)) != 1 or str(JsonCoerceScript._copy_dict(phase_run.current_environment.get("scenario_presentation", {})).get("signage_line", "")) != "THE BOUT IS LIVE.":
 		failures.append("Fight Night did not advance from prefight to bout on its third action boundary.")
@@ -3095,7 +3107,7 @@ func _check_grand_casino_game_fixture_capacity(library: ContentLibrary, failures
 	var redeemer_binding := JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(main_layout.get("slot_bindings", {})).get(redeemer_id, {}))
 	var overflow_ids := JsonCoerceScript._copy_array(main_layout.get("slot_overflow_ids", []))
 	if str(redeemer_binding.get("presentation_mode", "")) != "room" \
-			or str(redeemer_binding.get("slot_id", "")) != "base.fixed_ticket_redeemer" \
+			or str(redeemer_binding.get("slot_id", "")) != "fixed.ticket_redeemer" \
 			or overflow_ids.has(redeemer_id) \
 			or not object_rects.has(redeemer_id):
 		failures.append("Grand Casino ticket redeemer lost its authenticated fixed-counter room binding.")
@@ -4294,7 +4306,7 @@ func _check_lottery_redemption_clerk_merge(failures: Array) -> void:
 		"effect_summary": "$12 waits at the counter.",
 		"risk_summary": "Large prizes draw the clerk's attention.",
 		"unique_object_class": "lottery_redemption_clerk",
-		"unique_object_priority": 120,
+		"unique_object_priority": 121,
 		"available_actions": [{"id": "redeem_scratch_winners", "label": "Cash tickets", "parent_id": "scratch_tickets", "source_id": "scratch_ticket_clerk", "hook_id": "scratch_ticket_clerk", "object_type": "game_hook"}],
 		"confirm_action_id": "redeem_scratch_winners",
 	}, {})
@@ -4303,6 +4315,8 @@ func _check_lottery_redemption_clerk_merge(failures: Array) -> void:
 		failures.append("Lottery redemption clerks did not merge into one room object.")
 		return
 	var clerk: Dictionary = merged[0]
+	if str(clerk.get("object_id", "")) != "game_hook:scratch_tickets:scratch_ticket_clerk":
+		failures.append("Merged lottery clerk did not retain the manifest's canonical physical host.")
 	var actions := clerk.get("available_actions", []) as Array
 	if actions.size() != 2:
 		failures.append("Merged lottery clerk did not preserve both pull-tab and scratch-ticket actions.")

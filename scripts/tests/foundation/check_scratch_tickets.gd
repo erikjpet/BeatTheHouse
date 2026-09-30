@@ -1415,20 +1415,30 @@ func _check_scratch_scalper_restock_arrival(game: GameModule, failures: Array) -
 
 
 func _check_environment_person_transits(failures: Array) -> void:
-	var canvas: Control = ScratchPixelSceneCanvasScript.new()
-	var settled_person := _person_transit_record(
+	var scalper_fixture := _bound_person_transit_fixture(
+		"gas_station_casino",
 		"dialogue:scratch_ticket_scalper",
-		"stage.patron_floor_middle",
-		"standing_person",
-		Rect2(120.0, 334.0, 72.0, 80.0)
+		"event"
 	)
+	var nell_fixture := _bound_person_transit_fixture(
+		"gas_station_casino",
+		"character:nell",
+		"fixed"
+	)
+	var gas_surfaces := JsonCoerceScript._copy_dict(scalper_fixture.get("surface_map", {}))
+	var priority_exit := _person_transit_priority_exit_slot(gas_surfaces)
+	if scalper_fixture.is_empty() or nell_fixture.is_empty() or priority_exit.is_empty():
+		failures.append("Person transit fixture could not resolve the gas-station person bindings and priority exit from placement authority.")
+		return
+	var settled_person := JsonCoerceScript._copy_dict(scalper_fixture.get("record", {}))
+	var settled_rect := _person_transit_slot_rect(JsonCoerceScript._copy_dict(scalper_fixture.get("slot", {})))
+	var doorway_rect := _person_transit_slot_rect(priority_exit)
+	if not settled_rect.has_area() or not doorway_rect.has_area():
+		failures.append("Person transit fixture resolved a bound person slot or priority exit without authored hit geometry.")
+		return
+	var canvas: Control = ScratchPixelSceneCanvasScript.new()
 	var settled_package := _non_person_transit_record("delivery:pickup:gas_station_casino", 0.62)
-	var room := _person_transit_room("person-transit-visit", [_person_transit_record(
-		"shopkeeper:clerk",
-		"stage.staff_window",
-		"behind_counter_person",
-		Rect2(564.0, 12.0, 72.0, 72.0)
-	)])
+	var room := _person_transit_room("person-transit-visit", [JsonCoerceScript._copy_dict(nell_fixture.get("record", {}))])
 	canvas.call("render_environment_snapshot", room)
 	var changed_room := room.duplicate(true)
 	changed_room["interactable_objects"] = [room["interactable_objects"][0], settled_person, settled_package]
@@ -1451,8 +1461,8 @@ func _check_environment_person_transits(failures: Array) -> void:
 		else:
 			var doorway_point := Vector2(float((points[0] as Dictionary).get("x", -1.0)), float((points[0] as Dictionary).get("y", -1.0))) * Vector2(900, 430)
 			var settled_point := Vector2(float((points.back() as Dictionary).get("x", -1.0)), float((points.back() as Dictionary).get("y", -1.0))) * Vector2(900, 430)
-			if not doorway_point.is_equal_approx(Vector2(859.0, 362.0)) or not settled_point.is_equal_approx(Vector2(156.0, 374.0)):
-				failures.append("Person arrival did not follow the authored-priority exit and fixed person slot.")
+			if not doorway_point.is_equal_approx(doorway_rect.get_center()) or not settled_point.is_equal_approx(settled_rect.get_center()):
+				failures.append("Person arrival did not follow the authored-priority exit and bound person slot.")
 	canvas.set("actor_route_time", 20.0)
 	canvas.call("_advance_person_transits")
 	var arrived := _canvas_object(canvas, "dialogue:scratch_ticket_scalper")
@@ -1467,12 +1477,12 @@ func _check_environment_person_transits(failures: Array) -> void:
 	else:
 		var departure_points: Array = departure.get("actor_route_points", [])
 		if departure_points.size() < 2:
-			failures.append("Person departure did not preserve the authored fixed-slot route.")
+			failures.append("Person departure did not preserve the authored bound-slot route.")
 		else:
 			var departure_start := Vector2(float((departure_points[0] as Dictionary).get("x", -1.0)), float((departure_points[0] as Dictionary).get("y", -1.0))) * Vector2(900, 430)
 			var departure_exit := Vector2(float((departure_points.back() as Dictionary).get("x", -1.0)), float((departure_points.back() as Dictionary).get("y", -1.0))) * Vector2(900, 430)
-			if not departure_start.is_equal_approx(Vector2(156.0, 374.0)) or not departure_exit.is_equal_approx(Vector2(859.0, 362.0)):
-				failures.append("Person departure did not reverse the authored-priority fixed-slot route.")
+			if not departure_start.is_equal_approx(settled_rect.get_center()) or not departure_exit.is_equal_approx(doorway_rect.get_center()):
+				failures.append("Person departure did not reverse the authored-priority bound-slot route.")
 	canvas.set("actor_route_time", 40.0)
 	canvas.call("_advance_person_transits")
 	if not _canvas_object(canvas, "dialogue:scratch_ticket_scalper").is_empty():
@@ -1489,29 +1499,25 @@ func _check_environment_person_transits(failures: Array) -> void:
 	entry_canvas.call("render_environment_snapshot", _person_transit_room("entry-after", [settled_person]))
 	if int(entry_canvas.get("person_transit_ids").size()) != 0:
 		failures.append("People already present paraded in when the player entered a room.")
-	var lane_crowd: Array = [
-		_person_transit_record("person:cap_00", "base.patron_left_table", "seated_person", Rect2(150.0, 206.0, 68.0, 64.0)),
-		_person_transit_record("person:cap_01", "base.patron_front_left", "seated_person", Rect2(108.0, 286.0, 68.0, 64.0)),
-		_person_transit_record("person:cap_02", "base.staff_right_table", "behind_counter_person", Rect2(354.0, 102.0, 72.0, 72.0)),
-		_person_transit_record("person:cap_03", "base.patron_left_table", "seated_person", Rect2(150.0, 206.0, 68.0, 64.0)),
-		_person_transit_record("person:cap_04", "stage.staff_right_table", "behind_counter_person", Rect2(458.0, 102.0, 72.0, 72.0)),
-		_person_transit_record("person:cap_05", "stage.patron_group", "group", Rect2(468.0, 248.0, 104.0, 78.0)),
-		_person_transit_record("person:cap_06", "stage.patron_fog_officer", "standing_person", Rect2(364.0, 246.0, 72.0, 80.0)),
-		_person_transit_record("person:cap_07", "stage.patron_floor", "standing_person", Rect2(536.0, 246.0, 72.0, 80.0)),
-		_person_transit_record("person:cap_08", "", "standing_person", Rect2(), "overflow"),
-		_person_transit_record("person:cap_09", "", "standing_person", Rect2(), "overflow"),
-	]
+	var routed_capacity_records := _routed_person_transit_capacity_records("delta_queen", 10)
+	if routed_capacity_records.size() < 10:
+		failures.append("Person transit cap fixture could not resolve ten distinct lane-routed person slots from Delta Queen placement authority.")
+		canvas.queue_free()
+		reduced_canvas.queue_free()
+		entry_canvas.queue_free()
+		return
+	var lane_crowd: Array = routed_capacity_records.slice(0, 8)
+	lane_crowd.append(_person_transit_record("person:cap_08", "", "standing_person", Rect2(), "overflow"))
+	lane_crowd.append(_person_transit_record("person:cap_09", "", "standing_person", Rect2(), "overflow"))
 	var overflow_canvas: Control = ScratchPixelSceneCanvasScript.new()
 	overflow_canvas.call("render_environment_snapshot", _person_transit_room("overflow-visit", [], "delta_queen"))
 	overflow_canvas.call("render_environment_snapshot", _person_transit_room("overflow-visit", lane_crowd, "delta_queen"))
 	if (overflow_canvas.get("foundation_scene_objects") as Array).size() != 8:
 		failures.append("Geometry-free overflow people leaked into the fixed-slot room canvas.")
-	# Round 3 reserves Delta Queen's old base.staff_floor person slot for the
-	# illustrated payment calendar. Reuse routed person slots deliberately so
-	# this hostile fixture still exercises the canvas's independent transit cap.
-	var cap_crowd: Array = lane_crowd.slice(0, 8)
-	cap_crowd.append(_person_transit_record("person:cap_08", "base.patron_left_table", "seated_person", Rect2(150.0, 206.0, 68.0, 64.0)))
-	cap_crowd.append(_person_transit_record("person:cap_09", "base.patron_front_left", "seated_person", Rect2(108.0, 286.0, 68.0, 64.0)))
+	# Use the first ten distinct person-capable slots sharing the priority exit's
+	# authored lane. This keeps the hostile cap fixture semantic when those slots
+	# are manually repositioned in the placement tool.
+	var cap_crowd: Array = routed_capacity_records
 	var cap_canvas: Control = ScratchPixelSceneCanvasScript.new()
 	cap_canvas.call("render_environment_snapshot", _person_transit_room("cap-visit", [], "delta_queen"))
 	cap_canvas.call("render_environment_snapshot", _person_transit_room("cap-visit", cap_crowd, "delta_queen"))
@@ -1545,6 +1551,106 @@ func _person_transit_room(visit_id: String, objects: Array, archetype_id: String
 		"interactable_objects": objects,
 		"reduce_motion": false,
 	}
+
+
+func _bound_person_transit_fixture(archetype_id: String, object_id: String, family: String) -> Dictionary:
+	var surface_map := EnvironmentPlacementScript.surface_map({
+		"id": archetype_id,
+		"world_node_id": archetype_id,
+		"archetype_id": archetype_id,
+	})
+	var binding_map := JsonCoerceScript._copy_dict(surface_map.get("%s_object_slot_ids" % family, {}))
+	var slot_id := str(binding_map.get(object_id, "")).strip_edges()
+	var slot := _person_transit_slot_by_id(surface_map, slot_id)
+	var rect := _person_transit_slot_rect(slot)
+	var placement_class := str(slot.get("footprint_class", "")).strip_edges()
+	if slot_id.is_empty() or slot.is_empty() or not rect.has_area() \
+			or str(slot.get("kind", "")) != family \
+			or not EnvironmentPlacementScript.is_person_class(placement_class):
+		return {}
+	return {
+		"surface_map": surface_map,
+		"slot": slot,
+		"record": _person_transit_record(object_id, slot_id, placement_class, rect),
+	}
+
+
+func _routed_person_transit_capacity_records(archetype_id: String, wanted_count: int) -> Array:
+	var surface_map := EnvironmentPlacementScript.surface_map({
+		"id": archetype_id,
+		"world_node_id": archetype_id,
+		"archetype_id": archetype_id,
+	})
+	var exit_slot := _person_transit_priority_exit_slot(surface_map)
+	var exit_lane_ids := JsonCoerceScript._raw_string_array(exit_slot.get("walk_lane_ids", []))
+	if exit_slot.is_empty() or exit_lane_ids.is_empty():
+		return []
+	var candidates: Array = []
+	var family_rank := {"fixed": 0, "event": 1, "scenario": 2}
+	for field in ["fixed_slots", "event_slots", "scenario_slots"]:
+		for slot_value in _dict_array(surface_map.get(field, [])):
+			var slot := slot_value as Dictionary
+			var placement_class := str(slot.get("footprint_class", "")).strip_edges()
+			if not EnvironmentPlacementScript.is_person_class(placement_class) or not _person_transit_slot_rect(slot).has_area():
+				continue
+			var shares_exit_lane := false
+			for lane_id in JsonCoerceScript._raw_string_array(slot.get("walk_lane_ids", [])):
+				if exit_lane_ids.has(lane_id):
+					shares_exit_lane = true
+					break
+			if shares_exit_lane:
+				candidates.append(slot.duplicate(true))
+	candidates.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
+		var left := JsonCoerceScript._copy_dict(left_value)
+		var right := JsonCoerceScript._copy_dict(right_value)
+		var left_family := int(family_rank.get(str(left.get("kind", "")), 99))
+		var right_family := int(family_rank.get(str(right.get("kind", "")), 99))
+		if left_family != right_family:
+			return left_family < right_family
+		var left_priority := int(left.get("priority", 0))
+		var right_priority := int(right.get("priority", 0))
+		return str(left.get("id", "")) < str(right.get("id", "")) if left_priority == right_priority else left_priority < right_priority
+	)
+	var records: Array = []
+	for index in range(mini(maxi(0, wanted_count), candidates.size())):
+		var slot := JsonCoerceScript._copy_dict(candidates[index])
+		records.append(_person_transit_record(
+			"person:cap_%02d" % index,
+			str(slot.get("id", "")),
+			str(slot.get("footprint_class", "")),
+			_person_transit_slot_rect(slot)
+		))
+	return records
+
+
+func _person_transit_priority_exit_slot(surface_map: Dictionary) -> Dictionary:
+	var exit_slots := _dict_array(surface_map.get("exit_slots", [])).duplicate(true)
+	exit_slots.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
+		var left := JsonCoerceScript._copy_dict(left_value)
+		var right := JsonCoerceScript._copy_dict(right_value)
+		var left_priority := int(left.get("priority", 0))
+		var right_priority := int(right.get("priority", 0))
+		return str(left.get("id", "")) < str(right.get("id", "")) if left_priority == right_priority else left_priority < right_priority
+	)
+	return JsonCoerceScript._copy_dict(exit_slots[0]).duplicate(true) if not exit_slots.is_empty() else {}
+
+
+func _person_transit_slot_by_id(surface_map: Dictionary, slot_id: String) -> Dictionary:
+	if slot_id.is_empty():
+		return {}
+	for field in ["fixed_slots", "event_slots", "scenario_slots", "exit_slots"]:
+		for slot_value in _dict_array(surface_map.get(field, [])):
+			var slot := slot_value as Dictionary
+			if str(slot.get("id", "")) == slot_id:
+				return slot.duplicate(true)
+	return {}
+
+
+func _person_transit_slot_rect(slot: Dictionary) -> Rect2:
+	var values := JsonCoerceScript._copy_array(slot.get("hit_rect", []))
+	if values.size() < 4:
+		return Rect2()
+	return Rect2(float(values[0]), float(values[1]), float(values[2]), float(values[3]))
 
 
 func _person_transit_record(object_id: String, slot_id: String, placement_class: String, rect: Rect2, presentation_mode: String = "room") -> Dictionary:

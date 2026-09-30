@@ -2742,6 +2742,17 @@ def main() -> int:
     root = args.root.resolve()
     surface_path = root / "data/environments/placement_surfaces.json"
     surface_root = json.loads(surface_path.read_text(encoding="utf-8"))
+    if int(surface_root.get("slot_schema_version", 0)) >= 2:
+        if args.check:
+            from migrate_environment_slots_v2 import validate as validate_v2
+
+            validate_v2(surface_root)
+            print("RW06_1_FIXED_SLOT_AUTHORING_CHECK RETIRED slot_schema=v2")
+            return 0
+        raise SystemExit(
+            "rw06_1_author_fixed_slots.py is retired for slot schema v2; "
+            "edit the four-family placement authority or use the developer movement tool"
+        )
     archetypes_list = json.loads((root / "data/environments/archetypes.json").read_text(encoding="utf-8"))
     archetypes = {str(item.get("id", "")): item for item in archetypes_list if isinstance(item, dict)}
     semantics = collect_semantics(root)

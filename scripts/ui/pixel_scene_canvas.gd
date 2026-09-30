@@ -26,7 +26,8 @@ const CoinPusherRoomPropScript := preload("res://scripts/ui/game_props/coin_push
 const ScratchTicketRoomPropScript := preload("res://scripts/ui/game_props/scratch_ticket_room_prop.gd")
 const CrapsRoomPropScript := preload("res://scripts/ui/game_props/craps_room_prop.gd")
 const BarDiceRoomPropScript := preload("res://scripts/ui/game_props/bar_dice_room_prop.gd")
-const CATEGORY_AUTHORED_TYPES := ["event", "item"]
+const SLOT_COLLECTION_FIELDS := ["fixed_slots", "event_slots", "scenario_slots", "exit_slots"]
+const SLOT_FAMILIES := ["fixed", "event", "scenario", "exit"]
 
 const C_DARK := VisualStyleScript.DARK
 const C_DARK_2 := VisualStyleScript.DARK_2
@@ -125,7 +126,6 @@ const SCENE_SPARKLES_DELTA_QUEEN := [Vector2(128, 96), Vector2(448, 96), Vector2
 const SCENE_SPARKLES_UNDERGROUND := [Vector2(154, 134), Vector2(505, 136), Vector2(772, 142)]
 const SCENE_SPARKLES_GRAND_CASINO := [Vector2(132, 118), Vector2(728, 118), Vector2(444, 154)]
 const SCENE_SPARKLES_PAWN_SHOP := [Vector2(150, 84), Vector2(414, 118), Vector2(690, 154)]
-const LINDA_CAGE_FEET := [Vector2(330, 260), Vector2(420, 260), Vector2(512, 260), Vector2(590, 260)]
 const SCENARIO_CROWD_POINTS := [Vector2(82, 254), Vector2(219, 271), Vector2(356, 288), Vector2(493, 271), Vector2(630, 254), Vector2(767, 271), Vector2(164, 288), Vector2(301, 254), Vector2(438, 288), Vector2(575, 271)]
 const SCENARIO_CROWD_COLOR := Color(0.02, 0.025, 0.05, 0.56)
 
@@ -224,6 +224,14 @@ var developer_slot_valid := false
 var developer_slot_overlap_ids: Array[String] = []
 var developer_slot_scene_object_baseline: Array = []
 var developer_slot_scene_object_baseline_valid := false
+var developer_slot_filter_row: HBoxContainer
+var developer_slot_filter_buttons: Dictionary = {}
+var developer_slot_family_filters := {
+	"fixed": true,
+	"event": true,
+	"scenario": true,
+	"exit": true,
+}
 
 
 func _ready() -> void:
@@ -263,6 +271,8 @@ func set_developer_slot_placement_mode(enabled: bool) -> void:
 		_finish_developer_slot_placement_edit()
 		developer_slot_selected_id = ""
 	developer_slot_placement_mode = enabled
+	if developer_slot_filter_row != null:
+		developer_slot_filter_row.visible = enabled
 	if enabled:
 		_capture_developer_slot_scene_object_baseline()
 	else:
@@ -298,8 +308,25 @@ func developer_slot_placement_snapshot() -> Dictionary:
 		"valid": developer_slot_valid,
 		"overlap_ids": developer_slot_overlap_ids.duplicate(),
 		"visible_slot_count": _developer_slots().size(),
+		"family_filters": developer_slot_family_filters.duplicate(true),
 		"request": _developer_slot_placement_request(),
 	}
+
+
+func set_developer_slot_family_visible(family: String, visible: bool) -> void:
+	var normalized_family := family.strip_edges().to_lower()
+	if normalized_family not in SLOT_FAMILIES:
+		return
+	developer_slot_family_filters[normalized_family] = visible
+	var button_value: Variant = developer_slot_filter_buttons.get(normalized_family)
+	if button_value is BaseButton:
+		(button_value as BaseButton).set_pressed_no_signal(visible)
+	var selected := _developer_slot(developer_slot_selected_id)
+	if not selected.is_empty() and not _developer_slot_family_visible(_developer_slot_family(selected)):
+		clear_developer_slot_placement_preview()
+		developer_slot_selected_id = ""
+	_update_developer_placement_panel()
+	queue_redraw()
 
 
 func clear_developer_placement_preview() -> void:
@@ -346,12 +373,33 @@ func _ensure_developer_placement_panel() -> void:
 	developer_placement_label.text = "Placement mode: drag an object; release to keep its room position."
 	stack.add_child(developer_placement_label)
 
+	developer_slot_filter_row = HBoxContainer.new()
+	developer_slot_filter_row.name = "SlotFamilyFilters"
+	developer_slot_filter_row.add_theme_constant_override("separation", 4)
+	developer_slot_filter_row.visible = developer_slot_placement_mode
+	stack.add_child(developer_slot_filter_row)
+	var filter_label := Label.new()
+	filter_label.text = "Show:"
+	filter_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	developer_slot_filter_row.add_child(filter_label)
+	for family_value in SLOT_FAMILIES:
+		var family := str(family_value)
+		var button := CheckBox.new()
+		button.name = "%sSlots" % family.capitalize()
+		button.text = family.capitalize()
+		button.button_pressed = bool(developer_slot_family_filters.get(family, true))
+		button.tooltip_text = "Show or hide %s.* authoring slots." % family
+		button.add_theme_color_override("font_color", _developer_slot_family_color(family))
+		button.toggled.connect(_on_developer_slot_family_filter_toggled.bind(family))
+		developer_slot_filter_buttons[family] = button
+		developer_slot_filter_row.add_child(button)
+
 	var actions := HBoxContainer.new()
 	actions.add_theme_constant_override("separation", 5)
 	stack.add_child(actions)
 	developer_placement_lock_button = Button.new()
 	developer_placement_lock_button.text = "Lock"
-	developer_placement_lock_button.tooltip_text = "Save this room position. Items and events author reusable category slots."
+	developer_placement_lock_button.tooltip_text = "Save the current object or four-family slot position."
 	developer_placement_lock_button.pressed.connect(_lock_active_developer_placement)
 	actions.add_child(developer_placement_lock_button)
 	var cancel_button := Button.new()
@@ -375,12 +423,20 @@ func _ensure_developer_placement_panel() -> void:
 	_update_developer_placement_panel()
 
 
+func _on_developer_slot_family_filter_toggled(pressed: bool, family: String) -> void:
+	set_developer_slot_family_visible(family, pressed)
+
+
 func _update_developer_placement_panel() -> void:
 	if developer_placement_panel == null or developer_placement_label == null:
 		return
 	if developer_slot_placement_mode:
+		if developer_slot_filter_row != null:
+			developer_slot_filter_row.visible = true
 		_update_developer_slot_placement_panel()
 		return
+	if developer_slot_filter_row != null:
+		developer_slot_filter_row.visible = false
 	var object_data := _scene_object(selected_object_id)
 	if object_data.is_empty():
 		developer_placement_label.text = "Placement mode: drag an object; release to keep it. Right-click or Escape cancels. F2 hides this panel."
@@ -412,29 +468,36 @@ func _update_developer_placement_panel() -> void:
 func _update_developer_slot_placement_panel() -> void:
 	var slot := _developer_slot(developer_slot_selected_id)
 	if slot.is_empty():
-		developer_placement_label.text = "Slot placement: drag any outlined base, stage, or exit slot. Empty slots are editable. Right-click or Escape cancels."
+		developer_placement_label.text = "Slot placement: filter and drag fixed, event, scenario, or exit slots. Empty slots remain editable. Right-click or Escape cancels."
 		developer_placement_lock_button.disabled = true
 		developer_placement_reset_button.disabled = true
 		return
 	var slot_id := str(slot.get("id", developer_slot_selected_id))
-	var kind := str(slot.get("kind", "slot"))
+	var family := _developer_slot_family(slot)
+	var kind := str(slot.get("kind", family))
 	var placement_class := str(slot.get("footprint_class", "unknown"))
 	var support := str(slot.get("support_id", "free"))
 	var occupants := _developer_slot_occupants(slot_id)
 	var occupancy := "empty" if occupants.is_empty() else ", ".join(occupants)
+	var slot_state := _developer_slot_state(slot)
+	var requirement := "required" if bool(slot_state.get("required", false)) else "optional capacity"
+	var warnings: Array = slot_state.get("warnings", [])
 	var status_text := "unchanged"
 	if developer_slot_pending_rect.has_area():
 		status_text = "position %.0f, %.0f" % [developer_slot_pending_position.x, developer_slot_pending_position.y]
 		if not developer_slot_overlap_ids.is_empty():
 			status_text += "; overlaps %s" % ", ".join(developer_slot_overlap_ids.slice(0, mini(3, developer_slot_overlap_ids.size())))
-	developer_placement_label.text = "%s | %s\n%s (%s / %s)\n%s | %s | %s" % [
+	if not warnings.is_empty():
+		status_text += "; WARNING: %s" % "; ".join(warnings)
+	developer_placement_label.text = "%s | %s\n%s (%s / %s)\n%s | %s | %s | %s" % [
 		str(foundation_snapshot.get("archetype_id", environment_id)),
 		str(foundation_snapshot.get("current_layer_id", foundation_snapshot.get("layer_id", "main"))),
 		slot_id,
-		kind,
+		family if kind == family else "%s:%s" % [family, kind],
 		placement_class,
 		occupancy,
 		support,
+		requirement,
 		status_text,
 	]
 	developer_placement_lock_button.disabled = not developer_slot_pending_rect.has_area() or not developer_slot_valid
@@ -470,31 +533,21 @@ func _save_active_developer_placement_to_project() -> void:
 
 
 func _developer_placement_identity(object_data: Dictionary) -> Dictionary:
-	var object_id := str(object_data.get("id", "")).strip_edges()
-	var interaction_type := str(object_data.get("interaction_type", object_data.get("type", ""))).strip_edges()
-	var category_spot_field := str(object_data.get("layout_spot_field", "")).strip_edges()
-	if interaction_type in CATEGORY_AUTHORED_TYPES and not category_spot_field.is_empty():
-		var category_index := maxi(0, int(object_data.get("layout_index", 0)))
+	# Schema-v2 object placement is a convenience view over the reusable slot
+	# authority. Moving an occupied object therefore moves its authored slot; it
+	# must never recreate the retired per-object/category coordinate overlays.
+	var occupied_slot_id := str(object_data.get("slot_id", "")).strip_edges()
+	var occupied_slot_family := str(object_data.get("slot_family", object_data.get("family", ""))).strip_edges()
+	if occupied_slot_family.is_empty() and occupied_slot_id.contains("."):
+		occupied_slot_family = occupied_slot_id.get_slice(".", 0)
+	if occupied_slot_family in SLOT_FAMILIES and occupied_slot_id.begins_with("%s." % occupied_slot_family):
 		return {
-			"field": "category_slot_positions",
-			"slot_id": "%s:%d" % [category_spot_field, category_index],
-			"owner_namespace": "category",
-			"stable_object_id": interaction_type,
-			"category": interaction_type,
-			"category_index": category_index,
+			"field": "slot_positions",
+			"slot_id": occupied_slot_id,
+			"owner_namespace": str(object_data.get("owner_namespace", "")).strip_edges(),
+			"stable_object_id": str(object_data.get("stable_object_id", "")).strip_edges(),
 		}
-	var owner_namespace := str(object_data.get("owner_namespace", "")).strip_edges()
-	var stable_object_id := str(object_data.get("stable_object_id", "")).strip_edges()
-	var dynamic_object := object_id.contains("::")
-	var slot_id := object_id
-	if dynamic_object:
-		slot_id = stable_object_id if owner_namespace == "scenario" and not stable_object_id.is_empty() else object_id
-	return {
-		"field": "scenario_object_slot_positions" if dynamic_object else "object_slot_positions",
-		"slot_id": slot_id,
-		"owner_namespace": owner_namespace,
-		"stable_object_id": stable_object_id,
-	}
+	return {}
 
 
 func _developer_placement_request() -> Dictionary:
@@ -502,6 +555,8 @@ func _developer_placement_request() -> Dictionary:
 	if object_data.is_empty():
 		return {}
 	var identity := _developer_placement_identity(object_data)
+	if identity.is_empty():
+		return {}
 	var placement_class := str(object_data.get("placement_class", "")).strip_edges()
 	if placement_class.is_empty():
 		placement_class = EnvironmentPlacementScript.classify(object_data, str(object_data.get("interaction_type", object_data.get("type", ""))), selected_object_id, str(object_data.get("prop", object_data.get("icon_key", ""))))
@@ -514,7 +569,7 @@ func _developer_placement_request() -> Dictionary:
 		"object_id": selected_object_id,
 		"owner_namespace": str(identity.get("owner_namespace", "")),
 		"stable_object_id": str(identity.get("stable_object_id", "")),
-		"field": str(identity.get("field", "object_slot_positions")),
+		"field": str(identity.get("field", "slot_positions")),
 		"slot_id": str(identity.get("slot_id", selected_object_id)),
 		"position": developer_placement_pending_rect.position if developer_placement_pending_rect.has_area() else _developer_edit_rect_for_object(object_data).position,
 		"size": _developer_edit_rect_for_object(object_data).size,
@@ -1283,17 +1338,19 @@ func _developer_slot_environment() -> Dictionary:
 	}
 
 
-func _developer_slots() -> Array:
+func _developer_slots(include_hidden: bool = false) -> Array:
 	if foundation_snapshot.is_empty() and environment_id.is_empty():
 		return []
 	var surface_map := EnvironmentPlacementScript.authoring_surface_map(_developer_slot_environment())
 	var slots: Array = []
-	for field in ["base_slots", "stage_slots", "exit_slots"]:
+	for field in SLOT_COLLECTION_FIELDS:
 		for slot_value in _array_view(surface_map.get(field, [])):
 			if typeof(slot_value) != TYPE_DICTIONARY:
 				continue
 			var slot := (slot_value as Dictionary).duplicate(true)
 			if str(slot.get("id", "")).strip_edges().is_empty():
+				continue
+			if not include_hidden and not _developer_slot_family_visible(_developer_slot_family(slot)):
 				continue
 			slots.append(slot)
 	slots.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
@@ -1310,7 +1367,7 @@ func _developer_slot(slot_id: String) -> Dictionary:
 	var clean_id := slot_id.strip_edges()
 	if clean_id.is_empty():
 		return {}
-	for slot_value in _developer_slots():
+	for slot_value in _developer_slots(true):
 		var slot := slot_value as Dictionary
 		if str(slot.get("id", "")) == clean_id:
 			return slot
@@ -1334,14 +1391,110 @@ func _developer_slot_position(slot: Dictionary) -> Vector2:
 
 func _developer_slot_occupants(slot_id: String) -> Array[String]:
 	var occupants: Array[String] = []
+	for object_data in _developer_slot_occupant_records(slot_id):
+		occupants.append(str(object_data.get("label", object_data.get("id", "object"))))
+	occupants.sort()
+	return occupants
+
+
+func _developer_slot_occupant_records(slot_id: String) -> Array:
+	var occupants: Array = []
 	for object_value in foundation_scene_objects:
 		if typeof(object_value) != TYPE_DICTIONARY:
 			continue
 		var object_data := object_value as Dictionary
 		if str(object_data.get("slot_id", "")) == slot_id:
-			occupants.append(str(object_data.get("label", object_data.get("id", "object"))))
-	occupants.sort()
+			occupants.append(object_data)
 	return occupants
+
+
+func _developer_slot_family(slot: Dictionary) -> String:
+	var family := str(slot.get("kind", "")).strip_edges().to_lower()
+	if family in SLOT_FAMILIES:
+		return family
+	var slot_id := str(slot.get("id", "")).strip_edges().to_lower()
+	var separator := slot_id.find(".")
+	if separator > 0:
+		family = slot_id.left(separator)
+	return family if family in SLOT_FAMILIES else "unknown"
+
+
+func _developer_slot_family_visible(family: String) -> bool:
+	return bool(developer_slot_family_filters.get(family, false))
+
+
+func _developer_slot_family_color(family: String) -> Color:
+	match family:
+		"fixed": return C_CYAN
+		"event": return C_AMBER
+		"scenario": return C_PURPLE_2
+		"exit": return C_PINK
+	return C_SOFT
+
+
+func _developer_manifest_rows() -> Array:
+	var manifest := _copy_dictionary(foundation_snapshot.get("object_manifest", {}))
+	return JsonCoerceScript._copy_array(manifest.get("rows", []))
+
+
+func _developer_slot_state(slot: Dictionary, comparison_slots: Array = []) -> Dictionary:
+	var slot_id := str(slot.get("id", "")).strip_edges()
+	var family := _developer_slot_family(slot)
+	var placement_class := str(slot.get("footprint_class", "")).strip_edges()
+	var support_id := str(slot.get("support_id", "")).strip_edges()
+	var required := bool(slot.get("occupancy_required", false))
+	for row_value in _developer_manifest_rows():
+		if typeof(row_value) != TYPE_DICTIONARY:
+			continue
+		var row := row_value as Dictionary
+		if not bool(row.get("active", true)) or not bool(row.get("physical", true)):
+			continue
+		if str(row.get("exact_slot_id", "")).strip_edges() == slot_id and bool(row.get("required", false)):
+			required = true
+	var occupants := _developer_slot_occupant_records(slot_id)
+	for occupant_value in occupants:
+		if typeof(occupant_value) == TYPE_DICTIONARY \
+				and bool((occupant_value as Dictionary).get("manifest_required", false)):
+			required = true
+			break
+	var warnings: Array[String] = []
+	if str(slot.get("kind", family)).strip_edges().to_lower() != family:
+		warnings.append("kind/prefix mismatch")
+	if required and occupants.is_empty():
+		warnings.append("required occupant missing")
+	if occupants.size() > 1:
+		warnings.append("multiple occupants")
+	var slot_rect := _developer_slot_rect(slot)
+	var slots_to_compare := comparison_slots if not comparison_slots.is_empty() else _developer_slots(true)
+	for other_value in slots_to_compare:
+		var other := other_value as Dictionary
+		var other_id := str(other.get("id", ""))
+		if other_id != slot_id and slot_rect.intersects(_developer_slot_rect(other)):
+			warnings.append("overlaps %s" % other_id)
+			break
+	for occupant_value in occupants:
+		var occupant := occupant_value as Dictionary
+		var occupant_family := str(occupant.get("manifest_family", occupant.get("slot_family", ""))).strip_edges().to_lower()
+		if occupant_family.is_empty():
+			var occupant_slot := str(occupant.get("slot_id", ""))
+			var separator := occupant_slot.find(".")
+			if separator > 0:
+				occupant_family = occupant_slot.left(separator)
+		if not occupant_family.is_empty() and occupant_family != family:
+			warnings.append("family crossover: %s" % occupant_family)
+		var occupant_class := str(occupant.get("placement_class", "")).strip_edges()
+		if not placement_class.is_empty() and not occupant_class.is_empty() and occupant_class != placement_class:
+			warnings.append("class mismatch: %s" % occupant_class)
+		var metadata := _copy_dictionary(occupant.get("manifest_metadata", {}))
+		var occupant_support := str(occupant.get("support_id", metadata.get("support_id", ""))).strip_edges()
+		if not support_id.is_empty() and not occupant_support.is_empty() and occupant_support != support_id:
+			warnings.append("support mismatch: %s" % occupant_support)
+	return {
+		"family": family,
+		"required": required,
+		"occupants": occupants,
+		"warnings": warnings,
+	}
 
 
 func _developer_slot_id_at_local_position(local_position: Vector2) -> String:
@@ -1466,7 +1619,7 @@ func _validate_developer_slot_placement_preview() -> void:
 	if not developer_slot_valid:
 		_update_developer_placement_panel()
 		return
-	for slot_value in _developer_slots():
+	for slot_value in _developer_slots(true):
 		var slot := slot_value as Dictionary
 		var slot_id := str(slot.get("id", ""))
 		if slot_id != developer_slot_selected_id and developer_slot_pending_rect.intersects(_developer_slot_rect(slot)):
@@ -1572,7 +1725,7 @@ func _apply_authoring_slot_positions_to_scene_objects() -> void:
 	if not developer_slot_placement_mode or foundation_scene_objects.is_empty():
 		return
 	var slots_by_id: Dictionary = {}
-	for slot_value in _developer_slots():
+	for slot_value in _developer_slots(true):
 		var slot := slot_value as Dictionary
 		slots_by_id[str(slot.get("id", ""))] = slot
 	for index in range(foundation_scene_objects.size()):
@@ -1750,17 +1903,12 @@ func _draw() -> void:
 				_draw_grand_casino_cage()
 			_:
 				_draw_corner_store()
-	# Ambient counter staff occupy the same authored slots as live staff. Paint
-	# them before the exact fixture faces; live staff use the same ordering in
-	# _draw_scene_objects().
-	_draw_familiar_counter_characters()
 	# These closed, authored fixture faces are part of the room art. The exact
 	# same routine is replayed after live behind-counter bodies, so occlusion
 	# cannot recolor or approximate the original counter.
 	_draw_authored_counter_foregrounds()
 	_draw_scenario_palette()
 	_draw_scene_life()
-	_draw_familiar_floor_characters()
 	_draw_focus_dim_overlay()
 	_draw_scene_objects()
 	_draw_scene_outcome_highlight()
@@ -1790,22 +1938,23 @@ func _draw_developer_slot_overlay() -> void:
 	if not developer_slot_placement_mode:
 		return
 	var font := ThemeDB.fallback_font
+	var all_slots := _developer_slots(true)
 	for slot_value in _developer_slots():
 		var slot := slot_value as Dictionary
 		var slot_id := str(slot.get("id", ""))
 		var rect := _developer_slot_rect(slot)
 		if slot_id == developer_slot_selected_id and developer_slot_pending_rect.has_area():
 			rect = developer_slot_pending_rect
-		var kind := str(slot.get("kind", "base")).strip_edges().to_lower()
-		var color := C_CYAN
-		if kind == "stage":
-			color = C_AMBER
-		elif kind == "exit":
-			color = C_PINK
+		var family := _developer_slot_family(slot)
+		var color := _developer_slot_family_color(family)
 		var selected := slot_id == developer_slot_selected_id
 		if selected:
 			color = C_TEAL if developer_slot_valid or not developer_slot_pending_rect.has_area() else C_HOT
 		var occupied := not _developer_slot_occupants(slot_id).is_empty()
+		var slot_state := _developer_slot_state(slot, all_slots)
+		var has_warnings := not (slot_state.get("warnings", []) as Array).is_empty()
+		if has_warnings and not selected:
+			color = C_HOT
 		var fill_alpha := 0.19 if occupied else 0.10
 		if selected:
 			fill_alpha = 0.30
@@ -1930,7 +2079,7 @@ func _bg() -> void:
 
 
 func _draw_corner_store() -> void:
-	# Narrow store aisle, glass counter, bored clerk, scratchers, beer neon, and boxes.
+	# Narrow store aisle, glass counter, scratchers, beer neon, and boxes.
 	draw_rect(Rect2(0, 0, 900, 245), Color("#10101d"))
 	for x in [78, 212, 620, 758]:
 		draw_rect(Rect2(x, 0, 18, 238), Color("#16162a"))
@@ -1947,7 +2096,6 @@ func _draw_corner_store() -> void:
 	draw_rect(Rect2(338, 92, 246, 114), Color("#070712"))
 	draw_rect(Rect2(352, 106, 218, 88), Color("#181834"))
 	draw_rect(Rect2(430, 116, 60, 72), Color("#111120"))
-	_silhouette(Vector2(460, 158), 1.0, C_SHADOW)
 	draw_rect(Rect2(352, 142, 218, 7), C_CYAN)
 	draw_rect(Rect2(338, 206, 246, 48), Color("#20203c"))
 	for x in range(360, 552, 38):
@@ -2189,7 +2337,7 @@ func _draw_pawn_shop() -> void:
 
 
 func _draw_bar() -> void:
-	# Dive bar with bottle mirror, stools, pool table, video poker, neon signs, and patrons.
+	# Dive bar with bottle mirror, stools, pool table, neon signs, and patrons.
 	draw_rect(Rect2(0, 0, 900, 244), Color("#0f1320"))
 	draw_rect(Rect2(54, 52, 498, 130), Color("#151c2d"))
 	draw_rect(Rect2(72, 70, 462, 84), Color("#202842"))
@@ -2213,9 +2361,6 @@ func _draw_bar() -> void:
 	draw_rect(Rect2(612, 200, 196, 48), Color("#176b4d"))
 	draw_rect(Rect2(654, 124, 112, 14), C_AMBER)
 	draw_line(Vector2(710, 80), Vector2(710, 124), C_SOFT, 2)
-	draw_rect(Rect2(768, 144, 86, 112), Color("#111120"))
-	draw_rect(Rect2(782, 158, 58, 48), C_PURPLE)
-	draw_rect(Rect2(792, 170, 38, 18), C_CYAN)
 	# A low wall booth supports the one seated aftermath patron.
 	draw_rect(Rect2(654, 302, 142, 42), Color("#23172b"))
 	draw_rect(Rect2(662, 310, 126, 22), Color("#42213a"))
@@ -2226,7 +2371,7 @@ func _draw_bar() -> void:
 
 
 func _draw_jazz_club() -> void:
-	# Late-1960s jazz room: low amber stage, smoky tables, trio players, bar, and pull-tabs.
+	# Late-1960s jazz room architecture: low amber stage, smoky tables, and bar.
 	draw_rect(Rect2(0, 0, 900, 246), Color("#120d17"))
 	for x in range(0, 900, 72):
 		var panel_color := Color("#1a111c") if int(x / 72) % 2 == 0 else Color("#211420")
@@ -2248,9 +2393,6 @@ func _draw_jazz_club() -> void:
 	_draw_light_cone(Vector2(470, 34), Vector2(54, 194), C_AMBER, 0.12)
 	_neon_text("AFTER HOURS", Vector2(126, 62), 18, C_CYAN)
 	_neon_text("JAZZ", Vector2(374, 62), 24, C_YELLOW)
-	_draw_jazz_player(Vector2(178, 208), 0.72, "sax")
-	_draw_jazz_player(Vector2(322, 208), 0.76, "cello")
-	_draw_jazz_player(Vector2(466, 208), 0.70, "drums")
 	draw_rect(Rect2(600, 72, 254, 122), Color("#17101a"))
 	draw_rect(Rect2(618, 88, 218, 62), Color("#241622"))
 	for x in range(630, 826, 28):
@@ -2258,11 +2400,6 @@ func _draw_jazz_club() -> void:
 		draw_rect(Rect2(x + 2, 96, 6, 8), C_AMBER)
 	draw_rect(Rect2(590, 188, 284, 48), Color("#3b1f15"))
 	draw_line(Vector2(602, 197), Vector2(862, 197), Color(C_AMBER.r, C_AMBER.g, C_AMBER.b, 0.48), 3)
-	_neon_text("PULL TABS", Vector2(704, 162), 14, C_PINK)
-	draw_rect(Rect2(704, 176, 76, 64), Color("#090912"))
-	draw_rect(Rect2(714, 184, 56, 20), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.24))
-	for i in range(4):
-		draw_rect(Rect2(716, 210 + i * 6, 52, 3), Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.52))
 	for table_x in [112, 244, 612]:
 		var table_y := 304 + int(sin(float(table_x)) * 5.0)
 		draw_rect(Rect2(table_x - 38, table_y, 76, 14), Color("#241315"))
@@ -2305,7 +2442,7 @@ func _draw_jazz_player(foot: Vector2, scale_value: float, instrument: String) ->
 
 
 func _draw_kitty_cat_lounge() -> void:
-	# Velvet lounge with a stage, champagne bar, house wheel, and forgiving staff.
+	# Velvet lounge architecture with a stage, champagne bar, tables, and low lighting.
 	draw_rect(Rect2(0, 0, 900, 246), Color("#130918"))
 	for x in range(0, 900, 60):
 		var panel := Color("#241022") if int(x / 60) % 2 == 0 else Color("#1a0d1d")
@@ -2335,12 +2472,6 @@ func _draw_kitty_cat_lounge() -> void:
 		draw_rect(Rect2(x + 2, 94, 6, 8), C_AMBER)
 	draw_rect(Rect2(584, 190, 268, 48), Color("#3d1b14"))
 	draw_line(Vector2(596, 199), Vector2(840, 199), Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.46), 3)
-	draw_circle(Vector2(704, 274), 48, Color("#2a1220"))
-	draw_circle(Vector2(704, 274), 38, Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.26))
-	for i in range(8):
-		var angle := float(i) * TAU / 8.0 + flicker * 0.08
-		draw_line(Vector2(704, 274), Vector2(704, 274) + Vector2(cos(angle), sin(angle)) * 42.0, _cycle_color(i * 19), 2)
-	draw_circle(Vector2(704, 274), 9, C_YELLOW)
 	for table_x in [130, 300, 472]:
 		draw_rect(Rect2(table_x - 42, 308, 84, 14), Color("#251015"))
 		draw_rect(Rect2(table_x - 20, 298, 12, 20), C_AMBER)
@@ -2456,7 +2587,7 @@ func _draw_gas_station() -> void:
 
 
 func _draw_underground() -> void:
-	# Basement casino with low ceiling, felt tables, guard, string lights, smoke, and bar cart.
+	# Basement casino with low ceiling, felt tables, string lights, smoke, and bar cart.
 	draw_rect(Rect2(0, 0, 900, 245), Color("#0d0a18"))
 	for y in [34, 68, 102]:
 		draw_rect(Rect2(0, y, 900, 8), Color("#1d1730"))
@@ -2470,7 +2601,6 @@ func _draw_underground() -> void:
 	draw_rect(Rect2(456, 158, 222, 62), Color("#187452"))
 	for x in [150, 196, 242, 504, 550, 596]:
 		_card_back(Rect2(x, 134 + (x % 2) * 8, 28, 38))
-	_silhouette(Vector2(790, 190), 1.35, C_SHADOW)
 	draw_rect(Rect2(744, 88, 108, 178), Color("#08080f"))
 	draw_rect(Rect2(40, 188, 70, 82), Color("#352214"))
 	draw_rect(Rect2(48, 168, 54, 20), C_AMBER)
@@ -2551,8 +2681,7 @@ func _draw_punchline_back_room() -> void:
 	draw_circle(Vector2(760, 177), 12, C_YELLOW.darkened(0.2))
 	draw_circle(Vector2(760, 177), 4, C_SHADOW)
 	_neon_text("RIG", Vector2(742, 132), 12, C_YELLOW)
-	# Rook's guarded exit remains the normal travel seam.
-	_silhouette(Vector2(626, 188), 1.05, C_SHADOW)
+	# The exit remains the normal travel seam; Rook is rendered by the manifest.
 	draw_rect(Rect2(790, 70, 80, 174), Color("#12151b"))
 	draw_circle(Vector2(808, 158), 3, C_AMBER)
 	_floor_reflections()
@@ -2728,7 +2857,6 @@ func _draw_scene_life() -> void:
 			_draw_scan_bands(36, 820, 20, 72, C_SOFT, 0.10, 1.9)
 			var scan_x := 372 + int(abs(sin(flicker * 3.0)) * 164.0)
 			draw_rect(Rect2(scan_x, 206, 22, 5), Color(C_TEAL.r, C_TEAL.g, C_TEAL.b, 0.72))
-			draw_rect(Rect2(452, 114 + int(sin(flicker * 2.0) * 2.0), 16, 4), C_SOFT)
 			_draw_sparkles(SCENE_SPARKLES_CORNER_STORE, C_TEAL, 0.18)
 		"back_alley":
 			var bulb_alpha: float = 0.18 + absf(sin(flicker * 4.0)) * 0.18
@@ -2771,7 +2899,6 @@ func _draw_scene_life() -> void:
 			_draw_sign_pulse(Rect2(596, 102, 172, 34), C_CYAN, 0.17, 5.4)
 			draw_circle(Vector2(642 + sin(flicker * 1.5) * 7.0, 222), 5, C_WHITE)
 			draw_circle(Vector2(756 + cos(flicker * 1.7) * 5.0, 232), 4, C_WHITE)
-			draw_rect(Rect2(780, 158, 58, 48), Color(C_PURPLE.r, C_PURPLE.g, C_PURPLE.b, 0.20 + abs(sin(flicker * 6.0)) * 0.18))
 			_draw_smoke_bands(96, 520, 72, C_CYAN, 0.035)
 			_draw_sparkles(SCENE_SPARKLES_BAR, C_YELLOW, 0.20)
 		"jazz_club":
@@ -2779,15 +2906,11 @@ func _draw_scene_life() -> void:
 			_draw_sign_pulse(Rect2(696, 146, 124, 34), C_PINK, 0.20, 4.8)
 			_draw_smoke_bands(58, 826, 76, C_AMBER, 0.045)
 			_draw_smoke_bands(140, 760, 132, C_CYAN, 0.026)
-			var cymbal_alpha := 0.22 + absf(sin(flicker * 8.0)) * 0.24
-			draw_circle(Vector2(466, 168), 15, Color(C_AMBER.r, C_AMBER.g, C_AMBER.b, cymbal_alpha))
-			draw_rect(Rect2(718, 184, 48, 18), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.18 + absf(sin(flicker * 5.2)) * 0.16))
 			_draw_sparkles(SCENE_SPARKLES_JAZZ_CLUB, C_YELLOW, 0.18)
 		"kitty_cat_lounge":
 			_draw_sign_pulse(Rect2(116, 46, 404, 48), C_PINK, 0.18, 3.8)
 			_draw_smoke_bands(70, 820, 92, C_PINK, 0.044)
 			_draw_smoke_bands(120, 760, 138, C_CYAN, 0.026)
-			draw_circle(Vector2(704, 274), 40, Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.10 + absf(sin(flicker * 3.0)) * 0.14))
 			for x in [122, 292, 464, 622, 762]:
 				draw_rect(Rect2(x, 302 + int(sin(flicker * 2.0 + x) * 2.0), 16, 4), Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.30))
 			_draw_sparkles(SCENE_SPARKLES_KITTY_CAT, C_YELLOW, 0.20)
@@ -2821,7 +2944,6 @@ func _draw_scene_life() -> void:
 			for i in range(6):
 				var x := int(fmod(flicker * 16.0 + float(i * 160), 1040.0)) - 120
 				draw_rect(Rect2(x, 116 + i * 18, 260, 16), Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.045))
-			draw_rect(Rect2(770, 140, 38, 5), Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.28 + abs(sin(flicker * 3.0)) * 0.18))
 			_draw_smoke_bands(24, 840, 92, C_PINK, 0.05)
 			_draw_string_lights()
 			_draw_sparkles(SCENE_SPARKLES_UNDERGROUND, C_TEAL, 0.16)
@@ -2842,108 +2964,11 @@ func _draw_scene_life() -> void:
 				draw_rect(Rect2(bar_x, 124, 3, 112), Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.12 + abs(sin(flicker * 1.8 + bar_x)) * 0.08))
 
 
-func _draw_familiar_counter_characters() -> void:
-	# Recurring staff fill authored people slots only while no live object owns
-	# that slot. Their feet use the slot contact line and the fixture face is
-	# painted immediately after this pass.
-	match environment_id:
-		"corner_store":
-			_draw_familiar_character_in_slot("mara", "base.staff_shopkeeper", Vector2(374, 238), 0.78, "clerk")
-		"motel":
-			_draw_familiar_character_in_slot("june", "stage.staff_lobby_table", Vector2(558, 180), 0.82, "dealer")
-		"bar":
-			_draw_familiar_character_in_slot("rafi", "base.staff_bartender", Vector2(430, 218), 0.76, "bartender")
-		"jazz_club":
-			_draw_familiar_character_in_slot("rafi", "base.staff_bar", Vector2(742, 192), 0.66, "bartender")
-		"kitty_cat_lounge":
-			_draw_familiar_character_in_slot("iris", "base.staff_bar", Vector2(720, 194), 0.70, "host")
-		"delta_queen":
-			_draw_familiar_character_in_slot("sable", "base.staff_right_table", Vector2(390, 174), 0.70, "dealer")
-		"gas_station_casino":
-			_draw_familiar_character_in_slot("nell", "stage.staff_window", Vector2(600, 84), 0.76, "attendant")
-		"small_underground_casino":
-			if str(foundation_snapshot.get("current_layer_id", "")) == "casino":
-				_draw_familiar_character_in_slot("sable", "base.staff_dealer", Vector2(634, 146), 0.72, "dealer")
-		"pawn_shop":
-			_draw_familiar_character_in_slot("sal", "base.staff_pawn_counter", Vector2(352, 266), 0.74, "clerk")
-		"grand_casino":
-			_draw_familiar_character_in_slot("iris", "base.staff_host", Vector2(450, 350), 0.76, "host")
-		"grand_casino_high_limit":
-			pass
-		"grand_casino_cage":
-			_draw_linda_cage_silhouette()
-
-
-func _draw_familiar_floor_characters() -> void:
-	# Floor people are painted after fixture faces and use authored floor or seat
-	# contacts. This pass never paints counter staff.
-	match environment_id:
-		"back_alley":
-			_draw_familiar_character_in_slot("vince", "stage.patron_left", Vector2(388, 358), 0.88, "watcher")
-			_draw_familiar_character_in_slot("lena", "stage.patron_center", Vector2(500, 358), 0.82, "dealer")
-		"motel":
-			_draw_familiar_character_in_slot("marco", "base.patron_floor_right", Vector2(716, 326), 0.72, "fixer")
-		"bar":
-			_draw_familiar_character_in_slot("dot", "base.patron_floor_1", Vector2(508, 376), 0.70, "regular")
-		"jazz_club":
-			_draw_familiar_character_in_slot("dot", "stage.patron_floor_center", Vector2(364, 326), 0.52, "regular")
-		"kitty_cat_lounge":
-			_draw_familiar_character_in_slot("dot", "base.patron_stage_mid", Vector2(250, 234), 0.58, "regular")
-		"delta_queen":
-			_draw_familiar_character_in_slot("ox", "base.staff_floor", Vector2(496, 326), 0.86, "deck_boss")
-		"gas_station_casino":
-			_draw_watch_camera(Vector2(744, 72), C_PINK)
-		"small_underground_casino":
-			var layer_id := str(foundation_snapshot.get("current_layer_id", ""))
-			if layer_id == "casino":
-				_draw_familiar_character_in_slot("ox", "stage.patron_floor_right", Vector2(628, 358), 1.02, "bouncer")
-			elif layer_id == "club":
-				_draw_familiar_character_in_slot("ox", "base.staff_floor_right", Vector2(628, 358), 1.02, "bouncer")
-		"grand_casino", "grand_casino_high_limit", "grand_casino_back_room":
-			_draw_grand_casino_living_characters()
-		"grand_casino_cage":
-			pass
-
-
-func _draw_familiar_character_in_slot(id: String, slot_id: String, fallback: Vector2, scale_value: float, role: String, facing: String = "right") -> void:
-	if _scene_slot_is_occupied(slot_id):
-		return
-	_draw_named_character(id, _authored_slot_position(slot_id, fallback), scale_value, role, facing)
-
-
-func _scene_slot_is_occupied(slot_id: String) -> bool:
-	for object_value in foundation_scene_objects:
-		if typeof(object_value) == TYPE_DICTIONARY \
-				and str((object_value as Dictionary).get("presentation_mode", "room")) == "room" \
-				and str((object_value as Dictionary).get("slot_id", "")) == slot_id:
-			return true
-	return false
-
-
-func _authored_slot_position(slot_id: String, fallback: Vector2) -> Vector2:
-	var environment := {
-		"archetype_id": str(foundation_snapshot.get("archetype_id", foundation_snapshot.get("id", environment_id))),
-		"current_layer_id": str(foundation_snapshot.get("current_layer_id", foundation_snapshot.get("layer_id", ""))),
-	}
-	var surface_map := EnvironmentPlacementScript.surface_map(environment)
-	for field in ["base_slots", "stage_slots", "exit_slots"]:
-		for slot_value in _array_view(surface_map.get(field, [])):
-			if typeof(slot_value) != TYPE_DICTIONARY:
-				continue
-			var slot := slot_value as Dictionary
-			if str(slot.get("id", "")) != slot_id:
-				continue
-			var position := _array_view(slot.get("pos", []))
-			if position.size() >= 2:
-				return Vector2(float(position[0]), float(position[1]))
-	return fallback
-
-
-func _draw_linda_cage_silhouette() -> void:
+func _draw_linda_cage_silhouette(authored_feet: Vector2) -> void:
 	var cage_state: Dictionary = foundation_snapshot.get("linda_cage", {}) if typeof(foundation_snapshot.get("linda_cage", {})) == TYPE_DICTIONARY else {}
 	var pose_index := clampi(int(cage_state.get("pose_index", 1)), 0, 3)
 	var facing := str(cage_state.get("facing", "left"))
-	var feet: Vector2 = LINDA_CAGE_FEET[pose_index]
+	var feet := authored_feet
 	var idle_y: float = 0.0 if reduce_motion else sin(flicker * 1.7 + float(pose_index)) * 1.5
 	var pos: Vector2 = feet + Vector2(0, idle_y)
 	# Featureless by contract: opaque head/body only, with no skin, eye, nose,
@@ -2991,33 +3016,6 @@ func _draw_named_character(id: String, foot: Vector2, scale_value: float, role: 
 			draw_rect(Rect2(pos + Vector2(-25, -20) * scale_value, Vector2(16, 5) * scale_value), C_CYAN)
 
 
-func _draw_grand_casino_living_characters() -> void:
-	var living_floor := _grand_casino_living_floor_snapshot()
-	if living_floor.is_empty():
-		return
-	var escort: Dictionary = living_floor.get("escort", {}) if typeof(living_floor.get("escort", {})) == TYPE_DICTIONARY else {}
-	if not escort.is_empty():
-		var progress := clampf(float(escort.get("progress", 0.0)), 0.0, 1.0)
-		var escort_x := lerpf(170.0, 760.0, progress)
-		var escort_y := 398.0 if environment_id == "grand_casino" else 358.0
-		_draw_named_character("rourke", Vector2(escort_x, escort_y), 1.04, "pit_boss", "right")
-		_draw_rival_cheater_tell(str(escort.get("tell", "heel_tap")), 0, Vector2(escort_x - 54.0, escort_y))
-		return
-	var rourke: Dictionary = living_floor.get("rourke", {}) if typeof(living_floor.get("rourke", {})) == TYPE_DICTIONARY else {}
-	if bool(rourke.get("present", false)):
-		_draw_named_character("rourke", _rourke_scene_foot(str(rourke.get("spot", ""))), 1.04, "pit_boss", str(rourke.get("facing", "right")))
-	if environment_id == "grand_casino_back_room":
-		return
-	var rivals: Array = living_floor.get("rivals", []) if typeof(living_floor.get("rivals", [])) == TYPE_ARRAY else []
-	var rival_count := mini(rivals.size(), 2) if environment_id == "grand_casino_high_limit" else rivals.size()
-	for index in range(rival_count):
-		if typeof(rivals[index]) != TYPE_DICTIONARY:
-			continue
-		var rival := rivals[index] as Dictionary
-		var spot_index := clampi(int(rival.get("spot", index)), 0, 2)
-		_draw_rival_cheater(rival, _rival_scene_foot(spot_index))
-
-
 func _draw_rival_cheater(rival: Dictionary, foot: Vector2) -> void:
 	var tell := str(rival.get("tell", "chip_riffle"))
 	_draw_rival_cheater_tell(tell, int(rival.get("idle_phase", 0)), foot)
@@ -3056,53 +3054,12 @@ func _draw_rival_cheater_tell(tell: String, idle_phase: int, foot: Vector2) -> v
 			draw_rect(Rect2(animated_foot + Vector2(-6, -42), Vector2(12 + tell_motion * 3.0, 3)), C_PINK)
 
 
-func _rourke_scene_foot(spot: String) -> Vector2:
-	match spot:
-		"main_left":
-			return _authored_slot_position("stage.patron_floor_1", Vector2(306, 398))
-		"main_cage":
-			return _authored_slot_position("stage.patron_floor_2", Vector2(594, 398))
-		"high_rail":
-			return _authored_slot_position("base.patron_floor_1", Vector2(498, 358))
-		"high_door":
-			return _authored_slot_position("stage.patron_floor_1", Vector2(726, 358))
-		"back_table":
-			return _authored_slot_position("base.patron_floor_1", Vector2(450, 358))
-		"back_door":
-			return _authored_slot_position("stage.patron_floor_1", Vector2(570, 358))
-		_:
-			return _authored_slot_position("base.patron_floor_1", Vector2(450, 398 if environment_id == "grand_casino" else 358))
-
-
-func _rival_scene_foot(spot_index: int) -> Vector2:
-	if environment_id == "grand_casino_high_limit":
-		match spot_index:
-			0:
-				return _authored_slot_position("base.patron_floor_1", Vector2(306, 398))
-			1:
-				return _authored_slot_position("stage.patron_floor_1", Vector2(594, 398))
-			_:
-				return _authored_slot_position("base.patron_floor_1", Vector2(306, 398))
-	if environment_id == "grand_casino_back_room":
-		match spot_index:
-			0:
-				return Vector2(330, 358)
-			1:
-				return _authored_slot_position("base.patron_floor_1", Vector2(450, 358))
-			_:
-				return _authored_slot_position("stage.patron_floor_1", Vector2(570, 358))
-	match spot_index:
-		0:
-			return Vector2(156, 414)
-		1:
-			return _authored_slot_position("stage.patron_floor_1", Vector2(306, 398))
-		_:
-			return _authored_slot_position("stage.patron_floor_2", Vector2(594, 398))
-
-
 func _character_style(id: String) -> Dictionary:
 	var styles := {
 		"mara": {"skin": Color("#d9a36a"), "hair": Color("#271018"), "jacket": Color("#24404a"), "accent": C_CYAN, "tempo": 1.0, "phase": 0.2},
+		"alley_merchant": {"skin": Color("#9c684f"), "hair": Color("#241910"), "jacket": Color("#28301f"), "accent": C_AMBER, "tempo": 0.75, "phase": 1.5},
+		"motel_clerk": {"skin": Color("#c99572"), "hair": Color("#1c2630"), "jacket": Color("#30404a"), "accent": C_TEAL, "tempo": 0.8, "phase": 2.8},
+		"silas": {"skin": Color("#b77a62"), "hair": Color("#19151f"), "jacket": Color("#1d2535"), "accent": C_PURPLE_2, "tempo": 1.15, "phase": 0.9},
 		"vince": {"skin": Color("#a66a50"), "hair": Color("#06070c"), "jacket": Color("#34102b"), "accent": C_PINK, "tempo": 1.6, "phase": 2.1},
 		"lena": {"skin": Color("#c98665"), "hair": Color("#161025"), "jacket": Color("#273344"), "accent": C_AMBER, "tempo": 1.3, "phase": 0.7},
 		"june": {"skin": Color("#d0a07c"), "hair": Color("#332010"), "jacket": Color("#21363a"), "accent": C_TEAL, "tempo": 0.9, "phase": 1.8},
@@ -3250,6 +3207,8 @@ func _draw_scene_object_body(object_data: Dictionary) -> void:
 	var object_type := str(object_data.get("type", "item"))
 	var active := object_id == selected_object_id or object_id == hovered_object_id
 	_draw_object_shadow(rect, active, str(object_data.get("shadow_kind", "base")))
+	if _draw_manifest_specific_object(rect, object_data, active):
+		return
 	match object_type:
 		"game":
 			_draw_game_prop(rect, object_data, active)
@@ -3267,6 +3226,107 @@ func _draw_scene_object_body(object_data: Dictionary) -> void:
 			_draw_drink_prop(rect, active)
 		_:
 			_draw_item_prop(rect, object_data, active, str(object_data.get("surface", "counter")))
+
+
+func _draw_manifest_specific_object(rect: Rect2, object_data: Dictionary, active: bool) -> bool:
+	if not bool(object_data.get("manifest_physical", false)):
+		return false
+	var render_key := str(object_data.get("manifest_render_key", object_data.get("visual_key", ""))).strip_edges().to_lower()
+	var metadata := _copy_dictionary(object_data.get("manifest_metadata", {}))
+	var feet := Vector2(rect.get_center().x, rect.end.y - 2.0)
+	if render_key == "fixed_host_linda":
+		_draw_linda_cage_silhouette(feet)
+		if active:
+			draw_rect(rect.grow(2.0), Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.34), false, 2.0)
+		return true
+	if render_key == "grand_rourke":
+		_draw_named_character("rourke", feet, clampf(rect.size.y / 80.0, 0.58, 1.15), "pit_boss", str(metadata.get("facing", "right")))
+		if active:
+			draw_rect(rect.grow(2.0), Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.34), false, 2.0)
+		return true
+	if render_key == "grand_rival":
+		_draw_rival_cheater(metadata, feet)
+		if active:
+			draw_rect(rect.grow(2.0), Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.34), false, 2.0)
+		return true
+
+	var character_id := ""
+	var character_role := "regular"
+	match render_key:
+		"fixed_host_mara":
+			character_id = "mara"
+			character_role = "clerk"
+		"fixed_host_back_alley_merchant":
+			character_id = "alley_merchant"
+			character_role = "fixer"
+		"fixed_host_motel_clerk":
+			character_id = "motel_clerk"
+			character_role = "clerk"
+		"fixed_host_rafi", "jazz_bartender":
+			character_id = "rafi"
+			character_role = "bartender"
+		"fixed_host_iris":
+			character_id = "iris"
+			character_role = "host"
+		"fixed_host_sable":
+			character_id = "sable"
+			character_role = "dealer"
+		"fixed_host_ox":
+			character_id = "ox"
+			character_role = "bouncer"
+		"fixed_host_sal":
+			character_id = "sal"
+			character_role = "clerk"
+		"fixed_host_june":
+			character_id = "june"
+			character_role = "dealer"
+		"fixed_host_marco":
+			character_id = "marco"
+			character_role = "fixer"
+		"fixed_host_vince":
+			character_id = "vince"
+			character_role = "watcher"
+		"fixed_host_lena":
+			character_id = "lena"
+			character_role = "dealer"
+		"fixed_host_dot":
+			character_id = "dot"
+			character_role = "regular"
+		"fixed_host_nell":
+			character_id = "nell"
+			character_role = "attendant"
+		"numbers_silas":
+			character_id = "silas"
+			character_role = "watcher"
+	if not character_id.is_empty():
+		_draw_named_character(character_id, feet, clampf(rect.size.y / 80.0, 0.48, 1.15), character_role, str(metadata.get("facing", "right")))
+		if active:
+			draw_rect(rect.grow(2.0), Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.34), false, 2.0)
+		return true
+	match render_key:
+		"jazz_musician_sax", "jazz_musician_cello", "jazz_musician_drummer":
+			var instrument := "sax" if render_key.ends_with("_sax") else "cello" if render_key.ends_with("_cello") else "drums"
+			var scale_value := clampf(rect.size.y / 88.0, 0.48, 1.15)
+			_draw_jazz_player(Vector2(rect.get_center().x, rect.end.y - 2.0), scale_value, instrument)
+			if active:
+				draw_rect(rect.grow(2.0), Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.34), false, 2.0)
+			return true
+		"jazz_tip_jar":
+			var jar := Rect2(
+				rect.position + Vector2(rect.size.x * 0.30, rect.size.y * 0.22),
+				Vector2(rect.size.x * 0.40, rect.size.y * 0.58)
+			)
+			draw_rect(jar, Color("#21131a"))
+			draw_rect(jar, C_AMBER if active else C_CYAN, false, 2.0)
+			draw_rect(Rect2(jar.position + Vector2(jar.size.x * 0.12, -3.0), Vector2(jar.size.x * 0.76, 4.0)), C_SOFT)
+			_neon_text("TIP", jar.position + Vector2(2.0, jar.size.y * 0.62), 8, C_YELLOW)
+			return true
+		"jazz_band_stage":
+			var mark := Rect2(rect.position + Vector2(rect.size.x * 0.08, rect.size.y * 0.58), Vector2(rect.size.x * 0.84, maxf(5.0, rect.size.y * 0.18)))
+			draw_rect(mark, Color(C_AMBER.r, C_AMBER.g, C_AMBER.b, 0.20 if not active else 0.38))
+			draw_line(mark.position, Vector2(mark.end.x, mark.position.y), C_AMBER, 2.0)
+			return true
+	return false
 
 
 func _draw_scene_object_adornments(object_data: Dictionary, low_detail: bool) -> void:
@@ -3677,12 +3737,13 @@ func _objects_from_interactable_records(records: Array) -> Array:
 		if object_id.is_empty():
 			continue
 		if rendered_object_ids.has(object_id):
-			push_warning("Environment object %s was emitted more than once; suppressed the later duplicate." % object_id)
+			# Binding and placement audits retain the duplicate identities. The
+			# renderer only needs a deterministic last-line defense, and may be
+			# exercised repeatedly by diagnostic fixtures without flooding stderr.
 			continue
 		var slot_id := str(record.get("slot_id", "")).strip_edges()
 		var slot_holder := str(rendered_slot_holders.get(slot_id, "")) if not slot_id.is_empty() else ""
 		if not slot_holder.is_empty():
-			push_warning("Environment slot %s is already rendered by %s; suppressed duplicate %s." % [slot_id, slot_holder, object_id])
 			continue
 		rendered_object_ids[object_id] = true
 		if not slot_id.is_empty():
@@ -3747,13 +3808,14 @@ func _objects_from_interactable_records(records: Array) -> Array:
 			"scenario_layout_authority_digest": str(record.get("scenario_layout_authority_digest", "")),
 			"source_order": index,
 			"state_badge": str(record.get("state_badge", "")),
-			"visual_key": str(record.get("visual_key", "")),
+			"visual_key": str(record.get("visual_key", record.get("manifest_render_key", ""))),
 			"prop": str(record.get("prop", "")),
 			"surface": str(record.get("surface", "")),
 			"icon_key": str(record.get("icon_key", "")),
 			"asset_path": str(record.get("asset_path", "")),
 			"available_actions": JsonCoerceScript._copy_array(record.get("available_actions", [])),
 			"inline_actions": JsonCoerceScript._copy_array(record.get("inline_actions", [])),
+			"attached_room_actions": JsonCoerceScript._copy_array(record.get("attached_room_actions", [])),
 			"confirm_action_id": str(record.get("confirm_action_id", "")),
 			"scenario_owner_namespace": str(record.get("scenario_owner_namespace", "")),
 			"scenario_stable_object_id": str(record.get("scenario_stable_object_id", "")),
@@ -3774,6 +3836,18 @@ func _objects_from_interactable_records(records: Array) -> Array:
 			"layout_spot_field": str(record.get("layout_spot_field", "")),
 			"placement_class": str(record.get("placement_class", "")),
 			"slot_id": slot_id,
+			"slot_family": str(record.get("slot_family", record.get("manifest_family", ""))),
+			"manifest_object_id": str(record.get("manifest_object_id", "")),
+			"manifest_presentation_id": str(record.get("manifest_presentation_id", "")),
+			"manifest_family": str(record.get("manifest_family", record.get("slot_family", ""))),
+			"manifest_source_kind": str(record.get("manifest_source_kind", "")),
+			"manifest_source_id": str(record.get("manifest_source_id", "")),
+			"manifest_exact_slot_id": str(record.get("manifest_exact_slot_id", "")),
+			"manifest_required": bool(record.get("manifest_required", false)),
+			"manifest_physical": bool(record.get("manifest_physical", false)),
+			"manifest_render_key": str(record.get("manifest_render_key", "")),
+			"manifest_action_ids": JsonCoerceScript._copy_array(record.get("manifest_action_ids", [])),
+			"manifest_metadata": _copy_dictionary(record.get("manifest_metadata", {})),
 			"presentation_mode": str(record.get("presentation_mode", "room")),
 			"contact": str(record.get("contact", "")),
 		}
@@ -3941,7 +4015,7 @@ func _person_transit_route(settled: Dictionary, kind: String) -> Dictionary:
 
 
 func _surface_slot_by_id(surfaces: Dictionary, slot_id: String) -> Dictionary:
-	for field in ["base_slots", "stage_slots", "exit_slots"]:
+	for field in SLOT_COLLECTION_FIELDS:
 		for slot_value in JsonCoerceScript._copy_array(surfaces.get(field, [])):
 			var slot := _copy_dictionary(slot_value)
 			if str(slot.get("id", "")) == slot_id:
@@ -5635,11 +5709,14 @@ func _update_drunk_distortion_protected_rects() -> void:
 	drunk_distortion_overlay.set_ui_protected_rects(protected_rects)
 
 
-# Authored object rectangles are placement, interaction, and label authority.
-# Room models keep the stable dimensions they used before slot binding and are
-# anchored to the slot's physical contact instead of being resized into it.
+# Sealed fixed/scenario rectangles are exact draw, interaction, and label
+# authority. Legacy and otherwise unslotted room models retain their natural
+# dimensions and are anchored to the slot's physical contact.
 func _natural_model_rect_for_object(object_data: Dictionary) -> Rect2:
 	var slot_rect := _board_rect_for_object(object_data)
+	if bool(object_data.get("fixed_slot_geometry", false)) \
+			or bool(object_data.get("scenario_layout_resolved", false)):
+		return slot_rect
 	var model_size := _natural_model_size_for_object(object_data)
 	if small_screen_mode and bool(object_data.get("interactive", true)):
 		model_size.x = maxf(model_size.x, SmallScreenPolicyScript.ENVIRONMENT_OBJECT_HIT_SIZE.x)
@@ -6164,7 +6241,7 @@ func _draw_room_foreground_occluders(behind_counter_objects: Array) -> void:
 	if surface_map.is_empty():
 		return
 	var slots_by_id: Dictionary = {}
-	for field in ["base_slots", "stage_slots", "exit_slots"]:
+	for field in SLOT_COLLECTION_FIELDS:
 		var slot_values: Variant = surface_map.get(field, [])
 		if typeof(slot_values) != TYPE_ARRAY:
 			continue

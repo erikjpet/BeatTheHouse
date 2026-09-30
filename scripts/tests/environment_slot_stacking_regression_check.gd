@@ -17,9 +17,10 @@ func _run() -> void:
 	_test_capacity_failure_never_overflows()
 	_test_persisted_duplicate_rejected()
 	_test_presentation_alias_replaces_source()
+	_test_family_isolation()
 	_test_renderer_suppresses_duplicate_slot()
 	if _failures.is_empty():
-		print("ENVIRONMENT STACKING CHECK cases=6 duplicate_slots=0 overflow=0 ok=true")
+		print("ENVIRONMENT STACKING CHECK cases=7 duplicate_slots=0 overflow=0 family_crossovers=0 ok=true")
 		quit(0)
 		return
 	for failure in _failures:
@@ -28,40 +29,40 @@ func _run() -> void:
 
 
 func _test_collision_reassignment() -> void:
-	var first := _slot("test.surface_1", "surface_item", 10)
-	var second := _slot("test.surface_2", "surface_item", 20)
+	var first := _slot("event.surface_item_1", "event", "surface_item", 10)
+	var second := _slot("event.surface_item_2", "event", "surface_item", 20)
 	var result := EnvironmentSlotBinderScript.guard_unique_slot_bindings({
 		"alpha": _binding("alpha", first),
 		"beta": _binding("beta", first),
 	}, {}, {}, [first, second], "stacking regression")
 	_check(_array(result.get("errors", [])).is_empty(), "A duplicate slot with spare capacity produced an error.")
 	var bindings := _dict(result.get("slot_bindings", {}))
-	_check(str(_dict(bindings.get("alpha", {})).get("slot_id", "")) == "test.surface_1", "The deterministic first occupant did not retain its slot.")
-	_check(str(_dict(bindings.get("beta", {})).get("slot_id", "")) == "test.surface_2", "The later occupant was not reassigned to the free compatible slot.")
+	_check(str(_dict(bindings.get("alpha", {})).get("slot_id", "")) == "event.surface_item_1", "The deterministic first occupant did not retain its slot.")
+	_check(str(_dict(bindings.get("beta", {})).get("slot_id", "")) == "event.surface_item_2", "The later occupant was not reassigned to the free compatible slot.")
 	_assert_unique(bindings, "collision reassignment")
 
 
 func _test_shared_occupancy_reassignment() -> void:
-	var first := _slot("test.surface_1", "surface_item", 10)
-	var second := _slot("test.surface_2", "surface_item", 20)
+	var first := _slot("scenario.surface_item_1", "scenario", "surface_item", 10)
+	var second := _slot("scenario.surface_item_2", "scenario", "surface_item", 20)
 	var result := EnvironmentSlotBinderScript.guard_unique_slot_bindings(
 		{"late": _binding("late", first)},
 		{},
-		{"test.surface_1": "base"},
+		{"scenario.surface_item_1": "earlier"},
 		[first, second],
 		"shared occupancy regression"
 	)
 	var bindings := _dict(result.get("slot_bindings", {}))
-	_check(str(_dict(bindings.get("late", {})).get("slot_id", "")) == "test.surface_2", "A later binding reused a slot held by an earlier pass.")
-	_check(str(_dict(result.get("occupied_slots", {})).get("test.surface_1", "")) == "base", "The earlier shared-occupancy claim was overwritten.")
+	_check(str(_dict(bindings.get("late", {})).get("slot_id", "")) == "scenario.surface_item_2", "A later binding reused a slot held by an earlier pass.")
+	_check(str(_dict(result.get("occupied_slots", {})).get("scenario.surface_item_1", "")) == "earlier", "The earlier shared-occupancy claim was overwritten.")
 
 
 func _test_capacity_failure_never_overflows() -> void:
-	var only_slot := _slot("test.surface_1", "surface_item", 10)
+	var only_slot := _slot("event.surface_item_1", "event", "surface_item", 10)
 	var result := EnvironmentSlotBinderScript.guard_unique_slot_bindings(
 		{"late": _binding("late", only_slot)},
 		{},
-		{"test.surface_1": "base"},
+		{"event.surface_item_1": "earlier"},
 		[only_slot],
 		"capacity regression"
 	)
@@ -73,7 +74,7 @@ func _test_capacity_failure_never_overflows() -> void:
 func _test_persisted_duplicate_rejected() -> void:
 	var environment := {"archetype_id": "back_alley"}
 	var surface_map := EnvironmentPlacementScript.surface_map(environment)
-	var slot := _authored_slot(surface_map, "base.game_1")
+	var slot := _authored_slot(surface_map, "fixed.random_game_1")
 	_check(not slot.is_empty(), "Back Alley stacking regression slot is missing.")
 	if slot.is_empty():
 		return
@@ -90,7 +91,7 @@ func _test_persisted_duplicate_rejected() -> void:
 func _test_presentation_alias_replaces_source() -> void:
 	var environment := {"archetype_id": "back_alley"}
 	var surface_map := EnvironmentPlacementScript.surface_map(environment)
-	var slot := _authored_slot(surface_map, "base.game_1")
+	var slot := _authored_slot(surface_map, "fixed.random_game_1")
 	_check(not slot.is_empty(), "Back Alley alias regression slot is missing.")
 	if slot.is_empty():
 		return
@@ -103,7 +104,9 @@ func _test_presentation_alias_replaces_source() -> void:
 		"object_type": "home_container",
 		"visual_type": "home_container",
 		"slot_binding_source_id": source_id,
+		"family": "fixed",
 		"placement_class": "floor_fixture",
+		"active": true,
 		"visible": true,
 		"interactive": true,
 	}]
@@ -115,12 +118,43 @@ func _test_presentation_alias_replaces_source() -> void:
 	_assert_unique(bindings, "presentation alias replacement")
 
 
+func _test_family_isolation() -> void:
+	var fixed_slot := _slot("fixed.surface_item_1", "fixed", "surface_item", 10)
+	var event_slot := _slot("event.floor_item_1", "event", "floor_fixture", 20)
+	var cross_family_binding := _binding("event_probe", fixed_slot)
+	cross_family_binding["kind"] = "event"
+	cross_family_binding["slot_family"] = "event"
+	var result := EnvironmentSlotBinderScript.guard_unique_slot_bindings(
+		{"event_probe": cross_family_binding},
+		{},
+		{},
+		[fixed_slot, event_slot],
+		"family isolation regression"
+	)
+	_check(not _array(result.get("errors", [])).is_empty(), "A binding whose declared family disagreed with its slot did not fail closed.")
+	_check(not _dict(result.get("slot_bindings", {})).has("event_probe"), "A cross-family binding survived finalization.")
+
+	var bound := EnvironmentSlotBinderScript.bind_base_layout({"archetype_id": "bar"}, [{
+		"object_id": "event:family_isolation_probe",
+		"object_type": "event",
+		"visual_prop": "room_surface",
+		"family": "event",
+		"placement_class": "surface_item",
+		"exact_slot_id": "fixed.random_game_1",
+		"required": true,
+		"active": true,
+	}])
+	_check(not bool(bound.get("ok", true)), "An event object borrowed compatible capacity from the fixed family.")
+	_check(not _dict(bound.get("slot_bindings", {})).has("event:family_isolation_probe"), "An event object received a fixed-family slot.")
+
+
 func _test_renderer_suppresses_duplicate_slot() -> void:
 	var canvas: Variant = PixelSceneCanvasScript.new()
 	var common := {
 		"object_type": "prop",
 		"visual_type": "prop",
-		"slot_id": "test.surface_1",
+		"slot_id": "fixed.surface_item_1",
+		"slot_family": "fixed",
 		"presentation_mode": "room",
 		"visible": true,
 		"normalized_rect": {"x": 0.1, "y": 0.1, "w": 0.1, "h": 0.1},
@@ -151,10 +185,10 @@ func _authority(surface_map: Dictionary, bindings: Dictionary) -> Dictionary:
 	}
 
 
-func _slot(slot_id: String, placement_class: String, priority: int) -> Dictionary:
+func _slot(slot_id: String, family: String, placement_class: String, priority: int) -> Dictionary:
 	return {
 		"id": slot_id,
-		"kind": "base",
+		"kind": family,
 		"pos": [100.0 + priority, 100.0],
 		"footprint_class": placement_class,
 		"hit_rect": [80.0 + priority, 60.0, 72.0, 48.0],
@@ -168,9 +202,11 @@ func _slot(slot_id: String, placement_class: String, priority: int) -> Dictionar
 
 
 func _binding(identity: String, slot: Dictionary) -> Dictionary:
+	var family := str(slot.get("kind", ""))
 	return {
 		"identity": identity,
-		"kind": "base",
+		"kind": family,
+		"slot_family": family,
 		"presentation_mode": "room",
 		"slot_id": str(slot.get("id", "")),
 		"placement_class": str(slot.get("footprint_class", "")),
@@ -179,7 +215,7 @@ func _binding(identity: String, slot: Dictionary) -> Dictionary:
 
 
 func _authored_slot(surface_map: Dictionary, slot_id: String) -> Dictionary:
-	for collection_value in [surface_map.get("base_slots", []), surface_map.get("stage_slots", []), surface_map.get("exit_slots", [])]:
+	for collection_value in [surface_map.get("fixed_slots", []), surface_map.get("event_slots", []), surface_map.get("scenario_slots", []), surface_map.get("exit_slots", [])]:
 		for slot_value in _array(collection_value):
 			var slot := _dict(slot_value)
 			if str(slot.get("id", "")) == slot_id:
