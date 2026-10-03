@@ -251,7 +251,7 @@ static func _check_plan_a(library: ContentLibrary, failures: Array) -> void:
 			or str(live_table_row.get("placement_class", "")) != "floor_fixture" \
 			or str(live_table_row.get("spot_field", "")) != "runtime_object_manifest_entries" \
 			or str(live_table_binding.get("slot_family", "")) != "scenario" \
-			or not str(live_table_binding.get("slot_id", "")).begins_with("scenario.floor_item_"):
+			or not str(live_table_binding.get("slot_id", "")).begins_with("scenario.floor_fixture_"):
 		failures.append("Plan A's production Live Table did not mount through its trusted scenario-family floor-fixture projection.")
 	var live_table := EventModuleScript.new()
 	live_table.setup(library.event("heist_live_table"), library)

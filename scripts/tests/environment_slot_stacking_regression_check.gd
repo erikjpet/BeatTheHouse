@@ -120,7 +120,7 @@ func _test_presentation_alias_replaces_source() -> void:
 
 func _test_family_isolation() -> void:
 	var fixed_slot := _slot("fixed.surface_item_1", "fixed", "surface_item", 10)
-	var event_slot := _slot("event.floor_item_1", "event", "floor_fixture", 20)
+	var event_slot := _slot("event.floor_fixture_1", "event", "floor_fixture", 20)
 	var cross_family_binding := _binding("event_probe", fixed_slot)
 	cross_family_binding["kind"] = "event"
 	cross_family_binding["slot_family"] = "event"

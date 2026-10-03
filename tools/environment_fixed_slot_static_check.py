@@ -46,6 +46,74 @@ SLOT_FIELDS = {
     "id", "kind", "pos", "footprint_class", "hit_rect", "label_anchor",
     "facing", "priority", "zone_id", "support_id", "walk_lane_ids",
 }
+V2_SLOT_FIELDS = SLOT_FIELDS | {
+    "occupancy_required", "physical_role", "occupant_ids",
+    "runtime_reserve", "reserve_reason",
+}
+V2_GENERIC_ROLE = {
+    "standing_person": "standing_person",
+    "behind_counter_person": "behind_counter_person",
+    "seated_person": "seated_person",
+    "group": "group",
+    "floor_fixture": "floor_fixture",
+    "ground_marker": "ground_marker",
+    "surface_item": "surface_item",
+    "shop_item": "shop_item",
+    "wall_mounted": "wall_item",
+    "hanging": "hanging_item",
+    "doorway": "doorway",
+}
+V2_SCENARIO_CAPACITY_TARGETS = {
+    "corner_store": {"standing_person": 4, "doorway": 1, "wall_mounted": 3, "floor_fixture": 2, "surface_item": 1, "behind_counter_person": 1},
+    "back_alley": {"standing_person": 4, "doorway": 1, "wall_mounted": 1, "floor_fixture": 3, "surface_item": 2, "ground_marker": 1},
+    "motel": {"standing_person": 4, "behind_counter_person": 1, "floor_fixture": 3, "wall_mounted": 2, "doorway": 3, "hanging": 1, "surface_item": 1},
+    "bar": {"floor_fixture": 4, "doorway": 1, "standing_person": 4, "surface_item": 2, "behind_counter_person": 2, "wall_mounted": 2, "seated_person": 2, "ground_marker": 1},
+    "gas_station_casino": {"wall_mounted": 3, "standing_person": 5, "doorway": 3, "surface_item": 1, "ground_marker": 1, "behind_counter_person": 2, "floor_fixture": 2, "group": 2},
+    "small_underground_casino": {"doorway": 1, "surface_item": 1, "floor_fixture": 1, "standing_person": 1, "wall_mounted": 1},
+    "small_underground_casino:club": {"floor_fixture": 3, "standing_person": 4, "doorway": 2, "surface_item": 2, "group": 1, "ground_marker": 1, "wall_mounted": 1},
+    "small_underground_casino:casino": {"floor_fixture": 3, "standing_person": 3, "doorway": 2, "seated_person": 1, "wall_mounted": 3, "surface_item": 1, "group": 1, "ground_marker": 1},
+    "small_underground_casino:back_room": {"surface_item": 1, "floor_fixture": 1, "standing_person": 1, "wall_mounted": 1},
+    "jazz_club": {"standing_person": 3, "floor_fixture": 3, "doorway": 1, "wall_mounted": 2, "surface_item": 1, "seated_person": 1, "ground_marker": 1},
+    "kitty_cat_lounge": {"standing_person": 3, "surface_item": 1, "floor_fixture": 3, "doorway": 2, "wall_mounted": 3, "seated_person": 1, "ground_marker": 1},
+    "delta_queen": {"standing_person": 3, "floor_fixture": 3, "behind_counter_person": 1, "doorway": 1, "wall_mounted": 4, "group": 1, "surface_item": 2, "ground_marker": 1},
+    "beach": {"floor_fixture": 4, "standing_person": 5, "doorway": 1, "surface_item": 2, "wall_mounted": 2, "behind_counter_person": 2, "ground_marker": 1},
+    "pawn_shop": {"standing_person": 2, "doorway": 1, "wall_mounted": 2, "floor_fixture": 2, "surface_item": 2, "shop_item": 2},
+    "grand_casino": {"surface_item": 1, "standing_person": 3, "doorway": 1, "wall_mounted": 3, "group": 1, "floor_fixture": 3, "ground_marker": 1},
+    "grand_casino_high_limit": {"wall_mounted": 1, "floor_fixture": 2, "standing_person": 1},
+    "grand_casino_back_room": {"floor_fixture": 2, "standing_person": 1, "wall_mounted": 1},
+    "grand_casino_cage": {"surface_item": 1, "floor_fixture": 2, "standing_person": 1, "wall_mounted": 1},
+    "motel_room": {"floor_fixture": 1, "standing_person": 1, "surface_item": 1, "wall_mounted": 1},
+    "apartment": {"floor_fixture": 1, "standing_person": 1, "surface_item": 1, "wall_mounted": 1},
+    "house": {"floor_fixture": 1, "standing_person": 1, "surface_item": 1, "wall_mounted": 1},
+}
+V2_EVENT_CAPACITY_TARGETS = {
+    "corner_store": {"behind_counter_person": 2, "floor_fixture": 1, "group": 1, "standing_person": 1, "ground_marker": 1},
+    "back_alley": {"behind_counter_person": 1, "ground_marker": 1, "floor_fixture": 1, "standing_person": 6},
+    "motel": {"behind_counter_person": 1, "surface_item": 3, "ground_marker": 1, "standing_person": 4, "doorway": 1},
+    "bar": {"behind_counter_person": 1, "floor_fixture": 2, "standing_person": 5, "doorway": 1},
+    "gas_station_casino": {"doorway": 2, "floor_fixture": 2, "surface_item": 1, "ground_marker": 1, "standing_person": 5},
+    "small_underground_casino": {"floor_fixture": 2, "standing_person": 8, "wall_mounted": 1, "surface_item": 3, "doorway": 1},
+    "small_underground_casino:club": {"floor_fixture": 1, "standing_person": 8},
+    "small_underground_casino:casino": {"floor_fixture": 1, "behind_counter_person": 1, "seated_person": 1, "standing_person": 8},
+    "small_underground_casino:back_room": {"surface_item": 4, "floor_fixture": 1, "doorway": 1, "standing_person": 6},
+    "jazz_club": {"floor_fixture": 1, "standing_person": 3},
+    "kitty_cat_lounge": {"floor_fixture": 1, "seated_person": 1, "doorway": 1, "standing_person": 6},
+    "delta_queen": {"seated_person": 1, "doorway": 1, "behind_counter_person": 1, "floor_fixture": 2, "wall_mounted": 1, "surface_item": 1, "standing_person": 6},
+    "beach": {},
+    "pawn_shop": {"floor_fixture": 1, "standing_person": 3, "shop_item": 1, "surface_item": 1},
+    "grand_casino": {"behind_counter_person": 2, "wall_mounted": 1, "floor_fixture": 1, "standing_person": 7},
+    "grand_casino_high_limit": {"floor_fixture": 1, "standing_person": 6},
+    "grand_casino_back_room": {"standing_person": 5},
+    "grand_casino_cage": {},
+    "motel_room": {},
+    "apartment": {},
+    "house": {},
+}
+PULL_TABS_HOST_ACTION_IDS = {
+    "game:pull_tabs",
+    "game_hook:pull_tabs:ticket_redeemer",
+    "dialogue:pull_tab_clerk",
+}
 MAP_SLOT_FIELDS = ("base_slots", "stage_slots", "exit_slots")
 EPSILON = 0.01
 MIN_INTERACTIVE_TARGET = (44.0, 44.0)
@@ -1108,6 +1176,7 @@ def validate_map_v2(
         raw_slots = map_data.get(field)
         check.require(isinstance(raw_slots, list), f"{map_id}: {field} must be an array")
         family_slots: dict[str, dict[str, Any]] = {}
+        canonical_ordinals: dict[str, int] = {}
         for index, value in enumerate(values(raw_slots)):
             check.require(isinstance(value, dict), f"{map_id}.{field}[{index}] must be an object")
             if not isinstance(value, dict):
@@ -1118,8 +1187,22 @@ def validate_map_v2(
             check.require(prefix == family, f"{map_id}.{slot_id}: id prefix must be {family}.")
             check.require(str(value.get("kind", "")) == family, f"{map_id}.{slot_id}: kind must be {family}")
             check.require(slot_id not in slots_by_id, f"{map_id}: duplicate slot id {slot_id}")
+            check.require(
+                set(value) == V2_SLOT_FIELDS,
+                f"{map_id}.{slot_id}: v2 slot record is not closed; "
+                f"missing={sorted(V2_SLOT_FIELDS - set(value))} "
+                f"extra={sorted(set(value) - V2_SLOT_FIELDS)}",
+            )
             placement_class = str(value.get("footprint_class", ""))
             check.require(placement_class in CLASSES, f"{map_id}.{slot_id}: invalid footprint_class {placement_class}")
+            if family in {"event", "scenario"} and placement_class in V2_GENERIC_ROLE:
+                role = V2_GENERIC_ROLE[placement_class]
+                canonical_ordinals[role] = canonical_ordinals.get(role, 0) + 1
+                expected_slot_id = f"{family}.{role}_{canonical_ordinals[role]}"
+                check.require(
+                    slot_id == expected_slot_id,
+                    f"{map_id}.{slot_id}: canonical id must be {expected_slot_id}",
+                )
             check.require(str(value.get("facing", "")) in FACINGS, f"{map_id}.{slot_id}: invalid facing")
             check.require(
                 isinstance(value.get("priority"), int) and not isinstance(value.get("priority"), bool),
@@ -1146,9 +1229,59 @@ def validate_map_v2(
                 isinstance(value.get("occupancy_required"), bool),
                 f"{map_id}.{slot_id}: occupancy_required must be an explicit boolean",
             )
+            check.require(
+                isinstance(value.get("physical_role"), str)
+                and bool(str(value.get("physical_role", "")).strip()),
+                f"{map_id}.{slot_id}: physical_role must be a non-empty string",
+            )
+            occupant_ids = value.get("occupant_ids")
+            check.require(
+                isinstance(occupant_ids, list)
+                and all(isinstance(item, str) and item.strip() for item in occupant_ids),
+                f"{map_id}.{slot_id}: occupant_ids must contain non-empty strings",
+            )
+            if isinstance(occupant_ids, list):
+                check.require(
+                    occupant_ids == sorted(set(occupant_ids)),
+                    f"{map_id}.{slot_id}: occupant_ids must be sorted and unique",
+                )
+            runtime_reserve = value.get("runtime_reserve")
+            reserve_reason = value.get("reserve_reason")
+            check.require(
+                isinstance(runtime_reserve, bool),
+                f"{map_id}.{slot_id}: runtime_reserve must be an explicit boolean",
+            )
+            check.require(
+                isinstance(reserve_reason, str),
+                f"{map_id}.{slot_id}: reserve_reason must be a string",
+            )
+            if isinstance(runtime_reserve, bool) and isinstance(reserve_reason, str):
+                check.require(
+                    runtime_reserve == bool(reserve_reason.strip()),
+                    f"{map_id}.{slot_id}: reserve_reason must be non-empty exactly when runtime_reserve is true",
+                )
             family_slots[slot_id] = value
             slots_by_id[slot_id] = value
         slots_by_family[family] = family_slots
+
+    for family, targets in (
+        ("event", V2_EVENT_CAPACITY_TARGETS.get(map_id, {})),
+        ("scenario", V2_SCENARIO_CAPACITY_TARGETS.get(map_id, {})),
+    ):
+        actual: dict[str, int] = {}
+        for slot in slots_by_family.get(family, {}).values():
+            placement_class = str(slot.get("footprint_class", ""))
+            actual[placement_class] = actual.get(placement_class, 0) + 1
+        expected = {
+            placement_class: count
+            for placement_class, count in targets.items()
+            if count > 0
+        }
+        check.require(
+            actual == expected,
+            f"{map_id}: {family} capacity matrix drift; "
+            f"expected={expected} actual={actual}",
+        )
 
     for legacy_field in ("base_slots", "stage_slots", "object_slot_ids", "category_slot_ids"):
         check.require(legacy_field not in map_data, f"{map_id}: legacy field {legacy_field} is forbidden in slot schema v2")
@@ -1597,6 +1730,109 @@ def _v2_snapshot_rows(
     return rows
 
 
+def _v2_iter_dict_nodes(value: Any):
+    if isinstance(value, dict):
+        yield value
+        for child in value.values():
+            yield from _v2_iter_dict_nodes(child)
+    elif isinstance(value, list):
+        for child in value:
+            yield from _v2_iter_dict_nodes(child)
+
+
+def _v2_validate_source_add_claimants(
+    check: Check,
+    scenario_catalog: dict[str, Any],
+    maps_by_id: dict[str, dict[str, Any]],
+) -> int:
+    """Prove every source-added physical object has compatible scenario capacity."""
+    source_fields = {
+        "event_pool_add": "event",
+        "service_add": "service",
+        "item_offer_add": "item",
+        "game_pool_add": "game",
+    }
+    physical_claimants: set[tuple[str, str, str]] = set()
+    pawn_item_offers: set[str] = set()
+    for map_id, scenarios in scenario_catalog.items():
+        map_data = maps_by_id.get(str(map_id), {})
+        scenario_slots = {
+            str(slot.get("id", "")): slot
+            for slot in values(map_data.get("scenario_slots"))
+            if isinstance(slot, dict)
+        }
+        available_classes = {
+            str(slot.get("footprint_class", ""))
+            for slot in scenario_slots.values()
+        }
+        for scenario in values(scenarios):
+            if not isinstance(scenario, dict):
+                continue
+            scenario_id = str(scenario.get("id", ""))
+            for node in _v2_iter_dict_nodes(scenario):
+                for field, prefix in source_fields.items():
+                    additions = node.get(field)
+                    if not isinstance(additions, list):
+                        continue
+                    for raw in additions:
+                        source_id = (
+                            raw.strip()
+                            if isinstance(raw, str)
+                            else str(raw.get("id", "")).strip()
+                            if isinstance(raw, dict)
+                            else ""
+                        )
+                        if not source_id:
+                            continue
+                        object_id = f"{prefix}:{source_id}"
+                        declared_family = str(
+                            map_data.get("object_family_ids", {}).get(object_id, "")
+                        )
+                        exact_slot_id = str(
+                            map_data.get("scenario_object_slot_ids", {}).get(
+                                object_id, ""
+                            )
+                        )
+                        override = str(
+                            map_data.get("class_overrides", {}).get(object_id, "")
+                        )
+                        placement_class = (
+                            "shop_item"
+                            if field == "item_offer_add"
+                            else override
+                            if override in CLASSES
+                            else str(
+                                scenario_slots.get(exact_slot_id, {}).get(
+                                    "footprint_class", ""
+                                )
+                            )
+                        )
+                        is_scenario_physical = (
+                            declared_family == "scenario"
+                            or field in {"item_offer_add", "game_pool_add"}
+                        ) and declared_family != "fixed"
+                        if not is_scenario_physical or placement_class not in CLASSES:
+                            continue
+                        physical_claimants.add((str(map_id), scenario_id, object_id))
+                        check.require(
+                            placement_class in available_classes,
+                            f"{map_id}.{scenario_id}: source-added {object_id} "
+                            f"has no scenario.{placement_class} capacity",
+                        )
+                        if str(map_id) == "pawn_shop" and field == "item_offer_add":
+                            pawn_item_offers.add(object_id)
+    check.require(
+        pawn_item_offers == {"item:false_bottom_cup", "item:roadside_map"},
+        "pawn_shop: Estate Lot Day must claim both authored shop-item offers",
+    )
+    check.require(
+        V2_SCENARIO_CAPACITY_TARGETS["pawn_shop"].get("shop_item")
+        == len(pawn_item_offers),
+        "pawn_shop: scenario shop-item bank must match its two simultaneous offers",
+    )
+    return len(physical_claimants)
+
+
 def main_v2(
     root: Path,
     report_path: Path,
@@ -1654,6 +1890,67 @@ def main_v2(
         "service:jazz_drummer_round", "service:jazz_band_tip_jar", "service:listen_to_jazz",
     }:
         check.require(action_id in jazz_action_ids, f"jazz_club: fixed hosts do not attach {action_id}")
+    check.require(
+        len(values(jazz.get("fixed_slots"))) == 9
+        and len(values(jazz.get("event_slots"))) == 4
+        and len(values(jazz.get("scenario_slots"))) == 12
+        and len(values(jazz.get("exit_slots"))) == 1,
+        "jazz_club: reviewed fixed/event/scenario/exit counts must be 9/4/12/1",
+    )
+    check.require(
+        {
+            str(slot.get("id", ""))
+            for slot in values(jazz.get("exit_slots"))
+            if isinstance(slot, dict)
+        } == {"exit.door_right_upper"},
+        "jazz_club: only the real right-upper travel exit may remain",
+    )
+
+    retired_pull_tabs_slots = {
+        "bar": {"fixed.ticket_redeemer", "fixed.random_game_3"},
+        "gas_station_casino": {
+            "fixed.service_lottery_desk", "fixed.service_refreshment_shelf",
+            "fixed.random_game_2", "fixed.event_control_rail",
+        },
+        "jazz_club": {
+            "fixed.pulltab_game", "fixed.event_pull_tabs_sign",
+            "fixed.random_game_1", "fixed.service_bar",
+        },
+        "grand_casino": {"fixed.ticket_redeemer", "fixed.game_machine_5"},
+    }
+    for map_id, retired_ids in retired_pull_tabs_slots.items():
+        map_data = maps_by_id.get(map_id, {})
+        fixed_ids = {
+            str(slot.get("id", ""))
+            for slot in values(map_data.get("fixed_slots"))
+            if isinstance(slot, dict)
+        }
+        check.require(
+            fixed_ids.isdisjoint(retired_ids),
+            f"{map_id}: retained standalone Pull Tabs capacity {sorted(fixed_ids & retired_ids)}",
+        )
+        declarations = [
+            declaration
+            for declaration in values(map_data.get("fixed_objects"))
+            if isinstance(declaration, dict)
+        ]
+        check.require(
+            all(
+                not set(str(value) for value in values(declaration.get("action_ids")))
+                & PULL_TABS_HOST_ACTION_IDS
+                for declaration in declarations
+            ),
+            f"{map_id}: Pull Tabs actions must be merged by runtime only",
+        )
+        for action_id in PULL_TABS_HOST_ACTION_IDS:
+            check.require(
+                map_data.get("object_family_ids", {}).get(action_id) == "fixed"
+                and all(
+                    action_id not in map_data.get(f"{family}_object_slot_ids", {})
+                    for family in V2_FAMILIES
+                ),
+                f"{map_id}: {action_id} must be fixed-owned without standalone geometry",
+            )
 
     required_host_slots = {
         "corner_store": {"corner_store:shopkeeper": "fixed.staff_shopkeeper"},
@@ -1684,20 +1981,118 @@ def main_v2(
             check.require(str(declaration.get("exact_slot_id", "")) == slot_id, f"{map_id}: {object_id} must use {slot_id}")
             check.require(bool(declaration.get("required", False)), f"{map_id}: {object_id} must be required")
 
-    silas_slots = {
-        "motel": "event.floor_patron_1",
-        "bar": "event.floor_patron_2",
-        "small_underground_casino": "event.floor_patron_2",
-        "small_underground_casino:club": "event.floor_patron_1",
-        "small_underground_casino:casino": "event.floor_patron_1",
-        "small_underground_casino:back_room": "event.floor_patron_1",
-        "jazz_club": "event.floor_patron_1",
-        "kitty_cat_lounge": "event.floor_patron_1",
+    grand = maps_by_id.get("grand_casino", {})
+    check.require(
+        grand.get("fixed_object_slot_ids", {}).get("casino_fixture:host_desk")
+        == "fixed.fixture_host_desk",
+        "grand_casino: runtime game actions must use the tangible host desk",
+    )
+    grand_categories = {
+        str(key): str(value)
+        for key, value in grand.get("fixed_category_slot_ids", {}).items()
+        if str(key).startswith("game_spots:")
     }
-    for map_id, slot_id in silas_slots.items():
+    check.require(
+        grand_categories == {
+            "game_spots:0": "fixed.game_machine_1",
+            "game_spots:1": "fixed.game_machine_2",
+            "game_spots:2": "fixed.game_machine_3",
+            "game_spots:3": "fixed.game_machine_4",
+            "game_spots:4": "fixed.game_table_left",
+            "game_spots:5": "fixed.game_table_right",
+        },
+        "grand_casino: six game categories must skip the retired Pull Tabs machine",
+    )
+    expected_game_categories = {
+        "bar": {
+            "game_spots:0": "fixed.random_game_1",
+            "game_spots:1": "fixed.random_game_2",
+        },
+        "gas_station_casino": {
+            "game_spots:0": "fixed.random_game_1",
+            "game_spots:1": "fixed.game_scratch_tickets",
+        },
+    }
+    for map_id, expected in expected_game_categories.items():
+        actual = {
+            str(key): str(value)
+            for key, value in maps_by_id.get(map_id, {}).get(
+                "fixed_category_slot_ids", {}
+            ).items()
+            if str(key).startswith("game_spots:")
+        }
+        check.require(
+            actual == expected,
+            f"{map_id}: physical game category bank drift; "
+            f"expected={expected} actual={actual}",
+        )
+    for object_id in ("game:coin_pusher", "game:slot", "game:video_poker"):
+        check.require(
+            maps_by_id.get("gas_station_casino", {}).get(
+                "fixed_object_slot_ids", {}
+            ).get(object_id) == "fixed.random_game_1",
+            f"gas_station_casino: {object_id} must share fixed.random_game_1",
+        )
+    expected_game_spots = {
+        "bar": [[136, 202], [322, 202]],
+        "gas_station_casino": [[482, 254], [578, 160]],
+        "jazz_club": [],
+    }
+    for map_id, expected in expected_game_spots.items():
+        check.require(
+            values(archetypes.get(map_id, {}).get("layout", {}).get("game_spots"))
+            == expected,
+            f"{map_id}: layout game_spots must match its non-counter physical games",
+        )
+    check.require(
+        values(archetypes.get("grand_casino", {}).get("layout", {}).get("game_spots"))
+        == [[85, 150], [220, 150], [355, 150], [525, 150], [825, 150], [600, 260]],
+        "grand_casino: layout must expose the six non-Pull-Tabs physical game positions",
+    )
+    descriptive_fixed_ids = {
+        "back_alley": {"lender:street_lender": "fixed.lender_street_lender"},
+        "pawn_shop": {"lender:sals_pawn_counter": "fixed.lender_sals_pawn_counter"},
+        "beach": {"service:beach_sand_pile": "fixed.service_beach_sand_pile"},
+        "kitty_cat_lounge": {"event:grand_casino_invite": "fixed.event_grand_casino_invite"},
+        "delta_queen": {"event:grand_casino_invite": "fixed.event_grand_casino_invite"},
+    }
+    for map_id, object_targets in descriptive_fixed_ids.items():
         map_data = maps_by_id.get(map_id, {})
+        fixed_ids = {
+            str(slot.get("id", ""))
+            for slot in values(map_data.get("fixed_slots"))
+            if isinstance(slot, dict)
+        }
+        for object_id, slot_id in object_targets.items():
+            check.require(
+                map_data.get("fixed_object_slot_ids", {}).get(object_id) == slot_id
+                and slot_id in fixed_ids,
+                f"{map_id}: {object_id} must use descriptive fixed id {slot_id}",
+            )
+
+    silas_maps = (
+        "motel", "bar", "small_underground_casino",
+        "small_underground_casino:club",
+        "small_underground_casino:casino",
+        "small_underground_casino:back_room", "jazz_club",
+        "kitty_cat_lounge",
+    )
+    for map_id in silas_maps:
+        map_data = maps_by_id.get(map_id, {})
+        slot_id = str(
+            map_data.get("event_object_slot_ids", {}).get("numbers:silas", "")
+        )
+        event_slots = {
+            str(slot.get("id", "")): slot
+            for slot in values(map_data.get("event_slots"))
+            if isinstance(slot, dict)
+        }
         check.require(map_data.get("object_family_ids", {}).get("numbers:silas") == "event", f"{map_id}: Silas must be event-owned")
-        check.require(map_data.get("event_object_slot_ids", {}).get("numbers:silas") == slot_id, f"{map_id}: Silas must use {slot_id}")
+        check.require(
+            slot_id.startswith("event.standing_person_")
+            and event_slots.get(slot_id, {}).get("footprint_class") == "standing_person",
+            f"{map_id}: Silas must use canonical event standing-person capacity",
+        )
 
     gas = maps_by_id.get("gas_station_casino", {})
     gas_nell = next(
@@ -1714,8 +2109,8 @@ def main_v2(
     )
     check.require(
         gas.get("object_family_ids", {}).get("dialogue:scratch_ticket_scalper") == "event"
-        and gas.get("event_object_slot_ids", {}).get("dialogue:scratch_ticket_scalper") == "event.floor_patron_1",
-        "gas_station_casino: scratch-ticket scalper must use optional event.floor_patron_1",
+        and gas.get("event_object_slot_ids", {}).get("dialogue:scratch_ticket_scalper") == "event.standing_person_5",
+        "gas_station_casino: scratch-ticket scalper must use optional event.standing_person_5",
     )
     for home_id in ("motel_room", "apartment", "house"):
         home = maps_by_id.get(home_id, {})
@@ -1738,7 +2133,7 @@ def main_v2(
             if isinstance(slot, dict)
         }
         for ordinal in range(1, count + 1):
-            slot_id = f"event.floor_patron_{ordinal}"
+            slot_id = f"event.standing_person_{ordinal}"
             check.require(
                 event_slots.get(slot_id, {}).get("footprint_class") == "standing_person"
                 and event_slots.get(slot_id, {}).get("occupancy_required") is False,
@@ -1770,15 +2165,15 @@ def main_v2(
         for slot in values(corner_store.get("event_slots"))
         if isinstance(slot, dict)
     }
-    late_shift_slot = corner_event_slots.get("event.counter_patron_1", {})
-    town_rumor_slot = corner_event_slots.get("event.counter_patron_2", {})
+    late_shift_slot = corner_event_slots.get("event.behind_counter_person_1", {})
+    town_rumor_slot = corner_event_slots.get("event.behind_counter_person_2", {})
     late_shift_rect = rect(late_shift_slot.get("hit_rect"))
     town_rumor_rect = rect(town_rumor_slot.get("hit_rect"))
     check.require(
         corner_store.get("object_family_ids", {}).get("event:late_shift_discount") == "event"
         and corner_store.get("object_family_ids", {}).get("event:town_rumor_staff") == "event"
-        and corner_store.get("event_object_slot_ids", {}).get("event:late_shift_discount") == "event.counter_patron_1"
-        and corner_store.get("event_object_slot_ids", {}).get("event:town_rumor_staff") == "event.counter_patron_2"
+        and corner_store.get("event_object_slot_ids", {}).get("event:late_shift_discount") == "event.behind_counter_person_1"
+        and corner_store.get("event_object_slot_ids", {}).get("event:town_rumor_staff") == "event.behind_counter_person_2"
         and late_shift_slot.get("footprint_class") == "behind_counter_person"
         and town_rumor_slot.get("footprint_class") == "behind_counter_person"
         and late_shift_rect is not None
@@ -1808,7 +2203,7 @@ def main_v2(
         for slot in values(casino.get("event_slots"))
         if isinstance(slot, dict)
     }
-    rowdy_slot = casino_event_slots.get("event.seated_patron_1", {})
+    rowdy_slot = casino_event_slots.get("event.seated_person_1", {})
     casino_seats = {
         str(seat.get("id", "")): point(seat.get("point"))
         for seat in values(casino.get("seats"))
@@ -1816,11 +2211,65 @@ def main_v2(
     }
     check.require(
         casino.get("object_family_ids", {}).get("event:rowdy_regular") == "event"
-        and casino.get("event_object_slot_ids", {}).get("event:rowdy_regular") == "event.seated_patron_1"
+        and casino.get("event_object_slot_ids", {}).get("event:rowdy_regular") == "event.seated_person_1"
         and rowdy_slot.get("footprint_class") == "seated_person"
         and rowdy_slot.get("support_id") == "left_card_seat"
         and point(rowdy_slot.get("pos")) == casino_seats.get("left_card_seat"),
         "small_underground_casino:casino: rowdy regular must have authored seated event capacity",
+    )
+
+    for map_id, map_data in maps_by_id.items():
+        scenario_reserves = [
+            slot
+            for slot in values(map_data.get("scenario_slots"))
+            if isinstance(slot, dict) and bool(slot.get("runtime_reserve"))
+        ]
+        roles = [str(slot.get("physical_role", "")) for slot in scenario_reserves]
+        for required_role in (
+            "Runtime contact reserve",
+            "Delivery hold reserve",
+            "Delivery package reserve",
+        ):
+            check.require(
+                roles.count(required_role) == 1,
+                f"{map_id}: must expose exactly one {required_role}",
+            )
+    for map_id, slot_id in (
+        ("bar", "scenario.seated_person_2"),
+        ("beach", "scenario.standing_person_5"),
+    ):
+        slot = next(
+            (
+                value
+                for value in values(maps_by_id.get(map_id, {}).get("scenario_slots"))
+                if isinstance(value, dict) and value.get("id") == slot_id
+            ),
+            {},
+        )
+        check.require(
+            slot.get("physical_role") == "Recruitment contact reserve"
+            and slot.get("runtime_reserve") is True,
+            f"{map_id}: {slot_id} must retain recruitment reserve metadata",
+        )
+    for map_id in (
+        "grand_casino", "grand_casino_high_limit",
+        "grand_casino_back_room", "grand_casino_cage",
+    ):
+        crew_reserves = [
+            slot
+            for slot in values(maps_by_id.get(map_id, {}).get("scenario_slots"))
+            if isinstance(slot, dict)
+            and slot.get("physical_role") == "Crew live-table reserve"
+            and slot.get("footprint_class") == "floor_fixture"
+            and slot.get("runtime_reserve") is True
+        ]
+        check.require(
+            len(crew_reserves) == 1,
+            f"{map_id}: must expose one Crew live-table floor reserve",
+        )
+
+    source_add_claimants = _v2_validate_source_add_claimants(
+        check, scenario_catalog, maps_by_id
     )
 
     active_snapshots = SlotAuthoring.collect_active_phase_snapshots(root)
@@ -1909,6 +2358,15 @@ def main_v2(
         "mandatory_lane_obstacle_checks": len(active_rows),
         "mandatory_lane_obstacle_states": len(active_rows),
         "mandatory_lane_overflow_states": 0,
+        "scenario_source_add_claimants": source_add_claimants,
+        "event_slot_count": sum(
+            len(values(map_data.get("event_slots")))
+            for map_data in maps_by_id.values()
+        ),
+        "scenario_slot_count": sum(
+            len(values(map_data.get("scenario_slots")))
+            for map_data in maps_by_id.values()
+        ),
     }
     report = {
         "tool": "environment_fixed_slot_static_check",

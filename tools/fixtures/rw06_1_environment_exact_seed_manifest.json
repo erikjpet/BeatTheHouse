@@ -8,7 +8,7 @@
       "scenario_id": "corner_store_delivery_day",
       "phase_id": "arrival",
       "base_event_id": "town_rumor_staff",
-      "event_slot_id": "event.counter_patron_2",
+      "event_slot_id": "event.behind_counter_person_2",
       "scenario_identity": "scenario::delivery_event_gate"
     }
   ],

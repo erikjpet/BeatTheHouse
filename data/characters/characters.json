@@ -523,37 +523,6 @@
     ]
   },
   {
-    "id": "rina_pull_tab_clerk",
-    "display_name": "Rina Sol",
-    "title": "Pull-Tab Clerk",
-    "role": "staff",
-    "model": {
-      "skin_color": "#b97858",
-      "hair_color": "#24546a",
-      "jacket_color": "#3b255f",
-      "accent_color": "#2bd7ff",
-      "silhouette": "glasses",
-      "scale": 0.96
-    },
-    "voice": {
-      "style": "Dry and observant, with the patience of someone watching bad odds all night.",
-      "lines": {
-        "greeting": [
-          "Winners, questions, trouble. Pick one and make it quick.",
-          "Tabs cash here. Bad luck complains outside.",
-          "If the paper owes you, I can make it honest."
-        ]
-      }
-    },
-    "encounters": [
-      {
-        "context": "greeting",
-        "line_key": "greeting",
-        "dialogue_id": "pull_tab_clerk"
-      }
-    ]
-  },
-  {
     "id": "mara_late_shift_clerk",
     "display_name": "Mara Quill",
     "title": "Late-Shift Clerk",

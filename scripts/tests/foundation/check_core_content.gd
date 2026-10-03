@@ -865,7 +865,7 @@ func _check_content_core(library: ContentLibrary, failures: Array) -> void:
 	call("_check_tier_two_venue_progression", library, failures)
 	call("_check_baccarat_grand_casino_only", library, failures)
 	_check_environment_game_pool_distribution(library, failures)
-	_check_grand_casino_game_fixture_capacity(library, failures)
+	_check_physical_game_fixture_capacity(library, failures)
 	_check_environment_encounter_freshness(library, failures)
 	_check_travel_unlock_event_copy(library, failures)
 	_check_high_risk_table_limit_overrides(library, failures)
@@ -3047,9 +3047,12 @@ func _check_environment_game_pool_distribution(library: ContentLibrary, failures
 			failures.append("Game %s only appears in rare environment game pools." % game_id)
 
 
-func _check_grand_casino_game_fixture_capacity(library: ContentLibrary, failures: Array) -> void:
+func _check_physical_game_fixture_capacity(library: ContentLibrary, failures: Array) -> void:
 	var expected_counts := {
-		"grand_casino": {"logical": 5, "rendered": 7},
+		"bar": {"logical": 3, "rendered": 2},
+		"gas_station_casino": {"logical": 3, "rendered": 2},
+		"jazz_club": {"logical": 1, "rendered": 0},
+		"grand_casino": {"logical": 5, "rendered": 6},
 		"grand_casino_high_limit": {"logical": 4, "rendered": 4},
 		"grand_casino_back_room": {"logical": 2, "rendered": 2},
 	}
@@ -3059,23 +3062,28 @@ func _check_grand_casino_game_fixture_capacity(library: ContentLibrary, failures
 		var room_id := str(room_id_value)
 		var archetype := _archetype_by_id(library, room_id)
 		if archetype.is_empty():
-			failures.append("Grand Casino fixture-capacity regression is missing room: %s." % room_id)
+			failures.append("Physical game fixture-capacity regression is missing room: %s." % room_id)
 			continue
 		var run_state: RunState = RunStateScript.new()
 		run_state.start_new("GRAND-CASINO-CAPACITY-%s" % room_id.to_upper())
-		var environment := EnvironmentInstance.from_archetype(archetype, 5, run_state.create_rng("grand_casino_capacity"), library).to_dict()
+		var environment := EnvironmentInstance.from_archetype(archetype.duplicate(true), 5, run_state.create_rng("grand_casino_capacity"), library).to_dict()
 		var layout := JsonCoerceScript._copy_dict(environment.get("layout", {}))
 		var fixture_counts := JsonCoerceScript._copy_dict(layout.get("game_fixture_counts", {}))
 		var logical_count := JsonCoerceScript._raw_string_array(environment.get("game_ids", [])).size()
+		var local_flags := JsonCoerceScript._copy_dict(environment.get("local_narrative_flags", {}))
+		var lottery_counter := JsonCoerceScript._copy_dict(local_flags.get("lottery_counter", {}))
+		var counter_sale_game_ids := JsonCoerceScript._raw_string_array(lottery_counter.get("sale_game_ids", []))
 		var rendered_count := 0
 		for game_id in JsonCoerceScript._raw_string_array(environment.get("game_ids", [])):
+			if counter_sale_game_ids.has(game_id):
+				continue
 			rendered_count += maxi(1, int(fixture_counts.get(game_id, 1)))
 		var authored_capacity := JsonCoerceScript._copy_array(layout.get("game_spots", [])).size()
 		var expected := JsonCoerceScript._copy_dict(expected_counts.get(room_id, {}))
 		if logical_count != int(expected.get("logical", -1)) or rendered_count != int(expected.get("rendered", -1)):
-			failures.append("Grand Casino %s game fixture counts changed: logical=%d rendered=%d expected=%s." % [room_id, logical_count, rendered_count, JSON.stringify(expected)])
+			failures.append("Environment %s game fixture counts changed: logical=%d physical=%d expected=%s." % [room_id, logical_count, rendered_count, JSON.stringify(expected)])
 		if rendered_count != authored_capacity:
-			failures.append("Grand Casino %s authored game capacity does not match rendered fixtures: logical=%d rendered=%d spots=%d." % [room_id, logical_count, rendered_count, authored_capacity])
+			failures.append("Environment %s authored game capacity does not match physical fixtures: logical=%d physical=%d spots=%d." % [room_id, logical_count, rendered_count, authored_capacity])
 		if room_id == RunState.GRAND_CASINO_ARCHETYPE_ID:
 			main_environment = environment
 			main_run = run_state
@@ -3103,14 +3111,32 @@ func _check_grand_casino_game_fixture_capacity(library: ContentLibrary, failures
 	for required_id in ["game:craps", "casino_fixture:host_desk"]:
 		if not object_rects.has(required_id):
 			failures.append("Grand Casino production-order layout regression is missing %s." % required_id)
-	var redeemer_id := "game_hook:pull_tabs:ticket_redeemer"
-	var redeemer_binding := JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(main_layout.get("slot_bindings", {})).get(redeemer_id, {}))
+	var counter_host_id := "casino_fixture:host_desk"
+	var forbidden_counter_objects := ["game:pull_tabs", "dialogue:pull_tab_clerk", "game_hook:pull_tabs:ticket_redeemer"]
+	var slot_bindings := JsonCoerceScript._copy_dict(main_layout.get("slot_bindings", {}))
 	var overflow_ids := JsonCoerceScript._copy_array(main_layout.get("slot_overflow_ids", []))
-	if str(redeemer_binding.get("presentation_mode", "")) != "room" \
-			or str(redeemer_binding.get("slot_id", "")) != "fixed.ticket_redeemer" \
-			or overflow_ids.has(redeemer_id) \
-			or not object_rects.has(redeemer_id):
-		failures.append("Grand Casino ticket redeemer lost its authenticated fixed-counter room binding.")
+	var counter_host_binding := JsonCoerceScript._copy_dict(slot_bindings.get(counter_host_id, {}))
+	if str(counter_host_binding.get("presentation_mode", "")) != "room" \
+			or overflow_ids.has(counter_host_id) \
+			or not object_rects.has(counter_host_id):
+		failures.append("Grand Casino Pull Tabs counter lost its authenticated host-desk room binding.")
+	for forbidden_id_value in forbidden_counter_objects:
+		var forbidden_id := str(forbidden_id_value)
+		if object_rects.has(forbidden_id) or slot_bindings.has(forbidden_id):
+			failures.append("Grand Casino Pull Tabs counter minted a separate physical object for %s." % forbidden_id)
+	var counter_host_row: Dictionary = {}
+	var object_manifest := JsonCoerceScript._copy_dict(main_environment.get("object_manifest", {}))
+	for row_value in JsonCoerceScript._copy_array(object_manifest.get("rows", [])):
+		if typeof(row_value) != TYPE_DICTIONARY:
+			continue
+		var row: Dictionary = row_value
+		if bool(row.get("active", true)) and str(row.get("presentation_object_id", row.get("presentation_id", ""))) == counter_host_id:
+			counter_host_row = row
+			break
+	for action_id_value in forbidden_counter_objects:
+		var action_id := str(action_id_value)
+		if not JsonCoerceScript._copy_array(counter_host_row.get("action_ids", [])).has(action_id):
+			failures.append("Grand Casino host desk does not own Pull Tabs counter action %s." % action_id)
 	var object_ids := object_rects.keys()
 	for index in range(object_ids.size()):
 		var object_id := str(object_ids[index])
@@ -4280,61 +4306,79 @@ func _first_shop_archetype(library: ContentLibrary) -> Dictionary:
 
 func _check_lottery_redemption_clerk_merge(failures: Array) -> void:
 	var view_model_script = load("res://scripts/ui/environment_interaction_view_model.gd")
-	var pull_tab_clerk: Dictionary = view_model_script.make_interactable_object({
-		"object_id": "game_hook:pull_tabs:ticket_redeemer",
-		"object_type": "game_hook",
-		"source_id": "ticket_redeemer",
-		"parent_id": "pull_tabs",
-		"label": "Lottery Clerk",
-		"short_description": "Cashes winning lottery tickets from this room.",
-		"action_summary": "Redeem 1 winner for $5.",
-		"effect_summary": "Pending payout $5.",
-		"risk_summary": "Routine cashout.",
-		"unique_object_class": "lottery_redemption_clerk",
-		"unique_object_priority": 120,
-		"available_actions": [{"id": "redeem_pull_tab_winners", "label": "Redeem pull-tabs", "parent_id": "pull_tabs", "source_id": "ticket_redeemer", "hook_id": "ticket_redeemer", "object_type": "game_hook"}],
-		"confirm_action_id": "redeem_pull_tab_winners",
+	var controller_script = load("res://scripts/ui/environment_interaction_controller.gd")
+	var counter_host_id := "character:nell"
+	var host: Dictionary = view_model_script.make_interactable_object({
+		"object_id": counter_host_id,
+		"object_type": "character",
+		"visual_type": "character",
+		"label": "Nell",
+		"manifest_physical": true,
+		"interactive": false,
+		"decorative": true,
+		"available_actions": [],
 	}, {})
-	var scratch_clerk: Dictionary = view_model_script.make_interactable_object({
-		"object_id": "game_hook:scratch_tickets:scratch_ticket_clerk",
-		"object_type": "game_hook",
-		"source_id": "scratch_ticket_clerk",
-		"parent_id": "scratch_tickets",
-		"label": "Lottery Clerk",
-		"short_description": "Checks and cashes winning lottery tickets from this room.",
-		"action_summary": "Cash 2 winners for $12.",
-		"effect_summary": "$12 waits at the counter.",
-		"risk_summary": "Large prizes draw the clerk's attention.",
-		"unique_object_class": "lottery_redemption_clerk",
-		"unique_object_priority": 121,
-		"available_actions": [{"id": "redeem_scratch_winners", "label": "Cash tickets", "parent_id": "scratch_tickets", "source_id": "scratch_ticket_clerk", "hook_id": "scratch_ticket_clerk", "object_type": "game_hook"}],
-		"confirm_action_id": "redeem_scratch_winners",
-	}, {})
-	var merged: Array = view_model_script.filter_unique_objects([pull_tab_clerk, scratch_clerk])
+	var counter_actions: Array = [
+		view_model_script.make_interactable_object({
+			"object_id": "game:pull_tabs",
+			"object_type": "game",
+			"source_id": "pull_tabs",
+			"label": "Pull Tabs",
+			"slot_binding_source_id": counter_host_id,
+			"available_actions": [{"id": "enter_game", "label": "Buy Pull Tabs"}],
+			"confirm_action_id": "enter_game",
+		}, {}),
+		view_model_script.make_interactable_object({
+			"object_id": "dialogue:pull_tab_clerk",
+			"object_type": "dialogue",
+			"source_id": "pull_tab_clerk",
+			"label": "Nell — Pull-Tab Help",
+			"slot_binding_source_id": counter_host_id,
+			"available_actions": [{"id": "start_dialogue", "label": "Ask About Pull Tabs"}],
+			"confirm_action_id": "start_dialogue",
+		}, {}),
+		view_model_script.make_interactable_object({
+			"object_id": "game_hook:pull_tabs:ticket_redeemer",
+			"object_type": "game_hook",
+			"source_id": "ticket_redeemer",
+			"parent_id": "pull_tabs",
+			"label": "Nell",
+			"slot_binding_source_id": counter_host_id,
+			"available_actions": [{"id": "redeem_pull_tab_winners", "label": "Cash In Pull Tabs"}],
+			"confirm_action_id": "redeem_pull_tab_winners",
+		}, {}),
+		view_model_script.make_interactable_object({
+			"object_id": "game_hook:scratch_tickets:scratch_ticket_clerk",
+			"object_type": "game_hook",
+			"source_id": "scratch_ticket_clerk",
+			"parent_id": "scratch_tickets",
+			"label": "Nell",
+			"slot_binding_source_id": counter_host_id,
+			"available_actions": [{"id": "redeem_scratch_winners", "label": "Cash In Scratchers"}],
+			"confirm_action_id": "redeem_scratch_winners",
+		}, {}),
+	]
+	var records: Array = [host]
+	records.append_array(counter_actions)
+	var merged: Array = controller_script._attach_action_only_records(records)
 	if merged.size() != 1:
-		failures.append("Lottery redemption clerks did not merge into one room object.")
+		failures.append("Lottery counter actions created separate room objects instead of attaching to Nell.")
 		return
-	var clerk: Dictionary = merged[0]
-	if str(clerk.get("object_id", "")) != "game_hook:scratch_tickets:scratch_ticket_clerk":
-		failures.append("Merged lottery clerk did not retain the manifest's canonical physical host.")
-	var actions := clerk.get("available_actions", []) as Array
-	if actions.size() != 2:
-		failures.append("Merged lottery clerk did not preserve both pull-tab and scratch-ticket actions.")
-	var saw_pull_tabs := false
-	var saw_scratch := false
-	for action_value in actions:
-		if typeof(action_value) != TYPE_DICTIONARY:
-			continue
-		var action: Dictionary = action_value
-		if str(action.get("parent_id", "")) == "pull_tabs" and str(action.get("id", "")) == "redeem_pull_tab_winners":
-			saw_pull_tabs = true
-		if str(action.get("parent_id", "")) == "scratch_tickets" and str(action.get("id", "")) == "redeem_scratch_winners":
-			saw_scratch = true
-	if not saw_pull_tabs or not saw_scratch:
-		failures.append("Merged lottery clerk lost a target game/action route.")
-	var summary := str(clerk.get("action_summary", ""))
-	if summary.find("Redeem 1 winner") == -1 or summary.find("Cash 2 winners") == -1:
-		failures.append("Merged lottery clerk did not combine redemption summaries.")
+	var counter: Dictionary = merged[0]
+	if str(counter.get("object_id", "")) != counter_host_id:
+		failures.append("Lottery counter actions did not retain Nell as their single physical host.")
+	if not bool(counter.get("interactive", false)) or bool(counter.get("decorative", true)):
+		failures.append("Attached lottery counter merchandise did not make Nell's counter interactive.")
+	var attached := JsonCoerceScript._copy_array(counter.get("attached_room_actions", []))
+	if attached.size() != 4:
+		failures.append("Nell's counter did not preserve Buy, Help, Pull Tabs cashout, and Scratcher cashout actions.")
+	var attached_labels: Array = []
+	for descriptor_value in attached:
+		if typeof(descriptor_value) == TYPE_DICTIONARY:
+			attached_labels.append(str((descriptor_value as Dictionary).get("label", "")))
+	for expected_label in ["Buy Pull Tabs", "Ask About Pull Tabs", "Cash In Pull Tabs", "Cash In Scratchers"]:
+		if not attached_labels.has(expected_label):
+			failures.append("Nell's counter lost attached action: %s." % expected_label)
 
 
 func _check_foundation_contract_smoke(library: ContentLibrary, failures: Array, suite: String = "all") -> void:

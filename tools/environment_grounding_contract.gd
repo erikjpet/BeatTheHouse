@@ -325,12 +325,12 @@ func _check_authored_actor_route(failures: Array) -> void:
 		failures.append("back-alley actor route did not use an ordered authored-lane slice without backtracking: %s" % str(route_points))
 
 	var corner_map := EnvironmentPlacementScript.surface_map({"archetype_id": "corner_store"})
-	var settled_slot := _slot_by_id(corner_map, "scenario.floor_patron_1")
+	var settled_slot := _slot_by_id(corner_map, "scenario.standing_person_1")
 	var settled_rect := EnvironmentSlotBinderScript.rect_from_binding({"slot": settled_slot})
 	var canvas = PixelSceneCanvasScript.new()
 	canvas.foundation_snapshot = {"id": "corner_route_fixture", "archetype_id": "corner_store"}
 	var settled := {
-		"slot_id": "scenario.floor_patron_1",
+		"slot_id": "scenario.standing_person_1",
 		"slot_family": "scenario",
 		"position": settled_rect.get_center() / Vector2(900.0, 430.0),
 		"small_screen_rect": EnvironmentSlotBinderScript.normalized_rect(EnvironmentSlotBinderScript.expanded_rect(settled_rect)),
@@ -366,7 +366,7 @@ func _check_complete_record_binding(failures: Array) -> void:
 			"interactive": true,
 			"family": "scenario",
 			"placement_class": "standing_person",
-			"exact_slot_id": "scenario.floor_patron_%d" % (index + 1),
+			"exact_slot_id": "scenario.standing_person_%d" % (index + 1),
 			"required": true,
 			"active": true,
 			"layout_spot_field": "event_spots",

@@ -79,7 +79,7 @@ class EnvironmentSlotMigrationV2Tests(unittest.TestCase):
         payload = self._current_payload()
         hostile_pointer = copy.deepcopy(payload)
         corner = next(value for value in hostile_pointer["maps"] if value["id"] == "corner_store")
-        corner["fixed_object_slot_ids"]["event:call_brother_in_law"] = "event.counter_patron_1"
+        corner["fixed_object_slot_ids"]["event:call_brother_in_law"] = "event.behind_counter_person_1"
         corner["object_family_ids"]["event:call_brother_in_law"] = "fixed"
         with self.assertRaisesRegex(ValueError, "names non-fixed slot"):
             MIGRATION.validate(hostile_pointer)
@@ -105,11 +105,40 @@ class EnvironmentSlotMigrationV2Tests(unittest.TestCase):
         )
         current = self._current_payload()
         self.assertEqual(converted, current)
+        current_bytes = MIGRATION._json_bytes(current)
+        reserve_metadata = {
+            (map_data["id"], slot["id"]): (
+                slot["physical_role"],
+                slot["runtime_reserve"],
+                slot["reserve_reason"],
+            )
+            for map_data in current["maps"]
+            for family in MIGRATION.FAMILIES
+            for slot in map_data[f"{family}_slots"]
+            if slot["runtime_reserve"]
+        }
+        self.assertTrue(reserve_metadata)
         refreshed = copy.deepcopy(current)
         MIGRATION.apply_capacity_repairs(refreshed)
         self.assertEqual(refreshed, current)
+        self.assertEqual(MIGRATION._json_bytes(refreshed), current_bytes)
         MIGRATION.apply_capacity_repairs(refreshed)
         self.assertEqual(refreshed, current)
+        self.assertEqual(MIGRATION._json_bytes(refreshed), current_bytes)
+        self.assertEqual(
+            {
+                (map_data["id"], slot["id"]): (
+                    slot["physical_role"],
+                    slot["runtime_reserve"],
+                    slot["reserve_reason"],
+                )
+                for map_data in refreshed["maps"]
+                for family in MIGRATION.FAMILIES
+                for slot in map_data[f"{family}_slots"]
+                if slot["runtime_reserve"]
+            },
+            reserve_metadata,
+        )
 
     def test_ledger_check_uses_recorded_commit_instead_of_head(self) -> None:
         original = MIGRATION.LEGACY_LEDGER_PATH

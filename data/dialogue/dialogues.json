@@ -1,17 +1,15 @@
 [
   {
     "id": "pull_tab_clerk",
-    "display_name": "Pull-Tab Clerk",
+    "display_name": "Pull-Tab Counter",
     "speaker": {
       "role": "staff",
-      "name": "Rina",
-      "character_id": "rina_pull_tab_clerk",
-      "voice_line_key": "greeting",
+      "name": "Counter Staff",
+      "character_pool_id": "shop_staff",
+      "voice_line_key": "shop_greeting",
+      "environment_actor": false,
       "mood": "dry",
-      "behavior": "watching",
-      "silhouette": "glasses",
-      "hair_color": "#2bd7ff",
-      "jacket_color": "#3b255f"
+      "behavior": "working the sales counter"
     },
     "start": "greeting",
     "nodes": {
@@ -86,6 +84,50 @@
           {
             "id": "done",
             "label": "Enough for now",
+            "effects": {},
+            "end": true
+          }
+        ]
+      },
+      "suspicious_tampered": {
+        "text": "Hold up. These edges are bent wrong. Where did you get these tabs?",
+        "choices": [
+          {
+            "id": "answer_tampered",
+            "label": "They came from this counter",
+            "effects": {},
+            "end": true
+          }
+        ]
+      },
+      "suspicious_bulk": {
+        "text": "That is a thick stack of winners for someone carrying so few dead tabs. I'm recording this cashout.",
+        "choices": [
+          {
+            "id": "answer_bulk",
+            "label": "Take the count",
+            "effects": {},
+            "end": true
+          }
+        ]
+      },
+      "suspicious_repeat": {
+        "text": "Another high-value winner, and still no trail of losing paper. This is starting to look deliberate.",
+        "choices": [
+          {
+            "id": "answer_repeat",
+            "label": "Cash it anyway",
+            "effects": {},
+            "end": true
+          }
+        ]
+      },
+      "suspicious_general": {
+        "text": "This cashout does not look ordinary. I'm making a note before you leave the counter.",
+        "choices": [
+          {
+            "id": "answer_general",
+            "label": "Understood",
             "effects": {},
             "end": true
           }
@@ -989,8 +1031,8 @@
         "choices": [{"id": "continue", "label": "Choose a route", "effects": {}, "end": true}]
       },
       "gas_machine": {
-        "text": "Open the pull-tab machine. Outcomes are fixed when each ticket is bought; peeling only reveals them. Your glasses mark a real winner in the stack.",
-        "choices": [{"id": "continue", "label": "Open the machine", "effects": {}, "end": true}]
+        "text": "At Nell's counter, choose Buy Pull Tabs. Outcomes are fixed when each ticket is bought; peeling only reveals them. Your glasses mark a real winner in the stack.",
+        "choices": [{"id": "continue", "label": "Buy from Nell", "effects": {}, "end": true}]
       },
       "gas_peek": {
         "text": "Without a Tab Detector, this says PEEK. Each try has a 50% chance to highlight the nearest winner, but always adds Heat: 8%, then 9%, 10%, and 11%. Peek four times and watch the meter.",
@@ -1021,7 +1063,7 @@
         "choices": [{"id": "continue", "label": "Collect and peel", "effects": {}, "end": true}]
       },
       "gas_clerk": {
-        "text": "Leave the machine, open Rina's clerk tray, and Redeem. A filed winner isn't cash until the clerk pays it.",
+        "text": "Leave the Pull Tabs page, return to Nell's counter, and choose Cash In Pull Tabs. A filed winner isn't cash until the counter pays it.",
         "choices": [{"id": "continue", "label": "Cash the winner", "effects": {}, "end": true}]
       },
       "gas_depart": {

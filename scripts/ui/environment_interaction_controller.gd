@@ -674,6 +674,9 @@ static func _attach_action_only_records(records: Array) -> Array:
 				"action": action.duplicate(true),
 			})
 		target["attached_room_actions"] = attached
+		if not attached.is_empty():
+			target["interactive"] = true
+			target["decorative"] = false
 		room_records[target_index] = target
 	return room_records
 
@@ -2123,9 +2126,12 @@ static func game_hook_interactable_objects(host: Variant, apply_failure_lock: bo
 			var object_type = host.CONTEXT_MODE_DIALOGUE if not dialogue_id.is_empty() else host.CONTEXT_MODE_GAME_HOOK
 			var character_actor: Dictionary = {}
 			var visual_type := str(hook.get("visual_type", "service"))
+			var dialogue_speaker_override := JsonCoerceScript._copy_dict(hook.get("dialogue_speaker_override", {}))
 			if not dialogue_id.is_empty():
 				var dialogue_definition: Dictionary = host.library.dialogue(dialogue_id)
-				var dialogue_speaker: Dictionary = dialogue_definition.get("speaker", {}) if typeof(dialogue_definition.get("speaker", {})) == TYPE_DICTIONARY else {}
+				var dialogue_speaker := JsonCoerceScript._copy_dict(dialogue_definition.get("speaker", {}))
+				for override_key in dialogue_speaker_override.keys():
+					dialogue_speaker[override_key] = dialogue_speaker_override[override_key]
 				if not dialogue_speaker.is_empty() and bool(dialogue_speaker.get("environment_actor", true)):
 					character_actor = host._resolve_character_speaker(
 						host._normalized_talk_speaker(dialogue_speaker),
@@ -2137,12 +2143,13 @@ static func game_hook_interactable_objects(host: Variant, apply_failure_lock: bo
 			if object_id.is_empty():
 				object_id = "dialogue:%s" % dialogue_id if not dialogue_id.is_empty() else "game_hook:%s:%s" % [game_id, hook_id]
 			var unique_object_class := str(hook.get("unique_object_class", "")).strip_edges()
+			var slot_binding_source_id := str(hook.get("slot_binding_source_id", "")).strip_edges()
+			if not slot_binding_source_id.is_empty():
+				unique_object_class = ""
 			if unique_object_class in ["scratch_ticket_clerk", "pull_tab_clerk", "lottery_redemption_clerk"]:
 				unique_object_class = "lottery_redemption_clerk"
-			# The manifest deliberately uses the Scratch Tickets clerk as the
-			# canonical physical lottery host.  Keep that identity stable even
-			# when a pending pull-tab payout raises the other action provider's
-			# runtime display priority to 120.
+			# Legacy/custom rooms without a configured sales-counter host still
+			# merge both redemption providers into the Scratch Tickets identity.
 			var unique_object_priority := int(hook.get("unique_object_priority", 0))
 			if hook_id == "scratch_ticket_clerk":
 				unique_object_priority = maxi(unique_object_priority, 121)
@@ -2151,8 +2158,10 @@ static func game_hook_interactable_objects(host: Variant, apply_failure_lock: bo
 			var disabled_reason := str(hook.get("disabled_reason", ""))
 			if run_failed_without_recovery:
 				disabled_reason = failed_reason
-			var hook_actions: Array = [{"id": "start_dialogue", "label": "Talk"}] if enabled and not dialogue_id.is_empty() else JsonCoerceScript._copy_array(hook.get("available_actions", [])) if enabled else []
-			var confirm_action: String = "start_dialogue" if enabled and not dialogue_id.is_empty() else str(hook.get("confirm_action_id", "")) if enabled else ""
+			var hook_actions: Array = JsonCoerceScript._copy_array(hook.get("available_actions", [])) if enabled else []
+			if enabled and not dialogue_id.is_empty() and hook_actions.is_empty():
+				hook_actions = [{"id": "start_dialogue", "label": "Talk"}]
+			var confirm_action: String = str(hook.get("confirm_action_id", "start_dialogue" if not dialogue_id.is_empty() else "")) if enabled else ""
 			var enriched_actions: Array = []
 			for action_value in hook_actions:
 				if typeof(action_value) != TYPE_DICTIONARY:
@@ -2183,6 +2192,8 @@ static func game_hook_interactable_objects(host: Variant, apply_failure_lock: bo
 				"visual_key": str(hook.get("visual_key", "")),
 				"icon_key": str(hook.get("icon_key", "service")),
 				"character_actor": character_actor,
+				"dialogue_speaker_override": dialogue_speaker_override,
+				"slot_binding_source_id": slot_binding_source_id,
 				"unique_object_class": unique_object_class,
 				"unique_object_priority": unique_object_priority,
 				"allow_duplicate_unique_class": bool(hook.get("allow_duplicate_unique_class", false)),

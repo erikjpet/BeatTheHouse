@@ -2738,7 +2738,7 @@ func _check_delivery_ordinary_travel_baseline(app: Control, phase: String) -> bo
 	const EXPECTED := {
 		"bankroll_delta": -4,
 		"clock_delta": 42,
-		"current_environment_sha256": "580cee268e6590d6232233573cd603fbe34e034874c2954d0a580952ec4bf15b",
+		"current_environment_sha256": "e866dc5b76f6941e6718c162af9ae9ffd8a37bda24435e4b312dd0f83d89be6e",
 		"current_world_node_id": "bar",
 		"heat_delta": 0,
 		"provenance_commit": "7ddb7685efb21e45979ea10ab89e660d99c6e891",
@@ -2749,7 +2749,7 @@ func _check_delivery_ordinary_travel_baseline(app: Control, phase: String) -> bo
 		"town_action_index": 0,
 		"travel_count_delta": 1,
 		"travel_story_sha256": "0257877551b37226fd62316ee2af5e047a27387fbb87d5acfa0273d1366a0e81",
-		"world_map_sha256": "2a5f70933fa21aef90f561e821a46b6c94cc954378148112f5a34990177aeee2",
+		"world_map_sha256": "89e5ccf4d95ebf7c4012178dcd98d9e2130d2685075918bd4a00308726729480",
 	}
 	app.call("start_foundation_run", "DELIVERY-ORDINARY-BASELINE", {}, false)
 	for _start_frame in range(3):
@@ -2941,7 +2941,7 @@ func _check_dialogue_dock_main_flow(app: Control) -> bool:
 	environment["scenario_id"] = str(scenario_definition.get("id", ""))
 	environment["scenario_state"] = ScenarioEngine.initial_state(scenario_definition)
 	# This fixture swaps the generated room to Pull Tabs; regenerate its sealed
-	# layout so the illustrated ticket redeemer exists before dialogue opens.
+	# layout so the counter host exists before its attached dialogue opens.
 	var pull_tabs_module: GameModule = app.call("_create_game_module", library.game("pull_tabs"))
 	if pull_tabs_module == null:
 		push_error("Dialogue dock fixture could not create its Pull Tabs module.")
@@ -2967,7 +2967,19 @@ func _check_dialogue_dock_main_flow(app: Control) -> bool:
 	for object_value in pre_dialogue_snapshot.get("objects", []):
 		if typeof(object_value) == TYPE_DICTIONARY:
 			rendered_positions_before_dialogue[str((object_value as Dictionary).get("id", ""))] = (object_value as Dictionary).get("position", Vector2(-1.0, -1.0))
-	if not bool(app.call("start_dialogue", "pull_tab_clerk", {})):
+	var counter_dialogue_source := {
+		"dialogue_speaker_override": {
+			"role": "staff",
+			"name": "Counter Staff",
+			"character_id": "",
+			"character_pool_id": "",
+			"character_identity_key": "fixture:counter_staff",
+			"voice_line_key": "",
+			"environment_actor": false,
+			"bind": "none",
+		},
+	}
+	if not bool(app.call("start_dialogue", "pull_tab_clerk", counter_dialogue_source)):
 		push_error("Dialogue dock fixture could not start pull_tab_clerk.")
 		return false
 	await process_frame
@@ -2975,11 +2987,11 @@ func _check_dialogue_dock_main_flow(app: Control) -> bool:
 	if not bool(snapshot.get("visible", false)) or str(snapshot.get("event_id", "")) != "dialogue:pull_tab_clerk":
 		push_error("Dialogue dock fixture did not expose the pilot dialogue.")
 		return false
-	var speaking_character_name := str(snapshot.get("speaking_character_name", "")).strip_edges()
+	var speaker_name := str(snapshot.get("speaker", "")).strip_edges()
 	if not bool(snapshot.get("speaker_label_visible", false)) \
-		or speaking_character_name != "Rina Sol" \
-		or str(snapshot.get("speaking_character_id", "")) != "rina_pull_tab_clerk" \
-		or not str(snapshot.get("speaker_text", "")).contains(speaking_character_name):
+		or speaker_name != "Counter Staff" \
+		or not str(snapshot.get("speaking_character_id", "")).is_empty() \
+		or not str(snapshot.get("speaker_text", "")).contains(speaker_name):
 		push_error("Dialogue dock fixture did not show the active speaker inside the expanded popup: %s." % str(snapshot.get("speaker_text", "")))
 		return false
 	var panel_rect := _snapshot_rect(snapshot.get("panel_rect", Rect2()))
@@ -3037,6 +3049,42 @@ func _check_dialogue_dock_main_flow(app: Control) -> bool:
 	snapshot = app.call("current_talk_dock_snapshot")
 	if bool(snapshot.get("visible", false)):
 		push_error("Dialogue dock stayed visible after the end choice.")
+		return false
+	var suspicion_before_followup := run_state.suspicion_level()
+	var followup_event_id := "pull_tab_suspicious_cashout:ui_dialogue_pull_tabs:1"
+	var followup_result := {
+		"ok": true,
+		"followup_dialogue": {
+			"dialogue_id": "pull_tab_clerk",
+			"event_id": followup_event_id,
+			"start_node": "suspicious_bulk",
+			"source_object_id": "character:nell",
+			"speaker": {
+				"role": "staff",
+				"name": "Nell",
+				"character_identity_key": "character:nell",
+				"environment_actor": false,
+			},
+		},
+	}
+	if not bool(app.call("_enqueue_game_hook_followup_dialogue", followup_result, "pull_tabs", "ticket_redeemer")):
+		push_error("Suspicious Pull Tabs cashout did not enqueue its counter-staff conversation.")
+		return false
+	app.call("_refresh")
+	await process_frame
+	var followup_entry := run_state.pending_talk_event(followup_event_id)
+	snapshot = app.call("current_talk_dock_snapshot")
+	if str(followup_entry.get("current_node", "")) != "suspicious_bulk" \
+			or str(JsonCoerceScript._copy_dict(followup_entry.get("context", {})).get("source_object_id", "")) != "character:nell" \
+			or not bool(snapshot.get("visible", false)) \
+			or str(snapshot.get("event_id", "")) != followup_event_id \
+			or str(snapshot.get("speaker", "")) != "Nell":
+		push_error("Suspicious Pull Tabs cashout conversation did not open on Nell's authored counter warning: entry=%s snapshot=%s." % [JSON.stringify(followup_entry), JSON.stringify(snapshot)])
+		return false
+	app.call("resolve_event_choice", followup_event_id, "answer_bulk")
+	await process_frame
+	if run_state.suspicion_level() != suspicion_before_followup:
+		push_error("Suspicious Pull Tabs dialogue applied heat a second time after the existing cashout heat.")
 		return false
 	return true
 

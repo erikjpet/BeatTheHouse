@@ -69,6 +69,7 @@ func _run() -> void:
 	_check_tutorial_home_item_manifest(library)
 	_check_category_family_authority(library)
 	_check_jazz_guarantees()
+	_check_lottery_counter_hosts(library)
 	_check_grand_casino_rumor_host(library)
 	_check_grand_casino_live_table(library)
 	_check_missing_and_stale_regeneration(library)
@@ -81,7 +82,7 @@ func _run() -> void:
 	_check_grand_living_runtime_hosts(library)
 	_check_controller_fail_closed_membership()
 	if _failures.is_empty():
-		print("ENVIRONMENT OBJECT MANIFEST CHECK maps=%d variants=%d rows=%d roundtrips=%d jazz_hosts=7 ok=true" % [
+		print("ENVIRONMENT OBJECT MANIFEST CHECK maps=%d variants=%d rows=%d roundtrips=%d jazz_hosts=6 lottery_counters=4 ok=true" % [
 			_authored_maps,
 			_runtime_variants,
 			_manifest_rows,
@@ -327,7 +328,6 @@ func _check_jazz_guarantees() -> void:
 		"jazz_club:musician_drummer": ["musician:jazz_drummer", "fixed.musician_drummer", "service:jazz_drummer_round"],
 		"jazz_club:band_tip_jar": ["service:jazz_band_tip_jar", "fixed.tip_jar_band", "service:jazz_band_tip_jar"],
 		"jazz_club:band_stage": ["fixture:jazz_band_stage", "fixed.band_stage", "service:listen_to_jazz"],
-		"jazz_club:pulltab_game": ["game:pull_tabs", "fixed.pulltab_game", "game:pull_tabs"],
 	}
 	var manifest := _dict(_jazz_environment.get("object_manifest", {}))
 	var rows_by_instance: Dictionary = {}
@@ -357,6 +357,92 @@ func _check_jazz_guarantees() -> void:
 		var binding := _dict(bindings.get(presentation_id, {}))
 		_check(str(binding.get("slot_id", "")) == exact_slot_id, "jazz_club", "%s did not bind to %s" % [instance_id, exact_slot_id])
 		_check(_array(action_owners.get(action_id, [])).size() == 1 and str(_array(action_owners.get(action_id, []))[0]) == instance_id, "jazz_club", "action %s is not owned by exactly one guaranteed host" % action_id)
+
+
+func _check_lottery_counter_hosts(library: ContentLibrary) -> void:
+	var expected_hosts := {
+		"bar": "staff:bar_bartender",
+		"gas_station_casino": "character:nell",
+		"jazz_club": "shopkeeper:merchant",
+		"grand_casino": "casino_fixture:host_desk",
+	}
+	var base_counter_actions := [
+		"game:pull_tabs",
+		"dialogue:pull_tab_clerk",
+		"game_hook:pull_tabs:ticket_redeemer",
+	]
+	for archetype_id_value in expected_hosts.keys():
+		var archetype_id := str(archetype_id_value)
+		var host_id := str(expected_hosts.get(archetype_id, ""))
+		var label := "%s lottery counter" % archetype_id
+		var environment := _generated_environment(library, archetype_id)
+		var selected_game_ids := _array(environment.get("game_ids", []))
+		if not selected_game_ids.has("pull_tabs"):
+			selected_game_ids.append("pull_tabs")
+		environment["game_ids"] = selected_game_ids
+		var game_states := _dict(environment.get("game_states", {}))
+		game_states["pull_tabs"] = {
+			"environment_hooks": [
+				{"id": "ticket_redeemer", "object_id": "game_hook:pull_tabs:ticket_redeemer", "unique_object_class": "pull_tab_clerk"},
+				{"id": "pull_tab_clerk_dialogue", "object_id": "dialogue:pull_tab_clerk", "dialogue_id": "pull_tab_clerk", "unique_object_class": "pull_tab_clerk"},
+			],
+		}
+		if archetype_id == "gas_station_casino":
+			game_states["scratch_tickets"] = {
+				"environment_hooks": [
+					{"id": "scratch_ticket_clerk", "object_id": "game_hook:scratch_tickets:scratch_ticket_clerk", "unique_object_class": "scratch_ticket_clerk"},
+				],
+			}
+		environment["game_states"] = game_states
+		environment["layout"] = EnvironmentInstanceScript.ensure_generated_layout(environment, library)
+		var manifest := _dict(environment.get("object_manifest", {}))
+		var host_row := _active_manifest_row(manifest, host_id)
+		_check(not host_row.is_empty(), label, "is missing its configured physical counter host %s" % host_id)
+		var expected_actions := base_counter_actions.duplicate()
+		if archetype_id == "gas_station_casino":
+			expected_actions.append("game_hook:scratch_tickets:scratch_ticket_clerk")
+		for action_id_value in expected_actions:
+			var action_id := str(action_id_value)
+			_check(_array(host_row.get("action_ids", [])).has(action_id), label, "%s does not own counter action %s" % [host_id, action_id])
+		for forbidden_id in [
+			"game:pull_tabs",
+			"dialogue:pull_tab_clerk",
+			"game_hook:pull_tabs:ticket_redeemer",
+			"game_hook:scratch_tickets:scratch_ticket_clerk",
+		]:
+			_check(_active_manifest_row(manifest, forbidden_id).is_empty(), label, "created duplicate physical row %s" % forbidden_id)
+		var bindings := _dict(_dict(environment.get("layout", {})).get("slot_bindings", {}))
+		_check(bindings.has(host_id), label, "%s lost its physical slot binding" % host_id)
+		for forbidden_id in ["game:pull_tabs", "dialogue:pull_tab_clerk", "game_hook:pull_tabs:ticket_redeemer", "game_hook:scratch_tickets:scratch_ticket_clerk"]:
+			_check(not bindings.has(forbidden_id), label, "%s incorrectly consumed its own placement slot" % forbidden_id)
+		if archetype_id in ["bar", "gas_station_casino", "grand_casino"]:
+			var unstocked := _generated_environment(library, archetype_id)
+			var unstocked_game_ids := _array(unstocked.get("game_ids", []))
+			unstocked_game_ids.erase("pull_tabs")
+			unstocked["game_ids"] = unstocked_game_ids
+			var unstocked_states := _dict(unstocked.get("game_states", {}))
+			unstocked_states.erase("pull_tabs")
+			unstocked["game_states"] = unstocked_states
+			unstocked["layout"] = EnvironmentInstanceScript.ensure_generated_layout(unstocked, library)
+			var unstocked_host := _active_manifest_row(_dict(unstocked.get("object_manifest", {})), host_id)
+			for action_id_value in base_counter_actions:
+				var action_id := str(action_id_value)
+				_check(not _array(unstocked_host.get("action_ids", [])).has(action_id), "%s unstocked counter" % archetype_id, "%s advertised unavailable counter action %s" % [host_id, action_id])
+		if archetype_id == "gas_station_casino":
+			var scratchless := _generated_environment(library, archetype_id)
+			var scratchless_game_ids := _array(scratchless.get("game_ids", []))
+			scratchless_game_ids.erase("scratch_tickets")
+			scratchless["game_ids"] = scratchless_game_ids
+			var scratchless_states := _dict(scratchless.get("game_states", {}))
+			scratchless_states.erase("scratch_tickets")
+			scratchless["game_states"] = scratchless_states
+			scratchless["layout"] = EnvironmentInstanceScript.ensure_generated_layout(scratchless, library)
+			var scratchless_host := _active_manifest_row(_dict(scratchless.get("object_manifest", {})), host_id)
+			_check(
+				not _array(scratchless_host.get("action_ids", [])).has("game_hook:scratch_tickets:scratch_ticket_clerk"),
+				"gas_station_casino scratchless counter",
+				"Nell advertised Scratcher cashout without Scratch Tickets selected"
+			)
 
 
 func _check_grand_casino_rumor_host(library: ContentLibrary) -> void:
@@ -431,11 +517,11 @@ func _check_grand_casino_live_table(library: ContentLibrary) -> void:
 		_check(str(row.get("family", "")) == "scenario" and str(row.get("placement_class", "")) == "floor_fixture", label, "The Live Table did not become scenario-owned furniture")
 		_check(str(row.get("spot_field", "")) == "runtime_object_manifest_entries", label, "The Live Table manifest row did not retain runtime projection provenance")
 		_check(str(binding.get("slot_family", "")) == "scenario" and str(binding.get("placement_class", "")) == "floor_fixture", label, "The Live Table did not bind through scenario furniture capacity")
-		_check(str(binding.get("slot_id", "")).begins_with("scenario.floor_item_"), label, "The Live Table did not claim a generic scenario floor-item slot")
+		_check(str(binding.get("slot_id", "")).begins_with("scenario.floor_fixture_"), label, "The Live Table did not claim a generic scenario floor-fixture slot")
 		if archetype_id == "grand_casino":
 			var hostile_map := surface_map.duplicate(true)
 			var hostile_event_preferences := _dict(hostile_map.get("event_object_slot_ids", {}))
-			hostile_event_preferences[object_id] = "event.counter_patron_1"
+			hostile_event_preferences[object_id] = "event.behind_counter_person_1"
 			hostile_map["event_object_slot_ids"] = hostile_event_preferences
 			var hostile_errors := EnvironmentSlotBinderScript._surface_map_errors(hostile_map)
 			_check(not hostile_errors.is_empty(), label, "cross-family live-table authoring was not rejected")

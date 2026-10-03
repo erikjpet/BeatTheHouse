@@ -1026,10 +1026,6 @@
         [
           322,
           202
-        ],
-        [
-          812,
-          202
         ]
       ],
       "event_spots": [
@@ -1246,7 +1242,17 @@
       "delta_queen"
     ],
     "local_narrative_flags": {
-      "first_gambling_stop": true
+      "first_gambling_stop": true,
+      "lottery_counter": {
+        "host_object_id": "staff:bar_bartender",
+        "staff_label": "Rafi",
+        "sale_game_ids": [
+          "pull_tabs"
+        ],
+        "service_game_ids": [
+          "pull_tabs"
+        ]
+      }
     },
     "moods": [
       "noisy",
@@ -1286,10 +1292,6 @@
     "objective_hint": "Paper pays fast. The ceiling counts faster.",
     "layout": {
       "game_spots": [
-        [
-          386,
-          160
-        ],
         [
           482,
           254
@@ -1496,7 +1498,18 @@
       "kitty_cat_lounge"
     ],
     "local_narrative_flags": {
-      "roadside_games": true
+      "roadside_games": true,
+      "lottery_counter": {
+        "host_object_id": "character:nell",
+        "staff_label": "Nell",
+        "sale_game_ids": [
+          "pull_tabs"
+        ],
+        "service_game_ids": [
+          "pull_tabs",
+          "scratch_tickets"
+        ]
+      }
     },
     "moods": [
       "bright",
@@ -2024,12 +2037,7 @@
     ],
     "layout": {
       "prioritize_service_spots": true,
-      "game_spots": [
-        [
-          815,
-          216
-        ]
-      ],
+      "game_spots": [],
       "shopkeeper_spots": [
         [
           642,
@@ -2419,7 +2427,17 @@
     ],
     "local_narrative_flags": {
       "jazz_club": true,
-      "rare_music_room": true
+      "rare_music_room": true,
+      "lottery_counter": {
+        "host_object_id": "shopkeeper:merchant",
+        "staff_label": "Bartender",
+        "sale_game_ids": [
+          "pull_tabs"
+        ],
+        "service_game_ids": [
+          "pull_tabs"
+        ]
+      }
     },
     "moods": [
       "amber",
@@ -3529,10 +3547,6 @@
           150
         ],
         [
-          675,
-          150
-        ],
-        [
           825,
           150
         ],
@@ -3781,6 +3795,16 @@
       "casino_room_travel_minutes": 5,
       "casino_chip_cash_rate": 1,
       "casino_high_limit_buy_in": 60,
+      "lottery_counter": {
+        "host_object_id": "casino_fixture:host_desk",
+        "staff_label": "Host Desk Attendant",
+        "sale_game_ids": [
+          "pull_tabs"
+        ],
+        "service_game_ids": [
+          "pull_tabs"
+        ]
+      },
       "grand_casino_staff_rotation": {
         "rotation_chance_percent": 50,
         "memory_high_heat_threshold": 50,

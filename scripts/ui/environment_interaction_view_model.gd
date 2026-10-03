@@ -160,6 +160,11 @@ static func interactable_object_view_list(run_state: RunState, library: ContentL
 	var selection: Dictionary = data.get("selection", {})
 	var layout: Dictionary = data.get("layout", {})
 	var game_fixture_counts := JsonCoerceScript._copy_dict(layout.get("game_fixture_counts", {}))
+	var local_flags := JsonCoerceScript._copy_dict(run_state.current_environment.get("local_narrative_flags", {}))
+	var lottery_counter := JsonCoerceScript._copy_dict(local_flags.get("lottery_counter", {}))
+	var counter_host_id := str(lottery_counter.get("host_object_id", "")).strip_edges()
+	var counter_staff_label := str(lottery_counter.get("staff_label", "Counter Staff")).strip_edges()
+	var counter_sale_game_ids := JsonCoerceScript._string_array(lottery_counter.get("sale_game_ids", []))
 	var game_layout_index := 0
 	for source_value in data.get("game_sources", []):
 		if typeof(source_value) != TYPE_DICTIONARY:
@@ -173,7 +178,10 @@ static func interactable_object_view_list(run_state: RunState, library: ContentL
 		for runtime_key in JsonCoerceScript._copy_dict(object_state.get("runtime_state", {})).keys():
 			runtime_state[runtime_key] = (object_state.get("runtime_state", {}) as Dictionary)[runtime_key]
 		var enabled := not definition.is_empty() and not failed
-		var fixture_count := maxi(1, int(game_fixture_counts.get(game_id, 1)))
+		var counter_merchandise := not counter_host_id.is_empty() and counter_sale_game_ids.has(game_id)
+		# Counter merchandise exposes one logical Buy action regardless of any
+		# legacy fixture-count metadata; it never represents multiple room props.
+		var fixture_count := 1 if counter_merchandise else maxi(1, int(game_fixture_counts.get(game_id, 1)))
 		for fixture_index in range(fixture_count):
 			var object_id := "game:%s" % game_id if fixture_index == 0 else "game:%s:%d" % [game_id, fixture_index + 1]
 			var fixture_object_state := JsonCoerceScript._copy_dict(fixture_object_states.get(object_id, object_state))
@@ -189,6 +197,8 @@ static func interactable_object_view_list(run_state: RunState, library: ContentL
 			var label := str(fixture_object_state.get("display_name", definition.get("display_name", _label_from_id(game_id))))
 			if fixture_count > 1:
 				label = "%s %d" % [label, fixture_index + 1]
+			if counter_merchandise:
+				description = "Pull-tab deal rows are stocked as merchandise at %s's sales counter. Choose a row and buy from its finite supply." % counter_staff_label
 			objects.append(_object_with_rect({
 				"object_id": object_id,
 				"object_type": "game",
@@ -198,7 +208,7 @@ static func interactable_object_view_list(run_state: RunState, library: ContentL
 				"presence": "fixture",
 				"enabled": enabled,
 				"disabled_reason": "" if enabled else failed_reason if failed else "Game definition is missing.",
-				"action_summary": "Double-click this machine to enter." if enabled else "This game is unavailable.",
+				"action_summary": "Buy Pull Tabs from the counter." if counter_merchandise and enabled else "Double-click this machine to enter." if enabled else "This game is unavailable.",
 				"status_summary": str(fixture_object_state.get("status_summary", "")),
 				"effect_summary": str(fixture_object_state.get("effect_summary", "")),
 				"impact_summary": str(fixture_object_state.get("impact_summary", "")),
@@ -207,13 +217,15 @@ static func interactable_object_view_list(run_state: RunState, library: ContentL
 				"runtime_state": fixture_runtime_state,
 				"visual_state": JsonCoerceScript._copy_dict(fixture_object_state.get("visual_state", {})),
 				"visual_key": str(definition.get("family", definition.get("type", "game"))),
-				"prop": str(definition.get("environment_prop", definition.get("prop", "card_table"))),
+				"prop": "counter_stock" if counter_merchandise else str(definition.get("environment_prop", definition.get("prop", "card_table"))),
 				"icon_key": str(definition.get("icon_key", game_id)),
 				"asset_path": str(definition.get("asset_path", "")),
-				"available_actions": [{"id": "enter_game", "label": "Double-click to enter"}] if enabled else [],
+				"slot_binding_source_id": counter_host_id if counter_merchandise else "",
+				"available_actions": [{"id": "enter_game", "label": "Buy Pull Tabs" if counter_merchandise and game_id == "pull_tabs" else "Buy %s" % label if counter_merchandise else "Double-click to enter"}] if enabled else [],
 				"confirm_action_id": "enter_game" if enabled else "",
 			}, selection, layout, game_layout_index))
-			game_layout_index += 1
+			if not counter_merchandise:
+				game_layout_index += 1
 	var event_index := 0
 	for event_value in data.get("event_options", []):
 		if typeof(event_value) != TYPE_DICTIONARY:
@@ -532,6 +544,7 @@ static func make_interactable_object(source: Dictionary, selection: Dictionary) 
 		"runtime_state": JsonCoerceScript._copy_dict(source.get("runtime_state", {})),
 		"visual_state": JsonCoerceScript._copy_dict(source.get("visual_state", {})),
 		"character_actor": JsonCoerceScript._copy_dict(source.get("character_actor", {})),
+		"dialogue_speaker_override": JsonCoerceScript._copy_dict(source.get("dialogue_speaker_override", {})),
 		"state_badge": str(source.get("state_badge", "")),
 		"non_color_state": str(source.get("non_color_state", "")),
 		"safe_exit": bool(source.get("safe_exit", false)),

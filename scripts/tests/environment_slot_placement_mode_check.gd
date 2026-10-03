@@ -122,8 +122,8 @@ func _check_slot_geometry_export_and_promotion(user_path: String, project_path: 
 	)
 	var normal_before := EnvironmentPlacementScript.surface_map(environment)
 	var fixed_before := _slot(normal_before, "fixed.item_shop_1")
-	var event_before := _slot(normal_before, "event.floor_patron_1")
-	var scenario_before := _slot(normal_before, "scenario.floor_patron_1")
+	var event_before := _slot(normal_before, "event.standing_person_1")
+	var scenario_before := _slot(normal_before, "scenario.standing_person_1")
 	var exit_before := _slot(normal_before, "exit.safe_left")
 	_check(not fixed_before.is_empty() and not event_before.is_empty() and not scenario_before.is_empty() and not exit_before.is_empty(), "Fixture must expose fixed, event, scenario, and exit slots.")
 	if fixed_before.is_empty() or event_before.is_empty() or scenario_before.is_empty() or exit_before.is_empty():
@@ -135,8 +135,8 @@ func _check_slot_geometry_export_and_promotion(user_path: String, project_path: 
 	var exit_target := _slot_position(exit_before) + Vector2(18.0, 12.0)
 	for edit in [
 		["fixed.item_shop_1", fixed_target],
-		["event.floor_patron_1", event_target],
-		["scenario.floor_patron_1", scenario_target],
+		["event.standing_person_1", event_target],
+		["scenario.standing_person_1", scenario_target],
 		["exit.safe_left", exit_target],
 	]:
 		var saved := DeveloperPlacementStoreScript.save_position(environment, "slot_positions", str(edit[0]), edit[1] as Vector2)
@@ -146,12 +146,12 @@ func _check_slot_geometry_export_and_promotion(user_path: String, project_path: 
 	var normal_local := EnvironmentPlacementScript.surface_map(environment)
 	var authoring_local := EnvironmentPlacementScript.authoring_surface_map(environment)
 	_check(_slot_position(_slot(normal_local, "fixed.item_shop_1")).is_equal_approx(fixed_target), "A locked fixed-slot edit must remain active after placement mode is disabled.")
-	_check(_slot_position(_slot(normal_local, "event.floor_patron_1")).is_equal_approx(event_target), "Normal rendering must consume the locked event-slot edit before project promotion.")
-	_check(_slot_position(_slot(normal_local, "scenario.floor_patron_1")).is_equal_approx(scenario_target), "Normal rendering must consume the locked scenario-slot edit before project promotion.")
+	_check(_slot_position(_slot(normal_local, "event.standing_person_1")).is_equal_approx(event_target), "Normal rendering must consume the locked event-slot edit before project promotion.")
+	_check(_slot_position(_slot(normal_local, "scenario.standing_person_1")).is_equal_approx(scenario_target), "Normal rendering must consume the locked scenario-slot edit before project promotion.")
 	_check(_slot_position(_slot(normal_local, "exit.safe_left")).is_equal_approx(exit_target), "Normal rendering must consume the locked exit-slot edit before project promotion.")
 	_check(_slot_position(_slot(authoring_local, "fixed.item_shop_1")).is_equal_approx(fixed_target), "Authoring view must load the local fixed-slot edit.")
-	_check(_slot_position(_slot(authoring_local, "event.floor_patron_1")).is_equal_approx(event_target), "Authoring view must load the local event-slot edit.")
-	_check(_slot_position(_slot(authoring_local, "scenario.floor_patron_1")).is_equal_approx(scenario_target), "Authoring view must load the local scenario-slot edit.")
+	_check(_slot_position(_slot(authoring_local, "event.standing_person_1")).is_equal_approx(event_target), "Authoring view must load the local event-slot edit.")
+	_check(_slot_position(_slot(authoring_local, "scenario.standing_person_1")).is_equal_approx(scenario_target), "Authoring view must load the local scenario-slot edit.")
 	_check(_slot_position(_slot(authoring_local, "exit.safe_left")).is_equal_approx(exit_target), "Authoring view must load the local exit-slot edit.")
 	_check(_translated_geometry(fixed_before, _slot(authoring_local, "fixed.item_shop_1"), fixed_target - _slot_position(fixed_before)), "Moving a slot must rigidly translate pos, hit_rect, and label_anchor without resizing it.")
 
@@ -216,8 +216,8 @@ func _check_slot_geometry_export_and_promotion(user_path: String, project_path: 
 		int((report_data as Dictionary).get("schema_version", 0)) == DeveloperPlacementStoreScript.SCHEMA_VERSION
 			and not report_rooms.has("committed_only")
 			and _reported_position(corner_slots, "fixed.item_shop_1").is_equal_approx(fixed_target)
-			and _reported_position(corner_slots, "event.floor_patron_1").is_equal_approx(event_target)
-			and _reported_position(corner_slots, "scenario.floor_patron_1").is_equal_approx(scenario_target)
+			and _reported_position(corner_slots, "event.standing_person_1").is_equal_approx(event_target)
+			and _reported_position(corner_slots, "scenario.standing_person_1").is_equal_approx(scenario_target)
 			and _reported_position(corner_slots, "exit.safe_left").is_equal_approx(exit_target)
 			and _reported_position(club_slots, "fixed.door_right_lower").is_equal_approx(club_target),
 		"The placement report must contain only exact local fixed/event/scenario/exit changes and preserve layered room keys."
@@ -268,7 +268,7 @@ func _check_slot_geometry_export_and_promotion(user_path: String, project_path: 
 			and int(reexported.get("slot_count", 0)) == 4,
 		"Re-exporting must replace stale report contents with the current set of local changes."
 	)
-	for slot_id in ["event.floor_patron_1", "scenario.floor_patron_1", "exit.safe_left"]:
+	for slot_id in ["event.standing_person_1", "scenario.standing_person_1", "exit.safe_left"]:
 		DeveloperPlacementStoreScript.clear_position(environment, "slot_positions", slot_id)
 	DeveloperPlacementStoreScript.clear_position(club_layer, "slot_positions", "fixed.door_right_lower")
 	var cleared_export := DeveloperPlacementStoreScript.export_user_overrides()
@@ -295,6 +295,12 @@ func _check_canvas_contract() -> void:
 	canvas.render_environment_snapshot({
 		"archetype_id": "corner_store",
 		"display_name": "Corner Store",
+		"scenario_id": "corner_store_late_delivery",
+		"scenario_sequence_state": {
+			"scenario_id": "corner_store_late_delivery",
+			"phase_id": "inspect_manifest",
+			"status": "active",
+		},
 		"interactable_objects": [{
 			"object_id": "item:fixture",
 			"object_type": "item",
@@ -311,35 +317,76 @@ func _check_canvas_contract() -> void:
 	canvas.developer_placement_export_button.pressed.emit()
 	_check(export_request_count == 1, "Export Placement Report must work without requiring a selected slot or pending move.")
 	var snapshot: Dictionary = canvas.developer_slot_placement_snapshot()
-	_check(bool(snapshot.get("enabled", false)) and int(snapshot.get("visible_slot_count", 0)) > 0, "Slot mode must expose every authored slot even when the room has no occupying objects.")
+	_check(bool(snapshot.get("enabled", false)) and int(snapshot.get("visible_slot_count", 0)) > 0, "Slot mode must expose occupied or required slots in its default preview.")
 	var filters: Dictionary = snapshot.get("family_filters", {})
-	_check(filters.keys().size() == 4 and filters.has("fixed") and filters.has("event") and filters.has("scenario") and filters.has("exit"), "Slot mode must expose independent filters for all four slot families.")
-	var all_family_count := int(snapshot.get("visible_slot_count", 0))
-	canvas.set_developer_slot_family_visible("event", false)
-	var filtered_snapshot := canvas.developer_slot_placement_snapshot()
-	_check(int(filtered_snapshot.get("visible_slot_count", 0)) < all_family_count, "Hiding the event family must remove event slots from the authoring overlay.")
+	_check(
+		filters.keys().size() == 4 and bool(filters.get("fixed", false)) \
+			and not bool(filters.get("event", true)) and not bool(filters.get("scenario", true)) and not bool(filters.get("exit", true)),
+		"Slot mode must open on the Fixed family alone instead of displaying all four families."
+	)
+	_check(not bool(snapshot.get("show_empty_capacity", true)) and not bool(snapshot.get("show_runtime_reserves", true)), "Empty capacity and runtime reserves must be hidden by default.")
+	_check(int(snapshot.get("visible_slot_count", 0)) < int(snapshot.get("total_slot_count", 0)), "The default occupied preview must not flood the room with every authored capacity slot.")
+	var preview_context: Dictionary = snapshot.get("preview_context", {})
+	_check(
+		str(preview_context.get("scenario_id", "")) == "corner_store_late_delivery" \
+			and str(preview_context.get("phase_id", "")) == "inspect_manifest",
+		"Slot mode must identify the active scenario and phase represented by the current room snapshot."
+	)
 	canvas.set_developer_slot_family_visible("event", true)
+	var filtered_snapshot := canvas.developer_slot_placement_snapshot()
+	filters = filtered_snapshot.get("family_filters", {})
+	_check(
+		str(filtered_snapshot.get("active_family", "")) == "event" and bool(filters.get("event", false)) and not bool(filters.get("fixed", true)),
+		"Selecting a family tab must replace the prior family instead of accumulating overlay clutter."
+	)
+	_check(int(filtered_snapshot.get("visible_slot_count", -1)) == 0, "An event family with no active occupants must stay empty until capacity is explicitly requested.")
+	canvas.set_developer_slot_show_empty_capacity(true)
+	_check(int(canvas.developer_slot_placement_snapshot().get("visible_slot_count", 0)) > 0, "The Empty capacity toggle must reveal unused slots in the active family.")
 	_check(not bool(canvas.developer_placement_snapshot().get("enabled", true)), "Enabling slot mode must disable spawned-object placement mode.")
 	var wrapped_label: Array = canvas.call("_wrap_developer_slot_label", "scenario.wall_item_1", ThemeDB.fallback_font, 8, 42.0)
 	_check(wrapped_label.size() > 1 and "".join(wrapped_label) == "scenario.wall_item_1", "Slot overlay labels must wrap onto multiple rows without truncating their stable IDs.")
+	var fixed_slot: Dictionary = canvas.call("_developer_slot", "fixed.item_shop_1")
+	_check(str(canvas.call("_developer_slot_primary_label", fixed_slot)) == "Fixture", "Occupied slot labels must lead with the friendly occupant name instead of the raw stable ID.")
+	var occupied_reserve := fixed_slot.duplicate(true)
+	occupied_reserve["runtime_reserve"] = true
+	_check(bool(canvas.call("_developer_slot_visible_by_detail", occupied_reserve)), "An occupied runtime-reserve slot must remain visible even while empty reserves are hidden.")
+	var reserve_fixture := {
+		"id": "scenario.standing_person_3",
+		"kind": "scenario",
+		"footprint_class": "standing_person",
+		"physical_role": "Delivery Contact Reserve",
+		"occupant_ids": ["runtime:delivery_contact"],
+		"runtime_reserve": true,
+		"reserve_reason": "delivery contact",
+	}
+	_check(bool(canvas.call("_developer_slot_is_runtime_reserve", reserve_fixture)), "The placement UI must recognize canonical runtime-reserve metadata.")
+	_check(str(canvas.call("_developer_slot_reserve_reason", reserve_fixture)) == "Delivery Contact", "Runtime reserves must expose a friendly reason in the placement panel.")
+	_check(str(canvas.call("_developer_slot_capacity_label", reserve_fixture)) == "Delivery Contact Reserve", "Empty slot labels must prefer the authored physical role over legacy slot-name wording.")
+	_check((canvas.call("_developer_slot_known_claimants", reserve_fixture) as Array).has("runtime:delivery_contact"), "Known slot claimants must remain available in placement details without replacing an active occupant label.")
 
-	var slot: Dictionary = canvas.call("_developer_slot", "scenario.wall_item_1")
-	_check(not slot.is_empty(), "The overlay must include empty scenario slots by stable ID.")
+	canvas.set_developer_slot_family_visible("scenario", true)
+	var slot: Dictionary = canvas.call("_developer_slot", "scenario.surface_item_1")
+	_check(not slot.is_empty(), "All-capacity mode must include empty scenario slots by stable ID.")
 	if not slot.is_empty():
 		var rect: Rect2 = canvas.call("_developer_slot_rect", slot)
 		var selected_id := str(canvas.call("_developer_slot_id_at_local_position", rect.get_center()))
-		_check(selected_id == "scenario.wall_item_1", "An empty overlay slot must be directly selectable.")
+		_check(selected_id == "scenario.surface_item_1", "An empty overlay slot must be directly selectable.")
 		canvas.call("_begin_developer_slot_placement_drag", rect.get_center())
 		var target_top_left := rect.position + Vector2(12.0, 8.0)
 		canvas.call("_update_developer_slot_placement_preview", target_top_left)
 		snapshot = canvas.developer_slot_placement_snapshot()
 		var request: Dictionary = snapshot.get("request", {})
 		_check(bool(snapshot.get("pending", false)) and bool(snapshot.get("valid", false)), "Dragging a slot must expose a valid live preview.")
-		_check(str(request.get("field", "")) == "slot_positions" and str(request.get("slot_id", "")) == "scenario.wall_item_1", "A slot edit request must retain reusable slot identity.")
+		for overlap_id_value in snapshot.get("overlap_ids", []):
+			var overlap_slot: Dictionary = canvas.call("_developer_slot", str(overlap_id_value))
+			_check(bool(canvas.call("_developer_slot_is_context_active", overlap_slot)), "Overlap diagnostics must ignore mutually exclusive empty capacity outside the active preview.")
+		_check(str(request.get("field", "")) == "slot_positions" and str(request.get("slot_id", "")) == "scenario.surface_item_1", "A slot edit request must retain reusable slot identity.")
 		canvas.developer_placement_export_button.pressed.emit()
-		_check(str(exported_pending_request.get("slot_id", "")) == "scenario.wall_item_1", "Export must carry the selected reusable slot edit to the host before writing the report.")
+		_check(str(exported_pending_request.get("slot_id", "")) == "scenario.surface_item_1", "Export must carry the selected reusable slot edit to the host before writing the report.")
 		_check(export_request_count == 2 and not bool(canvas.developer_slot_placement_snapshot().get("pending", true)), "Export must request the report only after retaining the current pending slot move.")
 
+	canvas.set_developer_slot_family_visible("fixed", true)
+	canvas.set_developer_slot_show_empty_capacity(false)
 	var occupied_slot: Dictionary = canvas.call("_developer_slot", "fixed.item_shop_1")
 	var occupied_rect: Rect2 = canvas.call("_developer_slot_rect", occupied_slot)
 	var baseline_object_rect: Rect2 = canvas.call("_board_rect_for_object", canvas.call("_scene_object", "item:fixture"))
@@ -360,6 +407,12 @@ func _check_canvas_contract() -> void:
 	canvas.render_environment_snapshot({
 		"archetype_id": "corner_store",
 		"display_name": "Corner Store",
+		"scenario_id": "corner_store_late_delivery",
+		"scenario_sequence_state": {
+			"scenario_id": "corner_store_late_delivery",
+			"phase_id": "inspect_manifest",
+			"status": "active",
+		},
 		"interactable_objects": [{
 			"object_id": "item:fixture",
 			"object_type": "item",

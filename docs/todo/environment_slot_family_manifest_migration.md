@@ -190,14 +190,14 @@ Recommended names include:
 - `fixed.pulltab_game`
 - `fixed.random_game_1`
 - `fixed.item_shop_1`
-- `event.floor_patron_1`
-- `event.counter_patron_1`
+- `event.standing_person_1`
+- `event.behind_counter_person_1`
 - `event.floor_fixture_1`
-- `event.floor_item_1`
+- `event.floor_fixture_1`
 - `event.wall_item_1`
-- `scenario.floor_patron_1`
-- `scenario.seated_patron_1`
-- `scenario.floor_item_1`
+- `scenario.standing_person_1`
+- `scenario.seated_person_1`
+- `scenario.floor_fixture_1`
 - `scenario.wall_item_1`
 - `scenario.doorway_1`
 

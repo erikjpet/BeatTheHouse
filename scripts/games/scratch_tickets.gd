@@ -126,7 +126,7 @@ func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
 		MaskScript.prime(ticket_type_value as Dictionary)
 	var machine := _ensure_machine_state(run_state, environment, false)
 	var result := super.enter(run_state, environment)
-	result["message"] = "The scratcher vending machine hums beside the clerk. Stock releases in small unposted batches; pick a live slot, then drag across the latex."
+	result["message"] = "The scratcher vending machine hums beside %s's sales counter. Stock releases in small unposted batches; pick a live slot, then drag across the latex." % _redeemer_label(environment)
 	result["scratch_stock_count"] = _stock_view(machine).size()
 	result["scratch_stock_available"] = _stock_total(machine)
 	result["scratch_scalper_present"] = bool(machine.get("scalper_present", false))
@@ -220,7 +220,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	return GameModule.surface_spec({
 		"surface_renderer": "scratch_tickets",
 		"surface_life": "scratch_vending_machine",
-		"surface_cast": "clerk_and_machine",
+		"surface_cast": "counter_staff_and_machine",
 		"counter_ritual": counter_ritual,
 		"counter_phase": str(counter_ritual.get("phase", "selection")),
 		"counter_actors": counter_ritual.get("actors", []),
@@ -260,7 +260,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"scratch_ticket_render_layers": _ticket_render_layers(active_ticket),
 		"scratch_foil_style_id": _ticket_foil_style_id(active_ticket),
 		"scratch_mask_kind": str(_dict_ref(active_ticket.get("scratch", {})).get("mask_kind", "")),
-		"scratch_discard_rule": "Discarded winners are filed safely and remain payable at the clerk.",
+		"scratch_discard_rule": "Discarded winners are filed safely and remain payable at the sales counter.",
 		"scratch_discard_interaction": "Deliberately drag the ticket into the highlighted basket opening.",
 		"scratch_discard_available": not active_ticket.is_empty(),
 		"scratch_dispense_animation": not last_dispense_id.is_empty(),
@@ -289,7 +289,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"scratch_xray_peeks": _dictionary_array(active_ticket.get("xray_peeks", [])) if result_ready else [],
 		"scratch_fortune": str(active_ticket.get("fortune_tier", "")) if result_ready else "",
 		"scratch_penalty_shields": int(machine.get("penalty_shields_remaining", 0)),
-		"scratch_rules": "%s Winners wait for the clerk." % _ticket_play_label(str(active_ticket.get("type_id", "")), _dict_ref(active_ticket.get("mechanic", {}))) if not active_ticket.is_empty() else _machine_empty_rules(machine, stock),
+		"scratch_rules": "%s Winners wait for the sales counter." % _ticket_play_label(str(active_ticket.get("type_id", "")), _dict_ref(active_ticket.get("mechanic", {}))) if not active_ticket.is_empty() else _machine_empty_rules(machine, stock),
 		"surface_animation_channels": [
 			GameModule.surface_animation_channel(DISPENSE_CHANNEL, last_dispense_id, DISPENSE_DURATION_MSEC, int(machine.get("dispense_started_msec", 0)), {"metadata": {"ticket_id": str(active_ticket.get("id", "")), "slot": int(machine.get("last_dispense_slot", 0))}}),
 			GameModule.surface_animation_channel(FILE_CHANNEL, last_file_id, FILE_DURATION_MSEC, int(machine.get("file_started_msec", 0)), {"metadata": {"pile": str(machine.get("last_settled_pile", ""))}}),
@@ -602,7 +602,8 @@ func environment_interactable_objects(run_state: RunState, environment: Dictiona
 	var payout := _pending_payout(machine)
 	var winners := _dictionary_array(machine.get("winner_pile", [])).size()
 	var label := _redeemer_label(environment)
-	var objects: Array = [{
+	var host_object_id := _counter_host_object_id(environment)
+	var redeem_record := {
 		"id": REDEEM_HOOK_ID,
 		"object_id": "game_hook:%s:%s" % [get_id(), REDEEM_HOOK_ID],
 		"label": label,
@@ -611,16 +612,19 @@ func environment_interactable_objects(run_state: RunState, environment: Dictiona
 		"recovery": payout > 0,
 		"action_summary": "Cash %d winner%s for $%d." % [winners, "" if winners == 1 else "s", payout] if winners > 0 else "No scratched winners to cash.",
 		"effect_summary": "$%d waits at the counter." % payout if payout > 0 else "Scratch a winner, then bring it here.",
-		"risk_summary": "Large prizes draw the clerk's attention.",
+		"risk_summary": "Large prizes draw the counter staff's attention.",
 		"cost_summary": "",
+		"slot_binding_source_id": host_object_id,
 		"visual_key": "pull_tab_redeemer",
 		"visual_type": "service",
 		"icon_key": "service",
-		"unique_object_class": "lottery_redemption_clerk",
-		"unique_object_priority": 120 if payout > 0 else 90,
-		"available_actions": [{"id": REDEEM_ACTION_ID, "label": "Cash In"}],
+		"available_actions": [{"id": REDEEM_ACTION_ID, "label": "Cash In Scratchers"}],
 		"confirm_action_id": REDEEM_ACTION_ID,
-	}]
+	}
+	if host_object_id.is_empty():
+		redeem_record["unique_object_class"] = "lottery_redemption_clerk"
+		redeem_record["unique_object_priority"] = 120 if payout > 0 else 90
+	var objects: Array = [redeem_record]
 	if bool(machine.get("scalper_present", false)):
 		var knows_schedule := bool(machine.get("scalper_knows_schedule", false))
 		var dialogue_id := SCALPER_DIALOGUE_KNOWS_ID if knows_schedule else SCALPER_DIALOGUE_OBLIVIOUS_ID
@@ -1005,7 +1009,7 @@ func _resolve_reveal(run_state: RunState, environment: Dictionary, rng: RngStrea
 		if discard_unfinished:
 			message = "%s discarded. %s" % [
 				str(ticket.get("display_name", "Ticket")),
-				"Any winner is filed safely for clerk redemption." if payout > 0 else "No prize was forfeited.",
+				"Any winner is filed safely for counter redemption." if payout > 0 else "No prize was forfeited.",
 			]
 		else:
 			message = "%s: %s %s" % [str(ticket.get("display_name", "Ticket")), _ticket_result_summary(ticket), _ticket_win_reason(ticket)]
@@ -1059,7 +1063,7 @@ func _resolve_redemption(run_state: RunState, environment: Dictionary, rng: RngS
 	var machine := _ensure_machine_state(run_state, environment, true)
 	var winners := _dictionary_array(machine.get("winner_pile", []))
 	if winners.is_empty():
-		return _scratch_empty_result(REDEEM_ACTION_ID, environment, "The clerk has no winning scratchers to cash.")
+		return _scratch_empty_result(REDEEM_ACTION_ID, environment, "%s has no winning scratchers to cash." % _redeemer_label(environment))
 	var payout := 0
 	var big_wins := 0
 	for ticket_value in winners:
@@ -1080,7 +1084,7 @@ func _resolve_redemption(run_state: RunState, environment: Dictionary, rng: RngS
 		"completed": true,
 	}
 	_write_machine_state(environment, machine, run_state)
-	var message := "The clerk scans %d ticket%s and counts out $%d." % [winners.size(), "" if winners.size() == 1 else "s", payout]
+	var message := "%s scans %d ticket%s and counts out $%d." % [_redeemer_label(environment), winners.size(), "" if winners.size() == 1 else "s", payout]
 	if heat > 0:
 		message += " The large payout draws attention +%d." % heat
 	var deltas := GameModule.empty_result_deltas()
@@ -1108,10 +1112,26 @@ func _resolve_redemption(run_state: RunState, environment: Dictionary, rng: RngS
 
 
 func _redeemer_label(environment: Dictionary) -> String:
+	var counter := _lottery_counter_config(environment)
+	var configured := str(counter.get("staff_label", "")).strip_edges()
+	if not configured.is_empty():
+		return configured
 	var scene_type := str(environment.get("visual_context", {}).get("scene_type", ""))
 	if scene_type == "bar" or str(environment.get("archetype_id", "")) == "bar":
 		return "Bartender"
-	return "Lottery Clerk"
+	return "Counter Staff"
+
+
+func _lottery_counter_config(environment: Dictionary) -> Dictionary:
+	var flags := _copy_dict(environment.get("local_narrative_flags", {}))
+	return _copy_dict(flags.get("lottery_counter", {}))
+
+
+func _counter_host_object_id(environment: Dictionary) -> String:
+	var counter := _lottery_counter_config(environment)
+	if not _array_ref(counter.get("service_game_ids", [])).has(get_id()):
+		return ""
+	return str(counter.get("host_object_id", "")).strip_edges()
 
 
 func _scratch_counter_ritual(machine: Dictionary, active_ticket: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
@@ -1126,19 +1146,19 @@ func _scratch_counter_ritual(machine: Dictionary, active_ticket: Dictionary, run
 		phase = "file" if bool(active_ticket.get("result_ready", false)) else "play"
 	elif str(transaction.get("phase", "")) == "handover":
 		phase = "handover"
-	var clerk_state := "idle"
+	var staff_state := "idle"
 	if suspicion >= 70:
-		clerk_state = "refusing"
+		staff_state = "refusing"
 	elif suspicion >= 45:
-		clerk_state = "suspicious"
+		staff_state = "suspicious"
 	elif suspicion >= 20:
-		clerk_state = "watching"
+		staff_state = "watching"
 	elif phase == "redemption_ready":
-		clerk_state = "paying_out"
+		staff_state = "paying_out"
 	elif phase in ["handover", "selection"] and not transaction.is_empty():
-		clerk_state = "serving"
+		staff_state = "serving"
 	elif _stock_total(machine) <= 0:
-		clerk_state = "bored"
+		staff_state = "bored"
 	var stock_rows := _dictionary_array(machine.get("stock", []))
 	var rack_rows: Array = []
 	for row_value in stock_rows:
@@ -1155,10 +1175,10 @@ func _scratch_counter_ritual(machine: Dictionary, active_ticket: Dictionary, run
 		"version": 1,
 		"phase": phase,
 		"actors": [{
-			"id": "scratch_clerk",
+			"id": "counter_staff",
 			"label": _redeemer_label(environment),
-			"state": clerk_state,
-			"material_energy": "alert" if clerk_state in ["watching", "suspicious", "refusing"] else "working" if clerk_state in ["serving", "paying_out"] else "ambient",
+			"state": staff_state,
+			"material_energy": "alert" if staff_state in ["watching", "suspicious", "refusing"] else "working" if staff_state in ["serving", "paying_out"] else "ambient",
 		}],
 		"objects": [
 			{"id": "ticket_rack", "state": "stocked" if _stock_total(machine) > 0 else "empty", "stock": rack_rows, "material_energy": "interactive" if _stock_total(machine) > 0 else "spent"},
@@ -1166,7 +1186,7 @@ func _scratch_counter_ritual(machine: Dictionary, active_ticket: Dictionary, run
 			{"id": "losing_ticket_pile", "count": losers.size() + maxi(0, int(machine.get("loser_archive_count", 0))), "visible": true, "material_energy": "spent"},
 		],
 		"transaction": transaction,
-		"attention": {"tier": clerk_state, "suspicion": suspicion, "reveals_hidden_outcomes": false},
+		"attention": {"tier": staff_state, "suspicion": suspicion, "reveals_hidden_outcomes": false},
 	}
 
 
@@ -1244,7 +1264,8 @@ func _generate_machine_state(run_state: RunState, environment: Dictionary, rng: 
 		"environment_hooks": [{
 			"id": REDEEM_HOOK_ID,
 			"kind": "redeemer",
-			"label": "Scratch-Ticket Clerk",
+			"label": "Scratch-Ticket Counter Redemption",
+			"slot_binding_source_id": _counter_host_object_id(environment),
 			"unique_object_class": "scratch_ticket_clerk",
 			"unique_object_priority": 100,
 		}, {
@@ -2488,7 +2509,7 @@ func _scalper_dialogue_summary(machine: Dictionary, knows_schedule: bool) -> Str
 	var gift_note := " He already took the one ticket he will accept this visit." if gift_used else ""
 	if knows_schedule:
 		var next_restock := int(machine.get("next_restock_absolute_minute", 0))
-		return ("I keep the clerk's schedule. This machine resets every three hours: %s, then %s, then %s. Be here before the clerk wheels past." % [
+		return ("I keep the counter schedule. This machine resets every three hours: %s, then %s, then %s. Be here before the cashier wheels past." % [
 			_clock_text_at_absolute_minute(next_restock),
 			_clock_text_at_absolute_minute(next_restock + RESTOCK_INTERVAL_MINUTES),
 			_clock_text_at_absolute_minute(next_restock + RESTOCK_INTERVAL_MINUTES * 2),

@@ -4361,7 +4361,10 @@ func start_dialogue(dialogue_id: String, source_data: Dictionary = {}) -> bool:
 	var summary_override := str(source_data.get("dialogue_summary", "")).strip_edges()
 	if not summary_override.is_empty():
 		context["summary_override"] = summary_override
-	var speaker: Dictionary = dialogue.get("speaker", {}) if typeof(dialogue.get("speaker", {})) == TYPE_DICTIONARY else {}
+	var speaker := JsonCoerceScript._copy_dict(dialogue.get("speaker", {}))
+	var speaker_override := JsonCoerceScript._copy_dict(source_data.get("dialogue_speaker_override", {}))
+	for override_key in speaker_override.keys():
+		speaker[override_key] = speaker_override[override_key]
 	speaker = _resolve_character_speaker(_normalized_talk_speaker(speaker), clean_id, str(speaker.get("voice_line_key", "")))
 	var start_node := str(source_data.get("start_node", dialogue.get("start", ""))).strip_edges()
 	if not run_state.enqueue_dialogue(clean_id, event_id, speaker, start_node, "dialogue", context):
@@ -5999,7 +6002,7 @@ func _pawn_counter_redeem_ticket(lender_id: String, debt_id: String) -> void:
 func use_game_environment_hook(game_id: String, hook_id: String, action_id: String = "") -> bool:
 	if run_state == null or library == null:
 		return false
-	if _guard_player_input_route():
+	if _guard_player_input_route(false, "game_hook:%s:%s" % [game_id, hook_id]):
 		return false
 	var game := _game_module_for_id(game_id)
 	if game == null:
@@ -6033,6 +6036,7 @@ func use_game_environment_hook(game_id: String, hook_id: String, action_id: Stri
 			_refresh_runtime_environment_views()
 			return false
 		GameModule.apply_result(run_state, result, rng)
+		_enqueue_game_hook_followup_dialogue(result, game_id, hook_id)
 		_play_result_drink_audio_cue(result)
 		_advance_alcohol_absorption()
 	last_hook_result = result.duplicate(true)
@@ -6046,6 +6050,35 @@ func use_game_environment_hook(game_id: String, hook_id: String, action_id: Stri
 		return true
 	_refresh()
 	return true
+
+
+func _enqueue_game_hook_followup_dialogue(result: Dictionary, game_id: String, hook_id: String) -> bool:
+	if run_state == null or library == null or not bool(result.get("ok", false)):
+		return false
+	var request := JsonCoerceScript._copy_dict(result.get("followup_dialogue", {}))
+	var dialogue_id := str(request.get("dialogue_id", "")).strip_edges()
+	var event_id := str(request.get("event_id", "")).strip_edges()
+	if dialogue_id.is_empty() or event_id.is_empty() or not run_state.pending_talk_event(event_id).is_empty():
+		return false
+	var dialogue := library.dialogue(dialogue_id)
+	if dialogue.is_empty():
+		return false
+	var speaker := JsonCoerceScript._copy_dict(dialogue.get("speaker", {}))
+	var speaker_override := JsonCoerceScript._copy_dict(request.get("speaker", {}))
+	for override_key in speaker_override.keys():
+		speaker[override_key] = speaker_override[override_key]
+	speaker = _resolve_character_speaker(_normalized_talk_speaker(speaker), event_id, str(speaker.get("voice_line_key", "")))
+	var source_object_id := str(request.get("source_object_id", "")).strip_edges()
+	var context := {
+		"trigger": "game_hook_followup",
+		"type": "dialogue",
+		"dialogue_id": dialogue_id,
+		"source": "game_hook:%s:%s" % [game_id, hook_id],
+		"source_object_id": source_object_id,
+		"environment_snapshot": RunState.environment_context_snapshot(run_state.current_environment),
+	}
+	var start_node := str(request.get("start_node", dialogue.get("start", ""))).strip_edges()
+	return run_state.enqueue_dialogue(dialogue_id, event_id, speaker, start_node, "game_hook_followup", context)
 
 
 # Saves the current foundation run.
@@ -14064,7 +14097,12 @@ func _activate_attached_room_action(target_object_id: String, action_key: String
 		)
 	match object_type:
 		CONTEXT_MODE_DIALOGUE:
+			var dialogue_action_id := str(record.get("object_id", "dialogue:%s" % source_id)).strip_edges()
+			if _guard_player_input_route(false, dialogue_action_id):
+				return false
 			return start_dialogue(source_id, record)
+		CONTEXT_MODE_GAME:
+			return enter_game(source_id)
 		CONTEXT_MODE_GAME_HOOK:
 			return use_game_environment_hook(str(action.get("parent_id", record.get("parent_id", ""))), source_id, str(action.get("id", record.get("confirm_action_id", ""))))
 		CONTEXT_MODE_EVENT:

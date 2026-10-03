@@ -177,8 +177,8 @@
     "dialogue_id": "tutorial_pal_guidance",
     "dialogue_node": "gas_machine",
     "trigger": {"depends_on": ["tutorial_route_choice"], "screen": "ENVIRONMENT", "environment_archetype": "gas_station_casino", "state_predicates": []},
-    "anchor": {"kind": "interactable_object", "id": "game:pull_tabs"},
-    "copy": "Open the pull-tab machine.",
+    "anchor": {"kind": "interactable_object", "id": "character:nell"},
+    "copy": "Buy Pull Tabs from Nell.",
     "completion": {"type": "anchored_action", "action_id": "game:pull_tabs"},
     "gating": {"allowed_action_ids": ["game:pull_tabs"]}
   },
@@ -253,7 +253,7 @@
     "dialogue_node": "gas_clerk",
     "trigger": {"depends_on": ["tutorial_gas_peel"], "screen": "GAME", "environment_archetype": "gas_station_casino", "game_id": "pull_tabs", "state_predicates": []},
     "anchor": {"kind": "surface_action", "id": "surface_back"},
-    "copy": "Leave the machine with the winning tab filed.",
+    "copy": "Leave with the winning tab filed.",
     "completion": {"type": "anchored_action", "action_id": "surface_back"},
     "gating": {"allowed_action_ids": ["surface_back"]}
   },
@@ -264,8 +264,8 @@
     "dialogue_id": "tutorial_pal_guidance",
     "dialogue_node": "gas_clerk",
     "trigger": {"depends_on": ["tutorial_gas_leave_machine"], "screen": "ENVIRONMENT", "environment_archetype": "gas_station_casino", "state_predicates": []},
-    "anchor": {"kind": "interactable_object", "id": "game_hook:pull_tabs:ticket_redeemer"},
-    "copy": "Redeem the winner at the pull-tab clerk.",
+    "anchor": {"kind": "interactable_object", "id": "character:nell"},
+    "copy": "Cash the winner with Nell.",
     "completion": {"type": "state_predicate", "state_predicates": [{"path": "action.last_action_id", "op": "equals", "value": "redeem_pull_tab_winners"}]},
     "gating": {"allowed_action_ids": ["game_hook:pull_tabs:ticket_redeemer", "ui:any"]}
   },

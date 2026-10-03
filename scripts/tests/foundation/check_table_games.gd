@@ -6423,6 +6423,15 @@ func _check_pull_tabs_surface_contract(game: GameModule, failures: Array) -> voi
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("PULL-TABS-SURFACE-CONTRACT")
 	var environment := _surface_contract_environment()
+	environment["archetype_id"] = "gas_station_casino"
+	environment["local_narrative_flags"] = {
+		"lottery_counter": {
+			"host_object_id": "character:nell",
+			"staff_label": "Nell",
+			"sale_game_ids": ["pull_tabs"],
+			"service_game_ids": ["pull_tabs", "scratch_tickets"],
+		},
+	}
 	var generated_state := game.generate_environment_state(run_state, environment, run_state.create_rng("pull_tab_contract_machine"))
 	if generated_state.is_empty():
 		failures.append("Pull Tabs did not generate finite deal state for an environment.")
@@ -6478,10 +6487,10 @@ func _check_pull_tabs_surface_contract(game: GameModule, failures: Array) -> voi
 		failures.append("Pull Tabs surface did not route to the pull-tab machine renderer.")
 	var counter_ritual: Dictionary = surface.get("counter_ritual", {}) if typeof(surface.get("counter_ritual", {})) == TYPE_DICTIONARY else {}
 	var counter_attention: Dictionary = counter_ritual.get("attention", {}) if typeof(counter_ritual.get("attention", {})) == TYPE_DICTIONARY else {}
-	if str(surface.get("surface_cast", "")) != "clerk_and_machine" or (counter_ritual.get("actors", []) as Array).is_empty() or (counter_ritual.get("objects", []) as Array).size() < 3:
-		failures.append("Pull Tabs did not project the clerk, deal rack, counter, and losing-ticket pile as material ritual state.")
+	if str(surface.get("surface_cast", "")) != "counter_staff_and_stock" or (counter_ritual.get("actors", []) as Array).is_empty() or (counter_ritual.get("objects", []) as Array).size() < 3:
+		failures.append("Pull Tabs did not project counter staff, merchandise rack, counter, and losing-ticket pile as material ritual state.")
 	if bool(counter_attention.get("reveals_hidden_outcomes", true)) or int(counter_attention.get("suspicion", -1)) != run_state.suspicion_level():
-		failures.append("Pull Tabs clerk attention leaked ticket contents or diverged from existing suspicion authority.")
+		failures.append("Pull Tabs counter-staff attention leaked ticket contents or diverged from existing suspicion authority.")
 	_check_idle_animation_liveness_contract(surface, "Pull Tabs cabinet surface", failures)
 	if not bool(surface.get("surface_controls_native", false)):
 		failures.append("Pull Tabs surface did not expose native surface controls.")
@@ -6795,17 +6804,25 @@ func _check_pull_tabs_surface_contract(game: GameModule, failures: Array) -> voi
 		failures.append("Pull Tabs did not move a fully opened ticket into a winner or loser pile.")
 	var hooks := game.environment_interactable_objects(run_state, environment)
 	if hooks.is_empty():
-		failures.append("Pull Tabs did not expose a room-side redemption clerk.")
+		failures.append("Pull Tabs did not expose counter help and redemption actions.")
 	else:
 		var cash_in_found := false
+		var help_found := false
 		for hook_value in hooks:
 			if typeof(hook_value) != TYPE_DICTIONARY:
 				continue
+			if str((hook_value as Dictionary).get("slot_binding_source_id", "")) != "character:nell" \
+					or not str((hook_value as Dictionary).get("unique_object_class", "")).is_empty():
+				failures.append("Pull Tabs counter action was not bound exclusively to Nell's existing counter host.")
 			for action_value in (hook_value as Dictionary).get("available_actions", []):
-				if typeof(action_value) == TYPE_DICTIONARY and str((action_value as Dictionary).get("id", "")) == "redeem_pull_tab_winners" and str((action_value as Dictionary).get("label", "")) == "Cash In":
+				if typeof(action_value) == TYPE_DICTIONARY and str((action_value as Dictionary).get("id", "")) == "redeem_pull_tab_winners" and str((action_value as Dictionary).get("label", "")) == "Cash In Pull Tabs":
 					cash_in_found = true
+				if typeof(action_value) == TYPE_DICTIONARY and str((action_value as Dictionary).get("id", "")) == "start_dialogue" and str((action_value as Dictionary).get("label", "")) == "Ask About Pull Tabs":
+					help_found = true
 		if not cash_in_found:
-			failures.append("Pull Tabs redemption control did not use the Cash In label.")
+			failures.append("Pull Tabs redemption control did not use the explicit Cash In Pull Tabs label.")
+		if not help_found:
+			failures.append("Pull Tabs counter help did not use the explicit Ask About Pull Tabs label.")
 	var winner_count_harness := SurfaceHarness.new()
 	winner_count_harness.setup(sorted_surface)
 	game.call("_draw_pull_tab_ordered_winner_pile", winner_count_harness, Rect2(0, 0, 150, 100), [_pull_tab_test_ticket_result("one", 5), _pull_tab_test_ticket_result("two", 5)])
@@ -6818,7 +6835,7 @@ func _check_pull_tabs_surface_contract(game: GameModule, failures: Array) -> voi
 	var redeem_before := _run_state_result_snapshot(run_state)
 	var redeem_command := game.environment_action_command("ticket_redeemer", "redeem_pull_tab_winners", run_state, environment, run_state.create_rng("pull_tab_redeem"))
 	if not bool(redeem_command.get("handled", false)):
-		failures.append("Pull Tabs redemption clerk did not handle winner redemption.")
+		failures.append("Pull Tabs counter staff did not handle winner redemption.")
 	var redeem_result: Dictionary = redeem_command.get("result", {})
 	if str(redeem_result.get("type", "")) != "game_hook" or int(redeem_result.get("bankroll_delta", 0)) <= 0:
 		failures.append("Pull Tabs redemption did not return a cashout game_hook result.")
@@ -6838,7 +6855,7 @@ func _check_pull_tabs_surface_contract(game: GameModule, failures: Array) -> voi
 	var pattern_redeem_command := game.environment_action_command("ticket_redeemer", "redeem_pull_tab_winners", run_state, environment, run_state.create_rng("pull_tab_pattern_redeem"))
 	var pattern_redeem_result: Dictionary = pattern_redeem_command.get("result", {})
 	if not bool(pattern_redeem_command.get("handled", false)):
-		failures.append("Pull Tabs suspicious cashout pattern was not handled by the redemption clerk.")
+		failures.append("Pull Tabs suspicious cashout pattern was not handled by the counter staff.")
 	elif int(pattern_redeem_result.get("suspicion_delta", 0)) <= 0:
 		failures.append("Pull Tabs repeated high-value winners with no loser trail did not add cashier heat.")
 	elif int(pattern_redeem_result.get("pull_tab_cashout_pattern_heat", 0)) <= 0:
@@ -6846,6 +6863,12 @@ func _check_pull_tabs_surface_contract(game: GameModule, failures: Array) -> voi
 	elif int(pattern_redeem_result.get("pull_tab_loser_trail_count", -1)) != 0:
 		failures.append("Pull Tabs suspicious cashout did not report the visible loser trail count.")
 	else:
+		var followup: Dictionary = pattern_redeem_result.get("followup_dialogue", {}) if typeof(pattern_redeem_result.get("followup_dialogue", {})) == TYPE_DICTIONARY else {}
+		if str(followup.get("dialogue_id", "")) != "pull_tab_clerk" \
+				or str(followup.get("start_node", "")) not in ["suspicious_bulk", "suspicious_repeat"] \
+				or str(followup.get("source_object_id", "")) != "character:nell" \
+				or str((followup.get("speaker", {}) as Dictionary).get("name", "")) != "Nell":
+			failures.append("Pull Tabs suspicious cashout did not request the counter-staff follow-up conversation.")
 		GameModule.apply_result(run_state, pattern_redeem_result, run_state.create_rng("pull_tab_pattern_redeem_apply"))
 		call("_check_action_result_applied", pattern_redeem_before, run_state, pattern_redeem_result, "pull-tab suspicious redemption result", failures)
 	_check_pull_tab_tarot_reading_surface(game, failures)

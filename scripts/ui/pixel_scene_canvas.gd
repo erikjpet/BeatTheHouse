@@ -228,11 +228,19 @@ var developer_slot_scene_object_baseline: Array = []
 var developer_slot_scene_object_baseline_valid := false
 var developer_slot_filter_row: HBoxContainer
 var developer_slot_filter_buttons: Dictionary = {}
+var developer_slot_family_button_group: ButtonGroup
+var developer_slot_visibility_row: HBoxContainer
+var developer_slot_show_empty_button: CheckBox
+var developer_slot_show_reserves_button: CheckBox
+var developer_slot_context_label: Label
+var developer_slot_show_empty_capacity := false
+var developer_slot_show_runtime_reserves := false
+var developer_slot_hovered_id := ""
 var developer_slot_family_filters := {
 	"fixed": true,
-	"event": true,
-	"scenario": true,
-	"exit": true,
+	"event": false,
+	"scenario": false,
+	"exit": false,
 }
 
 
@@ -275,9 +283,14 @@ func set_developer_slot_placement_mode(enabled: bool) -> void:
 	developer_slot_placement_mode = enabled
 	if developer_slot_filter_row != null:
 		developer_slot_filter_row.visible = enabled
+	if developer_slot_visibility_row != null:
+		developer_slot_visibility_row.visible = enabled
+	if developer_slot_context_label != null:
+		developer_slot_context_label.visible = enabled
 	if enabled:
 		_capture_developer_slot_scene_object_baseline()
 	else:
+		developer_slot_hovered_id = ""
 		_restore_developer_slot_scene_objects()
 	_ensure_developer_placement_panel()
 	developer_placement_panel.visible = enabled or developer_placement_mode
@@ -310,7 +323,13 @@ func developer_slot_placement_snapshot() -> Dictionary:
 		"valid": developer_slot_valid,
 		"overlap_ids": developer_slot_overlap_ids.duplicate(),
 		"visible_slot_count": _developer_slots().size(),
+		"total_slot_count": _developer_slots(true).size(),
 		"family_filters": developer_slot_family_filters.duplicate(true),
+		"active_family": _developer_slot_active_family(),
+		"show_empty_capacity": developer_slot_show_empty_capacity,
+		"show_runtime_reserves": developer_slot_show_runtime_reserves,
+		"hovered_slot_id": developer_slot_hovered_id,
+		"preview_context": _developer_slot_preview_context(),
 		"request": _developer_slot_placement_request(),
 	}
 
@@ -319,16 +338,54 @@ func set_developer_slot_family_visible(family: String, visible: bool) -> void:
 	var normalized_family := family.strip_edges().to_lower()
 	if normalized_family not in SLOT_FAMILIES:
 		return
-	developer_slot_family_filters[normalized_family] = visible
-	var button_value: Variant = developer_slot_filter_buttons.get(normalized_family)
-	if button_value is BaseButton:
-		(button_value as BaseButton).set_pressed_no_signal(visible)
+	# Families are tabs, not accumulating checkboxes. Only one lifecycle family
+	# is presented at a time so a room never opens as a wall of every possible
+	# slot. The active tab cannot be unpressed without selecting another one.
+	if not visible and bool(developer_slot_family_filters.get(normalized_family, false)):
+		return
+	if visible:
+		for family_value in SLOT_FAMILIES:
+			developer_slot_family_filters[str(family_value)] = str(family_value) == normalized_family
+	for family_value in SLOT_FAMILIES:
+		var candidate_family := str(family_value)
+		var button_value: Variant = developer_slot_filter_buttons.get(candidate_family)
+		if button_value is BaseButton:
+			(button_value as BaseButton).set_pressed_no_signal(bool(developer_slot_family_filters.get(candidate_family, false)))
 	var selected := _developer_slot(developer_slot_selected_id)
-	if not selected.is_empty() and not _developer_slot_family_visible(_developer_slot_family(selected)):
+	if not selected.is_empty() and not _developer_slot_visible_in_preview(selected):
 		clear_developer_slot_placement_preview()
 		developer_slot_selected_id = ""
+	developer_slot_hovered_id = ""
 	_update_developer_placement_panel()
 	queue_redraw()
+
+
+func set_developer_slot_show_empty_capacity(visible: bool) -> void:
+	developer_slot_show_empty_capacity = visible
+	if developer_slot_show_empty_button != null:
+		developer_slot_show_empty_button.set_pressed_no_signal(visible)
+	_prune_hidden_developer_slot_selection()
+	_update_developer_placement_panel()
+	queue_redraw()
+
+
+func set_developer_slot_show_runtime_reserves(visible: bool) -> void:
+	developer_slot_show_runtime_reserves = visible
+	if developer_slot_show_reserves_button != null:
+		developer_slot_show_reserves_button.set_pressed_no_signal(visible)
+	_prune_hidden_developer_slot_selection()
+	_update_developer_placement_panel()
+	queue_redraw()
+
+
+func _prune_hidden_developer_slot_selection() -> void:
+	var selected := _developer_slot(developer_slot_selected_id)
+	if not selected.is_empty() and not _developer_slot_visible_in_preview(selected):
+		clear_developer_slot_placement_preview()
+		developer_slot_selected_id = ""
+	var hovered := _developer_slot(developer_slot_hovered_id)
+	if not hovered.is_empty() and not _developer_slot_visible_in_preview(hovered):
+		developer_slot_hovered_id = ""
 
 
 func clear_developer_placement_preview() -> void:
@@ -381,20 +438,51 @@ func _ensure_developer_placement_panel() -> void:
 	developer_slot_filter_row.visible = developer_slot_placement_mode
 	stack.add_child(developer_slot_filter_row)
 	var filter_label := Label.new()
-	filter_label.text = "Show:"
+	filter_label.text = "Family:"
 	filter_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	developer_slot_filter_row.add_child(filter_label)
+	developer_slot_family_button_group = ButtonGroup.new()
+	developer_slot_family_button_group.allow_unpress = false
 	for family_value in SLOT_FAMILIES:
 		var family := str(family_value)
-		var button := CheckBox.new()
+		var button := Button.new()
 		button.name = "%sSlots" % family.capitalize()
 		button.text = family.capitalize()
+		button.toggle_mode = true
+		button.button_group = developer_slot_family_button_group
 		button.button_pressed = bool(developer_slot_family_filters.get(family, true))
-		button.tooltip_text = "Show or hide %s.* authoring slots." % family
+		button.tooltip_text = "Show only %s.* authoring slots." % family
 		button.add_theme_color_override("font_color", _developer_slot_family_color(family))
 		button.toggled.connect(_on_developer_slot_family_filter_toggled.bind(family))
 		developer_slot_filter_buttons[family] = button
 		developer_slot_filter_row.add_child(button)
+
+	developer_slot_visibility_row = HBoxContainer.new()
+	developer_slot_visibility_row.name = "SlotVisibilityFilters"
+	developer_slot_visibility_row.add_theme_constant_override("separation", 8)
+	developer_slot_visibility_row.visible = developer_slot_placement_mode
+	stack.add_child(developer_slot_visibility_row)
+	developer_slot_show_empty_button = CheckBox.new()
+	developer_slot_show_empty_button.name = "ShowEmptyCapacity"
+	developer_slot_show_empty_button.text = "Empty capacity"
+	developer_slot_show_empty_button.button_pressed = developer_slot_show_empty_capacity
+	developer_slot_show_empty_button.tooltip_text = "Show unused capacity in the active family. Required missing positions stay visible."
+	developer_slot_show_empty_button.toggled.connect(set_developer_slot_show_empty_capacity)
+	developer_slot_visibility_row.add_child(developer_slot_show_empty_button)
+	developer_slot_show_reserves_button = CheckBox.new()
+	developer_slot_show_reserves_button.name = "ShowRuntimeReserves"
+	developer_slot_show_reserves_button.text = "Runtime reserves"
+	developer_slot_show_reserves_button.button_pressed = developer_slot_show_runtime_reserves
+	developer_slot_show_reserves_button.tooltip_text = "Show positions reserved for delivery and other runtime-injected content."
+	developer_slot_show_reserves_button.toggled.connect(set_developer_slot_show_runtime_reserves)
+	developer_slot_visibility_row.add_child(developer_slot_show_reserves_button)
+
+	developer_slot_context_label = Label.new()
+	developer_slot_context_label.name = "SlotPreviewContext"
+	developer_slot_context_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	developer_slot_context_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	developer_slot_context_label.visible = developer_slot_placement_mode
+	stack.add_child(developer_slot_context_label)
 
 	var actions := HBoxContainer.new()
 	actions.add_theme_constant_override("separation", 5)
@@ -434,7 +522,8 @@ func _ensure_developer_placement_panel() -> void:
 
 
 func _on_developer_slot_family_filter_toggled(pressed: bool, family: String) -> void:
-	set_developer_slot_family_visible(family, pressed)
+	if pressed:
+		set_developer_slot_family_visible(family, true)
 
 
 func _update_developer_placement_panel() -> void:
@@ -443,10 +532,18 @@ func _update_developer_placement_panel() -> void:
 	if developer_slot_placement_mode:
 		if developer_slot_filter_row != null:
 			developer_slot_filter_row.visible = true
+		if developer_slot_visibility_row != null:
+			developer_slot_visibility_row.visible = true
+		if developer_slot_context_label != null:
+			developer_slot_context_label.visible = true
 		_update_developer_slot_placement_panel()
 		return
 	if developer_slot_filter_row != null:
 		developer_slot_filter_row.visible = false
+	if developer_slot_visibility_row != null:
+		developer_slot_visibility_row.visible = false
+	if developer_slot_context_label != null:
+		developer_slot_context_label.visible = false
 	var object_data := _scene_object(selected_object_id)
 	if object_data.is_empty():
 		developer_placement_label.text = "Placement mode: drag an object; release to keep it. Right-click or Escape cancels. F2 hides this panel."
@@ -476,21 +573,51 @@ func _update_developer_placement_panel() -> void:
 
 
 func _update_developer_slot_placement_panel() -> void:
+	_update_developer_slot_filter_labels()
+	var preview_context := _developer_slot_preview_context()
+	if developer_slot_context_label != null:
+		developer_slot_context_label.text = str(preview_context.get("label", "Active preview: no scenario"))
+	var family := _developer_slot_active_family()
+	var family_counts := _developer_slot_family_counts(family)
+	var count_summary := "%s %d/%d shown" % [
+		family.capitalize(),
+		int(family_counts.get("visible", 0)),
+		int(family_counts.get("total", 0)),
+	]
 	var slot := _developer_slot(developer_slot_selected_id)
 	if slot.is_empty():
-		developer_placement_label.text = "Slot placement: filter and drag fixed, event, scenario, or exit slots. Empty slots remain editable. Right-click or Escape cancels."
+		var visibility_summary := "occupied preview"
+		if developer_slot_show_empty_capacity:
+			visibility_summary = "empty capacity shown"
+		if developer_slot_show_runtime_reserves:
+			visibility_summary += "; runtime reserves shown"
+		developer_placement_label.text = "Slot placement | %s\n%s. Select or drag a marker; right-click or Escape cancels." % [
+			count_summary,
+			visibility_summary.capitalize(),
+		]
 		developer_placement_lock_button.disabled = true
 		developer_placement_reset_button.disabled = true
 		return
 	var slot_id := str(slot.get("id", developer_slot_selected_id))
-	var family := _developer_slot_family(slot)
+	family = _developer_slot_family(slot)
 	var kind := str(slot.get("kind", family))
 	var placement_class := str(slot.get("footprint_class", "unknown"))
 	var support := str(slot.get("support_id", "free"))
 	var occupants := _developer_slot_occupants(slot_id)
-	var occupancy := "empty" if occupants.is_empty() else ", ".join(occupants)
+	var primary_label := _developer_slot_primary_label(slot)
+	var occupancy := "Empty capacity" if occupants.is_empty() else "Occupant: %s" % ", ".join(occupants)
+	var known_claimants := _developer_slot_known_claimants(slot)
+	var claimant_summary := ""
+	if not known_claimants.is_empty():
+		var shown_claimants := known_claimants.slice(0, mini(3, known_claimants.size()))
+		claimant_summary = "\nKnown claimants: %s" % ", ".join(shown_claimants)
+		if known_claimants.size() > shown_claimants.size():
+			claimant_summary += " +%d" % (known_claimants.size() - shown_claimants.size())
 	var slot_state := _developer_slot_state(slot)
 	var requirement := "required" if bool(slot_state.get("required", false)) else "optional capacity"
+	if _developer_slot_is_runtime_reserve(slot):
+		var reserve_reason := _developer_slot_reserve_reason(slot)
+		requirement = "runtime reserve" if reserve_reason.is_empty() else "runtime reserve: %s" % reserve_reason
 	var warnings: Array = slot_state.get("warnings", [])
 	var status_text := "unchanged"
 	if developer_slot_pending_rect.has_area():
@@ -499,9 +626,10 @@ func _update_developer_slot_placement_panel() -> void:
 			status_text += "; overlaps %s" % ", ".join(developer_slot_overlap_ids.slice(0, mini(3, developer_slot_overlap_ids.size())))
 	if not warnings.is_empty():
 		status_text += "; WARNING: %s" % "; ".join(warnings)
-	developer_placement_label.text = "%s | %s\n%s (%s / %s)\n%s | %s | %s | %s" % [
+	developer_placement_label.text = "%s | %s\n%s\n%s | %s / %s\n%s | %s | %s | %s%s" % [
 		str(foundation_snapshot.get("archetype_id", environment_id)),
 		str(foundation_snapshot.get("current_layer_id", foundation_snapshot.get("layer_id", "main"))),
+		primary_label,
 		slot_id,
 		family if kind == family else "%s:%s" % [family, kind],
 		placement_class,
@@ -509,6 +637,7 @@ func _update_developer_slot_placement_panel() -> void:
 		support,
 		requirement,
 		status_text,
+		claimant_summary,
 	]
 	developer_placement_lock_button.disabled = not developer_slot_pending_rect.has_area() or not developer_slot_valid
 	developer_placement_reset_button.disabled = false
@@ -1377,7 +1506,7 @@ func _developer_slots(include_hidden: bool = false) -> Array:
 			var slot := (slot_value as Dictionary).duplicate(true)
 			if str(slot.get("id", "")).strip_edges().is_empty():
 				continue
-			if not include_hidden and not _developer_slot_family_visible(_developer_slot_family(slot)):
+			if not include_hidden and not _developer_slot_visible_in_preview(slot):
 				continue
 			slots.append(slot)
 	slots.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
@@ -1388,6 +1517,132 @@ func _developer_slots(include_hidden: bool = false) -> Array:
 		return str(left.get("id", "")) < str(right.get("id", "")) if left_kind == right_kind else left_kind < right_kind
 	)
 	return slots
+
+
+func _developer_slot_active_family() -> String:
+	for family_value in SLOT_FAMILIES:
+		var family := str(family_value)
+		if bool(developer_slot_family_filters.get(family, false)):
+			return family
+	return "fixed"
+
+
+func _developer_slot_visible_in_preview(slot: Dictionary) -> bool:
+	if not _developer_slot_family_visible(_developer_slot_family(slot)):
+		return false
+	return _developer_slot_visible_by_detail(slot)
+
+
+func _developer_slot_visible_by_detail(slot: Dictionary) -> bool:
+	if not _developer_slot_occupant_records(str(slot.get("id", ""))).is_empty():
+		return true
+	if _developer_slot_is_required(slot):
+		return true
+	if _developer_slot_is_runtime_reserve(slot):
+		return developer_slot_show_runtime_reserves
+	return developer_slot_show_empty_capacity
+
+
+func _developer_slot_is_runtime_reserve(slot: Dictionary) -> bool:
+	if bool(slot.get("runtime_reserve", false)):
+		return true
+	var capacity_role := str(slot.get("capacity_role", "")).strip_edges().to_lower()
+	if capacity_role == "runtime_reserve":
+		return true
+	var metadata := _copy_dictionary(slot.get("metadata", {}))
+	return bool(metadata.get("runtime_reserve", false)) \
+			or str(metadata.get("capacity_role", "")).strip_edges().to_lower() == "runtime_reserve"
+
+
+func _developer_slot_reserve_reason(slot: Dictionary) -> String:
+	var reason := str(slot.get("reserve_reason", "")).strip_edges()
+	if reason.is_empty():
+		reason = str(_copy_dictionary(slot.get("metadata", {})).get("reserve_reason", "")).strip_edges()
+	return reason.replace("_", " ").capitalize()
+
+
+func _developer_slot_is_required(slot: Dictionary) -> bool:
+	if bool(slot.get("occupancy_required", false)):
+		return true
+	var slot_id := str(slot.get("id", "")).strip_edges()
+	for row_value in _developer_manifest_rows():
+		if typeof(row_value) != TYPE_DICTIONARY:
+			continue
+		var row := row_value as Dictionary
+		if bool(row.get("active", true)) and bool(row.get("physical", true)) \
+				and bool(row.get("required", false)) \
+				and str(row.get("exact_slot_id", "")).strip_edges() == slot_id:
+			return true
+	for occupant_value in _developer_slot_occupant_records(slot_id):
+		if typeof(occupant_value) == TYPE_DICTIONARY \
+				and bool((occupant_value as Dictionary).get("manifest_required", false)):
+			return true
+	return false
+
+
+func _developer_slot_family_counts(family: String) -> Dictionary:
+	var total := 0
+	var visible := 0
+	for slot_value in _developer_slots(true):
+		var slot := slot_value as Dictionary
+		if _developer_slot_family(slot) != family:
+			continue
+		total += 1
+		if _developer_slot_visible_by_detail(slot):
+			visible += 1
+	return {"visible": visible, "total": total}
+
+
+func _update_developer_slot_filter_labels() -> void:
+	for family_value in SLOT_FAMILIES:
+		var family := str(family_value)
+		var button_value: Variant = developer_slot_filter_buttons.get(family)
+		if not (button_value is BaseButton):
+			continue
+		var counts := _developer_slot_family_counts(family)
+		(button_value as BaseButton).text = "%s %d/%d" % [
+			family.capitalize(),
+			int(counts.get("visible", 0)),
+			int(counts.get("total", 0)),
+		]
+
+
+func _developer_slot_preview_context() -> Dictionary:
+	var sequence_state := _copy_dictionary(foundation_snapshot.get("scenario_sequence_state", {}))
+	var scenario_state := _copy_dictionary(foundation_snapshot.get("scenario_state", {}))
+	var projection := _copy_dictionary(foundation_snapshot.get("scenario_sequence_projection", {}))
+	var scenario_id := str(foundation_snapshot.get("scenario_id", "")).strip_edges()
+	if scenario_id.is_empty():
+		scenario_id = str(sequence_state.get("scenario_id", scenario_state.get("id", ""))).strip_edges()
+	var scenario_name := str(foundation_snapshot.get("scenario_display_name", scenario_state.get("display_name", ""))).strip_edges()
+	if scenario_name.is_empty():
+		scenario_name = _developer_friendly_identifier(scenario_id)
+	var phase_id := str(projection.get("phase_id", sequence_state.get("phase_id", ""))).strip_edges()
+	var status := str(projection.get("status", sequence_state.get("status", ""))).strip_edges()
+	var resolved_outcomes := _array_view(projection.get("resolved_outcomes", sequence_state.get("resolved_outcomes", [])))
+	var outcome_id := str(resolved_outcomes.back()).strip_edges() if not resolved_outcomes.is_empty() else ""
+	var label := "Active preview: no scenario"
+	if not scenario_id.is_empty():
+		label = "Active preview: %s" % scenario_name
+		if not phase_id.is_empty():
+			label += " · %s" % _developer_friendly_identifier(phase_id)
+		elif not outcome_id.is_empty():
+			label += " · Aftermath: %s" % _developer_friendly_identifier(outcome_id)
+		elif not status.is_empty() and status.to_lower() != "active":
+			label += " · %s" % _developer_friendly_identifier(status)
+	return {
+		"scenario_id": scenario_id,
+		"scenario_name": scenario_name,
+		"phase_id": phase_id,
+		"status": status,
+		"outcome_id": outcome_id,
+		"label": label,
+	}
+
+
+func _developer_friendly_identifier(value: String) -> String:
+	var friendly := value.strip_edges().replace("_", " ").replace("-", " ")
+	return friendly.capitalize() if not friendly.is_empty() else ""
 
 
 func _developer_slot(slot_id: String) -> Dictionary:
@@ -1419,7 +1674,13 @@ func _developer_slot_position(slot: Dictionary) -> Vector2:
 func _developer_slot_occupants(slot_id: String) -> Array[String]:
 	var occupants: Array[String] = []
 	for object_data in _developer_slot_occupant_records(slot_id):
-		occupants.append(str(object_data.get("label", object_data.get("id", "object"))))
+		var label := str(object_data.get("label", "")).strip_edges()
+		if label.is_empty():
+			label = _developer_friendly_identifier(str(object_data.get("id", "object")).get_slice(":", 1))
+		if label.is_empty():
+			label = "Object"
+		if not occupants.has(label):
+			occupants.append(label)
 	occupants.sort()
 	return occupants
 
@@ -1433,6 +1694,42 @@ func _developer_slot_occupant_records(slot_id: String) -> Array:
 		if str(object_data.get("slot_id", "")) == slot_id:
 			occupants.append(object_data)
 	return occupants
+
+
+func _developer_slot_primary_label(slot: Dictionary) -> String:
+	var occupants := _developer_slot_occupants(str(slot.get("id", "")))
+	if occupants.size() == 1:
+		return occupants[0]
+	if occupants.size() > 1:
+		return "%s +%d" % [occupants[0], occupants.size() - 1]
+	return _developer_slot_capacity_label(slot)
+
+
+func _developer_slot_capacity_label(slot: Dictionary) -> String:
+	var physical_role := str(slot.get("physical_role", "")).strip_edges()
+	if not physical_role.is_empty():
+		return physical_role
+	var slot_id := str(slot.get("id", "")).strip_edges()
+	var family := _developer_slot_family(slot)
+	var identity := slot_id.get_slice(".", 1) if slot_id.contains(".") else slot_id
+	if family in ["fixed", "exit"]:
+		return _developer_friendly_identifier(identity)
+	var placement_class := str(slot.get("footprint_class", "capacity")).strip_edges()
+	var label := _developer_friendly_identifier(placement_class)
+	var suffix := identity.get_slice("_", identity.get_slice_count("_") - 1)
+	if suffix.is_valid_int():
+		label += " %s" % suffix
+	return label
+
+
+func _developer_slot_known_claimants(slot: Dictionary) -> Array[String]:
+	var claimants: Array[String] = []
+	for claimant_value in _array_view(slot.get("occupant_ids", [])):
+		var claimant := str(claimant_value).strip_edges()
+		if not claimant.is_empty() and not claimants.has(claimant):
+			claimants.append(claimant)
+	claimants.sort()
+	return claimants
 
 
 func _developer_slot_family(slot: Dictionary) -> String:
@@ -1469,21 +1766,8 @@ func _developer_slot_state(slot: Dictionary, comparison_slots: Array = []) -> Di
 	var family := _developer_slot_family(slot)
 	var placement_class := str(slot.get("footprint_class", "")).strip_edges()
 	var support_id := str(slot.get("support_id", "")).strip_edges()
-	var required := bool(slot.get("occupancy_required", false))
-	for row_value in _developer_manifest_rows():
-		if typeof(row_value) != TYPE_DICTIONARY:
-			continue
-		var row := row_value as Dictionary
-		if not bool(row.get("active", true)) or not bool(row.get("physical", true)):
-			continue
-		if str(row.get("exact_slot_id", "")).strip_edges() == slot_id and bool(row.get("required", false)):
-			required = true
+	var required := _developer_slot_is_required(slot)
 	var occupants := _developer_slot_occupant_records(slot_id)
-	for occupant_value in occupants:
-		if typeof(occupant_value) == TYPE_DICTIONARY \
-				and bool((occupant_value as Dictionary).get("manifest_required", false)):
-			required = true
-			break
 	var warnings: Array[String] = []
 	if str(slot.get("kind", family)).strip_edges().to_lower() != family:
 		warnings.append("kind/prefix mismatch")
@@ -1492,13 +1776,15 @@ func _developer_slot_state(slot: Dictionary, comparison_slots: Array = []) -> Di
 	if occupants.size() > 1:
 		warnings.append("multiple occupants")
 	var slot_rect := _developer_slot_rect(slot)
-	var slots_to_compare := comparison_slots if not comparison_slots.is_empty() else _developer_slots(true)
-	for other_value in slots_to_compare:
-		var other := other_value as Dictionary
-		var other_id := str(other.get("id", ""))
-		if other_id != slot_id and slot_rect.intersects(_developer_slot_rect(other)):
-			warnings.append("overlaps %s" % other_id)
-			break
+	var diagnose_overlap := slot_id == developer_slot_selected_id or _developer_slot_is_context_active(slot)
+	if diagnose_overlap:
+		var slots_to_compare := comparison_slots if not comparison_slots.is_empty() else _developer_slot_overlap_candidates(slot_id)
+		for other_value in slots_to_compare:
+			var other := other_value as Dictionary
+			var other_id := str(other.get("id", ""))
+			if other_id != slot_id and slot_rect.intersects(_developer_slot_rect(other)):
+				warnings.append("overlaps %s" % other_id)
+				break
 	for occupant_value in occupants:
 		var occupant := occupant_value as Dictionary
 		var occupant_family := str(occupant.get("manifest_family", occupant.get("slot_family", ""))).strip_edges().to_lower()
@@ -1524,6 +1810,21 @@ func _developer_slot_state(slot: Dictionary, comparison_slots: Array = []) -> Di
 	}
 
 
+func _developer_slot_is_context_active(slot: Dictionary) -> bool:
+	var slot_id := str(slot.get("id", "")).strip_edges()
+	return _developer_slot_is_required(slot) or not _developer_slot_occupant_records(slot_id).is_empty()
+
+
+func _developer_slot_overlap_candidates(selected_slot_id: String = "") -> Array:
+	var candidates: Array = []
+	for slot_value in _developer_slots(true):
+		var slot := slot_value as Dictionary
+		var slot_id := str(slot.get("id", ""))
+		if slot_id == selected_slot_id or _developer_slot_is_context_active(slot):
+			candidates.append(slot)
+	return candidates
+
+
 func _developer_slot_id_at_local_position(local_position: Vector2) -> String:
 	var board_position := _local_to_board_position(local_position)
 	var selected := _developer_slot(developer_slot_selected_id)
@@ -1544,9 +1845,25 @@ func _handle_developer_slot_placement_input(event: InputEvent) -> bool:
 		developer_placement_panel.visible = not developer_placement_panel.visible
 		return true
 	if event is InputEventMouseMotion:
+		var motion := event as InputEventMouseMotion
 		if developer_slot_dragging:
-			var motion := event as InputEventMouseMotion
 			_update_developer_slot_placement_preview(_local_to_board_position(motion.position) - developer_slot_drag_offset)
+		else:
+			var hovered_slot_id := _developer_slot_id_at_local_position(motion.position)
+			if hovered_slot_id != developer_slot_hovered_id:
+				developer_slot_hovered_id = hovered_slot_id
+				var hovered_slot := _developer_slot(hovered_slot_id)
+				if hovered_slot.is_empty():
+					tooltip_text = ""
+				else:
+					tooltip_text = "%s\n%s" % [_developer_slot_primary_label(hovered_slot), hovered_slot_id]
+					var known_claimants := _developer_slot_known_claimants(hovered_slot)
+					if not known_claimants.is_empty():
+						var shown_claimants := known_claimants.slice(0, mini(5, known_claimants.size()))
+						tooltip_text += "\nKnown: %s" % ", ".join(shown_claimants)
+						if known_claimants.size() > shown_claimants.size():
+							tooltip_text += " +%d" % (known_claimants.size() - shown_claimants.size())
+				queue_redraw()
 		return true
 	if event is InputEventMouseButton:
 		var mouse_event := event as InputEventMouseButton
@@ -1604,12 +1921,14 @@ func _begin_developer_slot_placement_drag(local_position: Vector2) -> void:
 	if slot_id.is_empty():
 		_cancel_developer_slot_placement_preview()
 		developer_slot_selected_id = ""
+		developer_slot_hovered_id = ""
 		_update_developer_placement_panel()
 		queue_redraw()
 		return
 	if slot_id != developer_slot_selected_id:
 		_cancel_developer_slot_placement_preview()
 		developer_slot_selected_id = slot_id
+	developer_slot_hovered_id = slot_id
 	var slot := _developer_slot(slot_id)
 	if slot.is_empty():
 		return
@@ -1646,7 +1965,10 @@ func _validate_developer_slot_placement_preview() -> void:
 	if not developer_slot_valid:
 		_update_developer_placement_panel()
 		return
-	for slot_value in _developer_slots(true):
+	# Diagnose the selected position against the objects in the active preview,
+	# not against every mutually exclusive empty capacity slot ever authored for
+	# the room. Required fixed positions remain part of that coexistence set.
+	for slot_value in _developer_slot_overlap_candidates(developer_slot_selected_id):
 		var slot := slot_value as Dictionary
 		var slot_id := str(slot.get("id", ""))
 		if slot_id != developer_slot_selected_id and developer_slot_pending_rect.intersects(_developer_slot_rect(slot)):
@@ -1965,7 +2287,7 @@ func _draw_developer_slot_overlay() -> void:
 	if not developer_slot_placement_mode:
 		return
 	var font := ThemeDB.fallback_font
-	var all_slots := _developer_slots(true)
+	var coexistence_slots := _developer_slot_overlap_candidates(developer_slot_selected_id)
 	for slot_value in _developer_slots():
 		var slot := slot_value as Dictionary
 		var slot_id := str(slot.get("id", ""))
@@ -1978,7 +2300,7 @@ func _draw_developer_slot_overlay() -> void:
 		if selected:
 			color = C_TEAL if developer_slot_valid or not developer_slot_pending_rect.has_area() else C_HOT
 		var occupied := not _developer_slot_occupants(slot_id).is_empty()
-		var slot_state := _developer_slot_state(slot, all_slots)
+		var slot_state := _developer_slot_state(slot, coexistence_slots)
 		var has_warnings := not (slot_state.get("warnings", []) as Array).is_empty()
 		if has_warnings and not selected:
 			color = C_HOT
@@ -1992,8 +2314,13 @@ func _draw_developer_slot_overlay() -> void:
 		draw_line(center - Vector2(0.0, 5.0), center + Vector2(0.0, 5.0), color, 1.0)
 		if occupied:
 			draw_circle(center, 3.0, color)
-		var label_width := maxf(96.0, minf(180.0, rect.size.x))
-		var label_lines := _wrap_developer_slot_label(slot_id, font, 8, label_width - 6.0)
+		var label_width := maxf(112.0, minf(200.0, maxf(rect.size.x, 160.0)))
+		var primary_lines := _wrap_developer_slot_label(_developer_slot_primary_label(slot), font, 8, label_width - 6.0)
+		var label_lines: Array[String] = []
+		label_lines.append_array(primary_lines)
+		var show_stable_id := selected or slot_id == developer_slot_hovered_id
+		if show_stable_id:
+			label_lines.append_array(_wrap_developer_slot_label(slot_id, font, 7, label_width - 6.0))
 		var label_line_height := 9.0
 		var label_height := maxf(11.0, float(label_lines.size()) * label_line_height + 3.0)
 		var label_y := rect.position.y - label_height
@@ -2005,14 +2332,16 @@ func _draw_developer_slot_overlay() -> void:
 		)
 		draw_rect(label_rect, Color(C_DARK.r, C_DARK.g, C_DARK.b, 0.88), true)
 		for line_index in range(label_lines.size()):
+			var line_color := color if line_index < primary_lines.size() else C_SOFT
+			var line_font_size := 8 if line_index < primary_lines.size() else 7
 			draw_string(
 				font,
 				label_rect.position + Vector2(3.0, 9.0 + float(line_index) * label_line_height),
 				label_lines[line_index],
 				HORIZONTAL_ALIGNMENT_LEFT,
 				label_rect.size.x - 6.0,
-				8,
-				color
+				line_font_size,
+				line_color
 			)
 
 

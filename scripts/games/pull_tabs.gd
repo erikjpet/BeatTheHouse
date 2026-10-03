@@ -124,8 +124,8 @@ func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
 	_pull_tab_glimmer_target_machine_fingerprint = ""
 	var machine := _ensure_machine_state(run_state, environment, false)
 	var result := super.enter(run_state, environment)
-	result["message"] = "A pull-tab dispenser waits by the bar: four deals, sealed paper windows, and a flare chart under glass."
-	result["pull_tab_machine_name"] = str(machine.get("machine_name", "Bar Pull-Tab Dispenser"))
+	result["message"] = "%s lays out four pull-tab deal rows for sale at the counter: sealed paper windows, posted prices, and a flare chart under glass." % _counter_staff_label(environment)
+	result["pull_tab_machine_name"] = str(machine.get("machine_name", "Pull-Tab Counter Stock"))
 	return result
 
 
@@ -176,8 +176,8 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var glimmer_projection := _pull_tab_glimmer_public_projection(machine, environment, ui_state)
 	return GameModule.surface_spec({
 		"surface_renderer": "pull_tab_machine",
-		"surface_life": "ticket_dispenser",
-		"surface_cast": "clerk_and_machine",
+		"surface_life": "counter_merchandise",
+		"surface_cast": "counter_staff_and_stock",
 		"counter_ritual": counter_ritual,
 		"counter_phase": str(counter_ritual.get("phase", "selection")),
 		"counter_actors": counter_ritual.get("actors", []),
@@ -193,7 +193,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_embeds_outcomes": true,
 		"surface_ui_preference_keys": PULL_TAB_GLIMMER_UI_STATE_KEYS,
 		"reduce_motion": bool(ui_state.get("reduce_motion", false)),
-		"machine_name": str(machine.get("machine_name", "Bar Pull-Tab Dispenser")),
+		"machine_name": str(machine.get("machine_name", "Pull-Tab Counter Stock")),
 		"wager_currency": wager_currency,
 		"pull_tab_rules": "Buy a ticket, then peel its three windows top to bottom. Match three symbols on a row to win.",
 		"pull_tab_format": "Deal flare: game, form, serial, ticket count, price, prize chart. Ticket: same form/serial plus three sealed windows.",
@@ -288,7 +288,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	})
 
 
-# Draws the pull-tab dispenser, active stack, and sorted winner/loser piles.
+# Draws the pull-tab merchandise display, active stack, and sorted piles.
 func draw_surface(surface, surface_state: Dictionary, _render_context: Dictionary = {}) -> bool:
 	if str(surface_state.get("surface_renderer", "")) != "pull_tab_machine":
 		return false
@@ -307,7 +307,7 @@ func draw_surface(surface, surface_state: Dictionary, _render_context: Dictionar
 	return true
 
 
-# Exposes a room-side clerk/cashier for redeeming sorted winning tabs.
+# Exposes help and redemption as actions on the room's existing sales counter.
 func environment_interactable_objects(run_state: RunState, environment: Dictionary) -> Array:
 	var machine := _read_machine_state(run_state, environment)
 	if machine.is_empty():
@@ -318,25 +318,28 @@ func environment_interactable_objects(run_state: RunState, environment: Dictiona
 	var wager_currency := GameModule.presentation_currency_for_game(run_state, get_id(), environment)
 	var payout_text := PlayerTextScript.format_currency_amount(wager_currency, pending_payout)
 	var account_noun := "chips" if wager_currency == "chips" else "cash"
-	return [{
+	var host_object_id := _counter_host_object_id(environment)
+	var speaker_override := _counter_speaker_override(environment)
+	var help_record := {
 		"id": CLERK_DIALOGUE_HOOK_ID,
 		"object_id": "dialogue:%s" % CLERK_DIALOGUE_ID,
-		"label": "Pull-Tab Clerk",
-		"short_description": "Answers quick questions about tabs.",
+		"label": "%s — Pull-Tab Help" % label,
+		"short_description": "The counter staff answers quick questions about the Pull Tabs for sale.",
 		"enabled": true,
-		"action_summary": "Talk to the clerk.",
+		"action_summary": "Ask about Pull Tabs.",
 		"effect_summary": "Tips, risk, route leads.",
 		"risk_summary": "Loose-ticket questions can draw heat.",
 		"cost_summary": "",
 		"dialogue_id": CLERK_DIALOGUE_ID,
+		"dialogue_speaker_override": speaker_override,
+		"slot_binding_source_id": host_object_id,
 		"visual_key": "pull_tab_redeemer",
 		"visual_type": "service",
 		"icon_key": "clerk_chat",
-		"unique_object_class": "lottery_redemption_clerk",
-		"unique_object_priority": 80,
-		"available_actions": [{"id": "start_dialogue", "label": "Talk"}],
+		"available_actions": [{"id": "start_dialogue", "label": "Ask About Pull Tabs"}],
 		"confirm_action_id": "start_dialogue",
-	}, {
+	}
+	var redeem_record := {
 		"id": REDEEM_HOOK_ID,
 		"object_id": "game_hook:%s:%s" % [get_id(), REDEEM_HOOK_ID],
 		"label": label,
@@ -347,14 +350,21 @@ func environment_interactable_objects(run_state: RunState, environment: Dictiona
 		"effect_summary": "Pending payout %s." % payout_text if pending_payout > 0 else "Sort winners here before redeeming.",
 		"risk_summary": _redemption_risk_summary(machine, run_state),
 		"cost_summary": "",
+		"slot_binding_source_id": host_object_id,
 		"visual_key": "pull_tab_redeemer",
 		"visual_type": "service",
 		"icon_key": "service",
-		"unique_object_class": "lottery_redemption_clerk",
-		"unique_object_priority": 120 if pending_payout > 0 else 90,
-		"available_actions": [{"id": REDEEM_ACTION_ID, "label": "Redeem" if wager_currency == "chips" else "Cash In"}],
+		"available_actions": [{"id": REDEEM_ACTION_ID, "label": "Redeem Pull Tabs" if wager_currency == "chips" else "Cash In Pull Tabs"}],
 		"confirm_action_id": REDEEM_ACTION_ID,
-	}]
+	}
+	# Compatibility fallback for custom/test environments that have not declared
+	# a counter host. Authored production environments always use the host path.
+	if host_object_id.is_empty():
+		help_record["unique_object_class"] = "lottery_redemption_clerk"
+		help_record["unique_object_priority"] = 80
+		redeem_record["unique_object_class"] = "lottery_redemption_clerk"
+		redeem_record["unique_object_priority"] = 120 if pending_payout > 0 else 90
+	return [help_record, redeem_record]
 
 
 func environment_runtime_state(run_state: RunState, environment: Dictionary) -> Dictionary:
@@ -421,7 +431,7 @@ func environment_object_state(run_state: RunState, environment: Dictionary) -> D
 		"state_badge": badge,
 		"runtime_state": runtime_state,
 		"visual_state": {
-			"machine_name": str(machine.get("machine_name", "Bar Pull-Tab Dispenser")),
+			"machine_name": str(machine.get("machine_name", "Pull-Tab Counter Stock")),
 			"pending_payout": pending_payout,
 			"winner_count": winner_count,
 			"stack_count": stack_count,
@@ -725,7 +735,7 @@ func surface_action_command(surface_action: String, index: int, _confirm_request
 				"direct_resolve": true,
 				"set_stake": price,
 				"selected_index": index,
-				"message": "The dispenser button thumps and a %s ticket drops." % str(deal.get("display_name", "pull-tab")),
+				"message": "%s takes payment and slides over a %s pull tab." % [_counter_staff_label(environment), str(deal.get("display_name", "pull-tab"))],
 			}
 		"pull_tab_buy_all":
 			var available_indices: Array = []
@@ -1384,7 +1394,7 @@ func _collect_tray_surface_command(machine: Dictionary, ui_state: Dictionary, ru
 	var tray_stack := _ticket_array(machine.get("tray_stack", []))
 	if tray_stack.is_empty():
 		return GameModule.surface_command({
-			"message": "The dispenser tray is empty.",
+			"message": "No purchased pull tabs are waiting at the counter.",
 		})
 	var play_stack := _ticket_array(machine.get("ticket_stack", []))
 	for i in range(tray_stack.size()):
@@ -1439,7 +1449,7 @@ func _resolve_ticket_sort(run_state: RunState, environment: Dictionary, rng: Rng
 		var deal := _deal_for_ticket(machine, ticket)
 		var message := "%s %s is a dead pull. It drops into the loser pile." % [str(ticket.get("display_name", "Pull-tab")), str(ticket.get("ticket_number", ""))]
 		if payout > 0:
-			message = "%s %s wins $%d. Take it to the clerk to redeem." % [str(ticket.get("display_name", "Pull-tab")), str(ticket.get("ticket_number", "")), payout]
+			message = "%s %s wins $%d. Take it back to the counter to redeem." % [str(ticket.get("display_name", "Pull-tab")), str(ticket.get("ticket_number", "")), payout]
 		var story_entry := {
 			"type": "pull_tab_sort",
 			"game_id": get_id(),
@@ -1498,6 +1508,7 @@ func _resolve_winner_redemption(run_state: RunState, environment: Dictionary, rn
 	var suspicion_delta := int(redemption_context.get("heat", 0))
 	var security_bankroll_delta := int(redemption_context.get("security_bankroll_delta", 0))
 	var bankroll_delta := payout + security_bankroll_delta
+	var cashout_count := int(machine.get("cashout_count", 0)) + 1
 	var message := "%s pays $%d for %d winning tab%s." % [
 		_redeemer_label(environment),
 		payout,
@@ -1515,6 +1526,7 @@ func _resolve_winner_redemption(run_state: RunState, environment: Dictionary, rn
 	machine["redeemed_pile"] = _redeemed_ticket_history(machine, winner_pile)
 	machine["last_redeemed_payout"] = payout
 	machine["last_redeemed_count"] = winner_pile.size()
+	machine["cashout_count"] = cashout_count
 	machine["last_counter_transaction"] = {
 		"kind": "redemption",
 		"phase": "payout",
@@ -1579,6 +1591,14 @@ func _resolve_winner_redemption(run_state: RunState, environment: Dictionary, rn
 	result["pull_tab_security_bankroll_delta"] = security_bankroll_delta
 	result["pull_tab_pit_boss_watched"] = bool(redemption_context.get("pit_boss_watched", false))
 	result["pull_tab_redemption_risk_reasons"] = _pt_copy_array(redemption_context.get("risk_reasons", []))
+	if suspicion_delta > 0:
+		result["followup_dialogue"] = {
+			"dialogue_id": CLERK_DIALOGUE_ID,
+			"event_id": "pull_tab_suspicious_cashout:%s:%d" % [str(environment.get("id", environment.get("archetype_id", "room"))), cashout_count],
+			"start_node": _suspicious_cashout_dialogue_node(redemption_context),
+			"source_object_id": _counter_host_object_id(environment),
+			"speaker": _counter_speaker_override(environment),
+		}
 	return result
 
 
@@ -1804,13 +1824,14 @@ func _generate_machine_state(run_state: RunState, environment: Dictionary, rng_o
 		"deals": deals,
 		"deal_template_count": _deal_templates().size(),
 		"item_state": item_state,
-		"environment_hooks": _default_environment_hooks(),
+		"environment_hooks": _default_environment_hooks(environment),
 		"tray_stack": [],
 		"ticket_stack": [],
 		"winner_pile": [],
 		"loser_pile": [],
 		"loser_archive_count": 0,
 		"tickets_sold": 0,
+		"cashout_count": 0,
 		"dispense_started_msec": 0,
 		"last_dispense_id": "",
 		"last_dispense_events": [],
@@ -1918,20 +1939,20 @@ func _machine_name_for_environment(environment: Dictionary) -> String:
 	var archetype_id := str(environment.get("archetype_id", "")).strip_edges()
 	match scene_type:
 		"bar":
-			return "Lucky Jar Pull-Tab Box"
+			return "Lucky Jar Pull-Tab Counter Stock"
 		"gas_station_casino":
-			return "Cooler-Case Pull-Tab Rack"
+			return "Cooler-Case Pull Tabs for Sale"
 		"jazz_club":
-			return "After-Hours Pull-Tab Box"
+			return "After-Hours Pull Tabs for Sale"
 		"kitty_cat_lounge":
-			return "Velvet Rope Pull-Tab Rack"
+			return "Velvet Rope Pull Tabs for Sale"
 		"riverboat", "delta_queen":
 			return "Riverboat Pull-Tab Window"
 	if archetype_id == "delta_queen":
 		return "Riverboat Pull-Tab Window"
 	if archetype_id == "kitty_cat_lounge":
 		return "Velvet Rope Pull-Tab Rack"
-	return "Lucky Jar Pull-Tab Box"
+	return "%s's Pull-Tab Counter Stock" % _counter_staff_label(environment)
 
 
 func _ensure_machine_state(run_state: RunState, environment: Dictionary, persist: bool) -> Dictionary:
@@ -3291,10 +3312,55 @@ func _high_value_ticket_count(tickets: Array) -> int:
 
 
 func _redeemer_label(environment: Dictionary) -> String:
+	return _counter_staff_label(environment)
+
+
+func _lottery_counter_config(environment: Dictionary) -> Dictionary:
+	var flags := _pt_copy_dict(environment.get("local_narrative_flags", {}))
+	return _pt_copy_dict(flags.get("lottery_counter", {}))
+
+
+func _counter_host_object_id(environment: Dictionary) -> String:
+	var counter := _lottery_counter_config(environment)
+	if not _pt_copy_array(counter.get("service_game_ids", [])).has(get_id()):
+		return ""
+	return str(counter.get("host_object_id", "")).strip_edges()
+
+
+func _counter_staff_label(environment: Dictionary) -> String:
+	var configured := str(_lottery_counter_config(environment).get("staff_label", "")).strip_edges()
+	if not configured.is_empty():
+		return configured
 	var scene_type := str(environment.get("visual_context", {}).get("scene_type", ""))
 	if scene_type == "bar" or str(environment.get("archetype_id", "")) == "bar":
 		return "Bartender"
-	return "Lottery Clerk"
+	return "Counter Staff"
+
+
+func _counter_speaker_override(environment: Dictionary) -> Dictionary:
+	return {
+		"role": "staff",
+		"name": _counter_staff_label(environment),
+		"character_id": "",
+		"character_pool_id": "",
+		"character_identity_key": _counter_host_object_id(environment),
+		"voice_line_key": "",
+		"environment_actor": false,
+		"mood": "watchful",
+		"behavior": "working the sales counter",
+		"bind": "none",
+	}
+
+
+func _suspicious_cashout_dialogue_node(redemption_context: Dictionary) -> String:
+	var reasons := _pt_copy_array(redemption_context.get("risk_reasons", []))
+	if reasons.has("bent_or_fake_tabs"):
+		return "suspicious_tampered"
+	if reasons.has("bulk_winners_low_loser_trail"):
+		return "suspicious_bulk"
+	if reasons.has("repeated_high_value_winners_low_loser_trail"):
+		return "suspicious_repeat"
+	return "suspicious_general"
 
 
 func _pull_tab_remaining_count(machine: Dictionary) -> int:
@@ -3318,19 +3384,19 @@ func _pull_tab_counter_ritual(machine: Dictionary, run_state: RunState, environm
 		phase = "play"
 	elif not tray.is_empty() or str(transaction.get("phase", "")) == "handover":
 		phase = "handover"
-	var clerk_state := "idle"
+	var staff_state := "idle"
 	if suspicion >= 70:
-		clerk_state = "refusing"
+		staff_state = "refusing"
 	elif suspicion >= 45:
-		clerk_state = "suspicious"
+		staff_state = "suspicious"
 	elif suspicion >= 20:
-		clerk_state = "watching"
+		staff_state = "watching"
 	elif phase == "redemption_ready":
-		clerk_state = "paying_out"
+		staff_state = "paying_out"
 	elif phase == "handover":
-		clerk_state = "serving"
+		staff_state = "serving"
 	elif _pull_tab_remaining_count(machine) <= 0:
-		clerk_state = "bored"
+		staff_state = "bored"
 	var deal_rows: Array = []
 	for deal_value in _array_view(machine.get("deals", [])):
 		var deal: Dictionary = deal_value
@@ -3343,10 +3409,10 @@ func _pull_tab_counter_ritual(machine: Dictionary, run_state: RunState, environm
 		"version": 1,
 		"phase": phase,
 		"actors": [{
-			"id": "pull_tab_clerk",
+			"id": "counter_staff",
 			"label": _redeemer_label(environment),
-			"state": clerk_state,
-			"material_energy": "alert" if clerk_state in ["watching", "suspicious", "refusing"] else "working" if clerk_state in ["serving", "paying_out"] else "ambient",
+			"state": staff_state,
+			"material_energy": "alert" if staff_state in ["watching", "suspicious", "refusing"] else "working" if staff_state in ["serving", "paying_out"] else "ambient",
 		}],
 		"objects": [
 			{"id": "deal_rack", "state": "stocked" if _pull_tab_remaining_count(machine) > 0 else "empty", "stock": deal_rows, "material_energy": "interactive" if _pull_tab_remaining_count(machine) > 0 else "spent"},
@@ -3354,7 +3420,7 @@ func _pull_tab_counter_ritual(machine: Dictionary, run_state: RunState, environm
 			{"id": "losing_tab_pile", "count": losers.size() + maxi(0, int(machine.get("loser_archive_count", 0))), "visible": true, "material_energy": "spent"},
 		],
 		"transaction": transaction,
-		"attention": {"tier": clerk_state, "suspicion": suspicion, "reveals_hidden_outcomes": false},
+		"attention": {"tier": staff_state, "suspicion": suspicion, "reveals_hidden_outcomes": false},
 	}
 
 
@@ -3584,22 +3650,21 @@ func _environment_hook_array(value: Variant) -> Array:
 	return hooks
 
 
-func _default_environment_hooks() -> Array:
+func _default_environment_hooks(environment: Dictionary = {}) -> Array:
+	var host_object_id := _counter_host_object_id(environment)
 	return [{
 		"id": REDEEM_HOOK_ID,
 		"kind": "redeemer",
-		"label": "Pull-Tab Clerk",
+		"label": "Pull-Tab Counter Redemption",
 		"object_id": "game_hook:%s:%s" % [get_id(), REDEEM_HOOK_ID],
-		"unique_object_class": "pull_tab_clerk",
-		"unique_object_priority": 100,
+		"slot_binding_source_id": host_object_id,
 	}, {
 		"id": CLERK_DIALOGUE_HOOK_ID,
 		"kind": "dialogue",
-		"label": "Pull-Tab Clerk",
+		"label": "Pull-Tab Counter Help",
 		"object_id": "dialogue:%s" % CLERK_DIALOGUE_ID,
 		"dialogue_id": CLERK_DIALOGUE_ID,
-		"unique_object_class": "pull_tab_clerk",
-		"unique_object_priority": 80,
+		"slot_binding_source_id": host_object_id,
 	}]
 
 

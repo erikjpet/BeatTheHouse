@@ -4,10 +4,29 @@ All notable public release changes for Beat the House are recorded here.
 
 ## 0.6.0 - Release preparation
 
-Status: **version-stamped on `main`; final qualification and owner upload are
-still pending.** Project and platform export metadata now read `0.6.0`. Trial
-Windows and Web artifacts precede the final post-endings, post-room-review
-package handoff.
+Status: **version-stamped on `main`; `v0.6.0-pre.2` is the current GitHub
+testing prerelease, while final stable qualification remains pending.** Project
+and platform export metadata read `0.6.0`.
+
+### Pre-release 2 (2026-10-03)
+
+- Consolidates all 21 environment maps and 55 scenarios into 659 authored
+  positions: 214 permanent `fixed`, 147 optional `event`, 222 reusable
+  `scenario`, and 76 real `exit` positions. The rework removes 63 redundant or
+  misleading positions without reducing verified simultaneous capacity.
+- Reworks manual placement around one family at a time, occupant-first labels,
+  scenario/phase context, hidden empty and runtime-reserve capacity, and
+  context-aware overlap warnings. Packaged builds can export every local edit
+  for translation back into committed placement data.
+- Moves Pull Tabs into each venue's existing bartender, sales counter, clerk,
+  or host desk as counter merchandise. Buying, help, and redemption no longer
+  create a separate lottery clerk or machine in the room.
+- Preserves all Pull Tab cashout, suspicion, counterfeit, scrutiny, and Heat
+  calculations, while suspicious redemptions now trigger a contextual staff
+  exchange after the mechanical result is applied exactly once.
+- Publishes a downloadable Windows testing archive and checksums from the exact
+  `v0.6.0-pre.2` source commit. Fresh runs are expected; legacy save migration
+  is intentionally outside this prerelease.
 
 ### Added
 
@@ -34,10 +53,10 @@ package handoff.
 
 ### Changed
 
-- Reworks rooms around fixed, named physical slots on authored surfaces. Games,
-  shop items, people, and illustrated props occupy art-aligned places, abstract
-  scenario work stays in the action list, and counter art properly occludes
-  staff stationed behind it.
+- Reworks rooms around the explicit `fixed`, `event`, `scenario`, and `exit`
+  placement families. Games, shop items, people, and illustrated props occupy
+  art-aligned places, abstract scenario work attaches to tangible hosts, and
+  counter art properly occludes staff stationed behind it.
 - Adds three Grand Casino ending routes: Linda's Bronze-to-Gold Players Card
   climb, Rourke's walk/pat-down/interrogation/duel sequence, and a Crew heist.
 - Deepens every game without changing established economic authority: Baccarat
@@ -65,10 +84,10 @@ package handoff.
 
 ### Release-preparation notes
 
-- Final owner room approval and normal-play confirmations for the clean, cheat,
-  and Crew/heist win screens remain outside this release-prep entry.
-- The final qualification pass and final Windows/Web archives happen after
-  those closures. Upload and publication remain owner-only actions.
+- Final owner positioning and normal-play confirmations for the clean, cheat,
+  and Crew/heist win screens remain outside this prerelease entry.
+- The final qualification pass and stable Windows/Web archives happen after
+  those closures. Prerelease 2 is a testing build, not the final 0.6 release.
 
 ## 0.5.1 - Released (2026-08-13)
 

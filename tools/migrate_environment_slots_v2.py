@@ -27,10 +27,78 @@ SEQUENCE_DIR = ROOT / "data" / "environments" / "scenario_sequences"
 LEGACY_LEDGER_PATH = (
     ROOT / "docs" / "todo" / "environment_slot_family_manifest_legacy_mapping.json"
 )
+CONSOLIDATION_LEDGER_PATH = (
+    ROOT / "docs" / "todo" / "environment_slot_consolidation_disposition.json"
+)
+CONSOLIDATION_SOURCE_REF = "c3d55ffb"
 
 LEGACY_ORIGIN_FIELD = "__legacy_slot_ledger_origin"
+CONSOLIDATION_ORIGIN_FIELD = "__consolidation_source_slot_ids"
 
 FAMILIES = ("fixed", "event", "scenario", "exit")
+
+PULL_TABS_HOST_ACTION_IDS = (
+    "game:pull_tabs",
+    "game_hook:pull_tabs:ticket_redeemer",
+    "dialogue:pull_tab_clerk",
+)
+
+# Reviewed maximum banks.  Active/aftermath replay is combined with source-add
+# producers, delivery contact/package/hold state, recruitment actors, the Crew
+# live table, and one injected-person reserve.  The result replaces the old
+# 270-row catch-all scenario bank with 222 deliberate positions across all 21
+# maps without treating producers outside the snapshot replay as exclusive.
+SCENARIO_CAPACITY_TARGETS: dict[str, dict[str, int]] = {
+    "corner_store": {"standing_person": 4, "doorway": 1, "wall_mounted": 3, "floor_fixture": 2, "surface_item": 1, "behind_counter_person": 1},
+    "back_alley": {"standing_person": 4, "doorway": 1, "wall_mounted": 1, "floor_fixture": 3, "surface_item": 2, "ground_marker": 1},
+    "motel": {"standing_person": 4, "behind_counter_person": 1, "floor_fixture": 3, "wall_mounted": 2, "doorway": 3, "hanging": 1, "surface_item": 1},
+    "bar": {"floor_fixture": 4, "doorway": 1, "standing_person": 4, "surface_item": 2, "behind_counter_person": 2, "wall_mounted": 2, "seated_person": 2, "ground_marker": 1},
+    "gas_station_casino": {"wall_mounted": 3, "standing_person": 5, "doorway": 3, "surface_item": 1, "ground_marker": 1, "behind_counter_person": 2, "floor_fixture": 2, "group": 2},
+    "small_underground_casino": {"doorway": 1, "surface_item": 1, "floor_fixture": 1, "standing_person": 1, "wall_mounted": 1},
+    "small_underground_casino:club": {"floor_fixture": 3, "standing_person": 4, "doorway": 2, "surface_item": 2, "group": 1, "ground_marker": 1, "wall_mounted": 1},
+    "small_underground_casino:casino": {"floor_fixture": 3, "standing_person": 3, "doorway": 2, "seated_person": 1, "wall_mounted": 3, "surface_item": 1, "group": 1, "ground_marker": 1},
+    "small_underground_casino:back_room": {"surface_item": 1, "floor_fixture": 1, "standing_person": 1, "wall_mounted": 1},
+    "jazz_club": {"standing_person": 3, "floor_fixture": 3, "doorway": 1, "wall_mounted": 2, "surface_item": 1, "seated_person": 1, "ground_marker": 1},
+    "kitty_cat_lounge": {"standing_person": 3, "surface_item": 1, "floor_fixture": 3, "doorway": 2, "wall_mounted": 3, "seated_person": 1, "ground_marker": 1},
+    "delta_queen": {"standing_person": 3, "floor_fixture": 3, "behind_counter_person": 1, "doorway": 1, "wall_mounted": 4, "group": 1, "surface_item": 2, "ground_marker": 1},
+    "beach": {"floor_fixture": 4, "standing_person": 5, "doorway": 1, "surface_item": 2, "wall_mounted": 2, "behind_counter_person": 2, "ground_marker": 1},
+    "pawn_shop": {"standing_person": 2, "doorway": 1, "wall_mounted": 2, "floor_fixture": 2, "surface_item": 2, "shop_item": 2},
+    "grand_casino": {"surface_item": 1, "standing_person": 3, "doorway": 1, "wall_mounted": 3, "group": 1, "floor_fixture": 3, "ground_marker": 1},
+    "grand_casino_high_limit": {"wall_mounted": 1, "floor_fixture": 2, "standing_person": 1},
+    "grand_casino_back_room": {"floor_fixture": 2, "standing_person": 1, "wall_mounted": 1},
+    "grand_casino_cage": {"surface_item": 1, "floor_fixture": 2, "standing_person": 1, "wall_mounted": 1},
+    "motel_room": {"floor_fixture": 1, "standing_person": 1, "surface_item": 1, "wall_mounted": 1},
+    "apartment": {"floor_fixture": 1, "standing_person": 1, "surface_item": 1, "wall_mounted": 1},
+    "house": {"floor_fixture": 1, "standing_person": 1, "surface_item": 1, "wall_mounted": 1},
+}
+
+# Event rows are independent of the selected scenario.  These reviewed banks
+# retain the established Crew/traveler/Numbers concurrency.  Jazz alone loses
+# one obsolete counter row: rumor actions now live on the fixed bartender, so
+# two simultaneous optional event clerks are no longer produced.
+EVENT_CAPACITY_TARGETS: dict[str, dict[str, int]] = {
+    "corner_store": {"behind_counter_person": 2, "floor_fixture": 1, "group": 1, "standing_person": 1, "ground_marker": 1},
+    "back_alley": {"behind_counter_person": 1, "ground_marker": 1, "floor_fixture": 1, "standing_person": 6},
+    "motel": {"behind_counter_person": 1, "surface_item": 3, "ground_marker": 1, "standing_person": 4, "doorway": 1},
+    "bar": {"behind_counter_person": 1, "floor_fixture": 2, "standing_person": 5, "doorway": 1},
+    "gas_station_casino": {"doorway": 2, "floor_fixture": 2, "surface_item": 1, "ground_marker": 1, "standing_person": 5},
+    "small_underground_casino": {"floor_fixture": 2, "standing_person": 8, "wall_mounted": 1, "surface_item": 3, "doorway": 1},
+    "small_underground_casino:club": {"floor_fixture": 1, "standing_person": 8},
+    "small_underground_casino:casino": {"floor_fixture": 1, "behind_counter_person": 1, "seated_person": 1, "standing_person": 8},
+    "small_underground_casino:back_room": {"surface_item": 4, "floor_fixture": 1, "doorway": 1, "standing_person": 6},
+    "jazz_club": {"floor_fixture": 1, "standing_person": 3},
+    "kitty_cat_lounge": {"floor_fixture": 1, "seated_person": 1, "doorway": 1, "standing_person": 6},
+    "delta_queen": {"seated_person": 1, "doorway": 1, "behind_counter_person": 1, "floor_fixture": 2, "wall_mounted": 1, "surface_item": 1, "standing_person": 6},
+    "beach": {},
+    "pawn_shop": {"floor_fixture": 1, "standing_person": 3, "shop_item": 1, "surface_item": 1},
+    "grand_casino": {"behind_counter_person": 2, "wall_mounted": 1, "floor_fixture": 1, "standing_person": 7},
+    "grand_casino_high_limit": {"floor_fixture": 1, "standing_person": 6},
+    "grand_casino_back_room": {"standing_person": 5},
+    "grand_casino_cage": {},
+    "motel_room": {},
+    "apartment": {},
+    "house": {},
+}
 
 BASELINE_POOL_FIELDS = {
     "game": "game_pool",
@@ -69,6 +137,23 @@ HEIST_LIVE_TABLE_MAP_IDS = (
 )
 
 GENERIC_ROLE = {
+    "standing_person": "standing_person",
+    "behind_counter_person": "behind_counter_person",
+    "seated_person": "seated_person",
+    "group": "group",
+    "floor_fixture": "floor_fixture",
+    "ground_marker": "ground_marker",
+    "surface_item": "surface_item",
+    "shop_item": "shop_item",
+    "wall_mounted": "wall_item",
+    "hanging": "hanging_item",
+    "doorway": "doorway",
+}
+
+# The one-way v1 recipe first reconstructs the already-reviewed v2 authority,
+# whose repair functions still address its historical ids.  A final canonical
+# pass below renames those intermediate rows and every reference atomically.
+V1_INTERMEDIATE_ROLE = {
     "standing_person": "floor_patron",
     "behind_counter_person": "counter_patron",
     "seated_person": "seated_patron",
@@ -250,7 +335,7 @@ def fixed_slot_id(old_id: str) -> str:
 
 def generic_slot_id(family: str, slot: dict[str, Any], counters: dict[tuple[str, str], int]) -> str:
     footprint = str(slot.get("footprint_class", "floor_fixture"))
-    role = GENERIC_ROLE.get(footprint, footprint or "object")
+    role = V1_INTERMEDIATE_ROLE.get(footprint, footprint or "object")
     key = (family, role)
     counters[key] += 1
     return f"{family}.{role}_{counters[key]}"
@@ -311,7 +396,10 @@ def jazz_fixed_objects() -> list[dict[str, Any]]:
             "placement_class": "behind_counter_person",
             "exact_slot_id": "fixed.staff_bartender",
             "required": True,
-            "action_ids": ["service:house_drink", "event:town_rumor_staff"],
+            "action_ids": [
+                "service:house_drink",
+                "event:town_rumor_staff",
+            ],
         },
         {
             "object_id": "jazz_club:musician_sax",
@@ -372,18 +460,6 @@ def jazz_fixed_objects() -> list[dict[str, Any]]:
             "exact_slot_id": "fixed.band_stage",
             "required": True,
             "action_ids": ["service:listen_to_jazz"],
-        },
-        {
-            "object_id": "jazz_club:pulltab_game",
-            "presentation_id": "game:pull_tabs",
-            "object_type": "game",
-            "visual_type": "game",
-            "render_key": "pull_tabs",
-            "label": "Pull Tabs",
-            "placement_class": "wall_mounted",
-            "exact_slot_id": "fixed.pulltab_game",
-            "required": True,
-            "action_ids": ["game:pull_tabs"],
         },
     ]
 
@@ -541,7 +617,6 @@ def add_jazz_slots(map_data: dict[str, Any]) -> None:
     take(("fixed.musician_drummer", "fixed.service_stage"), "fixed.musician_drummer", "standing_person", (530.0, 236.0))
     take(("fixed.tip_jar_band",), "fixed.tip_jar_band", "surface_item", (620.0, 270.0))
     take(("fixed.band_stage", "fixed.event_listen_marker"), "fixed.band_stage", "ground_marker", (450.0, 354.0))
-    take(("fixed.pulltab_game", "fixed.event_pull_tabs_sign"), "fixed.pulltab_game", "wall_mounted", (688.0, 48.0))
 
     fixed_map = map_data["fixed_object_slot_ids"]
     for action_id in (
@@ -556,7 +631,6 @@ def add_jazz_slots(map_data: dict[str, Any]) -> None:
         for family in FAMILIES:
             map_data.get(f"{family}_object_slot_ids", {}).pop(action_id, None)
     fixed_map["shopkeeper:merchant"] = "fixed.staff_bartender"
-    fixed_map["game:pull_tabs"] = "fixed.pulltab_game"
 
     object_families = map_data["object_family_ids"]
     for action_id in (
@@ -570,7 +644,6 @@ def add_jazz_slots(map_data: dict[str, Any]) -> None:
     ):
         object_families[action_id] = "fixed"
     object_families["shopkeeper:merchant"] = "fixed"
-    object_families["game:pull_tabs"] = "fixed"
     map_data["fixed_objects"] = jazz_fixed_objects()
 
 
@@ -728,6 +801,11 @@ def _ensure_provisional_slot(
     if source is None:
         raise ValueError(f"{map_data.get('id', '<unknown>')}: cannot provision {slot_id}; no source geometry")
     target = copy.deepcopy(source)
+    # A newly provisioned capacity row borrows geometry but is not the same
+    # authored row for current-v2 disposition/import purposes.  Keep the
+    # legacy-origin evidence (which explicitly tracks geometry ancestry), but
+    # mark this row as introduced in the consolidation ledger.
+    target.pop(CONSOLIDATION_ORIGIN_FIELD, None)
     target["id"] = slot_id
     target["kind"] = family
     target["footprint_class"] = footprint_class
@@ -1630,7 +1708,6 @@ def _normalize_jazz_spacing(maps: dict[str, dict[str, Any]]) -> None:
         "fixed.musician_cello",
         "fixed.musician_drummer",
         "fixed.tip_jar_band",
-        "fixed.pulltab_game",
         "fixed.item_shop_1",
         "fixed.item_shop_2",
         "fixed.patron_dot",
@@ -1725,11 +1802,6 @@ def _normalize_jazz_spacing(maps: dict[str, dict[str, Any]]) -> None:
     _move_slot_to(slots["scenario.doorway_1"], (36.0, 76.0))
     _move_slot_to(slots["exit.left_upper"], (36.0, 160.0))
     _move_slot_to(slots["exit.left_middle"], (36.0, 244.0))
-
-    pulltab = slots["fixed.pulltab_game"]
-    pulltab["pos"] = [688.0, 24.0]
-    pulltab["label_anchor"] = [688.0, 56.0]
-
 
 def _normalize_grand_living_floor_capacity(maps: dict[str, dict[str, Any]]) -> None:
     """Author optional generic event capacity for the complete living-floor cast."""
@@ -2277,6 +2349,909 @@ def _normalize_slot_occupancy_metadata(payload: dict[str, Any]) -> None:
             slot["occupancy_required"] = True
 
 
+def _fixed_object_by_id(
+    map_data: dict[str, Any], object_id: str
+) -> dict[str, Any] | None:
+    return next(
+        (
+            value
+            for value in map_data.get("fixed_objects", []) or []
+            if isinstance(value, dict) and str(value.get("object_id", "")) == object_id
+        ),
+        None,
+    )
+
+
+def _rename_slot_and_references(
+    map_data: dict[str, Any], source_slot_id: str, target_slot_id: str
+) -> None:
+    """Rename one authored row and every local authority reference atomically."""
+
+    source = _slot_by_id(map_data, source_slot_id)
+    target = _slot_by_id(map_data, target_slot_id)
+    if source is None:
+        if target is not None:
+            return
+        raise ValueError(
+            f"{map_data.get('id', '<unknown>')}: cannot rename missing "
+            f"{source_slot_id}"
+        )
+    if target is not None and target is not source:
+        raise ValueError(
+            f"{map_data.get('id', '<unknown>')}: rename target already exists "
+            f"{target_slot_id}"
+        )
+    source["id"] = target_slot_id
+    for family in FAMILIES:
+        for suffix in ("object_slot_ids", "category_slot_ids"):
+            preferences = map_data.get(f"{family}_{suffix}", {})
+            if not isinstance(preferences, dict):
+                continue
+            for claimant, slot_id in list(preferences.items()):
+                if str(slot_id) == source_slot_id:
+                    preferences[claimant] = target_slot_id
+    preferences = map_data.get("scenario_slot_ids", {})
+    if isinstance(preferences, dict):
+        for claimant, slot_id in list(preferences.items()):
+            if str(slot_id) == source_slot_id:
+                preferences[claimant] = target_slot_id
+    for route in map_data.get("actor_routes", []) or []:
+        if not isinstance(route, dict):
+            continue
+        for field in ("start_slot_id", "end_slot_id", "reduced_motion_slot_id"):
+            if str(route.get(field, "")) == source_slot_id:
+                route[field] = target_slot_id
+    for declaration in map_data.get("fixed_objects", []) or []:
+        if (
+            isinstance(declaration, dict)
+            and str(declaration.get("exact_slot_id", "")) == source_slot_id
+        ):
+            declaration["exact_slot_id"] = target_slot_id
+
+
+def _normalize_descriptive_fixed_ids(maps: dict[str, dict[str, Any]]) -> None:
+    renames = {
+        "back_alley": {
+            "fixed.door_left_upper": "fixed.lender_street_lender",
+        },
+        "pawn_shop": {
+            "fixed.door_left_lower": "fixed.lender_sals_pawn_counter",
+        },
+        "beach": {
+            "fixed.door_right_lower": "fixed.service_beach_sand_pile",
+        },
+        "kitty_cat_lounge": {
+            "fixed.random_game_1": "fixed.event_grand_casino_invite",
+        },
+        "delta_queen": {
+            "fixed.event_wall_1": "fixed.event_grand_casino_invite",
+        },
+    }
+    for map_id, map_renames in renames.items():
+        for source_slot_id, target_slot_id in map_renames.items():
+            _rename_slot_and_references(
+                maps[map_id], source_slot_id, target_slot_id
+            )
+
+
+def _attach_actions_to_fixed_host(
+    map_data: dict[str, Any], host_object_id: str, action_ids: tuple[str, ...]
+) -> None:
+    """Attach abstract interactions to one guaranteed tangible room object."""
+
+    declaration = _fixed_object_by_id(map_data, host_object_id)
+    if declaration is None:
+        raise ValueError(
+            f"{map_data.get('id', '<unknown>')}: missing fixed action host {host_object_id}"
+        )
+    actions = [str(value) for value in declaration.get("action_ids", []) or []]
+    for action_id in action_ids:
+        if action_id not in actions:
+            actions.append(action_id)
+        _remove_object_slot_assignment(map_data, action_id)
+        map_data.setdefault("object_family_ids", {})[action_id] = "fixed"
+        class_overrides = map_data.get("class_overrides", {})
+        if isinstance(class_overrides, dict):
+            class_overrides.pop(action_id, None)
+        positions = map_data.get("object_slot_positions", {})
+        if isinstance(positions, dict):
+            positions.pop(action_id, None)
+    declaration["action_ids"] = actions
+
+
+def _retire_pull_tabs_standalone_rows(maps: dict[str, dict[str, Any]]) -> None:
+    """Put Pull Tabs, redemption, and help on each venue's staffed counter."""
+
+    retired_slot_ids = {
+        "bar": (
+            "fixed.ticket_redeemer",
+            "fixed.random_game_3",
+        ),
+        "gas_station_casino": (
+            "fixed.service_lottery_desk",
+            "fixed.service_refreshment_shelf",
+            "fixed.random_game_2",
+            "fixed.event_control_rail",
+        ),
+        "jazz_club": (
+            "fixed.pulltab_game",
+            "fixed.event_pull_tabs_sign",
+            "fixed.random_game_1",
+            "fixed.service_bar",
+        ),
+        "grand_casino": (
+            "fixed.ticket_redeemer",
+            "fixed.game_machine_5",
+        ),
+    }
+    dynamic_actions = {
+        "bar": PULL_TABS_HOST_ACTION_IDS,
+        "gas_station_casino": (
+            *PULL_TABS_HOST_ACTION_IDS,
+            "game_hook:scratch_tickets:scratch_ticket_clerk",
+        ),
+        "jazz_club": PULL_TABS_HOST_ACTION_IDS,
+        "grand_casino": PULL_TABS_HOST_ACTION_IDS,
+    }
+    for map_id, action_ids in dynamic_actions.items():
+        map_data = maps[map_id]
+        for action_id in action_ids:
+            _remove_object_slot_assignment(map_data, action_id)
+            map_data.setdefault("object_family_ids", {})[action_id] = "fixed"
+            if isinstance(map_data.get("class_overrides"), dict):
+                map_data["class_overrides"].pop(action_id, None)
+            if isinstance(map_data.get("object_slot_positions"), dict):
+                map_data["object_slot_positions"].pop(action_id, None)
+
+    for map_id, map_data in maps.items():
+        if map_id not in retired_slot_ids:
+            continue
+        retired_ids = set(retired_slot_ids[map_id])
+        map_data["fixed_slots"] = [
+            slot
+            for slot in map_data.get("fixed_slots", []) or []
+            if not isinstance(slot, dict)
+            or str(slot.get("id", "")) not in retired_ids
+        ]
+        for family in FAMILIES:
+            for suffix in ("object_slot_ids", "category_slot_ids"):
+                preferences = map_data.get(f"{family}_{suffix}", {})
+                if not isinstance(preferences, dict):
+                    continue
+                for claimant in list(preferences):
+                    if str(preferences.get(claimant, "")) in retired_ids:
+                        preferences.pop(claimant, None)
+
+        # These category aliases represented the two synthetic Pull Tabs hook
+        # rows. Gas keeps hook 0 because that row belongs to Scratch Tickets.
+        categories = map_data.get("fixed_category_slot_ids", {})
+        if isinstance(categories, dict):
+            for category_id in list(categories):
+                if str(category_id).startswith("game_hook_spots:"):
+                    categories.pop(category_id, None)
+
+    jazz = maps["jazz_club"]
+    jazz["fixed_objects"] = [
+        value
+        for value in jazz.get("fixed_objects", []) or []
+        if not isinstance(value, dict)
+        or str(value.get("object_id", "")) != "jazz_club:pulltab_game"
+    ]
+    retired_exits = {"exit.left_upper", "exit.left_middle"}
+    jazz["exit_slots"] = [
+        slot
+        for slot in jazz.get("exit_slots", []) or []
+        if not isinstance(slot, dict) or str(slot.get("id", "")) not in retired_exits
+    ]
+    for suffix in ("object_slot_ids", "category_slot_ids"):
+        preferences = jazz.get(f"exit_{suffix}", {})
+        if not isinstance(preferences, dict):
+            continue
+        for claimant in list(preferences):
+            if str(preferences.get(claimant, "")) in retired_exits:
+                preferences.pop(claimant, None)
+
+    bar_categories = maps["bar"].get("fixed_category_slot_ids", {})
+    if isinstance(bar_categories, dict):
+        for category_id in list(bar_categories):
+            if str(category_id).startswith("game_spots:"):
+                bar_categories.pop(category_id, None)
+        bar_categories.update({
+            "game_spots:0": "fixed.random_game_1",
+            "game_spots:1": "fixed.random_game_2",
+        })
+
+    gas = maps["gas_station_casino"]
+    for object_id in ("game:coin_pusher", "game:slot", "game:video_poker"):
+        _assign_object_slot(gas, "fixed", object_id, "fixed.random_game_1")
+        gas.setdefault("class_overrides", {})[object_id] = "floor_fixture"
+    gas_categories = gas.get("fixed_category_slot_ids", {})
+    if isinstance(gas_categories, dict):
+        for category_id in list(gas_categories):
+            if str(category_id).startswith("game_spots:"):
+                gas_categories.pop(category_id, None)
+        gas_categories.update({
+            "game_spots:0": "fixed.random_game_1",
+            "game_spots:1": "fixed.game_scratch_tickets",
+        })
+
+    # Grand's fifth machine was the standalone Pull Tabs fixture.  Keep the
+    # four machine rows, then close the category sequence over the two table
+    # rows so Blackjack and Craps retain deterministic physical geometry.
+    grand_categories = maps["grand_casino"].get("fixed_category_slot_ids", {})
+    if isinstance(grand_categories, dict):
+        for category_id in list(grand_categories):
+            if str(category_id).startswith("game_spots:"):
+                grand_categories.pop(category_id, None)
+        for ordinal, slot_id in enumerate(
+            (
+                "fixed.game_machine_1",
+                "fixed.game_machine_2",
+                "fixed.game_machine_3",
+                "fixed.game_machine_4",
+                "fixed.game_table_left",
+                "fixed.game_table_right",
+            )
+        ):
+            grand_categories[f"game_spots:{ordinal}"] = slot_id
+
+
+def _scenario_capacity_plan(
+    map_data: dict[str, Any],
+) -> tuple[set[str], dict[str, str | None]]:
+    """Return retained ids and the deterministic old-id disposition map."""
+
+    map_id = str(map_data.get("id", ""))
+    targets = SCENARIO_CAPACITY_TARGETS.get(map_id)
+    if targets is None:
+        raise ValueError(f"{map_id}: scenario consolidation target is missing")
+    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    slots = [
+        slot
+        for slot in map_data.get("scenario_slots", []) or []
+        if isinstance(slot, dict)
+    ]
+    for slot in slots:
+        grouped[str(slot.get("footprint_class", ""))].append(slot)
+
+    forced_ids: set[str] = set(_runtime_person_capacity_targets().get(map_id, ()))
+    keep_ids: set[str] = set()
+    mapping: dict[str, str | None] = {}
+    for placement_class, class_slots in grouped.items():
+        target_count = int(targets.get(placement_class, 0))
+        if target_count > len(class_slots):
+            raise ValueError(
+                f"{map_id}: scenario target needs {target_count} {placement_class} rows, "
+                f"but only {len(class_slots)} exist"
+            )
+        selected = list(class_slots[:target_count])
+        for forced_id in sorted(forced_ids):
+            forced_slot = next(
+                (
+                    slot
+                    for slot in class_slots
+                    if str(slot.get("id", "")) == forced_id
+                ),
+                None,
+            )
+            if forced_slot is None or forced_slot in selected or target_count <= 0:
+                continue
+            replace_index = next(
+                (
+                    index
+                    for index in range(len(selected) - 1, -1, -1)
+                    if str(selected[index].get("id", "")) not in forced_ids
+                ),
+                None,
+            )
+            if replace_index is None:
+                raise ValueError(f"{map_id}: cannot retain forced reserve {forced_id}")
+            selected[replace_index] = forced_slot
+        selected.sort(key=lambda slot: class_slots.index(slot))
+        selected_ids = [str(slot.get("id", "")) for slot in selected]
+        keep_ids.update(selected_ids)
+        for index, slot in enumerate(class_slots):
+            slot_id = str(slot.get("id", ""))
+            mapping[slot_id] = (
+                slot_id
+                if slot_id in keep_ids
+                else selected_ids[index % len(selected_ids)]
+                if selected_ids
+                else None
+            )
+    return keep_ids, mapping
+
+
+def _rewrite_scenario_slot_references(
+    map_data: dict[str, Any], mapping: dict[str, str | None]
+) -> None:
+    for field in (
+        "scenario_object_slot_ids",
+        "scenario_category_slot_ids",
+        "scenario_slot_ids",
+    ):
+        preferences = map_data.get(field, {})
+        if not isinstance(preferences, dict):
+            continue
+        for claimant in list(preferences):
+            old_slot_id = str(preferences.get(claimant, ""))
+            if old_slot_id not in mapping:
+                continue
+            target = mapping[old_slot_id]
+            if target:
+                preferences[claimant] = target
+            else:
+                preferences.pop(claimant, None)
+
+    current_slots = {
+        str(slot.get("id", "")): slot
+        for slot in map_data.get("scenario_slots", []) or []
+        if isinstance(slot, dict)
+    }
+    retained_by_class: dict[str, list[str]] = defaultdict(list)
+    keep_ids = {target for target in mapping.values() if target}
+    for slot in map_data.get("scenario_slots", []) or []:
+        if not isinstance(slot, dict):
+            continue
+        slot_id = str(slot.get("id", ""))
+        if slot_id in keep_ids:
+            retained_by_class[str(slot.get("footprint_class", ""))].append(slot_id)
+
+    for route in map_data.get("actor_routes", []) or []:
+        if not isinstance(route, dict):
+            continue
+        original: dict[str, str] = {}
+        for field in ("start_slot_id", "end_slot_id", "reduced_motion_slot_id"):
+            old_slot_id = str(route.get(field, "")).strip()
+            original[field] = old_slot_id
+            if old_slot_id in mapping:
+                target = mapping[old_slot_id]
+                if target:
+                    route[field] = target
+                else:
+                    route.pop(field, None)
+        start_id = str(route.get("start_slot_id", ""))
+        end_id = str(route.get("end_slot_id", ""))
+        if start_id and start_id == end_id:
+            old_start = current_slots.get(original.get("start_slot_id", ""), {})
+            placement_class = str(old_start.get("footprint_class", ""))
+            alternative = next(
+                (
+                    slot_id
+                    for slot_id in retained_by_class.get(placement_class, [])
+                    if slot_id != start_id
+                ),
+                "",
+            )
+            if not alternative:
+                raise ValueError(
+                    f"{map_data.get('id', '<unknown>')}: route {route.get('id', '')} "
+                    "lost a distinct scenario endpoint"
+                )
+            route["end_slot_id"] = alternative
+
+
+def _normalize_event_capacity_consolidation(
+    maps: dict[str, dict[str, Any]],
+) -> None:
+    """Apply the reviewed ambient-event bank and merge retired aliases."""
+
+    if set(maps) != set(EVENT_CAPACITY_TARGETS):
+        raise ValueError("event consolidation target coverage drift")
+    for map_id, map_data in maps.items():
+        grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
+        for slot in map_data.get("event_slots", []) or []:
+            if isinstance(slot, dict):
+                grouped[str(slot.get("footprint_class", ""))].append(slot)
+        mapping: dict[str, str | None] = {}
+        keep_ids: set[str] = set()
+        for placement_class, class_slots in grouped.items():
+            target_count = int(EVENT_CAPACITY_TARGETS[map_id].get(placement_class, 0))
+            if target_count > len(class_slots):
+                raise ValueError(
+                    f"{map_id}: event target needs {target_count} {placement_class} rows, "
+                    f"but only {len(class_slots)} exist"
+                )
+            selected_ids = [
+                str(slot.get("id", "")) for slot in class_slots[:target_count]
+            ]
+            keep_ids.update(selected_ids)
+            for index, slot in enumerate(class_slots):
+                slot_id = str(slot.get("id", ""))
+                mapping[slot_id] = (
+                    slot_id
+                    if slot_id in keep_ids
+                    else selected_ids[index % len(selected_ids)]
+                    if selected_ids
+                    else None
+                )
+        for field in ("event_object_slot_ids", "event_category_slot_ids"):
+            preferences = map_data.get(field, {})
+            if not isinstance(preferences, dict):
+                continue
+            for claimant in list(preferences):
+                source_id = str(preferences.get(claimant, ""))
+                if source_id not in mapping:
+                    continue
+                target_id = mapping[source_id]
+                if target_id:
+                    preferences[claimant] = target_id
+                else:
+                    preferences.pop(claimant, None)
+        slots_by_id = {
+            str(slot.get("id", "")): slot
+            for slot in map_data.get("event_slots", []) or []
+            if isinstance(slot, dict)
+        }
+        for source_id, target_id in mapping.items():
+            if not target_id or source_id == target_id:
+                continue
+            source = slots_by_id.get(source_id, {})
+            target = slots_by_id.get(target_id, {})
+            source_origins = source.get(CONSOLIDATION_ORIGIN_FIELD, [])
+            target_origins = target.get(CONSOLIDATION_ORIGIN_FIELD, [])
+            if (
+                (CONSOLIDATION_ORIGIN_FIELD in source
+                 or CONSOLIDATION_ORIGIN_FIELD in target)
+                and isinstance(source_origins, list)
+                and isinstance(target_origins, list)
+            ):
+                target[CONSOLIDATION_ORIGIN_FIELD] = sorted(
+                    set(str(value) for value in [*target_origins, *source_origins])
+                )
+        map_data["event_slots"] = [
+            slot
+            for slot in map_data.get("event_slots", []) or []
+            if isinstance(slot, dict) and str(slot.get("id", "")) in keep_ids
+        ]
+        actual: dict[str, int] = defaultdict(int)
+        for slot in map_data["event_slots"]:
+            actual[str(slot.get("footprint_class", ""))] += 1
+        expected = {
+            placement_class: count
+            for placement_class, count in EVENT_CAPACITY_TARGETS[map_id].items()
+            if count > 0
+        }
+        if dict(actual) != expected:
+            raise ValueError(
+                f"{map_id}: consolidated event bank differs: "
+                f"expected={expected} actual={dict(actual)}"
+            )
+
+
+def _normalize_scenario_capacity_consolidation(
+    maps: dict[str, dict[str, Any]],
+) -> None:
+    """Apply the reviewed physical-class bank across all 21 effective maps."""
+
+    if set(maps) != set(SCENARIO_CAPACITY_TARGETS):
+        raise ValueError(
+            "scenario consolidation coverage drift: "
+            f"maps={sorted(set(maps) - set(SCENARIO_CAPACITY_TARGETS))} "
+            f"targets={sorted(set(SCENARIO_CAPACITY_TARGETS) - set(maps))}"
+        )
+    for map_id, map_data in maps.items():
+        grouped_ids: dict[str, list[str]] = defaultdict(list)
+        for slot in map_data.get("scenario_slots", []) or []:
+            if isinstance(slot, dict):
+                grouped_ids[str(slot.get("footprint_class", ""))].append(
+                    str(slot.get("id", ""))
+                )
+        canonical = any(
+            slot_id.startswith("scenario.standing_person_")
+            or slot_id.startswith("scenario.floor_fixture_")
+            for slot_ids in grouped_ids.values()
+            for slot_id in slot_ids
+        )
+        for placement_class, target_count in SCENARIO_CAPACITY_TARGETS[map_id].items():
+            while len(grouped_ids.get(placement_class, [])) < target_count:
+                sources = tuple(grouped_ids.get(placement_class, []))
+                if not sources:
+                    raise ValueError(
+                        f"{map_id}: cannot provision {placement_class} without source geometry"
+                    )
+                role_table = GENERIC_ROLE if canonical else V1_INTERMEDIATE_ROLE
+                role = role_table[placement_class]
+                slot_id = f"scenario.{role}_{len(grouped_ids[placement_class]) + 1}"
+                _ensure_provisional_slot(
+                    map_data,
+                    "scenario",
+                    slot_id,
+                    placement_class,
+                    sources,
+                    (18.0 * len(grouped_ids[placement_class]), 12.0),
+                )
+                introduced = _slot_by_id(map_data, slot_id)
+                if introduced is not None and CONSOLIDATION_ORIGIN_FIELD in introduced:
+                    introduced[CONSOLIDATION_ORIGIN_FIELD] = []
+                grouped_ids[placement_class].append(slot_id)
+        keep_ids, mapping = _scenario_capacity_plan(map_data)
+        _rewrite_scenario_slot_references(map_data, mapping)
+        slots_by_id = {
+            str(slot.get("id", "")): slot
+            for slot in map_data.get("scenario_slots", []) or []
+            if isinstance(slot, dict)
+        }
+        for source_id, target_id in mapping.items():
+            if not target_id or source_id == target_id:
+                continue
+            source = slots_by_id.get(source_id, {})
+            target = slots_by_id.get(target_id, {})
+            source_origins = source.get(CONSOLIDATION_ORIGIN_FIELD, [])
+            target_origins = target.get(CONSOLIDATION_ORIGIN_FIELD, [])
+            if (
+                (CONSOLIDATION_ORIGIN_FIELD in source
+                 or CONSOLIDATION_ORIGIN_FIELD in target)
+                and isinstance(source_origins, list)
+                and isinstance(target_origins, list)
+            ):
+                target[CONSOLIDATION_ORIGIN_FIELD] = sorted(
+                    set(str(value) for value in [*target_origins, *source_origins])
+                )
+        map_data["scenario_slots"] = [
+            slot
+            for slot in map_data.get("scenario_slots", []) or []
+            if isinstance(slot, dict) and str(slot.get("id", "")) in keep_ids
+        ]
+        actual: dict[str, int] = defaultdict(int)
+        for slot in map_data["scenario_slots"]:
+            actual[str(slot.get("footprint_class", ""))] += 1
+        expected = {
+            placement_class: count
+            for placement_class, count in SCENARIO_CAPACITY_TARGETS[map_id].items()
+            if count > 0
+        }
+        if dict(actual) != expected:
+            raise ValueError(
+                f"{map_id}: consolidated scenario bank differs: "
+                f"expected={expected} actual={dict(actual)}"
+            )
+
+
+def _physical_role(slot: dict[str, Any], declaration_label: str = "") -> str:
+    if declaration_label:
+        return declaration_label
+    slot_id = str(slot.get("id", ""))
+    placement_class = str(slot.get("footprint_class", ""))
+    if "musician_" in slot_id:
+        return "Musician"
+    if "tip_jar" in slot_id:
+        return "Tip jar"
+    if "band_stage" in slot_id:
+        return "Performance stage"
+    if ".item_shop_" in slot_id:
+        return "Shop item"
+    if "game" in slot_id:
+        return "Game fixture"
+    if slot_id.startswith("exit."):
+        return "Travel exit"
+    roles = {
+        "standing_person": "Standing person",
+        "behind_counter_person": "Counter staff",
+        "seated_person": "Seated person",
+        "group": "Group",
+        "floor_fixture": "Floor prop",
+        "ground_marker": "Floor marker",
+        "surface_item": "Counter or table item",
+        "shop_item": "Shop item",
+        "wall_mounted": "Wall item",
+        "hanging": "Hanging item",
+        "doorway": "Doorway / exit",
+    }
+    return roles.get(placement_class, "Physical placement")
+
+
+def _normalize_slot_authoring_metadata(payload: dict[str, Any]) -> None:
+    """Give every slot a concise role, claimant list, and reserve contract."""
+
+    maps = {
+        str(map_data.get("id", "")): map_data
+        for map_data in payload.get("maps", []) or []
+        if isinstance(map_data, dict)
+    }
+    for map_id, map_data in maps.items():
+        canonical_ids = _uses_canonical_reusable_slot_ids(
+            {"maps": [map_data]}
+        )
+        occupants: dict[str, set[str]] = defaultdict(set)
+        labels: dict[str, str] = {}
+        for family in FAMILIES:
+            preferences = map_data.get(f"{family}_object_slot_ids", {})
+            if isinstance(preferences, dict):
+                for object_id, slot_id in preferences.items():
+                    occupants[str(slot_id)].add(str(object_id))
+        preferences = map_data.get("scenario_slot_ids", {})
+        if isinstance(preferences, dict):
+            for identity, slot_id in preferences.items():
+                stable_id = str(identity).split("|", 1)[0].strip()
+                if stable_id:
+                    occupants[str(slot_id)].add(stable_id)
+        for route in map_data.get("actor_routes", []) or []:
+            if not isinstance(route, dict):
+                continue
+            route_id = str(route.get("id", "")).strip()
+            for field in ("start_slot_id", "end_slot_id", "reduced_motion_slot_id"):
+                slot_id = str(route.get(field, "")).strip()
+                if slot_id and route_id:
+                    occupants[slot_id].add(f"route:{route_id}")
+        for declaration in map_data.get("fixed_objects", []) or []:
+            if not isinstance(declaration, dict):
+                continue
+            slot_id = str(declaration.get("exact_slot_id", ""))
+            for field in ("object_id", "presentation_id"):
+                occupant_id = str(declaration.get(field, "")).strip()
+                if occupant_id:
+                    occupants[slot_id].add(occupant_id)
+            label = str(declaration.get("label", "")).strip()
+            if label:
+                labels[slot_id] = label
+
+        # On the one-way conversion pass the reviewed reserve targets still use
+        # the v1-intermediate ids.  A maintenance refresh sees canonical ids,
+        # so carry the already-authored semantic reserve marker instead of
+        # trying to address the retired ``floor_patron`` spelling again.
+        runtime_people = (
+            {
+                str(slot.get("id", ""))
+                for slot in map_data.get("scenario_slots", []) or []
+                if isinstance(slot, dict)
+                and (
+                    str(slot.get("physical_role", ""))
+                    == "Runtime contact reserve"
+                    or str(slot.get("reserve_reason", "")).startswith(
+                        "Injected chain, traveler, or delivery contact"
+                    )
+                )
+            }
+            if canonical_ids
+            else set(_runtime_person_capacity_targets().get(map_id, ()))
+        )
+        scenario_wall_ids = [
+            str(slot.get("id", ""))
+            for slot in map_data.get("scenario_slots", []) or []
+            if isinstance(slot, dict)
+            and str(slot.get("footprint_class", "")) == "wall_mounted"
+        ]
+        delivery_wall_id = scenario_wall_ids[-1] if scenario_wall_ids else ""
+        scenario_floor_ids = [
+            str(slot.get("id", ""))
+            for slot in map_data.get("scenario_slots", []) or []
+            if isinstance(slot, dict)
+            and str(slot.get("footprint_class", "")) == "floor_fixture"
+        ]
+        heist_floor_id = (
+            scenario_floor_ids[-1]
+            if map_id in HEIST_LIVE_TABLE_MAP_IDS and scenario_floor_ids
+            else ""
+        )
+        delivery_floor_id = (
+            scenario_floor_ids[-2]
+            if heist_floor_id and len(scenario_floor_ids) >= 2
+            else scenario_floor_ids[-1]
+            if scenario_floor_ids
+            else ""
+        )
+        beach_recruitment_id = (
+            "scenario.floor_patron_5" if map_id == "beach" and not canonical_ids else ""
+        )
+        event_exact_ids = {
+            str(slot_id)
+            for slot_id in (
+                map_data.get("event_object_slot_ids", {}).values()
+                if isinstance(map_data.get("event_object_slot_ids"), dict)
+                else []
+            )
+        }
+        event_category_ids = {
+            str(slot_id)
+            for slot_id in (
+                map_data.get("event_category_slot_ids", {}).values()
+                if isinstance(map_data.get("event_category_slot_ids"), dict)
+                else []
+            )
+        }
+        for family in FAMILIES:
+            for slot in map_data.get(f"{family}_slots", []) or []:
+                if not isinstance(slot, dict):
+                    continue
+                slot_id = str(slot.get("id", ""))
+                previous_role = str(slot.get("physical_role", "")).strip()
+                reserve_reason = (
+                    str(slot.get("reserve_reason", ""))
+                    if bool(slot.get("runtime_reserve", False))
+                    else ""
+                )
+                if slot_id in runtime_people:
+                    reserve_reason = (
+                        "Injected chain, traveler, or delivery contact can coexist "
+                        "with the authored scenario cast."
+                    )
+                elif family == "scenario" and slot_id == delivery_wall_id:
+                    reserve_reason = (
+                        "Runtime delivery or chain state can add a held wall object "
+                        "beside the authored scenario inventory."
+                    )
+                elif family == "scenario" and slot_id == heist_floor_id:
+                    reserve_reason = (
+                        "The Crew's live table can follow the player into this room "
+                        "beside authored scenario objects."
+                    )
+                elif family == "scenario" and slot_id == delivery_floor_id:
+                    reserve_reason = (
+                        "Runtime delivery state can add a package or floor prop "
+                        "beside the authored scenario inventory."
+                    )
+                elif (
+                    map_id == "bar"
+                    and family == "scenario"
+                    and slot_id in {
+                        "scenario.seated_patron_2",
+                        "scenario.seated_person_2",
+                    }
+                ):
+                    reserve_reason = (
+                        "Knuckles recruitment can coexist with the Fight Night seated actor."
+                    )
+                elif (
+                    map_id == "beach"
+                    and family == "scenario"
+                    and slot_id == beach_recruitment_id
+                ):
+                    reserve_reason = (
+                        "Lucky recruitment can coexist with the Festival scenario cast."
+                    )
+                elif (
+                    family == "event"
+                    and slot_id not in event_exact_ids
+                    and slot_id not in event_category_ids
+                ):
+                    reserve_reason = (
+                        "Independent ambient traveler, Crew, or Numbers presence may "
+                        "coexist with mapped room events."
+                    )
+                physical_role = _physical_role(slot, labels.get(slot_id, ""))
+                if slot_id in runtime_people:
+                    physical_role = "Runtime contact reserve"
+                elif slot_id == delivery_wall_id and family == "scenario":
+                    physical_role = "Delivery hold reserve"
+                elif slot_id == heist_floor_id and family == "scenario":
+                    physical_role = "Crew live-table reserve"
+                elif slot_id == delivery_floor_id and family == "scenario":
+                    physical_role = "Delivery package reserve"
+                elif reserve_reason and (
+                    (
+                        map_id == "bar"
+                        and slot_id in {
+                            "scenario.seated_patron_2",
+                            "scenario.seated_person_2",
+                        }
+                    )
+                    or (map_id == "beach" and slot_id == beach_recruitment_id)
+                ):
+                    physical_role = "Recruitment contact reserve"
+                elif reserve_reason and previous_role:
+                    # Preserve semantic roles whose first-pass target was
+                    # selected before canonical ids were assigned (notably the
+                    # Beach recruitment reserve).
+                    physical_role = previous_role
+                slot["physical_role"] = physical_role
+                slot["occupant_ids"] = sorted(occupants.get(slot_id, set()))
+                slot["runtime_reserve"] = bool(reserve_reason)
+                slot["reserve_reason"] = reserve_reason
+
+
+def _normalize_reusable_slot_ids(payload: dict[str, Any]) -> None:
+    """Rename event/scenario pools by physical role and rewrite all references."""
+
+    for map_data in payload.get("maps", []) or []:
+        if not isinstance(map_data, dict):
+            continue
+        family_mappings: dict[str, dict[str, str]] = {}
+        for family in ("event", "scenario"):
+            counters: dict[str, int] = defaultdict(int)
+            mapping: dict[str, str] = {}
+            for slot in map_data.get(f"{family}_slots", []) or []:
+                if not isinstance(slot, dict):
+                    continue
+                old_slot_id = str(slot.get("id", ""))
+                placement_class = str(slot.get("footprint_class", ""))
+                role = GENERIC_ROLE.get(placement_class)
+                if not role:
+                    raise ValueError(
+                        f"{map_data.get('id', '<unknown>')}.{old_slot_id}: "
+                        f"no canonical role for {placement_class}"
+                    )
+                counters[role] += 1
+                new_slot_id = f"{family}.{role}_{counters[role]}"
+                mapping[old_slot_id] = new_slot_id
+                slot["id"] = new_slot_id
+                slot["kind"] = family
+            if len(set(mapping.values())) != len(mapping):
+                raise ValueError(
+                    f"{map_data.get('id', '<unknown>')}: duplicate canonical {family} ids"
+                )
+            family_mappings[family] = mapping
+            for suffix in ("object_slot_ids", "category_slot_ids"):
+                preferences = map_data.get(f"{family}_{suffix}", {})
+                if not isinstance(preferences, dict):
+                    continue
+                for claimant, old_slot_id_value in list(preferences.items()):
+                    old_slot_id = str(old_slot_id_value)
+                    if old_slot_id in mapping:
+                        preferences[claimant] = mapping[old_slot_id]
+
+        scenario_mapping = family_mappings["scenario"]
+        preferences = map_data.get("scenario_slot_ids", {})
+        if isinstance(preferences, dict):
+            for claimant, old_slot_id_value in list(preferences.items()):
+                old_slot_id = str(old_slot_id_value)
+                if old_slot_id in scenario_mapping:
+                    preferences[claimant] = scenario_mapping[old_slot_id]
+        for route in map_data.get("actor_routes", []) or []:
+            if not isinstance(route, dict):
+                continue
+            for field in ("start_slot_id", "end_slot_id", "reduced_motion_slot_id"):
+                old_slot_id = str(route.get(field, "")).strip()
+                if old_slot_id in scenario_mapping:
+                    route[field] = scenario_mapping[old_slot_id]
+
+
+def _normalize_slot_field_order(payload: dict[str, Any]) -> None:
+    order = (
+        "id", "kind", "pos", "footprint_class", "physical_role",
+        "occupant_ids", "runtime_reserve", "reserve_reason", "hit_rect",
+        "label_anchor", "facing", "priority", "zone_id", "support_id",
+        "walk_lane_ids", "occupancy_required",
+    )
+    for map_data in payload.get("maps", []) or []:
+        if not isinstance(map_data, dict):
+            continue
+        for family in FAMILIES:
+            for slot in map_data.get(f"{family}_slots", []) or []:
+                if not isinstance(slot, dict):
+                    continue
+                if not slot.get(CONSOLIDATION_ORIGIN_FIELD):
+                    slot.pop(CONSOLIDATION_ORIGIN_FIELD, None)
+                reordered = {field: slot[field] for field in order if field in slot}
+                reordered.update(
+                    (field, value)
+                    for field, value in slot.items()
+                    if field not in reordered
+                )
+                slot.clear()
+                slot.update(reordered)
+
+
+def _uses_canonical_reusable_slot_ids(payload: dict[str, Any]) -> bool:
+    return any(
+        isinstance(slot, dict)
+        and (
+            str(slot.get("id", "")).startswith("event.standing_person_")
+            or str(slot.get("id", "")).startswith("scenario.floor_fixture_")
+        )
+        for map_data in payload.get("maps", []) or []
+        if isinstance(map_data, dict)
+        for family in ("event", "scenario")
+        for slot in map_data.get(f"{family}_slots", []) or []
+    )
+
+
+def _apply_slot_consolidation(payload: dict[str, Any]) -> None:
+    maps = {
+        str(map_data.get("id", "")): map_data
+        for map_data in payload.get("maps", []) or []
+        if isinstance(map_data, dict)
+    }
+    _retire_pull_tabs_standalone_rows(maps)
+    _normalize_descriptive_fixed_ids(maps)
+    _normalize_event_capacity_consolidation(maps)
+    _normalize_scenario_capacity_consolidation(maps)
+    _normalize_slot_occupancy_metadata(payload)
+    _normalize_slot_authoring_metadata(payload)
+    _normalize_reusable_slot_ids(payload)
+    _normalize_slot_field_order(payload)
+
+
 def _normalize_baseline_fixed_slots(payload: dict[str, Any]) -> None:
     """Give mapped baseline objects fixed lifecycle ownership and capacity."""
 
@@ -2437,6 +3412,10 @@ def apply_capacity_repairs(payload: dict[str, Any]) -> None:
     existing geometry. They make strict family ownership complete while leaving
     final visual placement to the in-game authoring tool.
     """
+
+    if _uses_canonical_reusable_slot_ids(payload):
+        _apply_slot_consolidation(payload)
+        return
 
     maps = {
         str(map_data.get("id", "")): map_data
@@ -2794,6 +3773,7 @@ def apply_capacity_repairs(payload: dict[str, Any]) -> None:
     _normalize_direct_interaction_spacing(maps)
     _normalize_reviewed_output_order(maps)
     _normalize_runtime_person_spacing(maps)
+    _apply_slot_consolidation(payload)
 
 
 def migrate_map(
@@ -2985,14 +3965,50 @@ def validate(
             values = map_data.get(field)
             assert isinstance(values, list), f"{map_id} missing {field}"
             slots_by_family[family] = set()
+            canonical_ordinals: dict[str, int] = defaultdict(int)
             for slot in values:
                 slot_id = str(slot.get("id", ""))
                 assert slot_id.startswith(f"{family}."), f"{map_id} malformed {slot_id}"
                 assert slot.get("kind") == family, f"{map_id} kind mismatch {slot_id}"
                 assert slot_id not in seen, f"{map_id} duplicate {slot_id}"
+                if family in {"event", "scenario"}:
+                    placement_class = str(slot.get("footprint_class", ""))
+                    role = GENERIC_ROLE.get(placement_class, "")
+                    assert role, f"{map_id} {slot_id} has no canonical role for {placement_class}"
+                    canonical_ordinals[role] += 1
+                    expected_id = f"{family}.{role}_{canonical_ordinals[role]}"
+                    assert slot_id == expected_id, (
+                        f"{map_id} non-canonical {family} id {slot_id}; "
+                        f"expected {expected_id}"
+                    )
                 assert isinstance(slot.get("occupancy_required"), bool), f"{map_id} {slot_id} lacks explicit occupancy_required"
+                assert isinstance(slot.get("physical_role"), str) and str(slot.get("physical_role", "")).strip(), f"{map_id} {slot_id} lacks physical_role"
+                occupant_ids = slot.get("occupant_ids")
+                assert isinstance(occupant_ids, list), f"{map_id} {slot_id} occupant_ids must be an array"
+                assert all(isinstance(value, str) and value.strip() for value in occupant_ids), f"{map_id} {slot_id} has invalid occupant_ids"
+                assert occupant_ids == sorted(set(occupant_ids)), f"{map_id} {slot_id} occupant_ids must be sorted and unique"
+                assert isinstance(slot.get("runtime_reserve"), bool), f"{map_id} {slot_id} lacks runtime_reserve"
+                assert isinstance(slot.get("reserve_reason"), str), f"{map_id} {slot_id} lacks reserve_reason"
+                assert bool(slot.get("runtime_reserve")) == bool(str(slot.get("reserve_reason", "")).strip()), f"{map_id} {slot_id} reserve metadata is inconsistent"
                 seen.add(slot_id)
                 slots_by_family[family].add(slot_id)
+        for family, targets in (
+            ("event", EVENT_CAPACITY_TARGETS[map_id]),
+            ("scenario", SCENARIO_CAPACITY_TARGETS[map_id]),
+        ):
+            actual = defaultdict(int)
+            for slot in map_data.get(f"{family}_slots", []) or []:
+                if isinstance(slot, dict):
+                    actual[str(slot.get("footprint_class", ""))] += 1
+            expected = {
+                placement_class: count
+                for placement_class, count in targets.items()
+                if count > 0
+            }
+            assert dict(actual) == expected, (
+                f"{map_id} {family} bank drift: "
+                f"expected={expected} actual={dict(actual)}"
+            )
         required_declared_slots = {
             str(declaration.get("exact_slot_id", ""))
             for declaration in map_data.get("fixed_objects", [])
@@ -3088,10 +4104,10 @@ def validate(
     padded_spacing_pairs = {
         "grand_casino": (
             ("fixed.fixture_host_desk", "fixed.staff_host"),
-            ("fixed.staff_host", "event.counter_patron_1"),
+            ("fixed.staff_host", "event.behind_counter_person_1"),
         ),
         "kitty_cat_lounge": (
-            ("fixed.patron_dot", "event.seated_patron_1"),
+            ("fixed.patron_dot", "event.seated_person_1"),
             ("fixed.random_game_2", "fixed.item_shop_1"),
             ("fixed.random_game_2", "fixed.service_kitty_champagne"),
             ("fixed.item_shop_1", "fixed.service_kitty_champagne"),
@@ -3113,7 +4129,7 @@ def validate(
             ("fixed.item_counter_phone", "fixed.lender_motel_friend"),
             ("scenario.doorway_3", "exit.left_upper"),
         ),
-        "bar": (("event.floor_patron_1", "event.doorway_1"),),
+        "bar": (("event.standing_person_1", "event.doorway_1"),),
         "kitty_cat_lounge": (("event.doorway_1", "fixed.staff_merchant"),),
         "delta_queen": (("event.doorway_1", "fixed.staff_merchant"),),
         "grand_casino": (("fixed.service_house_drink", "exit.travel_cage"),),
@@ -3155,22 +4171,24 @@ def validate(
         for family in FAMILIES
     ), "grand_casino rumor action minted an independent physical slot"
 
-    for map_id, slot_ids in _runtime_person_capacity_targets().items():
+    for map_id in SCENARIO_CAPACITY_TARGETS:
         map_data = maps[map_id]
-        for slot_id in slot_ids:
-            slot = _slot_by_id(map_data, slot_id)
-            expected_family = slot_id.split(".", 1)[0]
-            assert slot is not None, f"{map_id} missing runtime person capacity {slot_id}"
-            assert slot.get("kind") == expected_family and slot.get("footprint_class") == "standing_person", f"{map_id} malformed runtime person capacity {slot_id}"
-            assert not bool(slot.get("occupancy_required", True)), f"{map_id} runtime person capacity {slot_id} must be optional"
-            target_rect = _slot_rect(slot)
-            assert target_rect is not None, f"{map_id} runtime person capacity {slot_id} lacks geometry"
-            for family in FAMILIES:
-                for other in map_data.get(f"{family}_slots", []) or []:
-                    if not isinstance(other, dict) or str(other.get("id", "")) == slot_id:
-                        continue
-                    other_rect = _slot_rect(other)
-                    assert other_rect is None or not _rects_overlap(target_rect, other_rect), f"{map_id} runtime person capacity {slot_id} overlaps {other.get('id', '<unknown>')}"
+        runtime_slots = [
+            slot
+            for slot in map_data.get("scenario_slots", []) or []
+            if isinstance(slot, dict)
+            and slot.get("physical_role") == "Runtime contact reserve"
+        ]
+        assert len(runtime_slots) == 1, (
+            f"{map_id} must expose exactly one canonical runtime-person reserve"
+        )
+        slot = runtime_slots[0]
+        slot_id = str(slot.get("id", ""))
+        assert slot.get("kind") == "scenario" and slot.get("footprint_class") == "standing_person", f"{map_id} malformed runtime person capacity {slot_id}"
+        assert bool(slot.get("runtime_reserve")), f"{map_id} runtime person capacity {slot_id} is not reserved"
+        assert not bool(slot.get("occupancy_required", True)), f"{map_id} runtime person capacity {slot_id} must be optional"
+        target_rect = _slot_rect(slot)
+        assert target_rect is not None, f"{map_id} runtime person capacity {slot_id} lacks geometry"
     for map_id, object_id in (
         ("bar", "event:recruitment_knuckles"),
         ("beach", "event:recruitment_lucky"),
@@ -3200,7 +4218,7 @@ def validate(
 
     back_alley = maps["back_alley"]
     assert back_alley.get("object_family_ids", {}).get("game:craps") == "scenario", "back_alley Street Craps family drift"
-    assert back_alley.get("scenario_object_slot_ids", {}).get("game:craps") == "scenario.floor_item_1", "back_alley Street Craps slot drift"
+    assert back_alley.get("scenario_object_slot_ids", {}).get("game:craps") == "scenario.floor_fixture_1", "back_alley Street Craps slot drift"
     assert back_alley.get("class_overrides", {}).get("game:craps") == "floor_fixture", "back_alley Street Craps fixture classification drift"
     assert all(
         "game:craps" not in back_alley.get(f"{family}_object_slot_ids", {})
@@ -3224,7 +4242,7 @@ def validate(
     reviewed_scenario_preferences = {
         "bar": (
             "bar_darts_league_night_darts_scorer",
-            "scenario.floor_patron_5",
+            "scenario.standing_person_4",
         ),
         "kitty_cat_lounge": (
             "kitty_cat_lounge_amateur_night_amateur_signup",
@@ -3232,7 +4250,7 @@ def validate(
         ),
         "gas_station_casino": (
             "gas_station_trucker_convoy_lead_driver",
-            "scenario.floor_patron_5",
+            "scenario.standing_person_5",
         ),
     }
     for map_id, (stable_object_id, expected_slot_id) in reviewed_scenario_preferences.items():
@@ -3246,8 +4264,8 @@ def validate(
 
     bar = maps["bar"]
     fight_night_seat_ids = (
-        "scenario.seated_patron_1",
-        "scenario.seated_patron_2",
+        "scenario.seated_person_1",
+        "scenario.seated_person_2",
     )
     fight_night_seats = [_slot_by_id(bar, slot_id) for slot_id in fight_night_seat_ids]
     assert all(slot is not None for slot in fight_night_seats), "bar lacks two-seat Fight Night scenario capacity"
@@ -3273,13 +4291,11 @@ def validate(
         )
     }
     assert mapped_house_drink_maps == set(HOUSE_DRINK_SCENARIO_CAPACITY), "baseline house-drink venue coverage drift"
-    for map_id, retained_slot_id in HOUSE_DRINK_SCENARIO_CAPACITY.items():
+    for map_id in HOUSE_DRINK_SCENARIO_CAPACITY:
         map_data = maps[map_id]
         assert map_data.get("object_family_ids", {}).get(HOUSE_DRINK_OBJECT_ID) == "fixed", f"{map_id} house drink family drift"
         assert map_data.get("fixed_object_slot_ids", {}).get(HOUSE_DRINK_OBJECT_ID) == HOUSE_DRINK_FIXED_SLOT_ID, f"{map_id} house drink slot drift"
-        retained_slot = _slot_by_id(map_data, retained_slot_id)
         target_slot = _slot_by_id(map_data, HOUSE_DRINK_FIXED_SLOT_ID)
-        assert retained_slot is not None and retained_slot.get("kind") == "scenario", f"{map_id} lost reusable scenario capacity {retained_slot_id}"
         assert target_slot is not None and target_slot.get("kind") == "fixed" and target_slot.get("footprint_class") == "surface_item", f"{map_id} malformed fixed house-drink capacity"
         assert map_data.get("class_overrides", {}).get(HOUSE_DRINK_OBJECT_ID) == "surface_item", f"{map_id} house drink class override drift"
         target_rect = _slot_rect(target_slot)
@@ -3288,7 +4304,7 @@ def validate(
             slot
             for slot in map_data.get("fixed_slots", [])
             if isinstance(slot, dict) and str(slot.get("id", "")) != HOUSE_DRINK_FIXED_SLOT_ID
-        ] + [retained_slot]
+        ]
         for simultaneous_slot in simultaneous_slots:
             simultaneous_rect = _slot_rect(simultaneous_slot)
             assert simultaneous_rect is None or not _rects_overlap(target_rect, simultaneous_rect), f"{map_id} fixed house-drink geometry overlaps {simultaneous_slot.get('id', '<unknown>')}"
@@ -3296,35 +4312,35 @@ def validate(
         "motel": {
             "lender:motel_friend": ("fixed", "fixed.lender_motel_friend", "standing_person"),
             "numbers:book": ("fixed", "fixed.numbers_book", "surface_item"),
-            "numbers:silas": ("event", "event.floor_patron_1", "standing_person"),
+            "numbers:silas": ("event", "event.standing_person_4", "standing_person"),
             "event:chain06_nico_weekly_door": ("event", "event.doorway_1", "doorway"),
         },
         "gas_station_casino": {
             "game:scratch_tickets": ("fixed", "fixed.game_scratch_tickets", "floor_fixture"),
             "numbers:book": ("fixed", "fixed.numbers_book", "surface_item"),
-            "dialogue:scratch_ticket_scalper": ("event", "event.floor_patron_1", "standing_person"),
+            "dialogue:scratch_ticket_scalper": ("event", "event.standing_person_5", "standing_person"),
         },
         "bar": {
             "numbers:book": ("fixed", "fixed.numbers_book", "surface_item"),
-            "numbers:silas": ("event", "event.floor_patron_2", "standing_person"),
+            "numbers:silas": ("event", "event.standing_person_5", "standing_person"),
         },
         "small_underground_casino": {
             "game:slot": ("fixed", "fixed.game_slot", "floor_fixture"),
             "game:video_poker": ("fixed", "fixed.game_video_poker", "floor_fixture"),
-            "numbers:silas": ("event", "event.floor_patron_2", "standing_person"),
+            "numbers:silas": ("event", "event.standing_person_8", "standing_person"),
             "numbers:book": ("fixed", "fixed.numbers_book", "surface_item"),
             "service:punchline_two_drink_minimum": ("fixed", "fixed.service_two_drink_minimum", "surface_item"),
             "event:crew_job_board": ("event", "event.wall_item_1", "wall_mounted"),
             "event:crew_mags_bench": ("event", "event.surface_item_3", "surface_item"),
             "event:crew_planning_table": ("event", "event.surface_item_1", "surface_item"),
-            "event:crew_practice_rig": ("event", "event.floor_item_2", "floor_fixture"),
+            "event:crew_practice_rig": ("event", "event.floor_fixture_2", "floor_fixture"),
             "event:crew_rook_ride": ("event", "event.doorway_1", "doorway"),
             "event:numbers_desk": ("event", "event.surface_item_2", "surface_item"),
             "event:scenario_greased_week_window": ("scenario", "scenario.wall_item_1", "wall_mounted"),
         },
         "small_underground_casino:back_room": {
             "environment_layer:ambient": ("fixed", "fixed.ambient_rook", "standing_person"),
-            "numbers:silas": ("event", "event.floor_patron_1", "standing_person"),
+            "numbers:silas": ("event", "event.standing_person_6", "standing_person"),
             "event:crew_job_board": ("fixed", "fixed.event_job_board", "surface_item"),
             "event:crew_mags_bench": ("fixed", "fixed.event_mags_bench", "surface_item"),
             "event:crew_planning_table": ("fixed", "fixed.event_planning_table", "surface_item"),
@@ -3336,24 +4352,24 @@ def validate(
             "environment_layer:ambient": ("fixed", "fixed.ambient_stage", "floor_fixture"),
             "environment_layer:casino": ("exit", "exit.door_side", "doorway"),
             "numbers:book": ("fixed", "fixed.numbers_book", "surface_item"),
-            "numbers:silas": ("event", "event.floor_patron_1", "standing_person"),
+            "numbers:silas": ("event", "event.standing_person_1", "standing_person"),
         },
         "small_underground_casino:casino": {
             "numbers:book": ("fixed", "fixed.numbers_book", "surface_item"),
-            "numbers:silas": ("event", "event.floor_patron_1", "standing_person"),
-            "event:rowdy_regular": ("event", "event.seated_patron_1", "seated_person"),
+            "numbers:silas": ("event", "event.standing_person_8", "standing_person"),
+            "event:rowdy_regular": ("event", "event.seated_person_1", "seated_person"),
             "travel:leave": ("exit", "exit.guarded_upper", "doorway"),
         },
         "kitty_cat_lounge": {
-            "numbers:silas": ("event", "event.floor_patron_1", "standing_person"),
+            "numbers:silas": ("event", "event.standing_person_6", "standing_person"),
             "service:kitty_champagne": ("fixed", "fixed.service_kitty_champagne", "surface_item"),
             "event:side_door": ("event", "event.doorway_1", "doorway"),
         },
         "delta_queen": {
-            "event:rowdy_regular": ("event", "event.floor_patron_1", "standing_person"),
+            "event:rowdy_regular": ("event", "event.standing_person_1", "standing_person"),
         },
         "jazz_club": {
-            "numbers:silas": ("event", "event.floor_patron_1", "standing_person"),
+            "numbers:silas": ("event", "event.standing_person_3", "standing_person"),
         },
         "corner_store": {
             "numbers:book": ("fixed", "fixed.numbers_book", "surface_item"),
@@ -3401,7 +4417,6 @@ def validate(
             assert bool(slot.get("occupancy_required", False)), f"{map_id} guaranteed host {object_id} slot is optional"
 
     for map_id, object_id, presentation_id, slot_id in (
-        ("jazz_club", "jazz_club:pulltab_game", "game:pull_tabs", "fixed.pulltab_game"),
         ("grand_casino", "grand_casino:audit_roster", "event:scenario_audit_roster", "fixed.event_audit_roster"),
     ):
         map_data = maps[map_id]
@@ -3419,6 +4434,134 @@ def validate(
         slot = _slot_by_id(map_data, slot_id)
         assert slot is not None and bool(slot.get("occupancy_required", False)), f"{map_id} required fixed declaration {object_id} lacks required capacity"
 
+    pull_tabs_retired_slots = {
+        "bar": {"fixed.ticket_redeemer", "fixed.random_game_3"},
+        "gas_station_casino": {
+            "fixed.service_lottery_desk",
+            "fixed.service_refreshment_shelf",
+            "fixed.random_game_2",
+            "fixed.event_control_rail",
+        },
+        "jazz_club": {
+            "fixed.pulltab_game", "fixed.event_pull_tabs_sign",
+            "fixed.random_game_1",
+            "fixed.service_bar",
+        },
+        "grand_casino": {"fixed.ticket_redeemer", "fixed.game_machine_5"},
+    }
+    for map_id, retired_ids in pull_tabs_retired_slots.items():
+        map_data = maps[map_id]
+        fixed_ids = {
+            str(slot.get("id", ""))
+            for slot in map_data.get("fixed_slots", []) or []
+            if isinstance(slot, dict)
+        }
+        assert fixed_ids.isdisjoint(retired_ids), (
+            f"{map_id} retained standalone Pull Tabs capacity "
+            f"{sorted(fixed_ids & retired_ids)}"
+        )
+        declarations = [
+            declaration
+            for declaration in map_data.get("fixed_objects", []) or []
+            if isinstance(declaration, dict)
+        ]
+        assert all(
+            not set(str(value) for value in declaration.get("action_ids", []) or [])
+            & set(PULL_TABS_HOST_ACTION_IDS)
+            for declaration in declarations
+        ), f"{map_id} hard-codes Pull Tabs actions on a fixed declaration"
+        for action_id in PULL_TABS_HOST_ACTION_IDS:
+            assert map_data.get("object_family_ids", {}).get(action_id) == "fixed", (
+                f"{map_id} {action_id} lost fixed runtime-host ownership"
+            )
+            assert all(
+                action_id not in map_data.get(f"{family}_object_slot_ids", {})
+                for family in FAMILIES
+            ), f"{map_id} {action_id} retained a standalone physical mapping"
+            assert action_id not in map_data.get("class_overrides", {}), (
+                f"{map_id} {action_id} retained a physical class override"
+            )
+            assert action_id not in map_data.get("object_slot_positions", {}), (
+                f"{map_id} {action_id} retained a legacy position override"
+            )
+    jazz = maps["jazz_club"]
+    assert all(
+        str(value.get("object_id", "")) != "jazz_club:pulltab_game"
+        for value in jazz.get("fixed_objects", []) or []
+        if isinstance(value, dict)
+    ), "jazz_club retained its standalone Pull Tabs declaration"
+    assert {
+        str(slot.get("id", ""))
+        for slot in jazz.get("exit_slots", []) or []
+        if isinstance(slot, dict)
+    } == {"exit.door_right_upper"}, "jazz_club must retain only its real travel exit"
+    grand_game_categories = {
+        key: value
+        for key, value in maps["grand_casino"].get(
+            "fixed_category_slot_ids", {}
+        ).items()
+        if str(key).startswith("game_spots:")
+    }
+    assert grand_game_categories == {
+        "game_spots:0": "fixed.game_machine_1",
+        "game_spots:1": "fixed.game_machine_2",
+        "game_spots:2": "fixed.game_machine_3",
+        "game_spots:3": "fixed.game_machine_4",
+        "game_spots:4": "fixed.game_table_left",
+        "game_spots:5": "fixed.game_table_right",
+    }, "grand_casino game category rows no longer match its six physical games"
+    assert {
+        key: value
+        for key, value in maps["bar"].get("fixed_category_slot_ids", {}).items()
+        if str(key).startswith("game_spots:")
+    } == {
+        "game_spots:0": "fixed.random_game_1",
+        "game_spots:1": "fixed.random_game_2",
+    }, "bar game categories must expose only its two non-Pull-Tabs games"
+    assert {
+        key: value
+        for key, value in maps["gas_station_casino"].get(
+            "fixed_category_slot_ids", {}
+        ).items()
+        if str(key).startswith("game_spots:")
+    } == {
+        "game_spots:0": "fixed.random_game_1",
+        "game_spots:1": "fixed.game_scratch_tickets",
+    }, "gas_station_casino game categories must expose optional game plus Scratch"
+    for object_id in ("game:coin_pusher", "game:slot", "game:video_poker"):
+        assert maps["gas_station_casino"].get("fixed_object_slot_ids", {}).get(
+            object_id
+        ) == "fixed.random_game_1", (
+            f"gas_station_casino {object_id} must share the optional game row"
+        )
+
+    descriptive_fixed_ids = {
+        "back_alley": {
+            "lender:street_lender": "fixed.lender_street_lender",
+        },
+        "pawn_shop": {
+            "lender:sals_pawn_counter": "fixed.lender_sals_pawn_counter",
+        },
+        "beach": {
+            "service:beach_sand_pile": "fixed.service_beach_sand_pile",
+        },
+        "kitty_cat_lounge": {
+            "event:grand_casino_invite": "fixed.event_grand_casino_invite",
+        },
+        "delta_queen": {
+            "event:grand_casino_invite": "fixed.event_grand_casino_invite",
+        },
+    }
+    for map_id, object_targets in descriptive_fixed_ids.items():
+        map_data = maps[map_id]
+        for object_id, slot_id in object_targets.items():
+            assert map_data.get("fixed_object_slot_ids", {}).get(object_id) == slot_id, (
+                f"{map_id} {object_id} must use descriptive fixed id {slot_id}"
+            )
+            assert _slot_by_id(map_data, slot_id) is not None, (
+                f"{map_id} is missing descriptive fixed row {slot_id}"
+            )
+
     for map_id, count in {
         "grand_casino": 7,
         "grand_casino_high_limit": 6,
@@ -3426,7 +4569,7 @@ def validate(
     }.items():
         map_data = maps[map_id]
         for ordinal in range(1, count + 1):
-            slot_id = f"event.floor_patron_{ordinal}"
+            slot_id = f"event.standing_person_{ordinal}"
             slot = _slot_by_id(map_data, slot_id)
             assert slot is not None, f"{map_id} missing living-floor capacity {slot_id}"
             assert slot.get("kind") == "event" and slot.get("footprint_class") == "standing_person", f"{map_id} malformed living-floor capacity {slot_id}"
@@ -3443,7 +4586,7 @@ def validate(
     }.items():
         event_rects: list[tuple[str, tuple[float, float, float, float]]] = []
         for ordinal in range(1, count + 1):
-            slot_id = f"event.floor_patron_{ordinal}"
+            slot_id = f"event.standing_person_{ordinal}"
             slot = _slot_by_id(maps[map_id], slot_id)
             assert slot is not None, f"{map_id} missing shared event-person capacity {slot_id}"
             assert slot.get("kind") == "event" and slot.get("footprint_class") == "standing_person", f"{map_id} malformed shared event-person capacity {slot_id}"
@@ -3462,7 +4605,7 @@ def validate(
         "pawn_shop": 3,
     }.items():
         for ordinal in range(1, count + 1):
-            slot_id = f"event.floor_patron_{ordinal}"
+            slot_id = f"event.standing_person_{ordinal}"
             slot = _slot_by_id(maps[map_id], slot_id)
             assert slot is not None, f"{map_id} missing public event-person capacity {slot_id}"
             assert slot.get("kind") == "event" and slot.get("footprint_class") == "standing_person", f"{map_id} malformed public event-person capacity {slot_id}"
@@ -4240,6 +5383,347 @@ def run_legacy_ledger(mode: str, explicit_source_ref: str = "") -> None:
     )
 
 
+def _consolidation_source_ref(mode: str, explicit_ref: str = "") -> str:
+    if mode == "generate" and explicit_ref.strip():
+        return explicit_ref.strip()
+    if CONSOLIDATION_LEDGER_PATH.exists():
+        ledger = load_json(CONSOLIDATION_LEDGER_PATH)
+        if isinstance(ledger, dict) and isinstance(ledger.get("source"), dict):
+            recorded = str(ledger["source"].get("git_commit", "")).strip()
+            if recorded:
+                return recorded
+    return CONSOLIDATION_SOURCE_REF
+
+
+def _slot_rows(payload: dict[str, Any]) -> list[tuple[str, str, dict[str, Any]]]:
+    rows: list[tuple[str, str, dict[str, Any]]] = []
+    for map_data in payload.get("maps", []) or []:
+        if not isinstance(map_data, dict):
+            continue
+        map_id = str(map_data.get("id", ""))
+        for family in FAMILIES:
+            for slot in map_data.get(f"{family}_slots", []) or []:
+                if isinstance(slot, dict):
+                    rows.append((map_id, family, slot))
+    return rows
+
+
+def build_consolidation_disposition_ledger(
+    source_bytes: bytes,
+    source_payload: dict[str, Any],
+    source_revision: str,
+    final_bytes: bytes,
+    final_payload: dict[str, Any],
+) -> dict[str, Any]:
+    traced = copy.deepcopy(source_payload)
+    source_keys: list[tuple[str, str, str]] = []
+    for map_id, family, slot in _slot_rows(traced):
+        slot_id = str(slot.get("id", ""))
+        source_keys.append((map_id, family, slot_id))
+        slot[CONSOLIDATION_ORIGIN_FIELD] = [slot_id]
+    if len(source_keys) != len(set(source_keys)):
+        raise ValueError("consolidation source contains duplicate slot rows")
+
+    apply_capacity_repairs(traced)
+    clean = copy.deepcopy(traced)
+    for node in iter_dicts(clean):
+        node.pop(CONSOLIDATION_ORIGIN_FIELD, None)
+    if clean != final_payload:
+        difference = _first_payload_difference(final_payload, clean)
+        raise RuntimeError(
+            "current-v2 consolidation recipe does not reproduce the working "
+            f"placement authority: {difference}"
+        )
+
+    targets_by_origin: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
+    final_index: dict[tuple[str, str], dict[str, Any]] = {}
+    introduced: list[dict[str, Any]] = []
+    for map_id, family, slot in _slot_rows(traced):
+        slot_id = str(slot.get("id", ""))
+        final_index[(map_id, slot_id)] = slot
+        origins = slot.get(CONSOLIDATION_ORIGIN_FIELD, [])
+        clean_origins = sorted(set(str(value) for value in origins)) \
+            if isinstance(origins, list) else []
+        if not clean_origins:
+            introduced.append({
+                "map_id": map_id,
+                "family": family,
+                "slot_id": slot_id,
+                "footprint_class": str(slot.get("footprint_class", "")),
+                "reason": "introduced explicit coexistence reserve",
+            })
+        for source_id in clean_origins:
+            targets_by_origin[(map_id, source_id)].append(slot)
+
+    source_maps = {
+        str(map_data.get("id", "")): map_data
+        for map_data in source_payload.get("maps", []) or []
+        if isinstance(map_data, dict)
+    }
+    target_origin_sets: dict[tuple[str, str], list[str]] = {}
+    for map_id, _family, slot in _slot_rows(traced):
+        origins = slot.get(CONSOLIDATION_ORIGIN_FIELD, [])
+        target_origin_sets[(map_id, str(slot.get("id", "")))] = sorted(
+            set(str(value) for value in origins)
+        ) if isinstance(origins, list) else []
+
+    rows: list[dict[str, Any]] = []
+    disposition_counts: dict[str, int] = defaultdict(int)
+    for map_id, family, source_slot in _slot_rows(source_payload):
+        source_id = str(source_slot.get("id", ""))
+        targets = targets_by_origin.get((map_id, source_id), [])
+        if len(targets) > 1:
+            raise ValueError(
+                f"{map_id}.{source_id}: one source slot maps to multiple final slots"
+            )
+        target = targets[0] if targets else None
+        if target is None:
+            disposition = "remove"
+            target_id: str | None = None
+            target_family: str | None = None
+            collision_sources: list[str] = []
+            reason = "physical row retired; no coordinate is imported"
+        else:
+            target_id = str(target.get("id", ""))
+            target_family = str(target.get("kind", ""))
+            collision_sources = target_origin_sets.get((map_id, target_id), [])
+            if len(collision_sources) > 1:
+                disposition = "merge"
+                reason = "mutually exclusive capacity shares one retained physical row"
+            elif source_id == target_id and family == target_family:
+                disposition = "keep"
+                reason = "slot identity and geometry row retained"
+            else:
+                disposition = "rename"
+                reason = "slot renamed to its canonical physical role"
+        disposition_counts[disposition] += 1
+        rows.append({
+            "map_id": map_id,
+            "source_family": family,
+            "source_slot_id": source_id,
+            "source_footprint_class": str(source_slot.get("footprint_class", "")),
+            "source_position": copy.deepcopy(source_slot.get("pos")),
+            "disposition": disposition,
+            "target_family": target_family,
+            "target_slot_id": target_id,
+            "collision": {
+                "has_collision": len(collision_sources) > 1,
+                "source_slot_ids": collision_sources,
+                "policy": (
+                    "prefer_exact_target_then_source_order"
+                    if len(collision_sources) > 1 else "none"
+                ),
+            },
+            "reason": reason,
+        })
+    rows.sort(key=lambda value: (
+        value["map_id"],
+        FAMILIES.index(value["source_family"]),
+        value["source_slot_id"],
+    ))
+
+    final_rows = _slot_rows(final_payload)
+    map_counts: dict[str, dict[str, Any]] = {}
+    for map_id in sorted(source_maps):
+        before = {
+            family: sum(
+                1 for row_map, row_family, _slot in _slot_rows(source_payload)
+                if row_map == map_id and row_family == family
+            )
+            for family in FAMILIES
+        }
+        after = {
+            family: sum(
+                1 for row_map, row_family, _slot in final_rows
+                if row_map == map_id and row_family == family
+            )
+            for family in FAMILIES
+        }
+        map_counts[map_id] = {
+            "before": before,
+            "after": after,
+            "before_total": sum(before.values()),
+            "after_total": sum(after.values()),
+        }
+    return {
+        "schema_version": 1,
+        "purpose": "current-v2 environment slot consolidation and placement-report import",
+        "source": {
+            "path": PLACEMENT_PATH.relative_to(ROOT).as_posix(),
+            "git_commit": source_revision,
+            "sha256": _sha256(source_bytes),
+            "slot_count": len(source_keys),
+        },
+        "target": {
+            "path": PLACEMENT_PATH.relative_to(ROOT).as_posix(),
+            "sha256": _sha256(final_bytes),
+            "slot_count": len(final_rows),
+        },
+        "counts": {
+            "source_slots": len(source_keys),
+            "target_slots": len(final_rows),
+            "introduced_target_slots": len(introduced),
+            **{
+                f"{disposition}_source_slots": count
+                for disposition, count in sorted(disposition_counts.items())
+            },
+        },
+        "per_map_counts": map_counts,
+        "introduced_target_slots": sorted(
+            introduced,
+            key=lambda value: (value["map_id"], value["family"], value["slot_id"]),
+        ),
+        "slot_dispositions": rows,
+    }
+
+
+def consolidation_ledger_payload(
+    mode: str, explicit_source_ref: str = ""
+) -> dict[str, Any]:
+    source_ref = _consolidation_source_ref(mode, explicit_source_ref)
+    source_revision = _resolved_git_commit(source_ref)
+    relative = PLACEMENT_PATH.relative_to(ROOT).as_posix()
+    source_bytes = _git_blob(source_revision, relative)
+    source_payload = _json_blob(source_bytes, relative)
+    if not isinstance(source_payload, dict) or int(source_payload.get("slot_schema_version", 0)) != 2:
+        raise RuntimeError(
+            f"pinned consolidation source at {source_revision} is not slot schema v2"
+        )
+    final_bytes = PLACEMENT_PATH.read_bytes()
+    final_payload = _json_blob(final_bytes, relative)
+    if not isinstance(final_payload, dict):
+        raise RuntimeError("working placement authority is not an object")
+    return build_consolidation_disposition_ledger(
+        source_bytes,
+        source_payload,
+        source_revision,
+        final_bytes,
+        final_payload,
+    )
+
+
+def run_consolidation_ledger(mode: str, explicit_source_ref: str = "") -> None:
+    expected = consolidation_ledger_payload(mode, explicit_source_ref)
+    expected_bytes = _json_bytes(expected)
+    if mode == "generate":
+        CONSOLIDATION_LEDGER_PATH.write_bytes(expected_bytes)
+        print(
+            "generated current-v2 consolidation ledger: "
+            f"{expected['counts']['source_slots']} source rows -> "
+            f"{expected['counts']['target_slots']} target rows"
+        )
+        return
+    if not CONSOLIDATION_LEDGER_PATH.exists():
+        raise RuntimeError(
+            f"consolidation disposition ledger is missing: {CONSOLIDATION_LEDGER_PATH}"
+        )
+    if CONSOLIDATION_LEDGER_PATH.read_bytes() != expected_bytes:
+        raise RuntimeError(
+            "consolidation disposition ledger is stale or non-deterministic; "
+            "regenerate with --consolidation-ledger generate"
+        )
+    print(
+        "current-v2 consolidation ledger valid: "
+        f"{expected['counts']['source_slots']} source rows -> "
+        f"{expected['counts']['target_slots']} target rows"
+    )
+
+
+def translate_placement_report(input_path: Path, output_path: Path) -> None:
+    if not CONSOLIDATION_LEDGER_PATH.exists():
+        raise RuntimeError("consolidation disposition ledger is missing")
+    ledger = load_json(CONSOLIDATION_LEDGER_PATH)
+    if not isinstance(ledger, dict):
+        raise RuntimeError("consolidation disposition ledger is invalid")
+    rows = ledger.get("slot_dispositions", [])
+    row_index = {
+        (str(row.get("map_id", "")), str(row.get("source_slot_id", ""))): row
+        for row in rows
+        if isinstance(row, dict)
+    }
+    payload = load_json(input_path)
+    if not isinstance(payload, dict) or int(payload.get("schema_version", 0)) != 2:
+        raise RuntimeError("placement report must use schema_version 2")
+    rooms = payload.get("rooms", {})
+    if not isinstance(rooms, dict):
+        raise RuntimeError("placement report rooms must be an object")
+
+    translated_rooms: dict[str, Any] = {}
+    diagnostics: dict[str, Any] = {}
+    total_removed = 0
+    total_unmapped = 0
+    total_collisions = 0
+    for room_id, room_value in sorted(rooms.items(), key=lambda value: str(value[0])):
+        room_key = str(room_id)
+        room = room_value if isinstance(room_value, dict) else {}
+        positions = room.get("slot_positions", {})
+        if not isinstance(positions, dict):
+            positions = {}
+        candidates: dict[str, list[tuple[str, Any, dict[str, Any]]]] = defaultdict(list)
+        removed: list[str] = []
+        unmapped: list[str] = []
+        for source_slot_id, position in sorted(positions.items(), key=lambda value: str(value[0])):
+            source_id = str(source_slot_id)
+            row = row_index.get((room_key, source_id))
+            if row is None:
+                unmapped.append(source_id)
+                continue
+            target_value = row.get("target_slot_id")
+            target_id = (
+                target_value.strip()
+                if isinstance(target_value, str)
+                else ""
+            )
+            if not target_id:
+                removed.append(source_id)
+                continue
+            candidates[target_id].append((source_id, copy.deepcopy(position), row))
+        translated_positions: dict[str, Any] = {}
+        collisions: list[dict[str, Any]] = []
+        for target_id, values in sorted(candidates.items()):
+            values.sort(key=lambda value: (value[0] != target_id, value[0]))
+            chosen_id, chosen_position, _chosen_row = values[0]
+            translated_positions[target_id] = chosen_position
+            if len(values) > 1:
+                collisions.append({
+                    "target_slot_id": target_id,
+                    "chosen_source_slot_id": chosen_id,
+                    "ignored_source_slot_ids": [value[0] for value in values[1:]],
+                    "policy": "prefer_exact_target_then_source_order",
+                })
+        if translated_positions:
+            translated_rooms[room_key] = {"slot_positions": translated_positions}
+        if removed or unmapped or collisions:
+            diagnostics[room_key] = {
+                "removed_source_slot_ids": removed,
+                "unmapped_source_slot_ids": unmapped,
+                "merge_collisions": collisions,
+            }
+        total_removed += len(removed)
+        total_unmapped += len(unmapped)
+        total_collisions += len(collisions)
+
+    output = {
+        "schema_version": 2,
+        "rooms": translated_rooms,
+        "migration_report": {
+            "ledger_source_commit": str(ledger.get("source", {}).get("git_commit", "")),
+            "ledger_target_sha256": str(ledger.get("target", {}).get("sha256", "")),
+            "removed_positions": total_removed,
+            "unmapped_positions": total_unmapped,
+            "merge_collisions": total_collisions,
+            "rooms": diagnostics,
+        },
+    }
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    write_json(output_path, output)
+    print(
+        f"translated placement report: rooms={len(translated_rooms)} "
+        f"removed={total_removed} unmapped={total_unmapped} "
+        f"collisions={total_collisions} output={output_path}"
+    )
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--check", action="store_true", help="Validate an already migrated file without rewriting it")
@@ -4267,15 +5751,66 @@ def main() -> int:
             "otherwise generation reuses its checked-in recorded commit"
         ),
     )
+    parser.add_argument(
+        "--consolidation-ledger",
+        choices=("generate", "check"),
+        help=(
+            "Generate or verify the complete current-v2 slot disposition ledger; "
+            "never rewrites placement_surfaces.json"
+        ),
+    )
+    parser.add_argument(
+        "--consolidation-source-ref",
+        default="",
+        help=(
+            "Immutable current-v2 git ref used only when generating the "
+            "consolidation ledger"
+        ),
+    )
+    parser.add_argument(
+        "--translate-placement-report",
+        nargs=2,
+        metavar=("INPUT", "OUTPUT"),
+        help=(
+            "Translate a schema-v2 placement report through the checked-in "
+            "consolidation disposition ledger"
+        ),
+    )
     args = parser.parse_args()
 
-    selected_modes = int(args.check) + int(args.refresh_reviewed_v2) + int(bool(args.legacy_ledger))
+    selected_modes = (
+        int(args.check)
+        + int(args.refresh_reviewed_v2)
+        + int(bool(args.legacy_ledger))
+        + int(bool(args.consolidation_ledger))
+        + int(bool(args.translate_placement_report))
+    )
     if selected_modes > 1:
-        parser.error("--check, --refresh-reviewed-v2, and --legacy-ledger are mutually exclusive")
+        parser.error(
+            "--check, --refresh-reviewed-v2, --legacy-ledger, "
+            "--consolidation-ledger, and --translate-placement-report are mutually exclusive"
+        )
     if args.legacy_source_ref and args.legacy_ledger != "generate":
         parser.error("--legacy-source-ref is valid only with --legacy-ledger generate")
+    if args.consolidation_source_ref and args.consolidation_ledger != "generate":
+        parser.error(
+            "--consolidation-source-ref is valid only with "
+            "--consolidation-ledger generate"
+        )
     if args.legacy_ledger:
         run_legacy_ledger(args.legacy_ledger, args.legacy_source_ref)
+        return 0
+    if args.consolidation_ledger:
+        run_consolidation_ledger(
+            args.consolidation_ledger,
+            args.consolidation_source_ref,
+        )
+        return 0
+    if args.translate_placement_report:
+        translate_placement_report(
+            Path(args.translate_placement_report[0]).resolve(),
+            Path(args.translate_placement_report[1]).resolve(),
+        )
         return 0
 
     payload = load_json(PLACEMENT_PATH)

@@ -1436,7 +1436,7 @@ func _check_onboarding_tutorial_ui_flow(app: Control) -> bool:
 	var redeem_context: Dictionary = app.call("_coach_context_snapshot")
 	var redeem_lesson: Dictionary = app.get("library").tutorial_lesson("tutorial_gas_redeem")
 	if str((redeem_context.get("action", {}) as Dictionary).get("last_action_id", "")) != "redeem_pull_tab_winners" or not CoachViewModelScript.state_completion_matches(redeem_lesson, redeem_context):
-		push_error("The real pull-tab clerk result could not satisfy Pal's redemption lesson: context=%s lesson=%s." % [str(redeem_context.get("action", {})), str(redeem_lesson.get("completion", {}))])
+		push_error("The real Pull Tabs counter result could not satisfy Pal's redemption lesson: context=%s lesson=%s." % [str(redeem_context.get("action", {})), str(redeem_lesson.get("completion", {}))])
 		return false
 	app.set("last_hook_result", {})
 	app.call("back_to_environment")

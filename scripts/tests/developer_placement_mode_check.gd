@@ -109,8 +109,8 @@ func _check_store_scope_and_promotion(user_path: String, project_path: String) -
 	DeveloperPlacementStoreScript.save_position(club_layer, "slot_positions", "exit.door_right_lower", Vector2(12.0, 300.0))
 	_check(_slot_position(_slot(EnvironmentPlacementScript.surface_map(club_layer), "exit.door_right_lower")).is_equal_approx(Vector2(12.0, 300.0)) and not DeveloperPlacementStoreScript.user_slot_overrides(casino_layer, "slot_positions").has("exit.door_right_lower"), "Layered-room overrides must be scoped to the exact layer.")
 
-	var scenario_saved := DeveloperPlacementStoreScript.save_position(bar, "slot_positions", "scenario.floor_patron_3", Vector2(720.0, 268.0))
-	_check(bool(scenario_saved.get("ok", false)) and _slot_position(_slot(EnvironmentPlacementScript.surface_map(bar), "scenario.floor_patron_3")).is_equal_approx(Vector2(720.0, 268.0)), "Scenario objects must move their shared scenario slot.")
+	var scenario_saved := DeveloperPlacementStoreScript.save_position(bar, "slot_positions", "scenario.standing_person_3", Vector2(720.0, 268.0))
+	_check(bool(scenario_saved.get("ok", false)) and _slot_position(_slot(EnvironmentPlacementScript.surface_map(bar), "scenario.standing_person_3")).is_equal_approx(Vector2(720.0, 268.0)), "Scenario objects must move their shared scenario slot.")
 
 	var promoted := DeveloperPlacementStoreScript.promote_user_overrides()
 	_check(bool(promoted.get("ok", false)) and FileAccess.file_exists(project_path), "Save to Project must create the shippable override file.")
@@ -166,10 +166,10 @@ func _check_canvas_authoring_contract() -> void:
 		"id": "scenario::bar_darts_league_night_league_captain",
 		"owner_namespace": "scenario",
 		"stable_object_id": "bar_darts_league_night_league_captain",
-		"slot_id": "scenario.floor_patron_3",
+		"slot_id": "scenario.standing_person_3",
 		"slot_family": "scenario",
 	})
-	_check(str(scenario_identity.get("field", "")) == "slot_positions" and str(scenario_identity.get("slot_id", "")) == "scenario.floor_patron_3", "Scenario objects must author their shared reusable scenario slot.")
+	_check(str(scenario_identity.get("field", "")) == "slot_positions" and str(scenario_identity.get("slot_id", "")) == "scenario.standing_person_3", "Scenario objects must author their shared reusable scenario slot.")
 	var item_category_identity: Dictionary = canvas.call("_developer_placement_identity", {
 		"id": "item:any_future_stock",
 		"interaction_type": "item",
@@ -184,10 +184,10 @@ func _check_canvas_authoring_contract() -> void:
 		"interaction_type": "event",
 		"layout_spot_field": "event_spots",
 		"layout_index": 1,
-		"slot_id": "event.floor_item_1",
+		"slot_id": "event.floor_fixture_1",
 		"slot_family": "event",
 	})
-	_check(str(event_category_identity.get("field", "")) == "slot_positions" and str(event_category_identity.get("slot_id", "")) == "event.floor_item_1", "Event placement must author its occupied reusable event slot.")
+	_check(str(event_category_identity.get("field", "")) == "slot_positions" and str(event_category_identity.get("slot_id", "")) == "event.floor_fixture_1", "Event placement must author its occupied reusable event slot.")
 	canvas.call("_finish_developer_placement_edit")
 	_check(locked_request.get("position", Vector2.ZERO) == Vector2(410.0, 294.0), "Finishing a drag must auto-lock the exact board-space position.")
 	_check(not bool(canvas.developer_placement_snapshot().get("pending", true)), "A finished drag must become a retained room edit instead of a cancellable preview.")

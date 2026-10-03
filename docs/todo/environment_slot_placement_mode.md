@@ -31,13 +31,22 @@ mode contract.
 - Expose a separate **Environment slot placement mode** toggle under Settings
   > Developer.
 - Keep object-placement mode and slot-placement mode mutually exclusive.
-- Display every authored `fixed`, `event`, `scenario`, and `exit` slot in a
-  dedicated overlay, including currently empty capacity slots.
-- Allow the four families to be shown or hidden independently, with distinct
-  colors and a clear legend.
-- Identify slots by their stable authored slot IDs and show their family,
-  footprint class, support, layer, current occupancy, and required/optional
-  occupancy where available.
+- Open on the `fixed` family alone and present `fixed`, `event`, `scenario`,
+  and `exit` as mutually exclusive family tabs with distinct colors. Switching
+  tabs replaces the prior overlay instead of accumulating markers.
+- Default to the occupied preview for the current environment snapshot. Hide
+  unused optional capacity, and hide slots marked `runtime_reserve: true`,
+  until **Empty capacity** or **Runtime reserves** is explicitly enabled.
+  Required positions with missing occupants remain visible as diagnostics.
+- Lead marker and panel text with the current occupant's friendly name. Keep
+  the stable authored slot ID as secondary authoring information, followed by
+  family, footprint class, support, layer, and required/optional/reserve state.
+  For an empty slot, use its authored `physical_role`; expose optional sorted
+  `occupant_ids` as known claimants in details and hover text, not as extra
+  room labels.
+- Show the active scenario and phase from the current immutable room snapshot.
+  The placement overlay previews that active state; it does not select,
+  advance, or otherwise mutate scenario state.
 - Allow pointer dragging and keyboard nudging on the canonical 900x430 room
   plane. Moving a slot translates its position, hit rectangle, and label
   anchor without changing its size, family, or identity.
@@ -51,7 +60,9 @@ mode contract.
   future objects placed into that slot inherit the new location.
 - Surface missing required occupants, incompatible occupants, family
   crossovers, and overlap warnings without silently moving an object into a
-  different family.
+  different family. Overlap diagnostics compare the selected position with
+  required and currently occupied positions that can coexist in the active
+  snapshot, not every empty position from mutually exclusive possibilities.
 - Do not mutate manifest identities, gameplay selection, scenario state, RNG,
   save economy, or specific spawned objects.
 
@@ -69,7 +80,10 @@ environment/layer and `fixed.*`, `event.*`, `scenario.*`, or `exit.*` slot ID.
 It uses the same schema-v2 `rooms` structure as the committed developer
 placement override file, so the report can be provided directly for merging
 back into the source layout. Re-exporting replaces the report with the current
-set of local changes; it does not clear or modify those active changes.
+set of local changes; it does not clear or modify those active changes. Family
+tabs and the empty/reserve visibility controls are presentation-only: export
+always includes every locked machine-local slot change, including currently
+hidden families and capacity.
 
 **Save to Project** remains available for a writable source checkout. Use the
 export action when running a packaged `.exe`.
@@ -78,8 +92,9 @@ export action when running a packaged `.exe`.
 
 `rw06_10` extended the existing movement tool across all four families rather
 than creating a second editor. The repository-wide migration covers all 21
-placement maps, including layered and subroom variants, and empty reusable
-capacity remains visible and editable.
+placement maps, including layered and subroom variants. Empty reusable
+capacity remains editable through the explicit visibility controls without
+crowding the default room preview.
 
 The migrated coordinates preserve the prior layout wherever that was possible.
 Where a formerly shared slot had to become multiple simultaneous slots, the
@@ -91,34 +106,37 @@ require another schema or runtime change.
 ## Validation
 
 - Settings persistence and mutual exclusion.
-- Empty-slot visibility, per-family filtering, selection, and family legend.
+- Fixed-only default, exclusive family tabs, explicit empty/reserve visibility,
+  occupant-first labels, stable secondary IDs, active scenario/phase context,
+  selection, and family legend.
 - Drag/nudge preview and exact durable local reload.
 - `fixed`, `event`, `scenario`, and `exit` geometry translation.
 - Map/layer isolation, reset, and promotion.
 - Future object binding consumes the edited reusable slot.
 - Slot identity and manifest identity remain stable after movement.
-- Required occupancy, family isolation, compatibility, and overlap warnings.
+- Required occupancy, family isolation, compatibility, and active-context
+  overlap warnings.
 - Existing environment-library, manifest, and fixed-slot checks remain green.
 
 ## Verification evidence
 
 - `environment_slot_placement_mode_check.gd`: PASS. Covers Settings
-  persistence and mutual exclusion, all four slot families, empty-slot
-  editing, map/layer scoping, preview restoration, durable reload, reset,
-  promotion, and future-object binding.
+  persistence and mutual exclusion, fixed-only default presentation, exclusive
+  family tabs, empty/reserve controls, occupant-first labeling, active
+  scenario/phase context, all four slot families, empty-slot editing,
+  context-aware overlaps, map/layer scoping, preview restoration, durable
+  reload, complete report export, reset, promotion, and future-object binding.
 - `environment_test_mode_check.gd`: PASS across 18 environments and 55
   scenarios.
-- `environment_fixed_slot_static_check.py`: PASS across 722 slots (225 fixed,
-  149 event, 270 scenario, 78 exit), 21 authored maps, all four families, 18
+- `environment_fixed_slot_static_check.py`: PASS across 659 slots (214 fixed,
+  147 event, 222 scenario, 76 exit), 21 authored maps, all four families, 18
   archetypes, 55 scenarios, and 767 active snapshots.
 - `health06_1_serialization_contract.gd`: PASS.
 - `check_game_library_launchers.gd`: PASS for all 11 debug game launchers.
 - `validate_project.ps1 -Quiet`: PASS.
 - Audit runtime matrix: all 38 Godot/performance stages PASS, including 440
   scenario finalizations, 18,000 reachable states, and 4,024 distinct layouts.
-- Fresh 21-map slot-marker handoff:
-  `.tmp/rw06_1/visual_evidence/rw06_10_final_20260929_07/slot_markers/`;
-  manifest SHA-256
-  `3EC1694A0615E840E276E93EB8E65B879873769DC57BB116F32C525B08AC6E0A` and
-  contact-sheet SHA-256
-  `46B42AF2064C149AAAE8DB8EBE1062DCEB418E13AA685654FD62A8C96914A33E`.
+- `environment_slot_consolidation_breakdown.md`: audited placement handoff for
+  every one of the 659 slot IDs across all 21 maps and all 55 scenarios;
+  canonical placement SHA-256
+  `E18795A6665699AA1C8C6A1B451E66C10357F496C1FA059848EA7B3598FCC5D0`.

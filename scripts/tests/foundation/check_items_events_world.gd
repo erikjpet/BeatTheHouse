@@ -3305,6 +3305,11 @@ func _check_unique_object_layout_classes(library: ContentLibrary, failures: Arra
 	var pull_tabs_game: GameModule = _load_surface_contract_game(library, "pull_tabs", failures)
 	if pull_tabs_game == null:
 		return
+	var counter_hosts := {
+		"bar": "staff:bar_bartender",
+		"gas_station_casino": "character:nell",
+		"jazz_club": "shopkeeper:merchant",
+	}
 	for archetype_id in ["bar", "gas_station_casino", "jazz_club"]:
 		var archetype := _archetype_by_id(library, str(archetype_id))
 		if archetype.is_empty():
@@ -3322,10 +3327,23 @@ func _check_unique_object_layout_classes(library: ContentLibrary, failures: Arra
 		if not conflicts.is_empty():
 			failures.append("Unique object layout guard found duplicate identity classes in %s: %s." % [str(archetype_id), ", ".join(conflicts)])
 		var object_rects: Dictionary = JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(environment_data.get("layout", {})).get("object_rects", {}))
-		if object_rects.has("dialogue:pull_tab_clerk"):
-			failures.append("Pull Tabs duplicate dialogue clerk still reserved a room object in %s." % str(archetype_id))
-		if not object_rects.has("game_hook:pull_tabs:ticket_redeemer"):
-			failures.append("Pull Tabs unique clerk guard dropped the redeem counter in %s." % str(archetype_id))
+		var counter_host_id := str(counter_hosts.get(archetype_id, ""))
+		if not object_rects.has(counter_host_id):
+			failures.append("Pull Tabs sales counter host %s lost its room object in %s." % [counter_host_id, str(archetype_id)])
+		for forbidden_id in ["game:pull_tabs", "dialogue:pull_tab_clerk", "game_hook:pull_tabs:ticket_redeemer"]:
+			if object_rects.has(forbidden_id):
+				failures.append("Pull Tabs counter action %s still reserved a separate room object in %s." % [forbidden_id, str(archetype_id)])
+		var counter_host_row: Dictionary = {}
+		for row_value in JsonCoerceScript._copy_array(JsonCoerceScript._copy_dict(environment_data.get("object_manifest", {})).get("rows", [])):
+			if typeof(row_value) != TYPE_DICTIONARY:
+				continue
+			var row: Dictionary = row_value
+			if bool(row.get("active", true)) and str(row.get("presentation_object_id", row.get("presentation_id", ""))) == counter_host_id:
+				counter_host_row = row
+				break
+		for action_id in ["game:pull_tabs", "dialogue:pull_tab_clerk", "game_hook:pull_tabs:ticket_redeemer"]:
+			if not JsonCoerceScript._copy_array(counter_host_row.get("action_ids", [])).has(action_id):
+				failures.append("Pull Tabs counter host %s does not own action %s in %s." % [counter_host_id, action_id, str(archetype_id)])
 
 
 func _check_generated_object_layout_stability(library: ContentLibrary, failures: Array) -> void:
@@ -3807,7 +3825,7 @@ func _check_jazz_club_foundation(library: ContentLibrary, failures: Array) -> vo
 	var environment_a := EnvironmentInstance.from_archetype(jazz_archetype, 2, run_state.create_rng("jazz_a"), library)
 	var environment_b := EnvironmentInstance.from_archetype(jazz_archetype, 3, run_state.create_rng("jazz_b"), library)
 	if environment_a.game_ids != ["pull_tabs"]:
-		failures.append("Generated Jazz Club did not place the guaranteed pull-tab machine.")
+		failures.append("Generated Jazz Club did not stock its guaranteed Pull Tabs counter merchandise.")
 	var jazz_environment_data := environment_a.to_dict()
 	var pull_tabs_game: GameModule = _load_surface_contract_game(library, "pull_tabs", failures)
 	if pull_tabs_game != null:
@@ -4114,9 +4132,10 @@ func _check_jazz_club_foundation(library: ContentLibrary, failures: Array) -> vo
 func _check_jazz_club_layout(environment_data: Dictionary, failures: Array) -> void:
 	var layout: Dictionary = environment_data.get("layout", {}) if typeof(environment_data.get("layout", {})) == TYPE_DICTIONARY else {}
 	var object_rects: Dictionary = layout.get("object_rects", {}) if typeof(layout.get("object_rects", {})) == TYPE_DICTIONARY else {}
+	for forbidden_id in ["game:pull_tabs", "dialogue:pull_tab_clerk", "game_hook:pull_tabs:ticket_redeemer"]:
+		if object_rects.has(forbidden_id):
+			failures.append("Jazz Club Pull Tabs counter action %s still has a separate room placement." % forbidden_id)
 	for object_id in [
-		"game:pull_tabs",
-		"game_hook:pull_tabs:ticket_redeemer",
 		"shopkeeper:merchant",
 		"service:house_drink",
 		"service:jazz_sax_round",
@@ -4127,9 +4146,18 @@ func _check_jazz_club_layout(environment_data: Dictionary, failures: Array) -> v
 	]:
 		if not object_rects.has(object_id):
 			failures.append("Jazz Club layout is missing object placement for %s." % object_id)
+	var counter_host_row: Dictionary = {}
+	for row_value in JsonCoerceScript._copy_array(JsonCoerceScript._copy_dict(environment_data.get("object_manifest", {})).get("rows", [])):
+		if typeof(row_value) != TYPE_DICTIONARY:
+			continue
+		var row: Dictionary = row_value
+		if bool(row.get("active", true)) and str(row.get("presentation_object_id", row.get("presentation_id", ""))) == "shopkeeper:merchant":
+			counter_host_row = row
+			break
+	for action_id in ["game:pull_tabs", "dialogue:pull_tab_clerk", "game_hook:pull_tabs:ticket_redeemer"]:
+		if not JsonCoerceScript._copy_array(counter_host_row.get("action_ids", [])).has(action_id):
+			failures.append("Jazz Club bartender does not own Pull Tabs counter action %s." % action_id)
 	var expected_zones := {
-		"game:pull_tabs": Rect2(680, 175, 150, 105),
-		"game_hook:pull_tabs:ticket_redeemer": Rect2(550, 210, 130, 85),
 		"shopkeeper:merchant": Rect2(580, 80, 150, 105),
 		"service:house_drink": Rect2(760, 85, 140, 90),
 		"service:jazz_sax_round": Rect2(110, 220, 130, 90),

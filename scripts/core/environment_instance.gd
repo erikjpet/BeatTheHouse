@@ -1139,8 +1139,14 @@ static func _game_layout_entries(environment_data: Dictionary) -> Array:
 	var entries: Array = []
 	var layout := JsonCoerceScript._copy_dict(environment_data.get("layout", {}))
 	var fixture_counts := JsonCoerceScript._copy_dict(layout.get("game_fixture_counts", {}))
+	var counter_sale_game_ids := _lottery_counter_game_ids(environment_data, "sale_game_ids")
 	var layout_index := 0
 	for game_id in JsonCoerceScript._string_array(environment_data.get("game_ids", [])):
+		# Counter merchandise is still a complete game surface, but its room entry
+		# is an action owned by the existing cashier/bartender rather than a second
+		# physical machine. This also keeps it from consuming a placement slot.
+		if counter_sale_game_ids.has(game_id):
+			continue
 		var fixture_count := maxi(1, int(fixture_counts.get(game_id, 1)))
 		for fixture_index in range(fixture_count):
 			entries.append({
@@ -1231,6 +1237,7 @@ static func _active_object_layout_entries(environment_data: Dictionary, surface_
 		entries.append(runtime_entry)
 	if prioritize_services:
 		_append_item_offer_layout_entries(entries, JsonCoerceScript._copy_array(environment_data.get("item_offers", [])))
+	_attach_lottery_counter_manifest_actions(entries, environment_data, surface_map)
 	var filtered := _filter_unique_object_layout_entries(entries)
 	var placement_hints := JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(environment_data.get("layout", {})).get("object_placement_hints", {}))
 	var class_overrides := JsonCoerceScript._copy_dict(EnvironmentPlacementScript.surface_map(environment_data).get("class_overrides", {}))
@@ -1368,6 +1375,7 @@ static func _is_grand_casino_archetype(environment_data: Dictionary) -> bool:
 static func _game_hook_layout_entries(environment_data: Dictionary) -> Array:
 	var result: Array = []
 	var game_states := JsonCoerceScript._copy_dict(environment_data.get("game_states", {}))
+	var counter_service_game_ids := _lottery_counter_game_ids(environment_data, "service_game_ids")
 	for game_id in JsonCoerceScript._string_array(environment_data.get("game_ids", [])):
 		var machine: Variant = game_states.get(game_id, {})
 		if typeof(machine) != TYPE_DICTIONARY:
@@ -1379,9 +1387,13 @@ static func _game_hook_layout_entries(environment_data: Dictionary) -> Array:
 			var hook_id := str(hook_data.get("id", ""))
 			if hook_id.is_empty():
 				continue
-			# Scratch Tickets and Pull Tabs expose two action providers for the
-			# same in-room Lottery Clerk. Normalize them before the unique-object
-			# filter so the late hook consumes one authored person slot. The
+			# Help and redemption remain actionable, but live on the configured
+			# counter host. They are not additional people or counter fixtures.
+			if counter_service_game_ids.has(game_id) and hook_id != "scratch_ticket_scalper":
+				continue
+			# Legacy/custom environments may still expose separate action providers.
+			# Normalize those before the unique-object filter so they consume at
+			# most one authored person slot. Production counters skip this path.
 			# scalper is a separate person and exists only while its state says so.
 			var unique_object_class := str(hook_data.get("unique_object_class", "")).strip_edges()
 			var physical_person := false
@@ -1407,6 +1419,76 @@ static func _game_hook_layout_entries(environment_data: Dictionary) -> Array:
 				"physical_person": physical_person,
 			})
 	return result
+
+
+static func _lottery_counter_game_ids(environment_data: Dictionary, field: String) -> Array:
+	var flags := JsonCoerceScript._copy_dict(environment_data.get("local_narrative_flags", {}))
+	var counter := JsonCoerceScript._copy_dict(flags.get("lottery_counter", {}))
+	if str(counter.get("host_object_id", "")).strip_edges().is_empty():
+		return []
+	return JsonCoerceScript._string_array(counter.get(field, []))
+
+
+static func _attach_lottery_counter_manifest_actions(entries: Array, environment_data: Dictionary, surface_map: Dictionary) -> void:
+	var flags := JsonCoerceScript._copy_dict(environment_data.get("local_narrative_flags", {}))
+	var counter := JsonCoerceScript._copy_dict(flags.get("lottery_counter", {}))
+	var host_object_id := str(counter.get("host_object_id", "")).strip_edges()
+	if host_object_id.is_empty():
+		return
+	var selected_game_ids := JsonCoerceScript._string_array(environment_data.get("game_ids", []))
+	var action_ids: Array = []
+	for game_id in JsonCoerceScript._string_array(counter.get("sale_game_ids", [])):
+		if not selected_game_ids.has(game_id):
+			continue
+		action_ids.append("game:%s" % game_id)
+	for game_id in JsonCoerceScript._string_array(counter.get("service_game_ids", [])):
+		if not selected_game_ids.has(game_id):
+			continue
+		match game_id:
+			"pull_tabs":
+				action_ids.append("dialogue:pull_tab_clerk")
+				action_ids.append("game_hook:pull_tabs:ticket_redeemer")
+			"scratch_tickets":
+				action_ids.append("game_hook:scratch_tickets:scratch_ticket_clerk")
+	for index in range(entries.size()):
+		if typeof(entries[index]) != TYPE_DICTIONARY:
+			continue
+		var entry: Dictionary = entries[index]
+		if str(entry.get("object_id", "")) != host_object_id:
+			continue
+		var merged_actions := JsonCoerceScript._string_array(entry.get("action_ids", [host_object_id]))
+		for action_id in action_ids:
+			if not merged_actions.has(action_id):
+				merged_actions.append(action_id)
+		entry["action_ids"] = merged_actions
+		entries[index] = entry
+		return
+	if action_ids.is_empty():
+		return
+	# Some guaranteed people exist only as authored fixed declarations. Add a
+	# matching generated row solely to merge visit-specific action ownership into
+	# that declaration; the declaration remains the single physical identity.
+	for declaration_value in JsonCoerceScript._copy_array(surface_map.get("fixed_objects", [])):
+		if typeof(declaration_value) != TYPE_DICTIONARY:
+			continue
+		var declaration: Dictionary = declaration_value
+		var presentation_id := str(declaration.get("presentation_id", declaration.get("presentation_object_id", declaration.get("object_id", "")))).strip_edges()
+		if presentation_id != host_object_id:
+			continue
+		var merged_actions: Array = [host_object_id]
+		for action_id in action_ids:
+			if not merged_actions.has(action_id):
+				merged_actions.append(action_id)
+		entries.append({
+			"object_id": host_object_id,
+			"object_type": str(declaration.get("object_type", declaration.get("visual_type", "character"))),
+			"placement_class": str(declaration.get("placement_class", "")),
+			"render_key": str(declaration.get("render_key", "")),
+			"index": maxi(0, int(declaration.get("index", declaration.get("source_index", 0)))),
+			"spot_field": "fixed_objects",
+			"action_ids": merged_actions,
+		})
+		return
 
 
 static func _filter_unique_object_layout_entries(entries: Array) -> Array:

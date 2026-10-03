@@ -45,10 +45,10 @@ func _check_scratch_tickets_surface_contract(game: GameModule, failures: Array) 
 		failures.append("Scratch Tickets did not route to its native surface.")
 	var counter_ritual: Dictionary = surface.get("counter_ritual", {}) if typeof(surface.get("counter_ritual", {})) == TYPE_DICTIONARY else {}
 	var counter_attention: Dictionary = counter_ritual.get("attention", {}) if typeof(counter_ritual.get("attention", {})) == TYPE_DICTIONARY else {}
-	if str(surface.get("surface_cast", "")) != "clerk_and_machine" or (counter_ritual.get("actors", []) as Array).is_empty() or (counter_ritual.get("objects", []) as Array).size() < 3:
-		failures.append("Scratch Tickets did not project the clerk, rack, counter, and losing-ticket pile as material ritual state.")
+	if str(surface.get("surface_cast", "")) != "counter_staff_and_machine" or (counter_ritual.get("actors", []) as Array).is_empty() or (counter_ritual.get("objects", []) as Array).size() < 3:
+		failures.append("Scratch Tickets did not project counter staff, rack, counter, and losing-ticket pile as material ritual state.")
 	if bool(counter_attention.get("reveals_hidden_outcomes", true)) or int(counter_attention.get("suspicion", -1)) != run_state.suspicion_level():
-		failures.append("Scratch clerk attention leaked ticket contents or diverged from existing suspicion authority.")
+		failures.append("Scratch counter-staff attention leaked ticket contents or diverged from existing suspicion authority.")
 	if not bool(surface.get("surface_animates_idle", false)) or bool(surface.get("surface_realtime_state_refresh", true)):
 		failures.append("Scratch Tickets idle liveness/zero-copy flags are incorrect.")
 	var cash_hooks := game.environment_interactable_objects(run_state, environment)
@@ -57,10 +57,10 @@ func _check_scratch_tickets_surface_contract(game: GameModule, failures: Array) 
 		if typeof(hook_value) != TYPE_DICTIONARY:
 			continue
 		for action_value in (hook_value as Dictionary).get("available_actions", []):
-			if typeof(action_value) == TYPE_DICTIONARY and str((action_value as Dictionary).get("label", "")) == "Cash In":
+			if typeof(action_value) == TYPE_DICTIONARY and str((action_value as Dictionary).get("label", "")) == "Cash In Scratchers":
 				scratch_cash_in_found = true
 	if not scratch_cash_in_found:
-		failures.append("Scratch Tickets redemption control did not use the Cash In label.")
+		failures.append("Scratch Tickets redemption control did not use the explicit Cash In Scratchers label.")
 	if not bool(surface.get("surface_pointer_coalesce_moves", false)) or not game.surface_pointer_uses_lightweight_ui_state("scratch_scrub"):
 		failures.append("Scratch Tickets did not retain coalesced lightweight pointer input.")
 	var main_source := FileAccess.get_file_as_string("res://scripts/ui/foundation_main.gd")
@@ -1960,7 +1960,7 @@ func _check_scratch_gas_station_generation(failures: Array) -> void:
 
 
 func _scratch_environment(environment_id: String) -> Dictionary:
-	return {"id": environment_id, "world_node_id": environment_id, "display_name": "Roadside Gas", "archetype_id": "gas_station_casino", "kind": "casino", "game_ids": ["scratch_tickets"], "game_states": {}, "economic_profile": {"stake_floor": 1, "stake_ceiling": 100}, "visual_context": {"scene_type": "gas_station_casino"}}
+	return {"id": environment_id, "world_node_id": environment_id, "display_name": "Roadside Gas", "archetype_id": "gas_station_casino", "kind": "casino", "game_ids": ["scratch_tickets"], "game_states": {}, "economic_profile": {"stake_floor": 1, "stake_ceiling": 100}, "visual_context": {"scene_type": "gas_station_casino"}, "local_narrative_flags": {"lottery_counter": {"host_object_id": "character:nell", "staff_label": "Nell", "sale_game_ids": ["pull_tabs"], "service_game_ids": ["pull_tabs", "scratch_tickets"]}}}
 
 
 func _scratch_rng(seed_text: String) -> RngStream:

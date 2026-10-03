@@ -10,7 +10,8 @@ run state forward.
 
 Versions 0.2.0 through 0.3.3 are historical source releases; 0.4.0 was an Act 1
 candidate tag that was not published before development continued. Version
-0.5.1 is the latest owner-published release. Current `main` is the stamped 0.6.0
+0.5.1 is the latest stable owner-published release. The latest testing build is
+the GitHub prerelease `v0.6.0-pre.2`; current `main` remains the stamped 0.6.0
 release-preparation line. It keeps the Act 1 foundation and adds the Living Town,
 55 persistent room scenarios, the Crew campaign, eleven depth-complete game
 modules, expanded tutorial and audio coverage, and a reworked four-room Grand
@@ -18,13 +19,13 @@ Casino endgame with a living Rourke, chips and Cage economy, Linda's
 Bronze/Silver/Gold Players Card ladder, four-phase showdown, heads-up Blackjack
 duel, and persistent card/chip meta rewards.
 
-The 0.6.0 source is playable and now uses fixed, art-aligned room slots across
-its physical spaces. Release qualification is still in progress: the room set
-awaits final owner review, the three ending routes are completing their normal-
-play confirmations, and the final package follows those closures. Project and
-export metadata are stamped `0.6.0`; trial Windows and Web packaging precedes
-the final owner handoff. The `v0.5.1` tag and GitHub Release identify the final corrected 0.5
-playtest baseline; `v0.5.0` remains the immutable original release boundary.
+The 0.6.0 source is playable and uses a consolidated four-family placement
+model across 659 authored positions in 21 maps. Release qualification is still
+in progress: the room set awaits final owner positioning and the three ending
+routes are completing their normal-play confirmations. Project and export
+metadata are stamped `0.6.0`; `v0.6.0-pre.2` provides the current Windows
+testing package. The `v0.5.1` tag and GitHub Release identify the final corrected
+0.5 playtest baseline; `v0.5.0` remains the immutable original release boundary.
 Beat the House is not a real-money gambling product. It has no real-money
 wagering, cash prizes, gambling monetization, or store credentials checked into
 the repository.
@@ -36,10 +37,10 @@ the repository.
 | Engine | Godot 4.x project with Godot 4.6 project feature metadata |
 | Main scene | `res://scenes/main.tscn` |
 | Main UI shell | `res://scripts/ui/foundation_main.gd` |
-| Published release line | 0.5.1; 0.5.0 is the original release boundary and 0.4.0 is an unpublished Act 1 candidate |
-| Release-prep version | 0.6.0 in project and platform export metadata; 0.5.1 remains the latest owner-published release until upload |
-| Active planning target | Finish owner room review and normal-play ending confirmations, then cut the final Windows/Web handoff artifacts |
-| Current release readiness | Playable and version-stamped; trial packaging is in progress, while final qualification and owner upload remain pending |
+| Published release line | 0.5.1 stable; `v0.6.0-pre.2` is the latest GitHub testing prerelease |
+| Release-prep version | 0.6.0 in project and platform export metadata |
+| Active planning target | Owner room repositioning and normal-play ending confirmations before the final stable Windows/Web handoff |
+| Current release readiness | Playable, version-stamped, and packaged as prerelease 2; final stable qualification remains pending |
 | Viewport | 1280x720, non-resizable, canvas stretch with kept aspect |
 | Renderer | Godot mobile renderer by default; Windows uses Godot compatibility/OpenGL to avoid the native Vulkan/OBS crash path seen in local WER reports |
 | Input model | Single pointer interaction with mouse/touch parity |
@@ -84,7 +85,7 @@ Production content is JSON under `data/`.
 | Travel route templates | 12 | `data/travel/routes.json` | Destination templates for shops, casinos, tier-2 venues, the jazz club, beach, the underground casino, and the Grand Casino; `WorldMap` turns them into seeded graph paths with costs, unlocks, scouting previews, travel locks, and route-risk events |
 | Challenges | 8 | `data/challenges/challenges.json` | Act 1 authored challenge runs with profile completion flags |
 | Dialogues | 32 | `data/dialogue/dialogues.json` | TalkDock dialogue content for Act 1, the guided first night, Living Town, and Crew routes |
-| Characters | 46 identities / 3 pools | `data/characters/characters.json`, `data/characters/pools.json` | Seven Crew regulars, the Blue Note trio, shop staff, casino staff, patrons, and recurring world characters |
+| Characters | 45 identities / 3 pools | `data/characters/characters.json`, `data/characters/pools.json` | Seven Crew regulars, the Blue Note trio, shop staff, casino staff, patrons, and recurring world characters |
 | Collections | 2 collections / 28 entries in 1 versioned definition pack | `data/collections/collections.json` | Local meta collection bags/items, housing data, and pawn-shop sale values |
 | Music tracks | 3 | `data/audio/music_manifest.json` | Authored music manifest used by the procedural music player |
 | Tutorial lessons | 66 | `data/tutorial/lessons.json` | Dialogue-guided and contextual tutorial definitions, highlights, pacing, and gating contracts |
@@ -171,11 +172,14 @@ Hold'em table supports five production nights and seven persistent opponents;
 Crew decisions and grievances carry through later jobs and endings. Ignoring
 the Crew remains a supported no-op route.
 
-Room construction uses fixed, named slots by physical type across authored
-environment surfaces. Games, items, people, and illustrated props occupy
-art-aligned places; abstract scenario actions stay in the room action list.
-Behind-counter staff are occluded by the counter art, while floor actors and
-fixtures use grounded, scenario-specific coordinates with bounded fallbacks.
+Room construction uses 659 named positions across four explicit families:
+permanent `fixed`, optional ambient `event`, reusable `scenario`, and real
+travel `exit` positions. Games, items, people, and illustrated props occupy
+art-aligned places; abstract actions attach to tangible hosts instead of adding
+room markers. Pull Tabs are counter merchandise sold and redeemed through each
+venue's existing bartender, clerk, or host desk. Behind-counter staff are
+occluded by the counter art, while floor actors and fixtures use grounded,
+scenario-specific coordinates with bounded fallbacks.
 
 ## Games
 
@@ -186,7 +190,7 @@ rendering details.
 | Game | Family | Module | Cheat actions | Current behavior |
 | --- | --- | --- | --- | --- |
 | Scratch Tickets | lottery | `scripts/games/scratch_tickets.gd` | none | Seven generated-art ticket faces with separate background/icon/foil renderers, high-resolution interpolated scratching, intentional drag-to-bin discard, visible win/dud piles, fixed-at-purchase outcomes, compact settled receipts, and collection-print payoff |
-| Pull Tabs | novelty | `scripts/games/pull_tabs.gd` | `tab_detector_scan` | Finite pull-tab deals, ticket windows, row/deal state, detector and tarot item interactions |
+| Pull Tabs | novelty | `scripts/games/pull_tabs.gd` | `tab_detector_scan` | Counter-sold finite deals, ticket windows, row/deal state, detector and tarot interactions, counter redemption, and voiced suspicious-cashout follow-up |
 | Slot | slots | `scripts/games/slot.gd` | `nudge` | Generated Pinball/Buffalo machines, fixed bet ladder, reel-shift nudge, autoplay, feature bonuses, and bonus-stuck watchdog coverage |
 | Bar Dice | dice | `scripts/games/bar_dice.gd` | `loaded_toss`, `palmed_swap` | Ship, Captain, Crew as a bar-top table game with patrons, cargo scoring, carryover pots, and skill-timed dice cheats |
 | Blackjack | cards | `scripts/games/blackjack.gd` | `peek_hole_card`, `count_cards` | Shoe blackjack with hit/stand/split/double, side bets, count challenge, and hole-card peek heat |

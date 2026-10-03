@@ -56,8 +56,8 @@ $foundationTravelPath = Join-Path $projectRoot ($foundationTravelRelativePath.Re
 $tutorialFlowPath = Join-Path $projectRoot ($tutorialFlowRelativePath.Replace('/', '\'))
 $attributeBadgesPath = Join-Path $projectRoot ($attributeBadgesRelativePath.Replace('/', '\'))
 $projectCacheRoot = Join-Path $projectRoot '.godot'
-$expectedManifestSha256 = '5CCE3B0B584781583477972545153A28E59702C3649B00DFA94A6A65014B98AC'
-$expectedManifestBlob = 'efe95372c9bb543affe49e0a6d367eb5c22c8392'
+$expectedManifestSha256 = '329A72D408FB6C8D60FF17B326D3F7A9DE443513160A56290B478F2CC5D5F73F'
+$expectedManifestBlob = '71c8ba5485f8466e63851dc348be25183997fcf1'
 $generationSeedPrefix = 'RW06-1-GENERATION-100-0060'
 $inactiveIndependentProjectionFingerprint = '78b558bd2357fbe7ad52804fb3af1b8664b23db096b1deb22d215dde25b152bf'
 
@@ -515,7 +515,7 @@ function Get-CanonicalManifestIssues {
             -not (Test-ExactJsonStringValue $combo.scenario_id 'corner_store_delivery_day') -or
             -not (Test-ExactJsonStringValue $combo.phase_id 'arrival') -or
             -not (Test-ExactJsonStringValue $combo.base_event_id 'town_rumor_staff') -or
-            -not (Test-ExactJsonStringValue $combo.event_slot_id 'event.counter_patron_2') -or
+            -not (Test-ExactJsonStringValue $combo.event_slot_id 'event.behind_counter_person_2') -or
             -not (Test-ExactJsonStringValue $combo.scenario_identity 'scenario::delivery_event_gate')
         ) { Add-Issue $issues 'seed 009 legal-room combination changed' }
     }
@@ -2759,12 +2759,12 @@ function New-HistoricalSemanticSelfTestFixture {
     $records[0].events=[object[]]@('combo_base')
     $records[0].runtime_scenario_layout.authority_receipts=[object[]]@(
         (New-SemanticAuthoritySelfTestReceipt 'scenario::combo' 'semantic'),
-        (New-SemanticAuthoritySelfTestReceipt 'event::event:combo_base' 'base_record' $false 'event.floor_patron_1' 'event:combo_base')
+        (New-SemanticAuthoritySelfTestReceipt 'event::event:combo_base' 'base_record' $false 'event.standing_person_1' 'event:combo_base')
     )
     $records[2].events=[object[]]@('marker')
     $records[2].runtime_scenario_layout.authority_receipts=[object[]]@(
         (New-SemanticAuthoritySelfTestReceipt 'scenario::required' 'semantic'),
-        (New-SemanticAuthoritySelfTestReceipt 'event::event:conflict' 'base_record' $false 'event.floor_item_2' 'event:conflict')
+        (New-SemanticAuthoritySelfTestReceipt 'event::event:conflict' 'base_record' $false 'event.floor_fixture_2' 'event:conflict')
     )
     foreach($receiptIndex in @(0,2)){
         $receiptLayout=$records[$receiptIndex].runtime_scenario_layout;$receiptIdentities=[object[]]@($receiptLayout.authority_receipts|ForEach-Object{[string]$_.identity})
@@ -2783,7 +2783,7 @@ function New-HistoricalSemanticSelfTestFixture {
         travel_records=[object[]]$travels;travels_per_run_target=5;visits_per_run_target=6;warning_count=0;warnings=[object[]]@();warnings_clean=$true
     }
     $expectation=[pscustomobject]@{seed=$seed;destination='archetype-2';scenario_id='scenario-2';required_marker='marker';required_object='';required_interaction='scenario::required';conflict_identity='event::event:conflict'}
-    $combo=[pscustomobject]@{seed=$seed;destination='archetype-0';scenario_id='scenario-0';phase_id='arrival';base_event_id='combo_base';event_slot_id='event.floor_patron_1';scenario_identity='scenario::combo'}
+    $combo=[pscustomobject]@{seed=$seed;destination='archetype-0';scenario_id='scenario-0';phase_id='arrival';base_event_id='combo_base';event_slot_id='event.standing_person_1';scenario_identity='scenario::combo'}
     return [pscustomobject][ordered]@{attempt_id=$attempt;report=$report;expectation=$expectation;combo=$combo}
 }
 

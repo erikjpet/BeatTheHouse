@@ -69,7 +69,7 @@ def actor(identity: str, **extra: Any) -> dict[str, Any]:
 
 class V2ScenarioSlotReplayTest(unittest.TestCase):
     def test_capacity_shortfall_fails_closed(self) -> None:
-        surface = map_data([slot("scenario.floor_patron_1", "standing_person", 1, 100.0)])
+        surface = map_data([slot("scenario.standing_person_1", "standing_person", 1, 100.0)])
         result = SlotCheck._v2_bind_scenario_snapshot(surface, [
             actor("scenario::actor_a"),
             actor("scenario::actor_b"),
@@ -88,12 +88,12 @@ class V2ScenarioSlotReplayTest(unittest.TestCase):
 
     def test_preference_contention_uses_deterministic_family_fallback(self) -> None:
         surface = map_data([
-            slot("scenario.floor_patron_1", "standing_person", 1, 100.0),
-            slot("scenario.floor_patron_2", "standing_person", 2, 180.0),
+            slot("scenario.standing_person_1", "standing_person", 1, 100.0),
+            slot("scenario.standing_person_2", "standing_person", 2, 180.0),
         ])
         surface["scenario_slot_ids"] = {
-            "actor_a": "scenario.floor_patron_1",
-            "actor_b": "scenario.floor_patron_1",
+            "actor_a": "scenario.standing_person_1",
+            "actor_b": "scenario.standing_person_1",
         }
         snapshot = [actor("scenario::actor_a"), actor("scenario::actor_b")]
         first = SlotCheck._v2_bind_scenario_snapshot(surface, snapshot)
@@ -102,13 +102,13 @@ class V2ScenarioSlotReplayTest(unittest.TestCase):
         self.assertEqual(first["missing_count"], 0)
         self.assertEqual(
             {binding["slot_id"] for binding in first["bindings"].values()},
-            {"scenario.floor_patron_1", "scenario.floor_patron_2"},
+            {"scenario.standing_person_1", "scenario.standing_person_2"},
         )
 
     def test_route_reserves_both_scenario_endpoints(self) -> None:
         surface = map_data([
-            slot("scenario.floor_patron_1", "standing_person", 1, 100.0),
-            slot("scenario.floor_patron_2", "standing_person", 2, 300.0),
+            slot("scenario.standing_person_1", "standing_person", 1, 100.0),
+            slot("scenario.standing_person_2", "standing_person", 2, 300.0),
         ])
         surface["walk_lanes"] = [{
             "id": "public_lane", "direction": "both",
@@ -116,8 +116,8 @@ class V2ScenarioSlotReplayTest(unittest.TestCase):
         }]
         surface["actor_routes"] = [{
             "id": "cross_room",
-            "start_slot_id": "scenario.floor_patron_1",
-            "end_slot_id": "scenario.floor_patron_2",
+            "start_slot_id": "scenario.standing_person_1",
+            "end_slot_id": "scenario.standing_person_2",
             "lane_ids": ["public_lane"],
         }]
         result = SlotCheck._v2_bind_scenario_snapshot(surface, [
@@ -128,7 +128,7 @@ class V2ScenarioSlotReplayTest(unittest.TestCase):
         self.assertEqual(result["reservation_count"], 2)
         self.assertEqual(
             result["bindings"]["scenario::moving_actor"]["reserved_slot_ids"],
-            ["scenario.floor_patron_1", "scenario.floor_patron_2"],
+            ["scenario.standing_person_1", "scenario.standing_person_2"],
         )
 
     def test_safe_exit_stays_scenario_but_navigation_uses_exit(self) -> None:
