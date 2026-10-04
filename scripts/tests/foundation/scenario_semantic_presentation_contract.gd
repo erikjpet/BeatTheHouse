@@ -509,6 +509,7 @@ static func _check_passive_atomic_commits(library: Variant, failures: Array) -> 
 
 
 static func _check_fixed_slot_renderer_authority(failures: Array) -> void:
+	var scenario_id := "bar_darts_league_night"
 	var stable_id := "bar_darts_league_night_bracket_easel"
 	var identity := "scenario::%s" % stable_id
 	var semantic_visual := {
@@ -517,7 +518,7 @@ static func _check_fixed_slot_renderer_authority(failures: Array) -> void:
 		"visible": true, "enabled": true,
 	}
 	var projection := {
-		"scenario_id": "fixed_slot_authority_fixture", "phase_id": "arrival", "status": "active", "boundary_serial": 1,
+		"scenario_id": scenario_id, "phase_id": "arrival", "status": "active", "boundary_serial": 1,
 		"semantic_state": {
 			"scene_objects": {},
 			"actors": {}, "interactions": {}, "services": {}, "games": {}, "routes": {},
@@ -527,6 +528,8 @@ static func _check_fixed_slot_renderer_authority(failures: Array) -> void:
 	var environment := {
 		"id": "bar_fixed_slot_fixture",
 		"archetype_id": "bar",
+		"scenario_id": scenario_id,
+		"scenario_state": {"id": scenario_id, "layer_id": ""},
 		"_scenario_layout_context": _production_layout_context(),
 	}
 	var authored := EnvironmentSlotBinderScript.bind_scenario_visuals(environment, [{
@@ -561,24 +564,53 @@ static func _check_fixed_slot_renderer_authority(failures: Array) -> void:
 
 
 static func _check_finalized_actor_route(library: Variant, failures: Array) -> void:
+	var scenario_id := "back_alley_cruiser_parked"
+	var actor_stable_id := "patrol_officer"
+	var actor_identity := "scenario::%s" % actor_stable_id
+	var command_stable_id := "back_alley_cruiser_parked_exit"
+	var command_identity := "scenario::%s" % command_stable_id
+	var trusted_base_object_id := "service:house_drink"
 	var definition := ScenarioSequenceContractScript.finalization_fixture_definition()
+	definition["id"] = scenario_id
+	definition["archetype_id"] = "back_alley"
 	definition["sequence"]["declared_targets"]["anchors"].append("base::anchor:bar")
 	var phase: Dictionary = definition["sequence"]["phase_graph"]["phases"][0]
+	var phase_scene_ops: Array = []
+	for operation_value in _array(phase.get("scene_ops", [])):
+		var operation := _dict(operation_value)
+		if str(operation.get("stable_object_id", "")) == "fixture_100":
+			continue
+		if str(operation.get("stable_object_id", "")) == "command_console":
+			operation["stable_object_id"] = command_stable_id
+		phase_scene_ops.append(operation)
+	phase["scene_ops"] = phase_scene_ops
+	var phase_interaction_ops := _array(phase.get("interaction_ops", []))
+	for operation_index in range(phase_interaction_ops.size()):
+		var operation := _dict(phase_interaction_ops[operation_index])
+		if str(operation.get("stable_object_id", "")) != "command_console":
+			continue
+		operation["stable_object_id"] = command_stable_id
+		var interaction := _dict(operation.get("interaction", {}))
+		interaction["stable_object_id"] = command_stable_id
+		interaction["presentation_object_id"] = command_identity
+		operation["interaction"] = interaction
+		phase_interaction_ops[operation_index] = operation
+	phase["interaction_ops"] = phase_interaction_ops
 	var actor_ops: Array = phase.get("actor_ops", [])
 	actor_ops.append({
 		"family": "actor_ops",
 		"op": "spawn",
-		"receipt_id": "actor_spawn_route_guard",
+		"receipt_id": "actor_spawn_patrol_officer",
 		"owner_namespace": "scenario",
-		"stable_object_id": "route_guard",
-		"actor": {"label": "Route guard", "actor_id": "route_guard", "anchor_id": "bar_actor", "behavior": "patrol", "route_id": "base::world:bar", "pose": "brace"},
+		"stable_object_id": actor_stable_id,
+		"actor": {"label": "Patrol Officer", "actor_id": actor_stable_id, "anchor_id": "bar_actor", "behavior": "patrol", "route_id": "base::world:bar", "pose": "brace"},
 	})
 	phase["actor_ops"] = actor_ops
 	_append_interaction(definition, {
 		"owner_namespace": "scenario",
-		"stable_object_id": "route_guard",
-		"presentation_object_id": "scenario::route_guard",
-		"label": "Route guard",
+		"stable_object_id": actor_stable_id,
+		"presentation_object_id": actor_identity,
+		"label": "Patrol Officer",
 		"state_label": "Available",
 		"prompt": "Inspect the routed guard.",
 		"enabled": true,
@@ -593,20 +625,39 @@ static func _check_finalized_actor_route(library: Variant, failures: Array) -> v
 		"safe_exit": false,
 		"alternate_exit": false,
 	})
+	var complication: Dictionary = definition["sequence"]["phase_graph"]["phases"][1]
+	complication["scene_ops"] = _array(complication.get("scene_ops", [])).filter(func(operation_value: Variant) -> bool:
+		return str(_dict(operation_value).get("stable_object_id", "")) != "fixture_100"
+	)
 	var cleanup: Dictionary = definition["sequence"]["cleanup"]
-	var cleanup_ops: Array = cleanup.get("operations", [])
-	cleanup_ops.append({"family": "actor_ops", "op": "despawn", "receipt_id": "cleanup_actor_route_guard", "owner_namespace": "scenario", "stable_object_id": "route_guard"})
+	var cleanup_ops: Array = _array(cleanup.get("operations", [])).filter(func(operation_value: Variant) -> bool:
+		return not (str(_dict(operation_value).get("family", "")) == "scene_ops" and str(_dict(operation_value).get("stable_object_id", "")) == "fixture_100")
+	)
+	for operation_index in range(cleanup_ops.size()):
+		var operation := _dict(cleanup_ops[operation_index])
+		if str(operation.get("stable_object_id", "")) == "command_console":
+			operation["stable_object_id"] = command_stable_id
+			cleanup_ops[operation_index] = operation
+	cleanup_ops.append({"family": "actor_ops", "op": "despawn", "receipt_id": "cleanup_actor_patrol_officer", "owner_namespace": "scenario", "stable_object_id": actor_stable_id})
 	cleanup["operations"] = cleanup_ops
+	definition["sequence"]["declared_targets"]["scene_objects"] = []
+	definition["sequence"]["declared_targets"]["interactions"] = []
+	for outcome_id in ["repaired", "broken"]:
+		# This route-focused fixture keeps the real Back Alley route outcome and
+		# drops the Bar slot-machine mutation owned by the source fixture.
+		definition["sequence"]["aftermath"][outcome_id]["scene_ops"] = []
 	_reseal_definition(definition)
 	var run_state := RunStateScript.new()
 	run_state.current_environment = _finalization_environment(definition, library, "back_alley")
+	run_state.current_environment["scenario_id"] = scenario_id
+	run_state.current_environment["layout"] = EnvironmentInstanceScript.ensure_generated_layout(run_state.current_environment, library)
 	var trusted_base := _production_presentations(run_state.current_environment, library)
 	run_state.scenario_prepare_semantic_finalization()
 	var finalized := run_state.scenario_finalize_base_semantics(trusted_base, library, _production_layout_context())
 	var projected_candidate := EnvironmentInteractionControllerScript.project_finalized_sequence_interaction_result(_array(finalized.get("records", [])), finalized)
 	var projected := EnvironmentInteractionControllerScript.committed_projection_status_result(run_state, projected_candidate, trusted_base)
-	var actor := _record(_array(projected.get("records", [])), "scenario::route_guard")
-	var authority_record := _dict(_dict(finalized.get("layout_authority", {})).get("scenario::route_guard", {}))
+	var actor := _record(_array(projected.get("records", [])), actor_identity)
+	var authority_record := _dict(_dict(finalized.get("layout_authority", {})).get(actor_identity, {}))
 	var route_points := _array(actor.get("actor_route_points", []))
 	var route_stage := _dict(actor.get("actor_route_stage", {}))
 	var surface_map := EnvironmentPlacementScript.surface_map(run_state.current_environment)
@@ -632,7 +683,7 @@ static func _check_finalized_actor_route(library: Variant, failures: Array) -> v
 	var authored_start := authored_route_pixels[0] if not authored_route_pixels.is_empty() else Vector2(-1.0, -1.0)
 	var authored_endpoint := authored_route_pixels[-1] if not authored_route_pixels.is_empty() else Vector2(-1.0, -1.0)
 	var expected_duration := clampf(route_distance / 82.0, 0.75, 8.0)
-	if str(authority_record.get("presentation_object_id", "")) != "scenario::route_guard" \
+	if str(authority_record.get("presentation_object_id", "")) != actor_identity \
 		or not bool(authority_record.get("presentation_required", false)) \
 		or not bool(authority_record.get("presentation_visible", false)) \
 		or not bool(authority_record.get("presentation_interactive", false)) \
@@ -650,43 +701,43 @@ static func _check_finalized_actor_route(library: Variant, failures: Array) -> v
 		failures.append("Finalized fixed-slot route authority did not seal distinct authored endpoints, lane duration, reduced endpoint, and ping-pong order.")
 	var canvas = PixelSceneCanvasScript.new()
 	canvas.size = BOARD_SIZE
-	canvas.render_environment_snapshot({"id": "finalized_route", "archetype_id": "back_alley", "reduce_motion": false, "interactable_objects": projected.get("records", [])})
-	var start_rect := _canvas_object_rect(canvas, "scenario::route_guard")
+	canvas.render_environment_snapshot({"id": "finalized_route", "archetype_id": "back_alley", "scenario_id": scenario_id, "reduce_motion": false, "interactable_objects": projected.get("records", [])})
+	var start_rect := _canvas_object_rect(canvas, actor_identity)
 	var authored_actor_size := _slot_rect(authored_start_slot).size
 	var authored_small_size := EnvironmentSlotBinderScript.expanded_rect(_slot_rect(authored_start_slot)).size
-	if not start_rect.get_center().is_equal_approx(normal_start) or not start_rect.size.is_equal_approx(authored_actor_size) or canvas.object_id_at_local_position(start_rect.get_center()) != "scenario::route_guard":
+	if not start_rect.get_center().is_equal_approx(normal_start) or not start_rect.size.is_equal_approx(authored_actor_size) or canvas.object_id_at_local_position(start_rect.get_center()) != actor_identity:
 		failures.append("Public non-reduced canvas did not draw/hit the routed actor at its sealed normal start and size.")
 	canvas.actor_route_time = duration * 0.5
-	var midpoint_rect := _canvas_object_rect(canvas, "scenario::route_guard")
+	var midpoint_rect := _canvas_object_rect(canvas, actor_identity)
 	var expected_midpoint := _route_point_at_progress(route_points, 0.5)
-	if not midpoint_rect.get_center().is_equal_approx(expected_midpoint) or not midpoint_rect.size.is_equal_approx(authored_actor_size) or canvas.object_id_at_local_position(midpoint_rect.get_center()) != "scenario::route_guard":
+	if not midpoint_rect.get_center().is_equal_approx(expected_midpoint) or not midpoint_rect.size.is_equal_approx(authored_actor_size) or canvas.object_id_at_local_position(midpoint_rect.get_center()) != actor_identity:
 		failures.append("Public non-reduced canvas did not draw/hit the routed actor at the authored-lane midpoint.")
 	canvas.actor_route_time = duration
-	var endpoint_rect := _canvas_object_rect(canvas, "scenario::route_guard")
-	if not endpoint_rect.get_center().is_equal_approx(normal_endpoint) or not endpoint_rect.size.is_equal_approx(authored_actor_size) or canvas.object_id_at_local_position(endpoint_rect.get_center()) != "scenario::route_guard":
+	var endpoint_rect := _canvas_object_rect(canvas, actor_identity)
+	if not endpoint_rect.get_center().is_equal_approx(normal_endpoint) or not endpoint_rect.size.is_equal_approx(authored_actor_size) or canvas.object_id_at_local_position(endpoint_rect.get_center()) != actor_identity:
 		failures.append("Public non-reduced canvas did not draw/hit the routed actor at the explicit-duration endpoint.")
 	canvas.actor_route_time = duration * 2.0
-	var returned_rect := _canvas_object_rect(canvas, "scenario::route_guard")
-	if not returned_rect.get_center().is_equal_approx(normal_start) or canvas.object_id_at_local_position(returned_rect.get_center()) != "scenario::route_guard":
+	var returned_rect := _canvas_object_rect(canvas, actor_identity)
+	if not returned_rect.get_center().is_equal_approx(normal_start) or canvas.object_id_at_local_position(returned_rect.get_center()) != actor_identity:
 		failures.append("Public canvas did not honor sealed ping-pong ordering after one full route cycle.")
 	canvas.actor_route_time = duration
 	canvas.set_small_screen_mode(true)
-	var small_actor_rect := _canvas_object_rect(canvas, "scenario::route_guard")
-	if not small_actor_rect.get_center().is_equal_approx(small_endpoint) or not small_actor_rect.size.is_equal_approx(authored_small_size) or canvas.object_id_at_local_position(small_actor_rect.get_center()) != "scenario::route_guard" or not _rect_inside_canvas(small_actor_rect):
+	var small_actor_rect := _canvas_object_rect(canvas, actor_identity)
+	if not small_actor_rect.get_center().is_equal_approx(small_endpoint) or not small_actor_rect.size.is_equal_approx(authored_small_size) or canvas.object_id_at_local_position(small_actor_rect.get_center()) != actor_identity or not _rect_inside_canvas(small_actor_rect):
 		failures.append("Public small-screen canvas did not use the sealed expanded size and board-clamped endpoint.")
 	canvas.set_small_screen_mode(false)
-	canvas.render_environment_snapshot({"id": "finalized_reduced_route", "archetype_id": "back_alley", "reduce_motion": true, "interactable_objects": projected.get("records", [])})
-	var reduced_rect := _canvas_object_rect(canvas, "scenario::route_guard")
-	if not reduced_rect.get_center().is_equal_approx(reduced_endpoint) or not reduced_rect.size.is_equal_approx(authored_actor_size) or canvas.object_id_at_local_position(reduced_rect.get_center()) != "scenario::route_guard":
+	canvas.render_environment_snapshot({"id": "finalized_reduced_route", "archetype_id": "back_alley", "scenario_id": scenario_id, "reduce_motion": true, "interactable_objects": projected.get("records", [])})
+	var reduced_rect := _canvas_object_rect(canvas, actor_identity)
+	if not reduced_rect.get_center().is_equal_approx(reduced_endpoint) or not reduced_rect.size.is_equal_approx(authored_actor_size) or canvas.object_id_at_local_position(reduced_rect.get_center()) != actor_identity:
 		failures.append("Public reduced-motion canvas did not draw/hit the sealed normal reduced endpoint.")
 	canvas.set_small_screen_mode(true)
-	var reduced_small_rect := _canvas_object_rect(canvas, "scenario::route_guard")
-	if not reduced_small_rect.get_center().is_equal_approx(small_endpoint) or not reduced_small_rect.size.is_equal_approx(authored_small_size) or canvas.object_id_at_local_position(reduced_small_rect.get_center()) != "scenario::route_guard" or not _rect_inside_canvas(reduced_small_rect):
+	var reduced_small_rect := _canvas_object_rect(canvas, actor_identity)
+	if not reduced_small_rect.get_center().is_equal_approx(small_endpoint) or not reduced_small_rect.size.is_equal_approx(authored_small_size) or canvas.object_id_at_local_position(reduced_small_rect.get_center()) != actor_identity or not _rect_inside_canvas(reduced_small_rect):
 		failures.append("Public reduced-motion small-screen canvas diverged from the sealed clamped endpoint or expanded size.")
 	canvas.free()
 
 	var forged_authority_finalized := finalized.duplicate(true)
-	forged_authority_finalized["layout_authority"]["scenario::route_guard"]["presentation_object_id"] = "game:slot"
+	forged_authority_finalized["layout_authority"][actor_identity]["presentation_object_id"] = trusted_base_object_id
 	var forged_authority_projection := EnvironmentInteractionControllerScript.project_finalized_sequence_interaction_result(_array(finalized.get("records", [])), forged_authority_finalized)
 	if bool(forged_authority_projection.get("ok", true)):
 		failures.append("Finalized presentation-object identity mutation did not break the closed authority digest before projection.")
@@ -694,7 +745,7 @@ static func _check_finalized_actor_route(library: Variant, failures: Array) -> v
 	for semantic_mutation_value in ["normalized_hit_rect", "small_screen_rect", "z_order", "route_point_start", "route_point_endpoint", "stage_start", "stage_endpoint", "stage_reduced_endpoint", "stage_small_start", "stage_small_endpoint", "stage_duration", "stage_mode"]:
 		var semantic_mutation := str(semantic_mutation_value)
 		var forged_finalized := finalized.duplicate(true)
-		var forged_actor: Dictionary = forged_finalized["projection"]["semantic_state"]["actors"]["scenario::route_guard"]
+		var forged_actor: Dictionary = forged_finalized["projection"]["semantic_state"]["actors"][actor_identity]
 		_mutate_route_actor(forged_actor, semantic_mutation)
 		var forged_projection := EnvironmentInteractionControllerScript.project_finalized_sequence_interaction_result(_array(finalized.get("records", [])), forged_finalized)
 		if bool(forged_projection.get("ok", true)):
@@ -703,19 +754,19 @@ static func _check_finalized_actor_route(library: Variant, failures: Array) -> v
 	var committed_environment := run_state.current_environment.duplicate(true)
 	var forged_canvas = PixelSceneCanvasScript.new()
 	forged_canvas.size = BOARD_SIZE
-	for projected_mutation_value in ["delete_route_guard", "delete_game_slot", "delete_command_console", "extra_record", "object_id_collision", "scenario_layout_resolved", "owner_namespace", "stable_object_id", "visible", "interactive", "semantic_actor_deletion", "semantic_interaction_deletion", "semantic_owner_namespace", "semantic_stable_object_id", "semantic_presence_conflict", "semantic_tombstone", "semantic_visibility", "normalized_rect", "small_screen_rect", "scenario_z_order", "route_point_start", "route_point_endpoint", "stage_start", "stage_endpoint", "stage_reduced_endpoint", "stage_small_start", "stage_small_endpoint", "stage_duration", "stage_mode", "authority_identity", "authority_digest", "duplicate_record"]:
+	for projected_mutation_value in ["delete_route_actor", "delete_base_service", "delete_command_console", "extra_record", "object_id_collision", "scenario_layout_resolved", "owner_namespace", "stable_object_id", "visible", "interactive", "semantic_actor_deletion", "semantic_interaction_deletion", "semantic_owner_namespace", "semantic_stable_object_id", "semantic_presence_conflict", "semantic_tombstone", "semantic_visibility", "normalized_rect", "small_screen_rect", "scenario_z_order", "route_point_start", "route_point_endpoint", "stage_start", "stage_endpoint", "stage_reduced_endpoint", "stage_small_start", "stage_small_endpoint", "stage_duration", "stage_mode", "authority_identity", "authority_digest", "duplicate_record"]:
 		var projected_mutation := str(projected_mutation_value)
 		run_state.current_environment = committed_environment.duplicate(true)
 		var forged_record_projection := projected.duplicate(true)
 		var forged_projected_records: Array = forged_record_projection["records"]
-		var forged_projected_actor := _mutable_record(forged_record_projection.get("records", []), "scenario::route_guard")
+		var forged_projected_actor := _mutable_record(forged_record_projection.get("records", []), actor_identity)
 		match projected_mutation:
-			"delete_route_guard":
-				_remove_projected_record(forged_projected_records, "scenario::route_guard")
-			"delete_game_slot":
-				_remove_projected_record(forged_projected_records, "game:slot")
+			"delete_route_actor":
+				_remove_projected_record(forged_projected_records, actor_identity)
+			"delete_base_service":
+				_remove_projected_record(forged_projected_records, trusted_base_object_id)
 			"delete_command_console":
-				_remove_projected_record(forged_projected_records, "scenario::command_console")
+				_remove_projected_record(forged_projected_records, command_identity)
 			"extra_record":
 				var extra_record := forged_projected_actor.duplicate(true)
 				extra_record["object_id"] = "scenario::extra_guard"
@@ -726,36 +777,36 @@ static func _check_finalized_actor_route(library: Variant, failures: Array) -> v
 			"duplicate_record":
 				forged_projected_records.append(forged_projected_actor.duplicate(true))
 			"semantic_actor_deletion":
-				forged_record_projection["projection"]["semantic_state"]["actors"].erase("scenario::route_guard")
+				forged_record_projection["projection"]["semantic_state"]["actors"].erase(actor_identity)
 			"semantic_interaction_deletion":
-				forged_record_projection["projection"]["semantic_state"]["interactions"].erase("scenario::route_guard")
+				forged_record_projection["projection"]["semantic_state"]["interactions"].erase(actor_identity)
 			"semantic_owner_namespace":
-				forged_record_projection["projection"]["semantic_state"]["actors"]["scenario::route_guard"]["owner_namespace"] = "base"
+				forged_record_projection["projection"]["semantic_state"]["actors"][actor_identity]["owner_namespace"] = "base"
 			"semantic_stable_object_id":
-				forged_record_projection["projection"]["semantic_state"]["actors"]["scenario::route_guard"]["stable_object_id"] = "forged_route_guard"
+				forged_record_projection["projection"]["semantic_state"]["actors"][actor_identity]["stable_object_id"] = "forged_patrol_officer"
 			"semantic_presence_conflict":
-				forged_record_projection["projection"]["semantic_state"]["actors"]["scenario::route_guard"]["present"] = false
+				forged_record_projection["projection"]["semantic_state"]["actors"][actor_identity]["present"] = false
 			"semantic_tombstone":
-				forged_record_projection["projection"]["semantic_state"]["actors"]["scenario::route_guard"]["present"] = false
-				forged_record_projection["projection"]["semantic_state"]["interactions"]["scenario::route_guard"]["present"] = false
+				forged_record_projection["projection"]["semantic_state"]["actors"][actor_identity]["present"] = false
+				forged_record_projection["projection"]["semantic_state"]["interactions"][actor_identity]["present"] = false
 			"semantic_visibility":
-				forged_record_projection["projection"]["semantic_state"]["actors"]["scenario::route_guard"]["visible"] = false
+				forged_record_projection["projection"]["semantic_state"]["actors"][actor_identity]["visible"] = false
 			_:
 				_mutate_projected_route_actor(forged_projected_actor, projected_mutation)
 		var committed_forgery := EnvironmentInteractionControllerScript.committed_projection_status_result(run_state, forged_record_projection, trusted_base)
 		var forged_records := _array(committed_forgery.get("records", []))
-		if bool(committed_forgery.get("ok", true)) or not _record(forged_records, "scenario::route_guard").is_empty() \
-				or not _record(forged_records, "scenario::command_console").is_empty() or _record(forged_records, "game:slot").is_empty() \
+		if bool(committed_forgery.get("ok", true)) or not _record(forged_records, actor_identity).is_empty() \
+				or not _record(forged_records, command_identity).is_empty() or _record(forged_records, trusted_base_object_id).is_empty() \
 				or not _record(forged_records, "scenario::presentation_failure").is_empty() \
-				or not _trusted_overflow_action(forged_records, "route_guard") \
-				or not _trusted_overflow_action(forged_records, "command_console"):
+				or not _trusted_overflow_action(forged_records, actor_stable_id) \
+				or not _trusted_overflow_action(forged_records, command_stable_id):
 			failures.append("Projected actor mutation %s escaped trusted-base plus committed-action overflow fallback." % projected_mutation)
-		forged_canvas.render_environment_snapshot({"id": "forged_finalized_route_%s" % projected_mutation, "archetype_id": "bar", "reduce_motion": true, "interactable_objects": forged_records})
+		forged_canvas.render_environment_snapshot({"id": "forged_finalized_route_%s" % projected_mutation, "archetype_id": "back_alley", "scenario_id": scenario_id, "reduce_motion": true, "interactable_objects": forged_records})
 		var fallback_objects := _array(forged_canvas.current_view_snapshot().get("objects", []))
-		if not _object(fallback_objects, "scenario::route_guard").is_empty() \
-				or not _object(fallback_objects, "scenario::command_console").is_empty() \
-				or not _object(fallback_objects, "scenario_overflow:scenario:route_guard").is_empty() \
-				or not _object(fallback_objects, "scenario_overflow:scenario:command_console").is_empty() \
+		if not _object(fallback_objects, actor_identity).is_empty() \
+				or not _object(fallback_objects, command_identity).is_empty() \
+				or not _object(fallback_objects, "scenario_overflow:scenario:%s" % actor_stable_id).is_empty() \
+				or not _object(fallback_objects, "scenario_overflow:scenario:%s" % command_stable_id).is_empty() \
 				or not _object(fallback_objects, "scenario::presentation_failure").is_empty():
 			failures.append("Public canvas exposed room geometry for fail-open scenario actions after projected actor mutation %s." % projected_mutation)
 	forged_canvas.free()
@@ -1276,6 +1327,7 @@ static func _check_single_environment_plane(library: Variant, failures: Array) -
 	# scenario slot is disjoint by construction without moving either object
 	# or admitting the runtime control into semantic authority.
 	var runtime_projection := projection.duplicate(true)
+	runtime_projection["scenario_id"] = "bar_darts_league_night"
 	runtime_projection["semantic_state"]["interactions"].erase("service::service:house_drink")
 	runtime_projection["semantic_state"]["scene_objects"]["scenario::bar_darts_league_night_bracket_easel"] = {
 		"owner_namespace": "scenario", "stable_object_id": "bar_darts_league_night_bracket_easel", "present": true,
@@ -1284,6 +1336,8 @@ static func _check_single_environment_plane(library: Variant, failures: Array) -
 	}
 	var runtime_rect := _snapshot_rect(runtime_control.get("focus_rect", {}))
 	var runtime_environment := environment.duplicate(true)
+	runtime_environment["scenario_id"] = "bar_darts_league_night"
+	runtime_environment["scenario_state"] = {"id": "bar_darts_league_night", "layer_id": ""}
 	runtime_environment["_scenario_layout_context"] = {
 		"base_occupied_records": [{
 			"object_id": "numbers:book",
@@ -1456,24 +1510,31 @@ static func _check_atomic_projection_failures(library: Variant, failures: Array)
 	var invalid_settings := EnvironmentInteractionControllerScript.project_sequence_interaction_result([base], targeted_projection, invalid_settings_environment)
 	if bool(invalid_settings.get("ok", true)) or not _contains_text(_array(invalid_settings.get("errors", [])), "setting small_screen_mode must be boolean"):
 		failures.append("Malformed production accessibility settings bypassed structured layout validation.")
-	var divergent_interaction := _interaction_payload("scenario", "disabled_visual", "Disabled visual", true)
+	var divergent_scenario_id := "bar_darts_league_night"
+	var divergent_stable_id := "bar_darts_league_night_bracket_easel"
+	var divergent_identity := "scenario::%s" % divergent_stable_id
+	var divergent_interaction := _interaction_payload("scenario", divergent_stable_id, "Disabled visual", true)
 	var divergent_projection := {
+		"scenario_id": divergent_scenario_id,
 		"semantic_state": {
 			"scene_objects": {
-				"scenario::disabled_visual": {
-					"owner_namespace": "scenario", "stable_object_id": "disabled_visual", "present": true,
-					"label": "Disabled visual", "role": "control", "anchor_id": "control",
+				divergent_identity: {
+					"owner_namespace": "scenario", "stable_object_id": divergent_stable_id, "present": true,
+					"label": "Disabled visual", "role": "scoreboard", "anchor_id": "control",
 					"bounds": {"w": 72.0, "h": 52.0}, "visible": true, "enabled": false,
-					"icon_key": "room_surface", "placement_class": "surface_item",
+					"icon_key": "room_display", "placement_class": "floor_fixture",
 				},
 			},
 			"actors": {},
-			"interactions": {"scenario::disabled_visual": divergent_interaction},
+			"interactions": {divergent_identity: divergent_interaction},
 		},
 	}
 	var divergent_base := _production_presentations(environment, library)
-	var divergent := EnvironmentInteractionControllerScript.project_sequence_interaction_result(divergent_base, divergent_projection, environment)
-	if bool(divergent.get("ok", true)) or not _contains_text(_array(divergent.get("errors", [])), "remains actionable") or not _record(_array(divergent.get("records", [])), "scenario::disabled_visual").is_empty():
+	var divergent_environment := environment.duplicate(true)
+	divergent_environment["scenario_id"] = divergent_scenario_id
+	divergent_environment["scenario_state"] = {"id": divergent_scenario_id, "layer_id": ""}
+	var divergent := EnvironmentInteractionControllerScript.project_sequence_interaction_result(divergent_base, divergent_projection, divergent_environment)
+	if bool(divergent.get("ok", true)) or not _contains_text(_array(divergent.get("errors", [])), "remains actionable") or not _record(_array(divergent.get("records", [])), divergent_identity).is_empty():
 		failures.append("Actionable scenario semantics diverged from a disabled visual instead of failing atomically.")
 
 
@@ -1495,7 +1556,7 @@ static func _finalization_environment(definition: Dictionary, library: Variant, 
 		"environment_visit_id": "visit_1",
 		"current_layer_id": "",
 		"scenario_sequence_definition": definition,
-		"game_ids": ["slot"],
+		"game_ids": ["slot"] if archetype_id == "bar" else [],
 		"event_ids": ["late_shift_discount"],
 		"service_ids": ["house_drink"],
 		"lender_hooks": [],

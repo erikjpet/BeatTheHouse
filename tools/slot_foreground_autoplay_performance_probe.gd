@@ -11,7 +11,9 @@ const MainScene := preload("res://scenes/main.tscn")
 const SlotState := preload("res://scripts/games/slots/slot_machine_state.gd")
 const ActionAuthority := preload("res://scripts/core/blackjack_action_authority.gd")
 const SAVE_SLOT := "slot_foreground_autoplay_performance_probe"
-const SAMPLE_COUNT := 16
+# Nearest-rank p95 collapses to the maximum below 20 samples. Keep p95 and the
+# separately enforced hard maximum as distinct release signals.
+const SAMPLE_COUNT := 20
 const MAX_CACHED_RESPONSES := 2
 # Fill the bounded replay cache and exercise its first eviction/rehash before
 # timing. Two warmups only filled the cache, leaving that cold path in sample 1.

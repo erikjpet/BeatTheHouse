@@ -69,7 +69,7 @@ foreach ($preset in $presetRecords) {
     }
 }
 
-Assert-True ($project -match 'config/version="0\.5\.1"') "D3 violation: project.godot release stamp changed."
+Assert-True ($project -match 'config/version="0\.6\.0"') "D3 violation: project.godot release stamp changed."
 $identityPath = Join-Path $root "scripts/core/build_identity.gd"
 Assert-True (Test-Path -LiteralPath $identityPath -PathType Leaf) "BTH-033: manifest-backed runtime build identity is missing."
 if (Test-Path -LiteralPath $identityPath -PathType Leaf) {

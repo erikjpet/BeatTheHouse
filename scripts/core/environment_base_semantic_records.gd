@@ -3,6 +3,7 @@ extends RefCounted
 
 const OperationRegistryScript := preload("res://scripts/core/scenario_operation_registry.gd")
 const ArtContractsScript := preload("res://scripts/core/art_contracts.gd")
+const EnvironmentPlacementScript := preload("res://scripts/core/environment_placement.gd")
 const EnvironmentSlotBinderScript := preload("res://scripts/core/environment_slot_binder.gd")
 const DYNAMIC_SOURCE_FIELDS := ["active_delivery_run.handoff_pending_node_id", "numbers_state.venue_status", "numbers_state.silas_presence", "crew_presence", "game_ids.environment_interactable_objects", "game_ids.environment_interactable_objects.dialogue_id"]
 
@@ -145,6 +146,27 @@ static func authoritative_interactable_records(environment: Dictionary, library:
 				"y": float(rect.get("y", 0.0)) + float(rect.get("h", 0.0)) * 0.5,
 			}
 		records.append(record)
+	# Exact scenario layouts may attach a catalog action to a tangible scenario
+	# object instead of giving that action a second physical marker. Preserve the
+	# catalog-owned interaction identity as geometry-free action-list authority;
+	# the live composer attaches it to the exact host before presentation.
+	var surface_map := EnvironmentPlacementScript.surface_map(environment)
+	var hosted_action_ids := _dict(surface_map.get("scenario_instance_action_host_ids", {}))
+	var ordered_hosted_ids := hosted_action_ids.keys()
+	ordered_hosted_ids.sort_custom(func(left: Variant, right: Variant) -> bool: return str(left) < str(right))
+	for action_id_value in ordered_hosted_ids:
+		var action_id := str(action_id_value).strip_edges()
+		var host_id := str(hosted_action_ids.get(action_id_value, "")).strip_edges()
+		if action_id.is_empty() or host_id.is_empty() or not _catalog_identity_is_live(environment, action_id):
+			continue
+		if object_rects.has(action_id) or slot_bindings.has(action_id):
+			errors.append("exact hosted action %s still owns physical base layout authority." % action_id)
+			continue
+		var hosted_record := _hosted_catalog_action_record(environment, library, action_id, host_id)
+		if hosted_record.is_empty():
+			errors.append("exact hosted action %s is not backed by its active catalog source." % action_id)
+			continue
+		records.append(hosted_record)
 	if not errors.is_empty():
 		return {"ok": false, "records": [], "errors": errors}
 	# Use the same immutable slot projection as the production interaction UI.
@@ -189,8 +211,9 @@ static func stamp_interactable_records(records_value: Array, environment: Dictio
 			# migrated; the live composer attaches their actions to room objects.
 			# Keep their semantic identity/action authority without inventing a room
 			# hit rectangle that could bypass slot capacity or overlap validation.
-			if not _authorized_overflow_binding(record, slot_authority):
-				errors.append("base presentation record %d has no exact generated overflow binding authority." % index)
+			if not _authorized_overflow_binding(record, slot_authority) \
+					and not _authorized_hosted_action_binding(record, environment, slot_authority):
+				errors.append("base presentation record %d has no exact generated overflow or action-host authority." % index)
 				continue
 			for geometry_key in ["normalized_rect", "focus_rect", "focus_point", "normalized_hit_rect", "coordinate_space", "coordinate_board_size", "pixel_hit_bounds", "small_screen_rect", "label_rect", "small_screen_label_rect"]:
 				record.erase(geometry_key)
@@ -608,6 +631,94 @@ static func _authorized_overflow_binding(record: Dictionary, slot_authority: Dic
 	var object_id := str(record.get("object_id", "")).strip_edges()
 	return not object_id.is_empty() and bool(slot_authority.get("ok", false)) \
 		and _exact_id(slot_authority.get("overflow_ids", []), object_id)
+
+
+static func _authorized_hosted_action_binding(record: Dictionary, environment: Dictionary, slot_authority: Dictionary) -> bool:
+	if not bool(slot_authority.get("ok", false)):
+		return false
+	var object_id := str(record.get("object_id", "")).strip_edges()
+	var binding_source_id := str(record.get("slot_binding_source_id", "")).strip_edges()
+	if object_id.is_empty() or binding_source_id.is_empty() or object_id == binding_source_id:
+		return false
+	var surface_map := EnvironmentPlacementScript.surface_map(environment)
+	var exact_host_id := str(_dict(surface_map.get("scenario_instance_action_host_ids", {})).get(object_id, "")).strip_edges()
+	return exact_host_id == binding_source_id \
+		and not _dict(slot_authority.get("slot_bindings", {})).has(object_id) \
+		and not _dict(slot_authority.get("object_rects", {})).has(object_id)
+
+
+static func _hosted_catalog_action_record(environment: Dictionary, library: Variant, object_id: String, host_id: String) -> Dictionary:
+	var parts := object_id.split(":", false)
+	if parts.size() != 2:
+		return {}
+	var domain := str(parts[0])
+	var source_id := str(parts[1])
+	var definition: Dictionary = {}
+	match domain:
+		"game": definition = _dict(library.call("game", source_id)) if library.has_method("game") else {}
+		"event": definition = _dict(library.call("event", source_id)) if library.has_method("event") else {}
+		"service": definition = _dict(library.call("service", source_id)) if library.has_method("service") else {}
+		"lender": definition = _dict(library.call("lender", source_id)) if library.has_method("lender") else {}
+		"travel":
+			if source_id == "leave":
+				definition = {"display_name": "Leave"}
+			else:
+				definition = _dict(library.call("route", source_id)) if library.has_method("route") else {}
+		_:
+			return {}
+	if definition.is_empty():
+		return {}
+	var action_id := str({
+		"game": "enter_game",
+		"event": "inspect_event_choices",
+		"service": "use_service_hook",
+		"lender": "use_lender_hook",
+		"travel": "open_map" if source_id == "leave" else "travel",
+	}.get(domain, "interact"))
+	var action_label := str({
+		"game": "Double-click to enter",
+		"event": "Review responses",
+		"service": "Use",
+		"lender": "Use",
+		"travel": "Open Map" if source_id == "leave" else "Travel",
+	}.get(domain, "Interact"))
+	var action_summary := str({
+		"game": "Double-click this machine to enter.",
+		"event": "Choose a response.",
+		"service": "Double-click to use.",
+		"lender": "Double-click to use.",
+		"travel": "Open map." if source_id == "leave" else "Double-click to travel.",
+	}.get(domain, "Choose an action."))
+	var available_actions := [{"id": action_id, "label": action_label, "input_action": "confirm", "non_color_state": "available"}]
+	return {
+		"object_id": object_id,
+		"object_type": domain,
+		"source_id": source_id,
+		"label": str(definition.get("display_name", definition.get("label", source_id.replace("_", " ").capitalize()))),
+		"action_summary": action_summary,
+		"enabled": true,
+		"disabled_reason": "",
+		"available_actions": available_actions,
+		"confirm_action_id": action_id,
+		"presentation_mode": "overflow",
+		"slot_binding_source_id": host_id,
+	}
+
+
+static func _catalog_identity_is_live(environment: Dictionary, presentation_id: String) -> bool:
+	var parts := presentation_id.split(":", false)
+	if parts.size() != 2:
+		return false
+	var source_id := str(parts[1])
+	match str(parts[0]):
+		"game": return _exact_id(environment.get("game_ids", []), source_id)
+		"event": return _exact_id(environment.get("event_ids", []), source_id)
+		"service": return _exact_id(environment.get("service_ids", []), source_id)
+		"lender": return _exact_id(environment.get("lender_hooks", []), source_id)
+		"travel":
+			return source_id == "leave" and not _ids(_array(environment.get("travel_hooks", [])) + _array(environment.get("next_archetypes", []))).is_empty() \
+				or _ordinary_route_present(environment, source_id)
+	return false
 
 
 static func _producer_geometry(record: Dictionary) -> Dictionary:

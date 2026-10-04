@@ -27,9 +27,9 @@ const BASE_LAYOUT_AUTHORITY_KEYS := ["slot_schema_version", "slot_map_digest", "
 # slot; labels and keyword classification never mint physical authority.
 const CONCRETE_SCENARIO_ART_KEYS := [
 	"counter_phone", "jammed_machine", "motel_door", "paper_note", "payphone",
-	"room_display", "room_hazard", "room_refreshment",
-	"room_seating", "room_signal", "room_storage", "room_surface",
-	"room_vehicle", "security_camera", "side_door", "trunk_offer",
+	"room_barrier", "room_display", "room_fixture", "room_hazard", "room_refreshment",
+	"room_route", "room_seating", "room_signal", "room_storage", "room_surface", "room_trace",
+	"room_vehicle", "rowdy_regular", "security_camera", "side_door", "trunk_offer",
 ]
 
 # These semantic families are action/route explanations even when their label
@@ -40,6 +40,13 @@ const ABSTRACT_SCENARIO_ROLES := [
 	"barrier", "decision_route", "exit", "game_lane",
 	"ledger", "primary_task", "route",
 	"route_hazard", "route_marker", "task_station", "task_zone",
+]
+
+# These authored scene-operation roles are controls attached to a tangible
+# room host, never independent physical markers. ``game_lane`` deliberately
+# remains outside this list because its lane geometry is manually positioned.
+const ATTACHED_SCENARIO_CONTROL_ROLES := [
+	"decision_route", "task_station", "task_zone",
 ]
 
 const ABSTRACT_SCENARIO_ID_TOKENS := [
@@ -202,6 +209,7 @@ static func validate_base_layout_authority(environment: Dictionary, current_reco
 		errors.append("Persisted base slot authority has an invalid schema version.")
 	var surface_map := EnvironmentPlacementScript.surface_map(environment)
 	errors.append_array(_surface_map_errors(surface_map))
+	var exact_action_host_ids := _dict(surface_map.get("scenario_instance_action_host_ids", {}))
 	var expected_map_digest := slot_map_digest(surface_map)
 	if typeof(layout.get("slot_map_digest")) != TYPE_STRING or str(layout.get("slot_map_digest", "")) != expected_map_digest:
 		errors.append("Persisted base slot authority does not match the authored slot map digest.")
@@ -324,6 +332,19 @@ static func validate_base_layout_authority(environment: Dictionary, current_reco
 		if object_id.is_empty():
 			continue
 		var record_binding := _dict(bindings.get(object_id, {}))
+		var binding_source_id := str(record.get("slot_binding_source_id", "")).strip_edges()
+		var exact_host_id := str(exact_action_host_ids.get(object_id, "")).strip_edges()
+		var exact_hosted_action := not exact_host_id.is_empty() \
+				and exact_host_id == binding_source_id \
+				and exact_host_id != object_id
+		if exact_hosted_action:
+			# The exact scenario layout proves this action's tangible host, including
+			# route actors that never enter the base manifest. It must never own an
+			# independent base binding. Aliases without exact action-host authority
+			# continue through the replacement path and authenticate their transfer.
+			if not record_binding.is_empty():
+				errors.append("Current exact hosted action %s owns a base slot binding instead of borrowing %s." % [object_id, exact_host_id])
+			continue
 		if record_binding.is_empty():
 			if not allow_unbound_records:
 				errors.append("Current base record %s has no authenticated slot binding." % object_id)
@@ -458,13 +479,16 @@ static func base_record_requires_room_slot(record: Dictionary) -> bool:
 	# schema v2. Renderer heuristics remain only for non-manifest action records.
 	if record.has("physical") and typeof(record.get("physical")) == TYPE_BOOL:
 		return bool(record.get("physical", false))
-	if not _entry_slot_family(record).is_empty():
-		return true
 	var object_type := str(record.get("object_type", "")).strip_edges()
 	var visual_type := str(record.get("visual_type", "")).strip_edges()
 	var object_id := str(record.get("object_id", "")).strip_edges()
+	# These choices are deliberately hosted by another tangible object. Keep
+	# that rule ahead of carried/generated family metadata so stale layout data
+	# can never turn an action into a duplicate physical marker.
 	if object_id in BASE_ACTION_ONLY_EVENT_IDS:
 		return false
+	if not _entry_slot_family(record).is_empty():
+		return true
 	if object_type in BASE_ALWAYS_PHYSICAL_TYPES:
 		return true
 	if object_id in BASE_ALWAYS_PHYSICAL_OBJECT_IDS:
@@ -553,6 +577,7 @@ static func _base_layout_category_address(environment: Dictionary, object_type: 
 # other record is attached to a visible room object by the interaction composer.
 static func bind_base_records(environment: Dictionary, records: Array, existing_bindings: Dictionary = {}, shared_occupancy: Dictionary = {}) -> Dictionary:
 	var surface_map := EnvironmentPlacementScript.surface_map(environment)
+	var exact_action_host_ids := _dict(surface_map.get("scenario_instance_action_host_ids", {}))
 	var room_slots := _all_family_slots(surface_map)
 	var layout := _dict(environment.get("layout", {}))
 	# bind_base_records consumes the complete current interaction refresh. Build
@@ -599,6 +624,8 @@ static func bind_base_records(environment: Dictionary, records: Array, existing_
 		var alias_id := str(alias_record.get("object_id", "")).strip_edges()
 		var source_id := str(alias_record.get("slot_binding_source_id", "")).strip_edges()
 		if alias_id.is_empty() or source_id.is_empty() or alias_id == source_id:
+			continue
+		if str(exact_action_host_ids.get(alias_id, "")).strip_edges() == source_id:
 			continue
 		if aliases_by_source.has(source_id) and str(aliases_by_source.get(source_id, "")) != alias_id:
 			var alias_warning := "base record binding source %s is claimed by multiple live aliases; each physical source may have only one room identity." % source_id
@@ -678,6 +705,11 @@ static func bind_base_records(environment: Dictionary, records: Array, existing_
 	for record_value in ordered:
 		var record := _dict(record_value)
 		var object_id := str(record.get("object_id", "")).strip_edges()
+		var binding_source_id := str(record.get("slot_binding_source_id", "")).strip_edges()
+		if not binding_source_id.is_empty() \
+				and binding_source_id != object_id \
+				and str(exact_action_host_ids.get(object_id, "")).strip_edges() == binding_source_id:
+			continue
 		if bindings.has(object_id):
 			continue
 		# Late live records cross this binder after EnvironmentInstance generated its
@@ -810,14 +842,17 @@ static func bind_base_records(environment: Dictionary, records: Array, existing_
 	}
 
 
-# Binds scenario-owned visuals. Scenario-local safe exits remain scenario
+# Binds sequence-owned visuals. Catalog scenario objects use their exact
+# scenario-instance slots, while explicitly ambient/runtime event objects use
+# the venue's shared event bank. Scenario-local safe exits remain scenario
 # doorways; only entries explicitly classified as navigation may use exit slots.
 # Route actors reserve two scenario-family endpoints.
 static func bind_scenario_visuals(environment: Dictionary, visual_entries: Array, shared_occupancy: Dictionary = {}) -> Dictionary:
 	var surface_map := EnvironmentPlacementScript.surface_map(environment)
 	var scenario_slots := _family_slots(surface_map, "scenario")
+	var event_slots := _family_slots(surface_map, "event")
 	var exit_slots := _family_slots(surface_map, "exit")
-	var all_slots := scenario_slots + exit_slots
+	var all_slots := scenario_slots + event_slots + exit_slots
 	var slots_by_id := _slots_by_id(all_slots)
 	var preferences := _dict(surface_map.get("scenario_slot_ids", {}))
 	var art_keys := _dict(surface_map.get("scenario_art_keys", {}))
@@ -882,7 +917,7 @@ static func bind_scenario_visuals(environment: Dictionary, visual_entries: Array
 		if not art_key.is_empty():
 			semantic["icon_key"] = art_key
 		var slot_family := _entry_slot_family(entry, "scenario")
-		if slot_family not in ["scenario", "exit"]:
+		if slot_family not in ["event", "scenario", "exit"]:
 			errors.append("Scenario visual %s declares forbidden slot family %s." % [identity, slot_family])
 			continue
 		var placement_class := str(entry.get("placement_class", ""))
@@ -926,11 +961,16 @@ static func bind_scenario_visuals(environment: Dictionary, visual_entries: Array
 		else:
 			var preference_data := _slot_preference(surface_map, entry, identity, position_key, stable_id)
 			var preference := str(preference_data.get("slot_id", "")).strip_edges()
+			if bool(preference_data.get("exact", false)):
+				var exact_slot := _dict(slots_by_id.get(preference, {}))
+				var exact_class := str(exact_slot.get("footprint_class", "")).strip_edges()
+				if exact_class in EnvironmentPlacementScript.CLASSES:
+					placement_class = exact_class
 			if bool(surface_map.get("scenario_layout_scoped", false)) and slot_family == "scenario" \
 					and not bool(preference_data.get("exact", false)):
-				errors.append("Scenario visual %s has no exact slot instance in %s." % [identity, str(surface_map.get("scenario_layout_id", "scenario layout"))])
+				errors.append("Scenario visual %s has no exact slot instance for position key %s in %s." % [identity, position_key, str(surface_map.get("scenario_layout_id", "scenario layout"))])
 				continue
-			var candidate_slots := exit_slots if slot_family == "exit" else scenario_slots
+			var candidate_slots := exit_slots if slot_family == "exit" else event_slots if slot_family == "event" else scenario_slots
 			placement_class = _exit_preference_class(candidate_slots, slot_family, preference, placement_class)
 			# Event/scenario preferences are hints, never hard authority. A stale,
 			# occupied, or class-incompatible preferred id falls through to the
@@ -974,13 +1014,41 @@ static func bind_scenario_visuals(environment: Dictionary, visual_entries: Array
 # Positive authority never comes from role/label
 # inference.
 static func scenario_visual_requires_room_slot(surface_map: Dictionary, entry: Dictionary) -> bool:
+	var semantic := _dict(entry.get("semantic", {}))
+	if _scenario_semantic_is_attached_control(semantic):
+		return false
 	if bool(entry.get("actor", false)):
 		return true
 	if bool(entry.get("navigation_exit", false)) or _entry_slot_family(entry) == "exit":
 		return true
 	if bool(entry.get("safe_exit", false)):
 		return true
+	# Catalog scene_ops become physical only after the generated exact scenario
+	# layout names their stable/position identity. This lets every authored
+	# physical scene object be manually placed without allowing labels, nouns, or
+	# attached task controls to mint geometry.
+	if _scenario_visual_has_exact_slot(surface_map, entry):
+		return true
 	return not scenario_visual_art_key(surface_map, entry).is_empty()
+
+
+static func _scenario_semantic_is_attached_control(semantic: Dictionary) -> bool:
+	return str(semantic.get("role", "")).strip_edges().to_lower() in ATTACHED_SCENARIO_CONTROL_ROLES
+
+
+static func _scenario_visual_has_exact_slot(surface_map: Dictionary, entry: Dictionary) -> bool:
+	if not bool(surface_map.get("scenario_layout_scoped", false)):
+		return false
+	var identity := str(entry.get("identity", "")).strip_edges()
+	var semantic := _dict(entry.get("semantic", {}))
+	var stable_id := str(semantic.get("stable_object_id", identity.trim_prefix("scenario::"))).strip_edges()
+	var position_key := scenario_position_key(stable_id, semantic)
+	for field in ["scenario_instance_slot_ids", "scenario_instance_object_slot_ids"]:
+		var preferences := _dict(surface_map.get(field, {}))
+		for key in [position_key, stable_id, identity]:
+			if not str(key).is_empty() and preferences.has(key):
+				return true
+	return false
 
 
 static func scenario_visual_art_key(surface_map: Dictionary, entry: Dictionary) -> String:
@@ -993,12 +1061,24 @@ static func scenario_visual_art_key(surface_map: Dictionary, entry: Dictionary) 
 	var identity := str(entry.get("identity", "")).strip_edges()
 	var semantic := _dict(entry.get("semantic", {}))
 	var stable_id := str(semantic.get("stable_object_id", identity.trim_prefix("scenario::"))).strip_edges()
+	var position_key := scenario_position_key(stable_id, semantic)
+	var instance_art_keys := _dict(surface_map.get("scenario_instance_art_keys", {}))
+	var instance_art_key := str(instance_art_keys.get(position_key, "")).strip_edges()
+	if instance_art_key in CONCRETE_SCENARIO_ART_KEYS:
+		return instance_art_key
+	var art_keys := _dict(surface_map.get("scenario_art_keys", {}))
+	# A stable-id entry in the surface map is explicit, reviewed physical
+	# authority. It must win over broad legacy role/id heuristics (for example a
+	# tangible observer rail that happens to carry the old `barrier` role).
+	var mapped_art_key := str(art_keys.get(stable_id, art_keys.get(identity, ""))).strip_edges()
+	if mapped_art_key in CONCRETE_SCENARIO_ART_KEYS:
+		return mapped_art_key
+	var authored_payload_key := str(semantic.get("icon_key", "")).strip_edges()
+	if authored_payload_key in CONCRETE_SCENARIO_ART_KEYS:
+		return authored_payload_key
 	if _scenario_semantic_is_abstract(stable_id, semantic):
 		return ""
-	var art_keys := _dict(surface_map.get("scenario_art_keys", {}))
-	var authored_payload_key := str(semantic.get("icon_key", "")).strip_edges()
-	var art_key := str(art_keys.get(stable_id, art_keys.get(identity, authored_payload_key))).strip_edges()
-	return art_key if art_key in CONCRETE_SCENARIO_ART_KEYS else ""
+	return ""
 
 
 static func _scenario_semantic_is_abstract(stable_id: String, semantic: Dictionary) -> bool:
@@ -1037,6 +1117,9 @@ static func slot_map_digest(surface_map: Dictionary) -> String:
 		"scenario_slot_ids": _dict(surface_map.get("scenario_slot_ids", {})),
 		"scenario_instance_slot_ids": _dict(surface_map.get("scenario_instance_slot_ids", {})),
 		"scenario_instance_object_slot_ids": _dict(surface_map.get("scenario_instance_object_slot_ids", {})),
+		"scenario_instance_object_class_ids": _dict(surface_map.get("scenario_instance_object_class_ids", {})),
+		"scenario_instance_art_keys": _dict(surface_map.get("scenario_instance_art_keys", {})),
+		"scenario_instance_action_host_ids": _dict(surface_map.get("scenario_instance_action_host_ids", {})),
 		"scenario_layout_id": str(surface_map.get("scenario_layout_id", "")),
 		"scenario_art_keys": _dict(surface_map.get("scenario_art_keys", {})),
 		"scenario_overflow_ids": _array(surface_map.get("scenario_overflow_ids", [])),
@@ -1597,6 +1680,67 @@ static func _surface_map_errors(surface_map: Dictionary) -> Array:
 		for mapped_slot_value in (instance_value as Dictionary).values():
 			if typeof(mapped_slot_value) != TYPE_STRING or not str(mapped_slot_value).begins_with("scenario.") or not seen.has(str(mapped_slot_value)):
 				errors.append("Environment placement map %s %s references a missing or non-scenario slot." % [map_id, instance_field])
+	var instance_object_positions := _dict(surface_map.get("scenario_instance_object_slot_ids", {}))
+	var instance_object_classes_value: Variant = surface_map.get("scenario_instance_object_class_ids", {})
+	if typeof(instance_object_classes_value) != TYPE_DICTIONARY:
+		errors.append("Environment placement map %s scenario_instance_object_class_ids must be an object." % map_id)
+	else:
+		var instance_object_classes := instance_object_classes_value as Dictionary
+		var complete_object_classes := instance_object_classes.size() == instance_object_positions.size()
+		for object_id_value in instance_object_positions.keys():
+			if not instance_object_classes.has(object_id_value):
+				complete_object_classes = false
+				break
+		if not complete_object_classes:
+			errors.append("Environment placement map %s exact scenario object class authority is incomplete." % map_id)
+		for object_id_value in instance_object_classes.keys():
+			var object_id := str(object_id_value).strip_edges()
+			var placement_class_value: Variant = instance_object_classes.get(object_id_value)
+			var placement_class := str(placement_class_value).strip_edges()
+			var slot_id := str(instance_object_positions.get(object_id, "")).strip_edges()
+			var target_slot := _dict(authored_slots.get(slot_id, {}))
+			if typeof(object_id_value) != TYPE_STRING or object_id.is_empty() \
+					or typeof(placement_class_value) != TYPE_STRING or placement_class not in EnvironmentPlacementScript.CLASSES:
+				errors.append("Environment placement map %s contains malformed exact scenario object class authority." % map_id)
+			elif str(target_slot.get("footprint_class", "")) != placement_class:
+				errors.append("Environment placement object %s exact class does not match its scenario slot." % object_id)
+			elif str(_dict(surface_map.get("class_overrides", {})).get(object_id, "")) != placement_class:
+				errors.append("Environment placement object %s exact class was not sealed into runtime overrides." % object_id)
+	var instance_art_value: Variant = surface_map.get("scenario_instance_art_keys", {})
+	if typeof(instance_art_value) != TYPE_DICTIONARY:
+		errors.append("Environment placement map %s scenario_instance_art_keys must be an object." % map_id)
+	else:
+		var instance_positions := _dict(surface_map.get("scenario_instance_slot_ids", {}))
+		for position_key_value in (instance_art_value as Dictionary).keys():
+			var position_key := str(position_key_value).strip_edges()
+			var art_key_value: Variant = (instance_art_value as Dictionary).get(position_key_value)
+			if typeof(position_key_value) != TYPE_STRING or position_key.is_empty() or not instance_positions.has(position_key):
+				errors.append("Environment placement map %s has exact art without an exact scenario position." % map_id)
+			elif typeof(art_key_value) != TYPE_STRING or str(art_key_value) not in CONCRETE_SCENARIO_ART_KEYS:
+				errors.append("Environment placement map %s exact art position %s names an unsupported concrete renderer." % [map_id, position_key])
+	var action_hosts_value: Variant = surface_map.get("scenario_instance_action_host_ids", {})
+	if typeof(action_hosts_value) != TYPE_DICTIONARY:
+		errors.append("Environment placement map %s scenario_instance_action_host_ids must be an object." % map_id)
+	else:
+		var exact_object_positions := _dict(surface_map.get("scenario_instance_object_slot_ids", {}))
+		var exact_host_ids: Dictionary = {}
+		for authored_slot_value in authored_slots.values():
+			var authored_slot := _dict(authored_slot_value)
+			for identity_field in ["occupant_ids", "scenario_object_ids"]:
+				for host_identity_value in _array(authored_slot.get(identity_field, [])):
+					var host_identity := str(host_identity_value).strip_edges()
+					if not host_identity.is_empty():
+						exact_host_ids[host_identity] = true
+		for action_id_value in (action_hosts_value as Dictionary).keys():
+			var action_id := str(action_id_value).strip_edges()
+			var host_id_value: Variant = (action_hosts_value as Dictionary).get(action_id_value)
+			var host_id := str(host_id_value).strip_edges()
+			if typeof(action_id_value) != TYPE_STRING or action_id.is_empty() or typeof(host_id_value) != TYPE_STRING or host_id.is_empty() or action_id == host_id:
+				errors.append("Environment placement map %s contains malformed exact action-host authority." % map_id)
+			elif exact_object_positions.has(action_id):
+				errors.append("Environment placement action %s cannot own a slot and alias a host." % action_id)
+			elif not exact_host_ids.has(host_id):
+				errors.append("Environment placement action %s names host %s without placement authority." % [action_id, host_id])
 	# An identity may have one lifecycle owner.  A family override takes
 	# precedence during binding, so stale exact mappings in another family would
 	# otherwise be silently ignored and hide authoring drift until capacity fails.

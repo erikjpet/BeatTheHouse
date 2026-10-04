@@ -4427,11 +4427,19 @@ func _check_environment_instance_shape(environment: EnvironmentInstance, require
 			for event_id in environment.event_ids:
 				var object_id := "event:%s" % str(event_id)
 				# An event may either own a presentation row or be an action exposed by
-				# another sealed host (for example, Nell owns the Gas Station rumor).
-				# In both cases the host itself must retain complete slot authority.
+				# another sealed host. Exact scenario-layout authority is the source of
+				# truth for the latter; the physical manifest intentionally omits the
+				# action-only row so it cannot become a duplicate placement marker.
+				# In every case the tangible host must retain complete slot authority.
 				var presentation_object_id := object_id
 				if not (slot_bindings as Dictionary).has(presentation_object_id):
-					presentation_object_id = str(manifest_action_owners.get(object_id, ""))
+					var exact_action_hosts := JsonCoerceScript._copy_dict(
+						(layout as Dictionary).get("scenario_instance_action_host_ids", {})
+					)
+					presentation_object_id = str(exact_action_hosts.get(
+						object_id,
+						manifest_action_owners.get(object_id, "")
+					))
 				var binding := JsonCoerceScript._copy_dict((slot_bindings as Dictionary).get(presentation_object_id, {}))
 				var expected_family := str(manifest_families.get(presentation_object_id, ""))
 				var mode := str(binding.get("presentation_mode", ""))

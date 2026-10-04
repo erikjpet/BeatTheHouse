@@ -1152,7 +1152,8 @@
                       "acted_inspect_manifest": "You spread the damaged manifest beneath the work light, exposing the mismatched destination lines."
                     },
                     "enabled": true,
-                    "label": "Delivery manifest gate",
+                    "icon_key": "paper_note",
+                    "label": "Damaged Delivery Manifest",
                     "role": "workstation",
                     "state": "inspectable",
                     "visible": true,
@@ -1867,7 +1868,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "d86b8787c26e3671b72ada955960550b40c57b8bb19b3e88704cb4696c061aae"
+        "sequence_signature": "65e62baabf93daffc35c59d39fc1da9a6b839884cc4e4859ae6ea11be4b5c762"
       }
     },
     {
@@ -1941,7 +1942,7 @@
       "sequence": {
         "aftermath": {
           "failure": {
-            "label": "Angry Queue",
+            "label": "Disputed Queue Marks",
             "revisit_feedback": "The queue has bunched around crossed-out place marks; nobody trusts the order now.",
             "scene_ops": [
               {
@@ -1957,12 +1958,12 @@
 
                   },
                   "enabled": true,
-                  "label": "Angry Queue",
+                  "label": "Disputed Queue Marks",
                   "role": "aftermath",
                   "state": "restricted",
                   "visible": true,
                   "zone_id": "center",
-                  "icon_key": "patron_talk"
+                  "icon_key": "room_route"
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -2098,7 +2099,7 @@
 
                   },
                   "enabled": true,
-                  "label": "Economy Stock Public Service",
+                  "label": "Public Stock Notice",
                   "role": "aftermath",
                   "state": "public_service",
                   "visible": true,
@@ -2192,7 +2193,7 @@
 
                   },
                   "enabled": true,
-                  "label": "Celebration Layout",
+                  "label": "Winning Slips and Cups",
                   "role": "aftermath",
                   "state": "open",
                   "visible": true,
@@ -3030,7 +3031,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "0d3983d6fdd911c1c0b32bb2955e8236993522f326d8a73b78c361aa01d62906"
+        "sequence_signature": "f290c6070aae7fb3e098bccc0ac53595eb75d0a32f62c5a9a05a0109092d8608"
       }
     },
     {
@@ -3198,7 +3199,7 @@
             ]
           },
           "interrupted": {
-            "label": "Suspect Object Abandoned",
+            "label": "Unbagged Unidentified Evidence",
             "revisit_feedback": "The suspect object remains where the trace work stopped, exposed but never properly bagged.",
             "scene_ops": [
               {
@@ -3214,7 +3215,7 @@
 
                   },
                   "enabled": true,
-                  "label": "Suspect Object Abandoned",
+                  "label": "Unbagged Unidentified Evidence",
                   "role": "aftermath",
                   "state": "paused",
                   "visible": true,
@@ -3355,7 +3356,7 @@
 
                   },
                   "enabled": true,
-                  "label": "Quiet Recovery",
+                  "label": "Repaired Glass and Trace Bag",
                   "role": "aftermath",
                   "state": "open",
                   "visible": true,
@@ -3809,7 +3810,7 @@
                       "bagged_for_trace": "The object is sealed in a trace bag, preserving what it may reveal later."
                     },
                     "enabled": true,
-                    "label": "Suspect Object",
+                    "label": "Unidentified Object by Swept Glass",
                     "role": "evidence",
                     "state": "unread",
                     "visible": true,
@@ -4170,7 +4171,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "13167d5d06fa39ce3c7b968ddf72ee5e87e744057db22fe6af8d0675d0917a55"
+        "sequence_signature": "2698c7c20429c002506f77a155d29f04566431af919f993086d22682be731e62"
       }
     },
     {
@@ -4260,7 +4261,7 @@
 
                   },
                   "enabled": true,
-                  "label": "Private Darkness",
+                  "label": "Dark Cooler Bank and Closed Register",
                   "role": "aftermath",
                   "state": "restricted",
                   "visible": true,
@@ -4385,7 +4386,7 @@
             ]
           },
           "public": {
-            "label": "Surveillance Rumor Route",
+            "label": "Handwritten Camera Warning",
             "revisit_feedback": "A handwritten warning points from the dead circuit toward a camera outside the store.",
             "scene_ops": [
               {
@@ -4401,12 +4402,12 @@
 
                   },
                   "enabled": true,
-                  "label": "Surveillance Rumor Route",
+                  "label": "Handwritten Camera Warning",
                   "role": "aftermath",
                   "state": "rumor_pressure",
                   "visible": true,
                   "zone_id": "background",
-                  "icon_key": "security_camera"
+                  "icon_key": "paper_note"
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -4495,7 +4496,7 @@
 
                   },
                   "enabled": true,
-                  "label": "Lit Service",
+                  "label": "Lit Cooler Bank",
                   "role": "aftermath",
                   "state": "open",
                   "visible": true,
@@ -5304,7 +5305,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "d2bd780d7d81321a9cdb1fcad321324bdb0ca3e0c3f4f4a7137565ac660b9038"
+        "sequence_signature": "54a09fde5459cd60ac4f528e08c77d52acdedfc87f275e4c893fb69e3b1c7493"
       }
     },
     {
@@ -5535,7 +5536,7 @@
 
                   },
                   "enabled": true,
-                  "label": "Economy Inventory Public Service",
+                  "label": "Public Inventory Notice",
                   "role": "aftermath",
                   "state": "public_service",
                   "visible": true,
@@ -5629,7 +5630,7 @@
 
                   },
                   "enabled": true,
-                  "label": "Reopened Sections",
+                  "label": "Signed Open Shelves",
                   "role": "aftermath",
                   "state": "open",
                   "visible": true,
@@ -6470,7 +6471,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "ddee7b5dfb6f97dc8361c22085fc55565806c8e006be4b3a144b20ad14167668"
+        "sequence_signature": "15b164372e8ece23a50121c7407776936d2e7d3ab9fbde96648e75f4ae23727e"
       }
     },
     {
@@ -6641,7 +6642,7 @@
             ]
           },
           "interrupted": {
-            "label": "Lookout Marker Abandoned",
+            "label": "Fallen Bottle-Cap Lookout Signal",
             "revisit_feedback": "The warning marker lies on its side beside an unfinished point, marking an interrupted game.",
             "scene_ops": [
               {
@@ -6657,7 +6658,7 @@
 
                   },
                   "enabled": true,
-                  "label": "Lookout Marker Abandoned",
+                  "label": "Fallen Bottle-Cap Lookout Signal",
                   "role": "aftermath",
                   "state": "paused",
                   "visible": true,
@@ -7291,7 +7292,7 @@
                       "warning_active": "The marker is turned to warning, making another throw a conspicuous risk."
                     },
                     "enabled": true,
-                    "label": "Lookout Marker",
+                    "label": "Bottle-Cap Lookout Signal",
                     "role": "evidence",
                     "state": "unread",
                     "visible": true,
@@ -7669,7 +7670,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "6caf517dbbe7bbddd3beb82e75898f85a38ebd5f70fea5372253068fe04f4463"
+        "sequence_signature": "fc9b27fed6faea40040a99ed2e8e20d5b1fe187a09b9dc277ce33346074065d9"
       }
     },
     {
@@ -8916,7 +8917,7 @@
       "sequence": {
         "aftermath": {
           "failure": {
-            "label": "Brokered Exit",
+            "label": "Closed Broker Ledger",
             "revisit_feedback": "A closed ledger and empty hooks show the questionable lot was moved through another exit.",
             "scene_ops": [
               {
@@ -8932,7 +8933,7 @@
 
                   },
                   "enabled": true,
-                  "label": "Brokered Exit",
+                  "label": "Closed Broker Ledger",
                   "role": "aftermath",
                   "state": "restricted",
                   "visible": true,
@@ -8979,7 +8980,7 @@
 
                   },
                   "enabled": true,
-                  "label": "Buyer Control",
+                  "label": "Buyer-Tagged Goods Table",
                   "role": "aftermath",
                   "state": "occupied",
                   "visible": true,
@@ -9010,7 +9011,7 @@
             ]
           },
           "interrupted": {
-            "label": "Auth Station Abandoned",
+            "label": "Abandoned Loupe and Open Ledger",
             "revisit_feedback": "The loupe and open ledger remain beside an unchecked lot, preserving the interrupted appraisal.",
             "scene_ops": [
               {
@@ -9026,7 +9027,7 @@
 
                   },
                   "enabled": true,
-                  "label": "Auth Station Abandoned",
+                  "label": "Abandoned Loupe and Open Ledger",
                   "role": "aftermath",
                   "state": "paused",
                   "visible": true,
@@ -9073,7 +9074,7 @@
 
                   },
                   "enabled": true,
-                  "label": "Economy Fence Public Service",
+                  "label": "Public Price Card",
                   "role": "aftermath",
                   "state": "public_service",
                   "visible": true,
@@ -9120,7 +9121,7 @@
 
                   },
                   "enabled": true,
-                  "label": "Buyer Control Refused",
+                  "label": "Tagged Refused Goods Lot",
                   "role": "aftermath",
                   "state": "closed",
                   "visible": true,
@@ -9621,7 +9622,7 @@
                       "authentication_open": "The station is ready for a public check, making a false claim harder to pass."
                     },
                     "enabled": true,
-                    "label": "Auth Station",
+                    "label": "Authentication Loupe, Lamp, and Ledger",
                     "role": "evidence",
                     "state": "unread",
                     "visible": true,
@@ -10000,7 +10001,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "92a3cbc3fa24bb2c494138d03daebb86d25dde3f48f2d621fd0a2df24a98382d"
+        "sequence_signature": "3069bc46542007d8f0969ebb78abd8136ad4b40a7876de200d871d49a9c29e77"
       }
     },
     {
@@ -11397,7 +11398,7 @@
 
                   },
                   "enabled": true,
-                  "label": "Economy Provenance Public Service",
+                  "label": "Public Provenance Card",
                   "role": "aftermath",
                   "state": "public_service",
                   "visible": true,
@@ -12346,7 +12347,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "2711910cd5a626e2b5bb18db7ea6c6babfe331bce908a3bcd3a2e5d42495239c"
+        "sequence_signature": "71cff488c7db248bf70b02028117a94005b7e61142289ca4ef9fc6c3a2eb061a"
       }
     },
     {
@@ -12514,7 +12515,7 @@
             ]
           },
           "interrupted": {
-            "label": "Hold Object Abandoned",
+            "label": "Unsealed Item and Unfinished Carbon Copy",
             "revisit_feedback": "The unsealed hold and carbon copy remain exactly where the serial check stopped.",
             "scene_ops": [
               {
@@ -12530,7 +12531,7 @@
 
                   },
                   "enabled": true,
-                  "label": "Hold Object Abandoned",
+                  "label": "Unsealed Item and Unfinished Carbon Copy",
                   "role": "aftermath",
                   "state": "paused",
                   "visible": true,
@@ -13080,7 +13081,7 @@
                   "stable_object_id": "pawn_shop_serial_check_day_exit"
                 }
               ],
-              "label": "Serial Station",
+              "label": "Serial Lamp and Carbon Sheet",
               "objective_ids": [
                 "complete_serial_station"
               ],
@@ -13101,7 +13102,7 @@
                       "background": "The lamp is dark and the station has been put away after the copy was made."
                     },
                     "enabled": true,
-                    "label": "Serial Station",
+                    "label": "Serial Lamp and Carbon Sheet",
                     "role": "primary_task",
                     "state": "arrival",
                     "visible": true,
@@ -13129,7 +13130,7 @@
                       "right": "The sealed hold rests to the right of the active customer lane."
                     },
                     "enabled": true,
-                    "label": "Hold Object",
+                    "label": "Wrapped Item Awaiting Serial Check",
                     "role": "evidence",
                     "state": "unread",
                     "visible": true,
@@ -13517,7 +13518,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "d1c2274d7f2ac2d12eda4c2b664f5412c3f5b62c9b3e6818215881901103689b"
+        "sequence_signature": "2be160bd88e3c6e64d86941c0a5e61c5d6e1cd5166044221a2798449c4b285de"
       }
     },
     {
@@ -13751,7 +13752,7 @@
 
                   },
                   "enabled": true,
-                  "label": "Service Appraisal Public Service",
+                  "label": "Posted Appraisal Sheet",
                   "role": "aftermath",
                   "state": "public_service",
                   "visible": true,
@@ -14275,7 +14276,8 @@
                       "jobs_prioritized": "The bench now shows a workable order, with the most urgent repair already pulled forward."
                     },
                     "enabled": true,
-                    "label": "Unfinished Jobs",
+                    "icon_key": "jammed_machine",
+                    "label": "Half-Finished Repairs",
                     "role": "primary_task",
                     "state": "arrival",
                     "visible": true,
@@ -14675,7 +14677,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "b408d6cb6b02e1ed9ecc07c4127de3dc2310ab3f6898ee651dff6eaecf3a3d59"
+        "sequence_signature": "441dfc559edf6b2871bb5f8b995015778dbb9db2cfd23ce821bcd7f713d5819c"
       }
     }
   ],

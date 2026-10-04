@@ -117,6 +117,9 @@ func _check_shared_definition(entry: Dictionary, failures: Array) -> void:
 	if scene_ops.size() != 1 or str(_dict(scene_ops[0]).get("owner_namespace", "")) != "crew" \
 			or str(_dict(scene_ops[0]).get("stable_object_id", "")) != "package_handoff":
 		failures.append("Crew favor proof lacks its crew-owned physical handoff scene object.")
+	elif str(_dict(_dict(scene_ops[0]).get("object", {})).get("slot_family", "")) != "event" \
+			or str(_dict(_dict(scene_ops[0]).get("object", {})).get("placement_class", "")) != "standing_person":
+		failures.append("Crew favor handoff must consume shared event standing-person capacity in every destination room.")
 	if interaction_ops.size() != 1 or str(_dict(interaction_ops[0]).get("owner_namespace", "")) != "crew":
 		failures.append("Crew favor proof lacks its crew-owned handoff interaction.")
 	else:

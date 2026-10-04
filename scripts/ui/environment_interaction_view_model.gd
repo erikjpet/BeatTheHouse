@@ -259,6 +259,7 @@ static func interactable_object_view_list(run_state: RunState, library: ContentL
 			"prop": str(event_data.get("environment_prop", event_data.get("prop", ""))),
 			"icon_key": str(event_data.get("icon_key", event_id)),
 			"asset_path": str(event_data.get("asset_path", "")),
+			"slot_binding_source_id": str(event_data.get("slot_binding_source_id", "")).strip_edges(),
 			"character_actor": character_actor,
 			"presentation": str(event_data.get("presentation", "")),
 			"unique_object_class": str(event_data.get("unique_object_class", "")).strip_edges(),

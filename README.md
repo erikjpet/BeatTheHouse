@@ -178,23 +178,26 @@ the Crew remains a supported no-op route.
 Room construction uses four explicit families: permanent `fixed`, optional
 ambient `event`, scenario-owned `scenario`, and real-travel `exit` positions.
 Fixed/event/exit geometry is shared by every version of a room. Each of the 55
-catalog scenarios overlays its own 4–9-slot local bank, so the same role can be
-positioned differently in different scenarios without exposing every phase and
-outcome as another marker. Mutually exclusive scenario objects reuse local
-capacity; only objects that can coexist receive separate positions. Games,
+catalog scenarios overlays its own compact scenario-specific local bank, so the
+same role can be positioned differently in different scenarios without exposing
+every phase and outcome as another room-wide marker. A local position is reused
+when its claimant stays in one place; objects that coexist or deliberately move
+between phases retain separate positions within that scenario. Games,
 items, people, and illustrated props occupy art-aligned places, while abstract
 actions attach to tangible hosts instead of adding room markers. Pull Tabs are
 counter merchandise sold and redeemed through each venue's existing bartender,
 clerk, or host desk.
 
 The owner placement workflow lives under **Settings > Environment Library**.
-It exposes one slot family at a time, hides unused capacity and runtime reserves
-until requested, labels occupied markers with the object they actually contain,
-and locks layered scenarios to their authored room. The audited runtime maximum
-is 17 occupied objects in one layout, below the guarded limit of 20. **Save Current Layout** records all active
-coordinates, including hidden families; progress shows the saved count, missing
-count, and next missing layout until all 75 contexts are complete. Packaged
-builds export the schema-3 report as
+It exposes one slot family at a time, defaults empty capacity and runtime
+reserves visible for the exhaustive pass, and provides toggles to hide either
+when temporary visual clutter is unhelpful. Occupied markers are labeled with
+the object they actually contain, and layered scenarios stay locked to their
+authored room. The audited runtime maximum is 16 occupied objects in one layout,
+below the guarded limit of 20. **Save
+Current Layout** records all active coordinates, including hidden families;
+progress shows the saved count, missing count, and next missing layout until all
+75 contexts are complete. Packaged builds export the schema-3 report as
 `BeatTheHouse_environment_slot_placement_changes.json`. The generated
 per-environment checklist is
 `docs/plans/environment_scenario_layout_breakdown.md`.
@@ -426,15 +429,15 @@ powershell -ExecutionPolicy Bypass -File tools\ui05_popup_fit_check.ps1
 powershell -ExecutionPolicy Bypass -File tools\ui05_asset_pipeline_check.ps1
 ```
 
-Current integration evidence and remaining work (verified 2026-10-03):
+Current integration evidence and remaining work (verified 2026-10-04):
 
 - All 21 source maps and 55 exact scenario layouts pass the migration, ledger,
   schema, naming, family, and generated-guide checks. The reachable authoring
   set is exactly 20 base rooms plus 55 scenarios.
 - The maintained runtime audit generates all 75 contexts across six seeds,
-  validates 4,509 room objects, rejects missing or duplicate occupancy and
+  validates 4,221 room objects, rejects missing or duplicate occupancy and
   occupied hit-region overlap, and guards a maximum of 20 room objects; the
-  observed maximum is 17.
+  observed maximum is 16.
 - Placement persistence, complete-layout coverage, report export, scenario
   isolation, Environment Library launch, and both placement editors pass their
   focused engine checks. Shared edits correctly invalidate every affected

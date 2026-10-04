@@ -41,7 +41,7 @@
   },
   "final": {
     "path": "data/environments/placement_surfaces.json",
-    "sha256": "c64572eb0f6f1d52608fe523850850b0dfabb98ddfe8afc0028ccfdcef921f7d",
+    "sha256": "37002a3229ba4c30a57bb80c1c7604d956aadd2bdafcc6e0ede582eb48679f07",
     "schema_version": 3,
     "slot_schema_version": 2
   },
@@ -53,22 +53,22 @@
       "stage_slots": 185,
       "exit_slots": 42
     },
-    "legacy_slots_with_multiple_final_slots": 106,
-    "legacy_slots_retired": 84,
-    "final_slots": 579,
+    "legacy_slots_with_multiple_final_slots": 102,
+    "legacy_slots_retired": 90,
+    "final_slots": 565,
     "final_slots_by_family": {
       "fixed": 175,
-      "event": 147,
-      "scenario": 222,
-      "exit": 35
+      "event": 144,
+      "scenario": 213,
+      "exit": 33
     },
-    "final_slots_with_legacy_origin": 577,
+    "final_slots_with_legacy_origin": 563,
     "introduced_final_slots": 2,
     "required_final_slots": 29,
-    "capacity_final_slots": 550,
-    "preserved_geometry_links": 305,
-    "provisional_geometry_links": 274,
-    "action_to_object_attachments": 12
+    "capacity_final_slots": 536,
+    "preserved_geometry_links": 296,
+    "provisional_geometry_links": 269,
+    "action_to_object_attachments": 16
   },
   "legacy_slots": [
     {
@@ -617,6 +617,7 @@
           },
           "claimants": {
             "exact": [
+              "service:cashier_tip",
               "shopkeeper:merchant"
             ],
             "category": [
@@ -625,7 +626,14 @@
             "scenario": [],
             "route": []
           },
-          "action_to_object_attachments": [],
+          "action_to_object_attachments": [
+            {
+              "action_id": "service:cashier_tip",
+              "host_object_id": "corner_store:shopkeeper",
+              "host_presentation_id": "shopkeeper:merchant",
+              "final_slot_id": "fixed.staff_shopkeeper"
+            }
+          ],
           "geometry": {
             "status": "preserved",
             "reason": "legacy coordinate fields preserved exactly",
@@ -1043,24 +1051,15 @@
           },
           "claimants": {
             "exact": [
-              "event:call_brother_in_law",
-              "service:cashier_tip"
+              "event:call_brother_in_law"
             ],
-            "category": [
-              "service_spots:0"
-            ],
+            "category": [],
             "scenario": [],
             "route": []
           },
           "action_to_object_attachments": [
             {
               "action_id": "event:call_brother_in_law",
-              "host_object_id": "corner_store:phone",
-              "host_presentation_id": "event:call_brother_in_law",
-              "final_slot_id": "fixed.phone"
-            },
-            {
-              "action_id": "service:cashier_tip",
               "host_object_id": "corner_store:phone",
               "host_presentation_id": "event:call_brother_in_law",
               "final_slot_id": "fixed.phone"
@@ -2411,59 +2410,6 @@
             },
             "final": {
               "pos": [
-                468.0,
-                62.0
-              ],
-              "hit_rect": [
-                428.0,
-                38.0,
-                80.0,
-                48.0
-              ],
-              "label_anchor": [
-                468.0,
-                94.0
-              ]
-            }
-          }
-        },
-        {
-          "family": "scenario",
-          "id": "scenario.wall_item_3",
-          "footprint_class": "wall_mounted",
-          "support_id": "wall",
-          "occupancy": {
-            "required": false,
-            "mode": "capacity"
-          },
-          "claimants": {
-            "exact": [],
-            "category": [],
-            "scenario": [],
-            "route": []
-          },
-          "action_to_object_attachments": [],
-          "geometry": {
-            "status": "provisional",
-            "reason": "reviewed migration split, relocation, or capacity repair changed geometry",
-            "legacy": {
-              "pos": [
-                450.0,
-                50.0
-              ],
-              "hit_rect": [
-                410.0,
-                26.0,
-                80.0,
-                48.0
-              ],
-              "label_anchor": [
-                450.0,
-                82.0
-              ]
-            },
-            "final": {
-              "pos": [
                 486.0,
                 62.0
               ],
@@ -3157,11 +3103,67 @@
         "route": []
       },
       "coexistence": {
-        "decision": "retired_by_reviewed_capacity_repair",
+        "decision": "single_family_capacity",
         "independent_claimants_can_coexist": null
       },
       "action_to_object_attachments": [],
-      "final_slots": []
+      "final_slots": [
+        {
+          "family": "fixed",
+          "id": "fixed.home_container_1",
+          "footprint_class": "floor_fixture",
+          "support_id": "floor",
+          "occupancy": {
+            "required": false,
+            "mode": "capacity"
+          },
+          "claimants": {
+            "exact": [],
+            "category": [
+              "home_container_spots:0"
+            ],
+            "scenario": [],
+            "route": []
+          },
+          "action_to_object_attachments": [],
+          "geometry": {
+            "status": "provisional",
+            "reason": "reviewed migration split, relocation, or capacity repair changed geometry",
+            "legacy": {
+              "pos": [
+                250.0,
+                358.0
+              ],
+              "hit_rect": [
+                204.0,
+                294.0,
+                92.0,
+                64.0
+              ],
+              "label_anchor": [
+                250.0,
+                288.0
+              ]
+            },
+            "final": {
+              "pos": [
+                124.0,
+                358.0
+              ],
+              "hit_rect": [
+                78.0,
+                294.0,
+                92.0,
+                64.0
+              ],
+              "label_anchor": [
+                124.0,
+                288.0
+              ]
+            }
+          }
+        }
+      ]
     },
     {
       "map_id": "back_alley",
@@ -3186,11 +3188,67 @@
         "route": []
       },
       "coexistence": {
-        "decision": "retired_by_reviewed_capacity_repair",
+        "decision": "single_family_capacity",
         "independent_claimants_can_coexist": null
       },
       "action_to_object_attachments": [],
-      "final_slots": []
+      "final_slots": [
+        {
+          "family": "fixed",
+          "id": "fixed.home_container_2",
+          "footprint_class": "floor_fixture",
+          "support_id": "floor",
+          "occupancy": {
+            "required": false,
+            "mode": "capacity"
+          },
+          "claimants": {
+            "exact": [],
+            "category": [
+              "home_container_spots:1"
+            ],
+            "scenario": [],
+            "route": []
+          },
+          "action_to_object_attachments": [],
+          "geometry": {
+            "status": "provisional",
+            "reason": "reviewed migration split, relocation, or capacity repair changed geometry",
+            "legacy": {
+              "pos": [
+                450.0,
+                358.0
+              ],
+              "hit_rect": [
+                404.0,
+                294.0,
+                92.0,
+                64.0
+              ],
+              "label_anchor": [
+                450.0,
+                288.0
+              ]
+            },
+            "final": {
+              "pos": [
+                620.0,
+                358.0
+              ],
+              "hit_rect": [
+                574.0,
+                294.0,
+                92.0,
+                64.0
+              ],
+              "label_anchor": [
+                620.0,
+                288.0
+              ]
+            }
+          }
+        }
+      ]
     },
     {
       "map_id": "back_alley",
@@ -3215,11 +3273,67 @@
         "route": []
       },
       "coexistence": {
-        "decision": "retired_by_reviewed_capacity_repair",
+        "decision": "single_family_capacity",
         "independent_claimants_can_coexist": null
       },
       "action_to_object_attachments": [],
-      "final_slots": []
+      "final_slots": [
+        {
+          "family": "fixed",
+          "id": "fixed.home_container_3",
+          "footprint_class": "floor_fixture",
+          "support_id": "floor",
+          "occupancy": {
+            "required": false,
+            "mode": "capacity"
+          },
+          "claimants": {
+            "exact": [],
+            "category": [
+              "home_container_spots:2"
+            ],
+            "scenario": [],
+            "route": []
+          },
+          "action_to_object_attachments": [],
+          "geometry": {
+            "status": "provisional",
+            "reason": "reviewed migration split, relocation, or capacity repair changed geometry",
+            "legacy": {
+              "pos": [
+                650.0,
+                358.0
+              ],
+              "hit_rect": [
+                604.0,
+                294.0,
+                92.0,
+                64.0
+              ],
+              "label_anchor": [
+                650.0,
+                288.0
+              ]
+            },
+            "final": {
+              "pos": [
+                730.0,
+                358.0
+              ],
+              "hit_rect": [
+                684.0,
+                294.0,
+                92.0,
+                64.0
+              ],
+              "label_anchor": [
+                730.0,
+                288.0
+              ]
+            }
+          }
+        }
+      ]
     },
     {
       "map_id": "back_alley",
@@ -3672,11 +3786,68 @@
         "route": []
       },
       "coexistence": {
-        "decision": "single_family_capacity",
-        "independent_claimants_can_coexist": null
+        "decision": "split_or_cloned_into_distinct_family_local_capacity",
+        "independent_claimants_can_coexist": true
       },
       "action_to_object_attachments": [],
       "final_slots": [
+        {
+          "family": "fixed",
+          "id": "fixed.home_upgrade",
+          "footprint_class": "wall_mounted",
+          "support_id": "wall",
+          "occupancy": {
+            "required": false,
+            "mode": "capacity"
+          },
+          "claimants": {
+            "exact": [
+              "meta_upgrade:home"
+            ],
+            "category": [
+              "home_upgrade_spots:0"
+            ],
+            "scenario": [],
+            "route": []
+          },
+          "action_to_object_attachments": [],
+          "geometry": {
+            "status": "provisional",
+            "reason": "reviewed migration split, relocation, or capacity repair changed geometry",
+            "legacy": {
+              "pos": [
+                352.0,
+                192.0
+              ],
+              "hit_rect": [
+                312.0,
+                168.0,
+                80.0,
+                48.0
+              ],
+              "label_anchor": [
+                352.0,
+                162.0
+              ]
+            },
+            "final": {
+              "pos": [
+                650.0,
+                120.0
+              ],
+              "hit_rect": [
+                610.0,
+                72.0,
+                80.0,
+                48.0
+              ],
+              "label_anchor": [
+                650.0,
+                66.0
+              ]
+            }
+          }
+        },
         {
           "family": "scenario",
           "id": "scenario.wall_item_1",
@@ -5451,8 +5622,8 @@
         {
           "family": "exit",
           "id": "exit.door_curtain",
-          "footprint_class": "surface_item",
-          "support_id": "round3_curtain_ledge",
+          "footprint_class": "doorway",
+          "support_id": "curtain_passage",
           "occupancy": {
             "required": false,
             "mode": "capacity"
@@ -5562,7 +5733,10 @@
             "mode": "capacity"
           },
           "claimants": {
-            "exact": [],
+            "exact": [
+              "event:chain06_dave_last_stop",
+              "event:chain06_dave_same_bus"
+            ],
             "category": [],
             "scenario": [],
             "route": []
@@ -6329,67 +6503,11 @@
         "route": []
       },
       "coexistence": {
-        "decision": "shared_only_as_aliases_or_mutually_exclusive_capacity",
-        "independent_claimants_can_coexist": false
+        "decision": "retired_by_reviewed_capacity_repair",
+        "independent_claimants_can_coexist": null
       },
       "action_to_object_attachments": [],
-      "final_slots": [
-        {
-          "family": "event",
-          "id": "event.surface_item_2",
-          "footprint_class": "surface_item",
-          "support_id": "front_desk",
-          "occupancy": {
-            "required": false,
-            "mode": "capacity"
-          },
-          "claimants": {
-            "exact": [
-              "event:chain06_dave_same_bus"
-            ],
-            "category": [],
-            "scenario": [],
-            "route": []
-          },
-          "action_to_object_attachments": [],
-          "geometry": {
-            "status": "provisional",
-            "reason": "reviewed migration split, relocation, or capacity repair changed geometry",
-            "legacy": {
-              "pos": [
-                700.0,
-                176.0
-              ],
-              "hit_rect": [
-                664.0,
-                128.0,
-                72.0,
-                48.0
-              ],
-              "label_anchor": [
-                700.0,
-                122.0
-              ]
-            },
-            "final": {
-              "pos": [
-                718.0,
-                188.0
-              ],
-              "hit_rect": [
-                682.0,
-                140.0,
-                72.0,
-                48.0
-              ],
-              "label_anchor": [
-                718.0,
-                134.0
-              ]
-            }
-          }
-        }
-      ]
+      "final_slots": []
     },
     {
       "map_id": "motel",
@@ -6427,67 +6545,11 @@
         "route": []
       },
       "coexistence": {
-        "decision": "shared_only_as_aliases_or_mutually_exclusive_capacity",
-        "independent_claimants_can_coexist": false
+        "decision": "retired_by_reviewed_capacity_repair",
+        "independent_claimants_can_coexist": null
       },
       "action_to_object_attachments": [],
-      "final_slots": [
-        {
-          "family": "event",
-          "id": "event.surface_item_3",
-          "footprint_class": "surface_item",
-          "support_id": "bedspread",
-          "occupancy": {
-            "required": false,
-            "mode": "capacity"
-          },
-          "claimants": {
-            "exact": [
-              "event:chain06_dave_last_stop"
-            ],
-            "category": [],
-            "scenario": [],
-            "route": []
-          },
-          "action_to_object_attachments": [],
-          "geometry": {
-            "status": "provisional",
-            "reason": "reviewed migration split, relocation, or capacity repair changed geometry",
-            "legacy": {
-              "pos": [
-                180.0,
-                224.0
-              ],
-              "hit_rect": [
-                144.0,
-                176.0,
-                72.0,
-                48.0
-              ],
-              "label_anchor": [
-                180.0,
-                170.0
-              ]
-            },
-            "final": {
-              "pos": [
-                198.0,
-                236.0
-              ],
-              "hit_rect": [
-                162.0,
-                188.0,
-                72.0,
-                48.0
-              ],
-              "label_anchor": [
-                198.0,
-                182.0
-              ]
-            }
-          }
-        }
-      ]
+      "final_slots": []
     },
     {
       "map_id": "motel",
@@ -9767,8 +9829,8 @@
         {
           "family": "exit",
           "id": "exit.travel_right",
-          "footprint_class": "standing_person",
-          "support_id": "stage",
+          "footprint_class": "doorway",
+          "support_id": "right_exit",
           "occupancy": {
             "required": false,
             "mode": "capacity"
@@ -12765,8 +12827,8 @@
         "route": []
       },
       "coexistence": {
-        "decision": "split_or_cloned_into_distinct_family_local_capacity",
-        "independent_claimants_can_coexist": true
+        "decision": "single_family_capacity",
+        "independent_claimants_can_coexist": null
       },
       "action_to_object_attachments": [],
       "final_slots": [
@@ -12831,59 +12893,6 @@
               ]
             }
           }
-        },
-        {
-          "family": "scenario",
-          "id": "scenario.behind_counter_person_1",
-          "footprint_class": "behind_counter_person",
-          "support_id": "pull_tab_window",
-          "occupancy": {
-            "required": false,
-            "mode": "capacity"
-          },
-          "claimants": {
-            "exact": [],
-            "category": [],
-            "scenario": [],
-            "route": []
-          },
-          "action_to_object_attachments": [],
-          "geometry": {
-            "status": "provisional",
-            "reason": "reviewed migration split, relocation, or capacity repair changed geometry",
-            "legacy": {
-              "pos": [
-                600.0,
-                84.0
-              ],
-              "hit_rect": [
-                564.0,
-                12.0,
-                72.0,
-                72.0
-              ],
-              "label_anchor": [
-                600.0,
-                8.0
-              ]
-            },
-            "final": {
-              "pos": [
-                724.0,
-                84.0
-              ],
-              "hit_rect": [
-                688.0,
-                12.0,
-                72.0,
-                72.0
-              ],
-              "label_anchor": [
-                724.0,
-                6.0
-              ]
-            }
-          }
         }
       ]
     },
@@ -12915,7 +12924,7 @@
       "final_slots": [
         {
           "family": "scenario",
-          "id": "scenario.behind_counter_person_2",
+          "id": "scenario.behind_counter_person_1",
           "footprint_class": "behind_counter_person",
           "support_id": "staff_window_left",
           "occupancy": {
@@ -14423,59 +14432,6 @@
               ]
             }
           }
-        },
-        {
-          "family": "exit",
-          "id": "exit.door_right_lower",
-          "footprint_class": "doorway",
-          "support_id": "right_exit",
-          "occupancy": {
-            "required": false,
-            "mode": "capacity"
-          },
-          "claimants": {
-            "exact": [],
-            "category": [],
-            "scenario": [],
-            "route": []
-          },
-          "action_to_object_attachments": [],
-          "geometry": {
-            "status": "provisional",
-            "reason": "reviewed migration split, relocation, or capacity repair changed geometry",
-            "legacy": {
-              "pos": [
-                841.0,
-                362.0
-              ],
-              "hit_rect": [
-                809.0,
-                326.0,
-                64.0,
-                72.0
-              ],
-              "label_anchor": [
-                836.0,
-                330.0
-              ]
-            },
-            "final": {
-              "pos": [
-                859.0,
-                374.0
-              ],
-              "hit_rect": [
-                827.0,
-                338.0,
-                64.0,
-                72.0
-              ],
-              "label_anchor": [
-                854.0,
-                342.0
-              ]
-            }
-          }
         }
       ]
     },
@@ -14515,8 +14471,8 @@
         "route": []
       },
       "coexistence": {
-        "decision": "split_or_cloned_into_distinct_family_local_capacity",
-        "independent_claimants_can_coexist": true
+        "decision": "shared_only_as_aliases_or_mutually_exclusive_capacity",
+        "independent_claimants_can_coexist": false
       },
       "action_to_object_attachments": [],
       "final_slots": [
@@ -14571,59 +14527,6 @@
               "label_anchor": [
                 836.0,
                 224.0
-              ]
-            }
-          }
-        },
-        {
-          "family": "exit",
-          "id": "exit.door_right_upper",
-          "footprint_class": "doorway",
-          "support_id": "right_exit",
-          "occupancy": {
-            "required": false,
-            "mode": "capacity"
-          },
-          "claimants": {
-            "exact": [],
-            "category": [],
-            "scenario": [],
-            "route": []
-          },
-          "action_to_object_attachments": [],
-          "geometry": {
-            "status": "provisional",
-            "reason": "reviewed migration split, relocation, or capacity repair changed geometry",
-            "legacy": {
-              "pos": [
-                841.0,
-                266.0
-              ],
-              "hit_rect": [
-                809.0,
-                230.0,
-                64.0,
-                72.0
-              ],
-              "label_anchor": [
-                836.0,
-                224.0
-              ]
-            },
-            "final": {
-              "pos": [
-                859.0,
-                278.0
-              ],
-              "hit_rect": [
-                827.0,
-                242.0,
-                64.0,
-                72.0
-              ],
-              "label_anchor": [
-                854.0,
-                236.0
               ]
             }
           }
@@ -14917,59 +14820,6 @@
       },
       "action_to_object_attachments": [],
       "final_slots": [
-        {
-          "family": "fixed",
-          "id": "fixed.staff_floor_left",
-          "footprint_class": "standing_person",
-          "support_id": "floor",
-          "occupancy": {
-            "required": false,
-            "mode": "capacity"
-          },
-          "claimants": {
-            "exact": [],
-            "category": [],
-            "scenario": [],
-            "route": []
-          },
-          "action_to_object_attachments": [],
-          "geometry": {
-            "status": "preserved",
-            "reason": "legacy coordinate fields preserved exactly",
-            "legacy": {
-              "pos": [
-                252.0,
-                358.0
-              ],
-              "hit_rect": [
-                216.0,
-                278.0,
-                72.0,
-                80.0
-              ],
-              "label_anchor": [
-                251.0,
-                272.0
-              ]
-            },
-            "final": {
-              "pos": [
-                252.0,
-                358.0
-              ],
-              "hit_rect": [
-                216.0,
-                278.0,
-                72.0,
-                80.0
-              ],
-              "label_anchor": [
-                251.0,
-                272.0
-              ]
-            }
-          }
-        },
         {
           "family": "event",
           "id": "event.standing_person_1",
@@ -15436,61 +15286,6 @@
       },
       "action_to_object_attachments": [],
       "final_slots": [
-        {
-          "family": "fixed",
-          "id": "fixed.service_stage_left",
-          "footprint_class": "surface_item",
-          "support_id": "stage",
-          "occupancy": {
-            "required": false,
-            "mode": "capacity"
-          },
-          "claimants": {
-            "exact": [],
-            "category": [
-              "service_spots:0"
-            ],
-            "scenario": [],
-            "route": []
-          },
-          "action_to_object_attachments": [],
-          "geometry": {
-            "status": "preserved",
-            "reason": "legacy coordinate fields preserved exactly",
-            "legacy": {
-              "pos": [
-                300.0,
-                202.0
-              ],
-              "hit_rect": [
-                264.0,
-                154.0,
-                72.0,
-                48.0
-              ],
-              "label_anchor": [
-                297.0,
-                148.0
-              ]
-            },
-            "final": {
-              "pos": [
-                300.0,
-                202.0
-              ],
-              "hit_rect": [
-                264.0,
-                154.0,
-                72.0,
-                48.0
-              ],
-              "label_anchor": [
-                297.0,
-                148.0
-              ]
-            }
-          }
-        },
         {
           "family": "fixed",
           "id": "fixed.service_two_drink_minimum",
@@ -19931,8 +19726,8 @@
         "route": []
       },
       "coexistence": {
-        "decision": "split_or_cloned_into_distinct_family_local_capacity",
-        "independent_claimants_can_coexist": true
+        "decision": "shared_only_as_aliases_or_mutually_exclusive_capacity",
+        "independent_claimants_can_coexist": false
       },
       "action_to_object_attachments": [],
       "final_slots": [
@@ -19989,59 +19784,6 @@
               "label_anchor": [
                 273.0,
                 170.0
-              ]
-            }
-          }
-        },
-        {
-          "family": "scenario",
-          "id": "scenario.group_1",
-          "footprint_class": "group",
-          "support_id": "stage",
-          "occupancy": {
-            "required": false,
-            "mode": "capacity"
-          },
-          "claimants": {
-            "exact": [],
-            "category": [],
-            "scenario": [],
-            "route": []
-          },
-          "action_to_object_attachments": [],
-          "geometry": {
-            "status": "provisional",
-            "reason": "reviewed migration split, relocation, or capacity repair changed geometry",
-            "legacy": {
-              "pos": [
-                256.0,
-                154.0
-              ],
-              "hit_rect": [
-                220.0,
-                106.0,
-                72.0,
-                48.0
-              ],
-              "label_anchor": [
-                255.0,
-                102.0
-              ]
-            },
-            "final": {
-              "pos": [
-                274.0,
-                166.0
-              ],
-              "hit_rect": [
-                238.0,
-                118.0,
-                72.0,
-                48.0
-              ],
-              "label_anchor": [
-                273.0,
-                114.0
               ]
             }
           }
@@ -23274,65 +23016,11 @@
         "route": []
       },
       "coexistence": {
-        "decision": "single_family_capacity",
+        "decision": "retired_by_reviewed_capacity_repair",
         "independent_claimants_can_coexist": null
       },
       "action_to_object_attachments": [],
-      "final_slots": [
-        {
-          "family": "scenario",
-          "id": "scenario.surface_item_1",
-          "footprint_class": "surface_item",
-          "support_id": "planning_table",
-          "occupancy": {
-            "required": false,
-            "mode": "capacity"
-          },
-          "claimants": {
-            "exact": [],
-            "category": [],
-            "scenario": [],
-            "route": []
-          },
-          "action_to_object_attachments": [],
-          "geometry": {
-            "status": "preserved",
-            "reason": "legacy coordinate fields preserved exactly",
-            "legacy": {
-              "pos": [
-                450.0,
-                151.0
-              ],
-              "hit_rect": [
-                414.0,
-                103.0,
-                72.0,
-                48.0
-              ],
-              "label_anchor": [
-                450.0,
-                97.0
-              ]
-            },
-            "final": {
-              "pos": [
-                450.0,
-                151.0
-              ],
-              "hit_rect": [
-                414.0,
-                103.0,
-                72.0,
-                48.0
-              ],
-              "label_anchor": [
-                450.0,
-                97.0
-              ]
-            }
-          }
-        }
-      ]
+      "final_slots": []
     },
     {
       "map_id": "small_underground_casino",
@@ -28838,7 +28526,9 @@
             "mode": "capacity"
           },
           "claimants": {
-            "exact": [],
+            "exact": [
+              "event:rowdy_regular"
+            ],
             "category": [],
             "scenario": [],
             "route": []
@@ -28892,7 +28582,7 @@
           },
           "claimants": {
             "exact": [
-              "event:rowdy_regular"
+              "event:chain06_cass_first_contact"
             ],
             "category": [],
             "scenario": [],
@@ -28946,7 +28636,9 @@
             "mode": "capacity"
           },
           "claimants": {
-            "exact": [],
+            "exact": [
+              "event:chain06_dave_same_bus"
+            ],
             "category": [],
             "scenario": [],
             "route": []
@@ -30248,61 +29940,6 @@
           }
         },
         {
-          "family": "event",
-          "id": "event.wall_item_1",
-          "footprint_class": "wall_mounted",
-          "support_id": "round3_calendar_mount",
-          "occupancy": {
-            "required": false,
-            "mode": "capacity"
-          },
-          "claimants": {
-            "exact": [
-              "event:chain06_cass_first_contact"
-            ],
-            "category": [],
-            "scenario": [],
-            "route": []
-          },
-          "action_to_object_attachments": [],
-          "geometry": {
-            "status": "provisional",
-            "reason": "reviewed migration split, relocation, or capacity repair changed geometry",
-            "legacy": {
-              "pos": [
-                600.0,
-                286.0
-              ],
-              "hit_rect": [
-                564.0,
-                246.0,
-                72.0,
-                80.0
-              ],
-              "label_anchor": [
-                600.0,
-                214.0
-              ]
-            },
-            "final": {
-              "pos": [
-                618.0,
-                298.0
-              ],
-              "hit_rect": [
-                582.0,
-                258.0,
-                72.0,
-                80.0
-              ],
-              "label_anchor": [
-                618.0,
-                226.0
-              ]
-            }
-          }
-        },
-        {
           "family": "scenario",
           "id": "scenario.wall_item_1",
           "footprint_class": "wall_mounted",
@@ -30731,8 +30368,8 @@
         "route": []
       },
       "coexistence": {
-        "decision": "split_or_cloned_into_distinct_family_local_capacity",
-        "independent_claimants_can_coexist": true
+        "decision": "shared_only_as_aliases_or_mutually_exclusive_capacity",
+        "independent_claimants_can_coexist": false
       },
       "action_to_object_attachments": [],
       "final_slots": [
@@ -30787,61 +30424,6 @@
               "label_anchor": [
                 315.0,
                 202.0
-              ]
-            }
-          }
-        },
-        {
-          "family": "event",
-          "id": "event.surface_item_1",
-          "footprint_class": "surface_item",
-          "support_id": "scoreboard_ledge",
-          "occupancy": {
-            "required": false,
-            "mode": "capacity"
-          },
-          "claimants": {
-            "exact": [
-              "event:chain06_dave_same_bus"
-            ],
-            "category": [],
-            "scenario": [],
-            "route": []
-          },
-          "action_to_object_attachments": [],
-          "geometry": {
-            "status": "provisional",
-            "reason": "reviewed migration split, relocation, or capacity repair changed geometry",
-            "legacy": {
-              "pos": [
-                286.0,
-                150.0
-              ],
-              "hit_rect": [
-                250.0,
-                102.0,
-                72.0,
-                48.0
-              ],
-              "label_anchor": [
-                315.0,
-                202.0
-              ]
-            },
-            "final": {
-              "pos": [
-                304.0,
-                162.0
-              ],
-              "hit_rect": [
-                268.0,
-                114.0,
-                72.0,
-                48.0
-              ],
-              "label_anchor": [
-                333.0,
-                214.0
               ]
             }
           }
@@ -32651,8 +32233,8 @@
         "route": []
       },
       "coexistence": {
-        "decision": "split_or_cloned_into_distinct_family_local_capacity",
-        "independent_claimants_can_coexist": true
+        "decision": "single_family_capacity",
+        "independent_claimants_can_coexist": null
       },
       "action_to_object_attachments": [],
       "final_slots": [
@@ -32707,59 +32289,6 @@
               "label_anchor": [
                 112.0,
                 120.0
-              ]
-            }
-          }
-        },
-        {
-          "family": "scenario",
-          "id": "scenario.behind_counter_person_2",
-          "footprint_class": "behind_counter_person",
-          "support_id": "towel",
-          "occupancy": {
-            "required": false,
-            "mode": "capacity"
-          },
-          "claimants": {
-            "exact": [],
-            "category": [],
-            "scenario": [],
-            "route": []
-          },
-          "action_to_object_attachments": [],
-          "geometry": {
-            "status": "provisional",
-            "reason": "reviewed migration split, relocation, or capacity repair changed geometry",
-            "legacy": {
-              "pos": [
-                112.0,
-                202.0
-              ],
-              "hit_rect": [
-                76.0,
-                130.0,
-                72.0,
-                72.0
-              ],
-              "label_anchor": [
-                112.0,
-                120.0
-              ]
-            },
-            "final": {
-              "pos": [
-                130.0,
-                214.0
-              ],
-              "hit_rect": [
-                94.0,
-                142.0,
-                72.0,
-                72.0
-              ],
-              "label_anchor": [
-                130.0,
-                132.0
               ]
             }
           }
@@ -33379,6 +32908,59 @@
       },
       "action_to_object_attachments": [],
       "final_slots": [
+        {
+          "family": "event",
+          "id": "event.standing_person_1",
+          "footprint_class": "standing_person",
+          "support_id": "floor",
+          "occupancy": {
+            "required": false,
+            "mode": "capacity"
+          },
+          "claimants": {
+            "exact": [],
+            "category": [],
+            "scenario": [],
+            "route": []
+          },
+          "action_to_object_attachments": [],
+          "geometry": {
+            "status": "provisional",
+            "reason": "reviewed migration split, relocation, or capacity repair changed geometry",
+            "legacy": {
+              "pos": [
+                276.0,
+                292.0
+              ],
+              "hit_rect": [
+                240.0,
+                212.0,
+                72.0,
+                80.0
+              ],
+              "label_anchor": [
+                276.0,
+                206.0
+              ]
+            },
+            "final": {
+              "pos": [
+                788.0,
+                406.0
+              ],
+              "hit_rect": [
+                752.0,
+                326.0,
+                72.0,
+                80.0
+              ],
+              "label_anchor": [
+                788.0,
+                320.0
+              ]
+            }
+          }
+        },
         {
           "family": "scenario",
           "id": "scenario.standing_person_1",
@@ -34197,10 +33779,17 @@
         "route": []
       },
       "coexistence": {
-        "decision": "shared_only_as_aliases_or_mutually_exclusive_capacity",
-        "independent_claimants_can_coexist": false
+        "decision": "actions_attach_to_one_guaranteed_physical_host",
+        "independent_claimants_can_coexist": true
       },
-      "action_to_object_attachments": [],
+      "action_to_object_attachments": [
+        {
+          "action_id": "meta_pawn_counter:sell",
+          "host_object_id": "pawn_shop:sal",
+          "host_presentation_id": "staff:pawn_counter_sal",
+          "final_slot_id": "fixed.staff_pawn_counter"
+        }
+      ],
       "final_slots": [
         {
           "family": "fixed",
@@ -34213,16 +33802,38 @@
           },
           "claimants": {
             "exact": [
-              "meta_pawn_counter:sell",
               "staff:pawn_counter_sal"
             ],
-            "category": [
-              "pawn_counter_spots:0"
-            ],
+            "category": [],
             "scenario": [],
             "route": []
           },
-          "action_to_object_attachments": [],
+          "action_to_object_attachments": [
+            {
+              "action_id": "lender:sals_pawn_counter",
+              "host_object_id": "pawn_shop:sal",
+              "host_presentation_id": "staff:pawn_counter_sal",
+              "final_slot_id": "fixed.staff_pawn_counter"
+            },
+            {
+              "action_id": "meta_pawn_counter:sell",
+              "host_object_id": "pawn_shop:sal",
+              "host_presentation_id": "staff:pawn_counter_sal",
+              "final_slot_id": "fixed.staff_pawn_counter"
+            },
+            {
+              "action_id": "meta_sal:talk",
+              "host_object_id": "pawn_shop:sal",
+              "host_presentation_id": "staff:pawn_counter_sal",
+              "final_slot_id": "fixed.staff_pawn_counter"
+            },
+            {
+              "action_id": "shopkeeper:merchant",
+              "host_object_id": "pawn_shop:sal",
+              "host_presentation_id": "staff:pawn_counter_sal",
+              "final_slot_id": "fixed.staff_pawn_counter"
+            }
+          ],
           "geometry": {
             "status": "preserved",
             "reason": "legacy coordinate fields preserved exactly",
@@ -34285,67 +33896,18 @@
         "route": []
       },
       "coexistence": {
-        "decision": "single_family_capacity",
+        "decision": "retired_by_reviewed_capacity_repair",
         "independent_claimants_can_coexist": null
       },
-      "action_to_object_attachments": [],
-      "final_slots": [
+      "action_to_object_attachments": [
         {
-          "family": "fixed",
-          "id": "fixed.staff_merchant",
-          "footprint_class": "behind_counter_person",
-          "support_id": "estate_right_lower_shelf",
-          "occupancy": {
-            "required": false,
-            "mode": "capacity"
-          },
-          "claimants": {
-            "exact": [
-              "shopkeeper:merchant"
-            ],
-            "category": [],
-            "scenario": [],
-            "route": []
-          },
-          "action_to_object_attachments": [],
-          "geometry": {
-            "status": "preserved",
-            "reason": "legacy coordinate fields preserved exactly",
-            "legacy": {
-              "pos": [
-                772.0,
-                188.0
-              ],
-              "hit_rect": [
-                736.0,
-                116.0,
-                72.0,
-                72.0
-              ],
-              "label_anchor": [
-                772.0,
-                112.0
-              ]
-            },
-            "final": {
-              "pos": [
-                772.0,
-                188.0
-              ],
-              "hit_rect": [
-                736.0,
-                116.0,
-                72.0,
-                72.0
-              ],
-              "label_anchor": [
-                772.0,
-                112.0
-              ]
-            }
-          }
+          "action_id": "shopkeeper:merchant",
+          "host_object_id": "pawn_shop:sal",
+          "host_presentation_id": "staff:pawn_counter_sal",
+          "final_slot_id": "fixed.staff_pawn_counter"
         }
-      ]
+      ],
+      "final_slots": []
     },
     {
       "map_id": "pawn_shop",
@@ -34466,69 +34028,18 @@
         "route": []
       },
       "coexistence": {
-        "decision": "shared_only_as_aliases_or_mutually_exclusive_capacity",
-        "independent_claimants_can_coexist": false
+        "decision": "retired_by_reviewed_capacity_repair",
+        "independent_claimants_can_coexist": null
       },
-      "action_to_object_attachments": [],
-      "final_slots": [
+      "action_to_object_attachments": [
         {
-          "family": "fixed",
-          "id": "fixed.lender_sals_pawn_counter",
-          "footprint_class": "standing_person",
-          "support_id": "stage",
-          "occupancy": {
-            "required": false,
-            "mode": "capacity"
-          },
-          "claimants": {
-            "exact": [
-              "lender:sals_pawn_counter"
-            ],
-            "category": [
-              "lender_spots:0"
-            ],
-            "scenario": [],
-            "route": []
-          },
-          "action_to_object_attachments": [],
-          "geometry": {
-            "status": "preserved",
-            "reason": "legacy coordinate fields preserved exactly",
-            "legacy": {
-              "pos": [
-                36.0,
-                398.0
-              ],
-              "hit_rect": [
-                4.0,
-                326.0,
-                64.0,
-                72.0
-              ],
-              "label_anchor": [
-                36.0,
-                390.0
-              ]
-            },
-            "final": {
-              "pos": [
-                36.0,
-                398.0
-              ],
-              "hit_rect": [
-                4.0,
-                326.0,
-                64.0,
-                72.0
-              ],
-              "label_anchor": [
-                36.0,
-                390.0
-              ]
-            }
-          }
+          "action_id": "lender:sals_pawn_counter",
+          "host_object_id": "pawn_shop:sal",
+          "host_presentation_id": "staff:pawn_counter_sal",
+          "final_slot_id": "fixed.staff_pawn_counter"
         }
-      ]
+      ],
+      "final_slots": []
     },
     {
       "map_id": "pawn_shop",
@@ -42367,7 +41878,7 @@
       "final_slots": [
         {
           "family": "fixed",
-          "id": "fixed.fixture_cage_1",
+          "id": "fixed.fixture_cage_counter",
           "footprint_class": "surface_item",
           "support_id": "teller_counter",
           "occupancy": {
@@ -42514,7 +42025,7 @@
       "final_slots": [
         {
           "family": "fixed",
-          "id": "fixed.fixture_cage_2",
+          "id": "fixed.fixture_cage_atm",
           "footprint_class": "wall_mounted",
           "support_id": "atm",
           "occupancy": {
@@ -42826,65 +42337,11 @@
         "route": []
       },
       "coexistence": {
-        "decision": "single_family_capacity",
+        "decision": "retired_by_reviewed_capacity_repair",
         "independent_claimants_can_coexist": null
       },
       "action_to_object_attachments": [],
-      "final_slots": [
-        {
-          "family": "scenario",
-          "id": "scenario.surface_item_1",
-          "footprint_class": "surface_item",
-          "support_id": "teller_counter",
-          "occupancy": {
-            "required": false,
-            "mode": "capacity"
-          },
-          "claimants": {
-            "exact": [],
-            "category": [],
-            "scenario": [],
-            "route": []
-          },
-          "action_to_object_attachments": [],
-          "geometry": {
-            "status": "preserved",
-            "reason": "legacy coordinate fields preserved exactly",
-            "legacy": {
-              "pos": [
-                386.0,
-                260.0
-              ],
-              "hit_rect": [
-                364.0,
-                216.0,
-                44.0,
-                44.0
-              ],
-              "label_anchor": [
-                386.0,
-                194.0
-              ]
-            },
-            "final": {
-              "pos": [
-                386.0,
-                260.0
-              ],
-              "hit_rect": [
-                364.0,
-                216.0,
-                44.0,
-                44.0
-              ],
-              "label_anchor": [
-                386.0,
-                194.0
-              ]
-            }
-          }
-        }
-      ]
+      "final_slots": []
     },
     {
       "map_id": "grand_casino_cage",
@@ -44394,65 +43851,11 @@
         "route": []
       },
       "coexistence": {
-        "decision": "single_family_capacity",
+        "decision": "retired_by_reviewed_capacity_repair",
         "independent_claimants_can_coexist": null
       },
       "action_to_object_attachments": [],
-      "final_slots": [
-        {
-          "family": "scenario",
-          "id": "scenario.surface_item_1",
-          "footprint_class": "surface_item",
-          "support_id": "rug",
-          "occupancy": {
-            "required": false,
-            "mode": "capacity"
-          },
-          "claimants": {
-            "exact": [],
-            "category": [],
-            "scenario": [],
-            "route": []
-          },
-          "action_to_object_attachments": [],
-          "geometry": {
-            "status": "preserved",
-            "reason": "legacy coordinate fields preserved exactly",
-            "legacy": {
-              "pos": [
-                420.0,
-                294.0
-              ],
-              "hit_rect": [
-                384.0,
-                246.0,
-                72.0,
-                48.0
-              ],
-              "label_anchor": [
-                420.0,
-                240.0
-              ]
-            },
-            "final": {
-              "pos": [
-                420.0,
-                294.0
-              ],
-              "hit_rect": [
-                384.0,
-                246.0,
-                72.0,
-                48.0
-              ],
-              "label_anchor": [
-                420.0,
-                240.0
-              ]
-            }
-          }
-        }
-      ]
+      "final_slots": []
     },
     {
       "map_id": "motel_room",
@@ -45660,65 +45063,11 @@
         "route": []
       },
       "coexistence": {
-        "decision": "single_family_capacity",
+        "decision": "retired_by_reviewed_capacity_repair",
         "independent_claimants_can_coexist": null
       },
       "action_to_object_attachments": [],
-      "final_slots": [
-        {
-          "family": "scenario",
-          "id": "scenario.surface_item_1",
-          "footprint_class": "surface_item",
-          "support_id": "rug",
-          "occupancy": {
-            "required": false,
-            "mode": "capacity"
-          },
-          "claimants": {
-            "exact": [],
-            "category": [],
-            "scenario": [],
-            "route": []
-          },
-          "action_to_object_attachments": [],
-          "geometry": {
-            "status": "preserved",
-            "reason": "legacy coordinate fields preserved exactly",
-            "legacy": {
-              "pos": [
-                394.0,
-                304.0
-              ],
-              "hit_rect": [
-                358.0,
-                256.0,
-                72.0,
-                48.0
-              ],
-              "label_anchor": [
-                394.0,
-                250.0
-              ]
-            },
-            "final": {
-              "pos": [
-                394.0,
-                304.0
-              ],
-              "hit_rect": [
-                358.0,
-                256.0,
-                72.0,
-                48.0
-              ],
-              "label_anchor": [
-                394.0,
-                250.0
-              ]
-            }
-          }
-        }
-      ]
+      "final_slots": []
     },
     {
       "map_id": "apartment",
@@ -47301,65 +46650,11 @@
         "route": []
       },
       "coexistence": {
-        "decision": "single_family_capacity",
+        "decision": "retired_by_reviewed_capacity_repair",
         "independent_claimants_can_coexist": null
       },
       "action_to_object_attachments": [],
-      "final_slots": [
-        {
-          "family": "scenario",
-          "id": "scenario.surface_item_1",
-          "footprint_class": "surface_item",
-          "support_id": "rug",
-          "occupancy": {
-            "required": false,
-            "mode": "capacity"
-          },
-          "claimants": {
-            "exact": [],
-            "category": [],
-            "scenario": [],
-            "route": []
-          },
-          "action_to_object_attachments": [],
-          "geometry": {
-            "status": "preserved",
-            "reason": "legacy coordinate fields preserved exactly",
-            "legacy": {
-              "pos": [
-                660.0,
-                296.0
-              ],
-              "hit_rect": [
-                624.0,
-                248.0,
-                72.0,
-                48.0
-              ],
-              "label_anchor": [
-                660.0,
-                242.0
-              ]
-            },
-            "final": {
-              "pos": [
-                660.0,
-                296.0
-              ],
-              "hit_rect": [
-                624.0,
-                248.0,
-                72.0,
-                48.0
-              ],
-              "label_anchor": [
-                660.0,
-                242.0
-              ]
-            }
-          }
-        }
-      ]
+      "final_slots": []
     },
     {
       "map_id": "house",

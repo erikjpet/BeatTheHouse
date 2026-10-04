@@ -15,7 +15,7 @@ const EnvironmentPlacementScript := preload("res://scripts/core/environment_plac
 const EnvironmentSlotBinderScript := preload("res://scripts/core/environment_slot_binder.gd")
 const EnvironmentObjectManifestScript := preload("res://scripts/core/environment_object_manifest.gd")
 
-const GENERATED_LAYOUT_VERSION := 14
+const GENERATED_LAYOUT_VERSION := 15
 const ENVIRONMENT_LAYER_SCHEMA_VERSION := 1
 const OBJECT_MANIFEST_SCHEMA_VERSION := EnvironmentObjectManifestScript.SCHEMA_VERSION
 const EMPTY_MUSIC_NOTE := -999
@@ -656,11 +656,19 @@ static func ensure_generated_layout(environment_data: Dictionary, library: Conte
 	# rather than the stale hints still held by the serialized input dictionary.
 	var placement_environment := environment_data.duplicate(true)
 	placement_environment["layout"] = layout
+	# Keep the exact-layout action attachment authority in the durable generated
+	# layout as well as the shipping surface map. Scenario actions that borrow a
+	# tangible host need this receipt when their sequence reaches aftermath and
+	# that host is removed from the room.
+	var action_host_ids := scenario_action_host_ids(placement_environment)
+	if action_host_ids.is_empty():
+		layout.erase("scenario_instance_action_host_ids")
+	else:
+		layout["scenario_instance_action_host_ids"] = action_host_ids
+	placement_environment["layout"] = layout
 	var active_entries := active_object_manifest_rows(placement_environment)
 	var grounding_signature := _grounding_signature(environment_data, layout, active_entries)
-	var current_slot_map_digest := EnvironmentSlotBinderScript.slot_map_digest(
-		EnvironmentPlacementScript.surface_map(placement_environment)
-	)
+	var current_slot_map_digest := EnvironmentSlotBinderScript.slot_map_digest(EnvironmentPlacementScript.surface_map(placement_environment))
 	var persisted_slot_authority := EnvironmentSlotBinderScript.validate_base_layout_authority(placement_environment)
 	if int(layout.get("generated_object_rect_version", 0)) == GENERATED_LAYOUT_VERSION \
 			and str(layout.get("grounding_signature", "")) == grounding_signature \
@@ -705,6 +713,15 @@ static func ensure_generated_layout(environment_data: Dictionary, library: Conte
 	layout["generated_object_rect_version"] = GENERATED_LAYOUT_VERSION
 	layout["grounding_signature"] = grounding_signature
 	return layout
+
+
+# Returns the exact scenario action-to-physical-host authority for this room.
+# This is deliberately exposed through EnvironmentInstance so RunState does not
+# need to introduce another direct placement preload into its dependency graph.
+static func scenario_action_host_ids(environment_data: Dictionary) -> Dictionary:
+	return JsonCoerceScript._copy_dict(
+		EnvironmentPlacementScript.surface_map(environment_data).get("scenario_instance_action_host_ids", {})
+	)
 
 
 # Reconciles the versioned physical-object manifest in place and returns it.
@@ -754,18 +771,39 @@ static func object_manifest_errors(environment_data: Dictionary) -> Array:
 
 
 static func active_object_manifest_rows(environment_data: Dictionary, family: String = "") -> Array:
-	return EnvironmentObjectManifestScript.active_rows(environment_data.get("object_manifest", {}), family)
+	var rows := EnvironmentObjectManifestScript.active_rows(environment_data.get("object_manifest", {}), family)
+	# Manifest metadata is the durable home for attachment authority, while the
+	# binder consumes a flat runtime record. Restore this one routing field on the
+	# transient projection so hosted actions remain nonphysical after reconcile.
+	for row_value in rows:
+		if typeof(row_value) != TYPE_DICTIONARY:
+			continue
+		var row: Dictionary = row_value
+		var binding_source_id := str(JsonCoerceScript._copy_dict(row.get("metadata", {})).get("slot_binding_source_id", "")).strip_edges()
+		if not binding_source_id.is_empty():
+			row["slot_binding_source_id"] = binding_source_id
+	return rows
 
 
 static func _physical_manifest_layout_entries(environment_data: Dictionary, surface_map: Dictionary) -> Array:
 	var result: Array = []
 	var class_overrides := JsonCoerceScript._copy_dict(surface_map.get("class_overrides", {}))
+	# Exact scenario actions borrow an already-authored tangible host. Apply that
+	# authority at the shared manifest boundary so event and service actions follow
+	# the same generation path and can never acquire a second room slot.
+	var action_host_ids := JsonCoerceScript._copy_dict(surface_map.get("scenario_instance_action_host_ids", {}))
 	for entry_value in _active_object_layout_entries(environment_data, surface_map):
 		if typeof(entry_value) != TYPE_DICTIONARY:
 			continue
 		var entry := (entry_value as Dictionary).duplicate(true)
 		var object_id := str(entry.get("object_id", "")).strip_edges()
 		if object_id.is_empty():
+			continue
+		var exact_host_id := str(action_host_ids.get(object_id, "")).strip_edges()
+		if not exact_host_id.is_empty() and exact_host_id != object_id:
+			# Hosted actions are interaction authority, not room occupants. Their
+			# exact source is injected when interaction records are composed; keeping
+			# them out of the physical manifest makes slotlessness structural.
 			continue
 		var object_type := str(entry.get("object_type", ""))
 		var actual_exit := object_type == "travel" or object_id.begins_with("travel:") \
@@ -830,7 +868,7 @@ static func _manifest_shop_item_order(environment_data: Dictionary, object_id: S
 
 static func _grounding_signature(environment_data: Dictionary, layout: Dictionary, active_entries: Array) -> String:
 	var layout_source := layout.duplicate(true)
-	for generated_key in ["object_rects", "slot_bindings", "slot_overflow_ids", "slot_schema_version", "slot_map_digest", "slot_binding_digest", "placement_classes", "placement_surfaces", "placement_errors", "placement_warnings", "placement_fallback_ids", "grounding_signature", "generated_object_rect_version"]:
+	for generated_key in ["object_rects", "slot_bindings", "slot_overflow_ids", "slot_schema_version", "slot_map_digest", "slot_binding_digest", "placement_classes", "placement_surfaces", "placement_errors", "placement_warnings", "placement_fallback_ids", "scenario_instance_action_host_ids", "grounding_signature", "generated_object_rect_version"]:
 		layout_source.erase(generated_key)
 	var signature_source := {
 		"version": GENERATED_LAYOUT_VERSION,

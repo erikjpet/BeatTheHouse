@@ -2609,7 +2609,7 @@ func _check_crew_favor_conversation(app: Control) -> bool:
 	if mounted_handoff_owner.is_empty() or str(arrival_interaction.get("node_id", "")) != target_id or abstract_handoff_marker_visible or direct_handoff_visible \
 			or delivery_contact.is_empty() or contact_actions.is_empty() \
 			or delivery_contact_count != 1 or str(delivery_contact.get("object_id", "")) != "crew::package_handoff" \
-			or str(delivery_contact.get("slot_family", "")) != "scenario" or not contact_slot_id.begins_with("scenario.") \
+			or str(delivery_contact.get("slot_family", "")) != "event" or not contact_slot_id.begins_with("event.") \
 			or not bool(delivery_contact.get("scenario_layout_resolved", false)) or int(room_slot_counts.get(contact_slot_id, 0)) != 1 \
 			or str((contact_actions[0] as Dictionary).get("label", "")) != "Hand Over The Package":
 		push_error("Delivery arrival did not attach its owner-scoped handoff dialogue option to a destination person: active=%s delivery=%s owner=%s interaction=%s contact=%s registrations=%s lifecycle_errors=%s layout_audit=%s manifest_errors=%s objects=%s" % [str(run_state.delivery_has_active_run()), JSON.stringify(run_state.delivery_snapshot()), mounted_handoff_owner, JSON.stringify(arrival_interaction), JSON.stringify(delivery_contact), JSON.stringify(run_state.world_sequence_registrations), JSON.stringify(run_state.current_environment.get("scenario_sequence_lifecycle_errors", [])), JSON.stringify(run_state.current_environment.get("scenario_layout_audit", {})), JSON.stringify(run_state.current_environment.get("object_manifest_errors", [])), JSON.stringify(delivery_object_summary)])
@@ -2738,7 +2738,7 @@ func _check_delivery_ordinary_travel_baseline(app: Control, phase: String) -> bo
 	const EXPECTED := {
 		"bankroll_delta": -4,
 		"clock_delta": 42,
-		"current_environment_sha256": "e866dc5b76f6941e6718c162af9ae9ffd8a37bda24435e4b312dd0f83d89be6e",
+		"current_environment_sha256": "48b61aa8f7e9122df377233749b97502b462ce243e0d20a0c7fcc24173dc34ff",
 		"current_world_node_id": "bar",
 		"heat_delta": 0,
 		"provenance_commit": "7ddb7685efb21e45979ea10ab89e660d99c6e891",
@@ -2749,7 +2749,7 @@ func _check_delivery_ordinary_travel_baseline(app: Control, phase: String) -> bo
 		"town_action_index": 0,
 		"travel_count_delta": 1,
 		"travel_story_sha256": "0257877551b37226fd62316ee2af5e047a27387fbb87d5acfa0273d1366a0e81",
-		"world_map_sha256": "89e5ccf4d95ebf7c4012178dcd98d9e2130d2685075918bd4a00308726729480",
+		"world_map_sha256": "01a617af5731398366b7df9b068b15d412fb8a052f5de257810df3054adb0a84",
 	}
 	app.call("start_foundation_run", "DELIVERY-ORDINARY-BASELINE", {}, false)
 	for _start_frame in range(3):
@@ -5767,14 +5767,16 @@ func _run_main_flow(app: Control) -> void:
 	app.call("clear_interaction_focus")
 	await process_frame
 	var first_seed_environment := JSON.stringify(app.call("current_environment_view_snapshot"))
-	app.call("start_foundation_run", "UI-COMPILE-SEED")
+	# Seed determinism is a run-generation contract. Keep every sample isolated
+	# from profile/loadout state written by earlier UI checks in this same process.
+	app.call("start_foundation_run", "UI-COMPILE-SEED", {}, false)
 	await process_frame
 	var same_seed_environment := JSON.stringify(app.call("current_environment_view_snapshot"))
 	if first_seed_environment != same_seed_environment:
 		push_error("Starting the same seed did not produce the same first environment.")
 		quit(1)
 		return
-	app.call("start_foundation_run", "UI-COMPILE-OTHER-SEED")
+	app.call("start_foundation_run", "UI-COMPILE-OTHER-SEED", {}, false)
 	await process_frame
 	var different_seed_environment := JSON.stringify(app.call("current_environment_view_snapshot"))
 	if same_seed_environment == different_seed_environment:
@@ -5782,10 +5784,10 @@ func _run_main_flow(app: Control) -> void:
 		quit(1)
 		return
 	var custom_challenge := RunStateScript.custom_challenge("ui_compile_variant", "UI-COMPILE-SEED", {"variant": "m1_01"})
-	app.call("start_foundation_run", "UI-COMPILE-SEED", custom_challenge)
+	app.call("start_foundation_run", "UI-COMPILE-SEED", custom_challenge, false)
 	await process_frame
 	var challenge_seed_value := int(app.get("run_state").seed_value)
-	app.call("start_foundation_run", "UI-COMPILE-SEED")
+	app.call("start_foundation_run", "UI-COMPILE-SEED", {}, false)
 	await process_frame
 	if challenge_seed_value == int(app.get("run_state").seed_value):
 		push_error("Custom challenge config did not alter the deterministic run seed.")
@@ -7815,6 +7817,23 @@ func _run_main_flow(app: Control) -> void:
 	var hook_library: ContentLibrary = app.get("library")
 	var original_hook_services: Array = hook_library.services.duplicate(true)
 	var original_hook_lenders: Array = hook_library.lenders.duplicate(true)
+	# The strict four-family placement contract rejects contacts that do not have
+	# authored room authority. Move this synthetic hook fixture onto Back Alley,
+	# which owns the merchant, house-drink, and street-lender fixed slots used by
+	# the assertions below, instead of injecting them into the preceding shop.
+	var hook_fixture_archetype := _archetype_by_id(hook_library, "back_alley")
+	if hook_fixture_archetype.is_empty():
+		push_error("Hook result-delta fixture is missing the Back Alley archetype.")
+		quit(1)
+		return
+	hook_run_state.current_environment["kind"] = str(hook_fixture_archetype.get("kind", "shop"))
+	hook_run_state.current_environment["archetype_id"] = "back_alley"
+	hook_run_state.current_environment["display_name"] = "Fixture Back Alley"
+	hook_run_state.current_environment["object_fixtures"] = JsonCoerceScript._copy_array(hook_fixture_archetype.get("object_fixtures", []))
+	hook_run_state.current_environment["event_ids"] = []
+	hook_run_state.current_environment["resolved_event_ids"] = []
+	hook_run_state.current_environment["item_offers"] = []
+	hook_run_state.current_environment["layout"] = JsonCoerceScript._copy_dict(hook_fixture_archetype.get("layout", {}))
 	hook_run_state.game_clock_minutes = 20 * 60
 	hook_run_state.clear_closing_time_state()
 	# Exercise result-delta behavior through a genuinely authored physical object.

@@ -45,13 +45,11 @@ FAMILIES = ("fixed", "event", "scenario", "exit")
 RETIRED_UNUSED_SLOT_IDS: dict[str, set[str]] = {
     "corner_store": {
         "fixed.drink", "fixed.item_shop_6", "fixed.item_shop_7", "fixed.item_shop_8",
-        "fixed.lender_floor_1",
+        "fixed.lender_floor_1", "scenario.wall_item_2",
         "fixed.travel_right", "exit.travel_left", "exit.travel_right",
         "exit.safe_left",
     },
     "back_alley": {
-        "fixed.event_wall_notice", "fixed.home_container_1",
-        "fixed.home_container_2", "fixed.home_container_3",
         "fixed.random_game_1",
         "exit.door_left_upper", "exit.door_left_lower", "exit.right_lower",
     },
@@ -65,15 +63,26 @@ RETIRED_UNUSED_SLOT_IDS: dict[str, set[str]] = {
     "bar": {
         "fixed.drink", "exit.travel_left", "exit.safe_left", "exit.safe_right",
     },
-    "gas_station_casino": {"exit.door_left_middle", "exit.right_lower"},
+    "gas_station_casino": {
+        "scenario.counter_patron_1",
+        "scenario.behind_counter_person_1",
+        "exit.door_left_middle", "exit.right_lower",
+    },
+    "small_underground_casino": {
+        "fixed.staff_floor_left", "fixed.service_stage_left",
+        "exit.door_right_lower", "exit.door_right_upper",
+    },
     "small_underground_casino:club": {
         "fixed.service_left_table",
         "exit.door_right_lower", "exit.left_upper",
     },
     "small_underground_casino:casino": {
-        "fixed.random_game_2", "fixed.service_left_table", "exit.left_upper",
+        "fixed.random_game_2", "fixed.service_left_table", "scenario.group_1",
+        "exit.left_upper",
     },
-    "small_underground_casino:back_room": {"exit.left_2"},
+    "small_underground_casino:back_room": {
+        "scenario.surface_item_1", "exit.left_2",
+    },
     "kitty_cat_lounge": {
         "fixed.item_shop_3", "exit.door_right_middle",
         "exit.door_right_upper", "exit.right_lower",
@@ -85,7 +94,8 @@ RETIRED_UNUSED_SLOT_IDS: dict[str, set[str]] = {
         "exit.door_left_middle", "exit.left_lower", "exit.right_upper",
     },
     "beach": {
-        "fixed.door_left_lower", "exit.door_right_lower", "exit.left_upper",
+        "fixed.door_left_lower", "scenario.behind_counter_person_2",
+        "exit.door_right_lower", "exit.left_upper",
     },
     "pawn_shop": {
         "fixed.item_shop_7", "fixed.item_shop_8",
@@ -97,14 +107,21 @@ RETIRED_UNUSED_SLOT_IDS: dict[str, set[str]] = {
     },
     "grand_casino_high_limit": {"exit.safe_right"},
     "grand_casino_back_room": {"exit.safe_left", "exit.safe_right"},
-    "grand_casino_cage": {"exit.safe_left", "exit.safe_left_lower"},
+    "grand_casino_cage": {
+        "scenario.surface_item_1", "exit.safe_left", "exit.safe_left_lower",
+    },
     "motel_room": {
-        "fixed.home_notice", "exit.travel_door", "exit.right_door",
+        "fixed.home_notice", "scenario.surface_item_1",
+        "exit.travel_door", "exit.right_door",
     },
     "apartment": {
-        "fixed.home_notice", "exit.travel_door", "exit.right_door",
+        "fixed.home_notice", "scenario.surface_item_1",
+        "exit.travel_door", "exit.right_door",
     },
-    "house": {"fixed.home_notice", "exit.left_door", "exit.right_door"},
+    "house": {
+        "fixed.home_notice", "scenario.surface_item_1",
+        "exit.left_door", "exit.right_door",
+    },
 }
 
 # The runtime now emits one physical `travel:leave` row plus only genuine
@@ -246,6 +263,14 @@ CANONICAL_EXIT_AUTHORITY: dict[str, dict[str, dict[str, str]]] = {
 # Exact scenario layouts clone this geometry and can then be repositioned
 # independently through the in-game tool.
 REVIEWED_SLOT_GEOMETRY: dict[str, dict[str, dict[str, Any]]] = {
+    "corner_store": {
+        "scenario.wall_item_2": {
+            "pos": [486.0, 62.0],
+            "hit_rect": [446.0, 38.0, 80.0, 48.0],
+            "label_anchor": [486.0, 94.0],
+            "support_id": "wall",
+        },
+    },
     "motel": {
         "fixed.item_shop_4": {
             "pos": [298.0, 100.0],
@@ -341,30 +366,30 @@ PULL_TABS_HOST_ACTION_IDS = (
 # Reviewed maximum banks.  Active/aftermath replay is combined with source-add
 # producers, delivery contact/package/hold state, recruitment actors, the Crew
 # live table, and one injected-person reserve.  The result replaces the old
-# 270-row catch-all scenario bank with 222 deliberate positions across all 21
+# 270-row catch-all scenario bank with 213 deliberate positions across all 21
 # maps without treating producers outside the snapshot replay as exclusive.
 SCENARIO_CAPACITY_TARGETS: dict[str, dict[str, int]] = {
-    "corner_store": {"standing_person": 4, "doorway": 1, "wall_mounted": 3, "floor_fixture": 2, "surface_item": 1, "behind_counter_person": 1},
+    "corner_store": {"standing_person": 4, "doorway": 1, "wall_mounted": 2, "floor_fixture": 2, "surface_item": 1, "behind_counter_person": 1},
     "back_alley": {"standing_person": 4, "doorway": 1, "wall_mounted": 1, "floor_fixture": 3, "surface_item": 2, "ground_marker": 1},
     "motel": {"standing_person": 4, "behind_counter_person": 1, "floor_fixture": 3, "wall_mounted": 2, "doorway": 3, "hanging": 1, "surface_item": 1},
     "bar": {"floor_fixture": 4, "doorway": 1, "standing_person": 4, "surface_item": 2, "behind_counter_person": 2, "wall_mounted": 2, "seated_person": 2, "ground_marker": 1},
-    "gas_station_casino": {"wall_mounted": 3, "standing_person": 5, "doorway": 3, "surface_item": 1, "ground_marker": 1, "behind_counter_person": 2, "floor_fixture": 2, "group": 2},
+    "gas_station_casino": {"wall_mounted": 3, "standing_person": 5, "doorway": 3, "surface_item": 1, "ground_marker": 1, "behind_counter_person": 1, "floor_fixture": 2, "group": 2},
     "small_underground_casino": {"doorway": 1, "surface_item": 1, "floor_fixture": 1, "standing_person": 1, "wall_mounted": 1},
     "small_underground_casino:club": {"floor_fixture": 3, "standing_person": 4, "doorway": 2, "surface_item": 2, "group": 1, "ground_marker": 1, "wall_mounted": 1},
-    "small_underground_casino:casino": {"floor_fixture": 3, "standing_person": 3, "doorway": 2, "seated_person": 1, "wall_mounted": 3, "surface_item": 1, "group": 1, "ground_marker": 1},
-    "small_underground_casino:back_room": {"surface_item": 1, "floor_fixture": 1, "standing_person": 1, "wall_mounted": 1},
+    "small_underground_casino:casino": {"floor_fixture": 3, "standing_person": 3, "doorway": 2, "seated_person": 1, "wall_mounted": 3, "surface_item": 1, "ground_marker": 1},
+    "small_underground_casino:back_room": {"floor_fixture": 1, "standing_person": 1, "wall_mounted": 1},
     "jazz_club": {"standing_person": 3, "floor_fixture": 3, "doorway": 1, "wall_mounted": 2, "surface_item": 1, "seated_person": 1, "ground_marker": 1},
     "kitty_cat_lounge": {"standing_person": 3, "surface_item": 1, "floor_fixture": 3, "doorway": 2, "wall_mounted": 3, "seated_person": 1, "ground_marker": 1},
     "delta_queen": {"standing_person": 3, "floor_fixture": 3, "behind_counter_person": 1, "doorway": 1, "wall_mounted": 4, "group": 1, "surface_item": 2, "ground_marker": 1},
-    "beach": {"floor_fixture": 4, "standing_person": 5, "doorway": 1, "surface_item": 2, "wall_mounted": 2, "behind_counter_person": 2, "ground_marker": 1},
+    "beach": {"floor_fixture": 4, "standing_person": 5, "doorway": 1, "surface_item": 2, "wall_mounted": 2, "behind_counter_person": 1, "ground_marker": 1},
     "pawn_shop": {"standing_person": 2, "doorway": 1, "wall_mounted": 2, "floor_fixture": 2, "surface_item": 2, "shop_item": 2},
     "grand_casino": {"surface_item": 1, "standing_person": 3, "doorway": 1, "wall_mounted": 3, "group": 1, "floor_fixture": 3, "ground_marker": 1},
     "grand_casino_high_limit": {"wall_mounted": 1, "floor_fixture": 2, "standing_person": 1},
     "grand_casino_back_room": {"floor_fixture": 2, "standing_person": 1, "wall_mounted": 1},
-    "grand_casino_cage": {"surface_item": 1, "floor_fixture": 2, "standing_person": 1, "wall_mounted": 1},
-    "motel_room": {"floor_fixture": 1, "standing_person": 1, "surface_item": 1, "wall_mounted": 1},
-    "apartment": {"floor_fixture": 1, "standing_person": 1, "surface_item": 1, "wall_mounted": 1},
-    "house": {"floor_fixture": 1, "standing_person": 1, "surface_item": 1, "wall_mounted": 1},
+    "grand_casino_cage": {"floor_fixture": 2, "standing_person": 1, "wall_mounted": 1},
+    "motel_room": {"floor_fixture": 1, "standing_person": 1, "wall_mounted": 1},
+    "apartment": {"floor_fixture": 1, "standing_person": 1, "wall_mounted": 1},
+    "house": {"floor_fixture": 1, "standing_person": 1, "wall_mounted": 1},
 }
 
 # Event rows are independent of the selected scenario.  These reviewed banks
@@ -374,7 +399,7 @@ SCENARIO_CAPACITY_TARGETS: dict[str, dict[str, int]] = {
 EVENT_CAPACITY_TARGETS: dict[str, dict[str, int]] = {
     "corner_store": {"behind_counter_person": 2, "floor_fixture": 1, "group": 1, "standing_person": 1, "ground_marker": 1},
     "back_alley": {"behind_counter_person": 1, "ground_marker": 1, "floor_fixture": 1, "standing_person": 6},
-    "motel": {"behind_counter_person": 1, "surface_item": 3, "ground_marker": 1, "standing_person": 4, "doorway": 1},
+    "motel": {"behind_counter_person": 1, "surface_item": 1, "ground_marker": 1, "standing_person": 4, "doorway": 1},
     "bar": {"behind_counter_person": 1, "floor_fixture": 2, "standing_person": 5, "doorway": 1},
     "gas_station_casino": {"doorway": 2, "floor_fixture": 2, "surface_item": 1, "ground_marker": 1, "standing_person": 5},
     "small_underground_casino": {"floor_fixture": 2, "standing_person": 8, "wall_mounted": 1, "surface_item": 3, "doorway": 1},
@@ -383,8 +408,8 @@ EVENT_CAPACITY_TARGETS: dict[str, dict[str, int]] = {
     "small_underground_casino:back_room": {"surface_item": 4, "floor_fixture": 1, "doorway": 1, "standing_person": 6},
     "jazz_club": {"floor_fixture": 1, "standing_person": 3},
     "kitty_cat_lounge": {"floor_fixture": 1, "seated_person": 1, "doorway": 1, "standing_person": 6},
-    "delta_queen": {"seated_person": 1, "doorway": 1, "behind_counter_person": 1, "floor_fixture": 2, "wall_mounted": 1, "surface_item": 1, "standing_person": 6},
-    "beach": {},
+    "delta_queen": {"seated_person": 1, "doorway": 1, "behind_counter_person": 1, "floor_fixture": 2, "standing_person": 6},
+    "beach": {"standing_person": 1},
     "pawn_shop": {"floor_fixture": 1, "standing_person": 3, "shop_item": 1, "surface_item": 1},
     "grand_casino": {"behind_counter_person": 2, "wall_mounted": 1, "floor_fixture": 1, "standing_person": 7},
     "grand_casino_high_limit": {"floor_fixture": 1, "standing_person": 6},
@@ -792,7 +817,14 @@ def guaranteed_host_objects() -> dict[str, list[dict[str, Any]]]:
 
     return {
         "corner_store": [
-            host("corner_store:shopkeeper", "shopkeeper:merchant", "fixed_host_mara", "Mara", "fixed.staff_shopkeeper"),
+            host(
+                "corner_store:shopkeeper",
+                "shopkeeper:merchant",
+                "fixed_host_mara",
+                "Mara",
+                "fixed.staff_shopkeeper",
+                action_ids=("service:cashier_tip",),
+            ),
             {
                 "object_id": "corner_store:phone",
                 "presentation_id": "event:call_brother_in_law",
@@ -803,7 +835,7 @@ def guaranteed_host_objects() -> dict[str, list[dict[str, Any]]]:
                 "placement_class": "surface_item",
                 "exact_slot_id": "fixed.phone",
                 "required": True,
-                "action_ids": ["service:cashier_tip", "event:call_brother_in_law"],
+                "action_ids": ["event:call_brother_in_law"],
             },
         ],
         "back_alley": [
@@ -849,7 +881,19 @@ def guaranteed_host_objects() -> dict[str, list[dict[str, Any]]]:
             host("punchline:casino_bouncer", "character:ox", "fixed_host_ox", "Ox", "fixed.staff_floor_right", "standing_person"),
         ],
         "pawn_shop": [
-            host("pawn_shop:sal", "staff:pawn_counter_sal", "fixed_host_sal", "Sal", "fixed.staff_pawn_counter"),
+            host(
+                "pawn_shop:sal",
+                "staff:pawn_counter_sal",
+                "fixed_host_sal",
+                "Sal",
+                "fixed.staff_pawn_counter",
+                action_ids=(
+                    "shopkeeper:merchant",
+                    "lender:sals_pawn_counter",
+                    "meta_pawn_counter:sell",
+                    "meta_sal:talk",
+                ),
+            ),
         ],
         "grand_casino": [
             host(
@@ -865,6 +909,60 @@ def guaranteed_host_objects() -> dict[str, list[dict[str, Any]]]:
             host("grand_casino_cage:linda", "staff:grand_casino_linda", "fixed_host_linda", "Linda", "fixed.staff_linda", "behind_counter_person"),
         ],
     }
+
+
+def _normalize_guaranteed_host_declarations(
+    maps: dict[str, dict[str, Any]],
+) -> None:
+    """Refresh fixed host/action declarations for legacy or canonical slots."""
+
+    canonical_host_slot_ids = {
+        ("delta_queen", "fixed.staff_floor"): "fixed.staff_ox",
+        ("small_underground_casino:club", "fixed.staff_floor_right"): "fixed.staff_ox",
+        ("small_underground_casino:casino", "fixed.staff_floor_right"): "fixed.staff_ox",
+    }
+    for map_id, declarations in guaranteed_host_objects().items():
+        map_data = maps[map_id]
+        existing = {
+            str(value.get("object_id", "")): value
+            for value in map_data.get("fixed_objects", [])
+            if isinstance(value, dict)
+        }
+        for source_declaration in declarations:
+            declaration = copy.deepcopy(source_declaration)
+            source_slot_id = str(declaration["exact_slot_id"])
+            canonical_slot_id = canonical_host_slot_ids.get(
+                (map_id, source_slot_id), source_slot_id
+            )
+            if _slot_by_id(map_data, canonical_slot_id) is not None:
+                declaration["exact_slot_id"] = canonical_slot_id
+            object_id = str(declaration["object_id"])
+            if object_id in existing:
+                existing[object_id].clear()
+                existing[object_id].update(declaration)
+            else:
+                map_data.setdefault("fixed_objects", []).append(declaration)
+            presentation_id = str(declaration["presentation_id"])
+            exact_slot_id = str(declaration["exact_slot_id"])
+            map_data.setdefault("fixed_object_slot_ids", {})[presentation_id] = exact_slot_id
+            map_data.setdefault("object_family_ids", {})[presentation_id] = "fixed"
+
+    # The cashier-tip action belongs to the guaranteed shopkeeper. Keep it on
+    # Mara rather than projecting a second fixture or attaching it to the phone.
+    _assign_object_slot(
+        maps["corner_store"],
+        "fixed",
+        "service:cashier_tip",
+        "fixed.staff_shopkeeper",
+    )
+
+    # Town rumor dialogue comes from the guaranteed Grand Casino floor host.
+    # Keep the conditional action in event_ids, but do not mint a second staff
+    # person or reserve event-family counter capacity for it.
+    grand = maps["grand_casino"]
+    rumor_action_id = "event:town_rumor_staff"
+    _remove_object_slot_assignment(grand, rumor_action_id)
+    grand.setdefault("object_family_ids", {})[rumor_action_id] = "fixed"
 
 
 def add_jazz_slots(map_data: dict[str, Any]) -> None:
@@ -1622,42 +1720,7 @@ def _normalize_guaranteed_hosts(maps: dict[str, dict[str, Any]]) -> None:
         80.0,
     )
 
-    declarations_by_map = guaranteed_host_objects()
-    for map_id, declarations in declarations_by_map.items():
-        map_data = maps[map_id]
-        existing = {
-            str(value.get("object_id", "")): value
-            for value in map_data.get("fixed_objects", [])
-            if isinstance(value, dict)
-        }
-        for declaration in declarations:
-            object_id = str(declaration["object_id"])
-            if object_id in existing:
-                existing[object_id].clear()
-                existing[object_id].update(copy.deepcopy(declaration))
-            else:
-                map_data.setdefault("fixed_objects", []).append(copy.deepcopy(declaration))
-            presentation_id = str(declaration["presentation_id"])
-            exact_slot_id = str(declaration["exact_slot_id"])
-            map_data.setdefault("fixed_object_slot_ids", {})[presentation_id] = exact_slot_id
-            map_data.setdefault("object_family_ids", {})[presentation_id] = "fixed"
-
-    # The cashier-tip action is intentionally hosted by the guaranteed store
-    # phone object rather than projected as a second physical fixture.
-    _assign_object_slot(
-        maps["corner_store"],
-        "fixed",
-        "service:cashier_tip",
-        "fixed.phone",
-    )
-
-    # Town rumor dialogue comes from the guaranteed Grand Casino floor host.
-    # Keep the conditional action in event_ids, but do not mint a second staff
-    # person or reserve event-family counter capacity for it.
-    grand = maps["grand_casino"]
-    rumor_action_id = "event:town_rumor_staff"
-    _remove_object_slot_assignment(grand, rumor_action_id)
-    grand.setdefault("object_family_ids", {})[rumor_action_id] = "fixed"
+    _normalize_guaranteed_host_declarations(maps)
 
 
 def _normalize_mixed_family_spacing(maps: dict[str, dict[str, Any]]) -> None:
@@ -2208,6 +2271,7 @@ def _normalize_public_event_capacity(maps: dict[str, dict[str, Any]]) -> None:
         "jazz_club": 3,
         "kitty_cat_lounge": 6,
         "delta_queen": 6,
+        "beach": 1,
         "pawn_shop": 3,
     }
     standing_positions = {
@@ -2215,6 +2279,7 @@ def _normalize_public_event_capacity(maps: dict[str, dict[str, Any]]) -> None:
         "jazz_club": [(746.0, 366.0), (810.0, 350.0), (236.0, 258.0)],
         "kitty_cat_lounge": [(704.0, 294.0), (450.0, 278.0), (78.0, 254.0), (78.0, 172.0), (244.0, 170.0), (450.0, 148.0)],
         "delta_queen": [(400.0, 282.0), (686.0, 278.0), (750.0, 278.0), (532.0, 258.0), (322.0, 246.0), (258.0, 246.0)],
+        "beach": [(788.0, 406.0)],
         "pawn_shop": [(392.0, 414.0), (528.0, 414.0), (592.0, 414.0)],
     }
     for map_id, count in standing_capacity.items():
@@ -2225,6 +2290,7 @@ def _normalize_public_event_capacity(maps: dict[str, dict[str, Any]]) -> None:
             "fixed.patron_floor_right",
             "fixed.staff_floor",
             "fixed.door_left_lower",
+            "fixed.service_beach_sand_pile",
         )
         for ordinal in range(1, count + 1):
             slot_id = f"event.floor_patron_{ordinal}"
@@ -2243,9 +2309,15 @@ def _normalize_public_event_capacity(maps: dict[str, dict[str, Any]]) -> None:
                 standing_positions[map_id][ordinal - 1],
                 "standing_person",
                 "floor",
-                64.0,
-                82.0,
+                72.0 if map_id == "beach" else 64.0,
+                80.0 if map_id == "beach" else 82.0,
             )
+            if map_id == "beach":
+                slot["facing"] = "right"
+                slot["physical_role"] = "Delivery handoff contact"
+                slot["zone_id"] = "foreground"
+                slot["walk_lane_ids"] = ["lane.public"]
+                slot["priority"] = 10
 
     motel = maps["motel"]
     _ensure_provisional_slot(
@@ -2712,6 +2784,7 @@ def _normalize_descriptive_fixed_ids(maps: dict[str, dict[str, Any]]) -> None:
         "back_alley": {
             "fixed.door_left_upper": "fixed.lender_street_lender",
             "fixed.patron_crew": "fixed.crew_group",
+            "fixed.event_wall_notice": "fixed.home_upgrade",
         },
         "pawn_shop": {
             "fixed.door_left_lower": "fixed.lender_sals_pawn_counter",
@@ -2735,9 +2808,38 @@ def _normalize_descriptive_fixed_ids(maps: dict[str, dict[str, Any]]) -> None:
         "small_underground_casino:casino": {
             "fixed.staff_floor_right": "fixed.staff_ox",
         },
+        "grand_casino_cage": {
+            "fixed.fixture_cage_1": "fixed.fixture_cage_counter",
+            "fixed.fixture_cage_2": "fixed.fixture_cage_atm",
+        },
     }
     for map_id, map_renames in renames.items():
         for source_slot_id, target_slot_id in map_renames.items():
+            if (
+                map_id == "pawn_shop"
+                and source_slot_id == "fixed.door_left_lower"
+                and _slot_by_id(maps[map_id], source_slot_id) is None
+                and _slot_by_id(maps[map_id], "fixed.staff_pawn_counter") is not None
+            ):
+                # Sal's reviewed single-host consolidation has already replaced
+                # both legacy lender/merchant positions with the named counter.
+                continue
+            if (
+                map_id == "back_alley"
+                and source_slot_id == "fixed.event_wall_notice"
+                and _slot_by_id(maps[map_id], source_slot_id) is None
+            ):
+                # A short-lived consolidated authority retired this live Meta
+                # Home row. The capacity normalizer below recreates the named
+                # target when neither legacy nor canonical row is present.
+                continue
+            if (
+                _slot_by_id(maps[map_id], source_slot_id) is None
+                and _slot_by_id(maps[map_id], target_slot_id) is not None
+            ):
+                # The reviewed-v2 refresh is idempotent: a canonical target may
+                # already exist even though its legacy descriptive id does not.
+                continue
             if (
                 map_id == "kitty_cat_lounge"
                 and source_slot_id == "fixed.random_game_1"
@@ -2751,13 +2853,129 @@ def _normalize_descriptive_fixed_ids(maps: dict[str, dict[str, Any]]) -> None:
                 maps[map_id], source_slot_id, target_slot_id
             )
 
-    # The raw Punchline parent is a source template, but keeping its deterministic
-    # reviewed order makes fresh legacy conversion byte-identical to maintenance
-    # refreshes and keeps human diffs readable.
+def _normalize_back_alley_meta_home_capacity(
+    maps: dict[str, dict[str, Any]],
+) -> None:
+    """Restore the physical controls used when Back Alley is the Meta Home."""
+
+    back_alley = maps["back_alley"]
+    container_positions = ((124.0, 358.0), (620.0, 358.0), (730.0, 358.0))
+    for ordinal, position in enumerate(container_positions, start=1):
+        slot_id = f"fixed.home_container_{ordinal}"
+        _ensure_provisional_slot(
+            back_alley,
+            "fixed",
+            slot_id,
+            "floor_fixture",
+            ("fixed.service_house_drink", "fixed.item_shop_1"),
+        )
+        slot = _slot_by_id(back_alley, slot_id)
+        if slot is None:
+            raise ValueError(f"back_alley: missing Meta Home container slot {slot_id}")
+        _set_person_slot_geometry(
+            slot,
+            position,
+            "floor_fixture",
+            "floor",
+            92.0,
+            64.0,
+        )
+        slot["physical_role"] = f"Meta Home container {ordinal}"
+        slot["priority"] = 10 + ordinal * 5
+        slot["zone_id"] = ("left", "center", "right")[ordinal - 1]
+        _move_category_preference(
+            back_alley,
+            "fixed",
+            f"home_container_spots:{ordinal - 1}",
+            slot_id,
+        )
+
+    _ensure_provisional_slot(
+        back_alley,
+        "fixed",
+        "fixed.home_upgrade",
+        "wall_mounted",
+        ("fixed.item_shop_1", "fixed.service_house_drink"),
+    )
+    upgrade = _slot_by_id(back_alley, "fixed.home_upgrade")
+    if upgrade is None:
+        raise ValueError("back_alley: missing Meta Home upgrade slot")
+    _set_person_slot_geometry(
+        upgrade,
+        (650.0, 120.0),
+        "wall_mounted",
+        "wall",
+        80.0,
+        48.0,
+    )
+    upgrade["physical_role"] = "Meta Home upgrade sign"
+    upgrade["priority"] = 10
+    upgrade["zone_id"] = "right"
+    _assign_object_slot(
+        back_alley,
+        "fixed",
+        "meta_upgrade:home",
+        "fixed.home_upgrade",
+    )
+    _move_category_preference(
+        back_alley,
+        "fixed",
+        "home_upgrade_spots:0",
+        "fixed.home_upgrade",
+    )
+
+    # A fresh legacy conversion retains these rows in their historical
+    # positions, while a reviewed-v2 recovery appends them. Give both paths one
+    # canonical order because slot order is deterministic fallback authority.
+    meta_slot_ids = tuple(
+        [f"fixed.home_container_{ordinal}" for ordinal in range(1, 4)]
+        + ["fixed.home_upgrade"]
+    )
+    fixed_slots = [
+        slot
+        for slot in back_alley.get("fixed_slots", []) or []
+        if isinstance(slot, dict)
+    ]
+    fixed_by_id = {str(slot.get("id", "")): slot for slot in fixed_slots}
+    back_alley["fixed_slots"] = [
+        slot for slot in fixed_slots if str(slot.get("id", "")) not in meta_slot_ids
+    ] + [fixed_by_id[slot_id] for slot_id in meta_slot_ids]
+
+    # Knuckles is a standing scenario actor. Bar seating heuristics are valid
+    # for ordinary patrons but must not change this named recruitment contact.
+    bar_fight = maps["bar"].setdefault("scenario_overrides", {}).setdefault(
+        "bar_fight_night", {}
+    )
+    bar_fight.setdefault("class_overrides", {})[
+        "event:recruitment_knuckles"
+    ] = "standing_person"
+
+
+def _normalize_scenario_instance_classes(
+    maps: dict[str, dict[str, Any]],
+) -> None:
+    """Keep one stable physical footprint when a scene object's state changes."""
+
+    for map_id, stable_id, placement_class in (
+        ("pawn_shop", "private_appraisal", "surface_item"),
+        (
+            "small_underground_casino:club",
+            "punchline_raid_jitters_clear_bins",
+            "floor_fixture",
+        ),
+    ):
+        maps[map_id].setdefault("class_overrides", {})[
+            stable_id
+        ] = placement_class
+
+    # The raw Punchline parent is a source template, but keeping its live fixed
+    # rows in deterministic reviewed order makes fresh legacy conversion
+    # byte-identical to maintenance refreshes and keeps human diffs readable.
+    # fixed.staff_floor_left is only a geometry donor earlier in a fresh legacy
+    # conversion and is retired after its live derivatives have been authored.
     punchline = maps["small_underground_casino"]
     punchline_order = {
-        "fixed.staff_floor_left": 0,
-        "fixed.door_right_lower": 1,
+        "fixed.door_right_lower": 0,
     }
     punchline["fixed_slots"] = sorted(
         punchline.get("fixed_slots", []) or [],
@@ -2937,7 +3155,7 @@ def _normalize_fixed_game_authority(maps: dict[str, dict[str, Any]]) -> None:
     # These ordinal service routes are action-only or empty in production.
     # Their actions already attach to tangible staff/musician hosts, so keeping
     # the aliases would misleadingly advertise extra physical service objects.
-    for map_id in ("back_alley", "pawn_shop", "jazz_club"):
+    for map_id in ("back_alley", "corner_store", "pawn_shop", "jazz_club"):
         categories = maps[map_id].setdefault("fixed_category_slot_ids", {})
         for category_id in list(categories):
             if str(category_id).startswith("service_spots:"):
@@ -2954,10 +3172,36 @@ def _retire_unreachable_slots(maps: dict[str, dict[str, Any]]) -> None:
         )
     for map_id, retired_ids in RETIRED_UNUSED_SLOT_IDS.items():
         map_data = maps[map_id]
+        removable_ids: set[str] = set()
         for slot_id in retired_ids:
             slot = _slot_by_id(map_data, slot_id)
             if slot is None:
                 continue
+            slot_kind = str(slot.get("kind", ""))
+            if slot_kind == "scenario":
+                placement_class = str(slot.get("footprint_class", ""))
+                class_count = sum(
+                    1
+                    for candidate in map_data.get("scenario_slots", []) or []
+                    if isinstance(candidate, dict)
+                    and str(candidate.get("footprint_class", ""))
+                    == placement_class
+                )
+                target_count = int(
+                    SCENARIO_CAPACITY_TARGETS[map_id].get(placement_class, 0)
+                )
+                if (
+                    class_count <= target_count
+                    and (
+                        bool(list(slot.get("occupant_ids", []) or []))
+                        or bool(slot.get("occupancy_required", False))
+                        or bool(slot.get("runtime_reserve", False))
+                    )
+                ):
+                    # Scenario ids are compact ordinals. After a reviewed row
+                    # is removed, a retained live/reserve row can inherit the
+                    # same spelling; do not retire that survivor on refresh.
+                    continue
             # Legacy exit rows can still carry obsolete world-map destination
             # labels even though production no longer creates those physical
             # objects. CANONICAL_EXIT_AUTHORITY above is the closed proof for
@@ -2991,6 +3235,7 @@ def _retire_unreachable_slots(maps: dict[str, dict[str, Any]]) -> None:
                 raise ValueError(
                     f"{map_id}: refusing to retire declared fixed slot {slot_id}"
                 )
+            removable_ids.add(slot_id)
 
         for family in FAMILIES:
             field = f"{family}_slots"
@@ -2998,21 +3243,21 @@ def _retire_unreachable_slots(maps: dict[str, dict[str, Any]]) -> None:
                 slot
                 for slot in map_data.get(field, []) or []
                 if not isinstance(slot, dict)
-                or str(slot.get("id", "")) not in retired_ids
+                or str(slot.get("id", "")) not in removable_ids
             ]
             category_preferences = map_data.get(
                 f"{family}_category_slot_ids", {}
             )
             if isinstance(category_preferences, dict):
                 for claimant, slot_id in list(category_preferences.items()):
-                    if str(slot_id) in retired_ids:
+                    if str(slot_id) in removable_ids:
                         category_preferences.pop(claimant, None)
 
         semantic_preferences = map_data.get("scenario_slot_ids", {})
         if isinstance(semantic_preferences, dict):
             for claimant, slot_id in list(semantic_preferences.items()):
-                if str(slot_id) in retired_ids:
-                        semantic_preferences.pop(claimant, None)
+                if str(slot_id) in removable_ids:
+                    semantic_preferences.pop(claimant, None)
 
 
 def _normalize_exit_authority(maps: dict[str, dict[str, Any]]) -> None:
@@ -3687,8 +3932,18 @@ def _physical_role(slot: dict[str, Any], declaration_label: str = "") -> str:
         return "Performance stage"
     if ".item_shop_" in slot_id:
         return "Shop item"
-    if "game" in slot_id:
-        return "Game fixture"
+    if slot_id.startswith("fixed.home_container_"):
+        return f"Home container {slot_id.rsplit('_', 1)[-1]}"
+    if slot_id.startswith("fixed.home_item_"):
+        return f"Home item {slot_id.rsplit('_', 1)[-1]}"
+    if slot_id.startswith("fixed.random_game_"):
+        return "Random game"
+    if slot_id.startswith("fixed.game_machine_"):
+        return "Random game machine"
+    if slot_id.startswith(("fixed.game_table_", "fixed.game_floor_")):
+        return "Random game table"
+    if slot_id.startswith(("fixed.machine_game_", "fixed.table_game_")):
+        return "Random game fixture"
     if slot_id == "exit.motel_room":
         return "Owned motel-room entrance"
     if slot_id.startswith("exit."):
@@ -3700,8 +3955,46 @@ def _physical_role(slot: dict[str, Any], declaration_label: str = "") -> str:
         "fixed.lender_street_lender": "Street lender",
         "fixed.lender_motel_friend": "Motel friend lender",
         "fixed.lender_person_1": "Individual lender",
+        "fixed.lender_group_1": "Lender group",
+        "fixed.lender_sals_pawn_counter": "Sal's lender counter",
         "fixed.staff_street_lender": "Street lender",
+        "fixed.staff_merchant": "Merchant",
+        "fixed.patron_bishop": "Bishop",
+        "fixed.item_counter_phone": "Counter phone",
+        "fixed.numbers_book": "Numbers book",
+        "fixed.service_house_drink": "House drink service",
+        "fixed.service_two_drink_minimum": "Two-drink minimum service",
+        "fixed.service_stage": "Two-drink minimum service",
+        "fixed.service_stage_left": "Two-drink minimum service",
+        "fixed.service_kitty_champagne": "Champagne service",
         "fixed.service_deck_walk": "Riverboat deck walk",
+        "fixed.service_beach_sand_pile": "Beach sand pile",
+        "fixed.game_coin_pusher": "Coin pusher",
+        "fixed.game_scratch_tickets": "Scratch ticket display",
+        "fixed.game_video_poker": "Video poker machine",
+        "fixed.game_slot": "Slot machine",
+        "fixed.game_blackjack": "Blackjack table",
+        "fixed.game_roulette": "Roulette table",
+        "fixed.game_crew_draw_poker": "Crew draw-poker table",
+        "fixed.door_right_lower": "Side door",
+        "fixed.door_side_event": "Side door",
+        "fixed.ambient_stage": "Comedy-club stage",
+        "fixed.ambient_rook": "Rook",
+        "fixed.event_planning_table": "Crew planning table",
+        "fixed.event_numbers_desk": "Numbers desk",
+        "fixed.event_job_board": "Crew job board",
+        "fixed.event_mags_bench": "Mags' bench",
+        "fixed.event_practice_rig": "Crew practice rig",
+        "fixed.event_rook_ride": "Rook's ride",
+        "fixed.event_grand_casino_invite": "Grand Casino invitation",
+        "fixed.fixture_host_desk": "Casino host desk",
+        "fixed.fixture_cage_counter": "Cashier cage counter",
+        "fixed.fixture_cage_atm": "Cage ATM",
+        "fixed.home_trade_up": "Home trade-up station",
+        "fixed.home_tenure": "Home tenure status",
+        "fixed.home_sleep": "Bed and sleep control",
+        "fixed.home_upgrade": "Home upgrade board",
+        "fixed.home_storage": "Home storage",
     }
     if slot_id in semantic_roles:
         return semantic_roles[slot_id]
@@ -3976,6 +4269,130 @@ def _normalize_reusable_slot_ids(payload: dict[str, Any]) -> None:
                     route[field] = scenario_mapping[old_slot_id]
 
 
+def _remove_slot_rows_and_references(
+    map_data: dict[str, Any], slot_ids: set[str]
+) -> None:
+    """Retire reviewed rows after their live claimants have been rehomed."""
+
+    for family in FAMILIES:
+        slot_field = f"{family}_slots"
+        map_data[slot_field] = [
+            slot
+            for slot in map_data.get(slot_field, []) or []
+            if not isinstance(slot, dict)
+            or str(slot.get("id", "")) not in slot_ids
+        ]
+        for suffix in ("object_slot_ids", "category_slot_ids"):
+            preferences = map_data.get(f"{family}_{suffix}", {})
+            if not isinstance(preferences, dict):
+                continue
+            for claimant, slot_id in list(preferences.items()):
+                if str(slot_id) in slot_ids:
+                    preferences.pop(claimant, None)
+
+    scenario_preferences = map_data.get("scenario_slot_ids", {})
+    if isinstance(scenario_preferences, dict):
+        for claimant, slot_id in list(scenario_preferences.items()):
+            if str(slot_id) in slot_ids:
+                scenario_preferences.pop(claimant, None)
+
+
+def _normalize_reviewed_shared_authority(
+    maps: dict[str, dict[str, Any]],
+) -> None:
+    """Apply the final shared-slot audit findings in canonical slot names."""
+
+    motel = maps["motel"]
+    motel_positions = motel.setdefault("object_slot_positions", {})
+    motel_classes = motel.setdefault("class_overrides", {})
+    for object_id in (
+        "event:chain06_dave_same_bus",
+        "event:chain06_dave_last_stop",
+    ):
+        # These are mutually exclusive appearances by the same speaking traveler,
+        # so they share one standing-person event position rather than masquerading
+        # as two independent counter props.
+        _assign_object_slot(
+            motel, "event", object_id, "event.standing_person_1"
+        )
+        motel_classes[object_id] = "standing_person"
+        motel_positions.pop(object_id, None)
+
+    delta = maps["delta_queen"]
+    delta_assignments = {
+        "event:chain06_cass_first_contact": (
+            "event.standing_person_1",
+            "standing_person",
+        ),
+        "event:chain06_dave_same_bus": (
+            "event.standing_person_2",
+            "standing_person",
+        ),
+        "event:rowdy_regular": (
+            "event.seated_person_1",
+            "seated_person",
+        ),
+    }
+    delta_positions = delta.setdefault("object_slot_positions", {})
+    delta_classes = delta.setdefault("class_overrides", {})
+    for object_id, (slot_id, placement_class) in delta_assignments.items():
+        _assign_object_slot(delta, "event", object_id, slot_id)
+        delta_classes[object_id] = placement_class
+        delta_positions.pop(object_id, None)
+    for override in delta.get("scenario_overrides", {}).values():
+        if not isinstance(override, dict):
+            continue
+        class_overrides = override.get("class_overrides", {})
+        if isinstance(class_overrides, dict):
+            class_overrides.pop("event:rowdy_regular", None)
+        object_positions = override.get("object_slot_positions", {})
+        if isinstance(object_positions, dict):
+            object_positions.pop("event:rowdy_regular", None)
+
+    # World travel is a doorway in both rooms. The old surface/person classes
+    # made the manual editor describe the destination as the wrong kind of thing.
+    exit_repairs = {
+        "motel": (
+            "exit.door_curtain",
+            "curtain_passage",
+        ),
+        "bar": (
+            "exit.travel_right",
+            "right_exit",
+        ),
+    }
+    for map_id, (slot_id, support_id) in exit_repairs.items():
+        slot = _slot_by_id(maps[map_id], slot_id)
+        if slot is None:
+            raise ValueError(f"{map_id}: missing reviewed travel exit {slot_id}")
+        slot["footprint_class"] = "doorway"
+        slot["physical_role"] = "Travel doorway"
+        slot["support_id"] = support_id
+        slot["facing"] = "front"
+        slot["walk_lane_ids"] = ["lane.public"]
+
+    pawn = maps["pawn_shop"]
+    pawn_action_ids = (
+        "shopkeeper:merchant",
+        "lender:sals_pawn_counter",
+        "meta_pawn_counter:sell",
+        "meta_sal:talk",
+    )
+    _attach_actions_to_fixed_host(pawn, "pawn_shop:sal", pawn_action_ids)
+    duplicate_pawn_slots = {
+        "fixed.staff_merchant",
+        "fixed.lender_sals_pawn_counter",
+    }
+    _remove_slot_rows_and_references(pawn, duplicate_pawn_slots)
+    fixed_categories = pawn.get("fixed_category_slot_ids", {})
+    if isinstance(fixed_categories, dict):
+        for category_id in list(fixed_categories):
+            if str(category_id).startswith(
+                ("shopkeeper_spots:", "lender_spots:", "pawn_counter_spots:")
+            ):
+                fixed_categories.pop(category_id, None)
+
+
 def _normalize_slot_field_order(payload: dict[str, Any]) -> None:
     order = (
         "id", "kind", "pos", "footprint_class", "physical_role",
@@ -4024,14 +4441,76 @@ def _apply_slot_consolidation(payload: dict[str, Any]) -> None:
     }
     _retire_pull_tabs_standalone_rows(maps)
     _normalize_descriptive_fixed_ids(maps)
+    _normalize_back_alley_meta_home_capacity(maps)
+    _normalize_scenario_instance_classes(maps)
     _normalize_fixed_game_authority(maps)
     _normalize_exit_authority(maps)
     _retire_unreachable_slots(maps)
+    # Fixed host declarations are authoritative even after the file has
+    # reached canonical reusable-slot form. Reapply only the declarations here;
+    # their legacy geometry provisioning has already been consolidated.
+    _normalize_guaranteed_host_declarations(maps)
+    beach_event_people = [
+        slot
+        for slot in maps["beach"].get("event_slots", []) or []
+        if isinstance(slot, dict)
+        and str(slot.get("footprint_class", "")) == "standing_person"
+    ]
+    if not beach_event_people:
+        # Crew Favor can choose any reachable public venue, including Beach.
+        # Canonical reviewed files therefore need one shared event-person row
+        # even though Beach has no ordinary random-event pool of its own.
+        _ensure_provisional_slot(
+            maps["beach"],
+            "event",
+            "event.standing_person_1",
+            "standing_person",
+            ("fixed.service_beach_sand_pile",),
+        )
+    beach_delivery_slot = next(
+        (
+            slot
+            for slot in maps["beach"].get("event_slots", []) or []
+            if isinstance(slot, dict)
+            and str(slot.get("footprint_class", "")) == "standing_person"
+        ),
+        None,
+    )
+    if beach_delivery_slot is None:
+        raise ValueError("beach: delivery/event person capacity is missing")
+    _set_person_slot_geometry(
+        beach_delivery_slot,
+        (788.0, 406.0),
+        "standing_person",
+        "floor",
+        72.0,
+        80.0,
+    )
+    beach_delivery_slot["facing"] = "right"
+    beach_delivery_slot["physical_role"] = "Delivery handoff contact"
+    beach_delivery_slot["zone_id"] = "foreground"
+    beach_delivery_slot["walk_lane_ids"] = ["lane.public"]
+    beach_delivery_slot["priority"] = 10
     _normalize_event_capacity_consolidation(maps)
     _normalize_scenario_capacity_consolidation(maps)
     _normalize_slot_occupancy_metadata(payload)
     _normalize_slot_authoring_metadata(payload)
     _normalize_reusable_slot_ids(payload)
+    _normalize_reviewed_shared_authority(maps)
+    reviewed_maps = {
+        "maps": [
+            maps[map_id]
+            for map_id in (
+                "motel",
+                "bar",
+                "delta_queen",
+                "pawn_shop",
+                "small_underground_casino",
+            )
+        ]
+    }
+    _normalize_slot_occupancy_metadata(reviewed_maps)
+    _normalize_slot_authoring_metadata(reviewed_maps)
     # Reviewed coordinates are expressed in the canonical reusable IDs. Apply
     # them after a fresh legacy conversion has completed that deterministic
     # rename, while remaining byte-idempotent for already canonical v2 data.
@@ -4734,6 +5213,7 @@ def validate(
     *,
     baseline_objects: dict[str, set[str]] | None = None,
     required_events: dict[str, set[str]] | None = None,
+    reviewed_authority: bool = True,
 ) -> None:
     assert payload.get("slot_schema_version") == 2
     assert payload.get("schema_version") == 3
@@ -4917,7 +5397,7 @@ def validate(
         "kitty_cat_lounge": (("event.doorway_1", "fixed.staff_merchant"),),
         "delta_queen": (("event.doorway_1", "fixed.staff_merchant"),),
         "grand_casino": (("fixed.service_house_drink", "exit.travel_cage"),),
-        "grand_casino_cage": (("fixed.fixture_cage_1", "fixed.staff_linda"),),
+        "grand_casino_cage": (("fixed.fixture_cage_counter", "fixed.staff_linda"),),
     }
     for map_id, slot_pairs in direct_spacing_pairs.items():
         map_data = maps[map_id]
@@ -4932,16 +5412,99 @@ def validate(
 
     for map_id, retired_ids in RETIRED_UNUSED_SLOT_IDS.items():
         map_data = maps[map_id]
+        # Event/scenario ids are canonical ordinals, so a retained later row may
+        # legitimately compact into the same spelling after the named source row
+        # is removed. Fixed/exit ids are stable identities and must disappear.
+        stable_retired_ids = {
+            slot_id
+            for slot_id in retired_ids
+            if slot_id.split(".", 1)[0] in {"fixed", "exit"}
+        }
         remaining_ids = {
             str(slot.get("id", ""))
             for family in FAMILIES
             for slot in map_data.get(f"{family}_slots", []) or []
             if isinstance(slot, dict)
         }
-        assert remaining_ids.isdisjoint(retired_ids), (
+        assert remaining_ids.isdisjoint(stable_retired_ids), (
             f"{map_id} retained unreachable placement rows "
+            f"{sorted(remaining_ids & stable_retired_ids)}"
+        )
+
+    # Focused proof for the rows identified by the final shared-slot census.
+    # The retained Gas Station clerk donor is canonically renumbered to _1, so
+    # distinguish it from the retired empty _1 row by its reviewed support and
+    # claimant instead of relying on the pre-consolidation ordinal spelling.
+    reviewed_absences = {
+        "motel": {"event.surface_item_2", "event.surface_item_3"},
+        "delta_queen": {"event.wall_item_1", "event.surface_item_1"},
+        "small_underground_casino": {"fixed.service_stage_left"},
+        "pawn_shop": {
+            "fixed.staff_merchant",
+            "fixed.lender_sals_pawn_counter",
+        },
+    }
+    for map_id, retired_ids in reviewed_absences.items():
+        remaining_ids = {
+            str(slot.get("id", ""))
+            for family in FAMILIES
+            for slot in maps[map_id].get(f"{family}_slots", []) or []
+            if isinstance(slot, dict)
+        }
+        assert remaining_ids.isdisjoint(retired_ids), (
+            f"{map_id} retained reviewed duplicate/dead rows "
             f"{sorted(remaining_ids & retired_ids)}"
         )
+
+    if reviewed_authority:
+        gas_counter_slots = [
+            slot
+            for slot in maps["gas_station_casino"].get("scenario_slots", []) or []
+            if isinstance(slot, dict)
+            and str(slot.get("footprint_class", "")) == "behind_counter_person"
+        ]
+        assert len(gas_counter_slots) == 1, (
+            "gas_station_casino must retain only the Night Clerk geometry donor"
+        )
+        assert str(gas_counter_slots[0].get("support_id", "")) == "staff_window_left" \
+            and "gas_station_graveyard_shift_night_clerk" in {
+                str(value) for value in gas_counter_slots[0].get("occupant_ids", []) or []
+            }, "gas_station_casino retained the empty pull-tab-window scenario row"
+
+    for map_id, slot_id, support_id in (
+        ("motel", "exit.door_curtain", "curtain_passage"),
+        ("bar", "exit.travel_right", "right_exit"),
+    ):
+        slot = _slot_by_id(maps[map_id], slot_id)
+        assert slot is not None \
+            and slot.get("footprint_class") == "doorway" \
+            and slot.get("support_id") == support_id, (
+                f"{map_id} {slot_id} must be a doorway on {support_id}"
+            )
+
+    pawn = maps["pawn_shop"]
+    sal = _fixed_object_by_id(pawn, "pawn_shop:sal")
+    pawn_actions = {
+        "shopkeeper:merchant",
+        "lender:sals_pawn_counter",
+        "meta_pawn_counter:sell",
+        "meta_sal:talk",
+    }
+    assert sal is not None and pawn_actions.issubset(
+        {str(value) for value in sal.get("action_ids", []) or []}
+    ), "pawn_shop Sal host is missing consolidated shop/lender/sell/talk actions"
+    for action_id in pawn_actions:
+        assert pawn.get("object_family_ids", {}).get(action_id) == "fixed" \
+            and all(
+                action_id not in pawn.get(f"{family}_object_slot_ids", {})
+                for family in FAMILIES
+            ), f"pawn_shop {action_id} retained standalone placement authority"
+    assert not any(
+        str(category_id).startswith(
+            ("shopkeeper_spots:", "lender_spots:", "pawn_counter_spots:")
+        )
+        for category_id in pawn.get("fixed_category_slot_ids", {})
+    ), "pawn_shop retained shadow category aliases for the consolidated Sal host"
 
     motel = maps["motel"]
     assert "lender:brother_in_law" not in motel.get("object_family_ids", {}), "motel phone-only brother-in-law gained a physical family"
@@ -5121,6 +5684,10 @@ def validate(
             "numbers:book": ("fixed", "fixed.numbers_book", "surface_item"),
             "numbers:silas": ("event", "event.standing_person_5", "standing_person"),
         },
+        "motel": {
+            "event:chain06_dave_same_bus": ("event", "event.standing_person_1", "standing_person"),
+            "event:chain06_dave_last_stop": ("event", "event.standing_person_1", "standing_person"),
+        },
         "small_underground_casino": {
             "game:slot": ("fixed", "fixed.game_slot", "floor_fixture"),
             "game:video_poker": ("fixed", "fixed.game_video_poker", "floor_fixture"),
@@ -5163,7 +5730,9 @@ def validate(
             "event:side_door": ("event", "event.doorway_1", "doorway"),
         },
         "delta_queen": {
-            "event:rowdy_regular": ("event", "event.standing_person_1", "standing_person"),
+            "event:chain06_cass_first_contact": ("event", "event.standing_person_1", "standing_person"),
+            "event:chain06_dave_same_bus": ("event", "event.standing_person_2", "standing_person"),
+            "event:rowdy_regular": ("event", "event.seated_person_1", "seated_person"),
         },
         "jazz_club": {
             "numbers:silas": ("event", "event.standing_person_3", "standing_person"),
@@ -5366,9 +5935,6 @@ def validate(
             "lender:street_lender": "fixed.lender_street_lender",
             "lender:the_crew": "fixed.crew_group",
         },
-        "pawn_shop": {
-            "lender:sals_pawn_counter": "fixed.lender_sals_pawn_counter",
-        },
         "beach": {
             "service:beach_sand_pile": "fixed.service_beach_sand_pile",
         },
@@ -5456,6 +6022,10 @@ def validate(
     assert "service_spots:0" not in maps["back_alley"].get(
         "fixed_category_slot_ids", {}
     ), "back_alley retained an action-only service alias"
+    assert not any(
+        str(key).startswith("service_spots:")
+        for key in maps["corner_store"].get("fixed_category_slot_ids", {})
+    ), "corner_store retained an action-only service alias"
     assert "service_spots:0" not in maps["pawn_shop"].get(
         "fixed_category_slot_ids", {}
     ), "pawn_shop retained an action-only service alias"
@@ -5611,6 +6181,7 @@ def convert_legacy_payload(
         converted,
         baseline_objects=baseline_objects,
         required_events=required_events,
+        reviewed_authority=False,
     )
     return converted, traced
 

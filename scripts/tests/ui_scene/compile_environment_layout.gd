@@ -184,12 +184,12 @@ func _check_meta_home_launcher_opens_room(app: Control) -> bool:
 	var pawn_counter_object := _object_by_id(pawn_objects, "meta_pawn_counter:sell")
 	var sal_object := _object_by_id(pawn_objects, "meta_sal:talk")
 	var pawn_door_object := _object_by_id(pawn_objects, "travel:leave")
-	if pawn_counter_object.is_empty() or sal_object.is_empty() or pawn_door_object.is_empty():
+	if sal_object.is_empty() or pawn_door_object.is_empty() or not pawn_counter_object.is_empty():
 		var meta_controller: Variant = app.get("meta_session_controller")
 		var raw_pawn_objects: Array = meta_controller.call("_pawn_interactable_objects", run_state, "", "", "") if meta_controller != null else []
 		var pawn_layout: Dictionary = pawn_environment.get("layout", {})
 		var pawn_binding := EnvironmentSlotBinderScript.bind_base_records(pawn_environment, raw_pawn_objects, pawn_layout.get("slot_bindings", {}), {})
-		push_error("Custom pawn-shop room did not expose separate Sal, sell-counter, and map-door interactions: %s." % JSON.stringify(pawn_binding.get("errors", [])))
+		push_error("Custom pawn-shop room did not expose one Sal host with shared actions and a map-door interaction: %s." % JSON.stringify(pawn_binding.get("errors", [])))
 		return false
 	var shelf_offer_ids: Array = []
 	for offer_value in JsonCoerceScript._copy_array(pawn_environment.get("item_offers", [])):
@@ -217,17 +217,17 @@ func _check_meta_home_launcher_opens_room(app: Control) -> bool:
 			push_error("Sal shelf slot %d duplicated visible authored slot %s." % [slot_index, shelf_slot_id])
 			return false
 		visible_shelf_slot_ids[shelf_slot_id] = true
-	var generated_merchant_binding := JsonCoerceScript._copy_dict(pawn_layout_bindings.get("shopkeeper:merchant", {}))
+	var generated_sal_binding := JsonCoerceScript._copy_dict(pawn_layout_bindings.get("staff:pawn_counter_sal", {}))
 	if str(sal_object.get("presentation_mode", "")) != "room" \
 			or str(sal_object.get("placement_class", "")) != "behind_counter_person" \
-			or str(sal_object.get("slot_id", "")) != str(generated_merchant_binding.get("slot_id", "")):
-		push_error("Sal did not reuse the generated shopkeeper's fixed behind-counter slot: %s / %s." % [str(sal_object), str(generated_merchant_binding)])
+			or str(sal_object.get("slot_id", "")) != str(generated_sal_binding.get("slot_id", "")):
+		push_error("Sal talk did not reuse the generated Sal host's fixed behind-counter slot: %s / %s." % [str(sal_object), str(generated_sal_binding)])
 		return false
-	if str(pawn_counter_object.get("presentation_mode", "")) != "room" \
-			or str(pawn_counter_object.get("placement_class", "")) != "behind_counter_person" \
-			or str(pawn_counter_object.get("slot_id", "")).is_empty() \
-			or str(pawn_counter_object.get("slot_id", "")) == str(sal_object.get("slot_id", "")):
-		push_error("Sal and the sell counter did not receive distinct fixed behind-counter slots: %s / %s." % [str(sal_object), str(pawn_counter_object)])
+	var sal_action_ids: Array = []
+	for action_value in JsonCoerceScript._copy_array(sal_object.get("available_actions", [])):
+		sal_action_ids.append(str(JsonCoerceScript._copy_dict(action_value).get("id", "")))
+	if not sal_action_ids.has("talk_sal") or not sal_action_ids.has("open_sell_counter"):
+		push_error("The single Sal host did not expose both talk and sell actions: %s." % str(sal_object))
 		return false
 	var pawn_door_binding := JsonCoerceScript._copy_dict(pawn_layout_bindings.get("travel:leave", {}))
 	if str(pawn_door_object.get("presentation_mode", "")) != "room" \

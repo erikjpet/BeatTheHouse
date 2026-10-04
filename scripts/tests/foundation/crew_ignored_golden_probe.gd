@@ -12,12 +12,26 @@ extends RefCounted
 const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
 const HarnessProductionFidelityScript := preload("res://scripts/tests/foundation/harness_production_fidelity.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
+const CrewRecruitmentModelScript := preload("res://scripts/core/crew_recruitment_model.gd")
+const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
 const CrewTurnModelScript := preload("res://scripts/core/crew_turn_model.gd")
 const SEEDS := ["CREW-IGNORED-GOLDEN-A", "CREW-IGNORED-GOLDEN-B"]
 const NORMALIZED_AUTHORITY_ID := "0000000000000000000000000000000000000000000000000000000000000000"
 
 
 static func capture(library: ContentLibrary) -> Dictionary:
+	return _capture(library, [])
+
+
+# The fixture updater uses this entry point so semantic invariants can fail the
+# write without adding transient diagnostics to the accepted capture schema.
+static func audited_capture(library: ContentLibrary) -> Dictionary:
+	var failures: Array = []
+	var result := _capture(library, failures)
+	return {"capture": result, "failures": failures}
+
+
+static func _capture(library: ContentLibrary, invariant_failures: Array) -> Dictionary:
 	var runs: Array = []
 	var arrival_failures: Array = []
 	for seed_value in SEEDS:
@@ -28,22 +42,70 @@ static func capture(library: ContentLibrary) -> Dictionary:
 		var initial_arrival := HarnessProductionFidelityScript.generate_and_finalize(generator, run_state, arrival_failures, "crew-ignored %s initial Bar arrival" % str(seed_value), "bar", true)
 		if not bool(initial_arrival.get("ok", false)):
 			return {"schema_version": 1, "runs": runs, "harness_failure": str(arrival_failures.back())}
+		_append_ignored_run_invariant_failures(str(seed_value), "initial_bar", run_state, invariant_failures)
 		var checkpoints: Array = [_checkpoint("initial_bar", run_state)]
 		run_state.advance_environment_turns(1)
+		_append_ignored_run_invariant_failures(str(seed_value), "bar_action_boundary", run_state, invariant_failures)
 		checkpoints.append(_checkpoint("bar_action_boundary", run_state))
 		var away_arrival := HarnessProductionFidelityScript.travel_and_finalize(generator, run_state, "gas_station_casino", true, library, arrival_failures, "crew-ignored %s ordinary travel" % str(seed_value))
 		if not bool(away_arrival.get("ok", false)):
 			return {"schema_version": 1, "runs": runs, "harness_failure": str(arrival_failures.back())}
+		_append_ignored_run_invariant_failures(str(seed_value), "ordinary_travel", run_state, invariant_failures)
 		checkpoints.append(_checkpoint("ordinary_travel", run_state))
 		var revisit_arrival := HarnessProductionFidelityScript.travel_and_finalize(generator, run_state, "bar", true, library, arrival_failures, "crew-ignored %s Bar revisit" % str(seed_value))
 		if not bool(revisit_arrival.get("ok", false)):
 			return {"schema_version": 1, "runs": runs, "harness_failure": str(arrival_failures.back())}
+		_append_ignored_run_invariant_failures(str(seed_value), "bar_revisit", run_state, invariant_failures)
 		checkpoints.append(_checkpoint("bar_revisit", run_state))
 		var restored := RunStateScript.new()
 		restored.from_dict(run_state.to_dict())
+		_append_ignored_run_invariant_failures(str(seed_value), "save_load_round_trip", restored, invariant_failures)
 		checkpoints.append(_checkpoint("save_load_round_trip", restored))
 		runs.append({"seed": str(seed_value), "checkpoints": checkpoints})
 	return {"schema_version": 1, "runs": runs}
+
+
+static func _append_ignored_run_invariant_failures(seed: String, checkpoint: String, run_state: RunState, failures: Array) -> void:
+	var context := "%s/%s" % [seed, checkpoint]
+	var expected_trust := CrewStateModelScript.default_trust()
+	if run_state.crew_trust_by_member.keys().size() != expected_trust.keys().size():
+		failures.append("%s changed the exact Crew trust-member census." % context)
+	for member_id_value in CrewStateModelScript.MEMBER_IDS:
+		var member_id := str(member_id_value)
+		if not run_state.crew_trust_by_member.has(member_id) or run_state.crew_trust(member_id) != 0:
+			failures.append("%s moved ignored-run Crew trust for %s to %d." % [context, member_id, run_state.crew_trust(member_id)])
+	for debt_value in run_state.debt:
+		if typeof(debt_value) == TYPE_DICTIONARY and str((debt_value as Dictionary).get("lender_id", "")) == RunStateScript.CREW_LENDER_ID:
+			failures.append("%s created a Crew loan/debt in an ignored run." % context)
+			break
+	for flag_id in ["crew_marker_open", "crew_marker_clear", "crew_marker_converted_to_cash"]:
+		if bool(run_state.narrative_flags.get(flag_id, false)):
+			failures.append("%s set ignored-run Crew loan flag %s." % [context, flag_id])
+	if not run_state.world_sequence_registrations.is_empty():
+		failures.append("%s created world-sequence registrations in an ignored run." % context)
+
+
+static func ignored_ambient_noop_failures() -> Array:
+	var failures: Array = []
+	var run_state := RunStateScript.new()
+	run_state.start_new("CREW-IGNORED")
+	var environment := {
+		"id": "ignored",
+		"archetype_id": "bar",
+		"kind": "casino",
+		"event_ids": ["rowdy_regular"],
+		"scenario_patron_ids": ["fight_crowd"],
+	}
+	var before_run := JSON.stringify(run_state.to_dict())
+	var before_environment := JSON.stringify(environment)
+	CrewRecruitmentModelScript.apply_to_environment(run_state, environment)
+	if JSON.stringify(run_state.to_dict()) != before_run or JSON.stringify(environment) != before_environment:
+		failures.append("Crew-ignoring run changed outside authored anchor ambience.")
+	for member_id_value in CrewStateModelScript.MEMBER_IDS:
+		var member_id := str(member_id_value)
+		if run_state.crew_trust(member_id) != 0:
+			failures.append("Crew-ignoring run moved hidden trust for %s." % member_id)
+	return failures
 
 
 # Separate from capture() so the accepted golden schema and fixture remain

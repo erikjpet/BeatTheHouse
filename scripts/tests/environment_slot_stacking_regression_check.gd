@@ -74,7 +74,7 @@ func _test_capacity_failure_never_overflows() -> void:
 func _test_persisted_duplicate_rejected() -> void:
 	var environment := {"archetype_id": "back_alley"}
 	var surface_map := EnvironmentPlacementScript.surface_map(environment)
-	var slot := _authored_slot(surface_map, "fixed.random_game_1")
+	var slot := _authored_slot(surface_map, "fixed.home_container_1")
 	_check(not slot.is_empty(), "Back Alley stacking regression slot is missing.")
 	if slot.is_empty():
 		return
@@ -91,7 +91,7 @@ func _test_persisted_duplicate_rejected() -> void:
 func _test_presentation_alias_replaces_source() -> void:
 	var environment := {"archetype_id": "back_alley"}
 	var surface_map := EnvironmentPlacementScript.surface_map(environment)
-	var slot := _authored_slot(surface_map, "fixed.random_game_1")
+	var slot := _authored_slot(surface_map, "fixed.home_container_1")
 	_check(not slot.is_empty(), "Back Alley alias regression slot is missing.")
 	if slot.is_empty():
 		return

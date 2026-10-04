@@ -4,6 +4,7 @@ extends RefCounted
 const OperationRegistryScript := preload("res://scripts/core/scenario_operation_registry.gd")
 const ArtContractsScript := preload("res://scripts/core/art_contracts.gd")
 const BaseSemanticRecordsScript := preload("res://scripts/core/environment_base_semantic_records.gd")
+const EnvironmentPlacementScript := preload("res://scripts/core/environment_placement.gd")
 const EnvironmentSlotBinderScript := preload("res://scripts/core/environment_slot_binder.gd")
 const EnvironmentEventResolverScript := preload("res://scripts/core/environment_event_resolver.gd")
 
@@ -259,6 +260,7 @@ static func for_instance(environment: Dictionary, library: Variant = null, base_
 	var provenance: Dictionary = {}
 	var errors: Array = []
 	var layout := _dict(environment.get("layout", {}))
+	var exact_action_host_ids := _exact_action_host_ids(environment)
 	# The live layout also carries phase-owned scenario geometry. Exact base
 	# inventory must never reinterpret an already-owned `scenario::...` id as a
 	# base id or seal a scenario-family event into immutable room authority.
@@ -267,7 +269,9 @@ static func for_instance(environment: Dictionary, library: Variant = null, base_
 	for row_value in _array(_dict(environment.get("object_manifest", {})).get("rows", [])):
 		var row := _dict(row_value)
 		var family := str(row.get("family", "")).strip_edges()
-		if not bool(row.get("active", false)) or not bool(row.get("physical", false)) or family == "scenario":
+		var owned_projection := str(row.get("source_kind", "")) == "scenario_projection"
+		if not bool(row.get("active", false)) or not bool(row.get("physical", false)) \
+				or family == "scenario" or owned_projection:
 			continue
 		var presentation_id := str(row.get("presentation_object_id", row.get("object_id", ""))).strip_edges()
 		var instance_object_id := str(row.get("instance_object_id", "")).strip_edges()
@@ -280,7 +284,10 @@ static func for_instance(environment: Dictionary, library: Variant = null, base_
 		manifest_presentations[presentation_id] = row.duplicate(true)
 	var slot_authority: Dictionary = {}
 	if _layout_has_slot_authority(layout):
-		slot_authority = EnvironmentSlotBinderScript.validate_base_layout_authority(environment, base_interactions)
+		slot_authority = EnvironmentSlotBinderScript.validate_base_layout_authority(
+			environment,
+			_without_exact_hosted_actions(base_interactions, exact_action_host_ids)
+		)
 		if not bool(slot_authority.get("ok", false)):
 			errors.append_array(_array(slot_authority.get("errors", [])))
 	var authenticated_overflow_ids: Array = []
@@ -320,6 +327,7 @@ static func for_instance(environment: Dictionary, library: Variant = null, base_
 		var identity := "%s::%s" % [str(record.get("owner_namespace", "")), str(record.get("stable_object_id", ""))]
 		var presentation_id := str(record.get("presentation_object_id", record.get("object_id", "")))
 		var authenticated_overflow := authenticated_overflow_ids.has(presentation_id)
+		var authenticated_hosted_action := exact_action_host_ids.has(presentation_id)
 		var claimed_overflow := str(record.get("presentation_mode", "")) == "overflow"
 		var dynamic_record := BaseSemanticRecordsScript.is_dynamic_interaction_record(record)
 		var dynamic_errors: Array = []
@@ -332,19 +340,19 @@ static func for_instance(environment: Dictionary, library: Variant = null, base_
 		elif interaction_identities.has(identity) or interaction_presentations.has(presentation_id): errors.append("base interaction inventory contains duplicate/colliding identity or presentation id %s." % presentation_id)
 		elif not casino_room_errors.is_empty(): errors.append_array(casino_room_errors)
 		elif dynamic_record and not dynamic_errors.is_empty(): errors.append_array(dynamic_errors)
-		elif claimed_overflow != authenticated_overflow: errors.append("base interaction %s overflow presentation does not match authenticated whole-layout authority." % presentation_id)
-		elif authenticated_overflow and (not _dict(record.get("normalized_hit_rect", {})).is_empty() or not _accessible_hit_bounds(record.get("hit_bounds", {}))):
-			errors.append("base overflow interaction %s must be geometry-free with accessible action-list bounds." % presentation_id)
-		elif not layout_rects.has(presentation_id) and not authenticated_overflow and not dynamic_record: errors.append("base interaction %s has no exact final layout geometry or authorized dynamic producer." % presentation_id)
+		elif claimed_overflow != (authenticated_overflow or authenticated_hosted_action): errors.append("base interaction %s non-room presentation does not match authenticated overflow or exact action-host authority." % presentation_id)
+		elif (authenticated_overflow or authenticated_hosted_action) and (not _dict(record.get("normalized_hit_rect", {})).is_empty() or not _accessible_hit_bounds(record.get("hit_bounds", {}))):
+			errors.append("base non-room interaction %s must be geometry-free with accessible action-list bounds." % presentation_id)
+		elif not layout_rects.has(presentation_id) and not authenticated_overflow and not authenticated_hosted_action and not dynamic_record: errors.append("base interaction %s has no exact final layout geometry, action host, or authorized dynamic producer." % presentation_id)
 		elif layout_rects.has(presentation_id) and not _same_normalized_rect(record.get("normalized_hit_rect", {}), layout_rects.get(presentation_id)):
 			errors.append("base interaction %s geometry does not match final layout.object_rects." % presentation_id)
 		else:
 			interaction_identities[identity] = true
 			interaction_presentations[presentation_id] = true
 			_add(exact, "interactions", identity)
-			if not _array(exact.get("scene_objects", [])).has(identity): _add(exact, "scene_objects", identity)
+			if not authenticated_hosted_action and not _array(exact.get("scene_objects", [])).has(identity): _add(exact, "scene_objects", identity)
 			presentation_ids["interactions|%s" % identity] = presentation_id
-			presentation_ids["scene_objects|%s" % identity] = presentation_id
+			if not authenticated_hosted_action: presentation_ids["scene_objects|%s" % identity] = presentation_id
 			var source_kind := str(record.get("source_kind", ""))
 			var source_field := str(record.get("source_field", ""))
 			var source_record_id := str(record.get("source_record_id", ""))
@@ -353,7 +361,7 @@ static func for_instance(environment: Dictionary, library: Variant = null, base_
 				source_field = "layout.object_rects"
 				source_record_id = presentation_id
 			_set_provenance(provenance, "interactions", identity, source_kind, source_field, source_record_id)
-			if not provenance.has("scene_objects|%s" % identity): _set_provenance(provenance, "scene_objects", identity, source_kind, source_field, source_record_id)
+			if not authenticated_hosted_action and not provenance.has("scene_objects|%s" % identity): _set_provenance(provenance, "scene_objects", identity, source_kind, source_field, source_record_id)
 	for service_id in _ids(environment.get("service_ids", [])):
 		if library != null and library.has_method("service") and _dict(library.call("service", service_id)).is_empty(): errors.append("environment instance references an unknown service %s." % service_id)
 		else:
@@ -458,7 +466,11 @@ static func validate_instance_binding(inventory: Dictionary, environment: Dictio
 	var layout := _dict(environment.get("layout", {}))
 	if _layout_has_slot_authority(layout):
 		var interactions := _array(environment.get("scenario_base_interactions", []))
-		var slot_authority := EnvironmentSlotBinderScript.validate_base_layout_authority(environment, interactions)
+		var exact_action_host_ids := _exact_action_host_ids(environment)
+		var slot_authority := EnvironmentSlotBinderScript.validate_base_layout_authority(
+			environment,
+			_without_exact_hosted_actions(interactions, exact_action_host_ids)
+		)
 		if not bool(slot_authority.get("ok", false)):
 			errors.append_array(_array(slot_authority.get("errors", [])))
 		else:
@@ -466,8 +478,9 @@ static func validate_instance_binding(inventory: Dictionary, environment: Dictio
 			for interaction_value in interactions:
 				var interaction := _dict(interaction_value)
 				var presentation_id := str(interaction.get("presentation_object_id", ""))
-				if (str(interaction.get("presentation_mode", "")) == "overflow") != overflow_ids.has(presentation_id):
-					errors.append("semantic inventory overflow interaction %s no longer matches authenticated whole-layout authority." % presentation_id)
+				var authenticated_non_room := overflow_ids.has(presentation_id) or exact_action_host_ids.has(presentation_id)
+				if (str(interaction.get("presentation_mode", "")) == "overflow") != authenticated_non_room:
+					errors.append("semantic inventory non-room interaction %s no longer matches authenticated whole-layout or exact action-host authority." % presentation_id)
 	errors.append_array(_validate_consumed_dynamic_sources(inventory, environment))
 	return errors
 
@@ -936,6 +949,28 @@ static func _accessible_hit_bounds(value: Variant) -> bool:
 		and float(bounds.get("h")) >= OperationRegistryScript.MIN_TARGET_SIZE
 
 
+static func _exact_action_host_ids(environment: Dictionary) -> Dictionary:
+	var result: Dictionary = {}
+	var surface_map := EnvironmentPlacementScript.surface_map(environment)
+	var authored_hosts := _dict(surface_map.get("scenario_instance_action_host_ids", {}))
+	for action_id_value in authored_hosts.keys():
+		var action_id := str(action_id_value).strip_edges()
+		var host_id := str(authored_hosts.get(action_id_value, "")).strip_edges()
+		if not action_id.is_empty() and not host_id.is_empty() and action_id != host_id:
+			result[action_id] = host_id
+	return result
+
+
+static func _without_exact_hosted_actions(records: Array, exact_action_host_ids: Dictionary) -> Array:
+	var result: Array = []
+	for record_value in records:
+		var record := _dict(record_value)
+		var presentation_id := str(record.get("presentation_object_id", record.get("object_id", ""))).strip_edges()
+		if not exact_action_host_ids.has(presentation_id):
+			result.append(record_value)
+	return result
+
+
 static func _layout_has_slot_authority(layout: Dictionary) -> bool:
 	for key in ["slot_schema_version", "slot_map_digest", "slot_binding_digest", "slot_bindings", "slot_overflow_ids"]:
 		if layout.has(key): return true
@@ -1352,7 +1387,9 @@ static func _object_manifest_authority(environment: Dictionary) -> Dictionary:
 	var rows: Array = []
 	for row_value in _array(manifest.get("rows", [])):
 		var row := _dict(row_value)
-		if not bool(row.get("active", false)) or not bool(row.get("physical", false)) or str(row.get("family", "")) == "scenario":
+		if not bool(row.get("active", false)) or not bool(row.get("physical", false)) \
+				or str(row.get("family", "")) == "scenario" \
+				or str(row.get("source_kind", "")) == "scenario_projection":
 			continue
 		rows.append(_manifest_semantic_row(row))
 	rows.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
@@ -1416,12 +1453,11 @@ static func _base_layout_object_rects(environment: Dictionary) -> Dictionary:
 	for row_value in _array(_dict(environment.get("object_manifest", {})).get("rows", [])):
 		var row := _dict(row_value)
 		var presentation_id := str(row.get("presentation_object_id", row.get("object_id", ""))).strip_edges()
-		# Gameplay-backed objects introduced by a scenario (for example an
-		# `event:*` delivery stock interaction) still participate in the sealed
-		# interaction inventory even though their physical slot family is scenario.
-		# Only true owned projection visuals are outside immutable base inventory.
-		if str(row.get("family", "")) == "scenario" \
-				and (str(row.get("source_kind", "")) == "scenario_projection" or presentation_id.contains("::")):
+		# Scenario-owned projection geometry never enters immutable base inventory.
+		# Exact hosted catalog actions have no physical row/rectangle at all; their
+		# interaction-only authority is authenticated separately in for_instance().
+		if str(row.get("source_kind", "")) == "scenario_projection" \
+				or str(row.get("family", "")) == "scenario" and presentation_id.contains("::"):
 			if not presentation_id.is_empty():
 				scenario_presentations[presentation_id] = true
 	for presentation_id_value in _dict(layout.get("slot_bindings", {})).keys():

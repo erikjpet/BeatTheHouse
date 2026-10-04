@@ -1541,6 +1541,7 @@ func _publish_scenario_membership_candidate(candidate: Dictionary, result_value:
 	# Do not run the live runtime-owner projector on this detached candidate:
 	# contextual projectors intentionally distinguish the current environment by
 	# identity and would remove valid delivery/crew rows before publication.
+	_resolve_terminal_scenario_action_aliases(candidate)
 	candidate["layout"] = EnvironmentInstance.ensure_generated_layout(candidate)
 	var membership_errors := JsonCoerceScript._copy_array(EnvironmentInstance.object_manifest_errors(candidate))
 	for error_value in JsonCoerceScript._copy_array(JsonCoerceScript._copy_dict(candidate.get("layout", {})).get("placement_errors", [])):
@@ -1569,6 +1570,49 @@ func _publish_scenario_membership_candidate(candidate: Dictionary, result_value:
 	current_environment.clear()
 	current_environment.merge(candidate, true)
 	return result
+
+
+# Scenario catalog events can be actions attached to a tangible scenario prop
+# or actor rather than independent room objects. Once the sequence becomes
+# terminal, its temporary hosts disappear. Resolve those action aliases at the
+# same atomic publication boundary so they cannot survive as dangling menu
+# actions or be resurrected from another stored layer.
+func _resolve_terminal_scenario_action_aliases(candidate: Dictionary) -> void:
+	var sequence_state := JsonCoerceScript._copy_dict(candidate.get("scenario_sequence_state", {}))
+	if str(sequence_state.get("status", "")) not in ["aftermath", "cleaned"]:
+		return
+	var action_host_ids := JsonCoerceScript._copy_dict(
+		JsonCoerceScript._copy_dict(candidate.get("layout", {})).get("scenario_instance_action_host_ids", {})
+	)
+	action_host_ids.merge(EnvironmentInstance.scenario_action_host_ids(candidate), true)
+	if action_host_ids.is_empty():
+		return
+	var resolved := JsonCoerceScript._copy_array(candidate.get("resolved_event_ids", []))
+	var newly_resolved: Array = []
+	for source_id_value in action_host_ids.keys():
+		var source_id := str(source_id_value).strip_edges()
+		var host_id := str(action_host_ids.get(source_id_value, "")).strip_edges()
+		if not source_id.begins_with("event:") or host_id.is_empty():
+			continue
+		var event_id := source_id.trim_prefix("event:")
+		if event_id.is_empty() or resolved.has(event_id):
+			continue
+		resolved.append(event_id)
+		newly_resolved.append(event_id)
+	if newly_resolved.is_empty():
+		return
+	candidate["resolved_event_ids"] = resolved
+	var layer_states := JsonCoerceScript._copy_dict(candidate.get("layer_states", {}))
+	for layer_id_value in layer_states.keys():
+		var layer_state := JsonCoerceScript._copy_dict(layer_states.get(layer_id_value, {}))
+		var layer_resolved := JsonCoerceScript._copy_array(layer_state.get("resolved_event_ids", []))
+		for event_id_value in newly_resolved:
+			if not layer_resolved.has(event_id_value):
+				layer_resolved.append(event_id_value)
+		layer_state["resolved_event_ids"] = layer_resolved
+		layer_states[layer_id_value] = layer_state
+	if not layer_states.is_empty():
+		candidate["layer_states"] = layer_states
 
 
 # Seals the current room and every durable alias that can restore it. Call this

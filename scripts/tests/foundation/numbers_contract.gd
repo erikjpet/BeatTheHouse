@@ -202,6 +202,7 @@ static func _check_physical_travel_race(failures: Array) -> void:
 static func _check_silas_availability_seam(failures: Array) -> void:
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("NUMBERS-SILAS-SURFACE")
+	_initialize_delivery_world(run_state)
 	var first_view: Dictionary = run_state.numbers_silas_status()
 	if bool(first_view.get("handle_available", true)) or not bool(first_view.get("tip_available", false)) or first_view.keys() != ["tip_available", "handle_available"]:
 		failures.append("First Silas view advertised hidden handle knowledge or leaked extra discovery state.")

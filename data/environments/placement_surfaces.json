@@ -821,6 +821,7 @@
           "physical_role": "Mara",
           "occupant_ids": [
             "corner_store:shopkeeper",
+            "service:cashier_tip",
             "shopkeeper:merchant"
           ],
           "runtime_reserve": false,
@@ -855,8 +856,7 @@
           "physical_role": "Store Phone",
           "occupant_ids": [
             "corner_store:phone",
-            "event:call_brother_in_law",
-            "service:cashier_tip"
+            "event:call_brother_in_law"
           ],
           "runtime_reserve": false,
           "reserve_reason": "",
@@ -885,7 +885,7 @@
             366.0
           ],
           "footprint_class": "floor_fixture",
-          "physical_role": "Game fixture",
+          "physical_role": "Coin pusher",
           "occupant_ids": [
             "game:coin_pusher"
           ],
@@ -949,7 +949,7 @@
             204.0
           ],
           "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
+          "physical_role": "House drink service",
           "occupant_ids": [
             "service:house_drink"
           ],
@@ -980,7 +980,7 @@
             270.0
           ],
           "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
+          "physical_role": "Numbers book",
           "occupant_ids": [
             "numbers:book"
           ],
@@ -1507,35 +1507,6 @@
           "id": "scenario.wall_item_2",
           "kind": "scenario",
           "pos": [
-            468.0,
-            62.0
-          ],
-          "footprint_class": "wall_mounted",
-          "physical_role": "Wall item",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            428.0,
-            38.0,
-            80.0,
-            48.0
-          ],
-          "label_anchor": [
-            468.0,
-            94.0
-          ],
-          "facing": "none",
-          "priority": 60,
-          "zone_id": "room",
-          "support_id": "wall",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
-          "id": "scenario.wall_item_3",
-          "kind": "scenario",
-          "pos": [
             486.0,
             62.0
           ],
@@ -1632,8 +1603,8 @@
         "lender:the_crew": "fixed.crew_group",
         "shopkeeper:merchant": "fixed.staff_shopkeeper",
         "numbers:book": "fixed.numbers_book",
-        "service:cashier_tip": "fixed.phone",
-        "service:house_drink": "fixed.service_house_drink"
+        "service:house_drink": "fixed.service_house_drink",
+        "service:cashier_tip": "fixed.staff_shopkeeper"
       },
       "event_object_slot_ids": {
         "event:chatty_clerk": "event.behind_counter_person_1",
@@ -1650,7 +1621,6 @@
       },
       "fixed_category_slot_ids": {
         "game_spots:0": "fixed.game_coin_pusher",
-        "service_spots:0": "fixed.phone",
         "shopkeeper_spots:0": "fixed.staff_shopkeeper",
         "numbers_spots:0": "fixed.numbers_book",
         "item_spots:0": "fixed.item_shop_1",
@@ -1698,7 +1668,9 @@
           "placement_class": "behind_counter_person",
           "exact_slot_id": "fixed.staff_shopkeeper",
           "required": true,
-          "action_ids": []
+          "action_ids": [
+            "service:cashier_tip"
+          ]
         },
         {
           "object_id": "corner_store:phone",
@@ -1711,7 +1683,6 @@
           "exact_slot_id": "fixed.phone",
           "required": true,
           "action_ids": [
-            "service:cashier_tip",
             "event:call_brother_in_law"
           ]
         }
@@ -2331,7 +2302,7 @@
             88.0
           ],
           "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
+          "physical_role": "House drink service",
           "occupant_ids": [
             "service:house_drink"
           ],
@@ -2421,6 +2392,124 @@
             "lane.public"
           ],
           "occupancy_required": true
+        },
+        {
+          "id": "fixed.home_container_1",
+          "kind": "fixed",
+          "pos": [
+            124.0,
+            358.0
+          ],
+          "footprint_class": "floor_fixture",
+          "physical_role": "Home container 1",
+          "occupant_ids": [],
+          "runtime_reserve": false,
+          "reserve_reason": "",
+          "hit_rect": [
+            78.0,
+            294.0,
+            92.0,
+            64.0
+          ],
+          "label_anchor": [
+            124.0,
+            288.0
+          ],
+          "facing": "none",
+          "priority": 15,
+          "zone_id": "left",
+          "support_id": "floor",
+          "walk_lane_ids": [],
+          "occupancy_required": false
+        },
+        {
+          "id": "fixed.home_container_2",
+          "kind": "fixed",
+          "pos": [
+            620.0,
+            358.0
+          ],
+          "footprint_class": "floor_fixture",
+          "physical_role": "Home container 2",
+          "occupant_ids": [],
+          "runtime_reserve": false,
+          "reserve_reason": "",
+          "hit_rect": [
+            574.0,
+            294.0,
+            92.0,
+            64.0
+          ],
+          "label_anchor": [
+            620.0,
+            288.0
+          ],
+          "facing": "none",
+          "priority": 20,
+          "zone_id": "center",
+          "support_id": "floor",
+          "walk_lane_ids": [],
+          "occupancy_required": false
+        },
+        {
+          "id": "fixed.home_container_3",
+          "kind": "fixed",
+          "pos": [
+            730.0,
+            358.0
+          ],
+          "footprint_class": "floor_fixture",
+          "physical_role": "Home container 3",
+          "occupant_ids": [],
+          "runtime_reserve": false,
+          "reserve_reason": "",
+          "hit_rect": [
+            684.0,
+            294.0,
+            92.0,
+            64.0
+          ],
+          "label_anchor": [
+            730.0,
+            288.0
+          ],
+          "facing": "none",
+          "priority": 25,
+          "zone_id": "right",
+          "support_id": "floor",
+          "walk_lane_ids": [],
+          "occupancy_required": false
+        },
+        {
+          "id": "fixed.home_upgrade",
+          "kind": "fixed",
+          "pos": [
+            650.0,
+            120.0
+          ],
+          "footprint_class": "wall_mounted",
+          "physical_role": "Home upgrade board",
+          "occupant_ids": [
+            "meta_upgrade:home"
+          ],
+          "runtime_reserve": false,
+          "reserve_reason": "",
+          "hit_rect": [
+            610.0,
+            72.0,
+            80.0,
+            48.0
+          ],
+          "label_anchor": [
+            650.0,
+            66.0
+          ],
+          "facing": "none",
+          "priority": 10,
+          "zone_id": "right",
+          "support_id": "wall",
+          "walk_lane_ids": [],
+          "occupancy_required": false
         }
       ],
       "event_slots": [
@@ -3131,7 +3220,8 @@
         "lender:street_lender": "fixed.lender_street_lender",
         "character:vince": "fixed.patron_vince",
         "character:lena": "fixed.patron_lena",
-        "service:house_drink": "fixed.service_house_drink"
+        "service:house_drink": "fixed.service_house_drink",
+        "meta_upgrade:home": "fixed.home_upgrade"
       },
       "event_object_slot_ids": {
         "event:back_alley_offer": "event.floor_fixture_1",
@@ -3152,7 +3242,11 @@
         "item_spots:0": "fixed.item_shop_1",
         "item_spots:1": "fixed.item_shop_2",
         "item_spots:2": "fixed.item_shop_3",
-        "item_spots:3": "fixed.item_shop_4"
+        "item_spots:3": "fixed.item_shop_4",
+        "home_container_spots:0": "fixed.home_container_1",
+        "home_container_spots:1": "fixed.home_container_2",
+        "home_container_spots:2": "fixed.home_container_3",
+        "home_upgrade_spots:0": "fixed.home_upgrade"
       },
       "event_category_slot_ids": {
         "event_spots:0": "event.floor_fixture_1",
@@ -3176,6 +3270,7 @@
         "character:vince": "fixed",
         "character:lena": "fixed",
         "game:craps": "scenario",
+        "meta_upgrade:home": "fixed",
         "travel:leave": "exit"
       },
       "fixed_objects": [
@@ -3241,7 +3336,9 @@
         "event:chain06_nico_weekly_door": "doorway",
         "motel_conventioneers_aftermath_actor_crowd_jammed": "standing_person",
         "numbers:silas": "standing_person",
-        "service:house_drink": "surface_item"
+        "service:house_drink": "surface_item",
+        "event:chain06_dave_same_bus": "standing_person",
+        "event:chain06_dave_last_stop": "standing_person"
       },
       "object_slot_positions": {
         "item:split_reel_note": [
@@ -3291,14 +3388,6 @@
         "event:town_rumor_staff": [
           784,
           350
-        ],
-        "event:chain06_dave_same_bus": [
-          16,
-          294
-        ],
-        "event:chain06_dave_last_stop": [
-          16,
-          294
         ],
         "lender:brother_in_law": [
           725,
@@ -4412,7 +4501,7 @@
             286.0
           ],
           "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
+          "physical_role": "Counter phone",
           "occupant_ids": [
             "event:call_brother_in_law"
           ],
@@ -4592,7 +4681,7 @@
             168.0
           ],
           "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
+          "physical_role": "House drink service",
           "occupant_ids": [
             "service:house_drink"
           ],
@@ -4623,7 +4712,7 @@
             132.0
           ],
           "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
+          "physical_role": "Numbers book",
           "occupant_ids": [
             "numbers:book"
           ],
@@ -4810,68 +4899,6 @@
           "occupancy_required": false
         },
         {
-          "id": "event.surface_item_2",
-          "kind": "event",
-          "pos": [
-            718.0,
-            188.0
-          ],
-          "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
-          "occupant_ids": [
-            "event:chain06_dave_same_bus"
-          ],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            682.0,
-            140.0,
-            72.0,
-            48.0
-          ],
-          "label_anchor": [
-            718.0,
-            134.0
-          ],
-          "facing": "none",
-          "priority": 30,
-          "zone_id": "right",
-          "support_id": "front_desk",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
-          "id": "event.surface_item_3",
-          "kind": "event",
-          "pos": [
-            198.0,
-            236.0
-          ],
-          "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
-          "occupant_ids": [
-            "event:chain06_dave_last_stop"
-          ],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            162.0,
-            188.0,
-            72.0,
-            48.0
-          ],
-          "label_anchor": [
-            198.0,
-            182.0
-          ],
-          "facing": "none",
-          "priority": 20,
-          "zone_id": "left",
-          "support_id": "bedspread",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
           "id": "event.standing_person_1",
           "kind": "event",
           "pos": [
@@ -4880,7 +4907,10 @@
           ],
           "footprint_class": "standing_person",
           "physical_role": "Standing person",
-          "occupant_ids": [],
+          "occupant_ids": [
+            "event:chain06_dave_last_stop",
+            "event:chain06_dave_same_bus"
+          ],
           "runtime_reserve": true,
           "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
           "hit_rect": [
@@ -5543,7 +5573,7 @@
             468.0,
             144.0
           ],
-          "footprint_class": "surface_item",
+          "footprint_class": "doorway",
           "physical_role": "Travel exit",
           "occupant_ids": [
             "travel:leave"
@@ -5560,11 +5590,13 @@
             457.0,
             54.0
           ],
-          "facing": "none",
+          "facing": "front",
           "priority": 20,
           "zone_id": "background",
-          "support_id": "round3_curtain_ledge",
-          "walk_lane_ids": [],
+          "support_id": "curtain_passage",
+          "walk_lane_ids": [
+            "lane.public"
+          ],
           "occupancy_required": false
         },
         {
@@ -5609,12 +5641,12 @@
         "service:house_drink": "fixed.service_house_drink"
       },
       "event_object_slot_ids": {
-        "event:chain06_dave_last_stop": "event.surface_item_3",
-        "event:chain06_dave_same_bus": "event.surface_item_2",
         "event:parking_lot_tip": "event.ground_marker_1",
         "event:town_rumor_staff": "event.behind_counter_person_1",
         "numbers:silas": "event.standing_person_4",
-        "event:chain06_nico_weekly_door": "event.doorway_1"
+        "event:chain06_nico_weekly_door": "event.doorway_1",
+        "event:chain06_dave_same_bus": "event.standing_person_1",
+        "event:chain06_dave_last_stop": "event.standing_person_1"
       },
       "scenario_object_slot_ids": {
         "event:scenario_stakeout_watch_or_leave": "scenario.standing_person_1",
@@ -6629,7 +6661,7 @@
             178.0
           ],
           "footprint_class": "surface_item",
-          "physical_role": "Game fixture",
+          "physical_role": "Random game",
           "occupant_ids": [],
           "runtime_reserve": false,
           "reserve_reason": "",
@@ -6658,7 +6690,7 @@
             178.0
           ],
           "footprint_class": "surface_item",
-          "physical_role": "Game fixture",
+          "physical_role": "Random game",
           "occupant_ids": [],
           "runtime_reserve": false,
           "reserve_reason": "",
@@ -6687,7 +6719,7 @@
             92.0
           ],
           "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
+          "physical_role": "Numbers book",
           "occupant_ids": [
             "numbers:book"
           ],
@@ -6718,7 +6750,7 @@
             104.0
           ],
           "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
+          "physical_role": "House drink service",
           "occupant_ids": [
             "service:house_drink"
           ],
@@ -7737,7 +7769,7 @@
             880.0,
             418.0
           ],
-          "footprint_class": "standing_person",
+          "footprint_class": "doorway",
           "physical_role": "Travel exit",
           "occupant_ids": [
             "travel:leave"
@@ -7757,7 +7789,7 @@
           "facing": "front",
           "priority": 110,
           "zone_id": "room",
-          "support_id": "stage",
+          "support_id": "right_exit",
           "walk_lane_ids": [
             "lane.public"
           ],
@@ -7843,7 +7875,14 @@
           "required": true,
           "action_ids": []
         }
-      ]
+      ],
+      "scenario_overrides": {
+        "bar_fight_night": {
+          "class_overrides": {
+            "event:recruitment_knuckles": "standing_person"
+          }
+        }
+      }
     },
     {
       "id": "gas_station_casino",
@@ -8662,8 +8701,8 @@
         "gas_station_graveyard_shift_cooler_gate|env06_8_cooler_gate|right|": "scenario.wall_item_2",
         "gas_station_graveyard_shift_flashlight_dock||right|": "scenario.floor_fixture_2",
         "gas_station_graveyard_shift_machine_gate||center|": "scenario.wall_item_3",
-        "gas_station_graveyard_shift_night_clerk|package_b_gas_top_mid|left|": "scenario.behind_counter_person_2",
-        "gas_station_graveyard_shift_night_clerk|package_b_gas_top_mid|left|gas_station_graveyard_shift_beat_2_set_position": "scenario.behind_counter_person_2",
+        "gas_station_graveyard_shift_night_clerk|package_b_gas_top_mid|left|": "scenario.behind_counter_person_1",
+        "gas_station_graveyard_shift_night_clerk|package_b_gas_top_mid|left|gas_station_graveyard_shift_beat_2_set_position": "scenario.behind_counter_person_1",
         "gas_station_graveyard_shift_safe_exit|package_b_gas_low_left|exit_lane|": "scenario.doorway_3",
         "gas_station_graveyard_shift_shutter_panel||service_lane|": "scenario.wall_item_1",
         "gas_station_graveyard_shift_station|cashier_counter|left|": "scenario.wall_item_2",
@@ -8728,7 +8767,7 @@
             240.0
           ],
           "footprint_class": "floor_fixture",
-          "physical_role": "Game fixture",
+          "physical_role": "Random game",
           "occupant_ids": [
             "game:coin_pusher",
             "game:slot",
@@ -8761,7 +8800,7 @@
             240.0
           ],
           "footprint_class": "floor_fixture",
-          "physical_role": "Game fixture",
+          "physical_role": "Scratch ticket display",
           "occupant_ids": [
             "game:scratch_tickets"
           ],
@@ -8792,7 +8831,7 @@
             400.0
           ],
           "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
+          "physical_role": "Numbers book",
           "occupant_ids": [
             "numbers:book"
           ],
@@ -8823,7 +8862,7 @@
             148.0
           ],
           "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
+          "physical_role": "House drink service",
           "occupant_ids": [
             "service:house_drink"
           ],
@@ -9365,37 +9404,6 @@
         },
         {
           "id": "scenario.behind_counter_person_1",
-          "kind": "scenario",
-          "pos": [
-            724.0,
-            84.0
-          ],
-          "footprint_class": "behind_counter_person",
-          "physical_role": "Counter staff",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            688.0,
-            12.0,
-            72.0,
-            72.0
-          ],
-          "label_anchor": [
-            724.0,
-            6.0
-          ],
-          "facing": "left",
-          "priority": 10,
-          "zone_id": "room",
-          "support_id": "pull_tab_window",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
-        },
-        {
-          "id": "scenario.behind_counter_person_2",
           "kind": "scenario",
           "pos": [
             114.0,
@@ -11033,37 +11041,6 @@
       "scenario_art_keys": {},
       "fixed_slots": [
         {
-          "id": "fixed.staff_floor_left",
-          "kind": "fixed",
-          "pos": [
-            252.0,
-            358.0
-          ],
-          "footprint_class": "standing_person",
-          "physical_role": "Standing person",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            216.0,
-            278.0,
-            72.0,
-            80.0
-          ],
-          "label_anchor": [
-            251.0,
-            272.0
-          ],
-          "facing": "right",
-          "priority": 10,
-          "zone_id": "left",
-          "support_id": "floor",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
-        },
-        {
           "id": "fixed.door_right_lower",
           "kind": "fixed",
           "pos": [
@@ -11071,7 +11048,7 @@
             362.0
           ],
           "footprint_class": "doorway",
-          "physical_role": "Doorway / exit",
+          "physical_role": "Side door",
           "occupant_ids": [
             "event:side_door"
           ],
@@ -11094,35 +11071,6 @@
           "walk_lane_ids": [
             "lane.public"
           ],
-          "occupancy_required": false
-        },
-        {
-          "id": "fixed.service_stage_left",
-          "kind": "fixed",
-          "pos": [
-            300.0,
-            202.0
-          ],
-          "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            264.0,
-            154.0,
-            72.0,
-            48.0
-          ],
-          "label_anchor": [
-            297.0,
-            148.0
-          ],
-          "facing": "none",
-          "priority": 30,
-          "zone_id": "room",
-          "support_id": "stage",
-          "walk_lane_ids": [],
           "occupancy_required": false
         },
         {
@@ -11166,7 +11114,7 @@
             154.0
           ],
           "footprint_class": "floor_fixture",
-          "physical_role": "Game fixture",
+          "physical_role": "Video poker machine",
           "occupant_ids": [
             "game:video_poker"
           ],
@@ -11197,7 +11145,7 @@
             202.0
           ],
           "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
+          "physical_role": "Two-drink minimum service",
           "occupant_ids": [
             "service:punchline_two_drink_minimum"
           ],
@@ -11228,7 +11176,7 @@
             154.0
           ],
           "footprint_class": "floor_fixture",
-          "physical_role": "Game fixture",
+          "physical_role": "Slot machine",
           "occupant_ids": [
             "game:slot"
           ],
@@ -11259,7 +11207,7 @@
             202.0
           ],
           "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
+          "physical_role": "Numbers book",
           "occupant_ids": [
             "numbers:book"
           ],
@@ -11915,68 +11863,6 @@
       ],
       "exit_slots": [
         {
-          "id": "exit.door_right_lower",
-          "kind": "exit",
-          "pos": [
-            859.0,
-            374.0
-          ],
-          "footprint_class": "doorway",
-          "physical_role": "Travel exit",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            827.0,
-            338.0,
-            64.0,
-            72.0
-          ],
-          "label_anchor": [
-            854.0,
-            342.0
-          ],
-          "facing": "left",
-          "priority": 20,
-          "zone_id": "room",
-          "support_id": "right_exit",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
-        },
-        {
-          "id": "exit.door_right_upper",
-          "kind": "exit",
-          "pos": [
-            859.0,
-            278.0
-          ],
-          "footprint_class": "doorway",
-          "physical_role": "Travel exit",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            827.0,
-            242.0,
-            64.0,
-            72.0
-          ],
-          "label_anchor": [
-            854.0,
-            236.0
-          ],
-          "facing": "left",
-          "priority": 10,
-          "zone_id": "room",
-          "support_id": "right_exit",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
-        },
-        {
           "id": "exit.left_upper",
           "kind": "exit",
           "pos": [
@@ -12073,7 +11959,6 @@
         "travel:leave": "exit.left_lower"
       },
       "fixed_category_slot_ids": {
-        "service_spots:0": "fixed.service_stage_left",
         "numbers_spots:0": "fixed.numbers_book"
       },
       "event_category_slot_ids": {
@@ -12130,7 +12015,8 @@
         "punchline_new_muscle_task_0": "wall_mounted",
         "punchline_open_mic_night_task_0": "wall_mounted",
         "punchline_raid_jitters_task_0": "wall_mounted",
-        "punchline_bringer_show_aftermath_show_seated_actor": "standing_person"
+        "punchline_bringer_show_aftermath_show_seated_actor": "standing_person",
+        "punchline_raid_jitters_clear_bins": "floor_fixture"
       },
       "object_slot_positions": {
         "service:punchline_two_drink_minimum": [
@@ -13235,7 +13121,7 @@
             362.0
           ],
           "footprint_class": "doorway",
-          "physical_role": "Doorway / exit",
+          "physical_role": "Side door",
           "occupant_ids": [
             "event:side_door"
           ],
@@ -13302,7 +13188,7 @@
             202.0
           ],
           "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
+          "physical_role": "Two-drink minimum service",
           "occupant_ids": [
             "service:punchline_two_drink_minimum"
           ],
@@ -13333,7 +13219,7 @@
             252.0
           ],
           "footprint_class": "floor_fixture",
-          "physical_role": "Floor prop",
+          "physical_role": "Comedy-club stage",
           "occupant_ids": [
             "environment_layer:ambient"
           ],
@@ -13364,7 +13250,7 @@
             194.0
           ],
           "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
+          "physical_role": "Numbers book",
           "occupant_ids": [
             "numbers:book"
           ],
@@ -14878,7 +14764,7 @@
             358.0
           ],
           "footprint_class": "floor_fixture",
-          "physical_role": "Game fixture",
+          "physical_role": "Random game table",
           "occupant_ids": [],
           "runtime_reserve": false,
           "reserve_reason": "",
@@ -14907,7 +14793,7 @@
             70.0
           ],
           "footprint_class": "floor_fixture",
-          "physical_role": "Game fixture",
+          "physical_role": "Random game table",
           "occupant_ids": [],
           "runtime_reserve": false,
           "reserve_reason": "",
@@ -14967,7 +14853,7 @@
             358.0
           ],
           "footprint_class": "group",
-          "physical_role": "Group",
+          "physical_role": "Lender group",
           "occupant_ids": [],
           "runtime_reserve": false,
           "reserve_reason": "",
@@ -14998,7 +14884,7 @@
             160.0
           ],
           "footprint_class": "doorway",
-          "physical_role": "Doorway / exit",
+          "physical_role": "Side door",
           "occupant_ids": [
             "event:side_door"
           ],
@@ -15031,7 +14917,7 @@
             222.0
           ],
           "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
+          "physical_role": "House drink service",
           "occupant_ids": [
             "service:house_drink"
           ],
@@ -15064,7 +14950,7 @@
             142.0
           ],
           "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
+          "physical_role": "Numbers book",
           "occupant_ids": [
             "numbers:book"
           ],
@@ -15500,37 +15386,6 @@
           "zone_id": "left",
           "support_id": "left_table",
           "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
-          "id": "scenario.group_1",
-          "kind": "scenario",
-          "pos": [
-            274.0,
-            166.0
-          ],
-          "footprint_class": "group",
-          "physical_role": "Group",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            238.0,
-            118.0,
-            72.0,
-            48.0
-          ],
-          "label_anchor": [
-            273.0,
-            114.0
-          ],
-          "facing": "front",
-          "priority": 10,
-          "zone_id": "left",
-          "support_id": "stage",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
           "occupancy_required": false
         },
         {
@@ -16316,7 +16171,7 @@
             151.0
           ],
           "footprint_class": "surface_item",
-          "physical_role": "Game fixture",
+          "physical_role": "Crew draw-poker table",
           "occupant_ids": [
             "game:crew_draw_poker"
           ],
@@ -16347,7 +16202,7 @@
             151.0
           ],
           "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
+          "physical_role": "Crew planning table",
           "occupant_ids": [
             "event:crew_planning_table"
           ],
@@ -16378,7 +16233,7 @@
             184.0
           ],
           "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
+          "physical_role": "Numbers desk",
           "occupant_ids": [
             "event:numbers_desk"
           ],
@@ -16409,7 +16264,7 @@
             54.0
           ],
           "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
+          "physical_role": "Crew job board",
           "occupant_ids": [
             "event:crew_job_board"
           ],
@@ -16440,7 +16295,7 @@
             62.0
           ],
           "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
+          "physical_role": "Mags' bench",
           "occupant_ids": [
             "event:crew_mags_bench"
           ],
@@ -16471,7 +16326,7 @@
             358.0
           ],
           "footprint_class": "floor_fixture",
-          "physical_role": "Floor prop",
+          "physical_role": "Crew practice rig",
           "occupant_ids": [
             "event:crew_practice_rig"
           ],
@@ -16502,7 +16357,7 @@
             106.0
           ],
           "footprint_class": "doorway",
-          "physical_role": "Doorway / exit",
+          "physical_role": "Rook's ride",
           "occupant_ids": [
             "event:crew_rook_ride"
           ],
@@ -16535,7 +16390,7 @@
             358.0
           ],
           "footprint_class": "standing_person",
-          "physical_role": "Standing person",
+          "physical_role": "Rook",
           "occupant_ids": [
             "environment_layer:ambient"
           ],
@@ -16916,35 +16771,6 @@
         }
       ],
       "scenario_slots": [
-        {
-          "id": "scenario.surface_item_1",
-          "kind": "scenario",
-          "pos": [
-            450.0,
-            151.0
-          ],
-          "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            414.0,
-            103.0,
-            72.0,
-            48.0
-          ],
-          "label_anchor": [
-            450.0,
-            97.0
-          ],
-          "facing": "none",
-          "priority": 10,
-          "zone_id": "room",
-          "support_id": "planning_table",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
         {
           "id": "scenario.floor_fixture_1",
           "kind": "scenario",
@@ -19857,7 +19683,7 @@
             230.0
           ],
           "footprint_class": "behind_counter_person",
-          "physical_role": "Counter staff",
+          "physical_role": "Merchant",
           "occupant_ids": [
             "shopkeeper:merchant"
           ],
@@ -19890,7 +19716,7 @@
             358.0
           ],
           "footprint_class": "floor_fixture",
-          "physical_role": "Game fixture",
+          "physical_role": "Random game fixture",
           "occupant_ids": [],
           "runtime_reserve": false,
           "reserve_reason": "",
@@ -19952,7 +19778,7 @@
             174.0
           ],
           "footprint_class": "surface_item",
-          "physical_role": "Game fixture",
+          "physical_role": "Random game fixture",
           "occupant_ids": [],
           "runtime_reserve": false,
           "reserve_reason": "",
@@ -19981,7 +19807,7 @@
             196.0
           ],
           "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
+          "physical_role": "Grand Casino invitation",
           "occupant_ids": [
             "event:grand_casino_invite"
           ],
@@ -20012,7 +19838,7 @@
             122.0
           ],
           "footprint_class": "surface_item",
-          "physical_role": "Game fixture",
+          "physical_role": "Random game fixture",
           "occupant_ids": [],
           "runtime_reserve": false,
           "reserve_reason": "",
@@ -20099,7 +19925,7 @@
             242.0
           ],
           "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
+          "physical_role": "Champagne service",
           "occupant_ids": [
             "service:kitty_champagne"
           ],
@@ -20130,7 +19956,7 @@
             264.0
           ],
           "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
+          "physical_role": "House drink service",
           "occupant_ids": [
             "service:house_drink"
           ],
@@ -21142,7 +20968,9 @@
         "delta_queen_fog_delay_gangway_shutter": "wall_mounted",
         "delta_queen_fog_delay_work_1_choice_0": "wall_mounted",
         "delta_queen_fog_delay_work_1_choice_1": "wall_mounted",
-        "delta_queen_fog_delay_work_1_choice_2": "wall_mounted"
+        "delta_queen_fog_delay_work_1_choice_2": "wall_mounted",
+        "event:chain06_cass_first_contact": "standing_person",
+        "event:chain06_dave_same_bus": "standing_person"
       },
       "class_default_contacts": {
         "standing_person": [
@@ -21203,10 +21031,6 @@
           0,
           98
         ],
-        "event:rowdy_regular": [
-          314,
-          270
-        ],
         "shopkeeper:merchant": [
           400,
           90
@@ -21250,14 +21074,6 @@
         "event:side_door": [
           840,
           100
-        ],
-        "event:chain06_cass_first_contact": [
-          250,
-          166
-        ],
-        "event:chain06_dave_same_bus": [
-          210,
-          270
         ],
         "item:payment_calendar": [
           100,
@@ -21872,7 +21688,6 @@
           "class_overrides": {
             "delta_queen_wedding_charter_ceremony_rope": "wall_mounted",
             "delta_queen_wedding_charter_safe_exit": "doorway",
-            "event:rowdy_regular": "standing_person",
             "game:blackjack": "floor_fixture",
             "lender:the_crew": "seated_person",
             "service:house_drink": "surface_item",
@@ -21894,10 +21709,6 @@
             "event:town_rumor_staff": [
               100,
               198
-            ],
-            "event:rowdy_regular": [
-              350,
-              350
             ],
             "shopkeeper:merchant": [
               400,
@@ -22664,7 +22475,7 @@
             250.0
           ],
           "footprint_class": "behind_counter_person",
-          "physical_role": "Counter staff",
+          "physical_role": "Merchant",
           "occupant_ids": [
             "shopkeeper:merchant"
           ],
@@ -22697,7 +22508,7 @@
             346.0
           ],
           "footprint_class": "floor_fixture",
-          "physical_role": "Game fixture",
+          "physical_role": "Blackjack table",
           "occupant_ids": [
             "game:blackjack"
           ],
@@ -22728,7 +22539,7 @@
             346.0
           ],
           "footprint_class": "floor_fixture",
-          "physical_role": "Game fixture",
+          "physical_role": "Video poker machine",
           "occupant_ids": [
             "game:video_poker"
           ],
@@ -22822,7 +22633,7 @@
             150.0
           ],
           "footprint_class": "surface_item",
-          "physical_role": "Game fixture",
+          "physical_role": "Roulette table",
           "occupant_ids": [
             "game:roulette"
           ],
@@ -22853,7 +22664,7 @@
             24.0
           ],
           "footprint_class": "wall_mounted",
-          "physical_role": "Wall item",
+          "physical_role": "Grand Casino invitation",
           "occupant_ids": [
             "event:grand_casino_invite"
           ],
@@ -22942,7 +22753,7 @@
             430.0
           ],
           "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
+          "physical_role": "House drink service",
           "occupant_ids": [
             "service:house_drink"
           ],
@@ -22976,7 +22787,9 @@
           ],
           "footprint_class": "seated_person",
           "physical_role": "Seated person",
-          "occupant_ids": [],
+          "occupant_ids": [
+            "event:rowdy_regular"
+          ],
           "runtime_reserve": true,
           "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
           "hit_rect": [
@@ -23123,68 +22936,6 @@
           "occupancy_required": false
         },
         {
-          "id": "event.wall_item_1",
-          "kind": "event",
-          "pos": [
-            618.0,
-            298.0
-          ],
-          "footprint_class": "wall_mounted",
-          "physical_role": "Wall item",
-          "occupant_ids": [
-            "event:chain06_cass_first_contact"
-          ],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            582.0,
-            258.0,
-            72.0,
-            80.0
-          ],
-          "label_anchor": [
-            618.0,
-            226.0
-          ],
-          "facing": "none",
-          "priority": 10,
-          "zone_id": "room",
-          "support_id": "round3_calendar_mount",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
-          "id": "event.surface_item_1",
-          "kind": "event",
-          "pos": [
-            304.0,
-            162.0
-          ],
-          "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
-          "occupant_ids": [
-            "event:chain06_dave_same_bus"
-          ],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            268.0,
-            114.0,
-            72.0,
-            48.0
-          ],
-          "label_anchor": [
-            333.0,
-            214.0
-          ],
-          "facing": "none",
-          "priority": 30,
-          "zone_id": "room",
-          "support_id": "scoreboard_ledge",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
           "id": "event.standing_person_1",
           "kind": "event",
           "pos": [
@@ -23194,7 +22945,7 @@
           "footprint_class": "standing_person",
           "physical_role": "Standing person",
           "occupant_ids": [
-            "event:rowdy_regular"
+            "event:chain06_cass_first_contact"
           ],
           "runtime_reserve": false,
           "reserve_reason": "",
@@ -23226,7 +22977,9 @@
           ],
           "footprint_class": "standing_person",
           "physical_role": "Standing person",
-          "occupant_ids": [],
+          "occupant_ids": [
+            "event:chain06_dave_same_bus"
+          ],
           "runtime_reserve": true,
           "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
           "hit_rect": [
@@ -23983,11 +23736,11 @@
         "service:house_drink": "fixed.service_house_drink"
       },
       "event_object_slot_ids": {
-        "event:chain06_cass_first_contact": "event.wall_item_1",
         "event:town_rumor_staff": "event.behind_counter_person_1",
-        "event:chain06_dave_same_bus": "event.surface_item_1",
         "event:side_door": "event.doorway_1",
-        "event:rowdy_regular": "event.standing_person_1"
+        "event:chain06_cass_first_contact": "event.standing_person_1",
+        "event:chain06_dave_same_bus": "event.standing_person_2",
+        "event:rowdy_regular": "event.seated_person_1"
       },
       "scenario_object_slot_ids": {
         "event:scenario_wedding_best_man": "scenario.wall_item_1",
@@ -24500,7 +24253,7 @@
             406.0
           ],
           "footprint_class": "floor_fixture",
-          "physical_role": "Floor prop",
+          "physical_role": "Beach sand pile",
           "occupant_ids": [
             "service:beach_sand_pile"
           ],
@@ -24531,7 +24284,7 @@
             180.0
           ],
           "footprint_class": "floor_fixture",
-          "physical_role": "Game fixture",
+          "physical_role": "Slot machine",
           "occupant_ids": [],
           "runtime_reserve": false,
           "reserve_reason": "",
@@ -24553,7 +24306,39 @@
           "occupancy_required": false
         }
       ],
-      "event_slots": [],
+      "event_slots": [
+        {
+          "id": "event.standing_person_1",
+          "kind": "event",
+          "pos": [
+            788.0,
+            406.0
+          ],
+          "footprint_class": "standing_person",
+          "physical_role": "Delivery handoff contact",
+          "occupant_ids": [],
+          "runtime_reserve": true,
+          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "hit_rect": [
+            752.0,
+            326.0,
+            72.0,
+            80.0
+          ],
+          "label_anchor": [
+            788.0,
+            320.0
+          ],
+          "facing": "right",
+          "priority": 10,
+          "zone_id": "foreground",
+          "support_id": "floor",
+          "walk_lane_ids": [
+            "lane.public"
+          ],
+          "occupancy_required": false
+        }
+      ],
       "scenario_slots": [
         {
           "id": "scenario.behind_counter_person_1",
@@ -25097,37 +24882,6 @@
             "lane.public"
           ],
           "occupancy_required": false
-        },
-        {
-          "id": "scenario.behind_counter_person_2",
-          "kind": "scenario",
-          "pos": [
-            130.0,
-            214.0
-          ],
-          "footprint_class": "behind_counter_person",
-          "physical_role": "Counter staff",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            94.0,
-            142.0,
-            72.0,
-            72.0
-          ],
-          "label_anchor": [
-            130.0,
-            132.0
-          ],
-          "facing": "right",
-          "priority": 10,
-          "zone_id": "left",
-          "support_id": "towel",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
         }
       ],
       "exit_slots": [
@@ -25199,10 +24953,6 @@
           326,
           122
         ],
-        "shopkeeper:merchant": [
-          738,
-          114
-        ],
         "event:chain06_sal_estate_item": [
           54,
           40
@@ -25226,10 +24976,6 @@
         "game:slot": [
           16,
           286
-        ],
-        "lender:sals_pawn_counter": [
-          174,
-          126
         ],
         "travel:leave": [
           0,
@@ -25377,7 +25123,7 @@
         "event:chatty_clerk": "standing_person",
         "event:town_rumor_staff": "standing_person",
         "game:slot": "floor_fixture",
-        "lender:sals_pawn_counter": "standing_person"
+        "private_appraisal": "surface_item"
       },
       "scenario_reserved_surfaces": [
         "scenario_serial_rail",
@@ -25720,7 +25466,6 @@
           "footprint_class": "behind_counter_person",
           "physical_role": "Sal",
           "occupant_ids": [
-            "meta_pawn_counter:sell",
             "pawn_shop:sal",
             "staff:pawn_counter_sal"
           ],
@@ -25746,72 +25491,6 @@
           "occupancy_required": true
         },
         {
-          "id": "fixed.staff_merchant",
-          "kind": "fixed",
-          "pos": [
-            772.0,
-            188.0
-          ],
-          "footprint_class": "behind_counter_person",
-          "physical_role": "Counter staff",
-          "occupant_ids": [
-            "shopkeeper:merchant"
-          ],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            736.0,
-            116.0,
-            72.0,
-            72.0
-          ],
-          "label_anchor": [
-            772.0,
-            112.0
-          ],
-          "facing": "left",
-          "priority": 10,
-          "zone_id": "right",
-          "support_id": "estate_right_lower_shelf",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
-        },
-        {
-          "id": "fixed.lender_sals_pawn_counter",
-          "kind": "fixed",
-          "pos": [
-            36.0,
-            398.0
-          ],
-          "footprint_class": "standing_person",
-          "physical_role": "Standing person",
-          "occupant_ids": [
-            "lender:sals_pawn_counter"
-          ],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            4.0,
-            326.0,
-            64.0,
-            72.0
-          ],
-          "label_anchor": [
-            36.0,
-            390.0
-          ],
-          "facing": "right",
-          "priority": 10,
-          "zone_id": "room",
-          "support_id": "stage",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
-        },
-        {
           "id": "fixed.game_slot",
           "kind": "fixed",
           "pos": [
@@ -25819,7 +25498,7 @@
             358.0
           ],
           "footprint_class": "floor_fixture",
-          "physical_role": "Game fixture",
+          "physical_role": "Slot machine",
           "occupant_ids": [
             "game:slot"
           ],
@@ -26600,15 +26279,12 @@
       ],
       "fixed_object_slot_ids": {
         "game:slot": "fixed.game_slot",
-        "lender:sals_pawn_counter": "fixed.lender_sals_pawn_counter",
-        "meta_pawn_counter:sell": "fixed.staff_pawn_counter",
         "meta_sal_shelf:0": "fixed.item_shop_1",
         "meta_sal_shelf:1": "fixed.item_shop_2",
         "meta_sal_shelf:2": "fixed.item_shop_3",
         "meta_sal_shelf:3": "fixed.item_shop_4",
         "meta_sal_shelf:4": "fixed.item_shop_5",
         "meta_sal_shelf:5": "fixed.item_shop_6",
-        "shopkeeper:merchant": "fixed.staff_merchant",
         "staff:pawn_counter_sal": "fixed.staff_pawn_counter"
       },
       "event_object_slot_ids": {
@@ -26625,8 +26301,6 @@
       },
       "fixed_category_slot_ids": {
         "game_spots:0": "fixed.game_slot",
-        "lender_spots:0": "fixed.lender_sals_pawn_counter",
-        "pawn_counter_spots:0": "fixed.staff_pawn_counter",
         "item_spots:0": "fixed.item_shop_1",
         "item_spots:1": "fixed.item_shop_2",
         "item_spots:2": "fixed.item_shop_3",
@@ -26656,17 +26330,18 @@
         "item:sal_shelf_4": "fixed",
         "item:sal_shelf_5": "fixed",
         "item:xray_glasses": "fixed",
-        "lender:sals_pawn_counter": "fixed",
-        "meta_pawn_counter:sell": "fixed",
         "meta_sal_shelf:0": "fixed",
         "meta_sal_shelf:1": "fixed",
         "meta_sal_shelf:2": "fixed",
         "meta_sal_shelf:3": "fixed",
         "meta_sal_shelf:4": "fixed",
         "meta_sal_shelf:5": "fixed",
-        "shopkeeper:merchant": "fixed",
         "staff:pawn_counter_sal": "fixed",
-        "travel:leave": "exit"
+        "travel:leave": "exit",
+        "shopkeeper:merchant": "fixed",
+        "lender:sals_pawn_counter": "fixed",
+        "meta_pawn_counter:sell": "fixed",
+        "meta_sal:talk": "fixed"
       },
       "fixed_objects": [
         {
@@ -26679,7 +26354,12 @@
           "placement_class": "behind_counter_person",
           "exact_slot_id": "fixed.staff_pawn_counter",
           "required": true,
-          "action_ids": []
+          "action_ids": [
+            "shopkeeper:merchant",
+            "lender:sals_pawn_counter",
+            "meta_pawn_counter:sell",
+            "meta_sal:talk"
+          ]
         }
       ]
     },
@@ -27583,7 +27263,7 @@
             118.0
           ],
           "footprint_class": "wall_mounted",
-          "physical_role": "Game fixture",
+          "physical_role": "Random game machine",
           "occupant_ids": [],
           "runtime_reserve": false,
           "reserve_reason": "",
@@ -27612,7 +27292,7 @@
             118.0
           ],
           "footprint_class": "wall_mounted",
-          "physical_role": "Game fixture",
+          "physical_role": "Random game machine",
           "occupant_ids": [],
           "runtime_reserve": false,
           "reserve_reason": "",
@@ -27641,7 +27321,7 @@
             118.0
           ],
           "footprint_class": "wall_mounted",
-          "physical_role": "Game fixture",
+          "physical_role": "Random game machine",
           "occupant_ids": [],
           "runtime_reserve": false,
           "reserve_reason": "",
@@ -27670,7 +27350,7 @@
             118.0
           ],
           "footprint_class": "wall_mounted",
-          "physical_role": "Game fixture",
+          "physical_role": "Random game machine",
           "occupant_ids": [],
           "runtime_reserve": false,
           "reserve_reason": "",
@@ -27699,7 +27379,7 @@
             258.0
           ],
           "footprint_class": "surface_item",
-          "physical_role": "Game fixture",
+          "physical_role": "Random game table",
           "occupant_ids": [],
           "runtime_reserve": false,
           "reserve_reason": "",
@@ -27728,7 +27408,7 @@
             258.0
           ],
           "footprint_class": "surface_item",
-          "physical_role": "Game fixture",
+          "physical_role": "Random game table",
           "occupant_ids": [],
           "runtime_reserve": false,
           "reserve_reason": "",
@@ -27757,7 +27437,7 @@
             366.0
           ],
           "footprint_class": "floor_fixture",
-          "physical_role": "Floor prop",
+          "physical_role": "Casino host desk",
           "occupant_ids": [
             "casino_fixture:host_desk"
           ],
@@ -27788,7 +27468,7 @@
             424.0
           ],
           "footprint_class": "standing_person",
-          "physical_role": "Standing person",
+          "physical_role": "Bishop",
           "occupant_ids": [
             "event:recruitment_bishop"
           ],
@@ -27821,7 +27501,7 @@
             222.0
           ],
           "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
+          "physical_role": "House drink service",
           "occupant_ids": [
             "service:house_drink"
           ],
@@ -28905,7 +28585,6 @@
         "event:the_house_calls": "event",
         "service:house_drink": "fixed",
         "staff:grand_casino_host": "fixed",
-        "event:town_rumor_staff": "fixed",
         "event:heist_live_table": "scenario",
         "game:pull_tabs": "fixed",
         "game_hook:pull_tabs:ticket_redeemer": "fixed",
@@ -28913,7 +28592,8 @@
         "travel:grand_casino_back_room": "exit",
         "travel:grand_casino_cage": "exit",
         "travel:grand_casino_high_limit": "exit",
-        "travel:leave": "exit"
+        "travel:leave": "exit",
+        "event:town_rumor_staff": "fixed"
       },
       "fixed_objects": [
         {
@@ -29127,7 +28807,7 @@
             258.0
           ],
           "footprint_class": "surface_item",
-          "physical_role": "Game fixture",
+          "physical_role": "Random game table",
           "occupant_ids": [],
           "runtime_reserve": false,
           "reserve_reason": "",
@@ -29156,7 +28836,7 @@
             258.0
           ],
           "footprint_class": "surface_item",
-          "physical_role": "Game fixture",
+          "physical_role": "Random game table",
           "occupant_ids": [],
           "runtime_reserve": false,
           "reserve_reason": "",
@@ -29185,7 +28865,7 @@
             258.0
           ],
           "footprint_class": "surface_item",
-          "physical_role": "Game fixture",
+          "physical_role": "Random game table",
           "occupant_ids": [],
           "runtime_reserve": false,
           "reserve_reason": "",
@@ -29214,7 +28894,7 @@
             258.0
           ],
           "footprint_class": "surface_item",
-          "physical_role": "Game fixture",
+          "physical_role": "Random game table",
           "occupant_ids": [],
           "runtime_reserve": false,
           "reserve_reason": "",
@@ -29867,7 +29547,7 @@
             258.0
           ],
           "footprint_class": "surface_item",
-          "physical_role": "Game fixture",
+          "physical_role": "Random game table",
           "occupant_ids": [],
           "runtime_reserve": false,
           "reserve_reason": "",
@@ -29896,7 +29576,7 @@
             258.0
           ],
           "footprint_class": "surface_item",
-          "physical_role": "Game fixture",
+          "physical_role": "Random game table",
           "occupant_ids": [],
           "runtime_reserve": false,
           "reserve_reason": "",
@@ -30541,14 +30221,14 @@
           "occupancy_required": false
         },
         {
-          "id": "fixed.fixture_cage_1",
+          "id": "fixed.fixture_cage_counter",
           "kind": "fixed",
           "pos": [
             500.0,
             260.0
           ],
           "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
+          "physical_role": "Cashier cage counter",
           "occupant_ids": [
             "casino_fixture:cage_counter"
           ],
@@ -30572,14 +30252,14 @@
           "occupancy_required": false
         },
         {
-          "id": "fixed.fixture_cage_2",
+          "id": "fixed.fixture_cage_atm",
           "kind": "fixed",
           "pos": [
             720.0,
             203.0
           ],
           "footprint_class": "wall_mounted",
-          "physical_role": "Wall item",
+          "physical_role": "Cage ATM",
           "occupant_ids": [
             "casino_fixture:cage_atm"
           ],
@@ -30637,35 +30317,6 @@
       ],
       "event_slots": [],
       "scenario_slots": [
-        {
-          "id": "scenario.surface_item_1",
-          "kind": "scenario",
-          "pos": [
-            386.0,
-            260.0
-          ],
-          "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            364.0,
-            216.0,
-            44.0,
-            44.0
-          ],
-          "label_anchor": [
-            386.0,
-            194.0
-          ],
-          "facing": "none",
-          "priority": 10,
-          "zone_id": "room",
-          "support_id": "teller_counter",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
         {
           "id": "scenario.floor_fixture_1",
           "kind": "scenario",
@@ -30854,8 +30505,8 @@
         }
       ],
       "fixed_object_slot_ids": {
-        "casino_fixture:cage_atm": "fixed.fixture_cage_2",
-        "casino_fixture:cage_counter": "fixed.fixture_cage_1",
+        "casino_fixture:cage_atm": "fixed.fixture_cage_atm",
+        "casino_fixture:cage_counter": "fixed.fixture_cage_counter",
         "staff:grand_casino_linda": "fixed.staff_linda"
       },
       "event_object_slot_ids": {},
@@ -30865,8 +30516,8 @@
         "travel:leave": "exit.travel_floor_door"
       },
       "fixed_category_slot_ids": {
-        "casino_fixture_spots:0": "fixed.fixture_cage_1",
-        "casino_fixture_spots:1": "fixed.fixture_cage_2",
+        "casino_fixture_spots:0": "fixed.fixture_cage_counter",
+        "casino_fixture_spots:1": "fixed.fixture_cage_atm",
         "item_spots:0": "fixed.item_shop_1",
         "item_spots:1": "fixed.item_shop_2",
         "item_spots:2": "fixed.item_shop_3",
@@ -31048,7 +30699,7 @@
             358.0
           ],
           "footprint_class": "floor_fixture",
-          "physical_role": "Floor prop",
+          "physical_role": "Home container 1",
           "occupant_ids": [
             "home_container:meta_bag_01"
           ],
@@ -31079,7 +30730,7 @@
             358.0
           ],
           "footprint_class": "floor_fixture",
-          "physical_role": "Floor prop",
+          "physical_role": "Home container 2",
           "occupant_ids": [
             "home_container:meta_trunk_02"
           ],
@@ -31110,7 +30761,7 @@
             358.0
           ],
           "footprint_class": "floor_fixture",
-          "physical_role": "Floor prop",
+          "physical_role": "Home container 3",
           "occupant_ids": [
             "home_container:trunk_01"
           ],
@@ -31141,7 +30792,7 @@
             294.0
           ],
           "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
+          "physical_role": "Home trade-up station",
           "occupant_ids": [
             "meta_trade_up:station"
           ],
@@ -31172,7 +30823,7 @@
             188.0
           ],
           "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
+          "physical_role": "Home tenure status",
           "occupant_ids": [
             "home_tenure:status"
           ],
@@ -31203,7 +30854,7 @@
             218.0
           ],
           "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
+          "physical_role": "Bed and sleep control",
           "occupant_ids": [
             "home_sleep:bed"
           ],
@@ -31234,7 +30885,7 @@
             294.0
           ],
           "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
+          "physical_role": "Home item 1",
           "occupant_ids": [],
           "runtime_reserve": false,
           "reserve_reason": "",
@@ -31263,7 +30914,7 @@
             294.0
           ],
           "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
+          "physical_role": "Home item 2",
           "occupant_ids": [],
           "runtime_reserve": false,
           "reserve_reason": "",
@@ -31292,7 +30943,7 @@
             294.0
           ],
           "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
+          "physical_role": "Home item 3",
           "occupant_ids": [],
           "runtime_reserve": false,
           "reserve_reason": "",
@@ -31321,7 +30972,7 @@
             72.0
           ],
           "footprint_class": "wall_mounted",
-          "physical_role": "Wall item",
+          "physical_role": "Home upgrade board",
           "occupant_ids": [
             "meta_upgrade:home"
           ],
@@ -31352,7 +31003,7 @@
             358.0
           ],
           "footprint_class": "floor_fixture",
-          "physical_role": "Floor prop",
+          "physical_role": "Home storage",
           "occupant_ids": [
             "home_storage:place"
           ],
@@ -31404,35 +31055,6 @@
           "priority": 10,
           "zone_id": "room",
           "support_id": "floor",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
-          "id": "scenario.surface_item_1",
-          "kind": "scenario",
-          "pos": [
-            420.0,
-            294.0
-          ],
-          "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            384.0,
-            246.0,
-            72.0,
-            48.0
-          ],
-          "label_anchor": [
-            420.0,
-            240.0
-          ],
-          "facing": "none",
-          "priority": 10,
-          "zone_id": "room",
-          "support_id": "rug",
           "walk_lane_ids": [],
           "occupancy_required": false
         },
@@ -31760,7 +31382,7 @@
             304.0
           ],
           "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
+          "physical_role": "Home trade-up station",
           "occupant_ids": [
             "meta_trade_up:station"
           ],
@@ -31791,7 +31413,7 @@
             146.0
           ],
           "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
+          "physical_role": "Home tenure status",
           "occupant_ids": [
             "home_tenure:status"
           ],
@@ -31822,7 +31444,7 @@
             222.0
           ],
           "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
+          "physical_role": "Bed and sleep control",
           "occupant_ids": [
             "home_sleep:bed"
           ],
@@ -31853,7 +31475,7 @@
             304.0
           ],
           "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
+          "physical_role": "Home item 1",
           "occupant_ids": [],
           "runtime_reserve": false,
           "reserve_reason": "",
@@ -31882,7 +31504,7 @@
             304.0
           ],
           "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
+          "physical_role": "Home item 2",
           "occupant_ids": [],
           "runtime_reserve": false,
           "reserve_reason": "",
@@ -31911,7 +31533,7 @@
             304.0
           ],
           "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
+          "physical_role": "Home item 3",
           "occupant_ids": [],
           "runtime_reserve": false,
           "reserve_reason": "",
@@ -31940,7 +31562,7 @@
             358.0
           ],
           "footprint_class": "floor_fixture",
-          "physical_role": "Floor prop",
+          "physical_role": "Home container 1",
           "occupant_ids": [
             "home_container:meta_bag_01"
           ],
@@ -31971,7 +31593,7 @@
             358.0
           ],
           "footprint_class": "floor_fixture",
-          "physical_role": "Floor prop",
+          "physical_role": "Home container 2",
           "occupant_ids": [
             "home_container:meta_trunk_02"
           ],
@@ -32002,7 +31624,7 @@
             358.0
           ],
           "footprint_class": "floor_fixture",
-          "physical_role": "Floor prop",
+          "physical_role": "Home container 3",
           "occupant_ids": [
             "home_container:trunk_01"
           ],
@@ -32033,7 +31655,7 @@
             24.0
           ],
           "footprint_class": "wall_mounted",
-          "physical_role": "Wall item",
+          "physical_role": "Home upgrade board",
           "occupant_ids": [
             "meta_upgrade:home"
           ],
@@ -32064,7 +31686,7 @@
             358.0
           ],
           "footprint_class": "floor_fixture",
-          "physical_role": "Floor prop",
+          "physical_role": "Home storage",
           "occupant_ids": [
             "home_storage:place"
           ],
@@ -32090,35 +31712,6 @@
       ],
       "event_slots": [],
       "scenario_slots": [
-        {
-          "id": "scenario.surface_item_1",
-          "kind": "scenario",
-          "pos": [
-            394.0,
-            304.0
-          ],
-          "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            358.0,
-            256.0,
-            72.0,
-            48.0
-          ],
-          "label_anchor": [
-            394.0,
-            250.0
-          ],
-          "facing": "none",
-          "priority": 10,
-          "zone_id": "room",
-          "support_id": "rug",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
         {
           "id": "scenario.floor_fixture_1",
           "kind": "scenario",
@@ -32503,7 +32096,7 @@
             358.0
           ],
           "footprint_class": "floor_fixture",
-          "physical_role": "Floor prop",
+          "physical_role": "Home container 1",
           "occupant_ids": [
             "home_container:meta_bag_01"
           ],
@@ -32534,7 +32127,7 @@
             358.0
           ],
           "footprint_class": "floor_fixture",
-          "physical_role": "Floor prop",
+          "physical_role": "Home container 2",
           "occupant_ids": [
             "home_container:meta_trunk_02"
           ],
@@ -32565,7 +32158,7 @@
             358.0
           ],
           "footprint_class": "floor_fixture",
-          "physical_role": "Floor prop",
+          "physical_role": "Home container 3",
           "occupant_ids": [
             "home_container:trunk_01"
           ],
@@ -32596,7 +32189,7 @@
             224.0
           ],
           "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
+          "physical_role": "Bed and sleep control",
           "occupant_ids": [
             "home_sleep:bed"
           ],
@@ -32627,7 +32220,7 @@
             160.0
           ],
           "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
+          "physical_role": "Home tenure status",
           "occupant_ids": [
             "home_tenure:status"
           ],
@@ -32658,7 +32251,7 @@
             222.0
           ],
           "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
+          "physical_role": "Home trade-up station",
           "occupant_ids": [
             "meta_trade_up:station"
           ],
@@ -32689,7 +32282,7 @@
             296.0
           ],
           "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
+          "physical_role": "Home item 1",
           "occupant_ids": [],
           "runtime_reserve": false,
           "reserve_reason": "",
@@ -32718,7 +32311,7 @@
             296.0
           ],
           "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
+          "physical_role": "Home item 2",
           "occupant_ids": [],
           "runtime_reserve": false,
           "reserve_reason": "",
@@ -32747,7 +32340,7 @@
             296.0
           ],
           "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
+          "physical_role": "Home item 3",
           "occupant_ids": [],
           "runtime_reserve": false,
           "reserve_reason": "",
@@ -32776,7 +32369,7 @@
             120.0
           ],
           "footprint_class": "wall_mounted",
-          "physical_role": "Wall item",
+          "physical_role": "Home upgrade board",
           "occupant_ids": [
             "meta_upgrade:home"
           ],
@@ -32807,7 +32400,7 @@
             358.0
           ],
           "footprint_class": "floor_fixture",
-          "physical_role": "Floor prop",
+          "physical_role": "Home storage",
           "occupant_ids": [
             "home_storage:place"
           ],
@@ -32859,35 +32452,6 @@
           "priority": 10,
           "zone_id": "room",
           "support_id": "floor",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
-          "id": "scenario.surface_item_1",
-          "kind": "scenario",
-          "pos": [
-            660.0,
-            296.0
-          ],
-          "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            624.0,
-            248.0,
-            72.0,
-            48.0
-          ],
-          "label_anchor": [
-            660.0,
-            242.0
-          ],
-          "facing": "none",
-          "priority": 10,
-          "zone_id": "room",
-          "support_id": "rug",
           "walk_lane_ids": [],
           "occupancy_required": false
         },

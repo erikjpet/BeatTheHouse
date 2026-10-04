@@ -270,6 +270,21 @@ static func _with_scenario_instance_layout(map_key: String, scenario_id: String,
 	result["scenario_slots"] = authored_slots
 	result["scenario_instance_slot_ids"] = _dict(layout.get("scenario_instance_slot_ids", {})).duplicate(true)
 	result["scenario_instance_object_slot_ids"] = _dict(layout.get("scenario_instance_object_slot_ids", {})).duplicate(true)
+	var scenario_object_class_ids := _dict(layout.get("scenario_instance_object_class_ids", {})).duplicate(true)
+	result["scenario_instance_object_class_ids"] = scenario_object_class_ids
+	# Exact scenario objects seal their footprint as well as their slot. This
+	# supersedes legacy map/scenario heuristics (for example, a saved party table
+	# that used to be classified as a wall marker) without weakening validation
+	# for any object that is not part of the exact layout.
+	var class_overrides := _dict(result.get("class_overrides", {})).duplicate(true)
+	class_overrides.merge(scenario_object_class_ids, true)
+	result["class_overrides"] = class_overrides
+	var scenario_instance_art_keys := _dict(layout.get("scenario_instance_art_keys", {})).duplicate(true)
+	# Exact layouts seal both geometry and the concrete renderer for every
+	# scenario-owned prop. Position keys remain separate because one stable object
+	# can present different tangible states in different phases.
+	result["scenario_instance_art_keys"] = scenario_instance_art_keys
+	result["scenario_instance_action_host_ids"] = _dict(layout.get("scenario_instance_action_host_ids", {})).duplicate(true)
 	var scenario_family_ids := _dict(layout.get("scenario_instance_object_family_ids", {}))
 	var object_family_ids := _dict(result.get("object_family_ids", {})).duplicate(true)
 	object_family_ids.merge(scenario_family_ids, true)

@@ -1,6 +1,6 @@
 # Current Game State
 
-Last product verification: 2026-10-03 against the `v0.6.0-pre.3` candidate
+Last product verification: 2026-10-04 against the `v0.6.0-pre.3` candidate
 tree.
 
 Status: **PLAYABLE 0.6 TESTING PRERELEASE / OWNER PLACEMENT PASS PENDING.**
@@ -106,17 +106,18 @@ The placement rework's source and runtime checks are green:
 - 21 source maps validate with four closed slot families and no dangling
   mapping, duplicate map-local ID, duplicate exact rectangle, or provable
   fixed/exit orphan;
-- the audited raw/template census is 579 positions (175 fixed, 147 event, 222
-  scenario-source, 35 exit), yielding 401 reachable shared positions plus 339
-  exact scenario positions for 740 unique manual entries;
+- the audited raw/template census is 565 positions (175 fixed, 144 event, 213
+  scenario-source, 33 exit), yielding 395 reachable shared positions plus 604
+  exact scenario positions for 999 unique manual entries;
 - 20 reachable base layouts plus 55 exact scenario layouts produce the complete
   75-context owner checklist; the raw Punchline parent remains source-only;
-- 55 exact scenario layouts contain 339 independently movable scenario slots;
+- 55 exact scenario layouts contain 604 independently movable scenario slots;
 - an independent deep sweep generated 1,200 layouts (16 seeds per context)
   with zero binding failures or occupied hit-rectangle intersections;
-- the permanent regression repeats all 75 contexts over six deterministic
-  seeds, validates sealed and recomputed bindings for 4,509 live room objects,
-  and rejects duplicate occupancy, missing authority, or overlap;
+- the permanent static regression validates 4,627 live physical bindings plus
+  825 attached/nonphysical bindings over 767 reachable snapshots and rejects
+  nonphysical fallbacks, overflow,
+  duplicate occupancy, missing authority, or overlap;
 - migration refresh, fresh legacy conversion, both migration ledgers, scenario
   generation, save/export coverage, Environment Library launch, and both
   placement editors pass their focused checks.
@@ -138,9 +139,13 @@ report for promotion into committed coordinates.
 ## Remaining release sequence
 
 1. Complete the 75-context pass in **Settings > Environment Library**, using
-   the saved/missing counter and exact scenario labels.
+   **Load Next Missing**, the SAVED/TODO labels, and the exact scenario layer
+   selection. Base contexts edit room-shared positions; exact scenarios open
+   on their local Scenario tab with shared positions locked by default.
 2. Export `BeatTheHouse_environment_slot_placement_changes.json` from the
-   packaged build and provide it for promotion into project authority.
+   packaged build and provide it for promotion into project authority. The
+   self-contained report includes all effective positions, 75-layout coverage,
+   build/source identity, and placement-authority hashes.
 3. Re-run the placement/runtime gates after promoting those artistic
    coordinates.
 4. Complete the remaining owner playtest and normal-play ending confirmations

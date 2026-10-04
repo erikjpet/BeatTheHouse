@@ -6,6 +6,7 @@ var failures: Array[String] = []
 var signal_order: Array[String] = []
 var locked_request: Dictionary = {}
 var layout_request: Dictionary = {}
+var reset_request_count := 0
 
 
 func _init() -> void:
@@ -18,8 +19,9 @@ func _run() -> void:
 	root.add_child(canvas)
 	await process_frame
 	canvas.developer_placement_lock_requested.connect(_capture_lock)
+	canvas.developer_placement_reset_requested.connect(_capture_reset)
 	canvas.developer_layout_save_requested.connect(_capture_layout)
-	canvas.render_environment_snapshot({
+	var lotto_snapshot := {
 		"archetype_id": "corner_store",
 		"display_name": "Corner Store",
 		"scenario_id": "corner_store_lotto_fever",
@@ -39,7 +41,8 @@ func _run() -> void:
 			"complete": false,
 		},
 		"interactable_objects": [],
-	})
+	}
+	canvas.render_environment_snapshot(lotto_snapshot)
 	canvas.set_developer_slot_placement_mode(true)
 	await process_frame
 
@@ -52,10 +55,53 @@ func _run() -> void:
 	_check(
 		canvas.developer_slot_context_label != null
 			and canvas.developer_slot_context_label.text.contains("corner_store::corner_store_lotto_fever | NOT SAVED")
+			and canvas.developer_slot_context_label.text.contains("SCENARIO-LOCAL editing")
+			and canvas.developer_slot_context_label.text.contains("ROOM-SHARED markers are locked")
 			and canvas.developer_slot_context_label.text.contains("Progress: 12/75 saved | 63 remaining")
 			and canvas.developer_slot_context_label.text.contains("Next missing:"),
 		"Slot placement mode must keep the exact context, saved state, coverage, and next missing layout visible."
 	)
+	_check(
+		canvas.developer_placement_export_button.tooltip_text.contains("complete effective placement authority"),
+		"The in-game export help must describe the self-contained effective placement report."
+	)
+
+	# Visibility choices are temporary to one layout. Load Next Missing must always
+	# reopen a complete review surface and relock shared room geometry.
+	canvas.set_developer_slot_show_empty_capacity(false)
+	canvas.set_developer_slot_show_runtime_reserves(false)
+	canvas.set_developer_slot_edit_shared_in_scenario(true)
+	canvas.render_environment_snapshot({
+		"archetype_id": "corner_store",
+		"display_name": "Corner Store",
+		"scenario_id": "corner_store_dead_shift",
+		"scenario_state": {"id": "corner_store_dead_shift"},
+		"scenario_sequence_state": {
+			"scenario_id": "corner_store_dead_shift",
+			"phase_id": "arrival",
+			"status": "active",
+		},
+		"interactable_objects": [],
+	})
+	var changed_context := canvas.developer_slot_placement_snapshot()
+	_check(
+		bool(changed_context.get("show_empty_capacity", false))
+			and bool(changed_context.get("show_runtime_reserves", false))
+			and not bool(changed_context.get("edit_shared_in_scenario", true)),
+		"Every new layout must restore complete marker visibility and relock ROOM-SHARED positions."
+	)
+	canvas.developer_slot_selected_id = "fixed.item_shop_1"
+	var nudge := InputEventAction.new()
+	nudge.action = "ui_right"
+	nudge.pressed = true
+	canvas.call("_handle_developer_slot_placement_input", nudge)
+	canvas.call("_reset_active_developer_placement")
+	_check(
+		not bool(canvas.developer_slot_placement_snapshot().get("pending", true))
+			and reset_request_count == 0,
+		"Keyboard nudging and Reset must not mutate a locked ROOM-SHARED marker."
+	)
+	canvas.render_environment_snapshot(lotto_snapshot)
 	_apply_maximum_accessibility_fixture(canvas.developer_placement_panel)
 	canvas.call("_update_developer_placement_panel")
 	await process_frame
@@ -108,6 +154,7 @@ func _run() -> void:
 	var moved_slot: Dictionary = canvas.call("_developer_slot", "fixed.item_shop_1")
 	_check(not moved_slot.is_empty(), "The UI fixture requires fixed.item_shop_1.")
 	if not moved_slot.is_empty():
+		canvas.set_developer_slot_edit_shared_in_scenario(true)
 		var original_position: Vector2 = canvas.call("_developer_slot_position", moved_slot)
 		var rect: Rect2 = canvas.call("_developer_slot_rect", moved_slot)
 		var delta := Vector2(12.0, 8.0)
@@ -144,6 +191,10 @@ func _capture_lock(request: Dictionary) -> void:
 func _capture_layout(request: Dictionary) -> void:
 	signal_order.append("layout")
 	layout_request = request.duplicate(true)
+
+
+func _capture_reset(_request: Dictionary) -> void:
+	reset_request_count += 1
 
 
 func _apply_maximum_accessibility_fixture(node: Node) -> void:

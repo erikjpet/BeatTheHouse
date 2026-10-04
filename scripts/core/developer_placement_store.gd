@@ -26,6 +26,7 @@ const SCENARIO_LAYOUTS_PATH := "res://data/environments/scenario_slot_layouts.js
 const BASE_LAYOUT_ID := "__base"
 const PersistencePathsScript := preload("res://scripts/core/persistence_paths.gd")
 const DurableStoreScript := preload("res://scripts/core/durable_store.gd")
+const BuildIdentityScript := preload("res://scripts/core/build_identity.gd")
 const POSITION_FIELDS := ["slot_positions"]
 const SHARED_SLOT_FAMILIES := ["fixed", "event", "exit"]
 
@@ -274,7 +275,8 @@ static func clear_position(environment: Dictionary, field: String, object_id: St
 # Saves the complete visible slot snapshot for one manual-placement context.
 # Shared slot coordinates replace the room snapshot. Scenario coordinates replace
 # only the active scenario snapshot. Unknown legacy/non-slot identities are
-# reported and ignored so they cannot leak into placement authority.
+# rejected so they cannot leak into placement authority or make an incomplete
+# manual pass look complete.
 static func save_layout(
 	environment: Dictionary,
 	full_positions: Dictionary,
@@ -631,6 +633,13 @@ static func coverage_snapshot() -> Dictionary:
 	var missing := missing_base.duplicate()
 	missing.append_array(missing_scenarios)
 	missing.sort()
+	var missing_set := _array_to_set(missing)
+	var next_missing_layout_id := ""
+	for layout_id_value in _manual_pass_layout_order():
+		var ordered_layout_id := str(layout_id_value)
+		if missing_set.has(ordered_layout_id):
+			next_missing_layout_id = ordered_layout_id
+			break
 	var saved_base_count := _expected_saved_count(_expected_base_layout_ids, saved_base)
 	var saved_scenario_count := _expected_saved_count(_expected_scenario_layout_ids, saved_scenarios)
 	return {
@@ -643,19 +652,62 @@ static func coverage_snapshot() -> Dictionary:
 		"missing_base_layout_ids": missing_base,
 		"missing_scenario_layout_ids": missing_scenarios,
 		"missing_layout_ids": missing,
+		"next_missing_layout_id": next_missing_layout_id,
 		"unexpected_layout_ids": unexpected,
 		"complete": missing.is_empty(),
 	}
 
 
+# Interleave each base room with its exact scenarios. This keeps a 75-layout
+# owner pass moving through one environment at a time instead of jumping from
+# all base rooms to an unrelated alphabetic scenario list.
+static func _manual_pass_layout_order() -> Array:
+	var result: Array = []
+	for base_layout_value in _expected_base_layout_ids:
+		var base_layout_id := str(base_layout_value)
+		result.append(base_layout_id)
+		var separator := base_layout_id.rfind("::")
+		var room_prefix := base_layout_id.left(separator + 2) if separator >= 0 else ""
+		for scenario_layout_value in _expected_scenario_layout_ids:
+			var scenario_layout_id := str(scenario_layout_value)
+			if not room_prefix.is_empty() and scenario_layout_id.begins_with(room_prefix):
+				result.append(scenario_layout_id)
+	return result
+
+
 static func export_user_overrides() -> Dictionary:
 	_ensure_loaded()
-	var exported_rooms := _exportable_user_rooms()
+	# The handoff must be self-contained. Export the effective reviewed authority,
+	# not only machine-local differences whose completion flags may be inherited
+	# from a committed baseline that the recipient cannot reconstruct.
+	var local_rooms := _exportable_user_rooms()
+	var exported_rooms := _exportable_effective_rooms()
 	var coverage := coverage_snapshot()
 	var output_path := report_path()
 	var absolute_path := ProjectSettings.globalize_path(output_path)
 	var slot_count := _slot_count(exported_rooms)
-	var save_error := _write_payload(output_path, exported_rooms, {"coverage": coverage})
+	var local_slot_count := _slot_count(local_rooms)
+	var build_identity := BuildIdentityScript.telemetry_identity()
+	var report_metadata := {
+		"schema": "beat_the_house.environment_placement_report/v1",
+		"report_scope": "effective_reviewed_authority",
+		"generated_at_utc": Time.get_datetime_string_from_system(true, true),
+		"build_version": BuildIdentityScript.display_version(),
+		"source_commit": str(build_identity.get("source_commit", "")),
+		"source_tree": str(build_identity.get("source_tree", "")),
+		"platform": str(build_identity.get("platform", OS.get_name())),
+		"identity_source": str(build_identity.get("identity_source", "development_source")),
+		"placement_surfaces_sha256": FileAccess.get_sha256(PLACEMENT_SURFACES_PATH),
+		"scenario_slot_layouts_sha256": FileAccess.get_sha256(SCENARIO_LAYOUTS_PATH),
+		"effective_room_count": exported_rooms.size(),
+		"effective_slot_count": slot_count,
+		"local_room_count": local_rooms.size(),
+		"local_slot_count": local_slot_count,
+	}
+	var save_error := _write_payload(output_path, exported_rooms, {
+		"coverage": coverage,
+		"report_metadata": report_metadata,
+	})
 	var warning := ""
 	if save_error == OK:
 		var backup_absolute := ProjectSettings.globalize_path(DurableStoreScript.backup_path(output_path))
@@ -671,6 +723,9 @@ static func export_user_overrides() -> Dictionary:
 		"absolute_path": absolute_path,
 		"room_count": exported_rooms.size(),
 		"slot_count": slot_count,
+		"local_room_count": local_rooms.size(),
+		"local_slot_count": local_slot_count,
+		"report_metadata": report_metadata,
 		"coverage": coverage,
 		"saved_layout_count": int(coverage.get("saved_layout_count", 0)),
 		"expected_layout_count": int(coverage.get("expected_layout_count", 0)),
@@ -751,6 +806,8 @@ static func _placement_payload_valid(payload: Dictionary) -> bool:
 	if typeof(payload.get("rooms", {})) != TYPE_DICTIONARY:
 		return false
 	if payload.has("coverage") and typeof(payload.get("coverage")) != TYPE_DICTIONARY:
+		return false
+	if payload.has("report_metadata") and typeof(payload.get("report_metadata")) != TYPE_DICTIONARY:
 		return false
 	for room_key_value in _dict(payload.get("rooms", {})).keys():
 		var raw_room_key := str(room_key_value)
@@ -967,14 +1024,66 @@ static func _read_resource_json(path: String) -> Dictionary:
 
 
 static func _exportable_user_rooms() -> Dictionary:
+	return _exportable_rooms(_user_rooms)
+
+
+static func _exportable_effective_rooms() -> Dictionary:
+	return _exportable_rooms(_merged_effective_rooms())
+
+
+static func _merged_effective_rooms() -> Dictionary:
+	var merged := _project_rooms.duplicate(true)
+	var authored_keys := _user_rooms.keys()
+	authored_keys.sort()
+	for key_value in authored_keys:
+		var key := str(key_value)
+		var room := _dict(merged.get(key, {})).duplicate(true)
+		var authored_room := _dict(_user_rooms.get(key, {}))
+		var slots := _positions(room.get("slot_positions", {})).duplicate(true)
+		slots.merge(_positions(authored_room.get("slot_positions", {})), true)
+		if slots.is_empty():
+			room.erase("slot_positions")
+		else:
+			room["slot_positions"] = slots
+		if authored_room.has("base_saved"):
+			room["base_saved"] = bool(authored_room.get("base_saved", false))
+		var layouts := _dict(room.get("scenario_layouts", {})).duplicate(true)
+		var authored_layouts := _dict(authored_room.get("scenario_layouts", {}))
+		var scenario_ids := authored_layouts.keys()
+		scenario_ids.sort()
+		for scenario_value in scenario_ids:
+			var scenario_id := str(scenario_value)
+			var scenario_layout := _dict(layouts.get(scenario_id, {})).duplicate(true)
+			var authored_layout := _dict(authored_layouts.get(scenario_id, {}))
+			var scenario_slots := _positions(scenario_layout.get("slot_positions", {})).duplicate(true)
+			scenario_slots.merge(_positions(authored_layout.get("slot_positions", {})), true)
+			if scenario_slots.is_empty():
+				scenario_layout.erase("slot_positions")
+			else:
+				scenario_layout["slot_positions"] = scenario_slots
+			if authored_layout.has("saved"):
+				scenario_layout["saved"] = bool(authored_layout.get("saved", false))
+			layouts[scenario_id] = scenario_layout
+		if layouts.is_empty():
+			room.erase("scenario_layouts")
+		else:
+			room["scenario_layouts"] = layouts
+		if room.is_empty():
+			merged.erase(key)
+		else:
+			merged[key] = room
+	return merged
+
+
+static func _exportable_rooms(source_rooms: Dictionary) -> Dictionary:
 	var result: Dictionary = {}
-	var room_keys := _user_rooms.keys()
+	var room_keys := source_rooms.keys()
 	room_keys.sort()
 	for key_value in room_keys:
 		var key := str(key_value).strip_edges()
 		if key.is_empty():
 			continue
-		var source_room := _dict(_user_rooms.get(key_value, {}))
+		var source_room := _dict(source_rooms.get(key_value, {}))
 		var room: Dictionary = {}
 		var slots := _sanitized_positions(source_room.get("slot_positions", {}))
 		if not slots.is_empty():

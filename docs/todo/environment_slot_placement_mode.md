@@ -33,13 +33,13 @@ mode contract.
 - Expose a separate **Environment slot placement mode** toggle under Settings
   > Developer.
 - Keep object-placement mode and slot-placement mode mutually exclusive.
-- Open on the `fixed` family alone and present `fixed`, `event`, `scenario`,
+- Open base contexts on `fixed` and exact contexts on `scenario`; present `fixed`, `event`, `scenario`,
   and `exit` as mutually exclusive family tabs with distinct colors. Switching
   tabs replaces the prior overlay instead of accumulating markers.
-- Default to the occupied preview for the current environment snapshot. Hide
-  unused optional capacity, and hide slots marked `runtime_reserve: true`,
-  until **Empty capacity** or **Runtime reserves** is explicitly enabled.
-  Required positions with missing occupants remain visible as diagnostics.
+- Default **Empty capacity** and **Runtime reserves** on during the exhaustive
+  placement pass so no authored coordinate is silently skipped. The toggles
+  may still reduce temporary visual clutter, and the panel warns when they
+  conceal authored markers. Required missing positions remain visible.
 - Lead marker and panel text with the current occupant's friendly name. Keep
   the stable authored slot ID as secondary authoring information, followed by
   family, footprint class, support, layer, and required/optional/reserve state.
@@ -59,6 +59,10 @@ mode contract.
   Scenario selection chooses an exact scenario-instance bank. Shared
   fixed/event/exit geometry remains room-scoped; ordinary scenario geometry is
   isolated beneath that active scenario ID.
+- Treat shared markers as locked reference inside an exact scenario. A clearly
+  warned **Edit shared room slots** override remains available for deliberate
+  corrections and explains that such a move invalidates the base and every
+  saved scenario for that room.
 - Expose **Save Current Layout** to lock a valid pending drag and snapshot all
   active slots, including hidden families, empty capacity, and runtime
   reserves. Track explicit completion for 20 reachable base layouts and 55
@@ -67,9 +71,9 @@ mode contract.
   future objects placed into that slot inherit the new location.
 - Surface missing required occupants, incompatible occupants, family
   crossovers, and overlap warnings without silently moving an object into a
-  different family. Overlap diagnostics compare the selected position with
-  required and currently occupied positions that can coexist in the active
-  snapshot, not every empty position from mutually exclusive possibilities.
+  different family. Manual overlap diagnostics compare the selected position
+  with every authored marker in the active context, including future capacity
+  and runtime reserves; warnings remain advisory for intentional alternatives.
 - Do not mutate manifest identities, gameplay selection, scenario state, RNG,
   save economy, or specific spawned objects.
 
@@ -78,18 +82,21 @@ mode contract.
 Packaged builds cannot write changes back into their embedded `res://` project
 data. After moving and locking slots in either placement mode, use **Export
 Placement Report** in the placement overlay. If a move is still pending, the
-button locks that move first and then exports all machine-local slot changes.
+button locks that move first and then exports the complete effective placement
+authority reviewed on that machine.
 
 The game writes `BeatTheHouse_environment_slot_placement_changes.json` to its
 writable per-user data directory, opens the file location, and copies the full
-path to the clipboard. The schema-3 report contains only machine-local
-changes. Shared room coordinates are keyed beneath
+path to the clipboard. The schema-3 report is self-contained even when some
+coordinates or completion markers came from committed project authority.
+Shared room coordinates are keyed beneath
 `rooms[map_id].slot_positions`; exact scenario coordinates are keyed beneath
 `rooms[map_id].scenario_layouts[scenario_id].slot_positions`. Completion
-markers and a 20-base/55-scenario coverage snapshot are included, so the
+markers, a 20-base/55-scenario coverage snapshot, build/source identity, and
+SHA-256 hashes of both placement authorities are included, so the
 report can be merged back into the committed developer placement override
 file without flattening scenario geometry. Re-exporting replaces the report
-with the current local snapshot; it does not clear active changes. Family tabs
+with the current effective snapshot; it does not clear active changes. Family tabs
 and empty/reserve visibility controls are presentation-only: full-layout save
 and export include hidden families and capacity.
 
@@ -104,11 +111,11 @@ the authoring pass from 21 source maps to 75 explicit contexts: 20 reachable
 base layouts plus 55 catalog scenario layouts, including layered and subroom
 variants. The unlayered Punchline parent is source geometry, not a playable
 manual context.
-Empty capacity remains editable through the explicit visibility controls
-without crowding the default room preview.
+Empty capacity remains editable through explicit visibility controls and
+family tabs keep each room from displaying all lifecycle families at once.
 
 The migrated coordinates preserve prior source geometry wherever possible.
-Seven scenario-instance positions are deterministic provisional placements;
+One hundred eighty scenario-instance positions are deterministic provisional placements;
 the exhaustive list is in
 `docs/plans/environment_scenario_layout_breakdown.md`. Overlap warnings remain
 visible in the tool, and the owner will perform the final artistic pass in all
@@ -118,7 +125,7 @@ runtime change.
 ## Validation
 
 - Settings persistence and mutual exclusion.
-- Fixed-only default, exclusive family tabs, explicit empty/reserve visibility,
+- Context-aware default tab, exclusive family tabs, complete empty/reserve visibility,
   occupant-first labels, stable secondary IDs, active scenario/phase context,
   selection, and family legend.
 - Drag/nudge preview and exact durable local reload.
@@ -130,14 +137,14 @@ runtime change.
   20/55/75 coverage accounting and exclusion of the template-only parent.
 - Future object binding consumes the edited shared or scenario-local slot.
 - Slot identity and manifest identity remain stable after movement.
-- Required occupancy, family isolation, compatibility, and active-context
+- Required occupancy, family isolation, compatibility, and complete-context
   overlap warnings.
 - Existing environment-library, manifest, and fixed-slot checks remain green.
 
 ## Verification coverage
 
 - `environment_slot_placement_mode_check.gd` covers Settings
-  persistence and mutual exclusion, fixed-only default presentation, exclusive
+  persistence and mutual exclusion, context-aware default presentation, exclusive
   family tabs, empty/reserve controls, occupant-first labeling, active
   scenario/phase context, all four slot families, empty-slot editing,
   context-aware overlaps, map/layer scoping, preview restoration, durable
@@ -148,9 +155,9 @@ runtime change.
   filtering, runtime reserves, no-catalog behavior, and exact layout
   composition.
 - `environment_fixed_slot_static_check.py` validates the post-audit raw
-  579-position source/template census (175 fixed, 147 event, 222 scenario,
-  35 exit), all 21
-  maps, the 55 exact scenario banks and their 339 local slots, and reachable
+  565-position source/template census (175 fixed, 144 event, 213 scenario,
+  33 exit), all 21
+  maps, the 55 exact scenario banks and their 604 local slots, and reachable
   active snapshots.
 - Serialization, environment-library, launcher, and full-project validation
   remain part of the release gate.

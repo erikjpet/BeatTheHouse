@@ -876,6 +876,7 @@ function Invoke-EnvironmentSlotVerificationGates {
     Invoke-GodotScript -Name "environment_runtime_manifest_retention" -ScriptPath "res://scripts/tests/environment_runtime_manifest_retention_check.gd" -StageTimeoutSec 120
     Invoke-GodotScript -Name "room_slot_occupancy" -ScriptPath "res://scripts/tests/room_slot_occupancy_check.gd" -StageTimeoutSec 600
     Invoke-GodotScript -Name "environment_slot_stacking" -ScriptPath "res://scripts/tests/environment_slot_stacking_regression_check.gd" -StageTimeoutSec 120
+    Invoke-GodotScript -Name "meta_home_anchor_regression" -ScriptPath "res://scripts/tests/meta_home_anchor_regression_check.gd" -StageTimeoutSec 120
     Invoke-GodotScript -Name "scenario_slot_layout" -ScriptPath "res://scripts/tests/scenario_slot_layout_check.gd" -StageTimeoutSec 180
     Invoke-GodotScript -Name "environment_slot_runtime_audit" -ScriptPath "res://scripts/tests/environment_slot_runtime_audit_check.gd" -StageTimeoutSec 600
     Invoke-GodotScript -Name "environment_slot_placement_mode" -ScriptPath "res://scripts/tests/environment_slot_placement_mode_check.gd" -StageTimeoutSec 180

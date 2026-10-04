@@ -25,6 +25,15 @@ LAYOUT_PATH = ROOT / "data" / "environments" / "scenario_slot_layouts.json"
 ARCHETYPE_PATH = ROOT / "data" / "environments" / "archetypes.json"
 SCENARIO_PATH = ROOT / "data" / "environments" / "scenarios.json"
 OUTPUT_PATH = ROOT / "docs" / "plans" / "environment_scenario_layout_breakdown.md"
+OCCUPANT_CATALOG_PATHS = {
+    "character": ROOT / "data" / "characters" / "characters.json",
+    "dialogue": ROOT / "data" / "dialogue" / "dialogues.json",
+    "event": ROOT / "data" / "events" / "events.json",
+    "game": ROOT / "data" / "games" / "games.json",
+    "item": ROOT / "data" / "items" / "items.json",
+    "lender": ROOT / "data" / "debt" / "lenders.json",
+    "service": ROOT / "data" / "services" / "services.json",
+}
 
 EXPECTED_BASE_CONTEXTS = 20
 EXPECTED_SCENARIO_CONTEXTS = 55
@@ -246,6 +255,17 @@ def build_model() -> dict[str, Any]:
         map_layouts.sort(key=lambda row: str(row.get("scenario_id", "")))
     reachable_order = [map_id for map_id in map_order if map_id in base_ids]
     titles = {map_id: map_title(surface, archetypes) for map_id, surface in surfaces.items()}
+    for namespace, catalog_path in OCCUPANT_CATALOG_PATHS.items():
+        rows = read_json(catalog_path)
+        require(isinstance(rows, list), f"{catalog_path.relative_to(ROOT)} must have an array root")
+        for raw_row in rows:
+            require(isinstance(raw_row, dict), f"{catalog_path.relative_to(ROOT)} contains a non-object row")
+            object_id = str(raw_row.get("id", "")).strip()
+            display_name = str(
+                raw_row.get("display_name", raw_row.get("label", raw_row.get("name", "")))
+            ).strip()
+            if object_id and display_name:
+                titles[f"{namespace}:{object_id}"] = display_name
     base_slots = {
         map_id: effective_shared_slots(surfaces[map_id], map_id in actual_catalog_maps)
         for map_id in reachable_order
@@ -289,6 +309,14 @@ def fixed_label_indexes(surface: dict[str, Any]) -> tuple[dict[str, list[str]], 
 
 def occupant_label(identifier: str, titles: dict[str, str]) -> str:
     clean = identifier.strip()
+    sal_shelf_match = re.fullmatch(r"meta_sal_shelf:(\d+)", clean)
+    if sal_shelf_match:
+        return f"Sal's Shelf Slot {int(sal_shelf_match.group(1)) + 1}"
+    # Task and decision IDs are action-only scenario operations, not physical
+    # claimants.  They retain source placement aliases for migration, but must
+    # not be presented to the owner as objects that need manual placement.
+    if re.search(r"(?:_task_\d+|_work_\d+_choice_\d+)$", clean):
+        return ""
     if clean.startswith("travel:"):
         destination = clean.removeprefix("travel:")
         return titles.get(destination, friendly(destination))
@@ -301,6 +329,11 @@ def occupant_label(identifier: str, titles: dict[str, str]) -> str:
 def shared_claimant_labels(
     surface: dict[str, Any], slot: dict[str, Any], titles: dict[str, str]
 ) -> list[str]:
+    if bool(slot.get("runtime_reserve", False)):
+        # A shared reserve is deliberately not tied to any one catalog object.
+        # Legacy aliases may remain as migration inputs, but listing them here
+        # makes action-only Task/Choice IDs look like objects to be positioned.
+        return ["Variable runtime content"]
     labels_by_slot, label_by_object = fixed_label_indexes(surface)
     slot_id = str(slot.get("id", ""))
     candidates: list[str] = list(labels_by_slot.get(slot_id, []))
@@ -312,8 +345,6 @@ def shared_claimant_labels(
     labels = unique_strings(candidates)
     if labels:
         return labels
-    if bool(slot.get("runtime_reserve", False)):
-        return ["Runtime reserve (unclaimed)"]
     return ["Empty capacity"]
 
 
@@ -446,16 +477,17 @@ def render(model: dict[str, Any]) -> str:
         "",
         "## Manual placement workflow",
         "",
-        "1. Open **Settings > Environment Library**.",
-        "2. Choose an environment (and the specific layer for a layered venue), then load **Base / No Scenario**.",
-        "3. Turn on **Empty capacity** and **Runtime reserves** so every authored slot in the table is visible.",
-        "4. Move the fixed, event, shared scenario-reserve, and exit slots into their intended positions. Claimant labels are guidance; the slot ID is the saved identity.",
-        "5. Press **Save Current Layout**. Do this even if the starting coordinates already look correct so the base context is explicitly marked complete.",
-        "6. Read the overlay's **Progress** line and **Next missing** layout ID. They are the authoritative completion tracker.",
-        "7. Return to the Environment Library and load every exact scenario listed for that map. Keep **Empty capacity** and **Runtime reserves** visible, place its local scenario slots around the shared room content, and press **Save Current Layout** for each one.",
-        "8. Continue until progress is **75/75 saved**, then press **Export Placement Report** to produce the complete handoff report.",
+        "1. Enable environment slot placement mode, then open **Settings > Environment Library**.",
+        "2. Press **Load Next Missing**. The library selects the correct environment, exact scenario, and Punchline area automatically; its SAVED/TODO labels remain available for manual navigation.",
+        "3. In a **Base / No Scenario** context, work through the Fixed, Event, Scenario, and Exit tabs and move the room-shared slots into place. **Empty capacity** and **Runtime reserves** start visible so no authored position is silently skipped.",
+        "4. Press **Save Current Layout** even when the starting coordinates were already correct. This explicitly completes that base context.",
+        "5. Return through the room's Leave control and press **Load Next Missing** again. Exact contexts open on the Scenario tab; move only their SCENARIO-LOCAL markers and save.",
+        "6. ROOM-SHARED markers are locked reference inside exact scenarios. If a shared correction is truly necessary, enable **Edit shared room slots (resets room progress)** and expect the base plus every saved scenario for that room to become TODO again.",
+        "7. Continue until progress is **75/75 saved**, then press **Export Placement Report**. The report contains the complete effective placement authority, completion coverage, build/source identity, and hashes of both slot-authority files.",
         "",
         "Only one family tab is shown at a time, so even with **Empty capacity** and **Runtime reserves** enabled, you work through the full snapshot one family at a time instead of manipulating every slot simultaneously.",
+        "",
+        "Many exact markers begin on provisional staging coordinates, so overlap warnings are expected before you move them. Warnings are advisory: place each visible marker where it belongs, then save once the layout reads correctly.",
         "",
         "`Save Current Layout` snapshots the full active context, including hidden families, empty capacity, and runtime reserves. A scenario save contains the shared room geometry plus its exact local slots, but it does not mark the separate Base / No Scenario context complete.",
         "",

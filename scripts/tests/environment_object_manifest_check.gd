@@ -70,6 +70,7 @@ func _run() -> void:
 	_check_category_family_authority(library)
 	_check_jazz_guarantees()
 	_check_lottery_counter_hosts(library)
+	_check_pawn_sal_host(library)
 	_check_grand_casino_rumor_host(library)
 	_check_grand_casino_live_table(library)
 	_check_missing_and_stale_regeneration(library)
@@ -207,21 +208,55 @@ func _check_category_family_authority(library: ContentLibrary) -> void:
 	phone_environment["layout"] = EnvironmentInstanceScript.ensure_generated_layout(phone_environment, library)
 	_check(EnvironmentInstanceScript.object_manifest_errors(phone_environment).is_empty(), "fixed action host", "produced an invalid manifest")
 	_check(_array(_dict(phone_environment.get("layout", {})).get("placement_errors", [])).is_empty(), "fixed action host", "failed layout generation: %s" % JSON.stringify(_dict(phone_environment.get("layout", {})).get("placement_errors", [])))
-	var phone_rows: Dictionary = {}
+	var fixed_rows: Dictionary = {}
 	for row_value in EnvironmentInstanceScript.active_object_manifest_rows(phone_environment):
 		var row := _dict(row_value)
-		phone_rows[str(row.get("presentation_object_id", ""))] = row
+		fixed_rows[str(row.get("presentation_object_id", ""))] = row
 	var phone_bindings := _dict(_dict(phone_environment.get("layout", {})).get("slot_bindings", {}))
-	var phone_row := _dict(phone_rows.get("event:call_brother_in_law", {}))
+	var phone_row := _dict(fixed_rows.get("event:call_brother_in_law", {}))
+	var shopkeeper_row := _dict(fixed_rows.get("shopkeeper:merchant", {}))
 	var phone_binding := _dict(phone_bindings.get("event:call_brother_in_law", {}))
+	var cashier_tip_owner_ids: Array = []
+	for fixed_row_id_value in fixed_rows.keys():
+		var fixed_row_id := str(fixed_row_id_value)
+		if _array(_dict(fixed_rows.get(fixed_row_id, {})).get("action_ids", [])).has("service:cashier_tip"):
+			cashier_tip_owner_ids.append(fixed_row_id)
 	_check(
 		str(phone_row.get("family", "")) == "fixed"
 			and str(phone_binding.get("slot_family", "")) == "fixed"
 			and str(phone_binding.get("slot_id", "")) == "fixed.phone",
 		"fixed action host",
-		"the cashier-tip action did not remain on the guaranteed store phone"
+		"the call action did not remain on the guaranteed store phone"
 	)
-	_check(str(phone_row.get("instance_object_id", "")) == "corner_store:phone" and _array(phone_row.get("action_ids", [])).has("service:cashier_tip"), "fixed action host", "the cashier-tip action is not owned by the guaranteed store phone")
+	_check(
+		str(phone_row.get("instance_object_id", "")) == "corner_store:phone"
+			and not _array(phone_row.get("action_ids", [])).has("service:cashier_tip"),
+		"fixed action host",
+		"the store phone incorrectly owns the cashier-tip action"
+	)
+	_check(
+		str(shopkeeper_row.get("instance_object_id", "")) == "corner_store:shopkeeper"
+			and _array(shopkeeper_row.get("action_ids", [])).has("service:cashier_tip")
+			and cashier_tip_owner_ids == ["shopkeeper:merchant"]
+			and not phone_bindings.has("service:cashier_tip")
+			and str(_dict(phone_bindings.get("shopkeeper:merchant", {})).get("slot_family", "")) == "fixed"
+			and str(_dict(phone_bindings.get("shopkeeper:merchant", {})).get("slot_id", "")) == "fixed.staff_shopkeeper",
+		"fixed action host",
+		"the cashier-tip action is not solely hosted by Mara without a duplicate room object"
+	)
+	var corner_surface: Dictionary = {}
+	for map_value in _array(_read_json_dictionary(PLACEMENT_MAP_PATH).get("maps", [])):
+		var map_data := _dict(map_value)
+		if str(map_data.get("id", "")) == "corner_store":
+			corner_surface = map_data
+			break
+	var corner_fixed_categories := _dict(corner_surface.get("fixed_category_slot_ids", {}))
+	_check(
+		not corner_fixed_categories.has("service_spots:0")
+			and not corner_fixed_categories.values().has("fixed.phone"),
+		"fixed action host",
+		"the store phone retained stale cashier/service category authority"
+	)
 
 	# Beach always generates one Slot machine through ordinal game capacity. This
 	# proves category-only family authority without restoring a dead generic row
@@ -474,6 +509,34 @@ func _check_lottery_counter_hosts(library: ContentLibrary) -> void:
 				"gas_station_casino scratchless counter",
 				"Nell advertised Scratcher cashout without Scratch Tickets selected"
 			)
+
+
+func _check_pawn_sal_host(library: ContentLibrary) -> void:
+	var environment := _generated_environment(library, "pawn_shop")
+	var label := "pawn_shop consolidated Sal host"
+	var manifest := _dict(environment.get("object_manifest", {}))
+	var sal_row := _active_manifest_row(manifest, "staff:pawn_counter_sal")
+	_check(not sal_row.is_empty(), label, "fixed Sal presentation is missing")
+	_check(str(sal_row.get("instance_object_id", "")) == "pawn_shop:sal", label, "Sal presentation lost its stable instance identity")
+	_check(str(sal_row.get("exact_slot_id", "")) == "fixed.staff_pawn_counter", label, "Sal host moved off the pawn counter")
+	var required_actions := [
+		"shopkeeper:merchant",
+		"lender:sals_pawn_counter",
+		"meta_pawn_counter:sell",
+		"meta_sal:talk",
+	]
+	var sal_actions := _array(sal_row.get("action_ids", []))
+	var layout := _dict(environment.get("layout", {}))
+	var bindings := _dict(layout.get("slot_bindings", {}))
+	var rects := _dict(layout.get("object_rects", {}))
+	var sal_binding := _dict(bindings.get("staff:pawn_counter_sal", {}))
+	_check(str(sal_binding.get("slot_id", "")) == "fixed.staff_pawn_counter", label, "Sal host lacks the reviewed fixed-slot binding")
+	for action_id in required_actions:
+		_check(sal_actions.has(action_id), label, "Sal host is missing action identity %s" % action_id)
+		_check(_active_manifest_row(manifest, action_id).is_empty(), label, "%s became a duplicate physical manifest row" % action_id)
+		_check(not bindings.has(action_id), label, "%s retained standalone slot binding geometry" % action_id)
+		_check(not rects.has(action_id), label, "%s retained standalone room geometry" % action_id)
+	_check(_array(layout.get("placement_errors", [])).is_empty(), label, "consolidated layout failed: %s" % JSON.stringify(layout.get("placement_errors", [])))
 
 
 func _check_grand_casino_rumor_host(library: ContentLibrary) -> void:

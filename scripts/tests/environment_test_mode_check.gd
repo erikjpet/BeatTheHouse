@@ -91,6 +91,8 @@ func _run() -> void:
 	scenario_layer_request["layer_id"] = ""
 	scenario_layer_request["generation_key"] = "layered-scenario-location"
 	var scenario_layer := _generate(library, "scenario-layer", scenario_layer_request)
+	if not bool(scenario_layer.get("ok", false)) or str((scenario_layer.get("environment", {}) as Dictionary).get("current_layer_id", "")) != "casino":
+		print("ENVIRONMENT_TEST_SCENARIO_LAYER_ERROR ", JSON.stringify(scenario_layer))
 	_check(bool(scenario_layer.get("ok", false)) and str((scenario_layer.get("environment", {}) as Dictionary).get("current_layer_id", "")) == "casino", "Scenario / Normal Entrance must open a layered scenario in its authored room.")
 
 	var layered_request := request.duplicate(true)

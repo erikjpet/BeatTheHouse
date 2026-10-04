@@ -116,9 +116,12 @@ func _check_store_scope_and_promotion(user_path: String, project_path: String) -
 	}
 	var darts_surface := EnvironmentPlacementScript.surface_map(bar_darts)
 	var darts_instance_slots := darts_surface.get("scenario_instance_slot_ids", {}) as Dictionary
-	var darts_slot_id := str(darts_instance_slots.get("scenario::bar_darts_league_night_darts_scorer", ""))
+	var darts_slot_id := str(darts_instance_slots.get(
+		"bar_darts_league_night_darts_scorer|darts_scorer|foreground|bar_darts_league_night_score_state_position",
+		""
+	))
 	var scenario_saved := DeveloperPlacementStoreScript.save_position(bar_darts, "slot_positions", darts_slot_id, Vector2(720.0, 268.0))
-	_check(darts_slot_id == "scenario.standing_person_2", "Darts scorer fixture must resolve through the exact scenario-local mapping.")
+	_check(darts_slot_id == "scenario.local_standing_person_2", "Darts scorer fixture must resolve through the exact scenario-local mapping.")
 	_check(bool(scenario_saved.get("ok", false)) and _slot_position(_slot(EnvironmentPlacementScript.surface_map(bar_darts), darts_slot_id)).is_equal_approx(Vector2(720.0, 268.0)), "Scenario objects must move their exact scenario-local role slot.")
 
 	var promoted := DeveloperPlacementStoreScript.promote_user_overrides()

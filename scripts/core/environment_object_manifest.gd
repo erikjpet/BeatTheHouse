@@ -249,7 +249,8 @@ static func validate_for_environment(manifest_value: Variant, environment: Dicti
 		var instance_id := str(instance_id_value)
 		var row := _dict(persisted_by_id.get(instance_id, {}))
 		var retained_authored_scenario := not snapshot_present \
-				and str(row.get("family", "")) == "scenario" \
+				and (str(row.get("family", "")) == "scenario" \
+						or str(row.get("source_kind", "")) == "scenario_projection") \
 				and not _row_is_runtime_projection(row)
 		if retained_authored_scenario:
 			continue
@@ -391,6 +392,9 @@ static func _scenario_rows(environment: Dictionary) -> Array:
 			continue
 		var stable_id := str(visual.get("stable_object_id", visual.get("source_id", presentation_id))).strip_edges()
 		var object_type := str(visual.get("object_type", "scenario_object")).strip_edges()
+		var slot_family := str(visual.get("slot_family", "scenario")).strip_edges()
+		if slot_family not in FAMILIES:
+			slot_family = "scenario"
 		var metadata := {
 			"owner_namespace": str(visual.get("owner_namespace", "scenario")),
 			"semantic_identity": str(visual.get("semantic_identity", "")),
@@ -403,7 +407,7 @@ static func _scenario_rows(environment: Dictionary) -> Array:
 			"instance_object_id": presentation_id,
 			"presentation_object_id": presentation_id,
 			"object_id": presentation_id,
-			"family": "scenario",
+			"family": slot_family,
 			"source_kind": "scenario_projection",
 			"source_field": "actors" if object_type == "scenario_actor" else "scene_objects",
 			"source_collection": "actors" if object_type == "scenario_actor" else "scene_objects",
@@ -418,7 +422,7 @@ static func _scenario_rows(environment: Dictionary) -> Array:
 			"exact_slot_id": str(visual.get("slot_id", "")).strip_edges(),
 			"action_ids": _strings(action_ids_by_presentation.get(presentation_id, [])),
 			"index": result.size(),
-			"spot_field": "scenario_slots",
+			"spot_field": "%s_slots" % slot_family,
 			"metadata": metadata,
 		})
 	return result
@@ -464,7 +468,9 @@ static func _retained_scenario_rows(environment: Dictionary, existing: Dictionar
 		# renderer snapshot. Runtime projections may also consume scenario capacity,
 		# but their authoritative source is RunState and must never be resurrected
 		# from the old manifest after an offscreen save strips that source.
-		if str(row.get("family", "")) == "scenario" and not _row_is_runtime_projection(row):
+		if (str(row.get("family", "")) == "scenario" \
+				or str(row.get("source_kind", "")) == "scenario_projection") \
+				and not _row_is_runtime_projection(row):
 			result.append(row.duplicate(true))
 	return result
 

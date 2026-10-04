@@ -10438,7 +10438,8 @@
                       "lift_appearance_resolved": "The stage lift sits level with the floor and its control lamps glow green."
                     },
                     "enabled": true,
-                    "label": "Lift",
+                    "icon_key": "jammed_machine",
+                    "label": "Stalled Stage Lift",
                     "role": "workstation",
                     "state": "stalled",
                     "visible": true,
@@ -11513,7 +11514,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "26be39b64e30fd9070b13b0a8b237e344c309165f2107aa7eaa32d13b3cb2d05"
+        "sequence_signature": "36fed1c760ea6674b24048fb0963ed4a6d7af87b4ffe9dd67ddafd8e5dff8c0d"
       }
     },
     {
@@ -12289,7 +12290,7 @@
                       "grand_work_object_left": "The crowded table block has shifted toward the back wall, reopening the center route between machine banks."
                     },
                     "enabled": true,
-                    "label": "Block",
+                    "label": "Delegation Cart Block",
                     "role": "barrier",
                     "state": "crowded",
                     "visible": true,
@@ -13365,7 +13366,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "86377a960cfb12bc9939c074e3e955b98e6d983c44fc87e6c4f9aa11acc9cf33"
+        "sequence_signature": "5d96e24252097a663414ffff259182cf7587503f9d8a3e3f3f0701e4be5ecbb2"
       }
     },
     {

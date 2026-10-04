@@ -30,16 +30,17 @@ For maps with catalog scenarios, Base / No Scenario includes only shared `scenar
 
 ## Manual placement workflow
 
-1. Open **Settings > Environment Library**.
-2. Choose an environment (and the specific layer for a layered venue), then load **Base / No Scenario**.
-3. Turn on **Empty capacity** and **Runtime reserves** so every authored slot in the table is visible.
-4. Move the fixed, event, shared scenario-reserve, and exit slots into their intended positions. Claimant labels are guidance; the slot ID is the saved identity.
-5. Press **Save Current Layout**. Do this even if the starting coordinates already look correct so the base context is explicitly marked complete.
-6. Read the overlay's **Progress** line and **Next missing** layout ID. They are the authoritative completion tracker.
-7. Return to the Environment Library and load every exact scenario listed for that map. Keep **Empty capacity** and **Runtime reserves** visible, place its local scenario slots around the shared room content, and press **Save Current Layout** for each one.
-8. Continue until progress is **75/75 saved**, then press **Export Placement Report** to produce the complete handoff report.
+1. Enable environment slot placement mode, then open **Settings > Environment Library**.
+2. Press **Load Next Missing**. The library selects the correct environment, exact scenario, and Punchline area automatically; its SAVED/TODO labels remain available for manual navigation.
+3. In a **Base / No Scenario** context, work through the Fixed, Event, Scenario, and Exit tabs and move the room-shared slots into place. **Empty capacity** and **Runtime reserves** start visible so no authored position is silently skipped.
+4. Press **Save Current Layout** even when the starting coordinates were already correct. This explicitly completes that base context.
+5. Return through the room's Leave control and press **Load Next Missing** again. Exact contexts open on the Scenario tab; move only their SCENARIO-LOCAL markers and save.
+6. ROOM-SHARED markers are locked reference inside exact scenarios. If a shared correction is truly necessary, enable **Edit shared room slots (resets room progress)** and expect the base plus every saved scenario for that room to become TODO again.
+7. Continue until progress is **75/75 saved**, then press **Export Placement Report**. The report contains the complete effective placement authority, completion coverage, build/source identity, and hashes of both slot-authority files.
 
 Only one family tab is shown at a time, so even with **Empty capacity** and **Runtime reserves** enabled, you work through the full snapshot one family at a time instead of manipulating every slot simultaneously.
+
+Many exact markers begin on provisional staging coordinates, so overlap warnings are expected before you move them. Warnings are advisory: place each visible marker where it belongs, then save once the layout reads correctly.
 
 `Save Current Layout` snapshots the full active context, including hidden families, empty capacity, and runtime reserves. A scenario save contains the shared room geometry plus its exact local slots, but it does not mark the separate Base / No Scenario context complete.
 
@@ -50,11 +51,11 @@ Only one family tab is shown at a time, so even with **Empty capacity** and **Ru
 | Reachable base contexts | 20 |
 | Exact scenario contexts | 55 |
 | Total manual save contexts | **75** |
-| Reachable base-scoped slot positions | 401 |
-| Exact scenario-local slot positions | 339 |
-| Unique manual position entries | **740** |
-| Slot appearances across all full save snapshots | 1938 |
-| Exact slots with provisional geometry | 7 |
+| Reachable base-scoped slot positions | 395 |
+| Exact scenario-local slot positions | 604 |
+| Unique manual position entries | **999** |
+| Slot appearances across all full save snapshots | 2192 |
+| Exact slots with provisional geometry | 180 |
 
 The unique manual-position count adds each room-scoped shared slot once and each scenario-local slot once. The larger full-snapshot count repeats shared geometry in every scenario snapshot, matching what **Save Current Layout** validates.
 
@@ -62,9 +63,9 @@ The unique manual-position count adds each room-scoped shared slot once and each
 
 | Scope | Fixed | Event | Scenario | Exit | Total |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| All 21 raw placement maps | 175 | 147 | 222 | 35 | 579 |
-| Template-only <code>small_underground_casino</code> | 8 | 15 | 5 | 4 | 32 |
-| Reachable effective base contexts | 167 | 132 | 71 | 31 | 401 |
+| All 21 raw placement maps | 175 | 144 | 213 | 33 | 565 |
+| Template-only <code>small_underground_casino</code> | 6 | 15 | 5 | 2 | 28 |
+| Reachable effective base contexts | 169 | 129 | 66 | 31 | 395 |
 
 The raw inventory includes generic source scenario capacity and the template-only parent. It is not the manual completion total.
 
@@ -72,87 +73,87 @@ The raw inventory includes generic source scenario capacity and the template-onl
 
 | Environment | Base layout ID | Fixed | Event | Shared scenario | Exit | Base total | Exact layouts | Exact local slots | Unique entries |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| Corner Store<br><code>corner_store</code> | <code>corner_store::__base</code> | 11 | 6 | 3 | 1 | 21 | 5 | 25 | 46 |
-| Back Alley<br><code>back_alley</code> | <code>back_alley::__base</code> | 10 | 9 | 3 | 1 | 23 | 4 | 20 | 43 |
-| Motel<br><code>motel</code> | <code>motel::__base</code> | 11 | 10 | 3 | 2 | 26 | 4 | 29 | 55 |
-| Bar<br><code>bar</code> | <code>bar::__base</code> | 6 | 9 | 4 | 1 | 20 | 7 | 41 | 61 |
-| Gas Station Casino<br><code>gas_station_casino</code> | <code>gas_station_casino::__base</code> | 5 | 11 | 3 | 1 | 20 | 5 | 36 | 56 |
-| The Punchline — Comedy Club<br><code>small_underground_casino:club</code> | <code>small_underground_casino:club::__base</code> | 5 | 9 | 3 | 2 | 19 | 5 | 32 | 51 |
-| The Punchline — Hidden Casino<br><code>small_underground_casino:casino</code> | <code>small_underground_casino:casino::__base</code> | 9 | 11 | 3 | 3 | 26 | 3 | 16 | 42 |
-| The Punchline — Crew Back Room<br><code>small_underground_casino:back_room</code> | <code>small_underground_casino:back_room::__base</code> | 8 | 12 | 4 | 2 | 26 | 0 | 0 | 26 |
-| Jazz Club<br><code>jazz_club</code> | <code>jazz_club::__base</code> | 9 | 4 | 3 | 1 | 17 | 4 | 27 | 44 |
-| Kitty Cat Lounge<br><code>kitty_cat_lounge</code> | <code>kitty_cat_lounge::__base</code> | 12 | 9 | 3 | 1 | 25 | 4 | 25 | 50 |
-| Delta Queen<br><code>delta_queen</code> | <code>delta_queen::__base</code> | 12 | 13 | 3 | 1 | 29 | 5 | 31 | 60 |
-| The Beach<br><code>beach</code> | <code>beach::__base</code> | 2 | 0 | 4 | 1 | 7 | 3 | 22 | 29 |
-| Sal's Pawn Shop<br><code>pawn_shop</code> | <code>pawn_shop::__base</code> | 10 | 6 | 3 | 1 | 20 | 3 | 20 | 40 |
-| Grand Casino Main Floor<br><code>grand_casino</code> | <code>grand_casino::__base</code> | 11 | 11 | 4 | 4 | 30 | 3 | 15 | 45 |
+| Corner Store<br><code>corner_store</code> | <code>corner_store::__base</code> | 11 | 6 | 3 | 1 | 21 | 5 | 44 | 65 |
+| Back Alley<br><code>back_alley</code> | <code>back_alley::__base</code> | 14 | 9 | 3 | 1 | 27 | 4 | 37 | 64 |
+| Motel<br><code>motel</code> | <code>motel::__base</code> | 11 | 8 | 3 | 2 | 24 | 4 | 53 | 77 |
+| Bar<br><code>bar</code> | <code>bar::__base</code> | 6 | 9 | 4 | 1 | 20 | 7 | 73 | 93 |
+| Gas Station Casino<br><code>gas_station_casino</code> | <code>gas_station_casino::__base</code> | 5 | 11 | 3 | 1 | 20 | 5 | 65 | 85 |
+| The Punchline — Comedy Club<br><code>small_underground_casino:club</code> | <code>small_underground_casino:club::__base</code> | 5 | 9 | 3 | 2 | 19 | 5 | 48 | 67 |
+| The Punchline — Hidden Casino<br><code>small_underground_casino:casino</code> | <code>small_underground_casino:casino::__base</code> | 9 | 11 | 3 | 3 | 26 | 3 | 30 | 56 |
+| The Punchline — Crew Back Room<br><code>small_underground_casino:back_room</code> | <code>small_underground_casino:back_room::__base</code> | 8 | 12 | 3 | 2 | 25 | 0 | 0 | 25 |
+| Jazz Club<br><code>jazz_club</code> | <code>jazz_club::__base</code> | 9 | 4 | 3 | 1 | 17 | 4 | 45 | 62 |
+| Kitty Cat Lounge<br><code>kitty_cat_lounge</code> | <code>kitty_cat_lounge::__base</code> | 12 | 9 | 3 | 1 | 25 | 4 | 44 | 69 |
+| Delta Queen<br><code>delta_queen</code> | <code>delta_queen::__base</code> | 12 | 11 | 3 | 1 | 27 | 5 | 61 | 88 |
+| The Beach<br><code>beach</code> | <code>beach::__base</code> | 2 | 1 | 4 | 1 | 8 | 3 | 38 | 46 |
+| Sal's Pawn Shop<br><code>pawn_shop</code> | <code>pawn_shop::__base</code> | 8 | 6 | 3 | 1 | 18 | 3 | 28 | 46 |
+| Grand Casino Main Floor<br><code>grand_casino</code> | <code>grand_casino::__base</code> | 11 | 11 | 4 | 4 | 30 | 3 | 38 | 68 |
 | Grand Casino High-Limit Room<br><code>grand_casino_high_limit</code> | <code>grand_casino_high_limit::__base</code> | 4 | 7 | 4 | 3 | 18 | 0 | 0 | 18 |
 | Grand Casino Back Room<br><code>grand_casino_back_room</code> | <code>grand_casino_back_room::__base</code> | 2 | 5 | 4 | 1 | 12 | 0 | 0 | 12 |
-| Grand Casino Cage<br><code>grand_casino_cage</code> | <code>grand_casino_cage::__base</code> | 7 | 0 | 5 | 2 | 14 | 0 | 0 | 14 |
-| Motel Room<br><code>motel_room</code> | <code>motel_room::__base</code> | 11 | 0 | 4 | 1 | 16 | 0 | 0 | 16 |
-| Apartment<br><code>apartment</code> | <code>apartment::__base</code> | 11 | 0 | 4 | 1 | 16 | 0 | 0 | 16 |
-| House<br><code>house</code> | <code>house::__base</code> | 11 | 0 | 4 | 1 | 16 | 0 | 0 | 16 |
-| **Reachable total** | **20 bases** | **167** | **132** | **71** | **31** | **401** | **55** | **339** | **740** |
+| Grand Casino Cage<br><code>grand_casino_cage</code> | <code>grand_casino_cage::__base</code> | 7 | 0 | 4 | 2 | 13 | 0 | 0 | 13 |
+| Motel Room<br><code>motel_room</code> | <code>motel_room::__base</code> | 11 | 0 | 3 | 1 | 15 | 0 | 0 | 15 |
+| Apartment<br><code>apartment</code> | <code>apartment::__base</code> | 11 | 0 | 3 | 1 | 15 | 0 | 0 | 15 |
+| House<br><code>house</code> | <code>house::__base</code> | 11 | 0 | 3 | 1 | 15 | 0 | 0 | 15 |
+| **Reachable total** | **20 bases** | **169** | **129** | **66** | **31** | **395** | **55** | **604** | **999** |
 
 ### Exact scenario summary
 
 | Exact layout ID | Scenario | Shared slots | Local slots | Full save slots | Claimant labels | Provisional | Action-only IDs |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| <code>corner_store::corner_store_aftermath</code> | The Aftermath | 21 | 5 | 26 | 7 | 0 | 4 |
-| <code>corner_store::corner_store_dead_shift</code> | Dead Shift | 21 | 5 | 26 | 8 | 0 | 3 |
-| <code>corner_store::corner_store_delivery_day</code> | Delivery Day | 21 | 4 | 25 | 5 | 0 | 8 |
-| <code>corner_store::corner_store_inventory_night</code> | Inventory Night | 21 | 5 | 26 | 7 | 0 | 4 |
-| <code>corner_store::corner_store_lotto_fever</code> | Lotto Fever | 21 | 6 | 27 | 9 | 0 | 2 |
-| <code>back_alley::back_alley_cruiser_parked</code> | Cruiser Parked | 23 | 5 | 28 | 6 | 0 | 6 |
-| <code>back_alley::back_alley_fence_night</code> | Fence Night | 23 | 6 | 29 | 10 | 0 | 2 |
-| <code>back_alley::back_alley_nothing_moving</code> | Nothing Moving | 23 | 4 | 27 | 7 | 0 | 5 |
-| <code>back_alley::back_alley_street_craps</code> | Street Craps | 23 | 5 | 28 | 5 | 0 | 7 |
-| <code>motel::motel_conventioneers</code> | Conventioneers | 26 | 6 | 32 | 12 | 0 | 6 |
-| <code>motel::motel_stakeout</code> | The Stakeout | 26 | 9 | 35 | 12 | 0 | 5 |
-| <code>motel::motel_wedding_overflow</code> | Wedding Overflow | 26 | 7 | 33 | 12 | 0 | 7 |
-| <code>motel::motel_weekly_rates</code> | Weekly Rates | 26 | 7 | 33 | 13 | 1 | 5 |
-| <code>bar::bar_darts_league_night</code> | Darts League Night | 20 | 6 | 26 | 8 | 0 | 9 |
-| <code>bar::bar_dead_tuesday</code> | Dead Tuesday | 20 | 5 | 25 | 5 | 0 | 8 |
-| <code>bar::bar_fight_night</code> | Fight Night | 20 | 8 | 28 | 11 | 0 | 8 |
-| <code>bar::bar_live_band</code> | Live Band | 20 | 6 | 26 | 8 | 0 | 8 |
-| <code>bar::bar_lock_in</code> | Lock-In | 20 | 5 | 25 | 7 | 0 | 9 |
-| <code>bar::bar_payday_rush</code> | Payday Rush | 20 | 5 | 25 | 8 | 0 | 7 |
-| <code>bar::bar_wake</code> | The Wake | 20 | 6 | 26 | 8 | 0 | 5 |
-| <code>gas_station_casino::gas_station_graveyard_shift</code> | Graveyard Shift | 20 | 7 | 27 | 10 | 0 | 8 |
-| <code>gas_station_casino::gas_station_road_crew_payday</code> | Road Crew Payday | 20 | 7 | 27 | 11 | 0 | 6 |
-| <code>gas_station_casino::gas_station_storm_shelter</code> | Storm Shelter | 20 | 7 | 27 | 10 | 0 | 8 |
-| <code>gas_station_casino::gas_station_tour_bus_stop</code> | Tour Bus Stop | 20 | 8 | 28 | 13 | 0 | 4 |
-| <code>gas_station_casino::gas_station_trucker_convoy</code> | Trucker Convoy | 20 | 7 | 27 | 13 | 0 | 7 |
-| <code>small_underground_casino:club::punchline_bringer_show</code> | Bringer Show | 19 | 8 | 27 | 11 | 1 | 6 |
-| <code>small_underground_casino:club::punchline_debt_court</code> | Debt Court | 19 | 6 | 25 | 10 | 0 | 6 |
-| <code>small_underground_casino:club::punchline_headliner_night</code> | Headliner Night | 19 | 6 | 25 | 8 | 0 | 10 |
-| <code>small_underground_casino:club::punchline_open_mic_night</code> | Open Mic Night | 19 | 7 | 26 | 10 | 0 | 6 |
-| <code>small_underground_casino:club::punchline_raid_jitters</code> | Raid Jitters | 19 | 5 | 24 | 7 | 0 | 10 |
-| <code>small_underground_casino:casino::punchline_greased_week</code> | Greased Week | 26 | 5 | 31 | 8 | 0 | 9 |
-| <code>small_underground_casino:casino::punchline_high_stakes_night</code> | High-Stakes Night | 26 | 7 | 33 | 10 | 1 | 7 |
-| <code>small_underground_casino:casino::punchline_new_muscle</code> | New Muscle | 26 | 4 | 30 | 6 | 0 | 11 |
-| <code>jazz_club::jazz_club_guest_legend</code> | Guest Legend | 17 | 7 | 24 | 9 | 0 | 9 |
-| <code>jazz_club::jazz_club_recording_night</code> | Recording Night | 17 | 6 | 23 | 8 | 0 | 6 |
-| <code>jazz_club::jazz_club_rent_party</code> | Rent Party | 17 | 8 | 25 | 10 | 1 | 7 |
-| <code>jazz_club::jazz_club_union_trouble</code> | Union Trouble | 17 | 6 | 23 | 8 | 0 | 8 |
-| <code>kitty_cat_lounge::kitty_cat_lounge_amateur_night</code> | Amateur Night | 25 | 8 | 33 | 11 | 0 | 6 |
-| <code>kitty_cat_lounge::kitty_cat_lounge_bachelorette_storm</code> | Bachelorette Storm | 25 | 5 | 30 | 7 | 0 | 11 |
-| <code>kitty_cat_lounge::kitty_cat_lounge_buyout</code> | The Buyout | 25 | 6 | 31 | 8 | 1 | 10 |
-| <code>kitty_cat_lounge::kitty_cat_lounge_slow_night</code> | Slow Night | 25 | 6 | 31 | 8 | 1 | 9 |
-| <code>delta_queen::delta_queen_captains_invitational</code> | Captain's Invitational | 29 | 6 | 35 | 10 | 0 | 10 |
-| <code>delta_queen::delta_queen_engine_trouble</code> | Engine Trouble | 29 | 6 | 35 | 10 | 0 | 11 |
-| <code>delta_queen::delta_queen_fog_delay</code> | Fog Delay | 29 | 6 | 35 | 9 | 0 | 9 |
-| <code>delta_queen::delta_queen_wedding_charter</code> | Wedding Charter | 29 | 7 | 36 | 10 | 0 | 9 |
-| <code>delta_queen::delta_queen_whale_aboard</code> | Whale Aboard | 29 | 6 | 35 | 8 | 0 | 10 |
-| <code>beach::beach_bonfire_night</code> | Bonfire Night | 7 | 8 | 15 | 12 | 0 | 6 |
-| <code>beach::beach_festival_weekend</code> | Festival Weekend | 7 | 9 | 16 | 13 | 0 | 6 |
-| <code>beach::beach_storm_coming</code> | Storm Coming | 7 | 5 | 12 | 10 | 0 | 8 |
-| <code>pawn_shop::pawn_shop_estate_lot_day</code> | Estate Lot Day | 20 | 9 | 29 | 11 | 1 | 3 |
-| <code>pawn_shop::pawn_shop_sals_mood</code> | Sal's Mood | 20 | 5 | 25 | 6 | 0 | 5 |
-| <code>pawn_shop::pawn_shop_serial_check_day</code> | Serial-Check Day | 20 | 6 | 26 | 9 | 0 | 2 |
-| <code>grand_casino::grand_casino_audit_night</code> | Audit Night | 30 | 4 | 34 | 7 | 0 | 12 |
-| <code>grand_casino::grand_casino_convention_crowd</code> | Convention Crowd | 30 | 5 | 35 | 8 | 0 | 11 |
-| <code>grand_casino::grand_casino_gala_night</code> | Gala Night | 30 | 6 | 36 | 9 | 0 | 10 |
+| <code>corner_store::corner_store_aftermath</code> | The Aftermath | 21 | 8 | 29 | 10 | 3 | 0 |
+| <code>corner_store::corner_store_dead_shift</code> | Dead Shift | 21 | 8 | 29 | 10 | 3 | 0 |
+| <code>corner_store::corner_store_delivery_day</code> | Delivery Day | 21 | 12 | 33 | 15 | 5 | 0 |
+| <code>corner_store::corner_store_inventory_night</code> | Inventory Night | 21 | 7 | 28 | 10 | 2 | 0 |
+| <code>corner_store::corner_store_lotto_fever</code> | Lotto Fever | 21 | 9 | 30 | 10 | 4 | 0 |
+| <code>back_alley::back_alley_cruiser_parked</code> | Cruiser Parked | 27 | 9 | 36 | 11 | 3 | 0 |
+| <code>back_alley::back_alley_fence_night</code> | Fence Night | 27 | 11 | 38 | 11 | 4 | 0 |
+| <code>back_alley::back_alley_nothing_moving</code> | Nothing Moving | 27 | 8 | 35 | 11 | 3 | 0 |
+| <code>back_alley::back_alley_street_craps</code> | Street Craps | 27 | 9 | 36 | 11 | 3 | 0 |
+| <code>motel::motel_conventioneers</code> | Conventioneers | 24 | 15 | 39 | 18 | 6 | 1 |
+| <code>motel::motel_stakeout</code> | The Stakeout | 24 | 13 | 37 | 15 | 3 | 1 |
+| <code>motel::motel_wedding_overflow</code> | Wedding Overflow | 24 | 14 | 38 | 18 | 5 | 1 |
+| <code>motel::motel_weekly_rates</code> | Weekly Rates | 24 | 11 | 35 | 15 | 3 | 1 |
+| <code>bar::bar_darts_league_night</code> | Darts League Night | 20 | 11 | 31 | 12 | 4 | 6 |
+| <code>bar::bar_dead_tuesday</code> | Dead Tuesday | 20 | 8 | 28 | 8 | 0 | 5 |
+| <code>bar::bar_fight_night</code> | Fight Night | 20 | 14 | 34 | 15 | 6 | 6 |
+| <code>bar::bar_live_band</code> | Live Band | 20 | 10 | 30 | 12 | 1 | 5 |
+| <code>bar::bar_lock_in</code> | Lock-In | 20 | 9 | 29 | 12 | 1 | 5 |
+| <code>bar::bar_payday_rush</code> | Payday Rush | 20 | 12 | 32 | 13 | 3 | 3 |
+| <code>bar::bar_wake</code> | The Wake | 20 | 9 | 29 | 10 | 0 | 3 |
+| <code>gas_station_casino::gas_station_graveyard_shift</code> | Graveyard Shift | 20 | 14 | 34 | 16 | 5 | 1 |
+| <code>gas_station_casino::gas_station_road_crew_payday</code> | Road Crew Payday | 20 | 13 | 33 | 14 | 6 | 1 |
+| <code>gas_station_casino::gas_station_storm_shelter</code> | Storm Shelter | 20 | 14 | 34 | 16 | 6 | 1 |
+| <code>gas_station_casino::gas_station_tour_bus_stop</code> | Tour Bus Stop | 20 | 11 | 31 | 15 | 4 | 1 |
+| <code>gas_station_casino::gas_station_trucker_convoy</code> | Trucker Convoy | 20 | 13 | 33 | 17 | 3 | 1 |
+| <code>small_underground_casino:club::punchline_bringer_show</code> | Bringer Show | 19 | 10 | 29 | 11 | 1 | 4 |
+| <code>small_underground_casino:club::punchline_debt_court</code> | Debt Court | 19 | 10 | 29 | 12 | 1 | 4 |
+| <code>small_underground_casino:club::punchline_headliner_night</code> | Headliner Night | 19 | 10 | 29 | 12 | 2 | 5 |
+| <code>small_underground_casino:club::punchline_open_mic_night</code> | Open Mic Night | 19 | 10 | 29 | 11 | 1 | 4 |
+| <code>small_underground_casino:club::punchline_raid_jitters</code> | Raid Jitters | 19 | 8 | 27 | 10 | 2 | 5 |
+| <code>small_underground_casino:casino::punchline_greased_week</code> | Greased Week | 26 | 10 | 36 | 12 | 4 | 5 |
+| <code>small_underground_casino:casino::punchline_high_stakes_night</code> | High-Stakes Night | 26 | 11 | 37 | 12 | 2 | 4 |
+| <code>small_underground_casino:casino::punchline_new_muscle</code> | New Muscle | 26 | 9 | 35 | 12 | 3 | 5 |
+| <code>jazz_club::jazz_club_guest_legend</code> | Guest Legend | 17 | 11 | 28 | 13 | 3 | 6 |
+| <code>jazz_club::jazz_club_recording_night</code> | Recording Night | 17 | 10 | 27 | 13 | 2 | 3 |
+| <code>jazz_club::jazz_club_rent_party</code> | Rent Party | 17 | 12 | 29 | 13 | 4 | 4 |
+| <code>jazz_club::jazz_club_union_trouble</code> | Union Trouble | 17 | 12 | 29 | 13 | 7 | 4 |
+| <code>kitty_cat_lounge::kitty_cat_lounge_amateur_night</code> | Amateur Night | 25 | 11 | 36 | 13 | 2 | 5 |
+| <code>kitty_cat_lounge::kitty_cat_lounge_bachelorette_storm</code> | Bachelorette Storm | 25 | 10 | 35 | 11 | 3 | 6 |
+| <code>kitty_cat_lounge::kitty_cat_lounge_buyout</code> | The Buyout | 25 | 11 | 36 | 12 | 3 | 5 |
+| <code>kitty_cat_lounge::kitty_cat_lounge_slow_night</code> | Slow Night | 25 | 12 | 37 | 13 | 4 | 4 |
+| <code>delta_queen::delta_queen_captains_invitational</code> | Captain's Invitational | 27 | 13 | 40 | 15 | 2 | 7 |
+| <code>delta_queen::delta_queen_engine_trouble</code> | Engine Trouble | 27 | 11 | 38 | 14 | 2 | 7 |
+| <code>delta_queen::delta_queen_fog_delay</code> | Fog Delay | 27 | 10 | 37 | 12 | 3 | 6 |
+| <code>delta_queen::delta_queen_wedding_charter</code> | Wedding Charter | 27 | 15 | 42 | 16 | 5 | 6 |
+| <code>delta_queen::delta_queen_whale_aboard</code> | Whale Aboard | 27 | 12 | 39 | 14 | 3 | 6 |
+| <code>beach::beach_bonfire_night</code> | Bonfire Night | 8 | 13 | 21 | 15 | 5 | 1 |
+| <code>beach::beach_festival_weekend</code> | Festival Weekend | 8 | 14 | 22 | 17 | 3 | 1 |
+| <code>beach::beach_storm_coming</code> | Storm Coming | 8 | 11 | 19 | 17 | 2 | 1 |
+| <code>pawn_shop::pawn_shop_estate_lot_day</code> | Estate Lot Day | 18 | 11 | 29 | 13 | 3 | 0 |
+| <code>pawn_shop::pawn_shop_sals_mood</code> | Sal's Mood | 18 | 9 | 27 | 10 | 4 | 0 |
+| <code>pawn_shop::pawn_shop_serial_check_day</code> | Serial-Check Day | 18 | 8 | 26 | 10 | 2 | 0 |
+| <code>grand_casino::grand_casino_audit_night</code> | Audit Night | 30 | 13 | 43 | 16 | 6 | 6 |
+| <code>grand_casino::grand_casino_convention_crowd</code> | Convention Crowd | 30 | 12 | 42 | 14 | 5 | 6 |
+| <code>grand_casino::grand_casino_gala_night</code> | Gala Night | 30 | 13 | 43 | 15 | 5 | 6 |
 
 ## Template-only source
 
@@ -175,280 +176,324 @@ Positions are canonical 900×430 board coordinates. Base tables list the exact e
 | <code>fixed</code> | <code>fixed.item_shop_3</code> | Shop item | <code>shop_item</code> | <code>320, 108</code> | <code>shop_display_top</code> | Empty capacity | Optional empty capacity |
 | <code>fixed</code> | <code>fixed.item_shop_4</code> | Shop item | <code>shop_item</code> | <code>424, 108</code> | <code>shop_display_top</code> | Empty capacity | Optional empty capacity |
 | <code>fixed</code> | <code>fixed.item_shop_5</code> | Shop item | <code>shop_item</code> | <code>112, 192</code> | <code>shop_display_bottom</code> | Empty capacity | Optional empty capacity |
-| <code>fixed</code> | <code>fixed.staff_shopkeeper</code> | Mara | <code>behind_counter_person</code> | <code>374, 238</code> | <code>register</code> | Mara | Required |
-| <code>fixed</code> | <code>fixed.phone</code> | Store Phone | <code>surface_item</code> | <code>220, 270</code> | <code>left_checkout_counter</code> | Store Phone<br>Cashier Tip | Required |
-| <code>fixed</code> | <code>fixed.game_coin_pusher</code> | Game fixture | <code>floor_fixture</code> | <code>270, 366</code> | <code>floor</code> | Coin Pusher | Mapped capacity |
+| <code>fixed</code> | <code>fixed.staff_shopkeeper</code> | Mara | <code>behind_counter_person</code> | <code>374, 238</code> | <code>register</code> | Mara<br>Cashier Tip | Required |
+| <code>fixed</code> | <code>fixed.phone</code> | Store Phone | <code>surface_item</code> | <code>220, 270</code> | <code>left_checkout_counter</code> | Store Phone | Required |
+| <code>fixed</code> | <code>fixed.game_coin_pusher</code> | Coin pusher | <code>floor_fixture</code> | <code>270, 366</code> | <code>floor</code> | Quarter Falls | Mapped capacity |
 | <code>fixed</code> | <code>fixed.crew_group</code> | The Crew | <code>group</code> | <code>384, 358</code> | <code>floor</code> | The Crew | Mapped capacity |
-| <code>fixed</code> | <code>fixed.service_house_drink</code> | Counter or table item | <code>surface_item</code> | <code>814, 204</code> | <code>cooler_upper</code> | House Drink | Mapped capacity |
-| <code>fixed</code> | <code>fixed.numbers_book</code> | Counter or table item | <code>surface_item</code> | <code>340, 270</code> | <code>left_checkout_counter</code> | Book | Mapped capacity |
+| <code>fixed</code> | <code>fixed.service_house_drink</code> | House drink service | <code>surface_item</code> | <code>814, 204</code> | <code>cooler_upper</code> | Buy a Drink | Mapped capacity |
+| <code>fixed</code> | <code>fixed.numbers_book</code> | Numbers book | <code>surface_item</code> | <code>340, 270</code> | <code>left_checkout_counter</code> | Book | Mapped capacity |
 | <code>event</code> | <code>event.behind_counter_person_1</code> | Counter staff | <code>behind_counter_person</code> | <code>480, 238</code> | <code>register</code> | Chatty Clerk<br>Late Shift Discount | Mapped capacity |
 | <code>event</code> | <code>event.floor_fixture_1</code> | Floor prop | <code>floor_fixture</code> | <code>288, 378</code> | <code>floor</code> | Empty capacity | Optional empty capacity |
 | <code>event</code> | <code>event.group_1</code> | Group | <code>group</code> | <code>402, 370</code> | <code>floor</code> | Empty capacity | Optional empty capacity |
 | <code>event</code> | <code>event.standing_person_1</code> | Standing person | <code>standing_person</code> | <code>516, 370</code> | <code>floor</code> | Empty capacity | Optional empty capacity |
 | <code>event</code> | <code>event.ground_marker_1</code> | Floor marker | <code>ground_marker</code> | <code>41, 406</code> | <code>stage</code> | Parking Lot Tip | Mapped capacity |
-| <code>event</code> | <code>event.behind_counter_person_2</code> | Counter staff | <code>behind_counter_person</code> | <code>94, 212</code> | <code>delivery_clerk_rail_left</code> | Town Rumor Staff | Mapped capacity |
-| <code>scenario</code> | <code>scenario.standing_person_4</code> | Runtime contact reserve | <code>standing_person</code> | <code>484, 164</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
-| <code>scenario</code> | <code>scenario.wall_item_3</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>486, 62</code> | <code>wall</code> | Runtime reserve (unclaimed) | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.floor_fixture_2</code> | Delivery package reserve | <code>floor_fixture</code> | <code>174, 370</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
+| <code>event</code> | <code>event.behind_counter_person_2</code> | Counter staff | <code>behind_counter_person</code> | <code>94, 212</code> | <code>delivery_clerk_rail_left</code> | Word from Across Town | Mapped capacity |
+| <code>scenario</code> | <code>scenario.standing_person_4</code> | Runtime contact reserve | <code>standing_person</code> | <code>484, 164</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
+| <code>scenario</code> | <code>scenario.wall_item_2</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>486, 62</code> | <code>wall</code> | Variable runtime content | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.floor_fixture_2</code> | Delivery package reserve | <code>floor_fixture</code> | <code>174, 370</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
 | <code>exit</code> | <code>exit.safe_right</code> | Travel exit | <code>doorway</code> | <code>859, 286</code> | <code>right_exit</code> | Leave | Mapped capacity |
 
 #### Scenario — The Aftermath — <code>corner_store::corner_store_aftermath</code>
 
-**Full save:** 26 slots = 21 shared + 5 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 29 slots = 21 shared + 8 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.doorway_1</code> | Marked Clear Exit | <code>doorway</code> | <code>41, 286</code> | <code>left_exit</code> | Marked Clear Exit | Exact scenario |
-| <code>scenario.floor_fixture_1</code> | Scenario alternatives: Quiet Recovery / Suspect Object Abandoned | <code>floor_fixture</code> | <code>156, 358</code> | <code>floor</code> | Quiet Recovery<br>Suspect Object Abandoned | Exact scenario |
-| <code>scenario.standing_person_1</code> | What Fell Off | <code>standing_person</code> | <code>480, 370</code> | <code>floor</code> | What Fell Off | Exact scenario |
-| <code>scenario.standing_person_2</code> | Plainclothes Officer | <code>standing_person</code> | <code>726, 358</code> | <code>floor</code> | Plainclothes Officer | Exact scenario |
-| <code>scenario.surface_item_1</code> | Scenario alternatives: Evidence Sweep Hold / Police Hold | <code>surface_item</code> | <code>814, 148</code> | <code>cooler_upper</code> | Evidence Sweep Hold<br>Police Hold | Exact scenario |
-
-**Action-only IDs (4; no placement marker):** <code>boarded_glass</code><br><code>suspect_object</code><br><code>watched_aisle</code><br><code>watched_aisle_refused</code>
+| <code>scenario.local_doorway_1</code> | Marked Clear Exit | <code>doorway</code> | <code>41, 286</code> | <code>left_exit</code> | Marked Clear Exit | Exact scenario |
+| <code>scenario.local_floor_fixture_1</code> | Unbagged Unidentified Evidence | <code>floor_fixture</code> | <code>156, 358</code> | <code>floor</code> | Unbagged Unidentified Evidence | Exact scenario |
+| <code>scenario.local_ground_marker_1</code> | Scenario alternatives: Watched Aisle / Watched Aisle Refused | <code>ground_marker</code> | <code>584, 422</code> | <code>manual_placement_required</code> | Watched Aisle<br>Watched Aisle Refused | Provisional geometry |
+| <code>scenario.local_standing_person_1</code> | Plainclothes Officer | <code>standing_person</code> | <code>726, 358</code> | <code>floor</code> | Plainclothes Officer | Exact scenario |
+| <code>scenario.local_surface_item_1</code> | Unidentified Object by Swept Glass | <code>surface_item</code> | <code>814, 148</code> | <code>cooler_upper</code> | Unidentified Object by Swept Glass | Exact scenario |
+| <code>scenario.local_surface_item_2</code> | Repaired Glass and Trace Bag | <code>surface_item</code> | <code>44, 64</code> | <code>manual_placement_required</code> | Repaired Glass and Trace Bag | Provisional geometry |
+| <code>scenario.local_surface_item_3</code> | Scenario alternatives: Evidence Sweep Hold / Police Hold | <code>surface_item</code> | <code>564, 64</code> | <code>manual_placement_required</code> | Evidence Sweep Hold<br>Police Hold | Provisional geometry |
+| <code>scenario.local_wall_item_1</code> | Boarded Glass | <code>wall_mounted</code> | <code>450, 50</code> | <code>wall</code> | Boarded Glass | Exact scenario |
 
 #### Scenario — Dead Shift — <code>corner_store::corner_store_dead_shift</code>
 
-**Full save:** 26 slots = 21 shared + 5 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 29 slots = 21 shared + 8 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.behind_counter_person_1</code> | Nothing but Time | <code>behind_counter_person</code> | <code>586, 238</code> | <code>register</code> | Nothing but Time | Exact scenario |
-| <code>scenario.doorway_1</code> | Marked Clear Exit | <code>doorway</code> | <code>41, 286</code> | <code>left_exit</code> | Marked Clear Exit | Exact scenario |
-| <code>scenario.floor_fixture_1</code> | Scenario alternatives: Cooler Circuit Abandoned / Lit Service / Private Darkness | <code>floor_fixture</code> | <code>156, 358</code> | <code>floor</code> | Cooler Circuit Abandoned<br>Lit Service<br>Private Darkness | Exact scenario |
-| <code>scenario.standing_person_1</code> | Night Clerk | <code>standing_person</code> | <code>612, 358</code> | <code>floor</code> | Night Clerk | Exact scenario |
-| <code>scenario.wall_item_1</code> | Scenario alternatives: Flicker Lockout / Flicker Lockout Refused | <code>wall_mounted</code> | <code>450, 50</code> | <code>wall</code> | Flicker Lockout<br>Flicker Lockout Refused | Exact scenario |
-
-**Action-only IDs (3; no placement marker):** <code>breaker_panel</code><br><code>cooler_circuit</code><br><code>surveillance_rumor_route</code>
+| <code>scenario.local_doorway_1</code> | Marked Clear Exit | <code>doorway</code> | <code>41, 286</code> | <code>left_exit</code> | Marked Clear Exit | Exact scenario |
+| <code>scenario.local_floor_fixture_1</code> | Cooler Circuit Abandoned | <code>floor_fixture</code> | <code>156, 358</code> | <code>floor</code> | Cooler Circuit Abandoned | Exact scenario |
+| <code>scenario.local_floor_fixture_2</code> | Scenario alternatives: Dark Cooler Bank and Closed Register / Lit Cooler Bank | <code>floor_fixture</code> | <code>598, 422</code> | <code>manual_placement_required</code> | Dark Cooler Bank and Closed Register<br>Lit Cooler Bank | Provisional geometry |
+| <code>scenario.local_standing_person_1</code> | Night Clerk | <code>standing_person</code> | <code>612, 358</code> | <code>floor</code> | Night Clerk | Exact scenario |
+| <code>scenario.local_surface_item_1</code> | Cooler Circuit | <code>surface_item</code> | <code>814, 148</code> | <code>cooler_upper</code> | Cooler Circuit | Exact scenario |
+| <code>scenario.local_wall_item_1</code> | Breaker Panel | <code>wall_mounted</code> | <code>450, 50</code> | <code>wall</code> | Breaker Panel | Exact scenario |
+| <code>scenario.local_wall_item_2</code> | Handwritten Camera Warning | <code>wall_mounted</code> | <code>48, 64</code> | <code>manual_placement_required</code> | Handwritten Camera Warning | Provisional geometry |
+| <code>scenario.local_wall_item_3</code> | Scenario alternatives: Flicker Lockout / Flicker Lockout Refused | <code>wall_mounted</code> | <code>568, 64</code> | <code>manual_placement_required</code> | Flicker Lockout<br>Flicker Lockout Refused | Provisional geometry |
 
 #### Scenario — Delivery Day — <code>corner_store::corner_store_delivery_day</code>
 
-**Full save:** 25 slots = 21 shared + 4 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 33 slots = 21 shared + 12 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.behind_counter_person_1</code> | Fresh Off the Truck | <code>behind_counter_person</code> | <code>586, 238</code> | <code>register</code> | Fresh Off the Truck | Exact scenario |
-| <code>scenario.doorway_1</code> | Clear front-door lane | <code>doorway</code> | <code>41, 286</code> | <code>left_exit</code> | Clear front-door lane | Exact scenario |
-| <code>scenario.standing_person_1</code> | Scenario alternatives: Ada at the reopened shelf / Delivery clerk | <code>standing_person</code> | <code>612, 358</code> | <code>floor</code> | Ada at the reopened shelf<br>Delivery clerk | Exact scenario |
-| <code>scenario.standing_person_2</code> | Runner | <code>standing_person</code> | <code>726, 358</code> | <code>floor</code> | Runner | Exact scenario |
-
-**Action-only IDs (8; no placement marker):** <code>abandoned_manifest</code><br><code>delivery_cartons</code><br><code>delivery_event_gate</code><br><code>mismarked_crate</code><br><code>sealed_pallet</code><br><code>sorting_shelf</code><br><code>stocked_rack</code><br><code>torn_carton</code>
+| <code>scenario.local_doorway_1</code> | Clear front-door lane | <code>doorway</code> | <code>41, 286</code> | <code>left_exit</code> | Clear front-door lane | Exact scenario |
+| <code>scenario.local_floor_fixture_1</code> | Mismarked delivery cartons | <code>floor_fixture</code> | <code>156, 358</code> | <code>floor</code> | Mismarked delivery cartons | Exact scenario |
+| <code>scenario.local_floor_fixture_2</code> | Scenario alternatives: Mismarked delivery cartons / Torn carton | <code>floor_fixture</code> | <code>598, 422</code> | <code>manual_placement_required</code> | Mismarked delivery cartons<br>Torn carton | Provisional geometry |
+| <code>scenario.local_floor_fixture_3</code> | Sealed pallet | <code>floor_fixture</code> | <code>579, 274</code> | <code>manual_placement_required</code> | Sealed pallet | Provisional geometry |
+| <code>scenario.local_standing_person_1</code> | Runner | <code>standing_person</code> | <code>480, 370</code> | <code>floor</code> | Runner | Exact scenario |
+| <code>scenario.local_standing_person_2</code> | Delivery clerk | <code>standing_person</code> | <code>612, 358</code> | <code>floor</code> | Delivery clerk | Exact scenario |
+| <code>scenario.local_standing_person_3</code> | Scenario alternatives: Ada at the reopened shelf / Delivery clerk | <code>standing_person</code> | <code>116, 294</code> | <code>manual_placement_required</code> | Ada at the reopened shelf<br>Delivery clerk | Provisional geometry |
+| <code>scenario.local_standing_person_4</code> | Runner | <code>standing_person</code> | <code>726, 358</code> | <code>floor</code> | Runner | Exact scenario |
+| <code>scenario.local_surface_item_1</code> | Scenario alternatives: Abandoned manifest / Crate with a damaged label | <code>surface_item</code> | <code>814, 148</code> | <code>cooler_upper</code> | Abandoned manifest<br>Crate with a damaged label | Exact scenario |
+| <code>scenario.local_surface_item_2</code> | Delivery verification shelf | <code>surface_item</code> | <code>44, 64</code> | <code>manual_placement_required</code> | Delivery verification shelf | Provisional geometry |
+| <code>scenario.local_surface_item_3</code> | Damaged Delivery Manifest | <code>surface_item</code> | <code>564, 64</code> | <code>manual_placement_required</code> | Damaged Delivery Manifest | Provisional geometry |
+| <code>scenario.local_wall_item_1</code> | Stocked rack | <code>wall_mounted</code> | <code>450, 50</code> | <code>wall</code> | Stocked rack | Exact scenario |
 
 #### Scenario — Inventory Night — <code>corner_store::corner_store_inventory_night</code>
 
-**Full save:** 26 slots = 21 shared + 5 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 28 slots = 21 shared + 7 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.behind_counter_person_1</code> | The Short Count | <code>behind_counter_person</code> | <code>586, 238</code> | <code>register</code> | The Short Count | Exact scenario |
-| <code>scenario.doorway_1</code> | Marked Clear Exit | <code>doorway</code> | <code>41, 286</code> | <code>left_exit</code> | Marked Clear Exit | Exact scenario |
-| <code>scenario.floor_fixture_1</code> | Scenario alternatives: Discrepancy Shelf Abandoned / Reopened Sections | <code>floor_fixture</code> | <code>156, 358</code> | <code>floor</code> | Discrepancy Shelf Abandoned<br>Reopened Sections | Exact scenario |
-| <code>scenario.standing_person_1</code> | Inventory Clerk | <code>standing_person</code> | <code>612, 358</code> | <code>floor</code> | Inventory Clerk | Exact scenario |
-| <code>scenario.surface_item_1</code> | Scenario alternatives: Discrepancy Shelf / Economy Inventory Public Service | <code>surface_item</code> | <code>814, 148</code> | <code>cooler_upper</code> | Discrepancy Shelf<br>Economy Inventory Public Service | Exact scenario |
-
-**Action-only IDs (4; no placement marker):** <code>closed_aisles</code><br><code>closed_aisles_refused</code><br><code>count_cage</code><br><code>quarantined_section</code>
+| <code>scenario.local_doorway_1</code> | Marked Clear Exit | <code>doorway</code> | <code>41, 286</code> | <code>left_exit</code> | Marked Clear Exit | Exact scenario |
+| <code>scenario.local_floor_fixture_1</code> | Count Cage | <code>floor_fixture</code> | <code>156, 358</code> | <code>floor</code> | Count Cage | Exact scenario |
+| <code>scenario.local_floor_fixture_2</code> | Discrepancy Shelf Abandoned | <code>floor_fixture</code> | <code>598, 422</code> | <code>manual_placement_required</code> | Discrepancy Shelf Abandoned | Provisional geometry |
+| <code>scenario.local_floor_fixture_3</code> | Scenario alternatives: Closed Aisles / Closed Aisles Refused / Quarantined Section / Signed Open Shelves | <code>floor_fixture</code> | <code>707, 422</code> | <code>manual_placement_required</code> | Closed Aisles<br>Closed Aisles Refused<br>Quarantined Section<br>Signed Open Shelves | Provisional geometry |
+| <code>scenario.local_standing_person_1</code> | Inventory Clerk | <code>standing_person</code> | <code>612, 358</code> | <code>floor</code> | Inventory Clerk | Exact scenario |
+| <code>scenario.local_surface_item_1</code> | Discrepancy Shelf | <code>surface_item</code> | <code>814, 148</code> | <code>cooler_upper</code> | Discrepancy Shelf | Exact scenario |
+| <code>scenario.local_wall_item_1</code> | Public Inventory Notice | <code>wall_mounted</code> | <code>450, 50</code> | <code>wall</code> | Public Inventory Notice | Exact scenario |
 
 #### Scenario — Lotto Fever — <code>corner_store::corner_store_lotto_fever</code>
 
-**Full save:** 27 slots = 21 shared + 6 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 30 slots = 21 shared + 9 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.doorway_1</code> | Marked Clear Exit | <code>doorway</code> | <code>41, 286</code> | <code>left_exit</code> | Marked Clear Exit | Exact scenario |
-| <code>scenario.floor_fixture_1</code> | Scenario alternatives: Celebration Layout / Sold Out Counter / Sold Out Counter Refused | <code>floor_fixture</code> | <code>156, 358</code> | <code>floor</code> | Celebration Layout<br>Sold Out Counter<br>Sold Out Counter Refused | Exact scenario |
-| <code>scenario.standing_person_1</code> | Jackpot Talk | <code>standing_person</code> | <code>612, 358</code> | <code>floor</code> | Jackpot Talk | Exact scenario |
-| <code>scenario.standing_person_2</code> | Lotto Regular | <code>standing_person</code> | <code>726, 358</code> | <code>floor</code> | Lotto Regular | Exact scenario |
-| <code>scenario.surface_item_1</code> | Economy Stock Public Service | <code>surface_item</code> | <code>814, 148</code> | <code>cooler_upper</code> | Economy Stock Public Service | Exact scenario |
-| <code>scenario.wall_item_1</code> | Scenario alternatives: Number Board / Number Board Abandoned | <code>wall_mounted</code> | <code>450, 50</code> | <code>wall</code> | Number Board<br>Number Board Abandoned | Exact scenario |
-
-**Action-only IDs (2; no placement marker):** <code>angry_queue</code><br><code>queue_rail</code>
+| <code>scenario.local_doorway_1</code> | Marked Clear Exit | <code>doorway</code> | <code>41, 286</code> | <code>left_exit</code> | Marked Clear Exit | Exact scenario |
+| <code>scenario.local_floor_fixture_1</code> | Queue Rail | <code>floor_fixture</code> | <code>156, 358</code> | <code>floor</code> | Queue Rail | Exact scenario |
+| <code>scenario.local_floor_fixture_2</code> | Scenario alternatives: Sold Out Counter / Sold Out Counter Refused | <code>floor_fixture</code> | <code>598, 422</code> | <code>manual_placement_required</code> | Sold Out Counter<br>Sold Out Counter Refused | Provisional geometry |
+| <code>scenario.local_ground_marker_1</code> | Disputed Queue Marks | <code>ground_marker</code> | <code>800, 422</code> | <code>manual_placement_required</code> | Disputed Queue Marks | Provisional geometry |
+| <code>scenario.local_standing_person_1</code> | Lotto Regular | <code>standing_person</code> | <code>726, 358</code> | <code>floor</code> | Lotto Regular | Exact scenario |
+| <code>scenario.local_surface_item_1</code> | Winning Slips and Cups | <code>surface_item</code> | <code>814, 148</code> | <code>cooler_upper</code> | Winning Slips and Cups | Exact scenario |
+| <code>scenario.local_wall_item_1</code> | Number Board | <code>wall_mounted</code> | <code>450, 50</code> | <code>wall</code> | Number Board | Exact scenario |
+| <code>scenario.local_wall_item_2</code> | Public Stock Notice | <code>wall_mounted</code> | <code>48, 64</code> | <code>manual_placement_required</code> | Public Stock Notice | Provisional geometry |
+| <code>scenario.local_wall_item_3</code> | Number Board Abandoned | <code>wall_mounted</code> | <code>568, 64</code> | <code>manual_placement_required</code> | Number Board Abandoned | Provisional geometry |
 
 ### Back Alley — <code>back_alley</code>
 
 #### Base / No Scenario — <code>back_alley::__base</code>
 
-**Save snapshot:** 23 slots = 10 fixed + 9 event + 3 shared scenario + 1 exit. Exact scenarios on this map: 4.
+**Save snapshot:** 27 slots = 14 fixed + 9 event + 3 shared scenario + 1 exit. Exact scenarios on this map: 4.
 
 | Family | Slot ID | Physical role | Footprint | Position | Support | Occupant/claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | <code>fixed</code> | <code>fixed.staff_merchant</code> | Alley Merchant | <code>behind_counter_person</code> | <code>810, 208</code> | <code>right_crate_display</code> | Alley Merchant | Required |
-| <code>fixed</code> | <code>fixed.lender_street_lender</code> | Street lender | <code>standing_person</code> | <code>44, 292</code> | <code>stage</code> | Street Lender | Mapped capacity |
+| <code>fixed</code> | <code>fixed.lender_street_lender</code> | Street lender | <code>standing_person</code> | <code>44, 292</code> | <code>stage</code> | Vic Mercer | Mapped capacity |
 | <code>fixed</code> | <code>fixed.crew_group</code> | The Crew | <code>group</code> | <code>284, 358</code> | <code>floor</code> | The Crew | Mapped capacity |
 | <code>fixed</code> | <code>fixed.item_shop_1</code> | Shop item | <code>shop_item</code> | <code>350, 112</code> | <code>folding_table_upper</code> | Empty capacity | Optional empty capacity |
 | <code>fixed</code> | <code>fixed.item_shop_2</code> | Shop item | <code>shop_item</code> | <code>470, 112</code> | <code>folding_table_upper</code> | Empty capacity | Optional empty capacity |
 | <code>fixed</code> | <code>fixed.item_shop_3</code> | Shop item | <code>shop_item</code> | <code>350, 192</code> | <code>folding_table</code> | Empty capacity | Optional empty capacity |
 | <code>fixed</code> | <code>fixed.item_shop_4</code> | Shop item | <code>shop_item</code> | <code>470, 192</code> | <code>folding_table</code> | Empty capacity | Optional empty capacity |
-| <code>fixed</code> | <code>fixed.service_house_drink</code> | Counter or table item | <code>surface_item</code> | <code>180, 88</code> | <code>left_crate_upper</code> | House Drink | Mapped capacity |
+| <code>fixed</code> | <code>fixed.service_house_drink</code> | House drink service | <code>surface_item</code> | <code>180, 88</code> | <code>left_crate_upper</code> | Buy a Drink | Mapped capacity |
 | <code>fixed</code> | <code>fixed.patron_vince</code> | Vince | <code>standing_person</code> | <code>388, 370</code> | <code>floor</code> | Vince | Required |
 | <code>fixed</code> | <code>fixed.patron_lena</code> | Lena | <code>standing_person</code> | <code>500, 358</code> | <code>floor</code> | Lena | Required |
-| <code>event</code> | <code>event.behind_counter_person_1</code> | Counter staff | <code>behind_counter_person</code> | <code>690, 208</code> | <code>right_crate_display</code> | Town Rumor Staff | Mapped capacity |
+| <code>fixed</code> | <code>fixed.home_container_1</code> | Home container 1 | <code>floor_fixture</code> | <code>124, 358</code> | <code>floor</code> | Empty capacity | Optional empty capacity |
+| <code>fixed</code> | <code>fixed.home_container_2</code> | Home container 2 | <code>floor_fixture</code> | <code>620, 358</code> | <code>floor</code> | Empty capacity | Optional empty capacity |
+| <code>fixed</code> | <code>fixed.home_container_3</code> | Home container 3 | <code>floor_fixture</code> | <code>730, 358</code> | <code>floor</code> | Empty capacity | Optional empty capacity |
+| <code>fixed</code> | <code>fixed.home_upgrade</code> | Home upgrade board | <code>wall_mounted</code> | <code>650, 120</code> | <code>wall</code> | Home | Mapped capacity |
+| <code>event</code> | <code>event.behind_counter_person_1</code> | Counter staff | <code>behind_counter_person</code> | <code>690, 208</code> | <code>right_crate_display</code> | Word from Across Town | Mapped capacity |
 | <code>event</code> | <code>event.ground_marker_1</code> | Floor marker | <code>ground_marker</code> | <code>44, 412</code> | <code>stage</code> | Parking Lot Tip | Mapped capacity |
 | <code>event</code> | <code>event.floor_fixture_1</code> | Floor prop | <code>floor_fixture</code> | <code>624, 370</code> | <code>floor</code> | Back Alley Offer | Mapped capacity |
-| <code>event</code> | <code>event.standing_person_1</code> | Standing person | <code>standing_person</code> | <code>100, 414</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_2</code> | Standing person | <code>standing_person</code> | <code>252, 414</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_3</code> | Standing person | <code>standing_person</code> | <code>404, 414</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_4</code> | Standing person | <code>standing_person</code> | <code>556, 414</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_5</code> | Standing person | <code>standing_person</code> | <code>708, 414</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_6</code> | Standing person | <code>standing_person</code> | <code>860, 414</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
-| <code>scenario</code> | <code>scenario.wall_item_1</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>150, 140</code> | <code>wall</code> | Runtime reserve (unclaimed) | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.standing_person_3</code> | Runtime contact reserve | <code>standing_person</code> | <code>376, 272</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
-| <code>scenario</code> | <code>scenario.floor_fixture_3</code> | Delivery package reserve | <code>floor_fixture</code> | <code>772, 370</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
+| <code>event</code> | <code>event.standing_person_1</code> | Standing person | <code>standing_person</code> | <code>100, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_2</code> | Standing person | <code>standing_person</code> | <code>252, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_3</code> | Standing person | <code>standing_person</code> | <code>404, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_4</code> | Standing person | <code>standing_person</code> | <code>556, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_5</code> | Standing person | <code>standing_person</code> | <code>708, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_6</code> | Standing person | <code>standing_person</code> | <code>860, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>scenario</code> | <code>scenario.wall_item_1</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>150, 140</code> | <code>wall</code> | Variable runtime content | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.standing_person_3</code> | Runtime contact reserve | <code>standing_person</code> | <code>376, 272</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
+| <code>scenario</code> | <code>scenario.floor_fixture_3</code> | Delivery package reserve | <code>floor_fixture</code> | <code>772, 370</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
 | <code>exit</code> | <code>exit.right_upper</code> | Travel exit | <code>doorway</code> | <code>856, 272</code> | <code>right_alley</code> | Leave | Mapped capacity |
 
 #### Scenario — Cruiser Parked — <code>back_alley::back_alley_cruiser_parked</code>
 
-**Full save:** 28 slots = 23 shared + 5 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 36 slots = 27 shared + 9 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.doorway_1</code> | Marked Clear Exit | <code>doorway</code> | <code>856, 376</code> | <code>right_alley</code> | Marked Clear Exit | Exact scenario |
-| <code>scenario.floor_fixture_1</code> | Scenario alternatives: Cruiser Departed / Diverted Patrol | <code>floor_fixture</code> | <code>736, 358</code> | <code>floor</code> | Cruiser Departed<br>Diverted Patrol | Exact scenario |
-| <code>scenario.standing_person_1</code> | Patrol Officer route end | <code>standing_person</code> | <code>570, 260</code> | <code>floor</code> | Patrol Officer route end | Exact scenario |
-| <code>scenario.standing_person_2</code> | Patrol Officer route start | <code>standing_person</code> | <code>250, 260</code> | <code>floor</code> | Patrol Officer route start | Exact scenario |
-| <code>scenario.surface_item_1</code> | Wrong Target | <code>surface_item</code> | <code>570, 112</code> | <code>folding_table_upper</code> | Wrong Target | Exact scenario |
-
-**Action-only IDs (6; no placement marker):** <code>cruiser_beam</code><br><code>cruiser_pressure_route</code><br><code>stacked_cover</code><br><code>stacked_cover_abandoned</code><br><code>watched_route</code><br><code>watched_route_refused</code>
+| <code>scenario.local_doorway_1</code> | Marked Clear Exit | <code>doorway</code> | <code>856, 376</code> | <code>right_alley</code> | Marked Clear Exit | Exact scenario |
+| <code>scenario.local_floor_fixture_1</code> | Stacked Cover | <code>floor_fixture</code> | <code>736, 358</code> | <code>floor</code> | Stacked Cover | Exact scenario |
+| <code>scenario.local_floor_fixture_2</code> | Stacked Cover Abandoned | <code>floor_fixture</code> | <code>696, 286</code> | <code>floor</code> | Stacked Cover Abandoned | Exact scenario |
+| <code>scenario.local_floor_fixture_3</code> | Scenario alternatives: Cruiser Departed / Diverted Patrol / Watched Route | <code>floor_fixture</code> | <code>126, 294</code> | <code>manual_placement_required</code> | Cruiser Departed<br>Diverted Patrol<br>Watched Route | Provisional geometry |
+| <code>scenario.local_ground_marker_1</code> | Cruiser Beam | <code>ground_marker</code> | <code>450, 260</code> | <code>floor</code> | Cruiser Beam | Exact scenario |
+| <code>scenario.local_ground_marker_2</code> | Cruiser Pressure Route | <code>ground_marker</code> | <code>776, 294</code> | <code>manual_placement_required</code> | Cruiser Pressure Route | Provisional geometry |
+| <code>scenario.local_ground_marker_3</code> | Watched Route Refused | <code>ground_marker</code> | <code>172, 422</code> | <code>manual_placement_required</code> | Watched Route Refused | Provisional geometry |
+| <code>scenario.local_standing_person_1</code> | Patrol Officer route end | <code>standing_person</code> | <code>570, 260</code> | <code>floor</code> | Patrol Officer route end | Exact scenario |
+| <code>scenario.local_standing_person_2</code> | Patrol Officer route start | <code>standing_person</code> | <code>250, 260</code> | <code>floor</code> | Patrol Officer route start | Exact scenario |
 
 #### Scenario — Fence Night — <code>back_alley::back_alley_fence_night</code>
 
-**Full save:** 29 slots = 23 shared + 6 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 38 slots = 27 shared + 11 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.doorway_1</code> | Scenario alternatives: Brokered Exit / Marked Clear Exit | <code>doorway</code> | <code>856, 376</code> | <code>right_alley</code> | Brokered Exit<br>Marked Clear Exit | Exact scenario |
-| <code>scenario.floor_fixture_1</code> | Real Prices | <code>floor_fixture</code> | <code>736, 358</code> | <code>floor</code> | Real Prices | Exact scenario |
-| <code>scenario.floor_fixture_2</code> | Scenario alternatives: Buyer Control / Buyer Control Refused / Verified Stall | <code>floor_fixture</code> | <code>696, 286</code> | <code>floor</code> | Buyer Control<br>Buyer Control Refused<br>Verified Stall | Exact scenario |
-| <code>scenario.standing_person_1</code> | Mags Recruitment | <code>standing_person</code> | <code>304, 272</code> | <code>floor</code> | Mags Recruitment | Exact scenario |
-| <code>scenario.standing_person_2</code> | Rotating Buyer | <code>standing_person</code> | <code>250, 260</code> | <code>floor</code> | Rotating Buyer | Exact scenario |
-| <code>scenario.surface_item_1</code> | Scenario alternatives: Auth Station Abandoned / Economy Fence Public Service | <code>surface_item</code> | <code>570, 112</code> | <code>folding_table_upper</code> | Auth Station Abandoned<br>Economy Fence Public Service | Exact scenario |
-
-**Action-only IDs (2; no placement marker):** <code>auth_station</code><br><code>goods_lot</code>
+| <code>scenario.local_doorway_1</code> | Marked Clear Exit | <code>doorway</code> | <code>856, 376</code> | <code>right_alley</code> | Marked Clear Exit | Exact scenario |
+| <code>scenario.local_floor_fixture_1</code> | Tagged Refused Goods Lot | <code>floor_fixture</code> | <code>736, 358</code> | <code>floor</code> | Tagged Refused Goods Lot | Exact scenario |
+| <code>scenario.local_floor_fixture_2</code> | Verified Stall | <code>floor_fixture</code> | <code>696, 286</code> | <code>floor</code> | Verified Stall | Exact scenario |
+| <code>scenario.local_standing_person_1</code> | Mags | <code>standing_person</code> | <code>304, 272</code> | <code>floor</code> | Mags | Exact scenario |
+| <code>scenario.local_standing_person_2</code> | Rotating Buyer | <code>standing_person</code> | <code>250, 260</code> | <code>floor</code> | Rotating Buyer | Exact scenario |
+| <code>scenario.local_surface_item_1</code> | Authentication Loupe, Lamp, and Ledger | <code>surface_item</code> | <code>570, 112</code> | <code>folding_table_upper</code> | Authentication Loupe, Lamp, and Ledger | Exact scenario |
+| <code>scenario.local_surface_item_2</code> | Goods Lot | <code>surface_item</code> | <code>804, 88</code> | <code>right_crate_upper</code> | Goods Lot | Exact scenario |
+| <code>scenario.local_surface_item_3</code> | Abandoned Loupe and Open Ledger | <code>surface_item</code> | <code>44, 64</code> | <code>manual_placement_required</code> | Abandoned Loupe and Open Ledger | Provisional geometry |
+| <code>scenario.local_surface_item_4</code> | Closed Broker Ledger | <code>surface_item</code> | <code>252, 64</code> | <code>manual_placement_required</code> | Closed Broker Ledger | Provisional geometry |
+| <code>scenario.local_surface_item_5</code> | Buyer-Tagged Goods Table | <code>surface_item</code> | <code>324, 64</code> | <code>manual_placement_required</code> | Buyer-Tagged Goods Table | Provisional geometry |
+| <code>scenario.local_surface_item_6</code> | Public Price Card | <code>surface_item</code> | <code>396, 64</code> | <code>manual_placement_required</code> | Public Price Card | Provisional geometry |
 
 #### Scenario — Nothing Moving — <code>back_alley::back_alley_nothing_moving</code>
 
-**Full save:** 27 slots = 23 shared + 4 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 35 slots = 27 shared + 8 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.doorway_1</code> | Scenario alternatives: Erased Rumor Exit / Marked Clear Exit / Opened Follow Exit / Shutter Gap Abandoned | <code>doorway</code> | <code>856, 376</code> | <code>right_alley</code> | Erased Rumor Exit<br>Marked Clear Exit<br>Opened Follow Exit<br>Shutter Gap Abandoned | Exact scenario |
-| <code>scenario.standing_person_1</code> | Returning Regular route end | <code>standing_person</code> | <code>570, 260</code> | <code>floor</code> | Returning Regular route end | Exact scenario |
-| <code>scenario.standing_person_2</code> | Returning Regular route start | <code>standing_person</code> | <code>250, 260</code> | <code>floor</code> | Returning Regular route start | Exact scenario |
-| <code>scenario.surface_item_1</code> | One Light | <code>surface_item</code> | <code>570, 112</code> | <code>folding_table_upper</code> | One Light | Exact scenario |
-
-**Action-only IDs (5; no placement marker):** <code>empty_alley</code><br><code>empty_alley_refused</code><br><code>shutter_gap</code><br><code>three_traces</code><br><code>weather_rumor_exit</code>
+| <code>scenario.local_doorway_1</code> | Scenario alternatives: Erased Rumor Exit / Marked Clear Exit / Opened Follow Exit | <code>doorway</code> | <code>856, 376</code> | <code>right_alley</code> | Erased Rumor Exit<br>Marked Clear Exit<br>Opened Follow Exit | Exact scenario |
+| <code>scenario.local_doorway_2</code> | Shutter Gap Abandoned | <code>doorway</code> | <code>112, 294</code> | <code>manual_placement_required</code> | Shutter Gap Abandoned | Provisional geometry |
+| <code>scenario.local_ground_marker_1</code> | Three Physical Clues | <code>ground_marker</code> | <code>450, 260</code> | <code>floor</code> | Three Physical Clues | Exact scenario |
+| <code>scenario.local_ground_marker_2</code> | Weather Rumor Exit | <code>ground_marker</code> | <code>176, 294</code> | <code>manual_placement_required</code> | Weather Rumor Exit | Provisional geometry |
+| <code>scenario.local_ground_marker_3</code> | Scenario alternatives: Empty Alley / Empty Alley Refused | <code>ground_marker</code> | <code>172, 422</code> | <code>manual_placement_required</code> | Empty Alley<br>Empty Alley Refused | Provisional geometry |
+| <code>scenario.local_standing_person_1</code> | Returning Regular route end | <code>standing_person</code> | <code>570, 260</code> | <code>floor</code> | Returning Regular route end | Exact scenario |
+| <code>scenario.local_standing_person_2</code> | Returning Regular route start | <code>standing_person</code> | <code>250, 260</code> | <code>floor</code> | Returning Regular route start | Exact scenario |
+| <code>scenario.local_surface_item_1</code> | Shutter Gap | <code>surface_item</code> | <code>570, 112</code> | <code>folding_table_upper</code> | Shutter Gap | Exact scenario |
 
 #### Scenario — Street Craps — <code>back_alley::back_alley_street_craps</code>
 
-**Full save:** 28 slots = 23 shared + 5 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 36 slots = 27 shared + 9 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.doorway_1</code> | Marked Clear Exit | <code>doorway</code> | <code>856, 376</code> | <code>right_alley</code> | Marked Clear Exit | Exact scenario |
-| <code>scenario.floor_fixture_1</code> | Craps | <code>floor_fixture</code> | <code>736, 358</code> | <code>floor</code> | Craps | Exact scenario |
-| <code>scenario.floor_fixture_2</code> | Street Stake Recovered | <code>floor_fixture</code> | <code>696, 286</code> | <code>floor</code> | Street Stake Recovered | Exact scenario |
-| <code>scenario.standing_person_1</code> | The Chalk Ring | <code>standing_person</code> | <code>304, 272</code> | <code>floor</code> | The Chalk Ring | Exact scenario |
-| <code>scenario.standing_person_2</code> | Street Shooter | <code>standing_person</code> | <code>250, 260</code> | <code>floor</code> | Street Shooter | Exact scenario |
-
-**Action-only IDs (7; no placement marker):** <code>chalk_ring</code><br><code>lookout_marker</code><br><code>lookout_marker_abandoned</code><br><code>ring_continues</code><br><code>ring_dispersed</code><br><code>ring_dispersed_refused</code><br><code>ring_relocated</code>
+| <code>scenario.local_doorway_1</code> | Marked Clear Exit | <code>doorway</code> | <code>856, 376</code> | <code>right_alley</code> | Marked Clear Exit | Exact scenario |
+| <code>scenario.local_floor_fixture_1</code> | Craps | <code>floor_fixture</code> | <code>736, 358</code> | <code>floor</code> | Craps | Exact scenario |
+| <code>scenario.local_floor_fixture_2</code> | Street Stake Recovered | <code>floor_fixture</code> | <code>696, 286</code> | <code>floor</code> | Street Stake Recovered | Exact scenario |
+| <code>scenario.local_ground_marker_1</code> | Chalk Ring | <code>ground_marker</code> | <code>450, 260</code> | <code>floor</code> | Chalk Ring | Exact scenario |
+| <code>scenario.local_ground_marker_2</code> | Ring Continues | <code>ground_marker</code> | <code>112, 294</code> | <code>manual_placement_required</code> | Ring Continues | Provisional geometry |
+| <code>scenario.local_ground_marker_3</code> | Scenario alternatives: Ring Dispersed / Ring Dispersed Refused / Ring Relocated | <code>ground_marker</code> | <code>172, 422</code> | <code>manual_placement_required</code> | Ring Dispersed<br>Ring Dispersed Refused<br>Ring Relocated | Provisional geometry |
+| <code>scenario.local_standing_person_1</code> | Street Shooter | <code>standing_person</code> | <code>250, 260</code> | <code>floor</code> | Street Shooter | Exact scenario |
+| <code>scenario.local_surface_item_1</code> | Bottle-Cap Lookout Signal | <code>surface_item</code> | <code>570, 112</code> | <code>folding_table_upper</code> | Bottle-Cap Lookout Signal | Exact scenario |
+| <code>scenario.local_wall_item_1</code> | Fallen Bottle-Cap Lookout Signal | <code>wall_mounted</code> | <code>48, 64</code> | <code>manual_placement_required</code> | Fallen Bottle-Cap Lookout Signal | Provisional geometry |
 
 ### Motel — <code>motel</code>
 
 #### Base / No Scenario — <code>motel::__base</code>
 
-**Save snapshot:** 26 slots = 11 fixed + 10 event + 3 shared scenario + 2 exit. Exact scenarios on this map: 4.
+**Save snapshot:** 24 slots = 11 fixed + 8 event + 3 shared scenario + 2 exit. Exact scenarios on this map: 4.
 
 | Family | Slot ID | Physical role | Footprint | Position | Support | Occupant/claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | <code>fixed</code> | <code>fixed.staff_front_desk</code> | Front Desk Clerk | <code>behind_counter_person</code> | <code>824, 250</code> | <code>merchandise_lower</code> | Front Desk Clerk | Required |
-| <code>fixed</code> | <code>fixed.item_counter_phone</code> | Counter or table item | <code>surface_item</code> | <code>566, 286</code> | <code>phone_desk</code> | Call Brother In Law | Mapped capacity |
+| <code>fixed</code> | <code>fixed.item_counter_phone</code> | Counter phone | <code>surface_item</code> | <code>566, 286</code> | <code>phone_desk</code> | Counter Phone | Mapped capacity |
 | <code>fixed</code> | <code>fixed.item_shop_1</code> | Shop item | <code>shop_item</code> | <code>584, 76</code> | <code>merchandise_upper</code> | Empty capacity | Optional empty capacity |
 | <code>fixed</code> | <code>fixed.item_shop_2</code> | Shop item | <code>shop_item</code> | <code>704, 76</code> | <code>merchandise_upper</code> | Empty capacity | Optional empty capacity |
 | <code>fixed</code> | <code>fixed.item_shop_3</code> | Shop item | <code>shop_item</code> | <code>824, 76</code> | <code>merchandise_upper</code> | Empty capacity | Optional empty capacity |
 | <code>fixed</code> | <code>fixed.item_shop_4</code> | Shop item | <code>shop_item</code> | <code>298, 100</code> | <code>lobby_key_ledge</code> | Empty capacity | Optional empty capacity |
 | <code>fixed</code> | <code>fixed.lender_motel_friend</code> | Motel friend lender | <code>standing_person</code> | <code>624, 326</code> | <code>floor</code> | Motel Friend | Mapped capacity |
-| <code>fixed</code> | <code>fixed.service_house_drink</code> | Counter or table item | <code>surface_item</code> | <code>316, 168</code> | <code>lobby_key_ledge</code> | House Drink | Mapped capacity |
-| <code>fixed</code> | <code>fixed.numbers_book</code> | Counter or table item | <code>surface_item</code> | <code>450, 132</code> | <code>round3_curtain_ledge</code> | Book | Mapped capacity |
+| <code>fixed</code> | <code>fixed.service_house_drink</code> | House drink service | <code>surface_item</code> | <code>316, 168</code> | <code>lobby_key_ledge</code> | Buy a Drink | Mapped capacity |
+| <code>fixed</code> | <code>fixed.numbers_book</code> | Numbers book | <code>surface_item</code> | <code>450, 132</code> | <code>round3_curtain_ledge</code> | Book | Mapped capacity |
 | <code>fixed</code> | <code>fixed.staff_june</code> | June | <code>behind_counter_person</code> | <code>558, 180</code> | <code>lobby_table</code> | June | Required |
 | <code>fixed</code> | <code>fixed.patron_marco</code> | Marco | <code>standing_person</code> | <code>716, 326</code> | <code>floor</code> | Marco | Required |
-| <code>event</code> | <code>event.behind_counter_person_1</code> | Counter staff | <code>behind_counter_person</code> | <code>700, 228</code> | <code>front_desk</code> | Town Rumor Staff | Mapped capacity |
+| <code>event</code> | <code>event.behind_counter_person_1</code> | Counter staff | <code>behind_counter_person</code> | <code>700, 228</code> | <code>front_desk</code> | Word from Across Town | Mapped capacity |
 | <code>event</code> | <code>event.surface_item_1</code> | Counter or table item | <code>surface_item</code> | <code>608, 426</code> | <code>round3_luggage_shelf</code> | Empty capacity | Optional empty capacity |
 | <code>event</code> | <code>event.ground_marker_1</code> | Floor marker | <code>ground_marker</code> | <code>804, 414</code> | <code>floor</code> | Parking Lot Tip | Mapped capacity |
-| <code>event</code> | <code>event.surface_item_2</code> | Counter or table item | <code>surface_item</code> | <code>718, 188</code> | <code>front_desk</code> | Chain06 Dave Same Bus | Mapped capacity |
-| <code>event</code> | <code>event.surface_item_3</code> | Counter or table item | <code>surface_item</code> | <code>198, 236</code> | <code>bedspread</code> | Chain06 Dave Last Stop | Mapped capacity |
-| <code>event</code> | <code>event.standing_person_1</code> | Standing person | <code>standing_person</code> | <code>208, 424</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_2</code> | Standing person | <code>standing_person</code> | <code>144, 424</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_3</code> | Standing person | <code>standing_person</code> | <code>408, 334</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
-| <code>event</code> | <code>event.doorway_1</code> | Doorway / exit | <code>doorway</code> | <code>786, 148</code> | <code>hallway_door</code> | Chain06 Nico Weekly Door | Mapped capacity |
+| <code>event</code> | <code>event.standing_person_1</code> | Standing person | <code>standing_person</code> | <code>208, 424</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_2</code> | Standing person | <code>standing_person</code> | <code>144, 424</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_3</code> | Standing person | <code>standing_person</code> | <code>408, 334</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.doorway_1</code> | Doorway / exit | <code>doorway</code> | <code>786, 148</code> | <code>hallway_door</code> | Nico's Weekly-Room Door | Mapped capacity |
 | <code>event</code> | <code>event.standing_person_4</code> | Standing person | <code>standing_person</code> | <code>450, 424</code> | <code>floor</code> | Silas | Mapped capacity |
-| <code>scenario</code> | <code>scenario.floor_fixture_3</code> | Delivery package reserve | <code>floor_fixture</code> | <code>486, 342</code> | <code>floor</code> | Motel Conventioneers Luggage Cart | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.standing_person_4</code> | Runtime contact reserve | <code>standing_person</code> | <code>508, 260</code> | <code>floor</code> | Motel Wedding Overflow Wedding Runner | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
-| <code>scenario</code> | <code>scenario.wall_item_2</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>58, 36</code> | <code>wall</code> | Runtime reserve (unclaimed) | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
-| <code>exit</code> | <code>exit.door_curtain</code> | Travel exit | <code>surface_item</code> | <code>468, 144</code> | <code>round3_curtain_ledge</code> | Leave | Mapped capacity |
-| <code>exit</code> | <code>exit.motel_room</code> | Owned motel-room entrance | <code>doorway</code> | <code>303, 168</code> | <code>room_door</code> | Runtime reserve (unclaimed) | Runtime reserve — Active motel-room ownership adds a return door beside the normal travel exit. |
+| <code>scenario</code> | <code>scenario.floor_fixture_3</code> | Delivery package reserve | <code>floor_fixture</code> | <code>486, 342</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.standing_person_4</code> | Runtime contact reserve | <code>standing_person</code> | <code>508, 260</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
+| <code>scenario</code> | <code>scenario.wall_item_2</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>58, 36</code> | <code>wall</code> | Variable runtime content | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
+| <code>exit</code> | <code>exit.door_curtain</code> | Travel exit | <code>doorway</code> | <code>468, 144</code> | <code>curtain_passage</code> | Leave | Mapped capacity |
+| <code>exit</code> | <code>exit.motel_room</code> | Owned motel-room entrance | <code>doorway</code> | <code>303, 168</code> | <code>room_door</code> | Variable runtime content | Runtime reserve — Active motel-room ownership adds a return door beside the normal travel exit. |
 
 #### Scenario — Conventioneers — <code>motel::motel_conventioneers</code>
 
-**Full save:** 32 slots = 26 shared + 6 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 39 slots = 24 shared + 15 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.behind_counter_person_1</code> | Desk clerk | <code>behind_counter_person</code> | <code>434, 236</code> | <code>reception_annex</code> | Desk clerk | Exact scenario |
-| <code>scenario.doorway_1</code> | Room Nine | <code>doorway</code> | <code>859, 116</code> | <code>right_door</code> | Room Nine | Exact scenario |
-| <code>scenario.doorway_2</code> | Marked safe exit | <code>doorway</code> | <code>40, 128</code> | <code>left_door</code> | Marked safe exit | Exact scenario |
-| <code>scenario.floor_fixture_1</code> | Scenario alternatives: Brass luggage cart / Parked Luggage Cart / Red-Tagged Luggage Pile / Unfinished Key Pile | <code>floor_fixture</code> | <code>166, 342</code> | <code>floor</code> | Brass luggage cart<br>Parked Luggage Cart<br>Red-Tagged Luggage Pile<br>Unfinished Key Pile | Exact scenario |
-| <code>scenario.standing_person_1</code> | Scenario alternatives: Coach guests / Satisfied Guest / Stranded Guest / Waiting Guest | <code>standing_person</code> | <code>276, 414</code> | <code>floor</code> | Coach guests<br>Satisfied Guest<br>Stranded Guest<br>Waiting Guest | Exact scenario |
-| <code>scenario.wall_item_1</code> | Room board | <code>wall_mounted</code> | <code>40, 24</code> | <code>wall</code> | Room board | Exact scenario |
+| <code>scenario.local_behind_counter_person_1</code> | Desk clerk | <code>behind_counter_person</code> | <code>434, 236</code> | <code>reception_annex</code> | Desk clerk | Exact scenario |
+| <code>scenario.local_doorway_1</code> | Room Nine Door | <code>doorway</code> | <code>859, 116</code> | <code>right_door</code> | Room Nine Door | Exact scenario |
+| <code>scenario.local_doorway_2</code> | Marked safe exit | <code>doorway</code> | <code>40, 128</code> | <code>left_door</code> | Marked safe exit | Exact scenario |
+| <code>scenario.local_floor_fixture_1</code> | Blue-tag suitcases | <code>floor_fixture</code> | <code>166, 342</code> | <code>floor</code> | Blue-tag suitcases | Exact scenario |
+| <code>scenario.local_floor_fixture_2</code> | Red cases | <code>floor_fixture</code> | <code>830, 342</code> | <code>floor</code> | Red cases | Exact scenario |
+| <code>scenario.local_floor_fixture_3</code> | Brass luggage cart | <code>floor_fixture</code> | <code>214, 266</code> | <code>manual_placement_required</code> | Brass luggage cart | Provisional geometry |
+| <code>scenario.local_floor_fixture_4</code> | Scenario alternatives: Brass luggage cart / Unfinished Key Pile | <code>floor_fixture</code> | <code>54, 226</code> | <code>manual_placement_required</code> | Brass luggage cart<br>Unfinished Key Pile | Provisional geometry |
+| <code>scenario.local_floor_fixture_5</code> | Red-Tagged Luggage Pile | <code>floor_fixture</code> | <code>702, 422</code> | <code>manual_placement_required</code> | Red-Tagged Luggage Pile | Provisional geometry |
+| <code>scenario.local_floor_fixture_6</code> | Parked Luggage Cart | <code>floor_fixture</code> | <code>262, 334</code> | <code>manual_placement_required</code> | Parked Luggage Cart | Provisional geometry |
+| <code>scenario.local_ground_marker_1</code> | Clear Service-Wing Route | <code>ground_marker</code> | <code>132, 278</code> | <code>manual_placement_required</code> | Clear Service-Wing Route | Provisional geometry |
+| <code>scenario.local_standing_person_1</code> | Scenario alternatives: Coach guests / Stranded Guest / Waiting Guest | <code>standing_person</code> | <code>276, 414</code> | <code>floor</code> | Coach guests<br>Stranded Guest<br>Waiting Guest | Exact scenario |
+| <code>scenario.local_standing_person_2</code> | Satisfied Guest | <code>standing_person</code> | <code>59, 312</code> | <code>stage</code> | Satisfied Guest | Exact scenario |
+| <code>scenario.local_surface_item_1</code> | Dispute Rope | <code>surface_item</code> | <code>572, 426</code> | <code>round3_luggage_shelf</code> | Dispute Rope | Exact scenario |
+| <code>scenario.local_wall_item_1</code> | Room board | <code>wall_mounted</code> | <code>40, 24</code> | <code>wall</code> | Room board | Exact scenario |
+| <code>scenario.local_wall_item_2</code> | Amended Room Board | <code>wall_mounted</code> | <code>144, 64</code> | <code>manual_placement_required</code> | Amended Room Board | Provisional geometry |
 
-**Action-only IDs (6; no placement marker):** <code>motel_conventioneers_aftermath_mixup_refused</code><br><code>motel_conventioneers_aftermath_service_wing_open</code><br><code>motel_conventioneers_aftermath_service_wing_open_secondary</code><br><code>motel_conventioneers_blue_cases</code><br><code>motel_conventioneers_red_cases</code><br><code>motel_conventioneers_station</code>
+**Action-only IDs (1; no placement marker):** <code>motel_conventioneers_station</code>
 
 #### Scenario — The Stakeout — <code>motel::motel_stakeout</code>
 
-**Full save:** 35 slots = 26 shared + 9 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 37 slots = 24 shared + 13 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.doorway_1</code> | The Long Watch | <code>doorway</code> | <code>859, 116</code> | <code>right_door</code> | The Long Watch | Exact scenario |
-| <code>scenario.doorway_2</code> | Marked safe exit | <code>doorway</code> | <code>40, 128</code> | <code>left_door</code> | Marked safe exit | Exact scenario |
-| <code>scenario.doorway_3</code> | Watched room door | <code>doorway</code> | <code>41, 360</code> | <code>left_door</code> | Watched room door | Exact scenario |
-| <code>scenario.floor_fixture_1</code> | Scenario alternatives: Idle Service Trolley / Laundry trolley cover | <code>floor_fixture</code> | <code>166, 342</code> | <code>floor</code> | Idle Service Trolley<br>Laundry trolley cover | Exact scenario |
-| <code>scenario.hanging_item_1</code> | South balcony camera | <code>hanging</code> | <code>572, 22</code> | <code>ceiling</code> | South balcony camera | Exact scenario |
-| <code>scenario.standing_person_1</code> | Scenario alternatives: North observer / Tired Lookout / Warned Occupant | <code>standing_person</code> | <code>276, 414</code> | <code>floor</code> | North observer<br>Tired Lookout<br>Warned Occupant | Exact scenario |
-| <code>scenario.standing_person_2</code> | South observer | <code>standing_person</code> | <code>700, 414</code> | <code>floor</code> | South observer | Exact scenario |
-| <code>scenario.surface_item_1</code> | Untouched Service Trolley | <code>surface_item</code> | <code>572, 426</code> | <code>round3_luggage_shelf</code> | Untouched Service Trolley | Exact scenario |
-| <code>scenario.wall_item_1</code> | Posted Warning Notice | <code>wall_mounted</code> | <code>40, 24</code> | <code>wall</code> | Posted Warning Notice | Exact scenario |
+| <code>scenario.local_doorway_1</code> | Clear courtyard gate | <code>doorway</code> | <code>859, 116</code> | <code>right_door</code> | Clear courtyard gate | Exact scenario |
+| <code>scenario.local_doorway_2</code> | Marked safe exit | <code>doorway</code> | <code>40, 128</code> | <code>left_door</code> | Marked safe exit | Exact scenario |
+| <code>scenario.local_doorway_3</code> | Watched room door | <code>doorway</code> | <code>41, 360</code> | <code>left_door</code> | Watched room door | Exact scenario |
+| <code>scenario.local_floor_fixture_1</code> | Laundry trolley cover | <code>floor_fixture</code> | <code>166, 342</code> | <code>floor</code> | Laundry trolley cover | Exact scenario |
+| <code>scenario.local_floor_fixture_2</code> | Idle Service Trolley | <code>floor_fixture</code> | <code>830, 342</code> | <code>floor</code> | Idle Service Trolley | Exact scenario |
+| <code>scenario.local_ground_marker_1</code> | False Balcony Arrows | <code>ground_marker</code> | <code>348, 422</code> | <code>manual_placement_required</code> | False Balcony Arrows | Provisional geometry |
+| <code>scenario.local_ground_marker_2</code> | Broken Chalk Sight Line | <code>ground_marker</code> | <code>252, 334</code> | <code>manual_placement_required</code> | Broken Chalk Sight Line | Provisional geometry |
+| <code>scenario.local_hanging_item_1</code> | South balcony camera | <code>hanging</code> | <code>572, 22</code> | <code>ceiling</code> | South balcony camera | Exact scenario |
+| <code>scenario.local_standing_person_1</code> | Scenario alternatives: North observer / Tired Lookout / Warned Occupant | <code>standing_person</code> | <code>276, 414</code> | <code>floor</code> | North observer<br>Tired Lookout<br>Warned Occupant | Exact scenario |
+| <code>scenario.local_standing_person_2</code> | South observer | <code>standing_person</code> | <code>700, 414</code> | <code>floor</code> | South observer | Exact scenario |
+| <code>scenario.local_surface_item_1</code> | North surveillance scope | <code>surface_item</code> | <code>572, 426</code> | <code>round3_luggage_shelf</code> | North surveillance scope | Exact scenario |
+| <code>scenario.local_surface_item_2</code> | Untouched Service Trolley | <code>surface_item</code> | <code>150, 80</code> | <code>manual_placement_required</code> | Untouched Service Trolley | Provisional geometry |
+| <code>scenario.local_wall_item_1</code> | Posted Warning Notice | <code>wall_mounted</code> | <code>40, 24</code> | <code>wall</code> | Posted Warning Notice | Exact scenario |
 
-**Action-only IDs (5; no placement marker):** <code>motel_stakeout_aftermath_observers_misdirected</code><br><code>motel_stakeout_aftermath_stakeout_interrupted</code><br><code>motel_stakeout_courtyard_gate</code><br><code>motel_stakeout_north_scope</code><br><code>motel_stakeout_station</code>
+**Action-only IDs (1; no placement marker):** <code>motel_stakeout_station</code>
 
 #### Scenario — Wedding Overflow — <code>motel::motel_wedding_overflow</code>
 
-**Full save:** 33 slots = 26 shared + 7 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 38 slots = 24 shared + 14 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.behind_counter_person_1</code> | Clerk | <code>behind_counter_person</code> | <code>434, 236</code> | <code>reception_annex</code> | Clerk | Exact scenario |
-| <code>scenario.doorway_1</code> | Marked safe exit | <code>doorway</code> | <code>40, 128</code> | <code>left_door</code> | Marked safe exit | Exact scenario |
-| <code>scenario.floor_fixture_1</code> | Hallway Table | <code>floor_fixture</code> | <code>166, 342</code> | <code>floor</code> | Hallway Table | Exact scenario |
-| <code>scenario.floor_fixture_2</code> | Scenario alternatives: Recovered Bouquet Cart / Wedding garment rack | <code>floor_fixture</code> | <code>830, 342</code> | <code>floor</code> | Recovered Bouquet Cart<br>Wedding garment rack | Exact scenario |
-| <code>scenario.standing_person_1</code> | Scenario alternatives: Best person / Key-Hook Clerk / Relieved Wedding Runner | <code>standing_person</code> | <code>276, 414</code> | <code>floor</code> | Best person<br>Key-Hook Clerk<br>Relieved Wedding Runner | Exact scenario |
-| <code>scenario.standing_person_2</code> | Wedding runner | <code>standing_person</code> | <code>59, 312</code> | <code>stage</code> | Wedding runner | Exact scenario |
-| <code>scenario.surface_item_1</code> | Scenario alternatives: Pinned Ribbon and Key / Recalled Key Tray / Unclaimed Garment Bags | <code>surface_item</code> | <code>572, 426</code> | <code>round3_luggage_shelf</code> | Pinned Ribbon and Key<br>Recalled Key Tray<br>Unclaimed Garment Bags | Exact scenario |
+| <code>scenario.local_behind_counter_person_1</code> | Clerk | <code>behind_counter_person</code> | <code>434, 236</code> | <code>reception_annex</code> | Clerk | Exact scenario |
+| <code>scenario.local_doorway_1</code> | Ribbon-marked stair | <code>doorway</code> | <code>859, 116</code> | <code>right_door</code> | Ribbon-marked stair | Exact scenario |
+| <code>scenario.local_doorway_2</code> | Marked safe exit | <code>doorway</code> | <code>40, 128</code> | <code>left_door</code> | Marked safe exit | Exact scenario |
+| <code>scenario.local_floor_fixture_1</code> | Hallway Card Table | <code>floor_fixture</code> | <code>166, 342</code> | <code>floor</code> | Hallway Card Table | Exact scenario |
+| <code>scenario.local_floor_fixture_2</code> | Wedding garment rack | <code>floor_fixture</code> | <code>262, 330</code> | <code>manual_placement_required</code> | Wedding garment rack | Provisional geometry |
+| <code>scenario.local_floor_fixture_3</code> | Scenario alternatives: Corridor Divider Rope / Reception cart | <code>floor_fixture</code> | <code>830, 342</code> | <code>floor</code> | Corridor Divider Rope<br>Reception cart | Exact scenario |
+| <code>scenario.local_floor_fixture_4</code> | Recovered Bouquet Cart | <code>floor_fixture</code> | <code>358, 422</code> | <code>manual_placement_required</code> | Recovered Bouquet Cart | Provisional geometry |
+| <code>scenario.local_standing_person_1</code> | Scenario alternatives: Best person / Relieved Wedding Runner | <code>standing_person</code> | <code>276, 414</code> | <code>floor</code> | Best person<br>Relieved Wedding Runner | Exact scenario |
+| <code>scenario.local_standing_person_2</code> | Wedding runner | <code>standing_person</code> | <code>59, 312</code> | <code>stage</code> | Wedding runner | Exact scenario |
+| <code>scenario.local_standing_person_3</code> | Key-Hook Clerk | <code>standing_person</code> | <code>700, 414</code> | <code>floor</code> | Key-Hook Clerk | Exact scenario |
+| <code>scenario.local_surface_item_1</code> | Missing bouquet case | <code>surface_item</code> | <code>572, 426</code> | <code>round3_luggage_shelf</code> | Missing bouquet case | Exact scenario |
+| <code>scenario.local_surface_item_2</code> | Scenario alternatives: Mixed room-key tray / Recalled Key Tray | <code>surface_item</code> | <code>150, 80</code> | <code>manual_placement_required</code> | Mixed room-key tray<br>Recalled Key Tray | Provisional geometry |
+| <code>scenario.local_surface_item_3</code> | Scenario alternatives: Pinned Ribbon and Key / Ribboned Bouquet Case | <code>surface_item</code> | <code>372, 64</code> | <code>manual_placement_required</code> | Pinned Ribbon and Key<br>Ribboned Bouquet Case | Provisional geometry |
+| <code>scenario.local_surface_item_4</code> | Unclaimed Garment Bags | <code>surface_item</code> | <code>222, 64</code> | <code>manual_placement_required</code> | Unclaimed Garment Bags | Provisional geometry |
 
-**Action-only IDs (7; no placement marker):** <code>motel_wedding_overflow_aftermath_corridor_argument</code><br><code>motel_wedding_overflow_aftermath_corridor_argument_secondary</code><br><code>motel_wedding_overflow_bouquet_case</code><br><code>motel_wedding_overflow_reception_cart</code><br><code>motel_wedding_overflow_ribbon_stair</code><br><code>motel_wedding_overflow_room_key_tray</code><br><code>motel_wedding_overflow_station</code>
+**Action-only IDs (1; no placement marker):** <code>motel_wedding_overflow_station</code>
 
 #### Scenario — Weekly Rates — <code>motel::motel_weekly_rates</code>
 
-**Full save:** 33 slots = 26 shared + 7 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 35 slots = 24 shared + 11 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.doorway_1</code> | Nico Weekly Door | <code>doorway</code> | <code>859, 116</code> | <code>right_door</code> | Nico Weekly Door | Exact scenario |
-| <code>scenario.doorway_2</code> | Soft Terms | <code>doorway</code> | <code>40, 128</code> | <code>left_door</code> | Soft Terms | Exact scenario |
-| <code>scenario.doorway_3</code> | Marked safe exit | <code>doorway</code> | <code>41, 360</code> | <code>left_door</code> | Marked safe exit | Exact scenario |
-| <code>scenario.standing_person_1</code> | Scenario alternatives: Motel landlord / Prospective Tenant / Settled Tenant / Waiting Tenant | <code>standing_person</code> | <code>276, 414</code> | <code>floor</code> | Motel landlord<br>Prospective Tenant<br>Settled Tenant<br>Waiting Tenant | Exact scenario |
-| <code>scenario.surface_item_1</code> | Nico Weekly Terms | <code>surface_item</code> | <code>572, 426</code> | <code>round3_luggage_shelf</code> | Nico Weekly Terms | Exact scenario |
-| <code>scenario.surface_item_2</code> | Scenario alternatives: Dead lamp / Leaking-Sink Warning Tag / Withdrawn Lease Clipboard | <code>surface_item</code> | <code>150, 80</code> | <code>manual_placement_required</code> | Dead lamp<br>Leaking-Sink Warning Tag<br>Withdrawn Lease Clipboard | Provisional geometry |
-| <code>scenario.wall_item_1</code> | Scenario alternatives: Lit Bedside Lamp / Open Bedside Lamp | <code>wall_mounted</code> | <code>40, 24</code> | <code>wall</code> | Lit Bedside Lamp<br>Open Bedside Lamp | Exact scenario |
+| <code>scenario.local_doorway_1</code> | Nico's Weekly-Room Door | <code>doorway</code> | <code>859, 116</code> | <code>right_door</code> | Nico's Weekly-Room Door | Exact scenario |
+| <code>scenario.local_doorway_2</code> | Marked safe exit | <code>doorway</code> | <code>40, 128</code> | <code>left_door</code> | Marked safe exit | Exact scenario |
+| <code>scenario.local_floor_fixture_1</code> | Sagging weekly bed | <code>floor_fixture</code> | <code>830, 342</code> | <code>floor</code> | Sagging weekly bed | Exact scenario |
+| <code>scenario.local_floor_fixture_2</code> | Temporary Bed Brace | <code>floor_fixture</code> | <code>166, 342</code> | <code>floor</code> | Temporary Bed Brace | Exact scenario |
+| <code>scenario.local_standing_person_1</code> | Motel landlord | <code>standing_person</code> | <code>276, 414</code> | <code>floor</code> | Motel landlord | Exact scenario |
+| <code>scenario.local_standing_person_2</code> | Scenario alternatives: Prospective Tenant / Settled Tenant / Waiting Tenant | <code>standing_person</code> | <code>59, 312</code> | <code>stage</code> | Prospective Tenant<br>Settled Tenant<br>Waiting Tenant | Exact scenario |
+| <code>scenario.local_surface_item_1</code> | Dead lamp | <code>surface_item</code> | <code>572, 426</code> | <code>round3_luggage_shelf</code> | Dead lamp | Exact scenario |
+| <code>scenario.local_surface_item_2</code> | Scenario alternatives: Weekly lease clipboard / Withdrawn Lease Clipboard | <code>surface_item</code> | <code>150, 80</code> | <code>manual_placement_required</code> | Weekly lease clipboard<br>Withdrawn Lease Clipboard | Provisional geometry |
+| <code>scenario.local_surface_item_3</code> | Leaking-Sink Warning Tag | <code>surface_item</code> | <code>372, 64</code> | <code>manual_placement_required</code> | Leaking-Sink Warning Tag | Provisional geometry |
+| <code>scenario.local_wall_item_1</code> | Scenario alternatives: Leaking sink / Lit Bedside Lamp | <code>wall_mounted</code> | <code>40, 24</code> | <code>wall</code> | Leaking sink<br>Lit Bedside Lamp | Exact scenario |
+| <code>scenario.local_wall_item_2</code> | Open Bedside Lamp | <code>wall_mounted</code> | <code>376, 112</code> | <code>manual_placement_required</code> | Open Bedside Lamp | Provisional geometry |
 
-**Action-only IDs (5; no placement marker):** <code>motel_weekly_rates_aftermath_room_accepted</code><br><code>motel_weekly_rates_lease_clipboard</code><br><code>motel_weekly_rates_station</code><br><code>motel_weekly_rates_weekly_bed</code><br><code>motel_weekly_rates_weekly_sink</code>
+**Action-only IDs (1; no placement marker):** <code>motel_weekly_rates_station</code>
 
 ### Bar — <code>bar</code>
 
@@ -458,130 +503,162 @@ Positions are canonical 900×430 board coordinates. Base tables list the exact e
 
 | Family | Slot ID | Physical role | Footprint | Position | Support | Occupant/claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| <code>fixed</code> | <code>fixed.random_game_1</code> | Game fixture | <code>surface_item</code> | <code>74, 178</code> | <code>bar_counter</code> | Empty capacity | Optional empty capacity |
-| <code>fixed</code> | <code>fixed.random_game_2</code> | Game fixture | <code>surface_item</code> | <code>194, 178</code> | <code>bar_counter</code> | Empty capacity | Optional empty capacity |
-| <code>fixed</code> | <code>fixed.numbers_book</code> | Counter or table item | <code>surface_item</code> | <code>420, 92</code> | <code>bottle_rail</code> | Book | Mapped capacity |
-| <code>fixed</code> | <code>fixed.service_house_drink</code> | Counter or table item | <code>surface_item</code> | <code>198, 104</code> | <code>bottle_rail</code> | House Drink | Mapped capacity |
+| <code>fixed</code> | <code>fixed.random_game_1</code> | Random game | <code>surface_item</code> | <code>74, 178</code> | <code>bar_counter</code> | Empty capacity | Optional empty capacity |
+| <code>fixed</code> | <code>fixed.random_game_2</code> | Random game | <code>surface_item</code> | <code>194, 178</code> | <code>bar_counter</code> | Empty capacity | Optional empty capacity |
+| <code>fixed</code> | <code>fixed.numbers_book</code> | Numbers book | <code>surface_item</code> | <code>420, 92</code> | <code>bottle_rail</code> | Book | Mapped capacity |
+| <code>fixed</code> | <code>fixed.service_house_drink</code> | House drink service | <code>surface_item</code> | <code>198, 104</code> | <code>bottle_rail</code> | Buy a Drink | Mapped capacity |
 | <code>fixed</code> | <code>fixed.staff_bartender</code> | Rafi | <code>behind_counter_person</code> | <code>430, 218</code> | <code>bar_counter</code> | Rafi | Required |
 | <code>fixed</code> | <code>fixed.patron_dot</code> | Dot | <code>standing_person</code> | <code>508, 376</code> | <code>floor</code> | Dot | Required |
-| <code>event</code> | <code>event.behind_counter_person_1</code> | Counter staff | <code>behind_counter_person</code> | <code>310, 218</code> | <code>bar_counter</code> | Town Rumor Staff | Mapped capacity |
+| <code>event</code> | <code>event.behind_counter_person_1</code> | Counter staff | <code>behind_counter_person</code> | <code>310, 218</code> | <code>bar_counter</code> | Word from Across Town | Mapped capacity |
 | <code>event</code> | <code>event.floor_fixture_1</code> | Floor prop | <code>floor_fixture</code> | <code>160, 290</code> | <code>stage</code> | Empty capacity | Optional empty capacity |
 | <code>event</code> | <code>event.floor_fixture_2</code> | Floor prop | <code>floor_fixture</code> | <code>276, 290</code> | <code>stage</code> | Empty capacity | Optional empty capacity |
 | <code>event</code> | <code>event.standing_person_1</code> | Standing person | <code>standing_person</code> | <code>102, 414</code> | <code>floor</code> | Rowdy Regular | Mapped capacity |
 | <code>event</code> | <code>event.doorway_1</code> | Doorway / exit | <code>doorway</code> | <code>38, 370</code> | <code>left_exit</code> | Side Door | Mapped capacity |
-| <code>event</code> | <code>event.standing_person_2</code> | Standing person | <code>standing_person</code> | <code>480, 414</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_3</code> | Standing person | <code>standing_person</code> | <code>670, 414</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_4</code> | Standing person | <code>standing_person</code> | <code>860, 414</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_2</code> | Standing person | <code>standing_person</code> | <code>480, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_3</code> | Standing person | <code>standing_person</code> | <code>670, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_4</code> | Standing person | <code>standing_person</code> | <code>860, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
 | <code>event</code> | <code>event.standing_person_5</code> | Standing person | <code>standing_person</code> | <code>290, 414</code> | <code>floor</code> | Silas | Mapped capacity |
-| <code>scenario</code> | <code>scenario.floor_fixture_4</code> | Delivery package reserve | <code>floor_fixture</code> | <code>624, 290</code> | <code>stage</code> | Bar Darts League Night Bracket Easel<br>Bar Live Band Speaker Stack | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.wall_item_2</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>680, 24</code> | <code>wall</code> | Bar Darts League Night Disputed Dart<br>Bar Lock In Task 0<br>Bar Lock In Task 1<br>Bar Lock In Task 2<br>Bar Lock In Task 3<br>Bar Lock In Task 4 | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.standing_person_4</code> | Runtime contact reserve | <code>standing_person</code> | <code>492, 144</code> | <code>floor</code> | Bar Darts League Night Darts Scorer | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
-| <code>scenario</code> | <code>scenario.seated_person_2</code> | Recruitment contact reserve | <code>seated_person</code> | <code>600, 120</code> | <code>provisional_booth</code> | Runtime reserve (unclaimed) | Runtime reserve — Knuckles recruitment can coexist with the Fight Night seated actor. |
-| <code>exit</code> | <code>exit.travel_right</code> | Travel exit | <code>standing_person</code> | <code>880, 418</code> | <code>stage</code> | Leave | Mapped capacity |
+| <code>scenario</code> | <code>scenario.floor_fixture_4</code> | Delivery package reserve | <code>floor_fixture</code> | <code>624, 290</code> | <code>stage</code> | Variable runtime content | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.wall_item_2</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>680, 24</code> | <code>wall</code> | Variable runtime content | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.standing_person_4</code> | Runtime contact reserve | <code>standing_person</code> | <code>492, 144</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
+| <code>scenario</code> | <code>scenario.seated_person_2</code> | Recruitment contact reserve | <code>seated_person</code> | <code>600, 120</code> | <code>provisional_booth</code> | Variable runtime content | Runtime reserve — Knuckles recruitment can coexist with the Fight Night seated actor. |
+| <code>exit</code> | <code>exit.travel_right</code> | Travel exit | <code>doorway</code> | <code>880, 418</code> | <code>right_exit</code> | Leave | Mapped capacity |
 
 #### Scenario — Darts League Night — <code>bar::bar_darts_league_night</code>
 
-**Full save:** 26 slots = 20 shared + 6 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 31 slots = 20 shared + 11 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.doorway_1</code> | Marked clean exit | <code>doorway</code> | <code>862, 270</code> | <code>right_exit</code> | Marked clean exit | Exact scenario |
-| <code>scenario.floor_fixture_1</code> | League bracket easel | <code>floor_fixture</code> | <code>392, 290</code> | <code>stage</code> | League bracket easel | Exact scenario |
-| <code>scenario.seated_person_1</code> | The Deciding Leg | <code>seated_person</code> | <code>742, 272</code> | <code>right_booth</code> | The Deciding Leg | Exact scenario |
-| <code>scenario.standing_person_1</code> | Scenario alternatives: Forfeiting captain / League captain | <code>standing_person</code> | <code>624, 376</code> | <code>floor</code> | Forfeiting captain<br>League captain | Exact scenario |
-| <code>scenario.standing_person_2</code> | Darts scorer | <code>standing_person</code> | <code>526, 294</code> | <code>floor</code> | Darts scorer | Exact scenario |
-| <code>scenario.wall_item_1</code> | Scenario alternatives: Circled board dart / Completed league bracket | <code>wall_mounted</code> | <code>560, 24</code> | <code>wall</code> | Circled board dart<br>Completed league bracket | Exact scenario |
+| <code>scenario.local_doorway_1</code> | Marked clean exit | <code>doorway</code> | <code>862, 270</code> | <code>right_exit</code> | Marked clean exit | Exact scenario |
+| <code>scenario.local_floor_fixture_1</code> | League bracket easel | <code>floor_fixture</code> | <code>392, 290</code> | <code>stage</code> | League bracket easel | Exact scenario |
+| <code>scenario.local_ground_marker_1</code> | Darts throw line | <code>ground_marker</code> | <code>160, 366</code> | <code>floor</code> | Darts throw line | Exact scenario |
+| <code>scenario.local_standing_person_1</code> | Scenario alternatives: Darts scorer / League captain | <code>standing_person</code> | <code>526, 294</code> | <code>floor</code> | Darts scorer<br>League captain | Exact scenario |
+| <code>scenario.local_standing_person_2</code> | Darts scorer | <code>standing_person</code> | <code>740, 376</code> | <code>floor</code> | Darts scorer | Exact scenario |
+| <code>scenario.local_standing_person_3</code> | League captain | <code>standing_person</code> | <code>624, 376</code> | <code>floor</code> | League captain | Exact scenario |
+| <code>scenario.local_standing_person_4</code> | Forfeiting captain | <code>standing_person</code> | <code>364, 422</code> | <code>manual_placement_required</code> | Forfeiting captain | Provisional geometry |
+| <code>scenario.local_wall_item_1</code> | Disputed board dart | <code>wall_mounted</code> | <code>560, 24</code> | <code>wall</code> | Disputed board dart | Exact scenario |
+| <code>scenario.local_wall_item_2</code> | Completed league bracket | <code>wall_mounted</code> | <code>48, 64</code> | <code>manual_placement_required</code> | Completed league bracket | Provisional geometry |
+| <code>scenario.local_wall_item_3</code> | Circled board dart | <code>wall_mounted</code> | <code>280, 64</code> | <code>manual_placement_required</code> | Circled board dart | Provisional geometry |
+| <code>scenario.local_wall_item_4</code> | Half-filled bracket | <code>wall_mounted</code> | <code>760, 64</code> | <code>manual_placement_required</code> | Half-filled bracket | Provisional geometry |
 
-**Action-only IDs (9; no placement marker):** <code>bar_darts_league_night_aftermath_league_paused_prop</code><br><code>bar_darts_league_night_darts_oche</code><br><code>bar_darts_league_night_disputed_dart</code><br><code>bar_darts_league_night_task_0</code><br><code>bar_darts_league_night_task_1</code><br><code>bar_darts_league_night_task_2</code><br><code>bar_darts_league_night_task_3</code><br><code>bar_darts_league_night_task_4</code><br><code>bar_darts_league_night_task_5</code>
+**Action-only IDs (6; no placement marker):** <code>bar_darts_league_night_task_0</code><br><code>bar_darts_league_night_task_1</code><br><code>bar_darts_league_night_task_2</code><br><code>bar_darts_league_night_task_3</code><br><code>bar_darts_league_night_task_4</code><br><code>bar_darts_league_night_task_5</code>
 
 #### Scenario — Dead Tuesday — <code>bar::bar_dead_tuesday</code>
-
-**Full save:** 25 slots = 20 shared + 5 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
-
-| Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
-| --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.behind_counter_person_1</code> | Last Regular | <code>behind_counter_person</code> | <code>550, 218</code> | <code>bar_counter</code> | Last Regular | Exact scenario |
-| <code>scenario.behind_counter_person_2</code> | Quiet bartender | <code>behind_counter_person</code> | <code>796, 334</code> | <code>scenario_staff_rail</code> | Quiet bartender | Exact scenario |
-| <code>scenario.doorway_1</code> | Marked clean exit | <code>doorway</code> | <code>862, 270</code> | <code>right_exit</code> | Marked clean exit | Exact scenario |
-| <code>scenario.seated_person_1</code> | Night-shift worker | <code>seated_person</code> | <code>742, 272</code> | <code>right_booth</code> | Night-shift worker | Exact scenario |
-| <code>scenario.standing_person_1</code> | Lone Tuesday patron | <code>standing_person</code> | <code>624, 376</code> | <code>floor</code> | Lone Tuesday patron | Exact scenario |
-
-**Action-only IDs (8; no placement marker):** <code>bar_dead_tuesday_aftermath_bartender_zone_kept_prop</code><br><code>bar_dead_tuesday_aftermath_night_left_empty_prop</code><br><code>bar_dead_tuesday_aftermath_patron_zone_kept_prop</code><br><code>bar_dead_tuesday_bartender_zone</code><br><code>bar_dead_tuesday_booth_zone</code><br><code>bar_dead_tuesday_patron_zone</code><br><code>bar_dead_tuesday_task_0</code><br><code>bar_dead_tuesday_task_1</code>
-
-#### Scenario — Fight Night — <code>bar::bar_fight_night</code>
 
 **Full save:** 28 slots = 20 shared + 8 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.doorway_1</code> | Marked clean exit | <code>doorway</code> | <code>862, 270</code> | <code>right_exit</code> | Marked clean exit | Exact scenario |
-| <code>scenario.floor_fixture_1</code> | Split fight table | <code>floor_fixture</code> | <code>392, 290</code> | <code>stage</code> | Split fight table | Exact scenario |
-| <code>scenario.floor_fixture_2</code> | Toppled chair | <code>floor_fixture</code> | <code>508, 290</code> | <code>stage</code> | Toppled chair | Exact scenario |
-| <code>scenario.seated_person_1</code> | One Big Swing | <code>seated_person</code> | <code>742, 272</code> | <code>right_booth</code> | One Big Swing | Exact scenario |
-| <code>scenario.standing_person_1</code> | Knuckles Recruitment | <code>standing_person</code> | <code>526, 294</code> | <code>floor</code> | Knuckles Recruitment | Exact scenario |
-| <code>scenario.standing_person_2</code> | Scenario alternatives: Calmed brawler / Chosen-side brawler / Left-side brawler | <code>standing_person</code> | <code>624, 376</code> | <code>floor</code> | Calmed brawler<br>Chosen-side brawler<br>Left-side brawler | Exact scenario |
-| <code>scenario.standing_person_3</code> | Right-side brawler | <code>standing_person</code> | <code>740, 376</code> | <code>floor</code> | Right-side brawler | Exact scenario |
-| <code>scenario.surface_item_1</code> | Scenario alternatives: Reset table line / Swept broken glass | <code>surface_item</code> | <code>666, 188</code> | <code>pool_table</code> | Reset table line<br>Swept broken glass | Exact scenario |
+| <code>scenario.local_behind_counter_person_1</code> | Quiet bartender | <code>behind_counter_person</code> | <code>796, 334</code> | <code>scenario_staff_rail</code> | Quiet bartender | Exact scenario |
+| <code>scenario.local_behind_counter_person_2</code> | Quiet bartender | <code>behind_counter_person</code> | <code>550, 218</code> | <code>bar_counter</code> | Quiet bartender | Exact scenario |
+| <code>scenario.local_doorway_1</code> | Marked clean exit | <code>doorway</code> | <code>862, 270</code> | <code>right_exit</code> | Marked clean exit | Exact scenario |
+| <code>scenario.local_floor_fixture_1</code> | Paired patron chairs | <code>floor_fixture</code> | <code>392, 290</code> | <code>stage</code> | Paired patron chairs | Exact scenario |
+| <code>scenario.local_ground_marker_1</code> | Untouched front glass | <code>ground_marker</code> | <code>160, 366</code> | <code>floor</code> | Untouched front glass | Exact scenario |
+| <code>scenario.local_seated_person_1</code> | Night-shift worker | <code>seated_person</code> | <code>742, 272</code> | <code>right_booth</code> | Night-shift worker | Exact scenario |
+| <code>scenario.local_standing_person_1</code> | Lone Tuesday patron | <code>standing_person</code> | <code>624, 376</code> | <code>floor</code> | Lone Tuesday patron | Exact scenario |
+| <code>scenario.local_surface_item_1</code> | Second bar glass | <code>surface_item</code> | <code>666, 188</code> | <code>pool_table</code> | Second bar glass | Exact scenario |
 
-**Action-only IDs (8; no placement marker):** <code>bar_fight_night_aftermath_security_controlled_prop</code><br><code>bar_fight_night_door_buffer</code><br><code>bar_fight_night_task_0</code><br><code>bar_fight_night_task_1</code><br><code>bar_fight_night_task_2</code><br><code>bar_fight_night_task_3</code><br><code>bar_fight_night_task_4</code><br><code>bar_fight_night_task_5</code>
+**Action-only IDs (5; no placement marker):** <code>bar_dead_tuesday_bartender_zone</code><br><code>bar_dead_tuesday_booth_zone</code><br><code>bar_dead_tuesday_patron_zone</code><br><code>bar_dead_tuesday_task_0</code><br><code>bar_dead_tuesday_task_1</code>
+
+#### Scenario — Fight Night — <code>bar::bar_fight_night</code>
+
+**Full save:** 34 slots = 20 shared + 14 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+
+| Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
+| --- | --- | --- | --- | --- | --- | --- |
+| <code>scenario.local_doorway_1</code> | Marked clean exit | <code>doorway</code> | <code>862, 270</code> | <code>right_exit</code> | Marked clean exit | Exact scenario |
+| <code>scenario.local_floor_fixture_1</code> | Split fight table | <code>floor_fixture</code> | <code>392, 290</code> | <code>stage</code> | Split fight table | Exact scenario |
+| <code>scenario.local_floor_fixture_2</code> | Toppled chair | <code>floor_fixture</code> | <code>718, 290</code> | <code>manual_placement_required</code> | Toppled chair | Provisional geometry |
+| <code>scenario.local_floor_fixture_3</code> | Toppled chair | <code>floor_fixture</code> | <code>54, 242</code> | <code>manual_placement_required</code> | Toppled chair | Provisional geometry |
+| <code>scenario.local_ground_marker_1</code> | Marked door buffer | <code>ground_marker</code> | <code>160, 366</code> | <code>floor</code> | Marked door buffer | Exact scenario |
+| <code>scenario.local_ground_marker_2</code> | Security rope | <code>ground_marker</code> | <code>172, 422</code> | <code>manual_placement_required</code> | Security rope | Provisional geometry |
+| <code>scenario.local_standing_person_1</code> | Knuckles | <code>standing_person</code> | <code>526, 294</code> | <code>floor</code> | Knuckles | Exact scenario |
+| <code>scenario.local_standing_person_2</code> | Left-side brawler | <code>standing_person</code> | <code>624, 376</code> | <code>floor</code> | Left-side brawler | Exact scenario |
+| <code>scenario.local_standing_person_3</code> | Right-side brawler | <code>standing_person</code> | <code>740, 376</code> | <code>floor</code> | Right-side brawler | Exact scenario |
+| <code>scenario.local_standing_person_4</code> | Right-side brawler | <code>standing_person</code> | <code>364, 422</code> | <code>manual_placement_required</code> | Right-side brawler | Provisional geometry |
+| <code>scenario.local_standing_person_5</code> | Scenario alternatives: Calmed brawler / Chosen-side brawler | <code>standing_person</code> | <code>40, 326</code> | <code>manual_placement_required</code> | Calmed brawler<br>Chosen-side brawler | Provisional geometry |
+| <code>scenario.local_surface_item_1</code> | Fight-Night Betting Book | <code>surface_item</code> | <code>666, 188</code> | <code>pool_table</code> | Fight-Night Betting Book | Exact scenario |
+| <code>scenario.local_surface_item_2</code> | Reset table line | <code>surface_item</code> | <code>118, 104</code> | <code>bottle_rail</code> | Reset table line | Exact scenario |
+| <code>scenario.local_surface_item_3</code> | Swept broken glass | <code>surface_item</code> | <code>44, 64</code> | <code>manual_placement_required</code> | Swept broken glass | Provisional geometry |
+
+**Action-only IDs (6; no placement marker):** <code>bar_fight_night_task_0</code><br><code>bar_fight_night_task_1</code><br><code>bar_fight_night_task_2</code><br><code>bar_fight_night_task_3</code><br><code>bar_fight_night_task_4</code><br><code>bar_fight_night_task_5</code>
 
 #### Scenario — Live Band — <code>bar::bar_live_band</code>
 
-**Full save:** 26 slots = 20 shared + 6 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 30 slots = 20 shared + 10 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.doorway_1</code> | Marked clean exit | <code>doorway</code> | <code>862, 270</code> | <code>right_exit</code> | Marked clean exit | Exact scenario |
-| <code>scenario.floor_fixture_1</code> | Scenario alternatives: Band stage / Unplugged stage box | <code>floor_fixture</code> | <code>392, 290</code> | <code>stage</code> | Band stage<br>Unplugged stage box | Exact scenario |
-| <code>scenario.standing_person_1</code> | One Request | <code>standing_person</code> | <code>526, 294</code> | <code>floor</code> | One Request | Exact scenario |
-| <code>scenario.standing_person_2</code> | Scenario alternatives: Band leader / Floor runner | <code>standing_person</code> | <code>624, 376</code> | <code>floor</code> | Band leader<br>Floor runner | Exact scenario |
-| <code>scenario.standing_person_3</code> | Floor runner | <code>standing_person</code> | <code>740, 376</code> | <code>floor</code> | Floor runner | Exact scenario |
-| <code>scenario.surface_item_1</code> | Powered speaker stack | <code>surface_item</code> | <code>666, 188</code> | <code>pool_table</code> | Powered speaker stack | Exact scenario |
+| <code>scenario.local_doorway_1</code> | Marked clean exit | <code>doorway</code> | <code>862, 270</code> | <code>right_exit</code> | Marked clean exit | Exact scenario |
+| <code>scenario.local_floor_fixture_1</code> | Band stage | <code>floor_fixture</code> | <code>392, 290</code> | <code>stage</code> | Band stage | Exact scenario |
+| <code>scenario.local_floor_fixture_2</code> | Speaker stack | <code>floor_fixture</code> | <code>178, 302</code> | <code>stage</code> | Speaker stack | Exact scenario |
+| <code>scenario.local_floor_fixture_3</code> | Scenario alternatives: Cable crossing / Unplugged stage box | <code>floor_fixture</code> | <code>508, 290</code> | <code>stage</code> | Cable crossing<br>Unplugged stage box | Exact scenario |
+| <code>scenario.local_floor_fixture_4</code> | Speaker stack | <code>floor_fixture</code> | <code>374, 422</code> | <code>manual_placement_required</code> | Speaker stack | Provisional geometry |
+| <code>scenario.local_ground_marker_1</code> | Half-coiled stage cable | <code>ground_marker</code> | <code>160, 366</code> | <code>floor</code> | Half-coiled stage cable | Exact scenario |
+| <code>scenario.local_standing_person_1</code> | Band leader | <code>standing_person</code> | <code>624, 376</code> | <code>floor</code> | Band leader | Exact scenario |
+| <code>scenario.local_standing_person_2</code> | Floor runner | <code>standing_person</code> | <code>526, 294</code> | <code>floor</code> | Floor runner | Exact scenario |
+| <code>scenario.local_standing_person_3</code> | Scenario alternatives: Band leader / Floor runner | <code>standing_person</code> | <code>740, 376</code> | <code>floor</code> | Band leader<br>Floor runner | Exact scenario |
+| <code>scenario.local_surface_item_1</code> | Powered speaker stack | <code>surface_item</code> | <code>666, 188</code> | <code>pool_table</code> | Powered speaker stack | Exact scenario |
 
-**Action-only IDs (8; no placement marker):** <code>bar_live_band_aftermath_show_interrupted_prop</code><br><code>bar_live_band_cable_crossing</code><br><code>bar_live_band_speaker_stack</code><br><code>bar_live_band_task_0</code><br><code>bar_live_band_task_1</code><br><code>bar_live_band_task_2</code><br><code>bar_live_band_task_3</code><br><code>bar_live_band_task_4</code>
+**Action-only IDs (5; no placement marker):** <code>bar_live_band_task_0</code><br><code>bar_live_band_task_1</code><br><code>bar_live_band_task_2</code><br><code>bar_live_band_task_3</code><br><code>bar_live_band_task_4</code>
 
 #### Scenario — Lock-In — <code>bar::bar_lock_in</code>
 
-**Full save:** 25 slots = 20 shared + 5 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 29 slots = 20 shared + 9 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.doorway_1</code> | Scenario alternatives: Marked clean exit / Open cellar hatch | <code>doorway</code> | <code>862, 270</code> | <code>right_exit</code> | Marked clean exit<br>Open cellar hatch | Exact scenario |
-| <code>scenario.floor_fixture_1</code> | After the Bolt | <code>floor_fixture</code> | <code>178, 302</code> | <code>stage</code> | After the Bolt | Exact scenario |
-| <code>scenario.standing_person_1</code> | Scenario alternatives: Daylight bar host / Lock-in host | <code>standing_person</code> | <code>624, 376</code> | <code>floor</code> | Daylight bar host<br>Lock-in host | Exact scenario |
-| <code>scenario.standing_person_2</code> | After-hours regular | <code>standing_person</code> | <code>740, 376</code> | <code>floor</code> | After-hours regular | Exact scenario |
-| <code>scenario.surface_item_1</code> | Numbered host token | <code>surface_item</code> | <code>666, 188</code> | <code>pool_table</code> | Numbered host token | Exact scenario |
+| <code>scenario.local_doorway_1</code> | Quiet cellar hatch | <code>doorway</code> | <code>360, 422</code> | <code>manual_placement_required</code> | Quiet cellar hatch | Provisional geometry |
+| <code>scenario.local_doorway_2</code> | Scenario alternatives: Marked clean exit / Open cellar hatch | <code>doorway</code> | <code>862, 270</code> | <code>right_exit</code> | Marked clean exit<br>Open cellar hatch | Exact scenario |
+| <code>scenario.local_floor_fixture_1</code> | After-hours task bench | <code>floor_fixture</code> | <code>508, 290</code> | <code>stage</code> | After-hours task bench | Exact scenario |
+| <code>scenario.local_ground_marker_1</code> | Inspection tape | <code>ground_marker</code> | <code>160, 366</code> | <code>floor</code> | Inspection tape | Exact scenario |
+| <code>scenario.local_standing_person_1</code> | Lock-in host | <code>standing_person</code> | <code>624, 376</code> | <code>floor</code> | Lock-in host | Exact scenario |
+| <code>scenario.local_standing_person_2</code> | After-hours regular | <code>standing_person</code> | <code>526, 294</code> | <code>floor</code> | After-hours regular | Exact scenario |
+| <code>scenario.local_standing_person_3</code> | Scenario alternatives: After-hours regular / Daylight bar host / Lock-in host | <code>standing_person</code> | <code>740, 376</code> | <code>floor</code> | After-hours regular<br>Daylight bar host<br>Lock-in host | Exact scenario |
+| <code>scenario.local_surface_item_1</code> | Numbered host token | <code>surface_item</code> | <code>666, 188</code> | <code>pool_table</code> | Numbered host token | Exact scenario |
+| <code>scenario.local_wall_item_1</code> | Locked front shutters | <code>wall_mounted</code> | <code>560, 24</code> | <code>wall</code> | Locked front shutters | Exact scenario |
 
-**Action-only IDs (9; no placement marker):** <code>bar_lock_in_aftermath_sweep_interrupted_prop</code><br><code>bar_lock_in_cellar_hatch</code><br><code>bar_lock_in_locked_shutters</code><br><code>bar_lock_in_private_bench</code><br><code>bar_lock_in_task_0</code><br><code>bar_lock_in_task_1</code><br><code>bar_lock_in_task_2</code><br><code>bar_lock_in_task_3</code><br><code>bar_lock_in_task_4</code>
+**Action-only IDs (5; no placement marker):** <code>bar_lock_in_task_0</code><br><code>bar_lock_in_task_1</code><br><code>bar_lock_in_task_2</code><br><code>bar_lock_in_task_3</code><br><code>bar_lock_in_task_4</code>
 
 #### Scenario — Payday Rush — <code>bar::bar_payday_rush</code>
 
-**Full save:** 25 slots = 20 shared + 5 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 32 slots = 20 shared + 12 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.behind_counter_person_1</code> | Rush bartender | <code>behind_counter_person</code> | <code>550, 218</code> | <code>bar_counter</code> | Rush bartender | Exact scenario |
-| <code>scenario.doorway_1</code> | Marked clean exit | <code>doorway</code> | <code>862, 270</code> | <code>right_exit</code> | Marked clean exit | Exact scenario |
-| <code>scenario.standing_person_1</code> | Scenario alternatives: Floor server / Payday runner / Waiting bartender | <code>standing_person</code> | <code>624, 376</code> | <code>floor</code> | Floor server<br>Payday runner<br>Waiting bartender | Exact scenario |
-| <code>scenario.surface_item_1</code> | Pay Envelope | <code>surface_item</code> | <code>666, 188</code> | <code>pool_table</code> | Pay Envelope | Exact scenario |
-| <code>scenario.surface_item_2</code> | Scenario alternatives: Spilled order tickets / Stacked carrying trays | <code>surface_item</code> | <code>118, 104</code> | <code>bottle_rail</code> | Spilled order tickets<br>Stacked carrying trays | Exact scenario |
+| <code>scenario.local_behind_counter_person_1</code> | Rush bartender | <code>behind_counter_person</code> | <code>550, 218</code> | <code>bar_counter</code> | Rush bartender | Exact scenario |
+| <code>scenario.local_doorway_1</code> | Marked clean exit | <code>doorway</code> | <code>862, 270</code> | <code>right_exit</code> | Marked clean exit | Exact scenario |
+| <code>scenario.local_floor_fixture_1</code> | Loaded order rail | <code>floor_fixture</code> | <code>392, 290</code> | <code>stage</code> | Loaded order rail | Exact scenario |
+| <code>scenario.local_ground_marker_1</code> | Cooling loaded trays | <code>ground_marker</code> | <code>160, 366</code> | <code>floor</code> | Cooling loaded trays | Exact scenario |
+| <code>scenario.local_standing_person_1</code> | Payday runner | <code>standing_person</code> | <code>526, 294</code> | <code>floor</code> | Payday runner | Exact scenario |
+| <code>scenario.local_standing_person_2</code> | Payday runner | <code>standing_person</code> | <code>624, 376</code> | <code>floor</code> | Payday runner | Exact scenario |
+| <code>scenario.local_standing_person_3</code> | Scenario alternatives: Floor server / Waiting bartender | <code>standing_person</code> | <code>740, 376</code> | <code>floor</code> | Floor server<br>Waiting bartender | Exact scenario |
+| <code>scenario.local_surface_item_1</code> | Pay Envelope | <code>surface_item</code> | <code>666, 188</code> | <code>pool_table</code> | Pay Envelope | Exact scenario |
+| <code>scenario.local_surface_item_2</code> | Carrying tray | <code>surface_item</code> | <code>44, 64</code> | <code>manual_placement_required</code> | Carrying tray | Provisional geometry |
+| <code>scenario.local_surface_item_3</code> | Open tab envelopes | <code>surface_item</code> | <code>118, 104</code> | <code>bottle_rail</code> | Open tab envelopes | Exact scenario |
+| <code>scenario.local_surface_item_4</code> | Stacked carrying trays | <code>surface_item</code> | <code>276, 64</code> | <code>manual_placement_required</code> | Stacked carrying trays | Provisional geometry |
+| <code>scenario.local_surface_item_5</code> | Spilled order tickets | <code>surface_item</code> | <code>348, 64</code> | <code>manual_placement_required</code> | Spilled order tickets | Provisional geometry |
 
-**Action-only IDs (7; no placement marker):** <code>bar_payday_rush_aftermath_rush_abandoned_prop</code><br><code>bar_payday_rush_carrying_tray</code><br><code>bar_payday_rush_order_rail</code><br><code>bar_payday_rush_tab_envelopes</code><br><code>bar_payday_rush_task_0</code><br><code>bar_payday_rush_task_1</code><br><code>bar_payday_rush_task_2</code>
+**Action-only IDs (3; no placement marker):** <code>bar_payday_rush_task_0</code><br><code>bar_payday_rush_task_1</code><br><code>bar_payday_rush_task_2</code>
 
 #### Scenario — The Wake — <code>bar::bar_wake</code>
 
-**Full save:** 26 slots = 20 shared + 6 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 29 slots = 20 shared + 9 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.behind_counter_person_1</code> | The Empty Stool | <code>behind_counter_person</code> | <code>550, 218</code> | <code>bar_counter</code> | The Empty Stool | Exact scenario |
-| <code>scenario.doorway_1</code> | Marked clean exit | <code>doorway</code> | <code>862, 270</code> | <code>right_exit</code> | Marked clean exit | Exact scenario |
-| <code>scenario.floor_fixture_1</code> | Joined memorial tables | <code>floor_fixture</code> | <code>392, 290</code> | <code>stage</code> | Joined memorial tables | Exact scenario |
-| <code>scenario.standing_person_1</code> | Scenario alternatives: Mourning regular / Wake host | <code>standing_person</code> | <code>624, 376</code> | <code>floor</code> | Mourning regular<br>Wake host | Exact scenario |
-| <code>scenario.standing_person_2</code> | Mourning regular | <code>standing_person</code> | <code>740, 376</code> | <code>floor</code> | Mourning regular | Exact scenario |
-| <code>scenario.surface_item_1</code> | Scenario alternatives: Raised toast glasses / Sealed remembrance tray | <code>surface_item</code> | <code>666, 188</code> | <code>pool_table</code> | Raised toast glasses<br>Sealed remembrance tray | Exact scenario |
+| <code>scenario.local_doorway_1</code> | Marked clean exit | <code>doorway</code> | <code>862, 270</code> | <code>right_exit</code> | Marked clean exit | Exact scenario |
+| <code>scenario.local_floor_fixture_1</code> | Joined memorial tables | <code>floor_fixture</code> | <code>392, 290</code> | <code>stage</code> | Joined memorial tables | Exact scenario |
+| <code>scenario.local_floor_fixture_2</code> | Joined memorial tables | <code>floor_fixture</code> | <code>508, 290</code> | <code>stage</code> | Joined memorial tables | Exact scenario |
+| <code>scenario.local_ground_marker_1</code> | Fallen remembrance card | <code>ground_marker</code> | <code>160, 366</code> | <code>floor</code> | Fallen remembrance card | Exact scenario |
+| <code>scenario.local_standing_person_1</code> | Mourning regular | <code>standing_person</code> | <code>526, 294</code> | <code>floor</code> | Mourning regular | Exact scenario |
+| <code>scenario.local_standing_person_2</code> | Wake host | <code>standing_person</code> | <code>624, 376</code> | <code>floor</code> | Wake host | Exact scenario |
+| <code>scenario.local_standing_person_3</code> | Mourning regular | <code>standing_person</code> | <code>740, 376</code> | <code>floor</code> | Mourning regular | Exact scenario |
+| <code>scenario.local_surface_item_1</code> | Scenario alternatives: Raised toast glasses / Remembrance tray | <code>surface_item</code> | <code>666, 188</code> | <code>pool_table</code> | Raised toast glasses<br>Remembrance tray | Exact scenario |
+| <code>scenario.local_surface_item_2</code> | Sealed remembrance tray | <code>surface_item</code> | <code>118, 104</code> | <code>bottle_rail</code> | Sealed remembrance tray | Exact scenario |
 
-**Action-only IDs (5; no placement marker):** <code>bar_wake_aftermath_interrupted_prop</code><br><code>bar_wake_remembrance_tray</code><br><code>bar_wake_task_0</code><br><code>bar_wake_task_1</code><br><code>bar_wake_task_2</code>
+**Action-only IDs (3; no placement marker):** <code>bar_wake_task_0</code><br><code>bar_wake_task_1</code><br><code>bar_wake_task_2</code>
 
 ### Gas Station Casino — <code>gas_station_casino</code>
 
@@ -591,107 +668,136 @@ Positions are canonical 900×430 board coordinates. Base tables list the exact e
 
 | Family | Slot ID | Physical role | Footprint | Position | Support | Occupant/claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| <code>fixed</code> | <code>fixed.random_game_1</code> | Game fixture | <code>floor_fixture</code> | <code>494, 240</code> | <code>stage</code> | Coin Pusher<br>Slot<br>Video Poker | Mapped capacity |
-| <code>fixed</code> | <code>fixed.game_scratch_tickets</code> | Game fixture | <code>floor_fixture</code> | <code>278, 240</code> | <code>stage</code> | Scratch Tickets | Mapped capacity |
-| <code>fixed</code> | <code>fixed.numbers_book</code> | Counter or table item | <code>surface_item</code> | <code>290, 400</code> | <code>lottery_desk</code> | Book | Mapped capacity |
-| <code>fixed</code> | <code>fixed.service_house_drink</code> | Counter or table item | <code>surface_item</code> | <code>846, 148</code> | <code>stage</code> | House Drink | Mapped capacity |
+| <code>fixed</code> | <code>fixed.random_game_1</code> | Random game | <code>floor_fixture</code> | <code>494, 240</code> | <code>stage</code> | Quarter Falls<br>Slot<br>Video Poker | Mapped capacity |
+| <code>fixed</code> | <code>fixed.game_scratch_tickets</code> | Scratch ticket display | <code>floor_fixture</code> | <code>278, 240</code> | <code>stage</code> | Scratch Tickets | Mapped capacity |
+| <code>fixed</code> | <code>fixed.numbers_book</code> | Numbers book | <code>surface_item</code> | <code>290, 400</code> | <code>lottery_desk</code> | Book | Mapped capacity |
+| <code>fixed</code> | <code>fixed.service_house_drink</code> | House drink service | <code>surface_item</code> | <code>846, 148</code> | <code>stage</code> | Buy a Drink | Mapped capacity |
 | <code>fixed</code> | <code>fixed.staff_nell</code> | Nell | <code>behind_counter_person</code> | <code>600, 84</code> | <code>staff_window</code> | Nell | Required |
 | <code>event</code> | <code>event.doorway_1</code> | Doorway / exit | <code>doorway</code> | <code>41, 210</code> | <code>forecourt_left</code> | Side Door | Mapped capacity |
 | <code>event</code> | <code>event.floor_fixture_1</code> | Floor prop | <code>floor_fixture</code> | <code>392, 252</code> | <code>stage</code> | Empty capacity | Optional empty capacity |
 | <code>event</code> | <code>event.floor_fixture_2</code> | Floor prop | <code>floor_fixture</code> | <code>512, 252</code> | <code>stage</code> | Empty capacity | Optional empty capacity |
-| <code>event</code> | <code>event.surface_item_1</code> | Counter or table item | <code>surface_item</code> | <code>508, 412</code> | <code>lottery_desk</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
-| <code>event</code> | <code>event.doorway_2</code> | Doorway / exit | <code>doorway</code> | <code>262, 120</code> | <code>round3_sill_door</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.surface_item_1</code> | Counter or table item | <code>surface_item</code> | <code>508, 412</code> | <code>lottery_desk</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.doorway_2</code> | Doorway / exit | <code>doorway</code> | <code>262, 120</code> | <code>round3_sill_door</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
 | <code>event</code> | <code>event.ground_marker_1</code> | Floor marker | <code>ground_marker</code> | <code>156, 248</code> | <code>stage</code> | Parking Lot Tip | Mapped capacity |
-| <code>event</code> | <code>event.standing_person_1</code> | Standing person | <code>standing_person</code> | <code>290, 414</code> | <code>floor</code> | Chain06 Dave Last Stop<br>Chain06 Dave Same Bus | Mapped capacity |
-| <code>event</code> | <code>event.standing_person_2</code> | Standing person | <code>standing_person</code> | <code>480, 414</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_3</code> | Standing person | <code>standing_person</code> | <code>670, 414</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_4</code> | Standing person | <code>standing_person</code> | <code>860, 414</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_1</code> | Standing person | <code>standing_person</code> | <code>290, 414</code> | <code>floor</code> | Dave's Second Truth<br>Dave's Last Stop | Mapped capacity |
+| <code>event</code> | <code>event.standing_person_2</code> | Standing person | <code>standing_person</code> | <code>480, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_3</code> | Standing person | <code>standing_person</code> | <code>670, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_4</code> | Standing person | <code>standing_person</code> | <code>860, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
 | <code>event</code> | <code>event.standing_person_5</code> | Standing person | <code>standing_person</code> | <code>100, 414</code> | <code>floor</code> | Scratch Ticket Scalper | Mapped capacity |
-| <code>scenario</code> | <code>scenario.floor_fixture_2</code> | Delivery package reserve | <code>floor_fixture</code> | <code>158, 152</code> | <code>stage</code> | Gas Station Graveyard Shift Flashlight Dock<br>Gas Station Road Crew Payday Barricade Stack<br>Gas Station Storm Shelter Generator Cart<br>Gas Station Trucker Convoy Freight Pallet | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.wall_item_3</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>40, 24</code> | <code>wall</code> | Gas Station Graveyard Shift Machine Gate<br>Gas Station Storm Shelter Station<br>Gas Station Trucker Convoy Relay Rig | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.standing_person_5</code> | Runtime contact reserve | <code>standing_person</code> | <code>492, 332</code> | <code>floor</code> | Gas Station Trucker Convoy Lead Driver | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
+| <code>scenario</code> | <code>scenario.floor_fixture_2</code> | Delivery package reserve | <code>floor_fixture</code> | <code>158, 152</code> | <code>stage</code> | Variable runtime content | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.wall_item_3</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>40, 24</code> | <code>wall</code> | Variable runtime content | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.standing_person_5</code> | Runtime contact reserve | <code>standing_person</code> | <code>492, 332</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
 | <code>exit</code> | <code>exit.left_upper</code> | Travel exit | <code>doorway</code> | <code>41, 114</code> | <code>forecourt_left</code> | Leave | Mapped capacity |
 
 #### Scenario — Graveyard Shift — <code>gas_station_casino::gas_station_graveyard_shift</code>
 
-**Full save:** 27 slots = 20 shared + 7 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 34 slots = 20 shared + 14 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.behind_counter_person_1</code> | Night clerk | <code>behind_counter_person</code> | <code>114, 84</code> | <code>staff_window_left</code> | Night clerk | Exact scenario |
-| <code>scenario.doorway_1</code> | Panel Open | <code>doorway</code> | <code>350, 120</code> | <code>round3_sill_door</code> | Panel Open | Exact scenario |
-| <code>scenario.doorway_2</code> | Marked safe exit | <code>doorway</code> | <code>859, 362</code> | <code>forecourt_right</code> | Marked safe exit | Exact scenario |
-| <code>scenario.floor_fixture_1</code> | Scenario alternatives: Empty Flashlight Dock / Jammed Machine Gate | <code>floor_fixture</code> | <code>414, 328</code> | <code>stage</code> | Empty Flashlight Dock<br>Jammed Machine Gate | Exact scenario |
-| <code>scenario.standing_person_1</code> | Scenario alternatives: Flashlight Clerk / Night Clerk / Patrol Clerk | <code>standing_person</code> | <code>52, 414</code> | <code>floor</code> | Flashlight Clerk<br>Night Clerk<br>Patrol Clerk | Exact scenario |
-| <code>scenario.surface_item_1</code> | Manual-Lock Shutter Tag | <code>surface_item</code> | <code>372, 80</code> | <code>ticket_service_shelf</code> | Manual-Lock Shutter Tag | Exact scenario |
-| <code>scenario.wall_item_1</code> | Completed Shutter Panel | <code>wall_mounted</code> | <code>256, 24</code> | <code>wall</code> | Completed Shutter Panel | Exact scenario |
+| <code>scenario.local_behind_counter_person_1</code> | Night clerk | <code>behind_counter_person</code> | <code>114, 84</code> | <code>staff_window_left</code> | Night clerk | Exact scenario |
+| <code>scenario.local_doorway_1</code> | Marked safe exit | <code>doorway</code> | <code>859, 362</code> | <code>forecourt_right</code> | Marked safe exit | Exact scenario |
+| <code>scenario.local_floor_fixture_1</code> | Flashlight dock | <code>floor_fixture</code> | <code>182, 422</code> | <code>manual_placement_required</code> | Flashlight dock | Provisional geometry |
+| <code>scenario.local_floor_fixture_2</code> | Jammed Machine Gate | <code>floor_fixture</code> | <code>414, 328</code> | <code>stage</code> | Jammed Machine Gate | Exact scenario |
+| <code>scenario.local_floor_fixture_3</code> | Empty Flashlight Dock | <code>floor_fixture</code> | <code>374, 422</code> | <code>manual_placement_required</code> | Empty Flashlight Dock | Provisional geometry |
+| <code>scenario.local_ground_marker_1</code> | Taped Camera Bypass | <code>ground_marker</code> | <code>174, 260</code> | <code>stage</code> | Taped Camera Bypass | Exact scenario |
+| <code>scenario.local_standing_person_1</code> | Night Clerk | <code>standing_person</code> | <code>52, 414</code> | <code>floor</code> | Night Clerk | Exact scenario |
+| <code>scenario.local_standing_person_2</code> | Scenario alternatives: Flashlight Clerk / Patrol Clerk | <code>standing_person</code> | <code>846, 92</code> | <code>stage</code> | Flashlight Clerk<br>Patrol Clerk | Exact scenario |
+| <code>scenario.local_surface_item_1</code> | Manual-Lock Shutter Tag | <code>surface_item</code> | <code>372, 80</code> | <code>ticket_service_shelf</code> | Manual-Lock Shutter Tag | Exact scenario |
+| <code>scenario.local_wall_item_1</code> | Cooler-zone gate | <code>wall_mounted</code> | <code>720, 48</code> | <code>wall</code> | Cooler-zone gate | Exact scenario |
+| <code>scenario.local_wall_item_2</code> | Machine-Zone Gate | <code>wall_mounted</code> | <code>448, 64</code> | <code>manual_placement_required</code> | Machine-Zone Gate | Provisional geometry |
+| <code>scenario.local_wall_item_3</code> | Shutter control panel | <code>wall_mounted</code> | <code>256, 24</code> | <code>wall</code> | Shutter control panel | Exact scenario |
+| <code>scenario.local_wall_item_4</code> | Scenario alternatives: Blind-Interval Monitor / Camera monitor | <code>wall_mounted</code> | <code>192, 96</code> | <code>manual_placement_required</code> | Blind-Interval Monitor<br>Camera monitor | Provisional geometry |
+| <code>scenario.local_wall_item_5</code> | Completed Shutter Panel | <code>wall_mounted</code> | <code>272, 96</code> | <code>manual_placement_required</code> | Completed Shutter Panel | Provisional geometry |
 
-**Action-only IDs (8; no placement marker):** <code>gas_station_graveyard_shift_aftermath_camera_bypass</code><br><code>gas_station_graveyard_shift_aftermath_camera_bypass_secondary</code><br><code>gas_station_graveyard_shift_camera_monitor</code><br><code>gas_station_graveyard_shift_cooler_gate</code><br><code>gas_station_graveyard_shift_flashlight_dock</code><br><code>gas_station_graveyard_shift_machine_gate</code><br><code>gas_station_graveyard_shift_shutter_panel</code><br><code>gas_station_graveyard_shift_station</code>
+**Action-only IDs (1; no placement marker):** <code>gas_station_graveyard_shift_station</code>
 
 #### Scenario — Road Crew Payday — <code>gas_station_casino::gas_station_road_crew_payday</code>
 
-**Full save:** 27 slots = 20 shared + 7 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 33 slots = 20 shared + 13 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.doorway_1</code> | Marked safe exit | <code>doorway</code> | <code>859, 362</code> | <code>forecourt_right</code> | Marked safe exit | Exact scenario |
-| <code>scenario.floor_fixture_1</code> | Barricade stack | <code>floor_fixture</code> | <code>414, 328</code> | <code>stage</code> | Barricade stack | Exact scenario |
-| <code>scenario.standing_person_1</code> | Pay Envelope Pool | <code>standing_person</code> | <code>52, 414</code> | <code>floor</code> | Pay Envelope Pool | Exact scenario |
-| <code>scenario.standing_person_2</code> | Scenario alternatives: Road foreman / Road-Crew Foreman / Stake Keeper | <code>standing_person</code> | <code>846, 92</code> | <code>stage</code> | Road foreman<br>Road-Crew Foreman<br>Stake Keeper | Exact scenario |
-| <code>scenario.standing_person_3</code> | Crew player | <code>standing_person</code> | <code>156, 414</code> | <code>floor</code> | Crew player | Exact scenario |
-| <code>scenario.standing_person_4</code> | Stake keeper | <code>standing_person</code> | <code>604, 414</code> | <code>floor</code> | Stake keeper | Exact scenario |
-| <code>scenario.surface_item_1</code> | Scenario alternatives: Crossed-Out Repair Order / Sealed Pooled-Stake Envelope / Split Bill Count | <code>surface_item</code> | <code>372, 80</code> | <code>ticket_service_shelf</code> | Crossed-Out Repair Order<br>Sealed Pooled-Stake Envelope<br>Split Bill Count | Exact scenario |
+| <code>scenario.local_doorway_1</code> | Marked safe exit | <code>doorway</code> | <code>859, 362</code> | <code>forecourt_right</code> | Marked safe exit | Exact scenario |
+| <code>scenario.local_floor_fixture_1</code> | Barricade stack | <code>floor_fixture</code> | <code>182, 334</code> | <code>manual_placement_required</code> | Barricade stack | Provisional geometry |
+| <code>scenario.local_floor_fixture_2</code> | Repair parts crate | <code>floor_fixture</code> | <code>414, 328</code> | <code>stage</code> | Repair parts crate | Exact scenario |
+| <code>scenario.local_floor_fixture_3</code> | Empty Barricade Straps | <code>floor_fixture</code> | <code>750, 422</code> | <code>manual_placement_required</code> | Empty Barricade Straps | Provisional geometry |
+| <code>scenario.local_standing_person_1</code> | Road foreman | <code>standing_person</code> | <code>52, 414</code> | <code>floor</code> | Road foreman | Exact scenario |
+| <code>scenario.local_standing_person_2</code> | Crew player | <code>standing_person</code> | <code>156, 414</code> | <code>floor</code> | Crew player | Exact scenario |
+| <code>scenario.local_standing_person_3</code> | Scenario alternatives: Road-Crew Foreman / Stake Keeper | <code>standing_person</code> | <code>604, 414</code> | <code>floor</code> | Road-Crew Foreman<br>Stake Keeper | Exact scenario |
+| <code>scenario.local_surface_item_1</code> | Pooled-stake envelope | <code>surface_item</code> | <code>372, 80</code> | <code>ticket_service_shelf</code> | Pooled-stake envelope | Exact scenario |
+| <code>scenario.local_surface_item_2</code> | Crossed-Out Repair Order | <code>surface_item</code> | <code>116, 64</code> | <code>manual_placement_required</code> | Crossed-Out Repair Order | Provisional geometry |
+| <code>scenario.local_surface_item_3</code> | Open Pooled-Stake Envelope | <code>surface_item</code> | <code>188, 64</code> | <code>manual_placement_required</code> | Open Pooled-Stake Envelope | Provisional geometry |
+| <code>scenario.local_surface_item_4</code> | Split Bill Count | <code>surface_item</code> | <code>260, 64</code> | <code>manual_placement_required</code> | Split Bill Count | Provisional geometry |
+| <code>scenario.local_surface_item_5</code> | Sealed Pooled-Stake Envelope | <code>surface_item</code> | <code>444, 64</code> | <code>manual_placement_required</code> | Sealed Pooled-Stake Envelope | Provisional geometry |
+| <code>scenario.local_wall_item_1</code> | Work orders | <code>wall_mounted</code> | <code>720, 48</code> | <code>wall</code> | Work orders | Exact scenario |
 
-**Action-only IDs (6; no placement marker):** <code>gas_station_road_crew_payday_aftermath_floor_occupied</code><br><code>gas_station_road_crew_payday_aftermath_route_repaired</code><br><code>gas_station_road_crew_payday_repair_crate</code><br><code>gas_station_road_crew_payday_stake_envelope</code><br><code>gas_station_road_crew_payday_station</code><br><code>gas_station_road_crew_payday_work_order_board</code>
+**Action-only IDs (1; no placement marker):** <code>gas_station_road_crew_payday_station</code>
 
 #### Scenario — Storm Shelter — <code>gas_station_casino::gas_station_storm_shelter</code>
 
-**Full save:** 27 slots = 20 shared + 7 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 34 slots = 20 shared + 14 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.behind_counter_person_1</code> | The Dry Corner | <code>behind_counter_person</code> | <code>724, 84</code> | <code>pull_tab_window</code> | The Dry Corner | Exact scenario |
-| <code>scenario.doorway_1</code> | Marked safe exit | <code>doorway</code> | <code>859, 362</code> | <code>forecourt_right</code> | Marked safe exit | Exact scenario |
-| <code>scenario.floor_fixture_1</code> | Part-Counted Supply Shelf | <code>floor_fixture</code> | <code>414, 328</code> | <code>stage</code> | Part-Counted Supply Shelf | Exact scenario |
-| <code>scenario.group_1</code> | Sheltering drivers | <code>group</code> | <code>732, 414</code> | <code>floor</code> | Sheltering drivers | Exact scenario |
-| <code>scenario.group_2</code> | Family | <code>group</code> | <code>292, 328</code> | <code>floor</code> | Family | Exact scenario |
-| <code>scenario.standing_person_1</code> | Scenario alternatives: Reopened-Counter Driver / Shelter Driver / Waiting Family Member | <code>standing_person</code> | <code>52, 414</code> | <code>floor</code> | Reopened-Counter Driver<br>Shelter Driver<br>Waiting Family Member | Exact scenario |
-| <code>scenario.wall_item_1</code> | Scenario alternatives: Clerk-Only Power Panel / Supplies | <code>wall_mounted</code> | <code>256, 24</code> | <code>wall</code> | Clerk-Only Power Panel<br>Supplies | Exact scenario |
+| <code>scenario.local_doorway_1</code> | Marked safe exit | <code>doorway</code> | <code>859, 362</code> | <code>forecourt_right</code> | Marked safe exit | Exact scenario |
+| <code>scenario.local_floor_fixture_1</code> | Generator | <code>floor_fixture</code> | <code>182, 422</code> | <code>manual_placement_required</code> | Generator | Provisional geometry |
+| <code>scenario.local_floor_fixture_2</code> | Part-Counted Supply Shelf | <code>floor_fixture</code> | <code>414, 328</code> | <code>stage</code> | Part-Counted Supply Shelf | Exact scenario |
+| <code>scenario.local_floor_fixture_3</code> | Raised Rain Shutters | <code>floor_fixture</code> | <code>374, 422</code> | <code>manual_placement_required</code> | Raised Rain Shutters | Provisional geometry |
+| <code>scenario.local_ground_marker_1</code> | Safe-zone floor tape | <code>ground_marker</code> | <code>174, 260</code> | <code>stage</code> | Safe-zone floor tape | Exact scenario |
+| <code>scenario.local_ground_marker_2</code> | Crowded Shelter Tape | <code>ground_marker</code> | <code>584, 422</code> | <code>manual_placement_required</code> | Crowded Shelter Tape | Provisional geometry |
+| <code>scenario.local_group_1</code> | Sheltering drivers | <code>group</code> | <code>732, 414</code> | <code>floor</code> | Sheltering drivers | Exact scenario |
+| <code>scenario.local_group_2</code> | Family | <code>group</code> | <code>292, 328</code> | <code>floor</code> | Family | Exact scenario |
+| <code>scenario.local_standing_person_1</code> | Scenario alternatives: Reopened-Counter Driver / Shelter Driver / Waiting Family Member | <code>standing_person</code> | <code>52, 414</code> | <code>floor</code> | Reopened-Counter Driver<br>Shelter Driver<br>Waiting Family Member | Exact scenario |
+| <code>scenario.local_wall_item_1</code> | Shelter power panel | <code>wall_mounted</code> | <code>256, 24</code> | <code>wall</code> | Shelter power panel | Exact scenario |
+| <code>scenario.local_wall_item_2</code> | Rain shutters | <code>wall_mounted</code> | <code>720, 48</code> | <code>wall</code> | Rain shutters | Exact scenario |
+| <code>scenario.local_wall_item_3</code> | Supplies | <code>wall_mounted</code> | <code>120, 64</code> | <code>manual_placement_required</code> | Supplies | Provisional geometry |
+| <code>scenario.local_wall_item_4</code> | Dark Power Panel | <code>wall_mounted</code> | <code>336, 64</code> | <code>manual_placement_required</code> | Dark Power Panel | Provisional geometry |
+| <code>scenario.local_wall_item_5</code> | Clerk-Only Power Panel | <code>wall_mounted</code> | <code>416, 64</code> | <code>manual_placement_required</code> | Clerk-Only Power Panel | Provisional geometry |
 
-**Action-only IDs (8; no placement marker):** <code>gas_station_storm_shelter_aftermath_shelter_blackout</code><br><code>gas_station_storm_shelter_aftermath_shelter_crowded</code><br><code>gas_station_storm_shelter_aftermath_station_reopened</code><br><code>gas_station_storm_shelter_generator_cart</code><br><code>gas_station_storm_shelter_power_panel</code><br><code>gas_station_storm_shelter_rain_shutters</code><br><code>gas_station_storm_shelter_safe_zone_tape</code><br><code>gas_station_storm_shelter_station</code>
+**Action-only IDs (1; no placement marker):** <code>gas_station_storm_shelter_station</code>
 
 #### Scenario — Tour Bus Stop — <code>gas_station_casino::gas_station_tour_bus_stop</code>
 
-**Full save:** 28 slots = 20 shared + 8 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 31 slots = 20 shared + 11 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.behind_counter_person_1</code> | Regional Stock | <code>behind_counter_person</code> | <code>724, 84</code> | <code>pull_tab_window</code> | Regional Stock | Exact scenario |
-| <code>scenario.doorway_1</code> | Scenario alternatives: Closed Bus Door / Marked safe exit | <code>doorway</code> | <code>859, 362</code> | <code>forecourt_right</code> | Closed Bus Door<br>Marked safe exit | Exact scenario |
-| <code>scenario.doorway_2</code> | Tour bus door | <code>doorway</code> | <code>859, 282</code> | <code>forecourt_right</code> | Tour bus door | Exact scenario |
-| <code>scenario.ground_marker_1</code> | Restroom queue marker | <code>ground_marker</code> | <code>174, 260</code> | <code>stage</code> | Restroom queue marker | Exact scenario |
-| <code>scenario.standing_person_1</code> | Scenario alternatives: Queue Marshal / Tour bus driver / Waiting Bus Driver | <code>standing_person</code> | <code>52, 414</code> | <code>floor</code> | Queue Marshal<br>Tour bus driver<br>Waiting Bus Driver | Exact scenario |
-| <code>scenario.standing_person_2</code> | Queue marshal | <code>standing_person</code> | <code>156, 414</code> | <code>floor</code> | Queue marshal | Exact scenario |
-| <code>scenario.standing_person_3</code> | Ticketless passenger | <code>standing_person</code> | <code>604, 414</code> | <code>floor</code> | Ticketless passenger | Exact scenario |
-| <code>scenario.surface_item_1</code> | Scenario alternatives: Boarding counter / Erased Manifest Tallies / Half-Finished Boarding List | <code>surface_item</code> | <code>372, 80</code> | <code>ticket_service_shelf</code> | Boarding counter<br>Erased Manifest Tallies<br>Half-Finished Boarding List | Exact scenario |
+| <code>scenario.local_doorway_1</code> | Marked safe exit | <code>doorway</code> | <code>859, 362</code> | <code>forecourt_right</code> | Marked safe exit | Exact scenario |
+| <code>scenario.local_doorway_2</code> | Tour bus door | <code>doorway</code> | <code>859, 282</code> | <code>forecourt_right</code> | Tour bus door | Exact scenario |
+| <code>scenario.local_doorway_3</code> | Closed Bus Door | <code>doorway</code> | <code>350, 120</code> | <code>round3_sill_door</code> | Closed Bus Door | Exact scenario |
+| <code>scenario.local_ground_marker_1</code> | Restroom queue marker | <code>ground_marker</code> | <code>368, 338</code> | <code>manual_placement_required</code> | Restroom queue marker | Provisional geometry |
+| <code>scenario.local_ground_marker_2</code> | Overflow Queue Line | <code>ground_marker</code> | <code>368, 422</code> | <code>manual_placement_required</code> | Overflow Queue Line | Provisional geometry |
+| <code>scenario.local_standing_person_1</code> | Tour bus driver | <code>standing_person</code> | <code>52, 414</code> | <code>floor</code> | Tour bus driver | Exact scenario |
+| <code>scenario.local_standing_person_2</code> | Queue marshal | <code>standing_person</code> | <code>156, 414</code> | <code>floor</code> | Queue marshal | Exact scenario |
+| <code>scenario.local_standing_person_3</code> | Scenario alternatives: Queue Marshal / Ticketless passenger / Waiting Bus Driver | <code>standing_person</code> | <code>604, 414</code> | <code>floor</code> | Queue Marshal<br>Ticketless passenger<br>Waiting Bus Driver | Exact scenario |
+| <code>scenario.local_surface_item_1</code> | Scenario alternatives: Boarding counter / Erased Manifest Tallies | <code>surface_item</code> | <code>372, 80</code> | <code>ticket_service_shelf</code> | Boarding counter<br>Erased Manifest Tallies | Exact scenario |
+| <code>scenario.local_surface_item_2</code> | Scenario alternatives: Loose ticket basket / Unmatched Ticket and Bag | <code>surface_item</code> | <code>116, 64</code> | <code>manual_placement_required</code> | Loose ticket basket<br>Unmatched Ticket and Bag | Provisional geometry |
+| <code>scenario.local_surface_item_3</code> | Half-Finished Boarding List | <code>surface_item</code> | <code>188, 64</code> | <code>manual_placement_required</code> | Half-Finished Boarding List | Provisional geometry |
 
-**Action-only IDs (4; no placement marker):** <code>gas_station_tour_bus_stop_aftermath_count_refused</code><br><code>gas_station_tour_bus_stop_aftermath_passenger_stranded</code><br><code>gas_station_tour_bus_stop_station</code><br><code>gas_station_tour_bus_stop_ticket_basket</code>
+**Action-only IDs (1; no placement marker):** <code>gas_station_tour_bus_stop_station</code>
 
 #### Scenario — Trucker Convoy — <code>gas_station_casino::gas_station_trucker_convoy</code>
 
-**Full save:** 27 slots = 20 shared + 7 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 33 slots = 20 shared + 13 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.doorway_1</code> | Marked safe exit | <code>doorway</code> | <code>859, 362</code> | <code>forecourt_right</code> | Marked safe exit | Exact scenario |
-| <code>scenario.standing_person_1</code> | Switch Recruitment | <code>standing_person</code> | <code>52, 414</code> | <code>floor</code> | Switch Recruitment | Exact scenario |
-| <code>scenario.standing_person_2</code> | Scenario alternatives: Blocked Driver / Lead driver / Relay Driver / Waiting Relay Driver | <code>standing_person</code> | <code>846, 92</code> | <code>stage</code> | Blocked Driver<br>Lead driver<br>Relay Driver<br>Waiting Relay Driver | Exact scenario |
-| <code>scenario.standing_person_3</code> | Machine driver | <code>standing_person</code> | <code>156, 414</code> | <code>floor</code> | Machine driver | Exact scenario |
-| <code>scenario.standing_person_4</code> | Relay driver | <code>standing_person</code> | <code>604, 414</code> | <code>floor</code> | Relay driver | Exact scenario |
-| <code>scenario.wall_item_1</code> | Convoy Talk | <code>wall_mounted</code> | <code>256, 24</code> | <code>wall</code> | Convoy Talk | Exact scenario |
-| <code>scenario.wall_item_2</code> | Scenario alternatives: Blank Departure Board / Checked Departure Board / Convoy departure board / Crossed Tail-Rig Marker | <code>wall_mounted</code> | <code>720, 48</code> | <code>wall</code> | Blank Departure Board<br>Checked Departure Board<br>Convoy departure board<br>Crossed Tail-Rig Marker | Exact scenario |
+| <code>scenario.local_doorway_1</code> | Marked safe exit | <code>doorway</code> | <code>859, 362</code> | <code>forecourt_right</code> | Marked safe exit | Exact scenario |
+| <code>scenario.local_floor_fixture_1</code> | Freight pallet | <code>floor_fixture</code> | <code>414, 328</code> | <code>stage</code> | Freight pallet | Exact scenario |
+| <code>scenario.local_ground_marker_1</code> | Tail rig marker | <code>ground_marker</code> | <code>174, 260</code> | <code>stage</code> | Tail rig marker | Exact scenario |
+| <code>scenario.local_ground_marker_2</code> | Empty Lead Position | <code>ground_marker</code> | <code>368, 422</code> | <code>manual_placement_required</code> | Empty Lead Position | Provisional geometry |
+| <code>scenario.local_standing_person_1</code> | Switch | <code>standing_person</code> | <code>52, 414</code> | <code>floor</code> | Switch | Exact scenario |
+| <code>scenario.local_standing_person_2</code> | Lead driver | <code>standing_person</code> | <code>846, 92</code> | <code>stage</code> | Lead driver | Exact scenario |
+| <code>scenario.local_standing_person_3</code> | Machine driver | <code>standing_person</code> | <code>156, 414</code> | <code>floor</code> | Machine driver | Exact scenario |
+| <code>scenario.local_standing_person_4</code> | Scenario alternatives: Blocked Driver / Relay Driver / Waiting Relay Driver | <code>standing_person</code> | <code>604, 414</code> | <code>floor</code> | Blocked Driver<br>Relay Driver<br>Waiting Relay Driver | Exact scenario |
+| <code>scenario.local_surface_item_1</code> | Relay-Rig Loading Tag | <code>surface_item</code> | <code>372, 80</code> | <code>ticket_service_shelf</code> | Relay-Rig Loading Tag | Exact scenario |
+| <code>scenario.local_wall_item_1</code> | Relay rig marker | <code>wall_mounted</code> | <code>120, 64</code> | <code>manual_placement_required</code> | Relay rig marker | Provisional geometry |
+| <code>scenario.local_wall_item_2</code> | Scenario alternatives: Convoy departure board / Crossed Tail-Rig Marker | <code>wall_mounted</code> | <code>256, 24</code> | <code>wall</code> | Convoy departure board<br>Crossed Tail-Rig Marker | Exact scenario |
+| <code>scenario.local_wall_item_3</code> | Scenario alternatives: Checked Departure Board / Lead rig marker | <code>wall_mounted</code> | <code>720, 48</code> | <code>wall</code> | Checked Departure Board<br>Lead rig marker | Exact scenario |
+| <code>scenario.local_wall_item_4</code> | Blank Departure Board | <code>wall_mounted</code> | <code>448, 64</code> | <code>manual_placement_required</code> | Blank Departure Board | Provisional geometry |
 
-**Action-only IDs (7; no placement marker):** <code>gas_station_trucker_convoy_aftermath_convoy_interrupted</code><br><code>gas_station_trucker_convoy_aftermath_machine_claim_won</code><br><code>gas_station_trucker_convoy_freight_pallet</code><br><code>gas_station_trucker_convoy_lead_rig</code><br><code>gas_station_trucker_convoy_relay_rig</code><br><code>gas_station_trucker_convoy_station</code><br><code>gas_station_trucker_convoy_tail_rig</code>
+**Action-only IDs (1; no placement marker):** <code>gas_station_trucker_convoy_station</code>
 
 ### The Punchline — Comedy Club — <code>small_underground_casino:club</code>
 
@@ -701,102 +807,118 @@ Positions are canonical 900×430 board coordinates. Base tables list the exact e
 
 | Family | Slot ID | Physical role | Footprint | Position | Support | Occupant/claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| <code>fixed</code> | <code>fixed.door_right_lower</code> | Doorway / exit | <code>doorway</code> | <code>841, 362</code> | <code>right_exit</code> | Side Door | Mapped capacity |
+| <code>fixed</code> | <code>fixed.door_right_lower</code> | Side door | <code>doorway</code> | <code>841, 362</code> | <code>right_exit</code> | Side Door | Mapped capacity |
 | <code>fixed</code> | <code>fixed.staff_ox</code> | Ox | <code>standing_person</code> | <code>628, 358</code> | <code>floor</code> | Ox | Required |
-| <code>fixed</code> | <code>fixed.service_stage</code> | Counter or table item | <code>surface_item</code> | <code>332, 202</code> | <code>stage</code> | Punchline Two Drink Minimum | Mapped capacity |
-| <code>fixed</code> | <code>fixed.ambient_stage</code> | Floor prop | <code>floor_fixture</code> | <code>546, 252</code> | <code>stage</code> | Ambient | Mapped capacity |
-| <code>fixed</code> | <code>fixed.numbers_book</code> | Counter or table item | <code>surface_item</code> | <code>706, 194</code> | <code>right_table</code> | Book | Mapped capacity |
+| <code>fixed</code> | <code>fixed.service_stage</code> | Two-drink minimum service | <code>surface_item</code> | <code>332, 202</code> | <code>stage</code> | Two-Drink Minimum | Mapped capacity |
+| <code>fixed</code> | <code>fixed.ambient_stage</code> | Comedy-club stage | <code>floor_fixture</code> | <code>546, 252</code> | <code>stage</code> | Ambient | Mapped capacity |
+| <code>fixed</code> | <code>fixed.numbers_book</code> | Numbers book | <code>surface_item</code> | <code>706, 194</code> | <code>right_table</code> | Book | Mapped capacity |
 | <code>event</code> | <code>event.floor_fixture_1</code> | Floor prop | <code>floor_fixture</code> | <code>734, 358</code> | <code>floor</code> | Empty capacity | Optional empty capacity |
-| <code>event</code> | <code>event.standing_person_1</code> | Standing person | <code>standing_person</code> | <code>100, 414</code> | <code>floor</code> | Chain06 Cass First Contact<br>Town Rumor Staff<br>Silas | Mapped capacity |
-| <code>event</code> | <code>event.standing_person_2</code> | Standing person | <code>standing_person</code> | <code>208.571429, 414</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_3</code> | Standing person | <code>standing_person</code> | <code>317.142857, 414</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_4</code> | Standing person | <code>standing_person</code> | <code>425.714286, 414</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_5</code> | Standing person | <code>standing_person</code> | <code>534.285714, 414</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_6</code> | Standing person | <code>standing_person</code> | <code>642.857143, 414</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_7</code> | Standing person | <code>standing_person</code> | <code>751.428571, 414</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_8</code> | Standing person | <code>standing_person</code> | <code>860, 414</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
-| <code>scenario</code> | <code>scenario.floor_fixture_3</code> | Delivery package reserve | <code>floor_fixture</code> | <code>222, 142</code> | <code>stage</code> | Punchline Bringer Show Crowd Ropes<br>Punchline Open Mic Night Signup Lectern<br>Punchline Raid Jitters Hide Cart | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.wall_item_1</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>40, 24</code> | <code>wall</code> | Punchline Bringer Show Task 0<br>Punchline Bringer Show Task 1<br>Punchline Bringer Show Task 2<br>Punchline Bringer Show Task 3<br>Punchline Debt Court Task 0<br>Punchline Debt Court Task 1<br>Punchline Debt Court Task 2<br>Punchline Debt Court Task 3<br>Punchline Headliner Night Task 0<br>Punchline Headliner Night Task 1<br>Punchline Headliner Night Task 2<br>Punchline Headliner Night Task 3<br>Punchline Headliner Night Task 4<br>Punchline Open Mic Night Task 0<br>Punchline Open Mic Night Task 1<br>Punchline Open Mic Night Task 2<br>Punchline Open Mic Night Task 3<br>Punchline Raid Jitters Task 0<br>Punchline Raid Jitters Task 1<br>Punchline Raid Jitters Task 2<br>Punchline Raid Jitters Task 3<br>Punchline Raid Jitters Task 4 | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.standing_person_4</code> | Runtime contact reserve | <code>standing_person</code> | <code>448, 248</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
+| <code>event</code> | <code>event.standing_person_1</code> | Standing person | <code>standing_person</code> | <code>100, 414</code> | <code>floor</code> | Cass Venn<br>Word from Across Town<br>Silas | Mapped capacity |
+| <code>event</code> | <code>event.standing_person_2</code> | Standing person | <code>standing_person</code> | <code>208.571429, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_3</code> | Standing person | <code>standing_person</code> | <code>317.142857, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_4</code> | Standing person | <code>standing_person</code> | <code>425.714286, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_5</code> | Standing person | <code>standing_person</code> | <code>534.285714, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_6</code> | Standing person | <code>standing_person</code> | <code>642.857143, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_7</code> | Standing person | <code>standing_person</code> | <code>751.428571, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_8</code> | Standing person | <code>standing_person</code> | <code>860, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>scenario</code> | <code>scenario.floor_fixture_3</code> | Delivery package reserve | <code>floor_fixture</code> | <code>222, 142</code> | <code>stage</code> | Variable runtime content | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.wall_item_1</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>40, 24</code> | <code>wall</code> | Variable runtime content | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.standing_person_4</code> | Runtime contact reserve | <code>standing_person</code> | <code>448, 248</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
 | <code>exit</code> | <code>exit.door_side</code> | Travel exit | <code>doorway</code> | <code>36, 118</code> | <code>left_exit</code> | Casino | Mapped capacity |
 | <code>exit</code> | <code>exit.left_lower</code> | Travel exit | <code>doorway</code> | <code>36, 346</code> | <code>left_exit</code> | Leave | Mapped capacity |
 
 #### Scenario — Bringer Show — <code>small_underground_casino:club::punchline_bringer_show</code>
 
+**Full save:** 29 slots = 19 shared + 10 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+
+| Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
+| --- | --- | --- | --- | --- | --- | --- |
+| <code>scenario.local_doorway_1</code> | Clear exit | <code>doorway</code> | <code>846, 114</code> | <code>side_door</code> | Clear exit | Exact scenario |
+| <code>scenario.local_floor_fixture_1</code> | Reserved chair blocks | <code>floor_fixture</code> | <code>446, 142</code> | <code>stage</code> | Reserved chair blocks | Exact scenario |
+| <code>scenario.local_floor_fixture_2</code> | Bringer stage | <code>floor_fixture</code> | <code>574, 142</code> | <code>stage</code> | Bringer stage | Exact scenario |
+| <code>scenario.local_floor_fixture_3</code> | Bringer crowd ropes | <code>floor_fixture</code> | <code>830, 326</code> | <code>manual_placement_required</code> | Bringer crowd ropes | Provisional geometry |
+| <code>scenario.local_ground_marker_1</code> | Unfinished Crowd Ropes | <code>ground_marker</code> | <code>164, 302</code> | <code>floor</code> | Unfinished Crowd Ropes | Exact scenario |
+| <code>scenario.local_group_1</code> | Crowd captain | <code>group</code> | <code>388, 358</code> | <code>floor</code> | Crowd captain | Exact scenario |
+| <code>scenario.local_standing_person_1</code> | Scenario alternatives: Bringer performer / Crowd Captain | <code>standing_person</code> | <code>284, 358</code> | <code>floor</code> | Bringer performer<br>Crowd Captain | Exact scenario |
+| <code>scenario.local_standing_person_2</code> | Waiting Supporter | <code>standing_person</code> | <code>500, 358</code> | <code>floor</code> | Waiting Supporter | Exact scenario |
+| <code>scenario.local_surface_item_1</code> | Coiled Ropes and Filled Chairs | <code>surface_item</code> | <code>128, 206</code> | <code>left_table</code> | Coiled Ropes and Filled Chairs | Exact scenario |
+| <code>scenario.local_surface_item_2</code> | Open Pitch Card | <code>surface_item</code> | <code>350, 214</code> | <code>stage</code> | Open Pitch Card | Exact scenario |
+
+**Action-only IDs (4; no placement marker):** <code>punchline_bringer_show_task_0</code><br><code>punchline_bringer_show_task_1</code><br><code>punchline_bringer_show_task_2</code><br><code>punchline_bringer_show_task_3</code>
+
+#### Scenario — Debt Court — <code>small_underground_casino:club::punchline_debt_court</code>
+
+**Full save:** 29 slots = 19 shared + 10 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+
+| Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
+| --- | --- | --- | --- | --- | --- | --- |
+| <code>scenario.local_doorway_1</code> | Clear exit | <code>doorway</code> | <code>846, 114</code> | <code>side_door</code> | Clear exit | Exact scenario |
+| <code>scenario.local_floor_fixture_1</code> | Debt-court hearing chairs | <code>floor_fixture</code> | <code>446, 142</code> | <code>stage</code> | Debt-court hearing chairs | Exact scenario |
+| <code>scenario.local_floor_fixture_2</code> | Paused poker table rope | <code>floor_fixture</code> | <code>574, 142</code> | <code>stage</code> | Paused poker table rope | Exact scenario |
+| <code>scenario.local_ground_marker_1</code> | Table Divider Rope | <code>ground_marker</code> | <code>164, 302</code> | <code>floor</code> | Table Divider Rope | Exact scenario |
+| <code>scenario.local_standing_person_1</code> | The Collector | <code>standing_person</code> | <code>284, 358</code> | <code>floor</code> | The Collector | Exact scenario |
+| <code>scenario.local_standing_person_2</code> | Scenario alternatives: Debt-court steward / Hearing Participant | <code>standing_person</code> | <code>124, 358</code> | <code>floor</code> | Debt-court steward<br>Hearing Participant | Exact scenario |
+| <code>scenario.local_standing_person_3</code> | Scenario alternatives: Hearing Attendee / Room witness | <code>standing_person</code> | <code>500, 358</code> | <code>floor</code> | Hearing Attendee<br>Room witness | Exact scenario |
+| <code>scenario.local_surface_item_1</code> | Public evidence stand | <code>surface_item</code> | <code>350, 214</code> | <code>stage</code> | Public evidence stand | Exact scenario |
+| <code>scenario.local_surface_item_2</code> | Cleared Hearing Chairs | <code>surface_item</code> | <code>128, 206</code> | <code>left_table</code> | Cleared Hearing Chairs | Exact scenario |
+| <code>scenario.local_surface_item_3</code> | Contested Evidence Spread | <code>surface_item</code> | <code>116, 64</code> | <code>manual_placement_required</code> | Contested Evidence Spread | Provisional geometry |
+
+**Action-only IDs (4; no placement marker):** <code>punchline_debt_court_task_0</code><br><code>punchline_debt_court_task_1</code><br><code>punchline_debt_court_task_2</code><br><code>punchline_debt_court_task_3</code>
+
+#### Scenario — Headliner Night — <code>small_underground_casino:club::punchline_headliner_night</code>
+
+**Full save:** 29 slots = 19 shared + 10 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+
+| Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
+| --- | --- | --- | --- | --- | --- | --- |
+| <code>scenario.local_doorway_1</code> | Clear exit | <code>doorway</code> | <code>846, 114</code> | <code>side_door</code> | Clear exit | Exact scenario |
+| <code>scenario.local_doorway_2</code> | Layer 3 service door | <code>doorway</code> | <code>841, 266</code> | <code>right_exit</code> | Layer 3 service door | Exact scenario |
+| <code>scenario.local_floor_fixture_1</code> | Layer 1 credential rope | <code>floor_fixture</code> | <code>446, 142</code> | <code>stage</code> | Layer 1 credential rope | Exact scenario |
+| <code>scenario.local_ground_marker_1</code> | Clear Headliner Route | <code>ground_marker</code> | <code>164, 302</code> | <code>floor</code> | Clear Headliner Route | Exact scenario |
+| <code>scenario.local_ground_marker_2</code> | Stranded Runner Case | <code>ground_marker</code> | <code>356, 326</code> | <code>manual_placement_required</code> | Stranded Runner Case | Provisional geometry |
+| <code>scenario.local_standing_person_1</code> | Runner | <code>standing_person</code> | <code>284, 358</code> | <code>floor</code> | Runner | Exact scenario |
+| <code>scenario.local_standing_person_2</code> | Scenario alternatives: Backstage Guard / Backstage door guard | <code>standing_person</code> | <code>500, 358</code> | <code>floor</code> | Backstage Guard<br>Backstage door guard | Exact scenario |
+| <code>scenario.local_standing_person_3</code> | Backstage door guard | <code>standing_person</code> | <code>124, 358</code> | <code>floor</code> | Backstage door guard | Exact scenario |
+| <code>scenario.local_standing_person_4</code> | Denied Guest | <code>standing_person</code> | <code>44, 310</code> | <code>manual_placement_required</code> | Denied Guest | Provisional geometry |
+| <code>scenario.local_surface_item_1</code> | Scenario alternatives: Diverted Equipment Case / Layer 2 runner case | <code>surface_item</code> | <code>350, 214</code> | <code>stage</code> | Diverted Equipment Case<br>Layer 2 runner case | Exact scenario |
+
+**Action-only IDs (5; no placement marker):** <code>punchline_headliner_night_task_0</code><br><code>punchline_headliner_night_task_1</code><br><code>punchline_headliner_night_task_2</code><br><code>punchline_headliner_night_task_3</code><br><code>punchline_headliner_night_task_4</code>
+
+#### Scenario — Open Mic Night — <code>small_underground_casino:club::punchline_open_mic_night</code>
+
+**Full save:** 29 slots = 19 shared + 10 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+
+| Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
+| --- | --- | --- | --- | --- | --- | --- |
+| <code>scenario.local_doorway_1</code> | Clear exit | <code>doorway</code> | <code>846, 114</code> | <code>side_door</code> | Clear exit | Exact scenario |
+| <code>scenario.local_floor_fixture_1</code> | Open-mic chair bank | <code>floor_fixture</code> | <code>446, 142</code> | <code>stage</code> | Open-mic chair bank | Exact scenario |
+| <code>scenario.local_floor_fixture_2</code> | Movable stage steps | <code>floor_fixture</code> | <code>574, 142</code> | <code>stage</code> | Movable stage steps | Exact scenario |
+| <code>scenario.local_floor_fixture_3</code> | Open-mic signup lectern | <code>floor_fixture</code> | <code>366, 326</code> | <code>manual_placement_required</code> | Open-mic signup lectern | Provisional geometry |
+| <code>scenario.local_ground_marker_1</code> | Crooked Stage Steps | <code>ground_marker</code> | <code>164, 302</code> | <code>floor</code> | Crooked Stage Steps | Exact scenario |
+| <code>scenario.local_standing_person_1</code> | Open-mic host | <code>standing_person</code> | <code>284, 358</code> | <code>floor</code> | Open-mic host | Exact scenario |
+| <code>scenario.local_standing_person_2</code> | Waiting comic | <code>standing_person</code> | <code>500, 358</code> | <code>floor</code> | Waiting comic | Exact scenario |
+| <code>scenario.local_standing_person_3</code> | Scenario alternatives: Lingering Comic / Unbooked Comic | <code>standing_person</code> | <code>124, 358</code> | <code>floor</code> | Lingering Comic<br>Unbooked Comic | Exact scenario |
+| <code>scenario.local_surface_item_1</code> | Used Act Card Stack | <code>surface_item</code> | <code>128, 206</code> | <code>left_table</code> | Used Act Card Stack | Exact scenario |
+| <code>scenario.local_surface_item_2</code> | Crossed-Out Running Order | <code>surface_item</code> | <code>350, 214</code> | <code>stage</code> | Crossed-Out Running Order | Exact scenario |
+
+**Action-only IDs (4; no placement marker):** <code>punchline_open_mic_night_task_0</code><br><code>punchline_open_mic_night_task_1</code><br><code>punchline_open_mic_night_task_2</code><br><code>punchline_open_mic_night_task_3</code>
+
+#### Scenario — Raid Jitters — <code>small_underground_casino:club::punchline_raid_jitters</code>
+
 **Full save:** 27 slots = 19 shared + 8 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.behind_counter_person_1</code> | Fill a Chair | <code>behind_counter_person</code> | <code>108, 326</code> | <code>manual_placement_required</code> | Fill a Chair | Provisional geometry |
-| <code>scenario.doorway_1</code> | Clear exit | <code>doorway</code> | <code>846, 114</code> | <code>side_door</code> | Clear exit | Exact scenario |
-| <code>scenario.floor_fixture_1</code> | Reserved chair blocks | <code>floor_fixture</code> | <code>446, 142</code> | <code>stage</code> | Reserved chair blocks | Exact scenario |
-| <code>scenario.floor_fixture_2</code> | Bringer stage | <code>floor_fixture</code> | <code>574, 142</code> | <code>stage</code> | Bringer stage | Exact scenario |
-| <code>scenario.group_1</code> | Crowd captain | <code>group</code> | <code>388, 358</code> | <code>floor</code> | Crowd captain | Exact scenario |
-| <code>scenario.standing_person_1</code> | Scenario alternatives: Bringer performer / Crowd Captain / Waiting Supporter | <code>standing_person</code> | <code>284, 358</code> | <code>floor</code> | Bringer performer<br>Crowd Captain<br>Waiting Supporter | Exact scenario |
-| <code>scenario.surface_item_1</code> | Buy a Drink | <code>surface_item</code> | <code>128, 206</code> | <code>left_table</code> | Buy a Drink | Exact scenario |
-| <code>scenario.surface_item_2</code> | Scenario alternatives: Coiled Ropes and Filled Chairs / Open Pitch Card | <code>surface_item</code> | <code>350, 214</code> | <code>stage</code> | Coiled Ropes and Filled Chairs<br>Open Pitch Card | Exact scenario |
+| <code>scenario.local_doorway_1</code> | Clear exit | <code>doorway</code> | <code>846, 114</code> | <code>side_door</code> | Clear exit | Exact scenario |
+| <code>scenario.local_floor_fixture_1</code> | Layer 2 clear bins | <code>floor_fixture</code> | <code>446, 142</code> | <code>stage</code> | Layer 2 clear bins | Exact scenario |
+| <code>scenario.local_floor_fixture_2</code> | Layer 3 room screen | <code>floor_fixture</code> | <code>574, 142</code> | <code>stage</code> | Layer 3 room screen | Exact scenario |
+| <code>scenario.local_floor_fixture_3</code> | Scenario alternatives: Layer 1 hide cart / Loaded Hide Cart | <code>floor_fixture</code> | <code>366, 326</code> | <code>manual_placement_required</code> | Layer 1 hide cart<br>Loaded Hide Cart | Provisional geometry |
+| <code>scenario.local_ground_marker_1</code> | Half-Cleared Bin Lane | <code>ground_marker</code> | <code>164, 302</code> | <code>floor</code> | Half-Cleared Bin Lane | Exact scenario |
+| <code>scenario.local_standing_person_1</code> | Scenario alternatives: Raid lookout / Watchful Lookout | <code>standing_person</code> | <code>284, 358</code> | <code>floor</code> | Raid lookout<br>Watchful Lookout | Exact scenario |
+| <code>scenario.local_standing_person_2</code> | Reopen Steward | <code>standing_person</code> | <code>500, 358</code> | <code>floor</code> | Reopen Steward | Exact scenario |
+| <code>scenario.local_wall_item_1</code> | Coiled Screen Seals | <code>wall_mounted</code> | <code>120, 64</code> | <code>manual_placement_required</code> | Coiled Screen Seals | Provisional geometry |
 
-**Action-only IDs (6; no placement marker):** <code>punchline_bringer_show_aftermath_crowd_interrupted_prop</code><br><code>punchline_bringer_show_crowd_ropes</code><br><code>punchline_bringer_show_task_0</code><br><code>punchline_bringer_show_task_1</code><br><code>punchline_bringer_show_task_2</code><br><code>punchline_bringer_show_task_3</code>
-
-#### Scenario — Debt Court — <code>small_underground_casino:club::punchline_debt_court</code>
-
-**Full save:** 25 slots = 19 shared + 6 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
-
-| Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
-| --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.doorway_1</code> | Clear exit | <code>doorway</code> | <code>846, 114</code> | <code>side_door</code> | Clear exit | Exact scenario |
-| <code>scenario.floor_fixture_1</code> | Debt-court hearing chairs | <code>floor_fixture</code> | <code>446, 142</code> | <code>stage</code> | Debt-court hearing chairs | Exact scenario |
-| <code>scenario.standing_person_1</code> | Office Hours | <code>standing_person</code> | <code>284, 358</code> | <code>floor</code> | Office Hours | Exact scenario |
-| <code>scenario.standing_person_2</code> | Scenario alternatives: Debt-court steward / Hearing Attendee / Hearing Participant | <code>standing_person</code> | <code>124, 358</code> | <code>floor</code> | Debt-court steward<br>Hearing Attendee<br>Hearing Participant | Exact scenario |
-| <code>scenario.standing_person_3</code> | Room witness | <code>standing_person</code> | <code>500, 358</code> | <code>floor</code> | Room witness | Exact scenario |
-| <code>scenario.surface_item_1</code> | Scenario alternatives: Cleared Hearing Chairs / Contested Evidence Spread / Public evidence stand | <code>surface_item</code> | <code>350, 214</code> | <code>stage</code> | Cleared Hearing Chairs<br>Contested Evidence Spread<br>Public evidence stand | Exact scenario |
-
-**Action-only IDs (6; no placement marker):** <code>punchline_debt_court_aftermath_poker_boundary_interrupted_prop</code><br><code>punchline_debt_court_paused_table_rope</code><br><code>punchline_debt_court_task_0</code><br><code>punchline_debt_court_task_1</code><br><code>punchline_debt_court_task_2</code><br><code>punchline_debt_court_task_3</code>
-
-#### Scenario — Headliner Night — <code>small_underground_casino:club::punchline_headliner_night</code>
-
-**Full save:** 25 slots = 19 shared + 6 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
-
-| Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
-| --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.doorway_1</code> | House Full | <code>doorway</code> | <code>846, 114</code> | <code>side_door</code> | House Full | Exact scenario |
-| <code>scenario.doorway_2</code> | Clear exit | <code>doorway</code> | <code>841, 266</code> | <code>right_exit</code> | Clear exit | Exact scenario |
-| <code>scenario.standing_person_1</code> | Scenario alternatives: Backstage Guard / Denied Guest / Runner | <code>standing_person</code> | <code>284, 358</code> | <code>floor</code> | Backstage Guard<br>Denied Guest<br>Runner | Exact scenario |
-| <code>scenario.standing_person_2</code> | Backstage door guard | <code>standing_person</code> | <code>124, 358</code> | <code>floor</code> | Backstage door guard | Exact scenario |
-| <code>scenario.surface_item_1</code> | Headliner Cover | <code>surface_item</code> | <code>350, 214</code> | <code>stage</code> | Headliner Cover | Exact scenario |
-| <code>scenario.surface_item_2</code> | Diverted Equipment Case | <code>surface_item</code> | <code>128, 206</code> | <code>left_table</code> | Diverted Equipment Case | Exact scenario |
-
-**Action-only IDs (10; no placement marker):** <code>punchline_headliner_night_aftermath_arrival_interrupted_prop</code><br><code>punchline_headliner_night_aftermath_headliner_reached_prop</code><br><code>punchline_headliner_night_credential_rope</code><br><code>punchline_headliner_night_runner_case</code><br><code>punchline_headliner_night_service_door</code><br><code>punchline_headliner_night_task_0</code><br><code>punchline_headliner_night_task_1</code><br><code>punchline_headliner_night_task_2</code><br><code>punchline_headliner_night_task_3</code><br><code>punchline_headliner_night_task_4</code>
-
-#### Scenario — Open Mic Night — <code>small_underground_casino:club::punchline_open_mic_night</code>
-
-**Full save:** 26 slots = 19 shared + 7 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
-
-| Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
-| --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.doorway_1</code> | Clear exit | <code>doorway</code> | <code>846, 114</code> | <code>side_door</code> | Clear exit | Exact scenario |
-| <code>scenario.floor_fixture_1</code> | Open-mic chair bank | <code>floor_fixture</code> | <code>446, 142</code> | <code>stage</code> | Open-mic chair bank | Exact scenario |
-| <code>scenario.floor_fixture_2</code> | Open-mic signup lectern | <code>floor_fixture</code> | <code>574, 142</code> | <code>stage</code> | Open-mic signup lectern | Exact scenario |
-| <code>scenario.standing_person_1</code> | Five Bad Minutes | <code>standing_person</code> | <code>284, 358</code> | <code>floor</code> | Five Bad Minutes | Exact scenario |
-| <code>scenario.standing_person_2</code> | Scenario alternatives: Lingering Comic / Open-mic host / Unbooked Comic | <code>standing_person</code> | <code>124, 358</code> | <code>floor</code> | Lingering Comic<br>Open-mic host<br>Unbooked Comic | Exact scenario |
-| <code>scenario.standing_person_3</code> | Waiting comic | <code>standing_person</code> | <code>500, 358</code> | <code>floor</code> | Waiting comic | Exact scenario |
-| <code>scenario.surface_item_1</code> | Scenario alternatives: Crossed-Out Running Order / Used Act Card Stack | <code>surface_item</code> | <code>128, 206</code> | <code>left_table</code> | Crossed-Out Running Order<br>Used Act Card Stack | Exact scenario |
-
-**Action-only IDs (6; no placement marker):** <code>punchline_open_mic_night_aftermath_show_interrupted_prop</code><br><code>punchline_open_mic_night_stage_steps</code><br><code>punchline_open_mic_night_task_0</code><br><code>punchline_open_mic_night_task_1</code><br><code>punchline_open_mic_night_task_2</code><br><code>punchline_open_mic_night_task_3</code>
-
-#### Scenario — Raid Jitters — <code>small_underground_casino:club::punchline_raid_jitters</code>
-
-**Full save:** 24 slots = 19 shared + 5 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
-
-| Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
-| --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.doorway_1</code> | Clear exit | <code>doorway</code> | <code>846, 114</code> | <code>side_door</code> | Clear exit | Exact scenario |
-| <code>scenario.floor_fixture_1</code> | Loaded Hide Cart | <code>floor_fixture</code> | <code>446, 142</code> | <code>stage</code> | Loaded Hide Cart | Exact scenario |
-| <code>scenario.standing_person_1</code> | Scenario alternatives: Raid lookout / Reopen Steward / Watchful Lookout | <code>standing_person</code> | <code>284, 358</code> | <code>floor</code> | Raid lookout<br>Reopen Steward<br>Watchful Lookout | Exact scenario |
-| <code>scenario.standing_person_2</code> | Reopen steward | <code>standing_person</code> | <code>500, 358</code> | <code>floor</code> | Reopen steward | Exact scenario |
-| <code>scenario.surface_item_1</code> | The Second Check | <code>surface_item</code> | <code>128, 206</code> | <code>left_table</code> | The Second Check | Exact scenario |
-
-**Action-only IDs (10; no placement marker):** <code>punchline_raid_jitters_aftermath_altered_floor_reopened_prop</code><br><code>punchline_raid_jitters_aftermath_raid_interrupted_prop</code><br><code>punchline_raid_jitters_clear_bins</code><br><code>punchline_raid_jitters_hide_cart</code><br><code>punchline_raid_jitters_room_screen</code><br><code>punchline_raid_jitters_task_0</code><br><code>punchline_raid_jitters_task_1</code><br><code>punchline_raid_jitters_task_2</code><br><code>punchline_raid_jitters_task_3</code><br><code>punchline_raid_jitters_task_4</code>
+**Action-only IDs (5; no placement marker):** <code>punchline_raid_jitters_task_0</code><br><code>punchline_raid_jitters_task_1</code><br><code>punchline_raid_jitters_task_2</code><br><code>punchline_raid_jitters_task_3</code><br><code>punchline_raid_jitters_task_4</code>
 
 ### The Punchline — Hidden Casino — <code>small_underground_casino:casino</code>
 
@@ -807,107 +929,120 @@ Positions are canonical 900×430 board coordinates. Base tables list the exact e
 | Family | Slot ID | Physical role | Footprint | Position | Support | Occupant/claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | <code>fixed</code> | <code>fixed.staff_dealer</code> | Sable | <code>standing_person</code> | <code>584, 146</code> | <code>stage</code> | Sable | Required |
-| <code>fixed</code> | <code>fixed.game_floor_1</code> | Game fixture | <code>floor_fixture</code> | <code>734, 358</code> | <code>floor</code> | Empty capacity | Optional empty capacity |
-| <code>fixed</code> | <code>fixed.game_floor_2</code> | Game fixture | <code>floor_fixture</code> | <code>468, 70</code> | <code>stage</code> | Empty capacity | Optional empty capacity |
+| <code>fixed</code> | <code>fixed.game_floor_1</code> | Random game table | <code>floor_fixture</code> | <code>734, 358</code> | <code>floor</code> | Empty capacity | Optional empty capacity |
+| <code>fixed</code> | <code>fixed.game_floor_2</code> | Random game table | <code>floor_fixture</code> | <code>468, 70</code> | <code>stage</code> | Empty capacity | Optional empty capacity |
 | <code>fixed</code> | <code>fixed.lender_person_1</code> | Individual lender | <code>behind_counter_person</code> | <code>474, 230</code> | <code>right_table</code> | Empty capacity | Optional empty capacity |
-| <code>fixed</code> | <code>fixed.lender_group_1</code> | Group | <code>group</code> | <code>164, 358</code> | <code>floor</code> | Empty capacity | Optional empty capacity |
-| <code>fixed</code> | <code>fixed.door_side_event</code> | Doorway / exit | <code>doorway</code> | <code>36, 160</code> | <code>left_exit</code> | Side Door | Mapped capacity |
-| <code>fixed</code> | <code>fixed.service_house_drink</code> | Counter or table item | <code>surface_item</code> | <code>274, 222</code> | <code>stage</code> | House Drink | Mapped capacity |
-| <code>fixed</code> | <code>fixed.numbers_book</code> | Counter or table item | <code>surface_item</code> | <code>688, 142</code> | <code>right_table</code> | Book | Mapped capacity |
+| <code>fixed</code> | <code>fixed.lender_group_1</code> | Lender group | <code>group</code> | <code>164, 358</code> | <code>floor</code> | Empty capacity | Optional empty capacity |
+| <code>fixed</code> | <code>fixed.door_side_event</code> | Side door | <code>doorway</code> | <code>36, 160</code> | <code>left_exit</code> | Side Door | Mapped capacity |
+| <code>fixed</code> | <code>fixed.service_house_drink</code> | House drink service | <code>surface_item</code> | <code>274, 222</code> | <code>stage</code> | Buy a Drink | Mapped capacity |
+| <code>fixed</code> | <code>fixed.numbers_book</code> | Numbers book | <code>surface_item</code> | <code>688, 142</code> | <code>right_table</code> | Book | Mapped capacity |
 | <code>fixed</code> | <code>fixed.staff_ox</code> | Ox | <code>standing_person</code> | <code>628, 358</code> | <code>floor</code> | Ox | Required |
 | <code>event</code> | <code>event.floor_fixture_1</code> | Floor prop | <code>floor_fixture</code> | <code>752, 370</code> | <code>floor</code> | Empty capacity | Optional empty capacity |
-| <code>event</code> | <code>event.behind_counter_person_1</code> | Counter staff | <code>behind_counter_person</code> | <code>136, 226</code> | <code>left_table</code> | Town Rumor Staff | Mapped capacity |
+| <code>event</code> | <code>event.behind_counter_person_1</code> | Counter staff | <code>behind_counter_person</code> | <code>136, 226</code> | <code>left_table</code> | Word from Across Town | Mapped capacity |
 | <code>event</code> | <code>event.seated_person_1</code> | Seated person | <code>seated_person</code> | <code>220, 246</code> | <code>left_card_seat</code> | Rowdy Regular | Mapped capacity |
-| <code>event</code> | <code>event.standing_person_1</code> | Standing person | <code>standing_person</code> | <code>208.571429, 414</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_2</code> | Standing person | <code>standing_person</code> | <code>317.142857, 414</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_3</code> | Standing person | <code>standing_person</code> | <code>425.714286, 414</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_4</code> | Standing person | <code>standing_person</code> | <code>534.285714, 414</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_5</code> | Standing person | <code>standing_person</code> | <code>642.857143, 414</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_6</code> | Standing person | <code>standing_person</code> | <code>751.428571, 414</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_7</code> | Standing person | <code>standing_person</code> | <code>860, 414</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_1</code> | Standing person | <code>standing_person</code> | <code>208.571429, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_2</code> | Standing person | <code>standing_person</code> | <code>317.142857, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_3</code> | Standing person | <code>standing_person</code> | <code>425.714286, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_4</code> | Standing person | <code>standing_person</code> | <code>534.285714, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_5</code> | Standing person | <code>standing_person</code> | <code>642.857143, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_6</code> | Standing person | <code>standing_person</code> | <code>751.428571, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_7</code> | Standing person | <code>standing_person</code> | <code>860, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
 | <code>event</code> | <code>event.standing_person_8</code> | Standing person | <code>standing_person</code> | <code>100, 414</code> | <code>floor</code> | Silas | Mapped capacity |
-| <code>scenario</code> | <code>scenario.wall_item_3</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>200, 24</code> | <code>wall</code> | Runtime reserve (unclaimed) | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.standing_person_3</code> | Runtime contact reserve | <code>standing_person</code> | <code>400, 168</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
-| <code>scenario</code> | <code>scenario.floor_fixture_3</code> | Delivery package reserve | <code>floor_fixture</code> | <code>874, 370</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.wall_item_3</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>200, 24</code> | <code>wall</code> | Variable runtime content | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.standing_person_3</code> | Runtime contact reserve | <code>standing_person</code> | <code>400, 168</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
+| <code>scenario</code> | <code>scenario.floor_fixture_3</code> | Delivery package reserve | <code>floor_fixture</code> | <code>874, 370</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
 | <code>exit</code> | <code>exit.door_guarded_lower</code> | Travel exit | <code>doorway</code> | <code>798, 220</code> | <code>guarded_exit</code> | Back Room | Mapped capacity |
 | <code>exit</code> | <code>exit.door_left_lower</code> | Travel exit | <code>doorway</code> | <code>36, 376</code> | <code>left_exit</code> | Club | Mapped capacity |
 | <code>exit</code> | <code>exit.guarded_upper</code> | Travel exit | <code>doorway</code> | <code>798, 124</code> | <code>guarded_exit</code> | Leave | Mapped capacity |
 
 #### Scenario — Greased Week — <code>small_underground_casino:casino::punchline_greased_week</code>
 
-**Full save:** 31 slots = 26 shared + 5 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 36 slots = 26 shared + 10 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.doorway_1</code> | Clear exit | <code>doorway</code> | <code>36, 264</code> | <code>left_exit</code> | Clear exit | Exact scenario |
-| <code>scenario.standing_person_1</code> | Scenario alternatives: Club Regular / Moving inspector / Waiting Runner | <code>standing_person</code> | <code>660, 252</code> | <code>floor</code> | Club Regular<br>Moving inspector<br>Waiting Runner | Exact scenario |
-| <code>scenario.standing_person_2</code> | Payoff runner | <code>standing_person</code> | <code>388, 358</code> | <code>floor</code> | Payoff runner | Exact scenario |
-| <code>scenario.wall_item_1</code> | Paid Quiet | <code>wall_mounted</code> | <code>40, 24</code> | <code>wall</code> | Paid Quiet | Exact scenario |
-| <code>scenario.wall_item_2</code> | Scenario alternatives: Broken Inspection Seals / Posted Payoff Ledger | <code>wall_mounted</code> | <code>376, 192</code> | <code>wall</code> | Broken Inspection Seals<br>Posted Payoff Ledger | Exact scenario |
+| <code>scenario.local_doorway_1</code> | Clear exit | <code>doorway</code> | <code>36, 264</code> | <code>left_exit</code> | Clear exit | Exact scenario |
+| <code>scenario.local_floor_fixture_1</code> | Declared service barrier | <code>floor_fixture</code> | <code>470, 330</code> | <code>manual_placement_required</code> | Declared service barrier | Provisional geometry |
+| <code>scenario.local_ground_marker_1</code> | Unposted Payoff Ledger | <code>ground_marker</code> | <code>172, 302</code> | <code>floor</code> | Unposted Payoff Ledger | Exact scenario |
+| <code>scenario.local_standing_person_1</code> | Moving inspector | <code>standing_person</code> | <code>660, 252</code> | <code>floor</code> | Moving inspector | Exact scenario |
+| <code>scenario.local_standing_person_2</code> | Scenario alternatives: Club Regular / Payoff runner | <code>standing_person</code> | <code>388, 358</code> | <code>floor</code> | Club Regular<br>Payoff runner | Exact scenario |
+| <code>scenario.local_standing_person_3</code> | Waiting Runner | <code>standing_person</code> | <code>252, 326</code> | <code>manual_placement_required</code> | Waiting Runner | Provisional geometry |
+| <code>scenario.local_wall_item_1</code> | Payoff route ledger | <code>wall_mounted</code> | <code>40, 24</code> | <code>wall</code> | Payoff route ledger | Exact scenario |
+| <code>scenario.local_wall_item_2</code> | Scenario alternatives: Layer inspection seals / Posted Payoff Ledger | <code>wall_mounted</code> | <code>376, 192</code> | <code>wall</code> | Layer inspection seals<br>Posted Payoff Ledger | Exact scenario |
+| <code>scenario.local_wall_item_3</code> | Layer inspection seals | <code>wall_mounted</code> | <code>120, 64</code> | <code>manual_placement_required</code> | Layer inspection seals | Provisional geometry |
+| <code>scenario.local_wall_item_4</code> | Broken Inspection Seals | <code>wall_mounted</code> | <code>280, 64</code> | <code>manual_placement_required</code> | Broken Inspection Seals | Provisional geometry |
 
-**Action-only IDs (9; no placement marker):** <code>punchline_greased_week_aftermath_inspection_interrupted_prop</code><br><code>punchline_greased_week_inspection_seals</code><br><code>punchline_greased_week_payoff_ledger</code><br><code>punchline_greased_week_service_barrier</code><br><code>punchline_greased_week_task_0</code><br><code>punchline_greased_week_task_1</code><br><code>punchline_greased_week_task_2</code><br><code>punchline_greased_week_task_3</code><br><code>punchline_greased_week_task_4</code>
+**Action-only IDs (5; no placement marker):** <code>punchline_greased_week_task_0</code><br><code>punchline_greased_week_task_1</code><br><code>punchline_greased_week_task_2</code><br><code>punchline_greased_week_task_3</code><br><code>punchline_greased_week_task_4</code>
 
 #### Scenario — High-Stakes Night — <code>small_underground_casino:casino::punchline_high_stakes_night</code>
 
-**Full save:** 33 slots = 26 shared + 7 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 37 slots = 26 shared + 11 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.doorway_1</code> | Clear exit | <code>doorway</code> | <code>36, 264</code> | <code>left_exit</code> | Clear exit | Exact scenario |
-| <code>scenario.floor_fixture_1</code> | Scenario alternatives: Displaced ordinary chairs / Protected table | <code>floor_fixture</code> | <code>838, 358</code> | <code>floor</code> | Displaced ordinary chairs<br>Protected table | Exact scenario |
-| <code>scenario.floor_fixture_2</code> | Protected high-stakes table | <code>floor_fixture</code> | <code>510, 358</code> | <code>floor</code> | Protected high-stakes table | Exact scenario |
-| <code>scenario.seated_person_1</code> | High-stakes guard | <code>seated_person</code> | <code>566, 246</code> | <code>right_card_seat</code> | High-stakes guard | Exact scenario |
-| <code>scenario.standing_person_1</code> | Scenario alternatives: Refused Guest / Table Runner / Table runner | <code>standing_person</code> | <code>660, 252</code> | <code>floor</code> | Refused Guest<br>Table Runner<br>Table runner | Exact scenario |
-| <code>scenario.surface_item_1</code> | The Serious Table | <code>surface_item</code> | <code>44, 64</code> | <code>manual_placement_required</code> | The Serious Table | Provisional geometry |
-| <code>scenario.surface_item_2</code> | Private Table | <code>surface_item</code> | <code>154, 166</code> | <code>left_table</code> | Private Table | Exact scenario |
+| <code>scenario.local_doorway_1</code> | Clear exit | <code>doorway</code> | <code>36, 264</code> | <code>left_exit</code> | Clear exit | Exact scenario |
+| <code>scenario.local_floor_fixture_1</code> | Displaced ordinary chairs | <code>floor_fixture</code> | <code>838, 358</code> | <code>floor</code> | Displaced ordinary chairs | Exact scenario |
+| <code>scenario.local_floor_fixture_2</code> | Protected high-stakes table | <code>floor_fixture</code> | <code>510, 358</code> | <code>floor</code> | Protected high-stakes table | Exact scenario |
+| <code>scenario.local_floor_fixture_3</code> | Protected table | <code>floor_fixture</code> | <code>262, 326</code> | <code>manual_placement_required</code> | Protected table | Provisional geometry |
+| <code>scenario.local_ground_marker_1</code> | Open Observer Rail | <code>ground_marker</code> | <code>172, 302</code> | <code>floor</code> | Open Observer Rail | Exact scenario |
+| <code>scenario.local_ground_marker_2</code> | Unfinished Chair Stack | <code>ground_marker</code> | <code>460, 294</code> | <code>manual_placement_required</code> | Unfinished Chair Stack | Provisional geometry |
+| <code>scenario.local_seated_person_1</code> | High-stakes guard | <code>seated_person</code> | <code>566, 246</code> | <code>right_card_seat</code> | High-stakes guard | Exact scenario |
+| <code>scenario.local_standing_person_1</code> | Scenario alternatives: Refused Guest / Table runner | <code>standing_person</code> | <code>660, 252</code> | <code>floor</code> | Refused Guest<br>Table runner | Exact scenario |
+| <code>scenario.local_standing_person_2</code> | Table Runner | <code>standing_person</code> | <code>388, 358</code> | <code>floor</code> | Table Runner | Exact scenario |
+| <code>scenario.local_surface_item_1</code> | Private Table | <code>surface_item</code> | <code>154, 166</code> | <code>left_table</code> | Private Table | Exact scenario |
+| <code>scenario.local_wall_item_1</code> | High-stakes observer rail | <code>wall_mounted</code> | <code>40, 24</code> | <code>wall</code> | High-stakes observer rail | Exact scenario |
 
-**Action-only IDs (7; no placement marker):** <code>punchline_high_stakes_night_aftermath_public_lane_restored_prop</code><br><code>punchline_high_stakes_night_aftermath_session_interrupted_prop</code><br><code>punchline_high_stakes_night_observer_rail</code><br><code>punchline_high_stakes_night_task_0</code><br><code>punchline_high_stakes_night_task_1</code><br><code>punchline_high_stakes_night_task_2</code><br><code>punchline_high_stakes_night_task_3</code>
+**Action-only IDs (4; no placement marker):** <code>punchline_high_stakes_night_task_0</code><br><code>punchline_high_stakes_night_task_1</code><br><code>punchline_high_stakes_night_task_2</code><br><code>punchline_high_stakes_night_task_3</code>
 
 #### Scenario — New Muscle — <code>small_underground_casino:casino::punchline_new_muscle</code>
 
-**Full save:** 30 slots = 26 shared + 4 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 35 slots = 26 shared + 9 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.doorway_1</code> | The New Coat | <code>doorway</code> | <code>752, 24</code> | <code>round3_side_door</code> | The New Coat | Exact scenario |
-| <code>scenario.doorway_2</code> | Clear exit | <code>doorway</code> | <code>36, 264</code> | <code>left_exit</code> | Clear exit | Exact scenario |
-| <code>scenario.standing_person_1</code> | Scenario alternatives: Checkpoint Rover / New guard lead / Waiting Traveler | <code>standing_person</code> | <code>660, 252</code> | <code>floor</code> | Checkpoint Rover<br>New guard lead<br>Waiting Traveler | Exact scenario |
-| <code>scenario.standing_person_2</code> | Checkpoint rover | <code>standing_person</code> | <code>388, 358</code> | <code>floor</code> | Checkpoint rover | Exact scenario |
+| <code>scenario.local_doorway_1</code> | Clear exit | <code>doorway</code> | <code>36, 264</code> | <code>left_exit</code> | Clear exit | Exact scenario |
+| <code>scenario.local_floor_fixture_1</code> | Scenario alternatives: Crowded Guard Posts / Three-layer guard posts | <code>floor_fixture</code> | <code>358, 274</code> | <code>manual_placement_required</code> | Crowded Guard Posts<br>Three-layer guard posts | Provisional geometry |
+| <code>scenario.local_floor_fixture_2</code> | Aligned Guard Posts | <code>floor_fixture</code> | <code>510, 358</code> | <code>floor</code> | Aligned Guard Posts | Exact scenario |
+| <code>scenario.local_ground_marker_1</code> | Scenario alternatives: Marked bypass lane / Stranded Inspection Tray | <code>ground_marker</code> | <code>172, 302</code> | <code>floor</code> | Marked bypass lane<br>Stranded Inspection Tray | Exact scenario |
+| <code>scenario.local_standing_person_1</code> | Checkpoint rover | <code>standing_person</code> | <code>388, 358</code> | <code>floor</code> | Checkpoint rover | Exact scenario |
+| <code>scenario.local_standing_person_2</code> | Scenario alternatives: Checkpoint Rover / New guard lead | <code>standing_person</code> | <code>660, 252</code> | <code>floor</code> | Checkpoint Rover<br>New guard lead | Exact scenario |
+| <code>scenario.local_standing_person_3</code> | Waiting Traveler | <code>standing_person</code> | <code>252, 326</code> | <code>manual_placement_required</code> | Waiting Traveler | Provisional geometry |
+| <code>scenario.local_surface_item_1</code> | Checkpoint inspection tray | <code>surface_item</code> | <code>154, 166</code> | <code>left_table</code> | Checkpoint inspection tray | Exact scenario |
+| <code>scenario.local_surface_item_2</code> | Checkpoint inspection tray | <code>surface_item</code> | <code>44, 64</code> | <code>manual_placement_required</code> | Checkpoint inspection tray | Provisional geometry |
 
-**Action-only IDs (11; no placement marker):** <code>punchline_new_muscle_aftermath_checkpoint_entrenched_prop</code><br><code>punchline_new_muscle_aftermath_checkpoint_interrupted_prop</code><br><code>punchline_new_muscle_aftermath_posts_reassigned_prop</code><br><code>punchline_new_muscle_bypass_lane</code><br><code>punchline_new_muscle_guard_posts</code><br><code>punchline_new_muscle_inspection_tray</code><br><code>punchline_new_muscle_task_0</code><br><code>punchline_new_muscle_task_1</code><br><code>punchline_new_muscle_task_2</code><br><code>punchline_new_muscle_task_3</code><br><code>punchline_new_muscle_task_4</code>
+**Action-only IDs (5; no placement marker):** <code>punchline_new_muscle_task_0</code><br><code>punchline_new_muscle_task_1</code><br><code>punchline_new_muscle_task_2</code><br><code>punchline_new_muscle_task_3</code><br><code>punchline_new_muscle_task_4</code>
 
 ### The Punchline — Crew Back Room — <code>small_underground_casino:back_room</code>
 
 #### Base / No Scenario — <code>small_underground_casino:back_room::__base</code>
 
-**Save snapshot:** 26 slots = 8 fixed + 12 event + 4 shared scenario + 2 exit. Exact scenarios on this map: 0.
+**Save snapshot:** 25 slots = 8 fixed + 12 event + 3 shared scenario + 2 exit. Exact scenarios on this map: 0.
 
 | Family | Slot ID | Physical role | Footprint | Position | Support | Occupant/claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| <code>fixed</code> | <code>fixed.game_crew_draw_poker</code> | Game fixture | <code>surface_item</code> | <code>330, 151</code> | <code>planning_table</code> | Crew Draw Poker | Mapped capacity |
-| <code>fixed</code> | <code>fixed.event_planning_table</code> | Counter or table item | <code>surface_item</code> | <code>570, 151</code> | <code>planning_table</code> | Crew Planning Table | Mapped capacity |
-| <code>fixed</code> | <code>fixed.event_numbers_desk</code> | Counter or table item | <code>surface_item</code> | <code>126, 184</code> | <code>numbers_desk</code> | Numbers Desk | Mapped capacity |
-| <code>fixed</code> | <code>fixed.event_job_board</code> | Counter or table item | <code>surface_item</code> | <code>126, 54</code> | <code>job_board</code> | Crew Job Board | Mapped capacity |
-| <code>fixed</code> | <code>fixed.event_mags_bench</code> | Counter or table item | <code>surface_item</code> | <code>716, 62</code> | <code>mags_bench</code> | Crew Mags Bench | Mapped capacity |
-| <code>fixed</code> | <code>fixed.event_practice_rig</code> | Floor prop | <code>floor_fixture</code> | <code>300, 358</code> | <code>floor</code> | Crew Practice Rig | Mapped capacity |
-| <code>fixed</code> | <code>fixed.event_rook_ride</code> | Doorway / exit | <code>doorway</code> | <code>830, 106</code> | <code>rook_exit</code> | Crew Rook Ride | Mapped capacity |
-| <code>fixed</code> | <code>fixed.ambient_rook</code> | Standing person | <code>standing_person</code> | <code>750, 358</code> | <code>floor</code> | Ambient | Mapped capacity |
+| <code>fixed</code> | <code>fixed.game_crew_draw_poker</code> | Crew draw-poker table | <code>surface_item</code> | <code>330, 151</code> | <code>planning_table</code> | Back-Room Hold'em | Mapped capacity |
+| <code>fixed</code> | <code>fixed.event_planning_table</code> | Crew planning table | <code>surface_item</code> | <code>570, 151</code> | <code>planning_table</code> | Planning Table | Mapped capacity |
+| <code>fixed</code> | <code>fixed.event_numbers_desk</code> | Numbers desk | <code>surface_item</code> | <code>126, 184</code> | <code>numbers_desk</code> | The Numbers Desk | Mapped capacity |
+| <code>fixed</code> | <code>fixed.event_job_board</code> | Crew job board | <code>surface_item</code> | <code>126, 54</code> | <code>job_board</code> | Job Board | Mapped capacity |
+| <code>fixed</code> | <code>fixed.event_mags_bench</code> | Mags' bench | <code>surface_item</code> | <code>716, 62</code> | <code>mags_bench</code> | Mags' Bench | Mapped capacity |
+| <code>fixed</code> | <code>fixed.event_practice_rig</code> | Crew practice rig | <code>floor_fixture</code> | <code>300, 358</code> | <code>floor</code> | Mags' Practice Rig | Mapped capacity |
+| <code>fixed</code> | <code>fixed.event_rook_ride</code> | Rook's ride | <code>doorway</code> | <code>830, 106</code> | <code>rook_exit</code> | Rook's Ride | Mapped capacity |
+| <code>fixed</code> | <code>fixed.ambient_rook</code> | Rook | <code>standing_person</code> | <code>750, 358</code> | <code>floor</code> | Ambient | Mapped capacity |
 | <code>event</code> | <code>event.surface_item_1</code> | Counter or table item | <code>surface_item</code> | <code>588, 163</code> | <code>planning_table</code> | Empty capacity | Optional empty capacity |
 | <code>event</code> | <code>event.surface_item_2</code> | Counter or table item | <code>surface_item</code> | <code>144, 196</code> | <code>numbers_desk</code> | Empty capacity | Optional empty capacity |
 | <code>event</code> | <code>event.surface_item_3</code> | Counter or table item | <code>surface_item</code> | <code>144, 66</code> | <code>job_board</code> | Empty capacity | Optional empty capacity |
 | <code>event</code> | <code>event.surface_item_4</code> | Counter or table item | <code>surface_item</code> | <code>734, 74</code> | <code>mags_bench</code> | Empty capacity | Optional empty capacity |
 | <code>event</code> | <code>event.floor_fixture_1</code> | Floor prop | <code>floor_fixture</code> | <code>468, 370</code> | <code>stage</code> | Empty capacity | Optional empty capacity |
 | <code>event</code> | <code>event.doorway_1</code> | Doorway / exit | <code>doorway</code> | <code>848, 118</code> | <code>rook_exit</code> | Empty capacity | Optional empty capacity |
-| <code>event</code> | <code>event.standing_person_1</code> | Standing person | <code>standing_person</code> | <code>252, 414</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_2</code> | Standing person | <code>standing_person</code> | <code>404, 414</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_3</code> | Standing person | <code>standing_person</code> | <code>556, 414</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_4</code> | Standing person | <code>standing_person</code> | <code>708, 414</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_5</code> | Standing person | <code>standing_person</code> | <code>860, 414</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_1</code> | Standing person | <code>standing_person</code> | <code>252, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_2</code> | Standing person | <code>standing_person</code> | <code>404, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_3</code> | Standing person | <code>standing_person</code> | <code>556, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_4</code> | Standing person | <code>standing_person</code> | <code>708, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_5</code> | Standing person | <code>standing_person</code> | <code>860, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
 | <code>event</code> | <code>event.standing_person_6</code> | Standing person | <code>standing_person</code> | <code>100, 414</code> | <code>floor</code> | Silas | Mapped capacity |
-| <code>scenario</code> | <code>scenario.surface_item_1</code> | Counter or table item | <code>surface_item</code> | <code>450, 151</code> | <code>planning_table</code> | Empty capacity | Optional empty capacity |
-| <code>scenario</code> | <code>scenario.floor_fixture_1</code> | Delivery package reserve | <code>floor_fixture</code> | <code>600, 358</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.wall_item_1</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>350, 188</code> | <code>wall</code> | Runtime reserve (unclaimed) | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.standing_person_1</code> | Runtime contact reserve | <code>standing_person</code> | <code>448, 248</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
+| <code>scenario</code> | <code>scenario.floor_fixture_1</code> | Delivery package reserve | <code>floor_fixture</code> | <code>600, 358</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.wall_item_1</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>350, 188</code> | <code>wall</code> | Variable runtime content | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.standing_person_1</code> | Runtime contact reserve | <code>standing_person</code> | <code>448, 248</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
 | <code>exit</code> | <code>exit.layer_door</code> | Travel exit | <code>doorway</code> | <code>830, 202</code> | <code>rook_exit</code> | Casino | Mapped capacity |
 | <code>exit</code> | <code>exit.left_1</code> | Travel exit | <code>doorway</code> | <code>36, 264</code> | <code>left_exit</code> | Leave | Mapped capacity |
 
@@ -931,76 +1066,94 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 | <code>fixed</code> | <code>fixed.tip_jar_band</code> | Band Tip Jar | <code>surface_item</code> | <code>494, 150</code> | <code>band_service_rail</code> | Band Tip Jar | Required |
 | <code>fixed</code> | <code>fixed.patron_dot</code> | Dot | <code>standing_person</code> | <code>364, 326</code> | <code>floor</code> | Dot | Required |
 | <code>event</code> | <code>event.floor_fixture_1</code> | Floor prop | <code>floor_fixture</code> | <code>572, 414</code> | <code>floor</code> | Empty capacity | Optional empty capacity |
-| <code>event</code> | <code>event.standing_person_1</code> | Standing person | <code>standing_person</code> | <code>810, 350</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_2</code> | Standing person | <code>standing_person</code> | <code>236, 258</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_1</code> | Standing person | <code>standing_person</code> | <code>810, 350</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_2</code> | Standing person | <code>standing_person</code> | <code>236, 258</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
 | <code>event</code> | <code>event.standing_person_3</code> | Standing person | <code>standing_person</code> | <code>744, 326</code> | <code>floor</code> | Silas | Mapped capacity |
-| <code>scenario</code> | <code>scenario.floor_fixture_3</code> | Delivery package reserve | <code>floor_fixture</code> | <code>667, 414</code> | <code>floor</code> | Jazz Club Guest Legend Instrument Case<br>Jazz Club Union Trouble Unbuilt Stage | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.wall_item_2</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>216, 24</code> | <code>wall</code> | Runtime reserve (unclaimed) | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.standing_person_3</code> | Runtime contact reserve | <code>standing_person</code> | <code>396, 244</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
+| <code>scenario</code> | <code>scenario.floor_fixture_3</code> | Delivery package reserve | <code>floor_fixture</code> | <code>667, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.wall_item_2</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>216, 24</code> | <code>wall</code> | Variable runtime content | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.standing_person_3</code> | Runtime contact reserve | <code>standing_person</code> | <code>396, 244</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
 | <code>exit</code> | <code>exit.door_right_upper</code> | Travel exit | <code>doorway</code> | <code>864, 116</code> | <code>right_exit</code> | Leave | Mapped capacity |
 
 #### Scenario — Guest Legend — <code>jazz_club::jazz_club_guest_legend</code>
 
-**Full save:** 24 slots = 17 shared + 7 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 28 slots = 17 shared + 11 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.doorway_1</code> | Marked clean exit | <code>doorway</code> | <code>36, 76</code> | <code>left_exit</code> | Marked clean exit | Exact scenario |
-| <code>scenario.floor_fixture_1</code> | The Extra Chair | <code>floor_fixture</code> | <code>157, 414</code> | <code>floor</code> | The Extra Chair | Exact scenario |
-| <code>scenario.floor_fixture_2</code> | Reserved legend table | <code>floor_fixture</code> | <code>62, 414</code> | <code>floor</code> | Reserved legend table | Exact scenario |
-| <code>scenario.standing_person_1</code> | Scenario alternatives: Guest legend / Revealed guest / Waiting guest | <code>standing_person</code> | <code>616, 326</code> | <code>floor</code> | Guest legend<br>Revealed guest<br>Waiting guest | Exact scenario |
-| <code>scenario.standing_person_2</code> | Stage manager | <code>standing_person</code> | <code>490, 326</code> | <code>floor</code> | Stage manager | Exact scenario |
-| <code>scenario.surface_item_1</code> | Face-down reveal card | <code>surface_item</code> | <code>112, 150</code> | <code>band_service_rail</code> | Face-down reveal card | Exact scenario |
-| <code>scenario.wall_item_1</code> | Named instrument stand | <code>wall_mounted</code> | <code>480, 32</code> | <code>wall</code> | Named instrument stand | Exact scenario |
+| <code>scenario.local_doorway_1</code> | Marked clean exit | <code>doorway</code> | <code>36, 76</code> | <code>left_exit</code> | Marked clean exit | Exact scenario |
+| <code>scenario.local_floor_fixture_1</code> | Empty cue stand | <code>floor_fixture</code> | <code>157, 414</code> | <code>floor</code> | Empty cue stand | Exact scenario |
+| <code>scenario.local_floor_fixture_2</code> | Reserved legend table | <code>floor_fixture</code> | <code>62, 414</code> | <code>floor</code> | Reserved legend table | Exact scenario |
+| <code>scenario.local_floor_fixture_3</code> | Instrument case | <code>floor_fixture</code> | <code>254, 422</code> | <code>manual_placement_required</code> | Instrument case | Provisional geometry |
+| <code>scenario.local_floor_fixture_4</code> | Reserved legend table | <code>floor_fixture</code> | <code>838, 422</code> | <code>manual_placement_required</code> | Reserved legend table | Provisional geometry |
+| <code>scenario.local_ground_marker_1</code> | Latched instrument case | <code>ground_marker</code> | <code>752, 414</code> | <code>floor</code> | Latched instrument case | Exact scenario |
+| <code>scenario.local_standing_person_1</code> | Scenario alternatives: Guest legend / Waiting guest | <code>standing_person</code> | <code>616, 326</code> | <code>floor</code> | Guest legend<br>Waiting guest | Exact scenario |
+| <code>scenario.local_standing_person_2</code> | Scenario alternatives: Revealed guest / Stage manager | <code>standing_person</code> | <code>490, 326</code> | <code>floor</code> | Revealed guest<br>Stage manager | Exact scenario |
+| <code>scenario.local_standing_person_3</code> | Stage manager | <code>standing_person</code> | <code>412, 422</code> | <code>manual_placement_required</code> | Stage manager | Provisional geometry |
+| <code>scenario.local_surface_item_1</code> | Face-down reveal card | <code>surface_item</code> | <code>112, 150</code> | <code>band_service_rail</code> | Face-down reveal card | Exact scenario |
+| <code>scenario.local_wall_item_1</code> | Named instrument stand | <code>wall_mounted</code> | <code>480, 32</code> | <code>wall</code> | Named instrument stand | Exact scenario |
 
-**Action-only IDs (9; no placement marker):** <code>jazz_club_guest_legend_aftermath_arrival_interrupted_prop</code><br><code>jazz_club_guest_legend_cue_stand</code><br><code>jazz_club_guest_legend_instrument_case</code><br><code>jazz_club_guest_legend_task_0</code><br><code>jazz_club_guest_legend_task_1</code><br><code>jazz_club_guest_legend_task_2</code><br><code>jazz_club_guest_legend_task_3</code><br><code>jazz_club_guest_legend_task_4</code><br><code>jazz_club_guest_legend_task_5</code>
+**Action-only IDs (6; no placement marker):** <code>jazz_club_guest_legend_task_0</code><br><code>jazz_club_guest_legend_task_1</code><br><code>jazz_club_guest_legend_task_2</code><br><code>jazz_club_guest_legend_task_3</code><br><code>jazz_club_guest_legend_task_4</code><br><code>jazz_club_guest_legend_task_5</code>
 
 #### Scenario — Recording Night — <code>jazz_club::jazz_club_recording_night</code>
 
-**Full save:** 23 slots = 17 shared + 6 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 27 slots = 17 shared + 10 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.doorway_1</code> | Marked clean exit | <code>doorway</code> | <code>36, 76</code> | <code>left_exit</code> | Marked clean exit | Exact scenario |
-| <code>scenario.floor_fixture_1</code> | Crossed-out take reel | <code>floor_fixture</code> | <code>157, 414</code> | <code>floor</code> | Crossed-out take reel | Exact scenario |
-| <code>scenario.ground_marker_1</code> | Tape Rolling | <code>ground_marker</code> | <code>752, 414</code> | <code>floor</code> | Tape Rolling | Exact scenario |
-| <code>scenario.seated_person_1</code> | Scenario alternatives: Audience / Rear-row audience member | <code>seated_person</code> | <code>244, 322</code> | <code>audience_mid</code> | Audience<br>Rear-row audience member | Exact scenario |
-| <code>scenario.standing_person_1</code> | Sound engineer | <code>standing_person</code> | <code>616, 326</code> | <code>floor</code> | Sound engineer | Exact scenario |
-| <code>scenario.surface_item_1</code> | Scenario alternatives: Labeled take case / Recording desk | <code>surface_item</code> | <code>112, 150</code> | <code>band_service_rail</code> | Labeled take case<br>Recording desk | Exact scenario |
+| <code>scenario.local_doorway_1</code> | Marked clean exit | <code>doorway</code> | <code>36, 76</code> | <code>left_exit</code> | Marked clean exit | Exact scenario |
+| <code>scenario.local_floor_fixture_1</code> | Microphone tree | <code>floor_fixture</code> | <code>62, 414</code> | <code>floor</code> | Microphone tree | Exact scenario |
+| <code>scenario.local_floor_fixture_2</code> | Scenario alternatives: Crossed-out take reel / Microphone tree | <code>floor_fixture</code> | <code>157, 414</code> | <code>floor</code> | Crossed-out take reel<br>Microphone tree | Exact scenario |
+| <code>scenario.local_ground_marker_1</code> | Scenario alternatives: Halted take reel / Taped silence zone | <code>ground_marker</code> | <code>752, 414</code> | <code>floor</code> | Halted take reel<br>Taped silence zone | Exact scenario |
+| <code>scenario.local_seated_person_1</code> | Scenario alternatives: Audience / Rear-row audience member | <code>seated_person</code> | <code>244, 322</code> | <code>audience_mid</code> | Audience<br>Rear-row audience member | Exact scenario |
+| <code>scenario.local_seated_person_2</code> | Audience | <code>seated_person</code> | <code>242, 422</code> | <code>manual_placement_required</code> | Audience | Provisional geometry |
+| <code>scenario.local_standing_person_1</code> | Sound engineer | <code>standing_person</code> | <code>616, 326</code> | <code>floor</code> | Sound engineer | Exact scenario |
+| <code>scenario.local_standing_person_2</code> | Sound engineer | <code>standing_person</code> | <code>490, 326</code> | <code>floor</code> | Sound engineer | Exact scenario |
+| <code>scenario.local_surface_item_1</code> | Recording desk | <code>surface_item</code> | <code>112, 150</code> | <code>band_service_rail</code> | Recording desk | Exact scenario |
+| <code>scenario.local_surface_item_2</code> | Labeled take case | <code>surface_item</code> | <code>108, 64</code> | <code>manual_placement_required</code> | Labeled take case | Provisional geometry |
 
-**Action-only IDs (6; no placement marker):** <code>jazz_club_recording_night_aftermath_recording_interrupted_prop</code><br><code>jazz_club_recording_night_microphone_tree</code><br><code>jazz_club_recording_night_silence_tape</code><br><code>jazz_club_recording_night_task_0</code><br><code>jazz_club_recording_night_task_1</code><br><code>jazz_club_recording_night_task_2</code>
+**Action-only IDs (3; no placement marker):** <code>jazz_club_recording_night_task_0</code><br><code>jazz_club_recording_night_task_1</code><br><code>jazz_club_recording_night_task_2</code>
 
 #### Scenario — Rent Party — <code>jazz_club::jazz_club_rent_party</code>
 
-**Full save:** 25 slots = 17 shared + 8 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 29 slots = 17 shared + 12 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.doorway_1</code> | Exit | <code>doorway</code> | <code>36, 76</code> | <code>left_exit</code> | Exit | Exact scenario |
-| <code>scenario.floor_fixture_1</code> | Trio Rent Payoff | <code>floor_fixture</code> | <code>157, 414</code> | <code>floor</code> | Trio Rent Payoff | Exact scenario |
-| <code>scenario.floor_fixture_2</code> | The Rent Hat | <code>floor_fixture</code> | <code>62, 414</code> | <code>floor</code> | The Rent Hat | Exact scenario |
-| <code>scenario.floor_fixture_4</code> | Counted donation jars | <code>floor_fixture</code> | <code>254, 422</code> | <code>manual_placement_required</code> | Counted donation jars | Provisional geometry |
-| <code>scenario.standing_person_1</code> | Scenario alternatives: Club regular / Host / Terms-reading regular | <code>standing_person</code> | <code>616, 326</code> | <code>floor</code> | Club regular<br>Host<br>Terms-reading regular | Exact scenario |
-| <code>scenario.standing_person_2</code> | Creditor | <code>standing_person</code> | <code>490, 326</code> | <code>floor</code> | Creditor | Exact scenario |
-| <code>scenario.surface_item_1</code> | Donation station | <code>surface_item</code> | <code>112, 150</code> | <code>band_service_rail</code> | Donation station | Exact scenario |
-| <code>scenario.wall_item_1</code> | Takeover notice | <code>wall_mounted</code> | <code>480, 32</code> | <code>wall</code> | Takeover notice | Exact scenario |
+| <code>scenario.local_doorway_1</code> | Exit | <code>doorway</code> | <code>36, 76</code> | <code>left_exit</code> | Exit | Exact scenario |
+| <code>scenario.local_floor_fixture_1</code> | Record crate | <code>floor_fixture</code> | <code>62, 414</code> | <code>floor</code> | Record crate | Exact scenario |
+| <code>scenario.local_floor_fixture_2</code> | Counted donation jars | <code>floor_fixture</code> | <code>157, 414</code> | <code>floor</code> | Counted donation jars | Exact scenario |
+| <code>scenario.local_ground_marker_1</code> | Sealed collection jars | <code>ground_marker</code> | <code>752, 414</code> | <code>floor</code> | Sealed collection jars | Exact scenario |
+| <code>scenario.local_standing_person_1</code> | Creditor | <code>standing_person</code> | <code>490, 326</code> | <code>floor</code> | Creditor | Exact scenario |
+| <code>scenario.local_standing_person_2</code> | Host | <code>standing_person</code> | <code>244, 422</code> | <code>manual_placement_required</code> | Host | Provisional geometry |
+| <code>scenario.local_standing_person_3</code> | Creditor | <code>standing_person</code> | <code>408, 422</code> | <code>manual_placement_required</code> | Creditor | Provisional geometry |
+| <code>scenario.local_standing_person_4</code> | Scenario alternatives: Club regular / Terms-reading regular | <code>standing_person</code> | <code>616, 326</code> | <code>floor</code> | Club regular<br>Terms-reading regular | Exact scenario |
+| <code>scenario.local_surface_item_1</code> | Donation station | <code>surface_item</code> | <code>112, 150</code> | <code>band_service_rail</code> | Donation station | Exact scenario |
+| <code>scenario.local_surface_item_2</code> | Donation station | <code>surface_item</code> | <code>108, 64</code> | <code>manual_placement_required</code> | Donation station | Provisional geometry |
+| <code>scenario.local_wall_item_1</code> | Rent tally | <code>wall_mounted</code> | <code>480, 32</code> | <code>wall</code> | Rent tally | Exact scenario |
+| <code>scenario.local_wall_item_2</code> | Takeover notice | <code>wall_mounted</code> | <code>296, 64</code> | <code>manual_placement_required</code> | Takeover notice | Provisional geometry |
 
-**Action-only IDs (7; no placement marker):** <code>jazz_club_rent_party_aftermath_party_interrupted_prop</code><br><code>jazz_club_rent_party_record_crate</code><br><code>jazz_club_rent_party_rent_marker</code><br><code>jazz_club_rent_party_task_0</code><br><code>jazz_club_rent_party_task_1</code><br><code>jazz_club_rent_party_task_2</code><br><code>jazz_club_rent_party_task_3</code>
+**Action-only IDs (4; no placement marker):** <code>jazz_club_rent_party_task_0</code><br><code>jazz_club_rent_party_task_1</code><br><code>jazz_club_rent_party_task_2</code><br><code>jazz_club_rent_party_task_3</code>
 
 #### Scenario — Union Trouble — <code>jazz_club::jazz_club_union_trouble</code>
 
-**Full save:** 23 slots = 17 shared + 6 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 29 slots = 17 shared + 12 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.doorway_1</code> | Exit | <code>doorway</code> | <code>36, 76</code> | <code>left_exit</code> | Exit | Exact scenario |
-| <code>scenario.floor_fixture_1</code> | The Meeting Line | <code>floor_fixture</code> | <code>62, 414</code> | <code>floor</code> | The Meeting Line | Exact scenario |
-| <code>scenario.floor_fixture_2</code> | Bare stage | <code>floor_fixture</code> | <code>157, 414</code> | <code>floor</code> | Bare stage | Exact scenario |
-| <code>scenario.standing_person_1</code> | Scenario alternatives: Delegate / Floor manager / Neutral delegate | <code>standing_person</code> | <code>616, 326</code> | <code>floor</code> | Delegate<br>Floor manager<br>Neutral delegate | Exact scenario |
-| <code>scenario.standing_person_2</code> | Manager | <code>standing_person</code> | <code>490, 326</code> | <code>floor</code> | Manager | Exact scenario |
-| <code>scenario.surface_item_1</code> | Shared stage tools | <code>surface_item</code> | <code>112, 150</code> | <code>band_service_rail</code> | Shared stage tools | Exact scenario |
+| <code>scenario.local_doorway_1</code> | Exit | <code>doorway</code> | <code>36, 76</code> | <code>left_exit</code> | Exit | Exact scenario |
+| <code>scenario.local_floor_fixture_1</code> | Entry rope | <code>floor_fixture</code> | <code>54, 266</code> | <code>manual_placement_required</code> | Entry rope | Provisional geometry |
+| <code>scenario.local_floor_fixture_2</code> | Picket line | <code>floor_fixture</code> | <code>830, 266</code> | <code>manual_placement_required</code> | Picket line | Provisional geometry |
+| <code>scenario.local_floor_fixture_3</code> | Picket line | <code>floor_fixture</code> | <code>550, 242</code> | <code>manual_placement_required</code> | Picket line | Provisional geometry |
+| <code>scenario.local_floor_fixture_4</code> | Scenario alternatives: Bare stage / Set-aside picket signs | <code>floor_fixture</code> | <code>838, 422</code> | <code>manual_placement_required</code> | Bare stage<br>Set-aside picket signs | Provisional geometry |
+| <code>scenario.local_ground_marker_1</code> | Barred club entrances | <code>ground_marker</code> | <code>752, 414</code> | <code>floor</code> | Barred club entrances | Exact scenario |
+| <code>scenario.local_standing_person_1</code> | Manager | <code>standing_person</code> | <code>490, 326</code> | <code>floor</code> | Manager | Exact scenario |
+| <code>scenario.local_standing_person_2</code> | Delegate | <code>standing_person</code> | <code>616, 326</code> | <code>floor</code> | Delegate | Exact scenario |
+| <code>scenario.local_standing_person_3</code> | Manager | <code>standing_person</code> | <code>412, 422</code> | <code>manual_placement_required</code> | Manager | Provisional geometry |
+| <code>scenario.local_standing_person_4</code> | Neutral delegate | <code>standing_person</code> | <code>240, 358</code> | <code>manual_placement_required</code> | Neutral delegate | Provisional geometry |
+| <code>scenario.local_standing_person_5</code> | Floor manager | <code>standing_person</code> | <code>40, 350</code> | <code>manual_placement_required</code> | Floor manager | Provisional geometry |
+| <code>scenario.local_surface_item_1</code> | Shared stage tools | <code>surface_item</code> | <code>112, 150</code> | <code>band_service_rail</code> | Shared stage tools | Exact scenario |
 
-**Action-only IDs (8; no placement marker):** <code>jazz_club_union_trouble_aftermath_club_closed_prop</code><br><code>jazz_club_union_trouble_aftermath_union_entry_prop</code><br><code>jazz_club_union_trouble_management_rope</code><br><code>jazz_club_union_trouble_picket_line</code><br><code>jazz_club_union_trouble_task_0</code><br><code>jazz_club_union_trouble_task_1</code><br><code>jazz_club_union_trouble_task_2</code><br><code>jazz_club_union_trouble_task_3</code>
+**Action-only IDs (4; no placement marker):** <code>jazz_club_union_trouble_task_0</code><br><code>jazz_club_union_trouble_task_1</code><br><code>jazz_club_union_trouble_task_2</code><br><code>jazz_club_union_trouble_task_3</code>
 
 ### Kitty Cat Lounge — <code>kitty_cat_lounge</code>
 
@@ -1011,346 +1164,410 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 | Family | Slot ID | Physical role | Footprint | Position | Support | Occupant/claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | <code>fixed</code> | <code>fixed.staff_bar</code> | Iris | <code>behind_counter_person</code> | <code>720, 194</code> | <code>champagne_bar</code> | Iris | Required |
-| <code>fixed</code> | <code>fixed.staff_merchant</code> | Counter staff | <code>behind_counter_person</code> | <code>816, 230</code> | <code>champagne_bar</code> | Merchant | Mapped capacity |
-| <code>fixed</code> | <code>fixed.machine_game_1</code> | Game fixture | <code>floor_fixture</code> | <code>742, 358</code> | <code>floor</code> | Empty capacity | Optional empty capacity |
+| <code>fixed</code> | <code>fixed.staff_merchant</code> | Merchant | <code>behind_counter_person</code> | <code>816, 230</code> | <code>champagne_bar</code> | Merchant | Mapped capacity |
+| <code>fixed</code> | <code>fixed.machine_game_1</code> | Random game fixture | <code>floor_fixture</code> | <code>742, 358</code> | <code>floor</code> | Empty capacity | Optional empty capacity |
 | <code>fixed</code> | <code>fixed.crew_group</code> | The Crew | <code>group</code> | <code>532, 358</code> | <code>floor</code> | The Crew | Mapped capacity |
-| <code>fixed</code> | <code>fixed.table_game_2</code> | Game fixture | <code>surface_item</code> | <code>620, 174</code> | <code>champagne_bar</code> | Empty capacity | Optional empty capacity |
-| <code>fixed</code> | <code>fixed.event_grand_casino_invite</code> | Counter or table item | <code>surface_item</code> | <code>146, 196</code> | <code>stage</code> | Grand Casino Invite | Mapped capacity |
-| <code>fixed</code> | <code>fixed.table_game_1</code> | Game fixture | <code>surface_item</code> | <code>312, 122</code> | <code>round3_stage_shelf</code> | Empty capacity | Optional empty capacity |
+| <code>fixed</code> | <code>fixed.table_game_2</code> | Random game fixture | <code>surface_item</code> | <code>620, 174</code> | <code>champagne_bar</code> | Empty capacity | Optional empty capacity |
+| <code>fixed</code> | <code>fixed.event_grand_casino_invite</code> | Grand Casino invitation | <code>surface_item</code> | <code>146, 196</code> | <code>stage</code> | High Roller Invitation | Mapped capacity |
+| <code>fixed</code> | <code>fixed.table_game_1</code> | Random game fixture | <code>surface_item</code> | <code>312, 122</code> | <code>round3_stage_shelf</code> | Empty capacity | Optional empty capacity |
 | <code>fixed</code> | <code>fixed.item_shop_1</code> | Shop item | <code>shop_item</code> | <code>640, 96</code> | <code>champagne_shelf</code> | Empty capacity | Optional empty capacity |
 | <code>fixed</code> | <code>fixed.item_shop_2</code> | Shop item | <code>shop_item</code> | <code>760, 96</code> | <code>champagne_shelf</code> | Empty capacity | Optional empty capacity |
-| <code>fixed</code> | <code>fixed.service_kitty_champagne</code> | Counter or table item | <code>surface_item</code> | <code>620, 242</code> | <code>champagne_bar</code> | Kitty Champagne | Mapped capacity |
-| <code>fixed</code> | <code>fixed.service_house_drink</code> | Counter or table item | <code>surface_item</code> | <code>164, 264</code> | <code>stage</code> | House Drink | Mapped capacity |
+| <code>fixed</code> | <code>fixed.service_kitty_champagne</code> | Champagne service | <code>surface_item</code> | <code>620, 242</code> | <code>champagne_bar</code> | Champagne Tray | Mapped capacity |
+| <code>fixed</code> | <code>fixed.service_house_drink</code> | House drink service | <code>surface_item</code> | <code>164, 264</code> | <code>stage</code> | Buy a Drink | Mapped capacity |
 | <code>fixed</code> | <code>fixed.patron_dot</code> | Dot | <code>seated_person</code> | <code>250, 234</code> | <code>stage_mid</code> | Dot | Required |
 | <code>event</code> | <code>event.floor_fixture_1</code> | Floor prop | <code>floor_fixture</code> | <code>760, 370</code> | <code>floor</code> | Empty capacity | Optional empty capacity |
 | <code>event</code> | <code>event.seated_person_1</code> | Seated person | <code>seated_person</code> | <code>358, 234</code> | <code>stage_right</code> | Rowdy Regular | Mapped capacity |
 | <code>event</code> | <code>event.doorway_1</code> | Doorway / exit | <code>doorway</code> | <code>859, 300</code> | <code>right_exit</code> | Side Door | Mapped capacity |
-| <code>event</code> | <code>event.standing_person_1</code> | Standing person | <code>standing_person</code> | <code>450, 278</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_2</code> | Standing person | <code>standing_person</code> | <code>78, 254</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_3</code> | Standing person | <code>standing_person</code> | <code>78, 172</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_4</code> | Standing person | <code>standing_person</code> | <code>244, 170</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_5</code> | Standing person | <code>standing_person</code> | <code>450, 148</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_1</code> | Standing person | <code>standing_person</code> | <code>450, 278</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_2</code> | Standing person | <code>standing_person</code> | <code>78, 254</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_3</code> | Standing person | <code>standing_person</code> | <code>78, 172</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_4</code> | Standing person | <code>standing_person</code> | <code>244, 170</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_5</code> | Standing person | <code>standing_person</code> | <code>450, 148</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
 | <code>event</code> | <code>event.standing_person_6</code> | Standing person | <code>standing_person</code> | <code>704, 294</code> | <code>floor</code> | Silas | Mapped capacity |
-| <code>scenario</code> | <code>scenario.floor_fixture_3</code> | Delivery package reserve | <code>floor_fixture</code> | <code>302, 358</code> | <code>floor</code> | Kitty Cat Lounge Buyout Request Cart<br>Kitty Cat Lounge Slow Night Closed Section Ropes | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.standing_person_3</code> | Runtime contact reserve | <code>standing_person</code> | <code>108, 88</code> | <code>floor</code> | Kitty Cat Lounge Amateur Night Amateur Judge | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
-| <code>scenario</code> | <code>scenario.wall_item_3</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>220, 60</code> | <code>wall</code> | Runtime reserve (unclaimed) | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.floor_fixture_3</code> | Delivery package reserve | <code>floor_fixture</code> | <code>302, 358</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.standing_person_3</code> | Runtime contact reserve | <code>standing_person</code> | <code>108, 88</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
+| <code>scenario</code> | <code>scenario.wall_item_3</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>220, 60</code> | <code>wall</code> | Variable runtime content | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
 | <code>exit</code> | <code>exit.left_lower</code> | Travel exit | <code>doorway</code> | <code>36, 356</code> | <code>left_exit</code> | Leave | Mapped capacity |
 
 #### Scenario — Amateur Night — <code>kitty_cat_lounge::kitty_cat_lounge_amateur_night</code>
 
-**Full save:** 33 slots = 25 shared + 8 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 36 slots = 25 shared + 11 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.doorway_1</code> | Clear exit | <code>doorway</code> | <code>876, 180</code> | <code>right_exit</code> | Clear exit | Exact scenario |
-| <code>scenario.floor_fixture_1</code> | Dressing costume rack | <code>floor_fixture</code> | <code>174, 358</code> | <code>floor</code> | Dressing costume rack | Exact scenario |
-| <code>scenario.floor_fixture_2</code> | Judges | <code>floor_fixture</code> | <code>426, 358</code> | <code>floor</code> | Judges | Exact scenario |
-| <code>scenario.standing_person_1</code> | Scenario alternatives: Amateur contestant / Final-Lineup Observer / Unregistered Contestant | <code>standing_person</code> | <code>428, 358</code> | <code>floor</code> | Amateur contestant<br>Final-Lineup Observer<br>Unregistered Contestant | Exact scenario |
-| <code>scenario.standing_person_2</code> | Judge | <code>standing_person</code> | <code>636, 354</code> | <code>floor</code> | Judge | Exact scenario |
-| <code>scenario.surface_item_1</code> | Signup station | <code>surface_item</code> | <code>638, 108</code> | <code>champagne_shelf</code> | Signup station | Exact scenario |
-| <code>scenario.wall_item_1</code> | Easy Applause | <code>wall_mounted</code> | <code>184, 48</code> | <code>wall</code> | Easy Applause | Exact scenario |
-| <code>scenario.wall_item_2</code> | Scenario alternatives: Blank Judges Card / Revised Lineup Card | <code>wall_mounted</code> | <code>472, 24</code> | <code>wall</code> | Blank Judges Card<br>Revised Lineup Card | Exact scenario |
+| <code>scenario.local_doorway_1</code> | Clear exit | <code>doorway</code> | <code>876, 180</code> | <code>right_exit</code> | Clear exit | Exact scenario |
+| <code>scenario.local_floor_fixture_1</code> | Dressing costume rack | <code>floor_fixture</code> | <code>174, 358</code> | <code>floor</code> | Dressing costume rack | Exact scenario |
+| <code>scenario.local_floor_fixture_2</code> | Judges' Card Desk | <code>floor_fixture</code> | <code>426, 358</code> | <code>floor</code> | Judges' Card Desk | Exact scenario |
+| <code>scenario.local_ground_marker_1</code> | Stranded Costume Rack | <code>ground_marker</code> | <code>52, 302</code> | <code>floor</code> | Stranded Costume Rack | Exact scenario |
+| <code>scenario.local_standing_person_1</code> | Scenario alternatives: Amateur contestant / Final-Lineup Observer | <code>standing_person</code> | <code>428, 358</code> | <code>floor</code> | Amateur contestant<br>Final-Lineup Observer | Exact scenario |
+| <code>scenario.local_standing_person_2</code> | Scenario alternatives: Judge / Unregistered Contestant | <code>standing_person</code> | <code>636, 354</code> | <code>floor</code> | Judge<br>Unregistered Contestant | Exact scenario |
+| <code>scenario.local_standing_person_3</code> | Judge | <code>standing_person</code> | <code>844, 422</code> | <code>manual_placement_required</code> | Judge | Provisional geometry |
+| <code>scenario.local_surface_item_1</code> | Signup station | <code>surface_item</code> | <code>638, 108</code> | <code>champagne_shelf</code> | Signup station | Exact scenario |
+| <code>scenario.local_surface_item_2</code> | Signup station | <code>surface_item</code> | <code>300, 64</code> | <code>manual_placement_required</code> | Signup station | Provisional geometry |
+| <code>scenario.local_wall_item_1</code> | Revised Lineup Card | <code>wall_mounted</code> | <code>472, 24</code> | <code>wall</code> | Revised Lineup Card | Exact scenario |
+| <code>scenario.local_wall_item_2</code> | Blank Judges Card | <code>wall_mounted</code> | <code>184, 48</code> | <code>wall</code> | Blank Judges Card | Exact scenario |
 
-**Action-only IDs (6; no placement marker):** <code>kitty_cat_lounge_amateur_night_aftermath_show_interrupted_prop</code><br><code>kitty_cat_lounge_amateur_night_task_0</code><br><code>kitty_cat_lounge_amateur_night_task_1</code><br><code>kitty_cat_lounge_amateur_night_task_2</code><br><code>kitty_cat_lounge_amateur_night_task_3</code><br><code>kitty_cat_lounge_amateur_night_task_4</code>
+**Action-only IDs (5; no placement marker):** <code>kitty_cat_lounge_amateur_night_task_0</code><br><code>kitty_cat_lounge_amateur_night_task_1</code><br><code>kitty_cat_lounge_amateur_night_task_2</code><br><code>kitty_cat_lounge_amateur_night_task_3</code><br><code>kitty_cat_lounge_amateur_night_task_4</code>
 
 #### Scenario — Bachelorette Storm — <code>kitty_cat_lounge::kitty_cat_lounge_bachelorette_storm</code>
 
-**Full save:** 30 slots = 25 shared + 5 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 35 slots = 25 shared + 10 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.doorway_1</code> | Clear exit | <code>doorway</code> | <code>876, 180</code> | <code>right_exit</code> | Clear exit | Exact scenario |
-| <code>scenario.floor_fixture_1</code> | Separated Party Seating | <code>floor_fixture</code> | <code>174, 358</code> | <code>floor</code> | Separated Party Seating | Exact scenario |
-| <code>scenario.seated_person_1</code> | Bachelorette party leader | <code>seated_person</code> | <code>548, 234</code> | <code>conversation_booth</code> | Bachelorette party leader | Exact scenario |
-| <code>scenario.standing_person_1</code> | Scenario alternatives: Floor Host / Floor host / Party Leader | <code>standing_person</code> | <code>428, 358</code> | <code>floor</code> | Floor Host<br>Floor host<br>Party Leader | Exact scenario |
-| <code>scenario.wall_item_1</code> | The Saved Table | <code>wall_mounted</code> | <code>184, 48</code> | <code>wall</code> | The Saved Table | Exact scenario |
+| <code>scenario.local_doorway_1</code> | Clear exit | <code>doorway</code> | <code>876, 180</code> | <code>right_exit</code> | Clear exit | Exact scenario |
+| <code>scenario.local_floor_fixture_1</code> | Reserved Party Table | <code>floor_fixture</code> | <code>426, 358</code> | <code>floor</code> | Reserved Party Table | Exact scenario |
+| <code>scenario.local_floor_fixture_2</code> | Scenario alternatives: Claimed Stage Prop / Prop trunk | <code>floor_fixture</code> | <code>174, 358</code> | <code>floor</code> | Claimed Stage Prop<br>Prop trunk | Exact scenario |
+| <code>scenario.local_floor_fixture_3</code> | Separated Party Seating | <code>floor_fixture</code> | <code>118, 422</code> | <code>manual_placement_required</code> | Separated Party Seating | Provisional geometry |
+| <code>scenario.local_ground_marker_1</code> | Bar route rope | <code>ground_marker</code> | <code>204, 422</code> | <code>manual_placement_required</code> | Bar route rope | Provisional geometry |
+| <code>scenario.local_ground_marker_2</code> | Guest marker | <code>ground_marker</code> | <code>52, 302</code> | <code>floor</code> | Guest marker | Exact scenario |
+| <code>scenario.local_ground_marker_3</code> | Off-Course Prop Trunk | <code>ground_marker</code> | <code>276, 422</code> | <code>manual_placement_required</code> | Off-Course Prop Trunk | Provisional geometry |
+| <code>scenario.local_seated_person_1</code> | Bachelorette party leader | <code>seated_person</code> | <code>548, 234</code> | <code>conversation_booth</code> | Bachelorette party leader | Exact scenario |
+| <code>scenario.local_standing_person_1</code> | Floor Host | <code>standing_person</code> | <code>428, 358</code> | <code>floor</code> | Floor Host | Exact scenario |
+| <code>scenario.local_standing_person_2</code> | Party Leader | <code>standing_person</code> | <code>636, 354</code> | <code>floor</code> | Party Leader | Exact scenario |
 
-**Action-only IDs (11; no placement marker):** <code>kitty_cat_lounge_bachelorette_storm_aftermath_stage_commandeered_prop</code><br><code>kitty_cat_lounge_bachelorette_storm_aftermath_storm_interrupted_prop</code><br><code>kitty_cat_lounge_bachelorette_storm_bar_route_rope</code><br><code>kitty_cat_lounge_bachelorette_storm_missing_guest_marker</code><br><code>kitty_cat_lounge_bachelorette_storm_party_prop_trunk</code><br><code>kitty_cat_lounge_bachelorette_storm_task_0</code><br><code>kitty_cat_lounge_bachelorette_storm_task_1</code><br><code>kitty_cat_lounge_bachelorette_storm_task_2</code><br><code>kitty_cat_lounge_bachelorette_storm_task_3</code><br><code>kitty_cat_lounge_bachelorette_storm_task_4</code><br><code>kitty_cat_lounge_bachelorette_storm_task_5</code>
+**Action-only IDs (6; no placement marker):** <code>kitty_cat_lounge_bachelorette_storm_task_0</code><br><code>kitty_cat_lounge_bachelorette_storm_task_1</code><br><code>kitty_cat_lounge_bachelorette_storm_task_2</code><br><code>kitty_cat_lounge_bachelorette_storm_task_3</code><br><code>kitty_cat_lounge_bachelorette_storm_task_4</code><br><code>kitty_cat_lounge_bachelorette_storm_task_5</code>
 
 #### Scenario — The Buyout — <code>kitty_cat_lounge::kitty_cat_lounge_buyout</code>
 
-**Full save:** 31 slots = 25 shared + 6 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 36 slots = 25 shared + 11 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.doorway_1</code> | The Private Rope | <code>doorway</code> | <code>876, 180</code> | <code>right_exit</code> | The Private Rope | Exact scenario |
-| <code>scenario.doorway_2</code> | Clear exit | <code>doorway</code> | <code>859, 84</code> | <code>right_exit</code> | Clear exit | Exact scenario |
-| <code>scenario.floor_fixture_1</code> | Buyout guest desk | <code>floor_fixture</code> | <code>174, 358</code> | <code>floor</code> | Buyout guest desk | Exact scenario |
-| <code>scenario.standing_person_1</code> | Velvet Recruitment | <code>standing_person</code> | <code>844, 422</code> | <code>manual_placement_required</code> | Velvet Recruitment | Provisional geometry |
-| <code>scenario.standing_person_2</code> | Scenario alternatives: Buyout host / Public-Floor Steward / Refused Guest | <code>standing_person</code> | <code>428, 358</code> | <code>floor</code> | Buyout host<br>Public-Floor Steward<br>Refused Guest | Exact scenario |
-| <code>scenario.standing_person_4</code> | Public floor steward | <code>standing_person</code> | <code>636, 354</code> | <code>floor</code> | Public floor steward | Exact scenario |
+| <code>scenario.local_doorway_1</code> | Clear exit | <code>doorway</code> | <code>876, 180</code> | <code>right_exit</code> | Clear exit | Exact scenario |
+| <code>scenario.local_doorway_2</code> | Private buyout ropes | <code>doorway</code> | <code>859, 84</code> | <code>right_exit</code> | Private buyout ropes | Exact scenario |
+| <code>scenario.local_floor_fixture_1</code> | Buyout guest desk | <code>floor_fixture</code> | <code>174, 358</code> | <code>floor</code> | Buyout guest desk | Exact scenario |
+| <code>scenario.local_floor_fixture_2</code> | Private request cart | <code>floor_fixture</code> | <code>426, 358</code> | <code>floor</code> | Private request cart | Exact scenario |
+| <code>scenario.local_floor_fixture_3</code> | Private-Party Rope Boundary | <code>floor_fixture</code> | <code>118, 422</code> | <code>manual_placement_required</code> | Private-Party Rope Boundary | Provisional geometry |
+| <code>scenario.local_ground_marker_1</code> | Short Buyout Rope | <code>ground_marker</code> | <code>52, 302</code> | <code>floor</code> | Short Buyout Rope | Exact scenario |
+| <code>scenario.local_standing_person_1</code> | Velvet | <code>standing_person</code> | <code>844, 422</code> | <code>manual_placement_required</code> | Velvet | Provisional geometry |
+| <code>scenario.local_standing_person_2</code> | Scenario alternatives: Buyout host / Public-Floor Steward | <code>standing_person</code> | <code>428, 358</code> | <code>floor</code> | Buyout host<br>Public-Floor Steward | Exact scenario |
+| <code>scenario.local_standing_person_3</code> | Public floor steward | <code>standing_person</code> | <code>636, 354</code> | <code>floor</code> | Public floor steward | Exact scenario |
+| <code>scenario.local_standing_person_4</code> | Refused Guest | <code>standing_person</code> | <code>520, 278</code> | <code>manual_placement_required</code> | Refused Guest | Provisional geometry |
+| <code>scenario.local_surface_item_1</code> | Guest Desk Divider | <code>surface_item</code> | <code>638, 108</code> | <code>champagne_shelf</code> | Guest Desk Divider | Exact scenario |
 
-**Action-only IDs (10; no placement marker):** <code>kitty_cat_lounge_buyout_aftermath_buyout_interrupted_prop</code><br><code>kitty_cat_lounge_buyout_aftermath_full_buyout_claimed_prop</code><br><code>kitty_cat_lounge_buyout_aftermath_split_floor_running_prop</code><br><code>kitty_cat_lounge_buyout_buyout_ropes</code><br><code>kitty_cat_lounge_buyout_request_cart</code><br><code>kitty_cat_lounge_buyout_task_0</code><br><code>kitty_cat_lounge_buyout_task_1</code><br><code>kitty_cat_lounge_buyout_task_2</code><br><code>kitty_cat_lounge_buyout_task_3</code><br><code>kitty_cat_lounge_buyout_task_4</code>
+**Action-only IDs (5; no placement marker):** <code>kitty_cat_lounge_buyout_task_0</code><br><code>kitty_cat_lounge_buyout_task_1</code><br><code>kitty_cat_lounge_buyout_task_2</code><br><code>kitty_cat_lounge_buyout_task_3</code><br><code>kitty_cat_lounge_buyout_task_4</code>
 
 #### Scenario — Slow Night — <code>kitty_cat_lounge::kitty_cat_lounge_slow_night</code>
 
-**Full save:** 31 slots = 25 shared + 6 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 37 slots = 25 shared + 12 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.behind_counter_person_1</code> | Nothing to Pour | <code>behind_counter_person</code> | <code>844, 422</code> | <code>manual_placement_required</code> | Nothing to Pour | Provisional geometry |
-| <code>scenario.doorway_1</code> | Clear exit | <code>doorway</code> | <code>876, 180</code> | <code>right_exit</code> | Clear exit | Exact scenario |
-| <code>scenario.floor_fixture_1</code> | Mini-stage | <code>floor_fixture</code> | <code>174, 358</code> | <code>floor</code> | Mini-stage | Exact scenario |
-| <code>scenario.seated_person_1</code> | Regular | <code>seated_person</code> | <code>548, 234</code> | <code>conversation_booth</code> | Regular | Exact scenario |
-| <code>scenario.standing_person_1</code> | Velvet Recruitment | <code>standing_person</code> | <code>636, 354</code> | <code>floor</code> | Velvet Recruitment | Exact scenario |
-| <code>scenario.standing_person_2</code> | Scenario alternatives: Host / Waiting Staff Member / Zone Regular | <code>standing_person</code> | <code>428, 358</code> | <code>floor</code> | Host<br>Waiting Staff Member<br>Zone Regular | Exact scenario |
+| <code>scenario.local_doorway_1</code> | Clear exit | <code>doorway</code> | <code>876, 180</code> | <code>right_exit</code> | Clear exit | Exact scenario |
+| <code>scenario.local_floor_fixture_1</code> | Section ropes | <code>floor_fixture</code> | <code>534, 170</code> | <code>manual_placement_required</code> | Section ropes | Provisional geometry |
+| <code>scenario.local_floor_fixture_2</code> | Section ropes | <code>floor_fixture</code> | <code>846, 138</code> | <code>manual_placement_required</code> | Section ropes | Provisional geometry |
+| <code>scenario.local_floor_fixture_3</code> | Scenario alternatives: Empty-Section Power Circuit / Mini-stage | <code>floor_fixture</code> | <code>174, 358</code> | <code>floor</code> | Empty-Section Power Circuit<br>Mini-stage | Exact scenario |
+| <code>scenario.local_ground_marker_1</code> | Loose Rope and Open Panel | <code>ground_marker</code> | <code>52, 302</code> | <code>floor</code> | Loose Rope and Open Panel | Exact scenario |
+| <code>scenario.local_seated_person_1</code> | Regular | <code>seated_person</code> | <code>548, 234</code> | <code>conversation_booth</code> | Regular | Exact scenario |
+| <code>scenario.local_standing_person_1</code> | Velvet | <code>standing_person</code> | <code>428, 358</code> | <code>floor</code> | Velvet | Exact scenario |
+| <code>scenario.local_standing_person_2</code> | Host | <code>standing_person</code> | <code>636, 354</code> | <code>floor</code> | Host | Exact scenario |
+| <code>scenario.local_standing_person_3</code> | Zone Regular | <code>standing_person</code> | <code>844, 422</code> | <code>manual_placement_required</code> | Zone Regular | Provisional geometry |
+| <code>scenario.local_standing_person_4</code> | Waiting Staff Member | <code>standing_person</code> | <code>384, 166</code> | <code>manual_placement_required</code> | Waiting Staff Member | Provisional geometry |
+| <code>scenario.local_surface_item_1</code> | Powered Zone Station | <code>surface_item</code> | <code>638, 108</code> | <code>champagne_shelf</code> | Powered Zone Station | Exact scenario |
+| <code>scenario.local_wall_item_1</code> | Maintenance Panel | <code>wall_mounted</code> | <code>184, 48</code> | <code>wall</code> | Maintenance Panel | Exact scenario |
 
-**Action-only IDs (9; no placement marker):** <code>kitty_cat_lounge_slow_night_aftermath_night_interrupted_prop</code><br><code>kitty_cat_lounge_slow_night_aftermath_selected_zone_active_prop</code><br><code>kitty_cat_lounge_slow_night_aftermath_wrong_zone_closed_prop</code><br><code>kitty_cat_lounge_slow_night_closed_section_ropes</code><br><code>kitty_cat_lounge_slow_night_maintenance_panel</code><br><code>kitty_cat_lounge_slow_night_task_0</code><br><code>kitty_cat_lounge_slow_night_task_1</code><br><code>kitty_cat_lounge_slow_night_task_2</code><br><code>kitty_cat_lounge_slow_night_task_3</code>
+**Action-only IDs (4; no placement marker):** <code>kitty_cat_lounge_slow_night_task_0</code><br><code>kitty_cat_lounge_slow_night_task_1</code><br><code>kitty_cat_lounge_slow_night_task_2</code><br><code>kitty_cat_lounge_slow_night_task_3</code>
 
 ### Delta Queen — <code>delta_queen</code>
 
 #### Base / No Scenario — <code>delta_queen::__base</code>
 
-**Save snapshot:** 29 slots = 12 fixed + 13 event + 3 shared scenario + 1 exit. Exact scenarios on this map: 5.
+**Save snapshot:** 27 slots = 12 fixed + 11 event + 3 shared scenario + 1 exit. Exact scenarios on this map: 5.
 
 | Family | Slot ID | Physical role | Footprint | Position | Support | Occupant/claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | <code>fixed</code> | <code>fixed.crew_group</code> | The Crew | <code>seated_person</code> | <code>466, 270</code> | <code>right_table</code> | The Crew | Mapped capacity |
 | <code>fixed</code> | <code>fixed.staff_right_table</code> | Sable | <code>behind_counter_person</code> | <code>390, 174</code> | <code>right_table</code> | Sable | Required |
-| <code>fixed</code> | <code>fixed.staff_merchant</code> | Counter staff | <code>behind_counter_person</code> | <code>100, 250</code> | <code>left_table</code> | Merchant | Mapped capacity |
-| <code>fixed</code> | <code>fixed.game_blackjack</code> | Game fixture | <code>floor_fixture</code> | <code>156, 346</code> | <code>floor</code> | Blackjack | Mapped capacity |
-| <code>fixed</code> | <code>fixed.game_video_poker</code> | Game fixture | <code>floor_fixture</code> | <code>392, 346</code> | <code>floor</code> | Video Poker | Mapped capacity |
+| <code>fixed</code> | <code>fixed.staff_merchant</code> | Merchant | <code>behind_counter_person</code> | <code>100, 250</code> | <code>left_table</code> | Merchant | Mapped capacity |
+| <code>fixed</code> | <code>fixed.game_blackjack</code> | Blackjack table | <code>floor_fixture</code> | <code>156, 346</code> | <code>floor</code> | Blackjack | Mapped capacity |
+| <code>fixed</code> | <code>fixed.game_video_poker</code> | Video poker machine | <code>floor_fixture</code> | <code>392, 346</code> | <code>floor</code> | Video Poker | Mapped capacity |
 | <code>fixed</code> | <code>fixed.staff_ox</code> | Ox | <code>standing_person</code> | <code>496, 358</code> | <code>floor</code> | Ox | Required |
-| <code>fixed</code> | <code>fixed.service_deck_walk</code> | Riverboat deck walk | <code>ground_marker</code> | <code>392, 414</code> | <code>floor</code> | Riverboat Deck Walk | Mapped capacity |
-| <code>fixed</code> | <code>fixed.game_roulette</code> | Game fixture | <code>surface_item</code> | <code>286, 150</code> | <code>scoreboard_ledge</code> | Roulette | Mapped capacity |
-| <code>fixed</code> | <code>fixed.event_grand_casino_invite</code> | Wall item | <code>wall_mounted</code> | <code>52, 24</code> | <code>wall</code> | Grand Casino Invite | Mapped capacity |
+| <code>fixed</code> | <code>fixed.service_deck_walk</code> | Riverboat deck walk | <code>ground_marker</code> | <code>392, 414</code> | <code>floor</code> | Walk the Deck | Mapped capacity |
+| <code>fixed</code> | <code>fixed.game_roulette</code> | Roulette table | <code>surface_item</code> | <code>286, 150</code> | <code>scoreboard_ledge</code> | Roulette | Mapped capacity |
+| <code>fixed</code> | <code>fixed.event_grand_casino_invite</code> | Grand Casino invitation | <code>wall_mounted</code> | <code>52, 24</code> | <code>wall</code> | High Roller Invitation | Mapped capacity |
 | <code>fixed</code> | <code>fixed.item_shop_1</code> | Shop item | <code>shop_item</code> | <code>662, 132</code> | <code>slot_console</code> | Empty capacity | Optional empty capacity |
 | <code>fixed</code> | <code>fixed.item_shop_2</code> | Shop item | <code>shop_item</code> | <code>774, 132</code> | <code>slot_console</code> | Empty capacity | Optional empty capacity |
-| <code>fixed</code> | <code>fixed.service_house_drink</code> | Counter or table item | <code>surface_item</code> | <code>138, 430</code> | <code>floor</code> | House Drink | Mapped capacity |
-| <code>event</code> | <code>event.seated_person_1</code> | Seated person | <code>seated_person</code> | <code>184, 270</code> | <code>left_table</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>fixed</code> | <code>fixed.service_house_drink</code> | House drink service | <code>surface_item</code> | <code>138, 430</code> | <code>floor</code> | Buy a Drink | Mapped capacity |
+| <code>event</code> | <code>event.seated_person_1</code> | Seated person | <code>seated_person</code> | <code>184, 270</code> | <code>left_table</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
 | <code>event</code> | <code>event.doorway_1</code> | Doorway / exit | <code>doorway</code> | <code>32, 238</code> | <code>gangway_left</code> | Side Door | Mapped capacity |
-| <code>event</code> | <code>event.behind_counter_person_1</code> | Counter staff | <code>behind_counter_person</code> | <code>408, 186</code> | <code>right_table</code> | Town Rumor Staff | Mapped capacity |
+| <code>event</code> | <code>event.behind_counter_person_1</code> | Counter staff | <code>behind_counter_person</code> | <code>408, 186</code> | <code>right_table</code> | Word from Across Town | Mapped capacity |
 | <code>event</code> | <code>event.floor_fixture_1</code> | Floor prop | <code>floor_fixture</code> | <code>174, 358</code> | <code>floor</code> | Empty capacity | Optional empty capacity |
 | <code>event</code> | <code>event.floor_fixture_2</code> | Floor prop | <code>floor_fixture</code> | <code>410, 358</code> | <code>floor</code> | Empty capacity | Optional empty capacity |
-| <code>event</code> | <code>event.wall_item_1</code> | Wall item | <code>wall_mounted</code> | <code>618, 298</code> | <code>round3_calendar_mount</code> | Chain06 Cass First Contact | Mapped capacity |
-| <code>event</code> | <code>event.surface_item_1</code> | Counter or table item | <code>surface_item</code> | <code>304, 162</code> | <code>scoreboard_ledge</code> | Chain06 Dave Same Bus | Mapped capacity |
-| <code>event</code> | <code>event.standing_person_1</code> | Standing person | <code>standing_person</code> | <code>400, 282</code> | <code>floor</code> | Rowdy Regular | Mapped capacity |
-| <code>event</code> | <code>event.standing_person_2</code> | Standing person | <code>standing_person</code> | <code>686, 278</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_3</code> | Standing person | <code>standing_person</code> | <code>750, 278</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_4</code> | Standing person | <code>standing_person</code> | <code>532, 258</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_5</code> | Standing person | <code>standing_person</code> | <code>322, 246</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_6</code> | Standing person | <code>standing_person</code> | <code>258, 246</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
-| <code>scenario</code> | <code>scenario.floor_fixture_3</code> | Delivery package reserve | <code>floor_fixture</code> | <code>704, 414</code> | <code>floor</code> | Delta Queen Wedding Charter Ceremony Rope | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.wall_item_4</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>426, 24</code> | <code>wall</code> | Delta Queen Captains Invitational Task 0<br>Delta Queen Captains Invitational Task 1<br>Delta Queen Captains Invitational Task 2<br>Delta Queen Captains Invitational Task 4<br>Delta Queen Captains Invitational Work 3 Choice 0<br>Delta Queen Engine Trouble Pressure Gauge<br>Delta Queen Fog Delay Fog Signal<br>Delta Queen Fog Delay Work 1 Choice 2<br>Delta Queen Wedding Charter Work 1 Choice 1<br>Delta Queen Whale Aboard Task 0<br>Delta Queen Whale Aboard Task 1<br>Delta Queen Whale Aboard Task 3 | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.standing_person_3</code> | Runtime contact reserve | <code>standing_person</code> | <code>784, 84</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
+| <code>event</code> | <code>event.standing_person_1</code> | Standing person | <code>standing_person</code> | <code>400, 282</code> | <code>floor</code> | Cass Venn | Mapped capacity |
+| <code>event</code> | <code>event.standing_person_2</code> | Standing person | <code>standing_person</code> | <code>686, 278</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_3</code> | Standing person | <code>standing_person</code> | <code>750, 278</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_4</code> | Standing person | <code>standing_person</code> | <code>532, 258</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_5</code> | Standing person | <code>standing_person</code> | <code>322, 246</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_6</code> | Standing person | <code>standing_person</code> | <code>258, 246</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>scenario</code> | <code>scenario.floor_fixture_3</code> | Delivery package reserve | <code>floor_fixture</code> | <code>704, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.wall_item_4</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>426, 24</code> | <code>wall</code> | Variable runtime content | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.standing_person_3</code> | Runtime contact reserve | <code>standing_person</code> | <code>784, 84</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
 | <code>exit</code> | <code>exit.door_right_middle</code> | Travel exit | <code>doorway</code> | <code>864, 210</code> | <code>gangway_right</code> | Leave | Mapped capacity |
 
 #### Scenario — Captain's Invitational — <code>delta_queen::delta_queen_captains_invitational</code>
 
-**Full save:** 35 slots = 29 shared + 6 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 40 slots = 27 shared + 13 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.behind_counter_person_1</code> | Captain scorer | <code>behind_counter_person</code> | <code>494, 174</code> | <code>right_table</code> | Captain scorer | Exact scenario |
-| <code>scenario.doorway_1</code> | Clear exit | <code>doorway</code> | <code>36, 316</code> | <code>gangway_left</code> | Clear exit | Exact scenario |
-| <code>scenario.floor_fixture_1</code> | Captain bracket tables | <code>floor_fixture</code> | <code>496, 346</code> | <code>floor</code> | Captain bracket tables | Exact scenario |
-| <code>scenario.standing_person_1</code> | Scenario alternatives: Eliminated observer / Eliminated players / Final-round official / Tournament official | <code>standing_person</code> | <code>600, 414</code> | <code>floor</code> | Eliminated observer<br>Eliminated players<br>Final-round official<br>Tournament official | Exact scenario |
-| <code>scenario.surface_item_1</code> | The Captain's Card | <code>surface_item</code> | <code>96, 162</code> | <code>scoreboard_ledge</code> | The Captain's Card | Exact scenario |
-| <code>scenario.wall_item_1</code> | Scenario alternatives: Observer entry card / Stamped finalist card | <code>wall_mounted</code> | <code>582, 298</code> | <code>round3_calendar_mount</code> | Observer entry card<br>Stamped finalist card | Exact scenario |
+| <code>scenario.local_behind_counter_person_1</code> | Captain scorer | <code>behind_counter_person</code> | <code>494, 174</code> | <code>right_table</code> | Captain scorer | Exact scenario |
+| <code>scenario.local_behind_counter_person_2</code> | Captain scorer | <code>behind_counter_person</code> | <code>788, 422</code> | <code>manual_placement_required</code> | Captain scorer | Provisional geometry |
+| <code>scenario.local_doorway_1</code> | Clear exit | <code>doorway</code> | <code>36, 316</code> | <code>gangway_left</code> | Clear exit | Exact scenario |
+| <code>scenario.local_floor_fixture_1</code> | Captain bracket tables | <code>floor_fixture</code> | <code>284, 324</code> | <code>floor</code> | Captain bracket tables | Exact scenario |
+| <code>scenario.local_floor_fixture_2</code> | Captain bracket tables | <code>floor_fixture</code> | <code>496, 346</code> | <code>floor</code> | Captain bracket tables | Exact scenario |
+| <code>scenario.local_ground_marker_1</code> | Fallen scorer stool | <code>ground_marker</code> | <code>156, 414</code> | <code>floor</code> | Fallen scorer stool | Exact scenario |
+| <code>scenario.local_standing_person_1</code> | Eliminated players | <code>standing_person</code> | <code>600, 414</code> | <code>floor</code> | Eliminated players | Exact scenario |
+| <code>scenario.local_standing_person_2</code> | Scenario alternatives: Eliminated observer / Eliminated players | <code>standing_person</code> | <code>260, 414</code> | <code>floor</code> | Eliminated observer<br>Eliminated players | Exact scenario |
+| <code>scenario.local_standing_person_3</code> | Scenario alternatives: Final-round official / Tournament official | <code>standing_person</code> | <code>820, 350</code> | <code>manual_placement_required</code> | Final-round official<br>Tournament official | Provisional geometry |
+| <code>scenario.local_surface_item_1</code> | Invitational entry cards | <code>surface_item</code> | <code>96, 162</code> | <code>scoreboard_ledge</code> | Invitational entry cards | Exact scenario |
+| <code>scenario.local_wall_item_1</code> | Scorer rail | <code>wall_mounted</code> | <code>286, 24</code> | <code>wall</code> | Scorer rail | Exact scenario |
+| <code>scenario.local_wall_item_2</code> | Observer entry card | <code>wall_mounted</code> | <code>582, 298</code> | <code>round3_calendar_mount</code> | Observer entry card | Exact scenario |
+| <code>scenario.local_wall_item_3</code> | Stamped finalist card | <code>wall_mounted</code> | <code>166, 24</code> | <code>wall</code> | Stamped finalist card | Exact scenario |
 
-**Action-only IDs (10; no placement marker):** <code>delta_queen_captains_invitational_aftermath_tournament_interrupted_prop</code><br><code>delta_queen_captains_invitational_entry_cards</code><br><code>delta_queen_captains_invitational_scorer_rail</code><br><code>delta_queen_captains_invitational_task_0</code><br><code>delta_queen_captains_invitational_task_1</code><br><code>delta_queen_captains_invitational_task_2</code><br><code>delta_queen_captains_invitational_task_4</code><br><code>delta_queen_captains_invitational_work_3_choice_0</code><br><code>delta_queen_captains_invitational_work_3_choice_1</code><br><code>delta_queen_captains_invitational_work_3_choice_2</code>
+**Action-only IDs (7; no placement marker):** <code>delta_queen_captains_invitational_task_0</code><br><code>delta_queen_captains_invitational_task_1</code><br><code>delta_queen_captains_invitational_task_2</code><br><code>delta_queen_captains_invitational_task_4</code><br><code>delta_queen_captains_invitational_work_3_choice_0</code><br><code>delta_queen_captains_invitational_work_3_choice_1</code><br><code>delta_queen_captains_invitational_work_3_choice_2</code>
 
 #### Scenario — Engine Trouble — <code>delta_queen::delta_queen_engine_trouble</code>
 
-**Full save:** 35 slots = 29 shared + 6 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 38 slots = 27 shared + 11 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.behind_counter_person_1</code> | Engine mate | <code>behind_counter_person</code> | <code>494, 174</code> | <code>right_table</code> | Engine mate | Exact scenario |
-| <code>scenario.doorway_1</code> | Clear exit | <code>doorway</code> | <code>36, 316</code> | <code>gangway_left</code> | Clear exit | Exact scenario |
-| <code>scenario.floor_fixture_1</code> | Benches | <code>floor_fixture</code> | <code>496, 346</code> | <code>floor</code> | Benches | Exact scenario |
-| <code>scenario.standing_person_1</code> | Scenario alternatives: Chief mechanic / Evacuation deck mate / Guard / Restart mechanic | <code>standing_person</code> | <code>600, 414</code> | <code>floor</code> | Chief mechanic<br>Evacuation deck mate<br>Guard<br>Restart mechanic | Exact scenario |
-| <code>scenario.wall_item_1</code> | Below Deck | <code>wall_mounted</code> | <code>166, 24</code> | <code>wall</code> | Below Deck | Exact scenario |
-| <code>scenario.wall_item_2</code> | Scenario alternatives: Green pressure gauge / Low-pressure gauge | <code>wall_mounted</code> | <code>582, 298</code> | <code>round3_calendar_mount</code> | Green pressure gauge<br>Low-pressure gauge | Exact scenario |
+| <code>scenario.local_behind_counter_person_1</code> | Engine mate | <code>behind_counter_person</code> | <code>494, 174</code> | <code>right_table</code> | Engine mate | Exact scenario |
+| <code>scenario.local_doorway_1</code> | Locked mid-river gangway | <code>doorway</code> | <code>36, 316</code> | <code>gangway_left</code> | Locked mid-river gangway | Exact scenario |
+| <code>scenario.local_doorway_2</code> | Clear exit | <code>doorway</code> | <code>784, 422</code> | <code>manual_placement_required</code> | Clear exit | Provisional geometry |
+| <code>scenario.local_floor_fixture_1</code> | Benches | <code>floor_fixture</code> | <code>496, 346</code> | <code>floor</code> | Benches | Exact scenario |
+| <code>scenario.local_ground_marker_1</code> | Empty restart-key box | <code>ground_marker</code> | <code>156, 414</code> | <code>floor</code> | Empty restart-key box | Exact scenario |
+| <code>scenario.local_standing_person_1</code> | Guard | <code>standing_person</code> | <code>600, 414</code> | <code>floor</code> | Guard | Exact scenario |
+| <code>scenario.local_standing_person_2</code> | Scenario alternatives: Evacuation deck mate / Guard / Restart mechanic | <code>standing_person</code> | <code>260, 414</code> | <code>floor</code> | Evacuation deck mate<br>Guard<br>Restart mechanic | Exact scenario |
+| <code>scenario.local_standing_person_3</code> | Chief mechanic | <code>standing_person</code> | <code>852, 422</code> | <code>manual_placement_required</code> | Chief mechanic | Provisional geometry |
+| <code>scenario.local_wall_item_1</code> | Falling pressure gauge | <code>wall_mounted</code> | <code>582, 298</code> | <code>round3_calendar_mount</code> | Falling pressure gauge | Exact scenario |
+| <code>scenario.local_wall_item_2</code> | Scenario alternatives: Bulkhead / Low-pressure gauge | <code>wall_mounted</code> | <code>286, 24</code> | <code>wall</code> | Bulkhead<br>Low-pressure gauge | Exact scenario |
+| <code>scenario.local_wall_item_3</code> | Green pressure gauge | <code>wall_mounted</code> | <code>166, 24</code> | <code>wall</code> | Green pressure gauge | Exact scenario |
 
-**Action-only IDs (11; no placement marker):** <code>delta_queen_engine_trouble_aftermath_engine_abandoned_prop</code><br><code>delta_queen_engine_trouble_engine_bulkhead</code><br><code>delta_queen_engine_trouble_locked_gangway</code><br><code>delta_queen_engine_trouble_pressure_gauge</code><br><code>delta_queen_engine_trouble_task_0</code><br><code>delta_queen_engine_trouble_task_1</code><br><code>delta_queen_engine_trouble_task_2</code><br><code>delta_queen_engine_trouble_task_4</code><br><code>delta_queen_engine_trouble_work_3_choice_0</code><br><code>delta_queen_engine_trouble_work_3_choice_1</code><br><code>delta_queen_engine_trouble_work_3_choice_2</code>
+**Action-only IDs (7; no placement marker):** <code>delta_queen_engine_trouble_task_0</code><br><code>delta_queen_engine_trouble_task_1</code><br><code>delta_queen_engine_trouble_task_2</code><br><code>delta_queen_engine_trouble_task_4</code><br><code>delta_queen_engine_trouble_work_3_choice_0</code><br><code>delta_queen_engine_trouble_work_3_choice_1</code><br><code>delta_queen_engine_trouble_work_3_choice_2</code>
 
 #### Scenario — Fog Delay — <code>delta_queen::delta_queen_fog_delay</code>
 
-**Full save:** 35 slots = 29 shared + 6 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 37 slots = 27 shared + 10 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.doorway_1</code> | Clear exit | <code>doorway</code> | <code>36, 316</code> | <code>gangway_left</code> | Clear exit | Exact scenario |
-| <code>scenario.group_1</code> | Scenario alternatives: Opportunistic bettor / Waiting crowd | <code>group</code> | <code>288, 324</code> | <code>floor</code> | Opportunistic bettor<br>Waiting crowd | Exact scenario |
-| <code>scenario.standing_person_1</code> | Scenario alternatives: Deck officer / Waiting passenger | <code>standing_person</code> | <code>260, 414</code> | <code>floor</code> | Deck officer<br>Waiting passenger | Exact scenario |
-| <code>scenario.surface_item_1</code> | Held at the Rail | <code>surface_item</code> | <code>182, 50</code> | <code>scenario_notice_rail</code> | Held at the Rail | Exact scenario |
-| <code>scenario.wall_item_1</code> | Scenario alternatives: Lit fog lantern / Rising stake board | <code>wall_mounted</code> | <code>286, 24</code> | <code>wall</code> | Lit fog lantern<br>Rising stake board | Exact scenario |
-| <code>scenario.wall_item_2</code> | Fog signal lamp | <code>wall_mounted</code> | <code>582, 298</code> | <code>round3_calendar_mount</code> | Fog signal lamp | Exact scenario |
+| <code>scenario.local_doorway_1</code> | Closed gangway | <code>doorway</code> | <code>600, 258</code> | <code>manual_placement_required</code> | Closed gangway | Provisional geometry |
+| <code>scenario.local_doorway_2</code> | Clear exit | <code>doorway</code> | <code>36, 316</code> | <code>gangway_left</code> | Clear exit | Exact scenario |
+| <code>scenario.local_doorway_3</code> | Opened gangway | <code>doorway</code> | <code>848, 422</code> | <code>manual_placement_required</code> | Opened gangway | Provisional geometry |
+| <code>scenario.local_ground_marker_1</code> | Chalk detour arrows | <code>ground_marker</code> | <code>156, 414</code> | <code>floor</code> | Chalk detour arrows | Exact scenario |
+| <code>scenario.local_group_1</code> | Waiting crowd | <code>group</code> | <code>288, 324</code> | <code>floor</code> | Waiting crowd | Exact scenario |
+| <code>scenario.local_group_2</code> | Scenario alternatives: Opportunistic bettor / Waiting crowd | <code>group</code> | <code>836, 350</code> | <code>manual_placement_required</code> | Opportunistic bettor<br>Waiting crowd | Provisional geometry |
+| <code>scenario.local_standing_person_1</code> | Deck officer | <code>standing_person</code> | <code>260, 414</code> | <code>floor</code> | Deck officer | Exact scenario |
+| <code>scenario.local_standing_person_2</code> | Waiting passenger | <code>standing_person</code> | <code>600, 414</code> | <code>floor</code> | Waiting passenger | Exact scenario |
+| <code>scenario.local_wall_item_1</code> | Fog signal lamp | <code>wall_mounted</code> | <code>582, 298</code> | <code>round3_calendar_mount</code> | Fog signal lamp | Exact scenario |
+| <code>scenario.local_wall_item_2</code> | Scenario alternatives: Lit fog lantern / Rising stake board | <code>wall_mounted</code> | <code>286, 24</code> | <code>wall</code> | Lit fog lantern<br>Rising stake board | Exact scenario |
 
-**Action-only IDs (9; no placement marker):** <code>delta_queen_fog_delay_aftermath_assisted_reroute_prop</code><br><code>delta_queen_fog_delay_aftermath_fog_departure_prop</code><br><code>delta_queen_fog_delay_gangway_shutter</code><br><code>delta_queen_fog_delay_task_0</code><br><code>delta_queen_fog_delay_task_2</code><br><code>delta_queen_fog_delay_task_3</code><br><code>delta_queen_fog_delay_work_1_choice_0</code><br><code>delta_queen_fog_delay_work_1_choice_1</code><br><code>delta_queen_fog_delay_work_1_choice_2</code>
+**Action-only IDs (6; no placement marker):** <code>delta_queen_fog_delay_task_0</code><br><code>delta_queen_fog_delay_task_2</code><br><code>delta_queen_fog_delay_task_3</code><br><code>delta_queen_fog_delay_work_1_choice_0</code><br><code>delta_queen_fog_delay_work_1_choice_1</code><br><code>delta_queen_fog_delay_work_1_choice_2</code>
 
 #### Scenario — Wedding Charter — <code>delta_queen::delta_queen_wedding_charter</code>
 
-**Full save:** 36 slots = 29 shared + 7 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 42 slots = 27 shared + 15 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.behind_counter_person_1</code> | Deck coordinator | <code>behind_counter_person</code> | <code>494, 174</code> | <code>right_table</code> | Deck coordinator | Exact scenario |
-| <code>scenario.doorway_1</code> | Clear exit | <code>doorway</code> | <code>36, 316</code> | <code>gangway_left</code> | Clear exit | Exact scenario |
-| <code>scenario.floor_fixture_1</code> | Open Bar | <code>floor_fixture</code> | <code>284, 324</code> | <code>floor</code> | Open Bar | Exact scenario |
-| <code>scenario.floor_fixture_2</code> | Best man table | <code>floor_fixture</code> | <code>496, 346</code> | <code>floor</code> | Best man table | Exact scenario |
-| <code>scenario.standing_person_1</code> | The Best Man's Table | <code>standing_person</code> | <code>600, 414</code> | <code>floor</code> | The Best Man's Table | Exact scenario |
-| <code>scenario.standing_person_2</code> | Scenario alternatives: Deck crew member / Losing best man / Wedding coordinator | <code>standing_person</code> | <code>260, 414</code> | <code>floor</code> | Deck crew member<br>Losing best man<br>Wedding coordinator | Exact scenario |
-| <code>scenario.wall_item_1</code> | Scenario alternatives: Discarded betting slips / Latched ring case | <code>wall_mounted</code> | <code>582, 298</code> | <code>round3_calendar_mount</code> | Discarded betting slips<br>Latched ring case | Exact scenario |
+| <code>scenario.local_behind_counter_person_1</code> | Deck coordinator | <code>behind_counter_person</code> | <code>494, 174</code> | <code>right_table</code> | Deck coordinator | Exact scenario |
+| <code>scenario.local_behind_counter_person_2</code> | Deck coordinator | <code>behind_counter_person</code> | <code>788, 422</code> | <code>manual_placement_required</code> | Deck coordinator | Provisional geometry |
+| <code>scenario.local_doorway_1</code> | Clear exit | <code>doorway</code> | <code>36, 316</code> | <code>gangway_left</code> | Clear exit | Exact scenario |
+| <code>scenario.local_floor_fixture_1</code> | Open Bar | <code>floor_fixture</code> | <code>284, 324</code> | <code>floor</code> | Open Bar | Exact scenario |
+| <code>scenario.local_floor_fixture_2</code> | Best man table | <code>floor_fixture</code> | <code>496, 346</code> | <code>floor</code> | Best man table | Exact scenario |
+| <code>scenario.local_ground_marker_1</code> | Fallen gangway stanchion | <code>ground_marker</code> | <code>156, 414</code> | <code>floor</code> | Fallen gangway stanchion | Exact scenario |
+| <code>scenario.local_standing_person_1</code> | Scenario alternatives: Losing best man / Wedding coordinator | <code>standing_person</code> | <code>600, 414</code> | <code>floor</code> | Losing best man<br>Wedding coordinator | Exact scenario |
+| <code>scenario.local_standing_person_2</code> | Losing best man | <code>standing_person</code> | <code>260, 414</code> | <code>floor</code> | Losing best man | Exact scenario |
+| <code>scenario.local_standing_person_3</code> | Deck crew member | <code>standing_person</code> | <code>820, 350</code> | <code>manual_placement_required</code> | Deck crew member | Provisional geometry |
+| <code>scenario.local_surface_item_1</code> | Loose ring case | <code>surface_item</code> | <code>96, 162</code> | <code>scoreboard_ledge</code> | Loose ring case | Exact scenario |
+| <code>scenario.local_surface_item_2</code> | Loose ring case | <code>surface_item</code> | <code>196, 128</code> | <code>manual_placement_required</code> | Loose ring case | Provisional geometry |
+| <code>scenario.local_wall_item_1</code> | Ceremony rope | <code>wall_mounted</code> | <code>604, 334</code> | <code>manual_placement_required</code> | Ceremony rope | Provisional geometry |
+| <code>scenario.local_wall_item_2</code> | Ceremony rope | <code>wall_mounted</code> | <code>166, 24</code> | <code>wall</code> | Ceremony rope | Exact scenario |
+| <code>scenario.local_wall_item_3</code> | Latched ring case | <code>wall_mounted</code> | <code>286, 24</code> | <code>wall</code> | Latched ring case | Exact scenario |
+| <code>scenario.local_wall_item_4</code> | Discarded betting slips | <code>wall_mounted</code> | <code>512, 64</code> | <code>manual_placement_required</code> | Discarded betting slips | Provisional geometry |
 
-**Action-only IDs (9; no placement marker):** <code>delta_queen_wedding_charter_aftermath_departure_interrupted_prop</code><br><code>delta_queen_wedding_charter_ceremony_rope</code><br><code>delta_queen_wedding_charter_ring_case</code><br><code>delta_queen_wedding_charter_task_0</code><br><code>delta_queen_wedding_charter_task_2</code><br><code>delta_queen_wedding_charter_task_3</code><br><code>delta_queen_wedding_charter_work_1_choice_0</code><br><code>delta_queen_wedding_charter_work_1_choice_1</code><br><code>delta_queen_wedding_charter_work_1_choice_2</code>
+**Action-only IDs (6; no placement marker):** <code>delta_queen_wedding_charter_task_0</code><br><code>delta_queen_wedding_charter_task_2</code><br><code>delta_queen_wedding_charter_task_3</code><br><code>delta_queen_wedding_charter_work_1_choice_0</code><br><code>delta_queen_wedding_charter_work_1_choice_1</code><br><code>delta_queen_wedding_charter_work_1_choice_2</code>
 
 #### Scenario — Whale Aboard — <code>delta_queen::delta_queen_whale_aboard</code>
 
-**Full save:** 35 slots = 29 shared + 6 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 39 slots = 27 shared + 12 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.behind_counter_person_1</code> | Whale host | <code>behind_counter_person</code> | <code>494, 174</code> | <code>right_table</code> | Whale host | Exact scenario |
-| <code>scenario.doorway_1</code> | Clear exit | <code>doorway</code> | <code>36, 316</code> | <code>gangway_left</code> | Clear exit | Exact scenario |
-| <code>scenario.floor_fixture_1</code> | Whale premium table | <code>floor_fixture</code> | <code>496, 346</code> | <code>floor</code> | Whale premium table | Exact scenario |
-| <code>scenario.standing_person_1</code> | Scenario alternatives: Entourage guard / Entourage runner / Premium host | <code>standing_person</code> | <code>600, 414</code> | <code>floor</code> | Entourage guard<br>Entourage runner<br>Premium host | Exact scenario |
-| <code>scenario.wall_item_1</code> | The Whale's Receipt | <code>wall_mounted</code> | <code>166, 24</code> | <code>wall</code> | The Whale's Receipt | Exact scenario |
-| <code>scenario.wall_item_2</code> | Gold access placard | <code>wall_mounted</code> | <code>582, 298</code> | <code>round3_calendar_mount</code> | Gold access placard | Exact scenario |
+| <code>scenario.local_behind_counter_person_1</code> | Whale host | <code>behind_counter_person</code> | <code>494, 174</code> | <code>right_table</code> | Whale host | Exact scenario |
+| <code>scenario.local_doorway_1</code> | Clear exit | <code>doorway</code> | <code>36, 316</code> | <code>gangway_left</code> | Clear exit | Exact scenario |
+| <code>scenario.local_floor_fixture_1</code> | Whale premium table | <code>floor_fixture</code> | <code>284, 324</code> | <code>floor</code> | Whale premium table | Exact scenario |
+| <code>scenario.local_floor_fixture_2</code> | Whale premium table | <code>floor_fixture</code> | <code>496, 346</code> | <code>floor</code> | Whale premium table | Exact scenario |
+| <code>scenario.local_ground_marker_1</code> | Scenario alternatives: Stacked name placards / Whale service lane | <code>ground_marker</code> | <code>156, 414</code> | <code>floor</code> | Stacked name placards<br>Whale service lane | Exact scenario |
+| <code>scenario.local_ground_marker_2</code> | Circled footprints | <code>ground_marker</code> | <code>44, 422</code> | <code>manual_placement_required</code> | Circled footprints | Provisional geometry |
+| <code>scenario.local_standing_person_1</code> | Entourage runner | <code>standing_person</code> | <code>600, 414</code> | <code>floor</code> | Entourage runner | Exact scenario |
+| <code>scenario.local_standing_person_2</code> | Entourage runner | <code>standing_person</code> | <code>260, 414</code> | <code>floor</code> | Entourage runner | Exact scenario |
+| <code>scenario.local_standing_person_3</code> | Scenario alternatives: Entourage runner / Premium host | <code>standing_person</code> | <code>788, 422</code> | <code>manual_placement_required</code> | Entourage runner<br>Premium host | Provisional geometry |
+| <code>scenario.local_standing_person_4</code> | Entourage guard | <code>standing_person</code> | <code>856, 422</code> | <code>manual_placement_required</code> | Entourage guard | Provisional geometry |
+| <code>scenario.local_wall_item_1</code> | Shifted stake placards | <code>wall_mounted</code> | <code>286, 24</code> | <code>wall</code> | Shifted stake placards | Exact scenario |
+| <code>scenario.local_wall_item_2</code> | Gold access placard | <code>wall_mounted</code> | <code>582, 298</code> | <code>round3_calendar_mount</code> | Gold access placard | Exact scenario |
 
-**Action-only IDs (10; no placement marker):** <code>delta_queen_whale_aboard_aftermath_shadowed_entourage_prop</code><br><code>delta_queen_whale_aboard_aftermath_whale_departed_prop</code><br><code>delta_queen_whale_aboard_service_lane</code><br><code>delta_queen_whale_aboard_stake_placards</code><br><code>delta_queen_whale_aboard_task_0</code><br><code>delta_queen_whale_aboard_task_1</code><br><code>delta_queen_whale_aboard_task_3</code><br><code>delta_queen_whale_aboard_work_2_choice_0</code><br><code>delta_queen_whale_aboard_work_2_choice_1</code><br><code>delta_queen_whale_aboard_work_2_choice_2</code>
+**Action-only IDs (6; no placement marker):** <code>delta_queen_whale_aboard_task_0</code><br><code>delta_queen_whale_aboard_task_1</code><br><code>delta_queen_whale_aboard_task_3</code><br><code>delta_queen_whale_aboard_work_2_choice_0</code><br><code>delta_queen_whale_aboard_work_2_choice_1</code><br><code>delta_queen_whale_aboard_work_2_choice_2</code>
 
 ### The Beach — <code>beach</code>
 
 #### Base / No Scenario — <code>beach::__base</code>
 
-**Save snapshot:** 7 slots = 2 fixed + 0 event + 4 shared scenario + 1 exit. Exact scenarios on this map: 3.
+**Save snapshot:** 8 slots = 2 fixed + 1 event + 4 shared scenario + 1 exit. Exact scenarios on this map: 3.
 
 | Family | Slot ID | Physical role | Footprint | Position | Support | Occupant/claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| <code>fixed</code> | <code>fixed.service_beach_sand_pile</code> | Floor prop | <code>floor_fixture</code> | <code>864, 406</code> | <code>stage</code> | Beach Sand Pile | Mapped capacity |
-| <code>fixed</code> | <code>fixed.game_slot</code> | Game fixture | <code>floor_fixture</code> | <code>502, 180</code> | <code>stage</code> | Empty capacity | Optional empty capacity |
-| <code>scenario</code> | <code>scenario.floor_fixture_4</code> | Delivery package reserve | <code>floor_fixture</code> | <code>398, 180</code> | <code>stage</code> | Beach Bonfire Night Driftwood Bundle<br>Beach Festival Weekend Festival Stage<br>Beach Storm Coming Rental Props | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.wall_item_2</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>128, 48</code> | <code>wall</code> | Beach Storm Coming Warning Flag | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.standing_person_4</code> | Runtime contact reserve | <code>standing_person</code> | <code>448, 116</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
-| <code>scenario</code> | <code>scenario.standing_person_5</code> | Recruitment contact reserve | <code>standing_person</code> | <code>348, 304</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Lucky recruitment can coexist with the Festival scenario cast. |
+| <code>fixed</code> | <code>fixed.service_beach_sand_pile</code> | Beach sand pile | <code>floor_fixture</code> | <code>864, 406</code> | <code>stage</code> | Sand Pile | Mapped capacity |
+| <code>fixed</code> | <code>fixed.game_slot</code> | Slot machine | <code>floor_fixture</code> | <code>502, 180</code> | <code>stage</code> | Empty capacity | Optional empty capacity |
+| <code>event</code> | <code>event.standing_person_1</code> | Delivery handoff contact | <code>standing_person</code> | <code>788, 406</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>scenario</code> | <code>scenario.floor_fixture_4</code> | Delivery package reserve | <code>floor_fixture</code> | <code>398, 180</code> | <code>stage</code> | Variable runtime content | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.wall_item_2</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>128, 48</code> | <code>wall</code> | Variable runtime content | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.standing_person_4</code> | Runtime contact reserve | <code>standing_person</code> | <code>448, 116</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
+| <code>scenario</code> | <code>scenario.standing_person_5</code> | Recruitment contact reserve | <code>standing_person</code> | <code>348, 304</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Lucky recruitment can coexist with the Festival scenario cast. |
 | <code>exit</code> | <code>exit.right_upper</code> | Travel exit | <code>doorway</code> | <code>864, 274</code> | <code>boardwalk_right</code> | Leave | Mapped capacity |
 
 #### Scenario — Bonfire Night — <code>beach::beach_bonfire_night</code>
 
-**Full save:** 15 slots = 7 shared + 8 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 21 slots = 8 shared + 13 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.behind_counter_person_1</code> | The Warm Side | <code>behind_counter_person</code> | <code>112, 202</code> | <code>towel</code> | The Warm Side | Exact scenario |
-| <code>scenario.doorway_1</code> | Marked safe exit | <code>doorway</code> | <code>36, 274</code> | <code>boardwalk_left</code> | Marked safe exit | Exact scenario |
-| <code>scenario.floor_fixture_1</code> | Scenario alternatives: Lit Stone Fire Ring / Movable beach seats / Soaked Fire Ring | <code>floor_fixture</code> | <code>614, 180</code> | <code>stage</code> | Lit Stone Fire Ring<br>Movable beach seats<br>Soaked Fire Ring | Exact scenario |
-| <code>scenario.floor_fixture_2</code> | Windbreak outline | <code>floor_fixture</code> | <code>390, 292</code> | <code>floor</code> | Windbreak outline | Exact scenario |
-| <code>scenario.standing_person_1</code> | Scenario alternatives: Ember-Watching Swimmer / Fire Tender / Fire tender | <code>standing_person</code> | <code>276, 292</code> | <code>floor</code> | Ember-Watching Swimmer<br>Fire Tender<br>Fire tender | Exact scenario |
-| <code>scenario.standing_person_2</code> | Night swimmers | <code>standing_person</code> | <code>628, 292</code> | <code>floor</code> | Night swimmers | Exact scenario |
-| <code>scenario.surface_item_1</code> | Tied Driftwood Bundle | <code>surface_item</code> | <code>744, 92</code> | <code>kiosk</code> | Tied Driftwood Bundle | Exact scenario |
-| <code>scenario.wall_item_1</code> | Half-Read Tide Marker | <code>wall_mounted</code> | <code>256, 24</code> | <code>wall</code> | Half-Read Tide Marker | Exact scenario |
+| <code>scenario.local_doorway_1</code> | Marked safe exit | <code>doorway</code> | <code>36, 274</code> | <code>boardwalk_left</code> | Marked safe exit | Exact scenario |
+| <code>scenario.local_floor_fixture_1</code> | Movable beach seats | <code>floor_fixture</code> | <code>614, 180</code> | <code>stage</code> | Movable beach seats | Exact scenario |
+| <code>scenario.local_floor_fixture_2</code> | Dry driftwood bundle | <code>floor_fixture</code> | <code>606, 372</code> | <code>stage</code> | Dry driftwood bundle | Exact scenario |
+| <code>scenario.local_floor_fixture_3</code> | Rising tide marker | <code>floor_fixture</code> | <code>54, 422</code> | <code>manual_placement_required</code> | Rising tide marker | Provisional geometry |
+| <code>scenario.local_floor_fixture_4</code> | Windbreak outline | <code>floor_fixture</code> | <code>118, 354</code> | <code>manual_placement_required</code> | Windbreak outline | Provisional geometry |
+| <code>scenario.local_floor_fixture_5</code> | Scenario alternatives: Soaked Fire Ring / Stone bonfire ring | <code>floor_fixture</code> | <code>150, 422</code> | <code>manual_placement_required</code> | Soaked Fire Ring<br>Stone bonfire ring | Provisional geometry |
+| <code>scenario.local_floor_fixture_6</code> | Lit Stone Fire Ring | <code>floor_fixture</code> | <code>232, 422</code> | <code>manual_placement_required</code> | Lit Stone Fire Ring | Provisional geometry |
+| <code>scenario.local_floor_fixture_7</code> | High Windbreak | <code>floor_fixture</code> | <code>310, 422</code> | <code>manual_placement_required</code> | High Windbreak | Provisional geometry |
+| <code>scenario.local_ground_marker_1</code> | Footprint Trail | <code>ground_marker</code> | <code>740, 236</code> | <code>floor</code> | Footprint Trail | Exact scenario |
+| <code>scenario.local_standing_person_1</code> | Fire Tender | <code>standing_person</code> | <code>276, 292</code> | <code>floor</code> | Fire Tender | Exact scenario |
+| <code>scenario.local_standing_person_2</code> | Scenario alternatives: Ember-Watching Swimmer / Night swimmers | <code>standing_person</code> | <code>628, 292</code> | <code>floor</code> | Ember-Watching Swimmer<br>Night swimmers | Exact scenario |
+| <code>scenario.local_surface_item_1</code> | Tied Driftwood Bundle | <code>surface_item</code> | <code>744, 92</code> | <code>kiosk</code> | Tied Driftwood Bundle | Exact scenario |
+| <code>scenario.local_wall_item_1</code> | Half-Read Tide Marker | <code>wall_mounted</code> | <code>256, 24</code> | <code>wall</code> | Half-Read Tide Marker | Exact scenario |
 
-**Action-only IDs (6; no placement marker):** <code>beach_bonfire_night_aftermath_hidden_fire</code><br><code>beach_bonfire_night_aftermath_hidden_fire_secondary</code><br><code>beach_bonfire_night_bonfire_ring</code><br><code>beach_bonfire_night_driftwood_bundle</code><br><code>beach_bonfire_night_station</code><br><code>beach_bonfire_night_tide_marker</code>
+**Action-only IDs (1; no placement marker):** <code>beach_bonfire_night_station</code>
 
 #### Scenario — Festival Weekend — <code>beach::beach_festival_weekend</code>
 
-**Full save:** 16 slots = 7 shared + 9 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 22 slots = 8 shared + 14 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.behind_counter_person_1</code> | Stall vendor | <code>behind_counter_person</code> | <code>112, 202</code> | <code>towel</code> | Stall vendor | Exact scenario |
-| <code>scenario.doorway_1</code> | Marked safe exit | <code>doorway</code> | <code>36, 274</code> | <code>boardwalk_left</code> | Marked safe exit | Exact scenario |
-| <code>scenario.floor_fixture_1</code> | Scenario alternatives: Craft stall / Dark Festival Stage | <code>floor_fixture</code> | <code>614, 180</code> | <code>stage</code> | Craft stall<br>Dark Festival Stage | Exact scenario |
-| <code>scenario.floor_fixture_2</code> | Festival cable stage | <code>floor_fixture</code> | <code>390, 292</code> | <code>floor</code> | Festival cable stage | Exact scenario |
-| <code>scenario.floor_fixture_3</code> | Food stall | <code>floor_fixture</code> | <code>606, 372</code> | <code>stage</code> | Food stall | Exact scenario |
-| <code>scenario.standing_person_1</code> | Lucky Recruitment | <code>standing_person</code> | <code>628, 292</code> | <code>floor</code> | Lucky Recruitment | Exact scenario |
-| <code>scenario.standing_person_2</code> | Lucky's Pitch | <code>standing_person</code> | <code>390, 378</code> | <code>stage</code> | Lucky's Pitch | Exact scenario |
-| <code>scenario.standing_person_3</code> | Scenario alternatives: After-Hours Vendor / Lost child / Route-Guiding Vendor | <code>standing_person</code> | <code>276, 292</code> | <code>floor</code> | After-Hours Vendor<br>Lost child<br>Route-Guiding Vendor | Exact scenario |
-| <code>scenario.surface_item_1</code> | Scenario alternatives: Festival schedule board / Revised Festival Schedule | <code>surface_item</code> | <code>744, 92</code> | <code>kiosk</code> | Festival schedule board<br>Revised Festival Schedule | Exact scenario |
+| <code>scenario.local_behind_counter_person_1</code> | Stall vendor | <code>behind_counter_person</code> | <code>112, 202</code> | <code>towel</code> | Stall vendor | Exact scenario |
+| <code>scenario.local_doorway_1</code> | Marked safe exit | <code>doorway</code> | <code>36, 274</code> | <code>boardwalk_left</code> | Marked safe exit | Exact scenario |
+| <code>scenario.local_floor_fixture_1</code> | Moving crowd rope | <code>floor_fixture</code> | <code>390, 292</code> | <code>floor</code> | Moving crowd rope | Exact scenario |
+| <code>scenario.local_floor_fixture_2</code> | Scenario alternatives: Craft stall / Dark Festival Stage | <code>floor_fixture</code> | <code>614, 180</code> | <code>stage</code> | Craft stall<br>Dark Festival Stage | Exact scenario |
+| <code>scenario.local_floor_fixture_3</code> | Festival cable stage | <code>floor_fixture</code> | <code>54, 422</code> | <code>manual_placement_required</code> | Festival cable stage | Provisional geometry |
+| <code>scenario.local_floor_fixture_4</code> | Food stall | <code>floor_fixture</code> | <code>606, 372</code> | <code>stage</code> | Food stall | Exact scenario |
+| <code>scenario.local_floor_fixture_5</code> | Closed Craft Stall | <code>floor_fixture</code> | <code>150, 422</code> | <code>manual_placement_required</code> | Closed Craft Stall | Provisional geometry |
+| <code>scenario.local_ground_marker_1</code> | Interrupted Rope Lane | <code>ground_marker</code> | <code>740, 236</code> | <code>floor</code> | Interrupted Rope Lane | Exact scenario |
+| <code>scenario.local_standing_person_1</code> | Lucky | <code>standing_person</code> | <code>276, 292</code> | <code>floor</code> | Lucky | Exact scenario |
+| <code>scenario.local_standing_person_2</code> | Scenario alternatives: After-Hours Vendor / Lost child / Route-Guiding Vendor | <code>standing_person</code> | <code>390, 378</code> | <code>stage</code> | After-Hours Vendor<br>Lost child<br>Route-Guiding Vendor | Exact scenario |
+| <code>scenario.local_surface_item_1</code> | Festival schedule board | <code>surface_item</code> | <code>224, 198</code> | <code>towel</code> | Festival schedule board | Exact scenario |
+| <code>scenario.local_surface_item_2</code> | Revised Festival Schedule | <code>surface_item</code> | <code>744, 92</code> | <code>kiosk</code> | Revised Festival Schedule | Exact scenario |
+| <code>scenario.local_wall_item_1</code> | Lost-child meeting marker | <code>wall_mounted</code> | <code>256, 24</code> | <code>wall</code> | Lost-child meeting marker | Exact scenario |
+| <code>scenario.local_wall_item_2</code> | Staffed Meeting Marker | <code>wall_mounted</code> | <code>48, 64</code> | <code>manual_placement_required</code> | Staffed Meeting Marker | Provisional geometry |
 
-**Action-only IDs (6; no placement marker):** <code>beach_festival_weekend_aftermath_festival_interrupted</code><br><code>beach_festival_weekend_aftermath_festival_task_refused</code><br><code>beach_festival_weekend_aftermath_stall_closed</code><br><code>beach_festival_weekend_crowd_rope</code><br><code>beach_festival_weekend_lost_child_marker</code><br><code>beach_festival_weekend_station</code>
+**Action-only IDs (1; no placement marker):** <code>beach_festival_weekend_station</code>
 
 #### Scenario — Storm Coming — <code>beach::beach_storm_coming</code>
 
-**Full save:** 12 slots = 7 shared + 5 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 19 slots = 8 shared + 11 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.doorway_1</code> | Marked safe exit | <code>doorway</code> | <code>36, 274</code> | <code>boardwalk_left</code> | Marked safe exit | Exact scenario |
-| <code>scenario.floor_fixture_1</code> | Scenario alternatives: Abandoned Rescue Skiff / Closing rental stall / Shuttered Rental Stall | <code>floor_fixture</code> | <code>614, 180</code> | <code>stage</code> | Abandoned Rescue Skiff<br>Closing rental stall<br>Shuttered Rental Stall | Exact scenario |
-| <code>scenario.standing_person_1</code> | Scenario alternatives: Inland Lifeguard / Late Swimmer / Late swimmer / Shoreline Lifeguard | <code>standing_person</code> | <code>276, 292</code> | <code>floor</code> | Inland Lifeguard<br>Late Swimmer<br>Late swimmer<br>Shoreline Lifeguard | Exact scenario |
-| <code>scenario.standing_person_2</code> | Lifeguard | <code>standing_person</code> | <code>628, 292</code> | <code>floor</code> | Lifeguard | Exact scenario |
-| <code>scenario.surface_item_1</code> | One Stranger | <code>surface_item</code> | <code>744, 92</code> | <code>kiosk</code> | One Stranger | Exact scenario |
+| <code>scenario.local_doorway_1</code> | Marked safe exit | <code>doorway</code> | <code>36, 274</code> | <code>boardwalk_left</code> | Marked safe exit | Exact scenario |
+| <code>scenario.local_floor_fixture_1</code> | Inland staging line | <code>floor_fixture</code> | <code>390, 292</code> | <code>floor</code> | Inland staging line | Exact scenario |
+| <code>scenario.local_floor_fixture_2</code> | Rescue skiff | <code>floor_fixture</code> | <code>606, 372</code> | <code>stage</code> | Rescue skiff | Exact scenario |
+| <code>scenario.local_floor_fixture_3</code> | Scenario alternatives: Abandoned Rescue Skiff / Closing rental stall | <code>floor_fixture</code> | <code>614, 180</code> | <code>stage</code> | Abandoned Rescue Skiff<br>Closing rental stall | Exact scenario |
+| <code>scenario.local_floor_fixture_4</code> | Scenario alternatives: Loose beach rentals / Scattered Chairs and Umbrellas | <code>floor_fixture</code> | <code>54, 422</code> | <code>manual_placement_required</code> | Loose beach rentals<br>Scattered Chairs and Umbrellas | Provisional geometry |
+| <code>scenario.local_floor_fixture_5</code> | Shuttered Rental Stall | <code>floor_fixture</code> | <code>150, 422</code> | <code>manual_placement_required</code> | Shuttered Rental Stall | Provisional geometry |
+| <code>scenario.local_ground_marker_1</code> | Bundled-Rental Trail | <code>ground_marker</code> | <code>740, 236</code> | <code>floor</code> | Bundled-Rental Trail | Exact scenario |
+| <code>scenario.local_standing_person_1</code> | Storm-Watching Stranger | <code>standing_person</code> | <code>390, 378</code> | <code>stage</code> | Storm-Watching Stranger | Exact scenario |
+| <code>scenario.local_standing_person_2</code> | Late swimmer | <code>standing_person</code> | <code>628, 292</code> | <code>floor</code> | Late swimmer | Exact scenario |
+| <code>scenario.local_standing_person_3</code> | Scenario alternatives: Inland Lifeguard / Late Swimmer / Lifeguard / Shoreline Lifeguard | <code>standing_person</code> | <code>276, 292</code> | <code>floor</code> | Inland Lifeguard<br>Late Swimmer<br>Lifeguard<br>Shoreline Lifeguard | Exact scenario |
+| <code>scenario.local_wall_item_1</code> | Scenario alternatives: People-Only Warning Notice / Storm warning flag | <code>wall_mounted</code> | <code>256, 24</code> | <code>wall</code> | People-Only Warning Notice<br>Storm warning flag | Exact scenario |
 
-**Action-only IDs (8; no placement marker):** <code>beach_storm_coming_aftermath_evacuation_interrupted</code><br><code>beach_storm_coming_aftermath_shoreline_damaged</code><br><code>beach_storm_coming_aftermath_storm_task_refused</code><br><code>beach_storm_coming_evacuation_line</code><br><code>beach_storm_coming_rental_props</code><br><code>beach_storm_coming_rescue_skiff</code><br><code>beach_storm_coming_station</code><br><code>beach_storm_coming_warning_flag</code>
+**Action-only IDs (1; no placement marker):** <code>beach_storm_coming_station</code>
 
 ### Sal's Pawn Shop — <code>pawn_shop</code>
 
 #### Base / No Scenario — <code>pawn_shop::__base</code>
 
-**Save snapshot:** 20 slots = 10 fixed + 6 event + 3 shared scenario + 1 exit. Exact scenarios on this map: 3.
+**Save snapshot:** 18 slots = 8 fixed + 6 event + 3 shared scenario + 1 exit. Exact scenarios on this map: 3.
 
 | Family | Slot ID | Physical role | Footprint | Position | Support | Occupant/claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| <code>fixed</code> | <code>fixed.staff_pawn_counter</code> | Sal | <code>behind_counter_person</code> | <code>352, 266</code> | <code>pawn_counter</code> | Sal<br>Sell | Required |
-| <code>fixed</code> | <code>fixed.staff_merchant</code> | Counter staff | <code>behind_counter_person</code> | <code>772, 188</code> | <code>estate_right_lower_shelf</code> | Merchant | Mapped capacity |
-| <code>fixed</code> | <code>fixed.lender_sals_pawn_counter</code> | Standing person | <code>standing_person</code> | <code>36, 398</code> | <code>stage</code> | Sals Pawn Counter | Mapped capacity |
-| <code>fixed</code> | <code>fixed.game_slot</code> | Game fixture | <code>floor_fixture</code> | <code>286, 358</code> | <code>floor</code> | Slot | Mapped capacity |
-| <code>fixed</code> | <code>fixed.item_shop_1</code> | Shop item | <code>shop_item</code> | <code>76, 70</code> | <code>estate_top_shelf</code> | 0 | Mapped capacity |
-| <code>fixed</code> | <code>fixed.item_shop_2</code> | Shop item | <code>shop_item</code> | <code>180, 70</code> | <code>estate_top_shelf</code> | 1 | Mapped capacity |
-| <code>fixed</code> | <code>fixed.item_shop_3</code> | Shop item | <code>shop_item</code> | <code>284, 70</code> | <code>estate_top_shelf</code> | 2 | Mapped capacity |
-| <code>fixed</code> | <code>fixed.item_shop_4</code> | Shop item | <code>shop_item</code> | <code>388, 70</code> | <code>estate_top_shelf</code> | 3 | Mapped capacity |
-| <code>fixed</code> | <code>fixed.item_shop_5</code> | Shop item | <code>shop_item</code> | <code>492, 70</code> | <code>estate_top_shelf</code> | 4 | Mapped capacity |
-| <code>fixed</code> | <code>fixed.item_shop_6</code> | Shop item | <code>shop_item</code> | <code>596, 70</code> | <code>estate_top_shelf</code> | 5 | Mapped capacity |
+| <code>fixed</code> | <code>fixed.staff_pawn_counter</code> | Sal | <code>behind_counter_person</code> | <code>352, 266</code> | <code>pawn_counter</code> | Sal | Required |
+| <code>fixed</code> | <code>fixed.game_slot</code> | Slot machine | <code>floor_fixture</code> | <code>286, 358</code> | <code>floor</code> | Slot | Mapped capacity |
+| <code>fixed</code> | <code>fixed.item_shop_1</code> | Shop item | <code>shop_item</code> | <code>76, 70</code> | <code>estate_top_shelf</code> | Sal's Shelf Slot 1 | Mapped capacity |
+| <code>fixed</code> | <code>fixed.item_shop_2</code> | Shop item | <code>shop_item</code> | <code>180, 70</code> | <code>estate_top_shelf</code> | Sal's Shelf Slot 2 | Mapped capacity |
+| <code>fixed</code> | <code>fixed.item_shop_3</code> | Shop item | <code>shop_item</code> | <code>284, 70</code> | <code>estate_top_shelf</code> | Sal's Shelf Slot 3 | Mapped capacity |
+| <code>fixed</code> | <code>fixed.item_shop_4</code> | Shop item | <code>shop_item</code> | <code>388, 70</code> | <code>estate_top_shelf</code> | Sal's Shelf Slot 4 | Mapped capacity |
+| <code>fixed</code> | <code>fixed.item_shop_5</code> | Shop item | <code>shop_item</code> | <code>492, 70</code> | <code>estate_top_shelf</code> | Sal's Shelf Slot 5 | Mapped capacity |
+| <code>fixed</code> | <code>fixed.item_shop_6</code> | Shop item | <code>shop_item</code> | <code>596, 70</code> | <code>estate_top_shelf</code> | Sal's Shelf Slot 6 | Mapped capacity |
 | <code>event</code> | <code>event.floor_fixture_1</code> | Floor prop | <code>floor_fixture</code> | <code>304, 370</code> | <code>floor</code> | Empty capacity | Optional empty capacity |
-| <code>event</code> | <code>event.standing_person_1</code> | Standing person | <code>standing_person</code> | <code>392, 414</code> | <code>floor</code> | Chatty Clerk<br>Town Rumor Staff | Mapped capacity |
-| <code>event</code> | <code>event.shop_item_1</code> | Shop item | <code>shop_item</code> | <code>94, 82</code> | <code>estate_top_shelf</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_2</code> | Standing person | <code>standing_person</code> | <code>528, 414</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_3</code> | Standing person | <code>standing_person</code> | <code>592, 414</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
-| <code>event</code> | <code>event.surface_item_1</code> | Counter or table item | <code>surface_item</code> | <code>532, 118</code> | <code>display_counter</code> | Chain06 Sal Estate Item | Mapped capacity |
-| <code>scenario</code> | <code>scenario.standing_person_2</code> | Runtime contact reserve | <code>standing_person</code> | <code>448, 248</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
-| <code>scenario</code> | <code>scenario.wall_item_2</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>786, 60</code> | <code>wall</code> | Runtime reserve (unclaimed) | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.floor_fixture_2</code> | Delivery package reserve | <code>floor_fixture</code> | <code>192, 370</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
+| <code>event</code> | <code>event.standing_person_1</code> | Standing person | <code>standing_person</code> | <code>392, 414</code> | <code>floor</code> | Chatty Clerk<br>Word from Across Town | Mapped capacity |
+| <code>event</code> | <code>event.shop_item_1</code> | Shop item | <code>shop_item</code> | <code>94, 82</code> | <code>estate_top_shelf</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_2</code> | Standing person | <code>standing_person</code> | <code>528, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_3</code> | Standing person | <code>standing_person</code> | <code>592, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.surface_item_1</code> | Counter or table item | <code>surface_item</code> | <code>532, 118</code> | <code>display_counter</code> | Estate Map | Mapped capacity |
+| <code>scenario</code> | <code>scenario.standing_person_2</code> | Runtime contact reserve | <code>standing_person</code> | <code>448, 248</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
+| <code>scenario</code> | <code>scenario.wall_item_2</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>786, 60</code> | <code>wall</code> | Variable runtime content | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.floor_fixture_2</code> | Delivery package reserve | <code>floor_fixture</code> | <code>192, 370</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
 | <code>exit</code> | <code>exit.door_right_lower</code> | Travel exit | <code>doorway</code> | <code>864, 362</code> | <code>right_exit</code> | Leave | Mapped capacity |
 
 #### Scenario — Estate Lot Day — <code>pawn_shop::pawn_shop_estate_lot_day</code>
 
-**Full save:** 29 slots = 20 shared + 9 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 29 slots = 18 shared + 11 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.doorway_1</code> | Marked Clear Exit | <code>doorway</code> | <code>36, 266</code> | <code>left_exit</code> | Marked Clear Exit | Exact scenario |
-| <code>scenario.floor_fixture_1</code> | Scenario alternatives: Quarantined Lot Refused / Returned Cart | <code>floor_fixture</code> | <code>174, 358</code> | <code>floor</code> | Quarantined Lot Refused<br>Returned Cart | Exact scenario |
-| <code>scenario.shop_item_1</code> | False-Bottom Cup | <code>shop_item</code> | <code>96, 184</code> | <code>estate_left_lower_shelf</code> | False-Bottom Cup | Exact scenario |
-| <code>scenario.shop_item_2</code> | Roadside Map | <code>shop_item</code> | <code>362, 176</code> | <code>estate_center_lower_shelf</code> | Roadside Map | Exact scenario |
-| <code>scenario.standing_person_1</code> | Estate Appraiser | <code>standing_person</code> | <code>460, 358</code> | <code>floor</code> | Estate Appraiser | Exact scenario |
-| <code>scenario.surface_item_1</code> | Sal Estate Item | <code>surface_item</code> | <code>676, 104</code> | <code>estate_right_upper_shelf</code> | Sal Estate Item | Exact scenario |
-| <code>scenario.surface_item_2</code> | One Owner | <code>surface_item</code> | <code>196, 184</code> | <code>estate_left_lower_shelf</code> | One Owner | Exact scenario |
-| <code>scenario.surface_item_3</code> | Scenario alternatives: Economy Provenance Public Service / Provenance Marks Abandoned | <code>surface_item</code> | <code>172, 120</code> | <code>manual_placement_required</code> | Economy Provenance Public Service<br>Provenance Marks Abandoned | Provisional geometry |
-| <code>scenario.wall_item_1</code> | Displayed Lot | <code>wall_mounted</code> | <code>768, 48</code> | <code>wall</code> | Displayed Lot | Exact scenario |
-
-**Action-only IDs (3; no placement marker):** <code>estate_cart</code><br><code>provenance_marks</code><br><code>quarantined_lot</code>
+| <code>scenario.local_doorway_1</code> | Marked Clear Exit | <code>doorway</code> | <code>36, 266</code> | <code>left_exit</code> | Marked Clear Exit | Exact scenario |
+| <code>scenario.local_floor_fixture_1</code> | Estate Cart | <code>floor_fixture</code> | <code>174, 358</code> | <code>floor</code> | Estate Cart | Exact scenario |
+| <code>scenario.local_floor_fixture_2</code> | Scenario alternatives: Quarantined Lot / Quarantined Lot Refused / Returned Cart | <code>floor_fixture</code> | <code>54, 422</code> | <code>manual_placement_required</code> | Quarantined Lot<br>Quarantined Lot Refused<br>Returned Cart | Provisional geometry |
+| <code>scenario.local_shop_item_1</code> | False-Bottom Cup | <code>shop_item</code> | <code>96, 184</code> | <code>estate_left_lower_shelf</code> | False-Bottom Cup | Exact scenario |
+| <code>scenario.local_shop_item_2</code> | Roadside Map | <code>shop_item</code> | <code>362, 176</code> | <code>estate_center_lower_shelf</code> | Roadside Map | Exact scenario |
+| <code>scenario.local_standing_person_1</code> | Estate Appraiser | <code>standing_person</code> | <code>460, 358</code> | <code>floor</code> | Estate Appraiser | Exact scenario |
+| <code>scenario.local_surface_item_1</code> | Estate Map | <code>surface_item</code> | <code>676, 104</code> | <code>estate_right_upper_shelf</code> | Estate Map | Exact scenario |
+| <code>scenario.local_surface_item_2</code> | Provenance Marks | <code>surface_item</code> | <code>196, 184</code> | <code>estate_left_lower_shelf</code> | Provenance Marks | Exact scenario |
+| <code>scenario.local_surface_item_3</code> | Public Provenance Card | <code>surface_item</code> | <code>172, 120</code> | <code>manual_placement_required</code> | Public Provenance Card | Provisional geometry |
+| <code>scenario.local_surface_item_4</code> | Provenance Marks Abandoned | <code>surface_item</code> | <code>244, 120</code> | <code>manual_placement_required</code> | Provenance Marks Abandoned | Provisional geometry |
+| <code>scenario.local_wall_item_1</code> | Displayed Lot | <code>wall_mounted</code> | <code>768, 48</code> | <code>wall</code> | Displayed Lot | Exact scenario |
 
 #### Scenario — Sal's Mood — <code>pawn_shop::pawn_shop_sals_mood</code>
 
-**Full save:** 25 slots = 20 shared + 5 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 27 slots = 18 shared + 9 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.doorway_1</code> | Marked Clear Exit | <code>doorway</code> | <code>36, 266</code> | <code>left_exit</code> | Marked Clear Exit | Exact scenario |
-| <code>scenario.floor_fixture_1</code> | Scenario alternatives: Private Appraisal / Reopened Counter | <code>floor_fixture</code> | <code>174, 358</code> | <code>floor</code> | Private Appraisal<br>Reopened Counter | Exact scenario |
-| <code>scenario.standing_person_1</code> | Sal Shopkeeper | <code>standing_person</code> | <code>460, 358</code> | <code>floor</code> | Sal Shopkeeper | Exact scenario |
-| <code>scenario.surface_item_1</code> | Sal Quotes Once | <code>surface_item</code> | <code>676, 104</code> | <code>estate_right_upper_shelf</code> | Sal Quotes Once | Exact scenario |
-| <code>scenario.surface_item_2</code> | Service Appraisal Public Service | <code>surface_item</code> | <code>196, 184</code> | <code>estate_left_lower_shelf</code> | Service Appraisal Public Service | Exact scenario |
-
-**Action-only IDs (5; no placement marker):** <code>closed_shutters</code><br><code>private_appraisal</code><br><code>private_appraisal_abandoned</code><br><code>private_appraisal_refused</code><br><code>unfinished_jobs</code>
+| <code>scenario.local_doorway_1</code> | Marked Clear Exit | <code>doorway</code> | <code>36, 266</code> | <code>left_exit</code> | Marked Clear Exit | Exact scenario |
+| <code>scenario.local_floor_fixture_1</code> | Private Appraisal Abandoned | <code>floor_fixture</code> | <code>174, 358</code> | <code>floor</code> | Private Appraisal Abandoned | Exact scenario |
+| <code>scenario.local_floor_fixture_2</code> | Reopened Counter | <code>floor_fixture</code> | <code>54, 422</code> | <code>manual_placement_required</code> | Reopened Counter | Provisional geometry |
+| <code>scenario.local_floor_fixture_3</code> | Scenario alternatives: Closed Shutters / Private Appraisal Refused | <code>floor_fixture</code> | <code>670, 422</code> | <code>manual_placement_required</code> | Closed Shutters<br>Private Appraisal Refused | Provisional geometry |
+| <code>scenario.local_standing_person_1</code> | Sal Shopkeeper | <code>standing_person</code> | <code>460, 358</code> | <code>floor</code> | Sal Shopkeeper | Exact scenario |
+| <code>scenario.local_surface_item_1</code> | Private Appraisal | <code>surface_item</code> | <code>676, 104</code> | <code>estate_right_upper_shelf</code> | Private Appraisal | Exact scenario |
+| <code>scenario.local_surface_item_2</code> | Half-Finished Repairs | <code>surface_item</code> | <code>196, 184</code> | <code>estate_left_lower_shelf</code> | Half-Finished Repairs | Exact scenario |
+| <code>scenario.local_surface_item_3</code> | Private Appraisal | <code>surface_item</code> | <code>172, 120</code> | <code>manual_placement_required</code> | Private Appraisal | Provisional geometry |
+| <code>scenario.local_surface_item_4</code> | Posted Appraisal Sheet | <code>surface_item</code> | <code>244, 120</code> | <code>manual_placement_required</code> | Posted Appraisal Sheet | Provisional geometry |
 
 #### Scenario — Serial-Check Day — <code>pawn_shop::pawn_shop_serial_check_day</code>
 
-**Full save:** 26 slots = 20 shared + 6 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 26 slots = 18 shared + 8 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.doorway_1</code> | Marked Clear Exit | <code>doorway</code> | <code>36, 266</code> | <code>left_exit</code> | Marked Clear Exit | Exact scenario |
-| <code>scenario.floor_fixture_1</code> | Withdrawn Stock | <code>floor_fixture</code> | <code>174, 358</code> | <code>floor</code> | Withdrawn Stock | Exact scenario |
-| <code>scenario.standing_person_1</code> | Records Clerk | <code>standing_person</code> | <code>460, 358</code> | <code>floor</code> | Records Clerk | Exact scenario |
-| <code>scenario.surface_item_1</code> | The Open Book | <code>surface_item</code> | <code>676, 104</code> | <code>estate_right_upper_shelf</code> | The Open Book | Exact scenario |
-| <code>scenario.surface_item_2</code> | Scenario alternatives: Hold Object Abandoned / Serial Sweep Hold / Waiting Hold / Waiting Hold Refused | <code>surface_item</code> | <code>196, 184</code> | <code>estate_left_lower_shelf</code> | Hold Object Abandoned<br>Serial Sweep Hold<br>Waiting Hold<br>Waiting Hold Refused | Exact scenario |
-| <code>scenario.wall_item_1</code> | Disclosed Hold | <code>wall_mounted</code> | <code>768, 48</code> | <code>wall</code> | Disclosed Hold | Exact scenario |
-
-**Action-only IDs (2; no placement marker):** <code>hold_object</code><br><code>serial_station</code>
+| <code>scenario.local_doorway_1</code> | Marked Clear Exit | <code>doorway</code> | <code>36, 266</code> | <code>left_exit</code> | Marked Clear Exit | Exact scenario |
+| <code>scenario.local_floor_fixture_1</code> | Withdrawn Stock | <code>floor_fixture</code> | <code>174, 358</code> | <code>floor</code> | Withdrawn Stock | Exact scenario |
+| <code>scenario.local_standing_person_1</code> | Records Clerk | <code>standing_person</code> | <code>460, 358</code> | <code>floor</code> | Records Clerk | Exact scenario |
+| <code>scenario.local_surface_item_1</code> | Wrapped Item Awaiting Serial Check | <code>surface_item</code> | <code>676, 104</code> | <code>estate_right_upper_shelf</code> | Wrapped Item Awaiting Serial Check | Exact scenario |
+| <code>scenario.local_surface_item_2</code> | Serial Lamp and Carbon Sheet | <code>surface_item</code> | <code>196, 184</code> | <code>estate_left_lower_shelf</code> | Serial Lamp and Carbon Sheet | Exact scenario |
+| <code>scenario.local_surface_item_3</code> | Unsealed Item and Unfinished Carbon Copy | <code>surface_item</code> | <code>172, 120</code> | <code>manual_placement_required</code> | Unsealed Item and Unfinished Carbon Copy | Provisional geometry |
+| <code>scenario.local_surface_item_4</code> | Scenario alternatives: Serial Sweep Hold / Waiting Hold / Waiting Hold Refused | <code>surface_item</code> | <code>244, 120</code> | <code>manual_placement_required</code> | Serial Sweep Hold<br>Waiting Hold<br>Waiting Hold Refused | Provisional geometry |
+| <code>scenario.local_wall_item_1</code> | Disclosed Hold | <code>wall_mounted</code> | <code>768, 48</code> | <code>wall</code> | Disclosed Hold | Exact scenario |
 
 ### Grand Casino Main Floor — <code>grand_casino</code>
 
@@ -1360,32 +1577,32 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 
 | Family | Slot ID | Physical role | Footprint | Position | Support | Occupant/claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| <code>fixed</code> | <code>fixed.game_machine_1</code> | Game fixture | <code>wall_mounted</code> | <code>156, 118</code> | <code>wall</code> | Empty capacity | Optional empty capacity |
-| <code>fixed</code> | <code>fixed.game_machine_2</code> | Game fixture | <code>wall_mounted</code> | <code>312, 118</code> | <code>wall</code> | Empty capacity | Optional empty capacity |
-| <code>fixed</code> | <code>fixed.game_machine_3</code> | Game fixture | <code>wall_mounted</code> | <code>468, 118</code> | <code>wall</code> | Empty capacity | Optional empty capacity |
-| <code>fixed</code> | <code>fixed.game_machine_4</code> | Game fixture | <code>wall_mounted</code> | <code>624, 118</code> | <code>wall</code> | Empty capacity | Optional empty capacity |
-| <code>fixed</code> | <code>fixed.game_table_left</code> | Game fixture | <code>surface_item</code> | <code>218, 258</code> | <code>left_table_felt</code> | Empty capacity | Optional empty capacity |
-| <code>fixed</code> | <code>fixed.game_table_right</code> | Game fixture | <code>surface_item</code> | <code>682, 258</code> | <code>right_table_felt</code> | Empty capacity | Optional empty capacity |
-| <code>fixed</code> | <code>fixed.fixture_host_desk</code> | Floor prop | <code>floor_fixture</code> | <code>388, 366</code> | <code>floor</code> | Host Desk | Mapped capacity |
-| <code>fixed</code> | <code>fixed.patron_bishop</code> | Standing person | <code>standing_person</code> | <code>104, 424</code> | <code>floor</code> | Recruitment Bishop | Mapped capacity |
-| <code>fixed</code> | <code>fixed.service_house_drink</code> | Counter or table item | <code>surface_item</code> | <code>810, 222</code> | <code>base_drink_shelf</code> | House Drink | Mapped capacity |
+| <code>fixed</code> | <code>fixed.game_machine_1</code> | Random game machine | <code>wall_mounted</code> | <code>156, 118</code> | <code>wall</code> | Empty capacity | Optional empty capacity |
+| <code>fixed</code> | <code>fixed.game_machine_2</code> | Random game machine | <code>wall_mounted</code> | <code>312, 118</code> | <code>wall</code> | Empty capacity | Optional empty capacity |
+| <code>fixed</code> | <code>fixed.game_machine_3</code> | Random game machine | <code>wall_mounted</code> | <code>468, 118</code> | <code>wall</code> | Empty capacity | Optional empty capacity |
+| <code>fixed</code> | <code>fixed.game_machine_4</code> | Random game machine | <code>wall_mounted</code> | <code>624, 118</code> | <code>wall</code> | Empty capacity | Optional empty capacity |
+| <code>fixed</code> | <code>fixed.game_table_left</code> | Random game table | <code>surface_item</code> | <code>218, 258</code> | <code>left_table_felt</code> | Empty capacity | Optional empty capacity |
+| <code>fixed</code> | <code>fixed.game_table_right</code> | Random game table | <code>surface_item</code> | <code>682, 258</code> | <code>right_table_felt</code> | Empty capacity | Optional empty capacity |
+| <code>fixed</code> | <code>fixed.fixture_host_desk</code> | Casino host desk | <code>floor_fixture</code> | <code>388, 366</code> | <code>floor</code> | Host Desk | Mapped capacity |
+| <code>fixed</code> | <code>fixed.patron_bishop</code> | Bishop | <code>standing_person</code> | <code>104, 424</code> | <code>floor</code> | Bishop | Mapped capacity |
+| <code>fixed</code> | <code>fixed.service_house_drink</code> | House drink service | <code>surface_item</code> | <code>810, 222</code> | <code>base_drink_shelf</code> | Buy a Drink | Mapped capacity |
 | <code>fixed</code> | <code>fixed.staff_host</code> | Iris | <code>behind_counter_person</code> | <code>450, 350</code> | <code>host_desk</code> | Iris | Required |
 | <code>fixed</code> | <code>fixed.event_audit_roster</code> | Audit Roster | <code>wall_mounted</code> | <code>176, 36</code> | <code>wall</code> | Audit Roster | Required |
-| <code>event</code> | <code>event.behind_counter_person_1</code> | Counter staff | <code>behind_counter_person</code> | <code>512, 354</code> | <code>cocktail_service</code> | Chain06 Cass First Contact<br>Comped Suite Offer<br>The House Calls | Mapped capacity |
-| <code>event</code> | <code>event.behind_counter_person_2</code> | Counter staff | <code>behind_counter_person</code> | <code>780, 294</code> | <code>right_table_felt</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
-| <code>event</code> | <code>event.wall_item_1</code> | Wall item | <code>wall_mounted</code> | <code>92, 36</code> | <code>wall</code> | Chain06 Rourke Noticed | Mapped capacity |
+| <code>event</code> | <code>event.behind_counter_person_1</code> | Counter staff | <code>behind_counter_person</code> | <code>512, 354</code> | <code>cocktail_service</code> | Cass Venn<br>Comped Suite Offer<br>The House Calls | Mapped capacity |
+| <code>event</code> | <code>event.behind_counter_person_2</code> | Counter staff | <code>behind_counter_person</code> | <code>780, 294</code> | <code>right_table_felt</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.wall_item_1</code> | Wall item | <code>wall_mounted</code> | <code>92, 36</code> | <code>wall</code> | Noticed | Mapped capacity |
 | <code>event</code> | <code>event.floor_fixture_1</code> | Floor prop | <code>floor_fixture</code> | <code>762, 430</code> | <code>floor</code> | Empty capacity | Optional empty capacity |
-| <code>event</code> | <code>event.standing_person_1</code> | Standing person | <code>standing_person</code> | <code>156, 414</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_2</code> | Standing person | <code>standing_person</code> | <code>260, 414</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_3</code> | Standing person | <code>standing_person</code> | <code>364, 414</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_4</code> | Standing person | <code>standing_person</code> | <code>468, 414</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_5</code> | Standing person | <code>standing_person</code> | <code>572, 414</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_6</code> | Standing person | <code>standing_person</code> | <code>676, 414</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_7</code> | Standing person | <code>standing_person</code> | <code>780, 414</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
-| <code>scenario</code> | <code>scenario.floor_fixture_2</code> | Delivery package reserve | <code>floor_fixture</code> | <code>636, 430</code> | <code>floor</code> | Grand Casino Audit Night Audit Barrier<br>Grand Casino Convention Crowd Machine Banks<br>Grand Casino Gala Night Aftermath Public Floor Reopened Prop | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.floor_fixture_3</code> | Crew live-table reserve | <code>floor_fixture</code> | <code>744, 352</code> | <code>floor</code> | Grand Casino Convention Crowd Table Block<br>Grand Casino Gala Night Stage Lift | Runtime reserve — The Crew's live table can follow the player into this room beside authored scenario objects. |
-| <code>scenario</code> | <code>scenario.wall_item_3</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>450, 24</code> | <code>wall</code> | Grand Casino Audit Night Cage Seal<br>Grand Casino Convention Crowd Task 0<br>Grand Casino Convention Crowd Task 1<br>Grand Casino Convention Crowd Task 3<br>Grand Casino Convention Crowd Work 2 Choice 0<br>Grand Casino Gala Night Task 0<br>Grand Casino Gala Night Task 1<br>Grand Casino Gala Night Task 3<br>Grand Casino Gala Night Work 2 Choice 0 | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.standing_person_3</code> | Runtime contact reserve | <code>standing_person</code> | <code>392, 248</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
+| <code>event</code> | <code>event.standing_person_1</code> | Standing person | <code>standing_person</code> | <code>156, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_2</code> | Standing person | <code>standing_person</code> | <code>260, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_3</code> | Standing person | <code>standing_person</code> | <code>364, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_4</code> | Standing person | <code>standing_person</code> | <code>468, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_5</code> | Standing person | <code>standing_person</code> | <code>572, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_6</code> | Standing person | <code>standing_person</code> | <code>676, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_7</code> | Standing person | <code>standing_person</code> | <code>780, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>scenario</code> | <code>scenario.floor_fixture_2</code> | Delivery package reserve | <code>floor_fixture</code> | <code>636, 430</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.floor_fixture_3</code> | Crew live-table reserve | <code>floor_fixture</code> | <code>744, 352</code> | <code>floor</code> | Variable runtime content | Runtime reserve — The Crew's live table can follow the player into this room beside authored scenario objects. |
+| <code>scenario</code> | <code>scenario.wall_item_3</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>450, 24</code> | <code>wall</code> | Variable runtime content | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.standing_person_3</code> | Runtime contact reserve | <code>standing_person</code> | <code>392, 248</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
 | <code>exit</code> | <code>exit.travel_back_room</code> | Travel exit | <code>doorway</code> | <code>36, 246</code> | <code>left_exit</code> | Grand Casino Back Room | Mapped capacity |
 | <code>exit</code> | <code>exit.travel_high_limit</code> | Travel exit | <code>doorway</code> | <code>36, 398</code> | <code>left_exit</code> | Grand Casino High-Limit Room | Mapped capacity |
 | <code>exit</code> | <code>exit.travel_cage</code> | Travel exit | <code>doorway</code> | <code>864, 246</code> | <code>right_exit</code> | Grand Casino Cage | Mapped capacity |
@@ -1393,45 +1610,68 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 
 #### Scenario — Audit Night — <code>grand_casino::grand_casino_audit_night</code>
 
-**Full save:** 34 slots = 30 shared + 4 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 43 slots = 30 shared + 13 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.doorway_1</code> | Clear exit | <code>doorway</code> | <code>864, 348</code> | <code>right_exit</code> | Clear exit | Exact scenario |
-| <code>scenario.standing_person_1</code> | Scenario alternatives: Audit lead / Inspection attendant / Lead auditor / Pit manager | <code>standing_person</code> | <code>284, 352</code> | <code>floor</code> | Audit lead<br>Inspection attendant<br>Lead auditor<br>Pit manager | Exact scenario |
-| <code>scenario.standing_person_2</code> | Manager | <code>standing_person</code> | <code>618, 352</code> | <code>floor</code> | Manager | Exact scenario |
-| <code>scenario.surface_item_1</code> | Completed pit ledger | <code>surface_item</code> | <code>874, 182</code> | <code>base_drink_shelf</code> | Completed pit ledger | Exact scenario |
+| <code>scenario.local_doorway_1</code> | Clear exit | <code>doorway</code> | <code>864, 348</code> | <code>right_exit</code> | Clear exit | Exact scenario |
+| <code>scenario.local_floor_fixture_1</code> | Audit zone barrier | <code>floor_fixture</code> | <code>214, 334</code> | <code>manual_placement_required</code> | Audit zone barrier | Provisional geometry |
+| <code>scenario.local_floor_fixture_2</code> | Audit zone barrier | <code>floor_fixture</code> | <code>342, 334</code> | <code>manual_placement_required</code> | Audit zone barrier | Provisional geometry |
+| <code>scenario.local_ground_marker_1</code> | Scenario alternatives: Redirected chalk arrow / Torn route card | <code>ground_marker</code> | <code>276, 430</code> | <code>floor</code> | Redirected chalk arrow<br>Torn route card | Exact scenario |
+| <code>scenario.local_standing_person_1</code> | Lead auditor | <code>standing_person</code> | <code>284, 352</code> | <code>floor</code> | Lead auditor | Exact scenario |
+| <code>scenario.local_standing_person_2</code> | Lead auditor | <code>standing_person</code> | <code>94, 350</code> | <code>manual_placement_required</code> | Lead auditor | Provisional geometry |
+| <code>scenario.local_standing_person_3</code> | Scenario alternatives: Inspection attendant / Manager / Pit manager | <code>standing_person</code> | <code>618, 352</code> | <code>floor</code> | Inspection attendant<br>Manager<br>Pit manager | Exact scenario |
+| <code>scenario.local_standing_person_4</code> | Audit lead | <code>standing_person</code> | <code>156, 334</code> | <code>manual_placement_required</code> | Audit lead | Provisional geometry |
+| <code>scenario.local_surface_item_1</code> | Pit audit ledger | <code>surface_item</code> | <code>874, 182</code> | <code>base_drink_shelf</code> | Pit audit ledger | Exact scenario |
+| <code>scenario.local_surface_item_2</code> | Completed pit ledger | <code>surface_item</code> | <code>318, 64</code> | <code>manual_placement_required</code> | Completed pit ledger | Provisional geometry |
+| <code>scenario.local_wall_item_1</code> | Public exit marker | <code>wall_mounted</code> | <code>56, 36</code> | <code>wall</code> | Public exit marker | Exact scenario |
+| <code>scenario.local_wall_item_2</code> | Audit cage seal | <code>wall_mounted</code> | <code>254, 24</code> | <code>wall</code> | Audit cage seal | Exact scenario |
+| <code>scenario.local_wall_item_3</code> | Audit cage seal | <code>wall_mounted</code> | <code>536, 64</code> | <code>manual_placement_required</code> | Audit cage seal | Provisional geometry |
 
-**Action-only IDs (12; no placement marker):** <code>grand_casino_audit_night_aftermath_audit_interrupted_prop</code><br><code>grand_casino_audit_night_aftermath_redirected_audit_prop</code><br><code>grand_casino_audit_night_audit_barrier</code><br><code>grand_casino_audit_night_cage_seal</code><br><code>grand_casino_audit_night_open_exit_marker</code><br><code>grand_casino_audit_night_pit_ledger</code><br><code>grand_casino_audit_night_task_0</code><br><code>grand_casino_audit_night_task_2</code><br><code>grand_casino_audit_night_task_3</code><br><code>grand_casino_audit_night_work_1_choice_0</code><br><code>grand_casino_audit_night_work_1_choice_1</code><br><code>grand_casino_audit_night_work_1_choice_2</code>
+**Action-only IDs (6; no placement marker):** <code>grand_casino_audit_night_task_0</code><br><code>grand_casino_audit_night_task_2</code><br><code>grand_casino_audit_night_task_3</code><br><code>grand_casino_audit_night_work_1_choice_0</code><br><code>grand_casino_audit_night_work_1_choice_1</code><br><code>grand_casino_audit_night_work_1_choice_2</code>
 
 #### Scenario — Convention Crowd — <code>grand_casino::grand_casino_convention_crowd</code>
 
-**Full save:** 35 slots = 30 shared + 5 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 42 slots = 30 shared + 12 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.doorway_1</code> | Clear exit | <code>doorway</code> | <code>864, 348</code> | <code>right_exit</code> | Clear exit | Exact scenario |
-| <code>scenario.group_1</code> | Scenario alternatives: Badge delegations / Convention coordinator / Disguised delegate / Floor attendant | <code>group</code> | <code>180, 352</code> | <code>floor</code> | Badge delegations<br>Convention coordinator<br>Disguised delegate<br>Floor attendant | Exact scenario |
-| <code>scenario.standing_person_1</code> | Coordinator | <code>standing_person</code> | <code>284, 352</code> | <code>floor</code> | Coordinator | Exact scenario |
-| <code>scenario.wall_item_1</code> | Borrowed Badge | <code>wall_mounted</code> | <code>56, 36</code> | <code>wall</code> | Borrowed Badge | Exact scenario |
-| <code>scenario.wall_item_2</code> | Color-coded schedule board | <code>wall_mounted</code> | <code>254, 24</code> | <code>wall</code> | Color-coded schedule board | Exact scenario |
+| <code>scenario.local_doorway_1</code> | Clear exit | <code>doorway</code> | <code>864, 348</code> | <code>right_exit</code> | Clear exit | Exact scenario |
+| <code>scenario.local_floor_fixture_1</code> | Delegation Cart Block | <code>floor_fixture</code> | <code>678, 334</code> | <code>manual_placement_required</code> | Delegation Cart Block | Provisional geometry |
+| <code>scenario.local_floor_fixture_2</code> | Reserved machine banks | <code>floor_fixture</code> | <code>30, 366</code> | <code>manual_placement_required</code> | Reserved machine banks | Provisional geometry |
+| <code>scenario.local_floor_fixture_3</code> | Delegation Cart Block | <code>floor_fixture</code> | <code>722, 194</code> | <code>manual_placement_required</code> | Delegation Cart Block | Provisional geometry |
+| <code>scenario.local_ground_marker_1</code> | Stacked reservation cards | <code>ground_marker</code> | <code>276, 430</code> | <code>floor</code> | Stacked reservation cards | Exact scenario |
+| <code>scenario.local_group_1</code> | Scenario alternatives: Badge delegations / Floor attendant | <code>group</code> | <code>180, 352</code> | <code>floor</code> | Badge delegations<br>Floor attendant | Exact scenario |
+| <code>scenario.local_group_2</code> | Scenario alternatives: Convention coordinator / Disguised delegate | <code>group</code> | <code>108, 302</code> | <code>manual_placement_required</code> | Convention coordinator<br>Disguised delegate | Provisional geometry |
+| <code>scenario.local_standing_person_1</code> | Coordinator | <code>standing_person</code> | <code>284, 352</code> | <code>floor</code> | Coordinator | Exact scenario |
+| <code>scenario.local_standing_person_2</code> | Coordinator | <code>standing_person</code> | <code>618, 352</code> | <code>floor</code> | Coordinator | Exact scenario |
+| <code>scenario.local_wall_item_1</code> | Convention booking board | <code>wall_mounted</code> | <code>56, 36</code> | <code>wall</code> | Convention booking board | Exact scenario |
+| <code>scenario.local_wall_item_2</code> | Spare convention badges | <code>wall_mounted</code> | <code>254, 24</code> | <code>wall</code> | Spare convention badges | Exact scenario |
+| <code>scenario.local_wall_item_3</code> | Color-coded schedule board | <code>wall_mounted</code> | <code>336, 64</code> | <code>manual_placement_required</code> | Color-coded schedule board | Provisional geometry |
 
-**Action-only IDs (11; no placement marker):** <code>grand_casino_convention_crowd_aftermath_camouflage_route_prop</code><br><code>grand_casino_convention_crowd_aftermath_convention_departed_prop</code><br><code>grand_casino_convention_crowd_booking_board</code><br><code>grand_casino_convention_crowd_machine_banks</code><br><code>grand_casino_convention_crowd_table_block</code><br><code>grand_casino_convention_crowd_task_0</code><br><code>grand_casino_convention_crowd_task_1</code><br><code>grand_casino_convention_crowd_task_3</code><br><code>grand_casino_convention_crowd_work_2_choice_0</code><br><code>grand_casino_convention_crowd_work_2_choice_1</code><br><code>grand_casino_convention_crowd_work_2_choice_2</code>
+**Action-only IDs (6; no placement marker):** <code>grand_casino_convention_crowd_task_0</code><br><code>grand_casino_convention_crowd_task_1</code><br><code>grand_casino_convention_crowd_task_3</code><br><code>grand_casino_convention_crowd_work_2_choice_0</code><br><code>grand_casino_convention_crowd_work_2_choice_1</code><br><code>grand_casino_convention_crowd_work_2_choice_2</code>
 
 #### Scenario — Gala Night — <code>grand_casino::grand_casino_gala_night</code>
 
-**Full save:** 36 slots = 30 shared + 6 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 43 slots = 30 shared + 13 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.doorway_1</code> | Clear exit | <code>doorway</code> | <code>864, 348</code> | <code>right_exit</code> | Clear exit | Exact scenario |
-| <code>scenario.floor_fixture_1</code> | A Borrowed Name | <code>floor_fixture</code> | <code>726, 430</code> | <code>floor</code> | A Borrowed Name | Exact scenario |
-| <code>scenario.standing_person_1</code> | Scenario alternatives: Accepted gala guest / Gala verifier / Host / Lift operator | <code>standing_person</code> | <code>284, 352</code> | <code>floor</code> | Accepted gala guest<br>Gala verifier<br>Host<br>Lift operator | Exact scenario |
-| <code>scenario.standing_person_2</code> | Stagehand | <code>standing_person</code> | <code>618, 352</code> | <code>floor</code> | Stagehand | Exact scenario |
-| <code>scenario.surface_item_1</code> | Charity credential desk | <code>surface_item</code> | <code>874, 182</code> | <code>base_drink_shelf</code> | Charity credential desk | Exact scenario |
-| <code>scenario.wall_item_1</code> | Verified charity badge | <code>wall_mounted</code> | <code>56, 36</code> | <code>wall</code> | Verified charity badge | Exact scenario |
+| <code>scenario.local_doorway_1</code> | Clear exit | <code>doorway</code> | <code>864, 348</code> | <code>right_exit</code> | Clear exit | Exact scenario |
+| <code>scenario.local_floor_fixture_1</code> | Stalled Stage Lift | <code>floor_fixture</code> | <code>726, 430</code> | <code>floor</code> | Stalled Stage Lift | Exact scenario |
+| <code>scenario.local_floor_fixture_2</code> | Stalled Stage Lift | <code>floor_fixture</code> | <code>30, 366</code> | <code>manual_placement_required</code> | Stalled Stage Lift | Provisional geometry |
+| <code>scenario.local_floor_fixture_3</code> | Coiled queue ropes | <code>floor_fixture</code> | <code>78, 350</code> | <code>manual_placement_required</code> | Coiled queue ropes | Provisional geometry |
+| <code>scenario.local_ground_marker_1</code> | Raised stage lift | <code>ground_marker</code> | <code>276, 430</code> | <code>floor</code> | Raised stage lift | Exact scenario |
+| <code>scenario.local_standing_person_1</code> | Host | <code>standing_person</code> | <code>126, 334</code> | <code>manual_placement_required</code> | Host | Provisional geometry |
+| <code>scenario.local_standing_person_2</code> | Stagehand | <code>standing_person</code> | <code>618, 352</code> | <code>floor</code> | Stagehand | Exact scenario |
+| <code>scenario.local_standing_person_3</code> | Scenario alternatives: Accepted gala guest / Host | <code>standing_person</code> | <code>284, 352</code> | <code>floor</code> | Accepted gala guest<br>Host | Exact scenario |
+| <code>scenario.local_standing_person_4</code> | Scenario alternatives: Lift operator / Stagehand | <code>standing_person</code> | <code>468, 278</code> | <code>manual_placement_required</code> | Lift operator<br>Stagehand | Provisional geometry |
+| <code>scenario.local_standing_person_5</code> | Gala verifier | <code>standing_person</code> | <code>540, 278</code> | <code>manual_placement_required</code> | Gala verifier | Provisional geometry |
+| <code>scenario.local_surface_item_1</code> | Charity credential desk | <code>surface_item</code> | <code>874, 182</code> | <code>base_drink_shelf</code> | Charity credential desk | Exact scenario |
+| <code>scenario.local_wall_item_1</code> | Gala coat check | <code>wall_mounted</code> | <code>56, 36</code> | <code>wall</code> | Gala coat check | Exact scenario |
+| <code>scenario.local_wall_item_2</code> | Verified charity badge | <code>wall_mounted</code> | <code>254, 24</code> | <code>wall</code> | Verified charity badge | Exact scenario |
 
-**Action-only IDs (10; no placement marker):** <code>grand_casino_gala_night_aftermath_gala_interrupted_prop</code><br><code>grand_casino_gala_night_aftermath_public_floor_reopened_prop</code><br><code>grand_casino_gala_night_coat_check</code><br><code>grand_casino_gala_night_stage_lift</code><br><code>grand_casino_gala_night_task_0</code><br><code>grand_casino_gala_night_task_1</code><br><code>grand_casino_gala_night_task_3</code><br><code>grand_casino_gala_night_work_2_choice_0</code><br><code>grand_casino_gala_night_work_2_choice_1</code><br><code>grand_casino_gala_night_work_2_choice_2</code>
+**Action-only IDs (6; no placement marker):** <code>grand_casino_gala_night_task_0</code><br><code>grand_casino_gala_night_task_1</code><br><code>grand_casino_gala_night_task_3</code><br><code>grand_casino_gala_night_work_2_choice_0</code><br><code>grand_casino_gala_night_work_2_choice_1</code><br><code>grand_casino_gala_night_work_2_choice_2</code>
 
 ### Grand Casino High-Limit Room — <code>grand_casino_high_limit</code>
 
@@ -1441,21 +1681,21 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 
 | Family | Slot ID | Physical role | Footprint | Position | Support | Occupant/claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| <code>fixed</code> | <code>fixed.game_table_1</code> | Game fixture | <code>surface_item</code> | <code>156, 258</code> | <code>left_table</code> | Empty capacity | Optional empty capacity |
-| <code>fixed</code> | <code>fixed.game_table_2</code> | Game fixture | <code>surface_item</code> | <code>310, 258</code> | <code>left_table</code> | Empty capacity | Optional empty capacity |
-| <code>fixed</code> | <code>fixed.game_table_3</code> | Game fixture | <code>surface_item</code> | <code>590, 258</code> | <code>right_table</code> | Empty capacity | Optional empty capacity |
-| <code>fixed</code> | <code>fixed.game_table_4</code> | Game fixture | <code>surface_item</code> | <code>744, 258</code> | <code>right_table</code> | Empty capacity | Optional empty capacity |
+| <code>fixed</code> | <code>fixed.game_table_1</code> | Random game table | <code>surface_item</code> | <code>156, 258</code> | <code>left_table</code> | Empty capacity | Optional empty capacity |
+| <code>fixed</code> | <code>fixed.game_table_2</code> | Random game table | <code>surface_item</code> | <code>310, 258</code> | <code>left_table</code> | Empty capacity | Optional empty capacity |
+| <code>fixed</code> | <code>fixed.game_table_3</code> | Random game table | <code>surface_item</code> | <code>590, 258</code> | <code>right_table</code> | Empty capacity | Optional empty capacity |
+| <code>fixed</code> | <code>fixed.game_table_4</code> | Random game table | <code>surface_item</code> | <code>744, 258</code> | <code>right_table</code> | Empty capacity | Optional empty capacity |
 | <code>event</code> | <code>event.floor_fixture_1</code> | Floor prop | <code>floor_fixture</code> | <code>190, 414</code> | <code>floor</code> | Empty capacity | Optional empty capacity |
 | <code>event</code> | <code>event.standing_person_1</code> | Standing person | <code>standing_person</code> | <code>162, 414</code> | <code>floor</code> | Empty capacity | Optional empty capacity |
-| <code>event</code> | <code>event.standing_person_2</code> | Standing person | <code>standing_person</code> | <code>282, 414</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_3</code> | Standing person | <code>standing_person</code> | <code>402, 414</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_4</code> | Standing person | <code>standing_person</code> | <code>522, 414</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_5</code> | Standing person | <code>standing_person</code> | <code>642, 414</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_6</code> | Standing person | <code>standing_person</code> | <code>762, 414</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
-| <code>scenario</code> | <code>scenario.wall_item_1</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>44, 60</code> | <code>left_notice_panel</code> | Runtime reserve (unclaimed) | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.floor_fixture_1</code> | Delivery package reserve | <code>floor_fixture</code> | <code>744, 414</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.standing_person_1</code> | Runtime contact reserve | <code>standing_person</code> | <code>448, 248</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
-| <code>scenario</code> | <code>scenario.floor_fixture_2</code> | Crew live-table reserve | <code>floor_fixture</code> | <code>762, 426</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — The Crew's live table can follow the player into this room beside authored scenario objects. |
+| <code>event</code> | <code>event.standing_person_2</code> | Standing person | <code>standing_person</code> | <code>282, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_3</code> | Standing person | <code>standing_person</code> | <code>402, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_4</code> | Standing person | <code>standing_person</code> | <code>522, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_5</code> | Standing person | <code>standing_person</code> | <code>642, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_6</code> | Standing person | <code>standing_person</code> | <code>762, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>scenario</code> | <code>scenario.wall_item_1</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>44, 60</code> | <code>left_notice_panel</code> | Variable runtime content | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.floor_fixture_1</code> | Delivery package reserve | <code>floor_fixture</code> | <code>744, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.standing_person_1</code> | Runtime contact reserve | <code>standing_person</code> | <code>448, 248</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
+| <code>scenario</code> | <code>scenario.floor_fixture_2</code> | Crew live-table reserve | <code>floor_fixture</code> | <code>762, 426</code> | <code>floor</code> | Variable runtime content | Runtime reserve — The Crew's live table can follow the player into this room beside authored scenario objects. |
 | <code>exit</code> | <code>exit.travel_left</code> | Travel exit | <code>doorway</code> | <code>36, 390</code> | <code>left_exit</code> | Grand Casino Main Floor | Mapped capacity |
 | <code>exit</code> | <code>exit.travel_right</code> | Travel exit | <code>doorway</code> | <code>864, 390</code> | <code>right_exit</code> | Grand Casino Cage | Mapped capacity |
 | <code>exit</code> | <code>exit.safe_left</code> | Travel exit | <code>doorway</code> | <code>36, 278</code> | <code>left_exit</code> | Leave | Mapped capacity |
@@ -1470,17 +1710,17 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 
 | Family | Slot ID | Physical role | Footprint | Position | Support | Occupant/claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| <code>fixed</code> | <code>fixed.game_table_left</code> | Game fixture | <code>surface_item</code> | <code>218, 258</code> | <code>left_table</code> | Empty capacity | Optional empty capacity |
-| <code>fixed</code> | <code>fixed.game_table_right</code> | Game fixture | <code>surface_item</code> | <code>682, 258</code> | <code>right_table</code> | Empty capacity | Optional empty capacity |
+| <code>fixed</code> | <code>fixed.game_table_left</code> | Random game table | <code>surface_item</code> | <code>218, 258</code> | <code>left_table</code> | Empty capacity | Optional empty capacity |
+| <code>fixed</code> | <code>fixed.game_table_right</code> | Random game table | <code>surface_item</code> | <code>682, 258</code> | <code>right_table</code> | Empty capacity | Optional empty capacity |
 | <code>event</code> | <code>event.standing_person_1</code> | Standing person | <code>standing_person</code> | <code>210, 414</code> | <code>floor</code> | Empty capacity | Optional empty capacity |
-| <code>event</code> | <code>event.standing_person_2</code> | Standing person | <code>standing_person</code> | <code>330, 414</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_3</code> | Standing person | <code>standing_person</code> | <code>450, 414</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_4</code> | Standing person | <code>standing_person</code> | <code>570, 414</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_5</code> | Standing person | <code>standing_person</code> | <code>690, 414</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
-| <code>scenario</code> | <code>scenario.floor_fixture_1</code> | Delivery package reserve | <code>floor_fixture</code> | <code>708, 414</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.wall_item_1</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>520, 188</code> | <code>wall</code> | Runtime reserve (unclaimed) | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.standing_person_1</code> | Runtime contact reserve | <code>standing_person</code> | <code>444, 248</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
-| <code>scenario</code> | <code>scenario.floor_fixture_2</code> | Crew live-table reserve | <code>floor_fixture</code> | <code>726, 426</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — The Crew's live table can follow the player into this room beside authored scenario objects. |
+| <code>event</code> | <code>event.standing_person_2</code> | Standing person | <code>standing_person</code> | <code>330, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_3</code> | Standing person | <code>standing_person</code> | <code>450, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_4</code> | Standing person | <code>standing_person</code> | <code>570, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_5</code> | Standing person | <code>standing_person</code> | <code>690, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
+| <code>scenario</code> | <code>scenario.floor_fixture_1</code> | Delivery package reserve | <code>floor_fixture</code> | <code>708, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.wall_item_1</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>520, 188</code> | <code>wall</code> | Variable runtime content | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.standing_person_1</code> | Runtime contact reserve | <code>standing_person</code> | <code>444, 248</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
+| <code>scenario</code> | <code>scenario.floor_fixture_2</code> | Crew live-table reserve | <code>floor_fixture</code> | <code>726, 426</code> | <code>floor</code> | Variable runtime content | Runtime reserve — The Crew's live table can follow the player into this room beside authored scenario objects. |
 | <code>exit</code> | <code>exit.travel_left</code> | Travel exit | <code>doorway</code> | <code>36, 390</code> | <code>left_exit</code> | Leave | Mapped capacity |
 
 This map has no exact catalog scenario. Its manual coverage ends with the base context.
@@ -1489,7 +1729,7 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 
 #### Base / No Scenario — <code>grand_casino_cage::__base</code>
 
-**Save snapshot:** 14 slots = 7 fixed + 0 event + 5 shared scenario + 2 exit. Exact scenarios on this map: 0.
+**Save snapshot:** 13 slots = 7 fixed + 0 event + 4 shared scenario + 2 exit. Exact scenarios on this map: 0.
 
 | Family | Slot ID | Physical role | Footprint | Position | Support | Occupant/claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -1497,14 +1737,13 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 | <code>fixed</code> | <code>fixed.item_shop_2</code> | Shop item | <code>shop_item</code> | <code>222, 178</code> | <code>gift_case_upper</code> | Empty capacity | Optional empty capacity |
 | <code>fixed</code> | <code>fixed.item_shop_3</code> | Shop item | <code>shop_item</code> | <code>282, 260</code> | <code>teller_counter</code> | Empty capacity | Optional empty capacity |
 | <code>fixed</code> | <code>fixed.item_shop_4</code> | Shop item | <code>shop_item</code> | <code>614, 260</code> | <code>teller_counter</code> | Empty capacity | Optional empty capacity |
-| <code>fixed</code> | <code>fixed.fixture_cage_1</code> | Counter or table item | <code>surface_item</code> | <code>500, 260</code> | <code>teller_counter</code> | Cage Counter | Mapped capacity |
-| <code>fixed</code> | <code>fixed.fixture_cage_2</code> | Wall item | <code>wall_mounted</code> | <code>720, 203</code> | <code>atm</code> | Cage ATM | Mapped capacity |
+| <code>fixed</code> | <code>fixed.fixture_cage_counter</code> | Cashier cage counter | <code>surface_item</code> | <code>500, 260</code> | <code>teller_counter</code> | Cage Counter | Mapped capacity |
+| <code>fixed</code> | <code>fixed.fixture_cage_atm</code> | Cage ATM | <code>wall_mounted</code> | <code>720, 203</code> | <code>atm</code> | Cage ATM | Mapped capacity |
 | <code>fixed</code> | <code>fixed.staff_linda</code> | Linda | <code>behind_counter_person</code> | <code>500, 340</code> | <code>teller_counter</code> | Linda | Required |
-| <code>scenario</code> | <code>scenario.surface_item_1</code> | Counter or table item | <code>surface_item</code> | <code>386, 260</code> | <code>teller_counter</code> | Empty capacity | Optional empty capacity |
-| <code>scenario</code> | <code>scenario.floor_fixture_1</code> | Delivery package reserve | <code>floor_fixture</code> | <code>160, 358</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.wall_item_1</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>690, 188</code> | <code>wall</code> | Runtime reserve (unclaimed) | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.standing_person_1</code> | Runtime contact reserve | <code>standing_person</code> | <code>448, 212</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
-| <code>scenario</code> | <code>scenario.floor_fixture_2</code> | Crew live-table reserve | <code>floor_fixture</code> | <code>178, 370</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — The Crew's live table can follow the player into this room beside authored scenario objects. |
+| <code>scenario</code> | <code>scenario.floor_fixture_1</code> | Delivery package reserve | <code>floor_fixture</code> | <code>160, 358</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.wall_item_1</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>690, 188</code> | <code>wall</code> | Variable runtime content | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.standing_person_1</code> | Runtime contact reserve | <code>standing_person</code> | <code>448, 212</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
+| <code>scenario</code> | <code>scenario.floor_fixture_2</code> | Crew live-table reserve | <code>floor_fixture</code> | <code>178, 370</code> | <code>floor</code> | Variable runtime content | Runtime reserve — The Crew's live table can follow the player into this room beside authored scenario objects. |
 | <code>exit</code> | <code>exit.casino_floor_door</code> | Travel exit | <code>doorway</code> | <code>847, 248</code> | <code>floor_door</code> | Grand Casino Main Floor | Mapped capacity |
 | <code>exit</code> | <code>exit.travel_floor_door</code> | Travel exit | <code>doorway</code> | <code>847, 160</code> | <code>floor_door</code> | Leave | Mapped capacity |
 
@@ -1514,25 +1753,24 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 
 #### Base / No Scenario — <code>motel_room::__base</code>
 
-**Save snapshot:** 16 slots = 11 fixed + 0 event + 4 shared scenario + 1 exit. Exact scenarios on this map: 0.
+**Save snapshot:** 15 slots = 11 fixed + 0 event + 3 shared scenario + 1 exit. Exact scenarios on this map: 0.
 
 | Family | Slot ID | Physical role | Footprint | Position | Support | Occupant/claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| <code>fixed</code> | <code>fixed.home_container_1</code> | Floor prop | <code>floor_fixture</code> | <code>700, 358</code> | <code>floor</code> | Meta Bag 01 | Mapped capacity |
-| <code>fixed</code> | <code>fixed.home_container_2</code> | Floor prop | <code>floor_fixture</code> | <code>170, 358</code> | <code>floor</code> | Meta Trunk 02 | Mapped capacity |
-| <code>fixed</code> | <code>fixed.home_container_3</code> | Floor prop | <code>floor_fixture</code> | <code>300, 358</code> | <code>floor</code> | Trunk 01 | Mapped capacity |
-| <code>fixed</code> | <code>fixed.home_trade_up</code> | Counter or table item | <code>surface_item</code> | <code>540, 294</code> | <code>rug</code> | Station | Mapped capacity |
-| <code>fixed</code> | <code>fixed.home_tenure</code> | Counter or table item | <code>surface_item</code> | <code>780, 188</code> | <code>nightstand</code> | Status | Mapped capacity |
-| <code>fixed</code> | <code>fixed.home_sleep</code> | Counter or table item | <code>surface_item</code> | <code>495, 218</code> | <code>bedspread</code> | Bed | Mapped capacity |
-| <code>fixed</code> | <code>fixed.home_item_1</code> | Counter or table item | <code>surface_item</code> | <code>300, 294</code> | <code>rug</code> | Empty capacity | Optional empty capacity |
-| <code>fixed</code> | <code>fixed.home_item_2</code> | Counter or table item | <code>surface_item</code> | <code>370, 294</code> | <code>rug</code> | Empty capacity | Optional empty capacity |
-| <code>fixed</code> | <code>fixed.home_item_3</code> | Counter or table item | <code>surface_item</code> | <code>440, 294</code> | <code>rug</code> | Empty capacity | Optional empty capacity |
-| <code>fixed</code> | <code>fixed.home_upgrade</code> | Wall item | <code>wall_mounted</code> | <code>820, 72</code> | <code>wall</code> | Home | Mapped capacity |
-| <code>fixed</code> | <code>fixed.home_storage</code> | Floor prop | <code>floor_fixture</code> | <code>830, 358</code> | <code>floor</code> | Place | Mapped capacity |
-| <code>scenario</code> | <code>scenario.floor_fixture_1</code> | Delivery package reserve | <code>floor_fixture</code> | <code>302, 358</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.surface_item_1</code> | Counter or table item | <code>surface_item</code> | <code>420, 294</code> | <code>rug</code> | Empty capacity | Optional empty capacity |
-| <code>scenario</code> | <code>scenario.wall_item_1</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>180, 206</code> | <code>wall</code> | Runtime reserve (unclaimed) | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.standing_person_1</code> | Runtime contact reserve | <code>standing_person</code> | <code>448, 376</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
+| <code>fixed</code> | <code>fixed.home_container_1</code> | Home container 1 | <code>floor_fixture</code> | <code>700, 358</code> | <code>floor</code> | Meta Bag 01 | Mapped capacity |
+| <code>fixed</code> | <code>fixed.home_container_2</code> | Home container 2 | <code>floor_fixture</code> | <code>170, 358</code> | <code>floor</code> | Meta Trunk 02 | Mapped capacity |
+| <code>fixed</code> | <code>fixed.home_container_3</code> | Home container 3 | <code>floor_fixture</code> | <code>300, 358</code> | <code>floor</code> | Trunk 01 | Mapped capacity |
+| <code>fixed</code> | <code>fixed.home_trade_up</code> | Home trade-up station | <code>surface_item</code> | <code>540, 294</code> | <code>rug</code> | Station | Mapped capacity |
+| <code>fixed</code> | <code>fixed.home_tenure</code> | Home tenure status | <code>surface_item</code> | <code>780, 188</code> | <code>nightstand</code> | Status | Mapped capacity |
+| <code>fixed</code> | <code>fixed.home_sleep</code> | Bed and sleep control | <code>surface_item</code> | <code>495, 218</code> | <code>bedspread</code> | Bed | Mapped capacity |
+| <code>fixed</code> | <code>fixed.home_item_1</code> | Home item 1 | <code>surface_item</code> | <code>300, 294</code> | <code>rug</code> | Empty capacity | Optional empty capacity |
+| <code>fixed</code> | <code>fixed.home_item_2</code> | Home item 2 | <code>surface_item</code> | <code>370, 294</code> | <code>rug</code> | Empty capacity | Optional empty capacity |
+| <code>fixed</code> | <code>fixed.home_item_3</code> | Home item 3 | <code>surface_item</code> | <code>440, 294</code> | <code>rug</code> | Empty capacity | Optional empty capacity |
+| <code>fixed</code> | <code>fixed.home_upgrade</code> | Home upgrade board | <code>wall_mounted</code> | <code>820, 72</code> | <code>wall</code> | Home | Mapped capacity |
+| <code>fixed</code> | <code>fixed.home_storage</code> | Home storage | <code>floor_fixture</code> | <code>830, 358</code> | <code>floor</code> | Place | Mapped capacity |
+| <code>scenario</code> | <code>scenario.floor_fixture_1</code> | Delivery package reserve | <code>floor_fixture</code> | <code>302, 358</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.wall_item_1</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>180, 206</code> | <code>wall</code> | Variable runtime content | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.standing_person_1</code> | Runtime contact reserve | <code>standing_person</code> | <code>448, 376</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
 | <code>exit</code> | <code>exit.left_door</code> | Travel exit | <code>doorway</code> | <code>36, 262</code> | <code>left_exit</code> | Leave | Mapped capacity |
 
 This map has no exact catalog scenario. Its manual coverage ends with the base context.
@@ -1541,25 +1779,24 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 
 #### Base / No Scenario — <code>apartment::__base</code>
 
-**Save snapshot:** 16 slots = 11 fixed + 0 event + 4 shared scenario + 1 exit. Exact scenarios on this map: 0.
+**Save snapshot:** 15 slots = 11 fixed + 0 event + 3 shared scenario + 1 exit. Exact scenarios on this map: 0.
 
 | Family | Slot ID | Physical role | Footprint | Position | Support | Occupant/claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| <code>fixed</code> | <code>fixed.home_trade_up</code> | Counter or table item | <code>surface_item</code> | <code>500, 304</code> | <code>rug</code> | Station | Mapped capacity |
-| <code>fixed</code> | <code>fixed.home_tenure</code> | Counter or table item | <code>surface_item</code> | <code>700, 146</code> | <code>kitchen_counter</code> | Status | Mapped capacity |
-| <code>fixed</code> | <code>fixed.home_sleep</code> | Counter or table item | <code>surface_item</code> | <code>430, 222</code> | <code>sofa</code> | Bed | Mapped capacity |
-| <code>fixed</code> | <code>fixed.home_item_1</code> | Counter or table item | <code>surface_item</code> | <code>300, 304</code> | <code>rug</code> | Empty capacity | Optional empty capacity |
-| <code>fixed</code> | <code>fixed.home_item_2</code> | Counter or table item | <code>surface_item</code> | <code>370, 304</code> | <code>rug</code> | Empty capacity | Optional empty capacity |
-| <code>fixed</code> | <code>fixed.home_item_3</code> | Counter or table item | <code>surface_item</code> | <code>580, 304</code> | <code>rug</code> | Empty capacity | Optional empty capacity |
-| <code>fixed</code> | <code>fixed.home_container_1</code> | Floor prop | <code>floor_fixture</code> | <code>700, 358</code> | <code>floor</code> | Meta Bag 01 | Mapped capacity |
-| <code>fixed</code> | <code>fixed.home_container_2</code> | Floor prop | <code>floor_fixture</code> | <code>170, 358</code> | <code>floor</code> | Meta Trunk 02 | Mapped capacity |
-| <code>fixed</code> | <code>fixed.home_container_3</code> | Floor prop | <code>floor_fixture</code> | <code>290, 358</code> | <code>floor</code> | Trunk 01 | Mapped capacity |
-| <code>fixed</code> | <code>fixed.home_upgrade</code> | Wall item | <code>wall_mounted</code> | <code>570, 24</code> | <code>wall</code> | Home | Mapped capacity |
-| <code>fixed</code> | <code>fixed.home_storage</code> | Floor prop | <code>floor_fixture</code> | <code>820, 358</code> | <code>floor</code> | Place | Mapped capacity |
-| <code>scenario</code> | <code>scenario.surface_item_1</code> | Counter or table item | <code>surface_item</code> | <code>394, 304</code> | <code>rug</code> | Empty capacity | Optional empty capacity |
-| <code>scenario</code> | <code>scenario.floor_fixture_1</code> | Delivery package reserve | <code>floor_fixture</code> | <code>700, 270</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.wall_item_1</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>350, 206</code> | <code>wall</code> | Runtime reserve (unclaimed) | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.standing_person_1</code> | Runtime contact reserve | <code>standing_person</code> | <code>448, 384</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
+| <code>fixed</code> | <code>fixed.home_trade_up</code> | Home trade-up station | <code>surface_item</code> | <code>500, 304</code> | <code>rug</code> | Station | Mapped capacity |
+| <code>fixed</code> | <code>fixed.home_tenure</code> | Home tenure status | <code>surface_item</code> | <code>700, 146</code> | <code>kitchen_counter</code> | Status | Mapped capacity |
+| <code>fixed</code> | <code>fixed.home_sleep</code> | Bed and sleep control | <code>surface_item</code> | <code>430, 222</code> | <code>sofa</code> | Bed | Mapped capacity |
+| <code>fixed</code> | <code>fixed.home_item_1</code> | Home item 1 | <code>surface_item</code> | <code>300, 304</code> | <code>rug</code> | Empty capacity | Optional empty capacity |
+| <code>fixed</code> | <code>fixed.home_item_2</code> | Home item 2 | <code>surface_item</code> | <code>370, 304</code> | <code>rug</code> | Empty capacity | Optional empty capacity |
+| <code>fixed</code> | <code>fixed.home_item_3</code> | Home item 3 | <code>surface_item</code> | <code>580, 304</code> | <code>rug</code> | Empty capacity | Optional empty capacity |
+| <code>fixed</code> | <code>fixed.home_container_1</code> | Home container 1 | <code>floor_fixture</code> | <code>700, 358</code> | <code>floor</code> | Meta Bag 01 | Mapped capacity |
+| <code>fixed</code> | <code>fixed.home_container_2</code> | Home container 2 | <code>floor_fixture</code> | <code>170, 358</code> | <code>floor</code> | Meta Trunk 02 | Mapped capacity |
+| <code>fixed</code> | <code>fixed.home_container_3</code> | Home container 3 | <code>floor_fixture</code> | <code>290, 358</code> | <code>floor</code> | Trunk 01 | Mapped capacity |
+| <code>fixed</code> | <code>fixed.home_upgrade</code> | Home upgrade board | <code>wall_mounted</code> | <code>570, 24</code> | <code>wall</code> | Home | Mapped capacity |
+| <code>fixed</code> | <code>fixed.home_storage</code> | Home storage | <code>floor_fixture</code> | <code>820, 358</code> | <code>floor</code> | Place | Mapped capacity |
+| <code>scenario</code> | <code>scenario.floor_fixture_1</code> | Delivery package reserve | <code>floor_fixture</code> | <code>700, 270</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.wall_item_1</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>350, 206</code> | <code>wall</code> | Variable runtime content | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.standing_person_1</code> | Runtime contact reserve | <code>standing_person</code> | <code>448, 384</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
 | <code>exit</code> | <code>exit.left_door</code> | Travel exit | <code>doorway</code> | <code>36, 262</code> | <code>left_exit</code> | Leave | Mapped capacity |
 
 This map has no exact catalog scenario. Its manual coverage ends with the base context.
@@ -1568,25 +1805,24 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 
 #### Base / No Scenario — <code>house::__base</code>
 
-**Save snapshot:** 16 slots = 11 fixed + 0 event + 4 shared scenario + 1 exit. Exact scenarios on this map: 0.
+**Save snapshot:** 15 slots = 11 fixed + 0 event + 3 shared scenario + 1 exit. Exact scenarios on this map: 0.
 
 | Family | Slot ID | Physical role | Footprint | Position | Support | Occupant/claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| <code>fixed</code> | <code>fixed.home_container_1</code> | Floor prop | <code>floor_fixture</code> | <code>422, 358</code> | <code>floor</code> | Meta Bag 01 | Mapped capacity |
-| <code>fixed</code> | <code>fixed.home_container_2</code> | Floor prop | <code>floor_fixture</code> | <code>150, 358</code> | <code>floor</code> | Meta Trunk 02 | Mapped capacity |
-| <code>fixed</code> | <code>fixed.home_container_3</code> | Floor prop | <code>floor_fixture</code> | <code>750, 358</code> | <code>floor</code> | Trunk 01 | Mapped capacity |
-| <code>fixed</code> | <code>fixed.home_sleep</code> | Counter or table item | <code>surface_item</code> | <code>196, 224</code> | <code>sofa</code> | Bed | Mapped capacity |
-| <code>fixed</code> | <code>fixed.home_tenure</code> | Counter or table item | <code>surface_item</code> | <code>652, 160</code> | <code>dining_table</code> | Status | Mapped capacity |
-| <code>fixed</code> | <code>fixed.home_trade_up</code> | Counter or table item | <code>surface_item</code> | <code>426, 222</code> | <code>coffee_table</code> | Station | Mapped capacity |
-| <code>fixed</code> | <code>fixed.home_item_1</code> | Counter or table item | <code>surface_item</code> | <code>270, 296</code> | <code>rug</code> | Empty capacity | Optional empty capacity |
-| <code>fixed</code> | <code>fixed.home_item_2</code> | Counter or table item | <code>surface_item</code> | <code>550, 296</code> | <code>rug</code> | Empty capacity | Optional empty capacity |
-| <code>fixed</code> | <code>fixed.home_item_3</code> | Counter or table item | <code>surface_item</code> | <code>650, 296</code> | <code>rug</code> | Empty capacity | Optional empty capacity |
-| <code>fixed</code> | <code>fixed.home_upgrade</code> | Wall item | <code>wall_mounted</code> | <code>335, 120</code> | <code>television_screen</code> | Home | Mapped capacity |
-| <code>fixed</code> | <code>fixed.home_storage</code> | Floor prop | <code>floor_fixture</code> | <code>570, 358</code> | <code>floor</code> | Place | Mapped capacity |
-| <code>scenario</code> | <code>scenario.floor_fixture_1</code> | Delivery package reserve | <code>floor_fixture</code> | <code>302, 358</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.surface_item_1</code> | Counter or table item | <code>surface_item</code> | <code>660, 296</code> | <code>rug</code> | Empty capacity | Optional empty capacity |
-| <code>scenario</code> | <code>scenario.wall_item_1</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>520, 206</code> | <code>wall</code> | Runtime reserve (unclaimed) | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.standing_person_1</code> | Runtime contact reserve | <code>standing_person</code> | <code>448, 172</code> | <code>floor</code> | Runtime reserve (unclaimed) | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
+| <code>fixed</code> | <code>fixed.home_container_1</code> | Home container 1 | <code>floor_fixture</code> | <code>422, 358</code> | <code>floor</code> | Meta Bag 01 | Mapped capacity |
+| <code>fixed</code> | <code>fixed.home_container_2</code> | Home container 2 | <code>floor_fixture</code> | <code>150, 358</code> | <code>floor</code> | Meta Trunk 02 | Mapped capacity |
+| <code>fixed</code> | <code>fixed.home_container_3</code> | Home container 3 | <code>floor_fixture</code> | <code>750, 358</code> | <code>floor</code> | Trunk 01 | Mapped capacity |
+| <code>fixed</code> | <code>fixed.home_sleep</code> | Bed and sleep control | <code>surface_item</code> | <code>196, 224</code> | <code>sofa</code> | Bed | Mapped capacity |
+| <code>fixed</code> | <code>fixed.home_tenure</code> | Home tenure status | <code>surface_item</code> | <code>652, 160</code> | <code>dining_table</code> | Status | Mapped capacity |
+| <code>fixed</code> | <code>fixed.home_trade_up</code> | Home trade-up station | <code>surface_item</code> | <code>426, 222</code> | <code>coffee_table</code> | Station | Mapped capacity |
+| <code>fixed</code> | <code>fixed.home_item_1</code> | Home item 1 | <code>surface_item</code> | <code>270, 296</code> | <code>rug</code> | Empty capacity | Optional empty capacity |
+| <code>fixed</code> | <code>fixed.home_item_2</code> | Home item 2 | <code>surface_item</code> | <code>550, 296</code> | <code>rug</code> | Empty capacity | Optional empty capacity |
+| <code>fixed</code> | <code>fixed.home_item_3</code> | Home item 3 | <code>surface_item</code> | <code>650, 296</code> | <code>rug</code> | Empty capacity | Optional empty capacity |
+| <code>fixed</code> | <code>fixed.home_upgrade</code> | Home upgrade board | <code>wall_mounted</code> | <code>335, 120</code> | <code>television_screen</code> | Home | Mapped capacity |
+| <code>fixed</code> | <code>fixed.home_storage</code> | Home storage | <code>floor_fixture</code> | <code>570, 358</code> | <code>floor</code> | Place | Mapped capacity |
+| <code>scenario</code> | <code>scenario.floor_fixture_1</code> | Delivery package reserve | <code>floor_fixture</code> | <code>302, 358</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.wall_item_1</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>520, 206</code> | <code>wall</code> | Variable runtime content | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.standing_person_1</code> | Runtime contact reserve | <code>standing_person</code> | <code>448, 172</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
 | <code>exit</code> | <code>exit.travel_door</code> | Travel exit | <code>doorway</code> | <code>864, 358</code> | <code>right_exit</code> | Leave | Mapped capacity |
 
 This map has no exact catalog scenario. Its manual coverage ends with the base context.

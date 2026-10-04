@@ -115,9 +115,9 @@ static func _check_event_presentation_contract(library: ContentLibrary, failures
 	var knuckles_speaker := _dict(knuckles.get("speaker", {}))
 	if str(knuckles.get("asset_path", "")) != "res://assets/art/events/rowdy_regular.png" \
 		or str(knuckles.get("icon_key", "")) != "rowdy_regular" \
-		or str(knuckles.get("environment_prop", "")) != "rowdy_patron" \
+		or str(knuckles.get("environment_prop", "")) != "character_actor" \
 		or not bool(knuckles_speaker.get("environment_actor", false)):
-		failures.append("Knuckles recruitment must remain an actor-present rowdy encounter, not a door prop.")
+		failures.append("Knuckles recruitment must remain a named standing actor with rowdy encounter art, not a door prop.")
 
 
 static func _check_placement_matrix(library: ContentLibrary, failures: Array) -> void:

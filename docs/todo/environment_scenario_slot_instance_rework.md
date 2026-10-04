@@ -43,7 +43,7 @@ The current data split is deliberate:
   ordinary scenario-family capacity in the sole base context. The eighth raw
   no-catalog map is the excluded template-only parent described above.
 - `data/environments/scenario_slot_layouts.json` (schema 1, slot schema 2)
-  owns 55 exact `map_id::scenario_id` banks containing 339 scenario-instance
+  owns 55 exact `map_id::scenario_id` banks containing 604 scenario-instance
   slots.
 - `data/environments/developer_placement_overrides.json` (schema 3) stores
   committed authoring overrides. Room-level `slot_positions` contain shared
@@ -53,15 +53,15 @@ The current data split is deliberate:
   20-base/55-scenario owner checklist and slot inventory. It is a guide, not
   another authority.
 
-The post-audit raw shared source contains 579 authored positions: 175 fixed,
-147 event, 222 scenario-source, and 35 exit. Of the 222 shared scenario
+The post-audit raw shared source contains 565 authored positions: 175 fixed,
+144 event, 213 scenario-source, and 33 exit. Of the 213 shared scenario
 positions, 69
 are explicit runtime reserves. Catalog scenario contexts replace the former
 ordinary map-wide scenario bank with their exact local bank and append the
 room's runtime reserves. The seven reachable no-catalog maps persist their effective
 ordinary scenario slots at room scope rather than beneath a fabricated
 scenario ID. This is why the raw shared census must not be added blindly to
-the 339 local slots.
+the 604 local slots.
 
 ## Completed implementation checklist
 
@@ -92,10 +92,11 @@ the 339 local slots.
   route endpoints, and known claimant identities.
 - [x] Retain deterministic source coordinates wherever a scenario's slots
   could be mapped without conflict.
-- [x] Mark the seven unavoidable generated coordinates with
+- [x] Mark the 180 unavoidable generated coordinates with
   `provisional_geometry: true` for the owner's attention.
-- [x] Record action-only scenario identities separately so nonphysical actions
-  do not create fake placement markers.
+- [x] Give every authored scenario scene object exact placement authority;
+  interaction-only choices remain attached to their tangible host and do not
+  create fake placement markers.
 - [x] Generate and validate exact instance/object preference maps for the
   binder.
 
@@ -206,9 +207,9 @@ contexts and
   the shared fixed/event/exit geometry plus any shared scenario reserves.
 - [ ] Open every one of the 55 scenario contexts and arrange its local
   scenario bank against the already-positioned shared room content.
-- [ ] Prioritize the seven rows marked **PROVISIONAL** in the breakdown; their
-  generated coordinates are deterministic but explicitly awaiting artistic
-  placement.
+- [ ] Treat all 180 scenario slots marked with provisional geometry as awaiting
+  artistic placement; their generated coordinates are deterministic starting
+  points, not approved final composition.
 - [ ] Check all four family tabs and enable Empty capacity and Runtime
   reserves before accepting each context.
 - [ ] Use **Save Current Layout** once the entire active context is correct.

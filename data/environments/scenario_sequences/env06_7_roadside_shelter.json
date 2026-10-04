@@ -7613,8 +7613,8 @@
 
                   },
                   "enabled": true,
-                  "icon_key": "patron_talk",
-                  "label": "Overflowing Passenger Queue",
+                  "icon_key": "room_route",
+                  "label": "Overflow Queue Line",
                   "role": "evidence",
                   "state": "unmanaged",
                   "visible": true,
@@ -8828,7 +8828,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "3a40127857e69439ebf465bbc9d41c039f68c3780ba9794c2f0871ceed0d8bb8"
+        "sequence_signature": "7d1fa7c9ee61b77abea5661d48c5e427aa382a1caa83fc9384631844616034bd"
       }
     },
     {
@@ -9615,7 +9615,7 @@
                       "open": "The machine gate now stands open while the cooler gate remains visibly latched."
                     },
                     "enabled": true,
-                    "label": "Gate",
+                    "label": "Machine-Zone Gate",
                     "role": "door",
                     "state": "arrival",
                     "visible": true,
@@ -10438,7 +10438,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "db018e32bf4206e36de5317fb24faac0a1bd3de27657f664659c5ca0ced3720c"
+        "sequence_signature": "5483c42de400f53de5e8ba9ae46dcad7aaba33d03eb3753e3cddadda1f13ee3d"
       }
     },
     {

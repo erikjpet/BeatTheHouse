@@ -16,7 +16,7 @@ MANUAL PLACEMENT PASS.**
 
 The counts and tables below intentionally preserve the earlier consolidation
 snapshot. They are not current authority. The generated scenario-layout guide
-contains the live 579-row raw census and all 75 reachable save contexts.
+contains the live 565-row raw census and all 75 reachable save contexts.
 
 This document answers three practical questions for every authored placement
 map: what was permanent, what reusable capacity existed, and what appeared in

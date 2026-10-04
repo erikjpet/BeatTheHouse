@@ -3006,9 +3006,9 @@ func _check_surface_bindings_non_mutating(game: GameModule, surface: Dictionary,
 func _check_run_action_service_boundary(library: ContentLibrary, failures: Array) -> void:
 	var item_definition := _first_definition(library.items)
 	var service_definition := _first_definition(library.services)
-	var lender_definition := _first_definition(library.lenders)
+	var lender_definition := library.lender("the_crew")
 	if item_definition.is_empty() or service_definition.is_empty() or lender_definition.is_empty():
-		failures.append("RunActionService boundary check needs item, service, and lender definitions.")
+		failures.append("RunActionService boundary check needs item, service, and the Corner Store's Crew lender definition.")
 		return
 	var fixture_archetype := _archetype_by_id(library, "corner_store")
 	if fixture_archetype.is_empty():

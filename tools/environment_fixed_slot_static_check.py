@@ -64,32 +64,32 @@ V2_GENERIC_ROLE = {
     "doorway": "doorway",
 }
 V2_SCENARIO_CAPACITY_TARGETS = {
-    "corner_store": {"standing_person": 4, "doorway": 1, "wall_mounted": 3, "floor_fixture": 2, "surface_item": 1, "behind_counter_person": 1},
+    "corner_store": {"standing_person": 4, "doorway": 1, "wall_mounted": 2, "floor_fixture": 2, "surface_item": 1, "behind_counter_person": 1},
     "back_alley": {"standing_person": 4, "doorway": 1, "wall_mounted": 1, "floor_fixture": 3, "surface_item": 2, "ground_marker": 1},
     "motel": {"standing_person": 4, "behind_counter_person": 1, "floor_fixture": 3, "wall_mounted": 2, "doorway": 3, "hanging": 1, "surface_item": 1},
     "bar": {"floor_fixture": 4, "doorway": 1, "standing_person": 4, "surface_item": 2, "behind_counter_person": 2, "wall_mounted": 2, "seated_person": 2, "ground_marker": 1},
-    "gas_station_casino": {"wall_mounted": 3, "standing_person": 5, "doorway": 3, "surface_item": 1, "ground_marker": 1, "behind_counter_person": 2, "floor_fixture": 2, "group": 2},
+    "gas_station_casino": {"wall_mounted": 3, "standing_person": 5, "doorway": 3, "surface_item": 1, "ground_marker": 1, "behind_counter_person": 1, "floor_fixture": 2, "group": 2},
     "small_underground_casino": {"doorway": 1, "surface_item": 1, "floor_fixture": 1, "standing_person": 1, "wall_mounted": 1},
     "small_underground_casino:club": {"floor_fixture": 3, "standing_person": 4, "doorway": 2, "surface_item": 2, "group": 1, "ground_marker": 1, "wall_mounted": 1},
-    "small_underground_casino:casino": {"floor_fixture": 3, "standing_person": 3, "doorway": 2, "seated_person": 1, "wall_mounted": 3, "surface_item": 1, "group": 1, "ground_marker": 1},
-    "small_underground_casino:back_room": {"surface_item": 1, "floor_fixture": 1, "standing_person": 1, "wall_mounted": 1},
+    "small_underground_casino:casino": {"floor_fixture": 3, "standing_person": 3, "doorway": 2, "seated_person": 1, "wall_mounted": 3, "surface_item": 1, "ground_marker": 1},
+    "small_underground_casino:back_room": {"floor_fixture": 1, "standing_person": 1, "wall_mounted": 1},
     "jazz_club": {"standing_person": 3, "floor_fixture": 3, "doorway": 1, "wall_mounted": 2, "surface_item": 1, "seated_person": 1, "ground_marker": 1},
     "kitty_cat_lounge": {"standing_person": 3, "surface_item": 1, "floor_fixture": 3, "doorway": 2, "wall_mounted": 3, "seated_person": 1, "ground_marker": 1},
     "delta_queen": {"standing_person": 3, "floor_fixture": 3, "behind_counter_person": 1, "doorway": 1, "wall_mounted": 4, "group": 1, "surface_item": 2, "ground_marker": 1},
-    "beach": {"floor_fixture": 4, "standing_person": 5, "doorway": 1, "surface_item": 2, "wall_mounted": 2, "behind_counter_person": 2, "ground_marker": 1},
+    "beach": {"floor_fixture": 4, "standing_person": 5, "doorway": 1, "surface_item": 2, "wall_mounted": 2, "behind_counter_person": 1, "ground_marker": 1},
     "pawn_shop": {"standing_person": 2, "doorway": 1, "wall_mounted": 2, "floor_fixture": 2, "surface_item": 2, "shop_item": 2},
     "grand_casino": {"surface_item": 1, "standing_person": 3, "doorway": 1, "wall_mounted": 3, "group": 1, "floor_fixture": 3, "ground_marker": 1},
     "grand_casino_high_limit": {"wall_mounted": 1, "floor_fixture": 2, "standing_person": 1},
     "grand_casino_back_room": {"floor_fixture": 2, "standing_person": 1, "wall_mounted": 1},
-    "grand_casino_cage": {"surface_item": 1, "floor_fixture": 2, "standing_person": 1, "wall_mounted": 1},
-    "motel_room": {"floor_fixture": 1, "standing_person": 1, "surface_item": 1, "wall_mounted": 1},
-    "apartment": {"floor_fixture": 1, "standing_person": 1, "surface_item": 1, "wall_mounted": 1},
-    "house": {"floor_fixture": 1, "standing_person": 1, "surface_item": 1, "wall_mounted": 1},
+    "grand_casino_cage": {"floor_fixture": 2, "standing_person": 1, "wall_mounted": 1},
+    "motel_room": {"floor_fixture": 1, "standing_person": 1, "wall_mounted": 1},
+    "apartment": {"floor_fixture": 1, "standing_person": 1, "wall_mounted": 1},
+    "house": {"floor_fixture": 1, "standing_person": 1, "wall_mounted": 1},
 }
 V2_EVENT_CAPACITY_TARGETS = {
     "corner_store": {"behind_counter_person": 2, "floor_fixture": 1, "group": 1, "standing_person": 1, "ground_marker": 1},
     "back_alley": {"behind_counter_person": 1, "ground_marker": 1, "floor_fixture": 1, "standing_person": 6},
-    "motel": {"behind_counter_person": 1, "surface_item": 3, "ground_marker": 1, "standing_person": 4, "doorway": 1},
+    "motel": {"behind_counter_person": 1, "surface_item": 1, "ground_marker": 1, "standing_person": 4, "doorway": 1},
     "bar": {"behind_counter_person": 1, "floor_fixture": 2, "standing_person": 5, "doorway": 1},
     "gas_station_casino": {"doorway": 2, "floor_fixture": 2, "surface_item": 1, "ground_marker": 1, "standing_person": 5},
     "small_underground_casino": {"floor_fixture": 2, "standing_person": 8, "wall_mounted": 1, "surface_item": 3, "doorway": 1},
@@ -98,8 +98,8 @@ V2_EVENT_CAPACITY_TARGETS = {
     "small_underground_casino:back_room": {"surface_item": 4, "floor_fixture": 1, "doorway": 1, "standing_person": 6},
     "jazz_club": {"floor_fixture": 1, "standing_person": 3},
     "kitty_cat_lounge": {"floor_fixture": 1, "seated_person": 1, "doorway": 1, "standing_person": 6},
-    "delta_queen": {"seated_person": 1, "doorway": 1, "behind_counter_person": 1, "floor_fixture": 2, "wall_mounted": 1, "surface_item": 1, "standing_person": 6},
-    "beach": {},
+    "delta_queen": {"seated_person": 1, "doorway": 1, "behind_counter_person": 1, "floor_fixture": 2, "standing_person": 6},
+    "beach": {"standing_person": 1},
     "pawn_shop": {"floor_fixture": 1, "standing_person": 3, "shop_item": 1, "surface_item": 1},
     "grand_casino": {"behind_counter_person": 2, "wall_mounted": 1, "floor_fixture": 1, "standing_person": 7},
     "grand_casino_high_limit": {"floor_fixture": 1, "standing_person": 6},
@@ -123,14 +123,18 @@ MIN_INTERACTIVE_TARGET = (44.0, 44.0)
 MANDATORY_PLAYER_ACCESS_LANE = (16.0, 378.0, 868.0, 36.0)
 CONCRETE_SCENARIO_ART_KEYS = {
     "counter_phone", "jammed_machine", "motel_door", "paper_note", "payphone",
-    "room_display", "room_hazard", "room_refreshment", "room_seating",
-    "room_signal", "room_storage", "room_surface", "room_vehicle",
+    "room_barrier", "room_display", "room_fixture", "room_hazard",
+    "room_refreshment", "room_route", "room_seating", "room_signal",
+    "room_storage", "room_surface", "room_trace", "room_vehicle",
     "security_camera", "side_door", "trunk_offer",
 }
 ABSTRACT_SCENARIO_ROLES = {
     "barrier", "decision_route", "exit", "game_lane",
     "ledger", "primary_task", "route",
     "route_hazard", "route_marker", "task_station", "task_zone",
+}
+ATTACHED_SCENARIO_CONTROL_ROLES = {
+    "decision_route", "task_station", "task_zone",
 }
 ABSTRACT_SCENARIO_ID_TOKENS = {
     "barrier", "choice", "ledger", "marker", "route", "seal", "task",
@@ -360,6 +364,12 @@ def scenario_semantic_is_abstract(stable_id: str, semantic: dict[str, Any]) -> b
     )
 
 
+def scenario_semantic_is_attached_control(semantic: dict[str, Any]) -> bool:
+    """Return true for a semantic control hosted by a tangible room object."""
+
+    return str(semantic.get("role", "")).strip().lower() in ATTACHED_SCENARIO_CONTROL_ROLES
+
+
 def scenario_visual_art_key(
     map_data: dict[str, Any],
     semantic: dict[str, Any],
@@ -389,6 +399,8 @@ def scenario_visual_requires_room_slot(
     actor: bool,
     safe_exit: bool,
 ) -> bool:
+    if scenario_semantic_is_attached_control(semantic):
+        return False
     return actor or safe_exit or bool(scenario_visual_art_key(map_data, semantic, actor, safe_exit))
 
 
@@ -1171,13 +1183,13 @@ def validate_map_v2(
 
     slots_by_id: dict[str, dict[str, Any]] = {}
     slots_by_family: dict[str, dict[str, dict[str, Any]]] = {}
+    geometry_owners: dict[tuple[float, float, float, float], str] = {}
     for family in V2_FAMILIES:
         field = f"{family}_slots"
         raw_slots = map_data.get(field)
         check.require(isinstance(raw_slots, list), f"{map_id}: {field} must be an array")
         family_slots: dict[str, dict[str, Any]] = {}
         canonical_ordinals: dict[str, int] = {}
-        geometry_owners: dict[tuple[float, float, float, float], str] = {}
         for index, value in enumerate(values(raw_slots)):
             check.require(isinstance(value, dict), f"{map_id}.{field}[{index}] must be an object")
             if not isinstance(value, dict):
@@ -1226,7 +1238,7 @@ def validate_map_v2(
                 prior_owner = geometry_owners.get(bounds, "")
                 check.require(
                     not prior_owner,
-                    f"{map_id}.{family}: {slot_id} duplicates the exact geometry of {prior_owner}",
+                    f"{map_id}: {slot_id} duplicates the exact geometry of {prior_owner}",
                 )
                 geometry_owners[bounds] = slot_id
             # Labels may intentionally sit just outside the board edge so the
@@ -1409,12 +1421,46 @@ def _v2_scenario_art_key(
         return "side_door"
     identity = str(semantic.get("identity", "")).strip()
     stable_id = str(semantic.get("stable_object_id", identity.removeprefix("scenario::"))).strip()
+    position_key = SlotAuthoring.scenario_position_key(stable_id, semantic)
+    instance_art_keys = map_data.get("scenario_instance_art_keys", {}) \
+        if isinstance(map_data.get("scenario_instance_art_keys"), dict) else {}
+    instance_art_key = str(instance_art_keys.get(position_key, "")).strip()
+    if instance_art_key in CONCRETE_SCENARIO_ART_KEYS:
+        return instance_art_key
+    art_keys = map_data.get("scenario_art_keys", {}) if isinstance(map_data.get("scenario_art_keys"), dict) else {}
+    # Explicit stable-id map authority is reviewed physical intent and takes
+    # precedence over broad legacy role/id heuristics.
+    mapped_art_key = str(art_keys.get(stable_id, art_keys.get(identity, ""))).strip()
+    if mapped_art_key in CONCRETE_SCENARIO_ART_KEYS:
+        return mapped_art_key
+    authored_payload_key = str(semantic.get("icon_key", "")).strip()
+    if authored_payload_key in CONCRETE_SCENARIO_ART_KEYS:
+        return authored_payload_key
     if scenario_semantic_is_abstract(stable_id, semantic):
         return ""
-    art_keys = map_data.get("scenario_art_keys", {}) if isinstance(map_data.get("scenario_art_keys"), dict) else {}
-    authored_payload_key = str(semantic.get("icon_key", "")).strip()
-    art_key = str(art_keys.get(stable_id, art_keys.get(identity, authored_payload_key))).strip()
-    return art_key if art_key in CONCRETE_SCENARIO_ART_KEYS else ""
+    return ""
+
+
+def _v2_scenario_has_exact_slot(
+    map_data: dict[str, Any],
+    identity: str,
+    stable_id: str,
+    position_key: str,
+) -> bool:
+    if not bool(map_data.get("scenario_layout_scoped", False)):
+        return False
+    for field in (
+        "scenario_instance_slot_ids",
+        "scenario_instance_object_slot_ids",
+    ):
+        preferences = (
+            map_data.get(field, {})
+            if isinstance(map_data.get(field), dict)
+            else {}
+        )
+        if any(key and key in preferences for key in (position_key, stable_id, identity)):
+            return True
+    return False
 
 
 def _v2_scenario_preference(
@@ -1481,6 +1527,21 @@ def _v2_effective_scenario_map(
     result["scenario_instance_object_slot_ids"] = copy.deepcopy(
         layout.get("scenario_instance_object_slot_ids", {})
         if isinstance(layout.get("scenario_instance_object_slot_ids"), dict) else {}
+    )
+    scenario_object_class_ids = copy.deepcopy(
+        layout.get("scenario_instance_object_class_ids", {})
+        if isinstance(layout.get("scenario_instance_object_class_ids"), dict) else {}
+    )
+    result["scenario_instance_object_class_ids"] = scenario_object_class_ids
+    result["class_overrides"].update(scenario_object_class_ids)
+    scenario_instance_art_keys = copy.deepcopy(
+        layout.get("scenario_instance_art_keys", {})
+        if isinstance(layout.get("scenario_instance_art_keys"), dict) else {}
+    )
+    result["scenario_instance_art_keys"] = scenario_instance_art_keys
+    result["scenario_instance_action_host_ids"] = copy.deepcopy(
+        layout.get("scenario_instance_action_host_ids", {})
+        if isinstance(layout.get("scenario_instance_action_host_ids"), dict) else {}
     )
     scenario_family_ids = copy.deepcopy(
         layout.get("scenario_instance_object_family_ids", {})
@@ -1580,8 +1641,8 @@ def _v2_load_scenario_layouts(
             f"{map_id}::{scenario_id}: audit slot_count is stale",
         )
         check.require(
-            1 <= len(slots) <= 12,
-            f"{map_id}::{scenario_id}: compact manual layout must contain 1-12 scenario slots, found {len(slots)}",
+            1 <= len(slots) <= 16,
+            f"{map_id}::{scenario_id}: compact manual layout must contain 1-16 scenario slots, found {len(slots)}",
         )
         check.require(
             len(slots) <= int(audit.get("semantic_position_count", 0)),
@@ -1654,8 +1715,85 @@ def _v2_load_scenario_layouts(
                 and all(str(family) == "scenario" for family in family_ids.values()),
                 f"{map_id}::{scenario_id}: exact object family authority is incomplete",
             )
+        object_class_ids = value.get("scenario_instance_object_class_ids")
+        check.require(
+            isinstance(object_class_ids, dict),
+            f"{map_id}::{scenario_id}: scenario_instance_object_class_ids must be an object",
+        )
+        if isinstance(object_class_ids, dict):
+            check.require(
+                set(object_class_ids) == set(object_preferences),
+                f"{map_id}::{scenario_id}: exact object class authority is incomplete",
+            )
+            slots_by_id = {
+                str(slot.get("id", "")): slot
+                for slot in slots
+                if isinstance(slot, dict)
+            }
+            for object_id, placement_class in object_class_ids.items():
+                slot_id = str(object_preferences.get(object_id, ""))
+                check.require(
+                    str(placement_class) in CLASSES
+                    and str(
+                        slots_by_id.get(slot_id, {}).get("footprint_class", "")
+                    ) == str(placement_class),
+                    f"{map_id}::{scenario_id}: exact object class for {object_id} "
+                    "does not match its slot",
+                )
         semantic_preferences = value.get("scenario_instance_slot_ids", {}) \
             if isinstance(value.get("scenario_instance_slot_ids"), dict) else {}
+        action_hosts_value = value.get("scenario_instance_action_host_ids")
+        check.require(
+            isinstance(action_hosts_value, dict),
+            f"{map_id}::{scenario_id}: scenario_instance_action_host_ids must be an object",
+        )
+        action_hosts = action_hosts_value if isinstance(action_hosts_value, dict) else {}
+        host_ids = {
+            str(host_id)
+            for slot in slots + [
+                slot
+                for family in ("fixed", "event", "exit")
+                for slot in values(maps_by_id.get(map_id, {}).get(f"{family}_slots"))
+                if isinstance(slot, dict)
+            ]
+            for field in ("occupant_ids", "scenario_object_ids")
+            for host_id in values(slot.get(field))
+            if str(host_id).strip()
+        }
+        for action_id, host_id in action_hosts.items():
+            clean_action_id = str(action_id).strip()
+            clean_host_id = str(host_id).strip()
+            check.require(
+                bool(clean_action_id) and bool(clean_host_id)
+                and clean_action_id != clean_host_id,
+                f"{map_id}::{scenario_id}: malformed exact action-host authority",
+            )
+            check.require(
+                clean_action_id not in object_preferences,
+                f"{map_id}::{scenario_id}: {clean_action_id} owns a slot and aliases a host",
+            )
+            check.require(
+                clean_host_id in host_ids,
+                f"{map_id}::{scenario_id}: action host {clean_host_id} has no manual placement authority",
+            )
+        art_keys_value = value.get("scenario_instance_art_keys")
+        check.require(
+            isinstance(art_keys_value, dict),
+            f"{map_id}::{scenario_id}: scenario_instance_art_keys must be an object",
+        )
+        art_keys = art_keys_value if isinstance(art_keys_value, dict) else {}
+        for position_key, art_key in art_keys.items():
+            clean_position_key = str(position_key).strip()
+            check.require(
+                bool(clean_position_key)
+                and isinstance(art_key, str)
+                and art_key in CONCRETE_SCENARIO_ART_KEYS,
+                f"{map_id}::{scenario_id}: invalid exact art authority {position_key}={art_key}",
+            )
+            check.require(
+                clean_position_key in semantic_preferences,
+                f"{map_id}::{scenario_id}: exact art authority {clean_position_key} has no exact position",
+            )
         for position_key, slot_id in listed_position_keys.items():
             if position_key.startswith("route::"):
                 continue
@@ -1785,8 +1923,26 @@ def _v2_bind_scenario_snapshot(
         safe_exit = bool(interaction.get("safe_exit", semantic.get("safe_exit", False)))
         navigation_exit = _v2_interaction_navigates_environment(interaction)
         slot_family = "exit" if navigation_exit else "scenario"
+        position_key = SlotAuthoring.scenario_position_key(stable_id, semantic)
         art_key = _v2_scenario_art_key(map_data, semantic, actor, safe_exit, navigation_exit)
-        if not (actor or safe_exit or navigation_exit or art_key):
+        # An exact preference is physical authority only for a tangible scene
+        # object. Task/decision controls stay attached to their room host even
+        # if stale generated data happens to contain their identity.
+        if scenario_semantic_is_attached_control(semantic):
+            bindings[identity] = {
+                "mode": "attached", "slot_id": "", "slot_family": "",
+                "placement_class": "", "art_key": "", "reserved_slot_ids": [],
+            }
+            continue
+        if not (
+            actor
+            or safe_exit
+            or navigation_exit
+            or art_key
+            or _v2_scenario_has_exact_slot(
+                map_data, identity, stable_id, position_key
+            )
+        ):
             bindings[identity] = {
                 "mode": "attached", "slot_id": "", "slot_family": "",
                 "placement_class": "", "art_key": "", "reserved_slot_ids": [],
@@ -1803,7 +1959,6 @@ def _v2_bind_scenario_snapshot(
         )
         if safe_exit:
             placement_class = "doorway"
-        position_key = SlotAuthoring.scenario_position_key(stable_id, semantic)
         route_id = str(semantic.get("route_id", "")).strip() \
             or str(position_routes.get(position_key, "")).strip()
         entries.append({
@@ -1861,6 +2016,12 @@ def _v2_bind_scenario_snapshot(
                 str(entry["position_key"]),
             )
             candidate_slots = family_slots.get(family, [])
+            if exact and preference:
+                exact_slot = slot_by_id.get(preference, {})
+                exact_class = str(exact_slot.get("footprint_class", ""))
+                if exact_class in CLASSES:
+                    placement_class = exact_class
+                    entry["placement_class"] = placement_class
             if family == "exit" and preference:
                 preferred_slot = slot_by_id.get(preference, {})
                 preferred_class = str(preferred_slot.get("footprint_class", ""))
@@ -2057,6 +2218,48 @@ def _v2_validate_source_add_claimants(
                         if not source_id:
                             continue
                         object_id = f"{prefix}:{source_id}"
+                        action_host_ids = (
+                            map_data.get("scenario_instance_action_host_ids", {})
+                            if isinstance(
+                                map_data.get("scenario_instance_action_host_ids", {}),
+                                dict,
+                            )
+                            else {}
+                        )
+                        action_host_id = str(
+                            action_host_ids.get(object_id, "")
+                        ).strip()
+                        if action_host_id:
+                            # Exact action aliases are gameplay records attached
+                            # to an already placed object.  They are intentionally
+                            # absent from scenario_instance_object_slot_ids and
+                            # must not be reclassified as physical source adds.
+                            placed_host_ids = {
+                                str(identity).strip()
+                                for slot in values(map_data.get("fixed_slots"))
+                                + values(map_data.get("scenario_slots"))
+                                if isinstance(slot, dict)
+                                for identity_field in (
+                                    "occupant_ids",
+                                    "scenario_object_ids",
+                                )
+                                for identity in values(slot.get(identity_field))
+                                if str(identity).strip()
+                            }
+                            check.require(
+                                object_id
+                                not in map_data.get(
+                                    "scenario_instance_object_slot_ids", {}
+                                ),
+                                f"{map_id}.{scenario_id}: exact action {object_id} "
+                                "also claims a physical scenario-instance slot",
+                            )
+                            check.require(
+                                action_host_id in placed_host_ids,
+                                f"{map_id}.{scenario_id}: exact action {object_id} "
+                                f"names unplaced host {action_host_id}",
+                            )
+                            continue
                         declared_family = str(
                             map_data.get("object_family_ids", {}).get(object_id, "")
                         )
@@ -2275,6 +2478,109 @@ def main_v2(
             check.require(str(declaration.get("exact_slot_id", "")) == slot_id, f"{map_id}: {object_id} must use {slot_id}")
             check.require(bool(declaration.get("required", False)), f"{map_id}: {object_id} must be required")
 
+    pawn = maps_by_id.get("pawn_shop", {})
+    pawn_declarations = {
+        str(item.get("object_id", "")): item
+        for item in values(pawn.get("fixed_objects"))
+        if isinstance(item, dict)
+    }
+    pawn_actions = {
+        "shopkeeper:merchant",
+        "lender:sals_pawn_counter",
+        "meta_pawn_counter:sell",
+        "meta_sal:talk",
+    }
+    sal_actions = {
+        str(value)
+        for value in values(
+            pawn_declarations.get("pawn_shop:sal", {}).get("action_ids")
+        )
+    }
+    pawn_fixed_ids = {
+        str(slot.get("id", ""))
+        for slot in values(pawn.get("fixed_slots"))
+        if isinstance(slot, dict)
+    }
+    check.require(
+        pawn_actions.issubset(sal_actions),
+        "pawn_shop: Sal must own merchant, lender, pawn-sell, and talk actions",
+    )
+    check.require(
+        pawn_fixed_ids.isdisjoint(
+            {"fixed.staff_merchant", "fixed.lender_sals_pawn_counter"}
+        ),
+        "pawn_shop: duplicate merchant/lender physical rows survived consolidation",
+    )
+    for action_id in pawn_actions:
+        check.require(
+            pawn.get("object_family_ids", {}).get(action_id) == "fixed"
+            and all(
+                action_id not in pawn.get(f"{family}_object_slot_ids", {})
+                for family in V2_FAMILIES
+            ),
+            f"pawn_shop: {action_id} retained standalone placement authority",
+        )
+    check.require(
+        not any(
+            str(category_id).startswith(
+                ("shopkeeper_spots:", "lender_spots:", "pawn_counter_spots:")
+            )
+            for category_id in pawn.get("fixed_category_slot_ids", {})
+        ),
+        "pawn_shop: consolidated Sal host retained shadow category aliases",
+    )
+
+    for map_id, retired_ids in {
+        "motel": {"event.surface_item_2", "event.surface_item_3"},
+        "delta_queen": {"event.wall_item_1", "event.surface_item_1"},
+        "small_underground_casino": {"fixed.service_stage_left"},
+    }.items():
+        remaining_ids = {
+            str(slot.get("id", ""))
+            for family in V2_FAMILIES
+            for slot in values(maps_by_id.get(map_id, {}).get(f"{family}_slots"))
+            if isinstance(slot, dict)
+        }
+        check.require(
+            remaining_ids.isdisjoint(retired_ids),
+            f"{map_id}: reviewed dead rows survived: "
+            f"{sorted(remaining_ids & retired_ids)}",
+        )
+
+    gas_counter_slots = [
+        slot
+        for slot in values(
+            maps_by_id.get("gas_station_casino", {}).get("scenario_slots")
+        )
+        if isinstance(slot, dict)
+        and str(slot.get("footprint_class", "")) == "behind_counter_person"
+    ]
+    check.require(
+        len(gas_counter_slots) == 1
+        and str(gas_counter_slots[0].get("support_id", "")) == "staff_window_left"
+        and "gas_station_graveyard_shift_night_clerk"
+        in {str(value) for value in values(gas_counter_slots[0].get("occupant_ids"))},
+        "gas_station_casino: empty pull-tab-window scenario row survived instead of the Night Clerk donor",
+    )
+
+    for map_id, slot_id, support_id in (
+        ("motel", "exit.door_curtain", "curtain_passage"),
+        ("bar", "exit.travel_right", "right_exit"),
+    ):
+        exit_slot = next(
+            (
+                slot
+                for slot in values(maps_by_id.get(map_id, {}).get("exit_slots"))
+                if isinstance(slot, dict) and str(slot.get("id", "")) == slot_id
+            ),
+            {},
+        )
+        check.require(
+            exit_slot.get("footprint_class") == "doorway"
+            and exit_slot.get("support_id") == support_id,
+            f"{map_id}: {slot_id} must be a doorway on {support_id}",
+        )
+
     grand = maps_by_id.get("grand_casino", {})
     check.require(
         grand.get("fixed_object_slot_ids", {}).get("casino_fixture:host_desk")
@@ -2349,7 +2655,6 @@ def main_v2(
             "lender:street_lender": "fixed.lender_street_lender",
             "lender:the_crew": "fixed.crew_group",
         },
-        "pawn_shop": {"lender:sals_pawn_counter": "fixed.lender_sals_pawn_counter"},
         "beach": {"service:beach_sand_pile": "fixed.service_beach_sand_pile"},
         "kitty_cat_lounge": {
             "event:grand_casino_invite": "fixed.event_grand_casino_invite",
@@ -3746,7 +4051,9 @@ def main() -> int:
     check.require(
         "slot_binding_source_id" in record_binding_source
         and '"slot_binding_source_id": "item:sal_shelf_%d" % index' in meta_source
-        and '"slot_binding_source_id": "shopkeeper:merchant"' in meta_source,
+        and meta_source.count('"slot_binding_source_id": "staff:pawn_counter_sal"') == 1
+        and '"object_id": "meta_pawn_counter:sell"' not in meta_source
+        and '"id": "open_sell_counter"' in meta_source,
         "pawn-shop actionable aliases do not reuse their generated fixed-slot bindings",
     )
     home_meta_source = meta_source.split("func _home_interactable_objects", 1)[-1].split("func _pawn_interactable_objects", 1)[0]

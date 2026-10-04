@@ -283,6 +283,9 @@ func _failure_geometry(resolved: Dictionary) -> Dictionary:
 			geometry[str(identity_value)] = {
 				"label": str(visual.get("label", "")),
 				"class": str(visual.get("placement_class", "")),
+				"anchor_id": str(visual.get("anchor_id", "")),
+				"zone_id": str(visual.get("zone_id", "")),
+				"authored_position_route_id": str(visual.get("authored_position_route_id", "")),
 				"rect": [snappedf(rect.position.x, 0.01), snappedf(rect.position.y, 0.01), snappedf(rect.size.x, 0.01), snappedf(rect.size.y, 0.01)],
 			}
 	return geometry
@@ -476,7 +479,14 @@ func _check_barrier_placements(library: Variant, definitions: Array, failures: A
 		var placements: Array = []
 		_collect_barrier_placement_ops(_dict(definition.get("sequence", {})), known, placements)
 		placement_count += placements.size()
-		var environment := _dict(library.environment_archetype(str(definition.get("archetype_id", ""))))
+		var environment := _dict(library.environment_archetype(str(definition.get("archetype_id", "")))).duplicate(true)
+		var scenario_id := str(definition.get("id", "")).strip_edges()
+		var scenario_layer_id := str(definition.get("layer_id", "")).strip_edges()
+		environment["scenario_id"] = scenario_id
+		environment["scenario_state"] = {"id": scenario_id, "layer_id": scenario_layer_id}
+		if not scenario_layer_id.is_empty():
+			environment["current_layer_id"] = scenario_layer_id
+		var surface_map := EnvironmentPlacementScript.surface_map(environment)
 		var bind_entries: Array = []
 		var bound_ids: Dictionary = {}
 		for placement_value in placements:
@@ -492,36 +502,46 @@ func _check_barrier_placements(library: Variant, definitions: Array, failures: A
 			semantic["present"] = true
 			semantic["role"] = str(semantic.get("role", "obstacle"))
 			var identity := "scenario::%s" % stable_id
-			bind_entries.append({
+			var bind_entry := {
 				"identity": identity,
 				"semantic": semantic,
 				"actor": false,
-				"placement_class": EnvironmentPlacementScript.classify(semantic, "scene_object", identity, str(semantic.get("prop", semantic.get("icon_key", "")))),
+				"placement_class": "",
 				"safe_exit": false,
-			})
+			}
+			# Match production classification: exact scenario authority supplies the
+			# concrete art key and any authored footprint override before binding.
+			if EnvironmentSlotBinderScript.scenario_visual_requires_room_slot(surface_map, bind_entry):
+				var art_key := EnvironmentSlotBinderScript.scenario_visual_art_key(surface_map, bind_entry)
+				if not art_key.is_empty():
+					semantic["icon_key"] = art_key
+				var class_overrides := _dict(surface_map.get("class_overrides", {}))
+				var class_override := str(class_overrides.get(identity, class_overrides.get(stable_id, "")))
+				if class_override in EnvironmentPlacementScript.CLASSES:
+					semantic["placement_class"] = class_override
+				bind_entry["semantic"] = semantic
+				bind_entry["placement_class"] = EnvironmentPlacementScript.classify(semantic, "scene_object", identity, art_key)
+			bind_entries.append(bind_entry)
 		var binding_result := EnvironmentSlotBinderScript.bind_scenario_visuals(environment, bind_entries)
 		var bindings := _dict(binding_result.get("slot_bindings", {}))
 		for entry_value in bind_entries:
 			var entry := _dict(entry_value)
 			var identity := str(entry.get("identity", ""))
-			var role := str(_dict(entry.get("semantic", {})).get("role", "")).to_lower()
 			var binding := _dict(bindings.get(identity, {}))
 			var mode := str(binding.get("presentation_mode", ""))
-			# Barriers are abstract scenario actions and attach to a visible owner;
-			# obstacles remain concrete room props. Neither may use removed overflow UI.
-			if role == "barrier":
-				if not binding.is_empty():
-					failures.append("Abstract barrier %s/%s incorrectly consumed room geometry." % [str(definition.get("id", "")), identity])
-				continue
+			# Barrier, obstacle, and blockade scene objects are tangible scenario
+			# geometry.  They must remain individually positionable in the exact
+			# scenario layout; only interaction/service actions attach to a host.
 			if binding.is_empty() or mode != "room":
-				failures.append("Obstacle %s/%s has no authored room slot." % [str(definition.get("id", "")), identity])
+				failures.append("Scenario obstruction %s/%s has no authored room slot." % [str(definition.get("id", "")), identity])
 				continue
 			var slot := _dict(binding.get("slot", {}))
 			var rect := EnvironmentSlotBinderScript.rect_from_binding(binding)
 			var small_rect := EnvironmentSlotBinderScript.expanded_rect(rect)
+			var resolved_class := str(binding.get("placement_class", ""))
 			if not str(binding.get("slot_id", "")).begins_with("scenario.") or not rect.has_area() or not small_rect.has_area() \
-					or str(slot.get("footprint_class", "")) != str(entry.get("placement_class", "")):
-				failures.append("Barrier %s/%s did not preserve class-compatible scenario-slot authority in normal and expanded layouts." % [str(definition.get("id", "")), identity])
+					or str(slot.get("footprint_class", "")) != resolved_class:
+				failures.append("Scenario obstruction %s/%s did not preserve class-compatible scenario-slot authority in normal and expanded layouts." % [str(definition.get("id", "")), identity])
 	if object_count != EXPECTED_BARRIER_OBJECTS or placement_count != EXPECTED_BARRIER_PLACEMENTS or role_counts != {"obstacle": 7, "barrier": 18, "blockade": 0}:
 		failures.append("Barrier sweep census changed: objects=%d placements=%d roles=%s." % [object_count, placement_count, JSON.stringify(role_counts)])
 

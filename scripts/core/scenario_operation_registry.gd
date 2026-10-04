@@ -17,6 +17,12 @@ const OWNER_PRIORITY := {
 	"scenario": 60,
 	"sweep": 70,
 }
+const AUTHORED_SCENE_SLOT_FAMILIES := ["event", "scenario"]
+const AUTHORED_SCENE_PLACEMENT_CLASSES := [
+	"standing_person", "behind_counter_person", "seated_person", "group",
+	"floor_fixture", "ground_marker", "surface_item", "shop_item", "wall_mounted",
+	"hanging", "doorway",
+]
 const SCENE_OPS := ["spawn", "remove", "move", "replace", "reveal", "hide", "enable", "disable", "set_state", "set_appearance"]
 const INTERACTION_OPS := ["add", "remove", "replace", "gate", "retarget", "augment"]
 const ACTOR_OPS := ["spawn", "despawn", "set_position", "set_route", "set_pose", "set_behavior"]
@@ -612,9 +618,10 @@ static func _apply_operation(state: Dictionary, family: String, operation: Dicti
 				current["anchor_id"] = str(operation.get("anchor_id", current.get("anchor_id", "")))
 				current["zone_id"] = str(operation.get("zone_id", current.get("zone_id", "")))
 				if family == "actor_ops" and op_id == "set_position":
-					# Persist the authored operation identity in semantic state so fixed-slot
-					# reconstruction can replay even a deliberate move within the same zone.
-					current["authored_position_route_id"] = receipt_id
+					# Placement authority is authored once and must remain stable across
+					# nodes, transitions, saves, and seeds.  The structural receipt hashes
+					# the runtime boundary and is therefore unsuitable as a layout key.
+					current["authored_position_route_id"] = str(operation.get("receipt_id", ""))
 			"reveal": current["visible"] = true
 			"hide": current["visible"] = false
 			"enable": current["enabled"] = true
@@ -854,13 +861,17 @@ static func _collection_key(family: String) -> String:
 
 
 static func _validate_scene_payload(payload: Dictionary, errors: Array) -> void:
-	_append_unknown_keys("scene object payload", payload, ["label", "role", "icon_key", "anchor_id", "zone_id", "bounds", "visible", "enabled", "state", "appearance", "description", "description_variants"], errors)
+	_append_unknown_keys("scene object payload", payload, ["label", "role", "icon_key", "anchor_id", "zone_id", "bounds", "visible", "enabled", "state", "appearance", "description", "description_variants", "slot_family", "placement_class"], errors)
 	if str(payload.get("label", "")).strip_edges().is_empty() or str(payload.get("role", "")).strip_edges().is_empty():
 		errors.append("scene object requires label and semantic role.")
 	if str(payload.get("anchor_id", "")).strip_edges().is_empty() and str(payload.get("zone_id", "")).strip_edges().is_empty():
 		errors.append("scene object requires bounded anchor_id or zone_id.")
 	if payload.has("icon_key") and str(payload.get("icon_key", "")).strip_edges().is_empty():
 		errors.append("scene object icon_key cannot be blank when authored.")
+	if payload.has("slot_family") and str(payload.get("slot_family", "")).strip_edges() not in AUTHORED_SCENE_SLOT_FAMILIES:
+		errors.append("scene object slot_family must be event or scenario when authored.")
+	if payload.has("placement_class") and str(payload.get("placement_class", "")).strip_edges() not in AUTHORED_SCENE_PLACEMENT_CLASSES:
+		errors.append("scene object placement_class is not supported when authored.")
 	var bounds := _dict(payload.get("bounds", {}))
 	_append_unknown_keys("scene object bounds", bounds, ["w", "h"], errors)
 	if bounds.is_empty() or not _finite_number(bounds.get("w")) or not _finite_number(bounds.get("h")) or float(bounds.get("w", 0.0)) <= 0.0 or float(bounds.get("h", 0.0)) <= 0.0:

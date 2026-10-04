@@ -77,7 +77,7 @@ func _run() -> void:
 				if str(binding.get("presentation_mode", "")) != "room" \
 						or str(binding.get("slot_family", "")) != family \
 						or str(binding.get("placement_class", "")) != "shop_item" \
-						or family == "scenario" and not expected_slot.begins_with("scenario.shop_item_") \
+						or family == "scenario" and not expected_slot.begins_with("scenario.local_shop_item_") \
 						or slot_id != expected_slot:
 					room_failures.append("%s %s expected %s, got %s" % [str(variant.get("label", "base")), object_id, expected_slot, slot_id])
 				if occupied.has(slot_id):

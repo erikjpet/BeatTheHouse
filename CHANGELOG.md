@@ -8,12 +8,14 @@ Status: **version-stamped on `main`; `v0.6.0-pre.3` is the current GitHub
 testing prerelease, while final stable qualification remains pending.** Project
 and platform export metadata read `0.6.0`.
 
-### Pre-release 3 (2026-10-03)
+### Pre-release 3 (2026-10-04)
 
 - Completes the post-migration slot review across all 75 playable layout
-  contexts. The raw source/template authority is now 579 positions (175 fixed,
-  147 event, 222 scenario-source, and 35 exit), while the 55 exact scenario
-  layouts retain 339 independently movable scenario positions.
+  contexts. The raw source/template authority is now 565 positions (175 fixed,
+  144 event, 213 scenario-source, and 33 exit), while the 55 exact scenario
+  layouts contain 604 independently movable scenario-local positions. Together
+  with 395 reachable room-shared positions, the manual pass covers 999 unique
+  placements.
 - Removes the remaining dead travel, home-fixture, service, lender, and game
   rows; aligns shop positions with generator maxima; and gives guaranteed or
   footprint-pooled content accurate fixed IDs. It retains one clearly named
@@ -29,18 +31,21 @@ and platform export metadata read `0.6.0`.
   context verify 450 generated rooms, sealed and recomputed bindings, manifest
   authority, single-slot occupancy, and non-overlapping occupied hit regions.
   The larger review sweep covered 1,200 generated layouts with the same clean
-  result. The maintained audit observes a maximum of 17 occupied room objects
+  result. The maintained audit observes a maximum of 16 occupied room objects
   and fails if any generated layout exceeds the reviewed limit of 20.
-- Tightens the owner workflow with a scrollable placement panel, actual
-  scenario-object labels, saved/missing progress, automatic pending-nudge
-  retention, and automatic locking to an exact scenario's authored Punchline
-  area. Base/no-scenario rooms still allow their starting area to be selected.
+- Tightens the owner workflow with an Environment Library, one-click **Load
+  Next Missing** traversal, clear SAVED/TODO progress, family tabs, actual
+  claimant labels, and automatic locking to an exact scenario's authored
+  Punchline area. Shared room positions remain visible but locked during exact
+  scenario placement unless the owner explicitly enables shared editing and
+  accepts that the room's saved progress will be reset.
 - Fixes object-drag placement so the visible rectangle's top-left is translated
   to the slot's authored anchor before persistence; reloading now preserves the
   exact visual location selected by the owner.
 - Publishes a downloadable Windows testing archive and checksums from the exact
   `v0.6.0-pre.3` source commit. The 75-layout artistic placement pass remains
-  intentionally owner-driven and exports a complete schema-3 report.
+  intentionally owner-driven and exports a complete, self-contained report
+  with build/source identity and placement-authority hashes.
 
 ### Pre-release 2 (2026-10-03)
 

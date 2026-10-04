@@ -3509,13 +3509,14 @@
   },
   {
     "id": "scenario_delivery_day_stock",
-    "display_name": "Fresh Off the Truck",
+    "display_name": "Ask About Fresh Stock",
     "type": "opportunistic",
     "interaction_mode": "interactable",
     "scopes": ["shop"],
     "asset_path": "res://assets/art/events/late_shift_discount.png",
     "icon_key": "discount_sticker",
     "environment_prop": "clerk_counter",
+    "slot_binding_source_id": "scenario::delivery_clerk",
     "start_summary": "Boxes choke the aisles. Prices slipped.",
     "trigger": {"type": "manual"},
     "payload": {
@@ -3539,13 +3540,14 @@
   },
   {
     "id": "scenario_lotto_fever_jackpot",
-    "display_name": "Jackpot Talk",
+    "display_name": "Chase the Jackpot Rumor",
     "type": "temptation",
     "interaction_mode": "interactable",
     "scopes": ["shop"],
     "asset_path": "res://assets/art/events/rowdy_regular.png",
     "icon_key": "rowdy_regular",
     "environment_prop": "rowdy_patron",
+    "slot_binding_source_id": "scenario::lotto_regular",
     "start_summary": "Everybody knows the winner. Nobody knows him.",
     "trigger": {"type": "manual"},
     "payload": {
@@ -3569,13 +3571,14 @@
   },
   {
     "id": "scenario_aftermath_fence_offer",
-    "display_name": "What Fell Off",
+    "display_name": "Inspect What Fell Off",
     "type": "opportunistic",
     "interaction_mode": "interactable",
     "scopes": ["shop"],
     "asset_path": "res://assets/art/events/back_alley_offer.png",
     "icon_key": "trunk_offer",
     "environment_prop": "trunk_offer",
+    "slot_binding_source_id": "scenario::suspect_object",
     "start_summary": "Cops watch the door. A coat opens inside.",
     "trigger": {"type": "manual"},
     "payload": {
@@ -3600,13 +3603,14 @@
   },
   {
     "id": "scenario_dead_shift_rumor",
-    "display_name": "Nothing but Time",
+    "display_name": "Ask the Night Clerk",
     "type": "discovery",
     "interaction_mode": "interactable",
     "scopes": ["shop"],
     "asset_path": "res://assets/art/events/chatty_clerk.png",
     "icon_key": "clerk_chat",
     "environment_prop": "clerk_talk",
+    "slot_binding_source_id": "scenario::night_clerk",
     "start_summary": "No line. The clerk has time to talk.",
     "trigger": {"type": "manual"},
     "payload": {
@@ -3629,13 +3633,14 @@
   },
   {
     "id": "scenario_street_craps_circle",
-    "display_name": "The Chalk Ring",
+    "display_name": "Join the Chalk Ring",
     "type": "opportunistic",
     "interaction_mode": "interactable",
     "scopes": ["shop"],
     "asset_path": "res://assets/art/events/rowdy_regular.png",
     "icon_key": "rowdy_regular",
     "environment_prop": "rowdy_patron",
+    "slot_binding_source_id": "scenario::chalk_ring",
     "start_summary": "Dice hit brick. Cash changes hands.",
     "trigger": {"type": "manual"},
     "payload": {
@@ -3658,13 +3663,14 @@
   },
   {
     "id": "scenario_cruiser_parked_watch",
-    "display_name": "Wrong Target",
+    "display_name": "Watch the Cruiser's Target",
     "type": "security",
     "interaction_mode": "interactable",
     "scopes": ["shop"],
     "asset_path": "res://assets/art/events/heat_at_exit.png",
     "icon_key": "parking_note",
     "environment_prop": "paper_note",
+    "slot_binding_source_id": "scenario::patrol_officer",
     "start_summary": "The cruiser watches somebody else. For now.",
     "trigger": {"type": "manual"},
     "payload": {
@@ -3689,13 +3695,14 @@
   },
   {
     "id": "scenario_fence_night_mags",
-    "display_name": "Real Prices",
+    "display_name": "Ask for the Real Price",
     "type": "opportunistic",
     "interaction_mode": "interactable",
     "scopes": ["shop"],
     "asset_path": "res://assets/art/events/back_alley_offer.png",
     "icon_key": "trunk_offer",
     "environment_prop": "trunk_offer",
+    "slot_binding_source_id": "scenario::goods_lot",
     "start_summary": "Mags weighs the goods once. Then you.",
     "trigger": {"type": "manual"},
     "payload": {
@@ -3719,7 +3726,7 @@
   },
   {
     "id": "scenario_conventioneers_room_nine",
-    "display_name": "Room Nine",
+    "display_name": "Room Nine Door",
     "type": "opportunistic",
     "interaction_mode": "interactable",
     "scopes": ["shop"],
@@ -3749,13 +3756,14 @@
   },
   {
     "id": "scenario_stakeout_watch_or_leave",
-    "display_name": "The Long Watch",
+    "display_name": "Watch the Watchers",
     "type": "security",
     "interaction_mode": "interactable",
     "scopes": ["shop"],
     "asset_path": "res://assets/art/events/suspicious_patron.png",
     "icon_key": "parking_note",
     "environment_prop": "paper_note",
+    "slot_binding_source_id": "scenario::motel_stakeout_north_observer",
     "start_summary": "The unmarked car hasn't blinked in an hour.",
     "trigger": {"type": "manual"},
     "payload": {
@@ -3780,13 +3788,14 @@
   },
   {
     "id": "scenario_weekly_rates_soft_terms",
-    "display_name": "Soft Terms",
+    "display_name": "Ask Nico for Soft Terms",
     "type": "social",
     "interaction_mode": "interactable",
     "scopes": ["shop"],
     "asset_path": "res://assets/art/events/motel_knock.png",
     "icon_key": "door",
     "environment_prop": "motel_door",
+    "slot_binding_source_id": "scenario::motel_weekly_rates_landlord",
     "start_summary": "Nico keeps the weekly book under one thumb.",
     "trigger": {"type": "manual"},
     "payload": {
@@ -3810,13 +3819,14 @@
   },
   {
     "id": "scenario_wake_route_story",
-    "display_name": "The Empty Stool",
+    "display_name": "Hear the Empty-Stool Story",
     "type": "discovery",
     "interaction_mode": "interactable",
     "scopes": ["casino"],
     "asset_path": "res://assets/art/events/chatty_clerk.png",
     "icon_key": "clerk_chat",
     "environment_prop": "clerk_talk",
+    "slot_binding_source_id": "scenario::bar_wake_wake_host",
     "start_summary": "One stool stays empty. The stories don't.",
     "trigger": {"type": "manual"},
     "payload": {
@@ -3840,13 +3850,13 @@
   },
   {
     "id": "scenario_fight_night_swing_bet",
-    "display_name": "One Big Swing",
+    "display_name": "Fight-Night Betting Book",
     "type": "temptation",
     "interaction_mode": "interactable",
     "scopes": ["casino"],
-    "asset_path": "res://assets/art/events/rowdy_regular.png",
-    "icon_key": "rowdy_regular",
-    "environment_prop": "rowdy_patron",
+    "asset_path": "res://assets/art/events/parking_lot_tip.png",
+    "icon_key": "parking_note",
+    "environment_prop": "paper_note",
     "start_summary": "The whole bar wants one side.",
     "trigger": {"type": "manual"},
     "payload": {
@@ -3884,9 +3894,9 @@
     "type": "temptation",
     "interaction_mode": "interactable",
     "scopes": ["casino"],
-    "asset_path": "res://assets/art/events/rowdy_regular.png",
-    "icon_key": "rowdy_regular",
-    "environment_prop": "rowdy_patron",
+    "asset_path": "res://assets/art/events/parking_lot_tip.png",
+    "icon_key": "parking_note",
+    "environment_prop": "paper_note",
     "start_summary": "Fresh pay makes every bad idea louder.",
     "trigger": {"type": "manual"},
     "payload": {
@@ -3911,13 +3921,14 @@
   },
   {
     "id": "scenario_lock_in_private_game",
-    "display_name": "After the Bolt",
+    "display_name": "Join the Private Game",
     "type": "opportunistic",
     "interaction_mode": "interactable",
     "scopes": ["casino"],
     "asset_path": "res://assets/art/events/side_door.png",
     "icon_key": "side_door",
     "environment_prop": "side_door",
+    "slot_binding_source_id": "scenario::bar_lock_in_private_bench",
     "start_summary": "The bolt turns. A better game opens.",
     "trigger": {"type": "manual"},
     "payload": {
@@ -3941,13 +3952,14 @@
   },
   {
     "id": "scenario_trucker_convoy_route",
-    "display_name": "Convoy Talk",
+    "display_name": "Trade for the Convoy Route",
     "type": "discovery",
     "interaction_mode": "interactable",
     "scopes": ["casino"],
     "asset_path": "res://assets/art/events/chatty_clerk.png",
     "icon_key": "clerk_chat",
     "environment_prop": "clerk_talk",
+    "slot_binding_source_id": "scenario::gas_station_trucker_convoy_relay_driver",
     "start_summary": "The drivers know which road got expensive.",
     "trigger": {"type": "manual"},
     "payload": {
@@ -3971,13 +3983,14 @@
   },
   {
     "id": "scenario_tour_bus_ticket_rush",
-    "display_name": "Regional Stock",
+    "display_name": "Buy Regional Ticket Stock",
     "type": "opportunistic",
     "interaction_mode": "interactable",
     "scopes": ["casino"],
     "asset_path": "res://assets/art/events/machine_jam.png",
     "icon_key": "discount_sticker",
     "environment_prop": "clerk_counter",
+    "slot_binding_source_id": "scenario::gas_station_tour_bus_stop_ticket_basket",
     "start_summary": "The bus brought tickets from three counties.",
     "trigger": {"type": "manual"},
     "payload": {
@@ -4001,13 +4014,14 @@
   },
   {
     "id": "scenario_graveyard_maintenance",
-    "display_name": "Panel Open",
+    "display_name": "Study the Open Panel",
     "type": "security",
     "interaction_mode": "interactable",
     "scopes": ["casino"],
     "asset_path": "res://assets/art/events/machine_jam.png",
     "icon_key": "side_door",
     "environment_prop": "side_door",
+    "slot_binding_source_id": "scenario::gas_station_graveyard_shift_shutter_panel",
     "start_summary": "Panel open. The alarm takes the night off.",
     "trigger": {"type": "manual"},
     "payload": {
@@ -4030,192 +4044,192 @@
     }
   },
   {
-    "id": "scenario_open_mic_signup", "display_name": "Five Bad Minutes", "type": "social", "interaction_mode": "interactable", "scopes": ["club"],
-    "asset_path": "res://assets/art/events/rowdy_regular.png", "icon_key": "rowdy_regular", "environment_prop": "rowdy_patron", "start_summary": "The signup sheet needs one more bad idea.", "trigger": {"type": "manual"},
+    "id": "scenario_open_mic_signup", "display_name": "Sign Up for Five Minutes", "type": "social", "interaction_mode": "interactable", "scopes": ["club"],
+    "asset_path": "res://assets/art/events/rowdy_regular.png", "icon_key": "rowdy_regular", "environment_prop": "rowdy_patron", "slot_binding_source_id": "scenario::punchline_open_mic_night_signup_lectern", "start_summary": "The signup sheet needs one more bad idea.", "trigger": {"type": "manual"},
     "payload": {"summary": "The signup sheet needs one more bad idea.", "choices": [
       {"id": "take_five_minutes", "label": "Take five minutes", "text": "The crowd forgets the stairs while you work.", "consequence_summary": "Heat -2", "consequences": {"suspicion_delta": -2, "flags": {"open_mic_cover_earned": true}, "resolve_event": true}},
       {"id": "leave_the_sheet", "label": "Leave the sheet", "text": "Somebody worse finds the pencil.", "consequences": {"flags": {"open_mic_passed": true}, "resolve_event": true}}
     ]}
   },
   {
-    "id": "scenario_headliner_cover", "display_name": "House Full", "type": "security", "interaction_mode": "interactable", "scopes": ["club"],
-    "asset_path": "res://assets/art/events/side_door.png", "icon_key": "side_door", "environment_prop": "side_door", "start_summary": "The door watches. The crowd covers everything else.", "trigger": {"type": "manual"},
+    "id": "scenario_headliner_cover", "display_name": "Use the House-Full Cover", "type": "security", "interaction_mode": "interactable", "scopes": ["club"],
+    "asset_path": "res://assets/art/events/side_door.png", "icon_key": "side_door", "environment_prop": "side_door", "slot_binding_source_id": "scenario::punchline_headliner_night_service_door", "start_summary": "The door watches. The crowd covers everything else.", "trigger": {"type": "manual"},
     "payload": {"summary": "The door watches. The crowd covers everything else.", "choices": [
       {"id": "move_with_the_crowd", "label": "Move with the crowd", "text": "A hundred coats make one clean shadow.", "consequence_summary": "Heat -3", "consequences": {"suspicion_delta": -3, "flags": {"headliner_crowd_cover": true}, "resolve_event": true}},
       {"id": "pay_the_cover", "label": "Pay the cover", "text": "The watched door remembers a clean receipt.", "consequence_summary": "Bankroll -8", "consequences": {"bankroll_delta": -8, "flags": {"headliner_cover_paid": true}, "resolve_event": true}}
     ]}
   },
   {
-    "id": "scenario_bringer_show_favor", "display_name": "Fill a Chair", "type": "social", "interaction_mode": "interactable", "scopes": ["club"],
-    "asset_path": "res://assets/art/events/chatty_clerk.png", "icon_key": "clerk_chat", "environment_prop": "clerk_talk", "start_summary": "A comic needs your name, not your laugh.", "trigger": {"type": "manual"},
+    "id": "scenario_bringer_show_favor", "display_name": "Fill a Chair for the Comic", "type": "social", "interaction_mode": "interactable", "scopes": ["club"],
+    "asset_path": "res://assets/art/events/chatty_clerk.png", "icon_key": "clerk_chat", "environment_prop": "clerk_talk", "slot_binding_source_id": "scenario::punchline_bringer_show_bringer_performer", "start_summary": "A comic needs your name, not your laugh.", "trigger": {"type": "manual"},
     "payload": {"summary": "A comic needs your name, not your laugh.", "choices": [
       {"id": "fill_the_chair", "label": "Fill the chair", "text": "The favor comes back wearing a different coat.", "consequence_summary": "Bankroll -5", "consequences": {"bankroll_delta": -5, "flags": {"bringer_show_favor": true}, "resolve_event": true}},
       {"id": "keep_standing", "label": "Keep standing", "text": "The empty chair tells the truth.", "consequences": {"flags": {"bringer_show_refused": true}, "resolve_event": true}}
     ]}
   },
   {
-    "id": "scenario_punchline_high_stakes_table", "display_name": "The Serious Table", "type": "temptation", "interaction_mode": "interactable", "scopes": ["casino"],
-    "asset_path": "res://assets/art/events/rowdy_regular.png", "icon_key": "rowdy_regular", "environment_prop": "rowdy_patron", "start_summary": "The small table carries the largest silence.", "trigger": {"type": "manual"},
+    "id": "scenario_punchline_high_stakes_table", "display_name": "Join the Serious Table", "type": "temptation", "interaction_mode": "interactable", "scopes": ["casino"],
+    "asset_path": "res://assets/art/events/rowdy_regular.png", "icon_key": "rowdy_regular", "environment_prop": "rowdy_patron", "slot_binding_source_id": "scenario::punchline_high_stakes_night_protected_table", "start_summary": "The small table carries the largest silence.", "trigger": {"type": "manual"},
     "payload": {"summary": "The small table carries the largest silence.", "choices": [
       {"id": "post_the_stake", "label": "Post the stake", "text": "The Crew counts your nerve before your money.", "consequence_summary": "Bankroll -20, heat +2", "consequences": {"bankroll_delta": -20, "suspicion_delta": 2, "flags": {"punchline_high_stakes_sat": true}, "resolve_event": true}},
       {"id": "watch_one_orbit", "label": "Watch one orbit", "text": "The stakes explain who owns the room.", "consequences": {"flags": {"punchline_high_stakes_read": true}, "resolve_event": true}}
     ]}
   },
   {
-    "id": "scenario_greased_week_window", "display_name": "Paid Quiet", "type": "security", "interaction_mode": "interactable", "scopes": ["casino"],
-    "asset_path": "res://assets/art/events/heat_at_exit.png", "icon_key": "parking_note", "environment_prop": "paper_note", "start_summary": "The street got paid. The ceiling did not.", "trigger": {"type": "manual"},
+    "id": "scenario_greased_week_window", "display_name": "Mark the Paid-Quiet Window", "type": "security", "interaction_mode": "interactable", "scopes": ["casino"],
+    "asset_path": "res://assets/art/events/heat_at_exit.png", "icon_key": "parking_note", "environment_prop": "paper_note", "slot_binding_source_id": "scenario::punchline_greased_week_payoff_ledger", "start_summary": "The street got paid. The ceiling did not.", "trigger": {"type": "manual"},
     "payload": {"summary": "The street got paid. The ceiling did not.", "choices": [
       {"id": "mark_the_window", "label": "Mark the window", "text": "The quiet week gives up its best minute.", "consequence_summary": "Heat -4", "consequences": {"suspicion_delta": -4, "flags": {"greased_week_window_marked": true}, "resolve_event": true}},
       {"id": "leave_it_paid", "label": "Leave it paid", "text": "Somebody else spends the silence.", "consequences": {"flags": {"greased_week_passed": true}, "resolve_event": true}}
     ]}
   },
   {
-    "id": "scenario_debt_court_office_hours", "display_name": "Office Hours", "type": "lender", "interaction_mode": "interactable", "scopes": ["club"],
-    "asset_path": "res://assets/art/events/rowdy_regular.png", "icon_key": "rowdy_regular", "environment_prop": "rowdy_patron", "start_summary": "The Collector has a chair and short pencil.", "trigger": {"type": "manual"},
+    "id": "scenario_debt_court_office_hours", "display_name": "The Collector", "type": "lender", "interaction_mode": "interactable", "scopes": ["club"],
+    "asset_path": "res://assets/art/events/rowdy_regular.png", "icon_key": "rowdy_regular", "environment_prop": "character_actor", "speaker": {"role": "lender", "name": "The Collector", "environment_actor": true}, "start_summary": "The Collector has a chair and short pencil.", "trigger": {"type": "manual"},
     "payload": {"summary": "The Collector has a chair and short pencil.", "choices": [
       {"id": "settle_the_marker", "label": "Settle the marker", "conditions": {"requires_collectible_debt": true}, "text": "The Collector takes less. The whole note disappears.", "consequence_summary": "Active marker settled at 25% off", "consequences": {"debt_settlement_discount_percent": 25, "flags": {"debt_court_settlement": true}, "resolve_event": true}},
       {"id": "watch_the_next_name", "label": "Watch the next name", "conditions": {"requires_collectible_debt": false}, "text": "No marker bears your name. Somebody else's does.", "consequences": {"flags": {"debt_court_witness_beat": true}, "resolve_event": true}}
     ]}
   },
   {
-    "id": "scenario_guest_legend_tip", "display_name": "The Extra Chair", "type": "social", "interaction_mode": "interactable", "scopes": ["shop"],
-    "asset_path": "res://assets/art/events/chatty_clerk.png", "icon_key": "band", "environment_prop": "jazz_band", "start_summary": "A famous hand rests on the worn piano.", "trigger": {"type": "manual"},
+    "id": "scenario_guest_legend_tip", "display_name": "Tip the Guest Legend", "type": "social", "interaction_mode": "interactable", "scopes": ["shop"],
+    "asset_path": "res://assets/art/events/chatty_clerk.png", "icon_key": "band", "environment_prop": "jazz_band", "slot_binding_source_id": "scenario::jazz_club_guest_legend_guest_legend", "start_summary": "A famous hand rests on the worn piano.", "trigger": {"type": "manual"},
     "payload": {"summary": "A famous hand rests on the worn piano.", "choices": [
       {"id": "tip_the_chair", "label": "Tip the chair", "text": "The room remembers who paid attention.", "consequence_summary": "Bankroll -10", "consequences": {"bankroll_delta": -10, "flags": {"guest_legend_favor": true}, "resolve_event": true}},
       {"id": "keep_listening", "label": "Keep listening", "text": "The name leaves. The set stays yours.", "consequences": {"flags": {"guest_legend_heard": true}, "resolve_event": true}}
     ]}
   },
   {
-    "id": "scenario_rent_party_hat", "display_name": "The Rent Hat", "type": "social", "interaction_mode": "interactable", "scopes": ["shop"],
-    "asset_path": "res://assets/art/events/chatty_clerk.png", "icon_key": "band", "environment_prop": "jazz_band", "start_summary": "The hat must cover rent before last call.", "trigger": {"type": "manual"},
+    "id": "scenario_rent_party_hat", "display_name": "Contribute to the Rent Hat", "type": "social", "interaction_mode": "interactable", "scopes": ["shop"],
+    "asset_path": "res://assets/art/events/chatty_clerk.png", "icon_key": "band", "environment_prop": "jazz_band", "slot_binding_source_id": "scenario::jazz_club_rent_party_donation_station", "start_summary": "The hat must cover rent before last call.", "trigger": {"type": "manual"},
     "payload": {"summary": "The hat must cover rent before last call.", "choices": [
       {"id": "cover_a_corner", "label": "Cover a corner", "text": "The band keeps the room. It keeps your face too.", "consequence_summary": "Bankroll -8, heat -2", "consequences": {"bankroll_delta": -8, "suspicion_delta": -2, "inventory_add": ["rent_party_hat_pin"], "flags": {"rent_party_helped": true}, "resolve_event": true}},
       {"id": "pass_the_hat", "label": "Pass the hat", "text": "The next table carries it farther.", "consequences": {"flags": {"rent_party_witnessed": true}, "resolve_event": true}}
     ]}
   },
   {
-    "id": "scenario_recording_night_tape", "display_name": "Tape Rolling", "type": "security", "interaction_mode": "interactable", "scopes": ["shop"],
-    "asset_path": "res://assets/art/events/chatty_clerk.png", "icon_key": "band", "environment_prop": "jazz_band", "start_summary": "The engineer watches needles. Staff watch him.", "trigger": {"type": "manual"},
+    "id": "scenario_recording_night_tape", "display_name": "Use the Recording Quiet", "type": "security", "interaction_mode": "interactable", "scopes": ["shop"],
+    "asset_path": "res://assets/art/events/chatty_clerk.png", "icon_key": "band", "environment_prop": "jazz_band", "slot_binding_source_id": "scenario::jazz_club_recording_night_recording_desk", "start_summary": "The engineer watches needles. Staff watch him.", "trigger": {"type": "manual"},
     "payload": {"summary": "The engineer watches needles. Staff watch him.", "choices": [
       {"id": "use_the_quiet", "label": "Use the quiet", "text": "The floor looks elsewhere for one clean minute.", "consequence_summary": "Heat -3", "consequences": {"suspicion_delta": -3, "inventory_add": ["recording_room_tape"], "flags": {"recording_night_window": true}, "resolve_event": true}},
       {"id": "stay_off_the_tape", "label": "Stay off the tape", "text": "Nothing on the reel belongs to you.", "consequences": {"flags": {"recording_night_passed": true}, "resolve_event": true}}
     ]}
   },
   {
-    "id": "scenario_amateur_night_applause", "display_name": "Easy Applause", "type": "social", "interaction_mode": "interactable", "scopes": ["casino"],
-    "asset_path": "res://assets/art/events/rowdy_regular.png", "icon_key": "rowdy_regular", "environment_prop": "rowdy_patron", "start_summary": "The room pays kindness in loose change.", "trigger": {"type": "manual"},
+    "id": "scenario_amateur_night_applause", "display_name": "Back the First-Timer", "type": "social", "interaction_mode": "interactable", "scopes": ["casino"],
+    "asset_path": "res://assets/art/events/rowdy_regular.png", "icon_key": "rowdy_regular", "environment_prop": "rowdy_patron", "slot_binding_source_id": "scenario::kitty_cat_lounge_amateur_night_judging_desk", "start_summary": "The room pays kindness in loose change.", "trigger": {"type": "manual"},
     "payload": {"summary": "The room pays kindness in loose change.", "choices": [
       {"id": "back_the_first_timer", "label": "Back the first timer", "text": "One loud table decides you're generous.", "consequence_summary": "Bankroll -6, heat -2", "consequences": {"bankroll_delta": -6, "suspicion_delta": -2, "flags": {"amateur_night_generous": true}, "resolve_event": true}},
       {"id": "save_the_applause", "label": "Save the applause", "text": "The room spends enough without you.", "consequences": {"flags": {"amateur_night_passed": true}, "resolve_event": true}}
     ]}
   },
   {
-    "id": "scenario_buyout_rope", "display_name": "The Private Rope", "type": "discovery", "interaction_mode": "interactable", "scopes": ["casino"],
-    "asset_path": "res://assets/art/events/side_door.png", "icon_key": "side_door", "environment_prop": "side_door", "start_summary": "Velvet holds the rope. A whale laughs.", "trigger": {"type": "manual"},
+    "id": "scenario_buyout_rope", "display_name": "Approach the Private Rope", "type": "discovery", "interaction_mode": "interactable", "scopes": ["casino"],
+    "asset_path": "res://assets/art/events/side_door.png", "icon_key": "side_door", "environment_prop": "side_door", "slot_binding_source_id": "scenario::kitty_cat_lounge_buyout_buyout_host", "start_summary": "Velvet holds the rope. A whale laughs.", "trigger": {"type": "manual"},
     "payload": {"summary": "Velvet holds the rope. A whale laughs.", "choices": [
       {"id": "use_the_name", "label": "Use the name", "conditions": {"requires_flags": {"grand_casino_invite": true}}, "text": "The borrowed name clears the rope. Velvet notices.", "consequences": {"flags": {"kitty_cat_buyout_name_used": true, "kitty_cat_buyout_whale_met": true, "velvet_buyout_contact": true}, "resolve_event": true}},
       {"id": "test_the_rope", "label": "Test the rope", "conditions": {"missing_flags": ["grand_casino_invite"]}, "text": "No name, no room. Velvet makes the denial useful.", "consequences": {"flags": {"kitty_cat_buyout_denied": true, "velvet_buyout_denial_seen": true}, "resolve_event": true}}
     ]}
   },
   {
-    "id": "scenario_slow_night_intel", "display_name": "Nothing to Pour", "type": "discovery", "interaction_mode": "interactable", "scopes": ["casino"],
-    "asset_path": "res://assets/art/events/chatty_clerk.png", "icon_key": "clerk_chat", "environment_prop": "clerk_talk", "start_summary": "The bartender has no line, only truth.", "trigger": {"type": "manual"},
+    "id": "scenario_slow_night_intel", "display_name": "Ask the Bartender What She Knows", "type": "discovery", "interaction_mode": "interactable", "scopes": ["casino"],
+    "asset_path": "res://assets/art/events/chatty_clerk.png", "icon_key": "clerk_chat", "environment_prop": "clerk_talk", "slot_binding_source_id": "staff:kitty_bar_host", "start_summary": "The bartender has no line, only truth.", "trigger": {"type": "manual"},
     "payload": {"summary": "The bartender has no line, only truth.", "choices": [
       {"id": "stay_for_the_truth", "label": "Stay for the truth", "text": "Two rooms come away less private.", "consequences": {"set_next_archetypes": ["delta_queen", "pawn_shop"], "flags": {"slow_night_intel": true}, "resolve_event": true}},
       {"id": "leave_the_glass_dry", "label": "Leave the glass dry", "text": "The truth waits for a worse customer.", "consequences": {"flags": {"slow_night_passed": true}, "resolve_event": true}}
     ]}
   },
   {
-    "id": "scenario_wedding_best_man", "display_name": "The Best Man's Table", "type": "temptation", "interaction_mode": "interactable", "scopes": ["casino"],
-    "asset_path": "res://assets/art/events/rowdy_regular.png", "icon_key": "rowdy_regular", "environment_prop": "rowdy_patron", "start_summary": "The best man keeps losing with perfect manners.", "trigger": {"type": "manual"},
+    "id": "scenario_wedding_best_man", "display_name": "Cover the Best Man's Hand", "type": "temptation", "interaction_mode": "interactable", "scopes": ["casino"],
+    "asset_path": "res://assets/art/events/rowdy_regular.png", "icon_key": "rowdy_regular", "environment_prop": "rowdy_patron", "slot_binding_source_id": "scenario::delta_queen_wedding_charter_best_man", "start_summary": "The best man keeps losing with perfect manners.", "trigger": {"type": "manual"},
     "payload": {"summary": "The best man keeps losing with perfect manners.", "choices": [
       {"id": "cover_one_hand", "label": "Cover one hand", "text": "The wedding owes you one quiet favor.", "consequence_summary": "Bankroll -12", "consequences": {"bankroll_delta": -12, "inventory_add": ["wedding_ribbon_favor"], "flags": {"wedding_best_man_favor": true}, "resolve_event": true}},
       {"id": "leave_him_smiling", "label": "Leave him smiling", "text": "The open bar handles the next loss.", "consequences": {"flags": {"wedding_best_man_passed": true}, "resolve_event": true}}
     ]}
   },
   {
-    "id": "scenario_whale_aboard_vouch", "display_name": "The Whale's Receipt", "type": "social", "interaction_mode": "interactable", "scopes": ["casino"],
-    "asset_path": "res://assets/art/events/rowdy_regular.png", "icon_key": "rowdy_regular", "environment_prop": "rowdy_patron", "start_summary": "The whale needs an audience, not a rival.", "trigger": {"type": "manual"},
+    "id": "scenario_whale_aboard_vouch", "display_name": "Seek the Whale's Vouch", "type": "social", "interaction_mode": "interactable", "scopes": ["casino"],
+    "asset_path": "res://assets/art/events/rowdy_regular.png", "icon_key": "rowdy_regular", "environment_prop": "rowdy_patron", "slot_binding_source_id": "scenario::delta_queen_whale_aboard_whale_host", "start_summary": "The whale needs an audience, not a rival.", "trigger": {"type": "manual"},
     "payload": {"summary": "The whale needs an audience, not a rival.", "choices": [
       {"id": "stake_his_table", "label": "Stake his table", "text": "You lose neatly. The whale signs his good opinion.", "consequence_summary": "Bankroll -18", "consequences": {"bankroll_delta": -18, "flags": {"heist_plan_b_whale_vouch": true, "whale_aboard_contact": true}, "resolve_event": true}},
       {"id": "watch_the_entourage", "label": "Watch the entourage", "text": "Their habits travel farther than their money.", "consequences": {"flags": {"whale_aboard_observed": true}, "resolve_event": true}}
     ]}
   },
   {
-    "id": "scenario_fog_delay_pool", "display_name": "Held at the Rail", "type": "temptation", "interaction_mode": "interactable", "scopes": ["casino"],
-    "asset_path": "res://assets/art/events/rowdy_regular.png", "icon_key": "rowdy_regular", "environment_prop": "rowdy_patron", "start_summary": "Nobody can board. Everybody can raise.", "trigger": {"type": "manual"},
+    "id": "scenario_fog_delay_pool", "display_name": "Join the Delayed Pool", "type": "temptation", "interaction_mode": "interactable", "scopes": ["casino"],
+    "asset_path": "res://assets/art/events/rowdy_regular.png", "icon_key": "rowdy_regular", "environment_prop": "rowdy_patron", "slot_binding_source_id": "scenario::delta_queen_fog_delay_waiting_crowd", "start_summary": "Nobody can board. Everybody can raise.", "trigger": {"type": "manual"},
     "payload": {"summary": "Nobody can board. Everybody can raise.", "choices": [
       {"id": "take_the_delayed_pool", "label": "Take the delayed pool", "text": "Trapped money moves before the fog does.", "consequence_summary": "Bankroll +12, heat +4", "consequences": {"bankroll_delta": 12, "suspicion_delta": 4, "flags": {"fog_delay_pool_taken": true}, "resolve_event": true}},
       {"id": "wait_for_boarding", "label": "Wait for boarding", "text": "The pool climbs without your name.", "consequences": {"flags": {"fog_delay_waited": true}, "resolve_event": true}}
     ]}
   },
   {
-    "id": "scenario_engine_trouble_repairs", "display_name": "Below Deck", "type": "discovery", "interaction_mode": "interactable", "scopes": ["casino"],
-    "asset_path": "res://assets/art/events/machine_jam.png", "icon_key": "side_door", "environment_prop": "side_door", "start_summary": "The engine crew counts turns, not promises.", "trigger": {"type": "manual"},
+    "id": "scenario_engine_trouble_repairs", "display_name": "Help Below Deck", "type": "discovery", "interaction_mode": "interactable", "scopes": ["casino"],
+    "asset_path": "res://assets/art/events/machine_jam.png", "icon_key": "side_door", "environment_prop": "side_door", "slot_binding_source_id": "scenario::delta_queen_engine_trouble_engine_mate", "start_summary": "The engine crew counts turns, not promises.", "trigger": {"type": "manual"},
     "payload": {"summary": "The engine crew counts turns, not promises.", "choices": [
       {"id": "carry_the_wrench", "label": "Carry the wrench", "text": "The work buys a useful name below deck.", "consequence_summary": "Heat -2", "consequences": {"suspicion_delta": -2, "flags": {"engine_trouble_helped": true}, "resolve_event": true}},
       {"id": "wait_above", "label": "Wait above", "text": "The lock expires on the crew's clock.", "consequences": {"flags": {"engine_trouble_waited": true}, "resolve_event": true}}
     ]}
   },
   {
-    "id": "scenario_bonfire_story", "display_name": "The Warm Side", "type": "discovery", "interaction_mode": "interactable", "scopes": ["recovery"],
-    "asset_path": "res://assets/art/events/chatty_clerk.png", "icon_key": "clerk_chat", "environment_prop": "clerk_talk", "start_summary": "Driftwood burns. The town gets smaller.", "trigger": {"type": "manual"},
+    "id": "scenario_bonfire_story", "display_name": "Hear the Bonfire Story", "type": "discovery", "interaction_mode": "interactable", "scopes": ["recovery"],
+    "asset_path": "res://assets/art/events/chatty_clerk.png", "icon_key": "clerk_chat", "environment_prop": "clerk_talk", "slot_binding_source_id": "scenario::beach_bonfire_night_fire_tender", "start_summary": "Driftwood burns. The town gets smaller.", "trigger": {"type": "manual"},
     "payload": {"summary": "Driftwood burns. The town gets smaller.", "choices": [
       {"id": "take_the_warm_side", "label": "Take the warm side", "text": "A route reaches the fire before the smoke.", "consequences": {"set_next_archetypes": ["jazz_club", "pawn_shop"], "flags": {"bonfire_route_story": true}, "resolve_event": true}},
       {"id": "leave_the_coals", "label": "Leave the coals", "text": "The story stays with the tide.", "consequences": {"flags": {"bonfire_passed": true}, "resolve_event": true}}
     ]}
   },
   {
-    "id": "scenario_storm_stranger", "display_name": "One Stranger", "type": "discovery", "interaction_mode": "interactable", "scopes": ["recovery"],
-    "asset_path": "res://assets/art/events/suspicious_patron.png", "icon_key": "parking_note", "environment_prop": "paper_note", "start_summary": "One stranger watches the tide leave first.", "trigger": {"type": "manual"},
+    "id": "scenario_storm_stranger", "display_name": "Storm-Watching Stranger", "type": "discovery", "interaction_mode": "interactable", "scopes": ["recovery"],
+    "asset_path": "res://assets/art/events/suspicious_patron.png", "icon_key": "rowdy_regular", "environment_prop": "patron_talk", "speaker": {"role": "patron", "name": "Storm-Watching Stranger", "environment_actor": false}, "start_summary": "One stranger watches the tide leave first.", "trigger": {"type": "manual"},
     "payload": {"summary": "One stranger watches the tide leave first.", "choices": [
       {"id": "take_the_advice", "label": "Take the advice", "text": "The warning may save the run. Or ruin the route.", "consequence_summary": "Heat -3", "consequences": {"suspicion_delta": -3, "flags": {"storm_stranger_advice": true}, "resolve_event": true}},
       {"id": "trust_the_tide", "label": "Trust the tide", "text": "The stranger keeps the worst part.", "consequence_summary": "Heat +2", "consequences": {"suspicion_delta": 2, "flags": {"storm_stranger_refused": true}, "resolve_event": true}}
     ]}
   },
   {
-    "id": "scenario_festival_lucky_pitch", "display_name": "Lucky's Pitch", "type": "social", "interaction_mode": "interactable", "scopes": ["recovery"],
-    "asset_path": "res://assets/art/events/rowdy_regular.png", "icon_key": "rowdy_regular", "environment_prop": "rowdy_patron", "start_summary": "Lucky works the stalls like a short road.", "trigger": {"type": "manual"},
+    "id": "scenario_festival_lucky_pitch", "display_name": "Hear Lucky's Pitch", "type": "social", "interaction_mode": "interactable", "scopes": ["recovery"],
+    "asset_path": "res://assets/art/events/rowdy_regular.png", "icon_key": "rowdy_regular", "environment_prop": "rowdy_patron", "slot_binding_source_id": "scenario::beach_festival_weekend_stall_vendor", "start_summary": "Lucky works the stalls like a short road.", "trigger": {"type": "manual"},
     "payload": {"summary": "Lucky works the stalls like a short road.", "choices": [
       {"id": "work_one_stall", "label": "Work one stall", "text": "Lucky learns you can move before a crowd closes.", "consequence_summary": "Bankroll +8, heat +2", "consequences": {"bankroll_delta": 8, "suspicion_delta": 2, "inventory_add": ["festival_brass_token"], "flags": {"lucky_festival_contact": true, "lucky_recruitment_anchor_seen": true}, "resolve_event": true}},
       {"id": "watch_the_pitch", "label": "Watch the pitch", "text": "The route is hidden inside the patter.", "consequences": {"flags": {"lucky_festival_observed": true}, "resolve_event": true}}
     ]}
   },
   {
-    "id": "scenario_estate_lot_provenance", "display_name": "One Owner", "type": "discovery", "interaction_mode": "interactable", "scopes": ["shop"],
-    "asset_path": "res://assets/art/events/back_alley_offer.png", "icon_key": "trunk_offer", "environment_prop": "trunk_offer", "start_summary": "Sal knows where the lot came from. Mostly.", "trigger": {"type": "manual"},
+    "id": "scenario_estate_lot_provenance", "display_name": "Ask Sal About the Lot", "type": "discovery", "interaction_mode": "interactable", "scopes": ["shop"],
+    "asset_path": "res://assets/art/events/back_alley_offer.png", "icon_key": "trunk_offer", "environment_prop": "trunk_offer", "slot_binding_source_id": "staff:pawn_counter_sal", "start_summary": "Sal knows where the lot came from. Mostly.", "trigger": {"type": "manual"},
     "payload": {"summary": "Sal knows where the lot came from. Mostly.", "choices": [
       {"id": "ask_about_the_lot", "label": "Ask about the lot", "text": "Two pieces belong to jobs not posted yet.", "consequences": {"inventory_add": ["estate_map_clasp"], "flags": {"estate_lot_chain06_1_anchor": true, "estate_lot_plan_b_anchor": true}, "resolve_event": true}},
       {"id": "read_the_price_tags", "label": "Read the price tags", "text": "One price each. No second shelf.", "consequences": {"flags": {"estate_lot_one_off_seen": true}, "resolve_event": true}}
     ]}
   },
   {
-    "id": "scenario_serial_check_hot_goods", "display_name": "The Open Book", "type": "security", "interaction_mode": "interactable", "scopes": ["shop"],
-    "asset_path": "res://assets/art/events/heat_at_exit.png", "icon_key": "parking_note", "environment_prop": "paper_note", "start_summary": "The auditor checks numbers. Sal checks your hands.", "trigger": {"type": "manual"},
+    "id": "scenario_serial_check_hot_goods", "display_name": "Move the Hot Goods", "type": "security", "interaction_mode": "interactable", "scopes": ["shop"],
+    "asset_path": "res://assets/art/events/heat_at_exit.png", "icon_key": "parking_note", "environment_prop": "paper_note", "slot_binding_source_id": "scenario::records_clerk", "start_summary": "The auditor checks numbers. Sal checks your hands.", "trigger": {"type": "manual"},
     "payload": {"summary": "The auditor checks numbers. Sal checks your hands.", "choices": [
       {"id": "move_the_hot_deck", "label": "Move the hot deck", "conditions": {"requires_items": ["marked_cards"]}, "text": "Sal pays fast. The open book keeps the serial.", "consequence_summary": "Bankroll +24, heat +12", "consequences": {"bankroll_delta": 24, "suspicion_delta": 12, "inventory_remove": ["marked_cards"], "flags": {"serial_check_hot_sale": true}, "resolve_event": true}},
       {"id": "keep_hands_empty", "label": "Keep hands empty", "text": "The auditor finds somebody else's number.", "consequence_summary": "Heat -2", "consequences": {"suspicion_delta": -2, "flags": {"serial_check_clean": true}, "resolve_event": true}}
     ]}
   },
   {
-    "id": "scenario_sals_mood_read", "display_name": "Sal Quotes Once", "type": "social", "interaction_mode": "interactable", "scopes": ["shop"],
-    "asset_path": "res://assets/art/events/back_alley_offer.png", "icon_key": "trunk_offer", "environment_prop": "trunk_offer", "start_summary": "Sal's first number says more than his face.", "trigger": {"type": "manual"},
+    "id": "scenario_sals_mood_read", "display_name": "Take Sal's First Quote", "type": "social", "interaction_mode": "interactable", "scopes": ["shop"],
+    "asset_path": "res://assets/art/events/back_alley_offer.png", "icon_key": "trunk_offer", "environment_prop": "trunk_offer", "slot_binding_source_id": "staff:pawn_counter_sal", "start_summary": "Sal's first number says more than his face.", "trigger": {"type": "manual"},
     "payload": {"summary": "Sal's first number says more than his face.", "choices": [
       {"id": "take_the_first_number", "label": "Take the first number", "text": "High or low, the quote advances his private book.", "consequence_summary": "Bankroll +6", "consequences": {"bankroll_delta": 6, "flags": {"sals_mood_chain_advanced": true}, "resolve_event": true}},
       {"id": "leave_him_the_number", "label": "Leave him the number", "text": "Sal remembers what you would not sell.", "consequences": {"flags": {"sals_mood_refused": true}, "resolve_event": true}}
     ]}
   },
   {
-    "id": "scenario_gala_cover", "display_name": "A Borrowed Name", "type": "social", "interaction_mode": "interactable", "scopes": ["boss"],
-    "asset_path": "res://assets/art/events/comped_suite_offer.png", "icon_key": "suite_key", "environment_prop": "host_station", "start_summary": "The gala accepts names before it checks them.", "trigger": {"type": "manual"},
+    "id": "scenario_gala_cover", "display_name": "Enter Under a Borrowed Name", "type": "social", "interaction_mode": "interactable", "scopes": ["boss"],
+    "asset_path": "res://assets/art/events/comped_suite_offer.png", "icon_key": "suite_key", "environment_prop": "host_station", "slot_binding_source_id": "scenario::grand_casino_gala_night_gala_host", "start_summary": "The gala accepts names before it checks them.", "trigger": {"type": "manual"},
     "payload": {"summary": "The gala accepts names before it checks them.", "choices": [
       {"id": "wear_the_name", "label": "Wear the name", "text": "The house welcomes the mask and notes the fit.", "consequence_summary": "Heat -3", "consequences": {"suspicion_delta": -3, "resolve_event": true}},
       {"id": "keep_your_own_name", "label": "Keep your own name", "text": "The file remains exact and courteous.", "consequences": {"resolve_event": true}}
     ]}
   },
   {
-    "id": "scenario_convention_badge", "display_name": "Borrowed Badge", "type": "security", "interaction_mode": "interactable", "scopes": ["boss"],
-    "asset_path": "res://assets/art/events/eye_in_the_sky.png", "icon_key": "camera", "environment_prop": "security_camera", "start_summary": "Badges fill the floor. The ceiling blinks.", "trigger": {"type": "manual"},
+    "id": "scenario_convention_badge", "display_name": "Use a Borrowed Badge", "type": "security", "interaction_mode": "interactable", "scopes": ["boss"],
+    "asset_path": "res://assets/art/events/eye_in_the_sky.png", "icon_key": "camera", "environment_prop": "security_camera", "slot_binding_source_id": "scenario::grand_casino_convention_crowd_booking_board", "start_summary": "Badges fill the floor. The ceiling blinks.", "trigger": {"type": "manual"},
     "payload": {"summary": "Badges fill the floor. The ceiling blinks.", "choices": [
       {"id": "join_the_badges", "label": "Join the badges", "text": "The crowd provides a careful little absence.", "consequence_summary": "Heat -4", "consequences": {"suspicion_delta": -4, "resolve_event": true}},
       {"id": "stay_unbadged", "label": "Stay unbadged", "text": "The floor remembers one face more clearly.", "consequence_summary": "Heat +2", "consequences": {"suspicion_delta": 2, "resolve_event": true}}
@@ -4310,7 +4324,7 @@
   {
     "id": "recruitment_switch", "display_name": "Switch", "type": "crew", "interaction_mode": "interactable", "presentation": "talk", "scopes": ["any"],
     "speaker": {"role": "crew", "name": "Switch", "character_id": "crew_switch", "voice_line_key": "favor_due", "environment_actor": true},
-    "asset_path": "res://assets/art/events/chatty_clerk.png", "icon_key": "clerk_chat", "environment_prop": "clerk_talk", "start_summary": "Switch has the next road before this one is done.", "trigger": {"type": "manual"},
+    "asset_path": "res://assets/art/events/chatty_clerk.png", "icon_key": "clerk_chat", "environment_prop": "character_actor", "start_summary": "Switch has the next road before this one is done.", "trigger": {"type": "manual"},
     "conditions": {"min_crew_rank": "marker", "crew_member_rank_at_most": {"crew_switch": "marker"}},
     "payload": {"summary": "Switch taps two routes, then waits.", "choices": [
       {"id": "work_with_switch", "label": "Take the route", "text": "Good. Window's open now. Move before it notices.", "consequences": {"crew_recruit_member": "crew_switch", "resolve_event": true}},
@@ -4320,7 +4334,7 @@
   {
     "id": "recruitment_mags", "display_name": "Mags", "type": "crew", "interaction_mode": "interactable", "presentation": "talk", "scopes": ["any"],
     "speaker": {"role": "crew", "name": "Mags", "character_id": "crew_mags", "voice_line_key": "favor_due", "environment_actor": true},
-    "asset_path": "res://assets/art/events/back_alley_offer.png", "icon_key": "trunk_offer", "environment_prop": "trunk_offer", "start_summary": "Mags has counted every loose part twice.", "trigger": {"type": "manual"},
+    "asset_path": "res://assets/art/events/back_alley_offer.png", "icon_key": "trunk_offer", "environment_prop": "character_actor", "start_summary": "Mags has counted every loose part twice.", "trigger": {"type": "manual"},
     "conditions": {"min_crew_rank": "marker", "crew_member_rank_at_most": {"crew_mags": "marker"}},
     "payload": {"summary": "Mags orders three pieces. None are decoration.", "choices": [
       {"id": "work_with_mags", "label": "Follow the order", "text": "Three steps. Do them cleanly and we won't need a fourth.", "consequences": {"crew_recruit_member": "crew_mags", "resolve_event": true}},
@@ -4330,7 +4344,7 @@
   {
     "id": "recruitment_knuckles", "display_name": "Knuckles", "type": "crew", "interaction_mode": "interactable", "presentation": "talk", "scopes": ["any"],
     "speaker": {"role": "crew", "name": "Knuckles", "character_id": "crew_knuckles", "voice_line_key": "favor_due", "environment_actor": true},
-    "asset_path": "res://assets/art/events/rowdy_regular.png", "icon_key": "rowdy_regular", "environment_prop": "rowdy_patron", "start_summary": "Knuckles watches the room choose the hard way.", "trigger": {"type": "manual"},
+    "asset_path": "res://assets/art/events/rowdy_regular.png", "icon_key": "rowdy_regular", "environment_prop": "character_actor", "start_summary": "Knuckles watches the room choose the hard way.", "trigger": {"type": "manual"},
     "conditions": {"min_crew_rank": "marker", "crew_member_rank_at_most": {"crew_knuckles": "marker"}},
     "payload": {"summary": "Knuckles points from the mess to the exit.", "choices": [
       {"id": "work_with_knuckles", "label": "Keep it simple", "text": "Good. Carry what matters. Drop the speech.", "consequences": {"crew_recruit_member": "crew_knuckles", "resolve_event": true}},
@@ -4340,7 +4354,7 @@
   {
     "id": "recruitment_velvet", "display_name": "Velvet", "type": "crew", "interaction_mode": "interactable", "presentation": "talk", "scopes": ["any"],
     "speaker": {"role": "crew", "name": "Velvet", "character_id": "crew_velvet", "voice_line_key": "favor_due", "environment_actor": true},
-    "asset_path": "res://assets/art/events/side_door.png", "icon_key": "side_door", "environment_prop": "side_door", "start_summary": "Velvet makes the rope look like your idea.", "trigger": {"type": "manual"},
+    "asset_path": "res://assets/art/events/side_door.png", "icon_key": "side_door", "environment_prop": "character_actor", "start_summary": "Velvet makes the rope look like your idea.", "trigger": {"type": "manual"},
     "conditions": {"min_crew_rank": "marker", "crew_member_rank_at_most": {"crew_velvet": "marker"}},
     "payload": {"summary": "Velvet offers a name the room will remember.", "choices": [
       {"id": "work_with_velvet", "label": "Accept the introduction", "text": "Beautiful. Let them think they invited you, darling.", "consequences": {"crew_recruit_member": "crew_velvet", "resolve_event": true}},
@@ -4361,7 +4375,7 @@
   {
     "id": "recruitment_lucky", "display_name": "Lucky", "type": "crew", "interaction_mode": "interactable", "presentation": "talk", "scopes": ["any"],
     "speaker": {"role": "crew", "name": "Lucky", "character_id": "crew_lucky", "voice_line_key": "favor_due", "environment_actor": false},
-    "asset_path": "res://assets/art/events/rowdy_regular.png", "icon_key": "rowdy_regular", "environment_prop": "rowdy_patron", "start_summary": "Lucky turns three stops into one bright dare.", "trigger": {"type": "manual"},
+    "asset_path": "res://assets/art/events/rowdy_regular.png", "icon_key": "rowdy_regular", "environment_prop": "character_actor", "start_summary": "Lucky turns three stops into one bright dare.", "trigger": {"type": "manual"},
     "conditions": {"min_crew_rank": "marker", "crew_member_rank_at_most": {"crew_lucky": "marker"}},
     "payload": {"summary": "Lucky has a route and unreasonable confidence.", "choices": [
       {"id": "work_with_lucky", "label": "Run the route", "text": "Perfect. Tiny road, big suspense. Try to look brilliant.", "consequences": {"crew_recruit_member": "crew_lucky", "resolve_event": true}},
@@ -4411,104 +4425,104 @@
     "conditions": {"min_crew_rank": "marker"}, "payload": {"kind": "crew_contact", "member_id": "crew_lucky", "summary": "Lucky waits for the next fast opening.", "choices": []}
   },
   {
-    "id": "scenario_inventory_night_count", "display_name": "The Short Count", "type": "opportunistic", "interaction_mode": "interactable", "scopes": ["shop"],
-    "asset_path": "res://assets/art/events/late_shift_discount.png", "icon_key": "discount_sticker", "environment_prop": "clerk_counter", "start_summary": "One box missed the sheet. Clerk noticed.", "trigger": {"type": "manual"},
+    "id": "scenario_inventory_night_count", "display_name": "Take the Short Count", "type": "opportunistic", "interaction_mode": "interactable", "scopes": ["shop"],
+    "asset_path": "res://assets/art/events/late_shift_discount.png", "icon_key": "discount_sticker", "environment_prop": "clerk_counter", "slot_binding_source_id": "scenario::inventory_clerk", "start_summary": "One box missed the sheet. Clerk noticed.", "trigger": {"type": "manual"},
     "payload": {"summary": "One box missed the sheet. Clerk noticed.", "choices": [
       {"id": "take_the_short_count", "label": "Take the short count", "text": "The ledger comes up short and keeps your face.", "consequence_summary": "Bankroll +7, heat +2", "consequences": {"bankroll_delta": 7, "suspicion_delta": 2, "flags": {"inventory_short_count_taken": true}, "resolve_event": true}},
       {"id": "set_the_box_back", "label": "Set the box back", "text": "The clerk crosses out one reason to watch you.", "consequence_summary": "Heat -1", "consequences": {"suspicion_delta": -1, "flags": {"inventory_count_left_clean": true}, "resolve_event": true}}
     ]}
   },
   {
-    "id": "scenario_nothing_moving_wait", "display_name": "One Light", "type": "security", "interaction_mode": "interactable", "scopes": ["shop"],
-    "asset_path": "res://assets/art/events/heat_at_exit.png", "icon_key": "parking_note", "environment_prop": "paper_note", "start_summary": "Nothing moves. The lookout keeps counting cars.", "trigger": {"type": "manual"},
+    "id": "scenario_nothing_moving_wait", "display_name": "Wait Out the Light", "type": "security", "interaction_mode": "interactable", "scopes": ["shop"],
+    "asset_path": "res://assets/art/events/heat_at_exit.png", "icon_key": "parking_note", "environment_prop": "paper_note", "slot_binding_source_id": "scenario::returning_regular", "start_summary": "Nothing moves. The lookout keeps counting cars.", "trigger": {"type": "manual"},
     "payload": {"summary": "Nothing moves. The lookout keeps counting cars.", "choices": [
       {"id": "wait_out_the_light", "label": "Wait out the light", "text": "The street forgets you before business returns.", "consequence_summary": "Heat -3", "consequences": {"suspicion_delta": -3, "flags": {"nothing_moving_waited": true}, "resolve_event": true}},
       {"id": "knock_anyway", "label": "Knock anyway", "text": "Your cash buys the same closed door.", "consequence_summary": "Bankroll -5", "consequences": {"bankroll_delta": -5, "flags": {"nothing_moving_knocked": true}, "resolve_event": true}}
     ]}
   },
   {
-    "id": "scenario_wedding_overflow_hallway", "display_name": "Hallway Table", "type": "temptation", "interaction_mode": "interactable", "scopes": ["shop"],
-    "asset_path": "res://assets/art/events/rowdy_regular.png", "icon_key": "rowdy_regular", "environment_prop": "rowdy_patron", "start_summary": "No rooms left. The hallway found cards.", "trigger": {"type": "manual"},
+    "id": "scenario_wedding_overflow_hallway", "display_name": "Hallway Card Table", "type": "temptation", "interaction_mode": "interactable", "scopes": ["shop"],
+    "asset_path": "res://assets/art/events/parking_lot_tip.png", "icon_key": "parking_note", "environment_prop": "room_surface", "start_summary": "No rooms left. The hallway found cards.", "trigger": {"type": "manual"},
     "payload": {"summary": "No rooms left. The hallway found cards.", "choices": [
       {"id": "take_the_hallway_seat", "label": "Take the hallway seat", "text": "The wedding pays out to learn your face.", "consequence_summary": "Bankroll +10, heat +3", "consequences": {"bankroll_delta": 10, "suspicion_delta": 3, "flags": {"wedding_overflow_table_played": true}, "resolve_event": true}},
       {"id": "step_over_the_coolers", "label": "Step over the coolers", "text": "The loud floor gives you one quiet pass.", "consequence_summary": "Heat -1", "consequences": {"suspicion_delta": -1, "flags": {"wedding_overflow_passed": true}, "resolve_event": true}}
     ]}
   },
   {
-    "id": "scenario_darts_league_decider", "display_name": "The Deciding Leg", "type": "temptation", "interaction_mode": "interactable", "scopes": ["casino"],
-    "asset_path": "res://assets/art/events/rowdy_regular.png", "icon_key": "rowdy_regular", "environment_prop": "rowdy_patron", "start_summary": "One leg left. The rail has picked sides.", "trigger": {"type": "manual"},
+    "id": "scenario_darts_league_decider", "display_name": "Bet the Deciding Leg", "type": "temptation", "interaction_mode": "interactable", "scopes": ["casino"],
+    "asset_path": "res://assets/art/events/rowdy_regular.png", "icon_key": "rowdy_regular", "environment_prop": "rowdy_patron", "slot_binding_source_id": "scenario::bar_darts_league_night_league_captain", "start_summary": "One leg left. The rail has picked sides.", "trigger": {"type": "manual"},
     "payload": {"summary": "One leg left. The rail has picked sides.", "choices": [
       {"id": "back_the_home_side", "label": "Back the home side", "text": "Your stake buys a place beside the board.", "consequence_summary": "Bankroll -10", "consequences": {"bankroll_delta": -10, "flags": {"darts_league_home_backed": true}, "resolve_event": true}},
       {"id": "take_the_rail_money", "label": "Take the rail money", "text": "The quiet leg pays and points your way.", "consequence_summary": "Bankroll +12, heat +3", "consequences": {"bankroll_delta": 12, "suspicion_delta": 3, "flags": {"darts_league_rail_taken": true}, "resolve_event": true}}
     ]}
   },
   {
-    "id": "scenario_live_band_request", "display_name": "One Request", "type": "social", "interaction_mode": "interactable", "scopes": ["casino"],
-    "asset_path": "res://assets/art/events/chatty_clerk.png", "icon_key": "band", "environment_prop": "jazz_band", "start_summary": "The band takes requests folded around cash.", "trigger": {"type": "manual"},
+    "id": "scenario_live_band_request", "display_name": "Make a Request", "type": "social", "interaction_mode": "interactable", "scopes": ["casino"],
+    "asset_path": "res://assets/art/events/chatty_clerk.png", "icon_key": "band", "environment_prop": "jazz_band", "slot_binding_source_id": "scenario::bar_live_band_band_leader", "start_summary": "The band takes requests folded around cash.", "trigger": {"type": "manual"},
     "payload": {"summary": "The band takes requests folded around cash.", "choices": [
       {"id": "fold_an_eight", "label": "Fold a bill", "text": "The next song keeps the room off your hands.", "consequence_summary": "Bankroll -8, heat -2", "consequences": {"bankroll_delta": -8, "suspicion_delta": -2, "flags": {"live_band_request_paid": true}, "resolve_event": true}},
       {"id": "keep_the_tab_flat", "label": "Keep the tab flat", "text": "The band finds somebody else's favorite.", "consequences": {"flags": {"live_band_request_passed": true}, "resolve_event": true}}
     ]}
   },
   {
-    "id": "scenario_dead_tuesday_regular", "display_name": "Last Regular", "type": "discovery", "interaction_mode": "interactable", "scopes": ["casino"],
-    "asset_path": "res://assets/art/events/chatty_clerk.png", "icon_key": "clerk_chat", "environment_prop": "clerk_talk", "start_summary": "The last regular knows why stools are dry.", "trigger": {"type": "manual"},
+    "id": "scenario_dead_tuesday_regular", "display_name": "Talk to the Last Regular", "type": "discovery", "interaction_mode": "interactable", "scopes": ["casino"],
+    "asset_path": "res://assets/art/events/chatty_clerk.png", "icon_key": "clerk_chat", "environment_prop": "clerk_talk", "slot_binding_source_id": "scenario::bar_dead_tuesday_lone_patron", "start_summary": "The last regular knows why stools are dry.", "trigger": {"type": "manual"},
     "payload": {"summary": "The last regular knows why stools are dry.", "choices": [
       {"id": "take_the_small_tip", "label": "Take the small tip", "text": "A small tip and a warning cross the bar.", "consequence_summary": "Bankroll +5", "consequences": {"bankroll_delta": 5, "flags": {"dead_tuesday_tip_taken": true}, "resolve_event": true}},
       {"id": "leave_the_stool_open", "label": "Leave the stool open", "text": "The empty room loses interest in you.", "consequence_summary": "Heat -2", "consequences": {"suspicion_delta": -2, "flags": {"dead_tuesday_left_quiet": true}, "resolve_event": true}}
     ]}
   },
   {
-    "id": "scenario_road_crew_payday_pool", "display_name": "Pay Envelope Pool", "type": "temptation", "interaction_mode": "interactable", "scopes": ["casino"],
-    "asset_path": "res://assets/art/events/rowdy_regular.png", "icon_key": "rowdy_regular", "environment_prop": "rowdy_patron", "start_summary": "Fresh envelopes make the small pool loud.", "trigger": {"type": "manual"},
+    "id": "scenario_road_crew_payday_pool", "display_name": "Join the Pay-Envelope Pool", "type": "temptation", "interaction_mode": "interactable", "scopes": ["casino"],
+    "asset_path": "res://assets/art/events/rowdy_regular.png", "icon_key": "rowdy_regular", "environment_prop": "rowdy_patron", "slot_binding_source_id": "scenario::gas_station_road_crew_payday_stake_envelope", "start_summary": "Fresh envelopes make the small pool loud.", "trigger": {"type": "manual"},
     "payload": {"summary": "Fresh envelopes make the small pool loud.", "choices": [
       {"id": "cover_the_crew_side", "label": "Cover the crew side", "text": "Your stake buys a hardhat's good opinion.", "consequence_summary": "Bankroll -12", "consequences": {"bankroll_delta": -12, "flags": {"road_crew_side_covered": true}, "resolve_event": true}},
       {"id": "cash_the_loose_envelope", "label": "Cash the envelope", "text": "Cash comes loose. Every hardhat notices.", "consequence_summary": "Bankroll +10, heat +4", "consequences": {"bankroll_delta": 10, "suspicion_delta": 4, "flags": {"road_crew_envelope_taken": true}, "resolve_event": true}}
     ]}
   },
   {
-    "id": "scenario_storm_shelter_corner", "display_name": "The Dry Corner", "type": "social", "interaction_mode": "interactable", "scopes": ["casino"],
-    "asset_path": "res://assets/art/events/chatty_clerk.png", "icon_key": "clerk_chat", "environment_prop": "clerk_talk", "start_summary": "The clerk kept one dry corner for everybody.", "trigger": {"type": "manual"},
+    "id": "scenario_storm_shelter_corner", "display_name": "Cover the Shelter Coffee", "type": "social", "interaction_mode": "interactable", "scopes": ["casino"],
+    "asset_path": "res://assets/art/events/chatty_clerk.png", "icon_key": "clerk_chat", "environment_prop": "clerk_talk", "slot_binding_source_id": "character:nell", "start_summary": "The clerk kept one dry corner for everybody.", "trigger": {"type": "manual"},
     "payload": {"summary": "The clerk kept one dry corner for everybody.", "choices": [
       {"id": "cover_the_coffee", "label": "Cover the coffee", "text": "Your tab settles the room for a minute.", "consequence_summary": "Bankroll -5, heat -2", "consequences": {"bankroll_delta": -5, "suspicion_delta": -2, "flags": {"storm_shelter_coffee_covered": true}, "resolve_event": true}},
       {"id": "keep_to_the_back_door", "label": "Keep to the back door", "text": "The crowd remembers who would not come in.", "consequence_summary": "Heat +2", "consequences": {"suspicion_delta": 2, "flags": {"storm_shelter_door_kept": true}, "resolve_event": true}}
     ]}
   },
   {
-    "id": "scenario_new_muscle_door", "display_name": "The New Coat", "type": "security", "interaction_mode": "interactable", "scopes": ["casino"],
-    "asset_path": "res://assets/art/events/side_door.png", "icon_key": "side_door", "environment_prop": "side_door", "start_summary": "New muscle reads every face twice.", "trigger": {"type": "manual"},
+    "id": "scenario_new_muscle_door", "display_name": "Face the New Guard Lead", "type": "security", "interaction_mode": "interactable", "scopes": ["casino"],
+    "asset_path": "res://assets/art/events/side_door.png", "icon_key": "side_door", "environment_prop": "side_door", "slot_binding_source_id": "scenario::punchline_new_muscle_new_guard_lead", "start_summary": "New muscle reads every face twice.", "trigger": {"type": "manual"},
     "payload": {"summary": "New muscle reads every face twice.", "choices": [
       {"id": "take_the_slow_read", "label": "Take the slow read", "text": "The new coat finds nothing worth keeping.", "consequence_summary": "Heat -2", "consequences": {"suspicion_delta": -2, "flags": {"new_muscle_read_clean": true}, "resolve_event": true}},
       {"id": "test_the_new_coat", "label": "Test the new coat", "text": "The Crew learns your face from the wrong angle.", "consequence_summary": "Heat +4", "consequences": {"suspicion_delta": 4, "flags": {"new_muscle_tested": true}, "resolve_event": true}}
     ]}
   },
   {
-    "id": "scenario_raid_jitters_check", "display_name": "The Second Check", "type": "security", "interaction_mode": "interactable", "scopes": ["club"],
-    "asset_path": "res://assets/art/events/heat_at_exit.png", "icon_key": "parking_note", "environment_prop": "paper_note", "start_summary": "Every knock sounds official downstairs.", "trigger": {"type": "manual"},
+    "id": "scenario_raid_jitters_check", "display_name": "Use the Second Check", "type": "security", "interaction_mode": "interactable", "scopes": ["club"],
+    "asset_path": "res://assets/art/events/heat_at_exit.png", "icon_key": "parking_note", "environment_prop": "paper_note", "slot_binding_source_id": "scenario::punchline_raid_jitters_raid_lookout", "start_summary": "Every knock sounds official downstairs.", "trigger": {"type": "manual"},
     "payload": {"summary": "Every knock sounds official downstairs.", "choices": [
       {"id": "use_the_second_check", "label": "Use the second check", "text": "The nervous floor checks somebody else first.", "consequence_summary": "Heat -3", "consequences": {"suspicion_delta": -3, "flags": {"raid_jitters_check_used": true}, "resolve_event": true}},
       {"id": "keep_cash_moving", "label": "Keep cash moving", "text": "Cash clears before the next knock.", "consequence_summary": "Bankroll +8, heat +5", "consequences": {"bankroll_delta": 8, "suspicion_delta": 5, "flags": {"raid_jitters_cash_moved": true}, "resolve_event": true}}
     ]}
   },
   {
-    "id": "scenario_union_trouble_line", "display_name": "The Meeting Line", "type": "social", "interaction_mode": "interactable", "scopes": ["shop"],
-    "asset_path": "res://assets/art/events/chatty_clerk.png", "icon_key": "band", "environment_prop": "jazz_band", "start_summary": "The worn room provides a careful meeting line.", "trigger": {"type": "manual"},
+    "id": "scenario_union_trouble_line", "display_name": "Respond to the Meeting Line", "type": "social", "interaction_mode": "interactable", "scopes": ["shop"],
+    "asset_path": "res://assets/art/events/chatty_clerk.png", "icon_key": "band", "environment_prop": "jazz_band", "slot_binding_source_id": "scenario::jazz_club_union_trouble_picket_line", "start_summary": "The worn room provides a careful meeting line.", "trigger": {"type": "manual"},
     "payload": {"summary": "The worn room provides a careful meeting line.", "choices": [
       {"id": "cover_one_due", "label": "Cover one due", "text": "Your money keeps a chair in the next set.", "consequence_summary": "Bankroll -10, heat -2", "consequences": {"bankroll_delta": -10, "suspicion_delta": -2, "flags": {"union_trouble_due_covered": true}, "resolve_event": true}},
       {"id": "cross_the_line", "label": "Cross the line", "text": "Cash pays now. The room keeps the rest.", "consequence_summary": "Bankroll +6, heat +4", "consequences": {"bankroll_delta": 6, "suspicion_delta": 4, "flags": {"union_trouble_line_crossed": true}, "resolve_event": true}}
     ]}
   },
   {
-    "id": "scenario_bachelorette_storm_table", "display_name": "The Saved Table", "type": "social", "interaction_mode": "interactable", "scopes": ["casino"],
-    "asset_path": "res://assets/art/events/rowdy_regular.png", "icon_key": "rowdy_regular", "environment_prop": "rowdy_patron", "start_summary": "The house saved them one attentive table.", "trigger": {"type": "manual"},
+    "id": "scenario_bachelorette_storm_table", "display_name": "Reserved Party Table", "type": "social", "interaction_mode": "interactable", "scopes": ["casino"],
+    "asset_path": "res://assets/art/events/parking_lot_tip.png", "icon_key": "parking_note", "environment_prop": "room_surface", "start_summary": "The house saved them one attentive table.", "trigger": {"type": "manual"},
     "payload": {"summary": "The house saved them one attentive table.", "choices": [
       {"id": "cover_one_round", "label": "Cover one round", "text": "Your round earns a generous little absence.", "consequence_summary": "Bankroll -10, heat -2", "consequences": {"bankroll_delta": -10, "suspicion_delta": -2, "flags": {"bachelorette_round_covered": true}, "resolve_event": true}},
       {"id": "play_the_saved_table", "label": "Play the saved table", "text": "The party pays. The floor takes notice.", "consequence_summary": "Bankroll +12, heat +4", "consequences": {"bankroll_delta": 12, "suspicion_delta": 4, "flags": {"bachelorette_table_played": true}, "resolve_event": true}}
     ]}
   },
   {
-    "id": "scenario_captains_invitational_card", "display_name": "The Captain's Card", "type": "temptation", "interaction_mode": "interactable", "scopes": ["casino"],
-    "asset_path": "res://assets/art/events/rowdy_regular.png", "icon_key": "rowdy_regular", "environment_prop": "rowdy_patron", "start_summary": "The captain's card provides one attentive table.", "trigger": {"type": "manual"},
+    "id": "scenario_captains_invitational_card", "display_name": "Enter with the Captain's Card", "type": "temptation", "interaction_mode": "interactable", "scopes": ["casino"],
+    "asset_path": "res://assets/art/events/rowdy_regular.png", "icon_key": "rowdy_regular", "environment_prop": "rowdy_patron", "slot_binding_source_id": "scenario::delta_queen_captains_invitational_captain_scorer", "start_summary": "The captain's card provides one attentive table.", "trigger": {"type": "manual"},
     "payload": {"summary": "The captain's card provides one attentive table.", "choices": [
       {"id": "post_the_entry", "label": "Post the entry", "text": "The buy-in puts your name in the first round.", "consequence_summary": "Bankroll -15", "consequences": {"bankroll_delta": -15, "flags": {"captains_invitational_entered": true}, "resolve_event": true}},
       {"id": "watch_the_rounds", "label": "Watch the rounds", "text": "The tournament keeps your place politely empty.", "consequence_summary": "Heat -2", "consequences": {"suspicion_delta": -2, "flags": {"captains_invitational_observed": true}, "resolve_event": true}}
@@ -4608,8 +4622,8 @@
     ]}
   },
   {
-    "id": "chain06_sal_estate_item", "display_name": "The Estate Map", "type": "discovery", "interaction_mode": "interactable", "presentation": "talk", "scopes": ["shop"],
-    "speaker": {"role": "staff", "name": "Sal", "character_id": "sal_pawn_broker", "voice_line_key": "shop_greeting", "silhouette": "coat", "bind": "none"},
+    "id": "chain06_sal_estate_item", "display_name": "Estate Map", "type": "discovery", "interaction_mode": "interactable", "presentation": "talk", "scopes": ["shop"],
+    "speaker": {"role": "staff", "name": "Sal", "character_id": "sal_pawn_broker", "voice_line_key": "shop_greeting", "silhouette": "coat", "bind": "none", "environment_actor": false},
     "asset_path": "res://assets/art/events/parking_lot_tip.png", "icon_key": "parking_note", "environment_prop": "paper_note", "start_summary": "One estate map has three addresses crossed out.", "trigger": {"type": "manual"},
     "conditions": {"archetype_ids": ["pawn_shop"], "scenario_ids": ["pawn_shop_estate_lot_day"], "missing_story_flags": ["chain06_sal_item_taken"]},
     "payload": {"summary": "One estate map has three addresses crossed out.", "choices": [
@@ -4645,16 +4659,16 @@
     ]}
   },
   {
-    "id": "chain06_nico_weekly_door", "display_name": "Weekly Door", "type": "social", "interaction_mode": "interactable", "presentation": "talk", "scopes": ["shop"],
-    "speaker": {"role": "lender", "name": "Nico", "character_id": "nico_motel_friend", "voice_line_key": "motel_knock", "silhouette": "coat", "bind": "none"},
-    "asset_path": "res://assets/art/events/chatty_clerk.png", "icon_key": "parking_note", "environment_prop": "paper_note", "start_summary": "Nico leaves groceries outside a weekly door.", "trigger": {"type": "manual"},
+    "id": "chain06_nico_weekly_door", "display_name": "Nico's Weekly-Room Door", "type": "social", "interaction_mode": "interactable", "presentation": "talk", "scopes": ["shop"],
+    "speaker": {"role": "lender", "name": "Nico", "character_id": "nico_motel_friend", "voice_line_key": "motel_knock", "silhouette": "coat", "bind": "none", "environment_actor": false},
+    "asset_path": "res://assets/art/events/motel_knock.png", "icon_key": "motel_door", "environment_prop": "motel_door", "start_summary": "Nico leaves groceries outside a weekly door.", "trigger": {"type": "manual"},
     "conditions": {"archetype_ids": ["motel"], "scenario_ids": ["motel_weekly_rates"], "missing_story_flags": ["chain06_nico_weekly_door"]},
     "payload": {"summary": "Nico leaves groceries outside a weekly door.", "choices": [{"id": "notice_the_names", "label": "Notice the names", "text": "Half the doors owe him. None call it a loan.", "consequences": {"story_flags_set": {"chain06_nico_weekly_door": true}, "resolve_event": true}}]}
   },
   {
-    "id": "chain06_nico_what_it_covers", "display_name": "What It Covers", "type": "social", "interaction_mode": "interactable", "presentation": "talk", "scopes": ["shop"],
-    "speaker": {"role": "lender", "name": "Nico", "character_id": "nico_motel_friend", "voice_line_key": "motel_knock", "silhouette": "coat", "bind": "none"},
-    "asset_path": "res://assets/art/events/chatty_clerk.png", "icon_key": "parking_note", "environment_prop": "paper_note", "start_summary": "Soft loans keep three doors lit.", "trigger": {"type": "manual"},
+    "id": "chain06_nico_what_it_covers", "display_name": "Ask Nico What It Covers", "type": "social", "interaction_mode": "interactable", "presentation": "talk", "scopes": ["shop"],
+    "speaker": {"role": "lender", "name": "Nico", "character_id": "nico_motel_friend", "voice_line_key": "motel_knock", "silhouette": "coat", "bind": "none", "environment_actor": false},
+    "asset_path": "res://assets/art/events/chatty_clerk.png", "icon_key": "parking_note", "environment_prop": "paper_note", "slot_binding_source_id": "scenario::motel_weekly_rates_landlord", "start_summary": "Soft loans keep three doors lit.", "trigger": {"type": "manual"},
     "conditions": {"archetype_ids": ["motel"], "scenario_ids": ["motel_weekly_rates"], "requires_story_flags": {"chain06_nico_weekly_door": true}, "missing_story_flags": ["chain06_nico_cover_seen"]},
     "payload": {"summary": "Soft loans keep three doors lit.", "choices": [{"id": "keep_it_quiet", "label": "Keep it quiet", "text": "Nico nods. It's nothing. It is not nothing.", "consequences": {"story_flags_set": {"chain06_nico_cover_seen": true}, "resolve_event": true}}]}
   },
@@ -4695,9 +4709,9 @@
     "payload": {"summary": "The trio recognizes every gift.", "choices": [{"id": "show_what_stayed", "label": "Show what stayed", "text": "Every gift gets a nod. The band misses nothing.", "consequences": {"story_flags_set": {"chain06_trio_gifts_named": true}, "resolve_event": true}}]}
   },
   {
-    "id": "chain06_trio_rent_payoff", "display_name": "Rent Party Promise", "type": "social", "interaction_mode": "interactable", "presentation": "talk", "scopes": ["shop"],
-    "speaker": {"role": "staff", "name": "The Trio", "character_pool_id": "blue_note_trio", "character_identity_key": "blue_note_trio", "voice_line_key": "set_break", "silhouette": "vest", "bind": "none"},
-    "asset_path": "res://assets/art/events/chatty_clerk.png", "icon_key": "band", "environment_prop": "jazz_band", "start_summary": "The band remembers your rent-party promise.", "trigger": {"type": "manual"},
+    "id": "chain06_trio_rent_payoff", "display_name": "Keep the Rent-Party Promise", "type": "social", "interaction_mode": "interactable", "presentation": "talk", "scopes": ["shop"],
+    "speaker": {"role": "staff", "name": "The Trio", "character_pool_id": "blue_note_trio", "character_identity_key": "blue_note_trio", "voice_line_key": "set_break", "silhouette": "vest", "bind": "none", "environment_actor": false},
+    "asset_path": "res://assets/art/events/chatty_clerk.png", "icon_key": "band", "environment_prop": "jazz_band", "slot_binding_source_id": "fixture:jazz_band_stage", "start_summary": "The band remembers your rent-party promise.", "trigger": {"type": "manual"},
     "conditions": {"archetype_ids": ["jazz_club"], "scenario_ids": ["jazz_club_rent_party"], "requires_story_flags": {"chain06_trio_gifts_named": true}, "missing_story_flags": ["chain06_trio_rent_party_paid"]},
     "payload": {"summary": "The band remembers your rent-party promise.", "choices": [
       {"id": "cover_the_last_corner", "label": "Cover the last corner", "text": "They name {gift_memory}. Your money keeps the room.", "conditions": {"min_bankroll": 8}, "consequence_summary": "Bankroll -8; luck +1", "consequences": {"bankroll_delta": -8, "baseline_luck_delta": 1, "story_flags_set": {"chain06_trio_rent_party_paid": true}, "resolve_event": true}},

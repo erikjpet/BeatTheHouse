@@ -595,10 +595,9 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 
 
 func environment_interactable_objects(run_state: RunState, environment: Dictionary) -> Array:
-	# The visit/restock projection controls whether a physical person exists. Seal
-	# that lifecycle state before exposing hooks so the record, manifest, layout,
-	# and persisted room aliases all describe the same frame.
-	var machine := _ensure_machine_state(run_state, environment, true)
+	# Interaction discovery is observational. Project visit/restock state on a
+	# detached machine; gameplay action boundaries persist the same projection.
+	var machine := _ensure_machine_state(run_state, environment, false)
 	var payout := _pending_payout(machine)
 	var winners := _dictionary_array(machine.get("winner_pile", [])).size()
 	var label := _redeemer_label(environment)

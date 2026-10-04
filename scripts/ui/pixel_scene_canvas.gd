@@ -239,9 +239,11 @@ var developer_slot_family_button_group: ButtonGroup
 var developer_slot_visibility_row: HFlowContainer
 var developer_slot_show_empty_button: CheckBox
 var developer_slot_show_reserves_button: CheckBox
+var developer_slot_edit_shared_button: CheckBox
 var developer_slot_context_label: Label
-var developer_slot_show_empty_capacity := false
-var developer_slot_show_runtime_reserves := false
+var developer_slot_show_empty_capacity := true
+var developer_slot_show_runtime_reserves := true
+var developer_slot_edit_shared_in_scenario := false
 var developer_slot_hovered_id := ""
 var developer_slot_context_change_locking := false
 var developer_placement_panel_layout_queued := false
@@ -297,11 +299,18 @@ func set_developer_slot_placement_mode(enabled: bool) -> void:
 	if developer_slot_context_label != null:
 		developer_slot_context_label.visible = enabled
 	if enabled:
+		# A placement pass must expose every authored coordinate by default. The
+		# owner can still hide capacity temporarily, but a newly opened context
+		# never looks complete while silently concealing positions.
+		developer_slot_show_empty_capacity = true
+		developer_slot_show_runtime_reserves = true
+		developer_slot_edit_shared_in_scenario = false
 		_capture_developer_slot_scene_object_baseline()
 	else:
 		developer_slot_hovered_id = ""
 		_restore_developer_slot_scene_objects()
 	_ensure_developer_placement_panel()
+	_configure_developer_slot_context(enabled)
 	developer_placement_panel.visible = enabled or developer_placement_mode
 	_apply_authoring_slot_positions_to_scene_objects()
 	_update_developer_placement_panel()
@@ -337,6 +346,7 @@ func developer_slot_placement_snapshot() -> Dictionary:
 		"active_family": _developer_slot_active_family(),
 		"show_empty_capacity": developer_slot_show_empty_capacity,
 		"show_runtime_reserves": developer_slot_show_runtime_reserves,
+		"edit_shared_in_scenario": developer_slot_edit_shared_in_scenario,
 		"hovered_slot_id": developer_slot_hovered_id,
 		"preview_context": _developer_slot_preview_context(),
 		"placement_progress": _copy_dictionary(foundation_snapshot.get("developer_placement_progress", {})),
@@ -386,6 +396,74 @@ func set_developer_slot_show_runtime_reserves(visible: bool) -> void:
 	_prune_hidden_developer_slot_selection()
 	_update_developer_placement_panel()
 	queue_redraw()
+
+
+func set_developer_slot_edit_shared_in_scenario(enabled: bool) -> void:
+	if not _developer_slot_has_active_scenario():
+		enabled = false
+	if developer_slot_edit_shared_in_scenario == enabled:
+		return
+	var selected := _developer_slot(developer_slot_selected_id)
+	if not selected.is_empty() and _developer_slot_scope(selected) == "room_shared":
+		_finish_developer_slot_placement_edit()
+	developer_slot_edit_shared_in_scenario = enabled
+	if developer_slot_edit_shared_button != null:
+		developer_slot_edit_shared_button.set_pressed_no_signal(enabled)
+	_update_developer_placement_panel()
+	queue_redraw()
+
+
+func _configure_developer_slot_context(reset_family: bool) -> void:
+	var exact_scenario := _developer_slot_has_active_scenario()
+	if reset_family:
+		# Every newly opened layout starts as a complete review surface. Filters
+		# are a temporary convenience inside one context and must not silently
+		# carry hidden authored positions into Load Next Missing.
+		developer_slot_show_empty_capacity = true
+		developer_slot_show_runtime_reserves = true
+		developer_slot_edit_shared_in_scenario = false
+	elif not exact_scenario:
+		developer_slot_edit_shared_in_scenario = false
+	if developer_slot_show_empty_button != null:
+		developer_slot_show_empty_button.set_pressed_no_signal(developer_slot_show_empty_capacity)
+	if developer_slot_show_reserves_button != null:
+		developer_slot_show_reserves_button.set_pressed_no_signal(developer_slot_show_runtime_reserves)
+	if developer_slot_edit_shared_button != null:
+		developer_slot_edit_shared_button.visible = developer_slot_placement_mode and exact_scenario
+		developer_slot_edit_shared_button.set_pressed_no_signal(developer_slot_edit_shared_in_scenario)
+	if not reset_family:
+		return
+	var preferred_family := "scenario" if exact_scenario else "fixed"
+	for family_value in SLOT_FAMILIES:
+		var family := str(family_value)
+		developer_slot_family_filters[family] = family == preferred_family
+		var button_value: Variant = developer_slot_filter_buttons.get(family)
+		if button_value is BaseButton:
+			(button_value as BaseButton).set_pressed_no_signal(family == preferred_family)
+	developer_slot_selected_id = ""
+	developer_slot_hovered_id = ""
+
+
+func _developer_slot_has_active_scenario() -> bool:
+	return not EnvironmentPlacementScript.active_scenario_id(foundation_snapshot).is_empty()
+
+
+func _developer_slot_scope(slot: Dictionary) -> String:
+	return "scenario_local" if bool(slot.get("scenario_instance", false)) else "room_shared"
+
+
+func _developer_slot_is_editable(slot: Dictionary) -> bool:
+	if slot.is_empty() or _developer_slot_scope(slot) == "scenario_local":
+		return not slot.is_empty()
+	return not _developer_slot_has_active_scenario() or developer_slot_edit_shared_in_scenario
+
+
+func _developer_slot_hidden_detail_count() -> int:
+	var result := 0
+	for slot_value in _developer_slots(true):
+		if not _developer_slot_visible_by_detail(slot_value as Dictionary):
+			result += 1
+	return result
 
 
 func _prune_hidden_developer_slot_selection() -> void:
@@ -501,6 +579,14 @@ func _ensure_developer_placement_panel() -> void:
 	developer_slot_show_reserves_button.tooltip_text = "Show positions reserved for delivery and other runtime-injected content."
 	developer_slot_show_reserves_button.toggled.connect(set_developer_slot_show_runtime_reserves)
 	developer_slot_visibility_row.add_child(developer_slot_show_reserves_button)
+	developer_slot_edit_shared_button = CheckBox.new()
+	developer_slot_edit_shared_button.name = "EditSharedRoomSlots"
+	developer_slot_edit_shared_button.text = "Edit shared room slots (resets room progress)"
+	developer_slot_edit_shared_button.button_pressed = developer_slot_edit_shared_in_scenario
+	developer_slot_edit_shared_button.tooltip_text = "Exact scenarios normally lock room-shared fixed, event, reserve, and exit positions. Enable only to deliberately change the base room; doing so resets completion for that room and all of its scenarios."
+	developer_slot_edit_shared_button.toggled.connect(set_developer_slot_edit_shared_in_scenario)
+	developer_slot_edit_shared_button.visible = developer_slot_placement_mode and _developer_slot_has_active_scenario()
+	developer_slot_visibility_row.add_child(developer_slot_edit_shared_button)
 
 	developer_slot_context_label = Label.new()
 	developer_slot_context_label.name = "SlotPreviewContext"
@@ -549,7 +635,7 @@ func _ensure_developer_placement_panel() -> void:
 	developer_placement_export_button.name = "ExportPlacementReport"
 	developer_placement_export_button.text = "Export Placement Report"
 	developer_placement_export_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	developer_placement_export_button.tooltip_text = "Lock the pending position and export every local slot change to a shareable JSON report. Works from an EXE build."
+	developer_placement_export_button.tooltip_text = "Lock the pending position and export the complete effective placement authority to a shareable JSON report. Works from an EXE build."
 	developer_placement_export_button.pressed.connect(_export_active_developer_placement_report)
 	stack.add_child(developer_placement_export_button)
 	_update_developer_placement_panel()
@@ -645,6 +731,16 @@ func _update_developer_slot_placement_panel() -> void:
 		var context_lines: Array[String] = [
 			str(preview_context.get("label", "Active preview: no scenario")),
 		]
+		if _developer_slot_has_active_scenario():
+			if developer_slot_edit_shared_in_scenario:
+				context_lines.append("Scope: SCENARIO-LOCAL + ROOM-SHARED editing (shared changes reset this room's saved progress)")
+			else:
+				context_lines.append("Scope: SCENARIO-LOCAL editing; ROOM-SHARED markers are locked reference")
+		else:
+			context_lines.append("Scope: ROOM-SHARED editing; these positions apply to every scenario in this room")
+		var hidden_detail_count := _developer_slot_hidden_detail_count()
+		if hidden_detail_count > 0:
+			context_lines.append("CHECK: %d authored marker(s) hidden by capacity filters; Save still includes their current positions" % hidden_detail_count)
 		var progress := _copy_dictionary(foundation_snapshot.get("developer_placement_progress", {}))
 		if not progress.is_empty():
 			var saved_label := "SAVED" if bool(progress.get("saved", false)) else "NOT SAVED"
@@ -684,6 +780,8 @@ func _update_developer_slot_placement_panel() -> void:
 		return
 	var slot_id := str(slot.get("id", developer_slot_selected_id))
 	family = _developer_slot_family(slot)
+	var scope_label := "SCENARIO-LOCAL" if _developer_slot_scope(slot) == "scenario_local" else "ROOM-SHARED"
+	var editable := _developer_slot_is_editable(slot)
 	var kind := str(slot.get("kind", family))
 	var placement_class := str(slot.get("footprint_class", "unknown"))
 	var support := str(slot.get("support_id", "free"))
@@ -707,14 +805,15 @@ func _update_developer_slot_placement_panel() -> void:
 	if developer_slot_pending_rect.has_area():
 		status_text = "position %.0f, %.0f" % [developer_slot_pending_position.x, developer_slot_pending_position.y]
 		if not developer_slot_overlap_ids.is_empty():
-			status_text += "; overlaps %s" % ", ".join(developer_slot_overlap_ids.slice(0, mini(3, developer_slot_overlap_ids.size())))
+			status_text += "; advisory overlap: %s" % ", ".join(developer_slot_overlap_ids.slice(0, mini(3, developer_slot_overlap_ids.size())))
 	if not warnings.is_empty():
 		status_text += "; WARNING: %s" % "; ".join(warnings)
-	developer_placement_label.text = "%s | %s\n%s\n%s | %s / %s\n%s | %s | %s | %s%s" % [
+	developer_placement_label.text = "%s | %s\n%s\n%s | %s | %s / %s\n%s | %s | %s | %s%s" % [
 		str(foundation_snapshot.get("archetype_id", environment_id)),
 		str(foundation_snapshot.get("current_layer_id", foundation_snapshot.get("layer_id", "main"))),
 		primary_label,
 		slot_id,
+		"%s%s" % [scope_label, " / LOCKED" if not editable else ""],
 		family if kind == family else "%s:%s" % [family, kind],
 		placement_class,
 		occupancy,
@@ -723,8 +822,8 @@ func _update_developer_slot_placement_panel() -> void:
 		status_text,
 		claimant_summary,
 	]
-	developer_placement_lock_button.disabled = not developer_slot_pending_rect.has_area() or not developer_slot_valid
-	developer_placement_reset_button.disabled = false
+	developer_placement_lock_button.disabled = not editable or not developer_slot_pending_rect.has_area() or not developer_slot_valid
+	developer_placement_reset_button.disabled = not editable
 
 
 func _lock_active_developer_placement() -> void:
@@ -900,6 +999,8 @@ func render_owned_environment_snapshot(snapshot: Dictionary) -> void:
 
 
 func _render_owned_environment_snapshot(snapshot: Dictionary) -> void:
+	var previous_slot_context := _developer_slot_snapshot_context_key(foundation_snapshot)
+	var next_slot_context := _developer_slot_snapshot_context_key(snapshot)
 	_preserve_developer_slot_edit_before_context_change(snapshot)
 	uses_foundation_snapshot = true
 	foundation_snapshot = snapshot
@@ -926,6 +1027,9 @@ func _render_owned_environment_snapshot(snapshot: Dictionary) -> void:
 	foundation_scene_objects = _objects_from_foundation_snapshot(foundation_snapshot)
 	if developer_slot_placement_mode:
 		_capture_developer_slot_scene_object_baseline()
+		if previous_slot_context != next_slot_context:
+			developer_slot_edit_shared_in_scenario = false
+			_configure_developer_slot_context(true)
 	_apply_authoring_slot_positions_to_scene_objects()
 	_sync_person_transits()
 	_sync_actor_route_starts()
@@ -1862,6 +1966,18 @@ func _developer_slot_occupant_records(slot_id: String) -> Array:
 
 
 func _developer_slot_primary_label(slot: Dictionary) -> String:
+	var label := _developer_slot_unqualified_label(slot)
+	if not bool(slot.get("scenario_instance", false)) or not _developer_slot_label_repeats(label, slot):
+		return label
+	var qualifier := _developer_slot_zone_label(slot)
+	if qualifier.is_empty():
+		qualifier = "Position %d" % int(slot.get("scenario_ordinal", 0))
+	elif _developer_slot_label_and_zone_repeat(label, qualifier, slot):
+		qualifier += " %d" % int(slot.get("scenario_ordinal", 0))
+	return "%s - %s" % [label, qualifier]
+
+
+func _developer_slot_unqualified_label(slot: Dictionary) -> String:
 	var occupants := _developer_slot_occupants(str(slot.get("id", "")))
 	if occupants.size() == 1:
 		return occupants[0]
@@ -1881,18 +1997,56 @@ func _developer_slot_primary_label(slot: Dictionary) -> String:
 	return _developer_slot_capacity_label(slot)
 
 
+func _developer_slot_label_repeats(label: String, slot: Dictionary) -> bool:
+	var normalized := label.strip_edges().to_lower()
+	if normalized.is_empty():
+		return false
+	for candidate_value in _developer_slots(true):
+		var candidate := candidate_value as Dictionary
+		if str(candidate.get("id", "")) == str(slot.get("id", "")) \
+				or not bool(candidate.get("scenario_instance", false)):
+			continue
+		if _developer_slot_unqualified_label(candidate).strip_edges().to_lower() == normalized:
+			return true
+	return false
+
+
+func _developer_slot_label_and_zone_repeat(label: String, qualifier: String, slot: Dictionary) -> bool:
+	var normalized_label := label.strip_edges().to_lower()
+	var normalized_zone := qualifier.strip_edges().to_lower()
+	for candidate_value in _developer_slots(true):
+		var candidate := candidate_value as Dictionary
+		if str(candidate.get("id", "")) == str(slot.get("id", "")) \
+				or not bool(candidate.get("scenario_instance", false)):
+			continue
+		if _developer_slot_unqualified_label(candidate).strip_edges().to_lower() == normalized_label \
+				and _developer_slot_zone_label(candidate).strip_edges().to_lower() == normalized_zone:
+			return true
+	return false
+
+
+func _developer_slot_zone_label(slot: Dictionary) -> String:
+	var zone_ids := _array_view(slot.get("scenario_zone_ids", []))
+	var zone_id := str(zone_ids[0]).strip_edges() if not zone_ids.is_empty() else ""
+	if zone_id.is_empty():
+		zone_id = str(slot.get("zone_id", "")).strip_edges()
+	return _developer_friendly_identifier(zone_id)
+
+
 func _developer_slot_capacity_label(slot: Dictionary) -> String:
 	var physical_role := str(slot.get("physical_role", "")).strip_edges()
-	if not physical_role.is_empty():
-		return physical_role
 	var slot_id := str(slot.get("id", "")).strip_edges()
 	var family := _developer_slot_family(slot)
 	var identity := slot_id.get_slice(".", 1) if slot_id.contains(".") else slot_id
+	var suffix := identity.get_slice("_", identity.get_slice_count("_") - 1)
+	if not physical_role.is_empty():
+		if suffix.is_valid_int() and not physical_role.ends_with(" %s" % suffix):
+			return "%s %s" % [physical_role, suffix]
+		return physical_role
 	if family in ["fixed", "exit"]:
 		return _developer_friendly_identifier(identity)
 	var placement_class := str(slot.get("footprint_class", "capacity")).strip_edges()
 	var label := _developer_friendly_identifier(placement_class)
-	var suffix := identity.get_slice("_", identity.get_slice_count("_") - 1)
 	if suffix.is_valid_int():
 		label += " %s" % suffix
 	return label
@@ -1909,6 +2063,12 @@ func _developer_slot_known_claimants(slot: Dictionary) -> Array[String]:
 
 
 func _developer_slot_claimant_labels(slot: Dictionary) -> Array[String]:
+	# Room-shared slots already lead with the live occupant when one exists and
+	# otherwise use their authored capacity role. Their raw occupant_ids are
+	# stable migration/runtime aliases, not owner-facing names. Exact scenario
+	# slots carry explicit scenario_occupant_labels and retain this detail.
+	if not bool(slot.get("scenario_instance", false)):
+		return []
 	var candidates: Array[Dictionary] = []
 	var authored_labels := _array_view(slot.get("scenario_occupant_labels", []))
 	for label_value in authored_labels:
@@ -1937,15 +2097,25 @@ func _developer_slot_claimant_labels(slot: Dictionary) -> Array[String]:
 		return str(left.get("label", "")) < str(right.get("label", "")) if left_priority == right_priority else left_priority < right_priority
 	)
 	var labels: Array[String] = []
+	var normalized_labels: Dictionary = {}
 	for candidate in candidates:
 		var label := str(candidate.get("label", ""))
-		if not labels.has(label):
-			labels.append(label)
+		var normalized := label.strip_edges().to_lower()
+		if normalized.is_empty() or normalized_labels.has(normalized):
+			continue
+		normalized_labels[normalized] = true
+		labels.append(label)
 	return labels
 
 
 func _developer_slot_claimant_label(claimant_id: String, scenario_id: String) -> String:
 	var identity := claimant_id.strip_edges()
+	if identity.begins_with("meta_sal_shelf:"):
+		var shelf_index := identity.get_slice(":", 1)
+		if shelf_index.is_valid_int():
+			return "Sal's Shelf Slot %d" % (int(shelf_index) + 1)
+	if _developer_slot_claimant_is_action_only(identity):
+		return ""
 	var double_separator := identity.find("::")
 	if double_separator >= 0:
 		identity = identity.substr(double_separator + 2)
@@ -1966,6 +2136,18 @@ func _developer_slot_claimant_label(claimant_id: String, scenario_id: String) ->
 			identity = identity.left(identity.length() - suffix.length())
 	var label := _developer_friendly_identifier(identity)
 	return "Aftermath: %s" % label if aftermath and not label.is_empty() else label
+
+
+func _developer_slot_claimant_is_action_only(identity: String) -> bool:
+	var tokens := identity.to_lower().split("_", false)
+	var count := tokens.size()
+	if count >= 2 and tokens[count - 2] == "task" and tokens[count - 1].is_valid_int():
+		return true
+	return count >= 4 \
+		and tokens[count - 4] == "work" \
+		and tokens[count - 3].is_valid_int() \
+		and tokens[count - 2] == "choice" \
+		and tokens[count - 1].is_valid_int()
 
 
 func _developer_slot_family(slot: Dictionary) -> String:
@@ -2056,7 +2238,7 @@ func _developer_slot_overlap_candidates(selected_slot_id: String = "") -> Array:
 	for slot_value in _developer_slots(true):
 		var slot := slot_value as Dictionary
 		var slot_id := str(slot.get("id", ""))
-		if slot_id == selected_slot_id or _developer_slot_is_context_active(slot):
+		if slot_id != selected_slot_id:
 			candidates.append(slot)
 	return candidates
 
@@ -2092,7 +2274,10 @@ func _handle_developer_slot_placement_input(event: InputEvent) -> bool:
 				if hovered_slot.is_empty():
 					tooltip_text = ""
 				else:
-					tooltip_text = "%s\n%s" % [_developer_slot_primary_label(hovered_slot), hovered_slot_id]
+					var hover_scope := "SCENARIO-LOCAL" if _developer_slot_scope(hovered_slot) == "scenario_local" else "ROOM-SHARED"
+					if not _developer_slot_is_editable(hovered_slot):
+						hover_scope += " / LOCKED"
+					tooltip_text = "%s\n%s\n%s" % [_developer_slot_primary_label(hovered_slot), hovered_slot_id, hover_scope]
 					var known_claimants := _developer_slot_claimant_labels(hovered_slot)
 					if not known_claimants.is_empty():
 						var shown_claimants := known_claimants.slice(0, mini(5, known_claimants.size()))
@@ -2143,7 +2328,7 @@ func _handle_developer_slot_placement_input(event: InputEvent) -> bool:
 		if event is InputEventKey and (event as InputEventKey).shift_pressed:
 			nudge *= 10.0
 		var slot := _developer_slot(developer_slot_selected_id)
-		if not slot.is_empty():
+		if not slot.is_empty() and _developer_slot_is_editable(slot):
 			if not developer_slot_original_rect.has_area():
 				developer_slot_original_rect = _developer_slot_rect(slot)
 			var current_rect := developer_slot_pending_rect if developer_slot_pending_rect.has_area() else developer_slot_original_rect
@@ -2168,6 +2353,13 @@ func _begin_developer_slot_placement_drag(local_position: Vector2) -> void:
 	var slot := _developer_slot(slot_id)
 	if slot.is_empty():
 		return
+	if not _developer_slot_is_editable(slot):
+		clear_developer_slot_placement_preview()
+		developer_slot_selected_id = slot_id
+		developer_slot_hovered_id = slot_id
+		_update_developer_placement_panel()
+		queue_redraw()
+		return
 	developer_slot_original_rect = _developer_slot_rect(slot)
 	developer_slot_pending_rect = developer_slot_original_rect
 	developer_slot_pending_position = _developer_slot_position(slot)
@@ -2179,7 +2371,7 @@ func _begin_developer_slot_placement_drag(local_position: Vector2) -> void:
 
 func _update_developer_slot_placement_preview(top_left: Vector2) -> void:
 	var slot := _developer_slot(developer_slot_selected_id)
-	if slot.is_empty():
+	if slot.is_empty() or not _developer_slot_is_editable(slot):
 		return
 	if not developer_slot_original_rect.has_area():
 		developer_slot_original_rect = _developer_slot_rect(slot)
@@ -2201,9 +2393,10 @@ func _validate_developer_slot_placement_preview() -> void:
 	if not developer_slot_valid:
 		_update_developer_placement_panel()
 		return
-	# Diagnose the selected position against the objects in the active preview,
-	# not against every mutually exclusive empty capacity slot ever authored for
-	# the room. Required fixed positions remain part of that coexistence set.
+	# Manual placement is the one opportunity to inspect future capacity. Warn
+	# against every authored marker in this exact context, including currently
+	# empty and injected-content reserves. The warning remains advisory so an
+	# intentional alternate-stage overlap is still authorable.
 	for slot_value in _developer_slot_overlap_candidates(developer_slot_selected_id):
 		var slot := slot_value as Dictionary
 		var slot_id := str(slot.get("id", ""))
@@ -2214,7 +2407,7 @@ func _validate_developer_slot_placement_preview() -> void:
 
 func _developer_slot_placement_request() -> Dictionary:
 	var slot := _developer_slot(developer_slot_selected_id)
-	if slot.is_empty():
+	if slot.is_empty() or not _developer_slot_is_editable(slot):
 		return {}
 	return {
 		"environment": _developer_slot_environment(),
@@ -2533,14 +2726,17 @@ func _draw_developer_slot_overlay() -> void:
 		var family := _developer_slot_family(slot)
 		var color := _developer_slot_family_color(family)
 		var selected := slot_id == developer_slot_selected_id
-		if selected:
+		var editable := _developer_slot_is_editable(slot)
+		if not editable:
+			color = C_SOFT
+		elif selected:
 			color = C_TEAL if developer_slot_valid or not developer_slot_pending_rect.has_area() else C_HOT
 		var occupied := not _developer_slot_occupants(slot_id).is_empty()
 		var slot_state := _developer_slot_state(slot, coexistence_slots)
 		var has_warnings := not (slot_state.get("warnings", []) as Array).is_empty()
 		if has_warnings and not selected:
 			color = C_HOT
-		var fill_alpha := 0.19 if occupied else 0.10
+		var fill_alpha := 0.08 if not editable else (0.19 if occupied else 0.10)
 		if selected:
 			fill_alpha = 0.30
 		draw_rect(rect, Color(color.r, color.g, color.b, fill_alpha), true)

@@ -38,6 +38,7 @@ const PERSON_INTERACTABLE_EVENT_IDS := [
 	"recruitment_rook_leads",
 	"recruitment_switch",
 	"recruitment_velvet",
+	"scenario_debt_court_office_hours",
 	"town_rumor_staff",
 ]
 

@@ -1968,8 +1968,18 @@ func _check_connected_town_foundation(library: ContentLibrary, failures: Array) 
 		failures.append("Same seed did not offer identical rumors at the same venue.")
 	var seeded_bar := run_state.scenario_for_node("bar")
 	if seeded_bar.is_empty():
-		failures.append("Town scenario truth source did not pre-seed the Bar's non-empty scenario pool.")
-		return
+		var bar_fixture := library.scenario("bar_fight_night")
+		if bar_fixture.is_empty():
+			failures.append("Town scenario truth source could not load the explicit Bar scenario fixture.")
+			return
+		var bar_fixture_id := str(bar_fixture.get("id", ""))
+		var bar_cycle_id := str(generator.call("_environment_situation_cycle_id", run_state, "bar"))
+		run_state.remember_scenario_selection("bar", bar_fixture_id)
+		run_state.remember_environment_situation_cycle("bar", bar_cycle_id, bar_fixture_id)
+		if not run_state.seed_scenario_for_node("bar", bar_fixture):
+			failures.append("Town scenario truth source could not seed the explicit Bar scenario fixture.")
+			return
+		seeded_bar = run_state.scenario_for_node("bar")
 	var scenario_rumor: Dictionary = {}
 	for rumor_value in run_state.rumors_for_venue("corner_store", "street", 64):
 		if typeof(rumor_value) != TYPE_DICTIONARY:

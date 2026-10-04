@@ -483,6 +483,7 @@ var environment_test_day_option: OptionButton
 var environment_test_happening_mode_option: OptionButton
 var environment_test_happening_checks: Dictionary = {}
 var environment_test_back_button: Button
+var environment_test_next_missing_button: Button
 var environment_test_overlay: Control
 var environment_test_overlay_panel: PanelContainer
 var environment_test_overlay_content: VBoxContainer
@@ -9969,6 +9970,7 @@ func _build_environment_test_menu(parent: Node) -> void:
 	environment_test_layer_option = _environment_test_option_group(identity_row, "Starting Area")
 	environment_test_archetype_option.item_selected.connect(_on_environment_test_archetype_selected)
 	environment_test_scenario_option.item_selected.connect(_on_environment_test_scenario_selected)
+	environment_test_layer_option.item_selected.connect(_on_environment_test_layer_selected)
 
 	var condition_row := HBoxContainer.new()
 	condition_row.add_theme_constant_override("separation", 8)
@@ -10001,6 +10003,19 @@ func _build_environment_test_menu(parent: Node) -> void:
 		check.set_meta("environment_test_happening_id", happening_id)
 		happening_row.add_child(check)
 		environment_test_happening_checks[happening_id] = check
+
+	var placement_action_row := HBoxContainer.new()
+	placement_action_row.add_theme_constant_override("separation", 8)
+	controls.add_child(placement_action_row)
+	environment_test_next_missing_button = _button(
+		"Load Next Missing",
+		Callable(self, "_load_next_missing_environment_layout")
+	)
+	environment_test_next_missing_button.name = "LoadNextMissingLayout"
+	environment_test_next_missing_button.custom_minimum_size = Vector2(0, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
+	environment_test_next_missing_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	environment_test_next_missing_button.tooltip_text = "Select and spawn the next unsaved base or exact scenario layout in the 75-layout placement pass."
+	placement_action_row.add_child(environment_test_next_missing_button)
 
 	var action_row := HBoxContainer.new()
 	action_row.add_theme_constant_override("separation", 8)
@@ -10044,6 +10059,21 @@ func _environment_test_selected_id(option: OptionButton, fallback: String = "") 
 	return str(option.get_item_metadata(option.selected)).strip_edges()
 
 
+func _environment_test_select_id(option: OptionButton, wanted_id: String) -> bool:
+	if option == null:
+		return false
+	var clean_id := wanted_id.strip_edges()
+	for index in range(option.item_count):
+		if str(option.get_item_metadata(index)).strip_edges() == clean_id:
+			option.select(index)
+			return true
+	return false
+
+
+func _environment_test_placement_pass_active() -> bool:
+	return user_settings != null and bool(user_settings.developer_slot_placement_mode)
+
+
 func _populate_environment_test_archetypes() -> void:
 	if environment_test_archetype_option == null or library == null:
 		return
@@ -10072,12 +10102,20 @@ func _on_environment_test_scenario_selected(_index: int) -> void:
 	_sync_environment_test_layer_to_scenario()
 
 
+func _on_environment_test_layer_selected(_index: int) -> void:
+	_refresh_environment_test_completion_presentation()
+
+
 func _refresh_environment_test_identity_options() -> void:
 	if library == null or environment_test_scenario_option == null or environment_test_layer_option == null:
 		return
+	var previous_scenario_id := _environment_test_selected_id(environment_test_scenario_option)
+	var previous_layer_id := _environment_test_selected_id(environment_test_layer_option)
 	var archetype_id := _environment_test_selected_id(environment_test_archetype_option)
+	var placement_pass := _environment_test_placement_pass_active()
 	environment_test_scenario_option.clear()
-	_environment_test_add_option(environment_test_scenario_option, "Normal Run Selection", "__default")
+	if not placement_pass:
+		_environment_test_add_option(environment_test_scenario_option, "Normal Run Selection", "__default")
 	_environment_test_add_option(environment_test_scenario_option, "Base / No Scenario", "__none")
 	for scenario_value in library.scenarios_for_archetype(archetype_id):
 		if typeof(scenario_value) != TYPE_DICTIONARY:
@@ -10091,23 +10129,35 @@ func _refresh_environment_test_identity_options() -> void:
 			scenario_name = scenario_id.replace("_", " ").capitalize()
 		_environment_test_add_option(environment_test_scenario_option, scenario_name, scenario_id)
 	environment_test_layer_option.clear()
-	_environment_test_add_option(environment_test_layer_option, "Scenario / Normal Entrance", "")
 	var archetype := library.environment_archetype(archetype_id)
 	var layers := JsonCoerceScript._copy_dict(archetype.get("layers", {}))
-	for layer_id_value in layers.keys():
+	if layers.is_empty() or not placement_pass:
+		var entrance_label := "Main room" if placement_pass else "Scenario / Normal Entrance"
+		_environment_test_add_option(environment_test_layer_option, entrance_label, "")
+	var ordered_layer_ids: Array = []
+	ordered_layer_ids.assign(layers.keys())
+	for layer_id_value in ordered_layer_ids:
 		var layer_id := str(layer_id_value)
 		var layer := JsonCoerceScript._copy_dict(layers.get(layer_id_value, {}))
 		var layer_name := str(layer.get("layer_display_name", layer_id.replace("_", " ").capitalize()))
 		_environment_test_add_option(environment_test_layer_option, layer_name, layer_id)
-	if environment_test_status_label != null:
-		environment_test_status_label.text = "%d scenario choice(s) available for %s." % [environment_test_scenario_option.item_count, archetype_id.replace("_", " ").capitalize()]
+	var fallback_scenario_id := "__none" if placement_pass else "__default"
+	if not _environment_test_select_id(environment_test_scenario_option, previous_scenario_id):
+		_environment_test_select_id(environment_test_scenario_option, fallback_scenario_id)
+	if not _environment_test_select_id(environment_test_layer_option, previous_layer_id):
+		var default_layer_id := str(archetype.get("default_layer_id", "")).strip_edges()
+		if default_layer_id.is_empty() or not _environment_test_select_id(environment_test_layer_option, default_layer_id):
+			environment_test_layer_option.select(0)
 	_sync_environment_test_layer_to_scenario()
 
 
 func _sync_environment_test_layer_to_scenario() -> void:
 	if library == null or environment_test_scenario_option == null or environment_test_layer_option == null:
 		return
-	var scenario_id := _environment_test_selected_id(environment_test_scenario_option, "__default")
+	var scenario_id := _environment_test_selected_id(
+		environment_test_scenario_option,
+		"__none" if _environment_test_placement_pass_active() else "__default"
+	)
 	var exact_scenario := scenario_id not in ["__default", "__none"]
 	var authored_layer_id := ""
 	if exact_scenario:
@@ -10119,13 +10169,208 @@ func _sync_environment_test_layer_to_scenario() -> void:
 	var archetype_id := _environment_test_selected_id(environment_test_archetype_option)
 	var layers := JsonCoerceScript._copy_dict(library.environment_archetype(archetype_id).get("layers", {}))
 	environment_test_layer_option.disabled = layers.is_empty() or exact_scenario
-	environment_test_layer_option.tooltip_text = "Exact scenarios always open in their authored area." if exact_scenario else "Choose the starting area for a base or normal-selection room."
+	environment_test_layer_option.tooltip_text = "Exact scenarios always open in their authored area." if exact_scenario else "Choose the starting area for this base room."
+	_refresh_environment_test_completion_presentation()
+
+
+func _environment_test_layout_environment(
+	archetype_id: String,
+	layer_id: String,
+	scenario_id: String
+) -> Dictionary:
+	var environment: Dictionary = {"archetype_id": archetype_id.strip_edges()}
+	var clean_layer_id := layer_id.strip_edges()
+	if not clean_layer_id.is_empty():
+		environment["current_layer_id"] = clean_layer_id
+	var clean_scenario_id := scenario_id.strip_edges()
+	if clean_scenario_id not in ["", "__default", "__none", DeveloperPlacementStoreScript.BASE_LAYOUT_ID]:
+		environment["scenario_id"] = clean_scenario_id
+		environment["scenario_state"] = {
+			"id": clean_scenario_id,
+			"layer_id": clean_layer_id,
+		}
+	return environment
+
+
+func _environment_test_current_layout_environment() -> Dictionary:
+	var archetype_id := _environment_test_selected_id(environment_test_archetype_option)
+	var scenario_id := _environment_test_selected_id(
+		environment_test_scenario_option,
+		"__none" if _environment_test_placement_pass_active() else "__default"
+	)
+	var layer_id := _environment_test_selected_id(environment_test_layer_option)
+	if scenario_id not in ["__default", "__none"]:
+		layer_id = str(library.scenario(scenario_id).get("layer_id", layer_id)).strip_edges()
+	return _environment_test_layout_environment(archetype_id, layer_id, scenario_id)
+
+
+func _environment_test_status_prefix(saved: bool) -> String:
+	return "SAVED · " if saved else "TODO · "
+
+
+func _environment_test_scenario_name(scenario_id: String) -> String:
+	var scenario := library.scenario(scenario_id)
+	var scenario_name := str(scenario.get("display_name", scenario.get("name", ""))).strip_edges()
+	return scenario_name if not scenario_name.is_empty() else scenario_id.replace("_", " ").capitalize()
+
+
+func _environment_test_layer_name(archetype_id: String, layer_id: String) -> String:
+	if layer_id.strip_edges().is_empty():
+		return "Main room"
+	var layers := JsonCoerceScript._copy_dict(library.environment_archetype(archetype_id).get("layers", {}))
+	var layer := JsonCoerceScript._copy_dict(layers.get(layer_id, {}))
+	return str(layer.get("layer_display_name", layer_id.replace("_", " ").capitalize()))
+
+
+func _environment_test_friendly_layout_name(layout_id: String) -> String:
+	var separator := layout_id.find("::")
+	if separator < 0:
+		return layout_id
+	var map_id := layout_id.left(separator)
+	var scenario_id := layout_id.substr(separator + 2)
+	var archetype_id := map_id
+	var layer_id := ""
+	var layer_separator := map_id.find(":")
+	if layer_separator >= 0:
+		archetype_id = map_id.left(layer_separator)
+		layer_id = map_id.substr(layer_separator + 1)
+	var archetype := library.environment_archetype(archetype_id)
+	var environment_name := str(archetype.get("display_name", "")).strip_edges()
+	if environment_name.is_empty():
+		environment_name = archetype_id.replace("_", " ").capitalize()
+	if not layer_id.is_empty():
+		environment_name += " — %s" % _environment_test_layer_name(archetype_id, layer_id)
+	var context_name := "Base / No Scenario" if scenario_id == DeveloperPlacementStoreScript.BASE_LAYOUT_ID else _environment_test_scenario_name(scenario_id)
+	return "%s / %s" % [environment_name, context_name]
+
+
+func _environment_test_next_missing_layout_id(coverage: Dictionary = {}) -> String:
+	var snapshot := coverage if not coverage.is_empty() else DeveloperPlacementStoreScript.coverage_snapshot()
+	var next_missing := str(snapshot.get("next_missing_layout_id", "")).strip_edges()
+	if not next_missing.is_empty():
+		return next_missing
+	var missing := JsonCoerceScript._copy_array(snapshot.get("missing_layout_ids", []))
+	return str(missing[0]).strip_edges() if not missing.is_empty() else ""
+
+
+func _refresh_environment_test_completion_presentation() -> void:
+	if library == null or environment_test_scenario_option == null or environment_test_layer_option == null:
+		return
+	var placement_pass := _environment_test_placement_pass_active()
+	if environment_test_next_missing_button != null:
+		environment_test_next_missing_button.visible = placement_pass
+	if not placement_pass:
+		if environment_test_status_label != null:
+			var selected_scenario_id := _environment_test_selected_id(environment_test_scenario_option, "__default")
+			if selected_scenario_id not in ["__default", "__none"]:
+				var authored_layer_id := str(library.scenario(selected_scenario_id).get("layer_id", "")).strip_edges()
+				var area_label := "main room" if authored_layer_id.is_empty() else _environment_test_layer_name(
+					_environment_test_selected_id(environment_test_archetype_option), authored_layer_id
+				)
+				environment_test_status_label.text = "Exact scenario area locked: %s." % area_label
+			elif not JsonCoerceScript._copy_dict(library.environment_archetype(
+				_environment_test_selected_id(environment_test_archetype_option)
+			).get("layers", {})).is_empty():
+				environment_test_status_label.text = "Base / normal selection: choose any starting area."
+			else:
+				environment_test_status_label.text = "%d scenario choice(s) available." % environment_test_scenario_option.item_count
+		return
+
+	var archetype_id := _environment_test_selected_id(environment_test_archetype_option)
+	var selected_layer_id := _environment_test_selected_id(environment_test_layer_option)
+	for index in range(environment_test_scenario_option.item_count):
+		var scenario_id := str(environment_test_scenario_option.get_item_metadata(index)).strip_edges()
+		if scenario_id == "__none":
+			var base_environment := _environment_test_layout_environment(archetype_id, selected_layer_id, scenario_id)
+			environment_test_scenario_option.set_item_text(
+				index,
+				"%sBase / No Scenario" % _environment_test_status_prefix(
+					DeveloperPlacementStoreScript.layout_saved(base_environment)
+				)
+			)
+		elif scenario_id != "__default":
+			var scenario_layer_id := str(library.scenario(scenario_id).get("layer_id", "")).strip_edges()
+			var scenario_environment := _environment_test_layout_environment(
+				archetype_id, scenario_layer_id, scenario_id
+			)
+			environment_test_scenario_option.set_item_text(
+				index,
+				"%s%s" % [
+					_environment_test_status_prefix(DeveloperPlacementStoreScript.layout_saved(scenario_environment)),
+					_environment_test_scenario_name(scenario_id),
+				]
+			)
+	for index in range(environment_test_layer_option.item_count):
+		var layer_id := str(environment_test_layer_option.get_item_metadata(index)).strip_edges()
+		var layer_environment := _environment_test_layout_environment(archetype_id, layer_id, "__none")
+		environment_test_layer_option.set_item_text(
+			index,
+			"%s%s" % [
+				_environment_test_status_prefix(DeveloperPlacementStoreScript.layout_saved(layer_environment)),
+				_environment_test_layer_name(archetype_id, layer_id),
+			]
+		)
+
+	var coverage := DeveloperPlacementStoreScript.coverage_snapshot()
+	var next_missing := _environment_test_next_missing_layout_id(coverage)
+	if environment_test_next_missing_button != null:
+		environment_test_next_missing_button.disabled = next_missing.is_empty()
+		environment_test_next_missing_button.text = "All Layouts Saved" if next_missing.is_empty() else "Load Next Missing"
+		environment_test_next_missing_button.tooltip_text = (
+			"Every authored placement layout is saved."
+			if next_missing.is_empty()
+			else "Select and spawn %s." % _environment_test_friendly_layout_name(next_missing)
+		)
 	if environment_test_status_label != null:
-		if exact_scenario:
-			var area_label := "main room" if authored_layer_id.is_empty() else authored_layer_id.replace("_", " ").capitalize()
-			environment_test_status_label.text = "Exact scenario area locked: %s." % area_label
-		elif not layers.is_empty():
-			environment_test_status_label.text = "Base / normal selection: choose any starting area."
+		var current_environment := _environment_test_current_layout_environment()
+		var current_layout_id := DeveloperPlacementStoreScript.layout_id(current_environment)
+		var current_state := "SAVED" if DeveloperPlacementStoreScript.layout_saved(current_environment) else "TODO"
+		var next_label := "complete" if next_missing.is_empty() else _environment_test_friendly_layout_name(next_missing)
+		environment_test_status_label.text = "Placement pass: %d/%d saved. Current: %s · %s. Next: %s." % [
+			int(coverage.get("saved_layout_count", 0)),
+			int(coverage.get("expected_layout_count", 0)),
+			current_state,
+			_environment_test_friendly_layout_name(current_layout_id),
+			next_label,
+		]
+
+
+func _select_environment_test_layout(layout_id: String) -> bool:
+	var separator := layout_id.find("::")
+	if separator < 0:
+		return false
+	var map_id := layout_id.left(separator)
+	var scenario_id := layout_id.substr(separator + 2)
+	var archetype_id := map_id
+	var layer_id := ""
+	var layer_separator := map_id.find(":")
+	if layer_separator >= 0:
+		archetype_id = map_id.left(layer_separator)
+		layer_id = map_id.substr(layer_separator + 1)
+	if not _environment_test_select_id(environment_test_archetype_option, archetype_id):
+		return false
+	_refresh_environment_test_identity_options()
+	var selector_scenario_id := "__none" if scenario_id == DeveloperPlacementStoreScript.BASE_LAYOUT_ID else scenario_id
+	if not _environment_test_select_id(environment_test_scenario_option, selector_scenario_id):
+		return false
+	if selector_scenario_id == "__none" and not _environment_test_select_id(environment_test_layer_option, layer_id):
+		return false
+	_sync_environment_test_layer_to_scenario()
+	return DeveloperPlacementStoreScript.layout_id(_environment_test_current_layout_environment()) == layout_id
+
+
+func _load_next_missing_environment_layout() -> Dictionary:
+	var coverage := DeveloperPlacementStoreScript.coverage_snapshot()
+	var next_missing := _environment_test_next_missing_layout_id(coverage)
+	if next_missing.is_empty():
+		_refresh_environment_test_completion_presentation()
+		return {"ok": false, "errors": ["Every environment layout is already saved."]}
+	if not _select_environment_test_layout(next_missing):
+		var error := "The next missing placement layout could not be selected: %s." % next_missing
+		if environment_test_status_label != null:
+			environment_test_status_label.text = error
+		return {"ok": false, "errors": [error]}
+	return start_environment_test_session()
 
 
 func _on_environment_test_happening_mode_selected(_index: int) -> void:
@@ -10295,7 +10540,10 @@ func start_environment_test_session() -> Dictionary:
 	var visible_seed := environment_test_seed_input.text.strip_edges() if environment_test_seed_input != null else ""
 	if visible_seed.is_empty():
 		visible_seed = "ENVIRONMENT-TEST"
-	var scenario_id := _environment_test_selected_id(environment_test_scenario_option, "__default")
+	var scenario_id := _environment_test_selected_id(
+		environment_test_scenario_option,
+		"__none" if _environment_test_placement_pass_active() else "__default"
+	)
 	var layer_id := _environment_test_selected_id(environment_test_layer_option)
 	var generation_key := "%s|%s|%s|%s|%s|%s" % [
 		visible_seed, archetype_id, scenario_id, layer_id,
@@ -11870,6 +12118,7 @@ func _add_context_object_actions(card: VBoxContainer, object_data: Dictionary) -
 			_add_card_button(card, "Inspect", Callable(self, "open_meta_sal_shelf").bind(int(source_id)), false, true)
 		CONTEXT_MODE_META_SAL_TALK:
 			_add_card_button(card, "Talk", Callable(self, "_talk_to_sal"), false, true)
+			_add_card_button(card, "Sell", Callable(self, "open_meta_sell_counter"), false, true)
 		CONTEXT_MODE_TRAVEL:
 			_add_context_travel_actions(card, source_id)
 		CONTEXT_MODE_SERVICE:
@@ -15645,7 +15894,9 @@ func _developer_placement_progress_snapshot(environment: Dictionary) -> Dictiona
 		"saved_layout_count": int(coverage.get("saved_layout_count", 0)),
 		"expected_layout_count": int(coverage.get("expected_layout_count", 0)),
 		"missing_layout_count": missing.size(),
-		"next_missing_layout_id": str(missing[0]) if not missing.is_empty() else "",
+		"next_missing_layout_id": str(
+			coverage.get("next_missing_layout_id", missing[0] if not missing.is_empty() else "")
+		),
 		"complete": bool(coverage.get("complete", false)),
 	}
 
@@ -20980,6 +21231,12 @@ func _clear_run_guidance_for_start_screen() -> void:
 
 func _sync_talk_dock_coach_avoid_rect() -> void:
 	if talk_dock == null or talk_dock_avoid_sync_active:
+		return
+	# Ordinary room focus has no dialogue footprint to place. Keep the reserve
+	# cleared, but do not rebuild every scenario clearance rectangle until the
+	# dock is actually visible.
+	if not talk_dock.visible:
+		_apply_talk_dock_environment_reserve()
 		return
 	var anchor_rect := Rect2()
 	var focus_x_hint := -1.0

@@ -35,7 +35,7 @@ class EnvironmentSlotConsolidationTests(unittest.TestCase):
         placement = self._placement()
         rows = ledger["slot_dispositions"]
         self.assertEqual(ledger["source"]["slot_count"], 722)
-        self.assertEqual(ledger["target"]["slot_count"], 659)
+        self.assertEqual(ledger["target"]["slot_count"], 565)
         self.assertEqual(len(rows), 722)
         source_keys = {
             (row["map_id"], row["source_family"], row["source_slot_id"])
@@ -49,7 +49,7 @@ class EnvironmentSlotConsolidationTests(unittest.TestCase):
             for family in MIGRATION.FAMILIES
             for slot in map_data[f"{family}_slots"]
         }
-        self.assertEqual(len(final_slots), 659)
+        self.assertEqual(len(final_slots), 565)
         for row in rows:
             with self.subTest(
                 map_id=row["map_id"], source_slot_id=row["source_slot_id"]
@@ -88,6 +88,58 @@ class EnvironmentSlotConsolidationTests(unittest.TestCase):
         self.assertEqual(traced_target_keys | introduced_keys, set(final_slots))
         self.assertEqual(
             ledger["counts"]["introduced_target_slots"], len(introduced)
+        )
+
+        punchline_template = next(
+            map_data
+            for map_data in placement["maps"]
+            if map_data["id"] == "small_underground_casino"
+        )
+        template_slot_ids = {
+            slot["id"]
+            for family in MIGRATION.FAMILIES
+            for slot in punchline_template[f"{family}_slots"]
+        }
+        self.assertTrue(
+            template_slot_ids.isdisjoint({
+                "fixed.staff_floor_left",
+                "fixed.service_stage_left",
+                "exit.door_right_lower",
+                "exit.door_right_upper",
+            })
+        )
+
+        by_id = {map_data["id"]: map_data for map_data in placement["maps"]}
+        for map_id, absent_ids in {
+            "motel": {"event.surface_item_2", "event.surface_item_3"},
+            "delta_queen": {"event.wall_item_1", "event.surface_item_1"},
+            "small_underground_casino:back_room": {"scenario.surface_item_1"},
+            "grand_casino_cage": {"scenario.surface_item_1"},
+            "motel_room": {"scenario.surface_item_1"},
+            "apartment": {"scenario.surface_item_1"},
+            "house": {"scenario.surface_item_1"},
+            "pawn_shop": {
+                "fixed.staff_merchant",
+                "fixed.lender_sals_pawn_counter",
+            },
+        }.items():
+            slot_ids = {
+                slot["id"]
+                for family in MIGRATION.FAMILIES
+                for slot in by_id[map_id][f"{family}_slots"]
+            }
+            self.assertTrue(slot_ids.isdisjoint(absent_ids))
+
+        gas_counter_slots = [
+            slot
+            for slot in by_id["gas_station_casino"]["scenario_slots"]
+            if slot["footprint_class"] == "behind_counter_person"
+        ]
+        self.assertEqual(len(gas_counter_slots), 1)
+        self.assertEqual(gas_counter_slots[0]["support_id"], "staff_window_left")
+        self.assertIn(
+            "gas_station_graveyard_shift_night_clerk",
+            gas_counter_slots[0]["occupant_ids"],
         )
 
     def test_checked_in_ledger_is_deterministic_and_current(self) -> None:

@@ -28,6 +28,36 @@ const LIVE_RENDER_FIELDS := [
 ]
 
 
+static func _service_options_with_exact_hosts(options: Array, action_hosts: Dictionary) -> Array:
+	var result: Array = []
+	for option_value in options:
+		if typeof(option_value) != TYPE_DICTIONARY:
+			continue
+		var option := _dict(option_value).duplicate(true)
+		var service_id := str(option.get("id", "")).strip_edges()
+		var object_id := "service:%s" % service_id
+		if not service_id.is_empty() \
+				and str(option.get("slot_binding_source_id", "")).strip_edges().is_empty() \
+				and action_hosts.has(object_id):
+			option["slot_binding_source_id"] = str(action_hosts.get(object_id, "")).strip_edges()
+		result.append(option)
+	return result
+
+
+static func _event_option_with_exact_host(option_value: Dictionary, action_hosts: Dictionary) -> Dictionary:
+	var option := option_value.duplicate(true)
+	var event_id := str(option.get("id", "")).strip_edges()
+	var object_id := "event:%s" % event_id
+	if not event_id.is_empty() and action_hosts.has(object_id):
+		option["slot_binding_source_id"] = str(action_hosts.get(object_id, "")).strip_edges()
+	else:
+		# Event definitions document their canonical scenario host, but that
+		# relationship is valid only while the matching exact layout is active. A
+		# deliberately pre-seeded/standalone event keeps its ordinary event slot.
+		option.erase("slot_binding_source_id")
+	return option
+
+
 static func interactable_object_view_list(host: Variant) -> Array:
 	if host.run_state == null or host.library == null:
 		return []
@@ -63,11 +93,21 @@ static func interactable_object_view_list(host: Variant) -> Array:
 	before_travel_objects.append_array(environment_layer_interactable_objects(host))
 	before_travel_objects.append_array(numbers_interactable_objects(host))
 	before_travel_objects.append_array(crew_presence_interactable_objects(host, all_event_options))
+	var scenario_action_hosts := _dict(
+		EnvironmentPlacementScript.surface_map(host.run_state.current_environment).get(
+			"scenario_instance_action_host_ids", {}
+		)
+	)
 	var after_travel_objects: Array = []
 	var room_return_object = host._parent_home_return_interactable_object()
 	if not room_return_object.is_empty():
 		after_travel_objects.append(room_return_object)
-	after_travel_objects.append_array(host._hook_interactable_objects(host.CONTEXT_MODE_SERVICE, host._service_hook_view_list()))
+	var service_options := _service_options_with_exact_hosts(
+		host._service_hook_view_list(), scenario_action_hosts
+	)
+	after_travel_objects.append_array(
+		host._hook_interactable_objects(host.CONTEXT_MODE_SERVICE, service_options)
+	)
 	after_travel_objects.append_array(host._hook_interactable_objects(host.CONTEXT_MODE_LENDER, host._lender_hook_view_list()))
 	var event_options: Array = []
 	var contact_event_ids: Array = []
@@ -79,9 +119,13 @@ static func interactable_object_view_list(host: Variant) -> Array:
 	for event_value in all_event_options:
 		if typeof(event_value) != TYPE_DICTIONARY:
 			continue
-		var event_id := str((event_value as Dictionary).get("id", ""))
+		var event_option := _event_option_with_exact_host(
+			event_value as Dictionary,
+			scenario_action_hosts
+		)
+		var event_id := str(event_option.get("id", ""))
 		if event_id != "numbers_desk" and not contact_event_ids.has(event_id):
-			event_options.append(event_value)
+			event_options.append(event_option)
 	var travel_choices = host._travel_choice_view_list()
 	var delivery_occupied := before_travel_objects + after_travel_objects
 	var layout: Dictionary = host._current_environment_layout()
@@ -168,7 +212,10 @@ static func interactable_object_view_list(host: Variant) -> Array:
 	# owner-scoped world-sequence token is not flattened into a generic attached
 	# action by this pass.
 	result = _attach_delivery_handoff_to_contact(host, result)
-	result = _attach_action_only_records(result)
+	# Exact scenario hosts are introduced by finalization below, so their action
+	# aliases are intentionally hostless during this base-only pass. Defer only
+	# those known pairs; the authoritative final pass still reports a missing host.
+	result = _attach_action_only_records(result, scenario_action_hosts)
 	# Seal the complete live base inventory against authored slots before scenario
 	# composition. Runtime-only physical objects consume remaining compatible room
 	# capacity; abstract controls retain their existing action-list presentation.
@@ -630,7 +677,7 @@ static func _manifest_label(value: String) -> String:
 	return clean.replace("_", " ").capitalize()
 
 
-static func _attach_action_only_records(records: Array) -> Array:
+static func _attach_action_only_records(records: Array, deferred_exact_action_hosts: Dictionary = {}) -> Array:
 	var room_records: Array = []
 	var action_only: Array = []
 	for value in records:
@@ -651,7 +698,8 @@ static func _attach_action_only_records(records: Array) -> Array:
 			continue
 		var target_index := _attached_action_target_index(room_records, source)
 		if target_index < 0:
-			push_warning("Room action %s has no visible room object to attach to." % str(source.get("object_id", "unknown")))
+			if not _missing_action_host_warning_deferred(source, deferred_exact_action_hosts):
+				push_warning("Room action %s has no visible room object to attach to." % str(source.get("object_id", "unknown")))
 			continue
 		var target := _dict(room_records[target_index])
 		var attached := _array(target.get("attached_room_actions", []))
@@ -681,7 +729,28 @@ static func _attach_action_only_records(records: Array) -> Array:
 	return room_records
 
 
+static func _missing_action_host_warning_deferred(source: Dictionary, deferred_exact_action_hosts: Dictionary) -> bool:
+	var action_object_id := str(source.get("object_id", "")).strip_edges()
+	var binding_source_id := str(source.get("slot_binding_source_id", "")).strip_edges()
+	if action_object_id.is_empty() or binding_source_id.is_empty() \
+			or not deferred_exact_action_hosts.has(action_object_id):
+		return false
+	return str(deferred_exact_action_hosts.get(action_object_id, "")).strip_edges() == binding_source_id
+
+
 static func _attached_action_target_index(records: Array, source: Dictionary) -> int:
+	var explicit_source_id := str(source.get("slot_binding_source_id", "")).strip_edges()
+	if not explicit_source_id.is_empty():
+		# Authored action aliases are placement authority, not a preference. If
+		# their tangible host is absent, do not silently move the action onto an
+		# unrelated person or prop merely because that record scored next-best.
+		for index in range(records.size()):
+			var explicit_candidate := _dict(records[index])
+			if bool(explicit_candidate.get("visible", true)) \
+					and str(explicit_candidate.get("presentation_mode", "room")) == "room" \
+					and str(explicit_candidate.get("object_id", "")).strip_edges() == explicit_source_id:
+				return index
+		return -1
 	var best_index := -1
 	var best_score := -100000
 	var source_tokens := _identity_tokens(source)
@@ -690,8 +759,6 @@ static func _attached_action_target_index(records: Array, source: Dictionary) ->
 		if not bool(candidate.get("visible", true)) or str(candidate.get("presentation_mode", "room")) != "room":
 			continue
 		var score := 0
-		if str(candidate.get("object_id", "")) == str(source.get("slot_binding_source_id", "")):
-			score += 1000
 		var object_type := str(candidate.get("object_type", ""))
 		var visual_type := str(candidate.get("visual_type", ""))
 		if visual_type == "character" or object_type in ["dialogue", "shopkeeper", "character", "scenario_actor"]:
@@ -2374,6 +2441,7 @@ static func hook_interactable_objects(host: Variant, object_type: String, option
 			"icon_key": icon_key,
 			"asset_path": str(option.get("asset_path", "")),
 			"character_actor": character_actor,
+			"slot_binding_source_id": str(option.get("slot_binding_source_id", "")).strip_edges(),
 			"available_actions": [{"id": "use_%s_hook" % object_type, "label": "Use"}] if enabled else [],
 			"confirm_action_id": "use_%s_hook" % object_type if enabled else "",
 			"focus_rect": host._interaction_rect_for_object(object_id, object_type, index),
@@ -2391,9 +2459,9 @@ static func interactable_object(host: Variant, object_id: String) -> Dictionary:
 
 
 # Programmatic category selection still names the gameplay action (for example
-# service:cashier_tip), even when that action now lives on one named physical
-# host. Resolve only focus to that host; action dispatch continues to use the
-# attached descriptor and therefore cannot impersonate the host's own action.
+# service:cashier_tip), even when that action lives on one named physical host.
+# Resolve only focus to that host; action dispatch continues to use the attached
+# descriptor and therefore cannot impersonate the host's own action.
 static func interactable_object_hosting_action(host: Variant, action_object_id: String) -> Dictionary:
 	if action_object_id.is_empty():
 		return {}

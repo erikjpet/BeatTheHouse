@@ -15036,7 +15036,7 @@
                       "stage_mark_resolved": "The judges' cards now carry the stage order used to score the acts."
                     },
                     "enabled": true,
-                    "label": "Judges",
+                    "label": "Judges' Card Desk",
                     "role": "scoreboard",
                     "state": "blank",
                     "visible": true,
@@ -16199,7 +16199,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "53875ec797a17a28af2f7000fd6fbdb3b47bbca6aa462bbc8cadefe2f6ccdf2a"
+        "sequence_signature": "010a63beaf363d21d968d52678379908b8c2a3c108eb27199b6b5249cde69ccf"
       }
     },
     {
@@ -18889,7 +18889,7 @@
                       "station_power_resolved": "A powered circuit light glows inside the panel beside the selected station's switch."
                     },
                     "enabled": true,
-                    "label": "Panel",
+                    "label": "Maintenance Panel",
                     "role": "workstation",
                     "state": "open",
                     "visible": true,
@@ -19764,7 +19764,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "cd44e846dd10f6fc94e99d4e30c3b428bc50c84744c5d79e3e41e700f6068ff3"
+        "sequence_signature": "cfe0896326dbd593452847f048d5c37725600d09b9a181012a5407ec07314739"
       }
     },
     {

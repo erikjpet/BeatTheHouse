@@ -66,7 +66,7 @@ func _check_deterministic_base_binding(failures: Array) -> void:
 	var entries := [
 		{"object_id": "travel:leave", "object_type": "travel", "family": "exit", "placement_class": "standing_person", "exact_slot_id": "exit.travel_right", "spot_field": "travel_spots", "index": 0, "required": true, "active": true},
 		{"object_id": "game:blackjack", "object_type": "game", "family": "fixed", "placement_class": "surface_item", "exact_slot_id": "fixed.random_game_1", "spot_field": "game_spots", "index": 0, "label": "Blackjack", "required": true, "active": true},
-		{"object_id": "service:house_drink", "object_type": "service", "family": "fixed", "placement_class": "surface_item", "exact_slot_id": "fixed.drink", "spot_field": "service_spots", "index": 0, "label": "House Drink", "required": true, "active": true},
+		{"object_id": "service:house_drink", "object_type": "service", "family": "fixed", "placement_class": "surface_item", "exact_slot_id": "fixed.service_house_drink", "spot_field": "service_spots", "index": 0, "label": "House Drink", "required": true, "active": true},
 	]
 	var first := EnvironmentSlotBinderScript.bind_base_layout(environment, entries)
 	var reversed := entries.duplicate(true)
@@ -223,14 +223,18 @@ func _check_base_capacity_failure(failures: Array) -> void:
 
 
 func _check_scenario_exit_and_capacity_failure(failures: Array) -> void:
-	var bar_surface_map := EnvironmentPlacementScript.surface_map({"archetype_id": "bar"})
+	# Keep this generic capacity probe independent from catalog scenario
+	# instances. Apartment has authored scenario reserve capacity but no catalog
+	# layouts, so arbitrary fixture identities remain valid for this binder test.
+	var environment := {"archetype_id": "apartment"}
+	var surface_map := EnvironmentPlacementScript.surface_map(environment)
 	var scenario_person_capacity := 0
-	for slot_value in bar_surface_map.get("scenario_slots", []):
+	for slot_value in surface_map.get("scenario_slots", []):
 		var slot: Dictionary = slot_value if typeof(slot_value) == TYPE_DICTIONARY else {}
 		if str(slot.get("footprint_class", "")) == "standing_person":
 			scenario_person_capacity += 1
 	if scenario_person_capacity <= 0:
-		failures.append("bar exposes no authored scenario standing-person capacity")
+		failures.append("non-catalog capacity fixture exposes no authored scenario standing-person capacity")
 		return
 	var entries: Array = [{
 		"identity": "scenario::safe_exit",
@@ -251,7 +255,7 @@ func _check_scenario_exit_and_capacity_failure(failures: Array) -> void:
 			"active": true,
 			"safe_exit": false,
 		})
-	var boundary := EnvironmentSlotBinderScript.bind_scenario_visuals({"archetype_id": "bar"}, entries)
+	var boundary := EnvironmentSlotBinderScript.bind_scenario_visuals(environment, entries)
 	if not bool(boundary.get("ok", false)):
 		failures.append("scenario exact-capacity boundary rejected available authored slots: %s" % JSON.stringify(boundary.get("errors", [])))
 	var overflow_identity := "scenario::fixture_%02d" % scenario_person_capacity
@@ -264,8 +268,8 @@ func _check_scenario_exit_and_capacity_failure(failures: Array) -> void:
 		"active": true,
 		"safe_exit": false,
 	})
-	var first := EnvironmentSlotBinderScript.bind_scenario_visuals({"archetype_id": "bar"}, entries)
-	var second := EnvironmentSlotBinderScript.bind_scenario_visuals({"archetype_id": "bar"}, entries)
+	var first := EnvironmentSlotBinderScript.bind_scenario_visuals(environment, entries)
+	var second := EnvironmentSlotBinderScript.bind_scenario_visuals(environment, entries)
 	var bindings: Dictionary = first.get("slot_bindings", {})
 	var exit_binding: Dictionary = bindings.get("scenario::safe_exit", {})
 	if str(exit_binding.get("kind", "")) != "exit" or str(exit_binding.get("presentation_mode", "")) != "room":
@@ -286,8 +290,9 @@ func _check_scenario_exit_and_capacity_failure(failures: Array) -> void:
 
 
 func _check_authored_actor_route(failures: Array) -> void:
-	var surface_map := EnvironmentPlacementScript.surface_map({"archetype_id": "back_alley"})
-	var result := EnvironmentSlotBinderScript.bind_scenario_visuals({"archetype_id": "back_alley"}, [{
+	var environment := {"archetype_id": "back_alley", "scenario_id": "back_alley_cruiser_parked"}
+	var surface_map := EnvironmentPlacementScript.surface_map(environment)
+	var result := EnvironmentSlotBinderScript.bind_scenario_visuals(environment, [{
 		"identity": "scenario::patrol_officer",
 		"semantic": {"present": true, "label": "Patrol Officer", "role": "guard", "route_id": "base::world:bar"},
 		"family": "scenario",
@@ -324,13 +329,18 @@ func _check_authored_actor_route(failures: Array) -> void:
 	if not ordered_route:
 		failures.append("back-alley actor route did not use an ordered authored-lane slice without backtracking: %s" % str(route_points))
 
-	var corner_map := EnvironmentPlacementScript.surface_map({"archetype_id": "corner_store"})
-	var settled_slot := _slot_by_id(corner_map, "scenario.standing_person_1")
+	var corner_environment := {"archetype_id": "corner_store", "scenario_id": "corner_store_dead_shift"}
+	var corner_map := EnvironmentPlacementScript.surface_map(corner_environment)
+	var settled_slot := _slot_by_id(corner_map, "scenario.local_standing_person_1")
 	var settled_rect := EnvironmentSlotBinderScript.rect_from_binding({"slot": settled_slot})
 	var canvas = PixelSceneCanvasScript.new()
-	canvas.foundation_snapshot = {"id": "corner_route_fixture", "archetype_id": "corner_store"}
+	canvas.foundation_snapshot = {
+		"id": "corner_route_fixture",
+		"archetype_id": "corner_store",
+		"scenario_id": "corner_store_dead_shift",
+	}
 	var settled := {
-		"slot_id": "scenario.standing_person_1",
+		"slot_id": "scenario.local_standing_person_1",
 		"slot_family": "scenario",
 		"position": settled_rect.get_center() / Vector2(900.0, 430.0),
 		"small_screen_rect": EnvironmentSlotBinderScript.normalized_rect(EnvironmentSlotBinderScript.expanded_rect(settled_rect)),
@@ -352,26 +362,38 @@ func _check_authored_actor_route(failures: Array) -> void:
 
 
 func _check_complete_record_binding(failures: Array) -> void:
-	var environment := {"archetype_id": "beach"}
+	var environment := {"archetype_id": "beach", "scenario_id": "beach_festival_weekend"}
+	var fixtures := [
+		["event:recruitment_lucky", "Lucky Recruitment", "scenario.local_standing_person_1"],
+		["event:scenario_festival_lucky_pitch", "Lucky's Pitch", "", "scenario::beach_festival_weekend_stall_vendor"],
+		["scenario::beach_festival_weekend_lost_child", "Lost Child", "scenario.local_standing_person_2"],
+		["crew::package_handoff", "Handoff Contact", "event.standing_person_1", "", "event"],
+	]
+	var expected_slots: Dictionary = {}
 	var records: Array = []
-	for index in range(3):
-		records.append({
-			"object_id": "actor:test_%02d" % index,
+	for index in range(fixtures.size()):
+		var fixture: Array = fixtures[index]
+		expected_slots[str(fixture[0])] = str(fixture[2])
+		var record_family := str(fixture[4]) if fixture.size() > 4 else "scenario"
+		var record := {
+			"object_id": str(fixture[0]),
 			"object_type": "actor",
 			"visual_type": "character",
 			"physical_person": true,
-			"label": "Test Patron %02d" % index,
+			"label": str(fixture[1]),
 			"visible": true,
 			"enabled": true,
 			"interactive": true,
-			"family": "scenario",
+			"family": record_family,
 			"placement_class": "standing_person",
-			"exact_slot_id": "scenario.standing_person_%d" % (index + 1),
 			"required": true,
 			"active": true,
 			"layout_spot_field": "event_spots",
 			"layout_index": index,
-		})
+		}
+		if fixture.size() > 3 and not str(fixture[3]).is_empty():
+			record["slot_binding_source_id"] = str(fixture[3])
+		records.append(record)
 	var result := EnvironmentSlotBinderScript.bind_base_records(environment, records)
 	if not bool(result.get("ok", false)):
 		failures.append("complete record binder rejected available authored room slots: %s" % JSON.stringify(result.get("errors", [])))
@@ -381,10 +403,18 @@ func _check_complete_record_binding(failures: Array) -> void:
 	for record_value in rebound:
 		var record: Dictionary = record_value
 		var mode := str(record.get("presentation_mode", ""))
+		var object_id := str(record.get("object_id", ""))
+		var expected_slot := str(expected_slots.get(object_id, ""))
+		if expected_slot.is_empty():
+			if mode == "room" or not str(record.get("slot_id", "")).is_empty():
+				failures.append("exact hosted action incorrectly received an independent room slot for %s" % object_id)
+			continue
 		if mode == "room" and (record.get("focus_rect", {}) as Dictionary).is_empty():
 			failures.append("room record has no fixed focus rectangle")
 		elif mode != "room":
 			failures.append("live physical record was not assigned a room slot")
+		elif str(record.get("slot_id", "")) != expected_slot:
+			failures.append("complete record binder did not honor exact scenario authority for %s" % object_id)
 
 
 func _check_shared_base_binding_aliases(failures: Array) -> void:
@@ -405,8 +435,8 @@ func _check_shared_base_binding_aliases(failures: Array) -> void:
 			"spot_field": "item_spots",
 			"index": index,
 		})
-	entries.append({"object_id": "shopkeeper:merchant", "object_type": "shopkeeper", "family": "fixed", "placement_class": "behind_counter_person", "exact_slot_id": "fixed.staff_merchant", "required": true, "active": true, "spot_field": "shopkeeper_spots", "index": 0})
-	entries.append({"object_id": "travel:leave", "object_type": "travel", "family": "exit", "placement_class": "doorway", "exact_slot_id": "exit.door_left_lower", "required": true, "active": true, "spot_field": "travel_spots", "index": 0})
+	entries.append({"object_id": "staff:pawn_counter_sal", "object_type": "character", "family": "fixed", "placement_class": "behind_counter_person", "exact_slot_id": "fixed.staff_pawn_counter", "required": true, "active": true, "spot_field": "fixed_objects", "index": 0})
+	entries.append({"object_id": "travel:leave", "object_type": "travel", "family": "exit", "placement_class": "doorway", "exact_slot_id": "exit.door_right_lower", "required": true, "active": true, "spot_field": "travel_spots", "index": 0})
 	var base_result := EnvironmentSlotBinderScript.bind_base_layout(environment, entries)
 	var base_bindings: Dictionary = base_result.get("slot_bindings", {})
 	environment["layout"] = {
@@ -431,21 +461,17 @@ func _check_shared_base_binding_aliases(failures: Array) -> void:
 	records.append({
 		"object_id": "meta_sal:talk",
 		"object_type": "meta_sal_talk",
-		"slot_binding_source_id": "shopkeeper:merchant",
-		"family": "fixed",
-		"placement_class": "behind_counter_person",
-		"exact_slot_id": "fixed.staff_merchant",
-		"active": true,
-	})
-	records.append({
-		"object_id": "meta_pawn_counter:sell",
-		"object_type": "meta_pawn_counter",
+		"slot_binding_source_id": "staff:pawn_counter_sal",
 		"family": "fixed",
 		"placement_class": "behind_counter_person",
 		"exact_slot_id": "fixed.staff_pawn_counter",
+		"available_actions": [
+			{"id": "talk_sal", "label": "Talk"},
+			{"id": "open_sell_counter", "label": "Sell"},
+		],
 		"active": true,
 	})
-	records.append({"object_id": "travel:leave", "object_type": "travel", "family": "exit", "placement_class": "doorway", "exact_slot_id": "exit.door_left_lower", "active": true})
+	records.append({"object_id": "travel:leave", "object_type": "travel", "family": "exit", "placement_class": "doorway", "exact_slot_id": "exit.door_right_lower", "active": true})
 	var result := EnvironmentSlotBinderScript.bind_base_records(environment, records, base_bindings)
 	if not bool(result.get("ok", false)):
 		failures.append("Sal shared alias binding failed: %s" % JSON.stringify(result.get("errors", [])))
@@ -473,21 +499,21 @@ func _check_shared_base_binding_aliases(failures: Array) -> void:
 			failures.append("Sal shelf %d reused another visible shelf slot %s" % [index, slot_id])
 		shelf_slots[slot_id] = true
 	var sal: Dictionary = bindings.get("meta_sal:talk", {})
-	var merchant: Dictionary = base_bindings.get("shopkeeper:merchant", {})
-	var counter: Dictionary = bindings.get("meta_pawn_counter:sell", {})
+	var sal_host: Dictionary = base_bindings.get("staff:pawn_counter_sal", {})
 	if str(sal.get("presentation_mode", "")) != "room" \
-			or str(sal.get("slot_id", "")) != str(merchant.get("slot_id", "")) \
+			or str(sal.get("slot_id", "")) != str(sal_host.get("slot_id", "")) \
 			or str(sal.get("placement_class", "")) != "behind_counter_person":
-		failures.append("Sal did not reuse the generated shopkeeper fixed binding")
-	if str(counter.get("presentation_mode", "")) != "room" \
-			or str(counter.get("placement_class", "")) != "behind_counter_person" \
-			or str(counter.get("slot_id", "")).is_empty() \
-			or str(counter.get("slot_id", "")) == str(sal.get("slot_id", "")):
-		failures.append("Sal and the pawn sell counter did not receive distinct fixed behind-counter slots")
+		failures.append("Sal talk did not reuse the consolidated Sal host binding")
+	var sal_record: Dictionary = rebound_by_id.get("meta_sal:talk", {})
+	var action_ids: Array = []
+	for action_value in sal_record.get("available_actions", []):
+		action_ids.append(str((action_value as Dictionary).get("id", "")) if typeof(action_value) == TYPE_DICTIONARY else "")
+	if not action_ids.has("talk_sal") or not action_ids.has("open_sell_counter"):
+		failures.append("consolidated Sal host did not retain both talk and sell actions")
 	var exit_record: Dictionary = rebound_by_id.get("travel:leave", {})
 	if str(exit_record.get("presentation_mode", "")) != "room" \
 			or str(exit_record.get("slot_family", "")) != "exit" \
-			or str(exit_record.get("placement_class", "")) != "standing_person" \
+			or str(exit_record.get("placement_class", "")) != "doorway" \
 			or str(exit_record.get("slot_id", "")).is_empty():
 		failures.append("pawn-shop Street Door lost its generated exit-family navigation binding")
 

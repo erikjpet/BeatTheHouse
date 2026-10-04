@@ -9,16 +9,16 @@
   },
   "target": {
     "path": "data/environments/placement_surfaces.json",
-    "sha256": "c64572eb0f6f1d52608fe523850850b0dfabb98ddfe8afc0028ccfdcef921f7d",
-    "slot_count": 579
+    "sha256": "37002a3229ba4c30a57bb80c1c7604d956aadd2bdafcc6e0ede582eb48679f07",
+    "slot_count": 565
   },
   "counts": {
     "source_slots": 722,
-    "target_slots": 579,
-    "introduced_target_slots": 16,
-    "keep_source_slots": 262,
-    "merge_source_slots": 109,
-    "remove_source_slots": 98,
+    "target_slots": 565,
+    "introduced_target_slots": 15,
+    "keep_source_slots": 248,
+    "merge_source_slots": 112,
+    "remove_source_slots": 109,
     "rename_source_slots": 253
   },
   "per_map_counts": {
@@ -32,11 +32,11 @@
       "after": {
         "fixed": 11,
         "event": 0,
-        "scenario": 4,
+        "scenario": 3,
         "exit": 1
       },
       "before_total": 20,
-      "after_total": 16
+      "after_total": 15
     },
     "back_alley": {
       "before": {
@@ -46,13 +46,13 @@
         "exit": 4
       },
       "after": {
-        "fixed": 10,
+        "fixed": 14,
         "event": 9,
         "scenario": 12,
         "exit": 1
       },
       "before_total": 40,
-      "after_total": 32
+      "after_total": 36
     },
     "bar": {
       "before": {
@@ -79,8 +79,8 @@
       },
       "after": {
         "fixed": 2,
-        "event": 0,
-        "scenario": 17,
+        "event": 1,
+        "scenario": 16,
         "exit": 1
       },
       "before_total": 24,
@@ -96,11 +96,11 @@
       "after": {
         "fixed": 11,
         "event": 6,
-        "scenario": 12,
+        "scenario": 11,
         "exit": 1
       },
       "before_total": 38,
-      "after_total": 30
+      "after_total": 29
     },
     "delta_queen": {
       "before": {
@@ -111,12 +111,12 @@
       },
       "after": {
         "fixed": 12,
-        "event": 13,
+        "event": 11,
         "scenario": 16,
         "exit": 1
       },
       "before_total": 62,
-      "after_total": 42
+      "after_total": 40
     },
     "gas_station_casino": {
       "before": {
@@ -128,11 +128,11 @@
       "after": {
         "fixed": 5,
         "event": 11,
-        "scenario": 19,
+        "scenario": 18,
         "exit": 1
       },
       "before_total": 49,
-      "after_total": 36
+      "after_total": 35
     },
     "grand_casino": {
       "before": {
@@ -176,11 +176,11 @@
       "after": {
         "fixed": 7,
         "event": 0,
-        "scenario": 5,
+        "scenario": 4,
         "exit": 2
       },
       "before_total": 16,
-      "after_total": 14
+      "after_total": 13
     },
     "grand_casino_high_limit": {
       "before": {
@@ -208,11 +208,11 @@
       "after": {
         "fixed": 11,
         "event": 0,
-        "scenario": 4,
+        "scenario": 3,
         "exit": 1
       },
       "before_total": 20,
-      "after_total": 16
+      "after_total": 15
     },
     "jazz_club": {
       "before": {
@@ -255,12 +255,12 @@
       },
       "after": {
         "fixed": 11,
-        "event": 10,
+        "event": 8,
         "scenario": 15,
         "exit": 2
       },
       "before_total": 51,
-      "after_total": 38
+      "after_total": 36
     },
     "motel_room": {
       "before": {
@@ -272,11 +272,11 @@
       "after": {
         "fixed": 11,
         "event": 0,
-        "scenario": 4,
+        "scenario": 3,
         "exit": 1
       },
       "before_total": 20,
-      "after_total": 16
+      "after_total": 15
     },
     "pawn_shop": {
       "before": {
@@ -286,13 +286,13 @@
         "exit": 4
       },
       "after": {
-        "fixed": 10,
+        "fixed": 8,
         "event": 6,
         "scenario": 11,
         "exit": 1
       },
       "before_total": 31,
-      "after_total": 28
+      "after_total": 26
     },
     "small_underground_casino": {
       "before": {
@@ -302,13 +302,13 @@
         "exit": 4
       },
       "after": {
-        "fixed": 8,
+        "fixed": 6,
         "event": 15,
         "scenario": 5,
-        "exit": 4
+        "exit": 2
       },
       "before_total": 36,
-      "after_total": 32
+      "after_total": 28
     },
     "small_underground_casino:back_room": {
       "before": {
@@ -320,11 +320,11 @@
       "after": {
         "fixed": 8,
         "event": 12,
-        "scenario": 4,
+        "scenario": 3,
         "exit": 2
       },
       "before_total": 28,
-      "after_total": 26
+      "after_total": 25
     },
     "small_underground_casino:casino": {
       "before": {
@@ -336,11 +336,11 @@
       "after": {
         "fixed": 9,
         "event": 11,
-        "scenario": 15,
+        "scenario": 14,
         "exit": 3
       },
       "before_total": 43,
-      "after_total": 38
+      "after_total": 37
     },
     "small_underground_casino:club": {
       "before": {
@@ -376,9 +376,9 @@
     },
     {
       "map_id": "beach",
-      "family": "scenario",
-      "slot_id": "scenario.behind_counter_person_2",
-      "footprint_class": "behind_counter_person",
+      "family": "event",
+      "slot_id": "event.standing_person_1",
+      "footprint_class": "standing_person",
       "reason": "introduced explicit coexistence reserve"
     },
     {
@@ -399,13 +399,6 @@
       "map_id": "corner_store",
       "family": "scenario",
       "slot_id": "scenario.wall_item_2",
-      "footprint_class": "wall_mounted",
-      "reason": "introduced explicit coexistence reserve"
-    },
-    {
-      "map_id": "corner_store",
-      "family": "scenario",
-      "slot_id": "scenario.wall_item_3",
       "footprint_class": "wall_mounted",
       "reason": "introduced explicit coexistence reserve"
     },
@@ -798,17 +791,15 @@
         394.0,
         304.0
       ],
-      "disposition": "keep",
-      "target_family": "scenario",
-      "target_slot_id": "scenario.surface_item_1",
+      "disposition": "remove",
+      "target_family": null,
+      "target_slot_id": null,
       "collision": {
         "has_collision": false,
-        "source_slot_ids": [
-          "scenario.surface_item_1"
-        ],
+        "source_slot_ids": [],
         "policy": "none"
       },
-      "reason": "slot identity and geometry row retained"
+      "reason": "physical row retired; no coordinate is imported"
     },
     {
       "map_id": "apartment",
@@ -920,15 +911,17 @@
         150.0,
         210.0
       ],
-      "disposition": "remove",
-      "target_family": null,
-      "target_slot_id": null,
+      "disposition": "rename",
+      "target_family": "fixed",
+      "target_slot_id": "fixed.home_upgrade",
       "collision": {
         "has_collision": false,
-        "source_slot_ids": [],
+        "source_slot_ids": [
+          "fixed.event_wall_notice"
+        ],
         "policy": "none"
       },
-      "reason": "physical row retired; no coordinate is imported"
+      "reason": "slot renamed to its canonical physical role"
     },
     {
       "map_id": "back_alley",
@@ -939,15 +932,17 @@
         250.0,
         358.0
       ],
-      "disposition": "remove",
-      "target_family": null,
-      "target_slot_id": null,
+      "disposition": "keep",
+      "target_family": "fixed",
+      "target_slot_id": "fixed.home_container_1",
       "collision": {
         "has_collision": false,
-        "source_slot_ids": [],
+        "source_slot_ids": [
+          "fixed.home_container_1"
+        ],
         "policy": "none"
       },
-      "reason": "physical row retired; no coordinate is imported"
+      "reason": "slot identity and geometry row retained"
     },
     {
       "map_id": "back_alley",
@@ -958,15 +953,17 @@
         450.0,
         358.0
       ],
-      "disposition": "remove",
-      "target_family": null,
-      "target_slot_id": null,
+      "disposition": "keep",
+      "target_family": "fixed",
+      "target_slot_id": "fixed.home_container_2",
       "collision": {
         "has_collision": false,
-        "source_slot_ids": [],
+        "source_slot_ids": [
+          "fixed.home_container_2"
+        ],
         "policy": "none"
       },
-      "reason": "physical row retired; no coordinate is imported"
+      "reason": "slot identity and geometry row retained"
     },
     {
       "map_id": "back_alley",
@@ -977,15 +974,17 @@
         650.0,
         358.0
       ],
-      "disposition": "remove",
-      "target_family": null,
-      "target_slot_id": null,
+      "disposition": "keep",
+      "target_family": "fixed",
+      "target_slot_id": "fixed.home_container_3",
       "collision": {
         "has_collision": false,
-        "source_slot_ids": [],
+        "source_slot_ids": [
+          "fixed.home_container_3"
+        ],
         "policy": "none"
       },
-      "reason": "physical row retired; no coordinate is imported"
+      "reason": "slot identity and geometry row retained"
     },
     {
       "map_id": "back_alley",
@@ -4570,17 +4569,15 @@
         304.0,
         162.0
       ],
-      "disposition": "keep",
-      "target_family": "event",
-      "target_slot_id": "event.surface_item_1",
+      "disposition": "remove",
+      "target_family": null,
+      "target_slot_id": null,
       "collision": {
         "has_collision": false,
-        "source_slot_ids": [
-          "event.surface_item_1"
-        ],
+        "source_slot_ids": [],
         "policy": "none"
       },
-      "reason": "slot identity and geometry row retained"
+      "reason": "physical row retired; no coordinate is imported"
     },
     {
       "map_id": "delta_queen",
@@ -4591,17 +4588,15 @@
         618.0,
         298.0
       ],
-      "disposition": "keep",
-      "target_family": "event",
-      "target_slot_id": "event.wall_item_1",
+      "disposition": "remove",
+      "target_family": null,
+      "target_slot_id": null,
       "collision": {
         "has_collision": false,
-        "source_slot_ids": [
-          "event.wall_item_1"
-        ],
+        "source_slot_ids": [],
         "policy": "none"
       },
-      "reason": "slot identity and geometry row retained"
+      "reason": "physical row retired; no coordinate is imported"
     },
     {
       "map_id": "delta_queen",
@@ -5668,18 +5663,15 @@
         724.0,
         84.0
       ],
-      "disposition": "merge",
-      "target_family": "scenario",
-      "target_slot_id": "scenario.behind_counter_person_1",
+      "disposition": "remove",
+      "target_family": null,
+      "target_slot_id": null,
       "collision": {
-        "has_collision": true,
-        "source_slot_ids": [
-          "scenario.counter_patron_1",
-          "scenario.counter_patron_3"
-        ],
-        "policy": "prefer_exact_target_then_source_order"
+        "has_collision": false,
+        "source_slot_ids": [],
+        "policy": "none"
       },
-      "reason": "mutually exclusive capacity shares one retained physical row"
+      "reason": "physical row retired; no coordinate is imported"
     },
     {
       "map_id": "gas_station_casino",
@@ -5690,17 +5682,18 @@
         114.0,
         84.0
       ],
-      "disposition": "rename",
+      "disposition": "merge",
       "target_family": "scenario",
-      "target_slot_id": "scenario.behind_counter_person_2",
+      "target_slot_id": "scenario.behind_counter_person_1",
       "collision": {
-        "has_collision": false,
+        "has_collision": true,
         "source_slot_ids": [
-          "scenario.counter_patron_2"
+          "scenario.counter_patron_2",
+          "scenario.counter_patron_3"
         ],
-        "policy": "none"
+        "policy": "prefer_exact_target_then_source_order"
       },
-      "reason": "slot renamed to its canonical physical role"
+      "reason": "mutually exclusive capacity shares one retained physical row"
     },
     {
       "map_id": "gas_station_casino",
@@ -5717,7 +5710,7 @@
       "collision": {
         "has_collision": true,
         "source_slot_ids": [
-          "scenario.counter_patron_1",
+          "scenario.counter_patron_2",
           "scenario.counter_patron_3"
         ],
         "policy": "prefer_exact_target_then_source_order"
@@ -7660,9 +7653,9 @@
         500.0,
         260.0
       ],
-      "disposition": "keep",
+      "disposition": "rename",
       "target_family": "fixed",
-      "target_slot_id": "fixed.fixture_cage_1",
+      "target_slot_id": "fixed.fixture_cage_counter",
       "collision": {
         "has_collision": false,
         "source_slot_ids": [
@@ -7670,7 +7663,7 @@
         ],
         "policy": "none"
       },
-      "reason": "slot identity and geometry row retained"
+      "reason": "slot renamed to its canonical physical role"
     },
     {
       "map_id": "grand_casino_cage",
@@ -7681,9 +7674,9 @@
         720.0,
         203.0
       ],
-      "disposition": "keep",
+      "disposition": "rename",
       "target_family": "fixed",
-      "target_slot_id": "fixed.fixture_cage_2",
+      "target_slot_id": "fixed.fixture_cage_atm",
       "collision": {
         "has_collision": false,
         "source_slot_ids": [
@@ -7691,7 +7684,7 @@
         ],
         "policy": "none"
       },
-      "reason": "slot identity and geometry row retained"
+      "reason": "slot renamed to its canonical physical role"
     },
     {
       "map_id": "grand_casino_cage",
@@ -7872,17 +7865,15 @@
         386.0,
         260.0
       ],
-      "disposition": "keep",
-      "target_family": "scenario",
-      "target_slot_id": "scenario.surface_item_1",
+      "disposition": "remove",
+      "target_family": null,
+      "target_slot_id": null,
       "collision": {
         "has_collision": false,
-        "source_slot_ids": [
-          "scenario.surface_item_1"
-        ],
+        "source_slot_ids": [],
         "policy": "none"
       },
-      "reason": "slot identity and geometry row retained"
+      "reason": "physical row retired; no coordinate is imported"
     },
     {
       "map_id": "grand_casino_cage",
@@ -8708,17 +8699,15 @@
         660.0,
         296.0
       ],
-      "disposition": "keep",
-      "target_family": "scenario",
-      "target_slot_id": "scenario.surface_item_1",
+      "disposition": "remove",
+      "target_family": null,
+      "target_slot_id": null,
       "collision": {
         "has_collision": false,
-        "source_slot_ids": [
-          "scenario.surface_item_1"
-        ],
+        "source_slot_ids": [],
         "policy": "none"
       },
-      "reason": "slot identity and geometry row retained"
+      "reason": "physical row retired; no coordinate is imported"
     },
     {
       "map_id": "house",
@@ -10998,17 +10987,19 @@
         608.0,
         426.0
       ],
-      "disposition": "keep",
+      "disposition": "merge",
       "target_family": "event",
       "target_slot_id": "event.surface_item_1",
       "collision": {
-        "has_collision": false,
+        "has_collision": true,
         "source_slot_ids": [
-          "event.surface_item_1"
+          "event.surface_item_1",
+          "event.surface_item_2",
+          "event.surface_item_3"
         ],
-        "policy": "none"
+        "policy": "prefer_exact_target_then_source_order"
       },
-      "reason": "slot identity and geometry row retained"
+      "reason": "mutually exclusive capacity shares one retained physical row"
     },
     {
       "map_id": "motel",
@@ -11019,17 +11010,19 @@
         718.0,
         188.0
       ],
-      "disposition": "keep",
+      "disposition": "merge",
       "target_family": "event",
-      "target_slot_id": "event.surface_item_2",
+      "target_slot_id": "event.surface_item_1",
       "collision": {
-        "has_collision": false,
+        "has_collision": true,
         "source_slot_ids": [
-          "event.surface_item_2"
+          "event.surface_item_1",
+          "event.surface_item_2",
+          "event.surface_item_3"
         ],
-        "policy": "none"
+        "policy": "prefer_exact_target_then_source_order"
       },
-      "reason": "slot identity and geometry row retained"
+      "reason": "mutually exclusive capacity shares one retained physical row"
     },
     {
       "map_id": "motel",
@@ -11040,17 +11033,19 @@
         198.0,
         236.0
       ],
-      "disposition": "keep",
+      "disposition": "merge",
       "target_family": "event",
-      "target_slot_id": "event.surface_item_3",
+      "target_slot_id": "event.surface_item_1",
       "collision": {
-        "has_collision": false,
+        "has_collision": true,
         "source_slot_ids": [
+          "event.surface_item_1",
+          "event.surface_item_2",
           "event.surface_item_3"
         ],
-        "policy": "none"
+        "policy": "prefer_exact_target_then_source_order"
       },
-      "reason": "slot identity and geometry row retained"
+      "reason": "mutually exclusive capacity shares one retained physical row"
     },
     {
       "map_id": "motel",
@@ -11877,17 +11872,15 @@
         420.0,
         294.0
       ],
-      "disposition": "keep",
-      "target_family": "scenario",
-      "target_slot_id": "scenario.surface_item_1",
+      "disposition": "remove",
+      "target_family": null,
+      "target_slot_id": null,
       "collision": {
         "has_collision": false,
-        "source_slot_ids": [
-          "scenario.surface_item_1"
-        ],
+        "source_slot_ids": [],
         "policy": "none"
       },
-      "reason": "slot identity and geometry row retained"
+      "reason": "physical row retired; no coordinate is imported"
     },
     {
       "map_id": "motel_room",
@@ -11978,17 +11971,15 @@
         36.0,
         398.0
       ],
-      "disposition": "rename",
-      "target_family": "fixed",
-      "target_slot_id": "fixed.lender_sals_pawn_counter",
+      "disposition": "remove",
+      "target_family": null,
+      "target_slot_id": null,
       "collision": {
         "has_collision": false,
-        "source_slot_ids": [
-          "fixed.door_left_lower"
-        ],
+        "source_slot_ids": [],
         "policy": "none"
       },
-      "reason": "slot renamed to its canonical physical role"
+      "reason": "physical row retired; no coordinate is imported"
     },
     {
       "map_id": "pawn_shop",
@@ -12184,17 +12175,15 @@
         772.0,
         188.0
       ],
-      "disposition": "keep",
-      "target_family": "fixed",
-      "target_slot_id": "fixed.staff_merchant",
+      "disposition": "remove",
+      "target_family": null,
+      "target_slot_id": null,
       "collision": {
         "has_collision": false,
-        "source_slot_ids": [
-          "fixed.staff_merchant"
-        ],
+        "source_slot_ids": [],
         "policy": "none"
       },
-      "reason": "slot identity and geometry row retained"
+      "reason": "physical row retired; no coordinate is imported"
     },
     {
       "map_id": "pawn_shop",
@@ -12724,17 +12713,15 @@
         300.0,
         202.0
       ],
-      "disposition": "keep",
-      "target_family": "fixed",
-      "target_slot_id": "fixed.service_stage_left",
+      "disposition": "remove",
+      "target_family": null,
+      "target_slot_id": null,
       "collision": {
         "has_collision": false,
-        "source_slot_ids": [
-          "fixed.service_stage_left"
-        ],
+        "source_slot_ids": [],
         "policy": "none"
       },
-      "reason": "slot identity and geometry row retained"
+      "reason": "physical row retired; no coordinate is imported"
     },
     {
       "map_id": "small_underground_casino",
@@ -12766,17 +12753,15 @@
         252.0,
         358.0
       ],
-      "disposition": "keep",
-      "target_family": "fixed",
-      "target_slot_id": "fixed.staff_floor_left",
+      "disposition": "remove",
+      "target_family": null,
+      "target_slot_id": null,
       "collision": {
         "has_collision": false,
-        "source_slot_ids": [
-          "fixed.staff_floor_left"
-        ],
+        "source_slot_ids": [],
         "policy": "none"
       },
-      "reason": "slot identity and geometry row retained"
+      "reason": "physical row retired; no coordinate is imported"
     },
     {
       "map_id": "small_underground_casino",
@@ -13301,17 +13286,15 @@
         859.0,
         374.0
       ],
-      "disposition": "keep",
-      "target_family": "exit",
-      "target_slot_id": "exit.door_right_lower",
+      "disposition": "remove",
+      "target_family": null,
+      "target_slot_id": null,
       "collision": {
         "has_collision": false,
-        "source_slot_ids": [
-          "exit.door_right_lower"
-        ],
+        "source_slot_ids": [],
         "policy": "none"
       },
-      "reason": "slot identity and geometry row retained"
+      "reason": "physical row retired; no coordinate is imported"
     },
     {
       "map_id": "small_underground_casino",
@@ -13322,17 +13305,15 @@
         859.0,
         278.0
       ],
-      "disposition": "keep",
-      "target_family": "exit",
-      "target_slot_id": "exit.door_right_upper",
+      "disposition": "remove",
+      "target_family": null,
+      "target_slot_id": null,
       "collision": {
         "has_collision": false,
-        "source_slot_ids": [
-          "exit.door_right_upper"
-        ],
+        "source_slot_ids": [],
         "policy": "none"
       },
-      "reason": "slot identity and geometry row retained"
+      "reason": "physical row retired; no coordinate is imported"
     },
     {
       "map_id": "small_underground_casino",
@@ -13870,17 +13851,15 @@
         450.0,
         151.0
       ],
-      "disposition": "keep",
-      "target_family": "scenario",
-      "target_slot_id": "scenario.surface_item_1",
+      "disposition": "remove",
+      "target_family": null,
+      "target_slot_id": null,
       "collision": {
         "has_collision": false,
-        "source_slot_ids": [
-          "scenario.surface_item_1"
-        ],
+        "source_slot_ids": [],
         "policy": "none"
       },
-      "reason": "slot identity and geometry row retained"
+      "reason": "physical row retired; no coordinate is imported"
     },
     {
       "map_id": "small_underground_casino:back_room",
@@ -14473,17 +14452,15 @@
         274.0,
         166.0
       ],
-      "disposition": "rename",
-      "target_family": "scenario",
-      "target_slot_id": "scenario.group_1",
+      "disposition": "remove",
+      "target_family": null,
+      "target_slot_id": null,
       "collision": {
         "has_collision": false,
-        "source_slot_ids": [
-          "scenario.floor_group_1"
-        ],
+        "source_slot_ids": [],
         "policy": "none"
       },
-      "reason": "slot renamed to its canonical physical role"
+      "reason": "physical row retired; no coordinate is imported"
     },
     {
       "map_id": "small_underground_casino:casino",

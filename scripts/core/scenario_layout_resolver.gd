@@ -34,6 +34,9 @@ const LAYOUT_SPOT_FIELDS := {
 	"shopkeeper": "shopkeeper_spots",
 	"game_hook": "game_hook_spots",
 }
+const ATTACHMENT_GENERIC_TOKENS := [
+	"action", "choice", "route", "scenario", "station", "task", "the", "work", "zone",
+]
 
 # Compatibility projection used by the renderer-extension seam. Production
 # interaction composition uses resolve(), which additionally seals geometry to
@@ -356,7 +359,7 @@ static func resolve(base_records: Array, projection: Dictionary, environment: Di
 				"placement_class": "",
 				"safe_exit": safe_exit,
 				"navigation_exit": navigation_exit,
-				"slot_family": "exit" if navigation_exit else "scenario",
+				"slot_family": _visual_slot_family(classified_semantic, navigation_exit),
 			}
 			var placement_class := ""
 			# Footprint classification is allowed only after exact physical/art
@@ -479,7 +482,7 @@ static func _attach_abstract_actions_to_room_objects(
 			"actor": false,
 			"safe_exit": bool(interaction.get("safe_exit", false)),
 			"navigation_exit": navigation_exit,
-			"slot_family": "exit" if navigation_exit else "scenario",
+			"slot_family": _visual_slot_family(semantic, navigation_exit),
 		}
 		if not EnvironmentSlotBinderScript.scenario_visual_requires_room_slot(surface_map, entry):
 			abstract_ids.append(identity)
@@ -540,67 +543,121 @@ static func _abstract_action_target(
 ) -> String:
 	var best_identity := ""
 	var best_score := -100000
-	var source_tokens := _attachment_tokens(identity, semantic)
+	# Intent tokens come from the owner-facing command label. Stable ids share a
+	# long scenario prefix with every object in the room, so treating those words
+	# as semantic evidence makes an unrelated actor beat the named prop.
+	var source_tokens := _attachment_source_tokens(semantic)
 	for family_value in [[actors, true], [scenes, false]]:
 		var family := _dict((family_value as Array)[0])
 		var actor := bool((family_value as Array)[1])
 		for candidate_identity_value in family.keys():
 			var candidate_identity := str(candidate_identity_value)
 			var candidate := _dict(family.get(candidate_identity_value, {}))
-			if candidate.is_empty() or not bool(candidate.get("present", true)) or not bool(candidate.get("visible", true)):
+			if candidate.is_empty() \
+					or not bool(candidate.get("present", true)) \
+					or not bool(candidate.get("visible", true)) \
+					or not bool(candidate.get("enabled", true)):
 				continue
 			var entry := {"identity": candidate_identity, "semantic": candidate, "actor": actor, "safe_exit": false}
 			if not EnvironmentSlotBinderScript.scenario_visual_requires_room_slot(surface_map, entry):
 				continue
-			var score := 100 if actor else 40
+			# Prefer an actor only as a small fallback when no tangible host has a
+			# meaningful authored relationship to the command.
+			var score := 10 if actor else 5
 			score += _attachment_match_score(source_tokens, semantic, candidate_identity, candidate)
-			if score > best_score:
+			if _attachment_candidate_is_better(score, candidate_identity, best_score, best_identity):
 				best_score = score
 				best_identity = candidate_identity
-	if not best_identity.is_empty():
-		return best_identity
 	for record_value in base_records:
 		var record := _dict(record_value)
-		if not bool(record.get("visible", true)) or str(record.get("presentation_mode", "room")) != "room":
+		if not bool(record.get("visible", true)) \
+				or not bool(record.get("enabled", true)) \
+				or str(record.get("presentation_mode", "room")) != "room":
 			continue
 		var candidate_identity := _record_identity(record)
 		if candidate_identity == "::":
 			continue
 		var object_type := str(record.get("object_type", ""))
 		var visual_type := str(record.get("visual_type", ""))
-		var score := 80 if visual_type == "character" or object_type in ["dialogue", "shopkeeper", "character"] else 20
+		var score := 8 if visual_type == "character" or object_type in ["dialogue", "shopkeeper", "character"] else 0
 		if object_type == "travel":
 			score -= 60
 		score += _attachment_match_score(source_tokens, semantic, candidate_identity, record)
-		if score > best_score:
+		if _attachment_candidate_is_better(score, candidate_identity, best_score, best_identity):
 			best_score = score
 			best_identity = candidate_identity
 	return best_identity
 
 
+static func _attachment_candidate_is_better(
+	score: int,
+	candidate_identity: String,
+	best_score: int,
+	best_identity: String
+) -> bool:
+	return score > best_score or score == best_score and (
+		best_identity.is_empty() or candidate_identity < best_identity
+	)
+
+
 static func _attachment_match_score(source_tokens: Array, source: Dictionary, candidate_identity: String, candidate: Dictionary) -> int:
 	var score := 0
-	var candidate_tokens := _attachment_tokens(candidate_identity, candidate)
+	var candidate_tokens := _attachment_candidate_tokens(candidate_identity, candidate)
+	var matched_tokens := 0
 	for token_value in source_tokens:
 		var token := str(token_value)
-		if token.length() >= 4 and candidate_tokens.has(token):
+		if token.length() >= 3 and candidate_tokens.has(token):
 			score += 25
-	for key in ["anchor_id", "zone_id"]:
-		var relation := str(source.get(key, "")).strip_edges()
-		if not relation.is_empty() and relation in [
+			matched_tokens += 1
+	# A command's final meaningful word is normally its subject (tray, dart,
+	# schedule), while two shared words are similarly strong evidence.  Either
+	# must outrank the broad room zone used to position the abstract control.
+	var head_token := _attachment_head_token(source)
+	if matched_tokens >= 2 or (not head_token.is_empty() and candidate_tokens.has(head_token)):
+		score += 160
+	var anchor_relation := str(source.get("anchor_id", "")).strip_edges()
+	if not anchor_relation.is_empty() and anchor_relation in [
 			str(candidate.get("anchor_id", "")), str(candidate.get("zone_id", "")),
 			str(candidate.get("stable_object_id", "")), str(candidate.get("actor_id", "")),
 		]:
-			score += 120
+		score += 500
+	var zone_relation := str(source.get("zone_id", "")).strip_edges()
+	if not zone_relation.is_empty() and zone_relation == str(candidate.get("zone_id", "")):
+		score += 120
 	return score
 
 
-static func _attachment_tokens(identity: String, semantic: Dictionary) -> Array:
+static func _attachment_source_tokens(semantic: Dictionary) -> Array:
+	return _attachment_tokens_from_texts([semantic.get("label", "")])
+
+
+static func _attachment_head_token(semantic: Dictionary) -> String:
+	var label := str(semantic.get("label", "")).to_lower().replace("::", "_").replace(":", "_").replace("-", "_").replace(" ", "_")
+	var tokens := label.split("_", false)
+	for index in range(tokens.size() - 1, -1, -1):
+		var token := str(tokens[index])
+		if token.length() >= 3 and token not in ATTACHMENT_GENERIC_TOKENS:
+			return token
+	return ""
+
+
+static func _attachment_candidate_tokens(identity: String, semantic: Dictionary) -> Array:
+	return _attachment_tokens_from_texts([
+		identity,
+		semantic.get("stable_object_id", ""),
+		semantic.get("label", ""),
+		semantic.get("actor_id", ""),
+		semantic.get("anchor_id", ""),
+		semantic.get("role", ""),
+	])
+
+
+static func _attachment_tokens_from_texts(text_values: Array) -> Array:
 	var seen: Dictionary = {}
-	for text_value in [identity, semantic.get("stable_object_id", ""), semantic.get("label", ""), semantic.get("anchor_id", ""), semantic.get("zone_id", "")]:
+	for text_value in text_values:
 		var text := str(text_value).to_lower().replace("::", "_").replace(":", "_").replace("-", "_").replace(" ", "_")
 		for token in text.split("_", false):
-			if token.length() >= 3:
+			if token.length() >= 3 and token not in ATTACHMENT_GENERIC_TOKENS:
 				seen[token] = true
 	return seen.keys()
 
@@ -655,6 +712,16 @@ static func _interaction_navigates_environment(interaction: Dictionary) -> bool:
 			if not str(inputs.get(destination_key, "")).strip_edges().is_empty():
 				return true
 	return false
+
+
+static func _visual_slot_family(semantic: Dictionary, navigation_exit: bool) -> String:
+	if navigation_exit:
+		return "exit"
+	var explicit := str(semantic.get("slot_family", "")).strip_edges()
+	# Sequence visuals may opt into the shared ambient event bank. Fixed room
+	# authority is created only by the environment manifest, while catalog
+	# scenario visuals remain exact-instance-owned by default.
+	return explicit if explicit in ["event", "scenario"] else "scenario"
 
 
 static func failure_authority(_base_records: Array = []) -> Dictionary:
@@ -783,6 +850,22 @@ static func _resolve_fixed_visual(
 		return {}
 	var scenario_art_key := str(binding.get("scenario_art_key", "")).strip_edges()
 	if presentation_mode == "room" and not actor:
+		# A scenario object may already own sealed base-record geometry (for
+		# example, after entering its authored layer), so it is intentionally
+		# omitted from the second slot-binding pass above. Resolve its concrete
+		# renderer from the same trusted surface-map authority instead of
+		# requiring a redundant binding solely to carry the art key.
+		if scenario_art_key.is_empty():
+			scenario_art_key = EnvironmentSlotBinderScript.scenario_visual_art_key(
+				EnvironmentPlacementScript.surface_map(environment),
+				{
+					"identity": identity,
+					"semantic": semantic,
+					"actor": actor,
+					"slot_family": slot_family,
+					"safe_exit": bool(semantic.get("safe_exit", false)),
+				}
+			)
 		if scenario_art_key.is_empty():
 			errors.append("Scenario scene object %s has room geometry without sealed concrete art authority." % identity)
 			return {}

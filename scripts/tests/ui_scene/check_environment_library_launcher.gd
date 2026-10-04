@@ -1,10 +1,12 @@
 extends SceneTree
 
 const MainScene := preload("res://scenes/main.tscn")
+const DeveloperPlacementStoreScript := preload("res://scripts/core/developer_placement_store.gd")
 
 var app: Control
 var failures: Array[String] = []
 var settings_path := ""
+var placement_paths: Array[String] = []
 
 
 func _init() -> void:
@@ -17,10 +19,31 @@ func _run() -> void:
 	var temp_root := ProjectSettings.globalize_path("res://.tmp/environment_library_launcher_check")
 	DirAccess.make_dir_recursive_absolute(temp_root)
 	settings_path = temp_root.path_join("settings.json")
-	for path in [settings_path, "%s.bak" % settings_path]:
+	var placement_user_path := temp_root.path_join("placement_user.json")
+	var placement_project_path := temp_root.path_join("placement_project.json")
+	var placement_report_path := temp_root.path_join("placement_report.json")
+	placement_paths = [
+		placement_user_path,
+		"%s.bak" % placement_user_path,
+		placement_project_path,
+		"%s.bak" % placement_project_path,
+		placement_report_path,
+		"%s.bak" % placement_report_path,
+	]
+	for path in [settings_path, "%s.bak" % settings_path] + placement_paths:
 		if FileAccess.file_exists(path):
 			DirAccess.remove_absolute(path)
 	OS.set_environment("BTH_USER_SETTINGS_PATH", settings_path)
+	OS.set_environment(DeveloperPlacementStoreScript.USER_PATH_ENV, placement_user_path)
+	OS.set_environment(DeveloperPlacementStoreScript.PROJECT_PATH_ENV, placement_project_path)
+	OS.set_environment(DeveloperPlacementStoreScript.REPORT_PATH_ENV, placement_report_path)
+	var project_file := FileAccess.open(placement_project_path, FileAccess.WRITE)
+	project_file.store_string(JSON.stringify({
+		"schema_version": DeveloperPlacementStoreScript.SCHEMA_VERSION,
+		"rooms": {},
+	}, "\t"))
+	project_file.close()
+	DeveloperPlacementStoreScript.reload()
 	app = MainScene.instantiate()
 	app.set("continuous_environment_clock_enabled", false)
 	app.set("autosave_slot_id", "environment_library_launcher_check")
@@ -37,15 +60,66 @@ func _run() -> void:
 	var menu := app.get("environment_test_menu") as Control
 	var archetypes := app.get("environment_test_archetype_option") as OptionButton
 	var scenarios := app.get("environment_test_scenario_option") as OptionButton
+	var next_missing_button := app.get("environment_test_next_missing_button") as Button
 	_check(menu != null and menu.is_visible_in_tree(), "The main-menu Environments launcher must open the Environment Library.")
 	var user_settings: UserSettings = app.get("user_settings")
 	_check(user_settings != null and user_settings.developer_slot_placement_mode, "Opening Environment Library must apply the placement-mode toggle instead of discarding it.")
 	_check(archetypes != null and archetypes.item_count >= 18, "The Environment Library must list every environment.")
-	_check(scenarios != null and scenarios.item_count >= 2, "Every environment must include normal and base scenario choices.")
+	_check(
+		scenarios != null
+			and scenarios.item_count >= 1
+			and not _has_metadata(scenarios, "__default")
+			and _has_metadata(scenarios, "__none"),
+		"Placement-pass scenario choices must expose Base / No Scenario without the unrelated Normal Run Selection alias."
+	)
+	_check(
+		_item_text_for_metadata(scenarios, "__none").begins_with("TODO"),
+		"Placement-pass choices must label an unsaved base context as TODO."
+	)
+	var coverage := DeveloperPlacementStoreScript.coverage_snapshot()
+	var missing_layouts: Array = coverage.get("missing_layout_ids", [])
+	var next_layout_id := str(coverage.get("next_missing_layout_id", "")).strip_edges()
+	if next_layout_id.is_empty() and not missing_layouts.is_empty():
+		next_layout_id = str(missing_layouts[0])
+	var status_label := app.get("environment_test_status_label") as Label
+	_check(
+		next_missing_button != null and next_missing_button.visible and not next_missing_button.disabled,
+		"Placement mode must expose a prominent enabled Load Next Missing action while coverage is incomplete."
+	)
+	_check(
+		status_label != null and status_label.text.contains("0/75 saved") and status_label.text.contains("Next:"),
+		"The Environment Library must show friendly global placement progress and the next missing context."
+	)
+	if next_missing_button != null:
+		next_missing_button.pressed.emit()
+	await _settle(5)
+	var run_state: RunState = app.get("run_state") as RunState
+	_check(
+		run_state != null
+			and str(app.get("current_screen")) == "ENVIRONMENT"
+			and DeveloperPlacementStoreScript.layout_id(run_state.current_environment) == next_layout_id,
+		"Load Next Missing must select and spawn the exact next coverage layout."
+	)
+	var next_leave_opened := bool(app.call("activate_interactable_object", "travel:leave"))
+	await _settle(3)
+	var overlay := app.get("environment_test_overlay") as Control
+	_check(
+		next_leave_opened and overlay != null and overlay.visible and menu.is_visible_in_tree(),
+		"Leaving a next-missing practice room must return to the Environment Library."
+	)
+	var selected_environment: Dictionary = app.call("_environment_test_current_layout_environment")
+	_check(
+		DeveloperPlacementStoreScript.layout_id(selected_environment) == next_layout_id,
+		"Reopening the Environment Library must preserve the exact environment, scenario, and layer selection."
+	)
 	_select_metadata(archetypes, "small_underground_casino")
 	app.call("_on_environment_test_archetype_selected", archetypes.selected)
 	var layered_scenario := app.get("environment_test_scenario_option") as OptionButton
 	var layered_area := app.get("environment_test_layer_option") as OptionButton
+	_check(
+		_metadata_ids(layered_area) == ["club", "casino", "back_room"],
+		"The Punchline placement pass must list exactly club, casino, and back_room without a duplicate blank/default-layer alias."
+	)
 	_select_metadata(layered_scenario, "punchline_high_stakes_night")
 	app.call("_on_environment_test_scenario_selected", layered_scenario.selected)
 	_check(_selected_metadata(layered_area) == "casino" and layered_area.disabled, "An exact layered scenario must select and lock its authored starting area.")
@@ -61,7 +135,7 @@ func _run() -> void:
 	var first: Dictionary = app.call("start_environment_test_session")
 	await _settle(3)
 	_check(bool(first.get("ok", false)), "The Environment Library must spawn a selected room through the live UI.")
-	var run_state: RunState = app.get("run_state")
+	run_state = app.get("run_state") as RunState
 	_check(str(app.get("current_screen")) == "ENVIRONMENT" and run_state != null, "A successful selection must enter the real environment screen.")
 	var environment_canvas := app.get("environment_canvas") as PixelSceneCanvas
 	_check(environment_canvas != null and bool(environment_canvas.developer_slot_placement_snapshot().get("enabled", false)), "The room spawned from Settings > Environment Library must open with slot placement mode active.")
@@ -71,8 +145,13 @@ func _run() -> void:
 	run_state.inventory = [{"id": "lucky_keychain"}]
 	var leave_opened := bool(app.call("activate_interactable_object", "travel:leave"))
 	await _settle(2)
-	var overlay := app.get("environment_test_overlay") as Control
+	overlay = app.get("environment_test_overlay") as Control
 	_check(leave_opened and overlay != null and overlay.visible and menu.is_visible_in_tree(), "The practice Leave object must reopen the Environment Library instead of the travel map.")
+	_check(
+		_selected_metadata(archetypes) == "bar"
+			and _selected_metadata(app.get("environment_test_scenario_option") as OptionButton) == "__none",
+		"Returning from a practice room must preserve the owner's current Environment Library selection."
+	)
 	_select_metadata(archetypes, "corner_store")
 	app.call("_on_environment_test_archetype_selected", archetypes.selected)
 	_select_metadata(app.get("environment_test_scenario_option") as OptionButton, "__none")
@@ -104,6 +183,33 @@ func _selected_metadata(option: OptionButton) -> String:
 	return str(option.get_item_metadata(option.selected))
 
 
+func _has_metadata(option: OptionButton, wanted: String) -> bool:
+	if option == null:
+		return false
+	for index in range(option.item_count):
+		if str(option.get_item_metadata(index)) == wanted:
+			return true
+	return false
+
+
+func _item_text_for_metadata(option: OptionButton, wanted: String) -> String:
+	if option == null:
+		return ""
+	for index in range(option.item_count):
+		if str(option.get_item_metadata(index)) == wanted:
+			return option.get_item_text(index)
+	return ""
+
+
+func _metadata_ids(option: OptionButton) -> Array[String]:
+	var result: Array[String] = []
+	if option == null:
+		return result
+	for index in range(option.item_count):
+		result.append(str(option.get_item_metadata(index)))
+	return result
+
+
 func _settle(frames: int) -> void:
 	for _frame in range(frames):
 		await process_frame
@@ -120,7 +226,13 @@ func _fail(message: String) -> void:
 
 func _finish() -> void:
 	OS.set_environment("BTH_USER_SETTINGS_PATH", "")
-	for path in [settings_path, "%s.bak" % settings_path]:
+	OS.set_environment(DeveloperPlacementStoreScript.USER_PATH_ENV, "")
+	OS.set_environment(DeveloperPlacementStoreScript.PROJECT_PATH_ENV, "")
+	OS.set_environment(DeveloperPlacementStoreScript.REPORT_PATH_ENV, "")
+	DeveloperPlacementStoreScript.reload()
+	var cleanup_paths: Array[String] = [settings_path, "%s.bak" % settings_path]
+	cleanup_paths.append_array(placement_paths)
+	for path in cleanup_paths:
 		if not path.is_empty() and FileAccess.file_exists(path):
 			DirAccess.remove_absolute(path)
 	if not settings_path.is_empty():
