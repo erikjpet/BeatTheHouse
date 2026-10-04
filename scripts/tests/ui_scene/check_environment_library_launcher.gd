@@ -4,6 +4,7 @@ const MainScene := preload("res://scenes/main.tscn")
 
 var app: Control
 var failures: Array[String] = []
+var settings_path := ""
 
 
 func _init() -> void:
@@ -13,19 +14,44 @@ func _init() -> void:
 func _run() -> void:
 	Engine.max_fps = 60
 	root.size = Vector2i(1280, 720)
+	var temp_root := ProjectSettings.globalize_path("res://.tmp/environment_library_launcher_check")
+	DirAccess.make_dir_recursive_absolute(temp_root)
+	settings_path = temp_root.path_join("settings.json")
+	for path in [settings_path, "%s.bak" % settings_path]:
+		if FileAccess.file_exists(path):
+			DirAccess.remove_absolute(path)
+	OS.set_environment("BTH_USER_SETTINGS_PATH", settings_path)
 	app = MainScene.instantiate()
 	app.set("continuous_environment_clock_enabled", false)
 	app.set("autosave_slot_id", "environment_library_launcher_check")
 	root.add_child(app)
 	await _settle(4)
-	app.call("open_environment_test_menu")
+	app.call("open_settings_menu")
+	await _settle(2)
+	var settings_menu := app.get("settings_menu") as Control
+	_check(settings_menu != null and settings_menu.visible, "Settings must open before the Environment Library workflow check.")
+	if settings_menu != null:
+		settings_menu.call("_on_developer_slot_placement_mode", true)
+	app.call("_on_settings_environment_library_requested")
 	await _settle(3)
 	var menu := app.get("environment_test_menu") as Control
 	var archetypes := app.get("environment_test_archetype_option") as OptionButton
 	var scenarios := app.get("environment_test_scenario_option") as OptionButton
 	_check(menu != null and menu.is_visible_in_tree(), "The main-menu Environments launcher must open the Environment Library.")
+	var user_settings: UserSettings = app.get("user_settings")
+	_check(user_settings != null and user_settings.developer_slot_placement_mode, "Opening Environment Library must apply the placement-mode toggle instead of discarding it.")
 	_check(archetypes != null and archetypes.item_count >= 18, "The Environment Library must list every environment.")
 	_check(scenarios != null and scenarios.item_count >= 2, "Every environment must include normal and base scenario choices.")
+	_select_metadata(archetypes, "small_underground_casino")
+	app.call("_on_environment_test_archetype_selected", archetypes.selected)
+	var layered_scenario := app.get("environment_test_scenario_option") as OptionButton
+	var layered_area := app.get("environment_test_layer_option") as OptionButton
+	_select_metadata(layered_scenario, "punchline_high_stakes_night")
+	app.call("_on_environment_test_scenario_selected", layered_scenario.selected)
+	_check(_selected_metadata(layered_area) == "casino" and layered_area.disabled, "An exact layered scenario must select and lock its authored starting area.")
+	_select_metadata(layered_scenario, "__none")
+	app.call("_on_environment_test_scenario_selected", layered_scenario.selected)
+	_check(not layered_area.disabled, "Base / No Scenario must leave layered starting areas selectable.")
 	_select_metadata(archetypes, "bar")
 	app.call("_on_environment_test_archetype_selected", archetypes.selected)
 	_select_metadata(app.get("environment_test_scenario_option") as OptionButton, "__none")
@@ -37,6 +63,8 @@ func _run() -> void:
 	_check(bool(first.get("ok", false)), "The Environment Library must spawn a selected room through the live UI.")
 	var run_state: RunState = app.get("run_state")
 	_check(str(app.get("current_screen")) == "ENVIRONMENT" and run_state != null, "A successful selection must enter the real environment screen.")
+	var environment_canvas := app.get("environment_canvas") as PixelSceneCanvas
+	_check(environment_canvas != null and bool(environment_canvas.developer_slot_placement_snapshot().get("enabled", false)), "The room spawned from Settings > Environment Library must open with slot placement mode active.")
 	_check(str(run_state.current_environment.get("archetype_id", "")) == "bar", "The live UI must install the selected environment.")
 	_check(str((run_state.current_environment.get("town_conditions", {}) as Dictionary).get("weather", "")) == "rain", "The live UI must apply exact condition controls.")
 	run_state.bankroll = 777
@@ -70,6 +98,12 @@ func _select_metadata(option: OptionButton, wanted: String) -> void:
 	_fail("Selector did not contain %s." % wanted)
 
 
+func _selected_metadata(option: OptionButton) -> String:
+	if option == null or option.selected < 0:
+		return ""
+	return str(option.get_item_metadata(option.selected))
+
+
 func _settle(frames: int) -> void:
 	for _frame in range(frames):
 		await process_frame
@@ -85,5 +119,13 @@ func _fail(message: String) -> void:
 
 
 func _finish() -> void:
+	OS.set_environment("BTH_USER_SETTINGS_PATH", "")
+	for path in [settings_path, "%s.bak" % settings_path]:
+		if not path.is_empty() and FileAccess.file_exists(path):
+			DirAccess.remove_absolute(path)
+	if not settings_path.is_empty():
+		var temp_root := settings_path.get_base_dir()
+		if DirAccess.dir_exists_absolute(temp_root):
+			DirAccess.remove_absolute(temp_root)
 	print("ENVIRONMENT_LIBRARY_LAUNCHER_CHECK %s" % JSON.stringify({"passed": failures.is_empty(), "failures": failures}))
 	quit(0 if failures.is_empty() else 1)

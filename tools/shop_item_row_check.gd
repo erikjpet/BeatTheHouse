@@ -2,10 +2,12 @@ extends SceneTree
 
 # One-shot placement check for merchandise. It generates every archetype in its
 # base state and at every authored scenario phase, runs the production base-slot
-# binder, and proves that each live offer occupies the room's gap-free shop row.
+# binder, and proves that each live offer occupies the shared fixed shop row or
+# its exact scenario-local shop position.
 
 const ContentLibraryScript := preload("res://scripts/core/content_library.gd")
 const EnvironmentInstanceScript := preload("res://scripts/core/environment_instance.gd")
+const EnvironmentPlacementScript := preload("res://scripts/core/environment_placement.gd")
 const RngStreamScript := preload("res://scripts/core/rng_stream.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")
@@ -48,6 +50,8 @@ func _run() -> void:
 			).to_dict()
 			_maximize_authored_stock(environment, archetype, library)
 			environment["layout"] = EnvironmentInstanceScript.ensure_generated_layout(environment, library)
+			var surface_map := EnvironmentPlacementScript.surface_map(environment)
+			var scenario_item_slots := _dict(surface_map.get("scenario_instance_object_slot_ids", {}))
 			var live_ids := _live_offer_ids(environment)
 			var bindings := _dict(_dict(environment.get("layout", {})).get("slot_bindings", {}))
 			var manifest_families: Dictionary = {}
@@ -66,11 +70,14 @@ func _run() -> void:
 					continue
 				family_ordinals[family] = int(family_ordinals.get(family, 0)) + 1
 				var expected_slot := "%s.item_shop_%d" % [family, int(family_ordinals.get(family, 0))]
+				if family == "scenario":
+					expected_slot = str(scenario_item_slots.get(object_id, ""))
 				listed["%s=%s" % [object_id, slot_id if not slot_id.is_empty() else "MISSING"]] = true
 				offer_count += 1
 				if str(binding.get("presentation_mode", "")) != "room" \
 						or str(binding.get("slot_family", "")) != family \
 						or str(binding.get("placement_class", "")) != "shop_item" \
+						or family == "scenario" and not expected_slot.begins_with("scenario.shop_item_") \
 						or slot_id != expected_slot:
 					room_failures.append("%s %s expected %s, got %s" % [str(variant.get("label", "base")), object_id, expected_slot, slot_id])
 				if occupied.has(slot_id):

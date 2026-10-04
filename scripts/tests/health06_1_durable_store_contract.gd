@@ -212,20 +212,21 @@ func _expect_invalid_settings_preserved(payload: Dictionary, label: String) -> v
 
 func _check_placement_failure_reporting() -> void:
 	DeveloperPlacementStoreScript.reload()
-	var environment := {"archetype_id": "health_room", "current_layer_id": "main"}
-	var first: Dictionary = DeveloperPlacementStoreScript.save_position(environment, "slot_positions", "fixed.fixture", Vector2(24, 36))
+	var environment := {"archetype_id": "house"}
+	var slot_id := "fixed.home_sleep"
+	var first: Dictionary = DeveloperPlacementStoreScript.save_position(environment, "slot_positions", slot_id, Vector2(24, 36))
 	_expect(bool(first.get("ok", false)), "CH-05: initial developer placement failed.")
 	var prior_bytes := FileAccess.get_file_as_bytes(PLACEMENT_PATH)
 	DurableStoreScript.set_debug_force_write_failure(true)
-	var failed: Dictionary = DeveloperPlacementStoreScript.save_position(environment, "slot_positions", "fixed.fixture", Vector2(48, 72))
+	var failed: Dictionary = DeveloperPlacementStoreScript.save_position(environment, "slot_positions", slot_id, Vector2(48, 72))
 	DurableStoreScript.reset_debug_faults()
 	_expect(not bool(failed.get("ok", true)), "CH-05: failed developer placement write reported success.")
 	_expect(FileAccess.get_file_as_bytes(PLACEMENT_PATH) == prior_bytes, "CH-05: failed developer placement write changed the prior generation.")
 	var still_active: Dictionary = DeveloperPlacementStoreScript.slot_overrides(environment, "slot_positions")
-	_expect(still_active.get("fixed.fixture", []) == [24.0, 36.0], "CH-05: failed developer placement write leaked into active in-memory overrides.")
+	_expect(still_active.get(slot_id, []) == [24.0, 36.0], "CH-05: failed developer placement write leaked into active in-memory overrides.")
 	DeveloperPlacementStoreScript.reload()
 	var loaded: Dictionary = DeveloperPlacementStoreScript.slot_overrides(environment, "slot_positions")
-	_expect(loaded.get("fixed.fixture", []) == [24.0, 36.0], "CH-05: developer placement was not re-readable after failure.")
+	_expect(loaded.get(slot_id, []) == [24.0, 36.0], "CH-05: developer placement was not re-readable after failure.")
 
 
 func _check_run_save_recovery_and_trust() -> void:

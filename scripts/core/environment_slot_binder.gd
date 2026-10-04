@@ -146,7 +146,7 @@ static func bind_base_layout(environment: Dictionary, active_entries: Array, sha
 		var preference := str(preference_data.get("slot_id", "")).strip_edges()
 		# Generated base records are actionable by default. Decorative-only late
 		# records bypass this inventory; never serialize an undersized room target.
-		var candidate_slots := _family_slots(surface_map, slot_family)
+		var candidate_slots := _candidate_slots_for_preference(surface_map, slot_family, preference_data)
 		placement_class = _exit_preference_class(candidate_slots, slot_family, preference, placement_class)
 		var slot := _select_slot(candidate_slots, occupied, placement_class, preference, bool(preference_data.get("exact", false)), MIN_INTERACTIVE_TARGET)
 		if slot.is_empty():
@@ -708,7 +708,7 @@ static func bind_base_records(environment: Dictionary, records: Array, existing_
 		var preference_data := _slot_preference(surface_map, binding_entry, object_id)
 		var preference := str(preference_data.get("slot_id", "")).strip_edges()
 		var minimum_size := MIN_INTERACTIVE_TARGET if bool(record.get("interactive", true)) else Vector2.ZERO
-		var candidate_slots := _family_slots(surface_map, slot_family)
+		var candidate_slots := _candidate_slots_for_preference(surface_map, slot_family, preference_data)
 		placement_class = _exit_preference_class(candidate_slots, slot_family, preference, placement_class)
 		var slot := _select_slot(candidate_slots, occupied, placement_class, preference, bool(preference_data.get("exact", false)), minimum_size)
 		if slot.is_empty():
@@ -926,6 +926,10 @@ static func bind_scenario_visuals(environment: Dictionary, visual_entries: Array
 		else:
 			var preference_data := _slot_preference(surface_map, entry, identity, position_key, stable_id)
 			var preference := str(preference_data.get("slot_id", "")).strip_edges()
+			if bool(surface_map.get("scenario_layout_scoped", false)) and slot_family == "scenario" \
+					and not bool(preference_data.get("exact", false)):
+				errors.append("Scenario visual %s has no exact slot instance in %s." % [identity, str(surface_map.get("scenario_layout_id", "scenario layout"))])
+				continue
 			var candidate_slots := exit_slots if slot_family == "exit" else scenario_slots
 			placement_class = _exit_preference_class(candidate_slots, slot_family, preference, placement_class)
 			# Event/scenario preferences are hints, never hard authority. A stale,
@@ -1031,6 +1035,9 @@ static func slot_map_digest(surface_map: Dictionary) -> String:
 		"fixed_objects": surface_map.get("fixed_objects", []),
 		"class_overrides": _dict(surface_map.get("class_overrides", {})),
 		"scenario_slot_ids": _dict(surface_map.get("scenario_slot_ids", {})),
+		"scenario_instance_slot_ids": _dict(surface_map.get("scenario_instance_slot_ids", {})),
+		"scenario_instance_object_slot_ids": _dict(surface_map.get("scenario_instance_object_slot_ids", {})),
+		"scenario_layout_id": str(surface_map.get("scenario_layout_id", "")),
 		"scenario_art_keys": _dict(surface_map.get("scenario_art_keys", {})),
 		"scenario_overflow_ids": _array(surface_map.get("scenario_overflow_ids", [])),
 		"scenario_position_route_ids": _dict(surface_map.get("scenario_position_route_ids", {})),
@@ -1372,6 +1379,20 @@ static func authored_entry_slot_family(
 	default_family: String = "",
 	allow_category: bool = true
 ) -> String:
+	# An active catalog layout is the final owner of every object it maps. This
+	# must run before a live record's legacy `event` family, otherwise scenario-
+	# conditioned chain/recruitment records silently consume shared event slots.
+	if bool(surface_map.get("scenario_layout_scoped", false)):
+		var instance_objects := _dict(surface_map.get("scenario_instance_object_slot_ids", {}))
+		for key_value in [
+			object_id,
+			str(entry.get("source_id", "")),
+			str(entry.get("presentation_object_id", "")),
+			str(entry.get("stable_object_id", "")),
+		]:
+			var instance_key := str(key_value).strip_edges()
+			if not instance_key.is_empty() and instance_objects.has(instance_key):
+				return "scenario"
 	var explicit := _entry_slot_family(entry)
 	if not explicit.is_empty():
 		return explicit
@@ -1420,6 +1441,23 @@ static func _family_slots(surface_map: Dictionary, family: String) -> Array:
 	return _ordered_slots(EnvironmentPlacementScript.slots_for_family(surface_map, family))
 
 
+static func _candidate_slots_for_preference(
+	surface_map: Dictionary,
+	family: String,
+	preference_data: Dictionary
+) -> Array:
+	var slots := _family_slots(surface_map, family)
+	if family != "scenario" or not bool(surface_map.get("scenario_layout_scoped", false)) \
+			or bool(preference_data.get("exact", false)):
+		return slots
+	var reserves: Array = []
+	for slot_value in slots:
+		var slot := _dict(slot_value)
+		if bool(slot.get("runtime_reserve", false)):
+			reserves.append(slot)
+	return reserves
+
+
 static func _all_family_slots(surface_map: Dictionary) -> Array:
 	var result: Array = []
 	for family in SLOT_FAMILIES:
@@ -1454,9 +1492,20 @@ static func _slot_preference(
 	var family := authored_entry_slot_family(surface_map, entry, object_id)
 	if family.is_empty() and object_id.begins_with("scenario::"):
 		family = "scenario"
+	if family == "scenario" and bool(surface_map.get("scenario_layout_scoped", false)):
+		var instance_preferences := _dict(surface_map.get("scenario_instance_slot_ids", {}))
+		for semantic_key in [position_key, stable_id, object_id]:
+			var clean_instance_key := str(semantic_key).strip_edges()
+			if not clean_instance_key.is_empty() and instance_preferences.has(clean_instance_key):
+				return {"slot_id": str(instance_preferences.get(clean_instance_key, "")).strip_edges(), "exact": true, "source": "scenario_instance_slot_ids"}
+		var instance_object_preferences := _dict(surface_map.get("scenario_instance_object_slot_ids", {}))
+		for object_key in [position_key, stable_id, object_id]:
+			var clean_object_key := str(object_key).strip_edges()
+			if not clean_object_key.is_empty() and instance_object_preferences.has(clean_object_key):
+				return {"slot_id": str(instance_object_preferences.get(clean_object_key, "")).strip_edges(), "exact": true, "source": "scenario_instance_object_slot_ids"}
 	var explicit := str(entry.get("exact_slot_id", "")).strip_edges()
 	if not explicit.is_empty():
-		return {"slot_id": explicit, "exact": family in ["fixed", "exit"], "source": "entry.exact_slot_id"}
+		return {"slot_id": explicit, "exact": family in ["fixed", "exit"] or family == "scenario" and bool(surface_map.get("scenario_layout_scoped", false)), "source": "entry.exact_slot_id"}
 	var carried := str(entry.get("slot_id", "")).strip_edges()
 	if not carried.is_empty():
 		return {"slot_id": carried, "exact": family in ["fixed", "exit"], "source": "entry.slot_id"}
@@ -1540,6 +1589,14 @@ static func _surface_map_errors(surface_map: Dictionary) -> Array:
 		for mapped_slot_value in (scenario_preferences_value as Dictionary).values():
 			if typeof(mapped_slot_value) != TYPE_STRING or not str(mapped_slot_value).begins_with("scenario.") or not seen.has(str(mapped_slot_value)):
 				errors.append("Environment placement map %s scenario_slot_ids references a missing or non-scenario slot." % map_id)
+	for instance_field in ["scenario_instance_slot_ids", "scenario_instance_object_slot_ids"]:
+		var instance_value: Variant = surface_map.get(instance_field, {})
+		if typeof(instance_value) != TYPE_DICTIONARY:
+			errors.append("Environment placement map %s %s must be an object." % [map_id, instance_field])
+			continue
+		for mapped_slot_value in (instance_value as Dictionary).values():
+			if typeof(mapped_slot_value) != TYPE_STRING or not str(mapped_slot_value).begins_with("scenario.") or not seen.has(str(mapped_slot_value)):
+				errors.append("Environment placement map %s %s references a missing or non-scenario slot." % [map_id, instance_field])
 	# An identity may have one lifecycle owner.  A family override takes
 	# precedence during binding, so stale exact mappings in another family would
 	# otherwise be silently ignored and hide authoring drift until capacity fails.

@@ -1,8 +1,15 @@
 # Environment slot consolidation matrix
 
-This document records the reviewed slot authority after the all-environment
-consolidation. The checked-in placement data has 659 physical rows across 21
-effective maps: 214 `fixed`, 147 `event`, 222 `scenario`, and 76 `exit`.
+Status: **HISTORICAL PRE-RELEASE-3 CONSOLIDATION SNAPSHOT — SUPERSEDED.**
+
+Use `environment_scenario_slot_instance_rework.md` for the implemented model
+and `../plans/environment_scenario_layout_breakdown.md` for the generated
+75-context manual-placement authority.
+
+This document records the reviewed slot authority at the pre-release-2
+consolidation checkpoint. At that point, placement data had 659 physical rows
+across 21 effective maps: 214 `fixed`, 147 `event`, 222 `scenario`, and 76
+`exit`.
 
 ## Family contract
 
@@ -11,9 +18,8 @@ effective maps: 214 `fixed`, 147 `event`, 222 `scenario`, and 76 `exit`.
   `fixed.random_game_1` when the guaranteed position intentionally accepts a
   variable game.
 - `event.*` is optional ambient content independent of the selected scenario.
-- `scenario.*` is reusable capacity for the selected scenario, its aftermath,
-  source-added physical content, recruitment contacts, deliveries, and live
-  chain objects.
+- `scenario.*` was then a reusable room-wide bank for selected scenarios and
+  runtime content. Current catalog scenarios instead use exact local banks.
 - `exit.*` is physical travel authority for another environment or sub-room.
 
 Reusable `event` and `scenario` ids use only these physical roles:

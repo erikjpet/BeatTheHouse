@@ -560,6 +560,7 @@ static func build_run_screen(host: Variant) -> void:
 	host.environment_canvas.developer_placement_reset_requested.connect(host._on_developer_placement_reset_requested)
 	host.environment_canvas.developer_placement_promote_requested.connect(host._on_developer_placement_promote_requested)
 	host.environment_canvas.developer_placement_export_requested.connect(host._on_developer_placement_export_requested)
+	host.environment_canvas.developer_layout_save_requested.connect(host._on_developer_layout_save_requested)
 	visual_stack.add_child(host.environment_canvas)
 	host.game_surface_canvas = host.GameSurfaceCanvasScript.new()
 	if host.game_surface_canvas.has_method("bind_surface_audio_authority"):

@@ -811,93 +811,6 @@
           "occupancy_required": false
         },
         {
-          "id": "fixed.item_shop_6",
-          "kind": "fixed",
-          "pos": [
-            216.0,
-            192.0
-          ],
-          "footprint_class": "shop_item",
-          "physical_role": "Shop item",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            194.0,
-            144.0,
-            44.0,
-            48.0
-          ],
-          "label_anchor": [
-            216.0,
-            138.0
-          ],
-          "facing": "none",
-          "priority": 60,
-          "zone_id": "room",
-          "support_id": "shop_display_bottom",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
-          "id": "fixed.item_shop_7",
-          "kind": "fixed",
-          "pos": [
-            320.0,
-            192.0
-          ],
-          "footprint_class": "shop_item",
-          "physical_role": "Shop item",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            298.0,
-            144.0,
-            44.0,
-            48.0
-          ],
-          "label_anchor": [
-            320.0,
-            138.0
-          ],
-          "facing": "none",
-          "priority": 70,
-          "zone_id": "room",
-          "support_id": "shop_display_bottom",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
-          "id": "fixed.item_shop_8",
-          "kind": "fixed",
-          "pos": [
-            424.0,
-            192.0
-          ],
-          "footprint_class": "shop_item",
-          "physical_role": "Shop item",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            402.0,
-            144.0,
-            44.0,
-            48.0
-          ],
-          "label_anchor": [
-            424.0,
-            138.0
-          ],
-          "facing": "none",
-          "priority": 80,
-          "zone_id": "room",
-          "support_id": "shop_display_bottom",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
           "id": "fixed.staff_shopkeeper",
           "kind": "fixed",
           "pos": [
@@ -965,36 +878,7 @@
           "occupancy_required": true
         },
         {
-          "id": "fixed.drink",
-          "kind": "fixed",
-          "pos": [
-            796.0,
-            136.0
-          ],
-          "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            760.0,
-            88.0,
-            72.0,
-            48.0
-          ],
-          "label_anchor": [
-            812.0,
-            82.0
-          ],
-          "facing": "none",
-          "priority": 100,
-          "zone_id": "room",
-          "support_id": "cooler_upper",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
-          "id": "fixed.random_game_1",
+          "id": "fixed.game_coin_pusher",
           "kind": "fixed",
           "pos": [
             270.0,
@@ -1025,14 +909,14 @@
           "occupancy_required": false
         },
         {
-          "id": "fixed.event_group_1",
+          "id": "fixed.crew_group",
           "kind": "fixed",
           "pos": [
             384.0,
             358.0
           ],
           "footprint_class": "group",
-          "physical_role": "Group",
+          "physical_role": "The Crew",
           "occupant_ids": [
             "lender:the_crew"
           ],
@@ -1055,66 +939,6 @@
           "walk_lane_ids": [
             "lane.public"
           ],
-          "occupancy_required": false
-        },
-        {
-          "id": "fixed.lender_floor_1",
-          "kind": "fixed",
-          "pos": [
-            498.0,
-            358.0
-          ],
-          "footprint_class": "standing_person",
-          "physical_role": "Standing person",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            462.0,
-            278.0,
-            72.0,
-            80.0
-          ],
-          "label_anchor": [
-            486.0,
-            416.0
-          ],
-          "facing": "front",
-          "priority": 130,
-          "zone_id": "room",
-          "support_id": "floor",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
-        },
-        {
-          "id": "fixed.travel_right",
-          "kind": "fixed",
-          "pos": [
-            859.0,
-            370.0
-          ],
-          "footprint_class": "wall_mounted",
-          "physical_role": "Wall item",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            827.0,
-            334.0,
-            64.0,
-            72.0
-          ],
-          "label_anchor": [
-            859.0,
-            406.0
-          ],
-          "facing": "none",
-          "priority": 150,
-          "zone_id": "room",
-          "support_id": "round3_calendar_mount",
-          "walk_lane_ids": [],
           "occupancy_required": false
         },
         {
@@ -1769,98 +1593,6 @@
       ],
       "exit_slots": [
         {
-          "id": "exit.travel_left",
-          "kind": "exit",
-          "pos": [
-            59.0,
-            418.0
-          ],
-          "footprint_class": "ground_marker",
-          "physical_role": "Travel exit",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            27.0,
-            346.0,
-            64.0,
-            72.0
-          ],
-          "label_anchor": [
-            59.0,
-            430.0
-          ],
-          "facing": "none",
-          "priority": 140,
-          "zone_id": "room",
-          "support_id": "stage",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
-          "id": "exit.travel_right",
-          "kind": "exit",
-          "pos": [
-            877.0,
-            382.0
-          ],
-          "footprint_class": "wall_mounted",
-          "physical_role": "Travel exit",
-          "occupant_ids": [
-            "travel:gas_station_casino",
-            "travel:jazz_club"
-          ],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            836.0,
-            346.0,
-            64.0,
-            72.0
-          ],
-          "label_anchor": [
-            877.0,
-            418.0
-          ],
-          "facing": "none",
-          "priority": 150,
-          "zone_id": "room",
-          "support_id": "round3_calendar_mount",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
-          "id": "exit.safe_left",
-          "kind": "exit",
-          "pos": [
-            59.0,
-            298.0
-          ],
-          "footprint_class": "doorway",
-          "physical_role": "Travel exit",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            27.0,
-            262.0,
-            64.0,
-            72.0
-          ],
-          "label_anchor": [
-            59.0,
-            256.0
-          ],
-          "facing": "front",
-          "priority": 10,
-          "zone_id": "room",
-          "support_id": "left_exit",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
-        },
-        {
           "id": "exit.safe_right",
           "kind": "exit",
           "pos": [
@@ -1870,9 +1602,7 @@
           "footprint_class": "doorway",
           "physical_role": "Travel exit",
           "occupant_ids": [
-            "travel:bar",
-            "travel:leave",
-            "travel:pawn_shop"
+            "travel:leave"
           ],
           "runtime_reserve": false,
           "reserve_reason": "",
@@ -1898,8 +1628,8 @@
       ],
       "fixed_object_slot_ids": {
         "event:call_brother_in_law": "fixed.phone",
-        "game:coin_pusher": "fixed.random_game_1",
-        "lender:the_crew": "fixed.event_group_1",
+        "game:coin_pusher": "fixed.game_coin_pusher",
+        "lender:the_crew": "fixed.crew_group",
         "shopkeeper:merchant": "fixed.staff_shopkeeper",
         "numbers:book": "fixed.numbers_book",
         "service:cashier_tip": "fixed.phone",
@@ -1916,28 +1646,18 @@
         "event:scenario_delivery_day_stock": "scenario.behind_counter_person_1"
       },
       "exit_object_slot_ids": {
-        "travel:gas_station_casino": "exit.travel_right",
-        "travel:jazz_club": "exit.travel_right",
-        "travel:bar": "exit.safe_right",
-        "travel:leave": "exit.safe_right",
-        "travel:pawn_shop": "exit.safe_right"
+        "travel:leave": "exit.safe_right"
       },
       "fixed_category_slot_ids": {
-        "game_spots:0": "fixed.random_game_1",
-        "lender_spots:0": "fixed.lender_floor_1",
-        "lender_spots:1": "fixed.lender_floor_1",
+        "game_spots:0": "fixed.game_coin_pusher",
         "service_spots:0": "fixed.phone",
-        "service_spots:1": "fixed.drink",
         "shopkeeper_spots:0": "fixed.staff_shopkeeper",
         "numbers_spots:0": "fixed.numbers_book",
         "item_spots:0": "fixed.item_shop_1",
         "item_spots:1": "fixed.item_shop_2",
         "item_spots:2": "fixed.item_shop_3",
         "item_spots:3": "fixed.item_shop_4",
-        "item_spots:4": "fixed.item_shop_5",
-        "item_spots:5": "fixed.item_shop_6",
-        "item_spots:6": "fixed.item_shop_7",
-        "item_spots:7": "fixed.item_shop_8"
+        "item_spots:4": "fixed.item_shop_5"
       },
       "event_category_slot_ids": {
         "event_spots:0": "event.behind_counter_person_1",
@@ -1947,8 +1667,7 @@
       },
       "scenario_category_slot_ids": {},
       "exit_category_slot_ids": {
-        "travel_spots:0": "exit.travel_right",
-        "travel_spots:1": "exit.safe_right"
+        "travel_spots:0": "exit.safe_right"
       },
       "object_family_ids": {
         "event:call_brother_in_law": "fixed",
@@ -1964,13 +1683,9 @@
         "lender:the_crew": "fixed",
         "service:house_drink": "fixed",
         "shopkeeper:merchant": "fixed",
-        "travel:bar": "exit",
-        "travel:gas_station_casino": "exit",
-        "travel:jazz_club": "exit",
-        "travel:leave": "exit",
-        "travel:pawn_shop": "exit",
         "numbers:book": "fixed",
-        "service:cashier_tip": "fixed"
+        "service:cashier_tip": "fixed",
+        "travel:leave": "exit"
       },
       "fixed_objects": [
         {
@@ -2434,7 +2149,7 @@
             292.0
           ],
           "footprint_class": "standing_person",
-          "physical_role": "Standing person",
+          "physical_role": "Street lender",
           "occupant_ids": [
             "lender:street_lender"
           ],
@@ -2460,130 +2175,14 @@
           "occupancy_required": false
         },
         {
-          "id": "fixed.random_game_1",
-          "kind": "fixed",
-          "pos": [
-            606.0,
-            358.0
-          ],
-          "footprint_class": "floor_fixture",
-          "physical_role": "Game fixture",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            560.0,
-            294.0,
-            92.0,
-            64.0
-          ],
-          "label_anchor": [
-            606.0,
-            390.0
-          ],
-          "facing": "none",
-          "priority": 10,
-          "zone_id": "room",
-          "support_id": "floor",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
-          "id": "fixed.home_container_1",
-          "kind": "fixed",
-          "pos": [
-            250.0,
-            358.0
-          ],
-          "footprint_class": "floor_fixture",
-          "physical_role": "Floor prop",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            204.0,
-            294.0,
-            92.0,
-            64.0
-          ],
-          "label_anchor": [
-            250.0,
-            288.0
-          ],
-          "facing": "none",
-          "priority": 15,
-          "zone_id": "left",
-          "support_id": "floor",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
-          "id": "fixed.home_container_2",
-          "kind": "fixed",
-          "pos": [
-            450.0,
-            358.0
-          ],
-          "footprint_class": "floor_fixture",
-          "physical_role": "Floor prop",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            404.0,
-            294.0,
-            92.0,
-            64.0
-          ],
-          "label_anchor": [
-            450.0,
-            288.0
-          ],
-          "facing": "none",
-          "priority": 20,
-          "zone_id": "center",
-          "support_id": "floor",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
-          "id": "fixed.home_container_3",
-          "kind": "fixed",
-          "pos": [
-            650.0,
-            358.0
-          ],
-          "footprint_class": "floor_fixture",
-          "physical_role": "Floor prop",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            604.0,
-            294.0,
-            92.0,
-            64.0
-          ],
-          "label_anchor": [
-            650.0,
-            288.0
-          ],
-          "facing": "none",
-          "priority": 25,
-          "zone_id": "right",
-          "support_id": "floor",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
-          "id": "fixed.patron_crew",
+          "id": "fixed.crew_group",
           "kind": "fixed",
           "pos": [
             284.0,
             358.0
           ],
           "footprint_class": "group",
-          "physical_role": "Group",
+          "physical_role": "The Crew",
           "occupant_ids": [
             "lender:the_crew"
           ],
@@ -2692,35 +2291,6 @@
           "priority": 30,
           "zone_id": "service_lane",
           "support_id": "folding_table",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
-          "id": "fixed.event_wall_notice",
-          "kind": "fixed",
-          "pos": [
-            150.0,
-            210.0
-          ],
-          "footprint_class": "wall_mounted",
-          "physical_role": "Wall item",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            110.0,
-            186.0,
-            80.0,
-            48.0
-          ],
-          "label_anchor": [
-            150.0,
-            180.0
-          ],
-          "facing": "none",
-          "priority": 10,
-          "zone_id": "room",
-          "support_id": "wall",
           "walk_lane_ids": [],
           "occupancy_required": false
         },
@@ -3522,97 +3092,6 @@
       ],
       "exit_slots": [
         {
-          "id": "exit.door_left_upper",
-          "kind": "exit",
-          "pos": [
-            62.0,
-            304.0
-          ],
-          "footprint_class": "standing_person",
-          "physical_role": "Travel exit",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            30.0,
-            232.0,
-            64.0,
-            72.0
-          ],
-          "label_anchor": [
-            62.0,
-            226.0
-          ],
-          "facing": "right",
-          "priority": 20,
-          "zone_id": "room",
-          "support_id": "stage",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
-        },
-        {
-          "id": "exit.door_left_lower",
-          "kind": "exit",
-          "pos": [
-            62.0,
-            424.0
-          ],
-          "footprint_class": "ground_marker",
-          "physical_role": "Travel exit",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            30.0,
-            352.0,
-            64.0,
-            72.0
-          ],
-          "label_anchor": [
-            62.0,
-            346.0
-          ],
-          "facing": "none",
-          "priority": 10,
-          "zone_id": "room",
-          "support_id": "stage",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
-          "id": "exit.right_lower",
-          "kind": "exit",
-          "pos": [
-            874.0,
-            388.0
-          ],
-          "footprint_class": "doorway",
-          "physical_role": "Travel exit",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            836.0,
-            352.0,
-            64.0,
-            72.0
-          ],
-          "label_anchor": [
-            874.0,
-            430.0
-          ],
-          "facing": "left",
-          "priority": 10,
-          "zone_id": "room",
-          "support_id": "right_alley",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
-        },
-        {
           "id": "exit.right_upper",
           "kind": "exit",
           "pos": [
@@ -3647,7 +3126,7 @@
         }
       ],
       "fixed_object_slot_ids": {
-        "lender:the_crew": "fixed.patron_crew",
+        "lender:the_crew": "fixed.crew_group",
         "shopkeeper:merchant": "fixed.staff_merchant",
         "lender:street_lender": "fixed.lender_street_lender",
         "character:vince": "fixed.patron_vince",
@@ -3666,16 +3145,9 @@
         "travel:leave": "exit.right_upper"
       },
       "fixed_category_slot_ids": {
-        "game_spots:0": "fixed.random_game_1",
         "home_bag_spots:0": "fixed.item_shop_1",
         "home_bag_spots:1": "fixed.item_shop_2",
         "home_bag_spots:2": "fixed.item_shop_3",
-        "home_container_spots:0": "fixed.home_container_1",
-        "home_container_spots:1": "fixed.home_container_2",
-        "home_container_spots:2": "fixed.home_container_3",
-        "home_storage_spots:0": "fixed.random_game_1",
-        "home_upgrade_spots:0": "fixed.event_wall_notice",
-        "service_spots:0": "fixed.item_shop_3",
         "shopkeeper_spots:0": "fixed.staff_merchant",
         "item_spots:0": "fixed.item_shop_1",
         "item_spots:1": "fixed.item_shop_2",
@@ -3690,9 +3162,7 @@
       },
       "scenario_category_slot_ids": {},
       "exit_category_slot_ids": {
-        "travel_spots:0": "exit.door_left_lower",
-        "travel_spots:1": "exit.door_left_upper",
-        "travel_spots:2": "exit.door_left_lower"
+        "travel_spots:0": "exit.right_upper"
       },
       "object_family_ids": {
         "event:back_alley_offer": "event",
@@ -3701,12 +3171,12 @@
         "lender:the_crew": "fixed",
         "service:house_drink": "fixed",
         "shopkeeper:merchant": "fixed",
-        "travel:leave": "exit",
         "event:parking_lot_tip": "event",
         "lender:street_lender": "fixed",
         "character:vince": "fixed",
         "character:lena": "fixed",
-        "game:craps": "scenario"
+        "game:craps": "scenario",
+        "travel:leave": "exit"
       },
       "fixed_objects": [
         {
@@ -4935,153 +4405,6 @@
           "occupancy_required": true
         },
         {
-          "id": "fixed.event_hallway_fixture",
-          "kind": "fixed",
-          "pos": [
-            590.0,
-            414.0
-          ],
-          "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            544.0,
-            350.0,
-            92.0,
-            64.0
-          ],
-          "label_anchor": [
-            580.0,
-            430.0
-          ],
-          "facing": "none",
-          "priority": 10,
-          "zone_id": "room",
-          "support_id": "round3_luggage_shelf",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
-          "id": "fixed.patron_floor_right",
-          "kind": "fixed",
-          "pos": [
-            716.0,
-            326.0
-          ],
-          "footprint_class": "standing_person",
-          "physical_role": "Standing person",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            680.0,
-            246.0,
-            72.0,
-            80.0
-          ],
-          "label_anchor": [
-            646.0,
-            225.0
-          ],
-          "facing": "left",
-          "priority": 10,
-          "zone_id": "right",
-          "support_id": "floor",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
-        },
-        {
-          "id": "fixed.item_front_desk",
-          "kind": "fixed",
-          "pos": [
-            700.0,
-            176.0
-          ],
-          "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            664.0,
-            128.0,
-            72.0,
-            48.0
-          ],
-          "label_anchor": [
-            700.0,
-            122.0
-          ],
-          "facing": "none",
-          "priority": 30,
-          "zone_id": "right",
-          "support_id": "front_desk",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
-          "id": "fixed.item_bed_left",
-          "kind": "fixed",
-          "pos": [
-            180.0,
-            224.0
-          ],
-          "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            144.0,
-            176.0,
-            72.0,
-            48.0
-          ],
-          "label_anchor": [
-            180.0,
-            170.0
-          ],
-          "facing": "none",
-          "priority": 20,
-          "zone_id": "left",
-          "support_id": "bedspread",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
-          "id": "fixed.item_key_ledge",
-          "kind": "fixed",
-          "pos": [
-            298.0,
-            100.0
-          ],
-          "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            262.0,
-            52.0,
-            72.0,
-            48.0
-          ],
-          "label_anchor": [
-            298.0,
-            46.0
-          ],
-          "facing": "none",
-          "priority": 10,
-          "zone_id": "background",
-          "support_id": "lobby_key_ledge",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
           "id": "fixed.item_counter_phone",
           "kind": "fixed",
           "pos": [
@@ -5109,35 +4432,6 @@
           "priority": 15,
           "zone_id": "center",
           "support_id": "phone_desk",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
-          "id": "fixed.event_wall_calendar",
-          "kind": "fixed",
-          "pos": [
-            688.0,
-            24.0
-          ],
-          "footprint_class": "wall_mounted",
-          "physical_role": "Wall item",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            648.0,
-            0.0,
-            80.0,
-            48.0
-          ],
-          "label_anchor": [
-            698.0,
-            8.0
-          ],
-          "facing": "none",
-          "priority": 10,
-          "zone_id": "room",
-          "support_id": "wall",
           "walk_lane_ids": [],
           "occupancy_required": false
         },
@@ -5232,8 +4526,8 @@
           "id": "fixed.item_shop_4",
           "kind": "fixed",
           "pos": [
-            584.0,
-            176.0
+            298.0,
+            100.0
           ],
           "footprint_class": "shop_item",
           "physical_role": "Shop item",
@@ -5241,19 +4535,19 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            548.0,
-            128.0,
+            262.0,
+            52.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            584.0,
-            122.0
+            298.0,
+            46.0
           ],
           "facing": "none",
           "priority": 50,
           "zone_id": "room",
-          "support_id": "lobby_table",
+          "support_id": "lobby_key_ledge",
           "walk_lane_ids": [],
           "occupancy_required": false
         },
@@ -5265,7 +4559,7 @@
             326.0
           ],
           "footprint_class": "standing_person",
-          "physical_role": "Standing person",
+          "physical_role": "Motel friend lender",
           "occupant_ids": [
             "lender:motel_friend"
           ],
@@ -5288,35 +4582,6 @@
           "walk_lane_ids": [
             "lane.public"
           ],
-          "occupancy_required": false
-        },
-        {
-          "id": "fixed.item_shop_5",
-          "kind": "fixed",
-          "pos": [
-            640.0,
-            100.0
-          ],
-          "footprint_class": "shop_item",
-          "physical_role": "Shop item",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            604.0,
-            52.0,
-            72.0,
-            48.0
-          ],
-          "label_anchor": [
-            640.0,
-            46.0
-          ],
-          "facing": "none",
-          "priority": 20,
-          "zone_id": "background",
-          "support_id": "merchandise_upper",
-          "walk_lane_ids": [],
           "occupancy_required": false
         },
         {
@@ -5877,7 +5142,7 @@
           "kind": "scenario",
           "pos": [
             859.0,
-            96.0
+            116.0
           ],
           "footprint_class": "doorway",
           "physical_role": "Doorway / exit",
@@ -5889,13 +5154,13 @@
           "reserve_reason": "",
           "hit_rect": [
             827.0,
-            60.0,
+            80.0,
             64.0,
             72.0
           ],
           "label_anchor": [
             859.0,
-            54.0
+            74.0
           ],
           "facing": "left",
           "priority": 10,
@@ -6303,79 +5568,17 @@
           "occupancy_required": false
         },
         {
-          "id": "exit.door_left_middle",
-          "kind": "exit",
-          "pos": [
-            23.0,
-            312.0
-          ],
-          "footprint_class": "standing_person",
-          "physical_role": "Travel exit",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            0.0,
-            240.0,
-            64.0,
-            72.0
-          ],
-          "label_anchor": [
-            23.0,
-            234.0
-          ],
-          "facing": "right",
-          "priority": 10,
-          "zone_id": "room",
-          "support_id": "stage",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
-        },
-        {
-          "id": "exit.left_upper",
-          "kind": "exit",
-          "pos": [
-            59.0,
-            164.0
-          ],
-          "footprint_class": "doorway",
-          "physical_role": "Travel exit",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            27.0,
-            128.0,
-            64.0,
-            72.0
-          ],
-          "label_anchor": [
-            59.0,
-            122.0
-          ],
-          "facing": "right",
-          "priority": 10,
-          "zone_id": "room",
-          "support_id": "left_door",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
-        },
-        {
-          "id": "exit.room_door",
+          "id": "exit.motel_room",
           "kind": "exit",
           "pos": [
             303.0,
             168.0
           ],
           "footprint_class": "doorway",
-          "physical_role": "Travel exit",
+          "physical_role": "Owned motel-room entrance",
           "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
+          "runtime_reserve": true,
+          "reserve_reason": "Active motel-room ownership adds a return door beside the normal travel exit.",
           "hit_rect": [
             271.0,
             132.0,
@@ -6421,17 +5624,12 @@
         "travel:leave": "exit.door_curtain"
       },
       "fixed_category_slot_ids": {
-        "lender_spots:0": "fixed.patron_floor_right",
-        "lender_spots:1": "fixed.patron_floor_right",
-        "lender_spots:2": "fixed.patron_floor_right",
-        "service_spots:0": "fixed.item_front_desk",
         "shopkeeper_spots:0": "fixed.staff_front_desk",
         "numbers_spots:0": "fixed.numbers_book",
         "item_spots:0": "fixed.item_shop_1",
         "item_spots:1": "fixed.item_shop_2",
         "item_spots:2": "fixed.item_shop_3",
-        "item_spots:3": "fixed.item_shop_4",
-        "item_spots:4": "fixed.item_shop_5"
+        "item_spots:3": "fixed.item_shop_4"
       },
       "event_category_slot_ids": {
         "event_spots:0": "event.surface_item_1",
@@ -6443,9 +5641,7 @@
       "scenario_category_slot_ids": {},
       "exit_category_slot_ids": {
         "travel_spots:0": "exit.door_curtain",
-        "travel_spots:1": "exit.door_left_middle",
-        "travel_spots:2": "exit.door_curtain",
-        "travel_spots:3": "exit.door_left_middle"
+        "runtime_object_manifest_entries:0": "exit.motel_room"
       },
       "object_family_ids": {
         "event:call_brother_in_law": "fixed",
@@ -6463,12 +5659,12 @@
         "numbers:book": "fixed",
         "service:house_drink": "fixed",
         "shopkeeper:merchant": "fixed",
-        "travel:leave": "exit",
         "numbers:silas": "event",
         "lender:motel_friend": "fixed",
         "character:june": "fixed",
         "character:marco": "fixed",
-        "event:chain06_nico_weekly_door": "event"
+        "event:chain06_nico_weekly_door": "event",
+        "travel:leave": "exit"
       },
       "fixed_objects": [
         {
@@ -7484,35 +6680,6 @@
           "occupancy_required": false
         },
         {
-          "id": "fixed.drink",
-          "kind": "fixed",
-          "pos": [
-            100.0,
-            92.0
-          ],
-          "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            64.0,
-            44.0,
-            72.0,
-            48.0
-          ],
-          "label_anchor": [
-            100.0,
-            38.0
-          ],
-          "facing": "none",
-          "priority": 60,
-          "zone_id": "room",
-          "support_id": "bottle_rail",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
           "id": "fixed.numbers_book",
           "kind": "fixed",
           "pos": [
@@ -7996,7 +7163,7 @@
           "kind": "scenario",
           "pos": [
             526.0,
-            388.0
+            294.0
           ],
           "footprint_class": "standing_person",
           "physical_role": "Standing person",
@@ -8008,13 +7175,13 @@
           "reserve_reason": "",
           "hit_rect": [
             490.0,
-            308.0,
+            214.0,
             72.0,
             80.0
           ],
           "label_anchor": [
             526.0,
-            352.0
+            208.0
           ],
           "facing": "front",
           "priority": 90,
@@ -8564,37 +7731,6 @@
       ],
       "exit_slots": [
         {
-          "id": "exit.travel_left",
-          "kind": "exit",
-          "pos": [
-            56.0,
-            382.0
-          ],
-          "footprint_class": "doorway",
-          "physical_role": "Travel exit",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            24.0,
-            346.0,
-            64.0,
-            72.0
-          ],
-          "label_anchor": [
-            56.0,
-            418.0
-          ],
-          "facing": "front",
-          "priority": 100,
-          "zone_id": "room",
-          "support_id": "left_exit",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
-        },
-        {
           "id": "exit.travel_right",
           "kind": "exit",
           "pos": [
@@ -8626,68 +7762,6 @@
             "lane.public"
           ],
           "occupancy_required": false
-        },
-        {
-          "id": "exit.safe_left",
-          "kind": "exit",
-          "pos": [
-            38.0,
-            270.0
-          ],
-          "footprint_class": "doorway",
-          "physical_role": "Travel exit",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            6.0,
-            234.0,
-            64.0,
-            72.0
-          ],
-          "label_anchor": [
-            38.0,
-            228.0
-          ],
-          "facing": "front",
-          "priority": 10,
-          "zone_id": "room",
-          "support_id": "left_exit",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
-        },
-        {
-          "id": "exit.safe_right",
-          "kind": "exit",
-          "pos": [
-            880.0,
-            282.0
-          ],
-          "footprint_class": "doorway",
-          "physical_role": "Travel exit",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            836.0,
-            246.0,
-            64.0,
-            72.0
-          ],
-          "label_anchor": [
-            880.0,
-            240.0
-          ],
-          "facing": "front",
-          "priority": 20,
-          "zone_id": "room",
-          "support_id": "right_exit",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
         }
       ],
       "fixed_object_slot_ids": {
@@ -8711,7 +7785,6 @@
         "travel:leave": "exit.travel_right"
       },
       "fixed_category_slot_ids": {
-        "service_spots:0": "fixed.drink",
         "numbers_spots:0": "fixed.numbers_book",
         "game_spots:0": "fixed.random_game_1",
         "game_spots:1": "fixed.random_game_2"
@@ -8725,12 +7798,7 @@
       },
       "scenario_category_slot_ids": {},
       "exit_category_slot_ids": {
-        "travel_spots:0": "exit.travel_right",
-        "travel_spots:1": "exit.travel_left",
-        "travel_spots:2": "exit.travel_right",
-        "travel_spots:3": "exit.travel_left",
-        "travel_spots:4": "exit.travel_right",
-        "travel_spots:5": "exit.travel_left"
+        "travel_spots:0": "exit.travel_right"
       },
       "object_family_ids": {
         "event:rowdy_regular": "event",
@@ -8742,13 +7810,13 @@
         "numbers:book": "fixed",
         "numbers:silas": "event",
         "service:house_drink": "fixed",
-        "travel:leave": "exit",
         "staff:bar_bartender": "fixed",
         "character:dot": "fixed",
         "event:recruitment_knuckles": "scenario",
         "game:pull_tabs": "fixed",
         "game_hook:pull_tabs:ticket_redeemer": "fixed",
-        "dialogue:pull_tab_clerk": "fixed"
+        "dialogue:pull_tab_clerk": "fixed",
+        "travel:leave": "exit"
       },
       "fixed_objects": [
         {
@@ -9556,8 +8624,8 @@
           "id": "round3_sill_door",
           "bounds": [
             226.0,
-            144.0,
-            72.0,
+            96.0,
+            160.0,
             48.0
           ]
         }
@@ -9941,7 +9009,7 @@
           "kind": "event",
           "pos": [
             262.0,
-            168.0
+            120.0
           ],
           "footprint_class": "doorway",
           "physical_role": "Doorway / exit",
@@ -9950,13 +9018,13 @@
           "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
           "hit_rect": [
             226.0,
-            144.0,
+            96.0,
             72.0,
             48.0
           ],
           "label_anchor": [
             262.0,
-            138.0
+            90.0
           ],
           "facing": "right",
           "priority": 10,
@@ -10164,8 +9232,8 @@
           "id": "scenario.doorway_1",
           "kind": "scenario",
           "pos": [
-            280.0,
-            180.0
+            350.0,
+            120.0
           ],
           "footprint_class": "doorway",
           "physical_role": "Doorway / exit",
@@ -10175,14 +9243,14 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            244.0,
-            156.0,
+            314.0,
+            96.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            280.0,
-            150.0
+            350.0,
+            90.0
           ],
           "facing": "right",
           "priority": 10,
@@ -10808,68 +9876,6 @@
       ],
       "exit_slots": [
         {
-          "id": "exit.door_left_middle",
-          "kind": "exit",
-          "pos": [
-            59.0,
-            222.0
-          ],
-          "footprint_class": "doorway",
-          "physical_role": "Travel exit",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            27.0,
-            186.0,
-            64.0,
-            72.0
-          ],
-          "label_anchor": [
-            59.0,
-            190.0
-          ],
-          "facing": "right",
-          "priority": 10,
-          "zone_id": "room",
-          "support_id": "forecourt_left",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
-        },
-        {
-          "id": "exit.right_lower",
-          "kind": "exit",
-          "pos": [
-            877.0,
-            374.0
-          ],
-          "footprint_class": "doorway",
-          "physical_role": "Travel exit",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            836.0,
-            338.0,
-            64.0,
-            72.0
-          ],
-          "label_anchor": [
-            855.0,
-            430.0
-          ],
-          "facing": "left",
-          "priority": 10,
-          "zone_id": "room",
-          "support_id": "forecourt_right",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
-        },
-        {
           "id": "exit.left_upper",
           "kind": "exit",
           "pos": [
@@ -10879,11 +9885,6 @@
           "footprint_class": "doorway",
           "physical_role": "Travel exit",
           "occupant_ids": [
-            "travel:back_alley",
-            "travel:corner_store",
-            "travel:delta_queen",
-            "travel:grand_casino",
-            "travel:kitty_cat_lounge",
             "travel:leave"
           ],
           "runtime_reserve": false,
@@ -10930,11 +9931,6 @@
         "event:scenario_trucker_convoy_route": "scenario.ground_marker_1"
       },
       "exit_object_slot_ids": {
-        "travel:back_alley": "exit.left_upper",
-        "travel:corner_store": "exit.left_upper",
-        "travel:delta_queen": "exit.left_upper",
-        "travel:grand_casino": "exit.left_upper",
-        "travel:kitty_cat_lounge": "exit.left_upper",
         "travel:leave": "exit.left_upper"
       },
       "fixed_category_slot_ids": {
@@ -10950,13 +9946,7 @@
       },
       "scenario_category_slot_ids": {},
       "exit_category_slot_ids": {
-        "travel_spots:0": "exit.left_upper",
-        "travel_spots:1": "exit.left_upper",
-        "travel_spots:2": "exit.left_upper",
-        "travel_spots:3": "exit.left_upper",
-        "travel_spots:4": "exit.left_upper",
-        "travel_spots:5": "exit.left_upper",
-        "travel_spots:6": "exit.left_upper"
+        "travel_spots:0": "exit.left_upper"
       },
       "object_family_ids": {
         "event:chain06_dave_last_stop": "event",
@@ -10969,12 +9959,6 @@
         "game:scratch_tickets": "fixed",
         "numbers:book": "fixed",
         "service:house_drink": "fixed",
-        "travel:back_alley": "exit",
-        "travel:corner_store": "exit",
-        "travel:delta_queen": "exit",
-        "travel:grand_casino": "exit",
-        "travel:kitty_cat_lounge": "exit",
-        "travel:leave": "exit",
         "event:parking_lot_tip": "event",
         "game:video_poker": "fixed",
         "game:slot": "fixed",
@@ -10983,7 +9967,8 @@
         "game:pull_tabs": "fixed",
         "game_hook:pull_tabs:ticket_redeemer": "fixed",
         "dialogue:pull_tab_clerk": "fixed",
-        "game_hook:scratch_tickets:scratch_ticket_clerk": "fixed"
+        "game_hook:scratch_tickets:scratch_ticket_clerk": "fixed",
+        "travel:leave": "exit"
       },
       "fixed_objects": [
         {
@@ -12048,6 +11033,37 @@
       "scenario_art_keys": {},
       "fixed_slots": [
         {
+          "id": "fixed.staff_floor_left",
+          "kind": "fixed",
+          "pos": [
+            252.0,
+            358.0
+          ],
+          "footprint_class": "standing_person",
+          "physical_role": "Standing person",
+          "occupant_ids": [],
+          "runtime_reserve": false,
+          "reserve_reason": "",
+          "hit_rect": [
+            216.0,
+            278.0,
+            72.0,
+            80.0
+          ],
+          "label_anchor": [
+            251.0,
+            272.0
+          ],
+          "facing": "right",
+          "priority": 10,
+          "zone_id": "left",
+          "support_id": "floor",
+          "walk_lane_ids": [
+            "lane.public"
+          ],
+          "occupancy_required": false
+        },
+        {
           "id": "fixed.door_right_lower",
           "kind": "fixed",
           "pos": [
@@ -12075,37 +11091,6 @@
           "priority": 20,
           "zone_id": "room",
           "support_id": "right_exit",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
-        },
-        {
-          "id": "fixed.staff_floor_left",
-          "kind": "fixed",
-          "pos": [
-            252.0,
-            358.0
-          ],
-          "footprint_class": "standing_person",
-          "physical_role": "Standing person",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            216.0,
-            278.0,
-            72.0,
-            80.0
-          ],
-          "label_anchor": [
-            251.0,
-            272.0
-          ],
-          "facing": "right",
-          "priority": 10,
-          "zone_id": "left",
-          "support_id": "floor",
           "walk_lane_ids": [
             "lane.public"
           ],
@@ -12148,7 +11133,7 @@
             358.0
           ],
           "footprint_class": "group",
-          "physical_role": "Group",
+          "physical_role": "The Crew",
           "occupant_ids": [
             "lender:the_crew"
           ],
@@ -14276,7 +13261,7 @@
           "occupancy_required": false
         },
         {
-          "id": "fixed.staff_floor_right",
+          "id": "fixed.staff_ox",
           "kind": "fixed",
           "pos": [
             628.0,
@@ -14337,35 +13322,6 @@
           "priority": 30,
           "zone_id": "center",
           "support_id": "stage",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
-          "id": "fixed.service_left_table",
-          "kind": "fixed",
-          "pos": [
-            110.0,
-            194.0
-          ],
-          "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            74.0,
-            146.0,
-            72.0,
-            48.0
-          ],
-          "label_anchor": [
-            107.0,
-            140.0
-          ],
-          "facing": "none",
-          "priority": 20,
-          "zone_id": "left",
-          "support_id": "left_table",
           "walk_lane_ids": [],
           "occupancy_required": false
         },
@@ -15206,37 +14162,6 @@
       ],
       "exit_slots": [
         {
-          "id": "exit.door_right_lower",
-          "kind": "exit",
-          "pos": [
-            859.0,
-            374.0
-          ],
-          "footprint_class": "doorway",
-          "physical_role": "Travel exit",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            827.0,
-            338.0,
-            64.0,
-            72.0
-          ],
-          "label_anchor": [
-            854.0,
-            402.0
-          ],
-          "facing": "left",
-          "priority": 20,
-          "zone_id": "room",
-          "support_id": "right_exit",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
-        },
-        {
           "id": "exit.door_side",
           "kind": "exit",
           "pos": [
@@ -15263,37 +14188,6 @@
           "facing": "left",
           "priority": 10,
           "zone_id": "left",
-          "support_id": "left_exit",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
-        },
-        {
-          "id": "exit.left_upper",
-          "kind": "exit",
-          "pos": [
-            54.0,
-            278.0
-          ],
-          "footprint_class": "doorway",
-          "physical_role": "Travel exit",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            22.0,
-            242.0,
-            64.0,
-            72.0
-          ],
-          "label_anchor": [
-            54.0,
-            236.0
-          ],
-          "facing": "right",
-          "priority": 10,
-          "zone_id": "room",
           "support_id": "left_exit",
           "walk_lane_ids": [
             "lane.public"
@@ -15337,7 +14231,7 @@
       "fixed_object_slot_ids": {
         "event:side_door": "fixed.door_right_lower",
         "service:punchline_two_drink_minimum": "fixed.service_stage",
-        "staff:punchline_bouncer": "fixed.staff_floor_right",
+        "staff:punchline_bouncer": "fixed.staff_ox",
         "environment_layer:ambient": "fixed.ambient_stage",
         "numbers:book": "fixed.numbers_book"
       },
@@ -15352,11 +14246,11 @@
         "service:punchline_cover_charge": "scenario.surface_item_1"
       },
       "exit_object_slot_ids": {
-        "travel:leave": "exit.left_lower",
-        "environment_layer:casino": "exit.door_side"
+        "environment_layer:casino": "exit.door_side",
+        "travel:leave": "exit.left_lower"
       },
       "fixed_category_slot_ids": {
-        "service_spots:0": "fixed.service_left_table",
+        "service_spots:0": "fixed.service_stage",
         "numbers_spots:0": "fixed.numbers_book"
       },
       "event_category_slot_ids": {
@@ -15366,11 +14260,9 @@
       "scenario_category_slot_ids": {},
       "exit_category_slot_ids": {
         "layer_spots:0": "exit.door_side",
-        "layer_spots:1": "exit.left_lower",
         "travel_spots:0": "exit.left_lower"
       },
       "object_family_ids": {
-        "environment_layer:casino": "exit",
         "event:chain06_cass_first_contact": "event",
         "event:scenario_headliner_cover": "scenario",
         "event:side_door": "fixed",
@@ -15379,10 +14271,11 @@
         "service:house_drink": "scenario",
         "service:punchline_cover_charge": "scenario",
         "service:punchline_two_drink_minimum": "fixed",
-        "travel:leave": "exit",
         "environment_layer:ambient": "fixed",
         "staff:punchline_bouncer": "fixed",
-        "numbers:silas": "event"
+        "numbers:silas": "event",
+        "environment_layer:casino": "exit",
+        "travel:leave": "exit"
       },
       "fixed_objects": [
         {
@@ -15393,7 +14286,7 @@
           "render_key": "fixed_host_ox",
           "label": "Ox",
           "placement_class": "standing_person",
-          "exact_slot_id": "fixed.staff_floor_right",
+          "exact_slot_id": "fixed.staff_ox",
           "required": true,
           "action_ids": []
         }
@@ -15425,7 +14318,9 @@
         "lender:the_crew": "group",
         "numbers:silas": "standing_person",
         "lender:street_lender": "behind_counter_person",
-        "service:house_drink": "surface_item"
+        "service:house_drink": "surface_item",
+        "game:blackjack": "floor_fixture",
+        "game:video_poker": "floor_fixture"
       },
       "object_slot_positions": {
         "environment_layer:back_room": [
@@ -15976,7 +14871,7 @@
           "occupancy_required": true
         },
         {
-          "id": "fixed.random_game_1",
+          "id": "fixed.game_floor_1",
           "kind": "fixed",
           "pos": [
             734.0,
@@ -15984,9 +14879,7 @@
           ],
           "footprint_class": "floor_fixture",
           "physical_role": "Game fixture",
-          "occupant_ids": [
-            "game:slot"
-          ],
+          "occupant_ids": [],
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
@@ -16007,77 +14900,44 @@
           "occupancy_required": false
         },
         {
-          "id": "fixed.random_game_2",
+          "id": "fixed.game_floor_2",
           "kind": "fixed",
           "pos": [
-            136.0,
-            154.0
+            468.0,
+            70.0
           ],
-          "footprint_class": "surface_item",
+          "footprint_class": "floor_fixture",
           "physical_role": "Game fixture",
           "occupant_ids": [],
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            100.0,
-            106.0,
-            72.0,
-            48.0
+            422.0,
+            6.0,
+            92.0,
+            64.0
           ],
           "label_anchor": [
-            129.0,
-            102.0
+            407.0,
+            26.0
           ],
           "facing": "none",
-          "priority": 20,
-          "zone_id": "left",
-          "support_id": "left_table",
+          "priority": 130,
+          "zone_id": "room",
+          "support_id": "stage",
           "walk_lane_ids": [],
           "occupancy_required": false
         },
         {
-          "id": "fixed.service_left_table",
-          "kind": "fixed",
-          "pos": [
-            256.0,
-            154.0
-          ],
-          "footprint_class": "group",
-          "physical_role": "Group",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            220.0,
-            106.0,
-            72.0,
-            48.0
-          ],
-          "label_anchor": [
-            255.0,
-            102.0
-          ],
-          "facing": "front",
-          "priority": 10,
-          "zone_id": "left",
-          "support_id": "stage",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
-        },
-        {
-          "id": "fixed.staff_street_lender",
+          "id": "fixed.lender_person_1",
           "kind": "fixed",
           "pos": [
             474.0,
             230.0
           ],
           "footprint_class": "behind_counter_person",
-          "physical_role": "Counter staff",
-          "occupant_ids": [
-            "lender:street_lender"
-          ],
+          "physical_role": "Individual lender",
+          "occupant_ids": [],
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
@@ -16100,7 +14960,7 @@
           "occupancy_required": false
         },
         {
-          "id": "fixed.crew_group",
+          "id": "fixed.lender_group_1",
           "kind": "fixed",
           "pos": [
             164.0,
@@ -16108,9 +14968,7 @@
           ],
           "footprint_class": "group",
           "physical_role": "Group",
-          "occupant_ids": [
-            "lender:the_crew"
-          ],
+          "occupant_ids": [],
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
@@ -16130,37 +14988,6 @@
           "walk_lane_ids": [
             "lane.public"
           ],
-          "occupancy_required": false
-        },
-        {
-          "id": "fixed.random_game_3",
-          "kind": "fixed",
-          "pos": [
-            468.0,
-            70.0
-          ],
-          "footprint_class": "floor_fixture",
-          "physical_role": "Game fixture",
-          "occupant_ids": [
-            "game:video_poker"
-          ],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            422.0,
-            6.0,
-            92.0,
-            64.0
-          ],
-          "label_anchor": [
-            407.0,
-            26.0
-          ],
-          "facing": "none",
-          "priority": 130,
-          "zone_id": "room",
-          "support_id": "stage",
-          "walk_lane_ids": [],
           "occupancy_required": false
         },
         {
@@ -16261,7 +15088,7 @@
           "occupancy_required": false
         },
         {
-          "id": "fixed.staff_floor_right",
+          "id": "fixed.staff_ox",
           "kind": "fixed",
           "pos": [
             628.0,
@@ -17191,37 +16018,6 @@
           "occupancy_required": false
         },
         {
-          "id": "exit.left_upper",
-          "kind": "exit",
-          "pos": [
-            54.0,
-            276.0
-          ],
-          "footprint_class": "doorway",
-          "physical_role": "Travel exit",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            22.0,
-            240.0,
-            64.0,
-            72.0
-          ],
-          "label_anchor": [
-            54.0,
-            234.0
-          ],
-          "facing": "right",
-          "priority": 10,
-          "zone_id": "room",
-          "support_id": "left_exit",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
-        },
-        {
           "id": "exit.guarded_upper",
           "kind": "exit",
           "pos": [
@@ -17256,12 +16052,8 @@
         }
       ],
       "fixed_object_slot_ids": {
-        "game:slot": "fixed.random_game_1",
-        "lender:street_lender": "fixed.staff_street_lender",
-        "game:video_poker": "fixed.random_game_3",
-        "lender:the_crew": "fixed.crew_group",
         "staff:underground_dealer": "fixed.staff_dealer",
-        "character:ox": "fixed.staff_floor_right",
+        "character:ox": "fixed.staff_ox",
         "event:side_door": "fixed.door_side_event",
         "numbers:book": "fixed.numbers_book",
         "service:house_drink": "fixed.service_house_drink"
@@ -17282,11 +16074,12 @@
         "travel:leave": "exit.guarded_upper"
       },
       "fixed_category_slot_ids": {
-        "service_spots:0": "fixed.random_game_2",
-        "game_spots:1": "fixed.random_game_3",
-        "lender_spots:0": "fixed.service_left_table",
-        "lender_spots:1": "fixed.service_left_table",
-        "numbers_spots:0": "fixed.numbers_book"
+        "numbers_spots:0": "fixed.numbers_book",
+        "game_spots:0": "fixed.game_floor_1",
+        "game_spots:1": "fixed.game_floor_2",
+        "service_spots:0": "fixed.service_house_drink",
+        "lender_spots:0": "fixed.lender_group_1",
+        "lender_spots:1": "fixed.lender_person_1"
       },
       "event_category_slot_ids": {
         "event_spots:0": "event.floor_fixture_1",
@@ -17296,11 +16089,9 @@
       "exit_category_slot_ids": {
         "layer_spots:0": "exit.door_left_lower",
         "layer_spots:1": "exit.door_guarded_lower",
-        "travel_spots:0": "exit.door_guarded_lower"
+        "travel_spots:0": "exit.guarded_upper"
       },
       "object_family_ids": {
-        "environment_layer:back_room": "exit",
-        "environment_layer:club": "exit",
         "event:scenario_new_muscle_door": "scenario",
         "event:scenario_greased_week_window": "scenario",
         "event:town_rumor_staff": "event",
@@ -17310,13 +16101,16 @@
         "numbers:silas": "event",
         "service:house_drink": "fixed",
         "service:punchline_private_table": "scenario",
-        "travel:leave": "exit",
         "event:side_door": "fixed",
         "game:video_poker": "fixed",
         "lender:the_crew": "fixed",
         "event:rowdy_regular": "event",
         "staff:underground_dealer": "fixed",
-        "character:ox": "fixed"
+        "character:ox": "fixed",
+        "game:blackjack": "fixed",
+        "environment_layer:back_room": "exit",
+        "environment_layer:club": "exit",
+        "travel:leave": "exit"
       },
       "fixed_objects": [
         {
@@ -17339,7 +16133,7 @@
           "render_key": "fixed_host_ox",
           "label": "Ox",
           "placement_class": "standing_person",
-          "exact_slot_id": "fixed.staff_floor_right",
+          "exact_slot_id": "fixed.staff_ox",
           "required": true,
           "action_ids": []
         }
@@ -17515,7 +16309,7 @@
       "scenario_art_keys": {},
       "fixed_slots": [
         {
-          "id": "fixed.random_game_1",
+          "id": "fixed.game_crew_draw_poker",
           "kind": "fixed",
           "pos": [
             330.0,
@@ -18284,7 +17078,9 @@
           ],
           "footprint_class": "doorway",
           "physical_role": "Travel exit",
-          "occupant_ids": [],
+          "occupant_ids": [
+            "travel:leave"
+          ],
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
@@ -18305,41 +17101,10 @@
             "lane.public"
           ],
           "occupancy_required": false
-        },
-        {
-          "id": "exit.left_2",
-          "kind": "exit",
-          "pos": [
-            36.0,
-            360.0
-          ],
-          "footprint_class": "doorway",
-          "physical_role": "Travel exit",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            4.0,
-            324.0,
-            64.0,
-            72.0
-          ],
-          "label_anchor": [
-            36.0,
-            318.0
-          ],
-          "facing": "right",
-          "priority": 20,
-          "zone_id": "room",
-          "support_id": "left_exit",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
         }
       ],
       "fixed_object_slot_ids": {
-        "game:crew_draw_poker": "fixed.random_game_1",
+        "game:crew_draw_poker": "fixed.game_crew_draw_poker",
         "event:crew_job_board": "fixed.event_job_board",
         "event:crew_mags_bench": "fixed.event_mags_bench",
         "event:crew_planning_table": "fixed.event_planning_table",
@@ -18353,10 +17118,11 @@
       },
       "scenario_object_slot_ids": {},
       "exit_object_slot_ids": {
-        "environment_layer:casino": "exit.layer_door"
+        "environment_layer:casino": "exit.layer_door",
+        "travel:leave": "exit.left_1"
       },
       "fixed_category_slot_ids": {
-        "game_spots:0": "fixed.random_game_1",
+        "game_spots:0": "fixed.game_crew_draw_poker",
         "numbers_spots:0": "fixed.event_numbers_desk"
       },
       "event_category_slot_ids": {
@@ -18371,11 +17137,9 @@
       "scenario_category_slot_ids": {},
       "exit_category_slot_ids": {
         "layer_spots:0": "exit.layer_door",
-        "layer_spots:1": "exit.layer_door",
-        "travel_spots:0": "exit.layer_door"
+        "travel_spots:0": "exit.left_1"
       },
       "object_family_ids": {
-        "environment_layer:casino": "exit",
         "event:crew_job_board": "fixed",
         "event:crew_mags_bench": "fixed",
         "event:crew_planning_table": "fixed",
@@ -18384,7 +17148,9 @@
         "event:numbers_desk": "fixed",
         "game:crew_draw_poker": "fixed",
         "numbers:silas": "event",
-        "environment_layer:ambient": "fixed"
+        "environment_layer:ambient": "fixed",
+        "environment_layer:casino": "exit",
+        "travel:leave": "exit"
       },
       "fixed_objects": []
     },
@@ -19862,11 +18628,6 @@
         "travel:leave": "exit.door_right_upper"
       },
       "fixed_category_slot_ids": {
-        "service_spots:1": "fixed.musician_sax",
-        "service_spots:2": "fixed.musician_sax",
-        "service_spots:3": "fixed.musician_drummer",
-        "service_spots:4": "fixed.musician_sax",
-        "service_spots:5": "fixed.musician_drummer",
         "shopkeeper_spots:0": "fixed.staff_bartender",
         "item_spots:0": "fixed.item_shop_1",
         "item_spots:1": "fixed.item_shop_2"
@@ -19878,11 +18639,7 @@
       },
       "scenario_category_slot_ids": {},
       "exit_category_slot_ids": {
-        "travel_spots:0": "exit.door_right_upper",
-        "travel_spots:1": "exit.door_right_upper",
-        "travel_spots:2": "exit.door_right_upper",
-        "travel_spots:3": "exit.door_right_upper",
-        "travel_spots:4": "exit.door_right_upper"
+        "travel_spots:0": "exit.door_right_upper"
       },
       "object_family_ids": {
         "event:scenario_recording_night_tape": "scenario",
@@ -19897,11 +18654,11 @@
         "service:jazz_sax_round": "fixed",
         "service:listen_to_jazz": "fixed",
         "shopkeeper:merchant": "fixed",
-        "travel:leave": "exit",
         "character:dot": "fixed",
         "game:pull_tabs": "fixed",
         "game_hook:pull_tabs:ticket_redeemer": "fixed",
-        "dialogue:pull_tab_clerk": "fixed"
+        "dialogue:pull_tab_clerk": "fixed",
+        "travel:leave": "exit"
       },
       "fixed_objects": [
         {
@@ -21126,7 +19883,7 @@
           "occupancy_required": false
         },
         {
-          "id": "fixed.random_game_3",
+          "id": "fixed.machine_game_1",
           "kind": "fixed",
           "pos": [
             742.0,
@@ -21134,9 +19891,7 @@
           ],
           "footprint_class": "floor_fixture",
           "physical_role": "Game fixture",
-          "occupant_ids": [
-            "game:slot"
-          ],
+          "occupant_ids": [],
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
@@ -21157,14 +19912,14 @@
           "occupancy_required": false
         },
         {
-          "id": "fixed.patron_group_center",
+          "id": "fixed.crew_group",
           "kind": "fixed",
           "pos": [
             532.0,
             358.0
           ],
           "footprint_class": "group",
-          "physical_role": "Group",
+          "physical_role": "The Crew",
           "occupant_ids": [
             "lender:the_crew"
           ],
@@ -21190,7 +19945,7 @@
           "occupancy_required": false
         },
         {
-          "id": "fixed.random_game_2",
+          "id": "fixed.table_game_2",
           "kind": "fixed",
           "pos": [
             620.0,
@@ -21198,9 +19953,7 @@
           ],
           "footprint_class": "surface_item",
           "physical_role": "Game fixture",
-          "occupant_ids": [
-            "game:bar_dice"
-          ],
+          "occupant_ids": [],
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
@@ -21252,7 +20005,7 @@
           "occupancy_required": false
         },
         {
-          "id": "fixed.game_table_left",
+          "id": "fixed.table_game_1",
           "kind": "fixed",
           "pos": [
             312.0,
@@ -21260,9 +20013,7 @@
           ],
           "footprint_class": "surface_item",
           "physical_role": "Game fixture",
-          "occupant_ids": [
-            "game:roulette"
-          ],
+          "occupant_ids": [],
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
@@ -21335,35 +20086,6 @@
           ],
           "facing": "none",
           "priority": 110,
-          "zone_id": "background",
-          "support_id": "champagne_shelf",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
-          "id": "fixed.item_shop_3",
-          "kind": "fixed",
-          "pos": [
-            520.0,
-            96.0
-          ],
-          "footprint_class": "shop_item",
-          "physical_role": "Shop item",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            484.0,
-            48.0,
-            72.0,
-            48.0
-          ],
-          "label_anchor": [
-            520.0,
-            42.0
-          ],
-          "facing": "none",
-          "priority": 100,
           "zone_id": "background",
           "support_id": "champagne_shelf",
           "walk_lane_ids": [],
@@ -21756,7 +20478,7 @@
           "id": "scenario.doorway_1",
           "kind": "scenario",
           "pos": [
-            859.0,
+            876.0,
             180.0
           ],
           "footprint_class": "doorway",
@@ -21771,13 +20493,13 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            827.0,
+            852.0,
             144.0,
-            64.0,
+            48.0,
             72.0
           ],
           "label_anchor": [
-            837.0,
+            876.0,
             218.0
           ],
           "facing": "left",
@@ -22231,99 +20953,6 @@
       ],
       "exit_slots": [
         {
-          "id": "exit.door_right_middle",
-          "kind": "exit",
-          "pos": [
-            877.0,
-            324.0
-          ],
-          "footprint_class": "standing_person",
-          "physical_role": "Travel exit",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            836.0,
-            252.0,
-            64.0,
-            72.0
-          ],
-          "label_anchor": [
-            855.0,
-            256.0
-          ],
-          "facing": "left",
-          "priority": 20,
-          "zone_id": "room",
-          "support_id": "stage",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
-        },
-        {
-          "id": "exit.door_right_upper",
-          "kind": "exit",
-          "pos": [
-            877.0,
-            192.0
-          ],
-          "footprint_class": "doorway",
-          "physical_role": "Travel exit",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            836.0,
-            156.0,
-            64.0,
-            72.0
-          ],
-          "label_anchor": [
-            855.0,
-            230.0
-          ],
-          "facing": "left",
-          "priority": 10,
-          "zone_id": "room",
-          "support_id": "right_exit",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
-        },
-        {
-          "id": "exit.right_lower",
-          "kind": "exit",
-          "pos": [
-            877.0,
-            384.0
-          ],
-          "footprint_class": "doorway",
-          "physical_role": "Travel exit",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            836.0,
-            348.0,
-            64.0,
-            72.0
-          ],
-          "label_anchor": [
-            877.0,
-            342.0
-          ],
-          "facing": "left",
-          "priority": 10,
-          "zone_id": "room",
-          "support_id": "right_exit",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
-        },
-        {
           "id": "exit.left_lower",
           "kind": "exit",
           "pos": [
@@ -22359,10 +20988,7 @@
       ],
       "fixed_object_slot_ids": {
         "event:grand_casino_invite": "fixed.event_grand_casino_invite",
-        "game:bar_dice": "fixed.random_game_2",
-        "game:roulette": "fixed.game_table_left",
-        "game:slot": "fixed.random_game_3",
-        "lender:the_crew": "fixed.patron_group_center",
+        "lender:the_crew": "fixed.crew_group",
         "shopkeeper:merchant": "fixed.staff_merchant",
         "staff:kitty_bar_host": "fixed.staff_bar",
         "character:dot": "fixed.patron_dot",
@@ -22382,17 +21008,14 @@
         "travel:leave": "exit.left_lower"
       },
       "fixed_category_slot_ids": {
-        "game_hook_spots:0": "fixed.random_game_2",
-        "game_spots:0": "fixed.random_game_3",
-        "game_spots:1": "fixed.game_table_left",
-        "game_spots:2": "fixed.random_game_3",
-        "service_spots:0": "fixed.random_game_2",
-        "service_spots:1": "fixed.event_grand_casino_invite",
-        "service_spots:2": "fixed.random_game_2",
         "shopkeeper_spots:0": "fixed.staff_bar",
         "item_spots:0": "fixed.item_shop_1",
         "item_spots:1": "fixed.item_shop_2",
-        "item_spots:2": "fixed.item_shop_3"
+        "game_spots:0": "fixed.table_game_1",
+        "game_spots:1": "fixed.machine_game_1",
+        "game_spots:2": "fixed.table_game_2",
+        "service_spots:0": "fixed.service_kitty_champagne",
+        "service_spots:2": "fixed.service_house_drink"
       },
       "event_category_slot_ids": {
         "event_spots:0": "event.floor_fixture_1",
@@ -22403,11 +21026,7 @@
       },
       "scenario_category_slot_ids": {},
       "exit_category_slot_ids": {
-        "travel_spots:0": "exit.left_lower",
-        "travel_spots:1": "exit.door_right_upper",
-        "travel_spots:2": "exit.left_lower",
-        "travel_spots:3": "exit.left_lower",
-        "travel_spots:4": "exit.door_right_upper"
+        "travel_spots:0": "exit.left_lower"
       },
       "object_family_ids": {
         "event:grand_casino_invite": "fixed",
@@ -22423,11 +21042,11 @@
         "service:house_drink": "fixed",
         "service:kitty_champagne": "fixed",
         "shopkeeper:merchant": "fixed",
-        "travel:leave": "exit",
         "numbers:silas": "event",
         "event:side_door": "event",
         "staff:kitty_bar_host": "fixed",
-        "character:dot": "fixed"
+        "character:dot": "fixed",
+        "travel:leave": "exit"
       },
       "fixed_objects": [
         {
@@ -23971,14 +22590,14 @@
       },
       "fixed_slots": [
         {
-          "id": "fixed.patron_front_left",
+          "id": "fixed.crew_group",
           "kind": "fixed",
           "pos": [
             466.0,
             270.0
           ],
           "footprint_class": "seated_person",
-          "physical_role": "Seated person",
+          "physical_role": "The Crew",
           "occupant_ids": [
             "lender:the_crew"
           ],
@@ -24071,7 +22690,7 @@
           "occupancy_required": false
         },
         {
-          "id": "fixed.random_game_1",
+          "id": "fixed.game_blackjack",
           "kind": "fixed",
           "pos": [
             156.0,
@@ -24102,7 +22721,7 @@
           "occupancy_required": false
         },
         {
-          "id": "fixed.random_game_2",
+          "id": "fixed.game_video_poker",
           "kind": "fixed",
           "pos": [
             392.0,
@@ -24133,7 +22752,7 @@
           "occupancy_required": false
         },
         {
-          "id": "fixed.staff_floor",
+          "id": "fixed.staff_ox",
           "kind": "fixed",
           "pos": [
             496.0,
@@ -24165,14 +22784,14 @@
           "occupancy_required": true
         },
         {
-          "id": "fixed.event_deck_walk",
+          "id": "fixed.service_deck_walk",
           "kind": "fixed",
           "pos": [
             392.0,
             414.0
           ],
           "footprint_class": "ground_marker",
-          "physical_role": "Floor marker",
+          "physical_role": "Riverboat deck walk",
           "occupant_ids": [
             "service:riverboat_deck_walk"
           ],
@@ -24196,65 +22815,7 @@
           "occupancy_required": false
         },
         {
-          "id": "fixed.event_table_1",
-          "kind": "fixed",
-          "pos": [
-            78.0,
-            150.0
-          ],
-          "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            42.0,
-            102.0,
-            72.0,
-            48.0
-          ],
-          "label_anchor": [
-            67.0,
-            114.0
-          ],
-          "facing": "none",
-          "priority": 10,
-          "zone_id": "room",
-          "support_id": "scoreboard_ledge",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
-          "id": "fixed.event_table_2",
-          "kind": "fixed",
-          "pos": [
-            182.0,
-            150.0
-          ],
-          "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            146.0,
-            102.0,
-            72.0,
-            48.0
-          ],
-          "label_anchor": [
-            189.0,
-            190.0
-          ],
-          "facing": "none",
-          "priority": 20,
-          "zone_id": "room",
-          "support_id": "scoreboard_ledge",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
-          "id": "fixed.random_game_3",
+          "id": "fixed.game_roulette",
           "kind": "fixed",
           "pos": [
             286.0,
@@ -24368,151 +22929,6 @@
           ],
           "facing": "none",
           "priority": 30,
-          "zone_id": "background",
-          "support_id": "slot_console",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
-          "id": "fixed.item_shop_3",
-          "kind": "fixed",
-          "pos": [
-            662.0,
-            156.0
-          ],
-          "footprint_class": "shop_item",
-          "physical_role": "Shop item",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            626.0,
-            108.0,
-            72.0,
-            48.0
-          ],
-          "label_anchor": [
-            662.0,
-            102.0
-          ],
-          "facing": "none",
-          "priority": 20,
-          "zone_id": "background",
-          "support_id": "slot_console",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
-          "id": "fixed.item_shop_4",
-          "kind": "fixed",
-          "pos": [
-            690.0,
-            156.0
-          ],
-          "footprint_class": "shop_item",
-          "physical_role": "Shop item",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            654.0,
-            108.0,
-            72.0,
-            48.0
-          ],
-          "label_anchor": [
-            690.0,
-            102.0
-          ],
-          "facing": "none",
-          "priority": 20,
-          "zone_id": "background",
-          "support_id": "slot_console",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
-          "id": "fixed.item_shop_5",
-          "kind": "fixed",
-          "pos": [
-            718.0,
-            156.0
-          ],
-          "footprint_class": "shop_item",
-          "physical_role": "Shop item",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            682.0,
-            108.0,
-            72.0,
-            48.0
-          ],
-          "label_anchor": [
-            718.0,
-            102.0
-          ],
-          "facing": "none",
-          "priority": 20,
-          "zone_id": "background",
-          "support_id": "slot_console",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
-          "id": "fixed.item_shop_6",
-          "kind": "fixed",
-          "pos": [
-            606.0,
-            180.0
-          ],
-          "footprint_class": "shop_item",
-          "physical_role": "Shop item",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            570.0,
-            132.0,
-            72.0,
-            48.0
-          ],
-          "label_anchor": [
-            606.0,
-            126.0
-          ],
-          "facing": "none",
-          "priority": 20,
-          "zone_id": "background",
-          "support_id": "slot_console",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
-          "id": "fixed.item_shop_7",
-          "kind": "fixed",
-          "pos": [
-            634.0,
-            180.0
-          ],
-          "footprint_class": "shop_item",
-          "physical_role": "Shop item",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            598.0,
-            132.0,
-            72.0,
-            48.0
-          ],
-          "label_anchor": [
-            634.0,
-            126.0
-          ],
-          "facing": "none",
-          "priority": 20,
           "zone_id": "background",
           "support_id": "slot_console",
           "walk_lane_ids": [],
@@ -24962,8 +23378,8 @@
           "id": "scenario.floor_fixture_1",
           "kind": "scenario",
           "pos": [
-            138.0,
-            358.0
+            284.0,
+            324.0
           ],
           "footprint_class": "floor_fixture",
           "physical_role": "Floor prop",
@@ -24974,14 +23390,14 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            92.0,
-            294.0,
+            238.0,
+            260.0,
             92.0,
             64.0
           ],
           "label_anchor": [
-            150.0,
-            314.0
+            284.0,
+            254.0
           ],
           "facing": "none",
           "priority": 10,
@@ -25098,8 +23514,8 @@
           "id": "scenario.wall_item_2",
           "kind": "scenario",
           "pos": [
-            70.0,
-            36.0
+            166.0,
+            24.0
           ],
           "footprint_class": "wall_mounted",
           "physical_role": "Wall item",
@@ -25115,14 +23531,14 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            30.0,
-            12.0,
+            126.0,
+            0.0,
             80.0,
             48.0
           ],
           "label_anchor": [
-            70.0,
-            20.0
+            166.0,
+            8.0
           ],
           "facing": "none",
           "priority": 10,
@@ -25521,37 +23937,6 @@
       ],
       "exit_slots": [
         {
-          "id": "exit.door_left_middle",
-          "kind": "exit",
-          "pos": [
-            54.0,
-            250.0
-          ],
-          "footprint_class": "doorway",
-          "physical_role": "Travel exit",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            22.0,
-            214.0,
-            64.0,
-            72.0
-          ],
-          "label_anchor": [
-            54.0,
-            208.0
-          ],
-          "facing": "right",
-          "priority": 10,
-          "zone_id": "room",
-          "support_id": "gangway_left",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
-        },
-        {
           "id": "exit.door_right_middle",
           "kind": "exit",
           "pos": [
@@ -25583,80 +23968,18 @@
             "lane.public"
           ],
           "occupancy_required": false
-        },
-        {
-          "id": "exit.left_lower",
-          "kind": "exit",
-          "pos": [
-            54.0,
-            406.0
-          ],
-          "footprint_class": "doorway",
-          "physical_role": "Travel exit",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            22.0,
-            358.0,
-            64.0,
-            72.0
-          ],
-          "label_anchor": [
-            54.0,
-            430.0
-          ],
-          "facing": "right",
-          "priority": 10,
-          "zone_id": "room",
-          "support_id": "gangway_left",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
-        },
-        {
-          "id": "exit.right_upper",
-          "kind": "exit",
-          "pos": [
-            864.0,
-            76.0
-          ],
-          "footprint_class": "doorway",
-          "physical_role": "Travel exit",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            832.0,
-            40.0,
-            64.0,
-            72.0
-          ],
-          "label_anchor": [
-            864.0,
-            34.0
-          ],
-          "facing": "left",
-          "priority": 20,
-          "zone_id": "room",
-          "support_id": "gangway_right",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
         }
       ],
       "fixed_object_slot_ids": {
         "shopkeeper:merchant": "fixed.staff_merchant",
-        "lender:the_crew": "fixed.patron_front_left",
-        "game:blackjack": "fixed.random_game_1",
-        "game:video_poker": "fixed.random_game_2",
-        "service:riverboat_deck_walk": "fixed.event_deck_walk",
-        "game:roulette": "fixed.random_game_3",
+        "lender:the_crew": "fixed.crew_group",
+        "game:blackjack": "fixed.game_blackjack",
+        "game:video_poker": "fixed.game_video_poker",
+        "service:riverboat_deck_walk": "fixed.service_deck_walk",
+        "game:roulette": "fixed.game_roulette",
         "event:grand_casino_invite": "fixed.event_grand_casino_invite",
         "staff:delta_right_table_dealer": "fixed.staff_right_table",
-        "staff:delta_deck_boss": "fixed.staff_floor",
+        "staff:delta_deck_boss": "fixed.staff_ox",
         "service:house_drink": "fixed.service_house_drink"
       },
       "event_object_slot_ids": {
@@ -25678,22 +24001,9 @@
         "travel:leave": "exit.door_right_middle"
       },
       "fixed_category_slot_ids": {
-        "game_spots:0": "fixed.random_game_1",
-        "game_spots:1": "fixed.random_game_2",
-        "game_spots:2": "fixed.random_game_2",
         "shopkeeper_spots:0": "fixed.staff_right_table",
-        "game_hook_spots:0": "fixed.event_table_2",
-        "service_spots:0": "fixed.random_game_3",
-        "service_spots:1": "fixed.event_table_2",
-        "lender_spots:0": "fixed.patron_front_left",
-        "lender_spots:1": "fixed.patron_front_left",
         "item_spots:0": "fixed.item_shop_1",
-        "item_spots:1": "fixed.item_shop_2",
-        "item_spots:2": "fixed.item_shop_3",
-        "item_spots:3": "fixed.item_shop_4",
-        "item_spots:4": "fixed.item_shop_5",
-        "item_spots:5": "fixed.item_shop_6",
-        "item_spots:6": "fixed.item_shop_7"
+        "item_spots:1": "fixed.item_shop_2"
       },
       "event_category_slot_ids": {
         "event_spots:0": "event.floor_fixture_1",
@@ -25703,11 +24013,7 @@
       },
       "scenario_category_slot_ids": {},
       "exit_category_slot_ids": {
-        "travel_spots:0": "exit.door_right_middle",
-        "travel_spots:1": "exit.door_left_middle",
-        "travel_spots:2": "exit.door_right_middle",
-        "travel_spots:3": "exit.door_right_middle",
-        "travel_spots:4": "exit.door_right_middle"
+        "travel_spots:0": "exit.door_right_middle"
       },
       "object_family_ids": {
         "event:chain06_cass_first_contact": "event",
@@ -25736,9 +24042,9 @@
         "event:scenario_whale_aboard_vouch": "scenario",
         "item:payment_calendar": "fixed",
         "event:side_door": "event",
-        "travel:leave": "exit",
         "staff:delta_right_table_dealer": "fixed",
-        "staff:delta_deck_boss": "fixed"
+        "staff:delta_deck_boss": "fixed",
+        "travel:leave": "exit"
       },
       "fixed_objects": [
         {
@@ -25761,7 +24067,7 @@
           "render_key": "fixed_host_ox",
           "label": "Ox",
           "placement_class": "standing_person",
-          "exact_slot_id": "fixed.staff_floor",
+          "exact_slot_id": "fixed.staff_ox",
           "required": true,
           "action_ids": []
         }
@@ -26187,37 +24493,6 @@
       },
       "fixed_slots": [
         {
-          "id": "fixed.door_left_lower",
-          "kind": "fixed",
-          "pos": [
-            36.0,
-            370.0
-          ],
-          "footprint_class": "doorway",
-          "physical_role": "Doorway / exit",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            4.0,
-            334.0,
-            64.0,
-            72.0
-          ],
-          "label_anchor": [
-            36.0,
-            338.0
-          ],
-          "facing": "right",
-          "priority": 20,
-          "zone_id": "room",
-          "support_id": "boardwalk_left",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
-        },
-        {
           "id": "fixed.service_beach_sand_pile",
           "kind": "fixed",
           "pos": [
@@ -26249,7 +24524,7 @@
           "occupancy_required": false
         },
         {
-          "id": "fixed.random_game_1",
+          "id": "fixed.game_slot",
           "kind": "fixed",
           "pos": [
             502.0,
@@ -26857,66 +25132,6 @@
       ],
       "exit_slots": [
         {
-          "id": "exit.door_right_lower",
-          "kind": "exit",
-          "pos": [
-            882.0,
-            418.0
-          ],
-          "footprint_class": "floor_fixture",
-          "physical_role": "Travel exit",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            836.0,
-            346.0,
-            64.0,
-            72.0
-          ],
-          "label_anchor": [
-            882.0,
-            340.0
-          ],
-          "facing": "none",
-          "priority": 10,
-          "zone_id": "room",
-          "support_id": "stage",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
-          "id": "exit.left_upper",
-          "kind": "exit",
-          "pos": [
-            54.0,
-            286.0
-          ],
-          "footprint_class": "doorway",
-          "physical_role": "Travel exit",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            22.0,
-            250.0,
-            64.0,
-            72.0
-          ],
-          "label_anchor": [
-            54.0,
-            244.0
-          ],
-          "facing": "right",
-          "priority": 10,
-          "zone_id": "room",
-          "support_id": "boardwalk_left",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
-        },
-        {
           "id": "exit.right_upper",
           "kind": "exit",
           "pos": [
@@ -26959,7 +25174,7 @@
         "travel:leave": "exit.right_upper"
       },
       "fixed_category_slot_ids": {
-        "game_spots:0": "fixed.random_game_1",
+        "game_spots:0": "fixed.game_slot",
         "service_spots:0": "fixed.service_beach_sand_pile"
       },
       "event_category_slot_ids": {},
@@ -26968,9 +25183,9 @@
         "travel_spots:0": "exit.right_upper"
       },
       "object_family_ids": {
-        "travel:leave": "exit",
         "service:beach_sand_pile": "fixed",
-        "event:recruitment_lucky": "scenario"
+        "event:recruitment_lucky": "scenario",
+        "travel:leave": "exit"
       },
       "fixed_objects": []
     },
@@ -27597,7 +25812,7 @@
           "occupancy_required": false
         },
         {
-          "id": "fixed.random_game_1",
+          "id": "fixed.game_slot",
           "kind": "fixed",
           "pos": [
             286.0,
@@ -27812,64 +26027,6 @@
           "support_id": "estate_top_shelf",
           "walk_lane_ids": [],
           "occupancy_required": false
-        },
-        {
-          "id": "fixed.item_shop_7",
-          "kind": "fixed",
-          "pos": [
-            700.0,
-            70.0
-          ],
-          "footprint_class": "shop_item",
-          "physical_role": "Shop item",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            664.0,
-            22.0,
-            72.0,
-            48.0
-          ],
-          "label_anchor": [
-            700.0,
-            16.0
-          ],
-          "facing": "none",
-          "priority": 70,
-          "zone_id": "background",
-          "support_id": "estate_top_shelf",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
-          "id": "fixed.item_shop_8",
-          "kind": "fixed",
-          "pos": [
-            804.0,
-            70.0
-          ],
-          "footprint_class": "shop_item",
-          "physical_role": "Shop item",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            768.0,
-            22.0,
-            72.0,
-            48.0
-          ],
-          "label_anchor": [
-            804.0,
-            16.0
-          ],
-          "facing": "none",
-          "priority": 80,
-          "zone_id": "background",
-          "support_id": "estate_top_shelf",
-          "walk_lane_ids": [],
-          "occupancy_required": false
         }
       ],
       "event_slots": [
@@ -28064,8 +26221,8 @@
           "id": "scenario.shop_item_1",
           "kind": "scenario",
           "pos": [
-            198.0,
-            82.0
+            96.0,
+            184.0
           ],
           "footprint_class": "shop_item",
           "physical_role": "Shop item",
@@ -28075,19 +26232,19 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            162.0,
-            34.0,
+            60.0,
+            136.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            198.0,
-            28.0
+            96.0,
+            130.0
           ],
           "facing": "none",
           "priority": 20,
           "zone_id": "background",
-          "support_id": "estate_top_shelf",
+          "support_id": "estate_left_lower_shelf",
           "walk_lane_ids": [],
           "occupancy_required": false
         },
@@ -28095,8 +26252,8 @@
           "id": "scenario.shop_item_2",
           "kind": "scenario",
           "pos": [
-            302.0,
-            82.0
+            362.0,
+            176.0
           ],
           "footprint_class": "shop_item",
           "physical_role": "Shop item",
@@ -28106,19 +26263,19 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            266.0,
-            34.0,
+            326.0,
+            128.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            302.0,
-            28.0
+            362.0,
+            122.0
           ],
           "facing": "none",
           "priority": 30,
           "zone_id": "background",
-          "support_id": "estate_top_shelf",
+          "support_id": "estate_center_lower_shelf",
           "walk_lane_ids": [],
           "occupancy_required": false
         },
@@ -28193,7 +26350,7 @@
           "id": "scenario.surface_item_1",
           "kind": "scenario",
           "pos": [
-            636.0,
+            676.0,
             104.0
           ],
           "footprint_class": "surface_item",
@@ -28205,13 +26362,13 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            600.0,
+            640.0,
             56.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            636.0,
+            676.0,
             50.0
           ],
           "facing": "none",
@@ -28225,8 +26382,8 @@
           "id": "scenario.surface_item_2",
           "kind": "scenario",
           "pos": [
-            458.0,
-            70.0
+            196.0,
+            184.0
           ],
           "footprint_class": "surface_item",
           "physical_role": "Counter or table item",
@@ -28236,19 +26393,19 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            422.0,
-            22.0,
+            160.0,
+            136.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            458.0,
-            16.0
+            196.0,
+            130.0
           ],
           "facing": "none",
           "priority": 20,
           "zone_id": "room",
-          "support_id": "estate_top_shelf",
+          "support_id": "estate_left_lower_shelf",
           "walk_lane_ids": [],
           "occupancy_required": false
         },
@@ -28439,103 +26596,10 @@
             "lane.public"
           ],
           "occupancy_required": false
-        },
-        {
-          "id": "exit.door_left_lower",
-          "kind": "exit",
-          "pos": [
-            54.0,
-            410.0
-          ],
-          "footprint_class": "standing_person",
-          "physical_role": "Travel exit",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            22.0,
-            338.0,
-            64.0,
-            72.0
-          ],
-          "label_anchor": [
-            54.0,
-            402.0
-          ],
-          "facing": "right",
-          "priority": 10,
-          "zone_id": "room",
-          "support_id": "stage",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
-        },
-        {
-          "id": "exit.left_upper",
-          "kind": "exit",
-          "pos": [
-            54.0,
-            278.0
-          ],
-          "footprint_class": "doorway",
-          "physical_role": "Travel exit",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            22.0,
-            242.0,
-            64.0,
-            72.0
-          ],
-          "label_anchor": [
-            54.0,
-            236.0
-          ],
-          "facing": "right",
-          "priority": 10,
-          "zone_id": "room",
-          "support_id": "left_exit",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
-        },
-        {
-          "id": "exit.right_upper",
-          "kind": "exit",
-          "pos": [
-            864.0,
-            266.0
-          ],
-          "footprint_class": "doorway",
-          "physical_role": "Travel exit",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            832.0,
-            230.0,
-            64.0,
-            72.0
-          ],
-          "label_anchor": [
-            864.0,
-            224.0
-          ],
-          "facing": "left",
-          "priority": 20,
-          "zone_id": "room",
-          "support_id": "right_exit",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
         }
       ],
       "fixed_object_slot_ids": {
-        "game:slot": "fixed.random_game_1",
+        "game:slot": "fixed.game_slot",
         "lender:sals_pawn_counter": "fixed.lender_sals_pawn_counter",
         "meta_pawn_counter:sell": "fixed.staff_pawn_counter",
         "meta_sal_shelf:0": "fixed.item_shop_1",
@@ -28560,18 +26624,15 @@
         "travel:leave": "exit.door_right_lower"
       },
       "fixed_category_slot_ids": {
-        "game_spots:0": "fixed.random_game_1",
+        "game_spots:0": "fixed.game_slot",
         "lender_spots:0": "fixed.lender_sals_pawn_counter",
         "pawn_counter_spots:0": "fixed.staff_pawn_counter",
-        "service_spots:0": "fixed.item_shop_5",
         "item_spots:0": "fixed.item_shop_1",
         "item_spots:1": "fixed.item_shop_2",
         "item_spots:2": "fixed.item_shop_3",
         "item_spots:3": "fixed.item_shop_4",
         "item_spots:4": "fixed.item_shop_5",
-        "item_spots:5": "fixed.item_shop_6",
-        "item_spots:6": "fixed.item_shop_7",
-        "item_spots:7": "fixed.item_shop_8"
+        "item_spots:5": "fixed.item_shop_6"
       },
       "event_category_slot_ids": {
         "event_spots:0": "event.floor_fixture_1",
@@ -28604,8 +26665,8 @@
         "meta_sal_shelf:4": "fixed",
         "meta_sal_shelf:5": "fixed",
         "shopkeeper:merchant": "fixed",
-        "travel:leave": "exit",
-        "staff:pawn_counter_sal": "fixed"
+        "staff:pawn_counter_sal": "fixed",
+        "travel:leave": "exit"
       },
       "fixed_objects": [
         {
@@ -28990,9 +27051,6 @@
       },
       "scenario_overrides": {
         "grand_casino_convention_crowd": {
-          "class_overrides": {
-            "game:video_poker": "floor_fixture"
-          },
           "scenario_object_slot_positions": {
             "grand_casino_convention_crowd_booking_board": [
               504,
@@ -29692,64 +27750,6 @@
           "occupancy_required": false
         },
         {
-          "id": "fixed.drink",
-          "kind": "fixed",
-          "pos": [
-            856.0,
-            170.0
-          ],
-          "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            834.0,
-            122.0,
-            44.0,
-            48.0
-          ],
-          "label_anchor": [
-            856.0,
-            216.0
-          ],
-          "facing": "none",
-          "priority": 90,
-          "zone_id": "room",
-          "support_id": "base_drink_shelf",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
-          "id": "fixed.event_wall_1",
-          "kind": "fixed",
-          "pos": [
-            74.0,
-            24.0
-          ],
-          "footprint_class": "wall_mounted",
-          "physical_role": "Wall item",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            34.0,
-            0.0,
-            80.0,
-            48.0
-          ],
-          "label_anchor": [
-            74.0,
-            80.0
-          ],
-          "facing": "none",
-          "priority": 110,
-          "zone_id": "room",
-          "support_id": "wall",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
           "id": "fixed.fixture_host_desk",
           "kind": "fixed",
           "pos": [
@@ -29775,35 +27775,6 @@
           ],
           "facing": "none",
           "priority": 120,
-          "zone_id": "room",
-          "support_id": "floor",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
-          "id": "fixed.event_floor_1",
-          "kind": "fixed",
-          "pos": [
-            744.0,
-            430.0
-          ],
-          "footprint_class": "floor_fixture",
-          "physical_role": "Floor prop",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            722.0,
-            386.0,
-            44.0,
-            44.0
-          ],
-          "label_anchor": [
-            733.0,
-            382.0
-          ],
-          "facing": "none",
-          "priority": 130,
           "zone_id": "room",
           "support_id": "floor",
           "walk_lane_ids": [],
@@ -30754,8 +28725,7 @@
           "footprint_class": "doorway",
           "physical_role": "Travel exit",
           "occupant_ids": [
-            "travel:grand_casino_back_room",
-            "travel:motel"
+            "travel:grand_casino_back_room"
           ],
           "runtime_reserve": false,
           "reserve_reason": "",
@@ -30821,8 +28791,7 @@
           "footprint_class": "doorway",
           "physical_role": "Travel exit",
           "occupant_ids": [
-            "travel:grand_casino_cage",
-            "travel:small_underground_casino"
+            "travel:grand_casino_cage"
           ],
           "runtime_reserve": false,
           "reserve_reason": "",
@@ -30877,68 +28846,6 @@
             "lane.public"
           ],
           "occupancy_required": false
-        },
-        {
-          "id": "exit.safe_left",
-          "kind": "exit",
-          "pos": [
-            36.0,
-            348.0
-          ],
-          "footprint_class": "doorway",
-          "physical_role": "Travel exit",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            4.0,
-            280.0,
-            64.0,
-            68.0
-          ],
-          "label_anchor": [
-            76.0,
-            318.0
-          ],
-          "facing": "front",
-          "priority": 10,
-          "zone_id": "room",
-          "support_id": "left_exit",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
-        },
-        {
-          "id": "exit.safe_right",
-          "kind": "exit",
-          "pos": [
-            882.0,
-            360.0
-          ],
-          "footprint_class": "doorway",
-          "physical_role": "Travel exit",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            836.0,
-            292.0,
-            64.0,
-            68.0
-          ],
-          "label_anchor": [
-            842.0,
-            330.0
-          ],
-          "facing": "front",
-          "priority": 20,
-          "zone_id": "room",
-          "support_id": "right_exit",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
         }
       ],
       "fixed_object_slot_ids": {
@@ -30962,14 +28869,10 @@
         "travel:grand_casino_back_room": "exit.travel_back_room",
         "travel:grand_casino_cage": "exit.travel_cage",
         "travel:grand_casino_high_limit": "exit.travel_high_limit",
-        "travel:leave": "exit.travel_leave",
-        "travel:motel": "exit.travel_back_room",
-        "travel:small_underground_casino": "exit.travel_cage"
+        "travel:leave": "exit.travel_leave"
       },
       "fixed_category_slot_ids": {
         "casino_fixture_spots:0": "fixed.fixture_host_desk",
-        "casino_fixture_spots:1": "fixed.event_floor_1",
-        "service_spots:0": "fixed.drink",
         "game_spots:0": "fixed.game_machine_1",
         "game_spots:1": "fixed.game_machine_2",
         "game_spots:2": "fixed.game_machine_3",
@@ -30985,10 +28888,10 @@
       },
       "scenario_category_slot_ids": {},
       "exit_category_slot_ids": {
-        "casino_door_spots:0": "exit.travel_leave",
+        "casino_door_spots:0": "exit.travel_high_limit",
         "casino_door_spots:1": "exit.travel_back_room",
         "casino_door_spots:2": "exit.travel_cage",
-        "travel_spots:0": "exit.travel_high_limit"
+        "travel_spots:0": "exit.travel_leave"
       },
       "object_family_ids": {
         "casino_fixture:host_desk": "fixed",
@@ -31001,18 +28904,16 @@
         "event:scenario_gala_cover": "scenario",
         "event:the_house_calls": "event",
         "service:house_drink": "fixed",
-        "travel:grand_casino_back_room": "exit",
-        "travel:grand_casino_cage": "exit",
-        "travel:grand_casino_high_limit": "exit",
-        "travel:leave": "exit",
-        "travel:motel": "exit",
-        "travel:small_underground_casino": "exit",
         "staff:grand_casino_host": "fixed",
         "event:town_rumor_staff": "fixed",
         "event:heist_live_table": "scenario",
         "game:pull_tabs": "fixed",
         "game_hook:pull_tabs:ticket_redeemer": "fixed",
-        "dialogue:pull_tab_clerk": "fixed"
+        "dialogue:pull_tab_clerk": "fixed",
+        "travel:grand_casino_back_room": "exit",
+        "travel:grand_casino_cage": "exit",
+        "travel:grand_casino_high_limit": "exit",
+        "travel:leave": "exit"
       },
       "fixed_objects": [
         {
@@ -31748,7 +29649,9 @@
           ],
           "footprint_class": "doorway",
           "physical_role": "Travel exit",
-          "occupant_ids": [],
+          "occupant_ids": [
+            "travel:leave"
+          ],
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
@@ -31769,37 +29672,6 @@
             "lane.public"
           ],
           "occupancy_required": false
-        },
-        {
-          "id": "exit.safe_right",
-          "kind": "exit",
-          "pos": [
-            864.0,
-            278.0
-          ],
-          "footprint_class": "doorway",
-          "physical_role": "Travel exit",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            832.0,
-            242.0,
-            64.0,
-            72.0
-          ],
-          "label_anchor": [
-            864.0,
-            236.0
-          ],
-          "facing": "front",
-          "priority": 20,
-          "zone_id": "room",
-          "support_id": "right_exit",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
         }
       ],
       "fixed_object_slot_ids": {},
@@ -31807,7 +29679,8 @@
       "scenario_object_slot_ids": {},
       "exit_object_slot_ids": {
         "travel:grand_casino": "exit.travel_left",
-        "travel:grand_casino_cage": "exit.travel_right"
+        "travel:grand_casino_cage": "exit.travel_right",
+        "travel:leave": "exit.safe_left"
       },
       "fixed_category_slot_ids": {
         "game_spots:0": "fixed.game_table_1",
@@ -31823,12 +29696,13 @@
       "exit_category_slot_ids": {
         "casino_door_spots:0": "exit.travel_left",
         "casino_door_spots:1": "exit.travel_right",
-        "travel_spots:0": "exit.travel_right"
+        "travel_spots:0": "exit.safe_left"
       },
       "object_family_ids": {
+        "event:heist_live_table": "scenario",
         "travel:grand_casino": "exit",
         "travel:grand_casino_cage": "exit",
-        "event:heist_live_table": "scenario"
+        "travel:leave": "exit"
       },
       "fixed_objects": []
     },
@@ -32332,7 +30206,7 @@
           "footprint_class": "doorway",
           "physical_role": "Travel exit",
           "occupant_ids": [
-            "travel:grand_casino"
+            "travel:leave"
           ],
           "runtime_reserve": false,
           "reserve_reason": "",
@@ -32354,75 +30228,13 @@
             "lane.public"
           ],
           "occupancy_required": false
-        },
-        {
-          "id": "exit.safe_left",
-          "kind": "exit",
-          "pos": [
-            36.0,
-            278.0
-          ],
-          "footprint_class": "doorway",
-          "physical_role": "Travel exit",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            4.0,
-            242.0,
-            64.0,
-            72.0
-          ],
-          "label_anchor": [
-            36.0,
-            236.0
-          ],
-          "facing": "front",
-          "priority": 10,
-          "zone_id": "room",
-          "support_id": "left_exit",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
-        },
-        {
-          "id": "exit.safe_right",
-          "kind": "exit",
-          "pos": [
-            864.0,
-            278.0
-          ],
-          "footprint_class": "doorway",
-          "physical_role": "Travel exit",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            832.0,
-            242.0,
-            64.0,
-            72.0
-          ],
-          "label_anchor": [
-            864.0,
-            236.0
-          ],
-          "facing": "front",
-          "priority": 20,
-          "zone_id": "room",
-          "support_id": "right_exit",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
         }
       ],
       "fixed_object_slot_ids": {},
       "event_object_slot_ids": {},
       "scenario_object_slot_ids": {},
       "exit_object_slot_ids": {
-        "travel:grand_casino": "exit.travel_left"
+        "travel:leave": "exit.travel_left"
       },
       "fixed_category_slot_ids": {
         "game_spots:0": "fixed.game_table_left",
@@ -32436,8 +30248,8 @@
         "travel_spots:0": "exit.travel_left"
       },
       "object_family_ids": {
-        "travel:grand_casino": "exit",
-        "event:heist_live_table": "scenario"
+        "event:heist_live_table": "scenario",
+        "travel:leave": "exit"
       },
       "fixed_objects": []
     },
@@ -32975,39 +30787,6 @@
       ],
       "exit_slots": [
         {
-          "id": "exit.travel_floor_door",
-          "kind": "exit",
-          "pos": [
-            847.0,
-            160.0
-          ],
-          "footprint_class": "doorway",
-          "physical_role": "Travel exit",
-          "occupant_ids": [
-            "travel:leave"
-          ],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            815.0,
-            124.0,
-            64.0,
-            72.0
-          ],
-          "label_anchor": [
-            847.0,
-            118.0
-          ],
-          "facing": "front",
-          "priority": 70,
-          "zone_id": "room",
-          "support_id": "floor_door",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
-        },
-        {
           "id": "exit.casino_floor_door",
           "kind": "exit",
           "pos": [
@@ -33041,62 +30820,33 @@
           "occupancy_required": false
         },
         {
-          "id": "exit.safe_left",
+          "id": "exit.travel_floor_door",
           "kind": "exit",
           "pos": [
-            36.0,
-            278.0
+            847.0,
+            160.0
           ],
           "footprint_class": "doorway",
           "physical_role": "Travel exit",
-          "occupant_ids": [],
+          "occupant_ids": [
+            "travel:leave"
+          ],
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            4.0,
-            242.0,
+            815.0,
+            124.0,
             64.0,
             72.0
           ],
           "label_anchor": [
-            36.0,
-            236.0
+            847.0,
+            118.0
           ],
           "facing": "front",
-          "priority": 10,
+          "priority": 70,
           "zone_id": "room",
-          "support_id": "left_exit",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
-        },
-        {
-          "id": "exit.safe_left_lower",
-          "kind": "exit",
-          "pos": [
-            36.0,
-            370.0
-          ],
-          "footprint_class": "doorway",
-          "physical_role": "Travel exit",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            4.0,
-            334.0,
-            64.0,
-            72.0
-          ],
-          "label_anchor": [
-            36.0,
-            328.0
-          ],
-          "facing": "front",
-          "priority": 20,
-          "zone_id": "room",
-          "support_id": "left_exit",
+          "support_id": "floor_door",
           "walk_lane_ids": [
             "lane.public"
           ],
@@ -33131,10 +30881,10 @@
       "object_family_ids": {
         "casino_fixture:cage_atm": "fixed",
         "casino_fixture:cage_counter": "fixed",
-        "travel:grand_casino": "exit",
-        "travel:leave": "exit",
         "staff:grand_casino_linda": "fixed",
-        "event:heist_live_table": "scenario"
+        "event:heist_live_table": "scenario",
+        "travel:grand_casino": "exit",
+        "travel:leave": "exit"
       },
       "fixed_objects": [
         {
@@ -33595,35 +31345,6 @@
           "occupancy_required": false
         },
         {
-          "id": "fixed.home_notice",
-          "kind": "fixed",
-          "pos": [
-            600.0,
-            72.0
-          ],
-          "footprint_class": "wall_mounted",
-          "physical_role": "Wall item",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            560.0,
-            48.0,
-            80.0,
-            48.0
-          ],
-          "label_anchor": [
-            600.0,
-            42.0
-          ],
-          "facing": "none",
-          "priority": 10,
-          "zone_id": "room",
-          "support_id": "wall",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
           "id": "fixed.home_storage",
           "kind": "fixed",
           "pos": [
@@ -33778,37 +31499,6 @@
       ],
       "exit_slots": [
         {
-          "id": "exit.travel_door",
-          "kind": "exit",
-          "pos": [
-            864.0,
-            358.0
-          ],
-          "footprint_class": "doorway",
-          "physical_role": "Travel exit",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            832.0,
-            322.0,
-            64.0,
-            72.0
-          ],
-          "label_anchor": [
-            864.0,
-            316.0
-          ],
-          "facing": "left",
-          "priority": 10,
-          "zone_id": "room",
-          "support_id": "right_exit",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
-        },
-        {
           "id": "exit.left_door",
           "kind": "exit",
           "pos": [
@@ -33836,37 +31526,6 @@
           "priority": 10,
           "zone_id": "room",
           "support_id": "left_exit",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
-        },
-        {
-          "id": "exit.right_door",
-          "kind": "exit",
-          "pos": [
-            864.0,
-            262.0
-          ],
-          "footprint_class": "doorway",
-          "physical_role": "Travel exit",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            832.0,
-            226.0,
-            64.0,
-            72.0
-          ],
-          "label_anchor": [
-            864.0,
-            220.0
-          ],
-          "facing": "left",
-          "priority": 20,
-          "zone_id": "room",
-          "support_id": "right_exit",
           "walk_lane_ids": [
             "lane.public"
           ],
@@ -33905,7 +31564,7 @@
       "event_category_slot_ids": {},
       "scenario_category_slot_ids": {},
       "exit_category_slot_ids": {
-        "travel_spots:0": "exit.travel_door"
+        "travel_spots:0": "exit.left_door"
       },
       "object_family_ids": {
         "home_container:meta_bag_01": "fixed",
@@ -33915,8 +31574,8 @@
         "home_tenure:status": "fixed",
         "meta_trade_up:station": "fixed",
         "meta_upgrade:home": "fixed",
-        "travel:leave": "exit",
-        "home_storage:place": "fixed"
+        "home_storage:place": "fixed",
+        "travel:leave": "exit"
       },
       "fixed_objects": []
     },
@@ -34398,35 +32057,6 @@
           "occupancy_required": false
         },
         {
-          "id": "fixed.home_notice",
-          "kind": "fixed",
-          "pos": [
-            427.0,
-            80.0
-          ],
-          "footprint_class": "wall_mounted",
-          "physical_role": "Wall item",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            354.0,
-            48.0,
-            146.0,
-            64.0
-          ],
-          "label_anchor": [
-            427.0,
-            42.0
-          ],
-          "facing": "none",
-          "priority": 20,
-          "zone_id": "room",
-          "support_id": "framed_print",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
           "id": "fixed.home_storage",
           "kind": "fixed",
           "pos": [
@@ -34581,37 +32211,6 @@
       ],
       "exit_slots": [
         {
-          "id": "exit.travel_door",
-          "kind": "exit",
-          "pos": [
-            864.0,
-            358.0
-          ],
-          "footprint_class": "doorway",
-          "physical_role": "Travel exit",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            832.0,
-            322.0,
-            64.0,
-            72.0
-          ],
-          "label_anchor": [
-            864.0,
-            316.0
-          ],
-          "facing": "left",
-          "priority": 10,
-          "zone_id": "room",
-          "support_id": "right_exit",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
-        },
-        {
           "id": "exit.left_door",
           "kind": "exit",
           "pos": [
@@ -34639,37 +32238,6 @@
           "priority": 10,
           "zone_id": "room",
           "support_id": "left_exit",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
-        },
-        {
-          "id": "exit.right_door",
-          "kind": "exit",
-          "pos": [
-            864.0,
-            262.0
-          ],
-          "footprint_class": "doorway",
-          "physical_role": "Travel exit",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            832.0,
-            226.0,
-            64.0,
-            72.0
-          ],
-          "label_anchor": [
-            864.0,
-            220.0
-          ],
-          "facing": "left",
-          "priority": 20,
-          "zone_id": "room",
-          "support_id": "right_exit",
           "walk_lane_ids": [
             "lane.public"
           ],
@@ -34709,7 +32277,7 @@
       "event_category_slot_ids": {},
       "scenario_category_slot_ids": {},
       "exit_category_slot_ids": {
-        "travel_spots:0": "exit.travel_door"
+        "travel_spots:0": "exit.left_door"
       },
       "object_family_ids": {
         "home_container:meta_bag_01": "fixed",
@@ -34719,8 +32287,8 @@
         "home_tenure:status": "fixed",
         "meta_trade_up:station": "fixed",
         "meta_upgrade:home": "fixed",
-        "travel:leave": "exit",
-        "home_storage:place": "fixed"
+        "home_storage:place": "fixed",
+        "travel:leave": "exit"
       },
       "fixed_objects": []
     },
@@ -35232,35 +32800,6 @@
           "occupancy_required": false
         },
         {
-          "id": "fixed.home_notice",
-          "kind": "fixed",
-          "pos": [
-            758.0,
-            97.0
-          ],
-          "footprint_class": "wall_mounted",
-          "physical_role": "Wall item",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            716.0,
-            70.0,
-            84.0,
-            54.0
-          ],
-          "label_anchor": [
-            758.0,
-            64.0
-          ],
-          "facing": "none",
-          "priority": 20,
-          "zone_id": "room",
-          "support_id": "kitchen_cabinet",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
           "id": "fixed.home_storage",
           "kind": "fixed",
           "pos": [
@@ -35446,68 +32985,6 @@
             "lane.public"
           ],
           "occupancy_required": false
-        },
-        {
-          "id": "exit.left_door",
-          "kind": "exit",
-          "pos": [
-            36.0,
-            262.0
-          ],
-          "footprint_class": "doorway",
-          "physical_role": "Travel exit",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            4.0,
-            226.0,
-            64.0,
-            72.0
-          ],
-          "label_anchor": [
-            36.0,
-            220.0
-          ],
-          "facing": "right",
-          "priority": 10,
-          "zone_id": "room",
-          "support_id": "left_exit",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
-        },
-        {
-          "id": "exit.right_door",
-          "kind": "exit",
-          "pos": [
-            864.0,
-            262.0
-          ],
-          "footprint_class": "doorway",
-          "physical_role": "Travel exit",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            832.0,
-            226.0,
-            64.0,
-            72.0
-          ],
-          "label_anchor": [
-            864.0,
-            220.0
-          ],
-          "facing": "left",
-          "priority": 20,
-          "zone_id": "room",
-          "support_id": "right_exit",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
         }
       ],
       "fixed_object_slot_ids": {
@@ -35554,8 +33031,8 @@
         "home_tenure:status": "fixed",
         "meta_trade_up:station": "fixed",
         "meta_upgrade:home": "fixed",
-        "travel:leave": "exit",
-        "home_storage:place": "fixed"
+        "home_storage:place": "fixed",
+        "travel:leave": "exit"
       },
       "fixed_objects": []
     }

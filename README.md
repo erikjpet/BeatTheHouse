@@ -11,7 +11,7 @@ run state forward.
 Versions 0.2.0 through 0.3.3 are historical source releases; 0.4.0 was an Act 1
 candidate tag that was not published before development continued. Version
 0.5.1 is the latest stable owner-published release. The latest testing build is
-the GitHub prerelease `v0.6.0-pre.2`; current `main` remains the stamped 0.6.0
+the GitHub prerelease `v0.6.0-pre.3`; current `main` remains the stamped 0.6.0
 release-preparation line. It keeps the Act 1 foundation and adds the Living Town,
 55 persistent room scenarios, the Crew campaign, eleven depth-complete game
 modules, expanded tutorial and audio coverage, and a reworked four-room Grand
@@ -19,11 +19,14 @@ Casino endgame with a living Rourke, chips and Cage economy, Linda's
 Bronze/Silver/Gold Players Card ladder, four-phase showdown, heads-up Blackjack
 duel, and persistent card/chip meta rewards.
 
-The 0.6.0 source is playable and uses a consolidated four-family placement
-model across 659 authored positions in 21 maps. Release qualification is still
-in progress: the room set awaits final owner positioning and the three ending
+The 0.6.0 source is playable and uses a four-family placement model across 21
+source maps plus 55 compact scenario-specific layouts. Twenty source maps are
+reachable base layouts; the unlayered Punchline parent is template-only. The
+complete manual authoring pass therefore has 75 contexts: 20 no-scenario
+layouts plus one layout per valid map/scenario combination. Release qualification is still in
+progress: the room set awaits final owner positioning and the three ending
 routes are completing their normal-play confirmations. Project and export
-metadata are stamped `0.6.0`; `v0.6.0-pre.2` provides the current Windows
+metadata are stamped `0.6.0`; `v0.6.0-pre.3` provides the current Windows
 testing package. The `v0.5.1` tag and GitHub Release identify the final corrected
 0.5 playtest baseline; `v0.5.0` remains the immutable original release boundary.
 Beat the House is not a real-money gambling product. It has no real-money
@@ -37,10 +40,10 @@ the repository.
 | Engine | Godot 4.x project with Godot 4.6 project feature metadata |
 | Main scene | `res://scenes/main.tscn` |
 | Main UI shell | `res://scripts/ui/foundation_main.gd` |
-| Published release line | 0.5.1 stable; `v0.6.0-pre.2` is the latest GitHub testing prerelease |
+| Published release line | 0.5.1 stable; `v0.6.0-pre.3` is the latest GitHub testing prerelease |
 | Release-prep version | 0.6.0 in project and platform export metadata |
 | Active planning target | Owner room repositioning and normal-play ending confirmations before the final stable Windows/Web handoff |
-| Current release readiness | Playable, version-stamped, and packaged as prerelease 2; final stable qualification remains pending |
+| Current release readiness | Playable, version-stamped, and packaged as prerelease 3; the owner layout pass and final stable qualification remain pending |
 | Viewport | 1280x720, non-resizable, canvas stretch with kept aspect |
 | Renderer | Godot mobile renderer by default; Windows uses Godot compatibility/OpenGL to avoid the native Vulkan/OBS crash path seen in local WER reports |
 | Input model | Single pointer interaction with mouse/touch parity |
@@ -77,7 +80,7 @@ Production content is JSON under `data/`.
 | --- | ---: | --- | --- |
 | Environments | 18 | `data/environments/archetypes.json` | Shops, homes, tier-1 casinos, tier-2 venues, jazz club, beach, pawn shop, and the Grand Casino's connected rooms plus Cage |
 | Games | 11 | `data/games/games.json` | Full-simulation games, including Coin Pusher, Craps, and Crew Hold'em |
-| Items | 88 | `data/items/items.json` | Permanent, temporary, consumable, contraband, active, game, security, travel, slot, pinball, container, time, and build-synergy effects |
+| Items | 89 | `data/items/items.json` | Permanent, temporary, consumable, contraband, active, game, security, travel, slot, pinball, container, time, and build-synergy effects |
 | Content groups | 16 | `data/content_groups/groups.json` | Modular run packs that enable/disable games and their related item pools |
 | Events | 159 | `data/events/events.json` | Scoped room and scenario events with choices, follow-ups, character chains, Crew/world sequences, and boss-floor consequences |
 | Services | 18 | `data/services/services.json` | Shop, drink, information, music, security, and venue-specific services |
@@ -172,14 +175,29 @@ Hold'em table supports five production nights and seven persistent opponents;
 Crew decisions and grievances carry through later jobs and endings. Ignoring
 the Crew remains a supported no-op route.
 
-Room construction uses 659 named positions across four explicit families:
-permanent `fixed`, optional ambient `event`, reusable `scenario`, and real
-travel `exit` positions. Games, items, people, and illustrated props occupy
-art-aligned places; abstract actions attach to tangible hosts instead of adding
-room markers. Pull Tabs are counter merchandise sold and redeemed through each
-venue's existing bartender, clerk, or host desk. Behind-counter staff are
-occluded by the counter art, while floor actors and fixtures use grounded,
-scenario-specific coordinates with bounded fallbacks.
+Room construction uses four explicit families: permanent `fixed`, optional
+ambient `event`, scenario-owned `scenario`, and real-travel `exit` positions.
+Fixed/event/exit geometry is shared by every version of a room. Each of the 55
+catalog scenarios overlays its own 4–9-slot local bank, so the same role can be
+positioned differently in different scenarios without exposing every phase and
+outcome as another marker. Mutually exclusive scenario objects reuse local
+capacity; only objects that can coexist receive separate positions. Games,
+items, people, and illustrated props occupy art-aligned places, while abstract
+actions attach to tangible hosts instead of adding room markers. Pull Tabs are
+counter merchandise sold and redeemed through each venue's existing bartender,
+clerk, or host desk.
+
+The owner placement workflow lives under **Settings > Environment Library**.
+It exposes one slot family at a time, hides unused capacity and runtime reserves
+until requested, labels occupied markers with the object they actually contain,
+and locks layered scenarios to their authored room. The audited runtime maximum
+is 17 occupied objects in one layout, below the guarded limit of 20. **Save Current Layout** records all active
+coordinates, including hidden families; progress shows the saved count, missing
+count, and next missing layout until all 75 contexts are complete. Packaged
+builds export the schema-3 report as
+`BeatTheHouse_environment_slot_placement_changes.json`. The generated
+per-environment checklist is
+`docs/plans/environment_scenario_layout_breakdown.md`.
 
 ## Games
 
@@ -408,26 +426,22 @@ powershell -ExecutionPolicy Bypass -File tools\ui05_popup_fit_check.ps1
 powershell -ExecutionPolicy Bypass -File tools\ui05_asset_pipeline_check.ps1
 ```
 
-Current integration evidence and remaining work (verified 2026-09-15):
+Current integration evidence and remaining work (verified 2026-10-03):
 
-- Current `main` includes the latest game-prop art,
-  back-room poker tweaks, the complete `fix06_32` game-verification stack, and
-  playtest repairs BUG-01 through BUG-36 except the placement-owned findings
-  deliberately held for the room-construction redesign.
-- Static architecture validation, exhaustive GDScript loading, the nine-stage
-  Smoke suite, dedicated playtest-fix regressions, focused game suites, audio
-  audits, the performance smoke probe, native Coin Pusher runtime/parity, and a
-  visible-input start → inventory → travel → merchant → lender → second venue
-  → game path pass. The reusable player-session harness is
-  `tools/agent_playtest_session.ps1`.
-- The broad Contract suite is still red at room/scenario composition. Current
-  failures include normal/small-screen label and hit-region overlap, colliding
-  route endpoints, required generated inventory being omitted, and stale
-  placement-dependent expectations. These failures are not waived and block
-  release readiness; they are distinct from the green game and native-runtime
-  gates.
-- Performance, platform, packaging, versioning, tagging, and publication must be
-  rerun only after the placement redesign is accepted and merged.
+- All 21 source maps and 55 exact scenario layouts pass the migration, ledger,
+  schema, naming, family, and generated-guide checks. The reachable authoring
+  set is exactly 20 base rooms plus 55 scenarios.
+- The maintained runtime audit generates all 75 contexts across six seeds,
+  validates 4,509 room objects, rejects missing or duplicate occupancy and
+  occupied hit-region overlap, and guards a maximum of 20 room objects; the
+  observed maximum is 17.
+- Placement persistence, complete-layout coverage, report export, scenario
+  isolation, Environment Library launch, and both placement editors pass their
+  focused engine checks. Shared edits correctly invalidate every affected
+  completion marker until the room is saved or reset.
+- The remaining room work is the owner's artistic 75-context placement pass.
+  The generated checklist and in-game saved/missing counter define that pass;
+  the exported schema-3 report is the permanent-coordinate handoff.
 
 Other targeted wrappers live in `tools/`: slot cabinet visual QA, environment
 generation audit, performance probe, mouse playtests, and game seed audits.
@@ -529,9 +543,9 @@ historical release evidence.
 
 `tools/export_itch.ps1` packages the Web and Windows presets into upload-ready
 zips after Godot export templates are installed. Project and export preset
-versions are stamped `0.6.0`. Agents produce local artifacts without `-Push`;
-the owner performs every upload personally. Trial packages are not final
-release artifacts. Android
+versions are stamped `0.6.0`. Publication requires explicit owner authorization;
+the `v0.6.0-pre.3` GitHub prerelease was explicitly requested. Trial packages
+are not final release artifacts. Android
 signing and iOS team/signature values still require real project credentials
 before store submission.
 
@@ -542,8 +556,8 @@ before store submission.
   qualification pass, and final artifact handoff still remain.
 - Tutorial pointer overlays can partially cover the center of the action they
   describe. The merged player path remains operable through the exposed part of
-  the target, but the composition should be corrected during the room/UI
-  placement redesign.
+  the target, but the composition can be polished during the owner's manual
+  room-placement pass.
 - The Web export is intentionally single-threaded. Procedural music is generated
   deterministically at build time into compact Web beds, so browser startup and
   playback no longer depend on PThreads or main-thread synthesis. Cross-origin

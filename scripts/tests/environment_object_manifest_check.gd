@@ -188,10 +188,10 @@ func _check_category_family_authority(library: ContentLibrary) -> void:
 	# A physical catalog object may use authored category capacity even without an
 	# identity-local override. The category does not, by itself, turn an abstract
 	# service verb into another physical room object.
-	var environment := {
-		"id": "category_family_fixture",
+	var phone_environment := {
+		"id": "fixed_action_host_fixture",
 		"archetype_id": "corner_store",
-		"display_name": "Category Family Fixture",
+		"display_name": "Fixed Action Host Fixture",
 		"kind": "casino",
 		"tier": 1,
 		"game_ids": [],
@@ -199,7 +199,45 @@ func _check_category_family_authority(library: ContentLibrary) -> void:
 		"resolved_event_ids": [],
 		"item_offers": [],
 		"service_ids": ["cashier_tip"],
-		"lender_hooks": ["street_lender"],
+		"lender_hooks": [],
+		"travel_hooks": [],
+		"next_archetypes": [],
+		"object_fixtures": [],
+	}
+	phone_environment["layout"] = EnvironmentInstanceScript.ensure_generated_layout(phone_environment, library)
+	_check(EnvironmentInstanceScript.object_manifest_errors(phone_environment).is_empty(), "fixed action host", "produced an invalid manifest")
+	_check(_array(_dict(phone_environment.get("layout", {})).get("placement_errors", [])).is_empty(), "fixed action host", "failed layout generation: %s" % JSON.stringify(_dict(phone_environment.get("layout", {})).get("placement_errors", [])))
+	var phone_rows: Dictionary = {}
+	for row_value in EnvironmentInstanceScript.active_object_manifest_rows(phone_environment):
+		var row := _dict(row_value)
+		phone_rows[str(row.get("presentation_object_id", ""))] = row
+	var phone_bindings := _dict(_dict(phone_environment.get("layout", {})).get("slot_bindings", {}))
+	var phone_row := _dict(phone_rows.get("event:call_brother_in_law", {}))
+	var phone_binding := _dict(phone_bindings.get("event:call_brother_in_law", {}))
+	_check(
+		str(phone_row.get("family", "")) == "fixed"
+			and str(phone_binding.get("slot_family", "")) == "fixed"
+			and str(phone_binding.get("slot_id", "")) == "fixed.phone",
+		"fixed action host",
+		"the cashier-tip action did not remain on the guaranteed store phone"
+	)
+	_check(str(phone_row.get("instance_object_id", "")) == "corner_store:phone" and _array(phone_row.get("action_ids", [])).has("service:cashier_tip"), "fixed action host", "the cashier-tip action is not owned by the guaranteed store phone")
+
+	# Beach always generates one Slot machine through ordinal game capacity. This
+	# proves category-only family authority without restoring a dead generic row
+	# or assigning a random pool occupant to an identity-specific position.
+	var environment := {
+		"id": "category_family_fixture",
+		"archetype_id": "beach",
+		"display_name": "Category Family Fixture",
+		"kind": "casino",
+		"tier": 1,
+		"game_ids": ["slot"],
+		"event_ids": [],
+		"resolved_event_ids": [],
+		"item_offers": [],
+		"service_ids": [],
+		"lender_hooks": [],
 		"travel_hooks": [],
 		"next_archetypes": [],
 		"object_fixtures": [],
@@ -212,40 +250,33 @@ func _check_category_family_authority(library: ContentLibrary) -> void:
 		var row := _dict(row_value)
 		rows[str(row.get("presentation_object_id", ""))] = row
 	var bindings := _dict(_dict(environment.get("layout", {})).get("slot_bindings", {}))
-	for expectation in [
-		["event:call_brother_in_law", "fixed", "fixed.phone"],
-		["lender:street_lender", "fixed", "fixed.lender_floor_1"],
-	]:
-		var object_id := str(expectation[0])
-		var family := str(expectation[1])
-		var slot_id := str(expectation[2])
-		_check(str(_dict(rows.get(object_id, {})).get("family", "")) == family, "category family authority", "%s did not inherit its authored %s category family" % [object_id, family])
-		var binding := _dict(bindings.get(object_id, {}))
-		_check(str(binding.get("slot_family", "")) == family and str(binding.get("slot_id", "")) == slot_id, "category family authority", "%s did not bind through its authored category slot %s" % [object_id, slot_id])
-	var phone_row := _dict(rows.get("event:call_brother_in_law", {}))
-	_check(str(phone_row.get("instance_object_id", "")) == "corner_store:phone" and _array(phone_row.get("action_ids", [])).has("service:cashier_tip"), "category family authority", "the cashier-tip action is not owned by the guaranteed store phone")
+	var game_row := _dict(rows.get("game:slot", {}))
+	var game_binding := _dict(bindings.get("game:slot", {}))
+	_check(str(game_row.get("family", "")) == "fixed", "category family authority", "the selected game did not inherit its authored fixed category family")
+	_check(str(game_binding.get("slot_family", "")) == "fixed" and str(game_binding.get("slot_id", "")) == "fixed.game_slot", "category family authority", "the selected game did not bind through fixed.game_slot")
 	var surface_map := EnvironmentPlacementScript.surface_map(environment)
-	_check(not _dict(surface_map.get("object_family_ids", {})).has("lender:street_lender"), "category family authority", "fixture no longer exercises category-only family authority")
-	_check(str(_dict(surface_map.get("fixed_category_slot_ids", {})).get("lender_spots:0", "")) == "fixed.lender_floor_1", "category family authority", "fixture is missing its authored lender category slot")
-	var lender_entry := {
-		"object_id": "lender:street_lender",
-		"object_type": "lender",
-		"spot_field": "lender_spots",
+	_check(not _dict(surface_map.get("object_family_ids", {})).has("game:slot"), "category family authority", "fixture no longer exercises category-only family authority")
+	_check(not _dict(surface_map.get("fixed_object_slot_ids", {})).has("game:slot"), "category family authority", "pooled game authority became identity-positioned")
+	_check(str(_dict(surface_map.get("fixed_category_slot_ids", {})).get("game_spots:0", "")) == "fixed.game_slot", "category family authority", "fixture is missing its authored game category slot")
+	var game_entry := {
+		"object_id": "game:slot",
+		"object_type": "game",
+		"spot_field": "game_spots",
 		"index": 0,
 	}
-	_check(EnvironmentSlotBinderScript.authored_entry_slot_family(surface_map, lender_entry, "lender:street_lender") == "fixed", "category family authority", "shared family resolver did not resolve the lender category")
-	_check(EnvironmentSlotBinderScript.authored_entry_slot_family(surface_map, lender_entry, "lender:street_lender", "", false).is_empty(), "category family authority", "category capacity was mistaken for identity-local physical-presence authority")
-	var authority := EnvironmentSlotBinderScript.validate_base_layout_authority(environment, [rows.get("lender:street_lender", {})], false)
-	_check(bool(authority.get("ok", false)), "category family authority", "rejected category-authorized lender binding: %s" % JSON.stringify(authority.get("errors", [])))
+	_check(EnvironmentSlotBinderScript.authored_entry_slot_family(surface_map, game_entry, "game:slot") == "fixed", "category family authority", "shared family resolver did not resolve the game category")
+	_check(EnvironmentSlotBinderScript.authored_entry_slot_family(surface_map, game_entry, "game:slot", "", false).is_empty(), "category family authority", "category capacity was mistaken for identity-local physical-presence authority")
+	var authority := EnvironmentSlotBinderScript.validate_base_layout_authority(environment, [rows.get("game:slot", {})], false)
+	_check(bool(authority.get("ok", false)), "category family authority", "rejected category-authorized game binding: %s" % JSON.stringify(authority.get("errors", [])))
 	# Scenario semantic replay carries a closed record and the already-sealed room
 	# occupancy. Rebinding that same identity must recognize its category-derived
 	# physical family instead of dropping the binding and colliding with its own
 	# occupancy claim.
-	var closed_lender_record := {
-		"object_id": "lender:street_lender",
-		"object_type": "lender",
+	var closed_game_record := {
+		"object_id": "game:slot",
+		"object_type": "game",
 		"slot_family": "fixed",
-		"placement_class": str(_dict(rows.get("lender:street_lender", {})).get("placement_class", "")),
+		"placement_class": str(game_row.get("placement_class", "")),
 		"interactive": true,
 	}
 	var sealed_occupancy: Dictionary = {}
@@ -255,15 +286,15 @@ func _check_category_family_authority(library: ContentLibrary) -> void:
 		var sealed_identity := str(sealed_binding.get("identity", "")).strip_edges()
 		if not sealed_slot_id.is_empty() and not sealed_identity.is_empty():
 			sealed_occupancy[sealed_slot_id] = sealed_identity
-	var replay := EnvironmentSlotBinderScript.bind_base_records(environment, [closed_lender_record], bindings, sealed_occupancy)
+	var replay := EnvironmentSlotBinderScript.bind_base_records(environment, [closed_game_record], bindings, sealed_occupancy)
 	_check(bool(replay.get("ok", false)), "category family authority", "closed semantic replay collided with its own category-authorized slot: %s" % JSON.stringify(replay.get("errors", [])))
-	_check(str(_dict(_dict(replay.get("slot_bindings", {})).get("lender:street_lender", {})).get("slot_id", "")) == "fixed.lender_floor_1", "category family authority", "closed semantic replay lost the category-authorized lender slot")
+	_check(str(_dict(_dict(replay.get("slot_bindings", {})).get("game:slot", {})).get("slot_id", "")) == "fixed.game_slot", "category family authority", "closed semantic replay lost the category-authorized game slot")
 	var parsed: Variant = JSON.parse_string(JSON.stringify(environment))
 	var restored: Dictionary = EnvironmentInstanceScript.from_dict(parsed as Dictionary).to_dict() if typeof(parsed) == TYPE_DICTIONARY else {}
 	if not restored.is_empty():
 		EnvironmentInstanceScript.reconcile_object_manifest(restored, library)
-	var restored_binding: Dictionary = _dict(_dict(_dict(restored.get("layout", {})).get("slot_bindings", {})).get("lender:street_lender", {}))
-	_check(not restored.is_empty() and EnvironmentInstanceScript.object_manifest_errors(restored).is_empty() and str(restored_binding.get("slot_id", "")) == "fixed.lender_floor_1", "category family authority", "JSON roundtrip lost category-authorized manifest/binding authority")
+	var restored_binding: Dictionary = _dict(_dict(_dict(restored.get("layout", {})).get("slot_bindings", {})).get("game:slot", {}))
+	_check(not restored.is_empty() and EnvironmentInstanceScript.object_manifest_errors(restored).is_empty() and str(restored_binding.get("slot_id", "")) == "fixed.game_slot", "category family authority", "JSON roundtrip lost category-authorized manifest/binding authority")
 
 
 func _check_manifest_and_bindings(label: String, environment: Dictionary) -> void:
@@ -779,7 +810,8 @@ func _check_contextual_runtime_membership(library: ContentLibrary) -> void:
 	home_run.current_environment = _generated_environment(library, "motel")
 	var home_reconciled := home_run.reconcile_environment_object_membership(home_run.current_environment)
 	_check(bool(home_reconciled.get("ok", false)), "parent-home exit", "failed membership reconciliation: %s" % JSON.stringify(home_reconciled.get("errors", [])))
-	_assert_runtime_membership(home_run.current_environment, "travel:motel_room_runtime_fixture", "exit", true, "parent-home exit")
+	var home_binding := _assert_runtime_membership(home_run.current_environment, "travel:motel_room_runtime_fixture", "exit", true, "parent-home exit")
+	_check(str(home_binding.get("slot_id", "")) == "exit.motel_room", "parent-home exit", "the conditional room entrance did not use its clearly named exit.motel_room reserve")
 	var restored_home := RunStateScript.new()
 	restored_home.from_dict(home_run.to_dict())
 	_check(str(restored_home.home_state.get("parent_archetype_id", "")) == "motel", "parent-home exit", "save normalization dropped parent_archetype_id")

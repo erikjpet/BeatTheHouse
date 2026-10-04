@@ -9968,6 +9968,7 @@ func _build_environment_test_menu(parent: Node) -> void:
 	environment_test_scenario_option = _environment_test_option_group(identity_row, "Scenario")
 	environment_test_layer_option = _environment_test_option_group(identity_row, "Starting Area")
 	environment_test_archetype_option.item_selected.connect(_on_environment_test_archetype_selected)
+	environment_test_scenario_option.item_selected.connect(_on_environment_test_scenario_selected)
 
 	var condition_row := HBoxContainer.new()
 	condition_row.add_theme_constant_override("separation", 8)
@@ -10067,6 +10068,10 @@ func _on_environment_test_archetype_selected(_index: int) -> void:
 	_refresh_environment_test_identity_options()
 
 
+func _on_environment_test_scenario_selected(_index: int) -> void:
+	_sync_environment_test_layer_to_scenario()
+
+
 func _refresh_environment_test_identity_options() -> void:
 	if library == null or environment_test_scenario_option == null or environment_test_layer_option == null:
 		return
@@ -10094,9 +10099,33 @@ func _refresh_environment_test_identity_options() -> void:
 		var layer := JsonCoerceScript._copy_dict(layers.get(layer_id_value, {}))
 		var layer_name := str(layer.get("layer_display_name", layer_id.replace("_", " ").capitalize()))
 		_environment_test_add_option(environment_test_layer_option, layer_name, layer_id)
-	environment_test_layer_option.disabled = layers.is_empty()
 	if environment_test_status_label != null:
 		environment_test_status_label.text = "%d scenario choice(s) available for %s." % [environment_test_scenario_option.item_count, archetype_id.replace("_", " ").capitalize()]
+	_sync_environment_test_layer_to_scenario()
+
+
+func _sync_environment_test_layer_to_scenario() -> void:
+	if library == null or environment_test_scenario_option == null or environment_test_layer_option == null:
+		return
+	var scenario_id := _environment_test_selected_id(environment_test_scenario_option, "__default")
+	var exact_scenario := scenario_id not in ["__default", "__none"]
+	var authored_layer_id := ""
+	if exact_scenario:
+		authored_layer_id = str(library.scenario(scenario_id).get("layer_id", "")).strip_edges()
+	for index in range(environment_test_layer_option.item_count):
+		if str(environment_test_layer_option.get_item_metadata(index)).strip_edges() == authored_layer_id:
+			environment_test_layer_option.select(index)
+			break
+	var archetype_id := _environment_test_selected_id(environment_test_archetype_option)
+	var layers := JsonCoerceScript._copy_dict(library.environment_archetype(archetype_id).get("layers", {}))
+	environment_test_layer_option.disabled = layers.is_empty() or exact_scenario
+	environment_test_layer_option.tooltip_text = "Exact scenarios always open in their authored area." if exact_scenario else "Choose the starting area for a base or normal-selection room."
+	if environment_test_status_label != null:
+		if exact_scenario:
+			var area_label := "main room" if authored_layer_id.is_empty() else authored_layer_id.replace("_", " ").capitalize()
+			environment_test_status_label.text = "Exact scenario area locked: %s." % area_label
+		elif not layers.is_empty():
+			environment_test_status_label.text = "Base / normal selection: choose any starting area."
 
 
 func _on_environment_test_happening_mode_selected(_index: int) -> void:
@@ -15600,7 +15629,25 @@ func _environment_view_snapshot() -> Dictionary:
 	# resulting audit after that atomic projection has completed.
 	snapshot["scenario_layout_audit"] = JsonCoerceScript._copy_dict(run_state.current_environment.get("scenario_layout_audit", {}))
 	snapshot["scenario_layout_authority_digest"] = str(run_state.current_environment.get("scenario_layout_authority_digest", ""))
+	if user_settings != null and bool(user_settings.developer_slot_placement_mode):
+		snapshot["developer_placement_progress"] = _developer_placement_progress_snapshot(
+			run_state.current_environment
+		)
 	return snapshot
+
+
+func _developer_placement_progress_snapshot(environment: Dictionary) -> Dictionary:
+	var coverage := DeveloperPlacementStoreScript.coverage_snapshot()
+	var missing := JsonCoerceScript._copy_array(coverage.get("missing_layout_ids", []))
+	return {
+		"layout_id": DeveloperPlacementStoreScript.layout_id(environment),
+		"saved": DeveloperPlacementStoreScript.layout_saved(environment),
+		"saved_layout_count": int(coverage.get("saved_layout_count", 0)),
+		"expected_layout_count": int(coverage.get("expected_layout_count", 0)),
+		"missing_layout_count": missing.size(),
+		"next_missing_layout_id": str(missing[0]) if not missing.is_empty() else "",
+		"complete": bool(coverage.get("complete", false)),
+	}
 
 
 func _interactable_object_view_list() -> Array:
@@ -16701,6 +16748,12 @@ func exit_game() -> void:
 
 func open_settings_menu() -> void:
 	if settings_menu == null or settings_overlay == null:
+		# Native and web startup intentionally defer the run shell. Settings owns
+		# Environment Library placement controls, so a cold-start click must cross
+		# that deferred boundary instead of being silently ignored.
+		if not _ensure_run_ui_built():
+			return
+	if settings_menu == null or settings_overlay == null:
 		return
 	if _event_choice_popup_is_visible():
 		return
@@ -16761,11 +16814,15 @@ func _on_settings_applied() -> void:
 
 
 func _on_settings_game_library_requested() -> void:
+	if settings_menu != null:
+		settings_menu.apply_draft("Settings saved; opening Game Library.")
 	close_settings_menu()
 	open_game_test_menu()
 
 
 func _on_settings_environment_library_requested() -> void:
+	if settings_menu != null:
+		settings_menu.apply_draft("Settings saved; opening Environment Library.")
 	close_settings_menu()
 	open_environment_test_menu()
 
@@ -16822,6 +16879,38 @@ func _on_developer_placement_promote_requested() -> void:
 	_show_message("Locked placements saved to %s." % str(result.get("path", "project data")))
 
 
+func _on_developer_layout_save_requested(request: Dictionary) -> void:
+	var environment := JsonCoerceScript._copy_dict(request.get("environment", {}))
+	var positions := JsonCoerceScript._copy_dict(request.get("full_positions", {}))
+	var result := DeveloperPlacementStoreScript.save_layout(
+		environment,
+		positions,
+		str(request.get("field", "slot_positions"))
+	)
+	if not bool(result.get("ok", false)):
+		_show_message(str(result.get("error", "Could not save the current environment layout.")))
+		return
+	var refresh_result := _refresh_developer_authored_environment()
+	var coverage := DeveloperPlacementStoreScript.coverage_snapshot()
+	var missing_value: Variant = coverage.get("missing_layout_ids", [])
+	var missing_count := (missing_value as Array).size() if typeof(missing_value) == TYPE_ARRAY else 0
+	var message := "Saved %s (%d slots). Coverage: %d/%d layouts saved; %d missing." % [
+		str(result.get("layout_id", "current layout")),
+		int(result.get("slot_count", positions.size())),
+		int(coverage.get("saved_layout_count", 0)),
+		int(coverage.get("expected_layout_count", 0)),
+		missing_count,
+	]
+	if bool(coverage.get("complete", false)):
+		message += " All environment layouts are complete."
+	var ignored_value: Variant = result.get("ignored_slot_ids", [])
+	if typeof(ignored_value) == TYPE_ARRAY and not (ignored_value as Array).is_empty():
+		message += " %d unsupported slot IDs were ignored." % (ignored_value as Array).size()
+	if not bool(refresh_result.get("ok", false)):
+		message += " Warning: %s" % str(refresh_result.get("error", "The layout was saved, but this room could not refresh it yet."))
+	_show_message(message)
+
+
 func _on_developer_placement_export_requested(pending_request: Dictionary) -> void:
 	var refresh_warning := ""
 	if not pending_request.is_empty():
@@ -16852,11 +16941,20 @@ func _on_developer_placement_export_requested(pending_request: Dictionary) -> vo
 	if not absolute_path.is_empty():
 		DisplayServer.clipboard_set(absolute_path)
 		OS.shell_show_in_file_manager(absolute_path, true)
-	var message := "Exported %d slot changes across %d rooms. The report path is copied: %s" % [
+	var coverage_value: Variant = result.get("coverage", {})
+	var coverage: Dictionary = coverage_value if typeof(coverage_value) == TYPE_DICTIONARY else {}
+	var missing_value: Variant = coverage.get("missing_layout_ids", [])
+	var missing_count := (missing_value as Array).size() if typeof(missing_value) == TYPE_ARRAY else int(result.get("missing_layout_count", 0))
+	var message := "Exported %d slot positions across %d rooms. Coverage: %d/%d layouts saved; %d missing. The report path is copied: %s" % [
 		int(result.get("slot_count", 0)),
 		int(result.get("room_count", 0)),
+		int(coverage.get("saved_layout_count", result.get("saved_layout_count", 0))),
+		int(coverage.get("expected_layout_count", result.get("expected_layout_count", 0))),
+		missing_count,
 		absolute_path,
 	]
+	if bool(coverage.get("complete", result.get("complete", false))):
+		message += " All environment layouts are complete."
 	var warnings: Array[String] = []
 	if not refresh_warning.is_empty():
 		warnings.append(refresh_warning)

@@ -1,12 +1,13 @@
 # Current Game State
 
-Last product verification: 2026-09-15 against product head `7c23d6aa`.
+Last product verification: 2026-10-03 against the `v0.6.0-pre.3` candidate
+tree.
 
-Status: **PLAYABLE 0.6 DEVELOPMENT SOURCE / NOT RELEASE-CLEARED.**
+Status: **PLAYABLE 0.6 TESTING PRERELEASE / OWNER PLACEMENT PASS PENDING.**
 
-Project and export metadata still identify `0.5.1`, the latest published
-release. That is intentional: the parked `release06_1` task owns the eventual
-0.6 version, package, tag, and publication boundary.
+Project and export metadata identify `0.6.0`. Version `0.5.1` remains the
+latest stable release; `v0.6.0-pre.3` is the current downloadable Windows
+testing prerelease. Final stable qualification remains separate.
 
 ## Player experience
 
@@ -28,7 +29,7 @@ Counts below come directly from the production JSON packs.
 | --- | ---: | --- |
 | Environment archetypes | 18 | `data/environments/archetypes.json` |
 | Games | 11 | `data/games/games.json` |
-| Items | 88 | `data/items/items.json` |
+| Items | 89 | `data/items/items.json` |
 | Content groups | 16 | `data/content_groups/groups.json` |
 | Events | 159 | `data/events/events.json` |
 | Services | 18 | `data/services/services.json` |
@@ -36,7 +37,7 @@ Counts below come directly from the production JSON packs.
 | Travel route templates | 12 | `data/travel/routes.json` |
 | Authored challenges | 8 | `data/challenges/challenges.json` |
 | Dialogues | 32 | `data/dialogue/dialogues.json` |
-| Character identities | 46 | `data/characters/characters.json` |
+| Character identities | 45 | `data/characters/characters.json` |
 | Character pools | 3 | `data/characters/pools.json` |
 | Tutorial lessons | 66 | `data/tutorial/lessons.json` |
 | Scenario sequences | 55 | `data/environments/scenario_sequences/*.json` |
@@ -100,39 +101,47 @@ real surface interaction rather than placeholder result buttons.
 
 ## Verification state
 
-Green on the verified product head:
+The placement rework's source and runtime checks are green:
 
-- project/static validation;
-- exhaustive core/game/UI GDScript loading;
-- all nine Smoke stages, including UI scene compilation and performance smoke;
-- focused Blackjack, Baccarat, Roulette, Craps, Bar Dice, Video Poker, and slot
-  contract suites;
-- surface-audio, float-PCM, adaptive-tempo, jazz choreography, and outcome
-  audits;
-- native Coin Pusher runtime identity, deterministic parity, and smoke;
-- performance-smoke budgets (worst observed frame p95 6.908 ms; worst observed
-  game resolve p95 3.305 ms).
+- 21 source maps validate with four closed slot families and no dangling
+  mapping, duplicate map-local ID, duplicate exact rectangle, or provable
+  fixed/exit orphan;
+- the audited raw/template census is 579 positions (175 fixed, 147 event, 222
+  scenario-source, 35 exit), yielding 401 reachable shared positions plus 339
+  exact scenario positions for 740 unique manual entries;
+- 20 reachable base layouts plus 55 exact scenario layouts produce the complete
+  75-context owner checklist; the raw Punchline parent remains source-only;
+- 55 exact scenario layouts contain 339 independently movable scenario slots;
+- an independent deep sweep generated 1,200 layouts (16 seeds per context)
+  with zero binding failures or occupied hit-rectangle intersections;
+- the permanent regression repeats all 75 contexts over six deterministic
+  seeds, validates sealed and recomputed bindings for 4,509 live room objects,
+  and rejects duplicate occupancy, missing authority, or overlap;
+- migration refresh, fresh legacy conversion, both migration ledgers, scenario
+  generation, save/export coverage, Environment Library launch, and both
+  placement editors pass their focused checks.
+- the Motel retains one conditional `exit.motel_room` reserve because active
+  motel-room ownership can create a real return doorway beside the ordinary
+  leave exit; the runtime manifest test binds that doorway explicitly.
+- the Grand Casino high-limit room, back room, and Cage retain their real
+  world-map Leave exits even though manifest-only generation does not synthesize
+  those UI-owned controls.
+- hidden-casino game capacity is now two floor-fixture positions, so Blackjack
+  can no longer fall through to the Numbers Book; variable Kitty games and
+  Punchline games/lenders remain pooled rather than ID-positioned.
 
-Red on the same current tree:
-
-- the broad Contract suite. Static validation and GDScript loading pass first,
-  then scenario/content shards report label and hit-authority overlap in normal
-  or expanded small-screen layouts, colliding actor route endpoints, missing
-  generated room inventory, and placement-dependent fixture expectations.
-
-This is a room/scenario composition blocker. It is not evidence that the game
-catalog, native extension, or basic player path is absent or broken, and it is
-not waived by the green Smoke result.
+The old room-composition failures are closed by the scenario-local layout
+authority and post-migration cleanup. The remaining room work is artistic:
+the owner will position the audited slots and return the complete schema-3
+report for promotion into committed coordinates.
 
 ## Remaining release sequence
 
-1. Approve and implement a room-construction/placement design that supports the
-   expanded object inventory without overlapping labels, actions, or routes.
-2. Return the broad Contract suite to green and refresh any intentionally
-   changed layout evidence.
-3. Run the binding performance/platform qualification on a quiescent witnessed
-   host.
-4. Refresh the full owner playtest gate and resolve owner-directed balance,
-   polish, voice, and cleanup work.
-5. Let `release06_1` own version stamping, final packages, hashes, tag, release
-   notes, and publication.
+1. Complete the 75-context pass in **Settings > Environment Library**, using
+   the saved/missing counter and exact scenario labels.
+2. Export `BeatTheHouse_environment_slot_placement_changes.json` from the
+   packaged build and provide it for promotion into project authority.
+3. Re-run the placement/runtime gates after promoting those artistic
+   coordinates.
+4. Complete the remaining owner playtest and normal-play ending confirmations
+   before deciding on the final stable 0.6 release.

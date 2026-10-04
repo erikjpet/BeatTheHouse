@@ -1,6 +1,9 @@
 # Environment slot consolidation and counter rework
 
-Status: COMPLETE
+Status: **COMPLETE — HISTORICAL PRE-RELEASE-2 SNAPSHOT; SUPERSEDED FOR CURRENT
+PLACEMENT AUTHORITY.** See `environment_scenario_slot_instance_rework.md` and
+`../plans/environment_scenario_layout_breakdown.md` for the implemented
+scenario-instance model and current 75-context guide.
 
 Started: 2026-10-03
 

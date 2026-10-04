@@ -1,7 +1,11 @@
 # rw06_10 — Environment slot families and generated object manifests
 
-Status: COMPLETE — implemented and verified 2026-09-29. Final artistic
-repositioning remains the owner handoff and is not unfinished migration work.
+Status: **COMPLETE HISTORICAL MILESTONE — SUPERSEDED FOR CURRENT PLACEMENT
+AUTHORITY.** This records the 2026-09-29 four-family migration checkpoint. The
+later scenario-instance rework replaced its room-wide scenario bank, and Pull
+Tabs now attach to each venue's staffed sales counter. Use
+`environment_scenario_slot_instance_rework.md` and
+`../plans/environment_scenario_layout_breakdown.md` for current authority.
 
 Queue row: `T10` in `docs/todo/rw06_final_queue.md`.
 

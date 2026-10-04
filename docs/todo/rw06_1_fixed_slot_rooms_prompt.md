@@ -1,7 +1,9 @@
 # rw06_1 — Fixed, modular room slots (replaces runtime placement solving)
 
-Status: TODO. Self-contained. Launch with this file only. Timebox: 3 days.
-Depends on rw06_0 being DONE (finished fixes are on `main`).
+Status: **HISTORICAL / SUPERSEDED.** This pre-implementation prompt used the
+retired `stage.*` model. The shipped four-family and exact scenario-instance
+design is documented in `environment_scenario_slot_instance_rework.md` and
+`../plans/environment_scenario_layout_breakdown.md`; do not launch this prompt.
 
 ## Goal
 

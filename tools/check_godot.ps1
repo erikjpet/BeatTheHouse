@@ -876,7 +876,12 @@ function Invoke-EnvironmentSlotVerificationGates {
     Invoke-GodotScript -Name "environment_runtime_manifest_retention" -ScriptPath "res://scripts/tests/environment_runtime_manifest_retention_check.gd" -StageTimeoutSec 120
     Invoke-GodotScript -Name "room_slot_occupancy" -ScriptPath "res://scripts/tests/room_slot_occupancy_check.gd" -StageTimeoutSec 600
     Invoke-GodotScript -Name "environment_slot_stacking" -ScriptPath "res://scripts/tests/environment_slot_stacking_regression_check.gd" -StageTimeoutSec 120
+    Invoke-GodotScript -Name "scenario_slot_layout" -ScriptPath "res://scripts/tests/scenario_slot_layout_check.gd" -StageTimeoutSec 180
+    Invoke-GodotScript -Name "environment_slot_runtime_audit" -ScriptPath "res://scripts/tests/environment_slot_runtime_audit_check.gd" -StageTimeoutSec 600
     Invoke-GodotScript -Name "environment_slot_placement_mode" -ScriptPath "res://scripts/tests/environment_slot_placement_mode_check.gd" -StageTimeoutSec 180
+    Invoke-GodotScript -Name "environment_test_mode" -ScriptPath "res://scripts/tests/environment_test_mode_check.gd" -StageTimeoutSec 180
+    Invoke-GodotScript -Name "environment_library_launcher" -ScriptPath "res://scripts/tests/ui_scene/check_environment_library_launcher.gd" -StageTimeoutSec 180
+    Invoke-GodotScript -Name "developer_layout_save_ui" -ScriptPath "res://scripts/tests/developer_layout_save_ui_check.gd" -StageTimeoutSec 120
     Invoke-GodotScript -Name "developer_placement_mode" -ScriptPath "res://scripts/tests/developer_placement_mode_check.gd" -StageTimeoutSec 180
     Invoke-GodotScript -Name "shop_item_row" -ScriptPath "res://tools/shop_item_row_check.gd" -StageTimeoutSec 120
 }

@@ -418,7 +418,14 @@ func _save(message: String) -> void:
 
 # Applies current draft settings.
 func _on_apply() -> void:
-	_save("Settings saved.")
+	apply_draft()
+
+
+# Debug-library launchers are part of this settings screen. Committing the
+# draft before navigation prevents a just-enabled placement mode from being
+# silently discarded when the overlay closes.
+func apply_draft(message: String = "Settings saved.") -> void:
+	_save(message)
 
 
 # Restores defaults and applies them.

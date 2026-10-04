@@ -37,6 +37,301 @@ CONSOLIDATION_ORIGIN_FIELD = "__consolidation_source_slot_ids"
 
 FAMILIES = ("fixed", "event", "scenario", "exit")
 
+# Rows retired after the complete 75-context runtime census.  Every entry was
+# either unreachable legacy action-list geometry or merchandise capacity above
+# the generator's authored maximum.  Keeping the list in the idempotent v2
+# maintenance recipe prevents a later refresh from restoring dead placement
+# markers that the owner would otherwise waste time positioning.
+RETIRED_UNUSED_SLOT_IDS: dict[str, set[str]] = {
+    "corner_store": {
+        "fixed.drink", "fixed.item_shop_6", "fixed.item_shop_7", "fixed.item_shop_8",
+        "fixed.lender_floor_1",
+        "fixed.travel_right", "exit.travel_left", "exit.travel_right",
+        "exit.safe_left",
+    },
+    "back_alley": {
+        "fixed.event_wall_notice", "fixed.home_container_1",
+        "fixed.home_container_2", "fixed.home_container_3",
+        "fixed.random_game_1",
+        "exit.door_left_upper", "exit.door_left_lower", "exit.right_lower",
+    },
+    "motel": {
+        "fixed.event_hallway_fixture", "fixed.item_bed_left",
+        "fixed.item_key_ledge", "fixed.event_wall_calendar",
+        "fixed.item_shop_5", "fixed.item_front_desk", "fixed.lender_visitor",
+        "fixed.patron_floor_right",
+        "exit.door_left_middle", "exit.left_upper",
+    },
+    "bar": {
+        "fixed.drink", "exit.travel_left", "exit.safe_left", "exit.safe_right",
+    },
+    "gas_station_casino": {"exit.door_left_middle", "exit.right_lower"},
+    "small_underground_casino:club": {
+        "fixed.service_left_table",
+        "exit.door_right_lower", "exit.left_upper",
+    },
+    "small_underground_casino:casino": {
+        "fixed.random_game_2", "fixed.service_left_table", "exit.left_upper",
+    },
+    "small_underground_casino:back_room": {"exit.left_2"},
+    "kitty_cat_lounge": {
+        "fixed.item_shop_3", "exit.door_right_middle",
+        "exit.door_right_upper", "exit.right_lower",
+    },
+    "delta_queen": {
+        "fixed.event_table_1", "fixed.event_table_2",
+        "fixed.item_shop_3", "fixed.item_shop_4",
+        "fixed.item_shop_5", "fixed.item_shop_6", "fixed.item_shop_7",
+        "exit.door_left_middle", "exit.left_lower", "exit.right_upper",
+    },
+    "beach": {
+        "fixed.door_left_lower", "exit.door_right_lower", "exit.left_upper",
+    },
+    "pawn_shop": {
+        "fixed.item_shop_7", "fixed.item_shop_8",
+        "exit.door_left_lower", "exit.left_upper", "exit.right_upper",
+    },
+    "grand_casino": {
+        "fixed.drink", "fixed.event_floor_1", "fixed.event_wall_1",
+        "exit.safe_left", "exit.safe_right",
+    },
+    "grand_casino_high_limit": {"exit.safe_right"},
+    "grand_casino_back_room": {"exit.safe_left", "exit.safe_right"},
+    "grand_casino_cage": {"exit.safe_left", "exit.safe_left_lower"},
+    "motel_room": {
+        "fixed.home_notice", "exit.travel_door", "exit.right_door",
+    },
+    "apartment": {
+        "fixed.home_notice", "exit.travel_door", "exit.right_door",
+    },
+    "house": {"fixed.home_notice", "exit.left_door", "exit.right_door"},
+}
+
+# The runtime now emits one physical `travel:leave` row plus only genuine
+# layer/local-room transitions.  This closed map replaces legacy world-map
+# destination aliases and keeps action-list destinations attached to those
+# tangible exits instead of manufacturing one marker per possible route.
+CANONICAL_EXIT_AUTHORITY: dict[str, dict[str, dict[str, str]]] = {
+    "corner_store": {
+        "objects": {"travel:leave": "exit.safe_right"},
+        "categories": {"travel_spots:0": "exit.safe_right"},
+    },
+    "back_alley": {
+        "objects": {"travel:leave": "exit.right_upper"},
+        "categories": {"travel_spots:0": "exit.right_upper"},
+    },
+    "motel": {
+        "objects": {"travel:leave": "exit.door_curtain"},
+        "categories": {
+            "travel_spots:0": "exit.door_curtain",
+            "runtime_object_manifest_entries:0": "exit.motel_room",
+        },
+    },
+    "bar": {
+        "objects": {"travel:leave": "exit.travel_right"},
+        "categories": {"travel_spots:0": "exit.travel_right"},
+    },
+    "gas_station_casino": {
+        "objects": {"travel:leave": "exit.left_upper"},
+        "categories": {"travel_spots:0": "exit.left_upper"},
+    },
+    "small_underground_casino:club": {
+        "objects": {
+            "environment_layer:casino": "exit.door_side",
+            "travel:leave": "exit.left_lower",
+        },
+        "categories": {
+            "layer_spots:0": "exit.door_side",
+            "travel_spots:0": "exit.left_lower",
+        },
+    },
+    "small_underground_casino:casino": {
+        "objects": {
+            "environment_layer:back_room": "exit.door_guarded_lower",
+            "environment_layer:club": "exit.door_left_lower",
+            "travel:leave": "exit.guarded_upper",
+        },
+        "categories": {
+            "layer_spots:0": "exit.door_left_lower",
+            "layer_spots:1": "exit.door_guarded_lower",
+            "travel_spots:0": "exit.guarded_upper",
+        },
+    },
+    "small_underground_casino:back_room": {
+        "objects": {
+            "environment_layer:casino": "exit.layer_door",
+            "travel:leave": "exit.left_1",
+        },
+        "categories": {
+            "layer_spots:0": "exit.layer_door",
+            "travel_spots:0": "exit.left_1",
+        },
+    },
+    "jazz_club": {
+        "objects": {"travel:leave": "exit.door_right_upper"},
+        "categories": {"travel_spots:0": "exit.door_right_upper"},
+    },
+    "kitty_cat_lounge": {
+        "objects": {"travel:leave": "exit.left_lower"},
+        "categories": {"travel_spots:0": "exit.left_lower"},
+    },
+    "delta_queen": {
+        "objects": {"travel:leave": "exit.door_right_middle"},
+        "categories": {"travel_spots:0": "exit.door_right_middle"},
+    },
+    "beach": {
+        "objects": {"travel:leave": "exit.right_upper"},
+        "categories": {"travel_spots:0": "exit.right_upper"},
+    },
+    "pawn_shop": {
+        "objects": {"travel:leave": "exit.door_right_lower"},
+        "categories": {"travel_spots:0": "exit.door_right_lower"},
+    },
+    "grand_casino": {
+        "objects": {
+            "travel:grand_casino_back_room": "exit.travel_back_room",
+            "travel:grand_casino_cage": "exit.travel_cage",
+            "travel:grand_casino_high_limit": "exit.travel_high_limit",
+            "travel:leave": "exit.travel_leave",
+        },
+        "categories": {
+            "casino_door_spots:0": "exit.travel_high_limit",
+            "casino_door_spots:1": "exit.travel_back_room",
+            "casino_door_spots:2": "exit.travel_cage",
+            "travel_spots:0": "exit.travel_leave",
+        },
+    },
+    "grand_casino_high_limit": {
+        "objects": {
+            "travel:grand_casino": "exit.travel_left",
+            "travel:grand_casino_cage": "exit.travel_right",
+            "travel:leave": "exit.safe_left",
+        },
+        "categories": {
+            "casino_door_spots:0": "exit.travel_left",
+            "casino_door_spots:1": "exit.travel_right",
+            "travel_spots:0": "exit.safe_left",
+        },
+    },
+    "grand_casino_back_room": {
+        "objects": {"travel:leave": "exit.travel_left"},
+        "categories": {"travel_spots:0": "exit.travel_left"},
+    },
+    "grand_casino_cage": {
+        "objects": {
+            "travel:grand_casino": "exit.casino_floor_door",
+            "travel:leave": "exit.travel_floor_door",
+        },
+        "categories": {
+            "casino_door_spots:0": "exit.casino_floor_door",
+            "travel_spots:0": "exit.travel_floor_door",
+        },
+    },
+    "motel_room": {
+        "objects": {"travel:leave": "exit.left_door"},
+        "categories": {"travel_spots:0": "exit.left_door"},
+    },
+    "apartment": {
+        "objects": {"travel:leave": "exit.left_door"},
+        "categories": {"travel_spots:0": "exit.left_door"},
+    },
+    "house": {
+        "objects": {"travel:leave": "exit.travel_door"},
+        "categories": {"travel_spots:0": "exit.travel_door"},
+    },
+}
+
+# Initial collision-free geometry for the owner placement pass.  These are
+# deliberately modest source-layout corrections, not an artistic final pass.
+# Exact scenario layouts clone this geometry and can then be repositioned
+# independently through the in-game tool.
+REVIEWED_SLOT_GEOMETRY: dict[str, dict[str, dict[str, Any]]] = {
+    "motel": {
+        "fixed.item_shop_4": {
+            "pos": [298.0, 100.0],
+            "hit_rect": [262.0, 52.0, 72.0, 48.0],
+            "label_anchor": [298.0, 46.0],
+            "support_id": "lobby_key_ledge",
+        },
+        "scenario.doorway_1": {
+            "pos": [859.0, 116.0],
+            "hit_rect": [827.0, 80.0, 64.0, 72.0],
+            "label_anchor": [859.0, 74.0],
+            "support_id": "right_door",
+        },
+    },
+    "bar": {
+        "scenario.standing_person_1": {
+            "pos": [526.0, 294.0],
+            "hit_rect": [490.0, 214.0, 72.0, 80.0],
+            "label_anchor": [526.0, 208.0],
+            "support_id": "floor",
+        },
+    },
+    "gas_station_casino": {
+        "event.doorway_2": {
+            "pos": [262.0, 120.0],
+            "hit_rect": [226.0, 96.0, 72.0, 48.0],
+            "label_anchor": [262.0, 90.0],
+            "support_id": "round3_sill_door",
+        },
+        "scenario.doorway_1": {
+            "pos": [350.0, 120.0],
+            "hit_rect": [314.0, 96.0, 72.0, 48.0],
+            "label_anchor": [350.0, 90.0],
+            "support_id": "round3_sill_door",
+        },
+    },
+    "kitty_cat_lounge": {
+        "scenario.doorway_1": {
+            "pos": [876.0, 180.0],
+            "hit_rect": [852.0, 144.0, 48.0, 72.0],
+            "label_anchor": [876.0, 218.0],
+            "support_id": "right_exit",
+        },
+    },
+    "delta_queen": {
+        "scenario.wall_item_2": {
+            "pos": [166.0, 24.0],
+            "hit_rect": [126.0, 0.0, 80.0, 48.0],
+            "label_anchor": [166.0, 8.0],
+            "support_id": "wall",
+        },
+        "scenario.floor_fixture_1": {
+            "pos": [284.0, 324.0],
+            "hit_rect": [238.0, 260.0, 92.0, 64.0],
+            "label_anchor": [284.0, 254.0],
+            "support_id": "floor",
+        },
+    },
+    "pawn_shop": {
+        "scenario.shop_item_1": {
+            "pos": [96.0, 184.0],
+            "hit_rect": [60.0, 136.0, 72.0, 48.0],
+            "label_anchor": [96.0, 130.0],
+            "support_id": "estate_left_lower_shelf",
+        },
+        "scenario.shop_item_2": {
+            "pos": [362.0, 176.0],
+            "hit_rect": [326.0, 128.0, 72.0, 48.0],
+            "label_anchor": [362.0, 122.0],
+            "support_id": "estate_center_lower_shelf",
+        },
+        "scenario.surface_item_1": {
+            "pos": [676.0, 104.0],
+            "hit_rect": [640.0, 56.0, 72.0, 48.0],
+            "label_anchor": [676.0, 50.0],
+            "support_id": "estate_right_upper_shelf",
+        },
+        "scenario.surface_item_2": {
+            "pos": [196.0, 184.0],
+            "hit_rect": [160.0, 136.0, 72.0, 48.0],
+            "label_anchor": [196.0, 130.0],
+            "support_id": "estate_left_lower_shelf",
+        },
+    },
+}
+
 PULL_TABS_HOST_ACTION_IDS = (
     "game:pull_tabs",
     "game_hook:pull_tabs:ticket_redeemer",
@@ -2411,8 +2706,12 @@ def _rename_slot_and_references(
 
 def _normalize_descriptive_fixed_ids(maps: dict[str, dict[str, Any]]) -> None:
     renames = {
+        "corner_store": {
+            "fixed.event_group_1": "fixed.crew_group",
+        },
         "back_alley": {
             "fixed.door_left_upper": "fixed.lender_street_lender",
+            "fixed.patron_crew": "fixed.crew_group",
         },
         "pawn_shop": {
             "fixed.door_left_lower": "fixed.lender_sals_pawn_counter",
@@ -2422,16 +2721,483 @@ def _normalize_descriptive_fixed_ids(maps: dict[str, dict[str, Any]]) -> None:
         },
         "kitty_cat_lounge": {
             "fixed.random_game_1": "fixed.event_grand_casino_invite",
+            "fixed.patron_group_center": "fixed.crew_group",
         },
         "delta_queen": {
             "fixed.event_wall_1": "fixed.event_grand_casino_invite",
+            "fixed.event_deck_walk": "fixed.service_deck_walk",
+            "fixed.patron_front_left": "fixed.crew_group",
+            "fixed.staff_floor": "fixed.staff_ox",
+        },
+        "small_underground_casino:club": {
+            "fixed.staff_floor_right": "fixed.staff_ox",
+        },
+        "small_underground_casino:casino": {
+            "fixed.staff_floor_right": "fixed.staff_ox",
         },
     }
     for map_id, map_renames in renames.items():
         for source_slot_id, target_slot_id in map_renames.items():
+            if (
+                map_id == "kitty_cat_lounge"
+                and source_slot_id == "fixed.random_game_1"
+                and _slot_by_id(maps[map_id], target_slot_id) is not None
+            ):
+                # A short-lived maintenance authority reused random_game_1 for
+                # Kitty's machine capacity after the invite had already been
+                # renamed. The fixed-game normalizer below resolves that row.
+                continue
             _rename_slot_and_references(
                 maps[map_id], source_slot_id, target_slot_id
             )
+
+    # The raw Punchline parent is a source template, but keeping its deterministic
+    # reviewed order makes fresh legacy conversion byte-identical to maintenance
+    # refreshes and keeps human diffs readable.
+    punchline = maps["small_underground_casino"]
+    punchline_order = {
+        "fixed.staff_floor_left": 0,
+        "fixed.door_right_lower": 1,
+    }
+    punchline["fixed_slots"] = sorted(
+        punchline.get("fixed_slots", []) or [],
+        key=lambda slot: punchline_order.get(
+            str(slot.get("id", "")) if isinstance(slot, dict) else "", 2
+        ),
+    )
+
+
+def _normalize_fixed_game_authority(maps: dict[str, dict[str, Any]]) -> None:
+    """Name guaranteed games exactly and keep variable pools ID-independent."""
+
+    guaranteed_renames = {
+        "corner_store": {
+            "fixed.random_game_1": "fixed.game_coin_pusher",
+        },
+        "beach": {
+            "fixed.random_game_1": "fixed.game_slot",
+        },
+        "pawn_shop": {
+            "fixed.random_game_1": "fixed.game_slot",
+        },
+        "small_underground_casino:back_room": {
+            "fixed.random_game_1": "fixed.game_crew_draw_poker",
+        },
+        "delta_queen": {
+            "fixed.random_game_1": "fixed.game_blackjack",
+            "fixed.random_game_2": "fixed.game_video_poker",
+            "fixed.random_game_3": "fixed.game_roulette",
+        },
+    }
+    for map_id, renames in guaranteed_renames.items():
+        for source_slot_id, target_slot_id in renames.items():
+            _rename_slot_and_references(
+                maps[map_id], source_slot_id, target_slot_id
+            )
+
+    # The hidden Punchline casino generates exactly two games from a three-game
+    # pool.  Both positions are floor fixtures owned by ordinal capacity.  The
+    # former surface-item middle row caused Blackjack to fall through to the
+    # Numbers Book; it is now retired rather than treated as game capacity.
+    casino = maps["small_underground_casino:casino"]
+    if _slot_by_id(casino, "fixed.random_game_3") is not None:
+        _rename_slot_and_references(
+            casino, "fixed.random_game_3", "fixed.game_floor_2"
+        )
+    elif _slot_by_id(casino, "fixed.game_floor_2") is None:
+        # Maintenance recovery for the short-lived reviewed authority that had
+        # already removed random_game_3: promote the doomed middle row, then
+        # normalize it to the canonical second floor fixture below.
+        _rename_slot_and_references(
+            casino, "fixed.random_game_2", "fixed.game_floor_2"
+        )
+    _rename_slot_and_references(
+        casino, "fixed.random_game_1", "fixed.game_floor_1"
+    )
+    second_floor = _slot_by_id(casino, "fixed.game_floor_2")
+    if second_floor is None:
+        raise ValueError(
+            "small_underground_casino:casino: missing second floor-game capacity"
+        )
+    second_floor.update({
+        "pos": [468.0, 70.0],
+        "footprint_class": "floor_fixture",
+        "physical_role": "Game floor position 2",
+        "hit_rect": [422.0, 6.0, 92.0, 64.0],
+        "label_anchor": [407.0, 26.0],
+        "facing": "none",
+        "priority": 130,
+        "zone_id": "room",
+        "support_id": "stage",
+        "walk_lane_ids": [],
+        "occupancy_required": False,
+    })
+    casino_objects = casino.setdefault("fixed_object_slot_ids", {})
+    for object_id in ("game:slot", "game:blackjack", "game:video_poker"):
+        casino_objects.pop(object_id, None)
+        casino.setdefault("object_family_ids", {})[object_id] = "fixed"
+        casino.setdefault("class_overrides", {})[object_id] = "floor_fixture"
+    casino_categories = casino.setdefault("fixed_category_slot_ids", {})
+    for category_id in list(casino_categories):
+        if category_id.startswith(("game_spots:", "service_spots:", "lender_spots:")):
+            casino_categories.pop(category_id, None)
+    casino_categories.update({
+        "game_spots:0": "fixed.game_floor_1",
+        "game_spots:1": "fixed.game_floor_2",
+        "service_spots:0": "fixed.service_house_drink",
+        "lender_spots:0": "fixed.lender_group_1",
+        "lender_spots:1": "fixed.lender_person_1",
+    })
+    _rename_slot_and_references(
+        casino, "fixed.crew_group", "fixed.lender_group_1"
+    )
+    _rename_slot_and_references(
+        casino, "fixed.staff_street_lender", "fixed.lender_person_1"
+    )
+    for object_id in ("lender:the_crew", "lender:street_lender"):
+        casino_objects.pop(object_id, None)
+    casino_order = {
+        "fixed.staff_dealer": 0,
+        "fixed.game_floor_1": 1,
+        "fixed.game_floor_2": 2,
+        "fixed.lender_person_1": 3,
+        "fixed.lender_group_1": 4,
+    }
+    casino["fixed_slots"] = sorted(
+        casino.get("fixed_slots", []) or [],
+        key=lambda slot: casino_order.get(
+            str(slot.get("id", "")) if isinstance(slot, dict) else "", 100
+        ),
+    )
+
+    # Kitty has one machine footprint and two table footprints.  Which game ID
+    # uses those positions is intentionally determined by the generated pool,
+    # not by object-specific placement authority.
+    kitty = maps["kitty_cat_lounge"]
+    for source_slot_id in ("fixed.game_table_left", "fixed.game_roulette"):
+        if _slot_by_id(kitty, source_slot_id) is not None:
+            _rename_slot_and_references(
+                kitty, source_slot_id, "fixed.table_game_1"
+            )
+    _rename_slot_and_references(
+        kitty, "fixed.random_game_2", "fixed.table_game_2"
+    )
+    for source_slot_id in ("fixed.random_game_3", "fixed.random_game_1"):
+        if _slot_by_id(kitty, source_slot_id) is not None:
+            _rename_slot_and_references(
+                kitty, source_slot_id, "fixed.machine_game_1"
+            )
+    kitty_objects = kitty.setdefault("fixed_object_slot_ids", {})
+    for object_id in ("game:roulette", "game:slot", "game:bar_dice"):
+        kitty_objects.pop(object_id, None)
+    kitty_categories = kitty.setdefault("fixed_category_slot_ids", {})
+    for category_id in list(kitty_categories):
+        if category_id.startswith(("game_spots:", "game_hook_spots:", "service_spots:")):
+            kitty_categories.pop(category_id, None)
+    kitty_categories.update({
+        "game_spots:0": "fixed.table_game_1",
+        "game_spots:1": "fixed.machine_game_1",
+        "game_spots:2": "fixed.table_game_2",
+        "service_spots:0": "fixed.service_kitty_champagne",
+        "service_spots:2": "fixed.service_house_drink",
+    })
+
+    # Delta always generates all three named games.  Their exact object
+    # mappings are the complete authority, so stale ordinal/service aliases are
+    # removed instead of pointing unrelated content at game geometry.
+    delta_categories = maps["delta_queen"].setdefault(
+        "fixed_category_slot_ids", {}
+    )
+    for category_id in list(delta_categories):
+        if category_id.startswith(
+            ("game_spots:", "game_hook_spots:", "service_spots:", "lender_spots:")
+        ):
+            delta_categories.pop(category_id, None)
+
+    # Convention Crowd used to reclassify Video Poker as a floor fixture,
+    # forcing it out of its guaranteed machine slot and into an unrelated
+    # event fixture. Keep the machine's base classification in every scenario.
+    grand_overrides = maps["grand_casino"].get("scenario_overrides", {})
+    if isinstance(grand_overrides, dict):
+        convention = grand_overrides.get("grand_casino_convention_crowd", {})
+        if isinstance(convention, dict):
+            class_overrides = convention.get("class_overrides", {})
+            if isinstance(class_overrides, dict):
+                class_overrides.pop("game:video_poker", None)
+                if not class_overrides:
+                    convention.pop("class_overrides", None)
+
+    # The club service is physically owned by the guaranteed stage.  Its old
+    # second table row never received an occupant.
+    club_categories = maps["small_underground_casino:club"].setdefault(
+        "fixed_category_slot_ids", {}
+    )
+    club_categories["service_spots:0"] = "fixed.service_stage"
+
+    # These ordinal service routes are action-only or empty in production.
+    # Their actions already attach to tangible staff/musician hosts, so keeping
+    # the aliases would misleadingly advertise extra physical service objects.
+    for map_id in ("back_alley", "pawn_shop", "jazz_club"):
+        categories = maps[map_id].setdefault("fixed_category_slot_ids", {})
+        for category_id in list(categories):
+            if str(category_id).startswith("service_spots:"):
+                categories.pop(category_id, None)
+
+
+def _retire_unreachable_slots(maps: dict[str, dict[str, Any]]) -> None:
+    """Remove reviewed dead rows and every ordinal category alias to them."""
+
+    unknown_maps = set(RETIRED_UNUSED_SLOT_IDS) - set(maps)
+    if unknown_maps:
+        raise ValueError(
+            f"retired placement rows name missing maps: {sorted(unknown_maps)}"
+        )
+    for map_id, retired_ids in RETIRED_UNUSED_SLOT_IDS.items():
+        map_data = maps[map_id]
+        for slot_id in retired_ids:
+            slot = _slot_by_id(map_data, slot_id)
+            if slot is None:
+                continue
+            # Legacy exit rows can still carry obsolete world-map destination
+            # labels even though production no longer creates those physical
+            # objects. CANONICAL_EXIT_AUTHORITY above is the closed proof for
+            # retiring them; non-exit rows must remain completely unclaimed.
+            if (
+                (
+                    str(slot.get("kind", "")) != "exit"
+                    and bool(list(slot.get("occupant_ids", []) or []))
+                )
+                or bool(slot.get("occupancy_required", False))
+                or bool(slot.get("runtime_reserve", False))
+            ):
+                raise ValueError(
+                    f"{map_id}: refusing to retire live/reserved slot {slot_id}"
+                )
+            for family in FAMILIES:
+                object_preferences = map_data.get(
+                    f"{family}_object_slot_ids", {}
+                )
+                if isinstance(object_preferences, dict) and slot_id in {
+                    str(value) for value in object_preferences.values()
+                }:
+                    raise ValueError(
+                        f"{map_id}: refusing to retire object-mapped slot {slot_id}"
+                    )
+            if any(
+                isinstance(declaration, dict)
+                and str(declaration.get("exact_slot_id", "")) == slot_id
+                for declaration in map_data.get("fixed_objects", []) or []
+            ):
+                raise ValueError(
+                    f"{map_id}: refusing to retire declared fixed slot {slot_id}"
+                )
+
+        for family in FAMILIES:
+            field = f"{family}_slots"
+            map_data[field] = [
+                slot
+                for slot in map_data.get(field, []) or []
+                if not isinstance(slot, dict)
+                or str(slot.get("id", "")) not in retired_ids
+            ]
+            category_preferences = map_data.get(
+                f"{family}_category_slot_ids", {}
+            )
+            if isinstance(category_preferences, dict):
+                for claimant, slot_id in list(category_preferences.items()):
+                    if str(slot_id) in retired_ids:
+                        category_preferences.pop(claimant, None)
+
+        semantic_preferences = map_data.get("scenario_slot_ids", {})
+        if isinstance(semantic_preferences, dict):
+            for claimant, slot_id in list(semantic_preferences.items()):
+                if str(slot_id) in retired_ids:
+                        semantic_preferences.pop(claimant, None)
+
+
+def _normalize_exit_authority(maps: dict[str, dict[str, Any]]) -> None:
+    """Keep only exits that production can create in each playable room."""
+
+    unknown_maps = set(CANONICAL_EXIT_AUTHORITY) - set(maps)
+    if unknown_maps:
+        raise ValueError(
+            f"canonical exit authority names missing maps: {sorted(unknown_maps)}"
+        )
+
+    # Maintenance recovery for a short-lived review that treated the Grand
+    # Casino's UI-synthesized world-map Leave controls as dead merely because
+    # the manifest-only generation host does not emit them. The real
+    # interaction view model uses all three slots.
+    grand_leave_slots = {
+        "grand_casino_high_limit": {
+            "id": "exit.safe_left",
+            "pos": [36.0, 278.0],
+            "hit_rect": [4.0, 242.0, 64.0, 72.0],
+            "label_anchor": [36.0, 236.0],
+            "priority": 10,
+            "support_id": "left_exit",
+        },
+        "grand_casino_back_room": {
+            "id": "exit.travel_left",
+            "pos": [36.0, 390.0],
+            "hit_rect": [4.0, 354.0, 64.0, 72.0],
+            "label_anchor": [36.0, 348.0],
+            "priority": 40,
+            "support_id": "left_exit",
+        },
+        "grand_casino_cage": {
+            "id": "exit.travel_floor_door",
+            "pos": [847.0, 160.0],
+            "hit_rect": [815.0, 124.0, 64.0, 72.0],
+            "label_anchor": [847.0, 118.0],
+            "priority": 70,
+            "support_id": "floor_door",
+        },
+    }
+    for map_id, geometry in grand_leave_slots.items():
+        map_data = maps[map_id]
+        slot_id = str(geometry["id"])
+        slot = _slot_by_id(map_data, slot_id)
+        if slot is None:
+            slot = {"id": slot_id}
+            map_data.setdefault("exit_slots", []).append(slot)
+        slot.update({
+            "kind": "exit",
+            "pos": list(geometry["pos"]),
+            "footprint_class": "doorway",
+            "physical_role": "Travel exit",
+            "occupant_ids": ["travel:leave"],
+            "runtime_reserve": False,
+            "reserve_reason": "",
+            "hit_rect": list(geometry["hit_rect"]),
+            "label_anchor": list(geometry["label_anchor"]),
+            "facing": "front",
+            "priority": int(geometry["priority"]),
+            "zone_id": "room",
+            "support_id": str(geometry["support_id"]),
+            "walk_lane_ids": ["lane.public"],
+            "occupancy_required": False,
+        })
+    grand_exit_order = {
+        "grand_casino_high_limit": [
+            "exit.travel_left", "exit.travel_right", "exit.safe_left",
+        ],
+        "grand_casino_back_room": ["exit.travel_left"],
+        "grand_casino_cage": [
+            "exit.casino_floor_door", "exit.travel_floor_door",
+        ],
+    }
+    for map_id, slot_ids in grand_exit_order.items():
+        order = {slot_id: index for index, slot_id in enumerate(slot_ids)}
+        maps[map_id]["exit_slots"] = sorted(
+            maps[map_id].get("exit_slots", []) or [],
+            key=lambda slot: order.get(
+                str(slot.get("id", "")) if isinstance(slot, dict) else "",
+                len(order),
+            ),
+        )
+
+    # Owning a motel room adds a second, runtime-authored doorway alongside the
+    # ordinary leave action. It is conditional rather than dead capacity, so
+    # retain one clearly named reserve instead of the three ambiguous legacy
+    # motel exits. Fresh legacy conversion renames the reviewed room-door row;
+    # maintenance refreshes can deterministically recover it from the scenario
+    # doorway geometry after a short-lived authority removed every spare exit.
+    motel = maps["motel"]
+    if _slot_by_id(motel, "exit.motel_room") is None:
+        if _slot_by_id(motel, "exit.room_door") is not None:
+            _rename_slot_and_references(
+                motel, "exit.room_door", "exit.motel_room"
+            )
+        else:
+            _ensure_provisional_slot(
+                motel,
+                "exit",
+                "exit.motel_room",
+                "doorway",
+                ("scenario.doorway_3", "exit.door_curtain"),
+            )
+    motel_room_exit = _slot_by_id(motel, "exit.motel_room")
+    if motel_room_exit is None:
+        raise ValueError("motel: missing conditional motel-room entrance")
+    motel_room_exit.update({
+        "pos": [303.0, 168.0],
+        "kind": "exit",
+        "footprint_class": "doorway",
+        "physical_role": "Owned motel-room entrance",
+        "occupant_ids": [],
+        "runtime_reserve": True,
+        "reserve_reason": (
+            "Active motel-room ownership adds a return door beside the normal "
+            "travel exit."
+        ),
+        "hit_rect": [271.0, 132.0, 64.0, 72.0],
+        "label_anchor": [303.0, 126.0],
+        "facing": "right",
+        "priority": 20,
+        "zone_id": "room",
+        "support_id": "room_door",
+        "walk_lane_ids": ["lane.public"],
+        "occupancy_required": False,
+    })
+
+    for map_id, authority in CANONICAL_EXIT_AUTHORITY.items():
+        map_data = maps[map_id]
+        objects = dict(authority["objects"])
+        categories = dict(authority["categories"])
+        authored_ids = {
+            str(slot.get("id", ""))
+            for slot in map_data.get("exit_slots", []) or []
+            if isinstance(slot, dict)
+        }
+        missing = (set(objects.values()) | set(categories.values())) - authored_ids
+        if missing:
+            raise ValueError(
+                f"{map_id}: canonical exit authority names missing slots "
+                f"{sorted(missing)}"
+            )
+        map_data["exit_object_slot_ids"] = objects
+        map_data["exit_category_slot_ids"] = categories
+        family_ids = map_data.setdefault("object_family_ids", {})
+        if not isinstance(family_ids, dict):
+            raise ValueError(f"{map_id}: object_family_ids must be an object")
+        for object_id, family in list(family_ids.items()):
+            if str(family) == "exit":
+                family_ids.pop(object_id, None)
+        for object_id in objects:
+            family_ids[object_id] = "exit"
+
+
+def _normalize_reviewed_slot_geometry(maps: dict[str, dict[str, Any]]) -> None:
+    """Apply the audited non-overlapping starting geometry."""
+
+    for map_id, slots in REVIEWED_SLOT_GEOMETRY.items():
+        map_data = maps.get(map_id)
+        if map_data is None:
+            raise ValueError(f"reviewed geometry names missing map {map_id}")
+        for slot_id, geometry in slots.items():
+            slot = _slot_by_id(map_data, slot_id)
+            if slot is None:
+                raise ValueError(
+                    f"{map_id}: reviewed geometry names missing slot {slot_id}"
+                )
+            for field in ("pos", "hit_rect", "label_anchor"):
+                slot[field] = list(geometry[field])
+            slot["support_id"] = str(geometry["support_id"])
+
+    gas_station = maps["gas_station_casino"]
+    sill = next(
+        (
+            doorway
+            for doorway in gas_station.get("doorways", []) or []
+            if isinstance(doorway, dict)
+            and str(doorway.get("id", "")) == "round3_sill_door"
+        ),
+        None,
+    )
+    if sill is None:
+        raise ValueError("gas_station_casino: round3_sill_door is missing")
+    sill["bounds"] = [226.0, 96.0, 160.0, 48.0]
 
 
 def _attach_actions_to_fixed_host(
@@ -2923,8 +3689,22 @@ def _physical_role(slot: dict[str, Any], declaration_label: str = "") -> str:
         return "Shop item"
     if "game" in slot_id:
         return "Game fixture"
+    if slot_id == "exit.motel_room":
+        return "Owned motel-room entrance"
     if slot_id.startswith("exit."):
         return "Travel exit"
+    semantic_roles = {
+        "fixed.crew_group": "The Crew",
+        "fixed.lender_floor_1": "Visiting lender",
+        "fixed.lender_visitor": "Visiting lender",
+        "fixed.lender_street_lender": "Street lender",
+        "fixed.lender_motel_friend": "Motel friend lender",
+        "fixed.lender_person_1": "Individual lender",
+        "fixed.staff_street_lender": "Street lender",
+        "fixed.service_deck_walk": "Riverboat deck walk",
+    }
+    if slot_id in semantic_roles:
+        return semantic_roles[slot_id]
     roles = {
         "standing_person": "Standing person",
         "behind_counter_person": "Counter staff",
@@ -3244,11 +4024,18 @@ def _apply_slot_consolidation(payload: dict[str, Any]) -> None:
     }
     _retire_pull_tabs_standalone_rows(maps)
     _normalize_descriptive_fixed_ids(maps)
+    _normalize_fixed_game_authority(maps)
+    _normalize_exit_authority(maps)
+    _retire_unreachable_slots(maps)
     _normalize_event_capacity_consolidation(maps)
     _normalize_scenario_capacity_consolidation(maps)
     _normalize_slot_occupancy_metadata(payload)
     _normalize_slot_authoring_metadata(payload)
     _normalize_reusable_slot_ids(payload)
+    # Reviewed coordinates are expressed in the canonical reusable IDs. Apply
+    # them after a fresh legacy conversion has completed that deterministic
+    # rename, while remaining byte-idempotent for already canonical v2 data.
+    _normalize_reviewed_slot_geometry(maps)
     _normalize_slot_field_order(payload)
 
 
@@ -4108,8 +4895,8 @@ def validate(
         ),
         "kitty_cat_lounge": (
             ("fixed.patron_dot", "event.seated_person_1"),
-            ("fixed.random_game_2", "fixed.item_shop_1"),
-            ("fixed.random_game_2", "fixed.service_kitty_champagne"),
+            ("fixed.table_game_2", "fixed.item_shop_1"),
+            ("fixed.table_game_2", "fixed.service_kitty_champagne"),
             ("fixed.item_shop_1", "fixed.service_kitty_champagne"),
         ),
     }
@@ -4125,10 +4912,7 @@ def validate(
             assert not _rects_overlap_with_gap(first_rect, second_rect), f"{map_id} padded geometry overlaps: {first_id}, {second_id}"
 
     direct_spacing_pairs = {
-        "motel": (
-            ("fixed.item_counter_phone", "fixed.lender_motel_friend"),
-            ("scenario.doorway_3", "exit.left_upper"),
-        ),
+        "motel": (("fixed.item_counter_phone", "fixed.lender_motel_friend"),),
         "bar": (("event.standing_person_1", "event.doorway_1"),),
         "kitty_cat_lounge": (("event.doorway_1", "fixed.staff_merchant"),),
         "delta_queen": (("event.doorway_1", "fixed.staff_merchant"),),
@@ -4145,6 +4929,19 @@ def validate(
             second_rect = _slot_rect(second)
             assert first_rect is not None and second_rect is not None, f"{map_id} direct spacing pair lacks geometry: {first_id}, {second_id}"
             assert not _rects_overlap(first_rect, second_rect), f"{map_id} direct interaction geometry overlaps: {first_id}, {second_id}"
+
+    for map_id, retired_ids in RETIRED_UNUSED_SLOT_IDS.items():
+        map_data = maps[map_id]
+        remaining_ids = {
+            str(slot.get("id", ""))
+            for family in FAMILIES
+            for slot in map_data.get(f"{family}_slots", []) or []
+            if isinstance(slot, dict)
+        }
+        assert remaining_ids.isdisjoint(retired_ids), (
+            f"{map_id} retained unreachable placement rows "
+            f"{sorted(remaining_ids & retired_ids)}"
+        )
 
     motel = maps["motel"]
     assert "lender:brother_in_law" not in motel.get("object_family_ids", {}), "motel phone-only brother-in-law gained a physical family"
@@ -4406,7 +5203,17 @@ def validate(
             for value in map_data.get("fixed_objects", [])
             if isinstance(value, dict)
         }
-        for expected in declarations:
+        canonical_host_slot_ids = {
+            ("delta_queen", "fixed.staff_floor"): "fixed.staff_ox",
+            ("small_underground_casino:club", "fixed.staff_floor_right"): "fixed.staff_ox",
+            ("small_underground_casino:casino", "fixed.staff_floor_right"): "fixed.staff_ox",
+        }
+        for legacy_expected in declarations:
+            expected = copy.deepcopy(legacy_expected)
+            legacy_slot_id = str(expected.get("exact_slot_id", ""))
+            expected["exact_slot_id"] = canonical_host_slot_ids.get(
+                (map_id, legacy_slot_id), legacy_slot_id
+            )
             object_id = str(expected["object_id"])
             declaration = by_id.get(object_id)
             assert declaration is not None, f"{map_id} missing guaranteed host {object_id}"
@@ -4510,6 +5317,22 @@ def validate(
         "game_spots:4": "fixed.game_table_left",
         "game_spots:5": "fixed.game_table_right",
     }, "grand_casino game category rows no longer match its six physical games"
+    grand = maps["grand_casino"]
+    convention_override = grand.get("scenario_overrides", {}).get(
+        "grand_casino_convention_crowd", {}
+    )
+    assert grand.get("class_overrides", {}).get("game:video_poker") == "wall_mounted", (
+        "grand_casino Video Poker must retain its machine classification"
+    )
+    assert "game:video_poker" not in convention_override.get("class_overrides", {}), (
+        "Convention Crowd must not reclassify Video Poker as a floor fixture"
+    )
+    assert _slot_by_id(grand, "fixed.event_floor_1") is None, (
+        "grand_casino retained the unused event floor fixture"
+    )
+    assert "casino_fixture_spots:1" not in grand.get("fixed_category_slot_ids", {}), (
+        "grand_casino retained the unused second casino-fixture alias"
+    )
     assert {
         key: value
         for key, value in maps["bar"].get("fixed_category_slot_ids", {}).items()
@@ -4536,8 +5359,12 @@ def validate(
         )
 
     descriptive_fixed_ids = {
+        "corner_store": {
+            "lender:the_crew": "fixed.crew_group",
+        },
         "back_alley": {
             "lender:street_lender": "fixed.lender_street_lender",
+            "lender:the_crew": "fixed.crew_group",
         },
         "pawn_shop": {
             "lender:sals_pawn_counter": "fixed.lender_sals_pawn_counter",
@@ -4547,9 +5374,19 @@ def validate(
         },
         "kitty_cat_lounge": {
             "event:grand_casino_invite": "fixed.event_grand_casino_invite",
+            "lender:the_crew": "fixed.crew_group",
         },
         "delta_queen": {
             "event:grand_casino_invite": "fixed.event_grand_casino_invite",
+            "lender:the_crew": "fixed.crew_group",
+            "service:riverboat_deck_walk": "fixed.service_deck_walk",
+            "staff:delta_deck_boss": "fixed.staff_ox",
+        },
+        "small_underground_casino:club": {
+            "staff:punchline_bouncer": "fixed.staff_ox",
+        },
+        "small_underground_casino:casino": {
+            "character:ox": "fixed.staff_ox",
         },
     }
     for map_id, object_targets in descriptive_fixed_ids.items():
@@ -4561,6 +5398,116 @@ def validate(
             assert _slot_by_id(map_data, slot_id) is not None, (
                 f"{map_id} is missing descriptive fixed row {slot_id}"
             )
+
+    guaranteed_game_ids = {
+        "corner_store": {"game:coin_pusher": "fixed.game_coin_pusher"},
+        "pawn_shop": {"game:slot": "fixed.game_slot"},
+        "small_underground_casino:back_room": {
+            "game:crew_draw_poker": "fixed.game_crew_draw_poker",
+        },
+        "delta_queen": {
+            "game:blackjack": "fixed.game_blackjack",
+            "game:roulette": "fixed.game_roulette",
+            "game:video_poker": "fixed.game_video_poker",
+        },
+    }
+    for map_id, expected in guaranteed_game_ids.items():
+        actual = maps[map_id].get("fixed_object_slot_ids", {})
+        for object_id, slot_id in expected.items():
+            assert actual.get(object_id) == slot_id, (
+                f"{map_id} guaranteed {object_id} must use {slot_id}"
+            )
+            assert _slot_by_id(maps[map_id], slot_id) is not None
+    assert maps["beach"].get("fixed_category_slot_ids", {}).get(
+        "game_spots:0"
+    ) == "fixed.game_slot", "beach guaranteed Slot must use fixed.game_slot"
+
+    casino = maps["small_underground_casino:casino"]
+    assert {
+        key: value
+        for key, value in casino.get("fixed_category_slot_ids", {}).items()
+        if key.startswith(("game_spots:", "service_spots:", "lender_spots:"))
+    } == {
+        "game_spots:0": "fixed.game_floor_1",
+        "game_spots:1": "fixed.game_floor_2",
+        "service_spots:0": "fixed.service_house_drink",
+        "lender_spots:0": "fixed.lender_group_1",
+        "lender_spots:1": "fixed.lender_person_1",
+    }, "Punchline casino pooled fixed authority drift"
+    for object_id in (
+        "game:slot", "game:blackjack", "game:video_poker",
+        "lender:the_crew", "lender:street_lender",
+    ):
+        assert object_id not in casino.get("fixed_object_slot_ids", {}), (
+            f"Punchline casino {object_id} must stay ID-independent"
+        )
+    for slot_id in ("fixed.game_floor_1", "fixed.game_floor_2"):
+        slot = _slot_by_id(casino, slot_id)
+        assert slot is not None and slot.get("footprint_class") == "floor_fixture", (
+            f"Punchline casino {slot_id} must be floor-game capacity"
+        )
+    individual_lender = _slot_by_id(casino, "fixed.lender_person_1")
+    assert individual_lender is not None \
+        and individual_lender.get("footprint_class") == "behind_counter_person" \
+        and individual_lender.get("physical_role") == "Individual lender", (
+            "Punchline casino individual lender position is mislabeled"
+        )
+
+    assert "service_spots:0" not in maps["back_alley"].get(
+        "fixed_category_slot_ids", {}
+    ), "back_alley retained an action-only service alias"
+    assert "service_spots:0" not in maps["pawn_shop"].get(
+        "fixed_category_slot_ids", {}
+    ), "pawn_shop retained an action-only service alias"
+    assert not any(
+        str(key).startswith("service_spots:")
+        for key in maps["jazz_club"].get("fixed_category_slot_ids", {})
+    ), "jazz_club retained action-only music-service aliases"
+
+    for map_id, slot_id in (
+        ("grand_casino_high_limit", "exit.safe_left"),
+        ("grand_casino_back_room", "exit.travel_left"),
+        ("grand_casino_cage", "exit.travel_floor_door"),
+    ):
+        map_data = maps[map_id]
+        assert map_data.get("exit_object_slot_ids", {}).get("travel:leave") == slot_id, (
+            f"{map_id} lost its UI-synthesized world-map Leave exit"
+        )
+        assert map_data.get("exit_category_slot_ids", {}).get(
+            "travel_spots:0"
+        ) == slot_id, f"{map_id} lost its Leave exit category authority"
+
+    kitty = maps["kitty_cat_lounge"]
+    assert {
+        key: value
+        for key, value in kitty.get("fixed_category_slot_ids", {}).items()
+        if key.startswith(("game_spots:", "game_hook_spots:", "service_spots:"))
+    } == {
+        "game_spots:0": "fixed.table_game_1",
+        "game_spots:1": "fixed.machine_game_1",
+        "game_spots:2": "fixed.table_game_2",
+        "service_spots:0": "fixed.service_kitty_champagne",
+        "service_spots:2": "fixed.service_house_drink",
+    }, "Kitty pooled game/service authority drift"
+    for object_id in ("game:roulette", "game:slot", "game:bar_dice"):
+        assert object_id not in kitty.get("fixed_object_slot_ids", {}), (
+            f"Kitty {object_id} must stay ID-independent"
+        )
+    assert {
+        str(_slot_by_id(kitty, slot_id).get("footprint_class", ""))
+        for slot_id in (
+            "fixed.table_game_1", "fixed.table_game_2", "fixed.machine_game_1",
+        )
+        if _slot_by_id(kitty, slot_id) is not None
+    } == {"surface_item", "floor_fixture"}, "Kitty game footprint bank drift"
+
+    delta_categories = maps["delta_queen"].get("fixed_category_slot_ids", {})
+    assert not any(
+        str(key).startswith(
+            ("game_spots:", "game_hook_spots:", "service_spots:", "lender_spots:")
+        )
+        for key in delta_categories
+    ), "Delta exact fixed objects must not retain shadow category aliases"
 
     for map_id, count in {
         "grand_casino": 7,

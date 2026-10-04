@@ -4,9 +4,43 @@ All notable public release changes for Beat the House are recorded here.
 
 ## 0.6.0 - Release preparation
 
-Status: **version-stamped on `main`; `v0.6.0-pre.2` is the current GitHub
+Status: **version-stamped on `main`; `v0.6.0-pre.3` is the current GitHub
 testing prerelease, while final stable qualification remains pending.** Project
 and platform export metadata read `0.6.0`.
+
+### Pre-release 3 (2026-10-03)
+
+- Completes the post-migration slot review across all 75 playable layout
+  contexts. The raw source/template authority is now 579 positions (175 fixed,
+  147 event, 222 scenario-source, and 35 exit), while the 55 exact scenario
+  layouts retain 339 independently movable scenario positions.
+- Removes the remaining dead travel, home-fixture, service, lender, and game
+  rows; aligns shop positions with generator maxima; and gives guaranteed or
+  footprint-pooled content accurate fixed IDs. It retains one clearly named
+  `exit.motel_room` reserve for the return door created by active motel-room
+  ownership and keeps the three Grand Casino subroom Leave exits used by the
+  world-map UI. No provable fixed/exit orphan, duplicate ID, duplicate exact
+  rectangle, or dangling mapping remains.
+- Fixes hidden-casino Blackjack falling through to the Numbers Book by replacing
+  the mixed-footprint bank with two true floor-game positions. Kitty's variable
+  games and the hidden casino's variable games/lenders now remain ID-independent
+  while respecting their physical footprints.
+- Adds a permanent 75-context runtime audit. Six deterministic seeds per
+  context verify 450 generated rooms, sealed and recomputed bindings, manifest
+  authority, single-slot occupancy, and non-overlapping occupied hit regions.
+  The larger review sweep covered 1,200 generated layouts with the same clean
+  result. The maintained audit observes a maximum of 17 occupied room objects
+  and fails if any generated layout exceeds the reviewed limit of 20.
+- Tightens the owner workflow with a scrollable placement panel, actual
+  scenario-object labels, saved/missing progress, automatic pending-nudge
+  retention, and automatic locking to an exact scenario's authored Punchline
+  area. Base/no-scenario rooms still allow their starting area to be selected.
+- Fixes object-drag placement so the visible rectangle's top-left is translated
+  to the slot's authored anchor before persistence; reloading now preserves the
+  exact visual location selected by the owner.
+- Publishes a downloadable Windows testing archive and checksums from the exact
+  `v0.6.0-pre.3` source commit. The 75-layout artistic placement pass remains
+  intentionally owner-driven and exports a complete schema-3 report.
 
 ### Pre-release 2 (2026-10-03)
 
@@ -53,6 +87,18 @@ and platform export metadata read `0.6.0`.
 
 ### Changed
 
+- Replaces each map-wide generic scenario pool with 55 compact, context-local
+  scenario banks. Each environment/scenario combination now owns independently
+  movable role slots while mutually exclusive phases and outcomes reuse the
+  same local capacity.
+- Adds **Save Current Layout** and schema-3 placement reports for the complete
+  75-context owner pass (20 reachable no-scenario rooms plus 55 scenario
+  layouts), with the raw layered Punchline parent explicitly excluded as a
+  non-playable source template and
+  explicit saved/missing coverage in both editor and packaged builds.
+- Validates full-layout saves against the exact authored slot inventory,
+  merges committed and local coverage correctly, and prevents retained
+  layer-specific scenarios from claiming another floor's placement layout.
 - Reworks rooms around the explicit `fixed`, `event`, `scenario`, and `exit`
   placement families. Games, shop items, people, and illustrated props occupy
   art-aligned places, abstract scenario work attaches to tangible hosts, and
@@ -87,7 +133,7 @@ and platform export metadata read `0.6.0`.
 - Final owner positioning and normal-play confirmations for the clean, cheat,
   and Crew/heist win screens remain outside this prerelease entry.
 - The final qualification pass and stable Windows/Web archives happen after
-  those closures. Prerelease 2 is a testing build, not the final 0.6 release.
+  those closures. Prerelease 3 is a testing build, not the final 0.6 release.
 
 ## 0.5.1 - Released (2026-08-13)
 

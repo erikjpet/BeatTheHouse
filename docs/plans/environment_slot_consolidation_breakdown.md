@@ -1,13 +1,28 @@
 # Environment slot consolidation: complete placement breakdown
 
-Status: implementation reference for the consolidated four-family slot model.
+Status: **HISTORICAL PRE-PRERELEASE-3 MIGRATION SNAPSHOT — DO NOT USE FOR THE
+MANUAL PLACEMENT PASS.**
+
+> **Supersession note (scenario placement):** This document remains the raw
+> four-family migration and source-template audit, but its description of one
+> reusable map-wide `scenario.*` bank is no longer the effective catalog
+> runtime model. Catalog scenarios now use exact per-scenario banks from
+> `data/environments/scenario_slot_layouts.json`; ordinary raw scenario slots
+> in `placement_surfaces.json` are filtered out, while explicit runtime
+> reserves remain shared. The eight maps without catalog layouts keep their
+> scenario-family slots in the sole room-shared base context. Use
+> `environment_scenario_layout_breakdown.md` for the current 20-base/55-scenario
+> manual-placement guide and Save Current Layout coverage.
+
+The counts and tables below intentionally preserve the earlier consolidation
+snapshot. They are not current authority. The generated scenario-layout guide
+contains the live 579-row raw census and all 75 reachable save contexts.
 
 This document answers three practical questions for every authored placement
-map: what is permanent, what reusable capacity exists, and what appears in the
-manual placement tool. It covers all 21 effective maps and all 55 catalog
-scenarios. The source of truth remains
-`data/environments/placement_surfaces.json`; this is its human-readable
-placement guide, not a second authority file.
+map: what was permanent, what reusable capacity existed, and what appeared in
+the manual placement tool at that checkpoint. It covers all 21 effective maps
+and all 55 catalog scenarios. This document is retained as historical evidence,
+not as current placement authority.
 
 ## How to read the breakdown
 
@@ -110,9 +125,9 @@ non-catalog runtime chains; no scenario is invented for them here.
 | `grand_casino` | `grand_casino_convention_crowd` | Convention Crowd |
 | `grand_casino` | `grand_casino_audit_night` | Audit Night |
 
-## Final authored census
+## Historical authored census
 
-The canonical file contains **659 positions**: **214 fixed**, **147 event**, **222 scenario**, and **76 exit** positions. Counts below include empty optional capacity and hidden runtime reserves; the normal placement view deliberately shows less.
+At that checkpoint, the canonical file contained **659 positions**: **214 fixed**, **147 event**, **222 scenario**, and **76 exit** positions. Counts below include empty optional capacity and hidden runtime reserves; the normal placement view deliberately showed less.
 
 | Placement map | Fixed | Event | Scenario | Exit | Total | Catalog scenarios |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -737,8 +752,8 @@ The Grand main floor still has six non-Pull-Tabs game positions: `fixed.game_mac
 - The engine-free authority replay passes all 21 maps, 18 archetypes, 55
   scenarios, 767 active snapshots, and 1,504 complete/aftermath snapshots with
   zero missing-capacity overflow.
-- The documentation census cross-check finds all 21 map sections, all 55
-  scenario-index rows, and every one of the 659 authored slot IDs in its
-  corresponding map section.
-- No source/document mismatch was found in the final census, family ownership,
+- The historical documentation census cross-check found all 21 map sections,
+  all 55 scenario-index rows, and every one of the 659 then-authored slot IDs in
+  its corresponding map section.
+- No source/document mismatch was found in that census, family ownership,
   runtime-reserve reasons, layer assignment, or scenario assignment.

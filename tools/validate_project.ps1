@@ -24,6 +24,22 @@ function Test-JsonObjectRoot {
     return $null -ne $Value -and $Value.GetType() -eq [System.Management.Automation.PSCustomObject]
 }
 
+function Test-FinitePlacementCoordinate {
+    param([AllowNull()][object]$Value)
+    $isJsonNumber =
+        $Value -is [byte] -or $Value -is [sbyte] -or
+        $Value -is [int16] -or $Value -is [uint16] -or
+        $Value -is [int32] -or $Value -is [uint32] -or
+        $Value -is [int64] -or $Value -is [uint64] -or
+        $Value -is [single] -or $Value -is [double] -or
+        $Value -is [decimal]
+    if (-not $isJsonNumber) {
+        return $false
+    }
+    $number = [double]$Value
+    return -not [double]::IsNaN($number) -and -not [double]::IsInfinity($number)
+}
+
 function Test-ExactJsonString {
     param([AllowNull()][object]$Value)
     return $null -ne $Value -and $Value -is [string]
@@ -590,9 +606,14 @@ $requiredFiles = @(
     "scripts/tests/fixtures/crew06_5_ignored_run_baseline.json",
     "scripts/tests/foundation/check_scratch_tickets.gd",
     "scripts/tests/developer_placement_mode_check.gd",
+    "scripts/tests/developer_layout_save_ui_check.gd",
+    "scripts/tests/environment_test_mode_check.gd",
     "scripts/tests/environment_slot_placement_mode_check.gd",
+    "scripts/tests/environment_slot_runtime_audit_check.gd",
+    "scripts/tests/scenario_slot_layout_check.gd",
     "scripts/tests/environment_object_manifest_check.gd",
     "scripts/tests/environment_runtime_manifest_retention_check.gd",
+    "scripts/tests/ui_scene/check_environment_library_launcher.gd",
     "scripts/tests/ui_scene/compile_run_menu_and_game_flows.gd",
     "tools/check_godot.ps1",
     "tools/split_test_runner_helpers.ps1",
@@ -605,6 +626,9 @@ $requiredFiles = @(
     "tools/environment_grounding_static_check.ps1",
     "tools/environment_grounding_contract.gd",
     "tools/environment_fixed_slot_static_check.py",
+    "tools/author_scenario_slot_layouts.py",
+    "tools/generate_environment_scenario_layout_breakdown.py",
+    "tools/test_scenario_slot_layouts.py",
     "tools/test_environment_fixed_slot_static_check_v2.py",
     "tools/test_environment_slot_migration_v2.py",
     "tools/migrate_environment_slots_v2.py",
@@ -624,7 +648,9 @@ $requiredFiles = @(
     "data/art/attribute_glyphs.json",
     "data/environments/archetypes.json",
     "data/environments/placement_surfaces.json",
+    "data/environments/scenario_slot_layouts.json",
     "data/environments/developer_placement_overrides.json",
+    "docs/plans/environment_scenario_layout_breakdown.md",
     "data/environments/scenario_sequences/env06_7_shops_streets.json",
     "data/items/items.json",
     "data/events/events.json",
@@ -1009,6 +1035,7 @@ $objectJsonFiles = @(
     "data/games/scratch_ticket_regions.json",
     "data/environments/scenarios.json",
     "data/environments/placement_surfaces.json",
+    "data/environments/scenario_slot_layouts.json",
     "data/environments/developer_placement_overrides.json",
     "data/story/character_chains.json"
 )
@@ -1049,34 +1076,185 @@ foreach ($jsonFile in $jsonFiles) {
 
 $placementOverridePath = Join-Path $root "data/environments/developer_placement_overrides.json"
 try {
+    $placementSurfaceAuthority = Get-Content -LiteralPath (Join-Path $root "data/environments/placement_surfaces.json") -Raw | ConvertFrom-Json
+    $scenarioPlacementAuthority = Get-Content -LiteralPath (Join-Path $root "data/environments/scenario_slot_layouts.json") -Raw | ConvertFrom-Json
+    $knownPlacementRooms = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
+    $sharedPlacementSlots = [System.Collections.Generic.Dictionary[string, object]]::new([System.StringComparer]::Ordinal)
+    $surfaceScenarioSlots = [System.Collections.Generic.Dictionary[string, object]]::new([System.StringComparer]::Ordinal)
+    $scenarioPlacementSlots = [System.Collections.Generic.Dictionary[string, object]]::new([System.StringComparer]::Ordinal)
+    $catalogScenariosByRoom = [System.Collections.Generic.Dictionary[string, object]]::new([System.StringComparer]::Ordinal)
+    foreach ($surfaceMap in @($placementSurfaceAuthority.maps)) {
+        $roomId = [string]$surfaceMap.id
+        if ([string]::IsNullOrWhiteSpace($roomId)) {
+            continue
+        }
+        $null = $knownPlacementRooms.Add($roomId)
+        $sharedIds = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
+        foreach ($slotField in @("fixed_slots", "event_slots", "exit_slots")) {
+            foreach ($slot in @($surfaceMap.$slotField)) {
+                if ($null -ne $slot -and -not [string]::IsNullOrWhiteSpace([string]$slot.id)) {
+                    $null = $sharedIds.Add([string]$slot.id)
+                }
+            }
+        }
+        $scenarioIds = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
+        foreach ($slot in @($surfaceMap.scenario_slots)) {
+            if ($null -eq $slot -or [string]::IsNullOrWhiteSpace([string]$slot.id)) {
+                continue
+            }
+            $null = $scenarioIds.Add([string]$slot.id)
+            if ($slot.runtime_reserve -eq $true) {
+                $null = $sharedIds.Add([string]$slot.id)
+            }
+        }
+        $sharedPlacementSlots[$roomId] = $sharedIds
+        $surfaceScenarioSlots[$roomId] = $scenarioIds
+        $catalogScenariosByRoom[$roomId] = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
+    }
+    foreach ($layout in @($scenarioPlacementAuthority.layouts)) {
+        $roomId = [string]$layout.map_id
+        $scenarioId = [string]$layout.scenario_id
+        if ([string]::IsNullOrWhiteSpace($roomId) -or [string]::IsNullOrWhiteSpace($scenarioId) -or -not $knownPlacementRooms.Contains($roomId)) {
+            continue
+        }
+        $layoutKey = "${roomId}::${scenarioId}"
+        $exactIds = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
+        foreach ($slot in @($layout.scenario_slots)) {
+            if ($null -ne $slot -and -not [string]::IsNullOrWhiteSpace([string]$slot.id)) {
+                $null = $exactIds.Add([string]$slot.id)
+            }
+        }
+        $scenarioPlacementSlots[$layoutKey] = $exactIds
+        $null = $catalogScenariosByRoom[$roomId].Add($scenarioId)
+    }
+    foreach ($roomId in @($knownPlacementRooms)) {
+        if ($catalogScenariosByRoom[$roomId].Count -eq 0) {
+            foreach ($slotId in @($surfaceScenarioSlots[$roomId])) {
+                $null = $sharedPlacementSlots[$roomId].Add($slotId)
+            }
+        }
+    }
     $placementOverrides = Get-Content -LiteralPath $placementOverridePath -Raw | ConvertFrom-Json
-    if (-not (Test-JsonObjectRoot $placementOverrides) -or [int]$placementOverrides.schema_version -ne 2 -or -not (Test-JsonObjectRoot $placementOverrides.rooms)) {
-        $failures.Add("Developer placement overrides require schema_version 2 and an object-valued rooms collection.")
+    $placementRootFields = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
+    if (Test-JsonObjectRoot $placementOverrides) {
+        foreach ($property in $placementOverrides.PSObject.Properties) {
+            $null = $placementRootFields.Add($property.Name)
+        }
+    }
+    if (-not (Test-JsonObjectRoot $placementOverrides) -or
+        -not $placementRootFields.Contains("schema_version") -or
+        -not $placementRootFields.Contains("rooms") -or
+        [int]$placementOverrides.schema_version -ne 3 -or
+        -not (Test-JsonObjectRoot $placementOverrides.rooms)) {
+        $failures.Add("Developer placement overrides require schema_version 3 and an object-valued rooms collection.")
     }
     else {
-        $allowedPlacementFields = @("slot_positions")
+        if ($placementRootFields.Contains("coverage") -and -not (Test-JsonObjectRoot $placementOverrides.coverage)) {
+            $failures.Add("Developer placement override coverage must be an object when present.")
+        }
+        $allowedPlacementFields = [System.Collections.Generic.HashSet[string]]::new(
+            [string[]]@("slot_positions", "base_saved", "scenario_layouts"),
+            [System.StringComparer]::Ordinal
+        )
         foreach ($roomProperty in $placementOverrides.rooms.PSObject.Properties) {
+            if (-not $knownPlacementRooms.Contains($roomProperty.Name)) {
+                $failures.Add("Developer placement overrides contain an unknown room: $($roomProperty.Name)")
+                continue
+            }
             if (-not (Test-JsonObjectRoot $roomProperty.Value)) {
                 $failures.Add("Developer placement room must be an object: $($roomProperty.Name)")
                 continue
             }
             foreach ($fieldProperty in $roomProperty.Value.PSObject.Properties) {
-                if ($allowedPlacementFields -notcontains $fieldProperty.Name -or -not (Test-JsonObjectRoot $fieldProperty.Value)) {
-                    $failures.Add("Developer placement room $($roomProperty.Name) has an unsupported placement collection: $($fieldProperty.Name)")
+                if (-not $allowedPlacementFields.Contains($fieldProperty.Name)) {
+                    $failures.Add("Developer placement room $($roomProperty.Name) has an unsupported field: $($fieldProperty.Name)")
+                    continue
+                }
+                if ([string]::Equals($fieldProperty.Name, "base_saved", [System.StringComparison]::Ordinal)) {
+                    if ($fieldProperty.Value -isnot [bool]) {
+                        $failures.Add("Developer placement room $($roomProperty.Name) base_saved must be Boolean.")
+                    }
+                    continue
+                }
+                if ([string]::Equals($fieldProperty.Name, "scenario_layouts", [System.StringComparison]::Ordinal)) {
+                    if (-not (Test-JsonObjectRoot $fieldProperty.Value)) {
+                        $failures.Add("Developer placement room $($roomProperty.Name) scenario_layouts must be an object.")
+                        continue
+                    }
+                    foreach ($scenarioProperty in $fieldProperty.Value.PSObject.Properties) {
+                        $layoutKey = "$($roomProperty.Name)::$($scenarioProperty.Name)"
+                        if ([string]::IsNullOrWhiteSpace($scenarioProperty.Name) -or -not (Test-JsonObjectRoot $scenarioProperty.Value)) {
+                            $failures.Add("Developer placement scenario layout $($roomProperty.Name)/$($scenarioProperty.Name) must have a non-empty ID and object payload.")
+                            continue
+                        }
+                        if (-not $scenarioPlacementSlots.ContainsKey($layoutKey)) {
+                            $failures.Add("Developer placement scenario layout is not authored: $layoutKey")
+                            continue
+                        }
+                        foreach ($layoutField in $scenarioProperty.Value.PSObject.Properties) {
+                            if ([string]::Equals($layoutField.Name, "saved", [System.StringComparison]::Ordinal)) {
+                                if ($layoutField.Value -isnot [bool]) {
+                                    $failures.Add("Developer placement scenario layout $($roomProperty.Name)/$($scenarioProperty.Name) saved must be Boolean.")
+                                }
+                                continue
+                            }
+                            if (-not [string]::Equals($layoutField.Name, "slot_positions", [System.StringComparison]::Ordinal) -or -not (Test-JsonObjectRoot $layoutField.Value)) {
+                                $failures.Add("Developer placement scenario layout $($roomProperty.Name)/$($scenarioProperty.Name) has an unsupported field: $($layoutField.Name)")
+                                continue
+                            }
+                            foreach ($slotProperty in $layoutField.Value.PSObject.Properties) {
+                                if (-not $scenarioPlacementSlots[$layoutKey].Contains($slotProperty.Name)) {
+                                    $failures.Add("Developer placement scenario layout $($roomProperty.Name)/$($scenarioProperty.Name) contains an unauthorised slot: $($slotProperty.Name)")
+                                }
+                                $coordinates = @($slotProperty.Value)
+                                if ($coordinates.Count -ne 2) {
+                                    $failures.Add("Developer placement $($roomProperty.Name)/scenario_layouts/$($scenarioProperty.Name)/slot_positions/$($slotProperty.Name) must contain exactly two coordinates.")
+                                    continue
+                                }
+                                foreach ($coordinate in $coordinates) {
+                                    if (-not (Test-FinitePlacementCoordinate $coordinate)) {
+                                        $failures.Add("Developer placement $($roomProperty.Name)/scenario_layouts/$($scenarioProperty.Name)/slot_positions/$($slotProperty.Name) contains a non-finite coordinate.")
+                                    }
+                                }
+                            }
+                        }
+                        if ($scenarioProperty.Value.saved -eq $true) {
+                            $savedScenarioSlots = @($scenarioProperty.Value.slot_positions.PSObject.Properties)
+                            if ($savedScenarioSlots.Count -ne $scenarioPlacementSlots[$layoutKey].Count) {
+                                $failures.Add("Saved developer placement scenario layout $layoutKey does not contain its complete authored slot set.")
+                            }
+                            $savedSharedSlots = @($roomProperty.Value.slot_positions.PSObject.Properties)
+                            if ($savedSharedSlots.Count -ne $sharedPlacementSlots[$roomProperty.Name].Count) {
+                                $failures.Add("Saved developer placement scenario layout $layoutKey does not contain its complete shared room slot set.")
+                            }
+                        }
+                    }
+                    continue
+                }
+                if (-not (Test-JsonObjectRoot $fieldProperty.Value)) {
+                    $failures.Add("Developer placement room $($roomProperty.Name) slot_positions must be an object.")
                     continue
                 }
                 foreach ($slotProperty in $fieldProperty.Value.PSObject.Properties) {
+                    if (-not $sharedPlacementSlots[$roomProperty.Name].Contains($slotProperty.Name)) {
+                        $failures.Add("Developer placement room $($roomProperty.Name) contains an unauthorised shared slot: $($slotProperty.Name)")
+                    }
                     $coordinates = @($slotProperty.Value)
                     if ($coordinates.Count -ne 2) {
                         $failures.Add("Developer placement $($roomProperty.Name)/$($fieldProperty.Name)/$($slotProperty.Name) must contain exactly two coordinates.")
                         continue
                     }
                     foreach ($coordinate in $coordinates) {
-                        $number = 0.0
-                        if (-not [double]::TryParse([string]$coordinate, [ref]$number) -or [double]::IsNaN($number) -or [double]::IsInfinity($number)) {
+                        if (-not (Test-FinitePlacementCoordinate $coordinate)) {
                             $failures.Add("Developer placement $($roomProperty.Name)/$($fieldProperty.Name)/$($slotProperty.Name) contains a non-finite coordinate.")
                         }
                     }
+                }
+            }
+            if ($roomProperty.Value.base_saved -eq $true) {
+                $savedBaseSlots = @($roomProperty.Value.slot_positions.PSObject.Properties)
+                if ($savedBaseSlots.Count -ne $sharedPlacementSlots[$roomProperty.Name].Count) {
+                    $failures.Add("Saved developer placement base layout $($roomProperty.Name) does not contain its complete authored slot set.")
                 }
             }
         }
@@ -1650,6 +1828,9 @@ Require-Text "tools/check_godot.ps1" 'scenario_room_multiseed_finalization.gd' "
 Require-Text "tools/check_godot.ps1" 'environment_grounding_contract.gd' "Godot audit/full suites must include the focused environment grounding mechanism contract."
 Require-Text "tools/check_godot.ps1" 'environment_object_manifest_check.gd' "Godot contract/audit/full suites must include the environment object manifest and save/reload contract."
 Require-Text "tools/check_godot.ps1" 'environment_runtime_manifest_retention_check.gd' "Godot contract/audit/full suites must prove offscreen runtime projections cannot replace durable scenario inventory."
+Require-Text "tools/check_godot.ps1" 'environment_slot_runtime_audit_check.gd' "Godot contract/audit/full suites must sweep live room-object bindings and occupied slot geometry across every reachable environment context."
+Require-Text "tools/check_godot.ps1" 'environment_test_mode_check.gd' "Godot contract/audit/full suites must exercise exact Environment Library generation and layered-room selection."
+Require-Text "tools/check_godot.ps1" 'scripts/tests/ui_scene/check_environment_library_launcher.gd' "Godot contract/audit/full suites must exercise the live Environment Library authoring workflow."
 Require-Text "tools/check_godot.ps1" 'Invoke-GameReworkVerificationGates' "Godot audit/full suites must retain the game rework verification gate group."
 Require-Text "tools/check_godot.ps1" 'craps_extensive_playtest.gd' "Game rework verification must retain the extensive Craps settlement gate."
 Require-Text "tools/check_godot.ps1" 'craps_rtp_audit.gd' "Game rework verification must retain the million-roll Craps RTP gate."
@@ -2395,6 +2576,24 @@ try {
 }
 catch {
     $failures.Add("Environment slot schema v2 static-check tests failed: $($_.Exception.Message)")
+}
+
+try {
+    & python (Join-Path $root "tools/author_scenario_slot_layouts.py") --check | Out-Null
+    if ($LASTEXITCODE -ne 0) {
+        throw "Scenario slot authoring check exited with code $LASTEXITCODE."
+    }
+    & python (Join-Path $root "tools/test_scenario_slot_layouts.py") | Out-Null
+    if ($LASTEXITCODE -ne 0) {
+        throw "Scenario slot layout tests exited with code $LASTEXITCODE."
+    }
+    & python (Join-Path $root "tools/generate_environment_scenario_layout_breakdown.py") --check | Out-Null
+    if ($LASTEXITCODE -ne 0) {
+        throw "Environment scenario layout breakdown check exited with code $LASTEXITCODE."
+    }
+}
+catch {
+    $failures.Add("Scenario-instance slot layout validation failed: $($_.Exception.Message)")
 }
 
 try {

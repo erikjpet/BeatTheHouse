@@ -8,7 +8,7 @@ Reusable identities live in two JSON packs:
 - `data/characters/pools.json` groups character IDs and declares how many
   unique members appear together.
 
-The current catalog contains 46 identities and three reusable pools:
+The current catalog contains 45 identities and three reusable pools:
 
 - `crew_regulars` contains seven identities and selects three for `the_crew`;
 - `blue_note_trio` contains and selects its three musicians;

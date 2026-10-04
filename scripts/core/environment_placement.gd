@@ -2,6 +2,7 @@ class_name EnvironmentPlacement
 extends RefCounted
 
 const SURFACE_MAP_PATH := "res://data/environments/placement_surfaces.json"
+const SCENARIO_LAYOUT_PATH := "res://data/environments/scenario_slot_layouts.json"
 const DeveloperPlacementStoreScript := preload("res://scripts/core/developer_placement_store.gd")
 const SLOT_SCHEMA_VERSION := 2
 const SLOT_FAMILIES := ["fixed", "event", "scenario", "exit"]
@@ -42,6 +43,8 @@ const SCENARIO_RESERVATION_FIELDS := [
 
 static var _surface_maps: Dictionary = {}
 static var _effective_surface_maps: Dictionary = {}
+static var _scenario_layouts: Dictionary = {}
+static var _maps_with_catalog_scenarios: Dictionary = {}
 static var _surface_maps_loaded := false
 
 
@@ -184,23 +187,25 @@ static func _shipping_surface_map(environment: Dictionary) -> Dictionary:
 	var layered_key := "%s:%s" % [archetype_id, layer_id]
 	var map_key := layered_key if not layer_id.is_empty() and _surface_maps.has(layered_key) else archetype_id
 	var base_map := _dict(_surface_maps.get(map_key, {}))
-	var scenario_state := _dict(environment.get("scenario_state", {}))
-	var scenario_id := str(scenario_state.get("id", environment.get("scenario_id", ""))).strip_edges()
-	if scenario_id.is_empty():
-		scenario_id = str(_dict(environment.get("scenario_sequence_state", {})).get("scenario_id", "")).strip_edges()
+	var scenario_id := active_scenario_id(environment)
 	var scenario_overrides := _dict(base_map.get("scenario_overrides", {}))
-	if scenario_id.is_empty() or not scenario_overrides.has(scenario_id):
+	var has_instance_layout := _scenario_layouts.has("%s::%s" % [map_key, scenario_id])
+	if scenario_id.is_empty():
 		var base_key := "%s::base" % map_key
 		if _effective_surface_maps.has(base_key):
 			return _dict(_effective_surface_maps.get(base_key, {}))
 		var unreserved_map := base_map.duplicate(false)
 		for field_value in SCENARIO_RESERVATION_FIELDS:
 			unreserved_map.erase(str(field_value))
-		_effective_surface_maps[base_key] = unreserved_map
-		return unreserved_map
+		var base_result := _with_scenario_instance_layout(map_key, scenario_id, unreserved_map)
+		_effective_surface_maps[base_key] = base_result
+		return base_result
 	var effective_key := "%s::%s" % [map_key, scenario_id]
 	if _effective_surface_maps.has(effective_key):
 		return _dict(_effective_surface_maps.get(effective_key, {}))
+	if not scenario_overrides.has(scenario_id) and not has_instance_layout:
+		_effective_surface_maps[effective_key] = base_map
+		return base_map
 	var result := base_map.duplicate(false)
 	var scenario_override := _dict(scenario_overrides.get(scenario_id, {}))
 	var base_class_overrides := _dict(base_map.get("class_overrides", {})).duplicate(true)
@@ -208,7 +213,144 @@ static func _shipping_surface_map(environment: Dictionary) -> Dictionary:
 	if scenario_override.has("class_overrides"):
 		base_class_overrides.merge(_dict(scenario_override.get("class_overrides", {})), true)
 		result["class_overrides"] = base_class_overrides
+	result = _with_scenario_instance_layout(map_key, scenario_id, result)
 	_effective_surface_maps[effective_key] = result
+	return result
+
+
+static func active_scenario_id(environment: Dictionary) -> String:
+	var scenario_state := _dict(environment.get("scenario_state", {}))
+	var target_layer_id := str(scenario_state.get("layer_id", "")).strip_edges()
+	var current_layer_id := str(environment.get("current_layer_id", environment.get("layer_id", ""))).strip_edges()
+	# Layered venues retain one scenario cursor while the player visits another
+	# floor. The retained cursor is progression state, not placement authority for
+	# the non-target room.
+	if not target_layer_id.is_empty() and target_layer_id != current_layer_id:
+		return ""
+	var scenario_id := str(scenario_state.get("id", environment.get("scenario_id", ""))).strip_edges()
+	if scenario_id.is_empty():
+		scenario_id = str(_dict(environment.get("scenario_sequence_state", {})).get("scenario_id", "")).strip_edges()
+	return scenario_id
+
+
+# Catalog scenario objects own exact, scenario-scoped slot instances. Shared
+# runtime reserves remain available for injected delivery/chain records, while
+# ordinary map-wide generic scenario pools are retired from catalog and clean
+# no-scenario layouts.
+static func _with_scenario_instance_layout(map_key: String, scenario_id: String, surface_data: Dictionary) -> Dictionary:
+	var layout_key := "%s::%s" % [map_key, scenario_id]
+	var layout := _dict(_scenario_layouts.get(layout_key, {}))
+	var has_catalog_layouts := bool(_maps_with_catalog_scenarios.get(map_key, false))
+	if layout.is_empty() and (not scenario_id.is_empty() or not has_catalog_layouts):
+		return surface_data
+	var result := surface_data.duplicate(true)
+	var runtime_slots: Array = []
+	for slot_value in _array(result.get("scenario_slots", [])):
+		var slot := _dict(slot_value)
+		if bool(slot.get("runtime_reserve", false)):
+			runtime_slots.append(slot.duplicate(true))
+	if layout.is_empty():
+		result["scenario_slots"] = runtime_slots
+		result["scenario_slot_ids"] = {}
+		result["scenario_object_slot_ids"] = _filtered_slot_mapping(
+			_dict(result.get("scenario_object_slot_ids", {})), runtime_slots
+		)
+		result["scenario_category_slot_ids"] = _filtered_slot_mapping(
+			_dict(result.get("scenario_category_slot_ids", {})), runtime_slots
+		)
+		result["actor_routes"] = _filtered_actor_routes(_array(result.get("actor_routes", [])), runtime_slots)
+		result["scenario_position_route_ids"] = _filtered_route_mapping(
+			_dict(result.get("scenario_position_route_ids", {})), _array(result.get("actor_routes", []))
+		)
+		result["scenario_layout_id"] = "%s::base" % map_key
+		result["scenario_layout_scoped"] = true
+		return result
+	var authored_slots := _array(layout.get("scenario_slots", [])).duplicate(true)
+	authored_slots.append_array(runtime_slots)
+	result["scenario_slots"] = authored_slots
+	result["scenario_instance_slot_ids"] = _dict(layout.get("scenario_instance_slot_ids", {})).duplicate(true)
+	result["scenario_instance_object_slot_ids"] = _dict(layout.get("scenario_instance_object_slot_ids", {})).duplicate(true)
+	var scenario_family_ids := _dict(layout.get("scenario_instance_object_family_ids", {}))
+	var object_family_ids := _dict(result.get("object_family_ids", {})).duplicate(true)
+	object_family_ids.merge(scenario_family_ids, true)
+	result["object_family_ids"] = object_family_ids
+	for family in ["fixed", "event", "exit"]:
+		var field := "%s_object_slot_ids" % family
+		result[field] = _without_mapping_keys(_dict(result.get(field, {})), scenario_family_ids)
+	result["fixed_objects"] = _without_fixed_declarations(
+		_array(result.get("fixed_objects", [])), scenario_family_ids
+	)
+	# The older preference fields remain complete views for diagnostics and
+	# callers that do not yet distinguish exact scenario instances.
+	result["scenario_slot_ids"] = _dict(layout.get("scenario_instance_slot_ids", {})).duplicate(true)
+	result["scenario_object_slot_ids"] = _dict(layout.get("scenario_instance_object_slot_ids", {})).duplicate(true)
+	result["scenario_category_slot_ids"] = {}
+	result["actor_routes"] = _array(layout.get("actor_routes", [])).duplicate(true)
+	result["scenario_position_route_ids"] = _filtered_route_mapping(
+		_dict(result.get("scenario_position_route_ids", {})), _array(result.get("actor_routes", []))
+	)
+	result["scenario_layout_id"] = str(layout.get("layout_id", layout_key))
+	result["scenario_layout_scenario_id"] = scenario_id
+	result["scenario_layout_display_name"] = str(layout.get("display_name", scenario_id))
+	result["scenario_layout_scoped"] = true
+	result["scenario_layout_audit"] = _dict(layout.get("audit", {})).duplicate(true)
+	return result
+
+
+static func _filtered_slot_mapping(source: Dictionary, slots: Array) -> Dictionary:
+	var valid: Dictionary = {}
+	for slot_value in slots:
+		var slot_id := str(_dict(slot_value).get("id", "")).strip_edges()
+		if not slot_id.is_empty():
+			valid[slot_id] = true
+	var result: Dictionary = {}
+	for key_value in source.keys():
+		var slot_id := str(source.get(key_value, "")).strip_edges()
+		if valid.has(slot_id):
+			result[str(key_value)] = slot_id
+	return result
+
+
+static func _without_mapping_keys(source: Dictionary, removed: Dictionary) -> Dictionary:
+	var result := source.duplicate(true)
+	for key_value in removed.keys():
+		result.erase(str(key_value))
+	return result
+
+
+static func _without_fixed_declarations(source: Array, removed: Dictionary) -> Array:
+	var result: Array = []
+	for declaration_value in source:
+		var declaration := _dict(declaration_value)
+		if removed.has(str(declaration.get("object_id", ""))):
+			continue
+		result.append(declaration.duplicate(true))
+	return result
+
+
+static func _filtered_actor_routes(routes: Array, slots: Array) -> Array:
+	var valid: Dictionary = {}
+	for slot_value in slots:
+		valid[str(_dict(slot_value).get("id", ""))] = true
+	var result: Array = []
+	for route_value in routes:
+		var route := _dict(route_value)
+		if valid.has(str(route.get("start_slot_id", ""))) and valid.has(str(route.get("end_slot_id", ""))):
+			result.append(route.duplicate(true))
+	return result
+
+
+static func _filtered_route_mapping(source: Dictionary, routes: Array) -> Dictionary:
+	var valid: Dictionary = {}
+	for route_value in routes:
+		var route_id := str(_dict(route_value).get("id", "")).strip_edges()
+		if not route_id.is_empty():
+			valid[route_id] = true
+	var result: Dictionary = {}
+	for key_value in source.keys():
+		var route_id := str(source.get(key_value, "")).strip_edges()
+		if valid.has(route_id):
+			result[str(key_value)] = route_id
 	return result
 
 
@@ -395,6 +537,8 @@ static func _ensure_surface_maps() -> void:
 		return
 	_surface_maps_loaded = true
 	_effective_surface_maps.clear()
+	_scenario_layouts.clear()
+	_maps_with_catalog_scenarios.clear()
 	var file := FileAccess.open(SURFACE_MAP_PATH, FileAccess.READ)
 	if file == null:
 		return
@@ -410,6 +554,26 @@ static func _ensure_surface_maps() -> void:
 		var map_id := str(map_data.get("id", ""))
 		if not map_id.is_empty() and _surface_map_v2_valid(map_data):
 			_surface_maps[map_id] = map_data
+	var layout_file := FileAccess.open(SCENARIO_LAYOUT_PATH, FileAccess.READ)
+	if layout_file == null:
+		return
+	var layout_parsed: Variant = JSON.parse_string(layout_file.get_as_text())
+	layout_file.close()
+	if typeof(layout_parsed) != TYPE_DICTIONARY:
+		return
+	var layout_root := _dict(layout_parsed)
+	if int(layout_root.get("schema_version", 0)) != 1 \
+			or int(layout_root.get("slot_schema_version", 0)) != SLOT_SCHEMA_VERSION:
+		return
+	for map_id_value in _array(layout_root.get("maps_with_catalog_scenarios", [])):
+		_maps_with_catalog_scenarios[str(map_id_value)] = true
+	for layout_value in _array(layout_root.get("layouts", [])):
+		var layout := _dict(layout_value)
+		var map_id := str(layout.get("map_id", "")).strip_edges()
+		var scenario_id := str(layout.get("scenario_id", "")).strip_edges()
+		if map_id.is_empty() or scenario_id.is_empty():
+			continue
+		_scenario_layouts["%s::%s" % [map_id, scenario_id]] = layout
 
 
 static func _surface_map_v2_valid(map_data: Dictionary) -> bool:
