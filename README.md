@@ -11,7 +11,7 @@ run state forward.
 Versions 0.2.0 through 0.3.3 are historical source releases; 0.4.0 was an Act 1
 candidate tag that was not published before development continued. Version
 0.5.1 is the latest stable owner-published release. The latest testing build is
-the GitHub prerelease `v0.6.0-pre.3`; current `main` remains the stamped 0.6.0
+the GitHub prerelease `v0.6.0-pre.4`; current `main` remains the stamped 0.6.0
 release-preparation line. It keeps the Act 1 foundation and adds the Living Town,
 55 persistent room scenarios, the Crew campaign, eleven depth-complete game
 modules, expanded tutorial and audio coverage, and a reworked four-room Grand
@@ -26,7 +26,7 @@ complete manual authoring pass therefore has 75 contexts: 20 no-scenario
 layouts plus one layout per valid map/scenario combination. Release qualification is still in
 progress: the room set awaits final owner positioning and the three ending
 routes are completing their normal-play confirmations. Project and export
-metadata are stamped `0.6.0`; `v0.6.0-pre.3` provides the current Windows
+metadata are stamped `0.6.0`; `v0.6.0-pre.4` provides the current Windows
 testing package. The `v0.5.1` tag and GitHub Release identify the final corrected
 0.5 playtest baseline; `v0.5.0` remains the immutable original release boundary.
 Beat the House is not a real-money gambling product. It has no real-money
@@ -40,10 +40,10 @@ the repository.
 | Engine | Godot 4.x project with Godot 4.6 project feature metadata |
 | Main scene | `res://scenes/main.tscn` |
 | Main UI shell | `res://scripts/ui/foundation_main.gd` |
-| Published release line | 0.5.1 stable; `v0.6.0-pre.3` is the latest GitHub testing prerelease |
+| Published release line | 0.5.1 stable; `v0.6.0-pre.4` is the latest GitHub testing prerelease |
 | Release-prep version | 0.6.0 in project and platform export metadata |
 | Active planning target | Owner room repositioning and normal-play ending confirmations before the final stable Windows/Web handoff |
-| Current release readiness | Playable, version-stamped, and packaged as prerelease 3; the owner layout pass and final stable qualification remain pending |
+| Current release readiness | Playable, version-stamped, and packaged as prerelease 4; broad verification is being completed against the published candidate before the owner layout pass |
 | Viewport | 1280x720, non-resizable, canvas stretch with kept aspect |
 | Renderer | Godot mobile renderer by default; Windows uses Godot compatibility/OpenGL to avoid the native Vulkan/OBS crash path seen in local WER reports |
 | Input model | Single pointer interaction with mouse/touch parity |
@@ -191,15 +191,19 @@ clerk, or host desk.
 The owner placement workflow lives under **Settings > Environment Library**.
 It exposes one slot family at a time, defaults empty capacity and runtime
 reserves visible for the exhaustive pass, and provides toggles to hide either
-when temporary visual clutter is unhelpful. Occupied markers are labeled with
-the object they actually contain, and layered scenarios stay locked to their
-authored room. The audited runtime maximum is 16 occupied objects in one layout,
-below the guarded limit of 20. **Save
-Current Layout** records all active coordinates, including hidden families;
-progress shows the saved count, missing count, and next missing layout until all
-75 contexts are complete. Packaged builds export the schema-3 report as
-`BeatTheHouse_environment_slot_placement_changes.json`. The generated
-per-environment checklist is
+when temporary visual clutter is unhelpful. Occupied markers identify the
+object they contain when selected or hovered so the room remains readable, and
+layered scenarios stay locked to their authored room. The audited runtime
+maximum is 16 occupied objects in one layout, below the guarded limit of 20.
+Each nonempty family must be deliberately reviewed before a base layout can be
+saved. **Save & Load Next Missing** records the current coordinates and advances
+to the next unfinished context, while progress shows the saved and missing
+counts until all 75 contexts are complete. Packaged builds hide the
+project-writing control and export the schema-3 report as
+`BeatTheHouse_environment_slot_placement_changes.json`. A report verification
+and import workflow checks source provenance, complete layout coverage, and
+placement-authority hashes before coordinates are promoted into committed
+data. The generated per-environment checklist is
 `docs/plans/environment_scenario_layout_breakdown.md`.
 
 ## Games
@@ -547,7 +551,7 @@ historical release evidence.
 `tools/export_itch.ps1` packages the Web and Windows presets into upload-ready
 zips after Godot export templates are installed. Project and export preset
 versions are stamped `0.6.0`. Publication requires explicit owner authorization;
-the `v0.6.0-pre.3` GitHub prerelease was explicitly requested. Trial packages
+the `v0.6.0-pre.4` GitHub prerelease was explicitly requested. Trial packages
 are not final release artifacts. Android
 signing and iOS team/signature values still require real project credentials
 before store submission.

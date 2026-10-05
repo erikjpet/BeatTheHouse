@@ -4,9 +4,28 @@ All notable public release changes for Beat the House are recorded here.
 
 ## 0.6.0 - Release preparation
 
-Status: **version-stamped on `main`; `v0.6.0-pre.3` is the current GitHub
+Status: **version-stamped on `main`; `v0.6.0-pre.4` is the current GitHub
 testing prerelease, while final stable qualification remains pending.** Project
 and platform export metadata read `0.6.0`.
+
+### Pre-release 4 (2026-10-05)
+
+- Removes dead and unreachable room positions, repairs misleading claimant
+  labels, and gives all 55 scenario layouts collision-free initial geometry so
+  the owner's pass starts from a usable composition.
+- Keeps placement views readable by showing detailed marker labels only for
+  the selected or hovered object, while retaining overlap warnings and the
+  four-family editing model.
+- Requires deliberate review of every nonempty family before a base layout can
+  be marked complete, and adds **Save & Load Next Missing** for a direct
+  save-and-advance pass through the 75 contexts.
+- Hides **Save to Project** in packaged builds so downloadable candidates only
+  write the portable placement report.
+- Adds a report verification and import workflow that checks source provenance,
+  complete layout coverage, and placement-authority hashes before returned
+  schema-3 coordinates can become committed authority.
+- Publishes the Windows `v0.6.0-pre.4` candidate for the owner's placement pass.
+  Broad verification is being completed against that published candidate.
 
 ### Pre-release 3 (2026-10-04)
 

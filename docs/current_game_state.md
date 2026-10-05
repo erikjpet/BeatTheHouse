@@ -1,12 +1,13 @@
 # Current Game State
 
-Last product verification: 2026-10-04 against the `v0.6.0-pre.3` candidate
-tree.
+Current release verification: 2026-10-05 against the published
+`v0.6.0-pre.4` candidate. Broad verification is being completed against that
+exact candidate.
 
 Status: **PLAYABLE 0.6 TESTING PRERELEASE / OWNER PLACEMENT PASS PENDING.**
 
 Project and export metadata identify `0.6.0`. Version `0.5.1` remains the
-latest stable release; `v0.6.0-pre.3` is the current downloadable Windows
+latest stable release; `v0.6.0-pre.4` is the current downloadable Windows
 testing prerelease. Final stable qualification remains separate.
 
 ## Player experience
@@ -101,7 +102,23 @@ real surface interaction rather than placeholder result buttons.
 
 ## Verification state
 
-The placement rework's source and runtime checks are green:
+The prerelease-3 placement baseline passed its source and runtime gates. The
+prerelease-4 repairs are published and broad verification is being completed
+against that exact candidate:
+
+- dead and unreachable positions have been removed and misleading claimant
+  labels repaired;
+- every one of the 55 scenario layouts now has collision-free initial geometry;
+- marker details appear on selection or hover, keeping crowded layouts legible;
+- each nonempty family requires deliberate review before a base layout can be
+  saved, and **Save & Load Next Missing** advances directly through unfinished
+  contexts;
+- packaged builds hide **Save to Project** and retain the portable schema-3
+  export path;
+- the returned-report workflow verifies source provenance, all-layout coverage,
+  and placement-authority hashes before import.
+
+The established placement baseline includes:
 
 - 21 source maps validate with four closed slot families and no dangling
   mapping, duplicate map-local ID, duplicate exact rectangle, or provable

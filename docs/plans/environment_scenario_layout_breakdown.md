@@ -32,17 +32,17 @@ For maps with catalog scenarios, Base / No Scenario includes only shared `scenar
 
 1. Enable environment slot placement mode, then open **Settings > Environment Library**.
 2. Press **Load Next Missing**. The library selects the correct environment, exact scenario, and Punchline area automatically; its SAVED/TODO labels remain available for manual navigation.
-3. In a **Base / No Scenario** context, work through the Fixed, Event, Scenario, and Exit tabs and move the room-shared slots into place. **Empty capacity** and **Runtime reserves** start visible so no authored position is silently skipped.
-4. Press **Save Current Layout** even when the starting coordinates were already correct. This explicitly completes that base context.
-5. Return through the room's Leave control and press **Load Next Missing** again. Exact contexts open on the Scenario tab; move only their SCENARIO-LOCAL markers and save.
+3. In a **Base / No Scenario** context, visit every nonempty family marked **TODO**, then place the room-shared Fixed, Event, Scenario, and Exit markers. **Empty capacity** and **Runtime reserves** start visible so no authored position is silently skipped.
+4. Press **Save & Load Next Missing** even when the starting coordinates were already correct. This completes the current context and immediately opens the next unfinished one.
+5. Exact contexts open on the Scenario tab. Move only their SCENARIO-LOCAL markers, then press **Save & Load Next Missing** again. Use **Save Current Layout** only when you want to save and remain in the same context.
 6. ROOM-SHARED markers are locked reference inside exact scenarios. If a shared correction is truly necessary, enable **Edit shared room slots (resets room progress)** and expect the base plus every saved scenario for that room to become TODO again.
 7. Continue until progress is **75/75 saved**, then press **Export Placement Report**. The report contains the complete effective placement authority, completion coverage, build/source identity, and hashes of both slot-authority files.
 
 Only one family tab is shown at a time, so even with **Empty capacity** and **Runtime reserves** enabled, you work through the full snapshot one family at a time instead of manipulating every slot simultaneously.
 
-Many exact markers begin on provisional staging coordinates, so overlap warnings are expected before you move them. Warnings are advisory: place each visible marker where it belongs, then save once the layout reads correctly.
+Many exact markers begin on artistically provisional staging coordinates, but their starting hit targets are non-overlapping. If a move creates an active-overlap warning, resolve it unless the overlap is deliberately part of the final composition.
 
-`Save Current Layout` snapshots the full active context, including hidden families, empty capacity, and runtime reserves. A scenario save contains the shared room geometry plus its exact local slots, but it does not mark the separate Base / No Scenario context complete.
+Both layout-save actions snapshot the full active context, including hidden families, empty capacity, and runtime reserves. A scenario save contains the shared room geometry plus its exact local slots, but it does not mark the separate Base / No Scenario context complete.
 
 ## Generated census
 
@@ -57,7 +57,7 @@ Many exact markers begin on provisional staging coordinates, so overlap warnings
 | Slot appearances across all full save snapshots | 2172 |
 | Exact slots with provisional geometry | 366 |
 
-The unique manual-position count adds each room-scoped shared slot once and each scenario-local slot once. The larger full-snapshot count repeats shared geometry in every scenario snapshot, matching what **Save Current Layout** validates.
+The unique manual-position count adds each room-scoped shared slot once and each scenario-local slot once. The larger full-snapshot count repeats shared geometry in every scenario snapshot, matching what both layout-save actions validate.
 
 ### Raw source inventory
 
