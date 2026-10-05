@@ -4,9 +4,23 @@ All notable public release changes for Beat the House are recorded here.
 
 ## 0.6.0 - Release preparation
 
-Status: **version-stamped on `main`; `v0.6.0-pre.4` is the current GitHub
+Status: **version-stamped on `main`; `v0.6.0-pre.5` is the current GitHub
 testing prerelease, while final stable qualification remains pending.** Project
 and platform export metadata read `0.6.0`.
+
+### Pre-release 5 (2026-10-05)
+
+- Adds a visible minimize control to the placement panel. While minimized, the
+  entire large panel is removed from hit testing so room objects and slots that
+  it covered can be selected normally without disrupting the panel's buttons.
+- Keeps a small restore button available to bring back every panel control and
+  retains F2 as the keyboard-parity shortcut for the same toggle.
+- Preserves the minimized state while advancing between placement contexts and
+  resets it when placement mode is exited, so later sessions reopen with the
+  full workflow visible.
+- Publishes the urgent Windows `v0.6.0-pre.5` owner-workflow candidate after
+  focused placement-panel checks. Broader candidate verification continues
+  after publication; final stable qualification remains separate.
 
 ### Pre-release 4 (2026-10-05)
 

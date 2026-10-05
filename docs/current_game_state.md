@@ -1,13 +1,13 @@
 # Current Game State
 
-Current release verification: 2026-10-05 against the published
-`v0.6.0-pre.4` candidate. Broad verification is being completed against that
-exact candidate.
+Current release handoff: 2026-10-05 against the published
+`v0.6.0-pre.5` candidate. Focused placement-panel checks cover its urgent
+owner-workflow repair; broader candidate verification continues.
 
 Status: **PLAYABLE 0.6 TESTING PRERELEASE / OWNER PLACEMENT PASS PENDING.**
 
 Project and export metadata identify `0.6.0`. Version `0.5.1` remains the
-latest stable release; `v0.6.0-pre.4` is the current downloadable Windows
+latest stable release; `v0.6.0-pre.5` is the current downloadable Windows
 testing prerelease. Final stable qualification remains separate.
 
 ## Player experience
@@ -102,9 +102,19 @@ real surface interaction rather than placeholder result buttons.
 
 ## Verification state
 
-The prerelease-3 placement baseline passed its source and runtime gates. The
-prerelease-4 repairs are published and broad verification is being completed
-against that exact candidate:
+The prerelease-3 placement baseline passed its source and runtime gates, and the
+prerelease-4 repair set remains the placement-authority baseline. Prerelease 5
+adds an urgent owner-workflow correction and is published after focused
+placement-panel checks; broader verification is being completed against that
+exact candidate:
+
+- the placement panel has a visible minimize control, and minimizing removes
+  the entire large panel from hit testing so covered room objects and slots can
+  be selected;
+- a small restore button brings back all panel controls, with F2 retained as a
+  keyboard-parity shortcut;
+- the minimized state survives context advances and resets when placement mode
+  is exited;
 
 - dead and unreachable positions have been removed and misleading claimant
   labels repaired;

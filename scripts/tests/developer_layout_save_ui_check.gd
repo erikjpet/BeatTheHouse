@@ -69,11 +69,24 @@ func _run() -> void:
 	await process_frame
 	await process_frame
 	var expanded_panel_rect := canvas.developer_placement_panel.get_rect()
-	var covered_slot_id := "fixed.item_shop_1"
-	var covered_slot: Dictionary = canvas.call("_developer_slot", covered_slot_id)
-	var covered_local_position: Vector2 = canvas.call("_board_to_local_position", canvas.call("_developer_slot_rect", covered_slot).get_center())
-	var expected_clicked_slot_id := str(canvas.call("_developer_slot_id_at_local_position", covered_local_position))
-	_check(not covered_slot.is_empty() and expanded_panel_rect.has_point(covered_local_position), "The click-through fixture must place a real slot beneath the expanded menu.")
+	var covered_slot: Dictionary = {}
+	var covered_local_position := Vector2.ZERO
+	var expected_clicked_slot_id := ""
+	for slot_value in canvas.call("_developer_slots"):
+		var candidate := slot_value as Dictionary
+		var candidate_position: Vector2 = canvas.call("_board_to_local_position", canvas.call("_developer_slot_rect", candidate).get_center())
+		var candidate_id := str(canvas.call("_developer_slot_id_at_local_position", candidate_position))
+		if expanded_panel_rect.has_point(candidate_position) \
+				and not canvas.developer_placement_restore_button.get_rect().has_point(candidate_position) \
+				and not candidate_id.is_empty():
+			covered_slot = candidate
+			covered_local_position = candidate_position
+			expected_clicked_slot_id = candidate_id
+			break
+	_check(
+		not covered_slot.is_empty() and not expected_clicked_slot_id.is_empty(),
+		"The click-through fixture must find a visible, selectable slot beneath the expanded menu."
+	)
 	canvas.developer_placement_minimize_button.pressed.emit()
 	await process_frame
 	_check(
@@ -85,7 +98,13 @@ func _run() -> void:
 	)
 	canvas.developer_slot_selected_id = ""
 	await _click_canvas(canvas, covered_local_position)
-	_check(canvas.developer_slot_selected_id == expected_clicked_slot_id, "A slot beneath the former menu rectangle must be selectable while the menu is minimized (expected %s, selected %s)." % [expected_clicked_slot_id, canvas.developer_slot_selected_id])
+	_check(
+		not expected_clicked_slot_id.is_empty() and canvas.developer_slot_selected_id == expected_clicked_slot_id,
+		"A visible slot beneath the former menu rectangle must be selectable while the menu is minimized (expected %s, selected %s)." % [expected_clicked_slot_id, canvas.developer_slot_selected_id]
+	)
+	canvas.call("_finish_developer_slot_placement_edit")
+	canvas.developer_slot_selected_id = ""
+	canvas.developer_slot_hovered_id = ""
 	canvas.developer_placement_restore_button.pressed.emit()
 	await process_frame
 	_check(
