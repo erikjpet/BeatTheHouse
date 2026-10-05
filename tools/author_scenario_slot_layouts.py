@@ -1026,6 +1026,7 @@ def visual_entry(
         "stable_id": stable_id,
         "placement_class": placement_class,
         "label": label,
+        "label_variants": [label] if label else [],
         "preferred_slot_id": preferred,
         "route_id": route_id,
         "zone_id": str(semantic.get("zone_id", "")).strip(),
@@ -1301,11 +1302,16 @@ def clone_slot(
     # ``Relay driver``).  They are one owner-facing role, not two alternatives.
     # Keep the deterministic first spelling while deduplicating case-insensitively.
     labels_by_folded: dict[str, str] = {}
-    for label in sorted(
-        str(node.get("label", "")).strip()
+    labels = [
+        str(label).strip()
         for node in bank_nodes
-        if str(node.get("label", "")).strip()
-    ):
+        for label in (
+            values(node.get("label_variants"))
+            or [str(node.get("label", "")).strip()]
+        )
+        if str(label).strip()
+    ]
+    for label in sorted(labels):
         labels_by_folded.setdefault(label.casefold(), label)
     occupant_labels = sorted(labels_by_folded.values())
     zone_ids = sorted(
@@ -1500,6 +1506,7 @@ def apply_exact_geometry_overrides(
         slot["provisional_geometry"] = True
         slot["zone_id"] = "provisional"
         slot["support_id"] = "manual_placement_required"
+        slot["_exact_geometry_locked"] = True
         for position_key in values(slot.get("scenario_position_keys")):
             authority_key = (map_id, scenario_id, str(position_key))
             if authority_key in EXACT_POSITION_RECT_OVERRIDES:
@@ -1512,6 +1519,110 @@ def apply_exact_geometry_overrides(
             f"{map_id}/{scenario_id}: exact geometry overrides did not resolve: "
             f"{sorted(expected - matched)}"
         )
+
+
+def resolve_starting_geometry(
+    authored_slots: list[dict[str, Any]],
+    surface: dict[str, Any],
+) -> None:
+    """Give every manual local marker a clear, collision-free starting point.
+
+    Placement mode draws the complete scenario-local bank, including mutually
+    exclusive phase alternatives.  Keeping every local hit target separate
+    from every other local and every shared-capacity target makes that editing
+    pass unambiguous while preserving the compact semantic slot reuse.
+    """
+
+    shared = _shared_occupied_rects(surface)
+    placed: list[list[float]] = []
+
+    def in_bounds(rect: list[float]) -> bool:
+        return (
+            rect[0] >= 0.0
+            and rect[1] >= 0.0
+            and rect[0] + rect[2] <= BOARD_WIDTH
+            and rect[1] + rect[3] <= BOARD_HEIGHT
+        )
+
+    def safe(slot: dict[str, Any], rect: list[float]) -> bool:
+        if not in_bounds(rect):
+            return False
+        occupied = shared + placed
+        if any(_rect_intersects(rect, other) for other in occupied):
+            return False
+        if bool(slot.get("_scenario_obstruction", False)):
+            expanded = _expanded_hit_rect(rect)
+            if _rect_intersects(rect, MANDATORY_ACCESS_LANE) or _rect_intersects(
+                expanded, MANDATORY_ACCESS_LANE
+            ):
+                return False
+            if any(_rect_contains_center(expanded, other) for other in occupied):
+                return False
+        return True
+
+    def candidate_rects(origin: list[float]) -> list[list[float]]:
+        width, height = origin[2], origin[3]
+        candidates = [
+            [float(x), float(y), width, height]
+            for y in range(0, int(BOARD_HEIGHT - height) + 1, 8)
+            for x in range(0, int(BOARD_WIDTH - width) + 1, 8)
+        ]
+        candidates.sort(
+            key=lambda rect: (
+                (rect[0] - origin[0]) ** 2 + (rect[1] - origin[1]) ** 2,
+                rect[1],
+                rect[0],
+            )
+        )
+        return candidates
+
+    def slot_area(slot: dict[str, Any]) -> float:
+        hit = values(slot.get("hit_rect"))
+        return float(hit[2]) * float(hit[3]) if len(hit) >= 4 else 0.0
+
+    ordered = sorted(
+        authored_slots,
+        key=lambda slot: (
+            not bool(slot.get("_exact_geometry_locked", False)),
+            -slot_area(slot),
+            int(slot.get("priority", 0)),
+            str(slot.get("id", "")),
+        ),
+    )
+    for slot in ordered:
+        hit = values(slot.get("hit_rect"))
+        if len(hit) < 4:
+            raise ValueError(
+                f"{surface.get('id', '<map>')}: local slot {slot.get('id', '<slot>')} "
+                "has no starting hit rectangle"
+            )
+        original = [float(hit[index]) for index in range(4)]
+        locked = bool(slot.get("_exact_geometry_locked", False))
+        candidate = original if safe(slot, original) else None
+        if candidate is None and locked:
+            raise ValueError(
+                f"{surface.get('id', '<map>')}: exact geometry for "
+                f"{slot.get('id', '<slot>')} intersects another placement target"
+            )
+        if candidate is None:
+            candidate = next(
+                (rect for rect in candidate_rects(original) if safe(slot, rect)),
+                None,
+            )
+        if candidate is None:
+            raise ValueError(
+                f"{surface.get('id', '<map>')}: no collision-free starting position "
+                f"for {slot.get('id', '<slot>')}"
+            )
+        if candidate != original:
+            _set_slot_hit_rect(slot, candidate)
+            slot["provisional_geometry"] = True
+        if bool(slot.get("provisional_geometry", False)):
+            slot["zone_id"] = "provisional"
+            slot["support_id"] = "manual_placement_required"
+        placed.append(candidate)
+        slot.pop("_exact_geometry_locked", None)
+        slot.pop("_scenario_obstruction", None)
 
 
 def clear_obstruction_conflicts(
@@ -1677,6 +1788,17 @@ def build_layout(
                 entry["node_key"] = node_key
             if node_key not in nodes:
                 nodes[node_key] = entry
+            else:
+                retained = nodes[node_key]
+                variants = {
+                    str(label).strip().casefold(): str(label).strip()
+                    for label in values(retained.get("label_variants"))
+                    if str(label).strip()
+                }
+                for label in values(entry.get("label_variants")):
+                    if str(label).strip():
+                        variants.setdefault(str(label).strip().casefold(), str(label).strip())
+                retained["label_variants"] = sorted(variants.values())
             active.append(node_key)
         active = sorted(set(active))
         active_with_base = sorted(
@@ -1735,9 +1857,8 @@ def build_layout(
                 priority,
             )
         )
-    place_provisional_geometry(authored_slots, surface)
     apply_exact_geometry_overrides(authored_slots, map_id, scenario_id)
-    clear_obstruction_conflicts(authored_slots, surface)
+    resolve_starting_geometry(authored_slots, surface)
 
     for node_key in sorted(nodes):
         node = nodes[node_key]

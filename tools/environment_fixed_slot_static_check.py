@@ -64,14 +64,14 @@ V2_GENERIC_ROLE = {
     "doorway": "doorway",
 }
 V2_SCENARIO_CAPACITY_TARGETS = {
-    "corner_store": {"standing_person": 4, "doorway": 1, "wall_mounted": 2, "floor_fixture": 2, "surface_item": 1, "behind_counter_person": 1},
+    "corner_store": {"standing_person": 4, "doorway": 1, "wall_mounted": 2, "floor_fixture": 2, "surface_item": 1},
     "back_alley": {"standing_person": 4, "doorway": 1, "wall_mounted": 1, "floor_fixture": 3, "surface_item": 2, "ground_marker": 1},
     "motel": {"standing_person": 4, "behind_counter_person": 1, "floor_fixture": 3, "wall_mounted": 2, "doorway": 3, "hanging": 1, "surface_item": 1},
     "bar": {"floor_fixture": 4, "doorway": 1, "standing_person": 4, "surface_item": 2, "behind_counter_person": 2, "wall_mounted": 2, "seated_person": 2, "ground_marker": 1},
     "gas_station_casino": {"wall_mounted": 3, "standing_person": 5, "doorway": 3, "surface_item": 1, "ground_marker": 1, "behind_counter_person": 1, "floor_fixture": 2, "group": 2},
     "small_underground_casino": {"doorway": 1, "surface_item": 1, "floor_fixture": 1, "standing_person": 1, "wall_mounted": 1},
     "small_underground_casino:club": {"floor_fixture": 3, "standing_person": 4, "doorway": 2, "surface_item": 2, "group": 1, "ground_marker": 1, "wall_mounted": 1},
-    "small_underground_casino:casino": {"floor_fixture": 3, "standing_person": 3, "doorway": 2, "seated_person": 1, "wall_mounted": 3, "surface_item": 1, "ground_marker": 1},
+    "small_underground_casino:casino": {"floor_fixture": 3, "standing_person": 3, "doorway": 1, "seated_person": 1, "wall_mounted": 3, "surface_item": 1, "ground_marker": 1},
     "small_underground_casino:back_room": {"floor_fixture": 1, "standing_person": 1, "wall_mounted": 1},
     "jazz_club": {"standing_person": 3, "floor_fixture": 3, "doorway": 1, "wall_mounted": 2, "surface_item": 1, "seated_person": 1, "ground_marker": 1},
     "kitty_cat_lounge": {"standing_person": 3, "surface_item": 1, "floor_fixture": 3, "doorway": 2, "wall_mounted": 3, "seated_person": 1, "ground_marker": 1},
@@ -93,9 +93,9 @@ V2_EVENT_CAPACITY_TARGETS = {
     "bar": {"behind_counter_person": 1, "floor_fixture": 2, "standing_person": 5, "doorway": 1},
     "gas_station_casino": {"doorway": 2, "floor_fixture": 2, "surface_item": 1, "ground_marker": 1, "standing_person": 5},
     "small_underground_casino": {"floor_fixture": 2, "standing_person": 8, "wall_mounted": 1, "surface_item": 3, "doorway": 1},
-    "small_underground_casino:club": {"floor_fixture": 1, "standing_person": 8},
-    "small_underground_casino:casino": {"floor_fixture": 1, "behind_counter_person": 1, "seated_person": 1, "standing_person": 8},
-    "small_underground_casino:back_room": {"surface_item": 4, "floor_fixture": 1, "doorway": 1, "standing_person": 6},
+    "small_underground_casino:club": {"standing_person": 8},
+    "small_underground_casino:casino": {"behind_counter_person": 1, "standing_person": 8},
+    "small_underground_casino:back_room": {"standing_person": 6},
     "jazz_club": {"floor_fixture": 1, "standing_person": 3},
     "kitty_cat_lounge": {"floor_fixture": 1, "seated_person": 1, "doorway": 1, "standing_person": 6},
     "delta_queen": {"seated_person": 1, "doorway": 1, "behind_counter_person": 1, "floor_fixture": 2, "standing_person": 6},
@@ -2914,19 +2914,11 @@ def main_v2(
         for slot in values(casino.get("event_slots"))
         if isinstance(slot, dict)
     }
-    rowdy_slot = casino_event_slots.get("event.seated_person_1", {})
-    casino_seats = {
-        str(seat.get("id", "")): point(seat.get("point"))
-        for seat in values(casino.get("seats"))
-        if isinstance(seat, dict)
-    }
     check.require(
-        casino.get("object_family_ids", {}).get("event:rowdy_regular") == "event"
-        and casino.get("event_object_slot_ids", {}).get("event:rowdy_regular") == "event.seated_person_1"
-        and rowdy_slot.get("footprint_class") == "seated_person"
-        and rowdy_slot.get("support_id") == "left_card_seat"
-        and point(rowdy_slot.get("pos")) == casino_seats.get("left_card_seat"),
-        "small_underground_casino:casino: rowdy regular must have authored seated event capacity",
+        "event:rowdy_regular" not in casino.get("object_family_ids", {})
+        and "event:rowdy_regular" not in casino.get("event_object_slot_ids", {})
+        and "event.seated_person_1" not in casino_event_slots,
+        "small_underground_casino:casino: unreachable rowdy regular capacity must stay retired",
     )
 
     for map_id, map_data in maps_by_id.items():

@@ -407,6 +407,7 @@ class ScenarioSlotLayoutTests(unittest.TestCase):
                 for slot in values(layout.get("scenario_slots"))
                 if isinstance(slot, dict)
             ]
+            local = active[len(shared) :]
             owners: dict[tuple[float, float, float, float], str] = {}
             for slot in active:
                 bounds = tuple(float(value) for value in values(slot.get("hit_rect")))
@@ -418,6 +419,96 @@ class ScenarioSlotLayoutTests(unittest.TestCase):
                     f"{map_id}::{scenario_id} places {slot_id} exactly on {owners.get(bounds, '')}",
                 )
                 owners[bounds] = slot_id
+            for index, slot in enumerate(local):
+                slot_id = str(slot.get("id", ""))
+                bounds = [float(value) for value in values(slot.get("hit_rect"))]
+                for other in shared:
+                    self.assertFalse(
+                        Authoring._rect_intersects(
+                            bounds,
+                            [float(value) for value in values(other.get("hit_rect"))],
+                        ),
+                        f"{map_id}::{scenario_id} partially overlaps shared target: {slot_id}",
+                    )
+                for other in local[index + 1 :]:
+                    self.assertFalse(
+                        Authoring._rect_intersects(
+                            bounds,
+                            [float(value) for value in values(other.get("hit_rect"))],
+                        ),
+                        f"{map_id}::{scenario_id} partially overlaps local targets: "
+                        f"{slot_id}/{other.get('id', '')}",
+                    )
+
+    def test_retired_unreachable_source_markers_and_mappings_are_absent(self) -> None:
+        retired = {
+            "corner_store": {"scenario.behind_counter_person_1"},
+            "small_underground_casino:club": {"event.floor_fixture_1"},
+            "small_underground_casino:casino": {
+                "event.floor_fixture_1",
+                "event.seated_person_1",
+            },
+            "small_underground_casino:back_room": {
+                "event.surface_item_1",
+                "event.surface_item_2",
+                "event.surface_item_3",
+                "event.surface_item_4",
+                "event.floor_fixture_1",
+                "event.doorway_1",
+            },
+        }
+        for map_id, retired_ids in retired.items():
+            serialized = json.dumps(self.maps[map_id], sort_keys=True)
+            for slot_id in retired_ids:
+                self.assertNotIn(f'"{slot_id}"', serialized)
+        casino = self.maps["small_underground_casino:casino"]
+        for object_id in (
+            "event:scenario_new_muscle_door",
+            "event:scenario_greased_week_window",
+        ):
+            self.assertNotIn(object_id, mapping(casino.get("scenario_object_slot_ids")))
+            self.assertNotIn(object_id, mapping(casino.get("object_family_ids")))
+            self.assertNotIn(object_id, mapping(casino.get("class_overrides")))
+            self.assertTrue(
+                all(
+                    object_id not in values(slot.get("occupant_ids"))
+                    for slot in values(casino.get("scenario_slots"))
+                    if isinstance(slot, dict)
+                )
+            )
+
+    def test_every_reachable_visual_label_is_preserved_for_manual_placement(self) -> None:
+        for pair, snapshots in self.snapshots.items():
+            map_id, scenario_id = pair
+            surface = Authoring.effective_map(self.maps[map_id], scenario_id)
+            layout = self.layouts[pair]
+            preferences = mapping(layout.get("scenario_instance_slot_ids"))
+            slots = {
+                str(slot.get("id", "")): slot
+                for slot in values(layout.get("scenario_slots"))
+                if isinstance(slot, dict)
+            }
+            for snapshot in snapshots:
+                for semantic in snapshot:
+                    if not isinstance(semantic, dict):
+                        continue
+                    entry = Authoring.visual_entry(surface, semantic)
+                    if entry is None or str(entry.get("route_id", "")):
+                        continue
+                    position_key = str(entry.get("position_key", ""))
+                    slot_id = str(preferences.get(position_key, ""))
+                    if not slot_id:
+                        continue
+                    self.assertIn(
+                        str(entry.get("label", "")).casefold(),
+                        {
+                            str(label).casefold()
+                            for label in values(
+                                slots[slot_id].get("scenario_occupant_labels")
+                            )
+                        },
+                        f"{map_id}::{scenario_id} lost label for {position_key}",
+                    )
 
     def test_reviewed_shop_capacity_matches_generator_ceiling(self) -> None:
         archetypes = {
@@ -904,23 +995,16 @@ class ScenarioSlotLayoutTests(unittest.TestCase):
         # purchase services that attach to existing room hosts.
         self.assertEqual(physical_count, 11)
 
-        # Removing one exact alias must make the same source event physical
-        # again and fail closed for lack of its own exact object slot.
-        corrupted = copy.deepcopy(generated_layouts)
-        delivery = corrupted[("corner_store", "corner_store_delivery_day")]
-        delivery["scenario_instance_action_host_ids"].pop(
-            "event:scenario_delivery_day_stock"
+        delivery = generated_layouts[("corner_store", "corner_store_delivery_day")]
+        self.assertEqual(
+            mapping(delivery.get("scenario_instance_action_host_ids")).get(
+                "event:scenario_delivery_day_stock"
+            ),
+            "scenario::delivery_clerk",
         )
-        corrupt_check = StaticCheck.Check()
-        StaticCheck._v2_validate_source_add_claimants(
-            corrupt_check, self.catalog, self.maps, corrupted
-        )
-        self.assertTrue(
-            any(
-                "event:scenario_delivery_day_stock" in error
-                and "lacks an exact compatible" in error
-                for error in corrupt_check.errors
-            )
+        self.assertNotIn(
+            "event:scenario_delivery_day_stock",
+            mapping(delivery.get("scenario_instance_object_slot_ids")),
         )
 
     def test_attached_controls_are_not_physical_but_game_lane_is(self) -> None:
@@ -1149,6 +1233,20 @@ class ScenarioSlotLayoutTests(unittest.TestCase):
                 for slot in values(layout.get("scenario_slots"))
                 if isinstance(slot, dict)
             }
+            local_slots = {
+                str(slot.get("id", "")): slot
+                for slot in values(layout.get("scenario_slots"))
+                if isinstance(slot, dict)
+            }
+            always_present_ids = set(
+                str(slot_id)
+                for slot_id in mapping(
+                    layout.get("scenario_instance_object_slot_ids")
+                ).values()
+            )
+            shared_rects = Authoring._shared_occupied_rects(
+                Authoring.effective_map(self.maps[map_id], scenario_id)
+            )
             effective = StaticCheck._v2_effective_scenario_map(
                 self.maps[map_id], scenario_id, self.layouts
             )
@@ -1161,14 +1259,37 @@ class ScenarioSlotLayoutTests(unittest.TestCase):
                     self.assertEqual(result.get("errors"), [])
                     self.assertEqual(result.get("missing_count"), 0)
                     self.assertEqual(result.get("conflict_count"), 0)
+                    active_local_ids = set(always_present_ids)
                     for binding in mapping(result.get("bindings")).values():
                         if not isinstance(binding, dict) or binding.get("mode") != "room":
                             continue
                         if binding.get("slot_family") == "scenario":
-                            self.assertIn(
-                                str(binding.get("slot_id", "")),
-                                local_slot_ids,
-                                "catalog scenario visual fell into a runtime-reserve slot",
+                            reserved_ids = {
+                                str(slot_id)
+                                for slot_id in values(binding.get("reserved_slot_ids"))
+                            }
+                            self.assertTrue(reserved_ids.issubset(local_slot_ids))
+                            active_local_ids.update(reserved_ids)
+                    active_slots = [local_slots[slot_id] for slot_id in sorted(active_local_ids)]
+                    for index, slot in enumerate(active_slots):
+                        rect = [float(value) for value in values(slot.get("hit_rect"))]
+                        self.assertTrue(
+                            all(
+                                not Authoring._rect_intersects(rect, shared_rect)
+                                for shared_rect in shared_rects
+                            )
+                        )
+                        for other in active_slots[index + 1 :]:
+                            self.assertFalse(
+                                Authoring._rect_intersects(
+                                    rect,
+                                    [
+                                        float(value)
+                                        for value in values(other.get("hit_rect"))
+                                    ],
+                                ),
+                                f"{map_id}::{scenario_id} replay has intersecting "
+                                f"targets {slot.get('id', '')}/{other.get('id', '')}",
                             )
             self.assertTrue(snapshots[pair], f"{map_id}::{scenario_id} has no replay")
         self.assertGreater(replayed, 55)

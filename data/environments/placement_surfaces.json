@@ -84,7 +84,6 @@
         "event:late_shift_discount": "behind_counter_person",
         "event:parking_lot_tip": "ground_marker",
         "event:scenario_aftermath_fence_offer": "standing_person",
-        "event:scenario_delivery_day_stock": "behind_counter_person",
         "event:town_rumor_staff": "behind_counter_person",
         "game:coin_pusher": "floor_fixture",
         "inventory_clerk": "standing_person",
@@ -1197,39 +1196,6 @@
       ],
       "scenario_slots": [
         {
-          "id": "scenario.behind_counter_person_1",
-          "kind": "scenario",
-          "pos": [
-            586.0,
-            238.0
-          ],
-          "footprint_class": "behind_counter_person",
-          "physical_role": "Counter staff",
-          "occupant_ids": [
-            "event:scenario_delivery_day_stock"
-          ],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            550.0,
-            166.0,
-            72.0,
-            72.0
-          ],
-          "label_anchor": [
-            586.0,
-            276.0
-          ],
-          "facing": "front",
-          "priority": 80,
-          "zone_id": "room",
-          "support_id": "register",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
-        },
-        {
           "id": "scenario.surface_item_1",
           "kind": "scenario",
           "pos": [
@@ -1613,8 +1579,7 @@
         "event:town_rumor_staff": "event.behind_counter_person_2"
       },
       "scenario_object_slot_ids": {
-        "event:scenario_aftermath_fence_offer": "scenario.standing_person_1",
-        "event:scenario_delivery_day_stock": "scenario.behind_counter_person_1"
+        "event:scenario_aftermath_fence_offer": "scenario.standing_person_1"
       },
       "exit_object_slot_ids": {
         "travel:leave": "exit.safe_right"
@@ -1645,7 +1610,6 @@
         "event:late_shift_discount": "event",
         "event:parking_lot_tip": "event",
         "event:scenario_aftermath_fence_offer": "scenario",
-        "event:scenario_delivery_day_stock": "scenario",
         "event:town_rumor_staff": "event",
         "game:coin_pusher": "fixed",
         "item:bag": "fixed",
@@ -13276,35 +13240,6 @@
       ],
       "event_slots": [
         {
-          "id": "event.floor_fixture_1",
-          "kind": "event",
-          "pos": [
-            734.0,
-            358.0
-          ],
-          "footprint_class": "floor_fixture",
-          "physical_role": "Floor prop",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            688.0,
-            294.0,
-            92.0,
-            64.0
-          ],
-          "label_anchor": [
-            725.0,
-            278.0
-          ],
-          "facing": "none",
-          "priority": 10,
-          "zone_id": "right",
-          "support_id": "floor",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
           "id": "event.standing_person_1",
           "kind": "event",
           "pos": [
@@ -14140,7 +14075,6 @@
         "numbers_spots:0": "fixed.numbers_book"
       },
       "event_category_slot_ids": {
-        "event_spots:0": "event.floor_fixture_1",
         "numbers_silas_spots:0": "event.standing_person_1"
       },
       "scenario_category_slot_ids": {},
@@ -14188,8 +14122,6 @@
         "environment_layer:back_room": "doorway",
         "environment_layer:club": "doorway",
         "event:recruitment_rook_leads": "standing_person",
-        "event:rowdy_regular": "seated_person",
-        "event:scenario_greased_week_window": "wall_mounted",
         "numbers:book": "surface_item",
         "punchline_greased_week_aftermath_chain_exposed_prop": "wall_mounted",
         "punchline_greased_week_aftermath_payoff_maintained_prop": "wall_mounted",
@@ -14695,14 +14627,14 @@
         "punchline_greased_week_payoff_ledger||background|": "scenario.wall_item_1",
         "punchline_greased_week_payoff_runner|punchline_greased_payoff_runner|background|punchline_greased_week_ledger_move_position": "scenario.standing_person_2",
         "punchline_greased_week_payoff_runner||background|": "scenario.standing_person_2",
-        "punchline_greased_week_safe_exit|env06_8_greased_exit|exit_lane|": "scenario.doorway_2",
+        "punchline_greased_week_safe_exit|env06_8_greased_exit|exit_lane|": "scenario.doorway_1",
         "punchline_greased_week_service_barrier||left|": "scenario.floor_fixture_1",
         "punchline_high_stakes_night_chair_stack|punchline_high_stakes_chair_stack|left|": "scenario.floor_fixture_1",
         "punchline_high_stakes_night_floor_service_runner|punchline_high_stakes_runner_work_2|background|": "scenario.standing_person_1",
         "punchline_high_stakes_night_floor_service_runner|punchline_high_stakes_runner_work_2|background|punchline_high_stakes_night_guard_turn_position": "scenario.standing_person_1",
         "punchline_high_stakes_night_observer_rail||background|": "scenario.floor_fixture_2",
         "punchline_high_stakes_night_protected_table|punchline_high_stakes_protected_table|center|": "scenario.floor_fixture_2",
-        "punchline_high_stakes_night_safe_exit|punchline_high_stakes_safe_exit|exit_lane|": "scenario.doorway_2",
+        "punchline_high_stakes_night_safe_exit|punchline_high_stakes_safe_exit|exit_lane|": "scenario.doorway_1",
         "punchline_new_muscle_bypass_lane||left|": "scenario.ground_marker_1",
         "punchline_new_muscle_checkpoint_rover|punchline_new_muscle_checkpoint_rover|background|punchline_new_muscle_guard_gap_position": "scenario.standing_person_2",
         "punchline_new_muscle_checkpoint_rover|punchline_new_muscle_rover_arrival|background|": "scenario.standing_person_2",
@@ -14710,7 +14642,7 @@
         "punchline_new_muscle_inspection_tray|env06_8_muscle_tray|service_lane|": "scenario.surface_item_1",
         "punchline_new_muscle_inspection_tray|punchline_new_muscle_tray_work_1|center|": "scenario.surface_item_1",
         "punchline_new_muscle_new_guard_lead||right|": "scenario.standing_person_1",
-        "punchline_new_muscle_safe_exit|punchline_headliner_door_guard|exit_lane|": "scenario.doorway_2"
+        "punchline_new_muscle_safe_exit|punchline_headliner_door_guard|exit_lane|": "scenario.doorway_1"
       },
       "scenario_position_route_ids": {},
       "scenario_overflow_ids": [],
@@ -15010,35 +14942,6 @@
       ],
       "event_slots": [
         {
-          "id": "event.floor_fixture_1",
-          "kind": "event",
-          "pos": [
-            752.0,
-            370.0
-          ],
-          "footprint_class": "floor_fixture",
-          "physical_role": "Floor prop",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            706.0,
-            306.0,
-            92.0,
-            64.0
-          ],
-          "label_anchor": [
-            751.0,
-            402.0
-          ],
-          "facing": "none",
-          "priority": 10,
-          "zone_id": "right",
-          "support_id": "floor",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
           "id": "event.behind_counter_person_1",
           "kind": "event",
           "pos": [
@@ -15066,39 +14969,6 @@
           "priority": 25,
           "zone_id": "left",
           "support_id": "left_table",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
-        },
-        {
-          "id": "event.seated_person_1",
-          "kind": "event",
-          "pos": [
-            220.0,
-            246.0
-          ],
-          "footprint_class": "seated_person",
-          "physical_role": "Seated person",
-          "occupant_ids": [
-            "event:rowdy_regular"
-          ],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            186.0,
-            182.0,
-            68.0,
-            64.0
-          ],
-          "label_anchor": [
-            220.0,
-            176.0
-          ],
-          "facing": "left",
-          "priority": 10,
-          "zone_id": "service_lane",
-          "support_id": "left_card_seat",
           "walk_lane_ids": [
             "lane.public"
           ],
@@ -15389,40 +15259,6 @@
           "occupancy_required": false
         },
         {
-          "id": "scenario.doorway_1",
-          "kind": "scenario",
-          "pos": [
-            752.0,
-            24.0
-          ],
-          "footprint_class": "doorway",
-          "physical_role": "Doorway / exit",
-          "occupant_ids": [
-            "event:scenario_greased_week_window",
-            "event:scenario_new_muscle_door"
-          ],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            712.0,
-            0.0,
-            80.0,
-            48.0
-          ],
-          "label_anchor": [
-            751.0,
-            26.0
-          ],
-          "facing": "left",
-          "priority": 10,
-          "zone_id": "room",
-          "support_id": "round3_side_door",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
-        },
-        {
           "id": "scenario.floor_fixture_1",
           "kind": "scenario",
           "pos": [
@@ -15710,7 +15546,7 @@
           "occupancy_required": false
         },
         {
-          "id": "scenario.doorway_2",
+          "id": "scenario.doorway_1",
           "kind": "scenario",
           "pos": [
             36.0,
@@ -15915,12 +15751,9 @@
       },
       "event_object_slot_ids": {
         "event:town_rumor_staff": "event.behind_counter_person_1",
-        "event:rowdy_regular": "event.seated_person_1",
         "numbers:silas": "event.standing_person_8"
       },
       "scenario_object_slot_ids": {
-        "event:scenario_new_muscle_door": "scenario.doorway_1",
-        "event:scenario_greased_week_window": "scenario.doorway_1",
         "service:punchline_private_table": "scenario.surface_item_1"
       },
       "exit_object_slot_ids": {
@@ -15937,7 +15770,6 @@
         "lender_spots:1": "fixed.lender_person_1"
       },
       "event_category_slot_ids": {
-        "event_spots:0": "event.floor_fixture_1",
         "numbers_silas_spots:0": "event.standing_person_8"
       },
       "scenario_category_slot_ids": {},
@@ -15947,8 +15779,6 @@
         "travel_spots:0": "exit.guarded_upper"
       },
       "object_family_ids": {
-        "event:scenario_new_muscle_door": "scenario",
-        "event:scenario_greased_week_window": "scenario",
         "event:town_rumor_staff": "event",
         "game:slot": "fixed",
         "lender:street_lender": "fixed",
@@ -15959,7 +15789,6 @@
         "event:side_door": "fixed",
         "game:video_poker": "fixed",
         "lender:the_crew": "fixed",
-        "event:rowdy_regular": "event",
         "staff:underground_dealer": "fixed",
         "character:ox": "fixed",
         "game:blackjack": "fixed",
@@ -16418,182 +16247,6 @@
       ],
       "event_slots": [
         {
-          "id": "event.surface_item_1",
-          "kind": "event",
-          "pos": [
-            588.0,
-            163.0
-          ],
-          "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            552.0,
-            115.0,
-            72.0,
-            48.0
-          ],
-          "label_anchor": [
-            588.0,
-            109.0
-          ],
-          "facing": "none",
-          "priority": 20,
-          "zone_id": "room",
-          "support_id": "planning_table",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
-          "id": "event.surface_item_2",
-          "kind": "event",
-          "pos": [
-            144.0,
-            196.0
-          ],
-          "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            108.0,
-            148.0,
-            72.0,
-            48.0
-          ],
-          "label_anchor": [
-            144.0,
-            142.0
-          ],
-          "facing": "none",
-          "priority": 30,
-          "zone_id": "room",
-          "support_id": "numbers_desk",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
-          "id": "event.surface_item_3",
-          "kind": "event",
-          "pos": [
-            144.0,
-            66.0
-          ],
-          "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            108.0,
-            18.0,
-            72.0,
-            48.0
-          ],
-          "label_anchor": [
-            144.0,
-            20.0
-          ],
-          "facing": "none",
-          "priority": 40,
-          "zone_id": "room",
-          "support_id": "job_board",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
-          "id": "event.surface_item_4",
-          "kind": "event",
-          "pos": [
-            734.0,
-            74.0
-          ],
-          "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            698.0,
-            26.0,
-            72.0,
-            48.0
-          ],
-          "label_anchor": [
-            734.0,
-            20.0
-          ],
-          "facing": "none",
-          "priority": 50,
-          "zone_id": "room",
-          "support_id": "mags_bench",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
-          "id": "event.floor_fixture_1",
-          "kind": "event",
-          "pos": [
-            468.0,
-            370.0
-          ],
-          "footprint_class": "floor_fixture",
-          "physical_role": "Floor prop",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            432.0,
-            290.0,
-            72.0,
-            80.0
-          ],
-          "label_anchor": [
-            468.0,
-            284.0
-          ],
-          "facing": "none",
-          "priority": 70,
-          "zone_id": "room",
-          "support_id": "stage",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
-          "id": "event.doorway_1",
-          "kind": "event",
-          "pos": [
-            848.0,
-            118.0
-          ],
-          "footprint_class": "doorway",
-          "physical_role": "Doorway / exit",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            816.0,
-            82.0,
-            64.0,
-            72.0
-          ],
-          "label_anchor": [
-            849.0,
-            76.0
-          ],
-          "facing": "left",
-          "priority": 80,
-          "zone_id": "room",
-          "support_id": "rook_exit",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
-        },
-        {
           "id": "event.standing_person_1",
           "kind": "event",
           "pos": [
@@ -16952,12 +16605,6 @@
         "numbers_spots:0": "fixed.event_numbers_desk"
       },
       "event_category_slot_ids": {
-        "event_spots:0": "event.surface_item_2",
-        "event_spots:1": "event.surface_item_3",
-        "event_spots:2": "event.surface_item_1",
-        "event_spots:3": "event.floor_fixture_1",
-        "event_spots:4": "event.doorway_1",
-        "event_spots:5": "event.surface_item_4",
         "numbers_silas_spots:0": "event.standing_person_6"
       },
       "scenario_category_slot_ids": {},

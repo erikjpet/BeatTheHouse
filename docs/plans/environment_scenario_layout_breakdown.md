@@ -51,11 +51,11 @@ Many exact markers begin on provisional staging coordinates, so overlap warnings
 | Reachable base contexts | 20 |
 | Exact scenario contexts | 55 |
 | Total manual save contexts | **75** |
-| Reachable base-scoped slot positions | 395 |
+| Reachable base-scoped slot positions | 386 |
 | Exact scenario-local slot positions | 604 |
-| Unique manual position entries | **999** |
-| Slot appearances across all full save snapshots | 2192 |
-| Exact slots with provisional geometry | 180 |
+| Unique manual position entries | **990** |
+| Slot appearances across all full save snapshots | 2172 |
+| Exact slots with provisional geometry | 366 |
 
 The unique manual-position count adds each room-scoped shared slot once and each scenario-local slot once. The larger full-snapshot count repeats shared geometry in every scenario snapshot, matching what **Save Current Layout** validates.
 
@@ -63,9 +63,9 @@ The unique manual-position count adds each room-scoped shared slot once and each
 
 | Scope | Fixed | Event | Scenario | Exit | Total |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| All 21 raw placement maps | 175 | 144 | 213 | 33 | 565 |
+| All 21 raw placement maps | 175 | 135 | 211 | 33 | 554 |
 | Template-only <code>small_underground_casino</code> | 6 | 15 | 5 | 2 | 28 |
-| Reachable effective base contexts | 169 | 129 | 66 | 31 | 395 |
+| Reachable effective base contexts | 169 | 120 | 66 | 31 | 386 |
 
 The raw inventory includes generic source scenario capacity and the template-only parent. It is not the manual completion total.
 
@@ -78,9 +78,9 @@ The raw inventory includes generic source scenario capacity and the template-onl
 | Motel<br><code>motel</code> | <code>motel::__base</code> | 11 | 8 | 3 | 2 | 24 | 4 | 53 | 77 |
 | Bar<br><code>bar</code> | <code>bar::__base</code> | 6 | 9 | 4 | 1 | 20 | 7 | 73 | 93 |
 | Gas Station Casino<br><code>gas_station_casino</code> | <code>gas_station_casino::__base</code> | 5 | 11 | 3 | 1 | 20 | 5 | 65 | 85 |
-| The Punchline — Comedy Club<br><code>small_underground_casino:club</code> | <code>small_underground_casino:club::__base</code> | 5 | 9 | 3 | 2 | 19 | 5 | 48 | 67 |
-| The Punchline — Hidden Casino<br><code>small_underground_casino:casino</code> | <code>small_underground_casino:casino::__base</code> | 9 | 11 | 3 | 3 | 26 | 3 | 30 | 56 |
-| The Punchline — Crew Back Room<br><code>small_underground_casino:back_room</code> | <code>small_underground_casino:back_room::__base</code> | 8 | 12 | 3 | 2 | 25 | 0 | 0 | 25 |
+| The Punchline — Comedy Club<br><code>small_underground_casino:club</code> | <code>small_underground_casino:club::__base</code> | 5 | 8 | 3 | 2 | 18 | 5 | 48 | 66 |
+| The Punchline — Hidden Casino<br><code>small_underground_casino:casino</code> | <code>small_underground_casino:casino::__base</code> | 9 | 9 | 3 | 3 | 24 | 3 | 30 | 54 |
+| The Punchline — Crew Back Room<br><code>small_underground_casino:back_room</code> | <code>small_underground_casino:back_room::__base</code> | 8 | 6 | 3 | 2 | 19 | 0 | 0 | 19 |
 | Jazz Club<br><code>jazz_club</code> | <code>jazz_club::__base</code> | 9 | 4 | 3 | 1 | 17 | 4 | 45 | 62 |
 | Kitty Cat Lounge<br><code>kitty_cat_lounge</code> | <code>kitty_cat_lounge::__base</code> | 12 | 9 | 3 | 1 | 25 | 4 | 44 | 69 |
 | Delta Queen<br><code>delta_queen</code> | <code>delta_queen::__base</code> | 12 | 11 | 3 | 1 | 27 | 5 | 61 | 88 |
@@ -93,67 +93,67 @@ The raw inventory includes generic source scenario capacity and the template-onl
 | Motel Room<br><code>motel_room</code> | <code>motel_room::__base</code> | 11 | 0 | 3 | 1 | 15 | 0 | 0 | 15 |
 | Apartment<br><code>apartment</code> | <code>apartment::__base</code> | 11 | 0 | 3 | 1 | 15 | 0 | 0 | 15 |
 | House<br><code>house</code> | <code>house::__base</code> | 11 | 0 | 3 | 1 | 15 | 0 | 0 | 15 |
-| **Reachable total** | **20 bases** | **169** | **129** | **66** | **31** | **395** | **55** | **604** | **999** |
+| **Reachable total** | **20 bases** | **169** | **120** | **66** | **31** | **386** | **55** | **604** | **990** |
 
 ### Exact scenario summary
 
 | Exact layout ID | Scenario | Shared slots | Local slots | Full save slots | Claimant labels | Provisional | Action-only IDs |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| <code>corner_store::corner_store_aftermath</code> | The Aftermath | 21 | 8 | 29 | 10 | 3 | 0 |
-| <code>corner_store::corner_store_dead_shift</code> | Dead Shift | 21 | 8 | 29 | 10 | 3 | 0 |
-| <code>corner_store::corner_store_delivery_day</code> | Delivery Day | 21 | 12 | 33 | 15 | 5 | 0 |
-| <code>corner_store::corner_store_inventory_night</code> | Inventory Night | 21 | 7 | 28 | 10 | 2 | 0 |
-| <code>corner_store::corner_store_lotto_fever</code> | Lotto Fever | 21 | 9 | 30 | 10 | 4 | 0 |
-| <code>back_alley::back_alley_cruiser_parked</code> | Cruiser Parked | 27 | 9 | 36 | 11 | 3 | 0 |
-| <code>back_alley::back_alley_fence_night</code> | Fence Night | 27 | 11 | 38 | 11 | 4 | 0 |
-| <code>back_alley::back_alley_nothing_moving</code> | Nothing Moving | 27 | 8 | 35 | 11 | 3 | 0 |
-| <code>back_alley::back_alley_street_craps</code> | Street Craps | 27 | 9 | 36 | 11 | 3 | 0 |
-| <code>motel::motel_conventioneers</code> | Conventioneers | 24 | 15 | 39 | 18 | 6 | 1 |
-| <code>motel::motel_stakeout</code> | The Stakeout | 24 | 13 | 37 | 15 | 3 | 1 |
-| <code>motel::motel_wedding_overflow</code> | Wedding Overflow | 24 | 14 | 38 | 18 | 5 | 1 |
-| <code>motel::motel_weekly_rates</code> | Weekly Rates | 24 | 11 | 35 | 15 | 3 | 1 |
-| <code>bar::bar_darts_league_night</code> | Darts League Night | 20 | 11 | 31 | 12 | 4 | 6 |
-| <code>bar::bar_dead_tuesday</code> | Dead Tuesday | 20 | 8 | 28 | 8 | 0 | 5 |
-| <code>bar::bar_fight_night</code> | Fight Night | 20 | 14 | 34 | 15 | 6 | 6 |
-| <code>bar::bar_live_band</code> | Live Band | 20 | 10 | 30 | 12 | 1 | 5 |
-| <code>bar::bar_lock_in</code> | Lock-In | 20 | 9 | 29 | 12 | 1 | 5 |
-| <code>bar::bar_payday_rush</code> | Payday Rush | 20 | 12 | 32 | 13 | 3 | 3 |
-| <code>bar::bar_wake</code> | The Wake | 20 | 9 | 29 | 10 | 0 | 3 |
-| <code>gas_station_casino::gas_station_graveyard_shift</code> | Graveyard Shift | 20 | 14 | 34 | 16 | 5 | 1 |
-| <code>gas_station_casino::gas_station_road_crew_payday</code> | Road Crew Payday | 20 | 13 | 33 | 14 | 6 | 1 |
-| <code>gas_station_casino::gas_station_storm_shelter</code> | Storm Shelter | 20 | 14 | 34 | 16 | 6 | 1 |
-| <code>gas_station_casino::gas_station_tour_bus_stop</code> | Tour Bus Stop | 20 | 11 | 31 | 15 | 4 | 1 |
-| <code>gas_station_casino::gas_station_trucker_convoy</code> | Trucker Convoy | 20 | 13 | 33 | 17 | 3 | 1 |
-| <code>small_underground_casino:club::punchline_bringer_show</code> | Bringer Show | 19 | 10 | 29 | 11 | 1 | 4 |
-| <code>small_underground_casino:club::punchline_debt_court</code> | Debt Court | 19 | 10 | 29 | 12 | 1 | 4 |
-| <code>small_underground_casino:club::punchline_headliner_night</code> | Headliner Night | 19 | 10 | 29 | 12 | 2 | 5 |
-| <code>small_underground_casino:club::punchline_open_mic_night</code> | Open Mic Night | 19 | 10 | 29 | 11 | 1 | 4 |
-| <code>small_underground_casino:club::punchline_raid_jitters</code> | Raid Jitters | 19 | 8 | 27 | 10 | 2 | 5 |
-| <code>small_underground_casino:casino::punchline_greased_week</code> | Greased Week | 26 | 10 | 36 | 12 | 4 | 5 |
-| <code>small_underground_casino:casino::punchline_high_stakes_night</code> | High-Stakes Night | 26 | 11 | 37 | 12 | 2 | 4 |
-| <code>small_underground_casino:casino::punchline_new_muscle</code> | New Muscle | 26 | 9 | 35 | 12 | 3 | 5 |
-| <code>jazz_club::jazz_club_guest_legend</code> | Guest Legend | 17 | 11 | 28 | 13 | 3 | 6 |
+| <code>corner_store::corner_store_aftermath</code> | The Aftermath | 21 | 8 | 29 | 10 | 5 | 0 |
+| <code>corner_store::corner_store_dead_shift</code> | Dead Shift | 21 | 8 | 29 | 10 | 5 | 0 |
+| <code>corner_store::corner_store_delivery_day</code> | Delivery Day | 21 | 12 | 33 | 16 | 10 | 0 |
+| <code>corner_store::corner_store_inventory_night</code> | Inventory Night | 21 | 7 | 28 | 10 | 5 | 0 |
+| <code>corner_store::corner_store_lotto_fever</code> | Lotto Fever | 21 | 9 | 30 | 10 | 6 | 0 |
+| <code>back_alley::back_alley_cruiser_parked</code> | Cruiser Parked | 27 | 9 | 36 | 11 | 7 | 0 |
+| <code>back_alley::back_alley_fence_night</code> | Fence Night | 27 | 11 | 38 | 11 | 9 | 0 |
+| <code>back_alley::back_alley_nothing_moving</code> | Nothing Moving | 27 | 8 | 35 | 11 | 4 | 0 |
+| <code>back_alley::back_alley_street_craps</code> | Street Craps | 27 | 9 | 36 | 11 | 6 | 0 |
+| <code>motel::motel_conventioneers</code> | Conventioneers | 24 | 15 | 39 | 18 | 11 | 1 |
+| <code>motel::motel_stakeout</code> | The Stakeout | 24 | 13 | 37 | 15 | 8 | 1 |
+| <code>motel::motel_wedding_overflow</code> | Wedding Overflow | 24 | 14 | 38 | 18 | 9 | 1 |
+| <code>motel::motel_weekly_rates</code> | Weekly Rates | 24 | 11 | 35 | 15 | 6 | 1 |
+| <code>bar::bar_darts_league_night</code> | Darts League Night | 20 | 11 | 31 | 12 | 6 | 6 |
+| <code>bar::bar_dead_tuesday</code> | Dead Tuesday | 20 | 8 | 28 | 8 | 3 | 5 |
+| <code>bar::bar_fight_night</code> | Fight Night | 20 | 14 | 34 | 15 | 8 | 6 |
+| <code>bar::bar_live_band</code> | Live Band | 20 | 10 | 30 | 12 | 5 | 5 |
+| <code>bar::bar_lock_in</code> | Lock-In | 20 | 9 | 29 | 12 | 4 | 5 |
+| <code>bar::bar_payday_rush</code> | Payday Rush | 20 | 12 | 32 | 13 | 7 | 3 |
+| <code>bar::bar_wake</code> | The Wake | 20 | 9 | 29 | 10 | 3 | 3 |
+| <code>gas_station_casino::gas_station_graveyard_shift</code> | Graveyard Shift | 20 | 14 | 34 | 16 | 10 | 1 |
+| <code>gas_station_casino::gas_station_road_crew_payday</code> | Road Crew Payday | 20 | 13 | 33 | 14 | 10 | 1 |
+| <code>gas_station_casino::gas_station_storm_shelter</code> | Storm Shelter | 20 | 14 | 34 | 16 | 10 | 1 |
+| <code>gas_station_casino::gas_station_tour_bus_stop</code> | Tour Bus Stop | 20 | 11 | 31 | 15 | 8 | 1 |
+| <code>gas_station_casino::gas_station_trucker_convoy</code> | Trucker Convoy | 20 | 13 | 33 | 17 | 8 | 1 |
+| <code>small_underground_casino:club::punchline_bringer_show</code> | Bringer Show | 18 | 10 | 28 | 11 | 5 | 4 |
+| <code>small_underground_casino:club::punchline_debt_court</code> | Debt Court | 18 | 10 | 28 | 12 | 6 | 4 |
+| <code>small_underground_casino:club::punchline_headliner_night</code> | Headliner Night | 18 | 10 | 28 | 12 | 7 | 5 |
+| <code>small_underground_casino:club::punchline_open_mic_night</code> | Open Mic Night | 18 | 10 | 28 | 11 | 6 | 4 |
+| <code>small_underground_casino:club::punchline_raid_jitters</code> | Raid Jitters | 18 | 8 | 26 | 10 | 4 | 5 |
+| <code>small_underground_casino:casino::punchline_greased_week</code> | Greased Week | 24 | 10 | 34 | 12 | 7 | 5 |
+| <code>small_underground_casino:casino::punchline_high_stakes_night</code> | High-Stakes Night | 24 | 11 | 35 | 12 | 8 | 4 |
+| <code>small_underground_casino:casino::punchline_new_muscle</code> | New Muscle | 24 | 9 | 33 | 12 | 8 | 5 |
+| <code>jazz_club::jazz_club_guest_legend</code> | Guest Legend | 17 | 11 | 28 | 13 | 5 | 6 |
 | <code>jazz_club::jazz_club_recording_night</code> | Recording Night | 17 | 10 | 27 | 13 | 2 | 3 |
-| <code>jazz_club::jazz_club_rent_party</code> | Rent Party | 17 | 12 | 29 | 13 | 4 | 4 |
-| <code>jazz_club::jazz_club_union_trouble</code> | Union Trouble | 17 | 12 | 29 | 13 | 7 | 4 |
-| <code>kitty_cat_lounge::kitty_cat_lounge_amateur_night</code> | Amateur Night | 25 | 11 | 36 | 13 | 2 | 5 |
-| <code>kitty_cat_lounge::kitty_cat_lounge_bachelorette_storm</code> | Bachelorette Storm | 25 | 10 | 35 | 11 | 3 | 6 |
-| <code>kitty_cat_lounge::kitty_cat_lounge_buyout</code> | The Buyout | 25 | 11 | 36 | 12 | 3 | 5 |
-| <code>kitty_cat_lounge::kitty_cat_lounge_slow_night</code> | Slow Night | 25 | 12 | 37 | 13 | 4 | 4 |
-| <code>delta_queen::delta_queen_captains_invitational</code> | Captain's Invitational | 27 | 13 | 40 | 15 | 2 | 7 |
-| <code>delta_queen::delta_queen_engine_trouble</code> | Engine Trouble | 27 | 11 | 38 | 14 | 2 | 7 |
-| <code>delta_queen::delta_queen_fog_delay</code> | Fog Delay | 27 | 10 | 37 | 12 | 3 | 6 |
-| <code>delta_queen::delta_queen_wedding_charter</code> | Wedding Charter | 27 | 15 | 42 | 16 | 5 | 6 |
-| <code>delta_queen::delta_queen_whale_aboard</code> | Whale Aboard | 27 | 12 | 39 | 14 | 3 | 6 |
+| <code>jazz_club::jazz_club_rent_party</code> | Rent Party | 17 | 12 | 29 | 13 | 5 | 4 |
+| <code>jazz_club::jazz_club_union_trouble</code> | Union Trouble | 17 | 12 | 29 | 13 | 9 | 4 |
+| <code>kitty_cat_lounge::kitty_cat_lounge_amateur_night</code> | Amateur Night | 25 | 11 | 36 | 13 | 5 | 5 |
+| <code>kitty_cat_lounge::kitty_cat_lounge_bachelorette_storm</code> | Bachelorette Storm | 25 | 10 | 35 | 11 | 6 | 6 |
+| <code>kitty_cat_lounge::kitty_cat_lounge_buyout</code> | The Buyout | 25 | 11 | 36 | 12 | 6 | 5 |
+| <code>kitty_cat_lounge::kitty_cat_lounge_slow_night</code> | Slow Night | 25 | 12 | 37 | 13 | 8 | 4 |
+| <code>delta_queen::delta_queen_captains_invitational</code> | Captain's Invitational | 27 | 13 | 40 | 15 | 6 | 7 |
+| <code>delta_queen::delta_queen_engine_trouble</code> | Engine Trouble | 27 | 11 | 38 | 14 | 5 | 7 |
+| <code>delta_queen::delta_queen_fog_delay</code> | Fog Delay | 27 | 10 | 37 | 12 | 7 | 6 |
+| <code>delta_queen::delta_queen_wedding_charter</code> | Wedding Charter | 27 | 15 | 42 | 16 | 8 | 6 |
+| <code>delta_queen::delta_queen_whale_aboard</code> | Whale Aboard | 27 | 12 | 39 | 14 | 7 | 6 |
 | <code>beach::beach_bonfire_night</code> | Bonfire Night | 8 | 13 | 21 | 15 | 5 | 1 |
-| <code>beach::beach_festival_weekend</code> | Festival Weekend | 8 | 14 | 22 | 17 | 3 | 1 |
-| <code>beach::beach_storm_coming</code> | Storm Coming | 8 | 11 | 19 | 17 | 2 | 1 |
-| <code>pawn_shop::pawn_shop_estate_lot_day</code> | Estate Lot Day | 18 | 11 | 29 | 13 | 3 | 0 |
-| <code>pawn_shop::pawn_shop_sals_mood</code> | Sal's Mood | 18 | 9 | 27 | 10 | 4 | 0 |
-| <code>pawn_shop::pawn_shop_serial_check_day</code> | Serial-Check Day | 18 | 8 | 26 | 10 | 2 | 0 |
-| <code>grand_casino::grand_casino_audit_night</code> | Audit Night | 30 | 13 | 43 | 16 | 6 | 6 |
-| <code>grand_casino::grand_casino_convention_crowd</code> | Convention Crowd | 30 | 12 | 42 | 14 | 5 | 6 |
-| <code>grand_casino::grand_casino_gala_night</code> | Gala Night | 30 | 13 | 43 | 15 | 5 | 6 |
+| <code>beach::beach_festival_weekend</code> | Festival Weekend | 8 | 14 | 22 | 17 | 5 | 1 |
+| <code>beach::beach_storm_coming</code> | Storm Coming | 8 | 11 | 19 | 17 | 4 | 1 |
+| <code>pawn_shop::pawn_shop_estate_lot_day</code> | Estate Lot Day | 18 | 11 | 29 | 13 | 6 | 0 |
+| <code>pawn_shop::pawn_shop_sals_mood</code> | Sal's Mood | 18 | 9 | 27 | 10 | 5 | 0 |
+| <code>pawn_shop::pawn_shop_serial_check_day</code> | Serial-Check Day | 18 | 8 | 26 | 10 | 5 | 0 |
+| <code>grand_casino::grand_casino_audit_night</code> | Audit Night | 30 | 13 | 43 | 16 | 11 | 6 |
+| <code>grand_casino::grand_casino_convention_crowd</code> | Convention Crowd | 30 | 12 | 42 | 14 | 11 | 6 |
+| <code>grand_casino::grand_casino_gala_night</code> | Gala Night | 30 | 13 | 43 | 15 | 11 | 6 |
 
 ## Template-only source
 
@@ -200,13 +200,13 @@ Positions are canonical 900×430 board coordinates. Base tables list the exact e
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
 | <code>scenario.local_doorway_1</code> | Marked Clear Exit | <code>doorway</code> | <code>41, 286</code> | <code>left_exit</code> | Marked Clear Exit | Exact scenario |
-| <code>scenario.local_floor_fixture_1</code> | Unbagged Unidentified Evidence | <code>floor_fixture</code> | <code>156, 358</code> | <code>floor</code> | Unbagged Unidentified Evidence | Exact scenario |
-| <code>scenario.local_ground_marker_1</code> | Scenario alternatives: Watched Aisle / Watched Aisle Refused | <code>ground_marker</code> | <code>584, 422</code> | <code>manual_placement_required</code> | Watched Aisle<br>Watched Aisle Refused | Provisional geometry |
+| <code>scenario.local_floor_fixture_1</code> | Unbagged Unidentified Evidence | <code>floor_fixture</code> | <code>134, 304</code> | <code>manual_placement_required</code> | Unbagged Unidentified Evidence | Provisional geometry |
+| <code>scenario.local_ground_marker_1</code> | Scenario alternatives: Watched Aisle / Watched Aisle Refused | <code>ground_marker</code> | <code>168, 216</code> | <code>manual_placement_required</code> | Watched Aisle<br>Watched Aisle Refused | Provisional geometry |
 | <code>scenario.local_standing_person_1</code> | Plainclothes Officer | <code>standing_person</code> | <code>726, 358</code> | <code>floor</code> | Plainclothes Officer | Exact scenario |
 | <code>scenario.local_surface_item_1</code> | Unidentified Object by Swept Glass | <code>surface_item</code> | <code>814, 148</code> | <code>cooler_upper</code> | Unidentified Object by Swept Glass | Exact scenario |
-| <code>scenario.local_surface_item_2</code> | Repaired Glass and Trace Bag | <code>surface_item</code> | <code>44, 64</code> | <code>manual_placement_required</code> | Repaired Glass and Trace Bag | Provisional geometry |
-| <code>scenario.local_surface_item_3</code> | Scenario alternatives: Evidence Sweep Hold / Police Hold | <code>surface_item</code> | <code>564, 64</code> | <code>manual_placement_required</code> | Evidence Sweep Hold<br>Police Hold | Provisional geometry |
-| <code>scenario.local_wall_item_1</code> | Boarded Glass | <code>wall_mounted</code> | <code>450, 50</code> | <code>wall</code> | Boarded Glass | Exact scenario |
+| <code>scenario.local_surface_item_2</code> | Repaired Glass and Trace Bag | <code>surface_item</code> | <code>300, 216</code> | <code>manual_placement_required</code> | Repaired Glass and Trace Bag | Provisional geometry |
+| <code>scenario.local_surface_item_3</code> | Scenario alternatives: Evidence Sweep Hold / Police Hold | <code>surface_item</code> | <code>236, 168</code> | <code>manual_placement_required</code> | Evidence Sweep Hold<br>Police Hold | Provisional geometry |
+| <code>scenario.local_wall_item_1</code> | Boarded Glass | <code>wall_mounted</code> | <code>400, 56</code> | <code>manual_placement_required</code> | Boarded Glass | Provisional geometry |
 
 #### Scenario — Dead Shift — <code>corner_store::corner_store_dead_shift</code>
 
@@ -215,13 +215,13 @@ Positions are canonical 900×430 board coordinates. Base tables list the exact e
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
 | <code>scenario.local_doorway_1</code> | Marked Clear Exit | <code>doorway</code> | <code>41, 286</code> | <code>left_exit</code> | Marked Clear Exit | Exact scenario |
-| <code>scenario.local_floor_fixture_1</code> | Cooler Circuit Abandoned | <code>floor_fixture</code> | <code>156, 358</code> | <code>floor</code> | Cooler Circuit Abandoned | Exact scenario |
-| <code>scenario.local_floor_fixture_2</code> | Scenario alternatives: Dark Cooler Bank and Closed Register / Lit Cooler Bank | <code>floor_fixture</code> | <code>598, 422</code> | <code>manual_placement_required</code> | Dark Cooler Bank and Closed Register<br>Lit Cooler Bank | Provisional geometry |
+| <code>scenario.local_floor_fixture_1</code> | Cooler Circuit Abandoned | <code>floor_fixture</code> | <code>134, 304</code> | <code>manual_placement_required</code> | Cooler Circuit Abandoned | Provisional geometry |
+| <code>scenario.local_floor_fixture_2</code> | Scenario alternatives: Dark Cooler Bank and Closed Register / Lit Cooler Bank | <code>floor_fixture</code> | <code>182, 216</code> | <code>manual_placement_required</code> | Dark Cooler Bank and Closed Register<br>Lit Cooler Bank | Provisional geometry |
 | <code>scenario.local_standing_person_1</code> | Night Clerk | <code>standing_person</code> | <code>612, 358</code> | <code>floor</code> | Night Clerk | Exact scenario |
 | <code>scenario.local_surface_item_1</code> | Cooler Circuit | <code>surface_item</code> | <code>814, 148</code> | <code>cooler_upper</code> | Cooler Circuit | Exact scenario |
-| <code>scenario.local_wall_item_1</code> | Breaker Panel | <code>wall_mounted</code> | <code>450, 50</code> | <code>wall</code> | Breaker Panel | Exact scenario |
-| <code>scenario.local_wall_item_2</code> | Handwritten Camera Warning | <code>wall_mounted</code> | <code>48, 64</code> | <code>manual_placement_required</code> | Handwritten Camera Warning | Provisional geometry |
-| <code>scenario.local_wall_item_3</code> | Scenario alternatives: Flicker Lockout / Flicker Lockout Refused | <code>wall_mounted</code> | <code>568, 64</code> | <code>manual_placement_required</code> | Flicker Lockout<br>Flicker Lockout Refused | Provisional geometry |
+| <code>scenario.local_wall_item_1</code> | Breaker Panel | <code>wall_mounted</code> | <code>400, 56</code> | <code>manual_placement_required</code> | Breaker Panel | Provisional geometry |
+| <code>scenario.local_wall_item_2</code> | Handwritten Camera Warning | <code>wall_mounted</code> | <code>568, 88</code> | <code>manual_placement_required</code> | Handwritten Camera Warning | Provisional geometry |
+| <code>scenario.local_wall_item_3</code> | Scenario alternatives: Flicker Lockout / Flicker Lockout Refused | <code>wall_mounted</code> | <code>408, 160</code> | <code>manual_placement_required</code> | Flicker Lockout<br>Flicker Lockout Refused | Provisional geometry |
 
 #### Scenario — Delivery Day — <code>corner_store::corner_store_delivery_day</code>
 
@@ -230,17 +230,17 @@ Positions are canonical 900×430 board coordinates. Base tables list the exact e
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
 | <code>scenario.local_doorway_1</code> | Clear front-door lane | <code>doorway</code> | <code>41, 286</code> | <code>left_exit</code> | Clear front-door lane | Exact scenario |
-| <code>scenario.local_floor_fixture_1</code> | Mismarked delivery cartons | <code>floor_fixture</code> | <code>156, 358</code> | <code>floor</code> | Mismarked delivery cartons | Exact scenario |
-| <code>scenario.local_floor_fixture_2</code> | Scenario alternatives: Mismarked delivery cartons / Torn carton | <code>floor_fixture</code> | <code>598, 422</code> | <code>manual_placement_required</code> | Mismarked delivery cartons<br>Torn carton | Provisional geometry |
-| <code>scenario.local_floor_fixture_3</code> | Sealed pallet | <code>floor_fixture</code> | <code>579, 274</code> | <code>manual_placement_required</code> | Sealed pallet | Provisional geometry |
-| <code>scenario.local_standing_person_1</code> | Runner | <code>standing_person</code> | <code>480, 370</code> | <code>floor</code> | Runner | Exact scenario |
-| <code>scenario.local_standing_person_2</code> | Delivery clerk | <code>standing_person</code> | <code>612, 358</code> | <code>floor</code> | Delivery clerk | Exact scenario |
-| <code>scenario.local_standing_person_3</code> | Scenario alternatives: Ada at the reopened shelf / Delivery clerk | <code>standing_person</code> | <code>116, 294</code> | <code>manual_placement_required</code> | Ada at the reopened shelf<br>Delivery clerk | Provisional geometry |
-| <code>scenario.local_standing_person_4</code> | Runner | <code>standing_person</code> | <code>726, 358</code> | <code>floor</code> | Runner | Exact scenario |
+| <code>scenario.local_floor_fixture_1</code> | Mismarked delivery cartons | <code>floor_fixture</code> | <code>134, 304</code> | <code>manual_placement_required</code> | Mismarked delivery cartons | Provisional geometry |
+| <code>scenario.local_floor_fixture_2</code> | Scenario alternatives: Mismarked delivery cartons / Torn carton | <code>floor_fixture</code> | <code>566, 288</code> | <code>manual_placement_required</code> | Mismarked delivery cartons<br>Torn carton | Provisional geometry |
+| <code>scenario.local_floor_fixture_3</code> | Sealed pallet | <code>floor_fixture</code> | <code>275, 216</code> | <code>manual_placement_required</code> | Sealed pallet | Provisional geometry |
+| <code>scenario.local_standing_person_1</code> | Runner | <code>standing_person</code> | <code>588, 368</code> | <code>manual_placement_required</code> | Runner | Provisional geometry |
+| <code>scenario.local_standing_person_2</code> | Delivery clerk | <code>standing_person</code> | <code>660, 360</code> | <code>manual_placement_required</code> | Delivery clerk | Provisional geometry |
+| <code>scenario.local_standing_person_3</code> | Scenario alternatives: Ada at the reopened shelf / Ada holding the return slip / Delivery clerk | <code>standing_person</code> | <code>556, 168</code> | <code>manual_placement_required</code> | Ada at the reopened shelf<br>Ada holding the return slip<br>Delivery clerk | Provisional geometry |
+| <code>scenario.local_standing_person_4</code> | Runner | <code>standing_person</code> | <code>732, 360</code> | <code>manual_placement_required</code> | Runner | Provisional geometry |
 | <code>scenario.local_surface_item_1</code> | Scenario alternatives: Abandoned manifest / Crate with a damaged label | <code>surface_item</code> | <code>814, 148</code> | <code>cooler_upper</code> | Abandoned manifest<br>Crate with a damaged label | Exact scenario |
-| <code>scenario.local_surface_item_2</code> | Delivery verification shelf | <code>surface_item</code> | <code>44, 64</code> | <code>manual_placement_required</code> | Delivery verification shelf | Provisional geometry |
-| <code>scenario.local_surface_item_3</code> | Damaged Delivery Manifest | <code>surface_item</code> | <code>564, 64</code> | <code>manual_placement_required</code> | Damaged Delivery Manifest | Provisional geometry |
-| <code>scenario.local_wall_item_1</code> | Stocked rack | <code>wall_mounted</code> | <code>450, 50</code> | <code>wall</code> | Stocked rack | Exact scenario |
+| <code>scenario.local_surface_item_2</code> | Delivery verification shelf | <code>surface_item</code> | <code>372, 160</code> | <code>manual_placement_required</code> | Delivery verification shelf | Provisional geometry |
+| <code>scenario.local_surface_item_3</code> | Damaged Delivery Manifest | <code>surface_item</code> | <code>180, 216</code> | <code>manual_placement_required</code> | Damaged Delivery Manifest | Provisional geometry |
+| <code>scenario.local_wall_item_1</code> | Stocked rack | <code>wall_mounted</code> | <code>400, 56</code> | <code>manual_placement_required</code> | Stocked rack | Provisional geometry |
 
 #### Scenario — Inventory Night — <code>corner_store::corner_store_inventory_night</code>
 
@@ -249,12 +249,12 @@ Positions are canonical 900×430 board coordinates. Base tables list the exact e
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
 | <code>scenario.local_doorway_1</code> | Marked Clear Exit | <code>doorway</code> | <code>41, 286</code> | <code>left_exit</code> | Marked Clear Exit | Exact scenario |
-| <code>scenario.local_floor_fixture_1</code> | Count Cage | <code>floor_fixture</code> | <code>156, 358</code> | <code>floor</code> | Count Cage | Exact scenario |
-| <code>scenario.local_floor_fixture_2</code> | Discrepancy Shelf Abandoned | <code>floor_fixture</code> | <code>598, 422</code> | <code>manual_placement_required</code> | Discrepancy Shelf Abandoned | Provisional geometry |
-| <code>scenario.local_floor_fixture_3</code> | Scenario alternatives: Closed Aisles / Closed Aisles Refused / Quarantined Section / Signed Open Shelves | <code>floor_fixture</code> | <code>707, 422</code> | <code>manual_placement_required</code> | Closed Aisles<br>Closed Aisles Refused<br>Quarantined Section<br>Signed Open Shelves | Provisional geometry |
-| <code>scenario.local_standing_person_1</code> | Inventory Clerk | <code>standing_person</code> | <code>612, 358</code> | <code>floor</code> | Inventory Clerk | Exact scenario |
+| <code>scenario.local_floor_fixture_1</code> | Count Cage | <code>floor_fixture</code> | <code>134, 304</code> | <code>manual_placement_required</code> | Count Cage | Provisional geometry |
+| <code>scenario.local_floor_fixture_2</code> | Discrepancy Shelf Abandoned | <code>floor_fixture</code> | <code>566, 288</code> | <code>manual_placement_required</code> | Discrepancy Shelf Abandoned | Provisional geometry |
+| <code>scenario.local_floor_fixture_3</code> | Scenario alternatives: Closed Aisles / Closed Aisles Refused / Quarantined Section / Signed Open Shelves | <code>floor_fixture</code> | <code>275, 216</code> | <code>manual_placement_required</code> | Closed Aisles<br>Closed Aisles Refused<br>Quarantined Section<br>Signed Open Shelves | Provisional geometry |
+| <code>scenario.local_standing_person_1</code> | Inventory Clerk | <code>standing_person</code> | <code>612, 368</code> | <code>manual_placement_required</code> | Inventory Clerk | Provisional geometry |
 | <code>scenario.local_surface_item_1</code> | Discrepancy Shelf | <code>surface_item</code> | <code>814, 148</code> | <code>cooler_upper</code> | Discrepancy Shelf | Exact scenario |
-| <code>scenario.local_wall_item_1</code> | Public Inventory Notice | <code>wall_mounted</code> | <code>450, 50</code> | <code>wall</code> | Public Inventory Notice | Exact scenario |
+| <code>scenario.local_wall_item_1</code> | Public Inventory Notice | <code>wall_mounted</code> | <code>400, 56</code> | <code>manual_placement_required</code> | Public Inventory Notice | Provisional geometry |
 
 #### Scenario — Lotto Fever — <code>corner_store::corner_store_lotto_fever</code>
 
@@ -263,14 +263,14 @@ Positions are canonical 900×430 board coordinates. Base tables list the exact e
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
 | <code>scenario.local_doorway_1</code> | Marked Clear Exit | <code>doorway</code> | <code>41, 286</code> | <code>left_exit</code> | Marked Clear Exit | Exact scenario |
-| <code>scenario.local_floor_fixture_1</code> | Queue Rail | <code>floor_fixture</code> | <code>156, 358</code> | <code>floor</code> | Queue Rail | Exact scenario |
-| <code>scenario.local_floor_fixture_2</code> | Scenario alternatives: Sold Out Counter / Sold Out Counter Refused | <code>floor_fixture</code> | <code>598, 422</code> | <code>manual_placement_required</code> | Sold Out Counter<br>Sold Out Counter Refused | Provisional geometry |
-| <code>scenario.local_ground_marker_1</code> | Disputed Queue Marks | <code>ground_marker</code> | <code>800, 422</code> | <code>manual_placement_required</code> | Disputed Queue Marks | Provisional geometry |
+| <code>scenario.local_floor_fixture_1</code> | Queue Rail | <code>floor_fixture</code> | <code>134, 304</code> | <code>manual_placement_required</code> | Queue Rail | Provisional geometry |
+| <code>scenario.local_floor_fixture_2</code> | Scenario alternatives: Sold Out Counter / Sold Out Counter Refused | <code>floor_fixture</code> | <code>182, 216</code> | <code>manual_placement_required</code> | Sold Out Counter<br>Sold Out Counter Refused | Provisional geometry |
+| <code>scenario.local_ground_marker_1</code> | Disputed Queue Marks | <code>ground_marker</code> | <code>40, 136</code> | <code>manual_placement_required</code> | Disputed Queue Marks | Provisional geometry |
 | <code>scenario.local_standing_person_1</code> | Lotto Regular | <code>standing_person</code> | <code>726, 358</code> | <code>floor</code> | Lotto Regular | Exact scenario |
 | <code>scenario.local_surface_item_1</code> | Winning Slips and Cups | <code>surface_item</code> | <code>814, 148</code> | <code>cooler_upper</code> | Winning Slips and Cups | Exact scenario |
-| <code>scenario.local_wall_item_1</code> | Number Board | <code>wall_mounted</code> | <code>450, 50</code> | <code>wall</code> | Number Board | Exact scenario |
-| <code>scenario.local_wall_item_2</code> | Public Stock Notice | <code>wall_mounted</code> | <code>48, 64</code> | <code>manual_placement_required</code> | Public Stock Notice | Provisional geometry |
-| <code>scenario.local_wall_item_3</code> | Number Board Abandoned | <code>wall_mounted</code> | <code>568, 64</code> | <code>manual_placement_required</code> | Number Board Abandoned | Provisional geometry |
+| <code>scenario.local_wall_item_1</code> | Number Board | <code>wall_mounted</code> | <code>400, 56</code> | <code>manual_placement_required</code> | Number Board | Provisional geometry |
+| <code>scenario.local_wall_item_2</code> | Public Stock Notice | <code>wall_mounted</code> | <code>568, 88</code> | <code>manual_placement_required</code> | Public Stock Notice | Provisional geometry |
+| <code>scenario.local_wall_item_3</code> | Number Board Abandoned | <code>wall_mounted</code> | <code>408, 160</code> | <code>manual_placement_required</code> | Number Board Abandoned | Provisional geometry |
 
 ### Back Alley — <code>back_alley</code>
 
@@ -314,15 +314,15 @@ Positions are canonical 900×430 board coordinates. Base tables list the exact e
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.local_doorway_1</code> | Marked Clear Exit | <code>doorway</code> | <code>856, 376</code> | <code>right_alley</code> | Marked Clear Exit | Exact scenario |
-| <code>scenario.local_floor_fixture_1</code> | Stacked Cover | <code>floor_fixture</code> | <code>736, 358</code> | <code>floor</code> | Stacked Cover | Exact scenario |
-| <code>scenario.local_floor_fixture_2</code> | Stacked Cover Abandoned | <code>floor_fixture</code> | <code>696, 286</code> | <code>floor</code> | Stacked Cover Abandoned | Exact scenario |
-| <code>scenario.local_floor_fixture_3</code> | Scenario alternatives: Cruiser Departed / Diverted Patrol / Watched Route | <code>floor_fixture</code> | <code>126, 294</code> | <code>manual_placement_required</code> | Cruiser Departed<br>Diverted Patrol<br>Watched Route | Provisional geometry |
+| <code>scenario.local_doorway_1</code> | Marked Clear Exit | <code>doorway</code> | <code>856, 136</code> | <code>manual_placement_required</code> | Marked Clear Exit | Provisional geometry |
+| <code>scenario.local_floor_fixture_1</code> | Stacked Cover | <code>floor_fixture</code> | <code>734, 288</code> | <code>manual_placement_required</code> | Stacked Cover | Provisional geometry |
+| <code>scenario.local_floor_fixture_2</code> | Stacked Cover Abandoned | <code>floor_fixture</code> | <code>638, 288</code> | <code>manual_placement_required</code> | Stacked Cover Abandoned | Provisional geometry |
+| <code>scenario.local_floor_fixture_3</code> | Scenario alternatives: Cruiser Departed / Diverted Patrol / Watched Route | <code>floor_fixture</code> | <code>606, 224</code> | <code>manual_placement_required</code> | Cruiser Departed<br>Diverted Patrol<br>Watched Route | Provisional geometry |
 | <code>scenario.local_ground_marker_1</code> | Cruiser Beam | <code>ground_marker</code> | <code>450, 260</code> | <code>floor</code> | Cruiser Beam | Exact scenario |
-| <code>scenario.local_ground_marker_2</code> | Cruiser Pressure Route | <code>ground_marker</code> | <code>776, 294</code> | <code>manual_placement_required</code> | Cruiser Pressure Route | Provisional geometry |
-| <code>scenario.local_ground_marker_3</code> | Watched Route Refused | <code>ground_marker</code> | <code>172, 422</code> | <code>manual_placement_required</code> | Watched Route Refused | Provisional geometry |
-| <code>scenario.local_standing_person_1</code> | Patrol Officer route end | <code>standing_person</code> | <code>570, 260</code> | <code>floor</code> | Patrol Officer route end | Exact scenario |
-| <code>scenario.local_standing_person_2</code> | Patrol Officer route start | <code>standing_person</code> | <code>250, 260</code> | <code>floor</code> | Patrol Officer route start | Exact scenario |
+| <code>scenario.local_ground_marker_2</code> | Cruiser Pressure Route | <code>ground_marker</code> | <code>112, 288</code> | <code>manual_placement_required</code> | Cruiser Pressure Route | Provisional geometry |
+| <code>scenario.local_ground_marker_3</code> | Watched Route Refused | <code>ground_marker</code> | <code>548, 160</code> | <code>manual_placement_required</code> | Watched Route Refused | Provisional geometry |
+| <code>scenario.local_standing_person_1</code> | Patrol Officer | <code>standing_person</code> | <code>524, 272</code> | <code>manual_placement_required</code> | Patrol Officer | Provisional geometry |
+| <code>scenario.local_standing_person_2</code> | Patrol Officer | <code>standing_person</code> | <code>250, 260</code> | <code>floor</code> | Patrol Officer | Exact scenario |
 
 #### Scenario — Fence Night — <code>back_alley::back_alley_fence_night</code>
 
@@ -330,17 +330,17 @@ Positions are canonical 900×430 board coordinates. Base tables list the exact e
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.local_doorway_1</code> | Marked Clear Exit | <code>doorway</code> | <code>856, 376</code> | <code>right_alley</code> | Marked Clear Exit | Exact scenario |
-| <code>scenario.local_floor_fixture_1</code> | Tagged Refused Goods Lot | <code>floor_fixture</code> | <code>736, 358</code> | <code>floor</code> | Tagged Refused Goods Lot | Exact scenario |
-| <code>scenario.local_floor_fixture_2</code> | Verified Stall | <code>floor_fixture</code> | <code>696, 286</code> | <code>floor</code> | Verified Stall | Exact scenario |
+| <code>scenario.local_doorway_1</code> | Marked Clear Exit | <code>doorway</code> | <code>856, 136</code> | <code>manual_placement_required</code> | Marked Clear Exit | Provisional geometry |
+| <code>scenario.local_floor_fixture_1</code> | Tagged Refused Goods Lot | <code>floor_fixture</code> | <code>734, 288</code> | <code>manual_placement_required</code> | Tagged Refused Goods Lot | Provisional geometry |
+| <code>scenario.local_floor_fixture_2</code> | Verified Stall | <code>floor_fixture</code> | <code>638, 288</code> | <code>manual_placement_required</code> | Verified Stall | Provisional geometry |
 | <code>scenario.local_standing_person_1</code> | Mags | <code>standing_person</code> | <code>304, 272</code> | <code>floor</code> | Mags | Exact scenario |
-| <code>scenario.local_standing_person_2</code> | Rotating Buyer | <code>standing_person</code> | <code>250, 260</code> | <code>floor</code> | Rotating Buyer | Exact scenario |
+| <code>scenario.local_standing_person_2</code> | Rotating Buyer | <code>standing_person</code> | <code>228, 256</code> | <code>manual_placement_required</code> | Rotating Buyer | Provisional geometry |
 | <code>scenario.local_surface_item_1</code> | Authentication Loupe, Lamp, and Ledger | <code>surface_item</code> | <code>570, 112</code> | <code>folding_table_upper</code> | Authentication Loupe, Lamp, and Ledger | Exact scenario |
-| <code>scenario.local_surface_item_2</code> | Goods Lot | <code>surface_item</code> | <code>804, 88</code> | <code>right_crate_upper</code> | Goods Lot | Exact scenario |
-| <code>scenario.local_surface_item_3</code> | Abandoned Loupe and Open Ledger | <code>surface_item</code> | <code>44, 64</code> | <code>manual_placement_required</code> | Abandoned Loupe and Open Ledger | Provisional geometry |
-| <code>scenario.local_surface_item_4</code> | Closed Broker Ledger | <code>surface_item</code> | <code>252, 64</code> | <code>manual_placement_required</code> | Closed Broker Ledger | Provisional geometry |
-| <code>scenario.local_surface_item_5</code> | Buyer-Tagged Goods Table | <code>surface_item</code> | <code>324, 64</code> | <code>manual_placement_required</code> | Buyer-Tagged Goods Table | Provisional geometry |
-| <code>scenario.local_surface_item_6</code> | Public Price Card | <code>surface_item</code> | <code>396, 64</code> | <code>manual_placement_required</code> | Public Price Card | Provisional geometry |
+| <code>scenario.local_surface_item_2</code> | Goods Lot | <code>surface_item</code> | <code>788, 88</code> | <code>manual_placement_required</code> | Goods Lot | Provisional geometry |
+| <code>scenario.local_surface_item_3</code> | Abandoned Loupe and Open Ledger | <code>surface_item</code> | <code>228, 136</code> | <code>manual_placement_required</code> | Abandoned Loupe and Open Ledger | Provisional geometry |
+| <code>scenario.local_surface_item_4</code> | Closed Broker Ledger | <code>surface_item</code> | <code>572, 64</code> | <code>manual_placement_required</code> | Closed Broker Ledger | Provisional geometry |
+| <code>scenario.local_surface_item_5</code> | Buyer-Tagged Goods Table | <code>surface_item</code> | <code>788, 136</code> | <code>manual_placement_required</code> | Buyer-Tagged Goods Table | Provisional geometry |
+| <code>scenario.local_surface_item_6</code> | Public Price Card | <code>surface_item</code> | <code>108, 88</code> | <code>manual_placement_required</code> | Public Price Card | Provisional geometry |
 
 #### Scenario — Nothing Moving — <code>back_alley::back_alley_nothing_moving</code>
 
@@ -348,13 +348,13 @@ Positions are canonical 900×430 board coordinates. Base tables list the exact e
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.local_doorway_1</code> | Scenario alternatives: Erased Rumor Exit / Marked Clear Exit / Opened Follow Exit | <code>doorway</code> | <code>856, 376</code> | <code>right_alley</code> | Erased Rumor Exit<br>Marked Clear Exit<br>Opened Follow Exit | Exact scenario |
-| <code>scenario.local_doorway_2</code> | Shutter Gap Abandoned | <code>doorway</code> | <code>112, 294</code> | <code>manual_placement_required</code> | Shutter Gap Abandoned | Provisional geometry |
+| <code>scenario.local_doorway_1</code> | Scenario alternatives: Erased Rumor Exit / Marked Clear Exit / Opened Follow Exit | <code>doorway</code> | <code>792, 288</code> | <code>manual_placement_required</code> | Erased Rumor Exit<br>Marked Clear Exit<br>Opened Follow Exit | Provisional geometry |
+| <code>scenario.local_doorway_2</code> | Shutter Gap Abandoned | <code>doorway</code> | <code>728, 288</code> | <code>manual_placement_required</code> | Shutter Gap Abandoned | Provisional geometry |
 | <code>scenario.local_ground_marker_1</code> | Three Physical Clues | <code>ground_marker</code> | <code>450, 260</code> | <code>floor</code> | Three Physical Clues | Exact scenario |
-| <code>scenario.local_ground_marker_2</code> | Weather Rumor Exit | <code>ground_marker</code> | <code>176, 294</code> | <code>manual_placement_required</code> | Weather Rumor Exit | Provisional geometry |
-| <code>scenario.local_ground_marker_3</code> | Scenario alternatives: Empty Alley / Empty Alley Refused | <code>ground_marker</code> | <code>172, 422</code> | <code>manual_placement_required</code> | Empty Alley<br>Empty Alley Refused | Provisional geometry |
-| <code>scenario.local_standing_person_1</code> | Returning Regular route end | <code>standing_person</code> | <code>570, 260</code> | <code>floor</code> | Returning Regular route end | Exact scenario |
-| <code>scenario.local_standing_person_2</code> | Returning Regular route start | <code>standing_person</code> | <code>250, 260</code> | <code>floor</code> | Returning Regular route start | Exact scenario |
+| <code>scenario.local_ground_marker_2</code> | Weather Rumor Exit | <code>ground_marker</code> | <code>112, 288</code> | <code>manual_placement_required</code> | Weather Rumor Exit | Provisional geometry |
+| <code>scenario.local_ground_marker_3</code> | Scenario alternatives: Empty Alley / Empty Alley Refused | <code>ground_marker</code> | <code>548, 176</code> | <code>manual_placement_required</code> | Empty Alley<br>Empty Alley Refused | Provisional geometry |
+| <code>scenario.local_standing_person_1</code> | Returning Regular | <code>standing_person</code> | <code>570, 260</code> | <code>floor</code> | Returning Regular | Exact scenario |
+| <code>scenario.local_standing_person_2</code> | Returning Regular | <code>standing_person</code> | <code>250, 260</code> | <code>floor</code> | Returning Regular | Exact scenario |
 | <code>scenario.local_surface_item_1</code> | Shutter Gap | <code>surface_item</code> | <code>570, 112</code> | <code>folding_table_upper</code> | Shutter Gap | Exact scenario |
 
 #### Scenario — Street Craps — <code>back_alley::back_alley_street_craps</code>
@@ -363,15 +363,15 @@ Positions are canonical 900×430 board coordinates. Base tables list the exact e
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.local_doorway_1</code> | Marked Clear Exit | <code>doorway</code> | <code>856, 376</code> | <code>right_alley</code> | Marked Clear Exit | Exact scenario |
-| <code>scenario.local_floor_fixture_1</code> | Craps | <code>floor_fixture</code> | <code>736, 358</code> | <code>floor</code> | Craps | Exact scenario |
-| <code>scenario.local_floor_fixture_2</code> | Street Stake Recovered | <code>floor_fixture</code> | <code>696, 286</code> | <code>floor</code> | Street Stake Recovered | Exact scenario |
+| <code>scenario.local_doorway_1</code> | Marked Clear Exit | <code>doorway</code> | <code>856, 136</code> | <code>manual_placement_required</code> | Marked Clear Exit | Provisional geometry |
+| <code>scenario.local_floor_fixture_1</code> | Craps | <code>floor_fixture</code> | <code>734, 288</code> | <code>manual_placement_required</code> | Craps | Provisional geometry |
+| <code>scenario.local_floor_fixture_2</code> | Street Stake Recovered | <code>floor_fixture</code> | <code>638, 288</code> | <code>manual_placement_required</code> | Street Stake Recovered | Provisional geometry |
 | <code>scenario.local_ground_marker_1</code> | Chalk Ring | <code>ground_marker</code> | <code>450, 260</code> | <code>floor</code> | Chalk Ring | Exact scenario |
-| <code>scenario.local_ground_marker_2</code> | Ring Continues | <code>ground_marker</code> | <code>112, 294</code> | <code>manual_placement_required</code> | Ring Continues | Provisional geometry |
-| <code>scenario.local_ground_marker_3</code> | Scenario alternatives: Ring Dispersed / Ring Dispersed Refused / Ring Relocated | <code>ground_marker</code> | <code>172, 422</code> | <code>manual_placement_required</code> | Ring Dispersed<br>Ring Dispersed Refused<br>Ring Relocated | Provisional geometry |
+| <code>scenario.local_ground_marker_2</code> | Ring Continues | <code>ground_marker</code> | <code>112, 288</code> | <code>manual_placement_required</code> | Ring Continues | Provisional geometry |
+| <code>scenario.local_ground_marker_3</code> | Scenario alternatives: Ring Dispersed / Ring Dispersed Refused / Ring Relocated | <code>ground_marker</code> | <code>524, 256</code> | <code>manual_placement_required</code> | Ring Dispersed<br>Ring Dispersed Refused<br>Ring Relocated | Provisional geometry |
 | <code>scenario.local_standing_person_1</code> | Street Shooter | <code>standing_person</code> | <code>250, 260</code> | <code>floor</code> | Street Shooter | Exact scenario |
 | <code>scenario.local_surface_item_1</code> | Bottle-Cap Lookout Signal | <code>surface_item</code> | <code>570, 112</code> | <code>folding_table_upper</code> | Bottle-Cap Lookout Signal | Exact scenario |
-| <code>scenario.local_wall_item_1</code> | Fallen Bottle-Cap Lookout Signal | <code>wall_mounted</code> | <code>48, 64</code> | <code>manual_placement_required</code> | Fallen Bottle-Cap Lookout Signal | Provisional geometry |
+| <code>scenario.local_wall_item_1</code> | Fallen Bottle-Cap Lookout Signal | <code>wall_mounted</code> | <code>152, 216</code> | <code>manual_placement_required</code> | Fallen Bottle-Cap Lookout Signal | Provisional geometry |
 
 ### Motel — <code>motel</code>
 
@@ -412,21 +412,21 @@ Positions are canonical 900×430 board coordinates. Base tables list the exact e
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.local_behind_counter_person_1</code> | Desk clerk | <code>behind_counter_person</code> | <code>434, 236</code> | <code>reception_annex</code> | Desk clerk | Exact scenario |
+| <code>scenario.local_behind_counter_person_1</code> | Desk clerk | <code>behind_counter_person</code> | <code>380, 120</code> | <code>manual_placement_required</code> | Desk clerk | Provisional geometry |
 | <code>scenario.local_doorway_1</code> | Room Nine Door | <code>doorway</code> | <code>859, 116</code> | <code>right_door</code> | Room Nine Door | Exact scenario |
-| <code>scenario.local_doorway_2</code> | Marked safe exit | <code>doorway</code> | <code>40, 128</code> | <code>left_door</code> | Marked safe exit | Exact scenario |
+| <code>scenario.local_doorway_2</code> | Marked safe exit | <code>doorway</code> | <code>40, 136</code> | <code>manual_placement_required</code> | Marked safe exit | Provisional geometry |
 | <code>scenario.local_floor_fixture_1</code> | Blue-tag suitcases | <code>floor_fixture</code> | <code>166, 342</code> | <code>floor</code> | Blue-tag suitcases | Exact scenario |
 | <code>scenario.local_floor_fixture_2</code> | Red cases | <code>floor_fixture</code> | <code>830, 342</code> | <code>floor</code> | Red cases | Exact scenario |
-| <code>scenario.local_floor_fixture_3</code> | Brass luggage cart | <code>floor_fixture</code> | <code>214, 266</code> | <code>manual_placement_required</code> | Brass luggage cart | Provisional geometry |
-| <code>scenario.local_floor_fixture_4</code> | Scenario alternatives: Brass luggage cart / Unfinished Key Pile | <code>floor_fixture</code> | <code>54, 226</code> | <code>manual_placement_required</code> | Brass luggage cart<br>Unfinished Key Pile | Provisional geometry |
-| <code>scenario.local_floor_fixture_5</code> | Red-Tagged Luggage Pile | <code>floor_fixture</code> | <code>702, 422</code> | <code>manual_placement_required</code> | Red-Tagged Luggage Pile | Provisional geometry |
-| <code>scenario.local_floor_fixture_6</code> | Parked Luggage Cart | <code>floor_fixture</code> | <code>262, 334</code> | <code>manual_placement_required</code> | Parked Luggage Cart | Provisional geometry |
-| <code>scenario.local_ground_marker_1</code> | Clear Service-Wing Route | <code>ground_marker</code> | <code>132, 278</code> | <code>manual_placement_required</code> | Clear Service-Wing Route | Provisional geometry |
-| <code>scenario.local_standing_person_1</code> | Scenario alternatives: Coach guests / Stranded Guest / Waiting Guest | <code>standing_person</code> | <code>276, 414</code> | <code>floor</code> | Coach guests<br>Stranded Guest<br>Waiting Guest | Exact scenario |
+| <code>scenario.local_floor_fixture_3</code> | Brass luggage cart | <code>floor_fixture</code> | <code>422, 248</code> | <code>manual_placement_required</code> | Brass luggage cart | Provisional geometry |
+| <code>scenario.local_floor_fixture_4</code> | Scenario alternatives: Brass luggage cart / Unfinished Key Pile | <code>floor_fixture</code> | <code>166, 272</code> | <code>manual_placement_required</code> | Brass luggage cart<br>Unfinished Key Pile | Provisional geometry |
+| <code>scenario.local_floor_fixture_5</code> | Red-Tagged Luggage Pile | <code>floor_fixture</code> | <code>718, 392</code> | <code>manual_placement_required</code> | Red-Tagged Luggage Pile | Provisional geometry |
+| <code>scenario.local_floor_fixture_6</code> | Parked Luggage Cart | <code>floor_fixture</code> | <code>366, 400</code> | <code>manual_placement_required</code> | Parked Luggage Cart | Provisional geometry |
+| <code>scenario.local_ground_marker_1</code> | Clear Service-Wing Route | <code>ground_marker</code> | <code>628, 240</code> | <code>manual_placement_required</code> | Clear Service-Wing Route | Provisional geometry |
+| <code>scenario.local_standing_person_1</code> | Scenario alternatives: Coach guests / Stranded Guest / Waiting Guest | <code>standing_person</code> | <code>276, 416</code> | <code>manual_placement_required</code> | Coach guests<br>Stranded Guest<br>Waiting Guest | Provisional geometry |
 | <code>scenario.local_standing_person_2</code> | Satisfied Guest | <code>standing_person</code> | <code>59, 312</code> | <code>stage</code> | Satisfied Guest | Exact scenario |
-| <code>scenario.local_surface_item_1</code> | Dispute Rope | <code>surface_item</code> | <code>572, 426</code> | <code>round3_luggage_shelf</code> | Dispute Rope | Exact scenario |
-| <code>scenario.local_wall_item_1</code> | Room board | <code>wall_mounted</code> | <code>40, 24</code> | <code>wall</code> | Room board | Exact scenario |
-| <code>scenario.local_wall_item_2</code> | Amended Room Board | <code>wall_mounted</code> | <code>144, 64</code> | <code>manual_placement_required</code> | Amended Room Board | Provisional geometry |
+| <code>scenario.local_surface_item_1</code> | Dispute Rope | <code>surface_item</code> | <code>326, 336</code> | <code>manual_placement_required</code> | Dispute Rope | Provisional geometry |
+| <code>scenario.local_wall_item_1</code> | Room board | <code>wall_mounted</code> | <code>112, 112</code> | <code>manual_placement_required</code> | Room board | Provisional geometry |
+| <code>scenario.local_wall_item_2</code> | Amended Room Board | <code>wall_mounted</code> | <code>144, 56</code> | <code>manual_placement_required</code> | Amended Room Board | Provisional geometry |
 
 **Action-only IDs (1; no placement marker):** <code>motel_conventioneers_station</code>
 
@@ -437,18 +437,18 @@ Positions are canonical 900×430 board coordinates. Base tables list the exact e
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
 | <code>scenario.local_doorway_1</code> | Clear courtyard gate | <code>doorway</code> | <code>859, 116</code> | <code>right_door</code> | Clear courtyard gate | Exact scenario |
-| <code>scenario.local_doorway_2</code> | Marked safe exit | <code>doorway</code> | <code>40, 128</code> | <code>left_door</code> | Marked safe exit | Exact scenario |
+| <code>scenario.local_doorway_2</code> | Marked safe exit | <code>doorway</code> | <code>40, 136</code> | <code>manual_placement_required</code> | Marked safe exit | Provisional geometry |
 | <code>scenario.local_doorway_3</code> | Watched room door | <code>doorway</code> | <code>41, 360</code> | <code>left_door</code> | Watched room door | Exact scenario |
 | <code>scenario.local_floor_fixture_1</code> | Laundry trolley cover | <code>floor_fixture</code> | <code>166, 342</code> | <code>floor</code> | Laundry trolley cover | Exact scenario |
 | <code>scenario.local_floor_fixture_2</code> | Idle Service Trolley | <code>floor_fixture</code> | <code>830, 342</code> | <code>floor</code> | Idle Service Trolley | Exact scenario |
-| <code>scenario.local_ground_marker_1</code> | False Balcony Arrows | <code>ground_marker</code> | <code>348, 422</code> | <code>manual_placement_required</code> | False Balcony Arrows | Provisional geometry |
-| <code>scenario.local_ground_marker_2</code> | Broken Chalk Sight Line | <code>ground_marker</code> | <code>252, 334</code> | <code>manual_placement_required</code> | Broken Chalk Sight Line | Provisional geometry |
-| <code>scenario.local_hanging_item_1</code> | South balcony camera | <code>hanging</code> | <code>572, 22</code> | <code>ceiling</code> | South balcony camera | Exact scenario |
+| <code>scenario.local_ground_marker_1</code> | False Balcony Arrows | <code>ground_marker</code> | <code>628, 240</code> | <code>manual_placement_required</code> | False Balcony Arrows | Provisional geometry |
+| <code>scenario.local_ground_marker_2</code> | Broken Chalk Sight Line | <code>ground_marker</code> | <code>716, 152</code> | <code>manual_placement_required</code> | Broken Chalk Sight Line | Provisional geometry |
+| <code>scenario.local_hanging_item_1</code> | South balcony camera | <code>hanging</code> | <code>508, 44</code> | <code>manual_placement_required</code> | South balcony camera | Provisional geometry |
 | <code>scenario.local_standing_person_1</code> | Scenario alternatives: North observer / Tired Lookout / Warned Occupant | <code>standing_person</code> | <code>276, 414</code> | <code>floor</code> | North observer<br>Tired Lookout<br>Warned Occupant | Exact scenario |
-| <code>scenario.local_standing_person_2</code> | South observer | <code>standing_person</code> | <code>700, 414</code> | <code>floor</code> | South observer | Exact scenario |
-| <code>scenario.local_surface_item_1</code> | North surveillance scope | <code>surface_item</code> | <code>572, 426</code> | <code>round3_luggage_shelf</code> | North surveillance scope | Exact scenario |
-| <code>scenario.local_surface_item_2</code> | Untouched Service Trolley | <code>surface_item</code> | <code>150, 80</code> | <code>manual_placement_required</code> | Untouched Service Trolley | Provisional geometry |
-| <code>scenario.local_wall_item_1</code> | Posted Warning Notice | <code>wall_mounted</code> | <code>40, 24</code> | <code>wall</code> | Posted Warning Notice | Exact scenario |
+| <code>scenario.local_standing_person_2</code> | South observer | <code>standing_person</code> | <code>524, 424</code> | <code>manual_placement_required</code> | South observer | Provisional geometry |
+| <code>scenario.local_surface_item_1</code> | North surveillance scope | <code>surface_item</code> | <code>702, 424</code> | <code>manual_placement_required</code> | North surveillance scope | Provisional geometry |
+| <code>scenario.local_surface_item_2</code> | Untouched Service Trolley | <code>surface_item</code> | <code>366, 424</code> | <code>manual_placement_required</code> | Untouched Service Trolley | Provisional geometry |
+| <code>scenario.local_wall_item_1</code> | Posted Warning Notice | <code>wall_mounted</code> | <code>112, 112</code> | <code>manual_placement_required</code> | Posted Warning Notice | Provisional geometry |
 
 **Action-only IDs (1; no placement marker):** <code>motel_stakeout_station</code>
 
@@ -458,20 +458,20 @@ Positions are canonical 900×430 board coordinates. Base tables list the exact e
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.local_behind_counter_person_1</code> | Clerk | <code>behind_counter_person</code> | <code>434, 236</code> | <code>reception_annex</code> | Clerk | Exact scenario |
+| <code>scenario.local_behind_counter_person_1</code> | Clerk | <code>behind_counter_person</code> | <code>340, 280</code> | <code>manual_placement_required</code> | Clerk | Provisional geometry |
 | <code>scenario.local_doorway_1</code> | Ribbon-marked stair | <code>doorway</code> | <code>859, 116</code> | <code>right_door</code> | Ribbon-marked stair | Exact scenario |
-| <code>scenario.local_doorway_2</code> | Marked safe exit | <code>doorway</code> | <code>40, 128</code> | <code>left_door</code> | Marked safe exit | Exact scenario |
+| <code>scenario.local_doorway_2</code> | Marked safe exit | <code>doorway</code> | <code>40, 136</code> | <code>manual_placement_required</code> | Marked safe exit | Provisional geometry |
 | <code>scenario.local_floor_fixture_1</code> | Hallway Card Table | <code>floor_fixture</code> | <code>166, 342</code> | <code>floor</code> | Hallway Card Table | Exact scenario |
-| <code>scenario.local_floor_fixture_2</code> | Wedding garment rack | <code>floor_fixture</code> | <code>262, 330</code> | <code>manual_placement_required</code> | Wedding garment rack | Provisional geometry |
+| <code>scenario.local_floor_fixture_2</code> | Wedding garment rack | <code>floor_fixture</code> | <code>422, 248</code> | <code>manual_placement_required</code> | Wedding garment rack | Provisional geometry |
 | <code>scenario.local_floor_fixture_3</code> | Scenario alternatives: Corridor Divider Rope / Reception cart | <code>floor_fixture</code> | <code>830, 342</code> | <code>floor</code> | Corridor Divider Rope<br>Reception cart | Exact scenario |
-| <code>scenario.local_floor_fixture_4</code> | Recovered Bouquet Cart | <code>floor_fixture</code> | <code>358, 422</code> | <code>manual_placement_required</code> | Recovered Bouquet Cart | Provisional geometry |
+| <code>scenario.local_floor_fixture_4</code> | Recovered Bouquet Cart | <code>floor_fixture</code> | <code>166, 272</code> | <code>manual_placement_required</code> | Recovered Bouquet Cart | Provisional geometry |
 | <code>scenario.local_standing_person_1</code> | Scenario alternatives: Best person / Relieved Wedding Runner | <code>standing_person</code> | <code>276, 414</code> | <code>floor</code> | Best person<br>Relieved Wedding Runner | Exact scenario |
 | <code>scenario.local_standing_person_2</code> | Wedding runner | <code>standing_person</code> | <code>59, 312</code> | <code>stage</code> | Wedding runner | Exact scenario |
-| <code>scenario.local_standing_person_3</code> | Key-Hook Clerk | <code>standing_person</code> | <code>700, 414</code> | <code>floor</code> | Key-Hook Clerk | Exact scenario |
-| <code>scenario.local_surface_item_1</code> | Missing bouquet case | <code>surface_item</code> | <code>572, 426</code> | <code>round3_luggage_shelf</code> | Missing bouquet case | Exact scenario |
-| <code>scenario.local_surface_item_2</code> | Scenario alternatives: Mixed room-key tray / Recalled Key Tray | <code>surface_item</code> | <code>150, 80</code> | <code>manual_placement_required</code> | Mixed room-key tray<br>Recalled Key Tray | Provisional geometry |
-| <code>scenario.local_surface_item_3</code> | Scenario alternatives: Pinned Ribbon and Key / Ribboned Bouquet Case | <code>surface_item</code> | <code>372, 64</code> | <code>manual_placement_required</code> | Pinned Ribbon and Key<br>Ribboned Bouquet Case | Provisional geometry |
-| <code>scenario.local_surface_item_4</code> | Unclaimed Garment Bags | <code>surface_item</code> | <code>222, 64</code> | <code>manual_placement_required</code> | Unclaimed Garment Bags | Provisional geometry |
+| <code>scenario.local_standing_person_3</code> | Key-Hook Clerk | <code>standing_person</code> | <code>524, 424</code> | <code>manual_placement_required</code> | Key-Hook Clerk | Provisional geometry |
+| <code>scenario.local_surface_item_1</code> | Missing bouquet case | <code>surface_item</code> | <code>702, 424</code> | <code>manual_placement_required</code> | Missing bouquet case | Provisional geometry |
+| <code>scenario.local_surface_item_2</code> | Scenario alternatives: Mixed room-key tray / Recalled Key Tray | <code>surface_item</code> | <code>366, 424</code> | <code>manual_placement_required</code> | Mixed room-key tray<br>Recalled Key Tray | Provisional geometry |
+| <code>scenario.local_surface_item_3</code> | Scenario alternatives: Pinned Ribbon and Key / Ribboned Bouquet Case | <code>surface_item</code> | <code>372, 120</code> | <code>manual_placement_required</code> | Pinned Ribbon and Key<br>Ribboned Bouquet Case | Provisional geometry |
+| <code>scenario.local_surface_item_4</code> | Unclaimed Garment Bags | <code>surface_item</code> | <code>566, 336</code> | <code>manual_placement_required</code> | Unclaimed Garment Bags | Provisional geometry |
 
 **Action-only IDs (1; no placement marker):** <code>motel_wedding_overflow_station</code>
 
@@ -482,16 +482,16 @@ Positions are canonical 900×430 board coordinates. Base tables list the exact e
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
 | <code>scenario.local_doorway_1</code> | Nico's Weekly-Room Door | <code>doorway</code> | <code>859, 116</code> | <code>right_door</code> | Nico's Weekly-Room Door | Exact scenario |
-| <code>scenario.local_doorway_2</code> | Marked safe exit | <code>doorway</code> | <code>40, 128</code> | <code>left_door</code> | Marked safe exit | Exact scenario |
+| <code>scenario.local_doorway_2</code> | Marked safe exit | <code>doorway</code> | <code>40, 136</code> | <code>manual_placement_required</code> | Marked safe exit | Provisional geometry |
 | <code>scenario.local_floor_fixture_1</code> | Sagging weekly bed | <code>floor_fixture</code> | <code>830, 342</code> | <code>floor</code> | Sagging weekly bed | Exact scenario |
 | <code>scenario.local_floor_fixture_2</code> | Temporary Bed Brace | <code>floor_fixture</code> | <code>166, 342</code> | <code>floor</code> | Temporary Bed Brace | Exact scenario |
 | <code>scenario.local_standing_person_1</code> | Motel landlord | <code>standing_person</code> | <code>276, 414</code> | <code>floor</code> | Motel landlord | Exact scenario |
 | <code>scenario.local_standing_person_2</code> | Scenario alternatives: Prospective Tenant / Settled Tenant / Waiting Tenant | <code>standing_person</code> | <code>59, 312</code> | <code>stage</code> | Prospective Tenant<br>Settled Tenant<br>Waiting Tenant | Exact scenario |
-| <code>scenario.local_surface_item_1</code> | Dead lamp | <code>surface_item</code> | <code>572, 426</code> | <code>round3_luggage_shelf</code> | Dead lamp | Exact scenario |
-| <code>scenario.local_surface_item_2</code> | Scenario alternatives: Weekly lease clipboard / Withdrawn Lease Clipboard | <code>surface_item</code> | <code>150, 80</code> | <code>manual_placement_required</code> | Weekly lease clipboard<br>Withdrawn Lease Clipboard | Provisional geometry |
-| <code>scenario.local_surface_item_3</code> | Leaking-Sink Warning Tag | <code>surface_item</code> | <code>372, 64</code> | <code>manual_placement_required</code> | Leaking-Sink Warning Tag | Provisional geometry |
-| <code>scenario.local_wall_item_1</code> | Scenario alternatives: Leaking sink / Lit Bedside Lamp | <code>wall_mounted</code> | <code>40, 24</code> | <code>wall</code> | Leaking sink<br>Lit Bedside Lamp | Exact scenario |
-| <code>scenario.local_wall_item_2</code> | Open Bedside Lamp | <code>wall_mounted</code> | <code>376, 112</code> | <code>manual_placement_required</code> | Open Bedside Lamp | Provisional geometry |
+| <code>scenario.local_surface_item_1</code> | Dead lamp | <code>surface_item</code> | <code>702, 424</code> | <code>manual_placement_required</code> | Dead lamp | Provisional geometry |
+| <code>scenario.local_surface_item_2</code> | Scenario alternatives: Weekly lease clipboard / Withdrawn Lease Clipboard | <code>surface_item</code> | <code>366, 424</code> | <code>manual_placement_required</code> | Weekly lease clipboard<br>Withdrawn Lease Clipboard | Provisional geometry |
+| <code>scenario.local_surface_item_3</code> | Leaking-Sink Warning Tag | <code>surface_item</code> | <code>372, 120</code> | <code>manual_placement_required</code> | Leaking-Sink Warning Tag | Provisional geometry |
+| <code>scenario.local_wall_item_1</code> | Scenario alternatives: Leaking sink / Lit Bedside Lamp | <code>wall_mounted</code> | <code>112, 112</code> | <code>manual_placement_required</code> | Leaking sink<br>Lit Bedside Lamp | Provisional geometry |
+| <code>scenario.local_wall_item_2</code> | Open Bedside Lamp | <code>wall_mounted</code> | <code>144, 56</code> | <code>manual_placement_required</code> | Open Bedside Lamp | Provisional geometry |
 
 **Action-only IDs (1; no placement marker):** <code>motel_weekly_rates_station</code>
 
@@ -532,15 +532,15 @@ Positions are canonical 900×430 board coordinates. Base tables list the exact e
 | --- | --- | --- | --- | --- | --- | --- |
 | <code>scenario.local_doorway_1</code> | Marked clean exit | <code>doorway</code> | <code>862, 270</code> | <code>right_exit</code> | Marked clean exit | Exact scenario |
 | <code>scenario.local_floor_fixture_1</code> | League bracket easel | <code>floor_fixture</code> | <code>392, 290</code> | <code>stage</code> | League bracket easel | Exact scenario |
-| <code>scenario.local_ground_marker_1</code> | Darts throw line | <code>ground_marker</code> | <code>160, 366</code> | <code>floor</code> | Darts throw line | Exact scenario |
+| <code>scenario.local_ground_marker_1</code> | Darts throw line | <code>ground_marker</code> | <code>172, 368</code> | <code>manual_placement_required</code> | Darts throw line | Provisional geometry |
 | <code>scenario.local_standing_person_1</code> | Scenario alternatives: Darts scorer / League captain | <code>standing_person</code> | <code>526, 294</code> | <code>floor</code> | Darts scorer<br>League captain | Exact scenario |
 | <code>scenario.local_standing_person_2</code> | Darts scorer | <code>standing_person</code> | <code>740, 376</code> | <code>floor</code> | Darts scorer | Exact scenario |
-| <code>scenario.local_standing_person_3</code> | League captain | <code>standing_person</code> | <code>624, 376</code> | <code>floor</code> | League captain | Exact scenario |
-| <code>scenario.local_standing_person_4</code> | Forfeiting captain | <code>standing_person</code> | <code>364, 422</code> | <code>manual_placement_required</code> | Forfeiting captain | Provisional geometry |
+| <code>scenario.local_standing_person_3</code> | League captain | <code>standing_person</code> | <code>596, 376</code> | <code>manual_placement_required</code> | League captain | Provisional geometry |
+| <code>scenario.local_standing_person_4</code> | Forfeiting captain | <code>standing_person</code> | <code>740, 296</code> | <code>manual_placement_required</code> | Forfeiting captain | Provisional geometry |
 | <code>scenario.local_wall_item_1</code> | Disputed board dart | <code>wall_mounted</code> | <code>560, 24</code> | <code>wall</code> | Disputed board dart | Exact scenario |
-| <code>scenario.local_wall_item_2</code> | Completed league bracket | <code>wall_mounted</code> | <code>48, 64</code> | <code>manual_placement_required</code> | Completed league bracket | Provisional geometry |
-| <code>scenario.local_wall_item_3</code> | Circled board dart | <code>wall_mounted</code> | <code>280, 64</code> | <code>manual_placement_required</code> | Circled board dart | Provisional geometry |
-| <code>scenario.local_wall_item_4</code> | Half-filled bracket | <code>wall_mounted</code> | <code>760, 64</code> | <code>manual_placement_required</code> | Half-filled bracket | Provisional geometry |
+| <code>scenario.local_wall_item_2</code> | Completed league bracket | <code>wall_mounted</code> | <code>680, 96</code> | <code>manual_placement_required</code> | Completed league bracket | Provisional geometry |
+| <code>scenario.local_wall_item_3</code> | Circled board dart | <code>wall_mounted</code> | <code>568, 168</code> | <code>manual_placement_required</code> | Circled board dart | Provisional geometry |
+| <code>scenario.local_wall_item_4</code> | Half-filled bracket | <code>wall_mounted</code> | <code>760, 48</code> | <code>manual_placement_required</code> | Half-filled bracket | Provisional geometry |
 
 **Action-only IDs (6; no placement marker):** <code>bar_darts_league_night_task_0</code><br><code>bar_darts_league_night_task_1</code><br><code>bar_darts_league_night_task_2</code><br><code>bar_darts_league_night_task_3</code><br><code>bar_darts_league_night_task_4</code><br><code>bar_darts_league_night_task_5</code>
 
@@ -554,9 +554,9 @@ Positions are canonical 900×430 board coordinates. Base tables list the exact e
 | <code>scenario.local_behind_counter_person_2</code> | Quiet bartender | <code>behind_counter_person</code> | <code>550, 218</code> | <code>bar_counter</code> | Quiet bartender | Exact scenario |
 | <code>scenario.local_doorway_1</code> | Marked clean exit | <code>doorway</code> | <code>862, 270</code> | <code>right_exit</code> | Marked clean exit | Exact scenario |
 | <code>scenario.local_floor_fixture_1</code> | Paired patron chairs | <code>floor_fixture</code> | <code>392, 290</code> | <code>stage</code> | Paired patron chairs | Exact scenario |
-| <code>scenario.local_ground_marker_1</code> | Untouched front glass | <code>ground_marker</code> | <code>160, 366</code> | <code>floor</code> | Untouched front glass | Exact scenario |
-| <code>scenario.local_seated_person_1</code> | Night-shift worker | <code>seated_person</code> | <code>742, 272</code> | <code>right_booth</code> | Night-shift worker | Exact scenario |
-| <code>scenario.local_standing_person_1</code> | Lone Tuesday patron | <code>standing_person</code> | <code>624, 376</code> | <code>floor</code> | Lone Tuesday patron | Exact scenario |
+| <code>scenario.local_ground_marker_1</code> | Untouched front glass | <code>ground_marker</code> | <code>172, 368</code> | <code>manual_placement_required</code> | Untouched front glass | Provisional geometry |
+| <code>scenario.local_seated_person_1</code> | Night-shift worker | <code>seated_person</code> | <code>738, 256</code> | <code>manual_placement_required</code> | Night-shift worker | Provisional geometry |
+| <code>scenario.local_standing_person_1</code> | Lone Tuesday patron | <code>standing_person</code> | <code>596, 376</code> | <code>manual_placement_required</code> | Lone Tuesday patron | Provisional geometry |
 | <code>scenario.local_surface_item_1</code> | Second bar glass | <code>surface_item</code> | <code>666, 188</code> | <code>pool_table</code> | Second bar glass | Exact scenario |
 
 **Action-only IDs (5; no placement marker):** <code>bar_dead_tuesday_bartender_zone</code><br><code>bar_dead_tuesday_booth_zone</code><br><code>bar_dead_tuesday_patron_zone</code><br><code>bar_dead_tuesday_task_0</code><br><code>bar_dead_tuesday_task_1</code>
@@ -569,18 +569,18 @@ Positions are canonical 900×430 board coordinates. Base tables list the exact e
 | --- | --- | --- | --- | --- | --- | --- |
 | <code>scenario.local_doorway_1</code> | Marked clean exit | <code>doorway</code> | <code>862, 270</code> | <code>right_exit</code> | Marked clean exit | Exact scenario |
 | <code>scenario.local_floor_fixture_1</code> | Split fight table | <code>floor_fixture</code> | <code>392, 290</code> | <code>stage</code> | Split fight table | Exact scenario |
-| <code>scenario.local_floor_fixture_2</code> | Toppled chair | <code>floor_fixture</code> | <code>718, 290</code> | <code>manual_placement_required</code> | Toppled chair | Provisional geometry |
-| <code>scenario.local_floor_fixture_3</code> | Toppled chair | <code>floor_fixture</code> | <code>54, 242</code> | <code>manual_placement_required</code> | Toppled chair | Provisional geometry |
-| <code>scenario.local_ground_marker_1</code> | Marked door buffer | <code>ground_marker</code> | <code>160, 366</code> | <code>floor</code> | Marked door buffer | Exact scenario |
-| <code>scenario.local_ground_marker_2</code> | Security rope | <code>ground_marker</code> | <code>172, 422</code> | <code>manual_placement_required</code> | Security rope | Provisional geometry |
-| <code>scenario.local_standing_person_1</code> | Knuckles | <code>standing_person</code> | <code>526, 294</code> | <code>floor</code> | Knuckles | Exact scenario |
-| <code>scenario.local_standing_person_2</code> | Left-side brawler | <code>standing_person</code> | <code>624, 376</code> | <code>floor</code> | Left-side brawler | Exact scenario |
+| <code>scenario.local_floor_fixture_2</code> | Toppled chair | <code>floor_fixture</code> | <code>508, 290</code> | <code>stage</code> | Toppled chair | Exact scenario |
+| <code>scenario.local_floor_fixture_3</code> | Toppled chair | <code>floor_fixture</code> | <code>182, 360</code> | <code>manual_placement_required</code> | Toppled chair | Provisional geometry |
+| <code>scenario.local_ground_marker_1</code> | Marked door buffer | <code>ground_marker</code> | <code>172, 408</code> | <code>manual_placement_required</code> | Marked door buffer | Provisional geometry |
+| <code>scenario.local_ground_marker_2</code> | Security rope | <code>ground_marker</code> | <code>76, 248</code> | <code>manual_placement_required</code> | Security rope | Provisional geometry |
+| <code>scenario.local_standing_person_1</code> | Knuckles | <code>standing_person</code> | <code>524, 224</code> | <code>manual_placement_required</code> | Knuckles | Provisional geometry |
+| <code>scenario.local_standing_person_2</code> | Left-side brawler | <code>standing_person</code> | <code>596, 376</code> | <code>manual_placement_required</code> | Left-side brawler | Provisional geometry |
 | <code>scenario.local_standing_person_3</code> | Right-side brawler | <code>standing_person</code> | <code>740, 376</code> | <code>floor</code> | Right-side brawler | Exact scenario |
-| <code>scenario.local_standing_person_4</code> | Right-side brawler | <code>standing_person</code> | <code>364, 422</code> | <code>manual_placement_required</code> | Right-side brawler | Provisional geometry |
-| <code>scenario.local_standing_person_5</code> | Scenario alternatives: Calmed brawler / Chosen-side brawler | <code>standing_person</code> | <code>40, 326</code> | <code>manual_placement_required</code> | Calmed brawler<br>Chosen-side brawler | Provisional geometry |
+| <code>scenario.local_standing_person_4</code> | Right-side brawler | <code>standing_person</code> | <code>740, 296</code> | <code>manual_placement_required</code> | Right-side brawler | Provisional geometry |
+| <code>scenario.local_standing_person_5</code> | Scenario alternatives: Calmed brawler / Chosen-side brawler | <code>standing_person</code> | <code>80, 330</code> | <code>manual_placement_required</code> | Calmed brawler<br>Chosen-side brawler | Provisional geometry |
 | <code>scenario.local_surface_item_1</code> | Fight-Night Betting Book | <code>surface_item</code> | <code>666, 188</code> | <code>pool_table</code> | Fight-Night Betting Book | Exact scenario |
 | <code>scenario.local_surface_item_2</code> | Reset table line | <code>surface_item</code> | <code>118, 104</code> | <code>bottle_rail</code> | Reset table line | Exact scenario |
-| <code>scenario.local_surface_item_3</code> | Swept broken glass | <code>surface_item</code> | <code>44, 64</code> | <code>manual_placement_required</code> | Swept broken glass | Provisional geometry |
+| <code>scenario.local_surface_item_3</code> | Swept broken glass | <code>surface_item</code> | <code>44, 128</code> | <code>manual_placement_required</code> | Swept broken glass | Provisional geometry |
 
 **Action-only IDs (6; no placement marker):** <code>bar_fight_night_task_0</code><br><code>bar_fight_night_task_1</code><br><code>bar_fight_night_task_2</code><br><code>bar_fight_night_task_3</code><br><code>bar_fight_night_task_4</code><br><code>bar_fight_night_task_5</code>
 
@@ -592,12 +592,12 @@ Positions are canonical 900×430 board coordinates. Base tables list the exact e
 | --- | --- | --- | --- | --- | --- | --- |
 | <code>scenario.local_doorway_1</code> | Marked clean exit | <code>doorway</code> | <code>862, 270</code> | <code>right_exit</code> | Marked clean exit | Exact scenario |
 | <code>scenario.local_floor_fixture_1</code> | Band stage | <code>floor_fixture</code> | <code>392, 290</code> | <code>stage</code> | Band stage | Exact scenario |
-| <code>scenario.local_floor_fixture_2</code> | Speaker stack | <code>floor_fixture</code> | <code>178, 302</code> | <code>stage</code> | Speaker stack | Exact scenario |
+| <code>scenario.local_floor_fixture_2</code> | Speaker stack | <code>floor_fixture</code> | <code>182, 360</code> | <code>manual_placement_required</code> | Speaker stack | Provisional geometry |
 | <code>scenario.local_floor_fixture_3</code> | Scenario alternatives: Cable crossing / Unplugged stage box | <code>floor_fixture</code> | <code>508, 290</code> | <code>stage</code> | Cable crossing<br>Unplugged stage box | Exact scenario |
-| <code>scenario.local_floor_fixture_4</code> | Speaker stack | <code>floor_fixture</code> | <code>374, 422</code> | <code>manual_placement_required</code> | Speaker stack | Provisional geometry |
-| <code>scenario.local_ground_marker_1</code> | Half-coiled stage cable | <code>ground_marker</code> | <code>160, 366</code> | <code>floor</code> | Half-coiled stage cable | Exact scenario |
-| <code>scenario.local_standing_person_1</code> | Band leader | <code>standing_person</code> | <code>624, 376</code> | <code>floor</code> | Band leader | Exact scenario |
-| <code>scenario.local_standing_person_2</code> | Floor runner | <code>standing_person</code> | <code>526, 294</code> | <code>floor</code> | Floor runner | Exact scenario |
+| <code>scenario.local_floor_fixture_4</code> | Speaker stack | <code>floor_fixture</code> | <code>62, 304</code> | <code>manual_placement_required</code> | Speaker stack | Provisional geometry |
+| <code>scenario.local_ground_marker_1</code> | Half-coiled stage cable | <code>ground_marker</code> | <code>172, 408</code> | <code>manual_placement_required</code> | Half-coiled stage cable | Provisional geometry |
+| <code>scenario.local_standing_person_1</code> | Band leader | <code>standing_person</code> | <code>596, 376</code> | <code>manual_placement_required</code> | Band leader | Provisional geometry |
+| <code>scenario.local_standing_person_2</code> | Floor runner | <code>standing_person</code> | <code>524, 224</code> | <code>manual_placement_required</code> | Floor runner | Provisional geometry |
 | <code>scenario.local_standing_person_3</code> | Scenario alternatives: Band leader / Floor runner | <code>standing_person</code> | <code>740, 376</code> | <code>floor</code> | Band leader<br>Floor runner | Exact scenario |
 | <code>scenario.local_surface_item_1</code> | Powered speaker stack | <code>surface_item</code> | <code>666, 188</code> | <code>pool_table</code> | Powered speaker stack | Exact scenario |
 
@@ -609,12 +609,12 @@ Positions are canonical 900×430 board coordinates. Base tables list the exact e
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.local_doorway_1</code> | Quiet cellar hatch | <code>doorway</code> | <code>360, 422</code> | <code>manual_placement_required</code> | Quiet cellar hatch | Provisional geometry |
+| <code>scenario.local_doorway_1</code> | Quiet cellar hatch | <code>doorway</code> | <code>40, 328</code> | <code>manual_placement_required</code> | Quiet cellar hatch | Provisional geometry |
 | <code>scenario.local_doorway_2</code> | Scenario alternatives: Marked clean exit / Open cellar hatch | <code>doorway</code> | <code>862, 270</code> | <code>right_exit</code> | Marked clean exit<br>Open cellar hatch | Exact scenario |
 | <code>scenario.local_floor_fixture_1</code> | After-hours task bench | <code>floor_fixture</code> | <code>508, 290</code> | <code>stage</code> | After-hours task bench | Exact scenario |
-| <code>scenario.local_ground_marker_1</code> | Inspection tape | <code>ground_marker</code> | <code>160, 366</code> | <code>floor</code> | Inspection tape | Exact scenario |
-| <code>scenario.local_standing_person_1</code> | Lock-in host | <code>standing_person</code> | <code>624, 376</code> | <code>floor</code> | Lock-in host | Exact scenario |
-| <code>scenario.local_standing_person_2</code> | After-hours regular | <code>standing_person</code> | <code>526, 294</code> | <code>floor</code> | After-hours regular | Exact scenario |
+| <code>scenario.local_ground_marker_1</code> | Inspection tape | <code>ground_marker</code> | <code>172, 368</code> | <code>manual_placement_required</code> | Inspection tape | Provisional geometry |
+| <code>scenario.local_standing_person_1</code> | Lock-in host | <code>standing_person</code> | <code>596, 376</code> | <code>manual_placement_required</code> | Lock-in host | Provisional geometry |
+| <code>scenario.local_standing_person_2</code> | After-hours regular | <code>standing_person</code> | <code>524, 224</code> | <code>manual_placement_required</code> | After-hours regular | Provisional geometry |
 | <code>scenario.local_standing_person_3</code> | Scenario alternatives: After-hours regular / Daylight bar host / Lock-in host | <code>standing_person</code> | <code>740, 376</code> | <code>floor</code> | After-hours regular<br>Daylight bar host<br>Lock-in host | Exact scenario |
 | <code>scenario.local_surface_item_1</code> | Numbered host token | <code>surface_item</code> | <code>666, 188</code> | <code>pool_table</code> | Numbered host token | Exact scenario |
 | <code>scenario.local_wall_item_1</code> | Locked front shutters | <code>wall_mounted</code> | <code>560, 24</code> | <code>wall</code> | Locked front shutters | Exact scenario |
@@ -627,18 +627,18 @@ Positions are canonical 900×430 board coordinates. Base tables list the exact e
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.local_behind_counter_person_1</code> | Rush bartender | <code>behind_counter_person</code> | <code>550, 218</code> | <code>bar_counter</code> | Rush bartender | Exact scenario |
+| <code>scenario.local_behind_counter_person_1</code> | Rush bartender | <code>behind_counter_person</code> | <code>564, 208</code> | <code>manual_placement_required</code> | Rush bartender | Provisional geometry |
 | <code>scenario.local_doorway_1</code> | Marked clean exit | <code>doorway</code> | <code>862, 270</code> | <code>right_exit</code> | Marked clean exit | Exact scenario |
 | <code>scenario.local_floor_fixture_1</code> | Loaded order rail | <code>floor_fixture</code> | <code>392, 290</code> | <code>stage</code> | Loaded order rail | Exact scenario |
-| <code>scenario.local_ground_marker_1</code> | Cooling loaded trays | <code>ground_marker</code> | <code>160, 366</code> | <code>floor</code> | Cooling loaded trays | Exact scenario |
+| <code>scenario.local_ground_marker_1</code> | Cooling loaded trays | <code>ground_marker</code> | <code>172, 368</code> | <code>manual_placement_required</code> | Cooling loaded trays | Provisional geometry |
 | <code>scenario.local_standing_person_1</code> | Payday runner | <code>standing_person</code> | <code>526, 294</code> | <code>floor</code> | Payday runner | Exact scenario |
-| <code>scenario.local_standing_person_2</code> | Payday runner | <code>standing_person</code> | <code>624, 376</code> | <code>floor</code> | Payday runner | Exact scenario |
+| <code>scenario.local_standing_person_2</code> | Payday runner | <code>standing_person</code> | <code>596, 376</code> | <code>manual_placement_required</code> | Payday runner | Provisional geometry |
 | <code>scenario.local_standing_person_3</code> | Scenario alternatives: Floor server / Waiting bartender | <code>standing_person</code> | <code>740, 376</code> | <code>floor</code> | Floor server<br>Waiting bartender | Exact scenario |
 | <code>scenario.local_surface_item_1</code> | Pay Envelope | <code>surface_item</code> | <code>666, 188</code> | <code>pool_table</code> | Pay Envelope | Exact scenario |
-| <code>scenario.local_surface_item_2</code> | Carrying tray | <code>surface_item</code> | <code>44, 64</code> | <code>manual_placement_required</code> | Carrying tray | Provisional geometry |
-| <code>scenario.local_surface_item_3</code> | Open tab envelopes | <code>surface_item</code> | <code>118, 104</code> | <code>bottle_rail</code> | Open tab envelopes | Exact scenario |
-| <code>scenario.local_surface_item_4</code> | Stacked carrying trays | <code>surface_item</code> | <code>276, 64</code> | <code>manual_placement_required</code> | Stacked carrying trays | Provisional geometry |
-| <code>scenario.local_surface_item_5</code> | Spilled order tickets | <code>surface_item</code> | <code>348, 64</code> | <code>manual_placement_required</code> | Spilled order tickets | Provisional geometry |
+| <code>scenario.local_surface_item_2</code> | Carrying tray | <code>surface_item</code> | <code>76, 128</code> | <code>manual_placement_required</code> | Carrying tray | Provisional geometry |
+| <code>scenario.local_surface_item_3</code> | Open tab envelopes | <code>surface_item</code> | <code>116, 80</code> | <code>manual_placement_required</code> | Open tab envelopes | Provisional geometry |
+| <code>scenario.local_surface_item_4</code> | Stacked carrying trays | <code>surface_item</code> | <code>276, 144</code> | <code>manual_placement_required</code> | Stacked carrying trays | Provisional geometry |
+| <code>scenario.local_surface_item_5</code> | Spilled order tickets | <code>surface_item</code> | <code>420, 144</code> | <code>manual_placement_required</code> | Spilled order tickets | Provisional geometry |
 
 **Action-only IDs (3; no placement marker):** <code>bar_payday_rush_task_0</code><br><code>bar_payday_rush_task_1</code><br><code>bar_payday_rush_task_2</code>
 
@@ -651,9 +651,9 @@ Positions are canonical 900×430 board coordinates. Base tables list the exact e
 | <code>scenario.local_doorway_1</code> | Marked clean exit | <code>doorway</code> | <code>862, 270</code> | <code>right_exit</code> | Marked clean exit | Exact scenario |
 | <code>scenario.local_floor_fixture_1</code> | Joined memorial tables | <code>floor_fixture</code> | <code>392, 290</code> | <code>stage</code> | Joined memorial tables | Exact scenario |
 | <code>scenario.local_floor_fixture_2</code> | Joined memorial tables | <code>floor_fixture</code> | <code>508, 290</code> | <code>stage</code> | Joined memorial tables | Exact scenario |
-| <code>scenario.local_ground_marker_1</code> | Fallen remembrance card | <code>ground_marker</code> | <code>160, 366</code> | <code>floor</code> | Fallen remembrance card | Exact scenario |
-| <code>scenario.local_standing_person_1</code> | Mourning regular | <code>standing_person</code> | <code>526, 294</code> | <code>floor</code> | Mourning regular | Exact scenario |
-| <code>scenario.local_standing_person_2</code> | Wake host | <code>standing_person</code> | <code>624, 376</code> | <code>floor</code> | Wake host | Exact scenario |
+| <code>scenario.local_ground_marker_1</code> | Fallen remembrance card | <code>ground_marker</code> | <code>172, 368</code> | <code>manual_placement_required</code> | Fallen remembrance card | Provisional geometry |
+| <code>scenario.local_standing_person_1</code> | Mourning regular | <code>standing_person</code> | <code>524, 224</code> | <code>manual_placement_required</code> | Mourning regular | Provisional geometry |
+| <code>scenario.local_standing_person_2</code> | Wake host | <code>standing_person</code> | <code>596, 376</code> | <code>manual_placement_required</code> | Wake host | Provisional geometry |
 | <code>scenario.local_standing_person_3</code> | Mourning regular | <code>standing_person</code> | <code>740, 376</code> | <code>floor</code> | Mourning regular | Exact scenario |
 | <code>scenario.local_surface_item_1</code> | Scenario alternatives: Raised toast glasses / Remembrance tray | <code>surface_item</code> | <code>666, 188</code> | <code>pool_table</code> | Raised toast glasses<br>Remembrance tray | Exact scenario |
 | <code>scenario.local_surface_item_2</code> | Sealed remembrance tray | <code>surface_item</code> | <code>118, 104</code> | <code>bottle_rail</code> | Sealed remembrance tray | Exact scenario |
@@ -695,20 +695,20 @@ Positions are canonical 900×430 board coordinates. Base tables list the exact e
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.local_behind_counter_person_1</code> | Night clerk | <code>behind_counter_person</code> | <code>114, 84</code> | <code>staff_window_left</code> | Night clerk | Exact scenario |
-| <code>scenario.local_doorway_1</code> | Marked safe exit | <code>doorway</code> | <code>859, 362</code> | <code>forecourt_right</code> | Marked safe exit | Exact scenario |
-| <code>scenario.local_floor_fixture_1</code> | Flashlight dock | <code>floor_fixture</code> | <code>182, 422</code> | <code>manual_placement_required</code> | Flashlight dock | Provisional geometry |
+| <code>scenario.local_behind_counter_person_1</code> | Night clerk | <code>behind_counter_person</code> | <code>116, 80</code> | <code>manual_placement_required</code> | Night clerk | Provisional geometry |
+| <code>scenario.local_doorway_1</code> | Marked safe exit | <code>doorway</code> | <code>792, 400</code> | <code>manual_placement_required</code> | Marked safe exit | Provisional geometry |
+| <code>scenario.local_floor_fixture_1</code> | Flashlight dock | <code>floor_fixture</code> | <code>158, 196</code> | <code>manual_placement_required</code> | Flashlight dock | Provisional geometry |
 | <code>scenario.local_floor_fixture_2</code> | Jammed Machine Gate | <code>floor_fixture</code> | <code>414, 328</code> | <code>stage</code> | Jammed Machine Gate | Exact scenario |
-| <code>scenario.local_floor_fixture_3</code> | Empty Flashlight Dock | <code>floor_fixture</code> | <code>374, 422</code> | <code>manual_placement_required</code> | Empty Flashlight Dock | Provisional geometry |
-| <code>scenario.local_ground_marker_1</code> | Taped Camera Bypass | <code>ground_marker</code> | <code>174, 260</code> | <code>stage</code> | Taped Camera Bypass | Exact scenario |
-| <code>scenario.local_standing_person_1</code> | Night Clerk | <code>standing_person</code> | <code>52, 414</code> | <code>floor</code> | Night Clerk | Exact scenario |
+| <code>scenario.local_floor_fixture_3</code> | Empty Flashlight Dock | <code>floor_fixture</code> | <code>510, 176</code> | <code>manual_placement_required</code> | Empty Flashlight Dock | Provisional geometry |
+| <code>scenario.local_ground_marker_1</code> | Taped Camera Bypass | <code>ground_marker</code> | <code>176, 296</code> | <code>manual_placement_required</code> | Taped Camera Bypass | Provisional geometry |
+| <code>scenario.local_standing_person_1</code> | Night Clerk | <code>standing_person</code> | <code>52, 328</code> | <code>manual_placement_required</code> | Night Clerk | Provisional geometry |
 | <code>scenario.local_standing_person_2</code> | Scenario alternatives: Flashlight Clerk / Patrol Clerk | <code>standing_person</code> | <code>846, 92</code> | <code>stage</code> | Flashlight Clerk<br>Patrol Clerk | Exact scenario |
 | <code>scenario.local_surface_item_1</code> | Manual-Lock Shutter Tag | <code>surface_item</code> | <code>372, 80</code> | <code>ticket_service_shelf</code> | Manual-Lock Shutter Tag | Exact scenario |
 | <code>scenario.local_wall_item_1</code> | Cooler-zone gate | <code>wall_mounted</code> | <code>720, 48</code> | <code>wall</code> | Cooler-zone gate | Exact scenario |
-| <code>scenario.local_wall_item_2</code> | Machine-Zone Gate | <code>wall_mounted</code> | <code>448, 64</code> | <code>manual_placement_required</code> | Machine-Zone Gate | Provisional geometry |
-| <code>scenario.local_wall_item_3</code> | Shutter control panel | <code>wall_mounted</code> | <code>256, 24</code> | <code>wall</code> | Shutter control panel | Exact scenario |
-| <code>scenario.local_wall_item_4</code> | Scenario alternatives: Blind-Interval Monitor / Camera monitor | <code>wall_mounted</code> | <code>192, 96</code> | <code>manual_placement_required</code> | Blind-Interval Monitor<br>Camera monitor | Provisional geometry |
-| <code>scenario.local_wall_item_5</code> | Completed Shutter Panel | <code>wall_mounted</code> | <code>272, 96</code> | <code>manual_placement_required</code> | Completed Shutter Panel | Provisional geometry |
+| <code>scenario.local_wall_item_2</code> | Machine-Zone Gate | <code>wall_mounted</code> | <code>192, 48</code> | <code>manual_placement_required</code> | Machine-Zone Gate | Provisional geometry |
+| <code>scenario.local_wall_item_3</code> | Shutter control panel | <code>wall_mounted</code> | <code>272, 48</code> | <code>manual_placement_required</code> | Shutter control panel | Provisional geometry |
+| <code>scenario.local_wall_item_4</code> | Scenario alternatives: Blind-Interval Monitor / Camera monitor | <code>wall_mounted</code> | <code>256, 96</code> | <code>manual_placement_required</code> | Blind-Interval Monitor<br>Camera monitor | Provisional geometry |
+| <code>scenario.local_wall_item_5</code> | Completed Shutter Panel | <code>wall_mounted</code> | <code>720, 120</code> | <code>manual_placement_required</code> | Completed Shutter Panel | Provisional geometry |
 
 **Action-only IDs (1; no placement marker):** <code>gas_station_graveyard_shift_station</code>
 
@@ -718,18 +718,18 @@ Positions are canonical 900×430 board coordinates. Base tables list the exact e
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.local_doorway_1</code> | Marked safe exit | <code>doorway</code> | <code>859, 362</code> | <code>forecourt_right</code> | Marked safe exit | Exact scenario |
-| <code>scenario.local_floor_fixture_1</code> | Barricade stack | <code>floor_fixture</code> | <code>182, 334</code> | <code>manual_placement_required</code> | Barricade stack | Provisional geometry |
+| <code>scenario.local_doorway_1</code> | Marked safe exit | <code>doorway</code> | <code>792, 400</code> | <code>manual_placement_required</code> | Marked safe exit | Provisional geometry |
+| <code>scenario.local_floor_fixture_1</code> | Barricade stack | <code>floor_fixture</code> | <code>158, 108</code> | <code>manual_placement_required</code> | Barricade stack | Provisional geometry |
 | <code>scenario.local_floor_fixture_2</code> | Repair parts crate | <code>floor_fixture</code> | <code>414, 328</code> | <code>stage</code> | Repair parts crate | Exact scenario |
-| <code>scenario.local_floor_fixture_3</code> | Empty Barricade Straps | <code>floor_fixture</code> | <code>750, 422</code> | <code>manual_placement_required</code> | Empty Barricade Straps | Provisional geometry |
-| <code>scenario.local_standing_person_1</code> | Road foreman | <code>standing_person</code> | <code>52, 414</code> | <code>floor</code> | Road foreman | Exact scenario |
-| <code>scenario.local_standing_person_2</code> | Crew player | <code>standing_person</code> | <code>156, 414</code> | <code>floor</code> | Crew player | Exact scenario |
-| <code>scenario.local_standing_person_3</code> | Scenario alternatives: Road-Crew Foreman / Stake Keeper | <code>standing_person</code> | <code>604, 414</code> | <code>floor</code> | Road-Crew Foreman<br>Stake Keeper | Exact scenario |
+| <code>scenario.local_floor_fixture_3</code> | Empty Barricade Straps | <code>floor_fixture</code> | <code>510, 176</code> | <code>manual_placement_required</code> | Empty Barricade Straps | Provisional geometry |
+| <code>scenario.local_standing_person_1</code> | Road foreman | <code>standing_person</code> | <code>52, 328</code> | <code>manual_placement_required</code> | Road foreman | Provisional geometry |
+| <code>scenario.local_standing_person_2</code> | Crew player | <code>standing_person</code> | <code>172, 416</code> | <code>manual_placement_required</code> | Crew player | Provisional geometry |
+| <code>scenario.local_standing_person_3</code> | Scenario alternatives: Road-Crew Foreman / Stake Keeper | <code>standing_person</code> | <code>596, 416</code> | <code>manual_placement_required</code> | Road-Crew Foreman<br>Stake Keeper | Provisional geometry |
 | <code>scenario.local_surface_item_1</code> | Pooled-stake envelope | <code>surface_item</code> | <code>372, 80</code> | <code>ticket_service_shelf</code> | Pooled-stake envelope | Exact scenario |
-| <code>scenario.local_surface_item_2</code> | Crossed-Out Repair Order | <code>surface_item</code> | <code>116, 64</code> | <code>manual_placement_required</code> | Crossed-Out Repair Order | Provisional geometry |
-| <code>scenario.local_surface_item_3</code> | Open Pooled-Stake Envelope | <code>surface_item</code> | <code>188, 64</code> | <code>manual_placement_required</code> | Open Pooled-Stake Envelope | Provisional geometry |
-| <code>scenario.local_surface_item_4</code> | Split Bill Count | <code>surface_item</code> | <code>260, 64</code> | <code>manual_placement_required</code> | Split Bill Count | Provisional geometry |
-| <code>scenario.local_surface_item_5</code> | Sealed Pooled-Stake Envelope | <code>surface_item</code> | <code>444, 64</code> | <code>manual_placement_required</code> | Sealed Pooled-Stake Envelope | Provisional geometry |
+| <code>scenario.local_surface_item_2</code> | Crossed-Out Repair Order | <code>surface_item</code> | <code>564, 336</code> | <code>manual_placement_required</code> | Crossed-Out Repair Order | Provisional geometry |
+| <code>scenario.local_surface_item_3</code> | Open Pooled-Stake Envelope | <code>surface_item</code> | <code>844, 96</code> | <code>manual_placement_required</code> | Open Pooled-Stake Envelope | Provisional geometry |
+| <code>scenario.local_surface_item_4</code> | Split Bill Count | <code>surface_item</code> | <code>292, 328</code> | <code>manual_placement_required</code> | Split Bill Count | Provisional geometry |
+| <code>scenario.local_surface_item_5</code> | Sealed Pooled-Stake Envelope | <code>surface_item</code> | <code>372, 128</code> | <code>manual_placement_required</code> | Sealed Pooled-Stake Envelope | Provisional geometry |
 | <code>scenario.local_wall_item_1</code> | Work orders | <code>wall_mounted</code> | <code>720, 48</code> | <code>wall</code> | Work orders | Exact scenario |
 
 **Action-only IDs (1; no placement marker):** <code>gas_station_road_crew_payday_station</code>
@@ -740,20 +740,20 @@ Positions are canonical 900×430 board coordinates. Base tables list the exact e
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.local_doorway_1</code> | Marked safe exit | <code>doorway</code> | <code>859, 362</code> | <code>forecourt_right</code> | Marked safe exit | Exact scenario |
-| <code>scenario.local_floor_fixture_1</code> | Generator | <code>floor_fixture</code> | <code>182, 422</code> | <code>manual_placement_required</code> | Generator | Provisional geometry |
+| <code>scenario.local_doorway_1</code> | Marked safe exit | <code>doorway</code> | <code>856, 328</code> | <code>manual_placement_required</code> | Marked safe exit | Provisional geometry |
+| <code>scenario.local_floor_fixture_1</code> | Generator | <code>floor_fixture</code> | <code>158, 108</code> | <code>manual_placement_required</code> | Generator | Provisional geometry |
 | <code>scenario.local_floor_fixture_2</code> | Part-Counted Supply Shelf | <code>floor_fixture</code> | <code>414, 328</code> | <code>stage</code> | Part-Counted Supply Shelf | Exact scenario |
-| <code>scenario.local_floor_fixture_3</code> | Raised Rain Shutters | <code>floor_fixture</code> | <code>374, 422</code> | <code>manual_placement_required</code> | Raised Rain Shutters | Provisional geometry |
-| <code>scenario.local_ground_marker_1</code> | Safe-zone floor tape | <code>ground_marker</code> | <code>174, 260</code> | <code>stage</code> | Safe-zone floor tape | Exact scenario |
-| <code>scenario.local_ground_marker_2</code> | Crowded Shelter Tape | <code>ground_marker</code> | <code>584, 422</code> | <code>manual_placement_required</code> | Crowded Shelter Tape | Provisional geometry |
-| <code>scenario.local_group_1</code> | Sheltering drivers | <code>group</code> | <code>732, 414</code> | <code>floor</code> | Sheltering drivers | Exact scenario |
+| <code>scenario.local_floor_fixture_3</code> | Raised Rain Shutters | <code>floor_fixture</code> | <code>510, 176</code> | <code>manual_placement_required</code> | Raised Rain Shutters | Provisional geometry |
+| <code>scenario.local_ground_marker_1</code> | Safe-zone floor tape | <code>ground_marker</code> | <code>176, 296</code> | <code>manual_placement_required</code> | Safe-zone floor tape | Provisional geometry |
+| <code>scenario.local_ground_marker_2</code> | Crowded Shelter Tape | <code>ground_marker</code> | <code>152, 200</code> | <code>manual_placement_required</code> | Crowded Shelter Tape | Provisional geometry |
+| <code>scenario.local_group_1</code> | Sheltering drivers | <code>group</code> | <code>756, 414</code> | <code>manual_placement_required</code> | Sheltering drivers | Provisional geometry |
 | <code>scenario.local_group_2</code> | Family | <code>group</code> | <code>292, 328</code> | <code>floor</code> | Family | Exact scenario |
-| <code>scenario.local_standing_person_1</code> | Scenario alternatives: Reopened-Counter Driver / Shelter Driver / Waiting Family Member | <code>standing_person</code> | <code>52, 414</code> | <code>floor</code> | Reopened-Counter Driver<br>Shelter Driver<br>Waiting Family Member | Exact scenario |
+| <code>scenario.local_standing_person_1</code> | Scenario alternatives: Reopened-Counter Driver / Shelter Driver / Waiting Family Member | <code>standing_person</code> | <code>52, 328</code> | <code>manual_placement_required</code> | Reopened-Counter Driver<br>Shelter Driver<br>Waiting Family Member | Provisional geometry |
 | <code>scenario.local_wall_item_1</code> | Shelter power panel | <code>wall_mounted</code> | <code>256, 24</code> | <code>wall</code> | Shelter power panel | Exact scenario |
 | <code>scenario.local_wall_item_2</code> | Rain shutters | <code>wall_mounted</code> | <code>720, 48</code> | <code>wall</code> | Rain shutters | Exact scenario |
-| <code>scenario.local_wall_item_3</code> | Supplies | <code>wall_mounted</code> | <code>120, 64</code> | <code>manual_placement_required</code> | Supplies | Provisional geometry |
-| <code>scenario.local_wall_item_4</code> | Dark Power Panel | <code>wall_mounted</code> | <code>336, 64</code> | <code>manual_placement_required</code> | Dark Power Panel | Provisional geometry |
-| <code>scenario.local_wall_item_5</code> | Clerk-Only Power Panel | <code>wall_mounted</code> | <code>416, 64</code> | <code>manual_placement_required</code> | Clerk-Only Power Panel | Provisional geometry |
+| <code>scenario.local_wall_item_3</code> | Supplies | <code>wall_mounted</code> | <code>120, 48</code> | <code>manual_placement_required</code> | Supplies | Provisional geometry |
+| <code>scenario.local_wall_item_4</code> | Dark Power Panel | <code>wall_mounted</code> | <code>256, 96</code> | <code>manual_placement_required</code> | Dark Power Panel | Provisional geometry |
+| <code>scenario.local_wall_item_5</code> | Clerk-Only Power Panel | <code>wall_mounted</code> | <code>720, 120</code> | <code>manual_placement_required</code> | Clerk-Only Power Panel | Provisional geometry |
 
 **Action-only IDs (1; no placement marker):** <code>gas_station_storm_shelter_station</code>
 
@@ -763,17 +763,17 @@ Positions are canonical 900×430 board coordinates. Base tables list the exact e
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.local_doorway_1</code> | Marked safe exit | <code>doorway</code> | <code>859, 362</code> | <code>forecourt_right</code> | Marked safe exit | Exact scenario |
+| <code>scenario.local_doorway_1</code> | Marked safe exit | <code>doorway</code> | <code>792, 400</code> | <code>manual_placement_required</code> | Marked safe exit | Provisional geometry |
 | <code>scenario.local_doorway_2</code> | Tour bus door | <code>doorway</code> | <code>859, 282</code> | <code>forecourt_right</code> | Tour bus door | Exact scenario |
 | <code>scenario.local_doorway_3</code> | Closed Bus Door | <code>doorway</code> | <code>350, 120</code> | <code>round3_sill_door</code> | Closed Bus Door | Exact scenario |
-| <code>scenario.local_ground_marker_1</code> | Restroom queue marker | <code>ground_marker</code> | <code>368, 338</code> | <code>manual_placement_required</code> | Restroom queue marker | Provisional geometry |
-| <code>scenario.local_ground_marker_2</code> | Overflow Queue Line | <code>ground_marker</code> | <code>368, 422</code> | <code>manual_placement_required</code> | Overflow Queue Line | Provisional geometry |
-| <code>scenario.local_standing_person_1</code> | Tour bus driver | <code>standing_person</code> | <code>52, 414</code> | <code>floor</code> | Tour bus driver | Exact scenario |
-| <code>scenario.local_standing_person_2</code> | Queue marshal | <code>standing_person</code> | <code>156, 414</code> | <code>floor</code> | Queue marshal | Exact scenario |
-| <code>scenario.local_standing_person_3</code> | Scenario alternatives: Queue Marshal / Ticketless passenger / Waiting Bus Driver | <code>standing_person</code> | <code>604, 414</code> | <code>floor</code> | Queue Marshal<br>Ticketless passenger<br>Waiting Bus Driver | Exact scenario |
+| <code>scenario.local_ground_marker_1</code> | Restroom queue marker | <code>ground_marker</code> | <code>176, 296</code> | <code>manual_placement_required</code> | Restroom queue marker | Provisional geometry |
+| <code>scenario.local_ground_marker_2</code> | Overflow Queue Line | <code>ground_marker</code> | <code>152, 200</code> | <code>manual_placement_required</code> | Overflow Queue Line | Provisional geometry |
+| <code>scenario.local_standing_person_1</code> | Tour bus driver | <code>standing_person</code> | <code>52, 328</code> | <code>manual_placement_required</code> | Tour bus driver | Provisional geometry |
+| <code>scenario.local_standing_person_2</code> | Queue marshal | <code>standing_person</code> | <code>172, 416</code> | <code>manual_placement_required</code> | Queue marshal | Provisional geometry |
+| <code>scenario.local_standing_person_3</code> | Scenario alternatives: Queue Marshal / Ticketless passenger / Waiting Bus Driver | <code>standing_person</code> | <code>596, 416</code> | <code>manual_placement_required</code> | Queue Marshal<br>Ticketless passenger<br>Waiting Bus Driver | Provisional geometry |
 | <code>scenario.local_surface_item_1</code> | Scenario alternatives: Boarding counter / Erased Manifest Tallies | <code>surface_item</code> | <code>372, 80</code> | <code>ticket_service_shelf</code> | Boarding counter<br>Erased Manifest Tallies | Exact scenario |
-| <code>scenario.local_surface_item_2</code> | Scenario alternatives: Loose ticket basket / Unmatched Ticket and Bag | <code>surface_item</code> | <code>116, 64</code> | <code>manual_placement_required</code> | Loose ticket basket<br>Unmatched Ticket and Bag | Provisional geometry |
-| <code>scenario.local_surface_item_3</code> | Half-Finished Boarding List | <code>surface_item</code> | <code>188, 64</code> | <code>manual_placement_required</code> | Half-Finished Boarding List | Provisional geometry |
+| <code>scenario.local_surface_item_2</code> | Scenario alternatives: Loose ticket basket / Unmatched Ticket and Bag | <code>surface_item</code> | <code>564, 336</code> | <code>manual_placement_required</code> | Loose ticket basket<br>Unmatched Ticket and Bag | Provisional geometry |
+| <code>scenario.local_surface_item_3</code> | Half-Finished Boarding List | <code>surface_item</code> | <code>844, 96</code> | <code>manual_placement_required</code> | Half-Finished Boarding List | Provisional geometry |
 
 **Action-only IDs (1; no placement marker):** <code>gas_station_tour_bus_stop_station</code>
 
@@ -783,19 +783,19 @@ Positions are canonical 900×430 board coordinates. Base tables list the exact e
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.local_doorway_1</code> | Marked safe exit | <code>doorway</code> | <code>859, 362</code> | <code>forecourt_right</code> | Marked safe exit | Exact scenario |
+| <code>scenario.local_doorway_1</code> | Marked safe exit | <code>doorway</code> | <code>792, 400</code> | <code>manual_placement_required</code> | Marked safe exit | Provisional geometry |
 | <code>scenario.local_floor_fixture_1</code> | Freight pallet | <code>floor_fixture</code> | <code>414, 328</code> | <code>stage</code> | Freight pallet | Exact scenario |
-| <code>scenario.local_ground_marker_1</code> | Tail rig marker | <code>ground_marker</code> | <code>174, 260</code> | <code>stage</code> | Tail rig marker | Exact scenario |
-| <code>scenario.local_ground_marker_2</code> | Empty Lead Position | <code>ground_marker</code> | <code>368, 422</code> | <code>manual_placement_required</code> | Empty Lead Position | Provisional geometry |
-| <code>scenario.local_standing_person_1</code> | Switch | <code>standing_person</code> | <code>52, 414</code> | <code>floor</code> | Switch | Exact scenario |
+| <code>scenario.local_ground_marker_1</code> | Tail rig marker | <code>ground_marker</code> | <code>176, 296</code> | <code>manual_placement_required</code> | Tail rig marker | Provisional geometry |
+| <code>scenario.local_ground_marker_2</code> | Empty Lead Position | <code>ground_marker</code> | <code>152, 200</code> | <code>manual_placement_required</code> | Empty Lead Position | Provisional geometry |
+| <code>scenario.local_standing_person_1</code> | Switch | <code>standing_person</code> | <code>52, 328</code> | <code>manual_placement_required</code> | Switch | Provisional geometry |
 | <code>scenario.local_standing_person_2</code> | Lead driver | <code>standing_person</code> | <code>846, 92</code> | <code>stage</code> | Lead driver | Exact scenario |
-| <code>scenario.local_standing_person_3</code> | Machine driver | <code>standing_person</code> | <code>156, 414</code> | <code>floor</code> | Machine driver | Exact scenario |
-| <code>scenario.local_standing_person_4</code> | Scenario alternatives: Blocked Driver / Relay Driver / Waiting Relay Driver | <code>standing_person</code> | <code>604, 414</code> | <code>floor</code> | Blocked Driver<br>Relay Driver<br>Waiting Relay Driver | Exact scenario |
+| <code>scenario.local_standing_person_3</code> | Machine driver | <code>standing_person</code> | <code>172, 416</code> | <code>manual_placement_required</code> | Machine driver | Provisional geometry |
+| <code>scenario.local_standing_person_4</code> | Scenario alternatives: Blocked Driver / Relay Driver / Waiting Relay Driver | <code>standing_person</code> | <code>596, 416</code> | <code>manual_placement_required</code> | Blocked Driver<br>Relay Driver<br>Waiting Relay Driver | Provisional geometry |
 | <code>scenario.local_surface_item_1</code> | Relay-Rig Loading Tag | <code>surface_item</code> | <code>372, 80</code> | <code>ticket_service_shelf</code> | Relay-Rig Loading Tag | Exact scenario |
-| <code>scenario.local_wall_item_1</code> | Relay rig marker | <code>wall_mounted</code> | <code>120, 64</code> | <code>manual_placement_required</code> | Relay rig marker | Provisional geometry |
+| <code>scenario.local_wall_item_1</code> | Relay rig marker | <code>wall_mounted</code> | <code>120, 48</code> | <code>manual_placement_required</code> | Relay rig marker | Provisional geometry |
 | <code>scenario.local_wall_item_2</code> | Scenario alternatives: Convoy departure board / Crossed Tail-Rig Marker | <code>wall_mounted</code> | <code>256, 24</code> | <code>wall</code> | Convoy departure board<br>Crossed Tail-Rig Marker | Exact scenario |
 | <code>scenario.local_wall_item_3</code> | Scenario alternatives: Checked Departure Board / Lead rig marker | <code>wall_mounted</code> | <code>720, 48</code> | <code>wall</code> | Checked Departure Board<br>Lead rig marker | Exact scenario |
-| <code>scenario.local_wall_item_4</code> | Blank Departure Board | <code>wall_mounted</code> | <code>448, 64</code> | <code>manual_placement_required</code> | Blank Departure Board | Provisional geometry |
+| <code>scenario.local_wall_item_4</code> | Blank Departure Board | <code>wall_mounted</code> | <code>256, 96</code> | <code>manual_placement_required</code> | Blank Departure Board | Provisional geometry |
 
 **Action-only IDs (1; no placement marker):** <code>gas_station_trucker_convoy_station</code>
 
@@ -803,7 +803,7 @@ Positions are canonical 900×430 board coordinates. Base tables list the exact e
 
 #### Base / No Scenario — <code>small_underground_casino:club::__base</code>
 
-**Save snapshot:** 19 slots = 5 fixed + 9 event + 3 shared scenario + 2 exit. Exact scenarios on this map: 5.
+**Save snapshot:** 18 slots = 5 fixed + 8 event + 3 shared scenario + 2 exit. Exact scenarios on this map: 5.
 
 | Family | Slot ID | Physical role | Footprint | Position | Support | Occupant/claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -812,7 +812,6 @@ Positions are canonical 900×430 board coordinates. Base tables list the exact e
 | <code>fixed</code> | <code>fixed.service_stage</code> | Two-drink minimum service | <code>surface_item</code> | <code>332, 202</code> | <code>stage</code> | Two-Drink Minimum | Mapped capacity |
 | <code>fixed</code> | <code>fixed.ambient_stage</code> | Comedy-club stage | <code>floor_fixture</code> | <code>546, 252</code> | <code>stage</code> | Ambient | Mapped capacity |
 | <code>fixed</code> | <code>fixed.numbers_book</code> | Numbers book | <code>surface_item</code> | <code>706, 194</code> | <code>right_table</code> | Book | Mapped capacity |
-| <code>event</code> | <code>event.floor_fixture_1</code> | Floor prop | <code>floor_fixture</code> | <code>734, 358</code> | <code>floor</code> | Empty capacity | Optional empty capacity |
 | <code>event</code> | <code>event.standing_person_1</code> | Standing person | <code>standing_person</code> | <code>100, 414</code> | <code>floor</code> | Cass Venn<br>Word from Across Town<br>Silas | Mapped capacity |
 | <code>event</code> | <code>event.standing_person_2</code> | Standing person | <code>standing_person</code> | <code>208.571429, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
 | <code>event</code> | <code>event.standing_person_3</code> | Standing person | <code>standing_person</code> | <code>317.142857, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
@@ -829,94 +828,94 @@ Positions are canonical 900×430 board coordinates. Base tables list the exact e
 
 #### Scenario — Bringer Show — <code>small_underground_casino:club::punchline_bringer_show</code>
 
-**Full save:** 29 slots = 19 shared + 10 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 28 slots = 18 shared + 10 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
 | <code>scenario.local_doorway_1</code> | Clear exit | <code>doorway</code> | <code>846, 114</code> | <code>side_door</code> | Clear exit | Exact scenario |
 | <code>scenario.local_floor_fixture_1</code> | Reserved chair blocks | <code>floor_fixture</code> | <code>446, 142</code> | <code>stage</code> | Reserved chair blocks | Exact scenario |
 | <code>scenario.local_floor_fixture_2</code> | Bringer stage | <code>floor_fixture</code> | <code>574, 142</code> | <code>stage</code> | Bringer stage | Exact scenario |
-| <code>scenario.local_floor_fixture_3</code> | Bringer crowd ropes | <code>floor_fixture</code> | <code>830, 326</code> | <code>manual_placement_required</code> | Bringer crowd ropes | Provisional geometry |
+| <code>scenario.local_floor_fixture_3</code> | Bringer crowd ropes | <code>floor_fixture</code> | <code>222, 208</code> | <code>manual_placement_required</code> | Bringer crowd ropes | Provisional geometry |
 | <code>scenario.local_ground_marker_1</code> | Unfinished Crowd Ropes | <code>ground_marker</code> | <code>164, 302</code> | <code>floor</code> | Unfinished Crowd Ropes | Exact scenario |
-| <code>scenario.local_group_1</code> | Crowd captain | <code>group</code> | <code>388, 358</code> | <code>floor</code> | Crowd captain | Exact scenario |
-| <code>scenario.local_standing_person_1</code> | Scenario alternatives: Bringer performer / Crowd Captain | <code>standing_person</code> | <code>284, 358</code> | <code>floor</code> | Bringer performer<br>Crowd Captain | Exact scenario |
-| <code>scenario.local_standing_person_2</code> | Waiting Supporter | <code>standing_person</code> | <code>500, 358</code> | <code>floor</code> | Waiting Supporter | Exact scenario |
+| <code>scenario.local_group_1</code> | Crowd captain | <code>group</code> | <code>388, 326</code> | <code>manual_placement_required</code> | Crowd captain | Provisional geometry |
+| <code>scenario.local_standing_person_1</code> | Scenario alternatives: Bringer performer / Crowd Captain | <code>standing_person</code> | <code>284, 328</code> | <code>manual_placement_required</code> | Bringer performer<br>Crowd Captain | Provisional geometry |
+| <code>scenario.local_standing_person_2</code> | Waiting Supporter | <code>standing_person</code> | <code>628, 272</code> | <code>manual_placement_required</code> | Waiting Supporter | Provisional geometry |
 | <code>scenario.local_surface_item_1</code> | Coiled Ropes and Filled Chairs | <code>surface_item</code> | <code>128, 206</code> | <code>left_table</code> | Coiled Ropes and Filled Chairs | Exact scenario |
-| <code>scenario.local_surface_item_2</code> | Open Pitch Card | <code>surface_item</code> | <code>350, 214</code> | <code>stage</code> | Open Pitch Card | Exact scenario |
+| <code>scenario.local_surface_item_2</code> | Open Pitch Card | <code>surface_item</code> | <code>348, 152</code> | <code>manual_placement_required</code> | Open Pitch Card | Provisional geometry |
 
 **Action-only IDs (4; no placement marker):** <code>punchline_bringer_show_task_0</code><br><code>punchline_bringer_show_task_1</code><br><code>punchline_bringer_show_task_2</code><br><code>punchline_bringer_show_task_3</code>
 
 #### Scenario — Debt Court — <code>small_underground_casino:club::punchline_debt_court</code>
 
-**Full save:** 29 slots = 19 shared + 10 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 28 slots = 18 shared + 10 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
 | <code>scenario.local_doorway_1</code> | Clear exit | <code>doorway</code> | <code>846, 114</code> | <code>side_door</code> | Clear exit | Exact scenario |
 | <code>scenario.local_floor_fixture_1</code> | Debt-court hearing chairs | <code>floor_fixture</code> | <code>446, 142</code> | <code>stage</code> | Debt-court hearing chairs | Exact scenario |
 | <code>scenario.local_floor_fixture_2</code> | Paused poker table rope | <code>floor_fixture</code> | <code>574, 142</code> | <code>stage</code> | Paused poker table rope | Exact scenario |
-| <code>scenario.local_ground_marker_1</code> | Table Divider Rope | <code>ground_marker</code> | <code>164, 302</code> | <code>floor</code> | Table Divider Rope | Exact scenario |
-| <code>scenario.local_standing_person_1</code> | The Collector | <code>standing_person</code> | <code>284, 358</code> | <code>floor</code> | The Collector | Exact scenario |
-| <code>scenario.local_standing_person_2</code> | Scenario alternatives: Debt-court steward / Hearing Participant | <code>standing_person</code> | <code>124, 358</code> | <code>floor</code> | Debt-court steward<br>Hearing Participant | Exact scenario |
-| <code>scenario.local_standing_person_3</code> | Scenario alternatives: Hearing Attendee / Room witness | <code>standing_person</code> | <code>500, 358</code> | <code>floor</code> | Hearing Attendee<br>Room witness | Exact scenario |
-| <code>scenario.local_surface_item_1</code> | Public evidence stand | <code>surface_item</code> | <code>350, 214</code> | <code>stage</code> | Public evidence stand | Exact scenario |
+| <code>scenario.local_ground_marker_1</code> | Table Divider Rope | <code>ground_marker</code> | <code>196, 304</code> | <code>manual_placement_required</code> | Table Divider Rope | Provisional geometry |
+| <code>scenario.local_standing_person_1</code> | The Collector | <code>standing_person</code> | <code>284, 328</code> | <code>manual_placement_required</code> | The Collector | Provisional geometry |
+| <code>scenario.local_standing_person_2</code> | Scenario alternatives: Debt-court steward / Hearing Participant | <code>standing_person</code> | <code>124, 328</code> | <code>manual_placement_required</code> | Debt-court steward<br>Hearing Participant | Provisional geometry |
+| <code>scenario.local_standing_person_3</code> | Scenario alternatives: Hearing Attendee / Room witness | <code>standing_person</code> | <code>460, 328</code> | <code>manual_placement_required</code> | Hearing Attendee<br>Room witness | Provisional geometry |
+| <code>scenario.local_surface_item_1</code> | Public evidence stand | <code>surface_item</code> | <code>356, 256</code> | <code>manual_placement_required</code> | Public evidence stand | Provisional geometry |
 | <code>scenario.local_surface_item_2</code> | Cleared Hearing Chairs | <code>surface_item</code> | <code>128, 206</code> | <code>left_table</code> | Cleared Hearing Chairs | Exact scenario |
-| <code>scenario.local_surface_item_3</code> | Contested Evidence Spread | <code>surface_item</code> | <code>116, 64</code> | <code>manual_placement_required</code> | Contested Evidence Spread | Provisional geometry |
+| <code>scenario.local_surface_item_3</code> | Contested Evidence Spread | <code>surface_item</code> | <code>708, 144</code> | <code>manual_placement_required</code> | Contested Evidence Spread | Provisional geometry |
 
 **Action-only IDs (4; no placement marker):** <code>punchline_debt_court_task_0</code><br><code>punchline_debt_court_task_1</code><br><code>punchline_debt_court_task_2</code><br><code>punchline_debt_court_task_3</code>
 
 #### Scenario — Headliner Night — <code>small_underground_casino:club::punchline_headliner_night</code>
 
-**Full save:** 29 slots = 19 shared + 10 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 28 slots = 18 shared + 10 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
 | <code>scenario.local_doorway_1</code> | Clear exit | <code>doorway</code> | <code>846, 114</code> | <code>side_door</code> | Clear exit | Exact scenario |
 | <code>scenario.local_doorway_2</code> | Layer 3 service door | <code>doorway</code> | <code>841, 266</code> | <code>right_exit</code> | Layer 3 service door | Exact scenario |
 | <code>scenario.local_floor_fixture_1</code> | Layer 1 credential rope | <code>floor_fixture</code> | <code>446, 142</code> | <code>stage</code> | Layer 1 credential rope | Exact scenario |
-| <code>scenario.local_ground_marker_1</code> | Clear Headliner Route | <code>ground_marker</code> | <code>164, 302</code> | <code>floor</code> | Clear Headliner Route | Exact scenario |
-| <code>scenario.local_ground_marker_2</code> | Stranded Runner Case | <code>ground_marker</code> | <code>356, 326</code> | <code>manual_placement_required</code> | Stranded Runner Case | Provisional geometry |
-| <code>scenario.local_standing_person_1</code> | Runner | <code>standing_person</code> | <code>284, 358</code> | <code>floor</code> | Runner | Exact scenario |
-| <code>scenario.local_standing_person_2</code> | Scenario alternatives: Backstage Guard / Backstage door guard | <code>standing_person</code> | <code>500, 358</code> | <code>floor</code> | Backstage Guard<br>Backstage door guard | Exact scenario |
-| <code>scenario.local_standing_person_3</code> | Backstage door guard | <code>standing_person</code> | <code>124, 358</code> | <code>floor</code> | Backstage door guard | Exact scenario |
-| <code>scenario.local_standing_person_4</code> | Denied Guest | <code>standing_person</code> | <code>44, 310</code> | <code>manual_placement_required</code> | Denied Guest | Provisional geometry |
-| <code>scenario.local_surface_item_1</code> | Scenario alternatives: Diverted Equipment Case / Layer 2 runner case | <code>surface_item</code> | <code>350, 214</code> | <code>stage</code> | Diverted Equipment Case<br>Layer 2 runner case | Exact scenario |
+| <code>scenario.local_ground_marker_1</code> | Clear Headliner Route | <code>ground_marker</code> | <code>164, 248</code> | <code>manual_placement_required</code> | Clear Headliner Route | Provisional geometry |
+| <code>scenario.local_ground_marker_2</code> | Stranded Runner Case | <code>ground_marker</code> | <code>92, 248</code> | <code>manual_placement_required</code> | Stranded Runner Case | Provisional geometry |
+| <code>scenario.local_standing_person_1</code> | Runner | <code>standing_person</code> | <code>284, 328</code> | <code>manual_placement_required</code> | Runner | Provisional geometry |
+| <code>scenario.local_standing_person_2</code> | Scenario alternatives: Backstage Guard / Backstage door guard | <code>standing_person</code> | <code>460, 328</code> | <code>manual_placement_required</code> | Backstage Guard<br>Backstage door guard | Provisional geometry |
+| <code>scenario.local_standing_person_3</code> | Backstage door guard | <code>standing_person</code> | <code>124, 328</code> | <code>manual_placement_required</code> | Backstage door guard | Provisional geometry |
+| <code>scenario.local_standing_person_4</code> | Denied Guest | <code>standing_person</code> | <code>196, 328</code> | <code>manual_placement_required</code> | Denied Guest | Provisional geometry |
+| <code>scenario.local_surface_item_1</code> | Scenario alternatives: Diverted Equipment Case / Layer 2 runner case | <code>surface_item</code> | <code>356, 256</code> | <code>manual_placement_required</code> | Diverted Equipment Case<br>Layer 2 runner case | Provisional geometry |
 
 **Action-only IDs (5; no placement marker):** <code>punchline_headliner_night_task_0</code><br><code>punchline_headliner_night_task_1</code><br><code>punchline_headliner_night_task_2</code><br><code>punchline_headliner_night_task_3</code><br><code>punchline_headliner_night_task_4</code>
 
 #### Scenario — Open Mic Night — <code>small_underground_casino:club::punchline_open_mic_night</code>
 
-**Full save:** 29 slots = 19 shared + 10 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 28 slots = 18 shared + 10 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
 | <code>scenario.local_doorway_1</code> | Clear exit | <code>doorway</code> | <code>846, 114</code> | <code>side_door</code> | Clear exit | Exact scenario |
 | <code>scenario.local_floor_fixture_1</code> | Open-mic chair bank | <code>floor_fixture</code> | <code>446, 142</code> | <code>stage</code> | Open-mic chair bank | Exact scenario |
 | <code>scenario.local_floor_fixture_2</code> | Movable stage steps | <code>floor_fixture</code> | <code>574, 142</code> | <code>stage</code> | Movable stage steps | Exact scenario |
-| <code>scenario.local_floor_fixture_3</code> | Open-mic signup lectern | <code>floor_fixture</code> | <code>366, 326</code> | <code>manual_placement_required</code> | Open-mic signup lectern | Provisional geometry |
-| <code>scenario.local_ground_marker_1</code> | Crooked Stage Steps | <code>ground_marker</code> | <code>164, 302</code> | <code>floor</code> | Crooked Stage Steps | Exact scenario |
-| <code>scenario.local_standing_person_1</code> | Open-mic host | <code>standing_person</code> | <code>284, 358</code> | <code>floor</code> | Open-mic host | Exact scenario |
-| <code>scenario.local_standing_person_2</code> | Waiting comic | <code>standing_person</code> | <code>500, 358</code> | <code>floor</code> | Waiting comic | Exact scenario |
-| <code>scenario.local_standing_person_3</code> | Scenario alternatives: Lingering Comic / Unbooked Comic | <code>standing_person</code> | <code>124, 358</code> | <code>floor</code> | Lingering Comic<br>Unbooked Comic | Exact scenario |
+| <code>scenario.local_floor_fixture_3</code> | Open-mic signup lectern | <code>floor_fixture</code> | <code>222, 208</code> | <code>manual_placement_required</code> | Open-mic signup lectern | Provisional geometry |
+| <code>scenario.local_ground_marker_1</code> | Crooked Stage Steps | <code>ground_marker</code> | <code>196, 304</code> | <code>manual_placement_required</code> | Crooked Stage Steps | Provisional geometry |
+| <code>scenario.local_standing_person_1</code> | Open-mic host | <code>standing_person</code> | <code>284, 328</code> | <code>manual_placement_required</code> | Open-mic host | Provisional geometry |
+| <code>scenario.local_standing_person_2</code> | Waiting comic | <code>standing_person</code> | <code>460, 328</code> | <code>manual_placement_required</code> | Waiting comic | Provisional geometry |
+| <code>scenario.local_standing_person_3</code> | Scenario alternatives: Lingering Comic / Unbooked Comic | <code>standing_person</code> | <code>124, 328</code> | <code>manual_placement_required</code> | Lingering Comic<br>Unbooked Comic | Provisional geometry |
 | <code>scenario.local_surface_item_1</code> | Used Act Card Stack | <code>surface_item</code> | <code>128, 206</code> | <code>left_table</code> | Used Act Card Stack | Exact scenario |
-| <code>scenario.local_surface_item_2</code> | Crossed-Out Running Order | <code>surface_item</code> | <code>350, 214</code> | <code>stage</code> | Crossed-Out Running Order | Exact scenario |
+| <code>scenario.local_surface_item_2</code> | Crossed-Out Running Order | <code>surface_item</code> | <code>356, 256</code> | <code>manual_placement_required</code> | Crossed-Out Running Order | Provisional geometry |
 
 **Action-only IDs (4; no placement marker):** <code>punchline_open_mic_night_task_0</code><br><code>punchline_open_mic_night_task_1</code><br><code>punchline_open_mic_night_task_2</code><br><code>punchline_open_mic_night_task_3</code>
 
 #### Scenario — Raid Jitters — <code>small_underground_casino:club::punchline_raid_jitters</code>
 
-**Full save:** 27 slots = 19 shared + 8 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 26 slots = 18 shared + 8 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
 | <code>scenario.local_doorway_1</code> | Clear exit | <code>doorway</code> | <code>846, 114</code> | <code>side_door</code> | Clear exit | Exact scenario |
 | <code>scenario.local_floor_fixture_1</code> | Layer 2 clear bins | <code>floor_fixture</code> | <code>446, 142</code> | <code>stage</code> | Layer 2 clear bins | Exact scenario |
 | <code>scenario.local_floor_fixture_2</code> | Layer 3 room screen | <code>floor_fixture</code> | <code>574, 142</code> | <code>stage</code> | Layer 3 room screen | Exact scenario |
-| <code>scenario.local_floor_fixture_3</code> | Scenario alternatives: Layer 1 hide cart / Loaded Hide Cart | <code>floor_fixture</code> | <code>366, 326</code> | <code>manual_placement_required</code> | Layer 1 hide cart<br>Loaded Hide Cart | Provisional geometry |
+| <code>scenario.local_floor_fixture_3</code> | Scenario alternatives: Layer 1 hide cart / Loaded Hide Cart | <code>floor_fixture</code> | <code>222, 208</code> | <code>manual_placement_required</code> | Layer 1 hide cart<br>Loaded Hide Cart | Provisional geometry |
 | <code>scenario.local_ground_marker_1</code> | Half-Cleared Bin Lane | <code>ground_marker</code> | <code>164, 302</code> | <code>floor</code> | Half-Cleared Bin Lane | Exact scenario |
-| <code>scenario.local_standing_person_1</code> | Scenario alternatives: Raid lookout / Watchful Lookout | <code>standing_person</code> | <code>284, 358</code> | <code>floor</code> | Raid lookout<br>Watchful Lookout | Exact scenario |
-| <code>scenario.local_standing_person_2</code> | Reopen Steward | <code>standing_person</code> | <code>500, 358</code> | <code>floor</code> | Reopen Steward | Exact scenario |
-| <code>scenario.local_wall_item_1</code> | Coiled Screen Seals | <code>wall_mounted</code> | <code>120, 64</code> | <code>manual_placement_required</code> | Coiled Screen Seals | Provisional geometry |
+| <code>scenario.local_standing_person_1</code> | Scenario alternatives: Raid lookout / Watchful Lookout | <code>standing_person</code> | <code>284, 328</code> | <code>manual_placement_required</code> | Raid lookout<br>Watchful Lookout | Provisional geometry |
+| <code>scenario.local_standing_person_2</code> | Reopen Steward | <code>standing_person</code> | <code>460, 328</code> | <code>manual_placement_required</code> | Reopen Steward | Provisional geometry |
+| <code>scenario.local_wall_item_1</code> | Coiled Screen Seals | <code>wall_mounted</code> | <code>120, 48</code> | <code>manual_placement_required</code> | Coiled Screen Seals | Provisional geometry |
 
 **Action-only IDs (5; no placement marker):** <code>punchline_raid_jitters_task_0</code><br><code>punchline_raid_jitters_task_1</code><br><code>punchline_raid_jitters_task_2</code><br><code>punchline_raid_jitters_task_3</code><br><code>punchline_raid_jitters_task_4</code>
 
@@ -924,7 +923,7 @@ Positions are canonical 900×430 board coordinates. Base tables list the exact e
 
 #### Base / No Scenario — <code>small_underground_casino:casino::__base</code>
 
-**Save snapshot:** 26 slots = 9 fixed + 11 event + 3 shared scenario + 3 exit. Exact scenarios on this map: 3.
+**Save snapshot:** 24 slots = 9 fixed + 9 event + 3 shared scenario + 3 exit. Exact scenarios on this map: 3.
 
 | Family | Slot ID | Physical role | Footprint | Position | Support | Occupant/claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -937,9 +936,7 @@ Positions are canonical 900×430 board coordinates. Base tables list the exact e
 | <code>fixed</code> | <code>fixed.service_house_drink</code> | House drink service | <code>surface_item</code> | <code>274, 222</code> | <code>stage</code> | Buy a Drink | Mapped capacity |
 | <code>fixed</code> | <code>fixed.numbers_book</code> | Numbers book | <code>surface_item</code> | <code>688, 142</code> | <code>right_table</code> | Book | Mapped capacity |
 | <code>fixed</code> | <code>fixed.staff_ox</code> | Ox | <code>standing_person</code> | <code>628, 358</code> | <code>floor</code> | Ox | Required |
-| <code>event</code> | <code>event.floor_fixture_1</code> | Floor prop | <code>floor_fixture</code> | <code>752, 370</code> | <code>floor</code> | Empty capacity | Optional empty capacity |
 | <code>event</code> | <code>event.behind_counter_person_1</code> | Counter staff | <code>behind_counter_person</code> | <code>136, 226</code> | <code>left_table</code> | Word from Across Town | Mapped capacity |
-| <code>event</code> | <code>event.seated_person_1</code> | Seated person | <code>seated_person</code> | <code>220, 246</code> | <code>left_card_seat</code> | Rowdy Regular | Mapped capacity |
 | <code>event</code> | <code>event.standing_person_1</code> | Standing person | <code>standing_person</code> | <code>208.571429, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
 | <code>event</code> | <code>event.standing_person_2</code> | Standing person | <code>standing_person</code> | <code>317.142857, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
 | <code>event</code> | <code>event.standing_person_3</code> | Standing person | <code>standing_person</code> | <code>425.714286, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
@@ -957,58 +954,58 @@ Positions are canonical 900×430 board coordinates. Base tables list the exact e
 
 #### Scenario — Greased Week — <code>small_underground_casino:casino::punchline_greased_week</code>
 
-**Full save:** 36 slots = 26 shared + 10 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 34 slots = 24 shared + 10 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
 | <code>scenario.local_doorway_1</code> | Clear exit | <code>doorway</code> | <code>36, 264</code> | <code>left_exit</code> | Clear exit | Exact scenario |
-| <code>scenario.local_floor_fixture_1</code> | Declared service barrier | <code>floor_fixture</code> | <code>470, 330</code> | <code>manual_placement_required</code> | Declared service barrier | Provisional geometry |
-| <code>scenario.local_ground_marker_1</code> | Unposted Payoff Ledger | <code>ground_marker</code> | <code>172, 302</code> | <code>floor</code> | Unposted Payoff Ledger | Exact scenario |
-| <code>scenario.local_standing_person_1</code> | Moving inspector | <code>standing_person</code> | <code>660, 252</code> | <code>floor</code> | Moving inspector | Exact scenario |
-| <code>scenario.local_standing_person_2</code> | Scenario alternatives: Club Regular / Payoff runner | <code>standing_person</code> | <code>388, 358</code> | <code>floor</code> | Club Regular<br>Payoff runner | Exact scenario |
-| <code>scenario.local_standing_person_3</code> | Waiting Runner | <code>standing_person</code> | <code>252, 326</code> | <code>manual_placement_required</code> | Waiting Runner | Provisional geometry |
+| <code>scenario.local_floor_fixture_1</code> | Declared service barrier | <code>floor_fixture</code> | <code>718, 288</code> | <code>manual_placement_required</code> | Declared service barrier | Provisional geometry |
+| <code>scenario.local_ground_marker_1</code> | Unposted Payoff Ledger | <code>ground_marker</code> | <code>172, 280</code> | <code>manual_placement_required</code> | Unposted Payoff Ledger | Provisional geometry |
+| <code>scenario.local_standing_person_1</code> | Moving inspector | <code>standing_person</code> | <code>636, 248</code> | <code>manual_placement_required</code> | Moving inspector | Provisional geometry |
+| <code>scenario.local_standing_person_2</code> | Scenario alternatives: Club Regular / Payoff runner | <code>standing_person</code> | <code>388, 328</code> | <code>manual_placement_required</code> | Club Regular<br>Payoff runner | Provisional geometry |
+| <code>scenario.local_standing_person_3</code> | Waiting Runner | <code>standing_person</code> | <code>316, 328</code> | <code>manual_placement_required</code> | Waiting Runner | Provisional geometry |
 | <code>scenario.local_wall_item_1</code> | Payoff route ledger | <code>wall_mounted</code> | <code>40, 24</code> | <code>wall</code> | Payoff route ledger | Exact scenario |
 | <code>scenario.local_wall_item_2</code> | Scenario alternatives: Layer inspection seals / Posted Payoff Ledger | <code>wall_mounted</code> | <code>376, 192</code> | <code>wall</code> | Layer inspection seals<br>Posted Payoff Ledger | Exact scenario |
-| <code>scenario.local_wall_item_3</code> | Layer inspection seals | <code>wall_mounted</code> | <code>120, 64</code> | <code>manual_placement_required</code> | Layer inspection seals | Provisional geometry |
-| <code>scenario.local_wall_item_4</code> | Broken Inspection Seals | <code>wall_mounted</code> | <code>280, 64</code> | <code>manual_placement_required</code> | Broken Inspection Seals | Provisional geometry |
+| <code>scenario.local_wall_item_3</code> | Layer inspection seals | <code>wall_mounted</code> | <code>200, 96</code> | <code>manual_placement_required</code> | Layer inspection seals | Provisional geometry |
+| <code>scenario.local_wall_item_4</code> | Broken Inspection Seals | <code>wall_mounted</code> | <code>40, 96</code> | <code>manual_placement_required</code> | Broken Inspection Seals | Provisional geometry |
 
 **Action-only IDs (5; no placement marker):** <code>punchline_greased_week_task_0</code><br><code>punchline_greased_week_task_1</code><br><code>punchline_greased_week_task_2</code><br><code>punchline_greased_week_task_3</code><br><code>punchline_greased_week_task_4</code>
 
 #### Scenario — High-Stakes Night — <code>small_underground_casino:casino::punchline_high_stakes_night</code>
 
-**Full save:** 37 slots = 26 shared + 11 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 35 slots = 24 shared + 11 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
 | <code>scenario.local_doorway_1</code> | Clear exit | <code>doorway</code> | <code>36, 264</code> | <code>left_exit</code> | Clear exit | Exact scenario |
-| <code>scenario.local_floor_fixture_1</code> | Displaced ordinary chairs | <code>floor_fixture</code> | <code>838, 358</code> | <code>floor</code> | Displaced ordinary chairs | Exact scenario |
-| <code>scenario.local_floor_fixture_2</code> | Protected high-stakes table | <code>floor_fixture</code> | <code>510, 358</code> | <code>floor</code> | Protected high-stakes table | Exact scenario |
-| <code>scenario.local_floor_fixture_3</code> | Protected table | <code>floor_fixture</code> | <code>262, 326</code> | <code>manual_placement_required</code> | Protected table | Provisional geometry |
-| <code>scenario.local_ground_marker_1</code> | Open Observer Rail | <code>ground_marker</code> | <code>172, 302</code> | <code>floor</code> | Open Observer Rail | Exact scenario |
-| <code>scenario.local_ground_marker_2</code> | Unfinished Chair Stack | <code>ground_marker</code> | <code>460, 294</code> | <code>manual_placement_required</code> | Unfinished Chair Stack | Provisional geometry |
+| <code>scenario.local_floor_fixture_1</code> | Displaced ordinary chairs | <code>floor_fixture</code> | <code>718, 288</code> | <code>manual_placement_required</code> | Displaced ordinary chairs | Provisional geometry |
+| <code>scenario.local_floor_fixture_2</code> | Protected high-stakes table | <code>floor_fixture</code> | <code>510, 328</code> | <code>manual_placement_required</code> | Protected high-stakes table | Provisional geometry |
+| <code>scenario.local_floor_fixture_3</code> | Protected table | <code>floor_fixture</code> | <code>414, 328</code> | <code>manual_placement_required</code> | Protected table | Provisional geometry |
+| <code>scenario.local_ground_marker_1</code> | Open Observer Rail | <code>ground_marker</code> | <code>172, 280</code> | <code>manual_placement_required</code> | Open Observer Rail | Provisional geometry |
+| <code>scenario.local_ground_marker_2</code> | Unfinished Chair Stack | <code>ground_marker</code> | <code>244, 280</code> | <code>manual_placement_required</code> | Unfinished Chair Stack | Provisional geometry |
 | <code>scenario.local_seated_person_1</code> | High-stakes guard | <code>seated_person</code> | <code>566, 246</code> | <code>right_card_seat</code> | High-stakes guard | Exact scenario |
-| <code>scenario.local_standing_person_1</code> | Scenario alternatives: Refused Guest / Table runner | <code>standing_person</code> | <code>660, 252</code> | <code>floor</code> | Refused Guest<br>Table runner | Exact scenario |
-| <code>scenario.local_standing_person_2</code> | Table Runner | <code>standing_person</code> | <code>388, 358</code> | <code>floor</code> | Table Runner | Exact scenario |
-| <code>scenario.local_surface_item_1</code> | Private Table | <code>surface_item</code> | <code>154, 166</code> | <code>left_table</code> | Private Table | Exact scenario |
+| <code>scenario.local_standing_person_1</code> | Scenario alternatives: Refused Guest / Table runner | <code>standing_person</code> | <code>636, 248</code> | <code>manual_placement_required</code> | Refused Guest<br>Table runner | Provisional geometry |
+| <code>scenario.local_standing_person_2</code> | Table Runner | <code>standing_person</code> | <code>332, 328</code> | <code>manual_placement_required</code> | Table Runner | Provisional geometry |
+| <code>scenario.local_surface_item_1</code> | Private Table | <code>surface_item</code> | <code>156, 152</code> | <code>manual_placement_required</code> | Private Table | Provisional geometry |
 | <code>scenario.local_wall_item_1</code> | High-stakes observer rail | <code>wall_mounted</code> | <code>40, 24</code> | <code>wall</code> | High-stakes observer rail | Exact scenario |
 
 **Action-only IDs (4; no placement marker):** <code>punchline_high_stakes_night_task_0</code><br><code>punchline_high_stakes_night_task_1</code><br><code>punchline_high_stakes_night_task_2</code><br><code>punchline_high_stakes_night_task_3</code>
 
 #### Scenario — New Muscle — <code>small_underground_casino:casino::punchline_new_muscle</code>
 
-**Full save:** 35 slots = 26 shared + 9 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 33 slots = 24 shared + 9 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
 | <code>scenario.local_doorway_1</code> | Clear exit | <code>doorway</code> | <code>36, 264</code> | <code>left_exit</code> | Clear exit | Exact scenario |
-| <code>scenario.local_floor_fixture_1</code> | Scenario alternatives: Crowded Guard Posts / Three-layer guard posts | <code>floor_fixture</code> | <code>358, 274</code> | <code>manual_placement_required</code> | Crowded Guard Posts<br>Three-layer guard posts | Provisional geometry |
-| <code>scenario.local_floor_fixture_2</code> | Aligned Guard Posts | <code>floor_fixture</code> | <code>510, 358</code> | <code>floor</code> | Aligned Guard Posts | Exact scenario |
-| <code>scenario.local_ground_marker_1</code> | Scenario alternatives: Marked bypass lane / Stranded Inspection Tray | <code>ground_marker</code> | <code>172, 302</code> | <code>floor</code> | Marked bypass lane<br>Stranded Inspection Tray | Exact scenario |
-| <code>scenario.local_standing_person_1</code> | Checkpoint rover | <code>standing_person</code> | <code>388, 358</code> | <code>floor</code> | Checkpoint rover | Exact scenario |
-| <code>scenario.local_standing_person_2</code> | Scenario alternatives: Checkpoint Rover / New guard lead | <code>standing_person</code> | <code>660, 252</code> | <code>floor</code> | Checkpoint Rover<br>New guard lead | Exact scenario |
-| <code>scenario.local_standing_person_3</code> | Waiting Traveler | <code>standing_person</code> | <code>252, 326</code> | <code>manual_placement_required</code> | Waiting Traveler | Provisional geometry |
-| <code>scenario.local_surface_item_1</code> | Checkpoint inspection tray | <code>surface_item</code> | <code>154, 166</code> | <code>left_table</code> | Checkpoint inspection tray | Exact scenario |
-| <code>scenario.local_surface_item_2</code> | Checkpoint inspection tray | <code>surface_item</code> | <code>44, 64</code> | <code>manual_placement_required</code> | Checkpoint inspection tray | Provisional geometry |
+| <code>scenario.local_floor_fixture_1</code> | Scenario alternatives: Crowded Guard Posts / Three-layer guard posts | <code>floor_fixture</code> | <code>718, 288</code> | <code>manual_placement_required</code> | Crowded Guard Posts<br>Three-layer guard posts | Provisional geometry |
+| <code>scenario.local_floor_fixture_2</code> | Aligned Guard Posts | <code>floor_fixture</code> | <code>510, 328</code> | <code>manual_placement_required</code> | Aligned Guard Posts | Provisional geometry |
+| <code>scenario.local_ground_marker_1</code> | Scenario alternatives: Marked bypass lane / Stranded Inspection Tray | <code>ground_marker</code> | <code>172, 280</code> | <code>manual_placement_required</code> | Marked bypass lane<br>Stranded Inspection Tray | Provisional geometry |
+| <code>scenario.local_standing_person_1</code> | Checkpoint rover | <code>standing_person</code> | <code>388, 328</code> | <code>manual_placement_required</code> | Checkpoint rover | Provisional geometry |
+| <code>scenario.local_standing_person_2</code> | Scenario alternatives: Checkpoint Rover / New guard lead | <code>standing_person</code> | <code>636, 248</code> | <code>manual_placement_required</code> | Checkpoint Rover<br>New guard lead | Provisional geometry |
+| <code>scenario.local_standing_person_3</code> | Waiting Traveler | <code>standing_person</code> | <code>316, 328</code> | <code>manual_placement_required</code> | Waiting Traveler | Provisional geometry |
+| <code>scenario.local_surface_item_1</code> | Checkpoint inspection tray | <code>surface_item</code> | <code>156, 152</code> | <code>manual_placement_required</code> | Checkpoint inspection tray | Provisional geometry |
+| <code>scenario.local_surface_item_2</code> | Checkpoint inspection tray | <code>surface_item</code> | <code>276, 168</code> | <code>manual_placement_required</code> | Checkpoint inspection tray | Provisional geometry |
 
 **Action-only IDs (5; no placement marker):** <code>punchline_new_muscle_task_0</code><br><code>punchline_new_muscle_task_1</code><br><code>punchline_new_muscle_task_2</code><br><code>punchline_new_muscle_task_3</code><br><code>punchline_new_muscle_task_4</code>
 
@@ -1016,7 +1013,7 @@ Positions are canonical 900×430 board coordinates. Base tables list the exact e
 
 #### Base / No Scenario — <code>small_underground_casino:back_room::__base</code>
 
-**Save snapshot:** 25 slots = 8 fixed + 12 event + 3 shared scenario + 2 exit. Exact scenarios on this map: 0.
+**Save snapshot:** 19 slots = 8 fixed + 6 event + 3 shared scenario + 2 exit. Exact scenarios on this map: 0.
 
 | Family | Slot ID | Physical role | Footprint | Position | Support | Occupant/claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -1028,12 +1025,6 @@ Positions are canonical 900×430 board coordinates. Base tables list the exact e
 | <code>fixed</code> | <code>fixed.event_practice_rig</code> | Crew practice rig | <code>floor_fixture</code> | <code>300, 358</code> | <code>floor</code> | Mags' Practice Rig | Mapped capacity |
 | <code>fixed</code> | <code>fixed.event_rook_ride</code> | Rook's ride | <code>doorway</code> | <code>830, 106</code> | <code>rook_exit</code> | Rook's Ride | Mapped capacity |
 | <code>fixed</code> | <code>fixed.ambient_rook</code> | Rook | <code>standing_person</code> | <code>750, 358</code> | <code>floor</code> | Ambient | Mapped capacity |
-| <code>event</code> | <code>event.surface_item_1</code> | Counter or table item | <code>surface_item</code> | <code>588, 163</code> | <code>planning_table</code> | Empty capacity | Optional empty capacity |
-| <code>event</code> | <code>event.surface_item_2</code> | Counter or table item | <code>surface_item</code> | <code>144, 196</code> | <code>numbers_desk</code> | Empty capacity | Optional empty capacity |
-| <code>event</code> | <code>event.surface_item_3</code> | Counter or table item | <code>surface_item</code> | <code>144, 66</code> | <code>job_board</code> | Empty capacity | Optional empty capacity |
-| <code>event</code> | <code>event.surface_item_4</code> | Counter or table item | <code>surface_item</code> | <code>734, 74</code> | <code>mags_bench</code> | Empty capacity | Optional empty capacity |
-| <code>event</code> | <code>event.floor_fixture_1</code> | Floor prop | <code>floor_fixture</code> | <code>468, 370</code> | <code>stage</code> | Empty capacity | Optional empty capacity |
-| <code>event</code> | <code>event.doorway_1</code> | Doorway / exit | <code>doorway</code> | <code>848, 118</code> | <code>rook_exit</code> | Empty capacity | Optional empty capacity |
 | <code>event</code> | <code>event.standing_person_1</code> | Standing person | <code>standing_person</code> | <code>252, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
 | <code>event</code> | <code>event.standing_person_2</code> | Standing person | <code>standing_person</code> | <code>404, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
 | <code>event</code> | <code>event.standing_person_3</code> | Standing person | <code>standing_person</code> | <code>556, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events. |
@@ -1083,12 +1074,12 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 | <code>scenario.local_doorway_1</code> | Marked clean exit | <code>doorway</code> | <code>36, 76</code> | <code>left_exit</code> | Marked clean exit | Exact scenario |
 | <code>scenario.local_floor_fixture_1</code> | Empty cue stand | <code>floor_fixture</code> | <code>157, 414</code> | <code>floor</code> | Empty cue stand | Exact scenario |
 | <code>scenario.local_floor_fixture_2</code> | Reserved legend table | <code>floor_fixture</code> | <code>62, 414</code> | <code>floor</code> | Reserved legend table | Exact scenario |
-| <code>scenario.local_floor_fixture_3</code> | Instrument case | <code>floor_fixture</code> | <code>254, 422</code> | <code>manual_placement_required</code> | Instrument case | Provisional geometry |
-| <code>scenario.local_floor_fixture_4</code> | Reserved legend table | <code>floor_fixture</code> | <code>838, 422</code> | <code>manual_placement_required</code> | Reserved legend table | Provisional geometry |
+| <code>scenario.local_floor_fixture_3</code> | Instrument case | <code>floor_fixture</code> | <code>662, 344</code> | <code>manual_placement_required</code> | Instrument case | Provisional geometry |
+| <code>scenario.local_floor_fixture_4</code> | Reserved legend table | <code>floor_fixture</code> | <code>566, 344</code> | <code>manual_placement_required</code> | Reserved legend table | Provisional geometry |
 | <code>scenario.local_ground_marker_1</code> | Latched instrument case | <code>ground_marker</code> | <code>752, 414</code> | <code>floor</code> | Latched instrument case | Exact scenario |
-| <code>scenario.local_standing_person_1</code> | Scenario alternatives: Guest legend / Waiting guest | <code>standing_person</code> | <code>616, 326</code> | <code>floor</code> | Guest legend<br>Waiting guest | Exact scenario |
-| <code>scenario.local_standing_person_2</code> | Scenario alternatives: Revealed guest / Stage manager | <code>standing_person</code> | <code>490, 326</code> | <code>floor</code> | Revealed guest<br>Stage manager | Exact scenario |
-| <code>scenario.local_standing_person_3</code> | Stage manager | <code>standing_person</code> | <code>412, 422</code> | <code>manual_placement_required</code> | Stage manager | Provisional geometry |
+| <code>scenario.local_standing_person_1</code> | Scenario alternatives: Guest legend / Waiting guest | <code>standing_person</code> | <code>612, 280</code> | <code>manual_placement_required</code> | Guest legend<br>Waiting guest | Provisional geometry |
+| <code>scenario.local_standing_person_2</code> | Scenario alternatives: Revealed guest / Stage manager | <code>standing_person</code> | <code>484, 328</code> | <code>manual_placement_required</code> | Revealed guest<br>Stage manager | Provisional geometry |
+| <code>scenario.local_standing_person_3</code> | Stage manager | <code>standing_person</code> | <code>540, 248</code> | <code>manual_placement_required</code> | Stage manager | Provisional geometry |
 | <code>scenario.local_surface_item_1</code> | Face-down reveal card | <code>surface_item</code> | <code>112, 150</code> | <code>band_service_rail</code> | Face-down reveal card | Exact scenario |
 | <code>scenario.local_wall_item_1</code> | Named instrument stand | <code>wall_mounted</code> | <code>480, 32</code> | <code>wall</code> | Named instrument stand | Exact scenario |
 
@@ -1105,11 +1096,11 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 | <code>scenario.local_floor_fixture_2</code> | Scenario alternatives: Crossed-out take reel / Microphone tree | <code>floor_fixture</code> | <code>157, 414</code> | <code>floor</code> | Crossed-out take reel<br>Microphone tree | Exact scenario |
 | <code>scenario.local_ground_marker_1</code> | Scenario alternatives: Halted take reel / Taped silence zone | <code>ground_marker</code> | <code>752, 414</code> | <code>floor</code> | Halted take reel<br>Taped silence zone | Exact scenario |
 | <code>scenario.local_seated_person_1</code> | Scenario alternatives: Audience / Rear-row audience member | <code>seated_person</code> | <code>244, 322</code> | <code>audience_mid</code> | Audience<br>Rear-row audience member | Exact scenario |
-| <code>scenario.local_seated_person_2</code> | Audience | <code>seated_person</code> | <code>242, 422</code> | <code>manual_placement_required</code> | Audience | Provisional geometry |
+| <code>scenario.local_seated_person_2</code> | Audience | <code>seated_person</code> | <code>242, 392</code> | <code>manual_placement_required</code> | Audience | Provisional geometry |
 | <code>scenario.local_standing_person_1</code> | Sound engineer | <code>standing_person</code> | <code>616, 326</code> | <code>floor</code> | Sound engineer | Exact scenario |
 | <code>scenario.local_standing_person_2</code> | Sound engineer | <code>standing_person</code> | <code>490, 326</code> | <code>floor</code> | Sound engineer | Exact scenario |
 | <code>scenario.local_surface_item_1</code> | Recording desk | <code>surface_item</code> | <code>112, 150</code> | <code>band_service_rail</code> | Recording desk | Exact scenario |
-| <code>scenario.local_surface_item_2</code> | Labeled take case | <code>surface_item</code> | <code>108, 64</code> | <code>manual_placement_required</code> | Labeled take case | Provisional geometry |
+| <code>scenario.local_surface_item_2</code> | Labeled take case | <code>surface_item</code> | <code>492, 96</code> | <code>manual_placement_required</code> | Labeled take case | Provisional geometry |
 
 **Action-only IDs (3; no placement marker):** <code>jazz_club_recording_night_task_0</code><br><code>jazz_club_recording_night_task_1</code><br><code>jazz_club_recording_night_task_2</code>
 
@@ -1124,13 +1115,13 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 | <code>scenario.local_floor_fixture_2</code> | Counted donation jars | <code>floor_fixture</code> | <code>157, 414</code> | <code>floor</code> | Counted donation jars | Exact scenario |
 | <code>scenario.local_ground_marker_1</code> | Sealed collection jars | <code>ground_marker</code> | <code>752, 414</code> | <code>floor</code> | Sealed collection jars | Exact scenario |
 | <code>scenario.local_standing_person_1</code> | Creditor | <code>standing_person</code> | <code>490, 326</code> | <code>floor</code> | Creditor | Exact scenario |
-| <code>scenario.local_standing_person_2</code> | Host | <code>standing_person</code> | <code>244, 422</code> | <code>manual_placement_required</code> | Host | Provisional geometry |
-| <code>scenario.local_standing_person_3</code> | Creditor | <code>standing_person</code> | <code>408, 422</code> | <code>manual_placement_required</code> | Creditor | Provisional geometry |
-| <code>scenario.local_standing_person_4</code> | Scenario alternatives: Club regular / Terms-reading regular | <code>standing_person</code> | <code>616, 326</code> | <code>floor</code> | Club regular<br>Terms-reading regular | Exact scenario |
+| <code>scenario.local_standing_person_2</code> | Host | <code>standing_person</code> | <code>564, 328</code> | <code>manual_placement_required</code> | Host | Provisional geometry |
+| <code>scenario.local_standing_person_3</code> | Creditor | <code>standing_person</code> | <code>816, 266</code> | <code>manual_placement_required</code> | Creditor | Provisional geometry |
+| <code>scenario.local_standing_person_4</code> | Scenario alternatives: Club regular / Terms-reading regular | <code>standing_person</code> | <code>636, 328</code> | <code>manual_placement_required</code> | Club regular<br>Terms-reading regular | Provisional geometry |
 | <code>scenario.local_surface_item_1</code> | Donation station | <code>surface_item</code> | <code>112, 150</code> | <code>band_service_rail</code> | Donation station | Exact scenario |
-| <code>scenario.local_surface_item_2</code> | Donation station | <code>surface_item</code> | <code>108, 64</code> | <code>manual_placement_required</code> | Donation station | Provisional geometry |
+| <code>scenario.local_surface_item_2</code> | Donation station | <code>surface_item</code> | <code>540, 200</code> | <code>manual_placement_required</code> | Donation station | Provisional geometry |
 | <code>scenario.local_wall_item_1</code> | Rent tally | <code>wall_mounted</code> | <code>480, 32</code> | <code>wall</code> | Rent tally | Exact scenario |
-| <code>scenario.local_wall_item_2</code> | Takeover notice | <code>wall_mounted</code> | <code>296, 64</code> | <code>manual_placement_required</code> | Takeover notice | Provisional geometry |
+| <code>scenario.local_wall_item_2</code> | Takeover notice | <code>wall_mounted</code> | <code>216, 96</code> | <code>manual_placement_required</code> | Takeover notice | Provisional geometry |
 
 **Action-only IDs (4; no placement marker):** <code>jazz_club_rent_party_task_0</code><br><code>jazz_club_rent_party_task_1</code><br><code>jazz_club_rent_party_task_2</code><br><code>jazz_club_rent_party_task_3</code>
 
@@ -1141,16 +1132,16 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
 | <code>scenario.local_doorway_1</code> | Exit | <code>doorway</code> | <code>36, 76</code> | <code>left_exit</code> | Exit | Exact scenario |
-| <code>scenario.local_floor_fixture_1</code> | Entry rope | <code>floor_fixture</code> | <code>54, 266</code> | <code>manual_placement_required</code> | Entry rope | Provisional geometry |
-| <code>scenario.local_floor_fixture_2</code> | Picket line | <code>floor_fixture</code> | <code>830, 266</code> | <code>manual_placement_required</code> | Picket line | Provisional geometry |
-| <code>scenario.local_floor_fixture_3</code> | Picket line | <code>floor_fixture</code> | <code>550, 242</code> | <code>manual_placement_required</code> | Picket line | Provisional geometry |
-| <code>scenario.local_floor_fixture_4</code> | Scenario alternatives: Bare stage / Set-aside picket signs | <code>floor_fixture</code> | <code>838, 422</code> | <code>manual_placement_required</code> | Bare stage<br>Set-aside picket signs | Provisional geometry |
+| <code>scenario.local_floor_fixture_1</code> | Entry rope | <code>floor_fixture</code> | <code>198, 368</code> | <code>manual_placement_required</code> | Entry rope | Provisional geometry |
+| <code>scenario.local_floor_fixture_2</code> | Picket line | <code>floor_fixture</code> | <code>54, 272</code> | <code>manual_placement_required</code> | Picket line | Provisional geometry |
+| <code>scenario.local_floor_fixture_3</code> | Picket line | <code>floor_fixture</code> | <code>662, 344</code> | <code>manual_placement_required</code> | Picket line | Provisional geometry |
+| <code>scenario.local_floor_fixture_4</code> | Scenario alternatives: Bare stage / Set-aside picket signs | <code>floor_fixture</code> | <code>566, 344</code> | <code>manual_placement_required</code> | Bare stage<br>Set-aside picket signs | Provisional geometry |
 | <code>scenario.local_ground_marker_1</code> | Barred club entrances | <code>ground_marker</code> | <code>752, 414</code> | <code>floor</code> | Barred club entrances | Exact scenario |
-| <code>scenario.local_standing_person_1</code> | Manager | <code>standing_person</code> | <code>490, 326</code> | <code>floor</code> | Manager | Exact scenario |
-| <code>scenario.local_standing_person_2</code> | Delegate | <code>standing_person</code> | <code>616, 326</code> | <code>floor</code> | Delegate | Exact scenario |
-| <code>scenario.local_standing_person_3</code> | Manager | <code>standing_person</code> | <code>412, 422</code> | <code>manual_placement_required</code> | Manager | Provisional geometry |
-| <code>scenario.local_standing_person_4</code> | Neutral delegate | <code>standing_person</code> | <code>240, 358</code> | <code>manual_placement_required</code> | Neutral delegate | Provisional geometry |
-| <code>scenario.local_standing_person_5</code> | Floor manager | <code>standing_person</code> | <code>40, 350</code> | <code>manual_placement_required</code> | Floor manager | Provisional geometry |
+| <code>scenario.local_standing_person_1</code> | Manager | <code>standing_person</code> | <code>484, 328</code> | <code>manual_placement_required</code> | Manager | Provisional geometry |
+| <code>scenario.local_standing_person_2</code> | Delegate | <code>standing_person</code> | <code>612, 280</code> | <code>manual_placement_required</code> | Delegate | Provisional geometry |
+| <code>scenario.local_standing_person_3</code> | Manager | <code>standing_person</code> | <code>540, 248</code> | <code>manual_placement_required</code> | Manager | Provisional geometry |
+| <code>scenario.local_standing_person_4</code> | Neutral delegate | <code>standing_person</code> | <code>816, 266</code> | <code>manual_placement_required</code> | Neutral delegate | Provisional geometry |
+| <code>scenario.local_standing_person_5</code> | Floor manager | <code>standing_person</code> | <code>232, 170</code> | <code>manual_placement_required</code> | Floor manager | Provisional geometry |
 | <code>scenario.local_surface_item_1</code> | Shared stage tools | <code>surface_item</code> | <code>112, 150</code> | <code>band_service_rail</code> | Shared stage tools | Exact scenario |
 
 **Action-only IDs (4; no placement marker):** <code>jazz_club_union_trouble_task_0</code><br><code>jazz_club_union_trouble_task_1</code><br><code>jazz_club_union_trouble_task_2</code><br><code>jazz_club_union_trouble_task_3</code>
@@ -1199,13 +1190,13 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 | <code>scenario.local_floor_fixture_1</code> | Dressing costume rack | <code>floor_fixture</code> | <code>174, 358</code> | <code>floor</code> | Dressing costume rack | Exact scenario |
 | <code>scenario.local_floor_fixture_2</code> | Judges' Card Desk | <code>floor_fixture</code> | <code>426, 358</code> | <code>floor</code> | Judges' Card Desk | Exact scenario |
 | <code>scenario.local_ground_marker_1</code> | Stranded Costume Rack | <code>ground_marker</code> | <code>52, 302</code> | <code>floor</code> | Stranded Costume Rack | Exact scenario |
-| <code>scenario.local_standing_person_1</code> | Scenario alternatives: Amateur contestant / Final-Lineup Observer | <code>standing_person</code> | <code>428, 358</code> | <code>floor</code> | Amateur contestant<br>Final-Lineup Observer | Exact scenario |
+| <code>scenario.local_standing_person_1</code> | Scenario alternatives: Amateur contestant / Final-Lineup Observer | <code>standing_person</code> | <code>524, 280</code> | <code>manual_placement_required</code> | Amateur contestant<br>Final-Lineup Observer | Provisional geometry |
 | <code>scenario.local_standing_person_2</code> | Scenario alternatives: Judge / Unregistered Contestant | <code>standing_person</code> | <code>636, 354</code> | <code>floor</code> | Judge<br>Unregistered Contestant | Exact scenario |
-| <code>scenario.local_standing_person_3</code> | Judge | <code>standing_person</code> | <code>844, 422</code> | <code>manual_placement_required</code> | Judge | Provisional geometry |
-| <code>scenario.local_surface_item_1</code> | Signup station | <code>surface_item</code> | <code>638, 108</code> | <code>champagne_shelf</code> | Signup station | Exact scenario |
-| <code>scenario.local_surface_item_2</code> | Signup station | <code>surface_item</code> | <code>300, 64</code> | <code>manual_placement_required</code> | Signup station | Provisional geometry |
+| <code>scenario.local_standing_person_3</code> | Judge | <code>standing_person</code> | <code>548, 200</code> | <code>manual_placement_required</code> | Judge | Provisional geometry |
+| <code>scenario.local_surface_item_1</code> | Signup station | <code>surface_item</code> | <code>636, 48</code> | <code>manual_placement_required</code> | Signup station | Provisional geometry |
+| <code>scenario.local_surface_item_2</code> | Signup station | <code>surface_item</code> | <code>236, 288</code> | <code>manual_placement_required</code> | Signup station | Provisional geometry |
 | <code>scenario.local_wall_item_1</code> | Revised Lineup Card | <code>wall_mounted</code> | <code>472, 24</code> | <code>wall</code> | Revised Lineup Card | Exact scenario |
-| <code>scenario.local_wall_item_2</code> | Blank Judges Card | <code>wall_mounted</code> | <code>184, 48</code> | <code>wall</code> | Blank Judges Card | Exact scenario |
+| <code>scenario.local_wall_item_2</code> | Blank Judges Card | <code>wall_mounted</code> | <code>168, 136</code> | <code>manual_placement_required</code> | Blank Judges Card | Provisional geometry |
 
 **Action-only IDs (5; no placement marker):** <code>kitty_cat_lounge_amateur_night_task_0</code><br><code>kitty_cat_lounge_amateur_night_task_1</code><br><code>kitty_cat_lounge_amateur_night_task_2</code><br><code>kitty_cat_lounge_amateur_night_task_3</code><br><code>kitty_cat_lounge_amateur_night_task_4</code>
 
@@ -1218,12 +1209,12 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 | <code>scenario.local_doorway_1</code> | Clear exit | <code>doorway</code> | <code>876, 180</code> | <code>right_exit</code> | Clear exit | Exact scenario |
 | <code>scenario.local_floor_fixture_1</code> | Reserved Party Table | <code>floor_fixture</code> | <code>426, 358</code> | <code>floor</code> | Reserved Party Table | Exact scenario |
 | <code>scenario.local_floor_fixture_2</code> | Scenario alternatives: Claimed Stage Prop / Prop trunk | <code>floor_fixture</code> | <code>174, 358</code> | <code>floor</code> | Claimed Stage Prop<br>Prop trunk | Exact scenario |
-| <code>scenario.local_floor_fixture_3</code> | Separated Party Seating | <code>floor_fixture</code> | <code>118, 422</code> | <code>manual_placement_required</code> | Separated Party Seating | Provisional geometry |
-| <code>scenario.local_ground_marker_1</code> | Bar route rope | <code>ground_marker</code> | <code>204, 422</code> | <code>manual_placement_required</code> | Bar route rope | Provisional geometry |
-| <code>scenario.local_ground_marker_2</code> | Guest marker | <code>ground_marker</code> | <code>52, 302</code> | <code>floor</code> | Guest marker | Exact scenario |
-| <code>scenario.local_ground_marker_3</code> | Off-Course Prop Trunk | <code>ground_marker</code> | <code>276, 422</code> | <code>manual_placement_required</code> | Off-Course Prop Trunk | Provisional geometry |
-| <code>scenario.local_seated_person_1</code> | Bachelorette party leader | <code>seated_person</code> | <code>548, 234</code> | <code>conversation_booth</code> | Bachelorette party leader | Exact scenario |
-| <code>scenario.local_standing_person_1</code> | Floor Host | <code>standing_person</code> | <code>428, 358</code> | <code>floor</code> | Floor Host | Exact scenario |
+| <code>scenario.local_floor_fixture_3</code> | Separated Party Seating | <code>floor_fixture</code> | <code>302, 424</code> | <code>manual_placement_required</code> | Separated Party Seating | Provisional geometry |
+| <code>scenario.local_ground_marker_1</code> | Bar route rope | <code>ground_marker</code> | <code>52, 302</code> | <code>manual_placement_required</code> | Bar route rope | Provisional geometry |
+| <code>scenario.local_ground_marker_2</code> | Guest marker | <code>ground_marker</code> | <code>108, 408</code> | <code>manual_placement_required</code> | Guest marker | Provisional geometry |
+| <code>scenario.local_ground_marker_3</code> | Off-Course Prop Trunk | <code>ground_marker</code> | <code>180, 408</code> | <code>manual_placement_required</code> | Off-Course Prop Trunk | Provisional geometry |
+| <code>scenario.local_seated_person_1</code> | Bachelorette party leader | <code>seated_person</code> | <code>546, 200</code> | <code>manual_placement_required</code> | Bachelorette party leader | Provisional geometry |
+| <code>scenario.local_standing_person_1</code> | Floor Host | <code>standing_person</code> | <code>524, 280</code> | <code>manual_placement_required</code> | Floor Host | Provisional geometry |
 | <code>scenario.local_standing_person_2</code> | Party Leader | <code>standing_person</code> | <code>636, 354</code> | <code>floor</code> | Party Leader | Exact scenario |
 
 **Action-only IDs (6; no placement marker):** <code>kitty_cat_lounge_bachelorette_storm_task_0</code><br><code>kitty_cat_lounge_bachelorette_storm_task_1</code><br><code>kitty_cat_lounge_bachelorette_storm_task_2</code><br><code>kitty_cat_lounge_bachelorette_storm_task_3</code><br><code>kitty_cat_lounge_bachelorette_storm_task_4</code><br><code>kitty_cat_lounge_bachelorette_storm_task_5</code>
@@ -1238,13 +1229,13 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 | <code>scenario.local_doorway_2</code> | Private buyout ropes | <code>doorway</code> | <code>859, 84</code> | <code>right_exit</code> | Private buyout ropes | Exact scenario |
 | <code>scenario.local_floor_fixture_1</code> | Buyout guest desk | <code>floor_fixture</code> | <code>174, 358</code> | <code>floor</code> | Buyout guest desk | Exact scenario |
 | <code>scenario.local_floor_fixture_2</code> | Private request cart | <code>floor_fixture</code> | <code>426, 358</code> | <code>floor</code> | Private request cart | Exact scenario |
-| <code>scenario.local_floor_fixture_3</code> | Private-Party Rope Boundary | <code>floor_fixture</code> | <code>118, 422</code> | <code>manual_placement_required</code> | Private-Party Rope Boundary | Provisional geometry |
+| <code>scenario.local_floor_fixture_3</code> | Private-Party Rope Boundary | <code>floor_fixture</code> | <code>302, 424</code> | <code>manual_placement_required</code> | Private-Party Rope Boundary | Provisional geometry |
 | <code>scenario.local_ground_marker_1</code> | Short Buyout Rope | <code>ground_marker</code> | <code>52, 302</code> | <code>floor</code> | Short Buyout Rope | Exact scenario |
-| <code>scenario.local_standing_person_1</code> | Velvet | <code>standing_person</code> | <code>844, 422</code> | <code>manual_placement_required</code> | Velvet | Provisional geometry |
-| <code>scenario.local_standing_person_2</code> | Scenario alternatives: Buyout host / Public-Floor Steward | <code>standing_person</code> | <code>428, 358</code> | <code>floor</code> | Buyout host<br>Public-Floor Steward | Exact scenario |
-| <code>scenario.local_standing_person_3</code> | Public floor steward | <code>standing_person</code> | <code>636, 354</code> | <code>floor</code> | Public floor steward | Exact scenario |
-| <code>scenario.local_standing_person_4</code> | Refused Guest | <code>standing_person</code> | <code>520, 278</code> | <code>manual_placement_required</code> | Refused Guest | Provisional geometry |
-| <code>scenario.local_surface_item_1</code> | Guest Desk Divider | <code>surface_item</code> | <code>638, 108</code> | <code>champagne_shelf</code> | Guest Desk Divider | Exact scenario |
+| <code>scenario.local_standing_person_1</code> | Velvet | <code>standing_person</code> | <code>636, 354</code> | <code>manual_placement_required</code> | Velvet | Provisional geometry |
+| <code>scenario.local_standing_person_2</code> | Scenario alternatives: Buyout host / Public-Floor Steward | <code>standing_person</code> | <code>524, 280</code> | <code>manual_placement_required</code> | Buyout host<br>Public-Floor Steward | Provisional geometry |
+| <code>scenario.local_standing_person_3</code> | Public floor steward | <code>standing_person</code> | <code>548, 200</code> | <code>manual_placement_required</code> | Public floor steward | Provisional geometry |
+| <code>scenario.local_standing_person_4</code> | Refused Guest | <code>standing_person</code> | <code>384, 170</code> | <code>manual_placement_required</code> | Refused Guest | Provisional geometry |
+| <code>scenario.local_surface_item_1</code> | Guest Desk Divider | <code>surface_item</code> | <code>636, 48</code> | <code>manual_placement_required</code> | Guest Desk Divider | Provisional geometry |
 
 **Action-only IDs (5; no placement marker):** <code>kitty_cat_lounge_buyout_task_0</code><br><code>kitty_cat_lounge_buyout_task_1</code><br><code>kitty_cat_lounge_buyout_task_2</code><br><code>kitty_cat_lounge_buyout_task_3</code><br><code>kitty_cat_lounge_buyout_task_4</code>
 
@@ -1255,17 +1246,17 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
 | <code>scenario.local_doorway_1</code> | Clear exit | <code>doorway</code> | <code>876, 180</code> | <code>right_exit</code> | Clear exit | Exact scenario |
-| <code>scenario.local_floor_fixture_1</code> | Section ropes | <code>floor_fixture</code> | <code>534, 170</code> | <code>manual_placement_required</code> | Section ropes | Provisional geometry |
-| <code>scenario.local_floor_fixture_2</code> | Section ropes | <code>floor_fixture</code> | <code>846, 138</code> | <code>manual_placement_required</code> | Section ropes | Provisional geometry |
-| <code>scenario.local_floor_fixture_3</code> | Scenario alternatives: Empty-Section Power Circuit / Mini-stage | <code>floor_fixture</code> | <code>174, 358</code> | <code>floor</code> | Empty-Section Power Circuit<br>Mini-stage | Exact scenario |
+| <code>scenario.local_floor_fixture_1</code> | Section ropes | <code>floor_fixture</code> | <code>426, 358</code> | <code>floor</code> | Section ropes | Exact scenario |
+| <code>scenario.local_floor_fixture_2</code> | Section ropes | <code>floor_fixture</code> | <code>206, 360</code> | <code>manual_placement_required</code> | Section ropes | Provisional geometry |
+| <code>scenario.local_floor_fixture_3</code> | Scenario alternatives: Empty-Section Power Circuit / Mini-stage | <code>floor_fixture</code> | <code>174, 424</code> | <code>manual_placement_required</code> | Empty-Section Power Circuit<br>Mini-stage | Provisional geometry |
 | <code>scenario.local_ground_marker_1</code> | Loose Rope and Open Panel | <code>ground_marker</code> | <code>52, 302</code> | <code>floor</code> | Loose Rope and Open Panel | Exact scenario |
-| <code>scenario.local_seated_person_1</code> | Regular | <code>seated_person</code> | <code>548, 234</code> | <code>conversation_booth</code> | Regular | Exact scenario |
-| <code>scenario.local_standing_person_1</code> | Velvet | <code>standing_person</code> | <code>428, 358</code> | <code>floor</code> | Velvet | Exact scenario |
+| <code>scenario.local_seated_person_1</code> | Regular | <code>seated_person</code> | <code>546, 120</code> | <code>manual_placement_required</code> | Regular | Provisional geometry |
+| <code>scenario.local_standing_person_1</code> | Velvet | <code>standing_person</code> | <code>524, 280</code> | <code>manual_placement_required</code> | Velvet | Provisional geometry |
 | <code>scenario.local_standing_person_2</code> | Host | <code>standing_person</code> | <code>636, 354</code> | <code>floor</code> | Host | Exact scenario |
-| <code>scenario.local_standing_person_3</code> | Zone Regular | <code>standing_person</code> | <code>844, 422</code> | <code>manual_placement_required</code> | Zone Regular | Provisional geometry |
-| <code>scenario.local_standing_person_4</code> | Waiting Staff Member | <code>standing_person</code> | <code>384, 166</code> | <code>manual_placement_required</code> | Waiting Staff Member | Provisional geometry |
-| <code>scenario.local_surface_item_1</code> | Powered Zone Station | <code>surface_item</code> | <code>638, 108</code> | <code>champagne_shelf</code> | Powered Zone Station | Exact scenario |
-| <code>scenario.local_wall_item_1</code> | Maintenance Panel | <code>wall_mounted</code> | <code>184, 48</code> | <code>wall</code> | Maintenance Panel | Exact scenario |
+| <code>scenario.local_standing_person_3</code> | Zone Regular | <code>standing_person</code> | <code>548, 200</code> | <code>manual_placement_required</code> | Zone Regular | Provisional geometry |
+| <code>scenario.local_standing_person_4</code> | Waiting Staff Member | <code>standing_person</code> | <code>384, 170</code> | <code>manual_placement_required</code> | Waiting Staff Member | Provisional geometry |
+| <code>scenario.local_surface_item_1</code> | Powered Zone Station | <code>surface_item</code> | <code>636, 48</code> | <code>manual_placement_required</code> | Powered Zone Station | Provisional geometry |
+| <code>scenario.local_wall_item_1</code> | Maintenance Panel | <code>wall_mounted</code> | <code>168, 136</code> | <code>manual_placement_required</code> | Maintenance Panel | Provisional geometry |
 
 **Action-only IDs (4; no placement marker):** <code>kitty_cat_lounge_slow_night_task_0</code><br><code>kitty_cat_lounge_slow_night_task_1</code><br><code>kitty_cat_lounge_slow_night_task_2</code><br><code>kitty_cat_lounge_slow_night_task_3</code>
 
@@ -1311,18 +1302,18 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.local_behind_counter_person_1</code> | Captain scorer | <code>behind_counter_person</code> | <code>494, 174</code> | <code>right_table</code> | Captain scorer | Exact scenario |
-| <code>scenario.local_behind_counter_person_2</code> | Captain scorer | <code>behind_counter_person</code> | <code>788, 422</code> | <code>manual_placement_required</code> | Captain scorer | Provisional geometry |
+| <code>scenario.local_behind_counter_person_1</code> | Captain scorer | <code>behind_counter_person</code> | <code>554, 176</code> | <code>manual_placement_required</code> | Captain scorer | Provisional geometry |
+| <code>scenario.local_behind_counter_person_2</code> | Captain scorer | <code>behind_counter_person</code> | <code>484, 176</code> | <code>manual_placement_required</code> | Captain scorer | Provisional geometry |
 | <code>scenario.local_doorway_1</code> | Clear exit | <code>doorway</code> | <code>36, 316</code> | <code>gangway_left</code> | Clear exit | Exact scenario |
 | <code>scenario.local_floor_fixture_1</code> | Captain bracket tables | <code>floor_fixture</code> | <code>284, 324</code> | <code>floor</code> | Captain bracket tables | Exact scenario |
-| <code>scenario.local_floor_fixture_2</code> | Captain bracket tables | <code>floor_fixture</code> | <code>496, 346</code> | <code>floor</code> | Captain bracket tables | Exact scenario |
-| <code>scenario.local_ground_marker_1</code> | Fallen scorer stool | <code>ground_marker</code> | <code>156, 414</code> | <code>floor</code> | Fallen scorer stool | Exact scenario |
+| <code>scenario.local_floor_fixture_2</code> | Captain bracket tables | <code>floor_fixture</code> | <code>494, 424</code> | <code>manual_placement_required</code> | Captain bracket tables | Provisional geometry |
+| <code>scenario.local_ground_marker_1</code> | Fallen scorer stool | <code>ground_marker</code> | <code>52, 416</code> | <code>manual_placement_required</code> | Fallen scorer stool | Provisional geometry |
 | <code>scenario.local_standing_person_1</code> | Eliminated players | <code>standing_person</code> | <code>600, 414</code> | <code>floor</code> | Eliminated players | Exact scenario |
 | <code>scenario.local_standing_person_2</code> | Scenario alternatives: Eliminated observer / Eliminated players | <code>standing_person</code> | <code>260, 414</code> | <code>floor</code> | Eliminated observer<br>Eliminated players | Exact scenario |
-| <code>scenario.local_standing_person_3</code> | Scenario alternatives: Final-round official / Tournament official | <code>standing_person</code> | <code>820, 350</code> | <code>manual_placement_required</code> | Final-round official<br>Tournament official | Provisional geometry |
+| <code>scenario.local_standing_person_3</code> | Scenario alternatives: Final-round official / Tournament official | <code>standing_person</code> | <code>708, 80</code> | <code>manual_placement_required</code> | Final-round official<br>Tournament official | Provisional geometry |
 | <code>scenario.local_surface_item_1</code> | Invitational entry cards | <code>surface_item</code> | <code>96, 162</code> | <code>scoreboard_ledge</code> | Invitational entry cards | Exact scenario |
 | <code>scenario.local_wall_item_1</code> | Scorer rail | <code>wall_mounted</code> | <code>286, 24</code> | <code>wall</code> | Scorer rail | Exact scenario |
-| <code>scenario.local_wall_item_2</code> | Observer entry card | <code>wall_mounted</code> | <code>582, 298</code> | <code>round3_calendar_mount</code> | Observer entry card | Exact scenario |
+| <code>scenario.local_wall_item_2</code> | Observer entry card | <code>wall_mounted</code> | <code>604, 328</code> | <code>manual_placement_required</code> | Observer entry card | Provisional geometry |
 | <code>scenario.local_wall_item_3</code> | Stamped finalist card | <code>wall_mounted</code> | <code>166, 24</code> | <code>wall</code> | Stamped finalist card | Exact scenario |
 
 **Action-only IDs (7; no placement marker):** <code>delta_queen_captains_invitational_task_0</code><br><code>delta_queen_captains_invitational_task_1</code><br><code>delta_queen_captains_invitational_task_2</code><br><code>delta_queen_captains_invitational_task_4</code><br><code>delta_queen_captains_invitational_work_3_choice_0</code><br><code>delta_queen_captains_invitational_work_3_choice_1</code><br><code>delta_queen_captains_invitational_work_3_choice_2</code>
@@ -1335,13 +1326,13 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 | --- | --- | --- | --- | --- | --- | --- |
 | <code>scenario.local_behind_counter_person_1</code> | Engine mate | <code>behind_counter_person</code> | <code>494, 174</code> | <code>right_table</code> | Engine mate | Exact scenario |
 | <code>scenario.local_doorway_1</code> | Locked mid-river gangway | <code>doorway</code> | <code>36, 316</code> | <code>gangway_left</code> | Locked mid-river gangway | Exact scenario |
-| <code>scenario.local_doorway_2</code> | Clear exit | <code>doorway</code> | <code>784, 422</code> | <code>manual_placement_required</code> | Clear exit | Provisional geometry |
-| <code>scenario.local_floor_fixture_1</code> | Benches | <code>floor_fixture</code> | <code>496, 346</code> | <code>floor</code> | Benches | Exact scenario |
-| <code>scenario.local_ground_marker_1</code> | Empty restart-key box | <code>ground_marker</code> | <code>156, 414</code> | <code>floor</code> | Empty restart-key box | Exact scenario |
+| <code>scenario.local_doorway_2</code> | Clear exit | <code>doorway</code> | <code>32, 200</code> | <code>manual_placement_required</code> | Clear exit | Provisional geometry |
+| <code>scenario.local_floor_fixture_1</code> | Benches | <code>floor_fixture</code> | <code>494, 424</code> | <code>manual_placement_required</code> | Benches | Provisional geometry |
+| <code>scenario.local_ground_marker_1</code> | Empty restart-key box | <code>ground_marker</code> | <code>52, 416</code> | <code>manual_placement_required</code> | Empty restart-key box | Provisional geometry |
 | <code>scenario.local_standing_person_1</code> | Guard | <code>standing_person</code> | <code>600, 414</code> | <code>floor</code> | Guard | Exact scenario |
 | <code>scenario.local_standing_person_2</code> | Scenario alternatives: Evacuation deck mate / Guard / Restart mechanic | <code>standing_person</code> | <code>260, 414</code> | <code>floor</code> | Evacuation deck mate<br>Guard<br>Restart mechanic | Exact scenario |
-| <code>scenario.local_standing_person_3</code> | Chief mechanic | <code>standing_person</code> | <code>852, 422</code> | <code>manual_placement_required</code> | Chief mechanic | Provisional geometry |
-| <code>scenario.local_wall_item_1</code> | Falling pressure gauge | <code>wall_mounted</code> | <code>582, 298</code> | <code>round3_calendar_mount</code> | Falling pressure gauge | Exact scenario |
+| <code>scenario.local_standing_person_3</code> | Chief mechanic | <code>standing_person</code> | <code>708, 80</code> | <code>manual_placement_required</code> | Chief mechanic | Provisional geometry |
+| <code>scenario.local_wall_item_1</code> | Falling pressure gauge | <code>wall_mounted</code> | <code>604, 328</code> | <code>manual_placement_required</code> | Falling pressure gauge | Provisional geometry |
 | <code>scenario.local_wall_item_2</code> | Scenario alternatives: Bulkhead / Low-pressure gauge | <code>wall_mounted</code> | <code>286, 24</code> | <code>wall</code> | Bulkhead<br>Low-pressure gauge | Exact scenario |
 | <code>scenario.local_wall_item_3</code> | Green pressure gauge | <code>wall_mounted</code> | <code>166, 24</code> | <code>wall</code> | Green pressure gauge | Exact scenario |
 
@@ -1353,15 +1344,15 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.local_doorway_1</code> | Closed gangway | <code>doorway</code> | <code>600, 258</code> | <code>manual_placement_required</code> | Closed gangway | Provisional geometry |
-| <code>scenario.local_doorway_2</code> | Clear exit | <code>doorway</code> | <code>36, 316</code> | <code>gangway_left</code> | Clear exit | Exact scenario |
-| <code>scenario.local_doorway_3</code> | Opened gangway | <code>doorway</code> | <code>848, 422</code> | <code>manual_placement_required</code> | Opened gangway | Provisional geometry |
-| <code>scenario.local_ground_marker_1</code> | Chalk detour arrows | <code>ground_marker</code> | <code>156, 414</code> | <code>floor</code> | Chalk detour arrows | Exact scenario |
+| <code>scenario.local_doorway_1</code> | Closed gangway | <code>doorway</code> | <code>32, 200</code> | <code>manual_placement_required</code> | Closed gangway | Provisional geometry |
+| <code>scenario.local_doorway_2</code> | Clear exit | <code>doorway</code> | <code>96, 176</code> | <code>manual_placement_required</code> | Clear exit | Provisional geometry |
+| <code>scenario.local_doorway_3</code> | Opened gangway | <code>doorway</code> | <code>864, 320</code> | <code>manual_placement_required</code> | Opened gangway | Provisional geometry |
+| <code>scenario.local_ground_marker_1</code> | Chalk detour arrows | <code>ground_marker</code> | <code>52, 416</code> | <code>manual_placement_required</code> | Chalk detour arrows | Provisional geometry |
 | <code>scenario.local_group_1</code> | Waiting crowd | <code>group</code> | <code>288, 324</code> | <code>floor</code> | Waiting crowd | Exact scenario |
-| <code>scenario.local_group_2</code> | Scenario alternatives: Opportunistic bettor / Waiting crowd | <code>group</code> | <code>836, 350</code> | <code>manual_placement_required</code> | Opportunistic bettor<br>Waiting crowd | Provisional geometry |
-| <code>scenario.local_standing_person_1</code> | Deck officer | <code>standing_person</code> | <code>260, 414</code> | <code>floor</code> | Deck officer | Exact scenario |
+| <code>scenario.local_group_2</code> | Scenario alternatives: Opportunistic bettor / Waiting crowd | <code>group</code> | <code>284, 406</code> | <code>manual_placement_required</code> | Opportunistic bettor<br>Waiting crowd | Provisional geometry |
+| <code>scenario.local_standing_person_1</code> | Deck officer | <code>standing_person</code> | <code>68, 360</code> | <code>manual_placement_required</code> | Deck officer | Provisional geometry |
 | <code>scenario.local_standing_person_2</code> | Waiting passenger | <code>standing_person</code> | <code>600, 414</code> | <code>floor</code> | Waiting passenger | Exact scenario |
-| <code>scenario.local_wall_item_1</code> | Fog signal lamp | <code>wall_mounted</code> | <code>582, 298</code> | <code>round3_calendar_mount</code> | Fog signal lamp | Exact scenario |
+| <code>scenario.local_wall_item_1</code> | Fog signal lamp | <code>wall_mounted</code> | <code>604, 328</code> | <code>manual_placement_required</code> | Fog signal lamp | Provisional geometry |
 | <code>scenario.local_wall_item_2</code> | Scenario alternatives: Lit fog lantern / Rising stake board | <code>wall_mounted</code> | <code>286, 24</code> | <code>wall</code> | Lit fog lantern<br>Rising stake board | Exact scenario |
 
 **Action-only IDs (6; no placement marker):** <code>delta_queen_fog_delay_task_0</code><br><code>delta_queen_fog_delay_task_2</code><br><code>delta_queen_fog_delay_task_3</code><br><code>delta_queen_fog_delay_work_1_choice_0</code><br><code>delta_queen_fog_delay_work_1_choice_1</code><br><code>delta_queen_fog_delay_work_1_choice_2</code>
@@ -1372,21 +1363,21 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.local_behind_counter_person_1</code> | Deck coordinator | <code>behind_counter_person</code> | <code>494, 174</code> | <code>right_table</code> | Deck coordinator | Exact scenario |
-| <code>scenario.local_behind_counter_person_2</code> | Deck coordinator | <code>behind_counter_person</code> | <code>788, 422</code> | <code>manual_placement_required</code> | Deck coordinator | Provisional geometry |
+| <code>scenario.local_behind_counter_person_1</code> | Deck coordinator | <code>behind_counter_person</code> | <code>554, 176</code> | <code>manual_placement_required</code> | Deck coordinator | Provisional geometry |
+| <code>scenario.local_behind_counter_person_2</code> | Deck coordinator | <code>behind_counter_person</code> | <code>484, 176</code> | <code>manual_placement_required</code> | Deck coordinator | Provisional geometry |
 | <code>scenario.local_doorway_1</code> | Clear exit | <code>doorway</code> | <code>36, 316</code> | <code>gangway_left</code> | Clear exit | Exact scenario |
 | <code>scenario.local_floor_fixture_1</code> | Open Bar | <code>floor_fixture</code> | <code>284, 324</code> | <code>floor</code> | Open Bar | Exact scenario |
-| <code>scenario.local_floor_fixture_2</code> | Best man table | <code>floor_fixture</code> | <code>496, 346</code> | <code>floor</code> | Best man table | Exact scenario |
-| <code>scenario.local_ground_marker_1</code> | Fallen gangway stanchion | <code>ground_marker</code> | <code>156, 414</code> | <code>floor</code> | Fallen gangway stanchion | Exact scenario |
+| <code>scenario.local_floor_fixture_2</code> | Best man table | <code>floor_fixture</code> | <code>494, 424</code> | <code>manual_placement_required</code> | Best man table | Provisional geometry |
+| <code>scenario.local_ground_marker_1</code> | Fallen gangway stanchion | <code>ground_marker</code> | <code>52, 416</code> | <code>manual_placement_required</code> | Fallen gangway stanchion | Provisional geometry |
 | <code>scenario.local_standing_person_1</code> | Scenario alternatives: Losing best man / Wedding coordinator | <code>standing_person</code> | <code>600, 414</code> | <code>floor</code> | Losing best man<br>Wedding coordinator | Exact scenario |
 | <code>scenario.local_standing_person_2</code> | Losing best man | <code>standing_person</code> | <code>260, 414</code> | <code>floor</code> | Losing best man | Exact scenario |
-| <code>scenario.local_standing_person_3</code> | Deck crew member | <code>standing_person</code> | <code>820, 350</code> | <code>manual_placement_required</code> | Deck crew member | Provisional geometry |
+| <code>scenario.local_standing_person_3</code> | Deck crew member | <code>standing_person</code> | <code>708, 80</code> | <code>manual_placement_required</code> | Deck crew member | Provisional geometry |
 | <code>scenario.local_surface_item_1</code> | Loose ring case | <code>surface_item</code> | <code>96, 162</code> | <code>scoreboard_ledge</code> | Loose ring case | Exact scenario |
 | <code>scenario.local_surface_item_2</code> | Loose ring case | <code>surface_item</code> | <code>196, 128</code> | <code>manual_placement_required</code> | Loose ring case | Provisional geometry |
-| <code>scenario.local_wall_item_1</code> | Ceremony rope | <code>wall_mounted</code> | <code>604, 334</code> | <code>manual_placement_required</code> | Ceremony rope | Provisional geometry |
+| <code>scenario.local_wall_item_1</code> | Ceremony rope | <code>wall_mounted</code> | <code>604, 328</code> | <code>manual_placement_required</code> | Ceremony rope | Provisional geometry |
 | <code>scenario.local_wall_item_2</code> | Ceremony rope | <code>wall_mounted</code> | <code>166, 24</code> | <code>wall</code> | Ceremony rope | Exact scenario |
 | <code>scenario.local_wall_item_3</code> | Latched ring case | <code>wall_mounted</code> | <code>286, 24</code> | <code>wall</code> | Latched ring case | Exact scenario |
-| <code>scenario.local_wall_item_4</code> | Discarded betting slips | <code>wall_mounted</code> | <code>512, 64</code> | <code>manual_placement_required</code> | Discarded betting slips | Provisional geometry |
+| <code>scenario.local_wall_item_4</code> | Discarded betting slips | <code>wall_mounted</code> | <code>424, 96</code> | <code>manual_placement_required</code> | Discarded betting slips | Provisional geometry |
 
 **Action-only IDs (6; no placement marker):** <code>delta_queen_wedding_charter_task_0</code><br><code>delta_queen_wedding_charter_task_2</code><br><code>delta_queen_wedding_charter_task_3</code><br><code>delta_queen_wedding_charter_work_1_choice_0</code><br><code>delta_queen_wedding_charter_work_1_choice_1</code><br><code>delta_queen_wedding_charter_work_1_choice_2</code>
 
@@ -1396,18 +1387,18 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
-| <code>scenario.local_behind_counter_person_1</code> | Whale host | <code>behind_counter_person</code> | <code>494, 174</code> | <code>right_table</code> | Whale host | Exact scenario |
+| <code>scenario.local_behind_counter_person_1</code> | Whale host | <code>behind_counter_person</code> | <code>546, 176</code> | <code>manual_placement_required</code> | Whale host | Provisional geometry |
 | <code>scenario.local_doorway_1</code> | Clear exit | <code>doorway</code> | <code>36, 316</code> | <code>gangway_left</code> | Clear exit | Exact scenario |
 | <code>scenario.local_floor_fixture_1</code> | Whale premium table | <code>floor_fixture</code> | <code>284, 324</code> | <code>floor</code> | Whale premium table | Exact scenario |
-| <code>scenario.local_floor_fixture_2</code> | Whale premium table | <code>floor_fixture</code> | <code>496, 346</code> | <code>floor</code> | Whale premium table | Exact scenario |
-| <code>scenario.local_ground_marker_1</code> | Scenario alternatives: Stacked name placards / Whale service lane | <code>ground_marker</code> | <code>156, 414</code> | <code>floor</code> | Stacked name placards<br>Whale service lane | Exact scenario |
-| <code>scenario.local_ground_marker_2</code> | Circled footprints | <code>ground_marker</code> | <code>44, 422</code> | <code>manual_placement_required</code> | Circled footprints | Provisional geometry |
+| <code>scenario.local_floor_fixture_2</code> | Whale premium table | <code>floor_fixture</code> | <code>494, 424</code> | <code>manual_placement_required</code> | Whale premium table | Provisional geometry |
+| <code>scenario.local_ground_marker_1</code> | Scenario alternatives: Stacked name placards / Whale service lane | <code>ground_marker</code> | <code>52, 416</code> | <code>manual_placement_required</code> | Stacked name placards<br>Whale service lane | Provisional geometry |
+| <code>scenario.local_ground_marker_2</code> | Circled footprints | <code>ground_marker</code> | <code>604, 248</code> | <code>manual_placement_required</code> | Circled footprints | Provisional geometry |
 | <code>scenario.local_standing_person_1</code> | Entourage runner | <code>standing_person</code> | <code>600, 414</code> | <code>floor</code> | Entourage runner | Exact scenario |
 | <code>scenario.local_standing_person_2</code> | Entourage runner | <code>standing_person</code> | <code>260, 414</code> | <code>floor</code> | Entourage runner | Exact scenario |
-| <code>scenario.local_standing_person_3</code> | Scenario alternatives: Entourage runner / Premium host | <code>standing_person</code> | <code>788, 422</code> | <code>manual_placement_required</code> | Entourage runner<br>Premium host | Provisional geometry |
-| <code>scenario.local_standing_person_4</code> | Entourage guard | <code>standing_person</code> | <code>856, 422</code> | <code>manual_placement_required</code> | Entourage guard | Provisional geometry |
+| <code>scenario.local_standing_person_3</code> | Scenario alternatives: Entourage runner / Premium host | <code>standing_person</code> | <code>708, 80</code> | <code>manual_placement_required</code> | Entourage runner<br>Premium host | Provisional geometry |
+| <code>scenario.local_standing_person_4</code> | Entourage guard | <code>standing_person</code> | <code>480, 170</code> | <code>manual_placement_required</code> | Entourage guard | Provisional geometry |
 | <code>scenario.local_wall_item_1</code> | Shifted stake placards | <code>wall_mounted</code> | <code>286, 24</code> | <code>wall</code> | Shifted stake placards | Exact scenario |
-| <code>scenario.local_wall_item_2</code> | Gold access placard | <code>wall_mounted</code> | <code>582, 298</code> | <code>round3_calendar_mount</code> | Gold access placard | Exact scenario |
+| <code>scenario.local_wall_item_2</code> | Gold access placard | <code>wall_mounted</code> | <code>604, 328</code> | <code>manual_placement_required</code> | Gold access placard | Provisional geometry |
 
 **Action-only IDs (6; no placement marker):** <code>delta_queen_whale_aboard_task_0</code><br><code>delta_queen_whale_aboard_task_1</code><br><code>delta_queen_whale_aboard_task_3</code><br><code>delta_queen_whale_aboard_work_2_choice_0</code><br><code>delta_queen_whale_aboard_work_2_choice_1</code><br><code>delta_queen_whale_aboard_work_2_choice_2</code>
 
@@ -1437,11 +1428,11 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 | <code>scenario.local_doorway_1</code> | Marked safe exit | <code>doorway</code> | <code>36, 274</code> | <code>boardwalk_left</code> | Marked safe exit | Exact scenario |
 | <code>scenario.local_floor_fixture_1</code> | Movable beach seats | <code>floor_fixture</code> | <code>614, 180</code> | <code>stage</code> | Movable beach seats | Exact scenario |
 | <code>scenario.local_floor_fixture_2</code> | Dry driftwood bundle | <code>floor_fixture</code> | <code>606, 372</code> | <code>stage</code> | Dry driftwood bundle | Exact scenario |
-| <code>scenario.local_floor_fixture_3</code> | Rising tide marker | <code>floor_fixture</code> | <code>54, 422</code> | <code>manual_placement_required</code> | Rising tide marker | Provisional geometry |
-| <code>scenario.local_floor_fixture_4</code> | Windbreak outline | <code>floor_fixture</code> | <code>118, 354</code> | <code>manual_placement_required</code> | Windbreak outline | Provisional geometry |
-| <code>scenario.local_floor_fixture_5</code> | Scenario alternatives: Soaked Fire Ring / Stone bonfire ring | <code>floor_fixture</code> | <code>150, 422</code> | <code>manual_placement_required</code> | Soaked Fire Ring<br>Stone bonfire ring | Provisional geometry |
-| <code>scenario.local_floor_fixture_6</code> | Lit Stone Fire Ring | <code>floor_fixture</code> | <code>232, 422</code> | <code>manual_placement_required</code> | Lit Stone Fire Ring | Provisional geometry |
-| <code>scenario.local_floor_fixture_7</code> | High Windbreak | <code>floor_fixture</code> | <code>310, 422</code> | <code>manual_placement_required</code> | High Windbreak | Provisional geometry |
+| <code>scenario.local_floor_fixture_3</code> | Rising tide marker | <code>floor_fixture</code> | <code>366, 112</code> | <code>manual_placement_required</code> | Rising tide marker | Provisional geometry |
+| <code>scenario.local_floor_fixture_4</code> | Windbreak outline | <code>floor_fixture</code> | <code>430, 288</code> | <code>manual_placement_required</code> | Windbreak outline | Provisional geometry |
+| <code>scenario.local_floor_fixture_5</code> | Scenario alternatives: Soaked Fire Ring / Stone bonfire ring | <code>floor_fixture</code> | <code>526, 248</code> | <code>manual_placement_required</code> | Soaked Fire Ring<br>Stone bonfire ring | Provisional geometry |
+| <code>scenario.local_floor_fixture_6</code> | Lit Stone Fire Ring | <code>floor_fixture</code> | <code>800, 320</code> | <code>manual_placement_required</code> | Lit Stone Fire Ring | Provisional geometry |
+| <code>scenario.local_floor_fixture_7</code> | High Windbreak | <code>floor_fixture</code> | <code>614, 112</code> | <code>manual_placement_required</code> | High Windbreak | Provisional geometry |
 | <code>scenario.local_ground_marker_1</code> | Footprint Trail | <code>ground_marker</code> | <code>740, 236</code> | <code>floor</code> | Footprint Trail | Exact scenario |
 | <code>scenario.local_standing_person_1</code> | Fire Tender | <code>standing_person</code> | <code>276, 292</code> | <code>floor</code> | Fire Tender | Exact scenario |
 | <code>scenario.local_standing_person_2</code> | Scenario alternatives: Ember-Watching Swimmer / Night swimmers | <code>standing_person</code> | <code>628, 292</code> | <code>floor</code> | Ember-Watching Swimmer<br>Night swimmers | Exact scenario |
@@ -1458,18 +1449,18 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 | --- | --- | --- | --- | --- | --- | --- |
 | <code>scenario.local_behind_counter_person_1</code> | Stall vendor | <code>behind_counter_person</code> | <code>112, 202</code> | <code>towel</code> | Stall vendor | Exact scenario |
 | <code>scenario.local_doorway_1</code> | Marked safe exit | <code>doorway</code> | <code>36, 274</code> | <code>boardwalk_left</code> | Marked safe exit | Exact scenario |
-| <code>scenario.local_floor_fixture_1</code> | Moving crowd rope | <code>floor_fixture</code> | <code>390, 292</code> | <code>floor</code> | Moving crowd rope | Exact scenario |
+| <code>scenario.local_floor_fixture_1</code> | Moving crowd rope | <code>floor_fixture</code> | <code>430, 288</code> | <code>manual_placement_required</code> | Moving crowd rope | Provisional geometry |
 | <code>scenario.local_floor_fixture_2</code> | Scenario alternatives: Craft stall / Dark Festival Stage | <code>floor_fixture</code> | <code>614, 180</code> | <code>stage</code> | Craft stall<br>Dark Festival Stage | Exact scenario |
-| <code>scenario.local_floor_fixture_3</code> | Festival cable stage | <code>floor_fixture</code> | <code>54, 422</code> | <code>manual_placement_required</code> | Festival cable stage | Provisional geometry |
+| <code>scenario.local_floor_fixture_3</code> | Festival cable stage | <code>floor_fixture</code> | <code>366, 112</code> | <code>manual_placement_required</code> | Festival cable stage | Provisional geometry |
 | <code>scenario.local_floor_fixture_4</code> | Food stall | <code>floor_fixture</code> | <code>606, 372</code> | <code>stage</code> | Food stall | Exact scenario |
-| <code>scenario.local_floor_fixture_5</code> | Closed Craft Stall | <code>floor_fixture</code> | <code>150, 422</code> | <code>manual_placement_required</code> | Closed Craft Stall | Provisional geometry |
+| <code>scenario.local_floor_fixture_5</code> | Closed Craft Stall | <code>floor_fixture</code> | <code>526, 248</code> | <code>manual_placement_required</code> | Closed Craft Stall | Provisional geometry |
 | <code>scenario.local_ground_marker_1</code> | Interrupted Rope Lane | <code>ground_marker</code> | <code>740, 236</code> | <code>floor</code> | Interrupted Rope Lane | Exact scenario |
 | <code>scenario.local_standing_person_1</code> | Lucky | <code>standing_person</code> | <code>276, 292</code> | <code>floor</code> | Lucky | Exact scenario |
-| <code>scenario.local_standing_person_2</code> | Scenario alternatives: After-Hours Vendor / Lost child / Route-Guiding Vendor | <code>standing_person</code> | <code>390, 378</code> | <code>stage</code> | After-Hours Vendor<br>Lost child<br>Route-Guiding Vendor | Exact scenario |
+| <code>scenario.local_standing_person_2</code> | Scenario alternatives: After-Hours Vendor / Lost child / Route-Guiding Vendor | <code>standing_person</code> | <code>388, 384</code> | <code>manual_placement_required</code> | After-Hours Vendor<br>Lost child<br>Route-Guiding Vendor | Provisional geometry |
 | <code>scenario.local_surface_item_1</code> | Festival schedule board | <code>surface_item</code> | <code>224, 198</code> | <code>towel</code> | Festival schedule board | Exact scenario |
 | <code>scenario.local_surface_item_2</code> | Revised Festival Schedule | <code>surface_item</code> | <code>744, 92</code> | <code>kiosk</code> | Revised Festival Schedule | Exact scenario |
 | <code>scenario.local_wall_item_1</code> | Lost-child meeting marker | <code>wall_mounted</code> | <code>256, 24</code> | <code>wall</code> | Lost-child meeting marker | Exact scenario |
-| <code>scenario.local_wall_item_2</code> | Staffed Meeting Marker | <code>wall_mounted</code> | <code>48, 64</code> | <code>manual_placement_required</code> | Staffed Meeting Marker | Provisional geometry |
+| <code>scenario.local_wall_item_2</code> | Staffed Meeting Marker | <code>wall_mounted</code> | <code>128, 120</code> | <code>manual_placement_required</code> | Staffed Meeting Marker | Provisional geometry |
 
 **Action-only IDs (1; no placement marker):** <code>beach_festival_weekend_station</code>
 
@@ -1480,13 +1471,13 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
 | <code>scenario.local_doorway_1</code> | Marked safe exit | <code>doorway</code> | <code>36, 274</code> | <code>boardwalk_left</code> | Marked safe exit | Exact scenario |
-| <code>scenario.local_floor_fixture_1</code> | Inland staging line | <code>floor_fixture</code> | <code>390, 292</code> | <code>floor</code> | Inland staging line | Exact scenario |
+| <code>scenario.local_floor_fixture_1</code> | Inland staging line | <code>floor_fixture</code> | <code>430, 288</code> | <code>manual_placement_required</code> | Inland staging line | Provisional geometry |
 | <code>scenario.local_floor_fixture_2</code> | Rescue skiff | <code>floor_fixture</code> | <code>606, 372</code> | <code>stage</code> | Rescue skiff | Exact scenario |
 | <code>scenario.local_floor_fixture_3</code> | Scenario alternatives: Abandoned Rescue Skiff / Closing rental stall | <code>floor_fixture</code> | <code>614, 180</code> | <code>stage</code> | Abandoned Rescue Skiff<br>Closing rental stall | Exact scenario |
-| <code>scenario.local_floor_fixture_4</code> | Scenario alternatives: Loose beach rentals / Scattered Chairs and Umbrellas | <code>floor_fixture</code> | <code>54, 422</code> | <code>manual_placement_required</code> | Loose beach rentals<br>Scattered Chairs and Umbrellas | Provisional geometry |
-| <code>scenario.local_floor_fixture_5</code> | Shuttered Rental Stall | <code>floor_fixture</code> | <code>150, 422</code> | <code>manual_placement_required</code> | Shuttered Rental Stall | Provisional geometry |
+| <code>scenario.local_floor_fixture_4</code> | Scenario alternatives: Loose beach rentals / Scattered Chairs and Umbrellas | <code>floor_fixture</code> | <code>366, 112</code> | <code>manual_placement_required</code> | Loose beach rentals<br>Scattered Chairs and Umbrellas | Provisional geometry |
+| <code>scenario.local_floor_fixture_5</code> | Shuttered Rental Stall | <code>floor_fixture</code> | <code>526, 248</code> | <code>manual_placement_required</code> | Shuttered Rental Stall | Provisional geometry |
 | <code>scenario.local_ground_marker_1</code> | Bundled-Rental Trail | <code>ground_marker</code> | <code>740, 236</code> | <code>floor</code> | Bundled-Rental Trail | Exact scenario |
-| <code>scenario.local_standing_person_1</code> | Storm-Watching Stranger | <code>standing_person</code> | <code>390, 378</code> | <code>stage</code> | Storm-Watching Stranger | Exact scenario |
+| <code>scenario.local_standing_person_1</code> | Storm-Watching Stranger | <code>standing_person</code> | <code>388, 384</code> | <code>manual_placement_required</code> | Storm-Watching Stranger | Provisional geometry |
 | <code>scenario.local_standing_person_2</code> | Late swimmer | <code>standing_person</code> | <code>628, 292</code> | <code>floor</code> | Late swimmer | Exact scenario |
 | <code>scenario.local_standing_person_3</code> | Scenario alternatives: Inland Lifeguard / Late Swimmer / Lifeguard / Shoreline Lifeguard | <code>standing_person</code> | <code>276, 292</code> | <code>floor</code> | Inland Lifeguard<br>Late Swimmer<br>Lifeguard<br>Shoreline Lifeguard | Exact scenario |
 | <code>scenario.local_wall_item_1</code> | Scenario alternatives: People-Only Warning Notice / Storm warning flag | <code>wall_mounted</code> | <code>256, 24</code> | <code>wall</code> | People-Only Warning Notice<br>Storm warning flag | Exact scenario |
@@ -1527,16 +1518,16 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
 | <code>scenario.local_doorway_1</code> | Marked Clear Exit | <code>doorway</code> | <code>36, 266</code> | <code>left_exit</code> | Marked Clear Exit | Exact scenario |
-| <code>scenario.local_floor_fixture_1</code> | Estate Cart | <code>floor_fixture</code> | <code>174, 358</code> | <code>floor</code> | Estate Cart | Exact scenario |
-| <code>scenario.local_floor_fixture_2</code> | Scenario alternatives: Quarantined Lot / Quarantined Lot Refused / Returned Cart | <code>floor_fixture</code> | <code>54, 422</code> | <code>manual_placement_required</code> | Quarantined Lot<br>Quarantined Lot Refused<br>Returned Cart | Provisional geometry |
+| <code>scenario.local_floor_fixture_1</code> | Estate Cart | <code>floor_fixture</code> | <code>174, 304</code> | <code>manual_placement_required</code> | Estate Cart | Provisional geometry |
+| <code>scenario.local_floor_fixture_2</code> | Scenario alternatives: Quarantined Lot / Quarantined Lot Refused / Returned Cart | <code>floor_fixture</code> | <code>94, 368</code> | <code>manual_placement_required</code> | Quarantined Lot<br>Quarantined Lot Refused<br>Returned Cart | Provisional geometry |
 | <code>scenario.local_shop_item_1</code> | False-Bottom Cup | <code>shop_item</code> | <code>96, 184</code> | <code>estate_left_lower_shelf</code> | False-Bottom Cup | Exact scenario |
 | <code>scenario.local_shop_item_2</code> | Roadside Map | <code>shop_item</code> | <code>362, 176</code> | <code>estate_center_lower_shelf</code> | Roadside Map | Exact scenario |
 | <code>scenario.local_standing_person_1</code> | Estate Appraiser | <code>standing_person</code> | <code>460, 358</code> | <code>floor</code> | Estate Appraiser | Exact scenario |
-| <code>scenario.local_surface_item_1</code> | Estate Map | <code>surface_item</code> | <code>676, 104</code> | <code>estate_right_upper_shelf</code> | Estate Map | Exact scenario |
+| <code>scenario.local_surface_item_1</code> | Estate Map | <code>surface_item</code> | <code>676, 120</code> | <code>manual_placement_required</code> | Estate Map | Provisional geometry |
 | <code>scenario.local_surface_item_2</code> | Provenance Marks | <code>surface_item</code> | <code>196, 184</code> | <code>estate_left_lower_shelf</code> | Provenance Marks | Exact scenario |
-| <code>scenario.local_surface_item_3</code> | Public Provenance Card | <code>surface_item</code> | <code>172, 120</code> | <code>manual_placement_required</code> | Public Provenance Card | Provisional geometry |
-| <code>scenario.local_surface_item_4</code> | Provenance Marks Abandoned | <code>surface_item</code> | <code>244, 120</code> | <code>manual_placement_required</code> | Provenance Marks Abandoned | Provisional geometry |
-| <code>scenario.local_wall_item_1</code> | Displayed Lot | <code>wall_mounted</code> | <code>768, 48</code> | <code>wall</code> | Displayed Lot | Exact scenario |
+| <code>scenario.local_surface_item_3</code> | Public Provenance Card | <code>surface_item</code> | <code>532, 168</code> | <code>manual_placement_required</code> | Public Provenance Card | Provisional geometry |
+| <code>scenario.local_surface_item_4</code> | Provenance Marks Abandoned | <code>surface_item</code> | <code>676, 168</code> | <code>manual_placement_required</code> | Provenance Marks Abandoned | Provisional geometry |
+| <code>scenario.local_wall_item_1</code> | Displayed Lot | <code>wall_mounted</code> | <code>704, 72</code> | <code>manual_placement_required</code> | Displayed Lot | Provisional geometry |
 
 #### Scenario — Sal's Mood — <code>pawn_shop::pawn_shop_sals_mood</code>
 
@@ -1545,14 +1536,14 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
 | <code>scenario.local_doorway_1</code> | Marked Clear Exit | <code>doorway</code> | <code>36, 266</code> | <code>left_exit</code> | Marked Clear Exit | Exact scenario |
-| <code>scenario.local_floor_fixture_1</code> | Private Appraisal Abandoned | <code>floor_fixture</code> | <code>174, 358</code> | <code>floor</code> | Private Appraisal Abandoned | Exact scenario |
-| <code>scenario.local_floor_fixture_2</code> | Reopened Counter | <code>floor_fixture</code> | <code>54, 422</code> | <code>manual_placement_required</code> | Reopened Counter | Provisional geometry |
-| <code>scenario.local_floor_fixture_3</code> | Scenario alternatives: Closed Shutters / Private Appraisal Refused | <code>floor_fixture</code> | <code>670, 422</code> | <code>manual_placement_required</code> | Closed Shutters<br>Private Appraisal Refused | Provisional geometry |
+| <code>scenario.local_floor_fixture_1</code> | Private Appraisal Abandoned | <code>floor_fixture</code> | <code>174, 304</code> | <code>manual_placement_required</code> | Private Appraisal Abandoned | Provisional geometry |
+| <code>scenario.local_floor_fixture_2</code> | Reopened Counter | <code>floor_fixture</code> | <code>94, 368</code> | <code>manual_placement_required</code> | Reopened Counter | Provisional geometry |
+| <code>scenario.local_floor_fixture_3</code> | Scenario alternatives: Closed Shutters / Private Appraisal Refused | <code>floor_fixture</code> | <code>270, 288</code> | <code>manual_placement_required</code> | Closed Shutters<br>Private Appraisal Refused | Provisional geometry |
 | <code>scenario.local_standing_person_1</code> | Sal Shopkeeper | <code>standing_person</code> | <code>460, 358</code> | <code>floor</code> | Sal Shopkeeper | Exact scenario |
 | <code>scenario.local_surface_item_1</code> | Private Appraisal | <code>surface_item</code> | <code>676, 104</code> | <code>estate_right_upper_shelf</code> | Private Appraisal | Exact scenario |
 | <code>scenario.local_surface_item_2</code> | Half-Finished Repairs | <code>surface_item</code> | <code>196, 184</code> | <code>estate_left_lower_shelf</code> | Half-Finished Repairs | Exact scenario |
-| <code>scenario.local_surface_item_3</code> | Private Appraisal | <code>surface_item</code> | <code>172, 120</code> | <code>manual_placement_required</code> | Private Appraisal | Provisional geometry |
-| <code>scenario.local_surface_item_4</code> | Posted Appraisal Sheet | <code>surface_item</code> | <code>244, 120</code> | <code>manual_placement_required</code> | Posted Appraisal Sheet | Provisional geometry |
+| <code>scenario.local_surface_item_3</code> | Private Appraisal | <code>surface_item</code> | <code>532, 168</code> | <code>manual_placement_required</code> | Private Appraisal | Provisional geometry |
+| <code>scenario.local_surface_item_4</code> | Posted Appraisal Sheet | <code>surface_item</code> | <code>676, 56</code> | <code>manual_placement_required</code> | Posted Appraisal Sheet | Provisional geometry |
 
 #### Scenario — Serial-Check Day — <code>pawn_shop::pawn_shop_serial_check_day</code>
 
@@ -1561,13 +1552,13 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
 | <code>scenario.local_doorway_1</code> | Marked Clear Exit | <code>doorway</code> | <code>36, 266</code> | <code>left_exit</code> | Marked Clear Exit | Exact scenario |
-| <code>scenario.local_floor_fixture_1</code> | Withdrawn Stock | <code>floor_fixture</code> | <code>174, 358</code> | <code>floor</code> | Withdrawn Stock | Exact scenario |
+| <code>scenario.local_floor_fixture_1</code> | Withdrawn Stock | <code>floor_fixture</code> | <code>174, 304</code> | <code>manual_placement_required</code> | Withdrawn Stock | Provisional geometry |
 | <code>scenario.local_standing_person_1</code> | Records Clerk | <code>standing_person</code> | <code>460, 358</code> | <code>floor</code> | Records Clerk | Exact scenario |
-| <code>scenario.local_surface_item_1</code> | Wrapped Item Awaiting Serial Check | <code>surface_item</code> | <code>676, 104</code> | <code>estate_right_upper_shelf</code> | Wrapped Item Awaiting Serial Check | Exact scenario |
+| <code>scenario.local_surface_item_1</code> | Wrapped Item Awaiting Serial Check | <code>surface_item</code> | <code>676, 120</code> | <code>manual_placement_required</code> | Wrapped Item Awaiting Serial Check | Provisional geometry |
 | <code>scenario.local_surface_item_2</code> | Serial Lamp and Carbon Sheet | <code>surface_item</code> | <code>196, 184</code> | <code>estate_left_lower_shelf</code> | Serial Lamp and Carbon Sheet | Exact scenario |
-| <code>scenario.local_surface_item_3</code> | Unsealed Item and Unfinished Carbon Copy | <code>surface_item</code> | <code>172, 120</code> | <code>manual_placement_required</code> | Unsealed Item and Unfinished Carbon Copy | Provisional geometry |
-| <code>scenario.local_surface_item_4</code> | Scenario alternatives: Serial Sweep Hold / Waiting Hold / Waiting Hold Refused | <code>surface_item</code> | <code>244, 120</code> | <code>manual_placement_required</code> | Serial Sweep Hold<br>Waiting Hold<br>Waiting Hold Refused | Provisional geometry |
-| <code>scenario.local_wall_item_1</code> | Disclosed Hold | <code>wall_mounted</code> | <code>768, 48</code> | <code>wall</code> | Disclosed Hold | Exact scenario |
+| <code>scenario.local_surface_item_3</code> | Unsealed Item and Unfinished Carbon Copy | <code>surface_item</code> | <code>532, 168</code> | <code>manual_placement_required</code> | Unsealed Item and Unfinished Carbon Copy | Provisional geometry |
+| <code>scenario.local_surface_item_4</code> | Scenario alternatives: Serial Sweep Hold / Waiting Hold / Waiting Hold Refused | <code>surface_item</code> | <code>676, 168</code> | <code>manual_placement_required</code> | Serial Sweep Hold<br>Waiting Hold<br>Waiting Hold Refused | Provisional geometry |
+| <code>scenario.local_wall_item_1</code> | Disclosed Hold | <code>wall_mounted</code> | <code>704, 72</code> | <code>manual_placement_required</code> | Disclosed Hold | Provisional geometry |
 
 ### Grand Casino Main Floor — <code>grand_casino</code>
 
@@ -1615,18 +1606,18 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
 | <code>scenario.local_doorway_1</code> | Clear exit | <code>doorway</code> | <code>864, 348</code> | <code>right_exit</code> | Clear exit | Exact scenario |
-| <code>scenario.local_floor_fixture_1</code> | Audit zone barrier | <code>floor_fixture</code> | <code>214, 334</code> | <code>manual_placement_required</code> | Audit zone barrier | Provisional geometry |
-| <code>scenario.local_floor_fixture_2</code> | Audit zone barrier | <code>floor_fixture</code> | <code>342, 334</code> | <code>manual_placement_required</code> | Audit zone barrier | Provisional geometry |
-| <code>scenario.local_ground_marker_1</code> | Scenario alternatives: Redirected chalk arrow / Torn route card | <code>ground_marker</code> | <code>276, 430</code> | <code>floor</code> | Redirected chalk arrow<br>Torn route card | Exact scenario |
-| <code>scenario.local_standing_person_1</code> | Lead auditor | <code>standing_person</code> | <code>284, 352</code> | <code>floor</code> | Lead auditor | Exact scenario |
-| <code>scenario.local_standing_person_2</code> | Lead auditor | <code>standing_person</code> | <code>94, 350</code> | <code>manual_placement_required</code> | Lead auditor | Provisional geometry |
-| <code>scenario.local_standing_person_3</code> | Scenario alternatives: Inspection attendant / Manager / Pit manager | <code>standing_person</code> | <code>618, 352</code> | <code>floor</code> | Inspection attendant<br>Manager<br>Pit manager | Exact scenario |
-| <code>scenario.local_standing_person_4</code> | Audit lead | <code>standing_person</code> | <code>156, 334</code> | <code>manual_placement_required</code> | Audit lead | Provisional geometry |
+| <code>scenario.local_floor_fixture_1</code> | Audit zone barrier | <code>floor_fixture</code> | <code>742, 220</code> | <code>manual_placement_required</code> | Audit zone barrier | Provisional geometry |
+| <code>scenario.local_floor_fixture_2</code> | Audit zone barrier | <code>floor_fixture</code> | <code>638, 328</code> | <code>manual_placement_required</code> | Audit zone barrier | Provisional geometry |
+| <code>scenario.local_ground_marker_1</code> | Scenario alternatives: Redirected chalk arrow / Torn route card | <code>ground_marker</code> | <code>238, 332</code> | <code>manual_placement_required</code> | Redirected chalk arrow<br>Torn route card | Provisional geometry |
+| <code>scenario.local_standing_person_1</code> | Lead auditor | <code>standing_person</code> | <code>286, 328</code> | <code>manual_placement_required</code> | Lead auditor | Provisional geometry |
+| <code>scenario.local_standing_person_2</code> | Lead auditor | <code>standing_person</code> | <code>590, 328</code> | <code>manual_placement_required</code> | Lead auditor | Provisional geometry |
+| <code>scenario.local_standing_person_3</code> | Scenario alternatives: Inspection attendant / Manager / Pit manager | <code>standing_person</code> | <code>614, 248</code> | <code>manual_placement_required</code> | Inspection attendant<br>Manager<br>Pit manager | Provisional geometry |
+| <code>scenario.local_standing_person_4</code> | Audit lead | <code>standing_person</code> | <code>156, 328</code> | <code>manual_placement_required</code> | Audit lead | Provisional geometry |
 | <code>scenario.local_surface_item_1</code> | Pit audit ledger | <code>surface_item</code> | <code>874, 182</code> | <code>base_drink_shelf</code> | Pit audit ledger | Exact scenario |
-| <code>scenario.local_surface_item_2</code> | Completed pit ledger | <code>surface_item</code> | <code>318, 64</code> | <code>manual_placement_required</code> | Completed pit ledger | Provisional geometry |
-| <code>scenario.local_wall_item_1</code> | Public exit marker | <code>wall_mounted</code> | <code>56, 36</code> | <code>wall</code> | Public exit marker | Exact scenario |
-| <code>scenario.local_wall_item_2</code> | Audit cage seal | <code>wall_mounted</code> | <code>254, 24</code> | <code>wall</code> | Audit cage seal | Exact scenario |
-| <code>scenario.local_wall_item_3</code> | Audit cage seal | <code>wall_mounted</code> | <code>536, 64</code> | <code>manual_placement_required</code> | Audit cage seal | Provisional geometry |
+| <code>scenario.local_surface_item_2</code> | Completed pit ledger | <code>surface_item</code> | <code>174, 248</code> | <code>manual_placement_required</code> | Completed pit ledger | Provisional geometry |
+| <code>scenario.local_wall_item_1</code> | Public exit marker | <code>wall_mounted</code> | <code>56, 112</code> | <code>manual_placement_required</code> | Public exit marker | Provisional geometry |
+| <code>scenario.local_wall_item_2</code> | Audit cage seal | <code>wall_mounted</code> | <code>256, 48</code> | <code>manual_placement_required</code> | Audit cage seal | Provisional geometry |
+| <code>scenario.local_wall_item_3</code> | Audit cage seal | <code>wall_mounted</code> | <code>400, 96</code> | <code>manual_placement_required</code> | Audit cage seal | Provisional geometry |
 
 **Action-only IDs (6; no placement marker):** <code>grand_casino_audit_night_task_0</code><br><code>grand_casino_audit_night_task_2</code><br><code>grand_casino_audit_night_task_3</code><br><code>grand_casino_audit_night_work_1_choice_0</code><br><code>grand_casino_audit_night_work_1_choice_1</code><br><code>grand_casino_audit_night_work_1_choice_2</code>
 
@@ -1637,17 +1628,17 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
 | <code>scenario.local_doorway_1</code> | Clear exit | <code>doorway</code> | <code>864, 348</code> | <code>right_exit</code> | Clear exit | Exact scenario |
-| <code>scenario.local_floor_fixture_1</code> | Delegation Cart Block | <code>floor_fixture</code> | <code>678, 334</code> | <code>manual_placement_required</code> | Delegation Cart Block | Provisional geometry |
-| <code>scenario.local_floor_fixture_2</code> | Reserved machine banks | <code>floor_fixture</code> | <code>30, 366</code> | <code>manual_placement_required</code> | Reserved machine banks | Provisional geometry |
+| <code>scenario.local_floor_fixture_1</code> | Delegation Cart Block | <code>floor_fixture</code> | <code>622, 244</code> | <code>manual_placement_required</code> | Delegation Cart Block | Provisional geometry |
+| <code>scenario.local_floor_fixture_2</code> | Reserved machine banks | <code>floor_fixture</code> | <code>638, 328</code> | <code>manual_placement_required</code> | Reserved machine banks | Provisional geometry |
 | <code>scenario.local_floor_fixture_3</code> | Delegation Cart Block | <code>floor_fixture</code> | <code>722, 194</code> | <code>manual_placement_required</code> | Delegation Cart Block | Provisional geometry |
-| <code>scenario.local_ground_marker_1</code> | Stacked reservation cards | <code>ground_marker</code> | <code>276, 430</code> | <code>floor</code> | Stacked reservation cards | Exact scenario |
-| <code>scenario.local_group_1</code> | Scenario alternatives: Badge delegations / Floor attendant | <code>group</code> | <code>180, 352</code> | <code>floor</code> | Badge delegations<br>Floor attendant | Exact scenario |
-| <code>scenario.local_group_2</code> | Scenario alternatives: Convention coordinator / Disguised delegate | <code>group</code> | <code>108, 302</code> | <code>manual_placement_required</code> | Convention coordinator<br>Disguised delegate | Provisional geometry |
-| <code>scenario.local_standing_person_1</code> | Coordinator | <code>standing_person</code> | <code>284, 352</code> | <code>floor</code> | Coordinator | Exact scenario |
-| <code>scenario.local_standing_person_2</code> | Coordinator | <code>standing_person</code> | <code>618, 352</code> | <code>floor</code> | Coordinator | Exact scenario |
-| <code>scenario.local_wall_item_1</code> | Convention booking board | <code>wall_mounted</code> | <code>56, 36</code> | <code>wall</code> | Convention booking board | Exact scenario |
-| <code>scenario.local_wall_item_2</code> | Spare convention badges | <code>wall_mounted</code> | <code>254, 24</code> | <code>wall</code> | Spare convention badges | Exact scenario |
-| <code>scenario.local_wall_item_3</code> | Color-coded schedule board | <code>wall_mounted</code> | <code>336, 64</code> | <code>manual_placement_required</code> | Color-coded schedule board | Provisional geometry |
+| <code>scenario.local_ground_marker_1</code> | Stacked reservation cards | <code>ground_marker</code> | <code>214, 332</code> | <code>manual_placement_required</code> | Stacked reservation cards | Provisional geometry |
+| <code>scenario.local_group_1</code> | Scenario alternatives: Badge delegations / Floor attendant | <code>group</code> | <code>156, 334</code> | <code>manual_placement_required</code> | Badge delegations<br>Floor attendant | Provisional geometry |
+| <code>scenario.local_group_2</code> | Scenario alternatives: Convention coordinator / Disguised delegate | <code>group</code> | <code>276, 334</code> | <code>manual_placement_required</code> | Convention coordinator<br>Disguised delegate | Provisional geometry |
+| <code>scenario.local_standing_person_1</code> | Coordinator | <code>standing_person</code> | <code>334, 328</code> | <code>manual_placement_required</code> | Coordinator | Provisional geometry |
+| <code>scenario.local_standing_person_2</code> | Coordinator | <code>standing_person</code> | <code>590, 328</code> | <code>manual_placement_required</code> | Coordinator | Provisional geometry |
+| <code>scenario.local_wall_item_1</code> | Convention booking board | <code>wall_mounted</code> | <code>56, 112</code> | <code>manual_placement_required</code> | Convention booking board | Provisional geometry |
+| <code>scenario.local_wall_item_2</code> | Spare convention badges | <code>wall_mounted</code> | <code>256, 48</code> | <code>manual_placement_required</code> | Spare convention badges | Provisional geometry |
+| <code>scenario.local_wall_item_3</code> | Color-coded schedule board | <code>wall_mounted</code> | <code>400, 96</code> | <code>manual_placement_required</code> | Color-coded schedule board | Provisional geometry |
 
 **Action-only IDs (6; no placement marker):** <code>grand_casino_convention_crowd_task_0</code><br><code>grand_casino_convention_crowd_task_1</code><br><code>grand_casino_convention_crowd_task_3</code><br><code>grand_casino_convention_crowd_work_2_choice_0</code><br><code>grand_casino_convention_crowd_work_2_choice_1</code><br><code>grand_casino_convention_crowd_work_2_choice_2</code>
 
@@ -1658,18 +1649,18 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
 | <code>scenario.local_doorway_1</code> | Clear exit | <code>doorway</code> | <code>864, 348</code> | <code>right_exit</code> | Clear exit | Exact scenario |
-| <code>scenario.local_floor_fixture_1</code> | Stalled Stage Lift | <code>floor_fixture</code> | <code>726, 430</code> | <code>floor</code> | Stalled Stage Lift | Exact scenario |
-| <code>scenario.local_floor_fixture_2</code> | Stalled Stage Lift | <code>floor_fixture</code> | <code>30, 366</code> | <code>manual_placement_required</code> | Stalled Stage Lift | Provisional geometry |
-| <code>scenario.local_floor_fixture_3</code> | Coiled queue ropes | <code>floor_fixture</code> | <code>78, 350</code> | <code>manual_placement_required</code> | Coiled queue ropes | Provisional geometry |
-| <code>scenario.local_ground_marker_1</code> | Raised stage lift | <code>ground_marker</code> | <code>276, 430</code> | <code>floor</code> | Raised stage lift | Exact scenario |
-| <code>scenario.local_standing_person_1</code> | Host | <code>standing_person</code> | <code>126, 334</code> | <code>manual_placement_required</code> | Host | Provisional geometry |
-| <code>scenario.local_standing_person_2</code> | Stagehand | <code>standing_person</code> | <code>618, 352</code> | <code>floor</code> | Stagehand | Exact scenario |
-| <code>scenario.local_standing_person_3</code> | Scenario alternatives: Accepted gala guest / Host | <code>standing_person</code> | <code>284, 352</code> | <code>floor</code> | Accepted gala guest<br>Host | Exact scenario |
-| <code>scenario.local_standing_person_4</code> | Scenario alternatives: Lift operator / Stagehand | <code>standing_person</code> | <code>468, 278</code> | <code>manual_placement_required</code> | Lift operator<br>Stagehand | Provisional geometry |
-| <code>scenario.local_standing_person_5</code> | Gala verifier | <code>standing_person</code> | <code>540, 278</code> | <code>manual_placement_required</code> | Gala verifier | Provisional geometry |
+| <code>scenario.local_floor_fixture_1</code> | Stalled Stage Lift | <code>floor_fixture</code> | <code>694, 332</code> | <code>manual_placement_required</code> | Stalled Stage Lift | Provisional geometry |
+| <code>scenario.local_floor_fixture_2</code> | Stalled Stage Lift | <code>floor_fixture</code> | <code>638, 328</code> | <code>manual_placement_required</code> | Stalled Stage Lift | Provisional geometry |
+| <code>scenario.local_floor_fixture_3</code> | Coiled queue ropes | <code>floor_fixture</code> | <code>726, 220</code> | <code>manual_placement_required</code> | Coiled queue ropes | Provisional geometry |
+| <code>scenario.local_ground_marker_1</code> | Raised stage lift | <code>ground_marker</code> | <code>214, 332</code> | <code>manual_placement_required</code> | Raised stage lift | Provisional geometry |
+| <code>scenario.local_standing_person_1</code> | Host | <code>standing_person</code> | <code>590, 328</code> | <code>manual_placement_required</code> | Host | Provisional geometry |
+| <code>scenario.local_standing_person_2</code> | Stagehand | <code>standing_person</code> | <code>614, 248</code> | <code>manual_placement_required</code> | Stagehand | Provisional geometry |
+| <code>scenario.local_standing_person_3</code> | Scenario alternatives: Accepted gala guest / Host | <code>standing_person</code> | <code>334, 328</code> | <code>manual_placement_required</code> | Accepted gala guest<br>Host | Provisional geometry |
+| <code>scenario.local_standing_person_4</code> | Scenario alternatives: Lift operator / Stagehand | <code>standing_person</code> | <code>156, 328</code> | <code>manual_placement_required</code> | Lift operator<br>Stagehand | Provisional geometry |
+| <code>scenario.local_standing_person_5</code> | Gala verifier | <code>standing_person</code> | <code>276, 328</code> | <code>manual_placement_required</code> | Gala verifier | Provisional geometry |
 | <code>scenario.local_surface_item_1</code> | Charity credential desk | <code>surface_item</code> | <code>874, 182</code> | <code>base_drink_shelf</code> | Charity credential desk | Exact scenario |
-| <code>scenario.local_wall_item_1</code> | Gala coat check | <code>wall_mounted</code> | <code>56, 36</code> | <code>wall</code> | Gala coat check | Exact scenario |
-| <code>scenario.local_wall_item_2</code> | Verified charity badge | <code>wall_mounted</code> | <code>254, 24</code> | <code>wall</code> | Verified charity badge | Exact scenario |
+| <code>scenario.local_wall_item_1</code> | Gala coat check | <code>wall_mounted</code> | <code>56, 112</code> | <code>manual_placement_required</code> | Gala coat check | Provisional geometry |
+| <code>scenario.local_wall_item_2</code> | Verified charity badge | <code>wall_mounted</code> | <code>256, 48</code> | <code>manual_placement_required</code> | Verified charity badge | Provisional geometry |
 
 **Action-only IDs (6; no placement marker):** <code>grand_casino_gala_night_task_0</code><br><code>grand_casino_gala_night_task_1</code><br><code>grand_casino_gala_night_task_3</code><br><code>grand_casino_gala_night_work_2_choice_0</code><br><code>grand_casino_gala_night_work_2_choice_1</code><br><code>grand_casino_gala_night_work_2_choice_2</code>
 
