@@ -34,6 +34,7 @@ const SLOT_FAMILIES := ["fixed", "event", "scenario", "exit"]
 const DEVELOPER_PANEL_MARGIN := 8.0
 const DEVELOPER_PANEL_MIN_WIDTH := 320.0
 const DEVELOPER_PANEL_PREFERRED_WIDTH := 520.0
+const DEVELOPER_PANEL_RESTORE_MIN_WIDTH := 156.0
 
 const C_DARK := VisualStyleScript.DARK
 const C_DARK_2 := VisualStyleScript.DARK_2
@@ -216,8 +217,13 @@ var developer_placement_valid := false
 var developer_placement_surface_id := ""
 var developer_placement_overlap_ids: Array[String] = []
 var developer_placement_panel: PanelContainer
+var developer_placement_panel_shell: VBoxContainer
+var developer_placement_panel_header: HBoxContainer
 var developer_placement_scroll: ScrollContainer
 var developer_placement_stack: VBoxContainer
+var developer_placement_minimize_button: Button
+var developer_placement_restore_button: Button
+var developer_placement_panel_minimized := false
 var developer_placement_label: Label
 var developer_placement_lock_button: Button
 var developer_placement_reset_button: Button
@@ -280,7 +286,7 @@ func set_developer_placement_mode(enabled: bool) -> void:
 		_finish_developer_placement_edit()
 	developer_placement_mode = enabled
 	_ensure_developer_placement_panel()
-	developer_placement_panel.visible = enabled or developer_slot_placement_mode
+	_sync_developer_placement_panel_visibility()
 	_update_developer_placement_panel()
 	_invalidate_camera_target()
 	_update_camera_target_if_needed()
@@ -316,7 +322,7 @@ func set_developer_slot_placement_mode(enabled: bool) -> void:
 		_restore_developer_slot_scene_objects()
 	_ensure_developer_placement_panel()
 	_configure_developer_slot_context(enabled)
-	developer_placement_panel.visible = enabled or developer_placement_mode
+	_sync_developer_placement_panel_visibility()
 	_apply_authoring_slot_positions_to_scene_objects()
 	_update_developer_placement_panel()
 	_invalidate_camera_target()
@@ -327,6 +333,7 @@ func set_developer_slot_placement_mode(enabled: bool) -> void:
 func developer_placement_snapshot() -> Dictionary:
 	return {
 		"enabled": developer_placement_mode,
+		"panel_minimized": developer_placement_panel_minimized,
 		"selected_object_id": selected_object_id,
 		"dragging": developer_placement_dragging,
 		"pending": developer_placement_pending_rect.has_area(),
@@ -341,6 +348,7 @@ func developer_slot_placement_snapshot() -> Dictionary:
 	var review_status := _developer_slot_review_status()
 	return {
 		"enabled": developer_slot_placement_mode,
+		"panel_minimized": developer_placement_panel_minimized,
 		"selected_slot_id": developer_slot_selected_id,
 		"dragging": developer_slot_dragging,
 		"pending": developer_slot_pending_rect.has_area(),
@@ -562,8 +570,38 @@ func _ensure_developer_placement_panel() -> void:
 	developer_placement_panel.position = Vector2.ONE * DEVELOPER_PANEL_MARGIN
 	developer_placement_panel.custom_minimum_size = Vector2(DEVELOPER_PANEL_MIN_WIDTH, 0.0)
 	developer_placement_panel.mouse_filter = Control.MOUSE_FILTER_PASS
-	developer_placement_panel.visible = developer_placement_mode or developer_slot_placement_mode
+	developer_placement_panel.visible = false
 	add_child(developer_placement_panel)
+
+	developer_placement_restore_button = Button.new()
+	developer_placement_restore_button.name = "RestoreDeveloperPlacementPanel"
+	developer_placement_restore_button.text = "Restore Placement Menu"
+	developer_placement_restore_button.custom_minimum_size = Vector2(DEVELOPER_PANEL_RESTORE_MIN_WIDTH, 44.0)
+	developer_placement_restore_button.tooltip_text = "Restore the placement menu. (F2)"
+	developer_placement_restore_button.visible = false
+	developer_placement_restore_button.pressed.connect(_restore_developer_placement_panel)
+	add_child(developer_placement_restore_button)
+
+	developer_placement_panel_shell = VBoxContainer.new()
+	developer_placement_panel_shell.name = "DeveloperPlacementPanelShell"
+	developer_placement_panel_shell.mouse_filter = Control.MOUSE_FILTER_PASS
+	developer_placement_panel_shell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	developer_placement_panel_shell.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	developer_placement_panel_shell.add_theme_constant_override("separation", 5)
+	developer_placement_panel.add_child(developer_placement_panel_shell)
+
+	developer_placement_panel_header = HBoxContainer.new()
+	developer_placement_panel_header.name = "DeveloperPlacementPanelHeader"
+	developer_placement_panel_header.alignment = BoxContainer.ALIGNMENT_END
+	developer_placement_panel_header.mouse_filter = Control.MOUSE_FILTER_PASS
+	developer_placement_panel_shell.add_child(developer_placement_panel_header)
+	developer_placement_minimize_button = Button.new()
+	developer_placement_minimize_button.name = "MinimizeDeveloperPlacementPanel"
+	developer_placement_minimize_button.text = "Minimize"
+	developer_placement_minimize_button.custom_minimum_size = Vector2(112.0, 44.0)
+	developer_placement_minimize_button.tooltip_text = "Hide this menu so objects underneath it can be selected. (F2 restores it.)"
+	developer_placement_minimize_button.pressed.connect(_minimize_developer_placement_panel)
+	developer_placement_panel_header.add_child(developer_placement_minimize_button)
 
 	developer_placement_scroll = ScrollContainer.new()
 	developer_placement_scroll.name = "DeveloperPlacementScroll"
@@ -572,7 +610,7 @@ func _ensure_developer_placement_panel() -> void:
 	developer_placement_scroll.follow_focus = true
 	developer_placement_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	developer_placement_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	developer_placement_panel.add_child(developer_placement_scroll)
+	developer_placement_panel_shell.add_child(developer_placement_scroll)
 
 	developer_placement_stack = VBoxContainer.new()
 	developer_placement_stack.name = "DeveloperPlacementStack"
@@ -704,8 +742,48 @@ func _ensure_developer_placement_panel() -> void:
 	developer_placement_export_button.tooltip_text = "Lock the pending position and export the complete effective placement authority to a shareable JSON report. Works from an EXE build."
 	developer_placement_export_button.pressed.connect(_export_active_developer_placement_report)
 	stack.add_child(developer_placement_export_button)
+	_sync_developer_placement_panel_visibility()
 	_update_developer_placement_panel()
 	_queue_developer_placement_panel_layout()
+
+
+func _developer_placement_mode_active() -> bool:
+	return developer_placement_mode or developer_slot_placement_mode
+
+
+func _sync_developer_placement_panel_visibility() -> void:
+	var active := _developer_placement_mode_active()
+	if not active:
+		developer_placement_panel_minimized = false
+	if developer_placement_panel != null:
+		developer_placement_panel.visible = active and not developer_placement_panel_minimized
+	if developer_placement_restore_button != null:
+		developer_placement_restore_button.visible = active and developer_placement_panel_minimized
+	_queue_developer_placement_panel_layout()
+
+
+func _set_developer_placement_panel_minimized(minimized: bool) -> void:
+	developer_placement_panel_minimized = minimized and _developer_placement_mode_active()
+	_sync_developer_placement_panel_visibility()
+
+
+func _minimize_developer_placement_panel() -> void:
+	_set_developer_placement_panel_minimized(true)
+	if developer_placement_restore_button != null:
+		developer_placement_restore_button.grab_focus()
+
+
+func _restore_developer_placement_panel() -> void:
+	_set_developer_placement_panel_minimized(false)
+	if developer_placement_minimize_button != null:
+		developer_placement_minimize_button.grab_focus()
+
+
+func _toggle_developer_placement_panel_minimized() -> void:
+	if developer_placement_panel_minimized:
+		_restore_developer_placement_panel()
+	else:
+		_minimize_developer_placement_panel()
 
 
 func _queue_developer_placement_panel_layout() -> void:
@@ -725,12 +803,25 @@ func _layout_developer_placement_panel() -> void:
 	)
 	if available_size.x <= 0.0 or available_size.y <= 0.0:
 		return
+	if developer_placement_restore_button != null:
+		var restore_minimum := developer_placement_restore_button.get_combined_minimum_size()
+		var restore_size := Vector2(
+			minf(maxf(DEVELOPER_PANEL_RESTORE_MIN_WIDTH, restore_minimum.x), available_size.x),
+			minf(maxf(44.0, restore_minimum.y), available_size.y)
+		)
+		developer_placement_restore_button.size = restore_size
+		developer_placement_restore_button.position = Vector2(
+			maxf(DEVELOPER_PANEL_MARGIN, size.x - DEVELOPER_PANEL_MARGIN - restore_size.x),
+			DEVELOPER_PANEL_MARGIN
+		)
 	var minimum_width := minf(DEVELOPER_PANEL_MIN_WIDTH, available_size.x)
 	var panel_style := developer_placement_panel.get_theme_stylebox("panel")
 	var panel_padding := panel_style.get_minimum_size() if panel_style != null else Vector2.ZERO
 	var content_minimum := developer_placement_stack.get_combined_minimum_size()
+	var header_minimum := developer_placement_panel_header.get_combined_minimum_size()
+	var shell_separation := float(developer_placement_panel_shell.get_theme_constant("separation"))
 	var desired_width := minf(DEVELOPER_PANEL_PREFERRED_WIDTH, available_size.x)
-	var desired_height := minf(content_minimum.y + panel_padding.y, available_size.y)
+	var desired_height := minf(header_minimum.y + shell_separation + content_minimum.y + panel_padding.y, available_size.y)
 	developer_placement_panel.position = Vector2.ONE * DEVELOPER_PANEL_MARGIN
 	developer_placement_panel.custom_minimum_size = Vector2(minimum_width, 0.0)
 	developer_placement_panel.size = Vector2(maxf(minimum_width, desired_width), maxf(1.0, desired_height))
@@ -744,6 +835,7 @@ func _on_developer_slot_family_filter_toggled(pressed: bool, family: String) -> 
 func _update_developer_placement_panel() -> void:
 	if developer_placement_panel == null or developer_placement_label == null:
 		return
+	_sync_developer_placement_panel_visibility()
 	_queue_developer_placement_panel_layout()
 	if developer_layout_save_button != null:
 		developer_layout_save_button.visible = developer_slot_placement_mode
@@ -1629,9 +1721,20 @@ func _gui_input(event: InputEvent) -> void:
 		_set_hovered_object(object_id_at_local_position((event as InputEventScreenDrag).position))
 
 
+# Buttons inside the placement menu own keyboard focus while they are used.
+# F2 must still reach the menu toggle in that state, including when focus has
+# moved to the sibling Restore button after minimizing.
+func _unhandled_key_input(event: InputEvent) -> void:
+	if not _developer_placement_mode_active():
+		return
+	if event is InputEventKey and (event as InputEventKey).pressed and not (event as InputEventKey).echo and (event as InputEventKey).keycode == KEY_F2:
+		_toggle_developer_placement_panel_minimized()
+		get_viewport().set_input_as_handled()
+
+
 func _handle_developer_placement_input(event: InputEvent) -> bool:
 	if event is InputEventKey and (event as InputEventKey).pressed and not (event as InputEventKey).echo and (event as InputEventKey).keycode == KEY_F2:
-		developer_placement_panel.visible = not developer_placement_panel.visible
+		_toggle_developer_placement_panel_minimized()
 		return true
 	if event is InputEventMouseMotion:
 		var motion := event as InputEventMouseMotion
@@ -2413,7 +2516,7 @@ func _developer_slot_id_at_local_position(local_position: Vector2) -> String:
 
 func _handle_developer_slot_placement_input(event: InputEvent) -> bool:
 	if event is InputEventKey and (event as InputEventKey).pressed and not (event as InputEventKey).echo and (event as InputEventKey).keycode == KEY_F2:
-		developer_placement_panel.visible = not developer_placement_panel.visible
+		_toggle_developer_placement_panel_minimized()
 		return true
 	if event is InputEventMouseMotion:
 		var motion := event as InputEventMouseMotion

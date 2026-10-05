@@ -59,6 +59,42 @@ func _run() -> void:
 			and canvas.developer_layout_save_next_button.text == "Save & Load Next Missing",
 		"A practice placement pass must expose the one-click Save & Load Next Missing action."
 	)
+	_check(
+		canvas.developer_placement_minimize_button != null
+			and canvas.developer_placement_minimize_button.visible
+			and canvas.developer_placement_restore_button != null
+			and not canvas.developer_placement_restore_button.visible,
+		"Placement mode must expose a clear Minimize control while keeping Restore out of the way."
+	)
+	await process_frame
+	await process_frame
+	var expanded_panel_rect := canvas.developer_placement_panel.get_rect()
+	var covered_slot_id := "fixed.item_shop_1"
+	var covered_slot: Dictionary = canvas.call("_developer_slot", covered_slot_id)
+	var covered_local_position: Vector2 = canvas.call("_board_to_local_position", canvas.call("_developer_slot_rect", covered_slot).get_center())
+	var expected_clicked_slot_id := str(canvas.call("_developer_slot_id_at_local_position", covered_local_position))
+	_check(not covered_slot.is_empty() and expanded_panel_rect.has_point(covered_local_position), "The click-through fixture must place a real slot beneath the expanded menu.")
+	canvas.developer_placement_minimize_button.pressed.emit()
+	await process_frame
+	_check(
+		bool(canvas.developer_slot_placement_snapshot().get("panel_minimized", false))
+			and not canvas.developer_placement_panel.visible
+			and canvas.developer_placement_restore_button.visible
+			and canvas.developer_placement_restore_button.has_focus(),
+		"Minimize must fully hide the blocking menu, expose Restore, and transfer keyboard focus."
+	)
+	canvas.developer_slot_selected_id = ""
+	await _click_canvas(canvas, covered_local_position)
+	_check(canvas.developer_slot_selected_id == expected_clicked_slot_id, "A slot beneath the former menu rectangle must be selectable while the menu is minimized (expected %s, selected %s)." % [expected_clicked_slot_id, canvas.developer_slot_selected_id])
+	canvas.developer_placement_restore_button.pressed.emit()
+	await process_frame
+	_check(
+		not bool(canvas.developer_slot_placement_snapshot().get("panel_minimized", true))
+			and canvas.developer_placement_panel.visible
+			and not canvas.developer_placement_restore_button.visible
+			and canvas.developer_placement_minimize_button.has_focus(),
+		"Restore must bring back the complete menu and return focus to Minimize."
+	)
 	var initial_slot_snapshot := canvas.developer_slot_placement_snapshot()
 	_check(
 		(initial_slot_snapshot.get("marker_label_ids", []) as Array).is_empty(),
@@ -105,6 +141,7 @@ func _run() -> void:
 	canvas.set_developer_slot_show_empty_capacity(false)
 	canvas.set_developer_slot_show_runtime_reserves(false)
 	canvas.set_developer_slot_edit_shared_in_scenario(true)
+	canvas.developer_placement_minimize_button.pressed.emit()
 	canvas.render_environment_snapshot({
 		"archetype_id": "corner_store",
 		"display_name": "Corner Store",
@@ -124,6 +161,11 @@ func _run() -> void:
 			and not bool(changed_context.get("edit_shared_in_scenario", true)),
 		"Every new layout must restore complete marker visibility and relock ROOM-SHARED positions."
 	)
+	_check(
+		bool(changed_context.get("panel_minimized", false)) and canvas.developer_placement_restore_button.visible,
+		"Loading another environment/scenario must preserve the minimized menu so it does not block the next room."
+	)
+	canvas.developer_placement_restore_button.pressed.emit()
 	canvas.developer_slot_selected_id = "fixed.item_shop_1"
 	var nudge := InputEventAction.new()
 	nudge.action = "ui_right"
@@ -164,6 +206,7 @@ func _run() -> void:
 	)
 	canvas.render_environment_snapshot(lotto_snapshot)
 	_apply_maximum_accessibility_fixture(canvas.developer_placement_panel)
+	_apply_maximum_accessibility_fixture(canvas.developer_placement_restore_button)
 	canvas.call("_update_developer_placement_panel")
 	await process_frame
 	await process_frame
@@ -173,6 +216,22 @@ func _run() -> void:
 	)
 	var panel_rect := canvas.developer_placement_panel.get_rect()
 	_check(available_rect.encloses(panel_rect), "The placement panel must remain clamped inside a 900x430 environment canvas at maximum accessibility scale.")
+	_check(
+		canvas.developer_placement_panel.get_global_rect().encloses(canvas.developer_placement_minimize_button.get_global_rect())
+			and not canvas.developer_placement_scroll.is_ancestor_of(canvas.developer_placement_minimize_button),
+		"Minimize must remain in a fixed header instead of scrolling out of reach."
+	)
+	canvas.developer_placement_minimize_button.pressed.emit()
+	await process_frame
+	var restore_rect := canvas.developer_placement_restore_button.get_rect()
+	_check(
+		available_rect.encloses(restore_rect)
+			and restore_rect.size.y >= 52.0
+			and not panel_rect.intersects(restore_rect),
+		"Restore must remain a reachable, low-obstruction control at 900x430 and maximum text scale."
+	)
+	canvas.developer_placement_restore_button.pressed.emit()
+	await process_frame
 	var scroll := canvas.developer_placement_scroll
 	var vertical_scroll := scroll.get_v_scroll_bar()
 	var horizontal_scroll := scroll.get_h_scroll_bar()
@@ -239,6 +298,31 @@ func _run() -> void:
 
 	canvas.set_developer_placement_mode(true)
 	_check(not canvas.developer_layout_save_button.visible, "Save Current Layout must stay hidden in spawned-object placement mode.")
+	canvas.developer_placement_minimize_button.grab_focus()
+	await _send_key(KEY_F2)
+	_check(
+		bool(canvas.developer_placement_snapshot().get("panel_minimized", false))
+			and canvas.developer_placement_restore_button.visible
+			and canvas.developer_placement_restore_button.has_focus(),
+		"F2 must minimize the menu and transfer focus in spawned-object placement mode (snapshot %s, focus %s)." % [canvas.developer_placement_snapshot(), str(canvas.get_viewport().gui_get_focus_owner())]
+	)
+	await _send_key(KEY_F2)
+	_check(
+		not bool(canvas.developer_placement_snapshot().get("panel_minimized", true))
+			and canvas.developer_placement_panel.visible
+			and canvas.developer_placement_minimize_button.has_focus(),
+		"A second F2 must restore the menu even after focus moved to Restore."
+	)
+	canvas.developer_placement_minimize_button.pressed.emit()
+	canvas.set_developer_placement_mode(false)
+	_check(
+		not canvas.developer_placement_panel.visible
+			and not canvas.developer_placement_restore_button.visible
+			and not bool(canvas.developer_placement_snapshot().get("panel_minimized", true)),
+		"Leaving placement mode must hide both controls and clear minimized state."
+	)
+	canvas.set_developer_placement_mode(true)
+	_check(canvas.developer_placement_panel.visible and not canvas.developer_placement_restore_button.visible, "Re-entering placement mode must start with the full menu available.")
 	canvas.queue_free()
 	await process_frame
 
@@ -274,6 +358,43 @@ func _apply_maximum_accessibility_fixture(node: Node) -> void:
 			control.custom_minimum_size.y = maxf(control.custom_minimum_size.y, 52.0)
 	for child in node.get_children():
 		_apply_maximum_accessibility_fixture(child)
+
+
+func _click_canvas(canvas: Control, local_position: Vector2) -> void:
+	var global_position := canvas.get_global_transform_with_canvas() * local_position
+	var motion := InputEventMouseMotion.new()
+	motion.position = global_position
+	motion.global_position = global_position
+	root.push_input(motion, true)
+	await process_frame
+	var press := InputEventMouseButton.new()
+	press.button_index = MOUSE_BUTTON_LEFT
+	press.pressed = true
+	press.button_mask = MOUSE_BUTTON_MASK_LEFT
+	press.position = global_position
+	press.global_position = global_position
+	root.push_input(press, true)
+	await process_frame
+	var release := InputEventMouseButton.new()
+	release.button_index = MOUSE_BUTTON_LEFT
+	release.pressed = false
+	release.position = global_position
+	release.global_position = global_position
+	root.push_input(release, true)
+	await process_frame
+
+
+func _send_key(keycode: Key) -> void:
+	var pressed := InputEventKey.new()
+	pressed.keycode = keycode
+	pressed.pressed = true
+	root.push_input(pressed, true)
+	await process_frame
+	var released := InputEventKey.new()
+	released.keycode = keycode
+	released.pressed = false
+	root.push_input(released, true)
+	await process_frame
 
 
 func _check(condition: bool, message: String) -> void:
