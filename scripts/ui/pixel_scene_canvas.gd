@@ -24,6 +24,7 @@ const HeatFeedbackVisualsScript := preload("res://scripts/ui/heat_feedback_visua
 const TableGameVisualsScript := preload("res://scripts/games/table_game_visuals.gd")
 const EnvironmentPlacementScript := preload("res://scripts/core/environment_placement.gd")
 const EnvironmentSlotBinderScript := preload("res://scripts/core/environment_slot_binder.gd")
+const PersistencePathsScript := preload("res://scripts/core/persistence_paths.gd")
 const CoinPusherRoomPropScript := preload("res://scripts/ui/game_props/coin_pusher_room_prop.gd")
 const ScratchTicketRoomPropScript := preload("res://scripts/ui/game_props/scratch_ticket_room_prop.gd")
 const CrapsRoomPropScript := preload("res://scripts/ui/game_props/craps_room_prop.gd")
@@ -221,7 +222,9 @@ var developer_placement_label: Label
 var developer_placement_lock_button: Button
 var developer_placement_reset_button: Button
 var developer_placement_export_button: Button
+var developer_placement_promote_button: Button
 var developer_layout_save_button: Button
+var developer_layout_save_next_button: Button
 var developer_slot_placement_mode := false
 var developer_slot_selected_id := ""
 var developer_slot_dragging := false
@@ -247,6 +250,8 @@ var developer_slot_edit_shared_in_scenario := false
 var developer_slot_hovered_id := ""
 var developer_slot_context_change_locking := false
 var developer_placement_panel_layout_queued := false
+var developer_slot_review_context_key := ""
+var developer_slot_reviewed_families: Dictionary = {}
 var developer_slot_family_filters := {
 	"fixed": true,
 	"event": false,
@@ -333,6 +338,7 @@ func developer_placement_snapshot() -> Dictionary:
 
 
 func developer_slot_placement_snapshot() -> Dictionary:
+	var review_status := _developer_slot_review_status()
 	return {
 		"enabled": developer_slot_placement_mode,
 		"selected_slot_id": developer_slot_selected_id,
@@ -350,6 +356,12 @@ func developer_slot_placement_snapshot() -> Dictionary:
 		"hovered_slot_id": developer_slot_hovered_id,
 		"preview_context": _developer_slot_preview_context(),
 		"placement_progress": _copy_dictionary(foundation_snapshot.get("developer_placement_progress", {})),
+		"required_review_families": review_status.get("required", []).duplicate(),
+		"reviewed_families": review_status.get("reviewed", []).duplicate(),
+		"missing_review_families": review_status.get("missing", []).duplicate(),
+		"review_ready": bool(review_status.get("ready", false)),
+		"marker_label_ids": _developer_slot_label_ids(),
+		"overlap_summary": _developer_slot_overlap_summary(),
 		"request": _developer_slot_placement_request(),
 	}
 
@@ -364,6 +376,8 @@ func set_developer_slot_family_visible(family: String, visible: bool) -> void:
 	if not visible and bool(developer_slot_family_filters.get(normalized_family, false)):
 		return
 	if visible:
+		_ensure_developer_slot_review_context()
+		developer_slot_reviewed_families[normalized_family] = true
 		for family_value in SLOT_FAMILIES:
 			developer_slot_family_filters[str(family_value)] = str(family_value) == normalized_family
 	for family_value in SLOT_FAMILIES:
@@ -442,6 +456,47 @@ func _configure_developer_slot_context(reset_family: bool) -> void:
 			(button_value as BaseButton).set_pressed_no_signal(family == preferred_family)
 	developer_slot_selected_id = ""
 	developer_slot_hovered_id = ""
+	developer_slot_review_context_key = _developer_slot_snapshot_context_key(foundation_snapshot)
+	developer_slot_reviewed_families.clear()
+	developer_slot_reviewed_families[preferred_family] = true
+
+
+func _ensure_developer_slot_review_context() -> void:
+	var context_key := _developer_slot_snapshot_context_key(foundation_snapshot)
+	if context_key == developer_slot_review_context_key:
+		return
+	developer_slot_review_context_key = context_key
+	developer_slot_reviewed_families.clear()
+
+
+func _developer_slot_required_review_families() -> Array[String]:
+	var required: Array[String] = []
+	if _developer_slot_has_active_scenario():
+		required.append("scenario")
+		return required
+	for family_value in SLOT_FAMILIES:
+		var family := str(family_value)
+		if int(_developer_slot_family_counts(family).get("total", 0)) > 0:
+			required.append(family)
+	return required
+
+
+func _developer_slot_review_status() -> Dictionary:
+	_ensure_developer_slot_review_context()
+	var required := _developer_slot_required_review_families()
+	var reviewed: Array[String] = []
+	var missing: Array[String] = []
+	for family in required:
+		if bool(developer_slot_reviewed_families.get(family, false)):
+			reviewed.append(family)
+		else:
+			missing.append(family)
+	return {
+		"required": required,
+		"reviewed": reviewed,
+		"missing": missing,
+		"ready": missing.is_empty(),
+	}
 
 
 func _developer_slot_has_active_scenario() -> bool:
@@ -594,6 +649,15 @@ func _ensure_developer_placement_panel() -> void:
 	developer_slot_context_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	developer_slot_context_label.visible = developer_slot_placement_mode
 	stack.add_child(developer_slot_context_label)
+	developer_layout_save_next_button = Button.new()
+	developer_layout_save_next_button.name = "SaveAndLoadNextLayout"
+	developer_layout_save_next_button.text = "Save & Load Next Missing"
+	developer_layout_save_next_button.custom_minimum_size = Vector2(0.0, 38.0)
+	developer_layout_save_next_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	developer_layout_save_next_button.tooltip_text = "Save this reviewed layout, then immediately generate the next missing environment/scenario layout."
+	developer_layout_save_next_button.visible = developer_slot_placement_mode
+	developer_layout_save_next_button.pressed.connect(_save_and_load_next_developer_slot_layout)
+	stack.add_child(developer_layout_save_next_button)
 	developer_layout_save_button = Button.new()
 	developer_layout_save_button.name = "SaveCurrentLayout"
 	developer_layout_save_button.text = "Save Current Layout"
@@ -625,12 +689,14 @@ func _ensure_developer_placement_panel() -> void:
 	project_actions.mouse_filter = Control.MOUSE_FILTER_PASS
 	project_actions.add_theme_constant_override("separation", 5)
 	stack.add_child(project_actions)
-	var promote_button := Button.new()
-	promote_button.text = "Save to Project"
-	promote_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	promote_button.tooltip_text = "Lock the pending position and promote all locked positions into a writable source checkout."
-	promote_button.pressed.connect(_save_active_developer_placement_to_project)
-	project_actions.add_child(promote_button)
+	developer_placement_promote_button = Button.new()
+	developer_placement_promote_button.name = "SavePlacementToProject"
+	developer_placement_promote_button.text = "Save to Project"
+	developer_placement_promote_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	developer_placement_promote_button.tooltip_text = "Lock the pending position and promote all locked positions into a writable source checkout."
+	developer_placement_promote_button.pressed.connect(_save_active_developer_placement_to_project)
+	developer_placement_promote_button.visible = not PersistencePathsScript.distribution_build()
+	project_actions.add_child(developer_placement_promote_button)
 	developer_placement_export_button = Button.new()
 	developer_placement_export_button.name = "ExportPlacementReport"
 	developer_placement_export_button.text = "Export Placement Report"
@@ -681,6 +747,11 @@ func _update_developer_placement_panel() -> void:
 	_queue_developer_placement_panel_layout()
 	if developer_layout_save_button != null:
 		developer_layout_save_button.visible = developer_slot_placement_mode
+	if developer_layout_save_next_button != null:
+		var progress := _copy_dictionary(foundation_snapshot.get("developer_placement_progress", {}))
+		developer_layout_save_next_button.visible = developer_slot_placement_mode and bool(progress.get("practice_session", false))
+	if developer_placement_promote_button != null:
+		developer_placement_promote_button.visible = not PersistencePathsScript.distribution_build()
 	if developer_slot_placement_mode:
 		if developer_slot_filter_row != null:
 			developer_slot_filter_row.visible = true
@@ -725,7 +796,13 @@ func _update_developer_placement_panel() -> void:
 
 
 func _update_developer_slot_placement_panel() -> void:
+	var review_status := _developer_slot_review_status()
 	_update_developer_slot_filter_labels()
+	var review_ready := bool(review_status.get("ready", false))
+	if developer_layout_save_button != null:
+		developer_layout_save_button.disabled = not review_ready
+	if developer_layout_save_next_button != null:
+		developer_layout_save_next_button.disabled = not review_ready
 	var preview_context := _developer_slot_preview_context()
 	if developer_slot_context_label != null:
 		var context_lines: Array[String] = [
@@ -738,6 +815,22 @@ func _update_developer_slot_placement_panel() -> void:
 				context_lines.append("Scope: SCENARIO-LOCAL editing; ROOM-SHARED markers are locked reference")
 		else:
 			context_lines.append("Scope: ROOM-SHARED editing; these positions apply to every scenario in this room")
+		var reviewed_families: Array = review_status.get("reviewed", [])
+		var missing_review_families: Array = review_status.get("missing", [])
+		if missing_review_families.is_empty():
+			context_lines.append("Review: READY TO SAVE (%s)" % ", ".join(reviewed_families))
+		else:
+			context_lines.append("Review: visit every TODO family before saving | TODO: %s" % ", ".join(missing_review_families))
+		var overlap_summary := _developer_slot_overlap_summary()
+		var active_overlap_count := int(overlap_summary.get("active_count", 0))
+		if active_overlap_count > 0:
+			context_lines.append("WARNING: %d active overlap(s): %s" % [
+				active_overlap_count,
+				", ".join((overlap_summary.get("active_pairs", []) as Array).slice(0, 3)),
+			])
+		var alternative_overlap_count := int(overlap_summary.get("alternative_count", 0))
+		if alternative_overlap_count > 0:
+			context_lines.append("Allowed alternatives: %d inactive/mutually-exclusive overlap(s); these do not block saving" % alternative_overlap_count)
 		var hidden_detail_count := _developer_slot_hidden_detail_count()
 		if hidden_detail_count > 0:
 			context_lines.append("CHECK: %d authored marker(s) hidden by capacity filters; Save still includes their current positions" % hidden_detail_count)
@@ -765,13 +858,17 @@ func _update_developer_slot_placement_panel() -> void:
 		int(family_counts.get("total", 0)),
 	]
 	var slot := _developer_slot(developer_slot_selected_id)
+	var showing_hover := false
+	if slot.is_empty():
+		slot = _developer_slot(developer_slot_hovered_id)
+		showing_hover = not slot.is_empty()
 	if slot.is_empty():
 		var visibility_summary := "occupied preview"
 		if developer_slot_show_empty_capacity:
 			visibility_summary = "empty capacity shown"
 		if developer_slot_show_runtime_reserves:
 			visibility_summary += "; runtime reserves shown"
-		developer_placement_label.text = "Slot placement | %s\n%s. Select or drag a marker; right-click or Escape cancels." % [
+		developer_placement_label.text = "Slot placement | %s\n%s. Hover for its name and details; select or drag to move it." % [
 			count_summary,
 			visibility_summary.capitalize(),
 		]
@@ -801,7 +898,7 @@ func _update_developer_slot_placement_panel() -> void:
 		var reserve_reason := _developer_slot_reserve_reason(slot)
 		requirement = "runtime reserve" if reserve_reason.is_empty() else "runtime reserve: %s" % reserve_reason
 	var warnings: Array = slot_state.get("warnings", [])
-	var status_text := "unchanged"
+	var status_text := "hover preview" if showing_hover else "unchanged"
 	if developer_slot_pending_rect.has_area():
 		status_text = "position %.0f, %.0f" % [developer_slot_pending_position.x, developer_slot_pending_position.y]
 		if not developer_slot_overlap_ids.is_empty():
@@ -822,8 +919,8 @@ func _update_developer_slot_placement_panel() -> void:
 		status_text,
 		claimant_summary,
 	]
-	developer_placement_lock_button.disabled = not editable or not developer_slot_pending_rect.has_area() or not developer_slot_valid
-	developer_placement_reset_button.disabled = not editable
+	developer_placement_lock_button.disabled = showing_hover or not editable or not developer_slot_pending_rect.has_area() or not developer_slot_valid
+	developer_placement_reset_button.disabled = showing_hover or not editable
 
 
 func _lock_active_developer_placement() -> void:
@@ -871,8 +968,16 @@ func _export_active_developer_placement_report() -> void:
 	developer_placement_export_requested.emit(request)
 
 
-func _save_current_developer_slot_layout() -> void:
+func _save_and_load_next_developer_slot_layout() -> void:
+	_save_current_developer_slot_layout(true)
+
+
+func _save_current_developer_slot_layout(load_next_missing: bool = false) -> void:
 	if not developer_slot_placement_mode:
+		return
+	var review_status := _developer_slot_review_status()
+	if not bool(review_status.get("ready", false)):
+		_update_developer_placement_panel()
 		return
 	var pending_request: Dictionary = {}
 	if developer_slot_pending_rect.has_area():
@@ -890,6 +995,8 @@ func _save_current_developer_slot_layout() -> void:
 		full_positions[str(pending_request.get("slot_id", ""))] = pending_request.get("position", Vector2.ZERO)
 		request["full_positions"] = full_positions
 		request["slot_count"] = full_positions.size()
+	request["load_next_missing"] = load_next_missing
+	request["reviewed_families"] = (review_status.get("reviewed", []) as Array).duplicate()
 	developer_layout_save_requested.emit(request)
 
 
@@ -1862,16 +1969,21 @@ func _developer_slot_family_counts(family: String) -> Dictionary:
 
 
 func _update_developer_slot_filter_labels() -> void:
+	var required_review_families := _developer_slot_required_review_families()
 	for family_value in SLOT_FAMILIES:
 		var family := str(family_value)
 		var button_value: Variant = developer_slot_filter_buttons.get(family)
 		if not (button_value is BaseButton):
 			continue
 		var counts := _developer_slot_family_counts(family)
-		(button_value as BaseButton).text = "%s %d/%d" % [
+		var review_suffix := ""
+		if required_review_families.has(family):
+			review_suffix = " Reviewed" if bool(developer_slot_reviewed_families.get(family, false)) else " TODO"
+		(button_value as BaseButton).text = "%s %d/%d%s" % [
 			family.capitalize(),
 			int(counts.get("visible", 0)),
 			int(counts.get("total", 0)),
+			review_suffix,
 		]
 
 
@@ -2200,7 +2312,10 @@ func _developer_slot_state(slot: Dictionary, comparison_slots: Array = []) -> Di
 		for other_value in slots_to_compare:
 			var other := other_value as Dictionary
 			var other_id := str(other.get("id", ""))
-			if other_id != slot_id and slot_rect.intersects(_developer_slot_rect(other)):
+			if other_id != slot_id \
+					and _developer_slot_is_context_active(slot) \
+					and _developer_slot_is_context_active(other) \
+					and slot_rect.intersects(_developer_slot_rect(other)):
 				warnings.append("overlaps %s" % other_id)
 				break
 	for occupant_value in occupants:
@@ -2241,6 +2356,44 @@ func _developer_slot_overlap_candidates(selected_slot_id: String = "") -> Array:
 		if slot_id != selected_slot_id:
 			candidates.append(slot)
 	return candidates
+
+
+func _developer_slot_overlap_summary() -> Dictionary:
+	var slots := _developer_slots(true)
+	var active_pairs: Array[String] = []
+	var alternative_pairs: Array[String] = []
+	for left_index in range(slots.size()):
+		var left := slots[left_index] as Dictionary
+		var left_id := str(left.get("id", ""))
+		var left_rect := _developer_slot_rect(left)
+		for right_index in range(left_index + 1, slots.size()):
+			var right := slots[right_index] as Dictionary
+			if not left_rect.intersects(_developer_slot_rect(right)):
+				continue
+			var right_id := str(right.get("id", ""))
+			var pair_label := "%s / %s" % [left_id, right_id]
+			if _developer_slot_is_context_active(left) and _developer_slot_is_context_active(right):
+				active_pairs.append(pair_label)
+			else:
+				alternative_pairs.append(pair_label)
+	return {
+		"active_count": active_pairs.size(),
+		"active_pairs": active_pairs,
+		"alternative_count": alternative_pairs.size(),
+		"alternative_pairs": alternative_pairs,
+	}
+
+
+func _developer_slot_label_ids() -> Array[String]:
+	var result: Array[String] = []
+	for slot_id in [developer_slot_selected_id, developer_slot_hovered_id]:
+		var clean_id := str(slot_id).strip_edges()
+		if clean_id.is_empty() or result.has(clean_id):
+			continue
+		var slot := _developer_slot(clean_id)
+		if not slot.is_empty() and _developer_slot_visible_in_preview(slot):
+			result.append(clean_id)
+	return result
 
 
 func _developer_slot_id_at_local_position(local_position: Vector2) -> String:
@@ -2284,6 +2437,7 @@ func _handle_developer_slot_placement_input(event: InputEvent) -> bool:
 						tooltip_text += "\nKnown roles: %s" % ", ".join(shown_claimants)
 						if known_claimants.size() > shown_claimants.size():
 							tooltip_text += " +%d" % (known_claimants.size() - shown_claimants.size())
+				_update_developer_placement_panel()
 				queue_redraw()
 		return true
 	if event is InputEventMouseButton:
@@ -2726,6 +2880,7 @@ func _draw_developer_slot_overlay() -> void:
 		var family := _developer_slot_family(slot)
 		var color := _developer_slot_family_color(family)
 		var selected := slot_id == developer_slot_selected_id
+		var hovered := slot_id == developer_slot_hovered_id
 		var editable := _developer_slot_is_editable(slot)
 		if not editable:
 			color = C_SOFT
@@ -2746,13 +2901,15 @@ func _draw_developer_slot_overlay() -> void:
 		draw_line(center - Vector2(0.0, 5.0), center + Vector2(0.0, 5.0), color, 1.0)
 		if occupied:
 			draw_circle(center, 3.0, color)
+		# Keep the full room readable: every slot retains its compact marker, while
+		# only the hovered/selected slot expands into a text label and stable ID.
+		if not selected and not hovered:
+			continue
 		var label_width := maxf(112.0, minf(200.0, maxf(rect.size.x, 160.0)))
 		var primary_lines := _wrap_developer_slot_label(_developer_slot_primary_label(slot), font, 8, label_width - 6.0)
 		var label_lines: Array[String] = []
 		label_lines.append_array(primary_lines)
-		var show_stable_id := selected or slot_id == developer_slot_hovered_id
-		if show_stable_id:
-			label_lines.append_array(_wrap_developer_slot_label(slot_id, font, 7, label_width - 6.0))
+		label_lines.append_array(_wrap_developer_slot_label(slot_id, font, 7, label_width - 6.0))
 		var label_line_height := 9.0
 		var label_height := maxf(11.0, float(label_lines.size()) * label_line_height + 3.0)
 		var label_y := rect.position.y - label_height

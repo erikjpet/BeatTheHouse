@@ -39,6 +39,7 @@ func _run() -> void:
 			"missing_layout_count": 63,
 			"next_missing_layout_id": "corner_store::corner_store_lotto_fever",
 			"complete": false,
+			"practice_session": true,
 		},
 		"interactable_objects": [],
 	}
@@ -52,6 +53,39 @@ func _run() -> void:
 			and canvas.developer_layout_save_button.text == "Save Current Layout",
 		"Slot placement mode must expose a prominent Save Current Layout action."
 	)
+	_check(
+		canvas.developer_layout_save_next_button != null
+			and canvas.developer_layout_save_next_button.visible
+			and canvas.developer_layout_save_next_button.text == "Save & Load Next Missing",
+		"A practice placement pass must expose the one-click Save & Load Next Missing action."
+	)
+	var initial_slot_snapshot := canvas.developer_slot_placement_snapshot()
+	_check(
+		(initial_slot_snapshot.get("marker_label_ids", []) as Array).is_empty(),
+		"Unselected markers must stay compact instead of drawing dozens of colliding labels."
+	)
+	var visible_slots: Array = canvas.call("_developer_slots")
+	if not visible_slots.is_empty():
+		var hovered_id := str((visible_slots[0] as Dictionary).get("id", ""))
+		canvas.developer_slot_hovered_id = hovered_id
+		canvas.call("_update_developer_placement_panel")
+		var hover_snapshot := canvas.developer_slot_placement_snapshot()
+		_check(
+			(hover_snapshot.get("marker_label_ids", []) as Array) == [hovered_id]
+				and canvas.developer_placement_label.text.contains(hovered_id),
+			"Hovering one marker must expose only that marker's stable ID and panel details."
+		)
+		canvas.developer_slot_hovered_id = ""
+		canvas.call("_update_developer_placement_panel")
+	var distribution_override := OS.get_environment("BTH_DISTRIBUTION_BUILD")
+	OS.set_environment("BTH_DISTRIBUTION_BUILD", "1")
+	canvas.call("_update_developer_placement_panel")
+	_check(
+		canvas.developer_placement_promote_button != null and not canvas.developer_placement_promote_button.visible,
+		"Packaged/distribution builds must hide the source-checkout-only Save to Project action."
+	)
+	OS.set_environment("BTH_DISTRIBUTION_BUILD", distribution_override)
+	canvas.call("_update_developer_placement_panel")
 	_check(
 		canvas.developer_slot_context_label != null
 			and canvas.developer_slot_context_label.text.contains("corner_store::corner_store_lotto_fever | NOT SAVED")
@@ -100,6 +134,33 @@ func _run() -> void:
 		not bool(canvas.developer_slot_placement_snapshot().get("pending", true))
 			and reset_request_count == 0,
 		"Keyboard nudging and Reset must not mutate a locked ROOM-SHARED marker."
+	)
+	canvas.render_environment_snapshot(lotto_snapshot)
+	var base_snapshot := lotto_snapshot.duplicate(true)
+	base_snapshot["scenario_id"] = ""
+	base_snapshot["scenario_state"] = {}
+	base_snapshot["scenario_sequence_state"] = {}
+	(base_snapshot["developer_placement_progress"] as Dictionary)["layout_id"] = "corner_store::base"
+	canvas.render_environment_snapshot(base_snapshot)
+	var base_review := canvas.developer_slot_placement_snapshot()
+	var base_required: Array = base_review.get("required_review_families", [])
+	_check(
+		base_required.size() > 1
+			and not bool(base_review.get("review_ready", true))
+			and canvas.developer_layout_save_button.disabled,
+		"A base layout must remain unsavable until every nonempty family tab has been visited."
+	)
+	var signal_count_before_blocked_save := signal_order.size()
+	canvas.call("_save_current_developer_slot_layout")
+	_check(signal_order.size() == signal_count_before_blocked_save, "An incomplete base-family review must not emit a layout save.")
+	for family_value in base_required:
+		canvas.set_developer_slot_family_visible(str(family_value), true)
+	var completed_base_review := canvas.developer_slot_placement_snapshot()
+	_check(
+		bool(completed_base_review.get("review_ready", false))
+			and (completed_base_review.get("missing_review_families", []) as Array).is_empty()
+			and not canvas.developer_layout_save_button.disabled,
+		"Visiting every required base family must make the layout ready to save."
 	)
 	canvas.render_environment_snapshot(lotto_snapshot)
 	_apply_maximum_accessibility_fixture(canvas.developer_placement_panel)
@@ -168,6 +229,13 @@ func _run() -> void:
 		_check(str(layout_request.get("field", "")) == "slot_positions", "The layout payload must target slot_positions.")
 		_check(int(layout_request.get("slot_count", -1)) == all_slots.size(), "The layout payload slot count must match the complete active slot set.")
 		_check((positions.get("fixed.item_shop_1", Vector2.ZERO) as Vector2).is_equal_approx(original_position + delta), "The full snapshot must contain the newly locked pending position.")
+		signal_order.clear()
+		layout_request.clear()
+		canvas.developer_layout_save_next_button.pressed.emit()
+		_check(
+			signal_order == ["layout"] and bool(layout_request.get("load_next_missing", false)),
+			"Save & Load Next Missing must emit one synchronous full-layout request with the advance flag."
+		)
 
 	canvas.set_developer_placement_mode(true)
 	_check(not canvas.developer_layout_save_button.visible, "Save Current Layout must stay hidden in spawned-object placement mode.")

@@ -15898,6 +15898,7 @@ func _developer_placement_progress_snapshot(environment: Dictionary) -> Dictiona
 			coverage.get("next_missing_layout_id", missing[0] if not missing.is_empty() else "")
 		),
 		"complete": bool(coverage.get("complete", false)),
+		"practice_session": _is_environment_test_session(),
 	}
 
 
@@ -17141,7 +17142,6 @@ func _on_developer_layout_save_requested(request: Dictionary) -> void:
 	if not bool(result.get("ok", false)):
 		_show_message(str(result.get("error", "Could not save the current environment layout.")))
 		return
-	var refresh_result := _refresh_developer_authored_environment()
 	var coverage := DeveloperPlacementStoreScript.coverage_snapshot()
 	var missing_value: Variant = coverage.get("missing_layout_ids", [])
 	var missing_count := (missing_value as Array).size() if typeof(missing_value) == TYPE_ARRAY else 0
@@ -17153,10 +17153,27 @@ func _on_developer_layout_save_requested(request: Dictionary) -> void:
 		missing_count,
 	]
 	if bool(coverage.get("complete", false)):
-		message += " All environment layouts are complete."
+		message += " All environment layouts are complete; export the placement report when ready."
 	var ignored_value: Variant = result.get("ignored_slot_ids", [])
 	if typeof(ignored_value) == TYPE_ARRAY and not (ignored_value as Array).is_empty():
 		message += " %d unsupported slot IDs were ignored." % (ignored_value as Array).size()
+	var refresh_result := {"ok": true}
+	var load_next_missing := bool(request.get("load_next_missing", false))
+	if load_next_missing and not bool(coverage.get("complete", false)):
+		if not _is_environment_test_session():
+			refresh_result = _refresh_developer_authored_environment()
+			message += " Save & Load Next is only available in an Environment Library practice session."
+		else:
+			var next_layout_id := str(coverage.get("next_missing_layout_id", "")).strip_edges()
+			var next_result := _load_next_missing_environment_layout()
+			if bool(next_result.get("ok", false)):
+				message += " Loaded next missing layout: %s." % next_layout_id
+			else:
+				refresh_result = _refresh_developer_authored_environment()
+				var next_errors := JsonCoerceScript._copy_array(next_result.get("errors", []))
+				message += " Warning: %s" % (str(next_errors[0]) if not next_errors.is_empty() else "The next missing layout could not be loaded.")
+	else:
+		refresh_result = _refresh_developer_authored_environment()
 	if not bool(refresh_result.get("ok", false)):
 		message += " Warning: %s" % str(refresh_result.get("error", "The layout was saved, but this room could not refresh it yet."))
 	_show_message(message)

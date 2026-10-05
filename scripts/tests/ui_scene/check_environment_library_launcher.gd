@@ -100,6 +100,28 @@ func _run() -> void:
 			and DeveloperPlacementStoreScript.layout_id(run_state.current_environment) == next_layout_id,
 		"Load Next Missing must select and spawn the exact next coverage layout."
 	)
+	var following_layout_id := str(missing_layouts[1]) if missing_layouts.size() > 1 else ""
+	var next_canvas := app.get("environment_canvas") as PixelSceneCanvas
+	if next_canvas != null:
+		var required_families: Array = next_canvas.developer_slot_placement_snapshot().get("required_review_families", [])
+		for family_value in required_families:
+			next_canvas.set_developer_slot_family_visible(str(family_value), true)
+		_check(
+			next_canvas.developer_layout_save_next_button.visible
+				and not next_canvas.developer_layout_save_next_button.disabled,
+			"The generated practice room must enable Save & Load Next after all required family tabs are reviewed."
+		)
+		next_canvas.developer_layout_save_next_button.pressed.emit()
+	await _settle(7)
+	run_state = app.get("run_state") as RunState
+	var saved_coverage := DeveloperPlacementStoreScript.coverage_snapshot()
+	_check(
+		int(saved_coverage.get("saved_layout_count", 0)) == 1
+			and run_state != null
+			and DeveloperPlacementStoreScript.layout_id(run_state.current_environment) == following_layout_id,
+		"Save & Load Next must synchronously save the current layout and generate the next missing context without using Leave."
+	)
+	var active_layout_id := DeveloperPlacementStoreScript.layout_id(run_state.current_environment) if run_state != null else ""
 	var next_leave_opened := bool(app.call("activate_interactable_object", "travel:leave"))
 	await _settle(3)
 	var overlay := app.get("environment_test_overlay") as Control
@@ -109,7 +131,7 @@ func _run() -> void:
 	)
 	var selected_environment: Dictionary = app.call("_environment_test_current_layout_environment")
 	_check(
-		DeveloperPlacementStoreScript.layout_id(selected_environment) == next_layout_id,
+		DeveloperPlacementStoreScript.layout_id(selected_environment) == active_layout_id,
 		"Reopening the Environment Library must preserve the exact environment, scenario, and layer selection."
 	)
 	_select_metadata(archetypes, "small_underground_casino")
