@@ -203,6 +203,9 @@ func clear_runtime_state() -> void:
 
 
 func render_game_snapshot(snapshot: Dictionary) -> void:
+	# A newly rendered live surface must recover autonomous processing even if a
+	# prior lifecycle or harness owner disabled this canvas.
+	set_process(true)
 	uses_foundation_snapshot = true
 	surface_render_elapsed_sec = 0.0
 	view_data = snapshot.duplicate(false)
@@ -230,6 +233,9 @@ func render_game_snapshot(snapshot: Dictionary) -> void:
 func apply_surface_state_patch(patch: Dictionary) -> void:
 	if patch.is_empty():
 		return
+	# Realtime/action patches are live presentation boundaries. Keep their finite
+	# and idle animation clocks independent of subsequent pointer input.
+	set_process(true)
 	var defer_redraw := bool(patch.get("surface_defer_patch_redraw", false))
 	for key in patch.keys():
 		if str(key) == "surface_defer_patch_redraw":
@@ -1081,6 +1087,9 @@ func surface_draw_action_button(rect: Rect2, label: String, action: String, inde
 
 
 func _ready() -> void:
+	# Active surfaces own their animation heartbeat. Hover and selection redraws
+	# are supplemental and must never be required for visible game motion.
+	set_process(true)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	focus_mode = Control.FOCUS_ALL
 	clip_contents = true

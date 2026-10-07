@@ -307,6 +307,9 @@ var developer_slot_family_filters := {
 
 
 func _ready() -> void:
+	# Animation liveness is owned by this canvas. Pointer input may request extra
+	# redraws for hover state, but must never be the heartbeat for room motion.
+	set_process(true)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	focus_mode = Control.FOCUS_ALL
 	clip_contents = true
@@ -1339,6 +1342,9 @@ func render_owned_environment_snapshot(snapshot: Dictionary) -> void:
 
 
 func _render_owned_environment_snapshot(snapshot: Dictionary) -> void:
+	# Re-arm presentation processing at every live-content boundary. This repairs
+	# a canvas disabled by a prior lifecycle/test owner without waiting for input.
+	set_process(true)
 	environment_snapshot_render_generation += 1
 	var previous_slot_context := _developer_slot_snapshot_context_key(foundation_snapshot)
 	var next_slot_context := _developer_slot_snapshot_context_key(snapshot)
@@ -3215,10 +3221,9 @@ func _process(delta: float) -> void:
 
 
 func _scene_idle_animation_active() -> bool:
-	# Placement pointer motion already requests redraws. Freezing decorative idle
-	# animation while either authoring overlay is open avoids repainting the full
-	# procedural room behind a geometry-only editing interaction.
-	return not reduce_motion and not developer_placement_mode and not developer_slot_placement_mode
+	# Release-gated invariant: authoring overlays may optimize their own geometry,
+	# but they cannot make room animation depend on hover/drag pointer redraws.
+	return not reduce_motion
 
 
 func _scene_idle_animation_redraw_due(delta: float) -> bool:
