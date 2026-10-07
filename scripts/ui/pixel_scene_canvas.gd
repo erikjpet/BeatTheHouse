@@ -309,7 +309,7 @@ var developer_slot_family_filters := {
 func _ready() -> void:
 	# Animation liveness is owned by this canvas. Pointer input may request extra
 	# redraws for hover state, but must never be the heartbeat for room motion.
-	set_process(true)
+	_arm_animation_heartbeat()
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	focus_mode = Control.FOCUS_ALL
 	clip_contents = true
@@ -1327,6 +1327,8 @@ func _notification(what: int) -> void:
 		_update_camera_target_if_needed()
 		queue_redraw()
 		view_geometry_changed.emit()
+	elif what == NOTIFICATION_VISIBILITY_CHANGED and is_node_ready() and is_visible_in_tree():
+		_arm_animation_heartbeat()
 
 
 # Copies a foundation EnvironmentInstance view snapshot into canvas-local state.
@@ -1344,7 +1346,7 @@ func render_owned_environment_snapshot(snapshot: Dictionary) -> void:
 func _render_owned_environment_snapshot(snapshot: Dictionary) -> void:
 	# Re-arm presentation processing at every live-content boundary. This repairs
 	# a canvas disabled by a prior lifecycle/test owner without waiting for input.
-	set_process(true)
+	_arm_animation_heartbeat()
 	environment_snapshot_render_generation += 1
 	var previous_slot_context := _developer_slot_snapshot_context_key(foundation_snapshot)
 	var next_slot_context := _developer_slot_snapshot_context_key(snapshot)
@@ -3224,6 +3226,13 @@ func _scene_idle_animation_active() -> bool:
 	# Release-gated invariant: authoring overlays may optimize their own geometry,
 	# but they cannot make room animation depend on hover/drag pointer redraws.
 	return not reduce_motion
+
+
+func _arm_animation_heartbeat() -> void:
+	# PROCESS_MODE_PAUSABLE opts out of an accidentally disabled inherited mode
+	# while still respecting an intentional SceneTree pause.
+	process_mode = Node.PROCESS_MODE_PAUSABLE
+	set_process(true)
 
 
 func _scene_idle_animation_redraw_due(delta: float) -> bool:

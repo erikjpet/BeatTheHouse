@@ -14,6 +14,7 @@ func _run() -> void:
 	environment_canvas.size = Vector2(VisualStyleScript.ENVIRONMENT_BOARD_SIZE)
 	root.add_child(environment_canvas)
 	await process_frame
+	environment_canvas.process_mode = Node.PROCESS_MODE_DISABLED
 	environment_canvas.set_process(false)
 	environment_canvas.call("render_environment_snapshot", {
 		"id": "animation_liveness_environment",
@@ -27,7 +28,8 @@ func _run() -> void:
 	for _frame_index in range(24):
 		await process_frame
 	var environment_end: Dictionary = environment_canvas.call("current_view_snapshot")
-	if not environment_canvas.is_processing() \
+	if environment_canvas.process_mode != Node.PROCESS_MODE_PAUSABLE \
+			or not environment_canvas.is_processing() \
 			or not bool(environment_end.get("scene_idle_animation_active", false)) \
 			or float(environment_end.get("scene_animation_time", 0.0)) <= float(environment_start.get("scene_animation_time", 0.0)) \
 			or int(environment_end.get("scene_idle_animation_redraw_count", 0)) <= int(environment_start.get("scene_idle_animation_redraw_count", 0)):
@@ -39,6 +41,7 @@ func _run() -> void:
 	game_canvas.size = Vector2(VisualStyleScript.GAME_BOARD_SIZE)
 	root.add_child(game_canvas)
 	await process_frame
+	game_canvas.process_mode = Node.PROCESS_MODE_DISABLED
 	game_canvas.set_process(false)
 	game_canvas.call("render_game_snapshot", {
 		"game_id": "animation_liveness_game",
@@ -51,7 +54,8 @@ func _run() -> void:
 	for _frame_index in range(24):
 		await process_frame
 	var game_end: Dictionary = game_canvas.call("current_view_snapshot")
-	if not game_canvas.is_processing() \
+	if game_canvas.process_mode != Node.PROCESS_MODE_PAUSABLE \
+			or not game_canvas.is_processing() \
 			or not bool(game_end.get("surface_animation_liveness_active", false)) \
 			or int(game_end.get("surface_animation_redraw_count", 0)) <= int(game_start.get("surface_animation_redraw_count", 0)):
 		push_error("Game-surface animation stopped without pointer input.")

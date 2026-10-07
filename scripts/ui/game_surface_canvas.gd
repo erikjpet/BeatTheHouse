@@ -205,7 +205,7 @@ func clear_runtime_state() -> void:
 func render_game_snapshot(snapshot: Dictionary) -> void:
 	# A newly rendered live surface must recover autonomous processing even if a
 	# prior lifecycle or harness owner disabled this canvas.
-	set_process(true)
+	_arm_animation_heartbeat()
 	uses_foundation_snapshot = true
 	surface_render_elapsed_sec = 0.0
 	view_data = snapshot.duplicate(false)
@@ -235,7 +235,7 @@ func apply_surface_state_patch(patch: Dictionary) -> void:
 		return
 	# Realtime/action patches are live presentation boundaries. Keep their finite
 	# and idle animation clocks independent of subsequent pointer input.
-	set_process(true)
+	_arm_animation_heartbeat()
 	var defer_redraw := bool(patch.get("surface_defer_patch_redraw", false))
 	for key in patch.keys():
 		if str(key) == "surface_defer_patch_redraw":
@@ -1089,7 +1089,7 @@ func surface_draw_action_button(rect: Rect2, label: String, action: String, inde
 func _ready() -> void:
 	# Active surfaces own their animation heartbeat. Hover and selection redraws
 	# are supplemental and must never be required for visible game motion.
-	set_process(true)
+	_arm_animation_heartbeat()
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	focus_mode = Control.FOCUS_ALL
 	clip_contents = true
@@ -1292,8 +1292,11 @@ func _clear_captured_surface_pointer_state() -> void:
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_FOCUS_EXIT:
 		_cancel_captured_surface_pointer()
-	elif what == NOTIFICATION_VISIBILITY_CHANGED and is_node_ready() and not is_visible_in_tree():
-		_cancel_captured_surface_pointer()
+	elif what == NOTIFICATION_VISIBILITY_CHANGED and is_node_ready():
+		if is_visible_in_tree():
+			_arm_animation_heartbeat()
+		else:
+			_cancel_captured_surface_pointer()
 
 
 func _queue_or_emit_captured_pointer_move(screen_position: Vector2) -> void:
@@ -1630,6 +1633,13 @@ func _surface_main_animation_redraw_active() -> bool:
 	if _surface_animation_handoff_active():
 		return true
 	return bool(state.get("surface_animates_idle", false))
+
+
+func _arm_animation_heartbeat() -> void:
+	# PROCESS_MODE_PAUSABLE opts out of an accidentally disabled inherited mode
+	# while still respecting an intentional SceneTree pause.
+	process_mode = Node.PROCESS_MODE_PAUSABLE
+	set_process(true)
 
 
 func _surface_channel_record_active(channel: Dictionary) -> bool:
