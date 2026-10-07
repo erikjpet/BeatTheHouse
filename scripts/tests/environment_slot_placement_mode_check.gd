@@ -132,6 +132,14 @@ func _check_slot_geometry_export_and_promotion(user_path: String, project_path: 
 	)
 	_check_complete_layout_storage(user_path, project_path)
 	var normal_before := EnvironmentPlacementScript.surface_map(environment)
+	for no_scenario_alias in ["", "__none", "__default", "base", DeveloperPlacementStoreScript.BASE_LAYOUT_ID]:
+		_check(
+			EnvironmentPlacementScript.active_scenario_id({
+				"archetype_id": "corner_store",
+				"scenario_id": no_scenario_alias,
+			}).is_empty(),
+			"The no-scenario selector alias %s must resolve to base placement authority." % no_scenario_alias
+		)
 	var fixed_before := _slot(normal_before, "fixed.item_shop_1")
 	var event_before := _slot(normal_before, "event.standing_person_1")
 	var scenario_before := _slot(EnvironmentPlacementScript.surface_map(scenario_environment), LOCAL_SCENARIO_SURFACE_1)
@@ -727,6 +735,25 @@ func _check_canvas_contract() -> void:
 	await process_frame
 	canvas.developer_placement_lock_requested.connect(_capture_lock_request)
 	canvas.developer_placement_export_requested.connect(_capture_export_request)
+	var stale_canvas_object_id := "scenario::stale_canvas_visual"
+	var stale_canvas_objects: Array = canvas.call("_objects_from_foundation_snapshot", {
+		"archetype_id": "corner_store",
+		"scenario_render_snapshot": {
+			"ok": true,
+			"scenario_id": "corner_store_lotto_fever",
+			"visual_objects": [{
+				"object_id": stale_canvas_object_id,
+				"object_type": "scenario_object",
+				"visible": true,
+			}],
+		},
+	})
+	var stale_canvas_visual_present := false
+	for object_value in stale_canvas_objects:
+		if typeof(object_value) == TYPE_DICTIONARY \
+				and str((object_value as Dictionary).get("id", "")) == stale_canvas_object_id:
+			stale_canvas_visual_present = true
+	_check(not stale_canvas_visual_present, "The canvas fallback must reject stale scenario visuals when the room has no active scenario.")
 	var corner_snapshot := {
 		"archetype_id": "corner_store",
 		"display_name": "Corner Store",
@@ -792,7 +819,46 @@ func _check_canvas_contract() -> void:
 			and str(preview_context.get("label", "")) == "Active preview: no scenario",
 		"A retained scenario cursor from another floor must not mislabel the active placement context."
 	)
+	var available_base_slots: Array = canvas.call("_developer_slots", true)
+	var authored_base_slots: Array = canvas.call("_developer_authored_slots")
+	var hidden_base_scenario_ids: Array[String] = []
+	for slot_value in authored_base_slots:
+		var authored_slot := slot_value as Dictionary
+		if str(authored_slot.get("kind", "")) == "scenario":
+			hidden_base_scenario_ids.append(str(authored_slot.get("id", "")))
+	var available_base_scenario_ids: Array[String] = []
+	for slot_value in available_base_slots:
+		var available_slot := slot_value as Dictionary
+		if str(available_slot.get("kind", "")) == "scenario":
+			available_base_scenario_ids.append(str(available_slot.get("id", "")))
+	var no_scenario_snapshot := canvas.developer_slot_placement_snapshot()
+	var no_scenario_required: Array = no_scenario_snapshot.get("required_review_families", [])
+	var scenario_filter_button := canvas.developer_slot_filter_buttons.get("scenario") as BaseButton
+	var full_base_request: Dictionary = canvas.call("_developer_full_slot_layout_request")
+	var full_base_positions: Dictionary = full_base_request.get("full_positions", {})
+	var hidden_reserves_preserved := not hidden_base_scenario_ids.is_empty()
+	for hidden_slot_id in hidden_base_scenario_ids:
+		hidden_reserves_preserved = hidden_reserves_preserved and full_base_positions.has(hidden_slot_id)
+	_check(
+		available_base_scenario_ids.is_empty()
+			and not no_scenario_required.has("scenario")
+			and scenario_filter_button != null
+			and not scenario_filter_button.visible,
+		"A no-scenario room must not offer scenario-family markers, review work, or a Scenario placement tab."
+	)
+	_check(hidden_reserves_preserved, "Hiding no-scenario reserve markers must still preserve their shared coordinates in a complete base-layout save.")
+	canvas.set_developer_slot_family_visible("scenario", true)
+	var rejected_scenario_filter := canvas.developer_slot_placement_snapshot()
+	_check(
+		str(rejected_scenario_filter.get("active_family", "")) == "fixed"
+			and not bool((rejected_scenario_filter.get("family_filters", {}) as Dictionary).get("scenario", false)),
+		"A no-scenario placement context must reject programmatic Scenario-family selection."
+	)
 	canvas.render_environment_snapshot(corner_snapshot)
+	_check(
+		(canvas.developer_slot_filter_buttons.get("scenario") as BaseButton).visible,
+		"Rendering an exact scenario must restore its Scenario placement tab."
+	)
 	canvas.set_developer_slot_family_visible("event", true)
 	var filtered_snapshot := canvas.developer_slot_placement_snapshot()
 	filters = filtered_snapshot.get("family_filters", {})
@@ -950,10 +1016,48 @@ func _check_canvas_contract() -> void:
 	canvas.set_developer_slot_edit_shared_in_scenario(true)
 	_check(bool(canvas.developer_slot_placement_snapshot().get("edit_shared_in_scenario", false)), "The explicit shared-room edit warning toggle must unlock deliberate shared fixes.")
 	canvas.call("_begin_developer_slot_placement_drag", occupied_rect.get_center())
-	canvas.call("_update_developer_slot_placement_preview", occupied_rect.position + Vector2(16.0, 8.0))
+	_check(bool(canvas.developer_slot_dragging), "The occupied-slot performance fixture must exercise an active drag.")
+	# Warm the static overlay model once; pointer motion may move only the selected
+	# rectangle and must not rescan every object/manifest row for every slot.
+	canvas.call("_developer_slot_overlay_rows")
+	canvas.reset_performance_counters()
+	var drag_work_before := canvas.debug_soak_snapshot()
+	var final_preview_top_left := (occupied_rect.position + Vector2(16.0, 8.0)).round()
+	for preview_top_left in [
+		occupied_rect.position + Vector2(6.0, 3.0),
+		occupied_rect.position + Vector2(11.0, 5.0),
+		final_preview_top_left,
+	]:
+		canvas.call("_update_developer_slot_placement_preview", preview_top_left)
+		canvas.call("_developer_slot_overlay_rows")
+	# A fractional motion that rounds to the current board coordinate must be a
+	# no-op instead of repeating any of the expensive placement rebuilds.
+	canvas.call("_update_developer_slot_placement_preview", final_preview_top_left + Vector2(0.24, 0.24))
+	var drag_work_after := canvas.debug_soak_snapshot()
+	_check(
+		int(drag_work_after.get("scene_object_cache_rebuild_count", -1)) == int(drag_work_before.get("scene_object_cache_rebuild_count", -2)),
+		"Mouse motion during a slot drag must not rebuild the complete scene-object cache."
+	)
+	_check(
+		int(drag_work_after.get("developer_placement_panel_update_count", -1)) == int(drag_work_before.get("developer_placement_panel_update_count", -2)),
+		"Mouse motion during a slot drag must defer the complete placement-panel audit until the edit finishes."
+	)
+	_check(
+		int(drag_work_after.get("developer_slot_cache_rebuild_count", -1)) == 0,
+		"A warmed slot cache must not be rebuilt for each drag-motion event."
+	)
+	_check(
+		int(drag_work_after.get("developer_slot_overlay_cache_rebuild_count", -1)) == 0,
+		"A warmed slot-overlay model must not rescan occupants, requirements, and warnings for each drag redraw."
+	)
 	var preview_object_rect: Rect2 = canvas.call("_board_rect_for_object", canvas.call("_scene_object", "item:fixture"))
-	_check(not preview_object_rect.position.is_equal_approx(baseline_object_rect.position), "An occupied slot preview must move its current object with the slot.")
+	_check(
+		preview_object_rect.position.is_equal_approx(final_preview_top_left)
+			and not preview_object_rect.position.is_equal_approx(baseline_object_rect.position),
+		"An occupied slot preview must follow the final pointer position without mutating and rebuilding the complete scene."
+	)
 	canvas.call("_lock_developer_slot_placement")
+	_check(bool(locked_request.get("defer_refresh", false)), "A normal slot drop must defer the expensive authoritative room rebuild until the placement pass is flushed.")
 	var persisted := DeveloperPlacementStoreScript.save_position(
 		locked_request.get("environment", {}) as Dictionary,
 		str(locked_request.get("field", "")),
@@ -963,6 +1067,7 @@ func _check_canvas_contract() -> void:
 	_check(bool(persisted.get("ok", false)), "A released slot move must persist through the production placement store.")
 	var moved_slot := _slot(EnvironmentPlacementScript.surface_map({"archetype_id": "corner_store"}), "fixed.item_shop_1")
 	var moved_rect := _slot_rect(moved_slot)
+	canvas.reset_performance_counters()
 	canvas.render_environment_snapshot({
 		"archetype_id": "corner_store",
 		"display_name": "Corner Store",
@@ -988,6 +1093,10 @@ func _check_canvas_contract() -> void:
 			},
 		}],
 	})
+	_check(
+		int(canvas.debug_soak_snapshot().get("scene_object_cache_rebuild_count", -1)) == 1,
+		"One authoritative placement snapshot must build the scene and label caches exactly once."
+	)
 	canvas.set_developer_slot_placement_mode(false)
 	var persisted_object_rect: Rect2 = canvas.call("_board_rect_for_object", canvas.call("_scene_object", "item:fixture"))
 	_check(persisted_object_rect.position.is_equal_approx(moved_rect.position), "Leaving slot mode must retain the locked slot position in normal rendering.")

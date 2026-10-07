@@ -1039,66 +1039,6 @@
           "occupancy_required": false
         },
         {
-          "id": "event.floor_fixture_1",
-          "kind": "event",
-          "pos": [
-            288.0,
-            378.0
-          ],
-          "footprint_class": "floor_fixture",
-          "physical_role": "Floor prop",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            229.0,
-            306.0,
-            118.0,
-            72.0
-          ],
-          "label_anchor": [
-            288.0,
-            416.0
-          ],
-          "facing": "none",
-          "priority": 110,
-          "zone_id": "room",
-          "support_id": "floor",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
-          "id": "event.group_1",
-          "kind": "event",
-          "pos": [
-            402.0,
-            370.0
-          ],
-          "footprint_class": "group",
-          "physical_role": "Group",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            350.0,
-            292.0,
-            104.0,
-            78.0
-          ],
-          "label_anchor": [
-            478.0,
-            402.0
-          ],
-          "facing": "front",
-          "priority": 120,
-          "zone_id": "room",
-          "support_id": "floor",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
-        },
-        {
           "id": "event.standing_person_1",
           "kind": "event",
           "pos": [
@@ -1596,8 +1536,6 @@
       },
       "event_category_slot_ids": {
         "event_spots:0": "event.behind_counter_person_1",
-        "event_spots:1": "event.floor_fixture_1",
-        "event_spots:2": "event.group_1",
         "event_spots:3": "event.standing_person_1"
       },
       "scenario_category_slot_ids": {},
@@ -2478,39 +2416,6 @@
       ],
       "event_slots": [
         {
-          "id": "event.behind_counter_person_1",
-          "kind": "event",
-          "pos": [
-            690.0,
-            208.0
-          ],
-          "footprint_class": "behind_counter_person",
-          "physical_role": "Counter staff",
-          "occupant_ids": [
-            "event:town_rumor_staff"
-          ],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            654.0,
-            136.0,
-            72.0,
-            72.0
-          ],
-          "label_anchor": [
-            690.0,
-            130.0
-          ],
-          "facing": "front",
-          "priority": 15,
-          "zone_id": "right",
-          "support_id": "right_crate_display",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
-        },
-        {
           "id": "event.ground_marker_1",
           "kind": "event",
           "pos": [
@@ -2583,7 +2488,7 @@
           "physical_role": "Standing person",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             68.0,
             332.0,
@@ -2614,7 +2519,7 @@
           "physical_role": "Standing person",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             220.0,
             332.0,
@@ -2645,7 +2550,7 @@
           "physical_role": "Standing person",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             372.0,
             332.0,
@@ -2676,7 +2581,7 @@
           "physical_role": "Standing person",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             524.0,
             332.0,
@@ -2707,7 +2612,7 @@
           "physical_role": "Standing person",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             676.0,
             332.0,
@@ -2738,7 +2643,7 @@
           "physical_role": "Standing person",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             828.0,
             332.0,
@@ -3189,7 +3094,6 @@
       },
       "event_object_slot_ids": {
         "event:back_alley_offer": "event.floor_fixture_1",
-        "event:town_rumor_staff": "event.behind_counter_person_1",
         "event:parking_lot_tip": "event.ground_marker_1"
       },
       "scenario_object_slot_ids": {
@@ -3225,7 +3129,6 @@
       "object_family_ids": {
         "event:back_alley_offer": "event",
         "event:scenario_nothing_moving_wait": "scenario",
-        "event:town_rumor_staff": "event",
         "lender:the_crew": "fixed",
         "service:house_drink": "fixed",
         "shopkeeper:merchant": "fixed",
@@ -4803,35 +4706,6 @@
           "occupancy_required": false
         },
         {
-          "id": "event.surface_item_1",
-          "kind": "event",
-          "pos": [
-            608.0,
-            426.0
-          ],
-          "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            562.0,
-            362.0,
-            92.0,
-            64.0
-          ],
-          "label_anchor": [
-            598.0,
-            430.0
-          ],
-          "facing": "none",
-          "priority": 10,
-          "zone_id": "room",
-          "support_id": "round3_luggage_shelf",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
           "id": "event.ground_marker_1",
           "kind": "event",
           "pos": [
@@ -4875,8 +4749,8 @@
             "event:chain06_dave_last_stop",
             "event:chain06_dave_same_bus"
           ],
-          "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "runtime_reserve": false,
+          "reserve_reason": "",
           "hit_rect": [
             176.0,
             342.0,
@@ -4907,7 +4781,7 @@
           "physical_role": "Standing person",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             112.0,
             342.0,
@@ -4938,7 +4812,7 @@
           "physical_role": "Standing person",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             376.0,
             252.0,
@@ -4953,39 +4827,6 @@
           "priority": 10,
           "zone_id": "room",
           "support_id": "floor",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
-        },
-        {
-          "id": "event.doorway_1",
-          "kind": "event",
-          "pos": [
-            786.0,
-            148.0
-          ],
-          "footprint_class": "doorway",
-          "physical_role": "Doorway / exit",
-          "occupant_ids": [
-            "event:chain06_nico_weekly_door"
-          ],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            754.0,
-            76.0,
-            64.0,
-            72.0
-          ],
-          "label_anchor": [
-            786.0,
-            70.0
-          ],
-          "facing": "left",
-          "priority": 10,
-          "zone_id": "room",
-          "support_id": "hallway_door",
           "walk_lane_ids": [
             "lane.public"
           ],
@@ -5608,7 +5449,6 @@
         "event:parking_lot_tip": "event.ground_marker_1",
         "event:town_rumor_staff": "event.behind_counter_person_1",
         "numbers:silas": "event.standing_person_4",
-        "event:chain06_nico_weekly_door": "event.doorway_1",
         "event:chain06_dave_same_bus": "event.standing_person_1",
         "event:chain06_dave_last_stop": "event.standing_person_1"
       },
@@ -5628,10 +5468,6 @@
         "item_spots:3": "fixed.item_shop_4"
       },
       "event_category_slot_ids": {
-        "event_spots:0": "event.surface_item_1",
-        "event_spots:1": "event.surface_item_1",
-        "event_spots:2": "event.surface_item_1",
-        "event_spots:3": "event.surface_item_1",
         "numbers_silas_spots:0": "event.standing_person_4"
       },
       "scenario_category_slot_ids": {},
@@ -5659,7 +5495,7 @@
         "lender:motel_friend": "fixed",
         "character:june": "fixed",
         "character:marco": "fixed",
-        "event:chain06_nico_weekly_door": "event",
+        "event:chain06_nico_weekly_door": "scenario",
         "travel:leave": "exit"
       },
       "fixed_objects": [
@@ -6841,64 +6677,6 @@
           "occupancy_required": false
         },
         {
-          "id": "event.floor_fixture_1",
-          "kind": "event",
-          "pos": [
-            160.0,
-            290.0
-          ],
-          "footprint_class": "floor_fixture",
-          "physical_role": "Floor prop",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            114.0,
-            226.0,
-            92.0,
-            64.0
-          ],
-          "label_anchor": [
-            160.0,
-            270.0
-          ],
-          "facing": "none",
-          "priority": 70,
-          "zone_id": "room",
-          "support_id": "stage",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
-          "id": "event.floor_fixture_2",
-          "kind": "event",
-          "pos": [
-            276.0,
-            290.0
-          ],
-          "footprint_class": "floor_fixture",
-          "physical_role": "Floor prop",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            230.0,
-            226.0,
-            92.0,
-            64.0
-          ],
-          "label_anchor": [
-            276.0,
-            296.0
-          ],
-          "facing": "none",
-          "priority": 80,
-          "zone_id": "room",
-          "support_id": "stage",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
           "id": "event.standing_person_1",
           "kind": "event",
           "pos": [
@@ -6975,7 +6753,7 @@
           "physical_role": "Standing person",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             448.0,
             332.0,
@@ -7006,7 +6784,7 @@
           "physical_role": "Standing person",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             638.0,
             332.0,
@@ -7037,7 +6815,7 @@
           "physical_role": "Standing person",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             828.0,
             332.0,
@@ -7786,10 +7564,7 @@
         "game_spots:1": "fixed.random_game_2"
       },
       "event_category_slot_ids": {
-        "event_spots:0": "event.floor_fixture_1",
-        "event_spots:1": "event.floor_fixture_2",
         "event_spots:2": "event.standing_person_1",
-        "event_spots:3": "event.floor_fixture_2",
         "numbers_silas_spots:0": "event.standing_person_5"
       },
       "scenario_category_slot_ids": {},
@@ -8921,124 +8696,6 @@
           "occupancy_required": false
         },
         {
-          "id": "event.floor_fixture_1",
-          "kind": "event",
-          "pos": [
-            392.0,
-            252.0
-          ],
-          "footprint_class": "floor_fixture",
-          "physical_role": "Floor prop",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            346.0,
-            188.0,
-            92.0,
-            64.0
-          ],
-          "label_anchor": [
-            395.0,
-            208.0
-          ],
-          "facing": "none",
-          "priority": 20,
-          "zone_id": "center",
-          "support_id": "stage",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
-          "id": "event.floor_fixture_2",
-          "kind": "event",
-          "pos": [
-            512.0,
-            252.0
-          ],
-          "footprint_class": "floor_fixture",
-          "physical_role": "Floor prop",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            466.0,
-            188.0,
-            92.0,
-            64.0
-          ],
-          "label_anchor": [
-            529.0,
-            284.0
-          ],
-          "facing": "none",
-          "priority": 10,
-          "zone_id": "center",
-          "support_id": "stage",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
-          "id": "event.surface_item_1",
-          "kind": "event",
-          "pos": [
-            508.0,
-            412.0
-          ],
-          "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
-          "occupant_ids": [],
-          "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
-          "hit_rect": [
-            472.0,
-            364.0,
-            72.0,
-            48.0
-          ],
-          "label_anchor": [
-            507.0,
-            402.0
-          ],
-          "facing": "none",
-          "priority": 20,
-          "zone_id": "room",
-          "support_id": "lottery_desk",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
-          "id": "event.doorway_2",
-          "kind": "event",
-          "pos": [
-            262.0,
-            120.0
-          ],
-          "footprint_class": "doorway",
-          "physical_role": "Doorway / exit",
-          "occupant_ids": [],
-          "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
-          "hit_rect": [
-            226.0,
-            96.0,
-            72.0,
-            48.0
-          ],
-          "label_anchor": [
-            262.0,
-            90.0
-          ],
-          "facing": "right",
-          "priority": 10,
-          "zone_id": "left",
-          "support_id": "round3_sill_door",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
-        },
-        {
           "id": "event.ground_marker_1",
           "kind": "event",
           "pos": [
@@ -9114,7 +8771,7 @@
           "physical_role": "Standing person",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             448.0,
             332.0,
@@ -9145,7 +8802,7 @@
           "physical_role": "Standing person",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             638.0,
             332.0,
@@ -9176,7 +8833,7 @@
           "physical_role": "Standing person",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             828.0,
             332.0,
@@ -9910,12 +9567,7 @@
         "game_spots:0": "fixed.random_game_1",
         "game_spots:1": "fixed.game_scratch_tickets"
       },
-      "event_category_slot_ids": {
-        "event_spots:0": "event.floor_fixture_1",
-        "event_spots:1": "event.floor_fixture_1",
-        "event_spots:2": "event.floor_fixture_2",
-        "event_spots:3": "event.floor_fixture_1"
-      },
+      "event_category_slot_ids": {},
       "scenario_category_slot_ids": {},
       "exit_category_slot_ids": {
         "travel_spots:0": "exit.left_upper"
@@ -11195,478 +10847,7 @@
           "occupancy_required": false
         }
       ],
-      "event_slots": [
-        {
-          "id": "event.floor_fixture_1",
-          "kind": "event",
-          "pos": [
-            694.0,
-            142.0
-          ],
-          "footprint_class": "floor_fixture",
-          "physical_role": "Floor prop",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            648.0,
-            78.0,
-            92.0,
-            64.0
-          ],
-          "label_anchor": [
-            687.0,
-            80.0
-          ],
-          "facing": "none",
-          "priority": 10,
-          "zone_id": "room",
-          "support_id": "stage",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
-          "id": "event.standing_person_1",
-          "kind": "event",
-          "pos": [
-            100.0,
-            414.0
-          ],
-          "footprint_class": "standing_person",
-          "physical_role": "Standing person",
-          "occupant_ids": [
-            "event:chain06_cass_first_contact",
-            "event:town_rumor_staff"
-          ],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            68.0,
-            332.0,
-            64.0,
-            82.0
-          ],
-          "label_anchor": [
-            100.0,
-            326.0
-          ],
-          "facing": "right",
-          "priority": 10,
-          "zone_id": "left",
-          "support_id": "floor",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
-        },
-        {
-          "id": "event.wall_item_1",
-          "kind": "event",
-          "pos": [
-            120.0,
-            24.0
-          ],
-          "footprint_class": "wall_mounted",
-          "physical_role": "Wall item",
-          "occupant_ids": [
-            "event:crew_job_board"
-          ],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            80.0,
-            0.0,
-            80.0,
-            48.0
-          ],
-          "label_anchor": [
-            120.0,
-            8.0
-          ],
-          "facing": "none",
-          "priority": 20,
-          "zone_id": "room",
-          "support_id": "wall",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
-          "id": "event.surface_item_1",
-          "kind": "event",
-          "pos": [
-            264.0,
-            214.0
-          ],
-          "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
-          "occupant_ids": [
-            "event:crew_planning_table"
-          ],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            228.0,
-            166.0,
-            72.0,
-            48.0
-          ],
-          "label_anchor": [
-            261.0,
-            160.0
-          ],
-          "facing": "none",
-          "priority": 30,
-          "zone_id": "room",
-          "support_id": "stage",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
-          "id": "event.surface_item_2",
-          "kind": "event",
-          "pos": [
-            448.0,
-            214.0
-          ],
-          "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
-          "occupant_ids": [
-            "event:numbers_desk"
-          ],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            412.0,
-            166.0,
-            72.0,
-            48.0
-          ],
-          "label_anchor": [
-            459.0,
-            160.0
-          ],
-          "facing": "none",
-          "priority": 20,
-          "zone_id": "service_lane",
-          "support_id": "stage",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
-          "id": "event.surface_item_3",
-          "kind": "event",
-          "pos": [
-            128.0,
-            206.0
-          ],
-          "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
-          "occupant_ids": [
-            "event:crew_mags_bench"
-          ],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            92.0,
-            158.0,
-            72.0,
-            48.0
-          ],
-          "label_anchor": [
-            128.0,
-            152.0
-          ],
-          "facing": "none",
-          "priority": 10,
-          "zone_id": "left",
-          "support_id": "left_table",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
-          "id": "event.floor_fixture_2",
-          "kind": "event",
-          "pos": [
-            542.0,
-            322.0
-          ],
-          "footprint_class": "floor_fixture",
-          "physical_role": "Floor prop",
-          "occupant_ids": [
-            "event:crew_practice_rig"
-          ],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            496.0,
-            258.0,
-            92.0,
-            64.0
-          ],
-          "label_anchor": [
-            535.0,
-            260.0
-          ],
-          "facing": "none",
-          "priority": 10,
-          "zone_id": "room",
-          "support_id": "stage",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
-          "id": "event.doorway_1",
-          "kind": "event",
-          "pos": [
-            846.0,
-            168.0
-          ],
-          "footprint_class": "doorway",
-          "physical_role": "Doorway / exit",
-          "occupant_ids": [
-            "event:crew_rook_ride"
-          ],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            814.0,
-            132.0,
-            64.0,
-            72.0
-          ],
-          "label_anchor": [
-            841.0,
-            136.0
-          ],
-          "facing": "left",
-          "priority": 20,
-          "zone_id": "right",
-          "support_id": "side_door",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
-        },
-        {
-          "id": "event.standing_person_2",
-          "kind": "event",
-          "pos": [
-            317.1428571428571,
-            414.0
-          ],
-          "footprint_class": "standing_person",
-          "physical_role": "Standing person",
-          "occupant_ids": [],
-          "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
-          "hit_rect": [
-            285.1428571428571,
-            332.0,
-            64.0,
-            82.0
-          ],
-          "label_anchor": [
-            317.1428571428571,
-            326.0
-          ],
-          "facing": "right",
-          "priority": 10,
-          "zone_id": "left",
-          "support_id": "floor",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
-        },
-        {
-          "id": "event.standing_person_3",
-          "kind": "event",
-          "pos": [
-            425.7142857142857,
-            414.0
-          ],
-          "footprint_class": "standing_person",
-          "physical_role": "Standing person",
-          "occupant_ids": [],
-          "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
-          "hit_rect": [
-            393.7142857142857,
-            332.0,
-            64.0,
-            82.0
-          ],
-          "label_anchor": [
-            425.7142857142857,
-            326.0
-          ],
-          "facing": "right",
-          "priority": 10,
-          "zone_id": "left",
-          "support_id": "floor",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
-        },
-        {
-          "id": "event.standing_person_4",
-          "kind": "event",
-          "pos": [
-            534.2857142857142,
-            414.0
-          ],
-          "footprint_class": "standing_person",
-          "physical_role": "Standing person",
-          "occupant_ids": [],
-          "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
-          "hit_rect": [
-            502.2857142857142,
-            332.0,
-            64.0,
-            82.0
-          ],
-          "label_anchor": [
-            534.2857142857142,
-            326.0
-          ],
-          "facing": "right",
-          "priority": 10,
-          "zone_id": "left",
-          "support_id": "floor",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
-        },
-        {
-          "id": "event.standing_person_5",
-          "kind": "event",
-          "pos": [
-            642.8571428571429,
-            414.0
-          ],
-          "footprint_class": "standing_person",
-          "physical_role": "Standing person",
-          "occupant_ids": [],
-          "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
-          "hit_rect": [
-            610.8571428571429,
-            332.0,
-            64.0,
-            82.0
-          ],
-          "label_anchor": [
-            642.8571428571429,
-            326.0
-          ],
-          "facing": "right",
-          "priority": 10,
-          "zone_id": "left",
-          "support_id": "floor",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
-        },
-        {
-          "id": "event.standing_person_6",
-          "kind": "event",
-          "pos": [
-            751.4285714285714,
-            414.0
-          ],
-          "footprint_class": "standing_person",
-          "physical_role": "Standing person",
-          "occupant_ids": [],
-          "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
-          "hit_rect": [
-            719.4285714285714,
-            332.0,
-            64.0,
-            82.0
-          ],
-          "label_anchor": [
-            751.4285714285714,
-            326.0
-          ],
-          "facing": "right",
-          "priority": 10,
-          "zone_id": "left",
-          "support_id": "floor",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
-        },
-        {
-          "id": "event.standing_person_7",
-          "kind": "event",
-          "pos": [
-            860.0,
-            414.0
-          ],
-          "footprint_class": "standing_person",
-          "physical_role": "Standing person",
-          "occupant_ids": [],
-          "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
-          "hit_rect": [
-            828.0,
-            332.0,
-            64.0,
-            82.0
-          ],
-          "label_anchor": [
-            860.0,
-            326.0
-          ],
-          "facing": "right",
-          "priority": 10,
-          "zone_id": "left",
-          "support_id": "floor",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
-        },
-        {
-          "id": "event.standing_person_8",
-          "kind": "event",
-          "pos": [
-            208.57142857142856,
-            414.0
-          ],
-          "footprint_class": "standing_person",
-          "physical_role": "Standing person",
-          "occupant_ids": [
-            "numbers:silas"
-          ],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            176.57142857142856,
-            332.0,
-            64.0,
-            82.0
-          ],
-          "label_anchor": [
-            208.57142857142856,
-            326.0
-          ],
-          "facing": "right",
-          "priority": 10,
-          "zone_id": "left",
-          "support_id": "floor",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
-        }
-      ],
+      "event_slots": [],
       "scenario_slots": [
         {
           "id": "scenario.doorway_1",
@@ -11901,17 +11082,7 @@
         "game:slot": "fixed.game_slot",
         "numbers:book": "fixed.numbers_book"
       },
-      "event_object_slot_ids": {
-        "event:chain06_cass_first_contact": "event.standing_person_1",
-        "event:town_rumor_staff": "event.standing_person_1",
-        "event:crew_job_board": "event.wall_item_1",
-        "event:crew_mags_bench": "event.surface_item_3",
-        "event:crew_planning_table": "event.surface_item_1",
-        "event:crew_practice_rig": "event.floor_fixture_2",
-        "event:crew_rook_ride": "event.doorway_1",
-        "event:numbers_desk": "event.surface_item_2",
-        "numbers:silas": "event.standing_person_8"
-      },
+      "event_object_slot_ids": {},
       "scenario_object_slot_ids": {
         "event:scenario_headliner_cover": "scenario.doorway_1",
         "service:house_drink": "scenario.surface_item_1",
@@ -11925,10 +11096,7 @@
       "fixed_category_slot_ids": {
         "numbers_spots:0": "fixed.numbers_book"
       },
-      "event_category_slot_ids": {
-        "event_spots:0": "event.floor_fixture_1",
-        "numbers_silas_spots:0": "event.standing_person_8"
-      },
+      "event_category_slot_ids": {},
       "scenario_category_slot_ids": {},
       "exit_category_slot_ids": {
         "layer_spots:0": "exit.left_upper",
@@ -11937,25 +11105,16 @@
       },
       "object_family_ids": {
         "environment_layer:casino": "exit",
-        "event:chain06_cass_first_contact": "event",
         "event:scenario_headliner_cover": "scenario",
         "event:side_door": "fixed",
-        "event:town_rumor_staff": "event",
         "numbers:book": "fixed",
         "service:house_drink": "scenario",
         "service:punchline_cover_charge": "scenario",
         "service:punchline_two_drink_minimum": "fixed",
         "travel:leave": "exit",
-        "event:crew_job_board": "event",
         "lender:the_crew": "fixed",
         "game:video_poker": "fixed",
-        "event:crew_mags_bench": "event",
-        "event:crew_planning_table": "event",
-        "event:crew_practice_rig": "event",
-        "event:crew_rook_ride": "event",
-        "event:numbers_desk": "event",
         "game:slot": "fixed",
-        "numbers:silas": "event",
         "event:scenario_greased_week_window": "scenario"
       },
       "fixed_objects": []
@@ -13285,7 +12444,7 @@
           "physical_role": "Standing person",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             176.57142857142856,
             332.0,
@@ -13316,7 +12475,7 @@
           "physical_role": "Standing person",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             285.1428571428571,
             332.0,
@@ -13347,7 +12506,7 @@
           "physical_role": "Standing person",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             393.7142857142857,
             332.0,
@@ -13378,7 +12537,7 @@
           "physical_role": "Standing person",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             502.2857142857142,
             332.0,
@@ -13409,7 +12568,7 @@
           "physical_role": "Standing person",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             610.8571428571429,
             332.0,
@@ -13440,7 +12599,7 @@
           "physical_role": "Standing person",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             719.4285714285714,
             332.0,
@@ -13471,7 +12630,7 @@
           "physical_role": "Standing person",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             828.0,
             332.0,
@@ -14985,7 +14144,7 @@
           "physical_role": "Standing person",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             176.57142857142856,
             332.0,
@@ -15016,7 +14175,7 @@
           "physical_role": "Standing person",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             285.1428571428571,
             332.0,
@@ -15047,7 +14206,7 @@
           "physical_role": "Standing person",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             393.7142857142857,
             332.0,
@@ -15078,7 +14237,7 @@
           "physical_role": "Standing person",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             502.2857142857142,
             332.0,
@@ -15109,7 +14268,7 @@
           "physical_role": "Standing person",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             610.8571428571429,
             332.0,
@@ -15140,7 +14299,7 @@
           "physical_role": "Standing person",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             719.4285714285714,
             332.0,
@@ -15171,7 +14330,7 @@
           "physical_role": "Standing person",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             828.0,
             332.0,
@@ -16257,7 +15416,7 @@
           "physical_role": "Standing person",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             220.0,
             332.0,
@@ -16286,7 +15445,7 @@
           "physical_role": "Standing person",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             372.0,
             332.0,
@@ -16315,7 +15474,7 @@
           "physical_role": "Standing person",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             524.0,
             332.0,
@@ -16344,7 +15503,7 @@
           "physical_role": "Standing person",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             676.0,
             332.0,
@@ -16373,7 +15532,7 @@
           "physical_role": "Standing person",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             828.0,
             332.0,
@@ -17509,35 +16668,6 @@
       ],
       "event_slots": [
         {
-          "id": "event.floor_fixture_1",
-          "kind": "event",
-          "pos": [
-            572.0,
-            414.0
-          ],
-          "footprint_class": "floor_fixture",
-          "physical_role": "Floor prop",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            526.0,
-            350.0,
-            92.0,
-            64.0
-          ],
-          "label_anchor": [
-            572.0,
-            354.0
-          ],
-          "facing": "none",
-          "priority": 10,
-          "zone_id": "room",
-          "support_id": "floor",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
           "id": "event.standing_person_1",
           "kind": "event",
           "pos": [
@@ -17548,7 +16678,7 @@
           "physical_role": "Standing person",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             778.0,
             268.0,
@@ -17579,7 +16709,7 @@
           "physical_role": "Standing person",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             204.0,
             176.0,
@@ -18106,8 +17236,6 @@
         "item_spots:1": "fixed.item_shop_2"
       },
       "event_category_slot_ids": {
-        "event_spots:0": "event.floor_fixture_1",
-        "event_spots:1": "event.floor_fixture_1",
         "numbers_silas_spots:0": "event.standing_person_3"
       },
       "scenario_category_slot_ids": {},
@@ -19663,35 +18791,6 @@
       ],
       "event_slots": [
         {
-          "id": "event.floor_fixture_1",
-          "kind": "event",
-          "pos": [
-            760.0,
-            370.0
-          ],
-          "footprint_class": "floor_fixture",
-          "physical_role": "Floor prop",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            714.0,
-            306.0,
-            92.0,
-            64.0
-          ],
-          "label_anchor": [
-            718.0,
-            286.0
-          ],
-          "facing": "none",
-          "priority": 10,
-          "zone_id": "right",
-          "support_id": "floor",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
           "id": "event.seated_person_1",
           "kind": "event",
           "pos": [
@@ -19768,7 +18867,7 @@
           "physical_role": "Standing person",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             418.0,
             196.0,
@@ -19799,7 +18898,7 @@
           "physical_role": "Standing person",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             46.0,
             172.0,
@@ -19830,7 +18929,7 @@
           "physical_role": "Standing person",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             46.0,
             90.0,
@@ -19861,7 +18960,7 @@
           "physical_role": "Standing person",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             212.0,
             88.0,
@@ -19883,37 +18982,6 @@
         },
         {
           "id": "event.standing_person_5",
-          "kind": "event",
-          "pos": [
-            450.0,
-            148.0
-          ],
-          "footprint_class": "standing_person",
-          "physical_role": "Standing person",
-          "occupant_ids": [],
-          "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
-          "hit_rect": [
-            418.0,
-            66.0,
-            64.0,
-            82.0
-          ],
-          "label_anchor": [
-            450.0,
-            60.0
-          ],
-          "facing": "left",
-          "priority": 20,
-          "zone_id": "room",
-          "support_id": "floor",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
-        },
-        {
-          "id": "event.standing_person_6",
           "kind": "event",
           "pos": [
             704.0,
@@ -20471,7 +19539,7 @@
       "event_object_slot_ids": {
         "event:rowdy_regular": "event.seated_person_1",
         "event:side_door": "event.doorway_1",
-        "numbers:silas": "event.standing_person_6"
+        "numbers:silas": "event.standing_person_5"
       },
       "scenario_object_slot_ids": {
         "event:scenario_bachelorette_storm_table": "scenario.surface_item_1",
@@ -20491,11 +19559,7 @@
         "service_spots:2": "fixed.service_house_drink"
       },
       "event_category_slot_ids": {
-        "event_spots:0": "event.floor_fixture_1",
-        "event_spots:1": "event.floor_fixture_1",
-        "event_spots:2": "event.floor_fixture_1",
-        "event_spots:3": "event.floor_fixture_1",
-        "numbers_silas_spots:0": "event.standing_person_6"
+        "numbers_silas_spots:0": "event.standing_person_5"
       },
       "scenario_category_slot_ids": {},
       "exit_category_slot_ids": {
@@ -22437,8 +21501,8 @@
           "occupant_ids": [
             "event:rowdy_regular"
           ],
-          "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "runtime_reserve": false,
+          "reserve_reason": "",
           "hit_rect": [
             150.0,
             206.0,
@@ -22525,64 +21589,6 @@
           "occupancy_required": false
         },
         {
-          "id": "event.floor_fixture_1",
-          "kind": "event",
-          "pos": [
-            174.0,
-            358.0
-          ],
-          "footprint_class": "floor_fixture",
-          "physical_role": "Floor prop",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            128.0,
-            294.0,
-            92.0,
-            64.0
-          ],
-          "label_anchor": [
-            186.0,
-            314.0
-          ],
-          "facing": "none",
-          "priority": 10,
-          "zone_id": "room",
-          "support_id": "floor",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
-          "id": "event.floor_fixture_2",
-          "kind": "event",
-          "pos": [
-            410.0,
-            358.0
-          ],
-          "footprint_class": "floor_fixture",
-          "physical_role": "Floor prop",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            364.0,
-            294.0,
-            92.0,
-            64.0
-          ],
-          "label_anchor": [
-            396.0,
-            362.0
-          ],
-          "facing": "none",
-          "priority": 20,
-          "zone_id": "room",
-          "support_id": "floor",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
           "id": "event.standing_person_1",
           "kind": "event",
           "pos": [
@@ -22627,8 +21633,8 @@
           "occupant_ids": [
             "event:chain06_dave_same_bus"
           ],
-          "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "runtime_reserve": false,
+          "reserve_reason": "",
           "hit_rect": [
             654.0,
             196.0,
@@ -22659,7 +21665,7 @@
           "physical_role": "Standing person",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             718.0,
             196.0,
@@ -22690,7 +21696,7 @@
           "physical_role": "Standing person",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             500.0,
             176.0,
@@ -22721,7 +21727,7 @@
           "physical_role": "Standing person",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             290.0,
             164.0,
@@ -22752,7 +21758,7 @@
           "physical_role": "Standing person",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             226.0,
             164.0,
@@ -23405,12 +22411,7 @@
         "item_spots:0": "fixed.item_shop_1",
         "item_spots:1": "fixed.item_shop_2"
       },
-      "event_category_slot_ids": {
-        "event_spots:0": "event.floor_fixture_1",
-        "event_spots:1": "event.floor_fixture_2",
-        "event_spots:2": "event.floor_fixture_2",
-        "event_spots:3": "event.floor_fixture_1"
-      },
+      "event_category_slot_ids": {},
       "scenario_category_slot_ids": {},
       "exit_category_slot_ids": {
         "travel_spots:0": "exit.door_right_middle"
@@ -23965,7 +22966,7 @@
           "physical_role": "Delivery handoff contact",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             752.0,
             326.0,
@@ -25357,35 +24358,6 @@
       ],
       "event_slots": [
         {
-          "id": "event.floor_fixture_1",
-          "kind": "event",
-          "pos": [
-            304.0,
-            370.0
-          ],
-          "footprint_class": "floor_fixture",
-          "physical_role": "Floor prop",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            258.0,
-            306.0,
-            92.0,
-            64.0
-          ],
-          "label_anchor": [
-            304.0,
-            402.0
-          ],
-          "facing": "none",
-          "priority": 10,
-          "zone_id": "room",
-          "support_id": "floor",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
           "id": "event.standing_person_1",
           "kind": "event",
           "pos": [
@@ -25420,35 +24392,6 @@
           "occupancy_required": false
         },
         {
-          "id": "event.shop_item_1",
-          "kind": "event",
-          "pos": [
-            94.0,
-            82.0
-          ],
-          "footprint_class": "shop_item",
-          "physical_role": "Shop item",
-          "occupant_ids": [],
-          "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
-          "hit_rect": [
-            58.0,
-            34.0,
-            72.0,
-            48.0
-          ],
-          "label_anchor": [
-            94.0,
-            28.0
-          ],
-          "facing": "none",
-          "priority": 10,
-          "zone_id": "background",
-          "support_id": "estate_top_shelf",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
           "id": "event.standing_person_2",
           "kind": "event",
           "pos": [
@@ -25459,7 +24402,7 @@
           "physical_role": "Standing person",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             496.0,
             332.0,
@@ -25490,7 +24433,7 @@
           "physical_role": "Standing person",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             560.0,
             332.0,
@@ -25508,37 +24451,6 @@
           "walk_lane_ids": [
             "lane.public"
           ],
-          "occupancy_required": false
-        },
-        {
-          "id": "event.surface_item_1",
-          "kind": "event",
-          "pos": [
-            532.0,
-            118.0
-          ],
-          "footprint_class": "surface_item",
-          "physical_role": "Counter or table item",
-          "occupant_ids": [
-            "event:chain06_sal_estate_item"
-          ],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            496.0,
-            70.0,
-            72.0,
-            48.0
-          ],
-          "label_anchor": [
-            532.0,
-            64.0
-          ],
-          "facing": "none",
-          "priority": 10,
-          "zone_id": "background",
-          "support_id": "display_counter",
-          "walk_lane_ids": [],
           "occupancy_required": false
         }
       ],
@@ -25936,8 +24848,7 @@
       },
       "event_object_slot_ids": {
         "event:chatty_clerk": "event.standing_person_1",
-        "event:town_rumor_staff": "event.standing_person_1",
-        "event:chain06_sal_estate_item": "event.surface_item_1"
+        "event:town_rumor_staff": "event.standing_person_1"
       },
       "scenario_object_slot_ids": {
         "event:scenario_sals_mood_read": "scenario.shop_item_1",
@@ -25955,16 +24866,13 @@
         "item_spots:4": "fixed.item_shop_5",
         "item_spots:5": "fixed.item_shop_6"
       },
-      "event_category_slot_ids": {
-        "event_spots:0": "event.floor_fixture_1",
-        "event_spots:1": "event.floor_fixture_1"
-      },
+      "event_category_slot_ids": {},
       "scenario_category_slot_ids": {},
       "exit_category_slot_ids": {
         "travel_spots:0": "exit.door_right_lower"
       },
       "object_family_ids": {
-        "event:chain06_sal_estate_item": "event",
+        "event:chain06_sal_estate_item": "scenario",
         "event:chatty_clerk": "event",
         "event:scenario_sals_mood_read": "scenario",
         "event:scenario_serial_check_hot_goods": "scenario",
@@ -27275,37 +26183,6 @@
           "occupancy_required": false
         },
         {
-          "id": "event.behind_counter_person_2",
-          "kind": "event",
-          "pos": [
-            780.0,
-            294.0
-          ],
-          "footprint_class": "behind_counter_person",
-          "physical_role": "Counter staff",
-          "occupant_ids": [],
-          "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
-          "hit_rect": [
-            744.0,
-            222.0,
-            72.0,
-            72.0
-          ],
-          "label_anchor": [
-            780.0,
-            204.0
-          ],
-          "facing": "front",
-          "priority": 85,
-          "zone_id": "right",
-          "support_id": "right_table_felt",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
-          "occupancy_required": false
-        },
-        {
           "id": "event.wall_item_1",
           "kind": "event",
           "pos": [
@@ -27337,35 +26214,6 @@
           "occupancy_required": false
         },
         {
-          "id": "event.floor_fixture_1",
-          "kind": "event",
-          "pos": [
-            762.0,
-            430.0
-          ],
-          "footprint_class": "floor_fixture",
-          "physical_role": "Floor prop",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            740.0,
-            386.0,
-            44.0,
-            44.0
-          ],
-          "label_anchor": [
-            751.0,
-            394.0
-          ],
-          "facing": "none",
-          "priority": 130,
-          "zone_id": "room",
-          "support_id": "floor",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
           "id": "event.standing_person_1",
           "kind": "event",
           "pos": [
@@ -27376,7 +26224,7 @@
           "physical_role": "Standing person",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             120.0,
             334.0,
@@ -27407,7 +26255,7 @@
           "physical_role": "Standing person",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             224.0,
             334.0,
@@ -27438,7 +26286,7 @@
           "physical_role": "Standing person",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             328.0,
             334.0,
@@ -27469,7 +26317,7 @@
           "physical_role": "Standing person",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             432.0,
             334.0,
@@ -27500,7 +26348,7 @@
           "physical_role": "Standing person",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             536.0,
             334.0,
@@ -27531,7 +26379,7 @@
           "physical_role": "Standing person",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             640.0,
             334.0,
@@ -27562,7 +26410,7 @@
           "physical_role": "Standing person",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             744.0,
             334.0,
@@ -28209,9 +27057,7 @@
       },
       "event_category_slot_ids": {
         "event_spots:0": "event.behind_counter_person_1",
-        "event_spots:1": "event.wall_item_1",
-        "event_spots:2": "event.floor_fixture_1",
-        "event_spots:3": "event.floor_fixture_1"
+        "event_spots:1": "event.wall_item_1"
       },
       "scenario_category_slot_ids": {},
       "exit_category_slot_ids": {
@@ -28565,35 +27411,6 @@
       ],
       "event_slots": [
         {
-          "id": "event.floor_fixture_1",
-          "kind": "event",
-          "pos": [
-            190.0,
-            414.0
-          ],
-          "footprint_class": "floor_fixture",
-          "physical_role": "Floor prop",
-          "occupant_ids": [],
-          "runtime_reserve": false,
-          "reserve_reason": "",
-          "hit_rect": [
-            144.0,
-            350.0,
-            92.0,
-            64.0
-          ],
-          "label_anchor": [
-            190.0,
-            344.0
-          ],
-          "facing": "none",
-          "priority": 50,
-          "zone_id": "room",
-          "support_id": "floor",
-          "walk_lane_ids": [],
-          "occupancy_required": false
-        },
-        {
           "id": "event.standing_person_1",
           "kind": "event",
           "pos": [
@@ -28635,7 +27452,7 @@
           "physical_role": "Standing person",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             246.0,
             334.0,
@@ -28666,7 +27483,7 @@
           "physical_role": "Standing person",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             366.0,
             334.0,
@@ -28697,7 +27514,7 @@
           "physical_role": "Standing person",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             486.0,
             334.0,
@@ -28728,7 +27545,7 @@
           "physical_role": "Standing person",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             606.0,
             334.0,
@@ -28759,7 +27576,7 @@
           "physical_role": "Standing person",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             726.0,
             334.0,
@@ -29016,7 +27833,6 @@
         "game_spots:3": "fixed.game_table_4"
       },
       "event_category_slot_ids": {
-        "event_spots:0": "event.floor_fixture_1",
         "event_spots:1": "event.standing_person_1"
       },
       "scenario_category_slot_ids": {},
@@ -29288,7 +28104,7 @@
           "physical_role": "Standing person",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             294.0,
             334.0,
@@ -29319,7 +28135,7 @@
           "physical_role": "Standing person",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             414.0,
             334.0,
@@ -29350,7 +28166,7 @@
           "physical_role": "Standing person",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             534.0,
             334.0,
@@ -29381,7 +28197,7 @@
           "physical_role": "Standing person",
           "occupant_ids": [],
           "runtime_reserve": true,
-          "reserve_reason": "Independent ambient traveler, Crew, or Numbers presence may coexist with mapped room events.",
+          "reserve_reason": "Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events.",
           "hit_rect": [
             654.0,
             334.0,

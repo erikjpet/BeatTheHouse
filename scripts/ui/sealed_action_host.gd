@@ -261,7 +261,14 @@ func _sealed_action_host_in_place_session_intent(surface_action: String, index: 
 		return _sealed_action_host_rejection("invalid_intent", "Session-only Blackjack input has no sealed handler.")
 	var ledger := _sealed_action_host_in_place_ledger()
 	if ledger.is_empty():
-		return _sealed_action_host_rejection("internal_fail_closed", "The live Blackjack session could not be validated.")
+		# First entry has no persisted authority session yet. Initializing the small
+		# deterministic ledger on the live table is non-economic and lets the first
+		# chip/card interaction avoid cloning the complete run. Any resolving command
+		# still restarts below on the isolated transaction path.
+		ledger = _sealed_action_host_ledger(_foundation.run_state, true)
+		if ledger.is_empty():
+			return _sealed_action_host_rejection("internal_fail_closed", "The live table session could not be initialized.")
+		_sealed_action_host_store_ledger(_foundation.run_state, ledger)
 	if not (ledger.get("pending_delivery", {}) as Dictionary).is_empty():
 		return _sealed_action_host_rejection("pending_delivery", "Retry or cancel the pending Blackjack action before changing the table.")
 	var session: Dictionary = (ledger.get("session", {}) as Dictionary).duplicate(true)
@@ -271,7 +278,7 @@ func _sealed_action_host_in_place_session_intent(surface_action: String, index: 
 	if typeof(command_value) != TYPE_DICTIONARY:
 		return _sealed_action_host_rejection("invalid_intent", "Session-only Blackjack input returned an invalid command.")
 	var command := command_value as Dictionary
-	if bool(command.get("direct_resolve", false)) or bool(command.get("resolve", false)) or not str(command.get("action_id", "")).is_empty():
+	if bool(command.get("direct_resolve", false)) or bool(command.get("resolve", false)):
 		# Some hand controls are session-only until the selected card completes the
 		# round. Let those terminal variants restart on the isolated transaction
 		# path instead of either mutating live economics or rejecting a valid click.
@@ -287,6 +294,10 @@ func _sealed_action_host_in_place_session_intent(surface_action: String, index: 
 				var patch_value: Variant = _foundation.current_game.call(patch_method, next_session, _foundation.run_state, _foundation.run_state.current_environment)
 				if typeof(patch_value) == TYPE_DICTIONARY and not (patch_value as Dictionary).is_empty():
 					command["surface_state_patch"] = patch_value
+		# The authority ledger now owns a deep, durable copy of this session. The
+		# retained presentation state can share the command's nested values instead
+		# of recursively cloning the same cards or bet history again.
+		command["surface_transient"] = true
 	return command
 
 
@@ -456,6 +467,9 @@ func _sealed_action_host_surface_intent_impl(surface_action: String, index: int,
 			"ledger": ledger,
 			"delivery": command.get("_sealed_action_host_delivery", {}),
 		}
+	# Publication staged an isolated copy in the ledger. Avoid another recursive
+	# copy when Foundation retains this command session for presentation.
+	command["surface_transient"] = true
 	return command
 
 

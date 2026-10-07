@@ -267,6 +267,13 @@ func checkpoint_surface_ui_state_for_save(ui_state: Dictionary, run_state: RunSt
 	checkpoint_surface_ui_state(ui_state, run_state, environment)
 
 
+# Modules whose save checkpoint is entirely backed by durable/runtime state can
+# skip construction of the retained surface UI snapshot. That snapshot may hold
+# a complete card shoe, roulette undo history, or dense physical-machine view.
+func checkpoint_surface_ui_state_for_save_requires_ui_state() -> bool:
+	return true
+
+
 func foundation_save_ready(_run_state: RunState, _environment: Dictionary) -> bool:
 	return true
 

@@ -1567,7 +1567,16 @@ func _surface_action_uses_game_binding(action: String) -> bool:
 func _current_game_bound_surface_action(action: String, index: int) -> Dictionary:
 	if current_game == null or run_state == null:
 		return {"action": action, "index": index}
-	var surface_state := current_game.surface_state(run_state, run_state.current_environment, _current_game_surface_ui_state())
+	# The canvas already resolved this binding for ordinary pointer input. Reuse
+	# its current presentation state for keyboard/direct callers too; rebuilding a
+	# whole table just to read one binding delays the real action work.
+	var surface_state: Dictionary = {}
+	if game_surface_canvas != null:
+		var rendered_state: Dictionary = game_surface_canvas.realtime_surface_state()
+		if str(rendered_state.get("game_id", "")) == current_game.get_id():
+			surface_state = rendered_state
+	if surface_state.is_empty():
+		surface_state = current_game.surface_state(run_state, run_state.current_environment, _current_game_surface_ui_state())
 	var bindings: Dictionary = surface_state.get("surface_action_bindings", {}) if typeof(surface_state.get("surface_action_bindings", {})) == TYPE_DICTIONARY else {}
 	var binding_value: Variant = bindings.get(action, {})
 	if typeof(binding_value) != TYPE_DICTIONARY or (binding_value as Dictionary).is_empty():
@@ -6119,7 +6128,10 @@ func _autosave_foundation_run(status_text: String = "Autosaved.", force: bool = 
 
 func _prepare_foundation_run_save() -> void:
 	if current_game != null and run_state != null and not run_state.current_environment.is_empty():
-		current_game.checkpoint_surface_ui_state_for_save(_current_game_surface_ui_state(), run_state, run_state.current_environment)
+		var checkpoint_ui_state: Dictionary = {}
+		if current_game.checkpoint_surface_ui_state_for_save_requires_ui_state():
+			checkpoint_ui_state = _current_game_surface_ui_state()
+		current_game.checkpoint_surface_ui_state_for_save(checkpoint_ui_state, run_state, run_state.current_environment)
 	_evaluate_run_terminal_state()
 	if procedural_music_player != null:
 		run_state.remember_music_tempo_state(procedural_music_player.adaptive_tempo_save_state())
@@ -7218,6 +7230,7 @@ func _talk_dock_canvas_lifecycle_snapshot() -> Dictionary:
 		"environment_drunk_effect_mode": environment_canvas.drunk_effect_mode if environment_canvas != null else "distortion",
 		"environment_reduce_motion": environment_canvas.reduce_motion if environment_canvas != null else false,
 		"environment_small_screen_mode": environment_canvas.small_screen_mode if environment_canvas != null else false,
+		"environment_object_labels_and_borders_enabled": environment_canvas.object_labels_and_borders_enabled if environment_canvas != null else true,
 		"environment_overlay_repositioned_object_ids": environment_canvas.overlay_repositioned_object_ids.duplicate() if environment_canvas != null else [],
 		"environment_selected_object_id": environment_canvas.selected_object_id if environment_canvas != null else "",
 		"environment_hovered_object_id": environment_canvas.hovered_object_id if environment_canvas != null else "",
@@ -7274,6 +7287,7 @@ func _restore_talk_dock_canvas_lifecycle_snapshot(snapshot: Dictionary) -> void:
 		environment_canvas.drunk_effect_mode = str(snapshot.get("environment_drunk_effect_mode", "distortion"))
 		environment_canvas.reduce_motion = bool(snapshot.get("environment_reduce_motion", false))
 		environment_canvas.small_screen_mode = bool(snapshot.get("environment_small_screen_mode", false))
+		environment_canvas.object_labels_and_borders_enabled = bool(snapshot.get("environment_object_labels_and_borders_enabled", true))
 		environment_canvas.overlay_repositioned_object_ids.assign(JsonCoerceScript._copy_array(snapshot.get("environment_overlay_repositioned_object_ids", [])))
 		environment_canvas.call("_cache_scenario_presentation")
 		environment_canvas.call("_rebuild_scene_object_cache")
@@ -8522,6 +8536,7 @@ func _ensure_main_menu_background_built() -> void:
 	if main_menu_background != null or start_screen == null:
 		return
 	main_menu_background = PixelSceneCanvasScript.new()
+	main_menu_background.call("set_object_labels_and_borders_enabled", bool(user_settings.object_labels_and_borders_enabled) if user_settings != null else true)
 	main_menu_background.set_anchors_preset(Control.PRESET_FULL_RECT)
 	# _reroll_main_menu_background() both selects and publishes the environment.
 	# Avoid the former select-then-discard pass that cloned every candidate twice.
@@ -15960,7 +15975,10 @@ func _interactable_environment_cache_token(environment: Dictionary) -> String:
 	# the room object catalog and made late-run lender selection take hundreds of
 	# milliseconds. Include the small authored interaction collections explicitly
 	# so in-place host/test updates cannot reuse a stale catalog.
-	var layout := JsonCoerceScript._copy_dict(environment.get("layout", {}))
+	var layout_value: Variant = environment.get("layout", {})
+	var layout: Dictionary = layout_value as Dictionary if typeof(layout_value) == TYPE_DICTIONARY else {}
+	var manifest_value: Variant = environment.get("object_manifest", {})
+	var manifest: Dictionary = manifest_value as Dictionary if typeof(manifest_value) == TYPE_DICTIONARY else {}
 	return JSON.stringify([
 		str(environment.get("id", "")),
 		str(environment.get("world_node_id", "")),
@@ -15969,8 +15987,8 @@ func _interactable_environment_cache_token(environment: Dictionary) -> String:
 		int(environment.get("environment_runtime_revision", 0)),
 		str(environment.get("scenario_semantic_digest", "")),
 		str(environment.get("scenario_layout_authority_digest", "")),
-		int(environment.get("object_manifest_revision", JsonCoerceScript._copy_dict(environment.get("object_manifest", {})).get("revision", 0))),
-		str(environment.get("object_manifest_digest", JsonCoerceScript._copy_dict(environment.get("object_manifest", {})).get("digest", ""))),
+		int(environment.get("object_manifest_revision", manifest.get("revision", 0))),
+		str(environment.get("object_manifest_digest", manifest.get("digest", ""))),
 		environment.get("runtime_object_manifest_entries", []),
 		bool(environment.get("scenario_semantic_ready", false)),
 		bool(environment.get("scenario_restore_pending_trusted_rebuild", false)),
@@ -17084,6 +17102,10 @@ func _is_environment_test_session() -> bool:
 
 
 func _on_developer_placement_lock_requested(request: Dictionary) -> void:
+	# Signals are synchronous. Report persistence back through the request so the
+	# canvas does not paint or promote a coordinate after a failed durable write.
+	request["_placement_lock_handled"] = true
+	request["_placement_lock_persisted"] = false
 	var environment := JsonCoerceScript._copy_dict(request.get("environment", {}))
 	var result := DeveloperPlacementStoreScript.save_position(
 		environment,
@@ -17094,6 +17116,9 @@ func _on_developer_placement_lock_requested(request: Dictionary) -> void:
 	if not bool(result.get("ok", false)):
 		_show_message(str(result.get("error", "Could not lock that placement.")))
 		_render_foundation_snapshots()
+		return
+	request["_placement_lock_persisted"] = true
+	if bool(request.get("defer_refresh", false)):
 		return
 	var refresh_result := _refresh_developer_authored_environment()
 	if not bool(refresh_result.get("ok", false)):
@@ -17122,7 +17147,14 @@ func _on_developer_placement_reset_requested(request: Dictionary) -> void:
 func _on_developer_placement_promote_requested() -> void:
 	var result := DeveloperPlacementStoreScript.promote_user_overrides()
 	if not bool(result.get("ok", false)):
-		_show_message(str(result.get("error", "Could not save placements to the project.")))
+		var promote_error := str(result.get("error", "Could not save placements to the project."))
+		# A pending coordinate was already saved to the writable override store.
+		# Refresh that authoritative state even when copying it into the project
+		# fails, so the run catalog and placement canvas cannot diverge.
+		var recovery_refresh := _refresh_developer_authored_environment()
+		if not bool(recovery_refresh.get("ok", false)):
+			promote_error = "%s %s" % [promote_error, str(recovery_refresh.get("error", "The room could not refresh the retained placement."))]
+		_show_message(promote_error)
 		return
 	var refresh_result := _refresh_developer_authored_environment()
 	if not bool(refresh_result.get("ok", false)):
@@ -17131,7 +17163,15 @@ func _on_developer_placement_promote_requested() -> void:
 	_show_message("Locked placements saved to %s." % str(result.get("path", "project data")))
 
 
+func _on_developer_placement_refresh_requested() -> void:
+	var refresh_result := _refresh_developer_authored_environment()
+	if not bool(refresh_result.get("ok", false)):
+		_show_message(str(refresh_result.get("error", "Saved placements could not refresh in this room yet.")))
+
+
 func _on_developer_layout_save_requested(request: Dictionary) -> void:
+	request["_developer_layout_save_handled"] = true
+	request["_developer_layout_save_persisted"] = false
 	var environment := JsonCoerceScript._copy_dict(request.get("environment", {}))
 	var positions := JsonCoerceScript._copy_dict(request.get("full_positions", {}))
 	var result := DeveloperPlacementStoreScript.save_layout(
@@ -17142,6 +17182,7 @@ func _on_developer_layout_save_requested(request: Dictionary) -> void:
 	if not bool(result.get("ok", false)):
 		_show_message(str(result.get("error", "Could not save the current environment layout.")))
 		return
+	request["_developer_layout_save_persisted"] = true
 	var coverage := DeveloperPlacementStoreScript.coverage_snapshot()
 	var missing_value: Variant = coverage.get("missing_layout_ids", [])
 	var missing_count := (missing_value as Array).size() if typeof(missing_value) == TYPE_ARRAY else 0
@@ -17244,6 +17285,8 @@ func _refresh_developer_authored_environment() -> Dictionary:
 	interactable_object_view_cache_key = ""
 	if run_state == null or run_state.current_environment.is_empty():
 		_render_foundation_snapshots()
+		if environment_canvas != null:
+			environment_canvas.acknowledge_developer_placement_authority_refresh()
 		return {"ok": true}
 	var layout := JsonCoerceScript._copy_dict(run_state.current_environment.get("layout", {}))
 	layout.erase("generated_object_rect_version")
@@ -17260,6 +17303,8 @@ func _refresh_developer_authored_environment() -> Dictionary:
 			_render_foundation_snapshots()
 			return {"ok": false, "error": str(errors[0]) if not errors.is_empty() else "The room placement could not be finalized."}
 	_render_foundation_snapshots()
+	if environment_canvas != null:
+		environment_canvas.acknowledge_developer_placement_authority_refresh()
 	return {"ok": true}
 
 
@@ -21642,8 +21687,11 @@ func _apply_accessibility_settings() -> void:
 		heat_gain_feedback_overlay.set_reduce_motion(bool(user_settings.reduce_motion) if user_settings != null else false)
 	if environment_canvas != null:
 		environment_canvas.set_small_screen_mode(small_screen_enabled)
+		environment_canvas.set_object_labels_and_borders_enabled(bool(user_settings.object_labels_and_borders_enabled) if user_settings != null else true)
 		environment_canvas.set_developer_placement_mode(bool(user_settings.developer_placement_mode) if user_settings != null else false)
 		environment_canvas.set_developer_slot_placement_mode(bool(user_settings.developer_slot_placement_mode) if user_settings != null else false)
+	if main_menu_background != null:
+		main_menu_background.call("set_object_labels_and_borders_enabled", bool(user_settings.object_labels_and_borders_enabled) if user_settings != null else true)
 	if game_surface_canvas != null:
 		game_surface_canvas.set_small_screen_mode(small_screen_enabled)
 	if run_inventory_screen != null:
@@ -21898,7 +21946,7 @@ func _texture_for_image_asset_path(asset_path: String) -> Texture2D:
 		return run_item_icon_texture_cache[path] as Texture2D
 	if not ResourceLoader.exists(path):
 		return _load_uncached_run_item_texture(path)
-	var texture := ResourceLoader.load(path, "Texture2D", ResourceLoader.CACHE_MODE_IGNORE) as Texture2D
+	var texture := ResourceLoader.load(path, "Texture2D", ResourceLoader.CACHE_MODE_REUSE) as Texture2D
 	_remember_run_item_texture(path, texture)
 	return texture
 

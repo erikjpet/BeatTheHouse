@@ -93,7 +93,13 @@ const BASE_EVENT_ART_PROPS := [
 # No coordinate search, displacement, repack, fallback grid, or RNG is used.
 static func bind_base_layout(environment: Dictionary, active_entries: Array, shared_occupancy: Dictionary = {}) -> Dictionary:
 	var surface_map := EnvironmentPlacementScript.surface_map(environment)
-	var room_slots := _all_family_slots(surface_map)
+	var family_slots: Dictionary = {}
+	var room_slots: Array = []
+	for family_value in SLOT_FAMILIES:
+		var family := str(family_value)
+		var ordered_family_slots := _family_slots(surface_map, family)
+		family_slots[family] = ordered_family_slots
+		room_slots.append_array(ordered_family_slots)
 	var initial_occupancy := shared_occupancy.duplicate(true)
 	var occupied := initial_occupancy.duplicate(true)
 	var object_rects: Dictionary = {}
@@ -106,16 +112,26 @@ static func bind_base_layout(environment: Dictionary, active_entries: Array, sha
 	var scenario_id := str(scenario_state.get("scenario_id", scenario_state.get("id", ""))).strip_edges()
 	if not scenario_id.is_empty():
 		warning_scope += "/%s" % scenario_id
-	var entries := active_entries.duplicate(true)
+	var entries := active_entries.duplicate()
+	var entry_sort_keys: Dictionary = {}
+	for entry_value in entries:
+		var sortable_entry := _dict_view(entry_value)
+		var sortable_id := str(sortable_entry.get("object_id", ""))
+		entry_sort_keys[sortable_id] = {
+			"shop_order": _shop_item_order(environment, sortable_id),
+			"exact": bool(_slot_preference(surface_map, sortable_entry, sortable_id).get("exact", false)),
+		}
 	entries.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
-		var left := _dict(left_value)
-		var right := _dict(right_value)
+		var left := _dict_view(left_value)
+		var right := _dict_view(right_value)
 		var left_id := str(left.get("object_id", ""))
 		var right_id := str(right.get("object_id", ""))
-		var left_shop_order := _shop_item_order(environment, left_id)
-		var right_shop_order := _shop_item_order(environment, right_id)
-		var left_exact := bool(_slot_preference(surface_map, left, left_id).get("exact", false))
-		var right_exact := bool(_slot_preference(surface_map, right, right_id).get("exact", false))
+		var left_key := _dict_view(entry_sort_keys.get(left_id, {}))
+		var right_key := _dict_view(entry_sort_keys.get(right_id, {}))
+		var left_shop_order := int(left_key.get("shop_order", -1))
+		var right_shop_order := int(right_key.get("shop_order", -1))
+		var left_exact := bool(left_key.get("exact", false))
+		var right_exact := bool(right_key.get("exact", false))
 		if left_exact != right_exact:
 			return left_exact
 		if left_shop_order >= 0 and right_shop_order >= 0 and left_shop_order != right_shop_order:
@@ -153,7 +169,12 @@ static func bind_base_layout(environment: Dictionary, active_entries: Array, sha
 		var preference := str(preference_data.get("slot_id", "")).strip_edges()
 		# Generated base records are actionable by default. Decorative-only late
 		# records bypass this inventory; never serialize an undersized room target.
-		var candidate_slots := _candidate_slots_for_preference(surface_map, slot_family, preference_data)
+		var candidate_slots := _candidate_slots_for_preference(
+			surface_map,
+			slot_family,
+			preference_data,
+			_array_view(family_slots.get(slot_family, []))
+		)
 		placement_class = _exit_preference_class(candidate_slots, slot_family, preference, placement_class)
 		var slot := _select_slot(candidate_slots, occupied, placement_class, preference, bool(preference_data.get("exact", false)), MIN_INTERACTIVE_TARGET)
 		if slot.is_empty():
@@ -194,7 +215,12 @@ static func bind_base_layout(environment: Dictionary, active_entries: Array, sha
 # reuse it, extend it with late records, or derive semantic authority from it.
 # Room bindings are immutable authored reservations; only bindings with a live
 # object_rect are rendered. Overflow is the one geometry-free presentation.
-static func validate_base_layout_authority(environment: Dictionary, current_records: Array = [], allow_unbound_records: bool = false) -> Dictionary:
+static func validate_base_layout_authority(
+	environment: Dictionary,
+	current_records: Array = [],
+	allow_unbound_records: bool = false,
+	validation_context: Dictionary = {}
+) -> Dictionary:
 	var errors: Array = []
 	var layout_value: Variant = environment.get("layout")
 	if typeof(layout_value) != TYPE_DICTIONARY:
@@ -207,10 +233,18 @@ static func validate_base_layout_authority(environment: Dictionary, current_reco
 		return {"ok": false, "errors": errors}
 	if typeof(layout.get("slot_schema_version")) != TYPE_INT or int(layout.get("slot_schema_version", 0)) != SLOT_SCHEMA_VERSION:
 		errors.append("Persisted base slot authority has an invalid schema version.")
-	var surface_map := EnvironmentPlacementScript.surface_map(environment)
-	errors.append_array(_surface_map_errors(surface_map))
-	var exact_action_host_ids := _dict(surface_map.get("scenario_instance_action_host_ids", {}))
-	var expected_map_digest := slot_map_digest(surface_map)
+	var context_surface_value: Variant = validation_context.get("surface_map")
+	var surface_map := _dict_view(context_surface_value) \
+		if typeof(context_surface_value) == TYPE_DICTIONARY \
+		else EnvironmentPlacementScript.surface_map(environment)
+	if validation_context.has("surface_errors"):
+		errors.append_array(_array_view(validation_context.get("surface_errors", [])))
+	else:
+		errors.append_array(_surface_map_errors(surface_map))
+	var exact_action_host_ids := _dict_view(surface_map.get("scenario_instance_action_host_ids", {}))
+	var expected_map_digest := str(validation_context.get("slot_map_digest", ""))
+	if expected_map_digest.is_empty():
+		expected_map_digest = slot_map_digest(surface_map)
 	if typeof(layout.get("slot_map_digest")) != TYPE_STRING or str(layout.get("slot_map_digest", "")) != expected_map_digest:
 		errors.append("Persisted base slot authority does not match the authored slot map digest.")
 	if typeof(layout.get("slot_bindings")) != TYPE_DICTIONARY:
@@ -235,7 +269,10 @@ static func validate_base_layout_authority(environment: Dictionary, current_reco
 	var stored_digest := str(layout.get("slot_binding_digest", ""))
 	if stored_digest.is_empty() or stored_digest != binding_digest(bindings):
 		errors.append("Persisted base slot authority binding digest is missing or stale.")
-	var authored_slots := _slots_by_id(_all_family_slots(surface_map))
+	var context_slots_value: Variant = validation_context.get("authored_slots")
+	var authored_slots := _dict_view(context_slots_value) \
+		if typeof(context_slots_value) == TYPE_DICTIONARY \
+		else _slots_by_id(_all_family_slots(surface_map))
 	var overflow_ids: Array = []
 	var room_ids_by_slot: Dictionary = {}
 	var binding_ids := bindings.keys()
@@ -282,7 +319,7 @@ static func validate_base_layout_authority(environment: Dictionary, current_reco
 			if not slot_id.is_empty() or not binding_slot.is_empty() or object_rects.has(identity):
 				errors.append("Persisted base overflow binding %s is not geometry-free." % identity)
 		elif mode == PRESENTATION_ROOM:
-			var authored_slot := _dict(authored_slots.get(slot_id, {}))
+			var authored_slot := _dict_view(authored_slots.get(slot_id, {}))
 			var minimum_required := true
 			if current_records_by_id.has(identity):
 				minimum_required = bool(_dict(current_records_by_id.get(identity, {})).get("interactive", true))
@@ -577,8 +614,14 @@ static func _base_layout_category_address(environment: Dictionary, object_type: 
 # other record is attached to a visible room object by the interaction composer.
 static func bind_base_records(environment: Dictionary, records: Array, existing_bindings: Dictionary = {}, shared_occupancy: Dictionary = {}) -> Dictionary:
 	var surface_map := EnvironmentPlacementScript.surface_map(environment)
-	var exact_action_host_ids := _dict(surface_map.get("scenario_instance_action_host_ids", {}))
-	var room_slots := _all_family_slots(surface_map)
+	var exact_action_host_ids := _dict_view(surface_map.get("scenario_instance_action_host_ids", {}))
+	var family_slots: Dictionary = {}
+	var room_slots: Array = []
+	for family_value in SLOT_FAMILIES:
+		var family := str(family_value)
+		var ordered_family_slots := _family_slots(surface_map, family)
+		family_slots[family] = ordered_family_slots
+		room_slots.append_array(ordered_family_slots)
 	var layout := _dict(environment.get("layout", {}))
 	# bind_base_records consumes the complete current interaction refresh. Build
 	# its identity set before authenticating persisted geometry so a rectangle for
@@ -590,6 +633,13 @@ static func bind_base_records(environment: Dictionary, records: Array, existing_
 	var schema_errors := _surface_map_errors(surface_map)
 	if not schema_errors.is_empty():
 		return {"ok": false, "records": records.duplicate(true), "slot_bindings": {}, "overflow_ids": [], "object_rects": {}, "warnings": warnings, "errors": schema_errors}
+	var slot_map_digest_value := slot_map_digest(surface_map)
+	var validation_context := {
+		"surface_map": surface_map,
+		"surface_errors": schema_errors,
+		"slot_map_digest": slot_map_digest_value,
+		"authored_slots": _slots_by_id(room_slots),
+	}
 	for record_value in records:
 		var current_record := _dict(record_value)
 		var current_id := str(current_record.get("object_id", "")).strip_edges()
@@ -606,9 +656,9 @@ static func bind_base_records(environment: Dictionary, records: Array, existing_
 		# that provably dormant geometry before applying the unchanged strict
 		# authority validator; live or room-bound inconsistencies still fail closed.
 		layout = _without_dormant_orphan_object_rects(layout, current_record_ids)
-		var authenticated_environment := environment.duplicate(true)
+		var authenticated_environment := environment.duplicate(false)
 		authenticated_environment["layout"] = layout.duplicate(true)
-		var prior_authority := validate_base_layout_authority(authenticated_environment, records, true)
+		var prior_authority := validate_base_layout_authority(authenticated_environment, records, true, validation_context)
 		if not bool(prior_authority.get("ok", false)):
 			return {"ok": false, "records": records.duplicate(true), "slot_bindings": {}, "overflow_ids": [], "object_rects": {}, "errors": _array(prior_authority.get("errors", []))}
 		bindings = _dict(prior_authority.get("slot_bindings", {}))
@@ -687,15 +737,25 @@ static func bind_base_records(environment: Dictionary, records: Array, existing_
 		var object_id := str(record.get("object_id", "")).strip_edges()
 		if not object_id.is_empty():
 			ordered.append(record)
+	var ordered_sort_keys: Dictionary = {}
+	for record_value in ordered:
+		var sortable_record := _dict_view(record_value)
+		var sortable_id := str(sortable_record.get("object_id", ""))
+		ordered_sort_keys[sortable_id] = {
+			"shop_order": _shop_item_order(environment, sortable_id),
+			"exact": bool(_slot_preference(surface_map, sortable_record, sortable_id).get("exact", false)),
+		}
 	ordered.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
-		var left := _dict(left_value)
-		var right := _dict(right_value)
+		var left := _dict_view(left_value)
+		var right := _dict_view(right_value)
 		var left_id := str(left.get("object_id", ""))
 		var right_id := str(right.get("object_id", ""))
-		var left_shop_order := _shop_item_order(environment, left_id)
-		var right_shop_order := _shop_item_order(environment, right_id)
-		var left_exact := bool(_slot_preference(surface_map, left, left_id).get("exact", false))
-		var right_exact := bool(_slot_preference(surface_map, right, right_id).get("exact", false))
+		var left_key := _dict_view(ordered_sort_keys.get(left_id, {}))
+		var right_key := _dict_view(ordered_sort_keys.get(right_id, {}))
+		var left_shop_order := int(left_key.get("shop_order", -1))
+		var right_shop_order := int(right_key.get("shop_order", -1))
+		var left_exact := bool(left_key.get("exact", false))
+		var right_exact := bool(right_key.get("exact", false))
 		if left_exact != right_exact:
 			return left_exact
 		if left_shop_order >= 0 and right_shop_order >= 0 and left_shop_order != right_shop_order:
@@ -740,7 +800,12 @@ static func bind_base_records(environment: Dictionary, records: Array, existing_
 		var preference_data := _slot_preference(surface_map, binding_entry, object_id)
 		var preference := str(preference_data.get("slot_id", "")).strip_edges()
 		var minimum_size := MIN_INTERACTIVE_TARGET if bool(record.get("interactive", true)) else Vector2.ZERO
-		var candidate_slots := _candidate_slots_for_preference(surface_map, slot_family, preference_data)
+		var candidate_slots := _candidate_slots_for_preference(
+			surface_map,
+			slot_family,
+			preference_data,
+			_array_view(family_slots.get(slot_family, []))
+		)
 		placement_class = _exit_preference_class(candidate_slots, slot_family, preference, placement_class)
 		var slot := _select_slot(candidate_slots, occupied, placement_class, preference, bool(preference_data.get("exact", false)), minimum_size)
 		if slot.is_empty():
@@ -811,16 +876,16 @@ static func bind_base_records(environment: Dictionary, records: Array, existing_
 	var binding_digest_value := binding_digest(bindings)
 	var candidate_layout := layout.duplicate(true)
 	candidate_layout["slot_schema_version"] = SLOT_SCHEMA_VERSION
-	candidate_layout["slot_map_digest"] = slot_map_digest(surface_map)
+	candidate_layout["slot_map_digest"] = slot_map_digest_value
 	candidate_layout["slot_binding_digest"] = binding_digest_value
 	candidate_layout["slot_bindings"] = bindings.duplicate(true)
 	candidate_layout["slot_overflow_ids"] = overflow_ids.duplicate(true)
 	candidate_layout["object_rects"] = object_rects.duplicate(true)
-	var candidate_environment := environment.duplicate(true)
+	var candidate_environment := environment.duplicate(false)
 	candidate_environment["layout"] = candidate_layout
 	if not errors.is_empty():
 		return {"ok": false, "records": records.duplicate(true), "slot_bindings": bindings, "overflow_ids": [], "object_rects": object_rects, "warnings": warnings, "errors": errors}
-	var candidate_authority := validate_base_layout_authority(candidate_environment, result_records)
+	var candidate_authority := validate_base_layout_authority(candidate_environment, result_records, false, validation_context)
 	if not bool(candidate_authority.get("ok", false)):
 		return {"ok": false, "records": records.duplicate(true), "slot_bindings": {}, "overflow_ids": [], "object_rects": {}, "errors": _array(candidate_authority.get("errors", []))}
 	var candidate_commit_proof := base_layout_commit_proof(candidate_environment)
@@ -831,7 +896,7 @@ static func bind_base_records(environment: Dictionary, records: Array, existing_
 		"overflow_ids": overflow_ids,
 		"object_rects": object_rects,
 		"slot_schema_version": SLOT_SCHEMA_VERSION,
-		"slot_map_digest": slot_map_digest(surface_map),
+		"slot_map_digest": slot_map_digest_value,
 		"binding_digest": binding_digest_value,
 		"authenticated_prior_layout": layout.duplicate(true),
 		"validated_candidate_layout": candidate_layout.duplicate(true),
@@ -879,14 +944,14 @@ static func bind_scenario_visuals(environment: Dictionary, visual_entries: Array
 			"occupied_slot_ids": [],
 			"errors": errors,
 		}
-	var entries := visual_entries.duplicate(true)
+	var entries := visual_entries.duplicate()
 	entries.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
-		return str(_dict(left_value).get("identity", "")) < str(_dict(right_value).get("identity", ""))
+		return str(_dict_view(left_value).get("identity", "")) < str(_dict_view(right_value).get("identity", ""))
 	)
 	# True navigation exits and moving actors reserve first.
 	entries.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
-		var left := _dict(left_value)
-		var right := _dict(right_value)
+		var left := _dict_view(left_value)
+		var right := _dict_view(right_value)
 		var left_semantic := _dict(left.get("semantic", {}))
 		var right_semantic := _dict(right.get("semantic", {}))
 		var left_stable := str(left.get("identity", "")).trim_prefix("scenario::")
@@ -1097,33 +1162,33 @@ static func slot_map_digest(surface_map: Dictionary) -> String:
 	return JSON.stringify({
 		"schema_version": int(surface_map.get("slot_schema_version", 0)),
 		"map_id": str(surface_map.get("id", "")),
-		"fixed_slots": _array(surface_map.get("fixed_slots", [])),
-		"event_slots": _array(surface_map.get("event_slots", [])),
-		"scenario_slots": _array(surface_map.get("scenario_slots", [])),
-		"exit_slots": _array(surface_map.get("exit_slots", [])),
-		"walk_lanes": _array(surface_map.get("walk_lanes", [])),
-		"actor_routes": _array(surface_map.get("actor_routes", [])),
-		"fixed_object_slot_ids": _dict(surface_map.get("fixed_object_slot_ids", {})),
-		"event_object_slot_ids": _dict(surface_map.get("event_object_slot_ids", {})),
-		"scenario_object_slot_ids": _dict(surface_map.get("scenario_object_slot_ids", {})),
-		"exit_object_slot_ids": _dict(surface_map.get("exit_object_slot_ids", {})),
-		"fixed_category_slot_ids": _dict(surface_map.get("fixed_category_slot_ids", {})),
-		"event_category_slot_ids": _dict(surface_map.get("event_category_slot_ids", {})),
-		"scenario_category_slot_ids": _dict(surface_map.get("scenario_category_slot_ids", {})),
-		"exit_category_slot_ids": _dict(surface_map.get("exit_category_slot_ids", {})),
-		"object_family_ids": _dict(surface_map.get("object_family_ids", {})),
+		"fixed_slots": _array_view(surface_map.get("fixed_slots", [])),
+		"event_slots": _array_view(surface_map.get("event_slots", [])),
+		"scenario_slots": _array_view(surface_map.get("scenario_slots", [])),
+		"exit_slots": _array_view(surface_map.get("exit_slots", [])),
+		"walk_lanes": _array_view(surface_map.get("walk_lanes", [])),
+		"actor_routes": _array_view(surface_map.get("actor_routes", [])),
+		"fixed_object_slot_ids": _dict_view(surface_map.get("fixed_object_slot_ids", {})),
+		"event_object_slot_ids": _dict_view(surface_map.get("event_object_slot_ids", {})),
+		"scenario_object_slot_ids": _dict_view(surface_map.get("scenario_object_slot_ids", {})),
+		"exit_object_slot_ids": _dict_view(surface_map.get("exit_object_slot_ids", {})),
+		"fixed_category_slot_ids": _dict_view(surface_map.get("fixed_category_slot_ids", {})),
+		"event_category_slot_ids": _dict_view(surface_map.get("event_category_slot_ids", {})),
+		"scenario_category_slot_ids": _dict_view(surface_map.get("scenario_category_slot_ids", {})),
+		"exit_category_slot_ids": _dict_view(surface_map.get("exit_category_slot_ids", {})),
+		"object_family_ids": _dict_view(surface_map.get("object_family_ids", {})),
 		"fixed_objects": surface_map.get("fixed_objects", []),
-		"class_overrides": _dict(surface_map.get("class_overrides", {})),
-		"scenario_slot_ids": _dict(surface_map.get("scenario_slot_ids", {})),
-		"scenario_instance_slot_ids": _dict(surface_map.get("scenario_instance_slot_ids", {})),
-		"scenario_instance_object_slot_ids": _dict(surface_map.get("scenario_instance_object_slot_ids", {})),
-		"scenario_instance_object_class_ids": _dict(surface_map.get("scenario_instance_object_class_ids", {})),
-		"scenario_instance_art_keys": _dict(surface_map.get("scenario_instance_art_keys", {})),
-		"scenario_instance_action_host_ids": _dict(surface_map.get("scenario_instance_action_host_ids", {})),
+		"class_overrides": _dict_view(surface_map.get("class_overrides", {})),
+		"scenario_slot_ids": _dict_view(surface_map.get("scenario_slot_ids", {})),
+		"scenario_instance_slot_ids": _dict_view(surface_map.get("scenario_instance_slot_ids", {})),
+		"scenario_instance_object_slot_ids": _dict_view(surface_map.get("scenario_instance_object_slot_ids", {})),
+		"scenario_instance_object_class_ids": _dict_view(surface_map.get("scenario_instance_object_class_ids", {})),
+		"scenario_instance_art_keys": _dict_view(surface_map.get("scenario_instance_art_keys", {})),
+		"scenario_instance_action_host_ids": _dict_view(surface_map.get("scenario_instance_action_host_ids", {})),
 		"scenario_layout_id": str(surface_map.get("scenario_layout_id", "")),
-		"scenario_art_keys": _dict(surface_map.get("scenario_art_keys", {})),
-		"scenario_overflow_ids": _array(surface_map.get("scenario_overflow_ids", [])),
-		"scenario_position_route_ids": _dict(surface_map.get("scenario_position_route_ids", {})),
+		"scenario_art_keys": _dict_view(surface_map.get("scenario_art_keys", {})),
+		"scenario_overflow_ids": _array_view(surface_map.get("scenario_overflow_ids", [])),
+		"scenario_position_route_ids": _dict_view(surface_map.get("scenario_position_route_ids", {})),
 	}).sha256_text()
 
 
@@ -1521,21 +1586,23 @@ static func authored_entry_slot_family(
 
 
 static func _family_slots(surface_map: Dictionary, family: String) -> Array:
-	return _ordered_slots(EnvironmentPlacementScript.slots_for_family(surface_map, family))
+	var collection := "%s_slots" % family
+	return _ordered_slots(_array_view(surface_map.get(collection, []))) if family in SLOT_FAMILIES else []
 
 
 static func _candidate_slots_for_preference(
 	surface_map: Dictionary,
 	family: String,
-	preference_data: Dictionary
+	preference_data: Dictionary,
+	ordered_slots: Array = []
 ) -> Array:
-	var slots := _family_slots(surface_map, family)
+	var slots := ordered_slots if not ordered_slots.is_empty() else _family_slots(surface_map, family)
 	if family != "scenario" or not bool(surface_map.get("scenario_layout_scoped", false)) \
 			or bool(preference_data.get("exact", false)):
 		return slots
 	var reserves: Array = []
 	for slot_value in slots:
-		var slot := _dict(slot_value)
+		var slot := _dict_view(slot_value)
 		if bool(slot.get("runtime_reserve", false)):
 			reserves.append(slot)
 	return reserves
@@ -1551,7 +1618,7 @@ static func _all_family_slots(surface_map: Dictionary) -> Array:
 static func _slots_from_family(slots: Array, family: String) -> Array:
 	var result: Array = []
 	for slot_value in slots:
-		var slot := _dict(slot_value)
+		var slot := _dict_view(slot_value)
 		if _slot_family(slot) == family:
 			result.append(slot)
 	return _ordered_slots(result)
@@ -1576,12 +1643,12 @@ static func _slot_preference(
 	if family.is_empty() and object_id.begins_with("scenario::"):
 		family = "scenario"
 	if family == "scenario" and bool(surface_map.get("scenario_layout_scoped", false)):
-		var instance_preferences := _dict(surface_map.get("scenario_instance_slot_ids", {}))
+		var instance_preferences := _dict_view(surface_map.get("scenario_instance_slot_ids", {}))
 		for semantic_key in [position_key, stable_id, object_id]:
 			var clean_instance_key := str(semantic_key).strip_edges()
 			if not clean_instance_key.is_empty() and instance_preferences.has(clean_instance_key):
 				return {"slot_id": str(instance_preferences.get(clean_instance_key, "")).strip_edges(), "exact": true, "source": "scenario_instance_slot_ids"}
-		var instance_object_preferences := _dict(surface_map.get("scenario_instance_object_slot_ids", {}))
+		var instance_object_preferences := _dict_view(surface_map.get("scenario_instance_object_slot_ids", {}))
 		for object_key in [position_key, stable_id, object_id]:
 			var clean_object_key := str(object_key).strip_edges()
 			if not clean_object_key.is_empty() and instance_object_preferences.has(clean_object_key):
@@ -1594,14 +1661,14 @@ static func _slot_preference(
 		return {"slot_id": carried, "exact": family in ["fixed", "exit"], "source": "entry.slot_id"}
 	var object_preferences: Dictionary
 	if family == "scenario":
-		object_preferences = _dict(surface_map.get("scenario_object_slot_ids", {}))
-		var semantic_preferences := _dict(surface_map.get("scenario_slot_ids", {}))
+		object_preferences = _dict_view(surface_map.get("scenario_object_slot_ids", {}))
+		var semantic_preferences := _dict_view(surface_map.get("scenario_slot_ids", {}))
 		for semantic_key in [position_key, stable_id, object_id]:
 			var clean_semantic_key := str(semantic_key).strip_edges()
 			if not clean_semantic_key.is_empty() and semantic_preferences.has(clean_semantic_key):
 				return {"slot_id": str(semantic_preferences.get(clean_semantic_key, "")).strip_edges(), "exact": false, "source": "scenario_slot_ids"}
 	else:
-		object_preferences = _dict(surface_map.get("%s_object_slot_ids" % family, {}))
+		object_preferences = _dict_view(surface_map.get("%s_object_slot_ids" % family, {}))
 	for preference_key in [position_key, stable_id, object_id]:
 		var clean_key := str(preference_key).strip_edges()
 		if clean_key.is_empty() or not object_preferences.has(clean_key):
@@ -1611,7 +1678,7 @@ static func _slot_preference(
 			"exact": family in ["fixed", "exit"],
 			"source": "%s_object_slot_ids" % family,
 		}
-	var category_preferences := _dict(surface_map.get("%s_category_slot_ids" % family, {}))
+	var category_preferences := _dict_view(surface_map.get("%s_category_slot_ids" % family, {}))
 	var category_keys: Array = []
 	var explicit_category := str(entry.get("slot_category_key", "")).strip_edges()
 	if not explicit_category.is_empty():
@@ -1643,8 +1710,8 @@ static func _surface_map_errors(surface_map: Dictionary) -> Array:
 		if typeof(surface_map.get(collection)) != TYPE_ARRAY:
 			errors.append("Environment placement map %s must declare %s as an array." % [map_id, collection])
 			continue
-		for slot_value in _array(surface_map.get(collection, [])):
-			var slot := _dict(slot_value)
+		for slot_value in _array_view(surface_map.get(collection, [])):
+			var slot := _dict_view(slot_value)
 			var slot_id := str(slot.get("id", "")).strip_edges()
 			if slot_id.is_empty() or not slot_id.begins_with("%s." % family) or str(slot.get("kind", "")) != family:
 				errors.append("Environment placement map %s contains a malformed %s slot id/kind." % [map_id, family])
@@ -1680,7 +1747,7 @@ static func _surface_map_errors(surface_map: Dictionary) -> Array:
 		for mapped_slot_value in (instance_value as Dictionary).values():
 			if typeof(mapped_slot_value) != TYPE_STRING or not str(mapped_slot_value).begins_with("scenario.") or not seen.has(str(mapped_slot_value)):
 				errors.append("Environment placement map %s %s references a missing or non-scenario slot." % [map_id, instance_field])
-	var instance_object_positions := _dict(surface_map.get("scenario_instance_object_slot_ids", {}))
+	var instance_object_positions := _dict_view(surface_map.get("scenario_instance_object_slot_ids", {}))
 	var instance_object_classes_value: Variant = surface_map.get("scenario_instance_object_class_ids", {})
 	if typeof(instance_object_classes_value) != TYPE_DICTIONARY:
 		errors.append("Environment placement map %s scenario_instance_object_class_ids must be an object." % map_id)
@@ -1698,19 +1765,19 @@ static func _surface_map_errors(surface_map: Dictionary) -> Array:
 			var placement_class_value: Variant = instance_object_classes.get(object_id_value)
 			var placement_class := str(placement_class_value).strip_edges()
 			var slot_id := str(instance_object_positions.get(object_id, "")).strip_edges()
-			var target_slot := _dict(authored_slots.get(slot_id, {}))
+			var target_slot := _dict_view(authored_slots.get(slot_id, {}))
 			if typeof(object_id_value) != TYPE_STRING or object_id.is_empty() \
 					or typeof(placement_class_value) != TYPE_STRING or placement_class not in EnvironmentPlacementScript.CLASSES:
 				errors.append("Environment placement map %s contains malformed exact scenario object class authority." % map_id)
 			elif str(target_slot.get("footprint_class", "")) != placement_class:
 				errors.append("Environment placement object %s exact class does not match its scenario slot." % object_id)
-			elif str(_dict(surface_map.get("class_overrides", {})).get(object_id, "")) != placement_class:
+			elif str(_dict_view(surface_map.get("class_overrides", {})).get(object_id, "")) != placement_class:
 				errors.append("Environment placement object %s exact class was not sealed into runtime overrides." % object_id)
 	var instance_art_value: Variant = surface_map.get("scenario_instance_art_keys", {})
 	if typeof(instance_art_value) != TYPE_DICTIONARY:
 		errors.append("Environment placement map %s scenario_instance_art_keys must be an object." % map_id)
 	else:
-		var instance_positions := _dict(surface_map.get("scenario_instance_slot_ids", {}))
+		var instance_positions := _dict_view(surface_map.get("scenario_instance_slot_ids", {}))
 		for position_key_value in (instance_art_value as Dictionary).keys():
 			var position_key := str(position_key_value).strip_edges()
 			var art_key_value: Variant = (instance_art_value as Dictionary).get(position_key_value)
@@ -1722,12 +1789,12 @@ static func _surface_map_errors(surface_map: Dictionary) -> Array:
 	if typeof(action_hosts_value) != TYPE_DICTIONARY:
 		errors.append("Environment placement map %s scenario_instance_action_host_ids must be an object." % map_id)
 	else:
-		var exact_object_positions := _dict(surface_map.get("scenario_instance_object_slot_ids", {}))
+		var exact_object_positions := _dict_view(surface_map.get("scenario_instance_object_slot_ids", {}))
 		var exact_host_ids: Dictionary = {}
 		for authored_slot_value in authored_slots.values():
-			var authored_slot := _dict(authored_slot_value)
+			var authored_slot := _dict_view(authored_slot_value)
 			for identity_field in ["occupant_ids", "scenario_object_ids"]:
-				for host_identity_value in _array(authored_slot.get(identity_field, [])):
+				for host_identity_value in _array_view(authored_slot.get(identity_field, [])):
 					var host_identity := str(host_identity_value).strip_edges()
 					if not host_identity.is_empty():
 						exact_host_ids[host_identity] = true
@@ -1747,7 +1814,7 @@ static func _surface_map_errors(surface_map: Dictionary) -> Array:
 	var object_mapping_families: Dictionary = {}
 	for mapping_family_value in SLOT_FAMILIES:
 		var mapping_family := str(mapping_family_value)
-		for object_id_value in _dict(surface_map.get("%s_object_slot_ids" % mapping_family, {})).keys():
+		for object_id_value in _dict_view(surface_map.get("%s_object_slot_ids" % mapping_family, {})).keys():
 			var object_id := str(object_id_value).strip_edges()
 			if typeof(object_id_value) != TYPE_STRING or object_id.is_empty():
 				errors.append("Environment placement map %s contains a malformed object-slot identity." % map_id)
@@ -1762,7 +1829,7 @@ static func _surface_map_errors(surface_map: Dictionary) -> Array:
 	else:
 		for object_id_value in (family_overrides_value as Dictionary).keys():
 			var override_value: Variant = (family_overrides_value as Dictionary).get(object_id_value)
-			var family := str(_dict(override_value).get("family", "")) if typeof(override_value) == TYPE_DICTIONARY else str(override_value)
+			var family := str(_dict_view(override_value).get("family", "")) if typeof(override_value) == TYPE_DICTIONARY else str(override_value)
 			if typeof(object_id_value) != TYPE_STRING or str(object_id_value).strip_edges().is_empty() or family not in SLOT_FAMILIES:
 				errors.append("Environment placement map %s object_family_ids contains a malformed assignment." % map_id)
 			elif object_mapping_families.has(str(object_id_value)) and str(object_mapping_families.get(str(object_id_value), "")) != family:
@@ -1776,12 +1843,12 @@ static func _surface_map_errors(surface_map: Dictionary) -> Array:
 		var fixed_action_owners: Dictionary = {}
 		var required_fixed_slots: Dictionary = {}
 		for declaration_value in fixed_objects_value as Array:
-			var declaration := _dict(declaration_value)
+			var declaration := _dict_view(declaration_value)
 			var instance_id := str(declaration.get("instance_object_id", declaration.get("object_id", declaration.get("id", "")))).strip_edges()
 			var presentation_id := str(declaration.get("presentation_object_id", declaration.get("presentation_id", instance_id))).strip_edges()
 			var exact_slot_id := str(declaration.get("exact_slot_id", declaration.get("slot_id", ""))).strip_edges()
 			var placement_class := str(declaration.get("placement_class", "")).strip_edges()
-			var exact_slot := _dict(authored_slots.get(exact_slot_id, {}))
+			var exact_slot := _dict_view(authored_slots.get(exact_slot_id, {}))
 			if declaration.is_empty() or instance_id.is_empty() or presentation_id.is_empty() \
 					or fixed_instance_ids.has(instance_id) or fixed_presentation_ids.has(presentation_id):
 				errors.append("Environment placement map %s fixed_objects contains a malformed or duplicate identity." % map_id)
@@ -1811,16 +1878,16 @@ static func _surface_map_errors(surface_map: Dictionary) -> Array:
 						fixed_action_owners[action_id] = instance_id
 		for action_id_value in fixed_action_owners.keys():
 			var action_id := str(action_id_value)
-			var override_value: Variant = _dict(surface_map.get("object_family_ids", {})).get(action_id, "")
-			var override_family := str(_dict(override_value).get("family", "")) if typeof(override_value) == TYPE_DICTIONARY else str(override_value)
+			var override_value: Variant = _dict_view(surface_map.get("object_family_ids", {})).get(action_id, "")
+			var override_family := str(_dict_view(override_value).get("family", "")) if typeof(override_value) == TYPE_DICTIONARY else str(override_value)
 			if not override_family.is_empty() and override_family != "fixed":
 				errors.append("Environment placement action %s is attached to a fixed host but declares %s-family ownership." % [action_id, override_family])
 			for family in SLOT_FAMILIES:
-				if family != "fixed" and _dict(surface_map.get("%s_object_slot_ids" % family, {})).has(action_id):
+				if family != "fixed" and _dict_view(surface_map.get("%s_object_slot_ids" % family, {})).has(action_id):
 					errors.append("Environment placement action %s is attached to a fixed host but claims an independent %s-family slot." % [action_id, family])
 		for slot_id_value in authored_slots.keys():
 			var slot_id := str(slot_id_value)
-			var slot := _dict(authored_slots.get(slot_id, {}))
+			var slot := _dict_view(authored_slots.get(slot_id, {}))
 			if typeof(slot.get("occupancy_required")) == TYPE_BOOL \
 					and bool(slot.get("occupancy_required", false)) != required_fixed_slots.has(slot_id):
 				errors.append("Environment placement slot %s occupancy_required does not match required fixed-object ownership." % slot_id)
@@ -1838,9 +1905,9 @@ static func _surface_map_errors(surface_map: Dictionary) -> Array:
 		errors.append("Environment placement map %s walk_lanes must be an array." % map_id)
 	else:
 		for lane_value in lanes_value as Array:
-			var lane := _dict(lane_value)
+			var lane := _dict_view(lane_value)
 			var lane_id := str(lane.get("id", "")).strip_edges()
-			if lane_id.is_empty() or lane_ids.has(lane_id) or typeof(lane.get("points")) != TYPE_ARRAY or _array(lane.get("points", [])).size() < 2:
+			if lane_id.is_empty() or lane_ids.has(lane_id) or typeof(lane.get("points")) != TYPE_ARRAY or _array_view(lane.get("points", [])).size() < 2:
 				errors.append("Environment placement map %s contains a malformed or duplicate walk lane." % map_id)
 				continue
 			lane_ids[lane_id] = true
@@ -1850,7 +1917,7 @@ static func _surface_map_errors(surface_map: Dictionary) -> Array:
 		errors.append("Environment placement map %s actor_routes must be an array." % map_id)
 	else:
 		for route_value in routes_value as Array:
-			var route := _dict(route_value)
+			var route := _dict_view(route_value)
 			var route_id := str(route.get("id", "")).strip_edges()
 			if route_id.is_empty() or routes_by_id.has(route_id):
 				errors.append("Environment placement map %s contains a malformed or duplicate actor route." % map_id)
@@ -1858,8 +1925,8 @@ static func _surface_map_errors(surface_map: Dictionary) -> Array:
 			routes_by_id[route_id] = route
 			var start_id := str(route.get("start_slot_id", "")).strip_edges()
 			var end_id := str(route.get("end_slot_id", "")).strip_edges()
-			var start_slot := _dict(authored_slots.get(start_id, {}))
-			var end_slot := _dict(authored_slots.get(end_id, {}))
+			var start_slot := _dict_view(authored_slots.get(start_id, {}))
+			var end_slot := _dict_view(authored_slots.get(end_id, {}))
 			var footprint_class := str(route.get("footprint_class", "")).strip_edges()
 			if start_id == end_id or _slot_family(start_slot) != "scenario" or _slot_family(end_slot) != "scenario":
 				errors.append("Environment placement actor route %s must use two distinct scenario-family endpoints." % route_id)
@@ -1875,7 +1942,7 @@ static func _surface_map_errors(surface_map: Dictionary) -> Array:
 					if typeof(lane_id_value) != TYPE_STRING or not lane_ids.has(str(lane_id_value)):
 						errors.append("Environment placement actor route %s references a missing walk lane." % route_id)
 			var reduced_motion_id := str(route.get("reduced_motion_slot_id", "")).strip_edges()
-			if not reduced_motion_id.is_empty() and _slot_family(_dict(authored_slots.get(reduced_motion_id, {}))) != "scenario":
+			if not reduced_motion_id.is_empty() and _slot_family(_dict_view(authored_slots.get(reduced_motion_id, {}))) != "scenario":
 				errors.append("Environment placement actor route %s has a missing or non-scenario reduced-motion slot." % route_id)
 	var position_routes_value: Variant = surface_map.get("scenario_position_route_ids")
 	if typeof(position_routes_value) != TYPE_DICTIONARY:
@@ -1931,9 +1998,9 @@ static func _shop_item_order(environment: Dictionary, object_id: String) -> int:
 	if not object_id.begins_with("item:"):
 		return -1
 	var item_id := object_id.trim_prefix("item:")
-	var offers := _array(environment.get("item_offers", []))
+	var offers := _array_view(environment.get("item_offers", []))
 	for index in range(offers.size()):
-		if str(_dict(offers[index]).get("id", "")) == item_id:
+		if str(_dict_view(offers[index]).get("id", "")) == item_id:
 			return index
 	return -1
 
@@ -1959,10 +2026,10 @@ static func _slot_meets_minimum(slot: Dictionary, minimum_size: Vector2) -> bool
 
 
 static func _ordered_slots(values: Array) -> Array:
-	var result := values.duplicate(true)
+	var result := values.duplicate()
 	result.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
-		var left := _dict(left_value)
-		var right := _dict(right_value)
+		var left := _dict_view(left_value)
+		var right := _dict_view(right_value)
 		var left_priority := int(left.get("priority", 0))
 		var right_priority := int(right.get("priority", 0))
 		return str(left.get("id", "")) < str(right.get("id", "")) if left_priority == right_priority else left_priority < right_priority
@@ -1973,7 +2040,7 @@ static func _ordered_slots(values: Array) -> Array:
 static func _slots_by_id(slots: Array) -> Dictionary:
 	var result: Dictionary = {}
 	for slot_value in slots:
-		var slot := _dict(slot_value)
+		var slot := _dict_view(slot_value)
 		var slot_id := str(slot.get("id", ""))
 		if not slot_id.is_empty():
 			result[slot_id] = slot
@@ -1983,7 +2050,7 @@ static func _slots_by_id(slots: Array) -> Dictionary:
 static func _routes_by_id(routes: Array) -> Dictionary:
 	var result: Dictionary = {}
 	for route_value in routes:
-		var route := _dict(route_value)
+		var route := _dict_view(route_value)
 		var route_id := str(route.get("id", ""))
 		if not route_id.is_empty():
 			result[route_id] = route
@@ -2242,3 +2309,14 @@ static func _dict(value: Variant) -> Dictionary:
 
 static func _array(value: Variant) -> Array:
 	return (value as Array).duplicate(true) if typeof(value) == TYPE_ARRAY else []
+
+
+# Read-only accessors for validated placement authority. The binder keeps the
+# copying helpers above at ownership boundaries, but hot scans and comparators
+# must not recursively clone the same map for every lookup.
+static func _dict_view(value: Variant) -> Dictionary:
+	return value as Dictionary if typeof(value) == TYPE_DICTIONARY else {}
+
+
+static func _array_view(value: Variant) -> Array:
+	return value as Array if typeof(value) == TYPE_ARRAY else []

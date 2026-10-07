@@ -294,12 +294,6 @@ REVIEWED_SLOT_GEOMETRY: dict[str, dict[str, dict[str, Any]]] = {
         },
     },
     "gas_station_casino": {
-        "event.doorway_2": {
-            "pos": [262.0, 120.0],
-            "hit_rect": [226.0, 96.0, 72.0, 48.0],
-            "label_anchor": [262.0, 90.0],
-            "support_id": "round3_sill_door",
-        },
         "scenario.doorway_1": {
             "pos": [350.0, 120.0],
             "hit_rect": [314.0, 96.0, 72.0, 48.0],
@@ -392,27 +386,26 @@ SCENARIO_CAPACITY_TARGETS: dict[str, dict[str, int]] = {
     "house": {"floor_fixture": 1, "standing_person": 1, "wall_mounted": 1},
 }
 
-# Event rows are independent of the selected scenario.  These reviewed banks
-# retain the established Crew/traveler/Numbers concurrency.  Jazz alone loses
-# one obsolete counter row: rumor actions now live on the fixed bartender, so
-# two simultaneous optional event clerks are no longer produced.
+# Event rows are independent of the selected scenario, but they must still have
+# a reachable producer.  These banks are the producer-backed maximum concurrent
+# inventory; category-only, scenario-only, and template-parent rows are omitted.
 EVENT_CAPACITY_TARGETS: dict[str, dict[str, int]] = {
-    "corner_store": {"behind_counter_person": 2, "floor_fixture": 1, "group": 1, "standing_person": 1, "ground_marker": 1},
-    "back_alley": {"behind_counter_person": 1, "ground_marker": 1, "floor_fixture": 1, "standing_person": 6},
-    "motel": {"behind_counter_person": 1, "surface_item": 1, "ground_marker": 1, "standing_person": 4, "doorway": 1},
-    "bar": {"behind_counter_person": 1, "floor_fixture": 2, "standing_person": 5, "doorway": 1},
-    "gas_station_casino": {"doorway": 2, "floor_fixture": 2, "surface_item": 1, "ground_marker": 1, "standing_person": 5},
-    "small_underground_casino": {"floor_fixture": 2, "standing_person": 8, "wall_mounted": 1, "surface_item": 3, "doorway": 1},
-    "small_underground_casino:club": {"floor_fixture": 1, "standing_person": 8},
-    "small_underground_casino:casino": {"floor_fixture": 1, "behind_counter_person": 1, "seated_person": 1, "standing_person": 8},
-    "small_underground_casino:back_room": {"surface_item": 4, "floor_fixture": 1, "doorway": 1, "standing_person": 6},
-    "jazz_club": {"floor_fixture": 1, "standing_person": 3},
-    "kitty_cat_lounge": {"floor_fixture": 1, "seated_person": 1, "doorway": 1, "standing_person": 6},
-    "delta_queen": {"seated_person": 1, "doorway": 1, "behind_counter_person": 1, "floor_fixture": 2, "standing_person": 6},
+    "corner_store": {"behind_counter_person": 2, "standing_person": 1, "ground_marker": 1},
+    "back_alley": {"ground_marker": 1, "floor_fixture": 1, "standing_person": 6},
+    "motel": {"behind_counter_person": 1, "ground_marker": 1, "standing_person": 4},
+    "bar": {"behind_counter_person": 1, "standing_person": 5, "doorway": 1},
+    "gas_station_casino": {"doorway": 1, "ground_marker": 1, "standing_person": 5},
+    "small_underground_casino": {},
+    "small_underground_casino:club": {"standing_person": 8},
+    "small_underground_casino:casino": {"behind_counter_person": 1, "standing_person": 8},
+    "small_underground_casino:back_room": {"standing_person": 6},
+    "jazz_club": {"standing_person": 3},
+    "kitty_cat_lounge": {"seated_person": 1, "doorway": 1, "standing_person": 5},
+    "delta_queen": {"seated_person": 1, "doorway": 1, "behind_counter_person": 1, "standing_person": 6},
     "beach": {"standing_person": 1},
-    "pawn_shop": {"floor_fixture": 1, "standing_person": 3, "shop_item": 1, "surface_item": 1},
-    "grand_casino": {"behind_counter_person": 2, "wall_mounted": 1, "floor_fixture": 1, "standing_person": 7},
-    "grand_casino_high_limit": {"floor_fixture": 1, "standing_person": 6},
+    "pawn_shop": {"standing_person": 3},
+    "grand_casino": {"behind_counter_person": 1, "wall_mounted": 1, "standing_person": 7},
+    "grand_casino_high_limit": {"standing_person": 6},
     "grand_casino_back_room": {"standing_person": 5},
     "grand_casino_cage": {},
     "motel_room": {},
@@ -1393,7 +1386,6 @@ def _normalize_conditional_people(maps: dict[str, dict[str, Any]]) -> None:
     silas_sources = {
         "motel": ("fixed.door_left_middle", "event.floor_patron_1"),
         "bar": ("fixed.travel_right", "event.floor_patron_2"),
-        "small_underground_casino": ("fixed.staff_silas", "event.floor_patron_2"),
         "small_underground_casino:casino": ("fixed.staff_silas", "event.floor_patron_1"),
         "small_underground_casino:back_room": ("fixed.staff_numbers", "event.floor_patron_1"),
         "jazz_club": ("fixed.staff_silas", "event.floor_patron_1"),
@@ -1777,7 +1769,6 @@ def _normalize_mixed_family_spacing(maps: dict[str, dict[str, Any]]) -> None:
             "fixed.patron_vince",
             "fixed.service_house_drink",
             "fixed.event_wall_notice",
-            "event.counter_patron_1",
             "scenario.item_shop_1",
             "scenario.item_shop_2",
             "scenario.surface_item_1",
@@ -1798,9 +1789,8 @@ def _normalize_mixed_family_spacing(maps: dict[str, dict[str, Any]]) -> None:
             + ", ".join(missing_back_alley)
         )
 
-    # The merchant and optional counter actor use the front of the right-hand
-    # crate.  Moving them down within that authored counter frees its top for
-    # two scenario props without changing either actor's semantic support.
+    # The merchant uses the front of the right-hand crate. Moving them down
+    # within that authored counter frees its top for two scenario props.
     _set_person_slot_geometry(
         back_alley_slots["fixed.staff_merchant"],
         (810.0, 208.0),
@@ -1809,15 +1799,6 @@ def _normalize_mixed_family_spacing(maps: dict[str, dict[str, Any]]) -> None:
         72.0,
         72.0,
     )
-    _set_person_slot_geometry(
-        back_alley_slots["event.counter_patron_1"],
-        (690.0, 208.0),
-        "behind_counter_person",
-        "right_crate_display",
-        72.0,
-        72.0,
-    )
-
     # Four scenario surface/item capacities and the guaranteed drink must all
     # coexist with the ordinary four-item shop row.  Spread them across the two
     # crate tops and the open end of the folding table.
@@ -1885,16 +1866,6 @@ def _normalize_exit_spacing(maps: dict[str, dict[str, Any]]) -> None:
     punchline = maps["small_underground_casino"]
     _remap_exit_preferences(punchline, "exit.door_right_upper", "exit.left_upper")
     _remap_exit_preferences(punchline, "exit.door_right_lower", "exit.left_lower")
-    rook_ride_door = _slot_by_id(punchline, "event.doorway_1")
-    if rook_ride_door is None:
-        raise ValueError("small_underground_casino: crew ride doorway is missing")
-    # The fixed side-door event, Rook's ride, and Leave are independent live
-    # objects.  Put Rook at the otherwise unused upper side-door aperture while
-    # the two navigation controls use the authored left exits.
-    _move_slot_to(rook_ride_door, (846.0, 168.0))
-    rook_ride_door["support_id"] = "side_door"
-    rook_ride_door["zone_id"] = "right"
-
     club = maps["small_underground_casino:club"]
     _remap_exit_preferences(club, "exit.door_right_lower", "exit.left_lower")
     club_side_door = _slot_by_id(club, "exit.door_side")
@@ -2069,8 +2040,6 @@ def _normalize_jazz_spacing(maps: dict[str, dict[str, Any]]) -> None:
         "fixed.item_shop_1",
         "fixed.item_shop_2",
         "fixed.patron_dot",
-        "event.counter_patron_1",
-        "event.floor_item_1",
         "event.floor_patron_1",
         "scenario.floor_item_1",
         "scenario.floor_item_2",
@@ -2110,14 +2079,6 @@ def _normalize_jazz_spacing(maps: dict[str, dict[str, Any]]) -> None:
         80.0,
     )
     _set_person_slot_geometry(
-        slots["event.counter_patron_1"],
-        (838.0, 236.0),
-        "behind_counter_person",
-        "bar",
-        72.0,
-        72.0,
-    )
-    _set_person_slot_geometry(
         slots["fixed.band_stage"],
         (116.0, 326.0),
         "ground_marker",
@@ -2147,7 +2108,6 @@ def _normalize_jazz_spacing(maps: dict[str, dict[str, Any]]) -> None:
         ("fixed.random_game_1", (252.0, 414.0)),
         ("fixed.item_shop_1", (337.0, 404.0)),
         ("fixed.item_shop_2", (487.0, 404.0)),
-        ("event.floor_item_1", (572.0, 414.0)),
         ("scenario.floor_item_1", (62.0, 414.0)),
         ("scenario.floor_item_2", (157.0, 414.0)),
         ("scenario.floor_item_3", (667.0, 414.0)),
@@ -2162,13 +2122,13 @@ def _normalize_jazz_spacing(maps: dict[str, dict[str, Any]]) -> None:
     _move_slot_to(slots["exit.left_middle"], (36.0, 244.0))
 
 def _normalize_grand_living_floor_capacity(maps: dict[str, dict[str, Any]]) -> None:
-    """Author optional generic event capacity for the complete living-floor cast."""
+    """Author producer-backed generic event capacity for the living-floor cast."""
 
     capacities = {
-        # Main Floor can select three ordinary events in addition to Rourke and
-        # all three deterministic rivals.
+        # Main Floor can concurrently host the reachable chain and injected
+        # standing actors. High Limit has a six-person upper bound; Back Room
+        # has five reachable standing producers.
         "grand_casino": 7,
-        # High Limit can select two ordinary events; Back Room selects one.
         "grand_casino_high_limit": 6,
         "grand_casino_back_room": 5,
     }
@@ -2219,7 +2179,6 @@ def _normalize_shared_event_person_capacity(maps: dict[str, dict[str, Any]]) -> 
         "back_alley": 6,
         "gas_station_casino": 5,
         "bar": 5,
-        "small_underground_casino": 8,
         "small_underground_casino:club": 8,
         "small_underground_casino:casino": 8,
         "small_underground_casino:back_room": 6,
@@ -2269,7 +2228,7 @@ def _normalize_public_event_capacity(maps: dict[str, dict[str, Any]]) -> None:
     standing_capacity = {
         "motel": 4,
         "jazz_club": 3,
-        "kitty_cat_lounge": 6,
+        "kitty_cat_lounge": 5,
         "delta_queen": 6,
         "beach": 1,
         "pawn_shop": 3,
@@ -2277,7 +2236,7 @@ def _normalize_public_event_capacity(maps: dict[str, dict[str, Any]]) -> None:
     standing_positions = {
         "motel": [(450.0, 424.0), (208.0, 424.0), (144.0, 424.0), (408.0, 334.0)],
         "jazz_club": [(746.0, 366.0), (810.0, 350.0), (236.0, 258.0)],
-        "kitty_cat_lounge": [(704.0, 294.0), (450.0, 278.0), (78.0, 254.0), (78.0, 172.0), (244.0, 170.0), (450.0, 148.0)],
+        "kitty_cat_lounge": [(704.0, 294.0), (450.0, 278.0), (78.0, 254.0), (78.0, 172.0), (450.0, 148.0)],
         "delta_queen": [(400.0, 282.0), (686.0, 278.0), (750.0, 278.0), (532.0, 258.0), (322.0, 246.0), (258.0, 246.0)],
         "beach": [(788.0, 406.0)],
         "pawn_shop": [(392.0, 414.0), (528.0, 414.0), (592.0, 414.0)],
@@ -2318,82 +2277,6 @@ def _normalize_public_event_capacity(maps: dict[str, dict[str, Any]]) -> None:
                 slot["zone_id"] = "foreground"
                 slot["walk_lane_ids"] = ["lane.public"]
                 slot["priority"] = 10
-
-    motel = maps["motel"]
-    _ensure_provisional_slot(
-        motel,
-        "event",
-        "event.doorway_1",
-        "doorway",
-        ("scenario.doorway_1", "exit.room_door"),
-        (-96.0, 0.0),
-    )
-    _assign_object_slot(
-        motel,
-        "event",
-        "event:chain06_nico_weekly_door",
-        "event.doorway_1",
-    )
-    motel_doorway = _slot_by_id(motel, "event.doorway_1")
-    if motel_doorway is None:
-        raise ValueError("motel: missing weekly-rates event doorway capacity")
-    _set_person_slot_geometry(
-        motel_doorway,
-        (786.0, 148.0),
-        "doorway",
-        "hallway_door",
-        64.0,
-        72.0,
-    )
-
-    jazz_club = maps["jazz_club"]
-    _ensure_provisional_slot(
-        jazz_club,
-        "event",
-        "event.counter_patron_2",
-        "behind_counter_person",
-        ("event.counter_patron_1", "fixed.staff_bartender"),
-        (-96.0, 0.0),
-    )
-    jazz_counter = _slot_by_id(jazz_club, "event.counter_patron_2")
-    if jazz_counter is None:
-        raise ValueError("jazz_club: missing second event counter capacity")
-    _set_person_slot_geometry(
-        jazz_counter,
-        (558.0, 236.0),
-        "behind_counter_person",
-        "bar",
-        72.0,
-        72.0,
-    )
-
-    pawn_shop = maps["pawn_shop"]
-    _ensure_provisional_slot(
-        pawn_shop,
-        "event",
-        "event.surface_item_1",
-        "surface_item",
-        ("scenario.surface_item_1", "event.item_shop_1"),
-        (-104.0, 0.0),
-    )
-    _assign_object_slot(
-        pawn_shop,
-        "event",
-        "event:chain06_sal_estate_item",
-        "event.surface_item_1",
-    )
-    pawn_surface = _slot_by_id(pawn_shop, "event.surface_item_1")
-    if pawn_surface is None:
-        raise ValueError("pawn_shop: missing estate-item event surface capacity")
-    _set_person_slot_geometry(
-        pawn_surface,
-        (532.0, 118.0),
-        "surface_item",
-        "display_counter",
-        72.0,
-        48.0,
-    )
-
 
 def _normalize_delivery_wall_capacity(maps: dict[str, dict[str, Any]]) -> None:
     """Give every reachable room a reusable scenario wall control slot."""
@@ -2630,7 +2513,6 @@ def _normalize_reviewed_output_order(maps: dict[str, dict[str, Any]]) -> None:
         "motel": ("event.floor_patron_1",),
         "bar": ("event.floor_patron_2",),
         "gas_station_casino": ("event.floor_patron_1",),
-        "small_underground_casino": ("event.floor_patron_2",),
         "small_underground_casino:casino": ("event.floor_patron_1",),
         "small_underground_casino:back_room": ("event.floor_patron_1",),
         "jazz_club": ("event.floor_patron_1",),
@@ -3828,6 +3710,57 @@ def _normalize_event_capacity_consolidation(
                 f"{map_id}: consolidated event bank differs: "
                 f"expected={expected} actual={dict(actual)}"
             )
+        if not expected:
+            for field in ("event_object_slot_ids", "event_category_slot_ids"):
+                preferences = map_data.get(field, {})
+                if isinstance(preferences, dict):
+                    preferences.clear()
+            families = map_data.get("object_family_ids", {})
+            if isinstance(families, dict):
+                for object_id, family in list(families.items()):
+                    if str(family) == "event":
+                        families.pop(object_id, None)
+
+
+def _normalize_compacted_event_ownership(
+    maps: dict[str, dict[str, Any]],
+) -> None:
+    """Keep named occupants on retained rows and scenario-only objects off them."""
+
+    silas_ordinals = {
+        "motel": 4,
+        "jazz_club": 3,
+        "kitty_cat_lounge": 5,
+    }
+    for map_id, ordinal in silas_ordinals.items():
+        map_data = maps[map_id]
+        standing_slots = [
+            slot
+            for slot in map_data.get("event_slots", []) or []
+            if isinstance(slot, dict)
+            and str(slot.get("footprint_class", "")) == "standing_person"
+        ]
+        if len(standing_slots) < ordinal:
+            raise ValueError(
+                f"{map_id}: compacted Silas target {ordinal} exceeds standing capacity"
+            )
+        target_id = str(standing_slots[ordinal - 1].get("id", ""))
+        _assign_object_slot(map_data, "event", "numbers:silas", target_id)
+        for category_id in list(map_data.get("event_category_slot_ids", {})):
+            if str(category_id).startswith("numbers_silas_spots:"):
+                _move_category_preference(map_data, "event", str(category_id), target_id)
+
+    for map_id, object_id in (
+        ("motel", "event:chain06_nico_weekly_door"),
+        ("pawn_shop", "event:chain06_sal_estate_item"),
+    ):
+        map_data = maps[map_id]
+        _remove_object_slot_assignment(map_data, object_id)
+        map_data.setdefault("object_family_ids", {})[object_id] = "scenario"
+
+    # Back Alley is deliberately excluded from the town-rumor staff producer;
+    # retaining its old preference would advertise an object that cannot spawn.
+    _remove_object_slot_assignment(maps["back_alley"], "event:town_rumor_staff")
 
 
 def _normalize_scenario_capacity_consolidation(
@@ -4134,6 +4067,11 @@ def _normalize_slot_authoring_metadata(payload: dict[str, Any]) -> None:
                     if bool(slot.get("runtime_reserve", False))
                     else ""
                 )
+                if family == "event":
+                    # Event reserves are backed only by independent person
+                    # producers. Never perpetuate the former catch-all reserve
+                    # marker on an otherwise-unreachable prop or doorway row.
+                    reserve_reason = ""
                 if slot_id in runtime_people:
                     reserve_reason = (
                         "Injected chain, traveler, or delivery contact can coexist "
@@ -4175,12 +4113,13 @@ def _normalize_slot_authoring_metadata(payload: dict[str, Any]) -> None:
                     )
                 elif (
                     family == "event"
+                    and str(slot.get("footprint_class", "")) == "standing_person"
                     and slot_id not in event_exact_ids
                     and slot_id not in event_category_ids
                 ):
                     reserve_reason = (
-                        "Independent ambient traveler, Crew, or Numbers presence may "
-                        "coexist with mapped room events."
+                        "Independent reputation reaction, ambient traveler, Crew, "
+                        "Numbers, or delivery contact may coexist with mapped room events."
                     )
                 physical_role = _physical_role(slot, labels.get(slot_id, ""))
                 if slot_id in runtime_people:
@@ -4492,6 +4431,7 @@ def _apply_slot_consolidation(payload: dict[str, Any]) -> None:
     beach_delivery_slot["walk_lane_ids"] = ["lane.public"]
     beach_delivery_slot["priority"] = 10
     _normalize_event_capacity_consolidation(maps)
+    _normalize_compacted_event_ownership(maps)
     _normalize_scenario_capacity_consolidation(maps)
     _normalize_slot_occupancy_metadata(payload)
     _normalize_slot_authoring_metadata(payload)
@@ -4800,46 +4740,6 @@ def apply_capacity_repairs(payload: dict[str, Any]) -> None:
         ("fixed.service_stage_left",),
         (36.0, 0.0),
     )
-    _ensure_provisional_slot(
-        punchline,
-        "event",
-        "event.surface_item_1",
-        "surface_item",
-        ("fixed.service_stage_left",),
-        (-36.0, 12.0),
-    )
-    _ensure_provisional_slot(
-        punchline,
-        "event",
-        "event.surface_item_2",
-        "surface_item",
-        ("fixed.numbers_stage_center",),
-        (36.0, 12.0),
-    )
-    _ensure_provisional_slot(
-        punchline,
-        "event",
-        "event.surface_item_3",
-        "surface_item",
-        ("scenario.surface_item_3", "fixed.service_stage_left"),
-        (18.0, 12.0),
-    )
-    _ensure_provisional_slot(
-        punchline,
-        "event",
-        "event.floor_item_2",
-        "floor_fixture",
-        ("event.floor_item_1",),
-        (-152.0, 180.0),
-    )
-    _ensure_provisional_slot(
-        punchline,
-        "event",
-        "event.doorway_1",
-        "doorway",
-        ("fixed.door_right_lower", "exit.door_right_lower"),
-        (18.0, 12.0),
-    )
     _assign_object_slot(punchline, "fixed", "game:video_poker", "fixed.game_video_poker")
     _assign_object_slot(
         punchline,
@@ -4847,16 +4747,6 @@ def apply_capacity_repairs(payload: dict[str, Any]) -> None:
         "service:punchline_two_drink_minimum",
         "fixed.service_two_drink_minimum",
     )
-    for object_id, slot_id in {
-        "event:crew_job_board": "event.wall_item_1",
-        "event:crew_mags_bench": "event.surface_item_3",
-        "event:crew_planning_table": "event.surface_item_1",
-        "event:crew_practice_rig": "event.floor_item_2",
-        "event:crew_rook_ride": "event.doorway_1",
-        "event:numbers_desk": "event.surface_item_2",
-    }.items():
-        _assign_object_slot(punchline, "event", object_id, slot_id)
-
     casino = maps["small_underground_casino:casino"]
     # The casino layer omits required_event_ids and therefore inherits the
     # Punchline's guaranteed side door. Early v2 refreshes treated that omitted
@@ -4977,14 +4867,6 @@ def apply_capacity_repairs(payload: dict[str, Any]) -> None:
     )
     _ensure_provisional_slot(
         punchline,
-        "fixed",
-        "fixed.staff_silas",
-        "standing_person",
-        ("fixed.staff_floor_left",),
-        (104.0, 0.0),
-    )
-    _ensure_provisional_slot(
-        punchline,
         "scenario",
         "scenario.wall_item_1",
         "wall_mounted",
@@ -4992,7 +4874,6 @@ def apply_capacity_repairs(payload: dict[str, Any]) -> None:
         (18.0, 12.0),
     )
     _assign_object_slot(punchline, "fixed", "game:slot", "fixed.game_slot")
-    _assign_object_slot(punchline, "fixed", "numbers:silas", "fixed.staff_silas")
     _assign_object_slot(
         punchline,
         "scenario",
@@ -5001,21 +4882,9 @@ def apply_capacity_repairs(payload: dict[str, Any]) -> None:
     )
 
     casino = maps["small_underground_casino:casino"]
-    # Rowdy Regular is optional ambient content and its authored presentation
-    # is seated, so it needs event-family capacity independent of scenarios.
-    _ensure_provisional_slot(
-        casino,
-        "event",
-        "event.seated_patron_1",
-        "seated_person",
-        ("scenario.seated_patron_1",),
-        (-346.0, 0.0),
-    )
-    casino_event_seat = _slot_by_id(casino, "event.seated_patron_1")
-    if casino_event_seat is None:
-        raise ValueError("small_underground_casino:casino: seated event capacity is missing")
-    casino_event_seat["support_id"] = "left_card_seat"
-    _assign_object_slot(casino, "event", "event:rowdy_regular", "event.seated_patron_1")
+    # Rowdy Regular is not reachable in the casino layer's event pool, so it
+    # must not manufacture an otherwise-unused seated event row here.
+    _remove_object_slot_assignment(casino, "event:rowdy_regular")
     _assign_object_slot(casino, "exit", "travel:leave", "exit.left_upper")
 
     _normalize_conditional_people(maps)
@@ -5219,6 +5088,9 @@ def validate(
     assert payload.get("schema_version") == 3
     maps = payload.get("maps", [])
     assert isinstance(maps, list) and len(maps) == 21
+    assert sum(
+        sum(class_counts.values()) for class_counts in EVENT_CAPACITY_TARGETS.values()
+    ) == 98, "reviewed producer-backed event capacity total drift"
     if baseline_objects is None:
         baseline_objects = baseline_objects_by_map()
     if required_events is None:
@@ -5257,6 +5129,10 @@ def validate(
                 assert isinstance(slot.get("runtime_reserve"), bool), f"{map_id} {slot_id} lacks runtime_reserve"
                 assert isinstance(slot.get("reserve_reason"), str), f"{map_id} {slot_id} lacks reserve_reason"
                 assert bool(slot.get("runtime_reserve")) == bool(str(slot.get("reserve_reason", "")).strip()), f"{map_id} {slot_id} reserve metadata is inconsistent"
+                if family == "event" and bool(slot.get("runtime_reserve")):
+                    assert slot.get("footprint_class") == "standing_person", (
+                        f"{map_id} {slot_id} is an unsupported non-person event reserve"
+                    )
                 seen.add(slot_id)
                 slots_by_family[family].add(slot_id)
         for family, targets in (
@@ -5673,7 +5549,8 @@ def validate(
             "lender:motel_friend": ("fixed", "fixed.lender_motel_friend", "standing_person"),
             "numbers:book": ("fixed", "fixed.numbers_book", "surface_item"),
             "numbers:silas": ("event", "event.standing_person_4", "standing_person"),
-            "event:chain06_nico_weekly_door": ("event", "event.doorway_1", "doorway"),
+            "event:chain06_dave_same_bus": ("event", "event.standing_person_1", "standing_person"),
+            "event:chain06_dave_last_stop": ("event", "event.standing_person_1", "standing_person"),
         },
         "gas_station_casino": {
             "game:scratch_tickets": ("fixed", "fixed.game_scratch_tickets", "floor_fixture"),
@@ -5684,22 +5561,11 @@ def validate(
             "numbers:book": ("fixed", "fixed.numbers_book", "surface_item"),
             "numbers:silas": ("event", "event.standing_person_5", "standing_person"),
         },
-        "motel": {
-            "event:chain06_dave_same_bus": ("event", "event.standing_person_1", "standing_person"),
-            "event:chain06_dave_last_stop": ("event", "event.standing_person_1", "standing_person"),
-        },
         "small_underground_casino": {
             "game:slot": ("fixed", "fixed.game_slot", "floor_fixture"),
             "game:video_poker": ("fixed", "fixed.game_video_poker", "floor_fixture"),
-            "numbers:silas": ("event", "event.standing_person_8", "standing_person"),
             "numbers:book": ("fixed", "fixed.numbers_book", "surface_item"),
             "service:punchline_two_drink_minimum": ("fixed", "fixed.service_two_drink_minimum", "surface_item"),
-            "event:crew_job_board": ("event", "event.wall_item_1", "wall_mounted"),
-            "event:crew_mags_bench": ("event", "event.surface_item_3", "surface_item"),
-            "event:crew_planning_table": ("event", "event.surface_item_1", "surface_item"),
-            "event:crew_practice_rig": ("event", "event.floor_fixture_2", "floor_fixture"),
-            "event:crew_rook_ride": ("event", "event.doorway_1", "doorway"),
-            "event:numbers_desk": ("event", "event.surface_item_2", "surface_item"),
             "event:scenario_greased_week_window": ("scenario", "scenario.wall_item_1", "wall_mounted"),
         },
         "small_underground_casino:back_room": {
@@ -5721,11 +5587,10 @@ def validate(
         "small_underground_casino:casino": {
             "numbers:book": ("fixed", "fixed.numbers_book", "surface_item"),
             "numbers:silas": ("event", "event.standing_person_8", "standing_person"),
-            "event:rowdy_regular": ("event", "event.seated_person_1", "seated_person"),
             "travel:leave": ("exit", "exit.guarded_upper", "doorway"),
         },
         "kitty_cat_lounge": {
-            "numbers:silas": ("event", "event.standing_person_6", "standing_person"),
+            "numbers:silas": ("event", "event.standing_person_5", "standing_person"),
             "service:kitty_champagne": ("fixed", "fixed.service_kitty_champagne", "surface_item"),
             "event:side_door": ("event", "event.doorway_1", "doorway"),
         },
@@ -5739,9 +5604,6 @@ def validate(
         },
         "corner_store": {
             "numbers:book": ("fixed", "fixed.numbers_book", "surface_item"),
-        },
-        "pawn_shop": {
-            "event:chain06_sal_estate_item": ("event", "event.surface_item_1", "surface_item"),
         },
         "grand_casino": {
             "event:scenario_audit_roster": ("fixed", "fixed.event_audit_roster", "wall_mounted"),
@@ -5764,6 +5626,19 @@ def validate(
             slot = _slot_by_id(map_data, slot_id)
             assert slot is not None, f"{map_id} missing repaired slot {slot_id}"
             assert slot.get("kind") == family and slot.get("footprint_class") == footprint_class, f"{map_id} malformed repaired slot {slot_id}"
+
+    for map_id, object_id in (
+        ("motel", "event:chain06_nico_weekly_door"),
+        ("pawn_shop", "event:chain06_sal_estate_item"),
+    ):
+        map_data = maps[map_id]
+        assert map_data.get("object_family_ids", {}).get(object_id) == "scenario", (
+            f"{map_id} {object_id} must remain scenario-owned"
+        )
+        assert all(
+            object_id not in map_data.get(f"{family}_object_slot_ids", {})
+            for family in FAMILIES
+        ), f"{map_id} {object_id} retained base-map slot authority"
 
     for map_id, declarations in guaranteed_host_objects().items():
         map_data = maps[map_id]

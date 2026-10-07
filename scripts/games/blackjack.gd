@@ -144,6 +144,20 @@ func defers_embedded_action_presentation_refresh(run_state: RunState, _environme
 	return run_state != null and not run_state.is_tutorial_run()
 
 
+func surface_action_uses_lightweight_ui_state(_surface_action: String) -> bool:
+	return true
+
+
+func surface_action_ui_state_keys() -> Array:
+	return BLACKJACK_HOST_TRANSIENT_UI_KEYS
+
+
+func checkpoint_surface_ui_state_for_save_requires_ui_state() -> bool:
+	# The sealed table ledger, not Foundation's retained presentation dictionary,
+	# is the durable Blackjack session.
+	return false
+
+
 func embedded_action_view_patch(run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
 	# The Blackjack surface projection is the complete post-action table view. Send
 	# it directly to the live canvas after a sealed action instead of rebuilding the

@@ -1679,6 +1679,7 @@ func _rw06_1_validate_interaction_geometry(view_snapshot: Dictionary) -> Diction
 	if typeof(view_objects_value) != TYPE_ARRAY or _array(view_objects_value).is_empty():
 		failures.append("Active renderer objects must be a nonempty native array.")
 	var layout := _dict(layout_value)
+	var labels_enabled := bool(view_snapshot.get("object_labels_and_borders_enabled", true))
 	var objects_value: Variant = layout.get("objects", null)
 	var objects := _array(objects_value)
 	if typeof(objects_value) != TYPE_ARRAY or objects.is_empty():
@@ -1694,17 +1695,16 @@ func _rw06_1_validate_interaction_geometry(view_snapshot: Dictionary) -> Diction
 			failures.append("Renderer layout object identity is empty or duplicated: %s." % object_id)
 		else:
 			seen_ids[object_id] = true
-		for rect_key_value in ["interaction_rect", "label_rect"]:
+		var required_rect_keys := ["interaction_rect", "label_rect"] if labels_enabled else ["interaction_rect"]
+		for rect_key_value in required_rect_keys:
 			var rect_key := str(rect_key_value)
 			var rect_result := _rw06_1_strict_rect(object_data.get(rect_key, null))
 			if not bool(rect_result.get("ok", false)):
 				failures.append("Renderer object %s has invalid %s: %s." % [object_id, rect_key, str(_array(rect_result.get("errors", [])))])
 	var interaction_overlaps := _rw06_1_rect_pair_overlaps(objects, "interaction_rect")
-	var label_overlaps := _rw06_1_rect_pair_overlaps(objects, "label_rect")
+	var label_overlaps := _rw06_1_rect_pair_overlaps(objects, "label_rect") if labels_enabled else []
 	if not interaction_overlaps.is_empty():
 		failures.append("Renderer exposes %d overlapping interaction rectangles." % interaction_overlaps.size())
-	if not label_overlaps.is_empty():
-		failures.append("Renderer exposes %d overlapping label rectangles." % label_overlaps.size())
 	var renderer_overlap_count: Variant = layout.get("overlap_count", null)
 	var renderer_overlaps_value: Variant = layout.get("overlaps", null)
 	if typeof(renderer_overlap_count) != TYPE_INT or int(renderer_overlap_count) < 0:
@@ -1724,12 +1724,21 @@ func _rw06_1_validate_interaction_geometry(view_snapshot: Dictionary) -> Diction
 			var key := str(key_value)
 			if typeof(label_layout.get(key, null)) != TYPE_INT or int(label_layout.get(key, -1)) < 0:
 				failures.append("Renderer label_layout.%s must be a native nonnegative integer." % key)
-		if typeof(label_layout.get("resolved_label_overlap_count", null)) == TYPE_INT \
-				and int(label_layout.get("resolved_label_overlap_count", -1)) != 0:
-			failures.append("Renderer reports unresolved label-to-label overlaps.")
-		if typeof(label_layout.get("resolved_object_overlap_count", null)) == TYPE_INT \
-				and int(label_layout.get("resolved_object_overlap_count", -1)) != 0:
-			failures.append("Renderer reports unresolved label-to-object overlaps.")
+		if typeof(label_layout.get("enabled", null)) != TYPE_BOOL or bool(label_layout.get("enabled", not labels_enabled)) != labels_enabled:
+			failures.append("Renderer label_layout.enabled does not match the active object-label setting.")
+		if labels_enabled:
+			if str(label_layout.get("overlap_policy", "")) != "bounded_tether":
+				failures.append("Renderer label layout does not declare its bounded-tether overlap policy.")
+			if typeof(label_layout.get("detached_label_count", null)) != TYPE_INT or int(label_layout.get("detached_label_count", -1)) != 0:
+				failures.append("Renderer detached one or more labels from their owning objects.")
+			var max_owner_gap_value: Variant = label_layout.get("max_owner_gap", null)
+			var tether_limit_value: Variant = label_layout.get("owner_tether_limit", null)
+			if not (typeof(max_owner_gap_value) in [TYPE_INT, TYPE_FLOAT]) or not is_finite(float(max_owner_gap_value)) \
+					or not (typeof(tether_limit_value) in [TYPE_INT, TYPE_FLOAT]) or not is_finite(float(tether_limit_value)) \
+					or float(max_owner_gap_value) > float(tether_limit_value) + 0.01:
+				failures.append("Renderer label geometry exceeds its declared owner tether.")
+		elif int(label_layout.get("label_count", -1)) != 0:
+			failures.append("Renderer retained visible label geometry while object labels were disabled.")
 	return {
 		"ok": failures.is_empty(),
 		"object_layout": layout.duplicate(true),

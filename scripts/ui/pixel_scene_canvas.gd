@@ -12,6 +12,7 @@ signal view_geometry_changed
 signal developer_placement_lock_requested(request: Dictionary)
 signal developer_placement_reset_requested(request: Dictionary)
 signal developer_placement_promote_requested
+signal developer_placement_refresh_requested
 signal developer_placement_export_requested(request: Dictionary)
 signal developer_layout_save_requested(request: Dictionary)
 
@@ -23,6 +24,7 @@ const DrunkDistortionOverlayScript := preload("res://scripts/ui/drunk_distortion
 const HeatFeedbackVisualsScript := preload("res://scripts/ui/heat_feedback_visuals.gd")
 const TableGameVisualsScript := preload("res://scripts/games/table_game_visuals.gd")
 const EnvironmentPlacementScript := preload("res://scripts/core/environment_placement.gd")
+const EnvironmentObjectManifestScript := preload("res://scripts/core/environment_object_manifest.gd")
 const EnvironmentSlotBinderScript := preload("res://scripts/core/environment_slot_binder.gd")
 const PersistencePathsScript := preload("res://scripts/core/persistence_paths.gd")
 const CoinPusherRoomPropScript := preload("res://scripts/ui/game_props/coin_pusher_room_prop.gd")
@@ -103,11 +105,13 @@ const OBJECT_INFO_RECT_SNAP_EPSILON := 0.25
 const OBJECT_LABEL_MAX_WIDTH := 126.0
 const OBJECT_LABEL_HEIGHT := 15.0
 const OBJECT_LABEL_TWO_LINE_HEIGHT := 26.0
-const OBJECT_LABEL_GAP := 4.0
+const OBJECT_LABEL_GAP := 2.0
+const OBJECT_LABEL_MAX_OFFSET_STEPS := 2
 const OBJECT_LABEL_FONT_SIZE := 10
 const OBJECT_LABEL_TEXT_PADDING_X := 3.0
 const OBJECT_LABEL_BASELINE_Y := 11.0
 const OBJECT_LABEL_LINE_HEIGHT := 11.0
+const OBJECT_LABEL_MAX_TETHER_GAP := OBJECT_LABEL_GAP + float(OBJECT_LABEL_MAX_OFFSET_STEPS) * (OBJECT_LABEL_LINE_HEIGHT + 2.0)
 # Godot can deliver touch plus emulated mouse after a stalled frame.
 const EMULATED_TOUCH_SUPPRESS_MS := 750
 const EMULATED_TOUCH_SUPPRESS_DISTANCE := 18.0
@@ -116,6 +120,7 @@ const SCENE_IDLE_ANIMATION_FPS := 60.0
 const SCENE_IDLE_ANIMATION_INTERVAL_SEC := 1.0 / SCENE_IDLE_ANIMATION_FPS
 const WEB_SCENE_IDLE_ANIMATION_FPS := 30.0
 const WEB_GRAND_CASINO_IDLE_ANIMATION_FPS := 15.0
+const DEVELOPER_DRAG_REDRAW_INTERVAL_MSEC := 33
 const ITEM_ICON_TEXTURE_CACHE_LIMIT := 32
 const SLOT_PROP_STATIC_LAYER_CACHE_LIMIT := 64
 const MAX_CONCURRENT_PERSON_TRANSITS := 8
@@ -163,9 +168,13 @@ var item_icon_texture_cache_scope_key: String = ""
 var icon_sprite_texture_cache: Dictionary = {}
 var scene_objects_by_id_cache: Dictionary = {}
 var active_scene_objects_cache: Array = []
+var behind_counter_scene_objects_cache: Array = []
+var room_front_scene_objects_cache: Array = []
 var scene_object_cache_valid := false
+var scene_has_live_actor_routes := false
 var object_label_rect_cache: Dictionary = {}
 var object_label_layout_stats: Dictionary = {}
+var object_labels_and_borders_enabled := true
 var draw_text_width_cache: Dictionary = {}
 var fit_draw_text_cache: Dictionary = {}
 var object_animation_phase_cache: Dictionary = {}
@@ -210,12 +219,20 @@ var _scenario_hazard_fill_points := PackedVector2Array([Vector2.ZERO, Vector2.ZE
 var _scenario_hazard_outline_points := PackedVector2Array([Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO])
 var developer_placement_mode := false
 var developer_placement_dragging := false
+var developer_drag_redraw_pending := false
+var developer_drag_last_redraw_msec := -100000
 var developer_placement_drag_offset := Vector2.ZERO
 var developer_placement_original_rect := Rect2()
 var developer_placement_pending_rect := Rect2()
 var developer_placement_valid := false
 var developer_placement_surface_id := ""
 var developer_placement_overlap_ids: Array[String] = []
+var developer_placement_surface_map_cache: Dictionary = {}
+var developer_placement_surface_map_cache_valid := false
+var room_surface_slots_by_id_cache: Dictionary = {}
+var room_surface_counters_by_id_cache: Dictionary = {}
+var room_foreground_counters_cache: Array = []
+var room_surface_draw_cache_valid := false
 var developer_placement_panel: PanelContainer
 var developer_placement_panel_shell: VBoxContainer
 var developer_placement_panel_header: HBoxContainer
@@ -240,6 +257,21 @@ var developer_slot_pending_rect := Rect2()
 var developer_slot_pending_position := Vector2.ZERO
 var developer_slot_valid := false
 var developer_slot_overlap_ids: Array[String] = []
+var developer_slots_cache: Array = []
+var developer_available_slots_cache: Array = []
+var developer_visible_slots_cache: Array = []
+var developer_slots_by_id_cache: Dictionary = {}
+var developer_slot_rects_by_id_cache: Dictionary = {}
+var developer_slot_positions_by_id_cache: Dictionary = {}
+var developer_slots_cache_valid := false
+var developer_available_slots_cache_valid := false
+var developer_visible_slots_cache_valid := false
+var developer_slot_occupants_by_id_cache: Dictionary = {}
+var developer_required_slot_ids_cache: Dictionary = {}
+var developer_slot_overlay_rows_cache: Array = []
+var developer_slot_overlay_cache_valid := false
+var developer_slot_overlap_summary_cache: Dictionary = {}
+var developer_slot_overlap_summary_cache_valid := false
 var developer_slot_scene_object_baseline: Array = []
 var developer_slot_scene_object_baseline_valid := false
 var developer_slot_filter_row: HFlowContainer
@@ -258,6 +290,14 @@ var developer_slot_context_change_locking := false
 var developer_placement_panel_layout_queued := false
 var developer_slot_review_context_key := ""
 var developer_slot_reviewed_families: Dictionary = {}
+var scene_object_cache_rebuild_count := 0
+var developer_slot_cache_rebuild_count := 0
+var developer_placement_panel_update_count := 0
+var developer_slot_overlay_cache_rebuild_count := 0
+var developer_slot_overlap_audit_count := 0
+var object_label_layout_rebuild_count := 0
+var environment_snapshot_render_generation := 0
+var developer_placement_authority_dirty := false
 var developer_slot_family_filters := {
 	"fixed": true,
 	"event": false,
@@ -291,6 +331,8 @@ func set_developer_placement_mode(enabled: bool) -> void:
 	_invalidate_camera_target()
 	_update_camera_target_if_needed()
 	queue_redraw()
+	if not enabled:
+		_flush_deferred_developer_placement_authority()
 
 
 func set_developer_slot_placement_mode(enabled: bool) -> void:
@@ -303,6 +345,7 @@ func set_developer_slot_placement_mode(enabled: bool) -> void:
 		_finish_developer_slot_placement_edit()
 		developer_slot_selected_id = ""
 	developer_slot_placement_mode = enabled
+	_invalidate_developer_placement_geometry_caches()
 	if developer_slot_filter_row != null:
 		developer_slot_filter_row.visible = enabled
 	if developer_slot_visibility_row != null:
@@ -328,6 +371,8 @@ func set_developer_slot_placement_mode(enabled: bool) -> void:
 	_invalidate_camera_target()
 	_update_camera_target_if_needed()
 	queue_redraw()
+	if not enabled:
+		_flush_deferred_developer_placement_authority()
 
 
 func developer_placement_snapshot() -> Dictionary:
@@ -378,6 +423,11 @@ func set_developer_slot_family_visible(family: String, visible: bool) -> void:
 	var normalized_family := family.strip_edges().to_lower()
 	if normalized_family not in SLOT_FAMILIES:
 		return
+	# Scenario slots are meaningful only while an exact scenario owns the current
+	# room/layer. Shared runtime reserves remain in the placement map for delivery
+	# and chain binding, but they are not base-room authoring choices.
+	if visible and not _developer_slot_family_available(normalized_family):
+		return
 	# Families are tabs, not accumulating checkboxes. Only one lifecycle family
 	# is presented at a time so a room never opens as a wall of every possible
 	# slot. The active tab cannot be unpressed without selecting another one.
@@ -393,6 +443,7 @@ func set_developer_slot_family_visible(family: String, visible: bool) -> void:
 		var button_value: Variant = developer_slot_filter_buttons.get(candidate_family)
 		if button_value is BaseButton:
 			(button_value as BaseButton).set_pressed_no_signal(bool(developer_slot_family_filters.get(candidate_family, false)))
+	_invalidate_developer_slot_derived_caches()
 	var selected := _developer_slot(developer_slot_selected_id)
 	if not selected.is_empty() and not _developer_slot_visible_in_preview(selected):
 		_finish_developer_slot_placement_edit()
@@ -404,6 +455,7 @@ func set_developer_slot_family_visible(family: String, visible: bool) -> void:
 
 func set_developer_slot_show_empty_capacity(visible: bool) -> void:
 	developer_slot_show_empty_capacity = visible
+	_invalidate_developer_slot_derived_caches()
 	if developer_slot_show_empty_button != null:
 		developer_slot_show_empty_button.set_pressed_no_signal(visible)
 	_prune_hidden_developer_slot_selection()
@@ -413,6 +465,7 @@ func set_developer_slot_show_empty_capacity(visible: bool) -> void:
 
 func set_developer_slot_show_runtime_reserves(visible: bool) -> void:
 	developer_slot_show_runtime_reserves = visible
+	_invalidate_developer_slot_derived_caches()
 	if developer_slot_show_reserves_button != null:
 		developer_slot_show_reserves_button.set_pressed_no_signal(visible)
 	_prune_hidden_developer_slot_selection()
@@ -429,6 +482,7 @@ func set_developer_slot_edit_shared_in_scenario(enabled: bool) -> void:
 	if not selected.is_empty() and _developer_slot_scope(selected) == "room_shared":
 		_finish_developer_slot_placement_edit()
 	developer_slot_edit_shared_in_scenario = enabled
+	_invalidate_developer_slot_derived_caches()
 	if developer_slot_edit_shared_button != null:
 		developer_slot_edit_shared_button.set_pressed_no_signal(enabled)
 	_update_developer_placement_panel()
@@ -437,6 +491,10 @@ func set_developer_slot_edit_shared_in_scenario(enabled: bool) -> void:
 
 func _configure_developer_slot_context(reset_family: bool) -> void:
 	var exact_scenario := _developer_slot_has_active_scenario()
+	if not exact_scenario and bool(developer_slot_family_filters.get("scenario", false)):
+		# A same-canvas transition from a scenario layout to its base room must not
+		# leave the now-unavailable Scenario tab selected.
+		reset_family = true
 	if reset_family:
 		# Every newly opened layout starts as a complete review surface. Filters
 		# are a temporary convenience inside one context and must not silently
@@ -453,6 +511,13 @@ func _configure_developer_slot_context(reset_family: bool) -> void:
 	if developer_slot_edit_shared_button != null:
 		developer_slot_edit_shared_button.visible = developer_slot_placement_mode and exact_scenario
 		developer_slot_edit_shared_button.set_pressed_no_signal(developer_slot_edit_shared_in_scenario)
+	for family_value in SLOT_FAMILIES:
+		var family := str(family_value)
+		var button_value: Variant = developer_slot_filter_buttons.get(family)
+		if button_value is BaseButton:
+			var available := _developer_slot_family_available(family)
+			(button_value as BaseButton).visible = available
+			(button_value as BaseButton).disabled = not available
 	if not reset_family:
 		return
 	var preferred_family := "scenario" if exact_scenario else "fixed"
@@ -467,6 +532,7 @@ func _configure_developer_slot_context(reset_family: bool) -> void:
 	developer_slot_review_context_key = _developer_slot_snapshot_context_key(foundation_snapshot)
 	developer_slot_reviewed_families.clear()
 	developer_slot_reviewed_families[preferred_family] = true
+	_invalidate_developer_slot_derived_caches()
 
 
 func _ensure_developer_slot_review_context() -> void:
@@ -511,12 +577,20 @@ func _developer_slot_has_active_scenario() -> bool:
 	return not EnvironmentPlacementScript.active_scenario_id(foundation_snapshot).is_empty()
 
 
+func _developer_slot_family_available(family: String) -> bool:
+	var normalized_family := family.strip_edges().to_lower()
+	return normalized_family in SLOT_FAMILIES \
+		and (normalized_family != "scenario" or _developer_slot_has_active_scenario())
+
+
 func _developer_slot_scope(slot: Dictionary) -> String:
 	return "scenario_local" if bool(slot.get("scenario_instance", false)) else "room_shared"
 
 
 func _developer_slot_is_editable(slot: Dictionary) -> bool:
-	if slot.is_empty() or _developer_slot_scope(slot) == "scenario_local":
+	if slot.is_empty() or not _developer_slot_family_available(_developer_slot_family(slot)):
+		return false
+	if _developer_slot_scope(slot) == "scenario_local":
 		return not slot.is_empty()
 	return not _developer_slot_has_active_scenario() or developer_slot_edit_shared_in_scenario
 
@@ -539,27 +613,74 @@ func _prune_hidden_developer_slot_selection() -> void:
 		developer_slot_hovered_id = ""
 
 
-func clear_developer_placement_preview() -> void:
+func clear_developer_placement_preview(refresh_panel: bool = true, redraw: bool = true) -> void:
 	developer_placement_dragging = false
+	developer_drag_redraw_pending = false
 	developer_placement_original_rect = Rect2()
 	developer_placement_pending_rect = Rect2()
 	developer_placement_valid = false
 	developer_placement_surface_id = ""
 	developer_placement_overlap_ids.clear()
-	_update_developer_placement_panel()
-	queue_redraw()
+	if refresh_panel:
+		_update_developer_placement_panel()
+	if redraw:
+		queue_redraw()
 
 
-func clear_developer_slot_placement_preview() -> void:
+func clear_developer_slot_placement_preview(refresh_panel: bool = true, redraw: bool = true) -> void:
 	developer_slot_dragging = false
+	developer_drag_redraw_pending = false
 	developer_slot_drag_offset = Vector2.ZERO
 	developer_slot_original_rect = Rect2()
 	developer_slot_pending_rect = Rect2()
 	developer_slot_pending_position = Vector2.ZERO
 	developer_slot_valid = false
 	developer_slot_overlap_ids.clear()
-	_update_developer_placement_panel()
-	queue_redraw()
+	if refresh_panel:
+		_update_developer_placement_panel()
+	if redraw:
+		queue_redraw()
+
+
+func _flush_deferred_developer_placement_authority() -> void:
+	if not developer_placement_authority_dirty:
+		return
+	developer_placement_refresh_requested.emit()
+
+
+func acknowledge_developer_placement_authority_refresh() -> void:
+	developer_placement_authority_dirty = false
+
+
+func _invalidate_developer_placement_geometry_caches() -> void:
+	# Effective surface maps are shared immutable cache values. Drop this canvas's
+	# reference instead of clearing the dictionary owned by EnvironmentPlacement.
+	developer_placement_surface_map_cache = {}
+	developer_placement_surface_map_cache_valid = false
+	room_surface_slots_by_id_cache.clear()
+	room_surface_counters_by_id_cache.clear()
+	room_foreground_counters_cache = []
+	room_surface_draw_cache_valid = false
+	developer_slots_cache = []
+	developer_available_slots_cache = []
+	developer_visible_slots_cache = []
+	developer_slots_by_id_cache.clear()
+	developer_slot_rects_by_id_cache.clear()
+	developer_slot_positions_by_id_cache.clear()
+	developer_slots_cache_valid = false
+	developer_available_slots_cache_valid = false
+	_invalidate_developer_slot_derived_caches()
+
+
+func _invalidate_developer_slot_derived_caches() -> void:
+	developer_available_slots_cache = []
+	developer_available_slots_cache_valid = false
+	developer_visible_slots_cache = []
+	developer_visible_slots_cache_valid = false
+	developer_slot_overlay_rows_cache = []
+	developer_slot_overlay_cache_valid = false
+	developer_slot_overlap_summary_cache.clear()
+	developer_slot_overlap_summary_cache_valid = false
 
 
 func _ensure_developer_placement_panel() -> void:
@@ -835,6 +956,7 @@ func _on_developer_slot_family_filter_toggled(pressed: bool, family: String) -> 
 func _update_developer_placement_panel() -> void:
 	if developer_placement_panel == null or developer_placement_label == null:
 		return
+	developer_placement_panel_update_count += 1
 	_sync_developer_placement_panel_visibility()
 	_queue_developer_placement_panel_layout()
 	if developer_layout_save_button != null:
@@ -1076,12 +1198,10 @@ func _save_current_developer_slot_layout(load_next_missing: bool = false) -> voi
 		if not developer_slot_valid:
 			return
 		pending_request = _developer_slot_placement_request()
-		# The single-position lock is emitted first so the existing live refresh and
-		# Save-to-Project workflow continue to observe the final drag position.
-		_lock_developer_slot_placement()
 	var request := _developer_full_slot_layout_request()
-	# Signal handlers are synchronous, but retaining the pending coordinate here
-	# also makes the full snapshot truthful in isolated canvas tests with no host.
+	# The complete layout transaction owns the pending coordinate too. Avoid a
+	# separate durable single-slot write and full room refresh immediately before
+	# this full-layout save.
 	if not pending_request.is_empty():
 		var full_positions: Dictionary = request.get("full_positions", {})
 		full_positions[str(pending_request.get("slot_id", ""))] = pending_request.get("position", Vector2.ZERO)
@@ -1089,13 +1209,34 @@ func _save_current_developer_slot_layout(load_next_missing: bool = false) -> voi
 		request["slot_count"] = full_positions.size()
 	request["load_next_missing"] = load_next_missing
 	request["reviewed_families"] = (review_status.get("reviewed", []) as Array).duplicate()
+	var render_generation := environment_snapshot_render_generation
+	developer_slot_dragging = false
 	developer_layout_save_requested.emit(request)
+	if _developer_layout_save_failed(request):
+		_update_developer_placement_panel()
+		queue_redraw()
+		return
+	if environment_snapshot_render_generation == render_generation:
+		clear_developer_slot_placement_preview(false, false)
+		developer_placement_authority_dirty = true
+		_invalidate_developer_placement_geometry_caches()
+		if _apply_authoring_slot_positions_to_scene_objects():
+			_capture_developer_slot_scene_object_baseline()
+		_update_developer_placement_panel()
+		queue_redraw()
+
+
+func _developer_layout_save_failed(request: Dictionary) -> bool:
+	return bool(request.get("_developer_layout_save_handled", false)) \
+		and not bool(request.get("_developer_layout_save_persisted", false))
 
 
 func _developer_full_slot_layout_request() -> Dictionary:
 	var environment := _developer_slot_environment()
 	var full_positions: Dictionary = {}
-	for slot_value in _developer_slots(true):
+	# Full saves preserve hidden shared runtime-reserve geometry even though the
+	# base-room placement list no longer offers those scenario-family markers.
+	for slot_value in _developer_authored_slots():
 		var slot := slot_value as Dictionary
 		var slot_id := str(slot.get("id", "")).strip_edges()
 		if slot_id.is_empty():
@@ -1198,11 +1339,15 @@ func render_owned_environment_snapshot(snapshot: Dictionary) -> void:
 
 
 func _render_owned_environment_snapshot(snapshot: Dictionary) -> void:
+	environment_snapshot_render_generation += 1
 	var previous_slot_context := _developer_slot_snapshot_context_key(foundation_snapshot)
 	var next_slot_context := _developer_slot_snapshot_context_key(snapshot)
 	_preserve_developer_slot_edit_before_context_change(snapshot)
 	uses_foundation_snapshot = true
 	foundation_snapshot = snapshot
+	if previous_slot_context != next_slot_context:
+		developer_placement_authority_dirty = false
+	_invalidate_developer_placement_geometry_caches()
 	var archetype_id := str(foundation_snapshot.get("archetype_id", foundation_snapshot.get("id", environment_id)))
 	var visual_context: Dictionary = foundation_snapshot.get("visual_context", {}) if typeof(foundation_snapshot.get("visual_context", {})) == TYPE_DICTIONARY else {}
 	var art_key := str(visual_context.get("art_key", archetype_id)).strip_edges()
@@ -1215,7 +1360,7 @@ func _render_owned_environment_snapshot(snapshot: Dictionary) -> void:
 		item_icon_texture_cache_scope_key = texture_scope_key
 	environment_name = str(foundation_snapshot.get("display_name", foundation_snapshot.get("name", environment_name)))
 	var presentation_value: Variant = foundation_snapshot.get("scenario_presentation", {})
-	scenario_presentation = (presentation_value as Dictionary).duplicate(true) if typeof(presentation_value) == TYPE_DICTIONARY else {}
+	scenario_presentation = presentation_value as Dictionary if typeof(presentation_value) == TYPE_DICTIONARY else {}
 	_cache_scenario_presentation()
 	suspicion_level = int(foundation_snapshot.get("suspicion_level", suspicion_level))
 	drunk_level = int(foundation_snapshot.get("drunk_level", drunk_level))
@@ -1229,17 +1374,16 @@ func _render_owned_environment_snapshot(snapshot: Dictionary) -> void:
 		if previous_slot_context != next_slot_context:
 			developer_slot_edit_shared_in_scenario = false
 			_configure_developer_slot_context(true)
-	_apply_authoring_slot_positions_to_scene_objects()
+	# The incoming snapshot replaces either preview, so clear their presentation
+	# state before deriving labels and scene caches from authoritative geometry.
+	clear_developer_placement_preview(false, false)
+	clear_developer_slot_placement_preview(false, false)
+	_apply_authoring_slot_positions_to_scene_objects(false)
 	_sync_person_transits()
 	_sync_actor_route_starts()
 	overlay_repositioned_object_ids.clear()
-	_clear_draw_text_caches()
 	_rebuild_scene_object_cache()
 	_prune_object_animation_phase_cache()
-	# A fresh snapshot owns any profile changes. Between snapshots, reuse the
-	# generated cabinet's geometry and palette while only animation values move.
-	slot_prop_static_layer_cache.clear()
-	icon_sprite_texture_cache = {}
 	if not selected_object_id.is_empty() and _scene_object(selected_object_id).is_empty():
 		selected_object_id = ""
 	if not hovered_object_id.is_empty() and _scene_object(hovered_object_id).is_empty():
@@ -1248,8 +1392,6 @@ func _render_owned_environment_snapshot(snapshot: Dictionary) -> void:
 		developer_slot_selected_id = ""
 	# Same-context refreshes remain non-committing. Exact context transitions have
 	# already retained a valid changed nudge above, against the outgoing layout.
-	clear_developer_placement_preview()
-	clear_developer_slot_placement_preview()
 	_update_developer_placement_panel()
 	_invalidate_camera_target()
 	_update_camera_target_if_needed()
@@ -1273,10 +1415,6 @@ func _preserve_developer_slot_edit_before_context_change(next_snapshot: Dictiona
 func _developer_slot_snapshot_context_key(snapshot: Dictionary) -> String:
 	if snapshot.is_empty():
 		return ""
-	var surface_map := EnvironmentPlacementScript.surface_map(snapshot)
-	var layout_id := str(surface_map.get("scenario_layout_id", "")).strip_edges()
-	if not layout_id.is_empty():
-		return layout_id
 	var archetype_id := str(snapshot.get("archetype_id", snapshot.get("id", ""))).strip_edges()
 	var layer_id := str(snapshot.get("current_layer_id", snapshot.get("layer_id", ""))).strip_edges()
 	var map_id := "%s:%s" % [archetype_id, layer_id] if not layer_id.is_empty() else archetype_id
@@ -1322,6 +1460,14 @@ func set_small_screen_mode(enabled: bool) -> void:
 	view_geometry_changed.emit()
 
 
+func set_object_labels_and_borders_enabled(enabled: bool) -> void:
+	if object_labels_and_borders_enabled == enabled:
+		return
+	object_labels_and_borders_enabled = enabled
+	_rebuild_object_label_rect_cache(_active_scene_objects())
+	queue_redraw()
+
+
 # Keeps camera focus clear of a live conversation without changing stable room
 # object placement. TalkDock owns target avoidance; the canvas never relocates
 # generated environment objects in response to overlay motion.
@@ -1362,6 +1508,7 @@ func debug_soak_snapshot() -> Dictionary:
 		"scene_object_index_count": scene_objects_by_id_cache.size(),
 		"object_label_rect_cache_size": object_label_rect_cache.size(),
 		"object_label_layout": object_label_layout_stats.duplicate(true),
+		"object_labels_and_borders_enabled": object_labels_and_borders_enabled,
 		"item_icon_texture_cache_size": item_icon_texture_cache.size(),
 		"icon_sprite_texture_cache_size": icon_sprite_texture_cache.size(),
 		"draw_text_width_cache_size": draw_text_width_cache.size(),
@@ -1372,6 +1519,14 @@ func debug_soak_snapshot() -> Dictionary:
 		"actor_route_time": actor_route_time,
 		"background_texture_loaded": background_texture != null,
 		"scene_idle_animation_redraw_count": scene_idle_animation_redraw_count,
+		"scene_object_cache_rebuild_count": scene_object_cache_rebuild_count,
+		"developer_slot_cache_rebuild_count": developer_slot_cache_rebuild_count,
+		"developer_placement_panel_update_count": developer_placement_panel_update_count,
+		"developer_slot_overlay_cache_rebuild_count": developer_slot_overlay_cache_rebuild_count,
+		"developer_slot_overlap_audit_count": developer_slot_overlap_audit_count,
+		"object_label_layout_rebuild_count": object_label_layout_rebuild_count,
+		"environment_snapshot_render_generation": environment_snapshot_render_generation,
+		"developer_placement_authority_dirty": developer_placement_authority_dirty,
 		"person_transit_count": person_transit_ids.size(),
 		"person_transit_cap": MAX_CONCURRENT_PERSON_TRANSITS,
 		"person_transit_ids": person_transit_ids.duplicate(),
@@ -1382,6 +1537,12 @@ func debug_soak_snapshot() -> Dictionary:
 
 func reset_performance_counters() -> void:
 	scene_idle_animation_redraw_count = 0
+	scene_object_cache_rebuild_count = 0
+	developer_slot_cache_rebuild_count = 0
+	developer_placement_panel_update_count = 0
+	developer_slot_overlay_cache_rebuild_count = 0
+	developer_slot_overlap_audit_count = 0
+	object_label_layout_rebuild_count = 0
 
 
 func performance_live_status() -> Dictionary:
@@ -1554,6 +1715,7 @@ func current_view_snapshot() -> Dictionary:
 		"drunk_time_scale_percent": int(round(drunk_time_scale * 100.0)),
 		"hovered_object_id": hovered_object_id,
 		"selected_object_id": selected_object_id,
+		"object_labels_and_borders_enabled": object_labels_and_borders_enabled,
 		"scene_animation_time": flicker,
 		"scene_idle_animation_active": _scene_idle_animation_active(),
 		"scene_idle_animation_fps": SCENE_IDLE_ANIMATION_FPS,
@@ -1798,7 +1960,9 @@ func _developer_object_id_at_local_position(local_position: Vector2) -> String:
 	var board_position := _local_to_board_position(local_position)
 	var objects := _active_scene_objects()
 	for index in range(objects.size() - 1, -1, -1):
-		var object_data := _copy_dictionary(objects[index])
+		if typeof(objects[index]) != TYPE_DICTIONARY:
+			continue
+		var object_data := objects[index] as Dictionary
 		if _developer_edit_rect_for_object(object_data).has_point(board_position):
 			return str(object_data.get("id", ""))
 	return ""
@@ -1835,18 +1999,30 @@ func _update_developer_placement_preview(top_left: Vector2) -> void:
 		clampf(top_left.x, 0.0, maxf(0.0, BOARD_SIZE.x - size_value.x)),
 		clampf(top_left.y, 0.0, maxf(0.0, BOARD_SIZE.y - size_value.y))
 	)
-	developer_placement_pending_rect = Rect2(bounded.round(), size_value)
-	_set_developer_preview_object_rect(developer_placement_pending_rect)
-	_validate_developer_placement_preview()
-	queue_redraw()
+	var next_rect := Rect2(bounded.round(), size_value)
+	if developer_placement_pending_rect.has_area() and developer_placement_pending_rect.is_equal_approx(next_rect):
+		return
+	developer_placement_pending_rect = next_rect
+	_validate_developer_placement_preview(not developer_placement_dragging)
+	_queue_developer_drag_redraw()
 
 
 func _set_developer_preview_object_rect(rect: Rect2) -> void:
 	for index in range(foundation_scene_objects.size()):
-		var object_data := _copy_dictionary(foundation_scene_objects[index])
-		if str(object_data.get("id", "")) != selected_object_id:
+		if typeof(foundation_scene_objects[index]) != TYPE_DICTIONARY:
 			continue
-		object_data["position"] = rect.get_center() / Vector2(BOARD_SIZE)
+		var current := foundation_scene_objects[index] as Dictionary
+		if str(current.get("id", "")) != selected_object_id:
+			continue
+		var current_position_value: Variant = current.get("position", Vector2.ZERO)
+		var current_position: Vector2 = current_position_value if typeof(current_position_value) == TYPE_VECTOR2 else Vector2.ZERO
+		var current_size_value: Variant = current.get("size", Vector2.ZERO)
+		var current_size: Vector2 = current_size_value if typeof(current_size_value) == TYPE_VECTOR2 else Vector2.ZERO
+		var target_position := rect.get_center() / Vector2(BOARD_SIZE)
+		if current_position.is_equal_approx(target_position) and current_size.is_equal_approx(rect.size):
+			return
+		var object_data := current.duplicate(false)
+		object_data["position"] = target_position
 		object_data["size"] = rect.size
 		foundation_scene_objects[index] = object_data
 		break
@@ -1855,37 +2031,71 @@ func _set_developer_preview_object_rect(rect: Rect2) -> void:
 	_update_camera_target_if_needed()
 
 
-func _validate_developer_placement_preview() -> void:
+func _developer_placement_surface_map() -> Dictionary:
+	if not developer_placement_surface_map_cache_valid:
+		developer_placement_surface_map_cache = EnvironmentPlacementScript.surface_map(_developer_slot_environment())
+		developer_placement_surface_map_cache_valid = true
+	return developer_placement_surface_map_cache
+
+
+func _ensure_room_surface_draw_cache() -> void:
+	if room_surface_draw_cache_valid:
+		return
+	room_surface_slots_by_id_cache = {}
+	room_surface_counters_by_id_cache = {}
+	room_foreground_counters_cache = []
+	var surface_map := _developer_placement_surface_map()
+	for field in SLOT_COLLECTION_FIELDS:
+		for slot_value in _array_view(surface_map.get(field, [])):
+			if typeof(slot_value) != TYPE_DICTIONARY:
+				continue
+			var slot := slot_value as Dictionary
+			room_surface_slots_by_id_cache[str(slot.get("id", ""))] = slot
+	for counter_value in _array_view(surface_map.get("counters", [])):
+		if typeof(counter_value) != TYPE_DICTIONARY:
+			continue
+		var counter := counter_value as Dictionary
+		room_surface_counters_by_id_cache[str(counter.get("id", ""))] = counter
+		if not str(counter.get("foreground_art_id", "")).is_empty():
+			room_foreground_counters_cache.append(counter)
+	room_foreground_counters_cache.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
+		return str((left_value as Dictionary).get("id", "")) < str((right_value as Dictionary).get("id", ""))
+	)
+	room_surface_draw_cache_valid = true
+
+
+func _validate_developer_placement_preview(refresh_panel: bool = true) -> void:
 	developer_placement_valid = false
 	developer_placement_surface_id = ""
 	developer_placement_overlap_ids.clear()
 	var object_data := _scene_object(selected_object_id)
 	if object_data.is_empty() or not developer_placement_pending_rect.has_area():
-		_update_developer_placement_panel()
+		if refresh_panel:
+			_update_developer_placement_panel()
 		return
 	var placement_class := str(object_data.get("placement_class", "")).strip_edges()
 	if placement_class.is_empty():
 		placement_class = EnvironmentPlacementScript.classify(object_data, str(object_data.get("interaction_type", object_data.get("type", ""))), selected_object_id, str(object_data.get("prop", object_data.get("icon_key", ""))))
-	var environment := _copy_dictionary(foundation_snapshot)
-	var support := EnvironmentPlacementScript.support_for_rect(environment, placement_class, developer_placement_pending_rect)
+	var support := EnvironmentPlacementScript.support_for_rect_on_surfaces(_developer_placement_surface_map(), placement_class, developer_placement_pending_rect)
 	# Developer placement is direct composition authoring. Physical surfaces and
 	# overlaps remain useful diagnostics, but they never veto an intentional
 	# in-bounds coordinate selected by the owner.
 	developer_placement_valid = Rect2(Vector2.ZERO, Vector2(BOARD_SIZE)).encloses(developer_placement_pending_rect)
 	developer_placement_surface_id = str(support.get("surface_id", ""))
 	for other_value in _active_scene_objects():
-		var other := _copy_dictionary(other_value)
+		if typeof(other_value) != TYPE_DICTIONARY:
+			continue
+		var other := other_value as Dictionary
 		var other_id := str(other.get("id", ""))
 		if other_id.is_empty() or other_id == selected_object_id:
 			continue
 		if developer_placement_pending_rect.intersects(_developer_edit_rect_for_object(other)):
 			developer_placement_overlap_ids.append(other_id)
-	_update_developer_placement_panel()
+	if refresh_panel:
+		_update_developer_placement_panel()
 
 
 func _cancel_developer_placement_preview() -> void:
-	if developer_placement_original_rect.has_area() and not selected_object_id.is_empty():
-		_set_developer_preview_object_rect(developer_placement_original_rect)
 	clear_developer_placement_preview()
 
 
@@ -1906,6 +2116,9 @@ func _finish_developer_placement_edit() -> void:
 func _developer_edit_rect_for_object(object_data: Dictionary) -> Rect2:
 	# Small-screen expansion and actor-route animation are presentation
 	# derivatives. Author only the canonical 900x430 placement rectangle.
+	if developer_placement_mode and developer_placement_pending_rect.has_area() \
+			and str(object_data.get("id", "")) == selected_object_id:
+		return developer_placement_pending_rect
 	return _board_rect_for_object_at_position(object_data, object_data.get("position", Vector2(0.5, 0.5)))
 
 
@@ -1913,11 +2126,19 @@ func _lock_developer_placement() -> void:
 	if not developer_placement_valid or not developer_placement_pending_rect.has_area():
 		return
 	var request := _developer_placement_request()
-	clear_developer_placement_preview()
+	request["defer_refresh"] = true
+	var render_generation := environment_snapshot_render_generation
+	clear_developer_placement_preview(false, false)
 	developer_placement_lock_requested.emit(request)
-	# Lock handlers rebuild the authoritative room synchronously. Keep the exact
-	# position the owner just accepted visible even if that rebuild had a stale
-	# interaction projection cached before the placement was written.
+	if _developer_placement_lock_failed(request):
+		return
+	if environment_snapshot_render_generation == render_generation:
+		developer_placement_authority_dirty = true
+		_invalidate_developer_placement_geometry_caches()
+		_update_developer_placement_panel()
+	# Normal locks update locally and defer the authoritative room rebuild. Keep
+	# the exact accepted position visible; this also protects against a custom
+	# synchronous host returning a stale interaction projection.
 	_apply_saved_developer_placement(request)
 
 
@@ -1926,14 +2147,28 @@ func _save_developer_placement_to_project() -> void:
 	# older locked value, so a newly dragged preview disappeared on the next room
 	# refresh even though the player had just asked to save it to the project.
 	var saved_request: Dictionary = {}
+	var render_generation := environment_snapshot_render_generation
 	if developer_placement_pending_rect.has_area():
 		if not developer_placement_valid:
 			return
 		saved_request = _developer_placement_request()
-		clear_developer_placement_preview()
+		saved_request["defer_refresh"] = true
+		clear_developer_placement_preview(false, false)
 		developer_placement_lock_requested.emit(saved_request)
-		_apply_saved_developer_placement(saved_request)
+		if _developer_placement_lock_failed(saved_request):
+			return
 	developer_placement_promote_requested.emit()
+	if environment_snapshot_render_generation == render_generation:
+		developer_placement_authority_dirty = true
+		_invalidate_developer_placement_geometry_caches()
+		_update_developer_placement_panel()
+	if not saved_request.is_empty():
+		_apply_saved_developer_placement(saved_request)
+
+
+func _developer_placement_lock_failed(request: Dictionary) -> bool:
+	return bool(request.get("_placement_lock_handled", false)) \
+		and not bool(request.get("_placement_lock_persisted", false))
 
 
 func _apply_saved_developer_placement(request: Dictionary) -> void:
@@ -1958,8 +2193,13 @@ func _reset_developer_placement() -> void:
 	var request := _developer_placement_request()
 	if request.is_empty():
 		return
-	clear_developer_placement_preview()
+	var render_generation := environment_snapshot_render_generation
+	clear_developer_placement_preview(false, false)
 	developer_placement_reset_requested.emit(request)
+	if environment_snapshot_render_generation == render_generation:
+		_invalidate_developer_placement_geometry_caches()
+		_update_developer_placement_panel()
+		queue_redraw()
 
 
 func _developer_slot_environment() -> Dictionary:
@@ -1975,18 +2215,66 @@ func _developer_slot_environment() -> Dictionary:
 func _developer_slots(include_hidden: bool = false) -> Array:
 	if foundation_snapshot.is_empty() and environment_id.is_empty():
 		return []
-	var surface_map := EnvironmentPlacementScript.authoring_surface_map(_developer_slot_environment())
+	var available_slots := _developer_available_slots()
+	if include_hidden:
+		return available_slots
+	if developer_visible_slots_cache_valid:
+		return developer_visible_slots_cache
 	var slots: Array = []
+	for slot_value in available_slots:
+		var slot := slot_value as Dictionary
+		if _developer_slot_visible_in_preview(slot):
+			slots.append(slot)
+	developer_visible_slots_cache = slots
+	developer_visible_slots_cache_valid = true
+	return developer_visible_slots_cache
+
+
+func _developer_available_slots() -> Array:
+	_ensure_developer_slot_cache()
+	if developer_available_slots_cache_valid:
+		return developer_available_slots_cache
+	var slots: Array = []
+	for slot_value in developer_slots_cache:
+		var slot := slot_value as Dictionary
+		if _developer_slot_family_available(_developer_slot_family(slot)):
+			slots.append(slot)
+	developer_available_slots_cache = slots
+	developer_available_slots_cache_valid = true
+	return developer_available_slots_cache
+
+
+func _developer_authored_slots() -> Array:
+	_ensure_developer_slot_cache()
+	return developer_slots_cache
+
+
+func _ensure_developer_slot_cache() -> void:
+	if developer_slots_cache_valid:
+		return
+	developer_slot_cache_rebuild_count += 1
+	var surface_map := _developer_placement_surface_map()
+	var slots: Array = []
+	var slots_by_id: Dictionary = {}
+	var slot_rects_by_id: Dictionary = {}
+	var slot_positions_by_id: Dictionary = {}
 	for field in SLOT_COLLECTION_FIELDS:
 		for slot_value in _array_view(surface_map.get(field, [])):
 			if typeof(slot_value) != TYPE_DICTIONARY:
 				continue
-			var slot := (slot_value as Dictionary).duplicate(true)
-			if str(slot.get("id", "")).strip_edges().is_empty():
-				continue
-			if not include_hidden and not _developer_slot_visible_in_preview(slot):
+			var slot := slot_value as Dictionary
+			var slot_id := str(slot.get("id", "")).strip_edges()
+			if slot_id.is_empty():
 				continue
 			slots.append(slot)
+			slots_by_id[slot_id] = slot
+			var position := _developer_slot_position(slot)
+			var rect_values := _array_view(slot.get("hit_rect", []))
+			var rect := Rect2(position - Vector2(22.0, 22.0), Vector2(44.0, 44.0))
+			if rect_values.size() >= 4:
+				rect = Rect2(float(rect_values[0]), float(rect_values[1]), float(rect_values[2]), float(rect_values[3]))
+			slot_positions_by_id[slot_id] = position
+			slot_rects_by_id[slot_id] = rect
 	slots.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
 		var left := left_value as Dictionary
 		var right := right_value as Dictionary
@@ -1994,7 +2282,11 @@ func _developer_slots(include_hidden: bool = false) -> Array:
 		var right_kind := str(right.get("kind", ""))
 		return str(left.get("id", "")) < str(right.get("id", "")) if left_kind == right_kind else left_kind < right_kind
 	)
-	return slots
+	developer_slots_cache = slots
+	developer_slots_by_id_cache = slots_by_id
+	developer_slot_rects_by_id_cache = slot_rects_by_id
+	developer_slot_positions_by_id_cache = slot_positions_by_id
+	developer_slots_cache_valid = true
 
 
 func _developer_slot_active_family() -> String:
@@ -2043,6 +2335,8 @@ func _developer_slot_is_required(slot: Dictionary) -> bool:
 	if bool(slot.get("occupancy_required", false)):
 		return true
 	var slot_id := str(slot.get("id", "")).strip_edges()
+	if scene_object_cache_valid:
+		return developer_required_slot_ids_cache.has(slot_id)
 	for row_value in _developer_manifest_rows():
 		if typeof(row_value) != TYPE_DICTIONARY:
 			continue
@@ -2078,6 +2372,9 @@ func _update_developer_slot_filter_labels() -> void:
 		var button_value: Variant = developer_slot_filter_buttons.get(family)
 		if not (button_value is BaseButton):
 			continue
+		var available := _developer_slot_family_available(family)
+		(button_value as BaseButton).visible = available
+		(button_value as BaseButton).disabled = not available
 		var counts := _developer_slot_family_counts(family)
 		var review_suffix := ""
 		if required_review_families.has(family):
@@ -2131,16 +2428,18 @@ func _developer_friendly_identifier(value: String) -> String:
 
 func _developer_slot(slot_id: String) -> Dictionary:
 	var clean_id := slot_id.strip_edges()
-	if clean_id.is_empty():
+	if clean_id.is_empty() or (foundation_snapshot.is_empty() and environment_id.is_empty()):
 		return {}
-	for slot_value in _developer_slots(true):
-		var slot := slot_value as Dictionary
-		if str(slot.get("id", "")) == clean_id:
-			return slot
-	return {}
+	_ensure_developer_slot_cache()
+	var slot_value: Variant = developer_slots_by_id_cache.get(clean_id, {})
+	return slot_value as Dictionary if typeof(slot_value) == TYPE_DICTIONARY else {}
 
 
 func _developer_slot_rect(slot: Dictionary) -> Rect2:
+	var slot_id := str(slot.get("id", "")).strip_edges()
+	var cached_value: Variant = developer_slot_rects_by_id_cache.get(slot_id)
+	if typeof(cached_value) == TYPE_RECT2:
+		return cached_value
 	var values := _array_view(slot.get("hit_rect", []))
 	if values.size() >= 4:
 		return Rect2(float(values[0]), float(values[1]), float(values[2]), float(values[3]))
@@ -2149,6 +2448,10 @@ func _developer_slot_rect(slot: Dictionary) -> Rect2:
 
 
 func _developer_slot_position(slot: Dictionary) -> Vector2:
+	var slot_id := str(slot.get("id", "")).strip_edges()
+	var cached_value: Variant = developer_slot_positions_by_id_cache.get(slot_id)
+	if typeof(cached_value) == TYPE_VECTOR2:
+		return cached_value
 	var values := _array_view(slot.get("pos", []))
 	if values.size() < 2:
 		return Vector2.ZERO
@@ -2170,6 +2473,9 @@ func _developer_slot_occupants(slot_id: String) -> Array[String]:
 
 
 func _developer_slot_occupant_records(slot_id: String) -> Array:
+	if scene_object_cache_valid:
+		var cached_value: Variant = developer_slot_occupants_by_id_cache.get(slot_id, [])
+		return cached_value as Array if typeof(cached_value) == TYPE_ARRAY else []
 	var occupants: Array = []
 	for object_value in foundation_scene_objects:
 		if typeof(object_value) != TYPE_DICTIONARY:
@@ -2390,8 +2696,10 @@ func _developer_slot_family_color(family: String) -> Color:
 
 
 func _developer_manifest_rows() -> Array:
-	var manifest := _copy_dictionary(foundation_snapshot.get("object_manifest", {}))
-	return JsonCoerceScript._copy_array(manifest.get("rows", []))
+	var manifest_value: Variant = foundation_snapshot.get("object_manifest", {})
+	if typeof(manifest_value) != TYPE_DICTIONARY:
+		return []
+	return _array_view((manifest_value as Dictionary).get("rows", []))
 
 
 func _developer_slot_state(slot: Dictionary, comparison_slots: Array = []) -> Dictionary:
@@ -2462,6 +2770,9 @@ func _developer_slot_overlap_candidates(selected_slot_id: String = "") -> Array:
 
 
 func _developer_slot_overlap_summary() -> Dictionary:
+	if developer_slot_overlap_summary_cache_valid:
+		return developer_slot_overlap_summary_cache
+	developer_slot_overlap_audit_count += 1
 	var slots := _developer_slots(true)
 	var active_pairs: Array[String] = []
 	var alternative_pairs: Array[String] = []
@@ -2479,12 +2790,14 @@ func _developer_slot_overlap_summary() -> Dictionary:
 				active_pairs.append(pair_label)
 			else:
 				alternative_pairs.append(pair_label)
-	return {
+	developer_slot_overlap_summary_cache = {
 		"active_count": active_pairs.size(),
 		"active_pairs": active_pairs,
 		"alternative_count": alternative_pairs.size(),
 		"alternative_pairs": alternative_pairs,
 	}
+	developer_slot_overlap_summary_cache_valid = true
+	return developer_slot_overlap_summary_cache
 
 
 func _developer_slot_label_ids() -> Array[String]:
@@ -2637,29 +2950,49 @@ func _update_developer_slot_placement_preview(top_left: Vector2) -> void:
 		clampf(top_left.x, 0.0, maxf(0.0, BOARD_SIZE.x - size_value.x)),
 		clampf(top_left.y, 0.0, maxf(0.0, BOARD_SIZE.y - size_value.y))
 	).round()
-	developer_slot_pending_rect = Rect2(bounded, size_value)
+	var next_rect := Rect2(bounded, size_value)
+	if developer_slot_pending_rect.has_area() and developer_slot_pending_rect.is_equal_approx(next_rect):
+		return
+	developer_slot_pending_rect = next_rect
 	developer_slot_pending_position = _developer_slot_position(slot) + bounded - developer_slot_original_rect.position
-	_set_scene_objects_for_slot_rect(developer_slot_selected_id, developer_slot_pending_rect)
-	_validate_developer_slot_placement_preview()
+	_validate_developer_slot_placement_preview(not developer_slot_dragging)
+	_queue_developer_drag_redraw()
+
+
+func _queue_developer_drag_redraw() -> void:
+	developer_drag_redraw_pending = true
+	_flush_developer_drag_redraw()
+
+
+func _flush_developer_drag_redraw() -> void:
+	if not developer_drag_redraw_pending:
+		return
+	var now_msec := Time.get_ticks_msec()
+	if now_msec - developer_drag_last_redraw_msec < DEVELOPER_DRAG_REDRAW_INTERVAL_MSEC:
+		return
+	developer_drag_redraw_pending = false
+	developer_drag_last_redraw_msec = now_msec
 	queue_redraw()
 
 
-func _validate_developer_slot_placement_preview() -> void:
+func _validate_developer_slot_placement_preview(refresh_panel: bool = true) -> void:
 	developer_slot_valid = developer_slot_pending_rect.has_area() and Rect2(Vector2.ZERO, Vector2(BOARD_SIZE)).encloses(developer_slot_pending_rect)
 	developer_slot_overlap_ids.clear()
 	if not developer_slot_valid:
-		_update_developer_placement_panel()
+		if refresh_panel:
+			_update_developer_placement_panel()
 		return
 	# Manual placement is the one opportunity to inspect future capacity. Warn
 	# against every authored marker in this exact context, including currently
 	# empty and injected-content reserves. The warning remains advisory so an
 	# intentional alternate-stage overlap is still authorable.
-	for slot_value in _developer_slot_overlap_candidates(developer_slot_selected_id):
+	for slot_value in _developer_slots(true):
 		var slot := slot_value as Dictionary
 		var slot_id := str(slot.get("id", ""))
 		if slot_id != developer_slot_selected_id and developer_slot_pending_rect.intersects(_developer_slot_rect(slot)):
 			developer_slot_overlap_ids.append(slot_id)
-	_update_developer_placement_panel()
+	if refresh_panel:
+		_update_developer_placement_panel()
 
 
 func _developer_slot_placement_request() -> Dictionary:
@@ -2680,7 +3013,6 @@ func _developer_slot_placement_request() -> Dictionary:
 
 func _cancel_developer_slot_placement_preview() -> void:
 	clear_developer_slot_placement_preview()
-	_apply_authoring_slot_positions_to_scene_objects()
 
 
 func _finish_developer_slot_placement_edit() -> void:
@@ -2699,56 +3031,78 @@ func _lock_developer_slot_placement() -> void:
 	if not developer_slot_valid or not developer_slot_pending_rect.has_area():
 		return
 	var request := _developer_slot_placement_request()
-	clear_developer_slot_placement_preview()
+	request["defer_refresh"] = true
+	var render_generation := environment_snapshot_render_generation
+	clear_developer_slot_placement_preview(false, false)
 	developer_placement_lock_requested.emit(request)
-	_apply_authoring_slot_positions_to_scene_objects()
+	if _developer_placement_lock_failed(request):
+		return
+	# Normal locks deliberately defer the authoritative room rebuild. Apply the
+	# saved surface map locally, while still avoiding duplicate work if a custom
+	# host rendered a fresh snapshot synchronously.
+	if environment_snapshot_render_generation == render_generation:
+		developer_placement_authority_dirty = true
+		_invalidate_developer_placement_geometry_caches()
+		if _apply_authoring_slot_positions_to_scene_objects():
+			_capture_developer_slot_scene_object_baseline()
+		_update_developer_placement_panel()
+		queue_redraw()
 
 
 func _save_developer_slot_placement_to_project() -> void:
+	var render_generation := environment_snapshot_render_generation
 	if developer_slot_pending_rect.has_area():
 		if not developer_slot_valid:
 			return
 		var request := _developer_slot_placement_request()
-		clear_developer_slot_placement_preview()
+		request["defer_refresh"] = true
+		clear_developer_slot_placement_preview(false, false)
 		developer_placement_lock_requested.emit(request)
+		if _developer_placement_lock_failed(request):
+			return
 	developer_placement_promote_requested.emit()
-	_apply_authoring_slot_positions_to_scene_objects()
+	if environment_snapshot_render_generation == render_generation:
+		developer_placement_authority_dirty = true
+		_invalidate_developer_placement_geometry_caches()
+		if _apply_authoring_slot_positions_to_scene_objects():
+			_capture_developer_slot_scene_object_baseline()
+		_update_developer_placement_panel()
+		queue_redraw()
 
 
 func _reset_developer_slot_placement() -> void:
 	var request := _developer_slot_placement_request()
 	if request.is_empty():
 		return
-	clear_developer_slot_placement_preview()
+	var render_generation := environment_snapshot_render_generation
+	clear_developer_slot_placement_preview(false, false)
 	developer_placement_reset_requested.emit(request)
-	_apply_authoring_slot_positions_to_scene_objects()
-
-
-func _set_scene_objects_for_slot_rect(slot_id: String, rect: Rect2) -> void:
-	for index in range(foundation_scene_objects.size()):
-		if typeof(foundation_scene_objects[index]) != TYPE_DICTIONARY:
-			continue
-		var object_data := _copy_dictionary(foundation_scene_objects[index])
-		if str(object_data.get("slot_id", "")) != slot_id:
-			continue
-		object_data["position"] = rect.get_center() / Vector2(BOARD_SIZE)
-		object_data["size"] = rect.size
-		object_data.erase("actor_route_stage")
-		foundation_scene_objects[index] = object_data
-	_rebuild_scene_object_cache()
-	_invalidate_camera_target()
-	_update_camera_target_if_needed()
+	if environment_snapshot_render_generation == render_generation:
+		developer_placement_authority_dirty = true
+		_invalidate_developer_placement_geometry_caches()
+		if _apply_authoring_slot_positions_to_scene_objects():
+			_capture_developer_slot_scene_object_baseline()
+		_update_developer_placement_panel()
+		queue_redraw()
 
 
 func _capture_developer_slot_scene_object_baseline() -> void:
-	developer_slot_scene_object_baseline = foundation_scene_objects.duplicate(true)
+	developer_slot_scene_object_baseline = []
+	for object_value in foundation_scene_objects:
+		developer_slot_scene_object_baseline.append(
+			(object_value as Dictionary).duplicate(false) if typeof(object_value) == TYPE_DICTIONARY else object_value
+		)
 	developer_slot_scene_object_baseline_valid = true
 
 
 func _restore_developer_slot_scene_objects() -> void:
 	if not developer_slot_scene_object_baseline_valid:
 		return
-	foundation_scene_objects = developer_slot_scene_object_baseline.duplicate(true)
+	foundation_scene_objects = []
+	for object_value in developer_slot_scene_object_baseline:
+		foundation_scene_objects.append(
+			(object_value as Dictionary).duplicate(false) if typeof(object_value) == TYPE_DICTIONARY else object_value
+		)
 	developer_slot_scene_object_baseline.clear()
 	developer_slot_scene_object_baseline_valid = false
 	_rebuild_scene_object_cache()
@@ -2756,28 +3110,38 @@ func _restore_developer_slot_scene_objects() -> void:
 	_update_camera_target_if_needed()
 
 
-func _apply_authoring_slot_positions_to_scene_objects() -> void:
+func _apply_authoring_slot_positions_to_scene_objects(refresh_caches: bool = true) -> bool:
 	if not developer_slot_placement_mode or foundation_scene_objects.is_empty():
-		return
-	var slots_by_id: Dictionary = {}
-	for slot_value in _developer_slots(true):
-		var slot := slot_value as Dictionary
-		slots_by_id[str(slot.get("id", ""))] = slot
+		return false
+	_ensure_developer_slot_cache()
+	var changed := false
 	for index in range(foundation_scene_objects.size()):
 		if typeof(foundation_scene_objects[index]) != TYPE_DICTIONARY:
 			continue
-		var object_data := _copy_dictionary(foundation_scene_objects[index])
-		var slot_id := str(object_data.get("slot_id", ""))
-		if not slots_by_id.has(slot_id):
+		var current := foundation_scene_objects[index] as Dictionary
+		var slot_id := str(current.get("slot_id", ""))
+		if not developer_slots_by_id_cache.has(slot_id):
 			continue
-		var rect := _developer_slot_rect(slots_by_id.get(slot_id, {}) as Dictionary)
-		object_data["position"] = rect.get_center() / Vector2(BOARD_SIZE)
+		var rect := _developer_slot_rect(developer_slots_by_id_cache.get(slot_id, {}) as Dictionary)
+		var target_position := rect.get_center() / Vector2(BOARD_SIZE)
+		var current_position_value: Variant = current.get("position", Vector2.ZERO)
+		var current_position: Vector2 = current_position_value if typeof(current_position_value) == TYPE_VECTOR2 else Vector2.ZERO
+		var current_size_value: Variant = current.get("size", Vector2.ZERO)
+		var current_size: Vector2 = current_size_value if typeof(current_size_value) == TYPE_VECTOR2 else Vector2.ZERO
+		if current_position.is_equal_approx(target_position) and current_size.is_equal_approx(rect.size) \
+				and not current.has("actor_route_stage"):
+			continue
+		var object_data := current.duplicate(false)
+		object_data["position"] = target_position
 		object_data["size"] = rect.size
 		object_data.erase("actor_route_stage")
 		foundation_scene_objects[index] = object_data
-	_rebuild_scene_object_cache()
-	_invalidate_camera_target()
-	_update_camera_target_if_needed()
+		changed = true
+	if changed and refresh_caches:
+		_rebuild_scene_object_cache()
+		_invalidate_camera_target()
+		_update_camera_target_if_needed()
+	return changed
 
 
 func _remember_mouse_press(position: Vector2) -> void:
@@ -2808,6 +3172,7 @@ func _mouse_duplicates_recent_touch_press(position: Vector2) -> bool:
 func _process(delta: float) -> void:
 	if not is_visible_in_tree():
 		return
+	_flush_developer_drag_redraw()
 	var previous_zoom := camera_zoom
 	var previous_offset := camera_offset
 	var was_info_animating := info_card_animating
@@ -2850,7 +3215,10 @@ func _process(delta: float) -> void:
 
 
 func _scene_idle_animation_active() -> bool:
-	return not reduce_motion
+	# Placement pointer motion already requests redraws. Freezing decorative idle
+	# animation while either authoring overlay is open avoids repainting the full
+	# procedural room behind a geometry-only editing interaction.
+	return not reduce_motion and not developer_placement_mode and not developer_slot_placement_mode
 
 
 func _scene_idle_animation_redraw_due(delta: float) -> bool:
@@ -2973,9 +3341,9 @@ func _draw_developer_slot_overlay() -> void:
 	if not developer_slot_placement_mode:
 		return
 	var font := ThemeDB.fallback_font
-	var coexistence_slots := _developer_slot_overlap_candidates(developer_slot_selected_id)
-	for slot_value in _developer_slots():
-		var slot := slot_value as Dictionary
+	for row_value in _developer_slot_overlay_rows():
+		var row := row_value as Dictionary
+		var slot := row.get("slot", {}) as Dictionary
 		var slot_id := str(slot.get("id", ""))
 		var rect := _developer_slot_rect(slot)
 		if slot_id == developer_slot_selected_id and developer_slot_pending_rect.has_area():
@@ -2984,14 +3352,13 @@ func _draw_developer_slot_overlay() -> void:
 		var color := _developer_slot_family_color(family)
 		var selected := slot_id == developer_slot_selected_id
 		var hovered := slot_id == developer_slot_hovered_id
-		var editable := _developer_slot_is_editable(slot)
+		var editable := bool(row.get("editable", false))
 		if not editable:
 			color = C_SOFT
 		elif selected:
 			color = C_TEAL if developer_slot_valid or not developer_slot_pending_rect.has_area() else C_HOT
-		var occupied := not _developer_slot_occupants(slot_id).is_empty()
-		var slot_state := _developer_slot_state(slot, coexistence_slots)
-		var has_warnings := not (slot_state.get("warnings", []) as Array).is_empty()
+		var occupied := bool(row.get("occupied", false))
+		var has_warnings := bool(row.get("has_warnings", false))
 		if has_warnings and not selected:
 			color = C_HOT
 		var fill_alpha := 0.08 if not editable else (0.19 if occupied else 0.10)
@@ -3009,7 +3376,7 @@ func _draw_developer_slot_overlay() -> void:
 		if not selected and not hovered:
 			continue
 		var label_width := maxf(112.0, minf(200.0, maxf(rect.size.x, 160.0)))
-		var primary_lines := _wrap_developer_slot_label(_developer_slot_primary_label(slot), font, 8, label_width - 6.0)
+		var primary_lines := _wrap_developer_slot_label(str(row.get("primary_label", "")), font, 8, label_width - 6.0)
 		var label_lines: Array[String] = []
 		label_lines.append_array(primary_lines)
 		label_lines.append_array(_wrap_developer_slot_label(slot_id, font, 7, label_width - 6.0))
@@ -3035,6 +3402,28 @@ func _draw_developer_slot_overlay() -> void:
 				line_font_size,
 				line_color
 			)
+
+
+func _developer_slot_overlay_rows() -> Array:
+	if developer_slot_overlay_cache_valid:
+		return developer_slot_overlay_rows_cache
+	developer_slot_overlay_cache_rebuild_count += 1
+	var comparison_slots := _developer_slots(true)
+	var rows: Array = []
+	for slot_value in _developer_slots():
+		var slot := slot_value as Dictionary
+		var slot_id := str(slot.get("id", ""))
+		var slot_state := _developer_slot_state(slot, comparison_slots)
+		rows.append({
+			"slot": slot,
+			"editable": _developer_slot_is_editable(slot),
+			"occupied": not _developer_slot_occupant_records(slot_id).is_empty(),
+			"has_warnings": not (slot_state.get("warnings", []) as Array).is_empty(),
+			"primary_label": _developer_slot_primary_label(slot),
+		})
+	developer_slot_overlay_rows_cache = rows
+	developer_slot_overlay_cache_valid = true
+	return developer_slot_overlay_rows_cache
 
 
 # Wraps stable slot IDs without deleting or replacing any character. Semantic
@@ -4224,17 +4613,22 @@ func _draw_scene_objects() -> void:
 	# Interactable props are rendered here; transparent buttons only provide hit testing.
 	var low_detail := _grand_casino_web_low_detail()
 	var objects := _active_scene_objects()
-	# Route animation can move actors between snapshots, so derive labels from the
-	# live drawn rectangles on every room frame rather than authored slot anchors.
-	_rebuild_object_label_rect_cache(objects)
-	var behind_counter: Array = []
-	var room_front: Array = []
-	for object_value in objects:
-		var object_data := object_value as Dictionary
-		if str(object_data.get("placement_class", "")) == "behind_counter_person":
-			behind_counter.append(object_data)
-		else:
-			room_front.append(object_data)
+	# Static rooms retain the layout built with their scene cache. Only authored
+	# live routes need a global relayout each frame; placement previews resolve the
+	# moving owner's label directly without the all-pairs label pass.
+	if scene_has_live_actor_routes:
+		_rebuild_object_label_rect_cache(objects)
+	var behind_counter := behind_counter_scene_objects_cache
+	var room_front := room_front_scene_objects_cache
+	if not scene_object_cache_valid:
+		behind_counter = []
+		room_front = []
+		for object_value in objects:
+			var object_data := object_value as Dictionary
+			if str(object_data.get("placement_class", "")) == "behind_counter_person":
+				behind_counter.append(object_data)
+			else:
+				room_front.append(object_data)
 	# Counter staff and their shadows are painted before the exact foreground
 	# fixture faces. Everyone else remains in normal deterministic room order.
 	for object_value in behind_counter:
@@ -4253,7 +4647,7 @@ func _draw_scene_object_body(object_data: Dictionary) -> void:
 	var rect := _natural_model_rect_for_object(object_data)
 	var object_id := str(object_data.get("id", ""))
 	var object_type := str(object_data.get("type", "item"))
-	var active := object_id == selected_object_id or object_id == hovered_object_id
+	var active := object_labels_and_borders_enabled and (object_id == selected_object_id or object_id == hovered_object_id)
 	_draw_object_shadow(rect, active, str(object_data.get("shadow_kind", "base")))
 	if _draw_manifest_specific_object(rect, object_data, active):
 		return
@@ -4386,6 +4780,8 @@ func _draw_scene_object_adornments(object_data: Dictionary, low_detail: bool) ->
 	var disabled := bool(object_data.get("disabled", false))
 	if disabled:
 		_draw_disabled_scene_mark(rect)
+	if not object_labels_and_borders_enabled:
+		return
 	if disabled and (selected or hovered):
 		_draw_disabled_focus_mark(rect, selected)
 	elif selected:
@@ -4682,19 +5078,51 @@ func _ordered_scene_objects() -> Array:
 
 
 func _rebuild_scene_object_cache() -> void:
+	scene_object_cache_rebuild_count += 1
 	active_scene_objects_cache = _ordered_scene_objects()
+	behind_counter_scene_objects_cache = []
+	room_front_scene_objects_cache = []
 	scene_object_cache_valid = true
 	_rebuild_object_label_rect_cache(active_scene_objects_cache)
 	scene_objects_by_id_cache = {}
+	scene_has_live_actor_routes = false
+	developer_slot_occupants_by_id_cache = {}
+	developer_required_slot_ids_cache = {}
+	for row_value in _developer_manifest_rows():
+		if typeof(row_value) != TYPE_DICTIONARY:
+			continue
+		var row := row_value as Dictionary
+		var required_slot_id := str(row.get("exact_slot_id", "")).strip_edges()
+		if not required_slot_id.is_empty() and bool(row.get("active", true)) \
+				and bool(row.get("physical", true)) and bool(row.get("required", false)):
+			developer_required_slot_ids_cache[required_slot_id] = true
 	for object_value in active_scene_objects_cache:
 		if typeof(object_value) != TYPE_DICTIONARY:
 			continue
 		var object_data: Dictionary = object_value
+		if str(object_data.get("placement_class", "")) == "behind_counter_person":
+			behind_counter_scene_objects_cache.append(object_data)
+		else:
+			room_front_scene_objects_cache.append(object_data)
 		var object_id := str(object_data.get("id", ""))
 		if not object_id.is_empty():
 			scene_objects_by_id_cache[object_id] = object_data
-		AttributeBadgeRowScript.warm_cache(JsonCoerceScript._copy_array(object_data.get("attribute_badges", [])), 14)
+		var slot_id := str(object_data.get("slot_id", "")).strip_edges()
+		if not slot_id.is_empty():
+			var occupants_value: Variant = developer_slot_occupants_by_id_cache.get(slot_id, [])
+			var occupants: Array = occupants_value as Array if typeof(occupants_value) == TYPE_ARRAY else []
+			occupants.append(object_data)
+			developer_slot_occupants_by_id_cache[slot_id] = occupants
+			if bool(object_data.get("manifest_required", false)):
+				developer_required_slot_ids_cache[slot_id] = true
+		var route_stage_value: Variant = object_data.get("actor_route_stage", {})
+		var route_points_value: Variant = object_data.get("actor_route_points", [])
+		if typeof(route_stage_value) == TYPE_DICTIONARY and not (route_stage_value as Dictionary).is_empty() \
+				and typeof(route_points_value) == TYPE_ARRAY and (route_points_value as Array).size() >= 2:
+			scene_has_live_actor_routes = true
+		AttributeBadgeRowScript.warm_cache(_array_view(object_data.get("attribute_badges", [])), 14)
 		_warm_object_info_layout_cache(object_data)
+	_invalidate_developer_slot_derived_caches()
 
 
 func _objects_from_foundation_snapshot(snapshot: Dictionary) -> Array:
@@ -4754,16 +5182,20 @@ func _objects_from_foundation_snapshot(snapshot: Dictionary) -> Array:
 			})
 	var ids: Dictionary = {}
 	for object_value in objects:
-		ids[str(_copy_dictionary(object_value).get("id", ""))] = true
-	var render_snapshot := _copy_dictionary(snapshot.get("scenario_render_snapshot", {}))
-	if not bool(render_snapshot.get("ok", false)):
+		if typeof(object_value) == TYPE_DICTIONARY:
+			ids[str((object_value as Dictionary).get("id", ""))] = true
+	var render_snapshot_value: Variant = snapshot.get("scenario_render_snapshot", {})
+	var render_snapshot: Dictionary = render_snapshot_value as Dictionary if typeof(render_snapshot_value) == TYPE_DICTIONARY else {}
+	if not EnvironmentObjectManifestScript.has_causal_scenario_renderer_snapshot(snapshot):
 		objects.sort_custom(Callable(PixelSceneCanvas, "_sort_composed_scene_objects"))
 		return objects
 	# Active-stage text is public room status, not a physical prop. Its actions
 	# remain available in the room action list; the canvas only renders authored
 	# physical visual_objects, so no generic status boxes float along the wall.
-	for visual_value in JsonCoerceScript._copy_array(render_snapshot.get("visual_objects", [])):
-		var visual := _copy_dictionary(visual_value)
+	for visual_value in _array_view(render_snapshot.get("visual_objects", [])):
+		if typeof(visual_value) != TYPE_DICTIONARY:
+			continue
+		var visual := visual_value as Dictionary
 		var object_id := str(visual.get("object_id", ""))
 		if object_id.is_empty() or ids.has(object_id) or not bool(visual.get("visible", true)):
 			continue
@@ -4829,10 +5261,10 @@ func _objects_from_interactable_records(records: Array) -> Array:
 			"classification_summary": str(record.get("classification_summary", "")),
 			"addition_count": maxi(0, int(record.get("addition_count", 0))),
 			"cost_summary": str(record.get("cost_summary", "")),
-			"attribute_badges": JsonCoerceScript._copy_array(record.get("attribute_badges", [])),
-			"runtime_state": (record.get("runtime_state", {}) as Dictionary).duplicate(true) if typeof(record.get("runtime_state", {})) == TYPE_DICTIONARY else {},
-			"visual_state": (record.get("visual_state", {}) as Dictionary).duplicate(true) if typeof(record.get("visual_state", {})) == TYPE_DICTIONARY else {},
-			"character_actor": (record.get("character_actor", {}) as Dictionary).duplicate(true) if typeof(record.get("character_actor", {})) == TYPE_DICTIONARY else {},
+			"attribute_badges": _array_view(record.get("attribute_badges", [])),
+			"runtime_state": record.get("runtime_state", {}) as Dictionary if typeof(record.get("runtime_state", {})) == TYPE_DICTIONARY else {},
+			"visual_state": record.get("visual_state", {}) as Dictionary if typeof(record.get("visual_state", {})) == TYPE_DICTIONARY else {},
+			"character_actor": record.get("character_actor", {}) as Dictionary if typeof(record.get("character_actor", {})) == TYPE_DICTIONARY else {},
 			"owner_namespace": str(record.get("owner_namespace", "")),
 			"stable_object_id": str(record.get("stable_object_id", "")),
 			"semantic_role": str(record.get("semantic_role", "")),
@@ -4844,11 +5276,11 @@ func _objects_from_interactable_records(records: Array) -> Array:
 			"actor_pose": str(record.get("actor_pose", "")),
 			"actor_behavior": str(record.get("actor_behavior", "")),
 			"actor_route_id": str(record.get("actor_route_id", "")),
-			"actor_route_points": JsonCoerceScript._copy_array(record.get("actor_route_points", [])),
-			"actor_route_stage": _copy_dictionary(record.get("actor_route_stage", {})),
-			"small_screen_rect": _copy_dictionary(record.get("small_screen_rect", {})),
-			"label_rect": _copy_dictionary(record.get("label_rect", {})),
-			"small_screen_label_rect": _copy_dictionary(record.get("small_screen_label_rect", {})),
+			"actor_route_points": _array_view(record.get("actor_route_points", [])),
+			"actor_route_stage": record.get("actor_route_stage", {}) as Dictionary if typeof(record.get("actor_route_stage", {})) == TYPE_DICTIONARY else {},
+			"small_screen_rect": record.get("small_screen_rect", {}) as Dictionary if typeof(record.get("small_screen_rect", {})) == TYPE_DICTIONARY else {},
+			"label_rect": record.get("label_rect", {}) as Dictionary if typeof(record.get("label_rect", {})) == TYPE_DICTIONARY else {},
+			"small_screen_label_rect": record.get("small_screen_label_rect", {}) as Dictionary if typeof(record.get("small_screen_label_rect", {})) == TYPE_DICTIONARY else {},
 			"fixed_slot_geometry": bool(record.get("fixed_slot_geometry", false)),
 			"scenario_z_order": int(record.get("scenario_z_order", index)),
 			"scenario_layout_resolved": bool(record.get("scenario_layout_resolved", false)),
@@ -4861,9 +5293,9 @@ func _objects_from_interactable_records(records: Array) -> Array:
 			"surface": str(record.get("surface", "")),
 			"icon_key": str(record.get("icon_key", "")),
 			"asset_path": str(record.get("asset_path", "")),
-			"available_actions": JsonCoerceScript._copy_array(record.get("available_actions", [])),
-			"inline_actions": JsonCoerceScript._copy_array(record.get("inline_actions", [])),
-			"attached_room_actions": JsonCoerceScript._copy_array(record.get("attached_room_actions", [])),
+			"available_actions": _array_view(record.get("available_actions", [])),
+			"inline_actions": _array_view(record.get("inline_actions", [])),
+			"attached_room_actions": _array_view(record.get("attached_room_actions", [])),
 			"confirm_action_id": str(record.get("confirm_action_id", "")),
 			"scenario_owner_namespace": str(record.get("scenario_owner_namespace", "")),
 			"scenario_stable_object_id": str(record.get("scenario_stable_object_id", "")),
@@ -4875,7 +5307,7 @@ func _objects_from_interactable_records(records: Array) -> Array:
 			"behavior": str(record.get("behavior", "")),
 			"route_id": str(record.get("route_id", "")),
 			"authored_position_route_id": str(record.get("authored_position_route_id", "")),
-			"route_points": JsonCoerceScript._copy_array(record.get("route_points", [])),
+			"route_points": _array_view(record.get("route_points", [])),
 			"non_color_state": str(record.get("non_color_state", "")),
 			"z_order": int(record.get("z_order", 0)),
 			"z_order_explicit": bool(record.get("z_order_explicit", record.has("z_order"))),
@@ -4894,8 +5326,8 @@ func _objects_from_interactable_records(records: Array) -> Array:
 			"manifest_required": bool(record.get("manifest_required", false)),
 			"manifest_physical": bool(record.get("manifest_physical", false)),
 			"manifest_render_key": str(record.get("manifest_render_key", "")),
-			"manifest_action_ids": JsonCoerceScript._copy_array(record.get("manifest_action_ids", [])),
-			"manifest_metadata": _copy_dictionary(record.get("manifest_metadata", {})),
+			"manifest_action_ids": _array_view(record.get("manifest_action_ids", [])),
+			"manifest_metadata": record.get("manifest_metadata", {}) as Dictionary if typeof(record.get("manifest_metadata", {})) == TYPE_DICTIONARY else {},
 			"presentation_mode": str(record.get("presentation_mode", "room")),
 			"contact": str(record.get("contact", "")),
 		}
@@ -5008,7 +5440,7 @@ func _start_person_transit(object_id: String, settled_value: Variant, kind: Stri
 
 
 func _person_transit_route(settled: Dictionary, kind: String) -> Dictionary:
-	var surfaces := EnvironmentPlacementScript.surface_map(foundation_snapshot)
+	var surfaces := _developer_placement_surface_map()
 	var settled_slot_id := str(settled.get("slot_id", "")).strip_edges()
 	if settled_slot_id.is_empty():
 		return {}
@@ -6872,6 +7304,15 @@ func _natural_model_size_for_type(object_type: String) -> Vector2:
 
 
 func _board_rect_for_object(object_data: Dictionary) -> Rect2:
+	# Placement previews are presentation-only until the owner locks the edit.
+	# Keeping authored objects immutable here avoids rebuilding every scene,
+	# label, badge, and camera cache for each mouse-motion event.
+	if developer_placement_mode and developer_placement_pending_rect.has_area() \
+			and str(object_data.get("id", "")) == selected_object_id:
+		return developer_placement_pending_rect
+	if developer_slot_placement_mode and developer_slot_pending_rect.has_area() \
+			and str(object_data.get("slot_id", "")) == developer_slot_selected_id:
+		return developer_slot_pending_rect
 	var route_position := _actor_route_position(object_data)
 	if route_position.x >= 0.0 and route_position.y >= 0.0:
 		var route_rect := _board_rect_for_object_at_position(object_data, route_position)
@@ -7108,19 +7549,49 @@ func _update_object_label_accessibility() -> void:
 
 
 func _resolved_label_rect_for_object(object_data: Dictionary, object_rect: Rect2) -> Rect2:
+	if not object_labels_and_borders_enabled:
+		return Rect2()
+	if _object_has_live_placement_preview(object_data):
+		return _label_rect_for_object(object_rect, str(object_data.get("label", "")))
 	var object_id := str(object_data.get("id", ""))
 	if object_label_rect_cache.has(object_id):
 		return object_label_rect_cache[object_id] as Rect2
 	return _label_rect_for_object(object_rect, str(object_data.get("label", "")))
 
 
+func _object_has_live_placement_preview(object_data: Dictionary) -> bool:
+	if developer_placement_mode and developer_placement_pending_rect.has_area() \
+			and str(object_data.get("id", "")) == selected_object_id:
+		return true
+	return developer_slot_placement_mode and developer_slot_pending_rect.has_area() \
+			and str(object_data.get("slot_id", "")) == developer_slot_selected_id
+
+
 func _rebuild_object_label_rect_cache(objects: Array) -> void:
+	object_label_layout_rebuild_count += 1
 	object_label_rect_cache = {}
+	if not object_labels_and_borders_enabled:
+		object_label_layout_stats = {
+			"enabled": false,
+			"label_count": 0,
+			"moved_count": 0,
+			"default_label_overlap_count": 0,
+			"resolved_label_overlap_count": 0,
+			"default_object_overlap_count": 0,
+			"resolved_object_overlap_count": 0,
+			"detached_label_count": 0,
+			"max_owner_gap": 0.0,
+			"owner_tether_limit": OBJECT_LABEL_MAX_TETHER_GAP,
+			"overlap_policy": "bounded_tether",
+		}
+		return
 	var live_objects: Array[Dictionary] = []
 	var object_rects: Array[Rect2] = []
 	var default_label_rects: Array[Rect2] = []
 	var resolved_label_rects: Array[Rect2] = []
 	var moved_count := 0
+	var detached_label_count := 0
+	var max_owner_gap := 0.0
 	for value in objects:
 		var object_data: Dictionary = value if typeof(value) == TYPE_DICTIONARY else {}
 		live_objects.append(object_data)
@@ -7140,14 +7611,23 @@ func _rebuild_object_label_rect_cache(objects: Array) -> void:
 			object_label_rect_cache[object_id] = resolved
 		if resolved.position != default_rect.position:
 			moved_count += 1
+		var owner_gap := _rect_edge_gap(object_rect, resolved)
+		max_owner_gap = maxf(max_owner_gap, owner_gap)
+		if owner_gap > OBJECT_LABEL_MAX_TETHER_GAP + 0.01:
+			detached_label_count += 1
 		resolved_label_rects.append(resolved)
 	object_label_layout_stats = {
+		"enabled": true,
 		"label_count": object_label_rect_cache.size(),
 		"moved_count": moved_count,
 		"default_label_overlap_count": _rect_pair_overlap_count(default_label_rects),
 		"resolved_label_overlap_count": _rect_pair_overlap_count(resolved_label_rects),
 		"default_object_overlap_count": _label_object_overlap_count(default_label_rects, object_rects),
 		"resolved_object_overlap_count": _label_object_overlap_count(resolved_label_rects, object_rects),
+		"detached_label_count": detached_label_count,
+		"max_owner_gap": max_owner_gap,
+		"owner_tether_limit": OBJECT_LABEL_MAX_TETHER_GAP,
+		"overlap_policy": "bounded_tether",
 	}
 
 
@@ -7159,19 +7639,22 @@ func _resolve_object_label_overlap(label_rect: Rect2, object_rect: Rect2, occupi
 	var above := label_rect.get_center().y < object_rect.get_center().y
 	var directions := [-1.0, 1.0] if above else [1.0, -1.0]
 	var best := label_rect
-	var best_overlap := INF
-	for direction_value in directions:
-		var direction := float(direction_value)
-		var side_start_y := object_rect.position.y - label_rect.size.y - OBJECT_LABEL_GAP if direction < 0.0 else object_rect.end.y + OBJECT_LABEL_GAP
-		for offset_index in range(0, 16):
+	var best_overlap := _label_overlap_area(label_rect, occupied)
+	# Labels are identifiers, not free-floating annotations. Search only a small
+	# tether around the owning object; in a very crowded room, a little overlap
+	# is preferable to a perfectly clear label that appears to name something else.
+	for offset_index in range(OBJECT_LABEL_MAX_OFFSET_STEPS + 1):
+		for direction_value in directions:
+			var direction := float(direction_value)
+			var side_start_y := object_rect.position.y - label_rect.size.y - OBJECT_LABEL_GAP if direction < 0.0 else object_rect.end.y + OBJECT_LABEL_GAP
 			var y := side_start_y + direction * step * float(offset_index)
 			if y < OBJECT_LAYOUT_MARGIN or y + label_rect.size.y > board_height - OBJECT_LAYOUT_MARGIN:
-				break
+				continue
 			var candidate := Rect2(Vector2(label_rect.position.x, y), label_rect.size)
 			var overlap := _label_overlap_area(candidate, occupied)
 			if overlap <= 0.01:
 				return candidate
-			if overlap < best_overlap:
+			if overlap + 0.01 < best_overlap:
 				best = candidate
 				best_overlap = overlap
 	return best
@@ -7179,6 +7662,14 @@ func _resolve_object_label_overlap(label_rect: Rect2, object_rect: Rect2, occupi
 
 func _rect_overlaps_any(rect: Rect2, others: Array[Rect2]) -> bool:
 	return _label_overlap_area(rect, others) > 0.01
+
+
+func _rect_edge_gap(a: Rect2, b: Rect2) -> float:
+	if not a.has_area() or not b.has_area():
+		return 0.0
+	var horizontal_gap := maxf(0.0, maxf(a.position.x - b.end.x, b.position.x - a.end.x))
+	var vertical_gap := maxf(0.0, maxf(a.position.y - b.end.y, b.position.y - a.end.y))
+	return Vector2(horizontal_gap, vertical_gap).length()
 
 
 func _label_overlap_area(rect: Rect2, others: Array[Rect2]) -> float:
@@ -7281,63 +7772,27 @@ func _draw_object_shadow(rect: Rect2, selected: bool, shadow_kind: String) -> vo
 func _draw_room_foreground_occluders(behind_counter_objects: Array) -> void:
 	if behind_counter_objects.is_empty():
 		return
-	var environment := {
-		"archetype_id": str(foundation_snapshot.get("archetype_id", foundation_snapshot.get("id", environment_id))),
-		"current_layer_id": str(foundation_snapshot.get("current_layer_id", foundation_snapshot.get("layer_id", ""))),
-	}
-	var surface_map := EnvironmentPlacementScript.surface_map(environment)
-	if surface_map.is_empty():
+	_ensure_room_surface_draw_cache()
+	if room_surface_slots_by_id_cache.is_empty() and room_surface_counters_by_id_cache.is_empty():
 		return
-	var slots_by_id: Dictionary = {}
-	for field in SLOT_COLLECTION_FIELDS:
-		var slot_values: Variant = surface_map.get(field, [])
-		if typeof(slot_values) != TYPE_ARRAY:
-			continue
-		for slot_value in slot_values as Array:
-			if typeof(slot_value) != TYPE_DICTIONARY:
-				continue
-			var slot := slot_value as Dictionary
-			slots_by_id[str(slot.get("id", ""))] = slot
-	var counters_by_id: Dictionary = {}
-	var counter_values: Variant = surface_map.get("counters", [])
-	if typeof(counter_values) == TYPE_ARRAY:
-		for counter_value in counter_values as Array:
-			if typeof(counter_value) != TYPE_DICTIONARY:
-				continue
-			var counter := counter_value as Dictionary
-			counters_by_id[str(counter.get("id", ""))] = counter
 	var support_ids: Dictionary = {}
 	for object_value in behind_counter_objects:
 		var object_data := object_value as Dictionary
-		var slot := slots_by_id.get(str(object_data.get("slot_id", "")), {}) as Dictionary
+		var slot := room_surface_slots_by_id_cache.get(str(object_data.get("slot_id", "")), {}) as Dictionary
 		var support_id := str(slot.get("support_id", ""))
-		if counters_by_id.has(support_id):
+		if room_surface_counters_by_id_cache.has(support_id):
 			support_ids[support_id] = true
 	var ordered_supports := support_ids.keys()
 	ordered_supports.sort()
 	for support_id_value in ordered_supports:
 		var support_id := str(support_id_value)
-		var counter := counters_by_id.get(support_id, {}) as Dictionary
+		var counter := room_surface_counters_by_id_cache.get(support_id, {}) as Dictionary
 		_draw_counter_foreground_art(counter)
 
 
 func _draw_authored_counter_foregrounds() -> void:
-	var environment := {
-		"archetype_id": str(foundation_snapshot.get("archetype_id", foundation_snapshot.get("id", environment_id))),
-		"current_layer_id": str(foundation_snapshot.get("current_layer_id", foundation_snapshot.get("layer_id", ""))),
-	}
-	var surface_map := EnvironmentPlacementScript.surface_map(environment)
-	var counter_values: Variant = surface_map.get("counters", [])
-	if typeof(counter_values) != TYPE_ARRAY:
-		return
-	var counters: Array = []
-	for counter_value in counter_values as Array:
-		if typeof(counter_value) == TYPE_DICTIONARY and not str((counter_value as Dictionary).get("foreground_art_id", "")).is_empty():
-			counters.append(counter_value)
-	counters.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
-		return str((left_value as Dictionary).get("id", "")) < str((right_value as Dictionary).get("id", ""))
-	)
-	for counter_value in counters:
+	_ensure_room_surface_draw_cache()
+	for counter_value in room_foreground_counters_cache:
 		_draw_counter_foreground_art(counter_value as Dictionary)
 
 
@@ -7495,21 +7950,22 @@ func _draw_object_label(rect: Rect2, label: String, object_type: String, disable
 	if label_rect.size.x <= 0.0 or label_rect.size.y <= 0.0:
 		return
 	var color := _color_for_object_type(object_type)
-	var alpha := 1.0 if active else 0.96
+	var alpha := 0.94 if active else 0.72
 	if disabled:
 		color = C_SOFT
-		alpha = 0.76
+		alpha = 0.56
 	var font := get_theme_default_font()
 	var text_width := label_rect.size.x - OBJECT_LABEL_TEXT_PADDING_X * 2.0
 	var lines := _object_label_lines(text, font, OBJECT_LABEL_FONT_SIZE, text_width)
 	for index in range(mini(2, lines.size())):
 		var text_pos := label_rect.position + Vector2(OBJECT_LABEL_TEXT_PADDING_X, OBJECT_LABEL_BASELINE_Y + float(index) * OBJECT_LABEL_LINE_HEIGHT)
-		draw_string(font, text_pos + Vector2(1.0, 1.0), lines[index], HORIZONTAL_ALIGNMENT_CENTER, text_width, OBJECT_LABEL_FONT_SIZE, Color(0.0, 0.0, 0.0, 0.92))
+		draw_string(font, text_pos + Vector2(1.0, 1.0), lines[index], HORIZONTAL_ALIGNMENT_CENTER, text_width, OBJECT_LABEL_FONT_SIZE, Color(0.0, 0.0, 0.0, 0.80 if active else 0.58))
 		draw_string(font, text_pos, lines[index], HORIZONTAL_ALIGNMENT_CENTER, text_width, OBJECT_LABEL_FONT_SIZE, Color(color.r, color.g, color.b, alpha))
+	var rule_y := label_rect.end.y - 1.0 if label_rect.get_center().y < rect.get_center().y else label_rect.position.y + 1.0
 	draw_line(
-		Vector2(label_rect.position.x + 8.0, label_rect.end.y - 1.0),
-		Vector2(label_rect.end.x - 8.0, label_rect.end.y - 1.0),
-		Color(color.r, color.g, color.b, alpha * (0.32 if active else 0.16)),
+		Vector2(label_rect.position.x + 8.0, rule_y),
+		Vector2(label_rect.end.x - 8.0, rule_y),
+		Color(color.r, color.g, color.b, alpha * (0.28 if active else 0.10)),
 		1
 	)
 
@@ -7577,7 +8033,13 @@ func _texture_for_icon_sprite(icon_sprite: Dictionary, object_data: Dictionary, 
 	var object_id := str(object_data.get("id", object_data.get("source_id", object_data.get("icon_key", "")))).strip_edges()
 	if object_id.is_empty():
 		object_id = "sprite"
-	var cache_key := "%s|%s|%d" % [object_id, accent.to_html(true), texture_size]
+	var cache_key := "%s|%d|%s|%d|%s" % [
+		object_id,
+		hash(icon_sprite),
+		accent.to_html(true),
+		texture_size,
+		"high_contrast" if VisualStyleScript.high_contrast_enabled else "standard",
+	]
 	if icon_sprite_texture_cache.has(cache_key):
 		return icon_sprite_texture_cache[cache_key] as Texture2D
 	var texture := IconSpriteRendererScript.texture(icon_sprite, texture_size, accent, false)
@@ -7696,7 +8158,7 @@ func _draw_character_actor(rect: Rect2, object_data: Dictionary) -> void:
 	if event_icon != null:
 		var icon_size := clampf(minf(rect.size.x, rect.size.y) * 0.30, 22.0, 32.0)
 		var icon_rect := Rect2(rect.end - Vector2(icon_size + 3.0, icon_size + 3.0), Vector2(icon_size, icon_size))
-		_draw_live_texture_icon(event_icon, icon_rect, object_data, C_CYAN_2, str(object_data.get("id", "")) == selected_object_id, bool(object_data.get("disabled", false)))
+		_draw_live_texture_icon(event_icon, icon_rect, object_data, C_CYAN_2, object_labels_and_borders_enabled and str(object_data.get("id", "")) == selected_object_id, bool(object_data.get("disabled", false)))
 
 
 func _character_actor_style(member: Dictionary, actor: Dictionary, faceless: bool, clock: float) -> Dictionary:
@@ -7793,7 +8255,7 @@ func _texture_for_asset_path(asset_path: String) -> Texture2D:
 		return item_icon_texture_cache[path] as Texture2D
 	if not ResourceLoader.exists(path):
 		return _load_uncached_image_texture(path)
-	var resource := ResourceLoader.load(path, "Texture2D", ResourceLoader.CACHE_MODE_IGNORE)
+	var resource := ResourceLoader.load(path, "Texture2D", ResourceLoader.CACHE_MODE_REUSE)
 	var texture := resource as Texture2D
 	_remember_item_icon_texture(path, texture)
 	return texture
@@ -8735,7 +9197,20 @@ func _draw_slot_cabinet_prop(rect: Rect2, object_data: Dictionary, accent: Color
 
 func _slot_prop_static_layer(rect: Rect2, object_data: Dictionary, fallback_accent: Color) -> Dictionary:
 	var object_id := str(object_data.get("id", object_data.get("label", "generated_machine")))
-	var signature := hash([rect, fallback_accent])
+	# Spin previews are animated independently and can be large. Key this static
+	# cabinet geometry only by the profile fields it actually consumes.
+	var visual := _slot_prop_visual_state(object_data)
+	var signature := hash([
+		rect,
+		fallback_accent,
+		visual.get("machine_family", ""),
+		visual.get("machine_format", ""),
+		visual.get("cabinet_identity", ""),
+		visual.get("cabinet_title", ""),
+		visual.get("reel_count", null),
+		visual.get("row_count", null),
+		visual.get("cabinet_palette", {}),
+	])
 	var cached_value: Variant = slot_prop_static_layer_cache.get(object_id, {})
 	if typeof(cached_value) == TYPE_DICTIONARY:
 		var cached := cached_value as Dictionary

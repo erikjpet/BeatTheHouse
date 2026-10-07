@@ -8,6 +8,7 @@ const ScenarioSemanticViewModelScript := preload("res://scripts/ui/scenario_sema
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const EnvironmentPlacementScript := preload("res://scripts/core/environment_placement.gd")
 const EnvironmentInstanceScript := preload("res://scripts/core/environment_instance.gd")
+const EnvironmentObjectManifestScript := preload("res://scripts/core/environment_object_manifest.gd")
 const EnvironmentSlotBinderScript := preload("res://scripts/core/environment_slot_binder.gd")
 
 const LIVE_MEMBERSHIP_OBJECT_TYPES := ["service", "lender"]
@@ -219,7 +220,7 @@ static func interactable_object_view_list(host: Variant) -> Array:
 	# Seal the complete live base inventory against authored slots before scenario
 	# composition. Runtime-only physical objects consume remaining compatible room
 	# capacity; abstract controls retain their existing action-list presentation.
-	var binding_environment := JsonCoerceScript._copy_dict(host.run_state.current_environment)
+	var binding_environment: Dictionary = host.run_state.current_environment.duplicate(false)
 	binding_environment["layout"] = layout
 	var room_slot_occupancy: Dictionary = {}
 	var record_binding := EnvironmentSlotBinderScript.bind_base_records(
@@ -244,17 +245,22 @@ static func interactable_object_view_list(host: Variant) -> Array:
 	# late overflow has the same identity/membership/digest proof after reload.
 	layout = commit_base_record_binding(host.run_state, layout, record_binding)
 	var definition: Dictionary = _dict(host.run_state.scenario_sequence_definition())
-	var trusted_base_result := result.duplicate(true)
+	var scenario_active := ScenarioSequenceSchemaScript.is_sequence(definition)
+	var world_sequence_active := bool(world_preparation.get("active", false))
+	# Ordinary/no-scene rooms stop at the already authenticated base binding.
+	# Only an active sequence needs a rollback copy plus scenario reservation data.
+	var trusted_base_result := result.duplicate(true) if scenario_active or world_sequence_active else result
 	var layout_context: Dictionary = {}
-	if host.environment_canvas != null and host.environment_canvas.has_method("scenario_layout_context"):
-		layout_context = _dict(host.environment_canvas.call("scenario_layout_context"))
-	# The sealed scenario inventory deliberately excludes runtime-only controls
-	# such as Numbers, Crew arrivals, and live game clerks. They are already bound
-	# to authored base slots above. Feed those immutable rectangles into scenario
-	# validation so fixed/event/exit occupancy remains disjoint from the scenario
-	# family; these records authorize no scenario behavior.
-	layout_context["base_occupied_records"] = _base_layout_reservations(trusted_base_result, layout)
-	layout_context["slot_occupancy"] = room_slot_occupancy.duplicate(true)
+	if scenario_active or world_sequence_active:
+		if host.environment_canvas != null and host.environment_canvas.has_method("scenario_layout_context"):
+			layout_context = _dict(host.environment_canvas.call("scenario_layout_context"))
+		# The sealed scenario inventory deliberately excludes runtime-only controls
+		# such as Numbers, Crew arrivals, and live game clerks. They are already bound
+		# to authored base slots above. Feed those immutable rectangles into scenario
+		# validation so fixed/event/exit occupancy remains disjoint from the scenario
+		# family; these records authorize no scenario behavior.
+		layout_context["base_occupied_records"] = _base_layout_reservations(trusted_base_result, layout)
+		layout_context["slot_occupancy"] = room_slot_occupancy.duplicate(true)
 	if not bool(preparation.get("ok", false)):
 		var preparation_failure := projection_failure_result(result, _array(preparation.get("errors", [])))
 		var committed_preparation_failure := committed_projection_status_result(host.run_state, preparation_failure, trusted_base_result)
@@ -263,7 +269,7 @@ static func interactable_object_view_list(host: Variant) -> Array:
 		var world_preparation_failure := projection_failure_result(result, _array(world_preparation.get("errors", [])))
 		var committed_world_preparation_failure := committed_projection_status_result(host.run_state, world_preparation_failure, trusted_base_result)
 		return _attach_action_only_records(_array(committed_world_preparation_failure.get("records", trusted_base_result)))
-	if ScenarioSequenceSchemaScript.is_sequence(definition):
+	if scenario_active:
 		var finalized: Dictionary = _dict(host.run_state.scenario_finalize_installed_environment(host.library, layout_context))
 		if not bool(finalized.get("ok", false)):
 			var finalization_failure := projection_failure_result(result, _array(finalized.get("errors", [])), _dict(finalized.get("layout_audit", {})))
@@ -281,7 +287,7 @@ static func interactable_object_view_list(host: Variant) -> Array:
 				JsonCoerceScript._copy_array(host.run_state.current_environment.get("resolved_event_ids", []))
 			)
 			result = append_unsealed_live_records(result, trusted_base_result, sealed_base_records)
-	elif bool(world_preparation.get("active", false)):
+	elif world_sequence_active:
 		var world_finalized: Dictionary = _dict(host.run_state.world_sequence_finalize_base_semantics(result, host.library, layout_context))
 		if not bool(world_finalized.get("ok", false)):
 			var world_finalization_failure := projection_failure_result(result, _array(world_finalized.get("errors", [])), _dict(world_finalized.get("layout_audit", {})))
@@ -332,9 +338,7 @@ static func _join_object_manifest(records: Array, environment: Dictionary, synth
 	var layout_authority := _dict(proof.get("layout_authority", {}))
 	var trusted_bindings := _dict(layout_authority.get("slot_bindings", {}))
 	var trusted_rects := _dict(layout_authority.get("object_rects", {}))
-	var scenario_snapshot_present := typeof(environment.get("scenario_render_snapshot")) == TYPE_DICTIONARY \
-			and bool(_dict(environment.get("scenario_render_snapshot", {})).get("ok", false)) \
-			and typeof(_dict(environment.get("scenario_render_snapshot", {})).get("visual_objects")) == TYPE_ARRAY
+	var scenario_snapshot_present := EnvironmentObjectManifestScript.has_causal_scenario_renderer_snapshot(environment)
 	var result := records.duplicate(true)
 	var record_indices: Dictionary = {}
 	for index in range(result.size()):
@@ -846,7 +850,7 @@ static func commit_base_record_binding(run_state: Variant, layout_value: Diction
 	var expected_proof := str(record_binding.get("validated_candidate_commit_proof", ""))
 	if layout.is_empty() or expected_proof.length() != 64:
 		return layout_value
-	var candidate_environment := environment.duplicate(true)
+	var candidate_environment := environment.duplicate(false)
 	candidate_environment["layout"] = layout
 	if EnvironmentSlotBinderScript.base_layout_commit_proof(candidate_environment) != expected_proof:
 		return layout_value

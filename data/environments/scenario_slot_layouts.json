@@ -206,7 +206,7 @@
           "id": "scenario.local_floor_fixture_3",
           "kind": "scenario",
           "pos": [
-            606.0,
+            726.0,
             224.0
           ],
           "footprint_class": "floor_fixture",
@@ -219,13 +219,13 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            560.0,
+            680.0,
             160.0,
             92.0,
             64.0
           ],
           "label_anchor": [
-            606.0,
+            726.0,
             154.0
           ],
           "facing": "none",
@@ -371,7 +371,7 @@
           "kind": "scenario",
           "pos": [
             548.0,
-            160.0
+            176.0
           ],
           "footprint_class": "ground_marker",
           "physical_role": "Watched Route Refused",
@@ -382,13 +382,13 @@
           "reserve_reason": "",
           "hit_rect": [
             512.0,
-            112.0,
+            128.0,
             72.0,
             48.0
           ],
           "label_anchor": [
             548.0,
-            106.0
+            122.0
           ],
           "facing": "none",
           "priority": 7,
@@ -423,8 +423,8 @@
           "id": "scenario.local_standing_person_1",
           "kind": "scenario",
           "pos": [
-            524.0,
-            272.0
+            556.0,
+            256.0
           ],
           "footprint_class": "standing_person",
           "physical_role": "Patrol Officer",
@@ -434,14 +434,14 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            488.0,
-            192.0,
+            520.0,
+            176.0,
             72.0,
             80.0
           ],
           "label_anchor": [
-            524.0,
-            186.0
+            556.0,
+            170.0
           ],
           "facing": "front",
           "priority": 8,
@@ -620,8 +620,8 @@
           "id": "scenario.local_doorway_1",
           "kind": "scenario",
           "pos": [
-            856.0,
-            136.0
+            736.0,
+            224.0
           ],
           "footprint_class": "doorway",
           "physical_role": "Marked Clear Exit",
@@ -631,14 +631,14 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            824.0,
-            64.0,
+            704.0,
+            152.0,
             64.0,
             72.0
           ],
           "label_anchor": [
-            856.0,
-            58.0
+            736.0,
+            146.0
           ],
           "facing": "left",
           "priority": 1,
@@ -923,7 +923,7 @@
           "id": "scenario.local_surface_item_2",
           "kind": "scenario",
           "pos": [
-            788.0,
+            804.0,
             88.0
           ],
           "footprint_class": "surface_item",
@@ -934,19 +934,19 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            752.0,
+            768.0,
             40.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            788.0,
+            804.0,
             34.0
           ],
           "facing": "none",
           "priority": 7,
-          "zone_id": "provisional",
-          "support_id": "manual_placement_required",
+          "zone_id": "background",
+          "support_id": "right_crate_upper",
           "walk_lane_ids": [],
           "occupancy_required": false,
           "scenario_occupant_labels": [
@@ -967,7 +967,7 @@
           ],
           "source_slot_id": "scenario.surface_item_2",
           "source_slot_family": "scenario",
-          "provisional_geometry": true
+          "provisional_geometry": false
         },
         {
           "id": "scenario.local_surface_item_3",
@@ -1079,7 +1079,7 @@
           "id": "scenario.local_surface_item_5",
           "kind": "scenario",
           "pos": [
-            788.0,
+            804.0,
             136.0
           ],
           "footprint_class": "surface_item",
@@ -1090,13 +1090,13 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            752.0,
+            768.0,
             88.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            788.0,
+            804.0,
             82.0
           ],
           "facing": "none",
@@ -1797,8 +1797,8 @@
           "id": "scenario.local_doorway_1",
           "kind": "scenario",
           "pos": [
-            856.0,
-            136.0
+            736.0,
+            224.0
           ],
           "footprint_class": "doorway",
           "physical_role": "Marked Clear Exit",
@@ -1808,14 +1808,14 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            824.0,
-            64.0,
+            704.0,
+            152.0,
             64.0,
             72.0
           ],
           "label_anchor": [
-            856.0,
-            58.0
+            736.0,
+            146.0
           ],
           "facing": "left",
           "priority": 1,
@@ -3673,8 +3673,8 @@
           "id": "scenario.local_floor_fixture_3",
           "kind": "scenario",
           "pos": [
-            182.0,
-            360.0
+            178.0,
+            302.0
           ],
           "footprint_class": "floor_fixture",
           "physical_role": "Toppled chair",
@@ -3684,19 +3684,19 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            136.0,
-            296.0,
+            132.0,
+            238.0,
             92.0,
             64.0
           ],
           "label_anchor": [
-            182.0,
-            290.0
+            178.0,
+            282.0
           ],
           "facing": "none",
           "priority": 4,
-          "zone_id": "provisional",
-          "support_id": "manual_placement_required",
+          "zone_id": "room",
+          "support_id": "stage",
           "walk_lane_ids": [],
           "occupancy_required": false,
           "scenario_occupant_labels": [
@@ -3717,14 +3717,14 @@
           ],
           "source_slot_id": "scenario.floor_fixture_1",
           "source_slot_family": "scenario",
-          "provisional_geometry": true
+          "provisional_geometry": false
         },
         {
           "id": "scenario.local_ground_marker_1",
           "kind": "scenario",
           "pos": [
-            172.0,
-            408.0
+            92.0,
+            328.0
           ],
           "footprint_class": "ground_marker",
           "physical_role": "Marked door buffer",
@@ -3734,14 +3734,14 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            136.0,
-            360.0,
+            56.0,
+            280.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            172.0,
-            354.0
+            92.0,
+            274.0
           ],
           "facing": "none",
           "priority": 5,
@@ -3773,8 +3773,8 @@
           "id": "scenario.local_ground_marker_2",
           "kind": "scenario",
           "pos": [
-            76.0,
-            248.0
+            260.0,
+            328.0
           ],
           "footprint_class": "ground_marker",
           "physical_role": "Security rope",
@@ -3784,14 +3784,14 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            40.0,
-            200.0,
+            224.0,
+            280.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            76.0,
-            194.0
+            260.0,
+            274.0
           ],
           "facing": "none",
           "priority": 6,
@@ -4033,8 +4033,8 @@
           "id": "scenario.local_standing_person_5",
           "kind": "scenario",
           "pos": [
-            80.0,
-            330.0
+            168.0,
+            410.0
           ],
           "footprint_class": "standing_person",
           "physical_role": "Scenario alternatives: Calmed brawler / Chosen-side brawler",
@@ -4045,14 +4045,14 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            48.0,
-            248.0,
+            136.0,
+            328.0,
             64.0,
             82.0
           ],
           "label_anchor": [
-            80.0,
-            242.0
+            168.0,
+            322.0
           ],
           "facing": "front",
           "priority": 11,
@@ -4188,8 +4188,8 @@
           "id": "scenario.local_surface_item_3",
           "kind": "scenario",
           "pos": [
-            44.0,
-            128.0
+            76.0,
+            232.0
           ],
           "footprint_class": "surface_item",
           "physical_role": "Swept broken glass",
@@ -4199,14 +4199,14 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            8.0,
-            80.0,
+            40.0,
+            184.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            44.0,
-            74.0
+            76.0,
+            178.0
           ],
           "facing": "none",
           "priority": 14,
@@ -4446,8 +4446,8 @@
           "id": "scenario.local_floor_fixture_2",
           "kind": "scenario",
           "pos": [
-            182.0,
-            360.0
+            178.0,
+            302.0
           ],
           "footprint_class": "floor_fixture",
           "physical_role": "Speaker stack",
@@ -4457,19 +4457,19 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            136.0,
-            296.0,
+            132.0,
+            238.0,
             92.0,
             64.0
           ],
           "label_anchor": [
-            182.0,
-            290.0
+            178.0,
+            282.0
           ],
           "facing": "none",
           "priority": 3,
-          "zone_id": "provisional",
-          "support_id": "manual_placement_required",
+          "zone_id": "room",
+          "support_id": "stage",
           "walk_lane_ids": [],
           "occupancy_required": false,
           "scenario_occupant_labels": [
@@ -4490,7 +4490,7 @@
           ],
           "source_slot_id": "scenario.floor_fixture_1",
           "source_slot_family": "scenario",
-          "provisional_geometry": true
+          "provisional_geometry": false
         },
         {
           "id": "scenario.local_floor_fixture_3",
@@ -4550,8 +4550,8 @@
           "id": "scenario.local_floor_fixture_4",
           "kind": "scenario",
           "pos": [
-            62.0,
-            304.0
+            182.0,
+            368.0
           ],
           "footprint_class": "floor_fixture",
           "physical_role": "Speaker stack",
@@ -4561,14 +4561,14 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            16.0,
-            240.0,
+            136.0,
+            304.0,
             92.0,
             64.0
           ],
           "label_anchor": [
-            62.0,
-            234.0
+            182.0,
+            298.0
           ],
           "facing": "none",
           "priority": 5,
@@ -4604,7 +4604,7 @@
           "kind": "scenario",
           "pos": [
             172.0,
-            408.0
+            416.0
           ],
           "footprint_class": "ground_marker",
           "physical_role": "Half-coiled stage cable",
@@ -4615,13 +4615,13 @@
           "reserve_reason": "",
           "hit_rect": [
             136.0,
-            360.0,
+            368.0,
             72.0,
             48.0
           ],
           "label_anchor": [
             172.0,
-            354.0
+            362.0
           ],
           "facing": "none",
           "priority": 6,
@@ -6043,8 +6043,8 @@
           "id": "scenario.local_surface_item_4",
           "kind": "scenario",
           "pos": [
-            276.0,
-            144.0
+            196.0,
+            232.0
           ],
           "footprint_class": "surface_item",
           "physical_role": "Stacked carrying trays",
@@ -6054,14 +6054,14 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            240.0,
-            96.0,
+            160.0,
+            184.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            276.0,
-            90.0
+            196.0,
+            178.0
           ],
           "facing": "none",
           "priority": 11,
@@ -10260,8 +10260,8 @@
           "id": "scenario.local_floor_fixture_2",
           "kind": "scenario",
           "pos": [
-            566.0,
-            288.0
+            382.0,
+            424.0
           ],
           "footprint_class": "floor_fixture",
           "physical_role": "Scenario alternatives: Mismarked delivery cartons / Torn carton",
@@ -10272,14 +10272,14 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            520.0,
-            224.0,
+            336.0,
+            360.0,
             92.0,
             64.0
           ],
           "label_anchor": [
-            566.0,
-            218.0
+            382.0,
+            354.0
           ],
           "facing": "none",
           "priority": 3,
@@ -10317,7 +10317,7 @@
           "id": "scenario.local_floor_fixture_3",
           "kind": "scenario",
           "pos": [
-            275.0,
+            267.0,
             216.0
           ],
           "footprint_class": "floor_fixture",
@@ -10328,13 +10328,13 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            216.0,
+            208.0,
             144.0,
             118.0,
             72.0
           ],
           "label_anchor": [
-            275.0,
+            267.0,
             138.0
           ],
           "facing": "none",
@@ -10343,8 +10343,8 @@
           "support_id": "manual_placement_required",
           "walk_lane_ids": [],
           "occupancy_required": false,
-          "_source_slot_id": "event.floor_fixture_1",
-          "_source_family": "event",
+          "_source_slot_id": "fixed.game_coin_pusher",
+          "_source_family": "fixed",
           "_synthetic_geometry": true,
           "scenario_occupant_labels": [
             "Sealed pallet"
@@ -10362,8 +10362,8 @@
           "scenario_object_ids": [
             "scenario::sealed_pallet"
           ],
-          "source_slot_id": "event.floor_fixture_1",
-          "source_slot_family": "event",
+          "source_slot_id": "fixed.game_coin_pusher",
+          "source_slot_family": "fixed",
           "provisional_geometry": true
         },
         {
@@ -10641,7 +10641,7 @@
           "id": "scenario.local_surface_item_2",
           "kind": "scenario",
           "pos": [
-            372.0,
+            364.0,
             160.0
           ],
           "footprint_class": "surface_item",
@@ -10652,13 +10652,13 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            336.0,
+            328.0,
             112.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            372.0,
+            364.0,
             106.0
           ],
           "facing": "none",
@@ -10694,7 +10694,7 @@
           "id": "scenario.local_surface_item_3",
           "kind": "scenario",
           "pos": [
-            180.0,
+            172.0,
             216.0
           ],
           "footprint_class": "surface_item",
@@ -10705,13 +10705,13 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            144.0,
+            136.0,
             168.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            180.0,
+            172.0,
             162.0
           ],
           "facing": "none",
@@ -10866,7 +10866,7 @@
         "action_host_count": 1,
         "action_only_ids": [],
         "source_generic_slot_ids": [
-          "event.floor_fixture_1",
+          "fixed.game_coin_pusher",
           "fixed.numbers_book",
           "fixed.phone",
           "scenario.doorway_1",
@@ -10993,8 +10993,8 @@
           "id": "scenario.local_floor_fixture_2",
           "kind": "scenario",
           "pos": [
-            566.0,
-            288.0
+            382.0,
+            424.0
           ],
           "footprint_class": "floor_fixture",
           "physical_role": "Discrepancy Shelf Abandoned",
@@ -11004,14 +11004,14 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            520.0,
-            224.0,
+            336.0,
+            360.0,
             92.0,
             64.0
           ],
           "label_anchor": [
-            566.0,
-            218.0
+            382.0,
+            354.0
           ],
           "facing": "none",
           "priority": 3,
@@ -11046,7 +11046,7 @@
           "id": "scenario.local_floor_fixture_3",
           "kind": "scenario",
           "pos": [
-            275.0,
+            267.0,
             216.0
           ],
           "footprint_class": "floor_fixture",
@@ -11060,13 +11060,13 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            216.0,
+            208.0,
             144.0,
             118.0,
             72.0
           ],
           "label_anchor": [
-            275.0,
+            267.0,
             138.0
           ],
           "facing": "none",
@@ -11075,8 +11075,8 @@
           "support_id": "manual_placement_required",
           "walk_lane_ids": [],
           "occupancy_required": false,
-          "_source_slot_id": "event.floor_fixture_1",
-          "_source_family": "event",
+          "_source_slot_id": "fixed.game_coin_pusher",
+          "_source_family": "fixed",
           "_synthetic_geometry": true,
           "scenario_occupant_labels": [
             "Closed Aisles",
@@ -11103,8 +11103,8 @@
             "scenario::quarantined_section",
             "scenario::reopened_sections"
           ],
-          "source_slot_id": "event.floor_fixture_1",
-          "source_slot_family": "event",
+          "source_slot_id": "fixed.game_coin_pusher",
+          "source_slot_family": "fixed",
           "provisional_geometry": true
         },
         {
@@ -11112,7 +11112,7 @@
           "kind": "scenario",
           "pos": [
             612.0,
-            368.0
+            358.0
           ],
           "footprint_class": "standing_person",
           "physical_role": "Inventory Clerk",
@@ -11123,18 +11123,18 @@
           "reserve_reason": "",
           "hit_rect": [
             576.0,
-            288.0,
+            278.0,
             72.0,
             80.0
           ],
           "label_anchor": [
             612.0,
-            282.0
+            398.0
           ],
           "facing": "front",
           "priority": 5,
-          "zone_id": "provisional",
-          "support_id": "manual_placement_required",
+          "zone_id": "room",
+          "support_id": "floor",
           "walk_lane_ids": [
             "lane.public"
           ],
@@ -11158,7 +11158,7 @@
           ],
           "source_slot_id": "scenario.standing_person_2",
           "source_slot_family": "scenario",
-          "provisional_geometry": true
+          "provisional_geometry": false
         },
         {
           "id": "scenario.local_surface_item_1",
@@ -11329,7 +11329,7 @@
         "action_host_count": 1,
         "action_only_ids": [],
         "source_generic_slot_ids": [
-          "event.floor_fixture_1",
+          "fixed.game_coin_pusher",
           "scenario.doorway_1",
           "scenario.floor_fixture_1",
           "scenario.floor_fixture_2",
@@ -15820,7 +15820,7 @@
           "id": "scenario.local_floor_fixture_3",
           "kind": "scenario",
           "pos": [
-            510.0,
+            494.0,
             176.0
           ],
           "footprint_class": "floor_fixture",
@@ -15831,13 +15831,13 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            464.0,
+            448.0,
             112.0,
             92.0,
             64.0
           ],
           "label_anchor": [
-            510.0,
+            494.0,
             106.0
           ],
           "facing": "none",
@@ -15846,8 +15846,8 @@
           "support_id": "manual_placement_required",
           "walk_lane_ids": [],
           "occupancy_required": false,
-          "_source_slot_id": "event.floor_fixture_2",
-          "_source_family": "event",
+          "_source_slot_id": "fixed.random_game_1",
+          "_source_family": "fixed",
           "_synthetic_geometry": true,
           "scenario_occupant_labels": [
             "Empty Flashlight Dock"
@@ -15865,8 +15865,8 @@
           "scenario_object_ids": [
             "scenario::gas_station_graveyard_shift_aftermath_night_check_interrupted"
           ],
-          "source_slot_id": "event.floor_fixture_2",
-          "source_slot_family": "event",
+          "source_slot_id": "fixed.random_game_1",
+          "source_slot_family": "fixed",
           "provisional_geometry": true
         },
         {
@@ -16434,7 +16434,7 @@
           "gas_station_graveyard_shift_station"
         ],
         "source_generic_slot_ids": [
-          "event.floor_fixture_2",
+          "fixed.random_game_1",
           "scenario.behind_counter_person_1",
           "scenario.doorway_3",
           "scenario.floor_fixture_1",
@@ -16614,7 +16614,7 @@
           "id": "scenario.local_floor_fixture_3",
           "kind": "scenario",
           "pos": [
-            510.0,
+            494.0,
             176.0
           ],
           "footprint_class": "floor_fixture",
@@ -16625,13 +16625,13 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            464.0,
+            448.0,
             112.0,
             92.0,
             64.0
           ],
           "label_anchor": [
-            510.0,
+            494.0,
             106.0
           ],
           "facing": "none",
@@ -16640,8 +16640,8 @@
           "support_id": "manual_placement_required",
           "walk_lane_ids": [],
           "occupancy_required": false,
-          "_source_slot_id": "event.floor_fixture_2",
-          "_source_family": "event",
+          "_source_slot_id": "fixed.random_game_1",
+          "_source_family": "fixed",
           "_synthetic_geometry": true,
           "scenario_occupant_labels": [
             "Empty Barricade Straps"
@@ -16659,8 +16659,8 @@
           "scenario_object_ids": [
             "scenario::gas_station_road_crew_payday_aftermath_route_repaired"
           ],
-          "source_slot_id": "event.floor_fixture_2",
-          "source_slot_family": "event",
+          "source_slot_id": "fixed.random_game_1",
+          "source_slot_family": "fixed",
           "provisional_geometry": true
         },
         {
@@ -16880,8 +16880,8 @@
           "id": "scenario.local_surface_item_2",
           "kind": "scenario",
           "pos": [
-            564.0,
-            336.0
+            844.0,
+            96.0
           ],
           "footprint_class": "surface_item",
           "physical_role": "Crossed-Out Repair Order",
@@ -16891,23 +16891,25 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            528.0,
-            288.0,
+            808.0,
+            48.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            564.0,
-            282.0
+            844.0,
+            42.0
           ],
-          "facing": "none",
+          "facing": "left",
           "priority": 9,
           "zone_id": "provisional",
           "support_id": "manual_placement_required",
-          "walk_lane_ids": [],
+          "walk_lane_ids": [
+            "lane.public"
+          ],
           "occupancy_required": false,
-          "_source_slot_id": "event.surface_item_1",
-          "_source_family": "event",
+          "_source_slot_id": "fixed.service_house_drink",
+          "_source_family": "fixed",
           "_synthetic_geometry": true,
           "scenario_occupant_labels": [
             "Crossed-Out Repair Order"
@@ -16925,16 +16927,16 @@
           "scenario_object_ids": [
             "scenario::gas_station_road_crew_payday_aftermath_crew_departed_early"
           ],
-          "source_slot_id": "event.surface_item_1",
-          "source_slot_family": "event",
+          "source_slot_id": "fixed.service_house_drink",
+          "source_slot_family": "fixed",
           "provisional_geometry": true
         },
         {
           "id": "scenario.local_surface_item_3",
           "kind": "scenario",
           "pos": [
-            844.0,
-            96.0
+            292.0,
+            328.0
           ],
           "footprint_class": "surface_item",
           "physical_role": "Open Pooled-Stake Envelope",
@@ -16944,24 +16946,22 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            808.0,
-            48.0,
+            256.0,
+            280.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            844.0,
-            42.0
+            292.0,
+            274.0
           ],
-          "facing": "left",
+          "facing": "none",
           "priority": 10,
           "zone_id": "provisional",
           "support_id": "manual_placement_required",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
+          "walk_lane_ids": [],
           "occupancy_required": false,
-          "_source_slot_id": "fixed.service_house_drink",
+          "_source_slot_id": "fixed.numbers_book",
           "_source_family": "fixed",
           "_synthetic_geometry": true,
           "scenario_occupant_labels": [
@@ -16980,7 +16980,7 @@
           "scenario_object_ids": [
             "scenario::gas_station_road_crew_payday_aftermath_floor_occupied"
           ],
-          "source_slot_id": "fixed.service_house_drink",
+          "source_slot_id": "fixed.numbers_book",
           "source_slot_family": "fixed",
           "provisional_geometry": true
         },
@@ -16988,8 +16988,8 @@
           "id": "scenario.local_surface_item_4",
           "kind": "scenario",
           "pos": [
-            292.0,
-            328.0
+            372.0,
+            128.0
           ],
           "footprint_class": "surface_item",
           "physical_role": "Split Bill Count",
@@ -16999,14 +16999,14 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            256.0,
-            280.0,
+            336.0,
+            80.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            292.0,
-            274.0
+            372.0,
+            74.0
           ],
           "facing": "none",
           "priority": 11,
@@ -17014,8 +17014,8 @@
           "support_id": "manual_placement_required",
           "walk_lane_ids": [],
           "occupancy_required": false,
-          "_source_slot_id": "fixed.numbers_book",
-          "_source_family": "fixed",
+          "_source_slot_id": "scenario.surface_item_1",
+          "_source_family": "scenario",
           "_synthetic_geometry": true,
           "scenario_occupant_labels": [
             "Split Bill Count"
@@ -17033,16 +17033,16 @@
           "scenario_object_ids": [
             "scenario::gas_station_road_crew_payday_aftermath_payday_interrupted"
           ],
-          "source_slot_id": "fixed.numbers_book",
-          "source_slot_family": "fixed",
+          "source_slot_id": "scenario.surface_item_1",
+          "source_slot_family": "scenario",
           "provisional_geometry": true
         },
         {
           "id": "scenario.local_surface_item_5",
           "kind": "scenario",
           "pos": [
-            372.0,
-            128.0
+            844.0,
+            200.0
           ],
           "footprint_class": "surface_item",
           "physical_role": "Sealed Pooled-Stake Envelope",
@@ -17052,23 +17052,25 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            336.0,
-            80.0,
+            808.0,
+            152.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            372.0,
-            74.0
+            844.0,
+            146.0
           ],
-          "facing": "none",
+          "facing": "left",
           "priority": 12,
           "zone_id": "provisional",
           "support_id": "manual_placement_required",
-          "walk_lane_ids": [],
+          "walk_lane_ids": [
+            "lane.public"
+          ],
           "occupancy_required": false,
-          "_source_slot_id": "scenario.surface_item_1",
-          "_source_family": "scenario",
+          "_source_slot_id": "fixed.service_house_drink",
+          "_source_family": "fixed",
           "_synthetic_geometry": true,
           "scenario_occupant_labels": [
             "Sealed Pooled-Stake Envelope"
@@ -17086,8 +17088,8 @@
           "scenario_object_ids": [
             "scenario::gas_station_road_crew_payday_aftermath_stake_dispute_refused"
           ],
-          "source_slot_id": "scenario.surface_item_1",
-          "source_slot_family": "scenario",
+          "source_slot_id": "fixed.service_house_drink",
+          "source_slot_family": "fixed",
           "provisional_geometry": true
         },
         {
@@ -17226,9 +17228,8 @@
           "gas_station_road_crew_payday_station"
         ],
         "source_generic_slot_ids": [
-          "event.floor_fixture_2",
-          "event.surface_item_1",
           "fixed.numbers_book",
+          "fixed.random_game_1",
           "fixed.service_house_drink",
           "scenario.doorway_3",
           "scenario.floor_fixture_1",
@@ -17406,7 +17407,7 @@
           "id": "scenario.local_floor_fixture_3",
           "kind": "scenario",
           "pos": [
-            510.0,
+            494.0,
             176.0
           ],
           "footprint_class": "floor_fixture",
@@ -17417,13 +17418,13 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            464.0,
+            448.0,
             112.0,
             92.0,
             64.0
           ],
           "label_anchor": [
-            510.0,
+            494.0,
             106.0
           ],
           "facing": "none",
@@ -17432,8 +17433,8 @@
           "support_id": "manual_placement_required",
           "walk_lane_ids": [],
           "occupancy_required": false,
-          "_source_slot_id": "event.floor_fixture_2",
-          "_source_family": "event",
+          "_source_slot_id": "fixed.random_game_1",
+          "_source_family": "fixed",
           "_synthetic_geometry": true,
           "scenario_occupant_labels": [
             "Raised Rain Shutters"
@@ -17451,8 +17452,8 @@
           "scenario_object_ids": [
             "scenario::gas_station_storm_shelter_aftermath_station_reopened"
           ],
-          "source_slot_id": "event.floor_fixture_2",
-          "source_slot_family": "event",
+          "source_slot_id": "fixed.random_game_1",
+          "source_slot_family": "fixed",
           "provisional_geometry": true
         },
         {
@@ -18072,8 +18073,8 @@
           "gas_station_storm_shelter_station"
         ],
         "source_generic_slot_ids": [
-          "event.floor_fixture_2",
           "event.ground_marker_1",
+          "fixed.random_game_1",
           "scenario.doorway_3",
           "scenario.floor_fixture_1",
           "scenario.floor_fixture_2",
@@ -18575,8 +18576,8 @@
           "id": "scenario.local_surface_item_2",
           "kind": "scenario",
           "pos": [
-            564.0,
-            336.0
+            844.0,
+            96.0
           ],
           "footprint_class": "surface_item",
           "physical_role": "Scenario alternatives: Loose ticket basket / Unmatched Ticket and Bag",
@@ -18587,23 +18588,25 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            528.0,
-            288.0,
+            808.0,
+            48.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            564.0,
-            282.0
+            844.0,
+            42.0
           ],
-          "facing": "none",
+          "facing": "left",
           "priority": 10,
           "zone_id": "provisional",
           "support_id": "manual_placement_required",
-          "walk_lane_ids": [],
+          "walk_lane_ids": [
+            "lane.public"
+          ],
           "occupancy_required": false,
-          "_source_slot_id": "event.surface_item_1",
-          "_source_family": "event",
+          "_source_slot_id": "fixed.service_house_drink",
+          "_source_family": "fixed",
           "_synthetic_geometry": true,
           "scenario_occupant_labels": [
             "Loose ticket basket",
@@ -18624,16 +18627,16 @@
             "scenario::gas_station_tour_bus_stop_aftermath_passenger_stranded",
             "scenario::gas_station_tour_bus_stop_ticket_basket"
           ],
-          "source_slot_id": "event.surface_item_1",
-          "source_slot_family": "event",
+          "source_slot_id": "fixed.service_house_drink",
+          "source_slot_family": "fixed",
           "provisional_geometry": true
         },
         {
           "id": "scenario.local_surface_item_3",
           "kind": "scenario",
           "pos": [
-            844.0,
-            96.0
+            292.0,
+            328.0
           ],
           "footprint_class": "surface_item",
           "physical_role": "Half-Finished Boarding List",
@@ -18643,24 +18646,22 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            808.0,
-            48.0,
+            256.0,
+            280.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            844.0,
-            42.0
+            292.0,
+            274.0
           ],
-          "facing": "left",
+          "facing": "none",
           "priority": 11,
           "zone_id": "provisional",
           "support_id": "manual_placement_required",
-          "walk_lane_ids": [
-            "lane.public"
-          ],
+          "walk_lane_ids": [],
           "occupancy_required": false,
-          "_source_slot_id": "fixed.service_house_drink",
+          "_source_slot_id": "fixed.numbers_book",
           "_source_family": "fixed",
           "_synthetic_geometry": true,
           "scenario_occupant_labels": [
@@ -18679,7 +18680,7 @@
           "scenario_object_ids": [
             "scenario::gas_station_tour_bus_stop_aftermath_count_interrupted"
           ],
-          "source_slot_id": "fixed.service_house_drink",
+          "source_slot_id": "fixed.numbers_book",
           "source_slot_family": "fixed",
           "provisional_geometry": true
         }
@@ -18770,7 +18771,7 @@
         ],
         "source_generic_slot_ids": [
           "event.ground_marker_1",
-          "event.surface_item_1",
+          "fixed.numbers_book",
           "fixed.service_house_drink",
           "scenario.doorway_1",
           "scenario.doorway_2",
@@ -19650,8 +19651,8 @@
           "id": "scenario.local_floor_fixture_1",
           "kind": "scenario",
           "pos": [
-            742.0,
-            220.0
+            686.0,
+            332.0
           ],
           "footprint_class": "floor_fixture",
           "physical_role": "Audit zone barrier",
@@ -19661,14 +19662,14 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            720.0,
-            176.0,
+            664.0,
+            288.0,
             44.0,
             44.0
           ],
           "label_anchor": [
-            742.0,
-            170.0
+            686.0,
+            282.0
           ],
           "facing": "none",
           "priority": 2,
@@ -19700,7 +19701,7 @@
           "id": "scenario.local_floor_fixture_2",
           "kind": "scenario",
           "pos": [
-            638.0,
+            798.0,
             328.0
           ],
           "footprint_class": "floor_fixture",
@@ -19711,13 +19712,13 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            616.0,
+            776.0,
             248.0,
             44.0,
             80.0
           ],
           "label_anchor": [
-            638.0,
+            798.0,
             242.0
           ],
           "facing": "none",
@@ -19859,7 +19860,7 @@
           "id": "scenario.local_standing_person_2",
           "kind": "scenario",
           "pos": [
-            590.0,
+            614.0,
             328.0
           ],
           "footprint_class": "standing_person",
@@ -19870,13 +19871,13 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            568.0,
+            592.0,
             248.0,
             44.0,
             80.0
           ],
           "label_anchor": [
-            590.0,
+            614.0,
             242.0
           ],
           "facing": "front",
@@ -19914,8 +19915,8 @@
           "id": "scenario.local_standing_person_3",
           "kind": "scenario",
           "pos": [
-            614.0,
-            248.0
+            566.0,
+            328.0
           ],
           "footprint_class": "standing_person",
           "physical_role": "Scenario alternatives: Inspection attendant / Manager / Pit manager",
@@ -19927,14 +19928,14 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            592.0,
-            168.0,
+            544.0,
+            248.0,
             44.0,
             80.0
           ],
           "label_anchor": [
-            614.0,
-            162.0
+            566.0,
+            242.0
           ],
           "facing": "front",
           "priority": 7,
@@ -20441,8 +20442,8 @@
           "id": "scenario.local_floor_fixture_1",
           "kind": "scenario",
           "pos": [
-            622.0,
-            244.0
+            686.0,
+            332.0
           ],
           "footprint_class": "floor_fixture",
           "physical_role": "Delegation Cart Block",
@@ -20452,14 +20453,14 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            600.0,
-            200.0,
+            664.0,
+            288.0,
             44.0,
             44.0
           ],
           "label_anchor": [
-            622.0,
-            194.0
+            686.0,
+            282.0
           ],
           "facing": "none",
           "priority": 2,
@@ -20491,7 +20492,7 @@
           "id": "scenario.local_floor_fixture_2",
           "kind": "scenario",
           "pos": [
-            638.0,
+            790.0,
             328.0
           ],
           "footprint_class": "floor_fixture",
@@ -20502,13 +20503,13 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            616.0,
+            768.0,
             248.0,
             44.0,
             80.0
           ],
           "label_anchor": [
-            638.0,
+            790.0,
             242.0
           ],
           "facing": "none",
@@ -20816,7 +20817,7 @@
           "id": "scenario.local_standing_person_2",
           "kind": "scenario",
           "pos": [
-            590.0,
+            614.0,
             328.0
           ],
           "footprint_class": "standing_person",
@@ -20827,13 +20828,13 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            568.0,
+            592.0,
             248.0,
             44.0,
             80.0
           ],
           "label_anchor": [
-            590.0,
+            614.0,
             242.0
           ],
           "facing": "front",
@@ -21224,7 +21225,7 @@
           "id": "scenario.local_floor_fixture_2",
           "kind": "scenario",
           "pos": [
-            638.0,
+            790.0,
             328.0
           ],
           "footprint_class": "floor_fixture",
@@ -21235,13 +21236,13 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            616.0,
+            768.0,
             248.0,
             44.0,
             80.0
           ],
           "label_anchor": [
-            638.0,
+            790.0,
             242.0
           ],
           "facing": "none",
@@ -21278,7 +21279,7 @@
           "kind": "scenario",
           "pos": [
             726.0,
-            220.0
+            268.0
           ],
           "footprint_class": "floor_fixture",
           "physical_role": "Coiled queue ropes",
@@ -21289,13 +21290,13 @@
           "reserve_reason": "",
           "hit_rect": [
             704.0,
-            176.0,
+            224.0,
             44.0,
             44.0
           ],
           "label_anchor": [
             726.0,
-            170.0
+            218.0
           ],
           "facing": "none",
           "priority": 4,
@@ -21380,7 +21381,7 @@
           "id": "scenario.local_standing_person_1",
           "kind": "scenario",
           "pos": [
-            590.0,
+            614.0,
             328.0
           ],
           "footprint_class": "standing_person",
@@ -21391,13 +21392,13 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            568.0,
+            592.0,
             248.0,
             44.0,
             80.0
           ],
           "label_anchor": [
-            590.0,
+            614.0,
             242.0
           ],
           "facing": "front",
@@ -21435,8 +21436,8 @@
           "id": "scenario.local_standing_person_2",
           "kind": "scenario",
           "pos": [
-            614.0,
-            248.0
+            566.0,
+            328.0
           ],
           "footprint_class": "standing_person",
           "physical_role": "Stagehand",
@@ -21446,14 +21447,14 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            592.0,
-            168.0,
+            544.0,
+            248.0,
             44.0,
             80.0
           ],
           "label_anchor": [
-            614.0,
-            162.0
+            566.0,
+            242.0
           ],
           "facing": "front",
           "priority": 7,
@@ -22113,8 +22114,8 @@
           "id": "scenario.local_floor_fixture_4",
           "kind": "scenario",
           "pos": [
-            566.0,
-            344.0
+            54.0,
+            272.0
           ],
           "footprint_class": "floor_fixture",
           "physical_role": "Reserved legend table",
@@ -22124,14 +22125,14 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            520.0,
-            280.0,
+            8.0,
+            208.0,
             92.0,
             64.0
           ],
           "label_anchor": [
-            566.0,
-            274.0
+            54.0,
+            202.0
           ],
           "facing": "none",
           "priority": 5,
@@ -22139,8 +22140,8 @@
           "support_id": "manual_placement_required",
           "walk_lane_ids": [],
           "occupancy_required": false,
-          "_source_slot_id": "event.floor_fixture_1",
-          "_source_family": "event",
+          "_source_slot_id": "scenario.floor_fixture_1",
+          "_source_family": "scenario",
           "_synthetic_geometry": true,
           "scenario_occupant_labels": [
             "Reserved legend table"
@@ -22158,8 +22159,8 @@
           "scenario_object_ids": [
             "scenario::jazz_club_guest_legend_guest_table"
           ],
-          "source_slot_id": "event.floor_fixture_1",
-          "source_slot_family": "event",
+          "source_slot_id": "scenario.floor_fixture_1",
+          "source_slot_family": "scenario",
           "provisional_geometry": true
         },
         {
@@ -22216,8 +22217,8 @@
           "id": "scenario.local_standing_person_1",
           "kind": "scenario",
           "pos": [
-            612.0,
-            280.0
+            580.0,
+            328.0
           ],
           "footprint_class": "standing_person",
           "physical_role": "Scenario alternatives: Guest legend / Waiting guest",
@@ -22228,14 +22229,14 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            576.0,
-            200.0,
+            544.0,
+            248.0,
             72.0,
             80.0
           ],
           "label_anchor": [
-            612.0,
-            194.0
+            580.0,
+            242.0
           ],
           "facing": "left",
           "priority": 7,
@@ -22272,8 +22273,8 @@
           "id": "scenario.local_standing_person_2",
           "kind": "scenario",
           "pos": [
-            484.0,
-            328.0
+            490.0,
+            326.0
           ],
           "footprint_class": "standing_person",
           "physical_role": "Scenario alternatives: Revealed guest / Stage manager",
@@ -22284,19 +22285,19 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            448.0,
-            248.0,
+            454.0,
+            246.0,
             72.0,
             80.0
           ],
           "label_anchor": [
-            484.0,
-            242.0
+            490.0,
+            240.0
           ],
           "facing": "right",
           "priority": 8,
-          "zone_id": "provisional",
-          "support_id": "manual_placement_required",
+          "zone_id": "service_lane",
+          "support_id": "floor",
           "walk_lane_ids": [
             "lane.public"
           ],
@@ -22322,14 +22323,14 @@
           ],
           "source_slot_id": "scenario.standing_person_2",
           "source_slot_family": "scenario",
-          "provisional_geometry": true
+          "provisional_geometry": false
         },
         {
           "id": "scenario.local_standing_person_3",
           "kind": "scenario",
           "pos": [
             540.0,
-            248.0
+            240.0
           ],
           "footprint_class": "standing_person",
           "physical_role": "Stage manager",
@@ -22340,13 +22341,13 @@
           "reserve_reason": "",
           "hit_rect": [
             504.0,
-            168.0,
+            160.0,
             72.0,
             80.0
           ],
           "label_anchor": [
             540.0,
-            162.0
+            154.0
           ],
           "facing": "right",
           "priority": 9,
@@ -22555,7 +22556,6 @@
           "jazz_club_guest_legend_task_5"
         ],
         "source_generic_slot_ids": [
-          "event.floor_fixture_1",
           "scenario.doorway_1",
           "scenario.floor_fixture_1",
           "scenario.floor_fixture_2",
@@ -24123,8 +24123,8 @@
           "id": "scenario.local_floor_fixture_4",
           "kind": "scenario",
           "pos": [
-            566.0,
-            344.0
+            62.0,
+            414.0
           ],
           "footprint_class": "floor_fixture",
           "physical_role": "Scenario alternatives: Bare stage / Set-aside picket signs",
@@ -24135,14 +24135,14 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            520.0,
-            280.0,
+            16.0,
+            350.0,
             92.0,
             64.0
           ],
           "label_anchor": [
-            566.0,
-            274.0
+            62.0,
+            354.0
           ],
           "facing": "none",
           "priority": 5,
@@ -24150,8 +24150,8 @@
           "support_id": "manual_placement_required",
           "walk_lane_ids": [],
           "occupancy_required": false,
-          "_source_slot_id": "event.floor_fixture_1",
-          "_source_family": "event",
+          "_source_slot_id": "scenario.floor_fixture_1",
+          "_source_family": "scenario",
           "_synthetic_geometry": true,
           "scenario_occupant_labels": [
             "Bare stage",
@@ -24172,8 +24172,8 @@
             "scenario::jazz_club_union_trouble_aftermath_union_entry_prop",
             "scenario::jazz_club_union_trouble_unbuilt_stage"
           ],
-          "source_slot_id": "event.floor_fixture_1",
-          "source_slot_family": "event",
+          "source_slot_id": "scenario.floor_fixture_1",
+          "source_slot_family": "scenario",
           "provisional_geometry": true
         },
         {
@@ -24230,8 +24230,8 @@
           "id": "scenario.local_standing_person_1",
           "kind": "scenario",
           "pos": [
-            484.0,
-            328.0
+            490.0,
+            326.0
           ],
           "footprint_class": "standing_person",
           "physical_role": "Manager",
@@ -24241,19 +24241,19 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            448.0,
-            248.0,
+            454.0,
+            246.0,
             72.0,
             80.0
           ],
           "label_anchor": [
-            484.0,
-            242.0
+            490.0,
+            240.0
           ],
           "facing": "right",
           "priority": 7,
-          "zone_id": "provisional",
-          "support_id": "manual_placement_required",
+          "zone_id": "service_lane",
+          "support_id": "floor",
           "walk_lane_ids": [
             "lane.public"
           ],
@@ -24276,14 +24276,14 @@
           ],
           "source_slot_id": "scenario.standing_person_2",
           "source_slot_family": "scenario",
-          "provisional_geometry": true
+          "provisional_geometry": false
         },
         {
           "id": "scenario.local_standing_person_2",
           "kind": "scenario",
           "pos": [
-            612.0,
-            280.0
+            580.0,
+            328.0
           ],
           "footprint_class": "standing_person",
           "physical_role": "Delegate",
@@ -24293,14 +24293,14 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            576.0,
-            200.0,
+            544.0,
+            248.0,
             72.0,
             80.0
           ],
           "label_anchor": [
-            612.0,
-            194.0
+            580.0,
+            242.0
           ],
           "facing": "left",
           "priority": 8,
@@ -24335,7 +24335,7 @@
           "kind": "scenario",
           "pos": [
             540.0,
-            248.0
+            240.0
           ],
           "footprint_class": "standing_person",
           "physical_role": "Manager",
@@ -24346,13 +24346,13 @@
           "reserve_reason": "",
           "hit_rect": [
             504.0,
-            168.0,
+            160.0,
             72.0,
             80.0
           ],
           "label_anchor": [
             540.0,
-            162.0
+            154.0
           ],
           "facing": "right",
           "priority": 9,
@@ -24618,7 +24618,6 @@
           "jazz_club_union_trouble_task_3"
         ],
         "source_generic_slot_ids": [
-          "event.floor_fixture_1",
           "event.standing_person_1",
           "event.standing_person_2",
           "scenario.doorway_1",
@@ -26395,8 +26394,8 @@
           "id": "scenario.local_standing_person_4",
           "kind": "scenario",
           "pos": [
-            384.0,
-            170.0
+            448.0,
+            194.0
           ],
           "footprint_class": "standing_person",
           "physical_role": "Refused Guest",
@@ -26406,14 +26405,14 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            352.0,
-            88.0,
+            416.0,
+            112.0,
             64.0,
             82.0
           ],
           "label_anchor": [
-            384.0,
-            82.0
+            448.0,
+            106.0
           ],
           "facing": "left",
           "priority": 10,
@@ -27070,8 +27069,8 @@
           "id": "scenario.local_standing_person_4",
           "kind": "scenario",
           "pos": [
-            384.0,
-            170.0
+            448.0,
+            194.0
           ],
           "footprint_class": "standing_person",
           "physical_role": "Waiting Staff Member",
@@ -27081,14 +27080,14 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            352.0,
-            88.0,
+            416.0,
+            112.0,
             64.0,
             82.0
           ],
           "label_anchor": [
-            384.0,
-            82.0
+            448.0,
+            106.0
           ],
           "facing": "left",
           "priority": 10,
@@ -27328,8 +27327,8 @@
           "id": "scenario.local_behind_counter_person_1",
           "kind": "scenario",
           "pos": [
-            380.0,
-            120.0
+            340.0,
+            280.0
           ],
           "footprint_class": "behind_counter_person",
           "physical_role": "Desk clerk",
@@ -27339,14 +27338,14 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            344.0,
-            48.0,
+            304.0,
+            208.0,
             72.0,
             72.0
           ],
           "label_anchor": [
-            380.0,
-            42.0
+            340.0,
+            202.0
           ],
           "facing": "left",
           "priority": 1,
@@ -27743,8 +27742,8 @@
           "id": "scenario.local_floor_fixture_6",
           "kind": "scenario",
           "pos": [
-            366.0,
-            400.0
+            534.0,
+            408.0
           ],
           "footprint_class": "floor_fixture",
           "physical_role": "Parked Luggage Cart",
@@ -27754,14 +27753,14 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            320.0,
-            336.0,
+            488.0,
+            344.0,
             92.0,
             64.0
           ],
           "label_anchor": [
-            366.0,
-            330.0
+            534.0,
+            338.0
           ],
           "facing": "none",
           "priority": 9,
@@ -27796,8 +27795,8 @@
           "id": "scenario.local_ground_marker_1",
           "kind": "scenario",
           "pos": [
-            628.0,
-            240.0
+            636.0,
+            416.0
           ],
           "footprint_class": "ground_marker",
           "physical_role": "Clear Service-Wing Route",
@@ -27807,14 +27806,14 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            592.0,
-            192.0,
+            600.0,
+            368.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            628.0,
-            186.0
+            636.0,
+            362.0
           ],
           "facing": "none",
           "priority": 10,
@@ -27850,7 +27849,7 @@
           "kind": "scenario",
           "pos": [
             276.0,
-            416.0
+            414.0
           ],
           "footprint_class": "standing_person",
           "physical_role": "Scenario alternatives: Coach guests / Stranded Guest / Waiting Guest",
@@ -27863,18 +27862,18 @@
           "reserve_reason": "",
           "hit_rect": [
             240.0,
-            336.0,
+            334.0,
             72.0,
             80.0
           ],
           "label_anchor": [
             276.0,
-            330.0
+            328.0
           ],
           "facing": "right",
           "priority": 11,
-          "zone_id": "provisional",
-          "support_id": "manual_placement_required",
+          "zone_id": "room",
+          "support_id": "floor",
           "walk_lane_ids": [
             "lane.public"
           ],
@@ -27904,7 +27903,7 @@
           ],
           "source_slot_id": "scenario.standing_person_2",
           "source_slot_family": "scenario",
-          "provisional_geometry": true
+          "provisional_geometry": false
         },
         {
           "id": "scenario.local_standing_person_2",
@@ -27962,8 +27961,8 @@
           "id": "scenario.local_surface_item_1",
           "kind": "scenario",
           "pos": [
-            326.0,
-            336.0
+            366.0,
+            424.0
           ],
           "footprint_class": "surface_item",
           "physical_role": "Dispute Rope",
@@ -27973,14 +27972,14 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            280.0,
-            272.0,
+            320.0,
+            360.0,
             92.0,
             64.0
           ],
           "label_anchor": [
-            326.0,
-            266.0
+            366.0,
+            354.0
           ],
           "facing": "none",
           "priority": 13,
@@ -28490,8 +28489,8 @@
           "id": "scenario.local_ground_marker_1",
           "kind": "scenario",
           "pos": [
-            628.0,
-            240.0
+            788.0,
+            176.0
           ],
           "footprint_class": "ground_marker",
           "physical_role": "False Balcony Arrows",
@@ -28501,14 +28500,14 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            592.0,
-            192.0,
+            752.0,
+            128.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            628.0,
-            186.0
+            788.0,
+            122.0
           ],
           "facing": "none",
           "priority": 6,
@@ -28543,8 +28542,8 @@
           "id": "scenario.local_ground_marker_2",
           "kind": "scenario",
           "pos": [
-            716.0,
-            152.0
+            628.0,
+            240.0
           ],
           "footprint_class": "ground_marker",
           "physical_role": "Broken Chalk Sight Line",
@@ -28554,14 +28553,14 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            680.0,
-            104.0,
+            592.0,
+            192.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            716.0,
-            98.0
+            628.0,
+            186.0
           ],
           "facing": "none",
           "priority": 7,
@@ -28706,8 +28705,8 @@
           "id": "scenario.local_standing_person_2",
           "kind": "scenario",
           "pos": [
-            524.0,
-            424.0
+            700.0,
+            414.0
           ],
           "footprint_class": "standing_person",
           "physical_role": "South observer",
@@ -28717,19 +28716,19 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            488.0,
-            344.0,
+            664.0,
+            334.0,
             72.0,
             80.0
           ],
           "label_anchor": [
-            524.0,
-            338.0
+            700.0,
+            430.0
           ],
           "facing": "left",
           "priority": 10,
-          "zone_id": "provisional",
-          "support_id": "manual_placement_required",
+          "zone_id": "room",
+          "support_id": "floor",
           "walk_lane_ids": [
             "lane.public"
           ],
@@ -28753,14 +28752,14 @@
           ],
           "source_slot_id": "scenario.standing_person_3",
           "source_slot_family": "scenario",
-          "provisional_geometry": true
+          "provisional_geometry": false
         },
         {
           "id": "scenario.local_surface_item_1",
           "kind": "scenario",
           "pos": [
-            702.0,
-            424.0
+            572.0,
+            426.0
           ],
           "footprint_class": "surface_item",
           "physical_role": "North surveillance scope",
@@ -28770,19 +28769,19 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            656.0,
-            360.0,
+            526.0,
+            362.0,
             92.0,
             64.0
           ],
           "label_anchor": [
-            702.0,
-            354.0
+            562.0,
+            430.0
           ],
           "facing": "none",
           "priority": 11,
-          "zone_id": "provisional",
-          "support_id": "manual_placement_required",
+          "zone_id": "room",
+          "support_id": "round3_luggage_shelf",
           "walk_lane_ids": [],
           "occupancy_required": false,
           "scenario_occupant_labels": [
@@ -28803,14 +28802,14 @@
           ],
           "source_slot_id": "scenario.surface_item_1",
           "source_slot_family": "scenario",
-          "provisional_geometry": true
+          "provisional_geometry": false
         },
         {
           "id": "scenario.local_surface_item_2",
           "kind": "scenario",
           "pos": [
-            366.0,
-            424.0
+            372.0,
+            120.0
           ],
           "footprint_class": "surface_item",
           "physical_role": "Untouched Service Trolley",
@@ -28820,14 +28819,14 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            320.0,
-            360.0,
-            92.0,
-            64.0
+            336.0,
+            72.0,
+            72.0,
+            48.0
           ],
           "label_anchor": [
-            366.0,
-            354.0
+            372.0,
+            66.0
           ],
           "facing": "none",
           "priority": 12,
@@ -28835,8 +28834,8 @@
           "support_id": "manual_placement_required",
           "walk_lane_ids": [],
           "occupancy_required": false,
-          "_source_slot_id": "event.surface_item_1",
-          "_source_family": "event",
+          "_source_slot_id": "fixed.service_house_drink",
+          "_source_family": "fixed",
           "_synthetic_geometry": true,
           "scenario_occupant_labels": [
             "Untouched Service Trolley"
@@ -28854,8 +28853,8 @@
           "scenario_object_ids": [
             "scenario::motel_stakeout_aftermath_stakeout_refused"
           ],
-          "source_slot_id": "event.surface_item_1",
-          "source_slot_family": "event",
+          "source_slot_id": "fixed.service_house_drink",
+          "source_slot_family": "fixed",
           "provisional_geometry": true
         },
         {
@@ -29001,7 +29000,7 @@
         ],
         "source_generic_slot_ids": [
           "event.ground_marker_1",
-          "event.surface_item_1",
+          "fixed.service_house_drink",
           "scenario.doorway_1",
           "scenario.doorway_2",
           "scenario.doorway_3",
@@ -29496,8 +29495,8 @@
           "id": "scenario.local_standing_person_3",
           "kind": "scenario",
           "pos": [
-            524.0,
-            424.0
+            700.0,
+            414.0
           ],
           "footprint_class": "standing_person",
           "physical_role": "Key-Hook Clerk",
@@ -29507,19 +29506,19 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            488.0,
-            344.0,
+            664.0,
+            334.0,
             72.0,
             80.0
           ],
           "label_anchor": [
-            524.0,
-            338.0
+            700.0,
+            430.0
           ],
           "facing": "left",
           "priority": 10,
-          "zone_id": "provisional",
-          "support_id": "manual_placement_required",
+          "zone_id": "room",
+          "support_id": "floor",
           "walk_lane_ids": [
             "lane.public"
           ],
@@ -29542,14 +29541,14 @@
           ],
           "source_slot_id": "scenario.standing_person_3",
           "source_slot_family": "scenario",
-          "provisional_geometry": true
+          "provisional_geometry": false
         },
         {
           "id": "scenario.local_surface_item_1",
           "kind": "scenario",
           "pos": [
-            702.0,
-            424.0
+            572.0,
+            426.0
           ],
           "footprint_class": "surface_item",
           "physical_role": "Missing bouquet case",
@@ -29559,19 +29558,19 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            656.0,
-            360.0,
+            526.0,
+            362.0,
             92.0,
             64.0
           ],
           "label_anchor": [
-            702.0,
-            354.0
+            562.0,
+            430.0
           ],
           "facing": "none",
           "priority": 11,
-          "zone_id": "provisional",
-          "support_id": "manual_placement_required",
+          "zone_id": "room",
+          "support_id": "round3_luggage_shelf",
           "walk_lane_ids": [],
           "occupancy_required": false,
           "scenario_occupant_labels": [
@@ -29593,14 +29592,14 @@
           ],
           "source_slot_id": "scenario.surface_item_1",
           "source_slot_family": "scenario",
-          "provisional_geometry": true
+          "provisional_geometry": false
         },
         {
           "id": "scenario.local_surface_item_2",
           "kind": "scenario",
           "pos": [
-            366.0,
-            424.0
+            388.0,
+            184.0
           ],
           "footprint_class": "surface_item",
           "physical_role": "Scenario alternatives: Mixed room-key tray / Recalled Key Tray",
@@ -29611,14 +29610,14 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            320.0,
-            360.0,
-            92.0,
-            64.0
+            352.0,
+            136.0,
+            72.0,
+            48.0
           ],
           "label_anchor": [
-            366.0,
-            354.0
+            388.0,
+            130.0
           ],
           "facing": "none",
           "priority": 12,
@@ -29626,8 +29625,8 @@
           "support_id": "manual_placement_required",
           "walk_lane_ids": [],
           "occupancy_required": false,
-          "_source_slot_id": "event.surface_item_1",
-          "_source_family": "event",
+          "_source_slot_id": "fixed.service_house_drink",
+          "_source_family": "fixed",
           "_synthetic_geometry": true,
           "scenario_occupant_labels": [
             "Mixed room-key tray",
@@ -29648,16 +29647,16 @@
             "scenario::motel_wedding_overflow_aftermath_corridor_locked",
             "scenario::motel_wedding_overflow_room_key_tray"
           ],
-          "source_slot_id": "event.surface_item_1",
-          "source_slot_family": "event",
+          "source_slot_id": "fixed.service_house_drink",
+          "source_slot_family": "fixed",
           "provisional_geometry": true
         },
         {
           "id": "scenario.local_surface_item_3",
           "kind": "scenario",
           "pos": [
-            372.0,
-            120.0
+            566.0,
+            336.0
           ],
           "footprint_class": "surface_item",
           "physical_role": "Scenario alternatives: Pinned Ribbon and Key / Ribboned Bouquet Case",
@@ -29668,14 +29667,14 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            336.0,
-            72.0,
-            72.0,
+            544.0,
+            288.0,
+            44.0,
             48.0
           ],
           "label_anchor": [
-            372.0,
-            66.0
+            566.0,
+            282.0
           ],
           "facing": "none",
           "priority": 13,
@@ -29683,7 +29682,7 @@
           "support_id": "manual_placement_required",
           "walk_lane_ids": [],
           "occupancy_required": false,
-          "_source_slot_id": "fixed.service_house_drink",
+          "_source_slot_id": "fixed.item_counter_phone",
           "_source_family": "fixed",
           "_synthetic_geometry": true,
           "scenario_occupant_labels": [
@@ -29705,7 +29704,7 @@
             "scenario::motel_wedding_overflow_aftermath_corridor_argument",
             "scenario::motel_wedding_overflow_aftermath_wedding_interrupted"
           ],
-          "source_slot_id": "fixed.service_house_drink",
+          "source_slot_id": "fixed.item_counter_phone",
           "source_slot_family": "fixed",
           "provisional_geometry": true
         },
@@ -29713,8 +29712,8 @@
           "id": "scenario.local_surface_item_4",
           "kind": "scenario",
           "pos": [
-            566.0,
-            336.0
+            384.0,
+            128.0
           ],
           "footprint_class": "surface_item",
           "physical_role": "Unclaimed Garment Bags",
@@ -29724,14 +29723,14 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            544.0,
-            288.0,
-            44.0,
-            48.0
+            352.0,
+            56.0,
+            64.0,
+            72.0
           ],
           "label_anchor": [
-            566.0,
-            282.0
+            384.0,
+            50.0
           ],
           "facing": "none",
           "priority": 14,
@@ -29739,7 +29738,7 @@
           "support_id": "manual_placement_required",
           "walk_lane_ids": [],
           "occupancy_required": false,
-          "_source_slot_id": "fixed.item_counter_phone",
+          "_source_slot_id": "fixed.numbers_book",
           "_source_family": "fixed",
           "_synthetic_geometry": true,
           "scenario_occupant_labels": [
@@ -29758,7 +29757,7 @@
           "scenario_object_ids": [
             "scenario::motel_wedding_overflow_aftermath_wedding_refused"
           ],
-          "source_slot_id": "fixed.item_counter_phone",
+          "source_slot_id": "fixed.numbers_book",
           "source_slot_family": "fixed",
           "provisional_geometry": true
         }
@@ -29863,8 +29862,8 @@
           "motel_wedding_overflow_station"
         ],
         "source_generic_slot_ids": [
-          "event.surface_item_1",
           "fixed.item_counter_phone",
+          "fixed.numbers_book",
           "fixed.service_house_drink",
           "scenario.behind_counter_person_1",
           "scenario.doorway_1",
@@ -30201,8 +30200,8 @@
           "id": "scenario.local_surface_item_1",
           "kind": "scenario",
           "pos": [
-            702.0,
-            424.0
+            572.0,
+            426.0
           ],
           "footprint_class": "surface_item",
           "physical_role": "Dead lamp",
@@ -30212,19 +30211,19 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            656.0,
-            360.0,
+            526.0,
+            362.0,
             92.0,
             64.0
           ],
           "label_anchor": [
-            702.0,
-            354.0
+            562.0,
+            430.0
           ],
           "facing": "none",
           "priority": 7,
-          "zone_id": "provisional",
-          "support_id": "manual_placement_required",
+          "zone_id": "room",
+          "support_id": "round3_luggage_shelf",
           "walk_lane_ids": [],
           "occupancy_required": false,
           "scenario_occupant_labels": [
@@ -30245,14 +30244,14 @@
           ],
           "source_slot_id": "scenario.surface_item_1",
           "source_slot_family": "scenario",
-          "provisional_geometry": true
+          "provisional_geometry": false
         },
         {
           "id": "scenario.local_surface_item_2",
           "kind": "scenario",
           "pos": [
-            366.0,
-            424.0
+            372.0,
+            120.0
           ],
           "footprint_class": "surface_item",
           "physical_role": "Scenario alternatives: Weekly lease clipboard / Withdrawn Lease Clipboard",
@@ -30263,14 +30262,14 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            320.0,
-            360.0,
-            92.0,
-            64.0
+            336.0,
+            72.0,
+            72.0,
+            48.0
           ],
           "label_anchor": [
-            366.0,
-            354.0
+            372.0,
+            66.0
           ],
           "facing": "none",
           "priority": 8,
@@ -30278,8 +30277,8 @@
           "support_id": "manual_placement_required",
           "walk_lane_ids": [],
           "occupancy_required": false,
-          "_source_slot_id": "event.surface_item_1",
-          "_source_family": "event",
+          "_source_slot_id": "fixed.service_house_drink",
+          "_source_family": "fixed",
           "_synthetic_geometry": true,
           "scenario_occupant_labels": [
             "Weekly lease clipboard",
@@ -30300,16 +30299,16 @@
             "scenario::motel_weekly_rates_aftermath_negotiation_failed",
             "scenario::motel_weekly_rates_lease_clipboard"
           ],
-          "source_slot_id": "event.surface_item_1",
-          "source_slot_family": "event",
+          "source_slot_id": "fixed.service_house_drink",
+          "source_slot_family": "fixed",
           "provisional_geometry": true
         },
         {
           "id": "scenario.local_surface_item_3",
           "kind": "scenario",
           "pos": [
-            372.0,
-            120.0
+            566.0,
+            336.0
           ],
           "footprint_class": "surface_item",
           "physical_role": "Leaking-Sink Warning Tag",
@@ -30319,14 +30318,14 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            336.0,
-            72.0,
-            72.0,
+            544.0,
+            288.0,
+            44.0,
             48.0
           ],
           "label_anchor": [
-            372.0,
-            66.0
+            566.0,
+            282.0
           ],
           "facing": "none",
           "priority": 9,
@@ -30334,7 +30333,7 @@
           "support_id": "manual_placement_required",
           "walk_lane_ids": [],
           "occupancy_required": false,
-          "_source_slot_id": "fixed.service_house_drink",
+          "_source_slot_id": "fixed.item_counter_phone",
           "_source_family": "fixed",
           "_synthetic_geometry": true,
           "scenario_occupant_labels": [
@@ -30353,7 +30352,7 @@
           "scenario_object_ids": [
             "scenario::motel_weekly_rates_aftermath_inspection_refused"
           ],
-          "source_slot_id": "fixed.service_house_drink",
+          "source_slot_id": "fixed.item_counter_phone",
           "source_slot_family": "fixed",
           "provisional_geometry": true
         },
@@ -30554,7 +30553,7 @@
           "motel_weekly_rates_station"
         ],
         "source_generic_slot_ids": [
-          "event.surface_item_1",
+          "fixed.item_counter_phone",
           "fixed.service_house_drink",
           "scenario.doorway_1",
           "scenario.doorway_3",
@@ -30982,7 +30981,7 @@
           "id": "scenario.local_surface_item_3",
           "kind": "scenario",
           "pos": [
-            532.0,
+            676.0,
             168.0
           ],
           "footprint_class": "surface_item",
@@ -30993,13 +30992,13 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            496.0,
+            640.0,
             120.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            532.0,
+            676.0,
             114.0
           ],
           "facing": "none",
@@ -31008,8 +31007,8 @@
           "support_id": "manual_placement_required",
           "walk_lane_ids": [],
           "occupancy_required": false,
-          "_source_slot_id": "event.surface_item_1",
-          "_source_family": "event",
+          "_source_slot_id": "scenario.surface_item_1",
+          "_source_family": "scenario",
           "_synthetic_geometry": true,
           "scenario_occupant_labels": [
             "Public Provenance Card"
@@ -31027,16 +31026,16 @@
           "scenario_object_ids": [
             "scenario::economy_provenance_public_service"
           ],
-          "source_slot_id": "event.surface_item_1",
-          "source_slot_family": "event",
+          "source_slot_id": "scenario.surface_item_1",
+          "source_slot_family": "scenario",
           "provisional_geometry": true
         },
         {
           "id": "scenario.local_surface_item_4",
           "kind": "scenario",
           "pos": [
-            676.0,
-            168.0
+            196.0,
+            136.0
           ],
           "footprint_class": "surface_item",
           "physical_role": "Provenance Marks Abandoned",
@@ -31046,14 +31045,14 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            640.0,
-            120.0,
+            160.0,
+            88.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            676.0,
-            114.0
+            196.0,
+            82.0
           ],
           "facing": "none",
           "priority": 10,
@@ -31061,7 +31060,7 @@
           "support_id": "manual_placement_required",
           "walk_lane_ids": [],
           "occupancy_required": false,
-          "_source_slot_id": "scenario.surface_item_1",
+          "_source_slot_id": "scenario.surface_item_2",
           "_source_family": "scenario",
           "_synthetic_geometry": true,
           "scenario_occupant_labels": [
@@ -31080,7 +31079,7 @@
           "scenario_object_ids": [
             "scenario::provenance_marks_abandoned"
           ],
-          "source_slot_id": "scenario.surface_item_1",
+          "source_slot_id": "scenario.surface_item_2",
           "source_slot_family": "scenario",
           "provisional_geometry": true
         },
@@ -31216,7 +31215,6 @@
         "action_host_count": 1,
         "action_only_ids": [],
         "source_generic_slot_ids": [
-          "event.surface_item_1",
           "scenario.doorway_1",
           "scenario.floor_fixture_1",
           "scenario.floor_fixture_2",
@@ -31394,8 +31392,8 @@
           "id": "scenario.local_floor_fixture_3",
           "kind": "scenario",
           "pos": [
-            270.0,
-            288.0
+            286.0,
+            424.0
           ],
           "footprint_class": "floor_fixture",
           "physical_role": "Scenario alternatives: Closed Shutters / Private Appraisal Refused",
@@ -31406,14 +31404,14 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            224.0,
-            224.0,
+            240.0,
+            360.0,
             92.0,
             64.0
           ],
           "label_anchor": [
-            270.0,
-            218.0
+            286.0,
+            354.0
           ],
           "facing": "none",
           "priority": 4,
@@ -31421,8 +31419,8 @@
           "support_id": "manual_placement_required",
           "walk_lane_ids": [],
           "occupancy_required": false,
-          "_source_slot_id": "event.floor_fixture_1",
-          "_source_family": "event",
+          "_source_slot_id": "fixed.game_slot",
+          "_source_family": "fixed",
           "_synthetic_geometry": true,
           "scenario_occupant_labels": [
             "Closed Shutters",
@@ -31443,8 +31441,8 @@
             "scenario::closed_shutters",
             "scenario::private_appraisal_refused"
           ],
-          "source_slot_id": "event.floor_fixture_1",
-          "source_slot_family": "event",
+          "source_slot_id": "fixed.game_slot",
+          "source_slot_family": "fixed",
           "provisional_geometry": true
         },
         {
@@ -31604,8 +31602,8 @@
           "id": "scenario.local_surface_item_3",
           "kind": "scenario",
           "pos": [
-            532.0,
-            168.0
+            676.0,
+            56.0
           ],
           "footprint_class": "surface_item",
           "physical_role": "Private Appraisal",
@@ -31615,14 +31613,14 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            496.0,
-            120.0,
+            640.0,
+            8.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            532.0,
-            114.0
+            676.0,
+            2.0
           ],
           "facing": "none",
           "priority": 8,
@@ -31630,8 +31628,8 @@
           "support_id": "manual_placement_required",
           "walk_lane_ids": [],
           "occupancy_required": false,
-          "_source_slot_id": "event.surface_item_1",
-          "_source_family": "event",
+          "_source_slot_id": "scenario.surface_item_1",
+          "_source_family": "scenario",
           "_synthetic_geometry": true,
           "scenario_occupant_labels": [
             "Private Appraisal"
@@ -31649,16 +31647,16 @@
           "scenario_object_ids": [
             "scenario::private_appraisal"
           ],
-          "source_slot_id": "event.surface_item_1",
-          "source_slot_family": "event",
+          "source_slot_id": "scenario.surface_item_1",
+          "source_slot_family": "scenario",
           "provisional_geometry": true
         },
         {
           "id": "scenario.local_surface_item_4",
           "kind": "scenario",
           "pos": [
-            676.0,
-            56.0
+            196.0,
+            136.0
           ],
           "footprint_class": "surface_item",
           "physical_role": "Posted Appraisal Sheet",
@@ -31668,14 +31666,14 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            640.0,
-            8.0,
+            160.0,
+            88.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            676.0,
-            2.0
+            196.0,
+            82.0
           ],
           "facing": "none",
           "priority": 9,
@@ -31683,7 +31681,7 @@
           "support_id": "manual_placement_required",
           "walk_lane_ids": [],
           "occupancy_required": false,
-          "_source_slot_id": "scenario.surface_item_1",
+          "_source_slot_id": "scenario.surface_item_2",
           "_source_family": "scenario",
           "_synthetic_geometry": true,
           "scenario_occupant_labels": [
@@ -31702,7 +31700,7 @@
           "scenario_object_ids": [
             "scenario::service_appraisal_public_service"
           ],
-          "source_slot_id": "scenario.surface_item_1",
+          "source_slot_id": "scenario.surface_item_2",
           "source_slot_family": "scenario",
           "provisional_geometry": true
         }
@@ -31770,8 +31768,7 @@
         "action_host_count": 1,
         "action_only_ids": [],
         "source_generic_slot_ids": [
-          "event.floor_fixture_1",
-          "event.surface_item_1",
+          "fixed.game_slot",
           "scenario.doorway_1",
           "scenario.floor_fixture_1",
           "scenario.floor_fixture_2",
@@ -32046,7 +32043,7 @@
           "id": "scenario.local_surface_item_3",
           "kind": "scenario",
           "pos": [
-            532.0,
+            676.0,
             168.0
           ],
           "footprint_class": "surface_item",
@@ -32057,13 +32054,13 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            496.0,
+            640.0,
             120.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            532.0,
+            676.0,
             114.0
           ],
           "facing": "none",
@@ -32072,8 +32069,8 @@
           "support_id": "manual_placement_required",
           "walk_lane_ids": [],
           "occupancy_required": false,
-          "_source_slot_id": "event.surface_item_1",
-          "_source_family": "event",
+          "_source_slot_id": "scenario.surface_item_1",
+          "_source_family": "scenario",
           "_synthetic_geometry": true,
           "scenario_occupant_labels": [
             "Unsealed Item and Unfinished Carbon Copy"
@@ -32091,16 +32088,16 @@
           "scenario_object_ids": [
             "scenario::hold_object_abandoned"
           ],
-          "source_slot_id": "event.surface_item_1",
-          "source_slot_family": "event",
+          "source_slot_id": "scenario.surface_item_1",
+          "source_slot_family": "scenario",
           "provisional_geometry": true
         },
         {
           "id": "scenario.local_surface_item_4",
           "kind": "scenario",
           "pos": [
-            676.0,
-            168.0
+            196.0,
+            136.0
           ],
           "footprint_class": "surface_item",
           "physical_role": "Scenario alternatives: Serial Sweep Hold / Waiting Hold / Waiting Hold Refused",
@@ -32112,14 +32109,14 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            640.0,
-            120.0,
+            160.0,
+            88.0,
             72.0,
             48.0
           ],
           "label_anchor": [
-            676.0,
-            114.0
+            196.0,
+            82.0
           ],
           "facing": "none",
           "priority": 7,
@@ -32127,7 +32124,7 @@
           "support_id": "manual_placement_required",
           "walk_lane_ids": [],
           "occupancy_required": false,
-          "_source_slot_id": "scenario.surface_item_1",
+          "_source_slot_id": "scenario.surface_item_2",
           "_source_family": "scenario",
           "_synthetic_geometry": true,
           "scenario_occupant_labels": [
@@ -32152,7 +32149,7 @@
             "scenario::waiting_hold",
             "scenario::waiting_hold_refused"
           ],
-          "source_slot_id": "scenario.surface_item_1",
+          "source_slot_id": "scenario.surface_item_2",
           "source_slot_family": "scenario",
           "provisional_geometry": true
         },
@@ -32275,7 +32272,6 @@
         "action_host_count": 1,
         "action_only_ids": [],
         "source_generic_slot_ids": [
-          "event.surface_item_1",
           "scenario.doorway_1",
           "scenario.floor_fixture_1",
           "scenario.standing_person_1",

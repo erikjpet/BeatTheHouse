@@ -60,6 +60,7 @@ func _check_user_settings() -> void:
 	source.high_contrast = true
 	source.play_on_small_screen = true
 	source.coach_tips_enabled = false
+	source.object_labels_and_borders_enabled = false
 	source.selected_home_type_id = "apartment"
 	source.developer_placement_mode = true
 	var restored: UserSettings = UserSettingsScript.new()

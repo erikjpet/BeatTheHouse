@@ -700,6 +700,39 @@ func _check_scenario_manifest_retention_validation(library: ContentLibrary) -> v
 	var trusted_manifest := _dict(environment.get("object_manifest", {})).duplicate(true)
 	_check(str(_active_manifest_row(trusted_manifest, scenario_object_id).get("render_key", "")) == "paper_note", "scenario manifest retention", "fixture did not produce a valid scenario manifest row")
 
+	# A renderer snapshot is projection data, not scenario activation authority.
+	# If a base room receives a stale snapshot, none of its visual objects may be
+	# admitted into the physical manifest.
+	var no_scenario_environment := _jazz_environment.duplicate(true)
+	for field in [
+		"scenario_id", "scenario_state", "scenario_sequence_state",
+		"scenario_sequence_definition", "scenario_sequence_projection",
+	]:
+		no_scenario_environment.erase(field)
+	no_scenario_environment.erase("object_manifest")
+	no_scenario_environment.erase("object_manifest_digest")
+	no_scenario_environment.erase("object_manifest_revision")
+	var stale_visual_id := "scenario::stale_no_scenario_visual"
+	no_scenario_environment["scenario_render_snapshot"] = {
+		"ok": true,
+		"scenario_id": "manifest_retention_fixture",
+		"visual_objects": [{
+			"object_id": stale_visual_id,
+			"object_type": "scenario_object",
+			"placement_class": "surface_item",
+			"slot_id": "scenario.surface_item_1",
+			"render_key": "paper_note",
+			"present": true,
+			"visible": true,
+		}],
+	}
+	EnvironmentInstanceScript.reconcile_object_manifest(no_scenario_environment, library)
+	_check(
+		_active_manifest_row(_dict(no_scenario_environment.get("object_manifest", {})), stale_visual_id).is_empty(),
+		"scenario manifest retention",
+		"a stale renderer snapshot created a scenario object in a no-scenario room"
+	)
+
 	# A valid, source-matching saved manifest remains the exact presentation bridge
 	# while the noncausal renderer snapshot is absent.
 	environment.erase("scenario_render_snapshot")

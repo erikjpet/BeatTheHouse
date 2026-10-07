@@ -31,6 +31,7 @@ const POSITION_FIELDS := ["slot_positions"]
 const SHARED_SLOT_FAMILIES := ["fixed", "event", "exit"]
 
 static var _loaded := false
+static var _authority_revision := 0
 static var _project_rooms: Dictionary = {}
 static var _user_rooms: Dictionary = {}
 static var _catalog_loaded := false
@@ -43,6 +44,14 @@ static var _expected_base_layout_ids: Array = []
 static var _expected_scenario_layout_ids: Array = []
 static var last_project_load_outcome: Dictionary = {}
 static var last_user_load_outcome: Dictionary = {}
+
+
+# Monotonic in-process revision for consumers that cache effective placement
+# maps. Persisted coordinates are immutable between successful writes/reloads,
+# so callers can cheaply reuse one translated map until this value changes.
+static func authority_revision() -> int:
+	_ensure_loaded()
+	return _authority_revision
 
 
 static func room_key(environment: Dictionary) -> String:
@@ -146,8 +155,9 @@ static func save_position(
 	if scope == "unsupported":
 		return {"ok": false, "error": "Unsupported placement slot family."}
 	_ensure_loaded()
-	var previous_user_rooms := _user_rooms.duplicate(true)
-	var room := _dict(_user_rooms.get(key, {})).duplicate(true)
+	var had_previous_room := _user_rooms.has(key)
+	var previous_room := _dict(_user_rooms.get(key, {}))
+	var room := previous_room.duplicate(false)
 	var normalized := [snappedf(position.x, 1.0), snappedf(position.y, 1.0)]
 	if scope == "shared":
 		var previous_effective := _effective_shared_positions(key, room, field)
@@ -178,7 +188,12 @@ static func save_position(
 	_user_rooms[key] = room
 	var save_error := _write_payload(user_path(), _user_rooms)
 	if save_error != OK:
-		_user_rooms = previous_user_rooms
+		if had_previous_room:
+			_user_rooms[key] = previous_room
+		else:
+			_user_rooms.erase(key)
+	else:
+		_authority_revision += 1
 	return {
 		"ok": save_error == OK,
 		"error": "" if save_error == OK else "Could not save developer placement overrides.",
@@ -207,8 +222,9 @@ static func clear_position(environment: Dictionary, field: String, object_id: St
 	if scope == "unsupported":
 		return {"ok": false, "error": "Unsupported placement slot family."}
 	_ensure_loaded()
-	var previous_user_rooms := _user_rooms.duplicate(true)
-	var room := _dict(_user_rooms.get(key, {})).duplicate(true)
+	var had_previous_room := _user_rooms.has(key)
+	var previous_room := _dict(_user_rooms.get(key, {}))
+	var room := previous_room.duplicate(false)
 	if scope == "shared":
 		var previous_effective := _effective_shared_positions(key, room, field)
 		var slots := _positions(room.get(field, {})).duplicate(true)
@@ -258,7 +274,12 @@ static func clear_position(environment: Dictionary, field: String, object_id: St
 		_user_rooms[key] = room
 	var save_error := _write_payload(user_path(), _user_rooms)
 	if save_error != OK:
-		_user_rooms = previous_user_rooms
+		if had_previous_room:
+			_user_rooms[key] = previous_room
+		else:
+			_user_rooms.erase(key)
+	else:
+		_authority_revision += 1
 	return {
 		"ok": save_error == OK,
 		"error": "" if save_error == OK else "Could not reset the developer placement.",
@@ -328,8 +349,9 @@ static func save_layout(
 		missing_slot_ids.sort()
 		return _save_layout_error("The layout snapshot is missing authored slots.", missing_slot_ids)
 	_ensure_loaded()
-	var previous_user_rooms := _user_rooms.duplicate(true)
-	var room := _dict(_user_rooms.get(key, {})).duplicate(true)
+	var had_previous_room := _user_rooms.has(key)
+	var previous_room := _dict(_user_rooms.get(key, {}))
+	var room := previous_room.duplicate(false)
 	var previous_shared_positions := _positions(
 		_dict(_project_rooms.get(key, {})).get(field, {})
 	).duplicate(true)
@@ -359,7 +381,12 @@ static func save_layout(
 	_user_rooms[key] = room
 	var save_error := _write_payload(user_path(), _user_rooms)
 	if save_error != OK:
-		_user_rooms = previous_user_rooms
+		if had_previous_room:
+			_user_rooms[key] = previous_room
+		else:
+			_user_rooms.erase(key)
+	else:
+		_authority_revision += 1
 	return {
 		"ok": save_error == OK,
 		"error": "" if save_error == OK else "Could not save the complete environment layout.",
@@ -576,6 +603,7 @@ static func promote_user_overrides() -> Dictionary:
 	var save_error := _write_payload(output_path, merged)
 	if save_error == OK:
 		_project_rooms = merged
+		_authority_revision += 1
 	return {
 		"ok": save_error == OK,
 		"error": "" if save_error == OK else "The project placement file is not writable in this build. The local locked placement is still saved.",
@@ -739,6 +767,7 @@ static func reload() -> void:
 	_project_rooms = {}
 	_user_rooms = {}
 	_ensure_loaded()
+	_authority_revision += 1
 
 
 static func user_path() -> String:

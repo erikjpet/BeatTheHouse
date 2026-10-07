@@ -647,28 +647,25 @@ static func ensure_generated_layout(environment_data: Dictionary, library: Conte
 	# GDScript, so this also refreshes the caller's durable manifest envelope.
 	reconcile_object_manifest(environment_data, library)
 	var layout := JsonCoerceScript._copy_dict(environment_data.get("layout", {}))
-	if library != null:
-		var refreshed_hints := _base_placement_hints(environment_data, library)
-		if not refreshed_hints.is_empty():
-			layout["object_placement_hints"] = refreshed_hints
 	# Town/scenario modifiers can add catalog objects after the EnvironmentInstance
-	# was first built. Classify those late additions from the refreshed hints above,
-	# rather than the stale hints still held by the serialized input dictionary.
-	var placement_environment := environment_data.duplicate(true)
+	# was first built. reconcile_object_manifest refreshed and persisted those
+	# hints above, so do not rebuild the full catalog projection a second time.
+	var placement_environment := environment_data.duplicate(false)
 	placement_environment["layout"] = layout
+	var surface_map := EnvironmentPlacementScript.surface_map(placement_environment)
 	# Keep the exact-layout action attachment authority in the durable generated
 	# layout as well as the shipping surface map. Scenario actions that borrow a
 	# tangible host need this receipt when their sequence reaches aftermath and
 	# that host is removed from the room.
-	var action_host_ids := scenario_action_host_ids(placement_environment)
+	var action_host_ids := JsonCoerceScript._copy_dict(surface_map.get("scenario_instance_action_host_ids", {}))
 	if action_host_ids.is_empty():
 		layout.erase("scenario_instance_action_host_ids")
 	else:
 		layout["scenario_instance_action_host_ids"] = action_host_ids
 	placement_environment["layout"] = layout
 	var active_entries := active_object_manifest_rows(placement_environment)
-	var grounding_signature := _grounding_signature(environment_data, layout, active_entries)
-	var current_slot_map_digest := EnvironmentSlotBinderScript.slot_map_digest(EnvironmentPlacementScript.surface_map(placement_environment))
+	var grounding_signature := _grounding_signature(environment_data, layout, active_entries, surface_map)
+	var current_slot_map_digest := EnvironmentSlotBinderScript.slot_map_digest(surface_map)
 	var persisted_slot_authority := EnvironmentSlotBinderScript.validate_base_layout_authority(placement_environment)
 	if int(layout.get("generated_object_rect_version", 0)) == GENERATED_LAYOUT_VERSION \
 			and str(layout.get("grounding_signature", "")) == grounding_signature \
@@ -866,8 +863,13 @@ static func _manifest_shop_item_order(environment_data: Dictionary, object_id: S
 	return -1
 
 
-static func _grounding_signature(environment_data: Dictionary, layout: Dictionary, active_entries: Array) -> String:
-	var layout_source := layout.duplicate(true)
+static func _grounding_signature(
+	environment_data: Dictionary,
+	layout: Dictionary,
+	active_entries: Array,
+	surface_map: Dictionary
+) -> String:
+	var layout_source := layout.duplicate(false)
 	for generated_key in ["object_rects", "slot_bindings", "slot_overflow_ids", "slot_schema_version", "slot_map_digest", "slot_binding_digest", "placement_classes", "placement_surfaces", "placement_errors", "placement_warnings", "placement_fallback_ids", "scenario_instance_action_host_ids", "grounding_signature", "generated_object_rect_version"]:
 		layout_source.erase(generated_key)
 	var signature_source := {
@@ -875,7 +877,7 @@ static func _grounding_signature(environment_data: Dictionary, layout: Dictionar
 		"placement_authority_version": 4,
 		"archetype_id": str(environment_data.get("archetype_id", environment_data.get("id", ""))),
 		"layer_id": str(environment_data.get("current_layer_id", environment_data.get("layer_id", ""))),
-		"surface_map": EnvironmentPlacementScript.surface_map(environment_data),
+		"surface_map": surface_map,
 		"active_entries": active_entries,
 		"layout_source": layout_source,
 	}
@@ -1278,7 +1280,7 @@ static func _active_object_layout_entries(environment_data: Dictionary, surface_
 	_attach_lottery_counter_manifest_actions(entries, environment_data, surface_map)
 	var filtered := _filter_unique_object_layout_entries(entries)
 	var placement_hints := JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(environment_data.get("layout", {})).get("object_placement_hints", {}))
-	var class_overrides := JsonCoerceScript._copy_dict(EnvironmentPlacementScript.surface_map(environment_data).get("class_overrides", {}))
+	var class_overrides := JsonCoerceScript._copy_dict(surface_map.get("class_overrides", {}))
 	for entry_value in filtered:
 		if typeof(entry_value) != TYPE_DICTIONARY:
 			continue

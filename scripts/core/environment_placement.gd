@@ -43,6 +43,8 @@ const SCENARIO_RESERVATION_FIELDS := [
 
 static var _surface_maps: Dictionary = {}
 static var _effective_surface_maps: Dictionary = {}
+static var _runtime_surface_maps: Dictionary = {}
+static var _runtime_surface_revision := -1
 static var _scenario_layouts: Dictionary = {}
 static var _maps_with_catalog_scenarios: Dictionary = {}
 static var _surface_maps_loaded := false
@@ -177,7 +179,16 @@ static func classify(object_data: Dictionary, object_type: String = "", object_i
 
 
 static func surface_map(environment: Dictionary) -> Dictionary:
-	return _with_runtime_slot_geometry(environment, _shipping_surface_map(environment))
+	var authority_revision := DeveloperPlacementStoreScript.authority_revision()
+	if authority_revision != _runtime_surface_revision:
+		_runtime_surface_maps.clear()
+		_runtime_surface_revision = authority_revision
+	var cache_key := DeveloperPlacementStoreScript.layout_id(environment)
+	if _runtime_surface_maps.has(cache_key):
+		return _dict(_runtime_surface_maps.get(cache_key, {}))
+	var result := _with_runtime_slot_geometry(environment, _shipping_surface_map(environment))
+	_runtime_surface_maps[cache_key] = result
+	return result
 
 
 static func _shipping_surface_map(environment: Dictionary) -> Dictionary:
@@ -219,18 +230,11 @@ static func _shipping_surface_map(environment: Dictionary) -> Dictionary:
 
 
 static func active_scenario_id(environment: Dictionary) -> String:
-	var scenario_state := _dict(environment.get("scenario_state", {}))
-	var target_layer_id := str(scenario_state.get("layer_id", "")).strip_edges()
-	var current_layer_id := str(environment.get("current_layer_id", environment.get("layer_id", ""))).strip_edges()
-	# Layered venues retain one scenario cursor while the player visits another
-	# floor. The retained cursor is progression state, not placement authority for
-	# the non-target room.
-	if not target_layer_id.is_empty() and target_layer_id != current_layer_id:
-		return ""
-	var scenario_id := str(scenario_state.get("id", environment.get("scenario_id", ""))).strip_edges()
-	if scenario_id.is_empty():
-		scenario_id = str(_dict(environment.get("scenario_sequence_state", {})).get("scenario_id", "")).strip_edges()
-	return scenario_id
+	# Placement composition and persistence must agree on both layer targeting and
+	# selector sentinels. In particular, Environment Library's ``__none`` choice is
+	# a request for the shared base room, not a scenario identity that can expose
+	# generic scenario capacity.
+	return DeveloperPlacementStoreScript.active_scenario_id(environment)
 
 
 # Catalog scenario objects own exact, scenario-scoped slot instances. Shared
@@ -394,7 +398,7 @@ static func slot_family(slot: Dictionary) -> String:
 # Reusable slot geometry is already live through surface_map(), so locked slot
 # moves persist when the overlay is disabled and in newly generated rooms.
 static func authoring_surface_map(environment: Dictionary) -> Dictionary:
-	return _with_developer_slots(environment, surface_map(environment))
+	return surface_map(environment)
 
 
 # Applies developer-authored positions as the final authored slot layer. This
@@ -405,7 +409,7 @@ static func _with_developer_slots(environment: Dictionary, surface_data: Diction
 		return surface_data
 	# Never modify the cached authored surface map. A local override must remain
 	# scoped to its room and must disappear immediately when Reset clears it.
-	var result := _with_slot_geometry(surface_data.duplicate(true), slot_overrides)
+	var result := _with_slot_geometry(surface_data, slot_overrides)
 	result["developer_slot_positions"] = slot_overrides.duplicate(true)
 	return result
 
@@ -428,20 +432,29 @@ static func _with_runtime_slot_geometry(environment: Dictionary, surface_data: D
 static func _with_slot_geometry(surface_data: Dictionary, overrides: Dictionary) -> Dictionary:
 	if overrides.is_empty():
 		return surface_data
-	var result := surface_data.duplicate(true)
+	# Surface maps are immutable runtime authority. Keep their large shared maps,
+	# routes, and unmodified slot records by reference; a local override only
+	# needs copy-on-write ownership of the collection and slot it translates.
+	var result := surface_data.duplicate(false)
 	for field in SLOT_COLLECTIONS.values():
+		var source_slots := _array(surface_data.get(field, []))
 		var translated: Array = []
-		for slot_value in _array(result.get(field, [])):
-			var slot := _dict(slot_value).duplicate(true)
-			var slot_id := str(slot.get("id", "")).strip_edges()
-			if slot_id.is_empty() or not overrides.has(slot_id):
-				translated.append(slot)
+		var collection_changed := false
+		for slot_value in source_slots:
+			if typeof(slot_value) != TYPE_DICTIONARY:
+				translated.append(slot_value)
 				continue
-			var original := _number_pair(slot.get("pos", []))
+			var source_slot := slot_value as Dictionary
+			var slot_id := str(source_slot.get("id", "")).strip_edges()
+			if slot_id.is_empty() or not overrides.has(slot_id):
+				translated.append(source_slot)
+				continue
+			var original := _number_pair(source_slot.get("pos", []))
 			var target := _vector(overrides.get(slot_id, []))
 			if not is_finite(target.x) or not is_finite(target.y):
-				translated.append(slot)
+				translated.append(source_slot)
 				continue
+			var slot := source_slot.duplicate(false)
 			var delta := target - original
 			slot["pos"] = [target.x, target.y]
 			var hit_values := _array(slot.get("hit_rect", [])).duplicate()
@@ -455,7 +468,9 @@ static func _with_slot_geometry(surface_data: Dictionary, overrides: Dictionary)
 				label_values[1] = float(label_values[1]) + delta.y
 				slot["label_anchor"] = label_values
 			translated.append(slot)
-		result[field] = translated
+			collection_changed = true
+		if collection_changed:
+			result[field] = translated
 	return result
 
 

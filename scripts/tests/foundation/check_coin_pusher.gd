@@ -2643,6 +2643,11 @@ func _check_pusher_v3_items_alarm_and_rumor(library: ContentLibrary, failures: A
 	live["alarm_tolerance_remaining"] = maxi(2, (effective_tolerance * 2) / 3) + 1
 	var trace_before_nudge := ((live.get("live_session", {}) as Dictionary).get("input_trace", []) as Array).size()
 	var nudge_result := game.resolve_with_context("nudge_machine", 0, run_state, environment, _pusher_v3_rng("PUSHER-V3-ITEMS-NUDGE"), {"coin_pusher_force": "tap", "coin_pusher_direction": "right"})
+	var nudge_audio_cue := str(nudge_result.get("surface_audio_cue", ""))
+	var nudge_audio_event := SurfaceSfxManifest.select_event("coin_pusher", nudge_audio_cue, run_state.seed_value, 0)
+	if nudge_audio_cue != "tell_chirp" or str(nudge_audio_event.get("event_id", "")) != "coin_pusher_chirp":
+		failures.append("Coin Pusher V3 nudge did not emit a resolvable tell-chirp event class: class=%s event=%s." % [nudge_audio_cue, str(nudge_audio_event.get("event_id", ""))])
+		return
 	var trace: Array = (live.get("live_session", {}) as Dictionary).get("input_trace", []) if typeof((live.get("live_session", {}) as Dictionary).get("input_trace", [])) == TYPE_ARRAY else []
 	var nudge_input: Dictionary = trace.back() if trace.size() > trace_before_nudge and typeof(trace.back()) == TYPE_DICTIONARY else {}
 	if int(nudge_input.get("x", 0)) <= 1200 or str(nudge_input.get("kind", "")) != "nudge":
@@ -2734,10 +2739,12 @@ func _check_pusher_v3_items_alarm_and_rumor(library: ContentLibrary, failures: A
 	var suspicion_before_alarm := run_state.suspicion_level()
 	run_state.set_environment(environment)
 	var alarm_result := game.resolve_with_context("nudge_machine", 0, run_state, environment, _pusher_v3_rng("PUSHER-V3-ALARM"), {"coin_pusher_force": "slam", "coin_pusher_direction": "front"})
+	var alarm_audio_cue := str(alarm_result.get("surface_audio_cue", ""))
+	var alarm_audio_event := SurfaceSfxManifest.select_event("coin_pusher", alarm_audio_cue, run_state.seed_value, 0)
 	GameModule.apply_result(run_state, alarm_result)
 	run_state.record_reputation_from_result(alarm_result, alarm_result.get("deltas", {}))
-	if not bool(live.get("locked_down", false)) or str(alarm_result.get("surface_audio_cue", "")) != "coin_pusher_alarm" or (game.get("_live_machines") as Dictionary).is_empty():
-		failures.append("Coin Pusher V3 hard alarm ejected the player or failed to night-lock/audio-signal in place.")
+	if not bool(live.get("locked_down", false)) or alarm_audio_cue != "alarm" or str(alarm_audio_event.get("event_id", "")) != "coin_pusher_alarm" or (game.get("_live_machines") as Dictionary).is_empty():
+		failures.append("Coin Pusher V3 hard alarm ejected the player or failed to emit a resolvable alarm event class in place: class=%s event=%s." % [alarm_audio_cue, str(alarm_audio_event.get("event_id", ""))])
 		return
 	CoinPusherSolverScript.step_ticks(simulation, {"motor_enabled": false}, 24)
 	var locked_surface := game.surface_state(run_state, environment)

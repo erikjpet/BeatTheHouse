@@ -2,6 +2,7 @@ class_name EnvironmentObjectManifest
 extends RefCounted
 
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+const EnvironmentPlacementScript := preload("res://scripts/core/environment_placement.gd")
 
 # Durable physical inventory for one generated environment/layer. Gameplay
 # collections remain authoritative for selection; this manifest is their
@@ -245,10 +246,11 @@ static func validate_for_environment(manifest_value: Variant, environment: Dicti
 		if _dict(persisted_by_id.get(instance_id, {})) != _dict(canonical_by_id.get(instance_id, {})):
 			errors.append("Environment object manifest canonical row %s is stale or altered." % instance_id)
 	var snapshot_present := _has_scenario_renderer_snapshot(environment)
+	var active_scenario_present := has_active_sequence_presentation(environment)
 	for instance_id_value in persisted_by_id.keys():
 		var instance_id := str(instance_id_value)
 		var row := _dict(persisted_by_id.get(instance_id, {}))
-		var retained_authored_scenario := not snapshot_present \
+		var retained_authored_scenario := active_scenario_present and not snapshot_present \
 				and (str(row.get("family", "")) == "scenario" \
 						or str(row.get("source_kind", "")) == "scenario_projection") \
 				and not _row_is_runtime_projection(row)
@@ -453,6 +455,8 @@ static func _scenario_action_ids(snapshot: Dictionary, environment: Dictionary) 
 
 
 static func _retained_scenario_rows(environment: Dictionary, existing: Dictionary) -> Array:
+	if EnvironmentPlacementScript.active_scenario_id(environment).is_empty():
+		return []
 	var state := _dict(environment.get("scenario_state", {}))
 	var sequence_state := _dict(environment.get("scenario_sequence_state", {}))
 	if state.is_empty() and sequence_state.is_empty():
@@ -495,6 +499,11 @@ static func _manifest_can_seed_scenario_retention(existing: Dictionary, environm
 
 static func _scenario_owned_presentations(environment: Dictionary) -> Dictionary:
 	var result: Dictionary = {}
+	# Scenario-named catalog fields can outlive a renderer refresh on transitional
+	# snapshots. They do not confer scenario ownership without a layer-active
+	# catalog scenario or a causally mounted world-sequence owner.
+	if not has_active_sequence_presentation(environment):
+		return result
 	var state := _dict(environment.get("scenario_state", {}))
 	if not state.is_empty():
 		var wanted_layer := str(state.get("layer_id", "")).strip_edges()
@@ -690,11 +699,66 @@ static func _upsert_row(rows_by_id: Dictionary, row: Dictionary) -> void:
 	rows_by_id[instance_id] = normalized
 
 
-static func _has_scenario_renderer_snapshot(environment: Dictionary) -> bool:
+static func has_active_sequence_presentation(environment: Dictionary) -> bool:
+	var active_scenario_id := EnvironmentPlacementScript.active_scenario_id(environment)
+	if not active_scenario_id.is_empty():
+		return true
+	var world_instances := _dict(environment.get("world_sequence_instances", {}))
+	var environment_node_id := str(environment.get("world_node_id", environment.get("archetype_id", environment.get("id", "")))).strip_edges()
+	var live_world_tokens: Dictionary = {}
+	for token_value in world_instances.keys():
+		var token := str(token_value).strip_edges()
+		var instance := _dict(world_instances.get(token_value, {}))
+		var instance_node_id := str(instance.get("node_id", "")).strip_edges()
+		if not token.is_empty() \
+				and str(instance.get("owner_token", "")).strip_edges() == token \
+				and str(instance.get("lifecycle", "")).strip_edges() in ["active", "cleanup_pending"] \
+				and (environment_node_id.is_empty() or instance_node_id.is_empty() or instance_node_id == environment_node_id):
+			live_world_tokens[token] = true
+	if live_world_tokens.is_empty():
+		return false
+	var semantic := _dict(_dict(environment.get("scenario_sequence_projection", {})).get("semantic_state", {}))
+	var found_live_owner := false
+	for collection in ["scene_objects", "interactions", "actors", "services", "games", "routes"]:
+		for record_value in _dict(semantic.get(collection, {})).values():
+			var record := _dict(record_value)
+			var record_token := str(record.get("world_sequence_owner_token", "")).strip_edges()
+			if not record_token.is_empty():
+				if not live_world_tokens.has(record_token):
+					return false
+				found_live_owner = true
+			for action_value in _array(record.get("available_actions", [])):
+				var action_token := str(_dict(action_value).get("world_sequence_owner_token", "")).strip_edges()
+				if action_token.is_empty():
+					continue
+				if not live_world_tokens.has(action_token):
+					return false
+				found_live_owner = true
+	return found_live_owner
+
+
+static func has_causal_scenario_renderer_snapshot(environment: Dictionary) -> bool:
+	var active_scenario_id := EnvironmentPlacementScript.active_scenario_id(environment)
+	if not has_active_sequence_presentation(environment):
+		return false
 	if typeof(environment.get("scenario_render_snapshot")) != TYPE_DICTIONARY:
 		return false
 	var snapshot := environment.get("scenario_render_snapshot") as Dictionary
-	return bool(snapshot.get("ok", false)) and typeof(snapshot.get("visual_objects")) == TYPE_ARRAY
+	var snapshot_scenario_id := str(snapshot.get("scenario_id", "")).strip_edges()
+	if active_scenario_id.is_empty():
+		# World-only snapshots have no catalog scenario id, so bind them to the
+		# independently sealed layout receipt as well as the live owner token.
+		var authority_digest := str(environment.get("scenario_layout_authority_digest", "")).strip_edges()
+		if not JsonCoerceScript._valid_sha256(authority_digest) \
+				or str(snapshot.get("layout_authority_digest", "")).strip_edges() != authority_digest:
+			return false
+	return bool(snapshot.get("ok", false)) \
+		and typeof(snapshot.get("visual_objects")) == TYPE_ARRAY \
+		and (snapshot_scenario_id.is_empty() or snapshot_scenario_id == active_scenario_id)
+
+
+static func _has_scenario_renderer_snapshot(environment: Dictionary) -> bool:
+	return has_causal_scenario_renderer_snapshot(environment)
 
 
 static func _source_digest(environment: Dictionary, active_entries: Array, surface_map: Dictionary) -> String:

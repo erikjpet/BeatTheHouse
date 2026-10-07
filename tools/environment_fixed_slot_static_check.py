@@ -87,22 +87,22 @@ V2_SCENARIO_CAPACITY_TARGETS = {
     "house": {"floor_fixture": 1, "standing_person": 1, "wall_mounted": 1},
 }
 V2_EVENT_CAPACITY_TARGETS = {
-    "corner_store": {"behind_counter_person": 2, "floor_fixture": 1, "group": 1, "standing_person": 1, "ground_marker": 1},
-    "back_alley": {"behind_counter_person": 1, "ground_marker": 1, "floor_fixture": 1, "standing_person": 6},
-    "motel": {"behind_counter_person": 1, "surface_item": 1, "ground_marker": 1, "standing_person": 4, "doorway": 1},
-    "bar": {"behind_counter_person": 1, "floor_fixture": 2, "standing_person": 5, "doorway": 1},
-    "gas_station_casino": {"doorway": 2, "floor_fixture": 2, "surface_item": 1, "ground_marker": 1, "standing_person": 5},
-    "small_underground_casino": {"floor_fixture": 2, "standing_person": 8, "wall_mounted": 1, "surface_item": 3, "doorway": 1},
+    "corner_store": {"behind_counter_person": 2, "standing_person": 1, "ground_marker": 1},
+    "back_alley": {"ground_marker": 1, "floor_fixture": 1, "standing_person": 6},
+    "motel": {"behind_counter_person": 1, "ground_marker": 1, "standing_person": 4},
+    "bar": {"behind_counter_person": 1, "standing_person": 5, "doorway": 1},
+    "gas_station_casino": {"doorway": 1, "ground_marker": 1, "standing_person": 5},
+    "small_underground_casino": {},
     "small_underground_casino:club": {"standing_person": 8},
     "small_underground_casino:casino": {"behind_counter_person": 1, "standing_person": 8},
     "small_underground_casino:back_room": {"standing_person": 6},
-    "jazz_club": {"floor_fixture": 1, "standing_person": 3},
-    "kitty_cat_lounge": {"floor_fixture": 1, "seated_person": 1, "doorway": 1, "standing_person": 6},
-    "delta_queen": {"seated_person": 1, "doorway": 1, "behind_counter_person": 1, "floor_fixture": 2, "standing_person": 6},
+    "jazz_club": {"standing_person": 3},
+    "kitty_cat_lounge": {"seated_person": 1, "doorway": 1, "standing_person": 5},
+    "delta_queen": {"seated_person": 1, "doorway": 1, "behind_counter_person": 1, "standing_person": 6},
     "beach": {"standing_person": 1},
-    "pawn_shop": {"floor_fixture": 1, "standing_person": 3, "shop_item": 1, "surface_item": 1},
-    "grand_casino": {"behind_counter_person": 2, "wall_mounted": 1, "floor_fixture": 1, "standing_person": 7},
-    "grand_casino_high_limit": {"floor_fixture": 1, "standing_person": 6},
+    "pawn_shop": {"standing_person": 3},
+    "grand_casino": {"behind_counter_person": 1, "wall_mounted": 1, "standing_person": 7},
+    "grand_casino_high_limit": {"standing_person": 6},
     "grand_casino_back_room": {"standing_person": 5},
     "grand_casino_cage": {},
     "motel_room": {},
@@ -1279,6 +1279,11 @@ def validate_map_v2(
                     runtime_reserve == bool(reserve_reason.strip()),
                     f"{map_id}.{slot_id}: reserve_reason must be non-empty exactly when runtime_reserve is true",
                 )
+            if family == "event" and runtime_reserve is True:
+                check.require(
+                    placement_class == "standing_person",
+                    f"{map_id}.{slot_id}: non-person event rows cannot be generic runtime reserves",
+                )
             family_slots[slot_id] = value
             slots_by_id[slot_id] = value
         slots_by_family[family] = family_slots
@@ -2336,6 +2341,10 @@ def main_v2(
     board_raw = point(placement.get("board_size"))
     check.require(placement.get("schema_version") == 3, "placement_surfaces.json schema_version must be 3")
     check.require(placement.get("slot_schema_version") == 2, "placement_surfaces.json slot_schema_version must be 2")
+    check.require(
+        sum(sum(class_counts.values()) for class_counts in V2_EVENT_CAPACITY_TARGETS.values()) == 98,
+        "producer-backed event capacity matrix must contain exactly 98 rows",
+    )
     check.require(board_raw is not None and board_raw[0] > 0 and board_raw[1] > 0, "invalid placement board_size")
     board = board_raw or (900.0, 430.0)
     archetypes = {str(item.get("id", "")): item for item in archetypes_list if isinstance(item, dict)}
@@ -2386,10 +2395,10 @@ def main_v2(
         check.require(action_id in jazz_action_ids, f"jazz_club: fixed hosts do not attach {action_id}")
     check.require(
         len(values(jazz.get("fixed_slots"))) == 9
-        and len(values(jazz.get("event_slots"))) == 4
+        and len(values(jazz.get("event_slots"))) == 3
         and len(values(jazz.get("scenario_slots"))) == 12
         and len(values(jazz.get("exit_slots"))) == 1,
-        "jazz_club: reviewed fixed/event/scenario/exit counts must be 9/4/12/1",
+        "jazz_club: reviewed fixed/event/scenario/exit counts must be 9/3/12/1",
     )
     check.require(
         {
@@ -2782,8 +2791,7 @@ def main_v2(
     )
 
     silas_maps = (
-        "motel", "bar", "small_underground_casino",
-        "small_underground_casino:club",
+        "motel", "bar", "small_underground_casino:club",
         "small_underground_casino:casino",
         "small_underground_casino:back_room", "jazz_club",
         "kitty_cat_lounge",
@@ -2804,6 +2812,45 @@ def main_v2(
             and event_slots.get(slot_id, {}).get("footprint_class") == "standing_person",
             f"{map_id}: Silas must use canonical event standing-person capacity",
         )
+    for map_id, expected_slot_id in {
+        "motel": "event.standing_person_4",
+        "jazz_club": "event.standing_person_3",
+        "kitty_cat_lounge": "event.standing_person_5",
+    }.items():
+        check.require(
+            maps_by_id.get(map_id, {}).get("event_object_slot_ids", {}).get("numbers:silas")
+            == expected_slot_id,
+            f"{map_id}: compacted Silas preference must use {expected_slot_id}",
+        )
+
+    for map_id, object_id in (
+        ("motel", "event:chain06_nico_weekly_door"),
+        ("pawn_shop", "event:chain06_sal_estate_item"),
+    ):
+        map_data = maps_by_id.get(map_id, {})
+        check.require(
+            map_data.get("object_family_ids", {}).get(object_id) == "scenario"
+            and all(
+                object_id not in map_data.get(f"{family}_object_slot_ids", {})
+                for family in V2_FAMILIES
+            ),
+            f"{map_id}: {object_id} must be owned only by its scenario instance",
+        )
+
+    template_parent = maps_by_id.get("small_underground_casino", {})
+    check.require(
+        not values(template_parent.get("event_slots"))
+        and not template_parent.get("event_object_slot_ids", {})
+        and not template_parent.get("event_category_slot_ids", {})
+        and "event" not in set(template_parent.get("object_family_ids", {}).values()),
+        "small_underground_casino: template parent retained event-family authority",
+    )
+    back_alley = maps_by_id.get("back_alley", {})
+    check.require(
+        "event:town_rumor_staff" not in back_alley.get("object_family_ids", {})
+        and "event:town_rumor_staff" not in back_alley.get("event_object_slot_ids", {}),
+        "back_alley: unreachable town-rumor staff authority survived",
+    )
 
     gas = maps_by_id.get("gas_station_casino", {})
     gas_nell = next(

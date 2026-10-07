@@ -148,7 +148,30 @@ func sealed_action_authority_contract() -> Dictionary:
 		"authoritative_result_marker": "table_game_authoritative",
 		"place_bet_action": "",
 		"host_pointer_intent": true,
+		# Bet construction and action arming mutate only the authenticated table
+		# session. Resolving variants restart on the isolated transaction path.
+		"in_place_session_intents": [
+			"roulette_chip", "roulette_bet", "roulette_patron_focus", "roulette_patron_bet",
+			"roulette_clear", "roulette_remove", "roulette_undo", "roulette_rebet",
+			"roulette_double", "roulette_max_bet", "roulette_spin", "roulette_nudge",
+			"roulette_read_wheel", "roulette_past_post",
+		],
+		"in_place_session_intent_method": &"_roulette_in_place_session_intent_command",
+		"in_place_session_surface_patch_method": &"_roulette_in_place_session_surface_patch",
 	}
+
+
+func surface_action_uses_lightweight_ui_state(_surface_action: String) -> bool:
+	return true
+
+
+func surface_action_ui_state_keys() -> Array:
+	return TABLE_GAME_HOST_TRANSIENT_UI_KEYS
+
+
+func checkpoint_surface_ui_state_for_save_requires_ui_state() -> bool:
+	# Roulette's authority ledger already contains bets, challenges, and history.
+	return false
 
 
 func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
@@ -732,6 +755,48 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 		"roulette_read_wheel":
 			return _read_wheel_command(index, next_state, table, run_state, environment, confirm_requested)
 	return {"handled": false}
+
+
+func _roulette_in_place_session_intent_command(surface_action: String, index: int, confirm_requested: bool, session: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
+	return surface_action_command(surface_action, index, confirm_requested, session, run_state, environment)
+
+
+func _roulette_in_place_session_surface_patch(session: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
+	var table := _peek_table_state(environment)
+	if table.is_empty():
+		return {}
+	var bets := _bet_array(session.get("roulette_bets", []))
+	var denominations := _chip_denominations(table)
+	var selected_chip := int(session.get("selected_chip", denominations[0]))
+	var total_wager := _total_wager(bets)
+	var barred := bool(table.get("table_barred", false))
+	var visible_bankroll := _roulette_visible_bankroll(run_state, environment, _last_result_source(table), true)
+	var wager_currency := GameModule.presentation_currency_for_game(run_state, get_id(), environment)
+	return {
+		"roulette_bets": bets,
+		"roulette_focused_stack_id": str(session.get("roulette_focused_stack_id", "")),
+		"selected_chip": selected_chip,
+		"selected_stake": selected_chip,
+		"chip_stack": TableVisualsScript.chip_stack_for_stake(total_wager, denominations),
+		"total_wager_cost": total_wager,
+		"inside_wager_total": _wager_total_for_family(bets, "inside"),
+		"outside_wager_total": _wager_total_for_family(bets, "outside"),
+		"surface_state_labels": [
+			{"label": "Wager", "value": PlayerTextScript.format_currency_amount(wager_currency, total_wager)},
+			{"label": "Wheel", "value": "00" if int(_table_rules(table).get("zero_count", 2)) == 2 else "0"},
+		],
+		"can_spin": not barred,
+		"can_undo": not barred and not _array(session.get("roulette_undo_stack", [])).is_empty(),
+		"can_clear": not barred and not bets.is_empty(),
+		"can_remove": not barred and not bets.is_empty(),
+		"can_rebet": not barred and not _roulette_rebet_layout(session, table).is_empty(),
+		"focused_patron_index": _focused_patron_index(session, _dictionary_array(table.get("patrons", []))),
+		"wheel_read_challenge": _normalized_wheel_read_challenge(session.get("wheel_read_challenge", {})),
+		"past_post_challenge": _normalized_past_post_challenge(session.get("past_post_challenge", {})),
+		"native_selected_surface_actions": _selected_surface_actions(session),
+		"available_funds": maxi(0, visible_bankroll - total_wager),
+		"total_new_stake": total_wager,
+	}
 
 
 func resolve(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream) -> Dictionary:

@@ -1,6 +1,7 @@
 extends SceneTree
 
 const ContentLibraryScript := preload("res://scripts/core/content_library.gd")
+const EnvironmentPlacementScript := preload("res://scripts/core/environment_placement.gd")
 const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 
@@ -107,6 +108,22 @@ func _run() -> void:
 	var layered_environment: Dictionary = layered.get("environment", {})
 	_check(str(layered_environment.get("current_layer_id", "")) == "back_room", "The selected layered starting area must become active.")
 	_check(bool((layered_environment.get("local_narrative_flags", {}) as Dictionary).get("environment_test_session", false)), "The Environment Library exit must survive a layered-room projection.")
+	_check(EnvironmentPlacementScript.active_scenario_id(layered_environment).is_empty(), "Base / No Scenario must not publish an active scenario identity.")
+	_check(
+		not layered_environment.has("scenario_sequence_state")
+			and not layered_environment.has("scenario_sequence_projection")
+			and not layered_environment.has("scenario_render_snapshot"),
+		"Base / No Scenario generation must not retain sequence or renderer projection artifacts."
+	)
+	var no_scenario_projection_rows: Array = []
+	for row_value in ((layered_environment.get("object_manifest", {}) as Dictionary).get("rows", []) as Array):
+		if typeof(row_value) != TYPE_DICTIONARY:
+			continue
+		var row := row_value as Dictionary
+		if str(row.get("source_kind", "")) == "scenario_projection" \
+				or str(row.get("object_type", "")) in ["scenario_actor", "scenario_object"]:
+			no_scenario_projection_rows.append(str(row.get("instance_object_id", row.get("object_id", ""))))
+	_check(no_scenario_projection_rows.is_empty(), "Base / No Scenario generated scenario presentation objects: %s" % JSON.stringify(no_scenario_projection_rows))
 
 	_finish()
 

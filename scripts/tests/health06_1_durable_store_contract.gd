@@ -179,6 +179,10 @@ func _check_settings_recovery() -> void:
 		{"text_size": {"corrupt": true}},
 		"recognized key with an invalid value type"
 	)
+	_expect_invalid_settings_preserved(
+		{"object_labels_and_borders_enabled": "sometimes"},
+		"object-label visibility with an invalid value type"
+	)
 	_expect(
 		not bool(UserSettingsScript.new().call("_settings_payload_valid", {"resolution": "corrupt"})),
 		"RP-008: malformed recognized resolution shape passed settings schema validation."
@@ -195,6 +199,7 @@ func _check_settings_recovery() -> void:
 	var legacy := UserSettingsScript.new()
 	var legacy_outcome: Dictionary = legacy.load()
 	_expect(str(legacy_outcome.get("code", "")) == "loaded" and legacy.text_size == "large", "RP-008: recognized schema-less legacy settings did not migrate: %s" % JSON.stringify(legacy_outcome))
+	_expect(legacy.object_labels_and_borders_enabled, "RP-008: legacy settings missing the object-label preference did not retain its enabled default.")
 
 
 func _expect_invalid_settings_preserved(payload: Dictionary, label: String) -> void:

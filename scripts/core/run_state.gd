@@ -2508,6 +2508,12 @@ func _scenario_sequence_definition_readonly() -> Dictionary:
 	var embedded_definition: Dictionary = embedded_value as Dictionary if typeof(embedded_value) == TYPE_DICTIONARY else {}
 	if scenario_id.is_empty() and ScenarioSequenceSchemaScript.is_sequence(embedded_definition):
 		scenario_id = str(embedded_definition.get("id", embedded_definition.get("scenario_id", ""))).strip_edges()
+	# A town node may retain a seeded definition for a future normal visit. That
+	# seed must not activate a Base / No Scenario room merely because both share a
+	# node id; the installed environment needs an explicit scenario identity (or a
+	# trusted embedded headless definition) before the seed can be resolved.
+	if scenario_id.is_empty():
+		return {}
 	var definition := _seeded_scenario_definition_for_node_readonly(node_id)
 	if definition.is_empty():
 		definition = embedded_definition

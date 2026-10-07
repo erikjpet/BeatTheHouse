@@ -45,6 +45,7 @@ var drunk_effect: OptionButton
 var high_contrast: CheckBox
 var play_on_small_screen: CheckBox
 var coach_tips: CheckBox
+var object_labels_and_borders: CheckBox
 var reset_tips: Button
 var haptics_note: Label
 var game_library: Button
@@ -140,6 +141,9 @@ func _build() -> void:
 	reset_tips.tooltip_text = "Show first-time coach tips again."
 	reset_tips.pressed.connect(_on_reset_tips)
 	box.add_child(reset_tips)
+	object_labels_and_borders = _check(box, "Object labels and borders")
+	object_labels_and_borders.tooltip_text = "Show subtle names and guide borders around room objects. Hover details remain available when off."
+	object_labels_and_borders.toggled.connect(_on_object_labels_and_borders)
 	var ui_row := _slider(box, "UI Scale", 85, 130, 5)
 	ui = ui_row["slider"]
 	ui_text = ui_row["text"]
@@ -381,6 +385,7 @@ func _sync() -> void:
 	audio_calm.button_pressed = draft.audio_calm
 	play_on_small_screen.button_pressed = draft.play_on_small_screen
 	coach_tips.button_pressed = draft.coach_tips_enabled
+	object_labels_and_borders.button_pressed = draft.object_labels_and_borders_enabled
 	ui.value = roundi(draft.ui_scale * 100.0)
 	text_size.select(draft.text_index())
 	high_contrast.button_pressed = draft.high_contrast
@@ -388,7 +393,7 @@ func _sync() -> void:
 	reduce_motion.button_pressed = draft.reduce_motion
 	developer_placement_mode.button_pressed = draft.developer_placement_mode
 	developer_slot_placement_mode.button_pressed = draft.developer_slot_placement_mode
-	for check in [vsync, audio_calm, play_on_small_screen, coach_tips, high_contrast, reduce_motion, developer_placement_mode, developer_slot_placement_mode]:
+	for check in [vsync, audio_calm, play_on_small_screen, coach_tips, object_labels_and_borders, high_contrast, reduce_motion, developer_placement_mode, developer_slot_placement_mode]:
 		_update_check_label(check, check.button_pressed)
 	_labels()
 	_apply_accessibility_settings()
@@ -478,6 +483,10 @@ func _on_coach_tips(enabled: bool) -> void:
 	draft.coach_tips_enabled = enabled
 
 
+func _on_object_labels_and_borders(enabled: bool) -> void:
+	draft.object_labels_and_borders_enabled = enabled
+
+
 func _on_reset_tips() -> void:
 	reset_tips_requested.emit()
 	status.text = "Coach tips reset."
@@ -549,6 +558,7 @@ func current_settings_snapshot() -> Dictionary:
 		"high_contrast": bool(active_settings.high_contrast),
 		"play_on_small_screen": bool(active_settings.play_on_small_screen),
 		"coach_tips_enabled": bool(active_settings.coach_tips_enabled),
+		"object_labels_and_borders_enabled": bool(active_settings.object_labels_and_borders_enabled),
 		"developer_placement_mode": bool(active_settings.developer_placement_mode),
 		"developer_slot_placement_mode": bool(active_settings.developer_slot_placement_mode),
 		"reset_tips_available": reset_tips != null and not reset_tips.disabled,

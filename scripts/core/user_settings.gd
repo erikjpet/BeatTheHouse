@@ -29,7 +29,7 @@ const STORAGE_KEYS := [
 	"resolution", "window_mode", "vsync_enabled", "master_volume",
 	"music_volume", "sfx_volume", "audio_calm", "ui_scale", "text_size",
 	"reduce_motion", "drunk_effect_mode", "high_contrast",
-	"play_on_small_screen", "coach_tips_enabled", "selected_home_type_id",
+	"play_on_small_screen", "coach_tips_enabled", "object_labels_and_borders_enabled", "selected_home_type_id",
 	"developer_placement_mode", "developer_slot_placement_mode",
 ]
 
@@ -47,6 +47,7 @@ var drunk_effect_mode: String = "distortion"
 var high_contrast: bool = false
 var play_on_small_screen: bool = false
 var coach_tips_enabled: bool = true
+var object_labels_and_borders_enabled: bool = true
 var selected_home_type_id: String = "random"
 var developer_placement_mode: bool = false
 var developer_slot_placement_mode: bool = false
@@ -69,6 +70,7 @@ func reset() -> void:
 	high_contrast = false
 	play_on_small_screen = false
 	coach_tips_enabled = true
+	object_labels_and_borders_enabled = true
 	selected_home_type_id = "random"
 	developer_placement_mode = false
 	developer_slot_placement_mode = false
@@ -163,6 +165,7 @@ func to_dict() -> Dictionary:
 		"high_contrast": high_contrast,
 		"play_on_small_screen": play_on_small_screen,
 		"coach_tips_enabled": coach_tips_enabled,
+		"object_labels_and_borders_enabled": object_labels_and_borders_enabled,
 		"selected_home_type_id": selected_home_type_id,
 		"developer_placement_mode": developer_placement_mode,
 		"developer_slot_placement_mode": developer_slot_placement_mode,
@@ -207,7 +210,7 @@ func _settings_value_shape_valid(key: String, value: Variant) -> bool:
 			return _settings_number(size.get("width", null)) and _settings_number(size.get("height", null))
 		"master_volume", "music_volume", "sfx_volume", "ui_scale":
 			return _settings_number(value)
-		"vsync_enabled", "audio_calm", "reduce_motion", "high_contrast", "play_on_small_screen", "coach_tips_enabled", "developer_placement_mode", "developer_slot_placement_mode":
+		"vsync_enabled", "audio_calm", "reduce_motion", "high_contrast", "play_on_small_screen", "coach_tips_enabled", "object_labels_and_borders_enabled", "developer_placement_mode", "developer_slot_placement_mode":
 			return typeof(value) == TYPE_BOOL
 		"window_mode", "text_size", "drunk_effect_mode", "selected_home_type_id":
 			return typeof(value) == TYPE_STRING
@@ -241,6 +244,7 @@ func from_dict(data: Dictionary) -> void:
 	high_contrast = bool(data.get("high_contrast", high_contrast))
 	play_on_small_screen = bool(data.get("play_on_small_screen", play_on_small_screen))
 	coach_tips_enabled = bool(data.get("coach_tips_enabled", coach_tips_enabled))
+	object_labels_and_borders_enabled = bool(data.get("object_labels_and_borders_enabled", object_labels_and_borders_enabled))
 	selected_home_type_id = str(data.get("selected_home_type_id", selected_home_type_id)).strip_edges()
 	developer_placement_mode = bool(data.get("developer_placement_mode", developer_placement_mode))
 	developer_slot_placement_mode = bool(data.get("developer_slot_placement_mode", developer_slot_placement_mode))
@@ -317,6 +321,7 @@ func accessibility_snapshot() -> Dictionary:
 		"high_contrast": high_contrast,
 		"play_on_small_screen": play_on_small_screen,
 		"coach_tips_enabled": coach_tips_enabled,
+		"object_labels_and_borders_enabled": object_labels_and_borders_enabled,
 		"haptics_supported": false,
 		"haptics_cut_reason": HAPTICS_CUT_REASON,
 	}

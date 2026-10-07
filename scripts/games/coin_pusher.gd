@@ -925,6 +925,12 @@ func checkpoint_surface_ui_state_for_save(_ui_state: Dictionary, _run_state: Run
 	pass
 
 
+func checkpoint_surface_ui_state_for_save_requires_ui_state() -> bool:
+	# Live simulation state is owned by the machine cache/durable snapshot; this
+	# save hook never consumes the retained renderer projection.
+	return false
+
+
 func foundation_save_ready(run_state: RunState, environment: Dictionary) -> bool:
 	var key := _live_key(run_state, environment)
 	if not _live_machines.has(key):
@@ -2020,7 +2026,9 @@ func _resolve_live_nudge(run_state: RunState, environment: Dictionary, machine: 
 	deltas["messages"] = [message]
 	var result := GameModule.build_owned_action_result({"source_id": get_id(), "game_id": get_id(), "action_id": NUDGE_ACTION, "action_kind": "cheat", "environment_id": str(environment.get("id", "")), "deltas": deltas, "message": message})
 	result["host_apply_result"] = true
-	result["surface_audio_cue"] = "coin_pusher_alarm" if alarmed else "coin_pusher_chirp"
+	# Surface cues name semantic classes from the profile manifest; the manifest
+	# resolves those classes to the concrete coin-pusher samples.
+	result["surface_audio_cue"] = "alarm" if alarmed else "tell_chirp"
 	result["surface_audio_context"] = {"tell_rung": int(machine.get("tell_rung", 0)), "alarmed": alarmed}
 	return result
 
