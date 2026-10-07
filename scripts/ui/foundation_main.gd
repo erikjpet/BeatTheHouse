@@ -3245,7 +3245,7 @@ func _confirm_meta_world_map_travel() -> Dictionary:
 
 
 # Selects an event choice without mutating simulation state.
-func select_event_choice(event_id: String, choice_id: String) -> bool:
+func select_event_choice(event_id: String, choice_id: String, refresh_presentation: bool = true) -> bool:
 	var visible_popup_choice := _event_choice_popup_is_visible() and _event_choice_popup_allows_event_resolution(event_id)
 	if not visible_popup_choice and _guard_player_input_route():
 		return false
@@ -3265,16 +3265,17 @@ func select_event_choice(event_id: String, choice_id: String) -> bool:
 	_set_current_screen(SCREEN_EVENT)
 	focus_interactable_object("event:%s" % selected_event_id)
 	_show_message("Selected event choice: %s." % selected_event_choice_label)
-	_refresh_after_environment_selection()
+	if refresh_presentation:
+		_refresh_after_environment_selection()
 	return true
 
 
 # Resolves the selected event choice through EventModule.
-func confirm_selected_event_choice() -> Dictionary:
+func confirm_selected_event_choice(lifecycle_rollback: Dictionary = {}) -> Dictionary:
 	if selected_event_id.is_empty() or selected_event_choice_id.is_empty():
 		_show_message("Select an event choice first.")
 		return {"ok": false, "errors": ["Select an event choice first."]}
-	return resolve_event_choice(selected_event_id, selected_event_choice_id)
+	return resolve_event_choice(selected_event_id, selected_event_choice_id, lifecycle_rollback)
 
 
 # Owns the full public event-card interaction, including the selection UI and
@@ -3290,10 +3291,16 @@ func activate_event_choice_action(event_id: String, choice_id: String) -> bool:
 			# Event cards resolve directly. Complete the parent-event tutorial
 			# acknowledgement before selecting and confirming the response.
 			_advance_completed_tutorial_action_dialogue(completed_lesson_id)
-	if not select_event_choice(event_id, choice_id):
+	# This path selects and resolves as one transaction. Publishing the temporary
+	# selection before resolution only redraws presentation that the result redraws
+	# again a few lines later, which was especially visible on room event objects.
+	if not select_event_choice(event_id, choice_id, false):
 		_restore_foundation_lifecycle_snapshot(caller_rollback)
 		return false
-	var event_result := confirm_selected_event_choice()
+	# Reuse the transaction's rollback image. resolve_event_choice() used to clone
+	# the complete RunState a second time here, including every generated room and
+	# live game buffer, before a Counter Phone response could begin.
+	var event_result := confirm_selected_event_choice(caller_rollback)
 	if not bool(event_result.get("ok", false)):
 		_restore_foundation_lifecycle_snapshot(caller_rollback)
 		return false
@@ -3302,7 +3309,7 @@ func activate_event_choice_action(event_id: String, choice_id: String) -> bool:
 
 
 # Resolves one selected event choice through EventModule.
-func resolve_event_choice(event_id: String, choice_id: String) -> Dictionary:
+func resolve_event_choice(event_id: String, choice_id: String, lifecycle_rollback: Dictionary = {}) -> Dictionary:
 	if travel_transition_active:
 		_show_message("Travel is already in progress.")
 		_refresh_modal_contract_owner()
@@ -3347,7 +3354,7 @@ func resolve_event_choice(event_id: String, choice_id: String) -> Dictionary:
 	var was_triggered_popup := popup_type == "triggered_event"
 	var return_to_game_after_event := _event_resolution_returns_to_active_game(popup_type, event_context)
 	var inventory_before := _run_inventory_id_set()
-	var event_rollback := _foundation_lifecycle_snapshot()
+	var event_rollback := lifecycle_rollback if not lifecycle_rollback.is_empty() else _foundation_lifecycle_snapshot()
 	var result := event_module.resolve(run_state, event_environment, choice_id)
 	var result_deltas: Dictionary = result.get("deltas", {}) if typeof(result.get("deltas", {})) == TYPE_DICTIONARY else {}
 	var layer_discovery: Dictionary = result_deltas.get("environment_layer_discovery", {}) if typeof(result_deltas.get("environment_layer_discovery", {})) == TYPE_DICTIONARY else {}
@@ -6810,6 +6817,21 @@ func _protect_foundation_coach_attention(snapshot: Dictionary) -> void:
 		coach_snapshot["attention"] = attention_snapshot
 		snapshot["coach"] = coach_snapshot
 		snapshot["_coach_attention_rolled_back"] = false
+
+
+func _foundation_coach_attention_boundary_snapshot() -> Dictionary:
+	if coach_overlay == null:
+		return {}
+	# Opening an event card does not mutate simulation state, but it still crosses
+	# the same input boundary as other room actions and must preserve the current
+	# Coach attention tween. Capture only that ownership token instead of cloning
+	# the complete RunState and every presentation model.
+	return {
+		"coach": {
+			"ref": coach_overlay,
+			"attention": coach_overlay.attention_tween_lifecycle_snapshot(),
+		},
+	}
 
 
 func _commit_foundation_coach_attention(snapshot: Dictionary) -> void:
@@ -14346,6 +14368,15 @@ func activate_interactable_object(object_id: String) -> bool:
 	# snapshot, so cloning the entire Foundation lifecycle here is redundant.
 	if object_id.begins_with("event_response:"):
 		return _activate_event_response_action(object_id)
+	# Inspecting a room event only focuses it and opens its response card. The
+	# response resolver below owns the actual transactional rollback boundary.
+	# Avoid copying a mature run just to display the card.
+	if object_id.begins_with("event:"):
+		var event_attention_boundary := _foundation_coach_attention_boundary_snapshot()
+		_protect_foundation_coach_attention(event_attention_boundary)
+		var event_action_ok := _activate_interactable_object_with_lifecycle_snapshot(object_id, event_attention_boundary)
+		_commit_foundation_coach_attention(event_attention_boundary)
+		return event_action_ok
 	var caller_rollback := _foundation_lifecycle_snapshot()
 	_protect_foundation_coach_attention(caller_rollback)
 	var action_ok := _activate_interactable_object_with_lifecycle_snapshot(object_id, caller_rollback)

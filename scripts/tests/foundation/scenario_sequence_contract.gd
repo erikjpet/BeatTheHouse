@@ -129,6 +129,7 @@ class LifecycleCallerProbe:
 	var failed_talk_dock_attention_tween: Tween
 	var environment_hover_signal_log: Array[String] = []
 	var recovered_event_popup_choice_count := 0
+	var lifecycle_snapshot_count := 0
 
 	func _init() -> void:
 		# These probes intentionally bypass FoundationMain._ready() and the staged
@@ -146,6 +147,10 @@ class LifecycleCallerProbe:
 
 	func _show_message(text: String) -> void:
 		message_log.append(text)
+
+	func _foundation_lifecycle_snapshot() -> Dictionary:
+		lifecycle_snapshot_count += 1
+		return super._foundation_lifecycle_snapshot()
 
 	func _refresh() -> void:
 		pass
@@ -379,7 +384,9 @@ static func _check_lifecycle_caller_failure_contract(library: ContentLibrary, fa
 	var layer_preexisting_coach_tween: Variant = layer_probe.coach_overlay.attention_tween_lifecycle_snapshot().get("tween", null)
 	var layer_message_start := layer_probe.message_log.size()
 	layer_probe.capture_transaction_attention = true
+	layer_probe.lifecycle_snapshot_count = 0
 	var layer_ok := layer_probe.activate_event_choice_action("side_door", "punchline_password")
+	var layer_action_snapshot_count := layer_probe.lifecycle_snapshot_count
 	layer_probe.capture_transaction_attention = false
 	var layer_messages := layer_probe.message_log.slice(layer_message_start)
 	var layer_rollback_equal := _public_caller_probe_state(layer_probe) == layer_before
@@ -405,6 +412,8 @@ static func _check_lifecycle_caller_failure_contract(library: ContentLibrary, fa
 			and layer_probe.selected_object_id.is_empty() and layer_probe.environment_canvas.selected_object_id.is_empty() \
 			and layer_probe.hover_target_id == "event:side_door" and layer_probe.environment_canvas.hovered_object_id == "event:side_door" \
 			and layer_probe.environment_canvas.mouse_default_cursor_shape == Control.CURSOR_POINTING_HAND
+	if layer_action_snapshot_count != 1:
+		failures.append("Event resolution captured %d complete lifecycle snapshots instead of reusing one transaction snapshot." % layer_action_snapshot_count)
 	if layer_ok or not layer_rollback_equal or not layer_stale_work_ignored or not layer_hover_baseline_valid or not layer_hover_rollback_exact \
 			or layer_probe.autosave_count != 0 or layer_probe.presentation_count != 0 \
 			or layer_messages != ["", "Selected event choice: Try the word.", "Layer caller fixture rejected."] \
@@ -449,10 +458,19 @@ static func _check_lifecycle_caller_failure_contract(library: ContentLibrary, fa
 	var success_rng := RngStream.new()
 	success_rng.configure(91204)
 	success_probe.run_state.current_environment = EnvironmentInstanceScript.from_archetype(library.environment_archetype("small_underground_casino"), 1, success_rng, library).to_dict()
+	success_probe._build_event_choice_popup_overlay()
+	success_probe.lifecycle_snapshot_count = 0
+	var event_open_ok := success_probe.activate_interactable_object("event:side_door")
+	if not event_open_ok or success_probe.lifecycle_snapshot_count != 0:
+		failures.append("Opening an event response card captured %d complete lifecycle snapshots instead of using its presentation-only boundary." % success_probe.lifecycle_snapshot_count)
+	success_probe._hide_event_choice_popup()
 	_install_real_event_popup(success_probe, "side_door")
 	_install_active_tutorial_presentation(success_probe, "tutorial_family_phone", "event:side_door", "family_phone", scene_tree)
 	var success_coach_tween: Variant = success_probe.coach_overlay.attention_tween_lifecycle_snapshot().get("tween", null)
+	success_probe.lifecycle_snapshot_count = 0
 	var success_ok := success_probe.activate_event_choice_action("side_door", "punchline_password")
+	if success_probe.lifecycle_snapshot_count != 1:
+		failures.append("Successful event resolution captured %d complete lifecycle snapshots instead of one." % success_probe.lifecycle_snapshot_count)
 	if not success_ok or not success_probe.coach_overlay.lifecycle_protected_attention_tweens.is_empty() \
 			or success_probe.coach_overlay.attention_tween != null \
 			or (success_coach_tween is Tween and (success_coach_tween as Tween).is_valid()):
