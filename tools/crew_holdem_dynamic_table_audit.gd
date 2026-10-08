@@ -379,7 +379,7 @@ func _exercise_eight_visible_hands(app: Control, canvas: Control) -> Dictionary:
 				hand_actions.clear()
 				hand_intents.clear()
 				active_hand = false
-				if hands.size() >= 8:
+				if hands.size() >= 8 and saw_bluff_showdown and saw_trap_or_check_raise:
 					break
 			var new_session_index := _surface_action_index(canvas, "poker_new_session")
 			if new_session_index != MISSING_ACTION_INDEX:
@@ -455,11 +455,32 @@ func _exercise_eight_visible_hands(app: Control, canvas: Control) -> Dictionary:
 					failures.append("The visible mid-hand save/reload changed the authoritative poker state.")
 			steps += 1
 			continue
-		var action_id := "poker_observe" if str(state.get("turn_owner", "")) != "player" else "poker_call"
+		if str(state.get("turn_owner", "")) != "player":
+			if _surface_action_index(canvas, "poker_observe") != MISSING_ACTION_INDEX:
+				failures.append("The automatic Hold'em table exposed a redundant Watch control.")
+				break
+			if not await _advance_automatic_opponent(app):
+				failures.append("The visible eight-hand run could not advance its scheduled opponent turn.")
+				break
+			await _settle(2)
+			steps += 1
+			continue
+		var action_id := "poker_call"
 		var action_index := _surface_action_index(canvas, action_id)
-		if action_index == MISSING_ACTION_INDEX and action_id == "poker_call":
-			action_id = "poker_check"
+		if action_index == MISSING_ACTION_INDEX:
+			# Conversation close and automatic-action refreshes can land in adjacent
+			# frames. Rebuild once before declaring a visible player turn broken.
+			app.call("_refresh")
+			await _settle(2)
+			canvas = app.get("game_surface_canvas") as Control
 			action_index = _surface_action_index(canvas, action_id)
+		if action_index == MISSING_ACTION_INDEX:
+			for fallback_action in ["poker_all_in", "poker_fold"]:
+				var fallback_index := _surface_action_index(canvas, fallback_action)
+				if fallback_index != MISSING_ACTION_INDEX:
+					action_id = fallback_action
+					action_index = fallback_index
+					break
 		if action_index == MISSING_ACTION_INDEX or not bool(app.call("_handle_module_surface_action", action_id, action_index, true)):
 			failures.append("The visible eight-hand run could not select %s during hand %d." % [action_id, hands.size() + 1])
 			break
@@ -523,8 +544,9 @@ func _advance_to_player(app: Control, canvas: Control) -> bool:
 		var state: Dictionary = canvas.call("realtime_surface_state")
 		if str(state.get("turn_owner", "")) == "player":
 			return true
-		var observe_index := _surface_action_index(canvas, "poker_observe")
-		if observe_index == MISSING_ACTION_INDEX or not bool(app.call("_handle_module_surface_action", "poker_observe", observe_index, true)):
+		if _surface_action_index(canvas, "poker_observe") != MISSING_ACTION_INDEX:
+			return false
+		if not await _advance_automatic_opponent(app):
 			return false
 		await _settle(3)
 	return false
@@ -542,9 +564,9 @@ func _advance_to_board_street(app: Control, canvas: Control) -> bool:
 				return false
 			await _settle(3)
 			continue
-		var observe_index := _surface_action_index(canvas, "poker_observe")
-		if observe_index != MISSING_ACTION_INDEX:
-			app.call("_handle_module_surface_action", "poker_observe", observe_index, true)
+		if str(state.get("turn_owner", "")) != "player":
+			if _surface_action_index(canvas, "poker_observe") != MISSING_ACTION_INDEX or not await _advance_automatic_opponent(app):
+				return false
 		else:
 			var call_index := _surface_action_index(canvas, "poker_call")
 			if call_index == MISSING_ACTION_INDEX:
@@ -552,6 +574,28 @@ func _advance_to_board_street(app: Control, canvas: Control) -> bool:
 			app.call("_handle_module_surface_action", "poker_call", call_index, true)
 		await _settle(3)
 	return false
+
+
+func _advance_automatic_opponent(app: Control) -> bool:
+	var run_state := app.get("run_state") as RunState
+	var game := app.get("current_game") as GameModule
+	if run_state == null or game == null:
+		return false
+	var states: Dictionary = run_state.current_environment.get("game_states", {}) if typeof(run_state.current_environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+	var table: Dictionary = states.get("crew_draw_poker", {}) if typeof(states.get("crew_draw_poker", {})) == TYPE_DICTIONARY else {}
+	var due_msec := maxi(1, int(table.get("npc_turn_due_msec", 0)))
+	var ui_state: Dictionary = (app.get("game_surface_ui_state") as Dictionary).duplicate(true)
+	# The audit fast-forwards presentation time without reinstating the removed
+	# manual control; production still waits the authored real-time delay.
+	ui_state.erase("poker_animation")
+	ui_state["surface_time_msec"] = due_msec + 1
+	ui_state["surface_presentation_time_msec"] = due_msec + 1
+	var command := game.surface_auto_action_command(ui_state, run_state, run_state.current_environment)
+	if not bool(command.get("handled", false)) or str(command.get("action_id", "")) != "observe":
+		return false
+	app.call("_apply_game_surface_automation_command", command, ui_state)
+	await _settle(1)
+	return true
 
 
 func _answer_visible_talk(app: Control) -> void:

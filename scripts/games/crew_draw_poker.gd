@@ -12,7 +12,7 @@ const TableGameVisualsScript := preload("res://scripts/games/table_game_visuals.
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 
 const STATE_SCHEMA := "crew_draw_table"
-const STATE_VERSION := 4
+const STATE_VERSION := 5
 const PLAYER_ID := "player"
 const C_DARK := VisualStyleScript.DARK
 const C_DARK_2 := VisualStyleScript.DARK_2
@@ -107,6 +107,7 @@ const MEMBER_NAMES := {
 const NIGHT_IDS := ["friendly_teaching", "hustle_test", "debt_court", "after_job", "raid_jitters"]
 const OBSERVATION_DURATION_ACTIONS := 3
 const ORDERED_ENGINE := "ordered_v1"
+const TELL_EMOTIONS := ["confidence", "worry", "scared", "neutral", "pushy"]
 
 var draw_card_events_cache_id := ""
 var draw_card_events_cache: Array = []
@@ -118,6 +119,15 @@ var last_npc_decision_usec := 0
 func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
 	var result := super.enter(run_state, environment)
 	var state := _table_state(environment)
+	if _npc_turn_waiting_peek(state):
+		# Saved monotonic timestamps do not survive a process/re-entry clock change.
+		# The first host tick establishes a fresh relative thinking window.
+		state["npc_turn_actor"] = str(state.get("turn_owner", ""))
+		state["npc_turn_started_msec"] = 0
+		state["npc_turn_due_msec"] = 0
+		state["npc_turn_resume_pending"] = true
+		_ensure_resumed_tell(state)
+		_update_environment_state(environment, state)
 	if not _buy_in_open(run_state, state):
 		result["message"] = "The table is friendly, not open. An associate at the table has to vouch for your chair."
 	elif bool(state.get("session_settled", false)):
@@ -186,6 +196,11 @@ func generate_environment_state(run_state: RunState, environment: Dictionary, rn
 		"table_talk_last_ordinal": -999,
 		"table_talk_members_this_hand": [],
 		"npc_stacks": {},
+		"npc_turn_actor": "",
+		"npc_turn_started_msec": 0,
+		"npc_turn_due_msec": 0,
+		"npc_turn_delay_msec": 0,
+		"npc_turn_resume_pending": false,
 		"pot": 0,
 		"shoe": [],
 		"player_cards": [],
@@ -315,6 +330,71 @@ func surface_realtime_state_patch(_run_state: RunState, _environment: Dictionary
 	}
 
 
+func surface_uses_auto_tick() -> bool:
+	return true
+
+
+func surface_needs_auto_tick(ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> bool:
+	# This is queried every frame. Read the canonical table in place and keep the
+	# dormant/player-turn path allocation free.
+	var state := _peek_table_state(environment)
+	if not _npc_turn_waiting_peek(state):
+		return false
+	var actor := str(state.get("turn_owner", ""))
+	if str(state.get("npc_turn_actor", "")) != actor:
+		return true
+	var animation: Dictionary = ui_state.get("poker_animation", {}) if typeof(ui_state.get("poker_animation", {})) == TYPE_DICTIONARY else {}
+	var presentation_msec := int(ui_state.get("surface_presentation_time_msec", ui_state.get("surface_time_msec", 0)))
+	if _animation_bundle_live(animation, presentation_msec, bool(ui_state.get("reduce_motion", false))):
+		return false
+	var now_msec := GameModule.deterministic_time_msec(run_state, ui_state)
+	var started_msec := int(state.get("npc_turn_started_msec", 0))
+	var due_msec := int(state.get("npc_turn_due_msec", 0))
+	# A missing timer belongs to an older save or a just-resumed hand. The command
+	# boundary below owns initialization of a fresh relative delay.
+	if due_msec <= 0:
+		return true
+	if started_msec > 0 and now_msec < started_msec:
+		return false
+	return now_msec >= due_msec
+
+
+func surface_auto_tick_state_keys() -> Array:
+	return ["poker_animation", "reduce_motion"]
+
+
+func surface_auto_action_uses_lightweight_ui_state() -> bool:
+	return true
+
+
+func surface_auto_action_command(ui_state: Dictionary, run_state: RunState, environment: Dictionary, _surface_status: Dictionary = {}) -> Dictionary:
+	if not surface_needs_auto_tick(ui_state, run_state, environment):
+		return {"handled": false}
+	var peek := _peek_table_state(environment)
+	if bool(peek.get("npc_turn_resume_pending", false)):
+		var resumed := _table_state(environment)
+		if not _npc_turn_waiting(resumed):
+			return {"handled": false}
+		var now_msec := GameModule.deterministic_time_msec(run_state, ui_state)
+		var delay_msec := maxi(450, int(resumed.get("npc_turn_delay_msec", 0)))
+		resumed["npc_turn_actor"] = str(resumed.get("turn_owner", ""))
+		resumed["npc_turn_started_msec"] = now_msec
+		resumed["npc_turn_due_msec"] = now_msec + delay_msec
+		resumed["npc_turn_resume_pending"] = false
+		_update_environment_state(environment, resumed)
+		return {"handled": false}
+	return GameModule.surface_command({
+		"handled": true,
+		"ui_state": ui_state,
+		"action_id": "observe",
+		"action_kind": "legal",
+		"direct_resolve": true,
+		"skip_stake_validation": true,
+		"preserve_surface_ui_state": true,
+		"message": "The next player acts.",
+	})
+
+
 func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
 	var state := _table_state(environment)
 	var phase := str(state.get("phase", "idle"))
@@ -384,6 +464,11 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 				seats[seat_index] = presentation_seat
 	var last := _poker_dict(state.get("last_result", {}))
 	var actions_now := legal_actions(run_state, environment)
+	# `observe` remains an internal legal action for deterministic simulations and
+	# old saves, but live opponents now act through the paced automatic-turn hook.
+	if str(state.get("turn_engine", "legacy_v1")) == ORDERED_ENGINE and _npc_turn_waiting(state):
+		actions_now = []
+	var active_tell := _active_npc_tell(seats, str(state.get("turn_owner", "")))
 	var minimum_raise_to := _minimum_raise_to(state)
 	var maximum_raise_to := _maximum_raise_to(state)
 	var selected_raise_to := clampi(int(ui_state.get("poker_raise_to", minimum_raise_to)), minimum_raise_to, maxi(minimum_raise_to, maximum_raise_to))
@@ -463,6 +548,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"swing_cap": int(CrewPokerModelScript.config().get("session_swing_cap", 60)),
 		"buy_in_open": _buy_in_open(run_state, state),
 		"observation": presentation,
+		"active_tell": active_tell,
 		"observation_queue": _public_observation_queue(state),
 		"action_ordinal": int(state.get("action_ordinal", 0)),
 		"night_id": str(state.get("night_id", "friendly_teaching")),
@@ -708,6 +794,7 @@ func _resolve_ordered(action_id: String, run_state: RunState, environment: Dicti
 	# Pure simulations do not carry a presentation clock, so they skip allocating
 	# visual events. The production surface and capture/test paths always do.
 	var animation := _build_presentation_animation(before_state, state, action_id, ui_state) if builds_presentation else {}
+	_prepare_npc_turn(state, rng, ui_state, animation)
 	_update_environment_state(environment, state)
 	var result := _result(action_id, environment, int(outcome.get("delta", 0)), str(outcome.get("message", "The table acts.")), true)
 	var next_ui := ui_state.duplicate(true)
@@ -750,7 +837,7 @@ func _deal_hand_ordered(run_state: RunState, state: Dictionary, rng: RngStream) 
 		var remembered_stack := int(stack_memory.get(member_id, cap))
 		if remembered_stack < int(tuning.get("big_blind", 2)):
 			remembered_stack = cap
-		seats.append({"member_id": member_id, "cards": [], "active": true, "all_in": false, "revealed": false, "contribution": 0, "round_contribution": 0, "stack": remembered_stack, "starting_stack": remembered_stack, "draw_count": -1, "last_action": "waiting", "decision_intent": ""})
+		seats.append({"member_id": member_id, "cards": [], "active": true, "all_in": false, "revealed": false, "contribution": 0, "round_contribution": 0, "stack": remembered_stack, "starting_stack": remembered_stack, "draw_count": -1, "last_action": "waiting", "decision_intent": "", "tell_emotion": "", "tell_cue": "", "tell_street": "", "thinking": false})
 	# Deal one card at a time around the table, twice, so the button order is real
 	# while the deck remains wholly owned by the injected deterministic RNG.
 	state["seats"] = seats
@@ -832,6 +919,8 @@ func _start_holdem_round(state: Dictionary, phase: String) -> void:
 	state["raise_count"] = 0
 	state["player_fake_tell_used_street"] = ""
 	state["player_signal"] = {}
+	_clear_npc_turn_timer(state)
+	_clear_seat_tells(state)
 
 
 func _ordered_npc_turn(state: Dictionary, rng: RngStream, run_state: RunState) -> Dictionary:
@@ -843,6 +932,10 @@ func _ordered_npc_turn(state: Dictionary, rng: RngStream, run_state: RunState) -
 		return {"ok": false, "delta": 0, "message": "The turn owner has no live seat."}
 	var seats: Array = state.get("seats", [])
 	var seat: Dictionary = seats[seat_index]
+	seat["thinking"] = false
+	seats[seat_index] = seat
+	state["seats"] = seats
+	_clear_npc_turn_timer(state)
 	var phase := str(state.get("phase", ""))
 	var due := maxi(0, int(state.get("current_bet", 0)) - int(seat.get("round_contribution", 0)))
 	var minimum_raise_size := maxi(1, int(state.get("last_raise_size", CrewPokerModelScript.config().get("raise_unit", 2))))
@@ -927,6 +1020,189 @@ func _ordered_npc_turn(state: Dictionary, rng: RngStream, run_state: RunState) -
 	var visible_action := str(seat.get("last_action", action))
 	var action_text := "folds" if visible_action == "fold" else "checks" if visible_action == "check" else "calls $%d" % due if visible_action == "call" else "bets $%d" % action_amount if visible_action == "bet" else "raises to $%d" % int(seat.get("round_contribution", 0)) if visible_action == "raise" else "shoves $%d" % action_amount
 	return {"ok": true, "delta": 0, "table_talk_request": table_talk_request, "message": "%s %s. %s is next." % [_actor_name(actor), action_text, _actor_name(str(state.get("turn_owner", "")))]}
+
+
+func _prepare_npc_turn(state: Dictionary, rng: RngStream, ui_state: Dictionary, animation: Dictionary) -> void:
+	_clear_npc_turn_timer(state)
+	if not _npc_turn_waiting(state):
+		return
+	var actor := str(state.get("turn_owner", ""))
+	var seat_index := _seat_index(state, actor)
+	if seat_index < 0:
+		return
+	var seats: Array = state.get("seats", [])
+	var seat: Dictionary = seats[seat_index]
+	var tell := _npc_tell_for_turn(state, seat, rng)
+	seat["tell_emotion"] = str(tell.get("emotion", "neutral"))
+	seat["tell_cue"] = str(tell.get("cue", "keeps an unreadable rhythm"))
+	seat["tell_street"] = str(state.get("phase", ""))
+	seat["thinking"] = true
+	seats[seat_index] = seat
+	state["seats"] = seats
+	var now_msec := int(ui_state.get("surface_time_msec", ui_state.get("surface_presentation_time_msec", 0)))
+	var animation_msec := maxi(int(animation.get("card_duration_msec", 0)), maxi(int(animation.get("chip_duration_msec", 0)), int(animation.get("payout_duration_msec", 0))))
+	var delay_msec := _npc_think_delay_msec(state, seat, tell, rng, bool(ui_state.get("reduce_motion", false)))
+	state["npc_turn_actor"] = actor
+	state["npc_turn_started_msec"] = now_msec
+	state["npc_turn_delay_msec"] = delay_msec
+	state["npc_turn_due_msec"] = now_msec + animation_msec + delay_msec if now_msec > 0 else 0
+
+
+func _npc_turn_waiting(state: Dictionary) -> bool:
+	if state.is_empty() or str(state.get("turn_engine", "legacy_v1")) != ORDERED_ENGINE:
+		return false
+	if str(state.get("phase", "")) not in ["preflop", "flop", "turn", "river"]:
+		return false
+	var actor := str(state.get("turn_owner", ""))
+	return not actor.is_empty() and actor != PLAYER_ID and _actor_can_act(state, actor)
+
+
+func _npc_turn_waiting_peek(state: Dictionary) -> bool:
+	# Allocation-free counterpart for the per-frame host predicate.
+	if state.is_empty() or str(state.get("turn_engine", "legacy_v1")) != ORDERED_ENGINE:
+		return false
+	if str(state.get("phase", "")) not in ["preflop", "flop", "turn", "river"]:
+		return false
+	var actor := str(state.get("turn_owner", ""))
+	if actor.is_empty() or actor == PLAYER_ID:
+		return false
+	var seats_value: Variant = state.get("seats", [])
+	if typeof(seats_value) != TYPE_ARRAY:
+		return false
+	for seat_value in seats_value as Array:
+		if typeof(seat_value) != TYPE_DICTIONARY:
+			continue
+		var seat: Dictionary = seat_value
+		if str(seat.get("member_id", "")) == actor:
+			return bool(seat.get("active", false)) and not bool(seat.get("all_in", false)) and int(seat.get("stack", 0)) > 0
+	return false
+
+
+func _clear_npc_turn_timer(state: Dictionary) -> void:
+	state["npc_turn_actor"] = ""
+	state["npc_turn_started_msec"] = 0
+	state["npc_turn_due_msec"] = 0
+	state["npc_turn_delay_msec"] = 0
+	state["npc_turn_resume_pending"] = false
+
+
+func _ensure_resumed_tell(state: Dictionary) -> void:
+	var actor := str(state.get("turn_owner", ""))
+	var seat_index := _seat_index(state, actor)
+	if seat_index < 0:
+		return
+	var seats: Array = state.get("seats", [])
+	var seat: Dictionary = seats[seat_index]
+	if not TELL_EMOTIONS.has(str(seat.get("tell_emotion", ""))):
+		seat["tell_emotion"] = "neutral"
+		seat["tell_cue"] = "returns to the same measured rhythm"
+		seat["tell_street"] = str(state.get("phase", ""))
+	seat["thinking"] = true
+	seats[seat_index] = seat
+	state["seats"] = seats
+
+
+func _clear_seat_tells(state: Dictionary) -> void:
+	var seats: Array = state.get("seats", []) if typeof(state.get("seats", [])) == TYPE_ARRAY else []
+	for index in range(seats.size()):
+		var seat: Dictionary = seats[index]
+		seat["tell_emotion"] = ""
+		seat["tell_cue"] = ""
+		seat["tell_street"] = ""
+		seat["thinking"] = false
+		seats[index] = seat
+	state["seats"] = seats
+
+
+func _npc_tell_for_turn(state: Dictionary, seat: Dictionary, rng: RngStream) -> Dictionary:
+	var actor := str(seat.get("member_id", ""))
+	var policy := CrewPokerModelScript.policy(actor)
+	var strength := CrewPokerModelScript.holdem_strength(_card_array(seat.get("cards", [])), _card_array(state.get("community_cards", [])))
+	var due := maxi(0, int(state.get("current_bet", 0)) - int(seat.get("round_contribution", 0)))
+	var pot := maxi(1, int(state.get("pot", 0)))
+	var pressure := clampi(int(round(float(due) * 100.0 / float(pot + due))), 0, 100)
+	var aggression := int(policy.get("aggression", 50))
+	var trap := int(policy.get("trap", 0))
+	var bluff := int(policy.get("bluff", 0))
+	var truth := "neutral"
+	if strength >= 76:
+		truth = "neutral" if trap >= 75 and rng.randi_range(0, 99) < 35 else "confidence"
+	elif strength >= 56:
+		truth = "pushy" if aggression >= 65 else "confidence"
+	elif strength >= 38:
+		truth = "pushy" if aggression + bluff >= 105 and pressure < 45 else "worry" if pressure >= 35 else "neutral"
+	else:
+		truth = "scared" if due > 0 and pressure >= 20 else "worry"
+	# Tells reward observation without becoming a hand-strength oracle. Even Lucky,
+	# the leakiest player, masks or projects often enough to preserve uncertainty.
+	var readable_chance := clampi(30 + int(round(float(int(policy.get("tell_leak", 50))) * 0.42)), 30, 72)
+	var emotion := truth
+	if rng.randi_range(0, 99) >= readable_chance:
+		var decoys := ["neutral", "worry"]
+		if aggression >= 65 or bluff >= 40:
+			decoys = ["pushy", "confidence", "neutral"]
+		elif trap >= 60:
+			decoys = ["neutral", "worry", "confidence"]
+		elif int(policy.get("fold_to_pressure", 50)) >= 65:
+			decoys = ["worry", "scared", "neutral"]
+		decoys.erase(truth)
+		emotion = str(rng.pick(decoys, "neutral"))
+	var cues := _tell_cues(emotion)
+	return {"emotion": emotion, "cue": str(rng.pick(cues, "keeps an unreadable rhythm")), "strength": strength, "pressure": pressure}
+
+
+func _tell_cues(emotion: String) -> Array:
+	match emotion:
+		"confidence":
+			return ["settles deeper into the chair", "breathing eases", "stacks two chips into a clean line"]
+		"worry":
+			return ["checks the pot, then the stack", "turns one chip under a thumb", "shoulders draw in a fraction"]
+		"scared":
+			return ["goes very still", "fingertips tighten on the rail", "lets a glance catch on the wager"]
+		"pushy":
+			return ["leans into the felt", "nudges the stack forward", "holds the table's gaze"]
+		_:
+			return ["keeps the same measured rhythm", "expression settles flat", "watches the felt without blinking"]
+
+
+func _npc_think_delay_msec(state: Dictionary, seat: Dictionary, tell: Dictionary, rng: RngStream, reduce_motion: bool) -> int:
+	var tuning_value: Variant = CrewPokerModelScript.config().get("opponent_turn_timing", {})
+	var tuning: Dictionary = tuning_value if typeof(tuning_value) == TYPE_DICTIONARY else {}
+	var minimum := int(tuning.get("minimum_msec", 850))
+	var maximum := maxi(minimum, int(tuning.get("maximum_msec", 2400)))
+	var policy := CrewPokerModelScript.policy(str(seat.get("member_id", "")))
+	var strength := int(tell.get("strength", 50))
+	var pressure := int(tell.get("pressure", 0))
+	var delay := minimum + rng.randi_range(0, 650)
+	delay += int(policy.get("position_awareness", 50)) * 4
+	delay += pressure * 5
+	delay += 260 if strength >= 35 and strength <= 65 else 0
+	delay += 220 if str(state.get("phase", "")) in ["turn", "river"] else 0
+	delay -= int(policy.get("aggression", 50)) * 2
+	delay = clampi(delay, minimum, maximum)
+	var long_chance := int(tuning.get("long_think_chance", 14)) + int(policy.get("position_awareness", 50)) / 12
+	long_chance += 8 if pressure >= 30 else 0
+	long_chance += 6 if str(state.get("phase", "")) == "river" else 0
+	if rng.randi_range(0, 99) < clampi(long_chance, 0, 45):
+		delay += rng.randi_range(int(tuning.get("long_think_extra_min_msec", 900)), int(tuning.get("long_think_extra_max_msec", 1900)))
+	if reduce_motion:
+		delay = maxi(450, int(round(float(delay) * float(tuning.get("reduced_motion_scale_percent", 65)) / 100.0)))
+	return delay
+
+
+func _active_npc_tell(seats: Array, actor: String) -> Dictionary:
+	if actor.is_empty() or actor == PLAYER_ID:
+		return {}
+	for seat_value in seats:
+		if typeof(seat_value) != TYPE_DICTIONARY:
+			continue
+		var seat: Dictionary = seat_value
+		if str(seat.get("member_id", "")) != actor or not bool(seat.get("thinking", false)):
+			continue
+		var emotion := str(seat.get("tell_emotion", ""))
+		if TELL_EMOTIONS.has(emotion):
+			return {"member_id": actor, "name": str(seat.get("name", _actor_name(actor))), "emotion": emotion, "cue": str(seat.get("tell_cue", ""))}
+	return {}
 
 
 func _maybe_table_talk_request(state: Dictionary, member_id: String, action: String) -> Dictionary:
@@ -2295,6 +2571,8 @@ func _finish_hand(state: Dictionary, run_state: RunState, last: Dictionary) -> v
 	state["player_signal"] = {}
 	state["player_signal_history"] = []
 	state["player_fake_tell_used_street"] = ""
+	_clear_npc_turn_timer(state)
+	_clear_seat_tells(state)
 	state["hand_lines"] = _neutral_hand_lines()
 	state["button_index"] = int(state.get("button_index", 0)) + 1
 	if bool(state.get("migrate_to_holdem_after_hand", false)):
@@ -2368,6 +2646,7 @@ func _start_new_session(state: Dictionary, environment: Dictionary) -> void:
 	state["table_talk_last_ordinal"] = -999
 	state["table_talk_members_this_hand"] = []
 	state["npc_stacks"] = {}
+	_clear_npc_turn_timer(state)
 	state["night_task_receipt"] = ""
 	state["night_aftermath"] = ""
 
@@ -2461,6 +2740,13 @@ func _table_state(environment: Dictionary) -> Dictionary:
 			migrated["table_talk_members_this_hand"] = []
 		if not migrated.has("npc_stacks"):
 			migrated["npc_stacks"] = {}
+		if not migrated.has("npc_turn_actor"):
+			migrated["npc_turn_actor"] = ""
+		for timer_key in ["npc_turn_started_msec", "npc_turn_due_msec", "npc_turn_delay_msec"]:
+			if not migrated.has(timer_key):
+				migrated[timer_key] = 0
+		if not migrated.has("npc_turn_resume_pending"):
+			migrated["npc_turn_resume_pending"] = false
 		var migrated_dealer := str(migrated.get("dealer_member_id", ""))
 		if migrated_dealer.is_empty() or _string_array(migrated.get("members", [])).has(migrated_dealer):
 			migrated["dealer_member_id"] = _derived_dealer_member_id(migrated, environment)
@@ -2471,12 +2757,23 @@ func _table_state(environment: Dictionary) -> Dictionary:
 			migrated["turn_engine"] = "legacy_v1"
 			migrated["migrate_to_holdem_after_hand"] = true
 		return migrated
-	var empty_state := {"schema": STATE_SCHEMA, "version": STATE_VERSION, "producer_id": "poker", "game_id": get_id(), "members": [], "phase": "idle", "hand_number": 0, "session_swing": 0, "session_settled": false, "session_index": 0, "night_id": _night_id(environment), "action_ordinal": 0, "observation_queue": [], "verified_observation_receipts": [], "pot": 0, "shoe": [], "player_cards": [], "community_cards": [], "burn_cards": [], "seats": [], "x": [], "beat": {}, "last_result": {}, "action_history": [], "session_memory": {}, "public_memory_receipt_id": "", "player_folded_hidden": false, "turn_engine": ORDERED_ENGINE if _ordered_engine(environment) else "legacy_v1", "button_index": 0, "turn_owner": "", "turn_order": [], "turn_cursor": 0, "current_bet": 0, "last_raise_size": int(CrewPokerModelScript.config().get("big_blind", CrewPokerModelScript.config().get("raise_unit", 2))), "round_contributions": {}, "acted_since_raise": [], "raise_count": 0, "player_active": true, "player_all_in": false, "player_stack": int(CrewPokerModelScript.config().get("buy_in", 60)), "player_contribution": 0, "dealer_actor": "", "dealer_member_id": "", "small_blind_actor": "", "big_blind_actor": "", "player_signal": {}, "player_signal_history": [], "player_fake_tell_used_street": "", "tell_reputation": 50, "table_talk_history": [], "table_talk_hand_count": 0, "table_talk_last_ordinal": -999, "table_talk_members_this_hand": [], "npc_stacks": {}}
+	var empty_state := {"schema": STATE_SCHEMA, "version": STATE_VERSION, "producer_id": "poker", "game_id": get_id(), "members": [], "phase": "idle", "hand_number": 0, "session_swing": 0, "session_settled": false, "session_index": 0, "night_id": _night_id(environment), "action_ordinal": 0, "observation_queue": [], "verified_observation_receipts": [], "pot": 0, "shoe": [], "player_cards": [], "community_cards": [], "burn_cards": [], "seats": [], "x": [], "beat": {}, "last_result": {}, "action_history": [], "session_memory": {}, "public_memory_receipt_id": "", "player_folded_hidden": false, "turn_engine": ORDERED_ENGINE if _ordered_engine(environment) else "legacy_v1", "button_index": 0, "turn_owner": "", "turn_order": [], "turn_cursor": 0, "current_bet": 0, "last_raise_size": int(CrewPokerModelScript.config().get("big_blind", CrewPokerModelScript.config().get("raise_unit", 2))), "round_contributions": {}, "acted_since_raise": [], "raise_count": 0, "player_active": true, "player_all_in": false, "player_stack": int(CrewPokerModelScript.config().get("buy_in", 60)), "player_contribution": 0, "dealer_actor": "", "dealer_member_id": "", "small_blind_actor": "", "big_blind_actor": "", "player_signal": {}, "player_signal_history": [], "player_fake_tell_used_street": "", "tell_reputation": 50, "table_talk_history": [], "table_talk_hand_count": 0, "table_talk_last_ordinal": -999, "table_talk_members_this_hand": [], "npc_stacks": {}, "npc_turn_actor": "", "npc_turn_started_msec": 0, "npc_turn_due_msec": 0, "npc_turn_delay_msec": 0, "npc_turn_resume_pending": false}
 	empty_state["seat_temperament"] = {}
 	empty_state["player_reads"] = _neutral_player_reads()
 	empty_state["hand_lines"] = _neutral_hand_lines()
 	empty_state["dealer_member_id"] = _derived_dealer_member_id(empty_state, environment)
 	return empty_state
+
+
+func _peek_table_state(environment: Dictionary) -> Dictionary:
+	# Zero-copy read view used only by the automatic-turn predicate.
+	var states_value: Variant = environment.get("game_states", {})
+	if typeof(states_value) != TYPE_DICTIONARY:
+		return {}
+	var state_value: Variant = (states_value as Dictionary).get(get_id(), {})
+	if typeof(state_value) != TYPE_DICTIONARY or str((state_value as Dictionary).get("schema", "")) != STATE_SCHEMA:
+		return {}
+	return state_value as Dictionary
 
 
 func _derived_dealer_member_id(state: Dictionary, environment: Dictionary) -> String:
@@ -2742,11 +3039,14 @@ func _draw_seats(surface, state: Dictionary) -> void:
 		var active := bool(seat.get("active", true)) or _fold_landing_waiting(surface, str(seat.get("member_id", "")))
 		var talking := bool(seat.get("conversation_active", false))
 		var last_action := str(seat.get("last_action", "waiting"))
-		var pose := "covered" if not active else "snitch" if talking or last_action in ["raise", "all_in"] else "watching" if str(state.get("turn_owner", "")) == str(seat.get("member_id", "")) else "idle"
+		var tell_emotion := str(seat.get("tell_emotion", ""))
+		var pose := "covered" if not active else "snitch" if talking or last_action in ["raise", "all_in"] else _tell_pose(tell_emotion) if not tell_emotion.is_empty() else "watching" if str(state.get("turn_owner", "")) == str(seat.get("member_id", "")) else "idle"
 		var portrait_variant := str(seat.get("portrait_variant", ""))
 		if not portrait_variant.is_empty() and active and not talking:
 			pose = _portrait_variant_pose(portrait_variant)
 		var accent := Color(str(model.get("accent_color", "#d5d8e6"))) if active else color
+		if active and TELL_EMOTIONS.has(tell_emotion):
+			accent = accent.lerp(_tell_color(tell_emotion), 0.62)
 		var animation_offset := float(absi(str(seat.get("member_id", "")).hash()) % 2200) / 1000.0
 		var portrait_scale := 1.0 + float((absi(portrait_variant.hash()) % 5) - 2) * 0.012 if not portrait_variant.is_empty() else 1.0
 		TableGameVisualsScript._draw_table_character(surface, {
@@ -2757,7 +3057,7 @@ func _draw_seats(surface, state: Dictionary) -> void:
 			"accent": accent,
 			"role": "crew",
 			"pose": pose,
-			"eye_offset": _portrait_variant_eye_offset(portrait_variant) if not portrait_variant.is_empty() else 2.0 if talking or pose == "watching" else 0.0,
+			"eye_offset": _portrait_variant_eye_offset(portrait_variant) if not portrait_variant.is_empty() else _tell_eye_offset(tell_emotion) if not tell_emotion.is_empty() else 2.0 if talking or pose == "watching" else 0.0,
 			"blink": fposmod(surface.surface_flicker() + animation_offset, 3.1) > 2.94,
 			"holding_card": active and not str(state.get("phase", "idle")) in ["idle", "showdown"],
 			"silhouette": str(model.get("silhouette", "coat")),
@@ -2774,9 +3074,60 @@ func _draw_seats(surface, state: Dictionary) -> void:
 		if bool(seat.get("all_in", false)):
 			action_text = "ALL IN"
 		var presented_action := "%s: %s" % [name, action_text] if bool(layout.get("action_carries_name", false)) and not action_text.is_empty() else action_text
-		surface.surface_label_centered(presented_action, layout.get("action_label_rect", Rect2()), int(layout.get("action_font_size", 10)), C_YELLOW)
+		if TELL_EMOTIONS.has(tell_emotion):
+			var compact_tell := "%s?" % _tell_compact_name(tell_emotion)
+			if bool(layout.get("action_carries_name", false)):
+				presented_action = "%s · %s" % [name.to_upper(), compact_tell]
+			else:
+				var visible_action := "THINK" if bool(seat.get("thinking", false)) else action_text.to_upper()
+				presented_action = "%s · %s" % [visible_action, compact_tell]
+		var action_color := _tell_color(tell_emotion) if TELL_EMOTIONS.has(tell_emotion) else C_YELLOW
+		surface.surface_label_centered(presented_action, layout.get("action_label_rect", Rect2()), mini(int(layout.get("action_font_size", 10)), 9) if TELL_EMOTIONS.has(tell_emotion) else int(layout.get("action_font_size", 10)), action_color)
 		if str(state.get("dealer_actor", "")) == str(seat.get("member_id", "")):
 			_draw_button_marker(surface, layout.get("dealer_button_center", Vector2.ZERO))
+
+
+func _tell_pose(emotion: String) -> String:
+	match emotion:
+		"confidence": return "covered"
+		"worry", "scared": return "watching"
+		"pushy": return "snitch"
+		_: return "idle"
+
+
+func _tell_eye_offset(emotion: String) -> float:
+	match emotion:
+		"worry": return -1.5
+		"scared": return -3.0
+		"pushy": return 2.5
+		_: return 0.0
+
+
+func _tell_display_name(emotion: String) -> String:
+	match emotion:
+		"confidence": return "CONFIDENT"
+		"worry": return "WORRIED"
+		"scared": return "SCARED"
+		"pushy": return "PUSHY"
+		_: return "NEUTRAL"
+
+
+func _tell_compact_name(emotion: String) -> String:
+	match emotion:
+		"confidence": return "CONF"
+		"worry": return "WORRY"
+		"scared": return "SCARED"
+		"pushy": return "PUSHY"
+		_: return "NEUTRAL"
+
+
+func _tell_color(emotion: String) -> Color:
+	match emotion:
+		"confidence": return C_TEAL
+		"worry": return C_YELLOW
+		"scared": return C_PINK
+		"pushy": return C_CYAN
+		_: return C_SOFT
 
 
 func _portrait_variant_pose(variant: String) -> String:
@@ -3018,6 +3369,15 @@ func _resting_chip_amount(surface, entry: Dictionary) -> int:
 
 
 func _draw_observation(surface, state: Dictionary) -> void:
+	var active_tell := _draw_dict_view(state.get("active_tell", {}))
+	if not active_tell.is_empty():
+		var emotion := str(active_tell.get("emotion", "neutral"))
+		var name := str(active_tell.get("name", "Crew"))
+		var cue := str(active_tell.get("cue", "keeps an unreadable rhythm"))
+		surface.draw_rect(Rect2(138, 337, 548, 35), Color(0.03, 0.03, 0.05, 0.92))
+		surface.surface_label("%s  /  %s?" % [name.to_upper(), _tell_display_name(emotion)], Vector2(152, 349), 8, _tell_color(emotion))
+		surface.surface_label(cue.left(76), Vector2(152, 365), 10, C_SOFT)
+		return
 	var observation := _draw_dict_view(state.get("observation", {}))
 	var channel := str(observation.get("channel", ""))
 	var text := ""
@@ -3049,6 +3409,9 @@ func _draw_controls(surface, state: Dictionary) -> void:
 		surface.surface_label("ANSWER THE TABLE TO CONTINUE", Vector2(226, 405), 11, C_CYAN)
 		return
 	var actions := _draw_array_view(state.get("legal_actions", []))
+	if actions.is_empty() and not _draw_dict_view(state.get("active_tell", {})).is_empty():
+		surface.surface_label_centered("WATCH THE TABLE — THE ACTION WILL CONTINUE", Rect2(240, 382, 420, 34), 10, C_SOFT)
+		return
 	var has_fake_tell := false
 	var has_raise := false
 	for action_value in actions:
